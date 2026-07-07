@@ -567,13 +567,9 @@ describe('initWGSLRuntime — czap:uniform-update → uniform buffer (D1-WGSL li
     expect(harness.calls.bufferWrites.length).toBe(writesAfterDispose);
   });
 
-  it('GUARD: a real WebGPU device drives the buffer; absent, it logs a skip (never faked)', async () => {
-    const realGpu = (globalThis.navigator as Navigator & { gpu?: unknown })?.gpu;
-    if (!realGpu) {
-      console.warn('[D1-WGSL] WebGPU unavailable in this harness — skipping real-device uniform-bind check.');
-      expect(realGpu).toBeUndefined();
-      return;
-    }
+  it.skipIf(!(globalThis.navigator as Navigator & { gpu?: unknown })?.gpu)(
+    'GUARD: a real WebGPU device drives the buffer; absent, it logs a skip (never faked)',
+    async () => {
     /* v8 ignore start — only runs where a real WebGPU device exists (not the CI harness). */
     const { canvas } = makeCanvas(true);
     const el = document.createElement('div');
@@ -582,7 +578,8 @@ describe('initWGSLRuntime — czap:uniform-update → uniform buffer (D1-WGSL li
     el.dispatchEvent(new CustomEvent('czap:uniform-update', { detail: { wgsl: { state_index: 1 } } }));
     dispose?.();
     /* v8 ignore stop */
-  });
+  },
+  );
 });
 
 describe('warnWebGpuUnavailable', () => {

@@ -285,6 +285,8 @@ export { noNondeterminismGate } from './gates/no-nondeterminism.js';
 export { noSilentCatchGate } from './gates/no-silent-catch.js';
 export { noSkippedTestGate } from './gates/no-skipped-test.js';
 export { noPlaceholderGate } from './gates/no-placeholder.js';
+export { noEarlyReturnTestGate } from './gates/no-early-return-test.js';
+export { detectEarlyReturnBeforeExpect, type EarlyReturnMatch } from './gates/early-return-detect.js';
 
 // The skip-form detector + the enumerated sanctioned-skip allowlist — exported so the
 // standards-surface extractor can fold the allowlist into the content-addressed snapshot

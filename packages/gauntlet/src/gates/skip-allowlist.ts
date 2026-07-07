@@ -57,6 +57,9 @@ export const SKIP_CAPABILITIES = [
   'shared-array-buffer-absent', // SharedArrayBuffer / cross-origin isolation is unavailable
   'coverage-instrumentation', // the test is REDUNDANT (and crash-prone) under v8 coverage; the in-process unit covers the same path
   'astro-example-not-built', // the built Astro example dist is absent (the integration build runs before the e2e lane)
+  'offscreen-canvas-absent', // OffscreenCanvas / transferControlToOffscreen is unavailable in the browser harness
+  'gpu-absent', // a real WebGPU device is unavailable in the CI/jsdom harness
+  'eacces-untestable-as-root', // chmod 0o000 EACCES semantics are not enforceable when the test process runs as root
 ] as const;
 
 /** The closed capability union — derived from the single-source {@link SKIP_CAPABILITIES} list. */
@@ -181,6 +184,9 @@ const CAPABILITY_KEYWORDS: ReadonlyMap<SkipCapability, readonly string[]> = new 
   ['shared-array-buffer-absent', ['sab', 'sharedarraybuffer', 'atomics', 'cross-origin', 'coop', 'coep']],
   ['coverage-instrumentation', ['coverage']],
   ['astro-example-not-built', ['astro', 'built']],
+  ['offscreen-canvas-absent', ['offscreen', 'canvas', 'transfercontrol']],
+  ['gpu-absent', ['webgpu', 'gpu', 'navigator']],
+  ['eacces-untestable-as-root', ['eacces', 'chmod', 'root', 'permission']],
 ]);
 
 /**
@@ -357,6 +363,30 @@ export const SANCTIONED_SKIPS: readonly SanctionedSkip[] = [
     site: "test.skip('ffmpeg+libx264 encode (skipped — codec not on PATH)', () => {",
     capability: 'ffmpeg-absent',
     why: 'the real ffmpeg+libx264 encode test skips when the codec is not on PATH.',
+  },
+  {
+    file: 'tests/browser/render-worker-browser.test.ts',
+    site: "describe.skipIf(typeof OffscreenCanvas === 'undefined')('OffscreenCanvas-dependent flows', () => {",
+    capability: 'offscreen-canvas-absent',
+    why: 'OffscreenCanvas transfer/render browser tests need transferControlToOffscreen; absent it skips (the in-process component suite covers the worker protocol).',
+  },
+  {
+    file: 'tests/unit/astro/wgpu-runtime.test.ts',
+    site: 'it.skipIf(!(globalThis.navigator as Navigator & { gpu?: unknown })?.gpu)(',
+    capability: 'gpu-absent',
+    why: 'the real-device WebGPU uniform-bind check runs only when navigator.gpu is present (jsdom/CI lacks a real adapter).',
+  },
+  {
+    file: 'tests/unit/cli/lib/gauntlet-verdict-cache.test.ts',
+    site: "it.skipIf(!CAN_TEST_EACCES)('a cache file with the read bit cleared (EACCES) reads as a MISS, not a throw', () => {",
+    capability: 'eacces-untestable-as-root',
+    why: 'the EACCES sound-MISS arm needs a non-root process so chmod 0o000 is enforceable.',
+  },
+  {
+    file: 'tests/unit/cli/lib/gauntlet-verdict-cache.test.ts',
+    site: "it.skipIf(!CAN_TEST_EACCES)('a mutation cache file with the read bit cleared (EACCES) reads as a MISS, not a throw', () => {",
+    capability: 'eacces-untestable-as-root',
+    why: 'the mutation-cache EACCES sound-MISS arm needs a non-root process so chmod 0o000 is enforceable.',
   },
 ];
 

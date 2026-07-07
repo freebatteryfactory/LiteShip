@@ -45,6 +45,8 @@ import { noNondeterminismGate } from './gates/no-nondeterminism.js';
 import { noSilentCatchGate } from './gates/no-silent-catch.js';
 import { noSkippedTestGate } from './gates/no-skipped-test.js';
 import { noPlaceholderGate } from './gates/no-placeholder.js';
+import { noEarlyReturnTestGate } from './gates/no-early-return-test.js';
+import type { EarlyReturnMatch } from './gates/early-return-detect.js';
 import { noBareThrowIRGate } from './gates/no-bare-throw-ir.js';
 import { noDefaultExportDivergenceGate } from './gates/no-default-export-divergence.js';
 import { noVarDivergenceGate } from './gates/no-var-divergence.js';
@@ -71,6 +73,7 @@ export const LITESHIP_GATES: readonly Gate[] = [
   noSilentCatchGate,
   noSkippedTestGate,
   noPlaceholderGate,
+  noEarlyReturnTestGate,
 ];
 
 /**
@@ -99,6 +102,7 @@ export const LITESHIP_IR_GATES: readonly Gate[] = [
   noSilentCatchGate,
   noSkippedTestGate,
   noPlaceholderGate,
+  noEarlyReturnTestGate,
   noDefaultExportDivergenceGate,
   noVarDivergenceGate,
   noRequireDivergenceGate,
@@ -136,6 +140,12 @@ export interface RunGauntletOnRepoOptions {
    * path: `czap check` / MCP) and the token `detectSkips` fallback runs unchanged.
    */
   readonly skipDetector?: (source: string) => readonly SkipMatch[];
+  /**
+   * The INJECTED SOUND early-return detector (`detectEarlyReturnBeforeExpectAST`) — OPTIONAL.
+   * Lands on {@link GateContext} for `noEarlyReturnTestGate` via
+   * `(context.earlyReturnDetector ?? detectEarlyReturnBeforeExpect)`.
+   */
+  readonly earlyReturnDetector?: (source: string) => readonly EarlyReturnMatch[];
   /**
    * The INJECTED SOUND `codeOnly` floor (the @czap/audit scanner `codeOnlyAST`) — OPTIONAL, same
    * pattern as {@link skipDetector}. Lands on the {@link GateContext} for code-scanning gates to use
@@ -297,6 +307,7 @@ export function runGauntletOnRepo(
     opts.taint !== undefined ||
     opts.capabilityLink !== undefined ||
     opts.skipDetector !== undefined ||
+    opts.earlyReturnDetector !== undefined ||
     opts.codeOnly !== undefined
       ? {
           ...baseContext,
@@ -307,6 +318,7 @@ export function runGauntletOnRepo(
           // The SOUND AST skip detector (injected by the CLI host); spread additively so the
           // brittle positional nodeContext signature is not widened. Omitted ⇒ token fallback.
           ...(opts.skipDetector !== undefined ? { skipDetector: opts.skipDetector } : {}),
+          ...(opts.earlyReturnDetector !== undefined ? { earlyReturnDetector: opts.earlyReturnDetector } : {}),
           // The SOUND scanner codeOnly floor (injected by the host); omitted ⇒ char-machine fallback.
           ...(opts.codeOnly !== undefined ? { codeOnly: opts.codeOnly } : {}),
         }
@@ -480,6 +492,7 @@ export function litelaunchGauntletWithIR(
       // line-agnostic multi-line/ASI/inner-describe coverage + the structural F2 conditionality.
       // Omitted ⇒ the token `detectSkips` fallback runs unchanged (the lean path).
       ...(cacheOpts.skipDetector !== undefined ? { skipDetector: cacheOpts.skipDetector } : {}),
+      ...(cacheOpts.earlyReturnDetector !== undefined ? { earlyReturnDetector: cacheOpts.earlyReturnDetector } : {}),
       // The SOUND scanner codeOnly floor (host-injected `codeOnlyAST`); omitted ⇒ char-machine fallback.
       ...(cacheOpts.codeOnly !== undefined ? { codeOnly: cacheOpts.codeOnly } : {}),
     },
@@ -621,6 +634,11 @@ export interface LitelaunchCacheOptions {
    * lean `czap check` / MCP path, where the token `detectSkips` fallback runs unchanged.
    */
   readonly skipDetector?: (source: string) => readonly SkipMatch[];
+  /**
+   * OPTIONAL host-built SOUND AST early-return detector (`detectEarlyReturnBeforeExpectAST`)
+   * threaded onto {@link GateContext} as `earlyReturnDetector`.
+   */
+  readonly earlyReturnDetector?: (source: string) => readonly EarlyReturnMatch[];
   /**
    * OPTIONAL host-built SOUND scanner codeOnly floor (`@czap/audit`'s `codeOnlyAST`) threaded onto the
    * {@link GateContext} as `codeOnly`. Code-scanning gates use it via `(context.codeOnly ?? codeOnly)`.

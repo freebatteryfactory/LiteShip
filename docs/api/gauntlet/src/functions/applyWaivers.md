@@ -8,7 +8,7 @@
 
 > **applyWaivers**(`findings`, `waivers`, `now`): [`WaiverApplication`](../interfaces/WaiverApplication.md)
 
-Defined in: [gauntlet/src/waiver.ts:122](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/waiver.ts#L122)
+Defined in: [gauntlet/src/waiver.ts:124](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/waiver.ts#L124)
 
 Partition `findings` against `waivers` as of `now`. Pure + deterministic:
 

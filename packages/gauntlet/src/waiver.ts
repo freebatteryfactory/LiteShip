@@ -70,6 +70,8 @@ export const ALWAYS_BLOCKING_RULES: readonly string[] = [
   'gauntlet/no-placeholder',
   // Emitted by noSkippedTestGate — skipped tests (the dot-skip / dot-todo / x-prefixed forms).
   'gauntlet/no-skipped-test',
+  // Emitted by noEarlyReturnTestGate — silent `return;` before `expect` in test callbacks.
+  'gauntlet/no-early-return-test',
 ];
 
 /** The partition {@link applyWaivers} returns. */

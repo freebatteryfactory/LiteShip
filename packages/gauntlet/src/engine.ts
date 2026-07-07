@@ -161,6 +161,7 @@ export function scopeContextByLevel(
     // no-skipped-test gate (an L2 gate, so scoped under propagation) would lose the AST detector
     // after scoping and silently fall back to the token scanner — re-opening the whack-a-mole.
     ...(context.skipDetector !== undefined ? { skipDetector: context.skipDetector } : {}),
+    ...(context.earlyReturnDetector !== undefined ? { earlyReturnDetector: context.earlyReturnDetector } : {}),
     // SAME pass-through for the injected sound `codeOnly` scanner: without it a scoped (assurance-map)
     // run drops `codeOnly`, so no-bare-throw / no-nondeterminism / no-silent-catch silently fall back
     // to the char-machine — making the injection inert on the production `litelaunchGauntlet*` path
