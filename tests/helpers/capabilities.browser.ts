@@ -16,3 +16,14 @@
 
 /** `shared-array-buffer-absent` — `SharedArrayBuffer` is not available (no COOP/COEP cross-origin isolation). */
 export const sharedArrayBufferAbsent = typeof SharedArrayBuffer === 'undefined';
+
+/** `offscreen-canvas-absent` — `OffscreenCanvas` is unavailable in the browser harness. */
+export const offscreenCanvasAbsent = typeof OffscreenCanvas === 'undefined';
+
+/** `webcodecs-absent` — WebCodecs `VideoEncoder` / `VideoFrame` are unavailable in the browser harness. */
+export const webCodecsAvailable =
+  typeof globalThis.VideoEncoder !== 'undefined' && typeof globalThis.VideoFrame !== 'undefined';
+export const webcodecsAbsent = !webCodecsAvailable;
+
+/** `gpu-absent` — a real WebGPU adapter is unavailable (`navigator.gpu` absent). */
+export const gpuAbsent = !(globalThis.navigator as Navigator & { gpu?: unknown })?.gpu;

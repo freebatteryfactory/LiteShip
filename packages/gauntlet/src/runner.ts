@@ -59,12 +59,12 @@ import { claimPropertyGate } from './gates/claim-property.js';
 import { activeModeledSurfaceReaderGate } from './gates/active-modeled-surface-reader.js';
 
 /**
- * LiteShip's built-in gate set — the gates the repo runs against itself. The two
- * always-blocking gates ({@link noSkippedTestGate} / {@link noPlaceholderGate})
- * are listed alongside the four hygiene gates: their rule ids are exactly the ones
- * {@link ALWAYS_BLOCKING_RULES} reserves, so the forbidden floor now guards rules a
- * REAL gate emits (no inert surface). A downstream project composes its own gates
- * onto this set.
+ * LiteShip's built-in gate set — the gates the repo runs against itself. The three
+ * always-blocking gates ({@link noSkippedTestGate} / {@link noPlaceholderGate} /
+ * {@link noEarlyReturnTestGate}) are listed alongside the four hygiene gates: their
+ * rule ids are exactly the ones {@link ALWAYS_BLOCKING_RULES} reserves, so the
+ * forbidden floor now guards rules a REAL gate emits (no inert surface). A downstream
+ * project composes its own gates onto this set.
  */
 export const LITESHIP_GATES: readonly Gate[] = [
   noBareThrowGate,
@@ -93,7 +93,7 @@ export const LITESHIP_GATES: readonly Gate[] = [
  * These IR-fold gates {@link requireIR}, so they CANNOT run on the lean
  * MCP/command path (no IR) — they appear ONLY here, the IR-present composition. The
  * lean {@link LITESHIP_GATES} default is unchanged: `czap check` / MCP still runs
- * the six regex gates IR-free.
+ * the seven regex gates IR-free.
  */
 export const LITESHIP_IR_GATES: readonly Gate[] = [
   noBareThrowIRGate,

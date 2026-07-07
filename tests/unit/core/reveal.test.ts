@@ -91,6 +91,7 @@ describe('Reveal graph → CSS equivalence', () => {
     const compiled = compileReveal(lowered.graph, lowered.transitionId, intent);
 
     expect(compiled.css.raw).toContain('@property --czap-hero-y');
+    expect(compiled.css.raw).toContain('transform: translate3d(var(--czap-hero-x,0px),var(--czap-hero-y,0px),var(--czap-hero-z,0px))');
     expect(compiled.css.keyframes).toContain('@keyframes czap-motion-hero-before-after');
     expect(compiled.css.startingStyle).toContain('@starting-style');
     expect(compiled.css.startingStyle).toContain('[data-czap-boundary="hero"]');

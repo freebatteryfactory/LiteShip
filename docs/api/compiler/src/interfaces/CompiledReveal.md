@@ -6,7 +6,7 @@
 
 # Interface: CompiledReveal
 
-Defined in: [compiler/src/reveal-compile.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/reveal-compile.ts#L27)
+Defined in: [compiler/src/reveal-compile.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/reveal-compile.ts#L28)
 
 Compiled reveal artifacts — CSS projection + runtime floor.
 
@@ -16,7 +16,7 @@ Compiled reveal artifacts — CSS projection + runtime floor.
 
 > `readonly` **css**: [`MotionCompileResult`](MotionCompileResult.md)
 
-Defined in: [compiler/src/reveal-compile.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/reveal-compile.ts#L28)
+Defined in: [compiler/src/reveal-compile.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/reveal-compile.ts#L29)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [compiler/src/reveal-compile.ts:28](https://github.com/freebatteryfa
 
 > `readonly` **graph**: [`DocumentGraph`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts)
 
-Defined in: [compiler/src/reveal-compile.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/reveal-compile.ts#L30)
+Defined in: [compiler/src/reveal-compile.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/reveal-compile.ts#L31)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [compiler/src/reveal-compile.ts:30](https://github.com/freebatteryfa
 
 > `readonly` **motion**: `LoweredMotionPlan`
 
-Defined in: [compiler/src/reveal-compile.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/reveal-compile.ts#L29)
+Defined in: [compiler/src/reveal-compile.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/reveal-compile.ts#L30)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [compiler/src/reveal-compile.ts:29](https://github.com/freebatteryfa
 
 > `readonly` **projectionId**: `ContentAddress`
 
-Defined in: [compiler/src/reveal-compile.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/reveal-compile.ts#L31)
+Defined in: [compiler/src/reveal-compile.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/reveal-compile.ts#L32)
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: [compiler/src/reveal-compile.ts:31](https://github.com/freebatteryfa
 
 > `readonly` **resultDigest**: `AddressedDigest`
 
-Defined in: [compiler/src/reveal-compile.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/reveal-compile.ts#L33)
+Defined in: [compiler/src/reveal-compile.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/reveal-compile.ts#L34)
 
 ***
 
@@ -56,4 +56,4 @@ Defined in: [compiler/src/reveal-compile.ts:33](https://github.com/freebatteryfa
 
 > `readonly` `optional` **viewTimeline?**: [`MotionViewTimeline`](MotionViewTimeline.md)
 
-Defined in: [compiler/src/reveal-compile.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/reveal-compile.ts#L32)
+Defined in: [compiler/src/reveal-compile.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/reveal-compile.ts#L33)

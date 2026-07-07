@@ -6,12 +6,10 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { webcodecsAbsent } from '../helpers/capabilities.browser.js';
 import { WebCodecsCapture } from '../../packages/web/src/capture/webcodecs.js';
 
-const webCodecsAvailable =
-  typeof globalThis.VideoEncoder !== 'undefined' && typeof globalThis.VideoFrame !== 'undefined';
-
-describe.skipIf(!webCodecsAvailable)('WebCodecsCapture — browser lane', () => {
+describe.skipIf(webcodecsAbsent)('WebCodecsCapture — browser lane', () => {
   it('encodes a single frame to H.264 when VideoEncoder is available', async () => {
     const capture = WebCodecsCapture.make({ codec: 'avc1.42001E', bitrate: 500_000 });
     await capture.init({ width: 64, height: 64, fps: 30 });

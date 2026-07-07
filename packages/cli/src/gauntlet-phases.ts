@@ -1,3 +1,5 @@
+import { ValidationError } from '@czap/error';
+
 /**
  * Canonical gauntlet phase profile (CUT D8) — the ONE source of truth for the
  * release-grade gauntlet sequence. Every projection derives from this list:
@@ -194,7 +196,8 @@ function labelsForSelection(selection: GauntletPhaseSelection): readonly string[
   if (selection.profile !== undefined) {
     const profile = gauntletPhaseProfiles[selection.profile];
     if (profile === undefined) {
-      throw new Error(
+      throw ValidationError(
+        'gauntlet-phases',
         `Unknown gauntlet profile "${selection.profile}". Known: ${Object.keys(gauntletPhaseProfiles).join(', ')}`,
       );
     }
@@ -212,7 +215,7 @@ export function selectGauntletPhases(selection: GauntletPhaseSelection = {}): re
     const known = new Set(gauntletPhaseLabels());
     const unknown = selection.only.filter((label) => !known.has(label));
     if (unknown.length > 0) {
-      throw new Error(`Unknown gauntlet phase label(s): ${unknown.join(', ')}`);
+      throw ValidationError('gauntlet-phases', `Unknown gauntlet phase label(s): ${unknown.join(', ')}`);
     }
   }
   const selected = new Set(selectedLabels);

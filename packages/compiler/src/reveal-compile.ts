@@ -22,6 +22,7 @@ import {
 } from '@czap/core';
 import { MotionCompiler } from './motion.js';
 import type { MotionCompileResult, MotionEasing, MotionViewTimeline } from './motion.js';
+import type { CssMotionPlan } from '@czap/core';
 
 /** Compiled reveal artifacts — CSS projection + runtime floor. */
 export interface CompiledReveal {
@@ -75,6 +76,20 @@ function easingFromIntent(intent: RevealIntent): MotionEasing | undefined {
   return intent.transition.easing;
 }
 
+/** Emit a transform consumer so `@property`-interpolated translate axes actually move the element. */
+function appendTranslateConsumer(css: MotionCompileResult, plan: CssMotionPlan): MotionCompileResult {
+  const target = plan.selector.match(/data-czap-boundary="([^"]+)"/)?.[1];
+  if (target === undefined) return css;
+
+  const hasTranslateAxis = plan.properties.some(
+    (prop) => /^--czap-[^-]+-[xyz]$/.test(prop.property) && prop.property.startsWith(`--czap-${target}-`),
+  );
+  if (!hasTranslateAxis) return css;
+
+  const rule = `${plan.selector} {\n  transform: translate3d(var(--czap-${target}-x,0px),var(--czap-${target}-y,0px),var(--czap-${target}-z,0px));\n}`;
+  return { ...css, raw: `${css.raw}\n\n${rule}` };
+}
+
 /**
  * Compile a lowered reveal graph into native CSS + a runtime write plan.
  *
@@ -93,11 +108,14 @@ export function compileReveal(
   }
 
   const viewTimeline = viewTimelineFromTrigger(intent.trigger);
-  const css = MotionCompiler.compile({
-    plan: motion.css,
-    easing: easingFromIntent(intent),
-    viewTimeline,
-  });
+  const css = appendTranslateConsumer(
+    MotionCompiler.compile({
+      plan: motion.css,
+      easing: easingFromIntent(intent),
+      viewTimeline,
+    }),
+    motion.css,
+  );
 
   const resultDigest = AddressedDigest.of(new TextEncoder().encode(css.raw));
   const { graph: graphWithDigest, projectionId } = sealProjectionDigest(graph, transitionId, resultDigest);

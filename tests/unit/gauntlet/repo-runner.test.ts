@@ -33,6 +33,7 @@ import {
   ALWAYS_BLOCKING_RULES,
   noSkippedTestGate,
   noPlaceholderGate,
+  noEarlyReturnTestGate,
   type Waiver,
 } from '@czap/gauntlet';
 
@@ -131,7 +132,9 @@ describe('litelaunchGauntlet — the committed waivers govern the REAL repo', ()
 describe('the always-blocking rules are emitted by REAL gates (the forbidden floor is not inert)', () => {
   it('ALWAYS_BLOCKING_RULES exactly matches the ids the always-blocking gates emit', () => {
     // Source of truth: the gate ids themselves — never a hardcoded duplicate list.
-    expect([...ALWAYS_BLOCKING_RULES].sort()).toEqual([noPlaceholderGate.id, noSkippedTestGate.id].sort());
+    expect([...ALWAYS_BLOCKING_RULES].sort()).toEqual(
+      [noPlaceholderGate.id, noSkippedTestGate.id, noEarlyReturnTestGate.id].sort(),
+    );
   });
 
   it('both always-blocking gates are part of the wired repo run', () => {
