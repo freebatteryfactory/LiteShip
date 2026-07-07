@@ -41,8 +41,10 @@ export interface ActiveSurfaceReaderOptions {
    */
   readonly transitionRequiredFields: readonly string[];
   /**
-   * When `'advisory'`, unread fields surface but do not block (live orphan until #130).
-   * Fixtures pass `'blocking'` to prove the ratchet's teeth.
+   * The live `--ir` path now injects `'blocking'` (#130 landed the `interpretTransition`
+   * reader, so the TransitionNode surface has readers and the gate is green at blocking).
+   * `'advisory'` surfaces unread fields without blocking; fixtures also pass `'blocking'`
+   * to prove the ratchet's teeth.
    */
   readonly promotion?: ActiveSurfacePromotion;
 }

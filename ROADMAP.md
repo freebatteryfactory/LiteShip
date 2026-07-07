@@ -604,6 +604,30 @@ replayable graph events; continuous transients (`scroll.progress`/`pointer`/`aud
   the `MotionCompiler` arm). **Subsumed:** #104 scroll-warning + batch-2 scroll story →
   #126.
 
+**Completeness ledger — what SHIPPED in the Epic-9 slice vs what's still owed (post-merge
+audit, 3-agent cross-ref against issues + design note + this roadmap).** The slice landed
+clean: #106/#107, #124, #130 (all 5 children), #132 (advisory→blocking once the interpreter
+landed), #133, #134 — a contracted vertical slice, gauntlet-enforced, zero orphans. Three
+issues are **PARTIAL — do NOT close as fully-done** (a piece shipped, the whole is owed):
+- **#126 scroll-timeline:** the native-CSS `@supports (animation-timeline: view())` floor +
+  reveal's `view`/`scroll` trigger shipped (`MotionCompiler`); the *standalone scroll-timeline
+  intent primitive* did not.
+- **#118 SSR receipt:** `StateCell.StateResolutionReceipt` is a runtime **proto** only; the
+  astro SSR-source receipt in `quantize.ts` (name-the-source-that-drove-initial-state) is
+  untouched.
+- **#122 hardening sweep:** only the dead-`czap:request-snapshot` orphan was cured (wired in
+  #133); `waitUntil` / `timeout→AbortSignal` / `Vary` / boundary-css remain.
+Next motion primitive (scoped OUT of slice 1, so not a miss): **multi-step `EdgeType`
+sequencing** — `interpretTransition` currently treats `seq`/`par`/`choice_then` as a 2-step
+start→end; true chained-`TransitionNode` sequencing (the seq/par/choice algebra) is the
+natural follow-on, pairs with #126.
+
+**#136 (sharded low-memory docs build) — PARKED at ~90%, monolith used for this cut.** The
+sharded `scripts/build-api-docs.ts` reached content + source-link fidelity (3 fixes documented
+in #136); the TypeDoc merge breadcrumb-depth issue remains, so `docs/api` is regenerated with
+the monolith build (viable here via the 16GB swapfile). Recorded here so the park is durable
+in-repo, not tracker-only.
+
 ## Completed Since Last Revision (2026-05-17)
 
 **Epics #1 + #2 — hotspot sweep and advisory floor (closed 2026-06-10, PR #11).**
