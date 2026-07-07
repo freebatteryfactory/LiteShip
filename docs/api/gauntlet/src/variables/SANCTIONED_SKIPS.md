@@ -8,7 +8,7 @@
 
 > `const` **SANCTIONED\_SKIPS**: readonly [`SanctionedSkip`](../interfaces/SanctionedSkip.md)[]
 
-Defined in: [gauntlet/src/gates/skip-allowlist.ts:278](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/skip-allowlist.ts#L278)
+Defined in: [gauntlet/src/gates/skip-allowlist.ts:284](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/skip-allowlist.ts#L284)
 
 THE ENUMERATED ALLOWLIST — every sanctioned capability-gated skip in `tests/`
 (outside `tests/generated/`, which the separate plumb-gate owns), at SITE granularity.

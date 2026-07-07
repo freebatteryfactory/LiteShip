@@ -16,6 +16,7 @@ import type { ContentAddress } from '@czap/core';
 import { Boundary, Diagnostics } from '@czap/core';
 import { createBoundaryCache, enumerateTierKeys, resolveOutputsByTier, tierKey } from '@czap/edge';
 import type { KVNamespace } from '@czap/edge';
+import { symlinkUnprivileged } from '../../helpers/capabilities.js';
 import {
   collectBoundaryManifest,
   collectBoundaryManifestFromScan,
@@ -421,19 +422,14 @@ export const drawer = {
     expect(Object.keys(manifest['viewport']!.outputsByTier)).toHaveLength(enumerateTierKeys().length);
   });
 
-  test('scan terminates on circular directory symlinks and still derives the right entries', async () => {
+  test.skipIf(symlinkUnprivileged)('scan terminates on circular directory symlinks and still derives the right entries', async () => {
     const root = makeTempDir();
     const srcDir = join(root, 'src');
     writeModule(srcDir, 'boundaries.ts', BOUNDARY_MODULE);
     writeModule(srcDir, 'styles.css', QUANTIZE_CSS);
-    try {
-      // Circular link: src/loop -> root, so a walk without a visited set
-      // would recurse root -> src -> loop -> src -> ... forever.
-      symlinkSync(root, join(srcDir, 'loop'), 'dir');
-    } catch {
-      // Windows without symlink privilege -- the plain walks above cover the scan.
-      return;
-    }
+    // Circular link: src/loop -> root, so a walk without a visited set
+    // would recurse root -> src -> loop -> src -> ... forever.
+    symlinkSync(root, join(srcDir, 'loop'), 'dir');
 
     const manifest = await collectBoundaryManifest(root);
 
@@ -442,17 +438,12 @@ export const drawer = {
     expect(Object.keys(manifest['viewport']!.outputsByTier)).toHaveLength(enumerateTierKeys().length);
   });
 
-  test('follows symlinked directories to boundary definitions outside the project tree', async () => {
+  test.skipIf(symlinkUnprivileged)('follows symlinked directories to boundary definitions outside the project tree', async () => {
     const root = makeTempDir();
     const external = makeTempDir();
     writeModule(external, 'boundaries.ts', BOUNDARY_MODULE);
     writeModule(join(root, 'src'), 'styles.css', QUANTIZE_CSS);
-    try {
-      symlinkSync(external, join(root, 'src', 'defs'), 'dir');
-    } catch {
-      // Windows without symlink privilege -- the boundaryDir override test covers external defs.
-      return;
-    }
+    symlinkSync(external, join(root, 'src', 'defs'), 'dir');
 
     const manifest = await collectBoundaryManifest(root);
 

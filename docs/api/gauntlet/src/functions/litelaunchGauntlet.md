@@ -6,9 +6,9 @@
 
 # Function: litelaunchGauntlet()
 
-> **litelaunchGauntlet**(`repoRoot`, `now`, `globs?`, `ir?`, `skipDetector?`, `codeOnly?`): [`GauntletResult`](../interfaces/GauntletResult.md)
+> **litelaunchGauntlet**(`repoRoot`, `now`, `globs?`, `ir?`, `skipDetector?`, `earlyReturnDetector?`, `codeOnly?`): [`GauntletResult`](../interfaces/GauntletResult.md)
 
-Defined in: [gauntlet/src/runner.ts:379](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L379)
+Defined in: [gauntlet/src/runner.ts:383](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L383)
 
 The PRODUCTION gauntlet run — the live composition the dogfood path calls.
 
@@ -69,6 +69,15 @@ Optional host-built SOUND AST skip detector (`@czap/audit`'s
                 detection + the structural conditionality proof. Omitted on the
                 no-`@czap/audit` path (MCP) → the token fallback (the documented lean
                 degradation, like `runCheckInvariants`).
+
+### earlyReturnDetector?
+
+(`source`) => readonly [`EarlyReturnMatch`](../interfaces/EarlyReturnMatch.md)[]
+
+Optional host-built SOUND AST early-return detector
+                (`@czap/audit`'s `detectEarlyReturnBeforeExpectAST`). The
+                no-early-return-test gate uses it via
+                `(context.earlyReturnDetector ?? detectEarlyReturnBeforeExpect)`.
 
 ### codeOnly?
 

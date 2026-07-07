@@ -111,39 +111,38 @@ describe('API-surface snapshot gate (drift)', () => {
 
     if (process.env.CZAP_UPDATE_API_SNAPSHOT === '1') {
       writeFileSync(SNAPSHOT_PATH, serialized);
-      return; // regeneration mode: write + pass (the human reviews the diff)
-    }
+    } else {
+      const committed = serializeSnapshot(readCommittedSnapshot());
 
-    const committed = serializeSnapshot(readCommittedSnapshot());
-
-    // Build a per-export drift report so the failure names exactly what changed.
-    const committedSnapshot = readCommittedSnapshot();
-    const drift: SurfaceDiff[] = [];
-    for (const pkg of LITESHIP_API_SURFACE_POLICY.publicPackages) {
-      const prior = committedSnapshot.packages[pkg];
-      const current = live.packages[pkg]!;
-      if (!prior) {
-        drift.push({
-          pkg,
-          changeClass: 'added',
-          name: '<package>',
-          detail: `package ${pkg} is new to the public surface`,
-        });
-        continue;
+      // Build a per-export drift report so the failure names exactly what changed.
+      const committedSnapshot = readCommittedSnapshot();
+      const drift: SurfaceDiff[] = [];
+      for (const pkg of LITESHIP_API_SURFACE_POLICY.publicPackages) {
+        const prior = committedSnapshot.packages[pkg];
+        const current = live.packages[pkg]!;
+        if (!prior) {
+          drift.push({
+            pkg,
+            changeClass: 'added',
+            name: '<package>',
+            detail: `package ${pkg} is new to the public surface`,
+          });
+          continue;
+        }
+        drift.push(...diffPackageSurface(pkg, prior, current));
       }
-      drift.push(...diffPackageSurface(pkg, prior, current));
-    }
 
-    expect(
-      serialized === committed,
-      drift.length === 0
-        ? 'API surface serialization drifted but no per-export diff was found — the snapshot schema or version stamp changed; run CZAP_UPDATE_API_SNAPSHOT=1 to regenerate and review.'
-        : `Public API surface drifted from the committed snapshot:\n` +
-            drift.map((d) => `  • ${d.pkg}: ${d.detail} [${d.changeClass}]`).join('\n') +
-            `\n\nIf this change is intentional, regenerate the snapshot ` +
-            `(CZAP_UPDATE_API_SNAPSHOT=1 npx vitest run tests/unit/meta/api-surface.test.ts) ` +
-            `and review the diff. An accidental public-API change must never pass silently.`,
-    ).toBe(true);
+      expect(
+        serialized === committed,
+        drift.length === 0
+          ? 'API surface serialization drifted but no per-export diff was found — the snapshot schema or version stamp changed; run CZAP_UPDATE_API_SNAPSHOT=1 to regenerate and review.'
+          : `Public API surface drifted from the committed snapshot:\n` +
+              drift.map((d) => `  • ${d.pkg}: ${d.detail} [${d.changeClass}]`).join('\n') +
+              `\n\nIf this change is intentional, regenerate the snapshot ` +
+              `(CZAP_UPDATE_API_SNAPSHOT=1 npx vitest run tests/unit/meta/api-surface.test.ts) ` +
+              `and review the diff. An accidental public-API change must never pass silently.`,
+      ).toBe(true);
+    }
   });
 
   test('the committed snapshot is byte-canonical (re-serializing it is a no-op)', () => {

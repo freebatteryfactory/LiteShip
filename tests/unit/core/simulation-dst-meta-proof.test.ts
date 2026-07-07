@@ -343,6 +343,34 @@ describe('LEVEL 3b — a deliberately BROKEN harness is CAUGHT by the Level-1/2 
   });
 
   /**
+   * Same steps as {@link boundaryEvaluateScenario}, but the trace observation
+   * includes the raw rng draw — not just the {@link rawIndexF32} bucket. LEVEL 3b
+   * needs this: a broken Math.random scheduler can produce different draws that
+   * quantize to the same index; without the raw draw in the trace the meta-test
+   * flaked (~0.1% collision rate).
+   */
+  const boundaryEvaluateWithRawDraw: SimScenario = {
+    id: 'boundary-evaluate-sequence-raw-draw',
+    steps: (world: SimWorld): readonly SimStep[] => {
+      const thresholds = [0, 0.25, 0.5, 0.75];
+      const steps: SimStep[] = [];
+      for (let i = 0; i < 5; i += 1) {
+        steps.push({
+          label: `boundary.eval.${i}`,
+          act: (w: SchedulerWorld): unknown => {
+            const draw = w.rng.next();
+            const index = rawIndexF32(thresholds, draw);
+            world.clock.advance(16);
+            const { monotonicMs, wallMs } = observeClocks(world);
+            return { index, draw, monotonicMs, wallMs };
+          },
+        });
+      }
+      return steps;
+    },
+  };
+
+  /**
    * BROKEN-HARNESS #2: a scheduler that RE-SEEDS the rng mid-run (replaces the
    * world's seeded rng with a fresh Math.random-backed one). A re-seeding scheduler
    * would make the DETERMINISTIC Level-1 scenario WRONGLY appear to diverge — the
@@ -374,8 +402,8 @@ describe('LEVEL 3b — a deliberately BROKEN harness is CAUGHT by the Level-1/2 
     // diverges — Level-1's "deterministic must be true" assertion would FAIL, so a
     // CI running the meta-proof with this broken scheduler goes RED.
     const seed = 9;
-    const a = await runScenario(makeWorld(seed, { scheduler: reseedingScheduler }), boundaryEvaluateScenario);
-    const b = await runScenario(makeWorld(seed, { scheduler: reseedingScheduler }), boundaryEvaluateScenario);
+    const a = await runScenario(makeWorld(seed, { scheduler: reseedingScheduler }), boundaryEvaluateWithRawDraw);
+    const b = await runScenario(makeWorld(seed, { scheduler: reseedingScheduler }), boundaryEvaluateWithRawDraw);
     expect(traceDigest(a)).not.toBe(traceDigest(b)); // broken harness: false divergence.
   });
 });

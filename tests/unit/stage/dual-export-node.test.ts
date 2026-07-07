@@ -123,8 +123,7 @@ describe('headless dualExportNode (F) — the proof + a real MP4, in node', () =
           '(CI: apt install ffmpeg on Ubuntu) to run it. This is an env-gated skip, NOT a pass.',
       );
     });
-    return;
-  }
+  } else {
 
   test('the stage probe agrees the codec is available', () => {
     expect(ffmpegEncodeAvailable()).toBe(true);
@@ -194,4 +193,5 @@ describe('headless dualExportNode (F) — the proof + a real MP4, in node', () =
     // frame-addressed does not mean the encode was skipped.
     expect(headless.encoded.bytes.byteLength).toBeGreaterThan(0);
   });
+  }
 });

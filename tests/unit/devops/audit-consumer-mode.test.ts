@@ -22,6 +22,7 @@ import {
   runSurfaceAudit,
   type DevopsProfile,
 } from '@czap/audit';
+import { symlinkUnprivileged } from '../../helpers/capabilities.js';
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
 
@@ -216,7 +217,7 @@ describe('consumer mode — discovery walks node_modules to a fixpoint', () => {
     expect(sourceResult.findings.filter((f) => f.rule === 'unknown-internal-package').length).toBeGreaterThan(0);
   });
 
-  it('resolves the pnpm virtual-store layout via realpath re-seeding', () => {
+  it.skipIf(symlinkUnprivileged)('resolves the pnpm virtual-store layout via realpath re-seeding', () => {
     const root = makeFixture({
       'package.json': JSON.stringify({ name: 'consumer-site', private: true, type: 'module' }),
       'node_modules/.pnpm/@acme+app@0.0.0/node_modules/@acme/app/package.json': PKG('@acme/app', {
@@ -231,12 +232,7 @@ describe('consumer mode — discovery walks node_modules to a fixpoint', () => {
     });
     const linkPath = join(root, 'node_modules', '@acme', 'app');
     mkdirSync(dirname(linkPath), { recursive: true });
-    try {
-      symlinkSync(join(root, 'node_modules/.pnpm/@acme+app@0.0.0/node_modules/@acme/app'), linkPath, 'dir');
-    } catch {
-      // Windows without symlink privilege — the npm-shaped test above covers the walk.
-      return;
-    }
+    symlinkSync(join(root, 'node_modules/.pnpm/@acme+app@0.0.0/node_modules/@acme/app'), linkPath, 'dir');
 
     const discovery = discoverInstalledPackageRoots(root, ['@acme/app', '@acme/core']);
     expect(Object.keys(discovery.packageRoots).sort()).toEqual(['@acme/app', '@acme/core']);

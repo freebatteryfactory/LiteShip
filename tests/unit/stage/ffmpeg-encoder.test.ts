@@ -124,8 +124,7 @@ describe('headless ffmpeg encoder (B) — real bytes behind the encode seam', ()
           '(CI: apt install ffmpeg on Ubuntu) to run it. This is an env-gated skip, NOT a pass.',
       );
     });
-    return;
-  }
+  } else {
 
   test('the stage probe agrees the codec is available', () => {
     expect(ffmpegEncodeAvailable()).toBe(true);
@@ -166,4 +165,5 @@ describe('headless ffmpeg encoder (B) — real bytes behind the encode seam', ()
     // Same source refs either way — both casts read the same projection.
     expect([...node.sourceRefs].sort()).toEqual([...frameOnly.sourceRefs].sort());
   });
+  }
 });

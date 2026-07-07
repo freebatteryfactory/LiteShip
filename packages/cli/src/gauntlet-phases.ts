@@ -33,7 +33,7 @@ export interface GauntletPhase {
   readonly gracePeriodMs?: number;
 }
 
-/** The canonical 39-phase gauntlet sequence, in execution order. */
+/** The canonical 41-phase gauntlet sequence, in execution order. */
 export const gauntletPhases: readonly GauntletPhase[] = [
   // ── Phase 0: Rig-check (env preflight) ─────────────────────────────
   { label: 'rig-check', command: 'pnpm run doctor -- --preflight --ci' },
@@ -46,6 +46,7 @@ export const gauntletPhases: readonly GauntletPhase[] = [
   { label: 'lint:structural', command: 'pnpm run lint:structural' },
   { label: 'docs:check', command: 'pnpm run docs:check' },
   { label: 'invariants', command: 'pnpm exec tsx packages/cli/src/bin.ts check-invariants' },
+  { label: 'check:gates', command: 'pnpm run check:gates' },
   { label: 'audit:floor', command: 'pnpm run audit:floor' },
 
   // ── Phase 2: Unit tests ────────────────────────────────────────────
@@ -150,6 +151,7 @@ export const CI_PARALLEL_PREFLIGHT_LABELS: readonly string[] = [
   'lint:structural',
   'docs:check',
   'invariants',
+  'check:gates',
   'audit:floor',
 ];
 

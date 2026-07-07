@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 1,
-  "address": "fnv1a:798c6b9f",
+  "address": "fnv1a:00d71d18",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -729,6 +729,24 @@
     },
     {
       "_tag": "skip-allowlist",
+      "file": "tests/unit/devops/audit-consumer-mode.test.ts",
+      "site": "it.skipIf(symlinkUnprivileged)('resolves the pnpm virtual-store layout via realpath re-seeding', () => {",
+      "capability": "symlink-unprivileged"
+    },
+    {
+      "_tag": "skip-allowlist",
+      "file": "tests/unit/meta/generated-bench-execution.test.ts",
+      "site": "describe.skipIf(capsuleManifestAbsent)(",
+      "capability": "capsule-manifest-absent"
+    },
+    {
+      "_tag": "skip-allowlist",
+      "file": "tests/unit/riff-walker.test.ts",
+      "site": "it.skipIf(fixtureAbsent)('decodes the shipped intro-bed.wav fixture cleanly', () => {",
+      "capability": "fixture-absent"
+    },
+    {
+      "_tag": "skip-allowlist",
       "file": "tests/unit/stage/dual-export-node.test.ts",
       "site": "test.skip('headless dual-export end to end (skipped — codec not on PATH)', () => {",
       "capability": "ffmpeg-absent"
@@ -738,6 +756,24 @@
       "file": "tests/unit/stage/ffmpeg-encoder.test.ts",
       "site": "test.skip('ffmpeg+libx264 encode (skipped — codec not on PATH)', () => {",
       "capability": "ffmpeg-absent"
+    },
+    {
+      "_tag": "skip-allowlist",
+      "file": "tests/unit/vite/boundary-manifest.test.ts",
+      "site": "test.skipIf(symlinkUnprivileged)('follows symlinked directories to boundary definitions outside the project tree', async () => {",
+      "capability": "symlink-unprivileged"
+    },
+    {
+      "_tag": "skip-allowlist",
+      "file": "tests/unit/vite/boundary-manifest.test.ts",
+      "site": "test.skipIf(symlinkUnprivileged)('scan terminates on circular directory symlinks and still derives the right entries', async () => {",
+      "capability": "symlink-unprivileged"
+    },
+    {
+      "_tag": "skip-allowlist",
+      "file": "tests/unit/vite/token-manifest.test.ts",
+      "site": "test.skipIf(symlinkUnprivileged)('scan terminates on circular directory symlinks and still derives entries', async () => {",
+      "capability": "symlink-unprivileged"
     },
     {
       "_tag": "waiver",
