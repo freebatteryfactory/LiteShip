@@ -190,7 +190,9 @@ if (import.meta.hot) {
       el.textContent = payload.css;
     }
     if (payload.uniforms !== undefined) {
-      dispatchCzapEvent(document, 'czap:uniform-update', { glsl: payload.uniforms });
+      document.querySelectorAll('[data-czap-boundary="' + payload.boundary + '"]').forEach((boundaryEl) => {
+        dispatchCzapEvent(boundaryEl, 'czap:uniform-update', { glsl: payload.uniforms });
+      });
       document.querySelectorAll('canvas[data-czap-boundary="' + payload.boundary + '"]').forEach((canvas) => {
         const gl = canvas.getContext('webgl2') ?? canvas.getContext('webgl');
         if (!gl) return;

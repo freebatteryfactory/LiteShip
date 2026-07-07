@@ -77,7 +77,11 @@ function applyCSSUpdate(boundary: string, css: string): void {
  * system listens for, passing the uniform map for in-place updates.
  */
 function applyUniformUpdate(boundary: string, uniforms: Record<string, number>): void {
-  dispatchCzapEvent(document, 'czap:uniform-update', { glsl: uniforms });
+  const boundaryRoots = Array.from(document.querySelectorAll<HTMLElement>(`[data-czap-boundary="${boundary}"]`));
+
+  for (const root of boundaryRoots) {
+    dispatchCzapEvent(root, 'czap:uniform-update', { glsl: uniforms });
+  }
 
   // Direct update: find canvas elements with matching boundary data attribute
   const canvases = Array.from(document.querySelectorAll<HTMLCanvasElement>(`canvas[data-czap-boundary="${boundary}"]`));
