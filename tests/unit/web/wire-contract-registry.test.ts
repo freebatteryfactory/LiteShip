@@ -25,6 +25,7 @@ function collectRuntimeCzapEventLiterals(): readonly string[] {
   const roots = [
     resolve(REPO_ROOT, 'packages/web/src'),
     resolve(REPO_ROOT, 'packages/astro/src/runtime'),
+    resolve(REPO_ROOT, 'packages/vite/src'),
   ];
   const found = new Set<string>();
   const pattern = /['"]czap:[a-z0-9-]+['"]/g;
@@ -54,6 +55,7 @@ function collectRawCzapCustomEventDispatches(): readonly string[] {
   const roots = [
     resolve(REPO_ROOT, 'packages/web/src'),
     resolve(REPO_ROOT, 'packages/astro/src/runtime'),
+    resolve(REPO_ROOT, 'packages/vite/src'),
   ];
   const pattern = /new\s+CustomEvent\s*\(\s*['"]czap:[a-z0-9-]+['"]/g;
   const violations: string[] = [];
@@ -113,7 +115,7 @@ describe('wire-contract registry — typed czap:* union + stream attributes', ()
     expect(match![1]).toBe(expected);
   });
 
-  test('runtime czap:* literals in web+astro runtime are registered (no fabricated names)', () => {
+  test('runtime czap:* literals in web+astro+vite runtime are registered (no fabricated names)', () => {
     const literals = collectRuntimeCzapEventLiterals();
     const registered = new Set<string>(CZAP_EVENT_NAMES);
     // Dev/HMR and detect-owned events are out of scope for this registry slice.

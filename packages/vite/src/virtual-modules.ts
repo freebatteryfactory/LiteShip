@@ -174,6 +174,8 @@ export function loadVirtualModule(id: string, data?: VirtualModuleData): string 
  * CSS or shader uniform updates surgically without full reload.
  */
 const HMR_CLIENT_SOURCE = `
+import { dispatchCzapEvent } from '@czap/web';
+
 if (import.meta.hot) {
   import.meta.hot.on('czap:update', (payload) => {
     if (typeof document === 'undefined') return;
@@ -188,10 +190,7 @@ if (import.meta.hot) {
       el.textContent = payload.css;
     }
     if (payload.uniforms !== undefined) {
-      document.dispatchEvent(new CustomEvent('czap:uniform-update', {
-        detail: { boundary: payload.boundary, uniforms: payload.uniforms },
-        bubbles: true,
-      }));
+      dispatchCzapEvent(document, 'czap:uniform-update', { glsl: payload.uniforms });
       document.querySelectorAll('canvas[data-czap-boundary="' + payload.boundary + '"]').forEach((canvas) => {
         const gl = canvas.getContext('webgl2') ?? canvas.getContext('webgl');
         if (!gl) return;

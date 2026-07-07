@@ -49,7 +49,7 @@ describe('@czap/vite HMR handler', () => {
       uniforms: { u_progress: 0.75 },
     });
 
-    expect(payloads).toEqual([{ boundary: 'hero', uniforms: { u_progress: 0.75 } }]);
+    expect(payloads).toEqual([{ glsl: { u_progress: 0.75 } }]);
     expect(uniformCalls).toEqual([['u_progress', 0.75]]);
   });
 
@@ -94,7 +94,7 @@ describe('@czap/vite HMR handler', () => {
       }),
     ).not.toThrow();
 
-    expect(payloads).toEqual([{ boundary: 'hero', uniforms: { u_progress: 0.5 } }]);
+    expect(payloads).toEqual([{ glsl: { u_progress: 0.5 } }]);
   });
 
   test('skips uniform writes when getUniformLocation returns null', () => {

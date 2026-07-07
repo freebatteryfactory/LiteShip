@@ -783,6 +783,9 @@ importers:
       '@czap/error':
         specifier: workspace:*
         version: link:../error
+      '@czap/web':
+        specifier: workspace:*
+        version: link:../web
     devDependencies:
       '@types/node':
         specifier: ^22.0.0
