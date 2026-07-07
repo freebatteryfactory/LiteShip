@@ -22,6 +22,16 @@ describe('Benchmark smoke tests', () => {
     expect(typeof bench.table).toBe('function');
   });
 
+  it('bench.run() produces at least one sample (micro-bench harness proof)', async () => {
+    const micro = new Bench({ time: 100, iterations: 1 });
+    micro.add('noop', () => {});
+    await micro.run();
+    expect(micro.results.length).toBeGreaterThan(0);
+    const firstResult = micro.results[0]!;
+    expect(typeof firstResult.mean).toBe('number');
+    expect(Number.isFinite(firstResult.mean)).toBe(true);
+  });
+
   it('bench files exist on disk', async () => {
     const fs = await import('fs');
     expect(fs.existsSync('./tests/bench/core.bench.ts')).toBe(true);

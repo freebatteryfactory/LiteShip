@@ -71,12 +71,13 @@ describe('browser RenderWorker with real Worker and OffscreenCanvas', () => {
       frames.push(output);
     });
 
-    const done = new Promise<void>((resolve) => {
+    const done = new Promise<void>((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('Timed out waiting for render-complete')), 5000);
       worker.onComplete((total) => {
+        clearTimeout(timer);
         completedFrames = total;
         resolve();
       });
-      setTimeout(resolve, 5000);
     });
 
     worker.startRender({
@@ -248,12 +249,14 @@ describe('browser RenderWorker with real Worker and OffscreenCanvas', () => {
     const offscreen = canvas.transferControlToOffscreen();
     worker.transferCanvas(offscreen);
 
-    const firstFrame = await new Promise<Record<string, unknown>>((resolve) => {
-      worker.onFrame((output) => {
+    const firstFrame = await new Promise<Record<string, unknown>>((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('Timed out waiting for first frame')), 5000);
+      const unsub = worker.onFrame((output) => {
+        clearTimeout(timer);
+        unsub();
         resolve(output as unknown as Record<string, unknown>);
       });
       worker.startRender({ fps: 10, width: 16, height: 16, durationMs: 100 as never });
-      setTimeout(() => resolve({}), 3000);
     });
 
     expect(firstFrame).toHaveProperty('frame');
