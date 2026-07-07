@@ -12,22 +12,13 @@
  */
 import ts from 'typescript';
 import { resolve } from 'node:path';
-import type { TransitionNode } from '@czap/core';
 import type { ActiveSurfaceFacts, ActiveSurfaceEntry, ActiveSurfacePromotion } from '@czap/gauntlet';
 import { createTypeDirectedProgram } from './ts-program.js';
 
 /** The oracle id every active-surface fact is tagged with (traceability). */
 export const ACTIVE_SURFACE_ORACLE_ID = 'ts-active-surface-reader';
 
-/** Load-bearing TransitionNode fields — derived from the real type, not string literals. */
-const TRANSITION_REQUIRED_FIELDS = [
-  'fromPose',
-  'toPose',
-  'routing',
-  'durationMs',
-] as const satisfies readonly (keyof TransitionNode)[];
-
-type TransitionField = (typeof TRANSITION_REQUIRED_FIELDS)[number];
+type TransitionField = string;
 
 /** Reader paths that MUST consume an active TransitionNode when present. */
 const TRANSITION_READER_FILES = [
@@ -44,6 +35,12 @@ export interface ActiveSurfaceReaderOptions {
   /** Absolute repo root; every relative path resolves against it. */
   readonly repoRoot: string;
   /**
+   * Load-bearing field names for the active `transition` surface — injected by the
+   * HOST from the real `@czap/core` type (`keyof TransitionNode`), never derived
+   * inside audit (audit-leaf-purity / D9b).
+   */
+  readonly transitionRequiredFields: readonly string[];
+  /**
    * When `'advisory'`, unread fields surface but do not block (live orphan until #130).
    * Fixtures pass `'blocking'` to prove the ratchet's teeth.
    */
@@ -51,10 +48,9 @@ export interface ActiveSurfaceReaderOptions {
 }
 
 /** Collect property names read on `subject` inside `body` (direct access + destructuring). */
-function fieldReadsInBlock(subject: string, body: ts.Node): Set<TransitionField> {
+function fieldReadsInBlock(subject: string, body: ts.Node, requiredFields: readonly string[]): Set<TransitionField> {
   const reads = new Set<TransitionField>();
-  const isField = (name: string): name is TransitionField =>
-    (TRANSITION_REQUIRED_FIELDS as readonly string[]).includes(name);
+  const isField = (name: string): name is TransitionField => requiredFields.includes(name);
 
   const visit = (node: ts.Node): void => {
     if (ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === subject) {
@@ -75,7 +71,7 @@ function fieldReadsInBlock(subject: string, body: ts.Node): Set<TransitionField>
 }
 
 /** Find `switch (X.family) { case 'transition': ... }` blocks and collect reads on X. */
-function transitionReadsInSourceFile(sf: ts.SourceFile): Set<TransitionField> {
+function transitionReadsInSourceFile(sf: ts.SourceFile, requiredFields: readonly string[]): Set<TransitionField> {
   const reads = new Set<TransitionField>();
 
   const visitSwitch = (stmt: ts.SwitchStatement): void => {
@@ -88,7 +84,7 @@ function transitionReadsInSourceFile(sf: ts.SourceFile): Set<TransitionField> {
       if (!ts.isCaseClause(clause)) continue;
       const label = clause.expression;
       if (!ts.isStringLiteral(label) || label.text !== 'transition') continue;
-      for (const f of fieldReadsInBlock(subject, clause)) reads.add(f);
+      for (const f of fieldReadsInBlock(subject, clause, requiredFields)) reads.add(f);
     }
   };
 
@@ -101,10 +97,9 @@ function transitionReadsInSourceFile(sf: ts.SourceFile): Set<TransitionField> {
 }
 
 /** Scan a dedicated interpreter file for any transition field property access. */
-function transitionReadsInDedicatedFile(sf: ts.SourceFile): Set<TransitionField> {
+function transitionReadsInDedicatedFile(sf: ts.SourceFile, requiredFields: readonly string[]): Set<TransitionField> {
   const reads = new Set<TransitionField>();
-  const isField = (name: string): name is TransitionField =>
-    (TRANSITION_REQUIRED_FIELDS as readonly string[]).includes(name);
+  const isField = (name: string): name is TransitionField => requiredFields.includes(name);
 
   const visit = (node: ts.Node): void => {
     if (ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.name) && isField(node.name.text)) {
@@ -127,20 +122,26 @@ function transitionReadsInDedicatedFile(sf: ts.SourceFile): Set<TransitionField>
 }
 
 /** Scan one reader file; returns fields read in transition contexts. */
-function readsInFile(relPath: string, absPath: string, program: ts.Program): Set<TransitionField> {
+function readsInFile(
+  relPath: string,
+  absPath: string,
+  program: ts.Program,
+  requiredFields: readonly string[],
+): Set<TransitionField> {
   const sf = program.getSourceFile(absPath);
   if (sf === undefined) return new Set();
   if (TRANSITION_DEDICATED_READER_FILES.has(relPath)) {
-    return transitionReadsInDedicatedFile(sf);
+    return transitionReadsInDedicatedFile(sf, requiredFields);
   }
-  return transitionReadsInSourceFile(sf);
+  return transitionReadsInSourceFile(sf, requiredFields);
 }
 
 function makeTransitionEntry(
   readFields: readonly TransitionField[],
+  requiredFields: readonly string[],
   promotion: ActiveSurfacePromotion,
 ): ActiveSurfaceEntry {
-  const required = [...TRANSITION_REQUIRED_FIELDS];
+  const required = [...requiredFields];
   const readSet = new Set(readFields);
   const unread = required.filter((f) => !readSet.has(f));
   return Object.freeze({
@@ -161,15 +162,18 @@ function makeTransitionEntry(
  */
 export function buildActiveSurfaceFacts(opts: ActiveSurfaceReaderOptions): ActiveSurfaceFacts {
   const promotion = opts.promotion ?? 'advisory';
+  const requiredFields = [...opts.transitionRequiredFields];
   const readerAbs = TRANSITION_READER_FILES.map((f) => resolve(opts.repoRoot, f));
   const program = createTypeDirectedProgram(readerAbs, opts.repoRoot);
 
   const allReads = new Set<TransitionField>();
   for (let i = 0; i < readerAbs.length; i++) {
-    for (const f of readsInFile(TRANSITION_READER_FILES[i]!, readerAbs[i]!, program)) allReads.add(f);
+    for (const f of readsInFile(TRANSITION_READER_FILES[i]!, readerAbs[i]!, program, requiredFields)) {
+      allReads.add(f);
+    }
   }
 
   return Object.freeze({
-    surfaces: Object.freeze([makeTransitionEntry([...allReads].sort(), promotion)]),
+    surfaces: Object.freeze([makeTransitionEntry([...allReads].sort(), requiredFields, promotion)]),
   });
 }

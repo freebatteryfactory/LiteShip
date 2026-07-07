@@ -99,9 +99,11 @@ export function isReplayHtmlPatch(patch: unknown): boolean {
   return false;
 }
 
-/** True when the replay array carries non-HTML entries (missed signal frames). */
+/** True when the replay array carries signal frames that need snapshot supplement. */
 export const replayDroppedSignals = (patches: readonly unknown[]): boolean =>
-  patches.some((patch) => !isReplayHtmlPatch(patch));
+  patches.some(
+    (patch) => patch !== null && typeof patch === 'object' && (patch as Record<string, unknown>).type === 'signal',
+  );
 
 /** Extract discrete keys from a snapshot signal record — continuous keys are stripped. */
 function discreteKeysFromRecord(record: Record<string, unknown>): Record<string, unknown> {
