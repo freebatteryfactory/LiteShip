@@ -157,6 +157,21 @@ describe('runCapsuleGateScan — in-process branches (no spawn)', () => {
     expect(summary.status).toBe('stale');
     expect(summary.errors).toContain('dishonest: bench marker drift');
   });
+
+  it('runs vitest on classified-real generated bench files after the test suite', async () => {
+    const cap = freshCapsule('bench-exec');
+    writeManifest({ generatorVersion: 'gen-v1', capsules: [cap] });
+    classifyBenchSourceMock.mockReturnValue('real');
+    const vitestCalls: string[] = [];
+    execSyncMock.mockImplementation((cmd: string) => {
+      if (cmd.includes('vitest')) vitestCalls.push(cmd);
+      return '';
+    });
+    const summary = await runCapsuleGateScan(root);
+    expect(summary.status).toBe('ok');
+    expect(vitestCalls.length).toBe(2);
+    expect(vitestCalls[1]).toContain('.bench.ts');
+  });
 });
 
 /**
