@@ -1,61 +1,46 @@
-import { afterEach, beforeEach, describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vitest';
 import { RenderWorker } from '../../packages/worker/src/render-worker.js';
 
-describe('browser RenderWorker with real Worker and OffscreenCanvas', () => {
-  afterEach(() => {
-    // Clean up any lingering workers
+function waitForWorkerReady(worker: RenderWorker, timeoutMs = 5000): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('Timed out waiting for worker ready')), timeoutMs);
+    const handler = (e: MessageEvent) => {
+      if (e.data?.type === 'ready') {
+        clearTimeout(timer);
+        worker.worker.removeEventListener('message', handler);
+        resolve();
+      }
+    };
+    worker.worker.addEventListener('message', handler);
   });
+}
+
+describe('browser RenderWorker with real Worker and OffscreenCanvas', () => {
 
   test('create spawns a real Worker that emits ready on init', async () => {
     const worker = RenderWorker.create();
-
-    const ready = await new Promise<boolean>((resolve) => {
-      const handler = (e: MessageEvent) => {
-        if (e.data?.type === 'ready') {
-          resolve(true);
-        }
-      };
-      worker.worker.addEventListener('message', handler);
-      // Init is sent in constructor; just wait
-      setTimeout(() => resolve(false), 2000);
-    });
-
-    expect(ready).toBe(true);
+    await waitForWorkerReady(worker);
     worker.dispose();
   });
 
   test('dispose terminates the worker without errors', async () => {
     const worker = RenderWorker.create();
-
-    // Wait for ready
-    await new Promise<void>((resolve) => {
-      const handler = (e: MessageEvent) => {
-        if (e.data?.type === 'ready') resolve();
-      };
-      worker.worker.addEventListener('message', handler);
-      setTimeout(resolve, 1000);
-    });
-
-    // Should not throw
-    worker.dispose();
-    expect(true).toBe(true);
+    await waitForWorkerReady(worker);
+    expect(() => worker.dispose()).not.toThrow();
+    expect(() => worker.dispose()).not.toThrow();
   });
 
-  test('transferCanvas sends OffscreenCanvas to the worker', async () => {
-    if (typeof OffscreenCanvas === 'undefined') {
-      // Skip if OffscreenCanvas is not supported
-      return;
-    }
+  test('worker.worker exposes the real Worker instance', () => {
+    const rw = RenderWorker.create();
+    expect(rw.worker).toBeInstanceOf(Worker);
+    rw.dispose();
+  });
 
+  describe.skipIf(typeof OffscreenCanvas === 'undefined')('OffscreenCanvas-dependent flows', () => {
+  test('transferCanvas sends OffscreenCanvas to the worker', async () => {
     const worker = RenderWorker.create();
 
-    await new Promise<void>((resolve) => {
-      const handler = (e: MessageEvent) => {
-        if (e.data?.type === 'ready') resolve();
-      };
-      worker.worker.addEventListener('message', handler);
-      setTimeout(resolve, 1000);
-    });
+    await waitForWorkerReady(worker);
 
     const canvas = document.createElement('canvas');
     canvas.width = 64;
@@ -63,25 +48,15 @@ describe('browser RenderWorker with real Worker and OffscreenCanvas', () => {
     const offscreen = canvas.transferControlToOffscreen();
 
     // Should not throw -- canvas is transferred to worker
-    worker.transferCanvas(offscreen);
+    expect(() => worker.transferCanvas(offscreen)).not.toThrow();
 
     worker.dispose();
   });
 
   test('startRender produces frame events and render-complete', async () => {
-    if (typeof OffscreenCanvas === 'undefined') {
-      return;
-    }
-
     const worker = RenderWorker.create();
 
-    await new Promise<void>((resolve) => {
-      const handler = (e: MessageEvent) => {
-        if (e.data?.type === 'ready') resolve();
-      };
-      worker.worker.addEventListener('message', handler);
-      setTimeout(resolve, 1000);
-    });
+    await waitForWorkerReady(worker);
 
     const canvas = document.createElement('canvas');
     canvas.width = 32;
@@ -127,19 +102,9 @@ describe('browser RenderWorker with real Worker and OffscreenCanvas', () => {
   // in the yield at frame 9, so we get ~10 frames out of a 300-frame
   // request regardless of how fast the realm is.
   test('stopRender halts an in-progress render early', async () => {
-    if (typeof OffscreenCanvas === 'undefined') {
-      return;
-    }
-
     const worker = RenderWorker.create();
 
-    await new Promise<void>((resolve) => {
-      const handler = (e: MessageEvent) => {
-        if (e.data?.type === 'ready') resolve();
-      };
-      worker.worker.addEventListener('message', handler);
-      setTimeout(resolve, 1000);
-    });
+    await waitForWorkerReady(worker);
 
     const canvas = document.createElement('canvas');
     canvas.width = 16;
@@ -200,19 +165,9 @@ describe('browser RenderWorker with real Worker and OffscreenCanvas', () => {
   // proving pacing engaged. Exact budget math lives in the component suite
   // under fake timers (tests/component/render-worker.test.ts).
   test('targetFps paces wall-clock frame emission', async () => {
-    if (typeof OffscreenCanvas === 'undefined') {
-      return;
-    }
-
     const worker = RenderWorker.create({ targetFps: 40 });
 
-    await new Promise<void>((resolve) => {
-      const handler = (e: MessageEvent) => {
-        if (e.data?.type === 'ready') resolve();
-      };
-      worker.worker.addEventListener('message', handler);
-      setTimeout(resolve, 1000);
-    });
+    await waitForWorkerReady(worker);
 
     const canvas = document.createElement('canvas');
     canvas.width = 16;
@@ -253,13 +208,7 @@ describe('browser RenderWorker with real Worker and OffscreenCanvas', () => {
   test('onFrame returns an unsubscribe function that stops callbacks', async () => {
     const worker = RenderWorker.create();
 
-    await new Promise<void>((resolve) => {
-      const handler = (e: MessageEvent) => {
-        if (e.data?.type === 'ready') resolve();
-      };
-      worker.worker.addEventListener('message', handler);
-      setTimeout(resolve, 1000);
-    });
+    await waitForWorkerReady(worker);
 
     let callCount = 0;
     const unsub = worker.onFrame(() => {
@@ -276,13 +225,7 @@ describe('browser RenderWorker with real Worker and OffscreenCanvas', () => {
   test('onComplete returns an unsubscribe function', async () => {
     const worker = RenderWorker.create();
 
-    await new Promise<void>((resolve) => {
-      const handler = (e: MessageEvent) => {
-        if (e.data?.type === 'ready') resolve();
-      };
-      worker.worker.addEventListener('message', handler);
-      setTimeout(resolve, 1000);
-    });
+    await waitForWorkerReady(worker);
 
     let called = false;
     const unsub = worker.onComplete(() => {
@@ -294,26 +237,10 @@ describe('browser RenderWorker with real Worker and OffscreenCanvas', () => {
     worker.dispose();
   });
 
-  test('worker.worker exposes the real Worker instance', () => {
-    const rw = RenderWorker.create();
-    expect(rw.worker).toBeInstanceOf(Worker);
-    rw.dispose();
-  });
-
   test('frame output includes frame number, timestamp, and state', async () => {
-    if (typeof OffscreenCanvas === 'undefined') {
-      return;
-    }
-
     const worker = RenderWorker.create();
 
-    await new Promise<void>((resolve) => {
-      const handler = (e: MessageEvent) => {
-        if (e.data?.type === 'ready') resolve();
-      };
-      worker.worker.addEventListener('message', handler);
-      setTimeout(resolve, 1000);
-    });
+    await waitForWorkerReady(worker);
 
     const canvas = document.createElement('canvas');
     canvas.width = 16;
@@ -334,5 +261,6 @@ describe('browser RenderWorker with real Worker and OffscreenCanvas', () => {
     expect(firstFrame).toHaveProperty('state');
 
     worker.dispose();
+  });
   });
 });

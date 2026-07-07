@@ -204,9 +204,9 @@ describe('browser physical state capture and restore', () => {
   });
 
   test('restoreIME is a no-op when passed null', async () => {
+    const priorActive = document.activeElement;
     await Effect.runPromise(restoreIME(null));
-    // Should not throw
-    expect(true).toBe(true);
+    expect(document.activeElement).toBe(priorActive);
   });
 
   test('elementToPath uses data-czap-id when present', () => {

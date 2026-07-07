@@ -8,7 +8,7 @@
 
 > **sanctionedSkipFor**(`file`, `siteLine`, `conditional?`): [`SanctionedSkip`](../interfaces/SanctionedSkip.md) \| `undefined`
 
-Defined in: [gauntlet/src/gates/skip-allowlist.ts:413](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/skip-allowlist.ts#L413)
+Defined in: [gauntlet/src/gates/skip-allowlist.ts:443](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/skip-allowlist.ts#L443)
 
 Is the skip at `siteLine` in `file` SANCTIONED? A skip is allowed ONLY if its file is
 enumerated in [SANCTIONED\_SKIPS](../variables/SANCTIONED_SKIPS.md) AND its own normalized source line MATCHES a

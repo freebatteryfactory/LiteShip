@@ -109,3 +109,118 @@ export const gauntletPhases: readonly GauntletPhase[] = [
 export function gauntletPhaseLabels(): readonly string[] {
   return gauntletPhases.map((phase) => phase.label);
 }
+
+// ── Tier 6 CI parallel profiles ─────────────────────────────────────────────
+// Bench is NEVER sharded; source-mutating phases are quarantined from vitest shards.
+
+export const CI_PARALLEL_SETUP_LABELS: readonly string[] = ['build', 'capsule:compile'];
+
+export const CI_PARALLEL_SHARDED_TEST_LABEL = 'test (unit + component + property + integration)' as const;
+
+export const CI_PARALLEL_BENCH_LABELS: readonly string[] = ['bench', 'bench:gate', 'bench:trend', 'bench:reality'];
+
+export const CI_PARALLEL_MUTATING_LABELS: readonly string[] = ['capsule:verify'];
+
+export const CI_PARALLEL_COVERAGE_LABELS: readonly string[] = [
+  'coverage:browser',
+  'merge-subprocess-v8',
+  'coverage:merge',
+];
+
+export const CI_PARALLEL_FINAL_LABELS: readonly string[] = [
+  'report:runtime-seams',
+  'audit',
+  'report:satellite-scan',
+  'feedback:verify',
+  'runtime:gate',
+  'standards:gate',
+  'capability:gate',
+  'plumb:gate',
+  'flex:verify',
+];
+
+export const CI_PARALLEL_TEST_SHARD_COUNT = 4;
+
+const CI_PARALLEL_EXCLUDED_FROM_MID = new Set<string>([
+  ...CI_PARALLEL_SETUP_LABELS,
+  CI_PARALLEL_SHARDED_TEST_LABEL,
+  ...CI_PARALLEL_BENCH_LABELS,
+  ...CI_PARALLEL_MUTATING_LABELS,
+  'coverage:wipe-subprocess',
+  'coverage:node:tracked',
+  ...CI_PARALLEL_COVERAGE_LABELS,
+  ...CI_PARALLEL_FINAL_LABELS,
+]);
+
+export const gauntletPhaseProfiles: Readonly<Record<string, readonly string[]>> = {
+  'ci-parallel-preflight': [
+    'rig-check',
+    'typecheck',
+    'lint',
+    'lint:structural',
+    'docs:check',
+    'invariants',
+    'audit:floor',
+  ],
+  'ci-parallel-integration': [
+    'test:vite',
+    'test:astro',
+    'test:cloudflare',
+    'test:cloudflare-dev',
+    'test:tailwind',
+    'test:e2e',
+    'test:e2e:stress',
+    'test:e2e:stream-stress',
+    'test:flake',
+    'test:redteam',
+  ],
+  'ci-parallel-bench': CI_PARALLEL_BENCH_LABELS,
+  'ci-parallel-mutating': CI_PARALLEL_MUTATING_LABELS,
+  'ci-parallel-coverage': CI_PARALLEL_COVERAGE_LABELS,
+  'ci-parallel-final': CI_PARALLEL_FINAL_LABELS,
+  'ci-parallel-mid': gauntletPhases
+    .map((phase) => phase.label)
+    .filter((label) => !CI_PARALLEL_EXCLUDED_FROM_MID.has(label)),
+};
+
+export interface GauntletPhaseSelection {
+  readonly only?: readonly string[];
+  readonly skip?: readonly string[];
+  readonly profile?: string;
+  readonly skipBuild?: boolean;
+}
+
+function labelsForSelection(selection: GauntletPhaseSelection): readonly string[] {
+  if (selection.profile !== undefined) {
+    const profile = gauntletPhaseProfiles[selection.profile];
+    if (profile === undefined) {
+      throw new Error(
+        `Unknown gauntlet profile "${selection.profile}". Known: ${Object.keys(gauntletPhaseProfiles).join(', ')}`,
+      );
+    }
+    return profile;
+  }
+  if (selection.only !== undefined && selection.only.length > 0) {
+    return selection.only;
+  }
+  return gauntletPhaseLabels();
+}
+
+export function selectGauntletPhases(selection: GauntletPhaseSelection = {}): readonly GauntletPhase[] {
+  const selectedLabels = labelsForSelection(selection);
+  if (selection.only !== undefined && selection.only.length > 0) {
+    const known = new Set(gauntletPhaseLabels());
+    const unknown = selection.only.filter((label) => !known.has(label));
+    if (unknown.length > 0) {
+      throw new Error(`Unknown gauntlet phase label(s): ${unknown.join(', ')}`);
+    }
+  }
+  const selected = new Set(selectedLabels);
+  const skip = new Set(selection.skip ?? []);
+  if (selection.skipBuild) {
+    for (const label of CI_PARALLEL_SETUP_LABELS) {
+      skip.add(label);
+    }
+  }
+  return gauntletPhases.filter((phase) => selected.has(phase.label) && !skip.has(phase.label));
+}

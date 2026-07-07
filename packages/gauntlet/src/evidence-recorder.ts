@@ -117,7 +117,7 @@ type OptionalFactKeys = Exclude<
   // the CAPABILITY functions `skipDetector` / `codeOnly` (the AST-vs-token and scanner-vs-char-machine
   // choices are part of the toolchain digest the host folds, not per-run fact channels) are NOT fact
   // channels.
-  'ir' | 'allFiles' | 'skipDetector' | 'codeOnly'
+  'ir' | 'allFiles' | 'skipDetector' | 'earlyReturnDetector' | 'codeOnly'
 >;
 type _factChannelsCoverContext = FactChannel extends OptionalFactKeys ? true : never;
 type _contextFactsAreChannels = OptionalFactKeys extends FactChannel ? true : never;

@@ -31,6 +31,7 @@ import {
   liteshipDevopsProfile,
   normalizeRepoPath,
   detectSkipsAST,
+  detectEarlyReturnBeforeExpectAST,
   codeOnlyAST,
   type FactOracle,
 } from '@czap/audit';
@@ -476,6 +477,7 @@ export async function runGauntletWithRepoIR(
     // detection + the structural F2 conditionality the token scanner cannot produce — the cure that
     // ends the token-scanner whack-a-mole. The lean `czap check`/MCP path keeps the token fallback.
     skipDetector: detectSkipsAST,
+    earlyReturnDetector: detectEarlyReturnBeforeExpectAST,
     // The SOUND scanner `codeOnly` floor — same always-on `--ir` injection. Code-scanning gates
     // (no-bare-throw, no-nondeterminism, no-silent-catch) use it via `(context.codeOnly ?? codeOnly)`,
     // a real parser tokenization (regex-vs-division, nested templates) over the char-machine fallback

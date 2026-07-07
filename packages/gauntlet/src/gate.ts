@@ -16,6 +16,7 @@
 
 import { ValidationError, HostCapabilityError } from '@czap/error';
 import type { AssuranceLevel } from './assurance.js';
+import type { EarlyReturnMatch } from './gates/early-return-detect.js';
 import type { Finding } from './finding.js';
 import type { FileId, RepoIR } from './repo-ir.js';
 import type { SupplyChainFacts } from './supply-chain-facts.js';
@@ -79,6 +80,13 @@ export interface GateContext {
    * {@link SkipMatch}.
    */
   readonly skipDetector?: (source: string) => readonly SkipMatch[];
+  /**
+   * The SOUND early-return detector — an INJECTED capability. `@czap/gauntlet` carries NO
+   * `typescript` dep; the token `detectEarlyReturnBeforeExpect` is its fallback. The host injects
+   * `detectEarlyReturnBeforeExpectAST` from `@czap/audit`. The no-early-return-test gate calls
+   * `(context.earlyReturnDetector ?? detectEarlyReturnBeforeExpect)(text)`.
+   */
+  readonly earlyReturnDetector?: (source: string) => readonly EarlyReturnMatch[];
   /**
    * The sound, parser-backed `codeOnly` floor — an INJECTED capability, the same shape as
    * {@link skipDetector}. The lean char-state-machine `codeOnly` (gates/code-only.ts) is the

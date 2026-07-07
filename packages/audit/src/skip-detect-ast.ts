@@ -1288,3 +1288,125 @@ function peelForCapture(expr: ts.Expression, roots: ReadonlySet<string>): Peeled
     tokenUpTo: (access: ChainAccess): string => buildTokenUpTo(peeled.rootName, peeled.accesses, access),
   };
 }
+
+// ---------------------------------------------------------------------------
+// Early-return-before-expect detector — silent test passes (Tier 0).
+// ---------------------------------------------------------------------------
+
+/** One early `return;` in a test callback before the first `expect(...)`. */
+export interface EarlyReturnMatch {
+  readonly line: number;
+  readonly token: string;
+}
+
+export function detectEarlyReturnBeforeExpectAST(source: string): readonly EarlyReturnMatch[] {
+  const sourceFile = ts.createSourceFile(
+    'early-return-scan.tsx',
+    source,
+    ts.ScriptTarget.Latest,
+    /* setParentNodes */ true,
+    ts.ScriptKind.TSX,
+  );
+  const matches: EarlyReturnMatch[] = [];
+  collectEarlyReturns(sourceFile, sourceFile, matches);
+  return dedupeEarlyReturns(matches);
+}
+
+function dedupeEarlyReturns(matches: readonly EarlyReturnMatch[]): readonly EarlyReturnMatch[] {
+  const lines = new Set<number>();
+  const out: EarlyReturnMatch[] = [];
+  for (const m of matches) {
+    if (lines.has(m.line)) continue;
+    lines.add(m.line);
+    out.push(m);
+  }
+  return out.sort((a, b) => a.line - b.line);
+}
+
+function collectEarlyReturns(node: ts.Node, sourceFile: ts.SourceFile, out: EarlyReturnMatch[]): void {
+  recognizeTestEarlyReturns(node, sourceFile, out);
+  ts.forEachChild(node, (child) => collectEarlyReturns(child, sourceFile, out));
+}
+
+function recognizeTestEarlyReturns(node: ts.Node, sourceFile: ts.SourceFile, out: EarlyReturnMatch[]): void {
+  if (!ts.isCallExpression(node)) return;
+  const callback = testCallbackFromCall(node);
+  if (callback?.body === undefined) return;
+  scanCallbackForEarlyReturn(callback.body, sourceFile, out);
+}
+
+/** Peel `it.skipIf(c)('title', fn)` / `test('title', fn)` down to the callback function. */
+function testCallbackFromCall(call: ts.CallExpression): ts.ArrowFunction | ts.FunctionExpression | undefined {
+  const args = call.arguments;
+  for (let i = args.length - 1; i >= 0; i--) {
+    const arg = args[i];
+    if (arg === undefined) continue;
+    if (ts.isArrowFunction(arg) || ts.isFunctionExpression(arg)) return arg;
+  }
+  const callee = call.expression;
+  if (ts.isCallExpression(callee)) return testCallbackFromCall(callee);
+  return undefined;
+}
+
+function scanCallbackForEarlyReturn(
+  body: ts.Block | ts.Expression,
+  sourceFile: ts.SourceFile,
+  out: EarlyReturnMatch[],
+): void {
+  const block = ts.isBlock(body) ? body : undefined;
+  if (block === undefined) return;
+  const firstExpectPos = firstExpectPosition(block);
+  for (const stmt of block.statements) {
+    collectBareReturns(stmt, block, firstExpectPos, sourceFile, out);
+  }
+}
+
+function firstExpectPosition(block: ts.Block): number {
+  let min = Number.POSITIVE_INFINITY;
+  const visit = (node: ts.Node, inNestedFn: boolean): void => {
+    if (!inNestedFn && ts.isCallExpression(node) && isExpectCall(node)) {
+      min = Math.min(min, node.getStart());
+    }
+    const nested =
+      inNestedFn ||
+      ts.isFunctionDeclaration(node) ||
+      ts.isFunctionExpression(node) ||
+      ts.isArrowFunction(node) ||
+      ts.isMethodDeclaration(node);
+    ts.forEachChild(node, (child) => visit(child, nested));
+  };
+  for (const stmt of block.statements) visit(stmt, false);
+  return min;
+}
+
+function isExpectCall(call: ts.CallExpression): boolean {
+  const expr = call.expression;
+  if (ts.isIdentifier(expr) && expr.text === 'expect') return true;
+  if (ts.isPropertyAccessExpression(expr) && expr.name.text === 'expect') return true;
+  return false;
+}
+
+function collectBareReturns(
+  node: ts.Node,
+  scopeBlock: ts.Block,
+  firstExpectPos: number,
+  sourceFile: ts.SourceFile,
+  out: EarlyReturnMatch[],
+): void {
+  if (ts.isReturnStatement(node) && (node.expression === undefined || ts.isIdentifier(node.expression))) {
+    if (firstExpectPos === Number.POSITIVE_INFINITY || node.getStart() < firstExpectPos) {
+      const line = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile)).line + 1;
+      out.push({ line, token: 'return;' });
+    }
+    return;
+  }
+  if (
+    ts.isFunctionDeclaration(node) ||
+    ts.isFunctionExpression(node) ||
+    ts.isArrowFunction(node) ||
+    ts.isMethodDeclaration(node)
+  ) {
+    return;
+  }
+  ts.forEachChild(node, (child) => collectBareReturns(child, scopeBlock, firstExpectPos, sourceFile, out));
+}
