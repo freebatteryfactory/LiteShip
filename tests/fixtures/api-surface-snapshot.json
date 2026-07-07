@@ -155,6 +155,10 @@
       "version": "0.8.0",
       "exports": [
         {
+          "name": "ACTIVE_SURFACE_ORACLE_ID",
+          "kind": "const"
+        },
+        {
           "name": "CAPABILITY_LINK_ORACLE_ID",
           "kind": "const"
         },
@@ -220,6 +224,11 @@
         {
           "name": "auditSourceGlobs",
           "kind": "const"
+        },
+        {
+          "name": "buildActiveSurfaceFacts",
+          "kind": "function",
+          "signature": "(1)"
         },
         {
           "name": "buildCapabilityLinkFacts",
@@ -859,6 +868,11 @@
           "signature": "compile:function,serialize:function"
         },
         {
+          "name": "MotionCompiler",
+          "kind": "namespace",
+          "signature": "compile:function"
+        },
+        {
           "name": "StyleCSSCompiler",
           "kind": "namespace",
           "signature": "compile:function"
@@ -897,6 +911,11 @@
           "name": "compileMcpAppManifest",
           "kind": "function",
           "signature": "(1)"
+        },
+        {
+          "name": "compileReveal",
+          "kind": "function",
+          "signature": "(3)"
         },
         {
           "name": "dispatch",
@@ -1157,9 +1176,19 @@
           "signature": "make:function,topoSort:function,validate:function"
         },
         {
+          "name": "ProjectionState",
+          "kind": "namespace",
+          "signature": "fromCells:function"
+        },
+        {
           "name": "Receipt",
           "kind": "namespace",
           "signature": "GENESIS:const,append:function,buildChain:function,createEnvelope:function,findByHash:function,findByKind:function,generateMACKey:function,hashEnvelope:function,head:function,isGenesis:function,macEnvelope:function,tail:function,validateChain:function,validateChainDetailed:function,verifyMAC:function"
+        },
+        {
+          "name": "Reveal",
+          "kind": "namespace",
+          "signature": "intent:function"
         },
         {
           "name": "RuntimeCoordinator",
@@ -1206,6 +1235,16 @@
           "name": "SpeculativeEvaluator",
           "kind": "namespace",
           "signature": "make:function"
+        },
+        {
+          "name": "StateCell",
+          "kind": "namespace",
+          "signature": "fromResolved:function,isReplayable:function,snapshot:function"
+        },
+        {
+          "name": "StateCellStore",
+          "kind": "namespace",
+          "signature": "create:function"
         },
         {
           "name": "StateName",
@@ -1328,6 +1367,11 @@
           "signature": "_kind:const,budgets:const,capabilities:const,id:const,input:namespace,invariants:const,name:const,output:namespace,run:function,site:const"
         },
         {
+          "name": "asReplayableRecoveryCell",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "assertTokenBinds",
           "kind": "function",
           "signature": "(1)"
@@ -1403,6 +1447,11 @@
           "signature": "batchBoundaryEval:function,blendNormalize:function,springCurve:function"
         },
         {
+          "name": "filterDiscreteSnapshotSignals",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "fixedClock",
           "kind": "function",
           "signature": "(1)"
@@ -1414,6 +1463,11 @@
         },
         {
           "name": "fnv1aBytes",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "formatTypedValue",
           "kind": "function",
           "signature": "(1)"
         },
@@ -1448,12 +1502,32 @@
           "signature": "(1)"
         },
         {
+          "name": "interpolate",
+          "kind": "function",
+          "signature": "(4)"
+        },
+        {
+          "name": "interpolateTyped",
+          "kind": "function",
+          "signature": "(3)"
+        },
+        {
+          "name": "interpretTransition",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
           "name": "isCell",
           "kind": "function",
           "signature": "(1)"
         },
         {
           "name": "isDerived",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "isReplayHtmlPatch",
           "kind": "function",
           "signature": "(1)"
         },
@@ -1478,9 +1552,24 @@
           "signature": "(1)"
         },
         {
+          "name": "lowerRevealIntent",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "manualClock",
           "kind": "function",
           "signature": "(0)"
+        },
+        {
+          "name": "motionPropToBinding",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "parseTypedBinding",
+          "kind": "function",
+          "signature": "(2)"
         },
         {
           "name": "projectLadder",
@@ -1504,6 +1593,16 @@
         },
         {
           "name": "rawIndexF32",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "replayDroppedSignals",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "resolveRevealInitialState",
           "kind": "function",
           "signature": "(2)"
         },
@@ -1533,9 +1632,24 @@
           "signature": "(2)"
         },
         {
+          "name": "signalPayloadKind",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "signalSourceKind",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "sourceToInput",
           "kind": "function",
           "signature": "(1)"
+        },
+        {
+          "name": "ssrRevealPaint",
+          "kind": "function",
+          "signature": "(2)"
         },
         {
           "name": "systemClock",
@@ -1564,6 +1678,11 @@
         },
         {
           "name": "validateGraph",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "validateSnapshotSignalsField",
           "kind": "function",
           "signature": "(1)"
         },
@@ -1990,6 +2109,11 @@
           "kind": "const"
         },
         {
+          "name": "activeModeledSurfaceReaderGate",
+          "kind": "namespace",
+          "signature": "decide:function,describe:const,evidenceDigest:function,fixtures:const,form:const,id:const,level:const,requires:const,run:function"
+        },
+        {
           "name": "allFileIds",
           "kind": "function",
           "signature": "(1)"
@@ -2058,6 +2182,11 @@
           "name": "crdtLawsGate",
           "kind": "namespace",
           "signature": "describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
+        },
+        {
+          "name": "decideActiveSurfaceReaders",
+          "kind": "function",
+          "signature": "(1)"
         },
         {
           "name": "decideSkipSite",
@@ -3144,6 +3273,14 @@
       "version": "0.8.0",
       "exports": [
         {
+          "name": "CZAP_EVENT_DOCS",
+          "kind": "const"
+        },
+        {
+          "name": "CZAP_EVENT_NAMES",
+          "kind": "const"
+        },
+        {
           "name": "DEFAULT_SHADER_INTEGRITY_MODE",
           "kind": "const"
         },
@@ -3180,12 +3317,24 @@
         {
           "name": "Resumption",
           "kind": "namespace",
-          "signature": "canResume:function,clearState:function,loadState:function,parseEventId:function,resume:function,saveState:function"
+          "signature": "canResume:function,clearState:function,fetchSnapshot:function,loadState:function,parseEventId:function,resume:function,saveState:function"
         },
         {
           "name": "SSE",
           "kind": "namespace",
           "signature": "buildUrl:function,calculateDelay:function,create:function,parseMessage:function"
+        },
+        {
+          "name": "STREAM_WIRE_ATTRIBUTES",
+          "kind": "const"
+        },
+        {
+          "name": "STREAM_WIRE_ATTRIBUTE_DOCS",
+          "kind": "const"
+        },
+        {
+          "name": "STREAM_WIRE_ATTR_KEYS",
+          "kind": "const"
         },
         {
           "name": "SemanticId",
@@ -3208,7 +3357,27 @@
           "signature": "make:function"
         },
         {
+          "name": "adoptRefreshedGraphBase",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "applyDiscreteSnapshotSignals",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "applyGraphNativeSnapshot",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
           "name": "bindGraphForm",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "bindRequestSnapshotRecovery",
           "kind": "function",
           "signature": "(2)"
         },
@@ -3233,6 +3402,16 @@
           "signature": "(2)"
         },
         {
+          "name": "dispatchCzapEvent",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "fetchSnapshot",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
           "name": "isExternalShaderSource",
           "kind": "function",
           "signature": "(1)"
@@ -3248,6 +3427,11 @@
           "signature": "(1)"
         },
         {
+          "name": "onCzap",
+          "kind": "function",
+          "signature": "(4)"
+        },
+        {
           "name": "parseShaderIntegrity",
           "kind": "function",
           "signature": "(1)"
@@ -3256,6 +3440,11 @@
           "name": "renderToCanvas",
           "kind": "function",
           "signature": "(3)"
+        },
+        {
+          "name": "renderWireContractDoc",
+          "kind": "function",
+          "signature": "(0)"
         },
         {
           "name": "resolveHtmlString",
@@ -3268,6 +3457,11 @@
           "signature": "(2)"
         },
         {
+          "name": "runGraphNativeRecovery",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "sanitizeHTML",
           "kind": "function",
           "signature": "(1)"
@@ -3275,6 +3469,16 @@
         {
           "name": "streamReceiptCapsule",
           "kind": "const"
+        },
+        {
+          "name": "streamWireAttr",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "supplementReplayIfSignalsDropped",
+          "kind": "function",
+          "signature": "(2)"
         },
         {
           "name": "verifyShaderIntegrity",

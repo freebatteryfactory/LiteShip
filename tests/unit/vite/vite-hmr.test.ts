@@ -30,6 +30,10 @@ describe('@czap/vite HMR handler', () => {
       },
     };
 
+    const boundary = document.createElement('div');
+    boundary.setAttribute('data-czap-boundary', 'hero');
+    document.body.appendChild(boundary);
+
     const canvas = document.createElement('canvas') as HTMLCanvasElement & {
       __czapProgram?: Record<string, unknown>;
     };
@@ -39,7 +43,7 @@ describe('@czap/vite HMR handler', () => {
     document.body.appendChild(canvas);
 
     const payloads: unknown[] = [];
-    document.addEventListener('czap:uniform-update', ((event: CustomEvent) => {
+    boundary.addEventListener('czap:uniform-update', ((event: CustomEvent) => {
       payloads.push(event.detail);
     }) as EventListener);
 
@@ -53,9 +57,35 @@ describe('@czap/vite HMR handler', () => {
     expect(uniformCalls).toEqual([['u_progress', 0.75]]);
   });
 
-  test('uniform broadcast detail.glsl matches WebGL document listener contract', () => {
+  test('scopes uniform broadcast to the target boundary only', () => {
+    const hero = document.createElement('div');
+    hero.setAttribute('data-czap-boundary', 'hero');
+    const footer = document.createElement('div');
+    footer.setAttribute('data-czap-boundary', 'footer');
+    document.body.append(hero, footer);
+
+    const heroPayloads: unknown[] = [];
+    const footerPayloads: unknown[] = [];
+    hero.addEventListener('czap:uniform-update', ((event: CustomEvent) => heroPayloads.push(event.detail)) as EventListener);
+    footer.addEventListener('czap:uniform-update', ((event: CustomEvent) => footerPayloads.push(event.detail)) as EventListener);
+
+    handleHMR({
+      type: 'czap:update',
+      boundary: 'hero',
+      uniforms: { u_progress: 0.75 },
+    });
+
+    expect(heroPayloads).toEqual([{ glsl: { u_progress: 0.75 } }]);
+    expect(footerPayloads).toEqual([]);
+  });
+
+  test('uniform broadcast detail.glsl matches WebGL boundary listener contract', () => {
+    const boundary = document.createElement('div');
+    boundary.setAttribute('data-czap-boundary', 'hero');
+    document.body.appendChild(boundary);
+
     const listenerCalls: unknown[] = [];
-    document.addEventListener('czap:uniform-update', ((event: CustomEvent) => {
+    boundary.addEventListener('czap:uniform-update', ((event: CustomEvent) => {
       listenerCalls.push(event.detail);
     }) as EventListener);
 
@@ -84,8 +114,12 @@ describe('@czap/vite HMR handler', () => {
     vi.unstubAllGlobals();
     vi.stubGlobal('document', originalDocument);
 
+    const boundary = document.createElement('div');
+    boundary.setAttribute('data-czap-boundary', 'hero');
+    document.body.appendChild(boundary);
+
     const payloads: unknown[] = [];
-    document.addEventListener('czap:uniform-update', ((event: CustomEvent) => {
+    boundary.addEventListener('czap:uniform-update', ((event: CustomEvent) => {
       payloads.push(event.detail);
     }) as EventListener);
 
