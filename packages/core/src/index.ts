@@ -153,6 +153,17 @@ export type {
   StateCellStoreShape,
 } from './state-cell.js';
 
+// Stream recovery — discrete/continuous replay discriminator (#133)
+export {
+  asReplayableRecoveryCell,
+  signalSourceKind,
+  signalPayloadKind,
+  isReplayHtmlPatch,
+  replayDroppedSignals,
+  filterDiscreteSnapshotSignals,
+} from './stream-recovery.js';
+export type { ReplayableRecoveryCell } from './stream-recovery.js';
+
 // Timeline
 export { Timeline } from './timeline.js';
 

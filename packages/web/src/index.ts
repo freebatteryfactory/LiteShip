@@ -85,6 +85,16 @@ export { SlotAddressing } from './slot/addressing.js';
 export type { SSEClient, SSEEventSource } from './stream/sse.js';
 export { SSE } from './stream/sse.js';
 export { Resumption } from './stream/resumption.js';
+export {
+  fetchSnapshot,
+  applyDiscreteSnapshotSignals,
+  adoptRefreshedGraphBase,
+  runGraphNativeRecovery,
+  applyGraphNativeSnapshot,
+  supplementReplayIfSignalsDropped,
+  bindRequestSnapshotRecovery,
+} from './stream/recovery.js';
+export type { StreamRecoveryMutationClient, StreamRecoveryHandlers, StreamRecoveryOptions } from './stream/recovery.js';
 
 // Physical State
 import { capture } from './physical/capture.js';

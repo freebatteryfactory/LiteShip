@@ -199,7 +199,10 @@ export const resume = (
     const prevState = yield* loadState(artifactId);
 
     if (!prevState) {
-      const snapshot = yield* requestSnapshot(artifactId, finalConfig.snapshotUrl!, finalConfig.endpointPolicy);
+      const snapshot = yield* fetchSnapshot(artifactId, {
+        snapshotUrl: finalConfig.snapshotUrl,
+        endpointPolicy: finalConfig.endpointPolicy,
+      });
       return snapshot;
     }
 
@@ -215,7 +218,10 @@ export const resume = (
     }
 
     if (gap > finalConfig.maxGapSize) {
-      const snapshot = yield* requestSnapshot(artifactId, finalConfig.snapshotUrl!, finalConfig.endpointPolicy);
+      const snapshot = yield* fetchSnapshot(artifactId, {
+        snapshotUrl: finalConfig.snapshotUrl,
+        endpointPolicy: finalConfig.endpointPolicy,
+      });
       return snapshot;
     }
 
@@ -268,12 +274,14 @@ const describeEndpointRejection = (
 /**
  * Request a snapshot when resumption is not possible.
  */
-const requestSnapshot = (
+export const fetchSnapshot = (
   artifactId: string,
-  snapshotUrl: string,
-  endpointPolicy: ResumptionConfig['endpointPolicy'],
-): Effect.Effect<ResumeResponse, LiteShipError> =>
+  config?: Partial<Pick<ResumptionConfig, 'snapshotUrl' | 'endpointPolicy'>>,
+): Effect.Effect<Extract<ResumeResponse, { type: 'snapshot' }>, LiteShipError> =>
   Effect.gen(function* () {
+    const finalConfig = { ...defaultResumptionConfig, ...config };
+    const snapshotUrl = finalConfig.snapshotUrl!;
+    const endpointPolicy = finalConfig.endpointPolicy;
     const resolved = resolveRuntimeUrl(snapshotUrl, {
       kind: 'snapshot',
       policy: endpointPolicy,
@@ -410,5 +418,6 @@ export const Resumption = {
   clearState,
   canResume,
   resume,
+  fetchSnapshot,
   parseEventId,
 } as const;
