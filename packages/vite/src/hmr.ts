@@ -7,6 +7,8 @@
  * @module
  */
 
+import { dispatchCzapEvent } from '@czap/web';
+
 declare global {
   interface HTMLCanvasElement {
     /**
@@ -75,11 +77,7 @@ function applyCSSUpdate(boundary: string, css: string): void {
  * system listens for, passing the uniform map for in-place updates.
  */
 function applyUniformUpdate(boundary: string, uniforms: Record<string, number>): void {
-  const event = new CustomEvent('czap:uniform-update', {
-    detail: { boundary, uniforms },
-    bubbles: true,
-  });
-  document.dispatchEvent(event);
+  dispatchCzapEvent(document, 'czap:uniform-update', { glsl: uniforms });
 
   // Direct update: find canvas elements with matching boundary data attribute
   const canvases = Array.from(document.querySelectorAll<HTMLCanvasElement>(`canvas[data-czap-boundary="${boundary}"]`));

@@ -52,7 +52,8 @@
     "@czap/core": "workspace:*",
     "@czap/compiler": "workspace:*",
     "@czap/edge": "workspace:*",
-    "@czap/error": "workspace:*"
+    "@czap/error": "workspace:*",
+    "@czap/web": "workspace:*"
   },
   "peerDependencies": {
     "vite": ">=8.0.0"
