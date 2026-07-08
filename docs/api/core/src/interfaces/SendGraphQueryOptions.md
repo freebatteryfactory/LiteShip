@@ -6,7 +6,7 @@
 
 # Interface: SendGraphQueryOptions
 
-Defined in: [core/src/graph-query.ts:147](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query.ts#L147)
+Defined in: [core/src/graph-query.ts:190](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query.ts#L190)
 
 Options for the retrying QUERY read sender.
 
@@ -16,7 +16,7 @@ Options for the retrying QUERY read sender.
 
 > `readonly` `optional` **fetchImpl?**: \{(`input`, `init?`): `Promise`\<`Response`\>; (`input`, `init?`): `Promise`\<`Response`\>; \}
 
-Defined in: [core/src/graph-query.ts:149](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query.ts#L149)
+Defined in: [core/src/graph-query.ts:192](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query.ts#L192)
 
 Injectable fetch for tests / non-browser hosts. Defaults to global `fetch`.
 
@@ -66,7 +66,7 @@ Injectable fetch for tests / non-browser hosts. Defaults to global `fetch`.
 
 > `readonly` `optional` **ifNoneMatch?**: `string`
 
-Defined in: [core/src/graph-query.ts:151](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query.ts#L151)
+Defined in: [core/src/graph-query.ts:194](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query.ts#L194)
 
 Conditional validator — sha256 integrity_digest only.
 
@@ -76,6 +76,6 @@ Conditional validator — sha256 integrity_digest only.
 
 > `readonly` `optional` **maxRetries?**: `number`
 
-Defined in: [core/src/graph-query.ts:153](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query.ts#L153)
+Defined in: [core/src/graph-query.ts:196](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query.ts#L196)
 
 Bounded retries on transport / server `error` outcomes (reads are idempotent). Default: 2.

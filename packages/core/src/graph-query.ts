@@ -48,41 +48,83 @@ const messageOf = (error: unknown): string => (error instanceof Error ? error.me
 
 /**
  * The cache validator for conditional reads — sha256 `integrity_digest`, NOT the
- * fnv1a display `id`. The digest excludes mutable `meta` by construction.
+ * fnv1a display `id`. The digest excludes mutable `meta` by construction, so a
+ * meta-only advance (display/version bookkeeping) intentionally does NOT
+ * invalidate a cached graph: CAS correctness keys on `base.id`, and `meta` is
+ * display-layer data that never participates in patch application. Documented
+ * contract, not an oversight.
  */
 export function graphQueryEtag(graph: DocumentGraph): string {
   return graph.digest.integrity_digest;
 }
 
-/** Normalize an HTTP `If-None-Match` / wire etag to bare sha256, or refuse fnv1a. */
+/** Parsed multi-member `If-None-Match`: sha256 candidates plus the `*` wildcard. */
+export interface GraphQueryEtagCandidates {
+  readonly candidates: readonly string[];
+  /** RFC 9110: `If-None-Match: *` matches any current representation. */
+  readonly matchAny: boolean;
+}
+
+const stripEtagMember = (member: string): string => member.replace(/^W\//, '').replace(/^"|"$/g, '');
+
+/**
+ * Parse a full `If-None-Match` header into ALL comma-separated members
+ * (RFC 9110 §13.1.2 — a compliant cache may list several stored validators;
+ * evaluating only the first would 422 or full-200 requests that should 304).
+ * Any fnv1a member refuses the whole request — a client that cached the
+ * display id is the silent-stale bug this channel exists to prevent.
+ */
+export function parseGraphQueryEtagList(
+  value: string | undefined,
+): GraphQueryEtagCandidates | { readonly errors: readonly string[] } {
+  if (value === undefined || value === '') {
+    return { candidates: [], matchAny: false };
+  }
+
+  const members = value
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  const candidates: string[] = [];
+  let matchAny = false;
+
+  for (const member of members) {
+    if (member === '*') {
+      matchAny = true;
+      continue;
+    }
+    const bare = stripEtagMember(member);
+    if (bare === '') {
+      continue;
+    }
+    if (FNV_ETAG_RE.test(bare)) {
+      return {
+        errors: [
+          'If-None-Match must be the sha256 integrity_digest, not the fnv1a display id — silent-stale 304 vector',
+        ],
+      };
+    }
+    if (!SHA256_ETAG_RE.test(bare)) {
+      return { errors: [`If-None-Match is not a sha256 integrity_digest: ${JSON.stringify(bare)}`] };
+    }
+    candidates.push(bare);
+  }
+
+  return { candidates, matchAny };
+}
+
+/** Normalize a SINGLE HTTP etag value (e.g. a response `ETag` header) to bare sha256, or refuse fnv1a. */
 export function normalizeGraphQueryEtag(value: string | undefined): string | { readonly errors: readonly string[] } {
   if (value === undefined || value === '') {
     return value ?? '';
   }
 
-  const trimmed =
-    value
-      .split(',')
-      .map((part) => part.trim())
-      .filter(Boolean)[0]
-      ?.replace(/^W\//, '')
-      .replace(/^"|"$/g, '') ?? '';
-
-  if (trimmed === '') {
-    return '';
+  const parsed = parseGraphQueryEtagList(value);
+  if ('errors' in parsed) {
+    return parsed;
   }
-
-  if (FNV_ETAG_RE.test(trimmed)) {
-    return {
-      errors: ['If-None-Match must be the sha256 integrity_digest, not the fnv1a display id — silent-stale 304 vector'],
-    };
-  }
-
-  if (!SHA256_ETAG_RE.test(trimmed)) {
-    return { errors: [`If-None-Match is not a sha256 integrity_digest: ${JSON.stringify(trimmed)}`] };
-  }
-
-  return trimmed;
+  return parsed.candidates[0] ?? '';
 }
 
 function isGraphQueryResponse(value: unknown): value is GraphQueryResponse {
@@ -115,11 +157,10 @@ export async function handleGraphQuery(
   request: GraphQueryRequest,
   store: Pick<GraphStore, 'loadGraph'>,
 ): Promise<GraphQueryResponse> {
-  const normalized = request.ifNoneMatch !== undefined ? normalizeGraphQueryEtag(request.ifNoneMatch) : undefined;
-  if (normalized !== undefined && typeof normalized === 'object') {
-    return { status: 'refused', errors: normalized.errors };
+  const parsed = request.ifNoneMatch !== undefined ? parseGraphQueryEtagList(request.ifNoneMatch) : undefined;
+  if (parsed !== undefined && 'errors' in parsed) {
+    return { status: 'refused', errors: parsed.errors };
   }
-  const ifNoneMatch = typeof normalized === 'string' && normalized !== '' ? normalized : undefined;
 
   let loaded: DocumentGraph;
   try {
@@ -136,7 +177,9 @@ export async function handleGraphQuery(
   const graph = verified.graph;
   const etag = graphQueryEtag(graph);
 
-  if (ifNoneMatch !== undefined && ifNoneMatch === etag) {
+  // RFC 9110 §13.1.2: 304 when ANY listed validator matches, or on `*`
+  // (the graph read always has a current representation).
+  if (parsed !== undefined && (parsed.matchAny || parsed.candidates.includes(etag))) {
     return { status: 'not_modified', etag };
   }
 

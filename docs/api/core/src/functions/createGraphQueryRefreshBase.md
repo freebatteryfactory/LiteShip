@@ -8,7 +8,7 @@
 
 > **createGraphQueryRefreshBase**(`url`, `options?`): () => `Promise`\<[`DocumentGraph`](../interfaces/DocumentGraph.md)\>
 
-Defined in: [core/src/graph-query.ts:269](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query.ts#L269)
+Defined in: [core/src/graph-query.ts:312](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query.ts#L312)
 
 Build a host-owned `refreshBase` for [createGraphMutationClient](createGraphMutationClient.md) over the read leg.
 

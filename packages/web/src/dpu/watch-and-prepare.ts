@@ -15,7 +15,9 @@
  */
 import type { AddressedDigest, ContentAddress } from '@czap/core';
 import { AddressedDigest as AddressedDigestNS } from '@czap/core';
+import { ValidationError } from '@czap/error';
 import { morphPure } from '../morph/diff-pure.js';
+import { createHtmlFragment } from '../security/html-trust.js';
 
 /** DOM attribute carrying the stable DPU marker name (a logicalKey, not a content address). */
 export const DPU_MARKER_ATTR = 'data-czap-dpu-marker';
@@ -23,7 +25,12 @@ export const DPU_MARKER_ATTR = 'data-czap-dpu-marker';
 export const DPU_BASE_ATTR = 'data-czap-dpu-base';
 /** DOM attribute stamped with the result graph id after a successful apply. */
 export const DPU_RESULT_ATTR = 'data-czap-dpu-result';
-/** DOM attribute stamped with the sha256 integrity digest of the applied HTML. */
+/**
+ * DOM attribute stamped with the sha256 integrity digest of the APPLIED DOM
+ * serialization (`target.innerHTML` after sanitize + apply) — NOT the envelope's
+ * pre-sanitization input bytes. The envelope digest verifies transport integrity
+ * before apply; this attribute attests what is actually rendered.
+ */
 export const DPU_DIGEST_ATTR = 'data-czap-dpu-digest';
 
 /** Which rung applied or will apply a verifiable patch. */
@@ -53,13 +60,26 @@ export type VerifiablePatchVerification =
   | { readonly _tag: 'staleBase'; readonly expected: ContentAddress; readonly received: ContentAddress }
   | { readonly _tag: 'digestMismatch'; readonly expected: string; readonly actual: string };
 
-/** Outcome of applying a verifiable patch (applied or refused). */
+/**
+ * Outcome of applying a verifiable patch. `applied` carries the digest of the
+ * DOM serialization actually rendered (post-sanitization); `sanitizedEmpty`
+ * reports — loudly, without touching the DOM — that sanitization would strip
+ * the entire fragment (e.g. `<script>…</script>`), so "applied" would have
+ * advertised a verified patch over unchanged stale content.
+ */
 export type ApplyVerifiablePatchResult =
-  | { readonly _tag: 'applied'; readonly rung: DpuRung; readonly envelope: VerifiablePatchEnvelope }
+  | {
+      readonly _tag: 'applied';
+      readonly rung: DpuRung;
+      readonly envelope: VerifiablePatchEnvelope;
+      /** sha256 digest of `target.innerHTML` after apply — what the DOM attribute attests. */
+      readonly appliedDigest: AddressedDigest;
+    }
   | {
       readonly _tag: 'refused';
       readonly verification: Exclude<VerifiablePatchVerification, { readonly _tag: 'verified' }>;
-    };
+    }
+  | { readonly _tag: 'sanitizedEmpty'; readonly envelope: VerifiablePatchEnvelope };
 
 /** Handle returned by {@link watchAndPrepare} — stamps and applies verifiable patches. */
 export interface WatchAndPrepareHandle {
@@ -72,6 +92,8 @@ export interface WatchAndPrepareHandle {
     readonly html: string;
   }): VerifiablePatchEnvelope;
   apply(envelope: VerifiablePatchEnvelope, currentBaseGraphId: ContentAddress): ApplyVerifiablePatchResult;
+  /** Release the marker registration so the name can be re-watched. */
+  dispose(): void;
 }
 
 type ElementWithSetHtml = Element & { setHTML?: (html: string, options?: object) => void };
@@ -123,11 +145,11 @@ export function verifyVerifiablePatch(
   return { _tag: 'verified' };
 }
 
-function stampTarget(target: Element, envelope: VerifiablePatchEnvelope): void {
+function stampTarget(target: Element, envelope: VerifiablePatchEnvelope, appliedDigest: AddressedDigest): void {
   target.setAttribute(DPU_MARKER_ATTR, envelope.marker);
   target.setAttribute(DPU_BASE_ATTR, envelope.baseGraphId);
   target.setAttribute(DPU_RESULT_ATTR, envelope.resultGraphId);
-  target.setAttribute(DPU_DIGEST_ATTR, envelope.digest.integrity_digest);
+  target.setAttribute(DPU_DIGEST_ATTR, appliedDigest.integrity_digest);
 }
 
 function applyFloor(target: Element, html: string): void {
@@ -136,6 +158,15 @@ function applyFloor(target: Element, html: string): void {
 
 function applyNative(target: Element, html: string): void {
   (target as ElementWithSetHtml).setHTML!(html);
+}
+
+/** True when sanitization strips a NON-empty fragment down to nothing renderable. */
+function sanitizesToNothing(html: string): boolean {
+  if (html.trim().length === 0) {
+    return false;
+  }
+  const fragment = createHtmlFragment(html, { policy: 'sanitized-html' });
+  return fragment.childNodes.length === 0;
 }
 
 /** Apply a verified envelope to `target`, using native DPU when available or the floor path. */
@@ -149,22 +180,54 @@ export function applyVerifiablePatch(
   if (verification._tag !== 'verified') {
     return { _tag: 'refused', verification };
   }
+
+  // A fragment sanitization strips ENTIRELY must not report `applied`: the morph
+  // would no-op and the element would advertise a verified patch over stale
+  // content. Refuse loudly before touching the DOM.
+  if (sanitizesToNothing(envelope.html)) {
+    return { _tag: 'sanitizedEmpty', envelope };
+  }
+
+  const rung: DpuRung = capability.available ? 'native-sethtml' : 'floor-morph';
   if (capability.available) {
     applyNative(target, envelope.html);
-    stampTarget(target, envelope);
-    return { _tag: 'applied', rung: 'native-sethtml', envelope };
+  } else {
+    applyFloor(target, envelope.html);
   }
-  applyFloor(target, envelope.html);
-  stampTarget(target, envelope);
-  return { _tag: 'applied', rung: 'floor-morph', envelope };
+  // Attest the RENDERED serialization: both rungs sanitize before insertion, so
+  // the envelope's input bytes are not what the DOM shows.
+  const appliedDigest = digestHtmlFragment(target.innerHTML);
+  stampTarget(target, envelope, appliedDigest);
+  return { _tag: 'applied', rung, envelope, appliedDigest };
 }
+
+/**
+ * Live marker registry — a marker is a LOGICAL address, so two connected
+ * elements claiming the same name would make `staleBase`/digest attestations
+ * ambiguous at scale. Registrations for disconnected elements are stale and
+ * silently superseded (view-transition swaps re-watch legitimately).
+ */
+const markerRegistry = new Map<string, Element>();
 
 /**
  * Watch a DOM slot under `marker` and prepare stamped verifiable patches against it.
  * The target is annotated with `data-czap-dpu-marker` immediately; successful applies
- * also stamp base/result ids and the fragment digest on the element.
+ * also stamp base/result ids and the applied-DOM digest on the element.
+ *
+ * Throws when `marker` is already watched on a DIFFERENT connected element —
+ * duplicate live markers are a wiring bug, not a condition to launder. Call
+ * `dispose()` on the previous handle (or disconnect its element) first.
  */
 export function watchAndPrepare(marker: string, target: Element): WatchAndPrepareHandle {
+  const existing = markerRegistry.get(marker);
+  if (existing !== undefined && existing !== target && existing.isConnected) {
+    throw ValidationError(
+      'watchAndPrepare',
+      `DPU marker "${marker}" is already watched on another connected element — markers must be unique; dispose the previous handle first`,
+    );
+  }
+  markerRegistry.set(marker, target);
+
   const capability = detectDpuCapability();
   target.setAttribute(DPU_MARKER_ATTR, marker);
   return {
@@ -176,6 +239,11 @@ export function watchAndPrepare(marker: string, target: Element): WatchAndPrepar
     },
     apply(envelope, currentBaseGraphId) {
       return applyVerifiablePatch(target, envelope, currentBaseGraphId, capability);
+    },
+    dispose() {
+      if (markerRegistry.get(marker) === target) {
+        markerRegistry.delete(marker);
+      }
     },
   };
 }

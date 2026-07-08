@@ -8,7 +8,7 @@
 
 > **isDerived**\<`T`\>(`p`): `p is Shape<T>`
 
-Defined in: [core/src/index.ts:506](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/index.ts#L506)
+Defined in: [core/src/index.ts:512](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/index.ts#L512)
 
 Narrow a [Primitive](../type-aliases/Primitive.md) to a [Derived](../namespaces/Derived/README.md).
 

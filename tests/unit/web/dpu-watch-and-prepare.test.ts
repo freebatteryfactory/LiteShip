@@ -140,6 +140,81 @@ describe('watchAndPrepare apply floor (#120)', () => {
   });
 });
 
+describe('sanitizedEmpty + applied-DOM digest (adversarial QA)', () => {
+  it('refuses a fragment sanitization strips entirely — no applied over stale content', () => {
+    const target = document.createElement('div');
+    target.innerHTML = '<p id="stale">stale</p>';
+    document.body.appendChild(target);
+    const envelope = stampVerifiablePatch({
+      marker: 'signal viewport.width',
+      baseGraphId: baseId,
+      resultGraphId: nextId,
+      html: '<script>alert(1)</script>',
+    });
+    const forcedFloor = { available: false as const, rung: 'floor-morph' as const };
+    const result = applyVerifiablePatch(target, envelope, baseId, forcedFloor);
+
+    expect(result._tag).toBe('sanitizedEmpty');
+    // DOM untouched — no verified-patch attrs over unchanged content.
+    expect(target.querySelector('#stale')?.textContent).toBe('stale');
+    expect(target.getAttribute(DPU_BASE_ATTR)).toBeNull();
+    expect(target.getAttribute(DPU_DIGEST_ATTR)).toBeNull();
+  });
+
+  it('stamps the digest of the APPLIED DOM serialization, not the envelope input bytes', () => {
+    const target = document.createElement('div');
+    document.body.appendChild(target);
+    // Sanitization strips the onclick attribute, so applied DOM ≠ input bytes.
+    const html = '<p onclick="alert(1)">safe text</p>';
+    const envelope = stampVerifiablePatch({
+      marker: 'signal viewport.width',
+      baseGraphId: baseId,
+      resultGraphId: nextId,
+      html,
+    });
+    const forcedFloor = { available: false as const, rung: 'floor-morph' as const };
+    const result = applyVerifiablePatch(target, envelope, baseId, forcedFloor);
+
+    expect(result._tag).toBe('applied');
+    if (result._tag === 'applied') {
+      const domDigest = digestHtmlFragment(target.innerHTML).integrity_digest;
+      expect(result.appliedDigest.integrity_digest).toBe(domDigest);
+      expect(target.getAttribute(DPU_DIGEST_ATTR)).toBe(domDigest);
+      // The attestation must NOT be the pre-sanitization envelope digest.
+      expect(target.getAttribute(DPU_DIGEST_ATTR)).not.toBe(envelope.digest.integrity_digest);
+    }
+    expect(target.querySelector('p')?.getAttribute('onclick')).toBeNull();
+  });
+});
+
+describe('marker dedup registry (adversarial QA)', () => {
+  it('throws when a marker is re-watched on a DIFFERENT connected element', () => {
+    const first = document.createElement('div');
+    const second = document.createElement('div');
+    document.body.append(first, second);
+
+    const handle = watchAndPrepare('signal dup.marker', first);
+    expect(() => watchAndPrepare('signal dup.marker', second)).toThrow(/already watched/);
+
+    handle.dispose();
+    // After dispose the name is free again.
+    const rebound = watchAndPrepare('signal dup.marker', second);
+    expect(rebound.target).toBe(second);
+    rebound.dispose();
+  });
+
+  it('a registration for a DISCONNECTED element is stale and silently superseded', () => {
+    const detached = document.createElement('div');
+    watchAndPrepare('signal vt.swap', detached);
+
+    const live = document.createElement('div');
+    document.body.appendChild(live);
+    const handle = watchAndPrepare('signal vt.swap', live);
+    expect(handle.target).toBe(live);
+    handle.dispose();
+  });
+});
+
 describe('marker names use logicalKey not content addresses', () => {
   it('two different node ids with the same logical cell share one marker', () => {
     const a = nodeFromParts({

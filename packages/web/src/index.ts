@@ -116,6 +116,12 @@ export {
   bindRequestSnapshotRecovery,
 } from './stream/recovery.js';
 export type { StreamRecoveryMutationClient, StreamRecoveryHandlers, StreamRecoveryOptions } from './stream/recovery.js';
+export {
+  registerStreamRecoverySubstrate,
+  getStreamRecoverySubstrate,
+  recordStreamPatchReceipt,
+} from './stream/recovery-substrate.js';
+export type { StreamRecoverySubstrate, ResolvedStreamRecoverySubstrate } from './stream/recovery-substrate.js';
 
 // Physical State
 import { capture } from './physical/capture.js';

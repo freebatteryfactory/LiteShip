@@ -22,7 +22,7 @@ import {
 } from '@czap/core';
 import { MotionCompiler } from './motion.js';
 import type { MotionCompileResult, MotionEasing, MotionViewTimeline } from './motion.js';
-import { appendTranslateConsumer } from './motion-utils.js';
+import { appendReducedMotionGuard, appendTranslateConsumer } from './motion-utils.js';
 
 /** Compiled reveal artifacts — CSS projection + runtime floor. */
 export interface CompiledReveal {
@@ -94,7 +94,7 @@ export function compileReveal(
   }
 
   const viewTimeline = viewTimelineFromTrigger(intent.trigger);
-  const css = appendTranslateConsumer(
+  const compiled = appendTranslateConsumer(
     MotionCompiler.compile({
       plan: motion.css,
       easing: easingFromIntent(intent),
@@ -102,6 +102,11 @@ export function compileReveal(
     }),
     motion.css,
   );
+
+  // The @media guard rides every settle-policy compile — client-side reduced
+  // motion must hold even when the request carried no Sec-CH hint.
+  const css =
+    intent.policy.reducedMotion === 'settle' ? Object.freeze(appendReducedMotionGuard(compiled, motion.css)) : compiled;
 
   const resultDigest = AddressedDigest.of(new TextEncoder().encode(css.raw));
   const { graph: graphWithDigest, projectionId } = sealProjectionDigest(graph, transitionId, resultDigest);

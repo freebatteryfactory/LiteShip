@@ -417,10 +417,16 @@ export {
   sendGraphQuery,
   graphQueryEtag,
   normalizeGraphQueryEtag,
+  parseGraphQueryEtagList,
   createGraphQueryRefreshBase,
   GRAPH_QUERY_FALLBACK_HEADER,
 } from './graph-query.js';
-export type { GraphQueryRequest, GraphQueryResponse, SendGraphQueryOptions } from './graph-query.js';
+export type {
+  GraphQueryRequest,
+  GraphQueryResponse,
+  GraphQueryEtagCandidates,
+  SendGraphQueryOptions,
+} from './graph-query.js';
 // #133-full — graph-native gap replay over StateCell + patch/receipt chain.
 export {
   discreteSignalPayloadsFromPatch,

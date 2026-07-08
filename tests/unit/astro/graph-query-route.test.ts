@@ -31,12 +31,13 @@ const queryRequest = (headers: Record<string, string> = {}): Request =>
   });
 
 describe('graphQueryRoute — read-only store, conditional etag', () => {
-  test('QUERY returns 200 ok graph + sha256 etag header', async () => {
+  test('QUERY returns 200 ok graph + weak sha256 etag header', async () => {
     const base = graph([node('scroll.y')]);
     const res = await graphQueryRoute(readOnlyStore(base))(queryRequest());
 
     expect(res.status).toBe(200);
-    expect(res.headers.get('etag')).toBe(`"${graphQueryEtag(base)}"`);
+    // Weak validator: the digest excludes mutable meta, so byte-equality is not guaranteed.
+    expect(res.headers.get('etag')).toBe(`W/"${graphQueryEtag(base)}"`);
     const body = (await res.json()) as { status: string; graph?: DocumentGraph; etag?: string };
     expect(body.status).toBe('ok');
     expect(body.graph!.id).toBe(base.id);
@@ -50,8 +51,37 @@ describe('graphQueryRoute — read-only store, conditional etag', () => {
     );
 
     expect(res.status).toBe(304);
-    expect(res.headers.get('etag')).toBe(`"${graphQueryEtag(base)}"`);
+    expect(res.headers.get('etag')).toBe(`W/"${graphQueryEtag(base)}"`);
     expect(await res.text()).toBe('');
+  });
+
+  test('multi-member If-None-Match matches ANY listed validator (RFC 9110)', async () => {
+    const base = graph([node('scroll.y')]);
+    const other = graph([node('pointer.x')]);
+    const res = await graphQueryRoute(readOnlyStore(base))(
+      queryRequest({ 'if-none-match': `"${graphQueryEtag(other)}", W/"${graphQueryEtag(base)}"` }),
+    );
+
+    expect(res.status).toBe(304);
+  });
+
+  test('If-None-Match: * matches the current representation → 304', async () => {
+    const base = graph([node('scroll.y')]);
+    const res = await graphQueryRoute(readOnlyStore(base))(queryRequest({ 'if-none-match': '*' }));
+
+    expect(res.status).toBe(304);
+    expect(res.headers.get('etag')).toBe(`W/"${graphQueryEtag(base)}"`);
+  });
+
+  test('multi-member list with a valid sha256 but a stale first member is NOT refused', async () => {
+    const base = graph([node('scroll.y')]);
+    const other = graph([node('pointer.x')]);
+    // First member stale, second current: a spec-compliant cache listing several
+    // stored validators must get a 304, not a full 200 (or a 422).
+    const res = await graphQueryRoute(readOnlyStore(base))(
+      queryRequest({ 'if-none-match': `"${graphQueryEtag(other)}", "${graphQueryEtag(base)}"` }),
+    );
+    expect(res.status).toBe(304);
   });
 
   test('fnv1a If-None-Match → 422 refused', async () => {
@@ -76,12 +106,34 @@ describe('graphQueryRoute — read-only store, conditional etag', () => {
     expect(res.status).toBe(200);
   });
 
-  test('unsupported method → 405', async () => {
+  test('unsupported method → 405 with Allow header', async () => {
     const base = graph([node('scroll.y')]);
     const res = await graphQueryRoute(readOnlyStore(base))(
       new Request('http://host/api/graph', { method: 'GET' }),
     );
     expect(res.status).toBe(405);
+    expect(res.headers.get('allow')).toBe('QUERY, POST, OPTIONS');
+  });
+
+  test('OPTIONS → 204 with Allow (CORS preflight must not see 405)', async () => {
+    const base = graph([node('scroll.y')]);
+    const res = await graphQueryRoute(readOnlyStore(base))(
+      new Request('http://host/api/graph', { method: 'OPTIONS' }),
+    );
+    expect(res.status).toBe(204);
+    expect(res.headers.get('allow')).toBe('QUERY, POST, OPTIONS');
+  });
+
+  test('oversized body → 413 without buffering it (body is unused on the read leg)', async () => {
+    const base = graph([node('scroll.y')]);
+    const res = await graphQueryRoute(readOnlyStore(base))(
+      new Request('http://host/api/graph', {
+        method: 'QUERY',
+        headers: { 'content-type': 'application/json' },
+        body: `{"pad":"${'x'.repeat(8192)}"}`,
+      }),
+    );
+    expect(res.status).toBe(413);
   });
 
   test('text/plain body → 415 (CSRF discipline mirrors mutation route)', async () => {

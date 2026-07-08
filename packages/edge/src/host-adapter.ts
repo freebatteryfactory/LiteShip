@@ -401,7 +401,21 @@ async function resolveBoundaryOutputs(
       tags,
     );
     if (background?.waitUntil) {
-      background.waitUntil(writeBack);
+      // A rejected deferred write-back must not vanish into the Workers runtime:
+      // the response already shipped, so surface the failure loudly — the next
+      // request simply recompiles (cache stays a pure optimization).
+      background.waitUntil(
+        writeBack.catch((error: unknown) => {
+          Diagnostics.warnOnce({
+            source: 'czap/edge.host-adapter',
+            code: 'boundary-cache-writeback-failed',
+            message:
+              `Deferred boundary-cache write-back failed for boundary "${source.boundaryId}": ` +
+              `${error instanceof Error ? error.message : String(error)}. ` +
+              'The response was already served; the next request recompiles and retries the write.',
+          });
+        }),
+      );
     } else {
       await writeBack;
     }

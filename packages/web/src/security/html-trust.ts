@@ -157,17 +157,45 @@ function effectiveHtmlPolicy(options?: HtmlTrustOptions): HtmlPolicy {
 }
 
 function normalizeAttributeValue(value: string): string {
-  // Strip ASCII whitespace AND embedded tab/newline/carriage-return before scheme
-  // comparison — the WHATWG URL parser strips them, so a naive startsWith is bypassable.
+  // Mirror the WHATWG URL parser's pre-processing so a naive scheme check is not
+  // bypassable: strip leading/trailing C0 controls AND space, then remove every
+  // embedded tab/newline/carriage-return (`java\tscript:` parses as javascript:).
   return value
-    .trim()
+    .replace(/^[\u0000-\u0020]+/, '')
+    .replace(/[\u0000-\u0020]+$/, '')
     .toLowerCase()
     .replace(/[\t\n\r]/g, '');
 }
 
+/**
+ * Scheme ALLOWLIST for url-sink attributes — a blocklist of known-bad schemes
+ * (javascript:, three data: media types) is inherently bypassable (vbscript:,
+ * data:text/xml, future schemes). Anything not listed here is stripped.
+ * `data:` is allowed only for `data:image/*` (inline images are the one
+ * routine legitimate use; data:-HTML/script payloads are the attack).
+ */
+const SAFE_URL_SCHEMES = new Set(['http:', 'https:', 'mailto:', 'tel:', 'blob:']);
+
+const URL_SCHEME_RE = /^([a-z][a-z0-9+.-]*:)/;
+
+function isDangerousUrlValue(normalizedValue: string): boolean {
+  const scheme = URL_SCHEME_RE.exec(normalizedValue)?.[1];
+  if (scheme === undefined) {
+    // No scheme — relative / scheme-relative / fragment / query URL. Safe:
+    // it resolves against the document origin.
+    return false;
+  }
+  if (SAFE_URL_SCHEMES.has(scheme)) {
+    return false;
+  }
+  if (scheme === 'data:') {
+    return !normalizedValue.startsWith('data:image/');
+  }
+  return true;
+}
+
 function isDangerousAttribute(name: string, value: string): boolean {
   const lowerName = name.toLowerCase();
-  const normalizedValue = normalizeAttributeValue(value);
 
   if (lowerName.startsWith('on')) {
     return true;
@@ -177,13 +205,8 @@ function isDangerousAttribute(name: string, value: string): boolean {
     return true;
   }
 
-  if (
-    normalizedValue.startsWith('javascript:') ||
-    normalizedValue.startsWith('data:text/html') ||
-    normalizedValue.startsWith('data:application/x-javascript') ||
-    normalizedValue.startsWith('data:text/javascript')
-  ) {
-    return URL_SINK_ATTRIBUTES.has(lowerName);
+  if (URL_SINK_ATTRIBUTES.has(lowerName)) {
+    return isDangerousUrlValue(normalizeAttributeValue(value));
   }
 
   return false;
@@ -242,11 +265,13 @@ function createTemplate(html: string, options?: HtmlTrustOptions): HTMLTemplateE
  * ready to be appended to the live DOM. Dangerous elements
  * (`<script>`, `<iframe>`, `<base>`, `<meta>`, `<link>`, `<form>`,
  * `<noscript>`, `<svg>`, `<math>`, `<style>`, `<object>`, `<embed>`)
- * and attributes (`on*`, `srcdoc`, `style`, `javascript:` /
- * `data:text/html` URLs in url-sink attributes including `href`,
- * `src`, `action`, `formaction`, `ping`, `background`, `cite`,
- * `data`, `poster`) are stripped when the effective policy is
- * `sanitized-html`.
+ * and attributes (`on*`, `srcdoc`, `style`) are stripped when the
+ * effective policy is `sanitized-html`. Url-sink attributes (`href`,
+ * `src`, `action`, `formaction`, `ping`, `background`, `cite`, `data`,
+ * `poster`, …) are held to a scheme ALLOWLIST: relative URLs,
+ * `http(s):`, `mailto:`, `tel:`, `blob:`, and `data:image/*` pass;
+ * every other scheme (`javascript:`, `vbscript:`, non-image `data:`, …)
+ * is stripped.
  */
 export function createHtmlFragment(html: string, options?: HtmlTrustOptions): DocumentFragment {
   return createTemplate(html, options).content;

@@ -291,4 +291,46 @@ describe('red-team runtime regressions', () => {
     expect(container.querySelector('style')).toBeNull();
     expect(container.querySelector('p')?.textContent).toBe('ok');
   });
+
+  test('scheme ALLOWLIST — vbscript:, non-image data:, and unknown schemes are stripped', () => {
+    const sanitized = resolveHtmlString(
+      '<a href="vbscript:MsgBox(1)">a</a>' +
+        '<a href="data:text/xml,<x/>">b</a>' +
+        '<a href="file:///etc/passwd">c</a>' +
+        '<a href="wtf-scheme:payload">d</a>',
+      { policy: 'sanitized-html' },
+    );
+    const container = document.createElement('div');
+    container.innerHTML = sanitized;
+    for (const anchor of Array.from(container.querySelectorAll('a'))) {
+      expect(anchor.getAttribute('href')).toBeNull();
+    }
+  });
+
+  test('scheme ALLOWLIST — relative, http(s), mailto, tel, and data:image survive', () => {
+    const sanitized = resolveHtmlString(
+      '<a href="/rel">a</a>' +
+        '<a href="https://example.com/x">b</a>' +
+        '<a href="mailto:x@example.com">c</a>' +
+        '<a href="tel:+15551234567">d</a>' +
+        '<img src="data:image/png;base64,iVBORw0KGgo=">',
+      { policy: 'sanitized-html' },
+    );
+    const container = document.createElement('div');
+    container.innerHTML = sanitized;
+    expect(container.querySelectorAll('a[href]')).toHaveLength(4);
+    expect(container.querySelector('img')?.getAttribute('src')).toContain('data:image/png');
+  });
+
+  test('strips scheme obfuscated with LEADING C0 controls (WHATWG parser strips them too)', () => {
+    const sanitized = resolveHtmlString(
+      `<a href="\u0001javascript:alert(1)">x</a><a href="\u0008\u000bvbscript:MsgBox(1)">y</a>`,
+      { policy: 'sanitized-html' },
+    );
+    const container = document.createElement('div');
+    container.innerHTML = sanitized;
+    for (const anchor of Array.from(container.querySelectorAll('a'))) {
+      expect(anchor.getAttribute('href')).toBeNull();
+    }
+  });
 });

@@ -8,7 +8,7 @@
 
 > **sendGraphQuery**(`url`, `options?`): `Promise`\<[`GraphQueryResponse`](../type-aliases/GraphQueryResponse.md)\>
 
-Defined in: [core/src/graph-query.ts:231](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query.ts#L231)
+Defined in: [core/src/graph-query.ts:274](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query.ts#L274)
 
 Client-side sender: QUERY the host's graph read endpoint with optional conditional
 etag and bounded retries. Tries `QUERY` first; on 405/501/404 falls back to POST with

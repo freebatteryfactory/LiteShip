@@ -5,7 +5,8 @@
  */
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { Effect } from 'effect';
-import { Resumption } from '@czap/web';
+import * as core from '@czap/core';
+import { Resumption, registerStreamRecoverySubstrate } from '@czap/web';
 import streamDirective from '../../../packages/astro/src/client-directives/stream.js';
 import { MockEventSource } from '../../helpers/mock-event-source.js';
 import { _resetRuntimePolicyForTests } from '../../../packages/astro/src/runtime/policy.js';
@@ -240,6 +241,56 @@ describe('stream directive graph-native recovery (#133)', () => {
     });
     expect(signals).toEqual([]);
     expect(el.innerHTML).toContain('stale');
+  });
+
+  test('registered substrate routes czap:request-snapshot through gap-replay in PRODUCTION wiring (#133-full)', async () => {
+    // The directive — not test-only glue — must look up the host-registered
+    // substrate, feed SSE receipt frames into its live buffer, and prefer
+    // runGraphNativeGapReplay over the snapshot floor.
+    const localBase = { id: 'czap:base' } as never;
+    const adopt = vi.fn();
+    const gapReplay = vi.spyOn(core, 'runGraphNativeGapReplay').mockResolvedValue({
+      query: { status: 'ok', graph: localBase, etag: 'sha256:ok' },
+      replayedCells: [],
+      discretePayloads: [],
+    } as never);
+    const snapshotSpy = vi.spyOn(Resumption, 'fetchSnapshot');
+
+    const dispose = registerStreamRecoverySubstrate('hero', {
+      graphQueryUrl: '/api/graph',
+      mutationClient: { base: () => localBase, adopt },
+      cellStore: { get: () => undefined, register: () => {}, applyDiscrete: () => {} } as never,
+    });
+
+    try {
+      const el = makeEl('div', {
+        'data-czap-stream-url': '/api/feed',
+        'data-czap-stream-artifact': 'hero',
+      });
+      streamDirective(noop, {}, el);
+
+      // A receipt frame on the SSE stream lands in the substrate's live buffer.
+      const receiptEntry = {
+        receipt: { kind: 'graph-patch' },
+        patch: { _tag: 'GraphPatch', _version: 1, base: 'czap:base', ops: [], resultId: 'czap:next' },
+      };
+      const source = MockEventSource.instances[0]!;
+      source.simulateMessage(JSON.stringify({ type: 'receipt', data: receiptEntry }), 'evt-43');
+
+      el.dispatchEvent(
+        new CustomEvent('czap:request-snapshot', { detail: { reason: 'preserve-missing' }, bubbles: true }),
+      );
+
+      await vi.waitFor(() => {
+        expect(gapReplay).toHaveBeenCalledOnce();
+      });
+      const call = gapReplay.mock.calls[0]![0] as { queryUrl: string; entries: readonly unknown[] };
+      expect(call.queryUrl).toBe('/api/graph');
+      expect(call.entries).toContainEqual(receiptEntry);
+      expect(snapshotSpy).not.toHaveBeenCalled();
+    } finally {
+      dispose();
+    }
   });
 
   test('replay with dropped signals validates snapshot before applying HTML patches', async () => {

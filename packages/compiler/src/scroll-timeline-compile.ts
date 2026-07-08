@@ -19,7 +19,7 @@ import {
 } from '@czap/core';
 import { MotionCompiler } from './motion.js';
 import type { MotionCompileResult, MotionEasing, MotionScrollTimeline } from './motion.js';
-import { appendTranslateConsumer } from './motion-utils.js';
+import { appendReducedMotionGuard, appendTranslateConsumer } from './motion-utils.js';
 
 /** Compiled scroll-timeline artifacts. */
 export interface CompiledScrollTimeline {
@@ -111,12 +111,10 @@ export function compileScrollTimeline(
     plan,
   );
 
-  const gatedRaw = settle
-    ? `${css.raw}\n@media (prefers-reduced-motion: reduce) {\n` +
-      `  [data-czap-scroll="${intent.target}"] { animation: none !important; transition: none !important; }\n` +
-      `}\n`
-    : css.raw;
-  const gatedCss = settle ? Object.freeze({ ...css, raw: gatedRaw }) : css;
+  // The @media guard rides EVERY settle-policy compile — the server-side
+  // `prefersReducedMotion` hint only additionally zeroes durations. A user
+  // whose request lacked the client hint still gets the OS preference honored.
+  const gatedCss = intent.policy.reducedMotion === 'settle' ? Object.freeze(appendReducedMotionGuard(css, plan)) : css;
 
   const resultDigest = AddressedDigest.of(new TextEncoder().encode(gatedCss.raw));
   const { graph: graphWithDigest, projectionId } = sealProjectionDigest(graph, transitionId, resultDigest);
