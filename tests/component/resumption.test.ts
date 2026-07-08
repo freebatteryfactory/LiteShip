@@ -240,7 +240,10 @@ describe('Resumption.resume', () => {
       }),
     );
 
-    expect(fetchMock).toHaveBeenCalledWith('https://cdn.example.com/fx/snapshot/absolute-artifact');
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://cdn.example.com/fx/snapshot/absolute-artifact',
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
   });
 
   test('replay URL includes from/to query params', async () => {

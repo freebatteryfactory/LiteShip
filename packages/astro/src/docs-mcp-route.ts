@@ -42,11 +42,10 @@ export function loadDocsMcpBundle(bundleDir: string): DocsMcpBundle {
     readDoc: (path: string) => {
       const entry = manifest.entries.find((e) => e.path === path);
       if (!entry) return null;
-      try {
-        return readFileSync(join(filesDir, path.replace(/[\\/]/g, '__')), 'utf8');
-      } catch {
-        return null;
-      }
+      // Entry present in the sealed manifest but missing on disk is corruption —
+      // throw loudly. Mapping I/O failure to null would launder integrity loss
+      // into "unknown doc" at the route.
+      return readFileSync(join(filesDir, path.replace(/[\\/]/g, '__')), 'utf8');
     },
   };
 }
