@@ -14,6 +14,13 @@ describe('parseGauntletArgv', () => {
     expect(parsed.skipBuild).toBe(true);
   });
 
+  it('ignores a leading pnpm `--` separator (CI invokes gauntlet:full -- --profile …)', () => {
+    const parsed = parseGauntletArgv(['--', '--profile', 'ci-parallel-preflight', '--skip-build']);
+    expect(parsed.unexpected).toEqual([]);
+    expect(parsed.profile).toBe('ci-parallel-preflight');
+    expect(parsed.skipBuild).toBe(true);
+  });
+
   it('accepts --only and --skip as comma lists', () => {
     const parsed = parseGauntletArgv(['--only=bench,bench:gate', '--skip', 'build,flex:verify']);
     expect(parsed.only).toEqual(['bench', 'bench:gate']);

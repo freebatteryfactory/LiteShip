@@ -48,7 +48,10 @@ export function parseGauntletArgv(argv: readonly string[]): GauntletArgv {
 
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i]!;
-    if (arg === '--dry-run') {
+    if (arg === '--') {
+      // pnpm/npm pass a bare `--` separator through to the script; ignore it.
+      continue;
+    } else if (arg === '--dry-run') {
       dryRun = true;
     } else if (arg === '--help' || arg === '-h') {
       help = true;
