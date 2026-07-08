@@ -1,6 +1,6 @@
 {
   "name": "@czap/_spine",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "description": "Type-only declaration spine referenced by published `.d.ts` from `@czap/core` / `@czap/scene`",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",
