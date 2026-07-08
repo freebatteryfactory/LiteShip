@@ -19,7 +19,6 @@ describe('gauntlet phase subset selection', () => {
   it('expands ci-parallel-preflight without build/capsule:compile when skip-build', () => {
     const selected = selectGauntletPhases({ profile: 'ci-parallel-preflight', skipBuild: true });
     expect(selected.map((phase) => phase.label)).toEqual([
-      'rig-check',
       'typecheck',
       'lint',
       'lint:structural',

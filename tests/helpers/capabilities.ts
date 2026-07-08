@@ -50,8 +50,9 @@ const ASTRO_EXAMPLE_INDEX = join(REPO_ROOT, 'tests/integration/astro/dist/index.
 const INTRO_BED_FIXTURE = join(REPO_ROOT, 'examples/scenes/intro-bed.wav');
 
 function canCreateSymlink(): boolean {
-  const dir = mkdtempSync(join(tmpdir(), 'czap-symlink-probe-'));
+  let dir: string | undefined;
   try {
+    dir = mkdtempSync(join(tmpdir(), 'czap-symlink-probe-'));
     const target = join(dir, 'target');
     const link = join(dir, 'link');
     mkdirSync(target);
@@ -60,7 +61,7 @@ function canCreateSymlink(): boolean {
   } catch {
     return false;
   } finally {
-    rmSync(dir, { recursive: true, force: true });
+    if (dir !== undefined) rmSync(dir, { recursive: true, force: true });
   }
 }
 
