@@ -8,7 +8,7 @@
 
 > **docsMcpRoute**(`bundle`): (`request`) => `Promise`\<`Response`\>
 
-Defined in: [astro/src/docs-mcp-route.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/docs-mcp-route.ts#L64)
+Defined in: [astro/src/docs-mcp-route.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/docs-mcp-route.ts#L63)
 
 Minimal MCP-over-HTTP handler for docs tools: `docs/list`, `docs/search`, `docs/get`.
 Accepts POST with JSON-RPC body; returns structured JSON (not stdio NDJSON).

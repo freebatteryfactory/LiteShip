@@ -27,6 +27,7 @@ describe('astro header helpers', () => {
     expect(entries).toEqual([
       ['Accept-CH', CLIENT_HINTS_HEADERS['Accept-CH']!],
       ['Critical-CH', CLIENT_HINTS_HEADERS['Critical-CH']!],
+      ['Vary', CLIENT_HINTS_HEADERS['Vary']!],
     ]);
   });
 

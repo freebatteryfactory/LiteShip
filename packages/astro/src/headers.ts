@@ -80,7 +80,9 @@ export function getCzapHeaderEntries(options: {
     if (criticalCH) {
       entries.push(['Critical-CH', criticalCH]);
     }
-    if (vary) {
+    // Vary tracks Accept-CH / Critical-CH: empty overrides suppress all three
+    // (there is nothing for caches to vary on once hints are blanked).
+    if (vary && (acceptCH || criticalCH)) {
       entries.push(['Vary', vary]);
     }
   }
