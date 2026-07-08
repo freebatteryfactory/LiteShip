@@ -83,4 +83,29 @@ export function safe(el: HTMLElement, x: string) {
       'src/multiline-unsafe.ts',
     ]);
   });
+
+  test('CRLF line endings do not false-positive multiline guarded innerHTML', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'czap-consumer-'));
+    mkdirSync(join(dir, 'src'), { recursive: true });
+    writeFileSync(
+      join(dir, 'src', 'crlf-safe.ts'),
+      [
+        "import { createHtmlFragment } from '@czap/web';",
+        'export function safe(el: HTMLElement, x: string) {',
+        '  el.innerHTML =',
+        '    createHtmlFragment(x);',
+        '}',
+      ].join('\r\n'),
+    );
+    writeFileSync(
+      join(dir, 'src', 'crlf-unsafe.ts'),
+      ['export function unsafe(el: HTMLElement, userInput: string) {', '  el.innerHTML =', '    userInput;', '}'].join(
+        '\r\n',
+      ),
+    );
+    const findings = scanConsumerAppSource(dir);
+    expect(findings.filter((f) => f.rule === 'consumer.unguarded-html-sink').map((f) => f.file)).toEqual([
+      'src/crlf-unsafe.ts',
+    ]);
+  });
 });

@@ -111,7 +111,7 @@ export const CATEGORIES: readonly CategorySpec[] = [
   {
     name: 'docs',
     description: 'Generate + check docs.',
-    scripts: ['docs:build', 'docs:build:monolith', 'docs:bundle', 'docs:check', 'docs:gen'],
+    scripts: ['docs:build', 'docs:build:sharded', 'docs:bundle', 'docs:check', 'docs:gen'],
   },
   {
     name: 'demos',
