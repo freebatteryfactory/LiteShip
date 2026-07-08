@@ -86,9 +86,6 @@ export const symlinkUnprivileged = !canCreateSymlink();
 /** `coverage-instrumentation` — running under V8 coverage; the subprocess-spawning dev test is redundant there. */
 export const coverageInstrumentation = process.env.NODE_V8_COVERAGE !== undefined;
 
-/** `chmod-deny-untestable-on-windows` — chmod 0o000 does not deny file reads on Windows. */
-export const chmodDenyUntestableOnWindows = process.platform === 'win32';
-
 /** `eacces-untestable-as-root` — chmod 0o000 EACCES semantics are not enforceable when the test process runs as root. */
 export const canTestEacces = process.getuid !== undefined && process.getuid() !== 0;
 export const eaccesUntestableAsRoot = !canTestEacces;
