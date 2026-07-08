@@ -6,7 +6,7 @@
 
 # Function: buildResponsiveImageSet()
 
-> **buildResponsiveImageSet**(`variants`): `string`
+> **buildResponsiveImageSet**(`variants`, `baseWidth?`): `string`
 
 Defined in: [core/src/responsive-media.ts:122](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/responsive-media.ts#L122)
 
@@ -20,6 +20,10 @@ types are omitted rather than guessed.
 ### variants
 
 readonly [`ResponsiveMediaVariant`](../interfaces/ResponsiveMediaVariant.md)[]
+
+### baseWidth?
+
+`number`
 
 ## Returns
 

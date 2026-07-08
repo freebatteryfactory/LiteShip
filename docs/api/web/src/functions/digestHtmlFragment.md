@@ -8,7 +8,7 @@
 
 > **digestHtmlFragment**(`html`): `AddressedDigest`
 
-Defined in: [web/src/dpu/watch-and-prepare.ts:113](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/dpu/watch-and-prepare.ts#L113)
+Defined in: [web/src/dpu/watch-and-prepare.ts:114](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/dpu/watch-and-prepare.ts#L114)
 
 Mint the sha256 digest for an HTML fragment (UTF-8 bytes, content-address kernel).
 

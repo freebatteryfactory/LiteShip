@@ -194,6 +194,11 @@ export interface SendGraphQueryOptions {
   readonly ifNoneMatch?: string;
   /** Bounded retries on transport / server `error` outcomes (reads are idempotent). Default: 2. */
   readonly maxRetries?: number;
+  /**
+   * Base delay between retry attempts in ms (doubles each attempt — 150, 300,
+   * 600, …). Default: 150. Pass 0 for immediate retries (tests).
+   */
+  readonly retryDelayMs?: number;
 }
 
 const queryHeaders = (ifNoneMatch: string | undefined): Record<string, string> => {
@@ -210,6 +215,7 @@ const queryHeaders = (ifNoneMatch: string | undefined): Record<string, string> =
 async function fetchGraphQueryOnce(
   url: string,
   options: SendGraphQueryOptions,
+  skipQueryMethod = false,
 ): Promise<{ readonly response: Response; readonly usedFallback: boolean }> {
   const fetchImpl = options.fetchImpl ?? fetch;
   const init = {
@@ -217,12 +223,14 @@ async function fetchGraphQueryOnce(
     body: JSON.stringify({} satisfies Record<string, never>),
   };
 
-  let response = await fetchImpl(url, { ...init, method: 'QUERY' });
-  if (response.status !== 405 && response.status !== 501 && response.status !== 404) {
-    return { response, usedFallback: false };
+  if (!skipQueryMethod) {
+    const response = await fetchImpl(url, { ...init, method: 'QUERY' });
+    if (response.status !== 405 && response.status !== 501 && response.status !== 404) {
+      return { response, usedFallback: false };
+    }
   }
 
-  response = await fetchImpl(url, {
+  const response = await fetchImpl(url, {
     ...init,
     method: 'POST',
     headers: { ...init.headers, [GRAPH_QUERY_FALLBACK_HEADER]: '1' },
@@ -273,12 +281,25 @@ function parseGraphQueryHttpResponse(response: Response, body: unknown, ifNoneMa
  */
 export async function sendGraphQuery(url: string, options: SendGraphQueryOptions = {}): Promise<GraphQueryResponse> {
   const maxRetries = options.maxRetries ?? 2;
+  const retryDelayMs = options.retryDelayMs ?? 150;
   let lastError: GraphQueryResponse = { status: 'error', message: 'request failed after retries' };
+  // Once one attempt learned the host rejects QUERY (405/501/404 → POST
+  // fallback), later attempts go straight to POST — re-probing QUERY on every
+  // retry would double round trips against a host whose answer cannot change
+  // mid-recovery.
+  let knownFallback = false;
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    if (attempt > 0 && retryDelayMs > 0) {
+      // Exponential backoff — back-to-back retries hammer a struggling server.
+      await new Promise((resolve) => setTimeout(resolve, retryDelayMs * 2 ** (attempt - 1)));
+    }
+
     let response: Response;
     try {
-      ({ response } = await fetchGraphQueryOnce(url, options));
+      const once = await fetchGraphQueryOnce(url, options, knownFallback);
+      response = once.response;
+      knownFallback ||= once.usedFallback;
     } catch (error) {
       lastError = { status: 'error', message: `request failed: ${messageOf(error)}` };
       continue;

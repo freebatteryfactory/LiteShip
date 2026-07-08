@@ -4,6 +4,14 @@
  * Fetches the production response and verifies CSP / COOP / COEP plus the
  * Accept-CH / Critical-CH pair (#116).
  *
+ * SSRF hardening: the probe only ever fetches public HTTPS origins. The URL
+ * (and every redirect hop — redirects are followed MANUALLY so each hop is
+ * re-validated) must be `https:` and must not name a loopback / private /
+ * link-local host. Each hop is bounded by a timeout so a black-holed URL
+ * cannot hang `--ci` runs. Hostname checks are literal (no DNS resolution),
+ * which is the right trade-off for a dev CLI: the https requirement means a
+ * rebinding host still has to present a valid certificate for the name.
+ *
  * @module
  */
 
@@ -11,29 +19,109 @@ import type { DoctorCheck } from './types.js';
 
 const REQUIRED_ISOLATION = ['Cross-Origin-Opener-Policy', 'Cross-Origin-Embedder-Policy'] as const;
 
+const MAX_REDIRECT_HOPS = 5;
+const FETCH_TIMEOUT_MS = 10_000;
+
+const IPV4_RE = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+
+/** True when `hostname` is a loopback / private / link-local / special-use host. */
+function isBlockedHostname(hostname: string): boolean {
+  const host = hostname.toLowerCase().replace(/^\[|\]$/g, '');
+  if (host === '' || host === 'localhost' || host.endsWith('.localhost') || host.endsWith('.local')) {
+    return true;
+  }
+
+  const v4 = IPV4_RE.exec(host);
+  if (v4) {
+    const a = Number(v4[1]);
+    const b = Number(v4[2]);
+    if (a === 0 || a === 10 || a === 127) return true; // this-net, private, loopback
+    if (a === 169 && b === 254) return true; // link-local / cloud metadata
+    if (a === 172 && b >= 16 && b <= 31) return true; // private
+    if (a === 192 && b === 168) return true; // private
+    if (a === 100 && b >= 64 && b <= 127) return true; // CGNAT
+    return false;
+  }
+
+  if (host.includes(':')) {
+    if (host === '::' || host === '::1') return true; // unspecified, loopback
+    if (host.startsWith('fc') || host.startsWith('fd')) return true; // ULA fc00::/7
+    if (/^fe[89ab]/.test(host)) return true; // link-local fe80::/10
+    if (host.startsWith('::ffff:')) return isBlockedHostname(host.slice('::ffff:'.length)); // v4-mapped
+  }
+
+  return false;
+}
+
+/** Reason a URL is refused as a deployed-probe target, or null when acceptable. */
+function rejectedDeployedUrl(url: URL): string | null {
+  if (url.protocol !== 'https:') {
+    return `Refusing to probe non-HTTPS URL ${url.href} — deployed probes only fetch public https:// origins`;
+  }
+  if (isBlockedHostname(url.hostname)) {
+    return `Refusing to probe ${url.href} — host resolves to a loopback/private/link-local range (SSRF guard)`;
+  }
+  return null;
+}
+
 function headerSummary(headers: Headers, name: string): string | null {
   const value = headers.get(name);
   return value && value.trim().length > 0 ? value.trim() : null;
 }
 
+const refusedCheck = (detail: string): readonly DoctorCheck[] => [
+  {
+    id: 'deployed.fetch',
+    label: 'Deployed site fetch',
+    status: 'fail',
+    detail,
+    hint: 'Pass a public HTTPS URL to `czap doctor --deployed <url>`',
+  },
+];
+
 /**
  * Probe a deployed URL's response headers. Returns one check per concern.
  */
 export async function probeDeployedSite(url: string): Promise<readonly DoctorCheck[]> {
+  let current: URL;
+  try {
+    current = new URL(url);
+  } catch {
+    return refusedCheck(`Not a valid URL: ${url}`);
+  }
+
   let response: Response;
   try {
-    response = await fetch(url, { redirect: 'follow' });
+    let hops = 0;
+    for (;;) {
+      const rejection = rejectedDeployedUrl(current);
+      if (rejection) {
+        return refusedCheck(rejection);
+      }
+
+      response = await fetch(current.href, {
+        redirect: 'manual',
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+      });
+
+      if (response.status >= 300 && response.status < 400) {
+        const location = response.headers.get('location');
+        if (!location) {
+          break; // 3xx without Location — report it as-is below
+        }
+        hops += 1;
+        if (hops > MAX_REDIRECT_HOPS) {
+          return refusedCheck(`Too many redirects (> ${MAX_REDIRECT_HOPS}) starting from ${url}`);
+        }
+        // Each hop re-enters the loop and is re-validated against the SSRF guard.
+        current = new URL(location, current);
+        continue;
+      }
+      break;
+    }
   } catch (error) {
     const detail = error instanceof Error ? error.message : String(error);
-    return [
-      {
-        id: 'deployed.fetch',
-        label: 'Deployed site fetch',
-        status: 'fail',
-        detail: `Could not fetch ${url}: ${detail}`,
-        hint: 'Pass a reachable HTTPS URL to `czap doctor --deployed <url>`',
-      },
-    ];
+    return refusedCheck(`Could not fetch ${current.href}: ${detail}`);
   }
 
   const headers = response.headers;
@@ -42,7 +130,9 @@ export async function probeDeployedSite(url: string): Promise<readonly DoctorChe
       id: 'deployed.fetch',
       label: 'Deployed site fetch',
       status: response.ok ? 'ok' : 'warn',
-      detail: response.ok ? `${response.status} ${response.statusText}` : `HTTP ${response.status} from ${url}`,
+      detail: response.ok
+        ? `${response.status} ${response.statusText}`
+        : `HTTP ${response.status} from ${current.href}`,
     },
   ];
 

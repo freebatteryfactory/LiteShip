@@ -1,9 +1,10 @@
 import { describe, expect, test, vi, afterEach } from 'vitest';
 import { docsMcpRoute, loadDocsMcpBundle } from '../../../packages/astro/src/docs-mcp-route.js';
 import { emitDocsBundle } from '../../../scripts/docs-bundle.ts';
-import { mkdtempSync, readdirSync, rmSync } from 'node:fs';
+import { mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { captureDiagnosticsAsync } from '../../helpers/diagnostics.js';
 
 describe('docsMcpRoute (#113)', () => {
   afterEach(() => {
@@ -63,15 +64,33 @@ describe('docsMcpRoute (#113)', () => {
 
     expect(() => bundle.readDoc('GLOSSARY.md')).toThrow(/ENOENT/);
 
-    // The route rejects (host surfaces a 500) rather than replying "Unknown doc".
+    // The route boundary answers with a STRUCTURED JSON-RPC internal error —
+    // never "Unknown doc", never a raw escaped throw (framework 500 + stack).
     const route = docsMcpRoute(bundle);
-    await expect(
-      route(
+    const events = await captureDiagnosticsAsync(async ({ events }) => {
+      const res = await route(
         new Request('http://localhost/mcp', {
           method: 'POST',
           body: JSON.stringify({ jsonrpc: '2.0', id: 4, method: 'docs/get', params: { path: 'GLOSSARY.md' } }),
         }),
-      ),
-    ).rejects.toThrow(/ENOENT/);
+      );
+      const json = (await res.json()) as { result: { error?: { code: number; message: string } } };
+      expect(json.result.error?.code).toBe(-32603);
+      expect(json.result.error?.message).not.toContain('ENOENT'); // no raw detail leaks to the client
+      return [...events];
+    });
+    expect(events.map((event) => event.code)).toContain('docs-bundle-corruption');
+  });
+
+  test('manifest-listed doc whose BYTES drifted after docs:bundle throws (content-addressed seal)', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'czap-docs-bundle-'));
+    await emitDocsBundle({ outDir: dir, sources: ['GLOSSARY.md'], version: 'test' });
+
+    const filesDir = join(dir, 'files');
+    const [file] = readdirSync(filesDir);
+    writeFileSync(join(filesDir, file!), 'tampered content after sealing');
+
+    const bundle = loadDocsMcpBundle(dir);
+    expect(() => bundle.readDoc('GLOSSARY.md')).toThrow(/does not match its sealed manifest hash/);
   });
 });

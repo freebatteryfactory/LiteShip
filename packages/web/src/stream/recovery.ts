@@ -128,7 +128,9 @@ export const runGraphNativeRecovery = async (options: StreamRecoveryOptions): Pr
     if (result.query.status === 'ok' || result.query.status === 'not_modified') {
       return;
     }
-    // QUERY refused/error — fall through to snapshot floor (loud path already refused).
+    // QUERY refused/error — still attempt a conditional refresh before the
+    // snapshot floor so the host's base is as current as the read-leg allows.
+    await adoptRefreshedGraphBase(options.mutationClient, options.graphQueryUrl);
   } else {
     await adoptRefreshedGraphBase(options.mutationClient, options.graphQueryUrl);
   }

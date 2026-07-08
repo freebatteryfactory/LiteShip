@@ -8,7 +8,7 @@
 
 > **resolveResponsiveMedia**(`intent`, `caps`): [`ResolvedResponsiveMedia`](../interfaces/ResolvedResponsiveMedia.md)
 
-Defined in: [core/src/responsive-media.ts:142](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/responsive-media.ts#L142)
+Defined in: [core/src/responsive-media.ts:161](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/responsive-media.ts#L161)
 
 Resolve the single best `src` for SSR / fallback `<img>` given capabilities.
 

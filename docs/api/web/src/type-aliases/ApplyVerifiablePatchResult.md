@@ -8,7 +8,7 @@
 
 > **ApplyVerifiablePatchResult** = \{ `_tag`: `"applied"`; `appliedDigest`: `AddressedDigest`; `envelope`: [`VerifiablePatchEnvelope`](../interfaces/VerifiablePatchEnvelope.md); `rung`: [`DpuRung`](DpuRung.md); \} \| \{ `_tag`: `"refused"`; `verification`: `Exclude`\<[`VerifiablePatchVerification`](VerifiablePatchVerification.md), \{ `_tag`: `"verified"`; \}\>; \} \| \{ `_tag`: `"sanitizedEmpty"`; `envelope`: [`VerifiablePatchEnvelope`](../interfaces/VerifiablePatchEnvelope.md); \}
 
-Defined in: [web/src/dpu/watch-and-prepare.ts:70](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/dpu/watch-and-prepare.ts#L70)
+Defined in: [web/src/dpu/watch-and-prepare.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/dpu/watch-and-prepare.ts#L71)
 
 Outcome of applying a verifiable patch. `applied` carries the digest of the
 DOM serialization actually rendered (post-sanitization); `sanitizedEmpty`

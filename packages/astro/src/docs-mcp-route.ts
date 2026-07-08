@@ -4,8 +4,11 @@
  * @module
  */
 
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { Diagnostics } from '@czap/core';
+import { ValidationError } from '@czap/error';
 
 /** One hashed file entry inside a docs-bundle manifest. */
 export interface DocsBundleManifestEntry {
@@ -45,7 +48,18 @@ export function loadDocsMcpBundle(bundleDir: string): DocsMcpBundle {
       // Entry present in the sealed manifest but missing on disk is corruption —
       // throw loudly. Mapping I/O failure to null would launder integrity loss
       // into "unknown doc" at the route.
-      return readFileSync(join(filesDir, path.replace(/[\\/]/g, '__')), 'utf8');
+      const bytes = readFileSync(join(filesDir, path.replace(/[\\/]/g, '__')));
+      // The bundle is content-addressed: bytes that no longer hash to the sealed
+      // manifest entry are the same corruption as a missing file — throw, don't
+      // serve content that silently drifted from the bundleId.
+      const sha256 = createHash('sha256').update(bytes).digest('hex');
+      if (sha256 !== entry.sha256) {
+        throw ValidationError(
+          'loadDocsMcpBundle',
+          `doc "${path}" on disk does not match its sealed manifest hash (expected sha256 ${entry.sha256}, got ${sha256}) — the bundle drifted after docs:bundle`,
+        );
+      }
+      return bytes.toString('utf8');
     },
   };
 }
@@ -79,7 +93,26 @@ export function docsMcpRoute(bundle: DocsMcpBundle): (request: Request) => Promi
     }
     if (method === 'docs/get') {
       const path = String(params?.path ?? '');
-      const text = bundle.readDoc(path);
+      let text: string | null;
+      try {
+        text = bundle.readDoc(path);
+      } catch (error) {
+        // Bundle corruption (manifest-listed file missing or hash-drifted) stays
+        // LOUD — a diagnostic names the real failure — but the route boundary
+        // answers with a structured JSON-RPC internal error instead of letting
+        // the raw throw escape as a framework 500 (with a stack) to the client.
+        Diagnostics.warn({
+          source: 'czap/astro.docs-mcp-route',
+          code: 'docs-bundle-corruption',
+          message:
+            `docs/get "${path}" failed reading the sealed bundle: ` +
+            `${error instanceof Error ? error.message : String(error)}. ` +
+            'Rebuild the bundle with `pnpm run docs:bundle` and redeploy.',
+        });
+        return jsonRpc(id, {
+          error: { code: -32603, message: `Internal error: docs bundle integrity failure for ${path}` },
+        });
+      }
       if (text === null) return jsonRpc(id, { error: { code: -32602, message: `Unknown doc: ${path}` } });
       return jsonRpc(id, { path, text });
     }

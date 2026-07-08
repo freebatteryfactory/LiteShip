@@ -102,10 +102,36 @@ describe('ResponsiveMedia projection', () => {
     expect(srcset).toContain('/img/hero-2400.jpg 2400w');
   });
 
-  test('buildResponsiveImageSet emits native image-set()', () => {
-    const imageSet = buildResponsiveImageSet(heroMediaIntent().variants);
+  test('buildResponsiveImageSet emits native image-set() with resolution descriptors only', () => {
+    const imageSet = buildResponsiveImageSet([
+      { src: '/img/hero-800.jpg', descriptor: '1x' },
+      { src: '/img/hero-1600.jpg', descriptor: '2x' },
+    ]);
     expect(imageSet).toMatch(/^image-set\(/);
-    expect(imageSet).toContain('url("/img/hero-1600.jpg") 1600w');
+    expect(imageSet).toContain('url("/img/hero-1600.jpg") 2x');
+    expect(imageSet).not.toContain('w');
+  });
+
+  test('buildResponsiveImageSet infers x descriptors from width variants', () => {
+    const imageSet = buildResponsiveImageSet(heroMediaIntent().variants);
+    expect(imageSet).toContain('url("/img/hero-1600.jpg") 2x');
+    expect(imageSet).not.toContain('1600w');
+  });
+
+  test('Save-Data preload targets the light asset, not the heavy srcset', () => {
+    const intent = ResponsiveMedia.intent({
+      id: 'hero',
+      alt: 'x',
+      variants: [
+        { src: '/img/hero-800.jpg', width: 800 },
+        { src: '/img/hero-2400.jpg', width: 2400 },
+      ],
+      saveDataVariant: { src: '/img/hero-lite.jpg', width: 400 },
+    });
+    const projection = projectResponsiveMediaPicture(intent, { devicePixelRatio: 3, saveData: true });
+    expect(projection.resolved.src).toBe('/img/hero-lite.jpg');
+    expect(projection.preload).toContain('/img/hero-lite.jpg');
+    expect(projection.preload).not.toContain('hero-2400');
   });
 
   test('projectResponsiveMediaPicture emits picture + save-data source', () => {

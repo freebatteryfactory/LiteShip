@@ -14,6 +14,7 @@ import {
   replayDiscreteFromPatchReceipts,
   runGraphNativeGapReplay,
 } from '../../../packages/core/src/index.js';
+import { nodeFromParts } from '../../../packages/core/src/index.js';
 import { graph, node } from '../../helpers/graph-fixtures.js';
 
 describe('graph-query gap replay (#133-full)', () => {
@@ -47,6 +48,56 @@ describe('graph-query gap replay (#133-full)', () => {
     expect(chain).toHaveLength(2);
     expect(chain[0]!.resultId).toBe(mid.id);
     expect(chain[1]!.resultId).toBe(server.id);
+  });
+
+  test('FORKED buffer: selects the branch that reaches the server graph, not buffer order', async () => {
+    const base = graph([node('a')]);
+    // Dead fork FIRST in the buffer — insertion order must not win.
+    const deadPatch = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('dead.mode') }]);
+    // Live branch: base → mid → server.
+    const midPatch = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('live.mode') }]);
+    const mid = GraphPatch.apply(base, midPatch);
+    const tailPatch = GraphPatch.propose(mid, [{ op: 'add', family: 'signal', node: node('tail.mode') }]);
+    const server = GraphPatch.apply(mid, tailPatch);
+
+    const deadReceipt = await Effect.runPromise(GraphPatch.receipt(deadPatch));
+    const midReceipt = await Effect.runPromise(GraphPatch.receipt(midPatch));
+    const tailReceipt = await Effect.runPromise(GraphPatch.receipt(tailPatch, { previous: midReceipt.hash }));
+
+    const chain = chainPatchesBetween(base.id, server.id, [
+      { receipt: deadReceipt, patch: deadPatch },
+      { receipt: midReceipt, patch: midPatch },
+      { receipt: tailReceipt, patch: tailPatch },
+    ]);
+
+    expect(chain).toHaveLength(2);
+    expect(chain[0]).toBe(midPatch);
+    expect(chain[1]).toBe(tailPatch);
+    expect(chain).not.toContain(deadPatch);
+  });
+
+  test('PARTIAL buffer: a chain that never reaches the server graph is refused (empty), not replayed', async () => {
+    const base = graph([node('a')]);
+    const forkPatch = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('fork.mode') }]);
+    const forkReceipt = await Effect.runPromise(GraphPatch.receipt(forkPatch));
+    // Server graph the buffered branch does NOT bridge to.
+    const unrelated = graph([node('b'), node('c')]);
+
+    const chain = chainPatchesBetween(base.id, unrelated.id, [{ receipt: forkReceipt, patch: forkPatch }]);
+    expect(chain).toEqual([]);
+  });
+
+  test('signal UPDATE ops replay as discrete crossings (diff collapses remove+add)', () => {
+    const before = graph([node('workspace.mode'), node('scroll.y')]);
+    // Same logical signal cell, changed payload (range) → new content address →
+    // GraphPatch.diff collapses the remove+add into op: 'update'.
+    const changed = nodeFromParts({ ...node('workspace.mode'), range: [0, 4] as const });
+    const after = graph([changed, node('scroll.y')]);
+    const patch = GraphPatch.diff(before, after);
+    expect(patch.ops.some((op) => op.op === 'update')).toBe(true);
+
+    const payloads = discreteSignalPayloadsFromPatch(patch);
+    expect(payloads).toEqual([{ state: 'workspace.mode' }]);
   });
 
   test('replayDiscreteFromPatchReceipts hydrates replayable StateCells only', async () => {

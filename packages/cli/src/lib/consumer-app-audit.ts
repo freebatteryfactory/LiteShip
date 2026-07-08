@@ -36,6 +36,23 @@ function lineOf(source: string, index: number): number {
   return source.slice(0, index).split('\n').length;
 }
 
+/** Start offset of the innermost `{…}` block enclosing `index`, or 0 at module scope. */
+function enclosingBlockStart(source: string, index: number): number {
+  const before = source.slice(0, index);
+  let depth = 0;
+  let blockStart = 0;
+  for (let i = 0; i < before.length; i++) {
+    const ch = before[i]!;
+    if (ch === '{') {
+      if (depth === 0) blockStart = i;
+      depth++;
+    } else if (ch === '}') {
+      depth = Math.max(0, depth - 1);
+    }
+  }
+  return depth > 0 ? blockStart : 0;
+}
+
 function scanFile(rel: string, source: string): ConsumerAppFinding[] {
   const findings: ConsumerAppFinding[] = [];
 
@@ -50,12 +67,16 @@ function scanFile(rel: string, source: string): ConsumerAppFinding[] {
     });
   }
 
-  if (
-    /\b(innerHTML|outerHTML)\s*=/.test(source) &&
-    !source.includes('createHtmlFragment') &&
-    !source.includes('assignInnerHTML')
-  ) {
-    const idx = source.search(/\b(innerHTML|outerHTML)\s*=/);
+  const htmlSinkRe = /\b(innerHTML|outerHTML)\s*=/g;
+  let sinkMatch: RegExpExecArray | null;
+  while ((sinkMatch = htmlSinkRe.exec(source)) !== null) {
+    const idx = sinkMatch.index;
+    const block = source.slice(enclosingBlockStart(source, idx), idx + 120);
+    // Per-block guard only — a createHtmlFragment import elsewhere in the file
+    // must not suppress an unguarded sink in a different function.
+    if (block.includes('createHtmlFragment') || block.includes('assignInnerHTML')) {
+      continue;
+    }
     findings.push({
       rule: 'consumer.unguarded-html-sink',
       severity: 'error',

@@ -188,6 +188,25 @@ describe('sanitizedEmpty + applied-DOM digest (adversarial QA)', () => {
 });
 
 describe('marker dedup registry (adversarial QA)', () => {
+  it('refuses an envelope stamped for a different marker than the target slot', () => {
+    const target = document.createElement('div');
+    document.body.appendChild(target);
+    watchAndPrepare('signal slot.a', target);
+
+    const envelope = stampVerifiablePatch({
+      marker: 'signal slot.b',
+      baseGraphId: baseId,
+      resultGraphId: nextId,
+      html: '<p>wrong slot</p>',
+    });
+    const result = applyVerifiablePatch(target, envelope, baseId, { available: false, rung: 'floor-morph' });
+    expect(result._tag).toBe('refused');
+    if (result._tag === 'refused') {
+      expect(result.verification._tag).toBe('markerMismatch');
+    }
+    expect(target.innerHTML).toBe('');
+  });
+
   it('throws when a marker is re-watched on a DIFFERENT connected element', () => {
     const first = document.createElement('div');
     const second = document.createElement('div');

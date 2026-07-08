@@ -119,11 +119,30 @@ export function buildResponsiveSrcset(variants: readonly ResponsiveMediaVariant[
  * Uses `type()` only when variants carry standard image extensions; unknown
  * types are omitted rather than guessed.
  */
-export function buildResponsiveImageSet(variants: readonly ResponsiveMediaVariant[]): string {
+export function buildResponsiveImageSet(variants: readonly ResponsiveMediaVariant[], baseWidth?: number): string {
   const parts: string[] = [];
+  const inferredBase = baseWidth ?? variants.find((v) => v.width !== undefined && v.width > 0)?.width ?? 0;
   for (const variant of variants) {
-    const descriptor =
-      variant.descriptor ?? (variant.width !== undefined && variant.width > 0 ? `${variant.width}w` : '1x');
+    let descriptor: string | undefined;
+    if (variant.descriptor !== undefined) {
+      const trimmed = variant.descriptor.trim();
+      if (/^[\d.]+x$/i.test(trimmed)) {
+        descriptor = trimmed;
+      } else {
+        const explicit = parseDescriptorDpr(trimmed);
+        if (explicit !== undefined) descriptor = `${explicit}x`;
+      }
+      // `Nw` width descriptors are invalid inside CSS image-set() — skip.
+    }
+    if (descriptor === undefined && variant.width !== undefined && inferredBase > 0) {
+      const dpr = variant.width / inferredBase;
+      if (Number.isFinite(dpr) && dpr > 0) {
+        descriptor = `${dpr}x`;
+      }
+    }
+    if (descriptor === undefined) {
+      continue;
+    }
     parts.push(`url("${variant.src}") ${descriptor}`);
   }
   if (parts.length === 0) return 'none';
@@ -209,9 +228,11 @@ export function projectResponsiveMediaPicture(
       ? `<picture data-czap-responsive="${escapeAttr(intent.id)}">${sources.join('')}${img}</picture>`
       : img;
 
+  const saveDataActive = caps.saveData && (resolved.reason === 'save-data' || resolved.reason === 'save-data-floor');
+  const preloadSrcset = saveDataActive && saveDataSrcset.length > 0 ? saveDataSrcset : srcset;
   const preload =
-    srcset.length > 0
-      ? `<link rel="preload" as="image" href="${escapeAttr(resolved.src)}" imagesrcset="${escapeAttr(srcset)}" imagesizes="${escapeAttr(sizes)}" />`
+    preloadSrcset.length > 0
+      ? `<link rel="preload" as="image" href="${escapeAttr(resolved.src)}" imagesrcset="${escapeAttr(preloadSrcset)}" imagesizes="${escapeAttr(sizes)}" />`
       : `<link rel="preload" as="image" href="${escapeAttr(resolved.src)}" />`;
 
   return Object.freeze({
