@@ -6,7 +6,7 @@
 
 # Interface: WatchAndPrepareHandle
 
-Defined in: [web/src/dpu/watch-and-prepare.ts:85](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/dpu/watch-and-prepare.ts#L85)
+Defined in: [web/src/dpu/watch-and-prepare.ts:86](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/dpu/watch-and-prepare.ts#L86)
 
 Handle returned by [watchAndPrepare](../functions/watchAndPrepare.md) — stamps and applies verifiable patches.
 
@@ -16,7 +16,7 @@ Handle returned by [watchAndPrepare](../functions/watchAndPrepare.md) — stamps
 
 > `readonly` **capability**: [`DpuCapability`](../type-aliases/DpuCapability.md)
 
-Defined in: [web/src/dpu/watch-and-prepare.ts:88](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/dpu/watch-and-prepare.ts#L88)
+Defined in: [web/src/dpu/watch-and-prepare.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/dpu/watch-and-prepare.ts#L89)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [web/src/dpu/watch-and-prepare.ts:88](https://github.com/freebattery
 
 > `readonly` **marker**: `string`
 
-Defined in: [web/src/dpu/watch-and-prepare.ts:86](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/dpu/watch-and-prepare.ts#L86)
+Defined in: [web/src/dpu/watch-and-prepare.ts:87](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/dpu/watch-and-prepare.ts#L87)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [web/src/dpu/watch-and-prepare.ts:86](https://github.com/freebattery
 
 > `readonly` **target**: `Element`
 
-Defined in: [web/src/dpu/watch-and-prepare.ts:87](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/dpu/watch-and-prepare.ts#L87)
+Defined in: [web/src/dpu/watch-and-prepare.ts:88](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/dpu/watch-and-prepare.ts#L88)
 
 ## Methods
 
@@ -40,7 +40,7 @@ Defined in: [web/src/dpu/watch-and-prepare.ts:87](https://github.com/freebattery
 
 > **apply**(`envelope`, `currentBaseGraphId`): [`ApplyVerifiablePatchResult`](../type-aliases/ApplyVerifiablePatchResult.md)
 
-Defined in: [web/src/dpu/watch-and-prepare.ts:94](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/dpu/watch-and-prepare.ts#L94)
+Defined in: [web/src/dpu/watch-and-prepare.ts:95](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/dpu/watch-and-prepare.ts#L95)
 
 #### Parameters
 
@@ -62,7 +62,7 @@ Defined in: [web/src/dpu/watch-and-prepare.ts:94](https://github.com/freebattery
 
 > **dispose**(): `void`
 
-Defined in: [web/src/dpu/watch-and-prepare.ts:96](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/dpu/watch-and-prepare.ts#L96)
+Defined in: [web/src/dpu/watch-and-prepare.ts:97](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/dpu/watch-and-prepare.ts#L97)
 
 Release the marker registration so the name can be re-watched.
 
@@ -76,7 +76,7 @@ Release the marker registration so the name can be re-watched.
 
 > **stamp**(`input`): [`VerifiablePatchEnvelope`](VerifiablePatchEnvelope.md)
 
-Defined in: [web/src/dpu/watch-and-prepare.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/dpu/watch-and-prepare.ts#L89)
+Defined in: [web/src/dpu/watch-and-prepare.ts:90](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/dpu/watch-and-prepare.ts#L90)
 
 #### Parameters
 

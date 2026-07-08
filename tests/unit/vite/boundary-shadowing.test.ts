@@ -15,4 +15,9 @@ describe('boundary-shadowing diagnostic (#114)', () => {
     const warnings = diagnoseBoundaryShadowing('.hero { color: red; }', '.footer { color: blue; }', 'app.css');
     expect(warnings).toEqual([]);
   });
+
+  test('does not false-positive on substring selector names (.hero vs .hero-title)', () => {
+    const warnings = diagnoseBoundaryShadowing('.hero { color: red; }', '.hero-title { color: blue; }', 'app.css');
+    expect(warnings).toEqual([]);
+  });
 });

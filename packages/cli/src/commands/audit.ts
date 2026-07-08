@@ -38,7 +38,16 @@ export async function audit(
 
   if (opts.consumerApp) {
     const { scanConsumerAppSource } = await import('../lib/consumer-app-audit.js');
-    const findings = scanConsumerAppSource(cwd);
+    // A filesystem failure mid-scan (permissions, file deleted between walk and
+    // read) must produce the same structured emitError envelope the rest of the
+    // CLI guarantees — not an unhandled rejection.
+    let findings: ReturnType<typeof scanConsumerAppSource>;
+    try {
+      findings = scanConsumerAppSource(cwd);
+    } catch (error) {
+      emitError('audit', error instanceof Error ? error.message : String(error));
+      return LOAD_FAILURE_EXIT;
+    }
     const receipt = {
       status: findings.some((f) => f.severity === 'error') ? ('failed' as const) : ('ok' as const),
       command: 'audit',

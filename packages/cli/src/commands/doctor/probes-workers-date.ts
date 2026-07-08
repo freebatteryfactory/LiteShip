@@ -35,9 +35,15 @@ function walkSourceFiles(dir: string, root: string, out: string[]): void {
 }
 
 function hasModuleScopeDate(source: string): boolean {
-  // Strip block and line comments, then scan only before the first top-level export/function/class.
   const stripped = source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
-  const topLevel = stripped.split(/\nexport\s+/)[0] ?? stripped;
+  // `export const foo = Date.now()` is module-scope ambient — the old
+  // split-before-export heuristic missed it when export was the first statement.
+  if (/\bexport\s+(?:const|let|var)\s+\w+\s*=[^;{]*\bDate\.now\s*\(/.test(stripped)) return true;
+  if (/\bexport\s+(?:const|let|var)\s+\w+\s*=[^;{]*\bnew\s+Date\s*\(/.test(stripped)) return true;
+  const topLevel =
+    stripped.split(
+      /\n(?=\s*(?:export\s+(?:default\s+)?(?:function|class)\b|export\s+default\b|function\s|class\s))/,
+    )[0] ?? stripped;
   return DATE_PATTERNS.some((re) => re.test(topLevel));
 }
 

@@ -8,7 +8,7 @@
 
 > **verifyVerifiablePatch**(`envelope`, `currentBaseGraphId`): [`VerifiablePatchVerification`](../type-aliases/VerifiablePatchVerification.md)
 
-Defined in: [web/src/dpu/watch-and-prepare.ts:134](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/dpu/watch-and-prepare.ts#L134)
+Defined in: [web/src/dpu/watch-and-prepare.ts:135](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/dpu/watch-and-prepare.ts#L135)
 
 Verify a stamped envelope against the live base graph id and fragment bytes.
 

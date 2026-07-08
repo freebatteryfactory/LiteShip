@@ -8,7 +8,7 @@
 
 > **replayDiscreteFromPatchReceipts**(`options`): `object`
 
-Defined in: [core/src/graph-query-gap-replay.ts:136](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query-gap-replay.ts#L136)
+Defined in: [core/src/graph-query-gap-replay.ts:158](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query-gap-replay.ts#L158)
 
 Replay missed discrete crossings from a patch/receipt chain — continuous
 transients are stripped by the discrete/continuous law.

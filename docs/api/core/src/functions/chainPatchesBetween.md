@@ -8,9 +8,19 @@
 
 > **chainPatchesBetween**(`localBaseId`, `serverGraphId`, `entries`): readonly [`GraphPatch`](../interfaces/GraphPatch.md)[]
 
-Defined in: [core/src/graph-query-gap-replay.ts:87](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query-gap-replay.ts#L87)
+Defined in: [core/src/graph-query-gap-replay.ts:103](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query-gap-replay.ts#L103)
 
-Walk a linear patch/receipt chain from `localBaseId` toward `serverGraphId`.
+Find the patch/receipt chain from `localBaseId` to `serverGraphId`.
+
+The receipt buffer may hold FORKS (multiple patches sharing one base) and
+partial branches (chains that never reach the server graph). Selection is a
+depth-first path search: only the branch that actually ends at
+`serverGraphId` is returned. A fork that dead-ends is backtracked, never
+replayed — replaying discrete payloads from a branch the server did not
+take would be silently wrong. When NO buffered branch reaches the server
+graph (missing tail receipt, unrelated fork) the result is EMPTY: the QUERY
+adoption already corrected the graph, and no discrete replay beats a wrong
+one.
 
 ## Parameters
 

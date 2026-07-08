@@ -6,7 +6,7 @@
 
 # Interface: DocsMcpBundle
 
-Defined in: [astro/src/docs-mcp-route.ts:26](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/docs-mcp-route.ts#L26)
+Defined in: [astro/src/docs-mcp-route.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/docs-mcp-route.ts#L29)
 
 Loaded docs bundle: sealed manifest plus a path→body reader.
 
@@ -16,7 +16,7 @@ Loaded docs bundle: sealed manifest plus a path→body reader.
 
 > `readonly` **manifest**: [`DocsBundleManifest`](DocsBundleManifest.md)
 
-Defined in: [astro/src/docs-mcp-route.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/docs-mcp-route.ts#L27)
+Defined in: [astro/src/docs-mcp-route.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/docs-mcp-route.ts#L30)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [astro/src/docs-mcp-route.ts:27](https://github.com/freebatteryfacto
 
 > `readonly` **readDoc**: (`path`) => `string` \| `null`
 
-Defined in: [astro/src/docs-mcp-route.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/docs-mcp-route.ts#L28)
+Defined in: [astro/src/docs-mcp-route.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/docs-mcp-route.ts#L31)
 
 #### Parameters
 

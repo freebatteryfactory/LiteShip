@@ -105,8 +105,9 @@ export function compileReveal(
 
   // The @media guard rides every settle-policy compile — client-side reduced
   // motion must hold even when the request carried no Sec-CH hint.
-  const css =
-    intent.policy.reducedMotion === 'settle' ? Object.freeze(appendReducedMotionGuard(compiled, motion.css)) : compiled;
+  const css = Object.freeze(
+    intent.policy.reducedMotion === 'settle' ? appendReducedMotionGuard(compiled, motion.css) : compiled,
+  );
 
   const resultDigest = AddressedDigest.of(new TextEncoder().encode(css.raw));
   const { graph: graphWithDigest, projectionId } = sealProjectionDigest(graph, transitionId, resultDigest);

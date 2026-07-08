@@ -158,13 +158,10 @@ export async function transformCss(code: string, id: string, ctx: TransformCssCo
   // Boundary-shadowing diagnostic (#114): must run BEFORE the early return so a
   // foreign app.css (no @czap at-rules) still gets checked against compiled
   // boundary output from other sheets in the same project.
-  if (!hasQuantize && cache.lastCompiledBoundaryCss.value) {
+  if (!hasQuantize && cache.lastCompiledBoundaryCss.size > 0) {
     const { diagnoseBoundaryShadowing } = await import('./boundary-shadowing.js');
-    for (const warning of diagnoseBoundaryShadowing(
-      cache.lastCompiledBoundaryCss.value,
-      normalizeCssLineEndings(code),
-      id,
-    )) {
+    const boundaryCss = [...cache.lastCompiledBoundaryCss.values()].join('\n');
+    for (const warning of diagnoseBoundaryShadowing(boundaryCss, normalizeCssLineEndings(code), id)) {
       ctx.warn(warning);
     }
   }
@@ -337,7 +334,9 @@ export async function transformCss(code: string, id: string, ctx: TransformCssCo
       }
 
       const compiled = compileQuantizeBlock(block, boundary, { viewportContainerNames });
-      cache.lastCompiledBoundaryCss.value = [cache.lastCompiledBoundaryCss.value, compiled].filter(Boolean).join('\n');
+      // Keyed overwrite — re-transforming this block replaces its own entry
+      // instead of appending forever across HMR edits.
+      cache.lastCompiledBoundaryCss.set(cacheKey, compiled);
       const blockSpan = findAtRuleBlock(transformed, '@quantize', block.boundaryName);
 
       if (blockSpan) {

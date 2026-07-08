@@ -55,7 +55,11 @@ export function discreteSignalPayloadsFromPatch(patch: GraphPatch): readonly Rec
   const payloads: Record<string, unknown>[] = [];
 
   for (const op of patch.ops) {
-    if (op.op !== 'add' || !('node' in op) || op.family !== 'signal') {
+    // `add` installs a new signal node; `update` is how GraphPatch.diff encodes
+    // a CHANGED signal value (remove+add collapsed on the logical cell). Both
+    // are missed crossings — skipping `update` would silently drop the most
+    // common discrete transition (a signal changing state).
+    if ((op.op !== 'add' && op.op !== 'update') || !('node' in op) || op.family !== 'signal') {
       continue;
     }
 
@@ -83,7 +87,19 @@ export function discreteSignalPayloadsFromPatch(patch: GraphPatch): readonly Rec
   return payloads;
 }
 
-/** Walk a linear patch/receipt chain from `localBaseId` toward `serverGraphId`. */
+/**
+ * Find the patch/receipt chain from `localBaseId` to `serverGraphId`.
+ *
+ * The receipt buffer may hold FORKS (multiple patches sharing one base) and
+ * partial branches (chains that never reach the server graph). Selection is a
+ * depth-first path search: only the branch that actually ends at
+ * `serverGraphId` is returned. A fork that dead-ends is backtracked, never
+ * replayed — replaying discrete payloads from a branch the server did not
+ * take would be silently wrong. When NO buffered branch reaches the server
+ * graph (missing tail receipt, unrelated fork) the result is EMPTY: the QUERY
+ * adoption already corrected the graph, and no discrete replay beats a wrong
+ * one.
+ */
 export function chainPatchesBetween(
   localBaseId: ContentAddress,
   serverGraphId: ContentAddress,
@@ -103,30 +119,36 @@ export function chainPatchesBetween(
     byBase.set(entry.patch.base, list);
   }
 
-  const chain: GraphPatch[] = [];
-  let current = localBaseId;
+  const path: GraphPatch[] = [];
+  const visiting = new Set<string>();
 
-  for (let guard = 0; guard <= entries.length; guard++) {
+  const search = (current: string): boolean => {
     if (current === serverGraphId) {
-      break;
+      return true;
+    }
+    if (visiting.has(current)) {
+      // Cycle in the buffered patch graph — refuse the loop, try siblings.
+      return false;
+    }
+    visiting.add(current);
+
+    for (const entry of byBase.get(current) ?? []) {
+      const resultId = entry.patch.resultId;
+      if (!resultId) {
+        continue;
+      }
+      path.push(entry.patch);
+      if (search(resultId)) {
+        return true;
+      }
+      path.pop();
     }
 
-    const candidates = byBase.get(current);
-    if (!candidates || candidates.length === 0) {
-      break;
-    }
+    visiting.delete(current);
+    return false;
+  };
 
-    const direct = candidates.find((entry) => entry.patch.resultId === serverGraphId);
-    const next = direct ?? candidates[0]!;
-    chain.push(next.patch);
-
-    if (!next.patch.resultId) {
-      break;
-    }
-    current = next.patch.resultId;
-  }
-
-  return chain;
+  return search(localBaseId) ? path : [];
 }
 
 /**

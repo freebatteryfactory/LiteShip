@@ -79,3 +79,14 @@ Conditional validator — sha256 integrity_digest only.
 Defined in: [core/src/graph-query.ts:196](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query.ts#L196)
 
 Bounded retries on transport / server `error` outcomes (reads are idempotent). Default: 2.
+
+***
+
+### retryDelayMs?
+
+> `readonly` `optional` **retryDelayMs?**: `number`
+
+Defined in: [core/src/graph-query.ts:201](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query.ts#L201)
+
+Base delay between retry attempts in ms (doubles each attempt — 150, 300,
+600, …). Default: 150. Pass 0 for immediate retries (tests).

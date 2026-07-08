@@ -58,7 +58,8 @@ export interface VerifiablePatchEnvelope {
 export type VerifiablePatchVerification =
   | { readonly _tag: 'verified' }
   | { readonly _tag: 'staleBase'; readonly expected: ContentAddress; readonly received: ContentAddress }
-  | { readonly _tag: 'digestMismatch'; readonly expected: string; readonly actual: string };
+  | { readonly _tag: 'digestMismatch'; readonly expected: string; readonly actual: string }
+  | { readonly _tag: 'markerMismatch'; readonly expected: string; readonly received: string };
 
 /**
  * Outcome of applying a verifiable patch. `applied` carries the digest of the
@@ -176,6 +177,14 @@ export function applyVerifiablePatch(
   currentBaseGraphId: ContentAddress,
   capability: DpuCapability = detectDpuCapability(),
 ): ApplyVerifiablePatchResult {
+  const stampedMarker = target.getAttribute(DPU_MARKER_ATTR);
+  if (stampedMarker !== null && stampedMarker !== envelope.marker) {
+    return {
+      _tag: 'refused',
+      verification: { _tag: 'markerMismatch', expected: stampedMarker, received: envelope.marker },
+    };
+  }
+
   const verification = verifyVerifiablePatch(envelope, currentBaseGraphId);
   if (verification._tag !== 'verified') {
     return { _tag: 'refused', verification };

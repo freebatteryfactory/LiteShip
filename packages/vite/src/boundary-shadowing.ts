@@ -38,7 +38,15 @@ function selectorsOverlap(a: string, b: string): boolean {
   const na = a.replace(/\s+/g, ' ').trim();
   const nb = b.replace(/\s+/g, ' ').trim();
   if (na === nb) return true;
-  if (na.includes(nb) || nb.includes(na)) return true;
+  // Component-exact match only — naive substring inclusion false-positives on
+  // `.hero` vs `.hero-title` or `.card` vs `.card-header`.
+  const componentsA = na.split(/\s+/);
+  const componentsB = nb.split(/\s+/);
+  for (const ca of componentsA) {
+    for (const cb of componentsB) {
+      if (ca === cb) return true;
+    }
+  }
   return false;
 }
 

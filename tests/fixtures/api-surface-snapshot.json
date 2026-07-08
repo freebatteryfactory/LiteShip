@@ -1448,7 +1448,7 @@
         {
           "name": "buildResponsiveImageSet",
           "kind": "function",
-          "signature": "(1)"
+          "signature": "(2)"
         },
         {
           "name": "buildResponsiveSrcset",
