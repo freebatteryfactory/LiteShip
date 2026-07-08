@@ -1750,6 +1750,66 @@ describe('CSS override flow-through', () => {
     expect(compiled).toContain('gap: 12px');
   });
 
+  test('compileQuantizeBlock preserves depth-3 @supports > @media > @supports (#110)', () => {
+    const css = `
+@quantize viewport {
+  compact {
+    @supports (display: grid) {
+      @media (min-width: 768px) {
+        @supports (gap: 1rem) {
+          .grid { gap: 24px; }
+        }
+      }
+    }
+  }
+}`;
+    const blocks = parseQuantizeBlocks(css, FILE);
+    const block = blocks[0]!;
+    const boundary = makeBoundary('viewport', [[0, 'compact']]);
+    const compiled = compileQuantizeBlock(block, boundary);
+
+    const depth3 = block.states.compact?.atRuleGroups?.[0]?.atRuleGroups?.[0]?.atRuleGroups?.[0];
+    expect(depth3?.prelude).toContain('@supports (gap: 1rem)');
+    expect(compiled).toContain('@supports (display: grid)');
+    expect(compiled).toContain('@media (min-width: 768px)');
+    expect(compiled).toContain('@supports (gap: 1rem)');
+    expect(compiled).toContain('gap: 24px');
+  });
+
+  test('a malformed @supportsfoo prelude is NOT parsed as a conditional group (#110)', () => {
+    const css = `
+@quantize viewport {
+  compact {
+    @supportsfoo (display: grid) {
+      .grid { gap: 4px; }
+    }
+    color: red;
+  }
+}`;
+    const blocks = parseQuantizeBlocks(css, FILE);
+    const block = blocks[0]!;
+    // No conditional group minted from the malformed marker…
+    expect(block.states.compact?.atRuleGroups ?? []).toHaveLength(0);
+    // …and the parser stays aligned: the following declaration still parses.
+    expect(block.states.compact?.bareProps.color).toBe('red');
+  });
+
+  test('an unbalanced paren in a prelude warns instead of silently swallowing the tail (#110)', () => {
+    const css = `
+@quantize viewport {
+  compact {
+    @supports (display: grid {
+      .grid { gap: 4px; }
+    }
+  }
+}`;
+    const events = captureDiagnostics(({ events }) => {
+      parseQuantizeBlocks(css, FILE);
+      return [...events];
+    });
+    expect(events.map((event) => event.code)).toContain('unterminated-quantize-segment');
+  });
+
   test('parseQuantizeBlocks ignores empty declarations and colonless statements while preserving later props', () => {
     const css = `
 @quantize viewport {

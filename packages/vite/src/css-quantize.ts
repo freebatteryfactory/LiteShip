@@ -24,10 +24,13 @@ import {
 // Types
 // ---------------------------------------------------------------------------
 
-/** True when `marker` names a conditional at-rule we recurse into (#110). */
+/**
+ * True when `marker` names a conditional at-rule we recurse into (#110).
+ * Word-boundary match — a malformed `@supportsfoo` / `@mediaquery` prelude is
+ * NOT a conditional group and must not be parsed as one.
+ */
 function isConditionalAtRule(marker: string): boolean {
-  const name = marker.trim().toLowerCase();
-  return name.startsWith('@supports') || name.startsWith('@media');
+  return /^@(supports|media)\b/i.test(marker.trim());
 }
 
 /**
@@ -317,6 +320,23 @@ function parseStateBody(css: string, pos: number): { body: QuantizeStateBody; en
 
       buf += sc;
       pos++;
+    }
+
+    // The scan ran off the end of the sheet without a terminator — an
+    // unbalanced paren in a prelude (e.g. `@supports (display: grid {`) keeps
+    // parenDepth > 0 so no delimiter ever fires, and everything after the typo
+    // is consumed. Silently dropping the swallowed tail is forbidden (#110):
+    // warn with the offending segment head so the author can find the typo.
+    if (terminator === '' && pos >= css.length && buf.trim().length > 0) {
+      Diagnostics.warn({
+        source: 'czap/vite.css-quantize',
+        code: 'unterminated-quantize-segment',
+        message:
+          `A segment inside a @quantize state never terminated (unbalanced parenthesis or missing brace?): ` +
+          `everything after ${JSON.stringify(buf.trim().slice(0, 60))} was consumed and DROPPED. ` +
+          `Fix the segment's delimiters — the compiled output is missing every rule after this point.`,
+        detail: { segmentHead: buf.trim().slice(0, 200) },
+      });
     }
 
     // `<selector> {` opens a nested rule whose body holds flat declarations.

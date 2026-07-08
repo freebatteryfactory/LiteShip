@@ -37,6 +37,21 @@ describe('ResponsiveMedia resolution', () => {
     expect(resolved.reason).toBe('save-data');
   });
 
+  test('Save-Data with NO authored variant serves the LIGHTEST candidate, never the heavy DPR match', () => {
+    const intent = ResponsiveMedia.intent({
+      id: 'no-lite',
+      alt: 'x',
+      variants: [
+        { src: '/img/hero-800.jpg', width: 800 },
+        { src: '/img/hero-1600.jpg', width: 1600 },
+        { src: '/img/hero-2400.jpg', width: 2400 },
+      ],
+    });
+    const resolved = resolveResponsiveMedia(intent, { devicePixelRatio: 3, saveData: true });
+    expect(resolved.src).toBe('/img/hero-800.jpg');
+    expect(resolved.reason).toBe('save-data-floor');
+  });
+
   test('DPR 2 picks closest at-or-above variant', () => {
     const intent = heroMediaIntent();
     const resolved = resolveResponsiveMedia(intent, { devicePixelRatio: 2, saveData: false });
@@ -130,19 +145,15 @@ describe('ResponsiveMedia projection', () => {
 describe('ResponsiveMedia property laws', () => {
   test('resolve always returns a src from variants or saveDataVariant', () => {
     fc.assert(
-      fc.property(
-        fc.float({ min: 0.5, max: 4, noNaN: true }),
-        fc.boolean(),
-        (dpr, saveData) => {
-          const intent = heroMediaIntent();
-          const resolved = resolveResponsiveMedia(intent, { devicePixelRatio: dpr, saveData });
-          const allowed = new Set([
-            ...intent.variants.map((v) => v.src),
-            ...(intent.saveDataVariant ? [intent.saveDataVariant.src] : []),
-          ]);
-          expect(allowed.has(resolved.src)).toBe(true);
-        },
-      ),
+      fc.property(fc.float({ min: 0.5, max: 4, noNaN: true }), fc.boolean(), (dpr, saveData) => {
+        const intent = heroMediaIntent();
+        const resolved = resolveResponsiveMedia(intent, { devicePixelRatio: dpr, saveData });
+        const allowed = new Set([
+          ...intent.variants.map((v) => v.src),
+          ...(intent.saveDataVariant ? [intent.saveDataVariant.src] : []),
+        ]);
+        expect(allowed.has(resolved.src)).toBe(true);
+      }),
       { seed: 0x5eed },
     );
   });
