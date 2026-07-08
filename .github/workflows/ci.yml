@@ -146,6 +146,7 @@ jobs:
           name: dist-packages
           path: |
             packages/*/dist
+            reports/capsule-manifest.json
           retention-days: 1
 
   truth-linux-parallel-preflight:
@@ -165,7 +166,7 @@ jobs:
       - uses: actions/download-artifact@v7
         with:
           name: dist-packages
-          path: packages
+          path: .
       - name: Configure git identity for doctor --ci
         run: |
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -195,19 +196,29 @@ jobs:
       - uses: actions/download-artifact@v7
         with:
           name: dist-packages
-          path: packages
+          path: .
       - run: pnpm run test:shard
         env:
           CI: true
           CZAP_SHARD_INDEX: ${{ matrix.shard }}
           CZAP_SHARD_TOTAL: 4
+      - name: Stage shard coverage for artifact upload
+        if: always()
+        run: |
+          set -euo pipefail
+          mkdir -p "ci-artifacts/coverage/node-shard-${{ matrix.shard }}"
+          if [ -d "coverage/node-shard-${{ matrix.shard }}" ]; then
+            cp -r "coverage/node-shard-${{ matrix.shard }}/." "ci-artifacts/coverage/node-shard-${{ matrix.shard }}/"
+          fi
+          if [ -d "coverage/subprocess-raw-shard/${{ matrix.shard }}" ]; then
+            mkdir -p "ci-artifacts/coverage/subprocess-raw-shard/${{ matrix.shard }}"
+            cp -r "coverage/subprocess-raw-shard/${{ matrix.shard }}/." "ci-artifacts/coverage/subprocess-raw-shard/${{ matrix.shard }}/"
+          fi
       - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: coverage-shard-${{ matrix.shard }}
-          path: |
-            coverage/node-shard-${{ matrix.shard }}
-            coverage/subprocess-raw-shard/${{ matrix.shard }}
+          path: ci-artifacts/coverage
           retention-days: 1
 
   truth-linux-parallel-bench:
@@ -227,11 +238,19 @@ jobs:
       - uses: actions/download-artifact@v7
         with:
           name: dist-packages
-          path: packages
+          path: .
+      - run: pnpm exec playwright install --with-deps chromium chromium-headless-shell
       - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - run: pnpm run build:wasm
       - run: pnpm run gauntlet:full -- --profile ci-parallel-bench --skip-build
         env:
           CI: true
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: benchmarks-parallel
+          path: benchmarks
+          retention-days: 1
 
   truth-linux-parallel-mutating:
     runs-on: ubuntu-latest
@@ -250,7 +269,7 @@ jobs:
       - uses: actions/download-artifact@v7
         with:
           name: dist-packages
-          path: packages
+          path: .
       - run: pnpm run gauntlet:full -- --profile ci-parallel-mutating --skip-build
         env:
           CI: true
@@ -272,7 +291,7 @@ jobs:
       - uses: actions/download-artifact@v7
         with:
           name: dist-packages
-          path: packages
+          path: .
       - run: pnpm exec playwright install --with-deps chromium chromium-headless-shell
       - run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - run: pnpm run gauntlet:full -- --profile ci-parallel-integration --skip-build
@@ -296,7 +315,7 @@ jobs:
       - uses: actions/download-artifact@v7
         with:
           name: dist-packages
-          path: packages
+          path: .
       - run: pnpm run gauntlet:full -- --profile ci-parallel-mid --skip-build
         env:
           CI: true
@@ -318,7 +337,7 @@ jobs:
       - uses: actions/download-artifact@v7
         with:
           name: dist-packages
-          path: packages
+          path: .
       - run: pnpm exec playwright install --with-deps chromium chromium-headless-shell
       - run: pnpm exec rimraf coverage/subprocess-raw
       - run: pnpm run coverage:browser
@@ -351,7 +370,7 @@ jobs:
       - uses: actions/download-artifact@v7
         with:
           name: dist-packages
-          path: packages
+          path: .
       - uses: actions/download-artifact@v7
         with:
           pattern: coverage-shard-*
@@ -360,7 +379,7 @@ jobs:
       - uses: actions/download-artifact@v7
         with:
           name: coverage-browser-parallel
-          path: coverage
+          path: coverage/browser
       - run: pnpm run coverage:merge-shards
         env:
           CI: true
@@ -391,7 +410,7 @@ jobs:
       - uses: actions/download-artifact@v7
         with:
           name: dist-packages
-          path: packages
+          path: .
       - name: Configure git identity for doctor --ci
         run: |
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -429,7 +448,11 @@ jobs:
       - uses: actions/download-artifact@v7
         with:
           name: coverage-browser-parallel
-          path: coverage
+          path: coverage/browser
+      - uses: actions/download-artifact@v7
+        with:
+          name: benchmarks-parallel
+          path: benchmarks
       - run: pnpm run coverage:merge-shards
         env:
           CI: true

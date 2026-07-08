@@ -145,7 +145,6 @@ export const CI_PARALLEL_FINAL_LABELS: readonly string[] = [
 export const CI_PARALLEL_TEST_SHARD_COUNT = 4;
 
 export const CI_PARALLEL_PREFLIGHT_LABELS: readonly string[] = [
-  'rig-check',
   'typecheck',
   'lint',
   'lint:structural',

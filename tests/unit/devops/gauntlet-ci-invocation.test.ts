@@ -25,7 +25,7 @@ describe('ci.yml gauntlet:full invocations parse cleanly', () => {
   const gauntletLines = readFileSync(CI_YML, 'utf8')
     .split('\n')
     .map((line) => line.trim())
-    .filter((line) => line.includes('pnpm run gauntlet:full'));
+    .filter((line) => line.includes('pnpm run gauntlet:full') && !line.startsWith('#'));
 
   it('finds at least one gauntlet:full invocation in ci.yml', () => {
     expect(gauntletLines.length).toBeGreaterThan(0);
