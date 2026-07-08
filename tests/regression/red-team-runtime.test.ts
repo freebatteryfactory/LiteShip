@@ -334,6 +334,43 @@ describe('red-team runtime regressions', () => {
     expect(container.querySelector('img')?.getAttribute('src')).toBeNull();
   });
 
+  test('nested <template> shells with URL sinks are stripped wholesale (payload lives in .content)', () => {
+    const sanitized = resolveHtmlString(
+      '<p>ok</p><template><img src="x" onerror="alert(1)"><script>bad()</script></template>',
+      { policy: 'sanitized-html' },
+    );
+    const container = document.createElement('div');
+    container.innerHTML = sanitized;
+    expect(container.querySelector('p')?.textContent).toBe('ok');
+    expect(container.querySelector('template')).toBeNull();
+    expect(container.querySelector('img')).toBeNull();
+    expect(container.querySelector('script')).toBeNull();
+  });
+
+  test('scheme ALLOWLIST — data:image/svg+xml is stripped on srcset and imagesrcset', () => {
+    const sanitized = resolveHtmlString(
+      '<img srcset="data:image/svg+xml,<svg onload=alert(1)></svg> 1x, /safe.png 2x">' +
+        '<source imagesrcset="data:image/svg+xml;base64,PHN2Zz4= 1x, https://example.com/x.png 2x">',
+      { policy: 'sanitized-html' },
+    );
+    const container = document.createElement('div');
+    container.innerHTML = sanitized;
+    expect(container.querySelector('img')?.getAttribute('srcset')).toBeNull();
+    expect(container.querySelector('source')?.getAttribute('imagesrcset')).toBeNull();
+  });
+
+  test('srcset keeps safe raster data:image and http(s) URLs', () => {
+    const sanitized = resolveHtmlString(
+      '<img srcset="data:image/png;base64,iVBORw0KGgo= 1x, https://example.com/x.png 2x">',
+      { policy: 'sanitized-html' },
+    );
+    const container = document.createElement('div');
+    container.innerHTML = sanitized;
+    const srcset = container.querySelector('img')?.getAttribute('srcset') ?? '';
+    expect(srcset).toContain('data:image/png');
+    expect(srcset).toContain('https://example.com/x.png');
+  });
+
   test('strips scheme obfuscated with LEADING C0 controls (WHATWG parser strips them too)', () => {
     const sanitized = resolveHtmlString(
       `<a href="\u0001javascript:alert(1)">x</a><a href="\u0008\u000bvbscript:MsgBox(1)">y</a>`,

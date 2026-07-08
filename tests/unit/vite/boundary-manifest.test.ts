@@ -349,6 +349,33 @@ ${Object.entries(attrs)
     expect(reduced.css).not.toContain('@property');
   });
 
+  test('nested @supports inside @quantize states survives manifest compilation (#110)', async () => {
+    const root = makeTempDir();
+    const srcDir = join(root, 'src');
+    writeModule(srcDir, 'boundaries.ts', BOUNDARY_MODULE);
+    writeModule(
+      srcDir,
+      'styles.css',
+      `
+@quantize viewport {
+  compact {
+    @supports (display: grid) {
+      .grid { gap: 4px; }
+    }
+  }
+  wide {
+    --gap: 24px;
+  }
+}
+`,
+    );
+
+    const manifest = await collectBoundaryManifest(root);
+    const outputs = manifest['viewport']!.outputs[0]!;
+    expect(outputs.containerQueries).toContain('@supports (display: grid)');
+    expect(outputs.containerQueries).toContain('gap: 4px');
+  });
+
   test('viewport.height boundaries carry their own :root size containment and (height ...) queries', async () => {
     const root = makeTempDir();
     const srcDir = join(root, 'src');

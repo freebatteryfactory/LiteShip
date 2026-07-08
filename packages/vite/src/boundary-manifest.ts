@@ -20,7 +20,7 @@ import * as path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { Diagnostics } from '@czap/core';
 import type { Boundary } from '@czap/core';
-import { CSSCompiler, dispatch } from '@czap/compiler';
+import { CSSCompiler, dispatch, type CSSAtRuleGroup } from '@czap/compiler';
 import type { WGSLUniformValue, WGSLUniformVector } from '@czap/compiler';
 import { DESIGN_TIERS, MOTION_TIERS, dedupeOutputsByTier, tierKey } from '@czap/edge';
 import type { BoundaryManifest, BoundaryManifestEntry, CompiledOutputs, TierKey } from '@czap/edge';
@@ -30,6 +30,7 @@ import {
   viewportContainmentRule,
   viewportQueryAxis,
   type CastTarget,
+  type QuantizeAtRuleGroup,
   type QuantizeStateBody,
 } from './css-quantize.js';
 import { findConventionFiles } from './resolve-fs.js';
@@ -452,15 +453,26 @@ function compileOutputsByTier(
   container?: string,
 ): Pick<BoundaryManifestEntry, 'outputs' | 'outputsByTier'> {
   // Bridge the parser's rule shape (props) to the compiler's (properties),
-  // exactly as compileQuantizeBlock does.
+  // exactly as compileQuantizeBlock does — including nested @supports/@media
+  // groups (#110) so manifest-served CSS matches the vite transform path.
+  const mapAtRuleGroup = (group: QuantizeAtRuleGroup): CSSAtRuleGroup => ({
+    prelude: group.prelude,
+    bareProps: group.bareProps,
+    rules: group.rules.map((rule) => ({ selector: rule.selector, properties: rule.props })),
+    ...(group.atRuleGroups?.length ? { atRuleGroups: group.atRuleGroups.map(mapAtRuleGroup) } : {}),
+  });
   const cssStates = Object.fromEntries(
-    Object.entries(states).map(([stateName, body]) => [
-      stateName,
-      {
-        bareProps: body.bareProps,
-        rules: body.rules.map((rule) => ({ selector: rule.selector, properties: rule.props })),
-      },
-    ]),
+    Object.entries(states).map(([stateName, body]) => {
+      const atRuleGroups = (body.atRuleGroups ?? []).map(mapAtRuleGroup);
+      return [
+        stateName,
+        {
+          bareProps: body.bareProps,
+          rules: body.rules.map((rule) => ({ selector: rule.selector, properties: rule.props })),
+          ...(atRuleGroups.length > 0 ? { atRuleGroups } : {}),
+        },
+      ];
+    }),
   );
   // Manifest-served CSS reaches the page WITHOUT the vite transform that
   // normally emits sheet-level containment — without a `:root` container
@@ -657,9 +669,12 @@ export async function collectBoundaryManifestFromScan(
           if (Object.keys(mergedTarget).length > 0) mergedCasts[target] = mergedTarget;
         }
         const hasCasts = Object.keys(mergedCasts).length > 0;
+        const mergedAtRuleGroups = [...(prior?.atRuleGroups ?? []), ...(body.atRuleGroups ?? [])];
+        const hasAtRuleGroups = mergedAtRuleGroups.length > 0;
         merged[stateName] = {
           bareProps: { ...prior?.bareProps, ...body.bareProps },
           rules: [...(prior?.rules ?? []), ...body.rules],
+          ...(hasAtRuleGroups ? { atRuleGroups: mergedAtRuleGroups } : {}),
           ...(hasCasts ? { castAttrs: mergedCasts } : {}),
           ...(mergedCasts.aria ? { ariaAttrs: mergedCasts.aria } : {}),
         };

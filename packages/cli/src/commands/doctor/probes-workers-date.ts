@@ -7,6 +7,7 @@
  * @module
  */
 
+import { normalizeRepoPath } from '@czap/audit';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import type { DoctorCheck } from './types.js';
@@ -16,7 +17,7 @@ const DATE_PATTERNS = [/\bDate\.now\s*\(/, /\bnew\s+Date\s*\(/] as const;
 const WORKER_PATH_HINTS = ['wrangler', 'cloudflare', '.worker.', '/workers/', 'src/middleware.ts'] as const;
 
 function isWorkersTargeted(rel: string): boolean {
-  const lower = rel.toLowerCase().replace(/\\/g, '/');
+  const lower = normalizeRepoPath(rel).toLowerCase();
   return WORKER_PATH_HINTS.some((hint) => lower.includes(hint));
 }
 
