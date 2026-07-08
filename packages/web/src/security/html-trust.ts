@@ -57,6 +57,9 @@ const DANGEROUS_TAGS = new Set([
   'LINK',
   'NOSCRIPT',
   'FORM',
+  // Payload lives in .content, not .children — strip wholesale so nested sinks
+  // cannot survive unsanitized inside an inert template shell.
+  'TEMPLATE',
 ]);
 
 /** Attribute names that can route a navigation/load to a `javascript:` or `data:` scheme. */
@@ -197,6 +200,17 @@ function isDangerousUrlValue(normalizedValue: string): boolean {
   return true;
 }
 
+/** `srcset` / `imagesrcset` are comma-separated URL lists with optional width descriptors. */
+function isDangerousSrcsetValue(value: string): boolean {
+  for (const candidate of value.split(',')) {
+    const url = candidate.trim().split(/\s+/)[0] ?? '';
+    if (url.length > 0 && isDangerousUrlValue(normalizeAttributeValue(url))) {
+      return true;
+    }
+  }
+  return false;
+}
+
 function isDangerousAttribute(name: string, value: string): boolean {
   const lowerName = name.toLowerCase();
 
@@ -206,6 +220,10 @@ function isDangerousAttribute(name: string, value: string): boolean {
 
   if (lowerName === 'srcdoc' || lowerName === 'style') {
     return true;
+  }
+
+  if (lowerName === 'srcset' || lowerName === 'imagesrcset') {
+    return isDangerousSrcsetValue(value);
   }
 
   if (URL_SINK_ATTRIBUTES.has(lowerName)) {
@@ -267,7 +285,8 @@ function createTemplate(html: string, options?: HtmlTrustOptions): HTMLTemplateE
  * Parse `html` under `options.policy` and return a `DocumentFragment`
  * ready to be appended to the live DOM. Dangerous elements
  * (`<script>`, `<iframe>`, `<base>`, `<meta>`, `<link>`, `<form>`,
- * `<noscript>`, `<svg>`, `<math>`, `<style>`, `<object>`, `<embed>`)
+ * `<noscript>`, `<svg>`, `<math>`, `<style>`, `<object>`, `<embed>`,
+ * `<template>`)
  * and attributes (`on*`, `srcdoc`, `style`) are stripped when the
  * effective policy is `sanitized-html`. Url-sink attributes (`href`,
  * `src`, `action`, `formaction`, `ping`, `background`, `cite`, `data`,
