@@ -4,6 +4,31 @@ All notable changes to czap. The format follows [Keep a Changelog](https://keepa
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Pre-1.0
 break policy is intentionally aggressive — minor version bumps may carry breaking changes.
 
+## [0.8.1] - 2026-07-08
+
+Test, bench, and CI hardening — honest gates, parallel truth-linux, and catalog-driven coverage.
+
+### Added
+
+- **Parallel truth-linux CI lane** — setup fan-out, four test shards, bench/mutating/integration/mid lanes, coverage merge, and a `ci-parallel-final` profile that runs `report:runtime-seams` against stitched artifacts.
+- **`check:gates` in gauntlet** — Tier 0.2 `czap check` gates (early-return detection, sanctioned skips, capability linkage) wired into the full gauntlet phase list.
+- **Catalog-driven bench execution** — generated bench tests honor capability probes and sanctioned skips instead of lying about coverage.
+- **`scripts/mint-gauntlet-context.ts`** — one `gauntletRunId` minted in parallel setup and propagated through fan-out jobs for runtime-seams coherence.
+
+### Fixed
+
+- **Bench harness** — `ecs-composition` migrated to tinybench; wasm bench lane installs the stable Rust toolchain before `build:wasm`.
+- **Parallel artifact handoff** — capsule manifest, benchmark tarballs, coverage shard layout, and gauntlet context ship in setup artifacts; final job restores them at repo root.
+- **WebKit WebCodecs** — broaden the `webcodecs-absent` probe so Playwright WebKit on Linux skips encode instead of crashing the browser process.
+
+### Internal
+
+- **Standards sign-offs** — traceability snapshot/waivers updated for new sanctioned skips and gate wiring.
+
+### Breaking
+
+- None.
+
 ## [0.8.0] - 2026-07-04
 
 The **keystone client wave**: the mutation channel now has a client-side state machine, a form binding, and a live-runtime adopt path; morph gains explicit opaque subtrees; the document graph node schema carries Standard Schema V1 interop.
