@@ -7,8 +7,8 @@
  * @module
  */
 
-import type { Boundary, CapTier, Quantizer } from '@czap/core';
-import { VIEWPORT } from '@czap/core';
+import type { Boundary, CapTier, Quantizer, StateResolutionReceipt } from '@czap/core';
+import { Diagnostics, VIEWPORT } from '@czap/core';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -43,6 +43,17 @@ export interface QuantizeProps<B extends Boundary.Shape = Boundary.Shape> {
   readonly fallback?: string;
   /** Extra CSS class names. */
   readonly class?: string;
+}
+
+/** SSR resolution outcome — state plus evidence of which source drove it (#118). */
+export interface ResolvedInitialState {
+  readonly state: string;
+  readonly resolution: StateResolutionReceipt;
+}
+
+interface ResolutionContext {
+  readonly value: number;
+  readonly resolution: StateResolutionReceipt;
 }
 
 // ---------------------------------------------------------------------------
@@ -117,8 +128,26 @@ function syntheticValueFromCapTier(capTier: CapTier): number {
 }
 
 // ---------------------------------------------------------------------------
-// Public API
+// Request-shape guard (#109)
 // ---------------------------------------------------------------------------
+
+/** True when `value` looks like a raw `Request` passed where `ServerIslandContext` was expected. */
+function isRequestLike(value: unknown): value is Request {
+  if (typeof value !== 'object' || value === null) return false;
+  const headers = (value as { headers?: unknown }).headers;
+  return typeof headers === 'object' && headers !== null && typeof (headers as Headers).get === 'function';
+}
+
+function warnRawRequestContext(value: unknown): void {
+  if (!isRequestLike(value)) return;
+  Diagnostics.warnOnce({
+    source: 'czap/astro.quantize',
+    code: 'resolve-initial-state-raw-request',
+    message:
+      'resolveInitialState received a raw Request object — every ServerIslandContext field reads undefined and SSR falls back to synthetic 960px (reactive tier). ' +
+      'Build a ServerIslandContext from the request instead: { userAgent: request.headers.get("user-agent") ?? "", clientHints: …, detectedCapTier: … }.',
+  });
+}
 
 /**
  * Resolve the initial boundary state for server-side rendering.
@@ -131,46 +160,79 @@ function syntheticValueFromCapTier(capTier: CapTier): number {
  * Evaluates the boundary thresholds to find the matching state.
  */
 export function resolveInitialState<B extends Boundary.Shape>(boundary: B, context: ServerIslandContext = {}): string {
+  return resolveInitialStateWithReceipt(boundary, context).state;
+}
+
+/**
+ * Like {@link resolveInitialState} but carries a `StateResolutionReceipt`
+ * (`@czap/core`) naming which signal drove SSR — client hints, UA estimate,
+ * cap-tier synthetic, or policy (reduced-motion bias).
+ */
+export function resolveInitialStateWithReceipt<B extends Boundary.Shape>(
+  boundary: B,
+  context: ServerIslandContext = {},
+): ResolvedInitialState {
+  warnRawRequestContext(context);
   const stateNames = boundary.states as readonly string[];
   const thresholds = boundary.thresholds as readonly number[];
   const userAgent = context.userAgent ?? '';
   const clientHints = context.clientHints ?? {};
   const detectedCapTier = context.detectedCapTier ?? 'reactive';
 
-  if (stateNames.length === 0) return '';
-  if (stateNames.length === 1) return stateNames[0]!;
+  if (stateNames.length === 0) {
+    return { state: '', resolution: { source: 'synthetic', detail: 'empty-boundary' } };
+  }
+  if (stateNames.length === 1) {
+    return { state: stateNames[0]!, resolution: { source: 'synthetic', detail: 'single-state' } };
+  }
 
-  // Determine the signal value to evaluate against the boundary
-  let value: number;
-
-  // Check client hints first (most accurate)
-  const hintWidth = parseViewportWidth(clientHints);
   const reducedMotion = parsePrefersReducedMotion(clientHints);
-
-  if (hintWidth !== undefined) {
-    value = hintWidth;
-  } else if (userAgent) {
-    value = estimateViewportFromUA(userAgent);
-  } else {
-    value = syntheticValueFromCapTier(detectedCapTier);
-  }
-
-  // If reduced motion is detected and the tier suggests limited capability,
-  // bias toward the lowest state
   if (reducedMotion === true && CAP_TIER_ORDINALS[detectedCapTier] <= 1) {
-    return stateNames[0]!;
+    return {
+      state: stateNames[0]!,
+      resolution: { source: 'policy', detail: 'prefers-reduced-motion' },
+    };
   }
 
-  // Evaluate against boundary thresholds to find the matching state.
-  // thresholds[i] is the lower bound for state[i].
-  // Walk backwards from the highest threshold to find the first match.
+  const { value, resolution } = resolveSignalContext(userAgent, clientHints, detectedCapTier, context);
+  const state = stateFromValue(stateNames, thresholds, value);
+  return { state, resolution };
+}
+
+function resolveSignalContext(
+  userAgent: string,
+  clientHints: Record<string, string>,
+  detectedCapTier: CapTier,
+  context: ServerIslandContext,
+): ResolutionContext {
+  const hintWidth = parseViewportWidth(clientHints);
+  if (hintWidth !== undefined) {
+    return { value: hintWidth, resolution: { source: 'tier', detail: 'client-hints:viewport-width' } };
+  }
+  if (userAgent) {
+    return {
+      value: estimateViewportFromUA(userAgent),
+      resolution: { source: 'tier', detail: 'user-agent:viewport-estimate' },
+    };
+  }
+  if (isRequestLike(context)) {
+    return {
+      value: syntheticValueFromCapTier(detectedCapTier),
+      resolution: { source: 'synthetic', detail: 'raw-request-fallback' },
+    };
+  }
+  return {
+    value: syntheticValueFromCapTier(detectedCapTier),
+    resolution: { source: 'synthetic', detail: `cap-tier:${detectedCapTier}` },
+  };
+}
+
+function stateFromValue(stateNames: readonly string[], thresholds: readonly number[], value: number): string {
   for (let i = stateNames.length - 1; i >= 0; i--) {
     const threshold = thresholds[i];
     if (threshold !== undefined && value >= threshold) {
       return stateNames[i]!;
     }
   }
-
-  // Fallback to first state
   return stateNames[0]!;
 }

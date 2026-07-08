@@ -6,7 +6,7 @@
 
 # Interface: QuantizeStateBody
 
-Defined in: [vite/src/css-quantize.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L75)
+Defined in: [vite/src/css-quantize.ts:94](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L94)
 
 The parsed body of one `@quantize` state: bare declarations that apply
 to the boundary element selector (the documented flat form) plus
@@ -18,7 +18,7 @@ nested per-selector rules (the adaptive per-element form).
 
 > `readonly` `optional` **ariaAttrs?**: `Record`\<`string`, `string`\>
 
-Defined in: [vite/src/css-quantize.ts:101](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L101)
+Defined in: [vite/src/css-quantize.ts:122](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L122)
 
 Authored per-state ARIA/data attributes from a nested `@aria { … }`
 segment (e.g. `aria-expanded: false; role: button`). Quotes are stripped.
@@ -30,11 +30,21 @@ ARIA consumers/tests read it unchanged.
 
 ***
 
+### atRuleGroups?
+
+> `readonly` `optional` **atRuleGroups?**: readonly [`QuantizeAtRuleGroup`](QuantizeAtRuleGroup.md)[]
+
+Defined in: [vite/src/css-quantize.ts:100](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L100)
+
+Nested `@supports` / `@media` groups authored inside the state (#110).
+
+***
+
 ### bareProps
 
 > `readonly` **bareProps**: `Record`\<`string`, `string`\>
 
-Defined in: [vite/src/css-quantize.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L77)
+Defined in: [vite/src/css-quantize.ts:96](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L96)
 
 Declarations written directly inside the state (flat form).
 
@@ -44,7 +54,7 @@ Declarations written directly inside the state (flat form).
 
 > `readonly` `optional` **castAttrs?**: `Partial`\<`Record`\<`CastTarget`, `Record`\<`string`, `string`\>\>\>
 
-Defined in: [vite/src/css-quantize.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L91)
+Defined in: [vite/src/css-quantize.ts:112](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L112)
 
 Authored per-state non-CSS cast attributes, keyed by cast target. Each
 entry holds the raw `{ key: value }` declarations from a nested
@@ -62,6 +72,6 @@ Downstream each target routes through its compiler arm via `dispatch`
 
 > `readonly` **rules**: readonly [`QuantizeNestedRule`](QuantizeNestedRule.md)[]
 
-Defined in: [vite/src/css-quantize.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L79)
+Defined in: [vite/src/css-quantize.ts:98](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L98)
 
 Nested `<selector> { ... }` rules written inside the state.

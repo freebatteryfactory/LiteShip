@@ -251,11 +251,22 @@ const STANDALONE_FUNCTIONS = [
   'canonicalAddressBytes',
   'sealNode',
   'sealGraph',
+  'nodeFromParts',
+  'nodeLogicalKey',
   'validateGraph',
   'linearizeGraph',
   // Client→server graph-mutation channel (0.7.0): the server core + the client sender.
   'handleGraphMutation',
   'sendGraphMutation',
+  'handleGraphQuery',
+  'sendGraphQuery',
+  'graphQueryEtag',
+  'normalizeGraphQueryEtag',
+  'createGraphQueryRefreshBase',
+  'discreteSignalPayloadsFromPatch',
+  'chainPatchesBetween',
+  'replayDiscreteFromPatchReceipts',
+  'runGraphNativeGapReplay',
   // Channel additions (0.8.0): the shared applied-graph adopt guard + the
   // client-side base state machine (serialized submits, bounded stale-retry).
   'verifyAppliedGraph',
@@ -317,6 +328,8 @@ const STANDALONE_FUNCTIONS = [
   'lowerRevealIntent',
   'resolveRevealInitialState',
   'ssrRevealPaint',
+  'lowerStaggerIntent',
+  'lowerScrollTimelineIntent',
   'motionPropToBinding',
   'asReplayableRecoveryCell',
   'signalSourceKind',
@@ -325,6 +338,10 @@ const STANDALONE_FUNCTIONS = [
   'replayDroppedSignals',
   'filterDiscreteSnapshotSignals',
   'validateSnapshotSignalsField',
+  'resolveResponsiveMedia',
+  'buildResponsiveSrcset',
+  'buildResponsiveImageSet',
+  'projectResponsiveMediaPicture',
 ];
 
 // ── Error classes ───────────────────────────────────────────────────
@@ -373,6 +390,9 @@ const STANDALONE_OBJECTS = [
   // sugar (#124) and the StateCell/ProjectionState typed-authority surface (#130 c5).
   // `export const X = { ... }` value-objects, not functions.
   'Reveal',
+  'Stagger',
+  'ScrollTimeline',
+  'ResponsiveMedia',
   'StateCell',
   'ProjectionState',
   'StateCellStore',
@@ -394,6 +414,7 @@ const DEFAULT_CONSTANTS = [
   'EASING_SPRING_STEPS',
   'THEME_TRANSITION_DURATION_MS',
   'THEME_TRANSITION_EASING',
+  'GRAPH_QUERY_FALLBACK_HEADER',
   'CANVAS_FALLBACK_WIDTH',
   'CANVAS_FALLBACK_HEIGHT',
   // Worker-blob twin of rawIndexF32 as an inlinable JS source string (Phase-0).

@@ -151,17 +151,31 @@ export interface EdgeHostCacheConfig {
 }
 
 /**
+ * Optional Workers background hook for deferring KV write-back off the request path (#122).
+ */
+export interface EdgeHostBackground {
+  readonly waitUntil: (promise: Promise<unknown>) => void;
+}
+
+/**
  * Configuration for {@link createEdgeHostAdapter}.
  *
  * `theme` may be a static {@link ThemeCompileConfig}, a per-request
  * resolver function, or absent. `cache` enables a KV-backed boundary
- * compile cache keyed by content address + tier.
+ * compile cache keyed by content address + tier. When `background` is
+ * present, boundary-cache write-back on a compile miss is scheduled via
+ * `waitUntil` instead of blocking the response (#122).
  */
 export interface EdgeHostAdapterConfig {
   /** Static theme config, or a resolver invoked with each request's context. */
   readonly theme?: ThemeCompileConfig | ((context: EdgeHostContext) => ThemeCompileConfig | null | undefined);
   /** KV-backed boundary output cache; omit to disable caching. */
   readonly cache?: EdgeHostCacheConfig;
+  /**
+   * When present, boundary-cache write-back on a compile miss is scheduled via
+   * `waitUntil` instead of blocking the response (#122).
+   */
+  readonly background?: EdgeHostBackground;
 }
 
 /**
@@ -349,6 +363,7 @@ async function resolveBoundaryOutputs(
   cache: ReturnType<typeof createBoundaryCache>,
   [name, source]: NormalizedBoundary,
   context: Omit<EdgeHostCompileContext, 'boundaryId' | 'boundaryName'>,
+  background?: EdgeHostBackground,
 ): Promise<EdgeHostBoundaryResolution> {
   const key = tierKey(context.tier);
   const assetUrl = source.assetUrlsByTier?.[key];
@@ -377,7 +392,19 @@ async function resolveBoundaryOutputs(
     };
     const compiledOutputs = await source.compile(compileContext);
     const tags = resolveBoundaryTags(source.tags, compileContext);
-    await cache.putCompiledOutputs(source.boundaryId, context.tier, compiledOutputs, qualifier, themeFp, tags);
+    const writeBack = cache.putCompiledOutputs(
+      source.boundaryId,
+      context.tier,
+      compiledOutputs,
+      qualifier,
+      themeFp,
+      tags,
+    );
+    if (background?.waitUntil) {
+      background.waitUntil(writeBack);
+    } else {
+      await writeBack;
+    }
     return { boundaryId: source.boundaryId, compiledOutputs, ...withAssetUrl, cacheStatus: 'miss' };
   }
   Diagnostics.warnOnce({
@@ -458,7 +485,8 @@ export function createEdgeHostAdapter(config: EdgeHostAdapterConfig = {}): EdgeH
         // KV keys), so their lookups run concurrently.
         const resolved = await Promise.all(
           boundarySources.map(
-            async (entry) => [entry[0], await resolveBoundaryOutputs(cache, entry, compileContext)] as const,
+            async (entry) =>
+              [entry[0], await resolveBoundaryOutputs(cache, entry, compileContext, config.background)] as const,
           ),
         );
         cacheStatus = resolved.reduce<Exclude<EdgeHostCacheStatus, 'disabled'>>(

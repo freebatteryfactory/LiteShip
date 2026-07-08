@@ -6,9 +6,9 @@
 
 # Function: generatePropertyRegistrations()
 
-> **generatePropertyRegistrations**(`states`): `string`
+> **generatePropertyRegistrations**(`states`, `initialValues?`): `string`
 
-Defined in: [compiler/src/css.ts:352](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/css.ts#L352)
+Defined in: [compiler/src/css.ts:388](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/css.ts#L388)
 
 Scan all CSS values across all states and emit `@property` declarations
 for properties whose values parse as numbers or colors. This enables
@@ -21,6 +21,10 @@ GPU-interpolated transitions on custom properties.
 `Record`\<`string`, `Record`\<`string`, `string`\>\>
 
 Per-state CSS property maps to scan for custom properties
+
+### initialValues?
+
+`Readonly`\<`Record`\<`string`, `string`\>\>
 
 ## Returns
 

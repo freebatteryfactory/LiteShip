@@ -22,10 +22,10 @@
 // PROVES: INV-SHADER-CONTENT-INTEGRITY
 import { describe, it, expect } from 'vitest';
 import fc from 'fast-check';
-import { AddressedDigest } from '@czap/core';
 import {
   parseShaderIntegrity,
   verifyShaderIntegrity,
+  computeShaderIntegrity,
   isExternalShaderSource,
   decideShaderIntegrity,
   DEFAULT_SHADER_INTEGRITY_MODE,
@@ -35,19 +35,29 @@ import { isFetchableRuntimeUrl, resolveRuntimeUrl } from '../../../packages/web/
 const SAMPLE_GLSL = '#version 300 es\nprecision mediump float;\nout vec4 c;\nvoid main(){c=vec4(1.0);}';
 
 /**
- * Compute the author SRI (`sha256-<base64>`) for `content` from the SAME kernel
- * the verifier hashes with — the canonical `AddressedDigest` sha256. Self-deriving:
- * a hardcoded digest beside the verifier would be a drift-prone hand-typed mirror.
+ * Compute the author SRI (`sha256-<base64>`) for `content` via the public producer.
  */
 function sriOf(content: string): string {
-  const bytes = new TextEncoder().encode(content);
-  const hex = AddressedDigest.of(bytes, 'sha256').integrity_digest.slice('sha256:'.length);
-  const raw = new Uint8Array(hex.length / 2);
-  for (let i = 0; i < raw.length; i++) raw[i] = Number.parseInt(hex.slice(i * 2, i * 2 + 2), 16);
-  let binary = '';
-  for (const b of raw) binary += String.fromCharCode(b);
-  return `sha256-${btoa(binary)}`;
+  return computeShaderIntegrity(content);
 }
+
+describe('computeShaderIntegrity — source→sha256 SRI producer (#111)', () => {
+  it('produces a parseable sha256 SRI that verifies the same content', () => {
+    const sri = computeShaderIntegrity(SAMPLE_GLSL);
+    expect(sri).toMatch(/^sha256-[A-Za-z0-9+/]+={0,2}$/);
+    const parsed = parseShaderIntegrity(sri);
+    expect(parsed).not.toBeNull();
+    expect(verifyShaderIntegrity(SAMPLE_GLSL, parsed)._tag).toBe('verified');
+  });
+
+  it('is deterministic and uses the content-address sha256 kernel (not fnv1a)', () => {
+    const a = computeShaderIntegrity(SAMPLE_GLSL);
+    const b = computeShaderIntegrity(SAMPLE_GLSL);
+    expect(a).toBe(b);
+    const tampered = computeShaderIntegrity(SAMPLE_GLSL.replace('vec4(1.0)', 'vec4(0.0)'));
+    expect(tampered).not.toBe(a);
+  });
+});
 
 describe('parseShaderIntegrity — SRI sha256-<base64> parse', () => {
   it('parses a well-formed sha256 SRI into a 64-hex expectation', () => {

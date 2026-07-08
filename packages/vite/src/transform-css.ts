@@ -323,6 +323,7 @@ export async function transformCss(code: string, id: string, ctx: TransformCssCo
       }
 
       const compiled = compileQuantizeBlock(block, boundary, { viewportContainerNames });
+      cache.lastCompiledBoundaryCss.value = [cache.lastCompiledBoundaryCss.value, compiled].filter(Boolean).join('\n');
       const blockSpan = findAtRuleBlock(transformed, '@quantize', block.boundaryName);
 
       if (blockSpan) {
@@ -347,6 +348,15 @@ export async function transformCss(code: string, id: string, ctx: TransformCssCo
   }
 
   if (transformed === code) return null;
+
+  // Boundary-shadowing diagnostic (#114): when this file has no @quantize blocks
+  // but other sheets in the project do, warn on overlapping selectors/properties.
+  if (!hasQuantize && cache.lastCompiledBoundaryCss.value) {
+    const { diagnoseBoundaryShadowing } = await import('./boundary-shadowing.js');
+    for (const warning of diagnoseBoundaryShadowing(cache.lastCompiledBoundaryCss.value, transformed, id)) {
+      ctx.warn(warning);
+    }
+  }
 
   return transformed;
 }

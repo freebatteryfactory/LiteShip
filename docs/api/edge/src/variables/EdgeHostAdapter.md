@@ -8,7 +8,7 @@
 
 > **EdgeHostAdapter**: `object`
 
-Defined in: [edge/src/host-adapter.ts:241](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L241)
+Defined in: [edge/src/host-adapter.ts:255](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L255)
 
 Edge host adapter namespace.
 

@@ -5,6 +5,7 @@
  */
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { Effect } from 'effect';
+import * as core from '@czap/core';
 import {
   applyDiscreteSnapshotSignals,
   adoptRefreshedGraphBase,
@@ -13,6 +14,7 @@ import {
   supplementReplayIfSignalsDropped,
 } from '@czap/web';
 import { Resumption } from '@czap/web';
+import { graph, node } from '../../helpers/graph-fixtures.js';
 
 describe('web stream recovery (#133)', () => {
   beforeEach(() => {
@@ -47,6 +49,19 @@ describe('web stream recovery (#133)', () => {
 
     expect(refreshBase).toHaveBeenCalledOnce();
     expect(adopt).toHaveBeenCalledWith(graph);
+  });
+
+  test('adoptRefreshedGraphBase uses graphQueryUrl when provided', async () => {
+    const fresh = graph([node('scroll.y')]);
+    const adopt = vi.fn();
+    const queryRefresh = vi.fn(async () => fresh);
+    vi.spyOn(core, 'createGraphQueryRefreshBase').mockReturnValue(queryRefresh);
+
+    await adoptRefreshedGraphBase({ base: () => fresh, adopt }, '/api/graph');
+
+    expect(core.createGraphQueryRefreshBase).toHaveBeenCalledWith('/api/graph', expect.any(Object));
+    expect(queryRefresh).toHaveBeenCalledOnce();
+    expect(adopt).toHaveBeenCalledWith(fresh);
   });
 
   test('bindRequestSnapshotRecovery wires a real listener for czap:request-snapshot', async () => {

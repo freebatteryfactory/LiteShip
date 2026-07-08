@@ -8,7 +8,7 @@
 
 > **BoundarySpec**: `object`
 
-Defined in: [core/src/boundary.ts:378](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/boundary.ts#L378)
+Defined in: [core/src/boundary.ts:405](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/boundary.ts#L405)
 
 BoundarySpec namespace — helpers for working with the optional activation filter on a boundary.
 

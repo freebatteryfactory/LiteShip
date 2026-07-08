@@ -84,6 +84,11 @@ export interface CloudflareMiddlewareConfig {
    * Pass a getter in tests or when env is injected by the host framework.
    */
   readonly env?: CloudflareWorkersEnv | (() => CloudflareWorkersEnv);
+  /**
+   * Workers `ExecutionContext.waitUntil` for deferring KV write-back (#122).
+   * When omitted, boundary-cache writes block the response path.
+   */
+  readonly waitUntil?: (promise: Promise<unknown>) => void;
 }
 
 let cachedWorkersEnv: CloudflareWorkersEnv | undefined;
@@ -302,6 +307,7 @@ export function cloudflareMiddleware(config: CloudflareMiddlewareConfig): Return
         prefix: config.prefix,
       },
       theme: config.theme,
+      ...(config.waitUntil ? { background: { waitUntil: config.waitUntil } } : {}),
     },
     detect: config.detect,
     workers: config.workers,

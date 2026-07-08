@@ -305,6 +305,15 @@ function criticalCHHeader(): string {
   return CRITICAL_HINTS.join(', ');
 }
 
+/**
+ * Produce the `Vary` response header value listing every Client Hint (and
+ * network hint) that shapes tier-specific HTML. CDN caches must vary on these
+ * inputs or they can serve the wrong tier's representation (#122).
+ */
+function varyCHHeader(): string {
+  return ALL_HINTS.join(', ');
+}
+
 // ---------------------------------------------------------------------------
 // Namespace export
 // ---------------------------------------------------------------------------
@@ -339,6 +348,8 @@ export const ClientHints = {
   acceptCHHeader,
   /** Produce the `Critical-CH` response header value listing boot-required hints. */
   criticalCHHeader,
+  /** Produce the `Vary` response header value for tier-varying HTML (#122). */
+  varyCHHeader,
 } as const;
 
 export declare namespace ClientHints {

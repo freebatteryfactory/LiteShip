@@ -6,7 +6,7 @@
 
 # Interface: CSSCompileResult
 
-Defined in: [compiler/src/css.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/css.ts#L73)
+Defined in: [compiler/src/css.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/css.ts#L89)
 
 Output of [CSSCompiler.compile](../variables/CSSCompiler.md#compile).
 
@@ -20,7 +20,7 @@ separate serialize call.
 
 > `readonly` **containerRules**: readonly [`CSSContainerRule`](CSSContainerRule.md)[]
 
-Defined in: [compiler/src/css.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/css.ts#L75)
+Defined in: [compiler/src/css.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/css.ts#L91)
 
 Structured container rules, one per non-empty state.
 
@@ -30,6 +30,6 @@ Structured container rules, one per non-empty state.
 
 > `readonly` **raw**: `string`
 
-Defined in: [compiler/src/css.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/css.ts#L77)
+Defined in: [compiler/src/css.ts:93](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/css.ts#L93)
 
 Pre-serialized CSS text ready for injection.

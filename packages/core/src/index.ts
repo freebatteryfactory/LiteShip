@@ -139,6 +139,37 @@ export type {
   RevealSsrPaint,
 } from './reveal.js';
 
+// Stagger intent sugar + graph lowering (#124 stagger)
+export { Stagger, lowerStaggerIntent } from './stagger.js';
+export type { StaggerIntent, StaggerIntentInput, StaggerChild, LoweredStagger, LoweredStaggerItem } from './stagger.js';
+
+// Scroll-timeline intent sugar + graph lowering (#126)
+export { ScrollTimeline, lowerScrollTimelineIntent } from './scroll-timeline.js';
+export type {
+  ScrollTimelineIntent,
+  ScrollTimelineIntentInput,
+  ScrollTimelineAxis,
+  LoweredScrollTimeline,
+} from './scroll-timeline.js';
+
+// Responsive-media intent + projection (#125)
+export {
+  ResponsiveMedia,
+  resolveResponsiveMedia,
+  buildResponsiveSrcset,
+  buildResponsiveImageSet,
+  projectResponsiveMediaPicture,
+} from './responsive-media.js';
+export type {
+  ResponsiveMediaIntent,
+  ResponsiveMediaIntentInput,
+  ResponsiveMediaVariant,
+  ResponsiveMediaCapabilities,
+  ResponsiveMediaResolutionReason,
+  ResolvedResponsiveMedia,
+  ResponsiveMediaPictureProjection,
+} from './responsive-media.js';
+
 // StateCell / ProjectionState — typed authority over coarse runtime state (#130 child 5)
 export { StateCell, ProjectionState, StateCellStore } from './state-cell.js';
 export type {
@@ -306,7 +337,15 @@ export type {
 // graph value (persisted JSON / wire payload): it gates `_tag`/`_version` + per-node
 // well-formedness, rejecting a future-version or malformed graph with ONE tagged
 // ParseError instead of silently misparsing it into a v1 shape.
-export { sealNode, sealGraph, validateGraph, linearizeGraph, decodeDocumentGraph } from './document-graph-address.js';
+export {
+  sealNode,
+  sealGraph,
+  nodeFromParts,
+  validateGraph,
+  linearizeGraph,
+  decodeDocumentGraph,
+} from './document-graph-address.js';
+export type { DocumentGraphNodeParts } from './document-graph-address.js';
 // The one node well-formedness trust gate, shared by the AI proposal validator
 // (ai-cast.ts) and the runtime graph loader (@czap/astro) — untrusted JSON, one
 // schema. Factored out of ai-cast.ts so neither seam owns a drifting copy.
@@ -321,7 +360,7 @@ export { contentAddressOf, canonicalAddressBytes } from './content-address.js';
 // namespace-object value merge into one `GraphPatch` symbol (ADR-0001), exactly
 // like `Plan`. Kept in a small block so a 3-way merge with sibling phases editing
 // this region is trivial.
-export { GraphPatch } from './graph-patch.js';
+export { GraphPatch, nodeLogicalKey } from './graph-patch.js';
 export type { PatchOp, NodePatchOp, EdgePatchOp } from './graph-patch.js';
 // ── end GraphPatch (P5b) ────────────────────────────────────────────────────
 
@@ -372,6 +411,29 @@ export type {
 } from './graph-mutation.js';
 export { createGraphMutationClient } from './graph-mutation-client.js';
 export type { GraphMutationClient, GraphMutationClientOptions, GraphMutationOps } from './graph-mutation-client.js';
+// HTTP QUERY read-leg (#119) — transport-agnostic graph read + conditional etag.
+export {
+  handleGraphQuery,
+  sendGraphQuery,
+  graphQueryEtag,
+  normalizeGraphQueryEtag,
+  createGraphQueryRefreshBase,
+  GRAPH_QUERY_FALLBACK_HEADER,
+} from './graph-query.js';
+export type { GraphQueryRequest, GraphQueryResponse, SendGraphQueryOptions } from './graph-query.js';
+// #133-full — graph-native gap replay over StateCell + patch/receipt chain.
+export {
+  discreteSignalPayloadsFromPatch,
+  chainPatchesBetween,
+  replayDiscreteFromPatchReceipts,
+  runGraphNativeGapReplay,
+} from './graph-query-gap-replay.js';
+export type {
+  PatchReceiptEntry,
+  ReplayDiscreteFromPatchReceiptsOptions,
+  GraphNativeGapReplayOptions,
+  GraphNativeGapReplayResult,
+} from './graph-query-gap-replay.js';
 
 // Runtime coordination
 export { RuntimeCoordinator } from './runtime-coordinator.js';

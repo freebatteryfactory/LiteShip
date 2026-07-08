@@ -6,7 +6,7 @@
 
 # Interface: QuantizeBlock
 
-Defined in: [vite/src/css-quantize.ts:109](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L109)
+Defined in: [vite/src/css-quantize.ts:130](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L130)
 
 A single parsed `@quantize` block: the boundary being quantised, the
 per-state bodies, and provenance info so HMR can emit
@@ -18,7 +18,7 @@ source-mapped warnings.
 
 > `readonly` **boundaryName**: `string`
 
-Defined in: [vite/src/css-quantize.ts:111](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L111)
+Defined in: [vite/src/css-quantize.ts:132](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L132)
 
 Boundary name referenced in the at-rule preamble.
 
@@ -28,7 +28,7 @@ Boundary name referenced in the at-rule preamble.
 
 > `readonly` **line**: `number`
 
-Defined in: [vite/src/css-quantize.ts:117](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L117)
+Defined in: [vite/src/css-quantize.ts:138](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L138)
 
 1-based source line where the block begins.
 
@@ -38,7 +38,7 @@ Defined in: [vite/src/css-quantize.ts:117](https://github.com/freebatteryfactory
 
 > `readonly` **sourceFile**: `string`
 
-Defined in: [vite/src/css-quantize.ts:115](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L115)
+Defined in: [vite/src/css-quantize.ts:136](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L136)
 
 Absolute path of the CSS source file.
 
@@ -48,6 +48,6 @@ Absolute path of the CSS source file.
 
 > `readonly` **states**: `Record`\<`string`, [`QuantizeStateBody`](QuantizeStateBody.md)\>
 
-Defined in: [vite/src/css-quantize.ts:113](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L113)
+Defined in: [vite/src/css-quantize.ts:134](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L134)
 
 `{ stateName: { bareProps, rules } }` mapping.

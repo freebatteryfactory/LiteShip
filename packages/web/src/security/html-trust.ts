@@ -156,9 +156,18 @@ function effectiveHtmlPolicy(options?: HtmlTrustOptions): HtmlPolicy {
   return requested;
 }
 
+function normalizeAttributeValue(value: string): string {
+  // Strip ASCII whitespace AND embedded tab/newline/carriage-return before scheme
+  // comparison — the WHATWG URL parser strips them, so a naive startsWith is bypassable.
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[\t\n\r]/g, '');
+}
+
 function isDangerousAttribute(name: string, value: string): boolean {
   const lowerName = name.toLowerCase();
-  const normalizedValue = value.trim().toLowerCase();
+  const normalizedValue = normalizeAttributeValue(value);
 
   if (lowerName.startsWith('on')) {
     return true;

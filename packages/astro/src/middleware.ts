@@ -15,7 +15,8 @@ import type {
   EdgeHostCacheStatus,
   ThemeCompileResult,
 } from '@czap/edge';
-import type { CapAxis, ExtendedDeviceCapabilities } from '@czap/detect';
+import type { CapTier } from '@czap/core';
+import type { DesignTier, ExtendedDeviceCapabilities, MotionTier } from '@czap/detect';
 import { applyCzapHeaders } from './headers.js';
 import type { CrossOriginEmbedderPolicy } from './headers.js';
 import { consumeIntegrationToggles } from './integration-toggles.js';
@@ -33,10 +34,14 @@ export interface CzapLocals {
   /**
    * Resolved capability tiers keyed by axis. Each field projects to the
    * matching `data-czap-<axis>` attribute on `<html>` — the field name and the
-   * attribute name are the same {@link CapAxis} key (one source: `CAP_AXES`),
-   * so they can never disagree.
+   * attribute name are the same CapAxis key (one source: `CAP_AXES` from
+   * `@czap/detect`), so they can never disagree.
    */
-  readonly tiers: Readonly<Record<CapAxis, string>>;
+  readonly tiers: Readonly<{
+    readonly tier: CapTier;
+    readonly motion: MotionTier;
+    readonly design: DesignTier;
+  }>;
   /** Parsed device capabilities. */
   readonly capabilities: ExtendedDeviceCapabilities;
   /** Edge-host resolution result, present when an edge adapter is configured. */
@@ -49,6 +54,8 @@ export interface CzapLocals {
     /** Per-boundary outcomes, keyed by name (multi-boundary cache form). */
     readonly boundaries?: Readonly<Record<string, EdgeHostBoundaryResolution>>;
     readonly htmlAttributes: string;
+    /** Spreadable `data-czap-<axis>` map for `<html {...htmlAttributesMap}>`. */
+    readonly htmlAttributesMap: Readonly<Record<string, string>>;
     readonly cacheStatus: EdgeHostCacheStatus;
   };
 }
@@ -143,6 +150,7 @@ export function czapMiddleware(
               assetUrl: edgeResolution.assetUrl,
               boundaries: edgeResolution.boundaries,
               htmlAttributes: edgeResolution.htmlAttributes,
+              htmlAttributesMap: edgeResolution.htmlAttributesMap,
               cacheStatus: edgeResolution.cacheStatus,
             },
           }

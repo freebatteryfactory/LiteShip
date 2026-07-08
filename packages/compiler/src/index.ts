@@ -6,7 +6,14 @@
  */
 
 export { CSSCompiler, generatePropertyRegistrations } from './css.js';
-export type { CSSRule, CSSContainerRule, CSSCompileResult, CSSStateBody, CSSStateInput } from './css.js';
+export type {
+  CSSRule,
+  CSSContainerRule,
+  CSSCompileResult,
+  CSSStateBody,
+  CSSStateInput,
+  CSSAtRuleGroup,
+} from './css.js';
 
 export { GLSLCompiler } from './glsl.js';
 export type { GLSLType, GLSLUniform, GLSLDefine, GLSLCompileResult } from './glsl.js';
@@ -84,10 +91,20 @@ export type {
   MotionEasing,
   MotionSpringConfig,
   MotionViewTimeline,
+  MotionScrollTimeline,
 } from './motion.js';
 
 export { compileReveal } from './reveal-compile.js';
 export type { CompiledReveal } from './reveal-compile.js';
+
+export { compileStagger } from './stagger-compile.js';
+export type { CompiledStagger, CompiledStaggerItem } from './stagger-compile.js';
+
+export { compileScrollTimeline } from './scroll-timeline-compile.js';
+export type { CompiledScrollTimeline } from './scroll-timeline-compile.js';
+
+export { compileResponsiveMedia } from './responsive-media-compile.js';
+export type { CompiledResponsiveMedia } from './responsive-media-compile.js';
 
 // ── Capsule declarations — cast-compiler hardening (property + bench + budget) ──
 // Concrete `pureTransform` instances of the 7-arm capsule factory, exported here

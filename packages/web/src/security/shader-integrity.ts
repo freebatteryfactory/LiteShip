@@ -126,6 +126,29 @@ function base64ToBytes(b64: string): Uint8Array | null {
   return bytes;
 }
 
+/** Encode a sha256 lowercase-hex digest as an SRI `sha256-<base64>` pin. */
+function digestHexToSri(hex: string): string {
+  const raw = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < raw.length; i++) raw[i] = Number.parseInt(hex.slice(i * 2, i * 2 + 2), 16);
+  let binary = '';
+  for (const b of raw) binary += String.fromCharCode(b);
+  if (typeof btoa !== 'function') return `sha256-${hex}`;
+  return `sha256-${btoa(binary)}`;
+}
+
+/**
+ * Compute the author SRI pin (`sha256-<base64>`) for shader source text — the
+ * source→hash producer paired with {@link parseShaderIntegrity} /
+ * {@link verifyShaderIntegrity}. Uses the SAME sha256 content-address kernel
+ * (`AddressedDigest`, not fnv1a): UTF-8 bytes → sha256 → SRI base64.
+ * Deterministic: the same source always yields the same pin.
+ */
+export function computeShaderIntegrity(content: string): string {
+  const bytes = new TextEncoder().encode(content);
+  const hex = AddressedDigest.of(bytes, 'sha256').integrity_digest.slice('sha256:'.length);
+  return digestHexToSri(hex);
+}
+
 /** Lowercase-hex encode a byte array (the digest comparison form). */
 function bytesToHex(bytes: Uint8Array): string {
   let out = '';

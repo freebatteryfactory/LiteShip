@@ -6,7 +6,7 @@
 
 # Interface: EdgeHostBoundaryResolution
 
-Defined in: [edge/src/host-adapter.ts:179](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L179)
+Defined in: [edge/src/host-adapter.ts:193](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L193)
 
 Per-boundary resolution outcome, reported in
 [EdgeHostResolution.boundaries](EdgeHostResolution.md#boundaries) when the cache is configured with
@@ -18,7 +18,7 @@ the multi-boundary form.
 
 > `readonly` `optional` **assetUrl?**: `string`
 
-Defined in: [edge/src/host-adapter.ts:185](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L185)
+Defined in: [edge/src/host-adapter.ts:199](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L199)
 
 Immutable static-asset URL for this request's resolved tier, when emitted by the build.
 
@@ -28,7 +28,7 @@ Immutable static-asset URL for this request's resolved tier, when emitted by the
 
 > `readonly` **boundaryId**: `ContentAddress`
 
-Defined in: [edge/src/host-adapter.ts:181](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L181)
+Defined in: [edge/src/host-adapter.ts:195](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L195)
 
 Content address the outputs were resolved (and cached) under.
 
@@ -38,7 +38,7 @@ Content address the outputs were resolved (and cached) under.
 
 > `readonly` **cacheStatus**: `"precompiled"` \| `"hit"` \| `"miss"`
 
-Defined in: [edge/src/host-adapter.ts:187](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L187)
+Defined in: [edge/src/host-adapter.ts:201](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L201)
 
 Where this boundary's outputs came from (`'disabled'` cannot occur per boundary).
 
@@ -48,6 +48,6 @@ Where this boundary's outputs came from (`'disabled'` cannot occur per boundary)
 
 > `readonly` `optional` **compiledOutputs?**: [`CompiledOutputs`](CompiledOutputs.md)
 
-Defined in: [edge/src/host-adapter.ts:183](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L183)
+Defined in: [edge/src/host-adapter.ts:197](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L197)
 
 Compiled per-state outputs; absent on an uncovered tier with no `compile`.

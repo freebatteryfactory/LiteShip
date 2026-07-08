@@ -8,6 +8,6 @@
 
 > **Spec** = [`BoundarySpec`](../../../interfaces/BoundarySpec.md)
 
-Defined in: [core/src/boundary.ts:424](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/boundary.ts#L424)
+Defined in: [core/src/boundary.ts:451](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/boundary.ts#L451)
 
 Alias for [BoundarySpec](../../../variables/BoundarySpec.md).

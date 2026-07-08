@@ -28,6 +28,7 @@ describe('Critical-CH drift guard', () => {
   test('@czap/astro CLIENT_HINTS_HEADERS is derived from @czap/edge — the two can never diverge', () => {
     expect(CLIENT_HINTS_HEADERS['Accept-CH']).toBe(ClientHints.acceptCHHeader());
     expect(CLIENT_HINTS_HEADERS['Critical-CH']).toBe(ClientHints.criticalCHHeader());
+    expect(CLIENT_HINTS_HEADERS['Vary']).toBe(ClientHints.varyCHHeader());
   });
 
   test('Sec-CH-Viewport-Width is boot-critical — SSR boundary resolution reads it before first render', () => {

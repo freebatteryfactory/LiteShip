@@ -8,7 +8,7 @@
 
 > `const` **Boundary**: `BoundaryFactory` & `object`
 
-Defined in: [core/src/boundary.ts:291](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/boundary.ts#L291)
+Defined in: [core/src/boundary.ts:292](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/boundary.ts#L292)
 
 Boundary — core primitive of constraint-based adaptive rendering.
 

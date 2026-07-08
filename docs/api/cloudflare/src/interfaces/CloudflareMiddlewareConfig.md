@@ -155,6 +155,27 @@ keys for superseded builds. Omit to cache indefinitely.
 
 ***
 
+### waitUntil?
+
+> `readonly` `optional` **waitUntil?**: (`promise`) => `void`
+
+Defined in: [cloudflare/src/middleware.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L91)
+
+Workers `ExecutionContext.waitUntil` for deferring KV write-back (#122).
+When omitted, boundary-cache writes block the response path.
+
+#### Parameters
+
+##### promise
+
+`Promise`\<`unknown`\>
+
+#### Returns
+
+`void`
+
+***
+
 ### workers?
 
 > `readonly` `optional` **workers?**: `object`

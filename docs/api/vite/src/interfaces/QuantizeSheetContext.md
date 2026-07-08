@@ -6,7 +6,7 @@
 
 # Interface: QuantizeSheetContext
 
-Defined in: [vite/src/css-quantize.ts:459](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L459)
+Defined in: [vite/src/css-quantize.ts:488](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L488)
 
 Sheet-level aggregation context shared across every
 [compileQuantizeBlock](../functions/compileQuantizeBlock.md) call for one stylesheet.
@@ -27,6 +27,6 @@ container.
 
 > `readonly` **viewportContainerNames**: `Set`\<`string`\>
 
-Defined in: [vite/src/css-quantize.ts:461](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L461)
+Defined in: [vite/src/css-quantize.ts:490](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L490)
 
 Viewport container names collected across the sheet's blocks.

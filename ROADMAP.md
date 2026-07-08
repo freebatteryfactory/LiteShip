@@ -1,6 +1,6 @@
 # LiteShip roadmap
 
-> Verified against the 2026-04-08 hardening wave. See `STATUS.md` for live counts, gate totals, coverage numbers, and current telemetry watch items.
+> Verified against the 2026-07-08 hardening wave (`v0.8.1` published). See `STATUS.md` for live counts, gate totals, coverage numbers, and current telemetry watch items.
 
 ## Current Phase
 
@@ -8,19 +8,28 @@ The pre-1.0 hardening arc closed through 0.6.0 (gates, fail-closed security defa
 CI/release truth, the front-door cut). 0.7.0 and 0.8.0 were dogfood-driven keystone
 waves: the client→server mutation channel, the form/mutation-binding primitive,
 morph-opaque subtrees, Standard Schema interop, and the Cloudflare dev-path fix —
-the five dashboard-blocking upstreams, all landed. The current phase is road-to-1.0
-stabilization: prove the keystones downstream, then freeze what has earned it.
+the five dashboard-blocking upstreams, all landed. **0.8.1** (2026-07-08) shipped test/bench/CI
+hardening: parallel CI lane green, `check:gates` wired, honest benches, catalog-driven
+coverage. **Epic 9** (authored motion + stream spine — `interpretTransition`,
+`MotionCompiler`, `StateCell`, wire-contract registry, active-surface gate) is on `main`
+(merged PR #135) but not versioned as 0.9.0.
+
+The current phase is **0.9.0 keystone build + road-to-1.0 stabilization**: close the
+31 open tracker issues to production quality (QUERY read-leg, motion primitives,
+security/correctness, tooling), prove keystones downstream, then freeze what has earned it.
 
 Active priorities:
 
-1. Downstream dogfood on 0.8.0 — the keystone wave is finished only when the consuming
-   app stops producing structural product feedback, not when the packages publish.
-2. Keep runtime correctness and hotspot coverage moving (standing watch on
+1. **Phase B gap closure** — every open issue (#104–#136) to code + test/bench + gate-green;
+   tracker reconciled with repo truth (no false-done, no phantom claims).
+2. **0.9.0 keystone** — HTTP QUERY read-leg (#119) + DPU adopt-under (#120) per §7 below.
+3. Downstream dogfood on 0.8.x — keystones are finished only when the consuming app stops
+   producing structural product feedback, not when packages publish.
+4. Keep runtime correctness and hotspot coverage moving (standing watch on
    `reports/runtime-seams.*`).
-3. Keep security defaults fail-closed for HTML, URL, selector, style, and boundary-state surfaces.
-4. Keep CI truth aligned with the canonical local gauntlet, and packaging truth aligned
-   with what ships to consumers.
-5. Stability ledger toward 1.0: `_spine` as the freeze ledger; freeze less than tempted.
+5. Keep security defaults fail-closed for HTML, URL, selector, style, and boundary-state surfaces.
+6. CI truth: parallel lane proven green; serial `truth-linux` cutover pending after Phase B.
+7. Stability ledger toward 1.0: `_spine` as the freeze ledger; freeze less than tempted.
 
 ## Already Promoted
 
@@ -42,6 +51,8 @@ These are no longer roadmap aspirations; they are current repo reality:
 - the plumb-completeness gate (0.4.0): a package-plumb ledger + unwired-capsule floor as gauntlet phase `plumb:gate`, so a built-not-plumbed primitive fails CI instead of shipping green
 - the front-door cut (0.6.0): the Layer-1 README with the "I want to…" router and the ≤3-package front-door budget gate, the examples ladder index, the `05-ai-patch-refused` keystone example, the four-layer DOCS preamble, and the `liteship` umbrella package
 - the doc-05 keystone set (0.7.0–0.8.0): the client→server mutation channel + client/form-binding primitives, morph-opaque subtrees, Standard Schema interop on the node schema, and the Cloudflare adapter dev-path fix — all five dashboard-blocking upstreams shipped
+- 0.8.1 test/bench/CI hardening (2026-07-08): parallel CI lane, `check:gates` in gauntlet, honest benches, catalog-driven coverage, WGSL honesty tests (#106/#107), active-surface gate blocking (#132), wire-contract single-source (#134)
+- Epic 9 motion/stream spine on main (2026-07-07, PR #135): `interpretTransition`, `MotionCompiler`, `StateCell`, stream recovery, generated wire-contract registry — landed as commits, not a separate semver narrative
 
 ## Near-Term Hardening Epics
 
@@ -606,9 +617,14 @@ replayable graph events; continuous transients (`scroll.progress`/`pointer`/`aud
 
 **Completeness ledger — what SHIPPED in the Epic-9 slice vs what's still owed (post-merge
 audit, 3-agent cross-ref against issues + design note + this roadmap).** The slice landed
-clean: #106/#107, #124, #130 (all 5 children), #132 (advisory→blocking once the interpreter
-landed), #133, #134 — a contracted vertical slice, gauntlet-enforced, zero orphans. Three
-issues are **PARTIAL — do NOT close as fully-done** (a piece shipped, the whole is owed):
+clean: #106/#107 (code + tests in `wgsl-honesty.test.ts`), #124 (reveal shipped), #130
+(machinery + reveal), #132 (advisory→blocking), #133 (interim), #134 — a contracted
+vertical slice, gauntlet-enforced. **#125 responsive-media** projection (`<picture>`/srcset/
+image-set) is **NOT-STARTED** — explicitly owed, not implied landed. Four issues are
+**PARTIAL — do NOT close as fully-done** (a piece shipped, the whole is owed):
+- **#124 stagger:** reveal/`@starting-style` shipped; stagger intent absent.
+- **#125 responsive-media:** Save-Data/DPR/Client Hints → `<picture>`/srcset/image-set
+  projection NOT-STARTED (zero symbols in packages).
 - **#126 scroll-timeline:** the native-CSS `@supports (animation-timeline: view())` floor +
   reveal's `view`/`scroll` trigger shipped (`MotionCompiler`); the *standalone scroll-timeline
   intent primitive* did not.
@@ -622,11 +638,10 @@ sequencing** — `interpretTransition` currently treats `seq`/`par`/`choice_then
 start→end; true chained-`TransitionNode` sequencing (the seq/par/choice algebra) is the
 natural follow-on, pairs with #126.
 
-**#136 (sharded low-memory docs build) — PARKED at ~90%, monolith used for this cut.** The
-sharded `scripts/build-api-docs.ts` reached content + source-link fidelity (3 fixes documented
-in #136); the TypeDoc merge breadcrumb-depth issue remains, so `docs/api` is regenerated with
-the monolith build (viable here via the 16GB swapfile). Recorded here so the park is durable
-in-repo, not tracker-only.
+**#136 (sharded low-memory docs build) — NOT STARTED (phantom claim corrected 2026-07-08).**
+Issue #136 documented fixes "already made on branch `liteship/fullsend-motion-stream-spine`",
+but `scripts/build-api-docs.ts` exists in no git ref (never committed). Repo truth: monolith
+TypeDoc build. Rebuild is Phase B Tier 3 work (#136 + #113 docs-bundle).
 
 ## Completed Since Last Revision (2026-05-17)
 

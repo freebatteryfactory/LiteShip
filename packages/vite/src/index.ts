@@ -43,7 +43,13 @@ export { resolveWASM } from './wasm-resolve.js';
 export type { WASMResolution } from './wasm-resolve.js';
 
 // @quantize
-export type { QuantizeBlock, QuantizeStateBody, QuantizeNestedRule, QuantizeSheetContext } from './css-quantize.js';
+export type {
+  QuantizeBlock,
+  QuantizeStateBody,
+  QuantizeNestedRule,
+  QuantizeAtRuleGroup,
+  QuantizeSheetContext,
+} from './css-quantize.js';
 export { parseQuantizeBlocks, compileQuantizeBlock, viewportContainmentRule } from './css-quantize.js';
 
 // @token

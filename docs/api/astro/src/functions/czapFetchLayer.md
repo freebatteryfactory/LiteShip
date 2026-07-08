@@ -8,7 +8,7 @@
 
 > **czapFetchLayer**(`config?`): [`CzapFetchLayer`](../type-aliases/CzapFetchLayer.md)
 
-Defined in: [astro/src/fetch-layer.ts:165](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/fetch-layer.ts#L165)
+Defined in: [astro/src/fetch-layer.ts:153](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/fetch-layer.ts#L153)
 
 Create the czap fetch layer.
 

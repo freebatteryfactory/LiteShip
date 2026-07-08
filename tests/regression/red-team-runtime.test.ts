@@ -271,6 +271,16 @@ describe('red-team runtime regressions', () => {
     expect(container.querySelector('p')?.textContent).toBe('ok');
   });
 
+  test('strips javascript: scheme obfuscated with embedded whitespace (#121)', () => {
+    const sanitized = resolveHtmlString(
+      '<a href="java\tscript:alert(1)">x</a><a href="java\nscript:alert(2)">y</a>',
+      { policy: 'sanitized-html' },
+    );
+    const container = document.createElement('div');
+    container.innerHTML = sanitized;
+    expect(container.querySelector('a')?.getAttribute('href')).toBeNull();
+  });
+
   test('strips <style> CSS-injection surface', () => {
     const sanitized = resolveHtmlString(
       '<p>ok</p><style>body { background: url("https://attacker.example/exfil"); }</style>',

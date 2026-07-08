@@ -8,7 +8,7 @@
 
 > **linearizeGraph**(`graph`): `object`
 
-Defined in: [core/src/document-graph-address.ts:129](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph-address.ts#L129)
+Defined in: [core/src/document-graph-address.ts:144](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph-address.ts#L144)
 
 Topologically order the node ids (Kahn's algorithm via `Plan.topoSort`).
 `cycle` is populated with the participating node ids when the graph is cyclic.

@@ -8,7 +8,7 @@
 
 > **compileReveal**(`graph`, `transitionId`, `intent`): [`CompiledReveal`](../interfaces/CompiledReveal.md)
 
-Defined in: [compiler/src/reveal-compile.ts:100](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/reveal-compile.ts#L100)
+Defined in: [compiler/src/reveal-compile.ts:86](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/reveal-compile.ts#L86)
 
 Compile a lowered reveal graph into native CSS + a runtime write plan.
 

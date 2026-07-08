@@ -6,7 +6,7 @@
  * fragile glue over the node shape, so it must live in exactly one place — a node-shape
  * change then breaks one file loudly instead of letting three copies rot independently.
  */
-import { sealGraph, sealNode } from '@czap/core';
+import { sealGraph, nodeFromParts } from '@czap/core';
 import type { CellMeta, DocumentGraph, DocumentGraphEdge, DocumentGraphNode, SignalNode } from '@czap/core';
 
 export const META: CellMeta = {
@@ -16,7 +16,7 @@ export const META: CellMeta = {
 };
 
 export const node = (input: string): SignalNode =>
-  sealNode({ _tag: 'DocGraphSignalNode', _version: 1, family: 'signal', id: '', meta: META, input } as unknown as SignalNode);
+  nodeFromParts({ _tag: 'DocGraphSignalNode', _version: 1, family: 'signal', meta: META, input });
 
 export const graph = (nodes: DocumentGraphNode[], edges: DocumentGraphEdge[] = []): DocumentGraph =>
   sealGraph({ _tag: 'DocumentGraph', _version: 1, meta: META, nodes, edges } as Omit<DocumentGraph, 'id' | 'digest'>);
