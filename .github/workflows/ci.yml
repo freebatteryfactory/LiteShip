@@ -142,7 +142,7 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - run: pnpm run build && pnpm run capsule:compile
       - name: Mint gauntlet run context for parallel fan-out
-        run: pnpm exec tsx -e "import { ensureArtifactContext } from './scripts/artifact-context.js'; ensureArtifactContext();"
+        run: pnpm exec tsx scripts/mint-gauntlet-context.ts
       - uses: actions/upload-artifact@v7
         with:
           name: dist-packages
