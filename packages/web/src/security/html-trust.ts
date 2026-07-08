@@ -171,12 +171,15 @@ function normalizeAttributeValue(value: string): string {
  * Scheme ALLOWLIST for url-sink attributes — a blocklist of known-bad schemes
  * (javascript:, three data: media types) is inherently bypassable (vbscript:,
  * data:text/xml, future schemes). Anything not listed here is stripped.
- * `data:` is allowed only for `data:image/*` (inline images are the one
- * routine legitimate use; data:-HTML/script payloads are the attack).
+ * `data:` is allowed only for raster `data:image/(png|jpeg|jpg|gif|webp|avif|bmp)` —
+ * `data:image/svg+xml` is scriptable and must not survive on URL sinks (href/action/…).
  */
 const SAFE_URL_SCHEMES = new Set(['http:', 'https:', 'mailto:', 'tel:', 'blob:']);
 
 const URL_SCHEME_RE = /^([a-z][a-z0-9+.-]*:)/;
+
+/** Raster-only data:image allowlist — SVG (and unknown subtypes) are stripped. */
+const SAFE_DATA_IMAGE_RE = /^data:image\/(png|jpeg|jpg|gif|webp|avif|bmp)[;,]/;
 
 function isDangerousUrlValue(normalizedValue: string): boolean {
   const scheme = URL_SCHEME_RE.exec(normalizedValue)?.[1];
@@ -189,7 +192,7 @@ function isDangerousUrlValue(normalizedValue: string): boolean {
     return false;
   }
   if (scheme === 'data:') {
-    return !normalizedValue.startsWith('data:image/');
+    return !SAFE_DATA_IMAGE_RE.test(normalizedValue);
   }
   return true;
 }
@@ -269,8 +272,8 @@ function createTemplate(html: string, options?: HtmlTrustOptions): HTMLTemplateE
  * effective policy is `sanitized-html`. Url-sink attributes (`href`,
  * `src`, `action`, `formaction`, `ping`, `background`, `cite`, `data`,
  * `poster`, …) are held to a scheme ALLOWLIST: relative URLs,
- * `http(s):`, `mailto:`, `tel:`, `blob:`, and `data:image/*` pass;
- * every other scheme (`javascript:`, `vbscript:`, non-image `data:`, …)
+ * `http(s):`, `mailto:`, `tel:`, `blob:`, and raster `data:image/(png|jpeg|…)` pass;
+ * every other scheme (`javascript:`, `vbscript:`, `data:image/svg+xml`, non-image `data:`, …)
  * is stripped.
  */
 export function createHtmlFragment(html: string, options?: HtmlTrustOptions): DocumentFragment {

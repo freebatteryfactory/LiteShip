@@ -49,23 +49,34 @@ export async function doctor(
   // Default behavior anchors probes to the workspace root so `czap doctor`
   // works correctly from any monorepo subdir, not just the repo root.
   const cwd = opts.cwd ?? findWorkspaceRoot(process.cwd());
+
+  const withDeployed = async (base: Awaited<ReturnType<typeof runAllProbes>>) => {
+    if (!opts.deployed) return base;
+    const { probeDeployedSite } = await import('./probes-deployed.js');
+    return [...base, ...(await probeDeployedSite(opts.deployed))];
+  };
+
   let checks;
   try {
-    checks = await runAllProbes(cwd, { target: opts.target });
+    checks = await withDeployed(await runAllProbes(cwd, { target: opts.target }));
   } catch (error) {
     emitError('doctor', error instanceof Error ? error.message : String(error));
     return 1;
   }
 
-  if (opts.deployed) {
-    const { probeDeployedSite } = await import('./probes-deployed.js');
-    checks = [...checks, ...(await probeDeployedSite(opts.deployed))];
-  }
-
   let fixes: readonly DoctorFix[] | undefined;
   if (opts.fix) {
     fixes = await applyFixes(checks, cwd);
-    if (fixes.length > 0) checks = await runAllProbes(cwd, { target: opts.target });
+    if (fixes.length > 0) {
+      try {
+        // Re-append deployed probes after --fix re-run — otherwise
+        // `doctor --fix --deployed` can pass CI without header checks.
+        checks = await withDeployed(await runAllProbes(cwd, { target: opts.target }));
+      } catch (error) {
+        emitError('doctor', error instanceof Error ? error.message : String(error));
+        return 1;
+      }
+    }
   }
 
   const scoped = opts.preflight ? checks.filter((c) => !c.id.endsWith('.built')) : checks;

@@ -36,9 +36,48 @@ function lineOf(source: string, index: number): number {
   return source.slice(0, index).split('\n').length;
 }
 
-function sinkAssignmentLine(source: string, index: number): string {
-  const lineEnd = source.indexOf('\n', index);
-  return source.slice(index, lineEnd === -1 ? source.length : lineEnd);
+/**
+ * RHS of an assignment starting at `index` (the `innerHTML`/`outerHTML` match),
+ * through the terminating `;` — spans newlines so a multiline guarded
+ * assignment is not false-positived.
+ */
+function sinkAssignmentRhs(source: string, index: number): string {
+  const eq = source.indexOf('=', index);
+  if (eq === -1) return '';
+  let i = eq + 1;
+  let depth = 0;
+  let inStr: '"' | "'" | '`' | null = null;
+  while (i < source.length) {
+    const ch = source[i]!;
+    if (inStr) {
+      if (ch === '\\') {
+        i += 2;
+        continue;
+      }
+      if (ch === inStr) inStr = null;
+      i++;
+      continue;
+    }
+    if (ch === '"' || ch === "'" || ch === '`') {
+      inStr = ch;
+      i++;
+      continue;
+    }
+    if (ch === '(' || ch === '{' || ch === '[') depth++;
+    if (ch === ')' || ch === '}' || ch === ']') depth = Math.max(0, depth - 1);
+    if (ch === ';' && depth === 0) {
+      return source.slice(eq + 1, i);
+    }
+    if ((ch === '\n' || ch === '\r') && depth === 0) {
+      // Soft end: next non-ws that looks like a new statement.
+      const rest = source.slice(i + 1);
+      if (/^\s*(?:export\s+|const\s+|let\s+|var\s+|function\s+|return\s+|if\s*\(|for\s*\(|while\s*\(|}|$)/.test(rest)) {
+        return source.slice(eq + 1, i);
+      }
+    }
+    i++;
+  }
+  return source.slice(eq + 1);
 }
 
 function scanFile(rel: string, source: string): ConsumerAppFinding[] {
@@ -59,9 +98,9 @@ function scanFile(rel: string, source: string): ConsumerAppFinding[] {
   let sinkMatch: RegExpExecArray | null;
   while ((sinkMatch = htmlSinkRe.exec(source)) !== null) {
     const idx = sinkMatch.index;
-    const line = sinkAssignmentLine(source, idx);
+    const rhs = sinkAssignmentRhs(source, idx);
     // Guard must be on the sink's own RHS — not merely present elsewhere in the file/block.
-    if (line.includes('createHtmlFragment') || line.includes('assignInnerHTML')) {
+    if (rhs.includes('createHtmlFragment') || rhs.includes('assignInnerHTML')) {
       continue;
     }
     findings.push({
