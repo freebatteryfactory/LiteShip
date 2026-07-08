@@ -35,6 +35,7 @@ import {
   probeWorkspaceInstalled,
 } from './probes-workspace.js';
 import { probeAstroDevStatus } from './probes-astro.js';
+import { probeWorkersModuleScopeDate } from './probes-workers-date.js';
 import type { DoctorCheck, DoctorTarget } from './types.js';
 
 interface RunProbesOptions {
@@ -65,6 +66,36 @@ export async function runCloudflareProbes(cwd: string): Promise<readonly DoctorC
     probeCloudflareConfig(cwd),
     probeCloudflareOutput(cwd),
     probeCloudflareCsp(),
+    probeWorkersModuleScopeDate(cwd),
+  ];
+}
+
+/** Consumer-app profile — integration smells in the host's own source (#117). */
+export async function runConsumerAppProbes(cwd: string): Promise<readonly DoctorCheck[]> {
+  const { scanConsumerAppSource } = await import('../../lib/consumer-app-audit.js');
+  const findings = scanConsumerAppSource(cwd);
+  if (findings.length === 0) {
+    return [
+      {
+        id: 'consumer-app.smells',
+        label: 'LiteShip integration smells',
+        status: 'ok',
+        detail: 'no known integration foot-guns in consumer source',
+      },
+    ];
+  }
+  const errors = findings.filter((f) => f.severity === 'error').length;
+  const warnings = findings.filter((f) => f.severity === 'warning').length;
+  return [
+    {
+      id: 'consumer-app.smells',
+      label: 'LiteShip integration smells',
+      status: errors > 0 ? 'fail' : warnings > 0 ? 'warn' : 'ok',
+      detail: `${findings.length} finding(s): ${errors} error, ${warnings} warning`,
+      hint: findings[0]
+        ? `${findings[0].file}${findings[0].line ? `:${findings[0].line}` : ''} — ${findings[0].title}`
+        : undefined,
+    },
   ];
 }
 
@@ -96,6 +127,7 @@ export async function runConsumerProbes(cwd: string): Promise<readonly DoctorChe
 export async function runAllProbes(cwd: string, opts: RunProbesOptions = {}): Promise<readonly DoctorCheck[]> {
   if (opts.target === 'cloudflare') return runCloudflareProbes(cwd);
   if (opts.target === 'astro') return runAstroProbes(cwd);
+  if (opts.target === 'consumer-app') return runConsumerAppProbes(cwd);
   if (!isLiteShipWorkspace(cwd)) return runConsumerProbes(cwd);
   const minima = loadEngineMinima(cwd);
   // The three external (spawn-bearing) probes are independent — run them

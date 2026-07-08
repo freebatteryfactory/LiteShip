@@ -8,7 +8,7 @@
 
 > `const` **Resumption**: `object`
 
-Defined in: [web/src/stream/resumption.ts:415](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/resumption.ts#L415)
+Defined in: [web/src/stream/resumption.ts:425](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/resumption.ts#L425)
 
 SSE resumption protocol namespace.
 
@@ -83,7 +83,7 @@ Request a snapshot when resumption is not possible.
 
 ##### config?
 
-`Partial`\<`Pick`\<[`ResumptionConfig`](../interfaces/ResumptionConfig.md), `"snapshotUrl"` \| `"endpointPolicy"`\>\>
+`Partial`\<`Pick`\<[`ResumptionConfig`](../interfaces/ResumptionConfig.md), `"snapshotUrl"` \| `"endpointPolicy"` \| `"timeout"`\>\>
 
 #### Returns
 

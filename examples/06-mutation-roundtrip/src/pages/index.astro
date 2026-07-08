@@ -69,7 +69,7 @@ const graph = currentGraph();
          imports and emits it as a module. A `type="module"` attribute would opt OUT of
          bundling, shipping the bare import to the browser unresolved. -->
     <script>
-      import { createGraphMutationClient, decodeDocumentGraph, GraphPatch, sealNode, sendGraphMutation } from '@czap/core';
+      import { createGraphMutationClient, createGraphQueryRefreshBase, GraphPatch, sealNode, sendGraphMutation } from '@czap/core';
       import { bindGraphForm } from '@czap/web';
 
       const out = document.getElementById('out');
@@ -89,7 +89,7 @@ const graph = currentGraph();
 
       // Fetch the CURRENT server graph to propose against — no host-mutated data is inlined
       // into the page, so a signal input can never smuggle a closing script tag into the markup.
-      const currentBase = async () => decodeDocumentGraph(await (await fetch('/api/graph')).json());
+      const currentBase = createGraphQueryRefreshBase('/api/graph');
 
       // A validated, content-addressed node, built the same way the server does.
       const signal = (meta, input) => sealNode({ _tag: 'DocGraphSignalNode', _version: 1, family: 'signal', id: '', meta, input });

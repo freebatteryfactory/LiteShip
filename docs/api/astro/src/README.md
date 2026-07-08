@@ -31,8 +31,11 @@ const config = defineConfig({
 - [CzapFetchLayerConfig](interfaces/CzapFetchLayerConfig.md)
 - [CzapLocals](interfaces/CzapLocals.md)
 - [CzapMiddlewareConfig](interfaces/CzapMiddlewareConfig.md)
+- [DocsBundleManifest](interfaces/DocsBundleManifest.md)
+- [DocsMcpBundle](interfaces/DocsMcpBundle.md)
 - [IntegrationConfig](interfaces/IntegrationConfig.md)
 - [QuantizeProps](interfaces/QuantizeProps.md)
+- [ResolvedInitialState](interfaces/ResolvedInitialState.md)
 - [SatelliteProps](interfaces/SatelliteProps.md)
 - [ServerIslandContext](interfaces/ServerIslandContext.md)
 
@@ -42,16 +45,24 @@ const config = defineConfig({
 - [CzapFetchLayer](type-aliases/CzapFetchLayer.md)
 - [FetchLayerNext](type-aliases/FetchLayerNext.md)
 
+## Variables
+
+- [parseGraphQueryIfNoneMatch](variables/parseGraphQueryIfNoneMatch.md)
+
 ## Functions
 
 - [bridgeDiagnosticsToAstroLogger](functions/bridgeDiagnosticsToAstroLogger.md)
 - [czapFetchLayer](functions/czapFetchLayer.md)
 - [czapMiddleware](functions/czapMiddleware.md)
+- [docsMcpRoute](functions/docsMcpRoute.md)
 - [graphMutationRoute](functions/graphMutationRoute.md)
+- [graphQueryRoute](functions/graphQueryRoute.md)
 - [installDiagnosticsBridge](functions/installDiagnosticsBridge.md)
 - [integration](functions/integration.md)
+- [loadDocsMcpBundle](functions/loadDocsMcpBundle.md)
 - [resolveInitialState](functions/resolveInitialState.md)
 - [resolveInitialStateFallback](functions/resolveInitialStateFallback.md)
+- [resolveInitialStateWithReceipt](functions/resolveInitialStateWithReceipt.md)
 - [satelliteAttrs](functions/satelliteAttrs.md)
 - [serializeBoundaryCss](functions/serializeBoundaryCss.md)
 

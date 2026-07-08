@@ -8,7 +8,7 @@
 
 > **resolveInitialState**\<`B`\>(`boundary`, `context?`): `string`
 
-Defined in: [astro/src/quantize.ts:133](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/quantize.ts#L133)
+Defined in: [astro/src/quantize.ts:162](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/quantize.ts#L162)
 
 Resolve the initial boundary state for server-side rendering.
 

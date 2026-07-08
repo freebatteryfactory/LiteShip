@@ -24,6 +24,7 @@ import { ClientHints } from '@czap/edge';
 export const CLIENT_HINTS_HEADERS: Record<string, string> = {
   'Accept-CH': ClientHints.acceptCHHeader(),
   'Critical-CH': ClientHints.criticalCHHeader(),
+  Vary: ClientHints.varyCHHeader(),
 };
 
 /**
@@ -38,6 +39,11 @@ export type CrossOriginEmbedderPolicy = 'require-corp' | 'credentialless';
  * `@czap/worker`'s SPSC ring). Applied only when the integration is
  * configured with `workers: { enabled: true }`; the COEP value is
  * overridable via `workers.coep`.
+ *
+ * Parked-by-design (#129): COEP is consumer-overridable (set-only-when-absent
+ * via {@link CONSUMER_OVERRIDABLE_HEADERS}) but cannot be disabled while workers
+ * are enabled — `SharedArrayBuffer` requires cross-origin isolation. A workers-off
+ * isolation escape remains a future first-party option; neither dogfood site needs it.
  */
 export const CROSS_ORIGIN_HEADERS: Record<string, string> = {
   'Cross-Origin-Opener-Policy': 'same-origin',
@@ -67,11 +73,15 @@ export function getCzapHeaderEntries(options: {
   if (options.detectEnabled) {
     const acceptCH = options.acceptCH ?? CLIENT_HINTS_HEADERS['Accept-CH'];
     const criticalCH = options.criticalCH ?? CLIENT_HINTS_HEADERS['Critical-CH'];
+    const vary = CLIENT_HINTS_HEADERS['Vary'];
     if (acceptCH) {
       entries.push(['Accept-CH', acceptCH]);
     }
     if (criticalCH) {
       entries.push(['Critical-CH', criticalCH]);
+    }
+    if (vary) {
+      entries.push(['Vary', vary]);
     }
   }
 

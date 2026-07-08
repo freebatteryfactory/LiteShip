@@ -6,7 +6,7 @@
 
 # Interface: EdgeHostAdapter
 
-Defined in: [edge/src/host-adapter.ts:241](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L241)
+Defined in: [edge/src/host-adapter.ts:255](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L255)
 
 Opaque host-facing adapter returned by [createEdgeHostAdapter](../functions/createEdgeHostAdapter.md).
 
@@ -19,7 +19,7 @@ theme compilation, and boundary caching in a single pass.
 
 > **resolve**(`headers`): `Promise`\<[`EdgeHostResolution`](EdgeHostResolution.md)\>
 
-Defined in: [edge/src/host-adapter.ts:243](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L243)
+Defined in: [edge/src/host-adapter.ts:257](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L257)
 
 Resolve a request's device context, theme, and compiled outputs.
 

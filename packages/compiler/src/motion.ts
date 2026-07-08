@@ -31,12 +31,21 @@ export interface MotionViewTimeline {
   readonly range: readonly [string, string];
 }
 
+/** Standalone scroll-root timeline for `animation-timeline: scroll()` (#126). */
+export interface MotionScrollTimeline {
+  readonly axis?: 'block' | 'inline' | 'x' | 'y';
+  readonly range: readonly [string, string];
+}
+
 /** Input to {@link MotionCompiler.compile}. */
 export interface MotionCompileInput {
   readonly plan: CssMotionPlan;
   readonly easing?: MotionEasing;
   readonly spring?: MotionSpringConfig;
   readonly viewTimeline?: MotionViewTimeline;
+  readonly scrollTimeline?: MotionScrollTimeline;
+  /** Stagger offset applied as animation/transition delay (#124). */
+  readonly delayMs?: number;
 }
 
 /** CSS artifacts emitted by {@link MotionCompiler.compile}. */
@@ -134,16 +143,21 @@ function resolveEasing(easing: MotionEasing | undefined, spring?: MotionSpringCo
   }
 }
 
-function transitionDecls(plan: CssMotionPlan, easingFn: string): string {
+function delaySuffix(delayMs: number | undefined): string {
+  return delayMs !== undefined && delayMs > 0 ? ` ${delayMs}ms` : '';
+}
+
+function transitionDecls(plan: CssMotionPlan, easingFn: string, delayMs?: number): string {
   const duration = `${plan.durationMs}ms`;
+  const delay = delaySuffix(delayMs);
   return plan.transitionProperty.trim().length > 0
     ? plan.transitionProperty
         .split(',')
         .map((p) => p.trim())
         .filter(Boolean)
-        .map((p) => `${p} ${duration} ${easingFn}`)
+        .map((p) => `${p} ${duration} ${easingFn}${delay}`)
         .join(', ')
-    : `all ${duration} ${easingFn}`;
+    : `all ${duration} ${easingFn}${delay}`;
 }
 
 function emitBaseRule(plan: CssMotionPlan): string {
@@ -152,7 +166,7 @@ function emitBaseRule(plan: CssMotionPlan): string {
   return [`${plan.selector} {`, fromDecls, `}`].join('\n');
 }
 
-function emitTransitionRule(plan: CssMotionPlan, easingFn: string): string {
+function emitTransitionRule(plan: CssMotionPlan, easingFn: string, delayMs?: number): string {
   const end = plan.keyframes.find((k) => k.offset === 1) ?? plan.keyframes.at(-1);
   const endDecls =
     end && Object.keys(end.properties).length > 0
@@ -164,14 +178,34 @@ function emitTransitionRule(plan: CssMotionPlan, easingFn: string): string {
   return [
     `${plan.selector}[data-czap-state="${plan.toState}"] {`,
     ...(endDecls.length > 0 ? [endDecls] : []),
-    `  transition: ${transitionDecls(plan, easingFn)};`,
+    `  transition: ${transitionDecls(plan, easingFn, delayMs)};`,
     `}`,
   ].join('\n');
 }
 
-function emitScrollTimeline(plan: CssMotionPlan, viewTimeline: MotionViewTimeline, easingFn: string): string {
+function scrollTimelineFn(scrollTimeline: MotionScrollTimeline): string {
+  switch (scrollTimeline.axis) {
+    case 'x':
+      return 'scroll(nearest inline)';
+    case 'y':
+      return 'scroll(nearest block)';
+    case 'inline':
+      return 'scroll(nearest inline)';
+    case 'block':
+    default:
+      return 'scroll()';
+  }
+}
+
+function emitViewTimeline(
+  plan: CssMotionPlan,
+  viewTimeline: MotionViewTimeline,
+  easingFn: string,
+  delayMs?: number,
+): string {
   const name = keyframeName(plan);
   const [start, end] = viewTimeline.range;
+  const delay = delayMs !== undefined && delayMs > 0 ? `\n    animation-delay: ${delayMs}ms;` : '';
 
   const supported = [
     `@supports (animation-timeline: view()) {`,
@@ -181,7 +215,7 @@ function emitScrollTimeline(plan: CssMotionPlan, viewTimeline: MotionViewTimelin
     `    animation-timing-function: ${easingFn};`,
     `    animation-fill-mode: both;`,
     `    animation-timeline: view();`,
-    `    animation-range: ${start} ${end};`,
+    `    animation-range: ${start} ${end};${delay}`,
     `  }`,
     `}`,
   ].join('\n');
@@ -189,7 +223,42 @@ function emitScrollTimeline(plan: CssMotionPlan, viewTimeline: MotionViewTimelin
   const fallback = [
     `@supports not (animation-timeline: view()) {`,
     `  ${plan.selector}[data-czap-state="${plan.toState}"] {`,
-    `    transition: ${transitionDecls(plan, easingFn)};`,
+    `    transition: ${transitionDecls(plan, easingFn, delayMs)};`,
+    `  }`,
+    `}`,
+  ].join('\n');
+
+  return [supported, fallback].join('\n\n');
+}
+
+function emitScrollRootTimeline(
+  plan: CssMotionPlan,
+  scrollTimeline: MotionScrollTimeline,
+  easingFn: string,
+  delayMs?: number,
+): string {
+  const name = keyframeName(plan);
+  const [start, end] = scrollTimeline.range;
+  const timeline = scrollTimelineFn(scrollTimeline);
+  const delay = delayMs !== undefined && delayMs > 0 ? `\n    animation-delay: ${delayMs}ms;` : '';
+
+  const supported = [
+    `@supports (animation-timeline: scroll()) {`,
+    `  ${plan.selector} {`,
+    `    animation-name: ${name};`,
+    `    animation-duration: auto;`,
+    `    animation-timing-function: ${easingFn};`,
+    `    animation-fill-mode: both;`,
+    `    animation-timeline: ${timeline};`,
+    `    animation-range: ${start} ${end};${delay}`,
+    `  }`,
+    `}`,
+  ].join('\n');
+
+  const fallback = [
+    `@supports not (animation-timeline: scroll()) {`,
+    `  ${plan.selector}[data-czap-state="${plan.toState}"] {`,
+    `    transition: ${transitionDecls(plan, easingFn, delayMs)};`,
     `  }`,
     `}`,
   ].join('\n');
@@ -198,17 +267,22 @@ function emitScrollTimeline(plan: CssMotionPlan, viewTimeline: MotionViewTimelin
 }
 
 function compile(input: MotionCompileInput): MotionCompileResult {
-  const { plan, easing, spring, viewTimeline } = input;
+  const { plan, easing, spring, viewTimeline, scrollTimeline, delayMs } = input;
   const easingFn = resolveEasing(easing, spring);
 
   const propertyRegistrations = emitPropertyRegistrations(plan.properties);
   const keyframes = emitKeyframes(plan);
   const startingStyle = emitStartingStyle(plan);
   const baseRule = emitBaseRule(plan);
-  const transition = emitTransitionRule(plan, easingFn);
-  const scrollTimeline = viewTimeline ? emitScrollTimeline(plan, viewTimeline, easingFn) : '';
+  const transition = emitTransitionRule(plan, easingFn, delayMs);
+  const timelineBlock = scrollTimeline
+    ? emitScrollRootTimeline(plan, scrollTimeline, easingFn, delayMs)
+    : viewTimeline
+      ? emitViewTimeline(plan, viewTimeline, easingFn, delayMs)
+      : '';
+  const scrollTimelineCss = timelineBlock;
 
-  const sections = [propertyRegistrations, keyframes, startingStyle, baseRule, transition, scrollTimeline].filter(
+  const sections = [propertyRegistrations, keyframes, startingStyle, baseRule, transition, scrollTimelineCss].filter(
     (s) => s.length > 0,
   );
 
@@ -218,7 +292,7 @@ function compile(input: MotionCompileInput): MotionCompileResult {
     keyframes,
     startingStyle,
     transition,
-    scrollTimeline,
+    scrollTimeline: scrollTimelineCss,
   };
 }
 

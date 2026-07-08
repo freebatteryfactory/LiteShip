@@ -5,6 +5,10 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  # Serial gauntlet kept as nightly deep-verify (Phase B CI cutover: parallel is the merge gate).
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -29,7 +33,9 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm run format:check
 
+  # Serial full gauntlet — nightly / manual only after Phase B cutover (parallel lane is merge gate).
   truth-linux:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
@@ -121,9 +127,9 @@ jobs:
             reports
             benchmarks
 
-  # Tier 6 — parallel truth-linux lane (runs ALONGSIDE serial truth-linux until
-  # proven green-for-green + red-for-red). Build once, fan out: vitest shards N=4,
-  # isolated bench, quarantined capsule:verify. Bench is NEVER sharded.
+  # Parallel truth-linux lane — merge gate (serial demoted to nightly after Phase B).
+  # Build once, fan out: vitest shards N=4, isolated bench, quarantined capsule:verify.
+  # Bench is NEVER sharded.
   truth-linux-parallel-setup:
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -676,10 +682,9 @@ jobs:
     timeout-minutes: 5
     needs:
       - format
-      - truth-linux
       - truth-linux-parallel
       - browser-e2e
       - windows-smoke
       - rust-wasm-parity
     steps:
-      - run: echo "CI truth lanes passed."
+      - run: echo "CI truth lanes passed (parallel merge gate; serial nightly-only)."

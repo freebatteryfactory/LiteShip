@@ -72,7 +72,11 @@ export interface CzapMiddlewareConfig {
 }
 
 export interface CzapLocals {
-  readonly tiers: Readonly<Record<string, string>>;
+  readonly tiers: Readonly<{
+    readonly tier: import('./core.d.ts').CapTier;
+    readonly motion: import('./tiers.js').MotionTier;
+    readonly design: import('./tiers.js').DesignTier;
+  }>;
   readonly capabilities: unknown;
   readonly edge?: {
     readonly theme?: unknown;
@@ -80,6 +84,7 @@ export interface CzapLocals {
     readonly assetUrl?: string;
     readonly boundaries?: EdgeHostResolution['boundaries'];
     readonly htmlAttributes: string;
+    readonly htmlAttributesMap: Readonly<Record<string, string>>;
     readonly cacheStatus: EdgeHostResolution['cacheStatus'];
   };
 }

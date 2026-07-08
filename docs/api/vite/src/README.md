@@ -48,6 +48,7 @@ const config = defineConfig({
 - [HMRPayload](interfaces/HMRPayload.md)
 - [PluginConfig](interfaces/PluginConfig.md)
 - [PrimitiveResolution](interfaces/PrimitiveResolution.md)
+- [QuantizeAtRuleGroup](interfaces/QuantizeAtRuleGroup.md)
 - [QuantizeBlock](interfaces/QuantizeBlock.md)
 - [QuantizeNestedRule](interfaces/QuantizeNestedRule.md)
 - [QuantizeSheetContext](interfaces/QuantizeSheetContext.md)

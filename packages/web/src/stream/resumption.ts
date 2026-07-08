@@ -202,6 +202,7 @@ export const resume = (
       const snapshot = yield* fetchSnapshot(artifactId, {
         snapshotUrl: finalConfig.snapshotUrl,
         endpointPolicy: finalConfig.endpointPolicy,
+        timeout: finalConfig.timeout,
       });
       return snapshot;
     }
@@ -221,6 +222,7 @@ export const resume = (
       const snapshot = yield* fetchSnapshot(artifactId, {
         snapshotUrl: finalConfig.snapshotUrl,
         endpointPolicy: finalConfig.endpointPolicy,
+        timeout: finalConfig.timeout,
       });
       return snapshot;
     }
@@ -231,6 +233,7 @@ export const resume = (
       currentEventId,
       finalConfig.replayUrl!,
       finalConfig.endpointPolicy,
+      finalConfig.timeout,
     );
 
     return {
@@ -271,12 +274,18 @@ const describeEndpointRejection = (
   }
 };
 
+/** Build fetch init with an optional {@link ResumptionConfig.timeout} AbortSignal (#122). */
+const recoveryFetchInit = (timeout?: Millis): RequestInit | undefined => {
+  if (timeout === undefined) return undefined;
+  return { signal: AbortSignal.timeout(timeout) };
+};
+
 /**
  * Request a snapshot when resumption is not possible.
  */
 export const fetchSnapshot = (
   artifactId: string,
-  config?: Partial<Pick<ResumptionConfig, 'snapshotUrl' | 'endpointPolicy'>>,
+  config?: Partial<Pick<ResumptionConfig, 'snapshotUrl' | 'endpointPolicy' | 'timeout'>>,
 ): Effect.Effect<Extract<ResumeResponse, { type: 'snapshot' }>, LiteShipError> =>
   Effect.gen(function* () {
     const finalConfig = { ...defaultResumptionConfig, ...config };
@@ -296,7 +305,7 @@ export const fetchSnapshot = (
     appendArtifactIdToUrl(url, artifactId);
 
     const response = yield* Effect.tryPromise({
-      try: () => fetch(url.toString()),
+      try: () => fetch(url.toString(), recoveryFetchInit(finalConfig.timeout)),
       catch: (error) => IoError('resumption.snapshot', `Failed to fetch snapshot: ${error}`, { cause: error }),
     });
 
@@ -340,6 +349,7 @@ const requestReplay = (
   toEventId: string,
   replayUrl: string,
   endpointPolicy: ResumptionConfig['endpointPolicy'],
+  timeout?: Millis,
 ): Effect.Effect<readonly unknown[], LiteShipError> =>
   Effect.gen(function* () {
     const resolved = resolveRuntimeUrl(replayUrl, {
@@ -358,7 +368,7 @@ const requestReplay = (
     url.searchParams.set('to', toEventId);
 
     const response = yield* Effect.tryPromise({
-      try: () => fetch(url.toString()),
+      try: () => fetch(url.toString(), recoveryFetchInit(timeout)),
       catch: (error) => IoError('resumption.replay', `Failed to fetch replay: ${error}`, { cause: error }),
     });
 

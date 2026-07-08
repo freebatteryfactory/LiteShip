@@ -15,6 +15,7 @@ import { rawIndexF32 } from './boundary-f32.js';
 import { WASMDispatch } from './wasm-dispatch.js';
 import { WASM_BATCH_MAX } from './defaults.js';
 import { Diagnostics } from './diagnostics.js';
+import { inputToSource } from './signal-input.js';
 import { wallClock } from './clock.js';
 import type { EvaluateResult } from './type-utils.js';
 import { ValidationError } from '@czap/error';
@@ -346,6 +347,32 @@ export const Boundary: BoundaryFactory & {
     // tupleMap preserves arity but fn returns `string`, not per-element S[K]; one narrow cast is unavoidable.
     const states = pairs.map(([, s]) => s) as unknown as S;
     const id = deterministicId(config.input, thresholds, states, config.hysteresis, config.spec);
+
+    const source = inputToSource(config.input);
+    if (source?.type === 'scroll' && source.axis === 'progress') {
+      const maxThreshold = Math.max(...pairs.map(([t]) => t));
+      if (maxThreshold > 1) {
+        Diagnostics.warnOnce({
+          source: 'czap/core.boundary',
+          code: 'scroll-progress-threshold-scale',
+          message:
+            `Boundary "${config.input}" uses thresholds with max ${maxThreshold}, but scroll.progress is canonical 0..1 — ` +
+            'thresholds above 1 pin the boundary at the lowest state on every built-in consumer path. ' +
+            'Author thresholds as fractions (e.g. [0, "arrival"], [0.2, "showroom"]) not percentages.',
+        });
+      }
+    } else if (source?.type === 'audio') {
+      const maxThreshold = Math.max(...pairs.map(([t]) => t));
+      if (maxThreshold > 1) {
+        Diagnostics.warnOnce({
+          source: 'czap/core.boundary',
+          code: 'audio-threshold-scale',
+          message:
+            `Boundary "${config.input}" uses thresholds with max ${maxThreshold}, but audio.* signals normalize to 0..1 — ` +
+            'thresholds above 1 will never cross on the built-in runtime path.',
+        });
+      }
+    }
 
     return {
       _tag: 'BoundaryDef',

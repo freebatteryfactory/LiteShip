@@ -48,17 +48,30 @@ export async function run(argv: readonly string[]): Promise<number> {
       const targetEq = parseFlag(rest, '--target');
       const targetIdx = rest.indexOf('--target');
       const targetRaw = targetEq ?? (targetIdx >= 0 ? rest[targetIdx + 1] : undefined);
-      // A typo'd target must not silently fall back to the default profile —
-      // that runs the wrong checks with no warning.
-      if ((targetEq !== undefined || targetIdx >= 0) && targetRaw !== 'cloudflare' && targetRaw !== 'astro') {
-        emitError('doctor', `expected target: cloudflare | astro (got: ${targetRaw ?? '<missing>'})`);
+      const deployedEq = parseFlag(rest, '--deployed');
+      const deployedIdx = rest.indexOf('--deployed');
+      const deployedRaw = deployedEq ?? (deployedIdx >= 0 ? rest[deployedIdx + 1] : undefined);
+      if (
+        (targetEq !== undefined || targetIdx >= 0) &&
+        targetRaw !== 'cloudflare' &&
+        targetRaw !== 'astro' &&
+        targetRaw !== 'consumer-app'
+      ) {
+        emitError('doctor', `expected target: cloudflare | astro | consumer-app (got: ${targetRaw ?? '<missing>'})`);
+        return 1;
+      }
+      if ((deployedEq !== undefined || deployedIdx >= 0) && !deployedRaw) {
+        emitError('doctor', 'usage: czap doctor --deployed <url>');
         return 1;
       }
       return doctor({
         fix: rest.includes('--fix'),
         ci: rest.includes('--ci'),
         preflight: rest.includes('--preflight'),
-        ...(targetRaw === 'cloudflare' || targetRaw === 'astro' ? { target: targetRaw } : {}),
+        ...(targetRaw === 'cloudflare' || targetRaw === 'astro' || targetRaw === 'consumer-app'
+          ? { target: targetRaw }
+          : {}),
+        ...(deployedRaw ? { deployed: deployedRaw } : {}),
       });
     }
     case 'glossary': {
@@ -174,10 +187,12 @@ export async function run(argv: readonly string[]): Promise<number> {
       const idx = rest.indexOf('--profile');
       const profile = eq ?? (idx >= 0 ? rest[idx + 1] : undefined);
       const consumer = rest.includes('--consumer');
+      const consumerApp = rest.includes('--consumer-app');
       const findings = rest.includes('--findings');
       return audit({
         ...(profile ? { profile } : {}),
         ...(consumer ? { consumer } : {}),
+        ...(consumerApp ? { consumerApp: true } : {}),
         ...(findings ? { findings } : {}),
       });
     }

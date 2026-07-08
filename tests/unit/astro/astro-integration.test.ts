@@ -11,7 +11,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { satelliteAttrs, resolveInitialStateFallback, resolveInitialState, integration } from '@czap/astro';
+import { satelliteAttrs, resolveInitialStateFallback, resolveInitialState, resolveInitialStateWithReceipt, integration } from '@czap/astro';
 import type { SatelliteProps } from '@czap/astro';
 import { Boundary, Diagnostics } from '@czap/core';
 
@@ -187,6 +187,20 @@ describe('resolveInitialState', () => {
     [1200, 'desktop'],
   ]);
 
+  test('warns when a raw Request is passed as ServerIslandContext (#109)', () => {
+    const { sink, events } = Diagnostics.createBufferSink();
+    const prev = Diagnostics.setSink(sink);
+    try {
+      Diagnostics.clearOnce();
+      const fakeRequest = { headers: { get: () => null } } as unknown as Request;
+      resolveInitialState(boundary, fakeRequest as never);
+      expect(events.some((e) => e.code === 'resolve-initial-state-raw-request')).toBe(true);
+    } finally {
+      Diagnostics.setSink(prev);
+      Diagnostics.clearOnce();
+    }
+  });
+
   test('resolves state from client hint viewport width', () => {
     const result = resolveInitialState(boundary, {
       userAgent: 'Mozilla/5.0',
@@ -343,6 +357,57 @@ describe('resolveInitialState', () => {
     expect(resolveInitialState(emptyBoundary as never, { userAgent: '', clientHints: {}, detectedCapTier: 'gpu' })).toBe(
       '',
     );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// resolveInitialStateWithReceipt — SSR resolution source (#118)
+// ---------------------------------------------------------------------------
+
+describe('resolveInitialStateWithReceipt (#118)', () => {
+  const boundary = makeBoundary('viewport', [
+    [0, 'compact'],
+    [768, 'tablet'],
+    [1200, 'desktop'],
+  ]);
+
+  test('names synthetic when no viewport signal is present', () => {
+    const result = resolveInitialStateWithReceipt(boundary, {});
+    expect(result.state).toBe(resolveInitialState(boundary, {}));
+    expect(result.resolution.source).toBe('synthetic');
+    expect(result.resolution.detail).toBe('cap-tier:reactive');
+  });
+
+  test('names tier + client-hints when viewport width is present', () => {
+    const result = resolveInitialStateWithReceipt(boundary, {
+      clientHints: { 'Sec-CH-Viewport-Width': '1400' },
+    });
+    expect(result.state).toBe('desktop');
+    expect(result.resolution).toEqual({ source: 'tier', detail: 'client-hints:viewport-width' });
+  });
+
+  test('names tier + user-agent when UA is present without hints', () => {
+    const result = resolveInitialStateWithReceipt(boundary, {
+      userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)',
+    });
+    expect(result.state).toBe('compact');
+    expect(result.resolution).toEqual({ source: 'tier', detail: 'user-agent:viewport-estimate' });
+  });
+
+  test('names policy when reduced-motion biases to the lowest state', () => {
+    const result = resolveInitialStateWithReceipt(boundary, {
+      clientHints: { 'Sec-CH-Prefers-Reduced-Motion': 'reduce' },
+      detectedCapTier: 'styled',
+    });
+    expect(result.state).toBe('compact');
+    expect(result.resolution).toEqual({ source: 'policy', detail: 'prefers-reduced-motion' });
+  });
+
+  test('names synthetic raw-request-fallback when a Request-shaped context is passed', () => {
+    const fakeRequest = { headers: { get: () => null } };
+    const result = resolveInitialStateWithReceipt(boundary, fakeRequest as never);
+    expect(result.resolution.source).toBe('synthetic');
+    expect(result.resolution.detail).toBe('raw-request-fallback');
   });
 });
 

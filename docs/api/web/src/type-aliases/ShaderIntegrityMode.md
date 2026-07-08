@@ -8,7 +8,7 @@
 
 > **ShaderIntegrityMode** = `"required-for-external"` \| `"lenient"`
 
-Defined in: [web/src/security/shader-integrity.ts:219](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/security/shader-integrity.ts#L219)
+Defined in: [web/src/security/shader-integrity.ts:242](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/security/shader-integrity.ts#L242)
 
 Whether a shader fetched from `shaderSrc` REQUIRES an integrity pin under the
 secure-by-default policy. The decision is deliberately simple and explicit:

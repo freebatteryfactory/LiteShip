@@ -8,7 +8,7 @@
 
 > **runGraphNativeRecovery**(`options`): `Promise`\<`void`\>
 
-Defined in: [web/src/stream/recovery.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L73)
+Defined in: [web/src/stream/recovery.ts:93](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L93)
 
 Full graph-native recovery: optional `refreshBase`/`adopt`, then snapshot re-sync.
 

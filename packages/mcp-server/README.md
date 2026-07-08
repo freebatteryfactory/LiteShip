@@ -1,6 +1,6 @@
 # @czap/mcp-server
 
-An MCP (Model Context Protocol) server that exposes the czap command catalog as tools, resources, and prompts over stdio or HTTP, so AI agents can run the same commands the `czap` CLI does.
+An MCP (Model Context Protocol) server that exposes the **czap command catalog** as tools, resources, and prompts over stdio or HTTP — so AI agents can run the same commands the `czap` CLI does. **This is not a documentation server.** For sealed prose/API docs over HTTP, use `docsMcpRoute` from `@czap/astro` with a `docs:bundle` artifact (#113).
 
 > You usually don't install this directly — it arrives as a dependency of `liteship`, and the `czap mcp` verb launches it. Install `liteship` (or this package alongside `@czap/cli`) instead, unless you're embedding the server in your own process via `start()`.
 

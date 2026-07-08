@@ -1706,6 +1706,27 @@ describe('CSS override flow-through', () => {
     expect(compiled.length).toBeGreaterThan(0);
   });
 
+  test('compileQuantizeBlock preserves nested @supports rules inside a state (#110)', () => {
+    const css = `
+@quantize viewport {
+  compact {
+    @supports (display: grid) {
+      .grid { gap: 4px; }
+    }
+  }
+}`;
+
+    const blocks = parseQuantizeBlocks(css, FILE);
+    const block = blocks[0]!;
+    const boundary = makeBoundary('viewport', [[0, 'compact']]);
+    const compiled = compileQuantizeBlock(block, boundary);
+
+    expect(block.states.compact?.atRuleGroups?.[0]?.prelude).toContain('@supports');
+    expect(compiled).toContain('@supports (display: grid)');
+    expect(compiled).toContain('.grid');
+    expect(compiled).toContain('gap: 4px');
+  });
+
   test('parseQuantizeBlocks ignores empty declarations and colonless statements while preserving later props', () => {
     const css = `
 @quantize viewport {

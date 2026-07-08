@@ -12,7 +12,7 @@
  */
 
 import { boundaryParseFailureMessage, parseBoundary, readSignalValue, type BoundaryStateDetail } from '../boundary.js';
-import { dispatchCzapEvent } from '@czap/web';
+import { createHtmlFragment, dispatchCzapEvent } from '@czap/web';
 import {
   castValueRows,
   deriveActiveTargets,
@@ -44,6 +44,16 @@ export interface PanelHandles {
  * hand. `refreshPanels` and the mount's `dispose` both drain this in full.
  */
 export const panelHandles = new Map<HTMLElement, PanelHandles>();
+
+/** Route dev-inspector markup through the shared trust pipeline (#121). */
+function assignInspectorHtml(el: HTMLElement, html: string): void {
+  el.replaceChildren(createHtmlFragment(html, { policy: 'sanitized-html' }));
+}
+
+/** Escape text interpolated into inspector HTML templates. */
+function escapeInspectorText(value: string): string {
+  return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
 
 /** Dispose every handle from a prior refresh and clear the map. Drains the MAP, not the DOM. */
 export function drainPanelHandles(): void {
@@ -107,12 +117,15 @@ function renderBoundaryPanel(element: HTMLElement, container: HTMLElement): Pane
 
   const stateLine = document.createElement('div');
   stateLine.className = 'meta';
-  stateLine.innerHTML = `state: <span class="state-live" data-role="state">${element.getAttribute('data-czap-state') ?? '—'}</span>`;
+  assignInspectorHtml(
+    stateLine,
+    `state: <span class="state-live" data-role="state">${escapeInspectorText(element.getAttribute('data-czap-state') ?? '—')}</span>`,
+  );
   panel.appendChild(stateLine);
 
   const signalLine = document.createElement('div');
   signalLine.className = 'meta';
-  signalLine.innerHTML = `signal: <span data-role="signal">—</span>`;
+  assignInspectorHtml(signalLine, `signal: <span data-role="signal">—</span>`);
   panel.appendChild(signalLine);
 
   const containerName = containerNameFromInput(runtimeBoundary.input);
@@ -352,11 +365,13 @@ function renderEscalation(body: HTMLElement, active: readonly ActiveTarget[]): v
   const rungLine = document.createElement('div');
   rungLine.className = 'esc-line';
   if (view.chosenRung) {
-    rungLine.innerHTML =
-      `rung: <span class="esc-rung">${view.chosenRung}</span> ` +
-      `<span class="cast-evidence">(requires ${view.requiredRung})</span>`;
+    assignInspectorHtml(
+      rungLine,
+      `rung: <span class="esc-rung">${escapeInspectorText(view.chosenRung)}</span> ` +
+        `<span class="cast-evidence">(requires ${escapeInspectorText(view.requiredRung)})</span>`,
+    );
   } else {
-    rungLine.innerHTML = `rung: <span class="esc-rung-err">unsatisfiable</span>`;
+    assignInspectorHtml(rungLine, `rung: <span class="esc-rung-err">unsatisfiable</span>`);
   }
   body.appendChild(rungLine);
 

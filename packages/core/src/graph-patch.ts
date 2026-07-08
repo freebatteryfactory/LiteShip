@@ -111,9 +111,9 @@ export function apply(graph: DocumentGraph, patch: GraphPatch): DocumentGraph {
         // the old node (two cells where there should be one) and break `diff` round-trip
         // for payload changes. Families whose logicalKey is id-based (entity/policy/export)
         // never reach here — `diff` emits remove+add for them, not `update`.
-        const key = logicalKey(op.node);
+        const key = nodeLogicalKey(op.node);
         for (const [id, existing] of nodes) {
-          if (id !== op.node.id && logicalKey(existing) === key) nodes.delete(id);
+          if (id !== op.node.id && nodeLogicalKey(existing) === key) nodes.delete(id);
         }
         nodes.set(op.node.id, op.node);
       } else {
@@ -176,12 +176,12 @@ export function diff(a: DocumentGraph, b: DocumentGraph): GraphPatch {
   // `update` op (readability) — apply treats update as remove-then-add, so the
   // round-trip is preserved either way.
   const removedByLogical = new Map<string, DocumentGraphNode>();
-  for (const node of removed) removedByLogical.set(logicalKey(node), node);
+  for (const node of removed) removedByLogical.set(nodeLogicalKey(node), node);
 
   const nodeOps: PatchOp[] = [];
   const consumedRemovals = new Set<ContentAddress>();
   for (const node of added) {
-    const prior = removedByLogical.get(logicalKey(node));
+    const prior = removedByLogical.get(nodeLogicalKey(node));
     if (prior) {
       nodeOps.push({ op: 'update', family: node.family, node });
       consumedRemovals.add(prior.id);
@@ -216,7 +216,8 @@ export function diff(a: DocumentGraph, b: DocumentGraph): GraphPatch {
  * with no stable non-payload key (entity/policy/export) fall back to the id, so each is
  * its own cell and `diff` never collapses them into `update`.
  */
-function logicalKey(node: DocumentGraphNode): string {
+/** Stable logical identity for a node — marker names for DPU patches, diff collapse keys. */
+export function nodeLogicalKey(node: DocumentGraphNode): string {
   switch (node.family) {
     case 'signal':
       return `signal ${node.input}`;

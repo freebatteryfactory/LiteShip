@@ -45,6 +45,8 @@ Prose vocabulary: [../GLOSSARY.md](../../GLOSSARY.md).
 | [0033](./0033-standard-schema-interop.md) | DocumentGraphNodeSchema carries Standard Schema V1 | Accepted |
 | 0034 | *(reserved — QUERY write-sink-unreachability gate; not yet written)* | Proposed |
 | [0035](./0035-motion-is-intent-not-target.md) | Motion is an authored intent, not a projection target | Accepted |
+| [0036](./0036-audit-findings-stream-contract.md) | `audit --findings` stdout/stderr stream contract | Accepted |
+| [0037](./0037-audit-consumer-structure-suppression.md) | `audit --consumer` structure-pass suppression | Accepted |
 
 ## Template
 

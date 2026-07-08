@@ -41,6 +41,7 @@ export async function doctor(
     ci?: boolean;
     preflight?: boolean;
     target?: DoctorTarget;
+    deployed?: string;
     cwd?: string;
   } = {},
 ): Promise<number> {
@@ -49,6 +50,11 @@ export async function doctor(
   // works correctly from any monorepo subdir, not just the repo root.
   const cwd = opts.cwd ?? findWorkspaceRoot(process.cwd());
   let checks = await runAllProbes(cwd, { target: opts.target });
+
+  if (opts.deployed) {
+    const { probeDeployedSite } = await import('./probes-deployed.js');
+    checks = [...checks, ...(await probeDeployedSite(opts.deployed))];
+  }
 
   let fixes: readonly DoctorFix[] | undefined;
   if (opts.fix) {
@@ -71,6 +77,7 @@ export async function doctor(
     ...(opts.ci ? { strict: true as const } : {}),
     ...(opts.preflight ? { preflight: true as const } : {}),
     ...(opts.target ? { target: opts.target } : {}),
+    ...(opts.deployed ? { deployed: opts.deployed } : {}),
   };
   emit(receipt);
 

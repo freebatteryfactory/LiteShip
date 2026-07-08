@@ -67,6 +67,21 @@ export function sealNode<N extends DocumentGraphNode>(node: N): N {
   return { ...node, id: addressNode(node) };
 }
 
+/** Authoring parts for a {@link DocumentGraphNode} before addressing — `id` is ignored. */
+export type DocumentGraphNodeParts<N extends DocumentGraphNode = DocumentGraphNode> = Omit<N, 'id'> & {
+  readonly id?: ContentAddress;
+};
+
+/**
+ * Build a sealed {@link DocumentGraphNode} from authoring parts — mints `id` via
+ * `addressNode` / {@link sealNode}. Graph-level `digest` is minted by
+ * {@link sealGraph}, not here.
+ */
+export function nodeFromParts<N extends DocumentGraphNode>(parts: DocumentGraphNodeParts<N>): N {
+  const { id: _ignored, ...rest } = parts;
+  return sealNode({ ...rest, id: '' as ContentAddress } as N);
+}
+
 /**
  * Mint the graph identity (`id`, fnv1a) + integrity digest (`digest`,
  * fnv1a+sha256) over the SAME canonical bytes: the sorted node ids + sorted

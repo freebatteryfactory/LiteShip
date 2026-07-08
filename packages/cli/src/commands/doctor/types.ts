@@ -18,7 +18,7 @@ export type DoctorBearing = 'ok' | 'warn' | 'fail';
 export type DoctorVerdict = 'ready' | 'caution' | 'blocked';
 
 /** Host deployment target for focused probe profiles. */
-export type DoctorTarget = 'cloudflare' | 'astro';
+export type DoctorTarget = 'cloudflare' | 'astro' | 'consumer-app';
 
 /** One probe outcome. */
 export interface DoctorCheck {
@@ -69,6 +69,8 @@ export interface DoctorReceipt {
   readonly preflight?: true;
   /** Present when `--target` was passed — names the focused host profile. */
   readonly target?: DoctorTarget;
+  /** Present when `--deployed <url>` was passed — live header verification. */
+  readonly deployed?: string;
 }
 
 /** Engine minima read from root package.json `engines`. Fallback to safe defaults. */

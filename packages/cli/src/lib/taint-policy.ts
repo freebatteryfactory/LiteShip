@@ -82,6 +82,10 @@ const LITESHIP_TAINT_SINKS: readonly string[] = [
   // Code execution.
   'eval',
   'Function',
+  // DOM HTML injection via method call (sibling to assignment sinks below).
+  'insertAdjacentHTML',
+  'document.write',
+  'document.writeln',
   // The AI-cast graph-apply into the LIVE runtime (the untrusted-apply seam).
   'applyValidatedPatch',
   'apply',

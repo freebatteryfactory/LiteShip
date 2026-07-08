@@ -24,7 +24,7 @@ function nextOk(body = 'OK', status = 200): (request: Request) => Promise<Respon
 const themeEdge = { theme: () => ({ prefix: 'b', tokens: { color: 'x' } }) } as const;
 
 describe('serializeBoundaryCss', () => {
-  test('orders theme before the canonical compiled css payload without duplicating structured mirrors', () => {
+  test('orders theme before the canonical compiled css payload (law 13 — emit only css)', () => {
     const payload = ['@property --p{}', '@container c (min-width:1px){}', '.x{color:red}'].join('\n\n');
     const resolution = {
       theme: { css: ':root{--a:1}' },
@@ -36,14 +36,12 @@ describe('serializeBoundaryCss', () => {
     } as unknown as EdgeHostResolution;
 
     const css = serializeBoundaryCss(resolution);
-    expect(css.indexOf(':root')).toBeLessThan(css.indexOf('@property'));
-    expect(css.indexOf('@property')).toBeLessThan(css.indexOf('@container'));
-    expect(css.indexOf('@container')).toBeLessThan(css.indexOf('.x{color'));
+    expect(css).toBe([`:root{--a:1}`, payload].join('\n'));
     expect(css.match(/@property/g)).toHaveLength(1);
     expect(css.match(/@container/g)).toHaveLength(1);
   });
 
-  test('preserves split compiled output sections from custom edge compilers', () => {
+  test('does not prepend mirror fields when css is the sole payload (custom compile must fold into css)', () => {
     const resolution = {
       theme: { css: ':root{--a:1}' },
       compiledOutputs: {
@@ -53,9 +51,7 @@ describe('serializeBoundaryCss', () => {
       },
     } as unknown as EdgeHostResolution;
 
-    expect(serializeBoundaryCss(resolution)).toBe(
-      [':root{--a:1}', '@property --p{}', '@container c (min-width:1px){}', '.x{color:red}'].join('\n'),
-    );
+    expect(serializeBoundaryCss(resolution)).toBe([':root{--a:1}', '.x{color:red}'].join('\n'));
   });
 
   test('concatenates every boundary in the multi-boundary form', () => {

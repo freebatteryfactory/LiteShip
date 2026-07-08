@@ -8,7 +8,7 @@
 
 > `const` **CSSCompiler**: `object`
 
-Defined in: [compiler/src/css.ts:399](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/css.ts#L399)
+Defined in: [compiler/src/css.ts:438](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/css.ts#L438)
 
 CSS compiler namespace.
 
@@ -86,7 +86,7 @@ console.log(result.raw);
 
 ### generatePropertyRegistrations
 
-> **generatePropertyRegistrations**: (`states`) => `string`
+> **generatePropertyRegistrations**: (`states`, `initialValues?`) => `string`
 
 Scan all CSS values across all states and emit `@property` declarations
 for properties whose values parse as numbers or colors. This enables
@@ -99,6 +99,10 @@ GPU-interpolated transitions on custom properties.
 `Record`\<`string`, `Record`\<`string`, `string`\>\>
 
 Per-state CSS property maps to scan for custom properties
+
+##### initialValues?
+
+`Readonly`\<`Record`\<`string`, `string`\>\>
 
 #### Returns
 

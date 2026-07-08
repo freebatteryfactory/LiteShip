@@ -23,8 +23,8 @@
 export type { IntegrationConfig } from './integration.js';
 export { integration } from './integration.js';
 export { integration as czap } from './integration.js';
-export type { ServerIslandContext, QuantizeProps } from './quantize.js';
-export { resolveInitialState } from './quantize.js';
+export type { ServerIslandContext, QuantizeProps, ResolvedInitialState } from './quantize.js';
+export { resolveInitialState, resolveInitialStateWithReceipt } from './quantize.js';
 export { satelliteAttrs, resolveInitialStateFallback } from './Satellite.js';
 export type { SatelliteProps } from './Satellite.js';
 export { czapMiddleware } from './middleware.js';
@@ -34,6 +34,9 @@ export type { CzapFetchLayer, CzapFetchLayerConfig, FetchLayerNext } from './fet
 // Client→server graph-mutation channel: the host route adapter over @czap/core's
 // `handleGraphMutation`. `POST: APIRoute = ({request}) => graphMutationRoute(store)(request)`.
 export { graphMutationRoute } from './graph-mutation-route.js';
+export { graphQueryRoute, parseGraphQueryIfNoneMatch } from './graph-query-route.js';
+export { docsMcpRoute, loadDocsMcpBundle } from './docs-mcp-route.js';
+export type { DocsBundleManifest, DocsMcpBundle } from './docs-mcp-route.js';
 export { bridgeDiagnosticsToAstroLogger, installDiagnosticsBridge } from './diagnostics-bridge.js';
 export type { AstroLoggerLike } from './diagnostics-bridge.js';
 export type { CrossOriginEmbedderPolicy } from './headers.js';

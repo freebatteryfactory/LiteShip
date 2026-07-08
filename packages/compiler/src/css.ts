@@ -29,6 +29,18 @@ export interface CSSRule {
 }
 
 /**
+ * A nested `@supports` / `@media` group inside a state's container block.
+ */
+export interface CSSAtRuleGroup {
+  /** The at-rule prelude exactly as authored. */
+  readonly prelude: string;
+  /** Declarations authored directly inside the at-rule. */
+  readonly bareProps?: Record<string, string>;
+  /** Nested selector rules inside the at-rule. */
+  readonly rules?: readonly CSSRule[];
+}
+
+/**
  * A `@container` at-rule grouping rules that apply at a given container query.
  *
  * Produced per-state by {@link CSSCompiler.compile}; the container `name`
@@ -41,6 +53,8 @@ export interface CSSContainerRule {
   readonly query: string;
   /** Rules evaluated inside the container query. */
   readonly rules: readonly CSSRule[];
+  /** Nested `@supports` / `@media` groups inside the container block. */
+  readonly atRuleGroups?: readonly CSSAtRuleGroup[];
 }
 
 /**
@@ -54,6 +68,8 @@ export interface CSSStateBody {
   readonly bareProps?: Record<string, string>;
   /** Per-selector rules emitted verbatim into the state's `@container` block. */
   readonly rules?: readonly CSSRule[];
+  /** Nested `@supports` / `@media` groups inside the state (#110). */
+  readonly atRuleGroups?: readonly CSSAtRuleGroup[];
 }
 
 /**
@@ -97,6 +113,20 @@ function serializeRule(rule: CSSRule): string {
   const decls = serializeDeclarations(rule.properties);
   if (!decls) return `${rule.selector} {}`;
   return `${rule.selector} {\n${decls}\n}`;
+}
+
+function serializeAtRuleGroup(group: CSSAtRuleGroup): string {
+  const inner: string[] = [];
+  if (group.bareProps && Object.keys(group.bareProps).length > 0) {
+    inner.push(serializeDeclarations(group.bareProps));
+  }
+  for (const rule of group.rules ?? []) {
+    if (Object.keys(rule.properties).length > 0) {
+      inner.push(serializeRule(rule));
+    }
+  }
+  if (inner.length === 0) return `${group.prelude} {}`;
+  return `${group.prelude} {\n${inner.join('\n')}\n}`;
 }
 
 /**
@@ -225,12 +255,15 @@ function compile<B extends Boundary.Shape>(
 
     let bareProps: Record<string, string>;
     let nestedRules: readonly CSSRule[];
+    let atRuleGroups: readonly CSSAtRuleGroup[];
     if (isStateBody(entry)) {
       bareProps = entry.bareProps ?? {};
       nestedRules = entry.rules ?? [];
+      atRuleGroups = entry.atRuleGroups ?? [];
     } else {
       bareProps = entry;
       nestedRules = [];
+      atRuleGroups = [];
     }
 
     const rules: CSSRule[] = [];
@@ -242,7 +275,7 @@ function compile<B extends Boundary.Shape>(
         rules.push(rule);
       }
     }
-    if (rules.length === 0) continue;
+    if (rules.length === 0 && atRuleGroups.length === 0) continue;
 
     const query = buildContainerQuery(thresholds, i, stateNames.length, axis);
 
@@ -250,6 +283,7 @@ function compile<B extends Boundary.Shape>(
       name: containerName,
       query,
       rules,
+      ...(atRuleGroups.length > 0 ? { atRuleGroups } : {}),
     });
   }
 
@@ -297,7 +331,9 @@ function serializeContainerRules(containerRules: readonly CSSContainerRule[]): s
 
   for (const cr of containerRules) {
     const innerRules = cr.rules.map(serializeRule).join('\n');
-    blocks.push(`@container ${cr.name} ${cr.query} {\n${innerRules}\n}`);
+    const innerAtRules = (cr.atRuleGroups ?? []).map(serializeAtRuleGroup).join('\n');
+    const inner = [innerRules, innerAtRules].filter((s) => s.length > 0).join('\n');
+    blocks.push(`@container ${cr.name} ${cr.query} {\n${inner}\n}`);
   }
 
   return blocks.join('\n\n');
@@ -349,7 +385,10 @@ function initialValueForSyntax(syntax: string): string {
  * @param states - Per-state CSS property maps to scan for custom properties
  * @returns A string of `@property` declarations, or empty string if none found
  */
-export function generatePropertyRegistrations(states: Record<string, Record<string, string>>): string {
+export function generatePropertyRegistrations(
+  states: Record<string, Record<string, string>>,
+  initialValues?: Readonly<Record<string, string>>,
+): string {
   const propSyntax = new Map<string, string>();
 
   for (const stateProps of Object.values(states)) {
@@ -365,7 +404,7 @@ export function generatePropertyRegistrations(states: Record<string, Record<stri
 
   const blocks: string[] = [];
   for (const [prop, syntax] of propSyntax) {
-    const initial = initialValueForSyntax(syntax);
+    const initial = initialValues?.[prop] ?? initialValueForSyntax(syntax);
     blocks.push(`@property ${prop} {\n  syntax: "${syntax}";\n  inherits: true;\n  initial-value: ${initial};\n}`);
   }
   return blocks.join('\n\n');

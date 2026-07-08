@@ -65,6 +65,7 @@ export type { RuntimeUrlResolution } from './security/runtime-url.js';
 export {
   parseShaderIntegrity,
   verifyShaderIntegrity,
+  computeShaderIntegrity,
   isExternalShaderSource,
   decideShaderIntegrity,
   DEFAULT_SHADER_INTEGRITY_MODE,
@@ -75,6 +76,26 @@ export type {
   ShaderIntegrityMode,
   IntegrityDecision,
 } from './security/shader-integrity.js';
+export {
+  watchAndPrepare,
+  detectDpuCapability,
+  stampVerifiablePatch,
+  verifyVerifiablePatch,
+  applyVerifiablePatch,
+  digestHtmlFragment,
+  DPU_MARKER_ATTR,
+  DPU_BASE_ATTR,
+  DPU_RESULT_ATTR,
+  DPU_DIGEST_ATTR,
+} from './dpu/watch-and-prepare.js';
+export type {
+  DpuRung,
+  DpuCapability,
+  VerifiablePatchEnvelope,
+  VerifiablePatchVerification,
+  ApplyVerifiablePatchResult,
+  WatchAndPrepareHandle,
+} from './dpu/watch-and-prepare.js';
 
 // Slot
 export { SlotRegistry } from './slot/registry.js';

@@ -1,19 +1,22 @@
 /**
- * The client→server graph-mutation endpoint.
+ * The client→server graph endpoint.
  *
- *   GET  → the current server graph (so the client has a base to propose against).
- *   POST → validate + apply a client-proposed GraphPatch (the channel).
- *
- * `graphMutationRoute(store)` is the whole server side — it wraps @czap/core's
- * `handleGraphMutation`. The host owns `store`; LiteShip owns the validate/apply gate.
+ *   QUERY (POST+X-Czap-Query fallback) → conditional read via `graphQueryRoute`
+ *   POST → validate + apply a client-proposed GraphPatch (`graphMutationRoute`)
  */
 import type { APIRoute } from 'astro';
-import { graphMutationRoute } from '@czap/astro';
+import { graphMutationRoute, graphQueryRoute } from '@czap/astro';
 import { store, currentGraph } from '../../server/graph-store';
 
 export const prerender = false;
 
-export const GET: APIRoute = () =>
-  new Response(JSON.stringify(currentGraph()), { headers: { 'content-type': 'application/json' } });
+const readStore = { loadGraph: () => currentGraph() };
 
-export const POST: APIRoute = ({ request }) => graphMutationRoute(store)(request);
+export const QUERY: APIRoute = ({ request }) => graphQueryRoute(readStore)(request);
+
+export const POST: APIRoute = ({ request }) => {
+  if (request.headers.get('X-Czap-Query') === '1') {
+    return graphQueryRoute(readStore)(request);
+  }
+  return graphMutationRoute(store)(request);
+};

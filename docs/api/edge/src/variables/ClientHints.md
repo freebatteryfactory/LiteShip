@@ -8,7 +8,7 @@
 
 > `const` **ClientHints**: `object`
 
-Defined in: [edge/src/client-hints.ts:335](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/client-hints.ts#L335)
+Defined in: [edge/src/client-hints.ts:344](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/client-hints.ts#L344)
 
 Client Hints namespace.
 
@@ -114,6 +114,20 @@ console.log(caps.memory);             // 8
 console.log(caps.devicePixelRatio);    // 2
 console.log(caps.prefersColorScheme);  // 'dark'
 ```
+
+### varyCHHeader
+
+> **varyCHHeader**: () => `string`
+
+Produce the `Vary` response header value for tier-varying HTML (#122).
+
+Produce the `Vary` response header value listing every Client Hint (and
+network hint) that shapes tier-specific HTML. CDN caches must vary on these
+inputs or they can serve the wrong tier's representation (#122).
+
+#### Returns
+
+`string`
 
 ## Example
 

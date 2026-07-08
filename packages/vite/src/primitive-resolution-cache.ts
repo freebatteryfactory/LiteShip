@@ -62,6 +62,8 @@ export interface PrimitiveResolutionCache {
   readonly boundaryManifest: { value: Promise<BoundaryManifest> | null };
   /** Lazily-collected token/theme manifest backing the design virtual modules. */
   readonly tokenThemeManifest: { value: Promise<TokenThemeManifest> | null };
+  /** Last compiled \@quantize CSS in this dev session (#114 shadowing diagnostic). */
+  readonly lastCompiledBoundaryCss: { value: string | null };
 }
 
 /** Build a fresh, empty {@link PrimitiveResolutionCache} for one plugin instance. */
@@ -74,6 +76,7 @@ export function createPrimitiveResolutionCache(): PrimitiveResolutionCache {
     source: new Map(),
     boundaryManifest: { value: null },
     tokenThemeManifest: { value: null },
+    lastCompiledBoundaryCss: { value: null },
   };
 }
 
@@ -91,4 +94,5 @@ export function invalidateAllPrimitives(cache: PrimitiveResolutionCache): void {
   cache.source.clear();
   cache.boundaryManifest.value = null;
   cache.tokenThemeManifest.value = null;
+  cache.lastCompiledBoundaryCss.value = null;
 }

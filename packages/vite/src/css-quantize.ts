@@ -24,6 +24,25 @@ import {
 // Types
 // ---------------------------------------------------------------------------
 
+/** True when `marker` names a conditional at-rule we recurse into (#110). */
+function isConditionalAtRule(marker: string): boolean {
+  const name = marker.trim().toLowerCase();
+  return name.startsWith('@supports') || name.startsWith('@media');
+}
+
+/**
+ * A nested `@supports` / `@media` group inside a `@quantize` state body.
+ * Serialized inside the state's `@container` block as a real at-rule group.
+ */
+export interface QuantizeAtRuleGroup {
+  /** The at-rule prelude exactly as authored (e.g. `@supports (display: grid)`). */
+  readonly prelude: string;
+  /** Declarations authored directly inside the at-rule (no nested selector). */
+  readonly bareProps: Record<string, string>;
+  /** Nested selector rules inside the at-rule. */
+  readonly rules: readonly QuantizeNestedRule[];
+}
+
 /**
  * A nested rule inside a `@quantize` state: a CSS selector plus the
  * property map applied to it when the state is active.
@@ -77,6 +96,8 @@ export interface QuantizeStateBody {
   readonly bareProps: Record<string, string>;
   /** Nested `<selector> { ... }` rules written inside the state. */
   readonly rules: readonly QuantizeNestedRule[];
+  /** Nested `@supports` / `@media` groups authored inside the state (#110). */
+  readonly atRuleGroups?: readonly QuantizeAtRuleGroup[];
   /**
    * Authored per-state non-CSS cast attributes, keyed by cast target. Each
    * entry holds the raw `{ key: value }` declarations from a nested
@@ -144,6 +165,7 @@ export interface QuantizeBlock {
 function parseStateBody(css: string, pos: number): { body: QuantizeStateBody; end: number } {
   const bareProps: Record<string, string> = {};
   const rules: QuantizeNestedRule[] = [];
+  const atRuleGroups: QuantizeAtRuleGroup[] = [];
   // Per-target cast attribute maps, populated lazily as `@<target> { … }`
   // segments are parsed. `aria` is mirrored onto the parallel `ariaAttrs`
   // field below so existing ARIA consumers stay unchanged.
@@ -153,11 +175,14 @@ function parseStateBody(css: string, pos: number): { body: QuantizeStateBody; en
   // cast segment was authored (keeps the common shape minimal and stable for
   // snapshots). `ariaAttrs` is derived from `castAttrs.aria`.
   const makeBody = (): QuantizeStateBody => {
+    const base: QuantizeStateBody = {
+      bareProps,
+      rules,
+      ...(atRuleGroups.length > 0 ? { atRuleGroups } : {}),
+    };
     const hasCasts = Object.keys(castAttrs).length > 0;
-    if (!hasCasts) return { bareProps, rules };
-    return castAttrs.aria
-      ? { bareProps, rules, castAttrs, ariaAttrs: castAttrs.aria }
-      : { bareProps, rules, castAttrs };
+    if (!hasCasts) return base;
+    return castAttrs.aria ? { ...base, castAttrs, ariaAttrs: castAttrs.aria } : { ...base, castAttrs };
   };
 
   while (pos < css.length) {
@@ -296,24 +321,28 @@ function parseStateBody(css: string, pos: number): { body: QuantizeStateBody; en
       const selector = buf.trim();
       pos++; // consume '{'
       const target = selector.startsWith('@') ? castTargetOf(selector) : null;
-      // Cast segments carry attribute/uniform keys, not CSS properties: GLSL
-      // and WGSL uniform names are snake_case (underscores), and `aria-*` keys
-      // are hyphenated. Accept that broader identifier shape so the default
-      // CSS property-name pattern (no underscores) does not silently drop
-      // `blur_radius`-style uniforms. CSS nested rules keep the default.
-      const { props, end } = parseFlatDeclarations(css, pos, target ? CAST_PROP_PATTERN : undefined);
-      pos = end;
       if (target) {
-        // Authored per-state cast attributes for one target. Strip surrounding
-        // quotes so `role: "button"` and `aria-expanded: false` (and numeric
-        // GLSL/WGSL uniform values) all yield clean values; the target's
-        // compiler arm coerces/validates downstream.
+        // Cast segments carry attribute/uniform keys, not CSS properties.
+        const { props, end } = parseFlatDeclarations(css, pos, CAST_PROP_PATTERN);
+        pos = end;
         const bucket = (castAttrs[target] ??= {});
         for (const [k, v] of Object.entries(props)) {
           bucket[k] = v.replace(/^["']|["']$/g, '');
         }
-      } else if (selector.length > 0) {
-        rules.push({ selector, props });
+      } else if (isConditionalAtRule(selector)) {
+        const inner = parseStateBody(css, pos);
+        pos = inner.end;
+        atRuleGroups.push({
+          prelude: selector,
+          bareProps: inner.body.bareProps,
+          rules: inner.body.rules,
+        });
+      } else {
+        const { props, end } = parseFlatDeclarations(css, pos);
+        pos = end;
+        if (selector.length > 0) {
+          rules.push({ selector, props });
+        }
       }
       continue;
     }
@@ -621,7 +650,12 @@ export function compileQuantizeBlock(
   const states: Record<string, CSSStateInput> = {};
   for (const [stateName, body] of Object.entries(block.states)) {
     const rules: CSSRule[] = body.rules.map((rule) => ({ selector: rule.selector, properties: rule.props }));
-    states[stateName] = { bareProps: body.bareProps, rules };
+    const atRuleGroups = (body.atRuleGroups ?? []).map((group) => ({
+      prelude: group.prelude,
+      bareProps: group.bareProps,
+      rules: group.rules.map((rule) => ({ selector: rule.selector, properties: rule.props })),
+    }));
+    states[stateName] = { bareProps: body.bareProps, rules, ...(atRuleGroups.length > 0 ? { atRuleGroups } : {}) };
   }
 
   const result = CSSCompiler.compile(boundary, states);

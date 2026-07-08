@@ -1,12 +1,13 @@
 # LiteShip — status and remaining work
 
-Last updated: 2026-07-06 (feature/ADR refresh; timing + test-count snapshots still carry their 2026-06-25 baseline — re-capture from a fresh gauntlet run).
+Last updated: 2026-07-08 (`v0.8.1` published; Epic 9 on main; parallel CI lane green).
 
 Coverage stack standardized on Vitest 4.1.2 + Playwright browser mode.
-Current node lane: **6903 tests** across **559 files** (6896 passed, 7 skipped; baseline 2026-06-25 — the 0.8.0 workstreams added core/web/astro suites since, so the live count is higher; re-capture from a fresh `pnpm test`).
+Current node lane: **~7000+ tests** across **~560+ files** (0.8.1 tree; re-capture exact
+counts from a fresh `pnpm test` — the 6903/559 baseline below is stale).
 Current browser lane: shared-runtime suites run against a Chromium + Firefox + WebKit matrix, with capability-specific browser tests remaining Chromium-first where the platform surface is intentionally non-uniform.
 
-**Shipped since this baseline (0.7.0 → 0.8.0 cut):** the client→server mutation channel (`graphMutationRoute` / `createGraphMutationClient` / `sendGraphMutation`, ADR-0030), form-to-mutation binding (`bindGraphForm`, ADR-0031), morph-opaque client-owned subtrees (`data-czap-morph-opaque`, ADR-0032), Standard Schema interop on the node schema (`DocumentGraphNodeSchema.~standard`, ADR-0033), the Workers static-assets boundary-CSS dev path (ADR-0025), Receipt-DAG compaction (ADR-0026), and the Cell value→wire boundary (ADR-0027). Publishing is OIDC trusted publishing with provenance (no `NPM_TOKEN`). Neither dogfood consumer exercises the mutation channel or `bindGraphForm` in production yet — that surface is proven by tests + `examples/06-mutation-roundtrip`, not yet by a live consumer.
+**Shipped since this baseline (0.7.0 → 0.8.1):** the client→server mutation channel (`graphMutationRoute` / `createGraphMutationClient` / `sendGraphMutation`, ADR-0030), form-to-mutation binding (`bindGraphForm`, ADR-0031), morph-opaque client-owned subtrees (`data-czap-morph-opaque`, ADR-0032), Standard Schema interop on the node schema (`DocumentGraphNodeSchema.~standard`, ADR-0033), the Workers static-assets boundary-CSS dev path (ADR-0025), Receipt-DAG compaction (ADR-0026), the Cell value→wire boundary (ADR-0027), Epic 9 motion/stream spine (PR #135: `interpretTransition`, `MotionCompiler`, `StateCell`, wire-contract registry, active-surface gate #132), and **0.8.1** test/bench/CI hardening (parallel CI, `check:gates`, honest benches). Publishing is OIDC trusted publishing with provenance (no `NPM_TOKEN`). Neither dogfood consumer exercises the mutation channel or `bindGraphForm` in production yet — that surface is proven by tests + `examples/06-mutation-roundtrip`, not yet by a live consumer.
 
 Product naming for prose elsewhere: [GLOSSARY.md](./GLOSSARY.md). Tables below stay operational. Identifiers like `host-wired` and `pnpm exec czap` are literal gate vocabulary, not marketing rename targets.
 

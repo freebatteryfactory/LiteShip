@@ -8,7 +8,7 @@
 
 > **compileQuantizeBlock**(`block`, `boundary`, `sheet?`): `string`
 
-Defined in: [vite/src/css-quantize.ts:616](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L616)
+Defined in: [vite/src/css-quantize.ts:645](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L645)
 
 Compile a parsed [QuantizeBlock](../interfaces/QuantizeBlock.md) plus its resolved
 [Boundary.Shape](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md) into CSS `@container` query rules. Delegates

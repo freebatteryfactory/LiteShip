@@ -22,11 +22,40 @@ export interface AuditReceipt extends AuditPayload {
 /** Exit code when the engine/profile load fails before producing a summary. */
 const LOAD_FAILURE_EXIT = 1;
 
-/** Execute `czap audit [--profile <path>] [--consumer] [--findings]`. */
+/** Execute `czap audit [--profile <path>] [--consumer] [--consumer-app] [--findings]`. */
 export async function audit(
-  opts: { profile?: string; consumer?: boolean; findings?: boolean; pretty?: boolean; cwd?: string } = {},
+  opts: {
+    profile?: string;
+    consumer?: boolean;
+    consumerApp?: boolean;
+    findings?: boolean;
+    pretty?: boolean;
+    cwd?: string;
+  } = {},
 ): Promise<number> {
   const cwd = opts.cwd ?? process.cwd();
+
+  if (opts.consumerApp) {
+    const { scanConsumerAppSource } = await import('../lib/consumer-app-audit.js');
+    const findings = scanConsumerAppSource(cwd);
+    const receipt = {
+      status: findings.some((f) => f.severity === 'error') ? ('failed' as const) : ('ok' as const),
+      command: 'audit',
+      timestamp: new Date().toISOString(),
+      mode: 'consumer-app' as const,
+      findingCount: findings.length,
+      findings,
+    };
+    if (opts.findings) {
+      process.stderr.write(JSON.stringify(receipt) + '\n');
+      for (const finding of findings) {
+        process.stdout.write(JSON.stringify(finding) + '\n');
+      }
+    } else {
+      emit(receipt);
+    }
+    return receipt.status === 'failed' ? 1 : 0;
+  }
 
   // The CLI-only runAudit capability: load the profile + run the engine.
   const runAudit = async ({

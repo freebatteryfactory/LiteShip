@@ -1,0 +1,291 @@
+/**
+ * HTTP QUERY read-leg — the mutation channel's read side (#119).
+ *
+ * Transport-agnostic graph read: the host's {@link GraphStore.loadGraph} is the
+ * authority; LiteShip validates the wire graph and exposes conditional reads via
+ * the sha256 `integrity_digest` (never fnv1a — silent-stale / cache-poisoning).
+ *
+ *   client: sendGraphQuery(url, \{ ifNoneMatch \})
+ *   server: handleGraphQuery(request, store)
+ *
+ * `@czap/astro` wraps `handleGraphQuery` into `graphQueryRoute`; the host mounts
+ * it on `export const QUERY` (POST + `X-Czap-Query` fallback when QUERY is absent).
+ *
+ * @module
+ */
+
+import type { DocumentGraph } from './document-graph.js';
+import type { GraphStore } from './graph-mutation.js';
+import { verifyAppliedGraph } from './graph-mutation.js';
+
+/** Optional conditional-read validator carried on the wire or from `If-None-Match`. */
+export interface GraphQueryRequest {
+  /** Client's cached etag — MUST be the sha256 `integrity_digest`, never fnv1a. */
+  readonly ifNoneMatch?: string;
+}
+
+/**
+ * Read-leg response — one shape for callers:
+ *   - `ok` — the verified server graph + its etag;
+ *   - `not_modified` — conditional hit (digest unchanged);
+ *   - `refused` — malformed validator or store graph failed verification;
+ *   - `error` — server-side load failure (retryable).
+ */
+export type GraphQueryResponse =
+  | { readonly status: 'ok'; readonly graph: DocumentGraph; readonly etag: string }
+  | { readonly status: 'not_modified'; readonly etag: string }
+  | { readonly status: 'refused'; readonly errors: readonly string[] }
+  | { readonly status: 'error'; readonly message: string };
+
+/** HTTP fallback header when the host cannot dispatch `QUERY` (loud ladder, not silent). */
+export const GRAPH_QUERY_FALLBACK_HEADER = 'X-Czap-Query';
+
+const SHA256_ETAG_RE = /^sha256:[0-9a-f]{64}$/;
+const FNV_ETAG_RE = /^fnv1a:[0-9a-f]{8}$/;
+
+const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
+
+/**
+ * The cache validator for conditional reads — sha256 `integrity_digest`, NOT the
+ * fnv1a display `id`. The digest excludes mutable `meta` by construction.
+ */
+export function graphQueryEtag(graph: DocumentGraph): string {
+  return graph.digest.integrity_digest;
+}
+
+/** Normalize an HTTP `If-None-Match` / wire etag to bare sha256, or refuse fnv1a. */
+export function normalizeGraphQueryEtag(value: string | undefined): string | { readonly errors: readonly string[] } {
+  if (value === undefined || value === '') {
+    return value ?? '';
+  }
+
+  const trimmed =
+    value
+      .split(',')
+      .map((part) => part.trim())
+      .filter(Boolean)[0]
+      ?.replace(/^W\//, '')
+      .replace(/^"|"$/g, '') ?? '';
+
+  if (trimmed === '') {
+    return '';
+  }
+
+  if (FNV_ETAG_RE.test(trimmed)) {
+    return {
+      errors: ['If-None-Match must be the sha256 integrity_digest, not the fnv1a display id — silent-stale 304 vector'],
+    };
+  }
+
+  if (!SHA256_ETAG_RE.test(trimmed)) {
+    return { errors: [`If-None-Match is not a sha256 integrity_digest: ${JSON.stringify(trimmed)}`] };
+  }
+
+  return trimmed;
+}
+
+function isGraphQueryResponse(value: unknown): value is GraphQueryResponse {
+  if (typeof value !== 'object' || value === null || !('status' in value)) return false;
+  const record = value as Record<string, unknown>;
+  switch (record.status) {
+    case 'ok':
+      return (
+        typeof record.graph === 'object' &&
+        record.graph !== null &&
+        typeof record.etag === 'string' &&
+        SHA256_ETAG_RE.test(record.etag)
+      );
+    case 'not_modified':
+      return typeof record.etag === 'string' && SHA256_ETAG_RE.test(record.etag);
+    case 'refused':
+      return Array.isArray(record.errors) && record.errors.every((entry) => typeof entry === 'string');
+    case 'error':
+      return typeof record.message === 'string';
+    default:
+      return false;
+  }
+}
+
+/**
+ * Process one graph read against the host store. Pure of transport: load → verify →
+ * conditional etag compare. NEVER throws — failures map to the response shape.
+ */
+export async function handleGraphQuery(
+  request: GraphQueryRequest,
+  store: Pick<GraphStore, 'loadGraph'>,
+): Promise<GraphQueryResponse> {
+  const normalized = request.ifNoneMatch !== undefined ? normalizeGraphQueryEtag(request.ifNoneMatch) : undefined;
+  if (normalized !== undefined && typeof normalized === 'object') {
+    return { status: 'refused', errors: normalized.errors };
+  }
+  const ifNoneMatch = typeof normalized === 'string' && normalized !== '' ? normalized : undefined;
+
+  let loaded: DocumentGraph;
+  try {
+    loaded = await store.loadGraph();
+  } catch (error) {
+    return { status: 'error', message: `loadGraph failed: ${messageOf(error)}` };
+  }
+
+  const verified = verifyAppliedGraph(loaded);
+  if (!verified.ok) {
+    return { status: 'refused', errors: [verified.message] };
+  }
+
+  const graph = verified.graph;
+  const etag = graphQueryEtag(graph);
+
+  if (ifNoneMatch !== undefined && ifNoneMatch === etag) {
+    return { status: 'not_modified', etag };
+  }
+
+  return { status: 'ok', graph, etag };
+}
+
+/** Options for the retrying QUERY read sender. */
+export interface SendGraphQueryOptions {
+  /** Injectable fetch for tests / non-browser hosts. Defaults to global `fetch`. */
+  readonly fetchImpl?: typeof fetch;
+  /** Conditional validator — sha256 integrity_digest only. */
+  readonly ifNoneMatch?: string;
+  /** Bounded retries on transport / server `error` outcomes (reads are idempotent). Default: 2. */
+  readonly maxRetries?: number;
+}
+
+const queryHeaders = (ifNoneMatch: string | undefined): Record<string, string> => {
+  const headers: Record<string, string> = {
+    accept: 'application/json',
+    'content-type': 'application/json',
+  };
+  if (ifNoneMatch !== undefined) {
+    headers['if-none-match'] = `"${ifNoneMatch}"`;
+  }
+  return headers;
+};
+
+async function fetchGraphQueryOnce(
+  url: string,
+  options: SendGraphQueryOptions,
+): Promise<{ readonly response: Response; readonly usedFallback: boolean }> {
+  const fetchImpl = options.fetchImpl ?? fetch;
+  const init = {
+    headers: queryHeaders(options.ifNoneMatch),
+    body: JSON.stringify({} satisfies Record<string, never>),
+  };
+
+  let response = await fetchImpl(url, { ...init, method: 'QUERY' });
+  if (response.status !== 405 && response.status !== 501 && response.status !== 404) {
+    return { response, usedFallback: false };
+  }
+
+  response = await fetchImpl(url, {
+    ...init,
+    method: 'POST',
+    headers: { ...init.headers, [GRAPH_QUERY_FALLBACK_HEADER]: '1' },
+  });
+  return { response, usedFallback: true };
+}
+
+function parseGraphQueryHttpResponse(response: Response, body: unknown, ifNoneMatch?: string): GraphQueryResponse {
+  if (response.status === 304) {
+    const headerEtag = response.headers.get('etag');
+    const normalized = headerEtag !== null ? normalizeGraphQueryEtag(headerEtag) : undefined;
+    if (normalized !== undefined && typeof normalized === 'object') {
+      return { status: 'refused', errors: normalized.errors };
+    }
+    const etag = typeof normalized === 'string' && normalized !== '' ? normalized : (ifNoneMatch ?? '');
+    if (!SHA256_ETAG_RE.test(etag)) {
+      return { status: 'error', message: `server returned 304 without a sha256 etag (HTTP ${response.status})` };
+    }
+    return { status: 'not_modified', etag };
+  }
+
+  if (!isGraphQueryResponse(body)) {
+    return { status: 'error', message: `server returned an unexpected response shape (HTTP ${response.status})` };
+  }
+
+  if (body.status === 'ok') {
+    const verified = verifyAppliedGraph(body.graph);
+    if (!verified.ok) {
+      return { status: 'error', message: verified.message };
+    }
+    const etag = body.etag;
+    if (etag !== graphQueryEtag(verified.graph)) {
+      return {
+        status: 'error',
+        message: 'server returned a graph whose etag does not match its sha256 integrity_digest',
+      };
+    }
+    return { status: 'ok', graph: verified.graph, etag };
+  }
+
+  return body;
+}
+
+/**
+ * Client-side sender: QUERY the host's graph read endpoint with optional conditional
+ * etag and bounded retries. Tries `QUERY` first; on 405/501/404 falls back to POST with
+ * {@link GRAPH_QUERY_FALLBACK_HEADER} (loud — not a silent downgrade). NEVER rejects.
+ */
+export async function sendGraphQuery(url: string, options: SendGraphQueryOptions = {}): Promise<GraphQueryResponse> {
+  const maxRetries = options.maxRetries ?? 2;
+  let lastError: GraphQueryResponse = { status: 'error', message: 'request failed after retries' };
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    let response: Response;
+    try {
+      ({ response } = await fetchGraphQueryOnce(url, options));
+    } catch (error) {
+      lastError = { status: 'error', message: `request failed: ${messageOf(error)}` };
+      continue;
+    }
+
+    let body: unknown = null;
+    if (response.status !== 304) {
+      try {
+        body = await response.json();
+      } catch (error) {
+        lastError = {
+          status: 'error',
+          message: `server did not return JSON (HTTP ${response.status}): ${messageOf(error)}`,
+        };
+        continue;
+      }
+    }
+
+    const parsed = parseGraphQueryHttpResponse(response, body, options.ifNoneMatch);
+    if (parsed.status === 'error' && attempt < maxRetries) {
+      lastError = parsed;
+      continue;
+    }
+    return parsed;
+  }
+
+  return lastError;
+}
+
+/** Build a host-owned `refreshBase` for {@link createGraphMutationClient} over the read leg. */
+export function createGraphQueryRefreshBase(
+  url: string,
+  options?: Pick<SendGraphQueryOptions, 'fetchImpl' | 'maxRetries'> & {
+    readonly currentEtag?: () => string | undefined;
+  },
+): () => Promise<DocumentGraph> {
+  return async () => {
+    const result = await sendGraphQuery(url, {
+      fetchImpl: options?.fetchImpl,
+      maxRetries: options?.maxRetries,
+      ifNoneMatch: options?.currentEtag?.(),
+    });
+    if (result.status === 'ok') {
+      return result.graph;
+    }
+    if (result.status === 'not_modified') {
+      throw new Error('graph query returned not_modified but refreshBase requires a graph body');
+    }
+    if (result.status === 'refused') {
+      throw new Error(`graph query refused: ${result.errors.join(' · ')}`);
+    }
+    throw new Error(result.message);
+  };
+}

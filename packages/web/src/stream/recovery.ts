@@ -7,6 +7,7 @@
 
 import { Effect } from 'effect';
 import type { DocumentGraph, GraphMutationClient } from '@czap/core';
+import { createGraphQueryRefreshBase, graphQueryEtag } from '@czap/core';
 import { filterDiscreteSnapshotSignals, replayDroppedSignals, validateSnapshotSignalsField } from '@czap/core';
 import { ValidationError } from '@czap/error';
 import type { LiteShipError } from '@czap/error';
@@ -31,10 +32,25 @@ export interface StreamRecoveryHandlers {
 export interface StreamRecoveryOptions {
   readonly artifactId: string;
   readonly snapshotUrl?: string;
+  readonly graphQueryUrl?: string;
   readonly endpointPolicy?: ResumptionConfig['endpointPolicy'];
   readonly mutationClient?: StreamRecoveryMutationClient;
   readonly handlers: StreamRecoveryHandlers;
 }
+
+const resolveRefreshBase = (
+  options: Pick<StreamRecoveryOptions, 'graphQueryUrl' | 'mutationClient'>,
+): (() => Promise<DocumentGraph>) | undefined => {
+  if (options.graphQueryUrl) {
+    return createGraphQueryRefreshBase(options.graphQueryUrl, {
+      currentEtag: () => {
+        const base = options.mutationClient?.base();
+        return base ? graphQueryEtag(base) : undefined;
+      },
+    });
+  }
+  return options.mutationClient?.refreshBase;
+};
 
 const snapshotConfig = (
   options: Pick<StreamRecoveryOptions, 'snapshotUrl' | 'endpointPolicy'>,
@@ -59,19 +75,23 @@ export const applyDiscreteSnapshotSignals = (
   }
 };
 
-/** Adopt a refreshed graph base when the host supplies a mutation client. */
-export const adoptRefreshedGraphBase = async (client: StreamRecoveryMutationClient | undefined): Promise<void> => {
-  if (!client?.refreshBase) {
+/** Adopt a refreshed graph base when the host supplies a mutation client or graph query URL. */
+export const adoptRefreshedGraphBase = async (
+  client: StreamRecoveryMutationClient | undefined,
+  graphQueryUrl?: string,
+): Promise<void> => {
+  const refreshBase = resolveRefreshBase({ mutationClient: client, graphQueryUrl });
+  if (!refreshBase || !client) {
     return;
   }
 
-  const next = await client.refreshBase();
+  const next = await refreshBase();
   client.adopt(next);
 };
 
 /** Full graph-native recovery: optional `refreshBase`/`adopt`, then snapshot re-sync. */
 export const runGraphNativeRecovery = async (options: StreamRecoveryOptions): Promise<void> => {
-  await adoptRefreshedGraphBase(options.mutationClient);
+  await adoptRefreshedGraphBase(options.mutationClient, options.graphQueryUrl);
 
   const snapshot = await Effect.runPromise(fetchSnapshot(options.artifactId, snapshotConfig(options)));
 
@@ -104,7 +124,7 @@ export const supplementReplayIfSignalsDropped = async (
     return;
   }
 
-  await adoptRefreshedGraphBase(options.mutationClient);
+  await adoptRefreshedGraphBase(options.mutationClient, options.graphQueryUrl);
 
   const snapshot = await Effect.runPromise(fetchSnapshot(options.artifactId, snapshotConfig(options)));
 
