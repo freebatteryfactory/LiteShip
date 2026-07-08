@@ -1,4 +1,3 @@
-// @vitest-environment jsdom
 /**
  * WebCodecs capture — real browser lane (F.6). Exercises VideoEncoder when available.
  *
