@@ -168,6 +168,7 @@ export const CI_PARALLEL_INTEGRATION_LABELS: readonly string[] = [
 ];
 
 const CI_PARALLEL_EXCLUDED_FROM_MID = new Set<string>([
+  'rig-check',
   ...CI_PARALLEL_SETUP_LABELS,
   ...CI_PARALLEL_PREFLIGHT_LABELS,
   CI_PARALLEL_SHARDED_TEST_LABEL,
