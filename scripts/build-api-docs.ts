@@ -1,8 +1,8 @@
 #!/usr/bin/env tsx
 /**
- * Sharded TypeDoc build (#136) — one subprocess per entry point so peak memory
- * stays ~4GB/shard instead of ~8GB+ for the monolith. Merges into `docs/api/`
- * for byte-faithful output that `docs:check` can diff.
+ * Experimental sharded TypeDoc build (#136) — NOT wired to `docs:build` or
+ * `docs:check`. The caged monolith (`pnpm run docs:build`) is the canonical
+ * generator; this script is kept for future low-memory sharding work.
  *
  * @module
  */
@@ -68,7 +68,6 @@ async function runShard(entryPoint: string, index: number): Promise<void> {
         compilerOptions: {
           composite: false,
           skipLibCheck: true,
-          skipErrorChecking: true,
         },
         include: [join(REPO_ROOT, pkgDir, '**/*')],
       },

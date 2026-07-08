@@ -6,6 +6,7 @@
  * @module
  */
 
+import { normalizeRepoPath } from '@czap/audit';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
@@ -28,12 +29,17 @@ function walkSource(root: string, dir: string, out: string[]): void {
       walkSource(root, abs, out);
       continue;
     }
-    if (/\.(ts|tsx|js|jsx|astro|mjs)$/.test(entry.name)) out.push(relative(root, abs));
+    if (/\.(ts|tsx|js|jsx|astro|mjs)$/.test(entry.name)) out.push(normalizeRepoPath(relative(root, abs)));
   }
 }
 
 function lineOf(source: string, index: number): number {
   return source.slice(0, index).split('\n').length;
+}
+
+/** CRLF sources (Windows checkouts) must not leave stray `\r` in RHS slices. */
+function normalizeSourceLines(source: string): string {
+  return source.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
 }
 
 /**
@@ -82,6 +88,7 @@ function sinkAssignmentRhs(source: string, index: number): string {
 
 function scanFile(rel: string, source: string): ConsumerAppFinding[] {
   const findings: ConsumerAppFinding[] = [];
+  source = normalizeSourceLines(source);
 
   if (/resolveInitialState\s*\(\s*context\.request\b/.test(source)) {
     const idx = source.search(/resolveInitialState\s*\(\s*context\.request\b/);

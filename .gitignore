@@ -111,3 +111,6 @@ scripts/**/*.d.ts.map
 # Scratch scripts from sibling projects (borrow this repo's Playwright install)
 .fbf-*.mjs
 tests/.czap-verify-fresh-*/
+
+# Experimental sharded TypeDoc workspace (#136) — never commit
+.typedoc-shards/
