@@ -52,43 +52,12 @@ describe('doctor --target consumer-app fs errors (#117)', () => {
 
     readFileSyncMock.mockImplementation((path: PathLike, ...args: unknown[]) => {
       if (String(path) === target) {
-        // #region agent log
-        fetch('http://127.0.0.1:7809/ingest/34367503-1f32-41e3-9d51-faf28bb55bd4', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '505061' },
-          body: JSON.stringify({
-            sessionId: '505061',
-            runId: 'post-fix',
-            hypothesisId: 'A',
-            location: 'doctor-consumer-app-fs.test.ts:readFileSyncMock',
-            message: 'injecting EACCES on consumer source read',
-            data: { path: String(path) },
-            timestamp: Date.now(),
-          }),
-        }).catch(() => {});
-        // #endregion
         throw fsError('EACCES');
       }
       return fsStore.realReadFileSync!(path as never, ...(args as never[]));
     });
 
     const { exit, stderr } = await captureCli(() => doctor({ pretty: false, cwd: dir, target: 'consumer-app' }));
-
-    // #region agent log
-    fetch('http://127.0.0.1:7809/ingest/34367503-1f32-41e3-9d51-faf28bb55bd4', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '505061' },
-      body: JSON.stringify({
-        sessionId: '505061',
-        runId: 'post-fix',
-        hypothesisId: 'B',
-        location: 'doctor-consumer-app-fs.test.ts:doctor-result',
-        message: 'doctor consumer-app fs error envelope',
-        data: { exit, stderrTail: stderr.trim().split('\n').at(-1)?.slice(0, 200) },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
 
     expect(exit).toBe(1);
     const err = lastStderrReceipt(stderr);
