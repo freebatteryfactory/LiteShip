@@ -48,19 +48,19 @@ describe('dispatch — closed-set flag validation', () => {
     expect(r.exit).toBe(1);
     const err = lastStderrReceipt(r.stderr);
     expect(err.command).toBe('doctor');
-    expect(err.error).toBe('expected target: cloudflare | astro (got: cloudfare)');
+    expect(err.error).toBe('expected target: cloudflare | astro | consumer-app (got: cloudfare)');
   });
 
   it('doctor --target=typo (equals form) also fails', async () => {
     const r = await capture(() => run(['doctor', '--target=cloudfare']));
     expect(r.exit).toBe(1);
-    expect(lastStderrReceipt(r.stderr).error).toMatch(/expected target: cloudflare \| astro/);
+    expect(lastStderrReceipt(r.stderr).error).toMatch(/expected target: cloudflare \| astro \| consumer-app/);
   });
 
   it('doctor --target with no value names the gap', async () => {
     const r = await capture(() => run(['doctor', '--target']));
     expect(r.exit).toBe(1);
-    expect(lastStderrReceipt(r.stderr).error).toBe('expected target: cloudflare | astro (got: <missing>)');
+    expect(lastStderrReceipt(r.stderr).error).toBe('expected target: cloudflare | astro | consumer-app (got: <missing>)');
   });
 
   it('describe --format with an unknown value fails instead of falling through to JSON', async () => {

@@ -12,6 +12,8 @@ import {
   bindRequestSnapshotRecovery,
   fetchSnapshot,
   applyDiscreteSnapshotSignals,
+  getStreamRecoverySubstrate,
+  recordStreamPatchReceipt,
 } from '@czap/web';
 import type { ResumeResponse, SSEClient, SSEMessage, SSEState } from '@czap/web';
 import { bootstrapSlots, rescanSlots } from './slots.js';
@@ -409,7 +411,16 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
       return;
     }
 
-    if (message.type === 'heartbeat' || message.type === 'receipt') {
+    if (message.type === 'receipt') {
+      // Feed the gap-replay receipt buffer (#133-full) when the host registered
+      // a recovery substrate; without one the frame has no consumer.
+      if (artifactId !== undefined) {
+        recordStreamPatchReceipt(artifactId, message.data);
+      }
+      return;
+    }
+
+    if (message.type === 'heartbeat') {
       return;
     }
 
@@ -508,10 +519,24 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
     }
 
     unbindSnapshotRecovery?.();
+    // Prefer graph-native gap replay (#133-full) when the host registered a
+    // QUERY substrate for this artifact (registerStreamRecoverySubstrate);
+    // the snapshot path below remains the permanent floor without one. The
+    // substrate's patchReceiptEntries is a LIVE buffer fed by SSE receipt
+    // frames, so entries arriving after this bind are visible at recovery time.
+    const substrate = getStreamRecoverySubstrate(artifactId);
     unbindSnapshotRecovery = bindRequestSnapshotRecovery(nextTarget, {
       artifactId,
       ...(snapshotUrl ? { snapshotUrl } : {}),
       ...(hasCustomEndpointPolicy(endpointPolicy) ? { endpointPolicy } : {}),
+      ...(substrate
+        ? {
+            graphQueryUrl: substrate.graphQueryUrl,
+            mutationClient: substrate.mutationClient,
+            cellStore: substrate.cellStore,
+            patchReceiptEntries: substrate.patchReceiptEntries,
+          }
+        : {}),
       handlers: {
         applyHtml: enqueueHtml,
         applyDiscreteSignal: (payload) => {

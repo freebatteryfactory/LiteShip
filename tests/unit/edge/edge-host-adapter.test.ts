@@ -566,4 +566,36 @@ describe('createEdgeHostAdapter (multi-boundary)', () => {
       }),
     ).toThrowError(/boundaryId.*boundaries|boundaries.*boundaryId/s);
   });
+
+  test('a REJECTED deferred write-back surfaces a loud diagnostic, not a swallowed rejection (#122)', async () => {
+    const failingKv = {
+      async get() {
+        return null;
+      },
+      async put(): Promise<void> {
+        throw new Error('KV quota exceeded');
+      },
+    };
+    const deferred: Promise<unknown>[] = [];
+    const adapter = createEdgeHostAdapter({
+      cache: {
+        kv: failingKv,
+        boundaryId: testBoundary.id,
+        compile: () => ({ css: '.x{}', propertyRegistrations: '', containerQueries: '' }),
+      },
+      background: { waitUntil: (promise) => deferred.push(promise) },
+    });
+
+    const outcome = await captureDiagnosticsAsync(async ({ events }) => {
+      const resolution = await adapter.resolve(makeHeaders());
+      // The deferred promise handed to waitUntil must settle WITHOUT rejecting.
+      await Promise.all(deferred);
+      return { resolution, codes: events.map((event) => event.code) };
+    });
+
+    expect(outcome.resolution.cacheStatus).toBe('miss');
+    expect(outcome.resolution.compiledOutputs?.css).toBe('.x{}');
+    expect(deferred).toHaveLength(1);
+    expect(outcome.codes).toContain('boundary-cache-writeback-failed');
+  });
 });

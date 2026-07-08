@@ -77,6 +77,17 @@ describe('ScrollTimeline graph → CSS', () => {
     expect(compiled.css.raw).toContain('prefers-reduced-motion: reduce');
   });
 
+  test('settle policy emits the @media reduced-motion guard WITHOUT the server hint', () => {
+    const lowered = lowerScrollTimelineIntent(heroScrollIntent());
+    const compiled = compileScrollTimeline(lowered.graph, lowered.transitionId, lowered.intent);
+    expect(compiled.css.raw).toContain('@media (prefers-reduced-motion: reduce)');
+    // Targets the real stamped selector, not an unstamped [data-czap-scroll] attribute.
+    expect(compiled.css.raw).not.toContain('data-czap-scroll');
+    const guard = compiled.css.raw.slice(compiled.css.raw.indexOf('@media (prefers-reduced-motion: reduce)'));
+    expect(guard).toContain('animation: none !important');
+    expect(guard).toContain('opacity');
+  });
+
   test('inline axis emits scroll(nearest inline)', () => {
     const intent = ScrollTimeline.intent({
       target: 'rail',

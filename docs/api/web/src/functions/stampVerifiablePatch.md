@@ -8,7 +8,7 @@
 
 > **stampVerifiablePatch**(`input`): [`VerifiablePatchEnvelope`](../interfaces/VerifiablePatchEnvelope.md)
 
-Defined in: [web/src/dpu/watch-and-prepare.ts:96](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/dpu/watch-and-prepare.ts#L96)
+Defined in: [web/src/dpu/watch-and-prepare.ts:118](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/dpu/watch-and-prepare.ts#L118)
 
 Stamp a verifiable-patch envelope for a marker + graph CAS chain + HTML fragment.
 

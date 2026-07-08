@@ -18,7 +18,7 @@ import {
 } from '@czap/core';
 import { MotionCompiler } from './motion.js';
 import type { MotionCompileResult, MotionEasing } from './motion.js';
-import { appendTranslateConsumer } from './motion-utils.js';
+import { appendReducedMotionGuard, appendTranslateConsumer } from './motion-utils.js';
 
 /** One compiled stagger child. */
 export interface CompiledStaggerItem {
@@ -99,12 +99,11 @@ export function compileStagger(
       plan,
     );
 
-    const gatedRaw = settle
-      ? `${css.raw}\n@media (prefers-reduced-motion: reduce) {\n` +
-        `  [data-czap-stagger="${item.target}"] { animation: none !important; transition: none !important; }\n` +
-        `}\n`
-      : css.raw;
-    const gatedCss = settle ? Object.freeze({ ...css, raw: gatedRaw }) : css;
+    // The @media guard rides EVERY settle-policy compile — the server-side
+    // `prefersReducedMotion` hint only additionally zeroes durations. A user
+    // whose request lacked the client hint still gets the OS preference honored.
+    const gatedCss =
+      lowered.intent.policy.reducedMotion === 'settle' ? Object.freeze(appendReducedMotionGuard(css, plan)) : css;
 
     const resultDigest = AddressedDigest.of(new TextEncoder().encode(gatedCss.raw));
     const sealed = sealProjectionDigest(graph, item.transitionId, resultDigest);

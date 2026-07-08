@@ -115,7 +115,17 @@
           "signature": "(1)"
         },
         {
+          "name": "docsMcpRoute",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "graphMutationRoute",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "graphQueryRoute",
           "kind": "function",
           "signature": "(1)"
         },
@@ -130,12 +140,27 @@
           "signature": "(1)"
         },
         {
+          "name": "loadDocsMcpBundle",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "parseGraphQueryIfNoneMatch",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "resolveInitialState",
           "kind": "function",
           "signature": "(1)"
         },
         {
           "name": "resolveInitialStateFallback",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "resolveInitialStateWithReceipt",
           "kind": "function",
           "signature": "(1)"
         },
@@ -918,9 +943,24 @@
           "signature": "(1)"
         },
         {
+          "name": "compileResponsiveMedia",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
           "name": "compileReveal",
           "kind": "function",
           "signature": "(3)"
+        },
+        {
+          "name": "compileScrollTimeline",
+          "kind": "function",
+          "signature": "(3)"
+        },
+        {
+          "name": "compileStagger",
+          "kind": "function",
+          "signature": "(1)"
         },
         {
           "name": "dispatch",
@@ -930,7 +970,7 @@
         {
           "name": "generatePropertyRegistrations",
           "kind": "function",
-          "signature": "(1)"
+          "signature": "(2)"
         },
         {
           "name": "glslCompileCapsule",
@@ -1120,6 +1160,10 @@
           "signature": "make:function"
         },
         {
+          "name": "GRAPH_QUERY_FALLBACK_HEADER",
+          "kind": "const"
+        },
+        {
           "name": "GenFrame",
           "kind": "namespace",
           "signature": "make:function,resolveGap:function"
@@ -1191,6 +1235,11 @@
           "signature": "GENESIS:const,append:function,buildChain:function,createEnvelope:function,findByHash:function,findByKind:function,generateMACKey:function,hashEnvelope:function,head:function,isGenesis:function,macEnvelope:function,tail:function,validateChain:function,validateChainDetailed:function,verifyMAC:function"
         },
         {
+          "name": "ResponsiveMedia",
+          "kind": "namespace",
+          "signature": "intent:function"
+        },
+        {
           "name": "Reveal",
           "kind": "namespace",
           "signature": "intent:function"
@@ -1222,6 +1271,11 @@
           "signature": "audioSync:function,fixedStep:function,noop:function,raf:function"
         },
         {
+          "name": "ScrollTimeline",
+          "kind": "namespace",
+          "signature": "intent:function"
+        },
+        {
           "name": "ShipCapsule",
           "kind": "namespace",
           "signature": "canonicalize:function,computeId:function,decode:function,make:function"
@@ -1240,6 +1294,11 @@
           "name": "SpeculativeEvaluator",
           "kind": "namespace",
           "signature": "make:function"
+        },
+        {
+          "name": "Stagger",
+          "kind": "namespace",
+          "signature": "intent:function"
         },
         {
           "name": "StateCell",
@@ -1387,6 +1446,16 @@
           "signature": "_kind:const,budgets:const,capabilities:const,id:const,input:namespace,invariants:const,name:const,output:namespace,run:function,site:const"
         },
         {
+          "name": "buildResponsiveImageSet",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "buildResponsiveSrcset",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
           "name": "canonicalAddressBytes",
           "kind": "function",
           "signature": "(1)"
@@ -1400,6 +1469,11 @@
           "name": "canonicalCborDecodeCapsule",
           "kind": "namespace",
           "signature": "_kind:const,budgets:const,capabilities:const,id:const,input:namespace,invariants:const,name:const,output:namespace,run:function,site:const"
+        },
+        {
+          "name": "chainPatchesBetween",
+          "kind": "function",
+          "signature": "(3)"
         },
         {
           "name": "chooseRung",
@@ -1422,6 +1496,11 @@
           "signature": "(1)"
         },
         {
+          "name": "createGraphQueryRefreshBase",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
           "name": "decodeDocumentGraph",
           "kind": "function",
           "signature": "(1)"
@@ -1433,6 +1512,11 @@
         },
         {
           "name": "defineConfig",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "discreteSignalPayloadsFromPatch",
           "kind": "function",
           "signature": "(1)"
         },
@@ -1492,7 +1576,17 @@
           "signature": "_kind:const,budgets:const,capabilities:const,id:const,input:namespace,invariants:const,name:const,output:namespace,run:function,site:const"
         },
         {
+          "name": "graphQueryEtag",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "handleGraphMutation",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "handleGraphQuery",
           "kind": "function",
           "signature": "(2)"
         },
@@ -1562,6 +1656,16 @@
           "signature": "(1)"
         },
         {
+          "name": "lowerScrollTimelineIntent",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "lowerStaggerIntent",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "manualClock",
           "kind": "function",
           "signature": "(0)"
@@ -1572,6 +1676,26 @@
           "signature": "(2)"
         },
         {
+          "name": "nodeFromParts",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "nodeLogicalKey",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "normalizeGraphQueryEtag",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "parseGraphQueryEtagList",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "parseTypedBinding",
           "kind": "function",
           "signature": "(2)"
@@ -1580,6 +1704,11 @@
           "name": "projectLadder",
           "kind": "function",
           "signature": "(1)"
+        },
+        {
+          "name": "projectResponsiveMediaPicture",
+          "kind": "function",
+          "signature": "(2)"
         },
         {
           "name": "projectionKeys",
@@ -1602,14 +1731,39 @@
           "signature": "(2)"
         },
         {
+          "name": "replayDiscreteFromPatchReceipts",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "replayDroppedSignals",
           "kind": "function",
           "signature": "(1)"
         },
         {
+          "name": "resolveResponsiveMedia",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
           "name": "resolveRevealInitialState",
           "kind": "function",
           "signature": "(2)"
+        },
+        {
+          "name": "resolveScrollTimelineInitialState",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "resolveStaggerInitialState",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "runGraphNativeGapReplay",
+          "kind": "function",
+          "signature": "(1)"
         },
         {
           "name": "schemaToJsonSchema",
@@ -1635,6 +1789,11 @@
           "name": "sendGraphMutation",
           "kind": "function",
           "signature": "(2)"
+        },
+        {
+          "name": "sendGraphQuery",
+          "kind": "function",
+          "signature": "(1)"
         },
         {
           "name": "signalPayloadKind",
@@ -1814,7 +1973,7 @@
         {
           "name": "ClientHints",
           "kind": "namespace",
-          "signature": "acceptCHHeader:function,criticalCHHeader:function,parseClientHints:function"
+          "signature": "acceptCHHeader:function,criticalCHHeader:function,parseClientHints:function,responsiveMediaCapabilities:function,responsiveMediaVaryHeader:function,varyCHHeader:function"
         },
         {
           "name": "DESIGN_TIERS",
@@ -3300,6 +3459,22 @@
           "kind": "const"
         },
         {
+          "name": "DPU_BASE_ATTR",
+          "kind": "const"
+        },
+        {
+          "name": "DPU_DIGEST_ATTR",
+          "kind": "const"
+        },
+        {
+          "name": "DPU_MARKER_ATTR",
+          "kind": "const"
+        },
+        {
+          "name": "DPU_RESULT_ATTR",
+          "kind": "const"
+        },
+        {
           "name": "Hints",
           "kind": "namespace",
           "signature": "empty:function,fromElement:function,merge:function,preserveFocus:function,preserveIds:function,preserveScroll:function,withIdMap:function,withSemanticIds:function"
@@ -3374,7 +3549,7 @@
         {
           "name": "adoptRefreshedGraphBase",
           "kind": "function",
-          "signature": "(1)"
+          "signature": "(2)"
         },
         {
           "name": "applyDiscreteSnapshotSignals",
@@ -3385,6 +3560,11 @@
           "name": "applyGraphNativeSnapshot",
           "kind": "function",
           "signature": "(2)"
+        },
+        {
+          "name": "applyVerifiablePatch",
+          "kind": "function",
+          "signature": "(3)"
         },
         {
           "name": "bindGraphForm",
@@ -3402,6 +3582,11 @@
           "signature": "(3)"
         },
         {
+          "name": "computeShaderIntegrity",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "createAudioProcessor",
           "kind": "function",
           "signature": "(2)"
@@ -3417,6 +3602,16 @@
           "signature": "(2)"
         },
         {
+          "name": "detectDpuCapability",
+          "kind": "function",
+          "signature": "(0)"
+        },
+        {
+          "name": "digestHtmlFragment",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "dispatchCzapEvent",
           "kind": "function",
           "signature": "(2)"
@@ -3425,6 +3620,11 @@
           "name": "fetchSnapshot",
           "kind": "function",
           "signature": "(2)"
+        },
+        {
+          "name": "getStreamRecoverySubstrate",
+          "kind": "function",
+          "signature": "(1)"
         },
         {
           "name": "isExternalShaderSource",
@@ -3450,6 +3650,16 @@
           "name": "parseShaderIntegrity",
           "kind": "function",
           "signature": "(1)"
+        },
+        {
+          "name": "recordStreamPatchReceipt",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "registerStreamRecoverySubstrate",
+          "kind": "function",
+          "signature": "(2)"
         },
         {
           "name": "renderToCanvas",
@@ -3482,6 +3692,11 @@
           "signature": "(1)"
         },
         {
+          "name": "stampVerifiablePatch",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "streamReceiptCapsule",
           "kind": "const"
         },
@@ -3497,6 +3712,16 @@
         },
         {
           "name": "verifyShaderIntegrity",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "verifyVerifiablePatch",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "watchAndPrepare",
           "kind": "function",
           "signature": "(2)"
         }

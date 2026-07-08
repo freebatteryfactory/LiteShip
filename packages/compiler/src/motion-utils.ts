@@ -7,6 +7,40 @@
 import type { CssMotionPlan } from '@czap/core';
 import type { MotionCompileResult } from './motion.js';
 
+/**
+ * Client-side reduced-motion floor: an `@media (prefers-reduced-motion: reduce)`
+ * block that kills the tween AND settles the boundary at its end pose.
+ *
+ * Emitted UNCONDITIONALLY when the intent's policy is `reducedMotion: 'settle'`
+ * — not only when the compiler was called with a server-side
+ * `prefersReducedMotion` hint. The hint path (Sec-CH detection) zeroes durations
+ * for a better first paint, but a default/cached/no-hint compile must still
+ * respect the user's OS preference in the browser; that is the whole point of
+ * the media query. Targets the plan's real selector (the stamped
+ * `data-czap-boundary` attribute), and applies the end-state declarations so a
+ * `from { opacity: 0 }` boundary settles VISIBLE instead of freezing hidden.
+ */
+export function appendReducedMotionGuard(css: MotionCompileResult, plan: CssMotionPlan): MotionCompileResult {
+  const end = plan.keyframes.find((step) => step.offset === 1) ?? plan.keyframes.at(-1);
+  const endDecls = end
+    ? Object.entries(end.properties)
+        .map(([property, value]) => `    ${property}: ${value};`)
+        .join('\n')
+    : '';
+
+  const guard = [
+    `@media (prefers-reduced-motion: reduce) {`,
+    `  ${plan.selector} {`,
+    `    animation: none !important;`,
+    `    transition: none !important;`,
+    ...(endDecls.length > 0 ? [endDecls] : []),
+    `  }`,
+    `}`,
+  ].join('\n');
+
+  return { ...css, raw: `${css.raw}\n\n${guard}` };
+}
+
 /** Emit a transform consumer so `@property`-interpolated translate axes actually move the element. */
 export function appendTranslateConsumer(css: MotionCompileResult, plan: CssMotionPlan): MotionCompileResult {
   const target = plan.selector.match(/data-czap-boundary="([^"]+)"/)?.[1];

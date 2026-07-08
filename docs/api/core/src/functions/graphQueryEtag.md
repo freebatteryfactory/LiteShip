@@ -8,10 +8,14 @@
 
 > **graphQueryEtag**(`graph`): `string`
 
-Defined in: [core/src/graph-query.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query.ts#L53)
+Defined in: [core/src/graph-query.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query.ts#L57)
 
 The cache validator for conditional reads — sha256 `integrity_digest`, NOT the
-fnv1a display `id`. The digest excludes mutable `meta` by construction.
+fnv1a display `id`. The digest excludes mutable `meta` by construction, so a
+meta-only advance (display/version bookkeeping) intentionally does NOT
+invalidate a cached graph: CAS correctness keys on `base.id`, and `meta` is
+display-layer data that never participates in patch application. Documented
+contract, not an oversight.
 
 ## Parameters
 

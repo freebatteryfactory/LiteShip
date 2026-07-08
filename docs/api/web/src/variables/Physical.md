@@ -8,7 +8,7 @@
 
 > `const` **Physical**: `object`
 
-Defined in: [web/src/index.ts:129](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/index.ts#L129)
+Defined in: [web/src/index.ts:135](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/index.ts#L135)
 
 Physical DOM-state helpers for save/restore across morphs and hot
 reloads. Captures focus, selection, scroll, and IME composition so a
