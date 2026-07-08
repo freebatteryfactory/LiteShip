@@ -8,7 +8,7 @@
 
 > **sanitizeHTML**(`html`): `string`
 
-Defined in: [web/src/security/html-trust.ts:308](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/security/html-trust.ts#L308)
+Defined in: [web/src/security/html-trust.ts:327](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/security/html-trust.ts#L327)
 
 Convenience wrapper that always applies the `sanitized-html` policy.
 Use when a caller just wants the "clean the markup" behaviour without
