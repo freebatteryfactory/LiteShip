@@ -132,6 +132,7 @@ describe('Tier 6 — ci-parallel profile partitioning', () => {
 
   it('ci-parallel-mid does not duplicate preflight, integration, or other dedicated lanes', () => {
     const mid = new Set(gauntletPhaseProfiles['ci-parallel-mid']);
+    expect(mid.has('rig-check'), 'rig-check runs only on serial truth-linux / setup').toBe(false);
     for (const labels of dedicatedProfiles) {
       for (const label of labels) {
         expect(mid.has(label), `mid must not re-run dedicated phase ${label}`).toBe(false);

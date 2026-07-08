@@ -11,7 +11,7 @@
  * @module
  */
 
-import { mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { spawnArgvVisible } from './lib/spawn.js';
 import { CI_PARALLEL_TEST_SHARD_COUNT } from '../packages/cli/src/gauntlet-phases.js';
@@ -27,8 +27,10 @@ if (!Number.isInteger(shardIndex) || shardIndex < 1 || shardIndex > shardTotal) 
   process.exit(1);
 }
 
-const coverageShardDir = resolve(repoRoot, `coverage/node-shard-${shardIndex}`);
+const coverageShardRel = `coverage/node-shard-${shardIndex}`;
+const coverageShardDir = resolve(repoRoot, coverageShardRel);
 const subprocessShardDir = resolve(repoRoot, `coverage/subprocess-raw-shard/${shardIndex}`);
+const coverageFinalPath = resolve(coverageShardDir, 'coverage-final.json');
 mkdirSync(coverageShardDir, { recursive: true });
 mkdirSync(subprocessShardDir, { recursive: true });
 
@@ -43,13 +45,14 @@ async function main(): Promise<void> {
       '--config',
       'vitest.config.ts',
       '--coverage',
+      `--coverage.reportsDirectory=${coverageShardRel}`,
       `--shard=${shardIndex}/${shardTotal}`,
     ],
     {
       cwd: repoRoot,
       env: {
         ...process.env,
-        CZAP_COVERAGE_SHARD_DIR: `coverage/node-shard-${shardIndex}`,
+        CZAP_COVERAGE_SHARD_DIR: coverageShardRel,
         NODE_V8_COVERAGE: `coverage/subprocess-raw-shard/${shardIndex}`,
       },
     },
@@ -57,6 +60,11 @@ async function main(): Promise<void> {
   if (result.exitCode !== 0) {
     process.exit(result.exitCode ?? 1);
   }
+  if (!existsSync(coverageFinalPath)) {
+    console.error(`[test-shard] expected coverage report missing: ${coverageFinalPath}`);
+    process.exit(1);
+  }
+  console.log(`[test-shard] wrote ${coverageFinalPath}`);
 }
 
 void main();
