@@ -6,7 +6,7 @@
 
 # Interface: QuantizeNestedRule
 
-Defined in: [vite/src/css-quantize.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L50)
+Defined in: [vite/src/css-quantize.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L53)
 
 A nested rule inside a `@quantize` state: a CSS selector plus the
 property map applied to it when the state is active.
@@ -17,7 +17,7 @@ property map applied to it when the state is active.
 
 > `readonly` **props**: `Record`\<`string`, `string`\>
 
-Defined in: [vite/src/css-quantize.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L54)
+Defined in: [vite/src/css-quantize.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L57)
 
 `{ cssProp: value }` declarations inside the nested rule.
 
@@ -27,6 +27,6 @@ Defined in: [vite/src/css-quantize.ts:54](https://github.com/freebatteryfactory/
 
 > `readonly` **selector**: `string`
 
-Defined in: [vite/src/css-quantize.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L52)
+Defined in: [vite/src/css-quantize.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L55)
 
 CSS selector exactly as authored (e.g. `.grid`, `.hero__title`).

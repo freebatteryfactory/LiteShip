@@ -6,7 +6,7 @@
 
 # Interface: ResponsiveMediaPictureProjection
 
-Defined in: [core/src/responsive-media.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/responsive-media.ts#L50)
+Defined in: [core/src/responsive-media.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/responsive-media.ts#L52)
 
 Structured `<picture>` projection.
 
@@ -16,7 +16,7 @@ Structured `<picture>` projection.
 
 > `readonly` **img**: `string`
 
-Defined in: [core/src/responsive-media.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/responsive-media.ts#L52)
+Defined in: [core/src/responsive-media.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/responsive-media.ts#L54)
 
 ***
 
@@ -24,7 +24,18 @@ Defined in: [core/src/responsive-media.ts:52](https://github.com/freebatteryfact
 
 > `readonly` **picture**: `string`
 
-Defined in: [core/src/responsive-media.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/responsive-media.ts#L51)
+Defined in: [core/src/responsive-media.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/responsive-media.ts#L53)
+
+***
+
+### preload
+
+> `readonly` **preload**: `string`
+
+Defined in: [core/src/responsive-media.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/responsive-media.ts#L62)
+
+Optional `<link rel="preload" as="image">` for the resolved (or full srcset)
+asset — hosts put this in `<head>` for LCP (#125).
 
 ***
 
@@ -32,7 +43,7 @@ Defined in: [core/src/responsive-media.ts:51](https://github.com/freebatteryfact
 
 > `readonly` **resolved**: [`ResolvedResponsiveMedia`](ResolvedResponsiveMedia.md)
 
-Defined in: [core/src/responsive-media.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/responsive-media.ts#L55)
+Defined in: [core/src/responsive-media.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/responsive-media.ts#L57)
 
 ***
 
@@ -40,7 +51,7 @@ Defined in: [core/src/responsive-media.ts:55](https://github.com/freebatteryfact
 
 > `readonly` **sizes**: `string`
 
-Defined in: [core/src/responsive-media.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/responsive-media.ts#L54)
+Defined in: [core/src/responsive-media.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/responsive-media.ts#L56)
 
 ***
 
@@ -48,4 +59,4 @@ Defined in: [core/src/responsive-media.ts:54](https://github.com/freebatteryfact
 
 > `readonly` **srcset**: `string`
 
-Defined in: [core/src/responsive-media.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/responsive-media.ts#L53)
+Defined in: [core/src/responsive-media.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/responsive-media.ts#L55)

@@ -30,6 +30,7 @@ export interface CSSRule {
 
 /**
  * A nested `@supports` / `@media` group inside a state's container block.
+ * Nested groups are preserved recursively (#110 — never silent-drop depth ≥ 2).
  */
 export interface CSSAtRuleGroup {
   /** The at-rule prelude exactly as authored. */
@@ -38,6 +39,8 @@ export interface CSSAtRuleGroup {
   readonly bareProps?: Record<string, string>;
   /** Nested selector rules inside the at-rule. */
   readonly rules?: readonly CSSRule[];
+  /** Nested conditional at-rule groups. */
+  readonly atRuleGroups?: readonly CSSAtRuleGroup[];
 }
 
 /**
@@ -124,6 +127,9 @@ function serializeAtRuleGroup(group: CSSAtRuleGroup): string {
     if (Object.keys(rule.properties).length > 0) {
       inner.push(serializeRule(rule));
     }
+  }
+  for (const nested of group.atRuleGroups ?? []) {
+    inner.push(serializeAtRuleGroup(nested));
   }
   if (inner.length === 0) return `${group.prelude} {}`;
   return `${group.prelude} {\n${inner.join('\n')}\n}`;

@@ -8,7 +8,7 @@
 
 > **projectResponsiveMediaPicture**(`intent`, `caps`): [`ResponsiveMediaPictureProjection`](../interfaces/ResponsiveMediaPictureProjection.md)
 
-Defined in: [core/src/responsive-media.ts:171](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/responsive-media.ts#L171)
+Defined in: [core/src/responsive-media.ts:178](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/responsive-media.ts#L178)
 
 Project a responsive-media intent to a `<picture>` + fallback `<img>`.
 

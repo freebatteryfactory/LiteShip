@@ -8,7 +8,7 @@
 
 > `const` **CSSCompiler**: `object`
 
-Defined in: [compiler/src/css.ts:438](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/css.ts#L438)
+Defined in: [compiler/src/css.ts:444](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/css.ts#L444)
 
 CSS compiler namespace.
 

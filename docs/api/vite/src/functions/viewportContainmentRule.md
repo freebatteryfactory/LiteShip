@@ -8,7 +8,7 @@
 
 > **viewportContainmentRule**(`names`, `selector?`): `string` \| `null`
 
-Defined in: [vite/src/css-quantize.ts:544](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L544)
+Defined in: [vite/src/css-quantize.ts:548](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L548)
 
 Build the single `:root` containment rule for a sheet's viewport-based
 boundaries: a `container-type` declaration plus every collected

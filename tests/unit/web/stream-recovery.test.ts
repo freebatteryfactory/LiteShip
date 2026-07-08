@@ -273,4 +273,31 @@ describe('web stream recovery (#133)', () => {
     expect(htmlApplied).toEqual(['<section>sync</section>']);
     expect(signals).toEqual([{ state: 'synced' }]);
   });
+
+  test('runGraphNativeRecovery prefers gap-replay when QUERY substrate is complete (#133-full)', async () => {
+    const local = graph([node('scroll.y')]);
+    const adopt = vi.fn();
+    const applyDiscrete = vi.fn();
+    const gapReplay = vi.spyOn(core, 'runGraphNativeGapReplay').mockResolvedValue({
+      query: { status: 'ok', graph: local, etag: 'etag' },
+      replayedCells: [],
+      discretePayloads: [],
+    } as never);
+    const snapshotSpy = vi.spyOn(Resumption, 'fetchSnapshot');
+
+    await runGraphNativeRecovery({
+      artifactId: 'doc-1',
+      graphQueryUrl: '/api/graph',
+      mutationClient: { base: () => local, adopt },
+      cellStore: { get: () => undefined, register: () => {}, applyDiscrete: () => {} } as never,
+      patchReceiptEntries: [],
+      handlers: {
+        applyHtml: async () => {},
+        applyDiscreteSignal: applyDiscrete,
+      },
+    });
+
+    expect(gapReplay).toHaveBeenCalledOnce();
+    expect(snapshotSpy).not.toHaveBeenCalled();
+  });
 });

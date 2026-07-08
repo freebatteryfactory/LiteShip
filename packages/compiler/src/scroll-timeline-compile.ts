@@ -92,27 +92,37 @@ export function compileScrollTimeline(
   graph: DocumentGraph,
   transitionId: ContentAddress,
   intent: ScrollTimelineIntent,
+  opts: { prefersReducedMotion?: boolean } = {},
 ): CompiledScrollTimeline {
   const motion = interpretTransition(graph, transitionId);
   if (!motion.css) {
     throw ValidationError('compileScrollTimeline', 'interpretTransition produced no css plan');
   }
 
+  const settle = opts.prefersReducedMotion === true && intent.policy.reducedMotion === 'settle';
+  const plan = settle ? { ...motion.css, durationMs: 0 } : motion.css;
   const scrollTimeline = scrollTimelineFromIntent(intent);
   const css = appendTranslateConsumer(
     MotionCompiler.compile({
-      plan: motion.css,
-      easing: easingFromIntent(intent.transition.easing),
-      scrollTimeline,
+      plan,
+      easing: settle ? 'linear' : easingFromIntent(intent.transition.easing),
+      scrollTimeline: settle ? undefined : scrollTimeline,
     }),
-    motion.css,
+    plan,
   );
 
-  const resultDigest = AddressedDigest.of(new TextEncoder().encode(css.raw));
+  const gatedRaw = settle
+    ? `${css.raw}\n@media (prefers-reduced-motion: reduce) {\n` +
+      `  [data-czap-scroll="${intent.target}"] { animation: none !important; transition: none !important; }\n` +
+      `}\n`
+    : css.raw;
+  const gatedCss = settle ? Object.freeze({ ...css, raw: gatedRaw }) : css;
+
+  const resultDigest = AddressedDigest.of(new TextEncoder().encode(gatedCss.raw));
   const { graph: graphWithDigest, projectionId } = sealProjectionDigest(graph, transitionId, resultDigest);
 
   return Object.freeze({
-    css,
+    css: gatedCss,
     motion,
     graph: graphWithDigest,
     projectionId,

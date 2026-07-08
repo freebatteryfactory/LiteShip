@@ -6,9 +6,14 @@
 
 # Interface: StreamRecoveryOptions
 
-Defined in: [web/src/stream/recovery.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L32)
+Defined in: [web/src/stream/recovery.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L39)
 
 Configuration for [bindRequestSnapshotRecovery](../functions/bindRequestSnapshotRecovery.md) and [runGraphNativeRecovery](../functions/runGraphNativeRecovery.md).
+
+When `graphQueryUrl`, `mutationClient`, `cellStore`, and `patchReceiptEntries` are all
+present, recovery prefers `runGraphNativeGapReplay` from `@czap/core` (#133-full)
+over the interim HTML snapshot path. Snapshot remains the permanent floor when any
+of those are absent.
 
 ## Properties
 
@@ -16,7 +21,17 @@ Configuration for [bindRequestSnapshotRecovery](../functions/bindRequestSnapshot
 
 > `readonly` **artifactId**: `string`
 
-Defined in: [web/src/stream/recovery.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L33)
+Defined in: [web/src/stream/recovery.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L40)
+
+***
+
+### cellStore?
+
+> `readonly` `optional` **cellStore?**: `StateCellStoreShape`
+
+Defined in: [web/src/stream/recovery.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L47)
+
+StateCell store for discrete gap-replay (#133-full). Required with [patchReceiptEntries](#patchreceiptentries).
 
 ***
 
@@ -24,7 +39,7 @@ Defined in: [web/src/stream/recovery.ts:33](https://github.com/freebatteryfactor
 
 > `readonly` `optional` **endpointPolicy?**: [`RuntimeEndpointPolicy`](RuntimeEndpointPolicy.md)
 
-Defined in: [web/src/stream/recovery.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L36)
+Defined in: [web/src/stream/recovery.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L43)
 
 ***
 
@@ -32,7 +47,7 @@ Defined in: [web/src/stream/recovery.ts:36](https://github.com/freebatteryfactor
 
 > `readonly` `optional` **graphQueryUrl?**: `string`
 
-Defined in: [web/src/stream/recovery.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L35)
+Defined in: [web/src/stream/recovery.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L42)
 
 ***
 
@@ -40,7 +55,7 @@ Defined in: [web/src/stream/recovery.ts:35](https://github.com/freebatteryfactor
 
 > `readonly` **handlers**: [`StreamRecoveryHandlers`](StreamRecoveryHandlers.md)
 
-Defined in: [web/src/stream/recovery.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L38)
+Defined in: [web/src/stream/recovery.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L45)
 
 ***
 
@@ -48,7 +63,17 @@ Defined in: [web/src/stream/recovery.ts:38](https://github.com/freebatteryfactor
 
 > `readonly` `optional` **mutationClient?**: [`StreamRecoveryMutationClient`](../type-aliases/StreamRecoveryMutationClient.md)
 
-Defined in: [web/src/stream/recovery.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L37)
+Defined in: [web/src/stream/recovery.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L44)
+
+***
+
+### patchReceiptEntries?
+
+> `readonly` `optional` **patchReceiptEntries?**: readonly `PatchReceiptEntry`[]
+
+Defined in: [web/src/stream/recovery.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L49)
+
+Patch/receipt chain spanning the missed gap (#133-full).
 
 ***
 
@@ -56,4 +81,4 @@ Defined in: [web/src/stream/recovery.ts:37](https://github.com/freebatteryfactor
 
 > `readonly` `optional` **snapshotUrl?**: `string`
 
-Defined in: [web/src/stream/recovery.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L34)
+Defined in: [web/src/stream/recovery.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L41)

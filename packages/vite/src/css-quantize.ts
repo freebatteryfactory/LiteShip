@@ -9,7 +9,7 @@
  */
 
 import { Diagnostics, inputToSource, type Boundary } from '@czap/core';
-import { CSSCompiler, type CSSRule, type CSSStateInput } from '@czap/compiler';
+import { CSSCompiler, type CSSAtRuleGroup, type CSSRule, type CSSStateInput } from '@czap/compiler';
 import { normalizeCssLineEndings } from './normalize-css-eol.js';
 import {
   blankCssCommentsAndStrings,
@@ -33,6 +33,7 @@ function isConditionalAtRule(marker: string): boolean {
 /**
  * A nested `@supports` / `@media` group inside a `@quantize` state body.
  * Serialized inside the state's `@container` block as a real at-rule group.
+ * Nested at-rule groups are preserved (depth ≥ 2); silent drop is forbidden (#110).
  */
 export interface QuantizeAtRuleGroup {
   /** The at-rule prelude exactly as authored (e.g. `@supports (display: grid)`). */
@@ -41,6 +42,8 @@ export interface QuantizeAtRuleGroup {
   readonly bareProps: Record<string, string>;
   /** Nested selector rules inside the at-rule. */
   readonly rules: readonly QuantizeNestedRule[];
+  /** Nested `@supports` / `@media` groups inside this at-rule (#110 depth ≥ 2). */
+  readonly atRuleGroups?: readonly QuantizeAtRuleGroup[];
 }
 
 /**
@@ -336,6 +339,7 @@ function parseStateBody(css: string, pos: number): { body: QuantizeStateBody; en
           prelude: selector,
           bareProps: inner.body.bareProps,
           rules: inner.body.rules,
+          ...(inner.body.atRuleGroups?.length ? { atRuleGroups: inner.body.atRuleGroups } : {}),
         });
       } else {
         const { props, end } = parseFlatDeclarations(css, pos);
@@ -647,14 +651,17 @@ export function compileQuantizeBlock(
   boundary: Boundary.Shape,
   sheet?: QuantizeSheetContext,
 ): string {
+  const mapAtRuleGroup = (group: QuantizeAtRuleGroup): CSSAtRuleGroup => ({
+    prelude: group.prelude,
+    bareProps: group.bareProps,
+    rules: group.rules.map((rule) => ({ selector: rule.selector, properties: rule.props })),
+    ...(group.atRuleGroups?.length ? { atRuleGroups: group.atRuleGroups.map(mapAtRuleGroup) } : {}),
+  });
+
   const states: Record<string, CSSStateInput> = {};
   for (const [stateName, body] of Object.entries(block.states)) {
     const rules: CSSRule[] = body.rules.map((rule) => ({ selector: rule.selector, properties: rule.props }));
-    const atRuleGroups = (body.atRuleGroups ?? []).map((group) => ({
-      prelude: group.prelude,
-      bareProps: group.bareProps,
-      rules: group.rules.map((rule) => ({ selector: rule.selector, properties: rule.props })),
-    }));
+    const atRuleGroups = (body.atRuleGroups ?? []).map(mapAtRuleGroup);
     states[stateName] = { bareProps: body.bareProps, rules, ...(atRuleGroups.length > 0 ? { atRuleGroups } : {}) };
   }
 

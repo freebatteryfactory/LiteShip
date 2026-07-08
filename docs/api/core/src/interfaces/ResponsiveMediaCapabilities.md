@@ -6,7 +6,7 @@
 
 # Interface: ResponsiveMediaCapabilities
 
-Defined in: [core/src/responsive-media.ts:11](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/responsive-media.ts#L11)
+Defined in: [core/src/responsive-media.ts:13](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/responsive-media.ts#L13)
 
 Capability slice required to resolve a responsive media intent.
 
@@ -16,7 +16,7 @@ Capability slice required to resolve a responsive media intent.
 
 > `readonly` **devicePixelRatio**: `number`
 
-Defined in: [core/src/responsive-media.ts:12](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/responsive-media.ts#L12)
+Defined in: [core/src/responsive-media.ts:14](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/responsive-media.ts#L14)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [core/src/responsive-media.ts:12](https://github.com/freebatteryfact
 
 > `readonly` **saveData**: `boolean`
 
-Defined in: [core/src/responsive-media.ts:13](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/responsive-media.ts#L13)
+Defined in: [core/src/responsive-media.ts:15](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/responsive-media.ts#L15)

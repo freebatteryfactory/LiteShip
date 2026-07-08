@@ -1727,6 +1727,29 @@ describe('CSS override flow-through', () => {
     expect(compiled).toContain('gap: 4px');
   });
 
+  test('compileQuantizeBlock preserves depth-2 @media inside @supports (#110)', () => {
+    const css = `
+@quantize viewport {
+  compact {
+    @supports (display: grid) {
+      @media (min-width: 768px) {
+        .grid { gap: 12px; }
+      }
+    }
+  }
+}`;
+
+    const blocks = parseQuantizeBlocks(css, FILE);
+    const block = blocks[0]!;
+    const boundary = makeBoundary('viewport', [[0, 'compact']]);
+    const compiled = compileQuantizeBlock(block, boundary);
+
+    expect(block.states.compact?.atRuleGroups?.[0]?.atRuleGroups?.[0]?.prelude).toContain('@media');
+    expect(compiled).toContain('@supports (display: grid)');
+    expect(compiled).toContain('@media (min-width: 768px)');
+    expect(compiled).toContain('gap: 12px');
+  });
+
   test('parseQuantizeBlocks ignores empty declarations and colonless statements while preserving later props', () => {
     const css = `
 @quantize viewport {

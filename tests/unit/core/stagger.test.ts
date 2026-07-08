@@ -9,6 +9,7 @@ import {
   Stagger,
   lowerStaggerIntent,
   interpretTransition,
+  resolveStaggerInitialState,
 } from '@czap/core';
 import { compileStagger } from '@czap/compiler';
 
@@ -50,7 +51,13 @@ describe('Stagger.intent → graph', () => {
       transition: { durationMs: 200 },
       policy: { reducedMotion: 'none', motionTier: 'transitions' },
     });
-    expect(() => lowerStaggerIntent(intent)).toThrow(RangeError);
+    expect(() => lowerStaggerIntent(intent)).toThrow();
+    try {
+      lowerStaggerIntent(intent);
+      expect.unreachable();
+    } catch (e) {
+      expect((e as { _tag?: string })._tag).toBe('ValidationError');
+    }
   });
 
   test('adversarial: negative stepMs throws', () => {
@@ -61,7 +68,18 @@ describe('Stagger.intent → graph', () => {
       transition: { durationMs: 200 },
       policy: { reducedMotion: 'none', motionTier: 'none' },
     });
-    expect(() => lowerStaggerIntent(intent)).toThrow(RangeError);
+    expect(() => lowerStaggerIntent(intent)).toThrow();
+    try {
+      lowerStaggerIntent(intent);
+      expect.unreachable();
+    } catch (e) {
+      expect((e as { _tag?: string })._tag).toBe('ValidationError');
+    }
+  });
+
+  test('resolveStaggerInitialState honors reducedMotion settle (#124)', () => {
+    expect(resolveStaggerInitialState(listIntent(), { prefersReducedMotion: true })).toBe('after');
+    expect(resolveStaggerInitialState(listIntent(), { prefersReducedMotion: false })).toBe('before');
   });
 });
 
@@ -76,6 +94,13 @@ describe('Stagger graph → CSS', () => {
     expect(compiled.items[1]!.css.transition).toContain('300ms ease 80ms');
     expect(compiled.raw).toContain('[data-czap-boundary="item-0"]');
     expect(compiled.raw).toContain('[data-czap-boundary="item-1"]');
+  });
+
+  test('compileStagger with prefersReducedMotion settle zeros delays (#124)', () => {
+    const lowered = lowerStaggerIntent(listIntent(2));
+    const compiled = compileStagger(lowered, { prefersReducedMotion: true });
+    expect(compiled.items.every((i) => i.delayMs === 0)).toBe(true);
+    expect(compiled.raw).toContain('prefers-reduced-motion: reduce');
   });
 });
 

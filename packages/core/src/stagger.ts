@@ -9,6 +9,7 @@
  * @module
  */
 
+import { ValidationError } from '@czap/error';
 import type { ContentAddress, IntegrityDigest, StateName } from './brands.js';
 import { Cap, type CapTier } from './caps.js';
 import { sealGraph, sealNode } from './document-graph-address.js';
@@ -132,10 +133,10 @@ function grantsForMotionTier(tier: MotionTier): ReturnType<typeof Cap.from> {
  */
 export function lowerStaggerIntent(intent: StaggerIntent): LoweredStagger {
   if (intent.children.length === 0) {
-    throw new RangeError('StaggerIntent.children must be non-empty');
+    throw ValidationError('lowerStaggerIntent', 'StaggerIntent.children must be non-empty');
   }
   if (intent.stepMs < 0 || !Number.isFinite(intent.stepMs)) {
-    throw new RangeError('StaggerIntent.stepMs must be a non-negative finite number');
+    throw ValidationError('lowerStaggerIntent', 'StaggerIntent.stepMs must be a non-negative finite number');
   }
 
   const signal = sealNode({
@@ -268,6 +269,21 @@ export function lowerStaggerIntent(intent: StaggerIntent): LoweredStagger {
     items: Object.freeze(items),
     signalId: signal.id,
   });
+}
+
+/**
+ * Resolve the discrete state for SSR / reduced-motion first paint (#124).
+ * When `reducedMotion: 'settle'` and the user prefers reduced motion, settle
+ * immediately to the `to` pose — no tween, no stagger delay.
+ */
+export function resolveStaggerInitialState(
+  intent: StaggerIntent,
+  opts: { prefersReducedMotion: boolean },
+): 'before' | 'after' {
+  if (opts.prefersReducedMotion && intent.policy.reducedMotion === 'settle') {
+    return 'after';
+  }
+  return 'before';
 }
 
 /** Authoring sugar namespace — data over intent, no behavior authority. */

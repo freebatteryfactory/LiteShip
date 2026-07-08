@@ -6,18 +6,29 @@
 
 # Interface: QuantizeAtRuleGroup
 
-Defined in: [vite/src/css-quantize.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L37)
+Defined in: [vite/src/css-quantize.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L38)
 
 A nested `@supports` / `@media` group inside a `@quantize` state body.
 Serialized inside the state's `@container` block as a real at-rule group.
+Nested at-rule groups are preserved (depth ≥ 2); silent drop is forbidden (#110).
 
 ## Properties
+
+### atRuleGroups?
+
+> `readonly` `optional` **atRuleGroups?**: readonly `QuantizeAtRuleGroup`[]
+
+Defined in: [vite/src/css-quantize.ts:46](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L46)
+
+Nested `@supports` / `@media` groups inside this at-rule (#110 depth ≥ 2).
+
+***
 
 ### bareProps
 
 > `readonly` **bareProps**: `Record`\<`string`, `string`\>
 
-Defined in: [vite/src/css-quantize.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L41)
+Defined in: [vite/src/css-quantize.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L42)
 
 Declarations authored directly inside the at-rule (no nested selector).
 
@@ -27,7 +38,7 @@ Declarations authored directly inside the at-rule (no nested selector).
 
 > `readonly` **prelude**: `string`
 
-Defined in: [vite/src/css-quantize.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L39)
+Defined in: [vite/src/css-quantize.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L40)
 
 The at-rule prelude exactly as authored (e.g. `@supports (display: grid)`).
 
@@ -37,6 +48,6 @@ The at-rule prelude exactly as authored (e.g. `@supports (display: grid)`).
 
 > `readonly` **rules**: readonly [`QuantizeNestedRule`](QuantizeNestedRule.md)[]
 
-Defined in: [vite/src/css-quantize.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L43)
+Defined in: [vite/src/css-quantize.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L44)
 
 Nested selector rules inside the at-rule.
