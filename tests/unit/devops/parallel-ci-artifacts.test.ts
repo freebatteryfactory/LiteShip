@@ -38,6 +38,14 @@ describe('parallel setup artifact ships dist + capsule manifest', () => {
     expect(ci).toMatch(/name: coverage-browser-parallel[\s\S]*?path: coverage\/browser/);
   });
 
+  it('bench lane installs wasm32 rust toolchain before build:wasm', () => {
+    const benchBlock = ci.slice(ci.indexOf('truth-linux-parallel-bench:'), ci.indexOf('truth-linux-parallel-mutating:'));
+    expect(benchBlock).toContain('dtolnay/rust-toolchain@');
+    expect(benchBlock).toMatch(/toolchain:\s*stable/);
+    expect(benchBlock).toContain('targets: wasm32-unknown-unknown');
+    expect(benchBlock).toContain('pnpm run build:wasm');
+  });
+
   it('bench lane uploads benchmarks for ci-parallel-final', () => {
     expect(ci).toContain('name: benchmarks-parallel');
     expect(ci).toMatch(/name: benchmarks-parallel[\s\S]*?path: benchmarks/);
