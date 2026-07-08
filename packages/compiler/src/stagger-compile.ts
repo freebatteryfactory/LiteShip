@@ -102,8 +102,9 @@ export function compileStagger(
     // The @media guard rides EVERY settle-policy compile — the server-side
     // `prefersReducedMotion` hint only additionally zeroes durations. A user
     // whose request lacked the client hint still gets the OS preference honored.
-    const gatedCss =
-      lowered.intent.policy.reducedMotion === 'settle' ? Object.freeze(appendReducedMotionGuard(css, plan)) : css;
+    const gatedCss = Object.freeze(
+      lowered.intent.policy.reducedMotion === 'settle' ? appendReducedMotionGuard(css, plan) : css,
+    );
 
     const resultDigest = AddressedDigest.of(new TextEncoder().encode(gatedCss.raw));
     const sealed = sealProjectionDigest(graph, item.transitionId, resultDigest);

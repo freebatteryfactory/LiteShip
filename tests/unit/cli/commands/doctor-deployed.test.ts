@@ -69,4 +69,24 @@ describe('doctor --deployed (#116)', () => {
     expect(checks[0]?.status).toBe('fail');
     expect(checks[0]?.detail).toMatch(/SSRF guard/i);
   });
+
+  test('red-team: v4-mapped IPv6 hex loopback is refused before fetch', async () => {
+    const fetchSpy = vi.fn();
+    vi.stubGlobal('fetch', fetchSpy);
+
+    const checks = await probeDeployedSite('https://[::ffff:7f00:1]/');
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(checks[0]?.status).toBe('fail');
+    expect(checks[0]?.detail).toMatch(/SSRF guard/i);
+  });
+
+  test('red-team: v4-mapped IPv6 hex cloud metadata (169.254.169.254) is refused before fetch', async () => {
+    const fetchSpy = vi.fn();
+    vi.stubGlobal('fetch', fetchSpy);
+
+    const checks = await probeDeployedSite('https://[::ffff:a9fe:a9fe]/');
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(checks[0]?.status).toBe('fail');
+    expect(checks[0]?.detail).toMatch(/SSRF guard/i);
+  });
 });

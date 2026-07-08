@@ -14,6 +14,7 @@ import {
   replayDiscreteFromPatchReceipts,
   runGraphNativeGapReplay,
 } from '../../../packages/core/src/index.js';
+import type { PatchReceiptEntry } from '../../../packages/core/src/graph-query-gap-replay.js';
 import { nodeFromParts } from '../../../packages/core/src/index.js';
 import { graph, node } from '../../helpers/graph-fixtures.js';
 
@@ -85,6 +86,34 @@ describe('graph-query gap replay (#133-full)', () => {
 
     const chain = chainPatchesBetween(base.id, unrelated.id, [{ receipt: forkReceipt, patch: forkPatch }]);
     expect(chain).toEqual([]);
+  });
+
+  test('layered fork DAG with no reaching branch completes in bounded time (cannot-reach memo)', () => {
+    const mkEntry = (base: string, result: string): PatchReceiptEntry => ({
+      receipt: { kind: 'graph-patch' } as PatchReceiptEntry['receipt'],
+      patch: { _tag: 'GraphPatch', _version: 1, base, ops: [], resultId: result } as GraphPatch,
+    });
+
+    const entries: PatchReceiptEntry[] = [];
+    const layers = 12;
+    let frontier = ['czap:base'];
+    for (let depth = 0; depth < layers; depth++) {
+      const next: string[] = [];
+      for (const base of frontier) {
+        const left = `czap:L${depth}-${base}-0`;
+        const right = `czap:L${depth}-${base}-1`;
+        entries.push(mkEntry(base, left), mkEntry(base, right));
+        next.push(left, right);
+      }
+      frontier = next;
+    }
+
+    const start = performance.now();
+    const chain = chainPatchesBetween('czap:base' as never, 'czap:unreachable-server' as never, entries);
+    const elapsed = performance.now() - start;
+
+    expect(chain).toEqual([]);
+    expect(elapsed).toBeLessThan(50);
   });
 
   test('signal UPDATE ops replay as discrete crossings (diff collapses remove+add)', () => {

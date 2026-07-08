@@ -24,6 +24,34 @@ const FETCH_TIMEOUT_MS = 10_000;
 
 const IPV4_RE = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
 
+/** True when dotted-quad `a.b.c.d` is loopback / private / link-local / CGNAT. */
+function isBlockedIpv4(a: number, b: number, _c: number, _d: number): boolean {
+  if (a === 0 || a === 10 || a === 127) return true;
+  if (a === 169 && b === 254) return true;
+  if (a === 172 && b >= 16 && b <= 31) return true;
+  if (a === 192 && b === 168) return true;
+  if (a === 100 && b >= 64 && b <= 127) return true;
+  return false;
+}
+
+/** Extract an embedded IPv4 from a v4-mapped tail (dotted OR hex — URL normalizes to hex). */
+function ipv4FromV4MappedTail(tail: string): string | null {
+  const dotted = IPV4_RE.exec(tail);
+  if (dotted) {
+    return tail;
+  }
+  const parts = tail.split(':').filter(Boolean);
+  if (parts.length !== 2) {
+    return null;
+  }
+  const high = Number.parseInt(parts[0]!, 16);
+  const low = Number.parseInt(parts[1]!, 16);
+  if (!Number.isFinite(high) || !Number.isFinite(low) || high < 0 || low < 0 || high > 0xffff || low > 0xffff) {
+    return null;
+  }
+  return `${(high >> 8) & 0xff}.${high & 0xff}.${(low >> 8) & 0xff}.${low & 0xff}`;
+}
+
 /** True when `hostname` is a loopback / private / link-local / special-use host. */
 function isBlockedHostname(hostname: string): boolean {
   const host = hostname.toLowerCase().replace(/^\[|\]$/g, '');
@@ -33,21 +61,24 @@ function isBlockedHostname(hostname: string): boolean {
 
   const v4 = IPV4_RE.exec(host);
   if (v4) {
-    const a = Number(v4[1]);
-    const b = Number(v4[2]);
-    if (a === 0 || a === 10 || a === 127) return true; // this-net, private, loopback
-    if (a === 169 && b === 254) return true; // link-local / cloud metadata
-    if (a === 172 && b >= 16 && b <= 31) return true; // private
-    if (a === 192 && b === 168) return true; // private
-    if (a === 100 && b >= 64 && b <= 127) return true; // CGNAT
-    return false;
+    return isBlockedIpv4(Number(v4[1]), Number(v4[2]), Number(v4[3]), Number(v4[4]));
   }
 
   if (host.includes(':')) {
-    if (host === '::' || host === '::1') return true; // unspecified, loopback
-    if (host.startsWith('fc') || host.startsWith('fd')) return true; // ULA fc00::/7
-    if (/^fe[89ab]/.test(host)) return true; // link-local fe80::/10
-    if (host.startsWith('::ffff:')) return isBlockedHostname(host.slice('::ffff:'.length)); // v4-mapped
+    if (host === '::' || host === '::1') return true;
+    if (host.startsWith('fc') || host.startsWith('fd')) return true;
+    if (/^fe[89ab]/.test(host)) return true;
+    if (host.startsWith('::ffff:')) {
+      const embedded = ipv4FromV4MappedTail(host.slice('::ffff:'.length));
+      if (embedded !== null) {
+        const octets = IPV4_RE.exec(embedded);
+        if (octets) {
+          return isBlockedIpv4(Number(octets[1]), Number(octets[2]), Number(octets[3]), Number(octets[4]));
+        }
+      }
+      // Unparseable or any v4-mapped form — never a canonical public probe target.
+      return true;
+    }
   }
 
   return false;

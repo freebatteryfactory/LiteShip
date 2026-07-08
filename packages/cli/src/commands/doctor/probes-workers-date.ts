@@ -34,16 +34,25 @@ function walkSourceFiles(dir: string, root: string, out: string[]): void {
   }
 }
 
+function stripForDateScan(source: string): string {
+  return source
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/\/\/.*$/gm, '')
+    .replace(/'(?:\\.|[^'\\])*'/g, '""')
+    .replace(/"(?:\\.|[^"\\])*"/g, '""')
+    .replace(/`(?:\\.|[^`\\])*`/g, '""');
+}
+
 function hasModuleScopeDate(source: string): boolean {
-  const stripped = source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
-  // `export const foo = Date.now()` is module-scope ambient — the old
-  // split-before-export heuristic missed it when export was the first statement.
-  if (/\bexport\s+(?:const|let|var)\s+\w+\s*=[^;{]*\bDate\.now\s*\(/.test(stripped)) return true;
-  if (/\bexport\s+(?:const|let|var)\s+\w+\s*=[^;{]*\bnew\s+Date\s*\(/.test(stripped)) return true;
+  const stripped = stripForDateScan(source);
+  // Deferred arrow initializers evaluate per call — not module-scope ambient time.
+  const withoutDeferred = stripped.replace(/\([^)]*\)\s*=>\s*[^{;]+/g, '()=>{}');
+  if (/\bexport\s+(?:const|let|var)\s+\w+\s*=[^;{]*\bDate\.now\s*\(/.test(withoutDeferred)) return true;
+  if (/\bexport\s+(?:const|let|var)\s+\w+\s*=[^;{]*\bnew\s+Date\s*\(/.test(withoutDeferred)) return true;
   const topLevel =
-    stripped.split(
+    withoutDeferred.split(
       /\n(?=\s*(?:export\s+(?:default\s+)?(?:function|class)\b|export\s+default\b|function\s|class\s))/,
-    )[0] ?? stripped;
+    )[0] ?? withoutDeferred;
   return DATE_PATTERNS.some((re) => re.test(topLevel));
 }
 

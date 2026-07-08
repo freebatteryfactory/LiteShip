@@ -121,17 +121,21 @@ export function chainPatchesBetween(
 
   const path: GraphPatch[] = [];
   const visiting = new Set<string>();
+  const cannotReach = new Set<string>();
 
   const search = (current: string): boolean => {
     if (current === serverGraphId) {
       return true;
     }
+    if (cannotReach.has(current)) {
+      return false;
+    }
     if (visiting.has(current)) {
-      // Cycle in the buffered patch graph — refuse the loop, try siblings.
       return false;
     }
     visiting.add(current);
 
+    let found = false;
     for (const entry of byBase.get(current) ?? []) {
       const resultId = entry.patch.resultId;
       if (!resultId) {
@@ -139,13 +143,17 @@ export function chainPatchesBetween(
       }
       path.push(entry.patch);
       if (search(resultId)) {
-        return true;
+        found = true;
+        break;
       }
       path.pop();
     }
 
     visiting.delete(current);
-    return false;
+    if (!found) {
+      cannotReach.add(current);
+    }
+    return found;
   };
 
   return search(localBaseId) ? path : [];

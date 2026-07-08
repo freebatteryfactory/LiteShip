@@ -40,4 +40,23 @@ export function safe(el: HTMLElement) {
       'src/unsafe.ts',
     ]);
   });
+
+  test('outer safe createHtmlFragment does not suppress inner unguarded innerHTML', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'czap-consumer-'));
+    mkdirSync(join(dir, 'src'), { recursive: true });
+    writeFileSync(
+      join(dir, 'src', 'mixed.ts'),
+      `import { createHtmlFragment } from '@czap/web';
+export function outer(el: HTMLElement) {
+  el.innerHTML = createHtmlFragment('<p/>', { policy: 'sanitized-html' });
+}
+export function inner(el: HTMLElement) {
+  el.innerHTML = userInput;
+}`,
+    );
+    const findings = scanConsumerAppSource(dir);
+    expect(findings.filter((f) => f.rule === 'consumer.unguarded-html-sink')).toEqual([
+      expect.objectContaining({ file: 'src/mixed.ts', line: 6 }),
+    ]);
+  });
 });

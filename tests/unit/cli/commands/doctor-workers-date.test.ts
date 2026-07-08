@@ -18,4 +18,26 @@ export function handler() { return startedAt; }`,
     expect(check.status).toBe('warn');
     expect(check.detail).toContain('api.worker.ts');
   });
+
+  test('does not flag Date.now inside a string literal', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'czap-workers-date-'));
+    mkdirSync(join(dir, 'src'), { recursive: true });
+    writeFileSync(
+      join(dir, 'src', 'api.worker.ts'),
+      `export const hint = "call Date.now() at runtime";
+export function handler() { return hint; }`,
+    );
+    expect(probeWorkersModuleScopeDate(dir).status).toBe('ok');
+  });
+
+  test('does not flag deferred () => Date.now() at module scope', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'czap-workers-date-'));
+    mkdirSync(join(dir, 'src'), { recursive: true });
+    writeFileSync(
+      join(dir, 'src', 'api.worker.ts'),
+      `export const clock = () => Date.now();
+export function handler() { return clock(); }`,
+    );
+    expect(probeWorkersModuleScopeDate(dir).status).toBe('ok');
+  });
 });

@@ -73,7 +73,12 @@ export async function runCloudflareProbes(cwd: string): Promise<readonly DoctorC
 /** Consumer-app profile — integration smells in the host's own source (#117). */
 export async function runConsumerAppProbes(cwd: string): Promise<readonly DoctorCheck[]> {
   const { scanConsumerAppSource } = await import('../../lib/consumer-app-audit.js');
-  const findings = scanConsumerAppSource(cwd);
+  let findings: ReturnType<typeof scanConsumerAppSource>;
+  try {
+    findings = scanConsumerAppSource(cwd);
+  } catch (error) {
+    throw new Error(error instanceof Error ? error.message : String(error));
+  }
   if (findings.length === 0) {
     return [
       {

@@ -101,6 +101,7 @@ describe('ScrollTimeline graph → CSS', () => {
     const lowered = lowerScrollTimelineIntent(intent);
     const compiled = compileScrollTimeline(lowered.graph, lowered.transitionId, intent);
     expect(compiled.css.scrollTimeline).toContain('animation-timeline: scroll(nearest inline)');
+    expect(Object.isFrozen(compiled.css)).toBe(true);
   });
 });
 
