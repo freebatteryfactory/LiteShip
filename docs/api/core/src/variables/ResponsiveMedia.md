@@ -8,7 +8,7 @@
 
 > `const` **ResponsiveMedia**: `object`
 
-Defined in: [core/src/responsive-media.ts:219](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/responsive-media.ts#L219)
+Defined in: [core/src/responsive-media.ts:228](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/responsive-media.ts#L228)
 
 Authoring sugar namespace — data over intent, no behavior authority.
 

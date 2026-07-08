@@ -40,7 +40,7 @@ export interface ResponsiveMediaIntent extends ResponsiveMediaIntentInput {
 }
 
 /** Why a particular variant was chosen. */
-export type ResponsiveMediaResolutionReason = 'save-data' | 'dpr-match' | 'dpr-floor' | 'fallback';
+export type ResponsiveMediaResolutionReason = 'save-data' | 'save-data-floor' | 'dpr-match' | 'dpr-floor' | 'fallback';
 
 /** Resolved single source for SSR or runtime `<img src>`. */
 export interface ResolvedResponsiveMedia {
@@ -133,7 +133,10 @@ export function buildResponsiveImageSet(variants: readonly ResponsiveMediaVarian
 /**
  * Resolve the single best `src` for SSR / fallback `<img>` given capabilities.
  *
- * Save-Data wins over DPR. Otherwise pick the variant whose DPR is closest
+ * Save-Data wins over DPR: the authored `saveDataVariant` when present, else
+ * the LIGHTEST available variant (`save-data-floor`) — a Save-Data user must
+ * never be served the heavy DPR-matched asset just because the author skipped
+ * the explicit light variant. Otherwise pick the variant whose DPR is closest
  * without going under the device ratio (floor), else the largest available.
  */
 export function resolveResponsiveMedia(
@@ -154,6 +157,12 @@ export function resolveResponsiveMedia(
   const scored = intent.variants
     .map((variant) => ({ variant, dpr: variantDpr(variant, baseWidth) ?? 1 }))
     .sort((a, b) => a.dpr - b.dpr);
+
+  if (caps.saveData) {
+    // No authored light variant — honor Save-Data with the smallest candidate
+    // rather than silently falling through to the heavy DPR match.
+    return Object.freeze({ src: scored[0]!.variant.src, reason: 'save-data-floor' });
+  }
 
   const atOrAbove = scored.filter((entry) => entry.dpr >= dpr);
   if (atOrAbove.length > 0) {

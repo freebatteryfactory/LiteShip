@@ -6,7 +6,7 @@
 
 # Type Alias: ResponsiveMediaResolutionReason
 
-> **ResponsiveMediaResolutionReason** = `"save-data"` \| `"dpr-match"` \| `"dpr-floor"` \| `"fallback"`
+> **ResponsiveMediaResolutionReason** = `"save-data"` \| `"save-data-floor"` \| `"dpr-match"` \| `"dpr-floor"` \| `"fallback"`
 
 Defined in: [core/src/responsive-media.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/responsive-media.ts#L43)
 
