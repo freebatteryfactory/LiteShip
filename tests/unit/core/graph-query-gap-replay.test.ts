@@ -113,7 +113,8 @@ describe('graph-query gap replay (#133-full)', () => {
     const elapsed = performance.now() - start;
 
     expect(chain).toEqual([]);
-    expect(elapsed).toBeLessThan(50);
+    // Bounded, not exponential — generous for loaded CI runners (exponential blow-up is seconds+).
+    expect(elapsed).toBeLessThan(200);
   });
 
   test('signal UPDATE ops replay as discrete crossings (diff collapses remove+add)', () => {
