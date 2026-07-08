@@ -128,6 +128,7 @@ describe('Stagger graph → CSS', () => {
     });
     const compiled = compileStagger(lowerStaggerIntent(intent));
     expect(compiled.raw).not.toContain('prefers-reduced-motion');
+    expect(Object.isFrozen(compiled.items[0]!.css)).toBe(true);
   });
 });
 

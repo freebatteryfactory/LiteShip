@@ -34,17 +34,30 @@ function extractRules(css: string): Array<{ selector: string; properties: Set<st
   return rules;
 }
 
+function selectorTokens(selector: string): readonly string[] {
+  const tokens: string[] = [];
+  for (const match of selector.matchAll(/\.([a-zA-Z_-][a-zA-Z0-9_-]*)/g)) {
+    tokens.push(`.${match[1]}`);
+  }
+  for (const match of selector.matchAll(/#([a-zA-Z_-][a-zA-Z0-9_-]*)/g)) {
+    tokens.push(`#${match[1]}`);
+  }
+  const typeMatch = /(?:^|[\s>+~|])([a-zA-Z][a-zA-Z0-9_-]*)/.exec(selector);
+  if (typeMatch?.[1]) {
+    tokens.push(typeMatch[1]!);
+  }
+  return tokens;
+}
+
 function selectorsOverlap(a: string, b: string): boolean {
   const na = a.replace(/\s+/g, ' ').trim();
   const nb = b.replace(/\s+/g, ' ').trim();
   if (na === nb) return true;
-  // Component-exact match only — naive substring inclusion false-positives on
-  // `.hero` vs `.hero-title` or `.card` vs `.card-header`.
-  const componentsA = na.split(/\s+/);
-  const componentsB = nb.split(/\s+/);
-  for (const ca of componentsA) {
-    for (const cb of componentsB) {
-      if (ca === cb) return true;
+  const tokensA = selectorTokens(na);
+  const tokensB = selectorTokens(nb);
+  for (const ta of tokensA) {
+    for (const tb of tokensB) {
+      if (ta === tb) return true;
     }
   }
   return false;

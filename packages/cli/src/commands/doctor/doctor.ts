@@ -14,7 +14,7 @@
 
 import { wallClock } from '@czap/core';
 import { color, colorEnabled } from '../../lib/ansi.js';
-import { emit } from '../../receipts.js';
+import { emit, emitError } from '../../receipts.js';
 import { findWorkspaceRoot } from './manifest.js';
 import { applyFixes } from './fix.js';
 import { runAllProbes } from './profiles.js';
@@ -49,7 +49,13 @@ export async function doctor(
   // Default behavior anchors probes to the workspace root so `czap doctor`
   // works correctly from any monorepo subdir, not just the repo root.
   const cwd = opts.cwd ?? findWorkspaceRoot(process.cwd());
-  let checks = await runAllProbes(cwd, { target: opts.target });
+  let checks;
+  try {
+    checks = await runAllProbes(cwd, { target: opts.target });
+  } catch (error) {
+    emitError('doctor', error instanceof Error ? error.message : String(error));
+    return 1;
+  }
 
   if (opts.deployed) {
     const { probeDeployedSite } = await import('./probes-deployed.js');
