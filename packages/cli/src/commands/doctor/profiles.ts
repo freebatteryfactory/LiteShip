@@ -73,12 +73,9 @@ export async function runCloudflareProbes(cwd: string): Promise<readonly DoctorC
 /** Consumer-app profile — integration smells in the host's own source (#117). */
 export async function runConsumerAppProbes(cwd: string): Promise<readonly DoctorCheck[]> {
   const { scanConsumerAppSource } = await import('../../lib/consumer-app-audit.js');
-  let findings: ReturnType<typeof scanConsumerAppSource>;
-  try {
-    findings = scanConsumerAppSource(cwd);
-  } catch (error) {
-    throw new Error(error instanceof Error ? error.message : String(error));
-  }
+  // Let tagged / native fs errors propagate to doctor()'s emitError envelope —
+  // do not catch-and-rethrow as bare Error (gauntlet/no-bare-throw).
+  const findings = scanConsumerAppSource(cwd);
   if (findings.length === 0) {
     return [
       {

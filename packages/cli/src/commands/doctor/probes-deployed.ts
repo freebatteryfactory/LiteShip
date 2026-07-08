@@ -34,8 +34,8 @@ function isBlockedIpv4(a: number, b: number, _c: number, _d: number): boolean {
   return false;
 }
 
-/** Extract an embedded IPv4 from a v4-mapped tail (dotted OR hex — URL normalizes to hex). */
-function ipv4FromV4MappedTail(tail: string): string | null {
+/** Extract an embedded IPv4 from a hex/dotted two-hextet tail (`a9fe:a9fe` / `127.0.0.1`). */
+function ipv4FromEmbeddedTail(tail: string): string | null {
   const dotted = IPV4_RE.exec(tail);
   if (dotted) {
     return tail;
@@ -50,6 +50,35 @@ function ipv4FromV4MappedTail(tail: string): string | null {
     return null;
   }
   return `${(high >> 8) & 0xff}.${high & 0xff}.${(low >> 8) & 0xff}.${low & 0xff}`;
+}
+
+/** True when a blocked IPv4 is embedded in a v4-mapped or IPv4-compatible IPv6 host. */
+function isBlockedEmbeddedIpv4(host: string): boolean {
+  if (host.startsWith('::ffff:')) {
+    const embedded = ipv4FromEmbeddedTail(host.slice('::ffff:'.length));
+    if (embedded !== null) {
+      const octets = IPV4_RE.exec(embedded);
+      if (octets) {
+        return isBlockedIpv4(Number(octets[1]), Number(octets[2]), Number(octets[3]), Number(octets[4]));
+      }
+    }
+    // Unparseable v4-mapped — never a canonical public probe target.
+    return true;
+  }
+
+  // Deprecated IPv4-compatible form (`::7f00:1`, `::a9fe:a9fe`) — URL normalizes
+  // `::127.0.0.1` to this shape. Fail-closed when the embedded v4 is blocked.
+  if (host.startsWith('::') && host !== '::' && host !== '::1' && !host.startsWith('::ffff:')) {
+    const embedded = ipv4FromEmbeddedTail(host.slice(2));
+    if (embedded !== null) {
+      const octets = IPV4_RE.exec(embedded);
+      if (octets) {
+        return isBlockedIpv4(Number(octets[1]), Number(octets[2]), Number(octets[3]), Number(octets[4]));
+      }
+    }
+  }
+
+  return false;
 }
 
 /** True when `hostname` is a loopback / private / link-local / special-use host. */
@@ -68,17 +97,7 @@ function isBlockedHostname(hostname: string): boolean {
     if (host === '::' || host === '::1') return true;
     if (host.startsWith('fc') || host.startsWith('fd')) return true;
     if (/^fe[89ab]/.test(host)) return true;
-    if (host.startsWith('::ffff:')) {
-      const embedded = ipv4FromV4MappedTail(host.slice('::ffff:'.length));
-      if (embedded !== null) {
-        const octets = IPV4_RE.exec(embedded);
-        if (octets) {
-          return isBlockedIpv4(Number(octets[1]), Number(octets[2]), Number(octets[3]), Number(octets[4]));
-        }
-      }
-      // Unparseable or any v4-mapped form — never a canonical public probe target.
-      return true;
-    }
+    if (isBlockedEmbeddedIpv4(host)) return true;
   }
 
   return false;

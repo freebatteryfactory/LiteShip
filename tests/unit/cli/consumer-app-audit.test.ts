@@ -59,4 +59,28 @@ export function inner(el: HTMLElement) {
       expect.objectContaining({ file: 'src/mixed.ts', line: 6 }),
     ]);
   });
+
+  test('multiline guarded assignment is not false-positived', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'czap-consumer-'));
+    mkdirSync(join(dir, 'src'), { recursive: true });
+    writeFileSync(
+      join(dir, 'src', 'multiline-safe.ts'),
+      `import { createHtmlFragment } from '@czap/web';
+export function safe(el: HTMLElement, x: string) {
+  el.innerHTML =
+    createHtmlFragment(x);
+}`,
+    );
+    writeFileSync(
+      join(dir, 'src', 'multiline-unsafe.ts'),
+      `export function unsafe(el: HTMLElement, userInput: string) {
+  el.innerHTML =
+    userInput;
+}`,
+    );
+    const findings = scanConsumerAppSource(dir);
+    expect(findings.filter((f) => f.rule === 'consumer.unguarded-html-sink').map((f) => f.file)).toEqual([
+      'src/multiline-unsafe.ts',
+    ]);
+  });
 });

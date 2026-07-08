@@ -40,4 +40,27 @@ export function handler() { return clock(); }`,
     );
     expect(probeWorkersModuleScopeDate(dir).status).toBe('ok');
   });
+
+  test('flags object-literal and post-boundary export const Date.now()', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'czap-workers-date-'));
+    mkdirSync(join(dir, 'src'), { recursive: true });
+    writeFileSync(
+      join(dir, 'src', 'api.worker.ts'),
+      `export function handler() { return 1; }
+export const cfg = { t: Date.now() };`,
+    );
+    expect(probeWorkersModuleScopeDate(dir).status).toBe('warn');
+  });
+
+  test('does not flag Date.now inside export default method body', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'czap-workers-date-'));
+    mkdirSync(join(dir, 'src'), { recursive: true });
+    writeFileSync(
+      join(dir, 'src', 'api.worker.ts'),
+      `export default {
+  async fetch() { return Date.now(); }
+};`,
+    );
+    expect(probeWorkersModuleScopeDate(dir).status).toBe('ok');
+  });
 });

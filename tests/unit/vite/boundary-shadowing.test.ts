@@ -33,4 +33,14 @@ describe('boundary-shadowing diagnostic (#114)', () => {
     const warnings = diagnoseBoundaryShadowing('.hero { color: red; }', '.heroic { color: blue; }', 'app.css');
     expect(warnings).toEqual([]);
   });
+
+  test('type-token is NOT enough for compound selectors — div.hero vs div.card stays quiet', () => {
+    expect(diagnoseBoundaryShadowing('div.hero { color: red; }', 'div.card { color: blue; }', 'app.css')).toEqual([]);
+    expect(diagnoseBoundaryShadowing('span.badge { color: red; }', 'span.tag { color: blue; }', 'app.css')).toEqual([]);
+  });
+
+  test('bare-type selectors still overlap on the shared type token', () => {
+    const warnings = diagnoseBoundaryShadowing('div { color: red; }', 'div { color: blue; }', 'app.css');
+    expect(warnings.length).toBeGreaterThan(0);
+  });
 });

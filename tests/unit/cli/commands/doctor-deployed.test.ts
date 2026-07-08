@@ -89,4 +89,39 @@ describe('doctor --deployed (#116)', () => {
     expect(checks[0]?.status).toBe('fail');
     expect(checks[0]?.detail).toMatch(/SSRF guard/i);
   });
+
+  test('red-team: IPv4-compatible ::7f00:1 / ::a9fe:a9fe refuse before fetch', async () => {
+    const fetchSpy = vi.fn();
+    vi.stubGlobal('fetch', fetchSpy);
+
+    for (const blocked of ['https://[::7f00:1]/', 'https://[::a9fe:a9fe]/', 'https://[::127.0.0.1]/']) {
+      const checks = await probeDeployedSite(blocked);
+      expect(fetchSpy).not.toHaveBeenCalled();
+      expect(checks[0]?.status).toBe('fail');
+      expect(checks[0]?.detail).toMatch(/SSRF guard/i);
+    }
+  });
+
+  test('red-team: numeric/hex/octal IPv4 forms normalize then refuse (no live bypass)', async () => {
+    const fetchSpy = vi.fn();
+    vi.stubGlobal('fetch', fetchSpy);
+
+    for (const blocked of ['https://2130706433/', 'https://0x7f000001/', 'https://0177.0.0.1/']) {
+      const checks = await probeDeployedSite(blocked);
+      expect(fetchSpy).not.toHaveBeenCalled();
+      expect(checks[0]?.status).toBe('fail');
+      expect(checks[0]?.detail).toMatch(/SSRF guard/i);
+    }
+  });
+
+  test('public v4-mapped Google DNS (::ffff:8.8.8.8) is allowed through the host filter', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('ok', { status: 200, headers: { 'accept-ch': 'Sec-CH-Viewport-Width' } })),
+    );
+
+    const checks = await probeDeployedSite('https://[::ffff:808:808]/');
+    expect(checks[0]?.status).not.toBe('fail');
+    expect(checks[0]?.detail).not.toMatch(/SSRF guard/i);
+  });
 });

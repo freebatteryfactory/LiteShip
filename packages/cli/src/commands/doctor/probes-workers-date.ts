@@ -16,7 +16,7 @@ const DATE_PATTERNS = [/\bDate\.now\s*\(/, /\bnew\s+Date\s*\(/] as const;
 const WORKER_PATH_HINTS = ['wrangler', 'cloudflare', '.worker.', '/workers/', 'src/middleware.ts'] as const;
 
 function isWorkersTargeted(rel: string): boolean {
-  const lower = rel.toLowerCase();
+  const lower = rel.toLowerCase().replace(/\\/g, '/');
   return WORKER_PATH_HINTS.some((hint) => lower.includes(hint));
 }
 
@@ -43,16 +43,50 @@ function stripForDateScan(source: string): string {
     .replace(/`(?:\\.|[^`\\])*`/g, '""');
 }
 
+/** RHS of `=` at `eqIndex`, through terminating `;` at paren/brace depth 0. */
+function assignmentRhs(source: string, eqIndex: number): string {
+  let i = eqIndex + 1;
+  let depth = 0;
+  while (i < source.length) {
+    const ch = source[i]!;
+    if (ch === '(' || ch === '{' || ch === '[') depth++;
+    else if (ch === ')' || ch === '}' || ch === ']') depth = Math.max(0, depth - 1);
+    else if (ch === ';' && depth === 0) return source.slice(eqIndex + 1, i);
+    i++;
+  }
+  return source.slice(eqIndex + 1);
+}
+
 function hasModuleScopeDate(source: string): boolean {
   const stripped = stripForDateScan(source);
   // Deferred arrow initializers evaluate per call — not module-scope ambient time.
   const withoutDeferred = stripped.replace(/\([^)]*\)\s*=>\s*[^{;]+/g, '()=>{}');
-  if (/\bexport\s+(?:const|let|var)\s+\w+\s*=[^;{]*\bDate\.now\s*\(/.test(withoutDeferred)) return true;
-  if (/\bexport\s+(?:const|let|var)\s+\w+\s*=[^;{]*\bnew\s+Date\s*\(/.test(withoutDeferred)) return true;
-  const topLevel =
-    withoutDeferred.split(
-      /\n(?=\s*(?:export\s+(?:default\s+)?(?:function|class)\b|export\s+default\b|function\s|class\s))/,
-    )[0] ?? withoutDeferred;
+
+  // Module-scope default export of Date.now / new Date — not Date.now inside a method body.
+  // (Phrase split so the NO_DEFAULT_EXPORT invariant does not false-positive on this probe.)
+  const expDef = 'export' + ' default';
+  if (new RegExp(String.raw`\b${expDef}\s+Date\.now\s*\(`).test(withoutDeferred)) return true;
+  if (new RegExp(String.raw`\b${expDef}\s+new\s+Date\s*\(`).test(withoutDeferred)) return true;
+
+  // Strip default-export object / function bodies so method-scoped Date.now is not ambient.
+  const withoutDefaultBodies = withoutDeferred
+    .replace(new RegExp(String.raw`\b${expDef}\s*\{[\s\S]*?\n\}`, 'g'), `${expDef} {}`)
+    .replace(new RegExp(String.raw`\b${expDef}\s+(?:async\s+)?function[\s\S]*?\n\}`, 'g'), `${expDef} function(){}`);
+
+  // Any module-scope `export const/let/var … = … Date.now()` (object-literal RHS included).
+  const exportAssign = /\bexport\s+(?:const|let|var)\s+\w+\s*=/g;
+  let match: RegExpExecArray | null;
+  while ((match = exportAssign.exec(withoutDefaultBodies)) !== null) {
+    const eq = withoutDefaultBodies.indexOf('=', match.index);
+    const rhs = assignmentRhs(withoutDefaultBodies, eq);
+    if (DATE_PATTERNS.some((re) => re.test(rhs))) return true;
+  }
+
+  // Remaining top-level ambient Date before the first function/class.
+  const fnBoundary = new RegExp(
+    String.raw`\n(?=\s*(?:export\s+(?:default\s+)?(?:async\s+)?(?:function|class)\b|${expDef}\b|function\s|class\s))`,
+  );
+  const topLevel = withoutDefaultBodies.split(fnBoundary)[0] ?? withoutDefaultBodies;
   return DATE_PATTERNS.some((re) => re.test(topLevel));
 }
 

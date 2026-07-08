@@ -34,7 +34,7 @@ function extractRules(css: string): Array<{ selector: string; properties: Set<st
   return rules;
 }
 
-function selectorTokens(selector: string): readonly string[] {
+function classIdTokens(selector: string): readonly string[] {
   const tokens: string[] = [];
   for (const match of selector.matchAll(/\.([a-zA-Z_-][a-zA-Z0-9_-]*)/g)) {
     tokens.push(`.${match[1]}`);
@@ -42,24 +42,37 @@ function selectorTokens(selector: string): readonly string[] {
   for (const match of selector.matchAll(/#([a-zA-Z_-][a-zA-Z0-9_-]*)/g)) {
     tokens.push(`#${match[1]}`);
   }
-  const typeMatch = /(?:^|[\s>+~|])([a-zA-Z][a-zA-Z0-9_-]*)/.exec(selector);
-  if (typeMatch?.[1]) {
-    tokens.push(typeMatch[1]!);
-  }
   return tokens;
+}
+
+function typeToken(selector: string): string | undefined {
+  const typeMatch = /(?:^|[\s>+~|])([a-zA-Z][a-zA-Z0-9_-]*)/.exec(selector);
+  return typeMatch?.[1];
 }
 
 function selectorsOverlap(a: string, b: string): boolean {
   const na = a.replace(/\s+/g, ' ').trim();
   const nb = b.replace(/\s+/g, ' ').trim();
   if (na === nb) return true;
-  const tokensA = selectorTokens(na);
-  const tokensB = selectorTokens(nb);
-  for (const ta of tokensA) {
-    for (const tb of tokensB) {
+
+  // Class/id tokens catch compound selectors (.hero:hover, div.hero) without
+  // false-positiving on substring names (.hero vs .hero-title).
+  const classIdsA = classIdTokens(na);
+  const classIdsB = classIdTokens(nb);
+  for (const ta of classIdsA) {
+    for (const tb of classIdsB) {
       if (ta === tb) return true;
     }
   }
+
+  // Type tokens are a tiebreaker ONLY when both selectors are bare-type
+  // (no class/id) — otherwise `div.hero` vs `div.card` would false-positive.
+  if (classIdsA.length === 0 && classIdsB.length === 0) {
+    const typeA = typeToken(na);
+    const typeB = typeToken(nb);
+    if (typeA !== undefined && typeA === typeB) return true;
+  }
+
   return false;
 }
 

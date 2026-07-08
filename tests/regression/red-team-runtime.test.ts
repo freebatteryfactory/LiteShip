@@ -307,7 +307,7 @@ describe('red-team runtime regressions', () => {
     }
   });
 
-  test('scheme ALLOWLIST — relative, http(s), mailto, tel, and data:image survive', () => {
+  test('scheme ALLOWLIST — relative, http(s), mailto, tel, and raster data:image survive', () => {
     const sanitized = resolveHtmlString(
       '<a href="/rel">a</a>' +
         '<a href="https://example.com/x">b</a>' +
@@ -320,6 +320,18 @@ describe('red-team runtime regressions', () => {
     container.innerHTML = sanitized;
     expect(container.querySelectorAll('a[href]')).toHaveLength(4);
     expect(container.querySelector('img')?.getAttribute('src')).toContain('data:image/png');
+  });
+
+  test('scheme ALLOWLIST — data:image/svg+xml is stripped on URL sinks (scriptable SVG)', () => {
+    const sanitized = resolveHtmlString(
+      '<a href="data:image/svg+xml,<svg onload=alert(1)></svg>">x</a>' +
+        '<img src="data:image/svg+xml;base64,PHN2Zz4=">',
+      { policy: 'sanitized-html' },
+    );
+    const container = document.createElement('div');
+    container.innerHTML = sanitized;
+    expect(container.querySelector('a')?.getAttribute('href')).toBeNull();
+    expect(container.querySelector('img')?.getAttribute('src')).toBeNull();
   });
 
   test('strips scheme obfuscated with LEADING C0 controls (WHATWG parser strips them too)', () => {

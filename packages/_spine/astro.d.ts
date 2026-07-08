@@ -74,8 +74,8 @@ export interface CzapMiddlewareConfig {
 export interface CzapLocals {
   readonly tiers: Readonly<{
     readonly tier: import('./core.d.ts').CapTier;
-    readonly motion: import('./tiers.js').MotionTier;
-    readonly design: import('./tiers.js').DesignTier;
+    readonly motion: import('./core.d.ts').MotionTier;
+    readonly design: import('./detect.d.ts').DesignTier;
   }>;
   readonly capabilities: unknown;
   readonly edge?: {
