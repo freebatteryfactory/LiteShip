@@ -20,10 +20,17 @@ export const sharedArrayBufferAbsent = typeof SharedArrayBuffer === 'undefined';
 /** `offscreen-canvas-absent` — `OffscreenCanvas` is unavailable in the browser harness. */
 export const offscreenCanvasAbsent = typeof OffscreenCanvas === 'undefined';
 
+/** WebKit/Safari exposes WebCodecs types but H.264 encode crashes the vitest browser harness. */
+function isWebKitBrowser(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent;
+  return /AppleWebKit/i.test(ua) && !/Chrom(e|ium)/i.test(ua);
+}
+
 /** `webcodecs-absent` — WebCodecs `VideoEncoder` / `VideoFrame` are unavailable in the browser harness. */
 export const webCodecsAvailable =
   typeof globalThis.VideoEncoder !== 'undefined' && typeof globalThis.VideoFrame !== 'undefined';
-export const webcodecsAbsent = !webCodecsAvailable;
+export const webcodecsAbsent = !webCodecsAvailable || isWebKitBrowser();
 
 /** `gpu-absent` — a real WebGPU adapter is unavailable (`navigator.gpu` absent). */
 export const gpuAbsent = !(globalThis.navigator as Navigator & { gpu?: unknown })?.gpu;

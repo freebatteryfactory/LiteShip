@@ -400,7 +400,7 @@ export const SANCTIONED_SKIPS: readonly SanctionedSkip[] = [
     file: 'tests/browser/webcodecs-capture.test.ts',
     site: "describe.skipIf(webcodecsAbsent)('WebCodecsCapture — browser lane', () => {",
     capability: 'webcodecs-absent',
-    why: 'WebCodecs VideoEncoder/VideoFrame lane runs only when the browser harness exposes WebCodecs.',
+    why: 'WebCodecs VideoEncoder/VideoFrame lane runs only when the browser harness exposes reliable WebCodecs encode (WebKit is excluded — types exist but crash the harness).',
   },
   {
     file: 'tests/unit/astro/wgpu-runtime.test.ts',
