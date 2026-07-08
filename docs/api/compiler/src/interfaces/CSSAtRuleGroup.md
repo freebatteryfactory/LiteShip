@@ -6,17 +6,28 @@
 
 # Interface: CSSAtRuleGroup
 
-Defined in: [compiler/src/css.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/css.ts#L34)
+Defined in: [compiler/src/css.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/css.ts#L35)
 
 A nested `@supports` / `@media` group inside a state's container block.
+Nested groups are preserved recursively (#110 — never silent-drop depth ≥ 2).
 
 ## Properties
+
+### atRuleGroups?
+
+> `readonly` `optional` **atRuleGroups?**: readonly `CSSAtRuleGroup`[]
+
+Defined in: [compiler/src/css.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/css.ts#L43)
+
+Nested conditional at-rule groups.
+
+***
 
 ### bareProps?
 
 > `readonly` `optional` **bareProps?**: `Record`\<`string`, `string`\>
 
-Defined in: [compiler/src/css.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/css.ts#L38)
+Defined in: [compiler/src/css.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/css.ts#L39)
 
 Declarations authored directly inside the at-rule.
 
@@ -26,7 +37,7 @@ Declarations authored directly inside the at-rule.
 
 > `readonly` **prelude**: `string`
 
-Defined in: [compiler/src/css.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/css.ts#L36)
+Defined in: [compiler/src/css.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/css.ts#L37)
 
 The at-rule prelude exactly as authored.
 
@@ -36,6 +47,6 @@ The at-rule prelude exactly as authored.
 
 > `readonly` `optional` **rules?**: readonly [`CSSRule`](CSSRule.md)[]
 
-Defined in: [compiler/src/css.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/css.ts#L40)
+Defined in: [compiler/src/css.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/css.ts#L41)
 
 Nested selector rules inside the at-rule.

@@ -8,7 +8,7 @@
 
 > `const` **ClientHints**: `object`
 
-Defined in: [edge/src/client-hints.ts:344](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/client-hints.ts#L344)
+Defined in: [edge/src/client-hints.ts:371](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/client-hints.ts#L371)
 
 Client Hints namespace.
 
@@ -114,6 +114,39 @@ console.log(caps.memory);             // 8
 console.log(caps.devicePixelRatio);    // 2
 console.log(caps.prefersColorScheme);  // 'dark'
 ```
+
+### responsiveMediaCapabilities
+
+> **responsiveMediaCapabilities**: (`headersOrCaps`) => `ResponsiveMediaCapabilities`
+
+Derive Save-Data/DPR capabilities for responsive-media projection (#125).
+
+Derive Save-Data / DPR capabilities for responsive-media projection (#125).
+Hosts that already parsed caps can also call this with the result of
+[parseClientHints](#parseclienthints).
+
+#### Parameters
+
+##### headersOrCaps
+
+[`ClientHintsHeaders`](../interfaces/ClientHintsHeaders.md) \| `Headers` \| [`ExtendedDeviceCapabilities`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md)
+
+#### Returns
+
+`ResponsiveMediaCapabilities`
+
+### responsiveMediaVaryHeader
+
+> **responsiveMediaVaryHeader**: () => `string`
+
+Produce the `Vary` value for responsive-media representations (#125).
+
+`Vary` inputs that shape responsive-media projection (DPR + Save-Data).
+CDN caches must vary on these or they can serve the wrong srcset (#125).
+
+#### Returns
+
+`string`
 
 ### varyCHHeader
 

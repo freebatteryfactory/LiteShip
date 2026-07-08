@@ -244,6 +244,21 @@ export function lowerScrollTimelineIntent(intent: ScrollTimelineIntent): Lowered
   });
 }
 
+/**
+ * Resolve the discrete state for SSR / reduced-motion first paint (#126).
+ * When `reducedMotion: 'settle'` and the user prefers reduced motion, settle
+ * immediately to the `after` pose — no scroll-driven tween.
+ */
+export function resolveScrollTimelineInitialState(
+  intent: ScrollTimelineIntent,
+  opts: { prefersReducedMotion: boolean },
+): 'before' | 'after' {
+  if (opts.prefersReducedMotion && intent.policy.reducedMotion === 'settle') {
+    return 'after';
+  }
+  return 'before';
+}
+
 /** Authoring sugar namespace — data over intent, no behavior authority. */
 export const ScrollTimeline = {
   /** Seal a scroll-timeline intent from authoring input. */

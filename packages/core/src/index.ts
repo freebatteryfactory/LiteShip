@@ -140,11 +140,11 @@ export type {
 } from './reveal.js';
 
 // Stagger intent sugar + graph lowering (#124 stagger)
-export { Stagger, lowerStaggerIntent } from './stagger.js';
+export { Stagger, lowerStaggerIntent, resolveStaggerInitialState } from './stagger.js';
 export type { StaggerIntent, StaggerIntentInput, StaggerChild, LoweredStagger, LoweredStaggerItem } from './stagger.js';
 
 // Scroll-timeline intent sugar + graph lowering (#126)
-export { ScrollTimeline, lowerScrollTimelineIntent } from './scroll-timeline.js';
+export { ScrollTimeline, lowerScrollTimelineIntent, resolveScrollTimelineInitialState } from './scroll-timeline.js';
 export type {
   ScrollTimelineIntent,
   ScrollTimelineIntentInput,

@@ -29,7 +29,7 @@ export function compileResponsiveMedia(
 ): CompiledResponsiveMedia {
   const picture = projectResponsiveMediaPicture(intent, caps);
   const imageSet = buildResponsiveImageSet(intent.variants);
-  const digestPayload = `${picture.picture}\n${imageSet}`;
+  const digestPayload = `${picture.picture}\n${picture.preload}\n${imageSet}`;
   return Object.freeze({
     picture,
     imageSet,

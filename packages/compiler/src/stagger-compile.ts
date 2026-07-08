@@ -73,10 +73,14 @@ function easingFromIntent(easing: 'linear' | 'ease' | 'spring' | undefined): Mot
 /**
  * Compile a lowered stagger graph into native CSS + runtime write plans per child.
  */
-export function compileStagger(lowered: LoweredStagger): CompiledStagger {
+export function compileStagger(
+  lowered: LoweredStagger,
+  opts: { prefersReducedMotion?: boolean } = {},
+): CompiledStagger {
   let graph = lowered.graph;
   const compiledItems: CompiledStaggerItem[] = [];
   const cssSections: string[] = [];
+  const settle = opts.prefersReducedMotion === true && lowered.intent.policy.reducedMotion === 'settle';
 
   for (const item of lowered.items) {
     const motion = interpretTransition(graph, item.transitionId);
@@ -84,30 +88,38 @@ export function compileStagger(lowered: LoweredStagger): CompiledStagger {
       throw ValidationError('compileStagger', `interpretTransition produced no css plan for ${item.target}`);
     }
 
+    const plan = settle ? { ...motion.css, durationMs: 0 } : motion.css;
     const css = appendTranslateConsumer(
       MotionCompiler.compile({
-        plan: motion.css,
-        easing: easingFromIntent(lowered.intent.transition.easing),
-        delayMs: item.delayMs,
+        plan,
+        easing: settle ? 'linear' : easingFromIntent(lowered.intent.transition.easing),
+        delayMs: settle ? 0 : item.delayMs,
         viewTimeline: lowered.intent.trigger.type === 'view' ? { range: lowered.intent.trigger.range } : undefined,
       }),
-      motion.css,
+      plan,
     );
 
-    const resultDigest = AddressedDigest.of(new TextEncoder().encode(css.raw));
+    const gatedRaw = settle
+      ? `${css.raw}\n@media (prefers-reduced-motion: reduce) {\n` +
+        `  [data-czap-stagger="${item.target}"] { animation: none !important; transition: none !important; }\n` +
+        `}\n`
+      : css.raw;
+    const gatedCss = settle ? Object.freeze({ ...css, raw: gatedRaw }) : css;
+
+    const resultDigest = AddressedDigest.of(new TextEncoder().encode(gatedCss.raw));
     const sealed = sealProjectionDigest(graph, item.transitionId, resultDigest);
     graph = sealed.graph;
 
     compiledItems.push(
       Object.freeze({
         target: item.target,
-        delayMs: item.delayMs,
-        css,
+        delayMs: settle ? 0 : item.delayMs,
+        css: gatedCss,
         motion,
         projectionId: sealed.projectionId,
       }),
     );
-    cssSections.push(css.raw);
+    cssSections.push(gatedCss.raw);
   }
 
   const raw = cssSections.join('\n\n');

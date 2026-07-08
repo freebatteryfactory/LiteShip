@@ -8,7 +8,7 @@
 
 > **adoptRefreshedGraphBase**(`client`, `graphQueryUrl?`): `Promise`\<`void`\>
 
-Defined in: [web/src/stream/recovery.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L79)
+Defined in: [web/src/stream/recovery.ts:90](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L90)
 
 Adopt a refreshed graph base when the host supplies a mutation client or graph query URL.
 

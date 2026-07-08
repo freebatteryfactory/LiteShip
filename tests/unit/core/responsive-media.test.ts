@@ -57,7 +57,13 @@ describe('ResponsiveMedia resolution', () => {
       alt: '',
       variants: [],
     });
-    expect(() => resolveResponsiveMedia(intent, { devicePixelRatio: 1, saveData: false })).toThrow(RangeError);
+    expect(() => resolveResponsiveMedia(intent, { devicePixelRatio: 1, saveData: false })).toThrow();
+    try {
+      resolveResponsiveMedia(intent, { devicePixelRatio: 1, saveData: false });
+      expect.unreachable();
+    } catch (e) {
+      expect((e as { _tag?: string })._tag).toBe('ValidationError');
+    }
   });
 
   test('adversarial: NaN DPR treated as 1', () => {
@@ -96,6 +102,9 @@ describe('ResponsiveMedia projection', () => {
     expect(projection.picture).toContain('prefers-reduced-data: reduce');
     expect(projection.picture).toContain('srcset="/img/hero-lite.jpg');
     expect(projection.resolved.src).toBe('/img/hero-800.jpg');
+    expect(projection.preload).toContain('rel="preload"');
+    expect(projection.preload).toContain('as="image"');
+    expect(projection.preload).toContain('imagesrcset=');
   });
 
   test('adversarial: escapes alt text in HTML', () => {

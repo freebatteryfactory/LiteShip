@@ -184,4 +184,15 @@ describe('ClientHints', () => {
     });
     expect(caps.gpu).toBe(1);
   });
+
+  test('responsiveMediaCapabilities derives Save-Data + DPR from Client Hints (#125)', () => {
+    const caps = ClientHints.responsiveMediaCapabilities({
+      'sec-ch-dpr': '2.5',
+      'save-data': 'on',
+    });
+    expect(caps.devicePixelRatio).toBe(2.5);
+    expect(caps.saveData).toBe(true);
+    expect(ClientHints.responsiveMediaVaryHeader()).toContain('Sec-CH-DPR');
+    expect(ClientHints.responsiveMediaVaryHeader()).toContain('Save-Data');
+  });
 });

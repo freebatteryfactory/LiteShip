@@ -14,6 +14,7 @@
  * @module
  */
 
+import { ValidationError } from '@czap/error';
 import type { DocumentGraph } from './document-graph.js';
 import type { GraphStore } from './graph-mutation.js';
 import { verifyAppliedGraph } from './graph-mutation.js';
@@ -281,11 +282,14 @@ export function createGraphQueryRefreshBase(
       return result.graph;
     }
     if (result.status === 'not_modified') {
-      throw new Error('graph query returned not_modified but refreshBase requires a graph body');
+      throw ValidationError(
+        'createGraphQueryRefreshBase',
+        'graph query returned not_modified but refreshBase requires a graph body',
+      );
     }
     if (result.status === 'refused') {
-      throw new Error(`graph query refused: ${result.errors.join(' · ')}`);
+      throw ValidationError('createGraphQueryRefreshBase', `graph query refused: ${result.errors.join(' · ')}`);
     }
-    throw new Error(result.message);
+    throw ValidationError('createGraphQueryRefreshBase', result.message);
   };
 }

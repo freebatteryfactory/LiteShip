@@ -7,6 +7,8 @@
  * @module
  */
 
+import { ValidationError } from '@czap/error';
+
 /** Capability slice required to resolve a responsive media intent. */
 export interface ResponsiveMediaCapabilities {
   readonly devicePixelRatio: number;
@@ -53,6 +55,11 @@ export interface ResponsiveMediaPictureProjection {
   readonly srcset: string;
   readonly sizes: string;
   readonly resolved: ResolvedResponsiveMedia;
+  /**
+   * Optional `<link rel="preload" as="image">` for the resolved (or full srcset)
+   * asset — hosts put this in `<head>` for LCP (#125).
+   */
+  readonly preload: string;
 }
 
 function parseDescriptorDpr(descriptor: string): number | undefined {
@@ -134,7 +141,7 @@ export function resolveResponsiveMedia(
   caps: ResponsiveMediaCapabilities,
 ): ResolvedResponsiveMedia {
   if (intent.variants.length === 0) {
-    throw new RangeError('ResponsiveMediaIntent.variants must be non-empty');
+    throw ValidationError('resolveResponsiveMedia', 'ResponsiveMediaIntent.variants must be non-empty');
   }
 
   const dpr = Number.isFinite(caps.devicePixelRatio) && caps.devicePixelRatio > 0 ? caps.devicePixelRatio : 1;
@@ -193,12 +200,18 @@ export function projectResponsiveMediaPicture(
       ? `<picture data-czap-responsive="${escapeAttr(intent.id)}">${sources.join('')}${img}</picture>`
       : img;
 
+  const preload =
+    srcset.length > 0
+      ? `<link rel="preload" as="image" href="${escapeAttr(resolved.src)}" imagesrcset="${escapeAttr(srcset)}" imagesizes="${escapeAttr(sizes)}" />`
+      : `<link rel="preload" as="image" href="${escapeAttr(resolved.src)}" />`;
+
   return Object.freeze({
     picture,
     img,
     srcset,
     sizes,
     resolved,
+    preload,
   });
 }
 

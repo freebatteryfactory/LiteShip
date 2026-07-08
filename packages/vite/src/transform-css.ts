@@ -155,6 +155,20 @@ export async function transformCss(code: string, id: string, ctx: TransformCssCo
   const hasStyle = code.includes('@style');
   const hasQuantize = code.includes('@quantize');
 
+  // Boundary-shadowing diagnostic (#114): must run BEFORE the early return so a
+  // foreign app.css (no @czap at-rules) still gets checked against compiled
+  // boundary output from other sheets in the same project.
+  if (!hasQuantize && cache.lastCompiledBoundaryCss.value) {
+    const { diagnoseBoundaryShadowing } = await import('./boundary-shadowing.js');
+    for (const warning of diagnoseBoundaryShadowing(
+      cache.lastCompiledBoundaryCss.value,
+      normalizeCssLineEndings(code),
+      id,
+    )) {
+      ctx.warn(warning);
+    }
+  }
+
   if (!hasToken && !hasTheme && !hasStyle && !hasQuantize) return null;
 
   let transformed = normalizeCssLineEndings(code);
@@ -348,15 +362,6 @@ export async function transformCss(code: string, id: string, ctx: TransformCssCo
   }
 
   if (transformed === code) return null;
-
-  // Boundary-shadowing diagnostic (#114): when this file has no @quantize blocks
-  // but other sheets in the project do, warn on overlapping selectors/properties.
-  if (!hasQuantize && cache.lastCompiledBoundaryCss.value) {
-    const { diagnoseBoundaryShadowing } = await import('./boundary-shadowing.js');
-    for (const warning of diagnoseBoundaryShadowing(cache.lastCompiledBoundaryCss.value, transformed, id)) {
-      ctx.warn(warning);
-    }
-  }
 
   return transformed;
 }

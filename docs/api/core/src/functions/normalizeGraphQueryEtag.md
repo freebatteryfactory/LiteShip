@@ -8,7 +8,7 @@
 
 > **normalizeGraphQueryEtag**(`value`): `string` \| \{ `errors`: readonly `string`[]; \}
 
-Defined in: [core/src/graph-query.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query.ts#L57)
+Defined in: [core/src/graph-query.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query.ts#L58)
 
 Normalize an HTTP `If-None-Match` / wire etag to bare sha256, or refuse fnv1a.
 

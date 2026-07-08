@@ -9,6 +9,7 @@ import {
   ScrollTimeline,
   lowerScrollTimelineIntent,
   interpretTransition,
+  resolveScrollTimelineInitialState,
 } from '@czap/core';
 import { compileScrollTimeline } from '@czap/compiler';
 
@@ -65,6 +66,15 @@ describe('ScrollTimeline graph → CSS', () => {
     expect(compiled.css.scrollTimeline).toContain('@supports not (animation-timeline: scroll())');
     expect(compiled.css.raw).toContain('transform: translate3d');
     expect(compiled.resultDigest.integrity_digest.length).toBeGreaterThan(0);
+  });
+
+  test('resolveScrollTimelineInitialState + settle compile honors reducedMotion (#126)', () => {
+    expect(resolveScrollTimelineInitialState(heroScrollIntent(), { prefersReducedMotion: true })).toBe('after');
+    const lowered = lowerScrollTimelineIntent(heroScrollIntent());
+    const compiled = compileScrollTimeline(lowered.graph, lowered.transitionId, lowered.intent, {
+      prefersReducedMotion: true,
+    });
+    expect(compiled.css.raw).toContain('prefers-reduced-motion: reduce');
   });
 
   test('inline axis emits scroll(nearest inline)', () => {

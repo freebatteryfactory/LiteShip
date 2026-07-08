@@ -6,7 +6,7 @@
 
 # Function: compileScrollTimeline()
 
-> **compileScrollTimeline**(`graph`, `transitionId`, `intent`): [`CompiledScrollTimeline`](../interfaces/CompiledScrollTimeline.md)
+> **compileScrollTimeline**(`graph`, `transitionId`, `intent`, `opts?`): [`CompiledScrollTimeline`](../interfaces/CompiledScrollTimeline.md)
 
 Defined in: [compiler/src/scroll-timeline-compile.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/scroll-timeline-compile.ts#L91)
 
@@ -25,6 +25,12 @@ Compile a lowered scroll-timeline graph into native CSS + a runtime write plan.
 ### intent
 
 `ScrollTimelineIntent`
+
+### opts?
+
+#### prefersReducedMotion?
+
+`boolean`
 
 ## Returns
 

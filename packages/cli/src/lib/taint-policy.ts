@@ -155,6 +155,9 @@ const LITESHIP_TAINT_NOTES: Readonly<Record<string, string>> = {
   spawnSync: 'a child-process spawn — a command-injection sink',
   innerHTML: 'a DOM innerHTML assignment — an HTML-injection sink',
   outerHTML: 'a DOM outerHTML assignment — an HTML-injection sink',
+  insertAdjacentHTML: 'a DOM insertAdjacentHTML call — an HTML-injection sink',
+  'document.write': 'a document.write call — an HTML-injection sink',
+  'document.writeln': 'a document.writeln call — an HTML-injection sink',
 };
 
 /**

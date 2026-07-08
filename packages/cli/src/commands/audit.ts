@@ -7,6 +7,7 @@
  *
  * @module
  */
+import { wallClock } from '@czap/core';
 import { auditCommand, type AuditPayload, type AuditEngineSummary } from '@czap/command';
 import { runAuditPasses } from '@czap/audit';
 import { loadProfile } from '../lib/load-profile.js';
@@ -41,7 +42,7 @@ export async function audit(
     const receipt = {
       status: findings.some((f) => f.severity === 'error') ? ('failed' as const) : ('ok' as const),
       command: 'audit',
-      timestamp: new Date().toISOString(),
+      timestamp: new Date(wallClock.now()).toISOString() as WallClockTimestamp,
       mode: 'consumer-app' as const,
       findingCount: findings.length,
       findings,

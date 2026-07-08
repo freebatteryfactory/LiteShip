@@ -8,7 +8,7 @@
 
 > **buildResponsiveImageSet**(`variants`): `string`
 
-Defined in: [core/src/responsive-media.ts:115](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/responsive-media.ts#L115)
+Defined in: [core/src/responsive-media.ts:122](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/responsive-media.ts#L122)
 
 Build a CSS `image-set()` value from variants (native CSS first).
 

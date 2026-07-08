@@ -425,6 +425,8 @@ plan graph, ECS, capsule factory).
 - [replayDroppedSignals](functions/replayDroppedSignals.md)
 - [resolveResponsiveMedia](functions/resolveResponsiveMedia.md)
 - [resolveRevealInitialState](functions/resolveRevealInitialState.md)
+- [resolveScrollTimelineInitialState](functions/resolveScrollTimelineInitialState.md)
+- [resolveStaggerInitialState](functions/resolveStaggerInitialState.md)
 - [runGraphNativeGapReplay](functions/runGraphNativeGapReplay.md)
 - [schemaToJsonSchema](functions/schemaToJsonSchema.md)
 - [sealGraph](functions/sealGraph.md)

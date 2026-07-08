@@ -8,6 +8,6 @@
 
 > **ResponsiveMediaResolutionReason** = `"save-data"` \| `"dpr-match"` \| `"dpr-floor"` \| `"fallback"`
 
-Defined in: [core/src/responsive-media.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/responsive-media.ts#L41)
+Defined in: [core/src/responsive-media.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/responsive-media.ts#L43)
 
 Why a particular variant was chosen.

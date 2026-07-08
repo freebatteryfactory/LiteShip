@@ -6,7 +6,7 @@
 
 # Interface: CSSContainerRule
 
-Defined in: [compiler/src/css.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/css.ts#L49)
+Defined in: [compiler/src/css.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/css.ts#L52)
 
 A `@container` at-rule grouping rules that apply at a given container query.
 
@@ -19,7 +19,7 @@ is derived from the boundary's `input` identifier.
 
 > `readonly` `optional` **atRuleGroups?**: readonly [`CSSAtRuleGroup`](CSSAtRuleGroup.md)[]
 
-Defined in: [compiler/src/css.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/css.ts#L57)
+Defined in: [compiler/src/css.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/css.ts#L60)
 
 Nested `@supports` / `@media` groups inside the container block.
 
@@ -29,7 +29,7 @@ Nested `@supports` / `@media` groups inside the container block.
 
 > `readonly` **name**: `string`
 
-Defined in: [compiler/src/css.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/css.ts#L51)
+Defined in: [compiler/src/css.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/css.ts#L54)
 
 Container name (sanitized from the boundary input).
 
@@ -39,7 +39,7 @@ Container name (sanitized from the boundary input).
 
 > `readonly` **query**: `string`
 
-Defined in: [compiler/src/css.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/css.ts#L53)
+Defined in: [compiler/src/css.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/css.ts#L56)
 
 Condition text like `(width >= 768px)`.
 
@@ -49,6 +49,6 @@ Condition text like `(width >= 768px)`.
 
 > `readonly` **rules**: readonly [`CSSRule`](CSSRule.md)[]
 
-Defined in: [compiler/src/css.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/css.ts#L55)
+Defined in: [compiler/src/css.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/css.ts#L58)
 
 Rules evaluated inside the container query.

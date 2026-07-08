@@ -8,7 +8,7 @@
 
 > **bindRequestSnapshotRecovery**(`target`, `options`): () => `void`
 
-Defined in: [web/src/stream/recovery.ts:143](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L143)
+Defined in: [web/src/stream/recovery.ts:183](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L183)
 
 Wire the production listener for `czap:request-snapshot` (morph rejection recovery).
 Returns a disposer for teardown.

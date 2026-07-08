@@ -9,6 +9,7 @@
  */
 
 import type { ExtendedDeviceCapabilities, GPUTier } from '@czap/detect';
+import type { ResponsiveMediaCapabilities } from '@czap/core';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -314,6 +315,32 @@ function varyCHHeader(): string {
   return ALL_HINTS.join(', ');
 }
 
+/**
+ * Derive Save-Data / DPR capabilities for responsive-media projection (#125).
+ * Hosts that already parsed caps can also call this with the result of
+ * {@link parseClientHints}.
+ */
+function responsiveMediaCapabilities(
+  headersOrCaps: Headers | ClientHintsHeaders | ExtendedDeviceCapabilities,
+): ResponsiveMediaCapabilities {
+  const caps =
+    'connection' in headersOrCaps && 'devicePixelRatio' in headersOrCaps
+      ? (headersOrCaps as ExtendedDeviceCapabilities)
+      : parseClientHints(headersOrCaps as Headers | ClientHintsHeaders);
+  return Object.freeze({
+    devicePixelRatio: caps.devicePixelRatio,
+    saveData: caps.connection?.saveData === true,
+  });
+}
+
+/**
+ * `Vary` inputs that shape responsive-media projection (DPR + Save-Data).
+ * CDN caches must vary on these or they can serve the wrong srcset (#125).
+ */
+function responsiveMediaVaryHeader(): string {
+  return 'Sec-CH-DPR, Save-Data';
+}
+
 // ---------------------------------------------------------------------------
 // Namespace export
 // ---------------------------------------------------------------------------
@@ -350,6 +377,10 @@ export const ClientHints = {
   criticalCHHeader,
   /** Produce the `Vary` response header value for tier-varying HTML (#122). */
   varyCHHeader,
+  /** Derive Save-Data/DPR capabilities for responsive-media projection (#125). */
+  responsiveMediaCapabilities,
+  /** Produce the `Vary` value for responsive-media representations (#125). */
+  responsiveMediaVaryHeader,
 } as const;
 
 export declare namespace ClientHints {

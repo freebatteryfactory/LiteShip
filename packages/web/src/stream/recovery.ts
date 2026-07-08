@@ -6,8 +6,8 @@
  */
 
 import { Effect } from 'effect';
-import type { DocumentGraph, GraphMutationClient } from '@czap/core';
-import { createGraphQueryRefreshBase, graphQueryEtag } from '@czap/core';
+import type { DocumentGraph, GraphMutationClient, PatchReceiptEntry, StateCellStoreShape } from '@czap/core';
+import { createGraphQueryRefreshBase, graphQueryEtag, runGraphNativeGapReplay } from '@czap/core';
 import { filterDiscreteSnapshotSignals, replayDroppedSignals, validateSnapshotSignalsField } from '@czap/core';
 import { ValidationError } from '@czap/error';
 import type { LiteShipError } from '@czap/error';
@@ -28,7 +28,14 @@ export interface StreamRecoveryHandlers {
   readonly applyDiscreteSignal: (payload: unknown) => void;
 }
 
-/** Configuration for {@link bindRequestSnapshotRecovery} and {@link runGraphNativeRecovery}. */
+/**
+ * Configuration for {@link bindRequestSnapshotRecovery} and {@link runGraphNativeRecovery}.
+ *
+ * When `graphQueryUrl`, `mutationClient`, `cellStore`, and `patchReceiptEntries` are all
+ * present, recovery prefers `runGraphNativeGapReplay` from `@czap/core` (#133-full)
+ * over the interim HTML snapshot path. Snapshot remains the permanent floor when any
+ * of those are absent.
+ */
 export interface StreamRecoveryOptions {
   readonly artifactId: string;
   readonly snapshotUrl?: string;
@@ -36,6 +43,10 @@ export interface StreamRecoveryOptions {
   readonly endpointPolicy?: ResumptionConfig['endpointPolicy'];
   readonly mutationClient?: StreamRecoveryMutationClient;
   readonly handlers: StreamRecoveryHandlers;
+  /** StateCell store for discrete gap-replay (#133-full). Required with {@link patchReceiptEntries}. */
+  readonly cellStore?: StateCellStoreShape;
+  /** Patch/receipt chain spanning the missed gap (#133-full). */
+  readonly patchReceiptEntries?: readonly PatchReceiptEntry[];
 }
 
 const resolveRefreshBase = (
@@ -89,9 +100,38 @@ export const adoptRefreshedGraphBase = async (
   client.adopt(next);
 };
 
-/** Full graph-native recovery: optional `refreshBase`/`adopt`, then snapshot re-sync. */
+/**
+ * Full graph-native recovery (#133).
+ *
+ * Prefer QUERY + patch/receipt discrete replay when the host supplies the full
+ * substrate (`graphQueryUrl` + `mutationClient` + `cellStore` + `patchReceiptEntries`).
+ * Otherwise fall through to interim snapshot re-sync (permanent floor).
+ */
 export const runGraphNativeRecovery = async (options: StreamRecoveryOptions): Promise<void> => {
-  await adoptRefreshedGraphBase(options.mutationClient, options.graphQueryUrl);
+  const localBase = options.mutationClient?.base();
+  const canGapReplay =
+    options.graphQueryUrl !== undefined &&
+    options.mutationClient !== undefined &&
+    options.cellStore !== undefined &&
+    options.patchReceiptEntries !== undefined &&
+    localBase !== undefined;
+
+  if (canGapReplay) {
+    const result = await runGraphNativeGapReplay({
+      queryUrl: options.graphQueryUrl!,
+      localBase: localBase!,
+      entries: options.patchReceiptEntries!,
+      cellStore: options.cellStore!,
+      adopt: (graph) => options.mutationClient!.adopt(graph),
+      applyDiscrete: options.handlers.applyDiscreteSignal,
+    });
+    if (result.query.status === 'ok' || result.query.status === 'not_modified') {
+      return;
+    }
+    // QUERY refused/error — fall through to snapshot floor (loud path already refused).
+  } else {
+    await adoptRefreshedGraphBase(options.mutationClient, options.graphQueryUrl);
+  }
 
   const snapshot = await Effect.runPromise(fetchSnapshot(options.artifactId, snapshotConfig(options)));
 

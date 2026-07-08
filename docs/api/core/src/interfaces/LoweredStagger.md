@@ -6,7 +6,7 @@
 
 # Interface: LoweredStagger
 
-Defined in: [core/src/stagger.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L63)
+Defined in: [core/src/stagger.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L64)
 
 Graph bundle produced by [lowerStaggerIntent](../functions/lowerStaggerIntent.md).
 
@@ -16,7 +16,7 @@ Graph bundle produced by [lowerStaggerIntent](../functions/lowerStaggerIntent.md
 
 > `readonly` **graph**: [`DocumentGraph`](DocumentGraph.md)
 
-Defined in: [core/src/stagger.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L64)
+Defined in: [core/src/stagger.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L65)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [core/src/stagger.ts:64](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **intent**: [`StaggerIntent`](StaggerIntent.md)
 
-Defined in: [core/src/stagger.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L65)
+Defined in: [core/src/stagger.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L66)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [core/src/stagger.ts:65](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **items**: readonly [`LoweredStaggerItem`](LoweredStaggerItem.md)[]
 
-Defined in: [core/src/stagger.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L66)
+Defined in: [core/src/stagger.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L67)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [core/src/stagger.ts:66](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **signalId**: `ContentAddress`
 
-Defined in: [core/src/stagger.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L67)
+Defined in: [core/src/stagger.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L68)

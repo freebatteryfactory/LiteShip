@@ -8,7 +8,7 @@
 
 > **fetchSnapshot**(`artifactId`, `config?`): `Effect`\<\{ `html`: `string`; `lastEventId`: `string`; `signals`: `unknown`; `type`: `"snapshot"`; \}, `LiteShipError`\>
 
-Defined in: [web/src/stream/recovery.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L63)
+Defined in: [web/src/stream/recovery.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L74)
 
 Fetch a full snapshot (html + signals + cursor) for graph-native re-sync.
 
