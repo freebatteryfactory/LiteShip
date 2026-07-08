@@ -1,6 +1,6 @@
 /**
  * Parallel CI setup artifact audit — the fan-out lane must ship everything downstream
- * jobs need from the one-time setup build (dist + capsule manifest).
+ * jobs need from the one-time setup build (dist + capsule manifest + gauntlet context).
  *
  * @module
  */
@@ -13,10 +13,12 @@ const CI_YML = resolve(import.meta.dirname, '../../../.github/workflows/ci.yml')
 describe('parallel setup artifact ships dist + capsule manifest', () => {
   const ci = readFileSync(CI_YML, 'utf8');
 
-  it('truth-linux-parallel-setup uploads packages/*/dist and reports/capsule-manifest.json', () => {
+  it('truth-linux-parallel-setup mints and uploads dist, capsule manifest, and gauntlet context', () => {
     const setupBlock = ci.slice(ci.indexOf('truth-linux-parallel-setup:'), ci.indexOf('truth-linux-parallel-preflight:'));
+    expect(setupBlock).toContain('ensureArtifactContext');
     expect(setupBlock).toContain('packages/*/dist');
     expect(setupBlock).toContain('reports/capsule-manifest.json');
+    expect(setupBlock).toContain('reports/gauntlet-context.json');
   });
 
   it('parallel fan-out jobs restore setup artifacts at repo root (path: .)', () => {
