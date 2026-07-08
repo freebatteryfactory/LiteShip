@@ -15,7 +15,7 @@ describe('parallel setup artifact ships dist + capsule manifest', () => {
 
   it('truth-linux-parallel-setup mints and uploads dist, capsule manifest, and gauntlet context', () => {
     const setupBlock = ci.slice(ci.indexOf('truth-linux-parallel-setup:'), ci.indexOf('truth-linux-parallel-preflight:'));
-    expect(setupBlock).toContain('ensureArtifactContext');
+    expect(setupBlock).toContain('mint-gauntlet-context.ts');
     expect(setupBlock).toContain('packages/*/dist');
     expect(setupBlock).toContain('reports/capsule-manifest.json');
     expect(setupBlock).toContain('reports/gauntlet-context.json');
