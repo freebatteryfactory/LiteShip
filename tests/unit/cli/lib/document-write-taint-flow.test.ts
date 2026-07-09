@@ -41,7 +41,7 @@ export async function render(html: string): Promise<void> {
   const res = await fetch('/api');
   const body = await res.text();
   document.write(body);
-  document.writeln(html);
+  document.writeln(html + body);
 }
 `,
     });
@@ -56,6 +56,7 @@ export async function render(html: string): Promise<void> {
     const writeFlows = facts.flows.filter((f) => f.sink.callee === 'write' || f.sink.callee === 'writeln');
     expect(writeFlows.length).toBeGreaterThanOrEqual(1);
     expect(writeFlows.some((f) => f.sink.callee === 'write' && f.source.callee === 'fetch')).toBe(true);
+    expect(writeFlows.some((f) => f.sink.callee === 'writeln' && f.source.callee === 'fetch')).toBe(true);
     expect(writeFlows.every((f) => f.sanitizedBy === null)).toBe(true);
   });
 });

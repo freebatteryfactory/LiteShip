@@ -14,7 +14,7 @@ Your UI only needs a few states out: mobile/tablet/desktop, light/dark, reduced/
 
 This is a real pre-1.0 hull being hardened on dogfooded sites and a CRM UI.
 
-**npm:** `pnpm add @czap/core` (definitions) or `pnpm create liteship` (starter). Package docs: [`packages/core/README.md`](./packages/core/README.md) · onboarding: [GETTING-STARTED.md](./GETTING-STARTED.md).
+**pnpm:** `pnpm add @czap/core` (definitions) or `pnpm create liteship` (starter). Package docs: [`packages/core/README.md`](./packages/core/README.md) · onboarding: [GETTING-STARTED.md](./GETTING-STARTED.md).
 
 ## The shape
 

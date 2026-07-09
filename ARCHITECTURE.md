@@ -37,7 +37,7 @@ The return leg. SSE pushes serverâ†’client; the channel is the other direction â
 
 **Workers static boundary CSS** ([ADR-0025](./docs/adr/0025-workers-static-assets-boundary-css.md)): precompiled boundary outputs ship as immutable `/_czap/<id>/<hash>.css` Workers Static Assets; SSR selects the tier URL instead of inlining bytes on every request. See also [HOSTING.md](./HOSTING.md) and [ASTRO-RUNTIME-MODEL.md](./ASTRO-RUNTIME-MODEL.md).
 
-**Docs MCP bundle** ([ADR-0036](./docs/adr/0036-audit-findings-stream-contract.md) context): sealed `docs:bundle` manifest + `loadDocsMcpBundle` integrity (`bundleId` recomputed at load).
+**Docs MCP bundle** ([`docs-bundle-id.ts`](./packages/astro/src/docs-bundle-id.ts)): sealed `docs:bundle` manifest + `loadDocsMcpBundle` integrity (`bundleId` recomputed at load).
 
 **DPU adopt-under** ([#120](https://github.com/freebatteryfactory/LiteShip/issues/120)): `applyVerifiablePatchAndAdopt` wires stamped HTML patches to `mutationClient.adopt` after CAS verification.
 

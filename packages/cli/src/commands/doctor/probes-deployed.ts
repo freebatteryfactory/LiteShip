@@ -33,6 +33,10 @@ function isBlockedIpv4(a: number, b: number, _c: number, _d: number): boolean {
   if (a === 172 && b >= 16 && b <= 31) return true;
   if (a === 192 && b === 168) return true;
   if (a === 100 && b >= 64 && b <= 127) return true;
+  // 198.18.0.0/15 — benchmarking (RFC 2544); not a public probe target.
+  if (a === 198 && b >= 18 && b <= 19) return true;
+  // 224.0.0.0/4 multicast and 240.0.0.0/4 reserved — align with runtime-url SSRF guard.
+  if (a >= 224) return true;
   return false;
 }
 

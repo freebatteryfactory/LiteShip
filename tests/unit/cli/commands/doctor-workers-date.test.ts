@@ -64,6 +64,28 @@ export const cfg = { t: Date.now() };`,
     expect(probeWorkersModuleScopeDate(dir).status).toBe('ok');
   });
 
+  test('wrangler.jsonc with comment resolves main without throwing (#115)', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'czap-workers-date-'));
+    mkdirSync(join(dir, 'src'), { recursive: true });
+    writeFileSync(
+      join(dir, 'wrangler.jsonc'),
+      `{
+  // entry for the worker
+  "name": "demo",
+  "main": "src/custom.ts"
+}`,
+    );
+    writeFileSync(
+      join(dir, 'src', 'custom.ts'),
+      `export const bootedAt = Date.now();
+export default { fetch() { return new Response(String(bootedAt)); } };`,
+    );
+
+    const check = probeWorkersModuleScopeDate(dir);
+    expect(check.status).toBe('warn');
+    expect(check.detail).toContain('src/custom.ts');
+  });
+
   test('wrangler.toml project flags generic src/index.ts without worker path hints (#115)', () => {
     const dir = mkdtempSync(join(tmpdir(), 'czap-workers-date-'));
     mkdirSync(join(dir, 'src'), { recursive: true });
