@@ -25,6 +25,23 @@ function isWorkersTargeted(rel: string): boolean {
   return WORKER_PATH_HINTS.some((hint) => lower.includes(hint));
 }
 
+function parseJsonWranglerMain(config: string): string {
+  const quotedMain = /"main"\s*:\s*"((?:\\.|[^"\\])*)"/.exec(config);
+  if (quotedMain?.[1]) {
+    return normalizeRepoPath(quotedMain[1].replace(/\\"/g, '"'));
+  }
+  try {
+    const stripped = config.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+    const json = JSON.parse(stripped) as { main?: string };
+    if (typeof json.main === 'string' && json.main.length > 0) {
+      return normalizeRepoPath(json.main);
+    }
+  } catch {
+    // Invalid JSONC — fall through to default main.
+  }
+  return DEFAULT_WRANGLER_MAIN;
+}
+
 function parseWranglerMain(cwd: string): string {
   for (const name of ['wrangler.jsonc', 'wrangler.json', 'wrangler.toml']) {
     const path = resolve(cwd, name);
@@ -34,12 +51,7 @@ function parseWranglerMain(cwd: string): string {
       const tomlMatch = /^\s*main\s*=\s*["']([^"']+)["']/m.exec(config);
       return tomlMatch?.[1] ? normalizeRepoPath(tomlMatch[1]) : DEFAULT_WRANGLER_MAIN;
     }
-    const stripped = config.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
-    const json = JSON.parse(stripped) as { main?: string };
-    if (typeof json.main === 'string' && json.main.length > 0) {
-      return normalizeRepoPath(json.main);
-    }
-    return DEFAULT_WRANGLER_MAIN;
+    return parseJsonWranglerMain(config);
   }
   return DEFAULT_WRANGLER_MAIN;
 }

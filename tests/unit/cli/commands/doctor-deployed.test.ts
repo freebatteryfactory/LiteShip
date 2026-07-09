@@ -19,6 +19,9 @@ function mockPublicDns(hostname = 'example.test') {
     if (host === 'private.example') {
       return [{ address: '10.0.0.1', family: 4 }];
     }
+    if (host === 'benchmark.example') {
+      return [{ address: '198.18.0.1', family: 4 }];
+    }
     return [{ address: '93.184.216.34', family: 4 }];
   });
 }
@@ -79,6 +82,9 @@ describe('doctor --deployed (#116)', () => {
       'https://169.254.169.254/',
       'https://10.0.0.1/',
       'https://192.168.1.1/',
+      'https://198.18.0.1/',
+      'https://224.0.0.1/',
+      'https://240.0.0.1/',
     ]) {
       const checks = await probeDeployedSite(blocked);
       expect(fetchSpy).not.toHaveBeenCalled();
@@ -92,6 +98,16 @@ describe('doctor --deployed (#116)', () => {
     vi.stubGlobal('fetch', fetchSpy);
 
     const checks = await probeDeployedSite('https://private.example/');
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(checks[0]?.status).toBe('fail');
+    expect(checks[0]?.detail).toMatch(/DNS resolution returned a loopback\/private/i);
+  });
+
+  test('refuses hostname resolving to special-use address before fetch (DNS SSRF)', async () => {
+    const fetchSpy = vi.fn();
+    vi.stubGlobal('fetch', fetchSpy);
+
+    const checks = await probeDeployedSite('https://benchmark.example/');
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(checks[0]?.status).toBe('fail');
     expect(checks[0]?.detail).toMatch(/DNS resolution returned a loopback\/private/i);

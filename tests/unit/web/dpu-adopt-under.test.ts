@@ -70,6 +70,7 @@ describe('applyVerifiablePatchAndAdopt (#120)', () => {
 
     const target = document.createElement('div');
     document.body.appendChild(target);
+    const beforeHtml = target.innerHTML;
 
     const envelope = stampVerifiablePatch({
       marker: 'slot-a',
@@ -88,5 +89,6 @@ describe('applyVerifiablePatchAndAdopt (#120)', () => {
       expect(outcome.verification._tag).toBe('resultGraphMismatch');
     }
     expect(adopted).toHaveLength(0);
+    expect(target.innerHTML).toBe(beforeHtml);
   });
 });

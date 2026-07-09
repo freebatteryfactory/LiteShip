@@ -240,10 +240,6 @@ export function applyVerifiablePatchAndAdopt(
   resultGraph: DocumentGraph,
   capability: DpuCapability = detectDpuCapability(),
 ): ApplyVerifiablePatchAdoptResult {
-  const patch = applyVerifiablePatch(target, envelope, currentBaseGraphId, capability);
-  if (patch._tag !== 'applied') {
-    return patch;
-  }
   if (resultGraph.id !== envelope.resultGraphId) {
     return {
       _tag: 'refused',
@@ -253,6 +249,10 @@ export function applyVerifiablePatchAndAdopt(
         received: resultGraph.id,
       },
     };
+  }
+  const patch = applyVerifiablePatch(target, envelope, currentBaseGraphId, capability);
+  if (patch._tag !== 'applied') {
+    return patch;
   }
   adoptClient.adopt(resultGraph);
   return patch;
