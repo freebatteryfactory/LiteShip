@@ -14,6 +14,14 @@ import { mcpExposedDescriptors } from '@czap/command';
 import { dispatch, dispatchToolCall, listTools } from '../../../packages/mcp-server/src/dispatch.js';
 import type { JsonRpcRequest, JsonRpcNotification } from '../../../packages/mcp-server/src/jsonrpc.js';
 import { validateStructural, type StructuralSchema } from '../../support/structural-schema.js';
+import { scaledTimeout } from '../../../vitest.shared.js';
+
+/** `check` runs the in-process gauntlet fold — same budget as cross-adapter convergence. */
+function mcpDispatchMatrixTimeout(name: string): number | undefined {
+  if (name === 'check') return scaledTimeout(60_000);
+  if (name === 'capsule.verify' || name === 'scene.render') return scaledTimeout(120_000);
+  return undefined;
+}
 
 /** Minimal arguments that exercise each MCP tool's dispatch path (ok or structured failure — never throw). */
 const MCP_DISPATCH_ARGS: Record<string, Record<string, unknown>> = {
@@ -122,19 +130,24 @@ describe('dispatchToolCall — all mcpExposed tools (catalog-driven matrix)', ()
   });
 
   for (const descriptor of descriptors) {
-    it(`${descriptor.name}: returns structured MCP result conforming to outputSchema`, async () => {
-      const result = await dispatchToolCall({
-        name: descriptor.name,
-        arguments: MCP_DISPATCH_ARGS[descriptor.name] ?? {},
-      });
-      expect(result.structuredContent).toBeDefined();
-      expect(typeof result.isError).toBe('boolean');
-      expect(result.content[0]!.text).toBe(JSON.stringify(result.structuredContent));
-      if (descriptor.outputSchema && !result.isError) {
-        const errors = validateStructural(descriptor.outputSchema as StructuralSchema, result.structuredContent);
-        expect(errors, `${descriptor.name} payload vs outputSchema: ${errors.join('; ')}`).toEqual([]);
-      }
-    });
+    const timeout = mcpDispatchMatrixTimeout(descriptor.name);
+    it(
+      `${descriptor.name}: returns structured MCP result conforming to outputSchema`,
+      timeout ? { timeout } : {},
+      async () => {
+        const result = await dispatchToolCall({
+          name: descriptor.name,
+          arguments: MCP_DISPATCH_ARGS[descriptor.name] ?? {},
+        });
+        expect(result.structuredContent).toBeDefined();
+        expect(typeof result.isError).toBe('boolean');
+        expect(result.content[0]!.text).toBe(JSON.stringify(result.structuredContent));
+        if (descriptor.outputSchema && !result.isError) {
+          const errors = validateStructural(descriptor.outputSchema as StructuralSchema, result.structuredContent);
+          expect(errors, `${descriptor.name} payload vs outputSchema: ${errors.join('; ')}`).toEqual([]);
+        }
+      },
+    );
   }
 });
 
