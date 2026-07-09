@@ -7,7 +7,7 @@ thresholds 0/33/66; each Remotion frame evaluates it, and the resulting
 on the composition — `useCzapState()` reads the current frame's state from the
 `<Provider>` context.
 
-When installing from npm (outside the monorepo), pin `@czap/*` packages at `^0.8.0`.
+When installing from npm (outside the monorepo), pin `@czap/*` packages at `^0.9.0`.
 
 ## Run it
 
