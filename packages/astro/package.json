@@ -1,6 +1,6 @@
 {
   "name": "@czap/astro",
-  "version": "0.8.1",
+  "version": "0.9.0",
   "description": "Astro 7 integration: `Satellite` component, `client:satellite` directive, `czapFetchLayer` edge layer",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",

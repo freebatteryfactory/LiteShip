@@ -4,6 +4,41 @@ All notable changes to czap. The format follows [Keep a Changelog](https://keepa
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Pre-1.0
 break policy is intentionally aggressive — minor version bumps may carry breaking changes.
 
+## [0.9.0] - 2026-07-09
+
+The **0.9 keystone wave** — Phase B gap closure plus the hardening cut: HTTP QUERY read-leg,
+DPU adopt-under, motion/security/tooling fixes, and a workstation-safe local accept bar.
+
+### Added
+
+- **HTTP QUERY read-leg (#119)** — typed query surface for the motion/stream spine keystone.
+- **`applyVerifiablePatchAndAdopt` (#120)** — DPU patch apply wires through `mutationClient.adopt` after CAS verification; refuses on `resultGraph` mismatch without mutating the DOM.
+- **Deployed doctor DNS pin-and-connect** — resolve A/AAAA, fail-closed on private/special-use ranges, pin undici connect per hop (rebinding-safe), multi-address fallback, agent cleanup.
+- **`local-safe` gauntlet profile** — build → capsule:compile → typecheck → lint → structural → invariants → gates → audit:floor → test → standards/capability gates (omits memory-hungry `docs:check`; run separately when API inputs change).
+- **`memberSinks` taint channel** — `document.write` / `document.writeln` classified receiver-qualified (no `stream.write` false positives).
+- **`examples/07-stagger-reveal`** — committed stagger preset + dogfood test (#124).
+- **ADR-0038** — monolith TypeDoc canonical; sharded build experimental only (#136).
+- **Docs MCP `computeBundleId`** — recompute/reject at load for sealed bundle integrity.
+
+### Fixed
+
+- **Responsive media DPR** — `minPositiveWidth` for unsorted variant lists (#125).
+- **Workers module-scope Date scan** — project-level wrangler `main` resolution (#115).
+- **Taint `document.write` registry** (#121); scroll-progress `warnOnce` buffer-sink regression (#104).
+- **HTML trust / B5b cage** — nested-template/srcset hardening; adversarial SSRF/DNS/HMR/recovery gaps from Phase B QA.
+- **IPv6 special-use DNS guard** — multicast, documentation, site-local, and 6to4 ranges blocked in deployed probes.
+
+### Internal
+
+- **cut9 meta-tests** — local-safe profile law, DNS pin law, B5b cage, skip-law pins.
+- **Architecture/docs cross-links** — README AEO, ROADMAP ledger, ADR 0036/0037 issue links.
+
+Closes #104, #105, #115, #119, #120, #121, #123, #124, #125, #127, #128, #136 (among others in the Phase B wave). Follow-ups: #140–#142; epic #130 remains open.
+
+### Breaking
+
+- None.
+
 ## [0.8.1] - 2026-07-08
 
 Test, bench, and CI hardening — honest gates, parallel truth-linux, and catalog-driven coverage.
