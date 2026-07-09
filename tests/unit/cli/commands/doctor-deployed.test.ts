@@ -134,6 +134,28 @@ describe('doctor --deployed (#116)', () => {
     expect(checks[0]?.detail).toMatch(/SSRF guard/i);
   });
 
+  test('falls back to later public DNS address when first pin is unreachable', async () => {
+    mockedLookup.mockImplementation(async () => [
+      { address: '2001:db8::1', family: 6 },
+      { address: '93.184.216.34', family: 4 },
+    ]);
+    let fetchAttempts = 0;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        fetchAttempts += 1;
+        if (fetchAttempts === 1) {
+          throw new Error('connect EHOSTUNREACH');
+        }
+        return new Response('ok', { status: 200, headers: {} });
+      }),
+    );
+
+    const checks = await probeDeployedSite('https://dual-stack.example/');
+    expect(checks[0]?.status).not.toBe('fail');
+    expect(fetchAttempts).toBe(2);
+  });
+
   test('pin-and-connect: connect uses pinned public IP even if DNS would rebind on second lookup', async () => {
     let lookupCalls = 0;
     mockedLookup.mockImplementation(async () => {

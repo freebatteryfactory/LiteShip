@@ -84,8 +84,6 @@ const LITESHIP_TAINT_SINKS: readonly string[] = [
   'Function',
   // DOM HTML injection via method call (sibling to assignment sinks below).
   'insertAdjacentHTML',
-  'write',
-  'writeln',
   // The AI-cast graph-apply into the LIVE runtime (the untrusted-apply seam).
   'applyValidatedPatch',
   'apply',
@@ -100,6 +98,12 @@ const LITESHIP_TAINT_SINKS: readonly string[] = [
   'execSync',
   'spawnSync',
 ];
+
+/**
+ * Qualified member-call sinks — `document.write` / `document.writeln` only;
+ * bare `write` would false-positive on `stream.write` / `stdout.write`.
+ */
+const LITESHIP_TAINT_MEMBER_SINKS: readonly string[] = ['document.write', 'document.writeln'];
 
 /**
  * Assignment-TARGET property names that are SINKS when assigned a tainted value —
@@ -156,8 +160,8 @@ const LITESHIP_TAINT_NOTES: Readonly<Record<string, string>> = {
   innerHTML: 'a DOM innerHTML assignment — an HTML-injection sink',
   outerHTML: 'a DOM outerHTML assignment — an HTML-injection sink',
   insertAdjacentHTML: 'a DOM insertAdjacentHTML call — an HTML-injection sink',
-  write: 'a document.write call — an HTML-injection sink',
-  writeln: 'a document.writeln call — an HTML-injection sink',
+  'document.write': 'a document.write call — an HTML-injection sink',
+  'document.writeln': 'a document.writeln call — an HTML-injection sink',
 };
 
 /**
@@ -168,6 +172,7 @@ const LITESHIP_TAINT_NOTES: Readonly<Record<string, string>> = {
 export const LITESHIP_TAINT_REGISTRY: TaintRegistry = {
   sources: new Set(LITESHIP_TAINT_SOURCES),
   sinks: new Set(LITESHIP_TAINT_SINKS),
+  memberSinks: new Set(LITESHIP_TAINT_MEMBER_SINKS),
   assignmentSinkNames: new Set(LITESHIP_TAINT_ASSIGNMENT_SINKS),
   sanitizers: new Set(LITESHIP_TAINT_SANITIZERS),
   notes: LITESHIP_TAINT_NOTES,

@@ -138,6 +138,13 @@ export interface TaintRegistry {
    */
   readonly sinks: ReadonlySet<string>;
   /**
+   * Qualified member-call sinks — `receiver.callee` pairs (e.g. `document.write`)
+   * matched only when the receiver is a bare identifier. Distinct from
+   * {@link sinks} to avoid classifying every `stream.write` / `stdout.write` as
+   * HTML injection.
+   */
+  readonly memberSinks?: ReadonlySet<string>;
+  /**
    * Assignment-TARGET property names that are sinks when assigned a tainted value
    * (e.g. `innerHTML`, `outerHTML`). Distinct from {@link sinks} because the
    * dangerous operation is a PROPERTY ASSIGNMENT (`el.innerHTML = tainted`), not a
@@ -640,11 +647,27 @@ function collectSinkCandidates(
   const candidates: SinkArgCandidate[] = [];
   const visit = (node: ts.Node): void => {
     if (ts.isCallExpression(node)) {
+      let sinkName: string | null = null;
       const name = calleeName(node);
       if (name !== null && ctx.registry.sinks.has(name)) {
+        sinkName = name;
+      } else if (
+        name !== null &&
+        ctx.registry.memberSinks !== undefined &&
+        ts.isPropertyAccessExpression(node.expression)
+      ) {
+        const receiver = node.expression.expression;
+        if (ts.isIdentifier(receiver)) {
+          const qualified = `${receiver.text}.${name}`;
+          if (ctx.registry.memberSinks.has(qualified)) {
+            sinkName = qualified;
+          }
+        }
+      }
+      if (sinkName !== null) {
         const line = lineOf(sourceFile, node);
         for (const arg of node.arguments) {
-          candidates.push({ sinkCallee: name, sinkFile: relativePath, sinkLine: line, argument: arg });
+          candidates.push({ sinkCallee: sinkName, sinkFile: relativePath, sinkLine: line, argument: arg });
         }
       }
     }

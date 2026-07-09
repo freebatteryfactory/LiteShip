@@ -161,7 +161,6 @@ export const LOCAL_SAFE_LABELS: readonly string[] = [
   'typecheck',
   'lint',
   'lint:structural',
-  'docs:check',
   'invariants',
   'check:gates',
   'audit:floor',

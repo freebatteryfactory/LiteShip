@@ -26,7 +26,7 @@ import { describe, it, expect } from 'vitest';
 import fc from 'fast-check';
 import { LITESHIP_TAINT_REGISTRY } from '../../../../packages/cli/src/lib/taint-policy.js';
 
-const { sources, sinks, sanitizers, assignmentSinkNames, notes } = LITESHIP_TAINT_REGISTRY;
+const { sources, sinks, sanitizers, assignmentSinkNames, memberSinks, notes } = LITESHIP_TAINT_REGISTRY;
 
 describe('LITESHIP_TAINT_REGISTRY — the shape contract', () => {
   it('is a well-formed TaintRegistry: Sets for the classifications + a notes record', () => {
@@ -53,11 +53,11 @@ describe('LITESHIP_TAINT_REGISTRY — the named visual-compiler seams', () => {
     expect(sources!.has('readFileSync')).toBe(true);
   });
 
-  it('SINKS: document.write / writeln callee names match member access (#121)', () => {
-    expect(sinks!.has('write')).toBe(true);
-    expect(sinks!.has('writeln')).toBe(true);
-    expect(sinks!.has('document.write')).toBe(false);
-    expect(sinks!.has('document.writeln')).toBe(false);
+  it('SINKS: document.write / writeln use receiver-qualified member sinks (#121)', () => {
+    expect(LITESHIP_TAINT_REGISTRY.memberSinks?.has('document.write')).toBe(true);
+    expect(LITESHIP_TAINT_REGISTRY.memberSinks?.has('document.writeln')).toBe(true);
+    expect(sinks!.has('write')).toBe(false);
+    expect(sinks!.has('writeln')).toBe(false);
   });
 
   it('SINKS: the GPU-shader compile + code-exec + AI-apply seams are dangerous', () => {
@@ -135,7 +135,7 @@ describe('LITESHIP_TAINT_REGISTRY — the classification LAWS (disjointness + no
     // The note is the WHY the finding renders without re-deriving it. The sanitizers
     // don't need a note (they break taint, they don't appear as a flow endpoint), but
     // every source/sink does. Property over the union of classified call names.
-    const callClassified = [...sources!, ...sinks!, ...assignmentSinkNames!];
+    const callClassified = [...sources!, ...sinks!, ...assignmentSinkNames!, ...(memberSinks ?? [])];
     fc.assert(
       fc.property(fc.constantFrom(...callClassified), (name) => {
         expect(typeof notes![name]).toBe('string');
@@ -148,7 +148,7 @@ describe('LITESHIP_TAINT_REGISTRY — the classification LAWS (disjointness + no
   it('an UNCLASSIFIED name has no note (the notes map is exactly the classified seams, no orphans)', () => {
     // A note for a name that is not classified anywhere would be dead documentation —
     // pin the map's keys are a SUBSET of the classified universe.
-    const classified = new Set([...sources!, ...sinks!, ...assignmentSinkNames!, ...sanitizers!]);
+    const classified = new Set([...sources!, ...sinks!, ...assignmentSinkNames!, ...(memberSinks ?? []), ...sanitizers!]);
     for (const key of Object.keys(notes!)) {
       expect(classified.has(key)).toBe(true);
     }

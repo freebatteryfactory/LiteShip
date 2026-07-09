@@ -31,6 +31,7 @@ describe('CUT 9 — gate-gap regressions (pre-commit ⊂ full CI)', () => {
     expect(gauntletPhaseProfiles['local-safe']).toEqual(LOCAL_SAFE_LABELS);
     const labels = LOCAL_SAFE_LABELS;
     expect(labels.indexOf('capsule:compile')).toBeLessThan(labels.indexOf('test (unit + component + property + integration)'));
+    expect(labels).not.toContain('docs:check');
     expect(labels).toContain('standards:gate');
     expect(labels).toContain('capability:gate');
     expect(CI_PARALLEL_FINAL_LABELS).toContain('standards:gate');
@@ -95,6 +96,7 @@ describe('CUT 9 — gate-gap regressions (pre-commit ⊂ full CI)', () => {
     expect(text).toContain('pinnedDispatcher');
     expect(text).toContain('dns/promises');
     expect(text).toMatch(/rebinding|pinned/i);
+    expect(text).toContain('await agent.close()');
   });
 
   test('realrepo-skip-proof guards unsanctioned skips in the live tree', () => {

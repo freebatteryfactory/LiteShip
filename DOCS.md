@@ -202,7 +202,7 @@ For agents and grep-first humans, here is where the canonical answer lives:
 | How do I add a new primitive? | `docs/adr/0001-namespace-pattern.md`, then mirror the existing primitive shape in `packages/core/src/` |
 | How do I extend an existing type union? | The pattern is grep-first today; see CONTRIBUTING.md "Architecture changes" and the affected `_spine/*.d.ts` file |
 | Where is the canonical CI workflow? | `.github/workflows/ci.yml` (truth-linux job runs `pnpm run gauntlet:full`) |
-| What is the 0.9 PR accept bar? | `pnpm run gauntlet:full -- --profile local-safe` (`LOCAL_SAFE_LABELS` in `packages/cli/src/gauntlet-phases.ts`; CONTRIBUTING.md) |
+| What is the 0.9 PR accept bar? | `pnpm run gauntlet:full -- --profile local-safe` — omits `docs:check` (memory-hungry; run alone when docs inputs change; see SKILL.md) |
 | Which API docs build is canonical? | [ADR-0038](./docs/adr/0038-typedoc-monolith-canonical.md) — monolith `pnpm run docs:build`; sharded is experimental |
 | Where is the red-team regression suite? | `tests/regression/red-team-runtime.test.ts` |
 | What does `flex:verify` check? | `scripts/flex-verify.ts` (7 dimensions; gauntlet's final phase rollup) |
