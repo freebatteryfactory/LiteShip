@@ -22,6 +22,12 @@ function mockPublicDns(hostname = 'example.test') {
     if (host === 'benchmark.example') {
       return [{ address: '198.18.0.1', family: 4 }];
     }
+    if (host === 'docv6.example') {
+      return [{ address: '2001:db8::1', family: 6 }];
+    }
+    if (host === 'mcastv6.example') {
+      return [{ address: 'ff02::1', family: 6 }];
+    }
     return [{ address: '93.184.216.34', family: 4 }];
   });
 }
@@ -85,6 +91,9 @@ describe('doctor --deployed (#116)', () => {
       'https://198.18.0.1/',
       'https://224.0.0.1/',
       'https://240.0.0.1/',
+      'https://[ff02::1]/',
+      'https://[2001:db8::1]/',
+      'https://[fec0::1]/',
     ]) {
       const checks = await probeDeployedSite(blocked);
       expect(fetchSpy).not.toHaveBeenCalled();
@@ -113,6 +122,18 @@ describe('doctor --deployed (#116)', () => {
     expect(checks[0]?.detail).toMatch(/DNS resolution returned a loopback\/private/i);
   });
 
+  test('refuses hostname resolving to IPv6 special-use address before fetch (DNS SSRF)', async () => {
+    const fetchSpy = vi.fn();
+    vi.stubGlobal('fetch', fetchSpy);
+
+    for (const host of ['https://docv6.example/', 'https://mcastv6.example/']) {
+      const checks = await probeDeployedSite(host);
+      expect(fetchSpy).not.toHaveBeenCalled();
+      expect(checks[0]?.status).toBe('fail');
+      expect(checks[0]?.detail).toMatch(/DNS resolution returned a loopback\/private/i);
+    }
+  });
+
   test('refuses when any A/AAAA record is private (multi-record fail-closed)', async () => {
     const fetchSpy = vi.fn();
     vi.stubGlobal('fetch', fetchSpy);
@@ -136,7 +157,7 @@ describe('doctor --deployed (#116)', () => {
 
   test('falls back to later public DNS address when first pin is unreachable', async () => {
     mockedLookup.mockImplementation(async () => [
-      { address: '2001:db8::1', family: 6 },
+      { address: '2607:f8b0:4005:8000::2003', family: 6 },
       { address: '93.184.216.34', family: 4 },
     ]);
     let fetchAttempts = 0;
