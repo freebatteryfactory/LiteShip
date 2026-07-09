@@ -53,10 +53,12 @@ export async function render(html: string): Promise<void> {
     });
 
     const facts = buildRepoIRTaint(LITESHIP_TAINT_REGISTRY, { profile, interproceduralDepth: 0 });
-    const writeFlows = facts.flows.filter((f) => f.sink.callee === 'write' || f.sink.callee === 'writeln');
+    const writeFlows = facts.flows.filter(
+      (f) => f.sink.callee === 'document.write' || f.sink.callee === 'document.writeln',
+    );
     expect(writeFlows.length).toBeGreaterThanOrEqual(1);
-    expect(writeFlows.some((f) => f.sink.callee === 'write' && f.source.callee === 'fetch')).toBe(true);
-    expect(writeFlows.some((f) => f.sink.callee === 'writeln' && f.source.callee === 'fetch')).toBe(true);
+    expect(writeFlows.some((f) => f.sink.callee === 'document.write' && f.source.callee === 'fetch')).toBe(true);
+    expect(writeFlows.some((f) => f.sink.callee === 'document.writeln' && f.source.callee === 'fetch')).toBe(true);
     expect(writeFlows.every((f) => f.sanitizedBy === null)).toBe(true);
   });
 });

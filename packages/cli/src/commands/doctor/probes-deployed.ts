@@ -8,9 +8,8 @@
  * (and every redirect hop — redirects are followed MANUALLY so each hop is
  * re-validated) must be `https:` and must not name a loopback / private /
  * link-local host. Each hop resolves DNS, rejects any private/reserved address
- * in the A/AAAA set (fail-closed), then connects to the first validated public
- * address via a pinned undici dispatcher — closing active DNS rebinding TOCTOU
- * (resolve-then-fetch-by-hostname would re-resolve at connect time).
+ * in the A/AAAA set (fail-closed), then tries each validated public address via
+ * a pinned undici dispatcher (closing active DNS rebinding TOCTOU).
  *
  * @module
  */
@@ -121,20 +120,20 @@ interface PinnedAddress {
 }
 
 type ResolvePinnedResult =
-  | { readonly _tag: 'ok'; readonly pin: PinnedAddress }
+  | { readonly _tag: 'ok'; readonly pins: readonly PinnedAddress[] }
   | { readonly _tag: 'blocked' }
   | { readonly _tag: 'dnsError'; readonly detail: string };
 
 /**
- * Resolve `hostname` to a single connectable public address. Fail-closed when any
+ * Resolve `hostname` to connectable public addresses. Fail-closed when any
  * A/AAAA record is blocked or when resolution yields nothing usable.
  */
-async function resolvePinnedPublicAddress(hostname: string): Promise<ResolvePinnedResult> {
+async function resolvePinnedPublicAddresses(hostname: string): Promise<ResolvePinnedResult> {
   const bare = hostname.replace(/^\[|\]$/g, '');
 
   if (isLiteralIpHostname(hostname)) {
     if (isBlockedHostname(bare)) return { _tag: 'blocked' };
-    return { _tag: 'ok', pin: { address: bare, family: bare.includes(':') ? 6 : 4 } };
+    return { _tag: 'ok', pins: [{ address: bare, family: bare.includes(':') ? 6 : 4 }] };
   }
 
   let records: { address: string; family: number }[];
@@ -154,15 +153,17 @@ async function resolvePinnedPublicAddress(hostname: string): Promise<ResolvePinn
     }
   }
 
-  const first = records[0]!;
   return {
     _tag: 'ok',
-    pin: { address: first.address, family: first.family === 6 ? 6 : 4 },
+    pins: records.map((record) => ({
+      address: record.address,
+      family: record.family === 6 ? 6 : 4,
+    })),
   };
 }
 
 /** undici dispatcher that connects only to a pre-validated address (DNS rebinding guard). */
-function pinnedDispatcher(pin: PinnedAddress): Dispatcher {
+function pinnedDispatcher(pin: PinnedAddress): Agent {
   return new Agent({
     connect: {
       lookup(_hostname, _options, callback) {
@@ -170,6 +171,28 @@ function pinnedDispatcher(pin: PinnedAddress): Dispatcher {
       },
     },
   });
+}
+
+/** Fetch one hop with DNS pinning; try each validated public address before failing. */
+async function fetchPinnedHop(url: URL, pins: readonly PinnedAddress[]): Promise<Response> {
+  let lastError: unknown;
+  for (const pin of pins) {
+    const agent = pinnedDispatcher(pin);
+    try {
+      const response = await fetch(url.href, {
+        redirect: 'manual',
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+        dispatcher: agent,
+      } as RequestInit & { dispatcher: Dispatcher });
+      await response.body?.cancel();
+      return response;
+    } catch (error) {
+      lastError = error;
+    } finally {
+      await agent.close();
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error(String(lastError));
 }
 
 /** Reason a URL is refused as a deployed-probe target, or null when acceptable. */
@@ -218,7 +241,7 @@ export async function probeDeployedSite(url: string): Promise<readonly DoctorChe
         return refusedCheck(rejection);
       }
 
-      const resolved = await resolvePinnedPublicAddress(current.hostname);
+      const resolved = await resolvePinnedPublicAddresses(current.hostname);
       if (resolved._tag === 'dnsError') {
         return refusedCheck(`Refusing to probe ${current.href} — DNS resolution failed: ${resolved.detail}`);
       }
@@ -227,13 +250,8 @@ export async function probeDeployedSite(url: string): Promise<readonly DoctorChe
           `Refusing to probe ${current.href} — DNS resolution returned a loopback/private/link-local address (SSRF guard)`,
         );
       }
-      const pin = resolved.pin;
 
-      response = await fetch(current.href, {
-        redirect: 'manual',
-        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-        dispatcher: pinnedDispatcher(pin),
-      } as RequestInit & { dispatcher: Dispatcher });
+      response = await fetchPinnedHop(current, resolved.pins);
 
       if (response.status >= 300 && response.status < 400) {
         const location = response.headers.get('location');

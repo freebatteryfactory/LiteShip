@@ -132,6 +132,32 @@ describe('buildRepoIRTaint — intra-procedural flow (depth 0)', () => {
     expect(facts.flows).toHaveLength(0);
   });
 
+  it('does NOT flag stream.write as an HTML sink (member sinks are receiver-qualified)', () => {
+    const registry: TaintRegistry = {
+      sources: new Set(['fetchSource']),
+      sinks: new Set(),
+      memberSinks: new Set(['document.write']),
+      sanitizers: new Set(),
+    };
+    const root = makeFixture({
+      'package.json': JSON.stringify({ name: 'acme-root', private: true, type: 'module' }),
+      'packages/core/package.json': PKG('@acme/core'),
+      'packages/core/src/index.ts':
+        'export function fetchSource(): string { return globalThis.location?.href ?? ""; }\n' +
+        'import { Writable } from "node:stream";\n' +
+        'export function run(out: Writable): void {\n' +
+        '  out.write(fetchSource());\n' +
+        '  document.write(fetchSource());\n' +
+        '}\n',
+    });
+    const facts = buildRepoIRTaint(registry, {
+      profile: acmeProfile(root),
+      interproceduralDepth: 0,
+    });
+    expect(facts.flows.some((f) => f.sink.callee === 'document.write')).toBe(true);
+    expect(facts.flows.some((f) => f.sink.callee === 'write')).toBe(false);
+  });
+
   it('traces an assignment sink (el.innerHTML = tainted)', () => {
     const facts = traceBody(
       'export function run(el: { innerHTML: string }): void {\n' +
