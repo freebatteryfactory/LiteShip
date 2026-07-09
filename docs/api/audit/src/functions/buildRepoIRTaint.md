@@ -8,7 +8,7 @@
 
 > **buildRepoIRTaint**(`registry`, `options?`): [`TaintFacts`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/taint-facts.ts)
 
-Defined in: [audit/src/repo-ir-taint.ts:732](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/repo-ir-taint.ts#L732)
+Defined in: [audit/src/repo-ir-taint.ts:760](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/repo-ir-taint.ts#L760)
 
 Build the GENERIC taint facts for a repo — the host-side materialization. Pure +
 deterministic: same source bytes + same registry → identical [TaintFacts](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/taint-facts.ts).
