@@ -26,12 +26,12 @@ function isWorkersTargeted(rel: string): boolean {
 }
 
 function parseJsonWranglerMain(config: string): string {
-  const quotedMain = /"main"\s*:\s*"((?:\\.|[^"\\])*)"/.exec(config);
+  const stripped = config.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+  const quotedMain = /"main"\s*:\s*"((?:\\.|[^"\\])*)"/.exec(stripped);
   if (quotedMain?.[1]) {
     return normalizeRepoPath(quotedMain[1].replace(/\\"/g, '"'));
   }
   try {
-    const stripped = config.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
     const json = JSON.parse(stripped) as { main?: string };
     if (typeof json.main === 'string' && json.main.length > 0) {
       return normalizeRepoPath(json.main);
