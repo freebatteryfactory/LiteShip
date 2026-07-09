@@ -38,6 +38,7 @@ It ships:
 - [CzapMorphRejectedDetail](interfaces/CzapMorphRejectedDetail.md)
 - [CzapStreamErrorDetail](interfaces/CzapStreamErrorDetail.md)
 - [CzapUniformUpdateDetail](interfaces/CzapUniformUpdateDetail.md)
+- [DpuAdoptClient](interfaces/DpuAdoptClient.md)
 - [FocusState](interfaces/FocusState.md)
 - [IMEState](interfaces/IMEState.md)
 - [LLMAdapterShape](interfaces/LLMAdapterShape.md)
@@ -72,6 +73,7 @@ It ships:
 
 ## Type Aliases
 
+- [ApplyVerifiablePatchAdoptResult](type-aliases/ApplyVerifiablePatchAdoptResult.md)
 - [ApplyVerifiablePatchResult](type-aliases/ApplyVerifiablePatchResult.md)
 - [ChunkParser](type-aliases/ChunkParser.md)
 - [CzapEventDisposer](type-aliases/CzapEventDisposer.md)
@@ -134,6 +136,7 @@ It ships:
 - [applyDiscreteSnapshotSignals](functions/applyDiscreteSnapshotSignals.md)
 - [applyGraphNativeSnapshot](functions/applyGraphNativeSnapshot.md)
 - [applyVerifiablePatch](functions/applyVerifiablePatch.md)
+- [applyVerifiablePatchAndAdopt](functions/applyVerifiablePatchAndAdopt.md)
 - [bindGraphForm](functions/bindGraphForm.md)
 - [bindRequestSnapshotRecovery](functions/bindRequestSnapshotRecovery.md)
 - [captureVideo](functions/captureVideo.md)

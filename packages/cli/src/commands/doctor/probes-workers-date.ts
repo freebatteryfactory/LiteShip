@@ -2,23 +2,46 @@
  * doctor — module-scope Date probe for Workers-targeted source (#115).
  *
  * Flags top-level `Date.now()` / `new Date()` in files that look Workers-bound
- * (wrangler config, cloudflare adapter imports, `*.worker.ts`).
+ * (wrangler config, cloudflare adapter imports, `*.worker.ts`) or in any file
+ * under a Workers project (wrangler.toml/json present).
  *
  * @module
  */
 
 import { normalizeRepoPath } from '@czap/audit';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { join, relative, resolve } from 'node:path';
+import { readWranglerConfig } from './manifest.js';
 import type { DoctorCheck } from './types.js';
 
 const DATE_PATTERNS = [/\bDate\.now\s*\(/, /\bnew\s+Date\s*\(/] as const;
 
 const WORKER_PATH_HINTS = ['wrangler', 'cloudflare', '.worker.', '/workers/', 'src/middleware.ts'] as const;
 
+const DEFAULT_WRANGLER_MAIN = 'src/index.ts';
+
 function isWorkersTargeted(rel: string): boolean {
   const lower = normalizeRepoPath(rel).toLowerCase();
   return WORKER_PATH_HINTS.some((hint) => lower.includes(hint));
+}
+
+function parseWranglerMain(cwd: string): string {
+  for (const name of ['wrangler.jsonc', 'wrangler.json', 'wrangler.toml']) {
+    const path = resolve(cwd, name);
+    if (!existsSync(path)) continue;
+    const config = readFileSync(path, 'utf8');
+    if (name.endsWith('.toml')) {
+      const tomlMatch = /^\s*main\s*=\s*["']([^"']+)["']/m.exec(config);
+      return tomlMatch?.[1] ? normalizeRepoPath(tomlMatch[1]) : DEFAULT_WRANGLER_MAIN;
+    }
+    const stripped = config.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+    const json = JSON.parse(stripped) as { main?: string };
+    if (typeof json.main === 'string' && json.main.length > 0) {
+      return normalizeRepoPath(json.main);
+    }
+    return DEFAULT_WRANGLER_MAIN;
+  }
+  return DEFAULT_WRANGLER_MAIN;
 }
 
 function walkSourceFiles(dir: string, root: string, out: string[]): void {
@@ -91,19 +114,38 @@ function hasModuleScopeDate(source: string): boolean {
   return DATE_PATTERNS.some((re) => re.test(topLevel));
 }
 
+function shouldScanFile(rel: string, workersProject: boolean, wranglerMain: string): boolean {
+  const normalized = normalizeRepoPath(rel);
+  if (workersProject) {
+    return normalized.startsWith('src/') || normalized === wranglerMain;
+  }
+  return isWorkersTargeted(rel);
+}
+
 /**
  * Scan `cwd` for module-scope ambient Date reads in Workers-targeted files.
  */
 export function probeWorkersModuleScopeDate(cwd: string): DoctorCheck {
+  const wrangler = readWranglerConfig(cwd);
+  const workersProject = wrangler.kind === 'ok';
+  const wranglerMain = workersProject ? parseWranglerMain(cwd) : DEFAULT_WRANGLER_MAIN;
+
   const srcDir = join(cwd, 'src');
   const files: string[] = [];
   walkSourceFiles(existsSync(srcDir) ? srcDir : cwd, cwd, files);
 
+  if (workersProject && !files.some((rel) => normalizeRepoPath(rel) === wranglerMain)) {
+    const mainAbs = join(cwd, wranglerMain);
+    if (existsSync(mainAbs)) {
+      files.push(wranglerMain);
+    }
+  }
+
   const hits: string[] = [];
   for (const rel of files) {
-    if (!isWorkersTargeted(rel)) continue;
+    if (!shouldScanFile(rel, workersProject, wranglerMain)) continue;
     const source = readFileSync(join(cwd, rel), 'utf8');
-    if (hasModuleScopeDate(source)) hits.push(rel);
+    if (hasModuleScopeDate(source)) hits.push(normalizeRepoPath(rel));
   }
 
   if (hits.length === 0) {

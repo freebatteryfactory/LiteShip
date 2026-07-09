@@ -1,7 +1,8 @@
 # ADR-0037 — `audit --consumer` structure-pass suppression
 
 **Status:** Accepted  
-**Date:** 2026-07-08
+**Date:** 2026-07-08  
+**Issue:** [#128](https://github.com/freebatteryfactory/LiteShip/issues/128) (closed)
 
 ## Context
 

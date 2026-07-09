@@ -13,7 +13,7 @@
  *
  * @module
  */
-import type { AddressedDigest, ContentAddress } from '@czap/core';
+import type { AddressedDigest, ContentAddress, DocumentGraph } from '@czap/core';
 import { AddressedDigest as AddressedDigestNS } from '@czap/core';
 import { ValidationError } from '@czap/error';
 import { morphPure } from '../morph/diff-pure.js';
@@ -208,6 +208,54 @@ export function applyVerifiablePatch(
   const appliedDigest = digestHtmlFragment(target.innerHTML);
   stampTarget(target, envelope, appliedDigest);
   return { _tag: 'applied', rung, envelope, appliedDigest };
+}
+
+/** Host mutation client surface for adopt-under after a successful DPU apply (#120). */
+export interface DpuAdoptClient {
+  readonly adopt: (graph: DocumentGraph) => void;
+}
+
+/** Outcome of {@link applyVerifiablePatchAndAdopt} — patch apply plus graph adoption. */
+export type ApplyVerifiablePatchAdoptResult =
+  | Extract<ApplyVerifiablePatchResult, { readonly _tag: 'applied' }>
+  | Exclude<ApplyVerifiablePatchResult, { readonly _tag: 'applied' }>
+  | {
+      readonly _tag: 'refused';
+      readonly verification: {
+        readonly _tag: 'resultGraphMismatch';
+        readonly expected: ContentAddress;
+        readonly received: ContentAddress;
+      };
+    };
+
+/**
+ * Apply a verified DPU patch and adopt the result graph under the host mutation client.
+ * Refuses when `resultGraph.id` does not match `envelope.resultGraphId`.
+ */
+export function applyVerifiablePatchAndAdopt(
+  target: Element,
+  envelope: VerifiablePatchEnvelope,
+  currentBaseGraphId: ContentAddress,
+  adoptClient: DpuAdoptClient,
+  resultGraph: DocumentGraph,
+  capability: DpuCapability = detectDpuCapability(),
+): ApplyVerifiablePatchAdoptResult {
+  const patch = applyVerifiablePatch(target, envelope, currentBaseGraphId, capability);
+  if (patch._tag !== 'applied') {
+    return patch;
+  }
+  if (resultGraph.id !== envelope.resultGraphId) {
+    return {
+      _tag: 'refused',
+      verification: {
+        _tag: 'resultGraphMismatch',
+        expected: envelope.resultGraphId,
+        received: resultGraph.id,
+      },
+    };
+  }
+  adoptClient.adopt(resultGraph);
+  return patch;
 }
 
 /**

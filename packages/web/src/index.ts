@@ -82,6 +82,7 @@ export {
   stampVerifiablePatch,
   verifyVerifiablePatch,
   applyVerifiablePatch,
+  applyVerifiablePatchAndAdopt,
   digestHtmlFragment,
   DPU_MARKER_ATTR,
   DPU_BASE_ATTR,
@@ -94,6 +95,8 @@ export type {
   VerifiablePatchEnvelope,
   VerifiablePatchVerification,
   ApplyVerifiablePatchResult,
+  ApplyVerifiablePatchAdoptResult,
+  DpuAdoptClient,
   WatchAndPrepareHandle,
 } from './dpu/watch-and-prepare.js';
 

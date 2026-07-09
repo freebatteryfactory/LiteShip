@@ -47,6 +47,7 @@ Prose vocabulary: [../GLOSSARY.md](../../GLOSSARY.md).
 | [0035](./0035-motion-is-intent-not-target.md) | Motion is an authored intent, not a projection target | Accepted |
 | [0036](./0036-audit-findings-stream-contract.md) | `audit --findings` stdout/stderr stream contract | Accepted |
 | [0037](./0037-audit-consumer-structure-suppression.md) | `audit --consumer` structure-pass suppression | Accepted |
+| [0038](./0038-typedoc-monolith-canonical.md) | TypeDoc monolith build is canonical | Accepted |
 
 ## Template
 

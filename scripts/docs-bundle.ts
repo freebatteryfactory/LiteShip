@@ -9,6 +9,7 @@
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { computeBundleId } from '../packages/astro/src/docs-bundle-id.js';
 
 const REPO_ROOT = join(import.meta.dirname, '..');
 const DEFAULT_SOURCES = [
@@ -82,9 +83,7 @@ export async function emitDocsBundle(opts: {
   const version =
     opts.version ??
     JSON.parse(readFileSync(join(REPO_ROOT, 'package.json'), 'utf8') as { version: string }).version;
-  const bundleId = createHash('sha256')
-    .update(entries.map((e) => `${e.path}:${e.sha256}`).join('\n'))
-    .digest('hex');
+  const bundleId = computeBundleId(entries);
   const manifest: DocsBundleManifest = {
     version,
     generatedAt: new Date().toISOString(),

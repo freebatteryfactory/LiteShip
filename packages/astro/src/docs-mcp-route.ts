@@ -9,6 +9,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { Diagnostics } from '@czap/core';
 import { ValidationError } from '@czap/error';
+import { computeBundleId } from './docs-bundle-id.js';
 
 /** One hashed file entry inside a docs-bundle manifest. */
 export interface DocsBundleManifestEntry {
@@ -38,7 +39,15 @@ export interface DocsMcpToolResult {
 
 /** Load a bundle directory produced by `pnpm run docs:bundle`. */
 export function loadDocsMcpBundle(bundleDir: string): DocsMcpBundle {
-  const manifest = JSON.parse(readFileSync(join(bundleDir, 'manifest.json'), 'utf8')) as DocsBundleManifest;
+  const raw = JSON.parse(readFileSync(join(bundleDir, 'manifest.json'), 'utf8')) as DocsBundleManifest;
+  const computedId = computeBundleId(raw.entries);
+  if (computedId !== raw.bundleId) {
+    throw ValidationError(
+      'loadDocsMcpBundle',
+      `docs-bundle-id-mismatch: manifest bundleId does not match recomputed hash from entries (expected ${computedId}, got ${raw.bundleId})`,
+    );
+  }
+  const manifest: DocsBundleManifest = { ...raw, bundleId: computedId };
   const filesDir = join(bundleDir, 'files');
   return {
     manifest,

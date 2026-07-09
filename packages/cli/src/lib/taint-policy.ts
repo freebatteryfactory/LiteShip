@@ -84,8 +84,8 @@ const LITESHIP_TAINT_SINKS: readonly string[] = [
   'Function',
   // DOM HTML injection via method call (sibling to assignment sinks below).
   'insertAdjacentHTML',
-  'document.write',
-  'document.writeln',
+  'write',
+  'writeln',
   // The AI-cast graph-apply into the LIVE runtime (the untrusted-apply seam).
   'applyValidatedPatch',
   'apply',
@@ -156,8 +156,8 @@ const LITESHIP_TAINT_NOTES: Readonly<Record<string, string>> = {
   innerHTML: 'a DOM innerHTML assignment — an HTML-injection sink',
   outerHTML: 'a DOM outerHTML assignment — an HTML-injection sink',
   insertAdjacentHTML: 'a DOM insertAdjacentHTML call — an HTML-injection sink',
-  'document.write': 'a document.write call — an HTML-injection sink',
-  'document.writeln': 'a document.writeln call — an HTML-injection sink',
+  write: 'a document.write call — an HTML-injection sink',
+  writeln: 'a document.writeln call — an HTML-injection sink',
 };
 
 /**

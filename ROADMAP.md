@@ -619,12 +619,14 @@ replayable graph events; continuous transients (`scroll.progress`/`pointer`/`aud
 audit, 3-agent cross-ref against issues + design note + this roadmap).** The slice landed
 clean: #106/#107 (code + tests in `wgsl-honesty.test.ts`), #124 (reveal shipped), #130
 (machinery + reveal), #132 (advisory→blocking), #133 (interim), #134 — a contracted
-vertical slice, gauntlet-enforced. **#125 responsive-media** projection (`<picture>`/srcset/
-image-set) is **NOT-STARTED** — explicitly owed, not implied landed. Four issues are
+vertical slice, gauntlet-enforced. **#125 responsive-media** DPR min-width base fixed in
+0.9 Tier A; Save-Data/Client-Hints → full `<picture>`/srcset projection tracked in a
+follow-up issue. Four issues are
 **PARTIAL — do NOT close as fully-done** (a piece shipped, the whole is owed):
-- **#124 stagger:** reveal/`@starting-style` shipped; stagger intent absent.
-- **#125 responsive-media:** Save-Data/DPR/Client Hints → `<picture>`/srcset/image-set
-  projection NOT-STARTED (zero symbols in packages).
+- **#124 stagger:** reveal/`@starting-style` + `examples/07-stagger-reveal` preset shipped;
+  multi-step seq/par chains deferred to follow-up.
+- **#125 responsive-media:** DPR min-width + core projection shipped; advanced Client-Hints
+  host wiring deferred (see follow-up issue).
 - **#126 scroll-timeline:** the native-CSS `@supports (animation-timeline: view())` floor +
   reveal's `view`/`scroll` trigger shipped (`MotionCompiler`); the *standalone scroll-timeline
   intent primitive* did not.
@@ -638,10 +640,9 @@ sequencing** — `interpretTransition` currently treats `seq`/`par`/`choice_then
 start→end; true chained-`TransitionNode` sequencing (the seq/par/choice algebra) is the
 natural follow-on, pairs with #126.
 
-**#136 (sharded low-memory docs build) — NOT STARTED (phantom claim corrected 2026-07-08).**
-Issue #136 documented fixes "already made on branch `liteship/fullsend-motion-stream-spine`",
-but `scripts/build-api-docs.ts` exists in no git ref (never committed). Repo truth: monolith
-TypeDoc build. Rebuild is Phase B Tier 3 work (#136 + #113 docs-bundle).
+**#136 (sharded low-memory docs build) — resolved by ADR-0038 (2026-07-08).** Monolith
+TypeDoc (`pnpm run docs:build`) is canonical; `docs:build:sharded` is experimental only.
+Sharded breadcrumb depth is a separate follow-up issue.
 
 ## Completed Since Last Revision (2026-05-17)
 
