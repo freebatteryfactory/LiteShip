@@ -28,7 +28,11 @@
  *   • `eval` / `Function` — code execution.
  *   • `applyValidatedPatch` / `apply` — the AI-cast graph-apply into the LIVE
  *     runtime (the untrusted-apply seam — a GraphPatch reaching the live graph).
- *   • `innerHTML` / `outerHTML` — a DOM-injection ASSIGNMENT sink (matched as the
+ *   • `insertAdjacentHTML` — a DOM HTML-injection call sink (callee-name matched).
+ *   • `document.write` / `document.writeln` — DOM HTML-injection MEMBER sinks
+ *     (receiver-qualified `identifier.write` only; bare `write` is deliberately
+ *     excluded to avoid `stream.write` false positives).
+ *   • `innerHTML` / `outerHTML` — DOM-injection ASSIGNMENT sinks (matched as the
  *     assignment-target property, not a call).
  *
  * SANITIZERS — the validators that BREAK the taint (the guarded boundaries):

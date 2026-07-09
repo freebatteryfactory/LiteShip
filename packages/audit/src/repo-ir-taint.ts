@@ -121,7 +121,10 @@ export const DEFAULT_TAINT_INTERPROCEDURAL_DEPTH = 8;
  * the `@czap/cli` host supplies the LiteShip-LOCAL set. Each is matched against a
  * call expression's CALLEE NAME — the bare identifier (`fetch`, `eval`) OR the
  * member name (`shaderSource`, `createShaderModule`, `innerHTML` as an assignment
- * target, `validateGraphPatchProposal`). A `Set` for O(1) classification.
+ * target, `validateGraphPatchProposal`). {@link memberSinks} adds a third channel:
+ * qualified `receiver.callee` pairs (e.g. `document.write`) matched only when the
+ * receiver is a bare identifier — aliases (`d.write`) and nested access
+ * (`window.document.write`) are intentionally out of scope. A `Set` for O(1) classification.
  */
 export interface TaintRegistry {
   /**
@@ -656,6 +659,8 @@ function collectSinkCandidates(
         ctx.registry.memberSinks !== undefined &&
         ts.isPropertyAccessExpression(node.expression)
       ) {
+        // Bare-identifier receiver only — `document.write` matches; `d.write` and
+        // `window.document.write` are intentionally out of scope (no alias resolution).
         const receiver = node.expression.expression;
         if (ts.isIdentifier(receiver)) {
           const qualified = `${receiver.text}.${name}`;

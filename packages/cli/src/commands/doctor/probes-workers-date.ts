@@ -31,13 +31,9 @@ function parseJsonWranglerMain(config: string): string {
   if (quotedMain?.[1]) {
     return normalizeRepoPath(quotedMain[1].replace(/\\"/g, '"'));
   }
-  try {
-    const json = JSON.parse(stripped) as { main?: string };
-    if (typeof json.main === 'string' && json.main.length > 0) {
-      return normalizeRepoPath(json.main);
-    }
-  } catch {
-    // Invalid JSONC — fall through to default main.
+  const singleQuotedMain = /'main'\s*:\s*'([^']+)'/.exec(stripped);
+  if (singleQuotedMain?.[1]) {
+    return normalizeRepoPath(singleQuotedMain[1]);
   }
   return DEFAULT_WRANGLER_MAIN;
 }

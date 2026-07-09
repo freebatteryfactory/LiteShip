@@ -5,8 +5,8 @@
  *
  * This module carries NO logic — it is DATA the host hands the oracle. So these pins
  * are CONTRACT pins on that data (the LAW it encodes), not behavior churn:
- *  - SHAPE: the registry is a valid `TaintRegistry` — `sources`/`sinks`/`sanitizers`/
- *    `assignmentSinkNames` are `Set`s, `notes` is a record.
+ *  - SHAPE: the registry is a valid `TaintRegistry` — `sources`/`sinks`/`memberSinks`/
+ *    `sanitizers`/`assignmentSinkNames` are `Set`s, `notes` is a record.
  *  - THE NAMED SEAMS: the real visual-compiler untrusted boundaries are classified —
  *    the network/file SOURCES, the GPU-shader / exec / AI-apply / DOM SINKS, and the
  *    AI-cast / genui / SSRF / SRI / HTML-policy SANITIZERS.
@@ -34,6 +34,7 @@ describe('LITESHIP_TAINT_REGISTRY — the shape contract', () => {
     expect(sinks).toBeInstanceOf(Set);
     expect(sanitizers).toBeInstanceOf(Set);
     expect(assignmentSinkNames).toBeInstanceOf(Set);
+    expect(memberSinks).toBeInstanceOf(Set);
     expect(typeof notes).toBe('object');
     expect(notes).not.toBeNull();
   });
@@ -43,8 +44,13 @@ describe('LITESHIP_TAINT_REGISTRY — the shape contract', () => {
     expect(sinks!.size).toBeGreaterThan(0);
     expect(sanitizers!.size).toBeGreaterThan(0);
     expect(assignmentSinkNames!.size).toBeGreaterThan(0);
+    expect(memberSinks!.size).toBeGreaterThan(0);
   });
 });
+
+function classifiedNames(): Set<string> {
+  return new Set([...sources!, ...sinks!, ...assignmentSinkNames!, ...memberSinks!, ...sanitizers!]);
+}
 
 describe('LITESHIP_TAINT_REGISTRY — the named visual-compiler seams', () => {
   it('SOURCES: the network fetch + the Node file reads are untrusted entry points', () => {
@@ -113,14 +119,21 @@ describe('LITESHIP_TAINT_REGISTRY — the deliberate exclusions (a host-policy t
 });
 
 describe('LITESHIP_TAINT_REGISTRY — the classification LAWS (disjointness + note coverage)', () => {
-  it('no name is BOTH a source and a sink (a name cannot mean two contradictory things)', () => {
+  it('no name is BOTH a source and a call sink (a name cannot mean two contradictory things)', () => {
     for (const name of sources!) {
       expect(sinks!.has(name)).toBe(false);
+      expect(memberSinks!.has(name)).toBe(false);
     }
   });
 
-  it('no name is BOTH a sink and a sanitizer (a guard cannot also be the danger)', () => {
+  it('no name is BOTH a call sink and a sanitizer (a guard cannot also be the danger)', () => {
     for (const name of sinks!) {
+      expect(sanitizers!.has(name)).toBe(false);
+    }
+  });
+
+  it('no name is BOTH a member sink and a sanitizer', () => {
+    for (const name of memberSinks!) {
       expect(sanitizers!.has(name)).toBe(false);
     }
   });
@@ -131,11 +144,18 @@ describe('LITESHIP_TAINT_REGISTRY — the classification LAWS (disjointness + no
     }
   });
 
-  it('every CALL-classified callee (source ∪ sink ∪ assignment-sink) carries a human note', () => {
+  it('member sinks are disjoint from bare call sinks and assignment sinks', () => {
+    for (const name of memberSinks!) {
+      expect(sinks!.has(name)).toBe(false);
+      expect(assignmentSinkNames!.has(name)).toBe(false);
+    }
+  });
+
+  it('every CALL-classified callee (source ∪ sink ∪ member-sink ∪ assignment-sink) carries a human note', () => {
     // The note is the WHY the finding renders without re-deriving it. The sanitizers
     // don't need a note (they break taint, they don't appear as a flow endpoint), but
     // every source/sink does. Property over the union of classified call names.
-    const callClassified = [...sources!, ...sinks!, ...assignmentSinkNames!, ...(memberSinks ?? [])];
+    const callClassified = [...sources!, ...sinks!, ...memberSinks!, ...assignmentSinkNames!];
     fc.assert(
       fc.property(fc.constantFrom(...callClassified), (name) => {
         expect(typeof notes![name]).toBe('string');
@@ -148,7 +168,7 @@ describe('LITESHIP_TAINT_REGISTRY — the classification LAWS (disjointness + no
   it('an UNCLASSIFIED name has no note (the notes map is exactly the classified seams, no orphans)', () => {
     // A note for a name that is not classified anywhere would be dead documentation —
     // pin the map's keys are a SUBSET of the classified universe.
-    const classified = new Set([...sources!, ...sinks!, ...assignmentSinkNames!, ...(memberSinks ?? []), ...sanitizers!]);
+    const classified = classifiedNames();
     for (const key of Object.keys(notes!)) {
       expect(classified.has(key)).toBe(true);
     }
@@ -157,10 +177,18 @@ describe('LITESHIP_TAINT_REGISTRY — the classification LAWS (disjointness + no
   it('a name absent from every set is classified by none (the negative control)', () => {
     fc.assert(
       fc.property(
-        fc.string().filter((s) => !sources!.has(s) && !sinks!.has(s) && !sanitizers!.has(s) && !assignmentSinkNames!.has(s)),
+        fc.string().filter(
+          (s) =>
+            !sources!.has(s) &&
+            !sinks!.has(s) &&
+            !memberSinks!.has(s) &&
+            !sanitizers!.has(s) &&
+            !assignmentSinkNames!.has(s),
+        ),
         (unknownName) => {
           expect(sources!.has(unknownName)).toBe(false);
           expect(sinks!.has(unknownName)).toBe(false);
+          expect(memberSinks!.has(unknownName)).toBe(false);
           expect(sanitizers!.has(unknownName)).toBe(false);
           expect(assignmentSinkNames!.has(unknownName)).toBe(false);
         },
