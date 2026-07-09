@@ -86,6 +86,22 @@ function isBlockedEmbeddedIpv4(host: string): boolean {
   return false;
 }
 
+/**
+ * True when an IPv6 literal is a non-public special-use range not covered by the
+ * ULA/link-local/loopback checks above — multicast (ff00::/8), deprecated
+ * site-local (fec0::/10), documentation (2001:db8::/32), 6to4 (2002::/16).
+ * Prefix heuristics on the normalized host string (DNS verbatim form).
+ */
+function isBlockedIpv6SpecialUse(host: string): boolean {
+  const lower = host.toLowerCase();
+  if (/^ff/i.test(lower)) return true;
+  if (/^fec[0-3]/i.test(lower)) return true;
+  if (/^2001:0?db8:/i.test(lower)) return true;
+  if (/^2002:/i.test(lower)) return true;
+  if (/^100:/i.test(lower)) return true;
+  return false;
+}
+
 /** True when `hostname` is a loopback / private / link-local / special-use host. */
 function isBlockedHostname(hostname: string): boolean {
   const host = hostname.toLowerCase().replace(/^\[|\]$/g, '');
@@ -102,6 +118,7 @@ function isBlockedHostname(hostname: string): boolean {
     if (host === '::' || host === '::1') return true;
     if (host.startsWith('fc') || host.startsWith('fd')) return true;
     if (/^fe[89ab]/.test(host)) return true;
+    if (isBlockedIpv6SpecialUse(host)) return true;
     if (isBlockedEmbeddedIpv4(host)) return true;
   }
 
