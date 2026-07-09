@@ -3567,6 +3567,11 @@
           "signature": "(3)"
         },
         {
+          "name": "applyVerifiablePatchAndAdopt",
+          "kind": "function",
+          "signature": "(5)"
+        },
+        {
           "name": "bindGraphForm",
           "kind": "function",
           "signature": "(2)"

@@ -4,7 +4,7 @@
 
 How LiteShip sits inside an Astro site: where the document host ends and the CZAP runtime begins. Imports stay on `@czap/*`; export names like `czapMiddleware()` stay literal.
 
-Naming: [GLOSSARY.md](./GLOSSARY.md).
+Naming: [GLOSSARY.md](./GLOSSARY.md). System map: [ARCHITECTURE.md](./ARCHITECTURE.md) (0.9 edge-delivery seams). Deploy: [HOSTING.md](./HOSTING.md).
 
 This is not a routing guide and not a content-model guide. It is about runtime responsibility.
 

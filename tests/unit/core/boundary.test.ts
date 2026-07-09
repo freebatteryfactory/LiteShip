@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest';
-import { Boundary, BoundarySpec } from '@czap/core';
+import { Boundary, BoundarySpec, Diagnostics } from '@czap/core';
 
 describe('Boundary.make', () => {
   test('creates a content-addressed boundary from ascending thresholds', () => {
@@ -93,6 +93,25 @@ describe('Boundary.make', () => {
     ).toThrow(
       'Boundary.make: duplicate state name "small" (used by two thresholds). Each threshold needs its own state — rename one, e.g. at: [[0, \'small\'], [768, \'medium\']]. If this throws mid-render, the boundary was constructed inside a render function; hoist it to module scope.',
     );
+  });
+
+  test('warnOnce when scroll.progress thresholds exceed 1 (#104)', () => {
+    const { sink, events } = Diagnostics.createBufferSink();
+    Diagnostics.setSink(sink);
+    try {
+      Boundary.make({
+        input: 'scroll.progress',
+        at: [
+          [0, 'a'],
+          [1.2, 'b'],
+        ] as const,
+      });
+      const warns = events.filter((e) => e.code === 'scroll-progress-threshold-scale');
+      expect(warns).toHaveLength(1);
+      expect(warns[0]?.message).toMatch(/0\.\.1/);
+    } finally {
+      Diagnostics.reset();
+    }
   });
 });
 

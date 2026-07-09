@@ -1,9 +1,36 @@
-import { describe, expect, test, vi, afterEach } from 'vitest';
+import { describe, expect, test, vi, afterEach, beforeEach } from 'vitest';
+import { lookup as dnsLookup } from 'node:dns/promises';
 import { probeDeployedSite } from '../../../../packages/cli/src/commands/doctor/probes-deployed.js';
 
+vi.mock('node:dns/promises', () => ({
+  lookup: vi.fn(),
+}));
+
+const mockedLookup = vi.mocked(dnsLookup);
+
+function mockPublicDns(hostname = 'example.test') {
+  mockedLookup.mockImplementation(async (host: string) => {
+    if (host === 'evil.example' || host === 'dual.example') {
+      return [
+        { address: '93.184.216.34', family: 4 },
+        { address: '10.0.0.1', family: 4 },
+      ];
+    }
+    if (host === 'private.example') {
+      return [{ address: '10.0.0.1', family: 4 }];
+    }
+    return [{ address: '93.184.216.34', family: 4 }];
+  });
+}
+
 describe('doctor --deployed (#116)', () => {
+  beforeEach(() => {
+    mockPublicDns();
+  });
+
   afterEach(() => {
     vi.unstubAllGlobals();
+    mockedLookup.mockReset();
   });
 
   test('reports Accept-CH and Vary from a live response', async () => {
@@ -29,6 +56,7 @@ describe('doctor --deployed (#116)', () => {
     const byId = Object.fromEntries(checks.map((c) => [c.id, c]));
     expect(byId['deployed.accept-ch']?.status).toBe('ok');
     expect(byId['deployed.vary']?.status).toBe('ok');
+    expect(mockedLookup).toHaveBeenCalledWith('example.test', { all: true, verbatim: true });
   });
 
   test('refuses non-HTTPS URLs (SSRF guard)', async () => {
@@ -59,6 +87,26 @@ describe('doctor --deployed (#116)', () => {
     }
   });
 
+  test('refuses hostname resolving to private address before fetch (DNS SSRF)', async () => {
+    const fetchSpy = vi.fn();
+    vi.stubGlobal('fetch', fetchSpy);
+
+    const checks = await probeDeployedSite('https://private.example/');
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(checks[0]?.status).toBe('fail');
+    expect(checks[0]?.detail).toMatch(/DNS resolution returned a loopback\/private/i);
+  });
+
+  test('refuses when any A/AAAA record is private (multi-record fail-closed)', async () => {
+    const fetchSpy = vi.fn();
+    vi.stubGlobal('fetch', fetchSpy);
+
+    const checks = await probeDeployedSite('https://dual.example/');
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(checks[0]?.status).toBe('fail');
+    expect(checks[0]?.detail).toMatch(/DNS resolution returned a loopback\/private/i);
+  });
+
   test('re-validates each redirect hop — a 302 to localhost is refused', async () => {
     vi.stubGlobal(
       'fetch',
@@ -68,6 +116,27 @@ describe('doctor --deployed (#116)', () => {
     const checks = await probeDeployedSite('https://example.test/');
     expect(checks[0]?.status).toBe('fail');
     expect(checks[0]?.detail).toMatch(/SSRF guard/i);
+  });
+
+  test('pin-and-connect: connect uses pinned public IP even if DNS would rebind on second lookup', async () => {
+    let lookupCalls = 0;
+    mockedLookup.mockImplementation(async () => {
+      lookupCalls += 1;
+      if (lookupCalls === 1) {
+        return [{ address: '93.184.216.34', family: 4 }];
+      }
+      return [{ address: '10.0.0.1', family: 4 }];
+    });
+
+    const fetchSpy = vi.fn(async () => new Response('ok', { status: 200, headers: {} }));
+    vi.stubGlobal('fetch', fetchSpy);
+
+    const checks = await probeDeployedSite('https://rebind-safe.example/');
+    expect(checks[0]?.status).not.toBe('fail');
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(lookupCalls).toBe(1);
+    const init = fetchSpy.mock.calls[0]?.[1] as { dispatcher?: unknown } | undefined;
+    expect(init?.dispatcher).toBeDefined();
   });
 
   test('red-team: v4-mapped IPv6 hex loopback is refused before fetch', async () => {

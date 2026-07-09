@@ -53,6 +53,13 @@ describe('LITESHIP_TAINT_REGISTRY — the named visual-compiler seams', () => {
     expect(sources!.has('readFileSync')).toBe(true);
   });
 
+  it('SINKS: document.write / writeln callee names match member access (#121)', () => {
+    expect(sinks!.has('write')).toBe(true);
+    expect(sinks!.has('writeln')).toBe(true);
+    expect(sinks!.has('document.write')).toBe(false);
+    expect(sinks!.has('document.writeln')).toBe(false);
+  });
+
   it('SINKS: the GPU-shader compile + code-exec + AI-apply seams are dangerous', () => {
     for (const sink of [
       'shaderSource',

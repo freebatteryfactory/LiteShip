@@ -231,7 +231,7 @@ the design is [ADR-0031](./docs/adr/0031-form-mutation-binding-primitive.md).
 
 ## 6. Where to go from here
 
-- [`examples/README.md`](./examples/README.md): the examples ladder — start with [`examples/tutorial`](./examples/tutorial) (five guided pages from boundaries to streaming/LLM), climb to the AI-refusal keystone, and finish at [`examples/06-mutation-roundtrip`](./examples/06-mutation-roundtrip), where a form submit becomes a validated `GraphPatch` via `createGraphMutationClient` + `bindGraphForm` — the client→server return leg
+- [`examples/README.md`](./examples/README.md): the examples ladder — start with [`examples/tutorial`](./examples/tutorial) (five guided pages from boundaries to streaming/LLM), climb to the AI-refusal keystone, finish at [`examples/06-mutation-roundtrip`](./examples/06-mutation-roundtrip) (client→server return leg), and see [`examples/07-stagger-reveal`](./examples/07-stagger-reveal) for a committed stagger preset (#124)
 - [AUTHORING-MODEL.md](./AUTHORING-MODEL.md): tokens, styles, and themes — the layer above boundaries (axis-varying values, per-state property sets, multi-variant theming), opening with a one-paragraph "what it feels like to author"
 - [ASTRO-STATIC-MENTAL-MODEL.md](./ASTRO-STATIC-MENTAL-MODEL.md): signals → boundaries → named states → outputs, the theory-first frame
 - [ASTRO-RUNTIME-MODEL.md](./ASTRO-RUNTIME-MODEL.md): how Astro hosts the runtime, directives, and the escalation path

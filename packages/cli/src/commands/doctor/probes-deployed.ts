@@ -7,14 +7,16 @@
  * SSRF hardening: the probe only ever fetches public HTTPS origins. The URL
  * (and every redirect hop — redirects are followed MANUALLY so each hop is
  * re-validated) must be `https:` and must not name a loopback / private /
- * link-local host. Each hop is bounded by a timeout so a black-holed URL
- * cannot hang `--ci` runs. Hostname checks are literal (no DNS resolution),
- * which is the right trade-off for a dev CLI: the https requirement means a
- * rebinding host still has to present a valid certificate for the name.
+ * link-local host. Each hop resolves DNS, rejects any private/reserved address
+ * in the A/AAAA set (fail-closed), then connects to the first validated public
+ * address via a pinned undici dispatcher — closing active DNS rebinding TOCTOU
+ * (resolve-then-fetch-by-hostname would re-resolve at connect time).
  *
  * @module
  */
 
+import { lookup as dnsLookup } from 'node:dns/promises';
+import { Agent, type Dispatcher } from 'undici';
 import type { DoctorCheck } from './types.js';
 
 const REQUIRED_ISOLATION = ['Cross-Origin-Opener-Policy', 'Cross-Origin-Embedder-Policy'] as const;
@@ -103,6 +105,69 @@ function isBlockedHostname(hostname: string): boolean {
   return false;
 }
 
+/** True when the hostname is a literal IP (v4 or v6) — skip DNS, use string guard only. */
+function isLiteralIpHostname(hostname: string): boolean {
+  const host = hostname.replace(/^\[|\]$/g, '');
+  return IPV4_RE.test(host) || host.includes(':');
+}
+
+interface PinnedAddress {
+  readonly address: string;
+  readonly family: 4 | 6;
+}
+
+type ResolvePinnedResult =
+  | { readonly _tag: 'ok'; readonly pin: PinnedAddress }
+  | { readonly _tag: 'blocked' }
+  | { readonly _tag: 'dnsError'; readonly detail: string };
+
+/**
+ * Resolve `hostname` to a single connectable public address. Fail-closed when any
+ * A/AAAA record is blocked or when resolution yields nothing usable.
+ */
+async function resolvePinnedPublicAddress(hostname: string): Promise<ResolvePinnedResult> {
+  const bare = hostname.replace(/^\[|\]$/g, '');
+
+  if (isLiteralIpHostname(hostname)) {
+    if (isBlockedHostname(bare)) return { _tag: 'blocked' };
+    return { _tag: 'ok', pin: { address: bare, family: bare.includes(':') ? 6 : 4 } };
+  }
+
+  let records: { address: string; family: number }[];
+  try {
+    const lookedUp = await dnsLookup(hostname, { all: true, verbatim: true });
+    records = Array.isArray(lookedUp) ? lookedUp : [lookedUp];
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    return { _tag: 'dnsError', detail };
+  }
+
+  if (records.length === 0) return { _tag: 'blocked' };
+
+  for (const record of records) {
+    if (isBlockedHostname(record.address)) {
+      return { _tag: 'blocked' };
+    }
+  }
+
+  const first = records[0]!;
+  return {
+    _tag: 'ok',
+    pin: { address: first.address, family: first.family === 6 ? 6 : 4 },
+  };
+}
+
+/** undici dispatcher that connects only to a pre-validated address (DNS rebinding guard). */
+function pinnedDispatcher(pin: PinnedAddress): Dispatcher {
+  return new Agent({
+    connect: {
+      lookup(_hostname, _options, callback) {
+        callback(null, pin.address, pin.family);
+      },
+    },
+  });
+}
+
 /** Reason a URL is refused as a deployed-probe target, or null when acceptable. */
 function rejectedDeployedUrl(url: URL): string | null {
   if (url.protocol !== 'https:') {
@@ -149,10 +214,22 @@ export async function probeDeployedSite(url: string): Promise<readonly DoctorChe
         return refusedCheck(rejection);
       }
 
+      const resolved = await resolvePinnedPublicAddress(current.hostname);
+      if (resolved._tag === 'dnsError') {
+        return refusedCheck(`Refusing to probe ${current.href} — DNS resolution failed: ${resolved.detail}`);
+      }
+      if (resolved._tag === 'blocked') {
+        return refusedCheck(
+          `Refusing to probe ${current.href} — DNS resolution returned a loopback/private/link-local address (SSRF guard)`,
+        );
+      }
+      const pin = resolved.pin;
+
       response = await fetch(current.href, {
         redirect: 'manual',
         signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-      });
+        dispatcher: pinnedDispatcher(pin),
+      } as RequestInit & { dispatcher: Dispatcher });
 
       if (response.status >= 300 && response.status < 400) {
         const location = response.headers.get('location');

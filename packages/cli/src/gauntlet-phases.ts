@@ -154,6 +154,22 @@ export const CI_PARALLEL_PREFLIGHT_LABELS: readonly string[] = [
   'audit:floor',
 ];
 
+/** Local-safe sweep — build through capability:gate without e2e/coverage/bench (0.9 tier accept bar). */
+export const LOCAL_SAFE_LABELS: readonly string[] = [
+  'build',
+  'capsule:compile',
+  'typecheck',
+  'lint',
+  'lint:structural',
+  'docs:check',
+  'invariants',
+  'check:gates',
+  'audit:floor',
+  CI_PARALLEL_SHARDED_TEST_LABEL,
+  'standards:gate',
+  'capability:gate',
+];
+
 export const CI_PARALLEL_INTEGRATION_LABELS: readonly string[] = [
   'test:vite',
   'test:astro',
@@ -182,6 +198,7 @@ const CI_PARALLEL_EXCLUDED_FROM_MID = new Set<string>([
 ]);
 
 export const gauntletPhaseProfiles: Readonly<Record<string, readonly string[]>> = {
+  'local-safe': LOCAL_SAFE_LABELS,
   'ci-parallel-preflight': CI_PARALLEL_PREFLIGHT_LABELS,
   'ci-parallel-integration': CI_PARALLEL_INTEGRATION_LABELS,
   'ci-parallel-bench': CI_PARALLEL_BENCH_LABELS,

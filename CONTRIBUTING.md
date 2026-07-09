@@ -92,6 +92,8 @@ in CI with `CI=1` (already standard) or `CZAP_QUIET_INSTALL=1`.
 
 ## The gauntlet, your release gate
 
+**0.9 tier / PR accept bar:** `pnpm run gauntlet:full -- --profile local-safe` runs build → capsule:compile → typecheck → lint → lint:structural → docs:check → invariants → check:gates → audit:floor → full unit test → standards:gate → capability:gate (see `LOCAL_SAFE_LABELS` in `packages/cli/src/gauntlet-phases.ts`).
+
 `pnpm run gauntlet:full` is the contract: the full shake-down cruise. It runs the full 39-phase sequence (the canonical ordered list + count is `packages/cli/src/gauntlet-phases.ts`, pinned by `tests/unit/devops/gauntlet-profile.test.ts` — never hand-counted):
 
 - rig-check (`doctor --preflight --ci` — env probes hard-fail before build)

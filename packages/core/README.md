@@ -2,7 +2,7 @@
 
 Creates the definitions — boundaries (named states over a numeric signal), design tokens, styles, themes — that the rest of LiteShip compiles to CSS and evaluates at runtime.
 
-> Install this directly when you want the definition primitives without a framework integration. If you're starting a new project, start with [liteship](https://www.npmjs.com/package/liteship) or [@czap/astro](https://www.npmjs.com/package/@czap/astro) instead.
+> Install this directly when you want the definition primitives without a framework integration. If you're starting a new project, start with [liteship](https://www.npmjs.com/package/liteship) or [@czap/astro](https://www.npmjs.com/package/@czap/astro) instead. Full ladder: [GETTING-STARTED.md](https://github.com/freebatteryfactory/LiteShip/blob/main/GETTING-STARTED.md).
 
 ## Install
 

@@ -29,6 +29,24 @@ describe('gauntlet phase subset selection', () => {
     ]);
   });
 
+  it('expands local-safe profile in canonical gauntlet order (0.9 tier accept bar)', () => {
+    const selected = selectGauntletPhases({ profile: 'local-safe' });
+    expect(selected.map((phase) => phase.label)).toEqual([
+      'build',
+      'capsule:compile',
+      'typecheck',
+      'lint',
+      'lint:structural',
+      'docs:check',
+      'invariants',
+      'check:gates',
+      'audit:floor',
+      'test (unit + component + property + integration)',
+      'standards:gate',
+      'capability:gate',
+    ]);
+  });
+
   it('omits --skip labels', () => {
     const selected = selectGauntletPhases({ skip: ['build', 'flex:verify'] });
     expect(selected.map((phase) => phase.label)).not.toContain('build');

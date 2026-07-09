@@ -85,6 +85,16 @@ function variantDpr(variant: ResponsiveMediaVariant, fallbackWidth: number): num
   return undefined;
 }
 
+function minPositiveWidth(variants: readonly ResponsiveMediaVariant[]): number {
+  let min = Number.POSITIVE_INFINITY;
+  for (const variant of variants) {
+    if (variant.width !== undefined && variant.width > 0) {
+      min = Math.min(min, variant.width);
+    }
+  }
+  return Number.isFinite(min) ? min : 0;
+}
+
 function escapeAttr(value: string): string {
   return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
@@ -121,7 +131,7 @@ export function buildResponsiveSrcset(variants: readonly ResponsiveMediaVariant[
  */
 export function buildResponsiveImageSet(variants: readonly ResponsiveMediaVariant[], baseWidth?: number): string {
   const parts: string[] = [];
-  const inferredBase = baseWidth ?? variants.find((v) => v.width !== undefined && v.width > 0)?.width ?? 0;
+  const inferredBase = baseWidth ?? minPositiveWidth(variants);
   for (const variant of variants) {
     let descriptor: string | undefined;
     if (variant.descriptor !== undefined) {
@@ -172,7 +182,7 @@ export function resolveResponsiveMedia(
     return Object.freeze({ src: intent.saveDataVariant.src, reason: 'save-data' });
   }
 
-  const baseWidth = intent.variants.find((v) => v.width !== undefined && v.width > 0)?.width ?? 0;
+  const baseWidth = minPositiveWidth(intent.variants);
   const scored = intent.variants
     .map((variant) => ({ variant, dpr: variantDpr(variant, baseWidth) ?? 1 }))
     .sort((a, b) => a.dpr - b.dpr);

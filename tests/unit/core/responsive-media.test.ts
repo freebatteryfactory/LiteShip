@@ -59,6 +59,21 @@ describe('ResponsiveMedia resolution', () => {
     expect(resolved.reason).toBe('dpr-match');
   });
 
+  test('adversarial: unsorted widths use min as DPR base — [1600,800,3200] at DPR 1 picks 800w asset', () => {
+    const intent = ResponsiveMedia.intent({
+      id: 'unsorted',
+      alt: 'x',
+      variants: [
+        { src: '/img/1600.jpg', width: 1600 },
+        { src: '/img/800.jpg', width: 800 },
+        { src: '/img/3200.jpg', width: 3200 },
+      ],
+    });
+    const resolved = resolveResponsiveMedia(intent, { devicePixelRatio: 1, saveData: false });
+    expect(resolved.src).toBe('/img/800.jpg');
+    expect(resolved.reason).toBe('dpr-match');
+  });
+
   test('adversarial: DPR 99 floors to largest variant', () => {
     const intent = heroMediaIntent();
     const resolved = resolveResponsiveMedia(intent, { devicePixelRatio: 99, saveData: false });

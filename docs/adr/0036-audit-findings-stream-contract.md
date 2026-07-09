@@ -1,7 +1,8 @@
 # ADR-0036 — `audit --findings` stream contract
 
 **Status:** Accepted  
-**Date:** 2026-07-08
+**Date:** 2026-07-08  
+**Issue:** [#127](https://github.com/freebatteryfactory/LiteShip/issues/127) (closed)
 
 ## Context
 

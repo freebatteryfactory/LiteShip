@@ -16,6 +16,7 @@ states, those states seal into a graph, and casts project that graph to outputs.
 | 4 · **the keystone** | [`05-ai-patch-refused/`](./05-ai-patch-refused) | a model's invalid `GraphPatch` is **refused**; only a validated proposal changes the graph |
 | 5 · the return leg | [`06-mutation-roundtrip/`](./06-mutation-roundtrip) | `createGraphMutationClient` + `bindGraphForm`: a form submit becomes a validated `GraphPatch`; stale bases are refused (`staleBase`/409) and auto-recovered — the refuse-seam both ways |
 | 6 · cast to video | [`remotion-demo/`](./remotion-demo) | the same DocumentGraph renders to video, headless |
+| 7 · stagger reveal | [`07-stagger-reveal/`](./07-stagger-reveal) | committed `Stagger.intent` preset + compile test (#124) |
 
 If you only open one, open **[`05-ai-patch-refused/`](./05-ai-patch-refused)** — it's the
 thesis in ~40 lines: the graph is the single truth, and the one way to change it is a

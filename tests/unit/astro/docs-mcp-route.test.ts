@@ -93,4 +93,14 @@ describe('docsMcpRoute (#113)', () => {
     const bundle = loadDocsMcpBundle(dir);
     expect(() => bundle.readDoc('GLOSSARY.md')).toThrow(/does not match its sealed manifest hash/);
   });
+
+  test('tampered top-level bundleId with valid entry shas is rejected at load', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'czap-docs-bundle-'));
+    const manifest = await emitDocsBundle({ outDir: dir, sources: ['GLOSSARY.md'], version: 'test' });
+    writeFileSync(
+      join(dir, 'manifest.json'),
+      JSON.stringify({ ...manifest, bundleId: '0'.repeat(64) }, null, 2) + '\n',
+    );
+    expect(() => loadDocsMcpBundle(dir)).toThrow(/docs-bundle-id-mismatch/);
+  });
 });
