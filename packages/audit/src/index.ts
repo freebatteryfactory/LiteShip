@@ -30,6 +30,7 @@ export * from './integrity.js';
 export * from './surface.js';
 export * from './skip-detect-ast.js';
 export * from './active-surface-reader.js';
+export * from './workers-date-scan.js';
 
 import { liteshipDevopsProfile, resolveDevopsProfile } from './devops-profile.js';
 import type { DevopsProfile } from './devops-profile.js';
