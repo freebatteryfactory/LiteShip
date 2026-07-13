@@ -8,7 +8,7 @@
 
 > **serializeBoundaryCss**(`resolution`): `string`
 
-Defined in: [astro/src/fetch-layer.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/fetch-layer.ts#L77)
+Defined in: [astro/src/fetch-layer.ts:78](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/fetch-layer.ts#L78)
 
 Serialize a resolution's compiled boundary outputs into one stylesheet.
 

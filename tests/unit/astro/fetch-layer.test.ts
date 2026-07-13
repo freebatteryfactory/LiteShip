@@ -105,6 +105,30 @@ describe('czapFetchLayer', () => {
     expect(typeof (await res.text())).toBe('string');
   });
 
+  test('pass-through merges the responsive-media Vary axis even with detect OFF (F-RM-3)', async () => {
+    // With detect off the client-hints Vary no longer advertises Save-Data / DPR, but a page can
+    // still render `responsiveMedia()` output that varies by them — the merge must key it apart so
+    // a CDN cannot serve the light srcset to a normal client (or vice versa) under one cache key.
+    const res = await czapFetchLayer({ detect: false })(makeRequest(), nextOk());
+    const vary = res.headers.get('Vary') ?? '';
+    expect(vary).toContain('Save-Data');
+    expect(vary).toContain('Sec-CH-DPR');
+  });
+
+  test('edge serve does NOT advertise the responsive-media Vary axis (boundary CSS carries no such output)', async () => {
+    // Detect off, so the only way Save-Data could enter Vary is the responsive-media merge — which
+    // the edge-serve CSS path must skip, keeping the boundary stylesheet cache-shared.
+    const layer = czapFetchLayer({ detect: false, edge: themeEdge, serveFromEdge: () => true });
+    const res = await layer(makeRequest(), nextOk());
+    expect(res.headers.get('Vary') ?? '').not.toContain('Save-Data');
+  });
+
+  test('Vary parity: pass-through merges the SAME responsive-media axis as czapMiddleware', async () => {
+    const mwRes = await czapMiddleware({ detect: false })({ request: makeRequest(), locals: {} }, nextOk());
+    const layerRes = await czapFetchLayer({ detect: false })(makeRequest(), nextOk());
+    expect(layerRes.headers.get('Vary')).toBe(mwRes.headers.get('Vary'));
+  });
+
   test('resolution parity: same response headers as czapMiddleware for the same request', async () => {
     const headers = { 'sec-ch-viewport-width': '1280', 'sec-ch-device-memory': '8' };
 

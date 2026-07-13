@@ -31,6 +31,7 @@
 import { ClientHints, createEdgeHostAdapter } from '@czap/edge';
 import type { CompiledOutputs, EdgeHostResolution } from '@czap/edge';
 import { applyCzapHeaders } from './headers.js';
+import { applyResponsiveMediaVary } from './responsive-media.js';
 import { consumeIntegrationToggles } from './integration-toggles.js';
 import type { CzapRuntimeToggles } from './integration-toggles.js';
 import type { CzapMiddlewareConfig } from './middleware.js';
@@ -105,11 +106,18 @@ function defaultRender(resolution: EdgeHostResolution): Response {
  * both the edge-serve and pass-through responses ask the browser for the hints
  * tier detection needs next navigation. Mirrors {@link czapMiddleware}'s
  * response decoration; the resolution's `responseHeaders` win when present.
+ *
+ * `mergeResponsiveMediaVary` merges the Save-Data / DPR axis into `Vary` exactly as
+ * `czapMiddleware` does — set ONLY on the pass-through (Astro HTML) path, since that is
+ * the response that can carry `responsiveMedia()` output whose srcset changes per client
+ * (F-RM-3). The edge-serve path returns boundary CSS with no responsive-media output, so
+ * it omits the axis and stays cache-shared across clients.
  */
 function withCzapHeaders(
   response: Response,
   resolution: EdgeHostResolution | null,
   toggles: CzapRuntimeToggles,
+  mergeResponsiveMediaVary: boolean,
 ): Response {
   const headers = applyCzapHeaders(new Headers(response.headers), {
     detectEnabled: toggles.detectEnabled,
@@ -118,6 +126,7 @@ function withCzapHeaders(
     acceptCH: resolution?.responseHeaders.acceptCH ?? ClientHints.acceptCHHeader(),
     criticalCH: resolution?.responseHeaders.criticalCH ?? ClientHints.criticalCHHeader(),
   });
+  if (mergeResponsiveMediaVary) applyResponsiveMediaVary(headers);
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,
@@ -160,13 +169,15 @@ export function czapFetchLayer(config?: CzapFetchLayerConfig): CzapFetchLayer {
   return async (request: Request, next: FetchLayerNext): Promise<Response> => {
     const resolution = edgeAdapter ? await edgeAdapter.resolve(request.headers) : null;
 
-    // Edge serve: serve the boundary CSS from the edge and skip Astro entirely.
+    // Edge serve: serve the boundary CSS from the edge and skip Astro entirely. No
+    // responsive-media output rides a CSS response, so it does not advertise that Vary axis.
     if (resolution && serveFromEdge?.(request, resolution)) {
-      return withCzapHeaders(render(resolution), resolution, toggles);
+      return withCzapHeaders(render(resolution), resolution, toggles, false);
     }
 
-    // Pass through: run the downstream (Astro) pipeline, then decorate headers.
+    // Pass through: run the downstream (Astro) pipeline, then decorate headers. This HTML can
+    // carry `responsiveMedia()` output, so it merges the Save-Data / DPR Vary axis (F-RM-3).
     const downstream = await next(request);
-    return withCzapHeaders(downstream, resolution, toggles);
+    return withCzapHeaders(downstream, resolution, toggles, true);
   };
 }
