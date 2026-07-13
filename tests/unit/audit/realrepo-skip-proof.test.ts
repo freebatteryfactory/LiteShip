@@ -20,6 +20,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { detectSkipsAST } from '@czap/audit';
 import { SANCTIONED_SKIPS, sanctionedSkipFor, normalizeSiteLine } from '@czap/gauntlet';
+import { scaledTimeout } from '../../../vitest.shared.js';
 
 const ROOT = process.cwd();
 
@@ -67,7 +68,11 @@ describe('REAL REPO — detectSkipsAST over the whole tests/ tree', () => {
     }
     // ZERO new false positives across the live tree.
     expect(blocking, `unsanctioned skips found:\n${blocking.join('\n')}`).toEqual([]);
-  });
+    // Full-tree AST scan (readFileSync + ts.createSourceFile over the whole tests/ corpus) is
+    // heavy synchronous work; the default 10s times out on a loaded Windows CI runner where the
+    // shared suite's import phase alone runs into minutes. Give it generous headroom via the
+    // repo's central CI-scaling policy (no raw literals — see test-timeout-policy).
+  }, scaledTimeout(30_000));
 });
 
 describe('F2 — structural conditionality is the sanctioning proof', () => {
