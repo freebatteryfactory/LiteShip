@@ -190,9 +190,15 @@ export function czapMiddleware(
     // Responsive-media representations vary by Save-Data / DPR — merge that axis into
     // the response Vary (union, never clobber) so a CDN keys the light and normal
     // srcsets apart. The production caller of responsiveMediaVaryHeader (#140).
-    if (detectEnabled) {
-      applyResponsiveMediaVary(headers);
-    }
+    //
+    // NOT gated on `detectEnabled`: `responsiveMedia()` is injected on `locals` for
+    // EVERY request and projects from `responsiveMediaCaps`, which is parsed from the
+    // request's real Client Hints regardless of detection (Save-Data is sent by
+    // data-saver browsers unprompted, never behind Accept-CH). So any page that renders
+    // through `Astro.locals.czap.responsiveMedia(intent)` can emit a Save-Data/DPR-
+    // specific srcset even with detect off — the Vary MUST advertise that axis or a CDN
+    // serves one variant under a shared cache key (F-RM-3).
+    applyResponsiveMediaVary(headers);
 
     return new Response(response.body, {
       status: response.status,

@@ -146,6 +146,28 @@ describe('Astro host path: czapMiddleware responsive-media projection (#140)', (
     expect(tokens).toContain('save-data'); // responsive-media axis added
     expect(tokens).toContain('sec-ch-dpr');
   });
+
+  // F-RM-3: `responsiveMedia()` is on locals for EVERY request and projects from caps
+  // parsed off the request's real Client Hints REGARDLESS of `detect`. A data-saver
+  // browser sends `Save-Data` unprompted (never behind Accept-CH), so with detect OFF a
+  // page rendering through the projector still emits a Save-Data-specific srcset — the
+  // Vary axis MUST still be advertised or a CDN serves one variant under a shared key.
+  test('advertises the responsive Vary axis even with detect DISABLED (Save-Data still varies output)', async () => {
+    const middleware = czapMiddleware({ detect: false });
+    const context = makeContext({ 'save-data': 'on' });
+    const response = await middleware(context, nextWithVary());
+
+    // Accept-CH is suppressed (detect off) but the output still varies by Save-Data...
+    expect(response.headers.get('Accept-CH')).toBeNull();
+    const projection = projector(context)(heroIntent());
+    expect(projection.resolved.src).toBe('/img/hero-lite.jpg'); // Save-Data honored regardless
+
+    // ...so the response MUST still Vary on that axis (union-merged with the app Vary).
+    const tokens = (response.headers.get('Vary') ?? '').split(',').map((t) => t.trim().toLowerCase());
+    expect(tokens).toContain('cookie');
+    expect(tokens).toContain('save-data');
+    expect(tokens).toContain('sec-ch-dpr');
+  });
 });
 
 // ── Cloudflare host path ─────────────────────────────────────────────────────────
