@@ -20,11 +20,11 @@ const hero = ResponsiveMedia.intent({
   id: 'hero-img',
   alt: 'Adaptive hero photograph',
   variants: [
-    { src: '/img/hero-800.jpg', width: 800 },
-    { src: '/img/hero-1600.jpg', width: 1600 },
-    { src: '/img/hero-2400.jpg', width: 2400 },
+    { src: '/img/hero-800.svg', width: 800 },
+    { src: '/img/hero-1600.svg', width: 1600 },
+    { src: '/img/hero-2400.svg', width: 2400 },
   ],
-  saveDataVariant: { src: '/img/hero-lite.jpg', width: 400 },
+  saveDataVariant: { src: '/img/hero-lite.svg', width: 400 },
   sizes: '100vw',
 });
 const media = czap?.responsiveMedia(hero);
