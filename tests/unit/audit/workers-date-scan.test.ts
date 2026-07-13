@@ -131,6 +131,18 @@ describe('scanModuleScopeDateReads — FOLLOWS module-scope helper calls execute
   test('a helper declared in a static block but never called stays CLEAN (deferred)', () => {
     expect(flagged('class C { static { function boot() { return Date.now(); } } }')).toBe(false);
   });
+
+  test('a helper declared + invoked inside a load-time IF block is followed (Codex P2)', () => {
+    expect(flagged('if (globalThis.flag) { function boot() { return Date.now(); } boot(); }')).toBe(true);
+  });
+
+  test('a helper declared + invoked inside a load-time FOR-loop body is followed', () => {
+    expect(flagged('for (let i = 0; i < 1; i++) { function boot() { return Date.now(); } boot(); }')).toBe(true);
+  });
+
+  test('a helper declared inside an executing block but never called stays CLEAN (deferred)', () => {
+    expect(flagged('if (globalThis.flag) { function boot() { return Date.now(); } }')).toBe(false);
+  });
 });
 
 describe('scanModuleScopeDateReads — deferred / deterministic reads are CLEAN (no false positive)', () => {
