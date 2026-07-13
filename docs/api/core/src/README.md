@@ -406,6 +406,7 @@ plan graph, ECS, capsule factory).
 - [decodeDocumentGraph](functions/decodeDocumentGraph.md)
 - [defineCapsule](functions/defineCapsule.md)
 - [defineConfig](functions/defineConfig.md)
+- [discreteTransitionPayload](functions/discreteTransitionPayload.md)
 - [discreteTransitionSubjectId](functions/discreteTransitionSubjectId.md)
 - [filterDiscreteSnapshotSignals](functions/filterDiscreteSnapshotSignals.md)
 - [fixedClock](functions/fixedClock.md)

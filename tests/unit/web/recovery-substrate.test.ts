@@ -120,6 +120,26 @@ describe('recordStreamPatchReceipt — attested buffering', () => {
     }
   });
 
+  test('HOSTILE: a payload-swapped frame (receipt for value X, transition with modified next/generation) is refused', async () => {
+    const dispose = registerStreamRecoverySubstrate('art-payload', substrate());
+    try {
+      // The receipt attests next:'tablet', generation:1 for subject czap:base#layout.
+      const frame = await validFrame('czap:base', 'layout');
+      // SAME self-consistent receipt + SAME subject, but the paired transition carries a
+      // DIFFERENT next-state value AND generation. The envelope hash and the subject law
+      // still pass — only the payload-law binding (receipt.payload must attest THIS value)
+      // catches it, so gap replay can never apply a value the receipt never signed.
+      const swapped = { receipt: frame.receipt, transition: mkTransition('czap:base', 'layout', 'desktop', 5) };
+      expect(await recordStreamPatchReceipt('art-payload', swapped)).toBe(false);
+      expect(getStreamRecoverySubstrate('art-payload')!.patchReceiptEntries).toHaveLength(0);
+
+      // Sanity: the UNMODIFIED frame the receipt actually attests is still accepted.
+      expect(await recordStreamPatchReceipt('art-payload', frame)).toBe(true);
+    } finally {
+      dispose();
+    }
+  });
+
   test('malformed frames are refused (not buffered)', async () => {
     const dispose = registerStreamRecoverySubstrate('art-bad', substrate());
     try {

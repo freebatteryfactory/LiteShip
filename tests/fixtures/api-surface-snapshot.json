@@ -1550,6 +1550,11 @@
           "signature": "(1)"
         },
         {
+          "name": "discreteTransitionPayload",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "discreteTransitionSubjectId",
           "kind": "function",
           "signature": "(1)"

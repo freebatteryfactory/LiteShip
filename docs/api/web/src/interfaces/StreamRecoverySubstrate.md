@@ -6,7 +6,7 @@
 
 # Interface: StreamRecoverySubstrate
 
-Defined in: [web/src/stream/recovery-substrate.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery-substrate.ts#L27)
+Defined in: [web/src/stream/recovery-substrate.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery-substrate.ts#L34)
 
 Host-supplied gap-replay substrate for one streamed artifact.
 
@@ -20,7 +20,7 @@ Host-supplied gap-replay substrate for one streamed artifact.
 
 > `readonly` **cellStore**: `StateCellStoreShape`
 
-Defined in: [web/src/stream/recovery-substrate.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery-substrate.ts#L33)
+Defined in: [web/src/stream/recovery-substrate.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery-substrate.ts#L40)
 
 The host's StateCell store for discrete crossing replay.
 
@@ -30,7 +30,7 @@ The host's StateCell store for discrete crossing replay.
 
 > `readonly` **graphQueryUrl**: `string`
 
-Defined in: [web/src/stream/recovery-substrate.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery-substrate.ts#L29)
+Defined in: [web/src/stream/recovery-substrate.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery-substrate.ts#L36)
 
 The host's QUERY read-leg endpoint (`graphQueryRoute` mount point).
 
@@ -40,6 +40,6 @@ The host's QUERY read-leg endpoint (`graphQueryRoute` mount point).
 
 > `readonly` **mutationClient**: [`StreamRecoveryMutationClient`](../type-aliases/StreamRecoveryMutationClient.md)
 
-Defined in: [web/src/stream/recovery-substrate.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery-substrate.ts#L31)
+Defined in: [web/src/stream/recovery-substrate.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery-substrate.ts#L38)
 
 The host's mutation client — supplies the local base and receives the adopted graph.

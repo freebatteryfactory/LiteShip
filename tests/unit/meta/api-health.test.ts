@@ -277,6 +277,7 @@ const STANDALONE_FUNCTIONS = [
   'decodeDiscreteStateTransition',
   'applyTransition',
   'discreteTransitionSubjectId',
+  'discreteTransitionPayload',
   // Channel additions (0.8.0): the shared applied-graph adopt guard + the
   // client-side base state machine (serialized submits, bounded stale-retry).
   'verifyAppliedGraph',

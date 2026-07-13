@@ -492,6 +492,7 @@ export {
   decodeDiscreteStateTransition,
   applyTransition,
   discreteTransitionSubjectId,
+  discreteTransitionPayload,
 } from './state-transition.js';
 export type { DiscreteStateTransition } from './state-transition.js';
 
