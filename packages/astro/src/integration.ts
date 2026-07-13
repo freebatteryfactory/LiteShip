@@ -19,7 +19,7 @@ import { collectBoundaryManifest, plugin, primitiveSearchPatterns } from '@czap/
 import type { PluginConfig, PrimitiveKind } from '@czap/vite';
 import { DETECT_UPGRADE_SCRIPT } from './detect-upgrade.js';
 import { DETECT_INLINE_SCRIPT } from './detect-provisional.js';
-import { getCzapHeaderEntries } from './headers.js';
+import { getCzapHeaderEntries, mergeVaryHeader } from './headers.js';
 import type { CrossOriginEmbedderPolicy } from './headers.js';
 import type { RuntimeEndpointPolicy } from '@czap/web';
 import type { DirectiveName } from './runtime/directive-boot.js';
@@ -466,16 +466,36 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
         logger.info('@czap dev server middleware active');
 
         if (detectEnabled || workersEnabled) {
-          server.middlewares.use((_req: unknown, res: { setHeader(k: string, v: string): void }, next: () => void) => {
-            for (const [header, value] of getCzapHeaderEntries({
-              detectEnabled,
-              workersEnabled,
-              ...(coep ? { coep } : {}),
-            })) {
-              res.setHeader(header, value);
-            }
-            next();
-          });
+          server.middlewares.use(
+            (
+              _req: unknown,
+              res: {
+                setHeader(k: string, v: string): void;
+                getHeader?(k: string): string | number | string[] | undefined;
+              },
+              next: () => void,
+            ) => {
+              for (const [header, value] of getCzapHeaderEntries({
+                detectEnabled,
+                workersEnabled,
+                ...(coep ? { coep } : {}),
+              })) {
+                if (header === 'Vary' && typeof res.getHeader === 'function') {
+                  // Additive header — union with any existing Vary rather than clobber it.
+                  const current = res.getHeader('Vary');
+                  const existing = Array.isArray(current)
+                    ? current.join(', ')
+                    : current === undefined
+                      ? null
+                      : String(current);
+                  res.setHeader('Vary', mergeVaryHeader(existing, value));
+                  continue;
+                }
+                res.setHeader(header, value);
+              }
+              next();
+            },
+          );
         }
       },
 
