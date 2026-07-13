@@ -69,6 +69,44 @@ describe('scanModuleScopeDateReads — additional load-time forms', () => {
   });
 });
 
+describe('scanModuleScopeDateReads — FOLLOWS module-scope helper calls executed at load (Codex P2)', () => {
+  test('a module-scope call to a local function declaration that reads the clock is FLAGGED', () => {
+    expect(flagged('function boot() { return Date.now(); }\nconst t = boot();')).toBe(true);
+  });
+
+  test('call BEFORE the (hoisted) function declaration is still followed', () => {
+    expect(flagged('const t = boot();\nfunction boot() { return Date.now(); }')).toBe(true);
+  });
+
+  test('a const arrow helper invoked at module scope is FLAGGED', () => {
+    expect(flagged('const boot = () => Date.now();\nexport const t = boot();')).toBe(true);
+  });
+
+  test('a TRANSITIVE helper chain (a → b → Date.now) is followed', () => {
+    expect(flagged('function b() { return Date.now(); }\nfunction a() { return b(); }\nconst t = a();')).toBe(true);
+  });
+
+  test('a recursive helper terminates (cycle guard) and still flags the read', () => {
+    expect(flagged('function boot(n) { if (n > 0) boot(n - 1);\n  return Date.now(); }\nconst t = boot(3);')).toBe(
+      true,
+    );
+  });
+
+  test('the reported position is inside the helper body, not the call site', () => {
+    const hits = scanModuleScopeDateReads(
+      'function boot() {\n  return Date.now();\n}\nconst t = boot();',
+      'x.worker.ts',
+    );
+    expect(hits).toHaveLength(1);
+    expect(hits[0]!.line).toBe(2); // Date.now() is inside boot, on line 2
+    expect(hits[0]!.kind).toBe('Date.now');
+  });
+
+  test('but a helper invoked ONLY inside a deferred (per-request) body stays CLEAN', () => {
+    expect(flagged('function boot() { return Date.now(); }\nexport function handler() { return boot(); }')).toBe(false);
+  });
+});
+
 describe('scanModuleScopeDateReads — deferred / deterministic reads are CLEAN (no false positive)', () => {
   test('deferred expression-bodied arrow (per-call)', () => {
     expect(flagged('export const clock = () => Date.now();')).toBe(false);
