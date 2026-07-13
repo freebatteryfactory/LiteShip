@@ -245,6 +245,48 @@ describe('graph-query gap replay — attested replay (#133-full)', () => {
     expect(store.snapshot('state')!.state).toBe('alpha');
     expect(store.snapshot('state')!.generation).toBe(1);
   });
+
+  test('MIXED gap: a state-only crossing on the local base is replayed ALONGSIDE a recast A→B', async () => {
+    // A pure StateCell crossing on `base` (no resultId) chained before a recast base→server.
+    // The QUERY returns the server graph (ok, not 304), so the branch search walks the
+    // recast — but the state-only cell must still hydrate, not be dropped as a non-edge.
+    const base = graph([node('a')]);
+    const patch = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('b.signal') }]);
+    const server = GraphPatch.apply(base, patch);
+    const store = StateCellStore.create();
+    store.register('state', ['a', 'alpha'], { kind: 'discrete' });
+    store.register('panel', ['closed', 'open'], { kind: 'discrete' });
+
+    const stateOnly: DiscreteStateTransition = {
+      _tag: 'DiscreteStateTransition',
+      _version: 1,
+      cell: 'panel',
+      next: StateName('open'),
+      generation: 1,
+      authority: 'graph',
+      base: base.id,
+      kind: 'discrete',
+    };
+    const recast = mkTransition(base.id, server.id, 'state', 'alpha', 1);
+    const e1 = await mkEntry(stateOnly);
+    const e2 = await mkEntry(recast, e1.receipt.hash);
+
+    const fetchImpl: typeof fetch = async () => {
+      const result = await handleGraphQuery({}, { loadGraph: () => server });
+      return { status: 200, json: async () => result } as Response;
+    };
+    const result = await runGraphNativeGapReplay({
+      queryUrl: '/api/graph',
+      localBase: base,
+      entries: [e1, e2],
+      cellStore: store,
+      adopt: () => undefined,
+      fetchImpl,
+    });
+    expect(result.query.status).toBe('ok');
+    expect(store.snapshot('state')!.state).toBe('alpha'); // recast cell
+    expect(store.snapshot('panel')!.state).toBe('open'); // state-only cell — NOT dropped
+  });
 });
 
 describe('graph-query gap replay — HOSTILE fixtures (Law 15)', () => {

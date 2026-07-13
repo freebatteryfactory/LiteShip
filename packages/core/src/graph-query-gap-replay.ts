@@ -87,17 +87,18 @@ export function chainPatchesBetween(
     byBase.set(entry.transition.base, list);
   }
 
+  // A STATE-ONLY crossing did NOT recast the graph (no `resultId`, or `resultId === base`:
+  // a pure StateCell transition). It is not a graph edge, so the branch search never
+  // follows it — but it DID happen and must still hydrate its cell.
+  const isStateOnly = (t: DiscreteStateTransition): boolean => t.resultId === undefined || t.resultId === t.base;
+
   if (localBaseId === serverGraphId) {
-    // Graph UNCHANGED (a 304 conditional read, or a same-id read). A graph-RECASTING
-    // crossing — its `resultId` names a DIFFERENT graph — did not take effect: the
-    // server never adopted that graph, so it is not replayed. But a STATE-ONLY crossing
-    // (no `resultId`, or `resultId === base`: a pure cell crossing that never recast the
-    // graph) DID happen and the HTML leg may have dropped it, so replay it. Returning []
-    // here (treating equal graph ids as no work) would leave state-only SSE gaps stale.
-    // The caller's chain floor + per-cell highest-generation fold settle each cell.
-    return (byBase.get(localBaseId) ?? [])
-      .filter((entry) => entry.transition.resultId === undefined || entry.transition.resultId === localBaseId)
-      .map((entry) => entry.transition);
+    // Graph UNCHANGED (a 304 conditional read, or a same-id read): there is no recast
+    // branch, so a graph-RECASTING crossing (its result graph the server never adopted)
+    // is not replayed — but a state-only crossing DID happen and the HTML leg may have
+    // dropped it. Returning [] here (equal graph ids as no work) would leave state-only
+    // SSE gaps stale. The caller's chain floor + per-cell highest-generation fold settle.
+    return (byBase.get(localBaseId) ?? []).filter((entry) => isStateOnly(entry.transition)).map((e) => e.transition);
   }
 
   const path: DiscreteStateTransition[] = [];
@@ -118,12 +119,11 @@ export function chainPatchesBetween(
 
     let found = false;
     for (const entry of byBase.get(current) ?? []) {
-      const resultId = entry.transition.resultId;
-      if (!resultId) {
-        continue;
+      if (isStateOnly(entry.transition)) {
+        continue; // not a graph edge — collected below, not walked
       }
       path.push(entry.transition);
-      if (search(resultId)) {
+      if (search(entry.transition.resultId!)) {
         found = true;
         break;
       }
@@ -137,7 +137,28 @@ export function chainPatchesBetween(
     return found;
   };
 
-  return search(localBaseId) ? path : [];
+  if (!search(localBaseId)) {
+    return [];
+  }
+
+  // MIXED gap: the recast branch reaches the server graph, but STATE-ONLY crossings
+  // anchored at the bases the branch passed through (local base, then each hop's result)
+  // did not recast the graph, so the `resultId`-only walk skipped them. Fold them into
+  // the selected set — a pure cell crossing on base A followed by a recast A→B must still
+  // hydrate its cell. Return in BUFFER order (= receipt-chain order) so the caller's
+  // `validateChainDetailed` sees a continuous `previous` chain.
+  const branchBases = new Set<string>([localBaseId, ...path.map((t) => t.resultId!)]);
+  const selected = new Set<DiscreteStateTransition>(path);
+  for (const entry of entries) {
+    if (
+      entry.receipt.kind === 'discrete-transition' &&
+      isStateOnly(entry.transition) &&
+      branchBases.has(entry.transition.base)
+    ) {
+      selected.add(entry.transition);
+    }
+  }
+  return entries.filter((entry) => selected.has(entry.transition)).map((entry) => entry.transition);
 }
 
 /**
