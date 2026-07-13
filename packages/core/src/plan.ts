@@ -1,6 +1,12 @@
 /**
  * Plan -- plan IR builder for universal execution DAG.
  *
+ * Beyond execution plans, this DAG is the ordering SUBSTRATE the authored-motion
+ * algebra reuses: `lowerTransitionProgram` (`transition-program.ts`, #141) builds a
+ * `Plan` per composition and reads `topoSort` to order a `seq`'s children
+ * deterministically (acyclicity + a canonical order come for free), so the composed
+ * window offsets are reproducible. `EdgeType` doubles as the transition edge flavor.
+ *
  * @module
  */
 

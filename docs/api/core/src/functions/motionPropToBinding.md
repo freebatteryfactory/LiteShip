@@ -8,7 +8,7 @@
 
 > **motionPropToBinding**(`target`, `key`): `string`
 
-Defined in: [core/src/reveal.ts:102](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L102)
+Defined in: [core/src/reveal.ts:104](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L104)
 
 Map a motion property key to a CSS custom-property binding for a target.
 

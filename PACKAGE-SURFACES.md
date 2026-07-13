@@ -141,6 +141,16 @@ The content-addressed keystone every cast reads from ([ADR-0015](./docs/adr/0015
 
 Main surfaces: `DocumentGraph`, `DocumentGraphNode`, `DocumentGraphEdge`, `DocumentGraphNodeSchema`, `sealNode` / `sealGraph`, `validateGraph`, `linearizeGraph`, `GraphPatch`. `apply` re-seals the graph, so a patched node's address stays honest. `DocumentGraphNodeSchema` carries Standard Schema V1 through `~standard` for host validators that consume that interop contract directly. Added 0.8.0.
 
+### Authored motion (`TransitionProgram`)
+
+The explicit multi-transition algebra ([ADR-0039](./docs/adr/0039-multi-transition-algebra.md)). Reach for it when you need:
+
+- to compose `TransitionNode`s into a real timeline — `seq` (total `Σ`, disjoint sub-windows), `par` (total `max`, short child holds), `choice` (exactly one branch, selected by a `BranchCondition` over a named signal, auditable receipt)
+- REAL multi-offset keyframes + per-window runtime sub-samplers (not the deleted routing-label two-endpoint collapse) that scrub through the `client:motion` floor
+- authoring sugar for a multi-step chain
+
+Main surfaces: `interpretTransition` (the single-step leaf reader) and, for composition, `lowerTransitionProgram` (deterministic `[0,1]` timeline, ordered through `Plan.topoSort`), `interpretProgram` (→ `LoweredMotionPlan` with multi-offset `css.keyframes` + `runtime.windows`), `sampleProgramWindows` (the one per-window runtime reader the floor shares), plus the `TransitionProgram` / `BranchCondition` / `ProgramEnv` types. Authoring: `Reveal.chain` (`lowerRevealChain`) and `staggerProgram`. `RuntimeWritePlan` gained one optional `windows` field. Added 0.9.0 (additive).
+
 ### AI cast
 
 Cast a graph *out* to a model and accept its reply safely ([ADR-0015](./docs/adr/0015-document-graph-ir.md)). Reach for it when you need:

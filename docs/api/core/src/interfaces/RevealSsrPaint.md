@@ -6,7 +6,7 @@
 
 # Interface: RevealSsrPaint
 
-Defined in: [core/src/reveal.ts:86](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L86)
+Defined in: [core/src/reveal.ts:88](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L88)
 
 SSR first-paint payload for a reveal boundary.
 
@@ -16,7 +16,7 @@ SSR first-paint payload for a reveal boundary.
 
 > `readonly` **boundaryAttr**: `string`
 
-Defined in: [core/src/reveal.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L89)
+Defined in: [core/src/reveal.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L91)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [core/src/reveal.ts:89](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **cssVars**: `Readonly`\<`Record`\<`string`, `string`\>\>
 
-Defined in: [core/src/reveal.ts:88](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L88)
+Defined in: [core/src/reveal.ts:90](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L90)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [core/src/reveal.ts:88](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **state**: [`StateName`](../type-aliases/StateName.md)
 
-Defined in: [core/src/reveal.ts:87](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L87)
+Defined in: [core/src/reveal.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L89)

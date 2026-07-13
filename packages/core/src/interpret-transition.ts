@@ -58,6 +58,20 @@ export interface RuntimeWriteProperty {
   readonly to: TypedValue;
 }
 
+/**
+ * A per-window runtime sub-sampler for a composed {@link TransitionProgram}: the
+ * properties one transition tweens over its `[windowStart, windowEnd]` slice of the
+ * global `[0,1]` timeline, with its OWN easing descriptor. Populated by
+ * `interpretProgram`; absent on a single-step plan (the flat `properties`/`easing`
+ * path). The `client:motion` floor samples these to scrub a multi-step chain.
+ */
+export interface RuntimeWriteWindow {
+  readonly windowStart: number;
+  readonly windowEnd: number;
+  readonly properties: readonly RuntimeWriteProperty[];
+  readonly easing: RuntimeEasing;
+}
+
 /** Runtime leaf-write plan — the permanent floor when native CSS is unavailable. */
 export interface RuntimeWritePlan {
   readonly properties: readonly RuntimeWriteProperty[];
@@ -72,6 +86,14 @@ export interface RuntimeWritePlan {
    * `linear()`, so the two floors sample one identical `Easing.spring` (Law 4).
    */
   readonly easing: RuntimeEasing;
+  /**
+   * Per-window sub-samplers for a composed {@link TransitionProgram} (from
+   * `interpretProgram`). Present ⇒ the floor scrubs each window at its own local
+   * eased progress (a multi-step chain); absent ⇒ the flat `properties`/`easing`
+   * single-tween path. The composite `durationMs`/`fromState`/`toState` describe the
+   * whole program.
+   */
+  readonly windows?: readonly RuntimeWriteWindow[];
 }
 
 /** Lowered motion intent — CSS projection + runtime floor + diagnostics. */
@@ -142,35 +164,21 @@ function diffBindings(
   return tweens;
 }
 
-function keyframesForRouting(
-  properties: readonly MotionPropertyTween[],
-  routing: EdgeType,
-): readonly CssKeyframeStep[] {
-  const atStart = Object.fromEntries(properties.map((p) => [p.property, formatTypedValue(p.from)]));
-  const atEnd = Object.fromEntries(properties.map((p) => [p.property, formatTypedValue(p.to)]));
-
-  switch (routing) {
-    case 'seq':
-      return [
-        { offset: 0, properties: atStart },
-        { offset: 1, properties: atEnd },
-      ];
-    case 'par':
-      return [
-        { offset: 0, properties: atStart },
-        { offset: 1, properties: atEnd },
-      ];
-    case 'choice_then':
-      return [
-        { offset: 0, properties: atStart },
-        { offset: 1, properties: atEnd },
-      ];
-    case 'choice_else':
-      return [
-        { offset: 0, properties: atEnd },
-        { offset: 1, properties: atStart },
-      ];
-  }
+/**
+ * A single transition is ONE pose→pose tween: a trivial two-frame lowering
+ * (`from` at `0%`, `to` at `100%`). The old `keyframesForRouting` switched on
+ * `routing` here and collapsed `seq`/`par`/`choice_then` to these SAME two frames
+ * (`choice_else` reversed them) — a routing LABEL pretending to be a sequencing
+ * algebra. That overload is DELETED (#141, Law 8): real multi-transition composition
+ * now lives in `interpretProgram` ({@link TransitionProgram}), which emits genuine
+ * multi-offset windows. `routing` remains the edge flavor BETWEEN adjacent
+ * transitions (the program tree reads it), not a per-node keyframe selector.
+ */
+function twoFrameKeyframes(properties: readonly MotionPropertyTween[]): readonly CssKeyframeStep[] {
+  return [
+    { offset: 0, properties: Object.fromEntries(properties.map((p) => [p.property, formatTypedValue(p.from)])) },
+    { offset: 1, properties: Object.fromEntries(properties.map((p) => [p.property, formatTypedValue(p.to)])) },
+  ];
 }
 
 function runtimeProperties(properties: readonly MotionPropertyTween[]): RuntimeWriteProperty[] {
@@ -272,7 +280,7 @@ export function interpretTransition(graph: DocumentGraph, transitionId: ContentA
   const durationMs = transition.durationMs ?? DEFAULT_DURATION_MS;
   const routing = transition.routing;
   const properties = diffBindings(fromPose.bindings, toPose.bindings);
-  const keyframes = keyframesForRouting(properties, routing);
+  const keyframes = twoFrameKeyframes(properties);
   const selector = `[data-czap-boundary="${component.name}"]`;
   const transitionProperty = properties.map((p) => p.property).join(', ');
 

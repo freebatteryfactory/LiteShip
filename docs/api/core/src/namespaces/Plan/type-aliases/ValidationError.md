@@ -8,6 +8,6 @@
 
 > **ValidationError** = `PlanValidationError`
 
-Defined in: [core/src/plan.ts:310](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/plan.ts#L310)
+Defined in: [core/src/plan.ts:316](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/plan.ts#L316)
 
 Alias for `PlanValidationError`.

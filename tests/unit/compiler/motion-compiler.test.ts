@@ -9,7 +9,9 @@ import {
   sealNode,
   sealGraph,
   interpretTransition,
+  interpretProgram,
   type CellMeta,
+  type ContentAddress,
   type DocumentGraph,
   type DocumentGraphNode,
   type DocumentGraphEdge,
@@ -230,6 +232,122 @@ describe('MotionCompiler', () => {
     expect(hero.keyframes).toContain('@keyframes czap-motion-hero-before-after');
     expect(footer.keyframes).toContain('@keyframes czap-motion-footer-before-after');
     expect(hero.keyframes).not.toContain('@keyframes czap-motion-footer-before-after');
+  });
+});
+
+/**
+ * The backend needs NO change for the multi-transition algebra (#141): once
+ * `interpretProgram` feeds it RICHER multi-offset keyframes, `MotionCompiler.compile`
+ * emits them verbatim through the same `emitKeyframeStep` (`step.offset`) path.
+ */
+describe('MotionCompiler — composed TransitionProgram keyframes (#141, backend unchanged)', () => {
+  function twoStepGraph(): { graph: DocumentGraph; a: ContentAddress; b: ContentAddress } {
+    const signal = sealNode({
+      _tag: 'DocGraphSignalNode',
+      _version: 1,
+      family: 'signal',
+      id: '',
+      meta: META,
+      input: 'scroll.progress',
+    } as unknown as SignalNode);
+    const component = sealNode({
+      _tag: 'DocGraphComponentNode',
+      _version: 1,
+      family: 'component',
+      id: '',
+      meta: META,
+      name: 'hero',
+      thresholds: [0, 1],
+      states: ['before', 'after'],
+    } as unknown as ComponentNode);
+    const entity = sealNode({
+      _tag: 'DocGraphEntityNode',
+      _version: 1,
+      family: 'entity',
+      id: '',
+      meta: META,
+      components: [component.id],
+    } as unknown as EntityNode);
+    const mkStep = (
+      from: Record<string, number | string>,
+      to: Record<string, number | string>,
+      durationMs: number,
+    ): TransitionNode & { fp: PoseNode; tp: PoseNode } => {
+      const fp = sealNode({
+        _tag: 'DocGraphPoseNode',
+        _version: 1,
+        family: 'pose',
+        id: '',
+        meta: META,
+        entityRef: entity.id,
+        state: 'before',
+        bindings: from,
+      } as unknown as PoseNode);
+      const tp = sealNode({
+        _tag: 'DocGraphPoseNode',
+        _version: 1,
+        family: 'pose',
+        id: '',
+        meta: META,
+        entityRef: entity.id,
+        state: 'after',
+        bindings: to,
+      } as unknown as PoseNode);
+      const tr = sealNode({
+        _tag: 'DocGraphTransitionNode',
+        _version: 1,
+        family: 'transition',
+        id: '',
+        meta: META,
+        fromPose: fp.id,
+        toPose: tp.id,
+        routing: 'seq',
+        durationMs,
+      } as unknown as TransitionNode);
+      return Object.assign(tr, { fp, tp });
+    };
+    const a = mkStep({ opacity: 0 }, { opacity: 1 }, 200);
+    const b = mkStep({ '--czap-hero-x': '0px' }, { '--czap-hero-x': '100px' }, 600);
+    const g = graph(
+      [signal, component, entity, a.fp, a.tp, a, b.fp, b.tp, b],
+      [{ from: signal.id, to: component.id, type: 'seq' }],
+    );
+    return { graph: g, a: a.id, b: b.id };
+  }
+
+  test('a seq program compiles to multi-offset @keyframes (0% / 25% / 100%)', () => {
+    const { graph: g, a, b } = twoStepGraph();
+    const plan = interpretProgram(g, {
+      kind: 'seq',
+      children: [
+        { kind: 'step', transitionId: a },
+        { kind: 'step', transitionId: b },
+      ],
+    });
+    const result = MotionCompiler.compile({ plan: plan.css! });
+    // Three stops, not the two-endpoint collapse — the seq seam is a real 25% stop.
+    expect(result.keyframes).toContain('  0% {');
+    expect(result.keyframes).toContain('  25% {');
+    expect(result.keyframes).toContain('  100% {');
+    // At the 25% seam: opacity fully 1 (A done), x still 0px (B not started).
+    const seam = result.keyframes.slice(result.keyframes.indexOf('  25% {'));
+    expect(seam).toContain('opacity: 1;');
+    expect(seam).toContain('--czap-hero-x: 0px;');
+  });
+
+  test('a par program compiles to distinct offsets from seq (max vs Σ duration)', () => {
+    const { graph: g, a, b } = twoStepGraph();
+    const par = interpretProgram(g, {
+      kind: 'par',
+      children: [
+        { kind: 'step', transitionId: a },
+        { kind: 'step', transitionId: b },
+      ],
+    });
+    const result = MotionCompiler.compile({ plan: par.css! });
+    // par total = max(200,600)=600 → A's window ends at 200/600 ≈ 33% (Math.round → 33%).
+    expect(result.keyframes).toContain('  33% {');
+    expect(result.keyframes).not.toContain('  25% {');
   });
 });
 

@@ -6,7 +6,7 @@
 
 # Interface: StaggerIntent
 
-Defined in: [core/src/stagger.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L51)
+Defined in: [core/src/stagger.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L52)
 
 Sealed stagger intent — data over graph, no behavior authority.
 
@@ -20,7 +20,7 @@ Sealed stagger intent — data over graph, no behavior authority.
 
 > `readonly` **\_tag**: `"StaggerIntent"`
 
-Defined in: [core/src/stagger.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L52)
+Defined in: [core/src/stagger.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L53)
 
 ***
 
@@ -28,7 +28,7 @@ Defined in: [core/src/stagger.ts:52](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **children**: readonly [`StaggerChild`](StaggerChild.md)[]
 
-Defined in: [core/src/stagger.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L44)
+Defined in: [core/src/stagger.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L45)
 
 #### Inherited from
 
@@ -40,7 +40,7 @@ Defined in: [core/src/stagger.ts:44](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **policy**: [`RevealPolicy`](RevealPolicy.md)
 
-Defined in: [core/src/stagger.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L47)
+Defined in: [core/src/stagger.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L48)
 
 #### Inherited from
 
@@ -52,7 +52,7 @@ Defined in: [core/src/stagger.ts:47](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **stepMs**: `number`
 
-Defined in: [core/src/stagger.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L45)
+Defined in: [core/src/stagger.ts:46](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L46)
 
 #### Inherited from
 
@@ -64,7 +64,7 @@ Defined in: [core/src/stagger.ts:45](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **transition**: [`RevealTransition`](RevealTransition.md)
 
-Defined in: [core/src/stagger.ts:46](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L46)
+Defined in: [core/src/stagger.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L47)
 
 #### Inherited from
 
@@ -76,7 +76,7 @@ Defined in: [core/src/stagger.ts:46](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **trigger**: [`RevealTrigger`](../type-aliases/RevealTrigger.md)
 
-Defined in: [core/src/stagger.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L43)
+Defined in: [core/src/stagger.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L44)
 
 #### Inherited from
 

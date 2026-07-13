@@ -8,11 +8,33 @@
 
 > `const` **Reveal**: `object`
 
-Defined in: [core/src/reveal.ts:326](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L326)
+Defined in: [core/src/reveal.ts:488](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L488)
 
 Authoring sugar namespace — data over intent, no behavior authority.
 
 ## Type Declaration
+
+### chain
+
+> `readonly` **chain**: (`input`) => [`LoweredRevealChain`](../interfaces/LoweredRevealChain.md) = `lowerRevealChain`
+
+Author a multi-step chain (`seq` + optional `choice`) → graph + [TransitionProgram](../type-aliases/TransitionProgram.md).
+
+Lower a [RevealChainInput](../interfaces/RevealChainInput.md) into ONE DocumentGraph (one signal + component +
+entity, N pose pairs + N transitions) plus a [TransitionProgram](../type-aliases/TransitionProgram.md) composing
+them: `seq` over the steps, with an optional trailing `choice`. This is the
+authoring sugar for the explicit multi-transition algebra — `interpretProgram`
+lowers the returned program to multi-offset keyframes + per-window sub-samplers.
+
+#### Parameters
+
+##### input
+
+[`RevealChainInput`](../interfaces/RevealChainInput.md)
+
+#### Returns
+
+[`LoweredRevealChain`](../interfaces/LoweredRevealChain.md)
 
 ### intent()
 

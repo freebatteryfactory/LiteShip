@@ -82,3 +82,8 @@ No change is made to `ProjectionNode.target`, `LadderTarget`, or `RuntimePhase`.
 - ROADMAP.md Epic 9 — Authored Motion + Self-Managing State
 - Epic #130 (authored motion), #131 (this decision), #132 (completeness gate), #133 (stream replay), #134 (wire contract)
 - Related: ADR-0021 (scene live bridge — discrete crossing vs continuous tween), ADR-0027 (reactive primitives are value→wire, never value→DOM)
+- **Superseded in part by [ADR-0039](./0039-multi-transition-algebra.md)** — this ADR
+  framed `EdgeType`/`routing` as the "sequencing algebra"; that per-node LABEL collapsed
+  `seq`/`par`/`choice` to identical two-endpoint frames. ADR-0039 replaces it with an
+  explicit `TransitionProgram` IR (real duration composition + branch selection). The
+  motion-is-intent taxonomy here still stands.

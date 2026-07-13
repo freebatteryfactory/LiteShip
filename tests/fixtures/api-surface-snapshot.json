@@ -1256,7 +1256,7 @@
         {
           "name": "Reveal",
           "kind": "namespace",
-          "signature": "intent:function"
+          "signature": "chain:function,intent:function"
         },
         {
           "name": "RuntimeCoordinator",
@@ -1635,6 +1635,11 @@
           "signature": "(3)"
         },
         {
+          "name": "interpretProgram",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
           "name": "interpretTransition",
           "kind": "function",
           "signature": "(2)"
@@ -1675,6 +1680,11 @@
           "signature": "(1)"
         },
         {
+          "name": "lowerRevealChain",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "lowerRevealIntent",
           "kind": "function",
           "signature": "(1)"
@@ -1688,6 +1698,11 @@
           "name": "lowerStaggerIntent",
           "kind": "function",
           "signature": "(1)"
+        },
+        {
+          "name": "lowerTransitionProgram",
+          "kind": "function",
+          "signature": "(2)"
         },
         {
           "name": "manualClock",
@@ -1795,6 +1810,11 @@
           "signature": "(1)"
         },
         {
+          "name": "sampleProgramWindows",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
           "name": "sampleRuntimeEasing",
           "kind": "function",
           "signature": "(1)"
@@ -1848,6 +1868,11 @@
           "name": "ssrRevealPaint",
           "kind": "function",
           "signature": "(2)"
+        },
+        {
+          "name": "staggerProgram",
+          "kind": "function",
+          "signature": "(1)"
         },
         {
           "name": "systemClock",

@@ -123,12 +123,35 @@ export type {
   CssMotionPlan,
   RuntimeWritePlan,
   RuntimeWriteProperty,
+  RuntimeWriteWindow,
   MotionPropertyTween,
   CssKeyframeStep,
 } from './interpret-transition.js';
 
-// Reveal intent sugar + graph lowering (#124)
-export { Reveal, lowerRevealIntent, resolveRevealInitialState, ssrRevealPaint, motionPropToBinding } from './reveal.js';
+// TransitionProgram — the explicit multi-transition algebra (#141). Composes
+// TransitionNodes (seq/par/choice) into a real timeline + multi-offset keyframes +
+// per-window runtime sub-samplers, replacing the deleted routing-label collapse.
+export { lowerTransitionProgram, interpretProgram, sampleProgramWindows } from './transition-program.js';
+export type {
+  TransitionProgram,
+  TransitionBranch,
+  BranchCondition,
+  ProgramEnv,
+  BranchGuard,
+  ProgramTimelineEntry,
+  LoweredProgramTimeline,
+} from './transition-program.js';
+
+// Reveal intent sugar + graph lowering (#124). `lowerRevealChain` (#141) authors a
+// multi-step chain (seq + optional choice) into one graph + a TransitionProgram.
+export {
+  Reveal,
+  lowerRevealIntent,
+  lowerRevealChain,
+  resolveRevealInitialState,
+  ssrRevealPaint,
+  motionPropToBinding,
+} from './reveal.js';
 export type {
   RevealIntent,
   RevealIntentInput,
@@ -138,10 +161,15 @@ export type {
   RevealReducedMotion,
   LoweredReveal,
   RevealSsrPaint,
+  RevealChainInput,
+  RevealChainStep,
+  RevealChainBranch,
+  LoweredRevealChain,
 } from './reveal.js';
 
-// Stagger intent sugar + graph lowering (#124 stagger)
-export { Stagger, lowerStaggerIntent, resolveStaggerInitialState } from './stagger.js';
+// Stagger intent sugar + graph lowering (#124 stagger). `staggerProgram` (#141)
+// composes the lowered children into a `par` TransitionProgram.
+export { Stagger, lowerStaggerIntent, resolveStaggerInitialState, staggerProgram } from './stagger.js';
 export type { StaggerIntent, StaggerIntentInput, StaggerChild, LoweredStagger, LoweredStaggerItem } from './stagger.js';
 
 // Scroll-timeline intent sugar + graph lowering (#126)

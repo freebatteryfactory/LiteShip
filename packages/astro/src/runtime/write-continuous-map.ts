@@ -12,6 +12,7 @@
 import {
   formatTypedValue,
   interpolateTyped,
+  sampleProgramWindows,
   sampleRuntimeEasing,
   type RuntimeWritePlan,
   type TypedValue,
@@ -51,18 +52,28 @@ export function writeContinuousMap(el: HTMLElement, plan: RuntimeWritePlan, t: n
   const css: Record<string, string> = {};
   const wgsl: Record<string, number> = {};
 
-  const eased = sampleRuntimeEasing(plan.easing)(t);
+  // A composed TransitionProgram carries per-window sub-samplers: each window bends
+  // its OWN easing over its own `[windowStart, windowEnd]` slice (seq seams, par
+  // overlaps, the selected choice branch). `sampleProgramWindows` is the ONE reader
+  // (Law 16) shared with the core algebra tests. A single-step plan has no windows —
+  // it stays on the flat single-easing tween path below (identical to W8).
+  const samples =
+    plan.windows && plan.windows.length > 0
+      ? sampleProgramWindows(plan.windows, t)
+      : plan.properties.map((prop) => ({
+          cssVar: prop.cssVar,
+          value: interpolateTyped(prop.from, prop.to, sampleRuntimeEasing(plan.easing)(t)),
+        }));
 
-  for (const prop of plan.properties) {
-    const interpolated = interpolateTyped(prop.from, prop.to, eased);
-    const formatted = formatTypedValue(interpolated);
-    el.style.setProperty(prop.cssVar, formatted);
-    css[prop.cssVar] = formatted;
+  for (const { cssVar, value } of samples) {
+    const formatted = formatTypedValue(value);
+    el.style.setProperty(cssVar, formatted);
+    css[cssVar] = formatted;
 
-    if (isGpuBound(interpolated)) {
-      const num = numericValue(interpolated);
+    if (isGpuBound(value)) {
+      const num = numericValue(value);
       if (num !== undefined) {
-        wgsl[wgslFieldFromCssVar(prop.cssVar)] = num;
+        wgsl[wgslFieldFromCssVar(cssVar)] = num;
       }
     }
   }

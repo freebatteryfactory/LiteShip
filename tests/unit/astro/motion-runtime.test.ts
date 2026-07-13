@@ -23,7 +23,9 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import {
   Reveal,
   lowerRevealIntent,
+  lowerRevealChain,
   interpretTransition,
+  interpretProgram,
   Easing,
   DEFAULT_MOTION_SPRING,
   type RevealIntent,
@@ -252,5 +254,87 @@ describe('client:motion — JS floor is the production driver (retires LATENT)',
     stepScroll(1);
     expect(uniformCount).toBe(0);
     expect(el.style.opacity).toBe(''); // never written by the floor
+  });
+
+  /**
+   * #141 — a composed TransitionProgram RUNS through the SAME production floor. A
+   * two-step `seq` chain (`opacity` over `[0,0.25]`, then `translateY` over
+   * `[0.25,1]`) is authored via `lowerRevealChain`, interpreted to per-window
+   * sub-samplers, and scrubbed by the real `client:motion` directive with native OFF.
+   * The seam at 0.25 and the mid-window sample prove `writeContinuousMap` reads the
+   * windows (Law 16), not the flat single-tween path.
+   */
+  describe('client:motion — multi-step TransitionProgram drives through the floor (#141)', () => {
+    /** seq[ opacity 0→1 over 300ms, translateY 24px→0px over 900ms ] → windows [0,.25],[.25,1]. */
+    function buildChainProgram(reducedMotion: 'settle' | 'none' = 'none'): SerializedMotionProgram {
+      const chain = lowerRevealChain({
+        target: 'hero',
+        trigger: { type: 'scroll', axis: 'progress' },
+        steps: [
+          { from: { opacity: 0 }, to: { opacity: 1 }, transition: { durationMs: 300, easing: 'linear' } },
+          {
+            from: { translateY: '24px' },
+            to: { translateY: '0px' },
+            transition: { durationMs: 900, easing: 'linear' },
+          },
+        ],
+        policy: { reducedMotion, motionTier: 'transitions' },
+      });
+      const plan = interpretProgram(chain.graph, chain.program);
+      const runtime = plan.runtime as RuntimeWritePlan;
+      const intent = Reveal.intent({
+        target: 'hero',
+        trigger: { type: 'scroll', axis: 'progress' },
+        from: { opacity: 0, translateY: '24px' },
+        to: { opacity: 1, translateY: '0px' },
+        transition: { durationMs: runtime.durationMs, easing: 'linear' },
+        policy: { reducedMotion, motionTier: 'transitions' },
+      });
+      return { intent, runtime, signals: plan.signals, threshold: 0.5 };
+    }
+
+    test('per-window sub-samplers scrub through the real directive (seam at 0.25, mid-window at 0.625)', () => {
+      const program = buildChainProgram();
+      // Sanity: the runtime plan carries two windows the floor must read.
+      expect(program.runtime.windows).toHaveLength(2);
+      const el = makeEl(program);
+      motionDirective(noop, {}, el);
+
+      // At the seam (0.25): step A (opacity) is complete; step B (y) has NOT started.
+      stepScroll(0.25);
+      expect(Number(el.style.opacity)).toBeCloseTo(1, 8);
+      expect(readY(el)).toBeCloseTo(24, 8); // y holds its `from` until window B opens
+
+      // Mid window B (0.625): local = (0.625-0.25)/0.75 = 0.5 → y = 24 - 24*0.5 = 12px.
+      stepScroll(0.625);
+      expect(Number(el.style.opacity)).toBe(1); // A holds its `to`
+      expect(readY(el)).toBeCloseTo(12, 6);
+
+      // Terminal (1): both windows complete.
+      stepScroll(1);
+      expect(Number(el.style.opacity)).toBe(1);
+      expect(readY(el)).toBeCloseTo(0, 8);
+    });
+
+    test('reduced-motion settles a chain to the TERMINAL pose once (last window `to`), no tween', () => {
+      vi.stubGlobal('matchMedia', (query: string) => ({
+        matches: query.includes('reduce'),
+        media: query,
+        addEventListener: () => {},
+        removeEventListener: () => {},
+      }));
+      const el = makeEl(buildChainProgram('settle'));
+      let uniformCount = 0;
+      el.addEventListener('czap:uniform-update', () => uniformCount++);
+
+      motionDirective(noop, {}, el);
+      // Terminal semantic state + every window at its `to` — the whole chain settled.
+      expect(el.getAttribute('data-czap-state')).toBe('after');
+      expect(Number(el.style.opacity)).toBe(1);
+      expect(readY(el)).toBe(0);
+      expect(uniformCount).toBe(1);
+      stepScroll(0.5);
+      expect(uniformCount).toBe(1); // loop skipped — no per-frame writes
+    });
   });
 });

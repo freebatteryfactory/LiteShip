@@ -15,6 +15,7 @@ import type {
   ComponentNode,
   DocumentGraph,
   DocumentGraphEdge,
+  DocumentGraphNode,
   EntityNode,
   PolicyNode,
   PoseNode,
@@ -29,6 +30,7 @@ import type { CellMeta } from './protocol.js';
 import { sourceToInput } from './signal-input.js';
 import type { SignalSource } from './signal.js';
 import type { MotionTier } from './ui-quality.js';
+import type { BranchCondition, TransitionProgram } from './transition-program.js';
 
 /** Reduced-motion handling for a reveal. */
 export type RevealReducedMotion = 'settle' | 'none';
@@ -264,6 +266,10 @@ export function lowerRevealIntent(intent: RevealIntent): LoweredReveal {
     meta: META,
     fromPose: fromPose.id,
     toPose: toPose.id,
+    // A lone reveal is ONE pose→pose step: `routing` (the edge flavor BETWEEN
+    // adjacent transitions) has no adjacent edge to describe, so it is inert here
+    // and defaults to `seq`. Real multi-step sequencing is a `TransitionProgram`
+    // over this node (see `lowerRevealChain`), NOT this per-node label (#141).
     routing: 'seq',
     durationMs: intent.transition.durationMs,
     easing: revealEasingDescriptor(intent.transition),
@@ -322,10 +328,168 @@ export function lowerRevealIntent(intent: RevealIntent): LoweredReveal {
   });
 }
 
+/** One authored step in a {@link RevealChainInput}: a pose→pose tween on the target. */
+export interface RevealChainStep {
+  readonly from: Readonly<Record<string, number | string>>;
+  readonly to: Readonly<Record<string, number | string>>;
+  readonly transition: RevealTransition;
+  /** Dead time before this step within the sequence (rides the seq offset). */
+  readonly delayMs?: number;
+}
+
+/** One `choice` arm appended to a chain: a condition over a named signal → a step. */
+export interface RevealChainBranch {
+  readonly when: BranchCondition;
+  readonly source: ReturnType<typeof sourceToInput>;
+  readonly step: RevealChainStep;
+}
+
+/**
+ * Authoring input to {@link lowerRevealChain} — a REAL multi-step chain on ONE
+ * target: a `seq` of steps, optionally followed by a `choice` (branches + an
+ * `otherwise`). Lowers to one graph + a {@link TransitionProgram} the motion floor
+ * drives, replacing the pre-W9 routing-label collapse (#141).
+ */
+export interface RevealChainInput {
+  readonly target: string;
+  readonly trigger: RevealTrigger;
+  readonly steps: readonly RevealChainStep[];
+  readonly choice?: { readonly branches: readonly RevealChainBranch[]; readonly otherwise?: RevealChainStep };
+  readonly policy: RevealPolicy;
+}
+
+/** Graph bundle + composed program produced by {@link lowerRevealChain}. */
+export interface LoweredRevealChain {
+  readonly graph: DocumentGraph;
+  readonly program: TransitionProgram;
+  readonly transitionIds: readonly ContentAddress[];
+  readonly componentId: ContentAddress;
+  readonly signalId: ContentAddress;
+}
+
+/**
+ * Lower a {@link RevealChainInput} into ONE DocumentGraph (one signal + component +
+ * entity, N pose pairs + N transitions) plus a {@link TransitionProgram} composing
+ * them: `seq` over the steps, with an optional trailing `choice`. This is the
+ * authoring sugar for the explicit multi-transition algebra — `interpretProgram`
+ * lowers the returned program to multi-offset keyframes + per-window sub-samplers.
+ */
+export function lowerRevealChain(input: RevealChainInput): LoweredRevealChain {
+  const signal = sealNode({
+    _tag: 'DocGraphSignalNode',
+    _version: 1,
+    family: 'signal',
+    id: '' as ContentAddress,
+    meta: META,
+    input: triggerToSignalInput(input.trigger),
+  } as unknown as SignalNode);
+
+  const component = sealNode({
+    _tag: 'DocGraphComponentNode',
+    _version: 1,
+    family: 'component',
+    id: '' as ContentAddress,
+    meta: META,
+    name: input.target,
+    thresholds: [0, 1],
+    states: [BEFORE, AFTER],
+  } as unknown as ComponentNode);
+
+  const entity = sealNode({
+    _tag: 'DocGraphEntityNode',
+    _version: 1,
+    family: 'entity',
+    id: '' as ContentAddress,
+    meta: META,
+    components: [component.id],
+  } as unknown as EntityNode);
+
+  const nodes: DocumentGraphNode[] = [signal, component, entity];
+  const transitionIds: ContentAddress[] = [];
+
+  const mkStep = (step: RevealChainStep): ContentAddress => {
+    const fromPose = sealNode({
+      _tag: 'DocGraphPoseNode',
+      _version: 1,
+      family: 'pose',
+      id: '' as ContentAddress,
+      meta: META,
+      entityRef: entity.id,
+      state: BEFORE,
+      bindings: normalizeBindings(input.target, step.from),
+    } as unknown as PoseNode);
+    const toPose = sealNode({
+      _tag: 'DocGraphPoseNode',
+      _version: 1,
+      family: 'pose',
+      id: '' as ContentAddress,
+      meta: META,
+      entityRef: entity.id,
+      state: AFTER,
+      bindings: normalizeBindings(input.target, step.to),
+    } as unknown as PoseNode);
+    const transition = sealNode({
+      _tag: 'DocGraphTransitionNode',
+      _version: 1,
+      family: 'transition',
+      id: '' as ContentAddress,
+      meta: META,
+      fromPose: fromPose.id,
+      toPose: toPose.id,
+      routing: 'seq',
+      durationMs: step.transition.durationMs,
+      easing: revealEasingDescriptor(step.transition),
+    } as unknown as TransitionNode);
+    nodes.push(fromPose, toPose, transition);
+    transitionIds.push(transition.id);
+    return transition.id;
+  };
+
+  const seqChildren: TransitionProgram[] = input.steps.map((step) => ({
+    kind: 'step',
+    transitionId: mkStep(step),
+    ...(step.delayMs !== undefined ? { delayMs: step.delayMs } : {}),
+  }));
+
+  if (input.choice) {
+    const branches = input.choice.branches.map((branch) => ({
+      when: branch.when,
+      source: branch.source,
+      body: { kind: 'step', transitionId: mkStep(branch.step) } as TransitionProgram,
+    }));
+    const choiceProgram: TransitionProgram = {
+      kind: 'choice',
+      branches,
+      ...(input.choice.otherwise
+        ? { otherwise: { kind: 'step', transitionId: mkStep(input.choice.otherwise) } as TransitionProgram }
+        : {}),
+    };
+    seqChildren.push(choiceProgram);
+  }
+
+  const graph = sealGraph({
+    _tag: 'DocumentGraph',
+    _version: 1,
+    meta: META,
+    nodes,
+    edges: [{ from: signal.id, to: component.id, type: 'seq' }],
+  } as Omit<DocumentGraph, 'id' | 'digest'>);
+
+  return Object.freeze({
+    graph,
+    program: { kind: 'seq', children: seqChildren } as TransitionProgram,
+    transitionIds: Object.freeze(transitionIds),
+    componentId: component.id,
+    signalId: signal.id,
+  });
+}
+
 /** Authoring sugar namespace — data over intent, no behavior authority. */
 export const Reveal = {
   /** Seal a reveal intent from authoring input. */
   intent(input: RevealIntentInput): RevealIntent {
     return Object.freeze({ _tag: 'RevealIntent', ...input });
   },
+  /** Author a multi-step chain (`seq` + optional `choice`) → graph + {@link TransitionProgram}. */
+  chain: lowerRevealChain,
 } as const;
