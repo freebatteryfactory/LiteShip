@@ -1,7 +1,7 @@
 {
   "name": "@czap/gauntlet",
   "version": "0.9.0",
-  "description": "Self-proving rigor engine: gates, findings, assurance levels, the authority ratchet, and `defineFactGate` (evidence-bound gates) — lean (no `typescript`; oracles host-injected)",
+  "description": "The rigor engine behind LiteShip's release gates: define quality gates that report findings and earn blocking power only by proving themselves against their own fixtures.",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",
   "repository": {
@@ -13,10 +13,10 @@
   "homepage": "https://github.com/freebatteryfactory/LiteShip#readme",
   "keywords": [
     "czap",
-    "rigor",
-    "audit",
+    "liteship",
+    "quality-gate",
     "fitness-function",
-    "assurance",
+    "static-analysis",
     "typescript"
   ],
   "type": "module",
