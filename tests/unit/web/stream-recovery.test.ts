@@ -160,7 +160,9 @@ describe('web stream recovery (#133)', () => {
   });
 
   test('bindRequestSnapshotRecovery dispatches czap:stream-error when recovery fails', async () => {
-    vi.spyOn(Resumption, 'fetchSnapshot').mockReturnValue(Effect.fail({ _tag: 'NetworkError', message: 'offline' }) as never);
+    vi.spyOn(Resumption, 'fetchSnapshot').mockReturnValue(
+      Effect.fail({ _tag: 'NetworkError', message: 'offline' }) as never,
+    );
 
     const host = document.createElement('div');
     const errors: Array<{ reason: string; message?: string }> = [];
@@ -205,21 +207,15 @@ describe('web stream recovery (#133)', () => {
     const signals: unknown[] = [];
     let htmlCalls = 0;
 
-    await supplementReplayIfSignalsDropped(
-      [
-        '<p>43</p>',
-        { type: 'signal', data: { state: 'missed' } },
-      ],
-      {
-        artifactId: 'doc-1',
-        handlers: {
-          applyHtml: async () => {
-            htmlCalls += 1;
-          },
-          applyDiscreteSignal: (payload) => signals.push(payload),
+    await supplementReplayIfSignalsDropped(['<p>43</p>', { type: 'signal', data: { state: 'missed' } }], {
+      artifactId: 'doc-1',
+      handlers: {
+        applyHtml: async () => {
+          htmlCalls += 1;
         },
+        applyDiscreteSignal: (payload) => signals.push(payload),
       },
-    );
+    });
 
     expect(fetchSpy).toHaveBeenCalledOnce();
     expect(htmlCalls).toBe(0);
@@ -299,5 +295,123 @@ describe('web stream recovery (#133)', () => {
 
     expect(gapReplay).toHaveBeenCalledOnce();
     expect(snapshotSpy).not.toHaveBeenCalled();
+  });
+
+  test('F-REC-3: valid-graph gap-replay + STALE DOM converges to fresh DOM (applies snapshot HTML)', async () => {
+    const local = graph([node('scroll.y')]);
+    const adopt = vi.fn();
+    vi.spyOn(core, 'runGraphNativeGapReplay').mockResolvedValue({
+      query: { status: 'ok', graph: local, etag: 'etag' },
+      replayedCells: [],
+      transitions: [],
+    } as never);
+    const snapshotSpy = vi.spyOn(Resumption, 'fetchSnapshot').mockReturnValue(
+      Effect.succeed({
+        type: 'snapshot',
+        html: '<main>fresh</main>',
+        signals: { state: 'converged' },
+        lastEventId: 'evt-3',
+      }),
+    );
+
+    const htmlApplied: string[] = [];
+    await runGraphNativeRecovery({
+      artifactId: 'doc-1',
+      graphQueryUrl: '/api/graph',
+      mutationClient: { base: () => local, adopt },
+      cellStore: { register: () => {}, hydrateDiscrete: () => ({}) } as never,
+      patchReceiptEntries: [],
+      // The morph was rejected → the rendered DOM is known-stale.
+      domStale: () => true,
+      handlers: {
+        applyHtml: async (html) => {
+          htmlApplied.push(html);
+        },
+        applyDiscreteSignal: () => undefined,
+      },
+    });
+
+    expect(snapshotSpy).toHaveBeenCalledOnce();
+    expect(htmlApplied).toEqual(['<main>fresh</main>']);
+  });
+
+  test('F-REC-3/4: 304 gap-replay + STALE DOM converges to fresh DOM AND does not throw', async () => {
+    const local = graph([node('scroll.y')]);
+    const adopt = vi.fn();
+    vi.spyOn(core, 'runGraphNativeGapReplay').mockResolvedValue({
+      query: { status: 'not_modified', etag: 'sha256:x' },
+      replayedCells: [],
+      transitions: [],
+    } as never);
+    const snapshotSpy = vi.spyOn(Resumption, 'fetchSnapshot').mockReturnValue(
+      Effect.succeed({
+        type: 'snapshot',
+        html: '<main>converged-304</main>',
+        signals: { state: 'ok' },
+        lastEventId: 'evt-4',
+      }),
+    );
+
+    const htmlApplied: string[] = [];
+    await expect(
+      runGraphNativeRecovery({
+        artifactId: 'doc-1',
+        graphQueryUrl: '/api/graph',
+        mutationClient: { base: () => local, adopt },
+        cellStore: { register: () => {}, hydrateDiscrete: () => ({}) } as never,
+        patchReceiptEntries: [],
+        domStale: () => true,
+        handlers: {
+          applyHtml: async (html) => {
+            htmlApplied.push(html);
+          },
+          applyDiscreteSignal: () => undefined,
+        },
+      }),
+    ).resolves.toBeUndefined();
+
+    expect(snapshotSpy).toHaveBeenCalledOnce();
+    expect(htmlApplied).toEqual(['<main>converged-304</main>']);
+  });
+
+  test('F-REC-3: gap-replay ok + FRESH DOM keeps the fast path (no snapshot fetch)', async () => {
+    const local = graph([node('scroll.y')]);
+    const adopt = vi.fn();
+    vi.spyOn(core, 'runGraphNativeGapReplay').mockResolvedValue({
+      query: { status: 'ok', graph: local, etag: 'etag' },
+      replayedCells: [],
+      transitions: [],
+    } as never);
+    const snapshotSpy = vi.spyOn(Resumption, 'fetchSnapshot');
+
+    await runGraphNativeRecovery({
+      artifactId: 'doc-1',
+      graphQueryUrl: '/api/graph',
+      mutationClient: { base: () => local, adopt },
+      cellStore: { register: () => {}, hydrateDiscrete: () => ({}) } as never,
+      patchReceiptEntries: [],
+      domStale: () => false,
+      handlers: { applyHtml: async () => {}, applyDiscreteSignal: () => undefined },
+    });
+
+    expect(snapshotSpy).not.toHaveBeenCalled();
+  });
+
+  test('F-REC-4: createGraphQueryRefreshBase resolves not_modified to the current base (no throw)', async () => {
+    const base = graph([node('a')]);
+    const fetchImpl: typeof fetch = async () =>
+      ({
+        status: 304,
+        headers: new Headers({ etag: `"${core.graphQueryEtag(base)}"` }),
+        json: async () => null,
+      }) as Response;
+
+    const refreshBase = core.createGraphQueryRefreshBase('/api/graph', {
+      fetchImpl,
+      currentEtag: () => core.graphQueryEtag(base),
+      currentBase: () => base,
+    });
+
+    await expect(refreshBase()).resolves.toBe(base);
   });
 });

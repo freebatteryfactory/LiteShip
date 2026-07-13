@@ -6,7 +6,13 @@
  */
 
 import { Effect } from 'effect';
-import type { DocumentGraph, GraphMutationClient, PatchReceiptEntry, StateCellStoreShape } from '@czap/core';
+import type {
+  DiscreteStateTransition,
+  DocumentGraph,
+  GraphMutationClient,
+  PatchReceiptEntry,
+  StateCellStoreShape,
+} from '@czap/core';
 import { createGraphQueryRefreshBase, graphQueryEtag, runGraphNativeGapReplay } from '@czap/core';
 import { filterDiscreteSnapshotSignals, replayDroppedSignals, validateSnapshotSignalsField } from '@czap/core';
 import { ValidationError } from '@czap/error';
@@ -25,7 +31,21 @@ export type StreamRecoveryMutationClient = Pick<GraphMutationClient, 'adopt' | '
 /** Host callbacks for applying a recovered snapshot. */
 export interface StreamRecoveryHandlers {
   readonly applyHtml: (html: string) => Promise<void>;
+  /**
+   * SNAPSHOT-FLOOR discrete signal application: raw, pre-filtered discrete
+   * payloads from the HTML snapshot re-sync (the permanent floor). These are NOT
+   * attestation-checked transitions, so the payload is deliberately `unknown`.
+   */
   readonly applyDiscreteSignal: (payload: unknown) => void;
+  /**
+   * TYPED gap-replay seam: reflect an attestation-checked
+   * {@link DiscreteStateTransition} into the host (e.g. dispatch to the DOM).
+   * The typed parameter is the uncompilable seam (Law 16) — a continuous cell /
+   * raw signal is not a `DiscreteStateTransition`, so it cannot be passed here.
+   * Optional: absent, the crossing still hydrates the cell store; only the host
+   * DOM reflection is skipped (the latent, producer-less state).
+   */
+  readonly applyTransition?: (transition: DiscreteStateTransition) => void;
 }
 
 /**
@@ -45,8 +65,18 @@ export interface StreamRecoveryOptions {
   readonly handlers: StreamRecoveryHandlers;
   /** StateCell store for discrete gap-replay (#133-full). Required with {@link patchReceiptEntries}. */
   readonly cellStore?: StateCellStoreShape;
-  /** Patch/receipt chain spanning the missed gap (#133-full). */
+  /** Transition/receipt chain spanning the missed gap (#133-full). */
   readonly patchReceiptEntries?: readonly PatchReceiptEntry[];
+  /**
+   * Whether the rendered DOM is KNOWN-STALE (F-REC-3). Recovery is usually
+   * triggered by a rejected morph, which leaves the DOM stale even after
+   * gap-replay corrects the graph + cell store. When this returns `true`,
+   * {@link runGraphNativeRecovery} applies fresh snapshot HTML on a successful
+   * QUERY (`ok`/`not_modified`) instead of early-returning — so a valid-graph or
+   * 304 read still CONVERGES the DOM. Absent/`false` preserves the gap-replay
+   * fast path (no snapshot fetch when the DOM is already fresh).
+   */
+  readonly domStale?: () => boolean;
 }
 
 const resolveRefreshBase = (
@@ -58,6 +88,9 @@ const resolveRefreshBase = (
         const base = options.mutationClient?.base();
         return base ? graphQueryEtag(base) : undefined;
       },
+      // F-REC-4: a conditional `not_modified` read is normal — resolve to the
+      // base the caller already holds instead of throwing.
+      currentBase: () => options.mutationClient?.base(),
     });
   }
   return options.mutationClient?.refreshBase;
@@ -123,9 +156,18 @@ export const runGraphNativeRecovery = async (options: StreamRecoveryOptions): Pr
       entries: options.patchReceiptEntries!,
       cellStore: options.cellStore!,
       adopt: (graph) => options.mutationClient!.adopt(graph),
-      applyDiscrete: options.handlers.applyDiscreteSignal,
+      ...(options.handlers.applyTransition !== undefined ? { applyTransition: options.handlers.applyTransition } : {}),
     });
     if (result.query.status === 'ok' || result.query.status === 'not_modified') {
+      // F-REC-3: gap-replay corrected the graph + cell store, but a rejected
+      // morph leaves the RENDERED DOM stale. A valid-graph read (or a 304) does
+      // not converge the DOM on its own — apply fresh snapshot HTML when the DOM
+      // is known-stale so both `ok`+stale-DOM and `not_modified`+stale-DOM reach
+      // a fresh DOM (and the 304 no longer early-returns a stale view).
+      if (options.domStale?.() === true) {
+        const snapshot = await Effect.runPromise(fetchSnapshot(options.artifactId, snapshotConfig(options)));
+        await applyGraphNativeSnapshot(snapshot, options.handlers);
+      }
       return;
     }
     // QUERY refused/error — still attempt a conditional refresh before the

@@ -334,6 +334,14 @@ export function createGraphQueryRefreshBase(
   url: string,
   options?: Pick<SendGraphQueryOptions, 'fetchImpl' | 'maxRetries'> & {
     readonly currentEtag?: () => string | undefined;
+    /**
+     * The caller's CURRENT base graph. A conditional read that returns
+     * `not_modified` (F-REC-4) is a NORMAL outcome, not an error — the caller
+     * already holds the current graph (it computed the `If-None-Match` etag from
+     * it). Supplying it lets `refreshBase` resolve to that graph instead of
+     * throwing, so a `not_modified` no longer aborts recovery.
+     */
+    readonly currentBase?: () => DocumentGraph | undefined;
   },
 ): () => Promise<DocumentGraph> {
   return async () => {
@@ -346,9 +354,15 @@ export function createGraphQueryRefreshBase(
       return result.graph;
     }
     if (result.status === 'not_modified') {
+      // A conditional hit is not a failure: the caller's cached base IS current.
+      const current = options?.currentBase?.();
+      if (current !== undefined) {
+        return current;
+      }
       throw ValidationError(
         'createGraphQueryRefreshBase',
-        'graph query returned not_modified but refreshBase requires a graph body',
+        'graph query returned not_modified but no currentBase was supplied to resolve it — ' +
+          'pass options.currentBase so a conditional hit resolves to the cached graph',
       );
     }
     if (result.status === 'refused') {

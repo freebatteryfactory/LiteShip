@@ -6,7 +6,7 @@
 
 # Interface: ResolvedStreamRecoverySubstrate
 
-Defined in: [web/src/stream/recovery-substrate.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery-substrate.ts#L36)
+Defined in: [web/src/stream/recovery-substrate.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery-substrate.ts#L37)
 
 Substrate plus the live receipt buffer, as consumed by the stream directive.
 
@@ -20,7 +20,7 @@ Substrate plus the live receipt buffer, as consumed by the stream directive.
 
 > `readonly` **cellStore**: `StateCellStoreShape`
 
-Defined in: [web/src/stream/recovery-substrate.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery-substrate.ts#L32)
+Defined in: [web/src/stream/recovery-substrate.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery-substrate.ts#L33)
 
 The host's StateCell store for discrete crossing replay.
 
@@ -34,7 +34,7 @@ The host's StateCell store for discrete crossing replay.
 
 > `readonly` **graphQueryUrl**: `string`
 
-Defined in: [web/src/stream/recovery-substrate.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery-substrate.ts#L28)
+Defined in: [web/src/stream/recovery-substrate.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery-substrate.ts#L29)
 
 The host's QUERY read-leg endpoint (`graphQueryRoute` mount point).
 
@@ -48,7 +48,7 @@ The host's QUERY read-leg endpoint (`graphQueryRoute` mount point).
 
 > `readonly` **mutationClient**: [`StreamRecoveryMutationClient`](../type-aliases/StreamRecoveryMutationClient.md)
 
-Defined in: [web/src/stream/recovery-substrate.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery-substrate.ts#L30)
+Defined in: [web/src/stream/recovery-substrate.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery-substrate.ts#L31)
 
 The host's mutation client — supplies the local base and receives the adopted graph.
 
@@ -62,6 +62,6 @@ The host's mutation client — supplies the local base and receives the adopted 
 
 > `readonly` **patchReceiptEntries**: readonly `PatchReceiptEntry`[]
 
-Defined in: [web/src/stream/recovery-substrate.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery-substrate.ts#L38)
+Defined in: [web/src/stream/recovery-substrate.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery-substrate.ts#L39)
 
 LIVE bounded buffer — receipt frames recorded after binding are visible at recovery time.

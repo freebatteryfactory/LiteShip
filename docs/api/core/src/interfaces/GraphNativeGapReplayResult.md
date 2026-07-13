@@ -6,30 +6,30 @@
 
 # Interface: GraphNativeGapReplayResult
 
-Defined in: [core/src/graph-query-gap-replay.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query-gap-replay.ts#L47)
+Defined in: [core/src/graph-query-gap-replay.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query-gap-replay.ts#L56)
 
 Result of [runGraphNativeGapReplay](../functions/runGraphNativeGapReplay.md).
 
 ## Properties
 
-### discretePayloads
-
-> `readonly` **discretePayloads**: readonly `unknown`[]
-
-Defined in: [core/src/graph-query-gap-replay.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query-gap-replay.ts#L50)
-
-***
-
 ### query
 
 > `readonly` **query**: [`GraphQueryResponse`](../type-aliases/GraphQueryResponse.md)
 
-Defined in: [core/src/graph-query-gap-replay.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query-gap-replay.ts#L48)
+Defined in: [core/src/graph-query-gap-replay.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query-gap-replay.ts#L57)
 
 ***
 
 ### replayedCells
 
-> `readonly` **replayedCells**: readonly ([`ReplayableRecoveryCell`](../type-aliases/ReplayableRecoveryCell.md) \| `undefined`)[]
+> `readonly` **replayedCells**: readonly [`ReplayableRecoveryCell`](../type-aliases/ReplayableRecoveryCell.md)[]
 
-Defined in: [core/src/graph-query-gap-replay.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query-gap-replay.ts#L49)
+Defined in: [core/src/graph-query-gap-replay.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query-gap-replay.ts#L58)
+
+***
+
+### transitions
+
+> `readonly` **transitions**: readonly [`DiscreteStateTransition`](DiscreteStateTransition.md)[]
+
+Defined in: [core/src/graph-query-gap-replay.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query-gap-replay.ts#L59)

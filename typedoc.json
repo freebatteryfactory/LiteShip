@@ -44,6 +44,7 @@
     "@czap/core": {
       "Diagnostics": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/variables/Diagnostics.md",
       "DiagnosticsSink": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/DiagnosticsSink.md",
+      "DiscreteStateTransition": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-transition.ts",
       "Boundary.Shape": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md",
       "Token.Shape": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Token/type-aliases/Shape.md",
       "Theme.Shape": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Theme/type-aliases/Shape.md",

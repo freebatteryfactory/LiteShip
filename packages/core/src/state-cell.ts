@@ -15,6 +15,7 @@
 import { StateName as mkStateName, type StateName } from './brands.js';
 import { RuntimeCoordinator } from './runtime-coordinator.js';
 import type { RuntimeCoordinatorShape } from './runtime-coordinator.js';
+import { Diagnostics } from './diagnostics.js';
 import { ValidationError } from '@czap/error';
 
 /** Which subsystem owns a cell's value — the authority source. */
@@ -230,6 +231,30 @@ function _createStore(runtime?: RuntimeCoordinatorShape): StateCellStoreShape {
           'StateCellStore.hydrateDiscrete',
           `unknown discrete state "${state}" for "${name}" (known: ${entry.states.join(', ')})`,
         );
+      }
+
+      // GENERATION-ROLLBACK GUARD (#133 correctness). `generation` is a
+      // monotonic per-cell counter; a stale or duplicate transition receipt must
+      // NOT roll the cell backward. Only a STRICTLY-NEWER generation advances the
+      // cell — an equal-or-older one leaves state byte-identical (Law 15). A
+      // strictly-older generation is the silent-rollback bug this guards, so it
+      // is a loud diagnostic (Law 1). An equal generation is an idempotent
+      // duplicate replay (no-op, quiet). Genesis (both 0) still installs the
+      // initial state, so bootstrap hydration is unaffected.
+      if (generation < entry.generation) {
+        Diagnostics.warnOnce({
+          source: 'czap/core.state-cell',
+          code: 'discrete-generation-rollback',
+          message:
+            `hydrateDiscrete("${name}", "${state}", generation ${generation}) refused: it would roll the cell ` +
+            `back from generation ${entry.generation} to ${generation} (stale/duplicate transition receipt). ` +
+            'The cell is left byte-identical.',
+        });
+        return buildSnapshot(name)!;
+      }
+      if (generation === entry.generation && generation > 0) {
+        // Idempotent duplicate — the crossing at this generation is already applied.
+        return buildSnapshot(name)!;
       }
 
       coordinator.applyState(name, state);

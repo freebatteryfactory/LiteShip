@@ -6,21 +6,21 @@
 
 # Function: chainPatchesBetween()
 
-> **chainPatchesBetween**(`localBaseId`, `serverGraphId`, `entries`): readonly [`GraphPatch`](../interfaces/GraphPatch.md)[]
+> **chainPatchesBetween**(`localBaseId`, `serverGraphId`, `entries`): readonly [`DiscreteStateTransition`](../interfaces/DiscreteStateTransition.md)[]
 
-Defined in: [core/src/graph-query-gap-replay.ts:103](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query-gap-replay.ts#L103)
+Defined in: [core/src/graph-query-gap-replay.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query-gap-replay.ts#L75)
 
-Find the patch/receipt chain from `localBaseId` to `serverGraphId`.
+Find the transition chain from `localBaseId` to `serverGraphId`.
 
-The receipt buffer may hold FORKS (multiple patches sharing one base) and
+The receipt buffer may hold FORKS (multiple transitions sharing one base) and
 partial branches (chains that never reach the server graph). Selection is a
-depth-first path search: only the branch that actually ends at
-`serverGraphId` is returned. A fork that dead-ends is backtracked, never
-replayed — replaying discrete payloads from a branch the server did not
-take would be silently wrong. When NO buffered branch reaches the server
-graph (missing tail receipt, unrelated fork) the result is EMPTY: the QUERY
-adoption already corrected the graph, and no discrete replay beats a wrong
-one.
+depth-first path search over each transition's graph identity
+(`base` → `resultId`): only the branch that actually ends at `serverGraphId`
+is returned. A fork that dead-ends is backtracked, never replayed — replaying
+a branch the server did not take would be silently wrong. When NO buffered
+branch reaches the server graph (missing tail receipt, unrelated fork) the
+result is EMPTY: the QUERY adoption already corrected the graph, and no
+discrete replay beats a wrong one.
 
 ## Parameters
 
@@ -38,4 +38,4 @@ readonly [`PatchReceiptEntry`](../interfaces/PatchReceiptEntry.md)[]
 
 ## Returns
 
-readonly [`GraphPatch`](../interfaces/GraphPatch.md)[]
+readonly [`DiscreteStateTransition`](../interfaces/DiscreteStateTransition.md)[]

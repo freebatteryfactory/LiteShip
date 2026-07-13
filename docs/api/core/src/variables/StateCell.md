@@ -8,7 +8,7 @@
 
 > **StateCell**: `object`
 
-Defined in: [core/src/state-cell.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L27)
+Defined in: [core/src/state-cell.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L28)
 
 StateCell — frozen authority snapshot helpers.
 

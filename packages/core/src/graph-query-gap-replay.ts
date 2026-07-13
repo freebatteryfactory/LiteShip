@@ -1,34 +1,42 @@
 /**
- * Graph-native gap replay (#133-full) — StateCell + patch/receipt chain over the
- * QUERY read-leg (#119). Discrete crossings replay; continuous transients do not.
+ * Graph-native gap replay (#133-full) — StateCell + DiscreteStateTransition /
+ * receipt chain over the QUERY read-leg (#119). Discrete crossings replay;
+ * continuous transients do not.
+ *
+ * The dead-wrong `discreteSignalPayloadsFromPatch` (which derived a runtime state
+ * VALUE from a {@link SignalNode}'s content-address) is DELETED. The next-state
+ * value now arrives typed in the {@link DiscreteStateTransition} receipt payload
+ * (`next`/`generation`), minted by the authority — nothing infers a value from
+ * patch ops. Replay is attestation-checked (Law 15): a chain that fails the
+ * structural floor (`validateChainDetailed`) applies nothing.
  *
  * @module
  */
 
+import { Effect } from 'effect';
 import type { ContentAddress } from './brands.js';
 import type { DocumentGraph } from './document-graph.js';
-import type { GraphPatch } from './graph-patch.js';
-import type { Receipt } from './receipt.js';
+import { Receipt, type ReceiptEnvelope } from './receipt.js';
+import { Diagnostics } from './diagnostics.js';
 import { createGraphQueryRefreshBase, graphQueryEtag, sendGraphQuery, type GraphQueryResponse } from './graph-query.js';
-import { inputToSource } from './signal-input.js';
 import type { StateCellStoreShape } from './state-cell.js';
-import { asReplayableRecoveryCell, filterDiscreteSnapshotSignals, signalSourceKind } from './stream-recovery.js';
+import { applyTransition, discreteTransitionSubjectId, type DiscreteStateTransition } from './state-transition.js';
+import { asReplayableRecoveryCell, type ReplayableRecoveryCell } from './stream-recovery.js';
 
-type ReceiptEnvelope = Receipt.Envelope;
-
-/** A minted graph-patch receipt paired with the patch bytes it attests. */
+/** A minted transition receipt paired with the {@link DiscreteStateTransition} it attests. */
 export interface PatchReceiptEntry {
   readonly receipt: ReceiptEnvelope;
-  readonly patch: GraphPatch;
+  readonly transition: DiscreteStateTransition;
 }
 
-/** Options for replaying discrete cells from a local patch/receipt chain. */
+/** Options for replaying discrete cells from a local transition/receipt chain. */
 export interface ReplayDiscreteFromPatchReceiptsOptions {
   readonly localBaseId: ContentAddress;
   readonly serverGraphId: ContentAddress;
   readonly entries: readonly PatchReceiptEntry[];
   readonly cellStore: StateCellStoreShape;
-  readonly applyDiscrete?: (payload: unknown) => void;
+  /** Typed host reflection of an applied crossing (e.g. dispatch to the DOM). */
+  readonly applyTransition?: (transition: DiscreteStateTransition) => void;
 }
 
 /** Options for QUERY-backed graph-native gap replay (#133-full). */
@@ -38,7 +46,8 @@ export interface GraphNativeGapReplayOptions {
   readonly entries: readonly PatchReceiptEntry[];
   readonly cellStore: StateCellStoreShape;
   readonly adopt: (graph: DocumentGraph) => void;
-  readonly applyDiscrete?: (payload: unknown) => void;
+  /** Typed host reflection of an applied crossing (e.g. dispatch to the DOM). */
+  readonly applyTransition?: (transition: DiscreteStateTransition) => void;
   readonly fetchImpl?: typeof fetch;
   readonly maxRetries?: number;
 }
@@ -46,80 +55,43 @@ export interface GraphNativeGapReplayOptions {
 /** Result of {@link runGraphNativeGapReplay}. */
 export interface GraphNativeGapReplayResult {
   readonly query: GraphQueryResponse;
-  readonly replayedCells: readonly ReturnType<typeof asReplayableRecoveryCell>[];
-  readonly discretePayloads: readonly unknown[];
-}
-
-/** Extract replayable discrete signal payloads from a validated patch's ops. */
-export function discreteSignalPayloadsFromPatch(patch: GraphPatch): readonly Record<string, unknown>[] {
-  const payloads: Record<string, unknown>[] = [];
-
-  for (const op of patch.ops) {
-    // `add` installs a new signal node; `update` is how GraphPatch.diff encodes
-    // a CHANGED signal value (remove+add collapsed on the logical cell). Both
-    // are missed crossings — skipping `update` would silently drop the most
-    // common discrete transition (a signal changing state).
-    if ((op.op !== 'add' && op.op !== 'update') || !('node' in op) || op.family !== 'signal') {
-      continue;
-    }
-
-    const signalNode = op.node;
-    if (signalNode.family !== 'signal') {
-      continue;
-    }
-
-    const input = signalNode.input;
-    const source = inputToSource(input);
-    const kind = source ? signalSourceKind(source) : 'discrete';
-
-    if (kind !== 'discrete') {
-      continue;
-    }
-
-    if (source?.type === 'custom' || input.endsWith('.state') || input === 'state' || input.includes('mode')) {
-      payloads.push({ state: input });
-      continue;
-    }
-
-    payloads.push({ [input]: signalNode.id });
-  }
-
-  return payloads;
+  readonly replayedCells: readonly ReplayableRecoveryCell[];
+  readonly transitions: readonly DiscreteStateTransition[];
 }
 
 /**
- * Find the patch/receipt chain from `localBaseId` to `serverGraphId`.
+ * Find the transition chain from `localBaseId` to `serverGraphId`.
  *
- * The receipt buffer may hold FORKS (multiple patches sharing one base) and
+ * The receipt buffer may hold FORKS (multiple transitions sharing one base) and
  * partial branches (chains that never reach the server graph). Selection is a
- * depth-first path search: only the branch that actually ends at
- * `serverGraphId` is returned. A fork that dead-ends is backtracked, never
- * replayed — replaying discrete payloads from a branch the server did not
- * take would be silently wrong. When NO buffered branch reaches the server
- * graph (missing tail receipt, unrelated fork) the result is EMPTY: the QUERY
- * adoption already corrected the graph, and no discrete replay beats a wrong
- * one.
+ * depth-first path search over each transition's graph identity
+ * (`base` → `resultId`): only the branch that actually ends at `serverGraphId`
+ * is returned. A fork that dead-ends is backtracked, never replayed — replaying
+ * a branch the server did not take would be silently wrong. When NO buffered
+ * branch reaches the server graph (missing tail receipt, unrelated fork) the
+ * result is EMPTY: the QUERY adoption already corrected the graph, and no
+ * discrete replay beats a wrong one.
  */
 export function chainPatchesBetween(
   localBaseId: ContentAddress,
   serverGraphId: ContentAddress,
   entries: readonly PatchReceiptEntry[],
-): readonly GraphPatch[] {
+): readonly DiscreteStateTransition[] {
   if (localBaseId === serverGraphId) {
     return [];
   }
 
   const byBase = new Map<string, PatchReceiptEntry[]>();
   for (const entry of entries) {
-    if (entry.receipt.kind !== 'graph-patch') {
+    if (entry.receipt.kind !== 'discrete-transition') {
       continue;
     }
-    const list = byBase.get(entry.patch.base) ?? [];
+    const list = byBase.get(entry.transition.base) ?? [];
     list.push(entry);
-    byBase.set(entry.patch.base, list);
+    byBase.set(entry.transition.base, list);
   }
 
-  const path: GraphPatch[] = [];
+  const path: DiscreteStateTransition[] = [];
   const visiting = new Set<string>();
   const cannotReach = new Set<string>();
 
@@ -137,11 +109,11 @@ export function chainPatchesBetween(
 
     let found = false;
     for (const entry of byBase.get(current) ?? []) {
-      const resultId = entry.patch.resultId;
+      const resultId = entry.transition.resultId;
       if (!resultId) {
         continue;
       }
-      path.push(entry.patch);
+      path.push(entry.transition);
       if (search(resultId)) {
         found = true;
         break;
@@ -160,65 +132,120 @@ export function chainPatchesBetween(
 }
 
 /**
- * Replay missed discrete crossings from a patch/receipt chain — continuous
- * transients are stripped by the discrete/continuous law.
+ * Replay missed discrete crossings from a transition/receipt chain.
+ *
+ * The selected branch's receipts are run through the structural floor
+ * ({@link Receipt.validateChainDetailed}: hash self-consistency, chain
+ * continuity, HLC ordering) BEFORE anything applies — a reordered / truncated /
+ * forked / HLC-regressed chain applies nothing (Law 15). Surviving transitions
+ * are grouped per cell and the HIGHEST-generation one is applied via
+ * {@link applyTransition}; the store's generation guard is the belt-and-suspenders.
  */
-export function replayDiscreteFromPatchReceipts(options: ReplayDiscreteFromPatchReceiptsOptions): {
-  readonly replayedCells: readonly NonNullable<ReturnType<typeof asReplayableRecoveryCell>>[];
-  readonly discretePayloads: readonly unknown[];
-} {
-  const patches = chainPatchesBetween(options.localBaseId, options.serverGraphId, options.entries);
-  const rawPayloads: unknown[] = [];
+export async function replayDiscreteFromPatchReceipts(options: ReplayDiscreteFromPatchReceiptsOptions): Promise<{
+  readonly replayedCells: readonly ReplayableRecoveryCell[];
+  readonly transitions: readonly DiscreteStateTransition[];
+}> {
+  const branch = chainPatchesBetween(options.localBaseId, options.serverGraphId, options.entries);
+  if (branch.length === 0) {
+    return { replayedCells: [], transitions: [] };
+  }
 
-  for (const patch of patches) {
-    for (const payload of discreteSignalPayloadsFromPatch(patch)) {
-      rawPayloads.push(payload);
+  // Chain-continuity floor over the SELECTED branch's receipts. `validateChainDetailed`
+  // recomputes each envelope's sha256 hash (catches tamper / forgery), enforces
+  // genesis-rooted continuity and monotonic HLC. A break refuses the whole replay —
+  // the QUERY adoption already corrected the graph, so degrading discrete replay is
+  // best-effort, never a wrong apply.
+  const receiptByTransition = new Map<DiscreteStateTransition, ReceiptEnvelope>(
+    options.entries.map((entry) => [entry.transition, entry.receipt]),
+  );
+
+  // SUBJECT-LAW floor (Law 15, defense-in-depth): each branch entry's receipt
+  // subject MUST be the `${base}#${cell}` effect subject of ITS transition, so a
+  // receipt minted for (base, cellA) can never be replayed against cellB or
+  // another graph — even if a producer / buffer handed us a mismatched pair.
+  for (const transition of branch) {
+    const receipt = receiptByTransition.get(transition);
+    if (
+      receipt === undefined ||
+      receipt.subject.type !== 'effect' ||
+      receipt.subject.id !== discreteTransitionSubjectId(transition)
+    ) {
+      Diagnostics.warnOnce({
+        source: 'czap/core.gap-replay',
+        code: 'discrete-transition-subject-mismatch',
+        message:
+          `graph-native gap replay refused a transition for cell "${transition.cell}": its receipt subject ` +
+          'does not match the `${base}#${cell}` subject law (a receipt for one cell cannot replay against ' +
+          'another). The graph was still adopted; no discrete crossing was replayed.',
+      });
+      return { replayedCells: [], transitions: [] };
     }
   }
 
-  const discretePayloads = filterDiscreteSnapshotSignals(rawPayloads);
-  const replayedCells: NonNullable<ReturnType<typeof asReplayableRecoveryCell>>[] = [];
+  const chain = branch
+    .map((transition) => receiptByTransition.get(transition))
+    .filter((receipt): receipt is ReceiptEnvelope => receipt !== undefined);
 
-  for (const payload of discretePayloads) {
-    if (payload !== null && typeof payload === 'object' && !Array.isArray(payload)) {
-      const record = payload as Record<string, unknown>;
-      if (typeof record.state === 'string') {
-        try {
-          const cell = options.cellStore.hydrateDiscrete('state', record.state, 0);
-          const replayable = asReplayableRecoveryCell(cell);
-          if (replayable) {
-            replayedCells.push(replayable);
-          }
-        } catch {
-          // Unregistered cell names are skipped — the host owns the registry.
-        }
-      } else {
-        for (const [name, value] of Object.entries(record)) {
-          if (typeof value !== 'string') {
-            continue;
-          }
-          try {
-            const cell = options.cellStore.hydrateDiscrete(name, value, 0);
-            const replayable = asReplayableRecoveryCell(cell);
-            if (replayable) {
-              replayedCells.push(replayable);
-            }
-          } catch {
-            // Unregistered cell names are skipped — the host owns the registry.
-          }
-        }
+  const validated = await Effect.runPromise(
+    Receipt.validateChainDetailed(chain).pipe(
+      Effect.match({
+        onFailure: (error) => ({ ok: false as const, error }),
+        onSuccess: () => ({ ok: true as const }),
+      }),
+    ),
+  );
+  if (!validated.ok) {
+    Diagnostics.warnOnce({
+      source: 'czap/core.gap-replay',
+      code: 'discrete-transition-chain-invalid',
+      message:
+        'graph-native gap replay refused a transition chain that failed the structural floor ' +
+        `(${validated.error.type}) — the graph was still adopted, but no discrete crossing was replayed.`,
+      detail: validated.error,
+    });
+    return { replayedCells: [], transitions: [] };
+  }
+
+  // Per-cell highest-generation crossing (the crossing target the cell ended at).
+  const highestByCell = new Map<string, DiscreteStateTransition>();
+  for (const transition of branch) {
+    const current = highestByCell.get(transition.cell);
+    if (current === undefined || transition.generation > current.generation) {
+      highestByCell.set(transition.cell, transition);
+    }
+  }
+
+  const replayedCells: ReplayableRecoveryCell[] = [];
+  const applied: DiscreteStateTransition[] = [];
+  for (const transition of highestByCell.values()) {
+    try {
+      const cell = applyTransition(options.cellStore, transition);
+      const replayable = asReplayableRecoveryCell(cell);
+      if (replayable) {
+        replayedCells.push(replayable);
       }
+      options.applyTransition?.(transition);
+      applied.push(transition);
+    } catch {
+      // Unregistered cell names are skipped — the host owns the registry. Loud,
+      // not silent (Law 1): a transition naming a cell the store never registered
+      // is a wiring gap, not a condition to launder.
+      Diagnostics.warnOnce({
+        source: 'czap/core.gap-replay',
+        code: 'discrete-transition-unknown-cell',
+        message:
+          `graph-native gap replay skipped a transition for cell "${transition.cell}": the StateCell store ` +
+          'has no such registered cell. Register the cell on the host, or drop the transition from the stream.',
+      });
     }
-
-    options.applyDiscrete?.(payload);
   }
 
-  return { replayedCells, discretePayloads };
+  return { replayedCells, transitions: applied };
 }
 
 /**
- * Full graph-native gap replay: conditional QUERY read → adopt → patch/receipt
- * discrete replay. Does NOT widen the SSE replay payload.
+ * Full graph-native gap replay: conditional QUERY read → adopt → transition/receipt
+ * discrete replay. Does NOT widen the SSE replay payload with a signal.
  */
 export async function runGraphNativeGapReplay(
   options: GraphNativeGapReplayOptions,
@@ -234,19 +261,19 @@ export async function runGraphNativeGapReplay(
   } else if (query.status === 'not_modified') {
     // Base unchanged — still replay discrete crossings the HTML leg may have dropped.
   } else {
-    return { query, replayedCells: [], discretePayloads: [] };
+    return { query, replayedCells: [], transitions: [] };
   }
 
   const serverGraphId = query.status === 'ok' ? query.graph.id : options.localBase.id;
-  const { replayedCells, discretePayloads } = replayDiscreteFromPatchReceipts({
+  const { replayedCells, transitions } = await replayDiscreteFromPatchReceipts({
     localBaseId: options.localBase.id,
     serverGraphId,
     entries: options.entries,
     cellStore: options.cellStore,
-    applyDiscrete: options.applyDiscrete,
+    ...(options.applyTransition !== undefined ? { applyTransition: options.applyTransition } : {}),
   });
 
-  return { query, replayedCells, discretePayloads };
+  return { query, replayedCells, transitions };
 }
 
 export { createGraphQueryRefreshBase };

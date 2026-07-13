@@ -6,22 +6,22 @@
 
 # Interface: PatchReceiptEntry
 
-Defined in: [core/src/graph-query-gap-replay.ts:20](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query-gap-replay.ts#L20)
+Defined in: [core/src/graph-query-gap-replay.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query-gap-replay.ts#L27)
 
-A minted graph-patch receipt paired with the patch bytes it attests.
+A minted transition receipt paired with the [DiscreteStateTransition](DiscreteStateTransition.md) it attests.
 
 ## Properties
-
-### patch
-
-> `readonly` **patch**: [`GraphPatch`](GraphPatch.md)
-
-Defined in: [core/src/graph-query-gap-replay.ts:22](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query-gap-replay.ts#L22)
-
-***
 
 ### receipt
 
 > `readonly` **receipt**: [`ReceiptEnvelope`](ReceiptEnvelope.md)
 
-Defined in: [core/src/graph-query-gap-replay.ts:21](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query-gap-replay.ts#L21)
+Defined in: [core/src/graph-query-gap-replay.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query-gap-replay.ts#L28)
+
+***
+
+### transition
+
+> `readonly` **transition**: [`DiscreteStateTransition`](DiscreteStateTransition.md)
+
+Defined in: [core/src/graph-query-gap-replay.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query-gap-replay.ts#L29)

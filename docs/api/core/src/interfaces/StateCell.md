@@ -6,7 +6,7 @@
 
 # Interface: StateCell\<S\>
 
-Defined in: [core/src/state-cell.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L27)
+Defined in: [core/src/state-cell.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L28)
 
 Immutable snapshot of one named state authority cell.
 
@@ -22,7 +22,7 @@ Immutable snapshot of one named state authority cell.
 
 > `readonly` **\_tag**: `"StateCell"`
 
-Defined in: [core/src/state-cell.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L28)
+Defined in: [core/src/state-cell.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L29)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [core/src/state-cell.ts:28](https://github.com/freebatteryfactory/Li
 
 > `readonly` **authority**: [`StateAuthority`](../type-aliases/StateAuthority.md)
 
-Defined in: [core/src/state-cell.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L31)
+Defined in: [core/src/state-cell.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L32)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [core/src/state-cell.ts:31](https://github.com/freebatteryfactory/Li
 
 > `readonly` **dirtyEpoch**: `number`
 
-Defined in: [core/src/state-cell.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L34)
+Defined in: [core/src/state-cell.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L35)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [core/src/state-cell.ts:34](https://github.com/freebatteryfactory/Li
 
 > `readonly` **generation**: `number`
 
-Defined in: [core/src/state-cell.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L36)
+Defined in: [core/src/state-cell.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L37)
 
 Monotonic generation — increments on discrete state changes (gap-replay ordering).
 
@@ -56,7 +56,7 @@ Monotonic generation — increments on discrete state changes (gap-replay orderi
 
 > `readonly` **kind**: [`StateCellKind`](../type-aliases/StateCellKind.md)
 
-Defined in: [core/src/state-cell.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L30)
+Defined in: [core/src/state-cell.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L31)
 
 ***
 
@@ -64,7 +64,7 @@ Defined in: [core/src/state-cell.ts:30](https://github.com/freebatteryfactory/Li
 
 > `readonly` **name**: `string`
 
-Defined in: [core/src/state-cell.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L29)
+Defined in: [core/src/state-cell.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L30)
 
 ***
 
@@ -72,7 +72,7 @@ Defined in: [core/src/state-cell.ts:29](https://github.com/freebatteryfactory/Li
 
 > `readonly` **replayable**: `boolean`
 
-Defined in: [core/src/state-cell.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L38)
+Defined in: [core/src/state-cell.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L39)
 
 Derived: only discrete cells may enter patch/receipt replay paths (#133).
 
@@ -82,7 +82,7 @@ Derived: only discrete cells may enter patch/receipt replay paths (#133).
 
 > `readonly` **state**: [`StateName`](../type-aliases/StateName.md)\<`S`\>
 
-Defined in: [core/src/state-cell.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L32)
+Defined in: [core/src/state-cell.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L33)
 
 ***
 
@@ -90,7 +90,7 @@ Defined in: [core/src/state-cell.ts:32](https://github.com/freebatteryfactory/Li
 
 > `readonly` **stateIndex**: `number`
 
-Defined in: [core/src/state-cell.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L33)
+Defined in: [core/src/state-cell.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L34)
 
 ***
 
@@ -98,6 +98,6 @@ Defined in: [core/src/state-cell.ts:33](https://github.com/freebatteryfactory/Li
 
 > `readonly` `optional` **value?**: `number`
 
-Defined in: [core/src/state-cell.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L40)
+Defined in: [core/src/state-cell.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L41)
 
 Continuous-only live scalar when [kind](#kind) is `'continuous'`.

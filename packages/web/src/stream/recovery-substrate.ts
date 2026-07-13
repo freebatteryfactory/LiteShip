@@ -17,8 +17,9 @@
  * @module
  */
 
-import type { PatchReceiptEntry, StateCellStoreShape } from '@czap/core';
-import { Diagnostics } from '@czap/core';
+import { Effect } from 'effect';
+import type { DiscreteStateTransition, PatchReceiptEntry, ReceiptEnvelope, StateCellStoreShape } from '@czap/core';
+import { Diagnostics, Receipt, decodeDiscreteStateTransition, discreteTransitionSubjectId } from '@czap/core';
 import { ValidationError } from '@czap/error';
 import type { StreamRecoveryMutationClient } from './recovery.js';
 
@@ -88,51 +89,112 @@ export function getStreamRecoverySubstrate(artifactId: string): ResolvedStreamRe
   };
 }
 
-const isPatchReceiptEntry = (value: unknown): value is PatchReceiptEntry => {
+const warnRejectedFrame = (artifactId: string, reason: string, cause?: unknown): void => {
+  Diagnostics.warnOnce({
+    source: 'czap/web.stream-recovery',
+    code: 'unattested-patch-receipt-frame',
+    message:
+      `SSE receipt frame for artifact "${artifactId}" was REFUSED (${reason}). A frame must be a ` +
+      '{ receipt, transition } pair whose receipt hash self-verifies (Receipt.hashEnvelope) and whose ' +
+      'subject.id is the `${base}#${cell}` transition subject law. A frame that does not attest cannot ' +
+      'feed graph-native gap replay (#133) — emit authority-minted transition receipts, or drop the event.',
+    ...(cause !== undefined ? { cause } : {}),
+  });
+};
+
+const isEnvelopeShape = (value: unknown): value is ReceiptEnvelope => {
   if (value === null || typeof value !== 'object') return false;
   const record = value as Record<string, unknown>;
-  const receipt = record.receipt;
-  const patch = record.patch;
-  if (
-    receipt === null ||
-    typeof receipt !== 'object' ||
-    typeof (receipt as Record<string, unknown>).kind !== 'string'
-  ) {
-    return false;
+  return (
+    typeof record.kind === 'string' &&
+    typeof record.hash === 'string' &&
+    typeof record.subject === 'object' &&
+    record.subject !== null &&
+    record.payload !== undefined &&
+    record.timestamp !== undefined &&
+    record.previous !== undefined
+  );
+};
+
+/**
+ * ATTESTATION-CHECK a candidate frame BEFORE buffering (Law 15: validate before
+ * apply). A shape-only guard would buffer a forged frame — the recovery path
+ * later trusts these entries, so the trust must be earned at the door:
+ *   1. `decodeDiscreteStateTransition` — fail-closed tag/version/kind gate.
+ *   2. `Receipt.hashEnvelope` self-consistency — the stored hash must be the
+ *      sha256 of the envelope's own bytes (catches tamper / forgery).
+ *   3. subject-law match — `receipt.subject` must be the `${base}#${cell}`
+ *      effect subject of THIS transition, so a receipt cannot be replayed
+ *      against another cell or graph.
+ * Returns the typed entry, or `null` (with a loud diagnostic) on any failure.
+ */
+const attestPatchReceiptEntry = async (artifactId: string, frame: unknown): Promise<PatchReceiptEntry | null> => {
+  if (frame === null || typeof frame !== 'object') {
+    warnRejectedFrame(artifactId, 'frame is not an object');
+    return null;
   }
-  if (patch === null || typeof patch !== 'object') return false;
-  const patchRecord = patch as Record<string, unknown>;
-  return patchRecord._tag === 'GraphPatch' && typeof patchRecord.base === 'string' && Array.isArray(patchRecord.ops);
+  const record = frame as Record<string, unknown>;
+
+  if (!isEnvelopeShape(record.receipt)) {
+    warnRejectedFrame(artifactId, 'receipt is not a well-formed envelope');
+    return null;
+  }
+  const receipt = record.receipt;
+
+  let transition: DiscreteStateTransition;
+  try {
+    transition = decodeDiscreteStateTransition(record.transition);
+  } catch (cause) {
+    warnRejectedFrame(artifactId, 'transition failed fail-closed decode', cause);
+    return null;
+  }
+
+  const computedHash = await Effect.runPromise(Receipt.hashEnvelope(receipt));
+  if (computedHash !== receipt.hash) {
+    warnRejectedFrame(artifactId, `receipt hash mismatch (stored ${receipt.hash}, computed ${computedHash})`);
+    return null;
+  }
+
+  const expectedSubjectId = discreteTransitionSubjectId(transition);
+  if (receipt.subject.type !== 'effect' || receipt.subject.id !== expectedSubjectId) {
+    warnRejectedFrame(
+      artifactId,
+      `subject-law mismatch (expected effect:${expectedSubjectId}, got ${receipt.subject.type}:${receipt.subject.id})`,
+    );
+    return null;
+  }
+
+  return { receipt, transition };
 };
 
 /**
  * Record a receipt frame from the SSE stream into the artifact's live buffer.
- * Returns `true` when recorded. Frames for unregistered artifacts are ignored
- * (no substrate → snapshot floor, nothing to feed); malformed frames warn loudly
- * — a server emitting `receipt` events that do not parse as patch/receipt pairs
- * is a wiring bug, not a condition to launder.
+ * Async because the attestation-check recomputes the sha256 receipt hash
+ * (`crypto.subtle`). Returns `true` when recorded. Frames for unregistered
+ * artifacts are ignored (no substrate → snapshot floor, nothing to feed);
+ * frames that fail attestation warn loudly and are NOT buffered.
  */
-export function recordStreamPatchReceipt(artifactId: string, frame: unknown): boolean {
+export async function recordStreamPatchReceipt(artifactId: string, frame: unknown): Promise<boolean> {
   const record = registry.get(artifactId);
   if (!record) {
     return false;
   }
 
-  if (!isPatchReceiptEntry(frame)) {
-    Diagnostics.warnOnce({
-      source: 'czap/web.stream-recovery',
-      code: 'malformed-patch-receipt-frame',
-      message:
-        `SSE receipt frame for artifact "${artifactId}" does not parse as a { receipt, patch } pair, ` +
-        'so it cannot feed graph-native gap replay (#133). Emit PatchReceiptEntry-shaped receipt events, ' +
-        'or drop the receipt event type from the stream.',
-    });
+  const entry = await attestPatchReceiptEntry(artifactId, frame);
+  if (!entry) {
     return false;
   }
 
-  record.entries.push(frame);
-  if (record.entries.length > MAX_PATCH_RECEIPT_ENTRIES) {
-    record.entries.splice(0, record.entries.length - MAX_PATCH_RECEIPT_ENTRIES);
+  // Re-check the registration after the async attestation gap: a reconnect /
+  // dispose mid-check must not resurrect a stale buffer (leak / double-apply).
+  const live = registry.get(artifactId);
+  if (!live || live !== record) {
+    return false;
+  }
+
+  live.entries.push(entry);
+  if (live.entries.length > MAX_PATCH_RECEIPT_ENTRIES) {
+    live.entries.splice(0, live.entries.length - MAX_PATCH_RECEIPT_ENTRIES);
   }
   return true;
 }

@@ -6,7 +6,7 @@
 
 # Interface: ProjectionState\<S\>
 
-Defined in: [core/src/state-cell.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L50)
+Defined in: [core/src/state-cell.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L51)
 
 Per-projection typed authority aggregate consumed by emitters.
 
@@ -22,7 +22,7 @@ Per-projection typed authority aggregate consumed by emitters.
 
 > `readonly` **\_tag**: `"ProjectionState"`
 
-Defined in: [core/src/state-cell.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L51)
+Defined in: [core/src/state-cell.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L52)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [core/src/state-cell.ts:51](https://github.com/freebatteryfactory/Li
 
 > `readonly` **cells**: `Readonly`\<`Record`\<`string`, [`StateCell`](StateCell.md)\<`S`\>\>\>
 
-Defined in: [core/src/state-cell.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L53)
+Defined in: [core/src/state-cell.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L54)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [core/src/state-cell.ts:53](https://github.com/freebatteryfactory/Li
 
 > `readonly` **dirtyEpoch**: `number`
 
-Defined in: [core/src/state-cell.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L55)
+Defined in: [core/src/state-cell.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L56)
 
 Composite dirty epoch — max of constituent cells.
 
@@ -48,7 +48,7 @@ Composite dirty epoch — max of constituent cells.
 
 > `readonly` **projection**: `string`
 
-Defined in: [core/src/state-cell.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L52)
+Defined in: [core/src/state-cell.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L53)
 
 ***
 
@@ -56,7 +56,7 @@ Defined in: [core/src/state-cell.ts:52](https://github.com/freebatteryfactory/Li
 
 > `readonly` `optional` **resolution?**: [`StateResolutionReceipt`](StateResolutionReceipt.md)
 
-Defined in: [core/src/state-cell.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L58)
+Defined in: [core/src/state-cell.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L59)
 
 ***
 
@@ -64,6 +64,6 @@ Defined in: [core/src/state-cell.ts:58](https://github.com/freebatteryfactory/Li
 
 > `readonly` **resolvedState**: [`StateName`](../type-aliases/StateName.md)\<`S`\>
 
-Defined in: [core/src/state-cell.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L57)
+Defined in: [core/src/state-cell.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L58)
 
 Primary discrete state for `data-czap-state` / CSS state selectors.

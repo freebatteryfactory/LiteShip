@@ -6,7 +6,7 @@
 
 # Interface: ResolvedStateSnapshot
 
-Defined in: [core/src/state-cell.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L62)
+Defined in: [core/src/state-cell.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L63)
 
 Worker/bootstrap interop — mirrors `ResolvedStateEntry` in `@czap/worker`.
 
@@ -16,7 +16,7 @@ Worker/bootstrap interop — mirrors `ResolvedStateEntry` in `@czap/worker`.
 
 > `readonly` **generation**: `number`
 
-Defined in: [core/src/state-cell.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L65)
+Defined in: [core/src/state-cell.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L66)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [core/src/state-cell.ts:65](https://github.com/freebatteryfactory/Li
 
 > `readonly` **name**: `string`
 
-Defined in: [core/src/state-cell.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L63)
+Defined in: [core/src/state-cell.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L64)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [core/src/state-cell.ts:63](https://github.com/freebatteryfactory/Li
 
 > `readonly` **state**: [`StateName`](../type-aliases/StateName.md)
 
-Defined in: [core/src/state-cell.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L64)
+Defined in: [core/src/state-cell.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L65)
