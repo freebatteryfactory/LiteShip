@@ -8,6 +8,7 @@ import { describe, test, expect } from 'vitest';
 import fc from 'fast-check';
 import {
   ResponsiveMedia,
+  selectCandidates,
   resolveResponsiveMedia,
   buildResponsiveSrcset,
   buildResponsiveImageSet,
@@ -180,6 +181,122 @@ describe('ResponsiveMedia projection', () => {
     expect(compiled.picture.resolved.reason).toBe('dpr-match');
     expect(compiled.imageSet).toContain('image-set(');
     expect(compiled.resultDigest.integrity_digest.length).toBeGreaterThan(0);
+  });
+});
+
+describe('ResponsiveMedia effective-candidate law (#140, F-RM-1a..e)', () => {
+  // The heavy candidates a Save-Data + high-DPR client must NEVER see advertised.
+  const HEAVY = ['hero-1600', 'hero-2400', 'hero-3200'];
+
+  /** Assert NO heavy candidate appears in ANY artifact of a compiled projection. */
+  function expectNoHeavyAnywhere(intent: ReturnType<typeof heroMediaIntent>, dpr: number): void {
+    const compiled = compileResponsiveMedia(intent, { devicePixelRatio: dpr, saveData: true });
+    const { picture, img, srcset, resolved, preload } = compiled.picture;
+    // Every surface the browser could fetch from: src, srcset, <source>, preload, image-set.
+    const surfaces = { picture, img, srcset, src: resolved.src, preload, imageSet: compiled.imageSet };
+    for (const [name, markup] of Object.entries(surfaces)) {
+      for (const heavy of HEAVY) {
+        expect(markup, `heavy candidate ${heavy} leaked into ${name} at DPR ${dpr}`).not.toContain(heavy);
+      }
+    }
+  }
+
+  test('selectCandidates caps ALL candidates to the authored light variant under Save-Data (DPR 1/2/3)', () => {
+    const intent = heroMediaIntent();
+    for (const dpr of [1, 2, 3]) {
+      const set = selectCandidates(intent, { devicePixelRatio: dpr, saveData: true });
+      expect(set.candidates.map((c) => c.src)).toEqual(['/img/hero-lite.jpg']);
+      expect(set.resolved.src).toBe('/img/hero-lite.jpg');
+      expect(set.reason).toBe('save-data');
+    }
+  });
+
+  test('selectCandidates caps to the SMALLEST variant when NO light variant is authored (F-RM-1c, DPR 1/2/3)', () => {
+    const intent = ResponsiveMedia.intent({
+      id: 'no-lite',
+      alt: 'x',
+      variants: [
+        { src: '/img/hero-800.jpg', width: 800 },
+        { src: '/img/hero-1600.jpg', width: 1600 },
+        { src: '/img/hero-2400.jpg', width: 2400 },
+      ],
+    });
+    for (const dpr of [1, 2, 3]) {
+      const set = selectCandidates(intent, { devicePixelRatio: dpr, saveData: true });
+      expect(set.candidates.map((c) => c.src)).toEqual(['/img/hero-800.jpg']);
+      expect(set.reason).toBe('save-data-floor');
+      // The full compiled projection advertises ONLY the floor — never 1600/2400.
+      const compiled = compileResponsiveMedia(intent, { devicePixelRatio: dpr, saveData: true });
+      for (const heavy of ['hero-1600', 'hero-2400']) {
+        expect(compiled.picture.picture).not.toContain(heavy);
+        expect(compiled.picture.srcset).not.toContain(heavy);
+        expect(compiled.picture.preload).not.toContain(heavy);
+        expect(compiled.imageSet).not.toContain(heavy);
+      }
+    }
+  });
+
+  test('Save-Data + high DPR: NO heavy candidate in src/srcset/source/preload/image-set (explicit variant, DPR 1/2/3)', () => {
+    const intent = heroMediaIntent();
+    for (const dpr of [1, 2, 3]) {
+      expectNoHeavyAnywhere(intent, dpr);
+      const projection = projectResponsiveMediaPicture(intent, { devicePixelRatio: dpr, saveData: true });
+      // Positive: the light asset IS advertised through src, srcset, <source>, preload.
+      expect(projection.resolved.src).toBe('/img/hero-lite.jpg');
+      expect(projection.srcset).toContain('/img/hero-lite.jpg');
+      expect(projection.picture).toContain('/img/hero-lite.jpg');
+      expect(projection.preload).toContain('/img/hero-lite.jpg');
+    }
+  });
+
+  test('the preload (F-RM-1d, the LCP leak) advertises ONLY the effective set under Save-Data', () => {
+    const projection = projectResponsiveMediaPicture(heroMediaIntent(), { devicePixelRatio: 3, saveData: true });
+    expect(projection.preload).toContain('imagesrcset="/img/hero-lite.jpg 400w"');
+    for (const heavy of HEAVY) expect(projection.preload).not.toContain(heavy);
+  });
+
+  test('image-set() folds the effective set — light-only under Save-Data', () => {
+    const compiled = compileResponsiveMedia(heroMediaIntent(), { devicePixelRatio: 3, saveData: true });
+    expect(compiled.imageSet).toMatch(/^image-set\(/);
+    expect(compiled.imageSet).toContain('/img/hero-lite.jpg');
+    for (const heavy of HEAVY) expect(compiled.imageSet).not.toContain(heavy);
+  });
+
+  test('the cache-key digest keys on the EFFECTIVE set: Save-Data and normal address differently', () => {
+    const intent = heroMediaIntent();
+    const saveData = compileResponsiveMedia(intent, { devicePixelRatio: 3, saveData: true });
+    const normal = compileResponsiveMedia(intent, { devicePixelRatio: 3, saveData: false });
+    expect(saveData.resultDigest.integrity_digest).not.toBe(normal.resultDigest.integrity_digest);
+    // The Save-Data digest is over light-only markup; the normal one over the full set.
+    expect(normal.picture.srcset).toContain('/img/hero-2400.jpg');
+    expect(saveData.picture.srcset).not.toContain('/img/hero-2400.jpg');
+  });
+
+  test('normal path is UNCHANGED: the full candidate set is still advertised', () => {
+    const intent = heroMediaIntent();
+    const compiled = compileResponsiveMedia(intent, { devicePixelRatio: 2, saveData: false });
+    // Every heavy candidate is present for a non-Save-Data client (the browser picks).
+    expect(compiled.picture.srcset).toContain('/img/hero-800.jpg 800w');
+    expect(compiled.picture.srcset).toContain('/img/hero-1600.jpg 1600w');
+    expect(compiled.picture.srcset).toContain('/img/hero-2400.jpg 2400w');
+    expect(compiled.imageSet).toContain('/img/hero-2400.jpg');
+    // DPR 2 still resolves the DPR-matched src.
+    expect(compiled.picture.resolved.reason).toBe('dpr-match');
+    expect(compiled.picture.resolved.src).toBe('/img/hero-1600.jpg');
+  });
+
+  test('resolveResponsiveMedia derives from the SAME law (its src is the effective resolved)', () => {
+    const intent = heroMediaIntent();
+    for (const caps of [
+      { devicePixelRatio: 3, saveData: true },
+      { devicePixelRatio: 2, saveData: false },
+      { devicePixelRatio: 99, saveData: false },
+    ]) {
+      const resolved = resolveResponsiveMedia(intent, caps);
+      const set = selectCandidates(intent, caps);
+      expect(resolved.src).toBe(set.resolved.src);
+      expect(resolved.reason).toBe(set.reason);
+    }
   });
 });
 

@@ -33,6 +33,8 @@ Each request now resolves the visitor's device tier and serves that tier's preco
 
 For Astro 7 route-cache invalidation, use `@czap/cloudflare/cache-provider` in `astro.config.mjs` and pass matching `tags` to `cloudflareMiddleware()`. `cache.invalidate({ tags })` then purges the same KV tag index that boundary compile fallbacks write.
 
+Because `cloudflareMiddleware` wraps `@czap/astro`'s `czapMiddleware`, the Workers edge also gets the responsive-media host projection (#140): `Astro.locals.czap.responsiveMedia(intent)` derives Save-Data / DPR caps from the request's Client Hints and projects through `@czap/core`'s `selectCandidates` law, so a Save-Data client on the edge is never advertised a heavy image candidate through `src` / `srcset` / `<source>` / the preload; the responsive `Vary` axis (`Sec-CH-DPR, Save-Data`) is merged into the response. Runnable in `examples/cloudflare-astro`.
+
 ## Where it sits
 
 A host adapter — it touches Cloudflare APIs (the `cloudflare:workers` env and KV namespaces) so nothing else has to. It depends on [`@czap/astro`](https://github.com/freebatteryfactory/LiteShip/tree/main/packages/astro) for the middleware contract, [`@czap/edge`](https://github.com/freebatteryfactory/LiteShip/tree/main/packages/edge) for tier detection and the content-addressed cache, and [`@czap/core`](https://github.com/freebatteryfactory/LiteShip/tree/main/packages/core) for the id types. Boundary authoring and compilation live upstream; this package is the Cloudflare glue for middleware, Workers KV, and Astro 7 cache invalidation. See the

@@ -29,6 +29,11 @@ export { satelliteAttrs, resolveInitialStateFallback } from './Satellite.js';
 export type { SatelliteProps } from './Satellite.js';
 export { czapMiddleware } from './middleware.js';
 export type { CzapLocals, CzapMiddlewareConfig } from './middleware.js';
+// Responsive-media host projection (#140): the production wiring of the edge
+// Save-Data/DPR caps + responsive Vary. `Astro.locals.czap.responsiveMedia(intent)`
+// is the ergonomic form; these are the standalone helpers for route handlers.
+export { projectResponsiveMediaForRequest, applyResponsiveMediaVary } from './responsive-media.js';
+export type { ResponsiveMediaCapsSource, ResponsiveMediaHostProjection } from './responsive-media.js';
 export { czapFetchLayer, serializeBoundaryCss } from './fetch-layer.js';
 export type { CzapFetchLayer, CzapFetchLayerConfig, FetchLayerNext } from './fetch-layer.js';
 // Client→server graph-mutation channel: the host route adapter over @czap/core's

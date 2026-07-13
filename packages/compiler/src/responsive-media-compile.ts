@@ -8,6 +8,7 @@ import {
   AddressedDigest,
   projectResponsiveMediaPicture,
   buildResponsiveImageSet,
+  selectCandidates,
   type ResponsiveMediaCapabilities,
   type ResponsiveMediaIntent,
   type ResponsiveMediaPictureProjection,
@@ -28,7 +29,12 @@ export function compileResponsiveMedia(
   caps: ResponsiveMediaCapabilities,
 ): CompiledResponsiveMedia {
   const picture = projectResponsiveMediaPicture(intent, caps);
-  const imageSet = buildResponsiveImageSet(intent.variants);
+  // image-set() enumerates the SAME effective candidate set the picture does — under
+  // Save-Data it lists only the light candidate, never the heavy DPR-matched one.
+  const imageSet = buildResponsiveImageSet(selectCandidates(intent, caps).candidates);
+  // The result digest (the content-addressed cache key) folds the EFFECTIVE markup, so
+  // a Save-Data representation and a normal one address differently — a CDN keyed by it
+  // (+ the `Save-Data` / `Sec-CH-DPR` Vary axis) cannot serve one for the other.
   const digestPayload = `${picture.picture}\n${picture.preload}\n${imageSet}`;
   return Object.freeze({
     picture,

@@ -36,6 +36,7 @@ const config = defineConfig({
 - [IntegrationConfig](interfaces/IntegrationConfig.md)
 - [QuantizeProps](interfaces/QuantizeProps.md)
 - [ResolvedInitialState](interfaces/ResolvedInitialState.md)
+- [ResponsiveMediaHostProjection](interfaces/ResponsiveMediaHostProjection.md)
 - [SatelliteProps](interfaces/SatelliteProps.md)
 - [ServerIslandContext](interfaces/ServerIslandContext.md)
 
@@ -44,6 +45,7 @@ const config = defineConfig({
 - [CrossOriginEmbedderPolicy](type-aliases/CrossOriginEmbedderPolicy.md)
 - [CzapFetchLayer](type-aliases/CzapFetchLayer.md)
 - [FetchLayerNext](type-aliases/FetchLayerNext.md)
+- [ResponsiveMediaCapsSource](type-aliases/ResponsiveMediaCapsSource.md)
 
 ## Variables
 
@@ -51,6 +53,7 @@ const config = defineConfig({
 
 ## Functions
 
+- [applyResponsiveMediaVary](functions/applyResponsiveMediaVary.md)
 - [bridgeDiagnosticsToAstroLogger](functions/bridgeDiagnosticsToAstroLogger.md)
 - [czapFetchLayer](functions/czapFetchLayer.md)
 - [czapMiddleware](functions/czapMiddleware.md)
@@ -60,6 +63,7 @@ const config = defineConfig({
 - [installDiagnosticsBridge](functions/installDiagnosticsBridge.md)
 - [integration](functions/integration.md)
 - [loadDocsMcpBundle](functions/loadDocsMcpBundle.md)
+- [projectResponsiveMediaForRequest](functions/projectResponsiveMediaForRequest.md)
 - [resolveInitialState](functions/resolveInitialState.md)
 - [resolveInitialStateFallback](functions/resolveInitialStateFallback.md)
 - [resolveInitialStateWithReceipt](functions/resolveInitialStateWithReceipt.md)

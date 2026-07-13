@@ -38,6 +38,8 @@ export default {
 
 The served `<html>` element carries `data-czap-tier`, `data-czap-motion`, and `data-czap-design` attributes — the same capability/motion/visual-fidelity triple the browser-side detector would compute, available before any client JavaScript runs.
 
+`ClientHints.responsiveMediaCapabilities(headers)` derives the Save-Data / DPR slice that `@czap/core`'s `selectCandidates` responsive-media law consumes, and `responsiveMediaVaryHeader()` is the `Vary` axis (`Sec-CH-DPR, Save-Data`) a CDN keys those representations on. Both are production-wired through `@czap/astro`'s `czapMiddleware` (and `@czap/cloudflare` through it) as of #140 — a Save-Data client is never advertised a heavy image candidate.
+
 ## Where it sits
 
 A host-agnostic edge layer: it only parses headers and strings, touching no platform APIs, which keeps host adapters like `@czap/cloudflare` down to binding glue. It depends on [`@czap/detect`](https://github.com/freebatteryfactory/LiteShip/tree/main/packages/detect) (the same pure tier-mapping functions the browser runs, so edge and client agree on tiers) and [`@czap/core`](https://github.com/freebatteryfactory/LiteShip/tree/main/packages/core) (shared tier types and branded ids). The KV-backed boundary cache (`createBoundaryCache`) keys entries by the boundary's content address, the device tier, the boundary name, and a fingerprint of the resolved theme — so an entry only serves a request whose inputs match, and editing a boundary mints a new key. (A bundled `compile()` whose output depends on build-time content the boundary id doesn't cover bumps `prefix` to version it.) See the

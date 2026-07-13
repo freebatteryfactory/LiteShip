@@ -122,6 +122,7 @@ const { title = 'czap showcase' } = Astro.props;
         padding: 2rem;
       }
     </style>
+    <slot name="head" />
   </head>
   <body>
     <nav class="czap-nav">
@@ -132,6 +133,7 @@ const { title = 'czap showcase' } = Astro.props;
         <li><a href="/stream-recovery">Recovery</a></li>
         <li><a href="/motion">Motion</a></li>
         <li><a href="/motion-chain">Chain</a></li>
+        <li><a href="/responsive-media">Media</a></li>
         <li><a href="/chat">Chat</a></li>
         <li><a href="/gpu">GPU</a></li>
         <li><a href="/worker">Worker</a></li>

@@ -22,7 +22,7 @@ from middleware to layer by swapping the factory, not relearning config.
 
 > `readonly` `optional` **detect?**: `boolean`
 
-Defined in: [astro/src/middleware.ts:86](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L86)
+Defined in: [astro/src/middleware.ts:98](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L98)
 
 Whether to include the Client Hints request headers (default `true`).
 
@@ -36,7 +36,7 @@ Whether to include the Client Hints request headers (default `true`).
 
 > `readonly` `optional` **edge?**: `EdgeHostAdapterConfig`
 
-Defined in: [astro/src/middleware.ts:84](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L84)
+Defined in: [astro/src/middleware.ts:96](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L96)
 
 Edge host adapter configuration (KV cache, theme compilation).
 
@@ -100,7 +100,7 @@ always passes through until a consumer opts edge serve in (e.g.
 
 > `readonly` `optional` **workers?**: `object`
 
-Defined in: [astro/src/middleware.ts:93](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L93)
+Defined in: [astro/src/middleware.ts:105](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L105)
 
 Whether to emit COOP/COEP headers for worker features. `coep`
 selects the embedder policy value (default `'require-corp'`);

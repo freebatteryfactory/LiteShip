@@ -95,6 +95,11 @@
       "version": "0.9.0",
       "exports": [
         {
+          "name": "applyResponsiveMediaVary",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "bridgeDiagnosticsToAstroLogger",
           "kind": "function",
           "signature": "(1)"
@@ -148,6 +153,11 @@
           "name": "parseGraphQueryIfNoneMatch",
           "kind": "function",
           "signature": "(1)"
+        },
+        {
+          "name": "projectResponsiveMediaForRequest",
+          "kind": "function",
+          "signature": "(2)"
         },
         {
           "name": "resolveInitialState",
@@ -1848,6 +1858,11 @@
           "name": "seededRng",
           "kind": "function",
           "signature": "(1)"
+        },
+        {
+          "name": "selectCandidates",
+          "kind": "function",
+          "signature": "(2)"
         },
         {
           "name": "sendGraphMutation",
