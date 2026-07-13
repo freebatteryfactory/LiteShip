@@ -715,6 +715,13 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
       artifactId,
       ...(snapshotUrl ? { snapshotUrl } : {}),
       ...(hasCustomEndpointPolicy(endpointPolicy) ? { endpointPolicy } : {}),
+      // `czap:request-snapshot` is dispatched by `Morph.morphWithState` ONLY after a
+      // preserve-hint rejection (packages/web/src/morph/diff.ts) — the morph already
+      // clobbered the DOM, so the rendered view is KNOWN-STALE. Mark it so, so the
+      // graph-native gap-replay path (below) does not early-return on an `ok`/`304`
+      // QUERY: it must also apply fresh snapshot HTML to CONVERGE the DOM (F-REC-3).
+      // Without a substrate the snapshot floor applies HTML unconditionally anyway.
+      domStale: () => true,
       ...(substrate
         ? {
             graphQueryUrl: substrate.graphQueryUrl,

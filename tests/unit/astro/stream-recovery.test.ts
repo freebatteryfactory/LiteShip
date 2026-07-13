@@ -249,7 +249,17 @@ describe('stream directive graph-native recovery (#133)', () => {
       replayedCells: [],
       discretePayloads: [],
     } as never);
-    const snapshotSpy = vi.spyOn(Resumption, 'fetchSnapshot');
+    // F-REC-3: request-snapshot fires from a REJECTED morph, so the DOM is stale.
+    // Gap-replay corrects the graph + cells but NOT the rendered DOM, so a snapshot
+    // is ALSO fetched (domStale) to converge it — provide one to apply.
+    const snapshotSpy = vi.spyOn(Resumption, 'fetchSnapshot').mockReturnValue(
+      Effect.succeed({
+        type: 'snapshot',
+        html: '<main>dom-converged</main>',
+        signals: { state: 'expanded' },
+        lastEventId: 'evt-99',
+      }),
+    );
 
     const dispose = registerStreamRecoverySubstrate('hero', {
       graphQueryUrl: '/api/graph',
@@ -262,6 +272,7 @@ describe('stream directive graph-native recovery (#133)', () => {
         'data-czap-stream-url': '/api/feed',
         'data-czap-stream-artifact': 'hero',
       });
+      el.innerHTML = '<main>stale-rejected</main>';
       streamDirective(noop, {}, el);
 
       // An AUTHORITY-MINTED, attested transition receipt frame — the ONLY shape the
@@ -305,7 +316,14 @@ describe('stream directive graph-native recovery (#133)', () => {
       expect(call.queryUrl).toBe('/api/graph');
       expect(call.entries).toHaveLength(1);
       expect(call.entries[0]!.transition).toMatchObject({ cell: 'workspace', next: 'expanded' });
-      expect(snapshotSpy).not.toHaveBeenCalled();
+      // Gap-replay stays the graph/cell leg (typed + attested), but the DOM only
+      // converges when the snapshot HTML is applied — the floor is NOT skipped for
+      // the DOM after a rejected morph (F-REC-3).
+      expect(snapshotSpy).toHaveBeenCalledOnce();
+      await vi.waitFor(() => {
+        expect(el.innerHTML).toContain('dom-converged');
+      });
+      expect(el.innerHTML).not.toContain('stale-rejected');
     } finally {
       dispose();
     }
@@ -324,14 +342,21 @@ describe('stream directive graph-native recovery (#133)', () => {
     const g1 = graph([node('workspace.collapsed'), node('workspace.expanded')]);
     expect(g0.id).not.toBe(g1.id);
 
-    // QUERY read leg returns the server graph (ok) with its sha256 etag.
-    const fetchMock = vi.fn(
-      async () =>
-        new Response(JSON.stringify({ status: 'ok', graph: g1, etag: g1.digest.integrity_digest }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        }),
-    );
+    // Two fetch legs: the graph QUERY read (ok + sha256 etag) drives gap-replay; the
+    // default /czap/snapshot/<id> endpoint converges the rejected-morph DOM (F-REC-3).
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input instanceof Request ? input.url : input);
+      if (url.includes('/czap/snapshot')) {
+        return new Response(
+          JSON.stringify({ html: '<main>dom-converged</main>', signals: { state: 'expanded' }, lastEventId: 'evt-99' }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        );
+      }
+      return new Response(JSON.stringify({ status: 'ok', graph: g1, etag: g1.digest.integrity_digest }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    });
     vi.stubGlobal('fetch', fetchMock);
 
     // Mint the AUTHORITY transition receipt for a real StateCellStore crossing
@@ -353,6 +378,7 @@ describe('stream directive graph-native recovery (#133)', () => {
       'data-czap-stream-cells': JSON.stringify([{ name: 'workspace', states: ['collapsed', 'expanded'] }]),
     });
 
+    el.innerHTML = '<main>stale-rejected</main>';
     streamDirective(noop, {}, el);
 
     // The directive registered a substrate from the attributes (not test glue),
@@ -381,6 +407,13 @@ describe('stream directive graph-native recovery (#133)', () => {
       expect(cell?.generation).toBe(1);
     });
     expect(fetchMock).toHaveBeenCalled();
+
+    // F-REC-3: the rejected-morph DOM ALSO converges — gap-replay fixes the graph +
+    // cells, and the snapshot HTML leg replaces the stale rendered DOM.
+    await vi.waitFor(() => {
+      expect(el.innerHTML).toContain('dom-converged');
+    });
+    expect(el.innerHTML).not.toContain('stale-rejected');
 
     // Disposal: teardown removes the registration — no leak. A re-register (which
     // THROWS if the slot were still held) proves the slot is free again.
