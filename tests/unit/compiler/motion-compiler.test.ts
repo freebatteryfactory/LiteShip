@@ -369,6 +369,27 @@ describe('MotionCompiler — composed TransitionProgram keyframes (#141, backend
     expect(result.transition).not.toContain('opacity 600ms');
   });
 
+  test('a property that re-reaches its final value late keeps the fallback open to the end', () => {
+    // Non-monotonic: opacity hits its final 1 at 25%, LEAVES to 0.5, then RETURNS to 1
+    // at 100%. The fallback must animate the FULL 1000ms — a first-final-stop scan would
+    // finish and hold at 250ms while the keyframe / JS paths keep going (Greptile P1).
+    const plan: CssMotionPlan = {
+      ...revealCssPlan(),
+      properties: [{ property: 'opacity', from: { k: 'opacity', v: 0 }, to: { k: 'opacity', v: 1 } }],
+      transitionProperty: 'opacity',
+      durationMs: 1000,
+      keyframes: [
+        { offset: 0, properties: { opacity: '0' } },
+        { offset: 0.25, properties: { opacity: '1' } },
+        { offset: 0.5, properties: { opacity: '0.5' } },
+        { offset: 1, properties: { opacity: '1' } },
+      ],
+    };
+    const result = MotionCompiler.compile({ plan });
+    expect(result.transition).toContain('opacity 1000ms ease');
+    expect(result.transition).not.toContain('opacity 250ms');
+  });
+
   test('seq transition fallback carries per-property delay — a later step starts at its seam', () => {
     // seq total = 200+600 = 800ms. Step A (opacity) owns [0, 0.25]; step B (x) owns
     // [0.25, 1] → duration 600ms after a 200ms delay, so the fallback holds x until B

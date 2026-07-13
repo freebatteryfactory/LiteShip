@@ -152,12 +152,15 @@ function delaySuffix(delayMs: number | undefined): string {
 
 /**
  * The `[start, end]` offsets a property ACTIVELY tweens over, read from the keyframe
- * stops: the last offset it still holds its initial value (before it departs) and the
- * first offset it reaches its terminal value (after which it holds). A single-transition
- * plan has exactly two stops, so every property yields `[0, 1]` — the whole span. A
- * multi-window program (`par` / `seq` / stagger) is where they differ: a `par` opacity
- * that completes at `200/600` yields `[0, 1/3]`, a `seq` step yields `[0.25, 1]`, etc.
- * A constant or non-monotonic property (`initial === final`) falls back to the full span.
+ * stops: the last offset it still holds its initial value (before it FIRST departs) and
+ * the offset it becomes PERMANENTLY final (the stop after its LAST departure from the
+ * final value). A single-transition plan has exactly two stops, so every property yields
+ * `[0, 1]` — the whole span. A multi-window program (`par` / `seq` / stagger) is where
+ * they differ: a `par` opacity that completes at `200/600` yields `[0, 1/3]`, a `seq`
+ * step yields `[0.25, 1]`. `end` is the LAST departure (not the first final-value stop):
+ * a property that reaches its final value early, LEAVES it, and RE-reaches it later keeps
+ * animating until that last return, so the fallback must not finish and hold early. A
+ * constant property (`initial === final`) collapses and falls back to the full span.
  */
 function propertyActiveWindow(
   sortedStops: readonly CssKeyframeStep[],
@@ -169,18 +172,25 @@ function propertyActiveWindow(
   const initial = values[0];
   const final = values[values.length - 1];
 
+  // start: the last stop of the contiguous run that still holds `initial` — where it
+  // FIRST departs (a later return to `initial` does not un-start the tween).
   let start = first;
   for (let i = 0; i < sortedStops.length; i++) {
     if (values[i] === initial) start = sortedStops[i]!.offset;
     else break;
   }
-  let end = last;
-  for (let i = 0; i < sortedStops.length; i++) {
-    if (values[i] === final) {
-      end = sortedStops[i]!.offset;
+  // end: the stop AFTER the property's LAST departure from `final` — where it settles
+  // permanently. Scanning for the FIRST final-value stop would end (and hold) too early
+  // when the property leaves and re-reaches its final value in a later window.
+  let lastDeparture = -1;
+  for (let i = sortedStops.length - 1; i >= 0; i--) {
+    if (values[i] !== final) {
+      lastDeparture = i;
       break;
     }
   }
+  const end = lastDeparture === -1 ? first : sortedStops[Math.min(lastDeparture + 1, sortedStops.length - 1)]!.offset;
+
   // A constant property (initial === final) collapses to end <= start — there is no real
   // tween, so hand it the full span rather than a zero/negative duration.
   return end > start ? { start, end } : { start: first, end: last };
