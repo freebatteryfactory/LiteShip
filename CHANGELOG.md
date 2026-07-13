@@ -4,6 +4,49 @@ All notable changes to czap. The format follows [Keep a Changelog](https://keepa
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Pre-1.0
 break policy is intentionally aggressive — minor version bumps may carry breaking changes.
 
+## [Unreleased]
+
+The **0.9 completion campaign** (2026-07-13) — a semantic-truth pass over the 25-package system,
+moving several seams from *structural* completion (a field is read, a fallback exported) to
+*semantic* completion (the correct state / bytes / DOM / cache variant / timeline behaviour
+survives end to end). Every change is red-first, root-caused, propagated to examples & docs, and
+independently QA'd; the full node vitest suite is green (7786/7809). Resolves #126, #130, #140,
+#141, #146; tidies #145; parks #129 with a reopen condition; fixes #142's breadcrumb depth.
+
+### Added
+
+- **Graph-native stream recovery, end to end (#133)** — a typed, value-bearing `DiscreteStateTransition@1`
+  receipt (minted through the one existing hash law), attestation-checked SSE ingestion (hash + subject +
+  chain), a generation-rollback guard, and a production astro host wiring + reference emit route + integration
+  test that drives a real crossing through a reconnect. Retires the latent substrate.
+- **Continuous motion runtime floor (#126)** — `client:motion` scrubs a scroll/time signal through the JS
+  floor when native `animation-timeline` is unavailable; the floor and CSS `linear()` provably sample one
+  `Easing.spring` kernel. Adds the `color` interpolation kind.
+- **Multi-transition algebra (#141)** — an explicit `TransitionProgram` (seq/par/choice) with real duration
+  composition and branch selection (ADR-0039), replacing the collapsed routing label.
+- **Cross-target motion parity (#130)** — one authored program renders identically across browser CSS,
+  browser runtime, scene, stage, remotion, and worker, proven by a differential oracle (ADR-0040).
+- **Responsive-media effective-candidate law (#140)** — `selectCandidates` so Save-Data is honoured across
+  `src`/`srcset`/`<source>`/preload/`image-set()`/cache-key; wired into Astro and Cloudflare hosts.
+- Answer-first npm `description`/`keywords` for all 25 packages from one canonical catalog, with a
+  release-gated prepublish metadata check (#146).
+
+### Changed / Fixed
+
+- CSS: bare declarations inside `@supports`/`@media` conditional groups are now wrapped in the boundary
+  selector (were silently dropped by the browser).
+- Astro: `Vary` tokens are merged, not clobbered (protects `Cookie`/`Accept-Encoding` cache axes).
+- MCP: the docs route returns JSON-RPC failures as a top-level `error` member (was laundered into a 200 `result`).
+- CLI/doctor: deployed-header checks validate actual COOP/COEP/Client-Hint *values* (not mere presence);
+  value-taking flags no longer swallow the next flag; the Workers module-scope `Date` scan is AST-based.
+- `#145` MCP dispatch-matrix timeouts refactored to a documented lookup table; `#142` sharded-docs breadcrumb
+  depth fixed (sharded builder stays experimental).
+
+### Removed (breaking — pre-1.0 aggressive break policy)
+
+- `discreteSignalPayloadsFromPatch` (@czap/core) — replaced by the typed `DiscreteStateTransition` replay path.
+- `keyframesForRouting` (@czap/core) — replaced by the `TransitionProgram` lowering.
+
 ## [0.9.0] - 2026-07-09
 
 The **0.9 keystone wave** — Phase B gap closure plus the hardening cut: HTTP QUERY read-leg,
