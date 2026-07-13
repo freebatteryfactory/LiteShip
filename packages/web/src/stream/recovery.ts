@@ -77,6 +77,16 @@ export interface StreamRecoveryOptions {
    * fast path (no snapshot fetch when the DOM is already fresh).
    */
   readonly domStale?: () => boolean;
+  /**
+   * Await any in-flight receipt-frame attestation before recovery reads the buffer.
+   * `recordStreamPatchReceipt` is async — it recomputes the sha256 hash to attest a
+   * frame BEFORE appending it — so a receipt that arrives just before a morph
+   * rejection may still be hashing when recovery fires; gap replay would then run
+   * against a buffer missing that just-received crossing. Draining first serializes
+   * the two: every receipt received before the trigger is buffered before the QUERY
+   * reads it. Absent, recovery proceeds immediately (the interim floor is unaffected).
+   */
+  readonly drainPendingReceipts?: () => Promise<void>;
 }
 
 const resolveRefreshBase = (
@@ -141,6 +151,11 @@ export const adoptRefreshedGraphBase = async (
  * Otherwise fall through to interim snapshot re-sync (permanent floor).
  */
 export const runGraphNativeRecovery = async (options: StreamRecoveryOptions): Promise<void> => {
+  // Serialize with receipt attestation: a receipt frame received just before this
+  // trigger may still be hashing (F-133 race). Drain it so gap replay reads a buffer
+  // that already includes every crossing received before recovery fired.
+  await options.drainPendingReceipts?.();
+
   const localBase = options.mutationClient?.base();
   const canGapReplay =
     options.graphQueryUrl !== undefined &&
