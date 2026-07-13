@@ -184,6 +184,29 @@ describe('ResponsiveMedia projection', () => {
     expect(projection.picture).not.toMatch(/prefers-reduced-data: reduce"[^>]*hero-1600/);
   });
 
+  test('buildResponsiveImageSet advertises a lone descriptor-less candidate at 1x (Codex P2)', () => {
+    // A bare Save-Data light asset (no width/descriptor) would otherwise yield `none`, dropping
+    // the light URL from CSS image-set() entirely — a single such candidate defaults to 1x.
+    expect(buildResponsiveImageSet([{ src: '/img/hero-lite.svg' }])).toBe('image-set(url("/img/hero-lite.svg") 1x)');
+    // Multiple descriptor-less candidates have an ambiguous DPR — still `none`.
+    expect(buildResponsiveImageSet([{ src: '/a.svg' }, { src: '/b.svg' }])).toBe('none');
+  });
+
+  test('image-set() keeps the bare Save-Data light asset instead of dropping to none (Codex P2)', () => {
+    const intent = ResponsiveMedia.intent({
+      id: 'hero-img',
+      alt: 'Hero',
+      variants: [
+        { src: '/img/hero-800.jpg', width: 800 },
+        { src: '/img/hero-1600.jpg', width: 1600 },
+      ],
+      saveDataVariant: { src: '/img/hero-lite.jpg' },
+    });
+    const compiled = compileResponsiveMedia(intent, { devicePixelRatio: 3, saveData: true });
+    expect(compiled.imageSet).toBe('image-set(url("/img/hero-lite.jpg") 1x)');
+    expect(compiled.imageSet).not.toContain('hero-1600');
+  });
+
   test('adversarial: escapes alt text in HTML', () => {
     const intent = ResponsiveMedia.intent({
       id: 'x',
