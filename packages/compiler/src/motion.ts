@@ -203,6 +203,16 @@ function propertyActiveWindow(
  * every property, which would make the transition fallback diverge from the keyframe /
  * JS-floor path (cross-target parity). A single-transition plan yields `[0,1]` for every
  * property, so this is byte-identical to a uniform `durationMs` there.
+ *
+ * KNOWN LIMITATION (inherent to CSS `transition`, not the window math): a `transition` is a
+ * single point-to-point interpolation from the property's start value to its END-STATE value
+ * (the `t=1` keyframe). It CANNOT render a NON-MONOTONIC / returning path — a program whose
+ * opacity goes `0 → 1 → 0` has equal start and end, so the transition is a `0 → 0` no-op and
+ * the middle peak never shows in this fallback. The multi-offset `@keyframes` and the JS floor
+ * DO render the arc faithfully; the single-segment transition is the last-resort tier (no
+ * `animation-timeline`, no JS) and only approximates monotonic motion. Rendering the arc in the
+ * fallback would require a time-based `@keyframes` animation instead of a transition (a
+ * deliberate change to the tier's semantics), not a different window.
  */
 function transitionDecls(plan: CssMotionPlan, easingFn: string, delayMs?: number): string {
   const baseDelayMs = delayMs !== undefined && delayMs > 0 ? delayMs : 0;
