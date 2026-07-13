@@ -358,8 +358,14 @@ interface WalkWindow {
  *     spring/ease SHAPE lives in the `linear()` timing function, not the stop values
  *     (baking easing into both would double-apply it).
  *
- * Later windows overwrite earlier ones per key (last-window-wins), so a `seq` seam is
- * a defined settled state and a completed program (`t=1`) is the terminal pose.
+ * Last-window-wins applies ONLY among windows that have reached their start
+ * (`t >= windowStart`): a `seq` seam is a defined settled state and a completed
+ * program (`t=1`) is the terminal pose. A window that has NOT started yet is clamped
+ * to its `from`, so it must never overwrite an earlier ACTIVE window on the same key
+ * (that would freeze an in-progress tween at the next step's start value — e.g. a
+ * `0→1` fade masked by a following `1→0` window's `from=1`). Such a not-yet-started
+ * window only SEEDS a key that no started/prior window has valued, so a key that
+ * first appears in a future window still holds its initial `from` until it begins.
  */
 function walkWindows(
   windows: readonly WalkWindow[],
@@ -369,11 +375,16 @@ function walkWindows(
   const byKey = new Map<string, TypedValue>();
   for (const window of windows) {
     const span = window.windowEnd - window.windowStart;
-    const localRaw = span <= 0 ? (t >= window.windowStart ? 1 : 0) : (t - window.windowStart) / span;
+    const started = t >= window.windowStart;
+    const localRaw = span <= 0 ? (started ? 1 : 0) : (t - window.windowStart) / span;
     const clamped = clamp01(localRaw);
     const eased = mode === 'identity' ? clamped : sampleRuntimeEasing(window.easing)(clamped);
     for (const tween of window.tweens) {
-      byKey.set(tween.key, interpolateTyped(tween.from, tween.to, eased));
+      // Started windows take the key (last-window-wins); unstarted windows only seed
+      // a key nothing has valued yet — never clobbering an earlier active window.
+      if (started || !byKey.has(tween.key)) {
+        byKey.set(tween.key, interpolateTyped(tween.from, tween.to, eased));
+      }
     }
   }
   return byKey;
@@ -466,15 +477,29 @@ export function interpretProgram(
     easing: w.step.easing,
   }));
 
-  // Union of runtime props (dedup by cssVar; last window wins for the flat fallback).
+  // Union of runtime props (dedup by cssVar). A repeated cssVar is folded to ONE
+  // end-to-end tween: the FIRST occurrence's `from` (the chain's initial value) and
+  // the LAST occurrence's `to` (its terminal value). The animated curve still rides
+  // `windows`; this flat fallback settles `from(first)→to(last)` — never the last
+  // leg alone, which would drop the first step's start.
   const runtimeByVar = new Map<string, RuntimeWriteProperty>();
-  for (const w of result.windows) for (const p of w.step.runtimeProps) runtimeByVar.set(p.cssVar, p);
+  for (const w of result.windows)
+    for (const p of w.step.runtimeProps) {
+      const prior = runtimeByVar.get(p.cssVar);
+      runtimeByVar.set(p.cssVar, prior ? { cssVar: prior.cssVar, from: prior.from, to: p.to } : p);
+    }
   const unionRuntime = [...runtimeByVar.values()];
 
-  // Union of CSS tweens (dedup by property name; first occurrence for @property init).
+  // Union of CSS tweens (dedup by property name). Same fold: the first `from` seeds
+  // @property init, the last `to` is the terminal value — so a repeated property's
+  // flat metadata (and its `t=1` keyframe) settle to the program's end, matching the
+  // runtime sampler instead of freezing at the first step's `to`.
   const cssByProp = new Map<string, MotionPropertyTween>();
   for (const w of result.windows)
-    for (const p of w.step.cssProps) if (!cssByProp.has(p.property)) cssByProp.set(p.property, p);
+    for (const p of w.step.cssProps) {
+      const prior = cssByProp.get(p.property);
+      cssByProp.set(p.property, prior ? { property: prior.property, from: prior.from, to: p.to } : p);
+    }
   const unionCss = [...cssByProp.values()];
 
   const signals = [...new Set(result.windows.flatMap((w) => w.step.signals))];

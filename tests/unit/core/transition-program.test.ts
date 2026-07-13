@@ -352,6 +352,89 @@ describe('TransitionProgram — algebra LAWS', () => {
   });
 });
 
+describe('TransitionProgram — same-key sequential windows (Codex P2 / Greptile P1 regression)', () => {
+  // A seq chain that animates the SAME key across BOTH steps — the case the algebra
+  // tests above never hit (they use opacity for A, --czap-hero-x for B). A future
+  // window, clamped to its `from` before it starts, must NOT clobber the earlier
+  // ACTIVE window on last-window-wins, or an in-progress tween freezes at the next
+  // step's start value.
+  const rampA = makeStep({ '--czap-hero-x': '0px' }, { '--czap-hero-x': '100px' }, 400);
+  const rampB = makeStep({ '--czap-hero-x': '100px' }, { '--czap-hero-x': '200px' }, 400);
+  const rampGraph = sealGraph({
+    _tag: 'DocumentGraph',
+    _version: 1,
+    meta: META,
+    nodes: [signal, component, entity, ...rampA.nodes, ...rampB.nodes],
+    edges: [],
+  } as Omit<DocumentGraph, 'id' | 'digest'>);
+  const ramp: TransitionProgram = {
+    kind: 'seq',
+    children: [
+      { kind: 'step', transitionId: rampA.transitionId },
+      { kind: 'step', transitionId: rampB.transitionId },
+    ],
+  };
+
+  test('the runtime sampler shows the FIRST leg in progress, not the second leg`s start value', () => {
+    const plan = interpretProgram(rampGraph, ramp);
+    const windows = plan.runtime!.windows!;
+    const x = (t: number): number =>
+      num(sampleProgramWindows(windows, t).find((s) => s.cssVar === '--czap-hero-x')!.value);
+    // seq windows: rampA [0,0.5], rampB [0.5,1]. Mid the FIRST leg the value is the
+    // in-progress 0→100 tween (≈50 at t=0.25) — NOT 100 frozen by rampB.from.
+    expect(x(0.25)).toBeCloseTo(50, 6);
+    expect(x(0.5)).toBeCloseTo(100, 6); // seam: both legs agree at 100
+    expect(x(0.75)).toBeCloseTo(150, 6); // second leg in progress 100→200
+    expect(x(1)).toBeCloseTo(200, 6); // terminal
+  });
+
+  test('the CSS keyframes seed 0% from the FIRST window and settle 100% at the TERMINAL', () => {
+    const plan = interpretProgram(rampGraph, ramp);
+    const kf = plan.css!.keyframes;
+    expect(kf.map((k) => k.offset)).toEqual([0, 0.5, 1]);
+    // 0% is rampA.from (0px) — a not-yet-started rampB must not overwrite it to 100px.
+    expect(kf.find((k) => k.offset === 0)!.properties['--czap-hero-x']).toBe('0px');
+    expect(kf.find((k) => k.offset === 0.5)!.properties['--czap-hero-x']).toBe('100px');
+    // 100% is the program terminal (rampB.to), not the first step`s 100px.
+    expect(kf.find((k) => k.offset === 1)!.properties['--czap-hero-x']).toBe('200px');
+  });
+
+  test('the flat CSS `properties` fold keeps FIRST `from` (init) but LAST `to` (terminal)', () => {
+    const plan = interpretProgram(rampGraph, ramp);
+    const tween = plan.css!.properties.find((p) => p.property === '--czap-hero-x')!;
+    expect(num(tween.from)).toBe(0); // first occurrence — @property initial-value
+    expect(num(tween.to)).toBe(200); // last occurrence — terminal, not the first step`s 100
+  });
+
+  test('a fade-in-then-out chain is not masked: opacity rises before it falls', () => {
+    // The concrete case Codex flagged: opacity 0→1 then 1→0. Before the fix the
+    // future 1→0 window (from=1) clobbered the fade-in throughout its window.
+    const fadeIn = makeStep({ opacity: 0 }, { opacity: 1 }, 400);
+    const fadeOut = makeStep({ opacity: 1 }, { opacity: 0 }, 400);
+    const fadeGraph = sealGraph({
+      _tag: 'DocumentGraph',
+      _version: 1,
+      meta: META,
+      nodes: [signal, component, entity, ...fadeIn.nodes, ...fadeOut.nodes],
+      edges: [],
+    } as Omit<DocumentGraph, 'id' | 'digest'>);
+    const fade: TransitionProgram = {
+      kind: 'seq',
+      children: [
+        { kind: 'step', transitionId: fadeIn.transitionId },
+        { kind: 'step', transitionId: fadeOut.transitionId },
+      ],
+    };
+    const windows = interpretProgram(fadeGraph, fade).runtime!.windows!;
+    const op = (t: number): number => num(sampleProgramWindows(windows, t).find((s) => s.cssVar === 'opacity')!.value);
+    expect(op(0)).toBeCloseTo(0, 6); // fade-in start (NOT frozen at 1)
+    expect(op(0.25)).toBeCloseTo(0.5, 6); // fade-in halfway
+    expect(op(0.5)).toBeCloseTo(1, 6); // peak
+    expect(op(0.75)).toBeCloseTo(0.5, 6); // fade-out halfway
+    expect(op(1)).toBeCloseTo(0, 6); // fade-out complete
+  });
+});
+
 describe('TransitionProgram — authoring sugar (Reveal.chain / staggerProgram)', () => {
   test('lowerRevealChain builds a seq + trailing choice program that lowers to windows', () => {
     const chain = lowerRevealChain({
