@@ -338,6 +338,9 @@ importers:
       '@czap/astro':
         specifier: workspace:*
         version: link:../../packages/astro
+      '@czap/compiler':
+        specifier: workspace:*
+        version: link:../../packages/compiler
       '@czap/core':
         specifier: workspace:*
         version: link:../../packages/core

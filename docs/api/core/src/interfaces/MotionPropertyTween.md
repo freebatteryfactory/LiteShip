@@ -6,7 +6,7 @@
 
 # Interface: MotionPropertyTween
 
-Defined in: [core/src/interpret-transition.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L29)
+Defined in: [core/src/interpret-transition.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L30)
 
 One property tween with typed endpoints.
 
@@ -16,7 +16,7 @@ One property tween with typed endpoints.
 
 > `readonly` **from**: [`TypedValue`](../type-aliases/TypedValue.md)
 
-Defined in: [core/src/interpret-transition.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L31)
+Defined in: [core/src/interpret-transition.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L32)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [core/src/interpret-transition.ts:31](https://github.com/freebattery
 
 > `readonly` **property**: `string`
 
-Defined in: [core/src/interpret-transition.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L30)
+Defined in: [core/src/interpret-transition.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L31)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [core/src/interpret-transition.ts:30](https://github.com/freebattery
 
 > `readonly` **to**: [`TypedValue`](../type-aliases/TypedValue.md)
 
-Defined in: [core/src/interpret-transition.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L32)
+Defined in: [core/src/interpret-transition.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L33)

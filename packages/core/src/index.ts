@@ -108,14 +108,15 @@ export type { SignalSourceType, SignalSource } from './signal.js';
 export { sourceToInput, inputToSource, inputSourceType } from './signal-input.js';
 
 // Easing
-export { Easing } from './easing.js';
+export { Easing, sampleRuntimeEasing, DEFAULT_MOTION_SPRING } from './easing.js';
+export type { RuntimeEasing } from './easing.js';
 
 // Animation
 export { Animation } from './animation.js';
 
 // Typed interpolation + TransitionNode interpreter (#130 children 1–2)
 export { interpolate, interpolateTyped, parseTypedBinding, formatTypedValue } from './interpolate.js';
-export type { TypedValue, TransformPart } from './interpolate.js';
+export type { TypedValue, TransformPart, ColorSpace } from './interpolate.js';
 export { interpretTransition } from './interpret-transition.js';
 export type {
   LoweredMotionPlan,

@@ -6,7 +6,7 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Reveal, lowerRevealIntent, interpretTransition } from '@czap/core';
+import { Reveal, lowerRevealIntent, interpretTransition, Easing, DEFAULT_MOTION_SPRING } from '@czap/core';
 import { compileReveal } from '@czap/compiler';
 import { writeContinuousMap, loadGraphRuntime, lowerGraph } from '@czap/astro/runtime';
 
@@ -22,20 +22,24 @@ function heroIntent() {
 }
 
 describe('Reveal end-to-end runtime floor', () => {
-  test('graph → interpretTransition → writeContinuousMap leaf writes at progress t', () => {
+  test('graph → interpretTransition → writeContinuousMap leaf writes eased at progress t', () => {
     const intent = heroIntent();
     const lowered = lowerRevealIntent(intent);
     compileReveal(lowered.graph, lowered.transitionId, intent);
 
     const plan = interpretTransition(lowered.graph, lowered.transitionId);
     if (!plan.runtime) throw new Error('expected runtime plan');
+    // The reveal authored `easing: 'spring'`, so the floor bends raw t through the
+    // SAME Easing.spring the CSS linear() compiles from — NOT a linear lerp.
+    expect(plan.runtime.easing).toEqual({ kind: 'spring' });
 
     const el = document.createElement('div');
     el.setAttribute('data-czap-boundary', 'hero');
     writeContinuousMap(el, plan.runtime, 0.5);
 
-    expect(el.style.opacity).toBe('0.5');
-    expect(el.style.getPropertyValue('--czap-hero-y')).toBe('12px');
+    const eased = Easing.spring(DEFAULT_MOTION_SPRING)(0.5); // the shared-default spring kernel
+    expect(Number(el.style.opacity)).toBeCloseTo(eased, 10); // opacity lerps 0→1 → value IS eased
+    expect(el.style.getPropertyValue('--czap-hero-y')).toBe(`${24 - 24 * eased}px`); // 24px → 0px
   });
 
   test('simulated animation frames dispatch uniform-update without graph mutation', () => {

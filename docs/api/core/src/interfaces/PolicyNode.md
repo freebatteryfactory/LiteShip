@@ -6,7 +6,7 @@
 
 # Interface: PolicyNode
 
-Defined in: [core/src/document-graph.ts:115](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L115)
+Defined in: [core/src/document-graph.ts:124](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L124)
 
 7. Policy — NET-NEW. A pre-projection capability/constraint gate read by the
 escalation chooser (P5c). Constrains which projection targets are admissible
@@ -22,7 +22,7 @@ given the runtime site, the required [CapTier](../type-aliases/CapTier.md), and 
 
 > `readonly` **\_tag**: `"DocGraphPolicyNode"`
 
-Defined in: [core/src/document-graph.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L48)
+Defined in: [core/src/document-graph.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L49)
 
 #### Inherited from
 
@@ -34,7 +34,7 @@ Defined in: [core/src/document-graph.ts:48](https://github.com/freebatteryfactor
 
 > `readonly` **\_version**: `1`
 
-Defined in: [core/src/document-graph.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L49)
+Defined in: [core/src/document-graph.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L50)
 
 #### Inherited from
 
@@ -46,7 +46,7 @@ Defined in: [core/src/document-graph.ts:49](https://github.com/freebatteryfactor
 
 > `readonly` **appliesTo**: readonly `ContentAddress`[]
 
-Defined in: [core/src/document-graph.ts:116](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L116)
+Defined in: [core/src/document-graph.ts:125](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L125)
 
 ***
 
@@ -54,7 +54,7 @@ Defined in: [core/src/document-graph.ts:116](https://github.com/freebatteryfacto
 
 > `readonly` `optional` **budgets?**: `object`
 
-Defined in: [core/src/document-graph.ts:120](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L120)
+Defined in: [core/src/document-graph.ts:129](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L129)
 
 #### allocClass?
 
@@ -74,7 +74,7 @@ Defined in: [core/src/document-graph.ts:120](https://github.com/freebatteryfacto
 
 > `readonly` **family**: `"policy"`
 
-Defined in: [core/src/document-graph.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L50)
+Defined in: [core/src/document-graph.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L51)
 
 #### Inherited from
 
@@ -86,7 +86,7 @@ Defined in: [core/src/document-graph.ts:50](https://github.com/freebatteryfactor
 
 > `readonly` **grants**: [`CapSet`](CapSet.md)
 
-Defined in: [core/src/document-graph.ts:118](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L118)
+Defined in: [core/src/document-graph.ts:127](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L127)
 
 ***
 
@@ -94,7 +94,7 @@ Defined in: [core/src/document-graph.ts:118](https://github.com/freebatteryfacto
 
 > `readonly` **id**: `ContentAddress`
 
-Defined in: [core/src/document-graph.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L52)
+Defined in: [core/src/document-graph.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L53)
 
 `fnv1a` content address over the node payload (set by `addressNode`/`sealNode`).
 
@@ -108,7 +108,7 @@ Defined in: [core/src/document-graph.ts:52](https://github.com/freebatteryfactor
 
 > `readonly` **meta**: [`CellMeta`](CellMeta.md)
 
-Defined in: [core/src/document-graph.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L54)
+Defined in: [core/src/document-graph.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L55)
 
 HLC created/updated + version. Excluded from the content address (volatile).
 
@@ -122,7 +122,7 @@ HLC created/updated + version. Excluded from the content address (volatile).
 
 > `readonly` **requires**: [`CapTier`](../type-aliases/CapTier.md)
 
-Defined in: [core/src/document-graph.ts:117](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L117)
+Defined in: [core/src/document-graph.ts:126](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L126)
 
 ***
 
@@ -130,4 +130,4 @@ Defined in: [core/src/document-graph.ts:117](https://github.com/freebatteryfacto
 
 > `readonly` **sites**: readonly [`RuntimeSite`](../type-aliases/RuntimeSite.md)[]
 
-Defined in: [core/src/document-graph.ts:119](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L119)
+Defined in: [core/src/document-graph.ts:128](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L128)

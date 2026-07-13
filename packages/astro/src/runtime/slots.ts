@@ -33,6 +33,7 @@ export const DIRECTIVE_ATTRIBUTE_REGISTRY = {
   gpu: [{ attribute: 'data-czap-shader-src', implicitBoot: true }],
   wasm: [{ attribute: 'data-czap-wasm', implicitBoot: true }],
   graph: [{ attribute: 'data-czap-graph', implicitBoot: true }],
+  motion: [{ attribute: 'data-czap-motion-program', implicitBoot: true }],
   svg: [],
 } as const satisfies Record<DirectiveName, readonly DirectiveRootAttribute[]>;
 

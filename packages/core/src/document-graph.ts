@@ -22,6 +22,7 @@
 
 import type { ContentAddress, AddressedDigest, SignalInput, ThresholdValue, StateName } from './brands.js';
 import type { CellMeta } from './protocol.js';
+import type { RuntimeEasing } from './easing.js';
 import type { EdgeType } from './plan.js';
 import type { ProjectionKeys } from './projection.js';
 import type { EvaluateResult } from './type-utils.js';
@@ -93,6 +94,14 @@ export interface TransitionNode extends NodeBase<'transition'> {
   readonly toPose: ContentAddress;
   readonly routing: EdgeType;
   readonly durationMs?: number;
+  /**
+   * The authored easing curve, carried on the node so `interpretTransition`
+   * projects the SAME descriptor onto the runtime floor (`RuntimeWritePlan.easing`)
+   * that the native CSS path compiles into `linear()` — one source, one kernel
+   * (Law 4). Omitted ⇒ the interpreter defaults it to `{ kind: 'ease' }`, matching
+   * the CSS `transition` default timing function.
+   */
+  readonly easing?: RuntimeEasing;
 }
 
 /**

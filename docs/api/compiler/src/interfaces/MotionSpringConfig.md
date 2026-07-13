@@ -6,7 +6,7 @@
 
 # Interface: MotionSpringConfig
 
-Defined in: [compiler/src/motion.ts:20](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L20)
+Defined in: [compiler/src/motion.ts:21](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L21)
 
 Spring physics config — mirrors `Easing.spring` input.
 
@@ -16,7 +16,7 @@ Spring physics config — mirrors `Easing.spring` input.
 
 > `readonly` `optional` **damping?**: `number`
 
-Defined in: [compiler/src/motion.ts:22](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L22)
+Defined in: [compiler/src/motion.ts:23](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L23)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [compiler/src/motion.ts:22](https://github.com/freebatteryfactory/Li
 
 > `readonly` `optional` **mass?**: `number`
 
-Defined in: [compiler/src/motion.ts:23](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L23)
+Defined in: [compiler/src/motion.ts:24](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L24)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [compiler/src/motion.ts:23](https://github.com/freebatteryfactory/Li
 
 > `readonly` `optional` **stiffness?**: `number`
 
-Defined in: [compiler/src/motion.ts:21](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L21)
+Defined in: [compiler/src/motion.ts:22](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L22)

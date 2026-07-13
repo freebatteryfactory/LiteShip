@@ -15,12 +15,16 @@ export interface TransformPart {
   readonly args: readonly TypedValue[];
 }
 
+/** Color space a {@link TypedValue} color carries its components in. */
+export type ColorSpace = 'srgb' | 'oklch';
+
 /** Typed value union — interpolate within-kind only. */
 export type TypedValue =
   | { readonly k: 'number'; readonly v: number }
   | { readonly k: 'opacity'; readonly v: number }
   | { readonly k: 'length'; readonly v: number; readonly unit: 'px' | 'rem' | '%' | 'vw' | 'vh' }
   | { readonly k: 'angle'; readonly v: number; readonly unit: 'deg' | 'rad' | 'turn' }
+  | { readonly k: 'color'; readonly space: ColorSpace; readonly components: readonly number[] }
   | { readonly k: 'transform'; readonly parts: readonly TransformPart[] };
 
 type LengthUnit = 'px' | 'rem' | '%' | 'vw' | 'vh';
@@ -39,6 +43,39 @@ function warnInterpolate(code: string, message: string, detail?: unknown): void 
     message,
     detail,
   });
+}
+
+/**
+ * Parse a color literal into a {@link TypedValue} color, or `null` when the input
+ * is not a recognized color form. Supports `#rgb` / `#rrggbb` hex and functional
+ * `rgb(r g b)` / `rgb(r, g, b)` (sRGB, 0..255 components) and `oklch(L C H)`
+ * (OKLCH, `[lightness, chroma, hue]`). Components stay in their authored numeric
+ * domain so {@link formatTypedValue} round-trips them losslessly — cross-space
+ * interpolation is refused loudly in {@link interpolateTyped}, never coerced.
+ */
+function parseColor(trimmed: string): Extract<TypedValue, { k: 'color' }> | null {
+  const hexMatch = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.exec(trimmed);
+  if (hexMatch) {
+    const hex = hexMatch[1]!;
+    const full = hex.length === 3 ? [...hex].map((c) => c + c).join('') : hex;
+    const components = [0, 2, 4].map((i) => Number.parseInt(full.slice(i, i + 2), 16));
+    return { k: 'color', space: 'srgb', components };
+  }
+
+  const fnMatch = /^(oklch|rgb)\(\s*([^)]+?)\s*\)$/i.exec(trimmed);
+  if (fnMatch) {
+    const fn = fnMatch[1]!.toLowerCase();
+    // Both comma- and space-separated component syntaxes (CSS Color 4); strip a
+    // trailing `%` so `oklch(70% 0.1 30)` reads as the raw lightness magnitude.
+    const components = fnMatch[2]!
+      .split(/[\s,]+/)
+      .filter(Boolean)
+      .map((part) => Number.parseFloat(part.replace('%', '')));
+    if (components.some((n) => Number.isNaN(n))) return null;
+    return { k: 'color', space: fn === 'oklch' ? 'oklch' : 'srgb', components };
+  }
+
+  return null;
 }
 
 /**
@@ -66,6 +103,11 @@ export function parseTypedBinding(key: string, value: number | string): TypedVal
     const unit = angleMatch[2]!;
     return { k: 'angle', v: Number.parseFloat(angleMatch[1]!), unit: unit as AngleUnit };
   }
+
+  // Color MUST be probed before the generic transform arm below: `rgb(...)` /
+  // `oklch(...)` would otherwise be mis-parsed as `transform` functions.
+  const color = parseColor(trimmed);
+  if (color) return color;
 
   const transformMatch = /^([a-zA-Z]+)\((.+)\)$/.exec(trimmed);
   if (transformMatch) {
@@ -106,6 +148,13 @@ export function formatTypedValue(value: TypedValue): string {
       return `${value.v}${value.unit}`;
     case 'angle':
       return `${value.v}${value.unit}`;
+    case 'color':
+      // Modern space-separated CSS syntax, which accepts fractional channels —
+      // so an eased mid-frame value emits losslessly (no round-to-int snap that
+      // would defeat the differential-oracle comparison against the kernel).
+      return value.space === 'oklch'
+        ? `oklch(${value.components.map(String).join(' ')})`
+        : `rgb(${value.components.map(String).join(' ')})`;
     case 'transform':
       return value.parts.map((part) => `${part.fn}(${part.args.map((a) => formatTypedValue(a)).join(', ')})`).join(' ');
   }
@@ -184,6 +233,31 @@ export function interpolateTyped(from: TypedValue, to: TypedValue, eased: number
         return to;
       }
       return { k: 'angle', v: lerp(from.v, toAngle.v, eased), unit: from.unit };
+    }
+    case 'color': {
+      const toColor = to as Extract<TypedValue, { k: 'color' }>;
+      // Cross-SPACE interpolation is a category error (sRGB channels and OKLCH
+      // lightness/chroma/hue are incommensurable): refuse LOUDLY and hold `to`,
+      // mirroring the unit-mismatch arm. No silent lerp across color models.
+      if (from.space !== toColor.space) {
+        warnInterpolate(
+          'color-space-mismatch',
+          `refusing color interpolation across spaces: ${from.space} → ${toColor.space}`,
+          {
+            from,
+            to,
+          },
+        );
+        return to;
+      }
+      const n = Math.max(from.components.length, toColor.components.length);
+      const components: number[] = [];
+      for (let i = 0; i < n; i++) {
+        const a = from.components[i] ?? toColor.components[i]!;
+        const b = toColor.components[i] ?? from.components[i]!;
+        components.push(lerp(a, b, eased));
+      }
+      return { k: 'color', space: from.space, components };
     }
     case 'transform': {
       const toTransform = to as Extract<TypedValue, { k: 'transform' }>;

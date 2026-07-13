@@ -23,6 +23,7 @@ import type {
 } from './document-graph.js';
 import type { DiagnosticPayload } from './diagnostics.js';
 import type { EdgeType } from './plan.js';
+import type { RuntimeEasing } from './easing.js';
 import { formatTypedValue, parseTypedBinding, type TypedValue } from './interpolate.js';
 
 /** One property tween with typed endpoints. */
@@ -64,6 +65,13 @@ export interface RuntimeWritePlan {
   readonly routing: EdgeType;
   readonly fromState: StateName;
   readonly toState: StateName;
+  /**
+   * The easing descriptor the JS floor samples (`sampleRuntimeEasing`). Self-describing
+   * so the floor never depends on a driver to hand it a curve — and read from the
+   * SAME authored source (`TransitionNode.easing`) the native CSS path compiles into
+   * `linear()`, so the two floors sample one identical `Easing.spring` (Law 4).
+   */
+  readonly easing: RuntimeEasing;
 }
 
 /** Lowered motion intent — CSS projection + runtime floor + diagnostics. */
@@ -285,6 +293,9 @@ export function interpretTransition(graph: DocumentGraph, transitionId: ContentA
     routing,
     fromState: fromPose.state,
     toState: toPose.state,
+    // Read the authored curve off the node; default to `ease` (the CSS `transition`
+    // default) so the floor and the native path stay matched even when unspecified.
+    easing: transition.easing ?? { kind: 'ease' as const },
   });
 
   return Object.freeze({
