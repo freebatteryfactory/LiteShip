@@ -173,6 +173,31 @@ export function chainPatchesBetween(
   const tip = pathEntries[pathEntries.length - 1];
   if (tip !== undefined) walkBack(tip.receipt.hash);
 
+  // FORWARD lineage: a state-only receipt whose `previous` points AT the tip (or at a later
+  // forward-folded state-only child) rides ON TOP of the adopted graph — it never recast, so the
+  // QUERY still lands on the tip's graph, yet it carries a cell crossing that must hydrate. The
+  // backward walk cannot see it (it is the tip's DESCENDANT), so walk forward along `previous`
+  // links, folding state-only children only. Stop at any further graph recast: the QUERY landed on
+  // the tip's `resultId`, so a later recast is a branch the server did NOT adopt and must not fold.
+  const childrenOf = new Map<string, PatchReceiptEntry[]>();
+  for (const entry of entries) {
+    const previous = entry.receipt.previous;
+    for (const p of typeof previous === 'string' ? [previous] : previous) {
+      const list = childrenOf.get(p);
+      if (list === undefined) childrenOf.set(p, [entry]);
+      else list.push(entry);
+    }
+  }
+  const walkForward = (hash: string): void => {
+    for (const child of childrenOf.get(hash) ?? []) {
+      if (!isStateOnly(child.transition)) continue; // a graph recast the QUERY didn't adopt — don't fold
+      if (lineage.has(child.receipt.hash)) continue;
+      lineage.add(child.receipt.hash);
+      walkForward(child.receipt.hash);
+    }
+  };
+  if (tip !== undefined) walkForward(tip.receipt.hash);
+
   const branchBases = new Set<string>([localBaseId, ...path.map((t) => t.resultId!)]);
   const selected = new Set<DiscreteStateTransition>(path);
   for (const entry of entries) {

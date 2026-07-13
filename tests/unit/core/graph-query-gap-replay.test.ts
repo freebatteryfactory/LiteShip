@@ -344,6 +344,49 @@ describe('graph-query gap replay — attested replay (#133-full)', () => {
     expect(store.snapshot('panel')!.state).toBe('open'); // adopted state-only crossing
     expect(store.snapshot('ghost')!.state).toBe('calm'); // FORK crossing — refused, cell at default
   });
+
+  test('MIXED gap: a state-only crossing AFTER the recast tip is replayed (Codex P2)', async () => {
+    // A recast A→B, then a pure state-only crossing on base B whose `previous` points AT the recast.
+    // The QUERY lands on B (the recast's resultId), so B is adopted — but the state-only child rides
+    // FORWARD of the tip, which the backward lineage walk cannot see. It must still hydrate; without
+    // the forward fold its cell stays stale.
+    const base = graph([node('a')]);
+    const patch = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('b.signal') }]);
+    const server = GraphPatch.apply(base, patch);
+    const store = StateCellStore.create();
+    store.register('state', ['a', 'alpha'], { kind: 'discrete' });
+    store.register('panel', ['closed', 'open'], { kind: 'discrete' });
+
+    const recast = mkTransition(base.id, server.id, 'state', 'alpha', 1);
+    const postRecast: DiscreteStateTransition = {
+      _tag: 'DiscreteStateTransition',
+      _version: 1,
+      cell: 'panel',
+      next: StateName('open'),
+      generation: 1,
+      authority: 'graph',
+      base: server.id, // rides ON the adopted graph B
+      kind: 'discrete',
+    };
+    const eRecast = await mkEntry(recast); // previous = genesis
+    const ePost = await mkEntry(postRecast, eRecast.receipt.hash); // chains FORWARD onto the recast tip
+
+    const fetchImpl: typeof fetch = async () => {
+      const result = await handleGraphQuery({}, { loadGraph: () => server });
+      return { status: 200, json: async () => result } as Response;
+    };
+    const result = await runGraphNativeGapReplay({
+      queryUrl: '/api/graph',
+      localBase: base,
+      entries: [eRecast, ePost],
+      cellStore: store,
+      adopt: () => undefined,
+      fetchImpl,
+    });
+    expect(result.query.status).toBe('ok');
+    expect(store.snapshot('state')!.state).toBe('alpha'); // recast cell
+    expect(store.snapshot('panel')!.state).toBe('open'); // post-recast state-only — folded forward, not stale
+  });
 });
 
 describe('graph-query gap replay — HOSTILE fixtures (Law 15)', () => {
