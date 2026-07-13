@@ -425,14 +425,14 @@ function easingKey(easing: RuntimeEasing): string {
  * ease shape rides the timing function, never double-eased into the values. Chained
  * same-property windows resolve last-window-wins, matching the runtime.
  *
- * When the program MIXES easing curves, one animation-level `animation-timing-function`
- * would sample every segment with a single curve on a native `animation-timeline` browser
- * while the JS/stage/worker floors use each window's own curve (a cross-target parity
- * gap). To close it, each stop that begins a segment carries THAT segment's easing as a
- * per-keyframe `animation-timing-function` (`CssKeyframeStep.easing`). A uniform-easing
- * program carries none (the animation-level curve already serves it — byte-identical to
- * before). An overlapping segment whose windows DISAGREE on easing (a `par` of
- * differently-eased children) cannot be expressed by one per-keyframe curve — it is left
+ * When the program uses any NON-DEFAULT easing, the animation-level `animation-timing-function`
+ * (which `MotionCompiler` defaults to `ease`) would sample every segment as `ease` on a native
+ * `animation-timeline` browser while the JS/stage/worker floors use each window's own curve (a
+ * cross-target parity gap — whether the curves are uniform or mixed). To close it, each stop that
+ * begins a segment carries THAT segment's easing as a per-keyframe `animation-timing-function`
+ * (`CssKeyframeStep.easing`). A default-`ease` program carries none (the compiler default already
+ * matches — byte-identical to before). An overlapping segment whose windows DISAGREE on easing (a
+ * `par` of differently-eased children) cannot be expressed by one per-keyframe curve — it is left
  * to the plan-level curve and diagnosed LOUDLY (Law 1).
  */
 function buildKeyframes(
@@ -441,16 +441,21 @@ function buildKeyframes(
   diagnostics: DiagnosticPayload[],
 ): CssKeyframeStep[] {
   const { walk, offsets } = cssWalkWindows(windows, totalMs);
-  const mixedEasing = new Set(walk.map((w) => easingKey(w.easing))).size > 1;
+  // Carry per-keyframe easing whenever ANY window uses a NON-DEFAULT curve — not only when
+  // curves are MIXED. `CssMotionPlan` carries no plan-level easing and `MotionCompiler.compile`
+  // defaults an omitted curve to `ease`, so a UNIFORM non-default program (e.g. every step a
+  // `spring`) would otherwise be sampled as `ease` natively while the runtime/stage/worker
+  // floors use the authored curve (Codex P2). Uniform-`ease` programs emit none — the compiler
+  // default already matches, so those keyframes stay byte-identical.
+  const needsEasing = walk.some((w) => easingKey(w.easing) !== 'ease');
 
   return offsets.map((offset, i) => {
     const properties: Record<string, string> = {};
     for (const [property, value] of walkWindows(walk, offset, 'identity')) {
       properties[property] = formatTypedValue(value);
     }
-    // Uniform easing (the common case) needs no per-keyframe curve; the final stop begins
-    // no segment. Both keep the pre-existing shape → zero churn on single-easing programs.
-    if (!mixedEasing || i === offsets.length - 1) return { offset, properties };
+    // Default-`ease` programs need no per-keyframe curve; the final stop begins no segment.
+    if (!needsEasing || i === offsets.length - 1) return { offset, properties };
 
     // Every window boundary is an offset, so a window either FULLY covers the segment
     // [offset, next] or misses it — the windows active here are exactly those spanning it.

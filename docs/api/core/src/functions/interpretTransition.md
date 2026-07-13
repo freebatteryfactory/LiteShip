@@ -8,7 +8,7 @@
 
 > **interpretTransition**(`graph`, `transitionId`): [`LoweredMotionPlan`](../interfaces/LoweredMotionPlan.md)
 
-Defined in: [core/src/interpret-transition.ts:219](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L219)
+Defined in: [core/src/interpret-transition.ts:220](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L220)
 
 Interpret a [TransitionNode](../interfaces/TransitionNode.md) into CSS + runtime motion plans.
 

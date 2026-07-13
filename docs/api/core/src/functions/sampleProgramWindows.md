@@ -8,7 +8,7 @@
 
 > **sampleProgramWindows**(`windows`, `t`): readonly [`ProgramSample`](../interfaces/ProgramSample.md)[]
 
-Defined in: [core/src/transition-program.ts:626](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/transition-program.ts#L626)
+Defined in: [core/src/transition-program.ts:631](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/transition-program.ts#L631)
 
 The per-window runtime sub-sampler — the READER of `RuntimeWritePlan.windows`
 (Law 16). At global `t`, each window is sampled at its LOCAL eased progress,

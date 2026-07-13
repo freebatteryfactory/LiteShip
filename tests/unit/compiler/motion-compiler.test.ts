@@ -415,8 +415,8 @@ describe('MotionCompiler — composed TransitionProgram keyframes (#141, backend
     expect(result.transition).toContain('--czap-hero-x 600ms ease 200ms');
   });
 
-  test('a UNIFORM-easing seq carries NO per-keyframe animation-timing-function (byte-identical keyframes)', () => {
-    // Both steps default to `ease`, so the animation-level curve serves every segment —
+  test('a UNIFORM DEFAULT-ease seq carries NO per-keyframe animation-timing-function (byte-identical keyframes)', () => {
+    // Both steps default to `ease`, which is exactly the compiler's animation-level default —
     // per-keyframe timing functions would be redundant churn. None must be emitted.
     const { graph: g, a, b } = twoStepGraph();
     const seq = interpretProgram(g, {
@@ -428,6 +428,24 @@ describe('MotionCompiler — composed TransitionProgram keyframes (#141, backend
     });
     expect(seq.css!.keyframes.every((k) => k.easing === undefined)).toBe(true);
     expect(MotionCompiler.compile({ plan: seq.css! }).keyframes).not.toContain('animation-timing-function');
+  });
+
+  test('a UNIFORM NON-DEFAULT easing seq still carries the curve on every segment (Codex P2)', () => {
+    // Every step springs (one shared, non-default curve). `CssMotionPlan` has no plan-level
+    // easing and the compiler defaults an omitted curve to `ease`, so without per-keyframe easing
+    // the native path would sample `ease` while the runtime/stage/worker floors use the spring.
+    // The uniform curve must be carried even though the windows do not DIFFER.
+    const spring: RuntimeEasing = { kind: 'spring', spring: { stiffness: 210, damping: 18 } };
+    const { graph: g, a, b } = twoStepGraph(spring, spring);
+    const seq = interpretProgram(g, {
+      kind: 'seq',
+      children: [
+        { kind: 'step', transitionId: a },
+        { kind: 'step', transitionId: b },
+      ],
+    });
+    expect(seq.css!.keyframes.some((k) => k.easing?.kind === 'spring')).toBe(true);
+    expect(MotionCompiler.compile({ plan: seq.css! }).keyframes).toContain('animation-timing-function: linear(');
   });
 
   test('a MIXED-easing seq carries each segment its own animation-timing-function (Codex P2 parity)', () => {

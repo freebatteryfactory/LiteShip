@@ -116,11 +116,11 @@ function formatKeyframeOffsetPct(offset: number): string {
 function emitKeyframeStep(step: CssKeyframeStep): string {
   const pct = formatKeyframeOffsetPct(step.offset);
   const decls = Object.entries(step.properties).map(([k, v]) => `    ${k}: ${v};`);
-  // A MIXED-easing composed program carries the segment's own curve here so the native
-  // animation samples each segment with its authored easing — matching the JS/stage/worker
+  // A composed program with non-default easing carries the segment's own curve here so the
+  // native animation samples each segment with its authored easing — matching the JS/stage/worker
   // per-window floors (cross-target parity). Per-keyframe `animation-timing-function` governs
   // the segment STARTING at this stop and overrides the animation-level function for it.
-  // Absent on uniform-easing plans and single-step transitions (no output change there).
+  // Absent on default-`ease` plans and single-step transitions (no output change there).
   if (step.easing) {
     decls.push(`    animation-timing-function: ${resolveEasing(step.easing.kind, step.easing.spring)};`);
   }

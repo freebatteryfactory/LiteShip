@@ -39,14 +39,15 @@ export interface CssKeyframeStep {
   readonly properties: Readonly<Record<string, string>>;
   /**
    * The easing curve governing the SEGMENT that starts at this stop (until the next
-   * stop), emitted as a per-keyframe `animation-timing-function`. Present ONLY on a
-   * MIXED-easing composed program, where one animation-level timing function cannot
-   * serve every segment — a native `animation-timeline` browser would otherwise sample
-   * every segment with one curve while the JS/stage/worker floors use the per-window
-   * curves. Absent on uniform-easing plans (the animation-level curve covers them) and
-   * on single-step transitions; also absent — with a loud `interpretProgram` diagnostic —
-   * on a segment where overlapping windows disagree on easing (a `par` of differently-eased
-   * children), which no single per-keyframe curve can express.
+   * stop), emitted as a per-keyframe `animation-timing-function`. Present on a composed
+   * program that uses any NON-DEFAULT easing, where the animation-level timing function
+   * (which the compiler defaults to `ease`) cannot serve the segment — a native
+   * `animation-timeline` browser would otherwise sample it as `ease` while the
+   * JS/stage/worker floors use the authored curve (uniform or mixed). Absent on
+   * default-`ease` plans (the compiler default already matches) and on single-step
+   * transitions; also absent — with a loud `interpretProgram` diagnostic — on a segment
+   * where overlapping windows disagree on easing (a `par` of differently-eased children),
+   * which no single per-keyframe curve can express.
    */
   readonly easing?: RuntimeEasing;
 }
