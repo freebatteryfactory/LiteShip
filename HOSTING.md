@@ -45,6 +45,8 @@ If you enforce Trusted Types: also add `require-trusted-types-for 'script'`. The
 
 Note that the hostname blocklist rejects literal private-IP strings (`127.0.0.1`, `10.x.x.x`, etc.) but does **not** rewrite hostnames that resolve to private IPs. For DNS-rebinding defense, restrict outbound DNS at the network layer.
 
+**Graph-native stream recovery** (a `client:stream` element with `data-czap-stream-graph`) reconnects by QUERYing that graph endpoint (the read leg) in addition to the SSE feed, and by re-applying attested `{ type: 'receipt', … }` transition frames the feed emits on discrete crossings. Both legs are same-origin by default; a cross-origin graph endpoint needs the same two-place agreement (CSP `connect-src` + the runtime URL allowlist). No extra CSP is needed for the receipt frames — they arrive on the already-allowed SSE connection.
+
 ### 3. `innerHTML` throws under Trusted Types
 
 **Symptom:** `TypeError: Failed to set the 'innerHTML' property on 'Element': This document requires 'TrustedHTML' assignment` thrown during LLM HTML render or DOM morph.

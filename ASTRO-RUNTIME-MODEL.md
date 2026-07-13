@@ -227,7 +227,17 @@ The shell then renders with the resolved state baked into `data-czap-state`; the
 
 ### `stream`
 
-Use when server-originated streamed content becomes part of the visual surface.
+Use when server-originated streamed content becomes part of the visual surface. The `client:stream` directive opens a hardened SSE client to `data-czap-stream-url`, morphs each patch into the container, and survives Astro view transitions (`czap:reinit` re-opens the connection resumed at the last cursor; `czap:teardown` closes it). When the connection drops, missed patches are reconciled against the pre-disconnect cursor; a rejected morph raises `czap:request-snapshot`, which the directive recovers from.
+
+**Recovery has two floors.** By default it is *snapshot re-sync*: fetch the full HTML snapshot + discrete signals and re-apply (continuous transients are deliberately dropped — they must not replay). This floor is always present and unchanged.
+
+**Graph-native recovery (opt-in) — the emit → attest → replay loop.** When the streamed element declares a graph-backed artifact, a missed *discrete state crossing* is recovered by value instead of by re-render:
+
+- **Emit (authority).** When the host crosses a discrete state (`StateCellStore.applyDiscrete` increments the cell generation on a real index change), it mints a `DiscreteStateTransition` receipt with `mintTransition(prev, next, { base, resultId })` and emits it on the SSE stream as a `{ type: 'receipt', data: { receipt, transition } }` frame. The next-state *value* lives in the receipt (`next`/`generation`), minted by the authority — never inferred from a graph node.
+- **Attest (client).** Before buffering a receipt frame, the client verifies it: fail-closed decode, `Receipt.hashEnvelope` self-consistency, and the `${base}#${cell}` subject law. A forged, tampered, or mis-subjected frame is refused loudly and never reaches replay (Law 15: validate before apply).
+- **Replay (client).** On the recovery edge the client QUERYs the host's read leg (conditional on its cached etag), re-adopts the authoritative graph, then applies the buffered crossings to its `StateCell` store by generation — the store's generation guard makes a stale/duplicate transition a no-op. The graph correctness comes from the QUERY adoption; the discrete replay is best-effort on top of it.
+
+The host owns this substrate (ADR-0015): the `client:stream` directive constructs a `StateCellStore` + a `createGraphMutationClient` and registers them via `registerStreamRecoverySubstrate(artifactId, …)` when the element opts in with three SSR-inlined attributes — `data-czap-stream-graph` (the QUERY read/mutation endpoint, the gate), `data-czap-stream-graph-base` (the sealed local base graph), and `data-czap-stream-cells` (the StateCell registrations the crossings replay into). The registration is disposed on `czap:teardown` and re-armed on `czap:reinit` (the registry throws on a double-registration, so the disposer fires before re-arming — no leaked registration). A plain stream (no `data-czap-stream-graph`) keeps the snapshot floor untouched; the graph-native path is strictly additive. The runnable cookbook is `examples/showcase` (`/stream-recovery`, `src/pages/api/graph-feed.ts` + `api/graph.ts`).
 
 ### `llm`
 

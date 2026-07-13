@@ -1,5 +1,15 @@
 import { Effect, Scope, Exit, ManagedRuntime, Layer } from 'effect';
-import { wallClock, validateSnapshotSignalsField, replayDroppedSignals } from '@czap/core';
+import {
+  wallClock,
+  validateSnapshotSignalsField,
+  replayDroppedSignals,
+  Diagnostics,
+  StateCellStore,
+  createGraphMutationClient,
+  decodeDocumentGraph,
+  sealGraph,
+} from '@czap/core';
+import type { DocumentGraph, StateAuthority, StateCellKind, StateCellStoreShape } from '@czap/core';
 import {
   Morph,
   Resumption,
@@ -14,6 +24,7 @@ import {
   applyDiscreteSnapshotSignals,
   getStreamRecoverySubstrate,
   recordStreamPatchReceipt,
+  registerStreamRecoverySubstrate,
 } from '@czap/web';
 import type { ResumeResponse, SSEClient, SSEMessage, SSEState } from '@czap/web';
 import { bootstrapSlots, rescanSlots } from './slots.js';
@@ -156,6 +167,99 @@ function hasCustomEndpointPolicy(policy: ReturnType<typeof readRuntimeEndpointPo
     policy.allowOrigins.length > 0 ||
     Object.values(policy.byKind).some((allowlist) => allowlist.length > 0)
   );
+}
+
+/**
+ * Graph-native recovery opt-in attributes (#133-full). Read DIRECTLY off the host
+ * element (like `client:graph`'s `data-czap-graph`), not through the stream wire
+ * registry: they configure the host-owned recovery SUBSTRATE, not the SSE
+ * transport. A plain stream (no `data-czap-stream-graph`) keeps the snapshot floor
+ * unchanged — the graph-native path is strictly additive and never the default.
+ *
+ * - `data-czap-stream-graph`   — the host's QUERY read-leg (and mutation POST)
+ *   endpoint. Its presence GATES the whole substrate.
+ * - `data-czap-stream-graph-base` — the SSR-inlined, sealed {@link DocumentGraph}
+ *   the client starts from (the local base the QUERY re-adopts against). Inlined,
+ *   not fetched, so registration is synchronous and cannot race a reinit.
+ * - `data-czap-stream-cells`   — the SSR-inlined StateCell registrations the
+ *   crossings replay INTO. Gap replay skips a cell the store never registered
+ *   (host owns the registry), so the host must declare them here.
+ */
+const STREAM_GRAPH_QUERY_ATTR = 'data-czap-stream-graph';
+const STREAM_GRAPH_BASE_ATTR = 'data-czap-stream-graph-base';
+const STREAM_GRAPH_CELLS_ATTR = 'data-czap-stream-cells';
+
+/** One SSR-inlined StateCell registration for the graph-native recovery store. */
+interface StreamCellRegistration {
+  readonly name: string;
+  readonly states: readonly string[];
+  readonly kind?: StateCellKind;
+  readonly authority?: StateAuthority;
+}
+
+const isStreamCellRegistration = (value: unknown): value is StreamCellRegistration => {
+  if (value === null || typeof value !== 'object') return false;
+  const record = value as Record<string, unknown>;
+  return (
+    typeof record.name === 'string' &&
+    record.name.length > 0 &&
+    Array.isArray(record.states) &&
+    record.states.length > 0 &&
+    record.states.every((state) => typeof state === 'string') &&
+    (record.kind === undefined || record.kind === 'discrete' || record.kind === 'continuous') &&
+    (record.authority === undefined || typeof record.authority === 'string')
+  );
+};
+
+/**
+ * Decode the SSR-inlined base graph through the FAIL-CLOSED reader
+ * ({@link decodeDocumentGraph}) and re-seal it so its `id`/`digest` are the
+ * program's own addresses (a stale inlined digest cannot smuggle a wrong etag
+ * into the conditional QUERY read). Returns `null` — loudly — on any malformed
+ * payload so the substrate is NOT registered and recovery keeps the snapshot floor.
+ */
+function decodeStreamGraphBase(raw: string): DocumentGraph | null {
+  try {
+    return sealGraph(decodeDocumentGraph(JSON.parse(raw) as unknown));
+  } catch (cause) {
+    Diagnostics.warnOnce({
+      source: 'czap/astro.stream',
+      code: 'stream-graph-base-malformed',
+      message:
+        `The ${STREAM_GRAPH_BASE_ATTR} inlined base graph did not decode as a well-formed DocumentGraph — ` +
+        'graph-native recovery is NOT armed for this stream; recovery falls back to the snapshot floor. ' +
+        'Serialize a sealed DocumentGraph (e.g. `JSON.stringify(currentGraph())`).',
+      cause,
+    });
+    return null;
+  }
+}
+
+/** Parse the SSR-inlined cell registrations; `null` (loudly) when malformed. */
+function parseStreamCellRegistrations(raw: string): readonly StreamCellRegistration[] | null {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (cause) {
+    Diagnostics.warnOnce({
+      source: 'czap/astro.stream',
+      code: 'stream-graph-cells-malformed',
+      message: `The ${STREAM_GRAPH_CELLS_ATTR} inlined cell registrations were not valid JSON — graph-native recovery is NOT armed.`,
+      cause,
+    });
+    return null;
+  }
+  if (!Array.isArray(parsed) || parsed.length === 0 || !parsed.every(isStreamCellRegistration)) {
+    Diagnostics.warnOnce({
+      source: 'czap/astro.stream',
+      code: 'stream-graph-cells-malformed',
+      message:
+        `The ${STREAM_GRAPH_CELLS_ATTR} inlined cell registrations must be a non-empty array of ` +
+        '`{ name: string, states: string[], kind?, authority? }` — graph-native recovery is NOT armed.',
+    });
+    return null;
+  }
+  return parsed;
 }
 
 /**
@@ -504,10 +608,92 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
     }
   };
 
+  // Host-owned graph-native recovery substrate (#133-full). Registered here — in
+  // the PRODUCTION directive, not test glue — when the element opts in via
+  // `data-czap-stream-graph`. The registry THROWS on double-registration (Law 1),
+  // so `setupGraphSubstrate` DISPOSES any prior registration before re-registering:
+  // it is safe to call repeatedly (init and every reinit).
+  let unbindGraphSubstrate: (() => void) | null = null;
+  const setupGraphSubstrate = (): void => {
+    // Dispose first so a reinit re-reads the (possibly freshly-rendered) base and
+    // cells without the registry rejecting a second registration for this artifact.
+    unbindGraphSubstrate?.();
+    unbindGraphSubstrate = null;
+
+    const rawGraphUrl = element.getAttribute(STREAM_GRAPH_QUERY_ATTR);
+    if (rawGraphUrl === null) {
+      return;
+    }
+    if (artifactId === undefined) {
+      Diagnostics.warnOnce({
+        source: 'czap/astro.stream',
+        code: 'stream-graph-without-artifact',
+        message:
+          `${STREAM_GRAPH_QUERY_ATTR} requires ${streamWireAttr('artifact')} — graph-native recovery is keyed by ` +
+          'artifact id. Add the artifact attribute or drop the graph attribute; recovery keeps the snapshot floor.',
+      });
+      return;
+    }
+
+    // The graph endpoint is a same-origin recovery read leg by default — resolve it
+    // under the runtime endpoint policy (reusing the `snapshot` recovery kind).
+    const graphQueryUrl = allowRuntimeEndpointUrl(rawGraphUrl, 'snapshot', 'czap/astro.stream', {
+      crossOriginRejected: 'stream-graph-cross-origin-url-rejected',
+      malformedUrl: 'stream-graph-malformed-url-rejected',
+      originNotAllowed: 'stream-graph-origin-not-allowed',
+      endpointKindNotPermitted: 'stream-graph-endpoint-kind-not-permitted',
+    });
+    if (!graphQueryUrl) {
+      return;
+    }
+
+    const rawBase = element.getAttribute(STREAM_GRAPH_BASE_ATTR);
+    const rawCells = element.getAttribute(STREAM_GRAPH_CELLS_ATTR);
+    if (rawBase === null || rawCells === null) {
+      Diagnostics.warnOnce({
+        source: 'czap/astro.stream',
+        code: 'stream-graph-substrate-incomplete',
+        message:
+          `${STREAM_GRAPH_QUERY_ATTR} is set but ${STREAM_GRAPH_BASE_ATTR} and/or ${STREAM_GRAPH_CELLS_ATTR} are missing — ` +
+          'graph-native recovery needs the SSR-inlined base graph and cell registrations. Recovery keeps the snapshot floor.',
+      });
+      return;
+    }
+
+    const base = decodeStreamGraphBase(rawBase);
+    const cells = parseStreamCellRegistrations(rawCells);
+    if (!base || !cells) {
+      return;
+    }
+
+    const cellStore: StateCellStoreShape = StateCellStore.create();
+    for (const cell of cells) {
+      cellStore.register(cell.name, cell.states, {
+        ...(cell.kind !== undefined ? { kind: cell.kind } : {}),
+        ...(cell.authority !== undefined ? { authority: cell.authority } : {}),
+      });
+    }
+
+    // The mutation client tracks the local base + adopts the QUERY-refreshed graph;
+    // recovery reads `base()`/`adopt()` off it. `submit` (the write leg) is unused
+    // by recovery, so the same endpoint serves as its POST url.
+    const mutationClient = createGraphMutationClient({ url: graphQueryUrl, base });
+
+    unbindGraphSubstrate = registerStreamRecoverySubstrate(artifactId, {
+      graphQueryUrl,
+      mutationClient,
+      cellStore,
+    });
+  };
+
   function handleReinit(): void {
+    // Dispose + re-arm the substrate BEFORE re-opening the connection so the
+    // registry never holds two registrations for this artifact across the swap.
+    setupGraphSubstrate();
     closeClient();
     recoveryPending = false;
     openClient();
+    bindSnapshotRecovery(target);
   }
 
   bindReinit(target);
@@ -546,10 +732,14 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
     });
   };
 
+  // Arm the graph-native substrate (if opted in) BEFORE binding recovery, so the
+  // request-snapshot listener resolves it and prefers gap replay over the floor.
+  setupGraphSubstrate();
   bindSnapshotRecovery(target);
 
   openClient();
   element.addEventListener('czap:teardown', () => {
+    unbindGraphSubstrate?.();
     unbindSnapshotRecovery?.();
     closeClient();
     patchScheduler.dispose();
