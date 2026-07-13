@@ -4,7 +4,7 @@
  * Registers the `@czap/vite` plugin, injects the detect/boot scripts,
  * registers every client directive (`client:satellite`,
  * `client:stream`, `client:llm`, `client:worker`, `client:gpu`,
- * `client:wasm`) that the host opts into, and (in `astro dev`) registers
+ * `client:wasm`, `client:motion`) that the host opts into, and (in `astro dev`) registers
  * the boundary inspector as a dev-toolbar app.
  *
  * @module
@@ -83,6 +83,13 @@ export interface IntegrationConfig {
   readonly stream?: { readonly enabled?: boolean };
   /** LLM streaming runtime configuration. */
   readonly llm?: { readonly enabled?: boolean };
+  /**
+   * Continuous-motion runtime (`client:motion`). Opt-in (default off): registers
+   * the JS motion FLOOR that scrubs `data-czap-motion-program` when native
+   * `animation-timeline` is unavailable. The native CSS path (`MotionCompiler`)
+   * needs no runtime and is unaffected.
+   */
+  readonly motion?: { readonly enabled?: boolean };
   /**
    * Dev-only boundary inspector (default enabled in `astro dev`). Registered
    * as an Astro dev-toolbar app — toggle it from the toolbar icon. Pass
@@ -255,6 +262,7 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
   const gpuEnabled = config?.gpu?.enabled !== false;
   const streamEnabled = config?.stream?.enabled !== false;
   const llmEnabled = config?.llm?.enabled !== false;
+  const motionEnabled = config?.motion?.enabled === true;
   const wasmEnabled = config?.wasm?.enabled === true;
   const inspectorEnabled = config?.inspector !== false;
   const excludeRoutes = (config?.exclude ?? []).filter((route): route is string => typeof route === 'string');
@@ -275,6 +283,7 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
     ...(workersEnabled ? (['worker'] as const) : []),
     ...(gpuEnabled ? (['gpu'] as const) : []),
     ...(wasmEnabled ? (['wasm'] as const) : []),
+    ...(motionEnabled ? (['motion'] as const) : []),
     'svg',
   ];
 
@@ -390,6 +399,14 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
             entrypoint: '@czap/astro/client-directives/wasm',
           });
           logger.info('Registered wasm client directive');
+        }
+
+        if (motionEnabled) {
+          addClientDirective({
+            name: 'motion',
+            entrypoint: '@czap/astro/client-directives/motion',
+          });
+          logger.info('Registered motion client directive');
         }
 
         // SVG last-mile: always-on (parity with satellite) — a pure DOM

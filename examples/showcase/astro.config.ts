@@ -18,6 +18,8 @@ export default defineConfig({
       // `detect` / `stream` / `llm` are on by default too, so they need no
       // opt-in. `workers` does default off — the worker.astro demo needs it.
       workers: { enabled: true },
+      // The continuous-motion floor demo (/motion) needs the client:motion runtime.
+      motion: { enabled: true },
       gpu: { preferWebGPU: false },
       // Point primitive resolution at the convention directories so the
       // @token / @theme / @quantize blocks inside .astro styles find

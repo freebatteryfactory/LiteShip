@@ -341,3 +341,45 @@ export declare namespace Easing {
   /** Spring parameters: stiffness, damping, mass. */
   export type Config = SpringConfigShape;
 }
+
+/**
+ * The ONE spring config both the CSS `linear()` path and the JS floor default to
+ * when a spring easing is authored without explicit parameters. Kept here (not in
+ * `@czap/compiler`) so the native compiler (`resolveEasing`) and the runtime
+ * sampler ({@link sampleRuntimeEasing}) read the SAME default — Law 4: one kernel,
+ * never forked.
+ */
+export const DEFAULT_MOTION_SPRING: SpringConfigShape = Object.freeze({ stiffness: 200, damping: 20 });
+
+/**
+ * Self-describing easing descriptor carried in the runtime motion plan
+ * (`RuntimeWritePlan.easing`) so the JS floor is driver-independent: it reads its
+ * own curve rather than being handed one. `kind` mirrors the authoring
+ * vocabulary (`'linear' | 'ease' | 'spring'`); `spring` carries the physics
+ * config for the spring arm (defaulting to {@link DEFAULT_MOTION_SPRING}).
+ */
+export interface RuntimeEasing {
+  readonly kind: 'linear' | 'ease' | 'spring';
+  readonly spring?: SpringConfigShape;
+}
+
+/**
+ * Build the `(t) => value` sampler for a {@link RuntimeEasing} descriptor.
+ *
+ * This is the RUNTIME half of the one-kernel law (Law 4): the `spring` arm
+ * delegates to `Easing.spring` — the EXACT function `Easing.springToLinearCSS`
+ * samples to build the CSS `linear()` timing function — so a browser scrubbing
+ * the JS floor and a browser running native CSS `linear()` read one identical
+ * curve. `linear`/`ease` map to `Easing.linear` / `Easing.ease`
+ * (the latter being `cubic-bezier(0.25, 0.1, 0.25, 1)`, i.e. CSS `ease`).
+ */
+export function sampleRuntimeEasing(easing: RuntimeEasing): EasingFnShape {
+  switch (easing.kind) {
+    case 'linear':
+      return Easing.linear;
+    case 'ease':
+      return Easing.ease;
+    case 'spring':
+      return Easing.spring(easing.spring ?? DEFAULT_MOTION_SPRING);
+  }
+}

@@ -10,6 +10,8 @@ import {
   sealNode,
   sealGraph,
   interpretTransition,
+  Easing,
+  DEFAULT_MOTION_SPRING,
   type ContentAddress,
   type CellMeta,
   type DocumentGraph,
@@ -99,6 +101,9 @@ function revealFixture(): { graph: DocumentGraph; transitionId: ContentAddress; 
     toPose: toPose.id,
     routing: 'seq',
     durationMs: 420,
+    // Pin LINEAR so the raw-`t` expectations below stay exact; the eased arms are
+    // proven separately in the spring test.
+    easing: { kind: 'linear' },
   } as unknown as TransitionNode);
 
   const g = graph(
@@ -150,5 +155,28 @@ describe('writeContinuousMap', () => {
     writeContinuousMap(el, plan, 1);
     expect(el.style.opacity).toBe('1');
     expect(el.style.getPropertyValue('--czap-hero-y')).toBe('0px');
+  });
+
+  test('applies the plan easing to raw t BEFORE interpolating (spring floor = Easing.spring kernel)', () => {
+    // A SPRING plan: the leaf writer must bend raw t through the SAME Easing.spring
+    // the CSS linear() path samples, so the floor value equals the kernel value.
+    const { plan } = revealFixture();
+    const springPlan: RuntimeWritePlan = { ...plan, easing: { kind: 'spring' } };
+    const kernel = Easing.spring(DEFAULT_MOTION_SPRING);
+    const el = document.createElement('div');
+
+    for (const t of [0.25, 0.5, 0.75]) {
+      writeContinuousMap(el, springPlan, t);
+      const eased = kernel(t);
+      // opacity lerps 0→1, so the written value IS eased(t); --czap-hero-y lerps 24→0px.
+      expect(Number(el.style.opacity)).toBeCloseTo(eased, 10);
+      expect(el.style.getPropertyValue('--czap-hero-y')).toBe(`${24 - 24 * eased}px`);
+    }
+
+    // Endpoints stay pinned regardless of easing (spring(0)=0, spring(1)=1).
+    writeContinuousMap(el, springPlan, 0);
+    expect(el.style.opacity).toBe('0');
+    writeContinuousMap(el, springPlan, 1);
+    expect(el.style.opacity).toBe('1');
   });
 });

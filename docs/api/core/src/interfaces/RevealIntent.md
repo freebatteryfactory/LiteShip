@@ -6,7 +6,7 @@
 
 # Interface: RevealIntent
 
-Defined in: [core/src/reveal.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L63)
+Defined in: [core/src/reveal.ts:70](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L70)
 
 Sealed reveal intent — data over graph, no behavior authority.
 
@@ -20,7 +20,7 @@ Sealed reveal intent — data over graph, no behavior authority.
 
 > `readonly` **\_tag**: `"RevealIntent"`
 
-Defined in: [core/src/reveal.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L64)
+Defined in: [core/src/reveal.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L71)
 
 ***
 
@@ -28,7 +28,7 @@ Defined in: [core/src/reveal.ts:64](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **from**: `Readonly`\<`Record`\<`string`, `number` \| `string`\>\>
 
-Defined in: [core/src/reveal.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L56)
+Defined in: [core/src/reveal.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L63)
 
 #### Inherited from
 
@@ -40,7 +40,7 @@ Defined in: [core/src/reveal.ts:56](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **policy**: [`RevealPolicy`](RevealPolicy.md)
 
-Defined in: [core/src/reveal.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L59)
+Defined in: [core/src/reveal.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L66)
 
 #### Inherited from
 
@@ -52,7 +52,7 @@ Defined in: [core/src/reveal.ts:59](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **target**: `string`
 
-Defined in: [core/src/reveal.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L54)
+Defined in: [core/src/reveal.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L61)
 
 #### Inherited from
 
@@ -64,7 +64,7 @@ Defined in: [core/src/reveal.ts:54](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **to**: `Readonly`\<`Record`\<`string`, `number` \| `string`\>\>
 
-Defined in: [core/src/reveal.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L57)
+Defined in: [core/src/reveal.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L64)
 
 #### Inherited from
 
@@ -76,7 +76,7 @@ Defined in: [core/src/reveal.ts:57](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **transition**: [`RevealTransition`](RevealTransition.md)
 
-Defined in: [core/src/reveal.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L58)
+Defined in: [core/src/reveal.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L65)
 
 #### Inherited from
 
@@ -88,7 +88,7 @@ Defined in: [core/src/reveal.ts:58](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **trigger**: [`RevealTrigger`](../type-aliases/RevealTrigger.md)
 
-Defined in: [core/src/reveal.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L55)
+Defined in: [core/src/reveal.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L62)
 
 #### Inherited from
 

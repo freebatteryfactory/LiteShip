@@ -38,6 +38,15 @@ pnpm dev
   and replays the missed crossing by generation — no lost discrete state, no full
   snapshot. Opt in with `data-czap-stream-graph` + the SSR-inlined base graph and
   cell registrations; a plain stream keeps the snapshot floor.
+- **`/motion`** — the continuous-motion floor cookbook (#126, F-MOT-2/3): ONE
+  authored `Reveal.intent` (`src/server/motion-program.ts`) projected two ways.
+  `MotionCompiler` emits the native `@supports (animation-timeline: scroll())`
+  CSS a modern browser scrubs with zero JS; `client:motion` reads the same lowered
+  program off `data-czap-motion-program` and runs the JS **FLOOR** wherever native
+  timelines are unavailable — writing typed leaf values (`--czap-hero-y`, `opacity`,
+  and the `--czap-hero-color` color arm) every frame. Both sample the intent's ONE
+  `Easing.spring`, so the curve is identical (Law 4). Reduced-motion settles to the
+  final pose with no tween; the continuous tween never patches the graph.
 - **`/chat`** — `client:llm` streaming over `/api/chat` with tier-gated
   rendering, plus the generated-UI path (`data-czap-genui`): `_genui` chunks
   render through a host-owned catalog — the model proposes, the catalog

@@ -9,7 +9,13 @@
  * @module
  */
 
-import { formatTypedValue, interpolateTyped, type RuntimeWritePlan, type TypedValue } from '@czap/core';
+import {
+  formatTypedValue,
+  interpolateTyped,
+  sampleRuntimeEasing,
+  type RuntimeWritePlan,
+  type TypedValue,
+} from '@czap/core';
 import { dispatchCzapEvent } from '@czap/web';
 
 /** Numeric typed values map to WGSL uniform fields on the live GPU path. */
@@ -32,17 +38,23 @@ function numericValue(value: TypedValue): number | undefined {
 /**
  * Write interpolated typed property values for progress `t` in [0..1].
  *
- * For each entry in `plan.properties`, interpolates `from`→`to` via
- * {@link interpolateTyped}, writes the CSS custom property on `el`, and
- * dispatches one `czap:uniform-update` carrying `detail.css` (all props) and
- * `detail.wgsl` (GPU-bound numeric props only).
+ * `t` is the RAW timeline position (scroll progress / elapsed fraction); the
+ * plan's own easing descriptor is sampled to `eased = ease(t)` FIRST, so the JS
+ * floor bends the curve exactly as the native CSS `linear()` does (Law 4 — one
+ * kernel: `sampleRuntimeEasing`'s spring arm is the same `Easing.spring` the CSS
+ * path samples). For each entry in `plan.properties`, interpolates `from`→`to`
+ * via {@link interpolateTyped} at `eased`, writes the CSS custom property on
+ * `el`, and dispatches one `czap:uniform-update` carrying `detail.css` (all
+ * props) and `detail.wgsl` (GPU-bound numeric props only).
  */
 export function writeContinuousMap(el: HTMLElement, plan: RuntimeWritePlan, t: number): void {
   const css: Record<string, string> = {};
   const wgsl: Record<string, number> = {};
 
+  const eased = sampleRuntimeEasing(plan.easing)(t);
+
   for (const prop of plan.properties) {
-    const interpolated = interpolateTyped(prop.from, prop.to, t);
+    const interpolated = interpolateTyped(prop.from, prop.to, eased);
     const formatted = formatTypedValue(interpolated);
     el.style.setProperty(prop.cssVar, formatted);
     css[prop.cssVar] = formatted;

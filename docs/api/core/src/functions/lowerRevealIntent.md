@@ -8,7 +8,7 @@
 
 > **lowerRevealIntent**(`intent`): [`LoweredReveal`](../interfaces/LoweredReveal.md)
 
-Defined in: [core/src/reveal.ts:194](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L194)
+Defined in: [core/src/reveal.ts:207](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L207)
 
 Lower a [RevealIntent](../interfaces/RevealIntent.md) into real DocumentGraph node families:
 Signal → Entity → Component → Pose×2 → Transition → Policy → Projection.

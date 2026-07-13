@@ -8,7 +8,7 @@
 
 > **NodeFamily** = `"signal"` \| `"entity"` \| `"component"` \| `"pose"` \| `"transition"` \| `"projection"` \| `"policy"` \| `"export"`
 
-Defined in: [core/src/document-graph.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L40)
+Defined in: [core/src/document-graph.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L41)
 
 Node-family discriminator. Six families map onto the existing `CellKind`
 vocabulary at the wire boundary; `policy` and `export` are the two net-new

@@ -8,7 +8,7 @@
 
 > **interpolateTyped**(`from`, `to`, `eased`): [`TypedValue`](../type-aliases/TypedValue.md)
 
-Defined in: [core/src/interpolate.ts:155](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpolate.ts#L155)
+Defined in: [core/src/interpolate.ts:204](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpolate.ts#L204)
 
 Interpolate two [TypedValue](../type-aliases/TypedValue.md)s within-kind. Cross-kind or unit-mismatch
 interpolation is refused loudly — holds `to` and emits a diagnostic.

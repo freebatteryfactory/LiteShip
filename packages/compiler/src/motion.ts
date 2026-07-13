@@ -9,6 +9,7 @@
 
 import {
   Easing,
+  DEFAULT_MOTION_SPRING,
   formatTypedValue,
   type CssMotionPlan,
   type CssKeyframeStep,
@@ -69,6 +70,8 @@ function syntaxForTypedValue(value: TypedValue): string | null {
       return value.unit === '%' ? '<length-percentage>' : '<length>';
     case 'angle':
       return '<angle>';
+    case 'color':
+      return '<color>';
     case 'transform':
       return null;
   }
@@ -137,7 +140,7 @@ function resolveEasing(easing: MotionEasing | undefined, spring?: MotionSpringCo
     case 'linear':
       return 'linear';
     case 'spring':
-      return Easing.springToLinearCSS(spring ?? { stiffness: 200, damping: 20 });
+      return Easing.springToLinearCSS(spring ?? DEFAULT_MOTION_SPRING);
     case 'ease':
       return 'ease';
   }

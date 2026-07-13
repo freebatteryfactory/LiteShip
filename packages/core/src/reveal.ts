@@ -22,6 +22,7 @@ import type {
   SignalNode,
   TransitionNode,
 } from './document-graph.js';
+import type { Easing, RuntimeEasing } from './easing.js';
 import { formatTypedValue, parseTypedBinding } from './interpolate.js';
 import { projectionKeys } from './projection.js';
 import type { CellMeta } from './protocol.js';
@@ -41,6 +42,12 @@ export type RevealTrigger =
 export interface RevealTransition {
   readonly durationMs: number;
   readonly easing?: 'linear' | 'ease' | 'spring';
+  /**
+   * Spring physics for `easing: 'spring'` (ignored otherwise). Carried through to
+   * the lowered {@link TransitionNode} so BOTH the CSS `linear()` and the JS floor
+   * sample this ONE config; omitted ⇒ the shared `DEFAULT_MOTION_SPRING`.
+   */
+  readonly spring?: Easing.Config;
 }
 
 /** Policy gate for reduced-motion and motion tier. */
@@ -112,6 +119,12 @@ function normalizeBindings(
     out[motionPropToBinding(target, key)] = value;
   }
   return Object.freeze(out);
+}
+
+/** Project the authored reveal timing onto the self-describing runtime easing descriptor. */
+function revealEasingDescriptor(transition: RevealTransition): RuntimeEasing {
+  const kind = transition.easing ?? 'ease';
+  return kind === 'spring' && transition.spring ? { kind, spring: transition.spring } : { kind };
 }
 
 function triggerToSignalInput(trigger: RevealTrigger): ReturnType<typeof sourceToInput> {
@@ -253,6 +266,7 @@ export function lowerRevealIntent(intent: RevealIntent): LoweredReveal {
     toPose: toPose.id,
     routing: 'seq',
     durationMs: intent.transition.durationMs,
+    easing: revealEasingDescriptor(intent.transition),
   } as unknown as TransitionNode);
 
   const policy = sealNode({

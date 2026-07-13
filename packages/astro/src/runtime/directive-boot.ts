@@ -42,6 +42,7 @@ const DIRECTIVE_CONFIG_KEYS: Partial<Record<DirectiveName, string>> = {
   gpu: 'gpu',
   wasm: 'wasm',
   graph: 'graph',
+  motion: 'motion',
 };
 
 function directiveEnableFix(name: DirectiveName): string {
@@ -61,6 +62,7 @@ const DIRECTIVE_NAMES: readonly DirectiveName[] = [
   'gpu',
   'wasm',
   'graph',
+  'motion',
   'svg',
 ];
 
@@ -74,6 +76,7 @@ const LOADERS: Record<DirectiveName, () => Promise<{ readonly default: Directive
   gpu: () => import('../client-directives/gpu.js'),
   wasm: () => import('../client-directives/wasm.js'),
   graph: () => import('../client-directives/graph.js'),
+  motion: () => import('../client-directives/motion.js'),
   svg: () => import('../client-directives/svg.js'),
 };
 

@@ -370,9 +370,10 @@ Host-owned shared runtime surfaces:
 - `@czap/astro/runtime` continuous signal→uniform driver (`driveUniformFromSignal`) — drive the existing `czap:uniform-update` GPU event continuously from a continuous signal (e.g. `scroll.progress`) into a GLSL/WGSL uniform, collapsing the hand-rolled scroll→uniform consumer bridge (0.4.0)
 - `@czap/astro/runtime` runtime DocumentGraph loader (`loadGraphRuntime`, `lowerGraph`, `castGraphDelta`) — lower a serialized `DocumentGraph` onto the live cast pipeline and apply a `GraphPatch` delta at runtime; the `client:graph` directive boots it from `data-czap-graph` (0.4.0)
 - `@czap/astro/runtime` scene→live bridge (`bridgeSceneToGraph`) — drive the live graph from a signal-indexed `@czap/scene`: a discrete crossing re-casts, the continuous tween writes a leaf CSS var / GPU uniform and never patches the graph (0.4.0)
+- `@czap/astro/runtime` continuous-motion FLOOR (`writeContinuousMap`, `initMotionDirective`, `client:motion`) — now production-driven: the `client:motion` directive reads an SSR-inlined lowered program off `data-czap-motion-program` and, when native `animation-timeline` is unavailable, scrubs the signal through `writeContinuousMap` every frame — sampling the SAME `Easing.spring` the native CSS `linear()` compiled from (one kernel, Law 4); the continuous tween never patches the graph, and reduced-motion `settle` pins the final pose with no tween (opt in with `motion: { enabled: true }`)
 - `@czap/astro/runtime` AI-apply seam (`castGraphContext`, `admitGraphPatchProposal`, `adoptAppliedGraph`) — cast the live graph OUT to a model-facing `AIContext`, admit a VALIDATED `GraphPatch` proposal IN through the un-bypassable validate→apply token chain, or adopt a server-applied graph after `verifyAppliedGraph`; re-cast the delta; the model producer is downstream (`adoptAppliedGraph` added 0.8.0, original seam 0.4.0)
 - `@czap/astro/runtime` SVG last-mile (`attachSvgRuntime`, `client:svg`) — resolve `data-czap-entity → SVGElement` and apply `@czap/scene`'s `applySvgAttrs` to the live DOM each frame (0.4.0)
-- internal runtime adapters for `satellite`, `stream`, `llm`, `worker`, `wasm`, `graph`, and `svg`
+- internal runtime adapters for `satellite`, `stream`, `llm`, `worker`, `wasm`, `graph`, `motion`, and `svg`
 
 ---
 

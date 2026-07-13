@@ -20,6 +20,7 @@ afterEach(() => {
   vi.doUnmock('../../../packages/astro/src/runtime/llm.js');
   vi.doUnmock('../../../packages/astro/src/runtime/stream.js');
   vi.doUnmock('../../../packages/astro/src/runtime/wasm.js');
+  vi.doUnmock('../../../packages/astro/src/runtime/motion.js');
   vi.doUnmock('../../../packages/astro/src/client-directives/satellite.js');
   vi.doUnmock('../../../packages/astro/src/client-directives/gpu.js');
 });
@@ -65,6 +66,7 @@ describe('Astro directive boot scanner', () => {
       gpu: vi.fn(),
       wasm: vi.fn(),
       graph: vi.fn(),
+      motion: vi.fn(),
     };
     const entry = (name: keyof typeof calls) =>
       vi.fn((load: () => Promise<unknown>, opts: Record<string, unknown>, el: HTMLElement) => {
@@ -90,6 +92,10 @@ describe('Astro directive boot scanner', () => {
     vi.doMock('../../../packages/astro/src/runtime/graph-directive.js', () => ({
       initGraphDirective: calls.graph,
       graphDirective: entry('graph'),
+    }));
+    vi.doMock('../../../packages/astro/src/runtime/motion.js', () => ({
+      initMotionDirective: calls.motion,
+      motionDirective: entry('motion'),
     }));
 
     const { scanAndBootDirectives } = await import('../../../packages/astro/src/runtime/directive-boot.js');

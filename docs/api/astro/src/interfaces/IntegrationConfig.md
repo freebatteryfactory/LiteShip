@@ -67,7 +67,7 @@ GPU runtime configuration.
 
 > `readonly` `optional` **inspector?**: `boolean`
 
-Defined in: [astro/src/integration.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/integration.ts#L91)
+Defined in: [astro/src/integration.ts:98](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/integration.ts#L98)
 
 Dev-only boundary inspector (default enabled in `astro dev`). Registered
 as an Astro dev-toolbar app — toggle it from the toolbar icon. Pass
@@ -93,7 +93,7 @@ LLM streaming runtime configuration.
 
 > `readonly` `optional` **middleware?**: `boolean`
 
-Defined in: [astro/src/integration.ts:101](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/integration.ts#L101)
+Defined in: [astro/src/integration.ts:108](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/integration.ts#L108)
 
 Opt in (`true`) to auto-register a zero-config capability-detection
 middleware, so a consumer needs no `src/middleware.ts` for the common case;
@@ -105,11 +105,28 @@ refines the same locals. Default off (wire middleware yourself).
 
 ***
 
+### motion?
+
+> `readonly` `optional` **motion?**: `object`
+
+Defined in: [astro/src/integration.ts:92](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/integration.ts#L92)
+
+Continuous-motion runtime (`client:motion`). Opt-in (default off): registers
+the JS motion FLOOR that scrubs `data-czap-motion-program` when native
+`animation-timeline` is unavailable. The native CSS path (`MotionCompiler`)
+needs no runtime and is unaffected.
+
+#### enabled?
+
+> `readonly` `optional` **enabled?**: `boolean`
+
+***
+
 ### security?
 
 > `readonly` `optional` **security?**: `object`
 
-Defined in: [astro/src/integration.ts:103](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/integration.ts#L103)
+Defined in: [astro/src/integration.ts:110](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/integration.ts#L110)
 
 Security policies applied to runtime fetch/HTML boundaries.
 

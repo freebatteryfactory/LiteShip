@@ -8,7 +8,7 @@
 
 > **resolveRevealInitialState**(`intent`, `opts`): [`StateName`](../type-aliases/StateName.md)
 
-Defined in: [core/src/reveal.ts:163](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L163)
+Defined in: [core/src/reveal.ts:176](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L176)
 
 Resolve the discrete state for SSR / reduced-motion first paint.
 

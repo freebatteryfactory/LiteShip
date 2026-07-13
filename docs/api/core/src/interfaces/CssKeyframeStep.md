@@ -6,7 +6,7 @@
 
 # Interface: CssKeyframeStep
 
-Defined in: [core/src/interpret-transition.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L36)
+Defined in: [core/src/interpret-transition.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L37)
 
 A single CSS keyframe step for sequential routing.
 
@@ -16,7 +16,7 @@ A single CSS keyframe step for sequential routing.
 
 > `readonly` **offset**: `number`
 
-Defined in: [core/src/interpret-transition.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L37)
+Defined in: [core/src/interpret-transition.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L38)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [core/src/interpret-transition.ts:37](https://github.com/freebattery
 
 > `readonly` **properties**: `Readonly`\<`Record`\<`string`, `string`\>\>
 
-Defined in: [core/src/interpret-transition.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L38)
+Defined in: [core/src/interpret-transition.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L39)

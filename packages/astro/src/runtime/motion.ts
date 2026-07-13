@@ -1,0 +1,314 @@
+/**
+ * Entry point for the `client:motion` directive — the PRODUCTION driver of the
+ * continuous motion floor (#126, F-MOT-2/3).
+ *
+ * The native-CSS path (`MotionCompiler`) owns motion wherever `animation-timeline`
+ * is supported. This directive is the permanent FLOOR for everywhere it is not: it
+ * reads an SSR-inlined, already-lowered motion program off `data-czap-motion-program`
+ * and, when native is unavailable, scrubs the same signal→progress the CSS would,
+ * writing typed leaf values through {@link writeContinuousMap} every frame. That
+ * writer samples the program's OWN easing descriptor (`RuntimeWritePlan.easing`) —
+ * the same `Easing.spring` the CSS `linear()` compiles from — so the JS floor and
+ * native CSS read ONE identical kernel (Law 4).
+ *
+ * The split the runtime enforces (Law 15/16):
+ *   - CONTINUOUS — the eased tween. A LEAF write every frame (`--czap-*` custom
+ *     properties + a `czap:uniform-update`) and a continuous StateCell write. NEVER
+ *     a graph patch (patching per frame would re-seal the graph 60×/s).
+ *   - DISCRETE — the state CROSSING at the threshold. `data-czap-state` flips and a
+ *     `czap:graph-state` fires through the exact seam `scene-bridge.applyDiscreteState`
+ *     uses. Sparse — only on a real crossing.
+ *
+ * Lifecycle mirrors the other host drivers: reduced-motion + `settle` policy skips
+ * the loop and pins the final endpoint once; `czap:reinit` disposes BEFORE
+ * re-reading (never double-holds); `czap:teardown` stops the driver and frees the
+ * store. SSR-safe: with no `window`/rAF the loop never starts.
+ *
+ * @module
+ */
+
+import {
+  Diagnostics,
+  StateCellStore,
+  resolveRevealInitialState,
+  type RevealIntent,
+  type RuntimeWritePlan,
+  type StateCellStoreShape,
+} from '@czap/core';
+import { dispatchCzapEvent } from '@czap/web';
+import { writeContinuousMap } from './write-continuous-map.js';
+import { attachSignalObserver, readSignalValue, warnIfSignalUnserved } from './boundary.js';
+import { bootDirectiveEntry } from './directive-bound.js';
+
+/**
+ * The opt-in attribute carrying the SSR-inlined lowered motion program (JSON).
+ * Presence GATES the directive — like `client:graph`'s `data-czap-graph`, it is
+ * read directly off the host, not through a wire registry.
+ */
+export const MOTION_PROGRAM_ATTR = 'data-czap-motion-program';
+
+/** The default discrete crossing point on RAW (un-eased) progress. */
+const DEFAULT_THRESHOLD = 0.5;
+
+/** The store cell names the directive registers on its private {@link StateCellStore}. */
+const DISCRETE_CELL = 'motion';
+const CONTINUOUS_CELL = 'motion.progress';
+
+/** The canonical discrete-crossing event, shared with the scene bridge. */
+const GRAPH_STATE_EVENT = 'czap:graph-state';
+
+/**
+ * The SSR-inlined, already-lowered motion program the directive drives. The
+ * authority (see `examples/showcase/src/server/motion-program.ts`) lowers a
+ * {@link RevealIntent} to a graph, interprets it, and serializes THIS: the reveal
+ * intent (drives reduced-motion first paint) + the runtime leaf-write plan (the
+ * floor, carrying its easing) + the resolved signal inputs.
+ */
+export interface SerializedMotionProgram {
+  /** The authoring intent — drives {@link resolveRevealInitialState} for first paint. */
+  readonly intent: RevealIntent;
+  /** The lowered leaf-write floor, including its self-describing easing descriptor. */
+  readonly runtime: RuntimeWritePlan;
+  /** Resolved continuous signal inputs (e.g. `['scroll.progress']`); empty ⇒ time trigger. */
+  readonly signals: readonly string[];
+  /** Discrete crossing point on raw progress (default `0.5`). */
+  readonly threshold?: number;
+}
+
+function isRuntimeWritePlan(value: unknown): value is RuntimeWritePlan {
+  if (value === null || typeof value !== 'object') return false;
+  const plan = value as Record<string, unknown>;
+  const easing = plan.easing as Record<string, unknown> | undefined;
+  return (
+    Array.isArray(plan.properties) &&
+    typeof plan.fromState === 'string' &&
+    typeof plan.toState === 'string' &&
+    typeof plan.durationMs === 'number' &&
+    easing !== undefined &&
+    typeof easing === 'object' &&
+    (easing.kind === 'linear' || easing.kind === 'ease' || easing.kind === 'spring')
+  );
+}
+
+/**
+ * Parse the inlined program, returning `null` LOUDLY on any malformed payload so
+ * the directive stays inert and the native/CSS floor is unaffected (Law 1).
+ */
+export function parseMotionProgram(raw: string): SerializedMotionProgram | null {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (cause) {
+    Diagnostics.warnOnce({
+      source: 'czap/astro.motion',
+      code: 'motion-program-malformed',
+      message: `${MOTION_PROGRAM_ATTR} was not valid JSON — the client:motion floor stays inert; native CSS still applies. Serialize with JSON.stringify(a lowered motion program).`,
+      cause,
+    });
+    return null;
+  }
+
+  const program = parsed as Partial<SerializedMotionProgram>;
+  if (
+    program === null ||
+    typeof program !== 'object' ||
+    !isRuntimeWritePlan(program.runtime) ||
+    program.intent === null ||
+    typeof program.intent !== 'object' ||
+    !Array.isArray(program.signals)
+  ) {
+    Diagnostics.warnOnce({
+      source: 'czap/astro.motion',
+      code: 'motion-program-shape-invalid',
+      message: `${MOTION_PROGRAM_ATTR} is missing required fields ({ intent, runtime, signals }) — the client:motion floor stays inert; native CSS still applies.`,
+    });
+    return null;
+  }
+  return program as SerializedMotionProgram;
+}
+
+/**
+ * Feature-detect native scroll/view timelines. When SUPPORTED the CSS
+ * `animation-timeline` path owns the continuous scrub and the JS floor stays idle;
+ * when UNSUPPORTED (or `CSS.supports` is unavailable) the floor runs. Defaulting
+ * to "run the floor" is the conservative choice — the floor is the permanent guarantee.
+ */
+export function nativeTimelineSupported(): boolean {
+  if (typeof CSS === 'undefined' || typeof CSS.supports !== 'function') return false;
+  return CSS.supports('animation-timeline: scroll()') || CSS.supports('animation-timeline: view()');
+}
+
+/** Whether the user asked for reduced motion (SSR-safe; false off-DOM / without matchMedia). */
+function prefersReducedMotion(): boolean {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+function clamp01(value: number): number {
+  return value < 0 ? 0 : value > 1 ? 1 : value;
+}
+
+/** Idempotent driver: cancels the rAF / detaches the signal observer exactly once. */
+interface MotionDriver {
+  readonly stop: () => void;
+}
+
+/**
+ * Start the continuous driver for a program: a SIGNAL clock (rAF-throttled scroll /
+ * viewport observer, canonicalised progress) when the program carries signal inputs,
+ * else a TIME clock (rAF wall-clock `elapsed / durationMs`). Each tick hands RAW
+ * progress to `onTick`; the plan's easing is applied downstream in
+ * {@link writeContinuousMap}. SSR-safe — with no rAF the loop never starts.
+ */
+function startDriver(program: SerializedMotionProgram, onTick: (progress: number) => void): MotionDriver {
+  const signal = program.signals[0];
+
+  if (signal !== undefined) {
+    warnIfSignalUnserved(signal, { source: 'czap/astro.motion', what: 'motion signal clock' });
+    const emit = (): void => {
+      const value = readSignalValue(signal);
+      if (value === undefined) return;
+      onTick(value);
+    };
+    emit(); // seed the first frame so the floor is correct before the first scroll
+    const detach = typeof window === 'undefined' ? null : attachSignalObserver(signal, emit);
+    let stopped = false;
+    return {
+      stop(): void {
+        if (stopped) return;
+        stopped = true;
+        detach?.();
+      },
+    };
+  }
+
+  // TIME clock — rAF wall-clock over the plan's own duration.
+  const durationMs = Math.max(1, program.runtime.durationMs);
+  const hasRaf = typeof requestAnimationFrame !== 'undefined';
+  let start: number | null = null;
+  let frame: number | null = null;
+  let stopped = false;
+  const loop = (ts: number): void => {
+    if (stopped) return;
+    if (start === null) start = ts;
+    const t = Math.min(1, (ts - start) / durationMs);
+    onTick(t);
+    if (!stopped && t < 1 && hasRaf) frame = requestAnimationFrame(loop);
+  };
+  if (hasRaf) frame = requestAnimationFrame(loop);
+  return {
+    stop(): void {
+      if (stopped) return;
+      stopped = true;
+      if (frame !== null && typeof cancelAnimationFrame !== 'undefined') {
+        cancelAnimationFrame(frame);
+        frame = null;
+      }
+    },
+  };
+}
+
+/**
+ * Activate the `client:motion` directive on `element`. Reads the inlined lowered
+ * program off {@link MOTION_PROGRAM_ATTR}, constructs a private
+ * {@link StateCellStore} (one discrete pose cell + one continuous progress cell —
+ * the FIRST production caller of `writeContinuous`), and runs the JS floor when
+ * native timelines are unavailable. Honors `czap:reinit` (dispose-then-re-read)
+ * and `czap:teardown` (stop + free the store).
+ */
+export function initMotionDirective(load: () => Promise<unknown>, element: HTMLElement): void {
+  let driver: MotionDriver | null = null;
+  let store: StateCellStoreShape | null = null;
+
+  const applyDiscrete = (stateName: string): void => {
+    if (!store) return;
+    store.applyDiscrete(DISCRETE_CELL, stateName);
+    if (element.getAttribute('data-czap-state') !== stateName) {
+      element.setAttribute('data-czap-state', stateName);
+    }
+    dispatchCzapEvent(element, GRAPH_STATE_EVENT, { discrete: { [stateName]: stateName }, state: stateName });
+  };
+
+  const teardownDriver = (): void => {
+    driver?.stop();
+    driver = null;
+    if (store) {
+      // The store is directive-private (no shared registry): unregister the cells
+      // and drop the reference so a reinit re-registers into a fresh store and the
+      // old one is freed — never double-held.
+      store.unregister(DISCRETE_CELL);
+      store.unregister(CONTINUOUS_CELL);
+      store = null;
+    }
+  };
+
+  const setup = (): void => {
+    // Dispose FIRST so a reinit re-reads fresh attributes without double-holding.
+    teardownDriver();
+
+    const raw = element.getAttribute(MOTION_PROGRAM_ATTR);
+    if (raw === null) {
+      Diagnostics.warnOnce({
+        source: 'czap/astro.motion',
+        code: 'motion-program-missing',
+        message: `A client:motion host carries no ${MOTION_PROGRAM_ATTR} — nothing to drive; the directive no-ops. Inline the lowered program (JSON.stringify) on the element.`,
+      });
+      return;
+    }
+    const program = parseMotionProgram(raw);
+    if (!program) return;
+
+    const { runtime } = program;
+    const reduced = prefersReducedMotion();
+
+    // Private store: the discrete pose cell + the continuous progress cell.
+    const s = StateCellStore.create();
+    s.register(DISCRETE_CELL, [runtime.fromState, runtime.toState], { authority: 'synthetic' });
+    s.register(CONTINUOUS_CELL, ['live'], { kind: 'continuous', authority: 'synthetic' });
+    store = s;
+
+    const initialState = resolveRevealInitialState(program.intent, { prefersReducedMotion: reduced });
+    applyDiscrete(initialState);
+
+    // Reduced-motion + settle: no tween. Pin the t=1 endpoint ONCE, settle the
+    // discrete cell to the final state, and SKIP the loop (final semantic state).
+    if (reduced && program.intent.policy.reducedMotion === 'settle') {
+      writeContinuousMap(element, runtime, 1);
+      s.writeContinuous(CONTINUOUS_CELL, 1);
+      applyDiscrete(runtime.toState);
+      return;
+    }
+
+    // Native scroll/view timeline present ⇒ CSS owns the scrub; the floor stays idle.
+    if (nativeTimelineSupported()) return;
+
+    // JS FLOOR — the permanent continuous fallback.
+    const threshold = program.threshold ?? DEFAULT_THRESHOLD;
+    let lastDiscrete: string = initialState;
+    driver = startDriver(program, (progress) => {
+      const p = clamp01(progress);
+      // CONTINUOUS: eased leaf write every frame + continuous cell write. Never a patch.
+      writeContinuousMap(element, runtime, p);
+      s.writeContinuous(CONTINUOUS_CELL, p);
+      // DISCRETE: a crossing of the raw threshold flips state (sparse).
+      const next = p >= threshold ? runtime.toState : runtime.fromState;
+      if (next !== lastDiscrete) {
+        lastDiscrete = next;
+        applyDiscrete(next);
+      }
+    });
+  };
+
+  element.addEventListener('czap:reinit', setup);
+  element.addEventListener('czap:teardown', teardownDriver);
+
+  setup();
+  load();
+}
+
+/** Astro client directive entry that marks the host before starting the motion runtime. */
+export const motionDirective = (load: () => Promise<unknown>, opts: Record<string, unknown>, el: HTMLElement): void => {
+  bootDirectiveEntry('motion', load, opts, el, (runtimeLoad, _runtimeOpts, runtimeEl) => {
+    initMotionDirective(runtimeLoad, runtimeEl);
+  });
+};

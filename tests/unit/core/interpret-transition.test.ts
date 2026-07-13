@@ -19,6 +19,7 @@ import {
   type EntityNode,
   type ComponentNode,
   type SignalNode,
+  type RuntimeEasing,
 } from '@czap/core';
 
 const META: CellMeta = {
@@ -34,7 +35,10 @@ function graph(nodes: DocumentGraphNode[], edges: DocumentGraphEdge[] = []): Doc
   >);
 }
 
-function revealFixture(durationMs = 420): { graph: DocumentGraph; transitionId: ContentAddress } {
+function revealFixture(
+  durationMs = 420,
+  easing?: RuntimeEasing,
+): { graph: DocumentGraph; transitionId: ContentAddress } {
   const signal = sealNode({
     _tag: 'DocGraphSignalNode',
     _version: 1,
@@ -96,6 +100,7 @@ function revealFixture(durationMs = 420): { graph: DocumentGraph; transitionId: 
     toPose: toPose.id,
     routing: 'seq',
     durationMs,
+    ...(easing ? { easing } : {}),
   } as unknown as TransitionNode);
 
   const g = graph(
@@ -119,6 +124,19 @@ describe('interpretTransition', () => {
     expect(plan.runtime?.routing).toBe('seq');
     expect(plan.css?.fromState).toBe('before');
     expect(plan.css?.toState).toBe('after');
+  });
+
+  test('defaults runtime easing to { kind: ease } when the node authors none', () => {
+    const { graph: g, transitionId } = revealFixture();
+    const plan = interpretTransition(g, transitionId);
+    expect(plan.runtime?.easing).toEqual({ kind: 'ease' });
+  });
+
+  test('projects the authored node easing (incl. spring config) onto the runtime floor', () => {
+    const { graph: g, transitionId } = revealFixture(420, { kind: 'spring', spring: { stiffness: 200, damping: 15 } });
+    const plan = interpretTransition(g, transitionId);
+    // The SAME descriptor the CSS path compiles into linear() — one source (Law 4).
+    expect(plan.runtime?.easing).toEqual({ kind: 'spring', spring: { stiffness: 200, damping: 15 } });
   });
 
   test('diffs pose bindings into typed property tweens', () => {

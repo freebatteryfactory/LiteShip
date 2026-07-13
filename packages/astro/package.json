@@ -65,6 +65,11 @@
       "import": "./dist/client-directives/graph.js",
       "development": "./src/client-directives/graph.ts"
     },
+    "./client-directives/motion": {
+      "types": "./dist/client-directives/motion.d.ts",
+      "import": "./dist/client-directives/motion.js",
+      "development": "./src/client-directives/motion.ts"
+    },
     "./client-directives/svg": {
       "types": "./dist/client-directives/svg.d.ts",
       "import": "./dist/client-directives/svg.js",

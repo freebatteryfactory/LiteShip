@@ -5,13 +5,7 @@
  */
 
 import { describe, test, expect, beforeEach, afterEach } from 'vitest';
-import {
-  interpolateTyped,
-  parseTypedBinding,
-  formatTypedValue,
-  Diagnostics,
-  type TypedValue,
-} from '@czap/core';
+import { interpolateTyped, parseTypedBinding, formatTypedValue, Diagnostics, type TypedValue } from '@czap/core';
 
 describe('parseTypedBinding', () => {
   test('parses numeric opacity', () => {
@@ -91,6 +85,54 @@ describe('interpolateTyped', () => {
   test('formatTypedValue round-trips length', () => {
     const value: TypedValue = { k: 'length', v: 12.5, unit: 'px' };
     expect(formatTypedValue(value)).toBe('12.5px');
+  });
+});
+
+describe('color TypedValue (F-MOT-3)', () => {
+  beforeEach(() => Diagnostics.reset());
+  afterEach(() => Diagnostics.reset());
+
+  test('parses #rrggbb and #rgb hex into sRGB 0..255 components', () => {
+    expect(parseTypedBinding('--czap-hero-color', '#ff0000')).toEqual({
+      k: 'color',
+      space: 'srgb',
+      components: [255, 0, 0],
+    });
+    // #f00 shorthand expands to the same triple.
+    expect(parseTypedBinding('--czap-hero-color', '#f00')).toEqual({
+      k: 'color',
+      space: 'srgb',
+      components: [255, 0, 0],
+    });
+  });
+
+  test('parses functional rgb() and oklch() (before the generic transform arm)', () => {
+    expect(parseTypedBinding('--c', 'rgb(10 20 30)')).toEqual({ k: 'color', space: 'srgb', components: [10, 20, 30] });
+    expect(parseTypedBinding('--c', 'oklch(0.7 0.15 30)')).toEqual({
+      k: 'color',
+      space: 'oklch',
+      components: [0.7, 0.15, 30],
+    });
+  });
+
+  test('lerps within color space component-wise', () => {
+    const from: TypedValue = { k: 'color', space: 'srgb', components: [0, 0, 0] };
+    const to: TypedValue = { k: 'color', space: 'srgb', components: [255, 100, 0] };
+    expect(interpolateTyped(from, to, 0.5)).toEqual({ k: 'color', space: 'srgb', components: [127.5, 50, 0] });
+  });
+
+  test('formatTypedValue emits modern space-separated syntax (fractional-lossless)', () => {
+    expect(formatTypedValue({ k: 'color', space: 'srgb', components: [127.5, 50, 0] })).toBe('rgb(127.5 50 0)');
+    expect(formatTypedValue({ k: 'color', space: 'oklch', components: [0.7, 0.15, 30] })).toBe('oklch(0.7 0.15 30)');
+  });
+
+  test('refuses CROSS-SPACE color interpolation loudly — holds `to`, no coerced lerp', () => {
+    const sink = Diagnostics.createBufferSink();
+    Diagnostics.setSink(sink.sink);
+    const from: TypedValue = { k: 'color', space: 'srgb', components: [255, 0, 0] };
+    const to: TypedValue = { k: 'color', space: 'oklch', components: [0.7, 0.15, 30] };
+    expect(interpolateTyped(from, to, 0.5)).toEqual(to);
+    expect(sink.events.some((e) => e.code === 'color-space-mismatch')).toBe(true);
   });
 });
 
