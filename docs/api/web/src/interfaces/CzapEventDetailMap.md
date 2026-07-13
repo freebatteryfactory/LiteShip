@@ -155,6 +155,17 @@ Defined in: [web/src/wire/czap-events.ts:55](https://github.com/freebatteryfacto
 
 Defined in: [web/src/wire/czap-events.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/wire/czap-events.ts#L56)
 
+#### domStale?
+
+> `readonly` `optional` **domStale?**: `boolean`
+
+Whether the rendered DOM is known STALE (overrides the recovery binding's default).
+A morph-rejection trigger omits it (the binding treats the DOM as stale). A trigger
+whose DOM is intact — a receipt-only resume that applies a state crossing without any
+failed morph — passes `false` so recovery gap-replays the crossing WITHOUT an
+unnecessary snapshot floor (which would false-error absent a snapshot URL, or needlessly
+replace fresh DOM).
+
 #### reason
 
 > `readonly` **reason**: `string`
@@ -165,7 +176,7 @@ Defined in: [web/src/wire/czap-events.ts:56](https://github.com/freebatteryfacto
 
 > **czap:satellite-state**: [`CzapUniformUpdateDetail`](CzapUniformUpdateDetail.md)
 
-Defined in: [web/src/wire/czap-events.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/wire/czap-events.ts#L57)
+Defined in: [web/src/wire/czap-events.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/wire/czap-events.ts#L68)
 
 ***
 
@@ -173,7 +184,7 @@ Defined in: [web/src/wire/czap-events.ts:57](https://github.com/freebatteryfacto
 
 > **czap:signal**: `unknown`
 
-Defined in: [web/src/wire/czap-events.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/wire/czap-events.ts#L58)
+Defined in: [web/src/wire/czap-events.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/wire/czap-events.ts#L69)
 
 ***
 
@@ -181,7 +192,7 @@ Defined in: [web/src/wire/czap-events.ts:58](https://github.com/freebatteryfacto
 
 > **czap:slot-mounted**: `object`
 
-Defined in: [web/src/wire/czap-events.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/wire/czap-events.ts#L59)
+Defined in: [web/src/wire/czap-events.ts:70](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/wire/czap-events.ts#L70)
 
 #### mode
 
@@ -197,7 +208,7 @@ Defined in: [web/src/wire/czap-events.ts:59](https://github.com/freebatteryfacto
 
 > **czap:slot-unmounted**: `object`
 
-Defined in: [web/src/wire/czap-events.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/wire/czap-events.ts#L60)
+Defined in: [web/src/wire/czap-events.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/wire/czap-events.ts#L71)
 
 #### mode?
 
@@ -213,7 +224,7 @@ Defined in: [web/src/wire/czap-events.ts:60](https://github.com/freebatteryfacto
 
 > **czap:state**: [`CzapUniformUpdateDetail`](CzapUniformUpdateDetail.md)
 
-Defined in: [web/src/wire/czap-events.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/wire/czap-events.ts#L61)
+Defined in: [web/src/wire/czap-events.ts:72](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/wire/czap-events.ts#L72)
 
 ***
 
@@ -221,7 +232,7 @@ Defined in: [web/src/wire/czap-events.ts:61](https://github.com/freebatteryfacto
 
 > **czap:stream-connected**: `undefined`
 
-Defined in: [web/src/wire/czap-events.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/wire/czap-events.ts#L62)
+Defined in: [web/src/wire/czap-events.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/wire/czap-events.ts#L73)
 
 ***
 
@@ -229,7 +240,7 @@ Defined in: [web/src/wire/czap-events.ts:62](https://github.com/freebatteryfacto
 
 > **czap:stream-disconnected**: `undefined`
 
-Defined in: [web/src/wire/czap-events.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/wire/czap-events.ts#L63)
+Defined in: [web/src/wire/czap-events.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/wire/czap-events.ts#L74)
 
 ***
 
@@ -237,7 +248,7 @@ Defined in: [web/src/wire/czap-events.ts:63](https://github.com/freebatteryfacto
 
 > **czap:stream-error**: [`CzapStreamErrorDetail`](CzapStreamErrorDetail.md)
 
-Defined in: [web/src/wire/czap-events.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/wire/czap-events.ts#L64)
+Defined in: [web/src/wire/czap-events.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/wire/czap-events.ts#L75)
 
 ***
 
@@ -245,7 +256,7 @@ Defined in: [web/src/wire/czap-events.ts:64](https://github.com/freebatteryfacto
 
 > **czap:stream-morph**: `undefined`
 
-Defined in: [web/src/wire/czap-events.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/wire/czap-events.ts#L65)
+Defined in: [web/src/wire/czap-events.ts:76](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/wire/czap-events.ts#L76)
 
 ***
 
@@ -253,7 +264,7 @@ Defined in: [web/src/wire/czap-events.ts:65](https://github.com/freebatteryfacto
 
 > **czap:teardown**: `undefined`
 
-Defined in: [web/src/wire/czap-events.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/wire/czap-events.ts#L66)
+Defined in: [web/src/wire/czap-events.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/wire/czap-events.ts#L77)
 
 ***
 
@@ -261,7 +272,7 @@ Defined in: [web/src/wire/czap-events.ts:66](https://github.com/freebatteryfacto
 
 > **czap:uniform-update**: [`CzapUniformUpdateDetail`](CzapUniformUpdateDetail.md)
 
-Defined in: [web/src/wire/czap-events.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/wire/czap-events.ts#L67)
+Defined in: [web/src/wire/czap-events.ts:78](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/wire/czap-events.ts#L78)
 
 ***
 
@@ -269,7 +280,7 @@ Defined in: [web/src/wire/czap-events.ts:67](https://github.com/freebatteryfacto
 
 > **czap:wasm-error**: `object`
 
-Defined in: [web/src/wire/czap-events.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/wire/czap-events.ts#L68)
+Defined in: [web/src/wire/czap-events.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/wire/czap-events.ts#L79)
 
 #### reason
 
@@ -285,7 +296,7 @@ Defined in: [web/src/wire/czap-events.ts:68](https://github.com/freebatteryfacto
 
 > **czap:wasm-ready**: `object`
 
-Defined in: [web/src/wire/czap-events.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/wire/czap-events.ts#L69)
+Defined in: [web/src/wire/czap-events.ts:80](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/wire/czap-events.ts#L80)
 
 #### url
 
@@ -297,7 +308,7 @@ Defined in: [web/src/wire/czap-events.ts:69](https://github.com/freebatteryfacto
 
 > **czap:worker-ready**: `undefined`
 
-Defined in: [web/src/wire/czap-events.ts:70](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/wire/czap-events.ts#L70)
+Defined in: [web/src/wire/czap-events.ts:81](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/wire/czap-events.ts#L81)
 
 ***
 
@@ -305,4 +316,4 @@ Defined in: [web/src/wire/czap-events.ts:70](https://github.com/freebatteryfacto
 
 > **czap:worker-state**: [`CzapUniformUpdateDetail`](CzapUniformUpdateDetail.md)
 
-Defined in: [web/src/wire/czap-events.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/wire/czap-events.ts#L71)
+Defined in: [web/src/wire/czap-events.ts:82](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/wire/czap-events.ts#L82)

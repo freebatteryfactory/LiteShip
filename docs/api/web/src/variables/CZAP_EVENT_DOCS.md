@@ -8,6 +8,6 @@
 
 > `const` **CZAP\_EVENT\_DOCS**: `Record`\<[`CzapEventName`](../type-aliases/CzapEventName.md), `string`\>
 
-Defined in: [web/src/wire/czap-events.ts:111](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/wire/czap-events.ts#L111)
+Defined in: [web/src/wire/czap-events.ts:122](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/wire/czap-events.ts#L122)
 
 Short human descriptions for generated wire-contract docs.

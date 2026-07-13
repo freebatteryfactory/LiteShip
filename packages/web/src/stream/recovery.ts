@@ -242,13 +242,18 @@ export const supplementReplayIfSignalsDropped = async (
 export const bindRequestSnapshotRecovery = (target: EventTarget, options: StreamRecoveryOptions): (() => void) => {
   let inFlight = false;
 
-  return onCzap(target, 'czap:request-snapshot', () => {
+  return onCzap(target, 'czap:request-snapshot', (detail) => {
     if (inFlight) {
       return;
     }
 
     inFlight = true;
-    void runGraphNativeRecovery(options)
+    // A trigger can declare the DOM FRESH via `detail.domStale: false` (e.g. a receipt-only
+    // resume that applies a state crossing with no failed morph). Honor it for this invocation
+    // so gap replay applies the crossing WITHOUT the post-replay snapshot floor. Absent → the
+    // binding's own `domStale` (morph-rejection recovery treats the rendered DOM as stale).
+    const effective = detail?.domStale !== undefined ? { ...options, domStale: () => detail.domStale! } : options;
+    void runGraphNativeRecovery(effective)
       .catch((error) => {
         dispatchCzapEvent(target, 'czap:stream-error', {
           reason: 'snapshot-recovery-failed',
