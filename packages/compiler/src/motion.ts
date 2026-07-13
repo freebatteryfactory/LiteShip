@@ -101,8 +101,20 @@ function emitPropertyRegistrations(properties: readonly MotionPropertyTween[]): 
   return blocks.join('\n\n');
 }
 
+/**
+ * Format a normalized `[0,1]` keyframe offset as a CSS percentage, PRESERVING fractional
+ * seams. A composed program (delays, stagger, uneven step durations) produces offsets like
+ * `1/3` or `1/1000` — integer rounding would collapse those onto an adjacent stop (a 1ms
+ * step in a 1000ms sequence becomes another `0%` keyframe), so the native `@keyframes`
+ * timeline would diverge from the EXACT offsets the JS/stage/worker samplers read. Round to
+ * 4 decimals (0.01% resolution) and strip trailing zeros so `0.25 → 25`, `1/3 → 33.3333`.
+ */
+function formatKeyframeOffsetPct(offset: number): string {
+  return `${+(offset * 100).toFixed(4)}`;
+}
+
 function emitKeyframeStep(step: CssKeyframeStep): string {
-  const pct = Math.round(step.offset * 100);
+  const pct = formatKeyframeOffsetPct(step.offset);
   const decls = Object.entries(step.properties).map(([k, v]) => `    ${k}: ${v};`);
   // A MIXED-easing composed program carries the segment's own curve here so the native
   // animation samples each segment with its authored easing — matching the JS/stage/worker

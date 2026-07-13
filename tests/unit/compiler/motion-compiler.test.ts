@@ -351,8 +351,10 @@ describe('MotionCompiler — composed TransitionProgram keyframes (#141, backend
       ],
     });
     const result = MotionCompiler.compile({ plan: par.css! });
-    // par total = max(200,600)=600 → A's window ends at 200/600 ≈ 33% (Math.round → 33%).
-    expect(result.keyframes).toContain('  33% {');
+    // par total = max(200,600)=600 → A's window ends at 200/600 = 1/3, emitted as the EXACT
+    // fractional 33.3333% (not integer-rounded 33%, which would diverge from the JS/stage/worker
+    // samplers that read the exact offset).
+    expect(result.keyframes).toContain('  33.3333% {');
     expect(result.keyframes).not.toContain('  25% {');
   });
 
@@ -452,6 +454,28 @@ describe('MotionCompiler — composed TransitionProgram keyframes (#141, backend
     // Emitted: the spring compiles to a `linear()` sampling; B's segment is plain `ease`.
     expect(result.keyframes).toContain('animation-timing-function: linear(');
     expect(result.keyframes).toMatch(/25% \{[^}]*animation-timing-function: ease;/s);
+  });
+
+  test('fractional keyframe offsets are preserved, not rounded to integer percent (Codex P2 parity)', () => {
+    // Composed programs (delays, stagger, uneven step durations) produce non-round offsets.
+    // Integer rounding would collapse a 1/3 seam onto 33% and a 0.1% seam onto 0%, so native
+    // @keyframes would diverge from the exact offsets the JS/stage/worker samplers read.
+    const base = revealCssPlan();
+    const plan: CssMotionPlan = {
+      ...base,
+      keyframes: [
+        { offset: 0, properties: { opacity: '0' } },
+        { offset: 0.001, properties: { opacity: '0.01' } },
+        { offset: 1 / 3, properties: { opacity: '0.5' } },
+        { offset: 1, properties: { opacity: '1' } },
+      ],
+    };
+    const out = MotionCompiler.compile({ plan });
+    expect(out.keyframes).toContain('0.1% {');
+    expect(out.keyframes).toContain('33.3333% {');
+    expect(out.keyframes).toContain('100% {');
+    // The 0.1% seam must NOT have collapsed onto a duplicate 0% stop.
+    expect(out.keyframes).not.toContain('0.001');
   });
 
   test('a PAR of differently-eased children cannot carry one per-keyframe curve — diagnosed LOUDLY', () => {
