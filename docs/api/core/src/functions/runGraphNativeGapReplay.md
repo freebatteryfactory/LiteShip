@@ -8,7 +8,7 @@
 
 > **runGraphNativeGapReplay**(`options`): `Promise`\<[`GraphNativeGapReplayResult`](../interfaces/GraphNativeGapReplayResult.md)\>
 
-Defined in: [core/src/graph-query-gap-replay.ts:280](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query-gap-replay.ts#L280)
+Defined in: [core/src/graph-query-gap-replay.ts:307](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query-gap-replay.ts#L307)
 
 Full graph-native gap replay: conditional QUERY read → adopt → transition/receipt
 discrete replay. Does NOT widen the SSE replay payload with a signal.
