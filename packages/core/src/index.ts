@@ -189,9 +189,10 @@ export type {
   LoweredScrollTimeline,
 } from './scroll-timeline.js';
 
-// Responsive-media intent + projection (#125)
+// Responsive-media intent + projection (#125) — the effective-candidate law (#140)
 export {
   ResponsiveMedia,
+  selectCandidates,
   resolveResponsiveMedia,
   buildResponsiveSrcset,
   buildResponsiveImageSet,
@@ -204,6 +205,7 @@ export type {
   ResponsiveMediaCapabilities,
   ResponsiveMediaResolutionReason,
   ResolvedResponsiveMedia,
+  ResponsiveMediaCandidateSet,
   ResponsiveMediaPictureProjection,
 } from './responsive-media.js';
 

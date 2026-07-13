@@ -15,10 +15,12 @@ import type {
   EdgeHostCacheStatus,
   ThemeCompileResult,
 } from '@czap/edge';
-import type { CapTier } from '@czap/core';
+import { projectResponsiveMediaPicture } from '@czap/core';
+import type { CapTier, ResponsiveMediaIntent, ResponsiveMediaPictureProjection } from '@czap/core';
 import type { DesignTier, ExtendedDeviceCapabilities, MotionTier } from '@czap/detect';
 import { applyCzapHeaders } from './headers.js';
 import type { CrossOriginEmbedderPolicy } from './headers.js';
+import { applyResponsiveMediaVary } from './responsive-media.js';
 import { consumeIntegrationToggles } from './integration-toggles.js';
 
 // ---------------------------------------------------------------------------
@@ -44,6 +46,16 @@ export interface CzapLocals {
   }>;
   /** Parsed device capabilities. */
   readonly capabilities: ExtendedDeviceCapabilities;
+  /**
+   * Project a responsive-media intent using THIS request's Save-Data / DPR caps
+   * (derived from Client Hints). Every artifact of the returned projection derives
+   * from the ONE effective-candidate law (`selectCandidates`), so a Save-Data client
+   * is never advertised a heavy candidate through `src` / `srcset` / `<source>` /
+   * the preload `imagesrcset`. The middleware also merges the responsive-media `Vary`
+   * axis (`Sec-CH-DPR, Save-Data`) into the response so a CDN keys the light and
+   * normal representations apart (#140).
+   */
+  readonly responsiveMedia: (intent: ResponsiveMediaIntent) => ResponsiveMediaPictureProjection;
   /** Edge-host resolution result, present when an edge adapter is configured. */
   readonly edge?: {
     readonly theme?: ThemeCompileResult;
@@ -134,6 +146,10 @@ export function czapMiddleware(
     const capabilities = edgeResolution?.capabilities ?? ClientHints.parseClientHints(context.request.headers);
     const tier = edgeResolution?.tier ?? EdgeTier.detectTier(context.request.headers);
 
+    // Save-Data / DPR caps for the responsive-media projector, derived ONCE from the
+    // request's real Client Hints (the production wiring of responsiveMediaCapabilities).
+    const responsiveMediaCaps = ClientHints.responsiveMediaCapabilities(capabilities);
+
     // Inject into locals for component access
     context.locals.czap = {
       tiers: {
@@ -142,6 +158,8 @@ export function czapMiddleware(
         design: tier.designTier,
       },
       capabilities,
+      responsiveMedia: (intent: ResponsiveMediaIntent): ResponsiveMediaPictureProjection =>
+        projectResponsiveMediaPicture(intent, responsiveMediaCaps),
       ...(edgeResolution
         ? {
             edge: {
@@ -168,6 +186,13 @@ export function czapMiddleware(
       acceptCH: edgeResolution?.responseHeaders.acceptCH ?? ClientHints.acceptCHHeader(),
       criticalCH: edgeResolution?.responseHeaders.criticalCH ?? ClientHints.criticalCHHeader(),
     });
+
+    // Responsive-media representations vary by Save-Data / DPR — merge that axis into
+    // the response Vary (union, never clobber) so a CDN keys the light and normal
+    // srcsets apart. The production caller of responsiveMediaVaryHeader (#140).
+    if (detectEnabled) {
+      applyResponsiveMediaVary(headers);
+    }
 
     return new Response(response.body, {
       status: response.status,

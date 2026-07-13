@@ -1,0 +1,99 @@
+---
+import Base from '../layouts/Base.astro';
+import { ResponsiveMedia } from '@czap/core';
+
+// SSR so the middleware's `Astro.locals.czap.responsiveMedia` projector runs with THIS
+// request's real Save-Data / DPR Client Hints (the production host path, #140).
+export const prerender = false;
+
+// One authored intent. The host projects it through the ONE effective-candidate law
+// (`selectCandidates`): under Save-Data every artifact — src, srcset, <source>, the
+// preload imagesrcset — is capped to the light asset, so a high-DPR Save-Data client
+// can never re-fetch the heavy hero. Toggle it live with the Chrome DevTools
+// "Save-Data: on" network condition (or a `Save-Data: on` request header).
+const hero = ResponsiveMedia.intent({
+  id: 'hero-img',
+  alt: 'Adaptive hero photograph',
+  variants: [
+    { src: '/img/hero-800.jpg', width: 800 },
+    { src: '/img/hero-1600.jpg', width: 1600 },
+    { src: '/img/hero-2400.jpg', width: 2400 },
+  ],
+  saveDataVariant: { src: '/img/hero-lite.jpg', width: 400 },
+  sizes: '(max-width: 768px) 100vw, 50vw',
+});
+
+const czap = Astro.locals.czap;
+const media = czap?.responsiveMedia(hero);
+const caps = czap?.capabilities;
+const saveData = caps?.connection?.saveData ?? false;
+const dpr = caps?.devicePixelRatio ?? 1;
+---
+
+<Base title="czap showcase -- responsive-media effective candidate law">
+  {/* The LCP preload lands in <head> and advertises ONLY the effective set. */}
+  <Fragment slot="head" set:html={media?.preload ?? ''} />
+
+  <header class="page-header">
+    <h1>Responsive media — one effective-candidate law</h1>
+    <p>
+      This hero is authored once as a <code>ResponsiveMedia.intent</code> and projected by
+      <code>Astro.locals.czap.responsiveMedia(intent)</code>. Every output — the
+      <code>&lt;img src&gt;</code>, the <code>srcset</code>, each <code>&lt;source&gt;</code>,
+      and the <code>&lt;link rel="preload" imagesrcset&gt;</code> in <code>&lt;head&gt;</code> —
+      derives from the SAME <code>selectCandidates(intent, caps)</code>. Under
+      <code>Save-Data</code> the set is capped to the light asset, so the browser cannot
+      fetch a heavy candidate no artifact lists.
+    </p>
+    <p class="detected">
+      Detected this request: <strong>Save-Data {saveData ? 'ON' : 'off'}</strong>,
+      <strong>DPR {dpr}</strong> → resolved reason
+      <code>{media?.resolved.reason}</code>, resolved src <code>{media?.resolved.src}</code>.
+    </p>
+  </header>
+
+  <section class="media-stage" set:html={media?.picture ?? ''}></section>
+
+  <section class="explanation">
+    <h2>What the host emitted</h2>
+    <p>The effective <code>srcset</code> for this request:</p>
+    <pre><code>{media?.srcset}</code></pre>
+    <p>The preload for this request (the LCP hint):</p>
+    <pre><code>{media?.preload}</code></pre>
+    <p class="footnote">
+      Turn on Save-Data and reload: the srcset and preload above collapse to
+      <code>/img/hero-lite.jpg</code> only. With Save-Data off they list the full
+      <code>800w / 1600w / 2400w</code> set and the DPR pick becomes the resolved
+      <code>src</code>. The response also carries <code>Vary: …, Sec-CH-DPR, Save-Data</code>
+      so a CDN keys the two representations apart.
+    </p>
+  </section>
+</Base>
+
+<style>
+  .page-header {
+    margin-bottom: 2rem;
+  }
+  .detected {
+    font-size: 0.9rem;
+    color: var(--czap-muted, #64748b);
+  }
+  .media-stage img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.5rem;
+    border: 1px solid var(--czap-border, #e2e8f0);
+  }
+  pre {
+    background: var(--czap-surface, #f8fafc);
+    border: 1px solid var(--czap-border, #e2e8f0);
+    border-radius: 0.375rem;
+    padding: 0.75rem 1rem;
+    overflow-x: auto;
+    font-size: 0.8125rem;
+  }
+  .footnote {
+    font-size: 0.85rem;
+    color: var(--czap-muted, #64748b);
+  }
+</style>

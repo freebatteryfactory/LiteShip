@@ -8,15 +8,15 @@
 
 > **resolveResponsiveMedia**(`intent`, `caps`): [`ResolvedResponsiveMedia`](../interfaces/ResolvedResponsiveMedia.md)
 
-Defined in: [core/src/responsive-media.ts:171](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/responsive-media.ts#L171)
+Defined in: [core/src/responsive-media.ts:244](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/responsive-media.ts#L244)
 
 Resolve the single best `src` for SSR / fallback `<img>` given capabilities.
 
-Save-Data wins over DPR: the authored `saveDataVariant` when present, else
-the LIGHTEST available variant (`save-data-floor`) — a Save-Data user must
-never be served the heavy DPR-matched asset just because the author skipped
-the explicit light variant. Otherwise pick the variant whose DPR is closest
-without going under the device ratio (floor), else the largest available.
+A thin projection of [selectCandidates](selectCandidates.md): takes its `resolved` variant and
+`reason`. Kept as its own export for hosts that only need the one `src` — but it
+derives from the SAME law as `srcset` / `<source>` / preload / image-set, so a
+Save-Data client is never SILENTLY served a light `src` while a heavy candidate
+leaks through another artifact.
 
 ## Parameters
 

@@ -48,6 +48,26 @@ export interface ResolvedResponsiveMedia {
   readonly reason: ResponsiveMediaResolutionReason;
 }
 
+/**
+ * The EFFECTIVE candidate set — the single law every responsive-media output derives
+ * from ({@link selectCandidates}). Under `caps.saveData` the set is capped to the ONE
+ * light/floor variant, so no artifact (`srcset`, `<source>`, the preload `imagesrcset`,
+ * CSS `image-set()`, the cache-key digest) can ever advertise a heavier candidate — the
+ * browser cannot re-fetch what no output lists (F-RM-1a..e).
+ */
+export interface ResponsiveMediaCandidateSet {
+  /**
+   * The candidates safe to advertise under `caps`. Save-Data caps this to a single
+   * light/floor variant; otherwise it is the full authored set. `srcset`, the general
+   * `<source>`, the preload `imagesrcset`, and CSS `image-set()` all enumerate THIS.
+   */
+  readonly candidates: readonly ResponsiveMediaVariant[];
+  /** The single best variant for `<img src>` — the DPR pick WITHIN `candidates`. */
+  readonly resolved: ResponsiveMediaVariant;
+  /** Why `resolved` was chosen and how `candidates` was capped. */
+  readonly reason: ResponsiveMediaResolutionReason;
+}
+
 /** Structured `<picture>` projection. */
 export interface ResponsiveMediaPictureProjection {
   readonly picture: string;
@@ -160,51 +180,73 @@ export function buildResponsiveImageSet(variants: readonly ResponsiveMediaVarian
 }
 
 /**
- * Resolve the single best `src` for SSR / fallback `<img>` given capabilities.
+ * THE one effective-candidate law — the single function every responsive-media
+ * output consumes (#140). Returns the {@link ResponsiveMediaCandidateSet}: the
+ * candidates safe to advertise under `caps`, the single best `src`, and the reason.
  *
- * Save-Data wins over DPR: the authored `saveDataVariant` when present, else
- * the LIGHTEST available variant (`save-data-floor`) — a Save-Data user must
- * never be served the heavy DPR-matched asset just because the author skipped
- * the explicit light variant. Otherwise pick the variant whose DPR is closest
- * without going under the device ratio (floor), else the largest available.
+ * Save-Data wins over DPR and caps ALL candidates to the floor: the authored
+ * `saveDataVariant` when present (`save-data`), else the LIGHTEST available variant
+ * (`save-data-floor`) — a Save-Data client must never be advertised a heavier
+ * candidate through ANY artifact, even when the author skipped the explicit light
+ * variant. Otherwise the full authored set is advertised and `resolved` is the DPR
+ * pick: the variant whose DPR is closest without going under the device ratio
+ * (`dpr-match`), else the largest available (`dpr-floor`), else the first (`fallback`).
  */
-export function resolveResponsiveMedia(
+export function selectCandidates(
   intent: ResponsiveMediaIntent,
   caps: ResponsiveMediaCapabilities,
-): ResolvedResponsiveMedia {
+): ResponsiveMediaCandidateSet {
   if (intent.variants.length === 0) {
-    throw ValidationError('resolveResponsiveMedia', 'ResponsiveMediaIntent.variants must be non-empty');
+    throw ValidationError('selectCandidates', 'ResponsiveMediaIntent.variants must be non-empty');
   }
 
   const dpr = Number.isFinite(caps.devicePixelRatio) && caps.devicePixelRatio > 0 ? caps.devicePixelRatio : 1;
-
-  if (caps.saveData && intent.saveDataVariant !== undefined) {
-    return Object.freeze({ src: intent.saveDataVariant.src, reason: 'save-data' });
-  }
-
   const baseWidth = minPositiveWidth(intent.variants);
   const scored = intent.variants
     .map((variant) => ({ variant, dpr: variantDpr(variant, baseWidth) ?? 1 }))
     .sort((a, b) => a.dpr - b.dpr);
 
+  // Save-Data caps the WHOLE set to one light candidate — the browser cannot
+  // re-fetch a heavy asset that no output advertises (F-RM-1a..e).
   if (caps.saveData) {
+    if (intent.saveDataVariant !== undefined) {
+      const only = intent.saveDataVariant;
+      return Object.freeze({ candidates: Object.freeze([only]), resolved: only, reason: 'save-data' });
+    }
     // No authored light variant — honor Save-Data with the smallest candidate
-    // rather than silently falling through to the heavy DPR match.
-    return Object.freeze({ src: scored[0]!.variant.src, reason: 'save-data-floor' });
+    // rather than silently falling through to the heavy DPR match (F-RM-1c).
+    const smallest = scored[0]!.variant;
+    return Object.freeze({ candidates: Object.freeze([smallest]), resolved: smallest, reason: 'save-data-floor' });
   }
 
+  // Normal path: advertise the FULL authored set; `resolved` is the DPR pick.
+  const candidates = intent.variants;
   const atOrAbove = scored.filter((entry) => entry.dpr >= dpr);
   if (atOrAbove.length > 0) {
-    const best = atOrAbove[0]!;
-    return Object.freeze({ src: best.variant.src, reason: 'dpr-match' });
+    return Object.freeze({ candidates, resolved: atOrAbove[0]!.variant, reason: 'dpr-match' });
   }
-
   const floor = scored[scored.length - 1];
   if (floor !== undefined) {
-    return Object.freeze({ src: floor.variant.src, reason: 'dpr-floor' });
+    return Object.freeze({ candidates, resolved: floor.variant, reason: 'dpr-floor' });
   }
+  return Object.freeze({ candidates, resolved: intent.variants[0]!, reason: 'fallback' });
+}
 
-  return Object.freeze({ src: intent.variants[0]!.src, reason: 'fallback' });
+/**
+ * Resolve the single best `src` for SSR / fallback `<img>` given capabilities.
+ *
+ * A thin projection of {@link selectCandidates}: takes its `resolved` variant and
+ * `reason`. Kept as its own export for hosts that only need the one `src` — but it
+ * derives from the SAME law as `srcset` / `<source>` / preload / image-set, so a
+ * Save-Data client is never SILENTLY served a light `src` while a heavy candidate
+ * leaks through another artifact.
+ */
+export function resolveResponsiveMedia(
+  intent: ResponsiveMediaIntent,
+  caps: ResponsiveMediaCapabilities,
+): ResolvedResponsiveMedia {
+  const selection = selectCandidates(intent, caps);
+  return Object.freeze({ src: selection.resolved.src, reason: selection.reason });
 }
 
 /**
@@ -217,9 +259,15 @@ export function projectResponsiveMediaPicture(
   intent: ResponsiveMediaIntent,
   caps: ResponsiveMediaCapabilities,
 ): ResponsiveMediaPictureProjection {
-  const resolved = resolveResponsiveMedia(intent, caps);
+  // ONE source: every artifact below enumerates the SAME effective candidate set.
+  const selection = selectCandidates(intent, caps);
+  const resolved = Object.freeze({ src: selection.resolved.src, reason: selection.reason });
   const sizes = intent.sizes ?? '100vw';
-  const srcset = buildResponsiveSrcset(intent.variants);
+  const srcset = buildResponsiveSrcset(selection.candidates);
+
+  // The reduced-data <source> advertises ONLY the authored light asset — a client
+  // that reports `prefers-reduced-data` picks it even when the server never saw a
+  // Save-Data header — so this branch NEVER lists a heavy candidate either.
   const saveDataSrcset = intent.saveDataVariant !== undefined ? buildResponsiveSrcset([intent.saveDataVariant]) : '';
 
   const sources: string[] = [];
@@ -238,11 +286,12 @@ export function projectResponsiveMediaPicture(
       ? `<picture data-czap-responsive="${escapeAttr(intent.id)}">${sources.join('')}${img}</picture>`
       : img;
 
-  const saveDataActive = caps.saveData && (resolved.reason === 'save-data' || resolved.reason === 'save-data-floor');
-  const preloadSrcset = saveDataActive && saveDataSrcset.length > 0 ? saveDataSrcset : srcset;
+  // Preload the EFFECTIVE set only (F-RM-1d, the worst leak — it drove the LCP):
+  // under Save-Data `srcset` is already the light set, so the LCP preload can
+  // never pull the heavy DPR-matched asset.
   const preload =
-    preloadSrcset.length > 0
-      ? `<link rel="preload" as="image" href="${escapeAttr(resolved.src)}" imagesrcset="${escapeAttr(preloadSrcset)}" imagesizes="${escapeAttr(sizes)}" />`
+    srcset.length > 0
+      ? `<link rel="preload" as="image" href="${escapeAttr(resolved.src)}" imagesrcset="${escapeAttr(srcset)}" imagesizes="${escapeAttr(sizes)}" />`
       : `<link rel="preload" as="image" href="${escapeAttr(resolved.src)}" />`;
 
   return Object.freeze({

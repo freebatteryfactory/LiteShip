@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import { satelliteAttrs } from '@czap/astro';
+import { ResponsiveMedia } from '@czap/core';
 import { viewport } from '../boundaries';
 import '../styles.css';
 
@@ -10,8 +11,26 @@ const czap = Astro.locals.czap;
 const boundaryResolution = czap?.edge?.boundaries?.viewport;
 const boundaryCssHref = boundaryResolution?.assetUrl ?? czap?.edge?.assetUrl;
 const boundaryCss = boundaryResolution?.compiledOutputs?.css ?? czap?.edge?.compiledOutputs?.css;
+
+// Responsive media through the Workers edge host path (#140): `cloudflareMiddleware`
+// wraps `czapMiddleware`, so `czap.responsiveMedia` derives Save-Data / DPR caps from
+// this request's Client Hints and projects through the effective-candidate law — a
+// Save-Data client on the edge is never advertised the heavy hero.
+const hero = ResponsiveMedia.intent({
+  id: 'hero-img',
+  alt: 'Adaptive hero photograph',
+  variants: [
+    { src: '/img/hero-800.jpg', width: 800 },
+    { src: '/img/hero-1600.jpg', width: 1600 },
+    { src: '/img/hero-2400.jpg', width: 2400 },
+  ],
+  saveDataVariant: { src: '/img/hero-lite.jpg', width: 400 },
+  sizes: '100vw',
+});
+const media = czap?.responsiveMedia(hero);
 ---
 <Base title="LiteShip Cloudflare Workers" boundaryCssHref={boundaryCssHref} boundaryCss={boundaryCss}>
+  <Fragment slot="head" set:html={media?.preload ?? ''} />
   <main {...satelliteAttrs({ boundary: viewport })}>
     <h1>LiteShip on Cloudflare Workers</h1>
     <p>Edge tier: {czap?.tiers.tier ?? 'detecting…'}</p>
@@ -19,5 +38,7 @@ const boundaryCss = boundaryResolution?.compiledOutputs?.css ?? czap?.edge?.comp
     <p>KV cache: {czap?.edge?.cacheStatus ?? 'n/a'}</p>
     <p>Boundary CSS: {boundaryCssHref ? 'static asset' : 'inline fallback'}</p>
     <p>Precompiled CSS bytes: {czap?.edge?.compiledOutputs?.css?.length ?? 0}</p>
+    <p>Responsive src (Save-Data {czap?.capabilities?.connection?.saveData ? 'ON' : 'off'}): <code>{media?.resolved.src}</code></p>
+    <section set:html={media?.picture ?? ''}></section>
   </main>
 </Base>

@@ -49,6 +49,8 @@ The return leg. SSE pushes server→client; the channel is the other direction �
 
 **Cell value→wire boundary** ([ADR-0027](./docs/adr/0027-cell-value-dom-boundary.md)): reactive primitives publish through the wire/compositor seam; DOM writes stay in host adapters. Continuous transients never patch the graph per frame.
 
+**Responsive-media effective-candidate law** ([#140](https://github.com/freebatteryfactory/LiteShip/issues/140)): `selectCandidates(intent, caps)` in `@czap/core` is the ONE function every responsive-media output derives from — `src`, `srcset`, each `<source>`, the preload `imagesrcset`, the CSS `image-set()`, and the content-addressed cache-key digest all enumerate the same set. Under `Save-Data` the whole set is capped to the light/floor variant, so a high-DPR Save-Data client is never advertised a heavy candidate through ANY artifact (the projection honors `resolveResponsiveMedia`'s own promise). `@czap/astro`'s `czapMiddleware` wires it into a production host path — `Astro.locals.czap.responsiveMedia(intent)` derives caps from the request's Client Hints and merges the responsive `Vary` axis (`Sec-CH-DPR, Save-Data`) into the response; `@czap/cloudflare`'s `cloudflareMiddleware` inherits both. Runnable routes: `examples/showcase` `/responsive-media`, `examples/cloudflare-astro` `/`.
+
 ## One source, N targets
 
 Two invariants share a shape: ONE authored source is provably read by every target, so the surfaces cannot silently diverge.

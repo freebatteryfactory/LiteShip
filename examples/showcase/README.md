@@ -55,6 +55,14 @@ pnpm dev
   collapse), and `client:motion` scrubs each window through the same floor. Exactly one
   branch executes — the unchosen arm never writes — and the selection is an auditable
   receipt. Reduced-motion settles to the terminal pose.
+- **`/responsive-media`** — the responsive-media effective-candidate cookbook (#140):
+  ONE authored `ResponsiveMedia.intent` projected by `Astro.locals.czap.responsiveMedia`,
+  which derives Save-Data / DPR caps from the request's Client Hints. Every artifact —
+  `src`, `srcset`, each `<source>`, the `<head>` preload `imagesrcset` — derives from ONE
+  `selectCandidates` law, so toggling DevTools' **Save-Data: on** collapses them all to the
+  light asset (`/img/hero-lite.jpg`); a high-DPR Save-Data client can never re-fetch the
+  heavy hero. The page prints the emitted srcset + preload so the cap is observable, and the
+  response carries `Vary: …, Sec-CH-DPR, Save-Data`. (SSR route: `export const prerender = false`.)
 - **`/chat`** — `client:llm` streaming over `/api/chat` with tier-gated
   rendering, plus the generated-UI path (`data-czap-genui`): `_genui` chunks
   render through a host-owned catalog — the model proposes, the catalog

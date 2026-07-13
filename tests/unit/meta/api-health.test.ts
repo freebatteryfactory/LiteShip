@@ -350,6 +350,10 @@ const STANDALONE_FUNCTIONS = [
   'replayDroppedSignals',
   'filterDiscreteSnapshotSignals',
   'validateSnapshotSignalsField',
+  // The ONE effective-candidate law (#140): every responsive-media output (src, srcset,
+  // <source>, preload imagesrcset, CSS image-set, cache-key digest) derives from it, so
+  // Save-Data never advertises a heavy candidate through any artifact.
+  'selectCandidates',
   'resolveResponsiveMedia',
   'buildResponsiveSrcset',
   'buildResponsiveImageSet',

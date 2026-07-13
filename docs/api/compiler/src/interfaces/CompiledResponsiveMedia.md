@@ -6,7 +6,7 @@
 
 # Interface: CompiledResponsiveMedia
 
-Defined in: [compiler/src/responsive-media-compile.ts:17](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/responsive-media-compile.ts#L17)
+Defined in: [compiler/src/responsive-media-compile.ts:18](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/responsive-media-compile.ts#L18)
 
 Compiled responsive-media artifacts.
 
@@ -16,7 +16,7 @@ Compiled responsive-media artifacts.
 
 > `readonly` **imageSet**: `string`
 
-Defined in: [compiler/src/responsive-media-compile.ts:19](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/responsive-media-compile.ts#L19)
+Defined in: [compiler/src/responsive-media-compile.ts:20](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/responsive-media-compile.ts#L20)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [compiler/src/responsive-media-compile.ts:19](https://github.com/fre
 
 > `readonly` **picture**: `ResponsiveMediaPictureProjection`
 
-Defined in: [compiler/src/responsive-media-compile.ts:18](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/responsive-media-compile.ts#L18)
+Defined in: [compiler/src/responsive-media-compile.ts:19](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/responsive-media-compile.ts#L19)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [compiler/src/responsive-media-compile.ts:18](https://github.com/fre
 
 > `readonly` **resultDigest**: `AddressedDigest`
 
-Defined in: [compiler/src/responsive-media-compile.ts:20](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/responsive-media-compile.ts#L20)
+Defined in: [compiler/src/responsive-media-compile.ts:21](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/responsive-media-compile.ts#L21)

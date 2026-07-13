@@ -268,6 +268,12 @@ Same browser CSP as [Required CSP directives](#required-csp-directives) above. I
 
 Treat KV as a host-controlled cache — not a secrets store. A KV entry is keyed by the boundary's content address (`Boundary.make`'s FNV-1a address per ADR-0003), the device tier, the boundary name, and a fingerprint of the resolved theme — so an entry only serves a request whose inputs match. `ttl` and `prefix` are configurable on `cloudflareMiddleware`; `prefix` doubles as a per-deploy content version, which a bundled `compile()` whose output depends on build-time content the boundary id doesn't cover must bump. Deploys that change boundary content mint new content addresses, stranding the old keys (never re-read) — Workers KV never evicts and bills storage, so set `ttl` (e.g. `2592000` = 30 days) to reclaim them. Requests whose tier is covered by the manifest are served from the bundle without touching KV at all (`cacheStatus: 'precompiled'`); KV only backs the `compile` fallback path.
 
+## Responsive media under Save-Data (Astro + Cloudflare)
+
+Author an image once as a `ResponsiveMedia.intent` and project it through the host: `Astro.locals.czap.responsiveMedia(intent)` derives Save-Data / DPR caps from THIS request's Client Hints and returns a `<picture>` / `<img>` / `<link rel="preload">` projection. Every artifact — `src`, `srcset`, each `<source>`, the preload `imagesrcset`, the CSS `image-set()`, and the content-addressed cache-key digest — derives from ONE law (`selectCandidates` in `@czap/core`), so under `Save-Data` the whole set is capped to the light asset and a high-DPR Save-Data client can never re-fetch the heavy hero (the preload leak that drove the LCP is closed). `cloudflareMiddleware` wraps `czapMiddleware`, so the Workers edge gets the identical projector.
+
+The middleware merges the responsive `Vary` axis (`Sec-CH-DPR, Save-Data`) into the response — unioned with any existing `Vary` (`Cookie`, `Accept-Encoding`), never clobbered — so a CDN keys the light and normal representations apart and cannot serve one for the other. For a route handler that has raw request headers, `projectResponsiveMediaForRequest(intent, request.headers)` and `applyResponsiveMediaVary(response.headers)` are the standalone helpers. Runnable routes: `examples/showcase` `/responsive-media` (Astro) and `examples/cloudflare-astro` `/` (Cloudflare Workers).
+
 ## Where to look next
 
 - [SECURITY.md](./SECURITY.md) — full security posture, allowlist details, sanitizer reference

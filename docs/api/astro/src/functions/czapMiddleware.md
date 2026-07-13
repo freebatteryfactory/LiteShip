@@ -8,7 +8,7 @@
 
 > **czapMiddleware**(`config?`): (`context`, `next`) => `Promise`\<`Response`\>
 
-Defined in: [astro/src/middleware.ts:119](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L119)
+Defined in: [astro/src/middleware.ts:131](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L131)
 
 Create the czap edge middleware.
 

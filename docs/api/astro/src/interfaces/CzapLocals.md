@@ -6,7 +6,7 @@
 
 # Interface: CzapLocals
 
-Defined in: [astro/src/middleware.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L33)
+Defined in: [astro/src/middleware.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L35)
 
 Shape of `context.locals.czap` injected by [czapMiddleware](../functions/czapMiddleware.md).
 Astro components (and downstream middleware) read this to drive
@@ -18,7 +18,7 @@ adaptive rendering decisions.
 
 > `readonly` **capabilities**: [`ExtendedDeviceCapabilities`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md)
 
-Defined in: [astro/src/middleware.ts:46](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L46)
+Defined in: [astro/src/middleware.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L48)
 
 Parsed device capabilities.
 
@@ -28,7 +28,7 @@ Parsed device capabilities.
 
 > `readonly` `optional` **edge?**: `object`
 
-Defined in: [astro/src/middleware.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L48)
+Defined in: [astro/src/middleware.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L60)
 
 Edge-host resolution result, present when an edge adapter is configured.
 
@@ -70,11 +70,37 @@ Spreadable `data-czap-<axis>` map for `<html {...htmlAttributesMap}>`.
 
 ***
 
+### responsiveMedia
+
+> `readonly` **responsiveMedia**: (`intent`) => `ResponsiveMediaPictureProjection`
+
+Defined in: [astro/src/middleware.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L58)
+
+Project a responsive-media intent using THIS request's Save-Data / DPR caps
+(derived from Client Hints). Every artifact of the returned projection derives
+from the ONE effective-candidate law (`selectCandidates`), so a Save-Data client
+is never advertised a heavy candidate through `src` / `srcset` / `<source>` /
+the preload `imagesrcset`. The middleware also merges the responsive-media `Vary`
+axis (`Sec-CH-DPR, Save-Data`) into the response so a CDN keys the light and
+normal representations apart (#140).
+
+#### Parameters
+
+##### intent
+
+`ResponsiveMediaIntent`
+
+#### Returns
+
+`ResponsiveMediaPictureProjection`
+
+***
+
 ### tiers
 
 > `readonly` **tiers**: `Readonly`\<\{ `design`: `DesignTier`; `motion`: [`MotionTier`](../../../quantizer/src/type-aliases/MotionTier.md); `tier`: [`CapTier`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md); \}\>
 
-Defined in: [astro/src/middleware.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L40)
+Defined in: [astro/src/middleware.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L42)
 
 Resolved capability tiers keyed by axis. Each field projects to the
 matching `data-czap-<axis>` attribute on `<html>` — the field name and the

@@ -19,6 +19,7 @@ const { title = 'LiteShip on Cloudflare', boundaryCssHref, boundaryCss } = Astro
       ) : null
     }
     <title>{title}</title>
+    <slot name="head" />
   </head>
   <body>
     <slot />
