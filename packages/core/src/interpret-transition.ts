@@ -37,6 +37,18 @@ export interface MotionPropertyTween {
 export interface CssKeyframeStep {
   readonly offset: number;
   readonly properties: Readonly<Record<string, string>>;
+  /**
+   * The easing curve governing the SEGMENT that starts at this stop (until the next
+   * stop), emitted as a per-keyframe `animation-timing-function`. Present ONLY on a
+   * MIXED-easing composed program, where one animation-level timing function cannot
+   * serve every segment — a native `animation-timeline` browser would otherwise sample
+   * every segment with one curve while the JS/stage/worker floors use the per-window
+   * curves. Absent on uniform-easing plans (the animation-level curve covers them) and
+   * on single-step transitions; also absent — with a loud `interpretProgram` diagnostic —
+   * on a segment where overlapping windows disagree on easing (a `par` of differently-eased
+   * children), which no single per-keyframe curve can express.
+   */
+  readonly easing?: RuntimeEasing;
 }
 
 /** CSS projection plan — keyframes / transition keyed on discrete state. */
