@@ -105,6 +105,24 @@ describe('scanModuleScopeDateReads — FOLLOWS module-scope helper calls execute
   test('but a helper invoked ONLY inside a deferred (per-request) body stays CLEAN', () => {
     expect(flagged('function boot() { return Date.now(); }\nexport function handler() { return boot(); }')).toBe(false);
   });
+
+  test('a helper DECLARED INSIDE a load-time IIFE and invoked there is followed (Codex P2)', () => {
+    expect(flagged('(() => { function boot() { return Date.now(); } return boot(); })();')).toBe(true);
+  });
+
+  test('a nested const-arrow helper invoked inside a load-time IIFE is followed', () => {
+    expect(flagged('const t = (() => { const boot = () => Date.now(); return boot(); })();')).toBe(true);
+  });
+
+  test('a helper declared inside a FOLLOWED module-scope helper is followed transitively', () => {
+    expect(
+      flagged('function outer() { function inner() { return Date.now(); } return inner(); }\nconst t = outer();'),
+    ).toBe(true);
+  });
+
+  test('a nested helper DECLARED but never called inside a load-time IIFE stays CLEAN (deferred)', () => {
+    expect(flagged('(() => { function boot() { return Date.now(); } return 1; })();')).toBe(false);
+  });
 });
 
 describe('scanModuleScopeDateReads — deferred / deterministic reads are CLEAN (no false positive)', () => {
