@@ -4,9 +4,9 @@ All notable changes to czap. The format follows [Keep a Changelog](https://keepa
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Pre-1.0
 break policy is intentionally aggressive — minor version bumps may carry breaking changes.
 
-## [Unreleased]
+## [0.10.0] - 2026-07-13
 
-The **0.9 completion campaign** (2026-07-13) — a semantic-truth pass over the 25-package system,
+The **completion cut** — a semantic-truth pass over the 25-package system,
 moving several seams from *structural* completion (a field is read, a fallback exported) to
 *semantic* completion (the correct state / bytes / DOM / cache variant / timeline behaviour
 survives end to end). Every change is red-first, root-caused, propagated to examples & docs, and

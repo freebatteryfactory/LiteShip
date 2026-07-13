@@ -1,9 +1,9 @@
 # LiteShip — status and remaining work
 
-Last updated: 2026-07-13 (`v0.9.0` tree; the completion campaign landed the 0.9 semantic-truth pass — see below).
+Last updated: 2026-07-13 (`v0.10.0` tree; the completion cut landed the semantic-truth pass — see below).
 
 Coverage stack standardized on Vitest 4.1.2 + Playwright browser mode.
-Current node lane: **7786 passing tests** (23 skipped) across **649 files** (0.9.0 tree;
+Current node lane: **7786 passing tests** (23 skipped) across **649 files** (0.10.0 tree;
 captured from a fresh `pnpm test` on 2026-07-13).
 Current browser lane: shared-runtime suites run against a Chromium + Firefox + WebKit matrix, with capability-specific browser tests remaining Chromium-first where the platform surface is intentionally non-uniform.
 

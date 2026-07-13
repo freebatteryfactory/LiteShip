@@ -1,6 +1,6 @@
 # LiteShip roadmap
 
-> Verified against the 0.9 completion campaign (2026-07-13, `v0.9.0` tree). See `STATUS.md` for live counts, gate totals, coverage numbers, and current telemetry watch items.
+> Verified against the 0.9 completion campaign (2026-07-13, `v0.10.0` tree). See `STATUS.md` for live counts, gate totals, coverage numbers, and current telemetry watch items.
 
 ## Current Phase
 
