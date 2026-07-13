@@ -3,8 +3,9 @@ import Base from '../layouts/Base.astro';
 import { CHAIN_PROGRAM, CHAIN_SSR_PAINT, CHAIN_SELECTED, CHAIN_TOTAL_MS, CHAIN_WINDOWS } from '../server/motion-chain';
 
 // Prerender-friendly: the chain program is composed + lowered once at build time.
-// The client:motion floor drives its per-window sub-samplers when the browser lacks
-// `animation-timeline`.
+// This surface emits no native MotionCompiler CSS, so the `client:motion` floor drives
+// its per-window sub-samplers on EVERY browser: the floor is the guarantee and stays
+// idle only where native `animation-timeline` CSS actually owns the element.
 const program = JSON.stringify(CHAIN_PROGRAM);
 const initialState = CHAIN_SSR_PAINT.state;
 const seams = CHAIN_WINDOWS.map(([s, e]) => `${Math.round(s * 100)}–${Math.round(e * 100)}%`).join(', ');

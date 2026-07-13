@@ -128,14 +128,32 @@ export function parseMotionProgram(raw: string): SerializedMotionProgram | null 
 }
 
 /**
- * Feature-detect native scroll/view timelines. When SUPPORTED the CSS
- * `animation-timeline` path owns the continuous scrub and the JS floor stays idle;
- * when UNSUPPORTED (or `CSS.supports` is unavailable) the floor runs. Defaulting
- * to "run the floor" is the conservative choice — the floor is the permanent guarantee.
+ * Feature-detect native scroll/view timeline CAPABILITY. A `true` here means the
+ * browser understands `animation-timeline` — a NECESSARY but NOT sufficient condition
+ * for the floor to stay idle: the element must ALSO carry the emitted native CSS (see
+ * {@link nativeTimelineOwnsElement}). Defaulting to `false` (run the floor) when
+ * `CSS.supports` is unavailable is conservative — the floor is the permanent guarantee.
  */
 export function nativeTimelineSupported(): boolean {
   if (typeof CSS === 'undefined' || typeof CSS.supports !== 'function') return false;
   return CSS.supports('animation-timeline: scroll()') || CSS.supports('animation-timeline: view()');
+}
+
+/**
+ * Whether native timeline CSS ACTUALLY drives THIS element — the only condition under
+ * which the JS floor may stay idle. A global {@link nativeTimelineSupported} check is
+ * NOT enough: a program surface (e.g. a `Reveal.chain`) that inlines
+ * `data-czap-motion-program` but emits no `MotionCompiler` CSS would otherwise be
+ * stranded at first paint on a capable browser — floor skipped, no CSS to scrub it.
+ * `MotionCompiler` binds its `czap-motion-*` keyframes (see its `keyframeName`) to a
+ * scroll/view `animation-timeline` INSIDE a `supports(animation-timeline)` block,
+ * so a `czap-motion-*` `animation-name` on the computed style means native CSS is BOTH
+ * supported here AND emitted for this element. Absent it, the floor runs (Law 1).
+ */
+function nativeTimelineOwnsElement(element: HTMLElement): boolean {
+  if (!nativeTimelineSupported() || typeof getComputedStyle !== 'function') return false;
+  const animationName = getComputedStyle(element).animationName;
+  return animationName !== '' && animationName.split(',').some((name) => name.trim().startsWith('czap-motion-'));
 }
 
 /** Whether the user asked for reduced motion (SSR-safe; false off-DOM / without matchMedia). */
@@ -279,8 +297,10 @@ export function initMotionDirective(load: () => Promise<unknown>, element: HTMLE
       return;
     }
 
-    // Native scroll/view timeline present ⇒ CSS owns the scrub; the floor stays idle.
-    if (nativeTimelineSupported()) return;
+    // Native scroll/view timeline CSS actually drives THIS element ⇒ CSS owns the
+    // scrub; the floor stays idle. A capability check alone is not enough — a
+    // program surface with no emitted MotionCompiler CSS must still get the floor.
+    if (nativeTimelineOwnsElement(element)) return;
 
     // JS FLOOR — the permanent continuous fallback.
     const threshold = program.threshold ?? DEFAULT_THRESHOLD;
