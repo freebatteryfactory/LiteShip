@@ -466,6 +466,26 @@ export function interpretProgram(
     return emptyProgramPlan(graph.id, diagnostics);
   }
 
+  // A composed program drives ONE host: `LoweredMotionPlan` carries a single
+  // `css.selector` / `target` and the runtime windows have no per-window boundary. A
+  // MULTI-TARGET program (e.g. `staggerProgram` over distinct children `a`/`b`) cannot
+  // be collapsed onto the first boundary — every later child window would silently write
+  // to the wrong element. Reject it loudly (Law 1); multi-target motion is lowered
+  // PER-TARGET (compile each child, or drive each with its own client:motion).
+  const targets = new Set(result.windows.map((w) => w.step.target));
+  if (targets.size > 1) {
+    diagnostics.push({
+      source: 'interpretProgram',
+      code: 'multi-target-program',
+      message:
+        `a composed TransitionProgram spans ${targets.size} boundaries (${[...targets].join(', ')}), but one ` +
+        'LoweredMotionPlan drives ONE host element. Multi-target motion (e.g. a stagger over distinct children) ' +
+        'must be lowered PER-TARGET — compile each child separately, or drive each with its own client:motion. ' +
+        'Refusing to collapse every window onto the first boundary.',
+    });
+    return emptyProgramPlan(graph.id, diagnostics);
+  }
+
   const first = result.windows[0]!;
   const last = result.windows[result.windows.length - 1]!;
 

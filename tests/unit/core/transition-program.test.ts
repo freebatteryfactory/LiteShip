@@ -552,4 +552,43 @@ describe('TransitionProgram — authoring sugar (Reveal.chain / staggerProgram)'
     expect(timeline.entries[1]!.windowStart).toBeCloseTo(100 / 400, 10);
     expect(timeline.entries[1]!.windowEnd).toBe(1);
   });
+
+  test('interpretProgram REJECTS a multi-target program instead of collapsing to one boundary', () => {
+    // A stagger over distinct children (`a`, `b`) is a MULTI-TARGET program. One
+    // LoweredMotionPlan drives one host, so interpreting it would silently write every
+    // window to the first boundary — reject it loudly instead (Codex P2).
+    const intent = Stagger.intent({
+      trigger: { type: 'view', range: ['entry 0%', 'cover 50%'] },
+      children: [
+        { target: 'a', from: { opacity: 0 }, to: { opacity: 1 } },
+        { target: 'b', from: { opacity: 0 }, to: { opacity: 1 } },
+      ],
+      stepMs: 100,
+      transition: { durationMs: 300, easing: 'linear' },
+      policy: { reducedMotion: 'settle', motionTier: 'transitions' },
+    });
+    const lowered = lowerStaggerIntent(intent);
+    const plan = interpretProgram(lowered.graph, staggerProgram(lowered));
+
+    // No runtime/css plan (nothing collapsed onto boundary `a`); a loud diagnostic instead.
+    expect(plan.runtime).toBeUndefined();
+    expect(plan.css).toBeUndefined();
+    expect(plan.diagnostics.some((d) => d.code === 'multi-target-program')).toBe(true);
+  });
+
+  test('interpretProgram accepts a SINGLE-target program (the reveal chain) unchanged', () => {
+    // Guard the reject above does not fire for the common single-boundary chain.
+    const chain = lowerRevealChain({
+      target: 'hero',
+      trigger: { type: 'scroll', axis: 'progress' },
+      steps: [
+        { from: { opacity: 0 }, to: { opacity: 1 }, transition: { durationMs: 200, easing: 'linear' } },
+        { from: { translateY: '24px' }, to: { translateY: '0px' }, transition: { durationMs: 200, easing: 'linear' } },
+      ],
+      policy: { reducedMotion: 'settle', motionTier: 'transitions' },
+    });
+    const plan = interpretProgram(chain.graph, chain.program);
+    expect(plan.runtime).toBeDefined();
+    expect(plan.diagnostics.some((d) => d.code === 'multi-target-program')).toBe(false);
+  });
 });
