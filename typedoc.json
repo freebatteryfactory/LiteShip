@@ -36,6 +36,7 @@
   "excludeExternals": true,
   "treatWarningsAsErrors": true,
   "gitRevision": "main",
+  "sourceLinkTemplate": "https://github.com/freebatteryfactory/LiteShip/blob/main/{path}#L{line}",
   "hideBreadcrumbs": false,
   "hidePageHeader": false,
   "hideGenerator": true,
