@@ -240,23 +240,31 @@ describe('client:motion — JS floor is the production driver (retires LATENT)',
     expect(uniformCount).toBe(4);
   });
 
-  test('native timeline CSS DRIVES this element ⇒ JS floor idle (CSS owns the scrub), initial state still set', () => {
+  test('native timeline CSS owns the CONTINUOUS scrub, but the DISCRETE crossing still fires', () => {
     vi.stubGlobal('CSS', { supports: () => true, escape: (s: string) => s });
     // Simulate the emitted MotionCompiler CSS: this element carries a czap-motion
-    // animation bound to a scroll/view timeline, so native CSS actually owns it.
+    // animation bound to a scroll/view timeline, so native CSS actually owns the scrub.
     vi.stubGlobal('getComputedStyle', () => ({ animationName: 'czap-motion-hero-before-after' }));
     const el = makeEl(buildProgram());
     let uniformCount = 0;
+    const graphStates: Array<{ state: string }> = [];
     el.addEventListener('czap:uniform-update', () => uniformCount++);
+    el.addEventListener('czap:graph-state', (e) => graphStates.push((e as CustomEvent).detail));
 
     motionDirective(noop, {}, el);
-    // Discrete first-paint state is applied, but NO continuous leaf writes run.
+    // First paint: discrete initial state set; NO continuous leaf writes (CSS owns those).
     expect(el.getAttribute('data-czap-state')).toBe('before');
     expect(uniformCount).toBe(0);
+
+    // Scroll past the threshold: CSS keyframes cannot flip the semantic state, so the JS
+    // threshold observer MUST — data-czap-state advances + czap:graph-state fires — while
+    // the continuous leaf writes stay idle (opacity is never written by the floor).
     stepScroll(0.5);
     stepScroll(1);
+    expect(el.getAttribute('data-czap-state')).toBe('after');
+    expect(graphStates.some((s) => s.state === 'after')).toBe(true);
     expect(uniformCount).toBe(0);
-    expect(el.style.opacity).toBe(''); // never written by the floor
+    expect(el.style.opacity).toBe('');
   });
 
   test('capable browser but NO native CSS emitted for this element ⇒ floor RUNS (program-only surface)', () => {

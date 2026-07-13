@@ -298,19 +298,26 @@ export function initMotionDirective(load: () => Promise<unknown>, element: HTMLE
     }
 
     // Native scroll/view timeline CSS actually drives THIS element ⇒ CSS owns the
-    // scrub; the floor stays idle. A capability check alone is not enough — a
-    // program surface with no emitted MotionCompiler CSS must still get the floor.
-    if (nativeTimelineOwnsElement(element)) return;
+    // CONTINUOUS scrub, so the per-frame leaf writes stay idle. But CSS keyframes cannot
+    // flip the discrete `data-czap-state` or dispatch `czap:graph-state`, so the DISCRETE
+    // threshold crossing runs REGARDLESS — a lightweight observer — or the semantic state
+    // would stall at the initial pose while the visual scrubs past (F-MOT). A capability
+    // check alone is not enough here: a program surface with no emitted MotionCompiler CSS
+    // gets the full floor (nativeTimelineOwnsElement is false → continuous runs too).
+    const nativeOwnsContinuous = nativeTimelineOwnsElement(element);
 
-    // JS FLOOR — the permanent continuous fallback.
     const threshold = program.threshold ?? DEFAULT_THRESHOLD;
     let lastDiscrete: string = initialState;
     driver = startDriver(program, (progress) => {
       const p = clamp01(progress);
-      // CONTINUOUS: eased leaf write every frame + continuous cell write. Never a patch.
-      writeContinuousMap(element, runtime, p);
-      s.writeContinuous(CONTINUOUS_CELL, p);
-      // DISCRETE: a crossing of the raw threshold flips state (sparse).
+      if (!nativeOwnsContinuous) {
+        // CONTINUOUS: eased leaf write every frame + continuous cell write. Never a patch.
+        // Skipped when native `animation-timeline` CSS owns the scrub (it writes these).
+        writeContinuousMap(element, runtime, p);
+        s.writeContinuous(CONTINUOUS_CELL, p);
+      }
+      // DISCRETE: a crossing of the raw threshold flips state (sparse). Always runs — the
+      // semantic state machine is JS-owned even when native CSS animates the visual.
       const next = p >= threshold ? runtime.toState : runtime.fromState;
       if (next !== lastDiscrete) {
         lastDiscrete = next;
