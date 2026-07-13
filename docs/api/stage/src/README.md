@@ -22,6 +22,8 @@ parent merge receipt.
 - [DualExportResult](interfaces/DualExportResult.md)
 - [EncodedVideo](interfaces/EncodedVideo.md)
 - [EncodedVideoExport](interfaces/EncodedVideoExport.md)
+- [MotionFrameSample](interfaces/MotionFrameSample.md)
+- [MotionTrackExport](interfaces/MotionTrackExport.md)
 - [VideoEncodeConfig](interfaces/VideoEncodeConfig.md)
 
 ## Type Aliases
@@ -33,5 +35,7 @@ parent merge receipt.
 - [dualExport](functions/dualExport.md)
 - [dualExportNode](functions/dualExportNode.md)
 - [exportAstroPage](functions/exportAstroPage.md)
+- [exportMotionTrack](functions/exportMotionTrack.md)
 - [exportVideo](functions/exportVideo.md)
 - [exportVideoEncoded](functions/exportVideoEncoded.md)
+- [sampleMotionFrames](functions/sampleMotionFrames.md)

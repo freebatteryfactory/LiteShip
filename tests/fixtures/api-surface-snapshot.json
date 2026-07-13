@@ -1810,6 +1810,16 @@
           "signature": "(1)"
         },
         {
+          "name": "sampleProgram",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "sampleProgramUniforms",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
           "name": "sampleProgramWindows",
           "kind": "function",
           "signature": "(2)"
@@ -3164,6 +3174,11 @@
           "signature": "(1)"
         },
         {
+          "name": "motionCssVars",
+          "kind": "function",
+          "signature": "(3)"
+        },
+        {
           "name": "precomputeFrames",
           "kind": "function",
           "signature": "(1)"
@@ -3174,6 +3189,11 @@
         },
         {
           "name": "rendererFromRemotionConfig",
+          "kind": "function",
+          "signature": "(3)"
+        },
+        {
+          "name": "sampleMotionFrame",
           "kind": "function",
           "signature": "(3)"
         },
@@ -3221,6 +3241,11 @@
           "name": "Layout",
           "kind": "namespace",
           "signature": "grid:function,stack:function"
+        },
+        {
+          "name": "MotionSampleSystem",
+          "kind": "function",
+          "signature": "(3)"
         },
         {
           "name": "PassThroughMixer",
@@ -3317,6 +3342,11 @@
           "signature": "(2)"
         },
         {
+          "name": "motionComponentName",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "pulse",
           "kind": "namespace",
           "signature": "every:function"
@@ -3338,6 +3368,11 @@
         },
         {
           "name": "resolveFrameMark",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "sampleSceneMotion",
           "kind": "function",
           "signature": "(2)"
         },
@@ -3376,12 +3411,22 @@
           "signature": "(1)"
         },
         {
+          "name": "exportMotionTrack",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
           "name": "exportVideo",
           "kind": "function",
           "signature": "(2)"
         },
         {
           "name": "exportVideoEncoded",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "sampleMotionFrames",
           "kind": "function",
           "signature": "(2)"
         }
@@ -3828,6 +3873,16 @@
           "name": "WorkerHost",
           "kind": "namespace",
           "signature": "create:function"
+        },
+        {
+          "name": "motionSampleMessage",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "sampleProgramUniforms",
+          "kind": "function",
+          "signature": "(2)"
         }
       ]
     }

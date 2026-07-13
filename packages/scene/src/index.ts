@@ -42,6 +42,7 @@ export type { SceneRuntimeHandle, SceneRuntimeOptions } from './runtime.js';
 export { VideoSystem } from './systems/video.js';
 export { AudioSystem } from './systems/audio.js';
 export { TransitionSystem } from './systems/transition.js';
+export { MotionSampleSystem, sampleSceneMotion, motionComponentName } from './systems/motion.js';
 export { EffectSystem } from './systems/effect.js';
 export { SyncSystem } from './systems/sync.js';
 export { PassThroughMixer } from './systems/pass-through-mixer.js';

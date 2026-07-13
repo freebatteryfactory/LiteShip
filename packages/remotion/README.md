@@ -40,6 +40,10 @@ A host adapter — it calls Remotion's `useCurrentFrame` so nothing else has to.
 
 Every failure path returns a structurally-empty state instead of throwing: an empty `frames` array, or `useCzapState()` without a mounted `Provider`, renders with zero CSS variables and no error. If your composition shows unstyled output, check that `precomputeFrames` actually ran and its result reached the hook (`frames.length > 0`).
 
+## Authored-motion adapter
+
+`sampleMotionFrame(plan, frame, durationInFrames)` samples the ONE shared kernel (`@czap/core`'s `sampleProgram`, #130) at the composition's current frame (`t = frame / max(1, durationInFrames-1)`); `motionCssVars` folds the typed leaves into a Remotion `style`, formatted through the same `formatTypedValue` the browser floor uses. Pure + React-free, so a `calculateMetadata` or test can call it directly — the composition wraps it with `useCurrentFrame()`. A differential oracle proves the remotion leg renders identically to browser CSS, the browser runtime, scene, stage, and worker ([ADR-0040](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/adr/0040-cross-target-motion-parity.md)).
+
 ## Docs
 
 - [Getting started](https://github.com/freebatteryfactory/LiteShip/blob/main/GETTING-STARTED.md)

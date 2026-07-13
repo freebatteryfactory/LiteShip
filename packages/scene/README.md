@@ -44,6 +44,12 @@ A layered authoring package: it sits on the ECS (entity-component-system) world 
 
 Beat-synced effect tracks (`syncTo: syncTo.beat(...)`) tick but never pulse when `scene.beats` is empty — the sync system queries the world for beat entities and finds none, with no warning. The fix: detect beats with `@czap/assets`, convert them with `resolveBeatProjectionToSceneBeats`, and set the result as `scene.beats` before `compileScene`.
 
+## Authored-motion adapter
+
+`MotionSampleSystem(plan, frameIndex, totalFrames)` is the scene's adapter for an **authored motion program** (`@czap/core`'s `sampleProgram`, #130): per frame it samples the ONE shared kernel and writes each typed leaf as a `motion:<cssVar>` component (via the same `world.setComponent` seam `TransitionSystem` uses). `sampleSceneMotion(plan, t)` is the pure projection.
+
+This is **additive** to `TransitionSystem`, not a merge. `TransitionSystem`'s `_blend` is a video-**crossfade** mix factor between two `Between` entities — a different concept from an authored motion program. Both coexist on one world; `TransitionSystem` is untouched. A differential oracle proves the scene leg renders identically to browser CSS, the browser runtime floor, stage, remotion, and worker ([ADR-0040](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/adr/0040-cross-target-motion-parity.md)).
+
 ## Docs
 
 - [Getting started](https://github.com/freebatteryfactory/LiteShip/blob/main/GETTING-STARTED.md)

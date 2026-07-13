@@ -43,6 +43,8 @@ separate worker entry files or bundler configuration.
 ## Interfaces
 
 - [CompositorWorkerShape](interfaces/CompositorWorkerShape.md)
+- [MotionSampleMessage](interfaces/MotionSampleMessage.md)
+- [ProgramUniforms](interfaces/ProgramUniforms.md)
 - [QuantizerBoundarySource](interfaces/QuantizerBoundarySource.md)
 - [RenderWorkerShape](interfaces/RenderWorkerShape.md)
 - [SPSCRingBufferShape](interfaces/SPSCRingBufferShape.md)
@@ -67,3 +69,8 @@ separate worker entry files or bundler configuration.
 - [RenderWorker](variables/RenderWorker.md)
 - [SPSCRing](variables/SPSCRing.md)
 - [WorkerHost](variables/WorkerHost.md)
+
+## Functions
+
+- [motionSampleMessage](functions/motionSampleMessage.md)
+- [sampleProgramUniforms](functions/sampleProgramUniforms.md)

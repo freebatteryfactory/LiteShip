@@ -151,9 +151,11 @@ The explicit multi-transition algebra ([ADR-0039](./docs/adr/0039-multi-transiti
 
 Main surfaces: `interpretTransition` (the single-step leaf reader) and, for composition, `lowerTransitionProgram` (deterministic `[0,1]` timeline, ordered through `Plan.topoSort`), `interpretProgram` (→ `LoweredMotionPlan` with multi-offset `css.keyframes` + `runtime.windows`), `sampleProgramWindows` (the one per-window runtime reader the floor shares), plus the `TransitionProgram` / `BranchCondition` / `ProgramEnv` types. Authoring: `Reveal.chain` (`lowerRevealChain`) and `staggerProgram`. `RuntimeWritePlan` gained one optional `windows` field. Added 0.9.0 (additive).
 
+**The shared motion kernel (#130, ADR-0040).** `sampleProgram(plan, t)` is the ONE reader EVERY non-CSS target samples — it generalizes `sampleProgramWindows` to also cover a flat single-tween plan, returning the typed leaf of every animated `cssVar`. The declarative CSS `@keyframes` are generated from the SAME internal window-walk (`buildKeyframes` and `sampleProgramWindows` share one path; the old `sampleTween` parallel path is gone), so declarative CSS and every sampler provably agree. `sampleProgramUniforms(plan, t)` projects a sample to the `{ css, wgsl }` `czap:uniform-update` payload shared by the browser floor (`writeContinuousMap`) and the `@czap/worker` off-thread sampler. `ProgramSample` / `ProgramUniforms` types. Added 0.9.0 (additive). The per-target adapters live in `@czap/scene` / `@czap/stage` / `@czap/remotion` / `@czap/worker` (below); a differential oracle (`tests/unit/core/motion-parity.test.ts`) pins them all to `sampleProgram`.
+
 ### AI cast
 
-Cast a graph *out* to a model and accept its reply safely ([ADR-0015](./docs/adr/0015-document-graph-ir.md)). Reach for it when you need:
+Cast a graph _out_ to a model and accept its reply safely ([ADR-0015](./docs/adr/0015-document-graph-ir.md)). Reach for it when you need:
 
 - a deterministic, token-budgeted `AIContext` (graph summary + tool schema) for a model call
 - validation of a model's `GraphPatch` proposal (or a genui tree, ADR-0014)
@@ -459,8 +461,11 @@ Main surfaces:
 - `CompositorWorker`
 - `RenderWorker`
 - `WorkerHost`
+- `motionSampleMessage` / `sampleProgramUniforms` (the MINIMAL authored-motion adapter, #130)
 
 This package assumes stronger runtime requirements and should be used where the surface meaning justifies off-thread work. The Astro worker directive routes through this package rather than carrying its own worker protocol. By the way, `SPSCRing` is a real lock-free single-producer / single-consumer ring on `SharedArrayBuffer`, with `Atomics.load` and `Atomics.store` only — no `Atomics.wait` or `Atomics.notify`, which keeps it fully non-blocking on both sides.
+
+**Motion adapter (#130, ADR-0040).** The MINIMAL, net-new authored-motion surface: `motionSampleMessage(plan, t)` runs the ONE shared `sampleProgram` kernel off-thread (via `sampleProgramUniforms`, re-exported so a worker script imports its producer here) and returns a structured-clone-safe `{ css, wgsl }` envelope the host relays on the EXISTING `czap:uniform-update` channel. No new compositor, render loop, or protocol — a thin sampler-posts-uniform, deliberately kept out of the `FromWorkerMessage` union. Sampled by the differential oracle.
 
 ---
 
@@ -484,8 +489,11 @@ Main surfaces:
 - `precomputeFrames`
 - `Provider`
 - `useCzapState`
+- `sampleMotionFrame` / `motionCssVars` (the authored-motion adapter, #130)
 
 This package is for the Remotion / video branch of the ecosystem, not the main Astro static-site path.
+
+**Motion adapter (#130, ADR-0040).** `sampleMotionFrame(plan, frame, durationInFrames)` samples the ONE shared `sampleProgram` kernel at the composition's current frame (`t = frame / max(1, durationInFrames-1)`), and `motionCssVars` folds the typed leaves into a Remotion `style` (formatted through the same `formatTypedValue` the browser floor uses). Pure + React-free so a `calculateMetadata` or test can call it; the composition wraps it with `useCurrentFrame()`. Sampled by the differential oracle.
 
 ---
 
@@ -508,8 +516,11 @@ Main surfaces:
 - `exportAstroPage`
 - `exportVideo` / `exportVideoEncoded`
 - `FrameEncoder` (the injectable seam)
+- `sampleMotionFrames` / `exportMotionTrack` (the authored-motion video-leg adapter, #130)
 
 The `encode?` seam keeps `@czap/stage` pure; the node-only ffmpeg backend is a thin adapter on the `@czap/stage/ffmpeg` subpath — `exportVideoEncoded(graph, ffmpegFrameEncoder())`. When no encoder is wired, frame digests are still real; the bytes are skipped-with-log, not faked. The video carrier's content address is taken over the produced **frames**; the byte-encode is the injected seam, so it never changes the proof's digest.
+
+**Motion adapter (#130, ADR-0040).** `sampleMotionFrames(plan, totalFrames)` samples the ONE shared `sampleProgram` kernel at each `FrameRange` index; `exportMotionTrack` folds the sampled leaves into per-frame content and content-addresses the whole track through the SAME `CanonicalCbor.encode` → `AddressedDigest.of` kernel `dual-export.ts` uses — the built-in oracle for the video leg. ADDITIVE to the video-crossfade carrier / `TransitionSystem`, never a merge. Sampled by the differential oracle.
 
 ---
 
@@ -531,10 +542,13 @@ Main surfaces:
 - `Track` (`Track.video` / `Track.audio` / `Track.transition` / `Track.effect`)
 - `SceneRuntime`
 - `VideoSystem` / `AudioSystem` / `TransitionSystem` / `EffectSystem` / `SVGSystem` (+ the sync + pass-through mixer)
+- `MotionSampleSystem` / `sampleSceneMotion` (the authored-motion adapter, #130)
 - `applySvgAttrs` / `collectSvgAttrs` (the SVG egress, applied live by `@czap/astro`'s `client:svg` directive)
 - `bindBeats` (beat-indexed composition from `@czap/assets` projections)
 
 Paired with `@czap/stage` for the video-export branch — and, as of 0.4.0, a **live** runtime consumer too: `@czap/astro`'s `bridgeSceneToGraph` drives a scene against the live cast pipeline, and the `client:svg` directive applies its SVG egress to the live DOM (scene is no longer offline/video-only).
+
+**Motion adapter (#130, ADR-0040).** `MotionSampleSystem(plan, frameIndex, totalFrames)` samples the ONE shared `sampleProgram` kernel per frame and writes each typed leaf as a `motion:<cssVar>` component (via the same `world.setComponent` seam `TransitionSystem` uses for `_blend`); `sampleSceneMotion` is the pure projection the differential oracle reads. This is ADDITIVE to `TransitionSystem`: the video-crossfade `_blend` (a compositor mix between two `Between` entities) and the authored motion program are DIFFERENT concepts that coexist on one world — `TransitionSystem` is untouched.
 
 ---
 

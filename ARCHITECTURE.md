@@ -1,10 +1,10 @@
 # LiteShip architecture
 
-The structural map: what the pieces are and how they fit. This doc explains the system on its own — the ADRs record *why* each choice was made, but you shouldn't need them to understand it.
+The structural map: what the pieces are and how they fit. This doc explains the system on its own — the ADRs record _why_ each choice was made, but you shouldn't need them to understand it.
 
 **LiteShip is a multimedia-native adaptive UI compiler/runtime — not a component library.**
 
-*LiteShip — powered by the CZAP engine (Content-Zoned Adaptive Projection), distributed as `@czap/*` packages on npm.*
+_LiteShip — powered by the CZAP engine (Content-Zoned Adaptive Projection), distributed as `@czap/*` packages on npm._
 
 Prose vocabulary: [GLOSSARY.md](./GLOSSARY.md).
 
@@ -23,7 +23,7 @@ That "same content-addressed definition" is one data structure: the **document g
 
 ## AI cast
 
-The same graph casts *out* to a model. `AICast.castContext` turns a sealed graph into a token-budgeted `AIContext` (a deterministic summary plus a tool schema); a model's reply returns as a `GraphPatch` proposal that must clear `validateGraphPatchProposal` before `applyValidatedPatch` will touch the graph. Validation mints a `ValidatedProposal` carrying an unforgeable `ApplyToken` — there is no path from raw model output to a graph mutation that skips it (`mintValidated` is denied at the package subpath; see `packages/core/package.json` `"./validated-output": null`). The primitive is pure: zero network, zero provider imports. The framework owns the envelope; the host owns the model call and the authority to apply. See [ADR-0015](./docs/adr/0015-document-graph-ir.md) and `packages/core/src/ai-cast.ts`.
+The same graph casts _out_ to a model. `AICast.castContext` turns a sealed graph into a token-budgeted `AIContext` (a deterministic summary plus a tool schema); a model's reply returns as a `GraphPatch` proposal that must clear `validateGraphPatchProposal` before `applyValidatedPatch` will touch the graph. Validation mints a `ValidatedProposal` carrying an unforgeable `ApplyToken` — there is no path from raw model output to a graph mutation that skips it (`mintValidated` is denied at the package subpath; see `packages/core/package.json` `"./validated-output": null`). The primitive is pure: zero network, zero provider imports. The framework owns the envelope; the host owns the model call and the authority to apply. See [ADR-0015](./docs/adr/0015-document-graph-ir.md) and `packages/core/src/ai-cast.ts`.
 
 ## The mutation channel
 
@@ -33,7 +33,7 @@ The return leg. SSE pushes server→client; the channel is the other direction �
 
 `adoptAppliedGraph` (`@czap/astro/runtime`) closes the loop back into a live graph runtime. A graph returned by a mutation endpoint is still treated as unknown wire data, re-proved through `verifyAppliedGraph`, then advanced through the same `castGraphDelta` runtime seam used by AI proposals and scene bridges. Full rationale: [ADR-0031](./docs/adr/0031-form-mutation-binding-primitive.md).
 
-**Stream recovery — the forward leg, bounded end-to-end** ([#133](https://github.com/freebatteryfactory/LiteShip/issues/133)). SSE pushes server→client; when the connection drops, a missed *discrete state crossing* must not silently vanish. The default floor is snapshot re-sync (re-fetch HTML + discrete signals; continuous transients never replay). Graph-backed streams add a value-bearing path over the SAME QUERY read leg the mutation channel exposes: **emit → attest → replay**. The authority mints a `DiscreteStateTransition` receipt on each real crossing (`mintTransition(prev, next, { base, resultId })` — the next-state value lives in the receipt, minted, never inferred from a node) through the ONE receipt hash law (`TypedRef → Receipt.createEnvelope → sha256`, byte-identical to `GraphPatch.receipt`; Law 4) and emits it as an SSE `{ type: 'receipt', … }` frame. The client attests every frame before buffering — fail-closed decode, `Receipt.hashEnvelope` self-consistency, and the `${base}#${cell}` subject law (Law 15) — so a forged or mis-subjected frame is refused, not replayed. On recovery the client QUERYs the read leg, re-adopts the authoritative graph (`runGraphNativeGapReplay`), then applies the buffered crossings to a `StateCell` store by generation (the generation guard makes a stale/duplicate transition a no-op). The host owns the substrate: `@czap/astro`'s `client:stream` directive constructs the store + `createGraphMutationClient` and registers them via `registerStreamRecoverySubstrate` when the element opts in (`data-czap-stream-graph`), disposing on teardown and re-arming on view-transition reinit. Runnable cookbook: `examples/showcase` (`/stream-recovery`). See [ASTRO-RUNTIME-MODEL.md](./ASTRO-RUNTIME-MODEL.md) `### stream`.
+**Stream recovery — the forward leg, bounded end-to-end** ([#133](https://github.com/freebatteryfactory/LiteShip/issues/133)). SSE pushes server→client; when the connection drops, a missed _discrete state crossing_ must not silently vanish. The default floor is snapshot re-sync (re-fetch HTML + discrete signals; continuous transients never replay). Graph-backed streams add a value-bearing path over the SAME QUERY read leg the mutation channel exposes: **emit → attest → replay**. The authority mints a `DiscreteStateTransition` receipt on each real crossing (`mintTransition(prev, next, { base, resultId })` — the next-state value lives in the receipt, minted, never inferred from a node) through the ONE receipt hash law (`TypedRef → Receipt.createEnvelope → sha256`, byte-identical to `GraphPatch.receipt`; Law 4) and emits it as an SSE `{ type: 'receipt', … }` frame. The client attests every frame before buffering — fail-closed decode, `Receipt.hashEnvelope` self-consistency, and the `${base}#${cell}` subject law (Law 15) — so a forged or mis-subjected frame is refused, not replayed. On recovery the client QUERYs the read leg, re-adopts the authoritative graph (`runGraphNativeGapReplay`), then applies the buffered crossings to a `StateCell` store by generation (the generation guard makes a stale/duplicate transition a no-op). The host owns the substrate: `@czap/astro`'s `client:stream` directive constructs the store + `createGraphMutationClient` and registers them via `registerStreamRecoverySubstrate` when the element opts in (`data-czap-stream-graph`), disposing on teardown and re-arming on view-transition reinit. Runnable cookbook: `examples/showcase` (`/stream-recovery`). See [ASTRO-RUNTIME-MODEL.md](./ASTRO-RUNTIME-MODEL.md) `### stream`.
 
 ## Edge delivery (0.9 seams)
 
@@ -48,6 +48,13 @@ The return leg. SSE pushes server→client; the channel is the other direction �
 **Receipt-DAG compaction** ([ADR-0026](./docs/adr/0026-dag-compaction.md)): `ReceiptDAG.pruneToBound` caps per-session DAG growth while retaining the canonical linear tail — long-lived streams do not grow without bound.
 
 **Cell value→wire boundary** ([ADR-0027](./docs/adr/0027-cell-value-dom-boundary.md)): reactive primitives publish through the wire/compositor seam; DOM writes stay in host adapters. Continuous transients never patch the graph per frame.
+
+## One source, N targets
+
+Two invariants share a shape: ONE authored source is provably read by every target, so the surfaces cannot silently diverge.
+
+- **Dual export — shared DIGEST** ([`dual-export.ts`](./packages/stage/src/dual-export.ts)): one `DocumentGraph` casts to a static Astro page AND a video, both derived from the same `DocumentGraph.digest`, joined under one parent merge receipt. Each `ExportNode` is a reader of the graph.
+- **Motion parity — shared KERNEL** ([ADR-0040](./docs/adr/0040-cross-target-motion-parity.md)): one authored motion program renders identically across browser CSS, browser runtime, scene, stage, remotion, and worker because EVERY non-CSS target samples the ONE kernel `sampleProgram` (`@czap/core`) and the declarative CSS `@keyframes` are generated from the SAME kernel. A DIFFERENTIAL ORACLE (`tests/unit/core/motion-parity.test.ts`) pins every target to the reference within a documented epsilon (the browser-CSS leg compared against the SAME 32-sample `linear()` approximation, never the continuous spring). Authored-motion sampling is ADDITIVE to `@czap/scene`'s video-crossfade `_blend`, never a merge. The oracle is the reader that makes each thin per-target adapter load-bearing.
 
 ## Package DAG
 
@@ -82,46 +89,48 @@ Plus `crates/czap-compute/`, the Rust `#![no_std]` WASM hot-path kernels.
 API docs per package live at [`docs/api/<name>/`](./docs/api/); import guidance at [`PACKAGE-SURFACES.md`](./PACKAGE-SURFACES.md).
 
 <!-- BEGIN PACKAGES (generated by scripts/gen-docs.ts from package.json descriptions + scripts/lib/doc-registry.ts — edit those, then run `pnpm run docs:gen`) -->
-| Package | Description |
-| --- | --- |
-| [`@czap/core`](./packages/core) | Primitives: Boundary, Token, Style, Theme, Signal, DocumentGraph + GraphPatch (the content-addressed IR), AI cast, Compositor, ECS, HLC, DAG, Plan, AVBridge |
-| [`@czap/canonical`](./packages/canonical) | Self-contained bytes kernel: RFC 8949 §4.2.1 CBOR, FNV-1a labels, sync `AddressedDigest` (no Effect/spine in-package) |
-| [`@czap/error`](./packages/error) | Composable tagged-error algebra: a closed variant coproduct over an open `TaggedError` contract — value AND type, Effect- and throw-compatible (the foundational zero-dep leaf) |
-| [`@czap/genui`](./packages/genui) | Host-owned generated UI catalog: validate structured trees, render trusted components only (`genui:interaction` for actions) |
-| [`@czap/quantizer`](./packages/quantizer) | `Q.from()` builder, boundary evaluation, animated transitions, motion-tier gating |
-| [`@czap/compiler`](./packages/compiler) | Multi-target output: CSS, GLSL, WGSL, ARIA, AI, Tailwind v4 |
+
+| Package                                   | Description                                                                                                                                                                     |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`@czap/core`](./packages/core)           | Primitives: Boundary, Token, Style, Theme, Signal, DocumentGraph + GraphPatch (the content-addressed IR), AI cast, Compositor, ECS, HLC, DAG, Plan, AVBridge                    |
+| [`@czap/canonical`](./packages/canonical) | Self-contained bytes kernel: RFC 8949 §4.2.1 CBOR, FNV-1a labels, sync `AddressedDigest` (no Effect/spine in-package)                                                           |
+| [`@czap/error`](./packages/error)         | Composable tagged-error algebra: a closed variant coproduct over an open `TaggedError` contract — value AND type, Effect- and throw-compatible (the foundational zero-dep leaf) |
+| [`@czap/genui`](./packages/genui)         | Host-owned generated UI catalog: validate structured trees, render trusted components only (`genui:interaction` for actions)                                                    |
+| [`@czap/quantizer`](./packages/quantizer) | `Q.from()` builder, boundary evaluation, animated transitions, motion-tier gating                                                                                               |
+| [`@czap/compiler`](./packages/compiler)   | Multi-target output: CSS, GLSL, WGSL, ARIA, AI, Tailwind v4                                                                                                                     |
 
 Add a host integration when you wire LiteShip into a build pipeline:
 
-| Package | Description |
-| --- | --- |
-| [`@czap/vite`](./packages/vite) | Vite 8 plugin: `@token` / `@theme` / `@style` / `@quantize` CSS transforms + HMR |
-| [`@czap/astro`](./packages/astro) | Astro 7 integration: `Satellite` component, `client:satellite` directive, `czapFetchLayer` edge layer |
-| [`@czap/edge`](./packages/edge) | CDN-edge: Client Hints, tier detection, KV boundary cache, theme compilation |
-| [`@czap/cloudflare`](./packages/cloudflare) | Cloudflare Workers siteAdapter: KV boundary cache + Astro middleware glue |
+| Package                                     | Description                                                                                           |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| [`@czap/vite`](./packages/vite)             | Vite 8 plugin: `@token` / `@theme` / `@style` / `@quantize` CSS transforms + HMR                      |
+| [`@czap/astro`](./packages/astro)           | Astro 7 integration: `Satellite` component, `client:satellite` directive, `czapFetchLayer` edge layer |
+| [`@czap/edge`](./packages/edge)             | CDN-edge: Client Hints, tier detection, KV boundary cache, theme compilation                          |
+| [`@czap/cloudflare`](./packages/cloudflare) | Cloudflare Workers siteAdapter: KV boundary cache + Astro middleware glue                             |
 
 Reach for the rest only when the surface meaning justifies the runtime escalation:
 
-| Package | Description |
-| --- | --- |
-| [`@czap/web`](./packages/web) | DOM runtime: Morph, SlotRegistry, SSE client, Physical state, LLM adapter, AudioWorklet |
-| [`@czap/detect`](./packages/detect) | Device capability probes, GPU tier, design/motion-tier mapping |
-| [`@czap/worker`](./packages/worker) | Off-thread: SPSC ring buffer, compositor worker, render worker, OffscreenCanvas |
-| [`@czap/remotion`](./packages/remotion) | Remotion adapter: React hooks + composition helpers |
-| [`@czap/scene`](./packages/scene) | ECS-backed scene composition + timeline authoring |
-| [`@czap/assets`](./packages/assets) | Asset capsules + analysis projections (audio waveform, beat markers, ...) |
-| [`@czap/stage`](./packages/stage) | Dual-export orchestration: one document graph → static Astro page + headless video, proven same-source (ffmpeg backend on `@czap/stage/ffmpeg`) |
-| [`@czap/cli`](./packages/cli) | `czap` CLI: AI-first JSON I/O with human-pretty TTY mode |
-| [`@czap/mcp-server`](./packages/mcp-server) | Model Context Protocol server for AI tooling integration |
-| [`@czap/_spine`](./packages/_spine) | Type-only declaration spine referenced by published `.d.ts` from `@czap/core` / `@czap/scene` |
+| Package                                     | Description                                                                                                                                     |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`@czap/web`](./packages/web)               | DOM runtime: Morph, SlotRegistry, SSE client, Physical state, LLM adapter, AudioWorklet                                                         |
+| [`@czap/detect`](./packages/detect)         | Device capability probes, GPU tier, design/motion-tier mapping                                                                                  |
+| [`@czap/worker`](./packages/worker)         | Off-thread: SPSC ring buffer, compositor worker, render worker, OffscreenCanvas                                                                 |
+| [`@czap/remotion`](./packages/remotion)     | Remotion adapter: React hooks + composition helpers                                                                                             |
+| [`@czap/scene`](./packages/scene)           | ECS-backed scene composition + timeline authoring                                                                                               |
+| [`@czap/assets`](./packages/assets)         | Asset capsules + analysis projections (audio waveform, beat markers, ...)                                                                       |
+| [`@czap/stage`](./packages/stage)           | Dual-export orchestration: one document graph → static Astro page + headless video, proven same-source (ffmpeg backend on `@czap/stage/ffmpeg`) |
+| [`@czap/cli`](./packages/cli)               | `czap` CLI: AI-first JSON I/O with human-pretty TTY mode                                                                                        |
+| [`@czap/mcp-server`](./packages/mcp-server) | Model Context Protocol server for AI tooling integration                                                                                        |
+| [`@czap/_spine`](./packages/_spine)         | Type-only declaration spine referenced by published `.d.ts` from `@czap/core` / `@czap/scene`                                                   |
 
 You don't install these directly — they back the CLI, the MCP server, and the release tooling:
 
-| Package | Description |
-| --- | --- |
-| [`@czap/command`](./packages/command) | Shared capsule command registry + dispatcher — one command truth for the CLI and MCP adapters |
-| [`@czap/audit`](./packages/audit) | Profile-driven structure / integrity / surface audit engine + the host that builds the gauntlet's repo-IR + oracles (deps `@czap/canonical` / `@czap/error` / `@czap/gauntlet` / `typescript`) |
-| [`@czap/gauntlet`](./packages/gauntlet) | Self-proving rigor engine: gates, findings, assurance levels, the authority ratchet, and `defineFactGate` (evidence-bound gates) — lean (no `typescript`; oracles host-injected) |
+| Package                                 | Description                                                                                                                                                                                    |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`@czap/command`](./packages/command)   | Shared capsule command registry + dispatcher — one command truth for the CLI and MCP adapters                                                                                                  |
+| [`@czap/audit`](./packages/audit)       | Profile-driven structure / integrity / surface audit engine + the host that builds the gauntlet's repo-IR + oracles (deps `@czap/canonical` / `@czap/error` / `@czap/gauntlet` / `typescript`) |
+| [`@czap/gauntlet`](./packages/gauntlet) | Self-proving rigor engine: gates, findings, assurance levels, the authority ratchet, and `defineFactGate` (evidence-bound gates) — lean (no `typescript`; oracles host-injected)               |
+
 <!-- END PACKAGES -->
 
 ## Graceful degradation
@@ -130,7 +139,7 @@ Fast paths fall back honestly past their regime — `DirtyFlags` past 31 keys (`
 
 ## Architectural decisions
 
-Full index + accepted set (0001–0035; 0034 reserved): [`docs/adr/README.md`](./docs/adr/README.md).
+Full index + accepted set (0001–0040; 0034 reserved): [`docs/adr/README.md`](./docs/adr/README.md).
 
 Capsule factory + video stack: [CAPSULE-FACTORY.md](./CAPSULE-FACTORY.md).
 

@@ -33,9 +33,11 @@ Typical flow:
 ## Functions
 
 - [cssVarsFromState](functions/cssVarsFromState.md)
+- [motionCssVars](functions/motionCssVars.md)
 - [precomputeFrames](functions/precomputeFrames.md)
 - [Provider](functions/Provider.md)
 - [rendererFromRemotionConfig](functions/rendererFromRemotionConfig.md)
+- [sampleMotionFrame](functions/sampleMotionFrame.md)
 - [stateAtFrame](functions/stateAtFrame.md)
 - [useCompositeState](functions/useCompositeState.md)
 - [useCzapState](functions/useCzapState.md)

@@ -52,3 +52,8 @@ export type { RenderWorkerShape } from './render-worker.js';
 // Host
 export { WorkerHost } from './host.js';
 export type { WorkerHostShape, TransferableCanvas, WorkerHostRenderConfig } from './host.js';
+
+// Off-thread motion sampler (#130) — the MINIMAL authored-motion adapter: run the ONE
+// shared `sampleProgram` kernel off-thread and post its uniforms on `czap:uniform-update`.
+export { motionSampleMessage, sampleProgramUniforms } from './motion-sample.js';
+export type { MotionSampleMessage, ProgramUniforms } from './motion-sample.js';
