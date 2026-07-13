@@ -17,10 +17,22 @@ import { validateStructural, type StructuralSchema } from '../../support/structu
 import { scaledTimeout } from '../../../vitest.shared.js';
 
 /** `check` runs the in-process gauntlet fold — same budget as cross-adapter convergence. */
+// Per-tool timeout budgets for the catalog-driven dispatch matrix (#145). A
+// lookup table so a per-tool budget is trivial to scan/extend; values are wrapped
+// in `scaledTimeout` at lookup time (per test-timeout-policy). Only `check` needs
+// an elevated budget: with empty args it runs the in-process gauntlet fold — the
+// same 60s `tests/integration/cross-adapter-convergence.test.ts` gives it. Every
+// other tool (including `capsule.verify` / `scene.render`) dispatches with a
+// `__mcp-dispatch-probe__` arg that references a non-existent capsule/scene and
+// fails fast, so the default vitest budget is ample — the old 120s here was
+// over-conservative parity with the convergence suite, which uses REAL fixtures.
+const MCP_DISPATCH_TIMEOUT_MS: Readonly<Record<string, number>> = {
+  check: 60_000,
+};
+
 function mcpDispatchMatrixTimeout(name: string): number | undefined {
-  if (name === 'check') return scaledTimeout(60_000);
-  if (name === 'capsule.verify' || name === 'scene.render') return scaledTimeout(120_000);
-  return undefined;
+  const budget = MCP_DISPATCH_TIMEOUT_MS[name];
+  return budget === undefined ? undefined : scaledTimeout(budget);
 }
 
 /** Minimal arguments that exercise each MCP tool's dispatch path (ok or structured failure — never throw). */

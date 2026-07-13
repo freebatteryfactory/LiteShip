@@ -1,6 +1,6 @@
 # LiteShip roadmap
 
-> Verified against the 2026-07-08 hardening wave (`v0.8.1` published). See `STATUS.md` for live counts, gate totals, coverage numbers, and current telemetry watch items.
+> Verified against the 0.9 completion campaign (2026-07-13, `v0.9.0` tree). See `STATUS.md` for live counts, gate totals, coverage numbers, and current telemetry watch items.
 
 ## Current Phase
 
@@ -11,8 +11,17 @@ morph-opaque subtrees, Standard Schema interop, and the Cloudflare dev-path fix 
 the five dashboard-blocking upstreams, all landed. **0.8.1** (2026-07-08) shipped test/bench/CI
 hardening: parallel CI lane green, `check:gates` wired, honest benches, catalog-driven
 coverage. **Epic 9** (authored motion + stream spine — `interpretTransition`,
-`MotionCompiler`, `StateCell`, wire-contract registry, active-surface gate) is on `main`
-(merged PR #135) but not versioned as 0.9.0.
+`MotionCompiler`, `StateCell`, wire-contract registry, active-surface gate) landed as
+**0.9.0** (PR #135). The **0.9 completion campaign** (2026-07-13) then drove those seams
+from structural to *semantic* completion: the motion runtime FLOOR now scrubs (#126), the
+explicit `TransitionProgram` seq/par/choice algebra replaced the collapsed routing label
+(#141), and one authored program renders identically across six targets, proven by a
+differential oracle (#130) — plus graph-native stream recovery end to end (typed attested
+`DiscreteStateTransition`), Save-Data-honouring responsive media across Astro + Cloudflare
+(#140), and answer-first package metadata with a prepublish gate (#146). #145 (MCP dispatch
+timeouts) is tidied; #129 (workers-off COEP escape) stays PARKED — reopen only when a real
+workers-off consumer needs first-party isolation removal. #142 sharded-docs breadcrumb depth
+is fixed but the sharded builder stays experimental (monolith canonical, ADR-0038).
 
 The current phase is **0.9.0 keystone build + road-to-1.0 stabilization**: close the
 31 open tracker issues to production quality (QUERY read-leg, motion primitives,

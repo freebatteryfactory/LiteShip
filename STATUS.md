@@ -1,13 +1,29 @@
 # LiteShip — status and remaining work
 
-Last updated: 2026-07-08 (`v0.8.1` published; Epic 9 on main; parallel CI lane green).
+Last updated: 2026-07-13 (`v0.9.0` tree; the completion campaign landed the 0.9 semantic-truth pass — see below).
 
 Coverage stack standardized on Vitest 4.1.2 + Playwright browser mode.
-Current node lane: **~7000+ tests** across **~560+ files** (0.8.1 tree; re-capture exact
-counts from a fresh `pnpm test` — the 6903/559 baseline below is stale).
+Current node lane: **7786 passing tests** (23 skipped) across **649 files** (0.9.0 tree;
+captured from a fresh `pnpm test` on 2026-07-13).
 Current browser lane: shared-runtime suites run against a Chromium + Firefox + WebKit matrix, with capability-specific browser tests remaining Chromium-first where the platform surface is intentionally non-uniform.
 
 **Shipped since this baseline (0.7.0 → 0.8.1):** the client→server mutation channel (`graphMutationRoute` / `createGraphMutationClient` / `sendGraphMutation`, ADR-0030), form-to-mutation binding (`bindGraphForm`, ADR-0031), morph-opaque client-owned subtrees (`data-czap-morph-opaque`, ADR-0032), Standard Schema interop on the node schema (`DocumentGraphNodeSchema.~standard`, ADR-0033), the Workers static-assets boundary-CSS dev path (ADR-0025), Receipt-DAG compaction (ADR-0026), the Cell value→wire boundary (ADR-0027), Epic 9 motion/stream spine (PR #135: `interpretTransition`, `MotionCompiler`, `StateCell`, wire-contract registry, active-surface gate #132), and **0.8.1** test/bench/CI hardening (parallel CI, `check:gates`, honest benches). Publishing is OIDC trusted publishing with provenance (no `NPM_TOKEN`). Neither dogfood consumer exercises the mutation channel or `bindGraphForm` in production yet — that surface is proven by tests + `examples/06-mutation-roundtrip`, not yet by a live consumer.
+
+**Shipped in the 0.9 completion campaign (2026-07-13, semantic-truth pass over the 25-package system):**
+moved several seams from *structural* completion (a field is read, a fallback is exported) to *semantic*
+completion (the correct state / bytes / DOM / cache variant / timeline behaviour survives end to end).
+Landed, each red-first + root-caused + propagated to examples & docs + independently QA'd:
+**recovery** — a typed, attested `DiscreteStateTransition` protocol replaced the category-error
+`discreteSignalPayloadsFromPatch`; SSE frames are hash/subject/chain-verified before replay; the
+graph-native substrate now drives end to end (astro host wiring + reference emit route + integration
+test; no longer latent). **motion** — the continuous runtime FLOOR is production-driven (`client:motion`,
+#126), the explicit `TransitionProgram` seq/par/choice algebra replaced the collapsed routing label (#141),
+and one authored program renders identically across six targets proven by a differential oracle (#130).
+**responsive media** — one `selectCandidates` law so Save-Data is honoured across every output, wired
+into Astro + Cloudflare hosts (#140). **hardening** — CSS conditional-group serialization, JSON-RPC
+error XOR, `Vary` token merge, deployed-doctor semantic header checks + swallow-proof CLI flags,
+AST-based Workers-`Date` analysis, and answer-first npm metadata for all 25 packages with a prepublish
+gate (#146). Full node vitest suite green (7786/7809).
 
 Product naming for prose elsewhere: [GLOSSARY.md](./GLOSSARY.md). Tables below stay operational. Identifiers like `host-wired` and `pnpm exec czap` are literal gate vocabulary, not marketing rename targets.
 
