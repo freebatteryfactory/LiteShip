@@ -804,6 +804,15 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
         applyDiscreteSignal: (payload) => {
           dispatchCzapEvent(target, 'czap:signal', payload);
         },
+        // Reflect each gap-replayed crossing back to the host as the SAME discrete signal the
+        // snapshot floor emits (`{ [cell]: next }`). The morph-rejection path converges the host
+        // via fresh snapshot HTML + signals, but a receipt-only resume (`domStale: false`) skips
+        // that floor — without this the crossing would hydrate ONLY the private recovery cell
+        // store, dispatching no `czap:signal` and leaving downstream listeners / rendered state
+        // stale even though it was attested and replayed (Codex P2).
+        applyTransition: (transition) => {
+          dispatchCzapEvent(target, 'czap:signal', { [transition.cell]: transition.next });
+        },
       },
     });
   };
