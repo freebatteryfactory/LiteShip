@@ -102,6 +102,7 @@ export function chainPatchesBetween(
   }
 
   const path: DiscreteStateTransition[] = [];
+  const pathEntries: PatchReceiptEntry[] = [];
   const visiting = new Set<string>();
   const cannotReach = new Set<string>();
 
@@ -123,11 +124,13 @@ export function chainPatchesBetween(
         continue; // not a graph edge — collected below, not walked
       }
       path.push(entry.transition);
+      pathEntries.push(entry);
       if (search(entry.transition.resultId!)) {
         found = true;
         break;
       }
       path.pop();
+      pathEntries.pop();
     }
 
     visiting.delete(current);
@@ -141,19 +144,43 @@ export function chainPatchesBetween(
     return [];
   }
 
-  // MIXED gap: the recast branch reaches the server graph, but STATE-ONLY crossings
-  // anchored at the bases the branch passed through (local base, then each hop's result)
-  // did not recast the graph, so the `resultId`-only walk skipped them. Fold them into
-  // the selected set — a pure cell crossing on base A followed by a recast A→B must still
-  // hydrate its cell. Return in BUFFER order (= receipt-chain order) so the caller's
-  // `validateChainDetailed` sees a continuous `previous` chain.
+  // MIXED gap: the recast branch reaches the server graph, but STATE-ONLY crossings that ride
+  // the branch did not recast the graph, so the `resultId`-only walk skipped them. Fold them in —
+  // a pure cell crossing on base A followed by a recast A→B must still hydrate its cell.
+  //
+  // Gate the fold on RECEIPT-CHAIN LINEAGE, not graph `base` alone. Two forks can share a base;
+  // folding by base would pull an unrelated same-base crossing off a branch the server never
+  // adopted, which then either makes the caller's `validateChainDetailed` reject the WHOLE replay
+  // as a broken chain, or applies a cell crossing from the wrong branch (Codex P2). The adopted
+  // lineage is the `previous`-chain walking BACK from the tip receipt (the recast that reached the
+  // server graph): each receipt's `previous` names its predecessor's `hash`, so the backward walk
+  // traverses exactly the inline crossings (recast AND state-only) on the selected path and never
+  // steps onto a fork sibling. A state-only entry is folded only when it is (a) anchored at a graph
+  // state the branch visited AND (b) on that lineage. The result stays BUFFER-ordered so the
+  // caller's continuity floor sees a contiguous `previous` chain.
+  const byHash = new Map<string, PatchReceiptEntry>();
+  for (const entry of entries) byHash.set(entry.receipt.hash, entry);
+  const lineage = new Set<string>();
+  const walkBack = (hash: string): void => {
+    if (lineage.has(hash)) return;
+    const entry = byHash.get(hash);
+    if (entry === undefined) return; // a pre-gap / genesis ancestor outside the buffer — stop.
+    lineage.add(hash);
+    const previous = entry.receipt.previous;
+    if (typeof previous === 'string') walkBack(previous);
+    else for (const p of previous) walkBack(p);
+  };
+  const tip = pathEntries[pathEntries.length - 1];
+  if (tip !== undefined) walkBack(tip.receipt.hash);
+
   const branchBases = new Set<string>([localBaseId, ...path.map((t) => t.resultId!)]);
   const selected = new Set<DiscreteStateTransition>(path);
   for (const entry of entries) {
     if (
       entry.receipt.kind === 'discrete-transition' &&
       isStateOnly(entry.transition) &&
-      branchBases.has(entry.transition.base)
+      branchBases.has(entry.transition.base) &&
+      lineage.has(entry.receipt.hash)
     ) {
       selected.add(entry.transition);
     }

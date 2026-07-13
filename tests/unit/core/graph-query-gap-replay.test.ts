@@ -287,6 +287,63 @@ describe('graph-query gap replay — attested replay (#133-full)', () => {
     expect(store.snapshot('state')!.state).toBe('alpha'); // recast cell
     expect(store.snapshot('panel')!.state).toBe('open'); // state-only cell — NOT dropped
   });
+
+  test('MIXED gap: a FORK state-only crossing sharing the base is NOT replayed (Codex P2)', async () => {
+    // Two state-only crossings branch off the SAME genesis base: `panel` rides the ADOPTED
+    // lineage (the recast chains its `previous` onto panel's receipt), while `ghost` is a fork
+    // SIBLING the server never adopted. Folding by graph `base` alone would replay BOTH (both are
+    // anchored at `base`); the receipt-lineage gate replays only the crossing on the tip's
+    // `previous` chain, so the non-adopted fork's cell stays at its default.
+    const base = graph([node('a')]);
+    const patch = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('b.signal') }]);
+    const server = GraphPatch.apply(base, patch);
+    const store = StateCellStore.create();
+    store.register('state', ['a', 'alpha'], { kind: 'discrete' });
+    store.register('panel', ['closed', 'open'], { kind: 'discrete' });
+    store.register('ghost', ['calm', 'haunted'], { kind: 'discrete' });
+
+    const panelCrossing: DiscreteStateTransition = {
+      _tag: 'DiscreteStateTransition',
+      _version: 1,
+      cell: 'panel',
+      next: StateName('open'),
+      generation: 1,
+      authority: 'graph',
+      base: base.id,
+      kind: 'discrete',
+    };
+    const ghostFork: DiscreteStateTransition = {
+      _tag: 'DiscreteStateTransition',
+      _version: 1,
+      cell: 'ghost',
+      next: StateName('haunted'),
+      generation: 1,
+      authority: 'graph',
+      base: base.id,
+      kind: 'discrete',
+    };
+    const recast = mkTransition(base.id, server.id, 'state', 'alpha', 1);
+    const ePanel = await mkEntry(panelCrossing); // previous = genesis
+    const eRecast = await mkEntry(recast, ePanel.receipt.hash); // chains ONTO panel → on the lineage
+    const eGhost = await mkEntry(ghostFork); // fork sibling off genesis → NOT on the tip's lineage
+
+    const fetchImpl: typeof fetch = async () => {
+      const result = await handleGraphQuery({}, { loadGraph: () => server });
+      return { status: 200, json: async () => result } as Response;
+    };
+    const result = await runGraphNativeGapReplay({
+      queryUrl: '/api/graph',
+      localBase: base,
+      entries: [ePanel, eRecast, eGhost],
+      cellStore: store,
+      adopt: () => undefined,
+      fetchImpl,
+    });
+    expect(result.query.status).toBe('ok');
+    expect(store.snapshot('state')!.state).toBe('alpha'); // recast cell
+    expect(store.snapshot('panel')!.state).toBe('open'); // adopted state-only crossing
+    expect(store.snapshot('ghost')!.state).toBe('calm'); // FORK crossing — refused, cell at default
+  });
 });
 
 describe('graph-query gap replay — HOSTILE fixtures (Law 15)', () => {
