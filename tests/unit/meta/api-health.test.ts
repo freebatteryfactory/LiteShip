@@ -354,6 +354,17 @@ const STANDALONE_FUNCTIONS = [
   'buildResponsiveSrcset',
   'buildResponsiveImageSet',
   'projectResponsiveMediaPicture',
+  // Runtime easing sampler (#126, W8) + the multi-transition algebra (#141, W9) +
+  // the ONE cross-target motion kernel (#130, W10): every non-CSS target samples
+  // `sampleProgram`, and the differential oracle pins them all to it.
+  'sampleRuntimeEasing',
+  'lowerTransitionProgram',
+  'interpretProgram',
+  'sampleProgramWindows',
+  'sampleProgram',
+  'sampleProgramUniforms',
+  'lowerRevealChain',
+  'staggerProgram',
 ];
 
 // ── Error classes ───────────────────────────────────────────────────
@@ -438,6 +449,8 @@ const DEFAULT_CONSTANTS = [
   // project from via `projectLadder` (cap-axes rename).
   'LADDER_TARGETS',
   'LADDER_RUNGS',
+  // The ONE spring config the CSS `linear()` path and the JS floor default to (#126, Law 4).
+  'DEFAULT_MOTION_SPRING',
 ];
 
 // ── Branded type constructors (re-exported from brands.ts) ──────────

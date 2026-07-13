@@ -131,7 +131,13 @@ export type {
 // TransitionProgram — the explicit multi-transition algebra (#141). Composes
 // TransitionNodes (seq/par/choice) into a real timeline + multi-offset keyframes +
 // per-window runtime sub-samplers, replacing the deleted routing-label collapse.
-export { lowerTransitionProgram, interpretProgram, sampleProgramWindows } from './transition-program.js';
+export {
+  lowerTransitionProgram,
+  interpretProgram,
+  sampleProgramWindows,
+  sampleProgram,
+  sampleProgramUniforms,
+} from './transition-program.js';
 export type {
   TransitionProgram,
   TransitionBranch,
@@ -140,6 +146,8 @@ export type {
   BranchGuard,
   ProgramTimelineEntry,
   LoweredProgramTimeline,
+  ProgramSample,
+  ProgramUniforms,
 } from './transition-program.js';
 
 // Reveal intent sugar + graph lowering (#124). `lowerRevealChain` (#141) authors a

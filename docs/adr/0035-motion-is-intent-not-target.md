@@ -17,19 +17,20 @@ Four distinct target/output vocabularies exist today, and `motion`/`html`/`runti
 `dom` appear in none of them (`video` is a carrier, not a target; `svg` is in both
 target and carrier):
 
-| Vocabulary | Values | Source |
-|---|---|---|
-| `ProjectionNode.target` (output surface) | `css, glsl, wgsl, aria, ai, config, svg` | `packages/core/src/document-graph.ts:104` |
-| `ExportNode.carrier` (produced artifact) | `astro-page, video, svg, ship-capsule, receipt` | `document-graph.ts:133` |
-| `LadderTarget` (capability rung) | `css, glsl, wgsl, aria, ai` | `packages/core/src/cap-ladder.ts:29` |
-| `RuntimePhase` (execution lane) | `compute-discrete, compute-blend, emit-css/glsl/wgsl/aria` | `packages/core/src/runtime-coordinator.ts:23` |
+| Vocabulary                               | Values                                                     | Source                                        |
+| ---------------------------------------- | ---------------------------------------------------------- | --------------------------------------------- |
+| `ProjectionNode.target` (output surface) | `css, glsl, wgsl, aria, ai, config, svg`                   | `packages/core/src/document-graph.ts:104`     |
+| `ExportNode.carrier` (produced artifact) | `astro-page, video, svg, ship-capsule, receipt`            | `document-graph.ts:133`                       |
+| `LadderTarget` (capability rung)         | `css, glsl, wgsl, aria, ai`                                | `packages/core/src/cap-ladder.ts:29`          |
+| `RuntimePhase` (execution lane)          | `compute-discrete, compute-blend, emit-css/glsl/wgsl/aria` | `packages/core/src/runtime-coordinator.ts:23` |
 
 ## Decision
 
 **Motion is an authored intent, not a projection target.** A projection target names an
-*output surface*; motion names *transition semantics* that lower into existing surfaces.
+_output surface_; motion names _transition semantics_ that lower into existing surfaces.
 
 A `MotionIntent` lowers into:
+
 1. a **CSS projection plan** (`target: 'css'` — `@property` / `@keyframes` /
    `@starting-style` / `animation-timeline` / transitions);
 2. a **runtime leaf-write plan** — NOT a projection; it rides the law that discrete
@@ -87,3 +88,7 @@ No change is made to `ProjectionNode.target`, `LadderTarget`, or `RuntimePhase`.
   `seq`/`par`/`choice` to identical two-endpoint frames. ADR-0039 replaces it with an
   explicit `TransitionProgram` IR (real duration composition + branch selection). The
   motion-is-intent taxonomy here still stands.
+- **Extended by [ADR-0040](./0040-cross-target-motion-parity.md)** — the intent's runtime
+  floor becomes ONE shared kernel (`sampleProgram`) that every non-CSS target samples and
+  the CSS `@keyframes` are generated from, proven by a differential oracle. That parity is
+  ADDITIVE to `@czap/scene`'s video-crossfade `_blend`, never a merge.

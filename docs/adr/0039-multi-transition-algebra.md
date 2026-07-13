@@ -111,4 +111,7 @@ receipt.
 - `packages/astro/src/runtime/write-continuous-map.ts` — the floor reads the windows
 - Supersedes the `EdgeType`-as-algebra framing in **ADR-0035**; ADR-0035 keeps the
   motion-is-intent taxonomy, this ADR replaces its per-node sequencing claim.
+- Extended by **[ADR-0040](./0040-cross-target-motion-parity.md)** — `sampleProgramWindows`
+  is generalized into the ONE `sampleProgram` kernel every non-CSS target samples (and the
+  CSS `@keyframes` are generated from), pinned by a differential oracle.
 - Epic #141 (this decision); builds on #126 (the continuous floor), #130 (the interpreter)

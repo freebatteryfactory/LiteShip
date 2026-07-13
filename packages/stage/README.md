@@ -22,7 +22,7 @@ const result = await dualExport(graph);
 result.sharedSourceDigest === graph.digest; // true — the ONE source both casts read
 result.astro.carrier; // 'astro-page' — sealed ExportNode for the static page
 result.video.carrier; // 'video'      — sealed ExportNode for the frame-addressed video
-result.receipt;       // parent MERGE envelope: previous = [astroReceipt, videoReceipt]
+result.receipt; // parent MERGE envelope: previous = [astroReceipt, videoReceipt]
 ```
 
 `dualExport` runs both existing casters, content-addresses each artifact through the one kernel, and returns a single assertable head — a merge receipt whose `previous` joins both child receipts and whose payload pins `sharedSourceDigest`. The proof is that `sharedSourceDigest === graph.digest`, not that two outputs happen to agree.
@@ -46,6 +46,10 @@ Stage owns no identity kernel and reinvents no caster. It walks the graph and dr
 ## The byte-encode is injected
 
 The core entry never imports a codec. `exportVideo` content-addresses the produced per-frame `CompositeState` snapshots, not encoded bytes — so the same-source proof never depends on a codec running. To emit real bytes, inject a `FrameEncoder` at the call site: the node ffmpeg adapter from `@czap/stage/ffmpeg`, or WebCodecs in a browser wrapper. The proof's video carrier always addresses the frames, identical across both paths.
+
+## Authored-motion adapter
+
+`sampleMotionFrames(plan, totalFrames)` samples the ONE shared kernel (`@czap/core`'s `sampleProgram`, #130) at each `FrameRange` index; `exportMotionTrack(plan, totalFrames)` folds the sampled leaves into per-frame content and content-addresses the whole track through the SAME `CanonicalCbor.encode` → `AddressedDigest.of` kernel `dualExport` uses — the built-in oracle for the video leg. It is **additive** to the video-crossfade carrier / `TransitionSystem`, never a merge. A differential oracle proves the stage leg renders identically to every other target ([ADR-0040](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/adr/0040-cross-target-motion-parity.md)).
 
 ## Docs
 

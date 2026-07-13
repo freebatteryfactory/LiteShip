@@ -6,16 +6,15 @@
 
 # Function: sampleProgramWindows()
 
-> **sampleProgramWindows**(`windows`, `t`): readonly `object`[]
+> **sampleProgramWindows**(`windows`, `t`): readonly [`ProgramSample`](../interfaces/ProgramSample.md)[]
 
-Defined in: [core/src/transition-program.ts:483](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/transition-program.ts#L483)
+Defined in: [core/src/transition-program.ts:537](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/transition-program.ts#L537)
 
 The per-window runtime sub-sampler — the READER of `RuntimeWritePlan.windows`
-(Law 16). At global `t`, each window is sampled at its LOCAL eased progress
-(`clamp01((t - windowStart) / (windowEnd - windowStart))`), interpolated `from`→`to`;
-later windows overwrite earlier ones per `cssVar`, so a `seq` seam is a defined
-settled state and a completed program (`t=1`) is the terminal pose. Shared by the
-`client:motion` floor (`writeContinuousMap`) and its differential tests.
+(Law 16). At global `t`, each window is sampled at its LOCAL eased progress,
+interpolated `from`→`to`, last-window-wins. Delegates to the shared
+`walkWindows` kernel so a multi-step chain and the CSS `@keyframes` are one
+code path. Prefer `sampleProgram`, which also handles a flat single-tween plan.
 
 ## Parameters
 
@@ -29,4 +28,4 @@ readonly [`RuntimeWriteWindow`](../interfaces/RuntimeWriteWindow.md)[]
 
 ## Returns
 
-readonly `object`[]
+readonly [`ProgramSample`](../interfaces/ProgramSample.md)[]

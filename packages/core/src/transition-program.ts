@@ -327,53 +327,92 @@ export function lowerTransitionProgram(
   });
 }
 
-/** Sample a property's value at a global offset, holding endpoints outside its window. */
-function sampleTween(from: TypedValue, to: TypedValue, ws: number, we: number, offset: number): TypedValue {
-  if (offset <= ws || we <= ws) return from;
-  if (offset >= we) return to;
-  return interpolateTyped(from, to, (offset - ws) / (we - ws));
+/** Clamp a raw progress value to `[0,1]` (the local-t domain every easing expects). */
+function clamp01(value: number): number {
+  return value < 0 ? 0 : value > 1 ? 1 : value;
 }
 
-/** One CSS property's windows across the whole program (chained same-property steps). */
-interface PropWindow {
-  readonly property: string;
+/** One keyed tween (opaque `key` — a `cssVar` for the runtime, a CSS `property` for keyframes). */
+interface KeyedTween {
+  readonly key: string;
   readonly from: TypedValue;
   readonly to: TypedValue;
-  readonly ws: number;
-  readonly we: number;
+}
+
+/** A `[0,1]` window carrying its own easing over a set of keyed tweens. */
+interface WalkWindow {
+  readonly windowStart: number;
+  readonly windowEnd: number;
+  readonly easing: RuntimeEasing;
+  readonly tweens: readonly KeyedTween[];
 }
 
 /**
- * Build REAL multi-offset `@keyframes` stops from the composed windows. A stop is
- * emitted at every window boundary; at each stop EVERY property is valued (its
- * animated value inside its own window, its held endpoint outside), so `seq` steps
- * that touch different properties produce distinct stops instead of the pre-W9
- * two-endpoint collapse. Chained same-property windows resolve last-window-wins,
- * matching the runtime sub-sampler.
+ * THE window-walk — the single source of truth every non-CSS target and the CSS
+ * keyframe generator share (Law 4). At global `t`, each window is sampled at its
+ * LOCAL progress (`clamp01((t - windowStart) / span)`); `mode` selects the easing:
+ *
+ *   - `'authored'` — the window's own {@link RuntimeEasing} (the continuous curve the
+ *     runtime floor, scene, stage, remotion, and worker samplers all render);
+ *   - `'identity'` — linear local progress, for declarative CSS `@keyframes` whose
+ *     spring/ease SHAPE lives in the `linear()` timing function, not the stop values
+ *     (baking easing into both would double-apply it).
+ *
+ * Later windows overwrite earlier ones per key (last-window-wins), so a `seq` seam is
+ * a defined settled state and a completed program (`t=1`) is the terminal pose.
+ */
+function walkWindows(
+  windows: readonly WalkWindow[],
+  t: number,
+  mode: 'authored' | 'identity',
+): Map<string, TypedValue> {
+  const byKey = new Map<string, TypedValue>();
+  for (const window of windows) {
+    const span = window.windowEnd - window.windowStart;
+    const localRaw = span <= 0 ? (t >= window.windowStart ? 1 : 0) : (t - window.windowStart) / span;
+    const clamped = clamp01(localRaw);
+    const eased = mode === 'identity' ? clamped : sampleRuntimeEasing(window.easing)(clamped);
+    for (const tween of window.tweens) {
+      byKey.set(tween.key, interpolateTyped(tween.from, tween.to, eased));
+    }
+  }
+  return byKey;
+}
+
+/** Project composed {@link AbsWindow}s onto the shared {@link WalkWindow} shape, keyed by CSS `property`. */
+function cssWalkWindows(windows: readonly AbsWindow[], totalMs: number): { walk: WalkWindow[]; offsets: number[] } {
+  const offsets = new Set<number>([0, 1]);
+  const walk: WalkWindow[] = windows.map((w) => {
+    const windowStart = normalize(w.startMs, totalMs);
+    const windowEnd = normalize(w.endMs, totalMs);
+    offsets.add(windowStart);
+    offsets.add(windowEnd);
+    return {
+      windowStart,
+      windowEnd,
+      easing: w.step.easing,
+      tweens: w.step.cssProps.map((p) => ({ key: p.property, from: p.from, to: p.to })),
+    };
+  });
+  return { walk, offsets: [...offsets].sort((a, b) => a - b) };
+}
+
+/**
+ * Build REAL multi-offset `@keyframes` stops from the composed windows — by sampling
+ * the SAME `walkWindows` kernel the runtime samplers read (Law 4), so declarative
+ * CSS and every non-CSS sampler provably agree. A stop is emitted at every window
+ * boundary; at each stop EVERY property is valued (its animated value inside its own
+ * window, its held endpoint outside), so `seq` steps that touch different properties
+ * produce distinct stops. `'identity'` mode keeps the stop values LINEAR — the spring/
+ * ease shape rides the compiled `linear()` timing function, never double-eased into the
+ * values. Chained same-property windows resolve last-window-wins, matching the runtime.
  */
 function buildKeyframes(windows: readonly AbsWindow[], totalMs: number): CssKeyframeStep[] {
-  const propWindows: PropWindow[] = [];
-  const offsets = new Set<number>([0, 1]);
-  for (const w of windows) {
-    const ws = normalize(w.startMs, totalMs);
-    const we = normalize(w.endMs, totalMs);
-    offsets.add(ws);
-    offsets.add(we);
-    for (const p of w.step.cssProps) propWindows.push({ property: p.property, from: p.from, to: p.to, ws, we });
-  }
-  const propNames = [...new Set(propWindows.map((p) => p.property))];
-  const sortedOffsets = [...offsets].sort((a, b) => a - b);
-
-  return sortedOffsets.map((offset) => {
+  const { walk, offsets } = cssWalkWindows(windows, totalMs);
+  return offsets.map((offset) => {
     const properties: Record<string, string> = {};
-    for (const name of propNames) {
-      const forProp = propWindows.filter((p) => p.property === name).sort((a, b) => a.ws - b.ws);
-      // Last window whose start is at/behind this offset governs; else the first `from`.
-      let governing = forProp[0]!;
-      for (const pw of forProp) if (pw.ws <= offset) governing = pw;
-      properties[name] = formatTypedValue(
-        sampleTween(governing.from, governing.to, governing.ws, governing.we, offset),
-      );
+    for (const [property, value] of walkWindows(walk, offset, 'identity')) {
+      properties[property] = formatTypedValue(value);
     }
     return { offset, properties };
   });
@@ -472,27 +511,97 @@ export function interpretProgram(
   });
 }
 
+/** One sampled leaf: a `cssVar` and its interpolated {@link TypedValue} at a given `t`. */
+export interface ProgramSample {
+  readonly cssVar: string;
+  readonly value: TypedValue;
+}
+
+/** Project per-window runtime sub-samplers onto the shared {@link WalkWindow} shape, keyed by `cssVar`. */
+function runtimeWalkWindows(windows: readonly RuntimeWriteWindow[]): WalkWindow[] {
+  return windows.map((w) => ({
+    windowStart: w.windowStart,
+    windowEnd: w.windowEnd,
+    easing: w.easing,
+    tweens: w.properties.map((p) => ({ key: p.cssVar, from: p.from, to: p.to })),
+  }));
+}
+
 /**
  * The per-window runtime sub-sampler — the READER of `RuntimeWritePlan.windows`
- * (Law 16). At global `t`, each window is sampled at its LOCAL eased progress
- * (`clamp01((t - windowStart) / (windowEnd - windowStart))`), interpolated `from`→`to`;
- * later windows overwrite earlier ones per `cssVar`, so a `seq` seam is a defined
- * settled state and a completed program (`t=1`) is the terminal pose. Shared by the
- * `client:motion` floor (`writeContinuousMap`) and its differential tests.
+ * (Law 16). At global `t`, each window is sampled at its LOCAL eased progress,
+ * interpolated `from`→`to`, last-window-wins. Delegates to the shared
+ * `walkWindows` kernel so a multi-step chain and the CSS `@keyframes` are one
+ * code path. Prefer `sampleProgram`, which also handles a flat single-tween plan.
  */
-export function sampleProgramWindows(
-  windows: readonly RuntimeWriteWindow[],
-  t: number,
-): ReadonlyArray<{ readonly cssVar: string; readonly value: TypedValue }> {
-  const byVar = new Map<string, TypedValue>();
-  for (const window of windows) {
-    const span = window.windowEnd - window.windowStart;
-    const localRaw = span <= 0 ? (t >= window.windowStart ? 1 : 0) : (t - window.windowStart) / span;
-    const clamped = localRaw < 0 ? 0 : localRaw > 1 ? 1 : localRaw;
-    const eased = sampleRuntimeEasing(window.easing)(clamped);
-    for (const prop of window.properties) {
-      byVar.set(prop.cssVar, interpolateTyped(prop.from, prop.to, eased));
+export function sampleProgramWindows(windows: readonly RuntimeWriteWindow[], t: number): readonly ProgramSample[] {
+  return [...walkWindows(runtimeWalkWindows(windows), t, 'authored').entries()].map(([cssVar, value]) => ({
+    cssVar,
+    value,
+  }));
+}
+
+/**
+ * `sampleProgram` — THE shared motion kernel every non-CSS target samples (#130, Law 4).
+ *
+ * Given a lowered {@link RuntimeWritePlan} and a normalized time `t ∈ [0,1]`, returns the
+ * typed leaf value of every animated `cssVar`. It unifies BOTH lowering shapes behind one
+ * reader:
+ *   - a composed {@link TransitionProgram} (`plan.windows` present) → the per-window
+ *     sub-samplers ({@link sampleProgramWindows});
+ *   - a single-step plan (`interpretTransition`, no windows) → one implicit window `[0,1]`
+ *     carrying `plan.easing` over `plan.properties`.
+ *
+ * The browser runtime floor (`writeContinuousMap`), the scene / stage / remotion frame
+ * samplers, and the worker off-thread sampler ALL call this one function; the declarative
+ * CSS `@keyframes` are generated from the SAME `walkWindows` kernel (see
+ * `buildKeyframes`). The differential oracle (`motion-parity.test.ts`) is the
+ * reader that pins every target to this reference.
+ */
+export function sampleProgram(plan: RuntimeWritePlan, t: number): readonly ProgramSample[] {
+  if (plan.windows && plan.windows.length > 0) return sampleProgramWindows(plan.windows, t);
+  const flat: WalkWindow[] = [
+    {
+      windowStart: 0,
+      windowEnd: 1,
+      easing: plan.easing,
+      tweens: plan.properties.map((p) => ({ key: p.cssVar, from: p.from, to: p.to })),
+    },
+  ];
+  return [...walkWindows(flat, t, 'authored').entries()].map(([cssVar, value]) => ({ cssVar, value }));
+}
+
+/** Strip the `--czap-` prefix and kebab→snake a `cssVar` into a WGSL struct field name. */
+function wgslFieldFromCssVar(cssVar: string): string {
+  const stripped = cssVar.startsWith('--') ? cssVar.slice(2) : cssVar;
+  const withoutPrefix = stripped.startsWith('czap-') ? stripped.slice(5) : stripped;
+  return withoutPrefix.replace(/-/g, '_');
+}
+
+/** The uniform payload a `sampleProgram` sample projects to: formatted CSS + GPU-bound WGSL scalars. */
+export interface ProgramUniforms {
+  /** Every animated `cssVar` formatted for a CSS custom-property / style write. */
+  readonly css: Record<string, string>;
+  /** GPU-bound numeric props (kind `number`/`opacity`) keyed by their WGSL struct field. */
+  readonly wgsl: Record<string, number>;
+}
+
+/**
+ * Project a `sampleProgram` sample into the `czap:uniform-update` payload — the ONE
+ * uniform-building path shared by the `client:motion` floor (`writeContinuousMap`, which
+ * adds the DOM writes) and the `@czap/worker` off-thread sampler (which posts it across the
+ * worker boundary). Keeping the formatting here (not forked per host) is Law 4: the leaf a
+ * browser writes and the leaf a worker posts are byte-identical because they format ONE
+ * kernel sample.
+ */
+export function sampleProgramUniforms(plan: RuntimeWritePlan, t: number): ProgramUniforms {
+  const css: Record<string, string> = {};
+  const wgsl: Record<string, number> = {};
+  for (const { cssVar, value } of sampleProgram(plan, t)) {
+    css[cssVar] = formatTypedValue(value);
+    if (value.k === 'number' || value.k === 'opacity') {
+      wgsl[wgslFieldFromCssVar(cssVar)] = value.v;
     }
   }
-  return [...byVar.entries()].map(([cssVar, value]) => ({ cssVar, value }));
+  return { css, wgsl };
 }

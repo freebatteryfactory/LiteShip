@@ -26,6 +26,10 @@ import type { VideoRenderer } from '@czap/core';
 // Hooks
 export { cssVarsFromState, stateAtFrame, useCompositeState } from './hooks.js';
 
+// Authored-motion adapter (#130): samples the ONE shared `sampleProgram` kernel at the
+// composition's current frame and folds the typed leaves into frame content.
+export { sampleMotionFrame, motionCssVars } from './motion.js';
+
 // Composition
 export type { RemotionVideoConfig } from './composition.js';
 export { precomputeFrames, rendererFromRemotionConfig, Provider, useCzapState } from './composition.js';

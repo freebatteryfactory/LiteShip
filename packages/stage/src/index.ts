@@ -22,6 +22,12 @@ export type {
   FrameEncoder,
 } from './dual-export.js';
 
+// Authored-motion video-leg adapter (#130): samples the ONE shared `sampleProgram`
+// kernel per FrameRange index and content-addresses the folded frames — ADDITIVE to
+// the video-crossfade carrier above, never a merge.
+export { sampleMotionFrames, exportMotionTrack } from './motion-export.js';
+export type { MotionFrameSample, MotionTrackExport } from './motion-export.js';
+
 // The headless ffmpeg byte-encode backend lives on the node-only `./ffmpeg`
 // subpath (it imports `node:child_process`/`node:fs`); the main entry above
 // stays node-free so the pure graph-walk is importable anywhere. Inject the

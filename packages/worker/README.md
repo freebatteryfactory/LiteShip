@@ -25,7 +25,10 @@ import { CompositorWorker } from '@czap/worker';
 // A boundary names the thresholds where one state becomes the next.
 const layout = Boundary.make({
   input: 'viewport.width',
-  at: [[0, 'compact'], [768, 'wide']],
+  at: [
+    [0, 'compact'],
+    [768, 'wide'],
+  ],
 });
 
 const compositor = CompositorWorker.create();
@@ -52,6 +55,10 @@ for the full layout.
 ## If it does nothing
 
 `onState` callbacks only fire after a compute round: if you `evaluate(...)` and never see a snapshot, you likely skipped `requestCompute()`. Pass a real `Boundary.make(...).id` to `addQuantizer` — the id is a content address (a hash of the definition), and downstream caching keys on it.
+
+## Authored-motion adapter (minimal)
+
+`motionSampleMessage(plan, t)` is the worker's deliberately **thin** authored-motion adapter (#130): it runs the ONE shared kernel (`@czap/core`'s `sampleProgram`, via the re-exported `sampleProgramUniforms`) off the main thread and returns a structured-clone-safe `{ type: 'motion-sample', css, wgsl }` envelope. The host relays `css`/`wgsl` onto a bound element with `dispatchCzapEvent(el, 'czap:uniform-update', …)` — the SAME channel the main-thread floor already dispatches. There is no new compositor, render loop, or protocol; the sample envelope is kept out of the `FromWorkerMessage` union on purpose. A differential oracle proves the worker leg renders identically to every other target ([ADR-0040](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/adr/0040-cross-target-motion-parity.md)).
 
 ## Docs
 
