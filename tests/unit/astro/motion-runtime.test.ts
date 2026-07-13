@@ -240,8 +240,11 @@ describe('client:motion — JS floor is the production driver (retires LATENT)',
     expect(uniformCount).toBe(4);
   });
 
-  test('native timeline SUPPORTED ⇒ JS floor idle (CSS owns the scrub), initial state still set', () => {
+  test('native timeline CSS DRIVES this element ⇒ JS floor idle (CSS owns the scrub), initial state still set', () => {
     vi.stubGlobal('CSS', { supports: () => true, escape: (s: string) => s });
+    // Simulate the emitted MotionCompiler CSS: this element carries a czap-motion
+    // animation bound to a scroll/view timeline, so native CSS actually owns it.
+    vi.stubGlobal('getComputedStyle', () => ({ animationName: 'czap-motion-hero-before-after' }));
     const el = makeEl(buildProgram());
     let uniformCount = 0;
     el.addEventListener('czap:uniform-update', () => uniformCount++);
@@ -254,6 +257,25 @@ describe('client:motion — JS floor is the production driver (retires LATENT)',
     stepScroll(1);
     expect(uniformCount).toBe(0);
     expect(el.style.opacity).toBe(''); // never written by the floor
+  });
+
+  test('capable browser but NO native CSS emitted for this element ⇒ floor RUNS (program-only surface)', () => {
+    // animation-timeline is supported, but this surface emitted no MotionCompiler CSS
+    // (a Reveal.chain / program inlines the program but no @keyframes) — animationName
+    // is 'none'. A global capability check would strand it at first paint; the
+    // per-element check keeps the floor as the guarantee, so it scrubs normally.
+    vi.stubGlobal('CSS', { supports: () => true, escape: (s: string) => s });
+    vi.stubGlobal('getComputedStyle', () => ({ animationName: 'none' }));
+    const el = makeEl(buildProgram());
+    let uniformCount = 0;
+    el.addEventListener('czap:uniform-update', () => uniformCount++);
+
+    motionDirective(noop, {}, el);
+    // The floor ran: the seed frame wrote leaf values, so first paint is NOT stuck.
+    expect(uniformCount).toBe(1);
+    expect(el.style.opacity).not.toBe('');
+    stepScroll(0.5);
+    expect(uniformCount).toBe(2); // continues to scrub on scroll
   });
 
   /**
