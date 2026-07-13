@@ -15,11 +15,11 @@ const hero = ResponsiveMedia.intent({
   id: 'hero-img',
   alt: 'Adaptive hero photograph',
   variants: [
-    { src: '/img/hero-800.jpg', width: 800 },
-    { src: '/img/hero-1600.jpg', width: 1600 },
-    { src: '/img/hero-2400.jpg', width: 2400 },
+    { src: '/img/hero-800.svg', width: 800 },
+    { src: '/img/hero-1600.svg', width: 1600 },
+    { src: '/img/hero-2400.svg', width: 2400 },
   ],
-  saveDataVariant: { src: '/img/hero-lite.jpg', width: 400 },
+  saveDataVariant: { src: '/img/hero-lite.svg', width: 400 },
   sizes: '(max-width: 768px) 100vw, 50vw',
 });
 
@@ -62,7 +62,7 @@ const dpr = caps?.devicePixelRatio ?? 1;
     <pre><code>{media?.preload}</code></pre>
     <p class="footnote">
       Turn on Save-Data and reload: the srcset and preload above collapse to
-      <code>/img/hero-lite.jpg</code> only. With Save-Data off they list the full
+      <code>/img/hero-lite.svg</code> only. With Save-Data off they list the full
       <code>800w / 1600w / 2400w</code> set and the DPR pick becomes the resolved
       <code>src</code>. The response also carries <code>Vary: …, Sec-CH-DPR, Save-Data</code>
       so a CDN keys the two representations apart.
