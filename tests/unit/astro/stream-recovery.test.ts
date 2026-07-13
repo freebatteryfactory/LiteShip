@@ -445,6 +445,11 @@ describe('stream directive graph-native recovery (#133)', () => {
     el.innerHTML = '<main>stale-rejected</main>';
     streamDirective(noop, {}, el);
 
+    // The gap-replayed crossing must be REFLECTED back to the host, not only written to the
+    // private recovery store — capture the discrete signals it dispatches (Codex P2).
+    const signals: unknown[] = [];
+    el.addEventListener('czap:signal', ((event: CustomEvent) => signals.push(event.detail)) as EventListener);
+
     // The directive registered a substrate from the attributes (not test glue),
     // with its OWN store carrying the inlined 'workspace' registration at genesis.
     const registered = getStreamRecoverySubstrate(ARTIFACT);
@@ -471,6 +476,9 @@ describe('stream directive graph-native recovery (#133)', () => {
       expect(cell?.generation).toBe(1);
     });
     expect(fetchMock).toHaveBeenCalled();
+    // ...and the crossing was reflected to the HOST as a discrete signal, not just written to the
+    // private recovery store — so downstream listeners / rendered state converge too (Codex P2).
+    expect(signals).toContainEqual({ workspace: 'expanded' });
 
     // F-REC-3: the rejected-morph DOM ALSO converges — gap-replay fixes the graph +
     // cells, and the snapshot HTML leg replaces the stale rendered DOM.
