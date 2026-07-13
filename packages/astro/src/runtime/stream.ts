@@ -348,6 +348,13 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
   // the top instead of resuming where the swapped-out connection left off.
   let lastCursor: string | null = null;
 
+  // In-flight receipt attestations (F-133 race): `recordStreamPatchReceipt` is async
+  // (it re-hashes to attest before buffering), so a receipt frame received just before
+  // a morph rejection may still be settling when recovery fires. Recovery drains this
+  // set first (see `drainPendingReceipts` below), so gap replay reads a buffer that
+  // already includes every crossing received before the trigger.
+  const inFlightReceipts = new Set<Promise<unknown>>();
+
   const bindReinit = (nextTarget: HTMLElement): void => {
     if (reinitTarget === nextTarget) {
       return;
@@ -517,9 +524,12 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
 
     if (message.type === 'receipt') {
       // Feed the gap-replay receipt buffer (#133-full) when the host registered
-      // a recovery substrate; without one the frame has no consumer.
+      // a recovery substrate; without one the frame has no consumer. Track the
+      // in-flight attestation so a recovery firing before it settles drains it first.
       if (artifactId !== undefined) {
-        recordStreamPatchReceipt(artifactId, message.data);
+        const pending = recordStreamPatchReceipt(artifactId, message.data).catch(() => false);
+        inFlightReceipts.add(pending);
+        void pending.finally(() => inFlightReceipts.delete(pending));
       }
       return;
     }
@@ -728,6 +738,9 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
             mutationClient: substrate.mutationClient,
             cellStore: substrate.cellStore,
             patchReceiptEntries: substrate.patchReceiptEntries,
+            // Drain any receipt frame still attesting so gap replay never reads a
+            // buffer missing a crossing that arrived before this recovery (F-133 race).
+            drainPendingReceipts: () => Promise.all([...inFlightReceipts]).then(() => undefined),
           }
         : {}),
       handlers: {

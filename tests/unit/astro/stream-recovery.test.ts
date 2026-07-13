@@ -329,6 +329,70 @@ describe('stream directive graph-native recovery (#133)', () => {
     }
   });
 
+  test('a receipt still attesting when recovery fires is DRAINED before gap replay reads the buffer (F-133 race)', async () => {
+    // The race: recordStreamPatchReceipt is async (it re-hashes to attest), so a
+    // receipt frame received immediately before a morph rejection is still settling
+    // when recovery fires. Without draining, gap replay reads an EMPTY buffer and
+    // misses the just-received crossing. This test triggers recovery in the SAME tick
+    // as the receipt frame — no wait for the buffer — and asserts the entry made it.
+    const localBase = { id: 'czap:base' } as never;
+    const gapReplay = vi.spyOn(core, 'runGraphNativeGapReplay').mockResolvedValue({
+      query: { status: 'ok', graph: localBase, etag: 'sha256:ok' },
+      replayedCells: [],
+      discretePayloads: [],
+    } as never);
+    // domStale is wired, so recovery also fetches a snapshot — supply one.
+    vi.spyOn(Resumption, 'fetchSnapshot').mockReturnValue(
+      Effect.succeed({ type: 'snapshot', html: '<main>x</main>', signals: {}, lastEventId: 'evt-99' }),
+    );
+
+    const dispose = registerStreamRecoverySubstrate('hero', {
+      graphQueryUrl: '/api/graph',
+      mutationClient: { base: () => localBase, adopt: vi.fn() },
+      cellStore: { get: () => undefined, register: () => {}, applyDiscrete: () => {} } as never,
+    });
+
+    try {
+      const el = makeEl('div', { 'data-czap-stream-url': '/api/feed', 'data-czap-stream-artifact': 'hero' });
+      streamDirective(noop, {}, el);
+
+      const transition = {
+        _tag: 'DiscreteStateTransition' as const,
+        _version: 1 as const,
+        cell: 'workspace',
+        next: 'expanded',
+        generation: 1,
+        authority: 'quantizer' as const,
+        base: 'czap:base',
+        kind: 'discrete' as const,
+      };
+      const receipt = await Effect.runPromise(core.transitionReceipt(transition));
+
+      // Feed the receipt frame, then trigger recovery in the SAME tick — the async
+      // attestation is still in flight (NOT awaited for the buffer as the other tests do).
+      MockEventSource.instances[0]!.simulateMessage(
+        JSON.stringify({ type: 'receipt', data: { receipt, transition } }),
+        'evt-43',
+      );
+      el.dispatchEvent(
+        new CustomEvent('czap:request-snapshot', { detail: { reason: 'preserve-missing' }, bubbles: true }),
+      );
+
+      await vi.waitFor(() => {
+        expect(gapReplay).toHaveBeenCalledOnce();
+      });
+      // The drain awaited the in-flight attestation, so the buffer already carried the
+      // crossing when gap replay read it — length 1, not the empty 0 of the race.
+      const call = gapReplay.mock.calls[0]![0] as {
+        entries: readonly { readonly transition: { readonly cell: string; readonly next: string } }[];
+      };
+      expect(call.entries).toHaveLength(1);
+      expect(call.entries[0]!.transition).toMatchObject({ cell: 'workspace', next: 'expanded' });
+    } finally {
+      dispose();
+    }
+  });
+
   test('graph-backed directive constructs + registers the substrate and a REAL crossing converges the cell (retires LATENT)', async () => {
     // No mock of runGraphNativeGapReplay: the crossing must replay through the REAL
     // core path (QUERY → adopt → applyTransition → hydrateDiscrete), driven by the

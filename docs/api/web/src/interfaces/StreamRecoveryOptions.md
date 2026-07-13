@@ -55,6 +55,26 @@ fast path (no snapshot fetch when the DOM is already fresh).
 
 ***
 
+### drainPendingReceipts?
+
+> `readonly` `optional` **drainPendingReceipts?**: () => `Promise`\<`void`\>
+
+Defined in: [web/src/stream/recovery.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L89)
+
+Await any in-flight receipt-frame attestation before recovery reads the buffer.
+`recordStreamPatchReceipt` is async — it recomputes the sha256 hash to attest a
+frame BEFORE appending it — so a receipt that arrives just before a morph
+rejection may still be hashing when recovery fires; gap replay would then run
+against a buffer missing that just-received crossing. Draining first serializes
+the two: every receipt received before the trigger is buffered before the QUERY
+reads it. Absent, recovery proceeds immediately (the interim floor is unaffected).
+
+#### Returns
+
+`Promise`\<`void`\>
+
+***
+
 ### endpointPolicy?
 
 > `readonly` `optional` **endpointPolicy?**: [`RuntimeEndpointPolicy`](RuntimeEndpointPolicy.md)

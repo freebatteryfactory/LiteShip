@@ -8,7 +8,7 @@
 
 > **runGraphNativeRecovery**(`options`): `Promise`\<`void`\>
 
-Defined in: [web/src/stream/recovery.ts:143](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L143)
+Defined in: [web/src/stream/recovery.ts:153](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L153)
 
 Full graph-native recovery (#133).
 
