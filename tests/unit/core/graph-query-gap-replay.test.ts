@@ -186,7 +186,7 @@ describe('graph-query gap replay — attested replay (#133-full)', () => {
     expect(result.transitions).toHaveLength(1);
   });
 
-  test('not_modified still replays local transition-chain crossings', async () => {
+  test('not_modified does NOT replay a graph-RECASTING crossing (its result graph was never adopted)', async () => {
     const { base, e1 } = await scenario();
     const store = freshStore();
     const fetchImpl: typeof fetch = async () =>
@@ -195,7 +195,8 @@ describe('graph-query gap replay — attested replay (#133-full)', () => {
         headers: new Headers({ etag: `"${graphQueryEtag(base)}"` }),
         json: async () => null,
       }) as Response;
-    // localBase === serverGraphId on 304 → no branch bridges → nothing to replay.
+    // e1 recasts the graph (base → mid). On a 304 the graph is still `base`, so that
+    // crossing did not take effect and must not replay — only state-only crossings do.
     const result = await runGraphNativeGapReplay({
       queryUrl: '/api/graph',
       localBase: base,
@@ -206,6 +207,43 @@ describe('graph-query gap replay — attested replay (#133-full)', () => {
     });
     expect(result.query.status).toBe('not_modified');
     expect(result.transitions).toHaveLength(0);
+    expect(store.snapshot('state')!.state).toBe('a');
+  });
+
+  test('not_modified REPLAYS a state-only crossing (no resultId) the HTML leg dropped', async () => {
+    const base = graph([node('a')]);
+    const store = freshStore();
+    // A pure cell crossing that did NOT recast the graph → `resultId` absent. On a 304
+    // the graph is unchanged, but this crossing still happened and must hydrate the cell.
+    const stateOnly: DiscreteStateTransition = {
+      _tag: 'DiscreteStateTransition',
+      _version: 1,
+      cell: 'state',
+      next: StateName('alpha'),
+      generation: 1,
+      authority: 'graph',
+      base: base.id,
+      kind: 'discrete',
+    };
+    const entry = await mkEntry(stateOnly);
+    const fetchImpl: typeof fetch = async () =>
+      ({
+        status: 304,
+        headers: new Headers({ etag: `"${graphQueryEtag(base)}"` }),
+        json: async () => null,
+      }) as Response;
+    const result = await runGraphNativeGapReplay({
+      queryUrl: '/api/graph',
+      localBase: base,
+      entries: [entry],
+      cellStore: store,
+      adopt: () => undefined,
+      fetchImpl,
+    });
+    expect(result.query.status).toBe('not_modified');
+    expect(result.transitions).toHaveLength(1);
+    expect(store.snapshot('state')!.state).toBe('alpha');
+    expect(store.snapshot('state')!.generation).toBe(1);
   });
 });
 

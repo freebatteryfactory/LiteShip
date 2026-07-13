@@ -77,10 +77,6 @@ export function chainPatchesBetween(
   serverGraphId: ContentAddress,
   entries: readonly PatchReceiptEntry[],
 ): readonly DiscreteStateTransition[] {
-  if (localBaseId === serverGraphId) {
-    return [];
-  }
-
   const byBase = new Map<string, PatchReceiptEntry[]>();
   for (const entry of entries) {
     if (entry.receipt.kind !== 'discrete-transition') {
@@ -89,6 +85,19 @@ export function chainPatchesBetween(
     const list = byBase.get(entry.transition.base) ?? [];
     list.push(entry);
     byBase.set(entry.transition.base, list);
+  }
+
+  if (localBaseId === serverGraphId) {
+    // Graph UNCHANGED (a 304 conditional read, or a same-id read). A graph-RECASTING
+    // crossing — its `resultId` names a DIFFERENT graph — did not take effect: the
+    // server never adopted that graph, so it is not replayed. But a STATE-ONLY crossing
+    // (no `resultId`, or `resultId === base`: a pure cell crossing that never recast the
+    // graph) DID happen and the HTML leg may have dropped it, so replay it. Returning []
+    // here (treating equal graph ids as no work) would leave state-only SSE gaps stale.
+    // The caller's chain floor + per-cell highest-generation fold settle each cell.
+    return (byBase.get(localBaseId) ?? [])
+      .filter((entry) => entry.transition.resultId === undefined || entry.transition.resultId === localBaseId)
+      .map((entry) => entry.transition);
   }
 
   const path: DiscreteStateTransition[] = [];
