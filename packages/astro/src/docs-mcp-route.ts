@@ -80,6 +80,20 @@ function jsonRpc(id: unknown, result: unknown): Response {
 }
 
 /**
+ * JSON-RPC 2.0 error response. The failure lives in the TOP-LEVEL `error`
+ * member — never nested under `result` — so spec-conformant MCP clients read
+ * it as a failure instead of laundering it into a success envelope (Law 1: no
+ * silent drift). Every response is `error` XOR `result`, never both. HTTP 200
+ * is correct for JSON-RPC-over-HTTP: the transport succeeded; the RPC did not.
+ */
+function jsonRpcError(id: unknown, code: number, message: string, data?: unknown): Response {
+  return new Response(
+    JSON.stringify({ jsonrpc: '2.0', id, error: { code, message, ...(data !== undefined ? { data } : {}) } }),
+    { headers: { 'content-type': 'application/json' } },
+  );
+}
+
+/**
  * Minimal MCP-over-HTTP handler for docs tools: `docs/list`, `docs/search`, `docs/get`.
  * Accepts POST with JSON-RPC body; returns structured JSON (not stdio NDJSON).
  */
@@ -92,7 +106,8 @@ export function docsMcpRoute(bundle: DocsMcpBundle): (request: Request) => Promi
     try {
       body = (await request.json()) as typeof body;
     } catch {
-      return jsonRpc(null, { error: { code: -32700, message: 'Parse error' } });
+      // Per JSON-RPC 2.0, a parse error uses id: null (the id could not be read).
+      return jsonRpcError(null, -32700, 'Parse error');
     }
 
     const { id, method, params } = body;
@@ -118,11 +133,9 @@ export function docsMcpRoute(bundle: DocsMcpBundle): (request: Request) => Promi
             `${error instanceof Error ? error.message : String(error)}. ` +
             'Rebuild the bundle with `pnpm run docs:bundle` and redeploy.',
         });
-        return jsonRpc(id, {
-          error: { code: -32603, message: `Internal error: docs bundle integrity failure for ${path}` },
-        });
+        return jsonRpcError(id, -32603, `Internal error: docs bundle integrity failure for ${path}`);
       }
-      if (text === null) return jsonRpc(id, { error: { code: -32602, message: `Unknown doc: ${path}` } });
+      if (text === null) return jsonRpcError(id, -32602, `Unknown doc: ${path}`);
       return jsonRpc(id, { path, text });
     }
     if (method === 'docs/search') {
@@ -133,6 +146,6 @@ export function docsMcpRoute(bundle: DocsMcpBundle): (request: Request) => Promi
         .slice(0, 50);
       return jsonRpc(id, { hits });
     }
-    return jsonRpc(id, { error: { code: -32601, message: `Method not found: ${method}` } });
+    return jsonRpcError(id, -32601, `Method not found: ${method}`);
   };
 }
