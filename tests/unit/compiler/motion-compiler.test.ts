@@ -21,6 +21,7 @@ import {
   type ComponentNode,
   type SignalNode,
   type CssMotionPlan,
+  type RuntimeEasing,
 } from '@czap/core';
 import { MotionCompiler, dispatch } from '@czap/compiler';
 
@@ -241,7 +242,10 @@ describe('MotionCompiler', () => {
  * emits them verbatim through the same `emitKeyframeStep` (`step.offset`) path.
  */
 describe('MotionCompiler — composed TransitionProgram keyframes (#141, backend unchanged)', () => {
-  function twoStepGraph(): { graph: DocumentGraph; a: ContentAddress; b: ContentAddress } {
+  function twoStepGraph(
+    easingA?: RuntimeEasing,
+    easingB?: RuntimeEasing,
+  ): { graph: DocumentGraph; a: ContentAddress; b: ContentAddress } {
     const signal = sealNode({
       _tag: 'DocGraphSignalNode',
       _version: 1,
@@ -272,6 +276,7 @@ describe('MotionCompiler — composed TransitionProgram keyframes (#141, backend
       from: Record<string, number | string>,
       to: Record<string, number | string>,
       durationMs: number,
+      easing?: RuntimeEasing,
     ): TransitionNode & { fp: PoseNode; tp: PoseNode } => {
       const fp = sealNode({
         _tag: 'DocGraphPoseNode',
@@ -303,11 +308,12 @@ describe('MotionCompiler — composed TransitionProgram keyframes (#141, backend
         toPose: tp.id,
         routing: 'seq',
         durationMs,
+        ...(easing ? { easing } : {}),
       } as unknown as TransitionNode);
       return Object.assign(tr, { fp, tp });
     };
-    const a = mkStep({ opacity: 0 }, { opacity: 1 }, 200);
-    const b = mkStep({ '--czap-hero-x': '0px' }, { '--czap-hero-x': '100px' }, 600);
+    const a = mkStep({ opacity: 0 }, { opacity: 1 }, 200, easingA);
+    const b = mkStep({ '--czap-hero-x': '0px' }, { '--czap-hero-x': '100px' }, 600, easingB);
     const g = graph(
       [signal, component, entity, a.fp, a.tp, a, b.fp, b.tp, b],
       [{ from: signal.id, to: component.id, type: 'seq' }],
@@ -405,6 +411,64 @@ describe('MotionCompiler — composed TransitionProgram keyframes (#141, backend
     const result = MotionCompiler.compile({ plan: seq.css! });
     expect(result.transition).toContain('opacity 200ms ease');
     expect(result.transition).toContain('--czap-hero-x 600ms ease 200ms');
+  });
+
+  test('a UNIFORM-easing seq carries NO per-keyframe animation-timing-function (byte-identical keyframes)', () => {
+    // Both steps default to `ease`, so the animation-level curve serves every segment —
+    // per-keyframe timing functions would be redundant churn. None must be emitted.
+    const { graph: g, a, b } = twoStepGraph();
+    const seq = interpretProgram(g, {
+      kind: 'seq',
+      children: [
+        { kind: 'step', transitionId: a },
+        { kind: 'step', transitionId: b },
+      ],
+    });
+    expect(seq.css!.keyframes.every((k) => k.easing === undefined)).toBe(true);
+    expect(MotionCompiler.compile({ plan: seq.css! }).keyframes).not.toContain('animation-timing-function');
+  });
+
+  test('a MIXED-easing seq carries each segment its own animation-timing-function (Codex P2 parity)', () => {
+    // Step A springs, step B eases. Native `animation-timeline` browsers must sample each
+    // segment with its OWN curve — matching the JS/stage/worker per-window floors — instead
+    // of one animation-level curve for the whole plan. The seam stop (25%) begins B's `ease`
+    // segment; the 0% stop begins A's spring segment (a `linear(...)` sampled from the spring).
+    const spring: RuntimeEasing = { kind: 'spring', spring: { stiffness: 210, damping: 18 } };
+    const { graph: g, a, b } = twoStepGraph(spring, { kind: 'ease' });
+    const seq = interpretProgram(g, {
+      kind: 'seq',
+      children: [
+        { kind: 'step', transitionId: a },
+        { kind: 'step', transitionId: b },
+      ],
+    });
+    // The seam is a real 25% stop (200 of 800ms); A owns [0,0.25], B owns [0.25,1].
+    const startStop = seq.css!.keyframes.find((k) => k.offset === 0);
+    const seamStop = seq.css!.keyframes.find((k) => k.offset === 0.25);
+    expect(startStop?.easing).toEqual(spring);
+    expect(seamStop?.easing).toEqual({ kind: 'ease' });
+
+    const result = MotionCompiler.compile({ plan: seq.css! });
+    // Emitted: the spring compiles to a `linear()` sampling; B's segment is plain `ease`.
+    expect(result.keyframes).toContain('animation-timing-function: linear(');
+    expect(result.keyframes).toMatch(/25% \{[^}]*animation-timing-function: ease;/s);
+  });
+
+  test('a PAR of differently-eased children cannot carry one per-keyframe curve — diagnosed LOUDLY', () => {
+    // Overlapping windows [0,0.33] (spring) and [0,1] (ease) both cover the [0,0.33]
+    // segment with DIFFERENT easing; one `animation-timing-function` cannot serve both, so
+    // interpretProgram approximates with the plan-level curve and emits a loud diagnostic
+    // (Law 1: no silent drift) rather than pretending the fallback is faithful.
+    const spring: RuntimeEasing = { kind: 'spring', spring: { stiffness: 210, damping: 18 } };
+    const { graph: g, a, b } = twoStepGraph(spring, { kind: 'ease' });
+    const par = interpretProgram(g, {
+      kind: 'par',
+      children: [
+        { kind: 'step', transitionId: a },
+        { kind: 'step', transitionId: b },
+      ],
+    });
+    expect(par.diagnostics.some((d) => d.code === 'mixed-easing-overlap-approximated')).toBe(true);
   });
 });
 

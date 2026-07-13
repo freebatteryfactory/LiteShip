@@ -6,7 +6,7 @@
 
 # Interface: RuntimeWriteProperty
 
-Defined in: [core/src/interpret-transition.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L55)
+Defined in: [core/src/interpret-transition.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L67)
 
 One runtime leaf-write descriptor (typed CSS custom property floor).
 
@@ -16,7 +16,7 @@ One runtime leaf-write descriptor (typed CSS custom property floor).
 
 > `readonly` **cssVar**: `string`
 
-Defined in: [core/src/interpret-transition.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L56)
+Defined in: [core/src/interpret-transition.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L68)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [core/src/interpret-transition.ts:56](https://github.com/freebattery
 
 > `readonly` **from**: [`TypedValue`](../type-aliases/TypedValue.md)
 
-Defined in: [core/src/interpret-transition.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L57)
+Defined in: [core/src/interpret-transition.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L69)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [core/src/interpret-transition.ts:57](https://github.com/freebattery
 
 > `readonly` **to**: [`TypedValue`](../type-aliases/TypedValue.md)
 
-Defined in: [core/src/interpret-transition.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L58)
+Defined in: [core/src/interpret-transition.ts:70](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L70)

@@ -6,7 +6,7 @@
 
 # Interface: RuntimeWritePlan
 
-Defined in: [core/src/interpret-transition.ts:76](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L76)
+Defined in: [core/src/interpret-transition.ts:88](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L88)
 
 Runtime leaf-write plan — the permanent floor when native CSS is unavailable.
 
@@ -16,7 +16,7 @@ Runtime leaf-write plan — the permanent floor when native CSS is unavailable.
 
 > `readonly` **durationMs**: `number`
 
-Defined in: [core/src/interpret-transition.ts:78](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L78)
+Defined in: [core/src/interpret-transition.ts:90](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L90)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [core/src/interpret-transition.ts:78](https://github.com/freebattery
 
 > `readonly` **easing**: [`RuntimeEasing`](RuntimeEasing.md)
 
-Defined in: [core/src/interpret-transition.ts:88](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L88)
+Defined in: [core/src/interpret-transition.ts:100](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L100)
 
 The easing descriptor the JS floor samples (`sampleRuntimeEasing`). Self-describing
 so the floor never depends on a driver to hand it a curve — and read from the
@@ -37,7 +37,7 @@ SAME authored source (`TransitionNode.easing`) the native CSS path compiles into
 
 > `readonly` **fromState**: [`StateName`](../type-aliases/StateName.md)
 
-Defined in: [core/src/interpret-transition.ts:80](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L80)
+Defined in: [core/src/interpret-transition.ts:92](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L92)
 
 ***
 
@@ -45,7 +45,7 @@ Defined in: [core/src/interpret-transition.ts:80](https://github.com/freebattery
 
 > `readonly` **properties**: readonly [`RuntimeWriteProperty`](RuntimeWriteProperty.md)[]
 
-Defined in: [core/src/interpret-transition.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L77)
+Defined in: [core/src/interpret-transition.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L89)
 
 ***
 
@@ -53,7 +53,7 @@ Defined in: [core/src/interpret-transition.ts:77](https://github.com/freebattery
 
 > `readonly` **routing**: [`EdgeType`](../type-aliases/EdgeType.md)
 
-Defined in: [core/src/interpret-transition.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L79)
+Defined in: [core/src/interpret-transition.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L91)
 
 ***
 
@@ -61,7 +61,7 @@ Defined in: [core/src/interpret-transition.ts:79](https://github.com/freebattery
 
 > `readonly` **toState**: [`StateName`](../type-aliases/StateName.md)
 
-Defined in: [core/src/interpret-transition.ts:81](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L81)
+Defined in: [core/src/interpret-transition.ts:93](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L93)
 
 ***
 
@@ -69,7 +69,7 @@ Defined in: [core/src/interpret-transition.ts:81](https://github.com/freebattery
 
 > `readonly` `optional` **windows?**: readonly [`RuntimeWriteWindow`](RuntimeWriteWindow.md)[]
 
-Defined in: [core/src/interpret-transition.ts:96](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L96)
+Defined in: [core/src/interpret-transition.ts:108](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L108)
 
 Per-window sub-samplers for a composed [TransitionProgram](../type-aliases/TransitionProgram.md) (from
 `interpretProgram`). Present ⇒ the floor scrubs each window at its own local

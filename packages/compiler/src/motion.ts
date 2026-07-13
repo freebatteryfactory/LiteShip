@@ -103,10 +103,16 @@ function emitPropertyRegistrations(properties: readonly MotionPropertyTween[]): 
 
 function emitKeyframeStep(step: CssKeyframeStep): string {
   const pct = Math.round(step.offset * 100);
-  const decls = Object.entries(step.properties)
-    .map(([k, v]) => `    ${k}: ${v};`)
-    .join('\n');
-  return `  ${pct}% {\n${decls}\n  }`;
+  const decls = Object.entries(step.properties).map(([k, v]) => `    ${k}: ${v};`);
+  // A MIXED-easing composed program carries the segment's own curve here so the native
+  // animation samples each segment with its authored easing — matching the JS/stage/worker
+  // per-window floors (cross-target parity). Per-keyframe `animation-timing-function` governs
+  // the segment STARTING at this stop and overrides the animation-level function for it.
+  // Absent on uniform-easing plans and single-step transitions (no output change there).
+  if (step.easing) {
+    decls.push(`    animation-timing-function: ${resolveEasing(step.easing.kind, step.easing.spring)};`);
+  }
+  return `  ${pct}% {\n${decls.join('\n')}\n  }`;
 }
 
 function emitKeyframes(plan: CssMotionPlan): string {

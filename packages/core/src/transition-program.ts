@@ -408,6 +408,13 @@ function cssWalkWindows(windows: readonly AbsWindow[], totalMs: number): { walk:
   return { walk, offsets: [...offsets].sort((a, b) => a - b) };
 }
 
+/** Stable value-identity for a {@link RuntimeEasing} so distinct curves compare by value. */
+function easingKey(easing: RuntimeEasing): string {
+  return easing.kind === 'spring'
+    ? `spring:${easing.spring?.stiffness ?? ''}:${easing.spring?.damping ?? ''}:${easing.spring?.mass ?? ''}`
+    : easing.kind;
+}
+
 /**
  * Build REAL multi-offset `@keyframes` stops from the composed windows — by sampling
  * the SAME `walkWindows` kernel the runtime samplers read (Law 4), so declarative
@@ -415,15 +422,52 @@ function cssWalkWindows(windows: readonly AbsWindow[], totalMs: number): { walk:
  * boundary; at each stop EVERY property is valued (its animated value inside its own
  * window, its held endpoint outside), so `seq` steps that touch different properties
  * produce distinct stops. `'identity'` mode keeps the stop values LINEAR — the spring/
- * ease shape rides the compiled `linear()` timing function, never double-eased into the
- * values. Chained same-property windows resolve last-window-wins, matching the runtime.
+ * ease shape rides the timing function, never double-eased into the values. Chained
+ * same-property windows resolve last-window-wins, matching the runtime.
+ *
+ * When the program MIXES easing curves, one animation-level `animation-timing-function`
+ * would sample every segment with a single curve on a native `animation-timeline` browser
+ * while the JS/stage/worker floors use each window's own curve (a cross-target parity
+ * gap). To close it, each stop that begins a segment carries THAT segment's easing as a
+ * per-keyframe `animation-timing-function` (`CssKeyframeStep.easing`). A uniform-easing
+ * program carries none (the animation-level curve already serves it — byte-identical to
+ * before). An overlapping segment whose windows DISAGREE on easing (a `par` of
+ * differently-eased children) cannot be expressed by one per-keyframe curve — it is left
+ * to the plan-level curve and diagnosed LOUDLY (Law 1).
  */
-function buildKeyframes(windows: readonly AbsWindow[], totalMs: number): CssKeyframeStep[] {
+function buildKeyframes(
+  windows: readonly AbsWindow[],
+  totalMs: number,
+  diagnostics: DiagnosticPayload[],
+): CssKeyframeStep[] {
   const { walk, offsets } = cssWalkWindows(windows, totalMs);
-  return offsets.map((offset) => {
+  const mixedEasing = new Set(walk.map((w) => easingKey(w.easing))).size > 1;
+
+  return offsets.map((offset, i) => {
     const properties: Record<string, string> = {};
     for (const [property, value] of walkWindows(walk, offset, 'identity')) {
       properties[property] = formatTypedValue(value);
+    }
+    // Uniform easing (the common case) needs no per-keyframe curve; the final stop begins
+    // no segment. Both keep the pre-existing shape → zero churn on single-easing programs.
+    if (!mixedEasing || i === offsets.length - 1) return { offset, properties };
+
+    // Every window boundary is an offset, so a window either FULLY covers the segment
+    // [offset, next] or misses it — the windows active here are exactly those spanning it.
+    const next = offsets[i + 1]!;
+    const active = walk.filter((w) => w.windowStart <= offset && w.windowEnd >= next);
+    const distinct = new Set(active.map((w) => easingKey(w.easing)));
+    if (distinct.size === 1) return { offset, properties, easing: active[0]!.easing };
+    if (distinct.size > 1) {
+      diagnostics.push({
+        source: 'interpretProgram',
+        code: 'mixed-easing-overlap-approximated',
+        message:
+          `the keyframe segment at offset ${offset} is covered by ${distinct.size} overlapping windows with ` +
+          'DIFFERENT easing (a `par` of differently-eased children); one per-keyframe `animation-timing-function` ' +
+          'cannot serve them, so the native CSS path approximates this segment with the plan-level curve. Lower ' +
+          'differently-eased par children as separate per-property motions to render each curve exactly.',
+      });
     }
     return { offset, properties };
   });
@@ -532,7 +576,7 @@ export function interpretProgram(
     properties: Object.freeze(unionCss),
     durationMs: result.totalMs,
     routing: 'seq',
-    keyframes: Object.freeze(buildKeyframes(result.windows, result.totalMs)),
+    keyframes: Object.freeze(buildKeyframes(result.windows, result.totalMs, diagnostics)),
     transitionProperty: unionCss.map((p) => p.property).join(', '),
   });
 
