@@ -10,6 +10,7 @@ import { Resumption, getStreamRecoverySubstrate, registerStreamRecoverySubstrate
 import streamDirective from '../../../packages/astro/src/client-directives/stream.js';
 import { MockEventSource } from '../../helpers/mock-event-source.js';
 import { _resetRuntimePolicyForTests } from '../../../packages/astro/src/runtime/policy.js';
+import { graph, node } from '../../helpers/graph-fixtures.js';
 
 const noop = (): Promise<void> => Promise.resolve();
 
@@ -33,24 +34,21 @@ describe('stream directive graph-native recovery (#133)', () => {
     _resetRuntimePolicyForTests();
     restoreES = MockEventSource.install();
     vi.stubGlobal('location', { origin: 'http://localhost:3000' });
-    vi.stubGlobal(
-      'sessionStorage',
-      {
-        getItem: vi.fn(() =>
-          JSON.stringify({
-            artifactId: 'hero',
-            lastEventId: 'evt-42',
-            lastSequence: 42,
-            timestamp: 1,
-          }),
-        ),
-        setItem: vi.fn(),
-        removeItem: vi.fn(),
-        clear: vi.fn(),
-        length: 0,
-        key: vi.fn(() => null),
-      },
-    );
+    vi.stubGlobal('sessionStorage', {
+      getItem: vi.fn(() =>
+        JSON.stringify({
+          artifactId: 'hero',
+          lastEventId: 'evt-42',
+          lastSequence: 42,
+          timestamp: 1,
+        }),
+      ),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+      clear: vi.fn(),
+      length: 0,
+      key: vi.fn(() => null),
+    });
   });
 
   afterEach(() => {
@@ -73,10 +71,7 @@ describe('stream directive graph-native recovery (#133)', () => {
       .mockResolvedValueOnce(
         new Response(
           JSON.stringify({
-            patches: [
-              '<p>html-patch</p>',
-              { type: 'signal', data: { state: 'missed-discrete' } },
-            ],
+            patches: ['<p>html-patch</p>', { type: 'signal', data: { state: 'missed-discrete' } }],
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
@@ -316,6 +311,89 @@ describe('stream directive graph-native recovery (#133)', () => {
     }
   });
 
+  test('graph-backed directive constructs + registers the substrate and a REAL crossing converges the cell (retires LATENT)', async () => {
+    // No mock of runGraphNativeGapReplay: the crossing must replay through the REAL
+    // core path (QUERY → adopt → applyTransition → hydrateDiscrete), driven by the
+    // production directive that constructs StateCellStore.create() + a mutation
+    // client + registerStreamRecoverySubstrate from the graph-backed attributes.
+    const ARTIFACT = 'graph-native-hero';
+
+    // G0 = the client's SSR-inlined local base; G1 = the server graph after the
+    // crossing recast (distinct ids). The transition chains G0.id → G1.id.
+    const g0 = graph([node('workspace.collapsed')]);
+    const g1 = graph([node('workspace.collapsed'), node('workspace.expanded')]);
+    expect(g0.id).not.toBe(g1.id);
+
+    // QUERY read leg returns the server graph (ok) with its sha256 etag.
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ status: 'ok', graph: g1, etag: g1.digest.integrity_digest }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    // Mint the AUTHORITY transition receipt for a real StateCellStore crossing
+    // (collapsed → expanded, generation 0 → 1), exactly as the emit route does.
+    const authorityStore = core.StateCellStore.create();
+    authorityStore.register('workspace', ['collapsed', 'expanded']);
+    const previous = authorityStore.snapshot('workspace');
+    const next = authorityStore.applyDiscrete('workspace', 'expanded');
+    expect(next.generation).toBe(1);
+    const { receipt, transition } = await Effect.runPromise(
+      core.mintTransition(previous, next, { base: g0.id, resultId: g1.id }),
+    );
+
+    const el = makeEl('div', {
+      'data-czap-stream-url': '/api/graph-feed',
+      'data-czap-stream-artifact': ARTIFACT,
+      'data-czap-stream-graph': '/api/graph',
+      'data-czap-stream-graph-base': JSON.stringify(g0),
+      'data-czap-stream-cells': JSON.stringify([{ name: 'workspace', states: ['collapsed', 'expanded'] }]),
+    });
+
+    streamDirective(noop, {}, el);
+
+    // The directive registered a substrate from the attributes (not test glue),
+    // with its OWN store carrying the inlined 'workspace' registration at genesis.
+    const registered = getStreamRecoverySubstrate(ARTIFACT);
+    expect(registered).toBeDefined();
+    expect(registered!.cellStore.snapshot('workspace')?.state).toBe('collapsed');
+    expect(registered!.cellStore.snapshot('workspace')?.generation).toBe(0);
+
+    // Feed the attested receipt frame over SSE; it attests + lands in the live buffer.
+    const source = MockEventSource.instances[0]!;
+    source.simulateMessage(JSON.stringify({ type: 'receipt', data: { receipt, transition } }), 'evt-43');
+    await vi.waitFor(() => {
+      expect(getStreamRecoverySubstrate(ARTIFACT)?.patchReceiptEntries).toHaveLength(1);
+    });
+
+    // Recover: request-snapshot drives graph-native gap replay through the wiring.
+    el.dispatchEvent(
+      new CustomEvent('czap:request-snapshot', { detail: { reason: 'preserve-missing' }, bubbles: true }),
+    );
+
+    // The CELL converged — state AND generation — through the production path.
+    await vi.waitFor(() => {
+      const cell = getStreamRecoverySubstrate(ARTIFACT)?.cellStore.snapshot('workspace');
+      expect(cell?.state).toBe('expanded');
+      expect(cell?.generation).toBe(1);
+    });
+    expect(fetchMock).toHaveBeenCalled();
+
+    // Disposal: teardown removes the registration — no leak. A re-register (which
+    // THROWS if the slot were still held) proves the slot is free again.
+    el.dispatchEvent(new CustomEvent('czap:teardown'));
+    expect(getStreamRecoverySubstrate(ARTIFACT)).toBeUndefined();
+    const redispose = registerStreamRecoverySubstrate(ARTIFACT, {
+      graphQueryUrl: '/api/graph',
+      mutationClient: { base: () => g1, adopt: () => {} },
+      cellStore: core.StateCellStore.create(),
+    });
+    redispose();
+  });
+
   test('replay with dropped signals validates snapshot before applying HTML patches', async () => {
     vi.useFakeTimers();
     vi.spyOn(Math, 'random').mockReturnValue(0.5);
@@ -323,10 +401,7 @@ describe('stream directive graph-native recovery (#133)', () => {
     const fetchMock = vi.fn().mockResolvedValueOnce(
       new Response(
         JSON.stringify({
-          patches: [
-            '<p>should-not-apply</p>',
-            { type: 'signal', data: { state: 'missed-discrete' } },
-          ],
+          patches: ['<p>should-not-apply</p>', { type: 'signal', data: { state: 'missed-discrete' } }],
         }),
         { status: 200, headers: { 'Content-Type': 'application/json' } },
       ),
@@ -390,19 +465,14 @@ describe('stream directive graph-native recovery (#133)', () => {
     const fetchMock = vi.fn().mockResolvedValueOnce(
       new Response(
         JSON.stringify({
-          patches: [
-            '<p>html-patch-applied</p>',
-            { type: 'signal', data: { state: 'missed-discrete' } },
-          ],
+          patches: ['<p>html-patch-applied</p>', { type: 'signal', data: { state: 'missed-discrete' } }],
         }),
         { status: 200, headers: { 'Content-Type': 'application/json' } },
       ),
     );
     vi.stubGlobal('fetch', fetchMock);
 
-    vi.spyOn(Resumption, 'fetchSnapshot').mockReturnValue(
-      Effect.fail(new Error('snapshot endpoint unreachable')),
-    );
+    vi.spyOn(Resumption, 'fetchSnapshot').mockReturnValue(Effect.fail(new Error('snapshot endpoint unreachable')));
 
     const el = makeEl('div', {
       'data-czap-stream-url': '/api/feed',
