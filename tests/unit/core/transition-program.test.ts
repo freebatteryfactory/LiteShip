@@ -480,6 +480,55 @@ describe('TransitionProgram — authoring sugar (Reveal.chain / staggerProgram)'
     expect(color).toBeDefined();
   });
 
+  test('a choice branch step carries its delayMs into the lowered timeline (Codex P2)', () => {
+    const build = (branchDelayMs?: number, otherwiseDelayMs?: number) =>
+      lowerRevealChain({
+        target: 'hero',
+        trigger: { type: 'scroll', axis: 'progress' },
+        steps: [{ from: { opacity: 0 }, to: { opacity: 1 }, transition: { durationMs: 300, easing: 'linear' } }],
+        choice: {
+          branches: [
+            {
+              when: { op: 'gte', value: 768 },
+              source: 'viewport.width' as never,
+              step: {
+                from: { color: '#000000' },
+                to: { color: '#2dd4bf' },
+                transition: { durationMs: 200, easing: 'linear' },
+                ...(branchDelayMs !== undefined ? { delayMs: branchDelayMs } : {}),
+              },
+            },
+          ],
+          otherwise: {
+            from: { color: '#000000' },
+            to: { color: '#f59e0b' },
+            transition: { durationMs: 200, easing: 'linear' },
+            ...(otherwiseDelayMs !== undefined ? { delayMs: otherwiseDelayMs } : {}),
+          },
+        },
+        policy: { reducedMotion: 'settle', motionTier: 'transitions' },
+      });
+
+    const wideSignals = { signals: { 'viewport.width': 1200 } };
+    const narrowSignals = { signals: { 'viewport.width': 320 } };
+
+    // Selected branch delay lengthens the timeline by EXACTLY the delay (300 rise + 150
+    // dead + 200 tween = 650), where the dropped-delay bug produced 500.
+    const withDelay = build(150, 90);
+    const wide = lowerTransitionProgram(withDelay.graph, withDelay.program, wideSignals);
+    expect(wide.selectedBranchIds).toEqual(['branch-0']);
+    expect(wide.totalMs).toBe(650);
+
+    // The otherwise arm carries ITS delay too (300 + 90 + 200 = 590).
+    const narrow = lowerTransitionProgram(withDelay.graph, withDelay.program, narrowSignals);
+    expect(narrow.selectedBranchIds).toEqual(['otherwise']);
+    expect(narrow.totalMs).toBe(590);
+
+    // Falsifier: with no branch delay the same chain totals 300 + 200 = 500.
+    const noDelay = build();
+    expect(lowerTransitionProgram(noDelay.graph, noDelay.program, wideSignals).totalMs).toBe(500);
+  });
+
   test('staggerProgram composes a par program whose child windows carry the stagger delays', () => {
     const intent = Stagger.intent({
       trigger: { type: 'view', range: ['entry 0%', 'cover 50%'] },

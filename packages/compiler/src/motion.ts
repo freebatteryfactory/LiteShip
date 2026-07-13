@@ -150,17 +150,74 @@ function delaySuffix(delayMs: number | undefined): string {
   return delayMs !== undefined && delayMs > 0 ? ` ${delayMs}ms` : '';
 }
 
+/**
+ * The `[start, end]` offsets a property ACTIVELY tweens over, read from the keyframe
+ * stops: the last offset it still holds its initial value (before it departs) and the
+ * first offset it reaches its terminal value (after which it holds). A single-transition
+ * plan has exactly two stops, so every property yields `[0, 1]` — the whole span. A
+ * multi-window program (`par` / `seq` / stagger) is where they differ: a `par` opacity
+ * that completes at `200/600` yields `[0, 1/3]`, a `seq` step yields `[0.25, 1]`, etc.
+ * A constant or non-monotonic property (`initial === final`) falls back to the full span.
+ */
+function propertyActiveWindow(
+  sortedStops: readonly CssKeyframeStep[],
+  property: string,
+): { readonly start: number; readonly end: number } {
+  const values = sortedStops.map((stop) => stop.properties[property]);
+  const first = sortedStops[0]!.offset;
+  const last = sortedStops[sortedStops.length - 1]!.offset;
+  const initial = values[0];
+  const final = values[values.length - 1];
+
+  let start = first;
+  for (let i = 0; i < sortedStops.length; i++) {
+    if (values[i] === initial) start = sortedStops[i]!.offset;
+    else break;
+  }
+  let end = last;
+  for (let i = 0; i < sortedStops.length; i++) {
+    if (values[i] === final) {
+      end = sortedStops[i]!.offset;
+      break;
+    }
+  }
+  // A constant property (initial === final) collapses to end <= start — there is no real
+  // tween, so hand it the full span rather than a zero/negative duration.
+  return end > start ? { start, end } : { start: first, end: last };
+}
+
+/**
+ * Compose the `transition` shorthand. Each property animates over ITS OWN window
+ * (`propertyActiveWindow`), so a `par`/stagger program whose opacity completes at
+ * `200/600` emits `opacity 200ms` (with the right delay) — not the composed total for
+ * every property, which would make the transition fallback diverge from the keyframe /
+ * JS-floor path (cross-target parity). A single-transition plan yields `[0,1]` for every
+ * property, so this is byte-identical to a uniform `durationMs` there.
+ */
 function transitionDecls(plan: CssMotionPlan, easingFn: string, delayMs?: number): string {
-  const duration = `${plan.durationMs}ms`;
-  const delay = delaySuffix(delayMs);
-  return plan.transitionProperty.trim().length > 0
-    ? plan.transitionProperty
-        .split(',')
-        .map((p) => p.trim())
-        .filter(Boolean)
-        .map((p) => `${p} ${duration} ${easingFn}${delay}`)
-        .join(', ')
-    : `all ${duration} ${easingFn}${delay}`;
+  const baseDelayMs = delayMs !== undefined && delayMs > 0 ? delayMs : 0;
+  const props = plan.transitionProperty
+    .split(',')
+    .map((p) => p.trim())
+    .filter(Boolean);
+  if (props.length === 0) {
+    return `all ${plan.durationMs}ms ${easingFn}${delaySuffix(delayMs)}`;
+  }
+
+  const stops = [...plan.keyframes].sort((a, b) => a.offset - b.offset);
+  if (stops.length < 2) {
+    // No window structure to read — every property spans the full duration.
+    return props.map((p) => `${p} ${plan.durationMs}ms ${easingFn}${delaySuffix(delayMs)}`).join(', ');
+  }
+
+  return props
+    .map((p) => {
+      const { start, end } = propertyActiveWindow(stops, p);
+      const durationMs = Math.round((end - start) * plan.durationMs);
+      const delayMsForProp = Math.round(baseDelayMs + start * plan.durationMs);
+      return `${p} ${durationMs}ms ${easingFn}${delayMsForProp > 0 ? ` ${delayMsForProp}ms` : ''}`;
+    })
+    .join(', ');
 }
 
 function emitBaseRule(plan: CssMotionPlan): string {
