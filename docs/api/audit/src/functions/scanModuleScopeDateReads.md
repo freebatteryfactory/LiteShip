@@ -8,7 +8,7 @@
 
 > **scanModuleScopeDateReads**(`source`, `fileName?`): readonly [`ModuleScopeDateHit`](../interfaces/ModuleScopeDateHit.md)[]
 
-Defined in: [audit/src/workers-date-scan.ts:333](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/workers-date-scan.ts#L333)
+Defined in: [audit/src/workers-date-scan.ts:343](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/workers-date-scan.ts#L343)
 
 THE PUBLIC ENTRY — every MODULE-LOAD ambient-Date read in `source`, each with its 1-based line/column.
 Shared by the doctor probe and the consumer-app audit so both agree on ONE definition (Law 6). Returns

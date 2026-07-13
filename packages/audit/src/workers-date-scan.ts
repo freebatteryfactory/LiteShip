@@ -233,6 +233,18 @@ function walkExecuting(node: ts.Node, ctx: ScanContext): void {
     return;
   }
 
+  // A plain executing BLOCK reached during load — an `if`/`else` consequent, a loop body, a
+  // `try`/`catch` block, or a bare `{}` — runs its statements NOW. Index its OWN local helper
+  // declarations first so a call to one inside the block is followed: the generic child walk
+  // below would enter with the enclosing table and skip the `function` declaration as deferred,
+  // missing a read like `if (flag) { function boot() { return Date.now() } boot() }` (Codex P2).
+  if (ts.isBlock(node)) {
+    const localFns = scopeWithLocalFunctions(node, ctx.localFns);
+    const scoped: ScanContext = localFns === ctx.localFns ? ctx : { ...ctx, localFns };
+    for (const statement of node.statements) walkExecuting(statement, scoped);
+    return;
+  }
+
   ts.forEachChild(node, (child) => walkExecuting(child, ctx));
 }
 
@@ -298,13 +310,11 @@ function walkClassDefinition(node: ts.ClassDeclaration | ts.ClassExpression, ctx
       walkExecuting(member.initializer, ctx);
       continue;
     }
-    // A `static {}` block runs at class definition — index its OWN local helper declarations
-    // (like a load-time function body) so a call to one inside the block is followed; without
-    // this a `static { function boot(){ Date.now() } boot() }` frozen-clock read is missed.
+    // A `static {}` block runs at class definition; its body is an executing block, so the generic
+    // block path in walkExecuting walks its statements AND indexes its own local helper
+    // declarations (so a `static { function boot(){ Date.now() } boot() }` read is not missed).
     if (ts.isClassStaticBlockDeclaration(member)) {
-      const localFns = scopeWithLocalFunctions(member.body, ctx.localFns);
-      const scoped: ScanContext = localFns === ctx.localFns ? ctx : { ...ctx, localFns };
-      for (const statement of member.body.statements) walkExecuting(statement, scoped);
+      walkExecuting(member.body, ctx);
     }
     // Methods / accessors / constructor bodies are deferred — never scanned here.
   }
