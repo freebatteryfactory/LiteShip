@@ -1,7 +1,7 @@
 {
   "name": "@czap/core",
   "version": "0.9.0",
-  "description": "Primitives: Boundary, Token, Style, Theme, Signal, DocumentGraph + GraphPatch (the content-addressed IR), AI cast, Compositor, ECS, HLC, DAG, Plan, AVBridge",
+  "description": "The heart of LiteShip: define UI boundaries, tokens, themes, and signals once as a content-addressed graph, then drive the engine that keeps every rendered output in sync.",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",
   "repository": {
@@ -13,12 +13,10 @@
   "homepage": "https://github.com/freebatteryfactory/LiteShip#readme",
   "keywords": [
     "czap",
-    "constraint-based",
+    "liteship",
     "adaptive-rendering",
-    "framework",
-    "boundary",
-    "compositor",
-    "ecs",
+    "constraint-based",
+    "ui-framework",
     "typescript"
   ],
   "type": "module",

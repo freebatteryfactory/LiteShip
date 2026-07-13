@@ -33,6 +33,7 @@ import {
   resolveExecutable,
   tarballFileUrl,
 } from '../lib/package-smoke-helpers.js';
+import { checkPackedMetadata } from '../lib/package-metadata-catalog.js';
 import { emit, type WallClockTimestamp } from '../receipts.js';
 
 /** `PEER_INSTALLS` → `{name: version}` map (the extracted, unit-tested helper). */
@@ -79,12 +80,20 @@ function run(command: string, args: readonly string[], cwd: string): string {
 
 /** Read `package/package.json` from a `pnpm pack` tarball (layout-stable on every OS). */
 function readPackedManifest(tarballPath: string): {
+  name?: string;
+  description?: string;
+  keywords?: readonly string[];
+  private?: boolean;
   dependencies?: Record<string, string>;
   peerDependencies?: Record<string, string>;
   optionalDependencies?: Record<string, string>;
 } {
   const raw = execFileSync('tar', ['-xOf', tarballPath, 'package/package.json'], { encoding: 'utf8' });
   return JSON.parse(raw) as {
+    name?: string;
+    description?: string;
+    keywords?: readonly string[];
+    private?: boolean;
     dependencies?: Record<string, string>;
     peerDependencies?: Record<string, string>;
     optionalDependencies?: Record<string, string>;
@@ -323,6 +332,27 @@ export async function runPackageSmokeScan(root: string): Promise<PackageSmokeSum
       ensureNoWorkspaceProtocolsInTarball(tarballByPackage.get(pkg.name)!, pkg.name);
     }
     stepOk('no workspace: protocols found in packed manifests');
+
+    // F-EXTRA (#146): the release gate is the enforcement point for answer-first
+    // package metadata. Every packed manifest must still MATCH its canonical
+    // catalog entry (description + keywords derived from PACKAGE_METADATA_CATALOG,
+    // Law 6) and carry no accidental private/`internal` metadata — so a drifted or
+    // jargon description can never reach npm.
+    step('verify answer-first package metadata (description + keywords) in packed manifests');
+    const metadataViolations: string[] = [];
+    for (const pkg of PACKAGES) {
+      const manifest = readPackedManifest(tarballByPackage.get(pkg.name)!);
+      for (const violation of checkPackedMetadata(manifest, pkg.name)) {
+        metadataViolations.push(`${violation.package} [${violation.field}]: ${violation.message}`);
+      }
+    }
+    if (metadataViolations.length > 0) {
+      throw IntegrityError(
+        'package-smoke',
+        `Publishable package metadata failed the answer-first check:\n  - ${metadataViolations.join('\n  - ')}`,
+      );
+    }
+    stepOk(`answer-first metadata verified for ${PACKAGES.length} packed manifests`);
 
     const allImports = PACKAGES.flatMap((pkg) => pkg.imports);
     step(`import-smoke ${allImports.length} module specifiers via node smoke.mjs`);

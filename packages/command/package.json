@@ -1,7 +1,7 @@
 {
   "name": "@czap/command",
   "version": "0.9.0",
-  "description": "Shared capsule command registry + dispatcher — one command truth for the CLI and MCP adapters",
+  "description": "The shared command registry behind LiteShip's tooling: one source of command definitions that both the `czap` CLI and the MCP server project from.",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",
   "repository": {
@@ -13,10 +13,10 @@
   "homepage": "https://github.com/freebatteryfactory/LiteShip#readme",
   "keywords": [
     "czap",
-    "command-registry",
-    "dispatcher",
+    "liteship",
     "cli",
     "mcp",
+    "command-registry",
     "typescript"
   ],
   "type": "module",

@@ -370,6 +370,12 @@ export const auditAllowlist: readonly AuditAllowlistEntry[] = [
   {
     rule: 'default-export',
     package: '@czap/astro',
+    filePrefix: 'src/client-directives/motion.ts',
+    reason: 'Astro client directives require default exports and this file is an intentionally tiny wrapper.',
+  },
+  {
+    rule: 'default-export',
+    package: '@czap/astro',
     filePrefix: 'src/client-directives/wasm.ts',
     reason: 'Astro client directives require default exports and this file is an intentionally tiny wrapper.',
   },
