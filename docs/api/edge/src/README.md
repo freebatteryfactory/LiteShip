@@ -43,6 +43,7 @@ compilation.
 ## Type Aliases
 
 - [BoundaryManifest](type-aliases/BoundaryManifest.md)
+- [CrossOriginEmbedderPolicy](type-aliases/CrossOriginEmbedderPolicy.md)
 - [EdgeHostCacheStatus](type-aliases/EdgeHostCacheStatus.md)
 - [EdgeHostCacheTags](type-aliases/EdgeHostCacheTags.md)
 - [TierKey](type-aliases/TierKey.md)
@@ -50,6 +51,7 @@ compilation.
 ## Variables
 
 - [ClientHints](variables/ClientHints.md)
+- [CrossOriginIsolation](variables/CrossOriginIsolation.md)
 - [DESIGN\_TIERS](variables/DESIGN_TIERS.md)
 - [EdgeHostAdapter](variables/EdgeHostAdapter.md)
 - [EdgeTier](variables/EdgeTier.md)

@@ -16,9 +16,8 @@
 
 import { lookup as dnsLookup } from 'node:dns/promises';
 import { Agent, type Dispatcher } from 'undici';
+import { ClientHints, CrossOriginIsolation } from '@czap/edge';
 import type { DoctorCheck } from './types.js';
-
-const REQUIRED_ISOLATION = ['Cross-Origin-Opener-Policy', 'Cross-Origin-Embedder-Policy'] as const;
 
 const MAX_REDIRECT_HOPS = 5;
 const FETCH_TIMEOUT_MS = 10_000;
@@ -228,6 +227,54 @@ function headerSummary(headers: Headers, name: string): string | null {
   return value && value.trim().length > 0 ? value.trim() : null;
 }
 
+/** Split a comma-separated list header into trimmed, LOWERCASED, non-empty tokens (case-insensitive comparison). */
+function tokenizeHeader(value: string): string[] {
+  return value
+    .split(',')
+    .map((token) => token.trim().toLowerCase())
+    .filter((token) => token.length > 0);
+}
+
+/** The leading structured token of a policy header (drop any `; report-to="…"` params), lowercased. */
+function policyToken(value: string): string {
+  return value.split(';')[0]!.trim().toLowerCase();
+}
+
+/**
+ * Advisory check that a deployed list-header CONTAINS every token czap requests.
+ * `ok` only when the full expected set is present; `warn` (never `fail`) when the
+ * header is absent or missing any required token. The expected set is DERIVED from
+ * the passed czap header value (e.g. `ClientHints.acceptCHHeader()`), never a
+ * hand-kept copy — so it tracks the framework automatically (Law 6).
+ */
+function listHeaderCoverageCheck(args: {
+  readonly id: string;
+  readonly label: string;
+  readonly actual: string | null;
+  readonly expected: string;
+  readonly missingDetail: string;
+  readonly unit: string;
+  readonly hint?: string;
+}): DoctorCheck {
+  const required = tokenizeHeader(args.expected);
+  const present = new Set(args.actual ? tokenizeHeader(args.actual) : []);
+  const missing = required.filter((token) => !present.has(token));
+  const status: DoctorCheck['status'] = args.actual === null ? 'warn' : missing.length === 0 ? 'ok' : 'warn';
+  const detail =
+    args.actual === null
+      ? args.missingDetail
+      : missing.length === 0
+        ? args.actual
+        : `present but missing ${missing.length} required ${args.unit}: ${missing.join(', ')}`;
+  return {
+    id: args.id,
+    label: args.label,
+    status,
+    detail,
+    ...(args.hint ? { hint: args.hint } : {}),
+  };
+}
+
 const refusedCheck = (detail: string): readonly DoctorCheck[] => [
   {
     id: 'deployed.fetch',
@@ -311,41 +358,80 @@ export async function probeDeployedSite(url: string): Promise<readonly DoctorChe
     hint: "Add a CSP with worker-src 'self' blob: and connect-src for your runtime endpoints",
   });
 
-  for (const name of REQUIRED_ISOLATION) {
+  // COOP/COEP must carry the ACTUAL isolating token, not merely be present:
+  // `unsafe-none` sets the header but does NOT establish cross-origin isolation, so
+  // `SharedArrayBuffer` (client:worker) stays unavailable. The accepted values are
+  // DERIVED from `@czap/edge`'s `CrossOriginIsolation` (the same source `@czap/astro`
+  // emits from), never hand-listed here (Law 6). Advisory — `warn`, never `fail`.
+  const isolationExpectations: ReadonlyArray<{
+    readonly name: string;
+    readonly isolating: (token: string) => boolean;
+    readonly needs: string;
+  }> = [
+    {
+      name: 'Cross-Origin-Opener-Policy',
+      isolating: (token) => token === CrossOriginIsolation.openerPolicy().toLowerCase(),
+      needs: `needs "${CrossOriginIsolation.openerPolicy()}"`,
+    },
+    {
+      name: 'Cross-Origin-Embedder-Policy',
+      isolating: (token) => CrossOriginIsolation.embedderPolicies().some((p) => p.toLowerCase() === token),
+      needs: `needs one of ${CrossOriginIsolation.embedderPolicies().join(' | ')}`,
+    },
+  ];
+  for (const { name, isolating, needs } of isolationExpectations) {
     const value = headerSummary(headers, name);
+    const isolates = value !== null && isolating(policyToken(value));
     checks.push({
       id: `deployed.${name.toLowerCase()}`,
       label: name,
-      status: value ? 'ok' : 'warn',
-      detail: value ?? `missing — required for SharedArrayBuffer / client:worker`,
+      status: isolates ? 'ok' : 'warn',
+      detail:
+        value === null
+          ? 'missing — required for SharedArrayBuffer / client:worker'
+          : isolates
+            ? value
+            : `"${value}" does not establish cross-origin isolation — ${needs}`,
       hint: 'Enable workers in czap integration or set COOP/COEP on your host middleware',
     });
   }
 
-  const acceptCH = headerSummary(headers, 'Accept-CH');
-  const criticalCH = headerSummary(headers, 'Critical-CH');
-  checks.push({
-    id: 'deployed.accept-ch',
-    label: 'Accept-CH',
-    status: acceptCH ? 'ok' : 'warn',
-    detail: acceptCH ?? 'missing — tier detection may degrade on first navigation',
-  });
-  checks.push({
-    id: 'deployed.critical-ch',
-    label: 'Critical-CH',
-    status: criticalCH ? 'ok' : 'warn',
-    detail: criticalCH ?? 'missing — Sec-CH-Viewport-Width may be absent before first render',
-    hint: 'Use czapMiddleware or cloudflareMiddleware so Client Hints are requested',
-  });
-
-  const vary = headerSummary(headers, 'Vary');
-  checks.push({
-    id: 'deployed.vary',
-    label: 'Vary',
-    status: vary && vary.includes('Sec-CH') ? 'ok' : 'warn',
-    detail: vary ?? 'missing — CDN may serve wrong-tier HTML (#122)',
-    hint: 'czap detect middleware emits Vary on Client Hint inputs',
-  });
+  // Accept-CH / Critical-CH / Vary must CONTAIN czap's requested Client-Hint set —
+  // any single junk hint used to pass. The expected token sets are DERIVED from
+  // `@czap/edge`'s `ClientHints` (the source `@czap/astro`/`@czap/edge` request the
+  // hints from), tokenized + compared case-insensitively (Law 6). Advisory.
+  checks.push(
+    listHeaderCoverageCheck({
+      id: 'deployed.accept-ch',
+      label: 'Accept-CH',
+      actual: headerSummary(headers, 'Accept-CH'),
+      expected: ClientHints.acceptCHHeader(),
+      missingDetail: 'missing — tier detection may degrade on first navigation',
+      unit: 'hint(s)',
+    }),
+  );
+  checks.push(
+    listHeaderCoverageCheck({
+      id: 'deployed.critical-ch',
+      label: 'Critical-CH',
+      actual: headerSummary(headers, 'Critical-CH'),
+      expected: ClientHints.criticalCHHeader(),
+      missingDetail: 'missing — Sec-CH-Viewport-Width may be absent before first render',
+      unit: 'hint(s)',
+      hint: 'Use czapMiddleware or cloudflareMiddleware so Client Hints are requested',
+    }),
+  );
+  checks.push(
+    listHeaderCoverageCheck({
+      id: 'deployed.vary',
+      label: 'Vary',
+      actual: headerSummary(headers, 'Vary'),
+      expected: ClientHints.varyCHHeader(),
+      missingDetail: 'missing — CDN may serve wrong-tier HTML (#122)',
+      unit: 'Client-Hint axis(es)',
+      hint: 'czap detect middleware emits Vary on Client Hint inputs',
+    }),
+  );
 
   return checks;
 }

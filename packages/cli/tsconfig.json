@@ -28,6 +28,7 @@
     { "path": "../scene" },
     { "path": "../assets" },
     { "path": "../audit" },
+    { "path": "../edge" },
     { "path": "../error" }
   ]
 }

@@ -1976,6 +1976,11 @@
           "signature": "acceptCHHeader:function,criticalCHHeader:function,parseClientHints:function,responsiveMediaCapabilities:function,responsiveMediaVaryHeader:function,varyCHHeader:function"
         },
         {
+          "name": "CrossOriginIsolation",
+          "kind": "namespace",
+          "signature": "embedderPolicies:function,isolationHeaders:function,openerPolicy:function"
+        },
+        {
           "name": "DESIGN_TIERS",
           "kind": "const"
         },

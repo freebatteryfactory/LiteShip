@@ -181,7 +181,19 @@ export const packageTopology: Record<string, PackagePolicy> = {
     // (via @czap/audit) and injects it into litelaunchGauntlet, keeping the lean
     // @czap/command/MCP check path IR-free. A direct edge to the standalone
     // gauntlet leaf (no cycle).
-    allowedInternalImports: ['@czap/core', '@czap/command', '@czap/assets', '@czap/audit', '@czap/gauntlet'],
+    // @czap/edge — `czap doctor --deployed` validates a deployed response's
+    // COOP/COEP + Client-Hint headers against the SAME vocabulary czap emits
+    // (`ClientHints` / `CrossOriginIsolation`), deriving the expected values from
+    // the one source instead of hand-mirroring them (Law 6). Acyclic: edge imports
+    // only core/detect/error, never cli.
+    allowedInternalImports: [
+      '@czap/core',
+      '@czap/command',
+      '@czap/assets',
+      '@czap/audit',
+      '@czap/gauntlet',
+      '@czap/edge',
+    ],
     kind: 'host-adjacent',
   },
   '@czap/mcp-server': {

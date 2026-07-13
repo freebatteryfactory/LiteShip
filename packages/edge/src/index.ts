@@ -13,6 +13,9 @@
 export { ClientHints } from './client-hints.js';
 export type { ClientHintsHeaders } from './client-hints.js';
 
+export { CrossOriginIsolation } from './cross-origin.js';
+export type { CrossOriginEmbedderPolicy } from './cross-origin.js';
+
 export { EdgeTier } from './edge-tier.js';
 export type { EdgeTierResult } from './edge-tier.js';
 

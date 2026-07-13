@@ -8,7 +8,7 @@
  * @module
  */
 
-import { ClientHints } from '@czap/edge';
+import { ClientHints, CrossOriginIsolation, type CrossOriginEmbedderPolicy } from '@czap/edge';
 
 /**
  * Default `Accept-CH` / `Critical-CH` response headers czap requests so the browser
@@ -31,8 +31,11 @@ export const CLIENT_HINTS_HEADERS: Record<string, string> = {
  * COEP values czap can emit. Both establish cross-origin isolation
  * (required for `SharedArrayBuffer`); `credentialless` loads CORP-less
  * third-party subresources without credentials instead of blocking them.
+ *
+ * DERIVED from `@czap/edge` (the single cross-origin vocabulary source) — re-exported
+ * so existing `@czap/astro` importers keep the same type name.
  */
-export type CrossOriginEmbedderPolicy = 'require-corp' | 'credentialless';
+export type { CrossOriginEmbedderPolicy };
 
 /**
  * COOP/COEP header pair required for `SharedArrayBuffer` (used by
@@ -40,15 +43,16 @@ export type CrossOriginEmbedderPolicy = 'require-corp' | 'credentialless';
  * configured with `workers: { enabled: true }`; the COEP value is
  * overridable via `workers.coep`.
  *
+ * DERIVED from `@czap/edge`'s `CrossOriginIsolation.isolationHeaders()` (NOT a
+ * hand-kept copy) so the values czap EMITS and the values `czap doctor --deployed`
+ * VALIDATES can never diverge. Pinned by tests/unit/astro/critical-ch-drift.test.ts.
+ *
  * Parked-by-design (#129): COEP is consumer-overridable (set-only-when-absent
  * via {@link CONSUMER_OVERRIDABLE_HEADERS}) but cannot be disabled while workers
  * are enabled — `SharedArrayBuffer` requires cross-origin isolation. A workers-off
  * isolation escape remains a future first-party option; neither dogfood site needs it.
  */
-export const CROSS_ORIGIN_HEADERS: Record<string, string> = {
-  'Cross-Origin-Opener-Policy': 'same-origin',
-  'Cross-Origin-Embedder-Policy': 'require-corp',
-};
+export const CROSS_ORIGIN_HEADERS: Record<string, string> = CrossOriginIsolation.isolationHeaders();
 
 /** Header names whose pre-existing response values czap must not clobber. */
 const CONSUMER_OVERRIDABLE_HEADERS: ReadonlySet<string> = new Set([
