@@ -6,7 +6,7 @@
  * @module
  */
 
-import { normalizeRepoPath } from '@czap/audit';
+import { normalizeRepoPath, scanModuleScopeDateReads } from '@czap/audit';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
@@ -130,17 +130,20 @@ function scanFile(rel: string, source: string): ConsumerAppFinding[] {
     });
   }
 
-  const topLevel = source.split(/\nexport\s+/)[0] ?? source;
-  if (
-    (/\bDate\.now\s*\(/.test(topLevel) || /\bnew\s+Date\s*\(/.test(topLevel)) &&
-    /cloudflare|wrangler|worker/i.test(rel)
-  ) {
-    findings.push({
-      rule: 'consumer.workers-module-scope-date',
-      severity: 'warning',
-      title: 'Module-scope Date read in Workers-targeted file',
-      file: rel,
-    });
+  // Module-load ambient Date read in a Workers-targeted file — Law 5's 1970 trap. Uses the ONE shared
+  // AST scanner (`@czap/audit`) the doctor probe uses (Law 6), so the two never drift. `source` here is
+  // already CRLF-normalized, so the reported line matches the consumer's editor.
+  if (/cloudflare|wrangler|worker/i.test(rel)) {
+    const dateHits = scanModuleScopeDateReads(source, rel);
+    if (dateHits.length > 0) {
+      findings.push({
+        rule: 'consumer.workers-module-scope-date',
+        severity: 'warning',
+        title: 'Module-scope Date read in Workers-targeted file',
+        file: rel,
+        line: dateHits[0]!.line,
+      });
+    }
   }
 
   if (/data-czap-/.test(source) && !/@czap\//.test(source)) {

@@ -64,6 +64,94 @@ export const cfg = { t: Date.now() };`,
     expect(probeWorkersModuleScopeDate(dir).status).toBe('ok');
   });
 
+  // ---------------------------------------------------------------------------
+  // F-PROTO-3 (W7): the four miss-classes the old REGEX scanner silently passed.
+  // Each executes a Date read at MODULE LOAD, so each must be FLAGGED.
+  // ---------------------------------------------------------------------------
+
+  test('F-PROTO-3(a): flags module-scope Date.now() inside a template interpolation', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'czap-workers-date-'));
+    mkdirSync(join(dir, 'src'), { recursive: true });
+    writeFileSync(
+      join(dir, 'src', 'api.worker.ts'),
+      `const stamp = \`booted-\${Date.now()}\`;
+export function handler() { return stamp; }`,
+    );
+    expect(probeWorkersModuleScopeDate(dir).status).toBe('warn');
+  });
+
+  test('F-PROTO-3(b): flags an immediately-invoked arrow that reads Date.now() at load', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'czap-workers-date-'));
+    mkdirSync(join(dir, 'src'), { recursive: true });
+    writeFileSync(
+      join(dir, 'src', 'api.worker.ts'),
+      `const boot = (() => Date.now())();
+export function handler() { return boot; }`,
+    );
+    expect(probeWorkersModuleScopeDate(dir).status).toBe('warn');
+  });
+
+  test('F-PROTO-3(c): flags a non-exported const Date.now() placed AFTER a function decl', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'czap-workers-date-'));
+    mkdirSync(join(dir, 'src'), { recursive: true });
+    writeFileSync(
+      join(dir, 'src', 'api.worker.ts'),
+      `export const NAME = 'svc';
+export function handler() { return NAME; }
+const startedAt = Date.now();`,
+    );
+    expect(probeWorkersModuleScopeDate(dir).status).toBe('warn');
+  });
+
+  test('F-PROTO-3(d): flags a class STATIC field initializer that reads Date.now() at load', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'czap-workers-date-'));
+    mkdirSync(join(dir, 'src'), { recursive: true });
+    writeFileSync(
+      join(dir, 'src', 'api.worker.ts'),
+      `export const NAME = 'svc';
+export class Config {
+  static startedAt = Date.now();
+}`,
+    );
+    expect(probeWorkersModuleScopeDate(dir).status).toBe('warn');
+  });
+
+  test('F-PROTO-3: does NOT flag Date.now() in a deferred instance-method body', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'czap-workers-date-'));
+    mkdirSync(join(dir, 'src'), { recursive: true });
+    writeFileSync(
+      join(dir, 'src', 'api.worker.ts'),
+      `export class Svc {
+  boot() { return Date.now(); }
+}`,
+    );
+    expect(probeWorkersModuleScopeDate(dir).status).toBe('ok');
+  });
+
+  test('F-PROTO-3: does NOT flag Date.now() in a deferred object getter body', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'czap-workers-date-'));
+    mkdirSync(join(dir, 'src'), { recursive: true });
+    writeFileSync(
+      join(dir, 'src', 'api.worker.ts'),
+      `export const clock = {
+  get now() { return Date.now(); },
+};
+export function handler() { return clock.now; }`,
+    );
+    expect(probeWorkersModuleScopeDate(dir).status).toBe('ok');
+  });
+
+  test('F-PROTO-3: does NOT flag deterministic new Date(explicitTimestamp) at module scope', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'czap-workers-date-'));
+    mkdirSync(join(dir, 'src'), { recursive: true });
+    writeFileSync(
+      join(dir, 'src', 'api.worker.ts'),
+      `export const epoch = new Date(0);
+export function handler() { return epoch; }`,
+    );
+    expect(probeWorkersModuleScopeDate(dir).status).toBe('ok');
+  });
+
   test('wrangler.jsonc with comment resolves main without throwing (#115)', () => {
     const dir = mkdtempSync(join(tmpdir(), 'czap-workers-date-'));
     mkdirSync(join(dir, 'src'), { recursive: true });

@@ -8,13 +8,11 @@
  * @module
  */
 
-import { normalizeRepoPath } from '@czap/audit';
+import { normalizeRepoPath, scanModuleScopeDateReads } from '@czap/audit';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { readWranglerConfig } from './manifest.js';
 import type { DoctorCheck } from './types.js';
-
-const DATE_PATTERNS = [/\bDate\.now\s*\(/, /\bnew\s+Date\s*\(/] as const;
 
 const WORKER_PATH_HINTS = ['wrangler', 'cloudflare', '.worker.', '/workers/', 'src/middleware.ts'] as const;
 
@@ -66,60 +64,14 @@ function walkSourceFiles(dir: string, root: string, out: string[]): void {
   }
 }
 
-function stripForDateScan(source: string): string {
-  return source
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/\/\/.*$/gm, '')
-    .replace(/'(?:\\.|[^'\\])*'/g, '""')
-    .replace(/"(?:\\.|[^"\\])*"/g, '""')
-    .replace(/`(?:\\.|[^`\\])*`/g, '""');
-}
-
-/** RHS of `=` at `eqIndex`, through terminating `;` at paren/brace depth 0. */
-function assignmentRhs(source: string, eqIndex: number): string {
-  let i = eqIndex + 1;
-  let depth = 0;
-  while (i < source.length) {
-    const ch = source[i]!;
-    if (ch === '(' || ch === '{' || ch === '[') depth++;
-    else if (ch === ')' || ch === '}' || ch === ']') depth = Math.max(0, depth - 1);
-    else if (ch === ';' && depth === 0) return source.slice(eqIndex + 1, i);
-    i++;
-  }
-  return source.slice(eqIndex + 1);
-}
-
-function hasModuleScopeDate(source: string): boolean {
-  const stripped = stripForDateScan(source);
-  // Deferred arrow initializers evaluate per call — not module-scope ambient time.
-  const withoutDeferred = stripped.replace(/\([^)]*\)\s*=>\s*[^{;]+/g, '()=>{}');
-
-  // Module-scope default export of Date.now / new Date — not Date.now inside a method body.
-  // (Phrase split so the NO_DEFAULT_EXPORT invariant does not false-positive on this probe.)
-  const expDef = 'export' + ' default';
-  if (new RegExp(String.raw`\b${expDef}\s+Date\.now\s*\(`).test(withoutDeferred)) return true;
-  if (new RegExp(String.raw`\b${expDef}\s+new\s+Date\s*\(`).test(withoutDeferred)) return true;
-
-  // Strip default-export object / function bodies so method-scoped Date.now is not ambient.
-  const withoutDefaultBodies = withoutDeferred
-    .replace(new RegExp(String.raw`\b${expDef}\s*\{[\s\S]*?\n\}`, 'g'), `${expDef} {}`)
-    .replace(new RegExp(String.raw`\b${expDef}\s+(?:async\s+)?function[\s\S]*?\n\}`, 'g'), `${expDef} function(){}`);
-
-  // Any module-scope `export const/let/var … = … Date.now()` (object-literal RHS included).
-  const exportAssign = /\bexport\s+(?:const|let|var)\s+\w+\s*=/g;
-  let match: RegExpExecArray | null;
-  while ((match = exportAssign.exec(withoutDefaultBodies)) !== null) {
-    const eq = withoutDefaultBodies.indexOf('=', match.index);
-    const rhs = assignmentRhs(withoutDefaultBodies, eq);
-    if (DATE_PATTERNS.some((re) => re.test(rhs))) return true;
-  }
-
-  // Remaining top-level ambient Date before the first function/class.
-  const fnBoundary = new RegExp(
-    String.raw`\n(?=\s*(?:export\s+(?:default\s+)?(?:async\s+)?(?:function|class)\b|${expDef}\b|function\s|class\s))`,
-  );
-  const topLevel = withoutDefaultBodies.split(fnBoundary)[0] ?? withoutDefaultBodies;
-  return DATE_PATTERNS.some((re) => re.test(topLevel));
+/**
+ * Does `source` read the wall clock at MODULE LOAD? Delegates to the ONE shared AST scanner
+ * (`@czap/audit`'s {@link scanModuleScopeDateReads}) — the same definition the consumer-app audit
+ * uses (Law 6). `rel` only selects the parse mode (`.tsx`/`.jsx` → JSX). A file that reads the clock
+ * only inside deferred (per-call) bodies is correctly NOT a hit.
+ */
+function hasModuleScopeDate(source: string, rel: string): boolean {
+  return scanModuleScopeDateReads(source, rel).length > 0;
 }
 
 function shouldScanFile(rel: string, workersProject: boolean, wranglerMain: string): boolean {
@@ -153,7 +105,7 @@ export function probeWorkersModuleScopeDate(cwd: string): DoctorCheck {
   for (const rel of files) {
     if (!shouldScanFile(rel, workersProject, wranglerMain)) continue;
     const source = readFileSync(join(cwd, rel), 'utf8');
-    if (hasModuleScopeDate(source)) hits.push(normalizeRepoPath(rel));
+    if (hasModuleScopeDate(source, rel)) hits.push(normalizeRepoPath(rel));
   }
 
   if (hits.length === 0) {
