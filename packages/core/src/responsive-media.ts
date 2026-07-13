@@ -175,7 +175,14 @@ export function buildResponsiveImageSet(variants: readonly ResponsiveMediaVarian
     }
     parts.push(`url("${variant.src}") ${descriptor}`);
   }
-  if (parts.length === 0) return 'none';
+  if (parts.length === 0) {
+    // A lone candidate with no derivable descriptor — a bare Save-Data light asset `{ src }` —
+    // still belongs in image-set(): default it to `1x` so CSS consumers advertise the light URL
+    // rather than `none`, matching the reduced-data <source> path (Codex P2). Multiple
+    // descriptor-less candidates have a genuinely ambiguous DPR, so those still yield `none`.
+    if (variants.length === 1) return `image-set(url("${variants[0]!.src}") 1x)`;
+    return 'none';
+  }
   return `image-set(${parts.join(', ')})`;
 }
 
