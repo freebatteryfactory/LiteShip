@@ -6,7 +6,7 @@
 
 # Interface: LoweredMotionPlan
 
-Defined in: [core/src/interpret-transition.ts:78](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L78)
+Defined in: [core/src/interpret-transition.ts:100](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L100)
 
 Lowered motion intent — CSS projection + runtime floor + diagnostics.
 
@@ -16,7 +16,7 @@ Lowered motion intent — CSS projection + runtime floor + diagnostics.
 
 > `readonly` `optional` **css?**: [`CssMotionPlan`](CssMotionPlan.md)
 
-Defined in: [core/src/interpret-transition.ts:82](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L82)
+Defined in: [core/src/interpret-transition.ts:104](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L104)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [core/src/interpret-transition.ts:82](https://github.com/freebattery
 
 > `readonly` **diagnostics**: readonly [`DiagnosticPayload`](DiagnosticPayload.md)[]
 
-Defined in: [core/src/interpret-transition.ts:84](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L84)
+Defined in: [core/src/interpret-transition.ts:106](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L106)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [core/src/interpret-transition.ts:84](https://github.com/freebattery
 
 > `readonly` **graphId**: `ContentAddress`
 
-Defined in: [core/src/interpret-transition.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L79)
+Defined in: [core/src/interpret-transition.ts:101](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L101)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [core/src/interpret-transition.ts:79](https://github.com/freebattery
 
 > `readonly` `optional` **runtime?**: [`RuntimeWritePlan`](RuntimeWritePlan.md)
 
-Defined in: [core/src/interpret-transition.ts:83](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L83)
+Defined in: [core/src/interpret-transition.ts:105](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L105)
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: [core/src/interpret-transition.ts:83](https://github.com/freebattery
 
 > `readonly` **signals**: readonly [`SignalInput`](../type-aliases/SignalInput.md)[]
 
-Defined in: [core/src/interpret-transition.ts:81](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L81)
+Defined in: [core/src/interpret-transition.ts:103](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L103)
 
 ***
 
@@ -56,4 +56,4 @@ Defined in: [core/src/interpret-transition.ts:81](https://github.com/freebattery
 
 > `readonly` **target**: `string`
 
-Defined in: [core/src/interpret-transition.ts:80](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L80)
+Defined in: [core/src/interpret-transition.ts:102](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L102)

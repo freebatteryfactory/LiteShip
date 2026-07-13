@@ -8,7 +8,7 @@
 
 > **resolveStaggerInitialState**(`intent`, `opts`): `"before"` \| `"after"`
 
-Defined in: [core/src/stagger.ts:279](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L279)
+Defined in: [core/src/stagger.ts:298](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L298)
 
 Resolve the discrete state for SSR / reduced-motion first paint (#124).
 When `reducedMotion: 'settle'` and the user prefers reduced motion, settle

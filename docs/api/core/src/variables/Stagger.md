@@ -8,7 +8,7 @@
 
 > `const` **Stagger**: `object`
 
-Defined in: [core/src/stagger.ts:290](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L290)
+Defined in: [core/src/stagger.ts:309](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L309)
 
 Authoring sugar namespace — data over intent, no behavior authority.
 

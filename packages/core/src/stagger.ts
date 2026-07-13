@@ -30,6 +30,7 @@ import type { CellMeta } from './protocol.js';
 import { sourceToInput } from './signal-input.js';
 import type { MotionTier } from './ui-quality.js';
 import { motionPropToBinding, type RevealPolicy, type RevealTransition, type RevealTrigger } from './reveal.js';
+import type { TransitionProgram } from './transition-program.js';
 
 /** One staggered child boundary. */
 export interface StaggerChild {
@@ -269,6 +270,24 @@ export function lowerStaggerIntent(intent: StaggerIntent): LoweredStagger {
     items: Object.freeze(items),
     signalId: signal.id,
   });
+}
+
+/**
+ * Compose a {@link LoweredStagger}'s children into a `par` {@link TransitionProgram}
+ * (#141). Each staggered child becomes a `step` carrying its compile-time
+ * `delayMs`; the `par` total is the `max` child window, so `interpretProgram` emits
+ * REAL per-child windows (the delays ride the offsets) instead of the pre-W9
+ * routing-label collapse. The authoring bridge from Stagger sugar to the algebra.
+ */
+export function staggerProgram(lowered: LoweredStagger): TransitionProgram {
+  return {
+    kind: 'par',
+    children: lowered.items.map((item) => ({
+      kind: 'step',
+      transitionId: item.transitionId,
+      ...(item.delayMs > 0 ? { delayMs: item.delayMs } : {}),
+    })),
+  };
 }
 
 /**

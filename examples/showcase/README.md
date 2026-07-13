@@ -47,6 +47,14 @@ pnpm dev
   and the `--czap-hero-color` color arm) every frame. Both sample the intent's ONE
   `Easing.spring`, so the curve is identical (Law 4). Reduced-motion settles to the
   final pose with no tween; the continuous tween never patches the graph.
+- **`/motion-chain`** — the multi-step motion algebra cookbook (#141): ONE authored
+  `Reveal.chain` (`src/server/motion-chain.ts`) — a **seq** (the rise) *followed by* a
+  **choice** that picks the terminal hue by `viewport.width`. `lowerRevealChain` builds
+  one graph + a `TransitionProgram`; `interpretProgram` lowers it to REAL multi-offset
+  keyframes + per-window sub-samplers (distinct windows, not the old two-endpoint
+  collapse), and `client:motion` scrubs each window through the same floor. Exactly one
+  branch executes — the unchosen arm never writes — and the selection is an auditable
+  receipt. Reduced-motion settles to the terminal pose.
 - **`/chat`** — `client:llm` streaming over `/api/chat` with tier-gated
   rendering, plus the generated-UI path (`data-czap-genui`): `_genui` chunks
   render through a host-owned catalog — the model proposes, the catalog

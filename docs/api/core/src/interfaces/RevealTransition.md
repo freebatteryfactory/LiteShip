@@ -6,7 +6,7 @@
 
 # Interface: RevealTransition
 
-Defined in: [core/src/reveal.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L42)
+Defined in: [core/src/reveal.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L44)
 
 Timing config for the reveal transition.
 
@@ -16,7 +16,7 @@ Timing config for the reveal transition.
 
 > `readonly` **durationMs**: `number`
 
-Defined in: [core/src/reveal.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L43)
+Defined in: [core/src/reveal.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L45)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [core/src/reveal.ts:43](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` `optional` **easing?**: `"linear"` \| `"ease"` \| `"spring"`
 
-Defined in: [core/src/reveal.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L44)
+Defined in: [core/src/reveal.ts:46](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L46)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [core/src/reveal.ts:44](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` `optional` **spring?**: `SpringConfigShape`
 
-Defined in: [core/src/reveal.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L50)
+Defined in: [core/src/reveal.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L52)
 
 Spring physics for `easing: 'spring'` (ignored otherwise). Carried through to
 the lowered [TransitionNode](TransitionNode.md) so BOTH the CSS `linear()` and the JS floor

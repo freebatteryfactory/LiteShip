@@ -126,9 +126,33 @@ export function interpretTransition(graph: DocumentGraph, transitionId: ContentA
 // read TransitionNode { fromPose, toPose, routing, durationMs }
 // read PoseNode(fromPose).bindings, PoseNode(toPose).bindings
 // diff bindings -> per-property (fromTyped, toTyped) pairs (parse strings -> TypedValue)
-// routing: seq -> sequential keyframe offsets; par -> parallel; choice_* -> conditional branch
+// single step: a trivial two-frame lowering (from @0%, to @100%) — one pose→pose tween
 // emit css plan AND runtime plan (both — CSS is the native path, runtime is the permanent floor)
 ```
+
+**SHIPPED (#141, ADR-0039).** The initial cut folded sequencing into the `TransitionNode`'s
+`routing: EdgeType` field, and the interpreter's `keyframesForRouting` collapsed
+`seq`/`par`/`choice_then` to the SAME two endpoint frames — a routing LABEL, not an
+algebra. That is DELETED. Real multi-transition composition is now an explicit
+`TransitionProgram` IR over transitions:
+
+```ts
+type TransitionProgram =
+  | { kind:'step';  transitionId; delayMs? }
+  | { kind:'seq';   children: TransitionProgram[] }   // total = Σ children + delays; disjoint sub-windows
+  | { kind:'par';   children: TransitionProgram[] }   // total = max child; shared window; short child holds
+  | { kind:'choice'; branches:{ when:BranchCondition; source:SignalInput; body }[]; otherwise? }; // exactly one arm
+
+// lowerTransitionProgram(graph, program, env?) -> deterministic [0,1] timeline of windows (Plan.topoSort ordering)
+// interpretProgram(graph, program, env?)       -> LoweredMotionPlan: REAL multi-offset css.keyframes
+//                                                 + runtime.windows (per-window sub-samplers, each with its easing)
+// sampleProgramWindows(windows, t)             -> the ONE runtime reader the client:motion floor + tests share
+```
+
+`interpretTransition` stays the per-step leaf reader (the trivial two-frame path above);
+`interpretProgram` walks the composition tree over it. `EdgeType` remains the edge
+flavor BETWEEN adjacent transitions, not a per-node keyframe selector. Authoring sugar:
+`lowerRevealChain` (seq + optional choice) and `staggerProgram` (par). See ADR-0039.
 
 ### 3c. N-property continuous writer (child 3)
 Generalize the shipping one-scalar writer, preserving the law:

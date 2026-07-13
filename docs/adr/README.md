@@ -48,6 +48,7 @@ Prose vocabulary: [../GLOSSARY.md](../../GLOSSARY.md).
 | [0036](./0036-audit-findings-stream-contract.md) | `audit --findings` stdout/stderr stream contract | Accepted |
 | [0037](./0037-audit-consumer-structure-suppression.md) | `audit --consumer` structure-pass suppression | Accepted |
 | [0038](./0038-typedoc-monolith-canonical.md) | TypeDoc monolith build is canonical | Accepted |
+| [0039](./0039-multi-transition-algebra.md) | A routing LABEL becomes a transition PROGRAM | Accepted |
 
 ## Template
 
