@@ -267,8 +267,15 @@ export function projectResponsiveMediaPicture(
 
   // The reduced-data <source> advertises ONLY the authored light asset — a client
   // that reports `prefers-reduced-data` picks it even when the server never saw a
-  // Save-Data header — so this branch NEVER lists a heavy candidate either.
-  const saveDataSrcset = intent.saveDataVariant !== undefined ? buildResponsiveSrcset([intent.saveDataVariant]) : '';
+  // Save-Data header — so this branch NEVER lists a heavy candidate either. A
+  // `saveDataVariant` may omit width/descriptor (a single bare light asset), in which
+  // case `buildResponsiveSrcset` returns '' — falling back to a bare-URL srcset (valid,
+  // defaults to `1x`) keeps the reduced-data <source> present so those clients are never
+  // dropped onto the heavy `srcset` (Codex P2).
+  const saveDataSrcset =
+    intent.saveDataVariant !== undefined
+      ? buildResponsiveSrcset([intent.saveDataVariant]) || intent.saveDataVariant.src
+      : '';
 
   const sources: string[] = [];
   if (saveDataSrcset.length > 0) {
