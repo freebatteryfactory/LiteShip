@@ -510,12 +510,19 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
     // the receipt IS the carrier. Such a missed crossing was just buffered above, but nothing has
     // APPLIED it: replayHtml dropped it and `dropped` was false, so no snapshot floor ran. Without
     // a trigger it stays buffered-but-unapplied and the StateCell/semantic state remains stale
-    // until some unrelated recovery fires (Codex P2). Drive the graph-native recovery now: with a
-    // QUERY substrate it drains the just-buffered attestations and gap-replays them onto the cell
-    // store; without one it converges via the snapshot floor. When `dropped`, that snapshot floor
-    // already converged the state above, so this is skipped.
-    if (bufferedReceipts && !dropped) {
-      dispatchCzapEvent(target, 'czap:request-snapshot', { reason: 'resume-receipts' });
+    // until some unrelated recovery fires (Codex P2). Drive the graph-native recovery now — but
+    // ONLY when a QUERY substrate exists (the only path that can gap-replay a buffered receipt),
+    // and mark the DOM FRESH (`domStale: false`): unlike a morph rejection, no failed morph left
+    // the view stale, so recovery must apply the crossing to the cell store WITHOUT a snapshot
+    // floor (which would false-error absent a snapshot URL, or needlessly replace fresh DOM).
+    // When `dropped`, the snapshot floor above already converged the state, so this is skipped.
+    if (
+      bufferedReceipts &&
+      !dropped &&
+      artifactId !== undefined &&
+      getStreamRecoverySubstrate(artifactId) !== undefined
+    ) {
+      dispatchCzapEvent(target, 'czap:request-snapshot', { reason: 'resume-receipts', domStale: false });
     }
   };
 

@@ -53,7 +53,18 @@ export interface CzapEventDetailMap {
   'czap:morph-rejected': CzapMorphRejectedDetail;
   'czap:mutation': GraphMutationResponse;
   'czap:reinit': undefined;
-  'czap:request-snapshot': { readonly reason: string };
+  'czap:request-snapshot': {
+    readonly reason: string;
+    /**
+     * Whether the rendered DOM is known STALE (overrides the recovery binding's default).
+     * A morph-rejection trigger omits it (the binding treats the DOM as stale). A trigger
+     * whose DOM is intact — a receipt-only resume that applies a state crossing without any
+     * failed morph — passes `false` so recovery gap-replays the crossing WITHOUT an
+     * unnecessary snapshot floor (which would false-error absent a snapshot URL, or needlessly
+     * replace fresh DOM).
+     */
+    readonly domStale?: boolean;
+  };
   'czap:satellite-state': CzapUniformUpdateDetail;
   'czap:signal': unknown;
   'czap:slot-mounted': { readonly path: SlotPath; readonly mode: IslandMode };

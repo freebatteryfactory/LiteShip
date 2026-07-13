@@ -650,9 +650,9 @@ describe('stream directive graph-native recovery (#133)', () => {
       replayedCells: [],
       discretePayloads: [],
     } as never);
-    vi.spyOn(Resumption, 'fetchSnapshot').mockReturnValue(
-      Effect.succeed({ type: 'snapshot', html: '<p>x</p>', signals: {}, lastEventId: 'evt-99' }),
-    );
+    const fetchSnapshotSpy = vi
+      .spyOn(Resumption, 'fetchSnapshot')
+      .mockReturnValue(Effect.succeed({ type: 'snapshot', html: '<p>x</p>', signals: {}, lastEventId: 'evt-99' }));
 
     const dispose = registerStreamRecoverySubstrate('hero', {
       graphQueryUrl: '/api/graph',
@@ -684,9 +684,10 @@ describe('stream directive graph-native recovery (#133)', () => {
       await flushPromises();
       await flushPromises();
 
-      // Recovery was DRIVEN by the resume (not left for an unrelated future trigger)...
+      // Recovery was DRIVEN by the resume (not left for an unrelated future trigger), and it
+      // marks the DOM FRESH (`domStale: false`) — no failed morph left the view stale.
       await vi.waitFor(() => {
-        expect(recoveries).toContainEqual(expect.objectContaining({ reason: 'resume-receipts' }));
+        expect(recoveries).toContainEqual(expect.objectContaining({ reason: 'resume-receipts', domStale: false }));
         expect(gapReplay).toHaveBeenCalled();
       });
       // ...and the replayed receipt was attested + fed into that gap replay (buffered, not dropped).
@@ -695,6 +696,10 @@ describe('stream directive graph-native recovery (#133)', () => {
       };
       expect(call.entries).toHaveLength(1);
       expect(call.entries[0]!.transition).toMatchObject({ cell: 'workspace', next: 'expanded' });
+      // domStale:false ⇒ the gap replay applies the crossing WITHOUT the snapshot floor, so no
+      // snapshot fetch (which would false-error absent a snapshot URL) is issued (Codex P2).
+      await flushPromises();
+      expect(fetchSnapshotSpy).not.toHaveBeenCalled();
     } finally {
       dispose();
       vi.useRealTimers();
