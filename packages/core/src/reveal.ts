@@ -445,24 +445,28 @@ export function lowerRevealChain(input: RevealChainInput): LoweredRevealChain {
     return transition.id;
   };
 
-  const seqChildren: TransitionProgram[] = input.steps.map((step) => ({
+  // ONE step-body builder for every arm — a top-level seq child AND a choice arm are
+  // both `step`s, so each must carry its `delayMs` into the TransitionProgram step.
+  // (The choice arms previously dropped it, so a selected branch started immediately and
+  // the lowered total/window offsets came out too short.)
+  const mkStepBody = (step: RevealChainStep): TransitionProgram => ({
     kind: 'step',
     transitionId: mkStep(step),
     ...(step.delayMs !== undefined ? { delayMs: step.delayMs } : {}),
-  }));
+  });
+
+  const seqChildren: TransitionProgram[] = input.steps.map(mkStepBody);
 
   if (input.choice) {
     const branches = input.choice.branches.map((branch) => ({
       when: branch.when,
       source: branch.source,
-      body: { kind: 'step', transitionId: mkStep(branch.step) } as TransitionProgram,
+      body: mkStepBody(branch.step),
     }));
     const choiceProgram: TransitionProgram = {
       kind: 'choice',
       branches,
-      ...(input.choice.otherwise
-        ? { otherwise: { kind: 'step', transitionId: mkStep(input.choice.otherwise) } as TransitionProgram }
-        : {}),
+      ...(input.choice.otherwise ? { otherwise: mkStepBody(input.choice.otherwise) } : {}),
     };
     seqChildren.push(choiceProgram);
   }

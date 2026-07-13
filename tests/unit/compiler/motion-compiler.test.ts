@@ -349,6 +349,42 @@ describe('MotionCompiler — composed TransitionProgram keyframes (#141, backend
     expect(result.keyframes).toContain('  33% {');
     expect(result.keyframes).not.toContain('  25% {');
   });
+
+  test('par transition fallback uses PER-PROPERTY durations — a short child finishes early', () => {
+    // Greptile P1: opacity completes at 200/600 of the composed 600ms, so the transition
+    // fallback must animate it for 200ms — not the composed total for every property,
+    // which would diverge from the keyframe / JS-floor path (cross-target parity).
+    const { graph: g, a, b } = twoStepGraph();
+    const par = interpretProgram(g, {
+      kind: 'par',
+      children: [
+        { kind: 'step', transitionId: a },
+        { kind: 'step', transitionId: b },
+      ],
+    });
+    const result = MotionCompiler.compile({ plan: par.css! });
+    expect(result.transition).toContain('opacity 200ms ease');
+    expect(result.transition).toContain('--czap-hero-x 600ms ease');
+    // The bug animated opacity for the full composed duration.
+    expect(result.transition).not.toContain('opacity 600ms');
+  });
+
+  test('seq transition fallback carries per-property delay — a later step starts at its seam', () => {
+    // seq total = 200+600 = 800ms. Step A (opacity) owns [0, 0.25]; step B (x) owns
+    // [0.25, 1] → duration 600ms after a 200ms delay, so the fallback holds x until B
+    // opens, mirroring the seq seam the keyframes encode at 25%.
+    const { graph: g, a, b } = twoStepGraph();
+    const seq = interpretProgram(g, {
+      kind: 'seq',
+      children: [
+        { kind: 'step', transitionId: a },
+        { kind: 'step', transitionId: b },
+      ],
+    });
+    const result = MotionCompiler.compile({ plan: seq.css! });
+    expect(result.transition).toContain('opacity 200ms ease');
+    expect(result.transition).toContain('--czap-hero-x 600ms ease 200ms');
+  });
 });
 
 describe('dispatch() MotionCompiler arm', () => {
