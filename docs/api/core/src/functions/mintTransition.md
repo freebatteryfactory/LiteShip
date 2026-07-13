@@ -8,7 +8,7 @@
 
 > **mintTransition**(`previous`, `next`, `options`): `Effect`\<\{ `receipt`: [`ReceiptEnvelope`](../interfaces/ReceiptEnvelope.md); `transition`: [`DiscreteStateTransition`](../interfaces/DiscreteStateTransition.md); \}\>
 
-Defined in: [core/src/state-transition.ts:126](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-transition.ts#L126)
+Defined in: [core/src/state-transition.ts:139](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-transition.ts#L139)
 
 Companion mint the authority host calls AFTER a synchronous
 [StateCellStoreShape.applyDiscrete](../interfaces/StateCellStoreShape.md#applydiscrete) — builds the transition VALUE from

@@ -8,7 +8,7 @@
 
 > **transitionReceipt**(`transition`, `options?`): `Effect`\<[`ReceiptEnvelope`](../interfaces/ReceiptEnvelope.md)\>
 
-Defined in: [core/src/state-transition.ts:92](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-transition.ts#L92)
+Defined in: [core/src/state-transition.ts:114](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-transition.ts#L114)
 
 Mint a receipt for a [DiscreteStateTransition](../interfaces/DiscreteStateTransition.md), mirroring
 [GraphPatch.receipt](../variables/GraphPatch.md#receipt) byte-for-byte: a single genesis-or-linked envelope

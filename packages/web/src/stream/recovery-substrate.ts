@@ -19,7 +19,14 @@
 
 import { Effect } from 'effect';
 import type { DiscreteStateTransition, PatchReceiptEntry, ReceiptEnvelope, StateCellStoreShape } from '@czap/core';
-import { Diagnostics, Receipt, decodeDiscreteStateTransition, discreteTransitionSubjectId } from '@czap/core';
+import {
+  Diagnostics,
+  Receipt,
+  TypedRef,
+  decodeDiscreteStateTransition,
+  discreteTransitionPayload,
+  discreteTransitionSubjectId,
+} from '@czap/core';
 import { ValidationError } from '@czap/error';
 import type { StreamRecoveryMutationClient } from './recovery.js';
 
@@ -160,6 +167,21 @@ const attestPatchReceiptEntry = async (artifactId: string, frame: unknown): Prom
     warnRejectedFrame(
       artifactId,
       `subject-law mismatch (expected effect:${expectedSubjectId}, got ${receipt.subject.type}:${receipt.subject.id})`,
+    );
+    return null;
+  }
+
+  // 4. PAYLOAD binding — the subject law binds the receipt to `(base, cell)`, but a
+  //    self-consistent receipt for that subject could otherwise be re-paired with a
+  //    DIFFERENT `next`/`generation`/`resultId`. Recompute the DiscreteStateTransition@1
+  //    payload ref from the DECODED transition (the SAME `discreteTransitionPayload` law
+  //    the mint used, Law 6) and require it to equal `receipt.payload`, so the receipt
+  //    attests the exact value gap replay will apply — not merely its subject.
+  const expectedPayload = await Effect.runPromise(discreteTransitionPayload(transition));
+  if (!TypedRef.equals(receipt.payload, expectedPayload)) {
+    warnRejectedFrame(
+      artifactId,
+      `payload-law mismatch (receipt.payload ${receipt.payload.content_hash} does not attest this transition value ${expectedPayload.content_hash})`,
     );
     return null;
   }

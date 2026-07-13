@@ -80,6 +80,28 @@ export function discreteTransitionSubjectId(transition: Pick<DiscreteStateTransi
 }
 
 /**
+ * The receipt PAYLOAD ref for a transition — a {@link TypedRef} over the crossing VALUE
+ * (`cell`/`previous`/`next`/`generation`/`authority`/`base`/`resultId`/`kind`). The SINGLE
+ * source of the payload law (Law 6): both the mint ({@link transitionReceipt}) AND the
+ * client-side attestation-check (`recordStreamPatchReceipt`) derive the payload from HERE.
+ * The subject law binds a receipt to a `(base, cell)` pair; THIS binds it to the exact
+ * value, so a self-consistent receipt cannot be re-paired with a DIFFERENT `next`/
+ * `generation`/`resultId` on the same subject.
+ */
+export function discreteTransitionPayload(transition: DiscreteStateTransition): Effect.Effect<TypedRef.Shape> {
+  return TypedRef.create('DiscreteStateTransition@1', {
+    cell: transition.cell,
+    previous: transition.previous,
+    next: transition.next,
+    generation: transition.generation,
+    authority: transition.authority,
+    base: transition.base,
+    resultId: transition.resultId,
+    kind: transition.kind,
+  });
+}
+
+/**
  * Mint a receipt for a {@link DiscreteStateTransition}, mirroring
  * {@link GraphPatch.receipt} byte-for-byte: a single genesis-or-linked envelope
  * whose payload is a {@link TypedRef} over the transition, subject-keyed by the
@@ -96,16 +118,7 @@ export function transitionReceipt(
   return Effect.gen(function* () {
     const timestamp = options?.timestamp ?? HLCOps.create('discrete-transition');
     const previous = options?.previous ?? Receipt.GENESIS;
-    const payload = yield* TypedRef.create('DiscreteStateTransition@1', {
-      cell: transition.cell,
-      previous: transition.previous,
-      next: transition.next,
-      generation: transition.generation,
-      authority: transition.authority,
-      base: transition.base,
-      resultId: transition.resultId,
-      kind: transition.kind,
-    });
+    const payload = yield* discreteTransitionPayload(transition);
     return yield* Receipt.createEnvelope(
       'discrete-transition',
       { type: 'effect', id: discreteTransitionSubjectId(transition) },

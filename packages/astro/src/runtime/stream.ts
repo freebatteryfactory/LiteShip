@@ -630,7 +630,11 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
     unbindGraphSubstrate?.();
     unbindGraphSubstrate = null;
 
-    const rawGraphUrl = element.getAttribute(STREAM_GRAPH_QUERY_ATTR);
+    // Read from the CURRENT stream host (`target`), not the original `element`: after an
+    // outerHTML morph / Astro view-transition swap, `target` is the freshly-rendered host
+    // carrying the up-to-date base graph + cell registrations. Reading `element` would
+    // re-register the substrate from the stale (pre-swap) base and miss the new branch.
+    const rawGraphUrl = target.getAttribute(STREAM_GRAPH_QUERY_ATTR);
     if (rawGraphUrl === null) {
       return;
     }
@@ -657,8 +661,8 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
       return;
     }
 
-    const rawBase = element.getAttribute(STREAM_GRAPH_BASE_ATTR);
-    const rawCells = element.getAttribute(STREAM_GRAPH_CELLS_ATTR);
+    const rawBase = target.getAttribute(STREAM_GRAPH_BASE_ATTR);
+    const rawCells = target.getAttribute(STREAM_GRAPH_CELLS_ATTR);
     if (rawBase === null || rawCells === null) {
       Diagnostics.warnOnce({
         source: 'czap/astro.stream',

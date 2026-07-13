@@ -8,7 +8,7 @@
 
 > **isCell**\<`T`\>(`p`): `p is Shape<T>`
 
-Defined in: [core/src/index.ts:564](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/index.ts#L564)
+Defined in: [core/src/index.ts:565](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/index.ts#L565)
 
 Narrow a [Primitive](../type-aliases/Primitive.md) to a [Cell](../namespaces/Cell/README.md).
 
