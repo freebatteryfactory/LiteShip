@@ -611,14 +611,14 @@ describe('stream directive graph-native recovery (#133)', () => {
     vi.useRealTimers();
   });
 
-  test('a receipt frame returned in the resume REPLAY is attested into the buffer, not dropped (Codex P2)', async () => {
-    // The app-level replay comes back through applyResumeResponse, NOT handleMessage —
-    // the only branch that used to call recordStreamPatchReceipt. A receipt missed
-    // during the disconnect arrives in the replay `patches`, where replayHtml drops it
-    // and replayDroppedSignals ignores it. Without routing it through the SAME
-    // attestation buffer, QUERY gap replay would have no entry and the state-only
-    // crossing would stay stale after reconnect. This drives a reconnect whose replay
-    // carries a receipt and asserts it lands in the live buffer.
+  test('a receipt-only resume replay is attested AND drives recovery so the crossing applies (Codex P2)', async () => {
+    // A discrete state crossing is emitted as a receipt-ONLY frame (no signal, no HTML). The
+    // app-level replay comes back through applyResumeResponse, not handleMessage, so the resume
+    // path must (1) route the receipt through the SAME attestation buffer the live path uses AND
+    // (2) DRIVE recovery — replayHtml drops it and replayDroppedSignals ignores it, so `dropped`
+    // is false and no snapshot floor runs; buffering alone records the attestation but applies
+    // nothing, leaving the StateCell stale. This drives a reconnect whose replay is receipt-only
+    // and asserts the buffered crossing is fed into a triggered graph-native recovery.
     vi.useFakeTimers();
     vi.spyOn(Math, 'random').mockReturnValue(0.5);
 
@@ -635,14 +635,24 @@ describe('stream directive graph-native recovery (#133)', () => {
     const receipt = await Effect.runPromise(core.transitionReceipt(transition));
 
     const fetchMock = vi.fn().mockResolvedValueOnce(
-      new Response(
-        JSON.stringify({
-          patches: [{ type: 'receipt', data: { receipt, transition } }, '<p>html-after-receipt</p>'],
-        }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } },
-      ),
+      new Response(JSON.stringify({ patches: [{ type: 'receipt', data: { receipt, transition } }] }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
     );
     vi.stubGlobal('fetch', fetchMock);
+
+    // The triggered recovery runs graph-native gap replay over the buffered receipt (and a
+    // domStale snapshot to converge the DOM). Mock both so the test asserts recovery was DRIVEN
+    // and fed the crossing, without needing live QUERY / snapshot endpoints.
+    const gapReplay = vi.spyOn(core, 'runGraphNativeGapReplay').mockResolvedValue({
+      query: { status: 'ok', graph: { id: 'czap:base' }, etag: 'sha256:ok' },
+      replayedCells: [],
+      discretePayloads: [],
+    } as never);
+    vi.spyOn(Resumption, 'fetchSnapshot').mockReturnValue(
+      Effect.succeed({ type: 'snapshot', html: '<p>x</p>', signals: {}, lastEventId: 'evt-99' }),
+    );
 
     const dispose = registerStreamRecoverySubstrate('hero', {
       graphQueryUrl: '/api/graph',
@@ -655,7 +665,8 @@ describe('stream directive graph-native recovery (#133)', () => {
         'data-czap-stream-url': '/api/feed',
         'data-czap-stream-artifact': 'hero',
       });
-      el.innerHTML = '<p>stale</p>';
+      const recoveries: Array<Record<string, unknown>> = [];
+      el.addEventListener('czap:request-snapshot', ((e: CustomEvent) => recoveries.push(e.detail)) as EventListener);
       streamDirective(noop, {}, el);
 
       const firstSource = MockEventSource.instances[0]!;
@@ -673,12 +684,17 @@ describe('stream directive graph-native recovery (#133)', () => {
       await flushPromises();
       await flushPromises();
 
-      // The replayed receipt attested + buffered through the production path — the fix.
+      // Recovery was DRIVEN by the resume (not left for an unrelated future trigger)...
       await vi.waitFor(() => {
-        expect(getStreamRecoverySubstrate('hero')?.patchReceiptEntries).toHaveLength(1);
+        expect(recoveries).toContainEqual(expect.objectContaining({ reason: 'resume-receipts' }));
+        expect(gapReplay).toHaveBeenCalled();
       });
-      // The non-receipt HTML frame in the same batch still applied.
-      expect(el.innerHTML).toContain('html-after-receipt');
+      // ...and the replayed receipt was attested + fed into that gap replay (buffered, not dropped).
+      const call = gapReplay.mock.calls[0]![0] as {
+        entries: readonly { readonly transition: { readonly cell: string; readonly next: string } }[];
+      };
+      expect(call.entries).toHaveLength(1);
+      expect(call.entries[0]!.transition).toMatchObject({ cell: 'workspace', next: 'expanded' });
     } finally {
       dispose();
       vi.useRealTimers();

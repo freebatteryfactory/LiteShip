@@ -450,9 +450,11 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
     // dropped by the HTML/signal filters below and QUERY gap replay has no entry, so
     // state-only crossings stay stale after reconnect (Codex P2). Track each in
     // `inFlightReceipts` so a recovery firing before it settles drains it first.
+    let bufferedReceipts = false;
     if (artifactId !== undefined) {
       for (const patch of response.patches) {
         if (!isReceiptFrame(patch)) continue;
+        bufferedReceipts = true;
         const pending = recordStreamPatchReceipt(artifactId, patch.data).catch(() => false);
         inFlightReceipts.add(pending);
         void pending.finally(() => inFlightReceipts.delete(pending));
@@ -502,6 +504,18 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
       applyDiscreteSnapshotSignals(recoveredSignals, (payload) => {
         dispatchCzapEvent(target, 'czap:signal', payload);
       });
+    }
+
+    // A discrete state crossing is emitted as a receipt-ONLY frame (no paired signal, no HTML) —
+    // the receipt IS the carrier. Such a missed crossing was just buffered above, but nothing has
+    // APPLIED it: replayHtml dropped it and `dropped` was false, so no snapshot floor ran. Without
+    // a trigger it stays buffered-but-unapplied and the StateCell/semantic state remains stale
+    // until some unrelated recovery fires (Codex P2). Drive the graph-native recovery now: with a
+    // QUERY substrate it drains the just-buffered attestations and gap-replays them onto the cell
+    // store; without one it converges via the snapshot floor. When `dropped`, that snapshot floor
+    // already converged the state above, so this is skipped.
+    if (bufferedReceipts && !dropped) {
+      dispatchCzapEvent(target, 'czap:request-snapshot', { reason: 'resume-receipts' });
     }
   };
 
