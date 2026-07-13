@@ -6,7 +6,7 @@
 
 # Interface: CzapFetchLayerConfig
 
-Defined in: [astro/src/fetch-layer.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/fetch-layer.ts#L53)
+Defined in: [astro/src/fetch-layer.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/fetch-layer.ts#L54)
 
 Options for [czapFetchLayer](../functions/czapFetchLayer.md). Extends [CzapMiddlewareConfig](CzapMiddlewareConfig.md) so the
 `edge` / `detect` / `workers` surface is shared verbatim — a consumer migrates
@@ -50,7 +50,7 @@ Edge host adapter configuration (KV cache, theme compilation).
 
 > `readonly` `optional` **render?**: (`resolution`) => `Response`
 
-Defined in: [astro/src/fetch-layer.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/fetch-layer.ts#L67)
+Defined in: [astro/src/fetch-layer.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/fetch-layer.ts#L68)
 
 How to render the edge-served Response from a resolution. Default:
 [serializeBoundaryCss](../functions/serializeBoundaryCss.md) wrapped in a `text/css` Response. Override to
@@ -72,7 +72,7 @@ match a specific page's exact inlining.
 
 > `readonly` `optional` **serveFromEdge?**: (`request`, `resolution`) => `boolean`
 
-Defined in: [astro/src/fetch-layer.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/fetch-layer.ts#L61)
+Defined in: [astro/src/fetch-layer.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/fetch-layer.ts#L62)
 
 Edge-serve predicate. Given the request and the resolution, decide whether to
 serve the boundary CSS straight from the edge (returning WITHOUT invoking
