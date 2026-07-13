@@ -8,7 +8,7 @@
 
 > **generatePropertyRegistrations**(`states`, `initialValues?`): `string`
 
-Defined in: [compiler/src/css.ts:394](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/css.ts#L394)
+Defined in: [compiler/src/css.ts:420](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/css.ts#L420)
 
 Scan all CSS values across all states and emit `@property` declarations
 for properties whose values parse as numbers or colors. This enables

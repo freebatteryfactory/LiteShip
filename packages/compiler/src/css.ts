@@ -94,11 +94,27 @@ export interface CSSCompileResult {
   readonly containerRules: readonly CSSContainerRule[];
   /** Pre-serialized CSS text ready for injection. */
   readonly raw: string;
+  /**
+   * The boundary selector this result was compiled against (mirrors the
+   * `selector` argument to {@link CSSCompiler.compile}; default
+   * `.czap-boundary`). Carried so {@link CSSCompiler.serialize} re-wraps
+   * conditional-group bare declarations with the same selector as `raw`.
+   * Optional for back-compat with hand-constructed results, which fall back
+   * to the default selector.
+   */
+  readonly selector?: string;
 }
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+/**
+ * Default selector bare properties are wrapped in when {@link compile} is
+ * called without an explicit `selector`. Single source of truth: both the
+ * compile-time wrapping and the {@link serialize} round-trip fall back to it.
+ */
+const DEFAULT_BOUNDARY_SELECTOR = '.czap-boundary';
 
 /**
  * Serialize a `Record<string, string>` of CSS properties into a declaration block.
@@ -118,10 +134,15 @@ function serializeRule(rule: CSSRule): string {
   return `${rule.selector} {\n${decls}\n}`;
 }
 
-function serializeAtRuleGroup(group: CSSAtRuleGroup): string {
+function serializeAtRuleGroup(group: CSSAtRuleGroup, selector: string): string {
   const inner: string[] = [];
+  // Bare declarations whose only ancestor is a conditional group
+  // (`@supports` / `@media` / `@container`) are INVALID CSS — the CSS parser
+  // discards a declaration that is not inside a style rule. Wrap them in the
+  // active boundary selector, mirroring how state-level bareProps are wrapped
+  // in `compile()`, so the declarations actually take effect.
   if (group.bareProps && Object.keys(group.bareProps).length > 0) {
-    inner.push(serializeDeclarations(group.bareProps));
+    inner.push(serializeRule({ selector, properties: group.bareProps }));
   }
   for (const rule of group.rules ?? []) {
     if (Object.keys(rule.properties).length > 0) {
@@ -129,7 +150,7 @@ function serializeAtRuleGroup(group: CSSAtRuleGroup): string {
     }
   }
   for (const nested of group.atRuleGroups ?? []) {
-    inner.push(serializeAtRuleGroup(nested));
+    inner.push(serializeAtRuleGroup(nested, selector));
   }
   if (inner.length === 0) return `${group.prelude} {}`;
   return `${group.prelude} {\n${inner.join('\n')}\n}`;
@@ -195,12 +216,17 @@ function buildContainerQuery(
 /**
  * Distinguish the structured {@link CSSStateBody} form from a flat
  * property map. A flat map only ever carries string values, so an
- * object-valued `bareProps` or array-valued `rules` key is unambiguous.
+ * object-valued `bareProps`, array-valued `rules`, or array-valued
+ * `atRuleGroups` key is unambiguous. A body carrying ONLY `atRuleGroups`
+ * (no bareProps, no rules) is still structured — omitting that arm misreads
+ * it as a flat map and silently drops the conditional groups.
  */
 function isStateBody(input: CSSStateInput): input is CSSStateBody {
   const candidate = input as CSSStateBody;
   return (
-    (candidate.bareProps !== undefined && typeof candidate.bareProps === 'object') || Array.isArray(candidate.rules)
+    (candidate.bareProps !== undefined && typeof candidate.bareProps === 'object') ||
+    Array.isArray(candidate.rules) ||
+    Array.isArray(candidate.atRuleGroups)
   );
 }
 
@@ -244,7 +270,7 @@ function compile<B extends Boundary.Shape>(
   states: { readonly [S in StateUnion<B> & string]?: CSSStateInput },
   selector?: string,
 ): CSSCompileResult {
-  const sel = selector ?? '.czap-boundary';
+  const sel = selector ?? DEFAULT_BOUNDARY_SELECTOR;
   const containerName = boundary.input.replace(/[^a-zA-Z0-9_-]/g, '-');
   const axis = queryAxisOf(boundary.input);
   // The state map is keyed by StateUnion<B> & string literals; treat the runtime array
@@ -307,8 +333,8 @@ function compile<B extends Boundary.Shape>(
     });
   }
 
-  const raw = serializeContainerRules(containerRules);
-  return { containerRules, raw };
+  const raw = serializeContainerRules(containerRules, sel);
+  return { containerRules, raw, selector: sel };
 }
 
 /**
@@ -329,15 +355,15 @@ function compile<B extends Boundary.Shape>(
  * @returns A string of valid CSS text
  */
 function serialize(result: CSSCompileResult): string {
-  return serializeContainerRules(result.containerRules);
+  return serializeContainerRules(result.containerRules, result.selector ?? DEFAULT_BOUNDARY_SELECTOR);
 }
 
-function serializeContainerRules(containerRules: readonly CSSContainerRule[]): string {
+function serializeContainerRules(containerRules: readonly CSSContainerRule[], selector: string): string {
   const blocks: string[] = [];
 
   for (const cr of containerRules) {
     const innerRules = cr.rules.map(serializeRule).join('\n');
-    const innerAtRules = (cr.atRuleGroups ?? []).map(serializeAtRuleGroup).join('\n');
+    const innerAtRules = (cr.atRuleGroups ?? []).map((group) => serializeAtRuleGroup(group, selector)).join('\n');
     const inner = [innerRules, innerAtRules].filter((s) => s.length > 0).join('\n');
     blocks.push(`@container ${cr.name} ${cr.query} {\n${inner}\n}`);
   }

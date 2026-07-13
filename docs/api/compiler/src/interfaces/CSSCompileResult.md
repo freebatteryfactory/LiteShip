@@ -33,3 +33,18 @@ Structured container rules, one per non-empty state.
 Defined in: [compiler/src/css.ts:96](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/css.ts#L96)
 
 Pre-serialized CSS text ready for injection.
+
+***
+
+### selector?
+
+> `readonly` `optional` **selector?**: `string`
+
+Defined in: [compiler/src/css.ts:105](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/css.ts#L105)
+
+The boundary selector this result was compiled against (mirrors the
+`selector` argument to [CSSCompiler.compile](../variables/CSSCompiler.md#compile); default
+`.czap-boundary`). Carried so [CSSCompiler.serialize](../variables/CSSCompiler.md#serialize) re-wraps
+conditional-group bare declarations with the same selector as `raw`.
+Optional for back-compat with hand-constructed results, which fall back
+to the default selector.
