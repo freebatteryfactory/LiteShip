@@ -120,6 +120,23 @@ function replayHtml(patch: unknown): string | null {
   return null;
 }
 
+/**
+ * A `{ type: 'receipt', data }` frame in a resume-replay batch. The app-level replay
+ * comes back through `applyResumeResponse`, not `handleMessage`, so a receipt missed
+ * during the disconnect arrives HERE — and `replayHtml` (drops non-HTML) / `replayDroppedSignals`
+ * (notices only `signal`) would silently discard it, leaving QUERY gap replay with no
+ * entry and state-only crossings stale after reconnect (Codex P2). This lets the resume
+ * path route receipts through the SAME attestation buffer the live path uses.
+ */
+function isReceiptFrame(patch: unknown): patch is { readonly type: 'receipt'; readonly data: unknown } {
+  return (
+    patch !== null &&
+    typeof patch === 'object' &&
+    'type' in patch &&
+    (patch as { readonly type?: unknown }).type === 'receipt'
+  );
+}
+
 function patchCouldInvalidateSlots(
   locator: Locator | null,
   morphStyle: 'innerHTML' | 'outerHTML',
@@ -426,6 +443,20 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
         dispatchCzapEvent(target, 'czap:signal', payload);
       });
       return;
+    }
+
+    // Attest any receipt frames the resumption returned through the SAME buffer the live
+    // path uses (handleMessage's receipt branch). Without this the missed crossing is
+    // dropped by the HTML/signal filters below and QUERY gap replay has no entry, so
+    // state-only crossings stay stale after reconnect (Codex P2). Track each in
+    // `inFlightReceipts` so a recovery firing before it settles drains it first.
+    if (artifactId !== undefined) {
+      for (const patch of response.patches) {
+        if (!isReceiptFrame(patch)) continue;
+        const pending = recordStreamPatchReceipt(artifactId, patch.data).catch(() => false);
+        inFlightReceipts.add(pending);
+        void pending.finally(() => inFlightReceipts.delete(pending));
+      }
     }
 
     const dropped = artifactId !== undefined && replayDroppedSignals(response.patches);

@@ -610,4 +610,78 @@ describe('stream directive graph-native recovery (#133)', () => {
 
     vi.useRealTimers();
   });
+
+  test('a receipt frame returned in the resume REPLAY is attested into the buffer, not dropped (Codex P2)', async () => {
+    // The app-level replay comes back through applyResumeResponse, NOT handleMessage —
+    // the only branch that used to call recordStreamPatchReceipt. A receipt missed
+    // during the disconnect arrives in the replay `patches`, where replayHtml drops it
+    // and replayDroppedSignals ignores it. Without routing it through the SAME
+    // attestation buffer, QUERY gap replay would have no entry and the state-only
+    // crossing would stay stale after reconnect. This drives a reconnect whose replay
+    // carries a receipt and asserts it lands in the live buffer.
+    vi.useFakeTimers();
+    vi.spyOn(Math, 'random').mockReturnValue(0.5);
+
+    const transition = {
+      _tag: 'DiscreteStateTransition' as const,
+      _version: 1 as const,
+      cell: 'workspace',
+      next: 'expanded',
+      generation: 1,
+      authority: 'quantizer' as const,
+      base: 'czap:base',
+      kind: 'discrete' as const,
+    };
+    const receipt = await Effect.runPromise(core.transitionReceipt(transition));
+
+    const fetchMock = vi.fn().mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          patches: [{ type: 'receipt', data: { receipt, transition } }, '<p>html-after-receipt</p>'],
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      ),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const dispose = registerStreamRecoverySubstrate('hero', {
+      graphQueryUrl: '/api/graph',
+      mutationClient: { base: () => ({ id: 'czap:base' }) as never, adopt: vi.fn() },
+      cellStore: { get: () => undefined, register: () => {}, applyDiscrete: () => {} } as never,
+    });
+
+    try {
+      const el = makeEl('div', {
+        'data-czap-stream-url': '/api/feed',
+        'data-czap-stream-artifact': 'hero',
+      });
+      el.innerHTML = '<p>stale</p>';
+      streamDirective(noop, {}, el);
+
+      const firstSource = MockEventSource.instances[0]!;
+      firstSource.simulateMessage(JSON.stringify({ type: 'heartbeat' }), 'evt-42');
+      firstSource.simulateError();
+      await vi.advanceTimersByTimeAsync(1000);
+
+      const secondSource = MockEventSource.instances.at(-1)!;
+      secondSource.simulateOpen();
+      secondSource.simulateMessage(JSON.stringify({ type: 'heartbeat' }), 'evt-45');
+
+      await vi.waitFor(() => {
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+      });
+      await flushPromises();
+      await flushPromises();
+
+      // The replayed receipt attested + buffered through the production path — the fix.
+      await vi.waitFor(() => {
+        expect(getStreamRecoverySubstrate('hero')?.patchReceiptEntries).toHaveLength(1);
+      });
+      // The non-receipt HTML frame in the same batch still applied.
+      expect(el.innerHTML).toContain('html-after-receipt');
+    } finally {
+      dispose();
+      vi.useRealTimers();
+    }
+  });
 });
