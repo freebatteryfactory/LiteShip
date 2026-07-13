@@ -8,7 +8,7 @@
 
 > **hasModuleScopeDateRead**(`source`, `fileName?`): `boolean`
 
-Defined in: [audit/src/workers-date-scan.ts:348](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/workers-date-scan.ts#L348)
+Defined in: [audit/src/workers-date-scan.ts:352](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/workers-date-scan.ts#L352)
 
 Convenience boolean: does `source` read the wall clock at module load? (doctor's warn/ok discriminant.)
 

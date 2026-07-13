@@ -123,6 +123,14 @@ describe('scanModuleScopeDateReads — FOLLOWS module-scope helper calls execute
   test('a nested helper DECLARED but never called inside a load-time IIFE stays CLEAN (deferred)', () => {
     expect(flagged('(() => { function boot() { return Date.now(); } return 1; })();')).toBe(false);
   });
+
+  test('a helper declared + invoked inside a class STATIC BLOCK is followed (Codex P2)', () => {
+    expect(flagged('class C { static { function boot() { return Date.now(); } boot(); } }')).toBe(true);
+  });
+
+  test('a helper declared in a static block but never called stays CLEAN (deferred)', () => {
+    expect(flagged('class C { static { function boot() { return Date.now(); } } }')).toBe(false);
+  });
 });
 
 describe('scanModuleScopeDateReads — deferred / deterministic reads are CLEAN (no false positive)', () => {

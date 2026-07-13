@@ -298,9 +298,13 @@ function walkClassDefinition(node: ts.ClassDeclaration | ts.ClassExpression, ctx
       walkExecuting(member.initializer, ctx);
       continue;
     }
-    // A `static {}` block runs at class definition.
+    // A `static {}` block runs at class definition — index its OWN local helper declarations
+    // (like a load-time function body) so a call to one inside the block is followed; without
+    // this a `static { function boot(){ Date.now() } boot() }` frozen-clock read is missed.
     if (ts.isClassStaticBlockDeclaration(member)) {
-      for (const statement of member.body.statements) walkExecuting(statement, ctx);
+      const localFns = scopeWithLocalFunctions(member.body, ctx.localFns);
+      const scoped: ScanContext = localFns === ctx.localFns ? ctx : { ...ctx, localFns };
+      for (const statement of member.body.statements) walkExecuting(statement, scoped);
     }
     // Methods / accessors / constructor bodies are deferred — never scanned here.
   }
