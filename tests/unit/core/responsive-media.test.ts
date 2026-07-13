@@ -164,6 +164,26 @@ describe('ResponsiveMedia projection', () => {
     expect(projection.preload).toContain('imagesrcset=');
   });
 
+  test('reduced-data <source> is emitted even when saveDataVariant is a bare URL (no width/descriptor) (Codex P2)', () => {
+    // A bare saveDataVariant makes buildResponsiveSrcset return '' — without a bare-URL fallback
+    // the reduced-data <source> would be SKIPPED, dropping prefers-reduced-data clients (that sent
+    // no Save-Data header) onto the heavy srcset. The light asset must always be advertised.
+    const intent = ResponsiveMedia.intent({
+      id: 'hero-img',
+      alt: 'Hero',
+      variants: [
+        { src: '/img/hero-800.jpg', width: 800 },
+        { src: '/img/hero-1600.jpg', width: 1600 },
+      ],
+      saveDataVariant: { src: '/img/hero-lite.jpg' },
+    });
+    const projection = projectResponsiveMediaPicture(intent, { devicePixelRatio: 1, saveData: false });
+    expect(projection.picture).toContain('prefers-reduced-data: reduce');
+    expect(projection.picture).toContain('srcset="/img/hero-lite.jpg"');
+    // The heavy candidates stay OUT of the reduced-data source.
+    expect(projection.picture).not.toMatch(/prefers-reduced-data: reduce"[^>]*hero-1600/);
+  });
+
   test('adversarial: escapes alt text in HTML', () => {
     const intent = ResponsiveMedia.intent({
       id: 'x',
