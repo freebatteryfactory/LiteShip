@@ -5,13 +5,7 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import {
-  StateCell,
-  ProjectionState,
-  StateCellStore,
-  StateName,
-  RuntimeCoordinator,
-} from '@czap/core';
+import { StateCell, ProjectionState, StateCellStore, StateName, RuntimeCoordinator } from '@czap/core';
 
 describe('StateCell authority model', () => {
   test('discrete cells are replayable; continuous cells are not', () => {
@@ -26,11 +20,11 @@ describe('StateCell authority model', () => {
   });
 
   test('fromResolved mirrors worker ResolvedStateEntry shape for gap-replay hydration', () => {
-    const cell = StateCell.fromResolved(
-      { name: 'layout', state: StateName('tablet'), generation: 7 },
-      'graph',
-      ['mobile', 'tablet', 'desktop'],
-    );
+    const cell = StateCell.fromResolved({ name: 'layout', state: StateName('tablet'), generation: 7 }, 'graph', [
+      'mobile',
+      'tablet',
+      'desktop',
+    ]);
 
     expect(cell.name).toBe('layout');
     expect(cell.state).toBe('tablet');
@@ -100,6 +94,42 @@ describe('StateCellStore', () => {
     expect(hydrated.stateIndex).toBe(2);
     expect(hydrated.generation).toBe(42);
     expect(hydrated.authority).toBe('graph');
+  });
+
+  test('hydrateDiscrete REFUSES a generation rollback — the cell stays byte-identical (#133)', () => {
+    const store = StateCellStore.create();
+    store.register('layout', ['mobile', 'tablet', 'desktop']);
+
+    store.hydrateDiscrete('layout', 'desktop', 5, 'graph');
+    // A stale/duplicate receipt at gen 4 must NOT roll the cell backward.
+    const rolled = store.hydrateDiscrete('layout', 'tablet', 4, 'graph');
+    expect(rolled.state).toBe('desktop');
+    expect(rolled.generation).toBe(5);
+    // A newer generation still advances it.
+    const advanced = store.hydrateDiscrete('layout', 'mobile', 6, 'graph');
+    expect(advanced.state).toBe('mobile');
+    expect(advanced.generation).toBe(6);
+  });
+
+  test('hydrateDiscrete is IDEMPOTENT on a duplicate generation (no rollback, no double-apply)', () => {
+    const store = StateCellStore.create();
+    store.register('layout', ['mobile', 'tablet', 'desktop']);
+
+    const first = store.hydrateDiscrete('layout', 'tablet', 3, 'graph');
+    const duplicate = store.hydrateDiscrete('layout', 'desktop', 3, 'graph');
+    // Same generation → the crossing is already applied; the duplicate is a no-op.
+    expect(duplicate.state).toBe('tablet');
+    expect(duplicate.generation).toBe(3);
+    expect(duplicate.state).toBe(first.state);
+  });
+
+  test('hydrateDiscrete still installs the initial state at genesis (generation 0)', () => {
+    const store = StateCellStore.create();
+    store.register('layout', ['mobile', 'tablet', 'desktop']);
+
+    const genesis = store.hydrateDiscrete('layout', 'desktop', 0, 'graph');
+    expect(genesis.state).toBe('desktop');
+    expect(genesis.generation).toBe(0);
   });
 
   test('wraps an existing RuntimeCoordinator without replacing it', () => {

@@ -6,7 +6,7 @@
 
 # Interface: StreamRecoveryHandlers
 
-Defined in: [web/src/stream/recovery.ts:26](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L26)
+Defined in: [web/src/stream/recovery.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L32)
 
 Host callbacks for applying a recovered snapshot.
 
@@ -16,7 +16,11 @@ Host callbacks for applying a recovered snapshot.
 
 > `readonly` **applyDiscreteSignal**: (`payload`) => `void`
 
-Defined in: [web/src/stream/recovery.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L28)
+Defined in: [web/src/stream/recovery.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L39)
+
+SNAPSHOT-FLOOR discrete signal application: raw, pre-filtered discrete
+payloads from the HTML snapshot re-sync (the permanent floor). These are NOT
+attestation-checked transitions, so the payload is deliberately `unknown`.
 
 #### Parameters
 
@@ -34,7 +38,7 @@ Defined in: [web/src/stream/recovery.ts:28](https://github.com/freebatteryfactor
 
 > `readonly` **applyHtml**: (`html`) => `Promise`\<`void`\>
 
-Defined in: [web/src/stream/recovery.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L27)
+Defined in: [web/src/stream/recovery.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L33)
 
 #### Parameters
 
@@ -45,3 +49,28 @@ Defined in: [web/src/stream/recovery.ts:27](https://github.com/freebatteryfactor
 #### Returns
 
 `Promise`\<`void`\>
+
+***
+
+### applyTransition?
+
+> `readonly` `optional` **applyTransition?**: (`transition`) => `void`
+
+Defined in: [web/src/stream/recovery.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L48)
+
+TYPED gap-replay seam: reflect an attestation-checked
+[DiscreteStateTransition](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-transition.ts) into the host (e.g. dispatch to the DOM).
+The typed parameter is the uncompilable seam (Law 16) — a continuous cell /
+raw signal is not a `DiscreteStateTransition`, so it cannot be passed here.
+Optional: absent, the crossing still hydrates the cell store; only the host
+DOM reflection is skipped (the latent, producer-less state).
+
+#### Parameters
+
+##### transition
+
+[`DiscreteStateTransition`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-transition.ts)
+
+#### Returns
+
+`void`

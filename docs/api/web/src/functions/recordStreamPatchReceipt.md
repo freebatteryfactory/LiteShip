@@ -6,15 +6,15 @@
 
 # Function: recordStreamPatchReceipt()
 
-> **recordStreamPatchReceipt**(`artifactId`, `frame`): `boolean`
+> **recordStreamPatchReceipt**(`artifactId`, `frame`): `Promise`\<`boolean`\>
 
-Defined in: [web/src/stream/recovery-substrate.ts:115](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery-substrate.ts#L115)
+Defined in: [web/src/stream/recovery-substrate.ts:177](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery-substrate.ts#L177)
 
 Record a receipt frame from the SSE stream into the artifact's live buffer.
-Returns `true` when recorded. Frames for unregistered artifacts are ignored
-(no substrate → snapshot floor, nothing to feed); malformed frames warn loudly
-— a server emitting `receipt` events that do not parse as patch/receipt pairs
-is a wiring bug, not a condition to launder.
+Async because the attestation-check recomputes the sha256 receipt hash
+(`crypto.subtle`). Returns `true` when recorded. Frames for unregistered
+artifacts are ignored (no substrate → snapshot floor, nothing to feed);
+frames that fail attestation warn loudly and are NOT buffered.
 
 ## Parameters
 
@@ -28,4 +28,4 @@ is a wiring bug, not a condition to launder.
 
 ## Returns
 
-`boolean`
+`Promise`\<`boolean`\>

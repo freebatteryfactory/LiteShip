@@ -6,7 +6,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { Effect } from 'effect';
 import * as core from '@czap/core';
-import { Resumption, registerStreamRecoverySubstrate } from '@czap/web';
+import { Resumption, getStreamRecoverySubstrate, registerStreamRecoverySubstrate } from '@czap/web';
 import streamDirective from '../../../packages/astro/src/client-directives/stream.js';
 import { MockEventSource } from '../../helpers/mock-event-source.js';
 import { _resetRuntimePolicyForTests } from '../../../packages/astro/src/runtime/policy.js';
@@ -269,13 +269,32 @@ describe('stream directive graph-native recovery (#133)', () => {
       });
       streamDirective(noop, {}, el);
 
-      // A receipt frame on the SSE stream lands in the substrate's live buffer.
-      const receiptEntry = {
-        receipt: { kind: 'graph-patch' },
-        patch: { _tag: 'GraphPatch', _version: 1, base: 'czap:base', ops: [], resultId: 'czap:next' },
+      // An AUTHORITY-MINTED, attested transition receipt frame — the ONLY shape the
+      // substrate now buffers (Law 15: attest before apply). The receipt hash
+      // self-verifies and its subject is the `${base}#${cell}` transition subject law;
+      // a hand-rolled unattested frame is (correctly) refused with a loud diagnostic
+      // and never reaches replay. This exercises the real attestation over a serialized
+      // frame end to end.
+      const transition = {
+        _tag: 'DiscreteStateTransition' as const,
+        _version: 1 as const,
+        cell: 'workspace',
+        next: 'expanded',
+        generation: 1,
+        authority: 'quantizer' as const,
+        base: 'czap:base',
+        kind: 'discrete' as const,
       };
+      const receipt = await Effect.runPromise(core.transitionReceipt(transition));
+      const receiptEntry = { receipt, transition };
       const source = MockEventSource.instances[0]!;
       source.simulateMessage(JSON.stringify({ type: 'receipt', data: receiptEntry }), 'evt-43');
+
+      // recordStreamPatchReceipt is async (it recomputes the sha256 hash to attest);
+      // wait for the attested entry to land in the live buffer before triggering recovery.
+      await vi.waitFor(() => {
+        expect(getStreamRecoverySubstrate('hero')?.patchReceiptEntries).toHaveLength(1);
+      });
 
       el.dispatchEvent(
         new CustomEvent('czap:request-snapshot', { detail: { reason: 'preserve-missing' }, bubbles: true }),
@@ -284,9 +303,13 @@ describe('stream directive graph-native recovery (#133)', () => {
       await vi.waitFor(() => {
         expect(gapReplay).toHaveBeenCalledOnce();
       });
-      const call = gapReplay.mock.calls[0]![0] as { queryUrl: string; entries: readonly unknown[] };
+      const call = gapReplay.mock.calls[0]![0] as {
+        queryUrl: string;
+        entries: readonly { readonly transition: { readonly cell: string; readonly next: string } }[];
+      };
       expect(call.queryUrl).toBe('/api/graph');
-      expect(call.entries).toContainEqual(receiptEntry);
+      expect(call.entries).toHaveLength(1);
+      expect(call.entries[0]!.transition).toMatchObject({ cell: 'workspace', next: 'expanded' });
       expect(snapshotSpy).not.toHaveBeenCalled();
     } finally {
       dispose();

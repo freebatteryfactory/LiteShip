@@ -427,9 +427,11 @@ export type {
   GraphQueryEtagCandidates,
   SendGraphQueryOptions,
 } from './graph-query.js';
-// #133-full — graph-native gap replay over StateCell + patch/receipt chain.
+// #133-full — graph-native gap replay over StateCell + DiscreteStateTransition
+// receipt chain. `discreteSignalPayloadsFromPatch` is DELETED — it derived a
+// runtime state VALUE from a SignalNode content-address (a category error). The
+// value now arrives typed in the transition receipt payload (state-transition.ts).
 export {
-  discreteSignalPayloadsFromPatch,
   chainPatchesBetween,
   replayDiscreteFromPatchReceipts,
   runGraphNativeGapReplay,
@@ -440,6 +442,19 @@ export type {
   GraphNativeGapReplayOptions,
   GraphNativeGapReplayResult,
 } from './graph-query-gap-replay.js';
+// DiscreteStateTransition (#133 correctness) — the typed, attestation-checked
+// authority record for a discrete crossing. The ONE hash law (Receipt/TypedRef);
+// the subject law (`${base}#${cell}`) binds a receipt to one cell + graph. The
+// replay INPUT type — `kind: 'discrete'` by construction makes a continuous
+// value uncompilable into the replay path (Law 16).
+export {
+  transitionReceipt,
+  mintTransition,
+  decodeDiscreteStateTransition,
+  applyTransition,
+  discreteTransitionSubjectId,
+} from './state-transition.js';
+export type { DiscreteStateTransition } from './state-transition.js';
 
 // Runtime coordination
 export { RuntimeCoordinator } from './runtime-coordinator.js';

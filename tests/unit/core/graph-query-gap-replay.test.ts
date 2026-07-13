@@ -1,219 +1,288 @@
 // @vitest-environment node
 /**
- * #133-full — graph-native gap replay via StateCell + patch/receipt chain + QUERY read-leg.
+ * #133-full — graph-native gap replay via StateCell + DiscreteStateTransition
+ * receipt chain + QUERY read-leg. Rewritten to the TRANSITION model: the dead
+ * `discreteSignalPayloadsFromPatch` (which derived a state value from a
+ * SignalNode content-address) is gone. Value arrives typed in the receipt.
  */
 import { describe, test, expect } from 'vitest';
 import { Effect } from 'effect';
 import {
   GraphPatch,
+  HLC,
   StateCellStore,
+  StateName,
   chainPatchesBetween,
-  discreteSignalPayloadsFromPatch,
   graphQueryEtag,
   handleGraphQuery,
   replayDiscreteFromPatchReceipts,
   runGraphNativeGapReplay,
+  transitionReceipt,
+  type DiscreteStateTransition,
+  type PatchReceiptEntry,
 } from '../../../packages/core/src/index.js';
-import type { PatchReceiptEntry } from '../../../packages/core/src/graph-query-gap-replay.js';
-import { nodeFromParts } from '../../../packages/core/src/index.js';
 import { graph, node } from '../../helpers/graph-fixtures.js';
 
-describe('graph-query gap replay (#133-full)', () => {
-  test('discreteSignalPayloadsFromPatch skips continuous signal ops', () => {
-    const base = graph([node('scroll.y')]);
-    const patch = GraphPatch.propose(base, [
-      { op: 'add', family: 'signal', node: node('workspace.mode') },
-      { op: 'add', family: 'signal', node: node('scroll.progress') },
-      { op: 'add', family: 'signal', node: node('viewport.width') },
-    ]);
+type Ids = ReturnType<typeof graph>['id'];
 
-    const payloads = discreteSignalPayloadsFromPatch(patch);
-    expect(payloads).toEqual([{ state: 'workspace.mode' }]);
-  });
+const mkTransition = (
+  base: Ids,
+  resultId: Ids,
+  cell: string,
+  next: string,
+  generation: number,
+): DiscreteStateTransition => ({
+  _tag: 'DiscreteStateTransition',
+  _version: 1,
+  cell,
+  next: StateName(next),
+  generation,
+  authority: 'graph',
+  base,
+  resultId,
+  kind: 'discrete',
+});
 
-  test('chainPatchesBetween walks receipt entries from local base to server graph', async () => {
-    const base = graph([node('a')]);
-    const midPatch = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('b.signal') }]);
-    const mid = GraphPatch.apply(base, midPatch);
-    const tailPatch = GraphPatch.propose(mid, [{ op: 'add', family: 'signal', node: node('c.signal') }]);
-    const server = GraphPatch.apply(mid, tailPatch);
+let clock = HLC.increment(HLC.create('test'), 1_000);
+const nextTs = () => (clock = HLC.increment(clock, clock.wall_ms + 1));
 
-    const parent = await Effect.runPromise(GraphPatch.receipt(midPatch));
-    const child = await Effect.runPromise(GraphPatch.receipt(tailPatch, { previous: parent.hash }));
+/** Mint an attested entry linking onto `previousHash` with a strictly-advancing HLC. */
+const mkEntry = async (transition: DiscreteStateTransition, previousHash?: string): Promise<PatchReceiptEntry> => {
+  const receipt = await Effect.runPromise(
+    transitionReceipt(transition, { timestamp: nextTs(), ...(previousHash ? { previous: previousHash } : {}) }),
+  );
+  return { receipt, transition };
+};
 
-    const chain = chainPatchesBetween(base.id, server.id, [
-      { receipt: parent, patch: midPatch },
-      { receipt: child, patch: tailPatch },
-    ]);
+/** base → mid → server, with two crossings on the `state` cell (alpha then beta). */
+const scenario = async () => {
+  const base = graph([node('a')]);
+  const midPatch = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('b.signal') }]);
+  const mid = GraphPatch.apply(base, midPatch);
+  const tailPatch = GraphPatch.propose(mid, [{ op: 'add', family: 'signal', node: node('c.signal') }]);
+  const server = GraphPatch.apply(mid, tailPatch);
 
+  const t1 = mkTransition(base.id, mid.id, 'state', 'alpha', 1);
+  const t2 = mkTransition(mid.id, server.id, 'state', 'beta', 2);
+  const e1 = await mkEntry(t1);
+  const e2 = await mkEntry(t2, e1.receipt.hash);
+  return { base, mid, server, t1, t2, e1, e2 };
+};
+
+const freshStore = () => {
+  const store = StateCellStore.create();
+  store.register('state', ['a', 'alpha', 'beta'], { kind: 'discrete' });
+  return store;
+};
+
+describe('graph-query gap replay — chain selection (#133-full)', () => {
+  test('chainPatchesBetween walks transition entries from local base to server graph', async () => {
+    const { base, mid, server, t1, t2, e1, e2 } = await scenario();
+    const chain = chainPatchesBetween(base.id, server.id, [e1, e2]);
     expect(chain).toHaveLength(2);
+    expect(chain[0]).toBe(t1);
+    expect(chain[1]).toBe(t2);
     expect(chain[0]!.resultId).toBe(mid.id);
     expect(chain[1]!.resultId).toBe(server.id);
   });
 
   test('FORKED buffer: selects the branch that reaches the server graph, not buffer order', async () => {
     const base = graph([node('a')]);
-    // Dead fork FIRST in the buffer — insertion order must not win.
-    const deadPatch = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('dead.mode') }]);
-    // Live branch: base → mid → server.
     const midPatch = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('live.mode') }]);
     const mid = GraphPatch.apply(base, midPatch);
     const tailPatch = GraphPatch.propose(mid, [{ op: 'add', family: 'signal', node: node('tail.mode') }]);
     const server = GraphPatch.apply(mid, tailPatch);
+    const deadPatch = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('dead.mode') }]);
+    const dead = GraphPatch.apply(base, deadPatch);
 
-    const deadReceipt = await Effect.runPromise(GraphPatch.receipt(deadPatch));
-    const midReceipt = await Effect.runPromise(GraphPatch.receipt(midPatch));
-    const tailReceipt = await Effect.runPromise(GraphPatch.receipt(tailPatch, { previous: midReceipt.hash }));
+    const deadT = mkTransition(base.id, dead.id, 'state', 'alpha', 1);
+    const midT = mkTransition(base.id, mid.id, 'state', 'alpha', 1);
+    const tailT = mkTransition(mid.id, server.id, 'state', 'beta', 2);
 
+    // Dead fork FIRST in the buffer — insertion order must not win.
     const chain = chainPatchesBetween(base.id, server.id, [
-      { receipt: deadReceipt, patch: deadPatch },
-      { receipt: midReceipt, patch: midPatch },
-      { receipt: tailReceipt, patch: tailPatch },
+      await mkEntry(deadT),
+      await mkEntry(midT),
+      await mkEntry(tailT),
     ]);
-
-    expect(chain).toHaveLength(2);
-    expect(chain[0]).toBe(midPatch);
-    expect(chain[1]).toBe(tailPatch);
-    expect(chain).not.toContain(deadPatch);
+    expect(chain).toEqual([midT, tailT]);
+    expect(chain).not.toContain(deadT);
   });
 
-  test('PARTIAL buffer: a chain that never reaches the server graph is refused (empty), not replayed', async () => {
+  test('PARTIAL buffer: a chain that never reaches the server graph is refused (empty)', async () => {
     const base = graph([node('a')]);
     const forkPatch = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('fork.mode') }]);
-    const forkReceipt = await Effect.runPromise(GraphPatch.receipt(forkPatch));
-    // Server graph the buffered branch does NOT bridge to.
+    const fork = GraphPatch.apply(base, forkPatch);
     const unrelated = graph([node('b'), node('c')]);
-
-    const chain = chainPatchesBetween(base.id, unrelated.id, [{ receipt: forkReceipt, patch: forkPatch }]);
+    const chain = chainPatchesBetween(base.id, unrelated.id, [
+      await mkEntry(mkTransition(base.id, fork.id, 'state', 'alpha', 1)),
+    ]);
     expect(chain).toEqual([]);
   });
 
   test('layered fork DAG with no reaching branch completes in bounded time (cannot-reach memo)', () => {
-    const mkEntry = (base: string, result: string): PatchReceiptEntry => ({
-      receipt: { kind: 'graph-patch' } as PatchReceiptEntry['receipt'],
-      patch: { _tag: 'GraphPatch', _version: 1, base, ops: [], resultId: result } as GraphPatch,
+    const mkFast = (base: string, result: string): PatchReceiptEntry => ({
+      receipt: { kind: 'discrete-transition' } as PatchReceiptEntry['receipt'],
+      transition: { base, resultId: result } as DiscreteStateTransition,
     });
-
     const entries: PatchReceiptEntry[] = [];
-    const layers = 12;
     let frontier = ['czap:base'];
-    for (let depth = 0; depth < layers; depth++) {
+    for (let depth = 0; depth < 12; depth++) {
       const next: string[] = [];
       for (const base of frontier) {
         const left = `czap:L${depth}-${base}-0`;
         const right = `czap:L${depth}-${base}-1`;
-        entries.push(mkEntry(base, left), mkEntry(base, right));
+        entries.push(mkFast(base, left), mkFast(base, right));
         next.push(left, right);
       }
       frontier = next;
     }
-
     const start = performance.now();
-    const chain = chainPatchesBetween('czap:base' as never, 'czap:unreachable-server' as never, entries);
-    const elapsed = performance.now() - start;
-
+    const chain = chainPatchesBetween('czap:base' as never, 'czap:unreachable' as never, entries);
     expect(chain).toEqual([]);
-    // Bounded, not exponential — generous for loaded CI runners (exponential blow-up is seconds+).
-    expect(elapsed).toBeLessThan(200);
+    expect(performance.now() - start).toBeLessThan(200);
   });
+});
 
-  test('signal UPDATE ops replay as discrete crossings (diff collapses remove+add)', () => {
-    const before = graph([node('workspace.mode'), node('scroll.y')]);
-    // Same logical signal cell, changed payload (range) → new content address →
-    // GraphPatch.diff collapses the remove+add into op: 'update'.
-    const changed = nodeFromParts({ ...node('workspace.mode'), range: [0, 4] as const });
-    const after = graph([changed, node('scroll.y')]);
-    const patch = GraphPatch.diff(before, after);
-    expect(patch.ops.some((op) => op.op === 'update')).toBe(true);
-
-    const payloads = discreteSignalPayloadsFromPatch(patch);
-    expect(payloads).toEqual([{ state: 'workspace.mode' }]);
-  });
-
-  test('replayDiscreteFromPatchReceipts hydrates replayable StateCells only', async () => {
-    const base = graph([node('a')]);
-    const patch = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('workspace.mode') }]);
-    const server = GraphPatch.apply(base, patch);
-    const receipt = await Effect.runPromise(GraphPatch.receipt(patch));
-
-    const store = StateCellStore.create();
-    store.register('state', ['workspace.mode', 'alpha', 'beta'], { kind: 'discrete' });
-    store.register('scroll', ['live'], { kind: 'continuous' });
-
-    const applied: unknown[] = [];
-    const { replayedCells, discretePayloads } = replayDiscreteFromPatchReceipts({
+describe('graph-query gap replay — attested replay (#133-full)', () => {
+  test('replayDiscreteFromPatchReceipts hydrates the highest-generation crossing per cell', async () => {
+    const { base, server, e1, e2 } = await scenario();
+    const store = freshStore();
+    const applied: DiscreteStateTransition[] = [];
+    const { replayedCells, transitions } = await replayDiscreteFromPatchReceipts({
       localBaseId: base.id,
       serverGraphId: server.id,
-      entries: [{ receipt, patch }],
+      entries: [e1, e2],
       cellStore: store,
-      applyDiscrete: (payload) => applied.push(payload),
+      applyTransition: (t) => applied.push(t),
     });
-
-    expect(discretePayloads.length).toBeGreaterThan(0);
-    expect(replayedCells.length).toBe(1);
+    expect(replayedCells).toHaveLength(1);
     expect(replayedCells[0]!.kind).toBe('discrete');
-    expect(applied.length).toBeGreaterThan(0);
+    expect(store.snapshot('state')!.state).toBe('beta');
+    expect(store.snapshot('state')!.generation).toBe(2);
+    expect(transitions.map((t) => t.next)).toEqual(['beta']);
+    expect(applied).toHaveLength(1);
   });
 
   test('runGraphNativeGapReplay queries, adopts, and replays discrete crossings', async () => {
-    const base = graph([node('a')]);
-    const patch = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('workspace.mode') }]);
-    const server = GraphPatch.apply(base, patch);
-    const receipt = await Effect.runPromise(GraphPatch.receipt(patch));
-
-    const store = StateCellStore.create();
-    store.register('state', ['workspace.mode', 'alpha', 'beta'], { kind: 'discrete' });
-
+    const { base, server, e1, e2 } = await scenario();
+    const store = freshStore();
     let adopted: typeof server | undefined;
     const fetchImpl: typeof fetch = async () => {
       const result = await handleGraphQuery({}, { loadGraph: () => server });
       return { status: 200, json: async () => result } as Response;
     };
-
     const result = await runGraphNativeGapReplay({
       queryUrl: '/api/graph',
       localBase: base,
-      entries: [{ receipt, patch }],
+      entries: [e1, e2],
       cellStore: store,
-      adopt: (next) => {
-        adopted = next;
-      },
+      adopt: (next) => (adopted = next),
       fetchImpl,
     });
-
     expect(result.query.status).toBe('ok');
     expect(adopted?.id).toBe(server.id);
-    expect(result.replayedCells.length).toBe(1);
-    expect(result.discretePayloads.length).toBeGreaterThan(0);
+    expect(store.snapshot('state')!.state).toBe('beta');
+    expect(result.transitions).toHaveLength(1);
   });
 
-  test('runGraphNativeGapReplay with not_modified still replays patch-chain discrete crossings', async () => {
-    const base = graph([node('a')]);
-    const patch = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('workspace.mode') }]);
-    const receipt = await Effect.runPromise(GraphPatch.receipt(patch));
-
-    const store = StateCellStore.create();
-    store.register('state', ['workspace.mode', 'alpha', 'beta'], { kind: 'discrete' });
-
-    const fetchImpl: typeof fetch = async () => {
-      const etag = graphQueryEtag(base);
-      return {
+  test('not_modified still replays local transition-chain crossings', async () => {
+    const { base, e1 } = await scenario();
+    const store = freshStore();
+    const fetchImpl: typeof fetch = async () =>
+      ({
         status: 304,
-        headers: new Headers({ etag: `"${etag}"` }),
+        headers: new Headers({ etag: `"${graphQueryEtag(base)}"` }),
         json: async () => null,
-      } as Response;
-    };
-
+      }) as Response;
+    // localBase === serverGraphId on 304 → no branch bridges → nothing to replay.
     const result = await runGraphNativeGapReplay({
       queryUrl: '/api/graph',
       localBase: base,
-      entries: [{ receipt, patch }],
+      entries: [e1],
       cellStore: store,
       adopt: () => undefined,
       fetchImpl,
     });
-
     expect(result.query.status).toBe('not_modified');
-    expect(result.replayedCells.length).toBe(0);
+    expect(result.transitions).toHaveLength(0);
+  });
+});
+
+describe('graph-query gap replay — HOSTILE fixtures (Law 15)', () => {
+  test('forged hash: a tampered receipt breaks the chain floor → nothing replayed', async () => {
+    const { base, server, e1, e2 } = await scenario();
+    const store = freshStore();
+    // Tamper the second receipt's stored hash — hash self-consistency fails.
+    const tampered: PatchReceiptEntry = { ...e2, receipt: { ...e2.receipt, hash: `${e2.receipt.hash}00` } };
+    const { replayedCells, transitions } = await replayDiscreteFromPatchReceipts({
+      localBaseId: base.id,
+      serverGraphId: server.id,
+      entries: [e1, tampered],
+      cellStore: store,
+    });
+    expect(replayedCells).toEqual([]);
+    expect(transitions).toEqual([]);
+    // Law 15: byte-identical — the cell never left its registered default.
+    expect(store.snapshot('state')!.state).toBe('a');
+    expect(store.snapshot('state')!.generation).toBe(0);
+  });
+
+  test('wrong subject: a receipt whose subject names another cell is refused', async () => {
+    const { base, mid, server } = await scenario();
+    const store = freshStore();
+    // Two transitions that FORM a valid graph branch, but the first receipt is
+    // minted for a DIFFERENT cell than the transition it is paired with.
+    const t1 = mkTransition(base.id, mid.id, 'state', 'alpha', 1);
+    const t2 = mkTransition(mid.id, server.id, 'state', 'beta', 2);
+    const wrongReceipt = await Effect.runPromise(
+      transitionReceipt(mkTransition(base.id, mid.id, 'OTHER', 'x', 1), { timestamp: nextTs() }),
+    );
+    const e1: PatchReceiptEntry = { receipt: wrongReceipt, transition: t1 };
+    const e2 = await mkEntry(t2, wrongReceipt.hash);
+    const { transitions } = await replayDiscreteFromPatchReceipts({
+      localBaseId: base.id,
+      serverGraphId: server.id,
+      entries: [e1, e2],
+      cellStore: store,
+    });
+    expect(transitions).toEqual([]);
+    expect(store.snapshot('state')!.state).toBe('a');
+  });
+
+  test('reordered / broken chain: HLC + previous continuity floor refuses replay', async () => {
+    const { base, mid, server } = await scenario();
+    const store = freshStore();
+    const t1 = mkTransition(base.id, mid.id, 'state', 'alpha', 1);
+    const t2 = mkTransition(mid.id, server.id, 'state', 'beta', 2);
+    // e2 links onto a BOGUS previous (not e1.hash) → chain_break.
+    const e1 = await mkEntry(t1);
+    const e2 = await mkEntry(t2, 'sha256:not-a-real-predecessor');
+    const { transitions } = await replayDiscreteFromPatchReceipts({
+      localBaseId: base.id,
+      serverGraphId: server.id,
+      entries: [e1, e2],
+      cellStore: store,
+    });
+    expect(transitions).toEqual([]);
+    expect(store.snapshot('state')!.state).toBe('a');
+  });
+
+  test('unknown cell: a transition naming an unregistered cell is a loud no-op, not a throw', async () => {
+    const { base, server } = await scenario();
+    // Store WITHOUT the 'state' cell registered → applyTransition throws inside,
+    // caught + diagnosed; the replay never throws through.
+    const store = StateCellStore.create();
+    store.register('other', ['x'], { kind: 'discrete' });
+    const t1 = mkTransition(base.id, server.id, 'state', 'alpha', 1);
+    const e1 = await mkEntry(t1);
+    const { replayedCells, transitions } = await replayDiscreteFromPatchReceipts({
+      localBaseId: base.id,
+      serverGraphId: server.id,
+      entries: [e1],
+      cellStore: store,
+    });
+    expect(replayedCells).toEqual([]);
+    expect(transitions).toEqual([]);
   });
 });

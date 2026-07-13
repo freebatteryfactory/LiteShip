@@ -6,7 +6,7 @@
 
 # Interface: StreamRecoveryOptions
 
-Defined in: [web/src/stream/recovery.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L39)
+Defined in: [web/src/stream/recovery.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L59)
 
 Configuration for [bindRequestSnapshotRecovery](../functions/bindRequestSnapshotRecovery.md) and [runGraphNativeRecovery](../functions/runGraphNativeRecovery.md).
 
@@ -21,7 +21,7 @@ of those are absent.
 
 > `readonly` **artifactId**: `string`
 
-Defined in: [web/src/stream/recovery.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L40)
+Defined in: [web/src/stream/recovery.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L60)
 
 ***
 
@@ -29,9 +29,29 @@ Defined in: [web/src/stream/recovery.ts:40](https://github.com/freebatteryfactor
 
 > `readonly` `optional` **cellStore?**: `StateCellStoreShape`
 
-Defined in: [web/src/stream/recovery.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L47)
+Defined in: [web/src/stream/recovery.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L67)
 
 StateCell store for discrete gap-replay (#133-full). Required with [patchReceiptEntries](#patchreceiptentries).
+
+***
+
+### domStale?
+
+> `readonly` `optional` **domStale?**: () => `boolean`
+
+Defined in: [web/src/stream/recovery.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L79)
+
+Whether the rendered DOM is KNOWN-STALE (F-REC-3). Recovery is usually
+triggered by a rejected morph, which leaves the DOM stale even after
+gap-replay corrects the graph + cell store. When this returns `true`,
+[runGraphNativeRecovery](../functions/runGraphNativeRecovery.md) applies fresh snapshot HTML on a successful
+QUERY (`ok`/`not_modified`) instead of early-returning — so a valid-graph or
+304 read still CONVERGES the DOM. Absent/`false` preserves the gap-replay
+fast path (no snapshot fetch when the DOM is already fresh).
+
+#### Returns
+
+`boolean`
 
 ***
 
@@ -39,7 +59,7 @@ StateCell store for discrete gap-replay (#133-full). Required with [patchReceipt
 
 > `readonly` `optional` **endpointPolicy?**: [`RuntimeEndpointPolicy`](RuntimeEndpointPolicy.md)
 
-Defined in: [web/src/stream/recovery.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L43)
+Defined in: [web/src/stream/recovery.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L63)
 
 ***
 
@@ -47,7 +67,7 @@ Defined in: [web/src/stream/recovery.ts:43](https://github.com/freebatteryfactor
 
 > `readonly` `optional` **graphQueryUrl?**: `string`
 
-Defined in: [web/src/stream/recovery.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L42)
+Defined in: [web/src/stream/recovery.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L62)
 
 ***
 
@@ -55,7 +75,7 @@ Defined in: [web/src/stream/recovery.ts:42](https://github.com/freebatteryfactor
 
 > `readonly` **handlers**: [`StreamRecoveryHandlers`](StreamRecoveryHandlers.md)
 
-Defined in: [web/src/stream/recovery.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L45)
+Defined in: [web/src/stream/recovery.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L65)
 
 ***
 
@@ -63,7 +83,7 @@ Defined in: [web/src/stream/recovery.ts:45](https://github.com/freebatteryfactor
 
 > `readonly` `optional` **mutationClient?**: [`StreamRecoveryMutationClient`](../type-aliases/StreamRecoveryMutationClient.md)
 
-Defined in: [web/src/stream/recovery.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L44)
+Defined in: [web/src/stream/recovery.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L64)
 
 ***
 
@@ -71,9 +91,9 @@ Defined in: [web/src/stream/recovery.ts:44](https://github.com/freebatteryfactor
 
 > `readonly` `optional` **patchReceiptEntries?**: readonly `PatchReceiptEntry`[]
 
-Defined in: [web/src/stream/recovery.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L49)
+Defined in: [web/src/stream/recovery.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L69)
 
-Patch/receipt chain spanning the missed gap (#133-full).
+Transition/receipt chain spanning the missed gap (#133-full).
 
 ***
 
@@ -81,4 +101,4 @@ Patch/receipt chain spanning the missed gap (#133-full).
 
 > `readonly` `optional` **snapshotUrl?**: `string`
 
-Defined in: [web/src/stream/recovery.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L41)
+Defined in: [web/src/stream/recovery.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L61)

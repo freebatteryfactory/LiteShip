@@ -8,6 +8,6 @@
 
 > **ResolutionReceipt** = [`StateResolutionReceipt`](../../../interfaces/StateResolutionReceipt.md)
 
-Defined in: [core/src/state-cell.ts:359](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L359)
+Defined in: [core/src/state-cell.ts:384](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L384)
 
 Alias for [StateResolutionReceipt](../../../interfaces/StateResolutionReceipt.md).

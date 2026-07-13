@@ -6,7 +6,7 @@
 
 # Interface: StateCellStoreShape
 
-Defined in: [core/src/state-cell.ts:90](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L90)
+Defined in: [core/src/state-cell.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L91)
 
 Live store — coarse authority registry over a [RuntimeCoordinator](../variables/RuntimeCoordinator.md).
 
@@ -16,7 +16,7 @@ Live store — coarse authority registry over a [RuntimeCoordinator](../variable
 
 > `readonly` **runtime**: `RuntimeCoordinatorShape`
 
-Defined in: [core/src/state-cell.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L91)
+Defined in: [core/src/state-cell.ts:92](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L92)
 
 ## Methods
 
@@ -24,7 +24,7 @@ Defined in: [core/src/state-cell.ts:91](https://github.com/freebatteryfactory/Li
 
 > **applyDiscrete**(`name`, `state`, `authority?`): [`StateCell`](StateCell.md)
 
-Defined in: [core/src/state-cell.ts:94](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L94)
+Defined in: [core/src/state-cell.ts:95](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L95)
 
 #### Parameters
 
@@ -50,7 +50,7 @@ Defined in: [core/src/state-cell.ts:94](https://github.com/freebatteryfactory/Li
 
 > **hydrateDiscrete**(`name`, `state`, `generation`, `authority?`): [`StateCell`](StateCell.md)
 
-Defined in: [core/src/state-cell.ts:96](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L96)
+Defined in: [core/src/state-cell.ts:97](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L97)
 
 #### Parameters
 
@@ -80,7 +80,7 @@ Defined in: [core/src/state-cell.ts:96](https://github.com/freebatteryfactory/Li
 
 > **markDirty**(`name`): `void`
 
-Defined in: [core/src/state-cell.ts:97](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L97)
+Defined in: [core/src/state-cell.ts:98](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L98)
 
 #### Parameters
 
@@ -98,7 +98,7 @@ Defined in: [core/src/state-cell.ts:97](https://github.com/freebatteryfactory/Li
 
 > **projectionState**(`projection`, `options?`): [`ProjectionState`](ProjectionState.md)
 
-Defined in: [core/src/state-cell.ts:99](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L99)
+Defined in: [core/src/state-cell.ts:100](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L100)
 
 #### Parameters
 
@@ -120,7 +120,7 @@ Defined in: [core/src/state-cell.ts:99](https://github.com/freebatteryfactory/Li
 
 > **register**(`name`, `states`, `options?`): `void`
 
-Defined in: [core/src/state-cell.ts:92](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L92)
+Defined in: [core/src/state-cell.ts:93](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L93)
 
 #### Parameters
 
@@ -146,7 +146,7 @@ readonly `string`[]
 
 > **reset**(`registrations?`): `void`
 
-Defined in: [core/src/state-cell.ts:100](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L100)
+Defined in: [core/src/state-cell.ts:101](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L101)
 
 #### Parameters
 
@@ -164,7 +164,7 @@ readonly `object`[]
 
 > **snapshot**(`name`): [`StateCell`](StateCell.md)\<`string`\> \| `undefined`
 
-Defined in: [core/src/state-cell.ts:98](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L98)
+Defined in: [core/src/state-cell.ts:99](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L99)
 
 #### Parameters
 
@@ -182,7 +182,7 @@ Defined in: [core/src/state-cell.ts:98](https://github.com/freebatteryfactory/Li
 
 > **unregister**(`name`): `void`
 
-Defined in: [core/src/state-cell.ts:93](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L93)
+Defined in: [core/src/state-cell.ts:94](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L94)
 
 #### Parameters
 
@@ -200,7 +200,7 @@ Defined in: [core/src/state-cell.ts:93](https://github.com/freebatteryfactory/Li
 
 > **writeContinuous**(`name`, `value`): [`StateCell`](StateCell.md)
 
-Defined in: [core/src/state-cell.ts:95](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L95)
+Defined in: [core/src/state-cell.ts:96](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L96)
 
 #### Parameters
 

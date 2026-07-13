@@ -1441,6 +1441,11 @@
           "signature": "_kind:const,budgets:const,capabilities:const,id:const,input:namespace,invariants:const,name:const,output:namespace,run:function,site:const"
         },
         {
+          "name": "applyTransition",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
           "name": "asReplayableRecoveryCell",
           "kind": "function",
           "signature": "(1)"
@@ -1511,6 +1516,11 @@
           "signature": "(2)"
         },
         {
+          "name": "decodeDiscreteStateTransition",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "decodeDocumentGraph",
           "kind": "function",
           "signature": "(1)"
@@ -1526,7 +1536,7 @@
           "signature": "(1)"
         },
         {
-          "name": "discreteSignalPayloadsFromPatch",
+          "name": "discreteTransitionSubjectId",
           "kind": "function",
           "signature": "(1)"
         },
@@ -1679,6 +1689,11 @@
           "name": "manualClock",
           "kind": "function",
           "signature": "(0)"
+        },
+        {
+          "name": "mintTransition",
+          "kind": "function",
+          "signature": "(3)"
         },
         {
           "name": "motionPropToBinding",
@@ -1839,6 +1854,11 @@
           "name": "tokenBufferCapsule",
           "kind": "namespace",
           "signature": "_kind:const,budgets:const,capabilities:const,id:const,initialState:const,input:namespace,invariants:const,name:const,output:namespace,site:const,step:function"
+        },
+        {
+          "name": "transitionReceipt",
+          "kind": "function",
+          "signature": "(2)"
         },
         {
           "name": "tupleMap",

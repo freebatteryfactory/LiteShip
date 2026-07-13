@@ -8,7 +8,7 @@
 
 > **ProjectionState**: `object`
 
-Defined in: [core/src/state-cell.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L50)
+Defined in: [core/src/state-cell.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L51)
 
 ProjectionState — per-projection typed authority aggregate.
 

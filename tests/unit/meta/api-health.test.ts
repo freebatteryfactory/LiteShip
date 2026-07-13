@@ -264,10 +264,19 @@ const STANDALONE_FUNCTIONS = [
   'normalizeGraphQueryEtag',
   'parseGraphQueryEtagList',
   'createGraphQueryRefreshBase',
-  'discreteSignalPayloadsFromPatch',
+  // #133 correctness: `discreteSignalPayloadsFromPatch` DELETED (it derived a
+  // runtime state VALUE from a SignalNode content-address). The value now arrives
+  // typed in the DiscreteStateTransition receipt payload.
   'chainPatchesBetween',
   'replayDiscreteFromPatchReceipts',
   'runGraphNativeGapReplay',
+  // DiscreteStateTransition (#133): typed, attestation-checked authority record
+  // for a discrete crossing — the ONE hash law + the `${base}#${cell}` subject law.
+  'transitionReceipt',
+  'mintTransition',
+  'decodeDiscreteStateTransition',
+  'applyTransition',
+  'discreteTransitionSubjectId',
   // Channel additions (0.8.0): the shared applied-graph adopt guard + the
   // client-side base state machine (serialized submits, bounded stale-retry).
   'verifyAppliedGraph',
