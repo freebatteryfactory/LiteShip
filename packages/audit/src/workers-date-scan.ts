@@ -237,14 +237,48 @@ function walkExecuting(node: ts.Node, ctx: ScanContext): void {
 }
 
 /**
+ * Layer the function body's OWN local helper declarations over the enclosing table so a call
+ * to a nested helper is followed inside the executing scope. A helper declared AND invoked
+ * during load — `(() => { function boot() { return Date.now() } return boot() })()` — runs at
+ * module load, but `boot` is not a module-scope name, so without this the call to `boot()` is
+ * never followed and the frozen-clock read is missed (Codex P2). Hoisted `function`
+ * declarations are visible anywhere in the body; `const` fn bindings mirror the module-scope
+ * collector's rule (Law 6: one indexing definition). Locals shadow the enclosing name.
+ */
+function scopeWithLocalFunctions(
+  body: ts.Node,
+  base: ReadonlyMap<string, LoadTimeFunction>,
+): ReadonlyMap<string, LoadTimeFunction> {
+  if (!ts.isBlock(body)) return base;
+  let table: Map<string, LoadTimeFunction> | undefined;
+  for (const statement of body.statements) {
+    if (ts.isFunctionDeclaration(statement) && statement.name !== undefined && statement.body !== undefined) {
+      (table ??= new Map(base)).set(statement.name.text, statement);
+      continue;
+    }
+    if (ts.isVariableStatement(statement) && (statement.declarationList.flags & ts.NodeFlags.Const) !== 0) {
+      for (const decl of statement.declarationList.declarations) {
+        if (ts.isIdentifier(decl.name) && decl.initializer !== undefined && isInvocableFunction(decl.initializer)) {
+          (table ??= new Map(base)).set(decl.name.text, decl.initializer);
+        }
+      }
+    }
+  }
+  return table ?? base;
+}
+
+/**
  * A function body that RUNS at module load — an immediately-invoked literal, or a module-scope
- * helper the walk followed at its call site. Its parameter defaults + body execute now.
+ * helper the walk followed at its call site. Its parameter defaults + body execute now, with the
+ * body's own nested helper declarations indexed so calls to them are followed too.
  */
 function walkImmediateFunction(fn: LoadTimeFunction, ctx: ScanContext): void {
+  const localFns = fn.body !== undefined ? scopeWithLocalFunctions(fn.body, ctx.localFns) : ctx.localFns;
+  const scoped: ScanContext = localFns === ctx.localFns ? ctx : { ...ctx, localFns };
   for (const param of fn.parameters) {
-    if (param.initializer !== undefined) walkExecuting(param.initializer, ctx);
+    if (param.initializer !== undefined) walkExecuting(param.initializer, scoped);
   }
-  if (fn.body !== undefined) walkExecuting(fn.body, ctx);
+  if (fn.body !== undefined) walkExecuting(fn.body, scoped);
 }
 
 /** The parts of a class that execute at class DEFINITION (module load) — everything else is deferred. */
