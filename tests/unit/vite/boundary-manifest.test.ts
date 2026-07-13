@@ -23,6 +23,7 @@ import {
   scanProject,
   serializeBoundaryOutput,
 } from '../../../packages/vite/src/boundary-manifest.js';
+import { compileQuantizeBlock, parseQuantizeBlocks } from '../../../packages/vite/src/css-quantize.js';
 import { plugin } from '../../../packages/vite/src/plugin.js';
 import { loadVirtualModule } from '../../../packages/vite/src/virtual-modules.js';
 
@@ -37,6 +38,35 @@ function makeTempDir(): string {
 function writeModule(dir: string, fileName: string, source: string): void {
   mkdirSync(dir, { recursive: true });
   writeFileSync(join(dir, fileName), source);
+}
+
+/** Extract the balanced `{ … }` body of the at-rule whose `prelude` appears in `css`. */
+function extractAtRuleBody(css: string, prelude: string): string | null {
+  const start = css.indexOf(prelude);
+  if (start === -1) return null;
+  const open = css.indexOf('{', start + prelude.length);
+  if (open === -1) return null;
+  let depth = 0;
+  for (let i = open; i < css.length; i++) {
+    if (css[i] === '{') depth++;
+    else if (css[i] === '}' && --depth === 0) return css.slice(open + 1, i);
+  }
+  return null;
+}
+
+/** Declarations (`prop: value`) sitting DIRECTLY at the top level of a block, not nested in a `{ … }` rule. */
+function topLevelBareDeclarations(body: string): string[] {
+  let depth = 0;
+  let top = '';
+  for (const ch of body) {
+    if (ch === '{') depth++;
+    else if (ch === '}') depth--;
+    else if (depth === 0) top += ch;
+  }
+  return top
+    .split(';')
+    .map((s) => s.trim())
+    .filter((s) => /^[a-zA-Z-][a-zA-Z0-9-]*\s*:\s*\S/.test(s));
 }
 
 afterEach(() => {
@@ -374,6 +404,53 @@ ${Object.entries(attrs)
     const outputs = manifest['viewport']!.outputs[0]!;
     expect(outputs.containerQueries).toContain('@supports (display: grid)');
     expect(outputs.containerQueries).toContain('gap: 4px');
+  });
+
+  test('dev transform and manifest compile @supports bare-prop states identically (F-CSS-3 parity)', async () => {
+    // The dev transform (compileQuantizeBlock) and the manifest
+    // (compileOutputsByTier) each run their own copy of mapAtRuleGroup. This
+    // pins them so the two copies cannot drift — same source, byte-identical
+    // container-query CSS — AND proves both wrap bare @supports declarations.
+    const root = makeTempDir();
+    const srcDir = join(root, 'src');
+    writeModule(srcDir, 'boundaries.ts', BOUNDARY_MODULE);
+    const quantizeCss = `
+@quantize viewport {
+  compact {
+    @supports (display: grid) {
+      display: grid;
+      gap: 8px;
+    }
+  }
+  wide {
+    --gap: 24px;
+  }
+}
+`;
+    writeModule(srcDir, 'styles.css', quantizeCss);
+
+    // Manifest path: compileOutputsByTier → dispatch(CSSCompiler) → outputs.containerQueries.
+    const manifest = await collectBoundaryManifest(root);
+    const manifestQueries = manifest['viewport']!.outputs
+      .map((output) => output.containerQueries)
+      .find((queries) => queries.includes('@supports'))!;
+
+    // Dev path: parseQuantizeBlocks → compileQuantizeBlock. `referenceBoundary`
+    // is the same viewport.width boundary the module fixture mirrors, so a
+    // single-block compile (no sheet) emits the same inline :root containment.
+    const [block] = parseQuantizeBlocks(quantizeCss, join(srcDir, 'styles.css'));
+    const devQueries = compileQuantizeBlock(block!, referenceBoundary);
+
+    // Dev vs manifest must be byte-identical (the drift guard)…
+    expect(devQueries).toBe(manifestQueries);
+    // …and, scoped to the @supports block itself (not the sibling `wide` state
+    // whose bare --gap is legitimately wrapped), the bare declarations must be
+    // wrapped in the boundary selector, never emitted raw inside @supports.
+    const supportsBody = extractAtRuleBody(devQueries, '@supports (display: grid)');
+    expect(supportsBody).not.toBeNull();
+    expect(supportsBody).toContain('.czap-boundary {');
+    expect(topLevelBareDeclarations(supportsBody!)).toEqual([]);
+    expect(supportsBody).toContain('display: grid');
   });
 
   test('viewport.height boundaries carry their own :root size containment and (height ...) queries', async () => {

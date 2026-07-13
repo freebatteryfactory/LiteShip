@@ -46,6 +46,39 @@ function makeBoundary(input: string, pairs: readonly (readonly [number, string])
   });
 }
 
+/** Extract the balanced `{ … }` body of the at-rule whose `prelude` appears in `css`. */
+function extractAtRuleBody(css: string, prelude: string): string | null {
+  const start = css.indexOf(prelude);
+  if (start === -1) return null;
+  const open = css.indexOf('{', start + prelude.length);
+  if (open === -1) return null;
+  let depth = 0;
+  for (let i = open; i < css.length; i++) {
+    if (css[i] === '{') depth++;
+    else if (css[i] === '}' && --depth === 0) return css.slice(open + 1, i);
+  }
+  return null;
+}
+
+/**
+ * Declarations (`prop: value`) sitting DIRECTLY at the top level of a block —
+ * NOT nested in a `{ … }` style rule. Such declarations are invalid CSS when
+ * their only ancestor is a conditional group; this returns the offenders.
+ */
+function topLevelBareDeclarations(body: string): string[] {
+  let depth = 0;
+  let top = '';
+  for (const ch of body) {
+    if (ch === '{') depth++;
+    else if (ch === '}') depth--;
+    else if (depth === 0) top += ch;
+  }
+  return top
+    .split(';')
+    .map((s) => s.trim())
+    .filter((s) => /^[a-zA-Z-][a-zA-Z0-9-]*\s*:\s*\S/.test(s));
+}
+
 // ---------------------------------------------------------------------------
 // @token block parsing
 // ---------------------------------------------------------------------------
@@ -1725,6 +1758,38 @@ describe('CSS override flow-through', () => {
     expect(compiled).toContain('@supports (display: grid)');
     expect(compiled).toContain('.grid');
     expect(compiled).toContain('gap: 4px');
+  });
+
+  test('compileQuantizeBlock wraps BARE declarations inside @supports in the boundary selector (F-CSS-2)', () => {
+    // Bare declarations authored directly inside a conditional group — the
+    // exact production shape the dev transform captures into atRuleGroup
+    // bareProps. Emitting them raw inside @supports is invalid CSS (browsers
+    // drop declarations whose only ancestor is a conditional group); they must
+    // be wrapped in the boundary selector, exactly as state-level bareProps are.
+    const css = `
+@quantize viewport {
+  compact {
+    @supports (display: grid) {
+      display: grid;
+      gap: 1rem;
+    }
+  }
+}`;
+    const blocks = parseQuantizeBlocks(css, FILE);
+    const block = blocks[0]!;
+    const boundary = makeBoundary('viewport', [[0, 'compact']]);
+    const compiled = compileQuantizeBlock(block, boundary);
+
+    // The parser captured the bare declarations into the group's bareProps…
+    expect(block.states.compact?.atRuleGroups?.[0]?.bareProps).toEqual({ display: 'grid', gap: '1rem' });
+
+    // …and serialization wraps them under the .czap-boundary selector, never bare.
+    const supportsBody = extractAtRuleBody(compiled, '@supports (display: grid)');
+    expect(supportsBody).not.toBeNull();
+    expect(supportsBody).toContain('.czap-boundary {');
+    expect(topLevelBareDeclarations(supportsBody!)).toEqual([]);
+    expect(compiled).toContain('display: grid');
+    expect(compiled).toContain('gap: 1rem');
   });
 
   test('compileQuantizeBlock preserves depth-2 @media inside @supports (#110)', () => {

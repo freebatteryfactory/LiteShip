@@ -10,6 +10,44 @@ import { TokenTailwindCompiler } from '../../../packages/compiler/src/token-tail
 import { StyleCSSCompiler } from '../../../packages/compiler/src/style-css.js';
 import { captureDiagnostics } from '../../helpers/diagnostics.js';
 
+// ---------------------------------------------------------------------------
+// Structural CSS assertion helpers (brace-aware; no brittle whole-string match)
+// ---------------------------------------------------------------------------
+
+/** Extract the balanced `{ … }` body of the at-rule whose `prelude` appears in `css`. */
+function extractAtRuleBody(css: string, prelude: string): string | null {
+  const start = css.indexOf(prelude);
+  if (start === -1) return null;
+  const open = css.indexOf('{', start + prelude.length);
+  if (open === -1) return null;
+  let depth = 0;
+  for (let i = open; i < css.length; i++) {
+    if (css[i] === '{') depth++;
+    else if (css[i] === '}' && --depth === 0) return css.slice(open + 1, i);
+  }
+  return null;
+}
+
+/**
+ * Declarations (`prop: value`) sitting DIRECTLY at the top level of a block —
+ * i.e. NOT nested inside a `{ … }` style rule. Per CSS, such declarations are
+ * invalid when their only ancestor is a conditional group and browsers drop
+ * them; this returns the offenders so a test can assert there are none.
+ */
+function topLevelBareDeclarations(body: string): string[] {
+  let depth = 0;
+  let top = '';
+  for (const ch of body) {
+    if (ch === '{') depth++;
+    else if (ch === '}') depth--;
+    else if (depth === 0) top += ch;
+  }
+  return top
+    .split(';')
+    .map((s) => s.trim())
+    .filter((s) => /^[a-zA-Z-][a-zA-Z0-9-]*\s*:\s*\S/.test(s));
+}
+
 afterEach(() => {
   vi.restoreAllMocks();
 });
@@ -279,6 +317,93 @@ describe('compiler branch coverage', () => {
     expect(compiled.containerRules[0]!.rules).toEqual([
       { selector: '.czap-boundary', properties: { color: 'blue' } },
     ]);
+  });
+
+  test('CSSCompiler classifies an atRuleGroups-only state body as structured (F-CSS-1)', () => {
+    const boundary = Boundary.make({
+      input: 'viewport.width',
+      at: [[0, 'only']] as const,
+    });
+
+    // Body carries ONLY atRuleGroups — no bareProps key, no rules key. The
+    // flat-vs-structured discriminator must still route it through the
+    // structured path, or the conditional group is silently dropped and the
+    // whole object leaks as a bogus `atRuleGroups: [object Object];` decl.
+    const compiled = CSSCompiler.compile(
+      boundary,
+      {
+        only: {
+          atRuleGroups: [
+            { prelude: '@supports (display: grid)', rules: [{ selector: '.grid', properties: { display: 'grid' } }] },
+          ],
+        },
+      },
+      '.card',
+    );
+
+    // The conditional group survives into the structured output…
+    expect(compiled.containerRules).toHaveLength(1);
+    expect(compiled.containerRules[0]!.atRuleGroups?.[0]?.prelude).toBe('@supports (display: grid)');
+    // …and serializes as a real @supports block, never a misread flat map.
+    expect(compiled.raw).toContain('@supports (display: grid)');
+    expect(compiled.raw).toContain('.grid');
+    // No garbage: the structured object must never leak as a declaration value.
+    expect(compiled.raw).not.toContain('atRuleGroups');
+    expect(compiled.raw).not.toContain('[object Object]');
+  });
+
+  test('CSSCompiler wraps bare declarations inside a conditional group in the boundary selector (F-CSS-2)', () => {
+    const boundary = Boundary.make({
+      input: 'viewport.width',
+      at: [[0, 'only']] as const,
+    });
+
+    const compiled = CSSCompiler.compile(
+      boundary,
+      {
+        // `rules: []` classifies this as a structured body independent of the
+        // F-CSS-1 discriminator fix, so this test isolates the serialization
+        // wrapping bug on its own.
+        only: {
+          rules: [],
+          atRuleGroups: [{ prelude: '@supports (display: grid)', bareProps: { display: 'grid', gap: '1rem' } }],
+        },
+      },
+      '.card',
+    );
+
+    // Structural proof (brace-aware, not whole-string): inside the @supports
+    // block the declarations must live under a `.card { … }` style rule — bare
+    // declarations whose only ancestor is a conditional group are invalid CSS.
+    const supportsBody = extractAtRuleBody(compiled.raw, '@supports (display: grid)');
+    expect(supportsBody).not.toBeNull();
+    expect(supportsBody).toContain('.card {');
+    // Nothing is left bare directly inside the @supports block.
+    expect(topLevelBareDeclarations(supportsBody!)).toEqual([]);
+    expect(compiled.raw).toContain('display: grid');
+    expect(compiled.raw).toContain('gap: 1rem');
+  });
+
+  test('CSSCompiler.serialize reproduces the wrapped conditional group of the compile result (F-CSS-2 round-trip)', () => {
+    const boundary = Boundary.make({
+      input: 'viewport.width',
+      at: [[0, 'only']] as const,
+    });
+
+    const result = CSSCompiler.compile(
+      boundary,
+      { only: { rules: [], atRuleGroups: [{ prelude: '@supports (gap: 1rem)', bareProps: { gap: '1rem' } }] } },
+      '.card',
+    );
+
+    // serialize() re-serializes the structured result; it must wrap identically
+    // to `raw`, threading the boundary selector rather than emitting bare decls.
+    const reserialized = CSSCompiler.serialize(result);
+    const body = extractAtRuleBody(reserialized, '@supports (gap: 1rem)');
+    expect(body).not.toBeNull();
+    expect(body).toContain('.card {');
+    expect(topLevelBareDeclarations(body!)).toEqual([]);
+    expect(reserialized).toBe(result.raw);
   });
 
   test('CSSCompiler ignores unsupported custom property values and emits frequency registrations', () => {
