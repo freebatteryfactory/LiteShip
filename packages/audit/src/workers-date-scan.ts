@@ -25,6 +25,8 @@
  * EXCEPT deferred function bodies, with these load-time re-entries that the naive "stop at any
  * function" rule would wrongly skip:
  *   - an IMMEDIATELY-INVOKED function/arrow (`(() => Date.now())()`) — the callee body runs now;
+ *   - a call to a MODULE-SCOPE helper (`function boot(){…}; const t = boot()`) — reaching the call
+ *     at load runs the helper's body now, so the walk follows it (cycle-guarded);
  *   - a class STATIC field initializer and `static {}` block — they run at class definition;
  *   - a class heritage expression, computed member name, and decorator — evaluated at definition.
  * Call-time reads (a plain method/getter body, an instance field initializer) are CORRECT and
@@ -144,28 +146,80 @@ function ambientDateRead(node: ts.Node): { kind: ModuleScopeDateHit['kind']; tex
   return undefined;
 }
 
+/** A function whose body the scanner WALKS when it is invoked during module load. */
+type LoadTimeFunction = ts.FunctionDeclaration | ts.FunctionExpression | ts.ArrowFunction;
+
+/**
+ * Scan state threaded through the walk: the source (for positions), the hit sink, the
+ * module-scope function table (name → body) used to follow load-time helper CALLS, and the
+ * in-progress set that breaks call cycles / recursion so the walk always terminates.
+ */
+interface ScanContext {
+  readonly sourceFile: ts.SourceFile;
+  readonly hits: ModuleScopeDateHit[];
+  readonly localFns: ReadonlyMap<string, LoadTimeFunction>;
+  readonly walking: Set<LoadTimeFunction>;
+}
+
+/**
+ * Index the MODULE-SCOPE `function name(){}` declarations and `const name = <function literal>`
+ * bindings by name. A module-load call to one of these runs its body at load, so `walkExecuting`
+ * follows it. Only top-level names (a call reaching one has run during module load), and only
+ * `const` bindings (not `let`/`var`, whose reassignment could point the name at a different body
+ * than the call actually invokes — a false positive on a warn-only probe).
+ */
+function collectTopLevelFunctions(sourceFile: ts.SourceFile): Map<string, LoadTimeFunction> {
+  const table = new Map<string, LoadTimeFunction>();
+  for (const statement of sourceFile.statements) {
+    if (ts.isFunctionDeclaration(statement) && statement.name !== undefined && statement.body !== undefined) {
+      table.set(statement.name.text, statement);
+      continue;
+    }
+    if (ts.isVariableStatement(statement) && (statement.declarationList.flags & ts.NodeFlags.Const) !== 0) {
+      for (const decl of statement.declarationList.declarations) {
+        if (ts.isIdentifier(decl.name) && decl.initializer !== undefined && isInvocableFunction(decl.initializer)) {
+          table.set(decl.name.text, decl.initializer);
+        }
+      }
+    }
+  }
+  return table;
+}
+
 /**
  * Walk `node` as a MODULE-LOAD-executing expression/statement, pushing every ambient Date read into
- * `hits`. Descends through all children EXCEPT deferred function bodies, with the load-time re-entries
- * (IIFE, class static parts) handled explicitly.
+ * `ctx.hits`. Descends through all children EXCEPT deferred function bodies, with the load-time re-entries
+ * (IIFE, a call to a module-scope helper, class static parts) handled explicitly.
  */
-function walkExecuting(node: ts.Node, sourceFile: ts.SourceFile, hits: ModuleScopeDateHit[]): void {
+function walkExecuting(node: ts.Node, ctx: ScanContext): void {
   const read = ambientDateRead(node);
   if (read !== undefined) {
-    const { line, character } = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile));
-    hits.push({ line: line + 1, column: character + 1, kind: read.kind, text: read.text });
+    const { line, character } = ctx.sourceFile.getLineAndCharacterOfPosition(node.getStart(ctx.sourceFile));
+    ctx.hits.push({ line: line + 1, column: character + 1, kind: read.kind, text: read.text });
   }
 
-  // A call / new: the callee body runs now ONLY when it is an immediately-invoked function literal;
-  // the arguments always run now. (`ambientDateRead` above already recorded a `Date`/`Date.now` head.)
+  // A call / new: the callee body runs now when it is an immediately-invoked function literal OR a
+  // call to a module-scope helper (`const t = boot()` runs `boot`'s body at load); the arguments
+  // always run now. (`ambientDateRead` above already recorded a `Date`/`Date.now` head.)
   if (ts.isCallExpression(node) || ts.isNewExpression(node)) {
     const callee = unwrapCallee(node.expression);
     if (isInvocableFunction(callee)) {
-      walkImmediateFunction(callee, sourceFile, hits);
+      walkImmediateFunction(callee, ctx);
     } else {
-      walkExecuting(node.expression, sourceFile, hits);
+      // A bare call to a module-scope function runs its body NOW — follow it, guarding call
+      // cycles. Constructors (`new LocalClass()`) are intentionally not followed here; the
+      // scanner's model is function helpers reached during load execution.
+      if (ts.isCallExpression(node) && ts.isIdentifier(callee)) {
+        const target = ctx.localFns.get(callee.text);
+        if (target !== undefined && !ctx.walking.has(target)) {
+          ctx.walking.add(target);
+          walkImmediateFunction(target, ctx);
+          ctx.walking.delete(target);
+        }
+      }
+      walkExecuting(node.expression, ctx);
     }
-    for (const arg of node.arguments ?? []) walkExecuting(arg, sourceFile, hits);
+    for (const arg of node.arguments ?? []) walkExecuting(arg, ctx);
     return;
   }
 
@@ -175,49 +229,44 @@ function walkExecuting(node: ts.Node, sourceFile: ts.SourceFile, hits: ModuleSco
   // A class definition: only its static initializers / static blocks / heritage / computed names / decorators
   // run at definition (module load); method + instance-field bodies are deferred.
   if (ts.isClassDeclaration(node) || ts.isClassExpression(node)) {
-    walkClassDefinition(node, sourceFile, hits);
+    walkClassDefinition(node, ctx);
     return;
   }
 
-  ts.forEachChild(node, (child) => walkExecuting(child, sourceFile, hits));
+  ts.forEachChild(node, (child) => walkExecuting(child, ctx));
 }
 
-/** An immediately-invoked function/arrow: its parameter defaults + body execute at the call site (now). */
-function walkImmediateFunction(
-  fn: ts.FunctionExpression | ts.ArrowFunction,
-  sourceFile: ts.SourceFile,
-  hits: ModuleScopeDateHit[],
-): void {
+/**
+ * A function body that RUNS at module load — an immediately-invoked literal, or a module-scope
+ * helper the walk followed at its call site. Its parameter defaults + body execute now.
+ */
+function walkImmediateFunction(fn: LoadTimeFunction, ctx: ScanContext): void {
   for (const param of fn.parameters) {
-    if (param.initializer !== undefined) walkExecuting(param.initializer, sourceFile, hits);
+    if (param.initializer !== undefined) walkExecuting(param.initializer, ctx);
   }
-  if (fn.body !== undefined) walkExecuting(fn.body, sourceFile, hits);
+  if (fn.body !== undefined) walkExecuting(fn.body, ctx);
 }
 
 /** The parts of a class that execute at class DEFINITION (module load) — everything else is deferred. */
-function walkClassDefinition(
-  node: ts.ClassDeclaration | ts.ClassExpression,
-  sourceFile: ts.SourceFile,
-  hits: ModuleScopeDateHit[],
-): void {
-  for (const dec of decoratorsOf(node)) walkExecuting(dec.expression, sourceFile, hits);
+function walkClassDefinition(node: ts.ClassDeclaration | ts.ClassExpression, ctx: ScanContext): void {
+  for (const dec of decoratorsOf(node)) walkExecuting(dec.expression, ctx);
   for (const heritage of node.heritageClauses ?? []) {
-    for (const type of heritage.types) walkExecuting(type.expression, sourceFile, hits);
+    for (const type of heritage.types) walkExecuting(type.expression, ctx);
   }
   for (const member of node.members) {
-    for (const dec of decoratorsOf(member)) walkExecuting(dec.expression, sourceFile, hits);
+    for (const dec of decoratorsOf(member)) walkExecuting(dec.expression, ctx);
     // A computed member name is evaluated at class definition.
     if (member.name !== undefined && ts.isComputedPropertyName(member.name)) {
-      walkExecuting(member.name.expression, sourceFile, hits);
+      walkExecuting(member.name.expression, ctx);
     }
     // A STATIC field initializer runs at class definition; an instance field runs at construction (deferred).
     if (ts.isPropertyDeclaration(member) && isStatic(member) && member.initializer !== undefined) {
-      walkExecuting(member.initializer, sourceFile, hits);
+      walkExecuting(member.initializer, ctx);
       continue;
     }
     // A `static {}` block runs at class definition.
     if (ts.isClassStaticBlockDeclaration(member)) {
-      for (const statement of member.body.statements) walkExecuting(statement, sourceFile, hits);
+      for (const statement of member.body.statements) walkExecuting(statement, ctx);
     }
     // Methods / accessors / constructor bodies are deferred — never scanned here.
   }
@@ -251,9 +300,14 @@ export function scanModuleScopeDateReads(source: string, fileName = 'module.ts')
     /* setParentNodes */ true,
     scriptKindFor(fileName),
   );
-  const hits: ModuleScopeDateHit[] = [];
-  for (const statement of sourceFile.statements) walkExecuting(statement, sourceFile, hits);
-  return dedupe(hits);
+  const ctx: ScanContext = {
+    sourceFile,
+    hits: [],
+    localFns: collectTopLevelFunctions(sourceFile),
+    walking: new Set(),
+  };
+  for (const statement of sourceFile.statements) walkExecuting(statement, ctx);
+  return dedupe(ctx.hits);
 }
 
 /** Convenience boolean: does `source` read the wall clock at module load? (doctor's warn/ok discriminant.) */

@@ -6,7 +6,7 @@
 
 # Interface: ModuleScopeDateHit
 
-Defined in: [audit/src/workers-date-scan.ts:46](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/workers-date-scan.ts#L46)
+Defined in: [audit/src/workers-date-scan.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/workers-date-scan.ts#L48)
 
 One module-load ambient-Date read, with its 1-based source position.
 
@@ -16,7 +16,7 @@ One module-load ambient-Date read, with its 1-based source position.
 
 > `readonly` **column**: `number`
 
-Defined in: [audit/src/workers-date-scan.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/workers-date-scan.ts#L50)
+Defined in: [audit/src/workers-date-scan.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/workers-date-scan.ts#L52)
 
 1-based column of the read.
 
@@ -26,7 +26,7 @@ Defined in: [audit/src/workers-date-scan.ts:50](https://github.com/freebatteryfa
 
 > `readonly` **kind**: `"Date.now"` \| `"new Date"` \| `"Date"`
 
-Defined in: [audit/src/workers-date-scan.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/workers-date-scan.ts#L52)
+Defined in: [audit/src/workers-date-scan.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/workers-date-scan.ts#L54)
 
 Which ambient-time API was read.
 
@@ -36,7 +36,7 @@ Which ambient-time API was read.
 
 > `readonly` **line**: `number`
 
-Defined in: [audit/src/workers-date-scan.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/workers-date-scan.ts#L48)
+Defined in: [audit/src/workers-date-scan.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/workers-date-scan.ts#L50)
 
 1-based line of the read.
 
@@ -46,6 +46,6 @@ Defined in: [audit/src/workers-date-scan.ts:48](https://github.com/freebatteryfa
 
 > `readonly` **text**: `string`
 
-Defined in: [audit/src/workers-date-scan.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/workers-date-scan.ts#L54)
+Defined in: [audit/src/workers-date-scan.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/workers-date-scan.ts#L56)
 
 A short display of the read (`Date.now()`).
