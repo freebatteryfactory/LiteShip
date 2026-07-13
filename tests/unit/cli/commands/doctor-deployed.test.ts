@@ -1,12 +1,37 @@
 import { describe, expect, test, vi, afterEach, beforeEach } from 'vitest';
 import { lookup as dnsLookup } from 'node:dns/promises';
 import { probeDeployedSite } from '../../../../packages/cli/src/commands/doctor/probes-deployed.js';
+// Source of truth for what czap emits — the probe validates DEPLOYED headers against
+// exactly these, so the tests derive their "ok" fixtures from them too (no hardcoded
+// header copy that could drift from the framework — Law 6).
+import { ClientHints, CrossOriginIsolation } from '../../../../packages/edge/src/index.js';
 
 vi.mock('node:dns/promises', () => ({
   lookup: vi.fn(),
 }));
 
 const mockedLookup = vi.mocked(dnsLookup);
+
+/** A full, valid czap response-header set derived from `@czap/edge` — the "everything ok" case. */
+function czapHeaders(overrides: Record<string, string> = {}): Record<string, string> {
+  const isolation = CrossOriginIsolation.isolationHeaders(); // COOP same-origin, COEP require-corp
+  return {
+    'content-security-policy': "default-src 'self'",
+    'cross-origin-opener-policy': isolation['Cross-Origin-Opener-Policy']!,
+    'cross-origin-embedder-policy': isolation['Cross-Origin-Embedder-Policy']!,
+    'accept-ch': ClientHints.acceptCHHeader(),
+    'critical-ch': ClientHints.criticalCHHeader(),
+    vary: ClientHints.varyCHHeader(),
+    ...overrides,
+  };
+}
+
+/** Drive the probe against a single 200 response carrying `headers`, return checks keyed by id. */
+async function probeWith(headers: Record<string, string>): Promise<Record<string, { status: string; detail: string }>> {
+  vi.stubGlobal('fetch', vi.fn(async () => new Response('ok', { status: 200, headers })));
+  const checks = await probeDeployedSite('https://example.test/');
+  return Object.fromEntries(checks.map((c) => [c.id, { status: c.status, detail: c.detail }]));
+}
 
 function mockPublicDns(hostname = 'example.test') {
   mockedLookup.mockImplementation(async (host: string) => {
@@ -42,30 +67,83 @@ describe('doctor --deployed (#116)', () => {
     mockedLookup.mockReset();
   });
 
-  test('reports Accept-CH and Vary from a live response', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(
-        async () =>
-          new Response('ok', {
-            status: 200,
-            headers: {
-              'content-security-policy': "default-src 'self'",
-              'cross-origin-opener-policy': 'same-origin',
-              'cross-origin-embedder-policy': 'require-corp',
-              'accept-ch': 'Sec-CH-Viewport-Width',
-              'critical-ch': 'Sec-CH-Viewport-Width',
-              vary: 'Sec-CH-Viewport-Width',
-            },
-          }),
-      ),
-    );
-
-    const checks = await probeDeployedSite('https://example.test/');
-    const byId = Object.fromEntries(checks.map((c) => [c.id, c]));
+  test('a fully czap-configured response is ok across every header check', async () => {
+    const byId = await probeWith(czapHeaders());
+    expect(byId['deployed.cross-origin-opener-policy']?.status).toBe('ok');
+    expect(byId['deployed.cross-origin-embedder-policy']?.status).toBe('ok');
     expect(byId['deployed.accept-ch']?.status).toBe('ok');
+    expect(byId['deployed.critical-ch']?.status).toBe('ok');
     expect(byId['deployed.vary']?.status).toBe('ok');
     expect(mockedLookup).toHaveBeenCalledWith('example.test', { all: true, verbatim: true });
+  });
+
+  // ── F-PROTO-2: semantic header validation, not mere presence ──────────────────
+
+  test('COOP/COEP set to unsafe-none are a warn — the header is present but does not isolate', async () => {
+    const byId = await probeWith(
+      czapHeaders({ 'cross-origin-opener-policy': 'unsafe-none', 'cross-origin-embedder-policy': 'unsafe-none' }),
+    );
+    expect(byId['deployed.cross-origin-opener-policy']?.status).toBe('warn');
+    expect(byId['deployed.cross-origin-opener-policy']?.detail).toMatch(/does not establish cross-origin isolation/i);
+    expect(byId['deployed.cross-origin-embedder-policy']?.status).toBe('warn');
+  });
+
+  test('both isolating COEP tokens (require-corp AND credentialless) are accepted', async () => {
+    for (const coep of CrossOriginIsolation.embedderPolicies()) {
+      const byId = await probeWith(czapHeaders({ 'cross-origin-embedder-policy': coep }));
+      expect(byId['deployed.cross-origin-embedder-policy']?.status, `COEP ${coep}`).toBe('ok');
+    }
+  });
+
+  test('COOP with a report-to parameter still isolates (leading token compared)', async () => {
+    const byId = await probeWith(czapHeaders({ 'cross-origin-opener-policy': 'same-origin; report-to="coop"' }));
+    expect(byId['deployed.cross-origin-opener-policy']?.status).toBe('ok');
+  });
+
+  test('Accept-CH missing a required hint is a warn; the full requested set is ok', async () => {
+    const partial = ClientHints.acceptCHHeader().split(',').slice(0, 1).join(','); // one hint only
+    const warned = await probeWith(czapHeaders({ 'accept-ch': partial }));
+    expect(warned['deployed.accept-ch']?.status).toBe('warn');
+    expect(warned['deployed.accept-ch']?.detail).toMatch(/missing/i);
+
+    const full = await probeWith(czapHeaders({ 'accept-ch': ClientHints.acceptCHHeader() }));
+    expect(full['deployed.accept-ch']?.status).toBe('ok');
+  });
+
+  test('Critical-CH missing a required hint is a warn; the full set is ok', async () => {
+    const partial = ClientHints.criticalCHHeader().split(',').slice(0, 1).join(',');
+    const warned = await probeWith(czapHeaders({ 'critical-ch': partial }));
+    expect(warned['deployed.critical-ch']?.status).toBe('warn');
+
+    const full = await probeWith(czapHeaders({ 'critical-ch': ClientHints.criticalCHHeader() }));
+    expect(full['deployed.critical-ch']?.status).toBe('ok');
+  });
+
+  test('Vary is compared case-insensitively and tokenized — lowercased full set is ok', async () => {
+    const lowercased = ClientHints.varyCHHeader().toLowerCase();
+    const byId = await probeWith(czapHeaders({ vary: lowercased }));
+    expect(byId['deployed.vary']?.status).toBe('ok');
+  });
+
+  test('Vary missing a required Client-Hint axis is a warn (not a bare Sec-CH substring pass)', async () => {
+    const byId = await probeWith(czapHeaders({ vary: 'Sec-CH-Viewport-Width' })); // one axis only
+    expect(byId['deployed.vary']?.status).toBe('warn');
+    expect(byId['deployed.vary']?.detail).toMatch(/missing/i);
+  });
+
+  test('missing COOP/COEP/Accept-CH/Critical-CH/Vary each warn (advisory, never fail)', async () => {
+    const byId = await probeWith({ 'content-security-policy': "default-src 'self'" });
+    for (const id of [
+      'deployed.cross-origin-opener-policy',
+      'deployed.cross-origin-embedder-policy',
+      'deployed.accept-ch',
+      'deployed.critical-ch',
+      'deployed.vary',
+    ]) {
+      expect(byId[id]?.status, id).toBe('warn');
+    }
+    // The deployed fetch itself succeeded — header gaps never escalate to fail.
+    expect(byId['deployed.fetch']?.status).toBe('ok');
   });
 
   test('refuses non-HTTPS URLs (SSRF guard)', async () => {

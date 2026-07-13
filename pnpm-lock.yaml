@@ -471,6 +471,9 @@ importers:
       '@czap/core':
         specifier: workspace:*
         version: link:../core
+      '@czap/edge':
+        specifier: workspace:*
+        version: link:../edge
       '@czap/error':
         specifier: workspace:*
         version: link:../error

@@ -392,6 +392,7 @@ Reach for it when you need:
 Main surfaces:
 
 - `ClientHints`
+- `CrossOriginIsolation` — the COOP/COEP cross-origin-isolation vocabulary czap emits for `SharedArrayBuffer` workers; `@czap/astro`'s `CROSS_ORIGIN_HEADERS` and `czap doctor --deployed`'s live header probe both derive from it
 - `EdgeTier`
 - `createEdgeHostAdapter`
 - `EdgeHostAdapter`

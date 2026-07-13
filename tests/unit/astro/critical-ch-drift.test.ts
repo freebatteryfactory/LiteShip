@@ -16,7 +16,8 @@
  */
 import { describe, test, expect } from 'vitest';
 import { ClientHints } from '../../../packages/edge/src/client-hints.js';
-import { CLIENT_HINTS_HEADERS } from '../../../packages/astro/src/headers.js';
+import { CrossOriginIsolation } from '../../../packages/edge/src/cross-origin.js';
+import { CLIENT_HINTS_HEADERS, CROSS_ORIGIN_HEADERS } from '../../../packages/astro/src/headers.js';
 
 const split = (header: string): string[] =>
   header
@@ -40,5 +41,19 @@ describe('Critical-CH drift guard', () => {
     for (const hint of split(ClientHints.criticalCHHeader())) {
       expect(accepted.has(hint), `${hint} is Critical-CH but missing from Accept-CH`).toBe(true);
     }
+  });
+});
+
+describe('Cross-origin isolation drift guard', () => {
+  test('@czap/astro CROSS_ORIGIN_HEADERS is derived from @czap/edge CrossOriginIsolation — the emitter and the doctor validator share one source', () => {
+    // The values czap EMITS (astro) and the values `czap doctor --deployed` VALIDATES
+    // (edge) must be the same, or a correctly-configured deploy would warn.
+    expect(CROSS_ORIGIN_HEADERS).toEqual(CrossOriginIsolation.isolationHeaders());
+    expect(CROSS_ORIGIN_HEADERS['Cross-Origin-Opener-Policy']).toBe(CrossOriginIsolation.openerPolicy());
+  });
+
+  test('the emitted COOP/COEP are among edge`s isolating values (a real deploy passes the doctor probe)', () => {
+    expect(CrossOriginIsolation.openerPolicy()).toBe(CROSS_ORIGIN_HEADERS['Cross-Origin-Opener-Policy']);
+    expect(CrossOriginIsolation.embedderPolicies()).toContain(CROSS_ORIGIN_HEADERS['Cross-Origin-Embedder-Policy']);
   });
 });

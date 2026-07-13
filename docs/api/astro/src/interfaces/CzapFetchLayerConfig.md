@@ -109,7 +109,7 @@ CORP-less third-party assets.
 
 #### coep?
 
-> `readonly` `optional` **coep?**: [`CrossOriginEmbedderPolicy`](../type-aliases/CrossOriginEmbedderPolicy.md)
+> `readonly` `optional` **coep?**: `"require-corp"` \| `"credentialless"`
 
 #### enabled?
 

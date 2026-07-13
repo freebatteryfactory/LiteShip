@@ -45,22 +45,18 @@ export async function run(argv: readonly string[]): Promise<number> {
     case 'version':
       return version();
     case 'doctor': {
-      const targetEq = parseFlag(rest, '--target');
-      const targetIdx = rest.indexOf('--target');
-      const targetRaw = targetEq ?? (targetIdx >= 0 ? rest[targetIdx + 1] : undefined);
-      const deployedEq = parseFlag(rest, '--deployed');
-      const deployedIdx = rest.indexOf('--deployed');
-      const deployedRaw = deployedEq ?? (deployedIdx >= 0 ? rest[deployedIdx + 1] : undefined);
-      if (
-        (targetEq !== undefined || targetIdx >= 0) &&
-        targetRaw !== 'cloudflare' &&
-        targetRaw !== 'astro' &&
-        targetRaw !== 'consumer-app'
-      ) {
+      // `--target` / `--deployed` are value-taking: neither may swallow a following
+      // token that begins with `-` (that token is the NEXT flag). Before, `doctor
+      // --deployed --fix` read deployed='--fix' and probed the literal string
+      // "--fix" as a URL; `takeFlagValue` refuses it (F-PROTO-4).
+      const target = takeFlagValue(rest, '--target');
+      const deployed = takeFlagValue(rest, '--deployed');
+      const targetRaw = target.value;
+      if (target.present && targetRaw !== 'cloudflare' && targetRaw !== 'astro' && targetRaw !== 'consumer-app') {
         emitError('doctor', `expected target: cloudflare | astro | consumer-app (got: ${targetRaw ?? '<missing>'})`);
         return 1;
       }
-      if ((deployedEq !== undefined || deployedIdx >= 0) && !deployedRaw) {
+      if (deployed.present && !deployed.value) {
         emitError('doctor', 'usage: czap doctor --deployed <url>');
         return 1;
       }
@@ -71,7 +67,7 @@ export async function run(argv: readonly string[]): Promise<number> {
         ...(targetRaw === 'cloudflare' || targetRaw === 'astro' || targetRaw === 'consumer-app'
           ? { target: targetRaw }
           : {}),
-        ...(deployedRaw ? { deployed: deployedRaw } : {}),
+        ...(deployed.value ? { deployed: deployed.value } : {}),
       });
     }
     case 'glossary': {
@@ -109,19 +105,18 @@ export async function run(argv: readonly string[]): Promise<number> {
       if (sub === 'compile') return sceneCompile(scene ?? '');
       if (sub === 'dev') return sceneDev(scene ?? '');
       if (sub === 'render') {
-        // Both space forms (-o X, --output X) must parse — with output now
-        // DERIVED when empty, a missed flag form would silently discard the
-        // user's explicit path instead of erroring like it used to.
-        const outputIdx = subRest.findIndex((a) => a === '-o' || a === '--output');
-        const outputNext = outputIdx >= 0 ? subRest[outputIdx + 1] : undefined;
-        if (outputIdx >= 0 && (outputNext === undefined || outputNext.startsWith('-'))) {
+        // Both space forms (-o X, --output X) and the `--output=X` equals form parse
+        // through one rule (`takeFlagValue`). A present `-o`/`--output` with no value
+        // — end of argv, or a following token that is itself a flag — errors instead
+        // of silently discarding the user's path (with output now DERIVED when empty).
+        const output = takeFlagValue(subRest, ['-o', '--output']);
+        if (output.present && output.value === undefined) {
           emitError('scene.render', 'usage: czap scene render <path-to-scene.ts> -o <output.mp4>');
           return 1;
         }
-        const outputFlag = parseFlag(subRest, '--output');
         const force = subRest.includes('--force');
         // Empty output is the "derive <scene>.mp4" default, resolved in @czap/command.
-        return sceneRender(scene ?? '', outputNext ?? outputFlag ?? '', force);
+        return sceneRender(scene ?? '', output.value ?? '', force);
       }
       if (sub === 'verify') return sceneVerify(scene ?? '');
       emitError('scene', `unknown subcommand: ${sub ?? '<missing>'}`);
@@ -183,9 +178,9 @@ export async function run(argv: readonly string[]): Promise<number> {
       return 1;
     }
     case 'audit': {
-      const eq = parseFlag(rest, '--profile');
-      const idx = rest.indexOf('--profile');
-      const profile = eq ?? (idx >= 0 ? rest[idx + 1] : undefined);
+      // `--profile <name>` is value-taking — the same swallow guard as doctor's
+      // flags: `audit --profile --consumer` must not read profile='--consumer'.
+      const profile = takeFlagValue(rest, '--profile').value;
       const consumer = rest.includes('--consumer');
       const consumerApp = rest.includes('--consumer-app');
       const findings = rest.includes('--findings');
@@ -375,6 +370,45 @@ function parseFlag(argv: readonly string[], flag: string): string | undefined {
     if (a.startsWith(`${flag}=`)) return a.slice(flag.length + 1);
   }
   return undefined;
+}
+
+/** A value-taking flag read from argv: whether it appeared at all, and its parsed value (if any). */
+interface FlagValue {
+  /** The flag token appeared (either `--flag=…` or a bare `--flag`). */
+  readonly present: boolean;
+  /**
+   * The parsed value — `undefined` when the flag is absent OR is present in space
+   * form with no usable value (end of argv, or the next token is itself a flag).
+   * Callers tell "omitted" (`!present`) apart from "given without a value"
+   * (`present && value === undefined`).
+   */
+  readonly value: string | undefined;
+}
+
+/**
+ * Read a value-taking flag from argv in either the `--flag=value` or the
+ * `--flag value` space form. One or more names may be given so aliases
+ * (`['-o', '--output']`) resolve through the same rule.
+ *
+ * The load-bearing rule (F-PROTO-4): a space-form flag must NEVER consume a
+ * following token that begins with `-`. That token is the NEXT flag, not this
+ * flag's value — so `doctor --deployed --fix` reads as "--deployed with no value"
+ * (a clean usage error), not "--deployed=--fix" (which then probed the literal
+ * string "--fix" as a URL). This is the guard the scene-render `-o` path already
+ * had, lifted into one shared parser for every value-taking flag.
+ */
+function takeFlagValue(argv: readonly string[], flag: string | readonly string[]): FlagValue {
+  const names = typeof flag === 'string' ? [flag] : flag;
+  for (const a of argv) {
+    for (const name of names) {
+      if (a.startsWith(`${name}=`)) return { present: true, value: a.slice(name.length + 1) };
+    }
+  }
+  const idx = argv.findIndex((a) => names.includes(a));
+  if (idx < 0) return { present: false, value: undefined };
+  const next = argv[idx + 1];
+  if (next === undefined || next.startsWith('-')) return { present: true, value: undefined };
+  return { present: true, value: next };
 }
 
 /** First positional argument: argv[0] only when present and not a flag. */
