@@ -365,6 +365,7 @@ export interface LoweredRevealChain {
   readonly transitionIds: readonly ContentAddress[];
   readonly componentId: ContentAddress;
   readonly signalId: ContentAddress;
+  readonly policyId: ContentAddress;
 }
 
 /**
@@ -404,7 +405,22 @@ export function lowerRevealChain(input: RevealChainInput): LoweredRevealChain {
     components: [component.id],
   } as unknown as EntityNode);
 
-  const nodes: DocumentGraphNode[] = [signal, component, entity];
+  // Materialize the capability policy into the graph (parity with lowerRevealIntent) so
+  // downstream consumers that inspect PolicyNodes — escalation / AI-cast surfaces — see the
+  // chain's motion-tier policy. `RevealChainInput.policy` is required, so this is unconditional.
+  const policy = sealNode({
+    _tag: 'DocGraphPolicyNode',
+    _version: 1,
+    family: 'policy',
+    id: '' as ContentAddress,
+    meta: META,
+    appliesTo: [component.id],
+    requires: capTierForMotionTier(input.policy.motionTier),
+    grants: grantsForMotionTier(input.policy.motionTier),
+    sites: ['node', 'browser', 'worker', 'edge'],
+  } as unknown as PolicyNode);
+
+  const nodes: DocumentGraphNode[] = [signal, component, entity, policy];
   const transitionIds: ContentAddress[] = [];
 
   const mkStep = (step: RevealChainStep): ContentAddress => {
@@ -485,6 +501,7 @@ export function lowerRevealChain(input: RevealChainInput): LoweredRevealChain {
     transitionIds: Object.freeze(transitionIds),
     componentId: component.id,
     signalId: signal.id,
+    policyId: policy.id,
   });
 }
 
