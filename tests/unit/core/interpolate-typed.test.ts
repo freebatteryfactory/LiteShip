@@ -115,6 +115,25 @@ describe('color TypedValue (F-MOT-3)', () => {
     });
   });
 
+  test('normalizes percentage color channels into the canonical numeric domain (Codex P2)', () => {
+    // rgb %: 100% → 255 (not the raw 100, which would render ~39% red).
+    expect(parseTypedBinding('--c', 'rgb(100% 0% 0%)')).toEqual({ k: 'color', space: 'srgb', components: [255, 0, 0] });
+    // oklch lightness %: 70% → 0.7 (not the raw, invalid 70).
+    expect(parseTypedBinding('--c', 'oklch(70% 0.1 30)')).toEqual({
+      k: 'color',
+      space: 'oklch',
+      components: [0.7, 0.1, 30],
+    });
+    // Mixed `%`/number in one rgb() still lands in ONE domain so it interpolates correctly.
+    expect(parseTypedBinding('--c', 'rgb(50% 128 0)')).toEqual({
+      k: 'color',
+      space: 'srgb',
+      components: [127.5, 128, 0],
+    });
+    // ...and the normalized color round-trips to valid CSS, not the corrupted raw magnitude.
+    expect(formatTypedValue(parseTypedBinding('--c', 'rgb(100% 0% 0%)'))).toBe('rgb(255 0 0)');
+  });
+
   test('lerps within color space component-wise', () => {
     const from: TypedValue = { k: 'color', space: 'srgb', components: [0, 0, 0] };
     const to: TypedValue = { k: 'color', space: 'srgb', components: [255, 100, 0] };

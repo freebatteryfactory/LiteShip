@@ -46,6 +46,21 @@ function warnInterpolate(code: string, message: string, detail?: unknown): void 
 }
 
 /**
+ * Normalize one functional-color channel into its space's canonical numeric domain.
+ * A percentage maps INTO that domain (never left as its raw magnitude); a plain number is
+ * already canonical. sRGB channels are `0..255` (100% → 255); OKLCH lightness is `0..1`
+ * (70% → 0.7) and chroma `0..0.4` (100% → 0.4, per CSS Color 4); an alpha channel (index 3,
+ * either space) is `0..1` (50% → 0.5). Hue (OKLCH index 2) never carries `%`.
+ */
+function colorChannel(part: string, space: 'srgb' | 'oklch', index: number): number {
+  const value = Number.parseFloat(part);
+  if (!part.includes('%')) return value;
+  if (index === 3) return value / 100; // alpha, both spaces
+  if (space === 'srgb') return (value / 100) * 255;
+  return index === 1 ? (value / 100) * 0.4 : value / 100; // oklch chroma vs lightness
+}
+
+/**
  * Parse a color literal into a {@link TypedValue} color, or `null` when the input
  * is not a recognized color form. Supports `#rgb` / `#rrggbb` hex and functional
  * `rgb(r g b)` / `rgb(r, g, b)` (sRGB, 0..255 components) and `oklch(L C H)`
@@ -65,14 +80,18 @@ function parseColor(trimmed: string): Extract<TypedValue, { k: 'color' }> | null
   const fnMatch = /^(oklch|rgb)\(\s*([^)]+?)\s*\)$/i.exec(trimmed);
   if (fnMatch) {
     const fn = fnMatch[1]!.toLowerCase();
-    // Both comma- and space-separated component syntaxes (CSS Color 4); strip a
-    // trailing `%` so `oklch(70% 0.1 30)` reads as the raw lightness magnitude.
+    const space = fn === 'oklch' ? 'oklch' : 'srgb';
+    // Both comma- and space-separated component syntaxes (CSS Color 4). A percentage channel
+    // is NORMALIZED into this space's canonical numeric domain — NOT stripped to its raw
+    // magnitude, which would corrupt the color: `rgb(100% 0 0)` is 255 red (not 100/255 ≈ 39%),
+    // and `oklch(70% 0.1 30)` is lightness 0.7 (not 70). Normalizing keeps every channel in one
+    // domain so mixed `%`/number authoring interpolates and formats correctly.
     const components = fnMatch[2]!
       .split(/[\s,]+/)
       .filter(Boolean)
-      .map((part) => Number.parseFloat(part.replace('%', '')));
+      .map((part, index) => colorChannel(part, space, index));
     if (components.some((n) => Number.isNaN(n))) return null;
-    return { k: 'color', space: fn === 'oklch' ? 'oklch' : 'srgb', components };
+    return { k: 'color', space, components };
   }
 
   return null;
