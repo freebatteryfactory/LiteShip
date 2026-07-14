@@ -28,6 +28,14 @@ Defined in: [core/src/reveal.ts:363](https://github.com/freebatteryfactory/LiteS
 
 ***
 
+### policyId
+
+> `readonly` **policyId**: `ContentAddress`
+
+Defined in: [core/src/reveal.ts:368](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L368)
+
+***
+
 ### program
 
 > `readonly` **program**: [`TransitionProgram`](../type-aliases/TransitionProgram.md)

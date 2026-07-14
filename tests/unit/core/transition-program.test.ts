@@ -436,6 +436,20 @@ describe('TransitionProgram — same-key sequential windows (Codex P2 / Greptile
 });
 
 describe('TransitionProgram — authoring sugar (Reveal.chain / staggerProgram)', () => {
+  test('lowerRevealChain materializes the capability policy as a graph PolicyNode (Codex P2)', () => {
+    const chain = lowerRevealChain({
+      target: 'hero',
+      trigger: { type: 'scroll', axis: 'progress' },
+      steps: [{ from: { opacity: 0 }, to: { opacity: 1 }, transition: { durationMs: 300, easing: 'linear' } }],
+      policy: { reducedMotion: 'settle', motionTier: 'transitions' },
+    });
+    const policyNodes = chain.graph.nodes.filter((n) => n.family === 'policy');
+    expect(policyNodes).toHaveLength(1);
+    expect(chain.policyId).toBe(policyNodes[0]!.id);
+    // The PolicyNode applies to the chain's component so escalation / AI-cast surfaces enforce it.
+    expect((policyNodes[0] as unknown as { appliesTo: readonly string[] }).appliesTo).toContain(chain.componentId);
+  });
+
   test('lowerRevealChain builds a seq + trailing choice program that lowers to windows', () => {
     const chain = lowerRevealChain({
       target: 'hero',
