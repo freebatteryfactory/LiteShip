@@ -8,9 +8,10 @@
 
 import type { Effect } from 'effect';
 import { Schema } from 'effect';
+import type { SchemaPort } from './schema-port.js';
 
 interface CodecShape<A, I = A> {
-  readonly schema: Schema.Codec<A, I>;
+  readonly schema: SchemaPort<A, I>;
   encode(value: A): Effect.Effect<I, Schema.SchemaError>;
   decode(input: I): Effect.Effect<A, Schema.SchemaError>;
 }

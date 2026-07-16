@@ -9,7 +9,7 @@
  * Effect v4 beta -- SubscriptionRef.changes(ref), Stream.callback, etc.
  */
 
-import type { Effect, Stream, SubscriptionRef, PubSub, Scope, Schema } from 'effect';
+import type { Effect, Stream, SubscriptionRef, PubSub, Scope } from 'effect';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 0. CAPABILITY TIERS
@@ -439,7 +439,7 @@ export declare namespace Part {
   /** ECS component shape */
   export interface Shape<T = unknown> {
     readonly name: string;
-    readonly schema: Schema.Schema<T>;
+    readonly schema: SchemaPort<T>;
   }
 }
 
@@ -969,17 +969,28 @@ export declare namespace Plan {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// § 23. SCHEMA (Effect Schema codec builder)
+// § 23. SCHEMA (transport-agnostic schema contract)
 // ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * The permanent schema contract: the phantom `Type`/`Encoded` pair every schema
+ * value carries (`A` decodes out, `I` is the encoded form). Structural, so an
+ * effect `Schema`/`Codec` value and a kernel schema both satisfy it — the spine
+ * names this instead of effect's `Schema` (ADR-0010, spine-first).
+ */
+export type SchemaPort<A, I = A> = {
+  readonly Type: A;
+  readonly Encoded: I;
+};
 
 export declare namespace Codec {
   export interface Shape<A, I = A> {
-    readonly schema: Schema.Schema<A, I>;
+    readonly schema: SchemaPort<A, I>;
     encode(value: A): Effect.Effect<I>;
     decode(input: I): Effect.Effect<A>;
   }
 
-  export function make<A, I>(schema: Schema.Schema<A, I>): Shape<A, I>;
+  export function make<A, I>(schema: SchemaPort<A, I>): Shape<A, I>;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

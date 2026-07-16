@@ -8,7 +8,7 @@
 
 > `const` **World**: `object`
 
-Defined in: [core/src/ecs.ts:369](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L369)
+Defined in: [core/src/ecs.ts:370](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L370)
 
 World namespace — construct the ECS world that ticks systems over entities.
 

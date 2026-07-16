@@ -53,3 +53,10 @@ export {
 } from './variants.js';
 
 export type { LiteShipError, LiteShipErrorTag } from './variants.js';
+
+// The canonical tagged-result owner — the sync errors-as-values carrier the rest
+// of LiteShip (audit/cli/web/core) consumes. Both the arm types and the
+// constructors/guards cross the barrel: `Ok`/`Err`/`Result` in type position,
+// `ok`/`err`/`isOk`/`isErr` in value position.
+export { ok, err, isOk, isErr } from './result.js';
+export type { Result, Ok, Err } from './result.js';

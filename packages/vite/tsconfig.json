@@ -1,54 +1,21 @@
 {
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "lib": [
-      "ES2022",
-      "DOM"
-    ],
-    "types": [
-      "node"
-    ],
-    "strict": true,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "isolatedModules": true,
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
+    "lib": ["ES2022", "DOM"],
+    "types": ["node"],
     "outDir": "./dist",
     "rootDir": "./src",
-    "composite": true,
-    "noUncheckedIndexedAccess": true,
     "paths": {
-      "vite": [
-        "./node_modules/vite/dist/node/index.d.ts"
-      ],
-      "@czap/error": [
-        "../error/src/index.ts"
-      ]
+      "vite": ["./node_modules/vite/dist/node/index.d.ts"],
+      "@czap/error": ["../error/src/index.ts"]
     }
   },
-  "include": [
-    "src/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ],
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist"],
   "references": [
-    {
-      "path": "../core"
-    },
-    {
-      "path": "../compiler"
-    },
-    {
-      "path": "../edge"
-    },
-    {
-      "path": "../error"
-    }
+    { "path": "../core" },
+    { "path": "../compiler" },
+    { "path": "../edge" },
+    { "path": "../error" }
   ]
 }

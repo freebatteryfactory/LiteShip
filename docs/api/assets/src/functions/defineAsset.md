@@ -8,7 +8,7 @@
 
 > **defineAsset**\<`K`\>(`decl`): `CapsuleDef`\<`"cachedProjection"`, `ArrayBuffer`, [`DecodedAsset`](../type-aliases/DecodedAsset.md)\<`K`\>, `unknown`\>
 
-Defined in: [assets/src/contract.ts:244](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L244)
+Defined in: [assets/src/contract.ts:247](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L247)
 
 Declare an asset as a cachedProjection capsule. PURE — returns the capsule
 with NO side effect; assemble the returned capsules into an

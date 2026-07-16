@@ -8,7 +8,7 @@
 
 > **Result**\<`T`\> = `Effect.Effect`\<`T`, `Schema.SchemaError`\>
 
-Defined in: [core/src/capsule.ts:265](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L265)
+Defined in: [core/src/capsule.ts:266](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L266)
 
 Effect returned by [TypeValidator.validate](../../../variables/TypeValidator.md#validate) on a successful decode.
 

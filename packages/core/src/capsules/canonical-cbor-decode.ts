@@ -122,7 +122,13 @@ function isCanonicalCborBytes(bytes: Uint8Array<ArrayBuffer>): bytes is Uint8Arr
  * the round-trip invariant (`encode(decode(bytes)) === bytes`) holds because
  * the canonical encoder is idempotent under `decode`.
  */
-export const CanonicalCborBytes: Schema.Schema<Uint8Array> = withArbitrary(
+// No explicit `Schema.Schema<Uint8Array>` annotation: that alias erases the
+// Encoded type to `unknown` (effect's `Schema<T>` tracks only `Type`), which
+// no longer satisfies the capsule's `SchemaPort<In>` input slot (Encoded must
+// equal In). Left to inference, the `refine(instanceOf(Uint8Array))` value
+// carries a precise Type AND Encoded of `Uint8Array`, and the `withArbitrary`
+// pass-through preserves both — so the slot is satisfied with no cast.
+export const CanonicalCborBytes = withArbitrary(
   Schema.instanceOf(Uint8Array).pipe(Schema.refine(isCanonicalCborBytes)),
   () => fc.anything().map((value) => CanonicalCbor.encode(value)),
 );

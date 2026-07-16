@@ -20,8 +20,8 @@
 
 import { Schema } from 'effect';
 import { NotFoundError, ValidationError } from '@czap/error';
-import { defineCapsule } from '@czap/core';
-import type { AttributionDecl, Invariant, CapsuleDef, Site } from '@czap/core';
+import { defineCapsule, asDeclaration } from '@czap/core';
+import type { AttributionDecl, Invariant, CapsuleDef, Site, DeclarationSchema } from '@czap/core';
 import { mkAssetRefId, type AssetRefId } from './brands.js';
 import { audioDecoder, type DecodedAudio } from './decoders/audio.js';
 import { videoDecoder, type DecodedVideo } from './decoders/video.js';
@@ -184,11 +184,14 @@ export function builtinDecoderSiteFor(kind: AssetKind): readonly Site[] {
 }
 
 /**
- * Raw asset byte source. A Declaration-tagged schema (instanceOf), so the
- * harness honestly reports "not arbitrary-derivable" instead of feeding
- * `fc.anything()` garbage into real decoders that only accept ArrayBuffer.
+ * Raw asset byte source. A {@link DeclarationSchema} over the `instanceOf`
+ * carrier, so the harness honestly reports "not arbitrary-derivable" instead of
+ * feeding `fc.anything()` garbage into real decoders that only accept
+ * ArrayBuffer. `asDeclaration` brands the effect `Schema` value with the phantom
+ * declaration tag (no runtime change, no `as unknown as` double-cast) — the
+ * capsule input slot accepts `SchemaPort<In> | DeclarationSchema<In>` directly.
  */
-export const AssetBytes = Schema.instanceOf(ArrayBuffer) as unknown as Schema.Schema<unknown>;
+export const AssetBytes: DeclarationSchema<ArrayBuffer> = asDeclaration(Schema.instanceOf(ArrayBuffer));
 
 /**
  * Effective site for a declaration: the explicit `decl.site` override when

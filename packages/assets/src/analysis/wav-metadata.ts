@@ -91,7 +91,7 @@ export function WavMetadataProjection(
     // asset decl): the harness honestly reports "not arbitrary-derivable" for
     // the random-source property test, and exercises the REAL derive over the
     // canonical `.wav` fixture instead.
-    input: AssetBytes as unknown as Schema.Schema<ArrayBuffer>,
+    input: AssetBytes,
     output: WavMetadataSchema,
     derive: (bytes: ArrayBuffer): WavMetadata => extractWavMetadata(bytes),
     capabilities: { reads: [`asset:${audioAssetId}`], writes: [] },

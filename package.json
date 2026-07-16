@@ -18,7 +18,7 @@
     "pnpm": ">=10.0.0"
   },
   "scripts": {
-    "build": "tsc --build packages/error packages/gauntlet packages/canonical packages/genui packages/core packages/quantizer packages/compiler packages/web packages/detect packages/edge packages/worker packages/vite packages/astro packages/stage packages/cloudflare packages/remotion packages/scene packages/assets packages/audit packages/command packages/cli packages/mcp-server packages/liteship packages/create-liteship",
+    "build": "tsc --build",
     "build:wasm": "pnpm exec tsx scripts/build-wasm.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json && pnpm run typecheck:scripts && pnpm run typecheck:tests",
     "typecheck:scripts": "tsc --project tsconfig.scripts.json",
@@ -125,7 +125,7 @@
     "@vitest/coverage-v8": "^4.1.2",
     "cborg": "^4.5.8",
     "cross-env": "^10.1.0",
-    "effect": "4.0.0-beta.32",
+    "effect": "catalog:",
     "eslint": "^10.6.0",
     "eslint-plugin-jsdoc": "^62.9.0",
     "eslint-plugin-tsdoc": "^0.5.2",

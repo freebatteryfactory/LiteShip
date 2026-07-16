@@ -42,6 +42,59 @@ export type { JsonSchemaObject, JsonSchemaFragment } from './json-schema-from-sc
 // Canonical CBOR encoder (RFC 8949 §4.2.1) — content-address kernel
 export { CanonicalCbor } from './cbor.js';
 
+// ── Schema kernel — the transport-agnostic (effect-free) schema substrate ─────
+// The successor to the Effect-AST deriver above: `S.*` constructors over a frozen
+// plain-data AST, type-level `Infer`, strict/lenient `decode` with the tagged
+// `DecodeIssue` algebra, the `toJsonSchema` deriver, and the `~standard` bridge.
+// The colliding `JsonSchemaObject`/`JsonSchemaFragment` type names stay sourced
+// from `json-schema-from-schema.ts` (above) until that deriver is deleted. The
+// kernel's non-colliding surface (`S`, `toJsonSchema`, `Infer`, the `DecodeIssue`
+// algebra, the `~standard` bridge) ships HERE on the main `@czap/core` barrel;
+// its own structurally-identical `JsonSchemaObject`/`JsonSchemaFragment` twins
+// are reachable only through repo-internal relative imports of `./schema/index.js`
+// (there is no `@czap/core/schema` subpath — the package `exports` map is a
+// closed, security-annotated allowlist and is deliberately NOT widened).
+export {
+  S,
+  withArbitrary,
+  isSchema,
+  decode,
+  decodeLenient,
+  parseErrorFromIssues,
+  toJsonSchema,
+} from './schema/index.js';
+export { toStandardSchema, standardResultOf } from './schema/index.js';
+export type { KernelDecodeResult, DecodeIssueView } from './schema/index.js';
+export type {
+  Schema,
+  SchemaNode,
+  Infer,
+  InferEncoded,
+  StructType,
+  StructEncoded,
+  DecodeIssue,
+  DecodeIssueCode,
+  DecodePath,
+  DecodeResult,
+  LiteshipStandardSchema,
+} from './schema/index.js';
+
+// SchemaPort — the permanent, effect-free structural schema contract (ADR-0010,
+// spine-first): the phantom `Type`/`Encoded` pair every schema value carries, so
+// a `CapsuleContract`/`Codec`/`Part` slot names THIS instead of `effect`'s Schema.
+export { asDeclaration } from './schema-port.js';
+export type { SchemaPort, DeclarationSchema } from './schema-port.js';
+
+// ── Lifetime + CellKernel — the disposal + reactive substrate primitives ──────
+// `Lifetime` is the LIFO, exactly-once, idempotent disposal handle that replaces
+// Scope/ManagedRuntime at seams; `CellKernel` is the replay-current / no-replay
+// fan-out kernel extracted from the compositor's listener-Set. The reactive
+// primitives (Cell/Derived/Store/Signal/Zap) rebuild on these in later waves.
+export { Lifetime } from './lifetime.js';
+export type { LifetimeShape, LifetimeDisposeError, Finalizer } from './lifetime.js';
+export { CellKernel } from './cell-kernel.js';
+export type { Disposer, CellSink, CellSubscriber, CellReplayShape, CellFanoutShape } from './cell-kernel.js';
+
 // Type utilities
 export type {
   Prettify,
