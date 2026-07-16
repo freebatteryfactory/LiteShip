@@ -5,7 +5,7 @@ layer — the same shape `npm create liteship` scaffolds, kept runnable inside t
 monorepo. Nothing here is showcase material; this is what a LiteShip page looks
 like before you've done anything interesting.
 
-When installing from npm (outside the monorepo), pin `@czap/*` packages at `^0.10.0`.
+When installing from npm (outside the monorepo), pin `@czap/*` packages at `^0.11.0`.
 
 ## Run it
 

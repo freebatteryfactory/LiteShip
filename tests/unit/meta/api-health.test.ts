@@ -80,6 +80,20 @@ const API_REGISTRY: Record<string, { methods: string[]; values?: string[] }> = {
   Store: { methods: ['make', 'makeWithEffect'] },
   LiveCell: { methods: ['make', 'makeBoundary'] },
 
+  // ── Schema kernel + disposal/reactive substrate (Wave 0 foundations) ──
+  // The effect-free schema substrate: `S.*` constructors over a frozen plain-data
+  // AST. `S`'s FUNCTION members are the constructors; its OBJECT members
+  // (`any`/`boolean`/`number`/`string`/`unknown`) are pre-built inert schema nodes.
+  S: {
+    methods: ['array', 'brand', 'bytes', 'hole', 'literal', 'optional', 'record', 'struct', 'union'],
+    values: ['any', 'boolean', 'number', 'string', 'unknown'],
+  },
+  // `Lifetime` is the LIFO, exactly-once, idempotent disposal handle that replaces
+  // Scope/ManagedRuntime at seams; `CellKernel` is the fan-out primitive extracted
+  // from the compositor's listener-Set (`replay1` = replay-current, `fanout` = no-replay).
+  Lifetime: { methods: ['make'] },
+  CellKernel: { methods: ['fanout', 'replay1'] },
+
   // ── Content addressing / receipts / DAG ───────────────────────────
   TypedRef: { methods: ['create', 'equals', 'canonicalize', 'hash'] },
   Receipt: {
@@ -370,6 +384,21 @@ const STANDALONE_FUNCTIONS = [
   'sampleProgramUniforms',
   'lowerRevealChain',
   'staggerProgram',
+  // Schema kernel standalone functions (Wave 0 foundations): the effect-free schema
+  // substrate's function surface — strict/lenient `decode`, the `~standard` bridge
+  // (`toStandardSchema`/`standardResultOf`), the `toJsonSchema` deriver, the issue
+  // reader (`parseErrorFromIssues`), the `isSchema` guard, and the arbitrary/declaration
+  // annotators (`withArbitrary`/`asDeclaration`). The `S` constructor namespace ships
+  // alongside in API_REGISTRY (it is a namespace object, not a standalone function).
+  'withArbitrary',
+  'isSchema',
+  'decode',
+  'decodeLenient',
+  'parseErrorFromIssues',
+  'toJsonSchema',
+  'toStandardSchema',
+  'standardResultOf',
+  'asDeclaration',
 ];
 
 // ── Error classes ───────────────────────────────────────────────────

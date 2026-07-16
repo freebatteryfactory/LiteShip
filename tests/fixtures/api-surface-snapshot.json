@@ -2,7 +2,7 @@
   "snapshotFormat": 1,
   "packages": {
     "@czap/assets": {
-      "version": "0.10.0",
+      "version": "0.11.0",
       "exports": [
         {
           "name": "AssetRegistry",
@@ -92,7 +92,7 @@
       ]
     },
     "@czap/astro": {
-      "version": "0.10.0",
+      "version": "0.11.0",
       "exports": [
         {
           "name": "applyResponsiveMediaVary",
@@ -187,7 +187,7 @@
       ]
     },
     "@czap/audit": {
-      "version": "0.10.0",
+      "version": "0.11.0",
       "exports": [
         {
           "name": "ACTIVE_SURFACE_ORACLE_ID",
@@ -573,7 +573,7 @@
       ]
     },
     "@czap/canonical": {
-      "version": "0.10.0",
+      "version": "0.11.0",
       "exports": [
         {
           "name": "AddressedDigest",
@@ -618,7 +618,7 @@
       ]
     },
     "@czap/cli": {
-      "version": "0.10.0",
+      "version": "0.11.0",
       "exports": [
         {
           "name": "run",
@@ -628,7 +628,7 @@
       ]
     },
     "@czap/cloudflare": {
-      "version": "0.10.0",
+      "version": "0.11.0",
       "exports": [
         {
           "name": "cloudflareAdapterCapsule",
@@ -652,7 +652,7 @@
       ]
     },
     "@czap/command": {
-      "version": "0.10.0",
+      "version": "0.11.0",
       "exports": [
         {
           "name": "AUDIT_WARNING_FLOOR",
@@ -890,7 +890,7 @@
       ]
     },
     "@czap/compiler": {
-      "version": "0.10.0",
+      "version": "0.11.0",
       "exports": [
         {
           "name": "AIManifestCompiler",
@@ -1005,7 +1005,7 @@
       ]
     },
     "@czap/core": {
-      "version": "0.10.0",
+      "version": "0.11.0",
       "exports": [
         {
           "name": "AICast",
@@ -1082,6 +1082,11 @@
           "name": "Cell",
           "kind": "namespace",
           "signature": "all:function,fromStream:function,make:function,map:function"
+        },
+        {
+          "name": "CellKernel",
+          "kind": "namespace",
+          "signature": "fanout:function,replay1:function"
         },
         {
           "name": "Codec",
@@ -1216,6 +1221,11 @@
           "kind": "const"
         },
         {
+          "name": "Lifetime",
+          "kind": "namespace",
+          "signature": "make:function"
+        },
+        {
           "name": "LiveCell",
           "kind": "namespace",
           "signature": "make:function,makeBoundary:function"
@@ -1272,6 +1282,11 @@
           "name": "RuntimeCoordinator",
           "kind": "namespace",
           "signature": "create:function"
+        },
+        {
+          "name": "S",
+          "kind": "namespace",
+          "signature": "any:const,array:function,boolean:const,brand:function,bytes:function,hole:function,literal:function,number:const,optional:function,record:function,string:const,struct:function,union:function,unknown:const"
         },
         {
           "name": "SSE_BUFFER_SIZE",
@@ -1460,6 +1475,11 @@
           "signature": "(2)"
         },
         {
+          "name": "asDeclaration",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "asReplayableRecoveryCell",
           "kind": "function",
           "signature": "(1)"
@@ -1530,6 +1550,11 @@
           "signature": "(2)"
         },
         {
+          "name": "decode",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
           "name": "decodeDiscreteStateTransition",
           "kind": "function",
           "signature": "(1)"
@@ -1538,6 +1563,11 @@
           "name": "decodeDocumentGraph",
           "kind": "function",
           "signature": "(1)"
+        },
+        {
+          "name": "decodeLenient",
+          "kind": "function",
+          "signature": "(2)"
         },
         {
           "name": "defineCapsule",
@@ -1675,6 +1705,11 @@
           "signature": "(1)"
         },
         {
+          "name": "isSchema",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "isWellFormedNode",
           "kind": "function",
           "signature": "(1)"
@@ -1746,6 +1781,11 @@
         },
         {
           "name": "normalizeGraphQueryEtag",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "parseErrorFromIssues",
           "kind": "function",
           "signature": "(1)"
         },
@@ -1905,6 +1945,11 @@
           "signature": "(1)"
         },
         {
+          "name": "standardResultOf",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "systemClock",
           "kind": "namespace",
           "signature": "now:function"
@@ -1913,6 +1958,16 @@
           "name": "systemRng",
           "kind": "namespace",
           "signature": "next:function"
+        },
+        {
+          "name": "toJsonSchema",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "toStandardSchema",
+          "kind": "function",
+          "signature": "(2)"
         },
         {
           "name": "tokenBufferCapsule",
@@ -1958,11 +2013,16 @@
           "name": "wgslIdent",
           "kind": "function",
           "signature": "(1)"
+        },
+        {
+          "name": "withArbitrary",
+          "kind": "function",
+          "signature": "(2)"
         }
       ]
     },
     "@czap/detect": {
-      "version": "0.10.0",
+      "version": "0.11.0",
       "exports": [
         {
           "name": "CAP_AXES",
@@ -2062,7 +2122,7 @@
       ]
     },
     "@czap/edge": {
-      "version": "0.10.0",
+      "version": "0.11.0",
       "exports": [
         {
           "name": "ClientHints",
@@ -2140,7 +2200,7 @@
       ]
     },
     "@czap/error": {
-      "version": "0.10.0",
+      "version": "0.11.0",
       "exports": [
         {
           "name": "HostCapabilityError",
@@ -2192,6 +2252,11 @@
           "signature": "(1)"
         },
         {
+          "name": "err",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "getTag",
           "kind": "function",
           "signature": "(1)"
@@ -2200,6 +2265,16 @@
           "name": "hasTag",
           "kind": "function",
           "signature": "(2)"
+        },
+        {
+          "name": "isErr",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "isOk",
+          "kind": "function",
+          "signature": "(1)"
         },
         {
           "name": "isTaggedError",
@@ -2217,6 +2292,11 @@
           "signature": "(3)"
         },
         {
+          "name": "ok",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "raise",
           "kind": "function",
           "signature": "(1)"
@@ -2229,7 +2309,7 @@
       ]
     },
     "@czap/gauntlet": {
-      "version": "0.10.0",
+      "version": "0.11.0",
       "exports": [
         {
           "name": "ABSENT_SUFFIX",
@@ -2874,7 +2954,7 @@
       ]
     },
     "@czap/genui": {
-      "version": "0.10.0",
+      "version": "0.11.0",
       "exports": [
         {
           "name": "ContentAddress",
@@ -2918,7 +2998,7 @@
       ]
     },
     "@czap/mcp-server": {
-      "version": "0.10.0",
+      "version": "0.11.0",
       "exports": [
         {
           "name": "APPLY_PATCH_COMMAND",
@@ -3131,7 +3211,7 @@
       ]
     },
     "@czap/quantizer": {
-      "version": "0.10.0",
+      "version": "0.11.0",
       "exports": [
         {
           "name": "AnimatedQuantizer",
@@ -3181,7 +3261,7 @@
       ]
     },
     "@czap/remotion": {
-      "version": "0.10.0",
+      "version": "0.11.0",
       "exports": [
         {
           "name": "Provider",
@@ -3235,7 +3315,7 @@
       ]
     },
     "@czap/scene": {
-      "version": "0.10.0",
+      "version": "0.11.0",
       "exports": [
         {
           "name": "AudioSystem",
@@ -3413,7 +3493,7 @@
       ]
     },
     "@czap/stage": {
-      "version": "0.10.0",
+      "version": "0.11.0",
       "exports": [
         {
           "name": "dualExport",
@@ -3453,7 +3533,7 @@
       ]
     },
     "@czap/vite": {
-      "version": "0.10.0",
+      "version": "0.11.0",
       "exports": [
         {
           "name": "collectBoundaryManifest",
@@ -3578,7 +3658,7 @@
       ]
     },
     "@czap/web": {
-      "version": "0.10.0",
+      "version": "0.11.0",
       "exports": [
         {
           "name": "CZAP_EVENT_DOCS",
@@ -3867,7 +3947,7 @@
       ]
     },
     "@czap/worker": {
-      "version": "0.10.0",
+      "version": "0.11.0",
       "exports": [
         {
           "name": "CompositorWorker",

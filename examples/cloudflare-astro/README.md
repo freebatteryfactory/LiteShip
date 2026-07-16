@@ -2,7 +2,7 @@
 
 Minimal Astro 7 app on `@astrojs/cloudflare` v14 with `@czap/cloudflare` KV boundary caching.
 
-When installing from npm (outside the monorepo), pin `@czap/*` packages at `^0.10.0`.
+When installing from npm (outside the monorepo), pin `@czap/*` packages at `^0.11.0`.
 
 The boundary cache config is build-derived: `src/boundaries.ts` exports the `viewport` boundary (`Boundary.make` mints its content address), `src/styles.css` holds the `@quantize viewport` block, and `src/middleware.ts` feeds the resulting `virtual:czap/boundaries` manifest to `cloudflareMiddleware` — no hand-typed ids, no compiler in the worker bundle. `astro.config.mjs` wires `@czap/cloudflare/cache-provider` and matching `routeRules.tags` so Astro 7 `cache.invalidate({ tags })` reaches the same KV tag index. The build also emits `czap-boundary-manifest.json` into the output directory.
 
