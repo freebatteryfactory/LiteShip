@@ -30,11 +30,13 @@ helper unchanged — zero rebuild, zero fork.
 
 ## Interfaces
 
+- [Err](interfaces/Err.md)
 - [HostCapabilityError](interfaces/HostCapabilityError.md)
 - [IntegrityError](interfaces/IntegrityError.md)
 - [InvariantViolationError](interfaces/InvariantViolationError.md)
 - [IoError](interfaces/IoError.md)
 - [NotFoundError](interfaces/NotFoundError.md)
+- [Ok](interfaces/Ok.md)
 - [ParseError](interfaces/ParseError.md)
 - [TaggedError](interfaces/TaggedError.md)
 - [UnsupportedError](interfaces/UnsupportedError.md)
@@ -44,6 +46,7 @@ helper unchanged — zero rebuild, zero fork.
 
 - [LiteShipError](type-aliases/LiteShipError.md)
 - [LiteShipErrorTag](type-aliases/LiteShipErrorTag.md)
+- [Result](type-aliases/Result.md)
 - [TaggedErrorValue](type-aliases/TaggedErrorValue.md)
 
 ## Variables
@@ -61,10 +64,14 @@ helper unchanged — zero rebuild, zero fork.
 ## Functions
 
 - [assertNever](functions/assertNever.md)
+- [err](functions/err.md)
 - [getTag](functions/getTag.md)
 - [hasTag](functions/hasTag.md)
+- [isErr](functions/isErr.md)
+- [isOk](functions/isOk.md)
 - [isTaggedError](functions/isTaggedError.md)
 - [matchTag](functions/matchTag.md)
 - [matchTagOr](functions/matchTagOr.md)
+- [ok](functions/ok.md)
 - [raise](functions/raise.md)
 - [taggedError](functions/taggedError.md)

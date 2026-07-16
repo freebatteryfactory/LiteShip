@@ -7,8 +7,9 @@
  * @module
  */
 
-import type { Scope, Schema } from 'effect';
+import type { Scope } from 'effect';
 import { Effect, Ref } from 'effect';
+import type { SchemaPort } from './schema-port.js';
 
 /** Nominal-typed identifier for an ECS entity — a branded string minted via the {@link EntityId} helper. */
 export type EntityId = string & { readonly _brand: 'EntityId' };
@@ -27,7 +28,7 @@ interface EntityShape {
 
 interface PartShape<T = unknown> {
   readonly name: string;
-  readonly schema: Schema.Schema<T>;
+  readonly schema: SchemaPort<T>;
 }
 
 // ---------------------------------------------------------------------------

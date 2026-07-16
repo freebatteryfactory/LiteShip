@@ -8,7 +8,7 @@
 
 > **Shape**\<`T`\> = `PartShape`\<`T`\>
 
-Defined in: [core/src/ecs.ts:376](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L376)
+Defined in: [core/src/ecs.ts:377](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L377)
 
 Structural shape of a typed component definition (`name` + schema).
 

@@ -35,8 +35,9 @@ describe('scripts-index parity — every root script is categorized', () => {
   });
 });
 
-describe('build-list parity — the build script compiles every publishable package', () => {
-  /** Publishable packages with no compile step (type-only declaration spines). */
+describe('build-list parity — root tsconfig references cover every publishable package', () => {
+  // The build script is a bare `tsc --build`: topology lives in root tsconfig
+  // references, so coverage is asserted there, not by parsing the script.
   const NO_BUILD = new Set(['@czap/_spine']);
 
   const publishableDirs = readdirSync(resolve(REPO, 'packages')).filter((dir) => {
@@ -49,14 +50,25 @@ describe('build-list parity — the build script compiles every publishable pack
     return pkg.publishConfig != null && pkg.name != null && !NO_BUILD.has(pkg.name);
   });
 
-  const buildDirs = [...rootPkg.scripts.build!.matchAll(/packages\/([\w-]+)/g)].map((m) => m[1]!);
+  const rootTsconfig = JSON.parse(readFileSync(resolve(REPO, 'tsconfig.json'), 'utf8')) as {
+    references?: ReadonlyArray<{ path: string }>;
+  };
+  const referenceDirs = (rootTsconfig.references ?? [])
+    .map((r) => /^\.\/packages\/([\w-]+)$/.exec(r.path)?.[1])
+    .filter((dir): dir is string => dir != null);
 
-  it('the `tsc --build` list is exactly the buildable publishable packages', () => {
-    expect([...buildDirs].sort()).toEqual([...publishableDirs].sort());
+  it('the build script is references-driven (`tsc --build`, no hand-topo package list)', () => {
+    expect(rootPkg.scripts.build).toMatch(/\btsc --build\b/);
+    expect(rootPkg.scripts.build).not.toMatch(/packages\//);
   });
 
-  it('lists no package directory twice', () => {
-    expect(buildDirs.length).toBe(new Set(buildDirs).size);
+  it('root tsconfig references cover every buildable publishable package', () => {
+    const missing = publishableDirs.filter((dir) => !referenceDirs.includes(dir));
+    expect(missing, `publishable packages absent from root tsconfig references: ${missing.join(', ')}`).toEqual([]);
+  });
+
+  it('lists no package reference twice', () => {
+    expect(referenceDirs.length).toBe(new Set(referenceDirs).size);
   });
 });
 

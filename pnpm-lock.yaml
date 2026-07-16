@@ -594,9 +594,6 @@ importers:
       '@czap/error':
         specifier: workspace:*
         version: link:../error
-      effect:
-        specifier: 4.0.0-beta.32
-        version: 4.0.0-beta.32
 
   packages/error: {}
 

@@ -98,7 +98,7 @@ export function BeatMarkerProjection(
     // cache-hit / invalidation probes hold. Declaration-tagged byte schema
     // (shared with the asset decl) — random-source property test self-skips
     // honestly; the canonical `.wav` fixture drives the real derive.
-    input: AssetBytes as unknown as Schema.Schema<ArrayBuffer>,
+    input: AssetBytes,
     output: BeatMarkerSetSchema,
     derive: async (bytes: ArrayBuffer): Promise<BeatMarkerSet> => detectBeats(await audioDecoder(bytes)),
     capabilities: { reads: [`asset:${audioAssetId}`], writes: [] },

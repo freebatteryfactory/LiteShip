@@ -8,7 +8,7 @@
 
 > `const` **TypeValidator**: `object`
 
-Defined in: [core/src/capsule.ts:257](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L257)
+Defined in: [core/src/capsule.ts:258](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L258)
 
 Runtime validator that verifies values against _spine-derived schemas.
 Used by capsule dispatchers to check inputs before invoking handlers.

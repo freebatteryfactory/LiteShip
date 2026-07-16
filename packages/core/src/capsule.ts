@@ -8,6 +8,7 @@
 
 import { type Effect, Schema } from 'effect';
 import type { ContentAddress } from '@czap/_spine';
+import type { SchemaPort, DeclarationSchema } from './schema-port.js';
 
 /** Closed seven-arm catalog of capsule kinds. Adding an eighth requires ADR amendment. */
 export type AssemblyKind =
@@ -134,8 +135,8 @@ export interface CapsuleContract<K extends AssemblyKind, In, Out, R> {
   readonly _kind: K;
   readonly id: ContentAddress;
   readonly name: string;
-  readonly input: Schema.Schema<In>;
-  readonly output: Schema.Schema<Out>;
+  readonly input: SchemaPort<In> | DeclarationSchema<In>;
+  readonly output: SchemaPort<Out> | DeclarationSchema<Out>;
   readonly capabilities: CapabilityDecl<R>;
   readonly invariants: readonly Invariant<In, Out>[];
   readonly budgets: BudgetDecl;

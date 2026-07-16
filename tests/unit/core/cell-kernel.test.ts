@@ -1,0 +1,481 @@
+/**
+ * CellKernel — the shared replay-current / fan-out substrate.
+ *
+ * Two constructors, extracted from compositor.ts:231-246 (the source of truth):
+ *   - replay1(initial): current-value slot + synchronous listener set; a new
+ *     subscriber is replayed the current value on subscribe.
+ *   - fanout(): no-replay fire-and-forget; late subscribers miss prior values.
+ *
+ * Pinned laws (asserted below for BOTH constructors):
+ *   - subscriber ordering: subscribers are notified in subscription order.
+ *   - duplicate-value policy: every publish is delivered; equal values are NOT
+ *     suppressed (no dedup — mirrors the raw compositor fan-out).
+ *   - reentrancy: a publish issued from within a subscriber runs a full nested
+ *     synchronous fan-out over the membership snapshot before the outer resumes.
+ *   - disposer idempotence: the returned disposer removes exactly one
+ *     subscription; calling it again is a no-op.
+ *   - close-completes: close() completes every subscriber exactly once,
+ *     synchronously (never blocks); afterwards publish is inert and subscribe
+ *     completes immediately without registering.
+ */
+
+import { describe, test, expect } from 'vitest';
+import fc from 'fast-check';
+import { CellKernel } from '../../../packages/core/src/cell-kernel.js';
+import type { Disposer } from '../../../packages/core/src/cell-kernel.js';
+
+// ---------------------------------------------------------------------------
+// Identity
+// ---------------------------------------------------------------------------
+
+describe('CellKernel — identity', () => {
+  test('replay1 has _tag CellReplay, is open, empty', () => {
+    const k = CellKernel.replay1(0);
+    expect(k._tag).toBe('CellReplay');
+    expect(k.closed).toBe(false);
+    expect(k.size).toBe(0);
+  });
+
+  test('fanout has _tag CellFanout, is open, empty', () => {
+    const k = CellKernel.fanout<number>();
+    expect(k._tag).toBe('CellFanout');
+    expect(k.closed).toBe(false);
+    expect(k.size).toBe(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// replay-1: current slot + replay-current-on-subscribe
+// ---------------------------------------------------------------------------
+
+describe('CellKernel.replay1 — current slot + replay', () => {
+  test('read() returns the initial value before any publish', () => {
+    expect(CellKernel.replay1(42).read()).toBe(42);
+  });
+
+  test('read() returns the most-recently-published value', () => {
+    const k = CellKernel.replay1(0);
+    k.publish(1);
+    k.publish(2);
+    expect(k.read()).toBe(2);
+  });
+
+  test('subscribe replays the current value synchronously', () => {
+    const k = CellKernel.replay1(7);
+    const got: number[] = [];
+    k.subscribe((v) => got.push(v));
+    expect(got).toEqual([7]);
+  });
+
+  test('a late subscriber replays the latest value, not the whole history', () => {
+    const k = CellKernel.replay1(0);
+    k.publish(1);
+    k.publish(2);
+    const got: number[] = [];
+    k.subscribe((v) => got.push(v));
+    expect(got).toEqual([2]);
+  });
+
+  test('publish delivers to every already-attached subscriber', () => {
+    const k = CellKernel.replay1(0);
+    const a: number[] = [];
+    const b: number[] = [];
+    k.subscribe((v) => a.push(v));
+    k.subscribe((v) => b.push(v));
+    k.publish(5);
+    expect(a).toEqual([0, 5]);
+    expect(b).toEqual([0, 5]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// no-replay: late subscribers miss prior values
+// ---------------------------------------------------------------------------
+
+describe('CellKernel.fanout — no replay', () => {
+  test('a subscriber attached before publish receives it', () => {
+    const k = CellKernel.fanout<number>();
+    const got: number[] = [];
+    k.subscribe((v) => got.push(v));
+    k.publish(1);
+    expect(got).toEqual([1]);
+  });
+
+  test('a subscriber attached after a publish misses that value', () => {
+    const k = CellKernel.fanout<number>();
+    k.publish(1);
+    const got: number[] = [];
+    k.subscribe((v) => got.push(v));
+    expect(got).toEqual([]);
+    k.publish(2);
+    expect(got).toEqual([2]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// subscriber ordering
+// ---------------------------------------------------------------------------
+
+describe('CellKernel — subscriber ordering', () => {
+  test('fanout notifies subscribers in subscription order', () => {
+    const k = CellKernel.fanout<number>();
+    const order: string[] = [];
+    k.subscribe(() => order.push('a'));
+    k.subscribe(() => order.push('b'));
+    k.subscribe(() => order.push('c'));
+    k.publish(1);
+    expect(order).toEqual(['a', 'b', 'c']);
+  });
+
+  test('replay1 notifies subscribers in subscription order', () => {
+    const k = CellKernel.replay1(0);
+    const order: string[] = [];
+    k.subscribe(() => order.push('a'));
+    k.subscribe(() => order.push('b'));
+    k.subscribe(() => order.push('c'));
+    // clear the per-subscribe replays; assert the publish fan-out order only.
+    order.length = 0;
+    k.publish(1);
+    expect(order).toEqual(['a', 'b', 'c']);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// duplicate-value policy (no dedup)
+// ---------------------------------------------------------------------------
+
+describe('CellKernel — duplicate-value policy', () => {
+  test('fanout delivers equal consecutive values without suppression', () => {
+    const k = CellKernel.fanout<number>();
+    const got: number[] = [];
+    k.subscribe((v) => got.push(v));
+    k.publish(7);
+    k.publish(7);
+    k.publish(7);
+    expect(got).toEqual([7, 7, 7]);
+  });
+
+  test('replay1 delivers equal consecutive values without suppression', () => {
+    const k = CellKernel.replay1(3);
+    const got: number[] = [];
+    k.subscribe((v) => got.push(v));
+    k.publish(3);
+    k.publish(3);
+    expect(got).toEqual([3, 3, 3]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// reentrancy: publish during notify
+// ---------------------------------------------------------------------------
+
+describe('CellKernel — reentrancy (publish during notify)', () => {
+  test('fanout: a reentrant publish runs a full nested fan-out before the outer resumes', () => {
+    const k = CellKernel.fanout<number>();
+    const a: number[] = [];
+    const b: number[] = [];
+    let fired = false;
+    k.subscribe((v) => {
+      a.push(v);
+      if (!fired && v === 1) {
+        fired = true;
+        k.publish(9);
+      }
+    });
+    k.subscribe((v) => b.push(v));
+    k.publish(1);
+    // a: outer 1, then reentrant 9. b: reentrant 9 (nested) then outer 1.
+    expect(a).toEqual([1, 9]);
+    expect(b).toEqual([9, 1]);
+  });
+
+  test('replay1: read() inside a reentrant publish observes the new value', () => {
+    const k = CellKernel.replay1(0);
+    const seen: number[] = [];
+    const readInside: number[] = [];
+    let fired = false;
+    k.subscribe((v) => {
+      seen.push(v);
+      if (!fired && v === 1) {
+        fired = true;
+        k.publish(2);
+        readInside.push(k.read());
+      }
+    });
+    k.publish(1);
+    expect(seen).toEqual([0, 1, 2]);
+    expect(readInside).toEqual([2]);
+    expect(k.read()).toBe(2);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// subscribe / dispose during notify — DIVERGENT delivery law by constructor:
+//   - fanout  (snapshot): a subscriber added mid-fan-out MISSES the in-flight
+//     value (membership snapshot taken at fan-out start; PubSub fidelity).
+//   - replay1 (live-Set): a subscriber added mid-fan-out RECEIVES the in-flight
+//     value — it mirrors compositor.ts:241-246 (`for (const notify of
+//     changeListeners) notify(state)`) EXACTLY, because replay1 is the
+//     extraction target Wave 2 swaps the compositor onto (behavior identity is
+//     the whole point). See the divergence-by-design note in cell-kernel.ts.
+// Both skip a subscriber DISPOSED mid-fan-out before it is reached.
+// ---------------------------------------------------------------------------
+
+describe('CellKernel — mutation during notify', () => {
+  test('fanout: a subscriber added during a fan-out MISSES the in-flight value (snapshot)', () => {
+    const k = CellKernel.fanout<number>();
+    const a: number[] = [];
+    const late: number[] = [];
+    k.subscribe((v) => {
+      a.push(v);
+      if (v === 1) k.subscribe((w) => late.push(w));
+    });
+    k.publish(1);
+    expect(a).toEqual([1]);
+    expect(late).toEqual([]);
+    k.publish(2);
+    expect(a).toEqual([1, 2]);
+    expect(late).toEqual([2]);
+  });
+
+  test('replay1: a subscriber added during a fan-out RECEIVES the in-flight value (live-Set; compositor parity)', () => {
+    const k = CellKernel.replay1(0);
+    const a: number[] = [];
+    const late: number[] = [];
+    let added = false;
+    k.subscribe((v) => {
+      a.push(v);
+      if (v === 1 && !added) {
+        added = true;
+        // Attached from WITHIN the fan-out of publish(1). Two deliveries reach
+        // it: (1) the replay of the current value on subscribe, and (2) the
+        // in-flight fan-out itself — live-Set iteration visits the just-added
+        // registration because it sits after the current cursor. Under the old
+        // snapshot fan-out only the replay (1) would arrive.
+        k.subscribe((w) => late.push(w));
+      }
+    });
+    k.publish(1);
+    expect(a).toEqual([0, 1]);
+    expect(late).toEqual([1, 1]);
+  });
+
+  test('fanout: a subscriber disposed during a fan-out does not receive the in-flight value', () => {
+    const k = CellKernel.fanout<number>();
+    const a: number[] = [];
+    const b: number[] = [];
+    let disposeB: Disposer = () => {};
+    k.subscribe((v) => {
+      a.push(v);
+      disposeB();
+    });
+    disposeB = k.subscribe((v) => b.push(v));
+    k.publish(1);
+    expect(a).toEqual([1]);
+    expect(b).toEqual([]);
+  });
+
+  test('replay1: a subscriber disposed during a fan-out is skipped (live-Set honors removal)', () => {
+    const k = CellKernel.replay1(0);
+    const a: number[] = [];
+    const b: number[] = [];
+    let disposeB: Disposer = () => {};
+    k.subscribe((v) => {
+      a.push(v);
+      disposeB();
+    });
+    disposeB = k.subscribe((v) => b.push(v));
+    // B replays the current value (0) on subscribe; the assertion below concerns
+    // only the publish fan-out, so clear that replay first.
+    b.length = 0;
+    k.publish(1);
+    expect(a).toEqual([0, 1]);
+    expect(b).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// disposer
+// ---------------------------------------------------------------------------
+
+describe('CellKernel — disposer', () => {
+  test('fanout: a disposed subscriber stops receiving values', () => {
+    const k = CellKernel.fanout<number>();
+    const got: number[] = [];
+    const dispose = k.subscribe((v) => got.push(v));
+    k.publish(1);
+    dispose();
+    k.publish(2);
+    expect(got).toEqual([1]);
+    expect(k.size).toBe(0);
+  });
+
+  test('replay1: a disposed subscriber stops receiving values', () => {
+    const k = CellKernel.replay1(0);
+    const got: number[] = [];
+    const dispose = k.subscribe((v) => got.push(v));
+    k.publish(1);
+    dispose();
+    k.publish(2);
+    expect(got).toEqual([0, 1]);
+    expect(k.size).toBe(0);
+  });
+
+  test('disposer is idempotent — calling twice removes only one subscription', () => {
+    const k = CellKernel.fanout<number>();
+    const sink = { next: (): void => undefined };
+    // The SAME sink object subscribed twice yields two distinct registrations.
+    const d1 = k.subscribe(sink);
+    const d2 = k.subscribe(sink);
+    expect(k.size).toBe(2);
+    d1();
+    d1();
+    expect(k.size).toBe(1);
+    d2();
+    expect(k.size).toBe(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// close-completes
+// ---------------------------------------------------------------------------
+
+describe('CellKernel — close-completes', () => {
+  test('fanout: close() completes every subscriber exactly once and clears them', () => {
+    const k = CellKernel.fanout<number>();
+    let completedA = 0;
+    let completedB = 0;
+    k.subscribe({ next: () => undefined, complete: () => (completedA += 1) });
+    k.subscribe({ next: () => undefined, complete: () => (completedB += 1) });
+    expect(k.close()).toBeUndefined(); // synchronous, never blocks
+    expect(k.closed).toBe(true);
+    expect(completedA).toBe(1);
+    expect(completedB).toBe(1);
+    expect(k.size).toBe(0);
+  });
+
+  test('close() is idempotent — a second close does not re-complete subscribers', () => {
+    const k = CellKernel.fanout<number>();
+    let completed = 0;
+    k.subscribe({ next: () => undefined, complete: () => (completed += 1) });
+    k.close();
+    k.close();
+    expect(completed).toBe(1);
+  });
+
+  test('after close, publish is inert', () => {
+    const k = CellKernel.fanout<number>();
+    const got: number[] = [];
+    k.subscribe((v) => got.push(v));
+    k.close();
+    k.publish(1);
+    expect(got).toEqual([]);
+  });
+
+  test('after close, subscribe completes immediately without registering or replaying', () => {
+    const k = CellKernel.replay1(5);
+    k.close();
+    const got: number[] = [];
+    let completed = 0;
+    const dispose = k.subscribe({ next: (v) => got.push(v), complete: () => (completed += 1) });
+    expect(got).toEqual([]); // no replay after close
+    expect(completed).toBe(1);
+    expect(k.size).toBe(0);
+    expect(() => dispose()).not.toThrow();
+  });
+
+  test('replay1: read() still returns the last value after close', () => {
+    const k = CellKernel.replay1(0);
+    k.publish(9);
+    k.close();
+    expect(k.read()).toBe(9);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// property: subscriber ordering + delivery completeness (seeded fast-check)
+// ---------------------------------------------------------------------------
+
+describe('CellKernel — property: subscriber ordering', () => {
+  test('fanout: every publish reaches every subscriber, in subscription order, once each', () => {
+    fc.assert(
+      fc.property(fc.integer({ min: 1, max: 6 }), fc.array(fc.integer(), { maxLength: 24 }), (numSubs, values) => {
+        const k = CellKernel.fanout<number>();
+        const order: number[] = [];
+        for (let i = 0; i < numSubs; i++) {
+          const id = i;
+          k.subscribe(() => order.push(id));
+        }
+        for (const v of values) k.publish(v);
+        const expected: number[] = [];
+        for (let p = 0; p < values.length; p++) {
+          for (let i = 0; i < numSubs; i++) expected.push(i);
+        }
+        expect(order).toEqual(expected);
+      }),
+      { seed: 0xce11, numRuns: 250 },
+    );
+  });
+
+  test('replay1: publish fan-out preserves subscription order (replays excluded)', () => {
+    fc.assert(
+      fc.property(fc.integer({ min: 1, max: 6 }), fc.array(fc.integer(), { maxLength: 24 }), (numSubs, values) => {
+        const k = CellKernel.replay1(0);
+        const order: number[] = [];
+        for (let i = 0; i < numSubs; i++) {
+          const id = i;
+          k.subscribe(() => order.push(id));
+        }
+        // Discard the per-subscribe replays; measure only the publish fan-out.
+        order.length = 0;
+        for (const v of values) k.publish(v);
+        const expected: number[] = [];
+        for (let p = 0; p < values.length; p++) {
+          for (let i = 0; i < numSubs; i++) expected.push(i);
+        }
+        expect(order).toEqual(expected);
+      }),
+      { seed: 0xce12, numRuns: 250 },
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// property: replay invariant (seeded fast-check)
+// ---------------------------------------------------------------------------
+
+describe('CellKernel — property: replay invariant', () => {
+  test('replay1: read() equals the last published value and a late subscriber replays exactly it', () => {
+    const initial = -999;
+    fc.assert(
+      fc.property(fc.array(fc.integer(), { maxLength: 24 }), (values) => {
+        const k = CellKernel.replay1(initial);
+        for (const v of values) k.publish(v);
+        const last = values.length === 0 ? initial : values[values.length - 1];
+        expect(k.read()).toBe(last);
+        const received: number[] = [];
+        k.subscribe((v) => received.push(v));
+        expect(received).toEqual([last]);
+      }),
+      { seed: 0xce13, numRuns: 250 },
+    );
+  });
+
+  test('fanout: a late subscriber observes only values published after it subscribed', () => {
+    fc.assert(
+      fc.property(
+        fc.array(fc.integer(), { maxLength: 24 }),
+        fc.array(fc.integer(), { maxLength: 24 }),
+        (before, after) => {
+          const k = CellKernel.fanout<number>();
+          for (const v of before) k.publish(v);
+          const received: number[] = [];
+          k.subscribe((v) => received.push(v));
+          for (const v of after) k.publish(v);
+          expect(received).toEqual(after);
+        },
+      ),
+      { seed: 0xce14, numRuns: 250 },
+    );
+  });
+});
