@@ -1,6 +1,6 @@
 {
   "name": "@czap/genui",
-  "version": "0.13.0",
+  "version": "0.14.0",
   "description": "Render AI-generated UI safely in LiteShip: validate a model's proposed component tree against a host-owned catalog and draw only trusted, whitelisted components.",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",

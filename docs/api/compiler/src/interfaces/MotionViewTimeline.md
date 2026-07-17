@@ -6,7 +6,7 @@
 
 # Interface: MotionViewTimeline
 
-Defined in: [compiler/src/motion.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L31)
+Defined in: [compiler/src/motion.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L32)
 
 Optional scroll/view timeline range for the `@supports`-gated path.
 
@@ -16,4 +16,4 @@ Optional scroll/view timeline range for the `@supports`-gated path.
 
 > `readonly` **range**: readonly \[`string`, `string`\]
 
-Defined in: [compiler/src/motion.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L32)
+Defined in: [compiler/src/motion.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L33)

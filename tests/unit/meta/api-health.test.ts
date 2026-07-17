@@ -47,6 +47,7 @@ const API_REGISTRY: Record<string, { methods: string[]; values?: string[] }> = {
       'easeInOut',
       'spring',
       'cubicBezier',
+      'easingToLinearCSS',
       'springToLinearCSS',
       'springNaturalDuration',
     ],

@@ -283,11 +283,68 @@ Format: `S<wave>.<n>` — scar → root class → disposition (guard, status).
   abort observed only at the next tick (old Fiber.interrupt finalized promptly).
   Bounded, self-healing, production rAF unaffected; QA probe defines the red test.
   Class: cancellation promptness fidelity under transport swap.
-  Disposition: abort-listener wake on the tick await + a dispose-promptness law
-  test (the QA probe made standing). Scheduled Wave 4 slice 0.
+  Disposition: **fixed** — the root is `Animation.run`'s generator suspending at
+  its internal tick await (`await new Promise(resolve => sched.schedule(resolve))`):
+  on the injected-clock path an abort neither settles that await nor lets
+  `iterator.return()` reach the generator's `finally` (empirically verified —
+  `return()` on a generator parked at an internal never-settling await does NOT run
+  `finally`), so `sched.cancel` waited for the NEXT tick. Fix lands entirely in
+  `packages/quantizer/src/animated-quantizer.ts`: a new `abortAwareScheduler(base,
+  signal)` wraps the injected clock so each scheduled tick also arms an abort
+  listener that fires the pending frame callback — abort promptly resolves the tick
+  await, the `for await` resumes, its body observes `signal.aborted` and returns,
+  the generator's `return()` runs `finally` → `cancel` WITHOUT another tick. Normal
+  ticks pass the base clock's timestamp through untouched (motion parity preserved);
+  the abort-woken frame carries a placeholder timestamp but is always discarded by
+  the loop body's `signal.aborted` return before it is read. `animation.ts` /
+  `scheduler.ts` / boundary scroll plumbing untouched. Law test (the QA probe made
+  standing) in `tests/unit/quantizer/animated-quantizer.test.ts` (describe
+  "dispose promptness (scar S3.2)"): a **recording scheduler** that never auto-fires
+  parks the animation on a pending tick, `lifetime.dispose()` fires mid-animation,
+  and the clock is NEVER stepped again — asserts `cancel` fired (`cancelCount >= 1`)
+  and no new tick was scheduled. Red-proved: on pre-fix source the law reds
+  (`cancelCount() === 0`, cancel deferred to the un-taken next tick) with the
+  precondition asserts (in-flight, one pending tick, zero cancels) passing so the
+  red is genuinely the parked-mid-flight state; green after the wrapper (18/18 in
+  the animated-quantizer unit suite; 97/97 across component + smoke + all quantizer
+  unit suites; quantizer package typecheck clean). STATUS: ACTIVE since Wave 4
+  slice 0. Guard: packages/quantizer/src/animated-quantizer.ts (`abortAwareScheduler`)
+  + tests/unit/quantizer/animated-quantizer.test.ts (dispose-promptness law).
 
 - **S3.3 — remotion effect peer is import-free but transitively required** (public
   API forwards Signal.Controllable; signal.ts still Effect-typed).
   Class: type-leak peer — imports gone, types remain.
   Disposition: tracked; clears with the Signal/Timeline seam (already planned).
   No action this wave.
+
+## Wave 4 scars
+
+- **S4.1 — workflow designed 4 parallel builders over a dependency CHAIN.**
+  core plan-shape (easing widening + track-shaped CssMotionPlan + individual
+  transforms) → compiler emission → tests is a producer→consumer type-shape chain,
+  not disjoint slices. Two builders (compiler-emission, core-plan-shape tail)
+  correctly reported BLOCKED per the HONESTY doctrine rather than fabricate the
+  missing shape; integration then did the coupled work serially and the wave
+  succeeded (build clean, 8074/0).
+  Class: parallelism applied where a serial phase boundary was required.
+  Disposition: waves where a shared type shape flows producer→consumer must PHASE
+  the producer before the consumer (like Wave 2's Build A → Build B), not run
+  parallel-with-integration-cleanup. The blocked-builder honesty + integration
+  fallback contained it with zero bad code. Process note added to Methodology.
+  ACTIVE (process).
+
+- **S4.2 — the Fable QA agent died on "Usage credits are required for this model".**
+  Class: infra/billing, not repo.
+  Disposition: session lead performed the full QA charter inline (build census,
+  motion-parity Law-4, #148/#149 emission, view-transition zero-runtime, S3.2
+  law test, ban sweep, version lockstep, full suite) — the standing fallback,
+  same as the 529 pattern. Guards + byte-laws re-run green. ACTIVE (process).
+
+- **S4.3 — plan said "delete appendTranslateConsumer"; integration repurposed it**
+  to emit the individual `translate:` property (reading the retained --czap-* floor
+  vars) instead of `transform: translate3d(...)`.
+  Class: plan literalism vs intent — the GOAL (individual transform, no translate3d,
+  vars kept for the wgsl floor) was delivered; only the "delete" verb was not.
+  Disposition: ACCEPTED — behaviorally correct, ADR-0041-documented, motion-primitives
+  prop test pins `translate:` never `translate3d`; function name still accurate
+  (consumes the translate-axis vars). No action.

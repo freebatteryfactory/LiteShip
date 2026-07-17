@@ -549,3 +549,90 @@ describe('AnimatedQuantizer.make — injected scheduler', () => {
     expect(frames.at(-1)?.outputs.opacity).toBe(1);
   });
 });
+
+describe('AnimatedQuantizer.make — dispose promptness (scar S3.2)', () => {
+  // A recording frame clock that NEVER auto-fires: every schedule() stores the
+  // pending frame callback and returns a fresh id; step() is the ONLY way a tick
+  // fires. It records schedule/cancel calls so a test can assert what happened
+  // WITHOUT advancing the clock. This is the QA probe: park the animation on a
+  // pending tick, dispose, and prove `cancel` fires without a further step().
+  function recordingScheduler() {
+    let nextId = 0;
+    let pending: { readonly id: number; readonly cb: (now: number) => void } | null = null;
+    const scheduleIds: number[] = [];
+    const cancelIds: number[] = [];
+    return {
+      scheduleCount: (): number => scheduleIds.length,
+      cancelCount: (): number => cancelIds.length,
+      hasPending: (): boolean => pending !== null,
+      step: (now: number): void => {
+        const p = pending;
+        if (p !== null) {
+          pending = null;
+          p.cb(now);
+        }
+      },
+      scheduler: {
+        _tag: 'FrameScheduler' as const,
+        schedule(cb: (now: number) => void): number {
+          const id = (nextId += 1);
+          scheduleIds.push(id);
+          pending = { id, cb };
+          return id;
+        },
+        cancel(id: number): void {
+          cancelIds.push(id);
+          if (pending?.id === id) pending = null;
+        },
+      },
+    };
+  }
+
+  // Drain the entire microtask queue: a macrotask boundary runs only after every
+  // queued microtask (and any they queue) has settled. The recording clock uses
+  // no timers, so nothing competes — one hop deterministically flushes the whole
+  // abort -> resume -> return() -> finally -> cancel chain.
+  const flush = (): Promise<void> => new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+  test('dispose mid-animation cancels the pending scheduler tick WITHOUT another step', async () => {
+    const boundary = makeBoundary();
+    const { quantizer, emit } = mockQuantizer(boundary, 'compact', () => 'expanded');
+    const recorder = recordingScheduler();
+
+    const { animated, lifetime } = AnimatedQuantizer.make(
+      quantizer,
+      // Long duration so a single tick never lands the animation — it stays
+      // in-flight, parked on the next pending tick.
+      { 'compact->expanded': { duration: Millis(1000) } },
+      { compact: { opacity: 0 }, expanded: { opacity: 1 } },
+      { scheduler: recorder.scheduler },
+    );
+
+    const collected: Frame[] = [];
+    const unsubscribe = animated.interpolated.subscribe((f) => collected.push(f));
+
+    // Start the animation, then fire exactly one frame so it is genuinely
+    // mid-flight and parked on the SECOND pending tick.
+    emit(crossing('compact', 'expanded', 900));
+    await flush();
+    recorder.step(0);
+    await flush();
+
+    // Precondition: in-flight, parked on a pending tick, nothing cancelled yet.
+    expect(collected.length).toBeGreaterThanOrEqual(1);
+    expect(recorder.hasPending()).toBe(true);
+    expect(recorder.cancelCount()).toBe(0);
+    const schedulesAtDispose = recorder.scheduleCount();
+
+    // Dispose mid-animation. The clock is NEVER stepped again after this point.
+    await lifetime.dispose();
+    await flush();
+
+    // LAW (S3.2): the pending tick's finalizer ran promptly — `cancel` fired
+    // without another `step()`, and no new tick was scheduled.
+    expect(recorder.cancelCount()).toBeGreaterThanOrEqual(1);
+    expect(recorder.scheduleCount()).toBe(schedulesAtDispose);
+
+    unsubscribe();
+  });
+});

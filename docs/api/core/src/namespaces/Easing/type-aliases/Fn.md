@@ -8,6 +8,6 @@
 
 > **Fn** = `EasingFnShape`
 
-Defined in: [core/src/easing.ts:340](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/easing.ts#L340)
+Defined in: [core/src/easing.ts:366](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/easing.ts#L366)
 
 Signature of an easing function: `(t: [0..1]) => [0..1]`.

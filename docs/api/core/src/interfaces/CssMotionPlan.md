@@ -6,7 +6,7 @@
 
 # Interface: CssMotionPlan
 
-Defined in: [core/src/interpret-transition.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L56)
+Defined in: [core/src/interpret-transition.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L62)
 
 CSS projection plan — keyframes / transition keyed on discrete state.
 
@@ -16,7 +16,7 @@ CSS projection plan — keyframes / transition keyed on discrete state.
 
 > `readonly` **durationMs**: `number`
 
-Defined in: [core/src/interpret-transition.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L61)
+Defined in: [core/src/interpret-transition.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L67)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [core/src/interpret-transition.ts:61](https://github.com/freebattery
 
 > `readonly` **fromState**: [`StateName`](../type-aliases/StateName.md)
 
-Defined in: [core/src/interpret-transition.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L58)
+Defined in: [core/src/interpret-transition.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L64)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [core/src/interpret-transition.ts:58](https://github.com/freebattery
 
 > `readonly` **keyframes**: readonly [`CssKeyframeStep`](CssKeyframeStep.md)[]
 
-Defined in: [core/src/interpret-transition.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L63)
+Defined in: [core/src/interpret-transition.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L69)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [core/src/interpret-transition.ts:63](https://github.com/freebattery
 
 > `readonly` **properties**: readonly [`MotionPropertyTween`](MotionPropertyTween.md)[]
 
-Defined in: [core/src/interpret-transition.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L60)
+Defined in: [core/src/interpret-transition.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L66)
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: [core/src/interpret-transition.ts:60](https://github.com/freebattery
 
 > `readonly` **routing**: [`EdgeType`](../type-aliases/EdgeType.md)
 
-Defined in: [core/src/interpret-transition.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L62)
+Defined in: [core/src/interpret-transition.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L68)
 
 ***
 
@@ -56,7 +56,7 @@ Defined in: [core/src/interpret-transition.ts:62](https://github.com/freebattery
 
 > `readonly` **selector**: `string`
 
-Defined in: [core/src/interpret-transition.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L57)
+Defined in: [core/src/interpret-transition.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L63)
 
 ***
 
@@ -64,7 +64,7 @@ Defined in: [core/src/interpret-transition.ts:57](https://github.com/freebattery
 
 > `readonly` **toState**: [`StateName`](../type-aliases/StateName.md)
 
-Defined in: [core/src/interpret-transition.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L59)
+Defined in: [core/src/interpret-transition.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L65)
 
 ***
 
@@ -72,4 +72,4 @@ Defined in: [core/src/interpret-transition.ts:59](https://github.com/freebattery
 
 > `readonly` **transitionProperty**: `string`
 
-Defined in: [core/src/interpret-transition.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L64)
+Defined in: [core/src/interpret-transition.ts:70](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L70)

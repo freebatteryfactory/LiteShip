@@ -64,7 +64,10 @@ describe('ScrollTimeline graph → CSS', () => {
     expect(compiled.css.scrollTimeline).toContain('animation-timeline: scroll()');
     expect(compiled.css.scrollTimeline).toContain('animation-range: 0% 100%');
     expect(compiled.css.scrollTimeline).toContain('@supports not (animation-timeline: scroll())');
-    expect(compiled.css.raw).toContain('transform: translate3d');
+    // Wave-4: individual `translate:` property off the per-axis vars, not a `translate3d()`
+    // consumer rule (appendTranslateConsumer deleted).
+    expect(compiled.css.raw).not.toContain('translate3d');
+    expect(compiled.css.raw).toContain('translate:');
     expect(compiled.resultDigest.integrity_digest.length).toBeGreaterThan(0);
   });
 

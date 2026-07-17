@@ -496,11 +496,15 @@ describe('MotionCompiler — composed TransitionProgram keyframes (#141, backend
     expect(out.keyframes).not.toContain('0.001');
   });
 
-  test('a PAR of differently-eased children cannot carry one per-keyframe curve — diagnosed LOUDLY', () => {
+  test('a PAR of differently-eased children lowers to per-window runtime curves — no approximation diagnostic (#148)', () => {
     // Overlapping windows [0,0.33] (spring) and [0,1] (ease) both cover the [0,0.33]
-    // segment with DIFFERENT easing; one `animation-timing-function` cannot serve both, so
-    // interpretProgram approximates with the plan-level curve and emits a loud diagnostic
-    // (Law 1: no silent drift) rather than pretending the fallback is faithful.
+    // segment with DIFFERENT easing; one `animation-timing-function` cannot serve both.
+    // The Wave-4 contract renders that composed case on the per-window RUNTIME floor
+    // (each `RuntimeWriteWindow.easing` sampled exactly), reserving the native single
+    // `@keyframes` leg for single/uniform-easing programs — so the old
+    // `mixed-easing-overlap-approximated` diagnostic is RETIRED (it flagged a native path
+    // composed programs never take). Pin: no diagnostic, and the runtime windows carry
+    // genuinely mixed, per-child easing.
     const spring: RuntimeEasing = { kind: 'spring', spring: { stiffness: 210, damping: 18 } };
     const { graph: g, a, b } = twoStepGraph(spring, { kind: 'ease' });
     const par = interpretProgram(g, {
@@ -510,7 +514,11 @@ describe('MotionCompiler — composed TransitionProgram keyframes (#141, backend
         { kind: 'step', transitionId: b },
       ],
     });
-    expect(par.diagnostics.some((d) => d.code === 'mixed-easing-overlap-approximated')).toBe(true);
+    expect(par.diagnostics.some((d) => d.code === 'mixed-easing-overlap-approximated')).toBe(false);
+    const kinds = (par.runtime?.windows ?? []).map((w) => w.easing.kind);
+    expect(kinds).toContain('spring');
+    expect(kinds).toContain('ease');
+    expect(new Set(kinds).size).toBeGreaterThan(1);
   });
 });
 

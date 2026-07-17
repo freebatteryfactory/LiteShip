@@ -4,6 +4,35 @@ All notable changes to czap. The format follows [Keep a Changelog](https://keepa
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Pre-1.0
 break policy is intentionally aggressive — minor version bumps may carry breaking changes.
 
+## [0.14.0] - 2026-07-17
+
+The **motion easing generalization** (#148, ADR-0041) — the cross-target byte-law (ADR-0040)
+extends from spring to the whole `Easing` catalog, translation composes as an individual
+transform, and the differently-eased `par` gets a faithful renderer instead of a diagnostic.
+
+### Added
+
+- **Generalized `linear()` easing, one producer (#148)** — `Easing.easingToLinearCSS(fn, sampleCount)`
+  samples ANY easing function into the CSS `linear()` point list; `Easing.springToLinearCSS` now
+  delegates to it (byte-identical). `RuntimeEasing` gains a serialized `points` arm and a widened
+  `kind` (`points`/`bounce`/`elastic`/`back`/`cubicBezier`); `sampleRuntimeEasing`'s new `points`
+  arm lerps the SAME stops the native `linear(...)` timing function emits, so the JS floor and
+  native CSS read one curve across the whole catalog (Law 4). `parseMotionProgram` accepts the
+  widened descriptors and rejects malformed `points` LOUDLY.
+
+### Changed
+
+- **Individual transform property** — the native motion consumer emits the CSS `translate:`
+  property off the per-axis `--czap-*` custom props, composing independently of author
+  `rotate`/`scale`, instead of a composite `transform: translate3d(...)`.
+- **The runtime floor renders differently-eased composition** — a `par` of differently-eased
+  children is rendered exactly by the per-window runtime floor (each `RuntimeWriteWindow.easing`);
+  the native single-`@keyframes` leg is reserved for single and uniform-easing programs. The
+  `mixed-easing-overlap-approximated` diagnostic is retired — it flagged a native path composed
+  programs never take.
+- **Lockstep 0.13.0 → 0.14.0** across all `@czap/*`; api-surface snapshot regenerated, api-health
+  registry gains `easingToLinearCSS`.
+
 ## [0.10.0] - 2026-07-13
 
 The **completion cut** — a semantic-truth pass over the 25-package system,

@@ -1,6 +1,6 @@
 {
   "name": "@czap/mcp-server",
-  "version": "0.13.0",
+  "version": "0.14.0",
   "description": "The Model Context Protocol server for LiteShip: exposes the `czap` commands and capsule catalog as MCP tools that AI assistants can call.",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",

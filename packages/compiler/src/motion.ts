@@ -14,6 +14,7 @@ import {
   type CssMotionPlan,
   type CssKeyframeStep,
   type MotionPropertyTween,
+  type RuntimeEasing,
   type TypedValue,
 } from '@czap/core';
 
@@ -122,7 +123,7 @@ function emitKeyframeStep(step: CssKeyframeStep): string {
   // the segment STARTING at this stop and overrides the animation-level function for it.
   // Absent on default-`ease` plans and single-step transitions (no output change there).
   if (step.easing) {
-    decls.push(`    animation-timing-function: ${resolveEasing(step.easing.kind, step.easing.spring)};`);
+    decls.push(`    animation-timing-function: ${resolveStepEasing(step.easing)};`);
   }
   return `  ${pct}% {\n${decls.join('\n')}\n  }`;
 }
@@ -160,6 +161,37 @@ function resolveEasing(easing: MotionEasing | undefined, spring?: MotionSpringCo
     case 'spring':
       return Easing.springToLinearCSS(spring ?? DEFAULT_MOTION_SPRING);
     case 'ease':
+      return 'ease';
+  }
+}
+
+/**
+ * Resolve a PER-KEYFRAME {@link RuntimeEasing} descriptor to a CSS timing function.
+ * Generalizes {@link resolveEasing} to the widened easing vocabulary: a serialized
+ * `points` list is emitted VERBATIM as the `linear()` string the JS floor lerps (Law 4,
+ * the byte-law — one producer feeds both legs); the analytic `linear`/`ease`/`spring`
+ * kinds keep their closed forms, and any widened-catalog kind lacking a points arm lowers
+ * through {@link Easing.easingToLinearCSS} — the SAME sampler `sampleRuntimeEasing` reads.
+ */
+function resolveStepEasing(easing: RuntimeEasing): string {
+  if (easing.points !== undefined && easing.points.length >= 2) {
+    return `linear(${easing.points.join(', ')})`;
+  }
+  switch (easing.kind) {
+    case 'linear':
+      return 'linear';
+    case 'ease':
+      return 'ease';
+    case 'spring':
+      return Easing.springToLinearCSS(easing.spring ?? DEFAULT_MOTION_SPRING);
+    case 'bounce':
+      return Easing.easingToLinearCSS(Easing.easeOutBounce);
+    case 'elastic':
+      return Easing.easingToLinearCSS(Easing.easeOutElastic);
+    case 'back':
+      return Easing.easingToLinearCSS(Easing.easeOutBack);
+    case 'points':
+    case 'cubicBezier':
       return 'ease';
   }
 }

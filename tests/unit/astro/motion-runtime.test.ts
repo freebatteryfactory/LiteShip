@@ -27,11 +27,13 @@ import {
   interpretTransition,
   interpretProgram,
   Easing,
+  Diagnostics,
   DEFAULT_MOTION_SPRING,
   type RevealIntent,
   type RuntimeWritePlan,
 } from '@czap/core';
 import motionDirective from '../../../packages/astro/src/client-directives/motion.js';
+import { parseMotionProgram } from '../../../packages/astro/src/runtime/motion.js';
 import type { SerializedMotionProgram } from '../../../packages/astro/src/runtime/motion.js';
 
 const noop = (): Promise<void> => Promise.resolve();
@@ -366,5 +368,83 @@ describe('client:motion — JS floor is the production driver (retires LATENT)',
       stepScroll(0.5);
       expect(uniformCount).toBe(1); // loop skipped — no per-frame writes
     });
+  });
+});
+
+/**
+ * parseMotionProgram — SSR-inlined program validation over the WIDENED easing
+ * descriptor (#CSS). The authoring vocabulary grew beyond `linear|ease|spring` to
+ * the full Easing catalog (bounce/elastic/back/cubicBezier), each serialized as a
+ * sampled-points arm so the JS floor lerps the IDENTICAL point list the CSS
+ * `linear()` uses (Law 4). `isRuntimeWritePlan` must ACCEPT those descriptors so a
+ * page inlining a widened-catalog reveal parses — and must still REJECT malformed
+ * payloads LOUDLY (a diagnostic + `null`, leaving the native/CSS floor untouched).
+ */
+describe('parseMotionProgram — widened easing descriptor validation (#CSS)', () => {
+  /** A minimal, otherwise-valid serialized program carrying `easing` verbatim. */
+  function programJson(easing: unknown): string {
+    return JSON.stringify({
+      intent: { policy: { reducedMotion: 'none' } },
+      runtime: {
+        properties: [],
+        fromState: 'before',
+        toState: 'after',
+        durationMs: 420,
+        easing,
+      },
+      signals: [],
+    });
+  }
+
+  let sink: ReturnType<typeof Diagnostics.createBufferSink>;
+
+  beforeEach(() => {
+    Diagnostics.reset();
+    sink = Diagnostics.createBufferSink();
+    Diagnostics.setSink(sink.sink);
+  });
+
+  afterEach(() => {
+    Diagnostics.reset();
+  });
+
+  test('accepts the narrow legacy descriptors (linear / ease / spring)', () => {
+    expect(parseMotionProgram(programJson({ kind: 'linear' }))).not.toBeNull();
+    expect(parseMotionProgram(programJson({ kind: 'ease' }))).not.toBeNull();
+    expect(parseMotionProgram(programJson({ kind: 'spring', spring: DEFAULT_MOTION_SPRING }))).not.toBeNull();
+    expect(sink.events).toHaveLength(0);
+  });
+
+  test('accepts a widened-catalog kind carrying a serialized sampled-points arm', () => {
+    const points = [0, 0.03, 0.34, 0.62, 0.88, 1];
+    for (const kind of ['bounce', 'elastic', 'back', 'cubicBezier'] as const) {
+      const program = parseMotionProgram(programJson({ kind, points }));
+      // Accept = a parsed program (not null); the widened kind + points arm survive parse.
+      expect(program).not.toBeNull();
+    }
+    expect(sink.events).toHaveLength(0);
+  });
+
+  test('rejects an easing with no kind LOUDLY (null + diagnostic)', () => {
+    expect(parseMotionProgram(programJson({ points: [0, 1] }))).toBeNull();
+    expect(sink.events.some((e) => e.code === 'motion-program-shape-invalid')).toBe(true);
+  });
+
+  test('rejects an unknown easing kind LOUDLY', () => {
+    expect(parseMotionProgram(programJson({ kind: 'wobble' }))).toBeNull();
+    expect(sink.events.some((e) => e.code === 'motion-program-shape-invalid')).toBe(true);
+  });
+
+  test('rejects a malformed points arm (degenerate length or non-finite members)', () => {
+    expect(parseMotionProgram(programJson({ kind: 'bounce', points: [0.5] }))).toBeNull();
+    expect(parseMotionProgram(programJson({ kind: 'bounce', points: 'nope' }))).toBeNull();
+    expect(parseMotionProgram(programJson({ kind: 'bounce', points: [0, 'x', 1] }))).toBeNull();
+    expect(parseMotionProgram(programJson({ kind: 'bounce', points: [0, Number.NaN, 1] }))).toBeNull();
+    expect(sink.events.some((e) => e.code === 'motion-program-shape-invalid')).toBe(true);
+  });
+
+  test('rejects a missing easing entirely LOUDLY', () => {
+    expect(parseMotionProgram(programJson(undefined))).toBeNull();
+    expect(sink.events.some((e) => e.code === 'motion-program-shape-invalid')).toBe(true);
   });
 });

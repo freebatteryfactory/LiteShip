@@ -75,18 +75,54 @@ export interface SerializedMotionProgram {
   readonly threshold?: number;
 }
 
+/**
+ * The widened authoring/easing vocabulary a serialized `RuntimeEasing`
+ * descriptor may carry. Beyond the legacy `linear|ease|spring` the full Easing
+ * catalog (bounce/elastic/back/cubicBezier) is now authorable; each catalog easing
+ * is serialized as a sampled `points` arm the JS floor lerps — the IDENTICAL point
+ * list the CSS `linear()` uses, so both floors read one curve (Law 4).
+ */
+const RUNTIME_EASING_KINDS: ReadonlySet<string> = new Set([
+  'linear',
+  'ease',
+  'spring',
+  'points',
+  'bounce',
+  'elastic',
+  'back',
+  'cubicBezier',
+]);
+
+/**
+ * Structural guard for a serialized `RuntimeEasing` descriptor. Accepts the
+ * widened kind vocabulary and an OPTIONAL serialized sampled-points arm (a
+ * non-degenerate array of finite numbers), rejecting anything else — an absent /
+ * unknown `kind` or a malformed `points` list fails LOUDLY upstream in
+ * {@link parseMotionProgram}, leaving the native/CSS floor untouched (Law 1).
+ */
+function isRuntimeEasingDescriptor(value: unknown): boolean {
+  if (value === null || typeof value !== 'object') return false;
+  const easing = value as Record<string, unknown>;
+  if (typeof easing.kind !== 'string' || !RUNTIME_EASING_KINDS.has(easing.kind)) return false;
+  if (easing.points !== undefined) {
+    if (!Array.isArray(easing.points) || easing.points.length < 2) return false;
+    for (const point of easing.points) {
+      if (typeof point !== 'number' || !Number.isFinite(point)) return false;
+    }
+  }
+  if (easing.spring !== undefined && (easing.spring === null || typeof easing.spring !== 'object')) return false;
+  return true;
+}
+
 function isRuntimeWritePlan(value: unknown): value is RuntimeWritePlan {
   if (value === null || typeof value !== 'object') return false;
   const plan = value as Record<string, unknown>;
-  const easing = plan.easing as Record<string, unknown> | undefined;
   return (
     Array.isArray(plan.properties) &&
     typeof plan.fromState === 'string' &&
     typeof plan.toState === 'string' &&
     typeof plan.durationMs === 'number' &&
-    easing !== undefined &&
-    typeof easing === 'object' &&
-    (easing.kind === 'linear' || easing.kind === 'ease' || easing.kind === 'spring')
+    isRuntimeEasingDescriptor(plan.easing)
   );
 }
 
@@ -146,9 +182,12 @@ export function nativeTimelineSupported(): boolean {
  * `data-czap-motion-program` but emits no `MotionCompiler` CSS would otherwise be
  * stranded at first paint on a capable browser — floor skipped, no CSS to scrub it.
  * `MotionCompiler` binds its `czap-motion-*` keyframes (see its `keyframeName`) to a
- * scroll/view `animation-timeline` INSIDE a `supports(animation-timeline)` block,
- * so a `czap-motion-*` `animation-name` on the computed style means native CSS is BOTH
- * supported here AND emitted for this element. Absent it, the floor runs (Law 1).
+ * scroll/view `animation-timeline` INSIDE a `supports(animation-timeline)` block. With
+ * per-track native emission a boundary composes one `czap-motion-*-<prop>` `@keyframes`
+ * per property into an `animation` shorthand LIST, so `getComputedStyle().animationName`
+ * is a comma-separated list — hence the `.split(',').some(...)` scan: ANY `czap-motion-*`
+ * name in it means native CSS is BOTH supported here AND emitted for this element. Absent
+ * it, the floor runs (Law 1).
  */
 function nativeTimelineOwnsElement(element: HTMLElement): boolean {
   if (!nativeTimelineSupported() || typeof getComputedStyle !== 'function') return false;

@@ -38,6 +38,7 @@ import {
   formatTypedValue,
   parseTypedBinding,
   interpolateTyped,
+  sampleRuntimeEasing,
   Easing,
   DEFAULT_MOTION_SPRING,
   type CssMotionPlan,
@@ -50,7 +51,12 @@ import { sampleSceneMotion } from '../../../packages/scene/src/systems/motion.js
 import { sampleMotionFrames } from '../../../packages/stage/src/motion-export.js';
 import { sampleMotionFrame } from '../../../packages/remotion/src/motion.js';
 import { motionSampleMessage } from '../../../packages/worker/src/motion-sample.js';
-import { MOTION_PARITY_FIXTURES } from '../../fixtures/motion-parity/programs.js';
+import {
+  MOTION_PARITY_FIXTURES,
+  differentlyEasedParLowered,
+  DIFFERENTLY_EASED_PAR_SAMPLE_TIMES,
+  parseLinearPoints,
+} from '../../fixtures/motion-parity/programs.js';
 
 const EPSILON_KERNEL = 1e-9;
 const EPSILON_CSS = 2e-3;
@@ -117,16 +123,25 @@ function parseKeyframes(css: CssMotionPlan): { offset: number; values: Map<strin
  * `.toFixed(4)` and all). The output may exceed `[0,1]` (spring overshoot), which the
  * browser extrapolates within the keyframe segment. For `linear` it is identity.
  */
+function lerpPoints(stops: readonly number[], u: number): number {
+  const n = stops.length - 1;
+  const x = clamp01(u) * n;
+  const i = Math.floor(x);
+  if (i >= n) return stops[n]!;
+  return stops[i]! + (stops[i + 1]! - stops[i]!) * (x - i);
+}
+
 function cssTimingFn(easing: RuntimeEasing): (u: number) => number {
   if (easing.kind === 'spring') {
-    const css = Easing.springToLinearCSS(easing.spring ?? DEFAULT_MOTION_SPRING, 32);
-    const stops = css.slice('linear('.length, -1).split(', ').map(Number);
-    return (u) => {
-      const x = clamp01(u) * 32;
-      const i = Math.floor(x);
-      if (i >= 32) return stops[32]!;
-      return stops[i]! + (stops[i + 1]! - stops[i]!) * (x - i);
-    };
+    const stops = parseLinearPoints(Easing.springToLinearCSS(easing.spring ?? DEFAULT_MOTION_SPRING, 32));
+    return (u) => lerpPoints(stops, u);
+  }
+  // The serialized `points` arm (#148): the browser renders the emitted `linear()` list
+  // and the JS floor lerps the SAME list — parity by construction, so the CSS leg's
+  // timing IS `sampleRuntimeEasing`'s points lerp.
+  if (easing.kind === 'points') {
+    const stops = easing.points ?? [];
+    return (u) => lerpPoints(stops, u);
   }
   if (easing.kind === 'linear') return (u) => clamp01(u);
   return Easing.ease;
@@ -260,6 +275,10 @@ describe('cross-target motion parity — the #130 differential oracle', () => {
     });
   }
 
+  test('catalog-points-bounce is in the corpus (widened-catalog easing sampled by every target)', () => {
+    expect(MOTION_PARITY_FIXTURES.some((f) => f.name === 'catalog-points-bounce')).toBe(true);
+  });
+
   test('reduced-motion: every target settles to the identical terminal pose at t=1', () => {
     const fixture = MOTION_PARITY_FIXTURES.find((f) => f.reducedMotion)!;
     const terminal = reference(fixture.plan, 1);
@@ -283,5 +302,99 @@ describe('cross-target motion parity — the #130 differential oracle', () => {
     );
     expectMapMatches(workerSettle, terminal, EPSILON_KERNEL, 'worker-settle');
     expectMapMatches(cssRendered(fixture.css, fixture.cssTiming, 1), terminal, EPSILON_CSS, 'css-settle');
+  });
+});
+
+/**
+ * Law 4, the byte-law, at the descriptor level: a widened-catalog easing is serialized
+ * ONCE (`Easing.easingToLinearCSS`) into a `linear()` point list; the native CSS path
+ * emits that string while the JS floor (`sampleRuntimeEasing`'s `points` arm) lerps the
+ * IDENTICAL parsed list. The two therefore sample one curve by construction — this
+ * asserts the floor's points arm IS the piecewise-linear reading of the emitted stops,
+ * bit-for-bit (RED until `RuntimeEasing` grows the `points` arm + `sampleRuntimeEasing`
+ * handles it).
+ */
+describe('points-descriptor easings — CSS linear() vs floor lerp, bit-exact (Law 4)', () => {
+  const catalog: Array<readonly [string, Easing.Fn]> = [
+    ['easeOutBounce', Easing.easeOutBounce],
+    ['easeOutElastic', Easing.easeOutElastic],
+    ['cubicBezier-overshoot', Easing.cubicBezier(0.68, -0.55, 0.27, 1.55)],
+  ];
+  for (const [name, fn] of catalog) {
+    describe(name, () => {
+      const points = parseLinearPoints(Easing.easingToLinearCSS(fn, 32));
+      const descriptor: RuntimeEasing = { kind: 'points', points };
+
+      test('the descriptor carries the 33 points the linear() string emits', () => {
+        expect(points).toHaveLength(33);
+      });
+
+      test('the floor lands on every emitted stop exactly (one producer, no re-derivation)', () => {
+        const floor = sampleRuntimeEasing(descriptor);
+        for (let i = 0; i <= 32; i++) {
+          expect(floor(i / 32)).toBeCloseTo(points[i]!, 12);
+        }
+      });
+
+      test('intermediate progress is piecewise-linear between stops — exactly the browser reading', () => {
+        const floor = sampleRuntimeEasing(descriptor);
+        for (let i = 0; i < 32; i++) {
+          const u = (i + 0.5) / 32;
+          expect(floor(u)).toBeCloseTo((points[i]! + points[i + 1]!) / 2, 12);
+        }
+      });
+    });
+  }
+});
+
+/**
+ * The #148 case: a `par` of differently-eased children. The runtime floor ALWAYS
+ * sampled each window at its own easing (per-window `RuntimeWriteWindow.easing`); the
+ * gap was purely the native CSS path, which could not express two curves over one
+ * overlapping segment and so emitted the `mixed-easing-overlap-approximated` diagnostic
+ * and dropped the native curve. The Wave-4 track lowering renders each child's curve
+ * exactly and the diagnostic is DELETED. This block pins: (a) no approximation
+ * diagnostic; (b) each window keeps its own distinct easing; (c) every non-CSS target
+ * equals the per-window kernel exactly; (d) each window's curve serializes to a
+ * `linear()` the floor lerps bit-exactly (Law 4 across the mixed track set).
+ */
+describe('differently-eased par — the #148 case', () => {
+  const lowered = differentlyEasedParLowered;
+  const plan = lowered.runtime!;
+  const windows = plan.windows ?? [];
+
+  test('interpretProgram no longer emits the mixed-easing approximation diagnostic', () => {
+    const codes = lowered.diagnostics.map((d) => d.code);
+    expect(codes).not.toContain('mixed-easing-overlap-approximated');
+  });
+
+  test("each runtime window carries its child's OWN easing — genuinely mixed", () => {
+    const kinds = windows.map((w) => w.easing.kind);
+    expect(kinds).toContain('linear');
+    expect(kinds).toContain('ease');
+    expect(new Set(kinds).size).toBeGreaterThan(1);
+  });
+
+  for (const t of DIFFERENTLY_EASED_PAR_SAMPLE_TIMES) {
+    test(`every non-CSS target equals the per-window kernel exactly at t=${t}`, () => {
+      const ref = reference(plan, t);
+      expect(ref.size, 'par animates at least one leaf').toBeGreaterThan(0);
+      expectMapMatches(runtimeDomSample(plan, t, ref), ref, EPSILON_KERNEL, 'runtime');
+      expectMapMatches(sampleSceneMotion(plan, t), ref, EPSILON_KERNEL, 'scene');
+      const msg = motionSampleMessage(plan, t);
+      const workerTyped = new Map([...Object.entries(msg.css)].map(([k, v]) => [k, parseTypedBinding(k, v)]));
+      expectMapMatches(workerTyped, ref, EPSILON_KERNEL, 'worker');
+    });
+  }
+
+  test('Law 4: each window curve serializes to a linear() the floor lerps bit-exactly', () => {
+    expect(windows.length, 'par lowers to per-child windows').toBeGreaterThan(1);
+    for (const w of windows) {
+      const points = parseLinearPoints(Easing.easingToLinearCSS(sampleRuntimeEasing(w.easing), 32));
+      const floor = sampleRuntimeEasing({ kind: 'points', points });
+      for (let i = 0; i <= 32; i++) {
+        expect(floor(i / 32)).toBeCloseTo(points[i]!, 12);
+      }
+    }
   });
 });

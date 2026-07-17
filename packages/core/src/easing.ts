@@ -36,6 +36,7 @@ interface EasingFns {
   readonly easeInOut: EasingFnShape;
   spring(config: SpringConfigShape): EasingFnShape;
   cubicBezier(x1: number, y1: number, x2: number, y2: number): EasingFnShape;
+  easingToLinearCSS(fn: EasingFnShape, sampleCount?: number): string;
   springToLinearCSS(config: SpringConfigShape, sampleCount?: number): string;
   springNaturalDuration(config: SpringConfigShape, epsilon?: number): number;
 }
@@ -283,8 +284,37 @@ function spring(config: SpringConfigShape): EasingFnShape {
 }
 
 /**
+ * Sample ANY easing function at `sampleCount + 1` evenly-spaced stops (both endpoints
+ * inclusive) and return a CSS `linear()` timing function string.
+ *
+ * This is the ONE producer of the point list behind Law 4 (the byte-law): the native
+ * CSS path serializes this string while the JS/worker floor lerps the SAME numeric
+ * list ({@link sampleRuntimeEasing}'s points arm) — parity by construction, because a
+ * single sampler at a single stop set (`i / sampleCount`) feeds both. Every catalog
+ * easing (cubic-bezier, bounce, elastic, back, spring) lowers through here, so a
+ * browser running native `linear()` and a browser scrubbing the floor read one curve.
+ *
+ * @example
+ * ```ts
+ * const css = Easing.easingToLinearCSS(Easing.easeOutBounce, 16);
+ * // css is 'linear(0.0000, 0.1200, ..., 1.0000)' with 17 sample points
+ * element.style.transitionTimingFunction = css;
+ * ```
+ */
+function easingToLinearCSS(fn: EasingFnShape, sampleCount = 32): string {
+  const points: string[] = [];
+  for (let i = 0; i <= sampleCount; i++) {
+    points.push(fn(i / sampleCount).toFixed(4));
+  }
+  return `linear(${points.join(', ')})`;
+}
+
+/**
  * Sample a spring easing at `sampleCount` evenly-spaced points and
  * return a CSS `linear()` timing function string for off-main-thread animation.
+ *
+ * Delegates to {@link easingToLinearCSS} over `spring(config)` so the spring path
+ * emits a point list byte-identical to the general sampler (Law 4: one kernel).
  *
  * @example
  * ```ts
@@ -294,12 +324,7 @@ function spring(config: SpringConfigShape): EasingFnShape {
  * ```
  */
 function springToLinearCSS(config: SpringConfigShape, sampleCount = 32): string {
-  const fn = spring(config);
-  const points: string[] = [];
-  for (let i = 0; i <= sampleCount; i++) {
-    points.push(fn(i / sampleCount).toFixed(4));
-  }
-  return `linear(${points.join(', ')})`;
+  return easingToLinearCSS(spring(config), sampleCount);
 }
 
 /**
@@ -331,6 +356,7 @@ export const Easing: EasingFns = {
   easeInOut,
   spring,
   cubicBezier,
+  easingToLinearCSS,
   springToLinearCSS,
   springNaturalDuration,
 };
@@ -359,8 +385,35 @@ export const DEFAULT_MOTION_SPRING: SpringConfigShape = Object.freeze({ stiffnes
  * config for the spring arm (defaulting to {@link DEFAULT_MOTION_SPRING}).
  */
 export interface RuntimeEasing {
-  readonly kind: 'linear' | 'ease' | 'spring';
+  readonly kind: 'linear' | 'ease' | 'spring' | 'points' | 'bounce' | 'elastic' | 'back' | 'cubicBezier';
   readonly spring?: SpringConfigShape;
+  /**
+   * Serialized sampled point list (Law 4, the byte-law): the IDENTICAL `linear()` stops
+   * the native CSS path emits via `Easing.easingToLinearCSS`. When present the floor lerps
+   * THIS list piecewise-linearly rather than re-deriving the curve — ONE producer, both
+   * floors read it, so a browser scrubbing the JS floor and a browser running native
+   * `linear(...)` land on one value at every `t`. Carried by the `'points'` kind and by
+   * any widened-catalog kind (`bounce`/`elastic`/`back`/`cubicBezier`) whose curve was
+   * serialized. The legacy `linear`/`ease`/`spring` kinds sample analytically (no arm).
+   */
+  readonly points?: readonly number[];
+}
+
+/**
+ * The `points` arm of {@link sampleRuntimeEasing}: piecewise-linear interpolation of a
+ * serialized `linear()` stop list. Reads the SAME list the native CSS path renders
+ * (Law 4) — `x = clamp01(t) · (n)`, floor to the bracketing stop, lerp the fraction — so
+ * a browser scrubbing the JS floor and a browser running `linear(...)` land on one
+ * identical value at every `t`. The endpoint `t ≥ 1` returns the final stop exactly.
+ */
+function samplePoints(points: readonly number[]): EasingFnShape {
+  const n = points.length - 1;
+  return (t: number): number => {
+    const x = (t < 0 ? 0 : t > 1 ? 1 : t) * n;
+    const i = Math.floor(x);
+    if (i >= n) return points[n]!;
+    return points[i]! + (points[i + 1]! - points[i]!) * (x - i);
+  };
 }
 
 /**
@@ -374,6 +427,12 @@ export interface RuntimeEasing {
  * (the latter being `cubic-bezier(0.25, 0.1, 0.25, 1)`, i.e. CSS `ease`).
  */
 export function sampleRuntimeEasing(easing: RuntimeEasing): EasingFnShape {
+  // A serialized point list (Law 4) is the definitive curve whenever present — the floor
+  // lerps EXACTLY what the native `linear()` renders. Widened-catalog kinds always carry
+  // it; only the legacy analytic kinds fall through to closed-form sampling below.
+  if (easing.points !== undefined && easing.points.length >= 2) {
+    return samplePoints(easing.points);
+  }
   switch (easing.kind) {
     case 'linear':
       return Easing.linear;
@@ -381,5 +440,17 @@ export function sampleRuntimeEasing(easing: RuntimeEasing): EasingFnShape {
       return Easing.ease;
     case 'spring':
       return Easing.spring(easing.spring ?? DEFAULT_MOTION_SPRING);
+    case 'bounce':
+      return Easing.easeOutBounce;
+    case 'elastic':
+      return Easing.easeOutElastic;
+    case 'back':
+      return Easing.easeOutBack;
+    case 'points':
+    case 'cubicBezier':
+      // A `points`/`cubicBezier` descriptor is well-defined ONLY with its serialized stop
+      // list (handled above). Absent it, fall back to identity — the upstream guards
+      // (`parseMotionProgram` / `interpretTransition`) never emit these kinds without one.
+      return Easing.linear;
   }
 }

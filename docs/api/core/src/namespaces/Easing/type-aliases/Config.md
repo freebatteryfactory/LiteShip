@@ -8,6 +8,6 @@
 
 > **Config** = `SpringConfigShape`
 
-Defined in: [core/src/easing.ts:342](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/easing.ts#L342)
+Defined in: [core/src/easing.ts:368](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/easing.ts#L368)
 
 Spring parameters: stiffness, damping, mass.

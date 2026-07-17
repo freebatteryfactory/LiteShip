@@ -41,7 +41,16 @@ export function appendReducedMotionGuard(css: MotionCompileResult, plan: CssMoti
   return { ...css, raw: `${css.raw}\n\n${guard}` };
 }
 
-/** Emit a transform consumer so `@property`-interpolated translate axes actually move the element. */
+/**
+ * Emit an INDIVIDUAL-transform consumer so `@property`-interpolated translate axes
+ * actually move the element (Wave-4, #148): the CSS `translate:` property reads the
+ * per-axis `--czap-<target>-{x,y,z}` custom props directly — NOT a composite
+ * `transform: translate3d(...)`. The individual `translate` property composes
+ * independently of `rotate`/`scale` and any authored `transform`, so a boundary can carry
+ * a translate track alongside other transforms without one clobbering the other; the
+ * runtime floor keeps writing the SAME `--czap-<target>-*` vars, so both legs read one
+ * source (cross-target parity). Absent unless the plan actually tweens a translate axis.
+ */
 export function appendTranslateConsumer(css: MotionCompileResult, plan: CssMotionPlan): MotionCompileResult {
   const target = plan.selector.match(/data-czap-boundary="([^"]+)"/)?.[1];
   if (target === undefined) return css;
@@ -51,6 +60,6 @@ export function appendTranslateConsumer(css: MotionCompileResult, plan: CssMotio
   );
   if (!hasTranslateAxis) return css;
 
-  const rule = `${plan.selector} {\n  transform: translate3d(var(--czap-${target}-x,0px),var(--czap-${target}-y,0px),var(--czap-${target}-z,0px));\n}`;
+  const rule = `${plan.selector} {\n  translate: var(--czap-${target}-x,0px) var(--czap-${target}-y,0px) var(--czap-${target}-z,0px);\n}`;
   return { ...css, raw: `${css.raw}\n\n${rule}` };
 }
