@@ -6,7 +6,7 @@
 
 # Interface: PackageSmokeSummary
 
-Defined in: [command/src/registry.ts:306](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L306)
+Defined in: [command/src/registry.ts:300](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L300)
 
 Structured verdict returned by the injected [CommandContext.runPackageSmoke](CommandContext.md#runpackagesmoke)
 capability — the release-grade pack/install/import smoke. `ok` ⟺ every package
@@ -22,7 +22,7 @@ contract lives in `@czap/command` without an import of the heavy CLI engine.
 
 > `readonly` **failedStep**: `string` \| `null`
 
-Defined in: [command/src/registry.ts:313](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L313)
+Defined in: [command/src/registry.ts:307](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L307)
 
 The bracketed step label of the first failure, or null on success.
 
@@ -32,7 +32,7 @@ The bracketed step label of the first failure, or null on success.
 
 > `readonly` **failure**: `string` \| `null`
 
-Defined in: [command/src/registry.ts:315](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L315)
+Defined in: [command/src/registry.ts:309](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L309)
 
 The failure message of the first failure, or null on success.
 
@@ -42,7 +42,7 @@ The failure message of the first failure, or null on success.
 
 > `readonly` **importsSmoked**: `number`
 
-Defined in: [command/src/registry.ts:311](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L311)
+Defined in: [command/src/registry.ts:305](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L305)
 
 Number of module specifiers the import-smoke resolved (0 when it never ran).
 
@@ -52,7 +52,7 @@ Number of module specifiers the import-smoke resolved (0 when it never ran).
 
 > `readonly` **ok**: `boolean`
 
-Defined in: [command/src/registry.ts:307](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L307)
+Defined in: [command/src/registry.ts:301](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L301)
 
 ***
 
@@ -60,6 +60,6 @@ Defined in: [command/src/registry.ts:307](https://github.com/freebatteryfactory/
 
 > `readonly` **packagesPacked**: `number`
 
-Defined in: [command/src/registry.ts:309](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L309)
+Defined in: [command/src/registry.ts:303](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L303)
 
 Number of `@czap/*` (+ unscoped) scopes packed via `pnpm pack`.

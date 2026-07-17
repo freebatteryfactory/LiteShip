@@ -28,7 +28,8 @@ describe('capsule-verify command — handler contract', () => {
     };
     const result = await capsuleVerifyGateCommand.handler({ name: 'capsule-verify', args: {} }, ctxWith(summary));
     expect(result.status).toBe('ok');
-    expect(result.exitCode).toBe(0);
+    // ok() stamps no exitCode — success maps to 0 at the adapter (see registry.ok).
+    expect(result.exitCode).toBeUndefined();
     const payload = result.payload as CapsuleGateSummary;
     expect(payload.status).toBe('ok');
     expect(payload.capsuleCount).toBe(42);

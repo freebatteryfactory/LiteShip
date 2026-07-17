@@ -18,14 +18,9 @@
  *
  * @module
  */
-import { wallClock, type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
+import { S, type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
 import type { Finding } from '@czap/gauntlet';
-import {
-  capabilityUnavailable,
-  type CommandCapability,
-  type CommandContext,
-  type HandledCommand,
-} from '../registry.js';
+import { capabilityUnavailable, defineCommand, failed, ok, type CommandCapability } from '../registry.js';
 
 /**
  * The descriptor `outputSchema` for `check` — the WELD-2 Finding-carrying shape,
@@ -93,7 +88,7 @@ export type CheckPayload = {
 };
 
 /** `check` — run the pure gauntlet gate fold in-process; emit the Finding[] work-list + verdict. */
-export const checkCommand: HandledCommand = {
+export const checkCommand = defineCommand({
   descriptor: {
     name: 'check',
     summary:
@@ -108,30 +103,28 @@ export const checkCommand: HandledCommand = {
     outputSchema: CheckPayloadSchema,
     annotations: { readOnly: true, mcpExposed: true, group: 'castoff' },
   },
-  handler: async (invocation, context: CommandContext): Promise<CapsuleCommandResult> => {
+  argsSchema: S.struct({ globs: S.optional(S.array(S.string)) }),
+  handler: async (invocation, context): Promise<CapsuleCommandResult> => {
     // Direct-invocation guard; the dispatcher already enforces `requires`.
     if (!context.runGauntlet) return capabilityUnavailable('check', ['runGauntlet']);
 
-    // Optional scope: a `globs` string[] narrows the file set; anything else
-    // (absent / wrong shape) falls through to the engine default.
-    const rawGlobs = (invocation.args as { readonly globs?: unknown }).globs;
+    // The dispatcher decodes `globs` against the argsSchema; this residual guard
+    // keeps a DIRECT handler call robust to a malformed value (any non-string-array
+    // falls through to the engine default).
     const globs =
-      Array.isArray(rawGlobs) && rawGlobs.every((g): g is string => typeof g === 'string') ? rawGlobs : undefined;
+      Array.isArray(invocation.args.globs) && invocation.args.globs.every((g): g is string => typeof g === 'string')
+        ? invocation.args.globs
+        : undefined;
 
     const result = await context.runGauntlet(globs);
     const findings = result.findings;
 
-    return {
-      status: result.blocked ? 'failed' : 'ok',
-      command: 'check',
-      timestamp: new Date(wallClock.now()).toISOString(),
-      exitCode: result.blocked ? 1 : 0,
-      payload: {
-        ok: !result.blocked,
-        blocked: result.blocked,
-        findingCount: findings.length,
-        findings,
-      } satisfies CheckPayload,
-    };
+    const payload = {
+      ok: !result.blocked,
+      blocked: result.blocked,
+      findingCount: findings.length,
+      findings,
+    } satisfies CheckPayload;
+    return result.blocked ? failed('check', payload, 1) : ok('check', payload);
   },
-};
+});

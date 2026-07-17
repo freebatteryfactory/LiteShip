@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 1,
-  "address": "fnv1a:00d71d18",
+  "address": "fnv1a:7c54a28d",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -807,7 +807,7 @@
     },
     {
       "_tag": "waiver",
-      "key": "gauntlet/no-silent-catch|packages/cli/src/commands/version.ts|47",
+      "key": "gauntlet/no-silent-catch|packages/cli/src/commands/version.ts|46",
       "ruleId": "gauntlet/no-silent-catch",
       "expiry": "2027-06-20"
     },

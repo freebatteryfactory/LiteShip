@@ -6,8 +6,8 @@
  *
  * @module
  */
-import { wallClock, type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
-import type { CommandContext, HandledCommand } from '../registry.js';
+import { type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
+import { ok, type CommandContext, type HandledCommand } from '../registry.js';
 
 /**
  * The descriptor `outputSchema` for the version command — hand-written
@@ -49,14 +49,10 @@ export const versionCommand: HandledCommand = {
     outputSchema: VersionPayloadSchema,
     annotations: { readOnly: true, group: 'castoff' },
   },
-  handler: async (_invocation, context): Promise<CapsuleCommandResult<VersionPayload>> => ({
-    status: 'ok',
-    command: 'version',
-    timestamp: new Date(wallClock.now()).toISOString(),
-    payload: {
+  handler: async (_invocation, context): Promise<CapsuleCommandResult<VersionPayload>> =>
+    ok('version', {
       czap: context.hostVersion?.() ?? '0.0.0-unknown',
       node: process.versions.node,
       pnpm: await probePnpm(context),
-    },
-  }),
+    }),
 };

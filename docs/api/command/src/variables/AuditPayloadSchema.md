@@ -8,7 +8,7 @@
 
 > `const` **AuditPayloadSchema**: `object`
 
-Defined in: [command/src/commands/audit.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/audit.ts#L28)
+Defined in: [command/src/commands/audit.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/audit.ts#L29)
 
 The descriptor `outputSchema` for `audit` — hand-written JSON-Schema,
 byte-parity-pinned against the parity fixture. The modelled `findings` element

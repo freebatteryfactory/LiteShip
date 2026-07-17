@@ -26,6 +26,50 @@ import { packageSmokeCommand } from './commands/package-smoke.js';
 import { checkInvariantsCommand } from './commands/check-invariants.js';
 import { capsuleVerifyGateCommand } from './commands/capsule-verify.js';
 import { checkCommand } from './commands/check.js';
+import type { GlossaryPayload } from './commands/glossary.js';
+import type { VersionPayload } from './commands/version.js';
+import type { AssetAnalyzePayload } from './commands/asset.js';
+import type { VerifyPayload } from './commands/verify.js';
+import type { AuditPayload } from './commands/audit.js';
+import type { AuditFloorPayload } from './commands/audit-floor.js';
+import type { PlumbPayload } from './commands/plumb.js';
+import type { PackageSmokePayload } from './commands/package-smoke.js';
+import type { CheckInvariantsPayload } from './commands/check-invariants.js';
+import type { CapsuleVerifyPayload } from './commands/capsule-verify.js';
+import type { CheckPayload } from './commands/check.js';
+
+/**
+ * The name-keyed payload contract: for each handler-backed command, the `payload`
+ * type its result carries. `dispatch<N extends keyof CommandMap>` reads this to
+ * type its return as `CapsuleCommandResult<CommandMap[N]>`, so a caller of
+ * `dispatch('glossary', …)` gets a compile-time `GlossaryPayload` with no cast.
+ *
+ * Assembled from the `*Payload` types each command module already exports.
+ * Commands whose payload type has not yet been extracted (the scene/capsule/
+ * asset.verify shrinks land in the consumer-phase [SCH]/[CER] slices) map to
+ * `unknown` until their module exports a named payload type — refining an entry
+ * here is a pure type-level tightening those slices perform.
+ */
+export interface CommandMap {
+  readonly glossary: GlossaryPayload;
+  readonly version: VersionPayload;
+  readonly 'capsule.inspect': unknown;
+  readonly 'capsule.list': unknown;
+  readonly 'capsule.verify': unknown;
+  readonly 'asset.analyze': AssetAnalyzePayload;
+  readonly 'asset.verify': unknown;
+  readonly 'scene.verify': unknown;
+  readonly 'scene.compile': unknown;
+  readonly 'scene.render': unknown;
+  readonly verify: VerifyPayload;
+  readonly audit: AuditPayload;
+  readonly 'audit-floor': AuditFloorPayload;
+  readonly plumb: PlumbPayload;
+  readonly 'package-smoke': PackageSmokePayload;
+  readonly 'check-invariants': CheckInvariantsPayload;
+  readonly 'capsule-verify': CapsuleVerifyPayload;
+  readonly check: CheckPayload;
+}
 
 /**
  * Descriptors for commands whose execution is owned by the CLI (terminal

@@ -1,6 +1,6 @@
 {
   "name": "@czap/gauntlet",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "description": "The rigor engine behind LiteShip's release gates: define quality gates that report findings and earn blocking power only by proving themselves against their own fixtures.",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",

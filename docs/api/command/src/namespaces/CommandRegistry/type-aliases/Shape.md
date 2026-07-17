@@ -8,4 +8,4 @@
 
 > **Shape** = `CommandRegistryShape`
 
-Defined in: [command/src/registry.ts:516](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L516)
+Defined in: [command/src/registry.ts:595](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L595)

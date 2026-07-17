@@ -8,7 +8,7 @@
 
 > `const` **PackageSmokePayloadSchema**: `object`
 
-Defined in: [command/src/commands/package-smoke.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/package-smoke.ts#L35)
+Defined in: [command/src/commands/package-smoke.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/package-smoke.ts#L37)
 
 The descriptor `outputSchema` for `package-smoke` — hand-written JSON-Schema,
 byte-parity-pinned against the parity fixture. [PackageSmokePayload](../type-aliases/PackageSmokePayload.md) is

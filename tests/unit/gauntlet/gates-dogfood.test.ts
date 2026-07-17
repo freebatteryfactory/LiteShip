@@ -243,7 +243,7 @@ describe('dogfood — the hygiene gates over the real packages/*/src tree', () =
     expect(scopedSeen).toEqual([
       'packages/cli/src/commands/doctor/probes-workspace.ts:250',
       'packages/cli/src/commands/ship.ts:169',
-      'packages/cli/src/commands/version.ts:47',
+      'packages/cli/src/commands/version.ts:46',
       'packages/web/src/stream/resumption-pure.ts:29',
     ]);
   });

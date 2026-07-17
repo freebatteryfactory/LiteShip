@@ -1,6 +1,6 @@
 {
   "name": "@czap/detect",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "description": "Detect device capabilities for LiteShip: probe GPU tier, CPU, memory, motion preference, and network, then map them to the tiers that select which UI state renders.",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",

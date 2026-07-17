@@ -7,8 +7,8 @@
  *
  * @module
  */
-import { systemClock, wallClock, type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
-import { capabilityUnavailable, type CommandCapability, type HandledCommand } from '../registry.js';
+import { S, systemClock, type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
+import { capabilityUnavailable, defineCommand, failed, ok, type CommandCapability } from '../registry.js';
 import { loadManifest, manifestUnavailable } from './manifest.js';
 
 /** `<verb> <scene.ts>` args — the single source of the verify/compile `inputSchema`. */
@@ -17,6 +17,9 @@ const SceneArgsSchema = {
   properties: { scene: { type: 'string' } },
   required: ['scene'],
 } as const satisfies CommandJsonSchema;
+
+/** Kernel argsSchema for the `<verb> <scene.ts>` verbs — decodes `scene` to a string. */
+const SceneVerbArgs = S.struct({ scene: S.string });
 
 /** scene.verify output — the scene id + count of generated tests run. */
 const SceneVerifyPayloadSchema = {
@@ -50,14 +53,9 @@ const SceneRenderPayloadSchema = {
   required: ['sceneId', 'output', 'frameCount', 'elapsedMs'],
 } as const satisfies CommandJsonSchema;
 
-function failed(command: string, error: string, exitCode: number): CapsuleCommandResult {
-  return {
-    status: 'failed',
-    command,
-    timestamp: new Date(wallClock.now()).toISOString(),
-    exitCode,
-    payload: { error },
-  };
+/** A domain failure whose payload is a single teaching `error` string. */
+function fail(command: string, error: string, exitCode: number): CapsuleCommandResult {
+  return failed(command, { error }, exitCode);
 }
 
 interface SceneCapsule {
@@ -98,7 +96,7 @@ function missingSceneExports(scenePath: string, cap: unknown, contract: unknown)
 }
 
 /** `scene verify <scene.ts>` — run the scene capsule's generated tests. */
-export const sceneVerifyCommand: HandledCommand = {
+export const sceneVerifyCommand = defineCommand({
   descriptor: {
     name: 'scene.verify',
     summary: 'Run a scene capsule’s generated tests.',
@@ -107,14 +105,15 @@ export const sceneVerifyCommand: HandledCommand = {
     outputSchema: SceneVerifyPayloadSchema,
     annotations: { mcpExposed: true, group: 'compose' },
   },
+  argsSchema: SceneVerbArgs,
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
-    const scenePath = String(invocation.args.scene ?? '');
-    if (!context.fileExists?.(scenePath)) return failed('scene.verify', `scene not found: ${scenePath}`, 1);
+    const scenePath = invocation.args.scene;
+    if (!context.fileExists?.(scenePath)) return fail('scene.verify', `scene not found: ${scenePath}`, 1);
 
     const mod = await context.loadSceneModule?.(scenePath);
     const cap = mod ? findSceneCapsule(mod) : undefined;
     if (!cap) {
-      return failed(
+      return fail(
         'scene.verify',
         `no sceneComposition capsule exported from ${scenePath} — export the capsule returned by your scene definition (czap glossary capsule)`,
         1,
@@ -124,25 +123,20 @@ export const sceneVerifyCommand: HandledCommand = {
     const loaded = loadManifest(context);
     if (!loaded.ok) return manifestUnavailable('scene.verify', loaded, context);
     const entry = loaded.manifest.capsules.find((c) => c.name === cap.name);
-    if (!entry?.generated) return failed('scene.verify', `capsule ${cap.name} not in manifest`, 1);
+    if (!entry?.generated) return fail('scene.verify', `capsule ${cap.name} not in manifest`, 1);
 
     // Direct-invocation guard; the dispatcher already enforces `requires`.
     if (!context.runVitest) return capabilityUnavailable('scene.verify', ['runVitest']);
     const { exitCode, stderrTail } = await context.runVitest([entry.generated.testFile, entry.generated.benchFile]);
     if (exitCode !== 0) {
-      return failed('scene.verify', `generated tests failed${stderrTail ? `: ${stderrTail.trim()}` : ''}`, 2);
+      return fail('scene.verify', `generated tests failed${stderrTail ? `: ${stderrTail.trim()}` : ''}`, 2);
     }
-    return {
-      status: 'ok',
-      command: 'scene.verify',
-      timestamp: new Date(wallClock.now()).toISOString(),
-      payload: { sceneId: cap.id, generatedTests: 2 },
-    };
+    return ok('scene.verify', { sceneId: cap.id, generatedTests: 2 });
   },
-};
+});
 
 /** `scene compile <scene.ts>` — load the scene module + run its compile pipeline. */
-export const sceneCompileCommand: HandledCommand = {
+export const sceneCompileCommand = defineCommand({
   descriptor: {
     name: 'scene.compile',
     summary: 'Compile a scene capsule.',
@@ -151,14 +145,15 @@ export const sceneCompileCommand: HandledCommand = {
     outputSchema: SceneCompilePayloadSchema,
     annotations: { mcpExposed: true, group: 'compose' },
   },
+  argsSchema: SceneVerbArgs,
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
-    const scenePath = String(invocation.args.scene ?? '');
-    if (!context.fileExists?.(scenePath)) return failed('scene.compile', `scene file not found: ${scenePath}`, 1);
+    const scenePath = invocation.args.scene;
+    if (!context.fileExists?.(scenePath)) return fail('scene.compile', `scene file not found: ${scenePath}`, 1);
 
     const mod = await context.loadSceneModule?.(scenePath);
     const cap = mod ? findSceneCapsule(mod) : undefined;
     const contract = mod ? findContract(mod) : undefined;
-    if (!cap || !contract) return failed('scene.compile', missingSceneExports(scenePath, cap, contract), 1);
+    if (!cap || !contract) return fail('scene.compile', missingSceneExports(scenePath, cap, contract), 1);
 
     // `durationMs` is an ELAPSED interval → MONOTONIC systemClock (a wall-clock
     // NTP/DST jump must never corrupt it). The receipt `timestamp` below is a
@@ -170,20 +165,15 @@ export const sceneCompileCommand: HandledCommand = {
     try {
       if (context.runSceneCompile) await context.runSceneCompile(mod!);
     } catch (err) {
-      return failed('scene.compile', String(err), 1);
+      return fail('scene.compile', String(err), 1);
     }
-    return {
-      status: 'ok',
-      command: 'scene.compile',
-      timestamp: new Date(wallClock.now()).toISOString(),
-      payload: {
-        sceneId: cap.id,
-        trackCount: (contract.tracks as readonly unknown[]).length,
-        durationMs: clock.now() - start,
-      },
-    };
+    return ok('scene.compile', {
+      sceneId: cap.id,
+      trackCount: (contract.tracks as readonly unknown[]).length,
+      durationMs: clock.now() - start,
+    });
   },
-};
+});
 
 /** Derive the default render output: `<sceneBasename>.mp4` next to the scene file. */
 function deriveOutputPath(scenePath: string): string {
@@ -195,7 +185,7 @@ function deriveOutputPath(scenePath: string): string {
 }
 
 /** `scene render <scene.ts> [-o <out.mp4>]` — compile + render to mp4 (idempotent). */
-export const sceneRenderCommand: HandledCommand = {
+export const sceneRenderCommand = defineCommand({
   descriptor: {
     name: 'scene.render',
     summary: 'Render a scene to mp4 (output defaults to <scene>.mp4 beside the scene file).',
@@ -208,13 +198,14 @@ export const sceneRenderCommand: HandledCommand = {
     outputSchema: SceneRenderPayloadSchema,
     annotations: { mcpExposed: true, group: 'compose' },
   },
+  argsSchema: S.struct({ scene: S.string, output: S.optional(S.string), force: S.optional(S.boolean) }),
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
-    const scenePath = String(invocation.args.scene ?? '');
+    const scenePath = invocation.args.scene;
     // Omitted output derives <sceneBasename>.mp4 beside the scene file here
     // (not at the adapter) so the cache key and the receipt both carry the
     // resolved path. -o/--output stays the override.
-    const output = String(invocation.args.output ?? '') || deriveOutputPath(scenePath);
-    if (!context.fileExists?.(scenePath)) return failed('scene.render', `scene not found: ${scenePath}`, 1);
+    const output = invocation.args.output || deriveOutputPath(scenePath);
+    if (!context.fileExists?.(scenePath)) return fail('scene.render', `scene not found: ${scenePath}`, 1);
 
     const force = invocation.args.force === true;
     const key = { command: 'scene.render', inputs: { scenePath, output }, force };
@@ -222,20 +213,15 @@ export const sceneRenderCommand: HandledCommand = {
       { sceneId: string; output: string; frameCount: number; elapsedMs: number; fps?: number } | null | undefined;
     // A cache hit only counts if the rendered output is still on disk.
     if (cached && typeof cached.output === 'string' && context.fileExists?.(cached.output)) {
-      return {
-        status: 'ok',
-        command: 'scene.render',
-        timestamp: new Date(wallClock.now()).toISOString(),
-        payload: { ...cached, cached: true },
-      };
+      return ok('scene.render', { ...cached, cached: true });
     }
 
     const mod = await context.loadSceneModule?.(scenePath);
     const cap = mod ? findSceneCapsule(mod) : undefined;
     const contract = mod ? findContract(mod) : undefined;
-    if (!cap || !contract) return failed('scene.render', missingSceneExports(scenePath, cap, contract), 1);
+    if (!cap || !contract) return fail('scene.render', missingSceneExports(scenePath, cap, contract), 1);
     if (typeof contract.fps !== 'number' || typeof contract.duration !== 'number') {
-      return failed(
+      return fail(
         'scene.render',
         `the scene contract exported by ${scenePath} must carry numeric fps and duration (got fps: ${String(contract.fps)}, duration: ${String(contract.duration)}). Compare a working example: examples/scenes/intro.ts`,
         1,
@@ -269,14 +255,9 @@ export const sceneRenderCommand: HandledCommand = {
         ...(height !== undefined ? { height } : {}),
       };
       context.cache?.write(key, payload);
-      return {
-        status: 'ok',
-        command: 'scene.render',
-        timestamp: new Date(wallClock.now()).toISOString(),
-        payload: { ...payload, cached: false },
-      };
+      return ok('scene.render', { ...payload, cached: false });
     } catch (err) {
-      return failed('scene.render', String(err), 5);
+      return fail('scene.render', String(err), 5);
     }
   },
-};
+});

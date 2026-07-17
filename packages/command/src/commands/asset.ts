@@ -7,13 +7,16 @@
  *
  * @module
  */
-import { wallClock, type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
-import { capabilityUnavailable, type CommandCapability, type HandledCommand } from '../registry.js';
+import { S, type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
+import { capabilityUnavailable, defineCommand, failed, ok, type CommandCapability } from '../registry.js';
 import { loadManifest, manifestUnavailable } from './manifest.js';
 
 /** The audio projection literal-set — single source of the `projection` enum + {@link Projection}. */
 const PROJECTIONS = ['beat', 'onset', 'waveform'] as const;
 type Projection = (typeof PROJECTIONS)[number];
+
+/** Kernel argsSchema mirror of the `projection` enum — decodes the raw arg to a {@link Projection}. */
+const ProjectionArg = S.union(S.literal('beat'), S.literal('onset'), S.literal('waveform'));
 
 /**
  * The descriptor `outputSchema` for asset.analyze — hand-written JSON-Schema,
@@ -49,18 +52,13 @@ const AssetVerifyPayloadSchema = {
   required: ['assetId', 'invariantsChecked'],
 } as const satisfies CommandJsonSchema;
 
-function failed(command: string, error: string, exitCode: number): CapsuleCommandResult {
-  return {
-    status: 'failed',
-    command,
-    timestamp: new Date(wallClock.now()).toISOString(),
-    exitCode,
-    payload: { error },
-  };
+/** A domain failure whose payload is a single teaching `error` string. */
+function fail(command: string, error: string, exitCode: number): CapsuleCommandResult {
+  return failed(command, { error }, exitCode);
 }
 
 /** `asset analyze <id> --projection=<beat|onset|waveform>`. */
-export const assetAnalyzeCommand: HandledCommand = {
+export const assetAnalyzeCommand = defineCommand({
   descriptor: {
     name: 'asset.analyze',
     summary: 'Run a cachedProjection (beat / onset / waveform) over an asset.',
@@ -73,26 +71,20 @@ export const assetAnalyzeCommand: HandledCommand = {
     outputSchema: AssetAnalyzePayloadSchema,
     annotations: { mcpExposed: true, group: 'compose' },
   },
+  argsSchema: S.struct({ asset: S.string, projection: ProjectionArg, force: S.optional(S.boolean) }),
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
     const loaded = loadManifest(context);
     if (!loaded.ok) return manifestUnavailable('asset.analyze', loaded, context);
     const { manifest } = loaded;
-    const assetId = String(invocation.args.asset ?? '');
-    const projection = invocation.args.projection as Projection;
+    const assetId = invocation.args.asset;
+    const projection = invocation.args.projection;
     const entry = manifest.capsules.find((c) => c.name === assetId);
-    if (!entry) return failed('asset.analyze', `asset not registered in manifest: ${assetId}`, 1);
+    if (!entry) return fail('asset.analyze', `asset not registered in manifest: ${assetId}`, 1);
 
     const force = invocation.args.force === true;
     const key = { command: 'asset.analyze', inputs: { assetId, projection }, force };
     const cached = context.cache?.read(key) as Omit<AssetAnalyzePayload, 'cached'> | null | undefined;
-    if (cached) {
-      return {
-        status: 'ok',
-        command: 'asset.analyze',
-        timestamp: new Date(wallClock.now()).toISOString(),
-        payload: { ...cached, cached: true } satisfies AssetAnalyzePayload,
-      };
-    }
+    if (cached) return ok('asset.analyze', { ...cached, cached: true } satisfies AssetAnalyzePayload);
 
     // Direct-invocation guard; the dispatcher already enforces `requires`.
     if (!context.loadAssetBytes || !context.runAudioProjection) {
@@ -102,24 +94,19 @@ export const assetAnalyzeCommand: HandledCommand = {
       );
     }
     const bytes = context.loadAssetBytes(assetId, entry.source);
-    if (!bytes) return failed('asset.analyze', `asset source file not found for: ${assetId}`, 1);
+    if (!bytes) return fail('asset.analyze', `asset source file not found for: ${assetId}`, 1);
     // Pass the asset id so the adapter can resolve the asset's own decoder
     // (AssetDecl.decoder override) instead of assuming the audio built-in.
     const markerCount = await context.runAudioProjection(bytes, projection, assetId);
 
     const computed: Omit<AssetAnalyzePayload, 'cached'> = { assetId, projection, markerCount };
     context.cache?.write(key, computed);
-    return {
-      status: 'ok',
-      command: 'asset.analyze',
-      timestamp: new Date(wallClock.now()).toISOString(),
-      payload: { ...computed, cached: false } satisfies AssetAnalyzePayload,
-    };
+    return ok('asset.analyze', { ...computed, cached: false } satisfies AssetAnalyzePayload);
   },
-};
+});
 
 /** `asset verify <id>` — run the asset's generated test (ok with 0 invariants when none). */
-export const assetVerifyCommand: HandledCommand = {
+export const assetVerifyCommand = defineCommand({
   descriptor: {
     name: 'asset.verify',
     summary: 'Verify an asset capsule.',
@@ -131,36 +118,25 @@ export const assetVerifyCommand: HandledCommand = {
     outputSchema: AssetVerifyPayloadSchema,
     annotations: { mcpExposed: true, group: 'compose' },
   },
+  argsSchema: S.struct({ asset: S.string }),
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
     const loaded = loadManifest(context);
     if (!loaded.ok) return manifestUnavailable('asset.verify', loaded, context);
     const { manifest } = loaded;
-    const assetId = String(invocation.args.asset ?? '');
+    const assetId = invocation.args.asset;
     const entry = manifest.capsules.find((c) => c.name === assetId);
-    if (!entry) return failed('asset.verify', `asset not registered: ${assetId}`, 1);
+    if (!entry) return fail('asset.verify', `asset not registered: ${assetId}`, 1);
 
     const testFile = entry.generated?.testFile;
-    if (!testFile || !context.fileExists?.(testFile)) {
-      return {
-        status: 'ok',
-        command: 'asset.verify',
-        timestamp: new Date(wallClock.now()).toISOString(),
-        payload: { assetId, invariantsChecked: 0 },
-      };
-    }
+    if (!testFile || !context.fileExists?.(testFile)) return ok('asset.verify', { assetId, invariantsChecked: 0 });
 
     // runVitest is only needed when generated tests exist, so it is NOT in
     // `requires` — the conditional guard reuses the same structured failure.
     if (!context.runVitest) return capabilityUnavailable('asset.verify', ['runVitest']);
     const { exitCode, stderrTail } = await context.runVitest([testFile]);
     if (exitCode !== 0) {
-      return failed('asset.verify', `generated tests failed${stderrTail ? `: ${stderrTail.trim()}` : ''}`, 2);
+      return fail('asset.verify', `generated tests failed${stderrTail ? `: ${stderrTail.trim()}` : ''}`, 2);
     }
-    return {
-      status: 'ok',
-      command: 'asset.verify',
-      timestamp: new Date(wallClock.now()).toISOString(),
-      payload: { assetId, invariantsChecked: 1 },
-    };
+    return ok('asset.verify', { assetId, invariantsChecked: 1 });
   },
-};
+});

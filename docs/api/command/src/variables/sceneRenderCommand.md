@@ -8,6 +8,6 @@
 
 > `const` **sceneRenderCommand**: [`HandledCommand`](../interfaces/HandledCommand.md)
 
-Defined in: [command/src/commands/scene.ts:198](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/scene.ts#L198)
+Defined in: [command/src/commands/scene.ts:188](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/scene.ts#L188)
 
 `scene render <scene.ts> [-o <out.mp4>]` — compile + render to mp4 (idempotent).

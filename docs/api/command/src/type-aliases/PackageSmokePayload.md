@@ -8,7 +8,7 @@
 
 > **PackageSmokePayload** = `object`
 
-Defined in: [command/src/commands/package-smoke.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/package-smoke.ts#L52)
+Defined in: [command/src/commands/package-smoke.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/package-smoke.ts#L54)
 
 Structured payload returned by `package-smoke`.
 
@@ -18,7 +18,7 @@ Structured payload returned by `package-smoke`.
 
 > `readonly` **failedStep**: `string` \| `null`
 
-Defined in: [command/src/commands/package-smoke.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/package-smoke.ts#L56)
+Defined in: [command/src/commands/package-smoke.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/package-smoke.ts#L58)
 
 ***
 
@@ -26,7 +26,7 @@ Defined in: [command/src/commands/package-smoke.ts:56](https://github.com/freeba
 
 > `readonly` **failure**: `string` \| `null`
 
-Defined in: [command/src/commands/package-smoke.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/package-smoke.ts#L57)
+Defined in: [command/src/commands/package-smoke.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/package-smoke.ts#L59)
 
 ***
 
@@ -34,7 +34,7 @@ Defined in: [command/src/commands/package-smoke.ts:57](https://github.com/freeba
 
 > `readonly` **importsSmoked**: `number`
 
-Defined in: [command/src/commands/package-smoke.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/package-smoke.ts#L55)
+Defined in: [command/src/commands/package-smoke.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/package-smoke.ts#L57)
 
 ***
 
@@ -42,7 +42,7 @@ Defined in: [command/src/commands/package-smoke.ts:55](https://github.com/freeba
 
 > `readonly` **ok**: `boolean`
 
-Defined in: [command/src/commands/package-smoke.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/package-smoke.ts#L53)
+Defined in: [command/src/commands/package-smoke.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/package-smoke.ts#L55)
 
 ***
 
@@ -50,4 +50,4 @@ Defined in: [command/src/commands/package-smoke.ts:53](https://github.com/freeba
 
 > `readonly` **packagesPacked**: `number`
 
-Defined in: [command/src/commands/package-smoke.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/package-smoke.ts#L54)
+Defined in: [command/src/commands/package-smoke.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/package-smoke.ts#L56)

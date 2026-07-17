@@ -19,9 +19,11 @@
  *
  * @module
  */
-import { wallClock, type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
+import { type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
 import {
   capabilityUnavailable,
+  failed,
+  ok,
   type CommandCapability,
   type CommandContext,
   type HandledCommand,
@@ -77,18 +79,13 @@ export const packageSmokeCommand: HandledCommand = {
 
     const summary = await context.runPackageSmoke();
 
-    return {
-      status: summary.ok ? 'ok' : 'failed',
-      command: 'package-smoke',
-      timestamp: new Date(wallClock.now()).toISOString(),
-      exitCode: summary.ok ? 0 : 1,
-      payload: {
-        ok: summary.ok,
-        packagesPacked: summary.packagesPacked,
-        importsSmoked: summary.importsSmoked,
-        failedStep: summary.failedStep,
-        failure: summary.failure,
-      } satisfies PackageSmokePayload,
-    };
+    const payload = {
+      ok: summary.ok,
+      packagesPacked: summary.packagesPacked,
+      importsSmoked: summary.importsSmoked,
+      failedStep: summary.failedStep,
+      failure: summary.failure,
+    } satisfies PackageSmokePayload;
+    return summary.ok ? ok('package-smoke', payload) : failed('package-smoke', payload, 1);
   },
 };

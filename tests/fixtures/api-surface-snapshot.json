@@ -2,7 +2,7 @@
   "snapshotFormat": 1,
   "packages": {
     "@czap/assets": {
-      "version": "0.14.0",
+      "version": "0.15.0",
       "exports": [
         {
           "name": "AssetRegistry",
@@ -92,7 +92,7 @@
       ]
     },
     "@czap/astro": {
-      "version": "0.14.0",
+      "version": "0.15.0",
       "exports": [
         {
           "name": "applyResponsiveMediaVary",
@@ -187,7 +187,7 @@
       ]
     },
     "@czap/audit": {
-      "version": "0.14.0",
+      "version": "0.15.0",
       "exports": [
         {
           "name": "ACTIVE_SURFACE_ORACLE_ID",
@@ -573,7 +573,7 @@
       ]
     },
     "@czap/canonical": {
-      "version": "0.14.0",
+      "version": "0.15.0",
       "exports": [
         {
           "name": "AddressedDigest",
@@ -618,7 +618,7 @@
       ]
     },
     "@czap/cli": {
-      "version": "0.14.0",
+      "version": "0.15.0",
       "exports": [
         {
           "name": "run",
@@ -628,7 +628,7 @@
       ]
     },
     "@czap/cloudflare": {
-      "version": "0.14.0",
+      "version": "0.15.0",
       "exports": [
         {
           "name": "cloudflareAdapterCapsule",
@@ -652,7 +652,7 @@
       ]
     },
     "@czap/command": {
-      "version": "0.14.0",
+      "version": "0.15.0",
       "exports": [
         {
           "name": "AUDIT_WARNING_FLOOR",
@@ -739,17 +739,17 @@
         {
           "name": "assetAnalyzeCommand",
           "kind": "namespace",
-          "signature": "descriptor:const,handler:function"
+          "signature": "argsSchema:const,descriptor:const,handler:function"
         },
         {
           "name": "assetVerifyCommand",
           "kind": "namespace",
-          "signature": "descriptor:const,handler:function"
+          "signature": "argsSchema:const,descriptor:const,handler:function"
         },
         {
           "name": "auditCommand",
           "kind": "namespace",
-          "signature": "descriptor:const,handler:function"
+          "signature": "argsSchema:const,descriptor:const,handler:function"
         },
         {
           "name": "auditFloorCommand",
@@ -764,17 +764,17 @@
         {
           "name": "capsuleInspectCommand",
           "kind": "namespace",
-          "signature": "descriptor:const,handler:function"
+          "signature": "argsSchema:const,descriptor:const,handler:function"
         },
         {
           "name": "capsuleListCommand",
           "kind": "namespace",
-          "signature": "descriptor:const,handler:function"
+          "signature": "argsSchema:const,descriptor:const,handler:function"
         },
         {
           "name": "capsuleVerifyCommand",
           "kind": "namespace",
-          "signature": "descriptor:const,handler:function"
+          "signature": "argsSchema:const,descriptor:const,handler:function"
         },
         {
           "name": "capsuleVerifyGateCommand",
@@ -784,7 +784,7 @@
         {
           "name": "checkCommand",
           "kind": "namespace",
-          "signature": "descriptor:const,handler:function"
+          "signature": "argsSchema:const,descriptor:const,handler:function"
         },
         {
           "name": "checkInvariantsCommand",
@@ -797,6 +797,11 @@
           "signature": "get:function,list:function"
         },
         {
+          "name": "defineCommand",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "deriveBuildEnv",
           "kind": "function",
           "signature": "(1)"
@@ -807,9 +812,14 @@
           "signature": "(2)"
         },
         {
+          "name": "failed",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
           "name": "glossaryCommand",
           "kind": "namespace",
-          "signature": "descriptor:const,handler:function"
+          "signature": "argsSchema:const,descriptor:const,handler:function"
         },
         {
           "name": "matchGlossaryEntries",
@@ -825,6 +835,11 @@
           "name": "observedLifecycleScripts",
           "kind": "function",
           "signature": "(1)"
+        },
+        {
+          "name": "ok",
+          "kind": "function",
+          "signature": "(2)"
         },
         {
           "name": "packageSlug",
@@ -849,17 +864,17 @@
         {
           "name": "sceneCompileCommand",
           "kind": "namespace",
-          "signature": "descriptor:const,handler:function"
+          "signature": "argsSchema:const,descriptor:const,handler:function"
         },
         {
           "name": "sceneRenderCommand",
           "kind": "namespace",
-          "signature": "descriptor:const,handler:function"
+          "signature": "argsSchema:const,descriptor:const,handler:function"
         },
         {
           "name": "sceneVerifyCommand",
           "kind": "namespace",
-          "signature": "descriptor:const,handler:function"
+          "signature": "argsSchema:const,descriptor:const,handler:function"
         },
         {
           "name": "selectTargets",
@@ -869,7 +884,7 @@
         {
           "name": "verifyCommand",
           "kind": "namespace",
-          "signature": "descriptor:const,handler:function"
+          "signature": "argsSchema:const,descriptor:const,handler:function"
         },
         {
           "name": "versionCommand",
@@ -879,7 +894,7 @@
       ]
     },
     "@czap/compiler": {
-      "version": "0.14.0",
+      "version": "0.15.0",
       "exports": [
         {
           "name": "AIManifestCompiler",
@@ -994,7 +1009,7 @@
       ]
     },
     "@czap/core": {
-      "version": "0.14.0",
+      "version": "0.15.0",
       "exports": [
         {
           "name": "AICast",
@@ -1990,7 +2005,7 @@
       ]
     },
     "@czap/detect": {
-      "version": "0.14.0",
+      "version": "0.15.0",
       "exports": [
         {
           "name": "CAP_AXES",
@@ -2090,7 +2105,7 @@
       ]
     },
     "@czap/edge": {
-      "version": "0.14.0",
+      "version": "0.15.0",
       "exports": [
         {
           "name": "ClientHints",
@@ -2168,7 +2183,7 @@
       ]
     },
     "@czap/error": {
-      "version": "0.14.0",
+      "version": "0.15.0",
       "exports": [
         {
           "name": "HostCapabilityError",
@@ -2277,7 +2292,7 @@
       ]
     },
     "@czap/gauntlet": {
-      "version": "0.14.0",
+      "version": "0.15.0",
       "exports": [
         {
           "name": "ABSENT_SUFFIX",
@@ -2922,7 +2937,7 @@
       ]
     },
     "@czap/genui": {
-      "version": "0.14.0",
+      "version": "0.15.0",
       "exports": [
         {
           "name": "ContentAddress",
@@ -2966,7 +2981,7 @@
       ]
     },
     "@czap/mcp-server": {
-      "version": "0.14.0",
+      "version": "0.15.0",
       "exports": [
         {
           "name": "APPLY_PATCH_COMMAND",
@@ -3179,7 +3194,7 @@
       ]
     },
     "@czap/quantizer": {
-      "version": "0.14.0",
+      "version": "0.15.0",
       "exports": [
         {
           "name": "AnimatedQuantizer",
@@ -3209,7 +3224,7 @@
       ]
     },
     "@czap/remotion": {
-      "version": "0.14.0",
+      "version": "0.15.0",
       "exports": [
         {
           "name": "Provider",
@@ -3263,7 +3278,7 @@
       ]
     },
     "@czap/scene": {
-      "version": "0.14.0",
+      "version": "0.15.0",
       "exports": [
         {
           "name": "AudioSystem",
@@ -3441,7 +3456,7 @@
       ]
     },
     "@czap/stage": {
-      "version": "0.14.0",
+      "version": "0.15.0",
       "exports": [
         {
           "name": "dualExport",
@@ -3481,7 +3496,7 @@
       ]
     },
     "@czap/vite": {
-      "version": "0.14.0",
+      "version": "0.15.0",
       "exports": [
         {
           "name": "collectBoundaryManifest",
@@ -3606,7 +3621,7 @@
       ]
     },
     "@czap/web": {
-      "version": "0.14.0",
+      "version": "0.15.0",
       "exports": [
         {
           "name": "CZAP_EVENT_DOCS",
@@ -3895,7 +3910,7 @@
       ]
     },
     "@czap/worker": {
-      "version": "0.14.0",
+      "version": "0.15.0",
       "exports": [
         {
           "name": "CompositorWorker",

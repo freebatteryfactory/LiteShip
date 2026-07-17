@@ -8,7 +8,7 @@
 
 > `const` **AssetAnalyzePayloadSchema**: `object`
 
-Defined in: [command/src/commands/asset.ts:23](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/asset.ts#L23)
+Defined in: [command/src/commands/asset.ts:26](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/asset.ts#L26)
 
 The descriptor `outputSchema` for asset.analyze — hand-written JSON-Schema,
 byte-parity-pinned against the parity fixture. [AssetAnalyzePayload](../type-aliases/AssetAnalyzePayload.md) is

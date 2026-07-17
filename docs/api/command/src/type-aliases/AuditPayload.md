@@ -8,7 +8,7 @@
 
 > **AuditPayload** = `object`
 
-Defined in: [command/src/commands/audit.ts:84](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/audit.ts#L84)
+Defined in: [command/src/commands/audit.ts:85](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/audit.ts#L85)
 
 Structured payload returned by `audit`. Mirrors `AuditPayloadSchema` for every
 field EXCEPT `findings`, which keeps the canonical [AuditEngineFinding](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts)
@@ -22,7 +22,7 @@ on exactly that one field.
 
 > `readonly` **errorCount**: `number`
 
-Defined in: [command/src/commands/audit.ts:85](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/audit.ts#L85)
+Defined in: [command/src/commands/audit.ts:86](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/audit.ts#L86)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [command/src/commands/audit.ts:85](https://github.com/freebatteryfac
 
 > `readonly` **findingCount**: `number`
 
-Defined in: [command/src/commands/audit.ts:88](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/audit.ts#L88)
+Defined in: [command/src/commands/audit.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/audit.ts#L89)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [command/src/commands/audit.ts:88](https://github.com/freebatteryfac
 
 > `readonly` `optional` **findings?**: readonly [`AuditEngineFinding`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts)[]
 
-Defined in: [command/src/commands/audit.ts:97](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/audit.ts#L97)
+Defined in: [command/src/commands/audit.ts:98](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/audit.ts#L98)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [command/src/commands/audit.ts:97](https://github.com/freebatteryfac
 
 > `readonly` **infoCount**: `number`
 
-Defined in: [command/src/commands/audit.ts:87](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/audit.ts#L87)
+Defined in: [command/src/commands/audit.ts:88](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/audit.ts#L88)
 
 ***
 
@@ -54,7 +54,7 @@ Defined in: [command/src/commands/audit.ts:87](https://github.com/freebatteryfac
 
 > `readonly` **passFindingCounts**: `object`
 
-Defined in: [command/src/commands/audit.ts:90](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/audit.ts#L90)
+Defined in: [command/src/commands/audit.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/audit.ts#L91)
 
 #### integrity
 
@@ -74,7 +74,7 @@ Defined in: [command/src/commands/audit.ts:90](https://github.com/freebatteryfac
 
 > `readonly` **profileSource**: `"default"` \| `"file"` \| `"consumer"`
 
-Defined in: [command/src/commands/audit.ts:96](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/audit.ts#L96)
+Defined in: [command/src/commands/audit.ts:97](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/audit.ts#L97)
 
 ***
 
@@ -82,7 +82,7 @@ Defined in: [command/src/commands/audit.ts:96](https://github.com/freebatteryfac
 
 > `readonly` **repoRoot**: `string`
 
-Defined in: [command/src/commands/audit.ts:95](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/audit.ts#L95)
+Defined in: [command/src/commands/audit.ts:96](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/audit.ts#L96)
 
 ***
 
@@ -90,7 +90,7 @@ Defined in: [command/src/commands/audit.ts:95](https://github.com/freebatteryfac
 
 > `readonly` **suppressedCount**: `number`
 
-Defined in: [command/src/commands/audit.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/audit.ts#L89)
+Defined in: [command/src/commands/audit.ts:90](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/audit.ts#L90)
 
 ***
 
@@ -98,4 +98,4 @@ Defined in: [command/src/commands/audit.ts:89](https://github.com/freebatteryfac
 
 > `readonly` **warningCount**: `number`
 
-Defined in: [command/src/commands/audit.ts:86](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/audit.ts#L86)
+Defined in: [command/src/commands/audit.ts:87](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/audit.ts#L87)

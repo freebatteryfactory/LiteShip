@@ -15,9 +15,11 @@
  *
  * @module
  */
-import { wallClock, type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
+import { type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
 import {
   capabilityUnavailable,
+  failed,
+  ok,
   type CommandCapability,
   type CommandContext,
   type HandledCommand,
@@ -86,18 +88,13 @@ export const plumbCommand: HandledCommand = {
 
     const summary = await context.runPlumb();
 
-    return {
-      status: summary.ok ? 'ok' : 'failed',
-      command: 'plumb',
-      timestamp: new Date(wallClock.now()).toISOString(),
-      exitCode: summary.ok ? 0 : 1,
-      payload: {
-        ok: summary.ok,
-        skips: summary.skips,
-        unclassified: summary.unclassified,
-        generatedPresent: summary.generatedPresent,
-        generatedCorpusMessage: summary.generatedCorpusMessage,
-      } satisfies PlumbPayload,
-    };
+    const payload = {
+      ok: summary.ok,
+      skips: summary.skips,
+      unclassified: summary.unclassified,
+      generatedPresent: summary.generatedPresent,
+      generatedCorpusMessage: summary.generatedCorpusMessage,
+    } satisfies PlumbPayload;
+    return summary.ok ? ok('plumb', payload) : failed('plumb', payload, 1);
   },
 };

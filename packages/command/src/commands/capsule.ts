@@ -6,18 +6,13 @@
  *
  * @module
  */
-import { wallClock, type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
-import { capabilityUnavailable, type CommandCapability, type HandledCommand } from '../registry.js';
+import { S, type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
+import { capabilityUnavailable, defineCommand, failed, ok, type CommandCapability } from '../registry.js';
 import { loadManifest, manifestUnavailable } from './manifest.js';
 
-function failed(command: string, error: string, exitCode: number): CapsuleCommandResult {
-  return {
-    status: 'failed',
-    command,
-    timestamp: new Date(wallClock.now()).toISOString(),
-    exitCode,
-    payload: { error },
-  };
+/** A domain failure whose payload is a single teaching `error` string. */
+function fail(command: string, error: string, exitCode: number): CapsuleCommandResult {
+  return failed(command, { error }, exitCode);
 }
 
 /** `<verb> <id>` args — the single source of the inspect/verify `inputSchema`. */
@@ -57,7 +52,7 @@ const CapsuleVerifyPayloadSchema = {
 } as const satisfies CommandJsonSchema;
 
 /** `capsule inspect <id>` — return a single manifest entry. */
-export const capsuleInspectCommand: HandledCommand = {
+export const capsuleInspectCommand = defineCommand({
   descriptor: {
     name: 'capsule.inspect',
     summary: 'Inspect a capsule manifest entry.',
@@ -69,24 +64,20 @@ export const capsuleInspectCommand: HandledCommand = {
     // CUT D5: link a live MCP Apps view that renders this tool's result (host-injected).
     ui: { resourceUri: 'ui://liteship/app/capsule-inspect' },
   },
+  argsSchema: S.struct({ id: S.string }),
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
     const loaded = loadManifest(context);
     if (!loaded.ok) return manifestUnavailable('capsule.inspect', loaded, context);
     const { manifest } = loaded;
-    const id = String(invocation.args.id ?? '');
+    const id = invocation.args.id;
     const entry = manifest.capsules.find((c) => c.name === id);
-    if (!entry) return failed('capsule.inspect', `capsule not found: ${id}`, 1);
-    return {
-      status: 'ok',
-      command: 'capsule.inspect',
-      timestamp: new Date(wallClock.now()).toISOString(),
-      payload: { capsule: entry },
-    };
+    if (!entry) return fail('capsule.inspect', `capsule not found: ${id}`, 1);
+    return ok('capsule.inspect', { capsule: entry });
   },
-};
+});
 
 /** `capsule list [--kind=<kind>]` — list manifest entries, optionally filtered. */
-export const capsuleListCommand: HandledCommand = {
+export const capsuleListCommand = defineCommand({
   descriptor: {
     name: 'capsule.list',
     summary: 'List capsules, optionally filtered by kind.',
@@ -97,23 +88,19 @@ export const capsuleListCommand: HandledCommand = {
     outputSchema: CapsuleListPayloadSchema,
     annotations: { readOnly: true, mcpExposed: true, group: 'manifest' },
   },
+  argsSchema: S.struct({ kind: S.optional(S.string) }),
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
     const loaded = loadManifest(context);
     if (!loaded.ok) return manifestUnavailable('capsule.list', loaded, context);
     const { manifest } = loaded;
-    const kind = typeof invocation.args.kind === 'string' ? invocation.args.kind : undefined;
+    const kind = invocation.args.kind;
     const capsules = kind ? manifest.capsules.filter((c) => c.kind === kind) : manifest.capsules;
-    return {
-      status: 'ok',
-      command: 'capsule.list',
-      timestamp: new Date(wallClock.now()).toISOString(),
-      payload: { capsules, kind: kind ?? null },
-    };
+    return ok('capsule.list', { capsules, kind: kind ?? null });
   },
-};
+});
 
 /** `capsule verify <id>` — run the capsule's generated test files. */
-export const capsuleVerifyCommand: HandledCommand = {
+export const capsuleVerifyCommand = defineCommand({
   descriptor: {
     name: 'capsule.verify',
     summary: 'Verify a capsule’s generated tests.',
@@ -122,25 +109,21 @@ export const capsuleVerifyCommand: HandledCommand = {
     outputSchema: CapsuleVerifyPayloadSchema,
     annotations: { mcpExposed: true, group: 'manifest' },
   },
+  argsSchema: S.struct({ id: S.string }),
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
     const loaded = loadManifest(context);
     if (!loaded.ok) return manifestUnavailable('capsule.verify', loaded, context);
     const { manifest } = loaded;
-    const id = String(invocation.args.id ?? '');
+    const id = invocation.args.id;
     const entry = manifest.capsules.find((c) => c.name === id);
-    if (!entry) return failed('capsule.verify', `capsule not found: ${id}`, 1);
-    if (!entry.generated) return failed('capsule.verify', `capsule has no generated tests: ${id}`, 2);
+    if (!entry) return fail('capsule.verify', `capsule not found: ${id}`, 1);
+    if (!entry.generated) return fail('capsule.verify', `capsule has no generated tests: ${id}`, 2);
     // Direct-invocation guard; the dispatcher already enforces `requires`.
     if (!context.runVitest) return capabilityUnavailable('capsule.verify', ['runVitest']);
     const { exitCode, stderrTail } = await context.runVitest([entry.generated.testFile]);
     if (exitCode !== 0) {
-      return failed('capsule.verify', `generated tests failed${stderrTail ? `: ${stderrTail.trim()}` : ''}`, 2);
+      return fail('capsule.verify', `generated tests failed${stderrTail ? `: ${stderrTail.trim()}` : ''}`, 2);
     }
-    return {
-      status: 'ok',
-      command: 'capsule.verify',
-      timestamp: new Date(wallClock.now()).toISOString(),
-      payload: { capsuleId: entry.name },
-    };
+    return ok('capsule.verify', { capsuleId: entry.name });
   },
-};
+});

@@ -29,6 +29,7 @@ projection adapters over this package; neither imports the other.
 - [CheckInvariantEntry](interfaces/CheckInvariantEntry.md)
 - [CheckInvariantsSummary](interfaces/CheckInvariantsSummary.md)
 - [CommandContext](interfaces/CommandContext.md)
+- [CommandMap](interfaces/CommandMap.md)
 - [HandledCommand](interfaces/HandledCommand.md)
 - [InvariantViolation](interfaces/InvariantViolation.md)
 - [InvariantViolationGroup](interfaces/InvariantViolationGroup.md)
@@ -109,11 +110,14 @@ projection adapters over this package; neither imports the other.
 ## Functions
 
 - [capabilityUnavailable](functions/capabilityUnavailable.md)
+- [defineCommand](functions/defineCommand.md)
 - [deriveBuildEnv](functions/deriveBuildEnv.md)
 - [diffInventories](functions/diffInventories.md)
+- [failed](functions/failed.md)
 - [matchGlossaryEntries](functions/matchGlossaryEntries.md)
 - [mcpExposedDescriptors](functions/mcpExposedDescriptors.md)
 - [observedLifecycleScripts](functions/observedLifecycleScripts.md)
+- [ok](functions/ok.md)
 - [packageSlug](functions/packageSlug.md)
 - [readPackageManagerVersion](functions/readPackageManagerVersion.md)
 - [selectTargets](functions/selectTargets.md)

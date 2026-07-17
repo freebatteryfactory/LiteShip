@@ -7,8 +7,8 @@
  *
  * @module
  */
-import { wallClock, type CapsuleCommandResult, type CommandJsonSchema, type ContentAddress } from '@czap/core';
-import type { CommandContext, HandledCommand } from '../registry.js';
+import { S, type CapsuleCommandResult, type CommandJsonSchema, type ContentAddress } from '@czap/core';
+import { defineCommand, failed, ok } from '../registry.js';
 
 type Verdict = 'Verified' | 'Mismatch' | 'Incomplete' | 'Unknown';
 
@@ -63,28 +63,18 @@ function verdictResult(
   exitCode: number,
   payload: VerifyPayload,
 ): CapsuleCommandResult<VerifyPayload> {
-  return {
-    status: verdict === 'Verified' ? 'ok' : 'failed',
-    command: 'verify',
-    timestamp: new Date(wallClock.now()).toISOString(),
-    verdict,
-    exitCode,
-    payload,
-  };
+  // Stamp the shared envelope through ok()/failed(); overlay the ADR-0011 verdict
+  // and its explicit exitCode (0 on Verified — the one ok result that pins a code).
+  const base = verdict === 'Verified' ? ok('verify', payload) : failed('verify', payload, exitCode);
+  return { ...base, verdict, exitCode };
 }
 
 function plainError(error: string): CapsuleCommandResult {
-  return {
-    status: 'failed',
-    command: 'verify',
-    timestamp: new Date(wallClock.now()).toISOString(),
-    exitCode: 1,
-    payload: { error },
-  };
+  return failed('verify', { error }, 1);
 }
 
 /** `verify <tarball> [--capsule <file>]` — emit one of four verdicts. */
-export const verifyCommand: HandledCommand = {
+export const verifyCommand = defineCommand({
   descriptor: {
     name: 'verify',
     summary: 'Locally verify a tarball against its ShipCapsule (ADR-0011; no network).',
@@ -96,9 +86,13 @@ export const verifyCommand: HandledCommand = {
     outputSchema: VerifyPayloadSchema,
     annotations: { readOnly: true, group: 'ship' },
   },
-  handler: async (invocation, context: CommandContext): Promise<CapsuleCommandResult> => {
-    const tarball = typeof invocation.args.tarball === 'string' ? invocation.args.tarball : undefined;
-    let capsule = typeof invocation.args.capsule === 'string' ? invocation.args.capsule : undefined;
+  // BOTH args decode as OPTIONAL even though the inputSchema documents `tarball`
+  // as required: ADR-0011 makes an absent tarball an honest `Unknown` verdict at
+  // the handler, not a hard `invalid_args` reject — the handler owns that decision.
+  argsSchema: S.struct({ tarball: S.optional(S.string), capsule: S.optional(S.string) }),
+  handler: async (invocation, context): Promise<CapsuleCommandResult> => {
+    const tarball = invocation.args.tarball;
+    let capsule = invocation.args.capsule;
 
     // No --capsule: ship mints the capsule as a tarball sibling
     // (`<slug>-<version>.shipcapsule.cbor`, see cli ship). Probe that
@@ -167,4 +161,4 @@ export const verifyCommand: HandledCommand = {
       mismatches: [],
     });
   },
-};
+});

@@ -8,7 +8,7 @@
 
 > **CheckInvariantsPayload** = `object`
 
-Defined in: [command/src/commands/check-invariants.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/check-invariants.ts#L69)
+Defined in: [command/src/commands/check-invariants.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/check-invariants.ts#L71)
 
 Structured payload returned by `check-invariants`.
 
@@ -18,7 +18,7 @@ Structured payload returned by `check-invariants`.
 
 > `readonly` **groups**: readonly `object`[]
 
-Defined in: [command/src/commands/check-invariants.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/check-invariants.ts#L71)
+Defined in: [command/src/commands/check-invariants.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/check-invariants.ts#L73)
 
 ***
 
@@ -26,7 +26,7 @@ Defined in: [command/src/commands/check-invariants.ts:71](https://github.com/fre
 
 > `readonly` **lineEndings**: readonly `string`[]
 
-Defined in: [command/src/commands/check-invariants.ts:76](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/check-invariants.ts#L76)
+Defined in: [command/src/commands/check-invariants.ts:78](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/check-invariants.ts#L78)
 
 ***
 
@@ -34,4 +34,4 @@ Defined in: [command/src/commands/check-invariants.ts:76](https://github.com/fre
 
 > `readonly` **ok**: `boolean`
 
-Defined in: [command/src/commands/check-invariants.ts:70](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/check-invariants.ts#L70)
+Defined in: [command/src/commands/check-invariants.ts:72](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/check-invariants.ts#L72)

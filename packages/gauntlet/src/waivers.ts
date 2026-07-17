@@ -130,10 +130,10 @@ export const LITESHIP_WAIVERS: readonly Waiver[] = [
   {
     ruleId: 'gauntlet/no-silent-catch',
     file: 'packages/cli/src/commands/version.ts',
-    line: 47,
+    line: 46,
     owner: 'heyoub',
     reason:
-      'Best-effort CLI-version resolution: import.meta.url may be unavailable in odd bundling/loader contexts, so readCliVersion skips the module-relative package.json candidate and falls through to the cwd-relative one. Non-corrupting (a real version is still resolved from the workspace) and conservative. Documented, not empty. (Surfaced into its own file when readCliVersion was relocated out of doctor.ts by the split.)',
+      'Best-effort CLI-version resolution: import.meta.url may be unavailable in odd bundling/loader contexts, so readCliVersion skips the module-relative package.json candidate and falls through to the cwd-relative one. Non-corrupting (a real version is still resolved from the workspace) and conservative. Documented, not empty. (Surfaced into its own file when readCliVersion was relocated out of doctor.ts by the split; shifted 47→46 when the Wave 5 runCliCommand migration dropped the spawn imports above it.)',
     expires: BOUNDARY_REVIEW,
     blastRadius:
       'With no import.meta.url, the version read falls back to the cwd package.json — at worst a wrong version string when run from an unrelated cwd, never a crash or corrupted state.',
