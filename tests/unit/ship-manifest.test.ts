@@ -14,8 +14,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { scaledTimeout } from '../../vitest.shared.js';
-import { spawnArgv } from '../../scripts/lib/spawn.js';
-import { mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import { packInWorkspace } from '../support/pack.js';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { gunzipSync, gzipSync } from 'node:zlib';
@@ -42,12 +42,10 @@ describe('tarballManifestAddress', () => {
       // Pack from the IN-WORKSPACE package dir (not a tmp copy): pnpm resolves the
       // package's `catalog:` peer spec to its concrete range only inside the
       // workspace — exactly as `czap ship` / `pnpm publish` do on the real release
-      // path (.github/workflows/release.yml). --pack-destination drops the .tgz into
-      // the clean tmp dir, leaving no artifact behind in the source package.
-      await spawnArgv('pnpm', ['pack', '--pack-destination', workDir], { cwd: sourceDir });
-      const tgzFile = readdirSync(workDir).find((f) => f.endsWith('.tgz'));
-      expect(tgzFile).toBeDefined();
-      const tgzPath = join(workDir, tgzFile!);
+      // path (.github/workflows/release.yml). The shared owner (tests/support/pack.ts,
+      // scar S0.5) drops the .tgz into the clean tmp dir, leaving no artifact behind
+      // in the source package, and returns its path.
+      const tgzPath = await packInWorkspace(sourceDir, workDir);
       const tgzBytes = new Uint8Array(readFileSync(tgzPath));
       const innerTar = gunzipSync(tgzBytes);
       const a = new Uint8Array(gzipSync(innerTar, { level: 6 }));

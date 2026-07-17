@@ -10,12 +10,11 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { spawnArgv } from '../../scripts/lib/spawn.js';
+import { packInWorkspace } from '../support/pack.js';
 import {
   existsSync,
   mkdtempSync,
   readFileSync,
-  readdirSync,
   rmSync,
   writeFileSync,
 } from 'node:fs';
@@ -82,16 +81,11 @@ beforeAll(async () => {
   workDir = mkdtempSync(join(tmpdir(), 'litesip-verify-'));
   // Pack from the IN-WORKSPACE package dir so pnpm resolves the package's
   // `catalog:` peer spec to its concrete range (as `czap ship` / `pnpm publish`
-  // do on the real release path); --pack-destination lands the .tgz in the clean
-  // tmp workDir. The dir is freshly minted, so there is no stale .tgz for the
-  // `.find()` below to grab and no stray sibling capsule to flip the no-capsule
-  // test to Verified — and nothing is left behind in the source package.
-  await spawnArgv('pnpm', ['pack', '--pack-destination', workDir], {
-    cwd: join(REPO_ROOT, 'packages/_spine'),
-  });
-  const tgz = readdirSync(workDir).find((f) => f.endsWith('.tgz'));
-  if (!tgz) throw new Error('pnpm pack produced no .tgz');
-  tarballPath = join(workDir, tgz);
+  // do on the real release path); the shared owner (tests/support/pack.ts, scar
+  // S0.5) lands the .tgz in the clean tmp workDir. The dir is freshly minted, so
+  // there is no stray sibling capsule to flip the no-capsule test to Verified,
+  // and nothing is left behind in the source package.
+  tarballPath = await packInWorkspace(join(REPO_ROOT, 'packages/_spine'), workDir);
   tarballBytes = new Uint8Array(readFileSync(tarballPath));
 });
 
