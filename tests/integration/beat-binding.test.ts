@@ -13,7 +13,6 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { Effect } from 'effect';
 import {
   Track,
   compileScene,
@@ -106,7 +105,7 @@ describe('beat-binding integration with SceneRuntime', () => {
     const compiled = compileScene(buildSceneWithBeats(beats));
     const handle = await SceneRuntime.build(compiled);
     try {
-      const beatEntities = await Effect.runPromise(handle.world.query('Beat'));
+      const beatEntities = handle.world.query('Beat');
       expect(beatEntities.length).toBe(beats.length);
       const spawnedTimes = beatEntities
         .map((e) => (e.components.get('Beat') as { timeMs: number }).timeMs)
@@ -126,7 +125,7 @@ describe('beat-binding integration with SceneRuntime', () => {
     try {
       // 500 ms — exactly at the beat.
       await handle.tick(500);
-      const synced = await Effect.runPromise(handle.world.query('SyncAnchor'));
+      const synced = handle.world.query('SyncAnchor');
       expect(synced.length).toBeGreaterThan(0);
       for (const e of synced) {
         const intensity = e.components.get('_intensity');
@@ -146,7 +145,7 @@ describe('beat-binding integration with SceneRuntime', () => {
     try {
       // 500 ms past the only beat → exp(-500/250) = exp(-2) ≈ 0.135.
       await handle.tick(500);
-      const synced = await Effect.runPromise(handle.world.query('SyncAnchor'));
+      const synced = handle.world.query('SyncAnchor');
       expect(synced.length).toBeGreaterThan(0);
       for (const e of synced) {
         const intensity = e.components.get('_intensity') as number;
@@ -165,7 +164,7 @@ describe('beat-binding integration with SceneRuntime', () => {
     const handle = await SceneRuntime.build(compiled);
     try {
       await handle.tick(100);
-      const synced = await Effect.runPromise(handle.world.query('SyncAnchor'));
+      const synced = handle.world.query('SyncAnchor');
       for (const e of synced) {
         const intensity = e.components.get('_intensity');
         expect(intensity).toBe(0);

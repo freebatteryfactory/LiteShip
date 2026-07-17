@@ -6,7 +6,6 @@
  */
 
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
-import { Effect } from 'effect';
 import { Resumption } from '@czap/web';
 import type { ResumptionState } from '@czap/web';
 
@@ -71,19 +70,19 @@ afterEach(() => {
 
 describe('Resumption.saveState / loadState', () => {
   test('round-trip: save then load returns same state', async () => {
-    await Effect.runPromise(Resumption.saveState(sampleState));
-    const loaded = await Effect.runPromise(Resumption.loadState('art-1'));
+    await Resumption.saveState(sampleState);
+    const loaded = await Resumption.loadState('art-1');
     expect(loaded).toEqual(sampleState);
   });
 
   test('loadState returns null for missing key', async () => {
-    const loaded = await Effect.runPromise(Resumption.loadState('nonexistent'));
+    const loaded = await Resumption.loadState('nonexistent');
     expect(loaded).toBeNull();
   });
 
   test('loadState returns null and cleans up corrupt JSON', async () => {
     storage.setItem('czap:resumption:bad', '{not json');
-    const loaded = await Effect.runPromise(Resumption.loadState('bad'));
+    const loaded = await Resumption.loadState('bad');
     expect(loaded).toBeNull();
     expect(storage.removeItem).toHaveBeenCalledWith('czap:resumption:bad');
   });
@@ -91,9 +90,9 @@ describe('Resumption.saveState / loadState', () => {
 
 describe('Resumption.clearState', () => {
   test('clears previously saved state', async () => {
-    await Effect.runPromise(Resumption.saveState(sampleState));
-    await Effect.runPromise(Resumption.clearState('art-1'));
-    const loaded = await Effect.runPromise(Resumption.loadState('art-1'));
+    await Resumption.saveState(sampleState);
+    await Resumption.clearState('art-1');
+    const loaded = await Resumption.loadState('art-1');
     expect(loaded).toBeNull();
   });
 });
@@ -107,7 +106,7 @@ describe('Resumption.resume', () => {
     const snapshotBody = { html: '<div>hi</div>', signals: { a: 1 }, lastEventId: '99' };
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(mockResponse(snapshotBody)));
 
-    const result = await Effect.runPromise(Resumption.resume('art-1', '50'));
+    const result = await Resumption.resume('art-1', '50');
 
     expect(result.type).toBe('snapshot');
     if (result.type === 'snapshot') {
@@ -119,38 +118,38 @@ describe('Resumption.resume', () => {
 
   test('gap <= 0 → returns empty replay', async () => {
     // Save state with lastSequence=10
-    await Effect.runPromise(Resumption.saveState({ ...sampleState, lastSequence: 10, lastEventId: '10' }));
+    await Resumption.saveState({ ...sampleState, lastSequence: 10, lastEventId: '10' });
 
     // currentEventId parses to sequence 10 → gap = 10 - 11 = -1 ≤ 0
-    const result = await Effect.runPromise(Resumption.resume('art-1', '10'));
+    const result = await Resumption.resume('art-1', '10');
     expect(result).toEqual({ type: 'replay', patches: [] });
   });
 
   test('gap > maxGapSize → falls back to snapshot', async () => {
-    await Effect.runPromise(Resumption.saveState({ ...sampleState, lastSequence: 1, lastEventId: '1' }));
+    await Resumption.saveState({ ...sampleState, lastSequence: 1, lastEventId: '1' });
 
     const snapshotBody = { html: '<p>snap</p>', signals: {}, lastEventId: '200' };
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(mockResponse(snapshotBody)));
 
     // sequence 200, gap = 200 - 2 = 198 > default maxGapSize of 50
-    const result = await Effect.runPromise(Resumption.resume('art-1', '200'));
+    const result = await Resumption.resume('art-1', '200');
     expect(result.type).toBe('snapshot');
   });
 
   test('small gap → requests replay patches', async () => {
-    await Effect.runPromise(Resumption.saveState({ ...sampleState, lastSequence: 10, lastEventId: '10' }));
+    await Resumption.saveState({ ...sampleState, lastSequence: 10, lastEventId: '10' });
 
     const replayBody = { patches: [{ op: 'replace', path: '/a', value: 1 }] };
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(mockResponse(replayBody)));
 
-    const result = await Effect.runPromise(Resumption.resume('art-1', '15'));
+    const result = await Resumption.resume('art-1', '15');
     expect(result).toEqual({ type: 'replay', patches: replayBody.patches });
   });
 
-  test('snapshot fetch failure → Effect fails with error', async () => {
+  test('snapshot fetch failure → rejects with error', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(mockResponse({}, 500)));
 
-    const result = Effect.runPromise(Resumption.resume('art-1', '50'));
+    const result = Resumption.resume('art-1', '50');
     // Teaching contract: the fetched URL, the status, and the way out.
     await expect(result).rejects.toThrow(
       /Snapshot request to .*\/czap\/snapshot\/art-1 failed: 500.*ResumptionConfig\.snapshotUrl/,
@@ -160,36 +159,34 @@ describe('Resumption.resume', () => {
   test('snapshot network failure surfaces the fetch error context', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network down')));
 
-    await expect(Effect.runPromise(Resumption.resume('art-1', '50'))).rejects.toThrow(/Failed to fetch snapshot/);
+    await expect(Resumption.resume('art-1', '50')).rejects.toThrow(/Failed to fetch snapshot/);
   });
 
-  test('replay fetch failure → Effect fails with error', async () => {
-    await Effect.runPromise(Resumption.saveState({ ...sampleState, lastSequence: 10, lastEventId: '10' }));
+  test('replay fetch failure → rejects with error', async () => {
+    await Resumption.saveState({ ...sampleState, lastSequence: 10, lastEventId: '10' });
 
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(mockResponse({}, 500)));
 
-    const result = Effect.runPromise(Resumption.resume('art-1', '15'));
+    const result = Resumption.resume('art-1', '15');
     await expect(result).rejects.toThrow(
       /Replay request to .*\/czap\/replay\/art-1.* failed: 500.*ResumptionConfig\.replayUrl/,
     );
   });
 
   test('replay network failure surfaces the fetch error context', async () => {
-    await Effect.runPromise(Resumption.saveState({ ...sampleState, lastSequence: 10, lastEventId: '10' }));
+    await Resumption.saveState({ ...sampleState, lastSequence: 10, lastEventId: '10' });
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network down')));
 
-    await expect(Effect.runPromise(Resumption.resume('art-1', '15'))).rejects.toThrow(/Failed to fetch replay/);
+    await expect(Resumption.resume('art-1', '15')).rejects.toThrow(/Failed to fetch replay/);
   });
 
   test('rejects snapshot URLs that do not satisfy the endpoint policy', async () => {
     vi.stubGlobal('fetch', vi.fn());
 
     await expect(
-      Effect.runPromise(
-        Resumption.resume('art-1', '50', {
-          snapshotUrl: 'https://cdn.example.com/fx/snapshot',
-        }),
-      ),
+      Resumption.resume('art-1', '50', {
+        snapshotUrl: 'https://cdn.example.com/fx/snapshot',
+      }),
       // Cross-origin rejection must name both origins and the literal
       // endpointPolicy allowlist fix.
     ).rejects.toThrow(
@@ -200,15 +197,13 @@ describe('Resumption.resume', () => {
   });
 
   test('rejects replay URLs that do not satisfy the endpoint policy', async () => {
-    await Effect.runPromise(Resumption.saveState({ ...sampleState, lastSequence: 10, lastEventId: '10' }));
+    await Resumption.saveState({ ...sampleState, lastSequence: 10, lastEventId: '10' });
     vi.stubGlobal('fetch', vi.fn());
 
     await expect(
-      Effect.runPromise(
-        Resumption.resume('art-1', '15', {
-          replayUrl: 'https://cdn.example.com/fx/replay',
-        }),
-      ),
+      Resumption.resume('art-1', '15', {
+        replayUrl: 'https://cdn.example.com/fx/replay',
+      }),
     ).rejects.toThrow(/Replay URL "https:\/\/cdn\.example\.com\/fx\/replay" was rejected.*endpointPolicy/);
 
     expect(fetch).not.toHaveBeenCalled();
@@ -218,7 +213,7 @@ describe('Resumption.resume', () => {
     const fetchMock = vi.fn().mockResolvedValue(mockResponse({ html: '', signals: {}, lastEventId: '1' }));
     vi.stubGlobal('fetch', fetchMock);
 
-    await Effect.runPromise(Resumption.resume('my-artifact', '50'));
+    await Resumption.resume('my-artifact', '50');
 
     const url = fetchMock.mock.calls[0]![0] as string;
     expect(url).toContain('my-artifact');
@@ -228,17 +223,15 @@ describe('Resumption.resume', () => {
     const fetchMock = vi.fn().mockResolvedValue(mockResponse({ html: '', signals: {}, lastEventId: '1' }));
     vi.stubGlobal('fetch', fetchMock);
 
-    await Effect.runPromise(
-      Resumption.resume('absolute-artifact', '50', {
-        snapshotUrl: 'https://cdn.example.com/fx/snapshot',
-        endpointPolicy: {
-          mode: 'allowlist',
-          byKind: {
-            snapshot: ['https://cdn.example.com'],
-          },
+    await Resumption.resume('absolute-artifact', '50', {
+      snapshotUrl: 'https://cdn.example.com/fx/snapshot',
+      endpointPolicy: {
+        mode: 'allowlist',
+        byKind: {
+          snapshot: ['https://cdn.example.com'],
         },
-      }),
-    );
+      },
+    });
 
     expect(fetchMock).toHaveBeenCalledWith(
       'https://cdn.example.com/fx/snapshot/absolute-artifact',
@@ -247,14 +240,12 @@ describe('Resumption.resume', () => {
   });
 
   test('replay URL includes from/to query params', async () => {
-    await Effect.runPromise(
-      Resumption.saveState({ ...sampleState, artifactId: 'art-2', lastSequence: 10, lastEventId: '10' }),
-    );
+    await Resumption.saveState({ ...sampleState, artifactId: 'art-2', lastSequence: 10, lastEventId: '10' });
 
     const fetchMock = vi.fn().mockResolvedValue(mockResponse({ patches: [] }));
     vi.stubGlobal('fetch', fetchMock);
 
-    await Effect.runPromise(Resumption.resume('art-2', '15'));
+    await Resumption.resume('art-2', '15');
 
     const url = new URL(fetchMock.mock.calls[0]![0] as string);
     expect(url.searchParams.get('from')).toBe('10');
@@ -262,24 +253,20 @@ describe('Resumption.resume', () => {
   });
 
   test('absolute replay URLs preserve host and append from/to query params', async () => {
-    await Effect.runPromise(
-      Resumption.saveState({ ...sampleState, artifactId: 'art-3', lastSequence: 10, lastEventId: '10' }),
-    );
+    await Resumption.saveState({ ...sampleState, artifactId: 'art-3', lastSequence: 10, lastEventId: '10' });
 
     const fetchMock = vi.fn().mockResolvedValue(mockResponse({ patches: [] }));
     vi.stubGlobal('fetch', fetchMock);
 
-    await Effect.runPromise(
-      Resumption.resume('art-3', '15', {
-        replayUrl: 'https://cdn.example.com/fx/replay',
-        endpointPolicy: {
-          mode: 'allowlist',
-          byKind: {
-            replay: ['https://cdn.example.com'],
-          },
+    await Resumption.resume('art-3', '15', {
+      replayUrl: 'https://cdn.example.com/fx/replay',
+      endpointPolicy: {
+        mode: 'allowlist',
+        byKind: {
+          replay: ['https://cdn.example.com'],
         },
-      }),
-    );
+      },
+    });
 
     const url = new URL(fetchMock.mock.calls[0]![0] as string);
     expect(url.origin).toBe('https://cdn.example.com');
@@ -291,21 +278,21 @@ describe('Resumption.resume', () => {
   test('rejects traversal-like artifact IDs before building snapshot or replay URLs', async () => {
     vi.stubGlobal('fetch', vi.fn());
 
-    await expect(Effect.runPromise(Resumption.resume('../../admin', '15'))).rejects.toThrow(/Invalid artifactId/);
+    await expect(Resumption.resume('../../admin', '15')).rejects.toThrow(/Invalid artifactId/);
     expect(fetch).not.toHaveBeenCalled();
   });
 
   test('loadState returns null for structurally invalid sessionStorage data (missing fields)', async () => {
     // Valid JSON but not a valid ResumptionState -- missing lastSequence and timestamp
     storage.setItem('czap:resumption:bad-shape', JSON.stringify({ artifactId: 'bad-shape', lastEventId: 'evt-1' }));
-    const loaded = await Effect.runPromise(Resumption.loadState('bad-shape'));
+    const loaded = await Resumption.loadState('bad-shape');
     expect(loaded).toBeNull();
     expect(storage.removeItem).toHaveBeenCalledWith('czap:resumption:bad-shape');
   });
 
   test('loadState returns null when sessionStorage contains a non-object JSON value', async () => {
     storage.setItem('czap:resumption:num', '42');
-    const loaded = await Effect.runPromise(Resumption.loadState('num'));
+    const loaded = await Resumption.loadState('num');
     expect(loaded).toBeNull();
     expect(storage.removeItem).toHaveBeenCalledWith('czap:resumption:num');
   });
@@ -320,7 +307,7 @@ describe('Resumption.resume', () => {
         timestamp: 1700000000,
       }),
     );
-    const loaded = await Effect.runPromise(Resumption.loadState('wrong-types'));
+    const loaded = await Resumption.loadState('wrong-types');
     expect(loaded).toBeNull();
   });
 
@@ -328,9 +315,7 @@ describe('Resumption.resume', () => {
     // Response has signals and lastEventId but no html
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(mockResponse({ signals: {}, lastEventId: '1' })));
 
-    await expect(Effect.runPromise(Resumption.resume('art-1', '50'))).rejects.toThrow(
-      /Malformed snapshot response/,
-    );
+    await expect(Resumption.resume('art-1', '50')).rejects.toThrow(/Malformed snapshot response/);
   });
 
   test('snapshot response JSON parse failure is surfaced clearly', async () => {
@@ -344,7 +329,7 @@ describe('Resumption.resume', () => {
       } satisfies Partial<Response>),
     );
 
-    await expect(Effect.runPromise(Resumption.resume('art-1', '50'))).rejects.toThrow(/Failed to parse snapshot/);
+    await expect(Resumption.resume('art-1', '50')).rejects.toThrow(/Failed to parse snapshot/);
   });
 
   test('snapshot response with non-string lastEventId is rejected', async () => {
@@ -353,24 +338,20 @@ describe('Resumption.resume', () => {
       vi.fn().mockResolvedValue(mockResponse({ html: '<p>ok</p>', signals: {}, lastEventId: 999 })),
     );
 
-    await expect(Effect.runPromise(Resumption.resume('art-1', '50'))).rejects.toThrow(
-      /Malformed snapshot response/,
-    );
+    await expect(Resumption.resume('art-1', '50')).rejects.toThrow(/Malformed snapshot response/);
   });
 
   test('replay response missing patches array is rejected with clear error', async () => {
-    await Effect.runPromise(Resumption.saveState({ ...sampleState, lastSequence: 10, lastEventId: '10' }));
+    await Resumption.saveState({ ...sampleState, lastSequence: 10, lastEventId: '10' });
 
     // Response is an object but patches is not an array
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(mockResponse({ patches: 'not-an-array' })));
 
-    await expect(Effect.runPromise(Resumption.resume('art-1', '15'))).rejects.toThrow(
-      /Malformed replay response/,
-    );
+    await expect(Resumption.resume('art-1', '15')).rejects.toThrow(/Malformed replay response/);
   });
 
   test('replay response JSON parse failure is surfaced clearly', async () => {
-    await Effect.runPromise(Resumption.saveState({ ...sampleState, lastSequence: 10, lastEventId: '10' }));
+    await Resumption.saveState({ ...sampleState, lastSequence: 10, lastEventId: '10' });
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({
@@ -381,35 +362,33 @@ describe('Resumption.resume', () => {
       } satisfies Partial<Response>),
     );
 
-    await expect(Effect.runPromise(Resumption.resume('art-1', '15'))).rejects.toThrow(/Failed to parse replay/);
+    await expect(Resumption.resume('art-1', '15')).rejects.toThrow(/Failed to parse replay/);
   });
 
   test('replay response that is a bare array (not wrapped in {patches}) is rejected', async () => {
-    await Effect.runPromise(Resumption.saveState({ ...sampleState, lastSequence: 10, lastEventId: '10' }));
+    await Resumption.saveState({ ...sampleState, lastSequence: 10, lastEventId: '10' });
 
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(mockResponse([{ op: 'add' }])));
 
-    await expect(Effect.runPromise(Resumption.resume('art-1', '15'))).rejects.toThrow(
-      /Malformed replay response/,
-    );
+    await expect(Resumption.resume('art-1', '15')).rejects.toThrow(/Malformed replay response/);
   });
 
   test('snapshot response that decodes to a primitive (null/string) is rejected as malformed', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(mockResponse(null)));
-    await expect(Effect.runPromise(Resumption.resume('art-1', '50'))).rejects.toThrow(/Malformed snapshot response/);
+    await expect(Resumption.resume('art-1', '50')).rejects.toThrow(/Malformed snapshot response/);
 
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(mockResponse('just-a-string')));
-    await expect(Effect.runPromise(Resumption.resume('art-1', '50'))).rejects.toThrow(/Malformed snapshot response/);
+    await expect(Resumption.resume('art-1', '50')).rejects.toThrow(/Malformed snapshot response/);
   });
 
   test('replay response that decodes to a primitive (null/string) is rejected as malformed', async () => {
-    await Effect.runPromise(Resumption.saveState({ ...sampleState, lastSequence: 10, lastEventId: '10' }));
+    await Resumption.saveState({ ...sampleState, lastSequence: 10, lastEventId: '10' });
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(mockResponse(null)));
-    await expect(Effect.runPromise(Resumption.resume('art-1', '15'))).rejects.toThrow(/Malformed replay response/);
+    await expect(Resumption.resume('art-1', '15')).rejects.toThrow(/Malformed replay response/);
 
-    await Effect.runPromise(Resumption.saveState({ ...sampleState, lastSequence: 10, lastEventId: '10' }));
+    await Resumption.saveState({ ...sampleState, lastSequence: 10, lastEventId: '10' });
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(mockResponse('literal-string')));
-    await expect(Effect.runPromise(Resumption.resume('art-1', '15'))).rejects.toThrow(/Malformed replay response/);
+    await expect(Resumption.resume('art-1', '15')).rejects.toThrow(/Malformed replay response/);
   });
 
   test('loadState rethrows non-Syntax parse failures so callers do not silently swallow storage bugs', async () => {
@@ -418,7 +397,9 @@ describe('Resumption.resume', () => {
       throw new TypeError('parse exploded');
     });
 
-    await expect(Effect.runPromise(Resumption.loadState('bad'))).rejects.toThrow('parse exploded');
+    // loadState is a synchronous localStorage read — a non-Syntax parse failure
+    // throws synchronously (it is not swallowed like a SyntaxError).
+    expect(() => Resumption.loadState('bad')).toThrow('parse exploded');
     expect(storage.removeItem).not.toHaveBeenCalledWith('czap:resumption:bad');
 
     parseSpy.mockRestore();

@@ -8,18 +8,23 @@
 
 > `const` **Zap**: `object`
 
-Defined in: [core/src/zap.ts:230](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/zap.ts#L230)
+Defined in: [core/src/zap.ts:233](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/zap.ts#L233)
 
-Zap -- push-based event channel backed by Effect PubSub.
-Provides reactive event streams with map, filter, merge, debounce, and throttle.
+Zap — push-based event channel over [CellKernel.fanout](CellKernel.md#fanout). No-replay
+fan-out with `map`, `filter`, `merge`, `debounce`, and `throttle`
+combinators; every factory returns a `{ zap, lifetime }` handle.
 
 ## Type Declaration
 
 ### debounce
 
-> **debounce**: \<`T`\>(`event`, `ms`) => `Effect`\<`ZapShape`\<`T`\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\> = `_debounce`
+> **debounce**: \<`T`\>(`event`, `ms`) => `ZapHandle`\<`T`\> = `_debounce`
 
 Debounces a Zap, only emitting after `ms` milliseconds of silence.
+
+The pending timer is cancelled on each new source value (so only the trailing
+value survives) and gated by the owning Lifetime's [AbortSignal](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal): a
+timer that fires after dispose does not publish.
 
 #### Type Parameters
 
@@ -39,21 +44,18 @@ Debounces a Zap, only emitting after `ms` milliseconds of silence.
 
 #### Returns
 
-`Effect`\<`ZapShape`\<`T`\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\>
+`ZapHandle`\<`T`\>
 
 #### Example
 
 ```ts
-const program = Effect.scoped(Effect.gen(function* () {
-  const input = yield* Zap.make<string>();
-  const debounced = yield* Zap.debounce(input, Millis(300));
-  // debounced.stream emits only after 300ms pause in input
-}));
+const { zap: debounced } = Zap.debounce(input.zap, Millis(300));
+// debounced.stream emits only after a 300ms pause in input
 ```
 
 ### filter
 
-> **filter**: \<`T`\>(`event`, `predicate`) => `Effect`\<`ZapShape`\<`T`\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\> = `_filter`
+> **filter**: \<`T`\>(`event`, `predicate`) => `ZapHandle`\<`T`\> = `_filter`
 
 Filters a Zap, only forwarding values that satisfy the predicate.
 
@@ -75,23 +77,21 @@ Filters a Zap, only forwarding values that satisfy the predicate.
 
 #### Returns
 
-`Effect`\<`ZapShape`\<`T`\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\>
+`ZapHandle`\<`T`\>
 
 #### Example
 
 ```ts
-const program = Effect.scoped(Effect.gen(function* () {
-  const nums = yield* Zap.make<number>();
-  const evens = yield* Zap.filter(nums, n => n % 2 === 0);
-  // evens.stream only receives even numbers
-}));
+const { zap: evens } = Zap.filter(nums.zap, (n) => n % 2 === 0);
+// evens.stream only receives even numbers
 ```
 
 ### fromDOMEvent
 
-> **fromDOMEvent**: \<`K`\>(`element`, `event`) => `Effect`\<`ZapShape`\<`HTMLElementEventMap`\[`K`\]\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\> = `_fromDOMEvent`
+> **fromDOMEvent**: \<`K`\>(`element`, `event`) => `ZapHandle`\<`HTMLElementEventMap`\[`K`\]\> = `_fromDOMEvent`
 
-Creates a Zap from a DOM event, auto-managing listener lifecycle via Scope.
+Creates a Zap from a DOM event; the listener is owned by the returned
+[Lifetime](Lifetime.md) and removed on dispose.
 
 #### Type Parameters
 
@@ -111,24 +111,21 @@ Creates a Zap from a DOM event, auto-managing listener lifecycle via Scope.
 
 #### Returns
 
-`Effect`\<`ZapShape`\<`HTMLElementEventMap`\[`K`\]\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\>
+`ZapHandle`\<`HTMLElementEventMap`\[`K`\]\>
 
 #### Example
 
 ```ts
-const program = Effect.scoped(Effect.gen(function* () {
-  const btn = document.getElementById('btn');
-  if (!(btn instanceof HTMLElement)) return;
-  const clicks = yield* Zap.fromDOMEvent(btn, 'click');
-  // clicks.stream emits MouseEvents; listener removed when scope closes
-}));
+const btn = document.getElementById('btn')!;
+const { zap, lifetime } = Zap.fromDOMEvent(btn, 'click');
+// zap.stream emits MouseEvents; await lifetime.dispose() removes the listener
 ```
 
 ### make
 
-> **make**: \<`T`\>() => `Effect`\<`ZapShape`\<`T`\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\> = `_make`
+> **make**: \<`T`\>() => `ZapHandle`\<`T`\> = `_make`
 
-Creates a new push-based event channel backed by an unbounded PubSub.
+Creates a new push-based event channel backed by a no-replay fan-out.
 
 #### Type Parameters
 
@@ -138,19 +135,19 @@ Creates a new push-based event channel backed by an unbounded PubSub.
 
 #### Returns
 
-`Effect`\<`ZapShape`\<`T`\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\>
+`ZapHandle`\<`T`\>
 
 #### Example
 
 ```ts
-const zap = await Effect.runPromise(Effect.scoped(Zap.make<number>()));
-Effect.runSync(zap.emit(42));
-// Subscribers on zap.stream will receive 42
+const { zap } = Zap.make<number>();
+zap.stream.subscribe((n) => received.push(n));
+zap.emit(42); // subscribers receive 42
 ```
 
 ### map
 
-> **map**: \<`A`, `B`\>(`event`, `f`) => `Effect`\<`ZapShape`\<`B`\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\> = `_map`
+> **map**: \<`A`, `B`\>(`event`, `f`) => `ZapHandle`\<`B`\> = `_map`
 
 Transforms each value emitted by a Zap through a mapping function.
 
@@ -176,21 +173,18 @@ Transforms each value emitted by a Zap through a mapping function.
 
 #### Returns
 
-`Effect`\<`ZapShape`\<`B`\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\>
+`ZapHandle`\<`B`\>
 
 #### Example
 
 ```ts
-const program = Effect.scoped(Effect.gen(function* () {
-  const nums = yield* Zap.make<number>();
-  const strs = yield* Zap.map(nums, n => `value: ${n}`);
-  // strs.stream emits transformed strings
-}));
+const { zap: strs } = Zap.map(nums.zap, (n) => `value: ${n}`);
+// strs.stream emits transformed strings
 ```
 
 ### merge
 
-> **merge**: \<`T`\>(`events`) => `Effect`\<`ZapShape`\<`T`\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\> = `_merge`
+> **merge**: \<`T`\>(`events`) => `ZapHandle`\<`T`\> = `_merge`
 
 Merges multiple Zaps of the same type into a single Zap.
 
@@ -208,24 +202,23 @@ readonly `ZapShape`\<`T`\>[]
 
 #### Returns
 
-`Effect`\<`ZapShape`\<`T`\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\>
+`ZapHandle`\<`T`\>
 
 #### Example
 
 ```ts
-const program = Effect.scoped(Effect.gen(function* () {
-  const a = yield* Zap.make<number>();
-  const b = yield* Zap.make<number>();
-  const merged = yield* Zap.merge([a, b]);
-  // merged.stream receives events from both a and b
-}));
+const { zap: merged } = Zap.merge([a.zap, b.zap]);
+// merged.stream receives events from both a and b
 ```
 
 ### throttle
 
-> **throttle**: \<`T`\>(`event`, `ms`) => `Effect`\<`ZapShape`\<`T`\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\> = `_throttle`
+> **throttle**: \<`T`\>(`event`, `ms`, `clock`) => `ZapHandle`\<`T`\> = `_throttle`
 
-Throttles a Zap, allowing at most one emission per `ms` milliseconds.
+Throttles a Zap, allowing at most one emission per `ms` milliseconds. The
+window is measured through the injected [Clock](../interfaces/Clock.md) (defaulting to
+[systemClock](systemClock.md), the monotonic `performance.now` boundary) so the throttle
+is replayable without an ambient time read.
 
 #### Type Parameters
 
@@ -243,27 +236,26 @@ Throttles a Zap, allowing at most one emission per `ms` milliseconds.
 
 `Millis`
 
+##### clock?
+
+[`Clock`](../interfaces/Clock.md) = `systemClock`
+
 #### Returns
 
-`Effect`\<`ZapShape`\<`T`\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\>
+`ZapHandle`\<`T`\>
 
 #### Example
 
 ```ts
-const program = Effect.scoped(Effect.gen(function* () {
-  const scroll = yield* Zap.make<number>();
-  const throttled = yield* Zap.throttle(scroll, Millis(16));
-  // throttled.stream emits at most once every 16ms (~60fps)
-}));
+const { zap: throttled } = Zap.throttle(scroll.zap, Millis(16));
+// throttled.stream emits at most once every 16ms (~60fps)
 ```
 
 ## Example
 
 ```ts
-const program = Effect.scoped(Effect.gen(function* () {
-  const zap = yield* Zap.make<number>();
-  const doubled = yield* Zap.map(zap, n => n * 2);
-  yield* zap.emit(5);
-  // doubled.stream receives 10
-}));
+const { zap } = Zap.make<number>();
+const { zap: doubled } = Zap.map(zap, (n) => n * 2);
+doubled.stream.subscribe((n) => received.push(n));
+zap.emit(5); // doubled subscribers receive 10
 ```

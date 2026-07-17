@@ -13,7 +13,12 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { scaledTimeout } from '../../vitest.shared.js';
 import { resolve } from 'node:path';
-import { detectCapsuleCalls, WORKSPACE_ALIASES } from '../../scripts/lib/capsule-detector.js';
+import {
+  detectCapsuleCalls,
+  WORKSPACE_ALIASES,
+  FACTORY_HINTS,
+  FACTORY_NAMING,
+} from '../../scripts/lib/capsule-detector.js';
 import { Config } from '@czap/core';
 
 const CANONICAL_CBOR = resolve('packages/core/src/capsules/canonical-cbor.ts');
@@ -116,5 +121,35 @@ describe('capsule detector workspace aliases', () => {
     const canonical = Object.keys(Config.toTestAliases(Config.make({}), process.cwd()));
     const detector = Object.keys(WORKSPACE_ALIASES);
     expect(new Set(detector)).toEqual(new Set(canonical));
+  });
+});
+
+/**
+ * FACTORY_HINTS single-owner pin (scar S1.5.2).
+ *
+ * The capsule pre-filter hint set used to be COPIED, hand-listed, inside
+ * `tests/property/schema-strictness.prop.test.ts` while `scripts/capsule-compile.ts`
+ * derived its own from FACTORY_NAMING — a fork that would silently drift the day a
+ * new projection factory landed, quietly narrowing the strictness sweep. Both now
+ * import the ONE {@link FACTORY_HINTS} from the detector lib. These pins freeze:
+ *   1. the DERIVATION (hints = the two base factories + every FACTORY_NAMING key),
+ *      so the list stays auto-generated, never re-hardcoded; and
+ *   2. the canonical CONTENT, so adding/removing a factory forces a conscious,
+ *      reviewable update here (red-proven by desyncing one FACTORY_NAMING entry).
+ */
+describe('FACTORY_HINTS — single owner of the capsule pre-filter (scar S1.5.2)', () => {
+  it('is exactly the two base factories plus every FACTORY_NAMING key (derived, not hand-listed)', () => {
+    expect([...FACTORY_HINTS]).toEqual(['defineCapsule', 'defineAsset', ...Object.keys(FACTORY_NAMING)]);
+  });
+
+  it('pins the canonical hint set — a factory added to / removed from FACTORY_NAMING must update this list', () => {
+    expect([...FACTORY_HINTS]).toEqual([
+      'defineCapsule',
+      'defineAsset',
+      'BeatMarkerProjection',
+      'OnsetProjection',
+      'WaveformProjection',
+      'WavMetadataProjection',
+    ]);
   });
 });

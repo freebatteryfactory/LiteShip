@@ -7,7 +7,6 @@
  * @module
  */
 
-import { Effect } from 'effect';
 import type { System } from '@czap/core';
 
 /** Mix receipt shape emitted by PassThroughMixer per entity per tick. */
@@ -23,16 +22,15 @@ export function PassThroughMixer(frameIndex: number, sink: (receipt: MixReceipt)
   return {
     name: 'PassThroughMixer',
     query: ['AudioSource', 'Volume', 'Pan'],
-    execute: (entities) =>
-      Effect.gen(function* () {
-        for (const e of entities) {
-          sink({
-            frame: frameIndex,
-            entity: e.id,
-            volume: e.components.get('Volume') as number,
-            pan: e.components.get('Pan') as number,
-          });
-        }
-      }),
+    execute: (entities) => {
+      for (const e of entities) {
+        sink({
+          frame: frameIndex,
+          entity: e.id,
+          volume: e.components.get('Volume') as number,
+          pan: e.components.get('Pan') as number,
+        });
+      }
+    },
   };
 }

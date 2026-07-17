@@ -6,7 +6,7 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Effect, Schema } from 'effect';
+import { Schema } from 'effect';
 import { Boundary, Composable, ComposableWorld, Part, Style, Token, World } from '@czap/core';
 import { hasTag } from '@czap/error';
 
@@ -61,7 +61,7 @@ const scorePart = {
 
 describe('ECS Composable Infrastructure', () => {
   test('World.make returns a world with the required methods', () => {
-    const world = Effect.runSync(Effect.scoped(World.make()));
+    const { world } = World.make();
 
     expect(world.spawn).toBeTypeOf('function');
     expect(world.despawn).toBeTypeOf('function');
@@ -74,16 +74,9 @@ describe('ECS Composable Infrastructure', () => {
   });
 
   test('World.spawn returns unique EntityIds with a content fingerprint suffix', () => {
-    const [id1, id2] = Effect.runSync(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const world = yield* World.make();
-          const first = yield* world.spawn({ type: 'enemy' });
-          const second = yield* world.spawn({ type: 'enemy' });
-          return [first, second] as const;
-        }),
-      ),
-    );
+    const { world } = World.make();
+    const id1 = world.spawn({ type: 'enemy' });
+    const id2 = world.spawn({ type: 'enemy' });
 
     expect(id1).toMatch(/^entity-\d+:fnv1a:[0-9a-f]{8}$/);
     expect(id2).toMatch(/^entity-\d+:fnv1a:[0-9a-f]{8}$/);
@@ -93,32 +86,26 @@ describe('ECS Composable Infrastructure', () => {
   });
 
   test('World query, addComponent, removeComponent, and despawn all behave correctly', () => {
-    const result = Effect.runSync(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const world = yield* World.make();
-          const entityId = yield* world.spawn({ tag: 'player' });
-          const missingId = 'entity-999:fnv1a:deadbeef' as never;
+    const { world } = World.make();
+    const entityId = world.spawn({ tag: 'player' });
+    const missingId = 'entity-999:fnv1a:deadbeef' as never;
 
-          yield* world.addComponent(entityId, scorePart, 42);
-          yield* world.addComponent(missingId, scorePart, 1);
+    world.addComponent(entityId, scorePart, 42);
+    world.addComponent(missingId, scorePart, 1);
 
-          const withScore = yield* world.query('tag', 'score');
-          yield* world.removeComponent(entityId, 'score');
-          yield* world.removeComponent(missingId, 'score');
-          const afterRemoval = yield* world.query('tag', 'score');
-          yield* world.despawn(entityId);
-          yield* world.despawn(missingId);
-          const afterDespawn = yield* world.query('tag');
+    const withScore = world.query('tag', 'score');
+    world.removeComponent(entityId, 'score');
+    world.removeComponent(missingId, 'score');
+    const afterRemoval = world.query('tag', 'score');
+    world.despawn(entityId);
+    world.despawn(missingId);
+    const afterDespawn = world.query('tag');
 
-          return {
-            withScore,
-            afterRemoval,
-            afterDespawn,
-          };
-        }),
-      ),
-    );
+    const result = {
+      withScore,
+      afterRemoval,
+      afterDespawn,
+    };
 
     expect(result.withScore).toHaveLength(1);
     expect(result.withScore[0]?.components.get('score')).toBe(42);
@@ -127,83 +114,69 @@ describe('ECS Composable Infrastructure', () => {
   });
 
   test('regular systems execute during tick with matched query results', () => {
-    const executions = Effect.runSync(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const world = yield* World.make();
-          yield* world.spawn({ position: { x: 1, y: 2 } });
-          yield* world.spawn({ position: { x: 3, y: 4 } });
+    const { world } = World.make();
+    world.spawn({ position: { x: 1, y: 2 } });
+    world.spawn({ position: { x: 3, y: 4 } });
 
-          let callCount = 0;
-          let lastMatched = 0;
+    let callCount = 0;
+    let lastMatched = 0;
 
-          yield* world.addSystem({
-            name: 'position-reader',
-            query: ['position'],
-            execute(entities) {
-              callCount++;
-              lastMatched = entities.length;
-              return Effect.void;
-            },
-          });
+    world.addSystem({
+      name: 'position-reader',
+      query: ['position'],
+      execute(entities) {
+        callCount++;
+        lastMatched = entities.length;
+      },
+    });
 
-          yield* world.tick();
-          return { callCount, lastMatched };
-        }),
-      ),
-    );
+    world.tick();
+    const executions = { callCount, lastMatched };
 
     expect(executions.callCount).toBe(1);
     expect(executions.lastMatched).toBe(2);
   });
 
   test('dense systems execute only when all queried stores are registered', () => {
-    const result = Effect.runSync(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const world = yield* World.make();
-          const posX = Part.dense('posX', 8);
-          const posY = Part.dense('posY', 8);
-          const id = yield* world.spawn();
-          posX.set(id, 1);
-          posY.set(id, 2);
+    const { world } = World.make();
+    const posX = Part.dense('posX', 8);
+    const posY = Part.dense('posY', 8);
+    const id = world.spawn();
+    posX.set(id, 1);
+    posY.set(id, 2);
 
-          let executedWithMissingStore = false;
-          let executedWithAllStores = false;
+    let executedWithMissingStore = false;
+    let executedWithAllStores = false;
 
-          yield* world.addSystem({
-            name: 'dense-mover',
-            query: ['posX', 'posY'],
-            _denseSystem: true,
-            execute(stores) {
-              executedWithMissingStore = stores.size < 2;
-              executedWithAllStores = stores.size === 2;
-              const xStore = stores.get('posX');
-              const yStore = stores.get('posY');
-              if (xStore && yStore) {
-                xStore.data[0] = xStore.data[0]! + 1;
-                yStore.data[0] = yStore.data[0]! + 1;
-              }
-              return Effect.void;
-            },
-          });
+    world.addSystem({
+      name: 'dense-mover',
+      query: ['posX', 'posY'],
+      _denseSystem: true,
+      execute(stores) {
+        executedWithMissingStore = stores.size < 2;
+        executedWithAllStores = stores.size === 2;
+        const xStore = stores.get('posX');
+        const yStore = stores.get('posY');
+        if (xStore && yStore) {
+          xStore.data[0] = xStore.data[0]! + 1;
+          yStore.data[0] = yStore.data[0]! + 1;
+        }
+      },
+    });
 
-          yield* world.addDenseStore(posX);
-          yield* world.tick();
-          const afterMissingTick = posX.get(id);
-          yield* world.addDenseStore(posY);
-          yield* world.tick();
+    world.addDenseStore(posX);
+    world.tick();
+    const afterMissingTick = posX.get(id);
+    world.addDenseStore(posY);
+    world.tick();
 
-          return {
-            executedWithMissingStore,
-            executedWithAllStores,
-            afterMissingTick,
-            x: posX.get(id),
-            y: posY.get(id),
-          };
-        }),
-      ),
-    );
+    const result = {
+      executedWithMissingStore,
+      executedWithAllStores,
+      afterMissingTick,
+      x: posX.get(id),
+      y: posY.get(id),
+    };
 
     expect(result.executedWithMissingStore).toBe(false);
     expect(result.executedWithAllStores).toBe(true);
@@ -283,21 +256,15 @@ describe('ECS Composable Infrastructure', () => {
   });
 
   test('ComposableWorld spawn, query, and evaluate integrate Boundary, Token, and Style', () => {
-    const result = Effect.runSync(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const world = yield* World.make();
-          const composableWorld = ComposableWorld.make(world);
-          const entity = yield* composableWorld.spawn({ boundary, token, style });
-          const queried = yield* composableWorld.query('boundary', 'token');
-          const evaluation = yield* composableWorld.evaluate(entity, {
-            'viewport.width': 800,
-            themeLevel: 1,
-          });
-          return { entity, queried, evaluation };
-        }),
-      ),
-    );
+    const { world } = World.make();
+    const composableWorld = ComposableWorld.make(world);
+    const entity = composableWorld.spawn({ boundary, token, style });
+    const queried = composableWorld.query('boundary', 'token');
+    const evaluation = composableWorld.evaluate(entity, {
+      'viewport.width': 800,
+      themeLevel: 1,
+    });
+    const result = { entity, queried, evaluation };
 
     expect(result.entity.id).toMatch(/^fnv1a:[0-9a-f]{8}$/);
     expect(result.queried).toHaveLength(1);
@@ -309,38 +276,26 @@ describe('ECS Composable Infrastructure', () => {
   });
 
   test('ComposableWorld evaluate handles empty input and entities with no known components', () => {
-    const result = Effect.runSync(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const world = yield* World.make();
-          const composableWorld = ComposableWorld.make(world);
-          const entity = Composable.make({ misc: 'value' });
-          yield* composableWorld.spawnWith(entity);
-          return yield* composableWorld.evaluate(entity, {});
-        }),
-      ),
-    );
+    const { world } = World.make();
+    const composableWorld = ComposableWorld.make(world);
+    const entity = Composable.make({ misc: 'value' });
+    composableWorld.spawnWith(entity);
+    const result = composableWorld.evaluate(entity, {});
 
     expect(result).toEqual({});
   });
 
   test('ComposableWorld.dense create/store/retrieve works and auto-spawns tracked entities', () => {
-    const result = Effect.runSync(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const world = yield* World.make();
-          const dense = ComposableWorld.dense(world);
-          const entity = Composable.make({ boundary });
+    const { world } = World.make();
+    const dense = ComposableWorld.dense(world);
+    const entity = Composable.make({ boundary });
 
-          const beforeCreate = yield* dense.retrieve(entity);
-          const store = yield* dense.create('metrics', 16);
-          yield* dense.store(entity, 42);
-          const afterStore = yield* dense.retrieve(entity);
+    const beforeCreate = dense.retrieve(entity);
+    const store = dense.create('metrics', 16);
+    dense.store(entity, 42);
+    const afterStore = dense.retrieve(entity);
 
-          return { beforeCreate, afterStore, store };
-        }),
-      ),
-    );
+    const result = { beforeCreate, afterStore, store };
 
     expect(result.beforeCreate).toBeUndefined();
     expect(result.afterStore).toBe(42);
@@ -349,17 +304,11 @@ describe('ECS Composable Infrastructure', () => {
   });
 
   test('ComposableWorld.dense store throws if create was not called first', () => {
-    expect(() =>
-      Effect.runSync(
-        Effect.scoped(
-          Effect.gen(function* () {
-            const world = yield* World.make();
-            const dense = ComposableWorld.dense(world);
-            const entity = Composable.make({ boundary });
-            yield* dense.store(entity, 1);
-          }),
-        ),
-      ),
-    ).toThrow('ComposableWorld.store: no dense store exists — call world.create(name, capacity) before world.store(entity, value).');
+    expect(() => {
+      const { world } = World.make();
+      const dense = ComposableWorld.dense(world);
+      const entity = Composable.make({ boundary });
+      dense.store(entity, 1);
+    }).toThrow('ComposableWorld.store: no dense store exists — call world.create(name, capacity) before world.store(entity, value).');
   });
 });

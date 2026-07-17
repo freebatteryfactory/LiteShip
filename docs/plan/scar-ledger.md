@@ -170,14 +170,42 @@ Format: `S<wave>.<n>` — scar → root class → disposition (guard, status).
   S0.4-shaped fork born the same wave S0.4's guard landed; the ast-grep rule's
   pattern does not match this form.
   Class: guards are code too — new tests can fork truths.
-  Disposition: refactor gate-canaries onto repo-truths accessors AND widen the
-  ast-grep rule to the forms it missed. Scheduled Wave 2.5.
+  Disposition: **refactored** gate-canaries onto repo-truths accessors — dropped its
+  private `parseJsonc`, the tsconfig-reference regex, and the script-body
+  `matchAll`/`split`; the truths now read through new single-owner accessors in
+  `tests/support/repo-truths.ts` (`lintGlobs()`, `typecheckLegs()`,
+  `typecheckScript()`, `packageTsconfigInputs()`, `tsconfigTestsIncludeFiles()`,
+  `apiSurfaceSnapshot()`), joining the existing `rootTsconfigReferenceDirs()`. AND
+  **widened** `sgrules/repo-truths-no-script-parse.yml` to the form it missed: the
+  nullish-coalescing-defaulted receiver `(pkg.scripts.x ?? '').split(…)` — the exact
+  shape gate-canaries used to dodge the naked patterns (dot + bracket key ×
+  match/matchAll/split/replace, plus RegExp exec/test). Alias-then-parse
+  (`const s = pkg.scripts.x ?? ''; s.matchAll(…)`) needs dataflow ast-grep can't do;
+  that instance was refactored out, and repo-truths.ts (allowlisted) now owns the
+  parse. Red-proved: the widened rule FIRES on the pre-refactor canary shape
+  (`(rootPkg.scripts.typecheck ?? '').split('&&')`, one hit) and PASSES on the
+  refactor + the whole `tests/` tree + the allowlisted repo-truths.ts (which itself
+  now carries the nullish form). STATUS: ACTIVE since Wave 2.5. Guard:
+  tests/support/repo-truths.ts + sgrules/repo-truths-no-script-parse.yml +
+  tests/unit/devops/gate-canaries.test.ts.
 
 - **S1.5.2 — FACTORY_HINTS copied** (schema-strictness.prop.test.ts hard-codes the
   pre-filter that scripts/capsule-compile.ts derives; in sync today, drifts silently).
   Class: derived constant transcribed instead of imported.
-  Disposition: export the derived list from capsule-compile's lib (or a sync-pin
-  test asserting equality). Scheduled Wave 2.5.
+  Disposition: **exported** the single source from the shared lib. capsule-compile.ts
+  self-invokes `main()` on import (not importable), so the sync-pin-against-its-copy
+  alternative was impractical; instead `FACTORY_NAMING` + its derived `FACTORY_HINTS`
+  moved into `scripts/lib/capsule-detector.ts` — the seam BOTH sides already import
+  for `detectCapsuleCalls`. capsule-compile.ts and schema-strictness.prop.test.ts now
+  import the ONE `FACTORY_HINTS` (the test's hardcoded copy deleted; capsule-compile's
+  local derivation deleted), so their candidate-file sets can't drift. A pin in
+  `tests/unit/capsule-detector.test.ts` freezes both the DERIVATION (hints = the two
+  base factories + every FACTORY_NAMING key) and the canonical CONTENT (the 6-token
+  list), so adding/removing a factory forces a conscious update. Red-proved: dropping
+  one FACTORY_NAMING entry (`WavMetadataProjection`) reds the content pin (Array(5) vs
+  Array(6)) while the derivation pin stays green → restore green. STATUS: ACTIVE since
+  Wave 2.5. Guard: scripts/lib/capsule-detector.ts (FACTORY_HINTS/FACTORY_NAMING single
+  owner) + tests/unit/capsule-detector.test.ts.
 
 - **S1.5.3 — near-miss derives from the CURRENT AST** (a future source-level
   tuple→array widening of a live catalog schema would self-consistently derive
@@ -185,3 +213,81 @@ Format: `S<wave>.<n>` — scar → root class → disposition (guard, status).
   Class: scope boundary, recorded not fixed — source-history widening is the
   parity/review layer's job (documented in near-miss.ts).
   Disposition: ACCEPTED limitation, documented in guard + ledger. No further action.
+
+## Wave 2 scars
+
+- **S2.1 — the wave plan under-enumerated the consumer/test closure.** The core-seams
+  file list named the kernel/seam edits (typed-ref/ecs/animation/compositor/zap/blend/
+  receipt/dag/…) but not the full transitive closure of consumers those retypes break:
+  ~42 downstream files (scene systems, astro receipt-chain, stage dual-export, command
+  host/context, cli scene-render, and their tests) that `yield*` over now-Promise/sync
+  APIs, plus an av-renderer product gap the plan's test section did not list.
+  Class: wave boundary drawn by an author's file list, not the typecheck closure — the
+  S0.1 shape, recurring at larger scale.
+  Disposition: **existing guard held** — the S0.1 **closure scout** ran preflight and
+  computed the transitive typecheck closure, catching all ~42 files + the av-renderer
+  gap before the wave started; nothing shipped surprised. Follow-up: the plan's test
+  section is marked NON-EXHAUSTIVE (the scout, not the hand list, is the closure
+  authority). No new guard — S0.1's scout is the disposition. STATUS: closed (S0.1
+  guard cited).
+
+- **S2.2 — the transport swap reintroduced bare `throw new Error(...)`.** Converting
+  `Effect.tryPromise({ catch })` and `Effect.mapError` closures into `try/catch { throw
+  new Error(…) }` at receipt.ts (×4) and typed-ref.ts (×1) resurrected the exact
+  bare-throw class the Slice-A migration eliminated (the catch closures had used bare
+  `new Error` as VALUES, invisible to the gate; the swap turned them into throw
+  STATEMENTS).
+  Class: transport swap silently re-widens a closed error taxonomy.
+  Disposition: **existing gate held** — the standing dogfood gate
+  `tests/unit/gauntlet/dogfood.test.ts` (noBareThrowGate over the real `packages/*/src`
+  tree) went RED and named all 5 sites; the fix retagged each as `IntegrityError`
+  (hash/sig/chain, per the gate's remediation). No new guard — the dogfood gate is the
+  disposition. STATUS: closed (dogfood gate cited; 5 sites cured red→green).
+
+- **S2.3 — live-cell was planned into the wrong seam.** The core-seams plan mapped
+  `src/live-cell.ts` as a SEAM:2 migration alongside Zap/blend, but LiveCell extends
+  `Cell.Shape` and rides the Cell seam — it cannot go Promise-first until Cell/Derived/
+  Store rebuild on CellKernel, which is the reactive-primitives wave, not this
+  receipt/Zap-carrier wave.
+  Class: seam mis-assignment — a file mapped to a wave whose substrate it does not
+  actually depend on.
+  Disposition: **replanned** — live-cell held deliberately Effect-shaped this wave and
+  moved to the reactive-primitives wave. Recorded in the plan (`src/live-cell.ts` entry
+  marked DEFERRED [SEAM:2→reactive-primitives]) and the spine (`_spine/core.d.ts` §15
+  LiveCell note: tracks source, deferred). STATUS: closed (replanned; plan + spine
+  notes landed).
+
+- **S2.4 — a producer/consumer wave split collides with the atomic-green-tree
+  doctrine.** Splitting the core-seams wave into a producer half (kernel/seam retypes)
+  and a consumer half (the ~42-file migration closure) tempts landing the producer
+  first while the tree is red — violating "all green → one atomic commit per wave."
+  Class: build-order convenience vs the never-red-`main` invariant.
+  Disposition: **master-plan Methodology note** — added to plan §7(d): a split wave
+  still lands as ONE commit, the tree is never committed red between the halves, and
+  `main` typechecks green at every commit. STATUS: closed (doctrine sentence landed in
+  plan §7).
+
+## Wave 3 scars
+
+- **S3.1 — container idle-suspension killed in-flight builders overnight** (three
+  agents frozen mid-edit at 10:17; four-hour stall until a user nudge woke the
+  container).
+  Class: infrastructure — long waves outlive the container's idle window.
+  Disposition: the workflow resume machinery held perfectly — completed slices
+  replayed from cache, interrupted builders re-ran onto their partial edits, zero
+  lost work. Process note: overnight waves should prefer shorter slices; resume is
+  the standing recovery path. ACTIVE (process).
+
+- **S3.2 — dispose-mid-flight scheduler-tick retention in animated-quantizer**:
+  lifetime.dispose() during a tick-await leaves one pending scheduler callback;
+  abort observed only at the next tick (old Fiber.interrupt finalized promptly).
+  Bounded, self-healing, production rAF unaffected; QA probe defines the red test.
+  Class: cancellation promptness fidelity under transport swap.
+  Disposition: abort-listener wake on the tick await + a dispose-promptness law
+  test (the QA probe made standing). Scheduled Wave 4 slice 0.
+
+- **S3.3 — remotion effect peer is import-free but transitively required** (public
+  API forwards Signal.Controllable; signal.ts still Effect-typed).
+  Class: type-leak peer — imports gone, types remain.
+  Disposition: tracked; clears with the Signal/Timeline seam (already planned).
+  No action this wave.

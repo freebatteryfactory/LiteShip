@@ -6,7 +6,6 @@
  * SignalNode content-address) is gone. Value arrives typed in the receipt.
  */
 import { describe, test, expect } from 'vitest';
-import { Effect } from 'effect';
 import {
   GraphPatch,
   HLC,
@@ -48,9 +47,10 @@ const nextTs = () => (clock = HLC.increment(clock, clock.wall_ms + 1));
 
 /** Mint an attested entry linking onto `previousHash` with a strictly-advancing HLC. */
 const mkEntry = async (transition: DiscreteStateTransition, previousHash?: string): Promise<PatchReceiptEntry> => {
-  const receipt = await Effect.runPromise(
-    transitionReceipt(transition, { timestamp: nextTs(), ...(previousHash ? { previous: previousHash } : {}) }),
-  );
+  const receipt = await transitionReceipt(transition, {
+    timestamp: nextTs(),
+    ...(previousHash ? { previous: previousHash } : {}),
+  });
   return { receipt, transition };
 };
 
@@ -415,9 +415,9 @@ describe('graph-query gap replay — HOSTILE fixtures (Law 15)', () => {
     // minted for a DIFFERENT cell than the transition it is paired with.
     const t1 = mkTransition(base.id, mid.id, 'state', 'alpha', 1);
     const t2 = mkTransition(mid.id, server.id, 'state', 'beta', 2);
-    const wrongReceipt = await Effect.runPromise(
-      transitionReceipt(mkTransition(base.id, mid.id, 'OTHER', 'x', 1), { timestamp: nextTs() }),
-    );
+    const wrongReceipt = await transitionReceipt(mkTransition(base.id, mid.id, 'OTHER', 'x', 1), {
+      timestamp: nextTs(),
+    });
     const e1: PatchReceiptEntry = { receipt: wrongReceipt, transition: t1 };
     const e2 = await mkEntry(t2, wrongReceipt.hash);
     const { transitions } = await replayDiscreteFromPatchReceipts({

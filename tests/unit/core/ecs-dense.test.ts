@@ -4,7 +4,6 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Effect, Scope, Schema } from 'effect';
 import { Part, World } from '@czap/core';
 import { hasTag } from '@czap/error';
 import type { EntityId, DenseStore } from '@czap/core';
@@ -151,114 +150,92 @@ describe('Part.dense -- DenseStore', () => {
 
 describe('World.tick() -- dense systems', () => {
   test('dense system iterates Float64Array in tick', () => {
-    const result = Effect.runSync(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const world = yield* World.make();
-          const velocityStore = Part.dense('velocity', 64);
+    const { world } = World.make();
+    const velocityStore = Part.dense('velocity', 64);
 
-          yield* world.addDenseStore(velocityStore);
+    world.addDenseStore(velocityStore);
 
-          // Spawn entities and add to dense store
-          const id1 = yield* world.spawn();
-          const id2 = yield* world.spawn();
-          const id3 = yield* world.spawn();
+    // Spawn entities and add to dense store
+    const id1 = world.spawn();
+    const id2 = world.spawn();
+    const id3 = world.spawn();
 
-          velocityStore.set(id1, 10);
-          velocityStore.set(id2, 20);
-          velocityStore.set(id3, 30);
+    velocityStore.set(id1, 10);
+    velocityStore.set(id2, 20);
+    velocityStore.set(id3, 30);
 
-          let sum = 0;
+    let sum = 0;
 
-          yield* world.addSystem({
-            name: 'accumulator',
-            query: ['velocity'],
-            _denseSystem: true as const,
-            execute(stores: ReadonlyMap<string, DenseStore>) {
-              const vel = stores.get('velocity')!;
-              const view = vel.view();
-              for (let i = 0; i < view.length; i++) {
-                sum += view[i]!;
-              }
-              return Effect.void;
-            },
-          });
+    world.addSystem({
+      name: 'accumulator',
+      query: ['velocity'],
+      _denseSystem: true as const,
+      execute(stores: ReadonlyMap<string, DenseStore>) {
+        const vel = stores.get('velocity')!;
+        const view = vel.view();
+        for (let i = 0; i < view.length; i++) {
+          sum += view[i]!;
+        }
+      },
+    });
 
-          yield* world.tick();
-          return sum;
-        }),
-      ),
-    );
+    world.tick();
 
-    expect(result).toBe(60);
+    expect(sum).toBe(60);
   });
 
   test('dense system mutates data in-place via view', () => {
-    Effect.runSync(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const world = yield* World.make();
-          const posStore = Part.dense('posX', 64);
+    const { world } = World.make();
+    const posStore = Part.dense('posX', 64);
 
-          yield* world.addDenseStore(posStore);
+    world.addDenseStore(posStore);
 
-          const id1 = yield* world.spawn();
-          const id2 = yield* world.spawn();
+    const id1 = world.spawn();
+    const id2 = world.spawn();
 
-          posStore.set(id1, 0);
-          posStore.set(id2, 100);
+    posStore.set(id1, 0);
+    posStore.set(id2, 100);
 
-          yield* world.addSystem({
-            name: 'mover',
-            query: ['posX'],
-            _denseSystem: true as const,
-            execute(stores: ReadonlyMap<string, DenseStore>) {
-              const pos = stores.get('posX')!;
-              const data = pos.data;
-              const len = pos.count;
-              for (let i = 0; i < len; i++) {
-                data[i] = data[i]! + 5;
-              }
-              return Effect.void;
-            },
-          });
+    world.addSystem({
+      name: 'mover',
+      query: ['posX'],
+      _denseSystem: true as const,
+      execute(stores: ReadonlyMap<string, DenseStore>) {
+        const pos = stores.get('posX')!;
+        const data = pos.data;
+        const len = pos.count;
+        for (let i = 0; i < len; i++) {
+          data[i] = data[i]! + 5;
+        }
+      },
+    });
 
-          yield* world.tick();
+    world.tick();
 
-          expect(posStore.get(id1)).toBe(5);
-          expect(posStore.get(id2)).toBe(105);
+    expect(posStore.get(id1)).toBe(5);
+    expect(posStore.get(id2)).toBe(105);
 
-          yield* world.tick();
+    world.tick();
 
-          expect(posStore.get(id1)).toBe(10);
-          expect(posStore.get(id2)).toBe(110);
-        }),
-      ),
-    );
+    expect(posStore.get(id1)).toBe(10);
+    expect(posStore.get(id2)).toBe(110);
   });
 
   test('dense system skipped when queried store is missing', () => {
-    Effect.runSync(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const world = yield* World.make();
-          let called = false;
+    const { world } = World.make();
+    let called = false;
 
-          yield* world.addSystem({
-            name: 'ghost',
-            query: ['nonexistent'],
-            _denseSystem: true as const,
-            execute() {
-              called = true;
-              return Effect.void;
-            },
-          });
+    world.addSystem({
+      name: 'ghost',
+      query: ['nonexistent'],
+      _denseSystem: true as const,
+      execute() {
+        called = true;
+      },
+    });
 
-          yield* world.tick();
-          expect(called).toBe(false);
-        }),
-      ),
-    );
+    world.tick();
+    expect(called).toBe(false);
   });
 });
 
@@ -270,70 +247,134 @@ describe('World.tick() -- mixed dense + regular systems', () => {
   test('both system types run in a single tick', () => {
     const results: string[] = [];
 
-    Effect.runSync(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const world = yield* World.make();
-          const speedStore = Part.dense('speed', 32);
-          yield* world.addDenseStore(speedStore);
+    const { world } = World.make();
+    const speedStore = Part.dense('speed', 32);
+    world.addDenseStore(speedStore);
 
-          // Spawn an entity with a regular component
-          const id = yield* world.spawn({ label: 'player' });
-          speedStore.set(id, 9.8);
+    // Spawn an entity with a regular component
+    const id = world.spawn({ label: 'player' });
+    speedStore.set(id, 9.8);
 
-          // Regular system
-          yield* world.addSystem({
-            name: 'labeler',
-            query: ['label'],
-            execute(entities) {
-              for (const e of entities) {
-                results.push(`label:${e.components.get('label')}`);
-              }
-              return Effect.void;
-            },
-          });
+    // Regular system
+    world.addSystem({
+      name: 'labeler',
+      query: ['label'],
+      execute(entities) {
+        for (const e of entities) {
+          results.push(`label:${e.components.get('label')}`);
+        }
+      },
+    });
 
-          // Dense system
-          yield* world.addSystem({
-            name: 'speeder',
-            query: ['speed'],
-            _denseSystem: true as const,
-            execute(stores: ReadonlyMap<string, DenseStore>) {
-              const s = stores.get('speed')!;
-              const v = s.view();
-              for (let i = 0; i < v.length; i++) {
-                results.push(`speed:${v[i]}`);
-              }
-              return Effect.void;
-            },
-          });
+    // Dense system
+    world.addSystem({
+      name: 'speeder',
+      query: ['speed'],
+      _denseSystem: true as const,
+      execute(stores: ReadonlyMap<string, DenseStore>) {
+        const s = stores.get('speed')!;
+        const v = s.view();
+        for (let i = 0; i < v.length; i++) {
+          results.push(`speed:${v[i]}`);
+        }
+      },
+    });
 
-          yield* world.tick();
-        }),
-      ),
-    );
+    world.tick();
 
     expect(results).toEqual(['label:player', 'speed:9.8']);
   });
 
   test('despawn cleans up dense stores', () => {
-    Effect.runSync(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const world = yield* World.make();
-          const store = Part.dense('hp', 16);
-          yield* world.addDenseStore(store);
+    const { world } = World.make();
+    const store = Part.dense('hp', 16);
+    world.addDenseStore(store);
 
-          const id = yield* world.spawn();
-          store.set(id, 100);
-          expect(store.has(id)).toBe(true);
+    const id = world.spawn();
+    store.set(id, 100);
+    expect(store.has(id)).toBe(true);
 
-          yield* world.despawn(id);
-          expect(store.has(id)).toBe(false);
-          expect(store.count).toBe(0);
-        }),
-      ),
-    );
+    world.despawn(id);
+    expect(store.has(id)).toBe(false);
+    expect(store.count).toBe(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Within-tick read-current law
+//
+// THE LAW the SEAM:2 transport-swap must preserve: a regular system's
+// `world.setComponent` write lands in the live entity map and is observed by
+// a LATER system's `world.query` within the SAME tick. This is the exact
+// semantic scene's SVGSystem depends on (it reads `_opacity`/`_blend` written
+// by the Video/Transition systems earlier the same tick). Pinned here on the
+// core primitive so the invariant is guarded independent of the scene layer.
+// ---------------------------------------------------------------------------
+
+describe('World.tick() -- within-tick read-current law', () => {
+  test('a later system observes setComponent writes made by an earlier system the same tick', () => {
+    const { world } = World.make();
+    world.spawn({ marker: true });
+
+    let observed: unknown = 'unwritten';
+
+    // Writer runs first: persists a computed output component.
+    world.addSystem({
+      name: 'writer',
+      query: ['marker'],
+      execute(entities, w) {
+        for (const e of entities) {
+          w!.setComponent(e.id, '_computed', 42);
+        }
+      },
+    });
+
+    // Reader runs after: its query must see the write from THIS same tick.
+    world.addSystem({
+      name: 'reader',
+      query: ['_computed'],
+      execute(entities) {
+        observed = entities[0]?.components.get('_computed');
+      },
+    });
+
+    world.tick();
+
+    expect(observed).toBe(42);
+  });
+
+  test('registration order decides visibility: a reader before the writer sees nothing this tick', () => {
+    const { world } = World.make();
+    world.spawn({ marker: true });
+
+    const readsPerTick: (unknown)[] = [];
+
+    // Reader runs FIRST — the write has not happened yet this tick.
+    world.addSystem({
+      name: 'early-reader',
+      query: ['_computed'],
+      execute(entities) {
+        readsPerTick.push(entities[0]?.components.get('_computed'));
+      },
+    });
+
+    world.addSystem({
+      name: 'writer',
+      query: ['marker'],
+      execute(entities, w) {
+        for (const e of entities) {
+          w!.setComponent(e.id, '_computed', 7);
+        }
+      },
+    });
+
+    world.tick();
+    // First tick: reader ran before writer, so it matched no `_computed` entity.
+    expect(readsPerTick).toEqual([undefined]);
+
+    world.tick();
+    // Second tick: the write from tick 1 persists, so the early reader now sees it.
+    expect(readsPerTick).toEqual([undefined, 7]);
   });
 });
 
@@ -343,53 +384,44 @@ describe('World.tick() -- mixed dense + regular systems', () => {
 
 describe('Dense system -- multi-store query', () => {
   test('system receives multiple dense stores', () => {
-    const result = Effect.runSync(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const world = yield* World.make();
-          const posX = Part.dense('posX', 32);
-          const velX = Part.dense('velX', 32);
+    const { world } = World.make();
+    const posX = Part.dense('posX', 32);
+    const velX = Part.dense('velX', 32);
 
-          yield* world.addDenseStore(posX);
-          yield* world.addDenseStore(velX);
+    world.addDenseStore(posX);
+    world.addDenseStore(velX);
 
-          const id1 = yield* world.spawn();
-          const id2 = yield* world.spawn();
+    const id1 = world.spawn();
+    const id2 = world.spawn();
 
-          posX.set(id1, 0);
-          posX.set(id2, 50);
-          velX.set(id1, 1);
-          velX.set(id2, -2);
+    posX.set(id1, 0);
+    posX.set(id2, 50);
+    velX.set(id1, 1);
+    velX.set(id2, -2);
 
-          yield* world.addSystem({
-            name: 'physics',
-            query: ['posX', 'velX'],
-            _denseSystem: true as const,
-            execute(stores: ReadonlyMap<string, DenseStore>) {
-              const pos = stores.get('posX')!;
-              const vel = stores.get('velX')!;
-              // Iterate entities from one store and look up in the other
-              const ents = pos.entities();
-              for (let i = 0; i < ents.length; i++) {
-                const eid = ents[i]!;
-                const v = vel.get(eid);
-                if (v !== undefined) {
-                  pos.set(eid, pos.get(eid)! + v);
-                }
-              }
-              return Effect.void;
-            },
-          });
+    world.addSystem({
+      name: 'physics',
+      query: ['posX', 'velX'],
+      _denseSystem: true as const,
+      execute(stores: ReadonlyMap<string, DenseStore>) {
+        const pos = stores.get('posX')!;
+        const vel = stores.get('velX')!;
+        // Iterate entities from one store and look up in the other
+        const ents = pos.entities();
+        for (let i = 0; i < ents.length; i++) {
+          const eid = ents[i]!;
+          const v = vel.get(eid);
+          if (v !== undefined) {
+            pos.set(eid, pos.get(eid)! + v);
+          }
+        }
+      },
+    });
 
-          yield* world.tick();
+    world.tick();
 
-          return { p1: posX.get(id1), p2: posX.get(id2) };
-        }),
-      ),
-    );
-
-    expect(result.p1).toBe(1);
-    expect(result.p2).toBe(48);
+    expect(posX.get(id1)).toBe(1);
+    expect(posX.get(id2)).toBe(48);
   });
 });
 
@@ -399,33 +431,21 @@ describe('Dense system -- multi-store query', () => {
 
 describe('World.spawn -- entity ID uniqueness', () => {
   test('spawn without components produces unique EntityIds', () => {
-    Effect.runSync(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const world = yield* World.make();
-          const id1 = yield* world.spawn();
-          const id2 = yield* world.spawn();
-          const id3 = yield* world.spawn();
+    const { world } = World.make();
+    const id1 = world.spawn();
+    const id2 = world.spawn();
+    const id3 = world.spawn();
 
-          expect(id1).not.toBe(id2);
-          expect(id2).not.toBe(id3);
-          expect(id1).not.toBe(id3);
-        }),
-      ),
-    );
+    expect(id1).not.toBe(id2);
+    expect(id2).not.toBe(id3);
+    expect(id1).not.toBe(id3);
   });
 
   test('spawn with identical components produces unique EntityIds', () => {
-    Effect.runSync(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const world = yield* World.make();
-          const id1 = yield* world.spawn({ type: 'bullet' });
-          const id2 = yield* world.spawn({ type: 'bullet' });
+    const { world } = World.make();
+    const id1 = world.spawn({ type: 'bullet' });
+    const id2 = world.spawn({ type: 'bullet' });
 
-          expect(id1).not.toBe(id2);
-        }),
-      ),
-    );
+    expect(id1).not.toBe(id2);
   });
 });

@@ -6,9 +6,9 @@
 
 # Function: discreteTransitionPayload()
 
-> **discreteTransitionPayload**(`transition`): `Effect`\<`TypedRefShape`\>
+> **discreteTransitionPayload**(`transition`): `Promise`\<`TypedRefShape`\>
 
-Defined in: [core/src/state-transition.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-transition.ts#L91)
+Defined in: [core/src/state-transition.ts:90](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-transition.ts#L90)
 
 The receipt PAYLOAD ref for a transition — a [TypedRef](../variables/TypedRef.md) over the crossing VALUE
 (`cell`/`previous`/`next`/`generation`/`authority`/`base`/`resultId`/`kind`). The SINGLE
@@ -26,4 +26,4 @@ value, so a self-consistent receipt cannot be re-paired with a DIFFERENT `next`/
 
 ## Returns
 
-`Effect`\<`TypedRefShape`\>
+`Promise`\<`TypedRefShape`\>

@@ -134,16 +134,19 @@ export function createNodeCommandContext(
       const result = compileFn();
       if (Effect.isEffect(result)) await Effect.runPromise(result as Effect.Effect<unknown, never, never>);
     },
-    renderScene: ({ fps, durationMs, output, width = DEFAULT_WIDTH, height = DEFAULT_HEIGHT }) =>
-      Effect.runPromise(
-        Effect.scoped(
-          Effect.gen(function* () {
-            const compositor = yield* Compositor.create();
-            const renderer = VideoRenderer.make({ fps, width, height, durationMs: durationMs as Millis }, compositor);
-            return yield* Effect.promise(() => renderWithFfmpeg(renderer.frames(), { output, width, height, fps }));
-          }),
-        ),
-      ),
+    renderScene: async ({ fps, durationMs, output, width = DEFAULT_WIDTH, height = DEFAULT_HEIGHT }) => {
+      // Compositor.create is sync-first (Wave 2): it returns the live instance
+      // plus the Lifetime that owns its teardown. The render collapses to a
+      // plain await; the scope's sole finalizer (closing the reactive `changes`
+      // kernel) runs on the way out, preserving the old `Effect.scoped` cleanup.
+      const { compositor, lifetime } = Compositor.create();
+      try {
+        const renderer = VideoRenderer.make({ fps, width, height, durationMs: durationMs as Millis }, compositor);
+        return await renderWithFfmpeg(renderer.frames(), { output, width, height, fps });
+      } finally {
+        await lifetime.dispose();
+      }
+    },
     cache: {
       read: (key) => tryReadCache({ command: key.command, inputs: key.inputs, force: key.force, cwd: opts.cwd }),
       write: (key, receipt) =>

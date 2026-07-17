@@ -23,7 +23,6 @@
  * @module
  */
 
-import { Effect } from 'effect';
 import { ParseError } from '@czap/error';
 import type { ContentAddress, HLC, StateName } from './brands.js';
 import { Receipt, type ReceiptEnvelope } from './receipt.js';
@@ -88,7 +87,7 @@ export function discreteTransitionSubjectId(transition: Pick<DiscreteStateTransi
  * value, so a self-consistent receipt cannot be re-paired with a DIFFERENT `next`/
  * `generation`/`resultId` on the same subject.
  */
-export function discreteTransitionPayload(transition: DiscreteStateTransition): Effect.Effect<TypedRef.Shape> {
+export function discreteTransitionPayload(transition: DiscreteStateTransition): Promise<TypedRef.Shape> {
   return TypedRef.create('DiscreteStateTransition@1', {
     cell: transition.cell,
     previous: transition.previous,
@@ -105,28 +104,26 @@ export function discreteTransitionPayload(transition: DiscreteStateTransition): 
  * Mint a receipt for a {@link DiscreteStateTransition}, mirroring
  * {@link GraphPatch.receipt} byte-for-byte: a single genesis-or-linked envelope
  * whose payload is a {@link TypedRef} over the transition, subject-keyed by the
- * `(base, cell)` law. Effect-returning because the receipt byte law hashes via
- * `crypto.subtle` (SHA-256) — the same async kernel `Receipt.createEnvelope`
- * rides on; folding it to a sync value would force a second, divergent hashing
- * path (Law 4). `timestamp`/`previous` default to a genesis stamp; pass them to
- * chain this transition onto a prior receipt.
+ * `(base, cell)` law. Async (`Promise`-returning) because the receipt byte law
+ * hashes via `crypto.subtle` (SHA-256) — the same async kernel
+ * `Receipt.createEnvelope` rides on; folding it to a sync value would force a
+ * second, divergent hashing path (Law 4). `timestamp`/`previous` default to a
+ * genesis stamp; pass them to chain this transition onto a prior receipt.
  */
-export function transitionReceipt(
+export async function transitionReceipt(
   transition: DiscreteStateTransition,
   options?: { readonly timestamp?: HLC; readonly previous?: string | readonly string[] },
-): Effect.Effect<ReceiptEnvelope> {
-  return Effect.gen(function* () {
-    const timestamp = options?.timestamp ?? HLCOps.create('discrete-transition');
-    const previous = options?.previous ?? Receipt.GENESIS;
-    const payload = yield* discreteTransitionPayload(transition);
-    return yield* Receipt.createEnvelope(
-      'discrete-transition',
-      { type: 'effect', id: discreteTransitionSubjectId(transition) },
-      payload,
-      timestamp,
-      previous,
-    );
-  });
+): Promise<ReceiptEnvelope> {
+  const timestamp = options?.timestamp ?? HLCOps.create('discrete-transition');
+  const previous = options?.previous ?? Receipt.GENESIS;
+  const payload = await discreteTransitionPayload(transition);
+  return Receipt.createEnvelope(
+    'discrete-transition',
+    { type: 'effect', id: discreteTransitionSubjectId(transition) },
+    payload,
+    timestamp,
+    previous,
+  );
 }
 
 /**
@@ -136,7 +133,7 @@ export function transitionReceipt(
  * receipt via {@link transitionReceipt}. Kept separate so `applyDiscrete` stays
  * synchronous (no crypto in the hot path).
  */
-export function mintTransition(
+export async function mintTransition(
   previous: StateCell | undefined,
   next: StateCell,
   options: {
@@ -145,26 +142,24 @@ export function mintTransition(
     readonly previousHash?: string | readonly string[];
     readonly timestamp?: HLC;
   },
-): Effect.Effect<{ readonly transition: DiscreteStateTransition; readonly receipt: ReceiptEnvelope }> {
-  return Effect.gen(function* () {
-    const transition: DiscreteStateTransition = {
-      _tag: 'DiscreteStateTransition',
-      _version: 1,
-      cell: next.name,
-      ...(previous !== undefined ? { previous: previous.state } : {}),
-      next: next.state,
-      generation: next.generation,
-      authority: next.authority,
-      base: options.base,
-      ...(options.resultId !== undefined ? { resultId: options.resultId } : {}),
-      kind: 'discrete',
-    };
-    const receipt = yield* transitionReceipt(transition, {
-      ...(options.timestamp !== undefined ? { timestamp: options.timestamp } : {}),
-      ...(options.previousHash !== undefined ? { previous: options.previousHash } : {}),
-    });
-    return { transition, receipt };
+): Promise<{ readonly transition: DiscreteStateTransition; readonly receipt: ReceiptEnvelope }> {
+  const transition: DiscreteStateTransition = {
+    _tag: 'DiscreteStateTransition',
+    _version: 1,
+    cell: next.name,
+    ...(previous !== undefined ? { previous: previous.state } : {}),
+    next: next.state,
+    generation: next.generation,
+    authority: next.authority,
+    base: options.base,
+    ...(options.resultId !== undefined ? { resultId: options.resultId } : {}),
+    kind: 'discrete',
+  };
+  const receipt = await transitionReceipt(transition, {
+    ...(options.timestamp !== undefined ? { timestamp: options.timestamp } : {}),
+    ...(options.previousHash !== undefined ? { previous: options.previousHash } : {}),
   });
+  return { transition, receipt };
 }
 
 /**

@@ -8,7 +8,7 @@
 
 > **SvgAttrsFrame** = `ReadonlyMap`\<`string`, [`SvgAttrs`](../interfaces/SvgAttrs.md)\>
 
-Defined in: [scene/src/systems/svg-egress.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/svg-egress.ts#L36)
+Defined in: [scene/src/systems/svg-egress.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/svg-egress.ts#L35)
 
 The serialized SVG egress frame: a snapshot mapping each video entity's
 id to the `_svgAttrs` composed for it this tick. Entities that carry no

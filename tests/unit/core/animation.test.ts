@@ -1,12 +1,23 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { scaledTimeout } from '../../../vitest.shared.js';
-import { Effect, Stream } from 'effect';
+import { afterEach, describe, expect, test, vi } from 'vitest';
 import { Animation, Millis, Scheduler, Easing } from '@czap/core';
 import { hasTag } from '@czap/error';
 import { interpolate as rawInterpolate } from '../../../packages/core/src/interpolate.js';
 
-async function settleAnimationRegistration(): Promise<void> {
-  await Promise.resolve();
+// ---------------------------------------------------------------------------
+// Deterministic drivers for the async-generator animation clock.
+//
+// Animation.run is now an AsyncIterable<Frame> driven by Scheduler.schedule /
+// cancel, so the tests drive it with a MANUAL clock: each scheduled tick fires
+// exactly once — on a microtask — with the next programmed timestamp. A plain
+// `for await` then pulls the whole animation to completion with no real timers
+// and no Date, and the generator's own `finally` cancels the last pending tick.
+// ---------------------------------------------------------------------------
+
+/**
+ * Settle past one macrotask so every queued microtask (and thus any pending
+ * frame callback) has run. Clock-free and deterministic.
+ */
+async function settle(): Promise<void> {
   await new Promise<void>((resolve) => {
     const channel = new MessageChannel();
     channel.port1.onmessage = () => {
@@ -18,43 +29,47 @@ async function settleAnimationRegistration(): Promise<void> {
   });
 }
 
-async function settleAnimationCompletion(): Promise<void> {
-  await Promise.resolve();
-  await new Promise<void>((resolve) => {
-    const channel = new MessageChannel();
-    channel.port1.onmessage = () => {
-      channel.port1.close();
-      channel.port2.close();
-      resolve();
-    };
-    channel.port2.postMessage(undefined);
+/**
+ * A manual frame clock: every scheduled tick fires once, on a microtask, with
+ * the next timestamp from `timestamps` (the final value repeats if exhausted).
+ * `cancel` is a spy so the teardown law — cancel the last pending tick — is
+ * observable. Deterministic: no real timers, no Date.
+ */
+function manualClock(timestamps: readonly number[]): {
+  scheduler: Scheduler.Shape;
+  cancel: ReturnType<typeof vi.fn>;
+} {
+  let index = 0;
+  let nextId = 1;
+  const cancelled = new Set<number>();
+  const cancel = vi.fn((id: number) => {
+    cancelled.add(id);
   });
+  const scheduler: Scheduler.Shape = {
+    _tag: 'FrameScheduler',
+    schedule: (callback: (now: number) => void) => {
+      const id = nextId++;
+      const at = timestamps[index] ?? timestamps[timestamps.length - 1] ?? 0;
+      index++;
+      queueMicrotask(() => {
+        if (!cancelled.has(id)) callback(at);
+      });
+      return id;
+    },
+    cancel,
+  };
+  return { scheduler, cancel };
 }
-
-/** Wait until the animation fiber registers a scheduler callback (CI can be slower than local). */
-async function waitForSchedulerCallback(callbacks: Map<number, unknown>, id: number): Promise<void> {
-  for (let attempt = 0; attempt < 500; attempt++) {
-    if (callbacks.has(id)) {
-      return;
-    }
-    await settleAnimationRegistration();
-  }
-  throw new Error(`scheduler callback ${id} never registered`);
-}
-
-beforeEach(() => {
-  vi.useRealTimers();
-});
 
 afterEach(() => {
-  vi.useRealTimers();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
 
 describe('Animation.run', () => {
   test('emits a single completed frame for zero-duration animations', async () => {
-    const frames = Array.from(await Effect.runPromise(Stream.runCollect(Animation.run({ duration: Millis(0) }))));
+    const frames: Animation.Frame[] = [];
+    for await (const frame of Animation.run({ duration: Millis(0) })) frames.push(frame);
 
     expect(frames).toHaveLength(1);
     expect(frames[0]?.progress).toBe(1);
@@ -64,102 +79,74 @@ describe('Animation.run', () => {
 
   test('accepts a custom scheduler configuration without changing zero-duration behavior', async () => {
     const scheduler = Scheduler.fixedStep(4);
-    const frames = Array.from(
-      await Effect.runPromise(
-        Stream.runCollect(
-          Animation.run({
-            duration: Millis(0),
-            easing: (t) => t * t,
-            scheduler,
-          }),
-        ),
-      ),
-    );
+    const frames: Animation.Frame[] = [];
+    for await (const frame of Animation.run({ duration: Millis(0), easing: (t) => t * t, scheduler })) {
+      frames.push(frame);
+    }
 
     expect(frames).toHaveLength(1);
     expect(frames[0]?.eased).toBe(1);
   });
 
   test('runs finite animations with a custom scheduler until completion', async () => {
-    const callbacks = new Map<number, (timestamp: number) => void>();
-    let nextId = 1;
-    const scheduler = {
-      _tag: 'FrameScheduler' as const,
-      schedule: vi.fn((callback: (timestamp: number) => void) => {
-        const id = nextId++;
-        callbacks.set(id, callback);
-        return id;
-      }),
-      cancel: vi.fn((id: number) => {
-        callbacks.delete(id);
-      }),
-    };
+    const { scheduler, cancel } = manualClock([0, 250, 500]);
 
-    const collecting = Effect.runPromise(
-      Stream.runCollect(
-        Animation.run({
-          duration: Millis(500),
-          easing: (t) => t * t,
-          scheduler,
-        }),
-      ),
-    );
-
-    await waitForSchedulerCallback(callbacks, 1);
-    callbacks.get(1)?.(0);
-    await waitForSchedulerCallback(callbacks, 2);
-    callbacks.get(2)?.(250);
-    await waitForSchedulerCallback(callbacks, 3);
-    callbacks.get(3)?.(500);
-    await settleAnimationCompletion();
-
-    const frames = Array.from(await collecting);
+    const frames: Animation.Frame[] = [];
+    for await (const frame of Animation.run({ duration: Millis(500), easing: (t) => t * t, scheduler })) {
+      frames.push(frame);
+    }
 
     expect(frames.map((frame) => frame.progress)).toEqual([0, 0.5, 1]);
     expect(frames[1]?.eased).toBeCloseTo(0.25);
-    expect(scheduler.cancel).toHaveBeenCalledWith(3);
-  }, scaledTimeout(20_000));
+    // The last scheduled tick (id 3) is cancelled by the generator's finally.
+    expect(cancel).toHaveBeenCalledWith(3);
+  });
 
   test('defaults to browser requestAnimationFrame scheduling when available', async () => {
-    const callbacks = new Map<number, FrameRequestCallback>();
+    const timestamps = [0, 16, 32];
+    let index = 0;
     let nextId = 1;
+    const cancelled = new Set<number>();
     const cancelAnimationFrameSpy = vi.fn((id: number) => {
-      callbacks.delete(id);
+      cancelled.add(id);
     });
 
     vi.stubGlobal(
       'requestAnimationFrame',
       vi.fn((callback: FrameRequestCallback) => {
         const id = nextId++;
-        callbacks.set(id, callback);
+        const at = timestamps[index] ?? timestamps[timestamps.length - 1] ?? 0;
+        index++;
+        queueMicrotask(() => {
+          if (!cancelled.has(id)) callback(at);
+        });
         return id;
       }),
     );
     vi.stubGlobal('cancelAnimationFrame', cancelAnimationFrameSpy);
 
-    const collecting = Effect.runPromise(Stream.runCollect(Animation.run({ duration: Millis(32) })));
-
-    await waitForSchedulerCallback(callbacks, 1);
-    callbacks.get(1)?.(0);
-    await waitForSchedulerCallback(callbacks, 2);
-    callbacks.get(2)?.(16);
-    await waitForSchedulerCallback(callbacks, 3);
-    callbacks.get(3)?.(32);
-    await settleAnimationCompletion();
-
-    const frames = Array.from(await collecting);
+    const frames: Animation.Frame[] = [];
+    for await (const frame of Animation.run({ duration: Millis(32) })) frames.push(frame);
 
     expect(frames.map((frame) => frame.timestamp)).toEqual([0, 16, 32]);
     expect(cancelAnimationFrameSpy).toHaveBeenCalledWith(3);
-  }, scaledTimeout(20_000));
+  });
 
-  test('times out cleanly with the noop scheduler when requestAnimationFrame is unavailable', async () => {
-    vi.stubGlobal('requestAnimationFrame', undefined as never);
-    vi.stubGlobal('cancelAnimationFrame', undefined as never);
+  test('never completes with the noop scheduler when requestAnimationFrame is unavailable', async () => {
+    vi.stubGlobal('requestAnimationFrame', undefined);
+    vi.stubGlobal('cancelAnimationFrame', undefined);
 
-    await expect(
-      Effect.runPromise(Stream.runCollect(Animation.run({ duration: Millis(10) })).pipe(Effect.timeout('5 millis'))),
-    ).rejects.toMatchObject({ _tag: 'TimeoutError' });
+    const iterator = Animation.run({ duration: Millis(10) });
+    let settled = false;
+    void iterator.next().then(() => {
+      settled = true;
+    });
+
+    await settle();
+
+    // The noop scheduler never fires its callback, so the animation never
+    // advances — the first pull stays pending forever (the old timeout law).
+    expect(settled).toBe(false);
   });
 });
 

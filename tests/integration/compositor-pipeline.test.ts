@@ -10,9 +10,7 @@
  */
 
 import { describe, test, expect, vi } from 'vitest';
-import { Effect, Ref, SubscriptionRef } from 'effect';
 import { Boundary, Compositor, CompositorStatePool, FrameBudget } from '@czap/core';
-import { runScopedAsync as runScoped } from '../helpers/effect-test.js';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -42,9 +40,9 @@ function makeSpiedQuantizer(boundary: Boundary.Shape, initialState?: string) {
 
   return {
     boundary,
-    get state() {
+    stateSync() {
       readCount++;
-      return Effect.succeed(currentState);
+      return currentState;
     },
     changes: null as any,
     evaluate(value: number) {
@@ -69,12 +67,12 @@ function makeSpiedQuantizer(boundary: Boundary.Shape, initialState?: string) {
 
 describe('Compositor pipeline integration', () => {
   test('dirty flags prevent recomputation of clean quantizers', async () => {
-    const compositor = await runScoped(Compositor.create());
+    const compositor = Compositor.create().compositor;
     const q1 = makeSpiedQuantizer(widthBoundary, 'mobile');
     const q2 = makeSpiedQuantizer(colorBoundary, 'light');
 
-    await Effect.runPromise(compositor.add('layout', q1));
-    await Effect.runPromise(compositor.add('theme', q2));
+    compositor.add('layout', q1);
+    compositor.add('theme', q2);
 
     // Initial compute reads both (add triggers compute internally)
     q1.resetReadCount();
@@ -82,10 +80,10 @@ describe('Compositor pipeline integration', () => {
 
     // Now only dirty q1 via setBlendWeights
     q1._setState('desktop');
-    await Effect.runPromise(compositor.setBlendWeights('layout', { desktop: 1 }));
+    compositor.setBlendWeights('layout', { desktop: 1 });
 
     // Explicit compute — should only read q1's state, skip q2
-    const state = await Effect.runPromise(compositor.compute());
+    const state = compositor.compute();
 
     expect(q1.readCount).toBeGreaterThanOrEqual(1); // q1 was recomputed
     expect(q2.readCount).toBe(0); // q2 was NOT recomputed
@@ -115,12 +113,12 @@ describe('Compositor pipeline integration', () => {
 
     // We can't inject a pool directly, but we CAN verify the pool contract
     // by checking that state objects are recycled (same shape, different identity)
-    const compositor = await runScoped(Compositor.create({ poolCapacity: 4 }));
+    const compositor = Compositor.create({ poolCapacity: 4 }).compositor;
     const q = makeSpiedQuantizer(widthBoundary, 'mobile');
-    await Effect.runPromise(compositor.add('layout', q));
+    compositor.add('layout', q);
 
-    const state1 = await Effect.runPromise(compositor.compute());
-    const state2 = await Effect.runPromise(compositor.compute());
+    const state1 = compositor.compute();
+    const state2 = compositor.compute();
 
     // States should have the correct values
     expect(state1.discrete['layout']).toBe('mobile');
@@ -133,7 +131,7 @@ describe('Compositor pipeline integration', () => {
   });
 
   test('full pipeline: signal change → dirty → selective recompute → output', async () => {
-    const compositor = await runScoped(Compositor.create());
+    const compositor = Compositor.create().compositor;
     const layout = makeSpiedQuantizer(widthBoundary, 'mobile');
     const theme = makeSpiedQuantizer(colorBoundary, 'light');
     const density = makeSpiedQuantizer(
@@ -148,9 +146,9 @@ describe('Compositor pipeline integration', () => {
       '1x',
     );
 
-    await Effect.runPromise(compositor.add('layout', layout));
-    await Effect.runPromise(compositor.add('theme', theme));
-    await Effect.runPromise(compositor.add('density', density));
+    compositor.add('layout', layout);
+    compositor.add('theme', theme);
+    compositor.add('density', density);
 
     // Reset spy counters after initial adds
     layout.resetReadCount();
@@ -159,9 +157,9 @@ describe('Compositor pipeline integration', () => {
 
     // Simulate signal change: only layout crosses boundary
     layout._setState('tablet');
-    await Effect.runPromise(compositor.setBlendWeights('layout', { tablet: 1 }));
+    compositor.setBlendWeights('layout', { tablet: 1 });
 
-    const state = await Effect.runPromise(compositor.compute());
+    const state = compositor.compute();
 
     // ONLY layout was recomputed
     expect(layout.readCount).toBeGreaterThanOrEqual(1);
@@ -200,9 +198,9 @@ describe('Compositor pipeline integration', () => {
   });
 
   test('speculative: evaluateSpeculative prefetches state near threshold', async () => {
-    const compositor = await runScoped(Compositor.create({ speculative: true }));
+    const compositor = Compositor.create({ speculative: true }).compositor;
     const q = makeSpiedQuantizer(widthBoundary, 'mobile');
-    await Effect.runPromise(compositor.add('layout', q));
+    compositor.add('layout', q);
 
     // Evaluate speculatively near the 768 threshold with velocity toward it
     compositor.evaluateSpeculative('layout', 750, 20);
@@ -211,38 +209,38 @@ describe('Compositor pipeline integration', () => {
     compositor.evaluateSpeculative('layout', 765, 20);
 
     // The method should not throw and the compositor should still produce valid state
-    const state = await Effect.runPromise(compositor.compute());
+    const state = compositor.compute();
     expect(state.discrete['layout']).toBe('mobile');
   });
 
   test('speculative: evaluateSpeculative is no-op without speculative config', async () => {
-    const compositor = await runScoped(Compositor.create());
+    const compositor = Compositor.create().compositor;
     const q = makeSpiedQuantizer(widthBoundary, 'mobile');
-    await Effect.runPromise(compositor.add('layout', q));
+    compositor.add('layout', q);
 
     // Should not throw — just a no-op
     compositor.evaluateSpeculative('layout', 760, 20);
 
-    const state = await Effect.runPromise(compositor.compute());
+    const state = compositor.compute();
     expect(state.discrete['layout']).toBe('mobile');
   });
 
   test('31+ quantizers fall back to recompute-all (DirtyFlags limit)', async () => {
-    const compositor = await runScoped(Compositor.create());
+    const compositor = Compositor.create().compositor;
     const spies: ReturnType<typeof makeSpiedQuantizer>[] = [];
 
     for (let i = 0; i < 33; i++) {
       const q = makeSpiedQuantizer(widthBoundary, 'mobile');
       spies.push(q);
-      await Effect.runPromise(compositor.add(`q${i}`, q));
+      compositor.add(`q${i}`, q);
     }
 
     // Reset all counters
     for (const s of spies) s.resetReadCount();
 
     // Dirty just one
-    await Effect.runPromise(compositor.setBlendWeights('q0', { mobile: 1 }));
-    await Effect.runPromise(compositor.compute());
+    compositor.setBlendWeights('q0', { mobile: 1 });
+    compositor.compute();
 
     // With >31 quantizers, dirty flags are disabled — ALL should be read
     const allRead = spies.every((s) => s.readCount >= 1);

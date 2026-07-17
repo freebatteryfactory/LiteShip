@@ -4,7 +4,6 @@
  * #133 — stream directive integrates graph-native recovery on reconnect + request-snapshot.
  */
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { Effect } from 'effect';
 import * as core from '@czap/core';
 import { Resumption, getStreamRecoverySubstrate, registerStreamRecoverySubstrate } from '@czap/web';
 import streamDirective from '../../../packages/astro/src/client-directives/stream.js';
@@ -162,7 +161,7 @@ describe('stream directive graph-native recovery (#133)', () => {
 
   test('continuous transients from snapshot are NOT replayed on recovery', async () => {
     vi.spyOn(Resumption, 'fetchSnapshot').mockReturnValue(
-      Effect.succeed({
+      Promise.resolve({
         type: 'snapshot',
         html: '<main>x</main>',
         signals: {
@@ -198,7 +197,7 @@ describe('stream directive graph-native recovery (#133)', () => {
 
   test('snapshot without signals field surfaces czap:stream-error and keeps stale discrete state', async () => {
     vi.spyOn(Resumption, 'fetchSnapshot').mockReturnValue(
-      Effect.succeed({
+      Promise.resolve({
         type: 'snapshot',
         html: '<main>no-signals</main>',
         signals: undefined as unknown as Record<string, unknown>,
@@ -253,7 +252,7 @@ describe('stream directive graph-native recovery (#133)', () => {
     // Gap-replay corrects the graph + cells but NOT the rendered DOM, so a snapshot
     // is ALSO fetched (domStale) to converge it — provide one to apply.
     const snapshotSpy = vi.spyOn(Resumption, 'fetchSnapshot').mockReturnValue(
-      Effect.succeed({
+      Promise.resolve({
         type: 'snapshot',
         html: '<main>dom-converged</main>',
         signals: { state: 'expanded' },
@@ -291,7 +290,7 @@ describe('stream directive graph-native recovery (#133)', () => {
         base: 'czap:base',
         kind: 'discrete' as const,
       };
-      const receipt = await Effect.runPromise(core.transitionReceipt(transition));
+      const receipt = await core.transitionReceipt(transition);
       const receiptEntry = { receipt, transition };
       const source = MockEventSource.instances[0]!;
       source.simulateMessage(JSON.stringify({ type: 'receipt', data: receiptEntry }), 'evt-43');
@@ -343,7 +342,7 @@ describe('stream directive graph-native recovery (#133)', () => {
     } as never);
     // domStale is wired, so recovery also fetches a snapshot — supply one.
     vi.spyOn(Resumption, 'fetchSnapshot').mockReturnValue(
-      Effect.succeed({ type: 'snapshot', html: '<main>x</main>', signals: {}, lastEventId: 'evt-99' }),
+      Promise.resolve({ type: 'snapshot', html: '<main>x</main>', signals: {}, lastEventId: 'evt-99' }),
     );
 
     const dispose = registerStreamRecoverySubstrate('hero', {
@@ -366,7 +365,7 @@ describe('stream directive graph-native recovery (#133)', () => {
         base: 'czap:base',
         kind: 'discrete' as const,
       };
-      const receipt = await Effect.runPromise(core.transitionReceipt(transition));
+      const receipt = await core.transitionReceipt(transition);
 
       // Feed the receipt frame, then trigger recovery in the SAME tick — the async
       // attestation is still in flight (NOT awaited for the buffer as the other tests do).
@@ -430,9 +429,7 @@ describe('stream directive graph-native recovery (#133)', () => {
     const previous = authorityStore.snapshot('workspace');
     const next = authorityStore.applyDiscrete('workspace', 'expanded');
     expect(next.generation).toBe(1);
-    const { receipt, transition } = await Effect.runPromise(
-      core.mintTransition(previous, next, { base: g0.id, resultId: g1.id }),
-    );
+    const { receipt, transition } = await core.mintTransition(previous, next, { base: g0.id, resultId: g1.id });
 
     const el = makeEl('div', {
       'data-czap-stream-url': '/api/graph-feed',
@@ -514,7 +511,7 @@ describe('stream directive graph-native recovery (#133)', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     vi.spyOn(Resumption, 'fetchSnapshot').mockReturnValue(
-      Effect.succeed({
+      Promise.resolve({
         type: 'snapshot',
         html: '<p>unused</p>',
         signals: undefined as unknown as Record<string, unknown>,
@@ -577,7 +574,7 @@ describe('stream directive graph-native recovery (#133)', () => {
     );
     vi.stubGlobal('fetch', fetchMock);
 
-    vi.spyOn(Resumption, 'fetchSnapshot').mockReturnValue(Effect.fail(new Error('snapshot endpoint unreachable')));
+    vi.spyOn(Resumption, 'fetchSnapshot').mockRejectedValue(new Error('snapshot endpoint unreachable'));
 
     const el = makeEl('div', {
       'data-czap-stream-url': '/api/feed',
@@ -640,7 +637,7 @@ describe('stream directive graph-native recovery (#133)', () => {
       base: 'czap:base',
       kind: 'discrete' as const,
     };
-    const receipt = await Effect.runPromise(core.transitionReceipt(transition));
+    const receipt = await core.transitionReceipt(transition);
 
     const fetchMock = vi.fn().mockResolvedValueOnce(
       new Response(JSON.stringify({ patches: [{ type: 'receipt', data: { receipt, transition } }] }), {
@@ -660,7 +657,7 @@ describe('stream directive graph-native recovery (#133)', () => {
     } as never);
     const fetchSnapshotSpy = vi
       .spyOn(Resumption, 'fetchSnapshot')
-      .mockReturnValue(Effect.succeed({ type: 'snapshot', html: '<p>x</p>', signals: {}, lastEventId: 'evt-99' }));
+      .mockReturnValue(Promise.resolve({ type: 'snapshot', html: '<p>x</p>', signals: {}, lastEventId: 'evt-99' }));
 
     const dispose = registerStreamRecoverySubstrate('hero', {
       graphQueryUrl: '/api/graph',

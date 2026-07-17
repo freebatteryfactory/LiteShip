@@ -8,7 +8,7 @@
 
 > **EntityId** = `string` & `object`
 
-Defined in: [core/src/ecs.ts:15](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L15)
+Defined in: [core/src/ecs.ts:14](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L14)
 
 Nominal-typed identifier for an ECS entity — a branded string minted via the [EntityId](../variables/EntityId.md) helper.
 

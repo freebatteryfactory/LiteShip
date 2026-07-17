@@ -13,10 +13,9 @@
  * @module
  */
 
-import { Effect } from 'effect';
 import type { ContentAddress } from './brands.js';
 import type { DocumentGraph } from './document-graph.js';
-import { Receipt, type ReceiptEnvelope } from './receipt.js';
+import { Receipt, type ChainValidationError, type ReceiptEnvelope } from './receipt.js';
 import { Diagnostics } from './diagnostics.js';
 import { createGraphQueryRefreshBase, graphQueryEtag, sendGraphQuery, type GraphQueryResponse } from './graph-query.js';
 import type { StateCellStoreShape } from './state-cell.js';
@@ -268,14 +267,19 @@ export async function replayDiscreteFromPatchReceipts(options: ReplayDiscreteFro
     .map((transition) => receiptByTransition.get(transition))
     .filter((receipt): receipt is ReceiptEnvelope => receipt !== undefined);
 
-  const validated = await Effect.runPromise(
-    Receipt.validateChainDetailed(chain).pipe(
-      Effect.match({
-        onFailure: (error) => ({ ok: false as const, error }),
-        onSuccess: () => ({ ok: true as const }),
-      }),
-    ),
-  );
+  let validated: { readonly ok: true } | { readonly ok: false; readonly error: ChainValidationError };
+  try {
+    await Receipt.validateChainDetailed(chain);
+    validated = { ok: true };
+  } catch (error) {
+    // `validateChainDetailed` throws the typed `ChainValidationError` (a plain
+    // tagged value) for a structural-floor violation; a hash-primitive failure
+    // surfaces as a real `Error`. Fold only the former into the `{ ok, error }`
+    // union — an unexpected `Error` (the old defect channel `Effect.match` never
+    // caught) propagates untouched.
+    if (error instanceof Error) throw error;
+    validated = { ok: false, error: error as ChainValidationError };
+  }
   if (!validated.ok) {
     Diagnostics.warnOnce({
       source: 'czap/core.gap-replay',

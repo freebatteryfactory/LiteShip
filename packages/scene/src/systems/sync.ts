@@ -29,7 +29,6 @@
  * @module
  */
 
-import { Effect } from 'effect';
 import { Diagnostics } from '@czap/core';
 import type { System, World } from '@czap/core';
 import type { ResolvedEnvelope } from '../sugar/envelope.js';
@@ -57,76 +56,73 @@ export function SyncSystem(frameIndex: number, fps: number = 60): System {
   return {
     name: 'SyncSystem',
     query: ['SyncAnchor'],
-    execute: (entities, world?: World.Shape) =>
-      Effect.gen(function* () {
-        // Pull beat entities from the world. SyncSystem's contract is
-        // "react to beats in the world" — when no world is supplied
-        // (legacy callers, isolated unit tests) we degrade gracefully
-        // to no decay rather than throw, but say so once: silent zero
-        // intensity reads as "my effects never pulse" with no signal.
-        if (world === undefined) {
-          Diagnostics.warnOnce({
-            source: 'czap/scene.sync-system',
-            code: 'worldless-degrade',
-            message:
-              'SyncSystem: no world supplied, so no Beat entities are visible — beat-synced effects will stay at intensity 0. If you built via SceneRuntime.build this is a bug; if you are calling SyncSystem directly, pass the world as the second execute argument.',
-          });
-        }
-        const beatEntities = world !== undefined ? yield* world.query('Beat') : [];
+    execute: (entities, world?: World.Shape) => {
+      // Pull beat entities from the world. SyncSystem's contract is
+      // "react to beats in the world" — when no world is supplied
+      // (legacy callers, isolated unit tests) we degrade gracefully
+      // to no decay rather than throw, but say so once: silent zero
+      // intensity reads as "my effects never pulse" with no signal.
+      if (world === undefined) {
+        Diagnostics.warnOnce({
+          source: 'czap/scene.sync-system',
+          code: 'worldless-degrade',
+          message:
+            'SyncSystem: no world supplied, so no Beat entities are visible — beat-synced effects will stay at intensity 0. If you built via SceneRuntime.build this is a bug; if you are calling SyncSystem directly, pass the world as the second execute argument.',
+        });
+      }
+      const beatEntities = world !== undefined ? world.query('Beat') : [];
 
-        // Extract beat timestamps in ms. The Beat component is the flat
-        // BeatBinding.Component shape ({ kind, timeMs, strength, ... })
-        // written by scene.beat-binding — see packages/scene/src/capsules/beat-binding.ts.
-        const beatTimesMs: number[] = [];
-        for (const e of beatEntities) {
-          const beat = e.components.get('Beat');
-          if (beat === undefined) continue;
-          const t = (beat as { timeMs?: unknown }).timeMs;
-          if (typeof t === 'number' && Number.isFinite(t)) beatTimesMs.push(t);
-        }
-        // Sort ascending — beat-binding preserves input order but a
-        // user-provided beat array might not be sorted.
-        beatTimesMs.sort((a, b) => a - b);
+      // Extract beat timestamps in ms. The Beat component is the flat
+      // BeatBinding.Component shape ({ kind, timeMs, strength, ... })
+      // written by scene.beat-binding — see packages/scene/src/capsules/beat-binding.ts.
+      const beatTimesMs: number[] = [];
+      for (const e of beatEntities) {
+        const beat = e.components.get('Beat');
+        if (beat === undefined) continue;
+        const t = (beat as { timeMs?: unknown }).timeMs;
+        if (typeof t === 'number' && Number.isFinite(t)) beatTimesMs.push(t);
+      }
+      // Sort ascending — beat-binding preserves input order but a
+      // user-provided beat array might not be sorted.
+      beatTimesMs.sort((a, b) => a - b);
 
-        const currentTimeMs = (frameIndex / fps) * 1000;
-        // Last beat at-or-before now. Linear scan is fine — beat counts
-        // are tiny relative to per-frame budget; sorted-binary-search
-        // optimization waits for a future ADR-driven `hot-path` pass.
-        let lastBeat = -Infinity;
-        for (const t of beatTimesMs) {
-          if (t <= currentTimeMs) lastBeat = t;
-          else break;
-        }
-        const msSinceBeat = currentTimeMs - lastBeat;
-        const decay = Number.isFinite(msSinceBeat) ? Math.exp(-msSinceBeat / DECAY_TAU_MS) : 0;
+      const currentTimeMs = (frameIndex / fps) * 1000;
+      // Last beat at-or-before now. Linear scan is fine — beat counts
+      // are tiny relative to per-frame budget; sorted-binary-search
+      // optimization waits for a future ADR-driven `hot-path` pass.
+      let lastBeat = -Infinity;
+      for (const t of beatTimesMs) {
+        if (t <= currentTimeMs) lastBeat = t;
+        else break;
+      }
+      const msSinceBeat = currentTimeMs - lastBeat;
+      const decay = Number.isFinite(msSinceBeat) ? Math.exp(-msSinceBeat / DECAY_TAU_MS) : 0;
 
-        for (const e of entities) {
-          // Compose with a declared envelope instead of clobbering it:
-          // sync decay is the base intensity, the envelope multiplies
-          // it (Spec 1 §5.4 — envelopes modulate, they don't race).
-          // Without a FrameRange there is no span to evaluate the
-          // envelope against, so we fall back to plain decay. The
-          // envelope only applies while the effect is active: gate on
-          // the FrameRange with the same half-open idiom EffectSystem
-          // uses (`from <= frameIndex < to`), so out-of-range frames
-          // behave exactly as pre-envelope sync did (plain decay)
-          // instead of letting a pulse modulate a dormant effect
-          // (Codex P2 follow-up).
-          const env = e.components.get('Envelope') as ResolvedEnvelope | undefined;
-          const range = e.components.get('FrameRange') as { from: number; to: number } | undefined;
-          const inRange = range !== undefined && frameIndex >= range.from && frameIndex < range.to;
-          const intensity =
-            env !== undefined && range !== undefined && inRange
-              ? decay * envelopeFactor(env, frameIndex, range)
-              : decay;
-          // Direct property write preserves the legacy in-place mutation
-          // path used by some downstream tests; setComponent persists
-          // through the canonical world-state map for query consumers.
-          (e as unknown as { _intensity: number })._intensity = intensity;
-          if (world !== undefined) {
-            yield* world.setComponent(e.id, '_intensity', intensity);
-          }
+      for (const e of entities) {
+        // Compose with a declared envelope instead of clobbering it:
+        // sync decay is the base intensity, the envelope multiplies
+        // it (Spec 1 §5.4 — envelopes modulate, they don't race).
+        // Without a FrameRange there is no span to evaluate the
+        // envelope against, so we fall back to plain decay. The
+        // envelope only applies while the effect is active: gate on
+        // the FrameRange with the same half-open idiom EffectSystem
+        // uses (`from <= frameIndex < to`), so out-of-range frames
+        // behave exactly as pre-envelope sync did (plain decay)
+        // instead of letting a pulse modulate a dormant effect
+        // (Codex P2 follow-up).
+        const env = e.components.get('Envelope') as ResolvedEnvelope | undefined;
+        const range = e.components.get('FrameRange') as { from: number; to: number } | undefined;
+        const inRange = range !== undefined && frameIndex >= range.from && frameIndex < range.to;
+        const intensity =
+          env !== undefined && range !== undefined && inRange ? decay * envelopeFactor(env, frameIndex, range) : decay;
+        // Direct property write preserves the legacy in-place mutation
+        // path used by some downstream tests; setComponent persists
+        // through the canonical world-state map for query consumers.
+        (e as unknown as { _intensity: number })._intensity = intensity;
+        if (world !== undefined) {
+          world.setComponent(e.id, '_intensity', intensity);
         }
-      }),
+      }
+    },
   };
 }

@@ -25,7 +25,6 @@
 import { describe, test, expect } from 'vitest';
 import { Boundary, Compositor } from '@czap/core';
 import { Effect } from 'effect';
-import { runScopedAsync as runScoped } from '../../helpers/effect-test.js';
 
 const widthBoundary = Boundary.make({
   input: 'viewport.width',
@@ -57,17 +56,17 @@ function liveQuantizer(boundary: Boundary.Shape) {
 }
 
 describe('Compositor evaluate→markDirty contract', () => {
-  test('LESSON (markDirty): a mutation WITHOUT markDirty freezes; runtime.markDirty unfreezes the next compute', async () => {
+  test('LESSON (markDirty): a mutation WITHOUT markDirty freezes; runtime.markDirty unfreezes the next compute', () => {
     // WHY: selective recomputation + the pose-parked dual-export sweep depend on
     // compute() being a pure function of (dirty set, current states). Drive the
     // quantizer's state out-of-band and prove the discrete/cast outputs freeze
     // until the dirty signal arrives — then snap to the new band.
-    const compositor = await runScoped(Compositor.create({ runtimeSite: 'node' }));
+    const { compositor } = Compositor.create({ runtimeSite: 'node' });
     const q = liveQuantizer(widthBoundary);
-    await Effect.runPromise(compositor.add('layout', q));
+    compositor.add('layout', q);
 
     // #1 — initial compute establishes the baseline (mobile / index 0).
-    const s1 = await Effect.runPromise(compositor.compute());
+    const s1 = compositor.compute();
     expect(s1.discrete['layout']).toBe('mobile');
     expect(s1.outputs.css['--czap-layout']).toBe('mobile');
     expect(s1.outputs.glsl['u_layout']).toBe(0);
@@ -77,7 +76,7 @@ describe('Compositor evaluate→markDirty contract', () => {
     expect(q.evaluate(800)).toBe('tablet');
 
     // #2 — NO markDirty: the composite must be FROZEN at the #1 snapshot.
-    const s2 = await Effect.runPromise(compositor.compute());
+    const s2 = compositor.compute();
     expect(s2.discrete['layout']).toBe('mobile');
     expect(s2.outputs.css['--czap-layout']).toBe('mobile');
     expect(s2.outputs.glsl['u_layout']).toBe(0);
@@ -87,27 +86,27 @@ describe('Compositor evaluate→markDirty contract', () => {
     compositor.runtime.markDirty('layout');
 
     // #3 — markDirty fired: the composite now reflects the NEW band everywhere.
-    const s3 = await Effect.runPromise(compositor.compute());
+    const s3 = compositor.compute();
     expect(s3.discrete['layout']).toBe('tablet');
     expect(s3.outputs.css['--czap-layout']).toBe('tablet');
     expect(s3.outputs.glsl['u_layout']).toBe(1);
     expect(s3.outputs.wgsl['state_index']).toBe(1);
   });
 
-  test('LESSON (markDirty@sweep): a per-frame evaluate+markDirty sweep tracks each crossing (no frozen frames)', async () => {
+  test('LESSON (markDirty@sweep): a per-frame evaluate+markDirty sweep tracks each crossing (no frozen frames)', () => {
     // WHY: this is the dual-export loop in miniature — sweep the input across the
     // threshold span, evaluate + markDirty each step, and assert the composite
     // advances monotonically through every band instead of freezing after frame 0.
-    const compositor = await runScoped(Compositor.create({ runtimeSite: 'node' }));
+    const { compositor } = Compositor.create({ runtimeSite: 'node' });
     const q = liveQuantizer(widthBoundary);
-    await Effect.runPromise(compositor.add('layout', q));
+    compositor.add('layout', q);
 
     const sweep = [0, 200, 768, 900, 1024, 1500];
     const seen: number[] = [];
     for (const v of sweep) {
       q.evaluate(v);
       compositor.runtime.markDirty('layout');
-      const s = await Effect.runPromise(compositor.compute());
+      const s = compositor.compute();
       // The numeric casts always agree with each other.
       expect(s.outputs.glsl['u_layout']).toBe(s.outputs.wgsl['state_index']);
       seen.push(s.outputs.glsl['u_layout']!);

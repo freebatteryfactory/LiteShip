@@ -46,7 +46,6 @@
 
 // PROVES: INV-GRAPHPATCH-IDEMPOTENT, INV-GRAPHPATCH-COMMUTATIVE, INV-GRAPHPATCH-CONVERGENCE, INV-GRAPHPATCH-CONFLICT-BOUNDARY
 import { describe, test, expect } from 'vitest';
-import { Effect } from 'effect';
 import fc from 'fast-check';
 import { GraphPatch, DAG, ContentAddress, sealNode, sealGraph } from '@czap/core';
 import type {
@@ -298,9 +297,9 @@ describe('GraphPatch — CONFLICT BOUNDARY (apply is LWW; fork detection lives o
     const pB = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: signal('branch_b') }]);
 
     // A common parent receipt, then two children both chaining onto it (concurrent branches).
-    const parent = await Effect.runPromise(GraphPatch.receipt(pA));
-    const childA = await Effect.runPromise(GraphPatch.receipt(pA, { previous: parent.hash }));
-    const childB = await Effect.runPromise(GraphPatch.receipt(pB, { previous: parent.hash }));
+    const parent = await GraphPatch.receipt(pA);
+    const childA = await GraphPatch.receipt(pA, { previous: parent.hash });
+    const childB = await GraphPatch.receipt(pB, { previous: parent.hash });
 
     const local = DAG.fromReceipts([parent]);
     const result = GraphPatch.forkOf(local, [childA, childB]);
@@ -312,8 +311,8 @@ describe('GraphPatch — CONFLICT BOUNDARY (apply is LWW; fork detection lives o
   test('a single child off the parent is NOT a fork (the seam does not cry wolf)', async () => {
     const base = graphOf([signal('shared')]);
     const p = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: signal('only') }]);
-    const parent = await Effect.runPromise(GraphPatch.receipt(p));
-    const child = await Effect.runPromise(GraphPatch.receipt(p, { previous: parent.hash }));
+    const parent = await GraphPatch.receipt(p);
+    const child = await GraphPatch.receipt(p, { previous: parent.hash });
     const result = GraphPatch.forkOf(DAG.fromReceipts([parent]), [child]);
     expect(result.forked).toBe(false);
   });

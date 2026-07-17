@@ -70,7 +70,18 @@
       "ExportNode": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts",
       "ProjectionNode": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts",
       "DocumentGraph": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts",
-      "CompositeState": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/compositor-pool.ts"
+      "CompositeState": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/compositor-pool.ts",
+      "Lifetime": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/lifetime.ts",
+      "CellKernel": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts",
+      "Disposer": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts",
+      "ReactiveQuantizer": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/quantizer-types.ts",
+      "CompositorFactory.create": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/compositor.ts",
+      "World.Handle": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts",
+      "WorldShape.query": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts",
+      "__type.run": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/animation.ts"
+    },
+    "@types/node": {
+      "__global.AbortController": "https://developer.mozilla.org/en-US/docs/Web/API/AbortController"
     },
     "@czap/error": {
       "ValidationError": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts",
@@ -128,6 +139,7 @@
     },
     "typescript": {
       "Map": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map",
+      "AbortSignal": "https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal",
       "ts.CompilerOptions": "https://www.typescriptlang.org/docs/handbook/compiler-options.html",
       "ts.Program": "https://github.com/microsoft/TypeScript/blob/main/src/compiler/types.ts",
       "ts.LanguageService": "https://github.com/microsoft/TypeScript/wiki/Using-the-Language-Service-API"

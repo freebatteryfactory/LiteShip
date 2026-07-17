@@ -46,38 +46,26 @@ import { createRequire } from 'node:module';
 import fg from 'fast-glob';
 import { spawnArgvCapture } from '../../../scripts/lib/spawn.js';
 import { scaledTimeout, nodeTestInclude } from '../../../vitest.shared.js';
+import {
+  rootTsconfigReferenceDirs,
+  packageTsconfigInputs,
+  tsconfigTestsIncludeFiles,
+  apiSurfaceSnapshot,
+  lintGlobs,
+  typecheckLegs,
+  typecheckScript,
+} from '../../support/repo-truths.js';
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
 const localRequire = createRequire(import.meta.url);
 const TSC = localRequire.resolve('typescript/bin/tsc');
 
-/** Tolerant tsconfig reader: strips `//` and block comments before JSON.parse. */
-function parseJsonc<T>(filePath: string): T {
-  const text = readFileSync(filePath, 'utf8');
-  try {
-    return JSON.parse(text) as T;
-  } catch {
-    const stripped = text
-      .replace(/\/\*[\s\S]*?\*\//g, '')
-      .replace(/(^|[^:])\/\/[^\n]*/g, '$1');
-    return JSON.parse(stripped) as T;
-  }
-}
-
-interface RootPkg {
-  readonly scripts: Record<string, string>;
-}
-interface Tsconfig {
-  readonly references?: ReadonlyArray<{ readonly path: string }>;
-  readonly include?: ReadonlyArray<string>;
-  readonly files?: ReadonlyArray<string>;
-}
-interface ApiSnapshot {
-  readonly packages: Record<string, { readonly exports?: ReadonlyArray<unknown> }>;
-}
-
-const rootPkg = parseJsonc<RootPkg>(resolve(REPO, 'package.json'));
-const rootTsconfig = parseJsonc<Tsconfig>(resolve(REPO, 'tsconfig.json'));
+// Every repo TRUTH this canary asserts against — root tsconfig references, each
+// package's compile inputs, the tests project's include, the api-surface
+// snapshot, and the lint/typecheck gate-script derivations — is read through the
+// single owner tests/support/repo-truths.ts, never a private JSONC parser or a
+// re-forked script-body regex (scar S0.4). Only the hermetic typecheck-canary
+// fixture below is read locally: it is throwaway sandbox input, not a repo truth.
 
 // --------------------------------------------------------------------------
 // (a) TYPECHECK canary — the build gate must detect a real type error.
@@ -148,9 +136,7 @@ describe('(a) typecheck canary — `tsc --build` detects an injected type error'
 // --------------------------------------------------------------------------
 
 describe('(b) coverage floors — gates cover a non-trivial surface', () => {
-  const referenceDirs = (rootTsconfig.references ?? [])
-    .map((r) => /^\.\/(packages\/[\w-]+)$/.exec(r.path)?.[1])
-    .filter((dir): dir is string => dir != null);
+  const referenceDirs = rootTsconfigReferenceDirs();
 
   it('root tsconfig references >= 20 package dirs (the `tsc --build` topology)', () => {
     expect(referenceDirs.length).toBeGreaterThanOrEqual(20);
@@ -162,23 +148,26 @@ describe('(b) coverage floors — gates cover a non-trivial surface', () => {
     const dangling: string[] = [];
     const empty: string[] = [];
     for (const dir of referenceDirs) {
-      const abs = resolve(REPO, dir);
-      const tsconfigPath = join(abs, 'tsconfig.json');
-      if (!existsSync(abs) || !existsSync(tsconfigPath)) {
+      const inputs = packageTsconfigInputs(dir);
+      // `undefined` = the reference points at a missing dir or a project with no
+      // tsconfig.json — a dangling reference.
+      if (inputs === undefined) {
         dangling.push(dir);
         continue;
       }
-      const cfg = parseJsonc<Tsconfig>(tsconfigPath);
       // An ABSENT include+files means tsc's default (compile everything under
       // the project) — glob the whole tree. An EXPLICIT `include: []` means the
       // project compiles nothing: do NOT fall back, so a gutted include reds.
-      const hasExplicitInputs = cfg.include !== undefined || cfg.files !== undefined;
-      const patterns = [...(cfg.files ?? []), ...(cfg.include ?? [])];
+      const hasExplicitInputs = inputs.include !== undefined || inputs.files !== undefined;
+      const patterns = [...(inputs.files ?? []), ...(inputs.include ?? [])];
       const globs = hasExplicitInputs ? patterns : ['**/*.ts', '**/*.d.ts'];
       const matched =
         globs.length === 0
           ? []
-          : fg.sync([...globs], { cwd: abs, ignore: ['**/node_modules/**', '**/dist/**'] });
+          : fg.sync([...globs], {
+              cwd: resolve(REPO, 'packages', dir),
+              ignore: ['**/node_modules/**', '**/dist/**'],
+            });
       if (matched.length === 0) empty.push(dir);
     }
     expect(dangling, `references point at missing dirs/tsconfigs: ${dangling.join(', ')}`).toEqual([]);
@@ -194,20 +183,16 @@ describe('(b) coverage floors — gates cover a non-trivial surface', () => {
   });
 
   it('tsconfig.tests.json lists only files that exist (no dangling compile-assertion seams)', () => {
-    const testsCfg = parseJsonc<Tsconfig>(resolve(REPO, 'tsconfig.tests.json'));
-    const listed = (testsCfg.include ?? []).filter((entry) => !entry.includes('*'));
+    const listed = tsconfigTestsIncludeFiles();
     expect(listed.length, 'tsconfig.tests.json include must name concrete files').toBeGreaterThan(0);
     const missing = listed.filter((entry) => !existsSync(resolve(REPO, entry)));
     expect(missing, `tsconfig.tests.json names files that no longer exist: ${missing.join(', ')}`).toEqual([]);
   });
 
   it('eslint lint globs match > 500 source files', () => {
-    const lintScript = rootPkg.scripts.lint ?? '';
-    const globs = [...lintScript.matchAll(/"([^"]+)"/g)]
-      .map((m) => m[1]!)
-      .filter((g) => g.includes('*'));
-    expect(globs.length, `no globs parsed from lint script: ${lintScript}`).toBeGreaterThan(0);
-    const matched = fg.sync(globs, {
+    const globs = lintGlobs();
+    expect(globs.length, 'no globs derived from the lint script').toBeGreaterThan(0);
+    const matched = fg.sync([...globs], {
       cwd: REPO,
       ignore: ['**/dist/**', '**/node_modules/**', '**/*.d.ts', '**/*.js'],
     });
@@ -215,7 +200,7 @@ describe('(b) coverage floors — gates cover a non-trivial surface', () => {
   });
 
   it('api-surface snapshot carries > 100 exports across > 20 packages', () => {
-    const snapshot = parseJsonc<ApiSnapshot>(resolve(REPO, 'tests', 'fixtures', 'api-surface-snapshot.json'));
+    const snapshot = apiSurfaceSnapshot();
     const pkgs = Object.entries(snapshot.packages ?? {});
     const packagesWithExports = pkgs.filter(([, v]) => (v.exports?.length ?? 0) > 0);
     const totalExports = pkgs.reduce((sum, [, v]) => sum + (v.exports?.length ?? 0), 0);
@@ -229,7 +214,7 @@ describe('(b) coverage floors — gates cover a non-trivial surface', () => {
 // --------------------------------------------------------------------------
 
 describe('(c) vacuity tripwire — typecheck leg 1 is `tsc --build`', () => {
-  const legs = (rootPkg.scripts.typecheck ?? '').split('&&').map((leg) => leg.trim());
+  const legs = typecheckLegs();
   const leg1 = legs[0] ?? '';
 
   it('leg 1 is exactly `tsc --build` (build-mode, references-driven)', () => {
@@ -243,7 +228,7 @@ describe('(c) vacuity tripwire — typecheck leg 1 is `tsc --build`', () => {
   });
 
   it('the typecheck gate still runs the scripts and tests projects (stays multi-leg)', () => {
-    const script = rootPkg.scripts.typecheck ?? '';
+    const script = typecheckScript();
     expect(script).toMatch(/typecheck:scripts/);
     expect(script).toMatch(/typecheck:tests/);
   });

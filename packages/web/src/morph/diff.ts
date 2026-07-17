@@ -10,7 +10,6 @@
  */
 
 import { Diagnostics } from '@czap/core';
-import { Effect } from 'effect';
 import type { MorphConfig, MorphHints, MorphResult } from '../types.js';
 import { dispatchCzapEvent } from '../wire/dispatch.js';
 import * as SemanticIdModule from './semantic-id.js';
@@ -41,16 +40,11 @@ export { defaultConfig, parseHTML, isSameNode, syncAttributes, syncChildren, fin
  * config flags or preserve hints apply. Use bare `morph` only when you have
  * proven you need to skip physical state handling.
  */
-export const morph = (
-  oldNode: Element,
-  newHTML: string,
-  config?: Partial<MorphConfig>,
-  hints?: MorphHints,
-): Effect.Effect<void> =>
-  // ONE reconcile body: the Effect entry delegates to `morphPure` so the morph-opaque
+export const morph = (oldNode: Element, newHTML: string, config?: Partial<MorphConfig>, hints?: MorphHints): void =>
+  // ONE reconcile body: this entry delegates to `morphPure` so the morph-opaque
   // laws and callback wiring live in exactly one place and cannot drift between the
-  // Effect and Effect-free entry points.
-  Effect.sync(() => morphPure(oldNode, newHTML, config, hints));
+  // public entry point and the pure kernel.
+  morphPure(oldNode, newHTML, config, hints);
 
 /**
  * Morph with physical state capture and restore — the default entry point.
@@ -65,55 +59,54 @@ export const morphWithState = (
   newHTML: string,
   config?: Partial<MorphConfig>,
   hints?: MorphHints,
-): Effect.Effect<MorphResult> =>
-  Effect.gen(function* () {
-    const finalConfig = { ...defaultConfig, ...config };
+): MorphResult => {
+  const finalConfig = { ...defaultConfig, ...config };
 
-    const state =
-      finalConfig.preserveFocus || finalConfig.preserveScroll || finalConfig.preserveSelection
-        ? yield* Physical.capture(oldNode)
-        : null;
+  const state =
+    finalConfig.preserveFocus || finalConfig.preserveScroll || finalConfig.preserveSelection
+      ? Physical.capture(oldNode)
+      : null;
 
-    const preserveIds = hints?.preserve ?? hints?.preserveIds ?? [];
-    if (preserveIds.length > 0) {
-      const preserveIndex = SemanticIdModule.buildIndex(oldNode);
-      for (const id of preserveIds) {
-        if (!preserveIndex.has(id)) {
-          Diagnostics.warn({
-            source: 'czap/web.morph',
-            code: 'preserve-id-missing',
-            message: `Preserve ID "${id}" was not found in the old DOM tree before morphing. Preserve IDs are matched against data-czap-id attributes — check for a typo, or add data-czap-id="${id}" to the element you want preserved.`,
-          });
-        }
+  const preserveIds = hints?.preserve ?? hints?.preserveIds ?? [];
+  if (preserveIds.length > 0) {
+    const preserveIndex = SemanticIdModule.buildIndex(oldNode);
+    for (const id of preserveIds) {
+      if (!preserveIndex.has(id)) {
+        Diagnostics.warn({
+          source: 'czap/web.morph',
+          code: 'preserve-id-missing',
+          message: `Preserve ID "${id}" was not found in the old DOM tree before morphing. Preserve IDs are matched against data-czap-id attributes — check for a typo, or add data-czap-id="${id}" to the element you want preserved.`,
+        });
       }
     }
+  }
 
-    yield* morph(oldNode, newHTML, finalConfig, hints);
+  morph(oldNode, newHTML, finalConfig, hints);
 
-    const rejection = HintsModule.rejectIfMissing(hints ?? {}, oldNode);
-    if (rejection) {
-      dispatchCzapEvent(oldNode, 'czap:morph-rejected', {
-        ...rejection,
-        recovery: 'A czap:request-snapshot event was dispatched to recover — listen for it to fetch fresh state.',
-      });
+  const rejection = HintsModule.rejectIfMissing(hints ?? {}, oldNode);
+  if (rejection) {
+    dispatchCzapEvent(oldNode, 'czap:morph-rejected', {
+      ...rejection,
+      recovery: 'A czap:request-snapshot event was dispatched to recover — listen for it to fetch fresh state.',
+    });
 
-      dispatchCzapEvent(oldNode, 'czap:request-snapshot', { reason: rejection.reason });
+    dispatchCzapEvent(oldNode, 'czap:request-snapshot', { reason: rejection.reason });
 
-      return { type: 'rejected' as const, rejection };
-    }
+    return { type: 'rejected' as const, rejection };
+  }
 
-    const remapIds = hints?.remap ?? (hints?.idMap ? Object.fromEntries(hints.idMap) : undefined);
-    if (remapIds) {
-      SemanticIdModule.applyIdMap(oldNode, remapIds);
-    }
+  const remapIds = hints?.remap ?? (hints?.idMap ? Object.fromEntries(hints.idMap) : undefined);
+  if (remapIds) {
+    SemanticIdModule.applyIdMap(oldNode, remapIds);
+  }
 
-    if (state) {
-      const remappedState = remapIds ? HintsModule.applyRemap(state, remapIds) : state;
-      yield* PhysicalRestore.restore(remappedState, oldNode, remapIds);
-    }
+  if (state) {
+    const remappedState = remapIds ? HintsModule.applyRemap(state, remapIds) : state;
+    PhysicalRestore.restore(remappedState, oldNode, remapIds);
+  }
 
-    return { type: 'success' as const };
-  });
+  return { type: 'success' as const };
+};
 
 /**
  * DOM morph namespace.

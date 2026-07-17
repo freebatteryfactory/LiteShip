@@ -8,7 +8,7 @@
 
 > `const` **DAG**: `object`
 
-Defined in: [core/src/dag.ts:674](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/dag.ts#L674)
+Defined in: [core/src/dag.ts:672](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/dag.ts#L672)
 
 DAG namespace -- receipt DAG merge and canonical linearization.
 
@@ -102,7 +102,7 @@ if (violation) {
 
 ### checkpoint
 
-> **checkpoint**: (`dag`, `options`) => `Effect`\<[`CheckpointResult`](../interfaces/CheckpointResult.md)\>
+> **checkpoint**: (`dag`, `options`) => `Promise`\<[`CheckpointResult`](../interfaces/CheckpointResult.md)\>
 
 Compact the DAG below a watermark, returning a checkpoint attestation.
 
@@ -139,12 +139,12 @@ node (which would spuriously read as a second head / fork).
 
 #### Returns
 
-`Effect`\<[`CheckpointResult`](../interfaces/CheckpointResult.md)\>
+`Promise`\<[`CheckpointResult`](../interfaces/CheckpointResult.md)\>
 
 #### Example
 
 ```ts
-const { dag: compacted, checkpoint, dropped } = yield* DAG.checkpoint(dag, { below: W });
+const { dag: compacted, checkpoint, dropped } = await DAG.checkpoint(dag, { below: W });
 // compacted has `dropped.length` fewer nodes; `checkpoint.subject.id` commits W
 ```
 

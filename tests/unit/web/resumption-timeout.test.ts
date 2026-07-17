@@ -1,6 +1,5 @@
 import { describe, expect, test, vi, afterEach } from 'vitest';
 import { Millis } from '@czap/core';
-import { Effect } from 'effect';
 import { Resumption } from '../../../packages/web/src/stream/resumption.js';
 
 describe('ResumptionConfig.timeout (#122)', () => {
@@ -18,9 +17,7 @@ describe('ResumptionConfig.timeout (#122)', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    await Effect.runPromise(
-      Resumption.fetchSnapshot('art-1', { snapshotUrl: '/czap/snapshot', timeout: Millis(50) }),
-    );
+    await Resumption.fetchSnapshot('art-1', { snapshotUrl: '/czap/snapshot', timeout: Millis(50) });
     expect(fetchMock).toHaveBeenCalledOnce();
   });
 });

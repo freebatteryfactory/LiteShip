@@ -72,7 +72,7 @@ True once `dispose()` has been initiated (flips synchronously).
 
 ### signal
 
-> `readonly` **signal**: `AbortSignal`
+> `readonly` **signal**: [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal)
 
 Defined in: [core/src/lifetime.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/lifetime.ts#L53)
 

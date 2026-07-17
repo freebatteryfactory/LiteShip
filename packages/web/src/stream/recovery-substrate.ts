@@ -17,7 +17,6 @@
  * @module
  */
 
-import { Effect } from 'effect';
 import type { DiscreteStateTransition, PatchReceiptEntry, ReceiptEnvelope, StateCellStoreShape } from '@czap/core';
 import {
   Diagnostics,
@@ -156,7 +155,7 @@ const attestPatchReceiptEntry = async (artifactId: string, frame: unknown): Prom
     return null;
   }
 
-  const computedHash = await Effect.runPromise(Receipt.hashEnvelope(receipt));
+  const computedHash = await Receipt.hashEnvelope(receipt);
   if (computedHash !== receipt.hash) {
     warnRejectedFrame(artifactId, `receipt hash mismatch (stored ${receipt.hash}, computed ${computedHash})`);
     return null;
@@ -177,7 +176,7 @@ const attestPatchReceiptEntry = async (artifactId: string, frame: unknown): Prom
   //    payload ref from the DECODED transition (the SAME `discreteTransitionPayload` law
   //    the mint used, Law 6) and require it to equal `receipt.payload`, so the receipt
   //    attests the exact value gap replay will apply — not merely its subject.
-  const expectedPayload = await Effect.runPromise(discreteTransitionPayload(transition));
+  const expectedPayload = await discreteTransitionPayload(transition);
   if (!TypedRef.equals(receipt.payload, expectedPayload)) {
     warnRejectedFrame(
       artifactId,

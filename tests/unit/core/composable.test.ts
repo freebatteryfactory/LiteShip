@@ -6,8 +6,6 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import type { Scope } from 'effect';
-import { Effect } from 'effect';
 import {
   Composable,
   ComposableWorld,
@@ -19,15 +17,9 @@ import {
 import type { ComposableEntity, EntityComponents } from '@czap/core';
 
 // ---------------------------------------------------------------------------
-// Helpers
+// Shared fixtures
 // ---------------------------------------------------------------------------
 
-/** Run a scoped Effect synchronously (world requires Scope). */
-function runScoped<A>(effect: Effect.Effect<A, never, Scope.Scope>): A {
-  return Effect.runSync(Effect.scoped(effect));
-}
-
-// Shared fixtures
 const widthBoundary = Boundary.make({
   input: 'viewport.width',
   at: [[0, 'sm'], [768, 'md'], [1024, 'lg']] as const,
@@ -249,14 +241,10 @@ describe('Composable.merge -- reduces correctly', () => {
 
 describe('ComposableWorld.evaluate -- Boundary', () => {
   test('evaluates boundary against input value and returns correct state', () => {
-    const result = runScoped(
-      Effect.gen(function* () {
-        const world = yield* World.make();
-        const cw = ComposableWorld.make(world);
-        const entity = yield* cw.spawn({ boundary: widthBoundary });
-        return yield* cw.evaluate(entity, { 'viewport.width': 800 });
-      }),
-    );
+    const { world } = World.make();
+    const cw = ComposableWorld.make(world);
+    const entity = cw.spawn({ boundary: widthBoundary });
+    const result = cw.evaluate(entity, { 'viewport.width': 800 });
 
     expect(result['viewport.width']).toBe('md');
   });
@@ -266,14 +254,10 @@ describe('ComposableWorld.evaluate -- Boundary', () => {
       input: 'viewport.width',
       at: [[320, 'sm'], [768, 'md']] as const,
     });
-    const result = runScoped(
-      Effect.gen(function* () {
-        const world = yield* World.make();
-        const cw = ComposableWorld.make(world);
-        const entity = yield* cw.spawn({ boundary: bp });
-        return yield* cw.evaluate(entity, { 'viewport.width': 100 });
-      }),
-    );
+    const { world } = World.make();
+    const cw = ComposableWorld.make(world);
+    const entity = cw.spawn({ boundary: bp });
+    const result = cw.evaluate(entity, { 'viewport.width': 100 });
 
     expect(result['viewport.width']).toBe('sm');
   });
@@ -293,30 +277,22 @@ describe('ComposableWorld.evaluate -- Token', () => {
       fallback: '#ccc',
     });
 
-    const result = runScoped(
-      Effect.gen(function* () {
-        const world = yield* World.make();
-        const cw = ComposableWorld.make(world);
-        // Token.tap expects string axis values; evaluate converts numeric inputs
-        // For token evaluation, use a numeric key matching the axis name
-        const entity = yield* cw.spawn({ token });
-        return yield* cw.evaluate(entity, {});
-      }),
-    );
+    const { world } = World.make();
+    const cw = ComposableWorld.make(world);
+    // Token.tap expects string axis values; evaluate converts numeric inputs
+    // For token evaluation, use a numeric key matching the axis name
+    const entity = cw.spawn({ token });
+    const result = cw.evaluate(entity, {});
 
     // No axis matched, so fallback is used
     expect(result['bg']).toBe('#ccc');
   });
 
   test('token falls back when no axis matches', () => {
-    const result = runScoped(
-      Effect.gen(function* () {
-        const world = yield* World.make();
-        const cw = ComposableWorld.make(world);
-        const entity = yield* cw.spawn({ token: colorToken });
-        return yield* cw.evaluate(entity, { unrelated: 42 });
-      }),
-    );
+    const { world } = World.make();
+    const cw = ComposableWorld.make(world);
+    const entity = cw.spawn({ token: colorToken });
+    const result = cw.evaluate(entity, { unrelated: 42 });
 
     expect(result['primary']).toBe('#888');
   });
@@ -333,14 +309,10 @@ describe('ComposableWorld.evaluate -- Token', () => {
       fallback: '#cccccc',
     });
 
-    const result = runScoped(
-      Effect.gen(function* () {
-        const world = yield* World.make();
-        const cw = ComposableWorld.make(world);
-        const entity = yield* cw.spawn({ token });
-        return yield* cw.evaluate(entity, { theme: 2 });
-      }),
-    );
+    const { world } = World.make();
+    const cw = ComposableWorld.make(world);
+    const entity = cw.spawn({ token });
+    const result = cw.evaluate(entity, { theme: 2 });
 
     expect(result['accent']).toBe('#222222');
   });
@@ -352,18 +324,14 @@ describe('ComposableWorld.evaluate -- Token', () => {
 
 describe('ComposableWorld.evaluate -- Style', () => {
   test('given boundary state, returns correct style properties', () => {
-    const result = runScoped(
-      Effect.gen(function* () {
-        const world = yield* World.make();
-        const cw = ComposableWorld.make(world);
-        const entity = yield* cw.spawn({
-          boundary: widthBoundary,
-          style: baseStyle,
-        });
-        // viewport.width = 1100 should resolve to 'lg'
-        return yield* cw.evaluate(entity, { 'viewport.width': 1100 });
-      }),
-    );
+    const { world } = World.make();
+    const cw = ComposableWorld.make(world);
+    const entity = cw.spawn({
+      boundary: widthBoundary,
+      style: baseStyle,
+    });
+    // viewport.width = 1100 should resolve to 'lg'
+    const result = cw.evaluate(entity, { 'viewport.width': 1100 });
 
     expect(result['viewport.width']).toBe('lg');
     // Style.tap merges base + 'lg' state: font-size overridden, color from base
@@ -376,28 +344,20 @@ describe('ComposableWorld.evaluate -- Style', () => {
       base: { properties: { display: 'flex', gap: '8px' } },
     });
 
-    const result = runScoped(
-      Effect.gen(function* () {
-        const world = yield* World.make();
-        const cw = ComposableWorld.make(world);
-        const entity = yield* cw.spawn({ style: styleNoBoundary });
-        return yield* cw.evaluate(entity, {});
-      }),
-    );
+    const { world } = World.make();
+    const cw = ComposableWorld.make(world);
+    const entity = cw.spawn({ style: styleNoBoundary });
+    const result = cw.evaluate(entity, {});
 
     expect(result['display']).toBe('flex');
     expect(result['gap']).toBe('8px');
   });
 
   test('evaluate returns an empty object when no supported components are present', () => {
-    const result = runScoped(
-      Effect.gen(function* () {
-        const world = yield* World.make();
-        const cw = ComposableWorld.make(world);
-        const entity = yield* cw.spawn({ custom: 'value' });
-        return yield* cw.evaluate(entity, {});
-      }),
-    );
+    const { world } = World.make();
+    const cw = ComposableWorld.make(world);
+    const entity = cw.spawn({ custom: 'value' });
+    const result = cw.evaluate(entity, {});
 
     expect(result).toEqual({});
   });
@@ -409,83 +369,63 @@ describe('ComposableWorld.evaluate -- Style', () => {
 
 describe('ComposableWorld.query -- round-trip identity', () => {
   test('make entity -> spawn into world -> query back -> same components', () => {
-    const result = runScoped(
-      Effect.gen(function* () {
-        const world = yield* World.make();
-        const cw = ComposableWorld.make(world);
+    const { world } = World.make();
+    const cw = ComposableWorld.make(world);
 
-        const original = yield* cw.spawn({
-          boundary: widthBoundary,
-          token: colorToken,
-        });
+    const original = cw.spawn({
+      boundary: widthBoundary,
+      token: colorToken,
+    });
 
-        const queried = yield* cw.query('boundary', 'token');
-        return { original, queried };
-      }),
-    );
+    const queried = cw.query('boundary', 'token');
 
-    expect(result.queried.length).toBe(1);
-    const recovered = result.queried[0]!;
+    expect(queried.length).toBe(1);
+    const recovered = queried[0]!;
     // Components should be structurally equal (same boundary and token objects)
-    expect(recovered.components.boundary).toEqual(result.original.components.boundary);
-    expect(recovered.components.token).toEqual(result.original.components.token);
+    expect(recovered.components.boundary).toEqual(original.components.boundary);
+    expect(recovered.components.token).toEqual(original.components.token);
   });
 
   test('query filters by component type names', () => {
-    const result = runScoped(
-      Effect.gen(function* () {
-        const world = yield* World.make();
-        const cw = ComposableWorld.make(world);
+    const { world } = World.make();
+    const cw = ComposableWorld.make(world);
 
-        yield* cw.spawn({ boundary: widthBoundary });
-        yield* cw.spawn({ token: colorToken });
-        yield* cw.spawn({ boundary: widthBoundary, token: colorToken });
+    cw.spawn({ boundary: widthBoundary });
+    cw.spawn({ token: colorToken });
+    cw.spawn({ boundary: widthBoundary, token: colorToken });
 
-        const boundaryOnly = yield* cw.query('boundary');
-        const tokenOnly = yield* cw.query('token');
-        const both = yield* cw.query('boundary', 'token');
-
-        return { boundaryOnly, tokenOnly, both };
-      }),
-    );
+    const boundaryOnly = cw.query('boundary');
+    const tokenOnly = cw.query('token');
+    const both = cw.query('boundary', 'token');
 
     // Two entities have 'boundary' (entity 1 and entity 3)
-    expect(result.boundaryOnly.length).toBe(2);
+    expect(boundaryOnly.length).toBe(2);
     // Two entities have 'token' (entity 2 and entity 3)
-    expect(result.tokenOnly.length).toBe(2);
+    expect(tokenOnly.length).toBe(2);
     // Only entity 3 has both
-    expect(result.both.length).toBe(1);
+    expect(both.length).toBe(1);
   });
 
   test('query over absent component names returns an empty list', () => {
-    const result = runScoped(
-      Effect.gen(function* () {
-        const world = yield* World.make();
-        const cw = ComposableWorld.make(world);
-        yield* cw.spawn({ boundary: widthBoundary });
-        return yield* cw.query('style');
-      }),
-    );
+    const { world } = World.make();
+    const cw = ComposableWorld.make(world);
+    cw.spawn({ boundary: widthBoundary });
+    const result = cw.query('style');
 
     expect(result).toEqual([]);
   });
 
   test('spawnWith preserves identity and makes entities queryable', () => {
-    const result = runScoped(
-      Effect.gen(function* () {
-        const world = yield* World.make();
-        const cw = ComposableWorld.make(world);
-        const entity = Composable.make({ boundary: widthBoundary, token: colorToken });
-        const spawned = yield* cw.spawnWith(entity);
-        const queriedA = yield* cw.query('token', 'boundary');
-        const queriedB = yield* cw.query('boundary', 'token');
-        return { entity, spawned, queriedA, queriedB };
-      }),
-    );
+    const { world } = World.make();
+    const cw = ComposableWorld.make(world);
+    const entity = Composable.make({ boundary: widthBoundary, token: colorToken });
+    const spawned = cw.spawnWith(entity);
+    const queriedA = cw.query('token', 'boundary');
+    const queriedB = cw.query('boundary', 'token');
 
-    expect(result.spawned).toBe(result.entity);
-    expect(result.queriedA.map((entity) => entity.id)).toEqual(result.queriedB.map((entity) => entity.id));
-    expect(result.queriedA[0]?.id).toBe(result.entity.id);
+    expect(spawned).toBe(entity);
+    expect(queriedA.map((e) => e.id)).toEqual(queriedB.map((e) => e.id));
+    expect(queriedA[0]?.id).toBe(entity.id);
   });
 });
 
@@ -495,97 +435,75 @@ describe('ComposableWorld.query -- round-trip identity', () => {
 
 describe('ComposableWorld.dense -- store/retrieve', () => {
   test('store and retrieve round-trip', () => {
-    const result = runScoped(
-      Effect.gen(function* () {
-        const world = yield* World.make();
-        const dense = ComposableWorld.dense(world);
-        yield* dense.create('velocity', 16);
+    const { world } = World.make();
+    const dense = ComposableWorld.dense(world);
+    dense.create('velocity', 16);
 
-        const entity = Composable.make({ boundary: widthBoundary });
-        yield* dense.store(entity, 42.5);
-        return yield* dense.retrieve(entity);
-      }),
-    );
+    const entity = Composable.make({ boundary: widthBoundary });
+    dense.store(entity, 42.5);
+    const result = dense.retrieve(entity);
 
     expect(result).toBe(42.5);
   });
 
   test('retrieve returns undefined for unknown entity', () => {
-    const result = runScoped(
-      Effect.gen(function* () {
-        const world = yield* World.make();
-        const dense = ComposableWorld.dense(world);
-        yield* dense.create('hp', 8);
+    const { world } = World.make();
+    const dense = ComposableWorld.dense(world);
+    dense.create('hp', 8);
 
-        const entity = Composable.make({ token: colorToken });
-        return yield* dense.retrieve(entity);
-      }),
-    );
+    const entity = Composable.make({ token: colorToken });
+    const result = dense.retrieve(entity);
 
     expect(result).toBeUndefined();
   });
 
   test('retrieve returns undefined before a dense store is created', () => {
-    const result = runScoped(
-      Effect.gen(function* () {
-        const world = yield* World.make();
-        const dense = ComposableWorld.dense(world);
-        const entity = Composable.make({ boundary: widthBoundary });
-        return yield* dense.retrieve(entity);
-      }),
-    );
+    const { world } = World.make();
+    const dense = ComposableWorld.dense(world);
+    const entity = Composable.make({ boundary: widthBoundary });
+    const result = dense.retrieve(entity);
 
     expect(result).toBeUndefined();
   });
 
   test('store rejects writes before create() is called', () => {
-    const effect = Effect.gen(function* () {
-      const world = yield* World.make();
+    expect(() => {
+      const { world } = World.make();
       const dense = ComposableWorld.dense(world);
       const entity = Composable.make({ boundary: widthBoundary });
-      yield* dense.store(entity, 1);
-    });
-
-    expect(() => runScoped(effect)).toThrow('no dense store exists — call world.create(name, capacity)');
+      dense.store(entity, 1);
+    }).toThrow('no dense store exists — call world.create(name, capacity)');
   });
 
   test('store overwrites previous value', () => {
-    const result = runScoped(
-      Effect.gen(function* () {
-        const world = yield* World.make();
-        const dense = ComposableWorld.dense(world);
-        yield* dense.create('hp', 8);
+    const { world } = World.make();
+    const dense = ComposableWorld.dense(world);
+    dense.create('hp', 8);
 
-        const entity = Composable.make({ boundary: widthBoundary });
-        yield* dense.store(entity, 10);
-        yield* dense.store(entity, 99);
-        return yield* dense.retrieve(entity);
-      }),
-    );
+    const entity = Composable.make({ boundary: widthBoundary });
+    dense.store(entity, 10);
+    dense.store(entity, 99);
+    const result = dense.retrieve(entity);
 
     expect(result).toBe(99);
   });
 
   test('same-component ComposableEntities share ContentAddress in dense store', () => {
-    const result = runScoped(
-      Effect.gen(function* () {
-        const world = yield* World.make();
-        const dense = ComposableWorld.dense(world);
-        yield* dense.create('speed', 16);
+    const { world } = World.make();
+    const dense = ComposableWorld.dense(world);
+    dense.create('speed', 16);
 
-        const e1 = Composable.make({ boundary: widthBoundary });
-        const e2 = Composable.make({ boundary: widthBoundary });
+    const e1 = Composable.make({ boundary: widthBoundary });
+    const e2 = Composable.make({ boundary: widthBoundary });
 
-        // Same components → same ContentAddress (by design)
-        expect(e1.id).toBe(e2.id);
+    // Same components → same ContentAddress (by design)
+    expect(e1.id).toBe(e2.id);
 
-        yield* dense.store(e1, 10);
-        yield* dense.store(e2, 20);
+    dense.store(e1, 10);
+    dense.store(e2, 20);
 
-        // ContentAddress-keyed: e2 overwrites e1 (intentional dedup)
-        return yield* dense.retrieve(e1);
-      }),
-    );
+    // ContentAddress-keyed: e2 overwrites e1 (intentional dedup)
+    const result = dense.retrieve(e1);
 
     expect(result).toBe(20);
   });
@@ -607,62 +525,48 @@ interface NarrowSchema extends EntityComponents {
 
 describe('TypedComposableWorld -- compile-time type safety', () => {
   test('typed world spawn constrains components to the schema', () => {
-    const result = runScoped(
-      Effect.gen(function* () {
-        const world = yield* World.make();
-        const cw: ComposableWorld.Shape<NarrowSchema> = ComposableWorld.make<NarrowSchema>(world);
+    const { world } = World.make();
+    const cw: ComposableWorld.Shape<NarrowSchema> = ComposableWorld.make<NarrowSchema>(world);
 
-        // This compiles because boundary and token are in NarrowSchema
-        const entity = yield* cw.spawn({ boundary: widthBoundary, token: colorToken });
-        return yield* cw.evaluate(entity, { 'viewport.width': 800 });
-      }),
-    );
+    // This compiles because boundary and token are in NarrowSchema
+    const entity = cw.spawn({ boundary: widthBoundary, token: colorToken });
+    const result = cw.evaluate(entity, { 'viewport.width': 800 });
 
     expect(result['viewport.width']).toBe('md');
     expect(result['primary']).toBe('#888');
   });
 
   test('typed query returns correctly narrowed component types', () => {
-    const result = runScoped(
-      Effect.gen(function* () {
-        const world = yield* World.make();
-        const cw: ComposableWorld.Shape<NarrowSchema> = ComposableWorld.make<NarrowSchema>(world);
+    const { world } = World.make();
+    const cw: ComposableWorld.Shape<NarrowSchema> = ComposableWorld.make<NarrowSchema>(world);
 
-        yield* cw.spawn({ boundary: widthBoundary });
-        yield* cw.spawn({ token: colorToken });
-        yield* cw.spawn({ boundary: widthBoundary, token: colorToken });
+    cw.spawn({ boundary: widthBoundary });
+    cw.spawn({ token: colorToken });
+    cw.spawn({ boundary: widthBoundary, token: colorToken });
 
-        // Query for 'boundary' -- result type is ComposableEntity<Pick<NarrowSchema, 'boundary'>>
-        const boundaryEntities = yield* cw.query('boundary');
-        // Query for both -- result type is ComposableEntity<Pick<NarrowSchema, 'boundary' | 'token'>>
-        const bothEntities = yield* cw.query('boundary', 'token');
+    // Query for 'boundary' -- result type is ComposableEntity<Pick<NarrowSchema, 'boundary'>>
+    const boundaryEntities = cw.query('boundary');
+    // Query for both -- result type is ComposableEntity<Pick<NarrowSchema, 'boundary' | 'token'>>
+    const bothEntities = cw.query('boundary', 'token');
 
-        return { boundaryEntities, bothEntities };
-      }),
-    );
-
-    expect(result.boundaryEntities.length).toBe(2);
-    expect(result.bothEntities.length).toBe(1);
+    expect(boundaryEntities.length).toBe(2);
+    expect(bothEntities.length).toBe(1);
     // Verify the query result carries the component through
-    const first = result.boundaryEntities[0]!;
+    const first = boundaryEntities[0]!;
     expect(first.components.boundary).toEqual(widthBoundary);
   });
 
   test('unparameterized ComposableWorld.make still works (backward compat)', () => {
-    const result = runScoped(
-      Effect.gen(function* () {
-        const world = yield* World.make();
-        // No type parameter -- defaults to EntityComponents (accepts anything)
-        const cw = ComposableWorld.make(world);
-        const entity = yield* cw.spawn({
-          boundary: widthBoundary,
-          token: colorToken,
-          style: baseStyle,
-          custom: 'arbitrary-value',
-        });
-        return yield* cw.evaluate(entity, { 'viewport.width': 1100 });
-      }),
-    );
+    const { world } = World.make();
+    // No type parameter -- defaults to EntityComponents (accepts anything)
+    const cw = ComposableWorld.make(world);
+    const entity = cw.spawn({
+      boundary: widthBoundary,
+      token: colorToken,
+      style: baseStyle,
+      custom: 'arbitrary-value',
+    });
+    const result = cw.evaluate(entity, { 'viewport.width': 1100 });
 
     expect(result['viewport.width']).toBe('lg');
     expect(result['font-size']).toBe('18px');

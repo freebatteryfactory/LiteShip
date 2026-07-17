@@ -6,7 +6,7 @@
 
 # Interface: LLMAdapterShape
 
-Defined in: [web/src/stream/llm-adapter.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/llm-adapter.ts#L58)
+Defined in: [web/src/stream/llm-adapter.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/llm-adapter.ts#L57)
 
 Host-facing surface of an LLM adapter. Exposes both the typed
 [LLMChunk](LLMChunk.md) stream and the decoded text-token stream derived
@@ -16,14 +16,14 @@ from it. Returned by [LLMAdapter.create](../variables/LLMAdapter.md#create).
 
 ### chunks
 
-> `readonly` **chunks**: `Stream`\<[`LLMChunk`](LLMChunk.md)\>
+> `readonly` **chunks**: `AsyncIterable`\<[`LLMChunk`](LLMChunk.md)\>
 
-Defined in: [web/src/stream/llm-adapter.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/llm-adapter.ts#L59)
+Defined in: [web/src/stream/llm-adapter.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/llm-adapter.ts#L58)
 
 ***
 
 ### textTokens
 
-> `readonly` **textTokens**: `Stream`\<`string`\>
+> `readonly` **textTokens**: `AsyncIterable`\<`string`\>
 
-Defined in: [web/src/stream/llm-adapter.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/llm-adapter.ts#L60)
+Defined in: [web/src/stream/llm-adapter.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/llm-adapter.ts#L59)

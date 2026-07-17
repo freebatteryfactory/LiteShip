@@ -9,19 +9,17 @@
  * @module
  */
 
-import type { Scope } from 'effect';
-import { Effect, Stream, SubscriptionRef, Queue } from 'effect';
 import type {
   Boundary,
   StateUnion,
   BoundaryCrossing,
   ContentAddress,
-  Quantizer,
+  ReactiveQuantizer,
   OutputsFor,
   HLCBrand,
   Clock,
 } from '@czap/core';
-import { HLC } from '@czap/core';
+import { HLC, CellKernel, Lifetime } from '@czap/core';
 import type { MotionTier, LadderTarget } from '@czap/core';
 import {
   StateName as mkStateName,
@@ -211,7 +209,7 @@ export interface QuantizerRuntime {
  * The `id` is an FNV-1a hash over the boundary id and outputs, so two
  * configs with identical definitions share the same address and are
  * deduplicated by the internal memo cache. `create()` materializes a
- * fresh {@link LiveQuantizer} within an Effect scope.
+ * fresh {@link LiveQuantizer} paired with its owning {@link Lifetime}.
  */
 export interface QuantizerConfig<B extends Boundary.Shape, O extends QuantizerOutputs<B> = QuantizerOutputs<B>> {
   /** Boundary this config quantizes against. */
@@ -225,33 +223,38 @@ export interface QuantizerConfig<B extends Boundary.Shape, O extends QuantizerOu
   /** Spring config driving CSS easing injection. */
   readonly spring?: SpringConfig;
   /**
-   * Instantiate a reactive {@link LiveQuantizer} scoped to an Effect fiber.
+   * Instantiate a reactive {@link LiveQuantizer}, paired with the {@link Lifetime}
+   * that owns its teardown — disposing it closes the state / outputs / crossings
+   * kernels (completing every subscriber and making publish inert).
    *
    * Pass a {@link QuantizerRuntime} to inject the wall-clock boundary that
    * advances this instance's monotonic crossing HLC; omit it to default to
    * `@czap/core`'s `wallClock`. The clock is per-instantiation, never part of
    * the cached config's identity.
    */
-  create(runtime?: QuantizerRuntime): Effect.Effect<LiveQuantizer<B, O>, never, Scope.Scope>;
+  create(runtime?: QuantizerRuntime): LiveQuantizerHandle<B, O>;
 }
 
 // ---------------------------------------------------------------------------
 // Live quantizer (extends base Quantizer with output dispatch)
 // ---------------------------------------------------------------------------
 
+/** The resolved per-target output record a {@link LiveQuantizer} dispatches. */
+type OutputRecord = Partial<{ [K in OutputTarget]: Record<string, unknown> }>;
+
 /**
  * Runtime-instantiated quantizer with reactive output dispatch.
  *
- * Extends the core {@link Quantizer} with a reactive outputs table: as
- * boundary crossings are detected, `currentOutputs` updates and
- * `outputChanges` streams the new per-target record. Consumers typically
- * subscribe via `Stream.runForEach(liveQuantizer.outputChanges, …)`.
+ * Extends the core {@link ReactiveQuantizer} with a reactive outputs table: as
+ * boundary crossings are detected, the outputs {@link CellKernel} publishes the
+ * new per-target record, readable via `currentOutputs.read()` and observable via
+ * `outputChanges.subscribe(sink)` (replay-1: a new subscriber is replayed the
+ * current outputs on attach). Both views are the same underlying replay-1 kernel.
  *
  * @example
  * ```ts
  * import { Boundary } from '@czap/core';
  * import { Q } from '@czap/quantizer';
- * import { Effect, Stream } from 'effect';
  *
  * const b = Boundary.make({
  *   input: 'w',
@@ -260,22 +263,32 @@ export interface QuantizerConfig<B extends Boundary.Shape, O extends QuantizerOu
  * const config = Q.from(b).outputs({
  *   css: { sm: { fontSize: '14px' }, lg: { fontSize: '18px' } },
  * });
- * Effect.runSync(Effect.scoped(Effect.gen(function* () {
- *   const live = yield* config.create();
- *   live.evaluate(900); // triggers crossing; outputs stream emits CSS
- * })));
+ * const { quantizer: live, lifetime } = config.create();
+ * live.evaluate(900); // triggers crossing; outputs kernel publishes CSS
+ * await lifetime.dispose();
  * ```
  */
 export interface LiveQuantizer<
   B extends Boundary.Shape,
   O extends QuantizerOutputs<B> = QuantizerOutputs<B>,
-> extends Quantizer<B> {
+> extends ReactiveQuantizer<B> {
   /** The config this quantizer was created from. */
   readonly config: QuantizerConfig<B, O>;
-  /** Read the currently-active per-target output record. */
-  readonly currentOutputs: Effect.Effect<Partial<{ [K in OutputTarget]: Record<string, unknown> }>>;
-  /** Stream of per-target output records emitted on each boundary crossing. */
-  readonly outputChanges: Stream.Stream<Partial<{ [K in OutputTarget]: Record<string, unknown> }>>;
+  /** Read the currently-active per-target output record (replay-1 read side). */
+  readonly currentOutputs: Pick<CellKernel.Replay<OutputRecord>, 'read' | 'subscribe' | 'closed' | 'size'>;
+  /** Per-target output records emitted on each boundary crossing (replay-1 subscribe side). */
+  readonly outputChanges: Pick<CellKernel.Replay<OutputRecord>, 'subscribe' | 'read' | 'closed' | 'size'>;
+}
+
+/**
+ * The pair {@link QuantizerConfig.create} returns: the live reactive quantizer
+ * plus the {@link Lifetime} that owns its teardown. Dispose the lifetime to close
+ * the state / outputs / crossings kernels (completing subscribers, making publish
+ * inert).
+ */
+export interface LiveQuantizerHandle<B extends Boundary.Shape, O extends QuantizerOutputs<B> = QuantizerOutputs<B>> {
+  readonly quantizer: LiveQuantizer<B, O>;
+  readonly lifetime: Lifetime.Shape;
 }
 
 // ---------------------------------------------------------------------------
@@ -437,13 +450,12 @@ function getSpringCSS(spring: SpringConfig): string {
  *
  * Starts a fluent chain: `Q.from(boundary).outputs({...})` produces a
  * content-addressed `QuantizerConfig` whose `.create()` method yields a
- * reactive `LiveQuantizer` inside an Effect scope.
+ * reactive `LiveQuantizer` paired with its owning {@link Lifetime}.
  *
  * @example
  * ```ts
  * import { Boundary } from '@czap/core';
  * import { Q } from '@czap/quantizer';
- * import { Effect } from 'effect';
  *
  * const boundary = Boundary.make({
  *   input: 'width',
@@ -452,13 +464,9 @@ function getSpringCSS(spring: SpringConfig): string {
  * const config = Q.from(boundary).outputs({
  *   css: { sm: { fontSize: '14px' }, md: { fontSize: '16px' }, lg: { fontSize: '18px' } },
  * });
- * const state = Effect.scoped(
- *   Effect.gen(function* () {
- *     const live = yield* config.create();
- *     return live.evaluate(800); // 'md'
- *   }),
- * );
- * const result = Effect.runSync(state);
+ * const { quantizer: live, lifetime } = config.create();
+ * const result = live.evaluate(800); // 'md'
+ * await lifetime.dispose();
  * ```
  *
  * @param boundary - The boundary definition to quantize against
@@ -509,73 +517,79 @@ function fromBoundary<B extends Boundary.Shape>(boundary: B, options?: Quantizer
         id,
         tier,
         spring,
-        create(runtime?: QuantizerRuntime): Effect.Effect<LiveQuantizer<B, O>, never, Scope.Scope> {
+        create(runtime?: QuantizerRuntime): LiveQuantizerHandle<B, O> {
           // Per-instantiation monotonic clock: this live quantizer OWNS its HLC,
           // so its crossing timestamps depend only on its own evaluate() calls
           // and the injected wall-clock boundary — never on how many other
           // quantizers evaluated first in this process. No module global.
           const tickClock: Clock = runtime?.clock ?? wallClock;
           let hlc = HLC.create(runtime?.node ?? 'quantizer');
-          return Effect.gen(function* () {
-            // Boundary.make guarantees non-empty states; head access widens to StateUnion<B>.
-            const initialState: StateUnion<B> = firstState(boundary);
-            const initialOutputs = resolveOutputs(outputs, initialState, allowedTargets, frozenForced, id, springCSS);
 
-            const stateRef = yield* SubscriptionRef.make(initialState);
-            const outputRef = yield* SubscriptionRef.make(initialOutputs);
+          // Boundary.make guarantees non-empty states; head access widens to StateUnion<B>.
+          const initialState: StateUnion<B> = firstState(boundary);
+          const initialOutputs = resolveOutputs(outputs, initialState, allowedTargets, frozenForced, id, springCSS);
 
-            const crossingQueue = yield* Queue.unbounded<BoundaryCrossing<StateUnion<B> & string>>();
+          // Reactive substrate on the extracted CellKernel (was SubscriptionRef /
+          // Queue): a replay-1 current-state slot, a replay-1 outputs slot (its
+          // `subscribe` gives the outputChanges replay-1 stream, its `read` the
+          // currentOutputs read), and a no-replay crossing fan-out. The owning
+          // Lifetime closes all three on dispose (replacing the Effect scope).
+          const stateCell = CellKernel.replay1<StateUnion<B>>(initialState);
+          const outputCell = CellKernel.replay1<OutputRecord>(initialOutputs);
+          const crossingChannel = CellKernel.fanout<BoundaryCrossing<StateUnion<B> & string>>();
 
-            let previousState: StateUnion<B> = initialState;
-            const crossingStream: Stream.Stream<BoundaryCrossing<StateUnion<B> & string>> =
-              Stream.fromQueue(crossingQueue);
-
-            const liveQuantizer: LiveQuantizer<B, O> = {
-              _tag: 'Quantizer',
-              boundary,
-              config,
-              state: SubscriptionRef.get(stateRef),
-              stateSync: () => previousState,
-              changes: crossingStream,
-
-              evaluate(value: number): StateUnion<B> {
-                const result: EvaluateResult<StateUnion<B> & string> = evaluate(boundary, value, previousState);
-
-                if (result.crossed) {
-                  // Live crossing stamp: HLC wall_ms is epoch ms (the protocol
-                  // defines it as ≈ Date.now()), so advance through the injected
-                  // wall-clock boundary (`tickClock`, defaulting to wallClock) —
-                  // the epoch entropy boundary — not the monotonic systemClock.
-                  // `hlc` is this instance's own clock, so the stamp is a
-                  // function of this quantizer's crossings alone.
-                  hlc = HLC.increment(hlc, tickClock.now());
-                  const crossing: BoundaryCrossing<StateUnion<B> & string> = {
-                    from: mkStateName<StateUnion<B> & string>(previousState),
-                    to: mkStateName(result.state),
-                    timestamp: hlc satisfies HLCBrand,
-                    value,
-                  };
-                  previousState = result.state;
-
-                  const newOutputs = resolveOutputs(outputs, result.state, allowedTargets, frozenForced, id, springCSS);
-                  Effect.runSync(
-                    Effect.all([
-                      SubscriptionRef.set(stateRef, result.state),
-                      SubscriptionRef.set(outputRef, newOutputs),
-                    ]),
-                  );
-                  Queue.offerUnsafe(crossingQueue, crossing);
-                }
-
-                return result.state;
-              },
-
-              currentOutputs: SubscriptionRef.get(outputRef),
-              outputChanges: SubscriptionRef.changes(outputRef),
-            };
-
-            return liveQuantizer;
+          const lifetime = Lifetime.make();
+          lifetime.add(() => {
+            stateCell.close();
+            outputCell.close();
+            crossingChannel.close();
           });
+
+          let previousState: StateUnion<B> = initialState;
+
+          const quantizer: LiveQuantizer<B, O> = {
+            _tag: 'Quantizer',
+            boundary,
+            config,
+            state: stateCell,
+            stateSync: () => previousState,
+            changes: crossingChannel,
+
+            evaluate(value: number): StateUnion<B> {
+              const result: EvaluateResult<StateUnion<B> & string> = evaluate(boundary, value, previousState);
+
+              if (result.crossed) {
+                // Live crossing stamp: HLC wall_ms is epoch ms (the protocol
+                // defines it as ≈ Date.now()), so advance through the injected
+                // wall-clock boundary (`tickClock`, defaulting to wallClock) —
+                // the epoch entropy boundary — not the monotonic systemClock.
+                // `hlc` is this instance's own clock, so the stamp is a
+                // function of this quantizer's crossings alone.
+                hlc = HLC.increment(hlc, tickClock.now());
+                const crossing: BoundaryCrossing<StateUnion<B> & string> = {
+                  from: mkStateName<StateUnion<B> & string>(previousState),
+                  to: mkStateName(result.state),
+                  timestamp: hlc satisfies HLCBrand,
+                  value,
+                };
+                previousState = result.state;
+
+                const newOutputs = resolveOutputs(outputs, result.state, allowedTargets, frozenForced, id, springCSS);
+                // Raw synchronous publishes (were `Effect.runSync(Effect.all([...]))`
+                // + `Queue.offerUnsafe`): assign the slots and fan out in one pass.
+                stateCell.publish(result.state);
+                outputCell.publish(newOutputs);
+                crossingChannel.publish(crossing);
+              }
+
+              return result.state;
+            },
+
+            currentOutputs: outputCell,
+            outputChanges: outputCell,
+          };
+
+          return { quantizer, lifetime };
         },
       };
 
@@ -597,16 +611,15 @@ function fromBoundary<B extends Boundary.Shape>(boundary: B, options?: Quantizer
  * Quantizer builder namespace.
  *
  * `Q.from(boundary)` starts a fluent builder that produces a content-addressed
- * {@link QuantizerConfig}. Calling `config.create()` within an Effect scope
- * yields a reactive {@link LiveQuantizer} that evaluates numeric input values
- * against boundary thresholds, dispatches state transitions, and routes
- * per-state outputs (CSS, GLSL, WGSL, ARIA, AI) gated by MotionTier.
+ * {@link QuantizerConfig}. Calling `config.create()` yields a reactive
+ * {@link LiveQuantizer} (paired with its {@link Lifetime}) that evaluates numeric
+ * input values against boundary thresholds, dispatches state transitions, and
+ * routes per-state outputs (CSS, GLSL, WGSL, ARIA, AI) gated by MotionTier.
  *
  * @example
  * ```ts
  * import { Boundary } from '@czap/core';
  * import { Q } from '@czap/quantizer';
- * import { Effect } from 'effect';
  *
  * const boundary = Boundary.make({
  *   input: 'width',
@@ -615,14 +628,11 @@ function fromBoundary<B extends Boundary.Shape>(boundary: B, options?: Quantizer
  * const config = Q.from(boundary).outputs({
  *   css: { sm: { display: 'block' }, lg: { display: 'grid' } },
  * });
- * const result = Effect.runSync(Effect.scoped(
- *   Effect.gen(function* () {
- *     const live = yield* config.create();
- *     live.evaluate(1024);
- *     return yield* live.currentOutputs;
- *   }),
- * ));
+ * const { quantizer: live, lifetime } = config.create();
+ * live.evaluate(1024);
+ * const result = live.currentOutputs.read();
  * // result.css => { display: 'grid' }
+ * await lifetime.dispose();
  * ```
  */
 export const Q = {

@@ -1,4 +1,3 @@
-import { Effect } from 'effect';
 import { DAG, Diagnostics } from '@czap/core';
 import type { Receipt, UIFrame } from '@czap/core';
 
@@ -15,7 +14,7 @@ interface ReceiptChainShape {
   /** Canonical linearization of the ingested DAG as a flat hash list (drives compaction watermark math). */
   linearizedHashes(): readonly string[];
   /** Drop-only compaction below an ingested watermark; reclaims frames + ordered ids, stashes the attestation. */
-  compactBelow(watermark: string): Effect.Effect<void>;
+  compactBelow(watermark: string): Promise<void>;
   /** The most recent checkpoint attestation minted by {@link compactBelow}, or null. */
   latestCheckpoint(): ReceiptEnvelope | null;
 }
@@ -116,33 +115,31 @@ export function createReceiptChain(): ReceiptChainShape {
       return DAG.linearize(dag).map((envelope) => envelope.hash);
     },
 
-    compactBelow(watermark) {
-      return Effect.gen(function* () {
-        // Cheap guards: nothing to reclaim, or the watermark was never ingested.
-        if (DAG.size(dag) === 0 || !dag.nodes.has(watermark)) return;
+    async compactBelow(watermark) {
+      // Cheap guards: nothing to reclaim, or the watermark was never ingested.
+      if (DAG.size(dag) === 0 || !dag.nodes.has(watermark)) return;
 
-        // Snapshot the DAG identity BEFORE the async mint. `dag` is reassigned
-        // copy-on-write by ingestEnvelope; if a concurrent ingest lands during the
-        // crypto mint, the `dropped` set computed from the pre-mint DAG is STALE —
-        // splicing the new DAG by it could drop a late envelope's parent while
-        // retaining the child (an orphan whose previous is neither the watermark
-        // nor in the DAG, violating dominance). Compaction is best-effort /
-        // footprint-only, so ABORT on a concurrent change and let the next trigger
-        // retry against a consistent DAG. (Codex finding #4.)
-        const before = dag;
-        const { checkpoint, dropped } = yield* DAG.checkpoint(before, { below: watermark });
-        if (dag !== before) return;
+      // Snapshot the DAG identity BEFORE the async mint. `dag` is reassigned
+      // copy-on-write by ingestEnvelope; if a concurrent ingest lands during the
+      // crypto mint, the `dropped` set computed from the pre-mint DAG is STALE —
+      // splicing the new DAG by it could drop a late envelope's parent while
+      // retaining the child (an orphan whose previous is neither the watermark
+      // nor in the DAG, violating dominance). Compaction is best-effort /
+      // footprint-only, so ABORT on a concurrent change and let the next trigger
+      // retry against a consistent DAG. (Codex finding #4.)
+      const before = dag;
+      const { checkpoint, dropped } = await DAG.checkpoint(before, { below: watermark });
+      if (dag !== before) return;
 
-        const droppedSet = new Set(dropped);
-        dag = DAG.spliceCheckpoint(dag, droppedSet);
-        lastCheckpoint = checkpoint;
+      const droppedSet = new Set(dropped);
+      dag = DAG.spliceCheckpoint(dag, droppedSet);
+      lastCheckpoint = checkpoint;
 
-        for (const hash of dropped) {
-          framesByReceipt.delete(hash);
-        }
-        const kept = orderedReceipts.filter((id) => !droppedSet.has(id));
-        orderedReceipts.splice(0, orderedReceipts.length, ...kept);
-      });
+      for (const hash of dropped) {
+        framesByReceipt.delete(hash);
+      }
+      const kept = orderedReceipts.filter((id) => !droppedSet.has(id));
+      orderedReceipts.splice(0, orderedReceipts.length, ...kept);
     },
 
     latestCheckpoint() {

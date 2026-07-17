@@ -6,8 +6,7 @@
  * @module
  */
 
-import { Effect } from 'effect';
-import { ParseError } from '@czap/error';
+import { IntegrityError, ParseError } from '@czap/error';
 import type { HLC } from './brands.js';
 import { TypedRef as TypedRefModule, type TypedRef } from './typed-ref.js';
 import { HLC as HLCOps } from './hlc.js';
@@ -85,7 +84,7 @@ export interface ChainValidationOptions {
    * to reject (fails the chain `checkpoint_invalid`); any verification failure must
    * resolve `false`, not raise. Absent, only the structural floor applies.
    */
-  readonly verifyCheckpoint?: (checkpoint: ReceiptEnvelope) => Effect.Effect<boolean>;
+  readonly verifyCheckpoint?: (checkpoint: ReceiptEnvelope) => Promise<boolean>;
 }
 
 /** Sentinel `previous` value marking the root of a receipt chain. */
@@ -107,13 +106,11 @@ export const CHECKPOINT_ATTESTATION_SCHEMA = 'czap/checkpoint-summary/v1';
  *
  * @example
  * ```ts
- * import { Effect } from 'effect';
- *
- * const hash = yield* Receipt.hashEnvelope(envelope);
+ * const hash = await Receipt.hashEnvelope(envelope);
  * // hash === envelope.hash (if envelope is valid)
  * ```
  */
-export const hashEnvelope = (envelope: ReceiptEnvelope): Effect.Effect<string> => {
+export const hashEnvelope = (envelope: ReceiptEnvelope): Promise<string> => {
   const previousNormalized = Array.isArray(envelope.previous)
     ? [...(envelope.previous as readonly string[])].sort()
     : envelope.previous;
@@ -132,7 +129,7 @@ export const hashEnvelope = (envelope: ReceiptEnvelope): Effect.Effect<string> =
  *
  * @example
  * ```ts
- * const envelope = yield* Receipt.createEnvelope(
+ * const envelope = await Receipt.createEnvelope(
  *   'state-change',
  *   { type: 'effect', id: 'actor-1' },
  *   { _tag: 'TypedRef', mediaType: 'application/json', data: { key: 'value' } },
@@ -142,21 +139,20 @@ export const hashEnvelope = (envelope: ReceiptEnvelope): Effect.Effect<string> =
  * // envelope.hash is the computed SHA-256 content address
  * ```
  */
-export const createEnvelope = (
+export const createEnvelope = async (
   kind: string,
   subject: ReceiptSubject,
   payload: TypedRef.Shape,
   timestamp: HLC,
   previousHash: string | readonly string[],
-): Effect.Effect<ReceiptEnvelope> =>
-  Effect.gen(function* () {
-    const previousNormalized = Array.isArray(previousHash)
-      ? [...(previousHash as readonly string[])].sort()
-      : previousHash;
-    const partial = { kind, timestamp, subject, payload, previous: previousNormalized };
-    const h = yield* TypedRefModule.hash(TypedRefModule.canonicalize(partial));
-    return { kind, timestamp, subject, payload, hash: h, previous: previousNormalized };
-  });
+): Promise<ReceiptEnvelope> => {
+  const previousNormalized = Array.isArray(previousHash)
+    ? [...(previousHash as readonly string[])].sort()
+    : previousHash;
+  const partial = { kind, timestamp, subject, payload, previous: previousNormalized };
+  const h = await TypedRefModule.hash(TypedRefModule.canonicalize(partial));
+  return { kind, timestamp, subject, payload, hash: h, previous: previousNormalized };
+};
 
 /**
  * Build a linear chain of receipt envelopes from an array of entries.
@@ -166,7 +162,7 @@ export const createEnvelope = (
  *
  * @example
  * ```ts
- * const chain = yield* Receipt.buildChain([
+ * const chain = await Receipt.buildChain([
  *   { kind: 'init', subject: { type: 'effect', id: 'a' }, payload, timestamp: ts1 },
  *   { kind: 'update', subject: { type: 'effect', id: 'a' }, payload, timestamp: ts2 },
  * ]);
@@ -174,24 +170,23 @@ export const createEnvelope = (
  * // chain[1].previous === chain[0].hash
  * ```
  */
-export const buildChain = (
+export const buildChain = async (
   entries: ReadonlyArray<{
     kind: string;
     subject: ReceiptSubject;
     payload: TypedRef.Shape;
     timestamp: HLC;
   }>,
-): Effect.Effect<ReceiptEnvelope[]> =>
-  Effect.gen(function* () {
-    const chain: ReceiptEnvelope[] = [];
-    let previousHash = GENESIS;
-    for (const entry of entries) {
-      const envelope = yield* createEnvelope(entry.kind, entry.subject, entry.payload, entry.timestamp, previousHash);
-      chain.push(envelope);
-      previousHash = envelope.hash;
-    }
-    return chain;
-  });
+): Promise<ReceiptEnvelope[]> => {
+  const chain: ReceiptEnvelope[] = [];
+  let previousHash = GENESIS;
+  for (const entry of entries) {
+    const envelope = await createEnvelope(entry.kind, entry.subject, entry.payload, entry.timestamp, previousHash);
+    chain.push(envelope);
+    previousHash = envelope.hash;
+  }
+  return chain;
+};
 
 /**
  * Validate a receipt chain: genesis link, hash integrity, chain continuity, HLC ordering.
@@ -201,18 +196,29 @@ export const buildChain = (
  *
  * @example
  * ```ts
- * const chain = yield* Receipt.buildChain(entries);
- * const valid = yield* Receipt.validateChain(chain);
+ * const chain = await Receipt.buildChain(entries);
+ * const valid = await Receipt.validateChain(chain);
  * // valid === true
  * ```
  *
  * @see validateChainDetailed for typed `ChainValidationError` handling.
  */
-export const validateChain = (
+export const validateChain = async (
   chain: ReadonlyArray<ReceiptEnvelope>,
   options?: ChainValidationOptions,
-): Effect.Effect<boolean, Error> =>
-  validateChainDetailed(chain, options).pipe(Effect.mapError((error) => new Error(formatChainError(error, chain))));
+): Promise<boolean> => {
+  try {
+    return await validateChainDetailed(chain, options);
+  } catch (error) {
+    // validateChainDetailed throws the typed `ChainValidationError` (a plain
+    // tagged value) for a rule violation; a hash-primitive failure surfaces as a
+    // real `Error`. Only the former is rendered into the human-readable message —
+    // an unexpected `Error` (the old defect channel) propagates untouched.
+    if (error instanceof Error) throw error;
+    const chainError = error as ChainValidationError;
+    throw IntegrityError('receipt-chain', formatChainError(chainError, chain), { code: chainError.type });
+  }
+};
 
 /**
  * Render a {@link ChainValidationError} as the human-readable message
@@ -253,182 +259,182 @@ const formatChainError = (error: ChainValidationError, chain: ReadonlyArray<Rece
  *
  * @example
  * ```ts
- * import { Effect } from 'effect';
- *
- * const result = yield* Effect.either(Receipt.validateChainDetailed(chain));
- * // result._tag === 'Right' on success
- * // result._tag === 'Left' with .left.type on failure
+ * try {
+ *   await Receipt.validateChainDetailed(chain);
+ *   // resolved true on success
+ * } catch (error) {
+ *   // error is a ChainValidationError with .type on failure
+ * }
  * ```
  *
  * @see validateChain for the simple Error-channel form.
  */
-export const validateChainDetailed = (
+export const validateChainDetailed = async (
   chain: ReadonlyArray<ReceiptEnvelope>,
   options?: ChainValidationOptions,
-): Effect.Effect<true, ChainValidationError> =>
-  Effect.gen(function* () {
-    const base = options?.base;
-    const checkpoint = options?.checkpoint;
+): Promise<true> => {
+  const base = options?.base;
+  const checkpoint = options?.checkpoint;
 
-    // A `base` watermark widens the index-0 genesis predicate to accept a
-    // compacted tail — but ONLY a verified checkpoint attestation authorizes that.
-    // Accepting `base` alone would let any caller validate a TRUNCATED chain by
-    // passing `base = tail[0].previous` with no proof the omitted prefix was ever
-    // checkpointed. Require the checkpoint. (Codex finding #3.)
-    if (base !== undefined && checkpoint === undefined) {
-      return yield* Effect.fail({
+  // A `base` watermark widens the index-0 genesis predicate to accept a
+  // compacted tail — but ONLY a verified checkpoint attestation authorizes that.
+  // Accepting `base` alone would let any caller validate a TRUNCATED chain by
+  // passing `base = tail[0].previous` with no proof the omitted prefix was ever
+  // checkpointed. Require the checkpoint. (Codex finding #3.)
+  if (base !== undefined && checkpoint === undefined) {
+    throw {
+      type: 'checkpoint_invalid' as const,
+      reason: 'a base watermark requires a checkpoint attestation to authorize compacted-tail validation',
+    };
+  }
+
+  // When a checkpoint is supplied, bind it to `base`: verify its content hash,
+  // genesis shape, and that its subject commits exactly this watermark. This is
+  // what authorizes the widened index-0 predicate below.
+  if (checkpoint !== undefined) {
+    if (base === undefined) {
+      throw {
         type: 'checkpoint_invalid' as const,
-        reason: 'a base watermark requires a checkpoint attestation to authorize compacted-tail validation',
-      });
+        reason: 'a checkpoint was supplied without a base watermark to bind it to',
+      };
     }
-
-    // When a checkpoint is supplied, bind it to `base`: verify its content hash,
-    // genesis shape, and that its subject commits exactly this watermark. This is
-    // what authorizes the widened index-0 predicate below.
-    if (checkpoint !== undefined) {
-      if (base === undefined) {
-        return yield* Effect.fail({
-          type: 'checkpoint_invalid' as const,
-          reason: 'a checkpoint was supplied without a base watermark to bind it to',
-        });
-      }
-      const computedCheckpointHash = yield* hashEnvelope(checkpoint);
-      if (computedCheckpointHash !== checkpoint.hash) {
-        return yield* Effect.fail({
-          type: 'checkpoint_invalid' as const,
-          reason: `checkpoint hash mismatch (expected "${checkpoint.hash}", computed "${computedCheckpointHash}")`,
-        });
-      }
-      // The attestation must actually be a checkpoint receipt — a different
-      // genesis-shaped receipt that happens to carry the same subject id must NOT
-      // authorize a compacted tail.
-      if (checkpoint.kind !== 'checkpoint') {
-        return yield* Effect.fail({
-          type: 'checkpoint_invalid' as const,
-          reason: `checkpoint attestation has kind "${checkpoint.kind}" (expected "checkpoint")`,
-        });
-      }
-      // Bind to the MINTED checkpoint shape, not just kind + subject id: DAG.checkpoint
-      // stamps subject.type "run" and a "czap/checkpoint-summary" payload. Otherwise a
-      // forger could mint a genesis-shaped kind:"checkpoint" envelope with the right
-      // subject id but an arbitrary payload + an older timestamp to authorize a
-      // truncated tail. (Full cryptographic provenance would need a signature; this
-      // rejects the structural forgeries.)
-      if (checkpoint.subject.type !== 'run') {
-        return yield* Effect.fail({
-          type: 'checkpoint_invalid' as const,
-          reason: `checkpoint subject.type is "${checkpoint.subject.type}" (expected "run")`,
-        });
-      }
-      if (checkpoint.payload.schema_hash !== CHECKPOINT_ATTESTATION_SCHEMA) {
-        return yield* Effect.fail({
-          type: 'checkpoint_invalid' as const,
-          reason: `checkpoint payload schema is "${checkpoint.payload.schema_hash}" (expected "${CHECKPOINT_ATTESTATION_SCHEMA}")`,
-        });
-      }
-      if (!isGenesis(checkpoint)) {
-        return yield* Effect.fail({
-          type: 'checkpoint_invalid' as const,
-          reason: 'checkpoint is not genesis-shaped (previous must be GENESIS)',
-        });
-      }
-      const expectedSubjectId = `czap/checkpoint:${base}`;
-      if (checkpoint.subject.id !== expectedSubjectId) {
-        return yield* Effect.fail({
-          type: 'checkpoint_invalid' as const,
-          reason: `checkpoint subject "${checkpoint.subject.id}" does not commit base watermark (expected "${expectedSubjectId}")`,
-        });
-      }
-      // Provenance gate (injected capability): the structural checks above prove the
-      // checkpoint is well-formed but not that it attests to the REAL dropped set —
-      // `validateChain` lacks that set, so it cannot recompute the summary
-      // `content_hash`. An adversarial caller closes the residual forgery vector by
-      // injecting `verifyCheckpoint` (e.g. a signature check); absent one, the
-      // structural floor stands (sound for trusted self-compaction). See ADR-0026.
-      if (options?.verifyCheckpoint !== undefined) {
-        const attested = yield* options.verifyCheckpoint(checkpoint);
-        if (!attested) {
-          return yield* Effect.fail({
-            type: 'checkpoint_invalid' as const,
-            reason: 'checkpoint failed the injected provenance verifier (not attested by a trusted compactor)',
-          });
-        }
-      }
-    }
-
-    // An empty chain is vacuously valid — but only AFTER any supplied checkpoint
-    // is bound + verified, so `validateChainDetailed([], { base })` cannot pass
-    // without the authorization a non-empty compacted tail requires.
-    if (chain.length === 0) return true as const;
-
-    const first = chain[0]!;
-    const firstPrev = first.previous;
-    // Index-0 genesis predicate, widened for a compacted tail: a retained tail's
-    // first envelope points at the dropped watermark (`base`), not GENESIS.
-    const firstIsGenesis =
-      firstPrev === GENESIS ||
-      (Array.isArray(firstPrev) && (firstPrev as readonly string[]).includes(GENESIS)) ||
-      (base !== undefined &&
-        (firstPrev === base || (Array.isArray(firstPrev) && (firstPrev as readonly string[]).includes(base))));
-    if (!firstIsGenesis) {
-      return yield* Effect.fail({ type: 'not_genesis' as const, index: 0 as const });
-    }
-
-    // A compacted tail (its first envelope names `base`, not GENESIS) is a child of
-    // the dropped watermark, so it MUST advance the HLC beyond the checkpoint —
-    // whose timestamp is the HLC-max over the dropped prefix. Otherwise a
-    // self-consistent but stale-HLC envelope naming `base` as `previous` would
-    // validate where the full chain rejects it at the prefix boundary.
-    const firstNamesBase =
-      base !== undefined &&
-      (firstPrev === base || (Array.isArray(firstPrev) && (firstPrev as readonly string[]).includes(base)));
-    if (firstNamesBase && checkpoint !== undefined && HLCOps.compare(first.timestamp, checkpoint.timestamp) <= 0) {
-      return yield* Effect.fail({
+    const computedCheckpointHash = await hashEnvelope(checkpoint);
+    if (computedCheckpointHash !== checkpoint.hash) {
+      throw {
         type: 'checkpoint_invalid' as const,
-        reason: 'compacted tail does not advance the HLC beyond the checkpoint watermark',
-      });
+        reason: `checkpoint hash mismatch (expected "${checkpoint.hash}", computed "${computedCheckpointHash}")`,
+      };
+    }
+    // The attestation must actually be a checkpoint receipt — a different
+    // genesis-shaped receipt that happens to carry the same subject id must NOT
+    // authorize a compacted tail.
+    if (checkpoint.kind !== 'checkpoint') {
+      throw {
+        type: 'checkpoint_invalid' as const,
+        reason: `checkpoint attestation has kind "${checkpoint.kind}" (expected "checkpoint")`,
+      };
+    }
+    // Bind to the MINTED checkpoint shape, not just kind + subject id: DAG.checkpoint
+    // stamps subject.type "run" and a "czap/checkpoint-summary" payload. Otherwise a
+    // forger could mint a genesis-shaped kind:"checkpoint" envelope with the right
+    // subject id but an arbitrary payload + an older timestamp to authorize a
+    // truncated tail. (Full cryptographic provenance would need a signature; this
+    // rejects the structural forgeries.)
+    if (checkpoint.subject.type !== 'run') {
+      throw {
+        type: 'checkpoint_invalid' as const,
+        reason: `checkpoint subject.type is "${checkpoint.subject.type}" (expected "run")`,
+      };
+    }
+    if (checkpoint.payload.schema_hash !== CHECKPOINT_ATTESTATION_SCHEMA) {
+      throw {
+        type: 'checkpoint_invalid' as const,
+        reason: `checkpoint payload schema is "${checkpoint.payload.schema_hash}" (expected "${CHECKPOINT_ATTESTATION_SCHEMA}")`,
+      };
+    }
+    if (!isGenesis(checkpoint)) {
+      throw {
+        type: 'checkpoint_invalid' as const,
+        reason: 'checkpoint is not genesis-shaped (previous must be GENESIS)',
+      };
+    }
+    const expectedSubjectId = `czap/checkpoint:${base}`;
+    if (checkpoint.subject.id !== expectedSubjectId) {
+      throw {
+        type: 'checkpoint_invalid' as const,
+        reason: `checkpoint subject "${checkpoint.subject.id}" does not commit base watermark (expected "${expectedSubjectId}")`,
+      };
+    }
+    // Provenance gate (injected capability): the structural checks above prove the
+    // checkpoint is well-formed but not that it attests to the REAL dropped set —
+    // `validateChain` lacks that set, so it cannot recompute the summary
+    // `content_hash`. An adversarial caller closes the residual forgery vector by
+    // injecting `verifyCheckpoint` (e.g. a signature check); absent one, the
+    // structural floor stands (sound for trusted self-compaction). See ADR-0026.
+    if (options?.verifyCheckpoint !== undefined) {
+      const attested = await options.verifyCheckpoint(checkpoint);
+      if (!attested) {
+        throw {
+          type: 'checkpoint_invalid' as const,
+          reason: 'checkpoint failed the injected provenance verifier (not attested by a trusted compactor)',
+        };
+      }
+    }
+  }
+
+  // An empty chain is vacuously valid — but only AFTER any supplied checkpoint
+  // is bound + verified, so `validateChainDetailed([], { base })` cannot pass
+  // without the authorization a non-empty compacted tail requires.
+  if (chain.length === 0) return true as const;
+
+  const first = chain[0]!;
+  const firstPrev = first.previous;
+  // Index-0 genesis predicate, widened for a compacted tail: a retained tail's
+  // first envelope points at the dropped watermark (`base`), not GENESIS.
+  const firstIsGenesis =
+    firstPrev === GENESIS ||
+    (Array.isArray(firstPrev) && (firstPrev as readonly string[]).includes(GENESIS)) ||
+    (base !== undefined &&
+      (firstPrev === base || (Array.isArray(firstPrev) && (firstPrev as readonly string[]).includes(base))));
+  if (!firstIsGenesis) {
+    throw { type: 'not_genesis' as const, index: 0 as const };
+  }
+
+  // A compacted tail (its first envelope names `base`, not GENESIS) is a child of
+  // the dropped watermark, so it MUST advance the HLC beyond the checkpoint —
+  // whose timestamp is the HLC-max over the dropped prefix. Otherwise a
+  // self-consistent but stale-HLC envelope naming `base` as `previous` would
+  // validate where the full chain rejects it at the prefix boundary.
+  const firstNamesBase =
+    base !== undefined &&
+    (firstPrev === base || (Array.isArray(firstPrev) && (firstPrev as readonly string[]).includes(base)));
+  if (firstNamesBase && checkpoint !== undefined && HLCOps.compare(first.timestamp, checkpoint.timestamp) <= 0) {
+    throw {
+      type: 'checkpoint_invalid' as const,
+      reason: 'compacted tail does not advance the HLC beyond the checkpoint watermark',
+    };
+  }
+
+  for (let i = 0; i < chain.length; i++) {
+    const envelope = chain[i]!;
+    const isMerge = Array.isArray(envelope.previous);
+
+    const computedHash = await hashEnvelope(envelope);
+    if (computedHash !== envelope.hash) {
+      throw {
+        type: 'hash_mismatch' as const,
+        index: i,
+        computed: computedHash,
+        stored: envelope.hash,
+      };
     }
 
-    for (let i = 0; i < chain.length; i++) {
-      const envelope = chain[i]!;
-      const isMerge = Array.isArray(envelope.previous);
-
-      const computedHash = yield* hashEnvelope(envelope);
-      if (computedHash !== envelope.hash) {
-        return yield* Effect.fail({
-          type: 'hash_mismatch' as const,
-          index: i,
-          computed: computedHash,
-          stored: envelope.hash,
-        });
-      }
-
-      if (!isMerge && i > 0 && envelope.previous !== chain[i - 1]!.hash) {
-        return yield* Effect.fail({
-          type: 'chain_break' as const,
-          index: i,
-          expected: chain[i - 1]!.hash,
-          actual: envelope.previous as string,
-        });
-      }
-
-      if (!isMerge && i > 0 && HLCOps.compare(chain[i - 1]!.timestamp, envelope.timestamp) >= 0) {
-        return yield* Effect.fail({
-          type: 'hlc_not_increasing' as const,
-          index: i,
-        });
-      }
+    if (!isMerge && i > 0 && envelope.previous !== chain[i - 1]!.hash) {
+      throw {
+        type: 'chain_break' as const,
+        index: i,
+        expected: chain[i - 1]!.hash,
+        actual: envelope.previous as string,
+      };
     }
 
-    return true as const;
-  });
+    if (!isMerge && i > 0 && HLCOps.compare(chain[i - 1]!.timestamp, envelope.timestamp) >= 0) {
+      throw {
+        type: 'hlc_not_increasing' as const,
+        index: i,
+      };
+    }
+  }
+
+  return true as const;
+};
 
 /**
  * Check whether a receipt envelope is a genesis (root) envelope.
  *
  * @example
  * ```ts
- * const chain = yield* Receipt.buildChain(entries);
+ * const chain = await Receipt.buildChain(entries);
  * Receipt.isGenesis(chain[0]); // true
  * Receipt.isGenesis(chain[1]); // false
  * ```
@@ -468,27 +474,26 @@ export const tail = (chain: ReadonlyArray<ReceiptEnvelope>): ReceiptEnvelope | u
  *
  * @example
  * ```ts
- * const chain = yield* Receipt.buildChain([entry1]);
- * const extended = yield* Receipt.append(chain, {
+ * const chain = await Receipt.buildChain([entry1]);
+ * const extended = await Receipt.append(chain, {
  *   kind: 'update', subject: { type: 'effect', id: 'a' }, payload, timestamp: ts2,
  * });
  * // extended.length === 2
  * ```
  */
-export const append = (
+export const append = async (
   chain: ReadonlyArray<ReceiptEnvelope>,
   entry: { kind: string; subject: ReceiptSubject; payload: TypedRef.Shape; timestamp: HLC },
   previousHashes?: readonly string[],
-): Effect.Effect<ReceiptEnvelope[]> =>
-  Effect.gen(function* () {
-    const previousHash: string | readonly string[] = previousHashes
-      ? previousHashes
-      : chain.length > 0
-        ? chain[chain.length - 1]!.hash
-        : GENESIS;
-    const envelope = yield* createEnvelope(entry.kind, entry.subject, entry.payload, entry.timestamp, previousHash);
-    return [...chain, envelope];
-  });
+): Promise<ReceiptEnvelope[]> => {
+  const previousHash: string | readonly string[] = previousHashes
+    ? previousHashes
+    : chain.length > 0
+      ? chain[chain.length - 1]!.hash
+      : GENESIS;
+  const envelope = await createEnvelope(entry.kind, entry.subject, entry.payload, entry.timestamp, previousHash);
+  return [...chain, envelope];
+};
 
 /**
  * Find an envelope in a chain by its content hash.
@@ -519,38 +524,41 @@ export const findByKind = (chain: ReadonlyArray<ReceiptEnvelope>, kind: string):
  *
  * @example
  * ```ts
- * const key = yield* Receipt.generateMACKey();
- * const signed = yield* Receipt.macEnvelope(envelope, key);
+ * const key = await Receipt.generateMACKey();
+ * const signed = await Receipt.macEnvelope(envelope, key);
  * // signed.signature is a hex string
  * ```
  */
-export const generateMACKey = (): Effect.Effect<CryptoKey, Error> =>
-  Effect.tryPromise({
-    try: () => crypto.subtle.generateKey({ name: 'HMAC', hash: { name: 'SHA-256' } }, true, ['sign', 'verify']),
-    catch: (error) => new Error(`Failed to generate MAC key: ${error}`),
-  });
+export const generateMACKey = async (): Promise<CryptoKey> => {
+  try {
+    return await crypto.subtle.generateKey({ name: 'HMAC', hash: { name: 'SHA-256' } }, true, ['sign', 'verify']);
+  } catch (error) {
+    throw IntegrityError('mac-key', `Failed to generate MAC key: ${error}`);
+  }
+};
 
 /**
  * Sign a receipt envelope with an HMAC key, adding a `signature` field.
  *
  * @example
  * ```ts
- * const key = yield* Receipt.generateMACKey();
- * const signed = yield* Receipt.macEnvelope(envelope, key);
+ * const key = await Receipt.generateMACKey();
+ * const signed = await Receipt.macEnvelope(envelope, key);
  * // signed.signature !== undefined
  * ```
  */
-export const macEnvelope = (envelope: ReceiptEnvelope, key: CryptoKey): Effect.Effect<ReceiptEnvelope, Error> =>
-  Effect.gen(function* () {
-    const data = new TextEncoder().encode(envelope.hash);
-    const signatureBuffer = yield* Effect.tryPromise({
-      try: () => crypto.subtle.sign('HMAC', key, data),
-      catch: (error) => new Error(`Failed to MAC envelope: ${error}`),
-    });
-    const signatureArray = Array.from(new Uint8Array(signatureBuffer));
-    const signature = signatureArray.map((b) => b.toString(16).padStart(2, '0')).join('');
-    return { ...envelope, signature };
-  });
+export const macEnvelope = async (envelope: ReceiptEnvelope, key: CryptoKey): Promise<ReceiptEnvelope> => {
+  const data = new TextEncoder().encode(envelope.hash);
+  let signatureBuffer: ArrayBuffer;
+  try {
+    signatureBuffer = await crypto.subtle.sign('HMAC', key, data);
+  } catch (error) {
+    throw IntegrityError('signature', `Failed to MAC envelope: ${error}`);
+  }
+  const signatureArray = Array.from(new Uint8Array(signatureBuffer));
+  const signature = signatureArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+  return { ...envelope, signature };
+};
 
 /**
  * Verify an envelope's HMAC signature against a key.
@@ -559,25 +567,24 @@ export const macEnvelope = (envelope: ReceiptEnvelope, key: CryptoKey): Effect.E
  *
  * @example
  * ```ts
- * const valid = yield* Receipt.verifyMAC(signedEnvelope, key);
+ * const valid = await Receipt.verifyMAC(signedEnvelope, key);
  * // valid === true if signature matches
  * ```
  */
-export const verifyMAC = (envelope: ReceiptEnvelope, key: CryptoKey): Effect.Effect<boolean, ParseError | Error> =>
-  Effect.gen(function* () {
-    if (!envelope.signature) return false;
-    const signatureHex = envelope.signature;
-    if (!/^[0-9a-fA-F]+$/.test(signatureHex) || signatureHex.length % 2 !== 0) {
-      return yield* Effect.fail(ParseError('signature-hex', 'expected even-length hex string', { code: 'malformed' }));
-    }
-    const signatureArray = new Uint8Array(signatureHex.match(/.{1,2}/g)!.map((byte) => parseInt(byte, 16)));
-    const data = new TextEncoder().encode(envelope.hash);
-    const valid = yield* Effect.tryPromise({
-      try: () => crypto.subtle.verify('HMAC', key, signatureArray, data),
-      catch: (error) => new Error(`Failed to verify signature: ${error}`),
-    });
-    return valid;
-  });
+export const verifyMAC = async (envelope: ReceiptEnvelope, key: CryptoKey): Promise<boolean> => {
+  if (!envelope.signature) return false;
+  const signatureHex = envelope.signature;
+  if (!/^[0-9a-fA-F]+$/.test(signatureHex) || signatureHex.length % 2 !== 0) {
+    throw ParseError('signature-hex', 'expected even-length hex string', { code: 'malformed' });
+  }
+  const signatureArray = new Uint8Array(signatureHex.match(/.{1,2}/g)!.map((byte) => parseInt(byte, 16)));
+  const data = new TextEncoder().encode(envelope.hash);
+  try {
+    return await crypto.subtle.verify('HMAC', key, signatureArray, data);
+  } catch (error) {
+    throw IntegrityError('signature', `Failed to verify signature: ${error}`);
+  }
+};
 
 /**
  * Receipt namespace -- chain validation and envelope construction.
@@ -588,17 +595,14 @@ export const verifyMAC = (envelope: ReceiptEnvelope, key: CryptoKey): Effect.Eff
  *
  * @example
  * ```ts
- * import { Effect } from 'effect';
  * import { Receipt, HLC } from '@czap/core';
  *
- * const program = Effect.gen(function* () {
- *   const ts = HLC.increment(HLC.create('node-1'), Date.now());
- *   const chain = yield* Receipt.buildChain([
- *     { kind: 'init', subject: { type: 'effect', id: 'a' }, payload, timestamp: ts },
- *   ]);
- *   const valid = yield* Receipt.validateChain(chain);
- *   const latest = Receipt.head(chain);
- * });
+ * const ts = HLC.increment(HLC.create('node-1'), Date.now());
+ * const chain = await Receipt.buildChain([
+ *   { kind: 'init', subject: { type: 'effect', id: 'a' }, payload, timestamp: ts },
+ * ]);
+ * const valid = await Receipt.validateChain(chain);
+ * const latest = Receipt.head(chain);
  * ```
  */
 export const Receipt = {

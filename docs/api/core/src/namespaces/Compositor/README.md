@@ -8,27 +8,27 @@
 
 Compositor — the live merge point for every attached [Quantizer](../../interfaces/Quantizer.md).
 
-`Compositor.create` hands back a scoped Effect that, when run inside a
-`Scope`, produces a compositor bound to a [RuntimeCoordinator](../../variables/RuntimeCoordinator.md). Adding
-quantizers, marking dirty flags, and emitting CSS/GLSL/ARIA outputs all flow
-through the zero-allocation hot path backed by [CompositorStatePool](../../variables/CompositorStatePool.md).
+`Compositor.create` returns a live compositor bound to a fresh
+[RuntimeCoordinator](../../variables/RuntimeCoordinator.md), paired with the [Lifetime](../../variables/Lifetime.md) that owns its
+teardown. Adding quantizers, marking dirty flags, and emitting CSS/GLSL/ARIA
+outputs all flow through the zero-allocation hot path backed by
+[CompositorStatePool](../../variables/CompositorStatePool.md).
 
 ## Example
 
 ```ts
-import { Effect } from 'effect';
 import { Compositor } from '@czap/core';
 
-const program = Effect.scoped(Effect.gen(function* () {
-  const compositor = yield* Compositor.create({ poolCapacity: 64, speculative: true });
-  yield* compositor.add('viewport', viewportQuantizer);
-  const state = yield* compositor.compute();
-  // state.discrete.viewport === 'tablet'
-  // state.outputs.css['--czap-viewport'] === 'tablet'
-}));
+const { compositor, lifetime } = Compositor.create({ poolCapacity: 64, speculative: true });
+compositor.add('viewport', viewportQuantizer);
+const state = compositor.compute();
+// state.discrete.viewport === 'tablet'
+// state.outputs.css['--czap-viewport'] === 'tablet'
+await lifetime.dispose();
 ```
 
 ## Type Aliases
 
 - [Config](type-aliases/Config.md)
+- [Handle](type-aliases/Handle.md)
 - [Shape](type-aliases/Shape.md)

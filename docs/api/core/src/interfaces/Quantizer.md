@@ -6,14 +6,21 @@
 
 # Interface: Quantizer\<B\>
 
-Defined in: [core/src/quantizer-types.ts:21](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/quantizer-types.ts#L21)
+Defined in: [core/src/quantizer-types.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/quantizer-types.ts#L34)
 
-Quantizer contract — the live evaluator that binds a [Boundary](../variables/Boundary.md) to a signal source.
+Quantizer contract — the SYNCHRONOUS base: a [Boundary](../variables/Boundary.md) definition, its
+`evaluate` transition, and an optional synchronous state accessor for hot
+paths. The reactive machinery (a current-state read and a crossing
+subscription) is layered on by [ReactiveQuantizer](ReactiveQuantizer.md); a consumer that only
+evaluates and reads `stateSync` never touches the reactive substrate.
 
-A quantizer holds a boundary definition plus the reactive machinery to observe
-its current state and emit crossings when the underlying signal moves between
-bands. The concrete implementation is produced by `@czap/quantizer`'s `Q.from()`
-builder; consumers interact only via this structural interface.
+The concrete reactive implementation is produced by `@czap/quantizer`'s
+`Q.from()` builder (a [ReactiveQuantizer](ReactiveQuantizer.md)); consumers interact only via
+these structural interfaces.
+
+## Extended by
+
+- [`ReactiveQuantizer`](ReactiveQuantizer.md)
 
 ## Type Parameters
 
@@ -27,7 +34,7 @@ builder; consumers interact only via this structural interface.
 
 > `readonly` **\_tag**: `"Quantizer"`
 
-Defined in: [core/src/quantizer-types.ts:22](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/quantizer-types.ts#L22)
+Defined in: [core/src/quantizer-types.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/quantizer-types.ts#L35)
 
 ***
 
@@ -35,23 +42,7 @@ Defined in: [core/src/quantizer-types.ts:22](https://github.com/freebatteryfacto
 
 > `readonly` **boundary**: `B`
 
-Defined in: [core/src/quantizer-types.ts:23](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/quantizer-types.ts#L23)
-
-***
-
-### changes
-
-> `readonly` **changes**: `Stream`\<[`BoundaryCrossing`](../type-aliases/BoundaryCrossing.md)\<[`StateUnion`](../type-aliases/StateUnion.md)\<`B`\>\>\>
-
-Defined in: [core/src/quantizer-types.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/quantizer-types.ts#L27)
-
-***
-
-### state
-
-> `readonly` **state**: `Effect`\<[`StateUnion`](../type-aliases/StateUnion.md)\<`B`\>\>
-
-Defined in: [core/src/quantizer-types.ts:24](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/quantizer-types.ts#L24)
+Defined in: [core/src/quantizer-types.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/quantizer-types.ts#L36)
 
 ***
 
@@ -59,9 +50,9 @@ Defined in: [core/src/quantizer-types.ts:24](https://github.com/freebatteryfacto
 
 > `readonly` `optional` **stateSync?**: () => [`StateUnion`](../type-aliases/StateUnion.md)\<`B`\>
 
-Defined in: [core/src/quantizer-types.ts:26](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/quantizer-types.ts#L26)
+Defined in: [core/src/quantizer-types.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/quantizer-types.ts#L38)
 
-Synchronous state accessor for hot paths (avoids Effect overhead).
+Synchronous state accessor for hot paths (avoids reactive read overhead).
 
 #### Returns
 
@@ -73,7 +64,7 @@ Synchronous state accessor for hot paths (avoids Effect overhead).
 
 > **evaluate**(`value`): [`StateUnion`](../type-aliases/StateUnion.md)\<`B`\>
 
-Defined in: [core/src/quantizer-types.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/quantizer-types.ts#L28)
+Defined in: [core/src/quantizer-types.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/quantizer-types.ts#L39)
 
 #### Parameters
 

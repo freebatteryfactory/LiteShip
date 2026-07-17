@@ -8,9 +8,9 @@
 
 > `const` **Animation**: `object`
 
-Defined in: [core/src/animation.ts:93](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/animation.ts#L93)
+Defined in: [core/src/animation.ts:99](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/animation.ts#L99)
 
-Animation — rAF-driven value interpolation exposed as an `Effect.Stream`.
+Animation — rAF-driven value interpolation exposed as an `AsyncIterable`.
 Pairs a duration and easing with either primitive lerping or the generic
 [Animation.interpolate](#interpolate) over numeric records.
 
@@ -55,12 +55,21 @@ Returns a new record with each property lerped: from[k] + (to[k] - from[k]) * ea
 
 ### run
 
-> **run**: (`config`) => `Stream`\<`AnimationFrameShape`\> = `_run`
+> **run**: (`config`) => `AsyncGenerator`\<`AnimationFrameShape`, `void`, `void`\> = `_run`
 
-Run an rAF animation that yields a stream of [Animation.Frame](../namespaces/Animation/type-aliases/Frame.md).
+Run an rAF animation that yields an async iterable of [Animation.Frame](../namespaces/Animation/type-aliases/Frame.md).
 
-Create a finite animation stream driven by rAF.
-Emits AnimationFrame values from progress 0 to 1.
+Run a finite animation as an `AsyncIterable` of [Animation.Frame](../namespaces/Animation/type-aliases/Frame.md)
+values driven by requestAnimationFrame (or an injected [Scheduler](Scheduler.md)).
+Emits frames from progress 0 to 1; a non-positive duration yields exactly one
+completed frame.
+
+The generator is a single-consumer pull clock: each iteration schedules ONE
+tick and awaits it, so at most one frame callback is ever outstanding. Its
+`finally` cancels that pending tick when the animation completes (progress
+reaches 1) OR when the consumer stops early (a `for await` `break`, which
+invokes the generator's `return`) — the replacement for the old Effect scope
+finalizer (`addFinalizer(sched.cancel)`).
 
 #### Parameters
 
@@ -80,4 +89,4 @@ Emits AnimationFrame values from progress 0 to 1.
 
 #### Returns
 
-`Stream`\<`AnimationFrameShape`\>
+`AsyncGenerator`\<`AnimationFrameShape`, `void`, `void`\>

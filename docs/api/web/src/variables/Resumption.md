@@ -8,7 +8,7 @@
 
 > `const` **Resumption**: `object`
 
-Defined in: [web/src/stream/resumption.ts:434](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/resumption.ts#L434)
+Defined in: [web/src/stream/resumption.ts:411](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/resumption.ts#L411)
 
 SSE resumption protocol namespace.
 
@@ -42,7 +42,7 @@ Check if resumption is possible by comparing event IDs.
 
 ### clearState
 
-> **clearState**: (`artifactId`) => `Effect`\<`void`\>
+> **clearState**: (`artifactId`) => `void`
 
 Clear resumption state from sessionStorage.
 
@@ -56,22 +56,19 @@ The artifact ID whose state should be cleared
 
 #### Returns
 
-`Effect`\<`void`\>
-
-An Effect that removes the state
+`void`
 
 #### Example
 
 ```ts
 import { Resumption } from '@czap/web';
-import { Effect } from 'effect';
 
-Effect.runSync(Resumption.clearState('article-123'));
+Resumption.clearState('article-123');
 ```
 
 ### fetchSnapshot
 
-> **fetchSnapshot**: (`artifactId`, `config?`) => `Effect`\<\{ `html`: `string`; `lastEventId`: `string`; `signals`: `unknown`; `type`: `"snapshot"`; \}, `LiteShipError`\>
+> **fetchSnapshot**: (`artifactId`, `config?`) => `Promise`\<\{ `html`: `string`; `lastEventId`: `string`; `signals`: `unknown`; `type`: `"snapshot"`; \}\>
 
 Request a snapshot when resumption is not possible.
 
@@ -87,11 +84,11 @@ Request a snapshot when resumption is not possible.
 
 #### Returns
 
-`Effect`\<\{ `html`: `string`; `lastEventId`: `string`; `signals`: `unknown`; `type`: `"snapshot"`; \}, `LiteShipError`\>
+`Promise`\<\{ `html`: `string`; `lastEventId`: `string`; `signals`: `unknown`; `type`: `"snapshot"`; \}\>
 
 ### loadState
 
-> **loadState**: (`artifactId`) => `Effect`\<[`ResumptionState`](../interfaces/ResumptionState.md) \| `null`\>
+> **loadState**: (`artifactId`) => [`ResumptionState`](../interfaces/ResumptionState.md) \| `null`
 
 Load resumption state from sessionStorage.
 
@@ -105,17 +102,16 @@ The artifact ID to load state for
 
 #### Returns
 
-`Effect`\<[`ResumptionState`](../interfaces/ResumptionState.md) \| `null`\>
+[`ResumptionState`](../interfaces/ResumptionState.md) \| `null`
 
-An Effect yielding the saved state, or null if none exists
+The saved state, or null if none exists
 
 #### Example
 
 ```ts
 import { Resumption } from '@czap/web';
-import { Effect } from 'effect';
 
-const state = Effect.runSync(Resumption.loadState('article-123'));
+const state = Resumption.loadState('article-123');
 if (state) {
   console.log(state.lastEventId); // 'evt-42'
 }
@@ -160,7 +156,7 @@ Legacy: numeric ("123"), prefixed ("evt-123"), dash-decimal resumption ids.
 
 ### resume
 
-> **resume**: (`artifactId`, `currentEventId`, `config?`) => `Effect`\<[`ResumeResponse`](../type-aliases/ResumeResponse.md), `LiteShipError`\>
+> **resume**: (`artifactId`, `currentEventId`, `config?`) => `Promise`\<[`ResumeResponse`](../type-aliases/ResumeResponse.md)\>
 
 Resume from a disconnection, choosing between event replay (small gap)
 and full snapshot (large gap or no prior state).
@@ -187,25 +183,23 @@ Optional partial config overriding defaults
 
 #### Returns
 
-`Effect`\<[`ResumeResponse`](../type-aliases/ResumeResponse.md), `LiteShipError`\>
+`Promise`\<[`ResumeResponse`](../type-aliases/ResumeResponse.md)\>
 
-An Effect yielding a [ResumeResponse](../type-aliases/ResumeResponse.md)
+A promise of a [ResumeResponse](../type-aliases/ResumeResponse.md); rejects with an
+         `IoError`/`ParseError`/`ValidationError` on failure
 
 #### Example
 
 ```ts
 import { Resumption } from '@czap/web';
-import { Effect } from 'effect';
 
-const response = Effect.runPromise(
-  Resumption.resume('article-123', 'evt-50', { maxGapSize: 100 }),
-);
+const response = await Resumption.resume('article-123', 'evt-50', { maxGapSize: 100 });
 // response.type => 'replay' | 'snapshot'
 ```
 
 ### saveState
 
-> **saveState**: (`state`, `clock`) => `Effect`\<`void`\>
+> **saveState**: (`state`, `clock`) => `void`
 
 Save resumption state to sessionStorage.
 
@@ -228,35 +222,29 @@ Time source for the default timestamp; defaults to `wallClock`
 
 #### Returns
 
-`Effect`\<`void`\>
-
-An Effect that saves the state
+`void`
 
 #### Example
 
 ```ts
 import { Resumption } from '@czap/web';
-import { Effect } from 'effect';
 
-Effect.runSync(Resumption.saveState({
+Resumption.saveState({
   artifactId: 'article-123',
   lastEventId: 'evt-42',
   lastSequence: 42,
-}));
+});
 ```
 
 ## Example
 
 ```ts
 import { Resumption } from '@czap/web';
-import { Effect } from 'effect';
 
 // Save state on each SSE message (timestamp defaults to systemClock.now())
-Effect.runSync(Resumption.saveState({
-  artifactId: 'doc-1', lastEventId: 'evt-99', lastSequence: 99,
-}));
+Resumption.saveState({ artifactId: 'doc-1', lastEventId: 'evt-99', lastSequence: 99 });
 
 // On reconnect, resume from where we left off
-const response = Effect.runPromise(Resumption.resume('doc-1', 'evt-105'));
+const response = await Resumption.resume('doc-1', 'evt-105');
 // response.type => 'replay' (patches) or 'snapshot' (full state)
 ```

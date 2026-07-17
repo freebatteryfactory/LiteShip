@@ -8,7 +8,7 @@
 
 > **MotionSampleSystem**(`plan`, `frameIndex`, `totalFrames`): `SystemShape`
 
-Defined in: [scene/src/systems/motion.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/motion.ts#L53)
+Defined in: [scene/src/systems/motion.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/motion.ts#L52)
 
 Build a `MotionSampleSystem` keyed to a frame index. It queries entities carrying a
 `MotionProgram` marker component and, per tick, samples [sampleSceneMotion](sampleSceneMotion.md) at

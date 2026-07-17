@@ -21,7 +21,6 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import { Effect } from 'effect';
 import { World } from '@czap/core';
 import {
   SVGSystem,
@@ -36,71 +35,52 @@ import {
 import type { SceneContract, SvgAttrs, SvgAttrsFrame } from '@czap/scene';
 
 describe('collectSvgAttrs (pure egress core)', () => {
-  it('collects persisted _svgAttrs into an entity-keyed frame after a tick', async () => {
-    const frame = await Effect.runPromise(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const world = yield* World.make();
-          const id = yield* world.spawn({ VideoSource: {}, FrameRange: { from: 0, to: 60 }, TrackLayer: 0 });
-          yield* world.addSystem(VideoSystem(30));
-          yield* world.addSystem(SVGSystem(30));
-          yield* world.tick();
+  it('collects persisted _svgAttrs into an entity-keyed frame after a tick', () => {
+    const { world } = World.make();
+    const id = world.spawn({ VideoSource: {}, FrameRange: { from: 0, to: 60 }, TrackLayer: 0 });
+    world.addSystem(VideoSystem(30));
+    world.addSystem(SVGSystem(30));
+    world.tick();
 
-          const collected = yield* collectSvgAttrs(world);
+    const collected = collectSvgAttrs(world);
 
-          // Read-through: frame value equals what SVGSystem persisted.
-          const entities = yield* world.query('VideoSource');
-          const persisted = entities[0]!.components.get('_svgAttrs') as SvgAttrs;
+    // Read-through: frame value equals what SVGSystem persisted.
+    const entities = world.query('VideoSource');
+    const persisted = entities[0]!.components.get('_svgAttrs') as SvgAttrs;
 
-          expect(collected.size).toBe(1);
-          const attrs = collected.get(id)!;
-          expect(attrs._tag).toBe('SvgAttrs');
-          expect(attrs.opacity).toBe(1);
-          expect(attrs.opacity).toBe(persisted.opacity);
-          return collected;
-        }),
-      ),
-    );
-    expect(frame.size).toBe(1);
+    expect(collected.size).toBe(1);
+    const attrs = collected.get(id)!;
+    expect(attrs._tag).toBe('SvgAttrs');
+    expect(attrs.opacity).toBe(1);
+    expect(attrs.opacity).toBe(persisted.opacity);
+    expect(collected.size).toBe(1);
   });
 
-  it('is empty before any tick has composed _svgAttrs', async () => {
-    const collected = await Effect.runPromise(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const world = yield* World.make();
-          yield* world.spawn({ VideoSource: {}, FrameRange: { from: 0, to: 60 }, TrackLayer: 0 });
-          yield* world.addSystem(VideoSystem(30));
-          yield* world.addSystem(SVGSystem(30));
-          // No tick yet → no persisted _svgAttrs.
-          return yield* collectSvgAttrs(world);
-        }),
-      ),
-    );
+  it('is empty before any tick has composed _svgAttrs', () => {
+    const { world } = World.make();
+    world.spawn({ VideoSource: {}, FrameRange: { from: 0, to: 60 }, TrackLayer: 0 });
+    world.addSystem(VideoSystem(30));
+    world.addSystem(SVGSystem(30));
+    // No tick yet → no persisted _svgAttrs.
+    const collected = collectSvgAttrs(world);
     expect(collected.size).toBe(0);
   });
 
-  it('carries mixBlendMode through from a _blend TransitionSystem wrote', async () => {
-    const collected = await Effect.runPromise(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const world = yield* World.make();
-          const id = yield* world.spawn({
-            VideoSource: {},
-            FrameRange: { from: 0, to: 100 },
-            TransitionKind: 'crossfade',
-            Between: ['a', 'b'],
-            TrackLayer: 0,
-          });
-          yield* world.addSystem(VideoSystem(80));
-          yield* world.addSystem(TransitionSystem(80));
-          yield* world.addSystem(SVGSystem(80));
-          yield* world.tick();
-          const frame = yield* collectSvgAttrs(world);
-          return frame.get(id)!;
-        }),
-      ),
-    );
+  it('carries mixBlendMode through from a _blend TransitionSystem wrote', () => {
+    const { world } = World.make();
+    const id = world.spawn({
+      VideoSource: {},
+      FrameRange: { from: 0, to: 100 },
+      TransitionKind: 'crossfade',
+      Between: ['a', 'b'],
+      TrackLayer: 0,
+    });
+    world.addSystem(VideoSystem(80));
+    world.addSystem(TransitionSystem(80));
+    world.addSystem(SVGSystem(80));
+    world.tick();
+    const frame = collectSvgAttrs(world);
+    const collected = frame.get(id)!;
     // frame 80 → blend 0.8 → 'screen'.
     expect(collected.mixBlendMode).toBe('screen');
   });

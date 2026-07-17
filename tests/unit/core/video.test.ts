@@ -3,7 +3,10 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { Effect, SubscriptionRef, Ref } from 'effect';
+// Effect is retained for the Signal/Timeline suites: those seams are NOT part of
+// the core-seams wave, so Signal.controllable()/signal.current/Timeline.* stay
+// Effect-typed. Only Compositor.create() went synchronous.
+import { Effect } from 'effect';
 import { Scheduler, VideoRenderer, Signal, Compositor, Boundary, Timeline, Easing, Millis } from '@czap/core';
 
 // ---------------------------------------------------------------------------
@@ -104,13 +107,13 @@ describe('FrameScheduler', () => {
 
 describe('VideoRenderer', () => {
   it('computes correct totalFrames', () => {
-    const compositor = Effect.runSync(Effect.scoped(Compositor.create()));
+    const compositor = Compositor.create().compositor;
     const renderer = VideoRenderer.make({ fps: 30, width: 1920, height: 1080, durationMs: Millis(5000) }, compositor);
     expect(renderer.totalFrames).toBe(150);
   });
 
   it('yields correct frame count', async () => {
-    const compositor = Effect.runSync(Effect.scoped(Compositor.create()));
+    const compositor = Compositor.create().compositor;
     const renderer = VideoRenderer.make({ fps: 30, width: 1920, height: 1080, durationMs: Millis(1000) }, compositor);
 
     const frames: Array<{ frame: number; timestamp: number; progress: number }> = [];
@@ -126,7 +129,7 @@ describe('VideoRenderer', () => {
   });
 
   it('yields CompositeState with correct shape for every frame', async () => {
-    const compositor = Effect.runSync(Effect.scoped(Compositor.create()));
+    const compositor = Compositor.create().compositor;
     const renderer = VideoRenderer.make({ fps: 10, width: 1280, height: 720, durationMs: Millis(500) }, compositor);
 
     let checked = 0;
@@ -143,7 +146,7 @@ describe('VideoRenderer', () => {
   });
 
   it('progress goes from 0 to 1 across frames', async () => {
-    const compositor = Effect.runSync(Effect.scoped(Compositor.create()));
+    const compositor = Compositor.create().compositor;
     const renderer = VideoRenderer.make({ fps: 10, width: 640, height: 480, durationMs: Millis(1000) }, compositor);
 
     const progresses: number[] = [];
@@ -159,7 +162,7 @@ describe('VideoRenderer', () => {
   });
 
   it('single frame duration yields 1 frame', async () => {
-    const compositor = Effect.runSync(Effect.scoped(Compositor.create()));
+    const compositor = Compositor.create().compositor;
     const renderer = VideoRenderer.make({ fps: 30, width: 1920, height: 1080, durationMs: Millis(10) }, compositor);
 
     const frames: Array<{ frame: number; progress: number }> = [];
@@ -171,7 +174,7 @@ describe('VideoRenderer', () => {
   });
 
   it('timestamp increments correctly at 60fps', async () => {
-    const compositor = Effect.runSync(Effect.scoped(Compositor.create()));
+    const compositor = Compositor.create().compositor;
     const renderer = VideoRenderer.make({ fps: 60, width: 1920, height: 1080, durationMs: Millis(100) }, compositor);
 
     const timestamps: number[] = [];
@@ -186,7 +189,7 @@ describe('VideoRenderer', () => {
   });
 
   it('seeks a controllable signal before each frame when one is provided', async () => {
-    const compositor = Effect.runSync(Effect.scoped(Compositor.create()));
+    const compositor = Compositor.create().compositor;
     const signal = Effect.runSync(Effect.scoped(Signal.controllable()));
     const renderer = VideoRenderer.make({ fps: 4, width: 320, height: 180, durationMs: Millis(1000) }, compositor, signal);
 
@@ -400,7 +403,7 @@ describe('springNaturalDuration', () => {
 
 describe('VideoRenderer edge cases', () => {
   it('durationMs: Millis(0) yields zero frames', async () => {
-    const compositor = Effect.runSync(Effect.scoped(Compositor.create()));
+    const compositor = Compositor.create().compositor;
     const renderer = VideoRenderer.make({ fps: 30, width: 1920, height: 1080, durationMs: Millis(0) }, compositor);
     expect(renderer.totalFrames).toBe(0);
 
@@ -410,7 +413,7 @@ describe('VideoRenderer edge cases', () => {
   });
 
   it('fps: 1 with 1500ms yields 2 frames', async () => {
-    const compositor = Effect.runSync(Effect.scoped(Compositor.create()));
+    const compositor = Compositor.create().compositor;
     const renderer = VideoRenderer.make({ fps: 1, width: 320, height: 240, durationMs: Millis(1500) }, compositor);
     expect(renderer.totalFrames).toBe(2); // ceil(1.5 * 1) = 2
 

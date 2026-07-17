@@ -60,12 +60,13 @@ export interface BridgeableScene {
 /** The narrow `world.query` surface the bridge reads — the `@czap/core` World exposes exactly this. */
 export interface SceneWorld {
   /**
-   * Query entities carrying ALL named components. The return is OPAQUE to the
-   * bridge ({@link SceneQueryEffect} = `unknown`): the `@czap/core` World returns
-   * an `Effect`, which the bridge never inspects — it hands the value straight to
-   * `runQuery` (the Effect runner). Typing it `unknown` is what lets the real
-   * `SceneRuntime.Handle.world` (whose `query` returns `Effect<…>`) satisfy this
-   * interface structurally without the bridge importing Effect's type.
+   * Query entities carrying ALL named components. `@czap/core`'s `World.query`
+   * is SYNCHRONOUS and returns the matched entities directly, so the bridge reads
+   * the result inline ({@link SceneQueryEffect} = `readonly SceneEntity[]`). The
+   * real `SceneRuntime.Handle.world` (whose `query` returns the world's entity
+   * rows) satisfies this structurally; each entity carries its live component map,
+   * and a host may still supply a `runQuery` projection to lift `trackId` out of
+   * that map (the real World stores it as a component — see `scene-stage.ts`).
    */
   readonly query: (...componentNames: string[]) => SceneQueryEffect;
 }
@@ -81,16 +82,21 @@ const _sceneHandleIsBridgeable = (handle: SceneRuntime.Handle): BridgeableScene 
 void _sceneHandleIsBridgeable;
 
 /**
- * The opaque value `world.query(...)` returns (the `@czap/core` World makes it an
- * `Effect`). The bridge never inspects it — it forwards it to `runQuery` — so it
- * is typed `unknown`, which is what lets the real handle's `Effect`-typed query
- * satisfy {@link SceneWorld} structurally without an Effect import here.
+ * The value `world.query(...)` returns: the matched entities, synchronously.
+ * `@czap/core`'s `World.query` is sync, so the bridge reads this inline (no
+ * runner). A host may inject a `runQuery` projection to reshape it (e.g. lift
+ * `trackId` out of the component map) before the routing loop reads each entity.
  */
-export type SceneQueryEffect = unknown;
+export type SceneQueryEffect = readonly SceneEntity[];
 
-/** One queried entity as the bridge reads it: a track id plus its live component map. */
+/**
+ * One queried entity as the bridge reads it: a track id plus its live component
+ * map. `trackId` is OPTIONAL because the raw `@czap/core` World stores it as a
+ * component rather than a top-level field — the reference `runQuery` projection
+ * (`scene-stage.ts`) lifts it up; a fake scene supplies it directly.
+ */
 interface SceneEntity {
-  readonly trackId: unknown;
+  readonly trackId?: unknown;
   readonly components: ReadonlyMap<string, unknown>;
 }
 
@@ -124,12 +130,13 @@ export interface BridgeOptions {
    */
   readonly projectTrack?: (trackId: string) => ContentAddress | undefined;
   /**
-   * Effect runner for the world query. Defaults to the scene runtime's own
-   * `Effect.runPromise`. Injected so the bridge needs no direct Effect dep and a
-   * test can run the query synchronously. Receives the value `world.query(...)`
-   * returned and must resolve the queried entities.
+   * Optional projection over the world-query result. `world.query(...)` is read
+   * DIRECTLY (it is synchronous); when supplied, `runQuery` reshapes the rows
+   * before the routing loop reads them — the reference consumer injects the
+   * `trackId`-lifting projection here (`scene-stage.ts`). May be sync or async;
+   * the bridge awaits it either way. Omitted, the query rows are used as-is.
    */
-  readonly runQuery?: (query: SceneQueryEffect) => Promise<readonly SceneEntity[]>;
+  readonly runQuery?: (query: SceneQueryEffect) => readonly SceneEntity[] | Promise<readonly SceneEntity[]>;
   /**
    * The `--czap-*` CSS custom property the continuous blend is written to.
    * Defaults to `--czap-blend`. The leaf write + `czap:uniform-update` dispatch
@@ -148,16 +155,6 @@ const CROSSING = 0.5;
 /** Quantize a continuous blend [0,1] to its DISCRETE side of the crossing — the active pose this frame. */
 function discreteStateOf(blend: number): string {
   return blend >= CROSSING ? TO_STATE : FROM_STATE;
-}
-
-/** Default Effect runner: resolve a world-query Effect via the scene runtime's own `Effect.runPromise`. */
-async function defaultRunQuery(query: SceneQueryEffect): Promise<readonly SceneEntity[]> {
-  // Imported lazily so the bridge module carries no static Effect dep — the
-  // SceneRuntime that produced `query` already depends on Effect, so this resolves.
-  const { Effect } = await import('effect');
-  return Effect.runPromise(query as unknown as Parameters<typeof Effect.runPromise>[0]) as Promise<
-    readonly SceneEntity[]
-  >;
 }
 
 /**
@@ -250,7 +247,7 @@ export function bridgeSceneToGraph(
   opts: BridgeOptions = {},
 ): SceneBridgeHandle {
   const projectTrack = opts.projectTrack ?? ((trackId: string) => trackId as ContentAddress);
-  const runQuery = opts.runQuery ?? defaultRunQuery;
+  const runQuery = opts.runQuery;
   const continuousVar = opts.continuousVar ?? '--czap-blend';
 
   // The scene's projection into the graph: a STABLE trackId → EntityNode.id map.
@@ -267,7 +264,7 @@ export function bridgeSceneToGraph(
   /**
    * One bridge step: tick the scene `dt`, then read each transition track's
    * discrete + continuous state off the world and route it. Async because the
-   * world query is Effect-shaped; a frame fires-and-forgets it.
+   * scene tick is Promise-shaped; a frame fires-and-forgets it.
    */
   async function step(dtMs: number): Promise<void> {
     if (stopped) return;
@@ -275,8 +272,11 @@ export function bridgeSceneToGraph(
     if (stopped) return;
 
     // Read the live transition tracks: entities carrying `_blend` (written by
-    // TransitionSystem this tick) plus their `trackId`.
-    const entities = await runQuery(scene.world.query('_blend') as SceneQueryEffect);
+    // TransitionSystem this tick) plus their `trackId`. `world.query` is
+    // SYNCHRONOUS — read it directly; an optional `runQuery` projection reshapes
+    // the rows (e.g. lifts `trackId` out of the component map for a real scene).
+    const queried = scene.world.query('_blend');
+    const entities = runQuery ? await runQuery(queried) : queried;
     if (stopped) return;
 
     for (const entity of entities) {

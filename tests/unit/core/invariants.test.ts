@@ -24,7 +24,10 @@ import {
   Compositor,
 } from '@czap/core';
 import { hasTag } from '@czap/error';
-import { Effect, Duration } from 'effect';
+// Duration is retained for Invariant 16 (Duration.millis/toMillis over the Millis
+// brand). The Compositor lifecycle invariant no longer uses Effect — create() and
+// compute() are synchronous as of the core-seams wave.
+import { Duration } from 'effect';
 
 // --- Quantizer imports ---
 import { evaluate } from '@czap/quantizer';
@@ -765,26 +768,19 @@ describe('Invariant 14: No raw-number Effect.sleep() in production source', () =
 });
 
 // ===========================================================================
-// INVARIANT 15: Compositor scope lifecycle contract
+// INVARIANT 15: Compositor lifecycle contract
 //
-// Compositor.create() returns Effect<..., Scope.Scope>. The returned
-// compositor's SubscriptionRef is tied to that scope. Using compute()
-// after scope close is a lifecycle violation.
-//
-// This test documents both the correct pattern (compute within scope)
-// and the failure mode (compute after scope close).
+// Compositor.create() returns a { compositor, lifetime } handle synchronously.
+// compute() is a synchronous pure fold over the current quantizer set and may be
+// invoked any number of times; the Lifetime owns teardown of the reactive
+// `changes` kernel. This documents that compute() yields a valid CompositeState
+// and stays stable across repeated calls.
 // ===========================================================================
 
-describe('Invariant 15: Compositor scope lifecycle', () => {
-  test('compute() within scope succeeds', () => {
-    const result = Effect.runSync(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const compositor = yield* Compositor.create();
-          return yield* compositor.compute();
-        }),
-      ),
-    );
+describe('Invariant 15: Compositor lifecycle', () => {
+  test('compute() succeeds on a freshly created compositor', () => {
+    const { compositor } = Compositor.create();
+    const result = compositor.compute();
     expect(result).toBeDefined();
     expect(result.discrete).toBeDefined();
     expect(result.outputs.css).toBeDefined();
@@ -792,23 +788,13 @@ describe('Invariant 15: Compositor scope lifecycle', () => {
     expect(result.outputs.aria).toBeDefined();
   });
 
-  test('scoped compositor keeps working across multiple compute calls', () => {
-    // The CORRECT pattern: keep all compute() calls inside the scope.
-    // This mirrors the fix applied to video.bench.ts where moving
-    // compute() calls inside Effect.scoped() fixed the "Invalid Input:
-    // undefined" error that occurred under tinybench warmup.
-    const result = Effect.runSync(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const compositor = yield* Compositor.create();
-          // Multiple sequential computes within scope must all succeed
-          const r1 = yield* compositor.compute();
-          const r2 = yield* compositor.compute();
-          const r3 = yield* compositor.compute();
-          return [r1, r2, r3] as const;
-        }),
-      ),
-    );
+  test('a compositor keeps working across multiple compute calls', () => {
+    // Multiple sequential computes must all succeed and return stable shapes.
+    const { compositor } = Compositor.create();
+    const r1 = compositor.compute();
+    const r2 = compositor.compute();
+    const r3 = compositor.compute();
+    const result = [r1, r2, r3] as const;
     expect(result).toHaveLength(3);
     for (const r of result) {
       expect(r.discrete).toBeDefined();

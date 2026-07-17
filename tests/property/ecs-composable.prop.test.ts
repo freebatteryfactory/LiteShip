@@ -7,7 +7,6 @@
 
 import { describe, test } from 'vitest';
 import fc from 'fast-check';
-import { Effect } from 'effect';
 import { Boundary, Composable, ComposableWorld, Part, Style, Token, World } from '@czap/core';
 
 const arbThresholdPairs = fc
@@ -60,18 +59,11 @@ describe('ECS Composable Properties', () => {
   test('World.spawn always produces unique ids', () => {
     fc.assert(
       fc.property(fc.array(fc.option(arbEntityRecord, { nil: undefined }), { minLength: 2, maxLength: 15 }), (componentsList) => {
-        const ids = Effect.runSync(
-          Effect.scoped(
-            Effect.gen(function* () {
-              const world = yield* World.make();
-              const result: string[] = [];
-              for (const components of componentsList) {
-                result.push(yield* world.spawn(components ?? undefined));
-              }
-              return result;
-            }),
-          ),
-        );
+        const { world } = World.make();
+        const ids: string[] = [];
+        for (const components of componentsList) {
+          ids.push(world.spawn(components ?? undefined));
+        }
         return new Set(ids).size === ids.length;
       }),
     );
@@ -80,18 +72,11 @@ describe('ECS Composable Properties', () => {
   test('World.spawn sequence is strictly increasing', () => {
     fc.assert(
       fc.property(fc.array(arbEntityRecord, { minLength: 2, maxLength: 8 }), (componentsList) => {
-        const ids = Effect.runSync(
-          Effect.scoped(
-            Effect.gen(function* () {
-              const world = yield* World.make();
-              const result: string[] = [];
-              for (const components of componentsList) {
-                result.push(yield* world.spawn(components));
-              }
-              return result;
-            }),
-          ),
-        );
+        const { world } = World.make();
+        const ids: string[] = [];
+        for (const components of componentsList) {
+          ids.push(world.spawn(components));
+        }
         const sequences = ids.map((id) => Number(id.split(':')[0]?.split('-')[1]));
         return sequences.every((seq, index) => index === 0 || seq > sequences[index - 1]!);
       }),
@@ -136,18 +121,13 @@ describe('ECS Composable Properties', () => {
     fc.assert(
       fc.property(arbBoundary, fc.integer({ min: 0, max: 9999 }), (boundary, value) => {
         const states = boundary.states as readonly string[];
-        const [evaluationA, evaluationB] = Effect.runSync(
-          Effect.scoped(
-            Effect.gen(function* () {
-              const world = yield* World.make();
-              const composableWorld = ComposableWorld.make<NumericThemeSchema>(world);
-              const entity = yield* composableWorld.spawn({ boundary });
-              const a = yield* composableWorld.evaluate(entity, { 'viewport.width': value });
-              const b = yield* composableWorld.evaluate(entity, { 'viewport.width': value + 1 });
-              return [a['viewport.width'], b['viewport.width']] as const;
-            }),
-          ),
-        );
+        const { world } = World.make();
+        const composableWorld = ComposableWorld.make<NumericThemeSchema>(world);
+        const entity = composableWorld.spawn({ boundary });
+        const a = composableWorld.evaluate(entity, { 'viewport.width': value });
+        const b = composableWorld.evaluate(entity, { 'viewport.width': value + 1 });
+        const evaluationA = a['viewport.width'];
+        const evaluationB = b['viewport.width'];
         return states.indexOf(evaluationB!) >= states.indexOf(evaluationA!);
       }),
     );
@@ -156,22 +136,16 @@ describe('ECS Composable Properties', () => {
   test('ComposableWorld query is sound and complete for a required component', () => {
     fc.assert(
       fc.property(fc.array(fc.boolean(), { minLength: 1, maxLength: 10 }), (flags) => {
-        const matched = Effect.runSync(
-          Effect.scoped(
-            Effect.gen(function* () {
-              const world = yield* World.make();
-              const composableWorld = ComposableWorld.make<NumericThemeSchema>(world);
-              for (const hasBoundary of flags) {
-                if (hasBoundary) {
-                  yield* composableWorld.spawn({ boundary: Boundary.make({ input: 'viewport.width', at: [[0, 'a'], [10, 'b']] }) });
-                } else {
-                  yield* composableWorld.spawn({ token: Token.make({ name: 'x', category: 'color', axes: ['themeLevel'] as const, values: { '1': '#0', '2': '#1' }, fallback: '#0' }) });
-                }
-              }
-              return yield* composableWorld.query('boundary');
-            }),
-          ),
-        );
+        const { world } = World.make();
+        const composableWorld = ComposableWorld.make<NumericThemeSchema>(world);
+        for (const hasBoundary of flags) {
+          if (hasBoundary) {
+            composableWorld.spawn({ boundary: Boundary.make({ input: 'viewport.width', at: [[0, 'a'], [10, 'b']] }) });
+          } else {
+            composableWorld.spawn({ token: Token.make({ name: 'x', category: 'color', axes: ['themeLevel'] as const, values: { '1': '#0', '2': '#1' }, fallback: '#0' }) });
+          }
+        }
+        const matched = composableWorld.query('boundary');
         return matched.length === flags.filter(Boolean).length && matched.every((entity) => 'boundary' in entity.components);
       }),
     );
@@ -188,16 +162,10 @@ describe('ECS Composable Properties', () => {
           states: Object.fromEntries(boundary.states.map((state, index) => [state, { properties: { padding: `${index}px` } }])) as never,
         });
 
-        const resolved = Effect.runSync(
-          Effect.scoped(
-            Effect.gen(function* () {
-              const world = yield* World.make();
-              const composableWorld = ComposableWorld.make<NumericThemeSchema>(world);
-              const entity = yield* composableWorld.spawn({ boundary, style });
-              return yield* composableWorld.evaluate(entity, { 'viewport.width': value });
-            }),
-          ),
-        );
+        const { world } = World.make();
+        const composableWorld = ComposableWorld.make<NumericThemeSchema>(world);
+        const entity = composableWorld.spawn({ boundary, style });
+        const resolved = composableWorld.evaluate(entity, { 'viewport.width': value });
 
         const expectedIndex = boundary.states.indexOf(chosen);
         return resolved.padding === `${expectedIndex}px`;
@@ -216,18 +184,13 @@ describe('ECS Composable Properties', () => {
           fallback: dark,
         });
 
-        const [resolvedDark, resolvedFallback] = Effect.runSync(
-          Effect.scoped(
-            Effect.gen(function* () {
-              const world = yield* World.make();
-              const composableWorld = ComposableWorld.make<NumericThemeSchema>(world);
-              const entity = yield* composableWorld.spawn({ token });
-              const a = yield* composableWorld.evaluate(entity, { themeLevel: 1 });
-              const b = yield* composableWorld.evaluate(entity, {});
-              return [a.primary, b.primary] as const;
-            }),
-          ),
-        );
+        const { world } = World.make();
+        const composableWorld = ComposableWorld.make<NumericThemeSchema>(world);
+        const entity = composableWorld.spawn({ token });
+        const a = composableWorld.evaluate(entity, { themeLevel: 1 });
+        const b = composableWorld.evaluate(entity, {});
+        const resolvedDark = a.primary;
+        const resolvedFallback = b.primary;
 
         return resolvedDark === dark && resolvedFallback === dark;
       }),
@@ -237,14 +200,8 @@ describe('ECS Composable Properties', () => {
   test('EntityId format invariant remains entity-seq:fnv1a:hash', () => {
     fc.assert(
       fc.property(arbEntityRecord, (components) => {
-        const id = Effect.runSync(
-          Effect.scoped(
-            Effect.gen(function* () {
-              const world = yield* World.make();
-              return yield* world.spawn(components);
-            }),
-          ),
-        );
+        const { world } = World.make();
+        const id = world.spawn(components);
         return /^entity-\d+:fnv1a:[a-f0-9]{8}$/.test(id);
       }),
     );

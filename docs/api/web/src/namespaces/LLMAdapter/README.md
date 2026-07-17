@@ -18,24 +18,19 @@ token buffer.
 
 ```ts
 import { LLMAdapter, SSE } from '@czap/web';
-import { Effect, Stream } from 'effect';
 
-const program = Effect.scoped(Effect.gen(function* () {
-  const client = yield* SSE.create({ url: '/api/llm/stream' });
-  const adapter = LLMAdapter.create({
-    source: client.messages,
-    parser: (msg) => {
-      if (msg.type !== 'patch') return null;
-      const data = msg.data as { type?: string; content?: string };
-      return data.type === 'text' && typeof data.content === 'string'
-        ? { type: 'text', partial: false, content: data.content }
-        : null;
-    },
-  });
-  yield* Stream.runForEach(adapter.textTokens, (token) =>
-    Effect.sync(() => process.stdout.write(token)),
-  );
-}));
+const client = SSE.create({ url: '/api/llm/stream' });
+const adapter = LLMAdapter.create({
+  source: client.messages,
+  parser: (msg) => {
+    if (msg.type !== 'patch') return null;
+    const data = msg.data as { type?: string; content?: string };
+    return data.type === 'text' && typeof data.content === 'string'
+      ? { type: 'text', partial: false, content: data.content }
+      : null;
+  },
+});
+for await (const token of adapter.textTokens) process.stdout.write(token);
 ```
 
 ## Type Aliases

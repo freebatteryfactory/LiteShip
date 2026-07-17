@@ -25,9 +25,7 @@ import { describe, test, expect } from 'vitest';
 import { Boundary, Compositor, Cap, sealNode, projectionKeys, wgslIdent, PROJECTION_KEYS_SOURCE } from '@czap/core';
 import type { PolicyNode, RuntimeSite, CapTier, CapSet, CellMeta, ContentAddress } from '@czap/core';
 import { satelliteAttrs } from '@czap/astro';
-import { Effect } from 'effect';
 import { applyBoundaryState, parseBoundary } from '../../packages/astro/src/runtime/boundary.js';
-import { runScopedAsync as runScoped } from '../helpers/effect-test.js';
 
 // ---------------------------------------------------------------------------
 // Shared fixtures
@@ -46,7 +44,7 @@ function makeQuantizer(boundary: Boundary.Shape, initialState?: string) {
   let currentState = initialState ?? (boundary.states[0] as string);
   return {
     boundary,
-    state: Effect.succeed(currentState),
+    stateSync: () => currentState,
     changes: null as never,
     evaluate(value: number) {
       currentState = Boundary.evaluate(boundary, value) as string;
@@ -116,9 +114,9 @@ describe('wgslKey — bare snake_case, no u_ prefix (matches the WGSL compiler t
 
 describe('compositor emit-wgsl: live WGSL channel, escalation-gated at the gpu rung', () => {
   test('pass-through (no policy): outputs.wgsl carries the live state index under the fixed state_index field', async () => {
-    const compositor = await runScoped(Compositor.create({ runtimeSite: 'browser' }));
-    await Effect.runPromise(compositor.add('blurRadius', makeQuantizer(widthBoundary, 'tablet')));
-    const state = await Effect.runPromise(compositor.compute());
+    const compositor = Compositor.create({ runtimeSite: 'browser' }).compositor;
+    compositor.add('blurRadius', makeQuantizer(widthBoundary, 'tablet'));
+    const state = compositor.compute();
 
     // The WGSL state index lands in the single fixed `state_index` field that the
     // WGSL compiler generates and wgpu.ts reads from slot 0 — 'tablet' = index 1.
@@ -129,9 +127,9 @@ describe('compositor emit-wgsl: live WGSL channel, escalation-gated at the gpu r
 
   test('gpu-rung policy admits wgsl (the heaviest target)', async () => {
     const p = policy({ requires: 'gpu', grants: grantUpTo('gpu'), sites: ['browser'] });
-    const compositor = await runScoped(Compositor.create({ runtimeSite: 'browser', getPolicy: () => p }));
-    await Effect.runPromise(compositor.add('layout', makeQuantizer(widthBoundary, 'desktop')));
-    const state = await Effect.runPromise(compositor.compute());
+    const compositor = Compositor.create({ runtimeSite: 'browser', getPolicy: () => p }).compositor;
+    compositor.add('layout', makeQuantizer(widthBoundary, 'desktop'));
+    const state = compositor.compute();
 
     // desktop = state index 2; gpu rung admits css/glsl/wgsl/aria.
     expect(state.outputs.wgsl['state_index']).toBe(2);
@@ -148,9 +146,9 @@ describe('compositor emit-wgsl: live WGSL channel, escalation-gated at the gpu r
       sites: ['browser'],
       budgets: { p95Ms: 12 },
     });
-    const compositor = await runScoped(Compositor.create({ runtimeSite: 'browser', getPolicy: () => p }));
-    await Effect.runPromise(compositor.add('layout', makeQuantizer(widthBoundary, 'mobile')));
-    const state = await Effect.runPromise(compositor.compute());
+    const compositor = Compositor.create({ runtimeSite: 'browser', getPolicy: () => p }).compositor;
+    compositor.add('layout', makeQuantizer(widthBoundary, 'mobile'));
+    const state = compositor.compute();
 
     // wgsl dropped; glsl + css survive.
     expect(state.outputs.wgsl['layout']).toBeUndefined();
@@ -161,9 +159,9 @@ describe('compositor emit-wgsl: live WGSL channel, escalation-gated at the gpu r
   test('unsatisfiable policy ({error} branch) denies wgsl along with every target', async () => {
     // Policy admits only 'node'; compositor runs at 'browser' → chooseRung errors → deny-all.
     const p = policy({ requires: 'gpu', grants: grantUpTo('gpu'), sites: ['node'] });
-    const compositor = await runScoped(Compositor.create({ runtimeSite: 'browser', getPolicy: () => p }));
-    await Effect.runPromise(compositor.add('layout', makeQuantizer(widthBoundary, 'desktop')));
-    const state = await Effect.runPromise(compositor.compute());
+    const compositor = Compositor.create({ runtimeSite: 'browser', getPolicy: () => p }).compositor;
+    compositor.add('layout', makeQuantizer(widthBoundary, 'desktop'));
+    const state = compositor.compute();
 
     expect(state.discrete['layout']).toBe('desktop');
     expect(state.outputs.wgsl['layout']).toBeUndefined();

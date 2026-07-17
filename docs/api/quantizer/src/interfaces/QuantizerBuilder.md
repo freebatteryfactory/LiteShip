@@ -6,7 +6,7 @@
 
 # Interface: QuantizerBuilder\<B\>
 
-Defined in: [quantizer/src/quantizer.ts:293](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L293)
+Defined in: [quantizer/src/quantizer.ts:306](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L306)
 
 Fluent builder returned by [Q.from](../variables/Q.md#from).
 
@@ -27,7 +27,7 @@ signals at the `none` tier for testing).
 
 > **force**(...`targets`): `QuantizerBuilder`\<`B`\>
 
-Defined in: [quantizer/src/quantizer.ts:297](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L297)
+Defined in: [quantizer/src/quantizer.ts:310](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L310)
 
 Force-enable specific targets regardless of the current tier's gating set.
 
@@ -47,7 +47,7 @@ Force-enable specific targets regardless of the current tier's gating set.
 
 > **outputs**\<`O`\>(`outputs`): [`QuantizerConfig`](QuantizerConfig.md)\<`B`, `O`\>
 
-Defined in: [quantizer/src/quantizer.ts:295](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L295)
+Defined in: [quantizer/src/quantizer.ts:308](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L308)
 
 Attach per-target output tables and produce a [QuantizerConfig](QuantizerConfig.md).
 

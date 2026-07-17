@@ -8,13 +8,11 @@
  */
 
 import { describe, test, expect, beforeEach } from 'vitest';
-import { Effect, Stream } from 'effect';
-import { Boundary, Diagnostics } from '@czap/core';
-import type { MotionTier, Quantizer } from '@czap/core';
+import { Boundary, Diagnostics, CellKernel } from '@czap/core';
+import type { MotionTier, ReactiveQuantizer } from '@czap/core';
 import { hasTag } from '@czap/error';
 import { AnimatedQuantizer, Q, evaluate } from '@czap/quantizer';
-import { captureDiagnostics, captureDiagnosticsAsync } from '../../helpers/diagnostics.js';
-import { runScopedAsync as runScoped } from '../../helpers/effect-test.js';
+import { captureDiagnostics } from '../../helpers/diagnostics.js';
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -173,21 +171,26 @@ describe('evaluate() unknown previousState', () => {
 // ---------------------------------------------------------------------------
 
 describe('AnimatedQuantizer uncovered states', () => {
-  test('warns when the outputs record does not cover every boundary state', async () => {
-    const boundary = viewport();
-    const quantizer = {
+  // A minimal reactive mock: a replay-1 state slot parked on 'compact' and an
+  // empty crossing fan-out (no crossings are published — these tests only assert
+  // the make()-time uncovered-states diagnostic).
+  function mockReactive(boundary: ReturnType<typeof viewport>) {
+    return {
+      _tag: 'Quantizer',
       boundary,
-      state: Effect.succeed<'compact' | 'expanded'>('compact'),
-      changes: Stream.empty,
+      state: CellKernel.replay1<'compact' | 'expanded'>('compact'),
+      changes: CellKernel.fanout<never>(),
       evaluate: () => 'compact' as const,
-    } satisfies Quantizer<typeof boundary>;
+    } satisfies ReactiveQuantizer<typeof boundary>;
+  }
 
-    await captureDiagnosticsAsync(async ({ events }) => {
-      await runScoped(
-        Effect.gen(function* () {
-          yield* AnimatedQuantizer.make(quantizer, { '*': { duration: 0 } }, { compact: { opacity: 0 } });
-        }),
-      );
+  test('warns when the outputs record does not cover every boundary state', () => {
+    const boundary = viewport();
+    const quantizer = mockReactive(boundary);
+
+    captureDiagnostics(({ events }) => {
+      const { lifetime } = AnimatedQuantizer.make(quantizer, { '*': { duration: 0 } }, { compact: { opacity: 0 } });
+      void lifetime.dispose();
 
       expect(events).toEqual([
         expect.objectContaining({
@@ -201,45 +204,29 @@ describe('AnimatedQuantizer uncovered states', () => {
     });
   });
 
-  test('fully-covered outputs emit nothing', async () => {
+  test('fully-covered outputs emit nothing', () => {
     const boundary = viewport();
-    const quantizer = {
-      boundary,
-      state: Effect.succeed<'compact' | 'expanded'>('compact'),
-      changes: Stream.empty,
-      evaluate: () => 'compact' as const,
-    } satisfies Quantizer<typeof boundary>;
+    const quantizer = mockReactive(boundary);
 
-    await captureDiagnosticsAsync(async ({ events }) => {
-      await runScoped(
-        Effect.gen(function* () {
-          yield* AnimatedQuantizer.make(
-            quantizer,
-            { '*': { duration: 0 } },
-            { compact: { opacity: 0 }, expanded: { opacity: 1 } },
-          );
-        }),
+    captureDiagnostics(({ events }) => {
+      const { lifetime } = AnimatedQuantizer.make(
+        quantizer,
+        { '*': { duration: 0 } },
+        { compact: { opacity: 0 }, expanded: { opacity: 1 } },
       );
+      void lifetime.dispose();
 
       expect(events).toEqual([]);
     });
   });
 
-  test('omitted outputs on a plain quantizer emit nothing (no derivation source)', async () => {
+  test('omitted outputs on a plain quantizer emit nothing (no derivation source)', () => {
     const boundary = viewport();
-    const quantizer = {
-      boundary,
-      state: Effect.succeed<'compact' | 'expanded'>('compact'),
-      changes: Stream.empty,
-      evaluate: () => 'compact' as const,
-    } satisfies Quantizer<typeof boundary>;
+    const quantizer = mockReactive(boundary);
 
-    await captureDiagnosticsAsync(async ({ events }) => {
-      await runScoped(
-        Effect.gen(function* () {
-          yield* AnimatedQuantizer.make(quantizer, { '*': { duration: 0 } });
-        }),
-      );
+    captureDiagnostics(({ events }) => {
+      const { lifetime } = AnimatedQuantizer.make(quantizer, { '*': { duration: 0 } });
+      void lifetime.dispose();
 
       expect(events).toEqual([]);
     });

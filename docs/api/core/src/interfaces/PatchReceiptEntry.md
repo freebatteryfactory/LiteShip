@@ -6,7 +6,7 @@
 
 # Interface: PatchReceiptEntry
 
-Defined in: [core/src/graph-query-gap-replay.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query-gap-replay.ts#L27)
+Defined in: [core/src/graph-query-gap-replay.ts:26](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query-gap-replay.ts#L26)
 
 A minted transition receipt paired with the [DiscreteStateTransition](DiscreteStateTransition.md) it attests.
 
@@ -16,7 +16,7 @@ A minted transition receipt paired with the [DiscreteStateTransition](DiscreteSt
 
 > `readonly` **receipt**: [`ReceiptEnvelope`](ReceiptEnvelope.md)
 
-Defined in: [core/src/graph-query-gap-replay.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query-gap-replay.ts#L28)
+Defined in: [core/src/graph-query-gap-replay.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query-gap-replay.ts#L27)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [core/src/graph-query-gap-replay.ts:28](https://github.com/freebatte
 
 > `readonly` **transition**: [`DiscreteStateTransition`](DiscreteStateTransition.md)
 
-Defined in: [core/src/graph-query-gap-replay.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query-gap-replay.ts#L29)
+Defined in: [core/src/graph-query-gap-replay.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query-gap-replay.ts#L28)

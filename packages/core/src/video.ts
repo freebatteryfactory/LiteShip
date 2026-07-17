@@ -142,9 +142,16 @@ function _make(
         scheduler.step();
         const timestamp = (i * 1000) / config.fps;
         if (signal) {
+          // SIGNAL/TIMELINE SEAM (not in this wave): signal.ts is untouched, so
+          // Signal.seek is still `Effect.Effect<void>`. This `Effect.runSync`
+          // grounding — and the `import { Effect } from 'effect'` above — MUST
+          // stay until the Signal/Timeline seam rebuilds Signal on the plain
+          // CellKernel handle. Do not delete before then.
           Effect.runSync(signal.seek(timestamp));
         }
-        const state = Effect.runSync(compositor.compute());
+        // Compositor.compute() is synchronous as of the core-seams wave (SEAM:2):
+        // it returns the CompositeState directly, no Effect wrapper to run.
+        const state = compositor.compute();
         yield {
           frame: i,
           timestamp,

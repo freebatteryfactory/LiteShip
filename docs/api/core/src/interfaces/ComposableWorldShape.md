@@ -6,7 +6,7 @@
 
 # Interface: ComposableWorldShape\<Schema\>
 
-Defined in: [core/src/composable.ts:117](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/composable.ts#L117)
+Defined in: [core/src/composable.ts:116](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/composable.ts#L116)
 
 ## Type Parameters
 
@@ -18,9 +18,9 @@ Defined in: [core/src/composable.ts:117](https://github.com/freebatteryfactory/L
 
 ### evaluate()
 
-> **evaluate**\<`T`\>(`entity`, `input`): `Effect`\<`Record`\<`string`, `string`\>\>
+> **evaluate**\<`T`\>(`entity`, `input`): `Record`\<`string`, `string`\>
 
-Defined in: [core/src/composable.ts:121](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/composable.ts#L121)
+Defined in: [core/src/composable.ts:120](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/composable.ts#L120)
 
 #### Type Parameters
 
@@ -40,15 +40,15 @@ Defined in: [core/src/composable.ts:121](https://github.com/freebatteryfactory/L
 
 #### Returns
 
-`Effect`\<`Record`\<`string`, `string`\>\>
+`Record`\<`string`, `string`\>
 
 ***
 
 ### query()
 
-> **query**\<`K`\>(...`componentTypes`): `Effect`\<readonly [`ComposableEntity`](ComposableEntity.md)\<`Pick`\<`Schema`, `K`\>\>[]\>
+> **query**\<`K`\>(...`componentTypes`): readonly [`ComposableEntity`](ComposableEntity.md)\<`Pick`\<`Schema`, `K`\>\>[]
 
-Defined in: [core/src/composable.ts:120](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/composable.ts#L120)
+Defined in: [core/src/composable.ts:119](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/composable.ts#L119)
 
 #### Type Parameters
 
@@ -64,15 +64,15 @@ Defined in: [core/src/composable.ts:120](https://github.com/freebatteryfactory/L
 
 #### Returns
 
-`Effect`\<readonly [`ComposableEntity`](ComposableEntity.md)\<`Pick`\<`Schema`, `K`\>\>[]\>
+readonly [`ComposableEntity`](ComposableEntity.md)\<`Pick`\<`Schema`, `K`\>\>[]
 
 ***
 
 ### spawn()
 
-> **spawn**\<`T`\>(`components`): `Effect`\<[`ComposableEntity`](ComposableEntity.md)\<`T`\>\>
+> **spawn**\<`T`\>(`components`): [`ComposableEntity`](ComposableEntity.md)\<`T`\>
 
-Defined in: [core/src/composable.ts:118](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/composable.ts#L118)
+Defined in: [core/src/composable.ts:117](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/composable.ts#L117)
 
 #### Type Parameters
 
@@ -88,15 +88,15 @@ Defined in: [core/src/composable.ts:118](https://github.com/freebatteryfactory/L
 
 #### Returns
 
-`Effect`\<[`ComposableEntity`](ComposableEntity.md)\<`T`\>\>
+[`ComposableEntity`](ComposableEntity.md)\<`T`\>
 
 ***
 
 ### spawnWith()
 
-> **spawnWith**\<`T`\>(`entity`): `Effect`\<[`ComposableEntity`](ComposableEntity.md)\<`T`\>\>
+> **spawnWith**\<`T`\>(`entity`): [`ComposableEntity`](ComposableEntity.md)\<`T`\>
 
-Defined in: [core/src/composable.ts:119](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/composable.ts#L119)
+Defined in: [core/src/composable.ts:118](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/composable.ts#L118)
 
 #### Type Parameters
 
@@ -112,4 +112,4 @@ Defined in: [core/src/composable.ts:119](https://github.com/freebatteryfactory/L
 
 #### Returns
 
-`Effect`\<[`ComposableEntity`](ComposableEntity.md)\<`T`\>\>
+[`ComposableEntity`](ComposableEntity.md)\<`T`\>

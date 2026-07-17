@@ -29,7 +29,7 @@
  * @module
  */
 
-import { Effect } from 'effect';
+import { IntegrityError } from '@czap/error';
 import { encode } from 'cborg';
 
 interface TypedRefShape {
@@ -53,30 +53,34 @@ export const canonicalize = (value: unknown): Uint8Array => encode(value);
  * Safe: cborg encodes into fresh ArrayBuffer and TextEncoder.encode returns
  * ArrayBuffer-backed views. No data copy.
  *
- * Hash-primitive failures are unrecoverable in practice (crypto.subtle errors
- * are environment-level, not user-recoverable), so we `Effect.orDie` to fold
- * the Error channel into a defect and keep the `Effect<string>` signature that
- * the content-addressing pipeline relies on.
+ * `crypto.subtle.digest` is the seam's ONE genuinely-async leaf, so `hash` is a
+ * plain `async` function returning `Promise<string>`. Hash-primitive failures are
+ * unrecoverable in practice (crypto.subtle errors are environment-level, not
+ * user-recoverable), so a failure is wrapped and re-thrown as a tagged
+ * `IntegrityError` (a real `Error`, so `instanceof Error` still holds) — the
+ * rejection every content-addressing consumer awaits.
  */
-export const hash = (data: string | Uint8Array): Effect.Effect<string> =>
-  Effect.tryPromise({
-    try: async () => {
-      const bytes = typeof data === 'string' ? new TextEncoder().encode(data) : data;
-      const buffer = await crypto.subtle.digest('SHA-256', bytes as BufferSource);
-      const hashHex = Array.from(new Uint8Array(buffer))
-        .map((b) => b.toString(16).padStart(2, '0'))
-        .join('');
-      return `sha256:${hashHex}`;
-    },
-    catch: (error) => new Error(`SHA-256 hash failed: ${error instanceof Error ? error.message : String(error)}`),
-  }).pipe(Effect.orDie);
+export const hash = async (data: string | Uint8Array): Promise<string> => {
+  try {
+    const bytes = typeof data === 'string' ? new TextEncoder().encode(data) : data;
+    const buffer = await crypto.subtle.digest('SHA-256', bytes as BufferSource);
+    const hashHex = Array.from(new Uint8Array(buffer))
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('');
+    return `sha256:${hashHex}`;
+  } catch (error) {
+    throw IntegrityError(
+      'content-address',
+      `SHA-256 hash failed: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+};
 
 /** Create a TypedRef from schema hash and payload. */
-const _create = (schemaHash: string, payload: unknown): Effect.Effect<TypedRefShape> =>
-  Effect.gen(function* () {
-    const contentHash = yield* hash(canonicalize(payload));
-    return { schema_hash: schemaHash, content_hash: contentHash };
-  });
+const _create = async (schemaHash: string, payload: unknown): Promise<TypedRefShape> => {
+  const contentHash = await hash(canonicalize(payload));
+  return { schema_hash: schemaHash, content_hash: contentHash };
+};
 
 /** Compare two TypedRefs for structural equality. */
 const _equals = (a: TypedRefShape, b: TypedRefShape): boolean =>

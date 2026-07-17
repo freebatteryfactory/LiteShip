@@ -3,7 +3,6 @@
  */
 
 import { Bench } from 'tinybench';
-import { Effect, Scope, Schema } from 'effect';
 import { Boundary, Token, Compositor, BlendTree, World, Part, Config } from '@czap/core';
 
 const bench = new Bench({ warmupIterations: 100 });
@@ -100,7 +99,7 @@ bench.add('Token.make() + FNV-1a', () => {
 });
 
 bench.add('BlendTree.compute() -- 4 nodes', () => {
-  const tree = Effect.runSync(Effect.scoped(BlendTree.make<{ x: number; y: number }>()));
+  const { tree } = BlendTree.make<{ x: number; y: number }>();
   tree.add('a', { x: 0, y: 0 }, 1);
   tree.add('b', { x: 100, y: 100 }, 1);
   tree.add('c', { x: 50, y: 50 }, 0.5);
@@ -109,86 +108,61 @@ bench.add('BlendTree.compute() -- 4 nodes', () => {
 });
 
 bench.add('Compositor.compute() -- empty', () => {
-  const compositor = Effect.runSync(Effect.scoped(Compositor.create()));
-  Effect.runSync(compositor.compute());
+  const compositor = Compositor.create().compositor;
+  compositor.compute();
 });
 
 // ECS World tick -- setup extracted so only tick() is measured per iteration
 {
-  const world100 = Effect.runSync(
-    Effect.scoped(
-      Effect.gen(function* () {
-        const world = yield* World.make();
-        for (let i = 0; i < 100; i++) {
-          yield* world.spawn({ position: { x: i, y: i * 2 } });
-        }
-        yield* world.addSystem({
-          name: 'mover',
-          query: ['position'],
-          execute: () => Effect.void,
-        });
-        return world;
-      }),
-    ),
-  );
+  const world100 = World.make().world;
+  for (let i = 0; i < 100; i++) {
+    world100.spawn({ position: { x: i, y: i * 2 } });
+  }
+  world100.addSystem({
+    name: 'mover',
+    query: ['position'],
+    execute: () => {},
+  });
 
   bench.add('ECS World tick -- 100 entities, 1 system', () => {
-    Effect.runSync(world100.tick());
+    world100.tick();
   });
 }
 
 {
-  const scope = Effect.runSync(Scope.make());
-  const {
-    world: world100Dense,
-    posX,
-    posY,
-  } = await Effect.runPromise(
-    Effect.scoped(
-      Effect.gen(function* () {
-        const world = yield* World.make();
-        const px = Part.dense('posX', 128);
-        const py = Part.dense('posY', 128);
+  const world100Dense = World.make().world;
+  const posX = Part.dense('posX', 128);
+  const posY = Part.dense('posY', 128);
 
-        yield* world.addDenseStore(px);
-        yield* world.addDenseStore(py);
+  world100Dense.addDenseStore(posX);
+  world100Dense.addDenseStore(posY);
 
-        for (let i = 0; i < 100; i++) {
-          const id = yield* world.spawn();
-          px.set(id, i);
-          py.set(id, i * 2);
-        }
+  for (let i = 0; i < 100; i++) {
+    const id = world100Dense.spawn();
+    posX.set(id, i);
+    posY.set(id, i * 2);
+  }
 
-        yield* world.addSystem({
-          name: 'mover',
-          query: ['posX', 'posY'],
-          _denseSystem: true as const,
-          execute(stores) {
-            const pxStore = stores.get('posX')!;
-            const pyStore = stores.get('posY')!;
-            const xData = pxStore.data;
-            const yData = pyStore.data;
-            const len = pxStore.count;
-            for (let i = 0; i < len; i++) {
-              xData[i] = xData[i]! + 1;
-              yData[i] = yData[i]! + 1;
-            }
-            return Effect.void;
-          },
-        });
-
-        return { world, posX: px, posY: py };
-      }),
-    ),
-  );
-
-  bench.add('ECS World tick -- 100 entities, 1 system (dense)', () => {
-    Effect.runSync(world100Dense.tick());
+  world100Dense.addSystem({
+    name: 'mover',
+    query: ['posX', 'posY'],
+    _denseSystem: true as const,
+    execute(stores) {
+      const pxStore = stores.get('posX')!;
+      const pyStore = stores.get('posY')!;
+      const xData = pxStore.data;
+      const yData = pyStore.data;
+      const len = pxStore.count;
+      for (let i = 0; i < len; i++) {
+        xData[i] = xData[i]! + 1;
+        yData[i] = yData[i]! + 1;
+      }
+    },
   });
 
-  void scope;
-  void posX;
-  void posY;
+  bench.add('ECS World tick -- 100 entities, 1 system (dense)', () => {
+    world100Dense.tick();
+  });
 }
 
 // Config -- make() mints a CanonicalCbor + FNV-1a content address; the

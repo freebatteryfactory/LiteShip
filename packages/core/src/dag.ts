@@ -6,7 +6,6 @@
  * @module
  */
 
-import { Effect } from 'effect';
 import { InvariantViolationError } from '@czap/error';
 import { compare as hlcCompare, HLC } from './hlc.js';
 import { TypedRef } from './typed-ref.js';
@@ -587,72 +586,71 @@ export const spliceCheckpoint = (dag: ReceiptDAG, dropSet: ReadonlySet<string>):
  *
  * @example
  * ```ts
- * const { dag: compacted, checkpoint, dropped } = yield* DAG.checkpoint(dag, { below: W });
+ * const { dag: compacted, checkpoint, dropped } = await DAG.checkpoint(dag, { below: W });
  * // compacted has `dropped.length` fewer nodes; `checkpoint.subject.id` commits W
  * ```
  */
-export const checkpoint = (dag: ReceiptDAG, options: { readonly below: string }): Effect.Effect<CheckpointResult> =>
-  Effect.gen(function* () {
-    const watermark = options.below;
-    if (!dag.nodes.has(watermark)) {
-      throw InvariantViolationError(
-        'dag.checkpoint.unknown-watermark',
-        `checkpoint watermark "${watermark}" is not a node in the DAG (compact below a hash you have ingested).`,
-      );
-    }
+export const checkpoint = async (dag: ReceiptDAG, options: { readonly below: string }): Promise<CheckpointResult> => {
+  const watermark = options.below;
+  if (!dag.nodes.has(watermark)) {
+    throw InvariantViolationError(
+      'dag.checkpoint.unknown-watermark',
+      `checkpoint watermark "${watermark}" is not a node in the DAG (compact below a hash you have ingested).`,
+    );
+  }
 
-    // dropSet = { W } ∪ ancestors(W) — the region to reclaim.
-    const dropSet = new Set<string>(ancestors(dag, watermark));
-    dropSet.add(watermark);
+  // dropSet = { W } ∪ ancestors(W) — the region to reclaim.
+  const dropSet = new Set<string>(ancestors(dag, watermark));
+  dropSet.add(watermark);
 
-    // Dominance precondition: the only cross-boundary parent edge (dropped parent
-    // -> retained child) may land on W. Any other dropped parent of a survivor
-    // means W does not dominate the region and the survivor would be orphaned.
-    for (const node of dag.nodes.values()) {
-      const childHash = node.envelope.hash;
-      if (dropSet.has(childHash)) continue;
-      for (const parent of node.parents) {
-        if (dropSet.has(parent) && parent !== watermark) {
-          throw InvariantViolationError(
-            'dag.checkpoint.not-dominated',
-            `watermark "${watermark}" does not dominate the drop region: retained node "${childHash}" ` +
-              `has dropped parent "${parent}". A checkpoint may only reclaim a region whose sole exit edge is the watermark.`,
-          );
-        }
+  // Dominance precondition: the only cross-boundary parent edge (dropped parent
+  // -> retained child) may land on W. Any other dropped parent of a survivor
+  // means W does not dominate the region and the survivor would be orphaned.
+  for (const node of dag.nodes.values()) {
+    const childHash = node.envelope.hash;
+    if (dropSet.has(childHash)) continue;
+    for (const parent of node.parents) {
+      if (dropSet.has(parent) && parent !== watermark) {
+        throw InvariantViolationError(
+          'dag.checkpoint.not-dominated',
+          `watermark "${watermark}" does not dominate the drop region: retained node "${childHash}" ` +
+            `has dropped parent "${parent}". A checkpoint may only reclaim a region whose sole exit edge is the watermark.`,
+        );
       }
     }
+  }
 
-    // HLC-max over the dropped envelopes -> the checkpoint's causal stamp
-    // (replica-deterministic: the set is identical given the same W).
-    let maxTs: ReceiptEnvelope['timestamp'] | null = null;
-    for (const hash of dropSet) {
-      const ts = dag.nodes.get(hash)!.envelope.timestamp;
-      if (maxTs === null || hlcCompare(ts, maxTs) > 0) maxTs = ts;
-    }
+  // HLC-max over the dropped envelopes -> the checkpoint's causal stamp
+  // (replica-deterministic: the set is identical given the same W).
+  let maxTs: ReceiptEnvelope['timestamp'] | null = null;
+  for (const hash of dropSet) {
+    const ts = dag.nodes.get(hash)!.envelope.timestamp;
+    if (maxTs === null || hlcCompare(ts, maxTs) > 0) maxTs = ts;
+  }
 
-    const payload = yield* TypedRef.create(CHECKPOINT_ATTESTATION_SCHEMA, {
-      watermark,
-      dropped: [...dropSet].sort(),
-      count: dropSet.size,
-      maxHlc: HLC.encode(maxTs!),
-    });
-
-    // subject.id COMMITS the watermark; previous = GENESIS makes it genesis-shaped
-    // (a sibling-root attestation, NOT an ancestor of any survivor).
-    const checkpointEnvelope = yield* createEnvelope(
-      'checkpoint',
-      { type: 'run', id: `czap/checkpoint:${watermark}` },
-      payload,
-      maxTs!,
-      GENESIS,
-    );
-
-    return {
-      dag: spliceCheckpoint(dag, dropSet),
-      checkpoint: checkpointEnvelope,
-      dropped: [...dropSet],
-    };
+  const payload = await TypedRef.create(CHECKPOINT_ATTESTATION_SCHEMA, {
+    watermark,
+    dropped: [...dropSet].sort(),
+    count: dropSet.size,
+    maxHlc: HLC.encode(maxTs!),
   });
+
+  // subject.id COMMITS the watermark; previous = GENESIS makes it genesis-shaped
+  // (a sibling-root attestation, NOT an ancestor of any survivor).
+  const checkpointEnvelope = await createEnvelope(
+    'checkpoint',
+    { type: 'run', id: `czap/checkpoint:${watermark}` },
+    payload,
+    maxTs!,
+    GENESIS,
+  );
+
+  return {
+    dag: spliceCheckpoint(dag, dropSet),
+    checkpoint: checkpointEnvelope,
+    dropped: [...dropSet],
+  };
+};
 
 /**
  * DAG namespace -- receipt DAG merge and canonical linearization.

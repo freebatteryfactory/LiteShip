@@ -4,11 +4,10 @@
  * Maps SlotPaths to DOM elements for efficient lookup and patching.
  */
 
-import { Effect } from 'effect';
-import type { Scope } from 'effect';
 import type { SlotPath, SlotEntry, SlotEntryInput, IslandMode } from '../types.js';
 import { dispatchCzapEvent } from '../wire/dispatch.js';
 import { Diagnostics } from '@czap/core';
+import type { Disposer } from '@czap/core';
 import { SlotAddressing, SlotPath as mkSlotPath } from './addressing.js';
 
 /**
@@ -158,8 +157,9 @@ export const scanDOM = (registry: SlotRegistryShape, root: Element, defaultMode:
 /**
  * Scan `root` for pre-existing slots, then create a `MutationObserver` that
  * automatically registers/unregisters slots as DOM elements with
- * `data-czap-slot` are added or removed. The observer is disconnected when
- * the enclosing Effect scope closes.
+ * `data-czap-slot` are added or removed. Returns a {@link Disposer} that
+ * disconnects the observer; register it on a `Lifetime` (or call it directly)
+ * to own the teardown.
  *
  * A separate {@link scanDOM} call before `observe` is no longer required
  * (and stays harmless: `register` is idempotent per path+element+mode).
@@ -167,111 +167,109 @@ export const scanDOM = (registry: SlotRegistryShape, root: Element, defaultMode:
  * @example
  * ```ts
  * import { SlotRegistry } from '@czap/web';
- * import { Effect } from 'effect';
+ * import { Lifetime } from '@czap/core';
  *
- * const program = Effect.scoped(Effect.gen(function* () {
- *   const registry = SlotRegistry.create();
- *   yield* SlotRegistry.observe(registry, document.body);
- *   // Pre-existing slots are registered; new slots auto-register on DOM changes
- * }));
+ * const registry = SlotRegistry.create();
+ * const lifetime = Lifetime.make();
+ * lifetime.add(SlotRegistry.observe(registry, document.body));
+ * // Pre-existing slots are registered; new slots auto-register on DOM changes.
+ * // lifetime.dispose() disconnects the observer.
  * ```
  *
  * @param registry - The slot registry to keep in sync
  * @param root     - The DOM root to scan and observe
- * @returns An Effect (scoped) that starts observation
+ * @returns A {@link Disposer} that disconnects the `MutationObserver`
  */
-export const observe = (registry: SlotRegistryShape, root: Element): Effect.Effect<void, never, Scope.Scope> => {
-  return Effect.gen(function* () {
-    // Pre-existing DOM first; the observer below only sees future mutations.
-    scanDOM(registry, root);
+export const observe = (registry: SlotRegistryShape, root: Element): Disposer => {
+  // Pre-existing DOM first; the observer below only sees future mutations.
+  scanDOM(registry, root);
 
-    const observer = new MutationObserver((mutations) => {
-      for (const mutation of mutations) {
-        for (const node of Array.from(mutation.addedNodes)) {
-          if (node instanceof Element) {
-            const slotPath = node.getAttribute('data-czap-slot');
-            if (slotPath && SlotAddressing.isValid(slotPath)) {
-              const mode = readIslandMode(node) ?? 'partial';
-              const entry: SlotEntry = {
-                path: mkSlotPath(slotPath),
-                element: node,
-                mode,
-                mounted: true,
-              };
-              registry.register(entry);
-            }
-
-            const descendants = node.querySelectorAll('[data-czap-slot]');
-            for (const desc of Array.from(descendants)) {
-              const descPath = desc.getAttribute('data-czap-slot');
-              if (descPath && SlotAddressing.isValid(descPath)) {
-                const mode = readIslandMode(desc) ?? 'partial';
-                const entry: SlotEntry = {
-                  path: mkSlotPath(descPath),
-                  element: desc,
-                  mode,
-                  mounted: true,
-                };
-                registry.register(entry);
-              }
-            }
-          }
-        }
-
-        for (const node of Array.from(mutation.removedNodes)) {
-          if (node instanceof Element) {
-            const slotPath = node.getAttribute('data-czap-slot');
-            if (slotPath && SlotAddressing.isValid(slotPath)) {
-              registry.unregister(mkSlotPath(slotPath));
-            }
-
-            const descendants = node.querySelectorAll('[data-czap-slot]');
-            for (const desc of Array.from(descendants)) {
-              const descPath = desc.getAttribute('data-czap-slot');
-              if (descPath && SlotAddressing.isValid(descPath)) {
-                registry.unregister(mkSlotPath(descPath));
-              }
-            }
-          }
-        }
-
-        if (
-          mutation.type === 'attributes' &&
-          mutation.attributeName === 'data-czap-slot' &&
-          mutation.target instanceof Element
-        ) {
-          const element = mutation.target;
-          const oldPath = mutation.oldValue;
-          const newPath = element.getAttribute('data-czap-slot');
-
-          if (oldPath && SlotAddressing.isValid(oldPath)) {
-            registry.unregister(mkSlotPath(oldPath));
-          }
-
-          if (newPath && SlotAddressing.isValid(newPath)) {
-            const mode = readIslandMode(element) ?? 'partial';
+  const observer = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      for (const node of Array.from(mutation.addedNodes)) {
+        if (node instanceof Element) {
+          const slotPath = node.getAttribute('data-czap-slot');
+          if (slotPath && SlotAddressing.isValid(slotPath)) {
+            const mode = readIslandMode(node) ?? 'partial';
             const entry: SlotEntry = {
-              path: mkSlotPath(newPath),
-              element,
+              path: mkSlotPath(slotPath),
+              element: node,
               mode,
               mounted: true,
             };
             registry.register(entry);
           }
+
+          const descendants = node.querySelectorAll('[data-czap-slot]');
+          for (const desc of Array.from(descendants)) {
+            const descPath = desc.getAttribute('data-czap-slot');
+            if (descPath && SlotAddressing.isValid(descPath)) {
+              const mode = readIslandMode(desc) ?? 'partial';
+              const entry: SlotEntry = {
+                path: mkSlotPath(descPath),
+                element: desc,
+                mode,
+                mounted: true,
+              };
+              registry.register(entry);
+            }
+          }
         }
       }
-    });
 
-    observer.observe(root, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeOldValue: true,
-      attributeFilter: ['data-czap-slot'],
-    });
+      for (const node of Array.from(mutation.removedNodes)) {
+        if (node instanceof Element) {
+          const slotPath = node.getAttribute('data-czap-slot');
+          if (slotPath && SlotAddressing.isValid(slotPath)) {
+            registry.unregister(mkSlotPath(slotPath));
+          }
 
-    yield* Effect.addFinalizer(() => Effect.sync(() => observer.disconnect()));
+          const descendants = node.querySelectorAll('[data-czap-slot]');
+          for (const desc of Array.from(descendants)) {
+            const descPath = desc.getAttribute('data-czap-slot');
+            if (descPath && SlotAddressing.isValid(descPath)) {
+              registry.unregister(mkSlotPath(descPath));
+            }
+          }
+        }
+      }
+
+      if (
+        mutation.type === 'attributes' &&
+        mutation.attributeName === 'data-czap-slot' &&
+        mutation.target instanceof Element
+      ) {
+        const element = mutation.target;
+        const oldPath = mutation.oldValue;
+        const newPath = element.getAttribute('data-czap-slot');
+
+        if (oldPath && SlotAddressing.isValid(oldPath)) {
+          registry.unregister(mkSlotPath(oldPath));
+        }
+
+        if (newPath && SlotAddressing.isValid(newPath)) {
+          const mode = readIslandMode(element) ?? 'partial';
+          const entry: SlotEntry = {
+            path: mkSlotPath(newPath),
+            element,
+            mode,
+            mounted: true,
+          };
+          registry.register(entry);
+        }
+      }
+    }
   });
+
+  observer.observe(root, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeOldValue: true,
+    attributeFilter: ['data-czap-slot'],
+  });
+
+  return () => observer.disconnect();
 };
 
 /**
@@ -339,7 +337,6 @@ export const getPath = (element: Element): SlotPath | null => {
  * @example
  * ```ts
  * import { SlotRegistry } from '@czap/web';
- * import { Effect } from 'effect';
  *
  * const registry = SlotRegistry.create();
  * SlotRegistry.scanDOM(registry, document.body);

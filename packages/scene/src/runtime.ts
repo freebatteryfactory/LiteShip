@@ -1,7 +1,7 @@
 /**
  * SceneRuntime — `stateMachine` arm capsule `scene.runtime`.
  *
- * Owns the ECS world lifetime via an explicit `Scope`, registers the
+ * Owns the ECS world lifetime via a `Lifetime`, registers the
  * 7 canonical scene systems (Video → Audio → Transition → Effect →
  * Sync → PassThroughMixer → SVG) in topological order, and exposes
  * `tick(dtMs)` + `release()` for use by render pipelines (CLI,
@@ -23,8 +23,7 @@
  * @module
  */
 
-import { Effect, Scope, Exit } from 'effect';
-import type { System, World as WorldNS } from '@czap/core';
+import type { System, World as WorldNS, Entity } from '@czap/core';
 import { defineCapsule, World, S } from '@czap/core';
 import { InvariantViolationError } from '@czap/error';
 import type { CompiledScene } from './compile.js';
@@ -125,6 +124,13 @@ export interface SceneRuntimeOptions {
 export interface SceneRuntimeHandle {
   /** The underlying ECS world — exposed for query-based assertions. */
   readonly world: WorldNS.Shape;
+  /**
+   * Query entities carrying ALL named components, resolved through a Promise.
+   * Wraps the now-synchronous {@link WorldNS.Shape.query} so the astro scene
+   * bridge can `await` the result without importing Effect (gate 24's
+   * Promise-facade decision) — the same entity shape `world.query` returns.
+   */
+  readonly query: (...componentNames: string[]) => Promise<readonly Entity[]>;
   /** Number of systems registered (always {@link CANONICAL_SYSTEM_COUNT}). */
   readonly systemsRegistered: number;
   /** Number of entities spawned at build time (one per scene track). */
@@ -148,7 +154,7 @@ export interface SceneRuntimeHandle {
    * registered system once over the world.
    */
   readonly tick: (dtMs: number) => Promise<void>;
-  /** Release the world's scope. Idempotent. */
+  /** Dispose the world's Lifetime. Idempotent. */
   readonly release: () => Promise<void>;
 }
 
@@ -160,8 +166,8 @@ export interface SceneRuntimeHandle {
 /**
  * Build a live SceneRuntime handle from a {@link CompiledScene}.
  *
- * Holds an explicit {@link Scope} for the world's lifetime so the
- * caller controls when finalizers run. Systems are registered in the
+ * Holds the world's {@link WorldNS.Handle} lifetime so the caller
+ * controls when finalizers run. Systems are registered in the
  * canonical topological order — this matches ADR-0009's
  * ECS-as-scene-substrate discipline.
  */
@@ -182,22 +188,19 @@ async function build(compiled: CompiledScene, opts: SceneRuntimeOptions = {}): P
   let svgFrame: SvgAttrsFrame = new Map();
   const svgSink = opts.svgSink;
 
-  // Long-lived scope holds the world (and any future resources).
-  const scope = await Effect.runPromise(Scope.make());
-
   // Mutable runtime context — system wrappers close over this ref so
   // we can register them exactly once and still let the frame index
   // advance each tick.
   const ctx = { frameIndex: 0, timeMs: 0 };
 
-  // Build the world inside our long-lived scope. Effect.runPromise
-  // strips `Scope` from the requirements via `Scope.use(scope)`.
-  const world = await Effect.runPromise(Scope.use(World.make(), scope));
+  // Build the world paired with the Lifetime that owns its teardown —
+  // the long-lived owner of the world (and any future resources).
+  const { world, lifetime } = World.make();
 
   // Spawn one entity per compiled track.
   let entitySpawnCount = 0;
   for (const t of compiled.trackSpawns) {
-    await Effect.runPromise(world.spawn({ trackId: t.trackId, ...t.components }));
+    world.spawn({ trackId: t.trackId, ...t.components });
     entitySpawnCount++;
   }
 
@@ -208,7 +211,7 @@ async function build(compiled: CompiledScene, opts: SceneRuntimeOptions = {}): P
   if (compiled.beats.length > 0) {
     const spawns = BeatBinding.bind(compiled.beats);
     for (const beatSpawn of spawns) {
-      await Effect.runPromise(world.spawn({ Beat: beatSpawn.components }));
+      world.spawn({ Beat: beatSpawn.components });
     }
   }
 
@@ -233,13 +236,14 @@ async function build(compiled: CompiledScene, opts: SceneRuntimeOptions = {}): P
   ];
 
   for (const sys of wrapped) {
-    await Effect.runPromise(world.addSystem(sys));
+    world.addSystem(sys);
   }
 
   let released = false;
 
   const handle: SceneRuntimeHandle = {
     world,
+    query: (...componentNames: string[]) => Promise.resolve(world.query(...componentNames)),
     systemsRegistered: wrapped.length,
     entitySpawnCount,
     currentTimeMs: () => ctx.timeMs,
@@ -255,18 +259,18 @@ async function build(compiled: CompiledScene, opts: SceneRuntimeOptions = {}): P
       }
       ctx.timeMs += dtMs;
       ctx.frameIndex = Math.floor((ctx.timeMs / 1000) * compiled.fps);
-      await Effect.runPromise(world.tick());
+      world.tick();
       // SVG egress: SVGSystem ran last in the tick above and persisted
       // `_svgAttrs`. Collect that durable output into the entity-keyed
       // frame — the reader that closes the dual-write — then surface it via
       // `svgAttrs()` and (if configured) the caller's sink.
-      svgFrame = await Effect.runPromise(collectSvgAttrs(world));
+      svgFrame = collectSvgAttrs(world);
       if (svgSink !== undefined) svgSink(svgFrame);
     },
     release: async () => {
       if (released) return;
       released = true;
-      await Effect.runPromise(Scope.close(scope, Exit.succeed(undefined)));
+      await lifetime.dispose();
     },
   };
 
@@ -282,11 +286,10 @@ function wrapForFrame(name: string, query: readonly string[], factory: () => Sys
   return {
     name,
     query,
-    execute: (entities, world) =>
-      Effect.gen(function* () {
-        const inner = factory();
-        yield* inner.execute(entities, world);
-      }),
+    execute: (entities, world) => {
+      const inner = factory();
+      inner.execute(entities, world);
+    },
   };
 }
 

@@ -2,18 +2,20 @@
  * @czap/quantizer type spine -- boundary detection, multi-target dispatch, animation.
  */
 
-import type { Effect, Stream, Scope } from 'effect';
 import type {
   Boundary,
   StateUnion,
-  BoundaryCrossing,
   ContentAddress,
   Easing,
   Millis,
   Quantizer,
+  ReactiveQuantizer,
   OutputsFor,
   MotionTier,
   Scheduler,
+  CellKernel,
+  Lifetime,
+  Clock,
 } from './core.d.ts';
 
 // MotionTier canonical declaration lives in core.d.ts; re-exported here so
@@ -38,6 +40,17 @@ export interface QuantizerFromOptions {
   readonly spring?: SpringConfig;
 }
 
+/**
+ * Per-instantiation runtime injection for {@link QuantizerConfig.create}: the
+ * wall-clock boundary advancing this instance's monotonic crossing HLC (defaults
+ * to `wallClock`) and the HLC node id. Injected at instantiation, never part of
+ * the cached config's content-addressed identity.
+ */
+export interface QuantizerRuntime {
+  readonly clock?: Clock;
+  readonly node?: string;
+}
+
 export declare const TIER_TARGETS: Record<MotionTier, ReadonlySet<OutputTarget>>;
 
 export interface QuantizerOutputs<B extends Boundary.Shape> {
@@ -50,26 +63,52 @@ export interface QuantizerOutputs<B extends Boundary.Shape> {
 
 export interface QuantizerBuilder<B extends Boundary.Shape> {
   outputs<O extends QuantizerOutputs<B>>(outputs: O): QuantizerConfig<B, O>;
+  force(...targets: OutputTarget[]): QuantizerBuilder<B>;
 }
+
+/** The resolved per-target output record a {@link LiveQuantizer} dispatches. */
+type OutputRecord = Partial<{ [K in OutputTarget]: Record<string, unknown> }>;
 
 export interface QuantizerConfig<B extends Boundary.Shape, O extends QuantizerOutputs<B> = QuantizerOutputs<B>> {
   readonly boundary: B;
   readonly outputs: O;
   readonly id: ContentAddress;
-  create(): Effect.Effect<LiveQuantizer<B, O>, never, Scope.Scope>;
+  readonly tier?: MotionTier;
+  readonly spring?: SpringConfig;
+  /**
+   * Materialize a reactive {@link LiveQuantizer} paired with the {@link Lifetime}
+   * that owns its teardown (was `Effect.Effect<LiveQuantizer, never, Scope.Scope>`);
+   * disposing the lifetime closes the state / outputs / crossings kernels.
+   */
+  create(runtime?: QuantizerRuntime): LiveQuantizerHandle<B, O>;
 }
 
 export interface LiveQuantizer<
   B extends Boundary.Shape,
   O extends QuantizerOutputs<B> = QuantizerOutputs<B>,
-> extends Quantizer<B> {
+> extends ReactiveQuantizer<B> {
   readonly config: QuantizerConfig<B, O>;
-  readonly currentOutputs: Effect.Effect<Partial<{ [K in OutputTarget]: Record<string, unknown> }>>;
-  readonly outputChanges: Stream.Stream<Partial<{ [K in OutputTarget]: Record<string, unknown> }>>;
+  /** Read the currently-active per-target output record (replay-1 read side; was `Effect.Effect<...>`). */
+  readonly currentOutputs: Pick<CellKernel.Replay<OutputRecord>, 'read' | 'subscribe' | 'closed' | 'size'>;
+  /** Per-target output records emitted on each crossing (replay-1 subscribe side; was `Stream.Stream<...>`). */
+  readonly outputChanges: Pick<CellKernel.Replay<OutputRecord>, 'subscribe' | 'read' | 'closed' | 'size'>;
+}
+
+/**
+ * The pair {@link QuantizerConfig.create} returns: the live reactive quantizer
+ * plus the {@link Lifetime} that owns its teardown (replaces the former
+ * `Effect<..., Scope.Scope>` scope).
+ */
+export interface LiveQuantizerHandle<
+  B extends Boundary.Shape,
+  O extends QuantizerOutputs<B> = QuantizerOutputs<B>,
+> {
+  readonly quantizer: LiveQuantizer<B, O>;
+  readonly lifetime: Lifetime.Shape;
 }
 
 export declare const Q: {
-  from<B extends Boundary.Shape>(boundary: B): QuantizerBuilder<B>;
+  from<B extends Boundary.Shape>(boundary: B, options?: QuantizerFromOptions): QuantizerBuilder<B>;
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -119,23 +158,40 @@ export declare const Transition: {
 // § 4. ANIMATED QUANTIZER
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export interface AnimatedQuantizer<B extends Boundary.Shape> extends Quantizer<B> {
-  readonly transition: Transition<B>;
-  /** Stream of interpolated output values (not just discrete state changes) */
-  readonly interpolated: Stream.Stream<{
-    readonly state: StateUnion<B>;
-    readonly progress: number;
-    readonly outputs: Record<string, number | string>;
-  }>;
+/** An interpolated animation frame emitted during a crossing. */
+export interface InterpolatedFrame<B extends Boundary.Shape> {
+  readonly state: StateUnion<B>;
+  readonly progress: number;
+  readonly outputs: Record<string, number | string>;
 }
 
-export declare namespace AnimatedQuantizer {
-  export function make<B extends Boundary.Shape>(
-    quantizer: Quantizer<B>,
+export interface AnimatedQuantizerShape<B extends Boundary.Shape> extends ReactiveQuantizer<B> {
+  readonly transition: Transition<B>;
+  /**
+   * No-replay subscription of interpolated animation frames during crossings (was
+   * `Stream.Stream<{ state; progress; outputs }>`): a late subscriber never sees a
+   * prior frame.
+   */
+  readonly interpolated: Pick<CellKernel.Fanout<InterpolatedFrame<B>>, 'subscribe' | 'closed' | 'size'>;
+}
+
+/**
+ * The pair {@link AnimatedQuantizer.make} returns: the live animated quantizer
+ * plus the {@link Lifetime} that owns its teardown (replaces the former
+ * `Effect<..., Scope.Scope>` scope).
+ */
+export interface AnimatedQuantizerHandle<B extends Boundary.Shape> {
+  readonly animated: AnimatedQuantizerShape<B>;
+  readonly lifetime: Lifetime.Shape;
+}
+
+export declare const AnimatedQuantizer: {
+  make<B extends Boundary.Shape>(
+    quantizer: ReactiveQuantizer<B>,
     transitions: TransitionMap<StateUnion<B> & string>,
     /** Omitted: derived from a LiveQuantizer's `config.outputs.css` tables. */
     outputs?: Record<string, Record<string, number | string>>,
     /** Optional frame-clock injection; omitted, drives an internal ~60fps 16ms loop. */
     options?: { readonly scheduler?: Scheduler.Shape },
-  ): Effect.Effect<AnimatedQuantizer<B>, never, Scope.Scope>;
-}
+  ): AnimatedQuantizerHandle<B>;
+};

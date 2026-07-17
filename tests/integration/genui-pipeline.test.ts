@@ -9,7 +9,6 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Effect, Stream } from 'effect';
 import { TokenBuffer, UIQuality, GenFrame } from '@czap/core';
 import type { UIQualityTier, UIFrame, ContentAddress } from '@czap/core';
 import { LLMAdapter } from '@czap/web';
@@ -160,21 +159,15 @@ describe('GenUI pipeline integration', () => {
     };
 
     const adapter = LLMAdapter.create({
-      source: Stream.fromIterable(events),
+      source: events,
       parser,
     });
 
     // Collect all emitted chunks
     const collected: LLMChunk[] = [];
-    await Effect.runPromise(
-      adapter.chunks.pipe(
-        Stream.runForEach((chunk) =>
-          Effect.sync(() => {
-            collected.push(chunk);
-          }),
-        ),
-      ),
-    );
+    for await (const chunk of adapter.chunks) {
+      collected.push(chunk);
+    }
 
     // The partial tool-call-delta (with partial:true) should have been suppressed
     const types = collected.map((c) => c.type);
@@ -219,21 +212,15 @@ describe('GenUI pipeline integration', () => {
     };
 
     const adapter = LLMAdapter.create({
-      source: Stream.fromIterable(events),
+      source: events,
       parser,
     });
 
     // Pipe text tokens into a real TokenBuffer
     const buf = TokenBuffer.make<string>({ capacity: 64 });
-    await Effect.runPromise(
-      adapter.textTokens.pipe(
-        Stream.runForEach((token) =>
-          Effect.sync(() => {
-            buf.push(token);
-          }),
-        ),
-      ),
-    );
+    for await (const token of adapter.textTokens) {
+      buf.push(token);
+    }
 
     // Buffer should have exactly the 3 text tokens (not tool-call or done)
     expect(buf.length).toBe(3);
@@ -257,21 +244,15 @@ describe('GenUI pipeline integration', () => {
     };
 
     const adapter = LLMAdapter.create({
-      source: Stream.fromIterable(events),
+      source: events,
       parser,
     });
 
     // Wire: adapter → token buffer
     const buf = TokenBuffer.make<string>({ capacity: 64 });
-    await Effect.runPromise(
-      adapter.textTokens.pipe(
-        Stream.runForEach((token) =>
-          Effect.sync(() => {
-            buf.push(token);
-          }),
-        ),
-      ),
-    );
+    for await (const token of adapter.textTokens) {
+      buf.push(token);
+    }
 
     expect(buf.length).toBe(20);
 

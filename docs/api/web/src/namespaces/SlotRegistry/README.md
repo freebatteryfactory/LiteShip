@@ -16,7 +16,6 @@ elements for efficient lookup and patching. Provides DOM scanning,
 
 ```ts
 import { SlotRegistry } from '@czap/web';
-import { Effect } from 'effect';
 
 const registry = SlotRegistry.create();
 SlotRegistry.scanDOM(registry, document.body);

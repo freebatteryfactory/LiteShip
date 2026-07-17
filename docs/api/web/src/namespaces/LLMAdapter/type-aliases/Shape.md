@@ -8,6 +8,6 @@
 
 > **Shape** = [`LLMAdapterShape`](../../../interfaces/LLMAdapterShape.md)
 
-Defined in: [web/src/stream/llm-adapter.ts:178](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/llm-adapter.ts#L178)
+Defined in: [web/src/stream/llm-adapter.ts:184](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/llm-adapter.ts#L184)
 
 Public adapter surface (`chunks` + `textTokens`).

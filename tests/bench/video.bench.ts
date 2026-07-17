@@ -3,7 +3,10 @@
  */
 
 import { Bench } from 'tinybench';
-import { Effect, Scope } from 'effect';
+// The quantizer seam is fully synchronous: the base contract exposes `stateSync`
+// (the compositor's preferred hot-path accessor) and `evaluate`; the reactive
+// CellKernel `state` lives on ReactiveQuantizer, which this fixture doesn't need.
+// Compositor.create/add/compute went synchronous in the core-seams wave.
 import { Scheduler, VideoRenderer, Compositor, Boundary, Millis } from '@czap/core';
 
 const bench = new Bench({ warmupIterations: 50 });
@@ -25,7 +28,7 @@ function makeQuantizer(boundary: Boundary.Shape) {
   let currentState = boundary.states[0] as string;
   return {
     boundary,
-    state: Effect.succeed(currentState),
+    stateSync: () => currentState,
     changes: null as never,
     evaluate(value: number) {
       currentState = Boundary.evaluate(boundary, value) as string;
@@ -53,7 +56,7 @@ bench.add('FixedStepScheduler -- 1000 steps @ 60fps', () => {
 });
 
 bench.add('VideoRenderer -- 30 frames @ 30fps', async () => {
-  const compositor = Effect.runSync(Effect.scoped(Compositor.create()));
+  const compositor = Compositor.create().compositor;
   const renderer = VideoRenderer.make({ fps: 30, width: 1920, height: 1080, durationMs: Millis(1000) }, compositor);
   for await (const _ of renderer.frames()) {
     /* consume */
@@ -61,41 +64,32 @@ bench.add('VideoRenderer -- 30 frames @ 30fps', async () => {
 });
 
 bench.add('VideoRenderer -- 300 frames @ 60fps', async () => {
-  const compositor = Effect.runSync(Effect.scoped(Compositor.create()));
+  const compositor = Compositor.create().compositor;
   const renderer = VideoRenderer.make({ fps: 60, width: 1920, height: 1080, durationMs: Millis(5000) }, compositor);
   for await (const _ of renderer.frames()) {
     /* consume */
   }
 });
 
-const blendTreeScope = Effect.runSync(Scope.make());
-const blendTreeCompositor = Effect.runSync(
-  Effect.gen(function* () {
-    const c = yield* Compositor.create();
-    yield* c.add('viewport', makeQuantizer(widthBoundary));
-    yield* c.add('layout', makeQuantizer(widthBoundary));
-    yield* c.add('theme', makeQuantizer(widthBoundary));
-    return c;
-  }).pipe(Effect.provideService(Scope.Scope, blendTreeScope)),
-);
+const blendTreeCompositor = (() => {
+  const c = Compositor.create().compositor;
+  c.add('viewport', makeQuantizer(widthBoundary));
+  c.add('layout', makeQuantizer(widthBoundary));
+  c.add('theme', makeQuantizer(widthBoundary));
+  return c;
+})();
 
 bench.add('Compositor.compute() -- hot loop with 3-quantizer blend tree (100 calls)', () => {
   for (let i = 0; i < 100; i++) {
-    Effect.runSync(blendTreeCompositor.compute());
+    blendTreeCompositor.compute();
   }
 });
 
 bench.add('Compositor.compute() -- hot loop (100 calls)', () => {
-  Effect.runSync(
-    Effect.scoped(
-      Effect.gen(function* () {
-        const c = yield* Compositor.create();
-        for (let i = 0; i < 100; i++) {
-          yield* c.compute();
-        }
-      }),
-    ),
-  );
+  const c = Compositor.create().compositor;
+  for (let i = 0; i < 100; i++) {
+    c.compute();
+  }
 });
 
 // ---------------------------------------------------------------------------

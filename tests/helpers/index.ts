@@ -3,7 +3,6 @@
  */
 
 export { MockEventSource } from './mock-event-source.js';
-export { MockWebSocket } from './mock-websocket.js';
 export { mockHTMLElement, mockCanvas } from './mock-dom.js';
 export type { MockHTMLElementShape, MockCanvasShape } from './mock-dom.js';
 export { MockWorker, stubWorkerEnvironment } from './mock-worker.js';

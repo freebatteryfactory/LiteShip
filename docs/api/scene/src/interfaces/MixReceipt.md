@@ -6,7 +6,7 @@
 
 # Interface: MixReceipt
 
-Defined in: [scene/src/systems/pass-through-mixer.ts:14](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/pass-through-mixer.ts#L14)
+Defined in: [scene/src/systems/pass-through-mixer.ts:13](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/pass-through-mixer.ts#L13)
 
 Mix receipt shape emitted by PassThroughMixer per entity per tick.
 
@@ -16,7 +16,7 @@ Mix receipt shape emitted by PassThroughMixer per entity per tick.
 
 > `readonly` **entity**: `string`
 
-Defined in: [scene/src/systems/pass-through-mixer.ts:16](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/pass-through-mixer.ts#L16)
+Defined in: [scene/src/systems/pass-through-mixer.ts:15](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/pass-through-mixer.ts#L15)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [scene/src/systems/pass-through-mixer.ts:16](https://github.com/free
 
 > `readonly` **frame**: `number`
 
-Defined in: [scene/src/systems/pass-through-mixer.ts:15](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/pass-through-mixer.ts#L15)
+Defined in: [scene/src/systems/pass-through-mixer.ts:14](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/pass-through-mixer.ts#L14)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [scene/src/systems/pass-through-mixer.ts:15](https://github.com/free
 
 > `readonly` **pan**: `number`
 
-Defined in: [scene/src/systems/pass-through-mixer.ts:18](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/pass-through-mixer.ts#L18)
+Defined in: [scene/src/systems/pass-through-mixer.ts:17](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/pass-through-mixer.ts#L17)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [scene/src/systems/pass-through-mixer.ts:18](https://github.com/free
 
 > `readonly` **volume**: `number`
 
-Defined in: [scene/src/systems/pass-through-mixer.ts:17](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/pass-through-mixer.ts#L17)
+Defined in: [scene/src/systems/pass-through-mixer.ts:16](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/pass-through-mixer.ts#L16)

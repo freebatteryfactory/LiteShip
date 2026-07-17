@@ -8,7 +8,7 @@
 
 > `const` **TypedRef**: `object`
 
-Defined in: [core/src/typed-ref.ts:90](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/typed-ref.ts#L90)
+Defined in: [core/src/typed-ref.ts:94](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/typed-ref.ts#L94)
 
 TypedRef — schema-plus-content-hash pointer used by the receipt pipeline.
 Lets a receipt reference a payload by its content address without embedding
@@ -38,7 +38,7 @@ addresses use `CanonicalCbor` (always-float64). See the module header.
 
 ### create
 
-> **create**: (`schemaHash`, `payload`) => `Effect`\<`TypedRefShape`\> = `_create`
+> **create**: (`schemaHash`, `payload`) => `Promise`\<`TypedRefShape`\> = `_create`
 
 Build a TypedRef from a schema hash and an arbitrary payload.
 
@@ -56,7 +56,7 @@ Create a TypedRef from schema hash and payload.
 
 #### Returns
 
-`Effect`\<`TypedRefShape`\>
+`Promise`\<`TypedRefShape`\>
 
 ### equals
 
@@ -82,7 +82,7 @@ Compare two TypedRefs for structural equality.
 
 ### hash
 
-> **hash**: (`data`) => `Effect`\<`string`\>
+> **hash**: (`data`) => `Promise`\<`string`\>
 
 Hash a canonicalized payload to its content address.
 
@@ -94,10 +94,12 @@ file. `Uint8Array` is structurally a BufferSource, but TS's DOM lib types
 Safe: cborg encodes into fresh ArrayBuffer and TextEncoder.encode returns
 ArrayBuffer-backed views. No data copy.
 
-Hash-primitive failures are unrecoverable in practice (crypto.subtle errors
-are environment-level, not user-recoverable), so we `Effect.orDie` to fold
-the Error channel into a defect and keep the `Effect<string>` signature that
-the content-addressing pipeline relies on.
+`crypto.subtle.digest` is the seam's ONE genuinely-async leaf, so `hash` is a
+plain `async` function returning `Promise<string>`. Hash-primitive failures are
+unrecoverable in practice (crypto.subtle errors are environment-level, not
+user-recoverable), so a failure is wrapped and re-thrown as a tagged
+`IntegrityError` (a real `Error`, so `instanceof Error` still holds) — the
+rejection every content-addressing consumer awaits.
 
 #### Parameters
 
@@ -107,4 +109,4 @@ the content-addressing pipeline relies on.
 
 #### Returns
 
-`Effect`\<`string`\>
+`Promise`\<`string`\>

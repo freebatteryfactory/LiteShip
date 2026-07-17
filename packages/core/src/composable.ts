@@ -18,7 +18,6 @@ import { Boundary } from './boundary.js';
 import { Part } from './ecs.js';
 import { contentAddressOf } from './content-address.js';
 import { ValidationError } from '@czap/error';
-import { Effect } from 'effect';
 
 // ---------------------------------------------------------------------------
 // Entity Composition Types
@@ -115,13 +114,10 @@ function entriesToPick<Schema extends EntityComponents, K extends keyof Schema>(
 }
 
 interface TypedComposableWorld<Schema extends EntityComponents = EntityComponents> {
-  spawn<T extends Schema>(components: T): Effect.Effect<ComposableEntity<T>>;
-  spawnWith<T extends Schema>(entity: ComposableEntity<T>): Effect.Effect<ComposableEntity<T>>;
-  query<K extends keyof Schema>(...componentTypes: K[]): Effect.Effect<readonly ComposableEntity<Pick<Schema, K>>[]>;
-  evaluate<T extends Schema>(
-    entity: ComposableEntity<T>,
-    input: Record<string, number>,
-  ): Effect.Effect<Record<string, string>>;
+  spawn<T extends Schema>(components: T): ComposableEntity<T>;
+  spawnWith<T extends Schema>(entity: ComposableEntity<T>): ComposableEntity<T>;
+  query<K extends keyof Schema>(...componentTypes: K[]): readonly ComposableEntity<Pick<Schema, K>>[];
+  evaluate<T extends Schema>(entity: ComposableEntity<T>, input: Record<string, number>): Record<string, string>;
 }
 
 function makeComposableWorld<Schema extends EntityComponents = EntityComponents>(
@@ -131,84 +127,73 @@ function makeComposableWorld<Schema extends EntityComponents = EntityComponents>
   const addressToEntityId = new Map<ContentAddress, EntityId>();
 
   return {
-    spawn<T extends Schema>(components: T): Effect.Effect<ComposableEntity<T>> {
-      return Effect.gen(function* () {
-        const entity = _make(components);
-        const ecsId = yield* world.spawn(components);
-        addressToEntityId.set(entity.id, ecsId);
-        return entity;
-      });
+    spawn<T extends Schema>(components: T): ComposableEntity<T> {
+      const entity = _make(components);
+      const ecsId = world.spawn(components);
+      addressToEntityId.set(entity.id, ecsId);
+      return entity;
     },
 
-    spawnWith<T extends Schema>(entity: ComposableEntity<T>): Effect.Effect<ComposableEntity<T>> {
-      return Effect.gen(function* () {
-        const ecsId = yield* world.spawn(entity.components);
-        addressToEntityId.set(entity.id, ecsId);
-        return entity;
-      });
+    spawnWith<T extends Schema>(entity: ComposableEntity<T>): ComposableEntity<T> {
+      const ecsId = world.spawn(entity.components);
+      addressToEntityId.set(entity.id, ecsId);
+      return entity;
     },
 
-    query<K extends keyof Schema>(...componentTypes: K[]): Effect.Effect<readonly ComposableEntity<Pick<Schema, K>>[]> {
-      return Effect.gen(function* () {
-        const names = [...componentTypes].map((k) => String(k)).sort();
-        const entities = yield* world.query(...names);
-        return [...entities]
-          .sort((left, right) => left.id.localeCompare(right.id))
-          .map((entityShape) => {
-            // world.query guarantees entityShape.components contains at least the K keys
-            // that were queried for; convert the runtime Map<string, unknown> to the typed
-            // Pick<Schema, K> via a single contained cast (runtime shape is validated by
-            // the ECS query filter).
-            const components = entriesToPick<Schema, K>(entityShape.components);
-            return _make(components);
-          });
-      });
+    query<K extends keyof Schema>(...componentTypes: K[]): readonly ComposableEntity<Pick<Schema, K>>[] {
+      const names = [...componentTypes].map((k) => String(k)).sort();
+      const entities = world.query(...names);
+      return [...entities]
+        .sort((left, right) => left.id.localeCompare(right.id))
+        .map((entityShape) => {
+          // world.query guarantees entityShape.components contains at least the K keys
+          // that were queried for; convert the runtime Map<string, unknown> to the typed
+          // Pick<Schema, K> via a single contained cast (runtime shape is validated by
+          // the ECS query filter).
+          const components = entriesToPick<Schema, K>(entityShape.components);
+          return _make(components);
+        });
     },
 
-    evaluate<T extends Schema>(
-      entity: ComposableEntity<T>,
-      input: Record<string, number>,
-    ): Effect.Effect<Record<string, string>> {
-      return Effect.gen(function* () {
-        const results: Record<string, string> = {};
+    evaluate<T extends Schema>(entity: ComposableEntity<T>, input: Record<string, number>): Record<string, string> {
+      const results: Record<string, string> = {};
 
-        // Evaluate boundary component: quantize continuous input to discrete state
-        let boundaryState: string | undefined;
-        if (entity.components.boundary) {
-          const boundary = entity.components.boundary;
-          const boundaryInput = input[boundary.input] ?? 0;
-          const state = Boundary.evaluate(boundary, boundaryInput);
-          results[boundary.input] = state;
-          boundaryState = state;
-        }
+      // Evaluate boundary component: quantize continuous input to discrete state
+      let boundaryState: string | undefined;
+      if (entity.components.boundary) {
+        const boundary = entity.components.boundary;
+        const boundaryInput = input[boundary.input] ?? 0;
+        const state = Boundary.evaluate(boundary, boundaryInput);
+        results[boundary.input] = state;
+        boundaryState = state;
+      }
 
-        // Evaluate token component: resolve axis values or fall back
-        if (entity.components.token) {
-          const token = entity.components.token;
-          // Build axis values from input keys. Token.tap expects string axis values,
-          // so we convert matching numeric inputs to strings.
-          const axisValues: Record<string, string> = {};
-          for (const axis of token.axes) {
-            if (axis in input) {
-              axisValues[axis] = String(input[axis]);
-            }
-          }
-          // Use Token.tap for proper axis-key lookup with fallback
-          const resolved = TokenNS.tap(token, axisValues);
-          results[token.name] = String(resolved);
-        }
-
-        // Evaluate style component: resolve properties for the current boundary state
-        if (entity.components.style) {
-          const style = entity.components.style;
-          const resolvedProps = StyleNS.tap(style, boundaryState);
-          for (const [prop, val] of Object.entries(resolvedProps)) {
-            results[prop] = val;
+      // Evaluate token component: resolve axis values or fall back
+      if (entity.components.token) {
+        const token = entity.components.token;
+        // Build axis values from input keys. Token.tap expects string axis values,
+        // so we convert matching numeric inputs to strings.
+        const axisValues: Record<string, string> = {};
+        for (const axis of token.axes) {
+          if (axis in input) {
+            axisValues[axis] = String(input[axis]);
           }
         }
+        // Use Token.tap for proper axis-key lookup with fallback
+        const resolved = TokenNS.tap(token, axisValues);
+        results[token.name] = String(resolved);
+      }
 
-        return results;
-      });
+      // Evaluate style component: resolve properties for the current boundary state
+      if (entity.components.style) {
+        const style = entity.components.style;
+        const resolvedProps = StyleNS.tap(style, boundaryState);
+        for (const [prop, val] of Object.entries(resolvedProps)) {
+          results[prop] = val;
+        }
+      }
+
+      return results;
     },
   };
 }
@@ -218,9 +203,9 @@ function makeComposableWorld<Schema extends EntityComponents = EntityComponents>
 // ---------------------------------------------------------------------------
 
 interface ComposableDenseStore {
-  create(name: string, capacity: number): Effect.Effect<Part.Dense>;
-  store<T extends EntityComponents>(entity: ComposableEntity<T>, value: number): Effect.Effect<void>;
-  retrieve<T extends EntityComponents>(entity: ComposableEntity<T>): Effect.Effect<number | undefined>;
+  create(name: string, capacity: number): Part.Dense;
+  store<T extends EntityComponents>(entity: ComposableEntity<T>, value: number): void;
+  retrieve<T extends EntityComponents>(entity: ComposableEntity<T>): number | undefined;
 }
 
 function makeComposableDenseStore(world: World.Shape): ComposableDenseStore {
@@ -229,45 +214,39 @@ function makeComposableDenseStore(world: World.Shape): ComposableDenseStore {
   let denseStore: Part.Dense | undefined;
 
   return {
-    create(name: string, capacity: number): Effect.Effect<Part.Dense> {
-      return Effect.gen(function* () {
-        const store = Part.dense(name, capacity);
-        yield* world.addDenseStore(store);
-        denseStore = store;
-        return store;
-      });
+    create(name: string, capacity: number): Part.Dense {
+      const store = Part.dense(name, capacity);
+      world.addDenseStore(store);
+      denseStore = store;
+      return store;
     },
 
-    store<T extends EntityComponents>(entity: ComposableEntity<T>, value: number): Effect.Effect<void> {
-      return Effect.gen(function* () {
-        if (!denseStore) {
-          throw ValidationError(
-            'ComposableWorld.store',
-            'no dense store exists — call world.create(name, capacity) before world.store(entity, value).',
-          );
-        }
-        // Ensure we have an ECS EntityId for this composable entity
-        let ecsId = addressToEntityId.get(entity.id);
-        if (!ecsId) {
-          // Spawn into the world to get an EntityId, then track mapping
-          ecsId = yield* world.spawn(entity.components);
-          addressToEntityId.set(entity.id, ecsId);
-        }
-        denseStore.set(ecsId, value);
-      });
+    store<T extends EntityComponents>(entity: ComposableEntity<T>, value: number): void {
+      if (!denseStore) {
+        throw ValidationError(
+          'ComposableWorld.store',
+          'no dense store exists — call world.create(name, capacity) before world.store(entity, value).',
+        );
+      }
+      // Ensure we have an ECS EntityId for this composable entity
+      let ecsId = addressToEntityId.get(entity.id);
+      if (!ecsId) {
+        // Spawn into the world to get an EntityId, then track mapping
+        ecsId = world.spawn(entity.components);
+        addressToEntityId.set(entity.id, ecsId);
+      }
+      denseStore.set(ecsId, value);
     },
 
-    retrieve<T extends EntityComponents>(entity: ComposableEntity<T>): Effect.Effect<number | undefined> {
-      return Effect.gen(function* () {
-        if (!denseStore) {
-          return undefined;
-        }
-        const ecsId = addressToEntityId.get(entity.id);
-        if (!ecsId) {
-          return undefined;
-        }
-        return denseStore.get(ecsId);
-      });
+    retrieve<T extends EntityComponents>(entity: ComposableEntity<T>): number | undefined {
+      if (!denseStore) {
+        return undefined;
+      }
+      const ecsId = addressToEntityId.get(entity.id);
+      if (!ecsId) {
+        return undefined;
+      }
+      return denseStore.get(ecsId);
     },
   };
 }

@@ -3,8 +3,6 @@
  * Salvaged from @kit/web, rebranded data-kit-* -> data-czap-*.
  */
 
-import type { Effect, Stream, Scope } from 'effect';
-
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 1. CORE WEB TYPES (from @kit/web/types.ts)
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -109,13 +107,13 @@ export interface MorphRejection {
 }
 
 export declare const Morph: {
-  morph(oldNode: Element, newHTML: string, config?: Partial<MorphConfig>, hints?: MorphHints): Effect.Effect<void>;
+  morph(oldNode: Element, newHTML: string, config?: Partial<MorphConfig>, hints?: MorphHints): void;
   morphWithState(
     oldNode: Element,
     newHTML: string,
     config?: Partial<MorphConfig>,
     hints?: MorphHints,
-  ): Effect.Effect<MorphResult>;
+  ): MorphResult;
   parseHTML(html: string): DocumentFragment;
   readonly defaultConfig: MorphConfig;
 };
@@ -175,7 +173,12 @@ export interface SlotRegistryShape {
 export declare const SlotRegistry: {
   create(): SlotRegistryShape;
   scanDOM(registry: SlotRegistryShape, root: Element, defaultMode?: IslandMode): void;
-  observe(registry: SlotRegistryShape, root: Element): Effect.Effect<void, never, Scope>;
+  /**
+   * Attach a MutationObserver and return its disposer (was
+   * `Effect.Effect<void, never, Scope>`): register the returned function on a
+   * {@link Lifetime}, or call it directly, to disconnect the observer.
+   */
+  observe(registry: SlotRegistryShape, root: Element): () => void;
   findElement(path: SlotPath): Element | null;
   getPath(element: Element): SlotPath | null;
 };
@@ -244,13 +247,18 @@ export interface BackpressureHint {
 }
 
 export interface SSEClient {
-  readonly messages: Stream.Stream<SSEMessage>;
-  readonly state: Effect.Effect<SSEState>;
-  readonly stateChanges: Stream.Stream<SSEState>;
-  close(): Effect.Effect<void>;
-  reconnect(): Effect.Effect<void>;
-  readonly lastEventId: Effect.Effect<string | null>;
-  readonly backpressure: Effect.Effect<BackpressureHint>;
+  /** Live message stream (was `Stream.Stream<SSEMessage>`). */
+  readonly messages: AsyncIterable<SSEMessage>;
+  /** Current connection state — a plain synchronous read (was `Effect.Effect<SSEState>`). */
+  readonly state: SSEState;
+  /** Live state-transition stream (was `Stream.Stream<SSEState>`). */
+  readonly stateChanges: AsyncIterable<SSEState>;
+  close(): void;
+  reconnect(): void;
+  /** Current per-connection cursor — a plain synchronous read (was `Effect.Effect<string | null>`). */
+  readonly lastEventId: string | null;
+  /** Current backpressure hint — a plain synchronous read (was `Effect.Effect<BackpressureHint>`). */
+  readonly backpressure: BackpressureHint;
 }
 
 export type SSEMessage =
@@ -262,7 +270,8 @@ export type SSEMessage =
   | { readonly type: 'snapshot'; readonly data: unknown };
 
 export declare const SSE: {
-  create(config: SSEConfig): Effect.Effect<SSEClient, never, Scope.Scope>;
+  /** Open a live SSE connection synchronously (was `Effect.Effect<SSEClient, never, Scope.Scope>`); the returned client's `close()` is the teardown — register it on a {@link Lifetime}. */
+  create(config: SSEConfig): SSEClient;
   parseMessage(event: MessageEvent): SSEMessage | null;
   calculateDelay(attempt: number, config: ReconnectConfig): number;
   buildUrl(baseUrl: string, artifactId?: string, lastEventId?: string): string;
@@ -306,15 +315,19 @@ export type ResumeResponse =
   | { readonly type: 'snapshot'; readonly html: string; readonly signals: unknown; readonly lastEventId: string };
 
 export declare const Resumption: {
-  saveState(state: ResumptionStateInput): Effect.Effect<void>;
-  loadState(artifactId: string): Effect.Effect<ResumptionState | null>;
-  clearState(artifactId: string): Effect.Effect<void>;
+  /** Persist the resume cursor synchronously (was `Effect.Effect<void>`). */
+  saveState(state: ResumptionStateInput): void;
+  /** Read the persisted cursor synchronously (was `Effect.Effect<ResumptionState | null>`). */
+  loadState(artifactId: string): ResumptionState | null;
+  /** Drop the persisted cursor synchronously (was `Effect.Effect<void>`). */
+  clearState(artifactId: string): void;
   canResume(lastEventId: string, serverOldestId: string): boolean;
+  /** Reconcile the replay gap — Promise-first, rejecting with a tagged `@czap/error` (was `Effect.Effect<ResumeResponse, Error>`). */
   resume(
     artifactId: string,
     currentEventId: string,
     config?: Partial<ResumptionConfig>,
-  ): Effect.Effect<ResumeResponse, Error>;
+  ): Promise<ResumeResponse>;
   parseEventId(eventId: string): { raw: string; sequence: number; timestamp?: number; nodeId?: string };
 };
 
@@ -323,8 +336,10 @@ export declare const Resumption: {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export declare const Physical: {
-  capture(root: Element): Effect.Effect<PhysicalState>;
-  restore(state: PhysicalState, root: Element, remap?: Record<string, string>): Effect.Effect<void>;
+  /** Snapshot the ephemeral DOM state synchronously (was `Effect.Effect<PhysicalState>`). */
+  capture(root: Element): PhysicalState;
+  /** Reapply captured DOM state synchronously (was `Effect.Effect<void>`). */
+  restore(state: PhysicalState, root: Element, remap?: Record<string, string>): void;
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════

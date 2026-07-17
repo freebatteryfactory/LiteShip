@@ -8,7 +8,7 @@
 
 > **Checkpoint** = `object`
 
-Defined in: [core/src/dag.ts:705](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/dag.ts#L705)
+Defined in: [core/src/dag.ts:703](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/dag.ts#L703)
 
 The genesis-shaped checkpoint attestation a compaction emits out-of-band.
 
@@ -18,7 +18,7 @@ The genesis-shaped checkpoint attestation a compaction emits out-of-band.
 
 > `readonly` **dropped**: readonly `string`[]
 
-Defined in: [core/src/dag.ts:707](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/dag.ts#L707)
+Defined in: [core/src/dag.ts:705](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/dag.ts#L705)
 
 ***
 
@@ -26,7 +26,7 @@ Defined in: [core/src/dag.ts:707](https://github.com/freebatteryfactory/LiteShip
 
 > `readonly` **envelope**: [`ReceiptEnvelope`](../../../interfaces/ReceiptEnvelope.md)
 
-Defined in: [core/src/dag.ts:706](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/dag.ts#L706)
+Defined in: [core/src/dag.ts:704](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/dag.ts#L704)
 
 ***
 
@@ -34,4 +34,4 @@ Defined in: [core/src/dag.ts:706](https://github.com/freebatteryfactory/LiteShip
 
 > `readonly` **watermark**: `string`
 
-Defined in: [core/src/dag.ts:708](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/dag.ts#L708)
+Defined in: [core/src/dag.ts:706](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/dag.ts#L706)

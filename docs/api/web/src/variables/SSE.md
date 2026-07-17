@@ -8,13 +8,13 @@
 
 > `const` **SSE**: `object`
 
-Defined in: [web/src/stream/sse.ts:480](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/sse.ts#L480)
+Defined in: [web/src/stream/sse.ts:547](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/sse.ts#L547)
 
 SSE client namespace.
 
 Creates and manages Server-Sent Events connections with automatic
 exponential-backoff reconnection, heartbeat timeout detection,
-backpressure-aware message buffering via bounded Effect queues,
+backpressure-aware message buffering via the sse-pure overflow buffer,
 and URL construction helpers.
 
 **Resumption is host-wired.** `SSE` is the transport; the sibling
@@ -83,7 +83,7 @@ reconnection-backoff deterministic in tests; it defaults to `systemRng`
 
 ### create
 
-> **create**: (`config`) => `Effect`\<[`SSEClient`](../interfaces/SSEClient.md), `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\>
+> **create**: (`config`) => [`SSEClient`](../interfaces/SSEClient.md)
 
 Create an SSE client that manages a Server-Sent Events connection with
 automatic reconnection, heartbeat timeout tracking, and backpressure-aware
@@ -117,59 +117,35 @@ SSE connection configuration
 
 #### Returns
 
-`Effect`\<[`SSEClient`](../interfaces/SSEClient.md), `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\>
+[`SSEClient`](../interfaces/SSEClient.md)
 
-An Effect yielding an [SSEClient](../interfaces/SSEClient.md) (scoped)
+An [SSEClient](../interfaces/SSEClient.md)
 
 #### Examples
 
 ```ts
 import { SSE } from '@czap/web';
-import { Effect, Stream, Scope } from 'effect';
 
-const program = Effect.scoped(Effect.gen(function* () {
-  const client = yield* SSE.create({
-    url: '/api/stream',
-    artifactId: 'doc-1',
-  });
-  yield* Stream.runForEach(client.messages, (msg) =>
-    Effect.sync(() => console.log(msg)),
-  );
-}));
+const client = SSE.create({ url: '/api/stream', artifactId: 'doc-1' });
+for await (const msg of client.messages) {
+  console.log(msg);
+}
+client.close();
 ```
 
 ```ts
-// Composing with Resumption (the host's job — mirrors
-// packages/astro/src/runtime/stream.ts):
-import { SSE, Resumption } from '@czap/web';
-import { Effect, Stream } from 'effect';
+// Fully synchronous consumption (the live morph directives): pass callbacks
+// and skip the async buffer entirely.
+import { SSE } from '@czap/web';
 
-const program = Effect.scoped(Effect.gen(function* () {
-  // 1. Seed the cursor from any state a previous session persisted.
-  const saved = yield* Resumption.loadState('doc-1');
-  const client = yield* SSE.create({
-    url: '/api/stream',
-    artifactId: 'doc-1',
-    lastEventId: saved?.lastEventId,
-  });
-  // 2. Persist the cursor as messages arrive.
-  yield* Stream.runForEach(client.messages, () =>
-    Effect.gen(function* () {
-      const cursor = yield* client.lastEventId;
-      if (cursor !== null) {
-        yield* Resumption.saveState({
-          artifactId: 'doc-1',
-          lastEventId: cursor,
-          lastSequence: Resumption.parseEventId(cursor).sequence,
-          timestamp: Date.now(),
-        });
-      }
-    }),
-  );
-  // 3. After 'reconnecting' -> 'connected', close the gap:
-  //    Resumption.resume('doc-1', currentEventId) yields either
-  //    replayed patches or a full snapshot to morph in.
-}));
+const client = SSE.create({
+  url: '/api/stream',
+  artifactId: 'doc-1',
+  onMessage: (msg) => applyPatch(msg),
+  onStateChange: (state) => updateBadge(state),
+});
+// Teardown owned by the host (e.g. a Lifetime finalizer):
+// lifetime.add(() => client.close());
 ```
 
 ### parseMessage
@@ -203,15 +179,11 @@ There is intentionally no opt-out — see red-team regression suite.
 
 ```ts
 import { SSE } from '@czap/web';
-import { Effect, Stream } from 'effect';
 
-const program = Effect.scoped(Effect.gen(function* () {
-  const client = yield* SSE.create({ url: '/api/events' });
-  const state = yield* client.state; // 'connecting' | 'connected' | ...
-  yield* Stream.runForEach(
-    Stream.take(client.messages, 10),
-    (msg) => Effect.sync(() => console.log(msg.type)),
-  );
-  yield* client.close();
-}));
+const client = SSE.create({ url: '/api/events' });
+const state = client.state; // 'connecting' | 'connected' | ...
+for await (const msg of client.messages) {
+  console.log(msg.type);
+}
+client.close();
 ```

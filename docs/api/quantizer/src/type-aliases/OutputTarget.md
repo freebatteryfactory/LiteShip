@@ -8,7 +8,7 @@
 
 > **OutputTarget** = [`LadderTarget`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/LadderTarget.md)
 
-Defined in: [quantizer/src/quantizer.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L69)
+Defined in: [quantizer/src/quantizer.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L67)
 
 Compilation target for quantizer per-state outputs.
 

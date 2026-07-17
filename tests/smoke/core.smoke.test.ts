@@ -6,7 +6,9 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Effect, Scope } from 'effect';
+// Effect is retained for Cell.make/get and HLC.makeClock/tick — those seams are
+// NOT part of the core-seams wave and stay Effect-typed. Compositor.create went sync.
+import { Effect } from 'effect';
 import { Boundary, Compositor, ContentAddress, Cell, VectorClock, HLC, Plan, Millis } from '@czap/core';
 
 describe('core smoke', () => {
@@ -28,8 +30,8 @@ describe('core smoke', () => {
     expect(addr).toBe('fnv1a:12345678');
   });
 
-  test('Compositor.create resolves', async () => {
-    const compositor = await Effect.runPromise(Effect.scoped(Compositor.create()));
+  test('Compositor.create resolves', () => {
+    const { compositor } = Compositor.create();
     expect(compositor).toBeDefined();
   });
 

@@ -28,7 +28,6 @@ import fc from 'fast-check';
 import { Boundary, Compositor } from '@czap/core';
 import { GLSLCompiler, WGSLCompiler } from '@czap/compiler';
 import { Effect } from 'effect';
-import { runScopedAsync as runScoped } from '../helpers/effect-test.js';
 
 // Boundary states are minted as `s0, s1, ...`, so the state literal carries its
 // own index — the bridge between the string cast (CSS) and the numeric casts.
@@ -64,14 +63,14 @@ async function castIndices(
   value: number,
 ): Promise<{ css: number; glsl: number; wgsl: number; oracle: number }> {
   const boundary = makeBoundary(thresholds);
-  const compositor = await runScoped(Compositor.create({ runtimeSite: 'node' }));
+  const compositor = Compositor.create({ runtimeSite: 'node' }).compositor;
   const q = liveQuantizer(boundary);
-  await Effect.runPromise(compositor.add('layout', q));
+  compositor.add('layout', q);
   // Drive evaluate then mark dirty — the live evaluate→markDirty contract every
   // host (worker, Stage dual-export) uses — so the tick reflects the new state.
   q.evaluate(value);
   compositor.runtime.markDirty('layout');
-  const state = await Effect.runPromise(compositor.compute());
+  const state = compositor.compute();
 
   return {
     css: idxOf(state.outputs.css['--czap-layout'] as string),

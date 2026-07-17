@@ -8,6 +8,6 @@
 
 > **Shape** = [`SlotRegistryShape`](../../../interfaces/SlotRegistryShape.md)
 
-Defined in: [web/src/slot/registry.ts:366](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/slot/registry.ts#L366)
+Defined in: [web/src/slot/registry.ts:363](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/slot/registry.ts#L363)
 
 Structural type of a slot registry instance.

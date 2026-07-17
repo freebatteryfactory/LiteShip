@@ -6,7 +6,7 @@
 
 # Interface: StreamRecoveryHandlers
 
-Defined in: [web/src/stream/recovery.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L32)
+Defined in: [web/src/stream/recovery.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L30)
 
 Host callbacks for applying a recovered snapshot.
 
@@ -16,7 +16,7 @@ Host callbacks for applying a recovered snapshot.
 
 > `readonly` **applyDiscreteSignal**: (`payload`) => `void`
 
-Defined in: [web/src/stream/recovery.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L39)
+Defined in: [web/src/stream/recovery.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L37)
 
 SNAPSHOT-FLOOR discrete signal application: raw, pre-filtered discrete
 payloads from the HTML snapshot re-sync (the permanent floor). These are NOT
@@ -38,7 +38,7 @@ attestation-checked transitions, so the payload is deliberately `unknown`.
 
 > `readonly` **applyHtml**: (`html`) => `Promise`\<`void`\>
 
-Defined in: [web/src/stream/recovery.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L33)
+Defined in: [web/src/stream/recovery.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L31)
 
 #### Parameters
 
@@ -56,7 +56,7 @@ Defined in: [web/src/stream/recovery.ts:33](https://github.com/freebatteryfactor
 
 > `readonly` `optional` **applyTransition?**: (`transition`) => `void`
 
-Defined in: [web/src/stream/recovery.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L48)
+Defined in: [web/src/stream/recovery.ts:46](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L46)
 
 TYPED gap-replay seam: reflect an attestation-checked
 [DiscreteStateTransition](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-transition.ts) into the host (e.g. dispatch to the DOM).

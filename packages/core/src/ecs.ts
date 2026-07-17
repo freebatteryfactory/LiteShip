@@ -7,8 +7,7 @@
  * @module
  */
 
-import type { Scope } from 'effect';
-import { Effect, Ref } from 'effect';
+import { Lifetime } from './lifetime.js';
 import type { SchemaPort } from './schema-port.js';
 
 /** Nominal-typed identifier for an ECS entity — a branded string minted via the {@link EntityId} helper. */
@@ -156,7 +155,7 @@ interface DenseSystemShape {
    * Execute receives dense stores keyed by component name.
    * Systems iterate the typed arrays directly -- zero allocation per tick.
    */
-  execute(stores: ReadonlyMap<string, DenseStoreShape>): Effect.Effect<void>;
+  execute(stores: ReadonlyMap<string, DenseStoreShape>): void;
 }
 
 // ---------------------------------------------------------------------------
@@ -168,7 +167,7 @@ interface SystemShape {
   readonly query: readonly string[];
   readonly _denseSystem?: undefined;
   /** Second argument is the world — use it to write computed output components back. */
-  execute(entities: readonly EntityShape[], world?: WorldShape): Effect.Effect<void>;
+  execute(entities: readonly EntityShape[], world?: WorldShape): void;
 }
 
 type AnySystemShape = SystemShape | DenseSystemShape;
@@ -178,168 +177,142 @@ type AnySystemShape = SystemShape | DenseSystemShape;
 // ---------------------------------------------------------------------------
 
 interface WorldShape {
-  spawn(components?: Record<string, unknown>): Effect.Effect<EntityId>;
-  despawn(id: EntityId): Effect.Effect<void>;
-  addComponent<T>(id: EntityId, component: PartShape<T>, value: T): Effect.Effect<void>;
+  spawn(components?: Record<string, unknown>): EntityId;
+  despawn(id: EntityId): void;
+  addComponent<T>(id: EntityId, component: PartShape<T>, value: T): void;
   /** Schema-free component write — used by systems to persist computed output values. */
-  setComponent(id: EntityId, name: string, value: unknown): Effect.Effect<void>;
-  removeComponent(id: EntityId, name: string): Effect.Effect<void>;
-  query(...componentNames: string[]): Effect.Effect<readonly EntityShape[]>;
-  addSystem(system: AnySystemShape): Effect.Effect<void>;
-  tick(): Effect.Effect<void>;
+  setComponent(id: EntityId, name: string, value: unknown): void;
+  removeComponent(id: EntityId, name: string): void;
+  query(...componentNames: string[]): readonly EntityShape[];
+  addSystem(system: AnySystemShape): void;
+  tick(): void;
   /** Register a dense store so the world can wire it into dense systems */
-  addDenseStore(store: DenseStoreShape): Effect.Effect<void>;
+  addDenseStore(store: DenseStoreShape): void;
 }
 
-function _makeWorld(): Effect.Effect<WorldShape, never, Scope.Scope> {
-  return Effect.gen(function* () {
-    const entitiesRef = yield* Ref.make<Map<EntityId, Map<string, unknown>>>(new Map());
-    const systemsRef = yield* Ref.make<AnySystemShape[]>([]);
-    const denseStoresRef = yield* Ref.make<Map<string, DenseStoreShape>>(new Map());
-    let nextEntitySeq = 0;
+/**
+ * The pair returned by {@link World.make}: the live world instance plus the
+ * {@link Lifetime} that owns its teardown. The ECS world registers zero
+ * finalizers (its state is plain in-memory Maps that GC reclaims), so the
+ * Lifetime is a formal disposal handle for consumers (e.g. the scene runtime)
+ * that thread world lifecycle through one uniform release — not a carrier of
+ * any actual finalizer.
+ */
+interface WorldHandle {
+  readonly world: WorldShape;
+  readonly lifetime: Lifetime.Shape;
+}
 
-    const world: WorldShape = {
-      spawn(components?: Record<string, unknown>): Effect.Effect<EntityId> {
-        return Effect.gen(function* () {
-          const seq = nextEntitySeq++;
-          // CUT B1: route the identity suffix through the one canonical encoder
-          // (CanonicalCbor sorts map keys) so it is deterministic under component
-          // key permutation — `JSON.stringify` was key-order-dependent.
-          const id = EntityId(`entity-${seq}:${fnv1aBytes(CanonicalCbor.encode(components ?? {}))}`);
-          const componentMap = new Map<string, unknown>();
-          if (components) {
-            for (const [name, value] of Object.entries(components)) {
-              componentMap.set(name, value);
-            }
+function _makeWorld(): WorldHandle {
+  const entities = new Map<EntityId, Map<string, unknown>>();
+  const systems: AnySystemShape[] = [];
+  const denseStores = new Map<string, DenseStoreShape>();
+  let nextEntitySeq = 0;
+
+  const world: WorldShape = {
+    spawn(components?: Record<string, unknown>): EntityId {
+      const seq = nextEntitySeq++;
+      // CUT B1: route the identity suffix through the one canonical encoder
+      // (CanonicalCbor sorts map keys) so it is deterministic under component
+      // key permutation — `JSON.stringify` was key-order-dependent.
+      const id = EntityId(`entity-${seq}:${fnv1aBytes(CanonicalCbor.encode(components ?? {}))}`);
+      const componentMap = new Map<string, unknown>();
+      if (components) {
+        for (const [name, value] of Object.entries(components)) {
+          componentMap.set(name, value);
+        }
+      }
+      entities.set(id, componentMap);
+      return id;
+    },
+
+    despawn(id: EntityId): void {
+      // Remove from entity map
+      entities.delete(id);
+      // Remove from all dense stores
+      for (const store of denseStores.values()) {
+        store.delete(id);
+      }
+    },
+
+    addComponent<T>(id: EntityId, component: PartShape<T>, value: T): void {
+      const entity = entities.get(id);
+      if (entity) {
+        entity.set(component.name, value);
+      }
+    },
+
+    setComponent(id: EntityId, name: string, value: unknown): void {
+      const entity = entities.get(id);
+      if (entity) {
+        entity.set(name, value);
+      }
+    },
+
+    removeComponent(id: EntityId, name: string): void {
+      const entity = entities.get(id);
+      if (entity) {
+        entity.delete(name);
+      }
+    },
+
+    query(...componentNames: string[]): readonly EntityShape[] {
+      const results: EntityShape[] = [];
+
+      for (const [id, components] of entities) {
+        const hasAll = componentNames.every((name) => components.has(name));
+        if (hasAll) {
+          const componentsCopy = new Map(components) as ReadonlyMap<string, unknown>;
+          // Spread component values as direct properties so systems can access
+          // computed output fields (e.g. `_opacity`, `_phase`, `_blend`) directly.
+          const entity = Object.assign(
+            { id, components: componentsCopy },
+            Object.fromEntries(componentsCopy),
+          ) as EntityShape;
+          results.push(entity);
+        }
+      }
+
+      return results;
+    },
+
+    addSystem(system: AnySystemShape): void {
+      systems.push(system);
+    },
+
+    addDenseStore(store: DenseStoreShape): void {
+      denseStores.set(store.name, store);
+    },
+
+    tick(): void {
+      // THE LAW (within-tick read-current): a regular system's `setComponent`
+      // write lands in the live `entities` map and the NEXT system's `query`
+      // observes it the same tick — so queries are re-run per system against the
+      // current state, never snapshotted at tick start (scene SVGSystem reads
+      // `_opacity`/`_blend` written by Video/Transition earlier this tick).
+      for (const system of systems) {
+        if (isDenseSystem(system)) {
+          // Dense path: collect the stores this system queries
+          const queriedStores = new Map<string, DenseStoreShape>();
+          for (const name of system.query) {
+            const store = denseStores.get(name);
+            if (store) queriedStores.set(name, store);
           }
-          yield* Ref.update(entitiesRef, (m) => {
-            const next = new Map(m);
-            next.set(id, componentMap);
-            return next;
-          });
-          return id;
-        });
-      },
-
-      despawn(id: EntityId): Effect.Effect<void> {
-        return Effect.gen(function* () {
-          // Remove from entity map
-          yield* Ref.update(entitiesRef, (m) => {
-            const next = new Map(m);
-            next.delete(id);
-            return next;
-          });
-          // Remove from all dense stores
-          const denseStores = yield* Ref.get(denseStoresRef);
-          for (const store of denseStores.values()) {
-            store.delete(id);
+          // Only execute if all queried stores exist
+          if (queriedStores.size === system.query.length) {
+            system.execute(queriedStores);
           }
-        });
-      },
+        } else {
+          // Regular path: entity-component query reads the LIVE entity map, so
+          // it observes writes made by systems earlier in this same tick.
+          const matched = world.query(...system.query);
+          system.execute(matched, world);
+        }
+      }
+    },
+  };
 
-      addComponent<T>(id: EntityId, component: PartShape<T>, value: T): Effect.Effect<void> {
-        return Ref.update(entitiesRef, (m) => {
-          const next = new Map(m);
-          const entity = next.get(id);
-          if (entity) {
-            const updated = new Map(entity);
-            updated.set(component.name, value);
-            next.set(id, updated);
-          }
-          return next;
-        });
-      },
-
-      setComponent(id: EntityId, name: string, value: unknown): Effect.Effect<void> {
-        return Ref.update(entitiesRef, (m) => {
-          const next = new Map(m);
-          const entity = next.get(id);
-          if (entity) {
-            const updated = new Map(entity);
-            updated.set(name, value);
-            next.set(id, updated);
-          }
-          return next;
-        });
-      },
-
-      removeComponent(id: EntityId, name: string): Effect.Effect<void> {
-        return Ref.update(entitiesRef, (m) => {
-          const next = new Map(m);
-          const entity = next.get(id);
-          if (entity) {
-            const updated = new Map(entity);
-            updated.delete(name);
-            next.set(id, updated);
-          }
-          return next;
-        });
-      },
-
-      query(...componentNames: string[]): Effect.Effect<readonly EntityShape[]> {
-        return Effect.gen(function* () {
-          const entities = yield* Ref.get(entitiesRef);
-          const results: EntityShape[] = [];
-
-          for (const [id, components] of entities) {
-            const hasAll = componentNames.every((name) => components.has(name));
-            if (hasAll) {
-              const componentsCopy = new Map(components) as ReadonlyMap<string, unknown>;
-              // Spread component values as direct properties so systems can access
-              // computed output fields (e.g. `_opacity`, `_phase`, `_blend`) directly.
-              const entity = Object.assign(
-                { id, components: componentsCopy },
-                Object.fromEntries(componentsCopy),
-              ) as EntityShape;
-              results.push(entity);
-            }
-          }
-
-          return results;
-        });
-      },
-
-      addSystem(system: AnySystemShape): Effect.Effect<void> {
-        return Ref.update(systemsRef, (systems) => [...systems, system]);
-      },
-
-      addDenseStore(store: DenseStoreShape): Effect.Effect<void> {
-        return Ref.update(denseStoresRef, (m) => {
-          const next = new Map(m);
-          next.set(store.name, store);
-          return next;
-        });
-      },
-
-      tick(): Effect.Effect<void> {
-        return Effect.gen(function* () {
-          const systems = yield* Ref.get(systemsRef);
-          const denseStores = yield* Ref.get(denseStoresRef);
-
-          for (const system of systems) {
-            if (isDenseSystem(system)) {
-              // Dense path: collect the stores this system queries
-              const queriedStores = new Map<string, DenseStoreShape>();
-              for (const name of system.query) {
-                const store = denseStores.get(name);
-                if (store) queriedStores.set(name, store);
-              }
-              // Only execute if all queried stores exist
-              if (queriedStores.size === system.query.length) {
-                yield* system.execute(queriedStores);
-              }
-            } else {
-              // Regular path: entity-component query
-              const matched = yield* world.query(...system.query);
-              yield* system.execute(matched, world);
-            }
-          }
-        });
-      },
-    };
-
-    return world;
-  });
+  return { world, lifetime: Lifetime.make() };
 }
 
 function isDenseSystem(system: AnySystemShape): system is DenseSystemShape {
@@ -368,7 +341,7 @@ export const Part = {
 
 /** World namespace — construct the ECS world that ticks systems over entities. */
 export const World = {
-  /** Scoped Effect that produces a fresh ECS {@link World.Shape}. */
+  /** Build a fresh ECS {@link World.Shape} paired with its owning {@link Lifetime}. */
   make: _makeWorld,
 };
 
@@ -382,6 +355,8 @@ export declare namespace Part {
 export declare namespace World {
   /** Structural shape of an ECS world: spawn/despawn, components, queries, systems, tick. */
   export type Shape = WorldShape;
+  /** The `{ world, lifetime }` pair returned by {@link World.make}. */
+  export type Handle = WorldHandle;
 }
 
 export type {

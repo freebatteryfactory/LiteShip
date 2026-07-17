@@ -281,7 +281,7 @@ export type { ReplayableRecoveryCell } from './stream-recovery.js';
 export { Timeline } from './timeline.js';
 
 // Quantizer types
-export type { Quantizer } from './quantizer-types.js';
+export type { Quantizer, ReactiveQuantizer, QuantizerState, QuantizerCrossings } from './quantizer-types.js';
 
 // Scheduler
 export { Scheduler } from './scheduler.js';
@@ -346,13 +346,6 @@ export { Zap } from './zap.js';
 
 // Store
 export { Store } from './store.js';
-
-// Wire
-export { Wire } from './wire.js';
-export type { WireSocket } from './wire.js';
-
-// Op
-export { Op } from './op.js';
 
 // Cap
 export type { CapTier, CapSet } from './caps.js';
@@ -598,10 +591,9 @@ export { ShipCapsule } from './ship-capsule.js';
 import type { Cell as _Cell } from './cell.js';
 import type { Derived as _Derived } from './derived.js';
 import type { Zap as _Zap } from './zap.js';
-import type { Wire as _Wire } from './wire.js';
 
-/** Union of the four reactive primitives the CZAP graph exposes to user code. */
-export type Primitive<T> = _Cell.Shape<T> | _Derived.Shape<T> | _Zap.Shape<T> | _Wire.Shape<T>;
+/** Union of the three reactive primitives the CZAP graph exposes to user code. */
+export type Primitive<T> = _Cell.Shape<T> | _Derived.Shape<T> | _Zap.Shape<T>;
 
 /** Narrow a {@link Primitive} to a {@link Cell}. */
 export const isCell = <T>(p: Primitive<T>): p is _Cell.Shape<T> => p._tag === 'Cell';
@@ -609,8 +601,6 @@ export const isCell = <T>(p: Primitive<T>): p is _Cell.Shape<T> => p._tag === 'C
 export const isDerived = <T>(p: Primitive<T>): p is _Derived.Shape<T> => p._tag === 'Derived';
 /** Narrow a {@link Primitive} to a {@link Zap}. */
 export const isZap = <T>(p: Primitive<T>): p is _Zap.Shape<T> => p._tag === 'Zap';
-/** Narrow a {@link Primitive} to a {@link Wire}. */
-export const isWire = <T>(p: Primitive<T>): p is _Wire.Shape<T> => p._tag === 'Wire';
 
 // Config hub
 export { Config, defineConfig } from './config.js';

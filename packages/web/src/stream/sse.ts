@@ -4,15 +4,16 @@
  * Manages SSE connection to the server for receiving patches,
  * signals, and events.
  *
- * Internal state is a plain mutable object mutated by a pure-ish reducer;
- * Effect appears only at the Scope boundary (scoped Queue + finalizer) and
- * at the public `state` / `lastEventId` / `backpressure` accessors. See
- * ADR-0005 §Category 4 for the rationale.
+ * Internal state is a plain mutable object mutated by a pure-ish reducer.
+ * The transport is Promise/AbortController-first: a {@link Lifetime} owns the
+ * teardown finalizer (replacing the former `Scope`), the sse-pure
+ * {@link applyOverflow} buffer holds pending messages (replacing the bounded
+ * `Queue`), and `messages`/`stateChanges` are {@link CellKernel}-backed
+ * AsyncIterables. The `state`/`lastEventId`/`backpressure` accessors are plain
+ * getters. See ADR-0005 §Category 4 for the rationale.
  */
 
-import { Effect, Stream, Queue } from 'effect';
-import type { Scope } from 'effect';
-import { Diagnostics, SSE_BUFFER_SIZE, SSE_HEARTBEAT_MS } from '@czap/core';
+import { CellKernel, Lifetime, Diagnostics, SSE_BUFFER_SIZE, SSE_HEARTBEAT_MS } from '@czap/core';
 import type { SSEConfig, SSEState, SSEMessage, BackpressureHint, OverflowPolicy } from '../types.js';
 
 /**
@@ -31,8 +32,13 @@ export interface SSEEventSource {
  * SSE client instance.
  */
 export interface SSEClient {
-  readonly messages: Stream.Stream<SSEMessage>;
-  readonly state: Effect.Effect<SSEState>;
+  /**
+   * Live async stream of parsed messages. Iterating drains the sse-pure
+   * overflow buffer (so {@link backpressure} `bufferSize` drops as messages are
+   * consumed); competing iterators share the single buffer, matching the former
+   * bounded-`Queue` semantics.
+   */
+  readonly messages: AsyncIterable<SSEMessage>;
   /**
    * Edge stream of connection-state *transitions* (one emission per
    * `connecting`/`reconnecting`/`connected`/`error`/`disconnected` change,
@@ -40,11 +46,21 @@ export interface SSEClient {
    * `reconnecting -> connected` edge — `state` is the pull accessor,
    * `stateChanges` is the push edge.
    */
-  readonly stateChanges: Stream.Stream<SSEState>;
-  close(): Effect.Effect<void>;
-  reconnect(): Effect.Effect<void>;
-  readonly lastEventId: Effect.Effect<string | null>;
-  readonly backpressure: Effect.Effect<BackpressureHint>;
+  readonly stateChanges: AsyncIterable<SSEState>;
+  /** Current connection state (plain accessor). */
+  readonly state: SSEState;
+  /** Cursor from the most recent message, or `null` (plain accessor). */
+  readonly lastEventId: string | null;
+  /** Backpressure snapshot for the current buffer occupancy (plain accessor). */
+  readonly backpressure: BackpressureHint;
+  /**
+   * Synchronous teardown: cancel the reconnect/heartbeat timers, detach and
+   * close the live EventSource, drop the buffer, and complete the
+   * `messages`/`stateChanges` streams. Idempotent — a second call is a no-op.
+   */
+  close(): void;
+  /** Manual reconnect: cancel timers, close the source, reset backoff, re-open. */
+  reconnect(): void;
 }
 
 // Import pure functions from sse-pure.ts (Effect-free) and re-export
@@ -92,367 +108,422 @@ export const buildUrl = _buildUrl;
  * @example
  * ```ts
  * import { SSE } from '@czap/web';
- * import { Effect, Stream, Scope } from 'effect';
  *
- * const program = Effect.scoped(Effect.gen(function* () {
- *   const client = yield* SSE.create({
- *     url: '/api/stream',
- *     artifactId: 'doc-1',
- *   });
- *   yield* Stream.runForEach(client.messages, (msg) =>
- *     Effect.sync(() => console.log(msg)),
- *   );
- * }));
+ * const client = SSE.create({ url: '/api/stream', artifactId: 'doc-1' });
+ * for await (const msg of client.messages) {
+ *   console.log(msg);
+ * }
+ * client.close();
  * ```
  *
  * @example
  * ```ts
- * // Composing with Resumption (the host's job — mirrors
- * // packages/astro/src/runtime/stream.ts):
- * import { SSE, Resumption } from '@czap/web';
- * import { Effect, Stream } from 'effect';
+ * // Fully synchronous consumption (the live morph directives): pass callbacks
+ * // and skip the async buffer entirely.
+ * import { SSE } from '@czap/web';
  *
- * const program = Effect.scoped(Effect.gen(function* () {
- *   // 1. Seed the cursor from any state a previous session persisted.
- *   const saved = yield* Resumption.loadState('doc-1');
- *   const client = yield* SSE.create({
- *     url: '/api/stream',
- *     artifactId: 'doc-1',
- *     lastEventId: saved?.lastEventId,
- *   });
- *   // 2. Persist the cursor as messages arrive.
- *   yield* Stream.runForEach(client.messages, () =>
- *     Effect.gen(function* () {
- *       const cursor = yield* client.lastEventId;
- *       if (cursor !== null) {
- *         yield* Resumption.saveState({
- *           artifactId: 'doc-1',
- *           lastEventId: cursor,
- *           lastSequence: Resumption.parseEventId(cursor).sequence,
- *           timestamp: Date.now(),
- *         });
- *       }
- *     }),
- *   );
- *   // 3. After 'reconnecting' -> 'connected', close the gap:
- *   //    Resumption.resume('doc-1', currentEventId) yields either
- *   //    replayed patches or a full snapshot to morph in.
- * }));
+ * const client = SSE.create({
+ *   url: '/api/stream',
+ *   artifactId: 'doc-1',
+ *   onMessage: (msg) => applyPatch(msg),
+ *   onStateChange: (state) => updateBadge(state),
+ * });
+ * // Teardown owned by the host (e.g. a Lifetime finalizer):
+ * // lifetime.add(() => client.close());
  * ```
  *
  * @param config - SSE connection configuration
- * @returns An Effect yielding an {@link SSEClient} (scoped)
+ * @returns An {@link SSEClient}
  */
-export const create = (config: SSEConfig): Effect.Effect<SSEClient, never, Scope.Scope> =>
-  Effect.gen(function* () {
-    // Partial overrides merge over the engine defaults so callers can bump
-    // one knob without copying the rest of defaultReconnectConfig.
-    const reconnectConfig = { ...defaultReconnectConfig, ...config.reconnect };
-    const heartbeatInterval = config.heartbeatInterval ?? SSE_HEARTBEAT_MS;
-    const maxBufferSize = SSE_BUFFER_SIZE;
-    const overflowPolicy: OverflowPolicy = config.overflow ?? defaultOverflowPolicy;
+export const create = (config: SSEConfig): SSEClient => {
+  // Partial overrides merge over the engine defaults so callers can bump
+  // one knob without copying the rest of defaultReconnectConfig.
+  const reconnectConfig = { ...defaultReconnectConfig, ...config.reconnect };
+  const heartbeatInterval = config.heartbeatInterval ?? SSE_HEARTBEAT_MS;
+  const maxBufferSize = SSE_BUFFER_SIZE;
+  const overflowPolicy: OverflowPolicy = config.overflow ?? defaultOverflowPolicy;
 
-    // All SSE state lives in one plain object. Transitions are synchronous
-    // mutations — Effect only bridges out at the public accessors.
-    //
-    // Pending messages live in a plain JS buffer so overflow can coalesce/drop
-    // without draining an Effect Queue that may already have parked takers.
-    // The queue below is only a wakeup signal for consumers.
-    const machine: {
-      status: SSEState;
-      lastEventId: string | null;
-      source: SSEEventSource | null;
-      reconnectAttempt: number;
-      droppedCount: number;
-      coalescedCount: number;
-      saturated: boolean;
-      reconnectHandle: ReturnType<typeof setTimeout> | null;
-      heartbeatHandle: ReturnType<typeof setTimeout> | null;
-    } = {
-      status: 'connecting',
-      lastEventId: config.lastEventId ?? null,
-      source: null,
-      reconnectAttempt: 0,
-      droppedCount: 0,
-      coalescedCount: 0,
-      saturated: false,
-      reconnectHandle: null,
-      heartbeatHandle: null,
-    };
+  // All SSE state lives in one plain object. Transitions are synchronous
+  // mutations — the public accessors read this object directly.
+  //
+  // Pending messages live in a plain JS buffer (the sse-pure applyOverflow
+  // target) so overflow can coalesce/drop deterministically. A no-replay
+  // CellKernel carries one wakeup per ingested message to any parked
+  // `messages` iterator; the buffer, not the kernel, is the source of truth.
+  const machine: {
+    status: SSEState;
+    lastEventId: string | null;
+    source: SSEEventSource | null;
+    reconnectAttempt: number;
+    droppedCount: number;
+    coalescedCount: number;
+    saturated: boolean;
+    reconnectHandle: ReturnType<typeof setTimeout> | null;
+    heartbeatHandle: ReturnType<typeof setTimeout> | null;
+  } = {
+    status: 'connecting',
+    lastEventId: config.lastEventId ?? null,
+    source: null,
+    reconnectAttempt: 0,
+    droppedCount: 0,
+    coalescedCount: 0,
+    saturated: false,
+    reconnectHandle: null,
+    heartbeatHandle: null,
+  };
 
-    const messageQueue = yield* Queue.bounded<true>(maxBufferSize);
-    let pendingMessages: SSEMessage[] = [];
-    let signaledCount = 0;
-    // Unbounded edge queue: every status transition is offered here and
-    // surfaced as `client.stateChanges`. Unbounded so a transition is never
-    // itself dropped under backpressure (edges are control-plane, not data).
-    const transitionQueue = yield* Queue.unbounded<SSEState>();
+  let pendingMessages: SSEMessage[] = [];
+  // No-replay fan-out: ingest publishes one wakeup token per buffered message
+  // (a late subscriber does not need prior tokens — it pulls the live buffer).
+  const messageWakeup = CellKernel.fanout<void>();
+  // No-replay fan-out of status EDGES: setStatus publishes only on an actual
+  // change, so a subscriber sees transitions, not a per-message firehose.
+  const stateEdges = CellKernel.fanout<SSEState>();
 
-    // Single writer for `machine.status`: mutate, then emit an EDGE only when
-    // the value actually changed (so `stateChanges` is a transition stream,
-    // not a per-message firehose).
-    const setStatus = (next: SSEState): void => {
-      if (machine.status === next) {
-        return;
+  // Single writer for `machine.status`: mutate, then emit an EDGE only when the
+  // value actually changed (so `stateChanges` is a transition stream, not a
+  // per-message firehose).
+  const setStatus = (next: SSEState): void => {
+    if (machine.status === next) {
+      return;
+    }
+    machine.status = next;
+    stateEdges.publish(next);
+    // Synchronous edge delivery (callback form of `stateChanges`) for consumers
+    // that drive lifecycle within the dispatch turn.
+    config.onStateChange?.(next);
+  };
+
+  const clearReconnectHandle = (): void => {
+    if (machine.reconnectHandle !== null) {
+      clearTimeout(machine.reconnectHandle);
+      machine.reconnectHandle = null;
+    }
+  };
+
+  const clearHeartbeat = (): void => {
+    if (machine.heartbeatHandle !== null) {
+      clearTimeout(machine.heartbeatHandle);
+      machine.heartbeatHandle = null;
+    }
+  };
+
+  // Detach the live source for good: drop its handlers BEFORE close() so a
+  // queued event can no longer invoke the synchronous `onMessage`/onerror sink
+  // after an intentional teardown or VT reinit — a stale frame must not morph
+  // into a newer generation (P2). The internal reconnect path deliberately does
+  // NOT use this: it closes and immediately re-opens a fresh source.
+  const detachSource = (): void => {
+    const src = machine.source;
+    if (!src) return;
+    src.onmessage = null;
+    src.onerror = null;
+    src.close();
+    machine.source = null;
+  };
+
+  /**
+   * Shared lost-connection path: close the dead source, then either
+   * schedule a backoff reconnect or latch `error` once attempts are
+   * exhausted. Driven by BOTH `source.onerror` AND the heartbeat watchdog
+   * — `close()` does not synthesize an `onerror`, so a silent heartbeat
+   * timeout must funnel through here itself or the stream would wedge in
+   * `error` and never reconnect.
+   */
+  const handleConnectionLoss = (): void => {
+    // Cancel any pending reconnect timer first: a duplicate loss signal (an
+    // `onerror` racing the heartbeat watchdog, or two `onerror`s) before the
+    // timer fires would otherwise overwrite `reconnectHandle` and leave the old
+    // timer live, double-opening a source.
+    clearReconnectHandle();
+    const currentSource = machine.source;
+    machine.source = null;
+    if (currentSource) {
+      // Detach BEFORE close: a frame or error already queued on this dying
+      // source must not fire its handler against the NEXT generation. Combined
+      // with the per-source identity guard in `setupSource`, a stale callback is
+      // inert on both ends.
+      currentSource.onmessage = null;
+      currentSource.onerror = null;
+      currentSource.close();
+    }
+    clearHeartbeat();
+    setStatus('reconnecting');
+
+    const attempt = machine.reconnectAttempt;
+    machine.reconnectAttempt = attempt + 1;
+    if (attempt < reconnectConfig.maxAttempts) {
+      const delay = calculateDelay(attempt, reconnectConfig);
+      machine.reconnectHandle = setTimeout(setupSource, delay);
+    } else {
+      setStatus('error');
+    }
+  };
+
+  const resetHeartbeat = (): void => {
+    clearHeartbeat();
+    machine.heartbeatHandle = setTimeout(() => {
+      // A missed heartbeat means the connection is dead but the browser
+      // never fired `onerror`. Funnel through the SAME reconnect path so
+      // the watchdog actually recovers the stream.
+      handleConnectionLoss();
+    }, heartbeatInterval * 2);
+  };
+
+  const setupSource = (): void => {
+    const url = buildUrl(config.url, config.artifactId, machine.lastEventId ?? undefined);
+    const source: SSEEventSource = new EventSource(url);
+    machine.source = source;
+    resetHeartbeat();
+
+    source.onmessage = (event: MessageEvent) => {
+      // Identity guard: a frame queued on a source that has since been replaced
+      // (reconnect / manual `reconnect()`) or closed (teardown) must not
+      // resurrect a dead generation — advance the cursor, flip status to
+      // `connected`, reset the backoff, or morph a stale frame into the live
+      // stream. Guard on source IDENTITY, not liveness.
+      if (machine.source !== source) return;
+      const message = parseMessage(event);
+      if (message) {
+        if (event.lastEventId) {
+          machine.lastEventId = event.lastEventId;
+        }
+
+        setStatus('connected');
+        machine.reconnectAttempt = 0;
+
+        ingest(message);
+        resetHeartbeat();
       }
-      machine.status = next;
-      Queue.offerUnsafe(transitionQueue, next);
-      // Synchronous edge delivery (callback form of `stateChanges`) for
-      // consumers that drive lifecycle within the dispatch turn.
-      config.onStateChange?.(next);
     };
 
-    const clearReconnectHandle = (): void => {
-      if (machine.reconnectHandle !== null) {
-        clearTimeout(machine.reconnectHandle);
-        machine.reconnectHandle = null;
-      }
+    source.onerror = () => {
+      // A stale error from an already-replaced source would otherwise drive
+      // `handleConnectionLoss` (which reads the CURRENT `machine.source`) and
+      // tear down the HEALTHY replacement, scheduling a spurious reconnect.
+      // Ignore errors that are not from the live generation.
+      if (machine.source !== source) return;
+      handleConnectionLoss();
     };
+  };
 
-    const clearHeartbeat = (): void => {
-      if (machine.heartbeatHandle !== null) {
-        clearTimeout(machine.heartbeatHandle);
-        machine.heartbeatHandle = null;
-      }
-    };
+  /**
+   * Fold an incoming message into the pending buffer under the overflow
+   * policy, then publish a single wakeup so a parked `messages` iterator can
+   * drain it. The buffer — not the wakeup kernel — is the source of truth:
+   * a message stays buffered (visible to `backpressure`) until consumed.
+   */
+  const ingest = (message: SSEMessage): void => {
+    if (config.onMessage) {
+      // Synchronous consumer: deliver in-turn and skip the async buffer entirely.
+      // A synchronous consumer holds no buffer, so there is nothing to overflow;
+      // `parseMessage` already gated this message upstream.
+      config.onMessage(message);
+      return;
+    }
+    const result = applyOverflow(pendingMessages, message, overflowPolicy, maxBufferSize);
+    pendingMessages = result.buffer;
 
-    // Detach the live source for good: drop its handlers BEFORE close() so a
-    // queued event can no longer invoke the synchronous `onMessage`/onerror sink
-    // after an intentional teardown or VT reinit — a stale frame must not morph
-    // into a newer generation (P2). The internal reconnect path deliberately does
-    // NOT use this: it closes and immediately re-opens a fresh source.
-    const detachSource = (): void => {
-      const src = machine.source;
-      if (!src) return;
-      src.onmessage = null;
-      src.onerror = null;
-      src.close();
-      machine.source = null;
-    };
+    machine.droppedCount += result.dropped;
+    machine.coalescedCount += result.coalesced;
 
-    /**
-     * Shared lost-connection path: close the dead source, then either
-     * schedule a backoff reconnect or latch `error` once attempts are
-     * exhausted. Driven by BOTH `source.onerror` AND the heartbeat watchdog
-     * — `close()` does not synthesize an `onerror`, so a silent heartbeat
-     * timeout must funnel through here itself or the stream would wedge in
-     * `error` and never reconnect.
-     */
-    const handleConnectionLoss = (): void => {
-      // Cancel any pending reconnect timer first: a duplicate loss signal (an
-      // `onerror` racing the heartbeat watchdog, or two `onerror`s) before the
-      // timer fires would otherwise overwrite `reconnectHandle` and leave the old
-      // timer live, double-opening a source.
-      clearReconnectHandle();
-      const currentSource = machine.source;
-      machine.source = null;
-      if (currentSource) {
-        // Detach BEFORE close: a frame or error already queued on this dying
-        // source must not fire its handler against the NEXT generation. Combined
-        // with the per-source identity guard in `setupSource`, a stale callback is
-        // inert on both ends.
-        currentSource.onmessage = null;
-        currentSource.onerror = null;
-        currentSource.close();
-      }
-      clearHeartbeat();
-      setStatus('reconnecting');
+    if (result.saturated && !machine.saturated) {
+      // First saturation only (latched + warnOnce-deduped): the buffer is
+      // overflowing and the policy is now actively shedding load.
+      machine.saturated = true;
+      Diagnostics.warnOnce({
+        source: 'czap/web.sse',
+        code: 'sse-buffer-saturated',
+        message: 'SSE receive buffer saturated; applying overflow policy.',
+        detail: { policy: overflowPolicy, maxBufferSize, bufferSize: pendingMessages.length },
+      });
+    }
 
-      const attempt = machine.reconnectAttempt;
-      machine.reconnectAttempt = attempt + 1;
-      if (attempt < reconnectConfig.maxAttempts) {
-        const delay = calculateDelay(attempt, reconnectConfig);
-        machine.reconnectHandle = setTimeout(setupSource, delay);
-      } else {
-        setStatus('error');
-      }
-    };
+    // Wake exactly one parked consumer per buffered message; if nobody is
+    // parked the message simply waits in the buffer for the next `next()`.
+    messageWakeup.publish();
+  };
 
-    const resetHeartbeat = (): void => {
-      clearHeartbeat();
-      machine.heartbeatHandle = setTimeout(() => {
-        // A missed heartbeat means the connection is dead but the browser
-        // never fired `onerror`. Funnel through the SAME reconnect path so
-        // the watchdog actually recovers the stream.
-        handleConnectionLoss();
-      }, heartbeatInterval * 2);
-    };
-
-    const setupSource = (): void => {
-      const url = buildUrl(config.url, config.artifactId, machine.lastEventId ?? undefined);
-      const source: SSEEventSource = new EventSource(url);
-      machine.source = source;
-      resetHeartbeat();
-
-      source.onmessage = (event: MessageEvent) => {
-        // Identity guard: a frame queued on a source that has since been replaced
-        // (reconnect / manual `reconnect()`) or closed (teardown) must not
-        // resurrect a dead generation — advance the cursor, flip status to
-        // `connected`, reset the backoff, or morph a stale frame into the live
-        // stream. Guard on source IDENTITY, not liveness.
-        if (machine.source !== source) return;
-        const message = parseMessage(event);
-        if (message) {
-          if (event.lastEventId) {
-            machine.lastEventId = event.lastEventId;
+  // `messages` drains the SHARED overflow buffer (so backpressure sees the
+  // drop) — it cannot use a per-iterator buffer. Each iterator subscribes to
+  // the wakeup kernel and pulls from `pendingMessages`; a value ready before
+  // the iterator parks is returned immediately by the pull-first check.
+  const messages: AsyncIterable<SSEMessage> = {
+    [Symbol.asyncIterator](): AsyncIterator<SSEMessage, undefined> {
+      let waiter: ((result: IteratorResult<SSEMessage, undefined>) => void) | null = null;
+      let completed = false;
+      const disposer = messageWakeup.subscribe({
+        next: () => {
+          if (waiter !== null && pendingMessages.length > 0) {
+            const resolve = waiter;
+            waiter = null;
+            resolve({ value: pendingMessages.shift()!, done: false });
           }
+        },
+        complete: () => {
+          completed = true;
+          if (waiter !== null) {
+            const resolve = waiter;
+            waiter = null;
+            resolve({ value: undefined, done: true });
+          }
+        },
+      });
+      return {
+        next(): Promise<IteratorResult<SSEMessage, undefined>> {
+          if (pendingMessages.length > 0) {
+            return Promise.resolve({ value: pendingMessages.shift()!, done: false });
+          }
+          if (completed) {
+            disposer();
+            return Promise.resolve({ value: undefined, done: true });
+          }
+          return new Promise((resolve) => {
+            waiter = resolve;
+          });
+        },
+        return(): Promise<IteratorResult<SSEMessage, undefined>> {
+          disposer();
+          return Promise.resolve({ value: undefined, done: true });
+        },
+      };
+    },
+  };
 
-          setStatus('connected');
-          machine.reconnectAttempt = 0;
-
-          ingest(message);
-          resetHeartbeat();
+  // `stateChanges` buffers edges per-iterator (each subscriber sees every edge
+  // from its subscription onward — control-plane, never dropped).
+  const stateChanges: AsyncIterable<SSEState> = {
+    [Symbol.asyncIterator](): AsyncIterator<SSEState, undefined> {
+      const buffer: SSEState[] = [];
+      let waiter: ((result: IteratorResult<SSEState, undefined>) => void) | null = null;
+      let completed = false;
+      const deliver = (): void => {
+        if (waiter === null) return;
+        if (buffer.length > 0) {
+          const resolve = waiter;
+          waiter = null;
+          resolve({ value: buffer.shift()!, done: false });
+        } else if (completed) {
+          const resolve = waiter;
+          waiter = null;
+          resolve({ value: undefined, done: true });
         }
       };
-
-      source.onerror = () => {
-        // A stale error from an already-replaced source would otherwise drive
-        // `handleConnectionLoss` (which reads the CURRENT `machine.source`) and
-        // tear down the HEALTHY replacement, scheduling a spurious reconnect.
-        // Ignore errors that are not from the live generation.
-        if (machine.source !== source) return;
-        handleConnectionLoss();
-      };
-    };
-
-    /**
-     * Fold an incoming message into the pending buffer under the overflow
-     * policy. The Effect queue is intentionally NOT the buffer: draining and
-     * refilling a live Queue is not safe when Stream consumers are parked on it
-     * (offerUnsafe can synchronously resume them). Instead the Queue carries
-     * one wakeup token per pending message.
-     */
-    const ingest = (message: SSEMessage): void => {
-      if (config.onMessage) {
-        // Synchronous consumer: deliver in-turn and skip the async buffer/Stream
-        // entirely. A synchronous consumer holds no buffer, so there is nothing
-        // to overflow; `parseMessage` already gated this message upstream.
-        config.onMessage(message);
-        return;
-      }
-      const result = applyOverflow(pendingMessages, message, overflowPolicy, maxBufferSize);
-      pendingMessages = result.buffer;
-
-      for (let index = signaledCount; index < pendingMessages.length; index++) {
-        signaledCount += 1;
-        if (!Queue.offerUnsafe(messageQueue, true)) {
-          signaledCount -= 1;
-          break;
-        }
-      }
-
-      machine.droppedCount += result.dropped;
-      machine.coalescedCount += result.coalesced;
-
-      if (result.saturated && !machine.saturated) {
-        // First saturation only (latched + warnOnce-deduped): the buffer is
-        // overflowing and the policy is now actively shedding load.
-        machine.saturated = true;
-        Diagnostics.warnOnce({
-          source: 'czap/web.sse',
-          code: 'sse-buffer-saturated',
-          message: 'SSE receive buffer saturated; applying overflow policy.',
-          detail: { policy: overflowPolicy, maxBufferSize, bufferSize: pendingMessages.length },
-        });
-      }
-    };
-
-    const createConnection = Effect.sync(() => {
-      setupSource();
-    });
-
-    yield* createConnection;
-
-    const messages: Stream.Stream<SSEMessage> = Stream.fromQueue(messageQueue).pipe(
-      Stream.flatMap(() => {
-        signaledCount = Math.max(0, signaledCount - 1);
-        // A wakeup token can outlive its message: coalesce-by-id supersedes an
-        // already-signaled patch and a saturating drop evicts one, either of
-        // which can leave one more token than pending message. Emit nothing for a
-        // stale token rather than deliver `undefined` to consumers; the next
-        // ingest re-signals any messages still pending, so the queue self-heals.
-        // (P1.)
-        const message = pendingMessages.shift();
-        return message === undefined ? Stream.empty : Stream.succeed(message);
-      }),
-    );
-    const stateChanges: Stream.Stream<SSEState> = Stream.fromQueue(transitionQueue);
-
-    const client: SSEClient = {
-      messages,
-
-      stateChanges,
-
-      state: Effect.sync(() => machine.status),
-
-      lastEventId: Effect.sync(() => machine.lastEventId),
-
-      backpressure: Effect.sync(() => {
-        const bufferSize = pendingMessages.length;
-        const percentFull = Math.round((bufferSize / maxBufferSize) * 100);
-        return {
-          bufferSize,
-          maxBufferSize,
-          percentFull,
-          dropping: bufferSize >= maxBufferSize,
-          policy: overflowPolicy,
-          droppedCount: machine.droppedCount,
-          coalescedCount: machine.coalescedCount,
-        };
-      }),
-
-      close: () =>
-        Effect.gen(function* () {
-          clearReconnectHandle();
-          clearHeartbeat();
-          detachSource();
-          // `close()` is an intentional teardown — land in `disconnected`
-          // regardless of whether a live source was present (e.g. the
-          // heartbeat watchdog may have already cleared it).
-          setStatus('disconnected');
-          pendingMessages = [];
-          signaledCount = 0;
-          yield* Queue.shutdown(messageQueue);
-          yield* Queue.shutdown(transitionQueue);
-        }),
-
-      reconnect: () =>
-        Effect.gen(function* () {
-          clearReconnectHandle();
-          clearHeartbeat();
-          const currentSource = machine.source;
-          if (currentSource) {
-            currentSource.close();
-            machine.source = null;
+      const disposer = stateEdges.subscribe({
+        next: (edge) => {
+          buffer.push(edge);
+          deliver();
+        },
+        complete: () => {
+          completed = true;
+          deliver();
+        },
+      });
+      return {
+        next(): Promise<IteratorResult<SSEState, undefined>> {
+          if (buffer.length > 0) {
+            return Promise.resolve({ value: buffer.shift()!, done: false });
           }
-          machine.reconnectAttempt = 0;
-          setStatus('connecting');
+          if (completed) {
+            disposer();
+            return Promise.resolve({ value: undefined, done: true });
+          }
+          return new Promise((resolve) => {
+            waiter = resolve;
+          });
+        },
+        return(): Promise<IteratorResult<SSEState, undefined>> {
+          disposer();
+          return Promise.resolve({ value: undefined, done: true });
+        },
+      };
+    },
+  };
 
-          yield* createConnection;
-        }),
-    };
-
-    yield* Effect.addFinalizer(() =>
-      Effect.gen(function* () {
-        clearReconnectHandle();
-        clearHeartbeat();
-        detachSource();
-        pendingMessages = [];
-        signaledCount = 0;
-        yield* Queue.shutdown(messageQueue);
-        yield* Queue.shutdown(transitionQueue);
-      }),
-    );
-
-    return client;
+  // One Lifetime owns the teardown finalizer (replacing the former Scope). Its
+  // sync body runs synchronously inside `dispose()`, so `close()` tears the
+  // transport down in one pass — a straggler frame from a dead generation
+  // cannot morph the fresh one on reinit.
+  const lifetime = Lifetime.make();
+  lifetime.add(() => {
+    clearReconnectHandle();
+    clearHeartbeat();
+    detachSource();
+    pendingMessages = [];
+    messageWakeup.close();
+    stateEdges.close();
   });
+
+  const client: SSEClient = {
+    messages,
+    stateChanges,
+
+    get state() {
+      return machine.status;
+    },
+
+    get lastEventId() {
+      return machine.lastEventId;
+    },
+
+    get backpressure(): BackpressureHint {
+      const bufferSize = pendingMessages.length;
+      const percentFull = Math.round((bufferSize / maxBufferSize) * 100);
+      return {
+        bufferSize,
+        maxBufferSize,
+        percentFull,
+        dropping: bufferSize >= maxBufferSize,
+        policy: overflowPolicy,
+        droppedCount: machine.droppedCount,
+        coalescedCount: machine.coalescedCount,
+      };
+    },
+
+    close: () => {
+      if (lifetime.disposed) {
+        return;
+      }
+      // `close()` is an intentional teardown — land in `disconnected` regardless
+      // of whether a live source was present (e.g. the heartbeat watchdog may
+      // have already cleared it). Publish the edge BEFORE disposing so a
+      // `stateChanges` subscriber sees the final transition, then complete.
+      setStatus('disconnected');
+      // Sync finalizer lands synchronously inside dispose(); teardown is
+      // fire-and-forget (there is no async finalizer), so the promise is dropped.
+      void lifetime.dispose();
+    },
+
+    reconnect: () => {
+      if (lifetime.disposed) {
+        return;
+      }
+      clearReconnectHandle();
+      clearHeartbeat();
+      const currentSource = machine.source;
+      if (currentSource) {
+        currentSource.close();
+        machine.source = null;
+      }
+      machine.reconnectAttempt = 0;
+      setStatus('connecting');
+      setupSource();
+    },
+  };
+
+  // Open the initial connection synchronously (AbortController-first: no runtime
+  // to run, no Scope to provide).
+  setupSource();
+
+  return client;
+};
 
 /**
  * SSE client namespace.
  *
  * Creates and manages Server-Sent Events connections with automatic
  * exponential-backoff reconnection, heartbeat timeout detection,
- * backpressure-aware message buffering via bounded Effect queues,
+ * backpressure-aware message buffering via the sse-pure overflow buffer,
  * and URL construction helpers.
  *
  * **Resumption is host-wired.** `SSE` is the transport; the sibling
@@ -464,17 +535,13 @@ export const create = (config: SSEConfig): Effect.Effect<SSEClient, never, Scope
  * @example
  * ```ts
  * import { SSE } from '@czap/web';
- * import { Effect, Stream } from 'effect';
  *
- * const program = Effect.scoped(Effect.gen(function* () {
- *   const client = yield* SSE.create({ url: '/api/events' });
- *   const state = yield* client.state; // 'connecting' | 'connected' | ...
- *   yield* Stream.runForEach(
- *     Stream.take(client.messages, 10),
- *     (msg) => Effect.sync(() => console.log(msg.type)),
- *   );
- *   yield* client.close();
- * }));
+ * const client = SSE.create({ url: '/api/events' });
+ * const state = client.state; // 'connecting' | 'connected' | ...
+ * for await (const msg of client.messages) {
+ *   console.log(msg.type);
+ * }
+ * client.close();
  * ```
  */
 export const SSE = {

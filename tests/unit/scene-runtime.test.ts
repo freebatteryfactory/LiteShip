@@ -8,7 +8,6 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { Effect } from 'effect';
 import { Track, compileScene, SceneRuntime, sceneRuntimeCapsule, Beat, pulse, syncTo } from '@czap/scene';
 import type { SceneContract, MixReceipt, TrackId } from '@czap/scene';
 
@@ -72,7 +71,7 @@ describe('SceneRuntime', () => {
     const handle = await SceneRuntime.build(compiled);
     try {
       expect(handle.entitySpawnCount).toBe(compiled.trackSpawns.length);
-      const spawned = await Effect.runPromise(handle.world.query('trackId'));
+      const spawned = handle.world.query('trackId');
       expect(spawned.length).toBe(compiled.trackSpawns.length);
     } finally {
       await handle.release();
@@ -88,7 +87,7 @@ describe('SceneRuntime', () => {
       expect(handle.currentTimeMs()).toBeCloseTo(16.67, 5);
       expect(handle.currentFrame()).toBe(1);
 
-      const videos = await Effect.runPromise(handle.world.query('VideoSource'));
+      const videos = handle.world.query('VideoSource');
       expect(videos.length).toBe(1);
       const opacity = videos[0]?.components.get('_opacity');
       // FrameRange is 0..60 and frame 1 is in-range → opacity 1.
@@ -106,16 +105,14 @@ describe('SceneRuntime', () => {
       await handle.tick((15 / 60) * 1000);
       expect(handle.currentFrame()).toBe(15);
 
-      const transitions = await Effect.runPromise(
-        handle.world.query('TransitionKind', 'FrameRange', 'Between'),
-      );
+      const transitions = handle.world.query('TransitionKind', 'FrameRange', 'Between');
       expect(transitions.length).toBe(1);
       const blend = transitions[0]?.components.get('_blend');
       expect(typeof blend).toBe('number');
       expect(blend as number).toBeGreaterThan(0);
       expect(blend as number).toBeLessThan(1);
 
-      const effects = await Effect.runPromise(handle.world.query('EffectKind', 'FrameRange'));
+      const effects = handle.world.query('EffectKind', 'FrameRange');
       expect(effects.length).toBe(2);
       for (const e of effects) {
         const intensity = e.components.get('_intensity');
@@ -178,7 +175,7 @@ describe('SceneRuntime', () => {
     const handle = await SceneRuntime.build(compiled);
     try {
       await handle.tick((10 / 60) * 1000); // frame 10 — Effect would write 10/30 ≈ 0.333
-      const synced = await Effect.runPromise(handle.world.query('SyncAnchor'));
+      const synced = handle.world.query('SyncAnchor');
       // If Sync ran AFTER Effect, intensity should be Sync's decay value
       // (e^0 = 1 since no past beats means lastBeat = -Infinity → decay = 0
       // OR Math.exp(-Infinity) = 0). Either way, the value is the Sync
@@ -232,7 +229,7 @@ describe('SceneRuntime', () => {
     try {
       await handle.tick(500); // frame 30
       expect(handle.currentFrame()).toBe(30);
-      const synced = await Effect.runPromise(handle.world.query('SyncAnchor'));
+      const synced = handle.world.query('SyncAnchor');
       expect(synced.length).toBe(1);
       const intensity = synced[0]?.components.get('_intensity');
       expect(typeof intensity).toBe('number');

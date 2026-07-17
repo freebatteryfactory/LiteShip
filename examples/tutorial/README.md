@@ -4,7 +4,7 @@ Five guided pages, one idea each. Every page is step-numbered prose with a live
 demo at the bottom and a "Next →" link to the following page — read the source
 beside the running page; the comments carry the story.
 
-When installing from npm (outside the monorepo), pin `@czap/*` packages at `^0.12.0`.
+When installing from npm (outside the monorepo), pin `@czap/*` packages at `^0.13.0`.
 
 ## Run it
 

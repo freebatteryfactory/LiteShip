@@ -3,10 +3,7 @@
  */
 
 import { afterEach, describe, test, expect, vi } from 'vitest';
-import { Effect } from 'effect';
 import { TypedRef } from '@czap/core';
-
-const run = <A>(effect: Effect.Effect<A>): Promise<A> => Effect.runPromise(effect);
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -61,46 +58,46 @@ describe('TypedRef.canonicalize', () => {
 
 describe('TypedRef.hash', () => {
   test('returns sha256: prefixed hex string from string input', async () => {
-    const h = await run(TypedRef.hash('hello'));
+    const h = await TypedRef.hash('hello');
     expect(h).toMatch(/^sha256:[0-9a-f]{64}$/);
   });
 
   test('returns sha256: prefixed hex string from Uint8Array input', async () => {
     const bytes = new TextEncoder().encode('hello');
-    const h = await run(TypedRef.hash(bytes));
+    const h = await TypedRef.hash(bytes);
     expect(h).toMatch(/^sha256:[0-9a-f]{64}$/);
   });
 
   test('deterministic -- same input produces same hash', async () => {
-    const a = await run(TypedRef.hash('test-data'));
-    const b = await run(TypedRef.hash('test-data'));
+    const a = await TypedRef.hash('test-data');
+    const b = await TypedRef.hash('test-data');
     expect(a).toBe(b);
   });
 
   test('different inputs produce different hashes', async () => {
-    const a = await run(TypedRef.hash('data-a'));
-    const b = await run(TypedRef.hash('data-b'));
+    const a = await TypedRef.hash('data-a');
+    const b = await TypedRef.hash('data-b');
     expect(a).not.toBe(b);
   });
 
   test('string and equivalent Uint8Array produce same hash', async () => {
     const str = 'hello world';
     const bytes = new TextEncoder().encode(str);
-    const fromStr = await run(TypedRef.hash(str));
-    const fromBytes = await run(TypedRef.hash(bytes));
+    const fromStr = await TypedRef.hash(str);
+    const fromBytes = await TypedRef.hash(bytes);
     expect(fromStr).toBe(fromBytes);
   });
 
   test('wraps Error rejections from crypto.subtle.digest with the original message', async () => {
     vi.spyOn(crypto.subtle, 'digest').mockRejectedValueOnce(new Error('digest exploded'));
 
-    await expect(run(TypedRef.hash('boom'))).rejects.toThrow('SHA-256 hash failed: digest exploded');
+    await expect(TypedRef.hash('boom')).rejects.toThrow('SHA-256 hash failed: digest exploded');
   });
 
   test('wraps non-Error rejections from crypto.subtle.digest using string coercion', async () => {
     vi.spyOn(crypto.subtle, 'digest').mockRejectedValueOnce('digest exploded');
 
-    await expect(run(TypedRef.hash('boom'))).rejects.toThrow('SHA-256 hash failed: digest exploded');
+    await expect(TypedRef.hash('boom')).rejects.toThrow('SHA-256 hash failed: digest exploded');
   });
 });
 
@@ -110,7 +107,7 @@ describe('TypedRef.hash', () => {
 
 describe('TypedRef.create', () => {
   test('produces shape with schema_hash and content_hash', async () => {
-    const ref = await run(TypedRef.create('schema-v1', { name: 'test' }));
+    const ref = await TypedRef.create('schema-v1', { name: 'test' });
     expect(ref).toHaveProperty('schema_hash');
     expect(ref).toHaveProperty('content_hash');
     expect(ref.schema_hash).toBe('schema-v1');
@@ -118,21 +115,21 @@ describe('TypedRef.create', () => {
   });
 
   test('same schema + payload produces same content_hash', async () => {
-    const a = await run(TypedRef.create('s1', { val: 100 }));
-    const b = await run(TypedRef.create('s1', { val: 100 }));
+    const a = await TypedRef.create('s1', { val: 100 });
+    const b = await TypedRef.create('s1', { val: 100 });
     expect(a.content_hash).toBe(b.content_hash);
   });
 
   test('different payload produces different content_hash', async () => {
-    const a = await run(TypedRef.create('s1', { val: 1 }));
-    const b = await run(TypedRef.create('s1', { val: 2 }));
+    const a = await TypedRef.create('s1', { val: 1 });
+    const b = await TypedRef.create('s1', { val: 2 });
     expect(a.content_hash).not.toBe(b.content_hash);
   });
 
   test('different schema_hash does not affect content_hash', async () => {
     // content_hash is derived from payload canonicalization, schema_hash is stored as-is
-    const a = await run(TypedRef.create('schema-a', { x: 1 }));
-    const b = await run(TypedRef.create('schema-b', { x: 1 }));
+    const a = await TypedRef.create('schema-a', { x: 1 });
+    const b = await TypedRef.create('schema-b', { x: 1 });
     expect(a.content_hash).toBe(b.content_hash);
     expect(a.schema_hash).not.toBe(b.schema_hash);
   });
@@ -144,25 +141,25 @@ describe('TypedRef.create', () => {
 
 describe('TypedRef.equals', () => {
   test('same refs are equal', async () => {
-    const ref = await run(TypedRef.create('s1', { data: 'test' }));
+    const ref = await TypedRef.create('s1', { data: 'test' });
     expect(TypedRef.equals(ref, ref)).toBe(true);
   });
 
   test('identical refs from separate creates are equal', async () => {
-    const a = await run(TypedRef.create('s1', { data: 'test' }));
-    const b = await run(TypedRef.create('s1', { data: 'test' }));
+    const a = await TypedRef.create('s1', { data: 'test' });
+    const b = await TypedRef.create('s1', { data: 'test' });
     expect(TypedRef.equals(a, b)).toBe(true);
   });
 
   test('different content_hash refs are not equal', async () => {
-    const a = await run(TypedRef.create('s1', { data: 'a' }));
-    const b = await run(TypedRef.create('s1', { data: 'b' }));
+    const a = await TypedRef.create('s1', { data: 'a' });
+    const b = await TypedRef.create('s1', { data: 'b' });
     expect(TypedRef.equals(a, b)).toBe(false);
   });
 
   test('different schema_hash refs are not equal', async () => {
-    const a = await run(TypedRef.create('s1', { data: 'x' }));
-    const b = await run(TypedRef.create('s2', { data: 'x' }));
+    const a = await TypedRef.create('s1', { data: 'x' });
+    const b = await TypedRef.create('s2', { data: 'x' });
     expect(TypedRef.equals(a, b)).toBe(false);
   });
 

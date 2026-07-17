@@ -5,7 +5,6 @@
  * (forged-hash / wrong-subject / malformed frames refused before buffering).
  */
 import { describe, expect, test } from 'vitest';
-import { Effect } from 'effect';
 import { StateName, transitionReceipt, type DiscreteStateTransition } from '@czap/core';
 import {
   registerStreamRecoverySubstrate,
@@ -40,7 +39,7 @@ const mkTransition = (
 /** Mint an ATTESTED { receipt, transition } frame (hash + subject self-consistent). */
 const validFrame = async (base = 'czap:base', cell = 'layout') => {
   const transition = mkTransition(base, cell);
-  const receipt = await Effect.runPromise(transitionReceipt(transition));
+  const receipt = await transitionReceipt(transition);
   return { receipt, transition };
 };
 

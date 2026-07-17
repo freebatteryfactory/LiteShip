@@ -3,28 +3,30 @@
  */
 
 import { describe, test, expect, vi } from 'vitest';
-import { Effect, Scope } from 'effect';
 import { AVRenderer, AVBridge, Compositor, Millis } from '@czap/core';
 
-function makeCompositor() {
-  return Effect.runPromise(Effect.scoped(Compositor.create()));
+// Compositor.create() is synchronous as of the core-seams wave: it returns a
+// { compositor, lifetime } handle. AVRenderer.make consumes the compositor
+// instance directly — no Effect scope to run.
+function makeCompositor(): Compositor.Shape {
+  return Compositor.create().compositor;
 }
 
 describe('AVRenderer frame generation', () => {
   test('computes correct totalFrames', async () => {
-    const renderer = AVRenderer.make({ sampleRate: 48000, fps: 30, durationMs: Millis(5000) }, await makeCompositor());
+    const renderer = AVRenderer.make({ sampleRate: 48000, fps: 30, durationMs: Millis(5000) }, makeCompositor());
     expect(renderer.totalFrames).toBe(150);
   });
 
   test('yields the correct number of frames', async () => {
-    const renderer = AVRenderer.make({ sampleRate: 48000, fps: 30, durationMs: Millis(1000) }, await makeCompositor());
+    const renderer = AVRenderer.make({ sampleRate: 48000, fps: 30, durationMs: Millis(1000) }, makeCompositor());
     let count = 0;
     for await (const _ of renderer.frames()) count++;
     expect(count).toBe(30);
   });
 
   test('durationMs: Millis(0) yields zero frames', async () => {
-    const renderer = AVRenderer.make({ sampleRate: 48000, fps: 30, durationMs: Millis(0) }, await makeCompositor());
+    const renderer = AVRenderer.make({ sampleRate: 48000, fps: 30, durationMs: Millis(0) }, makeCompositor());
     expect(renderer.totalFrames).toBe(0);
     let count = 0;
     for await (const _ of renderer.frames()) count++;
@@ -32,7 +34,7 @@ describe('AVRenderer frame generation', () => {
   });
 
   test('single frame at very short duration', async () => {
-    const renderer = AVRenderer.make({ sampleRate: 48000, fps: 30, durationMs: Millis(10) }, await makeCompositor());
+    const renderer = AVRenderer.make({ sampleRate: 48000, fps: 30, durationMs: Millis(10) }, makeCompositor());
     expect(renderer.totalFrames).toBe(1);
     let count = 0;
     for await (const _ of renderer.frames()) count++;
@@ -42,7 +44,7 @@ describe('AVRenderer frame generation', () => {
 
 describe('AVRenderer audio-visual alignment', () => {
   test('each frame has correct sample position', async () => {
-    const renderer = AVRenderer.make({ sampleRate: 48000, fps: 30, durationMs: Millis(1000) }, await makeCompositor());
+    const renderer = AVRenderer.make({ sampleRate: 48000, fps: 30, durationMs: Millis(1000) }, makeCompositor());
 
     const samplesPerFrame = Math.round(48000 / 30);
     const frames: Array<{ frame: number; sample: number; sampleCount: number }> = [];
@@ -60,7 +62,7 @@ describe('AVRenderer audio-visual alignment', () => {
   });
 
   test('timestamps increment correctly', async () => {
-    const renderer = AVRenderer.make({ sampleRate: 48000, fps: 60, durationMs: Millis(500) }, await makeCompositor());
+    const renderer = AVRenderer.make({ sampleRate: 48000, fps: 60, durationMs: Millis(500) }, makeCompositor());
 
     const timestamps: number[] = [];
     for await (const f of renderer.frames()) {
@@ -74,7 +76,7 @@ describe('AVRenderer audio-visual alignment', () => {
   });
 
   test('bridge sample counter matches total after rendering', async () => {
-    const renderer = AVRenderer.make({ sampleRate: 48000, fps: 30, durationMs: Millis(1000) }, await makeCompositor());
+    const renderer = AVRenderer.make({ sampleRate: 48000, fps: 30, durationMs: Millis(1000) }, makeCompositor());
 
     for await (const _ of renderer.frames()) {
     }
@@ -86,7 +88,7 @@ describe('AVRenderer audio-visual alignment', () => {
 
 describe('AVRenderer callbacks', () => {
   test('onAudioFrame is called for each frame', async () => {
-    const renderer = AVRenderer.make({ sampleRate: 48000, fps: 30, durationMs: Millis(500) }, await makeCompositor());
+    const renderer = AVRenderer.make({ sampleRate: 48000, fps: 30, durationMs: Millis(500) }, makeCompositor());
 
     const audioCalls: Array<{ sample: number; count: number }> = [];
     for await (const _ of renderer.frames({
@@ -100,7 +102,7 @@ describe('AVRenderer callbacks', () => {
   });
 
   test('onVideoFrame is called for each frame', async () => {
-    const renderer = AVRenderer.make({ sampleRate: 48000, fps: 10, durationMs: Millis(300) }, await makeCompositor());
+    const renderer = AVRenderer.make({ sampleRate: 48000, fps: 10, durationMs: Millis(300) }, makeCompositor());
 
     const videoCalls: Array<{ frame: number; timestamp: number }> = [];
     for await (const _ of renderer.frames({
@@ -116,7 +118,7 @@ describe('AVRenderer callbacks', () => {
 
 describe('AVRenderer CompositeState', () => {
   test('every frame yields a valid CompositeState', async () => {
-    const renderer = AVRenderer.make({ sampleRate: 48000, fps: 10, durationMs: Millis(200) }, await makeCompositor());
+    const renderer = AVRenderer.make({ sampleRate: 48000, fps: 10, durationMs: Millis(200) }, makeCompositor());
 
     for await (const f of renderer.frames()) {
       expect(f.state).toBeDefined();
@@ -134,7 +136,7 @@ describe('AVRenderer with external bridge', () => {
     const bridge = AVBridge.make({ sampleRate: 48000, fps: 30 });
     const renderer = AVRenderer.make(
       { sampleRate: 48000, fps: 30, durationMs: Millis(100) },
-      await makeCompositor(),
+      makeCompositor(),
       bridge,
     );
 
@@ -153,7 +155,7 @@ describe('AVRenderer with external bridge', () => {
 
     const renderer = AVRenderer.make(
       { sampleRate: 48_000, fps: 30, durationMs: Millis(10) },
-      await makeCompositor(),
+      makeCompositor(),
       bridge,
     );
 

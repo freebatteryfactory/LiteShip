@@ -6,7 +6,6 @@
 
 import { describe, test, expect } from 'vitest';
 import fc from 'fast-check';
-import { Effect } from 'effect';
 import { Receipt, HLC } from '@czap/core';
 
 describe('Receipt properties', () => {
@@ -39,9 +38,7 @@ describe('Receipt properties', () => {
           const subject = { type: 'effect' as const, id };
           const payload = { schema_hash: 'test', content_hash: 'test' };
 
-          const envelope = await Effect.runPromise(
-            Receipt.createEnvelope(kind, subject, payload, timestamp, 'genesis'),
-          );
+          const envelope = await Receipt.createEnvelope(kind, subject, payload, timestamp, 'genesis');
 
           return (
             envelope.kind === kind &&
@@ -65,8 +62,8 @@ describe('Receipt properties', () => {
       previous: 'genesis',
     };
 
-    const h1 = await Effect.runPromise(Receipt.hashEnvelope(env));
-    const h2 = await Effect.runPromise(Receipt.hashEnvelope(env));
+    const h1 = await Receipt.hashEnvelope(env);
+    const h2 = await Receipt.hashEnvelope(env);
 
     expect(h1).toBe(h2);
   });
@@ -93,7 +90,7 @@ describe('Receipt properties', () => {
       },
     ];
 
-    const chain = await Effect.runPromise(Receipt.buildChain(entries));
+    const chain = await Receipt.buildChain(entries);
 
     expect(chain).toHaveLength(3);
 
@@ -122,8 +119,8 @@ describe('Receipt properties', () => {
       },
     ];
 
-    const chain = await Effect.runPromise(Receipt.buildChain(entries));
-    const result = await Effect.runPromise(Receipt.validateChain(chain));
+    const chain = await Receipt.buildChain(entries);
+    const result = await Receipt.validateChain(chain);
     expect(result).toBe(true);
   });
 
@@ -143,7 +140,7 @@ describe('Receipt properties', () => {
       },
     ];
 
-    const chain = await Effect.runPromise(Receipt.buildChain(entries));
+    const chain = await Receipt.buildChain(entries);
     const h = Receipt.head(chain);
     expect(h?.kind).toBe('b');
   });
@@ -164,7 +161,7 @@ describe('Receipt properties', () => {
       },
     ];
 
-    const chain = await Effect.runPromise(Receipt.buildChain(entries));
+    const chain = await Receipt.buildChain(entries);
     const t = Receipt.tail(chain);
     expect(t).toBeDefined();
     expect(t!.kind).toBe('a');

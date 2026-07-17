@@ -6,7 +6,7 @@
 
 # Interface: QuantizerRuntime
 
-Defined in: [quantizer/src/quantizer.ts:193](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L193)
+Defined in: [quantizer/src/quantizer.ts:191](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L191)
 
 Runtime injection for [QuantizerConfig.create](QuantizerConfig.md#create).
 
@@ -27,7 +27,7 @@ no process-wide HLC.
 
 > `readonly` `optional` **clock?**: [`Clock`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Clock.md)
 
-Defined in: [quantizer/src/quantizer.ts:199](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L199)
+Defined in: [quantizer/src/quantizer.ts:197](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L197)
 
 Wall-clock boundary advancing this instance's HLC; defaults to
 `@czap/core`'s `wallClock`. Pass a `fixedClock`/`manualClock` for
@@ -39,6 +39,6 @@ deterministic, replayable crossing timestamps.
 
 > `readonly` `optional` **node?**: `string`
 
-Defined in: [quantizer/src/quantizer.ts:201](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L201)
+Defined in: [quantizer/src/quantizer.ts:199](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L199)
 
 HLC node id seeding this instance's clock; defaults to `'quantizer'`.

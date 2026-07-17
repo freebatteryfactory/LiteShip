@@ -8,6 +8,6 @@
 
 > **Op** = [`PatchOp`](../../../type-aliases/PatchOp.md)
 
-Defined in: [core/src/graph-patch.ts:360](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-patch.ts#L360)
+Defined in: [core/src/graph-patch.ts:357](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-patch.ts#L357)
 
 Alias for [PatchOp](../../../type-aliases/PatchOp.md).

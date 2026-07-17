@@ -38,7 +38,6 @@ plan graph, ECS, capsule factory).
 - [HLC](namespaces/HLC/README.md)
 - [Lifetime](namespaces/Lifetime/README.md)
 - [LiveCell](namespaces/LiveCell/README.md)
-- [Op](namespaces/Op/README.md)
 - [Part](namespaces/Part/README.md)
 - [Plan](namespaces/Plan/README.md)
 - [ProjectionState](namespaces/ProjectionState/README.md)
@@ -61,7 +60,6 @@ plan graph, ECS, capsule factory).
 - [UIQuality](namespaces/UIQuality/README.md)
 - [VectorClock](namespaces/VectorClock/README.md)
 - [VideoRenderer](namespaces/VideoRenderer/README.md)
-- [Wire](namespaces/Wire/README.md)
 - [World](namespaces/World/README.md)
 - [Zap](namespaces/Zap/README.md)
 
@@ -157,6 +155,7 @@ plan graph, ECS, capsule factory).
 - [ProjectionStateOptions](interfaces/ProjectionStateOptions.md)
 - [ProposalSchema](interfaces/ProposalSchema.md)
 - [Quantizer](interfaces/Quantizer.md)
+- [ReactiveQuantizer](interfaces/ReactiveQuantizer.md)
 - [Reason](interfaces/Reason.md)
 - [ReceiptDAG](interfaces/ReceiptDAG.md)
 - [ReceiptEnvelope](interfaces/ReceiptEnvelope.md)
@@ -211,7 +210,6 @@ plan graph, ECS, capsule factory).
 - [VideoFrameOutput](interfaces/VideoFrameOutput.md)
 - [WASMDispatchAPI](interfaces/WASMDispatchAPI.md)
 - [WASMKernels](interfaces/WASMKernels.md)
-- [WireSocket](interfaces/WireSocket.md)
 
 ## Type Aliases
 
@@ -278,6 +276,8 @@ plan graph, ECS, capsule factory).
 - [ProposalRejection](type-aliases/ProposalRejection.md)
 - [ProposalResult](type-aliases/ProposalResult.md)
 - [ProposalTarget](type-aliases/ProposalTarget.md)
+- [QuantizerCrossings](type-aliases/QuantizerCrossings.md)
+- [QuantizerState](type-aliases/QuantizerState.md)
 - [ReplayableRecoveryCell](type-aliases/ReplayableRecoveryCell.md)
 - [RequireAtLeastOne](type-aliases/RequireAtLeastOne.md)
 - [ResponsiveMediaResolutionReason](type-aliases/ResponsiveMediaResolutionReason.md)
@@ -365,7 +365,6 @@ plan graph, ECS, capsule factory).
 - [LiveCell](variables/LiveCell.md)
 - [Millis](variables/Millis.md)
 - [MS\_PER\_SEC](variables/MS_PER_SEC.md)
-- [Op](variables/Op.md)
 - [Part](variables/Part.md)
 - [Plan](variables/Plan.md)
 - [PROJECTION\_KEYS\_SOURCE](variables/PROJECTION_KEYS_SOURCE.md)
@@ -412,7 +411,6 @@ plan graph, ECS, capsule factory).
 - [WASM\_BATCH\_MAX](variables/WASM_BATCH_MAX.md)
 - [WASM\_SCRATCH\_BASE](variables/WASM_SCRATCH_BASE.md)
 - [WASMDispatch](variables/WASMDispatch.md)
-- [Wire](variables/Wire.md)
 - [World](variables/World.md)
 - [Zap](variables/Zap.md)
 
@@ -460,7 +458,6 @@ plan graph, ECS, capsule factory).
 - [isReplayHtmlPatch](functions/isReplayHtmlPatch.md)
 - [isSchema](functions/isSchema.md)
 - [isWellFormedNode](functions/isWellFormedNode.md)
-- [isWire](functions/isWire.md)
 - [isZap](functions/isZap.md)
 - [linearizeGraph](functions/linearizeGraph.md)
 - [lowerRevealChain](functions/lowerRevealChain.md)

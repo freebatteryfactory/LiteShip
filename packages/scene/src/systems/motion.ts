@@ -18,7 +18,6 @@
  * @module
  */
 
-import { Effect } from 'effect';
 import { sampleProgram, type RuntimeWritePlan, type System, type TypedValue, type World } from '@czap/core';
 
 /** The component name a `MotionSampleSystem` writes each sampled leaf under (`motion:<cssVar>`). */
@@ -56,17 +55,16 @@ export function MotionSampleSystem(plan: RuntimeWritePlan, frameIndex: number, t
   return {
     name: 'MotionSampleSystem',
     query: ['MotionProgram'],
-    execute: (entities, world?: World.Shape) =>
-      Effect.gen(function* () {
-        for (const e of entities) {
-          for (const [cssVar, value] of sampled) {
-            const name = motionComponentName(cssVar);
-            (e as unknown as Record<string, unknown>)[name] = value;
-            if (world !== undefined) {
-              yield* world.setComponent(e.id, name, value);
-            }
+    execute: (entities, world?: World.Shape) => {
+      for (const e of entities) {
+        for (const [cssVar, value] of sampled) {
+          const name = motionComponentName(cssVar);
+          (e as unknown as Record<string, unknown>)[name] = value;
+          if (world !== undefined) {
+            world.setComponent(e.id, name, value);
           }
         }
-      }),
+      }
+    },
   };
 }

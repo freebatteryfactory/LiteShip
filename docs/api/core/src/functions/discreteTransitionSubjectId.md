@@ -8,7 +8,7 @@
 
 > **discreteTransitionSubjectId**(`transition`): `string`
 
-Defined in: [core/src/state-transition.ts:78](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-transition.ts#L78)
+Defined in: [core/src/state-transition.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-transition.ts#L77)
 
 The receipt subject id for a transition — `${base}#${cell}`. The SINGLE source
 of the subject law (Law 6): both the mint ([transitionReceipt](transitionReceipt.md)) and the

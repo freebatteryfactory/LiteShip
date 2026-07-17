@@ -23,7 +23,6 @@
 import { describe, test, expect } from 'vitest';
 import fc from 'fast-check';
 import { BlendTree } from '@czap/core';
-import { runScopedAsync as runScoped } from '../helpers/effect-test.js';
 
 type Vec = { x: number; y: number; z: number };
 
@@ -35,8 +34,8 @@ interface Entry {
 }
 
 /** Build a tree, add entries in the given order, and compute the blend. */
-async function blendInOrder(entries: readonly Entry[]): Promise<Vec> {
-  const tree = await runScoped(BlendTree.make<Vec>());
+function blendInOrder(entries: readonly Entry[]): Vec {
+  const { tree } = BlendTree.make<Vec>();
   for (const e of entries) tree.add(e.name, e.value, e.weight);
   return tree.compute();
 }

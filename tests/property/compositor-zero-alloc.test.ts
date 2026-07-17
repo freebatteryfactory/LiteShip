@@ -137,11 +137,13 @@ describe('Compositor compose is genuinely zero-allocation (INV-COMPOSITOR-ZERO-A
       /\bSubscriptionRef\b/.test(code),
       'compositor.ts CODE must NOT use SubscriptionRef — the reactive publish is a raw zero-allocation listener-set fan-out.',
     ).toBe(false);
-    // The publish IS the `changeListeners` set + `publishState` raw fan-out the
-    // transient gate measures.
+    // The publish IS the extracted replay-1 `CellKernel` (the compositor-owned
+    // current-slot + live-Set fan-out, formerly the inline `changeListeners` set)
+    // driven by the `publishState` raw fan-out the transient gate measures. A revert
+    // to `SubscriptionRef.set` fails the assertion above AND drops `CellKernel.replay1`.
     expect(
-      code.includes('changeListeners') && code.includes('function publishState'),
-      'compositor.ts must publish via the `changeListeners` set + `publishState` raw fan-out.',
+      code.includes('CellKernel.replay1') && code.includes('function publishState'),
+      'compositor.ts must publish via the extracted `CellKernel.replay1` kernel + `publishState` raw fan-out.',
     ).toBe(true);
   });
 });

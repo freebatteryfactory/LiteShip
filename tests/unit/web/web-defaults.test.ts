@@ -9,7 +9,6 @@
  */
 
 import { describe, test, expect, beforeEach, afterEach } from 'vitest';
-import { Effect } from 'effect';
 import { Diagnostics, Millis, fixedClock } from '@czap/core';
 import { SSE, Resumption, SlotRegistry, SlotAddressing, Hints } from '@czap/web';
 import { MockEventSource } from '../../helpers/mock-event-source.js';
@@ -33,27 +32,20 @@ afterEach(() => {
 // ---------------------------------------------------------------------------
 
 describe('SSE.create reconnect defaults', () => {
-  test('a partial reconnect override merges over defaultReconnectConfig', async () => {
+  test('a partial reconnect override merges over defaultReconnectConfig', () => {
     uninstallEventSource = MockEventSource.install();
 
-    await Effect.runPromise(
-      Effect.scoped(
-        Effect.gen(function* () {
-          // Only one knob supplied; maxAttempts must come from the defaults
-          // (10), so the first error schedules a reconnect instead of erroring.
-          const client = yield* SSE.create({
-            url: '/api/stream',
-            reconnect: { initialDelay: Millis(1) },
-          });
+    // Only one knob supplied; maxAttempts must come from the defaults (10), so
+    // the first error schedules a reconnect instead of erroring.
+    const client = SSE.create({
+      url: '/api/stream',
+      reconnect: { initialDelay: Millis(1) },
+    });
 
-          MockEventSource.instances.at(-1)!.simulateError();
+    MockEventSource.instances.at(-1)!.simulateError();
 
-          const state = yield* client.state;
-          expect(state).toBe('reconnecting');
-          yield* client.close();
-        }),
-      ),
-    );
+    expect(client.state).toBe('reconnecting');
+    client.close();
   });
 });
 
@@ -62,25 +54,21 @@ describe('SSE.create reconnect defaults', () => {
 // ---------------------------------------------------------------------------
 
 describe('Resumption.saveState timestamp default', () => {
-  test('omitting timestamp stamps the injected clock and round-trips through loadState', async () => {
+  test('omitting timestamp stamps the injected clock and round-trips through loadState', () => {
     // Inject a fixed clock so the persisted timestamp is deterministic; the
     // production default is systemClock.
-    await Effect.runPromise(
-      Resumption.saveState({ artifactId: 'doc-1', lastEventId: 'evt-42', lastSequence: 42 }, fixedClock(1_700_000_000)),
-    );
+    Resumption.saveState({ artifactId: 'doc-1', lastEventId: 'evt-42', lastSequence: 42 }, fixedClock(1_700_000_000));
 
-    const loaded = await Effect.runPromise(Resumption.loadState('doc-1'));
+    const loaded = Resumption.loadState('doc-1');
     expect(loaded).not.toBeNull();
     expect(loaded!.lastEventId).toBe('evt-42');
     expect(loaded!.timestamp).toBe(1_700_000_000);
   });
 
-  test('an explicit timestamp is preserved', async () => {
-    await Effect.runPromise(
-      Resumption.saveState({ artifactId: 'doc-2', lastEventId: 'evt-1', lastSequence: 1, timestamp: 1234 }),
-    );
+  test('an explicit timestamp is preserved', () => {
+    Resumption.saveState({ artifactId: 'doc-2', lastEventId: 'evt-1', lastSequence: 1, timestamp: 1234 });
 
-    const loaded = await Effect.runPromise(Resumption.loadState('doc-2'));
+    const loaded = Resumption.loadState('doc-2');
     expect(loaded!.timestamp).toBe(1234);
   });
 });
@@ -128,24 +116,19 @@ describe('SlotRegistry.register defaults', () => {
 });
 
 describe('SlotRegistry.observe pre-existing DOM scan', () => {
-  test('observe registers slots already in the DOM without a separate scanDOM call', async () => {
+  test('observe registers slots already in the DOM without a separate scanDOM call', () => {
     const element = document.createElement('div');
     element.setAttribute('data-czap-slot', '/sidebar');
     document.body.append(element);
 
     const registry = SlotRegistry.create();
 
-    await Effect.runPromise(
-      Effect.scoped(
-        Effect.gen(function* () {
-          yield* SlotRegistry.observe(registry, document.body);
-          expect(registry.has(SlotAddressing.parse('/sidebar'))).toBe(true);
-        }),
-      ),
-    );
+    const dispose = SlotRegistry.observe(registry, document.body);
+    expect(registry.has(SlotAddressing.parse('/sidebar'))).toBe(true);
+    dispose();
   });
 
-  test('a prior scanDOM + observe sequence does not double-dispatch mounted events', async () => {
+  test('a prior scanDOM + observe sequence does not double-dispatch mounted events', () => {
     const element = document.createElement('div');
     element.setAttribute('data-czap-slot', '/hero');
     document.body.append(element);
@@ -158,13 +141,8 @@ describe('SlotRegistry.observe pre-existing DOM scan', () => {
     const registry = SlotRegistry.create();
     SlotRegistry.scanDOM(registry, document.body);
 
-    await Effect.runPromise(
-      Effect.scoped(
-        Effect.gen(function* () {
-          yield* SlotRegistry.observe(registry, document.body);
-        }),
-      ),
-    );
+    const dispose = SlotRegistry.observe(registry, document.body);
+    dispose();
 
     expect(mountedCount).toBe(1);
   });

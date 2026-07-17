@@ -1,6 +1,5 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { Effect } from 'effect';
 import { Diagnostics } from '@czap/core';
 import {
   applyIdMap,
@@ -13,12 +12,7 @@ import {
   matchNodes,
   set,
 } from '../../../packages/web/src/morph/semantic-id.js';
-import {
-  applyRemap,
-  fromElement,
-  merge,
-  rejectIfMissing,
-} from '../../../packages/web/src/morph/hints.js';
+import { applyRemap, fromElement, merge, rejectIfMissing } from '../../../packages/web/src/morph/hints.js';
 import {
   findBestMatch,
   isSameNode,
@@ -232,7 +226,8 @@ describe('web runtime primitives', () => {
     expect(rejection).toEqual({
       type: 'preserve_violation',
       missingIds: ['missing-id'],
-      reason: 'Morph rejected: elements [missing-id] were required by a preserve hint but are missing from the new HTML.',
+      reason:
+        'Morph rejected: elements [missing-id] were required by a preserve hint but are missing from the new HTML.',
       hint: expect.stringMatching(/data-czap-id elements \[missing-id\]/) as string,
     });
 
@@ -420,10 +415,7 @@ describe('web runtime primitives', () => {
     expect(oldParent.querySelector('#fresh')).not.toBeNull();
     expect(oldParent.querySelector('span')).toBeNull();
 
-    const best = findBestMatch(
-      newParent.querySelector('#fresh')!,
-      Array.from(oldParent.children),
-    );
+    const best = findBestMatch(newParent.querySelector('#fresh')!, Array.from(oldParent.children));
     expect(best?.id).toBe('fresh');
 
     const outer = document.createElement('div');
@@ -583,9 +575,14 @@ describe('web runtime primitives', () => {
     outer.id = 'mixed-outer';
     outer.textContent = 'keep';
     document.body.appendChild(outer);
-    morphPure(outer, 'lead<span data-czap-id="server">body</span>', { morphStyle: 'outerHTML' }, {
-      idMap: new Map([['server', 'client']]),
-    });
+    morphPure(
+      outer,
+      'lead<span data-czap-id="server">body</span>',
+      { morphStyle: 'outerHTML' },
+      {
+        idMap: new Map([['server', 'client']]),
+      },
+    );
     expect(document.getElementById('mixed-outer')?.textContent).toBe('keep');
   });
 
@@ -825,19 +822,17 @@ describe('web runtime primitives', () => {
     root.append(scrollBox, input, textarea);
     document.body.appendChild(root);
 
-    await Effect.runPromise(restoreActiveElement(null));
-    await Effect.runPromise(restoreActiveElement('['));
+    await restoreActiveElement(null);
+    await restoreActiveElement('[');
     expect(pathToElement('[')).toBeNull();
 
-    await Effect.runPromise(
-      restoreFocusState({
-        elementId: 'focus-next',
-        cursorPosition: 0,
-        selectionStart: 2,
-        selectionEnd: 5,
-        selectionDirection: 'backward',
-      }),
-    );
+    await restoreFocusState({
+      elementId: 'focus-next',
+      cursorPosition: 0,
+      selectionStart: 2,
+      selectionEnd: 5,
+      selectionDirection: 'backward',
+    });
     expect(document.activeElement).toBe(input);
     expect(input.selectionStart).toBe(2);
     expect(input.selectionEnd).toBe(5);
@@ -853,37 +848,31 @@ describe('web runtime primitives', () => {
     editor.textContent = 'editable text';
     root.appendChild(editor);
 
-    await Effect.runPromise(
-      restoreFocusState({
-        elementId: 'editor',
-        cursorPosition: 0,
-        selectionStart: 0,
-        selectionEnd: 8,
-        selectionDirection: 'forward',
-      }),
-    );
+    await restoreFocusState({
+      elementId: 'editor',
+      cursorPosition: 0,
+      selectionStart: 0,
+      selectionEnd: 8,
+      selectionDirection: 'forward',
+    });
     expect(document.activeElement).toBe(editor);
     expect(window.getSelection()?.toString()).toBe('editable');
 
-    await Effect.runPromise(
-      restoreSelection({
-        elementPath: '#notes',
-        start: 1,
-        end: 4,
-        direction: 'forward',
-      }),
-    );
+    await restoreSelection({
+      elementPath: '#notes',
+      start: 1,
+      end: 4,
+      direction: 'forward',
+    });
     expect(textarea.selectionStart).toBe(1);
     expect(textarea.selectionEnd).toBe(4);
 
-    await Effect.runPromise(
-      restoreSelection({
-        elementPath: '[data-czap-id="editor"]',
-        start: 9,
-        end: 13,
-        direction: 'forward',
-      }),
-    );
+    await restoreSelection({
+      elementPath: '[data-czap-id="editor"]',
+      start: 9,
+      end: 13,
+      direction: 'forward',
+    });
     expect(window.getSelection()?.toString()).toBe('text');
 
     const colorInput = document.createElement('input');
@@ -894,33 +883,27 @@ describe('web runtime primitives', () => {
     });
     root.appendChild(colorInput);
 
-    await Effect.runPromise(
-      restoreFocusState({
-        elementId: '#color-input',
-        cursorPosition: 0,
-        selectionStart: 0,
-        selectionEnd: 1,
-        selectionDirection: 'forward',
-      }),
-    );
-    await Effect.runPromise(
-      restoreSelection({
-        elementPath: '#color-input',
-        start: 0,
-        end: 1,
-        direction: 'forward',
-      }),
-    );
+    await restoreFocusState({
+      elementId: '#color-input',
+      cursorPosition: 0,
+      selectionStart: 0,
+      selectionEnd: 1,
+      selectionDirection: 'forward',
+    });
+    await restoreSelection({
+      elementPath: '#color-input',
+      start: 0,
+      end: 1,
+      direction: 'forward',
+    });
     expect(throwingSelection).toHaveBeenCalled();
 
-    await Effect.runPromise(
-      restoreScrollPositions(
-        {
-          '[data-czap-id="panel"]': { top: 90, left: 12 },
-          '[': { top: 1, left: 1 },
-        },
-        root,
-      ),
+    await restoreScrollPositions(
+      {
+        '[data-czap-id="panel"]': { top: 90, left: 12 },
+        '[': { top: 1, left: 1 },
+      },
+      root,
     );
     expect(scrollBox.scrollTop).toBe(90);
     expect(scrollBox.scrollLeft).toBe(12);
@@ -930,26 +913,24 @@ describe('web runtime primitives', () => {
     defineScrollBox(root, 520, 120);
     const rootPath = elementToPath(root);
 
-    await Effect.runPromise(restoreActiveElement(rootPath, root));
+    await restoreActiveElement(rootPath, root);
     expect(document.activeElement).toBe(root);
 
-    await Effect.runPromise(
-      restoreScrollPositions(
-        {
-          [rootPath]: { top: 33, left: 7 },
-        },
-        root,
-      ),
+    await restoreScrollPositions(
+      {
+        [rootPath]: { top: 33, left: 7 },
+      },
+      root,
     );
     expect(pathToElement(rootPath, root)).toBe(root);
     expect(root.scrollTop).toBe(33);
     expect(root.scrollLeft).toBe(7);
 
-    await Effect.runPromise(restoreIME({ elementPath: '[data-czap-id="focus-next"]', text: 'kana', start: 0, end: 2 }));
+    await restoreIME({ elementPath: '[data-czap-id="focus-next"]', text: 'kana', start: 0, end: 2 });
     expect(document.activeElement).toBe(input);
     expect(input.selectionEnd).toBe(2);
 
-    await Effect.runPromise(restoreIME({ elementPath: '[data-czap-id="editor"]', text: 'kana', start: 0, end: 2 }));
+    await restoreIME({ elementPath: '[data-czap-id="editor"]', text: 'kana', start: 0, end: 2 });
     expect(document.activeElement).toBe(input);
 
     const remappedRoot = document.createElement('div');
@@ -958,34 +939,32 @@ describe('web runtime primitives', () => {
     remappedRoot.appendChild(remappedInput);
     document.body.appendChild(remappedRoot);
 
-    await Effect.runPromise(
-      restore(
-        {
-          activeElementPath: `[${ATTR}="focus-old"]`,
-          focusState: {
-            elementId: 'focus-old',
-            cursorPosition: 0,
-            selectionStart: 1,
-            selectionEnd: 3,
-            selectionDirection: 'forward',
-          },
-          scrollPositions: {},
-          selection: {
-            elementPath: `[${ATTR}="focus-old"]`,
-            start: 0,
-            end: 2,
-            direction: 'forward',
-          },
-          ime: {
-            elementPath: `[${ATTR}="focus-old"]`,
-            text: 'ka',
-            start: 0,
-            end: 2,
-          },
+    await restore(
+      {
+        activeElementPath: `[${ATTR}="focus-old"]`,
+        focusState: {
+          elementId: 'focus-old',
+          cursorPosition: 0,
+          selectionStart: 1,
+          selectionEnd: 3,
+          selectionDirection: 'forward',
         },
-        remappedRoot,
-        { 'focus-old': 'focus-final' },
-      ),
+        scrollPositions: {},
+        selection: {
+          elementPath: `[${ATTR}="focus-old"]`,
+          start: 0,
+          end: 2,
+          direction: 'forward',
+        },
+        ime: {
+          elementPath: `[${ATTR}="focus-old"]`,
+          text: 'ka',
+          start: 0,
+          end: 2,
+        },
+      },
+      remappedRoot,
+      { 'focus-old': 'focus-final' },
     );
     expect(document.activeElement).toBe(remappedInput);
     expect(remappedInput.selectionStart).toBeGreaterThanOrEqual(0);
@@ -1018,51 +997,45 @@ describe('web runtime primitives', () => {
     root.append(disabledInput, plainDiv, editor, textarea);
     document.body.appendChild(root);
 
-    await Effect.runPromise(restoreActiveElement('[data-czap-id="disabled"]', root));
+    await restoreActiveElement('[data-czap-id="disabled"]', root);
     expect(document.activeElement).not.toBe(disabledInput);
 
-    await Effect.runPromise(
-      restoreFocusState(
-        {
-          elementId: 'plain',
-          cursorPosition: 0,
-          selectionStart: 0,
-          selectionEnd: 1,
-          selectionDirection: 'forward',
-        },
-        root,
-      ),
+    await restoreFocusState(
+      {
+        elementId: 'plain',
+        cursorPosition: 0,
+        selectionStart: 0,
+        selectionEnd: 1,
+        selectionDirection: 'forward',
+      },
+      root,
     );
     expect(document.activeElement).not.toBe(plainDiv);
 
-    await Effect.runPromise(
-      restoreFocusState(
-        {
-          elementId: 'editor-2',
-          cursorPosition: 0,
-          selectionStart: 20,
-          selectionEnd: 25,
-          selectionDirection: 'forward',
-        },
-        root,
-      ),
+    await restoreFocusState(
+      {
+        elementId: 'editor-2',
+        cursorPosition: 0,
+        selectionStart: 20,
+        selectionEnd: 25,
+        selectionDirection: 'forward',
+      },
+      root,
     );
     expect(document.activeElement).toBe(editor);
     expect(window.getSelection()?.rangeCount ?? 0).toBeGreaterThanOrEqual(0);
 
-    await Effect.runPromise(
-      restoreSelection({
-        elementPath: '[data-czap-id="editor-2"]',
-        start: 20,
-        end: 25,
-        direction: 'forward',
-      }),
-    );
+    await restoreSelection({
+      elementPath: '[data-czap-id="editor-2"]',
+      start: 20,
+      end: 25,
+      direction: 'forward',
+    });
     expect(window.getSelection()?.toString() ?? '').toBe('');
 
-    await Effect.runPromise(restoreSelection({ elementPath: '[', start: 0, end: 1, direction: 'forward' }));
+    await restoreSelection({ elementPath: '[', start: 0, end: 1, direction: 'forward' });
 
-    await Effect.runPromise(restoreIME({ elementPath: '[data-czap-id="notes-2"]', text: 'kana', start: 2, end: 5 }));
+    await restoreIME({ elementPath: '[data-czap-id="notes-2"]', text: 'kana', start: 2, end: 5 });
     expect(document.activeElement).toBe(textarea);
     expect(textarea.selectionStart).toBe(2);
     expect(textarea.selectionEnd).toBe(5);
@@ -1094,28 +1067,24 @@ describe('web runtime primitives', () => {
       throw new TypeError('selection boom');
     });
 
-    await expect(
-      Effect.runPromise(
-        restoreFocusState({
-          elementId: '#explode-input',
-          cursorPosition: 0,
-          selectionStart: 1,
-          selectionEnd: 3,
-          selectionDirection: 'forward',
-        }),
-      ),
-    ).rejects.toThrow('selection boom');
+    expect(() =>
+      restoreFocusState({
+        elementId: '#explode-input',
+        cursorPosition: 0,
+        selectionStart: 1,
+        selectionEnd: 3,
+        selectionDirection: 'forward',
+      }),
+    ).toThrow('selection boom');
 
-    await expect(
-      Effect.runPromise(
-        restoreSelection({
-          elementPath: '#explode-input',
-          start: 1,
-          end: 3,
-          direction: 'forward',
-        }),
-      ),
-    ).rejects.toThrow('selection boom');
+    expect(() =>
+      restoreSelection({
+        elementPath: '#explode-input',
+        start: 1,
+        end: 3,
+        direction: 'forward',
+      }),
+    ).toThrow('selection boom');
 
     vi.spyOn(document, 'createRange').mockReturnValue({
       setStart() {
@@ -1124,27 +1093,23 @@ describe('web runtime primitives', () => {
       setEnd() {},
     } as unknown as Range);
 
-    await expect(
-      Effect.runPromise(
-        restoreSelection({
-          elementPath: '[data-czap-id="explode-editor"]',
-          start: 0,
-          end: 4,
-          direction: 'forward',
-        }),
-      ),
-    ).rejects.toThrow('range boom');
+    expect(() =>
+      restoreSelection({
+        elementPath: '[data-czap-id="explode-editor"]',
+        start: 0,
+        end: 4,
+        direction: 'forward',
+      }),
+    ).toThrow('range boom');
 
-    await expect(
-      Effect.runPromise(
-        restoreIME({
-          elementPath: '#explode-input',
-          text: 'kana',
-          start: 0,
-          end: 2,
-        }),
-      ),
-    ).rejects.toThrow('selection boom');
+    expect(() =>
+      restoreIME({
+        elementPath: '#explode-input',
+        text: 'kana',
+        start: 0,
+        end: 2,
+      }),
+    ).toThrow('selection boom');
 
     expect(() =>
       pathToElement('#explode-input', {
@@ -1184,27 +1149,23 @@ describe('web runtime primitives', () => {
       setEnd() {},
     } as unknown as Range);
 
-    await expect(
-      Effect.runPromise(
-        restoreSelection({
-          elementPath: '[data-czap-id="range-editor"]',
-          start: 0,
-          end: 2,
-          direction: 'forward',
-        }),
-      ),
-    ).resolves.toBeUndefined();
+    expect(
+      restoreSelection({
+        elementPath: '[data-czap-id="range-editor"]',
+        start: 0,
+        end: 2,
+        direction: 'forward',
+      }),
+    ).toBeUndefined();
 
-    await expect(
-      Effect.runPromise(
-        restoreIME({
-          elementPath: '#missing-ime-target',
-          text: 'kana',
-          start: 0,
-          end: 2,
-        }),
-      ),
-    ).resolves.toBeUndefined();
+    expect(
+      restoreIME({
+        elementPath: '#missing-ime-target',
+        text: 'kana',
+        start: 0,
+        end: 2,
+      }),
+    ).toBeUndefined();
   });
 
   test('covers additional restore best-effort branches for tabindex focus, empty ranges, and unsupported DOM exceptions', async () => {
@@ -1213,12 +1174,10 @@ describe('web runtime primitives', () => {
     generic.tabIndex = 0;
     document.body.appendChild(generic);
 
-    await Effect.runPromise(
-      restoreFocusState({
-        elementId: 'tabbable',
-        cursorPosition: 0,
-      }),
-    );
+    await restoreFocusState({
+      elementId: 'tabbable',
+      cursorPosition: 0,
+    });
     expect(document.activeElement).toBe(generic);
 
     const emptyEditor = document.createElement('div');
@@ -1232,16 +1191,14 @@ describe('web runtime primitives', () => {
     });
     document.body.appendChild(emptyEditor);
 
-    await expect(
-      Effect.runPromise(
-        restoreSelection({
-          elementPath: '[data-czap-id="empty-editor"]',
-          start: 0,
-          end: 1,
-          direction: 'forward',
-        }),
-      ),
-    ).resolves.toBeUndefined();
+    expect(
+      restoreSelection({
+        elementPath: '[data-czap-id="empty-editor"]',
+        start: 0,
+        end: 1,
+        direction: 'forward',
+      }),
+    ).toBeUndefined();
 
     const textInput = document.createElement('input');
     textInput.id = 'invalid-access';
@@ -1250,17 +1207,15 @@ describe('web runtime primitives', () => {
       throw new DOMException('unsupported', 'InvalidAccessError');
     });
 
-    await expect(
-      Effect.runPromise(
-        restoreFocusState({
-          elementId: '#invalid-access',
-          cursorPosition: 0,
-          selectionStart: 0,
-          selectionEnd: 1,
-          selectionDirection: 'forward',
-        }),
-      ),
-    ).resolves.toBeUndefined();
+    expect(
+      restoreFocusState({
+        elementId: '#invalid-access',
+        cursorPosition: 0,
+        selectionStart: 0,
+        selectionEnd: 1,
+        selectionDirection: 'forward',
+      }),
+    ).toBeUndefined();
   });
 
   test('covers restore no-op branches for non-focusable targets, missing selections, and inert IME restores', async () => {
@@ -1286,47 +1241,41 @@ describe('web runtime primitives', () => {
     root.append(plain, editor, textarea);
     document.body.appendChild(root);
 
-    await Effect.runPromise(restoreActiveElement('#plain', root));
+    await restoreActiveElement('#plain', root);
     expect(document.activeElement).not.toBe(plain);
 
-    await Effect.runPromise(
-      restoreFocusState(
-        {
-          elementId: '#notes-null-selection',
-          cursorPosition: 0,
-          selectionDirection: 'none',
-        } as never,
-        root,
-      ),
+    await restoreFocusState(
+      {
+        elementId: '#notes-null-selection',
+        cursorPosition: 0,
+        selectionDirection: 'none',
+      } as never,
+      root,
     );
     expect(document.activeElement).toBe(textarea);
 
     const getSelectionSpy = vi.spyOn(window, 'getSelection').mockReturnValue(null);
 
-    await Effect.runPromise(
-      restoreFocusState(
-        {
-          elementId: 'editor-null-selection',
-          cursorPosition: 0,
-          selectionStart: 0,
-          selectionEnd: 4,
-          selectionDirection: 'forward',
-        },
-        root,
-      ),
+    await restoreFocusState(
+      {
+        elementId: 'editor-null-selection',
+        cursorPosition: 0,
+        selectionStart: 0,
+        selectionEnd: 4,
+        selectionDirection: 'forward',
+      },
+      root,
     );
     expect(document.activeElement).toBe(editor);
 
-    await Effect.runPromise(
-      restoreSelection({
-        elementPath: '[data-czap-id="editor-null-selection"]',
-        start: 0,
-        end: 4,
-        direction: 'forward',
-      }),
-    );
+    await restoreSelection({
+      elementPath: '[data-czap-id="editor-null-selection"]',
+      start: 0,
+      end: 4,
+      direction: 'forward',
+    });
 
-    await Effect.runPromise(restoreIME(null));
+    await restoreIME(null);
     expect(getSelectionSpy).toHaveBeenCalled();
   });
 
@@ -1340,20 +1289,18 @@ describe('web runtime primitives', () => {
     root.append(scroller, focusTarget);
     document.body.appendChild(root);
 
-    await Effect.runPromise(
-      restore(
-        {
-          activeElementPath: `[${ATTR}="focus-old"]`,
-          focusState: null,
-          scrollPositions: {
-            '#scroll-old': { top: 7, left: 3 },
-          },
-          selection: null,
-          ime: null,
+    await restore(
+      {
+        activeElementPath: `[${ATTR}="focus-old"]`,
+        focusState: null,
+        scrollPositions: {
+          '#scroll-old': { top: 7, left: 3 },
         },
-        root,
-        { '#scroll-old': '#scroll-next', 'focus-old': 'focus-next' },
-      ),
+        selection: null,
+        ime: null,
+      },
+      root,
+      { '#scroll-old': '#scroll-next', 'focus-old': 'focus-next' },
     );
 
     expect(document.activeElement).toBe(focusTarget);
@@ -1411,55 +1358,52 @@ describe('web runtime primitives', () => {
       });
       expect(registry.entries().size).toBe(2);
 
-      await Effect.runPromise(
-        Effect.scoped(
-          Effect.gen(function* () {
-            yield* SlotRegistry.observe(registry, root);
+      {
+        const dispose = SlotRegistry.observe(registry, root);
 
-            const nested = document.createElement('div');
-            nested.appendChild(document.createTextNode('ignored'));
-            nested.innerHTML += '<div data-czap-slot="relative-footer"></div><div data-czap-slot="/hero/footer"></div>';
-            root.appendChild(nested);
-            root.appendChild(document.createTextNode('still-ignored'));
-            yield* Effect.promise(flushMutations);
-            expect(registry.has('/hero/footer' as never)).toBe(true);
+        const nested = document.createElement('div');
+        nested.appendChild(document.createTextNode('ignored'));
+        nested.innerHTML += '<div data-czap-slot="relative-footer"></div><div data-czap-slot="/hero/footer"></div>';
+        root.appendChild(nested);
+        root.appendChild(document.createTextNode('still-ignored'));
+        await flushMutations();
+        expect(registry.has('/hero/footer' as never)).toBe(true);
 
-            const attrNode = nested.lastElementChild as Element;
-            attrNode.setAttribute('data-czap-slot', '/hero/footer-next');
-            yield* Effect.promise(flushMutations);
-            expect(registry.has('/hero/footer' as never)).toBe(false);
-            expect(registry.has('/hero/footer-next' as never)).toBe(true);
+        const attrNode = nested.lastElementChild as Element;
+        attrNode.setAttribute('data-czap-slot', '/hero/footer-next');
+        await flushMutations();
+        expect(registry.has('/hero/footer' as never)).toBe(false);
+        expect(registry.has('/hero/footer-next' as never)).toBe(true);
 
-            attrNode.setAttribute('data-czap-slot', 'relative-footer');
-            yield* Effect.promise(flushMutations);
-            expect(registry.has('/hero/footer-next' as never)).toBe(false);
-            expect(SlotRegistry.getPath(attrNode)).toBeNull();
+        attrNode.setAttribute('data-czap-slot', 'relative-footer');
+        await flushMutations();
+        expect(registry.has('/hero/footer-next' as never)).toBe(false);
+        expect(SlotRegistry.getPath(attrNode)).toBeNull();
 
-            attrNode.setAttribute('data-czap-slot', '/hero/footer-return');
-            yield* Effect.promise(flushMutations);
-            expect(registry.has('/hero/footer-return' as never)).toBe(true);
+        attrNode.setAttribute('data-czap-slot', '/hero/footer-return');
+        await flushMutations();
+        expect(registry.has('/hero/footer-return' as never)).toBe(true);
 
-            // Add a node that is ITSELF a slot (not just containing slot descendants)
-            // so the observer hits the added-node branch that registers it directly.
-            const directSlot = document.createElement('div');
-            directSlot.setAttribute('data-czap-slot', '/hero/direct');
-            root.appendChild(directSlot);
-            yield* Effect.promise(flushMutations);
-            expect(registry.has('/hero/direct' as never)).toBe(true);
+        // Add a node that is ITSELF a slot (not just containing slot descendants)
+        // so the observer hits the added-node branch that registers it directly.
+        const directSlot = document.createElement('div');
+        directSlot.setAttribute('data-czap-slot', '/hero/direct');
+        root.appendChild(directSlot);
+        await flushMutations();
+        expect(registry.has('/hero/direct' as never)).toBe(true);
 
-            // Remove that same slot node directly so the removed-node branch
-            // unregisters it before walking its descendants.
-            directSlot.remove();
-            yield* Effect.promise(flushMutations);
-            expect(registry.has('/hero/direct' as never)).toBe(false);
+        // Remove that same slot node directly so the removed-node branch
+        // unregisters it before walking its descendants.
+        directSlot.remove();
+        await flushMutations();
+        expect(registry.has('/hero/direct' as never)).toBe(false);
 
-            nested.remove();
-            root.lastChild?.remove();
-            yield* Effect.promise(flushMutations);
-            expect(registry.has('/hero/footer-return' as never)).toBe(false);
-          }),
-        ),
-      );
+        nested.remove();
+        root.lastChild?.remove();
+        await flushMutations();
+        expect(registry.has('/hero/footer-return' as never)).toBe(false);
+        dispose();
+      }
 
       registry.unregister('/missing' as never);
       expect(SlotRegistry.findElement('/root-shell' as never)).toBe(document.documentElement);
@@ -1476,20 +1420,17 @@ describe('web runtime primitives', () => {
 
       const attrOnly = document.createElement('div');
       root.appendChild(attrOnly);
-      await Effect.runPromise(
-        Effect.scoped(
-          Effect.gen(function* () {
-            yield* SlotRegistry.observe(registry, root);
-            attrOnly.setAttribute('data-czap-slot', '/hero/attr-only');
-            yield* Effect.promise(flushMutations);
-            expect(registry.has('/hero/attr-only' as never)).toBe(true);
+      {
+        const dispose = SlotRegistry.observe(registry, root);
+        attrOnly.setAttribute('data-czap-slot', '/hero/attr-only');
+        await flushMutations();
+        expect(registry.has('/hero/attr-only' as never)).toBe(true);
 
-            attrOnly.setAttribute('data-czap-slot', 'invalid');
-            yield* Effect.promise(flushMutations);
-            expect(registry.has('/hero/attr-only' as never)).toBe(false);
-          }),
-        ),
-      );
+        attrOnly.setAttribute('data-czap-slot', 'invalid');
+        await flushMutations();
+        expect(registry.has('/hero/attr-only' as never)).toBe(false);
+        dispose();
+      }
 
       // scanDOM warns once; each of the two observe() calls now scans the
       // pre-existing DOM first (wave-2 item 57) and re-warns the

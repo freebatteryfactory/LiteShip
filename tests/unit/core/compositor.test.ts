@@ -1,12 +1,19 @@
 /**
  * Compositor -- DirtyFlags integration, pool, FrameBudget, batching.
+ *
+ * Wave 2 / SEAM 4: the compositor's reactive seam was swapped from Effect
+ * (`Compositor.create` → scoped Effect, `add`/`remove`/`compute`/`setBlendWeights`
+ * → Effect, `changes` → `Stream`) onto the extracted replay-1 `CellKernel`:
+ * `create` now returns `{ compositor, lifetime }` synchronously, the mutators are
+ * plain sync, and `changes` is the kernel's read-only replay-1 subscription
+ * surface (`subscribe(sink) → disposer`, replaying the current live state on
+ * attach). The pure compose kernel (`computeStateSync`) is byte-identical — only
+ * the transport changed, so every assertion below is preserved.
  */
 
 import { describe, test, expect } from 'vitest';
-import { Deferred, Effect, Fiber, Stream } from 'effect';
 import { Boundary, Compositor, DIRTY_FLAGS_MAX } from '@czap/core';
 import type { CompositeState } from '@czap/core';
-import { runScopedAsync as runScoped } from '../../helpers/effect-test.js';
 
 const widthBoundary = Boundary.make({
   input: 'viewport.width',
@@ -21,7 +28,7 @@ function makeQuantizer(boundary: Boundary.Shape, initialState?: string) {
   let currentState = initialState ?? (boundary.states[0] as string);
   return {
     boundary,
-    state: Effect.succeed(currentState),
+    stateSync: () => currentState,
     changes: null as any, // Not used in these tests
     evaluate(value: number) {
       currentState = Boundary.evaluate(boundary, value) as string;
@@ -35,27 +42,29 @@ function makeQuantizer(boundary: Boundary.Shape, initialState?: string) {
 
 describe('Compositor', () => {
   describe('basic operations', () => {
-    test('create returns a compositor', async () => {
-      const compositor = await runScoped(Compositor.create());
+    test('create returns a compositor paired with its Lifetime', () => {
+      const { compositor, lifetime } = Compositor.create();
       expect(compositor).toBeDefined();
       expect(compositor.add).toBeDefined();
       expect(compositor.remove).toBeDefined();
       expect(compositor.compute).toBeDefined();
+      expect(lifetime).toBeDefined();
+      expect(lifetime._tag).toBe('Lifetime');
     });
 
-    test('compute on empty compositor returns empty state', async () => {
-      const compositor = await runScoped(Compositor.create());
-      const state = await Effect.runPromise(compositor.compute());
+    test('compute on empty compositor returns empty state', () => {
+      const { compositor } = Compositor.create();
+      const state = compositor.compute();
       expect(state.discrete).toEqual({});
       expect(state.outputs.css).toEqual({});
     });
 
-    test('add quantizer and compute produces output', async () => {
-      const compositor = await runScoped(Compositor.create());
+    test('add quantizer and compute produces output', () => {
+      const { compositor } = Compositor.create();
       const q = makeQuantizer(widthBoundary, 'mobile');
 
-      await Effect.runPromise(compositor.add('layout', q));
-      const state = await Effect.runPromise(compositor.compute());
+      compositor.add('layout', q);
+      const state = compositor.compute();
 
       expect(state.discrete['layout']).toBe('mobile');
       expect(state.outputs.css['--czap-layout']).toBe('mobile');
@@ -63,131 +72,129 @@ describe('Compositor', () => {
       expect(state.outputs.aria['data-czap-layout']).toBe('mobile');
     });
 
-    test('remove quantizer clears its output', async () => {
-      const compositor = await runScoped(Compositor.create());
+    test('remove quantizer clears its output', () => {
+      const { compositor } = Compositor.create();
       const q = makeQuantizer(widthBoundary, 'tablet');
 
-      await Effect.runPromise(compositor.add('layout', q));
-      await Effect.runPromise(compositor.remove('layout'));
-      const state = await Effect.runPromise(compositor.compute());
+      compositor.add('layout', q);
+      compositor.remove('layout');
+      const state = compositor.compute();
 
       expect(state.discrete['layout']).toBeUndefined();
     });
   });
 
   describe('DirtyFlags integration', () => {
-    test('only dirty quantizers recompute', async () => {
-      const compositor = await runScoped(Compositor.create());
+    test('only dirty quantizers recompute', () => {
+      const { compositor } = Compositor.create();
       const q1 = makeQuantizer(widthBoundary, 'mobile');
       const q2 = makeQuantizer(widthBoundary, 'tablet');
 
-      await Effect.runPromise(compositor.add('q1', q1));
-      await Effect.runPromise(compositor.add('q2', q2));
+      compositor.add('q1', q1);
+      compositor.add('q2', q2);
 
       // First compute should include both
-      const state1 = await Effect.runPromise(compositor.compute());
+      const state1 = compositor.compute();
       expect(state1.discrete['q1']).toBe('mobile');
       expect(state1.discrete['q2']).toBe('tablet');
 
       // Change q1's state, mark dirty via setBlendWeights
       q1._setState('desktop');
-      await Effect.runPromise(compositor.setBlendWeights('q1', { desktop: 1 }));
+      compositor.setBlendWeights('q1', { desktop: 1 });
 
       // Compute — q2 should still be present from previous state
-      const state2 = await Effect.runPromise(compositor.compute());
+      const state2 = compositor.compute();
       expect(state2.discrete['q2']).toBe('tablet');
       expect(state2.blend['q1']).toEqual({ desktop: 1 });
     });
   });
 
   describe('blend weights', () => {
-    test('setBlendWeights overrides auto-computed weights', async () => {
-      const compositor = await runScoped(Compositor.create());
+    test('setBlendWeights overrides auto-computed weights', () => {
+      const { compositor } = Compositor.create();
       const q = makeQuantizer(widthBoundary, 'mobile');
 
-      await Effect.runPromise(compositor.add('layout', q));
-      await Effect.runPromise(compositor.setBlendWeights('layout', { mobile: 0.5, tablet: 0.5 }));
+      compositor.add('layout', q);
+      compositor.setBlendWeights('layout', { mobile: 0.5, tablet: 0.5 });
 
-      const state = await Effect.runPromise(compositor.compute());
+      const state = compositor.compute();
       expect(state.blend['layout']).toEqual({ mobile: 0.5, tablet: 0.5 });
     });
   });
 
   describe('pool integration', () => {
-    test('custom pool capacity is accepted', async () => {
-      const compositor = await runScoped(Compositor.create({ poolCapacity: 4 }));
+    test('custom pool capacity is accepted', () => {
+      const { compositor } = Compositor.create({ poolCapacity: 4 });
       expect(compositor).toBeDefined();
     });
   });
 
   describe('scheduleBatch', () => {
-    test('scheduleBatch is callable', async () => {
-      const compositor = await runScoped(Compositor.create());
+    test('scheduleBatch is callable', () => {
+      const { compositor } = Compositor.create();
       // Should not throw
       compositor.scheduleBatch();
     });
 
     test('scheduleBatch coalesces duplicate calls in the same microtask turn', async () => {
-      const compositor = await runScoped(Compositor.create());
+      const { compositor } = Compositor.create();
       const q = makeQuantizer(widthBoundary, 'mobile');
 
-      await Effect.runPromise(compositor.add('layout', q));
+      compositor.add('layout', q);
       compositor.scheduleBatch();
       compositor.scheduleBatch();
       await Promise.resolve();
 
-      const state = await Effect.runPromise(compositor.compute());
+      const state = compositor.compute();
       expect(state.discrete['layout']).toBe('mobile');
     });
   });
 
   describe('runtime hot-path branches', () => {
-    test('respects frame-budget gating for glsl and aria emission', async () => {
-      const compositor = await runScoped(
-        Compositor.create({
-          frameBudget: {
-            canRun(priority: string) {
-              return priority === 'medium';
-            },
-          } as never,
-        }),
-      );
+    test('respects frame-budget gating for glsl and aria emission', () => {
+      const { compositor } = Compositor.create({
+        frameBudget: {
+          canRun(priority: string) {
+            return priority === 'medium';
+          },
+        } as never,
+      });
       const q = makeQuantizer(widthBoundary, 'tablet');
 
-      await Effect.runPromise(compositor.add('layout', q));
-      const state = await Effect.runPromise(compositor.compute());
+      compositor.add('layout', q);
+      const state = compositor.compute();
 
       expect(state.outputs.css['--czap-layout']).toBe('tablet');
       expect(state.outputs.glsl['u_layout']).toBeUndefined();
       expect(state.outputs.aria['data-czap-layout']).toBeUndefined();
     });
 
-    test('uses speculative prefetched states and clears them when confidence drops', async () => {
-      const compositor = await runScoped(Compositor.create({ speculative: true }));
+    test('uses speculative prefetched states and clears them when confidence drops', () => {
+      const { compositor } = Compositor.create({ speculative: true });
       const q = makeQuantizer(widthBoundary, 'mobile');
 
-      await Effect.runPromise(compositor.add('layout', q));
+      compositor.add('layout', q);
 
       compositor.evaluateSpeculative('layout', 767.9, 1);
-      let state = await Effect.runPromise(compositor.compute());
+      let state = compositor.compute();
       expect(state.discrete['layout']).toBe('tablet');
 
       q._setState('mobile');
       compositor.evaluateSpeculative('layout', 640, 0);
-      await Effect.runPromise(compositor.setBlendWeights('layout', { mobile: 1 }));
-      state = await Effect.runPromise(compositor.compute());
+      compositor.setBlendWeights('layout', { mobile: 1 });
+      state = compositor.compute();
       expect(state.discrete['layout']).toBe('mobile');
     });
 
-    test('prefers stateSync and tolerates undefined discrete states on the emit path', async () => {
-      const compositor = await runScoped(Compositor.create());
+    test('prefers stateSync and tolerates undefined discrete states on the emit path', () => {
+      const { compositor } = Compositor.create();
       const q = {
         ...makeQuantizer(widthBoundary, 'mobile'),
-        stateSync: () => undefined as unknown as string,
+        stateSync: () => undefined,
       };
 
-      await Effect.runPromise(compositor.add('layout', q as never));
-      const state = await Effect.runPromise(compositor.compute());
+      compositor.add('layout', q as never);
+      const state = compositor.compute();
 
       expect(state.discrete['layout']).toBeUndefined();
       expect(state.outputs.css['--czap-layout']).toBeUndefined();
@@ -196,39 +203,39 @@ describe('Compositor', () => {
       expect(state.blend['layout']).toEqual({});
     });
 
-    test('recompute-all mode stays stable after exceeding the dirty-flag capacity', async () => {
-      const compositor = await runScoped(Compositor.create({ speculative: true }));
+    test('recompute-all mode stays stable after exceeding the dirty-flag capacity', () => {
+      const { compositor } = Compositor.create({ speculative: true });
 
       for (let index = 0; index <= DIRTY_FLAGS_MAX; index++) {
-        await Effect.runPromise(compositor.add(`q${index}`, makeQuantizer(widthBoundary, 'mobile')));
+        compositor.add(`q${index}`, makeQuantizer(widthBoundary, 'mobile'));
       }
 
       compositor.evaluateSpeculative('q0', 767.9, 1);
-      const state = await Effect.runPromise(compositor.compute());
+      const state = compositor.compute();
 
       expect(Object.keys(state.discrete)).toHaveLength(DIRTY_FLAGS_MAX + 1);
       expect(state.discrete['q0']).toBe('tablet');
     });
 
-    test('duplicate adds preserve runtime state both before and after dirty flags fall back to recompute-all mode', async () => {
-      const compositor = await runScoped(Compositor.create());
+    test('duplicate adds preserve runtime state both before and after dirty flags fall back to recompute-all mode', () => {
+      const { compositor } = Compositor.create();
       const first = makeQuantizer(widthBoundary, 'mobile');
       const second = makeQuantizer(widthBoundary, 'tablet');
 
-      await Effect.runPromise(compositor.add('layout', first));
-      await Effect.runPromise(compositor.add('layout', second));
-      let state = await Effect.runPromise(compositor.compute());
+      compositor.add('layout', first);
+      compositor.add('layout', second);
+      let state = compositor.compute();
 
       expect(state.discrete['layout']).toBe('tablet');
       expect(state.blend['layout']).toEqual({ tablet: 1, mobile: 0, desktop: 0 });
 
-      const recomputeAll = await runScoped(Compositor.create());
+      const { compositor: recomputeAll } = Compositor.create();
       for (let index = 0; index <= DIRTY_FLAGS_MAX; index++) {
-        await Effect.runPromise(recomputeAll.add(`q${index}`, makeQuantizer(widthBoundary, 'mobile')));
+        recomputeAll.add(`q${index}`, makeQuantizer(widthBoundary, 'mobile'));
       }
 
-      await Effect.runPromise(recomputeAll.add('q0', makeQuantizer(widthBoundary, 'desktop')));
-      state = await Effect.runPromise(recomputeAll.compute());
+      recomputeAll.add('q0', makeQuantizer(widthBoundary, 'desktop'));
+      state = recomputeAll.compute();
 
       expect(state.discrete['q0']).toBe('desktop');
       expect(state.blend['q0']).toEqual({ mobile: 0, tablet: 0, desktop: 1 });
@@ -236,8 +243,8 @@ describe('Compositor', () => {
   });
 
   describe('multiple quantizers', () => {
-    test('handles multiple quantizers correctly', async () => {
-      const compositor = await runScoped(Compositor.create());
+    test('handles multiple quantizers correctly', () => {
+      const { compositor } = Compositor.create();
 
       const colorBoundary = Boundary.make({
         input: 'prefers-color-scheme',
@@ -250,10 +257,10 @@ describe('Compositor', () => {
       const q1 = makeQuantizer(widthBoundary, 'tablet');
       const q2 = makeQuantizer(colorBoundary, 'light');
 
-      await Effect.runPromise(compositor.add('layout', q1));
-      await Effect.runPromise(compositor.add('theme', q2));
+      compositor.add('layout', q1);
+      compositor.add('theme', q2);
 
-      const state = await Effect.runPromise(compositor.compute());
+      const state = compositor.compute();
       expect(state.discrete['layout']).toBe('tablet');
       expect(state.discrete['theme']).toBe('light');
       expect(state.outputs.css['--czap-layout']).toBe('tablet');
@@ -261,122 +268,138 @@ describe('Compositor', () => {
     });
   });
 
-  describe('changes stream (reactive contract preserved after the zero-alloc publish)', () => {
-    // The reactive publish was changed from `SubscriptionRef.set` to a raw
-    // listener-set fan-out (zero-transient). These pin that the `changes`
-    // Stream<CompositeState> contract is UNCHANGED: replay-current-on-subscribe,
-    // ordered delivery of every subsequent compose, and per-subscriber fan-out.
+  describe('changes — replay-1 CellKernel subscription (reactive contract preserved after the transport swap)', () => {
+    // The reactive publish is now the extracted replay-1 `CellKernel`
+    // (`compositor.changes` = the kernel's read-only subscription surface). These
+    // pin the same NOTIFICATION contract the old `Stream<CompositeState>` gave —
+    // replay-current-on-subscribe, ordered delivery of every subsequent compose,
+    // per-subscriber fan-out — but SYNCHRONOUSLY (no Effect fiber, no Queue): a
+    // `subscribe(sink)` returns a disposer and the current live state is delivered
+    // to the sink immediately on attach.
     //
-    // NOTE on payload: `changes` delivers the POOLED CompositeState reference (which
-    // the two-slot rotation recycles a tick later), so an ASYNC consumer reads it
-    // after recycle and sees the cleared object — a PRE-EXISTING property of the
-    // pool-backed publish, identical under the old `SubscriptionRef.set` (verified
-    // against the original). These tests therefore assert the NOTIFICATION contract
-    // (delivery count, ordering, well-formed shape, fan-out) — the publish-mechanism
-    // change — not the pooled payload (unchanged + out of scope).
-    // Race-free handshake: a forked subscriber resolves `registered` the moment its
-    // FIRST element (the on-attach replay) arrives — which can only happen after the
-    // `Stream.callback` listener is in the set. The driver awaits `registered` before
-    // composing, so no compose is ever published before the subscriber can see it. No
-    // sleep, no timing assumption (the old `Effect.sleep` raced under load).
-    test('a subscriber replays the current state on attach, then receives each subsequent compose', async () => {
-      const received = await Effect.runPromise(
-        Effect.scoped(
-          Effect.gen(function* () {
-            const compositor = yield* Compositor.create();
-            yield* compositor.add('layout', makeQuantizer(widthBoundary, 'mobile'));
-            // `add` composed once; the current live state is now published.
+    // NOTE on payload: `changes` delivers the POOLED CompositeState reference (the
+    // two-slot rotation recycles it a tick later), a PRE-EXISTING property of the
+    // pool-backed publish, identical under the old `SubscriptionRef.set`. These
+    // tests therefore assert the NOTIFICATION contract (delivery count, ordering,
+    // well-formed shape, fan-out) — not the pooled payload (unchanged + out of
+    // scope).
 
-            const registered = yield* Deferred.make<void>();
-            const collected: CompositeState[] = [];
-            const fiber = yield* Effect.forkChild(
-              compositor.changes.pipe(
-                Stream.take(3), // replay + two composes
-                Stream.runForEach((state) =>
-                  Effect.gen(function* () {
-                    collected.push(state);
-                    if (collected.length === 1) yield* Deferred.succeed(registered, undefined);
-                  }),
-                ),
-              ),
-            );
+    test('subscribe replays the current live state synchronously on attach (replay-1)', () => {
+      const { compositor } = Compositor.create();
+      compositor.add('layout', makeQuantizer(widthBoundary, 'tablet'));
+      // `add` composed once; the current live state is now published to the kernel.
 
-            // Block until the subscriber is registered + has replayed the current state.
-            yield* Deferred.await(registered);
+      // The current live state is delivered to a fresh subscriber synchronously,
+      // exactly once, before any further compose — the replay-1 semantics.
+      let count = 0;
+      let first: CompositeState | undefined;
+      const dispose = compositor.changes.subscribe((state) => {
+        count += 1;
+        if (count === 1) first = state;
+      });
+      expect(count).toBe(1);
+      expect(first).toBeDefined();
+      // `read()` exposes the same current live state the replay delivered.
+      expect(compositor.changes.read()).toBeDefined();
 
-            // Now drive two more composes — guaranteed observed by the subscriber.
-            yield* compositor.remove('layout');
-            yield* compositor.add('layout', makeQuantizer(widthBoundary, 'tablet'));
-            compositor.runtime.markDirty('layout');
-            yield* compositor.compute();
+      dispose();
+      expect(compositor.changes.size).toBe(0);
+    });
 
-            yield* Fiber.join(fiber);
-            return collected;
-          }),
-        ),
-      );
+    test('a subscriber replays the current state on attach, then receives each subsequent compose', () => {
+      const { compositor } = Compositor.create();
+      compositor.add('layout', makeQuantizer(widthBoundary, 'mobile'));
 
-      // Replay (1) + two composes (2) = 3 ordered emissions, each a well-formed
-      // CompositeState — the notification contract the publish change preserves.
-      expect(received.length).toBe(3);
-      for (const s of received) {
+      const collected: CompositeState[] = [];
+      const dispose = compositor.changes.subscribe((state) => {
+        collected.push(state);
+      });
+      // Replay-1: subscribe delivered the current live state synchronously.
+      expect(collected.length).toBe(1);
+
+      // Drive two more composes — each fans out synchronously to the subscriber.
+      compositor.remove('layout');
+      compositor.add('layout', makeQuantizer(widthBoundary, 'tablet'));
+
+      // Replay (1) + two composes (2) = 3 ordered, well-formed emissions — the
+      // notification contract the CellKernel swap preserves.
+      expect(collected.length).toBe(3);
+      for (const s of collected) {
         expect(s).toBeDefined();
         expect(s.discrete).toBeDefined();
         expect(s.outputs.css).toBeDefined();
         expect(s.outputs.glsl).toBeDefined();
         expect(s.outputs.aria).toBeDefined();
       }
+
+      // Disposed → no further delivery.
+      dispose();
+      compositor.compute();
+      expect(collected.length).toBe(3);
     });
 
-    test('two subscribers each receive the same number of composes (fan-out)', async () => {
-      const [a, b] = await Effect.runPromise(
-        Effect.scoped(
-          Effect.gen(function* () {
-            const compositor = yield* Compositor.create();
-            yield* compositor.add('layout', makeQuantizer(widthBoundary, 'mobile'));
+    test('two subscribers each receive the replay and every subsequent compose (fan-out)', () => {
+      const { compositor } = Compositor.create();
+      compositor.add('layout', makeQuantizer(widthBoundary, 'mobile'));
 
-            // Each subscriber signals registration on its own replay; the driver waits
-            // for BOTH before composing (race-free fan-out, no sleep).
-            const subscriber = (registered: Deferred.Deferred<void>) => {
-              const collected: CompositeState[] = [];
-              return Effect.forkChild(
-                compositor.changes.pipe(
-                  Stream.take(2), // replay + one compose
-                  Stream.runForEach((state) =>
-                    Effect.gen(function* () {
-                      collected.push(state);
-                      if (collected.length === 1) yield* Deferred.succeed(registered, undefined);
-                    }),
-                  ),
-                ),
-              ).pipe(Effect.map((fiber) => ({ fiber, collected })));
-            };
+      const a: CompositeState[] = [];
+      const b: CompositeState[] = [];
+      const da = compositor.changes.subscribe((s) => a.push(s)); // replay -> 1
+      const db = compositor.changes.subscribe((s) => b.push(s)); // replay -> 1
 
-            const ra = yield* Deferred.make<void>();
-            const rb = yield* Deferred.make<void>();
-            const a = yield* subscriber(ra);
-            const b = yield* subscriber(rb);
-            yield* Deferred.await(ra);
-            yield* Deferred.await(rb);
+      compositor.remove('layout');
+      compositor.add('layout', makeQuantizer(widthBoundary, 'desktop')); // two more composes
 
-            yield* compositor.remove('layout');
-            yield* compositor.add('layout', makeQuantizer(widthBoundary, 'desktop')); // one more compose
+      da();
+      db();
 
-            yield* Fiber.join(a.fiber);
-            yield* Fiber.join(b.fiber);
-            return [a.collected, b.collected] as const;
-          }),
-        ),
-      );
-
-      // Both subscribers independently see replay + the one compose = 2 emissions
-      // each — the per-subscriber fan-out the listener-set publish preserves.
-      expect(a.length).toBe(2);
-      expect(b.length).toBe(2);
+      // Each subscriber independently sees replay (1) + two composes (2) = 3 —
+      // the per-subscriber fan-out the CellKernel live-Set publish preserves.
+      expect(a.length).toBe(3);
+      expect(b.length).toBe(3);
       for (const s of [...a, ...b]) {
         expect(s.discrete).toBeDefined();
         expect(s.outputs.css).toBeDefined();
       }
+    });
+
+    test('disposing the lifetime closes the changes kernel: subscribers complete, publish goes inert', async () => {
+      const { compositor, lifetime } = Compositor.create();
+      compositor.add('layout', makeQuantizer(widthBoundary, 'mobile'));
+
+      const seen: CompositeState[] = [];
+      let completed = 0;
+      compositor.changes.subscribe({
+        next: (s) => seen.push(s),
+        complete: () => {
+          completed += 1;
+        },
+      });
+      const countAtDispose = seen.length; // replay (1)
+      expect(countAtDispose).toBe(1);
+
+      await lifetime.dispose();
+      expect(completed).toBe(1);
+      expect(compositor.changes.closed).toBe(true);
+
+      // After close the kernel is inert: a further compose fans out to nobody.
+      compositor.compute();
+      expect(seen.length).toBe(countAtDispose);
+
+      // A late subscribe completes immediately without replaying or registering.
+      let lateReplays = 0;
+      let lateCompleted = 0;
+      compositor.changes.subscribe({
+        next: () => {
+          lateReplays += 1;
+        },
+        complete: () => {
+          lateCompleted += 1;
+        },
+      });
+      expect(lateReplays).toBe(0);
+      expect(lateCompleted).toBe(1);
+      expect(compositor.changes.size).toBe(0);
     });
   });
 });

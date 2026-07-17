@@ -8,7 +8,7 @@
 
 > **GraphPatch**: `object`
 
-Defined in: [core/src/graph-patch.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-patch.ts#L66)
+Defined in: [core/src/graph-patch.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-patch.ts#L65)
 
 GraphPatch namespace — the tagged-delta mutation surface over
 [DocumentGraph](../interfaces/DocumentGraph.md). Propose a delta, apply/preview it (re-addressing through
@@ -180,15 +180,15 @@ readonly [`PatchOp`](../type-aliases/PatchOp.md)[]
 
 ### receipt
 
-> **receipt**: (`patch`, `options?`) => `Effect`\<[`ReceiptEnvelope`](../interfaces/ReceiptEnvelope.md)\>
+> **receipt**: (`patch`, `options?`) => `Promise`\<[`ReceiptEnvelope`](../interfaces/ReceiptEnvelope.md)\>
 
 Compose the patch's `resultId` onto the [Receipt](Receipt.md) byte law: a single
 genesis-or-linked envelope whose payload is a [TypedRef](TypedRef.md) over the
-mutation, subject-keyed by the patch identity. Effect-returning because the
-receipt byte law hashes via `crypto.subtle` (SHA-256) — the same async kernel
-`Receipt.createEnvelope` rides on; folding it to a sync value would force a
-second, divergent hashing path. `timestamp`/`previous` default to a genesis
-stamp; pass them to chain this patch onto a prior receipt.
+mutation, subject-keyed by the patch identity. Async (`Promise`-returning)
+because the receipt byte law hashes via `crypto.subtle` (SHA-256) — the same
+async kernel `Receipt.createEnvelope` rides on; folding it to a sync value
+would force a second, divergent hashing path. `timestamp`/`previous` default to
+a genesis stamp; pass them to chain this patch onto a prior receipt.
 
 #### Parameters
 
@@ -208,7 +208,7 @@ stamp; pass them to chain this patch onto a prior receipt.
 
 #### Returns
 
-`Effect`\<[`ReceiptEnvelope`](../interfaces/ReceiptEnvelope.md)\>
+`Promise`\<[`ReceiptEnvelope`](../interfaces/ReceiptEnvelope.md)\>
 
 ### validate
 

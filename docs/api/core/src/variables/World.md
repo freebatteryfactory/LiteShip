@@ -8,7 +8,7 @@
 
 > `const` **World**: `object`
 
-Defined in: [core/src/ecs.ts:370](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L370)
+Defined in: [core/src/ecs.ts:343](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L343)
 
 World namespace — construct the ECS world that ticks systems over entities.
 
@@ -16,10 +16,10 @@ World namespace — construct the ECS world that ticks systems over entities.
 
 ### make
 
-> **make**: () => `Effect`\<`WorldShape`, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\> = `_makeWorld`
+> **make**: () => `WorldHandle` = `_makeWorld`
 
-Scoped Effect that produces a fresh ECS [World.Shape](../namespaces/World/type-aliases/Shape.md).
+Build a fresh ECS [World.Shape](../namespaces/World/type-aliases/Shape.md) paired with its owning [Lifetime](Lifetime.md).
 
 #### Returns
 
-`Effect`\<`WorldShape`, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\>
+`WorldHandle`

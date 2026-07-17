@@ -23,7 +23,7 @@
 import type { AIContext, CastContextOptions } from '@czap/core';
 import type { SceneRuntime } from '@czap/scene';
 import { bridgeSceneToGraph } from './scene-bridge.js';
-import type { BridgeClock, BridgeOptions, SceneBridgeHandle } from './scene-bridge.js';
+import type { BridgeClock, BridgeOptions, SceneBridgeHandle, SceneQueryEffect } from './scene-bridge.js';
 import { admitGraphPatchProposal, castGraphContext } from './graph-ai-apply.js';
 import type { AdmitPatchResult } from './graph-ai-apply.js';
 import type { EntityElementResolver, GraphRuntimeHandle } from './graph-runtime.js';
@@ -42,28 +42,18 @@ interface BridgeEntity {
   readonly components: ReadonlyMap<string, unknown>;
 }
 
-/** The minimal queried-entity shape the real World yields: an id + a component map. */
-interface WorldEntity {
-  readonly components: ReadonlyMap<string, unknown>;
-}
-
 /**
- * Run a real `@czap/scene` world query (an Effect) and project each resolved
- * `{ components }` entity into the bridge's `{ trackId, components }` shape by
- * lifting the `trackId` component to the top level. The scene runtime already
- * depends on Effect, so the query value resolves through `Effect.runPromise`.
+ * Project each real `@czap/scene` world-query row `{ components }` into the
+ * bridge's `{ trackId, components }` shape by lifting the `trackId` component to
+ * the top level. `@czap/core`'s `World.query` is SYNCHRONOUS, so this is a pure,
+ * synchronous projection — no runner, no Effect. It is passed as the bridge's
+ * `runQuery` (see {@link driveSceneStage}).
  *
  * Exported so the real-path test (and any host) can reuse the EXACT projection
  * the reference consumer wires — no second, drifting copy.
  */
-export async function sceneStageRunQuery(query: unknown): Promise<readonly BridgeEntity[]> {
-  // Imported lazily so this module carries no static Effect dep — the scene that
-  // produced `query` already depends on Effect, so the import resolves at runtime.
-  const { Effect } = await import('effect');
-  const entities = (await Effect.runPromise(
-    query as Parameters<typeof Effect.runPromise>[0],
-  )) as readonly WorldEntity[];
-  return entities.map((entity) => ({
+export function sceneStageRunQuery(query: SceneQueryEffect): readonly BridgeEntity[] {
+  return query.map((entity) => ({
     // The real World stores `trackId` as a component; lift it so the bridge's
     // `entity.trackId` read resolves against the genuine scene track id.
     trackId: entity.components.get('trackId'),

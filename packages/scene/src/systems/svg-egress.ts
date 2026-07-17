@@ -22,7 +22,6 @@
  * @module
  */
 
-import { Effect } from 'effect';
 import type { World } from '@czap/core';
 import type { SvgAttrs } from './svg.js';
 
@@ -46,16 +45,14 @@ export type SvgAttrsFrame = ReadonlyMap<string, SvgAttrs>;
  * the result is keyed identically to the entities SVGSystem walked and only
  * contains entities the system has actually composed attrs for.
  */
-export function collectSvgAttrs(world: World.Shape): Effect.Effect<SvgAttrsFrame> {
-  return Effect.gen(function* () {
-    const frame = new Map<string, SvgAttrs>();
-    const entities = yield* world.query('VideoSource', '_svgAttrs');
-    for (const e of entities) {
-      const attrs = e.components.get('_svgAttrs') as SvgAttrs | undefined;
-      if (attrs !== undefined) frame.set(e.id, attrs);
-    }
-    return frame;
-  });
+export function collectSvgAttrs(world: World.Shape): SvgAttrsFrame {
+  const frame = new Map<string, SvgAttrs>();
+  const entities = world.query('VideoSource', '_svgAttrs');
+  for (const e of entities) {
+    const attrs = e.components.get('_svgAttrs') as SvgAttrs | undefined;
+    if (attrs !== undefined) frame.set(e.id, attrs);
+  }
+  return frame;
 }
 
 /**
