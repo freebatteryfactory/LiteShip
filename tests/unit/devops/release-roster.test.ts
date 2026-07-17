@@ -19,27 +19,25 @@
  * @module
  */
 import { describe, it, expect } from 'vitest';
-import { readFileSync, readdirSync } from 'node:fs';
-import { resolve, join } from 'node:path';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { packageManifests } from '../../support/repo-truths.js';
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
-const PACKAGES_DIR = resolve(REPO, 'packages');
 const RELEASE_YML = resolve(REPO, '.github/workflows/release.yml');
+
+// The publishable-set truth (packages/*/package.json) is owned by
+// tests/support/repo-truths.ts (scar S0.4). release.yml's own predicate is
+// `private != true`; this guard's ASSERTIONS are unchanged — only the manifest
+// reading moved to the single owner. The release.yml parsing below stays local:
+// the workflow file is release.yml's own truth, not a shared repo fact.
 
 /** Every packages/* manifest release.yml would publish — its own predicate: not private. */
 function derivePublishableNames(): string[] {
-  const names: string[] = [];
-  for (const entry of readdirSync(PACKAGES_DIR, { withFileTypes: true })) {
-    if (!entry.isDirectory()) continue;
-    let manifest: { name?: string; private?: boolean };
-    try {
-      manifest = JSON.parse(readFileSync(join(PACKAGES_DIR, entry.name, 'package.json'), 'utf8'));
-    } catch {
-      continue; // no manifest → not a package
-    }
-    if (manifest.private !== true && manifest.name) names.push(manifest.name);
-  }
-  return names.sort();
+  return packageManifests()
+    .filter((manifest) => manifest.private !== true && manifest.name != null)
+    .map((manifest) => manifest.name as string)
+    .sort();
 }
 
 /** The explicit publish-loop list in release.yml, read from source. */
@@ -67,15 +65,8 @@ function releaseLoopOrder(): string[] {
 function publishableDeps(): Map<string, readonly string[]> {
   const publishable = new Set(derivePublishableNames());
   const map = new Map<string, readonly string[]>();
-  for (const entry of readdirSync(PACKAGES_DIR, { withFileTypes: true })) {
-    if (!entry.isDirectory()) continue;
-    let manifest: { name?: string; private?: boolean; dependencies?: Record<string, string> };
-    try {
-      manifest = JSON.parse(readFileSync(join(PACKAGES_DIR, entry.name, 'package.json'), 'utf8'));
-    } catch {
-      continue; // no manifest → not a package
-    }
-    if (manifest.private !== true && manifest.name) {
+  for (const manifest of packageManifests()) {
+    if (manifest.private !== true && manifest.name != null) {
       map.set(
         manifest.name,
         Object.keys(manifest.dependencies ?? {}).filter((dep) => publishable.has(dep)),

@@ -10,14 +10,18 @@
  * @module
  */
 import { describe, it, expect } from 'vitest';
-import { readFileSync, readdirSync } from 'node:fs';
-import { resolve } from 'node:path';
 import { CATEGORIES, LIFECYCLE_SCRIPTS } from '../../../scripts/lib/script-categories.js';
+import {
+  rootManifest,
+  packageManifests,
+  publishablePackageDirs,
+  rootTsconfigReferenceDirs,
+} from '../../support/repo-truths.js';
 
-const REPO = resolve(import.meta.dirname, '..', '..', '..');
-const rootPkg = JSON.parse(readFileSync(resolve(REPO, 'package.json'), 'utf8')) as {
-  scripts: Record<string, string>;
-};
+// Truth-reading (root scripts, publishable set, references topology) is owned by
+// tests/support/repo-truths.ts (scar S0.4). This guard's ASSERTIONS are unchanged;
+// only the parsing moved to the single owner.
+const rootPkg = rootManifest();
 
 describe('scripts-index parity — every root script is categorized', () => {
   const categorized = new Set(CATEGORIES.flatMap((c) => c.scripts));
@@ -38,24 +42,14 @@ describe('scripts-index parity — every root script is categorized', () => {
 describe('build-list parity — root tsconfig references cover every publishable package', () => {
   // The build script is a bare `tsc --build`: topology lives in root tsconfig
   // references, so coverage is asserted there, not by parsing the script.
+  // Build-topology exclusion: the type-only `_spine` carries a publishConfig but
+  // does not compile, so it is not a `tsc --build` project.
   const NO_BUILD = new Set(['@czap/_spine']);
 
-  const publishableDirs = readdirSync(resolve(REPO, 'packages')).filter((dir) => {
-    let pkg: { name?: string; publishConfig?: unknown };
-    try {
-      pkg = JSON.parse(readFileSync(resolve(REPO, 'packages', dir, 'package.json'), 'utf8'));
-    } catch {
-      return false;
-    }
-    return pkg.publishConfig != null && pkg.name != null && !NO_BUILD.has(pkg.name);
-  });
+  const dirToName = new Map(packageManifests().map((m) => [m.dir, m.name] as const));
+  const publishableDirs = publishablePackageDirs().filter((dir) => !NO_BUILD.has(dirToName.get(dir) ?? ''));
 
-  const rootTsconfig = JSON.parse(readFileSync(resolve(REPO, 'tsconfig.json'), 'utf8')) as {
-    references?: ReadonlyArray<{ path: string }>;
-  };
-  const referenceDirs = (rootTsconfig.references ?? [])
-    .map((r) => /^\.\/packages\/([\w-]+)$/.exec(r.path)?.[1])
-    .filter((dir): dir is string => dir != null);
+  const referenceDirs = rootTsconfigReferenceDirs();
 
   it('the build script is references-driven (`tsc --build`, no hand-topo package list)', () => {
     expect(rootPkg.scripts.build).toMatch(/\btsc --build\b/);

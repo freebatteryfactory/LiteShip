@@ -1,0 +1,37 @@
+# Backstops scar S0.4 (docs/plan/scar-ledger.md) + tests/support/repo-truths.ts.
+#
+# S0.4 signature: a drift guard privately regex-parses a package.json SCRIPT BODY
+# (`pkg.scripts.<name>`) to extract a truth — the pattern that let
+# scripts-and-build-parity and doctor-package-drift fork the same invariant and
+# drift apart. The canonical truths now live in tests/support/repo-truths.ts;
+# script bodies are ASSERTED with `expect(pkg.scripts.x).toMatch(...)` (the
+# receiver of `.toMatch` is `expect(...)`, so assertions never trip this), never
+# re-parsed. This rule fires when a `.scripts.<key>` (or `.scripts[<key>]`)
+# member access is the receiver of a regex-extraction call (.match / .matchAll /
+# .split / .replace) or the argument to a RegExp `.exec` / `.test` — the exact
+# S0.4 signature — so a re-inlined private parse fails `lint:structural`.
+#
+# Scoped to tests/**; allowlists tests/support/repo-truths.ts, the one sanctioned
+# owner of the repo truths. Passes clean on the current tree.
+id: repo-truths-no-script-parse
+language: typescript
+severity: error
+message: "Regex-parsing a package.json script body in tests/ (scar S0.4) — read the truth through tests/support/repo-truths.ts instead of re-parsing scripts.*"
+files:
+  - "**/tests/**/*.ts"
+ignores:
+  - "**/tests/support/repo-truths.ts"
+rule:
+  any:
+    - pattern: $OBJ.scripts.$KEY.match($$$)
+    - pattern: $OBJ.scripts.$KEY.matchAll($$$)
+    - pattern: $OBJ.scripts.$KEY.split($$$)
+    - pattern: $OBJ.scripts.$KEY.replace($$$)
+    - pattern: $OBJ.scripts[$KEY].match($$$)
+    - pattern: $OBJ.scripts[$KEY].matchAll($$$)
+    - pattern: $OBJ.scripts[$KEY].split($$$)
+    - pattern: $OBJ.scripts[$KEY].replace($$$)
+    - pattern: $RE.exec($OBJ.scripts.$KEY)
+    - pattern: $RE.test($OBJ.scripts.$KEY)
+    - pattern: $RE.exec($OBJ.scripts[$KEY])
+    - pattern: $RE.test($OBJ.scripts[$KEY])

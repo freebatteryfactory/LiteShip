@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { readFileSync, existsSync, readdirSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { LITESHIP_LOCKFILE_POLICY } from '../../../packages/cli/src/lib/supply-chain-policy.js';
+import { effectCatalogRange, rootManifest, workspaceManifests } from '../../support/repo-truths.js';
 
 /**
  * effect version-sync drift guard — catalog residual.
@@ -40,15 +41,14 @@ function readJson(rel: string): Record<string, unknown> {
   return JSON.parse(readFileSync(join(REPO_ROOT, rel), 'utf8')) as Record<string, unknown>;
 }
 
-// The catalog is the source of truth. pnpm-workspace.yaml carries exactly one
-// `effect:` key (under `catalog:`); parse its value and derive the floor.
-const workspace = readFileSync(join(REPO_ROOT, 'pnpm-workspace.yaml'), 'utf8');
-const catalogMatch = /^\s+effect:\s*(.+?)\s*$/m.exec(workspace);
-const CATALOG_EFFECT = catalogMatch ? catalogMatch[1].replace(/^['"]|['"]$/g, '') : undefined;
+// The catalog is the source of truth (scar S0.4: catalog + root-manifest + the
+// per-manifest workspace scan are all owned by tests/support/repo-truths.ts;
+// this guard's ASSERTIONS are unchanged, only the truth-reading moved). Derive
+// the floor from the single catalog value.
+const CATALOG_EFFECT = effectCatalogRange();
 const FLOOR = CATALOG_EFFECT ? /(\d+\.\d+\.\d+(?:-[A-Za-z0-9.]+)?)/.exec(CATALOG_EFFECT)?.[1] : undefined;
 
-const root = readJson('package.json');
-const OVERRIDE = ((root.pnpm as Record<string, Record<string, string>> | undefined)?.overrides ?? {}).effect;
+const OVERRIDE = rootManifest().pnpm?.overrides?.effect;
 
 // Per-manifest sweep: every effect reference across the workspace (packages/* +
 // examples/*), with the field it appears in. The catalog makes RANGE agreement
@@ -59,25 +59,12 @@ interface EffectRef {
   readonly value: string;
 }
 
-function effectRefsIn(manifestRel: string): EffectRef[] {
-  const abs = join(REPO_ROOT, manifestRel);
-  if (!existsSync(abs)) return [];
-  const pkg = JSON.parse(readFileSync(abs, 'utf8')) as Record<string, unknown>;
-  const refs: EffectRef[] = [];
-  for (const field of DEP_FIELDS) {
-    const value = (pkg[field] as Record<string, string> | undefined)?.effect;
-    if (typeof value === 'string') refs.push({ file: manifestRel, field, value });
-  }
-  return refs;
-}
-
 function collectWorkspaceEffectRefs(): EffectRef[] {
   const refs: EffectRef[] = [];
-  for (const group of ['packages', 'examples'] as const) {
-    const groupDir = join(REPO_ROOT, group);
-    if (!existsSync(groupDir)) continue;
-    for (const name of readdirSync(groupDir)) {
-      refs.push(...effectRefsIn(`${group}/${name}/package.json`));
+  for (const manifest of workspaceManifests()) {
+    for (const field of DEP_FIELDS) {
+      const value = manifest[field]?.effect;
+      if (typeof value === 'string') refs.push({ file: manifest.relPath, field, value });
     }
   }
   return refs;

@@ -18,20 +18,17 @@
  * disk matches the referenced set).
  */
 import { describe, it, expect } from 'vitest';
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { readdirSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { loadBuiltPackages } from '../../../../packages/cli/src/commands/doctor/manifest.js';
+import { rootTsconfigReferenceDirs } from '../../../support/repo-truths.js';
 
 const REPO_ROOT = resolve(__dirname, '../../../..');
 
-function referenceDirs(): readonly string[] {
-  const tsconfig = JSON.parse(readFileSync(resolve(REPO_ROOT, 'tsconfig.json'), 'utf8')) as {
-    references?: ReadonlyArray<{ path: string }>;
-  };
-  return (tsconfig.references ?? [])
-    .map((reference) => /^\.\/packages\/([\w-]+)$/.exec(reference.path)?.[1])
-    .filter((dir): dir is string => dir != null);
-}
+// References topology is owned by tests/support/repo-truths.ts (scar S0.4). This
+// guard shares that truth with scripts-and-build-parity; the ASSERTIONS below are
+// unchanged — only the reference-reading moved to the single owner.
+const referenceDirs = rootTsconfigReferenceDirs;
 
 function listOnDiskPackages(): readonly string[] {
   const entries = readdirSync(resolve(REPO_ROOT, 'packages'));

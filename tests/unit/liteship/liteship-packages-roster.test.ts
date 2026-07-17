@@ -3,42 +3,21 @@
  *
  * @module
  */
-import { readFileSync, readdirSync } from 'node:fs';
-import { resolve, join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { LITESHIP_PACKAGES } from '../../../packages/liteship/src/index.js';
+import { packageManifests, packageRoster } from '../../support/repo-truths.js';
 
-const REPO = resolve(import.meta.dirname, '..', '..', '..');
-const MANIFEST_PATH = resolve(REPO, 'packages/liteship/package.json');
-const PACKAGES_DIR = resolve(REPO, 'packages');
+// The manifest truth (packages/*/package.json) and the canonical `@czap/*` roster
+// are owned by tests/support/repo-truths.ts (scar S0.4). `packageRoster()` IS the
+// non-private `@czap/*` fleet — the same predicate release.yml uses, scoped to
+// `@czap/*` (the umbrella can't depend on the non-scoped `liteship` /
+// `create-liteship`). This guard's ASSERTIONS are unchanged.
 
 function czapDependenciesFromManifest(): string[] {
-  const manifest = JSON.parse(readFileSync(MANIFEST_PATH, 'utf8')) as {
-    dependencies?: Record<string, string>;
-  };
-  return Object.keys(manifest.dependencies ?? {})
+  const liteship = packageManifests().find((manifest) => manifest.dir === 'liteship');
+  return Object.keys(liteship?.dependencies ?? {})
     .filter((name) => name.startsWith('@czap/'))
     .sort();
-}
-
-/**
- * Every publishable `@czap/*` package on disk — release.yml's own predicate (`private
- * != true`), scoped to `@czap/*` (the umbrella can't depend on the non-scoped `liteship`
- * / `create-liteship`). The authoritative set the umbrella must cover.
- */
-function derivePublishableCzapScopes(): string[] {
-  const names: string[] = [];
-  for (const entry of readdirSync(PACKAGES_DIR, { withFileTypes: true })) {
-    if (!entry.isDirectory()) continue;
-    let manifest: { name?: string; private?: boolean };
-    try {
-      manifest = JSON.parse(readFileSync(join(PACKAGES_DIR, entry.name, 'package.json'), 'utf8'));
-    } catch {
-      continue; // no manifest → not a package
-    }
-    if (manifest.private !== true && manifest.name?.startsWith('@czap/')) names.push(manifest.name);
-  }
-  return names.sort();
 }
 
 describe('liteship umbrella roster', () => {
@@ -53,7 +32,7 @@ describe('liteship umbrella roster', () => {
     // this pins the umbrella's dependencies to the same source, so a newly-public @czap/*
     // package that isn't added to liteship fails loud here instead of shipping an
     // incomplete umbrella.
-    expect(czapDependenciesFromManifest()).toEqual(derivePublishableCzapScopes());
+    expect(czapDependenciesFromManifest()).toEqual([...packageRoster()]);
   });
 
   it('includes framework primitive packages', () => {

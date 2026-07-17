@@ -80,7 +80,19 @@
     "tests/helpers/mock-worker.ts",
     "tests/helpers/mock-dom.ts",
     "tests/helpers/mock-browser.ts",
-    "tests/support/structural-schema.ts"
+    "tests/support/structural-schema.ts",
+    // The repo-truths single owner (scar S0.4): canonical accessors for the
+    // publishable set, references topology, catalog values, workspace version,
+    // and package roster. Typechecked here so the accessors' contracts bite.
+    "tests/support/repo-truths.ts",
+    // The in-workspace pack owner (scar S0.5): the single owner of the
+    // `pnpm pack` mechanic shared by the ship tests and the release-pack residue
+    // smoke. Typechecked here so PackedManifest / PackInWorkspaceOptions bite.
+    "tests/support/pack.ts",
+    // The near-miss strictness-mutator derivation (scar S1.1): its predicted
+    // issue codes are typed against the kernel `DecodeIssueCode` union, so a
+    // misspelled or stale code fails the typecheck rather than the property run.
+    "tests/support/near-miss.ts"
   ],
   "exclude": ["node_modules", "**/dist/**"]
 }

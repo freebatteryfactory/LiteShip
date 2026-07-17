@@ -16,29 +16,19 @@
  * @module
  */
 import { describe, it, expect } from 'vitest';
-import { readFileSync, readdirSync } from 'node:fs';
-import { resolve, join } from 'node:path';
 import { PACKAGES } from '@czap/command';
+import { packageManifests } from '../../support/repo-truths.js';
 
-const REPO = resolve(import.meta.dirname, '..', '..', '..');
-const PACKAGES_DIR = resolve(REPO, 'packages');
+// The publishable-set truth (packages/*/package.json publishConfig) is owned by
+// tests/support/repo-truths.ts (scar S0.4). This guard's ASSERTIONS are unchanged
+// — only the manifest reading moved to the single owner.
 
 /** The authoritative publishable set: every packages/* manifest with public access and not private. */
 function derivePublishableScopes(): string[] {
-  const names: string[] = [];
-  for (const entry of readdirSync(PACKAGES_DIR, { withFileTypes: true })) {
-    if (!entry.isDirectory()) continue;
-    const manifestPath = join(PACKAGES_DIR, entry.name, 'package.json');
-    let manifest: { name?: string; private?: boolean; publishConfig?: { access?: string } };
-    try {
-      manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
-    } catch {
-      continue; // no manifest → not a package
-    }
-    const publishable = manifest.publishConfig?.access === 'public' && manifest.private !== true;
-    if (publishable && manifest.name) names.push(manifest.name);
-  }
-  return names.sort();
+  return packageManifests()
+    .filter((manifest) => manifest.publishConfig?.access === 'public' && manifest.private !== true && manifest.name != null)
+    .map((manifest) => manifest.name as string)
+    .sort();
 }
 
 /** The names listed in the package-smoke PACKAGES roster (the data exported from @czap/command). */
@@ -59,14 +49,7 @@ describe('B6a — package-smoke covers exactly the publishable @czap/* roster', 
   it('private / non-public packages are excluded from the derived publishable set', () => {
     // Guards the filter itself: if a manifest were marked private it must not be required
     // in the smoke roster. (Today none are private; this pins the rule, not the count.)
-    for (const entry of readdirSync(PACKAGES_DIR, { withFileTypes: true })) {
-      if (!entry.isDirectory()) continue;
-      let manifest: { name?: string; private?: boolean; publishConfig?: { access?: string } };
-      try {
-        manifest = JSON.parse(readFileSync(join(PACKAGES_DIR, entry.name, 'package.json'), 'utf8'));
-      } catch {
-        continue;
-      }
+    for (const manifest of packageManifests()) {
       if (manifest.private === true || manifest.publishConfig?.access !== 'public') {
         expect(derivePublishableScopes()).not.toContain(manifest.name);
       }

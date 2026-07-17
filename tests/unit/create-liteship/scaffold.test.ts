@@ -19,6 +19,10 @@ import {
   DEFAULT_DIR,
   type RunIo,
 } from '../../../packages/create-liteship/src/index.js';
+// The workspace version and the pnpm catalog effect range are shared repo truths
+// owned by tests/support/repo-truths.ts (scar S0.4). The scaffold drift guards
+// below read them through the single owner; their ASSERTIONS are unchanged.
+import { effectCatalogRange, workspaceVersion } from '../../support/repo-truths.js';
 
 const EXPECTED_TREE = [
   '.gitignore',
@@ -145,10 +149,8 @@ describe('create-liteship scaffold', () => {
   // Pin the LAW (major.minor must match the workspace version), not the exact
   // patch, so caret-compatible patch releases need no template churn.
   it('template @czap/* ranges track the workspace release line (no stale-minor drift)', () => {
-    const root = JSON.parse(readFileSync(join(defaultTemplateDir(), '../../../../package.json'), 'utf8')) as {
-      version: string;
-    };
-    const [rootMajor, rootMinor] = root.version.split('.');
+    const rootVersion = workspaceVersion();
+    const [rootMajor, rootMinor] = rootVersion.split('.');
     const manifest = JSON.parse(readFileSync(join(defaultTemplateDir(), 'package.json'), 'utf8')) as {
       dependencies: Record<string, string>;
     };
@@ -158,7 +160,7 @@ describe('create-liteship scaffold', () => {
       const match = spec.match(/^\^(\d+)\.(\d+)\.\d+/);
       expect(match, `${dep} spec ${spec} should be a caret range`).not.toBeNull();
       const [, major, minor] = match!;
-      expect(`${major}.${minor}`, `${dep} (${spec}) must track workspace ${root.version}`).toBe(
+      expect(`${major}.${minor}`, `${dep} (${spec}) must track workspace ${rootVersion}`).toBe(
         `${rootMajor}.${rootMinor}`,
       );
     }
@@ -171,8 +173,7 @@ describe('create-liteship scaffold', () => {
   // is the pnpm-workspace.yaml catalog entry (`effect: '>=X <5'`) that pnpm resolves
   // it against; derive the caret floor from THAT, not a literal.
   it('template effect pins the caret floor of the workspace catalog effect range (A2)', () => {
-    const workspaceYaml = readFileSync(join(defaultTemplateDir(), '../../../../pnpm-workspace.yaml'), 'utf8');
-    const catalogRange = /^\s*effect:\s*['"]?([^'"\n]+?)['"]?\s*$/m.exec(workspaceYaml)?.[1];
+    const catalogRange = effectCatalogRange();
     const floor = catalogRange?.match(/>=(\S+)/)?.[1];
     expect(floor, 'pnpm-workspace.yaml catalog must declare an effect floor (>=X)').toBeTruthy();
     const manifest = JSON.parse(readFileSync(join(defaultTemplateDir(), 'package.json'), 'utf8')) as {
