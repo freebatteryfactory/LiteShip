@@ -17,6 +17,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { PACKAGES } from '@czap/command';
+import { PUBLISHABLE_ROSTER } from '../../../scripts/gen-roster.js';
 import { packageManifests } from '../../support/repo-truths.js';
 
 // The publishable-set truth (packages/*/package.json publishConfig) is owned by
@@ -44,6 +45,14 @@ describe('B6a — package-smoke covers exactly the publishable @czap/* roster', 
 
   it('@czap/command is in the smoke roster (the package that slipped the net)', () => {
     expect(smokeRosterScopes()).toContain('@czap/command');
+  });
+
+  it('the smoke roster equals gen-roster PUBLISHABLE_ROSTER (the single roster owner)', () => {
+    // The membership of the smoke PACKAGES roster is owned by scripts/gen-roster.ts
+    // (PUBLISHABLE_ROSTER = the @czap/* fleet + the create-liteship/liteship umbrellas).
+    // @czap/command cannot import the devops-layer generator, so parity is enforced here:
+    // a package added to the canonical roster but not to PACKAGES fails this assertion.
+    expect(smokeRosterScopes()).toEqual([...PUBLISHABLE_ROSTER].sort());
   });
 
   it('private / non-public packages are excluded from the derived publishable set', () => {

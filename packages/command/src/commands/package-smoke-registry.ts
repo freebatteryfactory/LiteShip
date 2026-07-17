@@ -23,7 +23,17 @@ export interface PackageSmokeSpec {
   readonly imports: readonly string[];
 }
 
-/** Mirrors every publishable `@czap/*` scope under `packages/*` (see `pnpm-workspace.yaml`). */
+/**
+ * Mirrors every publishable scope under `packages/*` (see `pnpm-workspace.yaml`).
+ *
+ * The MEMBERSHIP of this roster (the `name` set) is owned by
+ * `scripts/gen-roster.ts` (`PUBLISHABLE_ROSTER` = the `@czap/*` fleet plus the
+ * `create-liteship` / `liteship` umbrellas). This copy stays local — and keeps
+ * its hand-authored `imports` / `dir` fields — because `@czap/command` sits below
+ * the devops layer and cannot import the generator; parity with the canonical
+ * roster is enforced by the `package-smoke-roster` drift-guard, which asserts
+ * these names equal gen-roster's `PUBLISHABLE_ROSTER`.
+ */
 export const PACKAGES: readonly PackageSmokeSpec[] = [
   // _spine is type-only (no runtime); packed and overridden so consumers
   // can resolve `@czap/core`'s and `@czap/scene`'s declared dep on it

@@ -199,6 +199,14 @@ jobs:
           # added or removed in packages/, this assertion fails loud rather
           # than silently skipping the new one. Update both the EXPECTED
           # count and the loop list in the same commit.
+          #
+          # Membership + count owner: scripts/gen-roster.ts (PUBLISHABLE_ROSTER).
+          # YAML cannot import TS, so this list stays hand-maintained but is
+          # gen-roster-CHECKED, not regenerated: `pnpm tsx scripts/gen-roster.ts
+          # --check` and the release-roster drift-guard both assert this loop's
+          # membership and this count equal gen-roster's PUBLISHABLE_ROSTER. The
+          # loop ORDER stays hand-ordered here (topological, pinned by the
+          # release-roster test) rather than mirroring the generator's order.
           EXPECTED_PUBLISHABLE=25
           ACTUAL_PUBLISHABLE=$(find packages -maxdepth 2 -name package.json -print0 \
             | xargs -0 -I {} jq -r 'select(.private != true) | .name' {} \

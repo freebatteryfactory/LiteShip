@@ -8,7 +8,7 @@
 
 > `const` **PlumbPayloadSchema**: `object`
 
-Defined in: [command/src/commands/plumb.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/plumb.ts#L39)
+Defined in: [command/src/commands/plumb.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/plumb.ts#L41)
 
 The descriptor `outputSchema` for `plumb` — hand-written JSON-Schema,
 byte-parity-pinned against the parity fixture. [PlumbPayload](../type-aliases/PlumbPayload.md) is its

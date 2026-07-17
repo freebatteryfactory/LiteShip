@@ -6,7 +6,7 @@
 
 # Interface: HandledCommand
 
-Defined in: [command/src/registry.ts:483](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L483)
+Defined in: [command/src/registry.ts:530](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L530)
 
 A fully-migrated command: descriptor + a guaranteed handler. Migrated command
 modules type their export as this so adapters can invoke `.handler` directly
@@ -18,11 +18,30 @@ without a presence check. Assignable to [RegisteredCommand](RegisteredCommand.md
 
 ## Properties
 
+### argsSchema?
+
+> `readonly` `optional` **argsSchema?**: `Schema`\<`Readonly`\<`Record`\<`string`, `unknown`\>\>, `Readonly`\<`Record`\<`string`, `unknown`\>\>\>
+
+Defined in: [command/src/registry.ts:522](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L522)
+
+The declared kernel schema for the command's args. When present, the
+dispatcher decodes `invocation.args` against it BEFORE invoking the handler
+— a mistyped arg fails structurally with an `invalid_args` envelope instead
+of reaching the handler, and the handler receives the decoded, typed args.
+Absent for a handler that still reads `invocation.args` loosely (the decode
+step is then a no-op passthrough).
+
+#### Inherited from
+
+[`RegisteredCommand`](RegisteredCommand.md).[`argsSchema`](RegisteredCommand.md#argsschema)
+
+***
+
 ### descriptor
 
 > `readonly` **descriptor**: `CapsuleCommandDescriptor`
 
-Defined in: [command/src/registry.ts:474](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L474)
+Defined in: [command/src/registry.ts:512](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L512)
 
 #### Inherited from
 
@@ -34,7 +53,7 @@ Defined in: [command/src/registry.ts:474](https://github.com/freebatteryfactory/
 
 > `readonly` **handler**: [`CapsuleCommandHandler`](CapsuleCommandHandler.md)
 
-Defined in: [command/src/registry.ts:484](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L484)
+Defined in: [command/src/registry.ts:531](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L531)
 
 #### Overrides
 

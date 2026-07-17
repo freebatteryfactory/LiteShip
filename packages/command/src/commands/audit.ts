@@ -7,13 +7,14 @@
  *
  * @module
  */
-import { wallClock, type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
+import { S, type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
 import {
   capabilityUnavailable,
+  defineCommand,
+  failed,
+  ok,
   type AuditEngineFinding,
   type CommandCapability,
-  type CommandContext,
-  type HandledCommand,
 } from '../registry.js';
 
 /**
@@ -98,7 +99,7 @@ export type AuditPayload = {
 };
 
 /** `audit [--profile <path>] [--consumer] [--findings]` — run the engine, emit a structured summary. */
-export const auditCommand: HandledCommand = {
+export const auditCommand = defineCommand({
   descriptor: {
     name: 'audit',
     summary: 'Run the profile-driven structure/integrity/surface audit; report a structured summary.',
@@ -115,12 +116,17 @@ export const auditCommand: HandledCommand = {
     // NOT mcpExposed: the engine is CLI-injected (runAudit); cli-only by design.
     annotations: { readOnly: true, cliOnly: true, group: 'castoff' },
   },
-  handler: async (invocation, context: CommandContext): Promise<CapsuleCommandResult> => {
+  argsSchema: S.struct({
+    profile: S.optional(S.string),
+    consumer: S.optional(S.boolean),
+    findings: S.optional(S.boolean),
+  }),
+  handler: async (invocation, context): Promise<CapsuleCommandResult> => {
     // Direct-invocation guard; the dispatcher already enforces `requires`.
     if (!context.runAudit) return capabilityUnavailable('audit', ['runAudit']);
 
     const profile = invocation.args.profile;
-    const profilePath = typeof profile === 'string' && profile.length > 0 ? profile : undefined;
+    const profilePath = profile && profile.length > 0 ? profile : undefined;
     const consumer = invocation.args.consumer === true;
     const includeFindings = invocation.args.findings === true;
 
@@ -130,22 +136,17 @@ export const auditCommand: HandledCommand = {
       ...(includeFindings ? { includeFindings } : {}),
     });
 
-    return {
-      status: summary.errorCount > 0 ? 'failed' : 'ok',
-      command: 'audit',
-      timestamp: new Date(wallClock.now()).toISOString(),
-      exitCode: summary.errorCount > 0 ? 1 : 0,
-      payload: {
-        errorCount: summary.errorCount,
-        warningCount: summary.warningCount,
-        infoCount: summary.infoCount,
-        findingCount: summary.findingCount,
-        suppressedCount: summary.suppressedCount,
-        passFindingCounts: summary.passFindingCounts,
-        repoRoot: summary.repoRoot,
-        profileSource: summary.profileSource,
-        ...(summary.findings ? { findings: summary.findings } : {}),
-      },
+    const payload: AuditPayload = {
+      errorCount: summary.errorCount,
+      warningCount: summary.warningCount,
+      infoCount: summary.infoCount,
+      findingCount: summary.findingCount,
+      suppressedCount: summary.suppressedCount,
+      passFindingCounts: summary.passFindingCounts,
+      repoRoot: summary.repoRoot,
+      profileSource: summary.profileSource,
+      ...(summary.findings ? { findings: summary.findings } : {}),
     };
+    return summary.errorCount > 0 ? failed('audit', payload, 1) : ok('audit', payload);
   },
-};
+});

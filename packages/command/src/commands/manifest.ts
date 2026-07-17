@@ -7,8 +7,8 @@
  *
  * @module
  */
-import { wallClock, type CapsuleCommandResult } from '@czap/core';
-import type { CommandContext } from '../registry.js';
+import type { CapsuleCommandResult } from '@czap/core';
+import { failed, type CommandContext } from '../registry.js';
 
 /** One capsule-manifest entry (fields vary by capsule kind). */
 export interface CapsuleManifestEntry {
@@ -60,13 +60,7 @@ export function manifestUnavailable(
     failure.reason === 'missing'
       ? manifestMissing(context)
       : `capsule manifest is not valid JSON (${failure.detail}) — regenerate it with \`pnpm run capsule:compile\``;
-  return {
-    status: 'failed',
-    command,
-    timestamp: new Date(wallClock.now()).toISOString(),
-    exitCode: 1,
-    payload: { error },
-  };
+  return failed(command, { error }, 1);
 }
 
 /**

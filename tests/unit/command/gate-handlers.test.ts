@@ -29,7 +29,8 @@ describe('plumb command — handler contract', () => {
       },
     );
     expect(result.status).toBe('ok');
-    expect(result.exitCode).toBe(0);
+    // ok() stamps no exitCode — success maps to 0 at the adapter (see registry.ok).
+    expect(result.exitCode).toBeUndefined();
     expect((result.payload as { ok: boolean }).ok).toBe(true);
   });
 

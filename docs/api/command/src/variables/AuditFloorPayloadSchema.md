@@ -8,7 +8,7 @@
 
 > `const` **AuditFloorPayloadSchema**: `object`
 
-Defined in: [command/src/commands/audit-floor.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/audit-floor.ts#L32)
+Defined in: [command/src/commands/audit-floor.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/audit-floor.ts#L34)
 
 The descriptor `outputSchema` for `audit-floor` — hand-written JSON-Schema,
 byte-parity-pinned against the parity fixture. `delta` is a modelled nested

@@ -8,7 +8,7 @@
 
 > **AssetAnalyzePayload** = `object`
 
-Defined in: [command/src/commands/asset.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/asset.ts#L35)
+Defined in: [command/src/commands/asset.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/asset.ts#L38)
 
 Structured payload returned by asset.analyze.
 
@@ -18,7 +18,7 @@ Structured payload returned by asset.analyze.
 
 > `readonly` **assetId**: `string`
 
-Defined in: [command/src/commands/asset.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/asset.ts#L36)
+Defined in: [command/src/commands/asset.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/asset.ts#L39)
 
 ***
 
@@ -26,7 +26,7 @@ Defined in: [command/src/commands/asset.ts:36](https://github.com/freebatteryfac
 
 > `readonly` **cached**: `boolean`
 
-Defined in: [command/src/commands/asset.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/asset.ts#L39)
+Defined in: [command/src/commands/asset.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/asset.ts#L42)
 
 ***
 
@@ -34,7 +34,7 @@ Defined in: [command/src/commands/asset.ts:39](https://github.com/freebatteryfac
 
 > `readonly` **markerCount**: `number`
 
-Defined in: [command/src/commands/asset.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/asset.ts#L38)
+Defined in: [command/src/commands/asset.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/asset.ts#L41)
 
 ***
 
@@ -42,4 +42,4 @@ Defined in: [command/src/commands/asset.ts:38](https://github.com/freebatteryfac
 
 > `readonly` **projection**: `Projection`
 
-Defined in: [command/src/commands/asset.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/asset.ts#L37)
+Defined in: [command/src/commands/asset.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/asset.ts#L40)

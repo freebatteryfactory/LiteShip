@@ -20,9 +20,11 @@
  *
  * @module
  */
-import { wallClock, type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
+import { type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
 import {
   capabilityUnavailable,
+  failed,
+  ok,
   type CommandCapability,
   type CommandContext,
   type HandledCommand,
@@ -86,17 +88,12 @@ export const capsuleVerifyGateCommand: HandledCommand = {
 
     const summary = await context.runCapsuleGate();
 
-    return {
-      status: summary.status === 'ok' ? 'ok' : 'failed',
-      command: 'capsule-verify',
-      timestamp: new Date(wallClock.now()).toISOString(),
-      exitCode: summary.status === 'ok' ? 0 : 1,
-      payload: {
-        status: summary.status,
-        errors: summary.errors,
-        capsuleCount: summary.capsuleCount,
-        benches: summary.benches,
-      } satisfies CapsuleVerifyPayload,
-    };
+    const payload = {
+      status: summary.status,
+      errors: summary.errors,
+      capsuleCount: summary.capsuleCount,
+      benches: summary.benches,
+    } satisfies CapsuleVerifyPayload;
+    return summary.status === 'ok' ? ok('capsule-verify', payload) : failed('capsule-verify', payload, 1);
   },
 };

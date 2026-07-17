@@ -8,4 +8,4 @@
 
 > **Shape** = `CommandDispatcherShape`
 
-Defined in: [command/src/dispatcher.ts:108](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/dispatcher.ts#L108)
+Defined in: [command/src/dispatcher.ts:135](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/dispatcher.ts#L135)

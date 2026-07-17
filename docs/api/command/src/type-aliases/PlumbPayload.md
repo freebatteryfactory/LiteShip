@@ -8,7 +8,7 @@
 
 > **PlumbPayload** = `object`
 
-Defined in: [command/src/commands/plumb.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/plumb.ts#L64)
+Defined in: [command/src/commands/plumb.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/plumb.ts#L66)
 
 Structured payload returned by `plumb`.
 
@@ -18,7 +18,7 @@ Structured payload returned by `plumb`.
 
 > `readonly` **generatedCorpusMessage**: `string` \| `null`
 
-Defined in: [command/src/commands/plumb.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/plumb.ts#L69)
+Defined in: [command/src/commands/plumb.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/plumb.ts#L71)
 
 ***
 
@@ -26,7 +26,7 @@ Defined in: [command/src/commands/plumb.ts:69](https://github.com/freebatteryfac
 
 > `readonly` **generatedPresent**: `boolean`
 
-Defined in: [command/src/commands/plumb.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/plumb.ts#L68)
+Defined in: [command/src/commands/plumb.ts:70](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/plumb.ts#L70)
 
 ***
 
@@ -34,7 +34,7 @@ Defined in: [command/src/commands/plumb.ts:68](https://github.com/freebatteryfac
 
 > `readonly` **ok**: `boolean`
 
-Defined in: [command/src/commands/plumb.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/plumb.ts#L65)
+Defined in: [command/src/commands/plumb.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/plumb.ts#L67)
 
 ***
 
@@ -42,7 +42,7 @@ Defined in: [command/src/commands/plumb.ts:65](https://github.com/freebatteryfac
 
 > `readonly` **skips**: readonly `object`[]
 
-Defined in: [command/src/commands/plumb.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/plumb.ts#L66)
+Defined in: [command/src/commands/plumb.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/plumb.ts#L68)
 
 ***
 
@@ -50,4 +50,4 @@ Defined in: [command/src/commands/plumb.ts:66](https://github.com/freebatteryfac
 
 > `readonly` **unclassified**: readonly `string`[]
 
-Defined in: [command/src/commands/plumb.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/plumb.ts#L67)
+Defined in: [command/src/commands/plumb.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/plumb.ts#L69)

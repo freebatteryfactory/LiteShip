@@ -55,6 +55,17 @@ export function createNodeCommandContext(
     readonly cwd?: string;
     readonly skipDetector?: (source: string) => readonly SkipMatch[];
     readonly earlyReturnDetector?: (source: string) => readonly EarlyReturnMatch[];
+    /**
+     * Adapter-supplied capability overrides merged OVER the shared defaults, so a
+     * CLI adapter builds its context purely as `createNodeCommandContext({ …overrides })`
+     * instead of hand-writing an inline `CommandContext` literal. Every provided
+     * key wins over the default of the same name; keys absent here keep the shared
+     * host implementation. This is how the CLI injects the heavy `@czap/audit`-backed
+     * gates (`runAuditFloor`, `runPackageSmoke`, `runCapsuleGate`, `runCheckInvariants`)
+     * and the vitest runner (`runVitest`) that are NOT provisioned in the shared
+     * factory — over MCP those stay absent and the handlers degrade structurally.
+     */
+    readonly overrides?: Partial<Omit<CommandContext, 'cwd'>>;
   } = {},
 ): CommandContext {
   const cwd = opts.cwd ?? process.cwd();
@@ -71,7 +82,7 @@ export function createNodeCommandContext(
     return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
   };
 
-  return {
+  const base: CommandContext = {
     cwd: opts.cwd,
     spawnCapture: async (command, args) => {
       const r = await spawnArgvCapture(command, args).catch(() => null);
@@ -153,4 +164,7 @@ export function createNodeCommandContext(
         writeCache({ command: key.command, inputs: key.inputs, force: key.force, cwd: opts.cwd }, receipt),
     },
   };
+  // Adapter capability overrides win over the shared defaults; keys absent from
+  // `overrides` keep the host implementation above.
+  return opts.overrides ? { ...base, ...opts.overrides } : base;
 }

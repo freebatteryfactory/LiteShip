@@ -8,7 +8,7 @@
 
 > `const` **CheckInvariantsPayloadSchema**: `object`
 
-Defined in: [command/src/commands/check-invariants.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/check-invariants.ts#L38)
+Defined in: [command/src/commands/check-invariants.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/check-invariants.ts#L40)
 
 The descriptor `outputSchema` for `check-invariants` — hand-written JSON-Schema,
 byte-parity-pinned against the parity fixture. The modelled `groups` element

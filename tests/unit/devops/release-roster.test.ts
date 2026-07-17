@@ -21,6 +21,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { PUBLISHABLE_ROSTER, collectRosterDrift } from '../../../scripts/gen-roster.js';
 import { packageManifests } from '../../support/repo-truths.js';
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
@@ -108,6 +109,21 @@ describe('release.yml publish roster matches the workspace (the 4th roster locat
       }
     }
     expect(violations, `release.yml publish order is not topological:\n${violations.join('\n')}`).toEqual([]);
+  });
+
+  it('the publish loop membership equals gen-roster PUBLISHABLE_ROSTER (the single roster owner)', () => {
+    // release.yml is gen-roster-CHECKED, not regenerated: YAML cannot import TS, so the
+    // list stays hand-ordered (topological, pinned above) but its MEMBERSHIP and COUNT
+    // must equal gen-roster's canonical publishable roster.
+    expect(releaseLoopNames()).toEqual([...PUBLISHABLE_ROSTER].sort());
+    expect(releaseExpectedCount()).toBe(PUBLISHABLE_ROSTER.length);
+  });
+
+  it('gen-roster reports no roster drift across the authored roster and shipped copies', () => {
+    // The gen-roster staleness gate (`pnpm tsx scripts/gen-roster.ts --check`) run in-process:
+    // it cross-checks CANONICAL_ROSTER / PUBLISHABLE_ROSTER and release.yml against the
+    // repo-truths-derived set. An empty drift list is the green gate.
+    expect(collectRosterDrift()).toEqual([]);
   });
 
   it('the trusted-publisher checklist (RELEASING.md) states the right publishable count', () => {

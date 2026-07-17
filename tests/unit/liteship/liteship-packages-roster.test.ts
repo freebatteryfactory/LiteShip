@@ -3,8 +3,11 @@
  *
  * @module
  */
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { LITESHIP_PACKAGES } from '../../../packages/liteship/src/index.js';
+import { CANONICAL_ROSTER, renderLiteshipPackages } from '../../../scripts/gen-roster.js';
 import { packageManifests, packageRoster } from '../../support/repo-truths.js';
 
 // The manifest truth (packages/*/package.json) and the canonical `@czap/*` roster
@@ -13,11 +16,21 @@ import { packageManifests, packageRoster } from '../../support/repo-truths.js';
 // `@czap/*` (the umbrella can't depend on the non-scoped `liteship` /
 // `create-liteship`). This guard's ASSERTIONS are unchanged.
 
+const LITESHIP_INDEX = resolve(import.meta.dirname, '..', '..', '..', 'packages/liteship/src/index.ts');
+
 function czapDependenciesFromManifest(): string[] {
   const liteship = packageManifests().find((manifest) => manifest.dir === 'liteship');
   return Object.keys(liteship?.dependencies ?? {})
     .filter((name) => name.startsWith('@czap/'))
     .sort();
+}
+
+/** The exact text inside the `BEGIN/END gen-roster: LITESHIP_PACKAGES` markers. */
+function generatedBlock(): string {
+  const src = readFileSync(LITESHIP_INDEX, 'utf8');
+  const match = /\/\* BEGIN gen-roster: LITESHIP_PACKAGES[^\n]*\*\/\n([\s\S]*?)\n\/\* END gen-roster: LITESHIP_PACKAGES/.exec(src);
+  if (!match) throw new Error('packages/liteship/src/index.ts: BEGIN/END gen-roster: LITESHIP_PACKAGES markers not found');
+  return match[1]!;
 }
 
 describe('liteship umbrella roster', () => {
@@ -38,5 +51,18 @@ describe('liteship umbrella roster', () => {
   it('includes framework primitive packages', () => {
     expect(LITESHIP_PACKAGES).toContain('@czap/canonical');
     expect(LITESHIP_PACKAGES).toContain('@czap/genui');
+  });
+
+  // gen-roster (scripts/gen-roster.ts) is the single owner of the canonical
+  // dependency-ordered `@czap/*` fleet; `LITESHIP_PACKAGES` is its tarball-shipped
+  // mirror. These two assertions close the loop begun above (copy == repo-truths):
+  // copy == gen-roster's roster, in the SAME order, and byte-for-byte the generator
+  // output between the source's generated-block markers.
+  it('LITESHIP_PACKAGES equals gen-roster CANONICAL_ROSTER in dependency order', () => {
+    expect([...LITESHIP_PACKAGES]).toEqual([...CANONICAL_ROSTER]);
+  });
+
+  it('the generated-block source matches gen-roster renderLiteshipPackages() byte-for-byte', () => {
+    expect(generatedBlock()).toBe(renderLiteshipPackages());
   });
 });

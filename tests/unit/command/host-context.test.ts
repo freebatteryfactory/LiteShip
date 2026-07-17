@@ -246,3 +246,36 @@ describe('createNodeCommandContext', () => {
     expect(result?.elapsedMs).toBeGreaterThanOrEqual(0);
   });
 });
+
+describe('createNodeCommandContext capability overrides', () => {
+  it('merges adapter overrides over the shared defaults — the override wins, unlisted keys keep the host impl', async () => {
+    const floorSummary = {
+      ok: true,
+      expectedWarnings: 0,
+      actualWarnings: 0,
+      errorCount: 0,
+      delta: { added: [], removed: [] },
+      inventory: [],
+    };
+    const ctx = createNodeCommandContext({
+      overrides: {
+        // A capability the shared factory does NOT provision — only a CLI adapter
+        // (which deps the heavy @czap/audit engine) injects it.
+        runAuditFloor: async () => floorSummary,
+        // Override a provisioned default; the adapter value must win.
+        manifestSource: () => 'OVERRIDDEN',
+      },
+    });
+    expect(ctx.runAuditFloor).toBeDefined();
+    await expect(ctx.runAuditFloor!()).resolves.toEqual(floorSummary);
+    expect(ctx.manifestSource!()).toBe('OVERRIDDEN');
+    // A capability not listed in `overrides` keeps the shared host implementation.
+    expect(typeof ctx.runPlumb).toBe('function');
+  });
+
+  it('without overrides, the shared context is unchanged (a CLI-only capability stays absent)', () => {
+    const ctx = createNodeCommandContext({});
+    expect(ctx.runAuditFloor).toBeUndefined();
+    expect(typeof ctx.runPlumb).toBe('function');
+  });
+});

@@ -15,9 +15,11 @@
  *
  * @module
  */
-import { wallClock, type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
+import { type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
 import {
   capabilityUnavailable,
+  failed,
+  ok,
   type CommandCapability,
   type CommandContext,
   type HandledCommand,
@@ -82,19 +84,14 @@ export const auditFloorCommand: HandledCommand = {
 
     const summary = await context.runAuditFloor();
 
-    return {
-      status: summary.ok ? 'ok' : 'failed',
-      command: 'audit-floor',
-      timestamp: new Date(wallClock.now()).toISOString(),
-      exitCode: summary.ok ? 0 : 1,
-      payload: {
-        ok: summary.ok,
-        expectedWarnings: summary.expectedWarnings,
-        actualWarnings: summary.actualWarnings,
-        errorCount: summary.errorCount,
-        delta: summary.delta,
-        inventory: summary.inventory,
-      } satisfies AuditFloorPayload,
-    };
+    const payload = {
+      ok: summary.ok,
+      expectedWarnings: summary.expectedWarnings,
+      actualWarnings: summary.actualWarnings,
+      errorCount: summary.errorCount,
+      delta: summary.delta,
+      inventory: summary.inventory,
+    } satisfies AuditFloorPayload;
+    return summary.ok ? ok('audit-floor', payload) : failed('audit-floor', payload, 1);
   },
 };

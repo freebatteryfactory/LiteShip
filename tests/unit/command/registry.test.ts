@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { CommandRegistry, CommandDispatcher } from '@czap/command';
+import { CommandRegistry, CommandDispatcher, commandRegistry, ok, failed, defineCommand } from '@czap/command';
 import type { RegisteredCommand } from '@czap/command';
+import type { GlossaryPayload } from '@czap/command';
+import { S } from '@czap/core';
 
 function fakeCommand(name: string): RegisteredCommand {
   return {
@@ -84,5 +86,65 @@ describe('dispatcher error contract — failed payloads teach the next step', ()
     expect(payload.error).toBe('no_registry_handler');
     expect(payload.executionKind).toBe('cli-orchestration');
     expect(payload.hint).toContain('czap gauntlet');
+  });
+});
+
+describe('ok()/failed() envelope constructors stamp the shared shape once', () => {
+  it('ok(): status ok, threaded command, wall-clock timestamp, payload, NO exitCode', () => {
+    const result = ok('demo.cmd', { count: 3 });
+    expect(result.status).toBe('ok');
+    expect(result.command).toBe('demo.cmd');
+    expect(result.payload).toEqual({ count: 3 });
+    expect(result.exitCode).toBeUndefined();
+    expect(typeof result.timestamp).toBe('string');
+    expect(Number.isNaN(Date.parse(result.timestamp))).toBe(false);
+  });
+
+  it('failed(): status failed, given exitCode, payload; exitCode defaults to 1', () => {
+    const explicit = failed('demo.cmd', { error: 'boom' }, 3);
+    expect(explicit.status).toBe('failed');
+    expect(explicit.command).toBe('demo.cmd');
+    expect(explicit.exitCode).toBe(3);
+    expect(explicit.payload).toEqual({ error: 'boom' });
+
+    const defaulted = failed('demo.cmd', { error: 'boom' });
+    expect(defaulted.exitCode).toBe(1);
+  });
+});
+
+describe('CommandMap types the dispatch payload at compile time', () => {
+  it("dispatch('glossary') yields a GlossaryPayload — read a payload field with no cast", async () => {
+    const dispatcher = CommandDispatcher.make(commandRegistry);
+    const result = await dispatcher.dispatch({ name: 'glossary', args: {} }, {});
+    expect(result.status).toBe('ok');
+    const payload = result.payload;
+    // COMPILE-TIME PROOF: `payload` is typed `GlossaryPayload | undefined`, so
+    // `.entries` / `.term` resolve WITHOUT a cast. Were the return `unknown`
+    // (the pre-CommandMap dispatch), these member reads would fail typecheck.
+    if (payload) {
+      const entries: GlossaryPayload['entries'] = payload.entries;
+      const term: GlossaryPayload['term'] = payload.term;
+      expect(Array.isArray(entries)).toBe(true);
+      expect(term).toBeNull();
+    }
+  });
+});
+
+describe('RegisteredCommand carries a declared argsSchema slot', () => {
+  it('defineCommand threads the schema onto the registered command', () => {
+    const command = defineCommand({
+      descriptor: {
+        name: 'schema.cmd',
+        summary: 'declares an args schema',
+        inputSchema: { type: 'object', properties: { scene: { type: 'string' } }, required: ['scene'] },
+      },
+      argsSchema: S.struct({ scene: S.string }),
+      handler: async (invocation) => ok('schema.cmd', { scene: invocation.args.scene }),
+    });
+    const registry = CommandRegistry.make([command]);
+    expect(registry.get('schema.cmd')?.argsSchema).toBeDefined();
+    // A descriptor-only / legacy command has no schema slot.
+    const legacy = CommandRegistry.make([fakeCommand('legacy.cmd')]);
+    expect(legacy.get('legacy.cmd')?.argsSchema).toBeUndefined();
   });
 });

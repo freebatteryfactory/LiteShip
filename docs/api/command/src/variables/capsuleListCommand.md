@@ -8,6 +8,6 @@
 
 > `const` **capsuleListCommand**: [`HandledCommand`](../interfaces/HandledCommand.md)
 
-Defined in: [command/src/commands/capsule.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/capsule.ts#L89)
+Defined in: [command/src/commands/capsule.ts:80](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/capsule.ts#L80)
 
 `capsule list [--kind=<kind>]` — list manifest entries, optionally filtered.

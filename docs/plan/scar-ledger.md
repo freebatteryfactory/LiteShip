@@ -348,3 +348,76 @@ Format: `S<wave>.<n>` — scar → root class → disposition (guard, status).
   Disposition: ACCEPTED — behaviorally correct, ADR-0041-documented, motion-primitives
   prop test pins `translate:` never `translate3d`; function name still accurate
   (consumes the translate-axis vars). No action.
+
+## Wave 5 scars
+
+- **S5.1 — the generic-handler retype orphaned an internal import, tripping the
+  reimplementation-smell heuristic.** Making `CapsuleCommandHandler` generic over
+  decoded `Args` replaced its `CapsuleCommandInvocation` reference with an inline
+  `{ name; args: Args }` shape, leaving `CapsuleCommandInvocation` imported-but-unused
+  in `packages/command/src/registry.ts`. The audit `suspicious-reimplementation`
+  rule (`@czap/audit` integrity: an unused internal import next to local
+  implementation logic) fired, and the artifact-independent three-pass warning
+  inventory drifted 0 → 1 against the pinned `AUDIT_WARNING_FLOOR` (`[]`).
+  Class: a producer retype leaves a dead internal import that the reimplementation
+  heuristic reads as a smell — invisible to typecheck (an unused *type* import still
+  type-checks) but not to the audit floor.
+  Disposition: **existing gate held** — `audit-floor` (and `audit-profile-seam`
+  D9a, `audit-command` D9b-2) went RED and named the exact site
+  (`suspicious-reimplementation@packages/command/src/registry.ts`); integration
+  deleted the dead import, floor back to 0. No new guard — the audit-floor gate is
+  the disposition. STATUS: closed (audit-floor gate cited; import removed, 0→1→0).
+
+- **S5.2 — gen-spine + the spine-staleness byte-gate could not be built, so the
+  spine-conformance IsEqual pins stay FROZEN (not deleted).** The codegen slice
+  reported the two files (`scripts/gen-spine.ts`, `tests/unit/spine-staleness.test.ts`,
+  plan lines 447/521) as infeasible: the 17 `packages/_spine/*.d.ts` mirrors are
+  hand-curated *public-contract subsets* (relative `./core.d.ts` imports, box-drawing
+  section headers, deliberately omitted exports), NOT `tsc --emitDeclarationOnly`
+  output (which emits the full surface, `.js` specifiers, single-line imports). A
+  byte-compare gate would either be a no-op copy (circular gate — banned) or force
+  regenerating the mirrors to full-surface form, changing the published `@czap/core`
+  /`@czap/scene` reference — a cross-cutting decision outside a ceremony slice.
+  Class: a planned codegen substrate rests on an assumption (mirrors == emit output)
+  that the actual mirrors violate; the gate cannot be honest without a separate
+  surface decision.
+  Disposition: **HONESTY — deferred, pins frozen.** Per plan lines 447/520 gen-spine
+  "may trail the wave; until green, the conformance pins stay frozen and _spine edits
+  stay hand-made." This wave's retypes touch NONE of the pinned types
+  (CompositeState/VideoConfig/CaptureResult/CapSet/Token/Theme/Style/edge), so
+  `tests/unit/spine-conformance.test.ts` needed zero edits and stays green (7/7).
+  The IsEqual type-contract blocks are NOT deleted this wave; the runtime-existence
+  describe blocks (Config.make, Boundary, resolvePrimitive, dispatch) stay
+  permanently. Blocks the spine-pin-deletion follow-on, NOT this wave. See
+  **Conflict-1** below. STATUS: ACTIVE (deferred to a gen-spine/surface-decision wave).
+
+- **S5.3 — the CommandMap decode targets are typed `unknown` until the sibling
+  [SCH] payload extraction lands, so four cli payload casts survive.** The cli
+  adapters for `asset.verify`, `capsule.*`, and `scene.verify` still carry narrow
+  interim structural casts inside their `projectOk` arms because those `CommandMap`
+  entries resolve to `unknown` (the per-command payload types are not yet extracted).
+  The context-factory + verbatim `manifestSource`-copy deletion IS complete for all
+  four; only the result-narrowing cast remains. Likewise `host-browser/context.ts:69`
+  keeps its `scene.render` structuredContent cast (a wire-boundary MCP decode, not a
+  dispatch-result cast).
+  Class: producer/consumer phase boundary — CommandMap (this wave) precedes the
+  payload-type extraction ([SCH]) it will eventually key on.
+  Disposition: ACCEPTED scope boundary, recorded — the casts narrow to the shapes the
+  cli already asserts and clear structurally the moment the payload types land (the
+  CommandMap value stops being `unknown`). Tracked, no new guard. STATUS: ACTIVE
+  (clears with [SCH] payload extraction).
+
+- **Conflict-1 (spine codegen vs. hand-curated mirrors) — STATUS: DEFERRED (NOT
+  resolved this wave).** The plan (lines 447/520, master-plan §Conflict-1) scheduled
+  Conflict-1's resolution as: gen-spine emits `packages/_spine/*.d.ts` from the runtime
+  type surface + a CI staleness byte-gate; once green, delete the spine-conformance
+  IsEqual pins (keep the runtime-existence describes). Per **S5.2** the gate was found
+  infeasible as specified and was not built, so the precondition for pin deletion is
+  UNMET. The pins therefore stay FROZEN (zero edits — none of this wave's four `_spine`
+  retypes touch the pinned types), the runtime-existence describes stay, and
+  Conflict-1 remains OPEN, carried to a future wave that first decides the
+  spine-mirror surface question (published subset vs. full emit) before a byte-gate
+  can be honest. Scar: **S-conflict — a plan-scheduled resolution's precondition
+  (a green byte-gate) can itself prove infeasible; the honest disposition is to defer
+  the resolution and keep the relocated guarantee (the frozen pins) standing, never to
+  delete the pins ahead of the gate.**

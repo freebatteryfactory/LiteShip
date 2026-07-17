@@ -39,6 +39,13 @@ export interface PackageMetadata {
  * name → canonical metadata for every publishable scope. The manifests on disk
  * copy these strings verbatim; the prepublish check asserts the packed manifest
  * still equals its entry here.
+ *
+ * The KEY SET (which packages appear) mirrors the canonical publishable roster
+ * owned by `scripts/gen-roster.ts` (`PUBLISHABLE_ROSTER`); the per-package
+ * `description` / `keywords` are hand-authored annotations that survive over that
+ * generated membership. A package added to the fleet but missing an entry here
+ * fails the prepublish metadata check (no catalog entry) — the parity that keeps
+ * this key set aligned with gen-roster's roster.
  */
 export const PACKAGE_METADATA_CATALOG: Readonly<Record<string, PackageMetadata>> = {
   '@czap/_spine': {

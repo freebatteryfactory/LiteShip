@@ -5,8 +5,8 @@
  *
  * @module
  */
-import { wallClock, type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
-import type { HandledCommand } from '../registry.js';
+import { S, type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
+import { defineCommand, failed, ok } from '../registry.js';
 
 /** One ontology term. Mirrors a row in GLOSSARY.md. */
 export type GlossaryEntry = {
@@ -247,7 +247,7 @@ export function matchGlossaryEntries(query: string | null): readonly GlossaryEnt
 }
 
 /** The glossary command: descriptor + handler returning a structured result. */
-export const glossaryCommand: HandledCommand = {
+export const glossaryCommand = defineCommand({
   descriptor: {
     name: 'glossary',
     summary: 'Look up a term in the LiteShip prose register (maritime + product naming).',
@@ -258,14 +258,13 @@ export const glossaryCommand: HandledCommand = {
     outputSchema: GlossaryPayloadSchema,
     annotations: { readOnly: true, group: 'castoff' },
   },
+  argsSchema: S.struct({ term: S.optional(S.string) }),
   handler: async (invocation): Promise<CapsuleCommandResult<GlossaryPayload>> => {
+    // `term` arrives already decoded (string | undefined) from the argsSchema.
     const raw = invocation.args.term;
-    const term = typeof raw === 'string' && raw.length > 0 ? raw : null;
+    const term = raw && raw.length > 0 ? raw : null;
     const entries = matchGlossaryEntries(term);
-    const timestamp = new Date(wallClock.now()).toISOString();
-    if (entries.length === 0) {
-      return { status: 'failed', command: 'glossary', timestamp, exitCode: 1, payload: { term, entries: [] } };
-    }
-    return { status: 'ok', command: 'glossary', timestamp, payload: { term, entries } };
+    if (entries.length === 0) return failed('glossary', { term, entries: [] }, 1);
+    return ok('glossary', { term, entries });
   },
-};
+});

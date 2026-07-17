@@ -8,7 +8,7 @@
 
 > `const` **CheckPayloadSchema**: `object`
 
-Defined in: [command/src/commands/check.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/check.ts#L49)
+Defined in: [command/src/commands/check.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/check.ts#L44)
 
 The descriptor `outputSchema` for `check` — the WELD-2 Finding-carrying shape,
 hand-written JSON-Schema and byte-parity-pinned against the parity fixture. The

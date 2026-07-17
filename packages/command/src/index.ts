@@ -16,7 +16,7 @@ export type {
   CommandJsonSchema,
 } from '@czap/core';
 
-export { CommandRegistry, capabilityUnavailable } from './registry.js';
+export { CommandRegistry, capabilityUnavailable, ok, failed, defineCommand } from './registry.js';
 export type {
   AuditEngineSummary,
   AuditFloorSummary,
@@ -38,6 +38,7 @@ export { CommandDispatcher } from './dispatcher.js';
 
 // The canonical command catalog — the single source CLI/MCP surfaces project from.
 export { commandRegistry, COMMAND_CATALOG, mcpExposedDescriptors } from './catalog.js';
+export type { CommandMap } from './catalog.js';
 
 // Migrated commands (CUT A1, checkpoint 2+).
 export { glossaryCommand, GLOSSARY_ENTRIES, matchGlossaryEntries, GlossaryPayloadSchema } from './commands/glossary.js';

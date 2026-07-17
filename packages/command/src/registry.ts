@@ -4,13 +4,7 @@
  *
  * @module
  */
-import type {
-  CapsuleCommandDescriptor,
-  CapsuleCommandInvocation,
-  CapsuleCommandResult,
-  Clock,
-  ContentAddress,
-} from '@czap/core';
+import type { CapsuleCommandDescriptor, CapsuleCommandResult, Clock, ContentAddress, Schema } from '@czap/core';
 import { wallClock } from '@czap/core';
 import type { GauntletResult } from '@czap/gauntlet';
 import { ValidationError } from '@czap/error';
@@ -439,6 +433,39 @@ export interface CommandCache {
 export type CommandCapability = Exclude<keyof CommandContext, 'cwd'>;
 
 /**
+ * Stamp a SUCCESS envelope: `status: 'ok'` + the volatile wall-clock timestamp +
+ * the typed payload, no `exitCode` (ok maps to 0 at the adapter). The command
+ * name is threaded ONCE here instead of repeated on every return path in a
+ * handler. Generic over the payload so `ok('glossary', payload)` yields a
+ * `CapsuleCommandResult<GlossaryPayload>`.
+ */
+export function ok<P>(command: string, payload: P): CapsuleCommandResult<P> {
+  return {
+    status: 'ok',
+    command,
+    timestamp: new Date(wallClock.now()).toISOString(),
+    payload,
+  };
+}
+
+/**
+ * Stamp a FAILURE envelope: `status: 'failed'` + the wall-clock timestamp + the
+ * `exitCode` (default 1) + the typed payload. The dispatcher builds its own
+ * structural failures (unknown_command / no_registry_handler / invalid_args)
+ * through this; handlers build their domain failures through it too, so the
+ * envelope shape lives in exactly one place.
+ */
+export function failed<P>(command: string, payload: P, exitCode = 1): CapsuleCommandResult<P> {
+  return {
+    status: 'failed',
+    command,
+    timestamp: new Date(wallClock.now()).toISOString(),
+    exitCode,
+    payload,
+  };
+}
+
+/**
  * The ONE structured failure for a missing injected capability. The dispatcher
  * emits it for unmet descriptor `requires`; handlers reuse it for capabilities
  * they only need conditionally. Exit code 2 — the dominant convention among the
@@ -446,22 +473,33 @@ export type CommandCapability = Exclude<keyof CommandContext, 'cwd'>;
  * asset.verify all used 2; scene.render's 5 and asset.analyze's 1 were outliers).
  */
 export function capabilityUnavailable(command: string, missing: readonly CommandCapability[]): CapsuleCommandResult {
-  return {
-    status: 'failed',
+  return failed(
     command,
-    timestamp: new Date(wallClock.now()).toISOString(),
-    exitCode: 2,
-    payload: {
+    {
       error: 'capability_unavailable',
       missing,
       hint: 'build the context with createNodeCommandContext() from @czap/command/host, or inject the missing capabilities into your CommandContext',
     },
-  };
+    2,
+  );
 }
 
-/** A command handler: structured invocation in, structured result out. No stdout, no argv. */
-export interface CapsuleCommandHandler {
-  (invocation: CapsuleCommandInvocation, context: CommandContext): Promise<CapsuleCommandResult>;
+/**
+ * A command handler: structured invocation in, structured result out. No stdout,
+ * no argv. Generic over the DECODED `Args` (what the dispatcher hands the handler
+ * after decoding `invocation.args` against the command's declared {@link
+ * RegisteredCommand.argsSchema}) and the `Payload` it returns. The defaults keep
+ * a legacy handler — reading loosely-typed `invocation.args` and returning an
+ * `unknown` payload — assignable, so migration is opt-in per command.
+ */
+export interface CapsuleCommandHandler<
+  Args extends Readonly<Record<string, unknown>> = Readonly<Record<string, unknown>>,
+  Payload = unknown,
+> {
+  (
+    invocation: { readonly name: string; readonly args: Args },
+    context: CommandContext,
+  ): Promise<CapsuleCommandResult<Payload>>;
 }
 
 /**
@@ -473,6 +511,15 @@ export interface CapsuleCommandHandler {
 export interface RegisteredCommand {
   readonly descriptor: CapsuleCommandDescriptor;
   readonly handler?: CapsuleCommandHandler;
+  /**
+   * The declared kernel schema for the command's args. When present, the
+   * dispatcher decodes `invocation.args` against it BEFORE invoking the handler
+   * — a mistyped arg fails structurally with an `invalid_args` envelope instead
+   * of reaching the handler, and the handler receives the decoded, typed args.
+   * Absent for a handler that still reads `invocation.args` loosely (the decode
+   * step is then a no-op passthrough).
+   */
+  readonly argsSchema?: Schema<Readonly<Record<string, unknown>>>;
 }
 
 /**
@@ -482,6 +529,38 @@ export interface RegisteredCommand {
  */
 export interface HandledCommand extends RegisteredCommand {
   readonly handler: CapsuleCommandHandler;
+}
+
+/**
+ * Register a finite command with COMPILE-TIME capability narrowing (T053). The
+ * `requires` tuple is captured as a `const` type parameter `R`, so the handler's
+ * `context` is typed `CommandContext & Required<Pick<CommandContext, R[number]>>`
+ * — the declared capabilities are non-optional inside the handler, no per-handler
+ * presence check needed. The dispatcher still enforces `requires` at RUNTIME
+ * (residue for dynamically-built hosts), so the one variance bridge below — the
+ * narrowed-context handler stored under the uniform {@link CapsuleCommandHandler}
+ * — is sound: the dispatcher never calls the handler until the runtime guard has
+ * confirmed every declared capability is present.
+ */
+export function defineCommand<
+  const R extends readonly CommandCapability[] = readonly [],
+  Args extends Readonly<Record<string, unknown>> = Readonly<Record<string, unknown>>,
+  Payload = unknown,
+>(spec: {
+  readonly descriptor: Omit<CapsuleCommandDescriptor, 'requires'> & { readonly requires?: R };
+  readonly argsSchema?: Schema<Args>;
+  readonly handler: (
+    invocation: { readonly name: string; readonly args: Args },
+    context: CommandContext & Required<Pick<CommandContext, R[number]>>,
+  ) => Promise<CapsuleCommandResult<Payload>>;
+}): HandledCommand {
+  return {
+    descriptor: spec.descriptor,
+    // Variance bridge (see doc): the runtime `requires` guard makes the widened
+    // context safe. A plain cast, never `as unknown as`.
+    handler: spec.handler as CapsuleCommandHandler,
+    ...(spec.argsSchema !== undefined ? { argsSchema: spec.argsSchema } : {}),
+  };
 }
 
 interface CommandRegistryShape {

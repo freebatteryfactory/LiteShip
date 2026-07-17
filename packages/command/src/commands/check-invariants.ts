@@ -19,9 +19,11 @@
  *
  * @module
  */
-import { wallClock, type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
+import { type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
 import {
   capabilityUnavailable,
+  failed,
+  ok,
   type CommandCapability,
   type CommandContext,
   type HandledCommand,
@@ -95,16 +97,11 @@ export const checkInvariantsCommand: HandledCommand = {
 
     const summary = await context.runCheckInvariants();
 
-    return {
-      status: summary.ok ? 'ok' : 'failed',
-      command: 'check-invariants',
-      timestamp: new Date(wallClock.now()).toISOString(),
-      exitCode: summary.ok ? 0 : 1,
-      payload: {
-        ok: summary.ok,
-        groups: summary.groups,
-        lineEndings: summary.lineEndings,
-      } satisfies CheckInvariantsPayload,
-    };
+    const payload = {
+      ok: summary.ok,
+      groups: summary.groups,
+      lineEndings: summary.lineEndings,
+    } satisfies CheckInvariantsPayload;
+    return summary.ok ? ok('check-invariants', payload) : failed('check-invariants', payload, 1);
   },
 };

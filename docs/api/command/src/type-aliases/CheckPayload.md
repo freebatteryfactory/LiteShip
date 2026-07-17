@@ -8,7 +8,7 @@
 
 > **CheckPayload** = `object`
 
-Defined in: [command/src/commands/check.ts:88](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/check.ts#L88)
+Defined in: [command/src/commands/check.ts:83](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/check.ts#L83)
 
 Structured payload returned by `check`. Mirrors `CheckPayloadSchema` for every
 field EXCEPT `findings`, which keeps the canonical `@czap/gauntlet` `Finding`
@@ -22,7 +22,7 @@ superset on exactly that one field.
 
 > `readonly` **blocked**: `boolean`
 
-Defined in: [command/src/commands/check.ts:90](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/check.ts#L90)
+Defined in: [command/src/commands/check.ts:85](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/check.ts#L85)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [command/src/commands/check.ts:90](https://github.com/freebatteryfac
 
 > `readonly` **findingCount**: `number`
 
-Defined in: [command/src/commands/check.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/check.ts#L91)
+Defined in: [command/src/commands/check.ts:86](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/check.ts#L86)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [command/src/commands/check.ts:91](https://github.com/freebatteryfac
 
 > `readonly` **findings**: readonly [`Finding`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/finding.ts)[]
 
-Defined in: [command/src/commands/check.ts:92](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/check.ts#L92)
+Defined in: [command/src/commands/check.ts:87](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/check.ts#L87)
 
 ***
 
@@ -46,4 +46,4 @@ Defined in: [command/src/commands/check.ts:92](https://github.com/freebatteryfac
 
 > `readonly` **ok**: `boolean`
 
-Defined in: [command/src/commands/check.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/check.ts#L89)
+Defined in: [command/src/commands/check.ts:84](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/check.ts#L84)

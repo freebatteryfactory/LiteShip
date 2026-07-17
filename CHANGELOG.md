@@ -4,6 +4,33 @@ All notable changes to czap. The format follows [Keep a Changelog](https://keepa
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Pre-1.0
 break policy is intentionally aggressive — minor version bumps may carry breaking changes.
 
+## [0.15.0] - 2026-07-17
+
+The **ceremony cut** (Wave 5) — the command kernel stops hand-rolling its envelopes. A
+name-keyed `CommandMap`, `ok`/`failed` result constructors, argument decoding against each
+command's declared schema, and a single roster generator (`gen-roster`) replace the
+per-command boilerplate the fleet had been copying by hand.
+
+### Added
+
+- **`CommandMap`, `ok`/`failed` on `@czap/command`** — a name→payload map assembled from the
+  existing `*Payload` types, plus envelope constructors that stamp `status`/`command`/
+  `timestamp`/`exitCode` once. The dispatcher decodes `invocation.args` against each command's
+  declared `argsSchema` before invoking the handler, returning a structured `invalid_args`
+  failure on a decode miss. Every registered command now carries its `argsSchema` in the
+  descriptor (additive signature change).
+- **`gen-roster` — one owner for the `@czap/*` fleet roster** — `scripts/gen-roster.ts`
+  regenerates the five hand-maintained roster copies (liteship `LITESHIP_PACKAGES`, the cli
+  metadata catalog, command's package-smoke `PACKAGES`, audit's `WORKSPACE_ALIASES`, and
+  release.yml's publish loop) behind generated-block markers, with a `--check` byte-compare
+  staleness gate. `runCliCommand` (`@czap/cli`) projects a decoded command result onto the
+  Node adapter, retiring the per-command context factories + verbatim `manifestSource` copies.
+
+### Changed
+
+- **Lockstep 0.14.0 → 0.15.0** across all `@czap/*`; api-surface snapshot regenerated (the
+  command exports gain `argsSchema`, plus `ok`/`failed`), api-health registry updated.
+
 ## [0.14.0] - 2026-07-17
 
 The **motion easing generalization** (#148, ADR-0041) — the cross-target byte-law (ADR-0040)

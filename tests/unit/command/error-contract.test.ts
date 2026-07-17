@@ -126,6 +126,30 @@ describe('scene failure messages carry the subject + the literal next step', () 
   });
 });
 
+describe('a real command with a declared argsSchema rejects mistyped args at the dispatcher seam', () => {
+  it('capsule.inspect with a non-string id fails with a structured invalid_args envelope (exit 1), before the handler', async () => {
+    // The requires-less capsule.inspect declares argsSchema `{ id: string }`; a
+    // number id is decoded-rejected structurally — the manifestSource is never
+    // read because the decode gate fires before the handler.
+    const result = await dispatcher.dispatch(
+      { name: 'capsule.inspect', args: { id: 123 } },
+      { manifestSource: () => null },
+    );
+    expect(result.status).toBe('failed');
+    expect(result.exitCode).toBe(1);
+    const payload = result.payload as {
+      error: string;
+      name: string;
+      issues: readonly { path: readonly (string | number)[]; code: string }[];
+      hint: string;
+    };
+    expect(payload.error).toBe('invalid_args');
+    expect(payload.name).toBe('capsule.inspect');
+    expect(payload.issues.some((issue) => issue.path[0] === 'id' && issue.code === 'schema/type')).toBe(true);
+    expect(payload.hint).toContain('inputSchema');
+  });
+});
+
 describe('registry duplicate-name invariant points at the catalog lists', () => {
   it('names HANDLER_COMMANDS / CLI_OWNED_DESCRIPTORS in catalog.ts', () => {
     const command = {

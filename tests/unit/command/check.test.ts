@@ -106,7 +106,8 @@ describe('check command — handler contract', () => {
     const result: GauntletResult = { findings: [], outcomes: [], blocked: false };
     const out = await checkCommand.handler({ name: 'check', args: {} }, ctxWith(result));
     expect(out.status).toBe('ok');
-    expect(out.exitCode).toBe(0);
+    // ok() stamps no exitCode — success maps to 0 at the adapter (see registry.ok).
+    expect(out.exitCode).toBeUndefined();
     const payload = out.payload as CheckPayload;
     expect(payload).toEqual({ ok: true, blocked: false, findingCount: 0, findings: [] });
   });
@@ -140,9 +141,10 @@ describe('check command — handler contract', () => {
       blocked: false,
     };
     const out = await checkCommand.handler({ name: 'check', args: {} }, ctxWith(result));
-    // Findings present, but not blocking → ok / exit 0.
+    // Findings present, but not blocking → ok (adapter maps to exit 0).
     expect(out.status).toBe('ok');
-    expect(out.exitCode).toBe(0);
+    // ok() stamps no exitCode — success maps to 0 at the adapter (see registry.ok).
+    expect(out.exitCode).toBeUndefined();
     const payload = out.payload as CheckPayload;
     expect(payload.findingCount).toBe(1);
     expect(payload.findings[0]!.severity).toBe('advisory');

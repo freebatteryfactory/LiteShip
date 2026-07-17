@@ -1,5 +1,5 @@
 {
-  "$comment": "Owner sign-offs for the AGENT-SAFETY META-GAUNTLET (the raccoon rule). A weakening of the gauntlet's own rigor standards is permitted ONLY via an explicit, owner-signed entry here. Each sign-off names the EXACT element being weakened (elementKey), the weakening CLASS it authorizes, the owner, a justification, and an expiry (ISO yyyy-mm-dd; past the run date re-reds). An always-blocking weakening (the placeholder/skip floor) can NEVER be signed (void), and a skip-allowlist-add whose SITE carries a placeholder marker (TODO/FIXME/not implemented/stub/...) is non-signable (it is unfinished work, not a capability gate). The 28 entries below include the branch-local weakenings vs the snapshot's birth commit (d0c214b7) plus Tier 0.2 skipIf conversions (offscreen-canvas, webcodecs, gpu-absent, eacces-untestable-as-root, symlink-unprivileged, fixture-absent, capsule-manifest-absent). Derived from the live-vs-birth diff, not hand-guessed.",
+  "$comment": "Owner sign-offs for the AGENT-SAFETY META-GAUNTLET (the raccoon rule). A weakening of the gauntlet's own rigor standards is permitted ONLY via an explicit, owner-signed entry here. Each sign-off names the EXACT element being weakened (elementKey), the weakening CLASS it authorizes, the owner, a justification, and an expiry (ISO yyyy-mm-dd; past the run date re-reds). An always-blocking weakening (the placeholder/skip floor) can NEVER be signed (void), and a skip-allowlist-add whose SITE carries a placeholder marker (TODO/FIXME/not implemented/stub/...) is non-signable (it is unfinished work, not a capability gate). The 29 entries below include the branch-local weakenings vs the snapshot's birth commit (d0c214b7) plus Tier 0.2 skipIf conversions (offscreen-canvas, webcodecs, gpu-absent, eacces-untestable-as-root, symlink-unprivileged, fixture-absent, capsule-manifest-absent) plus two line-relocations of existing benign waivers (clock.ts no-nondeterminism 60/77; version.ts no-silent-catch 47→46 from the Wave 5 runCliCommand migration). Derived from the live-vs-birth diff, not hand-guessed.",
   "signoffs": [
     {
       "elementKey": "skip-allowlist::tests/browser/spsc-ring-browser.test.ts::describe.skipIf(!canUseSAB)('browser SPSCRing with real SharedArrayBuffer and Atomics', () => {",
@@ -195,6 +195,13 @@
       "weakening": "waiver-added",
       "owner": "heyoub",
       "justification": "Same gauntlet/no-nondeterminism boundary waiver (a sanctioned Date.now() entropy boundary in packages/core/src/clock.ts), RELOCATED one line by an edit above it after the snapshot's birth — NOT a new deferral. The waiver key embeds the line number, so a one-line shift surfaces as remove(old line)+add(new line); the corresponding removal is a strengthen. No additional code is waived. Signed vs the snapshot's birth baseline (the bootstrap window).",
+      "expiry": "2027-06-20"
+    },
+    {
+      "elementKey": "waiver::gauntlet/no-silent-catch|packages/cli/src/commands/version.ts|46",
+      "weakening": "waiver-added",
+      "owner": "heyoub",
+      "justification": "Same gauntlet/no-silent-catch benign-catch waiver (readCliVersion's best-effort import.meta.url fall-through in packages/cli/src/commands/version.ts, non-corrupting: a real version is still resolved from the workspace), RELOCATED one line (47→46) by the Wave 5 runCliCommand migration dropping the spawn imports above it — NOT a new deferral. The waiver key embeds the line number, so a one-line shift surfaces as remove(line 47)+add(line 46); the corresponding removal is a strengthen. No additional code is waived (identical to the clock.ts:60/77 relocation precedent). Signed vs the snapshot's birth baseline (the bootstrap window).",
       "expiry": "2027-06-20"
     }
   ]

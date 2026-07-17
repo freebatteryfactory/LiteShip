@@ -8,7 +8,7 @@
 
 > **CapsuleVerifyPayload** = `object`
 
-Defined in: [command/src/commands/capsule-verify.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/capsule-verify.ts#L61)
+Defined in: [command/src/commands/capsule-verify.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/capsule-verify.ts#L63)
 
 Structured payload returned by `capsule-verify`.
 
@@ -18,7 +18,7 @@ Structured payload returned by `capsule-verify`.
 
 > `readonly` **benches**: `object`
 
-Defined in: [command/src/commands/capsule-verify.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/capsule-verify.ts#L65)
+Defined in: [command/src/commands/capsule-verify.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/capsule-verify.ts#L67)
 
 #### placeholder
 
@@ -38,7 +38,7 @@ Defined in: [command/src/commands/capsule-verify.ts:65](https://github.com/freeb
 
 > `readonly` **capsuleCount**: `number`
 
-Defined in: [command/src/commands/capsule-verify.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/capsule-verify.ts#L64)
+Defined in: [command/src/commands/capsule-verify.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/capsule-verify.ts#L66)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [command/src/commands/capsule-verify.ts:64](https://github.com/freeb
 
 > `readonly` **errors**: readonly `string`[]
 
-Defined in: [command/src/commands/capsule-verify.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/capsule-verify.ts#L63)
+Defined in: [command/src/commands/capsule-verify.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/capsule-verify.ts#L65)
 
 ***
 
@@ -54,4 +54,4 @@ Defined in: [command/src/commands/capsule-verify.ts:63](https://github.com/freeb
 
 > `readonly` **status**: `"ok"` \| `"stale"` \| `"failed"`
 
-Defined in: [command/src/commands/capsule-verify.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/capsule-verify.ts#L62)
+Defined in: [command/src/commands/capsule-verify.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/capsule-verify.ts#L64)

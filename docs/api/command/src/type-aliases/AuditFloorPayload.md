@@ -8,7 +8,7 @@
 
 > **AuditFloorPayload** = `object`
 
-Defined in: [command/src/commands/audit-floor.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/audit-floor.ts#L58)
+Defined in: [command/src/commands/audit-floor.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/audit-floor.ts#L60)
 
 Structured payload returned by `audit-floor`.
 
@@ -18,7 +18,7 @@ Structured payload returned by `audit-floor`.
 
 > `readonly` **actualWarnings**: `number`
 
-Defined in: [command/src/commands/audit-floor.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/audit-floor.ts#L61)
+Defined in: [command/src/commands/audit-floor.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/audit-floor.ts#L63)
 
 ***
 
@@ -26,7 +26,7 @@ Defined in: [command/src/commands/audit-floor.ts:61](https://github.com/freebatt
 
 > `readonly` **delta**: `object`
 
-Defined in: [command/src/commands/audit-floor.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/audit-floor.ts#L63)
+Defined in: [command/src/commands/audit-floor.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/audit-floor.ts#L65)
 
 #### added
 
@@ -42,7 +42,7 @@ Defined in: [command/src/commands/audit-floor.ts:63](https://github.com/freebatt
 
 > `readonly` **errorCount**: `number`
 
-Defined in: [command/src/commands/audit-floor.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/audit-floor.ts#L62)
+Defined in: [command/src/commands/audit-floor.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/audit-floor.ts#L64)
 
 ***
 
@@ -50,7 +50,7 @@ Defined in: [command/src/commands/audit-floor.ts:62](https://github.com/freebatt
 
 > `readonly` **expectedWarnings**: `number`
 
-Defined in: [command/src/commands/audit-floor.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/audit-floor.ts#L60)
+Defined in: [command/src/commands/audit-floor.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/audit-floor.ts#L62)
 
 ***
 
@@ -58,7 +58,7 @@ Defined in: [command/src/commands/audit-floor.ts:60](https://github.com/freebatt
 
 > `readonly` **inventory**: readonly `string`[]
 
-Defined in: [command/src/commands/audit-floor.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/audit-floor.ts#L64)
+Defined in: [command/src/commands/audit-floor.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/audit-floor.ts#L66)
 
 ***
 
@@ -66,4 +66,4 @@ Defined in: [command/src/commands/audit-floor.ts:64](https://github.com/freebatt
 
 > `readonly` **ok**: `boolean`
 
-Defined in: [command/src/commands/audit-floor.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/audit-floor.ts#L59)
+Defined in: [command/src/commands/audit-floor.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/audit-floor.ts#L61)

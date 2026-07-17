@@ -11,8 +11,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { versionCommand, type VersionPayload } from '@czap/command';
-import { spawnArgvCapture } from '../lib/spawn.js';
+import { runCliCommand } from '../lib/run-command.js';
 import { emit, type WallClockTimestamp } from '../receipts.js';
 
 /** Receipt shape emitted by `czap version`. */
@@ -58,34 +57,34 @@ export function readCliVersion(cwd?: string): string {
   return '0.0.0-unknown';
 }
 
-/** Execute the version command. */
+/**
+ * Execute the version command. The pnpm probe (`spawnCapture`) comes from the
+ * shared host context; only the CLI's own `hostVersion` (its package version off
+ * disk) is an adapter override. The typed `VersionPayload` arrives at the
+ * projection with no cast.
+ */
 export async function version(opts: { pretty?: boolean; cwd?: string } = {}): Promise<number> {
-  const result = await versionCommand.handler(
-    { name: 'version', args: {} },
-    {
-      cwd: opts.cwd,
-      hostVersion: () => readCliVersion(opts.cwd),
-      spawnCapture: async (command, args) => {
-        const r = await spawnArgvCapture(command, args).catch(() => null);
-        return r ? { exitCode: r.exitCode, stdout: r.stdout } : { exitCode: 1, stdout: '' };
-      },
+  return runCliCommand(
+    'version',
+    {},
+    { cwd: opts.cwd, overrides: { hostVersion: () => readCliVersion(opts.cwd) } },
+    (payload, result) => {
+      const receipt: VersionReceipt = {
+        status: 'ok',
+        command: 'version',
+        timestamp: result.timestamp,
+        czap: payload.czap,
+        node: payload.node,
+        pnpm: payload.pnpm,
+      };
+      emit(receipt);
+
+      const wantPretty = opts.pretty ?? Boolean(process.stderr.isTTY);
+      if (wantPretty) {
+        process.stderr.write(`czap ${receipt.czap}  (Node ${receipt.node}, pnpm ${receipt.pnpm ?? 'not found'})\n`);
+      }
+
+      return 0;
     },
   );
-  const payload = result.payload as VersionPayload;
-  const receipt: VersionReceipt = {
-    status: 'ok',
-    command: 'version',
-    timestamp: result.timestamp,
-    czap: payload.czap,
-    node: payload.node,
-    pnpm: payload.pnpm,
-  };
-  emit(receipt);
-
-  const wantPretty = opts.pretty ?? Boolean(process.stderr.isTTY);
-  if (wantPretty) {
-    process.stderr.write(`czap ${receipt.czap}  (Node ${receipt.node}, pnpm ${receipt.pnpm ?? 'not found'})\n`);
-  }
-
-  return 0;
 }

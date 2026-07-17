@@ -1,87 +1,50 @@
 /**
  * asset analyze (CLI adapter) — thin projection over `@czap/command`'s
- * asset.analyze command. The structured branching (manifest / cache / source /
- * result) lives in `@czap/command`; this adapter injects the Node-coupled I/O:
- * the manifest read, asset-byte loading, the audio projection (DSP via
- * @czap/assets), and the content-addressed receipt cache.
+ * asset.analyze command, routed through {@link runCliCommand}. The manifest
+ * read, the @czap/assets audio projection, and the content-addressed receipt
+ * cache come from the shared host context (`createNodeCommandContext`); this
+ * adapter only overrides `loadAssetBytes` (its byte-load ordering is
+ * convention-first: `examples/scenes/<id>.wav` BEFORE the manifest-declared
+ * `source`, since an asset's `source` may be its declaration module, not the
+ * WAV) and renders the JSON receipt. The typed payload arrives with no cast.
  *
  * @module
  */
 
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { AssetRegistry, detectBeats, detectOnsets, computeWaveform, type DecodedAudio } from '@czap/assets';
-import { assetAnalyzeCommand, type AssetAnalyzePayload } from '@czap/command';
-import type { CommandContext } from '@czap/command';
-import { emit, emitError, getCapsuleManifestPath } from '../receipts.js';
-import { tryReadCache, writeCache } from '../idempotency.js';
-
-// Audio decode resolves by asset id, falling back to the built-in audio decoder
-// for any id not in a registry. An EMPTY immutable registry preserves the prior
-// global `resolveAssetDecoder` behavior without the order-dependent module-global.
-const ASSET_REGISTRY = AssetRegistry.make([]);
+import { runCliCommand } from '../lib/run-command.js';
+import { emit } from '../receipts.js';
 
 type Projection = 'beat' | 'onset' | 'waveform';
 
-/** Load an asset's raw bytes by source convention (examples/scenes/<id>.wav | manifest source). */
+/** Load an asset's raw bytes, convention (`examples/scenes/<id>.wav`) before manifest `source`. */
 function loadAssetBytes(assetId: string, source?: string): ArrayBuffer | null {
   const candidates = [resolve('examples/scenes', `${assetId}.wav`), source ? resolve(source) : ''].filter(
     (p) => p && existsSync(p),
   );
   if (candidates.length === 0) return null;
-  return readFileSync(candidates[0]!).buffer as ArrayBuffer;
-}
-
-/**
- * Run the selected audio projection over decoded bytes and return the marker
- * count. Decodes through the asset's OWN decoder (AssetDecl.decoder override
- * or the kind built-in, via the asset registry) — falls back to the audio
- * built-in when the asset isn't registered in this process. The projections
- * are audio analyses, so the decoded shape must be DecodedAudio (enforced on
- * AssetDecl.decoder for kind 'audio').
- */
-async function runAudioProjection(bytes: ArrayBuffer, projection: Projection, assetId?: string): Promise<number> {
-  const decoded = (await ASSET_REGISTRY.resolveDecoder(assetId ?? '')(bytes)) as DecodedAudio;
-  if (projection === 'beat') return detectBeats(decoded).beats.length;
-  if (projection === 'onset') return detectOnsets(decoded).length;
-  return computeWaveform(decoded, { bins: 512 }).length;
-}
-
-function analyzeContext(): CommandContext {
-  return {
-    manifestSource: () => {
-      const path = getCapsuleManifestPath();
-      return existsSync(path) ? readFileSync(path, 'utf8') : null;
-    },
-    manifestPath: () => getCapsuleManifestPath(),
-    loadAssetBytes,
-    runAudioProjection,
-    cache: {
-      read: (key) => tryReadCache({ command: key.command, inputs: key.inputs, force: key.force }),
-      write: (key, receipt) => writeCache({ command: key.command, inputs: key.inputs, force: key.force }, receipt),
-    },
-  };
+  const bytes = readFileSync(candidates[0]!);
+  return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
 }
 
 /** Execute the asset analyze command. */
 export async function assetAnalyze(assetId: string, projection: Projection, force = false): Promise<number> {
-  const result = await assetAnalyzeCommand.handler(
-    { name: 'asset.analyze', args: { asset: assetId, projection, force } },
-    analyzeContext(),
+  return runCliCommand(
+    'asset.analyze',
+    { asset: assetId, projection, force },
+    { overrides: { loadAssetBytes } },
+    (payload, result) => {
+      emit({
+        status: 'ok',
+        command: 'asset.analyze',
+        timestamp: result.timestamp,
+        assetId: payload.assetId,
+        projection: payload.projection,
+        markerCount: payload.markerCount,
+        cached: payload.cached,
+      });
+      return 0;
+    },
   );
-  if (result.status === 'failed') {
-    emitError('asset.analyze', (result.payload as { error: string }).error);
-    return result.exitCode ?? 1;
-  }
-  const payload = result.payload as AssetAnalyzePayload;
-  emit({
-    status: 'ok',
-    command: 'asset.analyze',
-    timestamp: result.timestamp,
-    assetId: payload.assetId,
-    projection: payload.projection,
-    markerCount: payload.markerCount,
-    cached: payload.cached,
-  });
-  return 0;
 }

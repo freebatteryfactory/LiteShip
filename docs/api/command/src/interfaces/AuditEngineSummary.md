@@ -6,7 +6,7 @@
 
 # Interface: AuditEngineSummary
 
-Defined in: [command/src/registry.ts:259](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L259)
+Defined in: [command/src/registry.ts:253](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L253)
 
 Structured summary returned by the injected [CommandContext.runAudit](CommandContext.md#runaudit)
 capability — a structural mirror of `@czap/audit`'s pass result, declared here
@@ -18,7 +18,7 @@ so the contract lives in `@czap/command` without an import of the engine.
 
 > `readonly` **errorCount**: `number`
 
-Defined in: [command/src/registry.ts:260](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L260)
+Defined in: [command/src/registry.ts:254](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L254)
 
 ***
 
@@ -26,7 +26,7 @@ Defined in: [command/src/registry.ts:260](https://github.com/freebatteryfactory/
 
 > `readonly` **findingCount**: `number`
 
-Defined in: [command/src/registry.ts:263](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L263)
+Defined in: [command/src/registry.ts:257](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L257)
 
 ***
 
@@ -34,7 +34,7 @@ Defined in: [command/src/registry.ts:263](https://github.com/freebatteryfactory/
 
 > `readonly` `optional` **findings?**: readonly [`AuditEngineFinding`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts)[]
 
-Defined in: [command/src/registry.ts:273](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L273)
+Defined in: [command/src/registry.ts:267](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L267)
 
 Present only when the caller asked for findings (`--findings`).
 
@@ -44,7 +44,7 @@ Present only when the caller asked for findings (`--findings`).
 
 > `readonly` **infoCount**: `number`
 
-Defined in: [command/src/registry.ts:262](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L262)
+Defined in: [command/src/registry.ts:256](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L256)
 
 ***
 
@@ -52,7 +52,7 @@ Defined in: [command/src/registry.ts:262](https://github.com/freebatteryfactory/
 
 > `readonly` **passFindingCounts**: `object`
 
-Defined in: [command/src/registry.ts:265](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L265)
+Defined in: [command/src/registry.ts:259](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L259)
 
 #### integrity
 
@@ -72,7 +72,7 @@ Defined in: [command/src/registry.ts:265](https://github.com/freebatteryfactory/
 
 > `readonly` **profileSource**: `"default"` \| `"file"` \| `"consumer"`
 
-Defined in: [command/src/registry.ts:271](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L271)
+Defined in: [command/src/registry.ts:265](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L265)
 
 ***
 
@@ -80,7 +80,7 @@ Defined in: [command/src/registry.ts:271](https://github.com/freebatteryfactory/
 
 > `readonly` **repoRoot**: `string`
 
-Defined in: [command/src/registry.ts:270](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L270)
+Defined in: [command/src/registry.ts:264](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L264)
 
 ***
 
@@ -88,7 +88,7 @@ Defined in: [command/src/registry.ts:270](https://github.com/freebatteryfactory/
 
 > `readonly` **suppressedCount**: `number`
 
-Defined in: [command/src/registry.ts:264](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L264)
+Defined in: [command/src/registry.ts:258](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L258)
 
 ***
 
@@ -96,4 +96,4 @@ Defined in: [command/src/registry.ts:264](https://github.com/freebatteryfactory/
 
 > `readonly` **warningCount**: `number`
 
-Defined in: [command/src/registry.ts:261](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L261)
+Defined in: [command/src/registry.ts:255](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L255)
