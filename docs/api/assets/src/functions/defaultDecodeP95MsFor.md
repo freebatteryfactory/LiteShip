@@ -8,7 +8,7 @@
 
 > **defaultDecodeP95MsFor**(`kind`): `number`
 
-Defined in: [assets/src/contract.ts:85](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L85)
+Defined in: [assets/src/contract.ts:84](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L84)
 
 Per-kind decode p95 budget defaults (ms). Explicit `decl.budgets.decodeP95Ms` overrides.
 

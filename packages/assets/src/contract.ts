@@ -18,10 +18,9 @@
  * @module
  */
 
-import { Schema } from 'effect';
 import { NotFoundError, ValidationError } from '@czap/error';
-import { defineCapsule, asDeclaration } from '@czap/core';
-import type { AttributionDecl, Invariant, CapsuleDef, Site, DeclarationSchema } from '@czap/core';
+import { defineCapsule, S } from '@czap/core';
+import type { AttributionDecl, Invariant, CapsuleDef, Site } from '@czap/core';
 import { mkAssetRefId, type AssetRefId } from './brands.js';
 import { audioDecoder, type DecodedAudio } from './decoders/audio.js';
 import { videoDecoder, type DecodedVideo } from './decoders/video.js';
@@ -184,14 +183,16 @@ export function builtinDecoderSiteFor(kind: AssetKind): readonly Site[] {
 }
 
 /**
- * Raw asset byte source. A {@link DeclarationSchema} over the `instanceOf`
- * carrier, so the harness honestly reports "not arbitrary-derivable" instead of
- * feeding `fc.anything()` garbage into real decoders that only accept
- * ArrayBuffer. `asDeclaration` brands the effect `Schema` value with the phantom
- * declaration tag (no runtime change, no `as unknown as` double-cast) — the
- * capsule input slot accepts `SchemaPort<In> | DeclarationSchema<In>` directly.
+ * Raw asset byte source — a first-class kernel `bytes` DECLARATION over the
+ * `ArrayBuffer` carrier. The `bytes` node is opaque to structural derivation, so
+ * the harness honestly reports "not arbitrary-derivable" instead of feeding
+ * `fc.anything()` garbage into real decoders that only accept ArrayBuffer; a
+ * scene supplies the canonical fixture bytes instead. Decode accepts any
+ * `ArrayBuffer` instance, and the capsule input slot takes it directly (a kernel
+ * `Schema<ArrayBuffer>` is structurally the `SchemaPort<ArrayBuffer>` the slot
+ * declares — no `asDeclaration` bridge and no double-cast through `unknown`).
  */
-export const AssetBytes: DeclarationSchema<ArrayBuffer> = asDeclaration(Schema.instanceOf(ArrayBuffer));
+export const AssetBytes = S.bytes(ArrayBuffer);
 
 /**
  * Effective site for a declaration: the explicit `decl.site` override when
@@ -253,8 +254,8 @@ export function defineAsset<K extends AssetKind>(
   const capsule = defineCapsule({
     _kind: 'cachedProjection',
     name: decl.id,
-    input: decode !== undefined ? AssetBytes : Schema.Unknown,
-    output: Schema.Unknown,
+    input: decode !== undefined ? AssetBytes : S.unknown,
+    output: S.unknown,
     capabilities: { reads: ['fs.read'], writes: [] },
     invariants: decl.invariants ?? [],
     budgets: { p95Ms: decodeP95Ms, memoryMb: decl.budgets?.memoryMb },

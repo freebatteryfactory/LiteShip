@@ -6,9 +6,9 @@
 
 # Function: matchGlossaryEntries()
 
-> **matchGlossaryEntries**(`query`): readonly `object`[]
+> **matchGlossaryEntries**(`query`): readonly [`GlossaryEntry`](../type-aliases/GlossaryEntry.md)[]
 
-Defined in: [command/src/commands/glossary.ts:233](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/glossary.ts#L233)
+Defined in: [command/src/commands/glossary.ts:239](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/glossary.ts#L239)
 
 Match entries: exact term wins, else substring over term + definition.
 
@@ -20,4 +20,4 @@ Match entries: exact term wins, else substring over term + definition.
 
 ## Returns
 
-readonly `object`[]
+readonly [`GlossaryEntry`](../type-aliases/GlossaryEntry.md)[]

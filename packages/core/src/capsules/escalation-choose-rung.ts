@@ -33,9 +33,10 @@
  * @module
  */
 
-import { Schema } from 'effect';
 import type { ContentAddress } from '../brands.js';
 import { defineCapsule } from '../assembly.js';
+import { S } from '../schema/index.js';
+import type { Infer } from '../schema/index.js';
 import type { Decision } from '../capsule.js';
 import { sealNode } from '../document-graph-address.js';
 import { Cap } from '../caps.js';
@@ -45,24 +46,19 @@ import { chooseRung, rungTargets, _resetEscalationMemo } from '../escalation.js'
 import type { EscalationResult, RungChoice } from '../escalation.js';
 
 /** The five rungs, as a schema literal union the arbitrary fully supports. */
-const CapTierSchema = Schema.Union([
-  Schema.Literal('static'),
-  Schema.Literal('styled'),
-  Schema.Literal('reactive'),
-  Schema.Literal('animated'),
-  Schema.Literal('gpu'),
-]);
+const CapTierSchema = S.union(
+  S.literal('static'),
+  S.literal('styled'),
+  S.literal('reactive'),
+  S.literal('animated'),
+  S.literal('gpu'),
+);
 
 /** The four runtime sites, as a schema literal union. */
-const RuntimeSiteSchema = Schema.Union([
-  Schema.Literal('node'),
-  Schema.Literal('browser'),
-  Schema.Literal('worker'),
-  Schema.Literal('edge'),
-]);
+const RuntimeSiteSchema = S.union(S.literal('node'), S.literal('browser'), S.literal('worker'), S.literal('edge'));
 
 /** Optional allocation class — the only budget axis with a categorical floor. */
-const AllocClassSchema = Schema.Union([Schema.Literal('zero'), Schema.Literal('bounded'), Schema.Literal('unbounded')]);
+const AllocClassSchema = S.union(S.literal('zero'), S.literal('bounded'), S.literal('unbounded'));
 
 /**
  * Seed material the schema-arbitrary CAN produce: the policy's capability /
@@ -70,24 +66,24 @@ const AllocClassSchema = Schema.Union([Schema.Literal('zero'), Schema.Literal('b
  * real {@link PolicyNode} from this and calls `chooseRung`. This IS the policyGate
  * SUBJECT — the typed thing the verdict is resolved against.
  */
-const EscalationSubject = Schema.Struct({
+const EscalationSubject = S.struct({
   /** The required {@link CapTier} — the rung ceiling the chooser starts at and only DOWNGRADES from. */
   requires: CapTierSchema,
   /** The granted rungs — a rung the chooser would pick must be granted here. */
-  grants: Schema.Array(CapTierSchema),
+  grants: S.array(CapTierSchema),
   /** The runtime sites the policy admits. */
-  sites: Schema.Array(RuntimeSiteSchema),
+  sites: S.array(RuntimeSiteSchema),
   /** The site the chooser decides on — may or may not be in `sites` (the deny path). */
   site: RuntimeSiteSchema,
   /** Optional p95 latency budget (ms) — below a rung's floor forces a downgrade. */
-  p95Ms: Schema.optional(Schema.Number),
+  p95Ms: S.optional(S.number),
   /** Optional working-set budget (MB) — below a rung's floor forces a downgrade. */
-  memoryMb: Schema.optional(Schema.Number),
+  memoryMb: S.optional(S.number),
   /** Optional allocation class — `'zero'` forbids the heap-hungry `gpu` rung. */
-  allocClass: Schema.optional(AllocClassSchema),
+  allocClass: S.optional(AllocClassSchema),
 });
 
-type EscalationSubjectValue = Schema.Schema.Type<typeof EscalationSubject>;
+type EscalationSubjectValue = Infer<typeof EscalationSubject>;
 
 /**
  * The verdict schema — the {@link Decision} shape the policyGate harness decodes
@@ -95,13 +91,13 @@ type EscalationSubjectValue = Schema.Schema.Type<typeof EscalationSubject>;
  * round-trips every verdict through it (the policyGate analogue of the receipt
  * byte law).
  */
-const ReasonSchema = Schema.Struct({
-  code: Schema.String,
-  message: Schema.String,
+const ReasonSchema = S.struct({
+  code: S.string,
+  message: S.string,
 });
-const DecisionSchema = Schema.Struct({
-  effect: Schema.Union([Schema.Literal('allow'), Schema.Literal('deny')]),
-  reasons: Schema.Array(ReasonSchema),
+const DecisionSchema = S.struct({
+  effect: S.union(S.literal('allow'), S.literal('deny')),
+  reasons: S.array(ReasonSchema),
 });
 
 /** Fixed volatile meta — excluded from the content address, so a constant is faithful. */

@@ -52,20 +52,25 @@ export function loadEngineMinima(cwd: string): EngineMinima {
 }
 
 /**
- * Read the build-script's package list out of root package.json so the
- * doctor and the build never drift. No catch: every caller is gated by
- * `isLiteShipWorkspace(cwd)`, which already parsed this same manifest — a
- * parse failure here is a real bug and must surface, not silently skip
- * tsbuildinfo invalidation (which would let `pnpm run build` no-op against
- * stale dist/).
+ * Read the buildable package list out of root tsconfig.json's project
+ * references so the doctor and the build never drift. The root `build`
+ * script is now a bare `tsc --build`: build topology lives in the root
+ * tsconfig's `references`, so that is the source of truth for which
+ * per-package `tsbuildinfo` files the doctor must invalidate. No catch:
+ * every caller is gated by `isLiteShipWorkspace(cwd)`, so a parse failure
+ * here is a real bug and must surface, not silently skip tsbuildinfo
+ * invalidation (which would let `pnpm run build` no-op against stale dist/).
  */
 export function loadBuiltPackages(cwd: string): readonly string[] {
-  const pkgPath = resolve(cwd, 'package.json');
-  if (!existsSync(pkgPath)) return [];
-  const pkg = JSON.parse(readFileSync(pkgPath, 'utf8')) as { scripts?: { build?: string } };
-  const build = pkg.scripts?.build ?? '';
-  const matches = Array.from(build.matchAll(/packages\/([\w-]+)/g));
-  return matches.flatMap((m) => (m[1] ? [m[1]] : []));
+  const tsconfigPath = resolve(cwd, 'tsconfig.json');
+  if (!existsSync(tsconfigPath)) return [];
+  const tsconfig = JSON.parse(readFileSync(tsconfigPath, 'utf8')) as {
+    references?: ReadonlyArray<{ path: string }>;
+  };
+  return (tsconfig.references ?? []).flatMap((reference) => {
+    const match = /^\.\/packages\/([\w-]+)$/.exec(reference.path);
+    return match?.[1] ? [match[1]] : [];
+  });
 }
 
 export function readCwdPackageJson(cwd: string): Readout<Record<string, unknown>> {

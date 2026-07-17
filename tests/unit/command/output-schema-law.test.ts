@@ -26,7 +26,6 @@ import {
   CapsuleVerifyPayloadSchema,
   CheckPayloadSchema,
 } from '@czap/command';
-import { schemaToJsonSchema } from '@czap/core';
 import { dispatchToolCall, listTools } from '../../../packages/mcp-server/src/dispatch.js';
 import { validateStructural, type StructuralSchema } from '../../support/structural-schema.js';
 
@@ -187,13 +186,14 @@ describe('D2 — payload conformance + validator teeth', () => {
     expect(validateStructural(schema, result.structuredContent)).toEqual([]);
   });
 
-  // Source-of-truth law: each migrated handler's descriptor.outputSchema is
-  // PROVABLY the JSON-Schema of its ONE payload Effect Schema — the same source
-  // the exported `Schema.Type` is derived from. A hand-edited outputSchema (the
-  // drift this migration killed) would diverge here. The CLI-only commands whose
-  // payload schema is module-private (capsule.*, scene.*) are guaranteed by
-  // construction (the descriptor literally calls `schemaToJsonSchema(X)`); this
-  // pins every EXPORTED payload schema as the single source.
+  // Source-of-truth law: each migrated handler's descriptor.outputSchema IS its
+  // ONE exported payload constant — the same hand-written `as const satisfies
+  // CommandJsonSchema` JSON-Schema the payload TYPE mirrors. A second, hand-edited
+  // outputSchema beside the exported constant (the drift this migration killed)
+  // would diverge here. The CLI-only commands whose payload schema is
+  // module-private (capsule.*, scene.*) are guaranteed by construction (the
+  // descriptor literally references the same constant); this pins every EXPORTED
+  // payload schema as the single source.
   const SINGLE_SOURCE_SCHEMAS = {
     glossary: GlossaryPayloadSchema,
     version: VersionPayloadSchema,
@@ -208,12 +208,12 @@ describe('D2 — payload conformance + validator teeth', () => {
     check: CheckPayloadSchema,
   } as const;
 
-  it('every handler outputSchema deep-equals the derivation of its ONE payload schema (no proxy beside the type)', () => {
+  it('every handler outputSchema deep-equals its ONE exported payload constant (no proxy beside the type)', () => {
     for (const [name, schema] of Object.entries(SINGLE_SOURCE_SCHEMAS)) {
       const descriptor = commandRegistry.get(name)?.descriptor;
       expect(descriptor, `no descriptor for '${name}'`).toBeDefined();
-      expect(descriptor!.outputSchema, `'${name}' outputSchema is not the derived single source`).toEqual(
-        schemaToJsonSchema(schema),
+      expect(descriptor!.outputSchema, `'${name}' outputSchema is not the single-source payload constant`).toEqual(
+        schema,
       );
     }
   });

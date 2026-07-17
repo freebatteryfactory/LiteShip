@@ -6,27 +6,28 @@
  * @module
  */
 
-import { Schema } from 'effect';
 import { assertNever } from '@czap/error';
 import { defineCapsule } from '../assembly.js';
+import { S } from '../schema/index.js';
+import type { Infer } from '../schema/index.js';
 import { TokenBuffer } from '../token-buffer.js';
 
-const TokenEventSchema = Schema.Union([
-  Schema.Struct({ _tag: Schema.Literal('push'), token: Schema.String }),
-  Schema.Struct({ _tag: Schema.Literal('flush') }),
-  Schema.Struct({ _tag: Schema.Literal('reset') }),
-]);
+const TokenEventSchema = S.union(
+  S.struct({ _tag: S.literal('push'), token: S.string }),
+  S.struct({ _tag: S.literal('flush') }),
+  S.struct({ _tag: S.literal('reset') }),
+);
 
-const PhaseSchema = Schema.Union([Schema.Literal('idle'), Schema.Literal('buffering'), Schema.Literal('draining')]);
+const PhaseSchema = S.union(S.literal('idle'), S.literal('buffering'), S.literal('draining'));
 
-const BufferStateSchema = Schema.Struct({
+const BufferStateSchema = S.struct({
   phase: PhaseSchema,
-  tokens: Schema.Array(Schema.String),
-  totalBytes: Schema.Number,
+  tokens: S.array(S.string),
+  totalBytes: S.number,
 });
 
-type TokenEvent = Schema.Schema.Type<typeof TokenEventSchema>;
-type BufferState = Schema.Schema.Type<typeof BufferStateSchema>;
+type TokenEvent = Infer<typeof TokenEventSchema>;
+type BufferState = Infer<typeof BufferStateSchema>;
 
 const utf8 = new TextEncoder();
 
@@ -93,19 +94,14 @@ export const tokenBufferCapsule = defineCapsule({
   invariants: [
     {
       name: 'phase-matches-content',
-      check: (_i, o) => {
-        const out = o as { phase: string; tokens: readonly string[] };
-        return out.tokens.length === 0 ? out.phase !== 'buffering' : true;
-      },
+      // `o` is contextually typed as the output state (`BufferState`) from the
+      // capsule's `step` signature — no cast needed.
+      check: (_i, o) => (o.tokens.length === 0 ? o.phase !== 'buffering' : true),
       message: 'empty buffer cannot be in buffering phase',
     },
     {
       name: 'totalBytes-tracks-tokens',
-      check: (_i, o) => {
-        const out = o as { tokens: readonly string[]; totalBytes: number };
-        const expected = out.tokens.reduce((s, t) => s + byteLength(t), 0);
-        return out.totalBytes === expected;
-      },
+      check: (_i, o) => o.totalBytes === o.tokens.reduce((s, t) => s + byteLength(t), 0),
       message: 'totalBytes must equal sum of token UTF-8 byte lengths',
     },
   ],

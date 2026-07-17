@@ -1,7 +1,7 @@
 // GENERATED — do not edit by hand
 import { describe, it, expect } from 'vitest';
 import * as fc from 'fast-check';
-import { Schema } from 'effect';
+import { decode } from '../../packages/core/src/schema/index.js';
 import { schemaToArbitrary } from '../../packages/core/src/harness/arbitrary-from-schema.js';
 import { vitestRunnerCapsule } from '../../packages/cli/src/capsules/vitest-runner.js';
 
@@ -19,14 +19,17 @@ describe('cli.vitest-runner', () => {
 //    hatch `receiptKind: 'effect-outcome'`; with no pure `mutate` core to
 //    drive, declared faults cannot be injected here. Recorded as a
 //    declared EXEMPTION (not a skip), reason as above.
-  it('contract shape: input and output decode/encode round-trip', () => {
+  it('contract shape: input and output decode round-trip', () => {
     for (const schema of [cap.input, cap.output]) {
       const arb = schemaToArbitrary(schema as never) as fc.Arbitrary<unknown>;
-      const encode = Schema.encodeSync(schema as never);
-      const decode = Schema.decodeUnknownSync(schema as never);
+      // Kernel schemas encode identically to their decoded form (Encoded ≡ Type),
+      // so the contract round-trip is a strict decode that returns the sample
+      // unchanged. A malformed contract fails RED at `decode`, never a green skip.
       fc.assert(
         fc.property(arb, (value) => {
-          expect(decode(encode(value as never))).toEqual(value);
+          const result = decode(schema as never, value);
+          expect(result.ok).toBe(true);
+          if (result.ok) expect(result.value).toEqual(value);
           return true;
         }),
         { numRuns: 100 },

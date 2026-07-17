@@ -15,8 +15,7 @@
  *
  * @module
  */
-import { Schema } from 'effect';
-import { schemaToJsonSchema, wallClock, type CapsuleCommandResult } from '@czap/core';
+import { wallClock, type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
 import {
   capabilityUnavailable,
   type CommandCapability,
@@ -25,27 +24,45 @@ import {
 } from '../registry.js';
 
 /**
- * Structured payload returned by `audit-floor` — ONE Effect Schema is the source
- * of both {@link AuditFloorPayload} and the descriptor's `outputSchema`. `delta`
- * is now a modelled nested struct (the validator recurses into it), tighter than
- * the old bare `{type:'object'}`.
+ * The descriptor `outputSchema` for `audit-floor` — hand-written JSON-Schema,
+ * byte-parity-pinned against the parity fixture. `delta` is a modelled nested
+ * struct (the validator recurses into it), tighter than a bare `{type:'object'}`.
+ * {@link AuditFloorPayload} is its plain-TS mirror.
  */
-export const AuditFloorPayloadSchema = Schema.Struct({
-  ok: Schema.Boolean,
-  /** Number of pinned floor warnings (`AUDIT_WARNING_FLOOR.length`). */
-  expectedWarnings: Schema.Number,
-  /** Number of `rule@file` warning keys the engine actually surfaced. */
-  actualWarnings: Schema.Number,
-  /** Error-severity findings across all three passes — any error fails the gate. */
-  errorCount: Schema.Number,
-  /** Warning-inventory drift against the floor: `added` are new, `removed` are gone. */
-  delta: Schema.Struct({ added: Schema.Array(Schema.String), removed: Schema.Array(Schema.String) }),
-  /** The sorted `rule@file` warning inventory the engine surfaced. */
-  inventory: Schema.Array(Schema.String),
-});
+export const AuditFloorPayloadSchema = {
+  type: 'object',
+  properties: {
+    ok: { type: 'boolean' },
+    /** Number of pinned floor warnings (`AUDIT_WARNING_FLOOR.length`). */
+    expectedWarnings: { type: 'number' },
+    /** Number of `rule@file` warning keys the engine actually surfaced. */
+    actualWarnings: { type: 'number' },
+    /** Error-severity findings across all three passes — any error fails the gate. */
+    errorCount: { type: 'number' },
+    /** Warning-inventory drift against the floor: `added` are new, `removed` are gone. */
+    delta: {
+      type: 'object',
+      properties: {
+        added: { type: 'array', items: { type: 'string' } },
+        removed: { type: 'array', items: { type: 'string' } },
+      },
+      required: ['added', 'removed'],
+    },
+    /** The sorted `rule@file` warning inventory the engine surfaced. */
+    inventory: { type: 'array', items: { type: 'string' } },
+  },
+  required: ['ok', 'expectedWarnings', 'actualWarnings', 'errorCount', 'delta', 'inventory'],
+} as const satisfies CommandJsonSchema;
 
 /** Structured payload returned by `audit-floor`. */
-export type AuditFloorPayload = Schema.Schema.Type<typeof AuditFloorPayloadSchema>;
+export type AuditFloorPayload = {
+  readonly ok: boolean;
+  readonly expectedWarnings: number;
+  readonly actualWarnings: number;
+  readonly errorCount: number;
+  readonly delta: { readonly added: readonly string[]; readonly removed: readonly string[] };
+  readonly inventory: readonly string[];
+};
 
 /** `audit-floor` — run the three-pass engine, diff the warning inventory against the floor; emit a verdict. */
 export const auditFloorCommand: HandledCommand = {
@@ -54,8 +71,8 @@ export const auditFloorCommand: HandledCommand = {
     summary:
       'Audit warning-floor gate: fail when the artifact-independent three-pass warning inventory drifts from AUDIT_WARNING_FLOOR or any error is present.',
     requires: ['runAuditFloor'] satisfies readonly CommandCapability[],
-    inputSchema: schemaToJsonSchema(Schema.Struct({})),
-    outputSchema: schemaToJsonSchema(AuditFloorPayloadSchema),
+    inputSchema: { type: 'object', properties: {} } as const satisfies CommandJsonSchema,
+    outputSchema: AuditFloorPayloadSchema,
     // NOT mcpExposed: the engine is the heavy CLI-injected `@czap/audit` (runAuditFloor); cli-only by design.
     annotations: { readOnly: true, cliOnly: true, group: 'castoff' },
   },

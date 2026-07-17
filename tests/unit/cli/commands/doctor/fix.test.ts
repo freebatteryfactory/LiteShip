@@ -42,8 +42,18 @@ beforeEach(() => {
   visibleSpy = vi.spyOn(spawnLib, 'spawnArgvVisible');
 });
 
-function writeCzapRoot(dir: string, buildScript = 'tsc -b packages/core packages/cli'): void {
-  writeFileSync(resolve(dir, 'package.json'), JSON.stringify({ name: 'czap', version: '0.0.0', scripts: { build: buildScript } }));
+function writeCzapRoot(dir: string, builtPackages: readonly string[] = ['core', 'cli']): void {
+  writeFileSync(
+    resolve(dir, 'package.json'),
+    JSON.stringify({ name: 'czap', version: '0.0.0', scripts: { build: 'tsc --build' } }),
+  );
+  // loadBuiltPackages reads the buildable set from root tsconfig project
+  // references (the bare `tsc --build` carries no package list), so the fixture
+  // must supply them there — that is the list the tsbuildinfo-invalidation loop drives.
+  writeFileSync(
+    resolve(dir, 'tsconfig.json'),
+    JSON.stringify({ references: builtPackages.map((pkg) => ({ path: `./packages/${pkg}` })) }),
+  );
 }
 
 const builtWarn = (id: 'core.built' | 'cli.built'): DoctorCheck => ({

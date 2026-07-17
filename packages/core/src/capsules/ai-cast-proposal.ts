@@ -38,9 +38,10 @@
  * @module
  */
 
-import { Schema } from 'effect';
 import type { ContentAddress } from '../brands.js';
 import { defineCapsule } from '../assembly.js';
+import { S } from '../schema/index.js';
+import type { Infer } from '../schema/index.js';
 import { sealGraph, sealNode } from '../document-graph-address.js';
 import { contentAddressOf } from '../content-address.js';
 import { GraphPatch } from '../graph-patch.js';
@@ -53,24 +54,24 @@ import type { DocumentGraph, DocumentGraphNode, SignalNode } from '../document-g
 import type { CellMeta } from '../protocol.js';
 
 /** One add/remove op descriptor the seed can produce (signal nodes only — fully supported). */
-const AddOpSeed = Schema.Struct({ kind: Schema.Literal('add'), input: Schema.String });
-const RemoveOpSeed = Schema.Struct({ kind: Schema.Literal('remove'), index: Schema.Number });
-const OpSeed = Schema.Union([AddOpSeed, RemoveOpSeed]);
+const AddOpSeed = S.struct({ kind: S.literal('add'), input: S.string });
+const RemoveOpSeed = S.struct({ kind: S.literal('remove'), index: S.number });
+const OpSeed = S.union(AddOpSeed, RemoveOpSeed);
 
 /**
  * Seed material the schema-arbitrary CAN produce: the base graph's signal-axis
  * names plus a list of op descriptors. `run` seals the graph, lowers the
  * descriptors to real `PatchOp`s over real sealed nodes, and proposes+validates.
  */
-const AiCastProposalSeed = Schema.Struct({
+const AiCastProposalSeed = S.struct({
   /** Base-graph signal-axis names → one sealed `SignalNode` per DISTINCT name. */
-  base: Schema.Array(Schema.String),
+  base: S.array(S.string),
   /** Op descriptors: add a new signal axis, or remove an existing node by index. */
-  ops: Schema.Array(OpSeed),
+  ops: S.array(OpSeed),
 });
 
-type AiCastProposalSeedValue = Schema.Schema.Type<typeof AiCastProposalSeed>;
-type OpSeedValue = Schema.Schema.Type<typeof OpSeed>;
+type AiCastProposalSeedValue = Infer<typeof AiCastProposalSeed>;
+type OpSeedValue = Infer<typeof OpSeed>;
 
 /** Fixed volatile meta — excluded from the content address, so a constant is faithful. */
 const META: CellMeta = {
@@ -157,7 +158,7 @@ export const aiCastProposalCapsule = defineCapsule({
   _kind: 'pureTransform',
   name: 'core.ai-cast.proposal',
   input: AiCastProposalSeed,
-  output: Schema.Unknown,
+  output: S.unknown,
   capabilities: { reads: [], writes: [] },
   invariants: [
     {

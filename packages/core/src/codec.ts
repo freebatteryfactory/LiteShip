@@ -1,40 +1,54 @@
 /**
- * Codec -- Effect Schema codec builder.
+ * Codec — a kernel-schema codec builder.
  *
- * Wraps Effect Schema into a typed codec with encode/decode methods.
+ * Wraps a kernel {@link Schema} into a typed codec with sync `encode` / `decode`
+ * methods that return a value-or-tagged-error {@link Result} — never an Effect,
+ * never a throw.
+ *
+ * Kernel schemas carry no encode TRANSFORM: a decoded value and its wire form
+ * are the SAME runtime value (brands refine nominally, not structurally). So the
+ * codec is a validated IDENTITY transport — `decode` validates untrusted input
+ * into the typed value, `encode` validates a domain value into its wire form —
+ * and `Codec.make` accepts an identity schema (`Schema<A, A>`). It has zero
+ * in-repo consumers, so this is a public-surface retype only.
  *
  * @module
  */
 
-import type { Effect } from 'effect';
-import { Schema } from 'effect';
-import type { SchemaPort } from './schema-port.js';
+import { err } from '@czap/error';
+import type { ParseError, Result } from '@czap/error';
+import { decode, parseErrorFromIssues } from './schema/index.js';
+import type { Schema } from './schema/index.js';
 
 interface CodecShape<A, I = A> {
-  readonly schema: SchemaPort<A, I>;
-  encode(value: A): Effect.Effect<I, Schema.SchemaError>;
-  decode(input: I): Effect.Effect<A, Schema.SchemaError>;
+  readonly schema: Schema<A, I>;
+  encode(value: A): Result<I, ParseError>;
+  decode(input: unknown): Result<A, ParseError>;
 }
 
-function _make<A, I>(schema: Schema.Codec<A, I>): CodecShape<A, I> {
+function _make<A>(schema: Schema<A, A>): CodecShape<A, A> {
+  const validate = (value: unknown, source: string): Result<A, ParseError> => {
+    const result = decode(schema, value);
+    return result.ok ? result : err(parseErrorFromIssues(result.error, source));
+  };
   return {
     schema,
-    encode: (value: A) => Schema.encodeEffect(schema)(value),
-    decode: (input: I) => Schema.decodeEffect(schema)(input),
+    encode: (value) => validate(value, 'Codec.encode'),
+    decode: (input) => validate(input, 'Codec.decode'),
   };
 }
 
 /**
- * Codec — typed encode/decode wrapper over `effect`'s `Schema.Codec`.
- * Gives a single call site for schema-driven validation so consumers don't
- * import `Schema.encodeEffect`/`decodeEffect` directly.
+ * Codec — typed sync encode/decode wrapper over a kernel {@link Schema}. Gives a
+ * single call site for schema-driven validation so consumers don't reach for the
+ * kernel `decode` directly.
  */
 export const Codec = {
-  /** Wrap a `Schema.Codec` in the {@link Codec.Shape} facade. */
+  /** Wrap an identity kernel schema in the {@link Codec.Shape} facade. */
   make: _make,
 };
 
 export declare namespace Codec {
-  /** Structural shape of a codec: underlying schema plus `encode` / `decode` Effects. */
+  /** Structural shape of a codec: underlying schema plus sync `encode` / `decode`. */
   export type Shape<A, I = A> = CodecShape<A, I>;
 }

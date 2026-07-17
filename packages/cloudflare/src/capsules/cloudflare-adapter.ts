@@ -5,19 +5,13 @@
  * @module
  */
 
-import { Schema } from 'effect';
-import { defineCapsule } from '@czap/core';
+import { defineCapsule, S } from '@czap/core';
 
-const ClientHintsInputSchema = Schema.Record(Schema.String, Schema.String);
+const ClientHintsInputSchema = S.record(S.string);
 
-const BoundaryResolutionSchema = Schema.Struct({
-  cacheStatus: Schema.Union([
-    Schema.Literal('disabled'),
-    Schema.Literal('precompiled'),
-    Schema.Literal('hit'),
-    Schema.Literal('miss'),
-  ]),
-  htmlAttributes: Schema.String,
+const BoundaryResolutionSchema = S.struct({
+  cacheStatus: S.union(S.literal('disabled'), S.literal('precompiled'), S.literal('hit'), S.literal('miss')),
+  htmlAttributes: S.string,
 });
 
 /**
@@ -34,12 +28,11 @@ export const cloudflareAdapterCapsule = defineCapsule({
     {
       name: 'cache-status-valid',
       check: (_i, o) => {
-        const out = o as { cacheStatus?: string };
         return (
-          out.cacheStatus === 'disabled' ||
-          out.cacheStatus === 'precompiled' ||
-          out.cacheStatus === 'hit' ||
-          out.cacheStatus === 'miss'
+          o.cacheStatus === 'disabled' ||
+          o.cacheStatus === 'precompiled' ||
+          o.cacheStatus === 'hit' ||
+          o.cacheStatus === 'miss'
         );
       },
       message:

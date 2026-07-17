@@ -167,6 +167,12 @@ describe('toJsonSchema — teeth (unsupported throws; derived schema rejects bad
     expect(subjectOf(caught)).toBe('hole');
   });
 
+  it('throws UnsupportedError for a tuple node (no prefixItems/items:false/minItems in the dialect)', () => {
+    const caught = catchOf(() => toJsonSchema(S.struct({ edge: S.tuple(S.number, S.number) })));
+    expect(hasTag(caught, 'UnsupportedError')).toBe(true);
+    expect(subjectOf(caught)).toBe('tuple');
+  });
+
   it('the derived schema REJECTS a missing required field and a wrong type', () => {
     const derived = toJsonSchema(S.struct({ assetId: S.string, markerCount: S.number, cached: S.boolean }));
     expect(validateStructural(derived, { assetId: 'x', cached: false }).length).toBeGreaterThan(0);

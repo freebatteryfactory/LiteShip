@@ -7,8 +7,7 @@
  *
  * @module
  */
-import { Schema } from 'effect';
-import { schemaToJsonSchema, wallClock, type CapsuleCommandResult } from '@czap/core';
+import { wallClock, type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
 import {
   capabilityUnavailable,
   type AuditEngineFinding,
@@ -18,59 +17,83 @@ import {
 } from '../registry.js';
 
 /**
- * One audit finding, modelled for the single-source derivation. Faithfully
- * mirrors {@link AuditEngineFinding} EXCEPT its `metadata?: Record<string,
- * unknown>` — an open record (index signature) the structural dialect cannot
- * represent (no `additionalProperties`). The engine's `AuditEngineFinding[]`
- * stays assignable (it only adds the optional `metadata`), and every field the
- * CLI receipt renders (location/severity/rule/title) is modelled here.
+ * The descriptor `outputSchema` for `audit` — hand-written JSON-Schema,
+ * byte-parity-pinned against the parity fixture. The modelled `findings` element
+ * faithfully mirrors {@link AuditEngineFinding} EXCEPT its `metadata?:
+ * Record<string, unknown>` — an open record (index signature) the structural
+ * dialect cannot represent (no `additionalProperties`). {@link AuditPayload}
+ * keeps the canonical {@link AuditEngineFinding} on `findings`, so `metadata`
+ * survives in the type and is never narrowed away.
  */
-const AuditFindingSchema = Schema.Struct({
-  id: Schema.String,
-  section: Schema.String,
-  rule: Schema.String,
-  severity: Schema.Union([Schema.Literal('error'), Schema.Literal('warning'), Schema.Literal('info')]),
-  title: Schema.String,
-  summary: Schema.String,
-  location: Schema.optional(
-    Schema.Struct({
-      file: Schema.String,
-      line: Schema.optional(Schema.Number),
-      column: Schema.optional(Schema.Number),
-    }),
-  ),
-});
+export const AuditPayloadSchema = {
+  type: 'object',
+  properties: {
+    errorCount: { type: 'number' },
+    warningCount: { type: 'number' },
+    infoCount: { type: 'number' },
+    findingCount: { type: 'number' },
+    suppressedCount: { type: 'number' },
+    passFindingCounts: {
+      type: 'object',
+      properties: { structure: { type: 'number' }, integrity: { type: 'number' }, surface: { type: 'number' } },
+      required: ['structure', 'integrity', 'surface'],
+    },
+    repoRoot: { type: 'string' },
+    profileSource: { enum: ['default', 'file', 'consumer'] },
+    /** Present only when `--findings` was requested — receipt shape is stable by default. */
+    findings: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          section: { type: 'string' },
+          rule: { type: 'string' },
+          severity: { enum: ['error', 'warning', 'info'] },
+          title: { type: 'string' },
+          summary: { type: 'string' },
+          location: {
+            type: 'object',
+            properties: { file: { type: 'string' }, line: { type: 'number' }, column: { type: 'number' } },
+            required: ['file'],
+          },
+        },
+        required: ['id', 'section', 'rule', 'severity', 'title', 'summary'],
+      },
+    },
+  },
+  required: [
+    'errorCount',
+    'warningCount',
+    'infoCount',
+    'findingCount',
+    'suppressedCount',
+    'passFindingCounts',
+    'repoRoot',
+    'profileSource',
+  ],
+} as const satisfies CommandJsonSchema;
 
 /**
- * Structured payload returned by `audit` — ONE Effect Schema is the source of
- * both {@link AuditPayload} and the descriptor's `outputSchema`.
+ * Structured payload returned by `audit`. Mirrors `AuditPayloadSchema` for every
+ * field EXCEPT `findings`, which keeps the canonical {@link AuditEngineFinding}
+ * type (so `metadata` — an open record the outputSchema's dialect can't express —
+ * stays in the type and is never narrowed away). The type is a faithful superset
+ * on exactly that one field.
  */
-export const AuditPayloadSchema = Schema.Struct({
-  errorCount: Schema.Number,
-  warningCount: Schema.Number,
-  infoCount: Schema.Number,
-  findingCount: Schema.Number,
-  suppressedCount: Schema.Number,
-  passFindingCounts: Schema.Struct({
-    structure: Schema.Number,
-    integrity: Schema.Number,
-    surface: Schema.Number,
-  }),
-  repoRoot: Schema.String,
-  profileSource: Schema.Union([Schema.Literal('default'), Schema.Literal('file'), Schema.Literal('consumer')]),
-  /** Present only when `--findings` was requested — receipt shape is stable by default. */
-  findings: Schema.optional(Schema.Array(AuditFindingSchema)),
-});
-
-/**
- * Structured payload returned by `audit`. Single-source-derived for every field
- * EXCEPT `findings`, which keeps the canonical {@link AuditEngineFinding} type
- * (so `metadata` — an open record the outputSchema's dialect can't express —
- * stays in the type and is never narrowed away). The `outputSchema` is derived
- * from `AuditPayloadSchema` (findings minus metadata); the type is a faithful
- * superset on exactly that one field.
- */
-export type AuditPayload = Omit<Schema.Schema.Type<typeof AuditPayloadSchema>, 'findings'> & {
+export type AuditPayload = {
+  readonly errorCount: number;
+  readonly warningCount: number;
+  readonly infoCount: number;
+  readonly findingCount: number;
+  readonly suppressedCount: number;
+  readonly passFindingCounts: {
+    readonly structure: number;
+    readonly integrity: number;
+    readonly surface: number;
+  };
+  readonly repoRoot: string;
+  readonly profileSource: 'default' | 'file' | 'consumer';
   readonly findings?: readonly AuditEngineFinding[];
 };
 
@@ -80,14 +103,15 @@ export const auditCommand: HandledCommand = {
     name: 'audit',
     summary: 'Run the profile-driven structure/integrity/surface audit; report a structured summary.',
     requires: ['runAudit'] satisfies readonly CommandCapability[],
-    inputSchema: schemaToJsonSchema(
-      Schema.Struct({
-        profile: Schema.optional(Schema.String),
-        consumer: Schema.optional(Schema.Boolean),
-        findings: Schema.optional(Schema.Boolean),
-      }),
-    ),
-    outputSchema: schemaToJsonSchema(AuditPayloadSchema),
+    inputSchema: {
+      type: 'object',
+      properties: {
+        profile: { type: 'string' },
+        consumer: { type: 'boolean' },
+        findings: { type: 'boolean' },
+      },
+    } as const satisfies CommandJsonSchema,
+    outputSchema: AuditPayloadSchema,
     // NOT mcpExposed: the engine is CLI-injected (runAudit); cli-only by design.
     annotations: { readOnly: true, cliOnly: true, group: 'castoff' },
   },

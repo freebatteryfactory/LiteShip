@@ -7,25 +7,19 @@
  * @module
  */
 
-import { Schema } from 'effect';
-import { defineCapsule } from '@czap/core';
+import { defineCapsule, S } from '@czap/core';
 
-const StreamMessageSchema = Schema.Struct({
-  kind: Schema.Union([
-    Schema.Literal('patch'),
-    Schema.Literal('batch'),
-    Schema.Literal('signal'),
-    Schema.Literal('snapshot'),
-  ]),
-  payload: Schema.Unknown,
+const StreamMessageSchema = S.struct({
+  kind: S.union(S.literal('patch'), S.literal('batch'), S.literal('signal'), S.literal('snapshot')),
+  payload: S.unknown,
 });
 
-const ReceiptResultSchema = Schema.Struct({
-  status: Schema.Union([Schema.Literal('applied'), Schema.Literal('skipped'), Schema.Literal('failed')]),
-  receipt: Schema.Struct({
-    messageId: Schema.String,
-    appliedAt: Schema.Number,
-    morphPath: Schema.optional(Schema.String),
+const ReceiptResultSchema = S.struct({
+  status: S.union(S.literal('applied'), S.literal('skipped'), S.literal('failed')),
+  receipt: S.struct({
+    messageId: S.string,
+    appliedAt: S.number,
+    morphPath: S.optional(S.string),
   }),
 });
 

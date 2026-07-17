@@ -1,8 +1,8 @@
 /**
  * to-json-schema — derive a JSON-Schema object from a KERNEL {@link Schema} value.
  *
- * The kernel successor of `json-schema-from-schema.ts`: where that walks an
- * Effect `SchemaAST.AST`, this walks the frozen plain-data {@link SchemaNode}
+ * The kernel successor of the now-deleted Effect-AST deriver: where that walked
+ * an Effect `SchemaAST.AST`, this walks the frozen plain-data {@link SchemaNode}
  * union of the schema kernel (`./ast.ts`). It derives the SAME
  * `CommandJsonSchema` / `validateStructural` dialect — `type`, `properties`,
  * `required`, `enum`, `const`, `items` — so command descriptors, CLI receipts,
@@ -24,9 +24,10 @@
  * UNSUPPORTED — a tagged `UnsupportedError` (`@czap/error`), NEVER a silent
  * fallback: `bytes` and `hole` declaration nodes (the opaque family — no sound
  * JSON-Schema image), open `record` index signatures (the dialect has no
- * `additionalProperties`), and heterogeneous non-literal unions (no
- * `anyOf`/`oneOf`). The error names the node `kind` so the command migration
- * sees the exact coverage envelope.
+ * `additionalProperties`), `tuple` fixed-arity positional lists (the dialect has no
+ * `prefixItems`/`items:false`/`minItems`/`maxItems`), and heterogeneous non-literal
+ * unions (no `anyOf`/`oneOf`). The error names the node `kind` so the command
+ * migration sees the exact coverage envelope.
  *
  * @module
  */
@@ -168,6 +169,14 @@ function _derive(node: SchemaNode): JsonSchemaFragment {
       return _deriveStruct(node);
     case 'array':
       return { type: 'array', items: _derive(node.element) };
+    case 'tuple':
+      // The structural dialect (`validateStructural` + tests/unit) has no
+      // `prefixItems` / `items:false` / `minItems` / `maxItems`, so a fixed-arity
+      // tuple has no sound image — refuse loudly rather than widen it to `array`.
+      throw unsupported(
+        'tuple',
+        'a fixed-arity tuple has no structural-dialect representation (no prefixItems/items:false/minItems/maxItems)',
+      );
     case 'brand':
       // A brand is a runtime refinement with no JSON-Schema image beyond its
       // base — derive the base shape.

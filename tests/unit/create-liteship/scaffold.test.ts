@@ -165,21 +165,22 @@ describe('create-liteship scaffold', () => {
   });
 
   // A2 gate: the scaffold must ship `effect` (the @czap/core/@czap/astro peer),
-  // pinned to the caret floor of core's published peer range — otherwise a fresh
-  // `npm create liteship` lands with an unmet peer dependency. Derive `expected`
-  // from @czap/core's manifest (the source of truth), not a literal.
-  it('template effect pins the caret floor of @czap/core\'s published peer (A2)', () => {
-    const corePkg = JSON.parse(
-      readFileSync(join(defaultTemplateDir(), '../../../core/package.json'), 'utf8'),
-    ) as { peerDependencies: Record<string, string> };
-    const floor = corePkg.peerDependencies.effect.match(/>=(\S+)/)?.[1];
-    expect(floor, '@czap/core must declare an effect peer floor').toBeTruthy();
-    const manifest = JSON.parse(
-      readFileSync(join(defaultTemplateDir(), 'package.json'), 'utf8'),
-    ) as { dependencies: Record<string, string> };
+  // pinned to the caret floor of the sanctioned effect range — otherwise a fresh
+  // `npm create liteship` lands with an unmet peer dependency. @czap/core's peer is
+  // now a `catalog:` reference, so the SINGLE source of truth for the effect range
+  // is the pnpm-workspace.yaml catalog entry (`effect: '>=X <5'`) that pnpm resolves
+  // it against; derive the caret floor from THAT, not a literal.
+  it('template effect pins the caret floor of the workspace catalog effect range (A2)', () => {
+    const workspaceYaml = readFileSync(join(defaultTemplateDir(), '../../../../pnpm-workspace.yaml'), 'utf8');
+    const catalogRange = /^\s*effect:\s*['"]?([^'"\n]+?)['"]?\s*$/m.exec(workspaceYaml)?.[1];
+    const floor = catalogRange?.match(/>=(\S+)/)?.[1];
+    expect(floor, 'pnpm-workspace.yaml catalog must declare an effect floor (>=X)').toBeTruthy();
+    const manifest = JSON.parse(readFileSync(join(defaultTemplateDir(), 'package.json'), 'utf8')) as {
+      dependencies: Record<string, string>;
+    };
     expect(
       manifest.dependencies.effect,
-      "template effect must be the caret floor of @czap/core's effect peer",
+      'template effect must be the caret floor of the workspace catalog effect range',
     ).toBe(`^${floor}`);
   });
 });

@@ -56,6 +56,13 @@ export function generateReceiptedMutation(
   ctx: HarnessContext = {},
 ): HarnessOutput {
   const arbitraryImport = ctx.arbitraryImport ?? DEFAULT_ARBITRARY_IMPORT;
+  // The kernel strict `decode` lives beside the arbitrary walker under
+  // `packages/core/src/schema/index.js`; derive its specifier from the arbitrary
+  // import so both resolve from the same generated-test directory. Replaces the
+  // effect `Schema.encodeSync`/`decodeUnknownSync` the contract round-trip used
+  // before the schema kernel landed — kernel schemas encode identically to their
+  // decoded form (Encoded ≡ Type here), so the round-trip is a strict decode.
+  const decodeImport = arbitraryImport.replace(/harness\/arbitrary-from-schema\.js$/, 'schema/index.js');
   const hasBinding = ctx.bindingImport !== undefined && ctx.bindingName !== undefined;
 
   // Without a real binding to import there is nothing to exercise — the
@@ -99,16 +106,19 @@ import 'vitest';
   // asserts each survives encode→decode.
   if (ctx.contractRoundTrippable === true) {
     imports.push(`import * as fc from 'fast-check';`);
-    imports.push(`import { Schema } from 'effect';`);
+    imports.push(`import { decode } from '${decodeImport}';`);
     imports.push(`import { schemaToArbitrary } from '${arbitraryImport}';`);
-    blocks.push(`  it('contract shape: input and output decode/encode round-trip', () => {
+    blocks.push(`  it('contract shape: input and output decode round-trip', () => {
     for (const schema of [cap.input, cap.output]) {
       const arb = schemaToArbitrary(schema as never) as fc.Arbitrary<unknown>;
-      const encode = Schema.encodeSync(schema as never);
-      const decode = Schema.decodeUnknownSync(schema as never);
+      // Kernel schemas encode identically to their decoded form (Encoded ≡ Type),
+      // so the contract round-trip is a strict decode that returns the sample
+      // unchanged. A malformed contract fails RED at \`decode\`, never a green skip.
       fc.assert(
         fc.property(arb, (value) => {
-          expect(decode(encode(value as never))).toEqual(value);
+          const result = decode(schema as never, value);
+          expect(result.ok).toBe(true);
+          if (result.ok) expect(result.value).toEqual(value);
           return true;
         }),
         { numRuns: 100 },
@@ -151,13 +161,15 @@ import 'vitest';
     // declared output schema, and the capsule must declare the capabilities
     // (reads/writes) the receipt is audited against.
     const receipt = await mutate(sample as never);
-    expect(() => Schema.decodeUnknownSync(cap.output as never)(receipt)).not.toThrow();
+    // The receipt decodes against the declared output schema via strict kernel
+    // decode — an ok result, never a throw.
+    expect(decode(cap.output as never, receipt).ok).toBe(true);
     expect(Array.isArray(cap.capabilities.reads)).toBe(true);
     expect(Array.isArray(cap.capabilities.writes)).toBe(true);
     expect(cap.capabilities.reads.length + cap.capabilities.writes.length).toBeGreaterThan(0);
   });`);
     if (ctx.contractRoundTrippable !== true) {
-      imports.push(`import { Schema } from 'effect';`);
+      imports.push(`import { decode } from '${decodeImport}';`);
     }
   } else if (effectOutcomeReason !== undefined) {
     notes.push(

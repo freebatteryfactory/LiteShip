@@ -8,7 +8,7 @@
 
 > `const` **S**: `object`
 
-Defined in: [core/src/schema/constructors.ts:174](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/constructors.ts#L174)
+Defined in: [core/src/schema/constructors.ts:191](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/constructors.ts#L191)
 
 The schema-kernel constructor namespace. Scalars are singleton VALUES
 (`S.string`); composites are constructor FUNCTIONS (`S.struct({ … })`).
@@ -228,6 +228,31 @@ A fixed-key object; a field wrapped by [optional](#optional) becomes an optional
 #### Returns
 
 [`Schema`](../interfaces/Schema.md)\<\{ \[K in string \| number \| symbol\]: (\{ readonly \[K in string \| number \| symbol as IsOptional\<F\[K\]\> extends true ? never : K\]: Infer\<F\[K\]\> \} & \{ readonly \[K in string \| number \| symbol as IsOptional\<F\[K\]\> extends true ? K : never\]?: Infer\<F\[K\]\> \})\[K\] \}, \{ \[K in string \| number \| symbol\]: (\{ readonly \[K in string \| number \| symbol as IsOptional\<F\[K\]\> extends true ? never : K\]: InferEncoded\<F\[K\]\> \} & \{ readonly \[K in string \| number \| symbol as IsOptional\<F\[K\]\> extends true ? K : never\]?: InferEncoded\<F\[K\]\> \})\[K\] \}\>
+
+### tuple
+
+> **tuple**: \<`E`\>(...`elements`) => [`Schema`](../interfaces/Schema.md)\<`TupleType`\<`E`\>, `TupleEncoded`\<`E`\>\>
+
+A FIXED-ARITY tuple over `elements`. Unlike [array](#array) (homogeneous, variable
+length), the arity and the per-position element schemas are pinned: decode
+accepts an array iff its length equals `elements.length` and each position
+decodes against its own element schema. `Infer` recovers a `readonly [...]`.
+
+#### Type Parameters
+
+##### E
+
+`E` *extends* readonly [`Schema`](../interfaces/Schema.md)\<`unknown`, `unknown`\>[]
+
+#### Parameters
+
+##### elements
+
+...`E`
+
+#### Returns
+
+[`Schema`](../interfaces/Schema.md)\<`TupleType`\<`E`\>, `TupleEncoded`\<`E`\>\>
 
 ### union
 

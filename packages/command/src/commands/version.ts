@@ -6,22 +6,31 @@
  *
  * @module
  */
-import { Schema } from 'effect';
-import { schemaToJsonSchema, wallClock, type CapsuleCommandResult } from '@czap/core';
+import { wallClock, type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
 import type { CommandContext, HandledCommand } from '../registry.js';
 
 /**
- * Structured payload returned by the version command — ONE Effect Schema is the
- * source of both {@link VersionPayload} and the descriptor's `outputSchema`.
+ * The descriptor `outputSchema` for the version command — hand-written
+ * JSON-Schema, byte-parity-pinned against the parity fixture. {@link VersionPayload}
+ * is the plain-TS mirror of this shape; the two are kept in step by the
+ * output-schema-law payload-conformance test, not by a shared Effect Schema.
  */
-export const VersionPayloadSchema = Schema.Struct({
-  czap: Schema.String,
-  node: Schema.String,
-  pnpm: Schema.NullOr(Schema.String),
-});
+export const VersionPayloadSchema = {
+  type: 'object',
+  properties: {
+    czap: { type: 'string' },
+    node: { type: 'string' },
+    pnpm: { type: ['string', 'null'] },
+  },
+  required: ['czap', 'node', 'pnpm'],
+} as const satisfies CommandJsonSchema;
 
 /** Structured payload returned by the version command. */
-export type VersionPayload = Schema.Schema.Type<typeof VersionPayloadSchema>;
+export type VersionPayload = {
+  readonly czap: string;
+  readonly node: string;
+  readonly pnpm: string | null;
+};
 
 /** Probe pnpm via the injected spawn capability. Returns null when unavailable. */
 async function probePnpm(context: CommandContext): Promise<string | null> {
@@ -36,8 +45,8 @@ export const versionCommand: HandledCommand = {
   descriptor: {
     name: 'version',
     summary: 'Report czap, Node, and pnpm versions.',
-    inputSchema: schemaToJsonSchema(Schema.Struct({})),
-    outputSchema: schemaToJsonSchema(VersionPayloadSchema),
+    inputSchema: { type: 'object', properties: {} } as const satisfies CommandJsonSchema,
+    outputSchema: VersionPayloadSchema,
     annotations: { readOnly: true, group: 'castoff' },
   },
   handler: async (_invocation, context): Promise<CapsuleCommandResult<VersionPayload>> => ({

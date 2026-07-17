@@ -15,8 +15,7 @@
  *
  * @module
  */
-import { Schema } from 'effect';
-import { schemaToJsonSchema, wallClock, type CapsuleCommandResult } from '@czap/core';
+import { wallClock, type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
 import {
   capabilityUnavailable,
   type CommandCapability,
@@ -25,39 +24,50 @@ import {
 } from '../registry.js';
 
 /**
- * One skipped generated test, modelled for the single-source derivation. The `kind`
- * mirrors {@link PlumbSkip.kind} — the detected skip TOKEN from the UNIFIED alias-aware
- * detector (`@czap/gauntlet`'s `detectSkips`), which covers every form a generated test
- * can carry (`it.skip` / `test.skip` / `describe.skip` / `bench.skip` / `it.todo` / `xit`
- * / the runtime-conditional `it.skipIf` / `it.runIf` / the `COND ? it : it.skip` alias).
- * It is a free `string` (not a closed literal union) so a new runner-verb skip form the
- * detector learns is faithfully surfaced — a generated test must NEVER skip in ANY form.
+ * The descriptor `outputSchema` for `plumb` — hand-written JSON-Schema,
+ * byte-parity-pinned against the parity fixture. {@link PlumbPayload} is its
+ * plain-TS mirror.
+ *
+ * The `skips` element `kind` mirrors {@link PlumbSkip.kind} — the detected skip
+ * TOKEN from the UNIFIED alias-aware detector (`@czap/gauntlet`'s `detectSkips`),
+ * which covers every form a generated test can carry (`it.skip` / `test.skip` /
+ * `describe.skip` / `bench.skip` / `it.todo` / `xit` / the runtime-conditional
+ * `it.skipIf` / `it.runIf` / the `COND ? it : it.skip` alias). It is a free
+ * `string` (not a closed literal union) so a new runner-verb skip form the
+ * detector learns is faithfully surfaced — a generated test must NEVER skip.
  */
-const PlumbSkipSchema = Schema.Struct({
-  file: Schema.String,
-  kind: Schema.String,
-  message: Schema.String,
-});
-
-/**
- * Structured payload returned by `plumb` — ONE Effect Schema is the source of
- * both {@link PlumbPayload} and the descriptor's `outputSchema`.
- */
-export const PlumbPayloadSchema = Schema.Struct({
-  /** Whether the gate passed (no skips, no unclassified packages). */
-  ok: Schema.Boolean,
-  /** Every `*.skip(...)` placeholder in `tests/generated/` — each one is blocking. */
-  skips: Schema.Array(PlumbSkipSchema),
-  /** Published packages with no PACKAGE_PLUMB classification. */
-  unclassified: Schema.Array(Schema.String),
-  /** Whether the generated test corpus was present to scan (false ⇒ run capsule:compile). */
-  generatedPresent: Schema.Boolean,
-  /** Human-readable reason when the generated test corpus is missing or empty. */
-  generatedCorpusMessage: Schema.NullOr(Schema.String),
-});
+export const PlumbPayloadSchema = {
+  type: 'object',
+  properties: {
+    /** Whether the gate passed (no skips, no unclassified packages). */
+    ok: { type: 'boolean' },
+    /** Every `*.skip(...)` placeholder in `tests/generated/` — each one is blocking. */
+    skips: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: { file: { type: 'string' }, kind: { type: 'string' }, message: { type: 'string' } },
+        required: ['file', 'kind', 'message'],
+      },
+    },
+    /** Published packages with no PACKAGE_PLUMB classification. */
+    unclassified: { type: 'array', items: { type: 'string' } },
+    /** Whether the generated test corpus was present to scan (false ⇒ run capsule:compile). */
+    generatedPresent: { type: 'boolean' },
+    /** Human-readable reason when the generated test corpus is missing or empty. */
+    generatedCorpusMessage: { type: ['string', 'null'] },
+  },
+  required: ['ok', 'skips', 'unclassified', 'generatedPresent', 'generatedCorpusMessage'],
+} as const satisfies CommandJsonSchema;
 
 /** Structured payload returned by `plumb`. */
-export type PlumbPayload = Schema.Schema.Type<typeof PlumbPayloadSchema>;
+export type PlumbPayload = {
+  readonly ok: boolean;
+  readonly skips: readonly { readonly file: string; readonly kind: string; readonly message: string }[];
+  readonly unclassified: readonly string[];
+  readonly generatedPresent: boolean;
+  readonly generatedCorpusMessage: string | null;
+};
 
 /** `plumb` — scan for placeholder skips + unclassified packages; emit a structured pass/fail verdict. */
 export const plumbCommand: HandledCommand = {
@@ -66,8 +76,8 @@ export const plumbCommand: HandledCommand = {
     summary:
       'Plumb-completeness gate: fail on any tests/generated/ placeholder skip or unclassified published package.',
     requires: ['runPlumb'] satisfies readonly CommandCapability[],
-    inputSchema: schemaToJsonSchema(Schema.Struct({})),
-    outputSchema: schemaToJsonSchema(PlumbPayloadSchema),
+    inputSchema: { type: 'object', properties: {} } as const satisfies CommandJsonSchema,
+    outputSchema: PlumbPayloadSchema,
     annotations: { readOnly: true, mcpExposed: true, group: 'castoff' },
   },
   handler: async (_invocation, context: CommandContext): Promise<CapsuleCommandResult> => {

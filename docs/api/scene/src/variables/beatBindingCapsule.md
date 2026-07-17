@@ -8,7 +8,7 @@
 
 > `const` **beatBindingCapsule**: `CapsuleDef`\<`"sceneComposition"`, \{ `beats`: readonly `object`[]; \}, \{ `spawns`: readonly `object`[]; \}, `unknown`\>
 
-Defined in: [scene/src/capsules/beat-binding.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/capsules/beat-binding.ts#L59)
+Defined in: [scene/src/capsules/beat-binding.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/capsules/beat-binding.ts#L58)
 
 The declared `scene.beat-binding` sceneComposition capsule. Registered
 in the module-level catalog at import time; walked by the factory

@@ -138,6 +138,31 @@ function decodeStrictNode(node: SchemaNode, input: unknown, path: DecodePath, is
       }
       return clean ? { ok: true, value: out } : { ok: false };
     }
+    case 'tuple': {
+      if (!Array.isArray(input)) {
+        addIssue(issues, path, 'schema/type', 'expected a tuple (array)');
+        return { ok: false };
+      }
+      // Arity is part of a tuple's type — a wrong length is a type mismatch, not a
+      // per-element failure. Report it once at the tuple's own path and stop.
+      if (input.length !== node.elements.length) {
+        addIssue(
+          issues,
+          path,
+          'schema/type',
+          `expected a tuple of length ${node.elements.length}, got ${input.length}`,
+        );
+        return { ok: false };
+      }
+      const out: unknown[] = [];
+      let clean = true;
+      for (const [i, element] of node.elements.entries()) {
+        const outcome = decodeStrictNode(element, input[i], [...path, i], issues);
+        if (outcome.ok) out.push(outcome.value);
+        else clean = false;
+      }
+      return clean ? { ok: true, value: out } : { ok: false };
+    }
     case 'record': {
       if (!isObjectInput(input)) {
         addIssue(issues, path, 'schema/type', 'expected an object');
@@ -240,6 +265,20 @@ function decodeLenientNode(node: SchemaNode, input: unknown): unknown {
       for (const item of input) {
         const decoded = decodeLenientNode(node.element, item);
         if (decoded !== PRUNE) out.push(decoded);
+      }
+      return out;
+    }
+    case 'tuple': {
+      // A tuple's positions are FIXED: unlike an array, a failed element is NEVER
+      // pruned (pruning would break arity and produce a value that lies about its
+      // type). The coerce-or-null contract collapses the whole tuple to `null` on a
+      // wrong length or any failed position.
+      if (!Array.isArray(input) || input.length !== node.elements.length) return PRUNE;
+      const out: unknown[] = [];
+      for (const [i, element] of node.elements.entries()) {
+        const decoded = decodeLenientNode(element, input[i]);
+        if (decoded === PRUNE) return PRUNE;
+        out.push(decoded);
       }
       return out;
     }

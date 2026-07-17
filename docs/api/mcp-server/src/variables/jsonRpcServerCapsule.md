@@ -6,7 +6,7 @@
 
 # Variable: jsonRpcServerCapsule
 
-> `const` **jsonRpcServerCapsule**: `CapsuleDef`\<`"pureTransform"`, `string`, \{ `kind`: `string`; \}, `unknown`\>
+> `const` **jsonRpcServerCapsule**: `CapsuleDef`\<`"pureTransform"`, `string`, \{ `kind`: `"request"` \| `"notification"` \| `"batch"` \| `"parse-error"` \| `"invalid-request"`; \}, `unknown`\>
 
 Defined in: [mcp-server/src/jsonrpc.ts:163](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/jsonrpc.ts#L163)
 

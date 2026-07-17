@@ -92,20 +92,36 @@ describe('doctor/manifest — loadEngineMinima()', () => {
 });
 
 describe('doctor/manifest — loadBuiltPackages()', () => {
-  it('extracts the package list out of the build script', () => {
+  it('extracts the package list out of the root tsconfig references', () => {
     const dir = mkTmp();
-    writePkg(dir, { name: 'czap', scripts: { build: 'tsc -b packages/core packages/cli packages/edge' } });
+    writeFileSync(
+      resolve(dir, 'tsconfig.json'),
+      JSON.stringify({
+        references: [{ path: './packages/core' }, { path: './packages/cli' }, { path: './packages/edge' }],
+      }),
+    );
     expect(loadBuiltPackages(dir)).toEqual(['core', 'cli', 'edge']);
   });
 
-  it('returns [] when package.json is absent', () => {
+  it('returns [] when tsconfig.json is absent', () => {
     expect(loadBuiltPackages(mkTmp())).toEqual([]);
   });
 
-  it('returns [] when there is no build script', () => {
+  it('returns [] when there are no references', () => {
     const dir = mkTmp();
-    writePkg(dir, { name: 'czap' });
+    writeFileSync(resolve(dir, 'tsconfig.json'), JSON.stringify({ compilerOptions: {} }));
     expect(loadBuiltPackages(dir)).toEqual([]);
+  });
+
+  it('counts only ./packages/<name> references (ignores tools/, external, and nested paths)', () => {
+    const dir = mkTmp();
+    writeFileSync(
+      resolve(dir, 'tsconfig.json'),
+      JSON.stringify({
+        references: [{ path: './packages/core' }, { path: './tools/foo' }, { path: '../other' }],
+      }),
+    );
+    expect(loadBuiltPackages(dir)).toEqual(['core']);
   });
 });
 

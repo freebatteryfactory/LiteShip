@@ -25,21 +25,21 @@
  */
 
 import { writeFileSync } from 'node:fs';
-import { Schema } from 'effect';
-import { CanonicalCbor, defineCapsule, ShipCapsule, type ContentAddress } from '@czap/core';
+import { CanonicalCbor, defineCapsule, S, ShipCapsule, type ContentAddress } from '@czap/core';
+import type { Infer } from '@czap/core';
 
 /**
  * The publishable workspace snapshot the emission receipt is PURELY derived
  * from. Every field is a plain scalar / array (arbitrary-derivable), so the
  * harness can sample it for the contract round-trip AND drive `mutate` twice.
  */
-const ShipEmitInput = Schema.Struct({
-  capsule_path: Schema.String,
-  capsule_id: Schema.String,
-  package_name: Schema.String,
-  package_version: Schema.String,
-  source_commit: Schema.String,
-  lifecycle_scripts_observed: Schema.Array(Schema.String),
+const ShipEmitInput = S.struct({
+  capsule_path: S.string,
+  capsule_id: S.string,
+  package_name: S.string,
+  package_version: S.string,
+  source_commit: S.string,
+  lifecycle_scripts_observed: S.array(S.string),
 });
 
 /**
@@ -47,17 +47,17 @@ const ShipEmitInput = Schema.Struct({
  * to (`emitted` on the happy path, `rejected` when the snapshot is unshippable),
  * which is what makes the fault-injection check real.
  */
-const ShipEmitOutput = Schema.Struct({
-  status: Schema.Union([Schema.Literal('emitted'), Schema.Literal('rejected')]),
-  bytes_written: Schema.Number,
-  capsule_path: Schema.String,
-  capsule_id: Schema.String,
-  package_name: Schema.String,
-  package_version: Schema.String,
+const ShipEmitOutput = S.struct({
+  status: S.union(S.literal('emitted'), S.literal('rejected')),
+  bytes_written: S.number,
+  capsule_path: S.string,
+  capsule_id: S.string,
+  package_name: S.string,
+  package_version: S.string,
 });
 
-type ShipEmitDecodedInput = Schema.Schema.Type<typeof ShipEmitInput>;
-type ShipEmitDecodedOutput = Schema.Schema.Type<typeof ShipEmitOutput>;
+type ShipEmitDecodedInput = Infer<typeof ShipEmitInput>;
+type ShipEmitDecodedOutput = Infer<typeof ShipEmitOutput>;
 
 interface ShipEmitRunInput {
   readonly capsule: ShipCapsule.Shape;

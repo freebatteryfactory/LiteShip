@@ -109,6 +109,17 @@ export interface ArrayNode extends NodeMeta {
   readonly element: SchemaNode;
 }
 
+/**
+ * A FIXED-ARITY tuple: a positional list whose length and per-position element
+ * schemas are both pinned. Unlike {@link ArrayNode} (a homogeneous, variable-length
+ * array), a tuple's arity is part of its type — decode enforces the exact element
+ * count and decodes each position against its own element schema.
+ */
+export interface TupleNode extends NodeMeta {
+  readonly kind: 'tuple';
+  readonly elements: readonly SchemaNode[];
+}
+
 /** A string-keyed record whose values conform to `value`. */
 export interface RecordNode extends NodeMeta {
   readonly kind: 'record';
@@ -172,6 +183,7 @@ export type SchemaNode =
   | UnionNode
   | StructNode
   | ArrayNode
+  | TupleNode
   | RecordNode
   | UnknownNode
   | AnyNode

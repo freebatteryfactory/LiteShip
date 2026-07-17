@@ -15,20 +15,22 @@
  * @module
  */
 import { describe, it, expect } from 'vitest';
-import type { Schema } from 'effect';
 import { checkCommand, commandRegistry, mcpExposedDescriptors } from '@czap/command';
-import type { CheckPayload, CheckPayloadSchema, CommandContext } from '@czap/command';
+import type { CheckPayload, CommandContext } from '@czap/command';
 import type { Finding, GauntletResult } from '@czap/gauntlet';
 
 // ── Single-source drift-guard ────────────────────────────────────────────────
-// The check `outputSchema` is derived from CheckPayloadSchema, whose findings are
-// modelled MINUS `remediation` (a heterogeneous union the JSON-Schema dialect can't
-// express). The CheckPayload TYPE keeps the canonical gauntlet `Finding` (remediation
-// included) so no capability is narrowed away. These never-executed type assertions
-// pin the schema's modelled finding fields BIDIRECTIONALLY against the canonical
-// `Finding` minus remediation — if the gauntlet `Finding` renames/adds/drops a
-// modelled field, or the schema drifts, this stops compiling (tsc -p tsconfig.tests).
-type SchemaFinding = Schema.Schema.Type<typeof CheckPayloadSchema>['findings'][number];
+// `SchemaFinding` is the finding element of the command's EXPORTED `CheckPayload`
+// type, derived MECHANICALLY (`CheckPayload['findings'][number]`) so it can never
+// hand-drift from the payload the handler actually returns — the compile-time link
+// the earlier hand-written 6-field mirror lacked. The command's `outputSchema`
+// (CheckPayloadSchema, hand-written JSON-Schema) models this element MINUS
+// `remediation` (a heterogeneous union the JSON-Schema dialect can't express); the
+// CheckPayload TYPE keeps the canonical gauntlet `Finding` (remediation included) so
+// no capability is narrowed away. The never-executed assertions below pin that
+// relationship: the payload's finding IS the canonical `Finding`, and its only
+// sans-schema field is the optional `remediation`, which the payload preserves.
+type SchemaFinding = CheckPayload['findings'][number];
 type CanonicalFindingSansRemediation = Omit<Finding, 'remediation'>;
 function __checkFindingContract(s: SchemaFinding, c: CanonicalFindingSansRemediation): void {
   const _toCanonical: CanonicalFindingSansRemediation = s;
@@ -71,7 +73,13 @@ describe('check command — handler contract', () => {
       outcomes: [
         {
           gateId: 'gauntlet/no-bare-throw',
-          proof: { selfProven: true, redCaught: true, greenClean: true, mutationKilled: true },
+          proof: {
+            gateId: 'gauntlet/no-bare-throw',
+            selfProven: true,
+            redCaught: true,
+            greenClean: true,
+            mutationKilled: true,
+          },
           authority: 'blocking',
           findings: [BARE_THROW],
           waived: [],
@@ -116,7 +124,13 @@ describe('check command — handler contract', () => {
       outcomes: [
         {
           gateId: 'gauntlet/no-nondeterminism',
-          proof: { selfProven: false, redCaught: false, greenClean: false, mutationKilled: false },
+          proof: {
+            gateId: 'gauntlet/no-nondeterminism',
+            selfProven: false,
+            redCaught: false,
+            greenClean: false,
+            mutationKilled: false,
+          },
           authority: 'advisory',
           findings: [advisory],
           waived: [],

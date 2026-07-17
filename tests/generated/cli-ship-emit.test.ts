@@ -1,20 +1,23 @@
 // GENERATED — do not edit by hand
 import { describe, it, expect } from 'vitest';
 import * as fc from 'fast-check';
-import { Schema } from 'effect';
+import { decode } from '../../packages/core/src/schema/index.js';
 import { schemaToArbitrary } from '../../packages/core/src/harness/arbitrary-from-schema.js';
 import { shipEmitCapsule } from '../../packages/cli/src/capsules/ship-emit.js';
 
 describe('cli.ship-emit', () => {
   const cap = shipEmitCapsule;
-  it('contract shape: input and output decode/encode round-trip', () => {
+  it('contract shape: input and output decode round-trip', () => {
     for (const schema of [cap.input, cap.output]) {
       const arb = schemaToArbitrary(schema as never) as fc.Arbitrary<unknown>;
-      const encode = Schema.encodeSync(schema as never);
-      const decode = Schema.decodeUnknownSync(schema as never);
+      // Kernel schemas encode identically to their decoded form (Encoded ≡ Type),
+      // so the contract round-trip is a strict decode that returns the sample
+      // unchanged. A malformed contract fails RED at `decode`, never a green skip.
       fc.assert(
         fc.property(arb, (value) => {
-          expect(decode(encode(value as never))).toEqual(value);
+          const result = decode(schema as never, value);
+          expect(result.ok).toBe(true);
+          if (result.ok) expect(result.value).toEqual(value);
           return true;
         }),
         { numRuns: 100 },
@@ -42,7 +45,9 @@ describe('cli.ship-emit', () => {
     // declared output schema, and the capsule must declare the capabilities
     // (reads/writes) the receipt is audited against.
     const receipt = await mutate(sample as never);
-    expect(() => Schema.decodeUnknownSync(cap.output as never)(receipt)).not.toThrow();
+    // The receipt decodes against the declared output schema via strict kernel
+    // decode — an ok result, never a throw.
+    expect(decode(cap.output as never, receipt).ok).toBe(true);
     expect(Array.isArray(cap.capabilities.reads)).toBe(true);
     expect(Array.isArray(cap.capabilities.writes)).toBe(true);
     expect(cap.capabilities.reads.length + cap.capabilities.writes.length).toBeGreaterThan(0);

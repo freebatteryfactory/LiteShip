@@ -1,94 +1,68 @@
 /**
- * Codec -- Effect Schema codec encode/decode roundtrip and error handling.
+ * Codec — kernel schema codec: sync encode/decode returning tagged results.
+ *
+ * Kernel schemas carry no encode TRANSFORM (a decoded value and its wire form
+ * are the same runtime value), so the codec is a validated identity transport:
+ * `decode` validates untrusted input into the typed value, `encode` validates a
+ * domain value into its wire form. Both return an `ok`/`err` Result — never an
+ * Effect, never a throw.
  */
 
 import { describe, test, expect } from 'vitest';
-import { Effect, Schema } from 'effect';
-import { Codec } from '@czap/core';
+import { S, Codec } from '@czap/core';
 
 describe('Codec', () => {
-  describe('roundtrip with simple schema', () => {
-    const PersonSchema = Schema.Struct({
-      name: Schema.String,
-      age: Schema.Number,
-    });
-
+  describe('roundtrip with a struct schema', () => {
+    const PersonSchema = S.struct({ name: S.string, age: S.number });
     const personCodec = Codec.make(PersonSchema);
 
-    test('encode then decode recovers original value', async () => {
+    test('decode then encode recovers a structurally-equal value', () => {
       const original = { name: 'Alice', age: 30 };
-      const encoded = await Effect.runPromise(personCodec.encode(original));
-      const decoded = await Effect.runPromise(personCodec.decode(encoded));
-      expect(decoded).toEqual(original);
+      const decoded = personCodec.decode(original);
+      expect(decoded.ok).toBe(true);
+      if (!decoded.ok) throw new Error('expected an ok result');
+      expect(decoded.value).toEqual(original);
+      const encoded = personCodec.encode(decoded.value);
+      expect(encoded.ok).toBe(true);
+      if (!encoded.ok) throw new Error('expected an ok result');
+      expect(encoded.value).toEqual(original);
     });
 
-    test('decode valid input succeeds', async () => {
-      const input = { name: 'Bob', age: 25 };
-      const decoded = await Effect.runPromise(personCodec.decode(input));
-      expect(decoded.name).toBe('Bob');
-      expect(decoded.age).toBe(25);
+    test('decode a valid input succeeds with the typed value', () => {
+      const decoded = personCodec.decode({ name: 'Bob', age: 25 });
+      if (!decoded.ok) throw new Error('expected an ok result');
+      expect(decoded.value.name).toBe('Bob');
+      expect(decoded.value.age).toBe(25);
     });
   });
 
-  describe('error handling', () => {
-    const StrictSchema = Schema.Struct({
-      id: Schema.Number,
-      label: Schema.String,
-    });
-
+  describe('error handling — tagged results, never a throw', () => {
+    const StrictSchema = S.struct({ id: S.number, label: S.string });
     const strictCodec = Codec.make(StrictSchema);
 
-    test('decode with wrong type returns error effect, not crash', async () => {
-      const invalid = { id: 'not-a-number', label: 'test' };
-      const result = await Effect.runPromise(
-        strictCodec.decode(invalid as any).pipe(
-          Effect.matchEffect({
-            onSuccess: () => Effect.succeed('should-not-reach' as const),
-            onFailure: (err) => Effect.succeed(err),
-          }),
-        ),
-      );
-      expect(result).not.toBe('should-not-reach');
+    test('decode with a wrong field type returns a ParseError result', () => {
+      const result = strictCodec.decode({ id: 'not-a-number', label: 'test' });
+      expect(result.ok).toBe(false);
+      if (result.ok) throw new Error('expected an err result');
+      expect(result.error._tag).toBe('ParseError');
     });
 
-    test('decode with missing field returns error effect', async () => {
-      const incomplete = { id: 42 };
-      const result = await Effect.runPromise(
-        strictCodec.decode(incomplete as any).pipe(
-          Effect.matchEffect({
-            onSuccess: () => Effect.succeed('should-not-reach' as const),
-            onFailure: (err) => Effect.succeed(err),
-          }),
-        ),
-      );
-      expect(result).not.toBe('should-not-reach');
-    });
-  });
-
-  describe('schema with transformations', () => {
-    const NumericString = Schema.NumberFromString;
-    const numCodec = Codec.make(NumericString);
-
-    test('encode transforms number to string representation', async () => {
-      const encoded = await Effect.runPromise(numCodec.encode(42));
-      expect(encoded).toBe('42');
+    test('decode with a missing field returns a ParseError result', () => {
+      const result = strictCodec.decode({ id: 42 });
+      expect(result.ok).toBe(false);
+      if (result.ok) throw new Error('expected an err result');
+      expect(result.error._tag).toBe('ParseError');
     });
 
-    test('decode transforms string to number', async () => {
-      const decoded = await Effect.runPromise(numCodec.decode('123'));
-      expect(decoded).toBe(123);
-    });
-
-    test('decode non-numeric string yields NaN which is not a valid number', async () => {
-      const decoded = await Effect.runPromise(numCodec.decode('not-a-number'));
-      expect(Number.isNaN(decoded)).toBe(true);
+    test('decode of a non-object returns a ParseError result', () => {
+      const result = strictCodec.decode('not an object at all');
+      expect(result.ok).toBe(false);
     });
   });
 
   describe('schema property', () => {
-    test('codec exposes underlying schema', () => {
-      const TestSchema = Schema.Struct({ value: Schema.Boolean });
-      const codec = Codec.make(TestSchema);
+    test('codec exposes the underlying kernel schema', () => {
+      const codec = Codec.make(S.struct({ value: S.boolean }));
       expect(codec.schema).toBeDefined();
     });
   });

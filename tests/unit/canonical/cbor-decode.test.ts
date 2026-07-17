@@ -10,15 +10,15 @@
 
 import { describe, it, expect, vi } from 'vitest';
 import fc from 'fast-check';
-import { Cause, Effect, Result, Schema } from 'effect';
 import { CanonicalCbor, decode } from '@czap/canonical';
 import { hasTag } from '@czap/error';
+import { decode as decodeSchema } from '../../../packages/core/src/schema/index.js';
 import {
   canonicalCborDecodeCapsule,
   _canonicalCborDecodeInternals,
 } from '../../../packages/core/src/capsules/canonical-cbor-decode.js';
 
-const { normalize } = _canonicalCborDecodeInternals;
+const { normalize, isCanonicalCborBytes } = _canonicalCborDecodeInternals;
 
 describe('decode — RFC 8949 Appendix A round-trips', () => {
   it('decodes unsigned integers in shortest form', () => {
@@ -174,33 +174,35 @@ describe('decode — strict rejection of non-canonical input', () => {
 });
 
 describe('canonicalCborDecodeCapsule input schema', () => {
-  it('accepts canonical encoder bytes and rejects non-canonical Uint8Array input at parse time', async () => {
+  // The input is a kernel `S.bytes(Uint8Array)` DECLARATION carrying a
+  // `withArbitrary` thunk; strict kernel decode accepts any `Uint8Array`
+  // instance (the decoder's own `decode()` is what rejects non-canonical bytes at
+  // run time). The canonical-CBOR DOMAIN — the narrow subset the thunk samples
+  // within — is defined by `isCanonicalCborBytes`, asserted directly below.
+  it('is a bytes declaration whose strict decode accepts a Uint8Array and refuses non-bytes', () => {
     const canonical = CanonicalCbor.encode({ ok: true });
-    const parsed = await Effect.runPromise(Schema.decodeUnknownEffect(canonicalCborDecodeCapsule.input)(canonical));
-    expect(parsed).toBeInstanceOf(Uint8Array);
-
-    const trailing = new Uint8Array([0x00, 0x00]);
-    const rejected = await Effect.runPromiseExit(
-      Schema.decodeUnknownEffect(canonicalCborDecodeCapsule.input)(trailing),
-    );
-    expect(rejected._tag).toBe('Failure');
+    expect(decodeSchema(canonicalCborDecodeCapsule.input as never, canonical).ok).toBe(true);
+    // A non-Uint8Array value is refused by the bytes-carrier check.
+    expect(decodeSchema(canonicalCborDecodeCapsule.input as never, { not: 'bytes' }).ok).toBe(false);
   });
 
-  it('treats non-Error canonicality throws as schema refinement failures', async () => {
-    const canonical = CanonicalCbor.encode({ ok: true });
+  it('the canonical-CBOR domain predicate accepts encoder output and rejects non-canonical bytes', () => {
+    // Encoder output is, by construction, canonical.
+    expect(isCanonicalCborBytes(CanonicalCbor.encode({ ok: true }) as Uint8Array<ArrayBuffer>)).toBe(true);
+    // Trailing bytes after the top-level item are non-canonical (the decoder's
+    // `malformed` reason) — outside the domain.
+    expect(isCanonicalCborBytes(new Uint8Array([0x00, 0x00]) as Uint8Array<ArrayBuffer>)).toBe(false);
+  });
+
+  it('treats a non-Error canonicality throw as a `false` rejection (no defect leaks)', () => {
+    const canonical = CanonicalCbor.encode({ ok: true }) as Uint8Array<ArrayBuffer>;
     const encodeSpy = vi.spyOn(CanonicalCbor, 'encode').mockImplementation(() => {
       throw 'bare encoder failure';
     });
-
     try {
-      const rejected = await Effect.runPromiseExit(
-        Schema.decodeUnknownEffect(canonicalCborDecodeCapsule.input)(canonical),
-      );
-
-      expect(rejected._tag).toBe('Failure');
-      if (rejected._tag === 'Failure') {
-        expect(Result.isSuccess(Cause.findError(rejected.cause))).toBe(true);
-      }
+      // The predicate's catch treats ANY throwable (including a bare string) as a
+      // domain rejection — it returns `false`, never re-surfacing the throwable.
+      expect(isCanonicalCborBytes(canonical)).toBe(false);
     } finally {
       encodeSpy.mockRestore();
     }

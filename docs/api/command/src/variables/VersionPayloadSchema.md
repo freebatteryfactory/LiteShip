@@ -6,9 +6,49 @@
 
 # Variable: VersionPayloadSchema
 
-> `const` **VersionPayloadSchema**: `Struct`\<\{ `czap`: `String`; `node`: `String`; `pnpm`: `NullOr`\<`String`\>; \}\>
+> `const` **VersionPayloadSchema**: `object`
 
-Defined in: [command/src/commands/version.ts:17](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/version.ts#L17)
+Defined in: [command/src/commands/version.ts:18](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/version.ts#L18)
 
-Structured payload returned by the version command — ONE Effect Schema is the
-source of both [VersionPayload](../type-aliases/VersionPayload.md) and the descriptor's `outputSchema`.
+The descriptor `outputSchema` for the version command — hand-written
+JSON-Schema, byte-parity-pinned against the parity fixture. [VersionPayload](../type-aliases/VersionPayload.md)
+is the plain-TS mirror of this shape; the two are kept in step by the
+output-schema-law payload-conformance test, not by a shared Effect Schema.
+
+## Type Declaration
+
+### properties
+
+> `readonly` **properties**: `object`
+
+#### properties.czap
+
+> `readonly` **czap**: `object`
+
+#### properties.czap.type
+
+> `readonly` **type**: `"string"` = `'string'`
+
+#### properties.node
+
+> `readonly` **node**: `object`
+
+#### properties.node.type
+
+> `readonly` **type**: `"string"` = `'string'`
+
+#### properties.pnpm
+
+> `readonly` **pnpm**: `object`
+
+#### properties.pnpm.type
+
+> `readonly` **type**: readonly \[`"string"`, `"null"`\]
+
+### required
+
+> `readonly` **required**: readonly \[`"czap"`, `"node"`, `"pnpm"`\]
+
+### type
+
+> `readonly` **type**: `"object"` = `'object'`

@@ -21,22 +21,22 @@
  * @module
  */
 
-import { Schema } from 'effect';
-import { defineCapsule, Boundary, wgslIdent } from '@czap/core';
+import { defineCapsule, Boundary, wgslIdent, S } from '@czap/core';
+import type { Infer } from '@czap/core';
 import { WGSLCompiler } from '../wgsl.js';
 import type { WGSLCompileResult } from '../wgsl.js';
 
 /** Seed material the schema-arbitrary CAN produce. `run` normalizes it. */
-const WGSLCompileSeed = Schema.Struct({
+const WGSLCompileSeed = S.struct({
   /** Candidate state names → deduped, ascending-thresholded boundary states. */
-  states: Schema.Array(Schema.String),
+  states: S.array(S.string),
   /** Candidate field names → deduped authored struct-field key set. */
-  fields: Schema.Array(Schema.String),
+  fields: S.array(S.string),
   /** Value matrix `values[stateIdx][fieldIdx]`; a short row omits the tail. */
-  values: Schema.Array(Schema.Array(Schema.Number)),
+  values: S.array(S.array(S.number)),
 });
 
-type WGSLCompileSeedValue = Schema.Schema.Type<typeof WGSLCompileSeed>;
+type WGSLCompileSeedValue = Infer<typeof WGSLCompileSeed>;
 
 /** Per-state value maps in the shape `WGSLCompiler.compile` consumes. */
 type StateMaps = { [s: string]: Record<string, number> };
@@ -121,7 +121,7 @@ export const wgslCompileCapsule = defineCapsule({
   _kind: 'pureTransform',
   name: 'compiler.wgsl-compile',
   input: WGSLCompileSeed,
-  output: Schema.Unknown,
+  output: S.unknown,
   capabilities: { reads: [], writes: [] },
   invariants: [
     {

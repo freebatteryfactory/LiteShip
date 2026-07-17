@@ -33,9 +33,10 @@
  * @module
  */
 
-import { Schema } from 'effect';
 import type { ContentAddress } from '../brands.js';
 import { defineCapsule } from '../assembly.js';
+import { S } from '../schema/index.js';
+import type { Infer } from '../schema/index.js';
 import { sealGraph, sealNode } from '../document-graph-address.js';
 import { summarizeGraph } from '../ai-cast.js';
 import type { GraphSummary } from '../ai-cast.js';
@@ -48,16 +49,16 @@ import type { CellMeta } from '../protocol.js';
  * monotonicity law has two points to compare. `run` seals the graph and
  * summarizes at both.
  */
-const AiCastSummarizeSeed = Schema.Struct({
+const AiCastSummarizeSeed = S.struct({
   /** Signal-axis names → one sealed `SignalNode` per DISTINCT name. */
-  inputs: Schema.Array(Schema.String),
+  inputs: S.array(S.string),
   /** A token budget (clamped to ≥ 0 in `run`). */
-  budgetA: Schema.Number,
+  budgetA: S.number,
   /** A second token budget (clamped to ≥ 0 in `run`) — compared against `budgetA`. */
-  budgetB: Schema.Number,
+  budgetB: S.number,
 });
 
-type AiCastSummarizeSeedValue = Schema.Schema.Type<typeof AiCastSummarizeSeed>;
+type AiCastSummarizeSeedValue = Infer<typeof AiCastSummarizeSeed>;
 
 /** Fixed volatile meta — excluded from the content address, so a constant is faithful. */
 const META: CellMeta = {
@@ -135,7 +136,7 @@ export const aiCastSummarizeCapsule = defineCapsule({
   _kind: 'pureTransform',
   name: 'core.ai-cast.summarize',
   input: AiCastSummarizeSeed,
-  output: Schema.Unknown,
+  output: S.unknown,
   capabilities: { reads: [], writes: [] },
   invariants: [
     {

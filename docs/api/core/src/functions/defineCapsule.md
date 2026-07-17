@@ -6,9 +6,9 @@
 
 # Function: defineCapsule()
 
-> **defineCapsule**\<`K`, `In`, `Out`, `R`\>(`decl`): [`CapsuleDef`](../interfaces/CapsuleDef.md)\<`K`, `In`, `Out`, `R`\>
+> **defineCapsule**\<`K`, `InS`, `OutS`, `R`\>(`decl`): [`CapsuleDef`](../interfaces/CapsuleDef.md)\<`K`, [`Infer`](../type-aliases/Infer.md)\<`InS`\>, [`Infer`](../type-aliases/Infer.md)\<`OutS`\>, `R`\>
 
-Defined in: [core/src/assembly.ts:105](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/assembly.ts#L105)
+Defined in: [core/src/assembly.ts:131](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/assembly.ts#L131)
 
 Declare a capsule. Validates shape, computes content address,
 registers in the module-level catalog, returns a typed def.
@@ -21,13 +21,13 @@ the harness/compiler walking the catalog.
 
 `K` *extends* [`AssemblyKind`](../type-aliases/AssemblyKind.md)
 
-### In
+### InS
 
-`In`
+`InS` *extends* [`SchemaPort`](../interfaces/SchemaPort.md)\<`unknown`, `unknown`\>
 
-### Out
+### OutS
 
-`Out`
+`OutS` *extends* [`SchemaPort`](../interfaces/SchemaPort.md)\<`unknown`, `unknown`\>
 
 ### R
 
@@ -37,8 +37,8 @@ the harness/compiler walking the catalog.
 
 ### decl
 
-`Omit`\<[`CapsuleContract`](../interfaces/CapsuleContract.md)\<`K`, `In`, `Out`, `R`\>, `"id"`\>
+`CapsuleDecl`\<`K`, `InS`, `OutS`, `R`\>
 
 ## Returns
 
-[`CapsuleDef`](../interfaces/CapsuleDef.md)\<`K`, `In`, `Out`, `R`\>
+[`CapsuleDef`](../interfaces/CapsuleDef.md)\<`K`, [`Infer`](../type-aliases/Infer.md)\<`InS`\>, [`Infer`](../type-aliases/Infer.md)\<`OutS`\>, `R`\>

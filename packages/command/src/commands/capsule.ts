@@ -6,8 +6,7 @@
  *
  * @module
  */
-import { Schema } from 'effect';
-import { schemaToJsonSchema, wallClock, type CapsuleCommandResult } from '@czap/core';
+import { wallClock, type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
 import { capabilityUnavailable, type CommandCapability, type HandledCommand } from '../registry.js';
 import { loadManifest, manifestUnavailable } from './manifest.js';
 
@@ -22,24 +21,40 @@ function failed(command: string, error: string, exitCode: number): CapsuleComman
 }
 
 /** `<verb> <id>` args — the single source of the inspect/verify `inputSchema`. */
-const INSPECT_SCHEMA = schemaToJsonSchema(Schema.Struct({ id: Schema.String }));
+const INSPECT_SCHEMA = {
+  type: 'object',
+  properties: { id: { type: 'string' } },
+  required: ['id'],
+} as const satisfies CommandJsonSchema;
 
 /**
  * `capsule inspect` output: the entry is an opaque manifest object whose internal
  * fields are intentionally NOT mirrored here (decision #2: avoid drift with the
- * manifest). `Schema.Struct({})` keeps the `type:object` teeth without pinning
- * the entry's internal shape.
+ * manifest). An empty `properties` object keeps the `type:object` teeth without
+ * pinning the entry's internal shape.
  */
-const CapsuleInspectPayloadSchema = Schema.Struct({ capsule: Schema.Struct({}) });
+const CapsuleInspectPayloadSchema = {
+  type: 'object',
+  properties: { capsule: { type: 'object', properties: {} } },
+  required: ['capsule'],
+} as const satisfies CommandJsonSchema;
 
 /** `capsule list` output — the entries are opaque manifest objects; `kind` is the nullable filter echo. */
-const CapsuleListPayloadSchema = Schema.Struct({
-  capsules: Schema.Array(Schema.Struct({})),
-  kind: Schema.NullOr(Schema.String),
-});
+const CapsuleListPayloadSchema = {
+  type: 'object',
+  properties: {
+    capsules: { type: 'array', items: { type: 'object', properties: {} } },
+    kind: { type: ['string', 'null'] },
+  },
+  required: ['capsules', 'kind'],
+} as const satisfies CommandJsonSchema;
 
 /** `capsule verify` output — the verified capsule's id. */
-const CapsuleVerifyPayloadSchema = Schema.Struct({ capsuleId: Schema.String });
+const CapsuleVerifyPayloadSchema = {
+  type: 'object',
+  properties: { capsuleId: { type: 'string' } },
+  required: ['capsuleId'],
+} as const satisfies CommandJsonSchema;
 
 /** `capsule inspect <id>` — return a single manifest entry. */
 export const capsuleInspectCommand: HandledCommand = {
@@ -49,7 +64,7 @@ export const capsuleInspectCommand: HandledCommand = {
     inputSchema: INSPECT_SCHEMA,
     // Minimal stable contract (decision #2): the entry is a manifest object;
     // its internal fields are not mirrored here to avoid drift with the manifest.
-    outputSchema: schemaToJsonSchema(CapsuleInspectPayloadSchema),
+    outputSchema: CapsuleInspectPayloadSchema,
     annotations: { readOnly: true, mcpExposed: true, group: 'manifest' },
     // CUT D5: link a live MCP Apps view that renders this tool's result (host-injected).
     ui: { resourceUri: 'ui://liteship/app/capsule-inspect' },
@@ -75,8 +90,11 @@ export const capsuleListCommand: HandledCommand = {
   descriptor: {
     name: 'capsule.list',
     summary: 'List capsules, optionally filtered by kind.',
-    inputSchema: schemaToJsonSchema(Schema.Struct({ kind: Schema.optional(Schema.String) })),
-    outputSchema: schemaToJsonSchema(CapsuleListPayloadSchema),
+    inputSchema: {
+      type: 'object',
+      properties: { kind: { type: 'string' } },
+    } as const satisfies CommandJsonSchema,
+    outputSchema: CapsuleListPayloadSchema,
     annotations: { readOnly: true, mcpExposed: true, group: 'manifest' },
   },
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
@@ -101,7 +119,7 @@ export const capsuleVerifyCommand: HandledCommand = {
     summary: 'Verify a capsule’s generated tests.',
     inputSchema: INSPECT_SCHEMA,
     requires: ['runVitest'] satisfies readonly CommandCapability[],
-    outputSchema: schemaToJsonSchema(CapsuleVerifyPayloadSchema),
+    outputSchema: CapsuleVerifyPayloadSchema,
     annotations: { mcpExposed: true, group: 'manifest' },
   },
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {

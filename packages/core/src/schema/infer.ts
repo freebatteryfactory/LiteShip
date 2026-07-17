@@ -54,5 +54,20 @@ export type StructEncoded<F extends SchemaFields> = Prettify<
   }
 >;
 
+/**
+ * The decoded type of `S.tuple(...elements)`: a READONLY tuple that mirrors each
+ * element position's `Infer`. The homomorphic mapped type over `keyof E` preserves
+ * tuple-ness (arity and per-position types), so `S.tuple(S.number, S.string)` infers
+ * `readonly [number, string]`, not `readonly (number | string)[]`.
+ */
+export type TupleType<E extends readonly Schema<unknown, unknown>[]> = {
+  readonly [K in keyof E]: Infer<E[K]>;
+};
+
+/** The encoded (wire) tuple type of `S.tuple(...elements)` — the {@link TupleType} shape over `InferEncoded`. */
+export type TupleEncoded<E extends readonly Schema<unknown, unknown>[]> = {
+  readonly [K in keyof E]: InferEncoded<E[K]>;
+};
+
 /** Re-exported so `S.optional`'s return type and consumers share one optional brand. */
 export type { OptionalSchema };

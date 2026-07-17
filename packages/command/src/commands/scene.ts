@@ -7,40 +7,48 @@
  *
  * @module
  */
-import { Schema } from 'effect';
-import { schemaToJsonSchema, systemClock, wallClock, type CapsuleCommandResult } from '@czap/core';
+import { systemClock, wallClock, type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
 import { capabilityUnavailable, type CommandCapability, type HandledCommand } from '../registry.js';
 import { loadManifest, manifestUnavailable } from './manifest.js';
 
 /** `<verb> <scene.ts>` args — the single source of the verify/compile `inputSchema`. */
-const SceneArgsSchema = Schema.Struct({ scene: Schema.String });
+const SceneArgsSchema = {
+  type: 'object',
+  properties: { scene: { type: 'string' } },
+  required: ['scene'],
+} as const satisfies CommandJsonSchema;
 
 /** scene.verify output — the scene id + count of generated tests run. */
-const SceneVerifyPayloadSchema = Schema.Struct({
-  sceneId: Schema.String,
-  generatedTests: Schema.Number,
-});
+const SceneVerifyPayloadSchema = {
+  type: 'object',
+  properties: { sceneId: { type: 'string' }, generatedTests: { type: 'number' } },
+  required: ['sceneId', 'generatedTests'],
+} as const satisfies CommandJsonSchema;
 
 /** scene.compile output — the scene id, track count, and elapsed compile duration. */
-const SceneCompilePayloadSchema = Schema.Struct({
-  sceneId: Schema.String,
-  trackCount: Schema.Number,
-  durationMs: Schema.Number,
-});
+const SceneCompilePayloadSchema = {
+  type: 'object',
+  properties: { sceneId: { type: 'string' }, trackCount: { type: 'number' }, durationMs: { type: 'number' } },
+  required: ['sceneId', 'trackCount', 'durationMs'],
+} as const satisfies CommandJsonSchema;
 
 /**
  * scene.render output — the rendered scene id, output path, frame count, elapsed
  * render duration, and the optional `fps`/`cached` echoes (receipts replayed from
  * a pre-fps cache lack `fps`; `cached` rides the live/replay split).
  */
-const SceneRenderPayloadSchema = Schema.Struct({
-  sceneId: Schema.String,
-  output: Schema.String,
-  frameCount: Schema.Number,
-  elapsedMs: Schema.Number,
-  fps: Schema.optional(Schema.Number),
-  cached: Schema.optional(Schema.Boolean),
-});
+const SceneRenderPayloadSchema = {
+  type: 'object',
+  properties: {
+    sceneId: { type: 'string' },
+    output: { type: 'string' },
+    frameCount: { type: 'number' },
+    elapsedMs: { type: 'number' },
+    fps: { type: 'number' },
+    cached: { type: 'boolean' },
+  },
+  required: ['sceneId', 'output', 'frameCount', 'elapsedMs'],
+} as const satisfies CommandJsonSchema;
 
 function failed(command: string, error: string, exitCode: number): CapsuleCommandResult {
   return {
@@ -94,9 +102,9 @@ export const sceneVerifyCommand: HandledCommand = {
   descriptor: {
     name: 'scene.verify',
     summary: 'Run a scene capsule’s generated tests.',
-    inputSchema: schemaToJsonSchema(SceneArgsSchema),
+    inputSchema: SceneArgsSchema,
     requires: ['fileExists', 'loadSceneModule', 'runVitest'] satisfies readonly CommandCapability[],
-    outputSchema: schemaToJsonSchema(SceneVerifyPayloadSchema),
+    outputSchema: SceneVerifyPayloadSchema,
     annotations: { mcpExposed: true, group: 'compose' },
   },
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
@@ -138,9 +146,9 @@ export const sceneCompileCommand: HandledCommand = {
   descriptor: {
     name: 'scene.compile',
     summary: 'Compile a scene capsule.',
-    inputSchema: schemaToJsonSchema(SceneArgsSchema),
+    inputSchema: SceneArgsSchema,
     requires: ['fileExists', 'loadSceneModule'] satisfies readonly CommandCapability[],
-    outputSchema: schemaToJsonSchema(SceneCompilePayloadSchema),
+    outputSchema: SceneCompilePayloadSchema,
     annotations: { mcpExposed: true, group: 'compose' },
   },
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
@@ -191,9 +199,13 @@ export const sceneRenderCommand: HandledCommand = {
   descriptor: {
     name: 'scene.render',
     summary: 'Render a scene to mp4 (output defaults to <scene>.mp4 beside the scene file).',
-    inputSchema: schemaToJsonSchema(Schema.Struct({ scene: Schema.String, output: Schema.optional(Schema.String) })),
+    inputSchema: {
+      type: 'object',
+      properties: { scene: { type: 'string' }, output: { type: 'string' } },
+      required: ['scene'],
+    } as const satisfies CommandJsonSchema,
     requires: ['fileExists', 'loadSceneModule', 'renderScene'] satisfies readonly CommandCapability[],
-    outputSchema: schemaToJsonSchema(SceneRenderPayloadSchema),
+    outputSchema: SceneRenderPayloadSchema,
     annotations: { mcpExposed: true, group: 'compose' },
   },
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {

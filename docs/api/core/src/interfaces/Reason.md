@@ -6,7 +6,7 @@
 
 # Interface: Reason
 
-Defined in: [core/src/capsule.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L56)
+Defined in: [core/src/capsule.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L59)
 
 One link in a [Decision](Decision.md)'s reason chain — a typed justification for the
 verdict. `code` is a stable, machine-readable discriminant (e.g.
@@ -22,7 +22,7 @@ Only meaningful for `policyGate` arms (the verdict of [CapsuleContract.decide](C
 
 > `readonly` **code**: `string`
 
-Defined in: [core/src/capsule.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L58)
+Defined in: [core/src/capsule.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L61)
 
 Stable, machine-readable reason discriminant (e.g. `'no-rung-admits'`).
 
@@ -32,6 +32,6 @@ Stable, machine-readable reason discriminant (e.g. `'no-rung-admits'`).
 
 > `readonly` **message**: `string`
 
-Defined in: [core/src/capsule.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L60)
+Defined in: [core/src/capsule.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L63)
 
 Human-readable explanation of this reason.

@@ -8,6 +8,6 @@
 
 > `const` **packageSmokeCommand**: [`HandledCommand`](../interfaces/HandledCommand.md)
 
-Defined in: [command/src/commands/package-smoke.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/package-smoke.ts#L51)
+Defined in: [command/src/commands/package-smoke.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/package-smoke.ts#L61)
 
 `package-smoke` — pack/install/import-smoke every publishable scope; emit a structured pass/fail verdict.

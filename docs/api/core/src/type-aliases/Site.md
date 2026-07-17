@@ -8,6 +8,6 @@
 
 > **Site** = `"node"` \| `"browser"` \| `"worker"` \| `"edge"`
 
-Defined in: [core/src/capsule.ts:24](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L24)
+Defined in: [core/src/capsule.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L27)
 
 Where a capsule may run.

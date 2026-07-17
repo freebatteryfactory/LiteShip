@@ -7,8 +7,8 @@
  * property harness fits the value-level laws exactly.
  *
  * WHY THE INPUT IS SEED MATERIAL (not a raw `Boundary` + `Record` map): the
- * arbitrary-from-schema walker supports String / Number / Array / Tuple / Struct
- * but THROWS on index signatures (`Schema.Record`), so a per-state
+ * arbitrary-from-schema walker supports string / number / array / struct
+ * but THROWS on index signatures (`S.record`), so a per-state
  * `Record<fieldName, number>` cannot be schema-arbitrary-minted, and a raw
  * `Boundary` carries a content-addressed `id` the walker can't forge. So the
  * input schema generates a small, fully-supported SEED domain — state-name and
@@ -28,31 +28,31 @@
  * @module
  */
 
-import { Schema } from 'effect';
-import { defineCapsule, Boundary, glslIdent } from '@czap/core';
+import { defineCapsule, Boundary, glslIdent, S } from '@czap/core';
+import type { Infer } from '@czap/core';
 import { GLSLCompiler } from '../glsl.js';
 import type { GLSLCompileResult } from '../glsl.js';
 
 /**
- * Seed material the schema-arbitrary CAN produce (String / Number / Array are
- * fully supported AST nodes). `run` normalizes it into a valid Boundary + the
- * per-state value maps.
+ * Seed material the schema-arbitrary CAN produce (string / number / array are
+ * fully supported kernel AST nodes). `run` normalizes it into a valid Boundary +
+ * the per-state value maps.
  */
-const GLSLCompileSeed = Schema.Struct({
+const GLSLCompileSeed = S.struct({
   /** Candidate state names → deduped, ascending-thresholded boundary states. */
-  states: Schema.Array(Schema.String),
+  states: S.array(S.string),
   /** Candidate field names → deduped authored uniform key set. */
-  fields: Schema.Array(Schema.String),
+  fields: S.array(S.string),
   /**
    * Value matrix `values[stateIdx][fieldIdx]`. A row shorter than `fields`
    * omits that state's trailing fields (ragged coverage → exercises the
    * omitted-uniform-reset completeness law). All values are integers (the
-   * Number arbitrary mints `fc.integer()`), so the int-type law holds.
+   * number arbitrary mints `fc.integer()`), so the int-type law holds.
    */
-  values: Schema.Array(Schema.Array(Schema.Number)),
+  values: S.array(S.array(S.number)),
 });
 
-type GLSLCompileSeedValue = Schema.Schema.Type<typeof GLSLCompileSeed>;
+type GLSLCompileSeedValue = Infer<typeof GLSLCompileSeed>;
 
 /** Per-state value maps in the shape `GLSLCompiler.compile` consumes. */
 type StateMaps = { [s: string]: Record<string, number> };
@@ -155,7 +155,7 @@ export const glslCompileCapsule = defineCapsule({
   _kind: 'pureTransform',
   name: 'compiler.glsl-compile',
   input: GLSLCompileSeed,
-  output: Schema.Unknown,
+  output: S.unknown,
   capabilities: { reads: [], writes: [] },
   invariants: [
     {

@@ -6,9 +6,9 @@
 
 # Function: toJsonSchema()
 
-> **toJsonSchema**(`schema`): `JsonSchemaObject`
+> **toJsonSchema**(`schema`): [`JsonSchemaObject`](../type-aliases/JsonSchemaObject.md)
 
-Defined in: [core/src/schema/to-json-schema.ts:198](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/to-json-schema.ts#L198)
+Defined in: [core/src/schema/to-json-schema.ts:207](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/to-json-schema.ts#L207)
 
 Walk a kernel [Schema](../interfaces/Schema.md) value and derive the JSON-Schema OBJECT a command
 descriptor's `inputSchema` / `outputSchema` carries. The root must be a
@@ -24,4 +24,4 @@ object, or when any nested node has no sound mapping in the structural dialect.
 
 ## Returns
 
-`JsonSchemaObject`
+[`JsonSchemaObject`](../type-aliases/JsonSchemaObject.md)

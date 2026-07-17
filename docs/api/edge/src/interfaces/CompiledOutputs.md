@@ -6,7 +6,7 @@
 
 # Interface: CompiledOutputs
 
-Defined in: [edge/src/kv-cache.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L48)
+Defined in: [edge/src/kv-cache.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L49)
 
 Precompiled outputs for a single boundary at a given tier.
 
@@ -16,7 +16,7 @@ Precompiled outputs for a single boundary at a given tier.
 
 > `readonly` `optional` **aria?**: `Readonly`\<`Record`\<`string`, `Readonly`\<`Record`\<`string`, `string`\>\>\>\>
 
-Defined in: [edge/src/kv-cache.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L58)
+Defined in: [edge/src/kv-cache.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L59)
 
 Authored per-state ARIA/data attributes (`@aria` blocks), keyed by state
 name then attribute (`ARIACompileResult.stateAttributes`). Tier-invariant.
@@ -29,7 +29,7 @@ resolves `aria[currentState]` so authored attributes update on crossings.
 
 > `readonly` **containerQueries**: `string`
 
-Defined in: [edge/src/kv-cache.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L51)
+Defined in: [edge/src/kv-cache.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L52)
 
 ***
 
@@ -37,7 +37,7 @@ Defined in: [edge/src/kv-cache.ts:51](https://github.com/freebatteryfactory/Lite
 
 > `readonly` **css**: `string`
 
-Defined in: [edge/src/kv-cache.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L49)
+Defined in: [edge/src/kv-cache.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L50)
 
 ***
 
@@ -45,7 +45,7 @@ Defined in: [edge/src/kv-cache.ts:49](https://github.com/freebatteryfactory/Lite
 
 > `readonly` `optional` **glsl?**: `CompiledGLSLOutput`
 
-Defined in: [edge/src/kv-cache.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L67)
+Defined in: [edge/src/kv-cache.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L68)
 
 Compiled GLSL cast (`@glsl` blocks): the shader preamble `declarations`
 the runtime prepends to a fragment shader plus the default `uniformValues`
@@ -60,7 +60,7 @@ D0 only carries this field end to end.
 
 > `readonly` **propertyRegistrations**: `string`
 
-Defined in: [edge/src/kv-cache.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L50)
+Defined in: [edge/src/kv-cache.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L51)
 
 ***
 
@@ -68,7 +68,7 @@ Defined in: [edge/src/kv-cache.ts:50](https://github.com/freebatteryfactory/Lite
 
 > `readonly` `optional` **wgsl?**: `CompiledWGSLOutput`
 
-Defined in: [edge/src/kv-cache.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L75)
+Defined in: [edge/src/kv-cache.ts:76](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L76)
 
 Compiled WGSL cast (`@wgsl` blocks): the WebGPU preamble `declarations`
 (state consts + uniform struct + binding) plus the default `bindingValues`

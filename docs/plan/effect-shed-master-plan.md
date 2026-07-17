@@ -20,6 +20,7 @@ Waves, not increments. Each wave lands whole or not at all — there is no "get 
 4. **Static QA gate (mechanical):** banned-pattern sweep over the wave diff — `as unknown as`, `@ts-ignore`, `eslint-disable`, `.skip(`, `.only(`, `TODO|FIXME|HACK|XXX`, stray `console.log`, new `from 'effect'` imports in shed packages. Zero tolerance; a hit fails the wave.
 5. **Adversarial QA (Fable):** a reviewer agent whose charter is to REFUTE the wave — hunt for behavior drift, weakened tests, fixture hand-editing, law-table gaps — before anything is called done.
 6. **Gates:** `pnpm typecheck`, build, affected suites, gauntlet where enrolled. All green → one atomic commit per wave. Anything less → the wave does not land.
+7. **Wave N.5 — the scar iteration (standing, between every wave):** no wave N+1 launches until wave N.5 completes. (a) *Harvest:* every QA finding, builder blocker, gate surprise, and process failure from wave N is appended to `docs/plan/scar-ledger.md` — scars are assets, not anecdotes. (b) *Disposition:* each scar must either map to an existing gate (cite it) or **mint a new guard** — a deterministic, property-based, single-owner test or structural rule built in N.5 itself. A scar with no disposition blocks the next wave. (c) *Land:* guards ship as their own atomic commit, so protection predates the wave whose risk profile it matches. Guards are additive by design — N.5 waves are small, fast, and never refactor product code. This is the compounding-interest mechanism: each wave makes every future wave safer.
 
 ## Conflict resolutions (locked)
 

@@ -6,7 +6,7 @@
 
 # Interface: Decision
 
-Defined in: [core/src/capsule.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L79)
+Defined in: [core/src/capsule.ts:82](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L82)
 
 The typed verdict a `policyGate` capsule's [CapsuleContract.decide](CapsuleContract.md#decide)
 resolves against a subject: an `allow`/`deny` effect plus a reason chain.
@@ -29,7 +29,7 @@ consistent with the AI cast-primitive boundary).
 
 > `readonly` **effect**: `"allow"` \| `"deny"`
 
-Defined in: [core/src/capsule.ts:81](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L81)
+Defined in: [core/src/capsule.ts:84](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L84)
 
 Whether the subject is admitted (`allow`) or rejected (`deny`).
 
@@ -39,6 +39,6 @@ Whether the subject is admitted (`allow`) or rejected (`deny`).
 
 > `readonly` **reasons**: readonly [`Reason`](Reason.md)[]
 
-Defined in: [core/src/capsule.ts:83](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L83)
+Defined in: [core/src/capsule.ts:86](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L86)
 
 The reason chain. Non-empty exactly when `effect === 'deny'`.

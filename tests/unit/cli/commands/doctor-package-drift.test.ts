@@ -1,29 +1,36 @@
 /**
  * Drift-guard: the package list the doctor's `--fix` invalidates
- * tsbuildinfo for must match the package list the build script actually
- * compiles. Because doctor now reads the list dynamically out of root
- * package.json's `build` script, this test pins that contract:
+ * tsbuildinfo for must match the build topology. The root `build` script
+ * is now a bare `tsc --build`, so that topology lives in root
+ * tsconfig.json's project `references`, and `loadBuiltPackages` reads it
+ * from there (mirroring tests/unit/devops/scripts-and-build-parity.test.ts).
+ * This test pins that contract:
  *
- *   1. The build script string must still parse via /packages\/([\w-]+)/g.
- *   2. The parsed list must equal exactly the 14 published, compiled
- *      packages currently in `packages/` (excluding `_spine`, which is
- *      type-only and has no dist/).
+ *   1. root tsconfig references parse into a non-empty package list;
+ *   2. `loadBuiltPackages` returns exactly the reference-derived dirs — the
+ *      invalidation set the doctor's `--fix` loop actually drives;
+ *   3. every directory under `packages/` is referenced, and every reference
+ *      exists on disk (no phantom, no forgotten package).
  *
- * If a new package is added to the build, this test will catch it being
- * forgotten from the doctor's invalidation loop only indirectly — the
- * loop is now dynamic, so adding a package to the build script
- * auto-includes it. The test instead asserts that the dynamic extraction
- * itself stays sound (regex still matches, set of packages on disk
- * matches what the build emits).
+ * The loop is dynamic, so adding a package to the root tsconfig references
+ * auto-includes it in the doctor's invalidation set; this test asserts the
+ * extraction itself stays sound (regex still matches, set of packages on
+ * disk matches the referenced set).
  */
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { loadBuiltPackages } from '../../../../packages/cli/src/commands/doctor/manifest.js';
 
 const REPO_ROOT = resolve(__dirname, '../../../..');
 
-function extractBuiltPackages(buildScript: string): readonly string[] {
-  return Array.from(buildScript.matchAll(/packages\/([\w-]+)/g)).map((m) => m[1]);
+function referenceDirs(): readonly string[] {
+  const tsconfig = JSON.parse(readFileSync(resolve(REPO_ROOT, 'tsconfig.json'), 'utf8')) as {
+    references?: ReadonlyArray<{ path: string }>;
+  };
+  return (tsconfig.references ?? [])
+    .map((reference) => /^\.\/packages\/([\w-]+)$/.exec(reference.path)?.[1])
+    .filter((dir): dir is string => dir != null);
 }
 
 function listOnDiskPackages(): readonly string[] {
@@ -35,33 +42,27 @@ function listOnDiskPackages(): readonly string[] {
 }
 
 describe('doctor package-list drift guard', () => {
-  it('root package.json build script parses into a non-empty package list', () => {
-    const pkg = JSON.parse(readFileSync(resolve(REPO_ROOT, 'package.json'), 'utf8')) as {
-      scripts: { build: string };
-    };
-    const built = extractBuiltPackages(pkg.scripts.build);
-    expect(built.length).toBeGreaterThanOrEqual(14);
+  it('root tsconfig references parse into a non-empty package list', () => {
+    expect(referenceDirs().length).toBeGreaterThanOrEqual(14);
   });
 
-  it('every directory under packages/ except _spine appears in the build script', () => {
-    const pkg = JSON.parse(readFileSync(resolve(REPO_ROOT, 'package.json'), 'utf8')) as {
-      scripts: { build: string };
-    };
-    const built = new Set(extractBuiltPackages(pkg.scripts.build));
-    const onDisk = listOnDiskPackages().filter((p) => p !== '_spine');
-
-    const missing = onDisk.filter((p) => !built.has(p));
-    expect(missing, `packages on disk but not in the build script: ${missing.join(', ')}`).toEqual([]);
+  it('loadBuiltPackages returns exactly the root tsconfig reference dirs (the doctor invalidation set)', () => {
+    expect(new Set(loadBuiltPackages(REPO_ROOT))).toEqual(new Set(referenceDirs()));
   });
 
-  it('every package in the build script exists on disk', () => {
-    const pkg = JSON.parse(readFileSync(resolve(REPO_ROOT, 'package.json'), 'utf8')) as {
-      scripts: { build: string };
-    };
-    const built = extractBuiltPackages(pkg.scripts.build);
+  it('every directory under packages/ appears in the root tsconfig references', () => {
+    const referenced = new Set(referenceDirs());
+    const onDisk = listOnDiskPackages();
+
+    const missing = onDisk.filter((p) => !referenced.has(p));
+    expect(missing, `packages on disk but not in root tsconfig references: ${missing.join(', ')}`).toEqual([]);
+  });
+
+  it('every referenced package exists on disk', () => {
+    const referenced = referenceDirs();
     const onDisk = new Set(listOnDiskPackages());
 
-    const phantom = built.filter((p) => !onDisk.has(p));
-    expect(phantom, `packages in build script with no directory: ${phantom.join(', ')}`).toEqual([]);
+    const phantom = referenced.filter((p) => !onDisk.has(p));
+    expect(phantom, `root tsconfig references with no directory: ${phantom.join(', ')}`).toEqual([]);
   });
 });

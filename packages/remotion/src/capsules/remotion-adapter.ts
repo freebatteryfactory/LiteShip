@@ -7,15 +7,14 @@
  * @module
  */
 
-import { Schema } from 'effect';
-import { defineCapsule } from '@czap/core';
+import { defineCapsule, S } from '@czap/core';
 
-const VideoRendererShapeSchema = Schema.Unknown;
-const VideoFrameOutputSchema = Schema.Struct({
-  frame: Schema.Number,
-  timestamp: Schema.Number,
-  progress: Schema.Number,
-  state: Schema.Unknown,
+const VideoRendererShapeSchema = S.unknown;
+const VideoFrameOutputSchema = S.struct({
+  frame: S.number,
+  timestamp: S.number,
+  progress: S.number,
+  state: S.unknown,
 });
 
 /**
@@ -26,15 +25,14 @@ export const remotionAdapterCapsule = defineCapsule({
   _kind: 'siteAdapter',
   name: 'remotion.video-frame-output',
   input: VideoRendererShapeSchema,
-  output: Schema.Array(VideoFrameOutputSchema),
+  output: S.array(VideoFrameOutputSchema),
   capabilities: { reads: [], writes: [] },
   invariants: [
     {
       name: 'frame-count-matches-totalFrames',
       check: (_i, o) => {
-        const frames = o as ReadonlyArray<{ frame: number }>;
-        if (!Array.isArray(frames)) return false;
-        return frames.every((f, idx) => f.frame === idx);
+        if (!Array.isArray(o)) return false;
+        return o.every((f, idx) => f.frame === idx);
       },
       message:
         'Frame stream out of order: expected frames[i].frame === i for every index. Frames were likely filtered, re-sorted, or concatenated after precomputeFrames — pass the precomputeFrames array through unmodified.',

@@ -6,7 +6,7 @@
 
 # Variable: boundaryEvaluateCapsule
 
-> `const` **boundaryEvaluateCapsule**: [`CapsuleDef`](../interfaces/CapsuleDef.md)\<`"pureTransform"`, \{ `states`: readonly `string`[]; `thresholds`: readonly `number`[]; `value`: `number`; \}, `EvaluateOutput`, `unknown`\>
+> `const` **boundaryEvaluateCapsule**: [`CapsuleDef`](../interfaces/CapsuleDef.md)\<`"pureTransform"`, \{ `states`: readonly `string`[]; `thresholds`: readonly `number`[]; `value`: `number`; \}, \{ `matched`: `boolean`; `state`: `string`; \}, `unknown`\>
 
 Defined in: [core/src/capsules/boundary-evaluate.ts:101](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsules/boundary-evaluate.ts#L101)
 

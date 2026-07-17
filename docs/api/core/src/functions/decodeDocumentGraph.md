@@ -17,7 +17,7 @@ A host that reconstructs a graph from outside the program must run it through
 THIS gate first, so a future-version (`_version: 2`) or malformed graph is
 rejected with ONE canonical tagged `ParseError` — never silently misparsed
 into a v1 shape. "Written data needs a reader": this is the graph envelope's
-fail-closed reader, the twin of [isWellFormedNode](../variables/isWellFormedNode.md)'s per-node gate.
+fail-closed reader, the twin of [isWellFormedNode](isWellFormedNode.md)'s per-node gate.
 
 ## Parameters
 
@@ -33,4 +33,4 @@ fail-closed reader, the twin of [isWellFormedNode](../variables/isWellFormedNode
 
 `ParseError` (`source: 'DocumentGraph'`) when the value is not a
   record, carries the wrong `_tag`, an unsupported `_version`, or a node that
-  fails the [isWellFormedNode](../variables/isWellFormedNode.md) trust gate.
+  fails the [isWellFormedNode](isWellFormedNode.md) trust gate.

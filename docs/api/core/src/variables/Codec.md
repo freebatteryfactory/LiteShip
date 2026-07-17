@@ -8,19 +8,19 @@
 
 > `const` **Codec**: `object`
 
-Defined in: [core/src/codec.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/codec.ts#L32)
+Defined in: [core/src/codec.ts:46](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/codec.ts#L46)
 
-Codec — typed encode/decode wrapper over `effect`'s `Schema.Codec`.
-Gives a single call site for schema-driven validation so consumers don't
-import `Schema.encodeEffect`/`decodeEffect` directly.
+Codec — typed sync encode/decode wrapper over a kernel [Schema](../interfaces/Schema.md). Gives a
+single call site for schema-driven validation so consumers don't reach for the
+kernel `decode` directly.
 
 ## Type Declaration
 
 ### make
 
-> **make**: \<`A`, `I`\>(`schema`) => `CodecShape`\<`A`, `I`\> = `_make`
+> **make**: \<`A`\>(`schema`) => `CodecShape`\<`A`, `A`\> = `_make`
 
-Wrap a `Schema.Codec` in the [Codec.Shape](../namespaces/Codec/type-aliases/Shape.md) facade.
+Wrap an identity kernel schema in the [Codec.Shape](../namespaces/Codec/type-aliases/Shape.md) facade.
 
 #### Type Parameters
 
@@ -28,16 +28,12 @@ Wrap a `Schema.Codec` in the [Codec.Shape](../namespaces/Codec/type-aliases/Shap
 
 `A`
 
-##### I
-
-`I`
-
 #### Parameters
 
 ##### schema
 
-`Codec`\<`A`, `I`\>
+[`Schema`](../interfaces/Schema.md)\<`A`, `A`\>
 
 #### Returns
 
-`CodecShape`\<`A`, `I`\>
+`CodecShape`\<`A`, `A`\>

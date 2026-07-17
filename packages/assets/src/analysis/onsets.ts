@@ -6,8 +6,7 @@
  * @module
  */
 
-import { Schema } from 'effect';
-import { defineCapsule } from '@czap/core';
+import { defineCapsule, S } from '@czap/core';
 import type { CapsuleDef } from '@czap/core';
 import type { AssetRegistry } from '../contract.js';
 
@@ -62,15 +61,14 @@ export function OnsetProjection(
   return defineCapsule({
     _kind: 'cachedProjection',
     name: `${audioAssetId}:onsets`,
-    input: Schema.Unknown,
-    output: Schema.Array(Schema.Number),
+    input: S.unknown,
+    output: S.array(S.number),
     capabilities: { reads: [`asset:${audioAssetId}`], writes: [] },
     invariants: [
       {
         name: 'onsets-ordered',
         check: (_i, o) => {
-          const arr = o as readonly number[];
-          for (let i = 1; i < arr.length; i++) if (arr[i]! <= arr[i - 1]!) return false;
+          for (let i = 1; i < o.length; i++) if (o[i]! <= o[i - 1]!) return false;
           return true;
         },
         message: 'onsets must be strictly increasing',

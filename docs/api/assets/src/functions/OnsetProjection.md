@@ -8,7 +8,7 @@
 
 > **OnsetProjection**(`registry`, `audioAssetId`): `CapsuleDef`\<`"cachedProjection"`, `unknown`, readonly `number`[], `unknown`\>
 
-Defined in: [assets/src/analysis/onsets.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/analysis/onsets.ts#L57)
+Defined in: [assets/src/analysis/onsets.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/analysis/onsets.ts#L56)
 
 Build an OnsetProjection cachedProjection capsule for a named audio asset,
 validated against the explicit [AssetRegistry](../variables/AssetRegistry.md) the caller assembled.

@@ -16,8 +16,7 @@
  * @module
  */
 
-import { Schema } from 'effect';
-import { defineCapsule } from '@czap/core';
+import { defineCapsule, S } from '@czap/core';
 import type { CapsuleDef } from '@czap/core';
 import { AssetBytes, type AssetRegistry } from '../contract.js';
 import { walkRiff } from '../decoders/riff.js';
@@ -66,10 +65,10 @@ export function extractWavMetadata(bytes: ArrayBuffer): WavMetadata {
   return meta;
 }
 
-const WavMetadataSchema = Schema.Struct({
-  title: Schema.optional(Schema.String),
-  artist: Schema.optional(Schema.String),
-  bpm: Schema.optional(Schema.Number),
+const WavMetadataSchema = S.struct({
+  title: S.optional(S.string),
+  artist: S.optional(S.string),
+  bpm: S.optional(S.number),
 });
 
 /**
@@ -104,9 +103,8 @@ export function WavMetadataProjection(
       {
         name: 'bpm-in-range',
         check: (_i, o) => {
-          const m = o as WavMetadata;
-          if (m.bpm === undefined) return true;
-          return Number.isFinite(m.bpm) && m.bpm > 0 && m.bpm <= 400;
+          if (o.bpm === undefined) return true;
+          return Number.isFinite(o.bpm) && o.bpm > 0 && o.bpm <= 400;
         },
         message: 'BPM (when present) must be a positive number <= 400',
       },

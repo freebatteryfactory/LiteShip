@@ -23,9 +23,9 @@
  * @module
  */
 
-import { Effect, Schema, Scope, Exit } from 'effect';
+import { Effect, Scope, Exit } from 'effect';
 import type { System, World as WorldNS } from '@czap/core';
-import { defineCapsule, World } from '@czap/core';
+import { defineCapsule, World, S } from '@czap/core';
 import { InvariantViolationError } from '@czap/error';
 import type { CompiledScene } from './compile.js';
 import { BeatBinding } from './capsules/beat-binding.js';
@@ -45,13 +45,13 @@ const CANONICAL_SYSTEM_COUNT = 7;
 // Capsule declaration
 // ---------------------------------------------------------------------------
 
-const SceneRuntimeInputSchema = Schema.Struct({
-  scene: Schema.Unknown,
+const SceneRuntimeInputSchema = S.struct({
+  scene: S.unknown,
 });
 
-const SceneRuntimeOutputSchema = Schema.Struct({
-  systemsRegistered: Schema.Number,
-  entitySpawnCount: Schema.Number,
+const SceneRuntimeOutputSchema = S.struct({
+  systemsRegistered: S.number,
+  entitySpawnCount: S.number,
 });
 
 /**

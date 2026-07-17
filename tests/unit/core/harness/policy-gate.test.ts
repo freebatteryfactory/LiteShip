@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { Schema } from 'effect';
-import { defineCapsule } from '@czap/core';
+import { defineCapsule, S } from '@czap/core';
 import { resetCapsuleCatalog } from '@czap/core/testing';
 import * as Harness from '@czap/core/harness';
 
@@ -12,10 +11,10 @@ describe('generatePolicyGate', () => {
     defineCapsule({
       _kind: 'policyGate',
       name: 'demo.canCreate',
-      input: Schema.Struct({ role: Schema.String }),
-      output: Schema.Struct({
-        effect: Schema.Union([Schema.Literal('allow'), Schema.Literal('deny')]),
-        reasons: Schema.Array(Schema.Struct({ code: Schema.String, message: Schema.String })),
+      input: S.struct({ role: S.string }),
+      output: S.struct({
+        effect: S.union(S.literal('allow'), S.literal('deny')),
+        reasons: S.array(S.struct({ code: S.string, message: S.string })),
       }),
       capabilities: { reads: [], writes: [] },
       invariants: [],
@@ -73,9 +72,12 @@ describe('generatePolicyGate', () => {
     expect(testFile).toContain('reason-chain integrity');
     expect(testFile).toContain('determinism');
     // It drives the REAL decide over a sampled subject and decodes the verdict
-    // against the declared Decision schema (the verdict-shape contract).
+    // against the declared Decision schema (the verdict-shape contract) via the
+    // effect-free kernel `decode` — never effect's `Schema.decodeUnknownSync`.
     expect(testFile).toContain('cap.decide');
-    expect(testFile).toContain('decodeVerdict');
+    expect(testFile).toContain('decode(cap.output as never');
+    expect(testFile).toMatch(/import \{ decode \} from/);
+    expect(testFile).not.toMatch(/from 'effect'/);
     expect(testFile).toContain('schemaToArbitrary(cap.input as never)');
     // It re-emits every declared invariant (none here, so the loop is present but empty).
     expect(testFile).toContain('for (const inv of cap.invariants)');
