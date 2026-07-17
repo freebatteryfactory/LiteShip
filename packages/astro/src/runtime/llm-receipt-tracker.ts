@@ -1,4 +1,3 @@
-import { Effect } from 'effect';
 import type { Receipt, UIFrame } from '@czap/core';
 import { GenFrame } from '@czap/core';
 import { createReceiptChain } from './receipt-chain.js';
@@ -72,7 +71,7 @@ export function createLLMReceiptTracker(): LLMReceiptTracker {
       // allow overlapping) compaction on the new chain.
       if (epoch === _compactionEpoch) _compacting = false;
     };
-    Effect.runPromise(chain.compactBelow(watermark)).then(settle, settle);
+    chain.compactBelow(watermark).then(settle, settle);
   }
 
   function getReceiptChain(): ReturnType<typeof createReceiptChain> {

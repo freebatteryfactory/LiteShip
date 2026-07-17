@@ -6,7 +6,7 @@
 
 # Interface: System
 
-Defined in: [core/src/ecs.ts:166](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L166)
+Defined in: [core/src/ecs.ts:165](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L165)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [core/src/ecs.ts:166](https://github.com/freebatteryfactory/LiteShip
 
 > `readonly` `optional` **\_denseSystem?**: `undefined`
 
-Defined in: [core/src/ecs.ts:169](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L169)
+Defined in: [core/src/ecs.ts:168](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L168)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [core/src/ecs.ts:169](https://github.com/freebatteryfactory/LiteShip
 
 > `readonly` **name**: `string`
 
-Defined in: [core/src/ecs.ts:167](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L167)
+Defined in: [core/src/ecs.ts:166](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L166)
 
 ***
 
@@ -30,15 +30,15 @@ Defined in: [core/src/ecs.ts:167](https://github.com/freebatteryfactory/LiteShip
 
 > `readonly` **query**: readonly `string`[]
 
-Defined in: [core/src/ecs.ts:168](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L168)
+Defined in: [core/src/ecs.ts:167](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L167)
 
 ## Methods
 
 ### execute()
 
-> **execute**(`entities`, `world?`): `Effect`\<`void`\>
+> **execute**(`entities`, `world?`): `void`
 
-Defined in: [core/src/ecs.ts:171](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L171)
+Defined in: [core/src/ecs.ts:170](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L170)
 
 Second argument is the world — use it to write computed output components back.
 
@@ -54,4 +54,4 @@ readonly [`Entity`](Entity.md)[]
 
 #### Returns
 
-`Effect`\<`void`\>
+`void`

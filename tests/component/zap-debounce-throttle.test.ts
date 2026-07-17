@@ -1,62 +1,45 @@
 /**
  * Component test: Zap.debounce and Zap.throttle.
  *
- * Uses real (small) delays for debounce since it relies on Effect.sleep,
- * and small delays for throttle as well to keep tests deterministic.
- * Collects values via a mutable array + Stream.runForEach to avoid
- * scope-closure issues with Fiber.join + Stream.runCollect.
+ * Debounce/throttle are now Effect-free closures over the synchronous
+ * `CellKernel.fanout` channel: debounce uses a platform timer cancelled by the
+ * owning Lifetime's AbortSignal, throttle measures its window through the
+ * injected {@link systemClock}. Real (small) delays keep the timing
+ * deterministic without a scheduler mock; values are collected via a plain
+ * subscribe sink.
  */
 
 import { describe, test, expect } from 'vitest';
-import { Effect, Stream } from 'effect';
 import { Zap, Millis } from '@czap/core';
-import { runScopedAsync as runScoped } from '../helpers/effect-test.js';
+
+/** Wait `ms` real milliseconds so a debounce window / throttle gap elapses. */
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
 
 // ---------------------------------------------------------------------------
 // Zap.throttle
 // ---------------------------------------------------------------------------
 
 describe('Zap.throttle', () => {
-  test('creates a throttled Zap with correct tag', async () => {
-    const tag = await runScoped(
-      Effect.gen(function* () {
-        const source = yield* Zap.make<number>();
-        const throttled = yield* Zap.throttle(source, Millis(100));
-        return throttled._tag;
-      }),
-    );
-    expect(tag).toBe('Zap');
+  test('creates a throttled Zap with correct tag', () => {
+    const { zap: source } = Zap.make<number>();
+    const { zap: throttled } = Zap.throttle(source, Millis(100));
+    expect(throttled._tag).toBe('Zap');
   });
 
-  test('first emission passes through, subsequent within window are dropped', async () => {
+  test('first emission passes through, subsequent within window are dropped', () => {
     const collected: number[] = [];
+    const { zap: source } = Zap.make<number>();
+    const { zap: throttled } = Zap.throttle(source, Millis(500));
+    throttled.stream.subscribe((v) => collected.push(v));
 
-    await runScoped(
-      Effect.gen(function* () {
-        const source = yield* Zap.make<number>();
-        const throttled = yield* Zap.throttle(source, Millis(500));
-
-        // Fork a consumer that collects values
-        yield* Effect.forkScoped(
-          Stream.runForEach(throttled.stream, (v) =>
-            Effect.sync(() => {
-              collected.push(v);
-            }),
-          ),
-        );
-
-        // Let the consumer subscribe
-        yield* Effect.sleep('20 millis');
-
-        // Emit three values rapidly — only first should pass (500ms window)
-        yield* source.emit(1);
-        yield* source.emit(2);
-        yield* source.emit(3);
-
-        // Let the forked fiber process
-        yield* Effect.sleep('20 millis');
-      }),
-    );
+    // Emit three values rapidly — only the first passes (500ms window).
+    source.emit(1);
+    source.emit(2);
+    source.emit(3);
 
     expect(collected).toEqual([1]);
   });
@@ -67,74 +50,49 @@ describe('Zap.throttle', () => {
 // ---------------------------------------------------------------------------
 
 describe('Zap.debounce', () => {
-  test('creates a debounced Zap with correct tag', async () => {
-    const tag = await runScoped(
-      Effect.gen(function* () {
-        const source = yield* Zap.make<number>();
-        const debounced = yield* Zap.debounce(source, Millis(10));
-        return debounced._tag;
-      }),
-    );
-    expect(tag).toBe('Zap');
+  test('creates a debounced Zap with correct tag', () => {
+    const { zap: source } = Zap.make<number>();
+    const { zap: debounced } = Zap.debounce(source, Millis(10));
+    expect(debounced._tag).toBe('Zap');
   });
 
   test('emits last value after delay', async () => {
     const collected: number[] = [];
+    const { zap: source } = Zap.make<number>();
+    const { zap: debounced } = Zap.debounce(source, Millis(30));
+    debounced.stream.subscribe((v) => collected.push(v));
 
-    await runScoped(
-      Effect.gen(function* () {
-        const source = yield* Zap.make<number>();
-        const debounced = yield* Zap.debounce(source, Millis(30));
+    source.emit(99);
+    expect(collected).toEqual([]); // nothing fires before the window elapses
 
-        yield* Effect.forkScoped(
-          Stream.runForEach(debounced.stream, (v) =>
-            Effect.sync(() => {
-              collected.push(v);
-            }),
-          ),
-        );
-
-        yield* Effect.sleep('20 millis');
-
-        yield* source.emit(99);
-
-        // Wait for debounce delay to elapse
-        yield* Effect.sleep('60 millis');
-      }),
-    );
-
+    await delay(60);
     expect(collected).toEqual([99]);
   });
 
-  test('cancels pending fiber on rapid re-emission', async () => {
+  test('cancels the pending timer on rapid re-emission', async () => {
     const collected: number[] = [];
+    const { zap: source } = Zap.make<number>();
+    const { zap: debounced } = Zap.debounce(source, Millis(50));
+    debounced.stream.subscribe((v) => collected.push(v));
 
-    await runScoped(
-      Effect.gen(function* () {
-        const source = yield* Zap.make<number>();
-        const debounced = yield* Zap.debounce(source, Millis(50));
+    source.emit(1);
+    await delay(15);
+    source.emit(2); // cancels the pending "1"
 
-        yield* Effect.forkScoped(
-          Stream.runForEach(debounced.stream, (v) =>
-            Effect.sync(() => {
-              collected.push(v);
-            }),
-          ),
-        );
-
-        yield* Effect.sleep('20 millis');
-
-        // Emit first value, wait a bit, then override with second
-        yield* source.emit(1);
-        yield* Effect.sleep('15 millis');
-        yield* source.emit(2); // should cancel the pending "1"
-
-        // Wait for debounce of "2" to complete
-        yield* Effect.sleep('80 millis');
-      }),
-    );
-
-    // Only the final value survives the debounce
+    await delay(80);
     expect(collected).toEqual([2]);
+  });
+
+  test('a fired timer after dispose does not publish (AbortSignal gate)', async () => {
+    const collected: number[] = [];
+    const { zap: source } = Zap.make<number>();
+    const { zap: debounced, lifetime } = Zap.debounce(source, Millis(20));
+    debounced.stream.subscribe((v) => collected.push(v));
+
+    source.emit(1);
+    await lifetime.dispose(); // aborts before the window elapses
+    await delay(40);
+
+    expect(collected).toEqual([]);
   });
 });

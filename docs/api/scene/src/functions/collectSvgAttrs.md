@@ -6,9 +6,9 @@
 
 # Function: collectSvgAttrs()
 
-> **collectSvgAttrs**(`world`): `Effect`\<[`SvgAttrsFrame`](../type-aliases/SvgAttrsFrame.md)\>
+> **collectSvgAttrs**(`world`): [`SvgAttrsFrame`](../type-aliases/SvgAttrsFrame.md)
 
-Defined in: [scene/src/systems/svg-egress.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/svg-egress.ts#L49)
+Defined in: [scene/src/systems/svg-egress.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/svg-egress.ts#L48)
 
 Pure egress core — query the world for persisted `_svgAttrs` components
 and collect them into an entity-keyed map. Reads only the persisted ECS
@@ -28,4 +28,4 @@ contains entities the system has actually composed attrs for.
 
 ## Returns
 
-`Effect`\<[`SvgAttrsFrame`](../type-aliases/SvgAttrsFrame.md)\>
+[`SvgAttrsFrame`](../type-aliases/SvgAttrsFrame.md)

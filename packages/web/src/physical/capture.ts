@@ -5,7 +5,6 @@
  * before morphing to restore afterward.
  */
 
-import { Effect } from 'effect';
 import type { PhysicalState, ScrollPosition, SelectionState, IMEState, FocusState } from '../types.js';
 import { ATTR } from '../morph/semantic-id.js';
 import * as SemanticIdModule from '../morph/semantic-id.js';
@@ -55,22 +54,20 @@ if (typeof document !== 'undefined') {
 /**
  * Capture full physical state of an element and its descendants.
  */
-export const capture = (root: Element): Effect.Effect<PhysicalState> => {
-  return Effect.sync(() => {
-    const activeElementPath = captureActiveElement();
-    const focusState = captureFocusState();
-    const scrollPositions = captureScrollPositionsSync(root);
-    const selection = captureSelection();
-    const ime = captureIME();
+export const capture = (root: Element): PhysicalState => {
+  const activeElementPath = captureActiveElement();
+  const focusState = captureFocusState();
+  const scrollPositions = captureScrollPositionsSync(root);
+  const selection = captureSelection();
+  const ime = captureIME();
 
-    return {
-      activeElementPath,
-      focusState,
-      scrollPositions,
-      selection,
-      ime,
-    };
-  });
+  return {
+    activeElementPath,
+    focusState,
+    scrollPositions,
+    selection,
+    ime,
+  };
 };
 
 /**

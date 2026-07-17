@@ -13,8 +13,6 @@
 import { describe, test, expect } from 'vitest';
 import { Boundary, Compositor, Cap, sealNode } from '@czap/core';
 import type { PolicyNode, RuntimeSite, CapTier, CapSet, CellMeta, ContentAddress } from '@czap/core';
-import { Effect } from 'effect';
-import { runScopedAsync as runScoped } from '../../helpers/effect-test.js';
 
 const widthBoundary = Boundary.make({
   input: 'viewport.width',
@@ -29,7 +27,7 @@ function makeQuantizer(boundary: Boundary.Shape, initialState?: string) {
   let currentState = initialState ?? (boundary.states[0] as string);
   return {
     boundary,
-    state: Effect.succeed(currentState),
+    stateSync: () => currentState,
     changes: null as never,
     evaluate(value: number) {
       currentState = Boundary.evaluate(boundary, value) as string;
@@ -72,16 +70,14 @@ function policy(opts: {
 }
 
 describe('Compositor escalation gate (E)', () => {
-  test('permissive policy (gpu, ample budget) admits all targets', async () => {
+  test('permissive policy (gpu, ample budget) admits all targets', () => {
     const p = policy({ requires: 'animated', grants: grantUpTo('animated'), sites: ['node'] });
-    const compositor = await runScoped(
-      Compositor.create({
-        runtimeSite: 'node',
-        getPolicy: () => p,
-      }),
-    );
-    await Effect.runPromise(compositor.add('layout', makeQuantizer(widthBoundary, 'mobile')));
-    const state = await Effect.runPromise(compositor.compute());
+    const { compositor } = Compositor.create({
+      runtimeSite: 'node',
+      getPolicy: () => p,
+    });
+    compositor.add('layout', makeQuantizer(widthBoundary, 'mobile'));
+    const state = compositor.compute();
 
     // animated rung admits css/glsl/aria → every channel emits.
     expect(state.outputs.css['--czap-layout']).toBe('mobile');
@@ -89,7 +85,7 @@ describe('Compositor escalation gate (E)', () => {
     expect(state.outputs.aria['data-czap-layout']).toBe('mobile');
   });
 
-  test('tight p95 budget downgrades the rung and drops glsl, keeping css/aria', async () => {
+  test('tight p95 budget downgrades the rung and drops glsl, keeping css/aria', () => {
     // requires gpu/animated (glsl-admitting) but a 5ms p95 only affords the
     // reactive rung, whose admissible targets are css/aria (no glsl).
     const p = policy({
@@ -98,14 +94,12 @@ describe('Compositor escalation gate (E)', () => {
       sites: ['node'],
       budgets: { p95Ms: 5 },
     });
-    const compositor = await runScoped(
-      Compositor.create({
-        runtimeSite: 'node',
-        getPolicy: () => p,
-      }),
-    );
-    await Effect.runPromise(compositor.add('layout', makeQuantizer(widthBoundary, 'mobile')));
-    const state = await Effect.runPromise(compositor.compute());
+    const { compositor } = Compositor.create({
+      runtimeSite: 'node',
+      getPolicy: () => p,
+    });
+    compositor.add('layout', makeQuantizer(widthBoundary, 'mobile'));
+    const state = compositor.compute();
 
     // css + aria survive; glsl is dropped by the downgraded rung.
     expect(state.outputs.css['--czap-layout']).toBe('mobile');
@@ -113,34 +107,30 @@ describe('Compositor escalation gate (E)', () => {
     expect(state.outputs.glsl['u_layout']).toBeUndefined();
   });
 
-  test('no matching policy is pass-through (all targets emit)', async () => {
-    const compositor = await runScoped(
-      Compositor.create({
-        runtimeSite: 'node',
-        // getPolicy present but returns no policy for this projection.
-        getPolicy: () => undefined,
-      }),
-    );
-    await Effect.runPromise(compositor.add('layout', makeQuantizer(widthBoundary, 'tablet')));
-    const state = await Effect.runPromise(compositor.compute());
+  test('no matching policy is pass-through (all targets emit)', () => {
+    const { compositor } = Compositor.create({
+      runtimeSite: 'node',
+      // getPolicy present but returns no policy for this projection.
+      getPolicy: () => undefined,
+    });
+    compositor.add('layout', makeQuantizer(widthBoundary, 'tablet'));
+    const state = compositor.compute();
 
     expect(state.outputs.css['--czap-layout']).toBe('tablet');
     expect(state.outputs.glsl['u_layout']).toBe(1);
     expect(state.outputs.aria['data-czap-layout']).toBe('tablet');
   });
 
-  test('unsatisfiable policy ({error} branch: site not admitted) denies every target', async () => {
+  test('unsatisfiable policy ({error} branch: site not admitted) denies every target', () => {
     // Policy admits only 'browser'; the compositor evaluates against 'node' →
     // chooseRung returns { error } → deny-all for that projection.
     const p = policy({ requires: 'animated', grants: grantUpTo('animated'), sites: ['browser'] });
-    const compositor = await runScoped(
-      Compositor.create({
-        runtimeSite: 'node',
-        getPolicy: () => p,
-      }),
-    );
-    await Effect.runPromise(compositor.add('layout', makeQuantizer(widthBoundary, 'desktop')));
-    const state = await Effect.runPromise(compositor.compute());
+    const { compositor } = Compositor.create({
+      runtimeSite: 'node',
+      getPolicy: () => p,
+    });
+    compositor.add('layout', makeQuantizer(widthBoundary, 'desktop'));
+    const state = compositor.compute();
 
     // Discrete bookkeeping still tracks the projection, but NO target emits.
     expect(state.discrete['layout']).toBe('desktop');
@@ -149,22 +139,20 @@ describe('Compositor escalation gate (E)', () => {
     expect(state.outputs.aria['data-czap-layout']).toBeUndefined();
   });
 
-  test('per-projection gate: governed projection drops glsl, ungoverned one keeps it', async () => {
+  test('per-projection gate: governed projection drops glsl, ungoverned one keeps it', () => {
     const constrained = policy({
       requires: 'animated',
       grants: grantUpTo('animated'),
       sites: ['node'],
       budgets: { p95Ms: 5 },
     });
-    const compositor = await runScoped(
-      Compositor.create({
-        runtimeSite: 'node',
-        getPolicy: (id: ContentAddress) => (id === ('gated' as ContentAddress) ? constrained : undefined),
-      }),
-    );
-    await Effect.runPromise(compositor.add('gated', makeQuantizer(widthBoundary, 'mobile')));
-    await Effect.runPromise(compositor.add('free', makeQuantizer(widthBoundary, 'tablet')));
-    const state = await Effect.runPromise(compositor.compute());
+    const { compositor } = Compositor.create({
+      runtimeSite: 'node',
+      getPolicy: (id: ContentAddress) => (id === ('gated' as ContentAddress) ? constrained : undefined),
+    });
+    compositor.add('gated', makeQuantizer(widthBoundary, 'mobile'));
+    compositor.add('free', makeQuantizer(widthBoundary, 'tablet'));
+    const state = compositor.compute();
 
     // Gated projection: glsl dropped, css/aria kept.
     expect(state.outputs.css['--czap-gated']).toBe('mobile');
@@ -177,23 +165,21 @@ describe('Compositor escalation gate (E)', () => {
     expect(state.outputs.aria['data-czap-free']).toBe('tablet');
   });
 
-  test('LESSON (getPolicy name-keyed): getPolicy receives the registry NAME passed to add(), not a content address', async () => {
+  test('LESSON (getPolicy name-keyed): getPolicy receives the registry NAME passed to add(), not a content address', () => {
     // WHY: the compositor knows projections by their registry name (the string
     // handed to `add`), NOT by graph projection ids / content addresses. A host
     // that maps graph ids → names does so at the `getPolicy` boundary. If the gate
     // ever passed a content address instead, every name-keyed `getPolicy` lookup
     // would silently miss and fall through to pass-through — disabling escalation.
     const seen: string[] = [];
-    const compositor = await runScoped(
-      Compositor.create({
-        runtimeSite: 'node',
-        getPolicy: (name) => {
-          seen.push(name);
-          return undefined;
-        },
-      }),
-    );
-    await Effect.runPromise(compositor.add('hero-layout', makeQuantizer(widthBoundary, 'tablet')));
+    const { compositor } = Compositor.create({
+      runtimeSite: 'node',
+      getPolicy: (name) => {
+        seen.push(name);
+        return undefined;
+      },
+    });
+    compositor.add('hero-layout', makeQuantizer(widthBoundary, 'tablet'));
 
     // The argument is exactly the name passed to `add` — a plain registry string,
     // never a `fnv1a:...`/content-address shape.

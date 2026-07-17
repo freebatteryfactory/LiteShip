@@ -20,7 +20,6 @@
  * @module
  */
 
-import { Effect } from 'effect';
 import type { System, World } from '@czap/core';
 
 /**
@@ -62,29 +61,28 @@ export function SVGSystem(frameIndex: number): System {
   return {
     name: 'SVGSystem',
     query: ['VideoSource', 'FrameRange'],
-    execute: (entities, world?: World.Shape) =>
-      Effect.gen(function* () {
-        for (const e of entities) {
-          // READ the outputs prior systems already populated this tick —
-          // do NOT recompute them. VideoSystem persisted `_opacity`;
-          // TransitionSystem persisted `_blend` (absent on entities that
-          // carry no transition).
-          const opacity = e.components.get('_opacity') as number | undefined;
-          const blend = e.components.get('_blend') as number | undefined;
+    execute: (entities, world?: World.Shape) => {
+      for (const e of entities) {
+        // READ the outputs prior systems already populated this tick —
+        // do NOT recompute them. VideoSystem persisted `_opacity`;
+        // TransitionSystem persisted `_blend` (absent on entities that
+        // carry no transition).
+        const opacity = e.components.get('_opacity') as number | undefined;
+        const blend = e.components.get('_blend') as number | undefined;
 
-          const attrs: SvgAttrs = {
-            _tag: 'SvgAttrs',
-            ...(opacity !== undefined ? { opacity } : {}),
-            ...(blend !== undefined ? { mixBlendMode: mixBlendModeFor(blend) } : {}),
-          };
+        const attrs: SvgAttrs = {
+          _tag: 'SvgAttrs',
+          ...(opacity !== undefined ? { opacity } : {}),
+          ...(blend !== undefined ? { mixBlendMode: mixBlendModeFor(blend) } : {}),
+        };
 
-          // Dual-write: direct property for in-tick readers, plus the
-          // persisted output component for downstream queries.
-          (e as unknown as { _svgAttrs: SvgAttrs })._svgAttrs = attrs;
-          if (world !== undefined) {
-            yield* world.setComponent(e.id, '_svgAttrs', attrs);
-          }
+        // Dual-write: direct property for in-tick readers, plus the
+        // persisted output component for downstream queries.
+        (e as unknown as { _svgAttrs: SvgAttrs })._svgAttrs = attrs;
+        if (world !== undefined) {
+          world.setComponent(e.id, '_svgAttrs', attrs);
         }
-      }),
+      }
+    },
   };
 }

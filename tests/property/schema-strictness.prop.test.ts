@@ -37,7 +37,7 @@ import fastGlob from 'fast-glob';
 import { hasTag } from '@czap/error';
 import { getCapsuleCatalog } from '@czap/core';
 import { scaledTimeout } from '../../vitest.shared.js';
-import { detectCapsuleCalls } from '../../scripts/lib/capsule-detector.js';
+import { detectCapsuleCalls, FACTORY_HINTS } from '../../scripts/lib/capsule-detector.js';
 import { S, withArbitrary, decode, isSchema } from '../../packages/core/src/schema/index.js';
 import { schemaToArbitrary } from '../../packages/core/src/harness/arbitrary-from-schema.js';
 import type { Schema } from '../../packages/core/src/schema/ast.js';
@@ -89,15 +89,8 @@ function pathStartsWith(path: DecodePath, prefix: DecodePath): boolean {
 
 const REPO_ROOT = resolve(import.meta.dirname, '../..');
 // The same globs + hint pre-filter `scripts/capsule-compile.ts` feeds the detector.
-const FACTORY_HINTS = [
-  'defineCapsule',
-  'defineAsset',
-  'BeatMarkerProjection',
-  'OnsetProjection',
-  'WaveformProjection',
-  'WavMetadataProjection',
-] as const;
-
+// FACTORY_HINTS is imported from the detector lib — its single owner (scar S1.5.2) —
+// so this sweep's candidate set can never drift from the compile driver's.
 const candidateFiles = (
   await fastGlob(['packages/**/src/**/*.ts', 'examples/**/*.ts'], {
     ignore: ['**/*.d.ts', '**/node_modules/**', '**/dist/**'],

@@ -1,54 +1,119 @@
 /**
  * Component test: Zap push-based event channels.
  *
- * Tests Zap.make, Zap.fromDOMEvent, merge, map, filter
- * using mock DOM elements and Effect scoped resources.
+ * Zap is now a synchronous, Effect-free fan-out channel over
+ * `CellKernel.fanout` (no-replay unbounded-PubSub semantics): `make` returns a
+ * `{ zap, lifetime }` handle, `emit` is a synchronous fire-and-forget publish,
+ * and `zap.stream.subscribe(sink)` registers a listener and returns a disposer.
+ * A late subscriber never sees a value published before it attached — the
+ * no-replay law this suite pins EXPLICITLY.
  */
 
 import { describe, test, expect } from 'vitest';
-import { Duration, Effect, Stream } from 'effect';
 import { Zap } from '@czap/core';
 import type { Millis } from '@czap/core';
-import { mockHTMLElement } from '../helpers/mock-dom.js';
-import { runScopedAsync as runScoped } from '../helpers/effect-test.js';
+import { mockHTMLElement, type MockHTMLElementShape } from '../helpers/mock-dom.js';
+
+/** Settle past a macrotask so any pending debounce/throttle timer has fired. */
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+/**
+ * Bridge the DOM mock to the `HTMLElement` surface `Zap.fromDOMEvent` consumes.
+ * `MockHTMLElementShape` is a deliberate subset (it also exposes `_listeners` /
+ * `_emit` for assertions). `Zap.fromDOMEvent` touches ONLY `addEventListener` /
+ * `removeEventListener`, and the mock supplies exactly those — so we narrow it to
+ * that two-method `Pick` surface with a CHECKED structural assignment (no `unknown`
+ * hop), then widen once.
+ */
+function asElement(el: MockHTMLElementShape): HTMLElement {
+  const surface: Pick<HTMLElement, 'addEventListener' | 'removeEventListener'> = el;
+  // Single sanctioned widen: the narrow above already proved the mock covers the surface fromDOMEvent uses.
+  return surface as HTMLElement;
+}
 
 // ---------------------------------------------------------------------------
-// Zap.make -- basic PubSub channel
+// Zap.make -- basic fan-out channel
 // ---------------------------------------------------------------------------
 
 describe('Zap.make', () => {
-  test('creates a Zap with correct tag', async () => {
-    const result = await Effect.runPromise(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const zap = yield* Zap.make<number>();
-          return zap._tag;
-        }),
-      ),
-    );
-    expect(result).toBe('Zap');
+  test('creates a Zap with correct tag', () => {
+    const { zap } = Zap.make<number>();
+    expect(zap._tag).toBe('Zap');
   });
 
-  test('emit does not throw', async () => {
-    await Effect.runPromise(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const zap = yield* Zap.make<number>();
-          yield* zap.emit(42);
-        }),
-      ),
-    );
+  test('emit does not throw', () => {
+    const { zap } = Zap.make<number>();
+    expect(() => zap.emit(42)).not.toThrow();
   });
 
-  test('stream has correct type', async () => {
-    await Effect.runPromise(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const zap = yield* Zap.make<string>();
-          expect(zap.stream).toBeDefined();
-        }),
-      ),
-    );
+  test('stream exposes a subscribe surface', () => {
+    const { zap } = Zap.make<string>();
+    expect(typeof zap.stream.subscribe).toBe('function');
+  });
+
+  test('delivers values emitted while subscribed', () => {
+    const { zap } = Zap.make<number>();
+    const received: number[] = [];
+    zap.stream.subscribe((value) => received.push(value));
+
+    zap.emit(1);
+    zap.emit(2);
+
+    expect(received).toEqual([1, 2]);
+  });
+
+  test('NO REPLAY: a late subscriber misses values published before it attached', () => {
+    const { zap } = Zap.make<number>();
+    zap.emit(1); // published with no subscriber — dropped, never buffered
+
+    const received: number[] = [];
+    zap.stream.subscribe((value) => received.push(value));
+    zap.emit(2);
+
+    // Only the post-subscribe value arrives; the pre-subscribe `1` is gone.
+    expect(received).toEqual([2]);
+  });
+
+  test('fans out to every current subscriber, in subscription order', () => {
+    const { zap } = Zap.make<number>();
+    const a: number[] = [];
+    const b: number[] = [];
+    zap.stream.subscribe((v) => a.push(v));
+    zap.stream.subscribe((v) => b.push(v));
+
+    zap.emit(7);
+
+    expect(a).toEqual([7]);
+    expect(b).toEqual([7]);
+  });
+
+  test('disposing the returned disposer stops delivery to that subscriber', () => {
+    const { zap } = Zap.make<number>();
+    const received: number[] = [];
+    const dispose = zap.stream.subscribe((v) => received.push(v));
+
+    zap.emit(1);
+    dispose();
+    zap.emit(2);
+
+    expect(received).toEqual([1]);
+  });
+
+  test('lifetime dispose closes the channel: publish is inert afterwards', async () => {
+    const { zap, lifetime } = Zap.make<number>();
+    const received: number[] = [];
+    zap.stream.subscribe((v) => received.push(v));
+
+    zap.emit(1);
+    await lifetime.dispose();
+    zap.emit(2); // channel closed — dropped
+
+    expect(received).toEqual([1]);
+    expect(zap.stream.closed).toBe(true);
   });
 });
 
@@ -57,71 +122,36 @@ describe('Zap.make', () => {
 // ---------------------------------------------------------------------------
 
 describe('Zap.fromDOMEvent', () => {
-  test('registers event listener on element', async () => {
+  test('registers event listener on element', () => {
     const el = mockHTMLElement();
-
-    await runScoped(
-      Effect.gen(function* () {
-        yield* Zap.fromDOMEvent(el as unknown as HTMLElement, 'click');
-        // Listener should be registered
-        expect(el._listeners.get('click')?.size).toBe(1);
-      }),
-    );
+    Zap.fromDOMEvent(asElement(el), 'click');
+    expect(el._listeners.get('click')?.size).toBe(1);
   });
 
-  test('scope cleanup removes event listener', async () => {
+  test('lifetime dispose removes the event listener', async () => {
     const el = mockHTMLElement();
+    const { lifetime } = Zap.fromDOMEvent(asElement(el), 'click');
+    expect(el._listeners.get('click')?.size).toBe(1);
 
-    // Run the scoped effect — when it completes, the scope closes
-    // and the acquireRelease should clean up the listener
-    await runScoped(
-      Effect.gen(function* () {
-        yield* Zap.fromDOMEvent(el as unknown as HTMLElement, 'click');
-        // Listener should be registered inside scope
-        expect(el._listeners.get('click')?.size).toBe(1);
-      }),
-    );
-
-    // After scope closes, listener should be removed
+    await lifetime.dispose();
     expect(el._listeners.get('click')?.size ?? 0).toBe(0);
   });
 
-  test('returns a Zap with correct tag', async () => {
+  test('returns a Zap with correct tag', () => {
     const el = mockHTMLElement();
-
-    const result = await runScoped(
-      Effect.gen(function* () {
-        const zap = yield* Zap.fromDOMEvent(el as unknown as HTMLElement, 'click');
-        return zap._tag;
-      }),
-    );
-
-    expect(result).toBe('Zap');
+    const { zap } = Zap.fromDOMEvent(asElement(el), 'click');
+    expect(zap._tag).toBe('Zap');
   });
 
-  test('emits DOM events through the stream', async () => {
+  test('emits DOM events through the stream', () => {
     const el = mockHTMLElement();
+    const { zap } = Zap.fromDOMEvent(asElement(el), 'click');
+    const received: string[] = [];
+    zap.stream.subscribe((event) => received.push(event.type));
 
-    await runScoped(
-      Effect.gen(function* () {
-        const zap = yield* Zap.fromDOMEvent(el as unknown as HTMLElement, 'click');
-        const received: string[] = [];
+    el._emit('click');
 
-        yield* Effect.forkScoped(
-          Stream.runForEach(zap.stream, (event) =>
-            Effect.sync(() => {
-              received.push(event.type);
-            }),
-          ),
-        );
-
-        yield* Effect.sleep(Duration.millis(0));
-        el._emit('click');
-        yield* Effect.sleep(Duration.millis(0));
-
-        expect(received).toEqual(['click']);
-      }),
-    );
+    expect(received).toEqual(['click']);
   });
 });
 
@@ -130,38 +160,21 @@ describe('Zap.fromDOMEvent', () => {
 // ---------------------------------------------------------------------------
 
 describe('Zap.map', () => {
-  test('creates a mapped Zap', async () => {
-    await runScoped(
-      Effect.gen(function* () {
-        const zap = yield* Zap.make<number>();
-        const doubled = yield* Zap.map(zap, (x) => x * 2);
-        expect(doubled._tag).toBe('Zap');
-      }),
-    );
+  test('creates a mapped Zap', () => {
+    const { zap } = Zap.make<number>();
+    const { zap: doubled } = Zap.map(zap, (x) => x * 2);
+    expect(doubled._tag).toBe('Zap');
   });
 
-  test('transforms emitted values through the mapped stream', async () => {
-    await runScoped(
-      Effect.gen(function* () {
-        const zap = yield* Zap.make<number>();
-        const doubled = yield* Zap.map(zap, (x) => x * 2);
-        const received: number[] = [];
+  test('transforms emitted values through the mapped stream', () => {
+    const { zap } = Zap.make<number>();
+    const { zap: doubled } = Zap.map(zap, (x) => x * 2);
+    const received: number[] = [];
+    doubled.stream.subscribe((value) => received.push(value));
 
-        yield* Effect.forkScoped(
-          Stream.runForEach(doubled.stream, (value) =>
-            Effect.sync(() => {
-              received.push(value);
-            }),
-          ),
-        );
+    zap.emit(2);
 
-        yield* Effect.sleep(Duration.millis(0));
-        yield* zap.emit(2);
-        yield* Effect.sleep(Duration.millis(0));
-
-        expect(received).toEqual([4]);
-      }),
-    );
+    expect(received).toEqual([4]);
   });
 });
 
@@ -170,40 +183,23 @@ describe('Zap.map', () => {
 // ---------------------------------------------------------------------------
 
 describe('Zap.filter', () => {
-  test('creates a filtered Zap', async () => {
-    await runScoped(
-      Effect.gen(function* () {
-        const zap = yield* Zap.make<number>();
-        const evens = yield* Zap.filter(zap, (x) => x % 2 === 0);
-        expect(evens._tag).toBe('Zap');
-      }),
-    );
+  test('creates a filtered Zap', () => {
+    const { zap } = Zap.make<number>();
+    const { zap: evens } = Zap.filter(zap, (x) => x % 2 === 0);
+    expect(evens._tag).toBe('Zap');
   });
 
-  test('drops values that do not satisfy the predicate', async () => {
-    await runScoped(
-      Effect.gen(function* () {
-        const zap = yield* Zap.make<number>();
-        const evens = yield* Zap.filter(zap, (x) => x % 2 === 0);
-        const received: number[] = [];
+  test('drops values that do not satisfy the predicate', () => {
+    const { zap } = Zap.make<number>();
+    const { zap: evens } = Zap.filter(zap, (x) => x % 2 === 0);
+    const received: number[] = [];
+    evens.stream.subscribe((value) => received.push(value));
 
-        yield* Effect.forkScoped(
-          Stream.runForEach(evens.stream, (value) =>
-            Effect.sync(() => {
-              received.push(value);
-            }),
-          ),
-        );
+    zap.emit(1);
+    zap.emit(2);
+    zap.emit(3);
 
-        yield* Effect.sleep(Duration.millis(0));
-        yield* zap.emit(1);
-        yield* zap.emit(2);
-        yield* zap.emit(3);
-        yield* Effect.sleep(Duration.millis(0));
-
-        expect(received).toEqual([2]);
-      }),
-    );
+    expect(received).toEqual([2]);
   });
 });
 
@@ -212,113 +208,56 @@ describe('Zap.filter', () => {
 // ---------------------------------------------------------------------------
 
 describe('Zap.merge', () => {
-  test('creates a merged Zap from multiple channels', async () => {
-    await runScoped(
-      Effect.gen(function* () {
-        const zap1 = yield* Zap.make<string>();
-        const zap2 = yield* Zap.make<string>();
-        const merged = yield* Zap.merge([zap1, zap2]);
-        expect(merged._tag).toBe('Zap');
-      }),
-    );
+  test('creates a merged Zap from multiple channels', () => {
+    const { zap: zap1 } = Zap.make<string>();
+    const { zap: zap2 } = Zap.make<string>();
+    const { zap: merged } = Zap.merge([zap1, zap2]);
+    expect(merged._tag).toBe('Zap');
   });
 
-  test('forwards events from every merged source', async () => {
-    await runScoped(
-      Effect.gen(function* () {
-        const zap1 = yield* Zap.make<string>();
-        const zap2 = yield* Zap.make<string>();
-        const merged = yield* Zap.merge([zap1, zap2]);
-        const received: string[] = [];
+  test('forwards events from every merged source', () => {
+    const { zap: zap1 } = Zap.make<string>();
+    const { zap: zap2 } = Zap.make<string>();
+    const { zap: merged } = Zap.merge([zap1, zap2]);
+    const received: string[] = [];
+    merged.stream.subscribe((value) => received.push(value));
 
-        yield* Effect.forkScoped(
-          Stream.runForEach(merged.stream, (value) =>
-            Effect.sync(() => {
-              received.push(value);
-            }),
-          ),
-        );
+    zap1.emit('left');
+    zap2.emit('right');
 
-        yield* Effect.sleep(Duration.millis(0));
-        yield* zap1.emit('left');
-        yield* zap2.emit('right');
-        yield* Effect.sleep(Duration.millis(0));
-
-        expect(received).toEqual(['left', 'right']);
-      }),
-    );
+    expect(received).toEqual(['left', 'right']);
   });
 });
 
 describe('Zap.debounce', () => {
   test('emits only the latest value after the debounce window', async () => {
-    await runScoped(
-      Effect.gen(function* () {
-        const zap = yield* Zap.make<number>();
-        const debounced = yield* Zap.debounce(zap, 30 as Millis);
-        const received: number[] = [];
-        let resolveEmission: ((value: number) => void) | null = null;
-        const emission = new Promise<number>((resolve) => {
-          resolveEmission = resolve;
-        });
+    const { zap } = Zap.make<number>();
+    const { zap: debounced } = Zap.debounce(zap, 30 as Millis);
+    const received: number[] = [];
+    debounced.stream.subscribe((value) => received.push(value));
 
-        yield* Effect.forkScoped(
-          Stream.runForEach(debounced.stream, (value) =>
-            Effect.sync(() => {
-              received.push(value);
-              resolveEmission?.(value);
-              resolveEmission = null;
-            }),
-          ),
-        );
+    zap.emit(1);
+    zap.emit(2);
+    // Nothing fires synchronously — the trailing value lands after the window.
+    expect(received).toEqual([]);
 
-        // Give the subscriber time to attach so this API-surface test does not
-        // depend on tight scheduler timing during the full gauntlet lane.
-        yield* Effect.sleep(Duration.millis(20));
-        yield* zap.emit(1);
-        yield* zap.emit(2);
-        const latest = yield* Effect.promise(() =>
-          Promise.race([
-            emission,
-            new Promise<number>((_, reject) => {
-              setTimeout(() => reject(new Error('debounced emission timed out')), 250);
-            }),
-          ]),
-        );
-        expect(latest).toBe(2);
-        yield* Effect.sleep(Duration.millis(20));
-
-        expect(received).toEqual([2]);
-      }),
-    );
+    await delay(60);
+    expect(received).toEqual([2]);
   });
 });
 
 describe('Zap.throttle', () => {
   test('emits at most one value per throttle window', async () => {
-    await runScoped(
-      Effect.gen(function* () {
-        const zap = yield* Zap.make<number>();
-        const throttled = yield* Zap.throttle(zap, 10 as Millis);
-        const received: number[] = [];
+    const { zap } = Zap.make<number>();
+    const { zap: throttled } = Zap.throttle(zap, 10 as Millis);
+    const received: number[] = [];
+    throttled.stream.subscribe((value) => received.push(value));
 
-        yield* Effect.forkScoped(
-          Stream.runForEach(throttled.stream, (value) =>
-            Effect.sync(() => {
-              received.push(value);
-            }),
-          ),
-        );
+    zap.emit(1);
+    zap.emit(2);
+    await delay(15);
+    zap.emit(3);
 
-        yield* Effect.sleep(Duration.millis(0));
-        yield* zap.emit(1);
-        yield* zap.emit(2);
-        yield* Effect.sleep(Duration.millis(15));
-        yield* zap.emit(3);
-        yield* Effect.sleep(Duration.millis(1));
-
-        expect(received).toEqual([1, 3]);
-      }),
-    );
+    expect(received).toEqual([1, 3]);
   });
 });

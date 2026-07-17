@@ -8,6 +8,6 @@
 
 > **Dense** = [`DenseStore`](../../../interfaces/DenseStore.md)
 
-Defined in: [core/src/ecs.ts:379](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L379)
+Defined in: [core/src/ecs.ts:352](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L352)
 
 Alias for the dense `Float64Array`-backed store.

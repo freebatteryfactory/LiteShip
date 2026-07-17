@@ -8,7 +8,7 @@
 
 > **applyTransition**(`cellStore`, `transition`): [`StateCell`](../interfaces/StateCell.md)
 
-Defined in: [core/src/state-transition.ts:222](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-transition.ts#L222)
+Defined in: [core/src/state-transition.ts:217](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-transition.ts#L217)
 
 Apply a validated [DiscreteStateTransition](../interfaces/DiscreteStateTransition.md) to a cell store. The typed
 parameter is the uncompilable seam (Law 16): a `StateCell & { kind: 'continuous' }`

@@ -6,7 +6,6 @@
  */
 
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
-import { Effect } from 'effect';
 import {
   AVBridge,
   Boundary,
@@ -25,6 +24,19 @@ import {
 } from '@czap/core';
 import { hasTag } from '@czap/error';
 import type { EntityId } from '@czap/core';
+
+/**
+ * Await a promise expected to REJECT and hand back the rejection reason typed as
+ * `E` — the Promise-transport analogue of the old `Effect.flip`. Throws if the
+ * promise unexpectedly resolves, so a missing rejection fails loudly.
+ */
+const rejection = <E = unknown>(promise: Promise<unknown>): Promise<E> =>
+  promise.then(
+    (): never => {
+      throw new Error('expected the promise to reject, but it resolved');
+    },
+    (reason: unknown): E => reason as E,
+  );
 
 // ---------------------------------------------------------------------------
 // Composable.merge — ValidationError with the next step (items 20/21)
@@ -60,18 +72,15 @@ describe('Composable.merge error contract', () => {
 // ---------------------------------------------------------------------------
 
 describe('ComposableWorld dense store error contract', () => {
-  test('store() before create() names the module and the call to make first', async () => {
-    const program = Effect.scoped(
-      Effect.gen(function* () {
-        const world = yield* World.make();
-        const dense = ComposableWorld.dense(world);
-        const entity = Composable.make({ value: 1 });
-        yield* dense.store(entity, 42);
-      }),
-    );
+  test('store() before create() names the module and the call to make first', () => {
+    // World.make() is synchronous now ({ world, lifetime }); dense.store() throws
+    // a ValidationError synchronously when no dense store has been created yet.
+    const { world } = World.make();
+    const dense = ComposableWorld.dense(world);
+    const entity = Composable.make({ value: 1 });
 
-    await expect(Effect.runPromise(program)).rejects.toThrow(/ComposableWorld\.store/);
-    await expect(Effect.runPromise(program)).rejects.toThrow(/world\.create\(name, capacity\)/);
+    expect(() => dense.store(entity, 42)).toThrow(/ComposableWorld\.store/);
+    expect(() => dense.store(entity, 42)).toThrow(/world\.create\(name, capacity\)/);
   });
 });
 
@@ -85,11 +94,9 @@ describe('Receipt.validateChain error contract', () => {
 
   test('non-genesis first envelope reports the got-value and the remedy', async () => {
     const hlc = HLC.increment(HLC.create('node-a'), 1000);
-    const envelope = await Effect.runPromise(
-      Receipt.createEnvelope('test', subject, payload(), hlc, 'not-genesis'),
-    );
+    const envelope = await Receipt.createEnvelope('test', subject, payload(), hlc, 'not-genesis');
 
-    const err = await Effect.runPromise(Receipt.validateChain([envelope]).pipe(Effect.flip));
+    const err = await rejection<Error>(Receipt.validateChain([envelope]));
     expect(err.message).toMatch(/previous="not-genesis"/);
     expect(err.message).toMatch(/must start at previous="genesis"/);
     expect(err.message).toMatch(/validate from index 0|Receipt\.GENESIS/);
@@ -98,13 +105,11 @@ describe('Receipt.validateChain error contract', () => {
   test('chain break reports both hashes and the recovery step', async () => {
     let hlc = HLC.create('node-a');
     hlc = HLC.increment(hlc, 1000);
-    const first = await Effect.runPromise(Receipt.createEnvelope('test', subject, payload(), hlc, Receipt.GENESIS));
+    const first = await Receipt.createEnvelope('test', subject, payload(), hlc, Receipt.GENESIS);
     hlc = HLC.increment(hlc, 2000);
-    const detached = await Effect.runPromise(
-      Receipt.createEnvelope('test', subject, payload(), hlc, 'wrong-previous-hash'),
-    );
+    const detached = await Receipt.createEnvelope('test', subject, payload(), hlc, 'wrong-previous-hash');
 
-    const err = await Effect.runPromise(Receipt.validateChain([first, detached]).pipe(Effect.flip));
+    const err = await rejection<Error>(Receipt.validateChain([first, detached]));
     expect(err.message).toMatch(/Envelope 1: chain break/);
     expect(err.message).toMatch(/previous="wrong-previous-hash"/);
     expect(err.message).toContain(`envelope 0's hash "${first.hash}"`);

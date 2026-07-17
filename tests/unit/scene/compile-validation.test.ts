@@ -5,7 +5,6 @@
  * declared duration) warns through Diagnostics instead of failing.
  */
 import { describe, it, expect, afterEach } from 'vitest';
-import { Effect } from 'effect';
 import { Track, compileScene, SceneRuntime, SyncSystem, resolveBeatProjectionToSceneBeats } from '@czap/scene';
 import type { SceneContract } from '@czap/scene';
 import { Diagnostics } from '@czap/core';
@@ -144,12 +143,12 @@ describe('scene runtime/bridge error contract', () => {
     );
   });
 
-  it('SyncSystem warns once when executed without a world', async () => {
+  it('SyncSystem warns once when executed without a world', () => {
     const { sink, events } = Diagnostics.createBufferSink();
     Diagnostics.setSink(sink);
 
-    await Effect.runPromise(SyncSystem(0, 60).execute([], undefined));
-    await Effect.runPromise(SyncSystem(1, 60).execute([], undefined));
+    SyncSystem(0, 60).execute([], undefined);
+    SyncSystem(1, 60).execute([], undefined);
 
     const warns = events.filter((e) => e.code === 'worldless-degrade');
     expect(warns.length).toBe(1); // warnOnce dedupes

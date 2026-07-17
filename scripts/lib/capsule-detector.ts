@@ -21,6 +21,47 @@ import { normalizeRepoPath, WORKSPACE_ALIASES, createTypeDirectedProgram } from 
 
 export { WORKSPACE_ALIASES };
 
+/**
+ * Naming-convention map for known capsule factories. Source of truth lives in
+ * the factory's `defineCapsule({ name: ... })` template literal — we mirror it
+ * here so the manifest's surface name matches what the runtime registers. Keep
+ * this in sync with the factories in `packages/assets/src/analysis/*.ts`.
+ *
+ * INDEXING NOTE: the projection factories now take a leading `registry` argument
+ * — `BeatMarkerProjection(registry, audioAssetId)` — but {@link detectCapsuleCalls}
+ * captures only DIRECTLY-SERIALIZABLE literal arguments: a non-literal like the
+ * `registry` variable yields `undefined` from the literal reader and is SKIPPED,
+ * never pushed. So `args` is the COMPACTED list of literal call-site arguments —
+ * `['intro-bed']`, not `[undefined, 'intro-bed']`. The audioAssetId is therefore
+ * still `args[0]`, and a bare numeric `bins` (if ever passed positionally) is
+ * still `args[1]`. Do NOT bump these indices for the registry arg — it was never
+ * captured.
+ */
+export const FACTORY_NAMING: Readonly<Record<string, (args: readonly unknown[]) => string | undefined>> = {
+  BeatMarkerProjection: (args) => (typeof args[0] === 'string' ? `${args[0]}:beats` : undefined),
+  OnsetProjection: (args) => (typeof args[0] === 'string' ? `${args[0]}:onsets` : undefined),
+  WaveformProjection: (args) =>
+    typeof args[0] === 'string' && typeof args[1] === 'number' ? `${args[0]}:waveform:${args[1]}` : undefined,
+  WavMetadataProjection: (args) => (typeof args[0] === 'string' ? `${args[0]}:wav-metadata` : undefined),
+};
+
+/**
+ * The bare source tokens that pre-select capsule-bearing files BEFORE the
+ * type-directed detector runs: the two base factories (`defineCapsule`,
+ * `defineAsset`) plus every {@link FACTORY_NAMING} key. DERIVED, never
+ * hand-listed, so a new naming rule auto-extends the hint set.
+ *
+ * The SINGLE OWNER (scar S1.5.2): both `scripts/capsule-compile.ts`'s pre-filter
+ * and the schema-strictness sweep (`tests/property/schema-strictness.prop.test.ts`)
+ * import THIS list rather than keeping their own copies, so their candidate-file
+ * sets can never drift apart — a hardcoded copy in the sweep previously could.
+ *
+ * Assumption: every capsule call site includes one of these bare tokens in its
+ * source text — holds for all current invocation patterns (`defineCapsule({...})`,
+ * `defineAsset(id, {...})`, `Factory(args)`).
+ */
+export const FACTORY_HINTS: readonly string[] = ['defineCapsule', 'defineAsset', ...Object.keys(FACTORY_NAMING)];
+
 /** A single resolved capsule call site. */
 export interface DetectedCall {
   /** Absolute path of the source file. */

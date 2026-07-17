@@ -8,7 +8,7 @@
 
 > `const` **AVRenderer**: `object`
 
-Defined in: [core/src/av-renderer.ts:106](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/av-renderer.ts#L106)
+Defined in: [core/src/av-renderer.ts:105](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/av-renderer.ts#L105)
 
 AVRenderer — deterministic offline audio+video renderer.
 

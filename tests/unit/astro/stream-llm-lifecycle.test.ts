@@ -26,7 +26,6 @@
  */
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { Effect } from 'effect';
 import { Diagnostics, SSE_BUFFER_SIZE } from '@czap/core';
 import { Resumption } from '@czap/web';
 import streamDirective from '../../../packages/astro/src/client-directives/stream.js';
@@ -36,11 +35,10 @@ import { _resetRuntimePolicyForTests } from '../../../packages/astro/src/runtime
 
 const noop = (): Promise<void> => Promise.resolve();
 
-// One real macrotask. The directive drains `SSE.create`'s message/state streams
-// on `Effect.runFork` fibers that the live default runtime pumps on macrotasks
-// (a `forkScoped` fiber registered through `runSync` is NOT pumped once `runSync`
-// returns — hence the bridge forks the drain at top level). Awaiting a macrotask
-// flushes the fiber AND the render scheduler's microtask flush.
+// One real macrotask. `SSE.create` now delivers messages/state through
+// SYNCHRONOUS sinks (`onMessage`/`onStateChange`), so the directive processes each
+// frame in-dispatch-turn — no Effect fiber to pump. Awaiting a macrotask flushes
+// the render scheduler's microtask flush and any pending reconnect/heartbeat timer.
 const tick = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 0));
 
 function makeEl(tag: string, attrs: Record<string, string> = {}): HTMLElement {
@@ -165,7 +163,7 @@ describe('A3b — client:stream Scope-bridged onto SSE.create', () => {
   test('reconnect reconciles the gap against the PRE-disconnect cursor (persist after resume, not before)', async () => {
     // Regression (Codex P1): on the first post-reconnect frame, handleMessage must
     // reconcile the replay gap BEFORE persisting the new cursor. `Resumption.resume`
-    // synchronously loads the persisted cursor (`loadState` is `Effect.sync`) to
+    // synchronously loads the persisted cursor (`loadState` is a plain sync read) to
     // size the gap `seq(current) - (persisted.lastSequence + 1)`. Persisting the
     // current cursor first would set `lastSequence` to the current sequence,
     // collapse the gap to `<= 0`, and silently drop every patch missed while
@@ -176,8 +174,8 @@ describe('A3b — client:stream Scope-bridged onto SSE.create', () => {
     let cursorSeenByResume: string | null | undefined;
     const resumeSpy = vi.spyOn(Resumption, 'resume').mockImplementation((artifactId: string) => {
       // What `loadState` would read at this instant IS the gap baseline.
-      cursorSeenByResume = Effect.runSync(Resumption.loadState(artifactId))?.lastEventId ?? null;
-      return Effect.succeed({ type: 'replay' as const, patches: [] });
+      cursorSeenByResume = Resumption.loadState(artifactId)?.lastEventId ?? null;
+      return Promise.resolve({ type: 'replay' as const, patches: [] });
     });
 
     const el = makeEl('div', {

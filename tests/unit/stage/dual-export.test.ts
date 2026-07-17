@@ -18,7 +18,6 @@ import type {
   ContentAddress,
   CellMeta,
 } from '@czap/core';
-import { Effect } from 'effect';
 import { dualExport, exportAstroPage, exportVideo } from '@czap/stage';
 
 const ts = HLC.increment(HLC.create('test'), 1);
@@ -369,7 +368,7 @@ describe('dualExport — one graph, two casts, one source (P4)', () => {
     expect(previous).toHaveLength(2);
 
     // The merge envelope's hash recomputes (it is a valid receipt over its payload).
-    const recomputed = await Effect.runPromise(Receipt.hashEnvelope(result.receipt));
+    const recomputed = await Receipt.hashEnvelope(result.receipt);
     expect(recomputed).toBe(result.receipt.hash);
 
     // The merge head is a genesis-eligible merge (both children are genesis) and

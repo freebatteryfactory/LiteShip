@@ -6,7 +6,6 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Effect } from 'effect';
 import { Boundary, Composable, ComposableWorld, Part, RuntimeCoordinator, Style, Token, World } from '@czap/core';
 
 const boundary = Boundary.make({
@@ -55,42 +54,35 @@ type TestSchema = {
 
 describe('ECS Composition Integration', () => {
   test('full lifecycle: spawn, query, evaluate, add system, and tick', () => {
-    const result = Effect.runSync(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const world = yield* World.make();
-          const composableWorld = ComposableWorld.make<TestSchema>(world);
-          const entityA = yield* composableWorld.spawn({ boundary, token, style });
-          const entityB = yield* composableWorld.spawn({ boundary });
-          yield* composableWorld.spawn({ token });
+    const { world } = World.make();
+    const composableWorld = ComposableWorld.make<TestSchema>(world);
+    const entityA = composableWorld.spawn({ boundary, token, style });
+    const entityB = composableWorld.spawn({ boundary });
+    composableWorld.spawn({ token });
 
-          const queried = yield* composableWorld.query('boundary');
-          const evaluationA = yield* composableWorld.evaluate(entityA, {
-            'viewport.width': 900,
-            themeLevel: 1,
-          });
-          const evaluationB = yield* composableWorld.evaluate(entityB, {
-            'viewport.width': 1200,
-          });
+    const queried = composableWorld.query('boundary');
+    const evaluationA = composableWorld.evaluate(entityA, {
+      'viewport.width': 900,
+      themeLevel: 1,
+    });
+    const evaluationB = composableWorld.evaluate(entityB, {
+      'viewport.width': 1200,
+    });
 
-          let executed = 0;
-          let matched = 0;
-          yield* world.addSystem({
-            name: 'boundary-system',
-            query: ['boundary'],
-            execute(entities) {
-              executed++;
-              matched = entities.length;
-              return Effect.void;
-            },
-          });
+    let executed = 0;
+    let matched = 0;
+    world.addSystem({
+      name: 'boundary-system',
+      query: ['boundary'],
+      execute(entities) {
+        executed++;
+        matched = entities.length;
+      },
+    });
 
-          yield* world.tick();
+    world.tick();
 
-          return { queried, evaluationA, evaluationB, executed, matched };
-        }),
-      ),
-    );
+    const result = { queried, evaluationA, evaluationB, executed, matched };
 
     expect(result.queried).toHaveLength(2);
     expect(result.evaluationA['viewport.width']).toBe('tablet');
@@ -102,37 +94,30 @@ describe('ECS Composition Integration', () => {
   });
 
   test('dense store lifecycle integrates with world tick and retrieval', () => {
-    const result = Effect.runSync(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const world = yield* World.make();
-          const dense = ComposableWorld.dense(world);
-          const metrics = yield* dense.create('metrics', 8);
-          const entity = Composable.make<TestSchema>({ boundary, token });
-          yield* dense.store(entity, 5);
+    const { world } = World.make();
+    const dense = ComposableWorld.dense(world);
+    const metrics = dense.create('metrics', 8);
+    const entity = Composable.make<TestSchema>({ boundary, token });
+    dense.store(entity, 5);
 
-          let seenMetric = 0;
-          yield* world.addSystem({
-            name: 'metrics-system',
-            query: ['metrics'],
-            _denseSystem: true,
-            execute(stores) {
-              const store = stores.get('metrics');
-              if (store) {
-                seenMetric = store.data[0] ?? 0;
-                store.data[0] = seenMetric + 10;
-              }
-              return Effect.void;
-            },
-          });
+    let seenMetric = 0;
+    world.addSystem({
+      name: 'metrics-system',
+      query: ['metrics'],
+      _denseSystem: true,
+      execute(stores) {
+        const store = stores.get('metrics');
+        if (store) {
+          seenMetric = store.data[0] ?? 0;
+          store.data[0] = seenMetric + 10;
+        }
+      },
+    });
 
-          yield* world.tick();
-          const afterTick = yield* dense.retrieve(entity);
+    world.tick();
+    const afterTick = dense.retrieve(entity);
 
-          return { metrics, seenMetric, afterTick };
-        }),
-      ),
-    );
+    const result = { metrics, seenMetric, afterTick };
 
     expect(result.metrics.name).toBe('metrics');
     expect(result.seenMetric).toBe(5);
@@ -140,28 +125,22 @@ describe('ECS Composition Integration', () => {
   });
 
   test('entity despawn removes entities from queries and dense stores', () => {
-    const result = Effect.runSync(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const world = yield* World.make();
-          const denseStore = Part.dense('hp', 16);
-          yield* world.addDenseStore(denseStore);
-          const id = yield* world.spawn({ boundary, role: 'hero' });
-          denseStore.set(id, 99);
+    const { world } = World.make();
+    const denseStore = Part.dense('hp', 16);
+    world.addDenseStore(denseStore);
+    const id = world.spawn({ boundary, role: 'hero' });
+    denseStore.set(id, 99);
 
-          const before = yield* world.query('boundary');
-          yield* world.despawn(id);
-          const after = yield* world.query('boundary');
+    const before = world.query('boundary');
+    world.despawn(id);
+    const after = world.query('boundary');
 
-          return {
-            before,
-            after,
-            hp: denseStore.get(id),
-            count: denseStore.count,
-          };
-        }),
-      ),
-    );
+    const result = {
+      before,
+      after,
+      hp: denseStore.get(id),
+      count: denseStore.count,
+    };
 
     expect(result.before).toHaveLength(1);
     expect(result.after).toHaveLength(0);
@@ -186,36 +165,28 @@ describe('ECS Composition Integration', () => {
   });
 
   test('multiple systems execute in registration order', () => {
-    const order = Effect.runSync(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const world = yield* World.make();
-          yield* world.spawn({ boundary });
-          const calls: string[] = [];
+    const { world } = World.make();
+    world.spawn({ boundary });
+    const calls: string[] = [];
 
-          yield* world.addSystem({
-            name: 'first',
-            query: ['boundary'],
-            execute() {
-              calls.push('first');
-              return Effect.void;
-            },
-          });
+    world.addSystem({
+      name: 'first',
+      query: ['boundary'],
+      execute() {
+        calls.push('first');
+      },
+    });
 
-          yield* world.addSystem({
-            name: 'second',
-            query: ['boundary'],
-            execute() {
-              calls.push('second');
-              return Effect.void;
-            },
-          });
+    world.addSystem({
+      name: 'second',
+      query: ['boundary'],
+      execute() {
+        calls.push('second');
+      },
+    });
 
-          yield* world.tick();
-          return calls;
-        }),
-      ),
-    );
+    world.tick();
+    const order = calls;
 
     expect(order).toEqual(['first', 'second']);
   });

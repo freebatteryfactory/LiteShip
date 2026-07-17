@@ -3,15 +3,19 @@
  *
  * Tests full SSE client with connection management, reconnection,
  * heartbeat timeout, buffer backpressure, and state transitions.
+ *
+ * The client is Promise/AbortController-first: `SSE.create` returns the client
+ * synchronously, `state`/`lastEventId`/`backpressure` are plain accessors,
+ * `close`/`reconnect` are synchronous, and `messages`/`stateChanges` are
+ * AsyncIterables ({@link takeAsync} subscribes synchronously, then resolves the
+ * first `n` values).
  */
 
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
-import { Effect, Fiber, Ref, Stream } from 'effect';
 import { SSE } from '@czap/web';
 import type { SSEConfig } from '@czap/web';
 import { Millis } from '@czap/core';
 import { MockEventSource } from '../helpers/mock-event-source.js';
-import { runScopedAsync as runScoped } from '../helpers/effect-test.js';
 
 // ---------------------------------------------------------------------------
 // Setup
@@ -40,74 +44,73 @@ const baseConfig: SSEConfig = {
   },
 };
 
+/**
+ * Subscribe to `iterable` SYNCHRONOUSLY (the iterator's subscription is
+ * established before the returned promise's first `await`), then resolve with
+ * the first `n` values. Mirrors `Stream.runCollect(Stream.take(_, n))`.
+ */
+function takeAsync<T>(iterable: AsyncIterable<T>, n: number): Promise<T[]> {
+  const iterator = iterable[Symbol.asyncIterator]();
+  const out: T[] = [];
+  const pump = async (): Promise<T[]> => {
+    try {
+      while (out.length < n) {
+        const result = await iterator.next();
+        if (result.done) break;
+        out.push(result.value);
+      }
+    } finally {
+      await iterator.return?.();
+    }
+    return out;
+  };
+  return pump();
+}
+
 // ---------------------------------------------------------------------------
 // Connection lifecycle
 // ---------------------------------------------------------------------------
 
 describe('SSE client lifecycle', () => {
-  test('creates EventSource on init', async () => {
-    await runScoped(
-      Effect.gen(function* () {
-        const client = yield* SSE.create(baseConfig);
+  test('creates EventSource on init', () => {
+    SSE.create(baseConfig);
 
-        expect(MockEventSource.instances).toHaveLength(1);
-        expect(MockEventSource.instances[0]!.url).toContain('localhost/sse');
-      }),
-    );
+    expect(MockEventSource.instances).toHaveLength(1);
+    expect(MockEventSource.instances[0]!.url).toContain('localhost/sse');
   });
 
-  test('initial state is connecting', async () => {
-    await runScoped(
-      Effect.gen(function* () {
-        const client = yield* SSE.create(baseConfig);
-        const state = yield* client.state;
-        expect(state).toBe('connecting');
-      }),
-    );
+  test('initial state is connecting', () => {
+    const client = SSE.create(baseConfig);
+    expect(client.state).toBe('connecting');
   });
 
-  test('state becomes connected after first message', async () => {
-    await runScoped(
-      Effect.gen(function* () {
-        const client = yield* SSE.create(baseConfig);
-        const es = MockEventSource.instances[0]!;
+  test('state becomes connected after first message', () => {
+    const client = SSE.create(baseConfig);
+    const es = MockEventSource.instances[0]!;
 
-        // Simulate a valid message
-        es.simulateMessage(JSON.stringify({ type: 'heartbeat' }));
+    // Simulate a valid message
+    es.simulateMessage(JSON.stringify({ type: 'heartbeat' }));
 
-        const state = yield* client.state;
-        expect(state).toBe('connected');
-      }),
-    );
+    expect(client.state).toBe('connected');
   });
 
-  test('close shuts down EventSource and state is disconnected', async () => {
-    await runScoped(
-      Effect.gen(function* () {
-        const client = yield* SSE.create(baseConfig);
-        const es = MockEventSource.instances[0]!;
+  test('close shuts down EventSource and state is disconnected', () => {
+    const client = SSE.create(baseConfig);
+    const es = MockEventSource.instances[0]!;
 
-        yield* client.close();
+    client.close();
 
-        expect(es.readyState).toBe(MockEventSource.CLOSED);
-        const state = yield* client.state;
-        expect(state).toBe('disconnected');
-      }),
-    );
+    expect(es.readyState).toBe(MockEventSource.CLOSED);
+    expect(client.state).toBe('disconnected');
   });
 
-  test('invalid messages are ignored without changing connection state', async () => {
-    await runScoped(
-      Effect.gen(function* () {
-        const client = yield* SSE.create(baseConfig);
-        const es = MockEventSource.instances[0]!;
+  test('invalid messages are ignored without changing connection state', () => {
+    const client = SSE.create(baseConfig);
+    const es = MockEventSource.instances[0]!;
 
-        es.simulateMessage('not json');
+    es.simulateMessage('not json');
 
-        const state = yield* client.state;
-        expect(state).toBe('connecting');
-      }),
-    );
+    expect(client.state).toBe('connecting');
   });
 });
 
@@ -116,130 +119,107 @@ describe('SSE client lifecycle', () => {
 // ---------------------------------------------------------------------------
 
 describe('SSE reconnection', () => {
-  test('error triggers reconnect with new EventSource', async () => {
-    await runScoped(
-      Effect.gen(function* () {
-        const client = yield* SSE.create(baseConfig);
-        const firstES = MockEventSource.instances[0]!;
+  test('error triggers reconnect with new EventSource', () => {
+    const client = SSE.create(baseConfig);
+    const firstES = MockEventSource.instances[0]!;
 
-        // Simulate error
-        firstES.simulateError();
+    // Simulate error
+    firstES.simulateError();
 
-        const state = yield* client.state;
-        expect(state).toBe('reconnecting');
+    expect(client.state).toBe('reconnecting');
 
-        // Advance past initial delay
-        vi.advanceTimersByTime(150);
+    // Advance past initial delay
+    vi.advanceTimersByTime(150);
 
-        // A new EventSource should have been created
-        expect(MockEventSource.instances).toHaveLength(2);
-      }),
-    );
+    // A new EventSource should have been created
+    expect(MockEventSource.instances).toHaveLength(2);
   });
 
-  test('reconnect delay increases exponentially', async () => {
+  test('reconnect delay increases exponentially', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.5);
 
-    await runScoped(
-      Effect.gen(function* () {
-        const client = yield* SSE.create(baseConfig);
+    const client = SSE.create(baseConfig);
+    expect(client.state).toBe('connecting');
 
-        // First error
-        MockEventSource.instances[0]!.simulateError();
-        vi.advanceTimersByTime(150); // initialDelay=100, factor=2
-        expect(MockEventSource.instances).toHaveLength(2);
+    // First error
+    MockEventSource.instances[0]!.simulateError();
+    vi.advanceTimersByTime(150); // initialDelay=100, factor=2
+    expect(MockEventSource.instances).toHaveLength(2);
 
-        // Second error
-        MockEventSource.instances[1]!.simulateError();
-        vi.advanceTimersByTime(150); // Should NOT be enough (delay ~200)
-        expect(MockEventSource.instances).toHaveLength(2);
+    // Second error
+    MockEventSource.instances[1]!.simulateError();
+    vi.advanceTimersByTime(150); // Should NOT be enough (delay ~200)
+    expect(MockEventSource.instances).toHaveLength(2);
 
-        vi.advanceTimersByTime(100); // Now at ~250ms total, past 200ms delay
-        expect(MockEventSource.instances).toHaveLength(3);
-      }),
-    );
+    vi.advanceTimersByTime(100); // Now at ~250ms total, past 200ms delay
+    expect(MockEventSource.instances).toHaveLength(3);
   });
 
-  test('max attempts reached sets state to error', async () => {
-    await runScoped(
-      Effect.gen(function* () {
-        const client = yield* SSE.create(baseConfig);
+  test('max attempts reached sets state to error', () => {
+    const client = SSE.create(baseConfig);
 
-        // Exhaust all 3 reconnect attempts
-        for (let i = 0; i < 3; i++) {
-          const es = MockEventSource.instances[MockEventSource.instances.length - 1]!;
-          es.simulateError();
-          vi.advanceTimersByTime(2000); // Plenty of time for any backoff
-        }
+    // Exhaust all 3 reconnect attempts
+    for (let i = 0; i < 3; i++) {
+      const es = MockEventSource.instances[MockEventSource.instances.length - 1]!;
+      es.simulateError();
+      vi.advanceTimersByTime(2000); // Plenty of time for any backoff
+    }
 
-        // One more error after max attempts
-        const lastES = MockEventSource.instances[MockEventSource.instances.length - 1]!;
-        lastES.simulateError();
+    // One more error after max attempts
+    const lastES = MockEventSource.instances[MockEventSource.instances.length - 1]!;
+    lastES.simulateError();
 
-        const state = yield* client.state;
-        expect(state).toBe('error');
-      }),
-    );
+    expect(client.state).toBe('error');
   });
 
-  test('manual reconnect resets attempt counter', async () => {
-    await runScoped(
-      Effect.gen(function* () {
-        const client = yield* SSE.create(baseConfig);
-        const es = MockEventSource.instances[0]!;
+  test('manual reconnect resets attempt counter', () => {
+    const client = SSE.create(baseConfig);
+    const es = MockEventSource.instances[0]!;
 
-        // Trigger an error
-        es.simulateError();
-        vi.advanceTimersByTime(200);
+    // Trigger an error
+    es.simulateError();
+    vi.advanceTimersByTime(200);
 
-        const countBefore = MockEventSource.instances.length;
+    const countBefore = MockEventSource.instances.length;
 
-        // Manual reconnect
-        yield* client.reconnect();
+    // Manual reconnect
+    client.reconnect();
 
-        // Should have created a new EventSource
-        expect(MockEventSource.instances.length).toBe(countBefore + 1);
-
-        const state = yield* client.state;
-        expect(state).toBe('connecting');
-      }),
-    );
+    // Should have created a new EventSource
+    expect(MockEventSource.instances.length).toBe(countBefore + 1);
+    expect(client.state).toBe('connecting');
   });
 
-  test('a stale error from a replaced source does not tear down the live replacement', async () => {
+  test('a stale error from a replaced source does not tear down the live replacement', () => {
     // Regression (Greptile T-Rex repro): a queued `onerror` from EventSource A,
     // delivered AFTER a reconnect installed replacement B, must not drive
     // `handleConnectionLoss` (which reads the CURRENT `machine.source` = B),
     // close B, and schedule a spurious third connection. The per-source identity
     // guard makes the stale callback inert. Manual `reconnect()` is used because
     // it closes A WITHOUT detaching its handlers — the path the guard protects.
-    await runScoped(
-      Effect.gen(function* () {
-        const client = yield* SSE.create(baseConfig);
-        const staleES = MockEventSource.instances[0]!;
-        staleES.simulateMessage(JSON.stringify({ type: 'heartbeat' }), 'live-1');
-        expect(yield* client.state).toBe('connected');
+    const client = SSE.create(baseConfig);
+    const staleES = MockEventSource.instances[0]!;
+    staleES.simulateMessage(JSON.stringify({ type: 'heartbeat' }), 'live-1');
+    expect(client.state).toBe('connected');
 
-        // Replace A with B (handlers on A are left installed by manual reconnect).
-        yield* client.reconnect();
-        expect(MockEventSource.instances).toHaveLength(2);
-        const liveES = MockEventSource.instances[1]!;
-        liveES.simulateMessage(JSON.stringify({ type: 'heartbeat' }), 'live-2');
-        expect(yield* client.state).toBe('connected');
-        expect(yield* client.lastEventId).toBe('live-2');
+    // Replace A with B (handlers on A are left installed by manual reconnect).
+    client.reconnect();
+    expect(MockEventSource.instances).toHaveLength(2);
+    const liveES = MockEventSource.instances[1]!;
+    liveES.simulateMessage(JSON.stringify({ type: 'heartbeat' }), 'live-2');
+    expect(client.state).toBe('connected');
+    expect(client.lastEventId).toBe('live-2');
 
-        // The stale error + a stale frame from A fire after B is live.
-        staleES.simulateError();
-        staleES.simulateMessage(JSON.stringify({ type: 'heartbeat' }), 'stale-999');
+    // The stale error + a stale frame from A fire after B is live.
+    staleES.simulateError();
+    staleES.simulateMessage(JSON.stringify({ type: 'heartbeat' }), 'stale-999');
 
-        // B is untouched: still connected, cursor uncorrupted, no third source
-        // even after any backoff timer would have elapsed.
-        vi.advanceTimersByTime(2000);
-        expect(yield* client.state).toBe('connected');
-        expect(yield* client.lastEventId).toBe('live-2');
-        expect(MockEventSource.instances).toHaveLength(2);
-      }),
-    );
+    // B is untouched: still connected, cursor uncorrupted, no third source
+    // even after any backoff timer would have elapsed.
+    vi.advanceTimersByTime(2000);
+    expect(client.state).toBe('connected');
+    expect(client.lastEventId).toBe('live-2');
+    expect(MockEventSource.instances).toHaveLength(2);
   });
 });
 
@@ -248,80 +228,63 @@ describe('SSE reconnection', () => {
 // ---------------------------------------------------------------------------
 
 describe('SSE heartbeat', () => {
-  test('heartbeat timeout reconnects instead of wedging in error', async () => {
+  test('heartbeat timeout reconnects instead of wedging in error', () => {
     // A silent heartbeat timeout means the connection died without an
     // `onerror`. The watchdog must funnel through the SAME reconnect path —
     // close the dead source, go `reconnecting`, then re-open on backoff —
     // rather than latching `error` (the latent primitive bug A3 fixes).
     vi.spyOn(Math, 'random').mockReturnValue(0.5); // zero jitter -> delay === initialDelay
 
-    await runScoped(
-      Effect.gen(function* () {
-        const client = yield* SSE.create(baseConfig);
+    const client = SSE.create(baseConfig);
 
-        // Heartbeat fires at heartbeatInterval * 2 = 10000ms.
-        vi.advanceTimersByTime(10_000);
-        expect(yield* client.state).toBe('reconnecting');
-        expect(MockEventSource.instances).toHaveLength(1);
+    // Heartbeat fires at heartbeatInterval * 2 = 10000ms.
+    vi.advanceTimersByTime(10_000);
+    expect(client.state).toBe('reconnecting');
+    expect(MockEventSource.instances).toHaveLength(1);
 
-        // Backoff (initialDelay 100ms, jitter 0) re-opens the source.
-        vi.advanceTimersByTime(100);
-        expect(MockEventSource.instances).toHaveLength(2);
-      }),
-    );
+    // Backoff (initialDelay 100ms, jitter 0) re-opens the source.
+    vi.advanceTimersByTime(100);
+    expect(MockEventSource.instances).toHaveLength(2);
   });
 
-  test('messages reset heartbeat timer', async () => {
-    await runScoped(
-      Effect.gen(function* () {
-        const client = yield* SSE.create(baseConfig);
-        const es = MockEventSource.instances[0]!;
+  test('messages reset heartbeat timer', () => {
+    const client = SSE.create(baseConfig);
+    const es = MockEventSource.instances[0]!;
 
-        // Send a message at 4s (before 10s timeout)
-        vi.advanceTimersByTime(4000);
-        es.simulateMessage(JSON.stringify({ type: 'heartbeat' }));
+    // Send a message at 4s (before 10s timeout)
+    vi.advanceTimersByTime(4000);
+    es.simulateMessage(JSON.stringify({ type: 'heartbeat' }));
 
-        // Advance another 4s (total 8s from message, still before 10s)
-        vi.advanceTimersByTime(4000);
+    // Advance another 4s (total 8s from message, still before 10s)
+    vi.advanceTimersByTime(4000);
 
-        const state = yield* client.state;
-        expect(state).toBe('connected');
-      }),
-    );
+    expect(client.state).toBe('connected');
   });
 
-  test('close after a heartbeat timeout lands in disconnected and cancels the pending reconnect', async () => {
-    await runScoped(
-      Effect.gen(function* () {
-        const client = yield* SSE.create(baseConfig);
+  test('close after a heartbeat timeout lands in disconnected and cancels the pending reconnect', () => {
+    const client = SSE.create(baseConfig);
 
-        vi.advanceTimersByTime(10_000); // heartbeat -> reconnecting + scheduled reconnect
-        yield* client.close();
+    vi.advanceTimersByTime(10_000); // heartbeat -> reconnecting + scheduled reconnect
+    client.close();
 
-        expect(yield* client.state).toBe('disconnected');
+    expect(client.state).toBe('disconnected');
 
-        // The scheduled reconnect must have been cancelled by close().
-        const countAfterClose = MockEventSource.instances.length;
-        vi.advanceTimersByTime(5000);
-        expect(MockEventSource.instances.length).toBe(countAfterClose);
-      }),
-    );
+    // The scheduled reconnect must have been cancelled by close().
+    const countAfterClose = MockEventSource.instances.length;
+    vi.advanceTimersByTime(5000);
+    expect(MockEventSource.instances.length).toBe(countAfterClose);
   });
 
-  test('manual reconnect after a heartbeat timeout supersedes the scheduled one', async () => {
-    await runScoped(
-      Effect.gen(function* () {
-        const client = yield* SSE.create(baseConfig);
+  test('manual reconnect after a heartbeat timeout supersedes the scheduled one', () => {
+    const client = SSE.create(baseConfig);
 
-        vi.advanceTimersByTime(10_000); // heartbeat -> reconnecting (source cleared)
-        const countBefore = MockEventSource.instances.length;
+    vi.advanceTimersByTime(10_000); // heartbeat -> reconnecting (source cleared)
+    const countBefore = MockEventSource.instances.length;
 
-        yield* client.reconnect();
+    client.reconnect();
 
-        expect(MockEventSource.instances.length).toBe(countBefore + 1);
-        expect(yield* client.state).toBe('connecting');
-      }),
-    );
+    expect(MockEventSource.instances.length).toBe(countBefore + 1);
+    expect(client.state).toBe('connecting');
   });
 });
 
@@ -333,25 +296,21 @@ describe('SSE stateChanges', () => {
   test('emits a deduplicated edge per status transition', async () => {
     vi.useRealTimers();
     try {
-      await runScoped(
-        Effect.gen(function* () {
-          const client = yield* SSE.create(baseConfig);
-          // Collect the first two edges: connected (first message), then
-          // reconnecting (error). Repeated 'connected' messages must NOT
-          // re-emit — it is a transition stream, not a per-message firehose.
-          const fiber = yield* Effect.forkScoped(Stream.runCollect(Stream.take(client.stateChanges, 2)));
-          yield* Effect.promise(() => Promise.resolve());
+      const client = SSE.create(baseConfig);
+      // Collect the first two edges: connected (first message), then
+      // reconnecting (error). Repeated 'connected' messages must NOT re-emit
+      // — it is a transition stream, not a per-message firehose. `takeAsync`
+      // subscribes synchronously BEFORE the transitions are triggered.
+      const collected = takeAsync(client.stateChanges, 2);
 
-          const es = MockEventSource.instances[0]!;
-          es.simulateMessage(JSON.stringify({ type: 'heartbeat' }));
-          es.simulateMessage(JSON.stringify({ type: 'heartbeat' }));
-          es.simulateError();
-          yield* Effect.promise(() => Promise.resolve());
+      const es = MockEventSource.instances[0]!;
+      es.simulateMessage(JSON.stringify({ type: 'heartbeat' }));
+      es.simulateMessage(JSON.stringify({ type: 'heartbeat' }));
+      es.simulateError();
 
-          const edges = Array.from(yield* Fiber.join(fiber));
-          expect(edges).toEqual(['connected', 'reconnecting']);
-        }),
-      );
+      const edges = await collected;
+      expect(edges).toEqual(['connected', 'reconnecting']);
+      client.close();
     } finally {
       vi.useFakeTimers();
     }
@@ -363,95 +322,72 @@ describe('SSE stateChanges', () => {
 // ---------------------------------------------------------------------------
 
 describe('SSE lastEventId', () => {
-  test('tracks lastEventId from messages', async () => {
-    await runScoped(
-      Effect.gen(function* () {
-        const client = yield* SSE.create(baseConfig);
-        const es = MockEventSource.instances[0]!;
+  test('tracks lastEventId from messages', () => {
+    const client = SSE.create(baseConfig);
+    const es = MockEventSource.instances[0]!;
 
-        es.simulateMessage(JSON.stringify({ type: 'patch', data: {} }), 'evt-42');
+    es.simulateMessage(JSON.stringify({ type: 'patch', data: {} }), 'evt-42');
 
-        const lastId = yield* client.lastEventId;
-        expect(lastId).toBe('evt-42');
-      }),
-    );
+    expect(client.lastEventId).toBe('evt-42');
   });
 
-  test('lastEventId is null initially', async () => {
-    await runScoped(
-      Effect.gen(function* () {
-        const client = yield* SSE.create(baseConfig);
-        const lastId = yield* client.lastEventId;
-        expect(lastId).toBeNull();
-      }),
-    );
+  test('lastEventId is null initially', () => {
+    const client = SSE.create(baseConfig);
+    expect(client.lastEventId).toBeNull();
   });
 });
 // Backpressure
 // ---------------------------------------------------------------------------
 
 describe('SSE backpressure', () => {
-  test('reports buffer usage', async () => {
-    await runScoped(
-      Effect.gen(function* () {
-        const client = yield* SSE.create(baseConfig);
-        const es = MockEventSource.instances[0]!;
+  test('reports buffer usage', () => {
+    const client = SSE.create(baseConfig);
+    const es = MockEventSource.instances[0]!;
 
-        // Send some messages
-        for (let i = 0; i < 5; i++) {
-          es.simulateMessage(JSON.stringify({ type: 'patch', data: { i } }));
-        }
+    // Send some messages
+    for (let i = 0; i < 5; i++) {
+      es.simulateMessage(JSON.stringify({ type: 'patch', data: { i } }));
+    }
 
-        const bp = yield* client.backpressure;
-        expect(bp.bufferSize).toBe(5);
-        expect(bp.maxBufferSize).toBe(100);
-        expect(bp.percentFull).toBe(5);
-        expect(bp.dropping).toBe(false);
-      }),
-    );
+    const bp = client.backpressure;
+    expect(bp.bufferSize).toBe(5);
+    expect(bp.maxBufferSize).toBe(100);
+    expect(bp.percentFull).toBe(5);
+    expect(bp.dropping).toBe(false);
   });
 
-  test('drops messages when buffer is full', async () => {
-    await runScoped(
-      Effect.gen(function* () {
-        const client = yield* SSE.create(baseConfig);
-        const es = MockEventSource.instances[0]!;
+  test('drops messages when buffer is full', () => {
+    const client = SSE.create(baseConfig);
+    const es = MockEventSource.instances[0]!;
 
-        // Fill the buffer to capacity (100) and then some
-        for (let i = 0; i < 105; i++) {
-          es.simulateMessage(JSON.stringify({ type: 'patch', data: { i } }));
-        }
+    // Fill the buffer to capacity (100) and then some
+    for (let i = 0; i < 105; i++) {
+      es.simulateMessage(JSON.stringify({ type: 'patch', data: { i } }));
+    }
 
-        const bp = yield* client.backpressure;
-        expect(bp.bufferSize).toBe(100);
-        expect(bp.dropping).toBe(true);
-        expect(bp.percentFull).toBe(100);
-      }),
-    );
+    const bp = client.backpressure;
+    expect(bp.bufferSize).toBe(100);
+    expect(bp.dropping).toBe(true);
+    expect(bp.percentFull).toBe(100);
   });
 
-  test('consuming messages drains the buffer (Queue.sizeUnsafe is the source of truth)', async () => {
+  test('consuming messages drains the buffer', async () => {
     vi.useRealTimers();
     try {
-      await runScoped(
-        Effect.gen(function* () {
-          const client = yield* SSE.create(baseConfig);
-          const es = MockEventSource.instances[0]!;
-          const fiber = yield* Effect.forkScoped(Stream.runCollect(Stream.take(client.messages, 2)));
-          yield* Effect.promise(() => Promise.resolve());
+      const client = SSE.create(baseConfig);
+      const es = MockEventSource.instances[0]!;
+      const collected = takeAsync(client.messages, 2);
 
-          es.simulateMessage(JSON.stringify({ type: 'patch', data: { i: 1 } }));
-          es.simulateMessage(JSON.stringify({ type: 'patch', data: { i: 2 } }));
-          yield* Effect.promise(() => Promise.resolve());
+      es.simulateMessage(JSON.stringify({ type: 'patch', data: { i: 1 } }));
+      es.simulateMessage(JSON.stringify({ type: 'patch', data: { i: 2 } }));
 
-          const messages = Array.from(yield* Fiber.join(fiber));
-          expect(messages).toHaveLength(2);
+      const messages = await collected;
+      expect(messages).toHaveLength(2);
 
-          const bp = yield* client.backpressure;
-          expect(bp.bufferSize).toBe(0);
-          expect(bp.percentFull).toBe(0);
-        }),
-      );
+      const bp = client.backpressure;
+      expect(bp.bufferSize).toBe(0);
+      expect(bp.percentFull).toBe(0);
+      client.close();
     } finally {
       vi.useFakeTimers();
     }
@@ -459,39 +395,24 @@ describe('SSE backpressure', () => {
 });
 
 describe('SSE initial lastEventId config', () => {
-  test('uses lastEventId from config when provided', async () => {
-    await runScoped(
-      Effect.gen(function* () {
-        const client = yield* SSE.create({ ...baseConfig, lastEventId: 'evt-99' });
-        const lastId = yield* client.lastEventId;
-        expect(lastId).toBe('evt-99');
-      }),
-    );
+  test('uses lastEventId from config when provided', () => {
+    const client = SSE.create({ ...baseConfig, lastEventId: 'evt-99' });
+    expect(client.lastEventId).toBe('evt-99');
   });
 
-  test('message without lastEventId does not overwrite existing value', async () => {
-    await runScoped(
-      Effect.gen(function* () {
-        const client = yield* SSE.create({ ...baseConfig, lastEventId: 'evt-50' });
-        const es = MockEventSource.instances[0]!;
+  test('message without lastEventId does not overwrite existing value', () => {
+    const client = SSE.create({ ...baseConfig, lastEventId: 'evt-50' });
+    const es = MockEventSource.instances[0]!;
 
-        // Message with no lastEventId
-        es.simulateMessage(JSON.stringify({ type: 'heartbeat' }));
+    // Message with no lastEventId
+    es.simulateMessage(JSON.stringify({ type: 'heartbeat' }));
 
-        const lastId = yield* client.lastEventId;
-        expect(lastId).toBe('evt-50');
-      }),
-    );
+    expect(client.lastEventId).toBe('evt-50');
   });
 
-  test('uses default reconnect config when none provided', async () => {
-    await runScoped(
-      Effect.gen(function* () {
-        const client = yield* SSE.create({ url: 'http://localhost/sse' });
-        const state = yield* client.state;
-        expect(state).toBe('connecting');
-      }),
-    );
+  test('uses default reconnect config when none provided', () => {
+    const client = SSE.create({ url: 'http://localhost/sse' });
+    expect(client.state).toBe('connecting');
   });
 });
 
@@ -522,25 +443,19 @@ describe('SSE pure helpers', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Scope finalizer
+// Lifetime cleanup
 // ---------------------------------------------------------------------------
 
-describe('SSE scope cleanup', () => {
-  test('scope close shuts down EventSource', async () => {
-    // Run the scoped effect — when it completes, the scope closes
-    // and the finalizer should clean up the EventSource
-    await runScoped(
-      Effect.gen(function* () {
-        const client = yield* SSE.create(baseConfig);
+describe('SSE lifetime cleanup', () => {
+  test('close shuts down the EventSource', () => {
+    // `close()` disposes the client's Lifetime, whose synchronous finalizer
+    // closes the EventSource, nulls the source, and completes the streams.
+    const client = SSE.create(baseConfig);
 
-        const es = MockEventSource.instances[0]!;
-        expect(es.readyState).not.toBe(MockEventSource.CLOSED);
-        // Scope will close after this gen completes
-      }),
-    );
-
-    // After scope closes, EventSource should be cleaned up
     const es = MockEventSource.instances[0]!;
+    expect(es.readyState).not.toBe(MockEventSource.CLOSED);
+
+    client.close();
     expect(es.readyState).toBe(MockEventSource.CLOSED);
   });
 });

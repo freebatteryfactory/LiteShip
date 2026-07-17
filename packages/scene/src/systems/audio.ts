@@ -10,7 +10,6 @@
  * @module
  */
 
-import { Effect } from 'effect';
 import type { System, World } from '@czap/core';
 import type { ResolvedEnvelope } from '../sugar/envelope.js';
 import { envelopeFactor } from '../sugar/envelope.js';
@@ -21,21 +20,20 @@ export function AudioSystem(frameIndex: number, fps: number, sampleRate: number)
   return {
     name: 'AudioSystem',
     query: ['AudioSource', 'FrameRange'],
-    execute: (entities, world?: World.Shape) =>
-      Effect.gen(function* () {
-        for (const e of entities) {
-          const range = e.components.get('FrameRange') as { from: number; to: number };
-          const inRange = frameIndex >= range.from && frameIndex < range.to;
-          const phase = inRange ? (frameIndex - range.from) * samplesPerFrame : 0;
-          const env = e.components.get('Envelope') as ResolvedEnvelope | undefined;
-          const gain = inRange ? (env !== undefined ? envelopeFactor(env, frameIndex, range) : 1) : 0;
-          (e as unknown as { _phase: number })._phase = phase;
-          (e as unknown as { _gain: number })._gain = gain;
-          if (world !== undefined) {
-            yield* world.setComponent(e.id, '_phase', phase);
-            yield* world.setComponent(e.id, '_gain', gain);
-          }
+    execute: (entities, world?: World.Shape) => {
+      for (const e of entities) {
+        const range = e.components.get('FrameRange') as { from: number; to: number };
+        const inRange = frameIndex >= range.from && frameIndex < range.to;
+        const phase = inRange ? (frameIndex - range.from) * samplesPerFrame : 0;
+        const env = e.components.get('Envelope') as ResolvedEnvelope | undefined;
+        const gain = inRange ? (env !== undefined ? envelopeFactor(env, frameIndex, range) : 1) : 0;
+        (e as unknown as { _phase: number })._phase = phase;
+        (e as unknown as { _gain: number })._gain = gain;
+        if (world !== undefined) {
+          world.setComponent(e.id, '_phase', phase);
+          world.setComponent(e.id, '_gain', gain);
         }
-      }),
+      }
+    },
   };
 }

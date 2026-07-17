@@ -8,7 +8,7 @@
 
 > `const` **Morph**: `object`
 
-Defined in: [web/src/morph/diff.ts:126](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/morph/diff.ts#L126)
+Defined in: [web/src/morph/diff.ts:119](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/morph/diff.ts#L119)
 
 DOM morph namespace.
 
@@ -27,7 +27,7 @@ Default morph configuration.
 
 ### morph
 
-> **morph**: (`oldNode`, `newHTML`, `config?`, `hints?`) => `Effect`\<`void`\>
+> **morph**: (`oldNode`, `newHTML`, `config?`, `hints?`) => `void`
 
 Morph an existing DOM element to match new HTML using idiomorph-inspired
 diffing that minimizes DOM mutations and preserves element identity.
@@ -58,11 +58,11 @@ proven you need to skip physical state handling.
 
 #### Returns
 
-`Effect`\<`void`\>
+`void`
 
 ### morphWithState
 
-> **morphWithState**: (`oldNode`, `newHTML`, `config?`, `hints?`) => `Effect`\<[`MorphResult`](../type-aliases/MorphResult.md)\>
+> **morphWithState**: (`oldNode`, `newHTML`, `config?`, `hints?`) => [`MorphResult`](../type-aliases/MorphResult.md)
 
 Morph with physical state capture and restore — the default entry point.
 
@@ -91,7 +91,7 @@ flags or hints apply it degrades to a plain [morph](#morph).
 
 #### Returns
 
-`Effect`\<[`MorphResult`](../type-aliases/MorphResult.md)\>
+[`MorphResult`](../type-aliases/MorphResult.md)
 
 ### parseHTML
 

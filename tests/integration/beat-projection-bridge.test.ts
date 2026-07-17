@@ -13,7 +13,6 @@
  * @module
  */
 import { describe, it, expect } from 'vitest';
-import { Effect } from 'effect';
 import { Track, compileScene, SceneRuntime, resolveBeatProjectionToSceneBeats } from '@czap/scene';
 import type { SceneContract, BeatComponent } from '@czap/scene';
 import type { BeatMarkerSet } from '@czap/_spine';
@@ -61,7 +60,7 @@ describe('beat-projection bridge — raw projection to scene-ready markers', () 
     const compiled = compileScene(sceneWith(beats));
     const handle = await SceneRuntime.build(compiled);
     try {
-      const beatEntities = await Effect.runPromise(handle.world.query('Beat'));
+      const beatEntities = handle.world.query('Beat');
       expect(beatEntities.length).toBe(3);
       const times = beatEntities
         .map((e) => (e.components.get('Beat') as { timeMs: number }).timeMs)
@@ -91,7 +90,7 @@ describe('beat-projection bridge — raw projection to scene-ready markers', () 
     const compiled = compileScene(sceneWith(beats));
     const handle = await SceneRuntime.build(compiled);
     try {
-      const beatEntities = await Effect.runPromise(handle.world.query('Beat'));
+      const beatEntities = handle.world.query('Beat');
       expect(beatEntities.length).toBe(beats.length);
     } finally {
       await handle.release();

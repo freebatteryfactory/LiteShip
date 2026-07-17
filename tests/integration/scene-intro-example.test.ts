@@ -1,5 +1,4 @@
 import { describe, it, expect } from 'vitest';
-import { Effect } from 'effect';
 import { SceneRuntime } from '@czap/scene';
 import { intro, introContract, compileIntro } from '../../examples/scenes/intro.js';
 
@@ -24,7 +23,7 @@ describe('examples.intro scene capsule', () => {
     try {
       expect(handle.entitySpawnCount).toBe(6);
       expect(handle.systemsRegistered).toBe(7);
-      const entities = await Effect.runPromise(handle.world.query('trackId'));
+      const entities = handle.world.query('trackId');
       expect(entities.length).toBe(6);
     } finally {
       await handle.release();

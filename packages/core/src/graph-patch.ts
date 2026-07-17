@@ -27,7 +27,6 @@
  * @module
  */
 
-import { Effect } from 'effect';
 import { ParseError } from '@czap/error';
 import type { ContentAddress, HLC } from './brands.js';
 import { contentAddressOf } from './content-address.js';
@@ -248,32 +247,30 @@ export function patchId(patch: GraphPatch): ContentAddress {
 /**
  * Compose the patch's `resultId` onto the {@link Receipt} byte law: a single
  * genesis-or-linked envelope whose payload is a {@link TypedRef} over the
- * mutation, subject-keyed by the patch identity. Effect-returning because the
- * receipt byte law hashes via `crypto.subtle` (SHA-256) — the same async kernel
- * `Receipt.createEnvelope` rides on; folding it to a sync value would force a
- * second, divergent hashing path. `timestamp`/`previous` default to a genesis
- * stamp; pass them to chain this patch onto a prior receipt.
+ * mutation, subject-keyed by the patch identity. Async (`Promise`-returning)
+ * because the receipt byte law hashes via `crypto.subtle` (SHA-256) — the same
+ * async kernel `Receipt.createEnvelope` rides on; folding it to a sync value
+ * would force a second, divergent hashing path. `timestamp`/`previous` default to
+ * a genesis stamp; pass them to chain this patch onto a prior receipt.
  */
-export function receipt(
+export async function receipt(
   patch: GraphPatch,
   options?: { readonly timestamp?: HLC; readonly previous?: string | readonly string[] },
-): Effect.Effect<ReceiptEnvelope> {
-  return Effect.gen(function* () {
-    const timestamp = options?.timestamp ?? HLCOps.create('graph-patch');
-    const previous = options?.previous ?? Receipt.GENESIS;
-    const payload = yield* TypedRef.create('GraphPatch@1', {
-      base: patch.base,
-      resultId: patch.resultId,
-      ops: patch.ops,
-    });
-    return yield* Receipt.createEnvelope(
-      'graph-patch',
-      { type: 'artifact', id: patch.resultId ?? patchId(patch) },
-      payload,
-      timestamp,
-      previous,
-    );
+): Promise<ReceiptEnvelope> {
+  const timestamp = options?.timestamp ?? HLCOps.create('graph-patch');
+  const previous = options?.previous ?? Receipt.GENESIS;
+  const payload = await TypedRef.create('GraphPatch@1', {
+    base: patch.base,
+    resultId: patch.resultId,
+    ops: patch.ops,
   });
+  return Receipt.createEnvelope(
+    'graph-patch',
+    { type: 'artifact', id: patch.resultId ?? patchId(patch) },
+    payload,
+    timestamp,
+    previous,
+  );
 }
 
 /**

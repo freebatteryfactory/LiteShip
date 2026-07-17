@@ -8,7 +8,7 @@
 
 > `const` **Part**: `object` & `Record`\<`string`, `never`\>
 
-Defined in: [core/src/ecs.ts:364](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L364)
+Defined in: [core/src/ecs.ts:337](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L337)
 
 Part namespace — factories for ECS component stores.
 

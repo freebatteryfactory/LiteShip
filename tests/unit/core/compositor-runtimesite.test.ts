@@ -25,7 +25,6 @@ import { afterEach, describe, test, expect } from 'vitest';
 import { Boundary, Compositor, Cap, sealNode } from '@czap/core';
 import type { PolicyNode, RuntimeSite, CapTier, CapSet, CellMeta } from '@czap/core';
 import { Effect } from 'effect';
-import { runScopedAsync as runScoped } from '../../helpers/effect-test.js';
 
 const widthBoundary = Boundary.make({
   input: 'viewport.width',
@@ -82,15 +81,13 @@ function siteOnlyPolicy(sites: readonly RuntimeSite[]): PolicyNode {
  * gate a projection on a policy admitting only `admitSite`, and report whether
  * that projection's css survived — i.e. whether the detected realm === admitSite.
  */
-async function detectedSiteAdmits(admitSite: RuntimeSite): Promise<boolean> {
-  const compositor = await runScoped(
-    Compositor.create({
-      // runtimeSite intentionally omitted → defaultRuntimeSite() runs.
-      getPolicy: () => siteOnlyPolicy([admitSite]),
-    }),
-  );
-  await Effect.runPromise(compositor.add('layout', makeQuantizer(widthBoundary, 'mobile')));
-  const state = await Effect.runPromise(compositor.compute());
+function detectedSiteAdmits(admitSite: RuntimeSite): boolean {
+  const { compositor } = Compositor.create({
+    // runtimeSite intentionally omitted → defaultRuntimeSite() runs.
+    getPolicy: () => siteOnlyPolicy([admitSite]),
+  });
+  compositor.add('layout', makeQuantizer(widthBoundary, 'mobile'));
+  const state = compositor.compute();
   // Pass-through is ruled out (a policy is always returned); the projection emits
   // css iff the chosen rung admitted it, which happens iff the detected site is in
   // the policy's `sites`. Otherwise chooseRung → { error } → deny-all.

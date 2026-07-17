@@ -7,7 +7,6 @@
  */
 
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
-import { Effect } from 'effect';
 import { Diagnostics } from '@czap/core';
 import { hasTag } from '@czap/error';
 import { Morph, SlotAddressing, SSE } from '@czap/web';
@@ -72,18 +71,16 @@ describe('slot path validation message', () => {
 // ---------------------------------------------------------------------------
 
 describe('preserve-id-missing warning', () => {
-  test('names the matching attribute and the literal fix', async () => {
+  test('names the matching attribute and the literal fix', () => {
     const events = captureDiagnostics();
 
     const root = document.createElement('div');
     root.innerHTML = '<span data-czap-id="kept">x</span>';
     document.body.append(root);
 
-    await Effect.runPromise(
-      Morph.morphWithState(root, '<div><span data-czap-id="kept">y</span></div>', undefined, {
-        preserveIds: ['kept', 'cart'],
-      }),
-    );
+    Morph.morphWithState(root, '<div><span data-czap-id="kept">y</span></div>', undefined, {
+      preserveIds: ['kept', 'cart'],
+    });
 
     const warning = events.find((e) => e.code === 'preserve-id-missing');
     expect(warning).toBeDefined();
@@ -97,7 +94,7 @@ describe('preserve-id-missing warning', () => {
 // ---------------------------------------------------------------------------
 
 describe('morph rejection contract', () => {
-  test('rejection reason names the missing ids and both remedies; event detail carries recovery', async () => {
+  test('rejection reason names the missing ids and both remedies; event detail carries recovery', () => {
     const root = document.createElement('div');
     root.innerHTML = '<span data-czap-id="cart">x</span>';
     document.body.append(root);
@@ -107,11 +104,9 @@ describe('morph rejection contract', () => {
       rejectedDetail = (event as CustomEvent<{ reason: string; recovery?: string }>).detail;
     });
 
-    const result = await Effect.runPromise(
-      Morph.morphWithState(root, '<div><span>no ids here</span></div>', undefined, {
-        preserveIds: ['cart'],
-      }),
-    );
+    const result = Morph.morphWithState(root, '<div><span>no ids here</span></div>', undefined, {
+      preserveIds: ['cart'],
+    });
 
     expect(result.type).toBe('rejected');
     if (result.type === 'rejected') {
@@ -133,7 +128,7 @@ describe('morph rejection contract', () => {
 // ---------------------------------------------------------------------------
 
 describe('physical restore warnings', () => {
-  test('focus selection failure names the element it was restoring', async () => {
+  test('focus selection failure names the element it was restoring', () => {
     const events = captureDiagnostics();
 
     const input = document.createElement('input');
@@ -148,17 +143,18 @@ describe('physical restore warnings', () => {
       throw new TypeError('boom');
     };
 
-    await expect(
-      Effect.runPromise(
-        restoreFocusState({
-          elementId: 'input',
-          cursorPosition: 1,
-          selectionStart: 0,
-          selectionEnd: 1,
-          selectionDirection: 'forward',
-        }),
-      ),
-    ).rejects.toThrow('boom');
+    // `restoreFocusState` is synchronous now — a non-DOMException error
+    // propagates as a synchronous throw (the DOMException best-effort path
+    // only swallows unsupported-range errors).
+    expect(() =>
+      restoreFocusState({
+        elementId: 'input',
+        cursorPosition: 1,
+        selectionStart: 0,
+        selectionEnd: 1,
+        selectionDirection: 'forward',
+      }),
+    ).toThrow('boom');
 
     const warning = events.find((e) => e.code === 'restore-focus-selection-failed');
     expect(warning).toBeDefined();

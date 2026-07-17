@@ -11,6 +11,15 @@
 # .split / .replace) or the argument to a RegExp `.exec` / `.test` — the exact
 # S0.4 signature — so a re-inlined private parse fails `lint:structural`.
 #
+# S1.5.1 widening: the naked-access patterns MISSED the nullish-coalescing-
+# defaulted form — `(pkg.scripts.x ?? '').split('&&')` — which the gate-canaries
+# canary used to dodge this guard (its typecheck-leg split + lint-glob matchAll).
+# The `(… ?? …)` mirror patterns below close that hole; the canary was refactored
+# onto repo-truths accessors in lockstep (proof: this rule fires on the pre-refactor
+# canary shape, passes on the refactor). An alias-then-parse
+# (`const s = pkg.scripts.x ?? ''; s.matchAll(…)`) needs dataflow ast-grep cannot
+# do — that instance was refactored out, and repo-truths.ts owns the parse.
+#
 # Scoped to tests/**; allowlists tests/support/repo-truths.ts, the one sanctioned
 # owner of the repo truths. Passes clean on the current tree.
 id: repo-truths-no-script-parse
@@ -35,3 +44,17 @@ rule:
     - pattern: $RE.test($OBJ.scripts.$KEY)
     - pattern: $RE.exec($OBJ.scripts[$KEY])
     - pattern: $RE.test($OBJ.scripts[$KEY])
+    # S1.5.1: the nullish-coalescing-defaulted receiver — `(pkg.scripts.x ?? '').split(…)`
+    # — the exact form the gate-canaries canary used to slip past the naked patterns above.
+    - pattern: ($OBJ.scripts.$KEY ?? $DEF).match($$$)
+    - pattern: ($OBJ.scripts.$KEY ?? $DEF).matchAll($$$)
+    - pattern: ($OBJ.scripts.$KEY ?? $DEF).split($$$)
+    - pattern: ($OBJ.scripts.$KEY ?? $DEF).replace($$$)
+    - pattern: ($OBJ.scripts[$KEY] ?? $DEF).match($$$)
+    - pattern: ($OBJ.scripts[$KEY] ?? $DEF).matchAll($$$)
+    - pattern: ($OBJ.scripts[$KEY] ?? $DEF).split($$$)
+    - pattern: ($OBJ.scripts[$KEY] ?? $DEF).replace($$$)
+    - pattern: $RE.exec($OBJ.scripts.$KEY ?? $DEF)
+    - pattern: $RE.test($OBJ.scripts.$KEY ?? $DEF)
+    - pattern: $RE.exec($OBJ.scripts[$KEY] ?? $DEF)
+    - pattern: $RE.test($OBJ.scripts[$KEY] ?? $DEF)

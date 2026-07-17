@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import { Effect } from 'effect';
 import { Diagnostics, GenFrame, HLC, Receipt, TokenBuffer, TypedRef, WASMDispatch } from '@czap/core';
 import type { UIFrame } from '@czap/core';
 import {
@@ -54,15 +53,13 @@ function resetRuntimeWindow(): void {
 }
 
 async function makeEnvelope(step: number, previous: string | readonly string[]) {
-  const payload = await Effect.runPromise(TypedRef.create('schema:test', { step }));
-  return Effect.runPromise(
-    Receipt.createEnvelope(
-      'frame',
-      { type: 'artifact', id: 'ui' },
-      payload,
-      HLC.increment(HLC.create('ui-node'), step),
-      previous,
-    ),
+  const payload = await TypedRef.create('schema:test', { step });
+  return Receipt.createEnvelope(
+    'frame',
+    { type: 'artifact', id: 'ui' },
+    payload,
+    HLC.increment(HLC.create('ui-node'), step),
+    previous,
   );
 }
 

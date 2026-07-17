@@ -7,7 +7,6 @@
  */
 
 import { describe, test, expect, beforeAll, vi } from 'vitest';
-import { Effect } from 'effect';
 import { Diagnostics } from '@czap/core';
 import { Morph, SemanticId, Hints, MorphOpaque } from '@czap/web';
 
@@ -32,8 +31,12 @@ const el = (html: string): Element => {
   return template.content.firstElementChild!;
 };
 
-/** Run a sync Effect and return the result. */
-const run = <A>(effect: Effect.Effect<A>): A => Effect.runSync(effect);
+/**
+ * Identity passthrough: `Morph.morph`/`morphWithState` are synchronous now, so
+ * the former `Effect.runSync` harness is just the value itself. Kept as a thin
+ * wrapper so the call sites below read unchanged.
+ */
+const run = <A>(value: A): A => value;
 
 // ---------------------------------------------------------------------------
 // parseHTML
@@ -203,11 +206,7 @@ describe('Morph semantic ID matching', () => {
         root,
         '<p data-czap-id="incoming">new</p>',
         { morphStyle: 'outerHTML' },
-        Hints.withIdMap(
-          new Map([
-            ['incoming', 'mapped'],
-          ]),
-        ),
+        Hints.withIdMap(new Map([['incoming', 'mapped']])),
       ),
     );
 
@@ -353,15 +352,11 @@ describe('Morph.morphWithState', () => {
     document.body.appendChild(root);
 
     const result = run(
-      Morph.morphWithState(
-        root,
-        '<p>new</p>',
-        {
-          preserveFocus: false,
-          preserveScroll: false,
-          preserveSelection: false,
-        },
-      ),
+      Morph.morphWithState(root, '<p>new</p>', {
+        preserveFocus: false,
+        preserveScroll: false,
+        preserveSelection: false,
+      }),
     );
 
     expect(result.type).toBe('success');
@@ -405,11 +400,7 @@ describe('Morph.morphWithState', () => {
           preserveFocus: true,
           preserveSelection: true,
         },
-        Hints.withIdMap(
-          new Map([
-            ['before', 'after'],
-          ]),
-        ),
+        Hints.withIdMap(new Map([['before', 'after']])),
       ),
     );
 
@@ -430,11 +421,7 @@ describe('Morph.morphWithState', () => {
         root,
         'lead<span data-czap-id="server">body</span>',
         undefined,
-        Hints.withIdMap(
-          new Map([
-            ['server', 'client'],
-          ]),
-        ),
+        Hints.withIdMap(new Map([['server', 'client']])),
       ),
     );
 
@@ -666,7 +653,10 @@ describe('morph callbacks', () => {
     run(
       Morph.morph(root, 'lead<p>old</p><span>new</span>', {
         callbacks: {
-          afterAdd: (node) => added.push(node.nodeType === Node.TEXT_NODE ? `text:${node.textContent}` : `element:${(node as Element).tagName}`),
+          afterAdd: (node) =>
+            added.push(
+              node.nodeType === Node.TEXT_NODE ? `text:${node.textContent}` : `element:${(node as Element).tagName}`,
+            ),
         },
       }),
     );

@@ -6,7 +6,6 @@
 import { describe, test, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { Effect } from 'effect';
 import { Boundary } from '@czap/core';
 import { Q } from '@czap/quantizer';
 
@@ -57,7 +56,7 @@ describe('quantizer output cache key law', () => {
     expect(a.id).not.toBe(c.id);
   });
 
-  test('evaluate with spring produces legal config id (spring path exercises output cache)', async () => {
+  test('evaluate with spring produces legal config id (spring path exercises output cache)', () => {
     const config = Q.from(viewport(), { spring: { stiffness: 200, damping: 20 } }).outputs({
       css: {
         compact: { '--gap': '0.5rem' },
@@ -66,8 +65,8 @@ describe('quantizer output cache key law', () => {
       },
     });
     expect(config.id).toMatch(FNV1A_RE);
-    const lq = await Effect.runPromise(Effect.scoped(config.create()));
-    const outputs = await Effect.runPromise(lq.currentOutputs);
+    const { quantizer: lq } = config.create();
+    const outputs = lq.currentOutputs.read();
     expect(outputs.css).toBeDefined();
   });
 });

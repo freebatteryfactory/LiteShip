@@ -8,7 +8,7 @@
 
 > `const` **LLMAdapter**: `object`
 
-Defined in: [web/src/stream/llm-adapter.ts:174](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/llm-adapter.ts#L174)
+Defined in: [web/src/stream/llm-adapter.ts:180](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/llm-adapter.ts#L180)
 
 LLM adapter namespace.
 
@@ -63,13 +63,12 @@ Stream source and parser configuration
 
 [`LLMAdapterShape`](../interfaces/LLMAdapterShape.md)
 
-An [LLMAdapterShape](../interfaces/LLMAdapterShape.md) with `chunks` and `textTokens` streams
+An [LLMAdapterShape](../interfaces/LLMAdapterShape.md) with `chunks` and `textTokens` AsyncIterables
 
 #### Example
 
 ```ts
 import { LLMAdapter } from '@czap/web';
-import { Stream, Effect } from 'effect';
 
 const adapter = LLMAdapter.create({
   source: sseMessageStream,
@@ -82,30 +81,26 @@ const adapter = LLMAdapter.create({
     return null;
   },
 });
-// adapter.textTokens is a Stream<string> of text content
-// adapter.chunks is a Stream<LLMChunk> of all parsed chunks
+// adapter.textTokens is an AsyncIterable<string> of text content
+// adapter.chunks is an AsyncIterable<LLMChunk> of all parsed chunks
+for await (const token of adapter.textTokens) process.stdout.write(token);
 ```
 
 ## Example
 
 ```ts
 import { LLMAdapter, SSE } from '@czap/web';
-import { Effect, Stream } from 'effect';
 
-const program = Effect.scoped(Effect.gen(function* () {
-  const client = yield* SSE.create({ url: '/api/llm/stream' });
-  const adapter = LLMAdapter.create({
-    source: client.messages,
-    parser: (msg) => {
-      if (msg.type !== 'patch') return null;
-      const data = msg.data as { type?: string; content?: string };
-      return data.type === 'text' && typeof data.content === 'string'
-        ? { type: 'text', partial: false, content: data.content }
-        : null;
-    },
-  });
-  yield* Stream.runForEach(adapter.textTokens, (token) =>
-    Effect.sync(() => process.stdout.write(token)),
-  );
-}));
+const client = SSE.create({ url: '/api/llm/stream' });
+const adapter = LLMAdapter.create({
+  source: client.messages,
+  parser: (msg) => {
+    if (msg.type !== 'patch') return null;
+    const data = msg.data as { type?: string; content?: string };
+    return data.type === 'text' && typeof data.content === 'string'
+      ? { type: 'text', partial: false, content: data.content }
+      : null;
+  },
+});
+for await (const token of adapter.textTokens) process.stdout.write(token);
 ```

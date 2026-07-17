@@ -6,7 +6,6 @@
 
 import { describe, test, expect } from 'vitest';
 import fc from 'fast-check';
-import { Effect } from 'effect';
 import { DAG, Receipt, HLC } from '@czap/core';
 
 // ---------------------------------------------------------------------------

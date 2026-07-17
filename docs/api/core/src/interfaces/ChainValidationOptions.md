@@ -6,7 +6,7 @@
 
 # Interface: ChainValidationOptions
 
-Defined in: [core/src/receipt.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/receipt.ts#L65)
+Defined in: [core/src/receipt.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/receipt.ts#L64)
 
 Options that let a chain be validated as a COMPACTED TAIL instead of a full
 history (see `DAG.checkpoint`). Optional everywhere — omitting them is the
@@ -27,7 +27,7 @@ back-compat genesis-rooted check.
 
 > `readonly` `optional` **base?**: `string`
 
-Defined in: [core/src/receipt.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/receipt.ts#L66)
+Defined in: [core/src/receipt.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/receipt.ts#L65)
 
 ***
 
@@ -35,15 +35,15 @@ Defined in: [core/src/receipt.ts:66](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` `optional` **checkpoint?**: [`ReceiptEnvelope`](ReceiptEnvelope.md)
 
-Defined in: [core/src/receipt.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/receipt.ts#L67)
+Defined in: [core/src/receipt.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/receipt.ts#L66)
 
 ***
 
 ### verifyCheckpoint?
 
-> `readonly` `optional` **verifyCheckpoint?**: (`checkpoint`) => `Effect`\<`boolean`\>
+> `readonly` `optional` **verifyCheckpoint?**: (`checkpoint`) => `Promise`\<`boolean`\>
 
-Defined in: [core/src/receipt.ts:88](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/receipt.ts#L88)
+Defined in: [core/src/receipt.ts:87](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/receipt.ts#L87)
 
 Provenance verifier for the checkpoint attestation (injected capability).
 
@@ -72,4 +72,4 @@ resolve `false`, not raise. Absent, only the structural floor applies.
 
 #### Returns
 
-`Effect`\<`boolean`\>
+`Promise`\<`boolean`\>

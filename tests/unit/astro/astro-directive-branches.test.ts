@@ -1,6 +1,5 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { Effect } from 'effect';
 import { Diagnostics, GenFrame } from '@czap/core';
 import { WorkerHost } from '@czap/worker';
 import { Resumption } from '@czap/web';
@@ -1321,7 +1320,7 @@ describe('astro directive branch coverage', () => {
     // fires the reconnect and the recovery frame lands on the LIVE reconnected
     // source — SSE.create now ignores a frame from the dead (pre-reconnect) source.
     vi.spyOn(Math, 'random').mockReturnValue(0.5);
-    const resumeSpy = vi.spyOn(Resumption, 'resume').mockReturnValue(Effect.fail(new Error('resume boom')));
+    const resumeSpy = vi.spyOn(Resumption, 'resume').mockRejectedValue(new Error('resume boom'));
 
     try {
       const el = makeEl('div', {
@@ -1491,7 +1490,7 @@ describe('astro directive branch coverage', () => {
     vi.useFakeTimers();
     vi.spyOn(Math, 'random').mockReturnValue(0.5); // deterministic reconnect backoff - recovery frame lands on the LIVE source
     const resumeSpy = vi.spyOn(Resumption, 'resume').mockReturnValue(
-      Effect.succeed({
+      Promise.resolve({
         type: 'replay',
         patches: [{ data: '<div class="replayed">resumed</div>' }],
       }),
@@ -1534,7 +1533,7 @@ describe('astro directive branch coverage', () => {
       },
     });
     const resumeSpy = vi.spyOn(Resumption, 'resume').mockReturnValue(
-      Effect.succeed({
+      Promise.resolve({
         type: 'replay',
         patches: ['<div class="string-replay">string</div>', { data: '<div class="data-replay">data</div>' }, 42],
       }),
@@ -1591,7 +1590,7 @@ describe('astro directive branch coverage', () => {
       },
     });
     const resumeSpy = vi.spyOn(Resumption, 'resume').mockReturnValue(
-      Effect.succeed({
+      Promise.resolve({
         type: 'snapshot',
         html: '<div class="resumed">resumed</div>',
       }),
@@ -1662,7 +1661,7 @@ describe('astro directive branch coverage', () => {
       },
     });
     const resumeSpy = vi.spyOn(Resumption, 'resume').mockReturnValue(
-      Effect.succeed({
+      Promise.resolve({
         type: 'snapshot',
         html: '<div class="resumed">resumed</div>',
       }),
@@ -1707,7 +1706,7 @@ describe('astro directive branch coverage', () => {
     cleanupEventSource = MockEventSource.install();
     vi.useFakeTimers();
     vi.spyOn(Math, 'random').mockReturnValue(0.5); // deterministic reconnect backoff - recovery frame lands on the LIVE source
-    const resumeSpy = vi.spyOn(Resumption, 'resume').mockReturnValue(Effect.fail('resume string failure'));
+    const resumeSpy = vi.spyOn(Resumption, 'resume').mockRejectedValue('resume string failure');
 
     try {
       const host = makeEl('div', {
@@ -1759,7 +1758,7 @@ describe('astro directive branch coverage', () => {
       },
     });
     const resumeSpy = vi.spyOn(Resumption, 'resume').mockReturnValue(
-      Effect.succeed({
+      Promise.resolve({
         type: 'snapshot',
         html: '<div class="resumed">resumed</div>',
       }),

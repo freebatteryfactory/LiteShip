@@ -79,7 +79,7 @@ import {
 import type { CapsuleDef } from '../packages/core/src/assembly.js';
 import type { AssemblyKind } from '../packages/core/src/capsule.js';
 import type { ContentAddress } from '../packages/core/src/brands.js';
-import { detectCapsuleCalls } from './lib/capsule-detector.js';
+import { detectCapsuleCalls, FACTORY_NAMING, FACTORY_HINTS } from './lib/capsule-detector.js';
 
 /** A single entry in the capsule manifest. */
 interface ManifestEntry {
@@ -693,30 +693,10 @@ function isAssemblyKind(k: string): k is AssemblyKind {
   return VALID_KINDS.has(k);
 }
 
-/**
- * Naming-convention map for known capsule factories. Source of truth lives
- * in the factory's `defineCapsule({ name: ... })` template literal — we
- * mirror it here so the manifest's surface name matches what the runtime
- * registers. Keep this in sync with the factories in
- * `packages/assets/src/analysis/*.ts`.
- *
- * INDEXING NOTE: the projection factories now take a leading `registry`
- * argument — `BeatMarkerProjection(registry, audioAssetId)` — but the detector
- * (`scripts/lib/capsule-detector.ts`) captures only DIRECTLY-SERIALIZABLE
- * literal arguments: a non-literal like the `registry` variable yields
- * `undefined` from `literalValue` and is SKIPPED, never pushed. So `args` is
- * the COMPACTED list of literal call-site arguments — `['intro-bed']`, not
- * `[undefined, 'intro-bed']`. The audioAssetId is therefore still `args[0]`,
- * and a bare numeric `bins` (if ever passed positionally) is still `args[1]`.
- * Do NOT bump these indices for the registry arg — it was never captured.
- */
-const FACTORY_NAMING: Readonly<Record<string, (args: readonly unknown[]) => string | undefined>> = {
-  BeatMarkerProjection: (args) => (typeof args[0] === 'string' ? `${args[0]}:beats` : undefined),
-  OnsetProjection: (args) => (typeof args[0] === 'string' ? `${args[0]}:onsets` : undefined),
-  WaveformProjection: (args) =>
-    typeof args[0] === 'string' && typeof args[1] === 'number' ? `${args[0]}:waveform:${args[1]}` : undefined,
-  WavMetadataProjection: (args) => (typeof args[0] === 'string' ? `${args[0]}:wav-metadata` : undefined),
-};
+// FACTORY_NAMING (the naming-convention map for known capsule factories) and its
+// derived FACTORY_HINTS pre-filter now live in scripts/lib/capsule-detector.ts —
+// the SINGLE owner shared with the schema-strictness sweep (scar S1.5.2). Imported
+// above.
 
 /** Resolve the capsule's runtime-registered name from a detected call site. */
 function resolveCapsuleName(
@@ -750,15 +730,12 @@ async function main(): Promise<void> {
     cwd,
   });
 
-  // Pre-filter to files that mention `defineCapsule` or a known capsule
-  // factory. The detector's ts.createProgram pulls in transitive
-  // dependencies anyway, so we don't need to feed it every source file.
-  // Derives the factory list from FACTORY_NAMING + the two base factories
-  // so a new naming rule auto-extends the hint list.
-  // Assumption: every capsule call site includes one of these bare tokens
-  // in its source text. Holds for all current invocation patterns
-  // (defineCapsule({...}), defineAsset(id, {...}), Factory(args)).
-  const FACTORY_HINTS = ['defineCapsule', 'defineAsset', ...Object.keys(FACTORY_NAMING)];
+  // Pre-filter to files that mention `defineCapsule` or a known capsule factory.
+  // The detector's ts.createProgram pulls in transitive dependencies anyway, so we
+  // don't need to feed it every source file. FACTORY_HINTS is the SINGLE owner in
+  // scripts/lib/capsule-detector.ts (derived from FACTORY_NAMING + the two base
+  // factories); the schema-strictness sweep imports the same list, so the two
+  // candidate-file sets can never drift apart (scar S1.5.2).
   const files = allFiles.filter((f) => {
     try {
       const src = readFileSync(f, 'utf8');

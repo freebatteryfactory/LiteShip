@@ -12,10 +12,14 @@
  */
 
 import { describe, test, expect, beforeAll, beforeEach, afterEach, vi } from 'vitest';
-import { Effect } from 'effect';
 import { Physical } from '@czap/web';
 import type { PhysicalState, FocusState, ScrollPosition, SelectionState, IMEState } from '@czap/web';
-import { captureIME, captureSelection, elementToPath, findScrollable } from '../../../packages/web/src/physical/capture.js';
+import {
+  captureIME,
+  captureSelection,
+  elementToPath,
+  findScrollable,
+} from '../../../packages/web/src/physical/capture.js';
 
 // jsdom lacks CSS.escape — polyfill for tests
 beforeAll(() => {
@@ -179,7 +183,7 @@ describe('Physical.capture() behavioral', () => {
     input.focus();
     expect(document.activeElement).toBe(input);
 
-    const state = Effect.runSync(Physical.capture(container));
+    const state = Physical.capture(container);
 
     expect(state.activeElementPath).not.toBeNull();
     expect(state.activeElementPath).toContain('name-field');
@@ -195,7 +199,7 @@ describe('Physical.capture() behavioral', () => {
     input.focus();
     input.setSelectionRange(5, 5);
 
-    const state = Effect.runSync(Physical.capture(container));
+    const state = Physical.capture(container);
 
     expect(state.focusState).not.toBeNull();
     expect(state.focusState!.cursorPosition).toBe(5);
@@ -213,7 +217,7 @@ describe('Physical.capture() behavioral', () => {
     input.focus();
     input.setSelectionRange(0, 6, 'forward');
 
-    const state = Effect.runSync(Physical.capture(container));
+    const state = Physical.capture(container);
 
     expect(state.focusState).not.toBeNull();
     expect(state.focusState!.selectionStart).toBe(0);
@@ -230,7 +234,7 @@ describe('Physical.capture() behavioral', () => {
     textarea.focus();
     textarea.setSelectionRange(3, 8);
 
-    const state = Effect.runSync(Physical.capture(container));
+    const state = Physical.capture(container);
 
     expect(state.focusState).not.toBeNull();
     expect(state.focusState!.selectionStart).toBe(3);
@@ -245,7 +249,7 @@ describe('Physical.capture() behavioral', () => {
 
     input.focus();
 
-    const state = Effect.runSync(Physical.capture(container));
+    const state = Physical.capture(container);
 
     expect(state.activeElementPath).toContain('data-czap-id="semantic-input"');
   });
@@ -289,7 +293,7 @@ describe('Physical.capture() behavioral', () => {
 
   test('capture on empty container returns null/empty state', () => {
     // No children, nothing focused
-    const state = Effect.runSync(Physical.capture(container));
+    const state = Physical.capture(container);
 
     expect(state.activeElementPath).toBeNull();
     expect(state.focusState).toBeNull();
@@ -305,7 +309,7 @@ describe('Physical.capture() behavioral', () => {
     input.focus();
     input.blur();
 
-    const state = Effect.runSync(Physical.capture(container));
+    const state = Physical.capture(container);
 
     expect(state.activeElementPath).toBeNull();
     expect(state.focusState).toBeNull();
@@ -320,7 +324,7 @@ describe('Physical.capture() behavioral', () => {
     button.focus();
     expect(document.activeElement).toBe(button);
 
-    const state = Effect.runSync(Physical.capture(container));
+    const state = Physical.capture(container);
 
     expect(state.focusState).not.toBeNull();
     expect(state.focusState!.elementId).toContain('my-btn');
@@ -403,7 +407,7 @@ describe('Physical.capture() behavioral', () => {
 
     input.focus();
 
-    const state = Effect.runSync(Physical.capture(container));
+    const state = Physical.capture(container);
 
     expect(state.focusState).toEqual({
       elementId: '#null-selection-input',
@@ -452,7 +456,7 @@ describe('Physical.capture() behavioral', () => {
 
     container.append(withSemanticId, withoutSemanticId);
 
-    const state = Effect.runSync(Physical.capture(container));
+    const state = Physical.capture(container);
 
     expect(state.scrollPositions['scroll-semantic']).toEqual({ top: 42, left: 7 });
     const elementPathKey = Object.keys(state.scrollPositions).find((k) => k !== 'scroll-semantic');
@@ -483,14 +487,14 @@ describe('Physical.restore() behavioral', () => {
 
     // Capture with focus
     input.focus();
-    const state = Effect.runSync(Physical.capture(container));
+    const state = Physical.capture(container);
 
     // Blur to lose focus
     input.blur();
     expect(document.activeElement).not.toBe(input);
 
     // Restore
-    Effect.runSync(Physical.restore(state, container));
+    Physical.restore(state, container);
 
     expect(document.activeElement).toBe(input);
   });
@@ -504,13 +508,13 @@ describe('Physical.restore() behavioral', () => {
 
     input.focus();
     input.setSelectionRange(7, 7);
-    const state = Effect.runSync(Physical.capture(container));
+    const state = Physical.capture(container);
 
     // Blur and reset cursor
     input.blur();
 
     // Restore
-    Effect.runSync(Physical.restore(state, container));
+    Physical.restore(state, container);
 
     expect(document.activeElement).toBe(input);
     expect(input.selectionStart).toBe(7);
@@ -525,11 +529,11 @@ describe('Physical.restore() behavioral', () => {
 
     textarea.focus();
     textarea.setSelectionRange(5, 9, 'forward');
-    const state = Effect.runSync(Physical.capture(container));
+    const state = Physical.capture(container);
 
     textarea.blur();
 
-    Effect.runSync(Physical.restore(state, container));
+    Physical.restore(state, container);
 
     expect(document.activeElement).toBe(textarea);
     expect(textarea.selectionStart).toBe(5);
@@ -545,7 +549,7 @@ describe('Physical.restore() behavioral', () => {
 
     input.focus();
     input.setSelectionRange(3, 7);
-    const state = Effect.runSync(Physical.capture(container));
+    const state = Physical.capture(container);
 
     // Simulate a DOM morph: remove and recreate the input
     container.innerHTML = '';
@@ -556,7 +560,7 @@ describe('Physical.restore() behavioral', () => {
     container.appendChild(newInput);
 
     // Restore onto the new DOM
-    Effect.runSync(Physical.restore(state, container));
+    Physical.restore(state, container);
 
     expect(document.activeElement).toBe(newInput);
     expect(newInput.selectionStart).toBe(3);
@@ -599,12 +603,10 @@ describe('Physical.restore() behavioral', () => {
       },
     };
 
-    Effect.runSync(
-      Physical.restore(state, container, {
-        'input-old': 'input-new',
-        'scroll-old': 'scroll-new',
-      }),
-    );
+    Physical.restore(state, container, {
+      'input-old': 'input-new',
+      'scroll-old': 'scroll-new',
+    });
 
     expect(scrollable.scrollTop).toBe(25);
     expect(scrollable.scrollLeft).toBe(8);
@@ -622,7 +624,7 @@ describe('Physical.restore() behavioral', () => {
       ime: null,
     };
 
-    expect(() => Effect.runSync(Physical.restore(state, container))).not.toThrow();
+    expect(() => Physical.restore(state, container)).not.toThrow();
   });
 
   test('restore with nonexistent element path does not throw', () => {
@@ -640,7 +642,7 @@ describe('Physical.restore() behavioral', () => {
       ime: null,
     };
 
-    expect(() => Effect.runSync(Physical.restore(state, container))).not.toThrow();
+    expect(() => Physical.restore(state, container)).not.toThrow();
   });
 
   test('restore skips disabled focus targets that are not otherwise tabbable', () => {
@@ -668,7 +670,7 @@ describe('Physical.restore() behavioral', () => {
       ime: null,
     };
 
-    Effect.runSync(Physical.restore(state, container));
+    Physical.restore(state, container);
 
     expect(document.activeElement).not.toBe(input);
   });
@@ -683,11 +685,9 @@ describe('Physical.restore() behavioral', () => {
     };
 
     expect(() =>
-      Effect.runSync(
-        Physical.restore(state, container, {
-          'some-old-id': 'some-new-id',
-        }),
-      ),
+      Physical.restore(state, container, {
+        'some-old-id': 'some-new-id',
+      }),
     ).not.toThrow();
     // With no active element to restore, focus should remain on body.
     expect(document.activeElement === container || document.activeElement === document.body).toBe(true);
@@ -712,7 +712,7 @@ describe('Physical.restore() behavioral', () => {
       ime: null,
     };
 
-    Effect.runSync(Physical.restore(state, container));
+    Physical.restore(state, container);
     expect(document.activeElement).toBe(anchor);
   });
 
@@ -742,7 +742,7 @@ describe('Physical.restore() behavioral', () => {
       },
     };
 
-    expect(() => Effect.runSync(Physical.restore(state, container))).not.toThrow();
+    expect(() => Physical.restore(state, container)).not.toThrow();
   });
 
   test('restore selection tolerates text nodes whose content resolves to null during range construction', () => {
@@ -769,7 +769,7 @@ describe('Physical.restore() behavioral', () => {
       ime: null,
     };
 
-    expect(() => Effect.runSync(Physical.restore(state, container))).not.toThrow();
+    expect(() => Physical.restore(state, container)).not.toThrow();
   });
 
   test('restores focus using data-czap-id semantic path', () => {
@@ -781,7 +781,7 @@ describe('Physical.restore() behavioral', () => {
 
     input.focus();
     input.setSelectionRange(2, 5);
-    const state = Effect.runSync(Physical.capture(container));
+    const state = Physical.capture(container);
 
     // Rebuild DOM with same semantic ID
     container.innerHTML = '';
@@ -791,7 +791,7 @@ describe('Physical.restore() behavioral', () => {
     newInput.value = 'semantic';
     container.appendChild(newInput);
 
-    Effect.runSync(Physical.restore(state, container));
+    Physical.restore(state, container);
 
     expect(document.activeElement).toBe(newInput);
     expect(newInput.selectionStart).toBe(2);

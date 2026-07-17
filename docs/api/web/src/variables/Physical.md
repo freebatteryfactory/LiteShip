@@ -18,7 +18,7 @@ subsequent [Morph.morph](Morph.md#morph) preserves them.
 
 ### capture
 
-> **capture**: (`root`) => `Effect`\<[`PhysicalState`](../interfaces/PhysicalState.md)\>
+> **capture**: (`root`) => [`PhysicalState`](../interfaces/PhysicalState.md)
 
 Snapshot focus/selection/scroll state on the document.
 
@@ -32,11 +32,11 @@ Capture full physical state of an element and its descendants.
 
 #### Returns
 
-`Effect`\<[`PhysicalState`](../interfaces/PhysicalState.md)\>
+[`PhysicalState`](../interfaces/PhysicalState.md)
 
 ### restore
 
-> **restore**: (`state`, `root`, `remap?`) => `Effect`\<`void`\>
+> **restore**: (`state`, `root`, `remap?`) => `void`
 
 Re-apply a snapshot produced by [Physical.capture](#capture).
 
@@ -58,4 +58,4 @@ Restore full physical state after morphing.
 
 #### Returns
 
-`Effect`\<`void`\>
+`void`

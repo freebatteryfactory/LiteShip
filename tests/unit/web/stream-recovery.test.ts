@@ -4,7 +4,6 @@
  * #133 — graph-native recovery wiring: request-snapshot listener + replay supplement.
  */
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { Effect } from 'effect';
 import * as core from '@czap/core';
 import {
   applyDiscreteSnapshotSignals,
@@ -65,14 +64,12 @@ describe('web stream recovery (#133)', () => {
   });
 
   test('bindRequestSnapshotRecovery wires a real listener for czap:request-snapshot', async () => {
-    const fetchSpy = vi.spyOn(Resumption, 'fetchSnapshot').mockReturnValue(
-      Effect.succeed({
-        type: 'snapshot',
-        html: '<main>fresh</main>',
-        signals: { state: 'recovered' },
-        lastEventId: 'evt-9',
-      }),
-    );
+    const fetchSpy = vi.spyOn(Resumption, 'fetchSnapshot').mockResolvedValue({
+      type: 'snapshot',
+      html: '<main>fresh</main>',
+      signals: { state: 'recovered' },
+      lastEventId: 'evt-9',
+    });
 
     const host = document.createElement('div');
     const htmlApplied: string[] = [];
@@ -105,15 +102,14 @@ describe('web stream recovery (#133)', () => {
   });
 
   test('bindRequestSnapshotRecovery ignores overlapping snapshot requests while recovery is in flight', async () => {
-    let resolveFetch: ((value: unknown) => void) | undefined;
-    const fetchSpy = vi.spyOn(Resumption, 'fetchSnapshot').mockReturnValue(
-      Effect.promise(
-        () =>
-          new Promise((resolve) => {
-            resolveFetch = resolve;
-          }),
-      ) as never,
+    let resolveFetch: (() => void) | undefined;
+    const pending = new Promise<{ type: 'snapshot'; html: string; signals: unknown; lastEventId: string }>(
+      (resolve) => {
+        resolveFetch = () =>
+          resolve({ type: 'snapshot', html: '<main>once</main>', signals: { state: 'ok' }, lastEventId: 'evt-1' });
+      },
     );
+    const fetchSpy = vi.spyOn(Resumption, 'fetchSnapshot').mockReturnValue(pending);
 
     const host = document.createElement('div');
     const htmlApplied: string[] = [];
@@ -145,12 +141,7 @@ describe('web stream recovery (#133)', () => {
       expect(fetchSpy).toHaveBeenCalledTimes(1);
     });
 
-    resolveFetch?.({
-      type: 'snapshot',
-      html: '<main>once</main>',
-      signals: { state: 'ok' },
-      lastEventId: 'evt-1',
-    });
+    resolveFetch?.();
 
     await vi.waitFor(() => {
       expect(htmlApplied).toEqual(['<main>once</main>']);
@@ -160,9 +151,7 @@ describe('web stream recovery (#133)', () => {
   });
 
   test('bindRequestSnapshotRecovery dispatches czap:stream-error when recovery fails', async () => {
-    vi.spyOn(Resumption, 'fetchSnapshot').mockReturnValue(
-      Effect.fail({ _tag: 'NetworkError', message: 'offline' }) as never,
-    );
+    vi.spyOn(Resumption, 'fetchSnapshot').mockRejectedValue({ _tag: 'NetworkError', message: 'offline' });
 
     const host = document.createElement('div');
     const errors: Array<{ reason: string; message?: string }> = [];
@@ -195,14 +184,12 @@ describe('web stream recovery (#133)', () => {
   });
 
   test('supplementReplayIfSignalsDropped recovers missed discrete crossing after HTML-only replay', async () => {
-    const fetchSpy = vi.spyOn(Resumption, 'fetchSnapshot').mockReturnValue(
-      Effect.succeed({
-        type: 'snapshot',
-        html: '<main>ignored</main>',
-        signals: { state: 'gap-recovered', width: 999 },
-        lastEventId: 'evt-5',
-      }),
-    );
+    const fetchSpy = vi.spyOn(Resumption, 'fetchSnapshot').mockResolvedValue({
+      type: 'snapshot',
+      html: '<main>ignored</main>',
+      signals: { state: 'gap-recovered', width: 999 },
+      lastEventId: 'evt-5',
+    });
 
     const signals: unknown[] = [];
     let htmlCalls = 0;
@@ -241,14 +228,12 @@ describe('web stream recovery (#133)', () => {
     const adopt = vi.fn();
     const refreshBase = vi.fn(async () => graph);
 
-    vi.spyOn(Resumption, 'fetchSnapshot').mockReturnValue(
-      Effect.succeed({
-        type: 'snapshot',
-        html: '<section>sync</section>',
-        signals: [{ state: 'synced' }],
-        lastEventId: 'evt-1',
-      }),
-    );
+    vi.spyOn(Resumption, 'fetchSnapshot').mockResolvedValue({
+      type: 'snapshot',
+      html: '<section>sync</section>',
+      signals: [{ state: 'synced' }],
+      lastEventId: 'evt-1',
+    });
 
     const htmlApplied: string[] = [];
     const signals: unknown[] = [];
@@ -305,14 +290,12 @@ describe('web stream recovery (#133)', () => {
       replayedCells: [],
       transitions: [],
     } as never);
-    const snapshotSpy = vi.spyOn(Resumption, 'fetchSnapshot').mockReturnValue(
-      Effect.succeed({
-        type: 'snapshot',
-        html: '<main>fresh</main>',
-        signals: { state: 'converged' },
-        lastEventId: 'evt-3',
-      }),
-    );
+    const snapshotSpy = vi.spyOn(Resumption, 'fetchSnapshot').mockResolvedValue({
+      type: 'snapshot',
+      html: '<main>fresh</main>',
+      signals: { state: 'converged' },
+      lastEventId: 'evt-3',
+    });
 
     const htmlApplied: string[] = [];
     await runGraphNativeRecovery({
@@ -343,14 +326,12 @@ describe('web stream recovery (#133)', () => {
       replayedCells: [],
       transitions: [],
     } as never);
-    const snapshotSpy = vi.spyOn(Resumption, 'fetchSnapshot').mockReturnValue(
-      Effect.succeed({
-        type: 'snapshot',
-        html: '<main>converged-304</main>',
-        signals: { state: 'ok' },
-        lastEventId: 'evt-4',
-      }),
-    );
+    const snapshotSpy = vi.spyOn(Resumption, 'fetchSnapshot').mockResolvedValue({
+      type: 'snapshot',
+      html: '<main>converged-304</main>',
+      signals: { state: 'ok' },
+      lastEventId: 'evt-4',
+    });
 
     const htmlApplied: string[] = [];
     await expect(

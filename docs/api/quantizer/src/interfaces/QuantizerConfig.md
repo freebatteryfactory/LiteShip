@@ -6,14 +6,14 @@
 
 # Interface: QuantizerConfig\<B, O\>
 
-Defined in: [quantizer/src/quantizer.ts:216](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L216)
+Defined in: [quantizer/src/quantizer.ts:214](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L214)
 
 Immutable, content-addressed quantizer definition.
 
 The `id` is an FNV-1a hash over the boundary id and outputs, so two
 configs with identical definitions share the same address and are
 deduplicated by the internal memo cache. `create()` materializes a
-fresh [LiveQuantizer](LiveQuantizer.md) within an Effect scope.
+fresh [LiveQuantizer](LiveQuantizer.md) paired with its owning [Lifetime](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/lifetime.ts).
 
 ## Type Parameters
 
@@ -31,7 +31,7 @@ fresh [LiveQuantizer](LiveQuantizer.md) within an Effect scope.
 
 > `readonly` **boundary**: `B`
 
-Defined in: [quantizer/src/quantizer.ts:218](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L218)
+Defined in: [quantizer/src/quantizer.ts:216](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L216)
 
 Boundary this config quantizes against.
 
@@ -41,7 +41,7 @@ Boundary this config quantizes against.
 
 > `readonly` **id**: `ContentAddress`
 
-Defined in: [quantizer/src/quantizer.ts:222](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L222)
+Defined in: [quantizer/src/quantizer.ts:220](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L220)
 
 Content-addressed identity (FNV-1a of boundary id + outputs).
 
@@ -51,7 +51,7 @@ Content-addressed identity (FNV-1a of boundary id + outputs).
 
 > `readonly` **outputs**: `O`
 
-Defined in: [quantizer/src/quantizer.ts:220](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L220)
+Defined in: [quantizer/src/quantizer.ts:218](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L218)
 
 Per-target output tables keyed by state.
 
@@ -61,7 +61,7 @@ Per-target output tables keyed by state.
 
 > `readonly` `optional` **spring?**: [`SpringConfig`](SpringConfig.md)
 
-Defined in: [quantizer/src/quantizer.ts:226](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L226)
+Defined in: [quantizer/src/quantizer.ts:224](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L224)
 
 Spring config driving CSS easing injection.
 
@@ -71,7 +71,7 @@ Spring config driving CSS easing injection.
 
 > `readonly` `optional` **tier?**: `MotionTier`
 
-Defined in: [quantizer/src/quantizer.ts:224](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L224)
+Defined in: [quantizer/src/quantizer.ts:222](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L222)
 
 Motion tier gating active targets; see [QuantizerFromOptions.tier](QuantizerFromOptions.md#tier) for the tier → targets table.
 
@@ -79,11 +79,13 @@ Motion tier gating active targets; see [QuantizerFromOptions.tier](QuantizerFrom
 
 ### create()
 
-> **create**(`runtime?`): `Effect`\<[`LiveQuantizer`](LiveQuantizer.md)\<`B`, `O`\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\>
+> **create**(`runtime?`): [`LiveQuantizerHandle`](LiveQuantizerHandle.md)\<`B`, `O`\>
 
 Defined in: [quantizer/src/quantizer.ts:235](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L235)
 
-Instantiate a reactive [LiveQuantizer](LiveQuantizer.md) scoped to an Effect fiber.
+Instantiate a reactive [LiveQuantizer](LiveQuantizer.md), paired with the [Lifetime](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/lifetime.ts)
+that owns its teardown — disposing it closes the state / outputs / crossings
+kernels (completing every subscriber and making publish inert).
 
 Pass a [QuantizerRuntime](QuantizerRuntime.md) to inject the wall-clock boundary that
 advances this instance's monotonic crossing HLC; omit it to default to
@@ -98,4 +100,4 @@ the cached config's identity.
 
 #### Returns
 
-`Effect`\<[`LiveQuantizer`](LiveQuantizer.md)\<`B`, `O`\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\>
+[`LiveQuantizerHandle`](LiveQuantizerHandle.md)\<`B`, `O`\>

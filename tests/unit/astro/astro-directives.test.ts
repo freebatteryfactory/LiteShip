@@ -2,7 +2,6 @@
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { WASMDispatch, Diagnostics, HLC, Receipt, TypedRef } from '@czap/core';
-import { Effect } from 'effect';
 import { Resumption } from '@czap/web';
 import { configureRuntimePolicy, _resetRuntimePolicyForTests } from '../../../packages/astro/src/runtime/policy.js';
 import { MockEventSource } from '../../helpers/mock-event-source.js';
@@ -32,15 +31,13 @@ const BOUNDARY = JSON.stringify({
 });
 
 async function makeReceiptEnvelope(step: number): Promise<Receipt.Envelope> {
-  const payload = await Effect.runPromise(TypedRef.create('schema:test', { step }));
-  return Effect.runPromise(
-    Receipt.createEnvelope(
-      'frame',
-      { type: 'artifact', id: 'llm' },
-      payload,
-      HLC.increment(HLC.create('llm-node'), step),
-      Receipt.GENESIS,
-    ),
+  const payload = await TypedRef.create('schema:test', { step });
+  return Receipt.createEnvelope(
+    'frame',
+    { type: 'artifact', id: 'llm' },
+    payload,
+    HLC.increment(HLC.create('llm-node'), step),
+    Receipt.GENESIS,
   );
 }
 
@@ -211,14 +208,12 @@ describe('stream directive', () => {
   test('reconnects through the shared resumption runtime after a disconnect', async () => {
     const scheduled: Array<() => void> = [];
     const clearTimeoutMock = vi.fn();
-    const resumeSpy = vi.spyOn(Resumption, 'resume').mockReturnValue(
-      Effect.succeed({
-        type: 'snapshot',
-        html: '<div data-czap-stream-url="/api/feed" data-czap-stream-artifact="hero">Recovered</div>',
-        signals: null,
-        lastEventId: 'evt-10',
-      }),
-    );
+    const resumeSpy = vi.spyOn(Resumption, 'resume').mockResolvedValue({
+      type: 'snapshot',
+      html: '<div data-czap-stream-url="/api/feed" data-czap-stream-artifact="hero">Recovered</div>',
+      signals: null,
+      lastEventId: 'evt-10',
+    });
 
     vi.stubGlobal('setTimeout', ((callback: () => void) => {
       scheduled.push(callback);
@@ -307,16 +302,14 @@ describe('stream directive', () => {
     }) as never);
     vi.stubGlobal('clearTimeout', vi.fn() as never);
 
-    const resumeSpy = vi.spyOn(Resumption, 'resume').mockReturnValue(
-      Effect.succeed({
-        type: 'replay',
-        patches: [
-          { data: '<section data-czap-id="semantic-stream"><div class="replayed-data">first</div></section>' },
-          { html: '<section data-czap-id="semantic-stream"><div class="replayed-html">second</div></section>' },
-          { html: 123 },
-        ] as unknown[],
-      }),
-    );
+    const resumeSpy = vi.spyOn(Resumption, 'resume').mockResolvedValue({
+      type: 'replay',
+      patches: [
+        { data: '<section data-czap-id="semantic-stream"><div class="replayed-data">first</div></section>' },
+        { html: '<section data-czap-id="semantic-stream"><div class="replayed-html">second</div></section>' },
+        { html: 123 },
+      ] as unknown[],
+    });
 
     const el = makeEl('section', {
       'data-czap-stream-url': '/api/feed',
@@ -371,14 +364,12 @@ describe('stream directive', () => {
       },
     });
 
-    const resumeSpy = vi.spyOn(Resumption, 'resume').mockReturnValue(
-      Effect.succeed({
-        type: 'snapshot',
-        html: '<section><div class="recovered">resumed</div></section>',
-        signals: null,
-        lastEventId: 'evt-2',
-      }),
-    );
+    const resumeSpy = vi.spyOn(Resumption, 'resume').mockResolvedValue({
+      type: 'snapshot',
+      html: '<section><div class="recovered">resumed</div></section>',
+      signals: null,
+      lastEventId: 'evt-2',
+    });
 
     const el = makeEl('section', {
       id: 'stream-id-target',
@@ -439,14 +430,12 @@ describe('stream directive', () => {
       },
     });
 
-    const resumeSpy = vi.spyOn(Resumption, 'resume').mockReturnValue(
-      Effect.succeed({
-        type: 'snapshot',
-        html: '<div data-czap-stream-url="/api/feed" data-czap-stream-artifact="hero">Recovered</div>',
-        signals: null,
-        lastEventId: 'evt-4',
-      }),
-    );
+    const resumeSpy = vi.spyOn(Resumption, 'resume').mockResolvedValue({
+      type: 'snapshot',
+      html: '<div data-czap-stream-url="/api/feed" data-czap-stream-artifact="hero">Recovered</div>',
+      signals: null,
+      lastEventId: 'evt-4',
+    });
 
     const el = makeEl('div', {
       'data-czap-stream-url': '/api/feed',

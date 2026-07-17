@@ -6,20 +6,20 @@
 
 # Zap
 
-Zap -- push-based event channel backed by Effect PubSub.
-Provides reactive event streams with map, filter, merge, debounce, and throttle.
+Zap — push-based event channel over [CellKernel.fanout](../../variables/CellKernel.md#fanout). No-replay
+fan-out with `map`, `filter`, `merge`, `debounce`, and `throttle`
+combinators; every factory returns a `{ zap, lifetime }` handle.
 
 ## Example
 
 ```ts
-const program = Effect.scoped(Effect.gen(function* () {
-  const zap = yield* Zap.make<number>();
-  const doubled = yield* Zap.map(zap, n => n * 2);
-  yield* zap.emit(5);
-  // doubled.stream receives 10
-}));
+const { zap } = Zap.make<number>();
+const { zap: doubled } = Zap.map(zap, (n) => n * 2);
+doubled.stream.subscribe((n) => received.push(n));
+zap.emit(5); // doubled subscribers receive 10
 ```
 
 ## Type Aliases
 
+- [Handle](type-aliases/Handle.md)
 - [Shape](type-aliases/Shape.md)

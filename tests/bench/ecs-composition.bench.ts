@@ -6,7 +6,6 @@
  */
 
 import { Bench } from 'tinybench';
-import { Effect } from 'effect';
 import { Boundary, Composable, ComposableWorld, Part, Style, Token, World } from '@czap/core';
 
 const bench = new Bench({ warmupIterations: 50 });
@@ -73,28 +72,16 @@ bench.add('Composable.merge -- three entities', () => {
 });
 
 bench.add('ComposableWorld.spawn -- single entity', () => {
-  Effect.runSync(
-    Effect.scoped(
-      Effect.gen(function* () {
-        const scopedWorld = yield* World.make();
-        const scopedComposableWorld = ComposableWorld.make<TestSchema>(scopedWorld);
-        yield* scopedComposableWorld.spawn({ boundary, token, style });
-      }),
-    ),
-  );
+  const { world: scopedWorld } = World.make();
+  const scopedComposableWorld = ComposableWorld.make<TestSchema>(scopedWorld);
+  scopedComposableWorld.spawn({ boundary, token, style });
 });
 
 bench.add('ComposableWorld.evaluate -- boundary + token + style', () => {
-  Effect.runSync(
-    Effect.scoped(
-      Effect.gen(function* () {
-        const scopedWorld = yield* World.make();
-        const scopedComposableWorld = ComposableWorld.make<TestSchema>(scopedWorld);
-        const entity = yield* scopedComposableWorld.spawn({ boundary, token, style });
-        yield* scopedComposableWorld.evaluate(entity, { 'viewport.width': 800, themeLevel: 1 });
-      }),
-    ),
-  );
+  const { world: scopedWorld } = World.make();
+  const scopedComposableWorld = ComposableWorld.make<TestSchema>(scopedWorld);
+  const entity = scopedComposableWorld.spawn({ boundary, token, style });
+  scopedComposableWorld.evaluate(entity, { 'viewport.width': 800, themeLevel: 1 });
 });
 
 bench.add('DenseStore get -- hot lookup', () => {
@@ -116,68 +103,47 @@ bench.add('DenseStore delete + reinsert', () => {
 });
 
 bench.add('World.tick -- regular system', () => {
-  Effect.runSync(
-    Effect.scoped(
-      Effect.gen(function* () {
-        const scopedWorld = yield* World.make();
-        yield* scopedWorld.spawn({ boundary });
-        yield* scopedWorld.addSystem({
-          name: 'reader',
-          query: ['boundary'],
-          execute() {
-            return Effect.void;
-          },
-        });
-        yield* scopedWorld.tick();
-      }),
-    ),
-  );
+  const { world: scopedWorld } = World.make();
+  scopedWorld.spawn({ boundary });
+  scopedWorld.addSystem({
+    name: 'reader',
+    query: ['boundary'],
+    execute() {},
+  });
+  scopedWorld.tick();
 });
 
 bench.add('World.tick -- dense system', () => {
-  Effect.runSync(
-    Effect.scoped(
-      Effect.gen(function* () {
-        const scopedWorld = yield* World.make();
-        const posX = Part.dense('posX', 8);
-        const posY = Part.dense('posY', 8);
-        yield* scopedWorld.addDenseStore(posX);
-        yield* scopedWorld.addDenseStore(posY);
-        const id = yield* scopedWorld.spawn();
-        posX.set(id, 1);
-        posY.set(id, 2);
-        yield* scopedWorld.addSystem({
-          name: 'dense-reader',
-          query: ['posX', 'posY'],
-          _denseSystem: true,
-          execute(stores) {
-            const x = stores.get('posX');
-            const y = stores.get('posY');
-            if (x && y) {
-              x.data[0] = x.data[0]! + 1;
-              y.data[0] = y.data[0]! + 1;
-            }
-            return Effect.void;
-          },
-        });
-        yield* scopedWorld.tick();
-      }),
-    ),
-  );
+  const { world: scopedWorld } = World.make();
+  const posX = Part.dense('posX', 8);
+  const posY = Part.dense('posY', 8);
+  scopedWorld.addDenseStore(posX);
+  scopedWorld.addDenseStore(posY);
+  const id = scopedWorld.spawn();
+  posX.set(id, 1);
+  posY.set(id, 2);
+  scopedWorld.addSystem({
+    name: 'dense-reader',
+    query: ['posX', 'posY'],
+    _denseSystem: true,
+    execute(stores) {
+      const x = stores.get('posX');
+      const y = stores.get('posY');
+      if (x && y) {
+        x.data[0] = x.data[0]! + 1;
+        y.data[0] = y.data[0]! + 1;
+      }
+    },
+  });
+  scopedWorld.tick();
 });
 
 bench.add('ComposableWorld.query -- existing world', () => {
-  Effect.runSync(
-    Effect.scoped(
-      Effect.gen(function* () {
-        const scopedWorld = yield* World.make();
-        const scopedComposableWorld = ComposableWorld.make<TestSchema>(scopedWorld);
-        yield* scopedComposableWorld.spawn({ boundary });
-        yield* scopedComposableWorld.spawn({ boundary, token });
-        yield* scopedComposableWorld.query('boundary');
-      }),
-    ),
-  );
+  const { world: scopedWorld } = World.make();
+  const scopedComposableWorld = ComposableWorld.make<TestSchema>(scopedWorld);
+  scopedComposableWorld.spawn({ boundary });
+  scopedComposableWorld.spawn({ boundary, token });
+  scopedComposableWorld.query('boundary');
 });
 
 bench.add('baseline object construction', () => {

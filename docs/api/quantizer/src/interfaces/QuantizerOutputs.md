@@ -6,7 +6,7 @@
 
 # Interface: QuantizerOutputs\<B\>
 
-Defined in: [quantizer/src/quantizer.ts:108](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L108)
+Defined in: [quantizer/src/quantizer.ts:106](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L106)
 
 Per-target output tables keyed by boundary state.
 
@@ -27,7 +27,7 @@ skip that target during dispatch.
 
 > `readonly` `optional` **ai?**: `OutputsFor`\<`B`, `Record`\<`string`, `unknown`\>\>
 
-Defined in: [quantizer/src/quantizer.ts:118](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L118)
+Defined in: [quantizer/src/quantizer.ts:116](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L116)
 
 AI-facing signals per state (free-form; consumed by LLMAdapter).
 
@@ -37,7 +37,7 @@ AI-facing signals per state (free-form; consumed by LLMAdapter).
 
 > `readonly` `optional` **aria?**: `OutputsFor`\<`B`, `Record`\<`string`, `string`\>\>
 
-Defined in: [quantizer/src/quantizer.ts:116](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L116)
+Defined in: [quantizer/src/quantizer.ts:114](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L114)
 
 ARIA attribute map per state (string values only).
 
@@ -47,7 +47,7 @@ ARIA attribute map per state (string values only).
 
 > `readonly` `optional` **css?**: `OutputsFor`\<`B`, `Record`\<`string`, `string` \| `number`\>\>
 
-Defined in: [quantizer/src/quantizer.ts:110](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L110)
+Defined in: [quantizer/src/quantizer.ts:108](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L108)
 
 CSS property map per state (values are raw CSS, e.g. `'16px'` or `1`).
 
@@ -57,7 +57,7 @@ CSS property map per state (values are raw CSS, e.g. `'16px'` or `1`).
 
 > `readonly` `optional` **glsl?**: `OutputsFor`\<`B`, `Record`\<`string`, `number`\>\>
 
-Defined in: [quantizer/src/quantizer.ts:112](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L112)
+Defined in: [quantizer/src/quantizer.ts:110](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L110)
 
 GLSL uniform values per state (numeric only).
 
@@ -67,6 +67,6 @@ GLSL uniform values per state (numeric only).
 
 > `readonly` `optional` **wgsl?**: `OutputsFor`\<`B`, `Record`\<`string`, `number`\>\>
 
-Defined in: [quantizer/src/quantizer.ts:114](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L114)
+Defined in: [quantizer/src/quantizer.ts:112](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L112)
 
 WGSL uniform values per state (numeric only).

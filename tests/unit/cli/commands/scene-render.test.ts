@@ -1,10 +1,10 @@
 /**
  * Unit tests for `czap scene render` covering the non-ffmpeg portions
  * — input validation, cache lookup, the dynamic-import + capsule/contract
- * guards. The successful render path (Effect.runPromise → renderWithFfmpeg)
- * is exercised by tests/integration/cli/scene-render.test.ts under the
- * `FFMPEG_AVAILABLE` gate; here we cover everything that reaches the
- * Effect block AND everything that returns before it.
+ * guards. The successful render path (await renderWithFfmpeg) is exercised
+ * by tests/integration/cli/scene-render.test.ts under the `FFMPEG_AVAILABLE`
+ * gate; here we cover everything that reaches the render path AND everything
+ * that returns before it.
  *
  * Every test passes an explicit `cwd: workDir` opt to sceneRender so the
  * `.czap/cache/` writes land inside the test's tmpdir, not in the repo

@@ -7,7 +7,6 @@
  * @module
  */
 import { describe, test, expect } from 'vitest';
-import { Effect } from 'effect';
 import { GraphPatch, sealNode, sealGraph } from '@czap/core';
 import type {
   SignalNode,
@@ -173,7 +172,7 @@ describe('GraphPatch receipt (composed onto the byte law)', () => {
     const base = graph([node('a')], []);
     const patch = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('b') }]);
 
-    const envelope = await Effect.runPromise(GraphPatch.receipt(patch));
+    const envelope = await GraphPatch.receipt(patch);
     expect(envelope.kind).toBe('graph-patch');
     expect(envelope.subject).toEqual({ type: 'artifact', id: patch.resultId });
     expect(envelope.hash).toMatch(/^sha256:[0-9a-f]{64}$/);

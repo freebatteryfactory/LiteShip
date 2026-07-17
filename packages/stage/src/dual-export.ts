@@ -45,7 +45,6 @@ import {
   TypedRef,
   HLC,
 } from '@czap/core';
-import { Effect } from 'effect';
 import { ValidationError } from '@czap/error';
 import { CSSCompiler } from '@czap/compiler';
 import { resolveInitialState, satelliteAttrs } from '@czap/astro';
@@ -238,15 +237,21 @@ export function exportAstroPage(graph: DocumentGraph): ExportNode {
 // Video caster
 // ---------------------------------------------------------------------------
 
-/** A pose-driven quantizer: holds a graph component's boundary, parks on a state. */
+/**
+ * A pose-driven quantizer: holds a graph component's boundary, parks on a state.
+ *
+ * Purely SYNCHRONOUS — it returns the sync {@link Quantizer} base (boundary +
+ * `evaluate` + `stateSync`) and omits the reactive extension entirely. The
+ * compositor reads its state through `stateSync()` on the sync hot path, so this
+ * never fabricates a reactive `state`/`changes` it does not have (the retyped
+ * quantizer-types split is exactly what lets a sync consumer omit them).
+ */
 function poseQuantizer(boundary: Boundary.Shape, initialState: string): Quantizer<Boundary.Shape> {
   let current = initialState;
   return {
     _tag: 'Quantizer',
     boundary,
-    state: Effect.succeed(current),
     stateSync: () => current,
-    changes: undefined as never,
     evaluate(value: number) {
       current = Boundary.evaluate(boundary, value) as string;
       return current;
@@ -280,62 +285,66 @@ type VideoFrame = { readonly composite: CompositeState; readonly posed: Record<s
  */
 function produceVideoFrames(graph: DocumentGraph): VideoFrame[] {
   const projections = cssProjections(graph);
-  return Effect.runSync(
-    Effect.scoped(
-      Effect.gen(function* () {
-        const compositor = yield* Compositor.create();
-        const posed = poses(graph);
-        // Keep each added quantizer + its boundary so the per-frame schedule can
-        // drive `evaluate` over a swept input. A pose-parked quantizer that is
-        // never evaluated yields a frozen frame stream — a degenerate "video";
-        // driving `evaluate` across the boundary's threshold span makes the cast
-        // genuinely animate across the component's states over its duration, and
-        // folds that crossing track into the artifact digest below so the video
-        // address is a true content address of what plays, not the frozen pose.
-        // `lo`/`hi` span the boundary's threshold range. `boundaryOf` guarantees
-        // a non-empty thresholds tuple (it throws otherwise), so the endpoints
-        // are always present — no defensive fallback branch to leave uncovered.
-        const driven: { key: string; quantizer: Quantizer<Boundary.Shape>; lo: number; hi: number }[] = [];
-        for (const projection of projections) {
-          const component = componentFor(graph, projection.sourceRef);
-          if (!component) continue;
-          const boundary = boundaryOf(component);
-          const thresholds = boundary.thresholds as readonly number[];
-          const lo = thresholds[0]!;
-          const hi = thresholds[thresholds.length - 1]!;
-          for (const pose of posed) {
-            const key = `${component.name}:${pose.state}`;
-            const quantizer = poseQuantizer(boundary, pose.state as string);
-            yield* compositor.add(key, quantizer);
-            driven.push({ key, quantizer, lo, hi });
-          }
-        }
-        const renderer = VideoRenderer.make(VIDEO_CONFIG, compositor);
-        // `denom` is the number of inter-frame steps; clamped to ≥1 so the sweep
-        // is well-defined for any frame count without a dead conditional branch.
-        const denom = Math.max(1, renderer.totalFrames - 1);
-        const collected: VideoFrame[] = [];
-        for (let i = 0; i < renderer.totalFrames; i++) {
-          renderer.scheduler.step();
-          // Sweep the input across the boundary's threshold span as the clock
-          // advances so each quantizer's `evaluate` re-derives its state per frame
-          // (a real boundary crossing over the video's timeline). Marking each
-          // driven quantizer dirty makes `compute()` read its swept state instead
-          // of carrying forward the previous composite — the same evaluate→mark-
-          // dirty contract the worker compositor uses. The crossing is also
-          // captured in `posed` so the artifact digest records it explicitly.
-          const progress = i / denom;
-          const posedFrame: Record<string, string> = {};
-          for (const { key, quantizer, lo, hi } of driven) {
-            posedFrame[key] = quantizer.evaluate(lo + (hi - lo) * progress) as string;
-            compositor.runtime.markDirty(key);
-          }
-          collected.push({ composite: yield* compositor.compute(), posed: posedFrame });
-        }
-        return collected;
-      }),
-    ),
-  );
+  // Compositor.create is now sync-first: it returns the live instance plus the
+  // Lifetime that owns its teardown (was `yield* Compositor.create()` in an
+  // Effect scope). `add`/`compute` are plain sync calls; the loop body was
+  // already fully synchronous, so the whole cast collapses to straight-line JS.
+  const { compositor, lifetime } = Compositor.create();
+  try {
+    const posed = poses(graph);
+    // Keep each added quantizer + its boundary so the per-frame schedule can
+    // drive `evaluate` over a swept input. A pose-parked quantizer that is
+    // never evaluated yields a frozen frame stream — a degenerate "video";
+    // driving `evaluate` across the boundary's threshold span makes the cast
+    // genuinely animate across the component's states over its duration, and
+    // folds that crossing track into the artifact digest below so the video
+    // address is a true content address of what plays, not the frozen pose.
+    // `lo`/`hi` span the boundary's threshold range. `boundaryOf` guarantees
+    // a non-empty thresholds tuple (it throws otherwise), so the endpoints
+    // are always present — no defensive fallback branch to leave uncovered.
+    const driven: { key: string; quantizer: Quantizer<Boundary.Shape>; lo: number; hi: number }[] = [];
+    for (const projection of projections) {
+      const component = componentFor(graph, projection.sourceRef);
+      if (!component) continue;
+      const boundary = boundaryOf(component);
+      const thresholds = boundary.thresholds as readonly number[];
+      const lo = thresholds[0]!;
+      const hi = thresholds[thresholds.length - 1]!;
+      for (const pose of posed) {
+        const key = `${component.name}:${pose.state}`;
+        const quantizer = poseQuantizer(boundary, pose.state as string);
+        compositor.add(key, quantizer);
+        driven.push({ key, quantizer, lo, hi });
+      }
+    }
+    const renderer = VideoRenderer.make(VIDEO_CONFIG, compositor);
+    // `denom` is the number of inter-frame steps; clamped to ≥1 so the sweep
+    // is well-defined for any frame count without a dead conditional branch.
+    const denom = Math.max(1, renderer.totalFrames - 1);
+    const collected: VideoFrame[] = [];
+    for (let i = 0; i < renderer.totalFrames; i++) {
+      renderer.scheduler.step();
+      // Sweep the input across the boundary's threshold span as the clock
+      // advances so each quantizer's `evaluate` re-derives its state per frame
+      // (a real boundary crossing over the video's timeline). Marking each
+      // driven quantizer dirty makes `compute()` read its swept state instead
+      // of carrying forward the previous composite — the same evaluate→mark-
+      // dirty contract the worker compositor uses. The crossing is also
+      // captured in `posed` so the artifact digest records it explicitly.
+      const progress = i / denom;
+      const posedFrame: Record<string, string> = {};
+      for (const { key, quantizer, lo, hi } of driven) {
+        posedFrame[key] = quantizer.evaluate(lo + (hi - lo) * progress) as string;
+        compositor.runtime.markDirty(key);
+      }
+      collected.push({ composite: compositor.compute(), posed: posedFrame });
+    }
+    return collected;
+  } finally {
+    // The compositor's one disposable resource is its reactive `changes` kernel;
+    // dispose closes it synchronously (its finalizer is sync) once the cast ends.
+    void lifetime.dispose();
+  }
 }
 
 /** Content-address the frame-level video artifact (spec + frame snapshots + crossing track). */
@@ -475,28 +484,29 @@ export interface DualExportResult {
 }
 
 /** Mint a genesis child receipt that pins one carrier's artifact digest to the shared source. */
-function childReceipt(
+async function childReceipt(
   carrier: ExportNode['carrier'],
   exportNode: ExportNode,
   graph: DocumentGraph,
-): Effect.Effect<ReceiptEnvelope> {
-  return Effect.gen(function* () {
-    const payload: TypedRef.Shape = yield* TypedRef.create(`czap/stage.export.${carrier}`, {
-      carrier,
-      exportId: exportNode.id,
-      artifactDigest: exportNode.artifactDigest.display_id,
-      sourceDigest: graph.digest.display_id,
-      graphId: graph.id,
-      sourceRefs: exportNode.sourceRefs,
-    });
-    return yield* Receipt.createEnvelope(
-      `stage.export.${carrier}`,
-      { type: 'artifact', id: exportNode.id },
-      payload,
-      HLC.increment(HLC.create('czap-stage'), 1),
-      Receipt.GENESIS,
-    );
+): Promise<ReceiptEnvelope> {
+  // TypedRef.create / Receipt.createEnvelope are now Promise-first (throwing
+  // tagged @czap/error), so this is a plain async function — the Effect.gen +
+  // yield* harness is gone, the receipt kernel identical.
+  const payload: TypedRef.Shape = await TypedRef.create(`czap/stage.export.${carrier}`, {
+    carrier,
+    exportId: exportNode.id,
+    artifactDigest: exportNode.artifactDigest.display_id,
+    sourceDigest: graph.digest.display_id,
+    graphId: graph.id,
+    sourceRefs: exportNode.sourceRefs,
   });
+  return Receipt.createEnvelope(
+    `stage.export.${carrier}`,
+    { type: 'artifact', id: exportNode.id },
+    payload,
+    HLC.increment(HLC.create('czap-stage'), 1),
+    Receipt.GENESIS,
+  );
 }
 
 /**
@@ -511,45 +521,44 @@ function childReceipt(
  *    `previous = [astroReceipt.hash, videoReceipt.hash]` and whose payload pins
  *    `sharedSourceDigest`. The merge envelope is the single assertable head.
  */
-export function dualExport(graph: DocumentGraph): Promise<DualExportResult> {
-  return Effect.runPromise(
-    Effect.gen(function* () {
-      // (1) shared source = the graph's OWN integrity digest. The keystone
-      // kernel (`addressDocumentGraph`, ADR-0003/0011) already minted this over
-      // the canonical bytes of the graph's sorted node ids + edges — node
-      // payloads ride in transitively, since each node id is itself a content
-      // address of its payload. Re-encoding the whole graph object would hash a
-      // DIFFERENT (non-canonical) byte sequence, so we take `graph.digest`
-      // verbatim: this is the SINGLE source address both casts derive from.
-      const sharedSourceDigest = graph.digest;
+export async function dualExport(graph: DocumentGraph): Promise<DualExportResult> {
+  // (1) shared source = the graph's OWN integrity digest. The keystone kernel
+  // (`addressDocumentGraph`, ADR-0003/0011) already minted this over the
+  // canonical bytes of the graph's sorted node ids + edges — node payloads ride
+  // in transitively, since each node id is itself a content address of its
+  // payload. Re-encoding the whole graph object would hash a DIFFERENT
+  // (non-canonical) byte sequence, so we take `graph.digest` verbatim: this is
+  // the SINGLE source address both casts derive from.
+  const sharedSourceDigest = graph.digest;
 
-      // (2) run both EXISTING casters.
-      const astro = exportAstroPage(graph);
-      const video = exportVideo(graph);
+  // (2) run both EXISTING casters.
+  const astro = exportAstroPage(graph);
+  const video = exportVideo(graph);
 
-      // (3) child receipts, then the parent merge head.
-      const astroReceipt = yield* childReceipt('astro-page', astro, graph);
-      const videoReceipt = yield* childReceipt('video', video, graph);
+  // (3) child receipts, then the parent merge head. TypedRef.create /
+  // Receipt.createEnvelope are Promise-first, so the former Effect.gen +
+  // Effect.runPromise harness collapses to plain awaits — the merge kernel
+  // (shared-source pin + both child hashes in `previous`) is unchanged.
+  const astroReceipt = await childReceipt('astro-page', astro, graph);
+  const videoReceipt = await childReceipt('video', video, graph);
 
-      const mergePayload: TypedRef.Shape = yield* TypedRef.create('czap/stage.dual-export.merge', {
-        sharedSourceDigest: sharedSourceDigest.display_id,
-        sharedSourceIntegrity: sharedSourceDigest.integrity_digest,
-        graphId: graph.id,
-        astroExportId: astro.id,
-        videoExportId: video.id,
-      });
+  const mergePayload: TypedRef.Shape = await TypedRef.create('czap/stage.dual-export.merge', {
+    sharedSourceDigest: sharedSourceDigest.display_id,
+    sharedSourceIntegrity: sharedSourceDigest.integrity_digest,
+    graphId: graph.id,
+    astroExportId: astro.id,
+    videoExportId: video.id,
+  });
 
-      const receipt = yield* Receipt.createEnvelope(
-        'stage.dual-export',
-        { type: 'artifact', id: graph.id },
-        mergePayload,
-        HLC.increment(HLC.create('czap-stage'), 2),
-        [astroReceipt.hash, videoReceipt.hash],
-      );
-
-      return { sharedSourceDigest, astro, video, astroReceipt, videoReceipt, receipt };
-    }),
+  const receipt = await Receipt.createEnvelope(
+    'stage.dual-export',
+    { type: 'artifact', id: graph.id },
+    mergePayload,
+    HLC.increment(HLC.create('czap-stage'), 2),
+    [astroReceipt.hash, videoReceipt.hash],
   );
+
+  return { sharedSourceDigest, astro, video, astroReceipt, videoReceipt, receipt };
 }
 
 // ---------------------------------------------------------------------------

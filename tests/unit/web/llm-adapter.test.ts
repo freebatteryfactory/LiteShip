@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'vitest';
-import { Effect, Stream } from 'effect';
 import { LLMAdapter, LLMChunkNormalization } from '@czap/web';
 import type { LLMChunk } from '@czap/web';
 
@@ -24,20 +23,14 @@ function parseChunk(event: { readonly data: string }): LLMChunk | null {
 
 async function collectChunks(events: readonly ReturnType<typeof makeSSEMessage>[]): Promise<readonly LLMChunk[]> {
   const adapter = LLMAdapter.create({
-    source: Stream.fromIterable(events),
+    source: events,
     parser: parseChunk,
   });
 
   const collected: LLMChunk[] = [];
-  await Effect.runPromise(
-    adapter.chunks.pipe(
-      Stream.runForEach((chunk) =>
-        Effect.sync(() => {
-          collected.push(chunk);
-        }),
-      ),
-    ),
-  );
+  for await (const chunk of adapter.chunks) {
+    collected.push(chunk);
+  }
 
   return collected;
 }
@@ -101,26 +94,20 @@ describe('LLMAdapter', () => {
 
   test('textTokens continues to emit only text while partial tool deltas stay suppressed', async () => {
     const adapter = LLMAdapter.create({
-      source: Stream.fromIterable([
+      source: [
         makeSSEMessage('{"type":"text","content":"Hello"}'),
         makeSSEMessage('{"type":"tool-call-start","toolName":"search"}'),
         makeSSEMessage('{"type":"tool-call-delta","content":"{\\"query\\":","partial":true}'),
         makeSSEMessage('{"type":"text","content":" world"}'),
         makeSSEMessage('{"type":"tool-call-end"}'),
-      ]),
+      ],
       parser: parseChunk,
     });
 
     const tokens: string[] = [];
-    await Effect.runPromise(
-      adapter.textTokens.pipe(
-        Stream.runForEach((token) =>
-          Effect.sync(() => {
-            tokens.push(token);
-          }),
-        ),
-      ),
-    );
+    for await (const token of adapter.textTokens) {
+      tokens.push(token);
+    }
 
     expect(tokens).toEqual(['Hello', ' world']);
   });
@@ -207,10 +194,7 @@ describe('LLMAdapter', () => {
     );
     toolCallBuffer = finalDelta.toolCallBuffer;
 
-    const end = LLMChunkNormalization.normalize(
-      { type: 'tool-call-end', partial: false },
-      toolCallBuffer,
-    );
+    const end = LLMChunkNormalization.normalize({ type: 'tool-call-end', partial: false }, toolCallBuffer);
 
     expect(start.chunk).toEqual({
       type: 'tool-call-start',

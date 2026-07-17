@@ -205,3 +205,89 @@ export function catalogEntry(name: string): string | undefined {
 export function effectCatalogRange(): string | undefined {
   return catalogEntry('effect');
 }
+
+// ---------------------------------------------------------------------------
+// Gate-script derivations — the S0.4-owned truths.
+// ---------------------------------------------------------------------------
+//
+// The root `lint` / `typecheck` scripts encode build topology in their argv:
+// eslint's target globs, and the `&&`-chained tsc legs. Extracting that topology
+// is exactly the "regex-parse a package.json SCRIPT BODY" move scar S0.4 forbids
+// everywhere else (`sgrules/repo-truths-no-script-parse.yml`). This module — the
+// rule's sole allowlisted file — is that parse's ONE sanctioned home, so a drift
+// guard reads the derived list here instead of re-forking the parse.
+
+/**
+ * The quoted glob arguments of the root `lint` script — eslint's target set
+ * (e.g. `packages/*​/src/**​/*.ts`). Only quoted tokens containing a `*` are
+ * returned, so a non-glob quoted flag value cannot inflate the list.
+ */
+export function lintGlobs(): readonly string[] {
+  const lint = rootManifest().scripts.lint ?? '';
+  return [...lint.matchAll(/"([^"]+)"/g)].map((match) => match[1]!).filter((glob) => glob.includes('*'));
+}
+
+/**
+ * The `&&`-chained legs of the root `typecheck` script, each trimmed. Leg 0 is
+ * the build-mode `tsc --build` the S0.3 vacuity tripwire pins.
+ */
+export function typecheckLegs(): readonly string[] {
+  return (rootManifest().scripts.typecheck ?? '').split('&&').map((leg) => leg.trim());
+}
+
+/** The raw root `typecheck` script body (for whole-script `.toMatch` assertions). */
+export function typecheckScript(): string {
+  return rootManifest().scripts.typecheck ?? '';
+}
+
+// ---------------------------------------------------------------------------
+// Build config inputs — per-package tsconfig, tests project, api surface.
+// ---------------------------------------------------------------------------
+
+/** Tolerant JSONC reader: strips block + line comments before JSON.parse. */
+function readJsonc<T>(absPath: string): T {
+  const text = readFileSync(absPath, 'utf8');
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    const stripped = text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/[^\n]*/g, '$1');
+    return JSON.parse(stripped) as T;
+  }
+}
+
+/** The `include` + `files` compile inputs of a tsconfig. */
+export interface TsconfigInputs {
+  readonly include?: ReadonlyArray<string>;
+  readonly files?: ReadonlyArray<string>;
+}
+
+/**
+ * The `include` + `files` inputs of `packages/<dir>/tsconfig.json` (JSONC-
+ * tolerant), or `undefined` if that project has no tsconfig (a dangling
+ * reference). Feeds the build-topology floor that proves every root reference
+ * compiles real files.
+ */
+export function packageTsconfigInputs(dir: string): TsconfigInputs | undefined {
+  const abs = resolve(REPO_ROOT, 'packages', dir, 'tsconfig.json');
+  if (!existsSync(abs)) return undefined;
+  const cfg = readJsonc<TsconfigInputs>(abs);
+  return { include: cfg.include, files: cfg.files };
+}
+
+/** The concrete (non-glob) `include` entries of `tsconfig.tests.json` (JSONC-tolerant). */
+export function tsconfigTestsIncludeFiles(): readonly string[] {
+  const include = readJsonc<TsconfigInputs>(resolve(REPO_ROOT, 'tsconfig.tests.json')).include ?? [];
+  return include.filter((entry) => !entry.includes('*'));
+}
+
+/** The parsed api-surface snapshot fixture (plain JSON). */
+export interface ApiSurfaceSnapshot {
+  readonly packages: Readonly<Record<string, { readonly exports?: ReadonlyArray<unknown> }>>;
+}
+
+/** Read the checked-in api-surface snapshot — the single reader in the test tree. */
+export function apiSurfaceSnapshot(): ApiSurfaceSnapshot {
+  return JSON.parse(
+    readFileSync(resolve(REPO_ROOT, 'tests', 'fixtures', 'api-surface-snapshot.json'), 'utf8'),
+  ) as ApiSurfaceSnapshot;
+}

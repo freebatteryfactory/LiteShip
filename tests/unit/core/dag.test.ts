@@ -3,7 +3,6 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Effect } from 'effect';
 import { DAG, Receipt, HLC } from '@czap/core';
 import type { ReceiptSubject, ReceiptEnvelope } from '@czap/core';
 
@@ -22,7 +21,7 @@ const makeChain = async (actorId: string, nodeId: string, count: number, baseTim
     hlc = HLC.increment(hlc, baseTime + i * 100);
     entries.push({ kind: 'op', subject: subject(actorId), payload: payload(), timestamp: hlc });
   }
-  return Effect.runPromise(Receipt.buildChain(entries));
+  return Receipt.buildChain(entries);
 };
 
 describe('DAG', () => {
@@ -79,9 +78,7 @@ describe('DAG', () => {
       expect(dag.heads).toHaveLength(2);
 
       const mergeTs = HLC.increment(HLC.create('node-a'), 5000);
-      const mergeEnvelope = await Effect.runPromise(
-        Receipt.createEnvelope('merge', subject('actor-1'), payload(), mergeTs, [chain1[1]!.hash, chain2[1]!.hash]),
-      );
+      const mergeEnvelope = await Receipt.createEnvelope('merge', subject('actor-1'), payload(), mergeTs, [chain1[1]!.hash, chain2[1]!.hash]);
 
       dag = DAG.ingest(dag, mergeEnvelope);
       expect(DAG.isFork(dag)).toBe(false);
@@ -112,9 +109,7 @@ describe('DAG', () => {
 
     test('merge-style genesis arrays still mark the ingested envelope as genesis', async () => {
       const mergeTs = HLC.increment(HLC.create('node-a'), 1000);
-      const envelope = await Effect.runPromise(
-        Receipt.createEnvelope('merge', subject('actor-1'), payload(), mergeTs, [Receipt.GENESIS, 'remote-head']),
-      );
+      const envelope = await Receipt.createEnvelope('merge', subject('actor-1'), payload(), mergeTs, [Receipt.GENESIS, 'remote-head']);
 
       const dag = DAG.ingest(DAG.empty(), envelope);
 
@@ -180,9 +175,7 @@ describe('DAG', () => {
 
     test('linearize ignores missing parent references when the referenced node is absent', async () => {
       const timestamp = HLC.increment(HLC.create('node-a'), 1000);
-      const envelope = await Effect.runPromise(
-        Receipt.createEnvelope('merge', subject('actor-1'), payload(), timestamp, ['missing-parent', Receipt.GENESIS]),
-      );
+      const envelope = await Receipt.createEnvelope('merge', subject('actor-1'), payload(), timestamp, ['missing-parent', Receipt.GENESIS]);
       const dag = DAG.ingest(DAG.empty(), envelope);
 
       expect(DAG.linearize(dag).map((entry) => entry.hash)).toEqual([envelope.hash]);
@@ -199,19 +192,11 @@ describe('DAG', () => {
 
     test('linearize breaks equal timestamps by actor id and then hash', async () => {
       const sharedTs = HLC.increment(HLC.create('same-node'), 2000);
-      const actorA = await Effect.runPromise(
-        Receipt.createEnvelope('op', subject('actor-a'), payload(), sharedTs, Receipt.GENESIS),
-      );
-      const actorB = await Effect.runPromise(
-        Receipt.createEnvelope('op', subject('actor-b'), payload(), sharedTs, Receipt.GENESIS),
-      );
+      const actorA = await Receipt.createEnvelope('op', subject('actor-a'), payload(), sharedTs, Receipt.GENESIS);
+      const actorB = await Receipt.createEnvelope('op', subject('actor-b'), payload(), sharedTs, Receipt.GENESIS);
 
-      const sameActorFirst = await Effect.runPromise(
-        Receipt.createEnvelope('op', subject('actor-a'), { ...payload(), content_hash: 'sha256:a' }, sharedTs, Receipt.GENESIS),
-      );
-      const sameActorSecond = await Effect.runPromise(
-        Receipt.createEnvelope('op', subject('actor-a'), { ...payload(), content_hash: 'sha256:b' }, sharedTs, Receipt.GENESIS),
-      );
+      const sameActorFirst = await Receipt.createEnvelope('op', subject('actor-a'), { ...payload(), content_hash: 'sha256:a' }, sharedTs, Receipt.GENESIS);
+      const sameActorSecond = await Receipt.createEnvelope('op', subject('actor-a'), { ...payload(), content_hash: 'sha256:b' }, sharedTs, Receipt.GENESIS);
 
       const dag = DAG.fromReceipts([actorB, sameActorSecond, sameActorFirst, actorA]);
       const ordered = DAG.linearize(dag).map((entry) => entry.hash);
@@ -230,12 +215,8 @@ describe('DAG', () => {
       // returns null (coerced to 0) where it should return -1 mis-orders the heads, so
       // canonicalHead returns the WRONG head and this assertion fails.
       const sharedTs = HLC.increment(HLC.create('same-node'), 9000);
-      const actorA = await Effect.runPromise(
-        Receipt.createEnvelope('op', subject('actor-a'), payload(), sharedTs, Receipt.GENESIS),
-      );
-      const actorB = await Effect.runPromise(
-        Receipt.createEnvelope('op', subject('actor-b'), payload(), sharedTs, Receipt.GENESIS),
-      );
+      const actorA = await Receipt.createEnvelope('op', subject('actor-a'), payload(), sharedTs, Receipt.GENESIS);
+      const actorB = await Receipt.createEnvelope('op', subject('actor-b'), payload(), sharedTs, Receipt.GENESIS);
 
       // Insert actor-b FIRST so a broken (null-returning) comparator cannot accidentally
       // land actor-a first by insertion luck — the sort sign is what must hold.
@@ -248,18 +229,10 @@ describe('DAG', () => {
 
     test('linearize handles reverse actor and reverse hash tie-break insertion deterministically', async () => {
       const sharedTs = HLC.increment(HLC.create('same-node'), 3000);
-      const actorZ = await Effect.runPromise(
-        Receipt.createEnvelope('op', subject('actor-z'), payload(), sharedTs, Receipt.GENESIS),
-      );
-      const actorA = await Effect.runPromise(
-        Receipt.createEnvelope('op', subject('actor-a'), payload(), sharedTs, Receipt.GENESIS),
-      );
-      const hashHigh = await Effect.runPromise(
-        Receipt.createEnvelope('op', subject('actor-same'), { ...payload(), content_hash: 'sha256:z' }, sharedTs, Receipt.GENESIS),
-      );
-      const hashLow = await Effect.runPromise(
-        Receipt.createEnvelope('op', subject('actor-same'), { ...payload(), content_hash: 'sha256:a' }, sharedTs, Receipt.GENESIS),
-      );
+      const actorZ = await Receipt.createEnvelope('op', subject('actor-z'), payload(), sharedTs, Receipt.GENESIS);
+      const actorA = await Receipt.createEnvelope('op', subject('actor-a'), payload(), sharedTs, Receipt.GENESIS);
+      const hashHigh = await Receipt.createEnvelope('op', subject('actor-same'), { ...payload(), content_hash: 'sha256:z' }, sharedTs, Receipt.GENESIS);
+      const hashLow = await Receipt.createEnvelope('op', subject('actor-same'), { ...payload(), content_hash: 'sha256:a' }, sharedTs, Receipt.GENESIS);
 
       const ordered = DAG.linearize(DAG.fromReceipts([actorZ, actorA, hashHigh, hashLow])).map((entry) => entry.hash);
 
@@ -269,12 +242,8 @@ describe('DAG', () => {
 
     test('linearize compares higher hashes after lower hashes for identical actor and timestamp peers', async () => {
       const sharedTs = HLC.increment(HLC.create('same-node'), 3500);
-      const first = await Effect.runPromise(
-        Receipt.createEnvelope('op', subject('actor-same'), { ...payload(), content_hash: 'sha256:z' }, sharedTs, Receipt.GENESIS),
-      );
-      const second = await Effect.runPromise(
-        Receipt.createEnvelope('op', subject('actor-same'), { ...payload(), content_hash: 'sha256:a' }, sharedTs, Receipt.GENESIS),
-      );
+      const first = await Receipt.createEnvelope('op', subject('actor-same'), { ...payload(), content_hash: 'sha256:z' }, sharedTs, Receipt.GENESIS);
+      const second = await Receipt.createEnvelope('op', subject('actor-same'), { ...payload(), content_hash: 'sha256:a' }, sharedTs, Receipt.GENESIS);
       const [higherHash, lowerHash] = first.hash > second.hash ? [first, second] : [second, first];
 
       const ordered = DAG.linearize(DAG.fromReceipts([higherHash, lowerHash])).map((entry) => entry.hash);
@@ -286,9 +255,7 @@ describe('DAG', () => {
       const left = await makeChain('actor-1', 'node-a', 2, 1000);
       const right = await makeChain('actor-2', 'node-b', 2, 2000);
       const mergeTs = HLC.increment(HLC.create('node-merge'), 5000);
-      const mergeEnvelope = await Effect.runPromise(
-        Receipt.createEnvelope('merge', subject('actor-3'), payload(), mergeTs, [left[1]!.hash, right[1]!.hash]),
-      );
+      const mergeEnvelope = await Receipt.createEnvelope('merge', subject('actor-3'), payload(), mergeTs, [left[1]!.hash, right[1]!.hash]);
 
       const merged = DAG.ingest(DAG.ingestAll(DAG.fromReceipts(left), right), mergeEnvelope);
       const ordered = DAG.linearize(merged).map((entry) => entry.hash);
@@ -436,9 +403,7 @@ describe('DAG', () => {
     test('commonAncestor prefers the latest common node when multiple ancestors are shared', async () => {
       const chain = await makeChain('actor-1', 'node-a', 4, 1000);
       const mergeTs = HLC.increment(HLC.create('node-branch'), 5000);
-      const branch = await Effect.runPromise(
-        Receipt.createEnvelope('merge', subject('actor-2'), payload(), mergeTs, [chain[1]!.hash, chain[2]!.hash]),
-      );
+      const branch = await Receipt.createEnvelope('merge', subject('actor-2'), payload(), mergeTs, [chain[1]!.hash, chain[2]!.hash]);
       const dag = DAG.ingest(DAG.fromReceipts(chain), branch);
 
       expect(DAG.commonAncestor(dag, chain[3]!.hash, branch.hash)).toBe(chain[2]!.hash);
@@ -447,12 +412,8 @@ describe('DAG', () => {
     test('commonAncestor keeps deterministic hash ordering when timestamps and actors tie', async () => {
       const base = await makeChain('actor-1', 'node-a', 1, 1000);
       const sharedTs = HLC.increment(HLC.create('node-a'), 2000);
-      const higherHash = await Effect.runPromise(
-        Receipt.createEnvelope('frame', subject('actor-1'), { payload: 'z' }, sharedTs, base[0]!.hash),
-      );
-      const lowerHash = await Effect.runPromise(
-        Receipt.createEnvelope('frame', subject('actor-1'), { payload: 'a' }, sharedTs, base[0]!.hash),
-      );
+      const higherHash = await Receipt.createEnvelope('frame', subject('actor-1'), { payload: 'z' }, sharedTs, base[0]!.hash);
+      const lowerHash = await Receipt.createEnvelope('frame', subject('actor-1'), { payload: 'a' }, sharedTs, base[0]!.hash);
 
       const dag = DAG.ingestAll(DAG.fromReceipts(base), [higherHash, lowerHash]);
 
@@ -543,9 +504,7 @@ describe('DAG', () => {
       const dag = DAG.fromReceipts(chain);
 
       const forkTs = HLC.increment(HLC.create('node-a'), 3000);
-      const forkEnvelope = await Effect.runPromise(
-        Receipt.createEnvelope('op', subject('actor-1'), payload(), forkTs, chain[0]!.hash),
-      );
+      const forkEnvelope = await Receipt.createEnvelope('op', subject('actor-1'), payload(), forkTs, chain[0]!.hash);
 
       const violation = DAG.checkForkRule(dag, forkEnvelope);
       expect(violation).not.toBeNull();
@@ -558,9 +517,7 @@ describe('DAG', () => {
       const dag = DAG.fromReceipts(chain);
 
       const otherTs = HLC.increment(HLC.create('node-b'), 3000);
-      const otherEnvelope = await Effect.runPromise(
-        Receipt.createEnvelope('op', subject('actor-2'), payload(), otherTs, chain[0]!.hash),
-      );
+      const otherEnvelope = await Receipt.createEnvelope('op', subject('actor-2'), payload(), otherTs, chain[0]!.hash);
 
       const violation = DAG.checkForkRule(dag, otherEnvelope);
       expect(violation).toBeNull();
@@ -570,12 +527,8 @@ describe('DAG', () => {
       const chain = await makeChain('actor-1', 'node-a', 2, 1000);
       const dag = DAG.fromReceipts(chain);
       const mergeTs = HLC.increment(HLC.create('node-a'), 4000);
-      const mergeEnvelope = await Effect.runPromise(
-        Receipt.createEnvelope('merge', subject('actor-1'), payload(), mergeTs, [chain[1]!.hash, 'missing-parent']),
-      );
-      const missingParentEnvelope = await Effect.runPromise(
-        Receipt.createEnvelope('op', subject('actor-1'), payload(), mergeTs, 'missing-parent'),
-      );
+      const mergeEnvelope = await Receipt.createEnvelope('merge', subject('actor-1'), payload(), mergeTs, [chain[1]!.hash, 'missing-parent']);
+      const missingParentEnvelope = await Receipt.createEnvelope('op', subject('actor-1'), payload(), mergeTs, 'missing-parent');
 
       expect(DAG.checkForkRule(dag, mergeEnvelope)).toBeNull();
       expect(DAG.checkForkRule(dag, missingParentEnvelope)).toBeNull();
@@ -585,9 +538,7 @@ describe('DAG', () => {
       const chain = await makeChain('actor-1', 'node-a', 2, 1000);
       const dag = DAG.fromReceipts(chain);
       const mergeTs = HLC.increment(HLC.create('node-a'), 5000);
-      const mergeEnvelope = await Effect.runPromise(
-        Receipt.createEnvelope('merge', subject('actor-1'), payload(), mergeTs, [Receipt.GENESIS, chain[1]!.hash]),
-      );
+      const mergeEnvelope = await Receipt.createEnvelope('merge', subject('actor-1'), payload(), mergeTs, [Receipt.GENESIS, chain[1]!.hash]);
 
       expect(DAG.checkForkRule(dag, mergeEnvelope)).toBeNull();
     });
@@ -597,9 +548,7 @@ describe('DAG', () => {
       const dag = DAG.fromReceipts(chain);
 
       const forkTs = HLC.increment(HLC.create('node-a'), 3000);
-      const forkEnvelope = await Effect.runPromise(
-        Receipt.createEnvelope('op', subject('actor-1'), payload(), forkTs, chain[0]!.hash),
-      );
+      const forkEnvelope = await Receipt.createEnvelope('op', subject('actor-1'), payload(), forkTs, chain[0]!.hash);
 
       expect(() => DAG.merge(dag, [forkEnvelope])).toThrow(/dag\.anti-fork|attempted to fork/);
     });

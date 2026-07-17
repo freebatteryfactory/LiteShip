@@ -1,9 +1,9 @@
-import { Effect, Scope, Exit, ManagedRuntime, Layer } from 'effect';
 import {
   wallClock,
   validateSnapshotSignalsField,
   replayDroppedSignals,
   Diagnostics,
+  Lifetime,
   StateCellStore,
   createGraphMutationClient,
   decodeDocumentGraph,
@@ -165,17 +165,16 @@ function saveResumptionState(artifactId: string | undefined, lastEventId: string
   }
 
   const parsed = Resumption.parseEventId(lastEventId);
-  Effect.runSync(
-    Resumption.saveState({
-      artifactId,
-      lastEventId,
-      lastSequence: parsed.sequence,
-      // Epoch wall-clock stamp for the resumption record — routed through
-      // `wallClock` (the epoch entropy boundary), not the monotonic systemClock,
-      // since the timestamp is a real point in time consumers read as epoch ms.
-      timestamp: wallClock.now(),
-    }),
-  );
+  // `Resumption.saveState` is a synchronous localStorage write — call it directly.
+  Resumption.saveState({
+    artifactId,
+    lastEventId,
+    lastSequence: parsed.sequence,
+    // Epoch wall-clock stamp for the resumption record — routed through
+    // `wallClock` (the epoch entropy boundary), not the monotonic systemClock,
+    // since the timestamp is a real point in time consumers read as epoch ms.
+    timestamp: wallClock.now(),
+  });
 }
 
 function hasCustomEndpointPolicy(policy: ReturnType<typeof readRuntimeEndpointPolicy>): boolean {
@@ -349,15 +348,14 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
   // The hardened SSE primitive (`@czap/web` `SSE.create`) now owns the
   // `EventSource`, exponential-backoff reconnect, the heartbeat watchdog, and
   // the bounded overflow buffer (default `coalesce-by-id` — stream patches are
-  // `data-czap-id`-addressed). This directive owns an explicit `Scope` and
-  // drains `messages` / `stateChanges` through an owned ManagedRuntime, not the
-  // process-global Effect runtime. Teardown explicitly interrupts the drain
-  // fibers, closes the connection Scope (EventSource + Queue + timers), then
-  // disposes the owned runtime.
-  // See ADR-0005 §Category 4 and the imperative-Scope bridge in
-  // `packages/scene/src/runtime.ts`.
-  let runtime: ManagedRuntime.ManagedRuntime<never, never> | null = null;
-  let scope: Scope.Closeable | null = null;
+  // `data-czap-id`-addressed). Messages and connection edges are delivered
+  // SYNCHRONOUSLY via `onMessage` / `onStateChange` callbacks, so this directive
+  // owns just ONE `Lifetime` per connection (replacing the former per-connection
+  // ManagedRuntime+Scope): the client's transport teardown (EventSource close +
+  // source null + queue shutdown) is registered as a synchronous finalizer on it.
+  // Teardown disposes the Lifetime, which runs that finalizer synchronously so a
+  // straggler frame from a dead generation cannot morph the fresh one on reinit.
+  let lifetime: Lifetime.Shape | null = null;
   let client: SSEClient | null = null;
   // Cursor carried ACROSS connections (reinit / VT-swap). `SSE.create` tracks
   // `lastEventId` per-connection, so a fresh connection opened on reinit must be
@@ -386,14 +384,13 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
     applyHtml: (html) => {
       const locator = targetLocator(target);
       pendingLocator = locator;
-      Effect.runSync(
-        Morph.morphWithState(target, html, {
-          morphStyle,
-          preserveFocus: true,
-          preserveScroll: true,
-          preserveSelection: true,
-        }),
-      );
+      // `Morph.morphWithState` applies the DOM morph synchronously — call it directly.
+      Morph.morphWithState(target, html, {
+        morphStyle,
+        preserveFocus: true,
+        preserveScroll: true,
+        preserveSelection: true,
+      });
 
       if (locator && locator.type !== 'slot') {
         target = findTarget(locator) ?? target;
@@ -466,12 +463,12 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
 
     if (dropped) {
       try {
-        const snapshot = await Effect.runPromise(
-          fetchSnapshot(artifactId!, {
-            ...(snapshotUrl ? { snapshotUrl } : {}),
-            ...(hasCustomEndpointPolicy(endpointPolicy) ? { endpointPolicy } : {}),
-          }),
-        );
+        // `fetchSnapshot` is Promise-first (rejects with a tagged @czap/error on
+        // failure) — await it directly; the surrounding catch handles rejection.
+        const snapshot = await fetchSnapshot(artifactId!, {
+          ...(snapshotUrl ? { snapshotUrl } : {}),
+          ...(hasCustomEndpointPolicy(endpointPolicy) ? { endpointPolicy } : {}),
+        });
         const signalsError = validateSnapshotSignalsField(snapshot.signals);
         if (signalsError) {
           dispatchCzapEvent(target, 'czap:stream-error', {
@@ -529,13 +526,13 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
   const reconcileResumption = async (currentEventId: string): Promise<void> => {
     const resolvedArtifactId = artifactId!;
     try {
-      const response = await Effect.runPromise(
-        Resumption.resume(resolvedArtifactId, currentEventId, {
-          ...(snapshotUrl ? { snapshotUrl } : {}),
-          ...(replayUrl ? { replayUrl } : {}),
-          ...(hasCustomEndpointPolicy(endpointPolicy) ? { endpointPolicy } : {}),
-        }),
-      );
+      // `Resumption.resume` is Promise-first (rejects with a tagged @czap/error on
+      // failure) — await it directly; the surrounding catch handles rejection.
+      const response = await Resumption.resume(resolvedArtifactId, currentEventId, {
+        ...(snapshotUrl ? { snapshotUrl } : {}),
+        ...(replayUrl ? { replayUrl } : {}),
+        ...(hasCustomEndpointPolicy(endpointPolicy) ? { endpointPolicy } : {}),
+      });
       await applyResumeResponse(response);
     } catch (error) {
       dispatchCzapEvent(target, 'czap:stream-error', {
@@ -552,13 +549,13 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
   // as before, but resumption is now armed by the `reconnecting` edge instead
   // of `onerror` (see `handleEdge`).
   const handleMessage = (message: SSEMessage): void => {
-    const currentEventId = client ? Effect.runSync(client.lastEventId) : null;
+    const currentEventId = client ? client.lastEventId : null;
     if (currentEventId) {
       lastCursor = currentEventId;
       // Reconcile the disconnect gap BEFORE persisting the current cursor. On the
-      // first post-reconnect frame, `Resumption.resume` synchronously loads the
-      // PRE-disconnect persisted cursor (`loadState` is `Effect.sync`) to size the
-      // replay gap `parsed.sequence - (prevState.lastSequence + 1)`. Persisting
+      // first post-reconnect frame, `Resumption.resume` loads the PRE-disconnect
+      // persisted cursor (`loadState` is a synchronous localStorage read) to size
+      // the replay gap `parsed.sequence - (prevState.lastSequence + 1)`. Persisting
       // `currentEventId` first would set `lastSequence` to the current sequence,
       // collapsing the gap to `<= 0` and silently dropping every patch missed
       // while disconnected. Reconcile first (reads the old cursor), then persist.
@@ -608,7 +605,7 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
         dispatchCzapEvent(target, 'czap:stream-connected');
         return;
       case 'reconnecting':
-        recoveryPending = artifactId !== undefined && (client ? Effect.runSync(client.lastEventId) !== null : false);
+        recoveryPending = artifactId !== undefined && (client ? client.lastEventId !== null : false);
         patchScheduler.beginReconnect();
         dispatchCzapEvent(target, 'czap:stream-disconnected');
         return;
@@ -623,50 +620,46 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
   };
 
   const openClient = (): void => {
-    const nextRuntime = ManagedRuntime.make(Layer.empty);
-    const next = nextRuntime.runSync(Scope.make());
-    runtime = nextRuntime;
-    scope = next;
-    // `SSE.create` requires a Scope; `Scope.provide` builds it and registers its
-    // finalizer (EventSource close + Queue shutdown + timer clear) in `next`.
+    // One `Lifetime` per connection replaces the former ManagedRuntime+Scope.
+    // `SSE.create` builds the EventSource + timers synchronously (AbortController-
+    // first) and returns the client directly — no Scope to provide, no runtime to
+    // run. Its transport teardown is registered as a synchronous finalizer on the
+    // Lifetime below.
     //
-    // Messages and connection edges are delivered SYNCHRONOUSLY via callbacks,
-    // not an async Stream drain fiber — so a patch/snapshot/signal is handled
-    // within the same dispatch turn as its `onmessage`. The directive's own rAF
-    // render batching (`enqueueHtml`/`patchScheduler`) owns throttling; an async
-    // buffer would only add latency and could reorder relative to that scheduler.
-    const created = nextRuntime.runSync(
-      Scope.provide(
-        SSE.create({
-          url: streamUrl,
-          ...(artifactId ? { artifactId } : {}),
-          ...(lastCursor ? { lastEventId: lastCursor } : {}),
-          onMessage: handleMessage,
-          onStateChange: handleEdge,
-        }),
-        next,
-      ),
-    );
+    // Messages and connection edges are delivered SYNCHRONOUSLY via callbacks —
+    // so a patch/snapshot/signal is handled within the same dispatch turn as its
+    // `onmessage`. The directive's own rAF render batching (`enqueueHtml`/
+    // `patchScheduler`) owns throttling; an async buffer would only add latency
+    // and could reorder relative to that scheduler.
+    const next = Lifetime.make();
+    const created = SSE.create({
+      url: streamUrl,
+      ...(artifactId ? { artifactId } : {}),
+      ...(lastCursor ? { lastEventId: lastCursor } : {}),
+      onMessage: handleMessage,
+      onStateChange: handleEdge,
+    });
+    // The client's `close()` (EventSource close + source null + queue shutdown) is
+    // a synchronous disposer — register it as the Lifetime's finalizer.
+    next.add(() => created.close());
+    lifetime = next;
     client = created;
   };
 
   const closeClient = (): void => {
-    if (scope && runtime) {
-      const closing = scope;
-      const closingRuntime = runtime;
-      scope = null;
-      runtime = null;
+    if (lifetime) {
+      const closing = lifetime;
+      lifetime = null;
       client = null;
-      // Close the Scope SYNCHRONOUSLY before the replacement opens: its finalizer
-      // closes the EventSource, nulls the primitive's `source`, and shuts the
-      // queues in one pass, so a frame from the old generation cannot morph stale
-      // HTML into the new one on reinit (P1) and SSE.create's onmessage ignores
-      // any straggler whose source is no longer current (P2). All finalizers are
-      // synchronous; the owned runtime is then disposed asynchronously. (Running
-      // both `client.close()` AND `Scope.close` would double-shut the queues and
-      // surface an async rejection in a later turn.)
-      closingRuntime.runSync(Scope.close(closing, Exit.void));
-      void closingRuntime.dispose().catch(() => undefined);
+      // Dispose SYNCHRONOUSLY before the replacement opens: the client's `close`
+      // finalizer closes the EventSource, nulls the primitive's `source`, and
+      // shuts the queues in one pass — all synchronous, so it lands inside this
+      // `dispose()` call. A frame from the old generation therefore cannot morph
+      // stale HTML into the new one on reinit (P1), and SSE.create's onmessage
+      // ignores any straggler whose source is no longer current (P2). The promise
+      // `dispose()` returns settles once any async finalizer settles; teardown is
+      // fire-and-forget (the sync close has already landed), so it is not awaited.
+      void closing.dispose();
     }
   };
 

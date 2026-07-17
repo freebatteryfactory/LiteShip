@@ -8,7 +8,6 @@
 
 import { describe, expect, test } from 'vitest';
 import fc from 'fast-check';
-import { Effect, Fiber, Stream } from 'effect';
 import { Boundary, type OutputsFor, type StateUnion } from '@czap/core';
 import { Q, type OutputTarget, type QuantizerConfig, type QuantizerOutputs } from '@czap/quantizer';
 
@@ -34,26 +33,20 @@ function targetsForState<B extends Boundary.Shape>(outputs: QuantizerOutputs<B>,
   });
 }
 
-async function emittedAfterCrossing<B extends Boundary.Shape, O extends QuantizerOutputs<B>>(
+function emittedAfterCrossing<B extends Boundary.Shape, O extends QuantizerOutputs<B>>(
   config: QuantizerConfig<B, O>,
   value: number,
-): Promise<Partial<{ [K in OutputTarget]: Record<string, unknown> }>> {
-  return Effect.runPromise(
-    Effect.scoped(
-      Effect.gen(function* () {
-        const live = yield* config.create();
-        const fiber = yield* Effect.forkScoped(Stream.runCollect(Stream.take(live.outputChanges, 2)));
-
-        yield* Effect.yieldNow;
-        yield* Effect.sync(() => {
-          live.evaluate(value);
-        });
-
-        const events = Array.from(yield* Fiber.join(fiber));
-        return events[1] ?? {};
-      }),
-    ),
-  );
+): Partial<{ [K in OutputTarget]: Record<string, unknown> }> {
+  const { quantizer: live, lifetime } = config.create();
+  // outputChanges is a replay-1 kernel: subscribe replays the current outputs
+  // (events[0]), evaluate() publishes the post-crossing outputs (events[1]) —
+  // both synchronous (was `Stream.take(live.outputChanges, 2)` forked in a scope).
+  const events: Partial<{ [K in OutputTarget]: Record<string, unknown> }>[] = [];
+  const dispose = live.outputChanges.subscribe((record) => events.push(record));
+  live.evaluate(value);
+  dispose();
+  void lifetime.dispose();
+  return events[1] ?? {};
 }
 
 describe('quantizer outputChanges target dispatch properties', () => {

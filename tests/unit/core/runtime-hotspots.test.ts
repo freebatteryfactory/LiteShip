@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { describe, expect, test } from 'vitest';
-import { Effect, Schema } from 'effect';
+import { Schema } from 'effect';
 import { Boundary, Millis, Part, SpeculativeEvaluator, Style, World } from '@czap/core';
 import { evaluate as evaluateQuantizer } from '@czap/quantizer';
 import { GLSLCompiler } from '@czap/compiler';
@@ -10,75 +10,62 @@ import { restoreActiveElement, restoreFocusState, restoreSelection } from '../..
 
 describe('runtime hotspot coverage', () => {
   test('World regular systems handle empty queries, component add/remove, and missing dense stores', () => {
-    const result = Effect.runSync(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const world = yield* World.make();
-          const hpPart = { name: 'hp', schema: Schema.Number };
-          const labelPart = { name: 'label', schema: Schema.String };
-          const presentStore = Part.dense('present', 8);
-          yield* world.addDenseStore(presentStore);
+    // World is a synchronous API as of the core-seams wave: make() returns
+    // { world, lifetime }, every method returns directly, and System.execute
+    // returns void (no Effect wrapper).
+    const { world } = World.make();
+    const hpPart = { name: 'hp', schema: Schema.Number };
+    const labelPart = { name: 'label', schema: Schema.String };
+    const presentStore = Part.dense('present', 8);
+    world.addDenseStore(presentStore);
 
-          const id = yield* world.spawn({ label: 'player' });
-          yield* world.addComponent(id, hpPart, 100);
-          yield* world.addComponent('missing-entity' as never, hpPart, 50);
+    const id = world.spawn({ label: 'player' });
+    world.addComponent(id, hpPart, 100);
+    world.addComponent('missing-entity' as never, hpPart, 50);
 
-          let emptyExecutions = 0;
-          let denseExecuted = false;
-          let regularSeen: string[] = [];
+    let emptyExecutions = 0;
+    let denseExecuted = false;
+    let regularSeen: string[] = [];
 
-          yield* world.addSystem({
-            name: 'empty-query',
-            query: ['ghost'],
-            execute(entities) {
-              emptyExecutions += 1;
-              expect(entities).toEqual([]);
-              return Effect.void;
-            },
-          });
+    world.addSystem({
+      name: 'empty-query',
+      query: ['ghost'],
+      execute(entities) {
+        emptyExecutions += 1;
+        expect(entities).toEqual([]);
+      },
+    });
 
-          yield* world.addSystem({
-            name: 'label-and-hp',
-            query: ['label', 'hp'],
-            execute(entities) {
-              regularSeen = entities.map((entity) => {
-                const label = entity.components.get(labelPart.name);
-                const hp = entity.components.get(hpPart.name);
-                return `${label}:${hp}`;
-              });
-              return Effect.void;
-            },
-          });
+    world.addSystem({
+      name: 'label-and-hp',
+      query: ['label', 'hp'],
+      execute(entities) {
+        regularSeen = entities.map((entity) => {
+          const label = entity.components.get(labelPart.name);
+          const hp = entity.components.get(hpPart.name);
+          return `${label}:${hp}`;
+        });
+      },
+    });
 
-          yield* world.addSystem({
-            name: 'missing-dense-store',
-            query: ['present', 'missing'],
-            _denseSystem: true as const,
-            execute() {
-              denseExecuted = true;
-              return Effect.void;
-            },
-          });
+    world.addSystem({
+      name: 'missing-dense-store',
+      query: ['present', 'missing'],
+      _denseSystem: true as const,
+      execute() {
+        denseExecuted = true;
+      },
+    });
 
-          yield* world.tick();
-          yield* world.removeComponent(id, hpPart.name);
-          yield* world.removeComponent('missing-entity' as never, hpPart.name);
-          const matchedAfterRemoval = yield* world.query('label', 'hp');
+    world.tick();
+    world.removeComponent(id, hpPart.name);
+    world.removeComponent('missing-entity' as never, hpPart.name);
+    const matchedAfterRemoval = world.query('label', 'hp');
 
-          return {
-            emptyExecutions,
-            denseExecuted,
-            regularSeen,
-            matchedAfterRemoval: matchedAfterRemoval.length,
-          };
-        }),
-      ),
-    );
-
-    expect(result.emptyExecutions).toBe(1);
-    expect(result.denseExecuted).toBe(false);
-    expect(result.regularSeen).toEqual(['player:100']);
-    expect(result.matchedAfterRemoval).toBe(0);
+    expect(emptyExecutions).toBe(1);
+    expect(denseExecuted).toBe(false);
+    expect(regularSeen).toEqual(['player:100']);
+    expect(matchedAfterRemoval.length).toBe(0);
   });
 
   test('quantizer evaluate handles empty threshold sets and unknown previous states defensively', () => {
@@ -236,31 +223,27 @@ describe('runtime hotspot coverage', () => {
 
     expect(captureSelection()).toBeNull();
     expect(findScrollable(root)).toEqual([]);
-    expect(() => Effect.runSync(restoreActiveElement('[broken-selector', root))).not.toThrow();
+    expect(() => restoreActiveElement('[broken-selector', root)).not.toThrow();
 
-    Effect.runSync(
-      restoreFocusState(
-        {
-          elementId: '#disabled-input',
-          cursorPosition: 0,
-          selectionStart: 0,
-          selectionEnd: 0,
-          selectionDirection: 'none',
-        },
-        root,
-      ),
+    restoreFocusState(
+      {
+        elementId: '#disabled-input',
+        cursorPosition: 0,
+        selectionStart: 0,
+        selectionEnd: 0,
+        selectionDirection: 'none',
+      },
+      root,
     );
     expect(document.activeElement).not.toBe(disabledInput);
 
     expect(() =>
-      Effect.runSync(
-        restoreSelection({
-          elementPath: '#email-input',
-          start: 0,
-          end: 6,
-          direction: 'forward',
-        }),
-      ),
+      restoreSelection({
+        elementPath: '#email-input',
+        start: 0,
+        end: 6,
+        direction: 'forward',
+      }),
     ).not.toThrow();
   });
 

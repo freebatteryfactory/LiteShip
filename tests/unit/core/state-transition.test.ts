@@ -6,7 +6,6 @@
  * enforced, not decorative.
  */
 import { describe, test, expect } from 'vitest';
-import { Effect } from 'effect';
 import {
   Receipt,
   StateCell,
@@ -70,7 +69,7 @@ const mkTransition = (over: Partial<DiscreteStateTransition> = {}): DiscreteStat
 describe('DiscreteStateTransition mint reuses the ONE hash law', () => {
   test('transitionReceipt mints a self-consistent, subject-keyed envelope', async () => {
     const transition = mkTransition();
-    const receipt = await Effect.runPromise(transitionReceipt(transition));
+    const receipt = await transitionReceipt(transition);
 
     // Subject law: `${base}#${cell}` effect subject.
     expect(receipt.kind).toBe('discrete-transition');
@@ -82,7 +81,7 @@ describe('DiscreteStateTransition mint reuses the ONE hash law', () => {
     expect(receipt.payload.schema_hash).toBe('DiscreteStateTransition@1');
 
     // Hash self-consistency — same sha256 kernel Receipt.hashEnvelope recomputes.
-    const computed = await Effect.runPromise(Receipt.hashEnvelope(receipt));
+    const computed = await Receipt.hashEnvelope(receipt);
     expect(computed).toBe(receipt.hash);
   });
 
@@ -93,30 +92,27 @@ describe('DiscreteStateTransition mint reuses the ONE hash law', () => {
     const next = store.applyDiscrete('layout', 'tablet');
     const base = baseId();
 
-    const { transition, receipt } = await Effect.runPromise(mintTransition(prev, next, { base }));
+    const { transition, receipt } = await mintTransition(prev, next, { base });
     expect(transition.cell).toBe('layout');
     expect(transition.previous).toBe('mobile');
     expect(transition.next).toBe('tablet');
     expect(transition.generation).toBe(1);
     expect(transition.authority).toBe('quantizer');
     expect(receipt.subject.id).toBe(`${base}#layout`);
-    expect(await Effect.runPromise(Receipt.hashEnvelope(receipt))).toBe(receipt.hash);
+    expect(await Receipt.hashEnvelope(receipt)).toBe(receipt.hash);
   });
 
   test('a chained mint links onto its predecessor with an advancing HLC', async () => {
     const parent = mkTransition({ next: mkTransition().next, generation: 1 });
-    const parentReceipt = await Effect.runPromise(transitionReceipt(parent));
+    const parentReceipt = await transitionReceipt(parent);
     const child = mkTransition({ generation: 2 });
-    const childReceipt = await Effect.runPromise(
-      transitionReceipt(child, {
-        previous: parentReceipt.hash,
-        timestamp: { wall_ms: parentReceipt.timestamp.wall_ms + 1, counter: 0, node_id: 't' },
-      }),
-    );
-    const valid = await Effect.runPromise(
-      Receipt.validateChainDetailed([parentReceipt, childReceipt]).pipe(
-        Effect.match({ onFailure: () => false, onSuccess: () => true }),
-      ),
+    const childReceipt = await transitionReceipt(child, {
+      previous: parentReceipt.hash,
+      timestamp: { wall_ms: parentReceipt.timestamp.wall_ms + 1, counter: 0, node_id: 't' },
+    });
+    const valid = await Receipt.validateChainDetailed([parentReceipt, childReceipt]).then(
+      () => true,
+      () => false,
     );
     expect(valid).toBe(true);
   });

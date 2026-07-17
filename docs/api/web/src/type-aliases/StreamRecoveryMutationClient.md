@@ -8,7 +8,7 @@
 
 > **StreamRecoveryMutationClient** = `Pick`\<`GraphMutationClient`, `"adopt"` \| `"base"`\> & `object`
 
-Defined in: [web/src/stream/recovery.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L27)
+Defined in: [web/src/stream/recovery.ts:25](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L25)
 
 Optional graph-mutation substrate for `refreshBase`/`adopt` during recovery.
 

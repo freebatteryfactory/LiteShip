@@ -15,17 +15,14 @@ Supports HMAC signing/verification for tamper detection.
 ## Example
 
 ```ts
-import { Effect } from 'effect';
 import { Receipt, HLC } from '@czap/core';
 
-const program = Effect.gen(function* () {
-  const ts = HLC.increment(HLC.create('node-1'), Date.now());
-  const chain = yield* Receipt.buildChain([
-    { kind: 'init', subject: { type: 'effect', id: 'a' }, payload, timestamp: ts },
-  ]);
-  const valid = yield* Receipt.validateChain(chain);
-  const latest = Receipt.head(chain);
-});
+const ts = HLC.increment(HLC.create('node-1'), Date.now());
+const chain = await Receipt.buildChain([
+  { kind: 'init', subject: { type: 'effect', id: 'a' }, payload, timestamp: ts },
+]);
+const valid = await Receipt.validateChain(chain);
+const latest = Receipt.head(chain);
 ```
 
 ## Type Aliases

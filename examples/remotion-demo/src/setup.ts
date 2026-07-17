@@ -9,7 +9,6 @@
  * @module
  */
 
-import { Effect } from 'effect';
 import { Boundary, Compositor, Millis, VideoRenderer } from '@czap/core';
 import type { VideoFrameOutput } from '@czap/core';
 import { Q } from '@czap/quantizer';
@@ -53,14 +52,16 @@ const scaleQuantizerConfig = Q.from(scaleBoundary).outputs({
 // ---------------------------------------------------------------------------
 
 export async function buildFrames(): Promise<ReadonlyArray<VideoFrameOutput>> {
-  // Run the Effect pipeline: create compositor + quantizer in a managed scope
-  const compositor = Effect.runSync(Effect.scoped(Compositor.create()));
+  // Sync-first (Wave 2): create returns the live instance paired with the
+  // Lifetime that owns its teardown; the reactive kernels aren't needed for the
+  // pure per-frame compute path here, so we drive the instances directly.
+  const { compositor } = Compositor.create();
 
-  // Create the live quantizer in a scope
-  const quantizer = Effect.runSync(Effect.scoped(scaleQuantizerConfig.create()));
+  // Materialize the live quantizer from its content-addressed config.
+  const { quantizer } = scaleQuantizerConfig.create();
 
   // Add quantizer to compositor under the name "scale"
-  Effect.runSync(compositor.add('scale', quantizer));
+  compositor.add('scale', quantizer);
 
   // Create the VideoRenderer
   const renderer = VideoRenderer.make({ fps: FPS, width: WIDTH, height: HEIGHT, durationMs: Millis(DURATION_MS) }, compositor);
@@ -74,7 +75,7 @@ export async function buildFrames(): Promise<ReadonlyArray<VideoFrameOutput>> {
     quantizer.evaluate(progressValue);
 
     // Recompute compositor state after quantizer evaluation
-    const state = Effect.runSync(compositor.compute());
+    const state = compositor.compute();
     frames.push({
       frame: frame.frame,
       timestamp: frame.timestamp,

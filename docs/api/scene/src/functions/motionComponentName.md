@@ -8,7 +8,7 @@
 
 > **motionComponentName**(`cssVar`): `string`
 
-Defined in: [scene/src/systems/motion.ts:25](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/motion.ts#L25)
+Defined in: [scene/src/systems/motion.ts:24](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/motion.ts#L24)
 
 The component name a `MotionSampleSystem` writes each sampled leaf under (`motion:<cssVar>`).
 

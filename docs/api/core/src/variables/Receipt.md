@@ -8,7 +8,7 @@
 
 > `const` **Receipt**: `object`
 
-Defined in: [core/src/receipt.ts:604](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/receipt.ts#L604)
+Defined in: [core/src/receipt.ts:608](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/receipt.ts#L608)
 
 Receipt namespace -- chain validation and envelope construction.
 
@@ -20,7 +20,7 @@ Supports HMAC signing/verification for tamper detection.
 
 ### append
 
-> **append**: (`chain`, `entry`, `previousHashes?`) => `Effect`\<[`ReceiptEnvelope`](../interfaces/ReceiptEnvelope.md)[]\>
+> **append**: (`chain`, `entry`, `previousHashes?`) => `Promise`\<[`ReceiptEnvelope`](../interfaces/ReceiptEnvelope.md)[]\>
 
 Append a new entry to an existing chain, auto-linking to the previous hash.
 
@@ -56,13 +56,13 @@ readonly `string`[]
 
 #### Returns
 
-`Effect`\<[`ReceiptEnvelope`](../interfaces/ReceiptEnvelope.md)[]\>
+`Promise`\<[`ReceiptEnvelope`](../interfaces/ReceiptEnvelope.md)[]\>
 
 #### Example
 
 ```ts
-const chain = yield* Receipt.buildChain([entry1]);
-const extended = yield* Receipt.append(chain, {
+const chain = await Receipt.buildChain([entry1]);
+const extended = await Receipt.append(chain, {
   kind: 'update', subject: { type: 'effect', id: 'a' }, payload, timestamp: ts2,
 });
 // extended.length === 2
@@ -70,7 +70,7 @@ const extended = yield* Receipt.append(chain, {
 
 ### buildChain
 
-> **buildChain**: (`entries`) => `Effect`\<[`ReceiptEnvelope`](../interfaces/ReceiptEnvelope.md)[]\>
+> **buildChain**: (`entries`) => `Promise`\<[`ReceiptEnvelope`](../interfaces/ReceiptEnvelope.md)[]\>
 
 Build a linear chain of receipt envelopes from an array of entries.
 
@@ -85,12 +85,12 @@ readonly `object`[]
 
 #### Returns
 
-`Effect`\<[`ReceiptEnvelope`](../interfaces/ReceiptEnvelope.md)[]\>
+`Promise`\<[`ReceiptEnvelope`](../interfaces/ReceiptEnvelope.md)[]\>
 
 #### Example
 
 ```ts
-const chain = yield* Receipt.buildChain([
+const chain = await Receipt.buildChain([
   { kind: 'init', subject: { type: 'effect', id: 'a' }, payload, timestamp: ts1 },
   { kind: 'update', subject: { type: 'effect', id: 'a' }, payload, timestamp: ts2 },
 ]);
@@ -100,7 +100,7 @@ const chain = yield* Receipt.buildChain([
 
 ### createEnvelope
 
-> **createEnvelope**: (`kind`, `subject`, `payload`, `timestamp`, `previousHash`) => `Effect`\<[`ReceiptEnvelope`](../interfaces/ReceiptEnvelope.md)\>
+> **createEnvelope**: (`kind`, `subject`, `payload`, `timestamp`, `previousHash`) => `Promise`\<[`ReceiptEnvelope`](../interfaces/ReceiptEnvelope.md)\>
 
 Create a new receipt envelope with an auto-computed content hash.
 
@@ -128,12 +128,12 @@ Create a new receipt envelope with an auto-computed content hash.
 
 #### Returns
 
-`Effect`\<[`ReceiptEnvelope`](../interfaces/ReceiptEnvelope.md)\>
+`Promise`\<[`ReceiptEnvelope`](../interfaces/ReceiptEnvelope.md)\>
 
 #### Example
 
 ```ts
-const envelope = yield* Receipt.createEnvelope(
+const envelope = await Receipt.createEnvelope(
   'state-change',
   { type: 'effect', id: 'actor-1' },
   { _tag: 'TypedRef', mediaType: 'application/json', data: { key: 'value' } },
@@ -199,19 +199,19 @@ const updates = Receipt.findByKind(chain, 'update');
 
 ### generateMACKey
 
-> **generateMACKey**: () => `Effect`\<`CryptoKey`, `Error`\>
+> **generateMACKey**: () => `Promise`\<`CryptoKey`\>
 
 Generate an HMAC-SHA-256 key for signing receipt envelopes.
 
 #### Returns
 
-`Effect`\<`CryptoKey`, `Error`\>
+`Promise`\<`CryptoKey`\>
 
 #### Example
 
 ```ts
-const key = yield* Receipt.generateMACKey();
-const signed = yield* Receipt.macEnvelope(envelope, key);
+const key = await Receipt.generateMACKey();
+const signed = await Receipt.macEnvelope(envelope, key);
 // signed.signature is a hex string
 ```
 
@@ -223,7 +223,7 @@ Sentinel `previous` value marking the root of a receipt chain.
 
 ### hashEnvelope
 
-> **hashEnvelope**: (`envelope`) => `Effect`\<`string`\>
+> **hashEnvelope**: (`envelope`) => `Promise`\<`string`\>
 
 Compute the content hash of a receipt envelope.
 
@@ -238,14 +238,12 @@ payload, and hashes with SHA-256 via TypedRef.
 
 #### Returns
 
-`Effect`\<`string`\>
+`Promise`\<`string`\>
 
 #### Example
 
 ```ts
-import { Effect } from 'effect';
-
-const hash = yield* Receipt.hashEnvelope(envelope);
+const hash = await Receipt.hashEnvelope(envelope);
 // hash === envelope.hash (if envelope is valid)
 ```
 
@@ -291,14 +289,14 @@ Check whether a receipt envelope is a genesis (root) envelope.
 #### Example
 
 ```ts
-const chain = yield* Receipt.buildChain(entries);
+const chain = await Receipt.buildChain(entries);
 Receipt.isGenesis(chain[0]); // true
 Receipt.isGenesis(chain[1]); // false
 ```
 
 ### macEnvelope
 
-> **macEnvelope**: (`envelope`, `key`) => `Effect`\<[`ReceiptEnvelope`](../interfaces/ReceiptEnvelope.md), `Error`\>
+> **macEnvelope**: (`envelope`, `key`) => `Promise`\<[`ReceiptEnvelope`](../interfaces/ReceiptEnvelope.md)\>
 
 Sign a receipt envelope with an HMAC key, adding a `signature` field.
 
@@ -314,13 +312,13 @@ Sign a receipt envelope with an HMAC key, adding a `signature` field.
 
 #### Returns
 
-`Effect`\<[`ReceiptEnvelope`](../interfaces/ReceiptEnvelope.md), `Error`\>
+`Promise`\<[`ReceiptEnvelope`](../interfaces/ReceiptEnvelope.md)\>
 
 #### Example
 
 ```ts
-const key = yield* Receipt.generateMACKey();
-const signed = yield* Receipt.macEnvelope(envelope, key);
+const key = await Receipt.generateMACKey();
+const signed = await Receipt.macEnvelope(envelope, key);
 // signed.signature !== undefined
 ```
 
@@ -349,7 +347,7 @@ const first = Receipt.tail(chain);
 
 ### validateChain
 
-> **validateChain**: (`chain`, `options?`) => `Effect`\<`boolean`, `Error`\>
+> **validateChain**: (`chain`, `options?`) => `Promise`\<`boolean`\>
 
 Validate a receipt chain: genesis link, hash integrity, chain continuity, HLC ordering.
 
@@ -368,13 +366,13 @@ readonly [`ReceiptEnvelope`](../interfaces/ReceiptEnvelope.md)[]
 
 #### Returns
 
-`Effect`\<`boolean`, `Error`\>
+`Promise`\<`boolean`\>
 
 #### Example
 
 ```ts
-const chain = yield* Receipt.buildChain(entries);
-const valid = yield* Receipt.validateChain(chain);
+const chain = await Receipt.buildChain(entries);
+const valid = await Receipt.validateChain(chain);
 // valid === true
 ```
 
@@ -384,7 +382,7 @@ validateChainDetailed for typed `ChainValidationError` handling.
 
 ### validateChainDetailed
 
-> **validateChainDetailed**: (`chain`, `options?`) => `Effect`\<`true`, [`ChainValidationError`](../type-aliases/ChainValidationError.md)\>
+> **validateChainDetailed**: (`chain`, `options?`) => `Promise`\<`true`\>
 
 Validate a receipt chain with detailed, structured error reporting.
 
@@ -404,16 +402,17 @@ readonly [`ReceiptEnvelope`](../interfaces/ReceiptEnvelope.md)[]
 
 #### Returns
 
-`Effect`\<`true`, [`ChainValidationError`](../type-aliases/ChainValidationError.md)\>
+`Promise`\<`true`\>
 
 #### Example
 
 ```ts
-import { Effect } from 'effect';
-
-const result = yield* Effect.either(Receipt.validateChainDetailed(chain));
-// result._tag === 'Right' on success
-// result._tag === 'Left' with .left.type on failure
+try {
+  await Receipt.validateChainDetailed(chain);
+  // resolved true on success
+} catch (error) {
+  // error is a ChainValidationError with .type on failure
+}
 ```
 
 #### See
@@ -422,7 +421,7 @@ validateChain for the simple Error-channel form.
 
 ### verifyMAC
 
-> **verifyMAC**: (`envelope`, `key`) => `Effect`\<`boolean`, `Error` \| [`ParseError`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts)\>
+> **verifyMAC**: (`envelope`, `key`) => `Promise`\<`boolean`\>
 
 Verify an envelope's HMAC signature against a key.
 
@@ -440,27 +439,24 @@ Returns false if the envelope has no signature.
 
 #### Returns
 
-`Effect`\<`boolean`, `Error` \| [`ParseError`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts)\>
+`Promise`\<`boolean`\>
 
 #### Example
 
 ```ts
-const valid = yield* Receipt.verifyMAC(signedEnvelope, key);
+const valid = await Receipt.verifyMAC(signedEnvelope, key);
 // valid === true if signature matches
 ```
 
 ## Example
 
 ```ts
-import { Effect } from 'effect';
 import { Receipt, HLC } from '@czap/core';
 
-const program = Effect.gen(function* () {
-  const ts = HLC.increment(HLC.create('node-1'), Date.now());
-  const chain = yield* Receipt.buildChain([
-    { kind: 'init', subject: { type: 'effect', id: 'a' }, payload, timestamp: ts },
-  ]);
-  const valid = yield* Receipt.validateChain(chain);
-  const latest = Receipt.head(chain);
-});
+const ts = HLC.increment(HLC.create('node-1'), Date.now());
+const chain = await Receipt.buildChain([
+  { kind: 'init', subject: { type: 'effect', id: 'a' }, payload, timestamp: ts },
+]);
+const valid = await Receipt.validateChain(chain);
+const latest = Receipt.head(chain);
 ```

@@ -11,7 +11,6 @@
  * @module
  */
 
-import { Effect, Stream } from 'effect';
 import type { SSEMessage } from '../types.js';
 import { LLMChunkNormalization, type LLMChunk, type ToolCallAccumulator } from './llm-chunks.js';
 export type { LLMChunk, LLMChunkType } from './llm-chunks.js';
@@ -35,13 +34,13 @@ export type ChunkParser = (event: SSEMessage) => LLMChunk | null;
 /**
  * Configuration accepted by {@link LLMAdapter.create}.
  *
- * `source` is typically the `messages` stream of an {@link SSE} client,
- * but any `Stream.Stream<SSEMessage>` will do -- including mock streams
- * in tests.
+ * `source` is typically the `messages` AsyncIterable of an {@link SSE} client,
+ * but any `Iterable`/`AsyncIterable` of `SSEMessage` will do -- including plain
+ * arrays in tests. Consumed with `for await`, so both sync and async sources work.
  */
 export interface LLMStreamConfig {
-  /** Stream of parsed SSE messages. */
-  readonly source: Stream.Stream<SSEMessage>;
+  /** Iterable (or AsyncIterable) of parsed SSE messages. */
+  readonly source: AsyncIterable<SSEMessage> | Iterable<SSEMessage>;
   /** Parser mapping SSE messages to typed LLM chunks. */
   readonly parser: ChunkParser;
 }
@@ -56,8 +55,8 @@ export interface LLMStreamConfig {
  * from it. Returned by {@link LLMAdapter.create}.
  */
 export interface LLMAdapterShape {
-  readonly chunks: Stream.Stream<LLMChunk>;
-  readonly textTokens: Stream.Stream<string>;
+  readonly chunks: AsyncIterable<LLMChunk>;
+  readonly textTokens: AsyncIterable<string>;
 }
 
 /**
@@ -71,7 +70,6 @@ export interface LLMAdapterShape {
  * @example
  * ```ts
  * import { LLMAdapter } from '@czap/web';
- * import { Stream, Effect } from 'effect';
  *
  * const adapter = LLMAdapter.create({
  *   source: sseMessageStream,
@@ -84,34 +82,47 @@ export interface LLMAdapterShape {
  *     return null;
  *   },
  * });
- * // adapter.textTokens is a Stream<string> of text content
- * // adapter.chunks is a Stream<LLMChunk> of all parsed chunks
+ * // adapter.textTokens is an AsyncIterable<string> of text content
+ * // adapter.chunks is an AsyncIterable<LLMChunk> of all parsed chunks
+ * for await (const token of adapter.textTokens) process.stdout.write(token);
  * ```
  *
  * @param config - Stream source and parser configuration
- * @returns An {@link LLMAdapterShape} with `chunks` and `textTokens` streams
+ * @returns An {@link LLMAdapterShape} with `chunks` and `textTokens` AsyncIterables
  */
 function _create(config: LLMStreamConfig): LLMAdapterShape {
-  let toolCallBuffer: ToolCallAccumulator = null;
+  // Each iteration replays the tool-call accumulator state from scratch and
+  // re-reads `source` — matching the former Stream semantics (a fresh run per
+  // subscription). Consumers iterate EITHER `chunks` OR `textTokens`.
+  const parseChunks = async function* (): AsyncGenerator<LLMChunk, void, undefined> {
+    let toolCallBuffer: ToolCallAccumulator = null;
+    for await (const event of config.source) {
+      const parsed = config.parser(event);
+      if (!parsed) {
+        continue;
+      }
+      const normalized = LLMChunkNormalization.normalize(parsed, toolCallBuffer);
+      toolCallBuffer = normalized.toolCallBuffer;
+      if (normalized.chunk) {
+        yield normalized.chunk;
+      }
+    }
+  };
 
-  const chunks: Stream.Stream<LLMChunk> = config.source.pipe(
-    Stream.mapEffect((event) =>
-      Effect.sync(() => {
-        const chunk = config.parser(event);
-        if (!chunk) return null;
-        const normalized = LLMChunkNormalization.normalize(chunk, toolCallBuffer);
-        toolCallBuffer = normalized.toolCallBuffer;
-        return normalized.chunk;
-      }),
-    ),
-    Stream.filter((chunk): chunk is LLMChunk => chunk !== null),
-  );
+  const chunks: AsyncIterable<LLMChunk> = {
+    [Symbol.asyncIterator]: () => parseChunks(),
+  };
 
-  // Convenience stream of just text tokens (for feeding into TokenBuffer)
-  const textTokens: Stream.Stream<string> = chunks.pipe(
-    Stream.filter((chunk) => chunk.type === 'text' && chunk.content !== undefined),
-    Stream.map((chunk) => chunk.content!),
-  );
+  // Convenience stream of just text tokens (for feeding into TokenBuffer).
+  const textTokens: AsyncIterable<string> = {
+    async *[Symbol.asyncIterator](): AsyncGenerator<string, void, undefined> {
+      for await (const chunk of parseChunks()) {
+        if (chunk.type === 'text' && chunk.content !== undefined) {
+          yield chunk.content;
+        }
+      }
+    },
+  };
 
   return { chunks, textTokens };
 }
@@ -151,24 +162,19 @@ function _collect(config: {
  * @example
  * ```ts
  * import { LLMAdapter, SSE } from '@czap/web';
- * import { Effect, Stream } from 'effect';
  *
- * const program = Effect.scoped(Effect.gen(function* () {
- *   const client = yield* SSE.create({ url: '/api/llm/stream' });
- *   const adapter = LLMAdapter.create({
- *     source: client.messages,
- *     parser: (msg) => {
- *       if (msg.type !== 'patch') return null;
- *       const data = msg.data as { type?: string; content?: string };
- *       return data.type === 'text' && typeof data.content === 'string'
- *         ? { type: 'text', partial: false, content: data.content }
- *         : null;
- *     },
- *   });
- *   yield* Stream.runForEach(adapter.textTokens, (token) =>
- *     Effect.sync(() => process.stdout.write(token)),
- *   );
- * }));
+ * const client = SSE.create({ url: '/api/llm/stream' });
+ * const adapter = LLMAdapter.create({
+ *   source: client.messages,
+ *   parser: (msg) => {
+ *     if (msg.type !== 'patch') return null;
+ *     const data = msg.data as { type?: string; content?: string };
+ *     return data.type === 'text' && typeof data.content === 'string'
+ *       ? { type: 'text', partial: false, content: data.content }
+ *       : null;
+ *   },
+ * });
+ * for await (const token of adapter.textTokens) process.stdout.write(token);
  * ```
  */
 export const LLMAdapter = { create: _create, collect: _collect };

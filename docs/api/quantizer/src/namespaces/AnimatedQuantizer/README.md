@@ -8,10 +8,10 @@
 
 Animated quantizer namespace.
 
-Wraps a base quantizer with transition-aware interpolation. When a boundary
-crossing occurs, numeric output values are lerped over a configurable
+Wraps a reactive quantizer with transition-aware interpolation. When a
+boundary crossing occurs, numeric output values are lerped over a configurable
 duration and easing curve. Non-numeric values snap at the 50% mark.
-The `interpolated` stream emits frames containing progress (0-1) and
+The `interpolated` fan-out publishes frames containing progress (0-1) and
 the current interpolated output record.
 
 ## Example
@@ -19,21 +19,16 @@ the current interpolated output record.
 ```ts
 import { Boundary, Millis } from '@czap/core';
 import { Q, AnimatedQuantizer } from '@czap/quantizer';
-import { Effect } from 'effect';
 
 const boundary = Boundary.make({
   input: 'scroll',
   at: [[0, 'top'], [500, 'bottom']],
 });
 const config = Q.from(boundary).outputs({});
-const program = Effect.scoped(Effect.gen(function* () {
-  const live = yield* config.create();
-  const animated = yield* AnimatedQuantizer.make(
-    live,
-    { '*': { duration: Millis(200) } },
-  );
-  return animated.transition; // TransitionResolver
-}));
+const { quantizer: live } = config.create();
+const { animated, lifetime } = AnimatedQuantizer.make(live, { '*': { duration: Millis(200) } });
+animated.transition; // TransitionResolver
+await lifetime.dispose();
 ```
 
 ## Type Aliases

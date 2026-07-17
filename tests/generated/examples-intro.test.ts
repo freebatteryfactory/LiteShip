@@ -24,9 +24,8 @@ describe('examples.intro', () => {
   // SVG-egress frame. Sorted by entity id so authoring/iteration order never
   // forks the address.
   const snapshotFrame = async (handle) => {
-    const entities = await import('effect').then(({ Effect }) =>
-      Effect.runPromise(handle.world.query('FrameRange')),
-    );
+    // World.query is synchronous — read the ticked FrameRange entities directly.
+    const entities = handle.world.query('FrameRange');
     const rows = entities
       .map((e) => {
         const out = {};
@@ -79,7 +78,6 @@ describe('examples.intro', () => {
     // (samplesPerFrame = sampleRate / fps) reconstructs to the same wall-clock
     // ms as the video frame index. A regression in the phase math (wrong
     // samplesPerFrame, off-by-one range gate) drifts these apart > 1ms.
-    const { Effect } = await import('effect');
     const handle = await SceneRuntime.build(compiled, { sampleRate });
     try {
       const samplesPerFrame = sampleRate / fps;
@@ -90,7 +88,7 @@ describe('examples.intro', () => {
         const videoMs = (frame / fps) * 1000;
         // Audio entities in range carry a non-zero _phase relative to their
         // FrameRange.from; reconstruct absolute audio ms and compare to videoMs.
-        const audioEntities = await Effect.runPromise(handle.world.query('AudioSource', 'FrameRange', '_phase'));
+        const audioEntities = handle.world.query('AudioSource', 'FrameRange', '_phase');
         for (const e of audioEntities) {
           const range = e.components.get('FrameRange');
           const phase = e.components.get('_phase');

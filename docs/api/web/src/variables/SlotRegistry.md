@@ -8,7 +8,7 @@
 
 > `const` **SlotRegistry**: `object`
 
-Defined in: [web/src/slot/registry.ts:356](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/slot/registry.ts#L356)
+Defined in: [web/src/slot/registry.ts:353](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/slot/registry.ts#L353)
 
 Slot registry namespace.
 
@@ -103,12 +103,13 @@ const path = SlotRegistry.getPath(el);
 
 ### observe
 
-> **observe**: (`registry`, `root`) => `Effect`\<`void`, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\>
+> **observe**: (`registry`, `root`) => [`Disposer`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts)
 
 Scan `root` for pre-existing slots, then create a `MutationObserver` that
 automatically registers/unregisters slots as DOM elements with
-`data-czap-slot` are added or removed. The observer is disconnected when
-the enclosing Effect scope closes.
+`data-czap-slot` are added or removed. Returns a [Disposer](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts) that
+disconnects the observer; register it on a `Lifetime` (or call it directly)
+to own the teardown.
 
 A separate [scanDOM](#scandom) call before `observe` is no longer required
 (and stays harmless: `register` is idempotent per path+element+mode).
@@ -129,21 +130,21 @@ The DOM root to scan and observe
 
 #### Returns
 
-`Effect`\<`void`, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\>
+[`Disposer`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts)
 
-An Effect (scoped) that starts observation
+A [Disposer](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts) that disconnects the `MutationObserver`
 
 #### Example
 
 ```ts
 import { SlotRegistry } from '@czap/web';
-import { Effect } from 'effect';
+import { Lifetime } from '@czap/core';
 
-const program = Effect.scoped(Effect.gen(function* () {
-  const registry = SlotRegistry.create();
-  yield* SlotRegistry.observe(registry, document.body);
-  // Pre-existing slots are registered; new slots auto-register on DOM changes
-}));
+const registry = SlotRegistry.create();
+const lifetime = Lifetime.make();
+lifetime.add(SlotRegistry.observe(registry, document.body));
+// Pre-existing slots are registered; new slots auto-register on DOM changes.
+// lifetime.dispose() disconnects the observer.
 ```
 
 ### scanDOM
@@ -191,7 +192,6 @@ SlotRegistry.scanDOM(registry, document.body);
 
 ```ts
 import { SlotRegistry } from '@czap/web';
-import { Effect } from 'effect';
 
 const registry = SlotRegistry.create();
 SlotRegistry.scanDOM(registry, document.body);

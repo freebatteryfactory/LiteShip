@@ -381,8 +381,9 @@ const ALLOC_BOUNDARY = Boundary.make({
  * per-frame compose body, so the quantizer only needs to be a cheap, non-allocating
  * state source. Composition over inheritance: a plain object satisfying the
  * structural contract (matching the `liveQuantizer` test pattern), no class. The
- * `changes` stream is unused by the compose path (`null as never`, the established
- * fixture form).
+ * base {@link Quantizer} contract is now purely synchronous (`stateSync` + `evaluate`);
+ * the reactive `state`/`changes` substrate lives on `ReactiveQuantizer` and the
+ * compose path never touches it, so this fixture omits it entirely.
  */
 type AllocState = (typeof ALLOC_BOUNDARY)['states'][number];
 
@@ -391,9 +392,7 @@ function fixedQuantizer(state: AllocState): Quantizer<typeof ALLOC_BOUNDARY> {
   return {
     _tag: 'Quantizer',
     boundary: ALLOC_BOUNDARY,
-    state: Effect.sync(() => fixed),
     stateSync: () => fixed,
-    changes: null as never,
     evaluate: () => fixed,
   };
 }
@@ -413,18 +412,19 @@ function tokenBufferOp(): () => void {
 
 /** Build the compositor compose op closure — the per-frame zero-alloc hot path. */
 function compositorOp(): () => void {
-  const compositor = Effect.runSync(Effect.scoped(Compositor.create({ poolCapacity: 8 })));
+  // Compositor.create/add/compute are synchronous as of the core-seams wave.
+  const { compositor } = Compositor.create({ poolCapacity: 8 });
   const names = ['viewport', 'theme', 'density'] as const;
   const states = ['mobile', 'tablet', 'desktop'] as const;
   for (let i = 0; i < names.length; i++) {
-    Effect.runSync(compositor.add(names[i]!, fixedQuantizer(states[i]!)));
+    compositor.add(names[i]!, fixedQuantizer(states[i]!));
   }
   let tick = 0;
   return () => {
     // Mark one quantizer dirty each tick (the steady selective-recompute path the
     // runtime drives), then compose. The compose body is the path under test.
     compositor.runtime.markDirty(names[tick++ % names.length]!);
-    Effect.runSync(compositor.compute());
+    compositor.compute();
   };
 }
 

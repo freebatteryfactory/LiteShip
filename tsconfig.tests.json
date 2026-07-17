@@ -75,7 +75,6 @@
     "tests/property/token-buffer-zero-alloc.test.ts",
     "tests/unit/gauntlet/perf-claim-bench-gate.test.ts",
     "tests/bench/allocation.bench.ts",
-    "tests/helpers/mock-websocket.ts",
     "tests/helpers/mock-event-source.ts",
     "tests/helpers/mock-worker.ts",
     "tests/helpers/mock-dom.ts",

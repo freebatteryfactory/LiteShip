@@ -23,8 +23,8 @@ Sugar over [SceneRuntime.build](SceneRuntime.md#build) — see `./runtime.ts`.
 
 Build a live SceneRuntime handle from a [CompiledScene](../interfaces/CompiledScene.md).
 
-Holds an explicit [Scope](https://effect.website/docs) for the world's lifetime so the
-caller controls when finalizers run. Systems are registered in the
+Holds the world's [WorldNS.Handle](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts) lifetime so the caller
+controls when finalizers run. Systems are registered in the
 canonical topological order — this matches ADR-0009's
 ECS-as-scene-substrate discipline.
 

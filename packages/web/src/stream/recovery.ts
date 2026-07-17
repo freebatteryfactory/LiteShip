@@ -5,7 +5,6 @@
  * @module
  */
 
-import { Effect } from 'effect';
 import type {
   DiscreteStateTransition,
   DocumentGraph,
@@ -16,7 +15,6 @@ import type {
 import { createGraphQueryRefreshBase, graphQueryEtag, runGraphNativeGapReplay } from '@czap/core';
 import { filterDiscreteSnapshotSignals, replayDroppedSignals, validateSnapshotSignalsField } from '@czap/core';
 import { ValidationError } from '@czap/error';
-import type { LiteShipError } from '@czap/error';
 import type { ResumptionConfig, ResumeResponse } from '../types.js';
 import { onCzap, dispatchCzapEvent } from '../wire/dispatch.js';
 import { Resumption } from './resumption.js';
@@ -117,7 +115,7 @@ const snapshotConfig = (
 export const fetchSnapshot = (
   artifactId: string,
   config?: Partial<Pick<ResumptionConfig, 'snapshotUrl' | 'endpointPolicy'>>,
-): Effect.Effect<SnapshotResponse, LiteShipError> => Resumption.fetchSnapshot(artifactId, config);
+): Promise<SnapshotResponse> => Resumption.fetchSnapshot(artifactId, config);
 
 /** Dispatch only replayable discrete signal payloads — continuous transients are skipped. */
 export const applyDiscreteSnapshotSignals = (
@@ -180,7 +178,7 @@ export const runGraphNativeRecovery = async (options: StreamRecoveryOptions): Pr
       // is known-stale so both `ok`+stale-DOM and `not_modified`+stale-DOM reach
       // a fresh DOM (and the 304 no longer early-returns a stale view).
       if (options.domStale?.() === true) {
-        const snapshot = await Effect.runPromise(fetchSnapshot(options.artifactId, snapshotConfig(options)));
+        const snapshot = await fetchSnapshot(options.artifactId, snapshotConfig(options));
         await applyGraphNativeSnapshot(snapshot, options.handlers);
       }
       return;
@@ -192,7 +190,7 @@ export const runGraphNativeRecovery = async (options: StreamRecoveryOptions): Pr
     await adoptRefreshedGraphBase(options.mutationClient, options.graphQueryUrl);
   }
 
-  const snapshot = await Effect.runPromise(fetchSnapshot(options.artifactId, snapshotConfig(options)));
+  const snapshot = await fetchSnapshot(options.artifactId, snapshotConfig(options));
 
   await applyGraphNativeSnapshot(snapshot, options.handlers);
 };
@@ -225,7 +223,7 @@ export const supplementReplayIfSignalsDropped = async (
 
   await adoptRefreshedGraphBase(options.mutationClient, options.graphQueryUrl);
 
-  const snapshot = await Effect.runPromise(fetchSnapshot(options.artifactId, snapshotConfig(options)));
+  const snapshot = await fetchSnapshot(options.artifactId, snapshotConfig(options));
 
   const signalsError = validateSnapshotSignalsField(snapshot.signals);
   if (signalsError) {

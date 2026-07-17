@@ -66,17 +66,17 @@ const API_REGISTRY: Record<string, { methods: string[]; values?: string[] }> = {
   Composable: { methods: ['make', 'compose', 'merge'] },
   ComposableWorld: { methods: ['make', 'dense'] },
 
-  Op: {
-    methods: ['make', 'fromPromise', 'succeed', 'fail', 'all', 'allSettled', 'race', 'retry', 'timeout'],
-  },
+  // `Op` (the Effect.Effect wrapper facade) was DELETED this wave — a pure
+  // Effect rename with zero production consumers (#152 §5.2). Its export left the
+  // core barrel alongside this removal.
 
   // ── Reactive primitives ───────────────────────────────────────────
   Cell: { methods: ['make', 'fromStream', 'all', 'map'] },
   Derived: { methods: ['make', 'combine', 'map', 'flatten'] },
   Zap: { methods: ['make', 'fromDOMEvent', 'merge', 'map', 'filter', 'debounce', 'throttle'] },
-  Wire: {
-    methods: ['from', 'fromSSE', 'fromWebSocket', 'fromAsyncIterable', 'zip', 'merge', 'runCollect', 'runForEach'],
-  },
+  // `Wire` (the fluent Effect-Stream wrapper) was DELETED this wave — 100%
+  // transport, zero runtime consumers (the web/astro `wire` is the unrelated
+  // czap:* event registry). `isWire` + the Wire arm of `Primitive` left with it.
   Store: { methods: ['make', 'makeWithEffect'] },
   LiveCell: { methods: ['make', 'makeBoundary'] },
 
@@ -225,7 +225,8 @@ const STANDALONE_FUNCTIONS = [
   'isCell',
   'isDerived',
   'isZap',
-  'isWire',
+  // `isWire` removed — the `Wire` primitive was deleted this wave (the guard and
+  // the Wire arm of the `Primitive` union left with it).
   'fnv1a',
   'fnv1aBytes',
   // The Effect-AST `schemaToJsonSchema` deriver was DELETED this wave. The single

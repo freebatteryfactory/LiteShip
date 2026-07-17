@@ -8,31 +8,38 @@
 
 > `const` **AnimatedQuantizer**: `object`
 
-Defined in: [quantizer/src/animated-quantizer.ts:349](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L349)
+Defined in: [quantizer/src/animated-quantizer.ts:403](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L403)
 
 Animated quantizer namespace.
 
-Wraps a base quantizer with transition-aware interpolation. When a boundary
-crossing occurs, numeric output values are lerped over a configurable
+Wraps a reactive quantizer with transition-aware interpolation. When a
+boundary crossing occurs, numeric output values are lerped over a configurable
 duration and easing curve. Non-numeric values snap at the 50% mark.
-The `interpolated` stream emits frames containing progress (0-1) and
+The `interpolated` fan-out publishes frames containing progress (0-1) and
 the current interpolated output record.
 
 ## Type Declaration
 
 ### make
 
-> `readonly` **make**: \<`B`\>(`quantizer`, `transitions`, `outputs?`, `options?`) => `Effect`\<[`AnimatedQuantizerShape`](../interfaces/AnimatedQuantizerShape.md)\<`B`\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\> = `makeAnimatedQuantizer`
+> `readonly` **make**: \<`B`\>(`quantizer`, `transitions`, `outputs?`, `options?`) => [`AnimatedQuantizerHandle`](../interfaces/AnimatedQuantizerHandle.md)\<`B`\> = `makeAnimatedQuantizer`
 
 Wrap a quantizer with transition-aware output interpolation.
 
 Create an animated quantizer that interpolates outputs during transitions.
 
-Wraps an existing [Quantizer](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Quantizer.md) and applies easing/duration-based
+Wraps an existing [ReactiveQuantizer](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/quantizer-types.ts) and applies easing/duration-based
 interpolation between old and new output values when a boundary crossing
-occurs. Produces an `interpolated` stream of frames with progress and
-lerped numeric outputs — at ~60fps by default, or on the cadence of an
-injected `options.scheduler` (`raf` / `fixedStep` / `audioSync`).
+occurs. Publishes an `interpolated` fan-out of frames with progress and lerped
+numeric outputs — at ~60fps by default, or on the cadence of an injected
+`options.scheduler` (`raf` / `fixedStep` / `audioSync`).
+
+The wrapped quantizer's crossings are observed eagerly (one shared
+subscription): each crossing interrupts the prior animation via a per-crossing
+[AbortController](https://developer.mozilla.org/en-US/docs/Web/API/AbortController) — aborting breaks the `for await` over
+[Animation.run](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/animation.ts), whose `finally` cancels the pending scheduler tick — and
+starts a fresh animation. Dispose the returned [Lifetime](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/lifetime.ts) to detach the
+crossing subscription, abort the in-flight animation, and close the fan-out.
 
 #### Type Parameters
 
@@ -44,9 +51,9 @@ injected `options.scheduler` (`raf` / `fixedStep` / `audioSync`).
 
 ##### quantizer
 
-[`Quantizer`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Quantizer.md)\<`B`\>
+[`ReactiveQuantizer`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/quantizer-types.ts)\<`B`\>
 
-The base quantizer to wrap
+The reactive quantizer to wrap
 
 ##### transitions
 
@@ -78,16 +85,15 @@ Optional injection bag. `options.scheduler` supplies a
 
 #### Returns
 
-`Effect`\<[`AnimatedQuantizerShape`](../interfaces/AnimatedQuantizerShape.md)\<`B`\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\>
+[`AnimatedQuantizerHandle`](../interfaces/AnimatedQuantizerHandle.md)\<`B`\>
 
-An Effect yielding an [AnimatedQuantizerShape](../interfaces/AnimatedQuantizerShape.md) (scoped)
+An [AnimatedQuantizerHandle](../interfaces/AnimatedQuantizerHandle.md) — the instance plus its [Lifetime](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/lifetime.ts)
 
 #### Example
 
 ```ts
 import { Boundary, Millis } from '@czap/core';
 import { Q, AnimatedQuantizer } from '@czap/quantizer';
-import { Effect, Stream } from 'effect';
 
 const boundary = Boundary.make({
   input: 'scroll',
@@ -96,16 +102,11 @@ const boundary = Boundary.make({
 const config = Q.from(boundary).outputs({
   css: { top: { opacity: '1' }, bottom: { opacity: '0.5' } },
 });
-const program = Effect.scoped(Effect.gen(function* () {
-  const live = yield* config.create();
-  // outputs omitted: derived from the LiveQuantizer's css output tables
-  const animated = yield* AnimatedQuantizer.make(
-    live,
-    { '*': { duration: Millis(300) } },
-  );
-  live.evaluate(600); // triggers interpolation
-  return animated;
-}));
+const { quantizer: live } = config.create();
+// outputs omitted: derived from the LiveQuantizer's css output tables
+const { animated, lifetime } = AnimatedQuantizer.make(live, { '*': { duration: Millis(300) } });
+const dispose = animated.interpolated.subscribe((frame) => { ... });
+live.evaluate(600); // triggers interpolation
 ```
 
 ## Example
@@ -113,19 +114,14 @@ const program = Effect.scoped(Effect.gen(function* () {
 ```ts
 import { Boundary, Millis } from '@czap/core';
 import { Q, AnimatedQuantizer } from '@czap/quantizer';
-import { Effect } from 'effect';
 
 const boundary = Boundary.make({
   input: 'scroll',
   at: [[0, 'top'], [500, 'bottom']],
 });
 const config = Q.from(boundary).outputs({});
-const program = Effect.scoped(Effect.gen(function* () {
-  const live = yield* config.create();
-  const animated = yield* AnimatedQuantizer.make(
-    live,
-    { '*': { duration: Millis(200) } },
-  );
-  return animated.transition; // TransitionResolver
-}));
+const { quantizer: live } = config.create();
+const { animated, lifetime } = AnimatedQuantizer.make(live, { '*': { duration: Millis(200) } });
+animated.transition; // TransitionResolver
+await lifetime.dispose();
 ```

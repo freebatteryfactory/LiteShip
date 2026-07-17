@@ -6,8 +6,7 @@
  * LiveQuantizer reactive streams, BoundaryCrossing pub-sub.
  */
 
-import { describe, test, expect, beforeEach } from 'vitest';
-import { Effect, Fiber, Scope, Stream } from 'effect';
+import { describe, test, expect } from 'vitest';
 import { Boundary, fixedClock, manualClock, type Clock } from '@czap/core';
 import { Q, type OutputTarget, type MotionTier, type QuantizerConfig, type LiveQuantizer } from '@czap/quantizer';
 import { TIER_TARGETS, MemoCache } from '@czap/quantizer/testing';
@@ -173,8 +172,8 @@ describe('MotionTier gating', () => {
     const b = viewport();
     const config = Q.from(b, { tier: 'none' }).outputs(simpleOutputs(b));
 
-    const lq = await Effect.runPromise(Effect.scoped(config.create()));
-    const outputs = await Effect.runPromise(lq.currentOutputs);
+    const lq = config.create().quantizer;
+    const outputs = lq.currentOutputs.read();
 
     // Only aria should be present
     expect(outputs.aria).toBeDefined();
@@ -186,8 +185,8 @@ describe('MotionTier gating', () => {
     const b = viewport();
     const config = Q.from(b, { tier: 'transitions' }).outputs(simpleOutputs(b));
 
-    const lq = await Effect.runPromise(Effect.scoped(config.create()));
-    const outputs = await Effect.runPromise(lq.currentOutputs);
+    const lq = config.create().quantizer;
+    const outputs = lq.currentOutputs.read();
 
     expect(outputs.css).toBeDefined();
     expect(outputs.aria).toBeDefined();
@@ -198,8 +197,8 @@ describe('MotionTier gating', () => {
     const b = viewport();
     const config = Q.from(b, { tier: 'physics' }).outputs(simpleOutputs(b));
 
-    const lq = await Effect.runPromise(Effect.scoped(config.create()));
-    const outputs = await Effect.runPromise(lq.currentOutputs);
+    const lq = config.create().quantizer;
+    const outputs = lq.currentOutputs.read();
 
     expect(outputs.css).toBeDefined();
     expect(outputs.glsl).toBeDefined();
@@ -210,8 +209,8 @@ describe('MotionTier gating', () => {
     const b = viewport();
     const config = Q.from(b).outputs(simpleOutputs(b));
 
-    const lq = await Effect.runPromise(Effect.scoped(config.create()));
-    const outputs = await Effect.runPromise(lq.currentOutputs);
+    const lq = config.create().quantizer;
+    const outputs = lq.currentOutputs.read();
 
     expect(outputs.css).toBeDefined();
     expect(outputs.glsl).toBeDefined();
@@ -257,20 +256,20 @@ describe('config identity includes tier/spring/force', () => {
     expect(transitions.id).not.toBe(physics.id);
     expect(physics.id).not.toBe(ungated.id);
 
-    const lqTransitions = await Effect.runPromise(Effect.scoped(transitions.create()));
-    const lqPhysics = await Effect.runPromise(Effect.scoped(physics.create()));
-    const lqUngated = await Effect.runPromise(Effect.scoped(ungated.create()));
+    const lqTransitions = transitions.create().quantizer;
+    const lqPhysics = physics.create().quantizer;
+    const lqUngated = ungated.create().quantizer;
 
-    expect((await Effect.runPromise(lqTransitions.currentOutputs)).glsl).toBeUndefined();
-    expect((await Effect.runPromise(lqPhysics.currentOutputs)).glsl).toBeDefined();
-    expect((await Effect.runPromise(lqUngated.currentOutputs)).glsl).toBeDefined();
+    expect((lqTransitions.currentOutputs.read()).glsl).toBeUndefined();
+    expect((lqPhysics.currentOutputs.read()).glsl).toBeDefined();
+    expect((lqUngated.currentOutputs.read()).glsl).toBeDefined();
 
     // Crossing-time resolution must stay per-config too (output cache key).
     lqPhysics.evaluate(800);
-    const physicsOutputs = await Effect.runPromise(lqPhysics.currentOutputs);
+    const physicsOutputs = lqPhysics.currentOutputs.read();
     expect(physicsOutputs.glsl).toEqual({ u_identity_scale: 1.0 });
     lqTransitions.evaluate(800);
-    expect((await Effect.runPromise(lqTransitions.currentOutputs)).glsl).toBeUndefined();
+    expect((lqTransitions.currentOutputs.read()).glsl).toBeUndefined();
   });
 
   test('distinct springs with identical outputs produce distinct configs and easings', async () => {
@@ -280,10 +279,10 @@ describe('config identity includes tier/spring/force', () => {
 
     expect(stiff.id).not.toBe(soft.id);
 
-    const lqStiff = await Effect.runPromise(Effect.scoped(stiff.create()));
-    const lqSoft = await Effect.runPromise(Effect.scoped(soft.create()));
-    const stiffCss = (await Effect.runPromise(lqStiff.currentOutputs)).css ?? {};
-    const softCss = (await Effect.runPromise(lqSoft.currentOutputs)).css ?? {};
+    const lqStiff = stiff.create().quantizer;
+    const lqSoft = soft.create().quantizer;
+    const stiffCss = (lqStiff.currentOutputs.read()).css ?? {};
+    const softCss = (lqSoft.currentOutputs.read()).css ?? {};
 
     expect(stiffCss['--czap-easing']).toBeDefined();
     expect(softCss['--czap-easing']).toBeDefined();
@@ -297,11 +296,11 @@ describe('config identity includes tier/spring/force', () => {
 
     expect(plain.id).not.toBe(forced.id);
 
-    const lqPlain = await Effect.runPromise(Effect.scoped(plain.create()));
-    const lqForced = await Effect.runPromise(Effect.scoped(forced.create()));
+    const lqPlain = plain.create().quantizer;
+    const lqForced = forced.create().quantizer;
 
-    expect((await Effect.runPromise(lqPlain.currentOutputs)).glsl).toBeUndefined();
-    expect((await Effect.runPromise(lqForced.currentOutputs)).glsl).toBeDefined();
+    expect((lqPlain.currentOutputs.read()).glsl).toBeUndefined();
+    expect((lqForced.currentOutputs.read()).glsl).toBeDefined();
   });
 });
 
@@ -315,8 +314,8 @@ describe('force() escape hatch', () => {
     // tier: none normally blocks everything except aria
     const config = Q.from(b, { tier: 'none' }).force('css', 'glsl').outputs(simpleOutputs(b));
 
-    const lq = await Effect.runPromise(Effect.scoped(config.create()));
-    const outputs = await Effect.runPromise(lq.currentOutputs);
+    const lq = config.create().quantizer;
+    const outputs = lq.currentOutputs.read();
 
     expect(outputs.css).toBeDefined();
     expect(outputs.glsl).toBeDefined();
@@ -347,8 +346,8 @@ describe('springToLinearCSS auto-generation', () => {
       },
     });
 
-    const lq = await Effect.runPromise(Effect.scoped(config.create()));
-    const outputs = await Effect.runPromise(lq.currentOutputs);
+    const lq = config.create().quantizer;
+    const outputs = lq.currentOutputs.read();
 
     expect(outputs.css).toBeDefined();
     expect(outputs.css!['--czap-easing']).toBeDefined();
@@ -368,8 +367,8 @@ describe('springToLinearCSS auto-generation', () => {
       },
     });
 
-    const lq = await Effect.runPromise(Effect.scoped(config.create()));
-    const outputs = await Effect.runPromise(lq.currentOutputs);
+    const lq = config.create().quantizer;
+    const outputs = lq.currentOutputs.read();
 
     expect(outputs.css).toBeDefined();
     expect(outputs.css!['--czap-easing']).toBeUndefined();
@@ -388,10 +387,10 @@ describe('springToLinearCSS auto-generation', () => {
       css: { compact: { [`--${t2}`]: '1' }, medium: { [`--${t2}`]: '2' }, expanded: { [`--${t2}`]: '3' } },
     });
 
-    const lq1 = await Effect.runPromise(Effect.scoped(config1.create()));
-    const lq2 = await Effect.runPromise(Effect.scoped(config2.create()));
-    const o1 = await Effect.runPromise(lq1.currentOutputs);
-    const o2 = await Effect.runPromise(lq2.currentOutputs);
+    const lq1 = config1.create().quantizer;
+    const lq2 = config2.create().quantizer;
+    const o1 = lq1.currentOutputs.read();
+    const o2 = lq2.currentOutputs.read();
 
     expect(o1.css!['--czap-easing']).toBe(o2.css!['--czap-easing']);
   });
@@ -448,8 +447,8 @@ describe('LiveQuantizer', () => {
     const { css } = uniqueCss();
     const config = Q.from(b).outputs({ css });
 
-    const lq = await Effect.runPromise(Effect.scoped(config.create()));
-    const state = await Effect.runPromise(lq.state);
+    const lq = config.create().quantizer;
+    const state = lq.state.read();
     expect(state).toBe('compact');
   });
 
@@ -458,7 +457,7 @@ describe('LiveQuantizer', () => {
     const { css } = uniqueCss();
     const config = Q.from(b).outputs({ css });
 
-    const lq = await Effect.runPromise(Effect.scoped(config.create()));
+    const lq = config.create().quantizer;
     const result = lq.evaluate(500);
     expect(result).toBe('compact');
   });
@@ -468,7 +467,7 @@ describe('LiveQuantizer', () => {
     const { css } = uniqueCss();
     const config = Q.from(b).outputs({ css });
 
-    const lq = await Effect.runPromise(Effect.scoped(config.create()));
+    const lq = config.create().quantizer;
 
     expect(lq.evaluate(500)).toBe('compact');
     expect(lq.evaluate(800)).toBe('medium');
@@ -480,17 +479,17 @@ describe('LiveQuantizer', () => {
     const { css, _key } = uniqueCss();
     const config = Q.from(b).outputs({ css });
 
-    const lq = await Effect.runPromise(Effect.scoped(config.create()));
+    const lq = config.create().quantizer;
 
-    let outputs = await Effect.runPromise(lq.currentOutputs);
+    let outputs = lq.currentOutputs.read();
     expect(outputs.css![_key]).toBe('0.5rem');
 
     lq.evaluate(800);
-    outputs = await Effect.runPromise(lq.currentOutputs);
+    outputs = lq.currentOutputs.read();
     expect(outputs.css![_key]).toBe('1rem');
 
     lq.evaluate(1300);
-    outputs = await Effect.runPromise(lq.currentOutputs);
+    outputs = lq.currentOutputs.read();
     expect(outputs.css![_key]).toBe('2rem');
   });
 
@@ -499,13 +498,13 @@ describe('LiveQuantizer', () => {
     const { css, _key } = uniqueCss();
     const config = Q.from(b).outputs({ css });
 
-    const lq = await Effect.runPromise(Effect.scoped(config.create()));
+    const lq = config.create().quantizer;
 
     expect(lq.evaluate(100)).toBe('compact');
     expect(lq.evaluate(200)).toBe('compact');
     expect(lq.evaluate(300)).toBe('compact');
 
-    const outputs = await Effect.runPromise(lq.currentOutputs);
+    const outputs = lq.currentOutputs.read();
     expect(outputs.css![_key]).toBe('0.5rem');
   });
 
@@ -514,7 +513,7 @@ describe('LiveQuantizer', () => {
     const { css } = uniqueCss();
     const config = Q.from(b).outputs({ css });
 
-    const lq = await Effect.runPromise(Effect.scoped(config.create()));
+    const lq = config.create().quantizer;
     expect(lq.config).toBe(config);
   });
 
@@ -523,7 +522,7 @@ describe('LiveQuantizer', () => {
     const { css } = uniqueCss();
     const config = Q.from(b).outputs({ css });
 
-    const lq = await Effect.runPromise(Effect.scoped(config.create()));
+    const lq = config.create().quantizer;
     expect(lq._tag).toBe('Quantizer');
     expect(lq.boundary).toBe(b);
   });
@@ -533,7 +532,7 @@ describe('LiveQuantizer', () => {
     const { css } = uniqueCss();
     const config = Q.from(b).outputs({ css });
 
-    const lq = await Effect.runPromise(Effect.scoped(config.create()));
+    const lq = config.create().quantizer;
     expect((lq as LiveQuantizer<typeof b> & { stateSync(): string }).stateSync()).toBe('compact');
     lq.evaluate(800);
     expect((lq as LiveQuantizer<typeof b> & { stateSync(): string }).stateSync()).toBe('medium');
@@ -552,13 +551,13 @@ describe('LiveQuantizer', () => {
       },
     });
 
-    const lq = await Effect.runPromise(Effect.scoped(config.create()));
-    expect(await Effect.runPromise(lq.currentOutputs)).toEqual({
+    const lq = config.create().quantizer;
+    expect(lq.currentOutputs.read()).toEqual({
       css: { '--gap': '4px' },
     });
 
     lq.evaluate(1300);
-    expect(await Effect.runPromise(lq.currentOutputs)).toEqual({
+    expect(lq.currentOutputs.read()).toEqual({
       css: { '--gap': '12px' },
       glsl: { u_scale: 2 },
     });
@@ -569,15 +568,15 @@ describe('LiveQuantizer', () => {
     const { css } = uniqueCss();
     const config = Q.from(b).outputs({ css });
 
-    const lq = await Effect.runPromise(Effect.scoped(config.create()));
-    const initialOutputs = await Effect.runPromise(lq.currentOutputs);
+    const lq = config.create().quantizer;
+    const initialOutputs = lq.currentOutputs.read();
 
     lq.evaluate(800);
-    const mediumOutputs = await Effect.runPromise(lq.currentOutputs);
+    const mediumOutputs = lq.currentOutputs.read();
     expect(mediumOutputs).not.toBe(initialOutputs);
 
     lq.evaluate(500);
-    const compactOutputs = await Effect.runPromise(lq.currentOutputs);
+    const compactOutputs = lq.currentOutputs.read();
     expect(compactOutputs).toBe(initialOutputs);
   });
 
@@ -589,25 +588,22 @@ describe('LiveQuantizer', () => {
     expect(() => Q.from(b, { tier: 'ghost' as MotionTier })).toThrow(/unknown MotionTier 'ghost'/);
   });
 
-  test('changes subscriptions clean up cleanly when the scope closes after a crossing', async () => {
+  test('changes subscriptions clean up cleanly when the lifetime disposes after a crossing', async () => {
     const b = viewport();
     const { css } = uniqueCss();
-    const events = await Effect.runPromise(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const lq = yield* Q.from(b).outputs({ css }).create();
-          const fiber = yield* Effect.forkScoped(Stream.runCollect(Stream.take(lq.changes, 1)));
+    const { quantizer: lq, lifetime } = Q.from(b).outputs({ css }).create();
 
-          yield* Effect.yieldNow;
-          yield* Effect.sync(() => {
-            lq.evaluate(900);
-          });
-
-          const chunk = yield* Fiber.join(fiber);
-          return Array.from(chunk).map((crossing) => ({ from: crossing.from, to: crossing.to }));
-        }),
-      ),
-    );
+    // The crossing fan-out publishes synchronously on evaluate(); collect via the
+    // kernel's subscribe (was `Stream.take(lq.changes, 1)` forked in a scope).
+    const events: Array<{ from: string; to: string }> = [];
+    const dispose = lq.changes.subscribe((crossing) => {
+      events.push({ from: crossing.from, to: crossing.to });
+    });
+    lq.evaluate(900); // compact -> medium crossing
+    dispose();
+    // Disposing the lifetime closes the crossing kernel (completes subscribers,
+    // makes publish inert) — the clean-up the old scope close covered.
+    await lifetime.dispose();
 
     expect(events).toEqual([{ from: 'compact', to: 'medium' }]);
   });
@@ -631,8 +627,8 @@ describe('tier gating output correctness', () => {
       },
     });
 
-    const lq = await Effect.runPromise(Effect.scoped(config.create()));
-    const outputs = await Effect.runPromise(lq.currentOutputs);
+    const lq = config.create().quantizer;
+    const outputs = lq.currentOutputs.read();
 
     expect(outputs.aria).toEqual({ 'aria-label': `c-${t}` });
     expect(outputs.css).toBeUndefined();
@@ -652,9 +648,9 @@ describe('tier gating output correctness', () => {
       },
     });
 
-    const lq = await Effect.runPromise(Effect.scoped(config.create()));
+    const lq = config.create().quantizer;
     lq.evaluate(800);
-    const outputs = await Effect.runPromise(lq.currentOutputs);
+    const outputs = lq.currentOutputs.read();
 
     expect(outputs.css).toEqual({ [`--${t}`]: '1rem' });
     expect(outputs.aria).toEqual({ 'aria-label': `m-${t}` });
@@ -670,22 +666,21 @@ describe('tier gating output correctness', () => {
 
 describe('injected-HLC determinism (A-1)', () => {
   /** Drive `lq` to its first crossing and return the crossing's HLC timestamp. */
-  function firstCrossingHlc<B extends Boundary.Shape>(b: B, clock: Clock, node?: string) {
+  function firstCrossingHlc<B extends Boundary.Shape>(
+    b: B,
+    clock: Clock,
+    node?: string,
+  ): { wall_ms: number; counter: number; node_id: string } {
     const { css } = uniqueCssForGuard();
-    return Effect.runPromise(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const lq = yield* Q.from(b).outputs({ css }).create({ clock, node });
-          const fiber = yield* Effect.forkScoped(Stream.runCollect(Stream.take(lq.changes, 1)));
-          yield* Effect.yieldNow;
-          yield* Effect.sync(() => {
-            lq.evaluate(900);
-          });
-          const chunk = yield* Fiber.join(fiber);
-          return Array.from(chunk)[0]!.timestamp as unknown as { wall_ms: number; counter: number; node_id: string };
-        }),
-      ),
-    );
+    const { quantizer: lq } = Q.from(b).outputs({ css }).create({ clock, node });
+    let stamp: { wall_ms: number; counter: number; node_id: string } | undefined;
+    const dispose = lq.changes.subscribe((crossing) => {
+      // crossing.timestamp is the branded HLC — structurally { wall_ms, counter, node_id }.
+      stamp = crossing.timestamp;
+    });
+    lq.evaluate(900); // crossing published synchronously
+    dispose();
+    return stamp!;
   }
 
   let guardCounter = 0;
@@ -716,34 +711,35 @@ describe('injected-HLC determinism (A-1)', () => {
     expect(a.counter).toBe(0);
   });
 
-  test("each create() owns its clock — one instance's evaluates never advance another's HLC", async () => {
+  test("each create() owns its clock — one instance's evaluates never advance another's HLC", () => {
     const b = viewport();
     const clockA = manualClock(2_000);
     const clockB = manualClock(2_000);
     const { css } = uniqueCssForGuard();
-    const stamps = await Effect.runPromise(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const config = Q.from(b).outputs({ css });
-          const lqA = yield* config.create({ clock: clockA, node: 'A' });
-          const lqB = yield* config.create({ clock: clockB, node: 'B' });
-          const fiberA = yield* Effect.forkScoped(Stream.runCollect(Stream.take(lqA.changes, 1)));
-          const fiberB = yield* Effect.forkScoped(Stream.runCollect(Stream.take(lqB.changes, 1)));
-          yield* Effect.yieldNow;
-          // Advance only A's clock and evaluate A several times before B ever
-          // crosses; B's stamp must be untouched by A's activity.
-          yield* Effect.sync(() => {
-            clockA.advance(50);
-            lqA.evaluate(900);
-            clockB.advance(10);
-            lqB.evaluate(900);
-          });
-          const ca = Array.from(yield* Fiber.join(fiberA))[0]!.timestamp as unknown as { wall_ms: number; node_id: string };
-          const cb = Array.from(yield* Fiber.join(fiberB))[0]!.timestamp as unknown as { wall_ms: number; node_id: string };
-          return { ca, cb };
-        }),
-      ),
-    );
+    const config = Q.from(b).outputs({ css });
+    const { quantizer: lqA } = config.create({ clock: clockA, node: 'A' });
+    const { quantizer: lqB } = config.create({ clock: clockB, node: 'B' });
+
+    let ca: { wall_ms: number; node_id: string } | undefined;
+    let cb: { wall_ms: number; node_id: string } | undefined;
+    const disposeA = lqA.changes.subscribe((c) => {
+      ca = c.timestamp;
+    });
+    const disposeB = lqB.changes.subscribe((c) => {
+      cb = c.timestamp;
+    });
+
+    // Advance only A's clock and evaluate A before B ever crosses; B's stamp must
+    // be untouched by A's activity. Each evaluate() publishes its crossing
+    // synchronously to its own fan-out.
+    clockA.advance(50);
+    lqA.evaluate(900);
+    clockB.advance(10);
+    lqB.evaluate(900);
+    disposeA();
+    disposeB();
+
+    const stamps = { ca: ca!, cb: cb! };
     expect(stamps.ca.wall_ms).toBe(2_050);
     expect(stamps.ca.node_id).toBe('A');
     // B's stamp reflects ONLY B's own clock (2_010), not A's 2_050 — no shared

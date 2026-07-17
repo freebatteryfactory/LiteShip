@@ -6,7 +6,7 @@
 
 # Interface: DAGNode
 
-Defined in: [core/src/dag.ts:17](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/dag.ts#L17)
+Defined in: [core/src/dag.ts:16](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/dag.ts#L16)
 
 Single vertex in a [ReceiptDAG](ReceiptDAG.md): an envelope plus its parent and child hashes.
 
@@ -16,7 +16,7 @@ Single vertex in a [ReceiptDAG](ReceiptDAG.md): an envelope plus its parent and 
 
 > `readonly` **children**: readonly `string`[]
 
-Defined in: [core/src/dag.ts:20](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/dag.ts#L20)
+Defined in: [core/src/dag.ts:19](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/dag.ts#L19)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [core/src/dag.ts:20](https://github.com/freebatteryfactory/LiteShip/
 
 > `readonly` **envelope**: [`ReceiptEnvelope`](ReceiptEnvelope.md)
 
-Defined in: [core/src/dag.ts:18](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/dag.ts#L18)
+Defined in: [core/src/dag.ts:17](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/dag.ts#L17)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [core/src/dag.ts:18](https://github.com/freebatteryfactory/LiteShip/
 
 > `readonly` **parents**: readonly `string`[]
 
-Defined in: [core/src/dag.ts:19](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/dag.ts#L19)
+Defined in: [core/src/dag.ts:18](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/dag.ts#L18)

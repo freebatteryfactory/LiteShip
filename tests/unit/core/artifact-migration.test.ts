@@ -261,9 +261,15 @@ describe('artifact migration — Receipt (kind discriminator, no _version)', () 
     // would be a real artifact change that THIS guard would surface.
     const { Receipt, HLC: HLCNs, TypedRef } = await import('@czap/core');
     const ts = HLCNs.create('migration-test');
-    const payload = await run(TypedRef.create('test/plain', { hello: 'world' }));
-    const envelope = await run(
-      Receipt.createEnvelope('migration-probe', { type: 'artifact', id: 'x' }, payload, ts, Receipt.GENESIS),
+    // TypedRef.create / Receipt.createEnvelope are Promise-first as of the
+    // core-seams wave (ShipCapsule above stays Effect — no mapped seam this wave).
+    const payload = await TypedRef.create('test/plain', { hello: 'world' });
+    const envelope = await Receipt.createEnvelope(
+      'migration-probe',
+      { type: 'artifact', id: 'x' },
+      payload,
+      ts,
+      Receipt.GENESIS,
     );
     expect('_version' in envelope).toBe(false);
     expect('schema_version' in envelope).toBe(false);

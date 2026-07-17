@@ -8,7 +8,7 @@
 
 > **SyncSystem**(`frameIndex`, `fps?`): `SystemShape`
 
-Defined in: [scene/src/systems/sync.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/sync.ts#L56)
+Defined in: [scene/src/systems/sync.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/sync.ts#L55)
 
 Build a SyncSystem keyed to a frame index. Resolves the current scene
 time from `frameIndex / fps`, queries the world for `Beat`-tagged

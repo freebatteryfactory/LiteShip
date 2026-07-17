@@ -6,7 +6,7 @@
 
 # Interface: DenseStore
 
-Defined in: [core/src/ecs.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L40)
+Defined in: [core/src/ecs.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L39)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [core/src/ecs.ts:40](https://github.com/freebatteryfactory/LiteShip/
 
 > `readonly` **\_dense**: `true`
 
-Defined in: [core/src/ecs.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L43)
+Defined in: [core/src/ecs.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L42)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [core/src/ecs.ts:43](https://github.com/freebatteryfactory/LiteShip/
 
 > `readonly` **capacity**: `number`
 
-Defined in: [core/src/ecs.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L42)
+Defined in: [core/src/ecs.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L41)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [core/src/ecs.ts:42](https://github.com/freebatteryfactory/LiteShip/
 
 > **count**: `number`
 
-Defined in: [core/src/ecs.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L51)
+Defined in: [core/src/ecs.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L50)
 
 Current number of live entries
 
@@ -40,7 +40,7 @@ Current number of live entries
 
 > `readonly` **data**: `Float64Array`
 
-Defined in: [core/src/ecs.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L49)
+Defined in: [core/src/ecs.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L48)
 
 The raw Float64Array backing store
 
@@ -50,7 +50,7 @@ The raw Float64Array backing store
 
 > `readonly` **entityToIndex**: [`Map`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map)\<[`EntityId`](../type-aliases/EntityId.md), `number`\>
 
-Defined in: [core/src/ecs.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L45)
+Defined in: [core/src/ecs.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L44)
 
 Entity ID `->` index in the data array
 
@@ -60,7 +60,7 @@ Entity ID `->` index in the data array
 
 > `readonly` **indexToEntity**: [`EntityId`](../type-aliases/EntityId.md)[]
 
-Defined in: [core/src/ecs.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L47)
+Defined in: [core/src/ecs.ts:46](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L46)
 
 Index `->` Entity ID (for iteration)
 
@@ -70,7 +70,7 @@ Index `->` Entity ID (for iteration)
 
 > `readonly` **name**: `string`
 
-Defined in: [core/src/ecs.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L41)
+Defined in: [core/src/ecs.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L40)
 
 ## Methods
 
@@ -78,7 +78,7 @@ Defined in: [core/src/ecs.ts:41](https://github.com/freebatteryfactory/LiteShip/
 
 > **delete**(`entityId`): `boolean`
 
-Defined in: [core/src/ecs.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L56)
+Defined in: [core/src/ecs.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L55)
 
 #### Parameters
 
@@ -96,7 +96,7 @@ Defined in: [core/src/ecs.ts:56](https://github.com/freebatteryfactory/LiteShip/
 
 > **entities**(): readonly [`EntityId`](../type-aliases/EntityId.md)[]
 
-Defined in: [core/src/ecs.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L61)
+Defined in: [core/src/ecs.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L60)
 
 All entity IDs with values, in dense order
 
@@ -110,7 +110,7 @@ readonly [`EntityId`](../type-aliases/EntityId.md)[]
 
 > **get**(`entityId`): `number` \| `undefined`
 
-Defined in: [core/src/ecs.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L53)
+Defined in: [core/src/ecs.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L52)
 
 #### Parameters
 
@@ -128,7 +128,7 @@ Defined in: [core/src/ecs.ts:53](https://github.com/freebatteryfactory/LiteShip/
 
 > **has**(`entityId`): `boolean`
 
-Defined in: [core/src/ecs.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L55)
+Defined in: [core/src/ecs.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L54)
 
 #### Parameters
 
@@ -146,7 +146,7 @@ Defined in: [core/src/ecs.ts:55](https://github.com/freebatteryfactory/LiteShip/
 
 > **reset**(): `void`
 
-Defined in: [core/src/ecs.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L57)
+Defined in: [core/src/ecs.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L56)
 
 #### Returns
 
@@ -158,7 +158,7 @@ Defined in: [core/src/ecs.ts:57](https://github.com/freebatteryfactory/LiteShip/
 
 > **set**(`entityId`, `value`): `void`
 
-Defined in: [core/src/ecs.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L54)
+Defined in: [core/src/ecs.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L53)
 
 #### Parameters
 
@@ -180,7 +180,7 @@ Defined in: [core/src/ecs.ts:54](https://github.com/freebatteryfactory/LiteShip/
 
 > **view**(): `Float64Array`
 
-Defined in: [core/src/ecs.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L59)
+Defined in: [core/src/ecs.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L58)
 
 Direct typed array view for tight-loop iteration (length = count)
 

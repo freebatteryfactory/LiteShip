@@ -14,7 +14,6 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import { Effect } from 'effect';
 import { World } from '@czap/core';
 import {
   SVGSystem,
@@ -35,86 +34,74 @@ interface SvgAttrsRead {
 }
 
 describe('SVGSystem', () => {
-  it('composes _svgAttrs from the _opacity VideoSystem already wrote (no recompute)', async () => {
-    const program = Effect.gen(function* () {
-      const world = yield* World.make();
-      yield* world.spawn({ VideoSource: {}, FrameRange: { from: 0, to: 60 }, TrackLayer: 0 });
-      // VideoSystem first (writes _opacity), then SVGSystem (reads it).
-      yield* world.addSystem(VideoSystem(30));
-      yield* world.addSystem(SVGSystem(30));
-      yield* world.tick();
+  it('composes _svgAttrs from the _opacity VideoSystem already wrote (no recompute)', () => {
+    const { world } = World.make();
+    world.spawn({ VideoSource: {}, FrameRange: { from: 0, to: 60 }, TrackLayer: 0 });
+    // VideoSystem first (writes _opacity), then SVGSystem (reads it).
+    world.addSystem(VideoSystem(30));
+    world.addSystem(SVGSystem(30));
+    world.tick();
 
-      const entities = yield* world.query('VideoSource');
-      const ent = entities[0]!;
-      const opacity = ent.components.get('_opacity');
-      const attrs = ent.components.get('_svgAttrs') as SvgAttrsRead | undefined;
+    const entities = world.query('VideoSource');
+    const ent = entities[0]!;
+    const opacity = ent.components.get('_opacity');
+    const attrs = ent.components.get('_svgAttrs') as SvgAttrsRead | undefined;
 
-      expect(opacity).toBe(1);
-      expect(attrs).toBeDefined();
-      expect(attrs!._tag).toBe('SvgAttrs');
-      // Read-through, not recomputed: opacity equals what VideoSystem wrote.
-      expect(attrs!.opacity).toBe(opacity);
-    });
-    await Effect.runPromise(Effect.scoped(program));
+    expect(opacity).toBe(1);
+    expect(attrs).toBeDefined();
+    expect(attrs!._tag).toBe('SvgAttrs');
+    // Read-through, not recomputed: opacity equals what VideoSystem wrote.
+    expect(attrs!.opacity).toBe(opacity);
   });
 
-  it('out-of-range opacity (0) flows into _svgAttrs unchanged', async () => {
-    const program = Effect.gen(function* () {
-      const world = yield* World.make();
-      yield* world.spawn({ VideoSource: {}, FrameRange: { from: 0, to: 60 }, TrackLayer: 0 });
-      yield* world.addSystem(VideoSystem(120));
-      yield* world.addSystem(SVGSystem(120));
-      yield* world.tick();
+  it('out-of-range opacity (0) flows into _svgAttrs unchanged', () => {
+    const { world } = World.make();
+    world.spawn({ VideoSource: {}, FrameRange: { from: 0, to: 60 }, TrackLayer: 0 });
+    world.addSystem(VideoSystem(120));
+    world.addSystem(SVGSystem(120));
+    world.tick();
 
-      const entities = yield* world.query('VideoSource');
-      const attrs = entities[0]!.components.get('_svgAttrs') as SvgAttrsRead;
-      expect(attrs.opacity).toBe(0);
-    });
-    await Effect.runPromise(Effect.scoped(program));
+    const entities = world.query('VideoSource');
+    const attrs = entities[0]!.components.get('_svgAttrs') as SvgAttrsRead;
+    expect(attrs.opacity).toBe(0);
   });
 
-  it('derives mixBlendMode from a _blend TransitionSystem wrote', async () => {
+  it('derives mixBlendMode from a _blend TransitionSystem wrote', () => {
     // Compose blend on a VideoSource entity that ALSO carries a transition,
     // so a single SVGSystem pass reads both _opacity and _blend. blend>=0.5
     // → 'screen', else 'normal'.
-    const blendModeAt = async (frameIndex: number): Promise<string | undefined> => {
-      const program = Effect.gen(function* () {
-        const world = yield* World.make();
-        yield* world.spawn({
-          VideoSource: {},
-          FrameRange: { from: 0, to: 100 },
-          TransitionKind: 'crossfade',
-          Between: ['a', 'b'],
-          TrackLayer: 0,
-        });
-        yield* world.addSystem(VideoSystem(frameIndex));
-        yield* world.addSystem(TransitionSystem(frameIndex));
-        yield* world.addSystem(SVGSystem(frameIndex));
-        yield* world.tick();
-        const entities = yield* world.query('VideoSource');
-        const attrs = entities[0]!.components.get('_svgAttrs') as SvgAttrsRead;
-        return attrs.mixBlendMode;
+    const blendModeAt = (frameIndex: number): string | undefined => {
+      const { world } = World.make();
+      world.spawn({
+        VideoSource: {},
+        FrameRange: { from: 0, to: 100 },
+        TransitionKind: 'crossfade',
+        Between: ['a', 'b'],
+        TrackLayer: 0,
       });
-      return Effect.runPromise(Effect.scoped(program));
+      world.addSystem(VideoSystem(frameIndex));
+      world.addSystem(TransitionSystem(frameIndex));
+      world.addSystem(SVGSystem(frameIndex));
+      world.tick();
+      const entities = world.query('VideoSource');
+      const attrs = entities[0]!.components.get('_svgAttrs') as SvgAttrsRead;
+      return attrs.mixBlendMode;
     };
     // frame 20 → blend 0.2 → normal; frame 80 → blend 0.8 → screen.
-    expect(await blendModeAt(20)).toBe('normal');
-    expect(await blendModeAt(80)).toBe('screen');
+    expect(blendModeAt(20)).toBe('normal');
+    expect(blendModeAt(80)).toBe('screen');
   });
 
-  it('omits mixBlendMode when no transition (_blend) is present', async () => {
-    const program = Effect.gen(function* () {
-      const world = yield* World.make();
-      yield* world.spawn({ VideoSource: {}, FrameRange: { from: 0, to: 60 }, TrackLayer: 0 });
-      yield* world.addSystem(VideoSystem(30));
-      yield* world.addSystem(SVGSystem(30));
-      yield* world.tick();
-      const entities = yield* world.query('VideoSource');
-      const attrs = entities[0]!.components.get('_svgAttrs') as SvgAttrsRead;
-      expect(attrs.mixBlendMode).toBeUndefined();
-      expect(attrs.opacity).toBe(1);
-    });
-    await Effect.runPromise(Effect.scoped(program));
+  it('omits mixBlendMode when no transition (_blend) is present', () => {
+    const { world } = World.make();
+    world.spawn({ VideoSource: {}, FrameRange: { from: 0, to: 60 }, TrackLayer: 0 });
+    world.addSystem(VideoSystem(30));
+    world.addSystem(SVGSystem(30));
+    world.tick();
+    const entities = world.query('VideoSource');
+    const attrs = entities[0]!.components.get('_svgAttrs') as SvgAttrsRead;
+    expect(attrs.mixBlendMode).toBeUndefined();
+    expect(attrs.opacity).toBe(1);
   });
 
   it('is registered as the 7th and LAST canonical system (ordering invariant)', async () => {
@@ -139,7 +126,7 @@ describe('SVGSystem', () => {
       // topological order) must populate _svgAttrs — proof SVGSystem runs
       // AFTER VideoSystem within the same tick.
       await handle.tick((30 / 60) * 1000);
-      const videos = await Effect.runPromise(handle.world.query('VideoSource'));
+      const videos = handle.world.query('VideoSource');
       const attrs = videos[0]!.components.get('_svgAttrs') as SvgAttrsRead;
       expect(attrs).toBeDefined();
       expect(attrs._tag).toBe('SvgAttrs');
@@ -149,7 +136,7 @@ describe('SVGSystem', () => {
     }
   });
 
-  it('never touches the DOM — pure / SSR-safe', async () => {
+  it('never touches the DOM — pure / SSR-safe', () => {
     // No document/window in this test env; assert SVGSystem does not reach
     // for them even if a stub were present.
     const docSpy = vi.fn();
@@ -166,16 +153,13 @@ describe('SVGSystem', () => {
       },
     );
     try {
-      const program = Effect.gen(function* () {
-        const world = yield* World.make();
-        yield* world.spawn({ VideoSource: {}, FrameRange: { from: 0, to: 60 }, TrackLayer: 0 });
-        yield* world.addSystem(VideoSystem(30));
-        yield* world.addSystem(SVGSystem(30));
-        yield* world.tick();
-        const entities = yield* world.query('VideoSource');
-        expect(entities[0]!.components.get('_svgAttrs')).toBeDefined();
-      });
-      await Effect.runPromise(Effect.scoped(program));
+      const { world } = World.make();
+      world.spawn({ VideoSource: {}, FrameRange: { from: 0, to: 60 }, TrackLayer: 0 });
+      world.addSystem(VideoSystem(30));
+      world.addSystem(SVGSystem(30));
+      world.tick();
+      const entities = world.query('VideoSource');
+      expect(entities[0]!.components.get('_svgAttrs')).toBeDefined();
       expect(docSpy).not.toHaveBeenCalled();
     } finally {
       if (hadDocument) g.document = originalDocument;

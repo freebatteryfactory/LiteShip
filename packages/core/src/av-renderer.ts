@@ -12,7 +12,6 @@ import type { CompositeState } from './compositor.js';
 import type { Compositor } from './compositor.js';
 import { AVBridge } from './av-bridge.js';
 import type { Millis } from './brands.js';
-import { Effect } from 'effect';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -78,7 +77,7 @@ function _make(config: AVRenderConfig, compositor: Compositor.Shape, existingBri
           onAudioFrame(frameSample, samplesPerFrame);
         }
 
-        const state = await Effect.runPromise(compositor.compute());
+        const state = compositor.compute();
 
         if (onVideoFrame) {
           onVideoFrame(i, timestamp, state);

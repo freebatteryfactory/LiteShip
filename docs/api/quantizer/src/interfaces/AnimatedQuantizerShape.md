@@ -6,17 +6,19 @@
 
 # Interface: AnimatedQuantizerShape\<B\>
 
-Defined in: [quantizer/src/animated-quantizer.ts:25](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L25)
+Defined in: [quantizer/src/animated-quantizer.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L43)
 
 Quantizer augmented with transition-aware output interpolation.
 
-The `interpolated` stream emits a frame on each animation tick containing
-the target state, normalized progress (0-1), and the current lerped
-output record. Non-numeric values snap at the 50% mark.
+The `interpolated` no-replay [CellKernel](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts) fan-out publishes a frame on
+each animation tick containing the target state, normalized progress (0-1),
+and the current lerped output record. Non-numeric values snap at the 50% mark.
+Subscribe via `interpolated.subscribe(sink)`; a late subscriber never sees a
+frame published before it attached.
 
 ## Extends
 
-- [`Quantizer`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Quantizer.md)\<`B`\>
+- [`ReactiveQuantizer`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/quantizer-types.ts)\<`B`\>
 
 ## Type Parameters
 
@@ -30,11 +32,11 @@ output record. Non-numeric values snap at the 50% mark.
 
 > `readonly` **\_tag**: `"Quantizer"`
 
-Defined in: core/dist/quantizer-types.d.ts:20
+Defined in: core/dist/quantizer-types.d.ts:33
 
 #### Inherited from
 
-`Quantizer._tag`
+`ReactiveQuantizer._tag`
 
 ***
 
@@ -42,45 +44,49 @@ Defined in: core/dist/quantizer-types.d.ts:20
 
 > `readonly` **boundary**: `B`
 
-Defined in: core/dist/quantizer-types.d.ts:21
+Defined in: core/dist/quantizer-types.d.ts:34
 
 #### Inherited from
 
-`Quantizer.boundary`
+`ReactiveQuantizer.boundary`
 
 ***
 
 ### changes
 
-> `readonly` **changes**: `Stream`\<`BoundaryCrossing`\<`StateUnion`\<`B`\>\>\>
+> `readonly` **changes**: [`QuantizerCrossings`](../../../core/src/type-aliases/QuantizerCrossings.md)\<`B`\>
 
-Defined in: core/dist/quantizer-types.d.ts:25
+Defined in: core/dist/quantizer-types.d.ts:63
+
+No-replay crossing subscription (was `Stream.Stream<BoundaryCrossing<StateUnion<B> & string>>`).
 
 #### Inherited from
 
-`Quantizer.changes`
+`ReactiveQuantizer.changes`
 
 ***
 
 ### interpolated
 
-> `readonly` **interpolated**: `Stream`\<\{ `outputs`: `Record`\<`string`, `number` \| `string`\>; `progress`: `number`; `state`: `StateUnion`\<`B`\>; \}\>
+> `readonly` **interpolated**: `Pick`\<`CellKernel.Fanout`\<[`InterpolatedFrame`](InterpolatedFrame.md)\<`B`\>\>, `"subscribe"` \| `"closed"` \| `"size"`\>
 
-Defined in: [quantizer/src/animated-quantizer.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L29)
+Defined in: [quantizer/src/animated-quantizer.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L47)
 
-Stream of interpolated animation frames during crossings.
+No-replay subscription of interpolated animation frames during crossings.
 
 ***
 
 ### state
 
-> `readonly` **state**: `Effect`\<`StateUnion`\<`B`\>\>
+> `readonly` **state**: `QuantizerState`\<`B`\>
 
-Defined in: core/dist/quantizer-types.d.ts:22
+Defined in: core/dist/quantizer-types.d.ts:61
+
+Replay-1 current-state read (was `Effect.Effect<StateUnion<B>>`).
 
 #### Inherited from
 
-`Quantizer.state`
+`ReactiveQuantizer.state`
 
 ***
 
@@ -88,9 +94,9 @@ Defined in: core/dist/quantizer-types.d.ts:22
 
 > `readonly` `optional` **stateSync?**: () => `StateUnion`\<`B`\>
 
-Defined in: core/dist/quantizer-types.d.ts:24
+Defined in: core/dist/quantizer-types.d.ts:36
 
-Synchronous state accessor for hot paths (avoids Effect overhead).
+Synchronous state accessor for hot paths (avoids reactive read overhead).
 
 #### Returns
 
@@ -98,7 +104,7 @@ Synchronous state accessor for hot paths (avoids Effect overhead).
 
 #### Inherited from
 
-`Quantizer.stateSync`
+`ReactiveQuantizer.stateSync`
 
 ***
 
@@ -106,7 +112,7 @@ Synchronous state accessor for hot paths (avoids Effect overhead).
 
 > `readonly` **transition**: [`Transition`](Transition.md)\<`B`\>
 
-Defined in: [quantizer/src/animated-quantizer.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L27)
+Defined in: [quantizer/src/animated-quantizer.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L45)
 
 Resolver that maps `from -> to` crossings to [TransitionConfig](TransitionConfig.md).
 
@@ -116,7 +122,7 @@ Resolver that maps `from -> to` crossings to [TransitionConfig](TransitionConfig
 
 > **evaluate**(`value`): `StateUnion`\<`B`\>
 
-Defined in: core/dist/quantizer-types.d.ts:26
+Defined in: core/dist/quantizer-types.d.ts:37
 
 #### Parameters
 
@@ -130,4 +136,4 @@ Defined in: core/dist/quantizer-types.d.ts:26
 
 #### Inherited from
 
-`Quantizer.evaluate`
+`ReactiveQuantizer.evaluate`

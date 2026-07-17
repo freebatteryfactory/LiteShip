@@ -8,7 +8,7 @@
 
 > **sampleSceneMotion**(`plan`, `t`): `ReadonlyMap`\<`string`, `TypedValue`\>
 
-Defined in: [scene/src/systems/motion.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/motion.ts#L35)
+Defined in: [scene/src/systems/motion.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/motion.ts#L34)
 
 Sample the shared motion kernel at normalized time `t`, projected to the scene's
 component representation: a `cssVar → TypedValue` map, exactly the leaves a

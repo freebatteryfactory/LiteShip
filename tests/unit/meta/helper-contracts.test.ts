@@ -3,7 +3,6 @@ import { mockCanvas, mockHTMLElement } from '../../helpers/mock-dom.js';
 import { mockMatchMedia, mockNavigator, mockViewport, mockWebGL } from '../../helpers/mock-browser.js';
 import { MockEventSource } from '../../helpers/mock-event-source.js';
 import { MockWorker } from '../../helpers/mock-worker.js';
-import { MockWebSocket } from '../../helpers/mock-websocket.js';
 
 describe('test helper contract parity', () => {
   test('MockEventSource preserves constructor args and readyState transitions', () => {
@@ -72,34 +71,6 @@ describe('test helper contract parity', () => {
     worker.simulateMessage({ ok: false });
 
     expect(received).toEqual([{ ok: true }]);
-  });
-
-  test('MockWebSocket enforces open-state sends and captures protocol', () => {
-    const socket = new MockWebSocket('wss://example.test/socket', ['json', 'fallback']);
-
-    expect(socket.protocol).toBe('json');
-    expect(() => socket.send('before-open')).toThrow(/not open/i);
-
-    socket.simulateOpen();
-    socket.send('hello');
-    socket.close(1000, 'done');
-
-    expect(socket.sentMessages).toEqual(['hello']);
-    expect(socket.readyState).toBe(MockWebSocket.CLOSED);
-  });
-
-  test('MockWebSocket.install restores the original global and clears instances', () => {
-    const original = globalThis.WebSocket;
-    const cleanup = MockWebSocket.install();
-
-    expect(globalThis.WebSocket).toBe(MockWebSocket as unknown as typeof WebSocket);
-    new MockWebSocket('wss://example.test/socket');
-    expect(MockWebSocket.instances).toHaveLength(1);
-
-    cleanup();
-
-    expect(globalThis.WebSocket).toBe(original);
-    expect(MockWebSocket.instances).toHaveLength(0);
   });
 
   test('mockHTMLElement removeEventListener stops later dispatch', () => {

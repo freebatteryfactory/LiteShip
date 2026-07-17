@@ -7,14 +7,18 @@
  */
 
 import { describe, test, expect, beforeEach } from 'vitest';
-import { Effect } from 'effect';
 import { Physical, Morph, SemanticId } from '@czap/web';
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-const run = <A>(effect: Effect.Effect<A>): A => Effect.runSync(effect);
+/**
+ * Identity passthrough: `Physical.capture`/`restore` and `Morph.morphWithState`
+ * are synchronous now, so the former `Effect.runSync` harness is just the value
+ * itself. Kept as a thin wrapper so the call sites below read unchanged.
+ */
+const run = <A>(value: A): A => value;
 
 /** Create element and attach to body. */
 const mount = (html: string): Element => {
