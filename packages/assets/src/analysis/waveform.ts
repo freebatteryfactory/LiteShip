@@ -6,8 +6,7 @@
  * @module
  */
 
-import { Schema } from 'effect';
-import { defineCapsule } from '@czap/core';
+import { defineCapsule, S } from '@czap/core';
 import type { CapsuleDef } from '@czap/core';
 import type { AssetRegistry } from '../contract.js';
 
@@ -52,18 +51,18 @@ export function WaveformProjection(
   return defineCapsule({
     _kind: 'cachedProjection',
     name: `${audioAssetId}:waveform:${bins}`,
-    input: Schema.Unknown,
-    output: Schema.Array(Schema.Number),
+    input: S.unknown,
+    output: S.array(S.number),
     capabilities: { reads: [`asset:${audioAssetId}`], writes: [] },
     invariants: [
       {
         name: 'bin-count-matches',
-        check: (_i, o) => (o as readonly number[]).length === bins,
+        check: (_i, o) => o.length === bins,
         message: `waveform must emit exactly ${bins} bins`,
       },
       {
         name: 'values-normalized',
-        check: (_i, o) => (o as readonly number[]).every((v) => v >= 0 && v <= 1),
+        check: (_i, o) => o.every((v) => v >= 0 && v <= 1),
         message: 'waveform values must be in [0, 1]',
       },
     ],

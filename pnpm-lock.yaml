@@ -395,9 +395,6 @@ importers:
       '@czap/error':
         specifier: workspace:*
         version: link:../error
-      effect:
-        specifier: 4.0.0-beta.32
-        version: 4.0.0-beta.32
 
   packages/astro:
     dependencies:
@@ -510,9 +507,6 @@ importers:
       '@czap/error':
         specifier: workspace:*
         version: link:../error
-      effect:
-        specifier: 4.0.0-beta.32
-        version: 4.0.0-beta.32
 
   packages/command:
     dependencies:
@@ -540,9 +534,6 @@ importers:
       '@czap/error':
         specifier: workspace:*
         version: link:../error
-      effect:
-        specifier: 4.0.0-beta.32
-        version: 4.0.0-beta.32
 
   packages/core:
     dependencies:
@@ -707,9 +698,6 @@ importers:
       '@czap/genui':
         specifier: workspace:*
         version: link:../genui
-      effect:
-        specifier: 4.0.0-beta.32
-        version: 4.0.0-beta.32
       fast-glob:
         specifier: ^3.3.3
         version: 3.3.3

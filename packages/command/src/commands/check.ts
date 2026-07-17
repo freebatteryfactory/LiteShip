@@ -18,8 +18,7 @@
  *
  * @module
  */
-import { Schema } from 'effect';
-import { schemaToJsonSchema, wallClock, type CapsuleCommandResult } from '@czap/core';
+import { wallClock, type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
 import type { Finding } from '@czap/gauntlet';
 import {
   capabilityUnavailable,
@@ -29,70 +28,67 @@ import {
 } from '../registry.js';
 
 /**
- * One gauntlet finding, modelled for the single-source derivation. Faithfully
- * mirrors `@czap/gauntlet`'s `Finding` EXCEPT its `remediation?` — a
- * heterogeneous non-literal union (`{kind:'patch',…} | {kind:'instruction',…}`)
- * the structural dialect cannot represent soundly (no `oneOf`). The engine's
- * `Finding[]` stays assignable (it only adds the optional `remediation`), and
- * every field the CLI receipt + MCP work-list render (ruleId/severity/level/
- * title/detail/location) is modelled here. `severity`/`level` derive to enums.
- *
- * This schema is the source for the `outputSchema` ONLY; `CheckPayload` below
- * keeps the canonical `@czap/gauntlet` `Finding` type (remediation included), so
- * no capability is narrowed away from consumers — `remediation` still rides the
- * payload at runtime and through `structuredContent`, it is merely absent from
- * the JSON-Schema description (the one field the dialect can't express). The
- * modelled fields are pinned against the canonical `Finding` by a drift-guard in
- * tests/unit/command/check.test.ts, so this subset can't silently diverge.
- */
-const FindingSchema = Schema.Struct({
-  ruleId: Schema.String,
-  severity: Schema.Union([Schema.Literal('advisory'), Schema.Literal('warning'), Schema.Literal('error')]),
-  level: Schema.Union([
-    Schema.Literal('L0'),
-    Schema.Literal('L1'),
-    Schema.Literal('L2'),
-    Schema.Literal('L3'),
-    Schema.Literal('L4'),
-  ]),
-  title: Schema.String,
-  detail: Schema.String,
-  location: Schema.optional(
-    Schema.Struct({
-      file: Schema.String,
-      line: Schema.optional(Schema.Number),
-      column: Schema.optional(Schema.Number),
-    }),
-  ),
-});
-
-/**
- * Structured payload returned by `check` — the WELD-2 Finding-carrying shape. The
+ * The descriptor `outputSchema` for `check` — the WELD-2 Finding-carrying shape,
+ * hand-written JSON-Schema and byte-parity-pinned against the parity fixture. The
  * `findings` ARE plain JSON-serializable {@link Finding} data (ruleId, severity,
  * level, title, detail, location?, remediation?), so they ride the
  * `CapsuleCommandResult` payload straight through the MCP dispatch's
  * `structuredContent` and the CLI receipt with no separate adapter. `blocked`
  * mirrors the engine's single blocking verdict; `ok` is its negation.
+ *
+ * The modelled `findings` element faithfully mirrors `@czap/gauntlet`'s `Finding`
+ * EXCEPT its `remediation?` — a heterogeneous non-literal union
+ * (`{kind:'patch',…} | {kind:'instruction',…}`) the structural dialect cannot
+ * represent soundly (no `oneOf`). `CheckPayload` below keeps the canonical
+ * `Finding` type (remediation included), so no capability is narrowed away from
+ * consumers — `remediation` still rides the payload at runtime and through
+ * `structuredContent`, it is merely absent from the JSON-Schema description. The
+ * modelled fields are pinned against the canonical `Finding` by a drift-guard in
+ * tests/unit/command/check.test.ts, so this subset can't silently diverge.
  */
-export const CheckPayloadSchema = Schema.Struct({
-  ok: Schema.Boolean,
-  /** True iff a self-proven (blocking) gate emitted an error, or a waiver expired/was forbidden. */
-  blocked: Schema.Boolean,
-  /** Number of kept findings across all gates (post-waiver, authority applied). */
-  findingCount: Schema.Number,
-  /** The kept findings — the actionable work-list a human or agent reads. */
-  findings: Schema.Array(FindingSchema),
-});
+export const CheckPayloadSchema = {
+  type: 'object',
+  properties: {
+    ok: { type: 'boolean' },
+    /** True iff a self-proven (blocking) gate emitted an error, or a waiver expired/was forbidden. */
+    blocked: { type: 'boolean' },
+    /** Number of kept findings across all gates (post-waiver, authority applied). */
+    findingCount: { type: 'number' },
+    /** The kept findings — the actionable work-list a human or agent reads. */
+    findings: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          ruleId: { type: 'string' },
+          severity: { enum: ['advisory', 'warning', 'error'] },
+          level: { enum: ['L0', 'L1', 'L2', 'L3', 'L4'] },
+          title: { type: 'string' },
+          detail: { type: 'string' },
+          location: {
+            type: 'object',
+            properties: { file: { type: 'string' }, line: { type: 'number' }, column: { type: 'number' } },
+            required: ['file'],
+          },
+        },
+        required: ['ruleId', 'severity', 'level', 'title', 'detail'],
+      },
+    },
+  },
+  required: ['ok', 'blocked', 'findingCount', 'findings'],
+} as const satisfies CommandJsonSchema;
 
 /**
- * Structured payload returned by `check`. Single-source-derived for every field
- * EXCEPT `findings`, which keeps the canonical `@czap/gauntlet` `Finding` type
- * (so `remediation` — undescribable in the outputSchema's dialect — stays in the
- * type and is never narrowed away from a consumer). The `outputSchema` is derived
- * from `CheckPayloadSchema` (findings minus remediation); the type is a faithful
+ * Structured payload returned by `check`. Mirrors `CheckPayloadSchema` for every
+ * field EXCEPT `findings`, which keeps the canonical `@czap/gauntlet` `Finding`
+ * type (so `remediation` — undescribable in the outputSchema's dialect — stays in
+ * the type and is never narrowed away from a consumer). The type is a faithful
  * superset on exactly that one field.
  */
-export type CheckPayload = Omit<Schema.Schema.Type<typeof CheckPayloadSchema>, 'findings'> & {
+export type CheckPayload = {
+  readonly ok: boolean;
+  readonly blocked: boolean;
+  readonly findingCount: number;
   readonly findings: readonly Finding[];
 };
 
@@ -103,12 +99,13 @@ export const checkCommand: HandledCommand = {
     summary:
       'Run the pure gauntlet gate fold in-process (litelaunchGauntlet) and return structured findings + a blocking verdict.',
     requires: ['runGauntlet'] satisfies readonly CommandCapability[],
-    inputSchema: schemaToJsonSchema(
-      // Optional file scope; the engine defaults to DEFAULT_GAUNTLET_GLOBS
-      // (every package's TypeScript source) when omitted.
-      Schema.Struct({ globs: Schema.optional(Schema.Array(Schema.String)) }),
-    ),
-    outputSchema: schemaToJsonSchema(CheckPayloadSchema),
+    // Optional file scope; the engine defaults to DEFAULT_GAUNTLET_GLOBS
+    // (every package's TypeScript source) when omitted.
+    inputSchema: {
+      type: 'object',
+      properties: { globs: { type: 'array', items: { type: 'string' } } },
+    } as const satisfies CommandJsonSchema,
+    outputSchema: CheckPayloadSchema,
     annotations: { readOnly: true, mcpExposed: true, group: 'castoff' },
   },
   handler: async (invocation, context: CommandContext): Promise<CapsuleCommandResult> => {

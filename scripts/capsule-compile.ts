@@ -609,21 +609,21 @@ const SITE_ADAPTER_INTEGRATIONS: Readonly<Record<string, SiteAdapterIntegrationS
 /**
  * Resolve which of a siteAdapter's schemas the pure round-trip samples. Prefer
  * the `input` schema when it is arbitrary-derivable AND concrete (not the
- * over-broad `Unknown`/`Any` that would sample `fc.anything()`); else fall back
+ * over-broad `unknown`/`any` that would sample `fc.anything()`); else fall back
  * to the `output` schema; else `undefined` (neither derivable → the round trip
  * is non-emittable, a typed not-applicable, never a skip). The round trip proves
  * CanonicalCbor encode/decode preserves the chosen schema's structure.
  */
 function resolveRoundTripSchema(cap: {
-  input?: { ast?: { _tag?: string } };
-  output?: { ast?: { _tag?: string } };
+  input?: { ast?: { kind?: string } };
+  output?: { ast?: { kind?: string } };
 }): 'input' | 'output' | undefined {
-  const isConcreteDerivable = (schema: { ast?: { _tag?: string } } | undefined): boolean => {
+  const isConcreteDerivable = (schema: { ast?: { kind?: string } } | undefined): boolean => {
     if (schema === undefined) return false;
-    // Over-broad top-level schemas (`Unknown`/`Any`) are "derivable" but sample
+    // Over-broad top-level schemas (`unknown`/`any`) are "derivable" but sample
     // fc.anything(); prefer a concrete sibling schema when one exists.
-    const tag = schema.ast?._tag;
-    if (tag === 'Unknown' || tag === 'AnyKeyword') return false;
+    const kind = schema.ast?.kind;
+    if (kind === 'unknown' || kind === 'any') return false;
     try {
       schemaToArbitrary(schema as never);
       return true;
@@ -632,7 +632,7 @@ function resolveRoundTripSchema(cap: {
       return false;
     }
   };
-  const isDerivable = (schema: { ast?: { _tag?: string } } | undefined): boolean => {
+  const isDerivable = (schema: { ast?: { kind?: string } } | undefined): boolean => {
     if (schema === undefined) return false;
     try {
       schemaToArbitrary(schema as never);
@@ -970,8 +970,8 @@ async function main(): Promise<void> {
         const mod = (await import(moduleUrl)) as Record<string, unknown>;
         const cap = mod[d.binding] as
           | {
-              input?: { ast?: { _tag?: string } };
-              output?: { ast?: { _tag?: string } };
+              input?: { ast?: { kind?: string } };
+              output?: { ast?: { kind?: string } };
               site?: readonly string[];
             }
           | undefined;

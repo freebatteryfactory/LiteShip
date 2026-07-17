@@ -8,7 +8,7 @@
 
 > `const` **BeatBinding**: `object`
 
-Defined in: [scene/src/capsules/beat-binding.ts:118](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/capsules/beat-binding.ts#L118)
+Defined in: [scene/src/capsules/beat-binding.ts:117](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/capsules/beat-binding.ts#L117)
 
 BeatBinding namespace — pure transforms over beat markers.
 Companion type namespace exposes Spawn and Component shapes (ADR-0001).

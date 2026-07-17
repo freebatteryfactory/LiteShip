@@ -6,8 +6,9 @@
  * @module
  */
 
-import { Schema } from 'effect';
+import * as fc from 'fast-check';
 import { defineCapsule } from '../assembly.js';
+import { S, withArbitrary } from '../schema/index.js';
 import { CanonicalCbor } from '../cbor.js';
 
 /**
@@ -17,8 +18,11 @@ import { CanonicalCbor } from '../cbor.js';
 export const canonicalCborCapsule = defineCapsule({
   _kind: 'pureTransform',
   name: 'core.canonical-cbor',
-  input: Schema.Unknown,
-  output: Schema.instanceOf(Uint8Array),
+  input: S.unknown,
+  // The encoder's output is an opaque `Uint8Array` carrier (a declaration node);
+  // the `withArbitrary` thunk samples the encoder's own image — canonical CBOR
+  // bytes — so any structural walk over the output stays in the valid domain.
+  output: withArbitrary(S.bytes(Uint8Array), () => fc.anything().map((value) => CanonicalCbor.encode(value))),
   capabilities: { reads: [], writes: [] },
   invariants: [
     {
@@ -56,5 +60,12 @@ export const canonicalCborCapsule = defineCapsule({
   ],
   budgets: { p95Ms: 1, allocClass: 'bounded' },
   site: ['node', 'browser', 'worker', 'edge'],
-  run: (input: unknown): Uint8Array => CanonicalCbor.encode(input),
+  // The kernel `S.bytes(Uint8Array)` carrier type is `Uint8Array<ArrayBuffer>`
+  // (the constructor's own instance type), narrower than the lib-default
+  // `Uint8Array` (`<ArrayBufferLike>`) the encoder is annotated to return. The
+  // encoder builds its result over a FRESH regular ArrayBuffer, so the value IS
+  // an `Uint8Array<ArrayBuffer>`; the narrowing reconciles the lib-widened return
+  // type with the schema carrier (a sound one-step assertion, never through
+  // `unknown`, and no copy — Doctrine Law 1).
+  run: (input: unknown): Uint8Array<ArrayBuffer> => CanonicalCbor.encode(input) as Uint8Array<ArrayBuffer>,
 });

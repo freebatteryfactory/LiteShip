@@ -1,14 +1,15 @@
 // GENERATED — do not edit by hand
 import { describe, it, expect } from 'vitest';
 import * as fc from 'fast-check';
-import { Schema } from 'effect';
+import { decode } from '../../packages/core/src/schema/index.js';
+import type { Schema } from '../../packages/core/src/schema/index.js';
 import { escalationChooseRungCapsule } from '../../packages/core/src/capsules/escalation-choose-rung.js';
 import { schemaToArbitrary } from '../../packages/core/src/harness/arbitrary-from-schema.js';
 
 describe('core.escalation.choose-rung', () => {
   const cap = escalationChooseRungCapsule as {
-    input: Schema.Schema<unknown>;
-    output: Schema.Schema<unknown>;
+    input: Schema<unknown>;
+    output: Schema<unknown>;
     decide?: (subject: unknown) => { effect: 'allow' | 'deny'; reasons: ReadonlyArray<{ code: string; message: string }> };
     invariants: ReadonlyArray<{ name: string; check: (subject: unknown, verdict: unknown) => boolean }>;
   };
@@ -18,9 +19,6 @@ describe('core.escalation.choose-rung', () => {
   // suite RED — correct, never a green skip.
   const subjectArb = schemaToArbitrary(cap.input as never) as fc.Arbitrary<unknown>;
   const decide = cap.decide!;
-  // The verdict shape IS the contract: `output` is the Decision schema, so each
-  // verdict round-trips through it (the policyGate analogue of the receipt byte law).
-  const decodeVerdict = Schema.decodeUnknownSync(cap.output as never);
 
   it('allow/deny coverage: every verdict is a well-formed Decision (reasons non-empty iff deny)', () => {
     fc.assert(
@@ -51,9 +49,13 @@ describe('core.escalation.choose-rung', () => {
           expect(typeof reason.message).toBe('string');
           expect(reason.message.length).toBeGreaterThan(0);
         }
-        // The whole verdict round-trips through the declared Decision schema — the
-        // reasons decode as typed reasons, not arbitrary objects.
-        expect(decodeVerdict(verdict as never)).toEqual(verdict);
+        // The whole verdict decodes against the declared Decision schema — the
+        // reasons decode as typed reasons, not arbitrary objects. Strict kernel
+        // decode returns the verdict unchanged (the policyGate analogue of the
+        // receipt byte law).
+        const decoded = decode(cap.output as never, verdict);
+        expect(decoded.ok).toBe(true);
+        if (decoded.ok) expect(decoded.value).toEqual(verdict);
         return true;
       }),
       { numRuns: 100 },

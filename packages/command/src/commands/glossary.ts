@@ -5,42 +5,48 @@
  *
  * @module
  */
-import { Schema } from 'effect';
-import { schemaToJsonSchema, wallClock, type CapsuleCommandResult } from '@czap/core';
+import { wallClock, type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
 import type { HandledCommand } from '../registry.js';
 
-/**
- * One ontology term. Mirrors a row in GLOSSARY.md. The single source for both
- * the TS type ({@link GlossaryEntry}) and the JSON-Schema fragment of the
- * `entries` array element — derived, never hand-written beside the type.
- */
-export const GlossaryEntrySchema = Schema.Struct({
-  term: Schema.String,
-  category: Schema.Union([Schema.Literal('naming'), Schema.Literal('primitive'), Schema.Literal('translator-note')]),
-  definition: Schema.String,
-  seeAlso: Schema.optional(Schema.Array(Schema.String)),
-});
-
 /** One ontology term. Mirrors a row in GLOSSARY.md. */
-export type GlossaryEntry = Schema.Schema.Type<typeof GlossaryEntrySchema>;
+export type GlossaryEntry = {
+  readonly term: string;
+  readonly category: 'naming' | 'primitive' | 'translator-note';
+  readonly definition: string;
+  readonly seeAlso?: readonly string[];
+};
 
 /**
- * Structured payload returned by the glossary command — ONE Effect Schema is the
- * source of both {@link GlossaryPayload} and the descriptor's `outputSchema`
- * (derived below), so the TS type and the JSON-Schema cannot drift.
+ * The descriptor `outputSchema` for the glossary command — hand-written
+ * JSON-Schema, byte-parity-pinned against the parity fixture. {@link GlossaryPayload}
+ * is its plain-TS mirror (the `entries` element mirrors {@link GlossaryEntry}).
  */
-export const GlossaryPayloadSchema = Schema.Struct({
-  term: Schema.NullOr(Schema.String),
-  entries: Schema.Array(GlossaryEntrySchema),
-});
+export const GlossaryPayloadSchema = {
+  type: 'object',
+  properties: {
+    term: { type: ['string', 'null'] },
+    entries: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          term: { type: 'string' },
+          category: { enum: ['naming', 'primitive', 'translator-note'] },
+          definition: { type: 'string' },
+          seeAlso: { type: 'array', items: { type: 'string' } },
+        },
+        required: ['term', 'category', 'definition'],
+      },
+    },
+  },
+  required: ['term', 'entries'],
+} as const satisfies CommandJsonSchema;
 
 /** Structured payload returned by the glossary command. */
-export type GlossaryPayload = Schema.Schema.Type<typeof GlossaryPayloadSchema>;
-
-/** Args accepted by the glossary command — the single source of its `inputSchema`. */
-export const GlossaryArgsSchema = Schema.Struct({
-  term: Schema.optional(Schema.String),
-});
+export type GlossaryPayload = {
+  readonly term: string | null;
+  readonly entries: readonly GlossaryEntry[];
+};
 
 /** The canonical ontology catalog (single source; the CLI re-exports it). */
 export const GLOSSARY_ENTRIES: readonly GlossaryEntry[] = [
@@ -245,8 +251,11 @@ export const glossaryCommand: HandledCommand = {
   descriptor: {
     name: 'glossary',
     summary: 'Look up a term in the LiteShip prose register (maritime + product naming).',
-    inputSchema: schemaToJsonSchema(GlossaryArgsSchema),
-    outputSchema: schemaToJsonSchema(GlossaryPayloadSchema),
+    inputSchema: {
+      type: 'object',
+      properties: { term: { type: 'string' } },
+    } as const satisfies CommandJsonSchema,
+    outputSchema: GlossaryPayloadSchema,
     annotations: { readOnly: true, group: 'castoff' },
   },
   handler: async (invocation): Promise<CapsuleCommandResult<GlossaryPayload>> => {

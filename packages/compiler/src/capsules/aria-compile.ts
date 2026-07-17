@@ -22,30 +22,30 @@
  * @module
  */
 
-import { Schema } from 'effect';
-import { defineCapsule, Boundary, Diagnostics, BoundaryAttribute } from '@czap/core';
+import { defineCapsule, Boundary, Diagnostics, BoundaryAttribute, S } from '@czap/core';
+import type { Infer } from '@czap/core';
 import { ARIACompiler } from '../aria.js';
 import type { ARIACompileResult } from '../aria.js';
 
 /** A single authored attribute entry (key + value), the seed unit for a state map. */
-const AttrEntry = Schema.Struct({
-  key: Schema.String,
-  value: Schema.String,
+const AttrEntry = S.struct({
+  key: S.string,
+  value: S.string,
 });
 
 /** Seed material the schema-arbitrary CAN produce. `run` normalizes it. */
-const ARIACompileSeed = Schema.Struct({
+const ARIACompileSeed = S.struct({
   /** Candidate state names → deduped, ascending-thresholded boundary states. */
-  states: Schema.Array(Schema.String),
+  states: S.array(S.string),
   /**
    * Per-state authored attribute entries `entries[stateIdx]`. Keys are free
    * strings, so the domain spans both valid (`aria-*`/`role`) and invalid keys —
    * exercising both the survival and the drop branches of the validator.
    */
-  entries: Schema.Array(Schema.Array(AttrEntry)),
+  entries: S.array(S.array(AttrEntry)),
 });
 
-type ARIACompileSeedValue = Schema.Schema.Type<typeof ARIACompileSeed>;
+type ARIACompileSeedValue = Infer<typeof ARIACompileSeed>;
 
 /** Per-state attribute maps in the shape `ARIACompiler.compile` consumes. */
 type StateAttrs = Record<string, Record<string, string>>;
@@ -129,7 +129,7 @@ export const ariaCompileCapsule = defineCapsule({
   _kind: 'pureTransform',
   name: 'compiler.aria-compile',
   input: ARIACompileSeed,
-  output: Schema.Unknown,
+  output: S.unknown,
   capabilities: { reads: [], writes: [] },
   invariants: [
     {

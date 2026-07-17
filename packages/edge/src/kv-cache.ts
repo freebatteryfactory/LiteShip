@@ -9,7 +9,8 @@
  * @module
  */
 
-import { Diagnostics, contentAddressOf, type ContentAddress } from '@czap/core';
+import { Diagnostics, contentAddressOf, decodeLenient, S, type ContentAddress } from '@czap/core';
+import { ValidationError } from '@czap/error';
 import type { EdgeTierResult } from './edge-tier.js';
 import { tierKey } from './manifest.js';
 
@@ -392,20 +393,12 @@ async function deleteTagMembersForDataKeys(
 }
 
 /**
- * Coerce an `unknown` JSON value into a per-state `Record<state, Record<u_*, number>>`
- * (drops non-numeric leaves, non-object states). Returns `undefined` when nothing
- * survives so the GLSL `stateUniforms` field stays absent. The live runtime
- * resolves `stateUniforms[currentState]` to update authored uniforms on crossings.
+ * A single WGSL binding value leaf: a finite scalar, or a 2/3/4-vector of finite
+ * numbers. Malformed leaves (non-finite, wrong arity, mixed types) yield
+ * `undefined` so the record decoders prune them. The irreducible domain logic
+ * the kernel AST cannot express (all-or-nothing vector arity, finiteness) lives
+ * here and rides {@link WGSLUniformValueSchema} as a brand refinement.
  */
-function asNestedNumberRecord(value: unknown): Readonly<Record<string, Readonly<Record<string, number>>>> | undefined {
-  if (typeof value !== 'object' || value === null) return undefined;
-  const out: Record<string, Record<string, number>> = {};
-  for (const [state, inner] of Object.entries(value)) {
-    out[state] = asNumberRecord(inner);
-  }
-  return Object.keys(out).length > 0 ? out : undefined;
-}
-
 function asWGSLUniformValue(value: unknown): WGSLUniformValue | undefined {
   if (typeof value === 'number' && Number.isFinite(value)) return value;
   if (!Array.isArray(value)) return undefined;
@@ -417,77 +410,112 @@ function asWGSLUniformValue(value: unknown): WGSLUniformValue | undefined {
   return undefined;
 }
 
-/** Coerce an `unknown` JSON value into a WGSL scalar/vector value record. */
-function asWGSLUniformValueRecord(value: unknown): Record<string, WGSLUniformValue> {
-  const out: Record<string, WGSLUniformValue> = {};
-  if (typeof value === 'object' && value !== null) {
-    for (const [k, v] of Object.entries(value)) {
-      const parsed = asWGSLUniformValue(v);
-      if (parsed !== undefined) out[k] = parsed;
+// ── Kernel schemas for the cached entry shapes ──────────────────────────────
+// Lenient decode reproduces the coerce-or-null / prune degradation this file has
+// always applied to stale or foreign KV entries — a malformed required leaf
+// collapses its cast to `null`, a malformed record leaf is pruned — and adds the
+// kernel's prototype-poison safety (poison keys are dropped, never installed
+// through the `__proto__` setter). The kernel's lenient contract was modeled on
+// this file's own degradation policy.
+
+/** GLSL uniform values map — numeric leaves (`NaN`/`Infinity` ride through, as before). */
+const UniformValuesSchema = S.record(S.number);
+
+/** Per-state GLSL uniforms — `state → (u_* → number)`. */
+const NestedUniformValuesSchema = S.record(UniformValuesSchema);
+
+/** A WGSL binding value leaf: coerce-or-reject through {@link asWGSLUniformValue}. */
+const WGSLUniformValueSchema = S.brand(
+  S.unknown,
+  (candidate: unknown): WGSLUniformValue => {
+    const parsed = asWGSLUniformValue(candidate);
+    if (parsed === undefined) {
+      throw ValidationError('czap/edge.kv-cache', 'expected a finite scalar or 2/3/4-vector WGSL value');
     }
-  }
-  return out;
+    return parsed;
+  },
+  'WGSLUniformValue',
+);
+
+/** A WGSL binding values map — `field → WGSLUniformValue`. */
+const WGSLBindingValuesSchema = S.record(WGSLUniformValueSchema);
+
+/** Per-state WGSL bindings — `state → (field → WGSLUniformValue)`. */
+const NestedWGSLBindingValuesSchema = S.record(WGSLBindingValuesSchema);
+
+/** GLSL cast head — the required `declarations` preamble (emptiness judged by the caller). */
+const GLSLCastHeadSchema = S.struct({ declarations: S.string });
+
+/** WGSL cast shape — preamble + default binding values. */
+const WGSLCastSchema = S.struct({ declarations: S.string, bindingValues: WGSLBindingValuesSchema });
+
+/** Compiled-outputs entry head — the three required fields that carry the outer shape. */
+const CompiledEntryHeadSchema = S.struct({
+  css: S.unknown,
+  propertyRegistrations: S.unknown,
+  containerQueries: S.unknown,
+});
+
+/**
+ * Coerce an `unknown` JSON value into a per-state `Record<state, Record<u_*, number>>`
+ * through kernel lenient decode (drops non-numeric leaves, non-object states, poison
+ * keys). Returns `undefined` when nothing survives so the GLSL `stateUniforms` field
+ * stays absent. The live runtime resolves `stateUniforms[currentState]` to update
+ * authored uniforms on crossings.
+ */
+function asNestedNumberRecord(value: unknown): Readonly<Record<string, Readonly<Record<string, number>>>> | undefined {
+  const decoded = decodeLenient(NestedUniformValuesSchema, value);
+  return decoded !== null && Object.keys(decoded).length > 0 ? decoded : undefined;
 }
 
 /**
  * Coerce an `unknown` JSON value into a per-state
- * `Record<state, Record<field, WGSLUniformValue>>` (drops malformed leaves).
+ * `Record<state, Record<field, WGSLUniformValue>>` through kernel lenient decode
+ * (drops malformed leaves, non-object states, poison keys).
  */
 function asNestedWGSLUniformValueRecord(
   value: unknown,
 ): Readonly<Record<string, Readonly<Record<string, WGSLUniformValue>>>> | undefined {
-  if (typeof value !== 'object' || value === null) return undefined;
-  const out: Record<string, Record<string, WGSLUniformValue>> = {};
-  for (const [state, inner] of Object.entries(value)) {
-    out[state] = asWGSLUniformValueRecord(inner);
-  }
-  return Object.keys(out).length > 0 ? out : undefined;
-}
-
-/** Coerce an `unknown` JSON value into a `Record<string, number>` (drops non-numeric). */
-function asNumberRecord(value: unknown): Record<string, number> {
-  const out: Record<string, number> = {};
-  if (typeof value === 'object' && value !== null) {
-    for (const [k, v] of Object.entries(value)) {
-      if (typeof v === 'number') out[k] = v;
-    }
-  }
-  return out;
+  const decoded = decodeLenient(NestedWGSLBindingValuesSchema, value);
+  return decoded !== null && Object.keys(decoded).length > 0 ? decoded : undefined;
 }
 
 /**
- * Parse a serialized scalar shader cast artifact: a `declarations` string plus
- * a numeric values map under `valuesKey` (`uniformValues` for GLSL). Returns
- * `null` for absent/malformed entries so
- * the caller treats them as "no cast authored" rather than throwing — the
- * same lenient policy the `aria` field follows.
+ * Parse a serialized scalar shader cast artifact: a `declarations` string plus a
+ * numeric values map under `valuesKey` (`uniformValues` for GLSL). Routed through
+ * kernel lenient decode so malformed cache data (e.g. a stale or foreign KV entry)
+ * degrades cleanly to "no cast" instead of rehydrating a bogus cast: a non-string
+ * `declarations` collapses to `null` (never coerced to `"[object Object]"`), and an
+ * empty `declarations` or a values map that pruned to `{}` carries no authored
+ * output. Returns `null` so the caller treats absent/malformed entries as "no cast
+ * authored" — the same lenient policy the `aria` field follows.
  */
 function parseShaderCast<K extends 'uniformValues' | 'bindingValues'>(
   value: unknown,
   valuesKey: K,
 ): ({ readonly declarations: string } & { readonly [P in K]: Readonly<Record<string, number>> }) | null {
-  if (typeof value !== 'object' || value === null || !('declarations' in value)) return null;
-  // Reject malformed cache data (e.g. a stale or foreign KV entry) so it degrades
-  // cleanly to "no cast" instead of rehydrating a bogus cast: a non-string
-  // `declarations` must NOT be coerced to "[object Object]", and a values map that
-  // collapsed to `{}` carries no authored output.
-  const declarations = (value as { declarations: unknown }).declarations;
-  if (typeof declarations !== 'string' || declarations.length === 0) return null;
-  const values = asNumberRecord((value as Record<string, unknown>)[valuesKey]);
+  const head = decodeLenient(GLSLCastHeadSchema, value);
+  if (head === null || head.declarations.length === 0) return null;
+  const values: Readonly<Record<string, number>> =
+    decodeLenient(UniformValuesSchema, (value as Record<string, unknown>)[valuesKey]) ?? {};
   if (Object.keys(values).length === 0) return null;
   return {
-    declarations,
+    declarations: head.declarations,
     [valuesKey]: values,
   } as { readonly declarations: string } & { readonly [P in K]: Readonly<Record<string, number>> };
 }
 
+/**
+ * Parse a serialized WGSL cast artifact (preamble + binding values) through kernel
+ * lenient decode. Degrades to `null` when the cast is absent, its `declarations` is
+ * missing/non-string/empty, or its `bindingValues` pruned to `{}` — never
+ * rehydrating a bogus cast from stale or foreign KV data.
+ */
 function parseWGSLShaderCast(value: unknown): CompiledWGSLOutput | null {
-  if (typeof value !== 'object' || value === null || !('declarations' in value)) return null;
-  const declarations = (value as { declarations: unknown }).declarations;
-  if (typeof declarations !== 'string' || declarations.length === 0) return null;
-  const bindingValues = asWGSLUniformValueRecord((value as { bindingValues?: unknown }).bindingValues);
-  if (Object.keys(bindingValues).length === 0) return null;
-  return { declarations, bindingValues };
+  const decoded = decodeLenient(WGSLCastSchema, value);
+  if (decoded === null || decoded.declarations.length === 0) return null;
+  if (Object.keys(decoded.bindingValues).length === 0) return null;
+  return { declarations: decoded.declarations, bindingValues: decoded.bindingValues };
 }
 
 // ---------------------------------------------------------------------------
@@ -572,13 +600,11 @@ export function createBoundaryCache(kv: KVNamespace, options?: CacheOptions): Bo
         return null;
       }
 
-      if (
-        typeof parsed === 'object' &&
-        parsed !== null &&
-        'css' in parsed &&
-        'propertyRegistrations' in parsed &&
-        'containerQueries' in parsed
-      ) {
+      // The outer shape (all three required fields present) is decided by kernel
+      // lenient decode: a non-object entry or one missing css/propertyRegistrations/
+      // containerQueries collapses the head to `null` and reads as a cache miss.
+      const head = decodeLenient(CompiledEntryHeadSchema, parsed);
+      if (head !== null) {
         const aria = (parsed as { aria?: unknown }).aria;
         const glslBase = parseShaderCast((parsed as { glsl?: unknown }).glsl, 'uniformValues');
         // Per-state authored uniforms ride the GLSL cast so the live runtime can
@@ -599,9 +625,9 @@ export function createBoundaryCache(kv: KVNamespace, options?: CacheOptions): Bo
           ? { ...wgslBase, ...(wgslStateBindings ? { stateBindings: wgslStateBindings } : {}) }
           : null;
         return {
-          css: String(parsed.css),
-          propertyRegistrations: String(parsed.propertyRegistrations),
-          containerQueries: String(parsed.containerQueries),
+          css: String(head.css),
+          propertyRegistrations: String(head.propertyRegistrations),
+          containerQueries: String(head.containerQueries),
           ...(typeof aria === 'object' && aria !== null
             ? { aria: aria as Readonly<Record<string, Readonly<Record<string, string>>>> }
             : {}),

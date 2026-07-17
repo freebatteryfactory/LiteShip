@@ -21,8 +21,7 @@
  * @module
  */
 
-import { Schema } from 'effect';
-import { defineCapsule } from '@czap/core';
+import { defineCapsule, S } from '@czap/core';
 
 // ---------- JSON-RPC 2.0 types (wire-shape) ----------
 
@@ -142,18 +141,19 @@ export const successResponse = _successResponse;
 
 // ---------- Capsule declaration (pureTransform arm) ----------
 //
-// Schemas are deliberately structural: the harness uses them to drive
-// `Schema.decodeUnknownEffect` against `fc.anything()` inputs, so we
-// only need to express enough shape for it to filter the property test.
-const JsonRpcInputSchema = Schema.String;
-const ParseOutcomeKindSchema = Schema.Union([
-  Schema.Literal('request'),
-  Schema.Literal('notification'),
-  Schema.Literal('batch'),
-  Schema.Literal('parse-error'),
-  Schema.Literal('invalid-request'),
-]);
-const ParseOutcomeSchema = Schema.Struct({ kind: ParseOutcomeKindSchema });
+// Schemas are deliberately structural: the harness walks them (schemaToArbitrary
+// over the kernel AST) to sample inputs and strict-`decode`s `fc.anything()`
+// values against them, so we only need enough shape for it to filter the
+// property test.
+const JsonRpcInputSchema = S.string;
+const ParseOutcomeKindSchema = S.union(
+  S.literal('request'),
+  S.literal('notification'),
+  S.literal('batch'),
+  S.literal('parse-error'),
+  S.literal('invalid-request'),
+);
+const ParseOutcomeSchema = S.struct({ kind: ParseOutcomeKindSchema });
 
 /**
  * Capsule definition for the kernel — placed in the catalog under the
@@ -206,7 +206,7 @@ export const jsonRpcServerCapsule = defineCapsule({
       message: 'well-formed messages without an id field must classify as notifications (§4.1)',
     },
   ],
-  run: (input: string): { kind: string } => _parse(input),
+  run: (input: string): ParseOutcome => _parse(input),
 });
 
 // ---------- Namespace surface (ADR-0001) ----------

@@ -35,6 +35,7 @@ const hole = S.hole<{ readonly shape: string }>('todo');
 const strArr = S.array(S.string);
 const numRec = S.record(S.number);
 const optStr = S.optional(S.string);
+const pair = S.tuple(S.number, S.string);
 
 function __typeContract(): void {
   // Scalars.
@@ -69,6 +70,12 @@ function __typeContract(): void {
   // Array + record.
   const _arr: Assert<IsEqual<Infer<typeof strArr>, readonly string[]>> = true;
   const _rec: Assert<IsEqual<Infer<typeof numRec>, { readonly [k: string]: number }>> = true;
+
+  // Tuple: fixed arity + per-position types (a readonly tuple, NOT a widened
+  // union array) — arity and position types are both preserved by `Infer`.
+  const _tuple: Assert<IsEqual<Infer<typeof pair>, readonly [number, string]>> = true;
+  const _tupleEnc: Assert<IsEqual<InferEncoded<typeof pair>, readonly [number, string]>> = true;
+  const _tupleNotArray: Not<IsEqual<Infer<typeof pair>, readonly (number | string)[]>> = false;
 
   // Structural SchemaPort conformance — a kernel schema IS a `{ Type; Encoded }`.
   const _port: { readonly Type: number; readonly Encoded: number } = S.number;

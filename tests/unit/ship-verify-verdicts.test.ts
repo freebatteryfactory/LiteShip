@@ -12,7 +12,6 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { spawnArgv } from '../../scripts/lib/spawn.js';
 import {
-  cpSync,
   existsSync,
   mkdtempSync,
   readFileSync,
@@ -81,16 +80,15 @@ let tarballBytes: Uint8Array;
 
 beforeAll(async () => {
   workDir = mkdtempSync(join(tmpdir(), 'litesip-verify-'));
-  cpSync(join(REPO_ROOT, 'packages/_spine'), workDir, { recursive: true });
-  // The live package dir can hold untracked artifacts from local ship runs
-  // (a stale .tgz + its minted .shipcapsule.cbor sibling) — cpSync drags
-  // them in, the .find() below grabs the WRONG tarball, and the verify
-  // sibling-derivation then finds a real capsule, flipping the no-capsule
-  // test to Verified. Pack into a clean fixture.
-  for (const f of readdirSync(workDir)) {
-    if (f.endsWith('.tgz') || f.endsWith('.shipcapsule.cbor')) rmSync(join(workDir, f));
-  }
-  await spawnArgv('pnpm', ['pack'], { cwd: workDir });
+  // Pack from the IN-WORKSPACE package dir so pnpm resolves the package's
+  // `catalog:` peer spec to its concrete range (as `czap ship` / `pnpm publish`
+  // do on the real release path); --pack-destination lands the .tgz in the clean
+  // tmp workDir. The dir is freshly minted, so there is no stale .tgz for the
+  // `.find()` below to grab and no stray sibling capsule to flip the no-capsule
+  // test to Verified — and nothing is left behind in the source package.
+  await spawnArgv('pnpm', ['pack', '--pack-destination', workDir], {
+    cwd: join(REPO_ROOT, 'packages/_spine'),
+  });
   const tgz = readdirSync(workDir).find((f) => f.endsWith('.tgz'));
   if (!tgz) throw new Error('pnpm pack produced no .tgz');
   tarballPath = join(workDir, tgz);

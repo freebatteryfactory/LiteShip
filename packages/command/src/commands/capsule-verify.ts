@@ -20,8 +20,7 @@
  *
  * @module
  */
-import { Schema } from 'effect';
-import { schemaToJsonSchema, wallClock, type CapsuleCommandResult } from '@czap/core';
+import { wallClock, type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
 import {
   capabilityUnavailable,
   type CommandCapability,
@@ -30,32 +29,41 @@ import {
 } from '../registry.js';
 
 /**
- * Bench-honesty classification — faithfully mirrors {@link CapsuleBenchClassification}
- * so the engine's value is assignable and the derived `benches` schema recurses
- * into the real total/real/placeholder shape (tighter than a bare object).
+ * The descriptor `outputSchema` for `capsule-verify` — hand-written JSON-Schema,
+ * byte-parity-pinned against the parity fixture. `benches` recurses into the real
+ * total/real/placeholder shape (tighter than a bare object) and mirrors
+ * {@link CapsuleBenchClassification}. {@link CapsuleVerifyPayload} is its plain-TS
+ * mirror.
  */
-const CapsuleBenchClassificationSchema = Schema.Struct({
-  total: Schema.Number,
-  real: Schema.Number,
-  placeholder: Schema.Array(Schema.String),
-});
-
-/**
- * Structured payload returned by `capsule-verify` — ONE Effect Schema is the
- * source of both {@link CapsuleVerifyPayload} and the descriptor's `outputSchema`.
- */
-export const CapsuleVerifyPayloadSchema = Schema.Struct({
-  status: Schema.Union([Schema.Literal('ok'), Schema.Literal('stale'), Schema.Literal('failed')]),
-  /** Human work-list: each blocking reason (missing/stale/dishonest/red). Empty on `ok`. */
-  errors: Schema.Array(Schema.String),
-  /** Number of capsules in the manifest the gate read. */
-  capsuleCount: Schema.Number,
-  /** Per-corpus bench-honesty classification (total / real / placeholder names). */
-  benches: CapsuleBenchClassificationSchema,
-});
+export const CapsuleVerifyPayloadSchema = {
+  type: 'object',
+  properties: {
+    status: { enum: ['ok', 'stale', 'failed'] },
+    /** Human work-list: each blocking reason (missing/stale/dishonest/red). Empty on `ok`. */
+    errors: { type: 'array', items: { type: 'string' } },
+    /** Number of capsules in the manifest the gate read. */
+    capsuleCount: { type: 'number' },
+    /** Per-corpus bench-honesty classification (total / real / placeholder names). */
+    benches: {
+      type: 'object',
+      properties: {
+        total: { type: 'number' },
+        real: { type: 'number' },
+        placeholder: { type: 'array', items: { type: 'string' } },
+      },
+      required: ['total', 'real', 'placeholder'],
+    },
+  },
+  required: ['status', 'errors', 'capsuleCount', 'benches'],
+} as const satisfies CommandJsonSchema;
 
 /** Structured payload returned by `capsule-verify`. */
-export type CapsuleVerifyPayload = Schema.Schema.Type<typeof CapsuleVerifyPayloadSchema>;
+export type CapsuleVerifyPayload = {
+  readonly status: 'ok' | 'stale' | 'failed';
+  readonly errors: readonly string[];
+  readonly capsuleCount: number;
+  readonly benches: { readonly total: number; readonly real: number; readonly placeholder: readonly string[] };
+};
 
 /** `capsule-verify` — freshness + bench-honesty + green-suite gate over the committed capsule corpus. */
 export const capsuleVerifyGateCommand: HandledCommand = {
@@ -64,8 +72,8 @@ export const capsuleVerifyGateCommand: HandledCommand = {
     summary:
       'Capsule-corpus gate: assert every generated test+bench is present, fresh (regeneration-confirmed), bench-honest, and that the generated suite passes.',
     requires: ['runCapsuleGate'] satisfies readonly CommandCapability[],
-    inputSchema: schemaToJsonSchema(Schema.Struct({})),
-    outputSchema: schemaToJsonSchema(CapsuleVerifyPayloadSchema),
+    inputSchema: { type: 'object', properties: {} } as const satisfies CommandJsonSchema,
+    outputSchema: CapsuleVerifyPayloadSchema,
     // NOT mcpExposed: the engine is a CLI-injected subprocess orchestrator
     // (runCapsuleGate spawns `capsule:compile` to confirm freshness and `vitest
     // run` over tests/generated/, mutating a scratch tree); terminal-streaming,

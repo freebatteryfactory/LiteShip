@@ -1,6 +1,6 @@
 {
   "name": "@czap/cloudflare",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "description": "Run LiteShip on Cloudflare Workers: a site adapter with a KV-backed edge cache and the Astro middleware glue that caches boundaries at the edge.",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",
@@ -56,9 +56,6 @@
     "@czap/edge": "workspace:*",
     "@czap/astro": "workspace:*",
     "@czap/error": "workspace:*"
-  },
-  "peerDependencies": {
-    "effect": "catalog:"
   },
   "engines": {
     "node": ">=22.13.0"

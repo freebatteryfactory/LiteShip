@@ -6,8 +6,8 @@ import { schemaToArbitrary } from '../../packages/core/src/harness/arbitrary-fro
 import { CanonicalCbor } from '../../packages/core/src/cbor.js';
 import { decode } from '../../packages/canonical/src/cbor-decode.js';
 
-const cap = cloudflareAdapterCapsule as { output: unknown };
-const arb = schemaToArbitrary(cap.output as never) as fc.Arbitrary<unknown>;
+const cap = cloudflareAdapterCapsule as { input: unknown };
+const arb = schemaToArbitrary(cap.input as never) as fc.Arbitrary<unknown>;
 const natives = fc.sample(arb, { numRuns: 64, seed: 0x5eed });
 let i = 0;
 

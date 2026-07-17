@@ -19,8 +19,7 @@
  *
  * @module
  */
-import { Schema } from 'effect';
-import { schemaToJsonSchema, wallClock, type CapsuleCommandResult } from '@czap/core';
+import { wallClock, type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
 import {
   capabilityUnavailable,
   type CommandCapability,
@@ -29,38 +28,53 @@ import {
 } from '../registry.js';
 
 /**
- * One banned-pattern hit — faithfully mirrors {@link InvariantViolation} so the
- * engine's groups are assignable and the derived `groups` items schema carries
- * the real element shape.
+ * The descriptor `outputSchema` for `check-invariants` — hand-written JSON-Schema,
+ * byte-parity-pinned against the parity fixture. The modelled `groups` element
+ * mirrors {@link InvariantViolationGroup} (its `violations` mirror
+ * {@link InvariantViolation}) so the engine's groups stay assignable and the
+ * schema carries the real element shape. {@link CheckInvariantsPayload} is its
+ * plain-TS mirror.
  */
-const InvariantViolationSchema = Schema.Struct({
-  file: Schema.String,
-  line: Schema.Number,
-  content: Schema.String,
-});
-
-/** Every violation of one named invariant rule — mirrors {@link InvariantViolationGroup}. */
-const InvariantViolationGroupSchema = Schema.Struct({
-  name: Schema.String,
-  message: Schema.String,
-  violations: Schema.Array(InvariantViolationSchema),
-});
-
-/**
- * Structured payload returned by `check-invariants` — ONE Effect Schema is the
- * source of both {@link CheckInvariantsPayload} and the descriptor's
- * `outputSchema`.
- */
-export const CheckInvariantsPayloadSchema = Schema.Struct({
-  ok: Schema.Boolean,
-  /** Banned-pattern violations, grouped by the rule that flagged them. */
-  groups: Schema.Array(InvariantViolationGroupSchema),
-  /** Committed text files whose line endings violate the `.gitattributes` policy. */
-  lineEndings: Schema.Array(Schema.String),
-});
+export const CheckInvariantsPayloadSchema = {
+  type: 'object',
+  properties: {
+    ok: { type: 'boolean' },
+    /** Banned-pattern violations, grouped by the rule that flagged them. */
+    groups: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          message: { type: 'string' },
+          violations: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: { file: { type: 'string' }, line: { type: 'number' }, content: { type: 'string' } },
+              required: ['file', 'line', 'content'],
+            },
+          },
+        },
+        required: ['name', 'message', 'violations'],
+      },
+    },
+    /** Committed text files whose line endings violate the `.gitattributes` policy. */
+    lineEndings: { type: 'array', items: { type: 'string' } },
+  },
+  required: ['ok', 'groups', 'lineEndings'],
+} as const satisfies CommandJsonSchema;
 
 /** Structured payload returned by `check-invariants`. */
-export type CheckInvariantsPayload = Schema.Schema.Type<typeof CheckInvariantsPayloadSchema>;
+export type CheckInvariantsPayload = {
+  readonly ok: boolean;
+  readonly groups: readonly {
+    readonly name: string;
+    readonly message: string;
+    readonly violations: readonly { readonly file: string; readonly line: number; readonly content: string }[];
+  }[];
+  readonly lineEndings: readonly string[];
+};
 
 /** `check-invariants` — scan source for banned patterns + line-ending policy; emit a structured verdict. */
 export const checkInvariantsCommand: HandledCommand = {
@@ -69,8 +83,8 @@ export const checkInvariantsCommand: HandledCommand = {
     summary:
       'Fast-lane invariant gate: fail on any banned source pattern (require/module.exports/var/ESM violation) or line-ending policy breach.',
     requires: ['runCheckInvariants'] satisfies readonly CommandCapability[],
-    inputSchema: schemaToJsonSchema(Schema.Struct({})),
-    outputSchema: schemaToJsonSchema(CheckInvariantsPayloadSchema),
+    inputSchema: { type: 'object', properties: {} } as const satisfies CommandJsonSchema,
+    outputSchema: CheckInvariantsPayloadSchema,
     // NOT mcpExposed: the scan needs @czap/audit's normalizeRepoPath (B5b cage),
     // so it is CLI-only by design — only @czap/cli injects runCheckInvariants.
     annotations: { readOnly: true, cliOnly: true, group: 'castoff' },

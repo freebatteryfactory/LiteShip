@@ -17,8 +17,7 @@
  * @module
  */
 
-import { Schema } from 'effect';
-import { defineCapsule } from '@czap/core';
+import { defineCapsule, S } from '@czap/core';
 import type { BeatComponent as _BeatComponent, BeatSpawn as _BeatSpawn } from '@czap/_spine';
 
 /**
@@ -33,22 +32,22 @@ export type BeatComponent = _BeatComponent;
 /** Spawn descriptor returned by the binding — the runtime spawns these into the world. */
 export type BeatSpawn = _BeatSpawn;
 
-const BeatComponentSchema = Schema.Struct({
-  _tag: Schema.Literal('beat'),
-  timeMs: Schema.Number,
-  strength: Schema.Number,
-  anchorTrackId: Schema.optional(Schema.String),
+const BeatComponentSchema = S.struct({
+  _tag: S.literal('beat'),
+  timeMs: S.number,
+  strength: S.number,
+  anchorTrackId: S.optional(S.string),
 });
 
-const BindingInputSchema = Schema.Struct({
+const BindingInputSchema = S.struct({
   // The beat array as already resolved by BeatMarkerProjection (or
   // declared directly on a CompiledScene). This capsule is a pure
   // transform from BeatComponent[] into BeatSpawn[].
-  beats: Schema.Array(BeatComponentSchema),
+  beats: S.array(BeatComponentSchema),
 });
 
-const BindingOutputSchema = Schema.Struct({
-  spawns: Schema.Array(Schema.Struct({ components: BeatComponentSchema })),
+const BindingOutputSchema = S.struct({
+  spawns: S.array(S.struct({ components: BeatComponentSchema })),
 });
 
 /**

@@ -8,7 +8,7 @@
 
 > `const` **successResponse**: (`id`, `result`) => [`JsonRpcSuccess`](../interfaces/JsonRpcSuccess.md) = `_successResponse`
 
-Defined in: [mcp-server/src/jsonrpc.ts:141](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/jsonrpc.ts#L141)
+Defined in: [mcp-server/src/jsonrpc.ts:140](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/jsonrpc.ts#L140)
 
 Construct a success response (§5).
 

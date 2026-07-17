@@ -6,9 +6,12 @@
  * @module
  */
 
-import { type Effect, Schema } from 'effect';
+import { err } from '@czap/error';
+import type { ParseError, Result as ErrorResult } from '@czap/error';
 import type { ContentAddress } from '@czap/_spine';
 import type { SchemaPort, DeclarationSchema } from './schema-port.js';
+import { decode, parseErrorFromIssues } from './schema/index.js';
+import type { Schema } from './schema/index.js';
 
 /** Closed seven-arm catalog of capsule kinds. Adding an eighth requires ADR amendment. */
 export type AssemblyKind =
@@ -252,16 +255,22 @@ export interface CapsuleContract<K extends AssemblyKind, In, Out, R> {
 }
 
 /**
- * Runtime validator that verifies values against _spine-derived schemas.
- * Used by capsule dispatchers to check inputs before invoking handlers.
+ * Runtime validator that verifies values against kernel schemas.
+ *
+ * {@link TypeValidator.validate} is a SYNC strict kernel decode: it returns a
+ * value-or-tagged-error {@link Result} — an `ok` carrying the decoded `T`, or an
+ * `err` carrying a tagged {@link ParseError} folded from the strict decoder's
+ * path-tagged issue list. It never throws on bad input and never returns an
+ * Effect. Used by capsule dispatchers to check inputs before invoking handlers.
  */
 export const TypeValidator = {
-  validate<T>(schema: Schema.Codec<T, T, never>, value: unknown): Effect.Effect<T, Schema.SchemaError> {
-    return Schema.decodeUnknownEffect(schema)(value);
+  validate<T>(schema: Schema<T>, value: unknown): ErrorResult<T, ParseError> {
+    const result = decode(schema, value);
+    return result.ok ? result : err(parseErrorFromIssues(result.error, 'TypeValidator.validate'));
   },
 } as const;
 
 export declare namespace TypeValidator {
-  /** Effect returned by {@link TypeValidator.validate} on a successful decode. */
-  export type Result<T> = Effect.Effect<T, Schema.SchemaError>;
+  /** The value-or-tagged-error {@link TypeValidator.validate} returns on a strict decode. */
+  export type Result<T> = ErrorResult<T, ParseError>;
 }

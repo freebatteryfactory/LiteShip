@@ -6,7 +6,7 @@
  */
 
 import { Effect } from 'effect';
-import { Millis, wallClock, type Clock } from '@czap/core';
+import { Millis, S, decode, wallClock, type Clock } from '@czap/core';
 import { IoError, ParseError, ValidationError, type LiteShipError } from '@czap/error';
 import type { ResumptionConfig, ResumptionState, ResumptionStateInput, ResumeResponse } from '../types.js';
 import { appendArtifactIdToUrl, validateArtifactId } from './sse-pure.js';
@@ -20,38 +20,47 @@ export const parseEventId = _parseEventId;
 /** Re-export of the Effect-free gap-size check from `./resumption-pure.js`. */
 export const canResume = _canResume;
 
+// Kernel schemas backing the runtime shape guards below. Sync strict `decode`
+// fails closed on any missing or mistyped field, so `.ok` is a boolean type
+// guard with no external dependency — the reconnect hot path stays effect-free
+// and dependency-light.
+
+/** The persisted sessionStorage shape — all four fields required and typed. */
+const ResumptionStateSchema = S.struct({
+  lastEventId: S.string,
+  lastSequence: S.number,
+  artifactId: S.string,
+  timestamp: S.number,
+});
+
+/** Snapshot response: `html`/`lastEventId` strings plus an opaque `signals` payload. */
+const SnapshotPayloadSchema = S.struct({
+  html: S.string,
+  signals: S.unknown,
+  lastEventId: S.string,
+});
+
+/** Replay response: a `patches` array of opaque JSON-patch entries. */
+const ReplayPayloadSchema = S.struct({
+  patches: S.array(S.unknown),
+});
+
 /**
  * Runtime shape check for data loaded from sessionStorage.
  * Returns true only if `v` has the exact shape of {@link ResumptionState}.
  */
-const isResumptionState = (v: unknown): v is ResumptionState => {
-  if (v === null || typeof v !== 'object') return false;
-  if (!('lastEventId' in v) || !('lastSequence' in v) || !('artifactId' in v) || !('timestamp' in v)) return false;
-  return (
-    typeof v.lastEventId === 'string' &&
-    typeof v.lastSequence === 'number' &&
-    typeof v.artifactId === 'string' &&
-    typeof v.timestamp === 'number'
-  );
-};
+const isResumptionState = (v: unknown): v is ResumptionState => decode(ResumptionStateSchema, v).ok;
 
 /**
  * Runtime shape check for snapshot responses.
  */
-const isSnapshotPayload = (v: unknown): v is { html: string; signals: unknown; lastEventId: string } => {
-  if (v === null || typeof v !== 'object') return false;
-  if (!('html' in v) || !('lastEventId' in v) || !('signals' in v)) return false;
-  return typeof v.html === 'string' && typeof v.lastEventId === 'string';
-};
+const isSnapshotPayload = (v: unknown): v is { html: string; signals: unknown; lastEventId: string } =>
+  decode(SnapshotPayloadSchema, v).ok;
 
 /**
  * Runtime shape check for replay responses.
  */
-const isReplayPayload = (v: unknown): v is { patches: readonly unknown[] } => {
-  if (v === null || typeof v !== 'object') return false;
-  if (!('patches' in v)) return false;
-  return Array.isArray(v.patches);
-};
+const isReplayPayload = (v: unknown): v is { patches: readonly unknown[] } => decode(ReplayPayloadSchema, v).ok;
 
 /**
  * Default resumption configuration.

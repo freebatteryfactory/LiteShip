@@ -22,10 +22,12 @@ const policyNode = (levels: readonly CapTier[]): unknown => ({
 });
 
 describe('DocumentGraphNodeSchema Standard Schema V1 interop', () => {
-  test('carries the Effect Standard Schema metadata', () => {
+  test('carries the Standard Schema V1 metadata', () => {
     expect('~standard' in DocumentGraphNodeSchema).toBe(true);
     expect(DocumentGraphNodeSchema['~standard'].version).toBe(1);
-    expect(DocumentGraphNodeSchema['~standard'].vendor).toBe('effect');
+    // The node schema is now a kernel schema bridged through the kernel's
+    // `~standard` conformance layer, so the vendor is LiteShip's, not effect's.
+    expect(DocumentGraphNodeSchema['~standard'].vendor).toBe('liteship');
   });
 
   test('validates a well-formed node through the Standard Schema interface', async () => {

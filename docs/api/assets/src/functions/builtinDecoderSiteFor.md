@@ -8,7 +8,7 @@
 
 > **builtinDecoderSiteFor**(`kind`): readonly `Site`[]
 
-Defined in: [assets/src/contract.ts:182](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L182)
+Defined in: [assets/src/contract.ts:181](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L181)
 
 Sites a media kind's BUILT-IN decoder can honestly run on. The video
 built-in shells out to ffprobe (node:child_process / fs / os), so a

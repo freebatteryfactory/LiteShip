@@ -31,29 +31,16 @@ export type {
 // FNV-1a hash utility
 export { fnv1a, fnv1aBytes } from './fnv.js';
 
-// JSON-Schema deriver (single-source-of-truth migration): derive a command
-// descriptor's JSON-Schema (`inputSchema`/`outputSchema`) from ONE Effect Schema,
-// killing the hand-maintained-JSON-Schema-beside-the-TS-type drift. PRODUCTION
-// module (NOT under harness/) so @czap/command can import it without pulling
-// fast-check into its runtime — it depends only on `effect` + `@czap/error`.
-export { schemaToJsonSchema } from './json-schema-from-schema.js';
-export type { JsonSchemaObject, JsonSchemaFragment } from './json-schema-from-schema.js';
-
 // Canonical CBOR encoder (RFC 8949 §4.2.1) — content-address kernel
 export { CanonicalCbor } from './cbor.js';
 
 // ── Schema kernel — the transport-agnostic (effect-free) schema substrate ─────
-// The successor to the Effect-AST deriver above: `S.*` constructors over a frozen
-// plain-data AST, type-level `Infer`, strict/lenient `decode` with the tagged
-// `DecodeIssue` algebra, the `toJsonSchema` deriver, and the `~standard` bridge.
-// The colliding `JsonSchemaObject`/`JsonSchemaFragment` type names stay sourced
-// from `json-schema-from-schema.ts` (above) until that deriver is deleted. The
-// kernel's non-colliding surface (`S`, `toJsonSchema`, `Infer`, the `DecodeIssue`
-// algebra, the `~standard` bridge) ships HERE on the main `@czap/core` barrel;
-// its own structurally-identical `JsonSchemaObject`/`JsonSchemaFragment` twins
-// are reachable only through repo-internal relative imports of `./schema/index.js`
-// (there is no `@czap/core/schema` subpath — the package `exports` map is a
-// closed, security-annotated allowlist and is deliberately NOT widened).
+// The single JSON-Schema deriver (successor to the deleted Effect-AST deriver):
+// `S.*` constructors over a frozen plain-data AST, type-level `Infer`, strict/
+// lenient `decode` with the tagged `DecodeIssue` algebra, the `toJsonSchema`
+// deriver, and the `~standard` bridge. The full surface (`S`, `toJsonSchema`,
+// `Infer`, the `DecodeIssue` algebra, `JsonSchemaObject`/`JsonSchemaFragment`,
+// the `~standard` bridge) ships HERE on the main `@czap/core` barrel.
 export {
   S,
   withArbitrary,
@@ -77,6 +64,8 @@ export type {
   DecodePath,
   DecodeResult,
   LiteshipStandardSchema,
+  JsonSchemaObject,
+  JsonSchemaFragment,
 } from './schema/index.js';
 
 // SchemaPort — the permanent, effect-free structural schema contract (ADR-0010,

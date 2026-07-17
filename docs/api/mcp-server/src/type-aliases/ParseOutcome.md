@@ -8,6 +8,6 @@
 
 > **ParseOutcome** = \{ `kind`: `"request"`; `message`: [`JsonRpcRequest`](../interfaces/JsonRpcRequest.md); \} \| \{ `kind`: `"notification"`; `message`: [`JsonRpcNotification`](../interfaces/JsonRpcNotification.md); \} \| \{ `kind`: `"batch"`; `outcomes`: readonly `ParseOutcome`[]; \} \| \{ `kind`: `"parse-error"`; \} \| \{ `id`: [`JsonRpcId`](JsonRpcId.md); `kind`: `"invalid-request"`; \}
 
-Defined in: [mcp-server/src/jsonrpc.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/jsonrpc.ts#L75)
+Defined in: [mcp-server/src/jsonrpc.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/jsonrpc.ts#L74)
 
 Discriminated union of every parse outcome the kernel produces.

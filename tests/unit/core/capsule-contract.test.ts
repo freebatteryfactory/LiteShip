@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Schema } from 'effect';
+import { S } from '@czap/core';
 import type { CapsuleContract, AssemblyKind } from '@czap/core';
 
 describe('CapsuleContract', () => {
@@ -8,8 +8,8 @@ describe('CapsuleContract', () => {
       _kind: 'pureTransform' as const,
       id: 'fnv1a:test001' as const,
       name: 'test-transform',
-      input: Schema.Number,
-      output: Schema.String,
+      input: S.number,
+      output: S.string,
       capabilities: { reads: [], writes: [] },
       invariants: [],
       budgets: { p95Ms: 1 },

@@ -1,19 +1,19 @@
 import { describe, it, expect } from 'vitest';
-import { Effect, Schema } from 'effect';
-import { TypeValidator } from '@czap/core';
+import { S, TypeValidator } from '@czap/core';
 
 describe('TypeValidator', () => {
-  it('validates a value against a schema and returns the typed result', () => {
-    const result = Effect.runSync(
-      TypeValidator.validate(Schema.Number, 42),
-    );
-    expect(result).toBe(42);
+  it('returns an ok result carrying the decoded value on a match', () => {
+    // Sync kernel strict decode: value-or-tagged-error, no Effect wrapper.
+    const result = TypeValidator.validate(S.number, 42);
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error('expected an ok result');
+    expect(result.value).toBe(42);
   });
 
-  it('fails Effect on a schema mismatch', () => {
-    const exit = Effect.runSyncExit(
-      TypeValidator.validate(Schema.Number, 'not a number'),
-    );
-    expect(exit._tag).toBe('Failure');
+  it('returns a tagged ParseError result on a schema mismatch (never throws)', () => {
+    const result = TypeValidator.validate(S.number, 'not a number');
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error('expected an err result');
+    expect(result.error._tag).toBe('ParseError');
   });
 });

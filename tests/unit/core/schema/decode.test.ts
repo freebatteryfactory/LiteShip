@@ -131,6 +131,45 @@ describe('strict decode — array & record', () => {
   });
 });
 
+describe('strict decode — tuple (fixed arity)', () => {
+  const pair = S.tuple(S.number, S.number);
+
+  it('decodes an exact-arity tuple, preserving positions', () => {
+    expect(valueOf(decode(pair, [1, 2]))).toEqual([1, 2]);
+  });
+
+  it('rejects a wrong-arity array with a root schema/type issue (arity is part of the type)', () => {
+    // RED-first cage: a shorter OR longer array must FAIL decode — an `S.array`
+    // would have accepted both, so this is exactly the fidelity the tuple restores.
+    const short = issuesOf(decode(pair, [1]));
+    expect(short).toHaveLength(1);
+    expect(short[0]?.code).toBe('schema/type');
+    expect(short[0]?.path).toEqual([]);
+    const long = issuesOf(decode(pair, [1, 2, 3]));
+    expect(long).toHaveLength(1);
+    expect(long[0]?.code).toBe('schema/type');
+    expect(long[0]?.path).toEqual([]);
+  });
+
+  it('rejects a non-array with a root schema/type issue', () => {
+    expect(issuesOf(decode(pair, { 0: 1, 1: 2 }))[0]?.code).toBe('schema/type');
+  });
+
+  it('reports the failing position at its index path; decodes mixed element types', () => {
+    const mixed = S.tuple(S.string, S.number);
+    expect(valueOf(decode(mixed, ['a', 1]))).toEqual(['a', 1]);
+    const issues = issuesOf(decode(mixed, ['a', 'no']));
+    expect(issues[0]?.path).toEqual([1]);
+    expect(issues[0]?.code).toBe('schema/type');
+  });
+
+  it('nests the path through a tuple inside a struct', () => {
+    const schema = S.struct({ edge: S.tuple(S.number, S.number) });
+    const issues = issuesOf(decode(schema, { edge: [1, 'no'] }));
+    expect(issues[0]?.path).toEqual(['edge', 1]);
+  });
+});
+
 describe('strict decode — brand', () => {
   const addr = S.brand(S.string, ContentAddress);
 
@@ -219,6 +258,17 @@ describe('lenient decode — coerce-or-null / prune', () => {
   it('array: malformed items are pruned', () => {
     expect(decodeLenient(S.array(S.number), [1, 'x', 3, null])).toEqual([1, 3]);
     expect(decodeLenient(S.array(S.number), 'not-array')).toBeNull();
+  });
+
+  it('tuple: wrong arity or any malformed position collapses to null (never pruned like an array)', () => {
+    const pair = S.tuple(S.number, S.number);
+    expect(decodeLenient(pair, [1, 2])).toEqual([1, 2]);
+    expect(decodeLenient(pair, [1])).toBeNull(); // short → null
+    expect(decodeLenient(pair, [1, 2, 3])).toBeNull(); // long → null
+    // A bad element collapses the whole tuple — it is NOT pruned to `[1]` (that
+    // would break arity and lie about the type).
+    expect(decodeLenient(pair, [1, 'bad'])).toBeNull();
+    expect(decodeLenient(pair, 'not-array')).toBeNull();
   });
 
   it('record: malformed leaves are pruned to a plain object', () => {

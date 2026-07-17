@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { Schema } from 'effect';
-import { defineCapsule } from '@czap/core';
+import { defineCapsule, S } from '@czap/core';
 import { resetCapsuleCatalog } from '@czap/core/testing';
 import * as Harness from '@czap/core/harness';
 
@@ -15,8 +14,8 @@ describe('generateReceiptedMutation', () => {
   const base = {
     _kind: 'receiptedMutation' as const,
     name: 'demo.issueReceipt',
-    input: Schema.Struct({ token: Schema.String }),
-    output: Schema.Struct({ status: Schema.String }),
+    input: S.struct({ token: S.string }),
+    output: S.struct({ status: S.string }),
     capabilities: { reads: [], writes: ['ledger.entries'] },
     invariants: [],
     budgets: { p95Ms: 5 },
@@ -38,9 +37,13 @@ describe('generateReceiptedMutation', () => {
     });
     // No skip token of any flavor.
     expect(testFile).not.toMatch(/it\.skip|test\.skip/);
-    // The contract round-trip is a REAL it(...) block.
-    expect(testFile).toContain("it('contract shape: input and output decode/encode round-trip'");
+    // The contract round-trip is a REAL it(...) block driven by the effect-free
+    // kernel `decode` (Encoded ≡ Type, so no separate encode) — never effect.
+    expect(testFile).toContain("it('contract shape: input and output decode round-trip'");
     expect(testFile).toContain('schemaToArbitrary');
+    expect(testFile).toContain('decode(schema as never, value)');
+    expect(testFile).toMatch(/import \{ decode \} from/);
+    expect(testFile).not.toMatch(/from 'effect'/);
     // The two handler-gated checks are documented as non-emitted, not skipped.
     expect(testFile).toContain('idempotent / audit receipt: NOT EMITTED');
     expect(testFile).toContain('fault injection: NOT EMITTED');
@@ -74,6 +77,10 @@ describe('generateReceiptedMutation', () => {
     expect(testFile).toContain("it('is idempotent:");
     expect(testFile).toContain("it('emits audit receipt with declared capabilities'");
     expect(testFile).toContain("it('fault injection: declared faults are reachable'");
+    // The audit-receipt check decodes against the output schema via the kernel
+    // `decode` — the whole file is effect-free.
+    expect(testFile).toContain('decode(cap.output as never, receipt).ok');
+    expect(testFile).not.toMatch(/from 'effect'/);
     // No non-emission / exemption notes when every check is real.
     expect(testFile).not.toContain('NOT EMITTED');
     expect(testFile).not.toContain('EXEMPTED');

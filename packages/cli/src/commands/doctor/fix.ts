@@ -36,9 +36,9 @@ export async function applyFixes(checks: readonly DoctorCheck[], cwd: string): P
       detail: 'doctor --fix only invokes pnpm run build when root package.json name === "czap"',
     });
   } else if (needsBuild) {
-    // Package list is read from root package.json's build script, so adding a
-    // new package to the build never silently desyncs this loop. `force:true`
-    // closes the TOCTOU window between existsSync and rmSync.
+    // Package list is read from root tsconfig.json's project references, so
+    // adding a new package to the build never silently desyncs this loop.
+    // `force:true` closes the TOCTOU window between existsSync and rmSync.
     for (const pkg of loadBuiltPackages(cwd)) {
       const info = resolve(cwd, `packages/${pkg}/tsconfig.tsbuildinfo`);
       rmSync(info, { force: true });

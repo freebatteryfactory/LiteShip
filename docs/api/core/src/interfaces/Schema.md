@@ -6,7 +6,7 @@
 
 # Interface: Schema\<A, I\>
 
-Defined in: [core/src/schema/ast.ts:195](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/ast.ts#L195)
+Defined in: [core/src/schema/ast.ts:207](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/ast.ts#L207)
 
 A kernel schema value over decoded type `A` and encoded type `I`.
 
@@ -32,7 +32,7 @@ port-shaped value.
 
 > `readonly` **ast**: [`SchemaNode`](../type-aliases/SchemaNode.md)
 
-Defined in: [core/src/schema/ast.ts:196](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/ast.ts#L196)
+Defined in: [core/src/schema/ast.ts:208](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/ast.ts#L208)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [core/src/schema/ast.ts:196](https://github.com/freebatteryfactory/L
 
 > `readonly` **Encoded**: `I`
 
-Defined in: [core/src/schema/ast.ts:198](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/ast.ts#L198)
+Defined in: [core/src/schema/ast.ts:210](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/ast.ts#L210)
 
 ***
 
@@ -48,4 +48,4 @@ Defined in: [core/src/schema/ast.ts:198](https://github.com/freebatteryfactory/L
 
 > `readonly` **Type**: `A`
 
-Defined in: [core/src/schema/ast.ts:197](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/ast.ts#L197)
+Defined in: [core/src/schema/ast.ts:209](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/ast.ts#L209)

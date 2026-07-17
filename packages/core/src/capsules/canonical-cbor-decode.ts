@@ -7,11 +7,10 @@
  * @module
  */
 
-import { Schema } from 'effect';
 import * as fc from 'fast-check';
 import { defineCapsule } from '../assembly.js';
+import { S, withArbitrary } from '../schema/index.js';
 import { CanonicalCbor, decode } from '../cbor.js';
-import { withArbitrary } from '../harness/arbitrary-from-schema.js';
 
 /**
  * Normalize a value into the encoder's image: the encoder coerces top-level
@@ -114,23 +113,22 @@ function isCanonicalCborBytes(bytes: Uint8Array<ArrayBuffer>): bytes is Uint8Arr
  * canonical encoder — so every generated sample is, by construction, valid
  * canonical CBOR the decoder accepts.
  *
- * This is the source-of-truth fix for the decoder's domain: the previous
- * `Schema.instanceOf(Uint8Array)` UNDER-SPECIFIED it (random bytes are
- * `Uint8Array`-conformant but not decodable), which forced the harness onto a
- * precondition-mismatch skip. `CanonicalCborBytes` states the real domain, and
- * `decode` is then exercised over exactly the inputs it is the inverse of —
- * the round-trip invariant (`encode(decode(bytes)) === bytes`) holds because
- * the canonical encoder is idempotent under `decode`.
+ * This is the source-of-truth fix for the decoder's domain: a bare
+ * `Uint8Array` carrier UNDER-SPECIFIES it (random bytes are `Uint8Array`-
+ * conformant but not decodable), which would force the harness onto a
+ * precondition-mismatch skip. The `withArbitrary` thunk instead samples the
+ * encoder's own image, so `decode` is exercised over exactly the inputs it is
+ * the inverse of — the round-trip invariant (`encode(decode(bytes)) === bytes`)
+ * holds because the canonical encoder is idempotent under `decode`. The
+ * standing definition of that domain is {@link isCanonicalCborBytes}.
  */
-// No explicit `Schema.Schema<Uint8Array>` annotation: that alias erases the
-// Encoded type to `unknown` (effect's `Schema<T>` tracks only `Type`), which
-// no longer satisfies the capsule's `SchemaPort<In>` input slot (Encoded must
-// equal In). Left to inference, the `refine(instanceOf(Uint8Array))` value
-// carries a precise Type AND Encoded of `Uint8Array`, and the `withArbitrary`
-// pass-through preserves both — so the slot is satisfied with no cast.
-export const CanonicalCborBytes = withArbitrary(
-  Schema.instanceOf(Uint8Array).pipe(Schema.refine(isCanonicalCborBytes)),
-  () => fc.anything().map((value) => CanonicalCbor.encode(value)),
+// The kernel `S.bytes(Uint8Array)` DECLARATION node carries a precise Type AND
+// Encoded of `Uint8Array`, and the `withArbitrary` pass-through preserves both,
+// so the capsule's `SchemaPort<In>` input slot is satisfied with no cast. The
+// generated domain is narrowed by the thunk (canonical CBOR bytes ⊂ Uint8Array),
+// not by a decode-time refinement — decode accepts any `Uint8Array` instance.
+export const CanonicalCborBytes = withArbitrary(S.bytes(Uint8Array), () =>
+  fc.anything().map((value) => CanonicalCbor.encode(value)),
 );
 
 /**
@@ -141,7 +139,7 @@ export const canonicalCborDecodeCapsule = defineCapsule({
   _kind: 'pureTransform',
   name: 'core.canonical-cbor-decode',
   input: CanonicalCborBytes,
-  output: Schema.Unknown,
+  output: S.unknown,
   capabilities: { reads: [], writes: [] },
   invariants: [
     {
@@ -166,6 +164,8 @@ export const canonicalCborDecodeCapsule = defineCapsule({
 /**
  * Internal helpers exported for the round-trip property test (the invariant
  * over the encoder's normalized domain): `decode(encode(x))` deep-equals
- * `normalize(x)`.
+ * `normalize(x)`. {@link isCanonicalCborBytes} is the standing definition of the
+ * decoder's input domain ("canonical CBOR bytes ⊂ Uint8Array") — the predicate
+ * the `withArbitrary` thunk samples within — exposed for direct assertions.
  */
-export const _canonicalCborDecodeInternals = { normalize, deepEquals } as const;
+export const _canonicalCborDecodeInternals = { normalize, deepEquals, isCanonicalCborBytes } as const;

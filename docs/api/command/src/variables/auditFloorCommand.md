@@ -8,6 +8,6 @@
 
 > `const` **auditFloorCommand**: [`HandledCommand`](../interfaces/HandledCommand.md)
 
-Defined in: [command/src/commands/audit-floor.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/audit-floor.ts#L51)
+Defined in: [command/src/commands/audit-floor.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/audit-floor.ts#L68)
 
 `audit-floor` — run the three-pass engine, diff the warning inventory against the floor; emit a verdict.

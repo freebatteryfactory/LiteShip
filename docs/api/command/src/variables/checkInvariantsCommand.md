@@ -8,6 +8,6 @@
 
 > `const` **checkInvariantsCommand**: [`HandledCommand`](../interfaces/HandledCommand.md)
 
-Defined in: [command/src/commands/check-invariants.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/check-invariants.ts#L66)
+Defined in: [command/src/commands/check-invariants.ts:80](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/check-invariants.ts#L80)
 
 `check-invariants` — scan source for banned patterns + line-ending policy; emit a structured verdict.

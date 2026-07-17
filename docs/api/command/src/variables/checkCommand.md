@@ -8,6 +8,6 @@
 
 > `const` **checkCommand**: [`HandledCommand`](../interfaces/HandledCommand.md)
 
-Defined in: [command/src/commands/check.ts:100](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/check.ts#L100)
+Defined in: [command/src/commands/check.ts:96](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/check.ts#L96)
 
 `check` — run the pure gauntlet gate fold in-process; emit the Finding[] work-list + verdict.

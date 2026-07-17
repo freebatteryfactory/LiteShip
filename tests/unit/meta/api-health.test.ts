@@ -85,7 +85,7 @@ const API_REGISTRY: Record<string, { methods: string[]; values?: string[] }> = {
   // AST. `S`'s FUNCTION members are the constructors; its OBJECT members
   // (`any`/`boolean`/`number`/`string`/`unknown`) are pre-built inert schema nodes.
   S: {
-    methods: ['array', 'brand', 'bytes', 'hole', 'literal', 'optional', 'record', 'struct', 'union'],
+    methods: ['array', 'brand', 'bytes', 'hole', 'literal', 'optional', 'record', 'struct', 'tuple', 'union'],
     values: ['any', 'boolean', 'number', 'string', 'unknown'],
   },
   // `Lifetime` is the LIFO, exactly-once, idempotent disposal handle that replaces
@@ -228,12 +228,11 @@ const STANDALONE_FUNCTIONS = [
   'isWire',
   'fnv1a',
   'fnv1aBytes',
-  // JSON-Schema deriver (single-source-of-truth migration): derives a command
-  // descriptor's JSON-Schema from ONE Effect Schema (Schema.Type + outputSchema
-  // from one source), killing the hand-maintained-JSON-Schema-beside-the-type
-  // drift. Production module (NOT harness/) so @czap/command imports it without
-  // pulling fast-check into its runtime.
-  'schemaToJsonSchema',
+  // The Effect-AST `schemaToJsonSchema` deriver was DELETED this wave. The single
+  // JSON-Schema deriver is now the kernel `toJsonSchema` (registered below), which
+  // walks the effect-free kernel AST and holds byte-parity with the retired deriver
+  // (the `tests/fixtures/json-schema-parity/` cage). @czap/command carries the
+  // as-const JSON-Schema constants directly — no runtime derivation at the barrel.
   // `isValidationError` removed from the main entry — core migrated to the
   // `@czap/error` algebra; consumers use `hasTag(e, 'ValidationError')` from
   // `@czap/error` (no per-package guard re-export, no compat shim).

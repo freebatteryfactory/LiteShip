@@ -27,9 +27,10 @@ import type {
   SchemaNode,
   StructField,
   StructNode,
+  TupleNode,
   UnionNode,
 } from './ast.js';
-import type { Infer, InferEncoded, SchemaFields, StructType, StructEncoded } from './infer.js';
+import type { Infer, InferEncoded, SchemaFields, StructType, StructEncoded, TupleType, TupleEncoded } from './infer.js';
 
 const stringSchema = makeSchema<string, string>(Object.freeze({ kind: 'string' }));
 const numberSchema = makeSchema<number, number>(Object.freeze({ kind: 'number' }));
@@ -87,6 +88,22 @@ function array<const E extends Schema<unknown, unknown>>(
   if (!isSchema(element)) throw ValidationError('S.array', 'the element must be a kernel schema');
   const node: ArrayNode = { kind: 'array', element: element.ast };
   return makeSchema<readonly Infer<E>[], readonly InferEncoded<E>[]>(Object.freeze(node));
+}
+
+/**
+ * A FIXED-ARITY tuple over `elements`. Unlike {@link array} (homogeneous, variable
+ * length), the arity and the per-position element schemas are pinned: decode
+ * accepts an array iff its length equals `elements.length` and each position
+ * decodes against its own element schema. `Infer` recovers a `readonly [...]`.
+ */
+function tuple<const E extends readonly Schema<unknown, unknown>[]>(
+  ...elements: E
+): Schema<TupleType<E>, TupleEncoded<E>> {
+  for (const element of elements) {
+    if (!isSchema(element)) throw ValidationError('S.tuple', 'every tuple element must be a kernel schema');
+  }
+  const node: TupleNode = { kind: 'tuple', elements: Object.freeze(elements.map((element) => element.ast)) };
+  return makeSchema<TupleType<E>, TupleEncoded<E>>(Object.freeze(node));
 }
 
 /** A string-keyed record whose values conform to `value`. */
@@ -181,6 +198,7 @@ export const S = {
   union,
   struct,
   array,
+  tuple,
   record,
   bytes,
   brand,

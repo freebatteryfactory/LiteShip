@@ -13,21 +13,21 @@
  * @module
  */
 
-import { Schema } from 'effect';
 import { defineCapsule } from '../assembly.js';
+import { S } from '../schema/index.js';
 import { Boundary } from '../boundary.js';
 
-const EvaluateInputSchema = Schema.Struct({
+const EvaluateInputSchema = S.struct({
   // Random arrays — the run handler dedupes states and aligns lengths.
-  // We use Schema.Array (not NonEmptyArray) for compatibility with the
+  // We use `S.array` (not a non-empty variant) for compatibility with the
   // edge case `length === 0`, which we handle by short-circuiting in run.
-  thresholds: Schema.Array(Schema.Number),
-  states: Schema.Array(Schema.String),
-  value: Schema.Number,
+  thresholds: S.array(S.number),
+  states: S.array(S.string),
+  value: S.number,
 });
-const EvaluateOutputSchema = Schema.Struct({
-  state: Schema.String,
-  matched: Schema.Boolean,
+const EvaluateOutputSchema = S.struct({
+  state: S.string,
+  matched: S.boolean,
 });
 
 type EvaluateInput = {

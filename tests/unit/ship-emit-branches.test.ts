@@ -24,8 +24,8 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { existsSync, mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { Effect, Schema } from 'effect';
-import { ContentAddress, IntegrityDigest, ShipCapsule, type AddressedDigest, type HLCBrand as HLC } from '@czap/core';
+import { Effect } from 'effect';
+import { ContentAddress, IntegrityDigest, ShipCapsule, decode, type AddressedDigest, type HLCBrand as HLC } from '@czap/core';
 import { ShipEmit, shipEmitCapsule } from '../../packages/cli/src/capsules/ship-emit.js';
 
 const run = <A, E>(eff: Effect.Effect<A, E>) => Effect.runPromise(eff);
@@ -111,31 +111,33 @@ const sampleSnapshot = () => ({
 });
 
 describe('shipEmitCapsule schema validation', () => {
-  it('input / output Schemas accept well-formed shapes and reject malformed ones', async () => {
-    // input Schema accept branch — the publishable snapshot.
-    const okIn = await Effect.runPromise(Schema.decodeUnknownEffect(shipEmitCapsule.input)(sampleSnapshot()));
-    expect(okIn.capsule_path).toBe('/tmp/x.shipcapsule.cbor');
-    expect(okIn.package_version).toBe('0.1.0');
+  it('input / output schemas accept well-formed shapes and reject malformed ones', () => {
+    // input schema accept branch — the publishable snapshot. `.input` is
+    // typed as the phantom `SchemaPort`, so feed it to the kernel strict
+    // `decode` through the sanctioned `as never` bridge (same idiom the
+    // generated harness templates use for `cap.input`/`cap.output`).
+    const okIn = decode(shipEmitCapsule.input as never, sampleSnapshot());
+    expect(okIn.ok).toBe(true);
+    if (okIn.ok) {
+      const decoded = okIn.value as { capsule_path: string; package_version: string };
+      expect(decoded.capsule_path).toBe('/tmp/x.shipcapsule.cbor');
+      expect(decoded.package_version).toBe('0.1.0');
+    }
 
-    // input Schema reject branches: missing field, then wrong type.
-    const missingField = await Effect.runPromiseExit(
-      Schema.decodeUnknownEffect(shipEmitCapsule.input)({ capsule_path: '/tmp/x.cbor' } as unknown),
-    );
-    expect(missingField._tag).toBe('Failure');
-    const wrongType = await Effect.runPromiseExit(
-      Schema.decodeUnknownEffect(shipEmitCapsule.input)({
-        ...sampleSnapshot(),
-        capsule_path: 42,
-      } as unknown),
-    );
-    expect(wrongType._tag).toBe('Failure');
+    // input schema reject branches: missing field, then wrong type.
+    expect(decode(shipEmitCapsule.input as never, { capsule_path: '/tmp/x.cbor' }).ok).toBe(false);
+    expect(decode(shipEmitCapsule.input as never, { ...sampleSnapshot(), capsule_path: 42 }).ok).toBe(false);
 
-    // output Schema accept branch, fed by the pure `mutate` core's receipt.
+    // output schema accept branch, fed by the pure `mutate` core's receipt.
     const receipt = shipEmitCapsule.mutate!(sampleSnapshot());
-    const okOut = await Effect.runPromise(Schema.decodeUnknownEffect(shipEmitCapsule.output)(receipt));
-    expect(okOut.status).toBe('emitted');
-    expect(okOut.bytes_written).toBeGreaterThan(0);
-    expect(okOut.capsule_path).toBe('/tmp/x.shipcapsule.cbor');
+    const okOut = decode(shipEmitCapsule.output as never, receipt);
+    expect(okOut.ok).toBe(true);
+    if (okOut.ok) {
+      const decoded = okOut.value as { status: string; bytes_written: number; capsule_path: string };
+      expect(decoded.status).toBe('emitted');
+      expect(decoded.bytes_written).toBeGreaterThan(0);
+      expect(decoded.capsule_path).toBe('/tmp/x.shipcapsule.cbor');
+    }
   });
 });
 

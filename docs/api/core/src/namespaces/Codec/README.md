@@ -6,9 +6,9 @@
 
 # Codec
 
-Codec — typed encode/decode wrapper over `effect`'s `Schema.Codec`.
-Gives a single call site for schema-driven validation so consumers don't
-import `Schema.encodeEffect`/`decodeEffect` directly.
+Codec — typed sync encode/decode wrapper over a kernel [Schema](../../interfaces/Schema.md). Gives a
+single call site for schema-driven validation so consumers don't reach for the
+kernel `decode` directly.
 
 ## Type Aliases
 

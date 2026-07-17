@@ -1,6 +1,6 @@
 {
   "name": "czap",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "private": true,
   "description": "Constraint-based adaptive rendering framework — monorepo root",
   "license": "MIT",
@@ -20,7 +20,7 @@
   "scripts": {
     "build": "tsc --build",
     "build:wasm": "pnpm exec tsx scripts/build-wasm.ts",
-    "typecheck": "tsc --noEmit -p tsconfig.json && pnpm run typecheck:scripts && pnpm run typecheck:tests",
+    "typecheck": "tsc --build && pnpm run typecheck:scripts && pnpm run typecheck:tests",
     "typecheck:scripts": "tsc --project tsconfig.scripts.json",
     "typecheck:tests": "tsc --project tsconfig.tests.json",
     "typecheck:spine": "tsc --noEmit --project packages/_spine/tsconfig.json",

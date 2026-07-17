@@ -17,22 +17,21 @@
  * @module
  */
 
-import { Schema } from 'effect';
-import { defineCapsule } from '@czap/core';
+import { defineCapsule, S } from '@czap/core';
 
 // The runtime callable now lives in @czap/command/host (CUT A1 capstone-1); this
 // module keeps only the capsule DECLARATION (walked into the manifest as
 // `cli.vitest-runner`) and re-exports the runtime for stable import sites.
 export { VitestRunner } from '@czap/command/host';
 
-const VitestRunnerInput = Schema.Struct({
-  testFiles: Schema.Array(Schema.String),
+const VitestRunnerInput = S.struct({
+  testFiles: S.array(S.string),
 });
 
-const VitestRunnerOutput = Schema.Struct({
-  exitCode: Schema.Number,
-  testFiles: Schema.Array(Schema.String),
-  stderrTail: Schema.String,
+const VitestRunnerOutput = S.struct({
+  exitCode: S.number,
+  testFiles: S.array(S.string),
+  stderrTail: S.string,
 });
 
 /**

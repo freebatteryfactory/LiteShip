@@ -9,6 +9,8 @@
 import { InvariantViolationError } from '@czap/error';
 import type { CapsuleContract, AssemblyKind } from './capsule.js';
 import type { ContentAddress } from './brands.js';
+import type { SchemaPort } from './schema-port.js';
+import type { Infer } from './schema/index.js';
 import { fnv1aBytes } from './fnv.js';
 import { CanonicalCbor } from './cbor.js';
 import { Diagnostics } from './diagnostics.js';
@@ -17,6 +19,30 @@ import { Diagnostics } from './diagnostics.js';
 export interface CapsuleDef<K extends AssemblyKind, In, Out, R> extends CapsuleContract<K, In, Out, R> {
   readonly id: ContentAddress;
 }
+
+/**
+ * The {@link defineCapsule} argument, generic over the schema VALUE types
+ * `InS`/`OutS` rather than the decoded `In`/`Out`. In/Out are DERIVED via
+ * `Infer<InS>`/`Infer<OutS>`, so every handler slot (`run`/`step`/`derive`/
+ * `mutate`/`decide`), each {@link CapsuleContract.invariants} entry, and each
+ * `faults[].trigger` are contextually typed off the schema the author passes —
+ * no `(o as T)` cast, no hand-written `Type` alias.
+ *
+ * The constraint is the STRUCTURAL {@link SchemaPort}, so a kernel schema value,
+ * an effect `Schema` value, and a `DeclarationSchema` are all accepted, and
+ * `Infer` reads the decoded type off any of them by reading its phantom `Type`.
+ * `input`/`output` keep the concrete `InS`/`OutS` types (the inference sources);
+ * everything else is the resolved `CapsuleContract` over `Infer<InS>`/`Infer<OutS>`.
+ */
+export type CapsuleDecl<
+  K extends AssemblyKind,
+  InS extends SchemaPort<unknown, unknown>,
+  OutS extends SchemaPort<unknown, unknown>,
+  R,
+> = Omit<CapsuleContract<K, Infer<InS>, Infer<OutS>, R>, 'id' | 'input' | 'output'> & {
+  readonly input: InS;
+  readonly output: OutS;
+};
 
 const catalog: CapsuleDef<AssemblyKind, unknown, unknown, unknown>[] = [];
 
@@ -102,9 +128,12 @@ function computeId(contract: Omit<CapsuleContract<AssemblyKind, unknown, unknown
  * No runtime behavior beyond registration — behavior comes from
  * the harness/compiler walking the catalog.
  */
-export function defineCapsule<K extends AssemblyKind, In, Out, R>(
-  decl: Omit<CapsuleContract<K, In, Out, R>, 'id'>,
-): CapsuleDef<K, In, Out, R> {
+export function defineCapsule<
+  K extends AssemblyKind,
+  InS extends SchemaPort<unknown, unknown>,
+  OutS extends SchemaPort<unknown, unknown>,
+  R,
+>(decl: CapsuleDecl<K, InS, OutS, R>): CapsuleDef<K, Infer<InS>, Infer<OutS>, R> {
   // For pureTransform capsules: omitting `run` leaves the declared invariants
   // type-only (no runtime validation). The generated harness still emits a REAL
   // test — never an `it.skip` (no-skip discipline) — so warn here, otherwise a
@@ -179,7 +208,7 @@ export function defineCapsule<K extends AssemblyKind, In, Out, R>(
   }
 
   const id = computeId(decl as Omit<CapsuleContract<AssemblyKind, unknown, unknown, unknown>, 'id'>);
-  const def = { ...decl, id } as CapsuleDef<K, In, Out, R>;
+  const def = { ...decl, id } as CapsuleDef<K, Infer<InS>, Infer<OutS>, R>;
   catalog.push(def as CapsuleDef<AssemblyKind, unknown, unknown, unknown>);
   return def;
 }

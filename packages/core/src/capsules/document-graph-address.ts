@@ -23,29 +23,34 @@
  * @module
  */
 
-import { Schema } from 'effect';
 import type { ContentAddress } from '../brands.js';
 import { defineCapsule } from '../assembly.js';
+import { S } from '../schema/index.js';
+import type { Infer } from '../schema/index.js';
 import { sealGraph, sealNode } from '../document-graph-address.js';
 import type { DocumentGraph, DocumentGraphEdge, DocumentGraphNode, SignalNode } from '../document-graph.js';
 import type { CellMeta } from '../protocol.js';
 
-/** An acyclic edge index pair — `[i, j]` over the sealed node list. */
-const EdgeSeed = Schema.Tuple([Schema.Number, Schema.Number]);
+/**
+ * An acyclic edge index pair — the fixed-arity `[i, j]` tuple over the sealed node
+ * list. `S.tuple(S.number, S.number)` decode-enforces exactly two numeric elements,
+ * so `run` reads both positions directly (no shorter-array skip needed).
+ */
+const EdgeSeed = S.tuple(S.number, S.number);
 
 /**
- * Seed material the schema-arbitrary CAN produce (String/Array/Tuple/Number are
+ * Seed material the schema-arbitrary CAN produce (String/Array/Number are
  * fully-supported AST nodes): a graph described by its signal-axis name list plus
  * acyclic edge index pairs. `run` seals this into a real graph.
  */
-const GraphAddressSeed = Schema.Struct({
+const GraphAddressSeed = S.struct({
   /** Signal-axis names → one sealed `SignalNode` per DISTINCT name. */
-  inputs: Schema.Array(Schema.String),
+  inputs: S.array(S.string),
   /** `[i, j]` index pairs → a `from`→`to` edge between sealed nodes (normalized acyclic). */
-  edges: Schema.Array(EdgeSeed),
+  edges: S.array(EdgeSeed),
 });
 
-type GraphAddressSeedValue = Schema.Schema.Type<typeof GraphAddressSeed>;
+type GraphAddressSeedValue = Infer<typeof GraphAddressSeed>;
 
 /** Fixed volatile meta — excluded from the content address, so a constant is faithful. */
 const META: CellMeta = {
@@ -85,8 +90,11 @@ function buildGraph(seed: GraphAddressSeedValue): DocumentGraph {
   const edgeKeys = new Set<string>();
   if (nodes.length >= 2) {
     for (const pair of seed.edges) {
-      const i = Math.abs(Math.trunc(pair[0])) % nodes.length;
-      const j = Math.abs(Math.trunc(pair[1])) % nodes.length;
+      // An edge seed is an `S.tuple(S.number, S.number)`: decode enforces arity 2,
+      // so both `[i, j]` positions are present numbers.
+      const [rawI, rawJ] = pair;
+      const i = Math.abs(Math.trunc(rawI)) % nodes.length;
+      const j = Math.abs(Math.trunc(rawJ)) % nodes.length;
       if (i === j) continue; // no self-loops
       const lo = Math.min(i, j);
       const hi = Math.max(i, j);
@@ -146,7 +154,7 @@ export const documentGraphAddressCapsule = defineCapsule({
   _kind: 'pureTransform',
   name: 'core.document-graph.address',
   input: GraphAddressSeed,
-  output: Schema.Unknown,
+  output: S.unknown,
   capabilities: { reads: [], writes: [] },
   invariants: [
     {

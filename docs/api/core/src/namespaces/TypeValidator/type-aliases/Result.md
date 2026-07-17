@@ -6,11 +6,11 @@
 
 # Type Alias: Result\<T\>
 
-> **Result**\<`T`\> = `Effect.Effect`\<`T`, `Schema.SchemaError`\>
+> **Result**\<`T`\> = `ErrorResult`\<`T`, [`ParseError`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts)\>
 
-Defined in: [core/src/capsule.ts:266](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L266)
+Defined in: [core/src/capsule.ts:275](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L275)
 
-Effect returned by [TypeValidator.validate](../../../variables/TypeValidator.md#validate) on a successful decode.
+The value-or-tagged-error [TypeValidator.validate](../../../variables/TypeValidator.md#validate) returns on a strict decode.
 
 ## Type Parameters
 

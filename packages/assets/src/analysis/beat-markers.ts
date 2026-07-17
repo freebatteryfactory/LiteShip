@@ -8,8 +8,7 @@
  * @module
  */
 
-import { Schema } from 'effect';
-import { defineCapsule } from '@czap/core';
+import { defineCapsule, S } from '@czap/core';
 import type { CapsuleDef } from '@czap/core';
 import { AssetBytes, type AssetRegistry } from '../contract.js';
 import { audioDecoder } from '../decoders/audio.js';
@@ -74,9 +73,9 @@ function envelopeMax(env: Float32Array): number {
   return m;
 }
 
-const BeatMarkerSetSchema = Schema.Struct({
-  bpm: Schema.Number,
-  beats: Schema.Array(Schema.Number),
+const BeatMarkerSetSchema = S.struct({
+  bpm: S.number,
+  beats: S.array(S.number),
 });
 
 /**
@@ -106,8 +105,7 @@ export function BeatMarkerProjection(
       {
         name: 'beats-ordered',
         check: (_i, o) => {
-          const set = o as BeatMarkerSet;
-          for (let i = 1; i < set.beats.length; i++) if (set.beats[i]! <= set.beats[i - 1]!) return false;
+          for (let i = 1; i < o.beats.length; i++) if (o.beats[i]! <= o.beats[i - 1]!) return false;
           return true;
         },
         message: 'beats must be strictly increasing sample indices',
@@ -115,9 +113,8 @@ export function BeatMarkerProjection(
       {
         name: 'bpm-in-range',
         check: (_i, o) => {
-          const set = o as BeatMarkerSet;
-          if (set.beats.length === 0) return set.bpm === 0;
-          return set.bpm >= 40 && set.bpm <= 240;
+          if (o.beats.length === 0) return o.bpm === 0;
+          return o.bpm >= 40 && o.bpm <= 240;
         },
         message: 'empty beat sets must report BPM 0; non-empty detected BPM must lie in [40, 240]',
       },

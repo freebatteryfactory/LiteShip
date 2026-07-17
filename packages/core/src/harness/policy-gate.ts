@@ -78,6 +78,12 @@ export function generatePolicyGate(
   ctx: HarnessContext = {},
 ): HarnessOutput {
   const arbitraryImport = ctx.arbitraryImport ?? DEFAULT_ARBITRARY_IMPORT;
+  // The kernel strict `decode` lives beside the arbitrary walker under
+  // `packages/core/src/schema/index.js`; derive its specifier from the arbitrary
+  // import so both resolve from the same generated-test directory, whatever its
+  // depth. (Replaces the effect `Schema.decodeUnknownSync` the verdict round-trip
+  // used before the schema kernel landed.)
+  const decodeImport = arbitraryImport.replace(/harness\/arbitrary-from-schema\.js$/, 'schema/index.js');
 
   if (ctx.bindingImport === undefined || ctx.bindingName === undefined) {
     // Wire-or-fail: a generator emits a real test or throws — never a skip.
@@ -108,14 +114,15 @@ export function generatePolicyGate(
   const testFile = `// GENERATED — do not edit by hand
 import { describe, it, expect } from 'vitest';
 import * as fc from 'fast-check';
-import { Schema } from 'effect';
+import { decode } from '${decodeImport}';
+import type { Schema } from '${decodeImport}';
 import { ${ctx.bindingName} } from '${ctx.bindingImport}';
 import { schemaToArbitrary } from '${arbitraryImport}';
 
 describe('${cap.name}', () => {
   const cap = ${ctx.bindingName} as {
-    input: Schema.Schema<unknown>;
-    output: Schema.Schema<unknown>;
+    input: Schema<unknown>;
+    output: Schema<unknown>;
     decide?: (subject: unknown) => { effect: 'allow' | 'deny'; reasons: ReadonlyArray<{ code: string; message: string }> };
     invariants: ReadonlyArray<{ name: string; check: (subject: unknown, verdict: unknown) => boolean }>;
   };
@@ -125,9 +132,6 @@ describe('${cap.name}', () => {
   // suite RED — correct, never a green skip.
   const subjectArb = schemaToArbitrary(cap.input as never) as fc.Arbitrary<unknown>;
   const decide = cap.decide!;
-  // The verdict shape IS the contract: \`output\` is the Decision schema, so each
-  // verdict round-trips through it (the policyGate analogue of the receipt byte law).
-  const decodeVerdict = Schema.decodeUnknownSync(cap.output as never);
 
   it('allow/deny coverage: every verdict is a well-formed Decision (reasons non-empty iff deny)', () => {
     fc.assert(
@@ -158,9 +162,13 @@ describe('${cap.name}', () => {
           expect(typeof reason.message).toBe('string');
           expect(reason.message.length).toBeGreaterThan(0);
         }
-        // The whole verdict round-trips through the declared Decision schema — the
-        // reasons decode as typed reasons, not arbitrary objects.
-        expect(decodeVerdict(verdict as never)).toEqual(verdict);
+        // The whole verdict decodes against the declared Decision schema — the
+        // reasons decode as typed reasons, not arbitrary objects. Strict kernel
+        // decode returns the verdict unchanged (the policyGate analogue of the
+        // receipt byte law).
+        const decoded = decode(cap.output as never, verdict);
+        expect(decoded.ok).toBe(true);
+        if (decoded.ok) expect(decoded.value).toEqual(verdict);
         return true;
       }),
       { numRuns: 100 },
