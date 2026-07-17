@@ -1,6 +1,6 @@
 {
   "name": "@czap/compiler",
-  "version": "0.13.0",
+  "version": "0.14.0",
   "description": "Compile one LiteShip boundary definition into many outputs at once — CSS, GLSL, WGSL, ARIA, AI descriptions, and Tailwind — so every target stays in sync.",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",

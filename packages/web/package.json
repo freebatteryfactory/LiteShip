@@ -1,6 +1,6 @@
 {
   "name": "@czap/web",
-  "version": "0.13.0",
+  "version": "0.14.0",
   "description": "The browser runtime for LiteShip: apply CSS, streamed HTML, worker output, and LLM chunks to a live DOM with focus- and scroll-preserving morphing.",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",

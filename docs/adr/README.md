@@ -50,6 +50,7 @@ Prose vocabulary: [../GLOSSARY.md](../../GLOSSARY.md).
 | [0038](./0038-typedoc-monolith-canonical.md)           | TypeDoc monolith build is canonical                                         | Accepted |
 | [0039](./0039-multi-transition-algebra.md)             | A routing LABEL becomes a transition PROGRAM                                | Accepted |
 | [0040](./0040-cross-target-motion-parity.md)           | Cross-target motion parity: one kernel + a differential oracle              | Accepted |
+| [0041](./0041-per-property-motion-tracks.md)           | Individual transforms, a generalized `linear()` easing vocabulary, retired mixed-easing diagnostic | Accepted |
 
 ## Template
 

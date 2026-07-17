@@ -8,7 +8,7 @@
 
 > **Shape**\<`B`\> = [`AnimatedQuantizerShape`](../../../interfaces/AnimatedQuantizerShape.md)\<`B`\>
 
-Defined in: [quantizer/src/animated-quantizer.ts:410](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L410)
+Defined in: [quantizer/src/animated-quantizer.ts:476](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L476)
 
 Shape of an animated quantizer parameterized by boundary `B`.
 

@@ -91,7 +91,12 @@ describe('Reveal graph → CSS equivalence', () => {
     const compiled = compileReveal(lowered.graph, lowered.transitionId, intent);
 
     expect(compiled.css.raw).toContain('@property --czap-hero-y');
-    expect(compiled.css.raw).toContain('transform: translate3d(var(--czap-hero-x,0px),var(--czap-hero-y,0px),var(--czap-hero-z,0px))');
+    // Wave-4: the native path emits the individual `translate:` property off the per-axis
+    // custom props — NOT a `translate3d()` transform consumer (appendTranslateConsumer is
+    // deleted). The runtime floor keeps writing the same `--czap-hero-*` vars.
+    expect(compiled.css.raw).not.toContain('translate3d');
+    expect(compiled.css.raw).toContain('translate:');
+    expect(compiled.css.raw).toContain('var(--czap-hero-y,0px)');
     expect(compiled.css.keyframes).toContain('@keyframes czap-motion-hero-before-after');
     expect(compiled.css.startingStyle).toContain('@starting-style');
     expect(compiled.css.startingStyle).toContain('[data-czap-boundary="hero"]');
@@ -129,7 +134,7 @@ describe('Reveal graph → CSS equivalence', () => {
     expect(compiled.css.transition).toMatch(/linear\(/);
   });
 
-  test('hyphenated targets emit a translate3d consumer on their custom axes', () => {
+  test('hyphenated targets emit individual translate props on their custom axes', () => {
     const intent = Reveal.intent({
       target: 'hero-card',
       trigger: { type: 'view', range: ['entry 0%', 'cover 60%'] },
@@ -141,9 +146,11 @@ describe('Reveal graph → CSS equivalence', () => {
     const lowered = lowerRevealIntent(intent);
     const compiled = compileReveal(lowered.graph, lowered.transitionId, intent);
     expect(compiled.css.raw).toContain('@property --czap-hero-card-y');
-    expect(compiled.css.raw).toContain(
-      'transform: translate3d(var(--czap-hero-card-x,0px),var(--czap-hero-card-y,0px),var(--czap-hero-card-z,0px))',
-    );
+    // Individual `translate:` property, not a `translate3d()` consumer, on the
+    // hyphenated target's per-axis vars.
+    expect(compiled.css.raw).not.toContain('translate3d');
+    expect(compiled.css.raw).toContain('translate:');
+    expect(compiled.css.raw).toContain('var(--czap-hero-card-y,0px)');
   });
 });
 

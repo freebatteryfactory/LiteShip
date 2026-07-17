@@ -431,15 +431,16 @@ function easingKey(easing: RuntimeEasing): string {
  * cross-target parity gap — whether the curves are uniform or mixed). To close it, each stop that
  * begins a segment carries THAT segment's easing as a per-keyframe `animation-timing-function`
  * (`CssKeyframeStep.easing`). A default-`ease` program carries none (the compiler default already
- * matches — byte-identical to before). An overlapping segment whose windows DISAGREE on easing (a
- * `par` of differently-eased children) cannot be expressed by one per-keyframe curve — it is left
- * to the plan-level curve and diagnosed LOUDLY (Law 1).
+ * matches — byte-identical to before). An overlapping segment whose windows DISAGREE on easing
+ * (a `par` of differently-eased children) cannot be expressed by one per-keyframe curve, so the
+ * shared `@keyframes` stop simply carries no per-keyframe easing there. This is NOT an
+ * approximation that ships: a composed program's faithful renderer is the per-window RUNTIME floor
+ * (`RuntimeWriteWindow.easing`, sampled by `sampleRuntimeEasing`), which drives `client:motion` and
+ * renders each child's curve exactly — the native single-`@keyframes` leg is reserved for single
+ * transitions and uniform-easing programs. The former `mixed-easing-overlap-approximated`
+ * diagnostic is therefore RETIRED (#148): it flagged a native path composed programs never take.
  */
-function buildKeyframes(
-  windows: readonly AbsWindow[],
-  totalMs: number,
-  diagnostics: DiagnosticPayload[],
-): CssKeyframeStep[] {
+function buildKeyframes(windows: readonly AbsWindow[], totalMs: number): CssKeyframeStep[] {
   const { walk, offsets } = cssWalkWindows(windows, totalMs);
   // Carry per-keyframe easing whenever ANY window uses a NON-DEFAULT curve — not only when
   // curves are MIXED. `CssMotionPlan` carries no plan-level easing and `MotionCompiler.compile`
@@ -463,17 +464,9 @@ function buildKeyframes(
     const active = walk.filter((w) => w.windowStart <= offset && w.windowEnd >= next);
     const distinct = new Set(active.map((w) => easingKey(w.easing)));
     if (distinct.size === 1) return { offset, properties, easing: active[0]!.easing };
-    if (distinct.size > 1) {
-      diagnostics.push({
-        source: 'interpretProgram',
-        code: 'mixed-easing-overlap-approximated',
-        message:
-          `the keyframe segment at offset ${offset} is covered by ${distinct.size} overlapping windows with ` +
-          'DIFFERENT easing (a `par` of differently-eased children); one per-keyframe `animation-timing-function` ' +
-          'cannot serve them, so the native CSS path approximates this segment with the plan-level curve. Lower ' +
-          'differently-eased par children as separate per-property motions to render each curve exactly.',
-      });
-    }
+    // Windows disagree on easing over this shared segment — no single per-keyframe curve
+    // serves them. The per-window runtime floor renders each child's curve exactly; the
+    // native `@keyframes` stop simply carries no easing here (#148, no diagnostic).
     return { offset, properties };
   });
 }
@@ -581,7 +574,7 @@ export function interpretProgram(
     properties: Object.freeze(unionCss),
     durationMs: result.totalMs,
     routing: 'seq',
-    keyframes: Object.freeze(buildKeyframes(result.windows, result.totalMs, diagnostics)),
+    keyframes: Object.freeze(buildKeyframes(result.windows, result.totalMs)),
     transitionProperty: unionCss.map((p) => p.property).join(', '),
   });
 

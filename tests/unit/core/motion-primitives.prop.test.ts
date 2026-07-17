@@ -75,6 +75,37 @@ describe('Motion primitives property laws', () => {
     );
   });
 
+  test('compiled scroll CSS emits individual transform props, never a translate3d consumer', () => {
+    // Wave-4 track-based emission: the native path writes the individual `translate:`
+    // property off the per-axis `--czap-*` vars instead of a single `translate3d()`
+    // consumer rule (appendTranslateConsumer is deleted). Holds across every axis mix.
+    fc.assert(
+      fc.property(
+        fc.constantFrom('block', 'inline', 'progress'),
+        fc.constantFrom('12px', '40px', '-8px'),
+        (axis, dy) => {
+          const intent = ScrollTimeline.intent({
+            target: 'panel',
+            axis,
+            range: ['0%', '100%'],
+            from: { opacity: 0, translateY: dy },
+            to: { opacity: 1, translateY: '0px' },
+            transition: { durationMs: 300, easing: 'ease' },
+            policy: { reducedMotion: 'none', motionTier: 'animations' },
+          });
+          const lowered = lowerScrollTimelineIntent(intent);
+          const compiled = compileScrollTimeline(lowered.graph, lowered.transitionId, intent);
+          return (
+            !compiled.css.raw.includes('translate3d') &&
+            compiled.css.raw.includes('translate:') &&
+            compiled.css.raw.includes('--czap-panel-y')
+          );
+        },
+      ),
+      { seed: 0x5eed },
+    );
+  });
+
   test('compileStagger raw CSS length grows monotonically with child count', () => {
     fc.assert(
       fc.property(fc.integer({ min: 1, max: 4 }), (count) => {

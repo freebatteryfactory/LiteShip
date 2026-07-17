@@ -45,9 +45,15 @@ export interface CssKeyframeStep {
    * `animation-timeline` browser would otherwise sample it as `ease` while the
    * JS/stage/worker floors use the authored curve (uniform or mixed). Absent on
    * default-`ease` plans (the compiler default already matches) and on single-step
-   * transitions; also absent — with a loud `interpretProgram` diagnostic — on a segment
-   * where overlapping windows disagree on easing (a `par` of differently-eased children),
-   * which no single per-keyframe curve can express.
+   * transitions; also absent on a segment where overlapping windows disagree on easing (a
+   * `par` of differently-eased children), which no single per-keyframe curve can express —
+   * that composed case is rendered exactly by the per-window RUNTIME floor
+   * ({@link RuntimeWriteWindow.easing}), the native single-`@keyframes` leg being reserved
+   * for single transitions and uniform-easing programs (#148, no approximation diagnostic).
+   *
+   * When present, the descriptor may carry a serialized `points` arm (a widened-catalog
+   * curve, e.g. `easeOutBounce`) which the compiler emits verbatim as a `linear()` timing
+   * function — the SAME stop list the JS floor lerps (Law 4, the byte-law).
    */
   readonly easing?: RuntimeEasing;
 }

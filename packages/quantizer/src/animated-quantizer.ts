@@ -159,6 +159,62 @@ function sleep(ms: number, signal: AbortSignal): Promise<void> {
 }
 
 /**
+ * Wrap an injected frame scheduler so a pending tick's await also settles the
+ * moment `signal` aborts. {@link Animation.run} bridges one scheduled tick onto a
+ * Promise the generator awaits; on the injected-clock path a lifetime dispose (or
+ * an interrupting crossing) aborts `signal`, but a recording/rAF clock may not
+ * fire that tick again — leaving the `for await` suspended and the generator's
+ * `finally` (`sched.cancel`) unreached until the NEXT tick (scar S3.2: prompt
+ * cancellation lost under the Effect→async-generator transport swap).
+ *
+ * This wrapper arms an abort listener on each scheduled tick that fires the
+ * pending frame callback. On abort the tick await resolves promptly, the
+ * `for await` loop resumes, its body observes `signal.aborted` and returns, and
+ * the generator's `return()` runs `cancel` WITHOUT another tick. Normal ticks
+ * pass through with the base clock's timestamp untouched, so motion parity holds;
+ * the abort-woken frame carries a placeholder timestamp but is always discarded
+ * by the loop body's `signal.aborted` return before it is read.
+ */
+function abortAwareScheduler(base: Scheduler.Shape, signal: AbortSignal): Scheduler.Shape {
+  // At most one tick is outstanding (Animation.run is a single-consumer pull
+  // clock), so a single-slot listener handle tracks the live tick's abort wake.
+  let currentOnAbort: (() => void) | null = null;
+  const clearListener = (): void => {
+    if (currentOnAbort !== null) {
+      signal.removeEventListener('abort', currentOnAbort);
+      currentOnAbort = null;
+    }
+  };
+  return {
+    _tag: 'FrameScheduler',
+    schedule(cb: (now: number) => void): number {
+      let fired = false;
+      const fire = (now: number): void => {
+        if (fired) return;
+        fired = true;
+        clearListener();
+        cb(now);
+      };
+      const id = base.schedule((now) => fire(now));
+      if (signal.aborted) {
+        // Already aborted before this tick was scheduled: settle on the next
+        // microtask so the suspended `for await` resumes and returns.
+        fire(0);
+      } else {
+        const onAbort = (): void => fire(0);
+        currentOnAbort = onAbort;
+        signal.addEventListener('abort', onAbort, { once: true });
+      }
+      return id;
+    },
+    cancel(id: number): void {
+      clearListener();
+      base.cancel(id);
+    },
+  };
+}
+
+/**
  * Create an animated quantizer that interpolates outputs during transitions.
  *
  * Wraps an existing {@link ReactiveQuantizer} and applies easing/duration-based
@@ -260,13 +316,23 @@ function makeAnimatedQuantizer<B extends Boundary.Shape>(
     fromOutputs: Record<string, number | string>,
     toOutputs: Record<string, number | string>,
   ): Promise<void> {
+    // Abort-aware wrapper of the injected clock (scar S3.2): a dispose/interrupt
+    // that aborts `signal` mid-tick wakes the pending scheduler await promptly so
+    // the `for await` reaches the generator's `return()` and `cancel` runs
+    // without waiting for another tick.
+    const clock = scheduler !== undefined ? abortAwareScheduler(scheduler, signal) : undefined;
+
     if (delay > 0) {
-      if (scheduler !== undefined) {
+      if (clock !== undefined) {
         // Honor the pre-roll on the SAME injected clock so a fixedStep
         // render/test stays deterministic — a wall-clock sleep here would desync
         // the delay from the scheduled frames. Drain a delay-length Animation.run
         // on the scheduler (frames discarded); abort breaks it (cancels the tick).
-        for await (const _frame of Animation.run({ duration: mkMillis(delay), easing: linearEasing, scheduler })) {
+        for await (const _frame of Animation.run({
+          duration: mkMillis(delay),
+          easing: linearEasing,
+          scheduler: clock,
+        })) {
           void _frame;
           if (signal.aborted) return;
         }
@@ -283,12 +349,12 @@ function makeAnimatedQuantizer<B extends Boundary.Shape>(
       return;
     }
 
-    if (scheduler !== undefined) {
+    if (clock !== undefined) {
       // Injected frame clock (rAF / fixedStep / audioSync): delegate the cadence
       // to the proven Animation.run loop instead of the fixed 16ms sleep. Each
       // frame publishes currentOutputs so an interrupting crossing reads the live
       // interpolated value; abort breaks the loop and cancels the pending tick.
-      for await (const frame of Animation.run({ duration: mkMillis(duration), easing, scheduler })) {
+      for await (const frame of Animation.run({ duration: mkMillis(duration), easing, scheduler: clock })) {
         if (signal.aborted) return;
         const interpolated = lerpOutputs(fromOutputs, toOutputs, frame.eased);
         currentOutputs = interpolated;

@@ -111,3 +111,71 @@ describe('Easing properties', () => {
     fc.assert(fc.property(fc.constant(null), () => duration === 0.3));
   });
 });
+
+// ── easingToLinearCSS: the shared sampler behind Law 4 (byte-law) ────
+// The CSS `linear()` string and the JS floor MUST sample the SAME point list.
+// `easingToLinearCSS(fn)` is the single producer of that list; `springToLinearCSS`
+// delegates to it so the spring path stays byte-identical.
+
+function parseLinearPoints(css: string): number[] {
+  const match = /^linear\((.*)\)$/.exec(css);
+  if (!match) throw new Error(`not a linear() timing function: ${css}`);
+  return match[1].split(',').map((segment) => Number(segment.trim()));
+}
+
+const catalogEasings: Array<[string, (t: number) => number]> = [
+  ['linear', Easing.linear],
+  ['ease', Easing.ease],
+  ['easeInCubic', Easing.easeInCubic],
+  ['easeOutCubic', Easing.easeOutCubic],
+  ['easeInOutCubic', Easing.easeInOutCubic],
+  ['easeOutExpo', Easing.easeOutExpo],
+  ['easeOutBack', Easing.easeOutBack],
+  ['easeOutElastic', Easing.easeOutElastic],
+  ['easeOutBounce', Easing.easeOutBounce],
+  ['easeIn', Easing.easeIn],
+  ['easeOut', Easing.easeOut],
+  ['easeInOut', Easing.easeInOut],
+];
+
+describe('easingToLinearCSS — Law 4 point parity by construction', () => {
+  describe.each(catalogEasings)('%s', (_name, fn) => {
+    test('linear() points faithfully sample fn(i/n) for any sampleCount', () => {
+      fc.assert(
+        fc.property(fc.integer({ min: 2, max: 64 }), (sampleCount) => {
+          const points = parseLinearPoints(Easing.easingToLinearCSS(fn, sampleCount));
+          // One point per sample stop, inclusive of both endpoints.
+          if (points.length !== sampleCount + 1) return false;
+          for (let i = 0; i <= sampleCount; i++) {
+            // Each emitted point is fn(i/n) rounded to 4 decimals — the SAME list the
+            // JS floor will lerp. Rounding error is bounded by half an ulp of 1e-4.
+            if (Math.abs(points[i] - fn(i / sampleCount)) > 1e-4) return false;
+          }
+          return true;
+        }),
+      );
+    });
+  });
+
+  test('default sampleCount emits 33 points (32 segments)', () => {
+    const points = parseLinearPoints(Easing.easingToLinearCSS(Easing.easeOutCubic));
+    fc.assert(fc.property(fc.constant(null), () => points.length === 33));
+  });
+
+  test('springToLinearCSS delegates to easingToLinearCSS (byte-identical output)', () => {
+    fc.assert(
+      fc.property(
+        fc.integer({ min: 50, max: 400 }),
+        fc.integer({ min: 5, max: 40 }),
+        fc.integer({ min: 2, max: 64 }),
+        (stiffness, damping, sampleCount) => {
+          const config = { stiffness, damping, mass: 1 };
+          return (
+            Easing.springToLinearCSS(config, sampleCount) ===
+            Easing.easingToLinearCSS(Easing.spring(config), sampleCount)
+          );
+        },
+      ),
+    );
+  });
+});

@@ -102,6 +102,13 @@ concepts that coexist on the same world / export path. `TransitionSystem` is unt
   timing model and breaks the W8/W9 CSS tests. Out of scope for a parity capstone; the
   single-timing-function structure is faithful for the fixtures (single-window spring or
   multi-window linear), and the oracle documents the approximation instead.
+  **Superseded in part by [ADR-0041](./0041-per-property-motion-tracks.md):** each
+  keyframe segment now carries its own easing as a per-keyframe `animation-timing-function`
+  (a serialized `linear()` for any catalog curve, one producer feeding both floors), and
+  the differently-eased `par` case is rendered faithfully by the per-window RUNTIME floor
+  — so the `mixed-easing-overlap-approximated` approximation diagnostic named below is
+  RETIRED. The remaining un-superseded piece (native per-property `@keyframes` tracks) is
+  deferred there.
 - **Merge authored motion into the scene crossfade `_blend`** — conflates two distinct
   concepts (owner-ruled NON-GOAL). Kept additive.
 - **A large worker motion subsystem** — the owner capped the worker leg at "a thin
