@@ -407,17 +407,51 @@ Format: `S<wave>.<n>` — scar → root class → disposition (guard, status).
   CommandMap value stops being `unknown`). Tracked, no new guard. STATUS: ACTIVE
   (clears with [SCH] payload extraction).
 
-- **Conflict-1 (spine codegen vs. hand-curated mirrors) — STATUS: DEFERRED (NOT
-  resolved this wave).** The plan (lines 447/520, master-plan §Conflict-1) scheduled
-  Conflict-1's resolution as: gen-spine emits `packages/_spine/*.d.ts` from the runtime
-  type surface + a CI staleness byte-gate; once green, delete the spine-conformance
-  IsEqual pins (keep the runtime-existence describes). Per **S5.2** the gate was found
-  infeasible as specified and was not built, so the precondition for pin deletion is
-  UNMET. The pins therefore stay FROZEN (zero edits — none of this wave's four `_spine`
-  retypes touch the pinned types), the runtime-existence describes stay, and
-  Conflict-1 remains OPEN, carried to a future wave that first decides the
-  spine-mirror surface question (published subset vs. full emit) before a byte-gate
-  can be honest. Scar: **S-conflict — a plan-scheduled resolution's precondition
-  (a green byte-gate) can itself prove infeasible; the honest disposition is to defer
-  the resolution and keep the relocated guarantee (the frozen pins) standing, never to
-  delete the pins ahead of the gate.**
+- **S5.4 — the ceremony plan named an owner file that never landed
+  (`cli/lib/run-effect.ts`).** The master-plan ceremony wave (Wave 5) scheduled
+  `packages/cli/src/lib/run-effect.ts` as the interim `runEffectResult` owner, to be
+  "deleted when ShipCapsule.make/decode go Promise-first." Wave 5 instead **inlined**
+  the Effect→Result adapters directly into `cli/src/commands/ship.ts`,
+  `ship-verify.ts`, and `lib/supply-chain.ts` — the extract-an-owner step was skipped
+  in favour of three local copies (grep-confirmed: the file is not on disk).
+  Class: plan named a to-be-extracted owner the implementation chose to inline — no
+  owner exists to delete later.
+  Disposition: **ACCEPTED, recorded** — there is no `run-effect.ts` to remove in the
+  Wave 8 tail; the three inline adapters are deleted directly as `ShipCapsule` goes
+  sync (`remaining-waves.md` Wave 8 [EFF] note carries this). No new guard: the Wave 8
+  effect-residue-scan gate is the catch (a residual `runEffect` adapter would keep a
+  `from 'effect'` import alive and red it). Master-plan reconciliation: the ceremony
+  file-plan `run-effect.ts` entry is original-plan history, not a live target. STATUS:
+  closed (recorded; Wave 8 deletes the inline adapters; residue-scan gate is the guard).
+
+- **Conflict-1 (spine codegen vs. hand-curated mirrors) — STATUS: RESOLVED
+  (direction decided; pin absorption executes at Wave 8.5).** The original resolution
+  (master-plan "Conflict resolutions (locked)" + the file-plan `gen-spine.ts` entry) was:
+  `gen-spine` emits `packages/_spine/*.d.ts` from the runtime type surface + a CI
+  staleness **byte-gate**; once green, delete the spine-conformance `IsEqual` pins.
+  Per **S5.2** that byte-gate is **infeasible** — the mirrors are hand-curated
+  public-contract *subsets* (relative `./core.d.ts` imports, box-drawing headers,
+  deliberate omissions), NOT `tsc --emitDeclarationOnly` output, so a byte gate over
+  them is either a no-op copy (circular gate — banned) or a forced surface change.
+  **Resolved direction (converged-decisions, authoritative; `convergence-constitution.md`
+  §7.3–7.4; `remaining-waves.md` Wave 8.5):** gen-spine as a mirror-byte generator is
+  **superseded** — the `_spine/*.d.ts` mirrors stay hand-curated and the *bytes are
+  never generated*; what is derived is the **relation**, via the **two-axis spine
+  relation gate** — **Authority** `{spine | runtime | generated}` × **SurfaceRelation**
+  `{exact | public-narrower | public-wider | opaque | brand-reanchored |
+  runtime-exists | intentionally-omitted}`, grounded in ADR-0010 (spine is the
+  canonical OWNER of branded types; other decls MIRROR runtime types) — plus a
+  `tsc`-AST type-export enumerator that makes the `intentionally-omitted` arm
+  mechanically checkable (the VALUE-only api-surface snapshot is structurally blind to
+  type-only omissions — why CapSet's `Set`→array slipped). The pins stay **FROZEN**
+  (zero edits — Wave 5's four `_spine` retypes touch none of the pinned types
+  CompositeState/VideoConfig/CaptureResult/CapSet/Token/Theme/Style/edge) and the
+  runtime-existence describes stay permanent; the pins are **absorbed deliberately at
+  Wave 8.5** only once the relation gate + type-export enumerator go green over the
+  three historical drift fixtures (CapSet `Set`→array, `Millis` brand loss, WGSL
+  output omission) — never deleted ahead of the green gate (the S-conflict discipline).
+  Scar lesson retained: **S-conflict — a plan-scheduled resolution's precondition (a
+  green byte-gate) can itself prove infeasible; the honest move is to keep the
+  relocated guarantee (the frozen pins) standing and re-home the resolution onto a
+  mechanism that *can* be honest (the relation gate), never to delete the pins ahead
+  of the gate.** STATUS: RESOLVED direction — pin absorption tracked to Wave 8.5.
