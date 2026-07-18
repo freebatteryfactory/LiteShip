@@ -242,8 +242,6 @@ plan graph, ECS, capsule factory).
 - [DocumentGraphNode](type-aliases/DocumentGraphNode.md)
 - [DocumentGraphNodeParts](type-aliases/DocumentGraphNodeParts.md)
 - [EdgeType](type-aliases/EdgeType.md)
-- [EffectError](type-aliases/EffectError.md)
-- [EffectValue](type-aliases/EffectValue.md)
 - [EntityId](type-aliases/EntityId.md)
 - [EscalationResult](type-aliases/EscalationResult.md)
 - [Finalizer](type-aliases/Finalizer.md)

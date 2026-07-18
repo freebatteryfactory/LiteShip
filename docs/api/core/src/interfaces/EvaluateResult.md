@@ -6,7 +6,7 @@
 
 # Interface: EvaluateResult\<S\>
 
-Defined in: [core/src/type-utils.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/type-utils.ts#L33)
+Defined in: [core/src/type-utils.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/type-utils.ts#L32)
 
 Result of evaluating a single numeric value against a boundary (the rich face
 of `Boundary.evaluateResult`).
@@ -27,7 +27,7 @@ effects. `index` is the position of `state` within the boundary's states tuple.
 
 > `readonly` **crossed**: `boolean`
 
-Defined in: [core/src/type-utils.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/type-utils.ts#L41)
+Defined in: [core/src/type-utils.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/type-utils.ts#L40)
 
 Whether evaluation produced a change from `previousState`.
 
@@ -37,7 +37,7 @@ Whether evaluation produced a change from `previousState`.
 
 > `readonly` **index**: `number`
 
-Defined in: [core/src/type-utils.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/type-utils.ts#L37)
+Defined in: [core/src/type-utils.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/type-utils.ts#L36)
 
 Index of `state` within the boundary's states tuple.
 
@@ -47,7 +47,7 @@ Index of `state` within the boundary's states tuple.
 
 > `readonly` **state**: `S`
 
-Defined in: [core/src/type-utils.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/type-utils.ts#L35)
+Defined in: [core/src/type-utils.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/type-utils.ts#L34)
 
 The resolved state literal.
 
@@ -57,6 +57,6 @@ The resolved state literal.
 
 > `readonly` **value**: `number`
 
-Defined in: [core/src/type-utils.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/type-utils.ts#L39)
+Defined in: [core/src/type-utils.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/type-utils.ts#L38)
 
 The input value that was evaluated.

@@ -8,6 +8,6 @@
 
 > **Shape** = `FrameBudgetShape`
 
-Defined in: [core/src/frame-budget.ts:160](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/frame-budget.ts#L160)
+Defined in: [core/src/frame-budget.ts:151](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/frame-budget.ts#L151)
 
-Structural shape of a [FrameBudget](../../../variables/FrameBudget.md) instance — `canRun`, `schedule`, `remaining`, `fps`.
+Structural shape of a [FrameBudget](../../../variables/FrameBudget.md) instance — `canRun`, `scheduleSync`, `remaining`, `fpsSync`, `lifetime`.

@@ -2,7 +2,6 @@
  * @czap/detect type spine -- device capability detection + branded tiers.
  */
 
-import type { Effect } from 'effect';
 import type { CapTier, CapSet, MotionTier } from './core.d.ts';
 
 // MotionTier canonical declaration lives in core.d.ts; re-exported here so
@@ -45,18 +44,19 @@ export interface DetectionResult {
 // § 2. DETECTION API
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export declare function detect(): Effect.Effect<DetectionResult>;
+/** A teardown function — call it to remove the listeners it added. */
+export type Disposer = () => void;
 
-export declare function detectGPUTier(): Effect.Effect<GPUTier>;
+export declare function detect(): ExtendedDetectionResult;
+
+export declare function detectGPUTier(): GPUTier;
 
 export declare function capTierFromCapabilities(caps: DeviceCapabilities): CapTier;
 
 export declare function capSetFromCapabilities(caps: DeviceCapabilities): CapSet;
 
 /** Watch for capability changes (viewport resize, media query changes, etc.) */
-export declare function watchCapabilities(
-  onChange: (result: DetectionResult) => void,
-): Effect.Effect<void, never, import('effect').Scope.Scope>;
+export declare function watchCapabilities(onChange: (result: ExtendedDetectionResult) => void): Disposer;
 
 /**
  * Clear memoized session-stable probe results (currently the GPU renderer

@@ -9,7 +9,6 @@
 
 import type { Boundary } from './boundary.js';
 import type { StateName, HLC } from './brands.js';
-import type { Effect as EffectType } from 'effect';
 
 /** Flatten branded intersections for clean IDE hints */
 export type Prettify<T> = { [K in keyof T]: T[K] } & {};
@@ -48,12 +47,6 @@ export type BoundaryCrossing<S extends string = string> = {
   readonly timestamp: HLC;
   readonly value: number;
 };
-
-/** Extract the value type from an Effect */
-export type EffectValue<T> = T extends EffectType.Effect<infer A, unknown, unknown> ? A : never;
-
-/** Extract the error type from an Effect */
-export type EffectError<T> = T extends EffectType.Effect<unknown, infer E, unknown> ? E : never;
 
 /** Require at least one key of T */
 export type RequireAtLeastOne<T, Keys extends keyof T = keyof T> = Pick<T, Exclude<keyof T, Keys>> &

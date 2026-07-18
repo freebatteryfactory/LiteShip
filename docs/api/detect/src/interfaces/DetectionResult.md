@@ -6,7 +6,7 @@
 
 # Interface: DetectionResult
 
-Defined in: [detect/src/detect.ts:108](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L108)
+Defined in: [detect/src/detect.ts:107](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L107)
 
 Result of a single detection sweep.
 
@@ -24,7 +24,7 @@ many probes returned real values (vs. defaults).
 
 > `readonly` **capabilities**: [`DeviceCapabilities`](DeviceCapabilities.md)
 
-Defined in: [detect/src/detect.ts:110](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L110)
+Defined in: [detect/src/detect.ts:109](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L109)
 
 The probed capabilities.
 
@@ -34,7 +34,7 @@ The probed capabilities.
 
 > `readonly` **capSet**: [`CapSet`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/CapSet.md)
 
-Defined in: [detect/src/detect.ts:114](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L114)
+Defined in: [detect/src/detect.ts:113](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L113)
 
 Monotone set of every [CapTier](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md) at or below `capTier`.
 
@@ -44,7 +44,7 @@ Monotone set of every [CapTier](https://github.com/freebatteryfactory/LiteShip/b
 
 > `readonly` **capTier**: [`CapTier`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md)
 
-Defined in: [detect/src/detect.ts:112](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L112)
+Defined in: [detect/src/detect.ts:111](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L111)
 
 Highest [CapTier](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md) the device qualifies for.
 
@@ -54,6 +54,6 @@ Highest [CapTier](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/
 
 > `readonly` **confidence**: `number`
 
-Defined in: [detect/src/detect.ts:116](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L116)
+Defined in: [detect/src/detect.ts:115](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L115)
 
 Heuristic confidence in `[0.5, 1]` based on how many probes succeeded.

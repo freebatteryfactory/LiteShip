@@ -1,6 +1,5 @@
 // @vitest-environment jsdom
 import { describe, expect, test, vi, beforeEach, afterEach } from 'vitest';
-import { Effect } from 'effect';
 import {
   Detect,
   detect,
@@ -34,35 +33,35 @@ function installMatchMedia(matches: Record<string, boolean>): Map<string, MockMe
     configurable: true,
     writable: true,
     value: (query: string) => {
-    const listeners = new Set<(event: MediaQueryListEvent) => void>();
-    const list = {
-      matches: matches[query] ?? false,
-      media: query,
-      onchange: null,
-      addListener(listener: (event: MediaQueryListEvent) => void) {
-        listeners.add(listener);
-      },
-      removeListener(listener: (event: MediaQueryListEvent) => void) {
-        listeners.delete(listener);
-      },
-      addEventListener(_type: string, listener: (event: MediaQueryListEvent) => void) {
-        listeners.add(listener);
-      },
-      removeEventListener(_type: string, listener: (event: MediaQueryListEvent) => void) {
-        listeners.delete(listener);
-      },
-      dispatchEvent() {
-        return true;
-      },
-      dispatchChange() {
-        for (const listener of listeners) {
-          listener({ matches: list.matches, media: query } as MediaQueryListEvent);
-        }
-      },
-    } as MockMediaQueryList;
+      const listeners = new Set<(event: MediaQueryListEvent) => void>();
+      const list = {
+        matches: matches[query] ?? false,
+        media: query,
+        onchange: null,
+        addListener(listener: (event: MediaQueryListEvent) => void) {
+          listeners.add(listener);
+        },
+        removeListener(listener: (event: MediaQueryListEvent) => void) {
+          listeners.delete(listener);
+        },
+        addEventListener(_type: string, listener: (event: MediaQueryListEvent) => void) {
+          listeners.add(listener);
+        },
+        removeEventListener(_type: string, listener: (event: MediaQueryListEvent) => void) {
+          listeners.delete(listener);
+        },
+        dispatchEvent() {
+          return true;
+        },
+        dispatchChange() {
+          for (const listener of listeners) {
+            listener({ matches: list.matches, media: query } as MediaQueryListEvent);
+          }
+        },
+      } as MockMediaQueryList;
 
-    lists.set(query, list);
-    return list;
+      lists.set(query, list);
+      return list;
     },
   });
 
@@ -130,17 +129,17 @@ describe('device detection runtime', () => {
 
   test('classifies GPU renderers through direct, debug, and fallback paths', () => {
     mockRenderer('ANGLE (NVIDIA GeForce RTX 4090)');
-    expect(Effect.runSync(detectGPUTier())).toBe(3);
+    expect(detectGPUTier()).toBe(3);
 
     resetDetectionCaches();
     mockRenderer('Google SwiftShader', true);
-    expect(Effect.runSync(detectGPUTier())).toBe(0);
+    expect(detectGPUTier()).toBe(0);
 
     resetDetectionCaches();
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(() => {
       throw new Error('no-webgl');
     });
-    expect(Effect.runSync(detectGPUTier())).toBe(1);
+    expect(detectGPUTier()).toBe(1);
   });
 
   test('detect() collects capabilities, infers tiers, and preserves graceful defaults', () => {
@@ -161,7 +160,7 @@ describe('device detection runtime', () => {
 
     mockRenderer('Apple M3');
 
-    const result = Effect.runSync(detect());
+    const result = detect();
 
     expect(result.capabilities).toMatchObject({
       gpu: 3,
@@ -202,7 +201,7 @@ describe('device detection runtime', () => {
     });
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null as never);
 
-    const fallback = Effect.runSync(Detect.detect());
+    const fallback = Detect.detect();
     expect(fallback.capabilities.gpu).toBe(1);
     expect(fallback.capabilities.prefersColorScheme).toBe('light');
     expect(fallback.capabilities.prefersReducedMotion).toBe(false);
@@ -235,7 +234,7 @@ describe('device detection runtime', () => {
     setNavigatorProperty('gpu', undefined);
     setNavigatorProperty('maxTouchPoints', 0);
 
-    const result = Effect.runSync(detect());
+    const result = detect();
 
     expect(result.capabilities.gpu).toBe(1);
     expect(result.capabilities.webgpu).toBe(false);
@@ -277,7 +276,7 @@ describe('device detection runtime', () => {
     vi.stubGlobal('devicePixelRatio', undefined as never);
     mockRenderer('');
 
-    const result = Effect.runSync(detect());
+    const result = detect();
 
     expect(result.capabilities.cores).toBe(2);
     expect(result.capabilities.memory).toBe(4);
@@ -326,7 +325,7 @@ describe('device detection runtime', () => {
       return null;
     });
 
-    const result = Effect.runSync(detect());
+    const result = detect();
 
     expect(result.capabilities.gpu).toBe(1);
     expect(result.confidence).toBeCloseTo(0.8, 10);
@@ -352,7 +351,7 @@ describe('device detection runtime', () => {
       return null;
     });
 
-    const result = Effect.runSync(detect());
+    const result = detect();
     expect(result.capabilities.gpu).toBeGreaterThanOrEqual(1);
   });
 
@@ -374,7 +373,7 @@ describe('device detection runtime', () => {
       return null;
     });
 
-    const result = Effect.runSync(detect());
+    const result = detect();
     // No valid GL context → renderer probe returns unavailable, gpu stays at the default.
     expect(result.capabilities.gpu).toBe(1);
   });
@@ -719,22 +718,25 @@ describe('device detection runtime', () => {
 
     const onChange = vi.fn();
 
-    await Effect.runPromise(
-      Effect.scoped(
-        Effect.gen(function* () {
-          yield* watchCapabilities(onChange);
+    const dispose = watchCapabilities(onChange);
 
-          window.dispatchEvent(new Event('resize'));
-          queries.get('(prefers-color-scheme: dark)')!.matches = true;
-          queries.get('(prefers-color-scheme: dark)')!.dispatchChange();
-          // Re-detection is debounced to one sweep per frame; wait it out.
-          yield* Effect.promise(() => new Promise((resolve) => setTimeout(resolve, 80)));
-        }),
-      ),
-    );
+    window.dispatchEvent(new Event('resize'));
+    queries.get('(prefers-color-scheme: dark)')!.matches = true;
+    queries.get('(prefers-color-scheme: dark)')!.dispatchChange();
+    // Re-detection is debounced to one sweep per frame; wait it out.
+    await new Promise((resolve) => setTimeout(resolve, 80));
 
     expect(onChange).toHaveBeenCalled();
     expect(onChange.mock.calls[0]?.[0].capTier).toBeDefined();
+
+    // The returned Disposer removes every listener it added: after dispose(),
+    // neither a resize nor a media-query change re-invokes the callback.
+    dispose();
+    onChange.mockClear();
+    window.dispatchEvent(new Event('resize'));
+    queries.get('(prefers-color-scheme: dark)')!.dispatchChange();
+    await new Promise((resolve) => setTimeout(resolve, 80));
+    expect(onChange).not.toHaveBeenCalled();
   });
 
   test('watchCapabilities coalesces event bursts into one re-detection per frame', async () => {
@@ -743,20 +745,16 @@ describe('device detection runtime', () => {
 
     const onChange = vi.fn();
 
-    await Effect.runPromise(
-      Effect.scoped(
-        Effect.gen(function* () {
-          yield* watchCapabilities(onChange);
+    const dispose = watchCapabilities(onChange);
 
-          window.dispatchEvent(new Event('resize'));
-          window.dispatchEvent(new Event('resize'));
-          window.dispatchEvent(new Event('resize'));
-          yield* Effect.promise(() => new Promise((resolve) => setTimeout(resolve, 80)));
-        }),
-      ),
-    );
+    window.dispatchEvent(new Event('resize'));
+    window.dispatchEvent(new Event('resize'));
+    window.dispatchEvent(new Event('resize'));
+    await new Promise((resolve) => setTimeout(resolve, 80));
 
     expect(onChange).toHaveBeenCalledTimes(1);
+
+    dispose();
   });
 
   test('watchCapabilities never re-acquires a WebGL context on resize updates', async () => {
@@ -771,29 +769,23 @@ describe('device detection runtime', () => {
         return null;
       },
     };
-    const getContext = vi
-      .spyOn(HTMLCanvasElement.prototype, 'getContext')
-      .mockImplementation((kind: string) => {
-        if (kind === 'webgl' || kind === 'experimental-webgl') return gl as never;
-        return null;
-      });
+    const getContext = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation((kind: string) => {
+      if (kind === 'webgl' || kind === 'experimental-webgl') return gl as never;
+      return null;
+    });
 
     const onChange = vi.fn();
 
-    await Effect.runPromise(
-      Effect.scoped(
-        Effect.gen(function* () {
-          yield* watchCapabilities(onChange);
-          const callsAfterSetup = getContext.mock.calls.length;
+    const dispose = watchCapabilities(onChange);
+    const callsAfterSetup = getContext.mock.calls.length;
 
-          window.dispatchEvent(new Event('resize'));
-          yield* Effect.promise(() => new Promise((resolve) => setTimeout(resolve, 80)));
+    window.dispatchEvent(new Event('resize'));
+    await new Promise((resolve) => setTimeout(resolve, 80));
 
-          expect(onChange).toHaveBeenCalledTimes(1);
-          expect(getContext.mock.calls.length).toBe(callsAfterSetup);
-        }),
-      ),
-    );
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(getContext.mock.calls.length).toBe(callsAfterSetup);
+
+    dispose();
   });
 
   test('memoizes the renderer probe across detect() calls and releases the throwaway context', () => {
@@ -809,15 +801,13 @@ describe('device detection runtime', () => {
         return name === 'WEBGL_lose_context' ? { loseContext } : null;
       },
     };
-    const getContext = vi
-      .spyOn(HTMLCanvasElement.prototype, 'getContext')
-      .mockImplementation((kind: string) => {
-        if (kind === 'webgl' || kind === 'experimental-webgl') return gl as never;
-        return null;
-      });
+    const getContext = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation((kind: string) => {
+      if (kind === 'webgl' || kind === 'experimental-webgl') return gl as never;
+      return null;
+    });
 
-    expect(Effect.runSync(detect()).capabilities.gpu).toBe(3);
-    expect(Effect.runSync(detect()).capabilities.gpu).toBe(3);
+    expect(detect().capabilities.gpu).toBe(3);
+    expect(detect().capabilities.gpu).toBe(3);
 
     expect(getContext).toHaveBeenCalledTimes(1);
     expect(loseContext).toHaveBeenCalledTimes(1);
@@ -828,7 +818,7 @@ describe('device detection runtime', () => {
     Diagnostics.setSink(buffer.sink);
 
     mockRenderer('Acme XG-9');
-    expect(Effect.runSync(detectGPUTier())).toBe(1);
+    expect(detectGPUTier()).toBe(1);
 
     const events = buffer.events.filter((e) => e.code === 'unrecognized-gpu-renderer');
     expect(events).toHaveLength(1);
@@ -839,7 +829,7 @@ describe('device detection runtime', () => {
 
     // warn-once: re-classifying the same renderer stays silent.
     resetDetectionCaches();
-    Effect.runSync(detectGPUTier());
+    detectGPUTier();
     expect(buffer.events.filter((e) => e.code === 'unrecognized-gpu-renderer')).toHaveLength(1);
   });
 
@@ -853,7 +843,7 @@ describe('device detection runtime', () => {
       throw new Error('SecurityError: fingerprinting protection');
     });
 
-    Effect.runSync(detect());
+    detect();
 
     const events = buffer.events.filter((e) => e.code === 'probes-defaulted');
     expect(events).toHaveLength(1);
@@ -863,7 +853,7 @@ describe('device detection runtime', () => {
     expect(events[0]?.message).toContain('confidence');
 
     // warn-once: a second identical sweep adds nothing.
-    Effect.runSync(detect());
+    detect();
     expect(buffer.events.filter((e) => e.code === 'probes-defaulted')).toHaveLength(1);
   });
 
@@ -874,7 +864,7 @@ describe('device detection runtime', () => {
     installMatchMedia({});
     mockRenderer('Apple M3');
 
-    Effect.runSync(detect());
+    detect();
 
     expect(buffer.events.filter((e) => e.code === 'probes-defaulted')).toHaveLength(0);
   });
@@ -887,28 +877,30 @@ describe('device detection runtime', () => {
     vi.stubGlobal('document', undefined);
     vi.stubGlobal('navigator', undefined);
 
-    Effect.runSync(detect());
+    detect();
 
     expect(buffer.events.filter((e) => e.code === 'probes-defaulted')).toHaveLength(0);
   });
 
   test('resetDetectionCaches() clears the memoized renderer probe', () => {
     mockRenderer('ANGLE (NVIDIA GeForce RTX 4090)');
-    expect(Effect.runSync(detectGPUTier())).toBe(3);
+    expect(detectGPUTier()).toBe(3);
 
     // Memoized: a new renderer is invisible until the cache is cleared.
     mockRenderer('Google SwiftShader');
-    expect(Effect.runSync(detectGPUTier())).toBe(3);
+    expect(detectGPUTier()).toBe(3);
 
     resetDetectionCaches();
-    expect(Effect.runSync(detectGPUTier())).toBe(0);
+    expect(detectGPUTier()).toBe(0);
   });
 
-  test('watchCapabilities short-circuits cleanly when window is unavailable', async () => {
+  test('watchCapabilities short-circuits cleanly when window is unavailable', () => {
     const onChange = vi.fn();
     vi.stubGlobal('window', undefined);
 
-    await Effect.runPromise(Effect.scoped(watchCapabilities(onChange)));
+    // Returns an inert no-op disposer; calling it must not throw.
+    const dispose = watchCapabilities(onChange);
+    dispose();
 
     expect(onChange).not.toHaveBeenCalled();
   });
@@ -918,7 +910,7 @@ describe('device detection runtime', () => {
     vi.stubGlobal('document', undefined);
     vi.stubGlobal('navigator', undefined);
 
-    const result = Effect.runSync(detect());
+    const result = detect();
 
     expect(result.capabilities).toMatchObject({
       gpu: 1,
@@ -940,7 +932,7 @@ describe('device detection runtime', () => {
     });
     expect(result.capabilities.connection).toBeUndefined();
     expect(result.confidence).toBe(0.5);
-    expect(Effect.runSync(detectGPUTier())).toBe(1);
+    expect(detectGPUTier()).toBe(1);
   });
 
   test('tier helpers cover low, mid, and reduced-motion branch splits', () => {

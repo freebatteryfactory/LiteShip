@@ -6,7 +6,7 @@
 
 # Interface: ExtendedDeviceCapabilities
 
-Defined in: [detect/src/detect.ts:126](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L126)
+Defined in: [detect/src/detect.ts:125](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L125)
 
 Extended capabilities adding accessibility and display metadata.
 
@@ -24,7 +24,7 @@ reduced transparency, HDR/dynamic range, color gamut, and update rate.
 
 > `readonly` **colorGamut**: `"srgb"` \| `"p3"` \| `"rec2020"`
 
-Defined in: [detect/src/detect.ts:136](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L136)
+Defined in: [detect/src/detect.ts:135](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L135)
 
 Display color gamut from `(color-gamut: ...)`.
 
@@ -34,7 +34,7 @@ Display color gamut from `(color-gamut: ...)`.
 
 > `readonly` `optional` **connection?**: `object`
 
-Defined in: [detect/src/detect.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L91)
+Defined in: [detect/src/detect.ts:90](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L90)
 
 Network Information API snapshot; undefined when unsupported.
 
@@ -66,7 +66,7 @@ Whether the user has opted into data-saving mode.
 
 > `readonly` **cores**: `number`
 
-Defined in: [detect/src/detect.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L73)
+Defined in: [detect/src/detect.ts:72](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L72)
 
 Logical CPU cores reported by `navigator.hardwareConcurrency`.
 
@@ -80,7 +80,7 @@ Logical CPU cores reported by `navigator.hardwareConcurrency`.
 
 > `readonly` **devicePixelRatio**: `number`
 
-Defined in: [detect/src/detect.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L89)
+Defined in: [detect/src/detect.ts:88](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L88)
 
 `window.devicePixelRatio` at detection time.
 
@@ -94,7 +94,7 @@ Defined in: [detect/src/detect.ts:89](https://github.com/freebatteryfactory/Lite
 
 > `readonly` **dynamicRange**: `"standard"` \| `"high"`
 
-Defined in: [detect/src/detect.ts:134](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L134)
+Defined in: [detect/src/detect.ts:133](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L133)
 
 Display dynamic range (HDR) from `(dynamic-range: high)`.
 
@@ -104,7 +104,7 @@ Display dynamic range (HDR) from `(dynamic-range: high)`.
 
 > `readonly` **forcedColors**: `boolean`
 
-Defined in: [detect/src/detect.ts:130](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L130)
+Defined in: [detect/src/detect.ts:129](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L129)
 
 `forced-colors: active` match (high-contrast/OS theme).
 
@@ -114,7 +114,7 @@ Defined in: [detect/src/detect.ts:130](https://github.com/freebatteryfactory/Lit
 
 > `readonly` **gpu**: [`GPUTier`](../type-aliases/GPUTier.md)
 
-Defined in: [detect/src/detect.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L71)
+Defined in: [detect/src/detect.ts:70](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L70)
 
 GPU fidelity bucket; see [GPUTier](../type-aliases/GPUTier.md).
 
@@ -128,7 +128,7 @@ GPU fidelity bucket; see [GPUTier](../type-aliases/GPUTier.md).
 
 > `readonly` **memory**: `number`
 
-Defined in: [detect/src/detect.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L75)
+Defined in: [detect/src/detect.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L74)
 
 Device memory in GiB (rounded by the Device Memory API).
 
@@ -142,7 +142,7 @@ Device memory in GiB (rounded by the Device Memory API).
 
 > `readonly` **prefersColorScheme**: `"light"` \| `"dark"`
 
-Defined in: [detect/src/detect.ts:83](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L83)
+Defined in: [detect/src/detect.ts:82](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L82)
 
 Effective color scheme (`prefers-color-scheme`).
 
@@ -156,7 +156,7 @@ Effective color scheme (`prefers-color-scheme`).
 
 > `readonly` **prefersContrast**: `"no-preference"` \| `"more"` \| `"less"` \| `"custom"`
 
-Defined in: [detect/src/detect.ts:128](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L128)
+Defined in: [detect/src/detect.ts:127](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L127)
 
 `prefers-contrast` value.
 
@@ -166,7 +166,7 @@ Defined in: [detect/src/detect.ts:128](https://github.com/freebatteryfactory/Lit
 
 > `readonly` **prefersReducedMotion**: `boolean`
 
-Defined in: [detect/src/detect.ts:81](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L81)
+Defined in: [detect/src/detect.ts:80](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L80)
 
 `prefers-reduced-motion: reduce` match.
 
@@ -180,7 +180,7 @@ Defined in: [detect/src/detect.ts:81](https://github.com/freebatteryfactory/Lite
 
 > `readonly` **prefersReducedTransparency**: `boolean`
 
-Defined in: [detect/src/detect.ts:132](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L132)
+Defined in: [detect/src/detect.ts:131](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L131)
 
 `prefers-reduced-transparency: reduce` match.
 
@@ -190,7 +190,7 @@ Defined in: [detect/src/detect.ts:132](https://github.com/freebatteryfactory/Lit
 
 > `readonly` **touchPrimary**: `boolean`
 
-Defined in: [detect/src/detect.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L79)
+Defined in: [detect/src/detect.ts:78](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L78)
 
 Whether touch is a primary input modality (maxTouchPoints or ontouchstart).
 
@@ -204,7 +204,7 @@ Whether touch is a primary input modality (maxTouchPoints or ontouchstart).
 
 > `readonly` **updateRate**: `"none"` \| `"fast"` \| `"slow"`
 
-Defined in: [detect/src/detect.ts:138](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L138)
+Defined in: [detect/src/detect.ts:137](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L137)
 
 Update rate from `(update: ...)`; `none` = e-ink / print.
 
@@ -214,7 +214,7 @@ Update rate from `(update: ...)`; `none` = e-ink / print.
 
 > `readonly` **viewportHeight**: `number`
 
-Defined in: [detect/src/detect.ts:87](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L87)
+Defined in: [detect/src/detect.ts:86](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L86)
 
 `window.innerHeight` at detection time.
 
@@ -228,7 +228,7 @@ Defined in: [detect/src/detect.ts:87](https://github.com/freebatteryfactory/Lite
 
 > `readonly` **viewportWidth**: `number`
 
-Defined in: [detect/src/detect.ts:85](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L85)
+Defined in: [detect/src/detect.ts:84](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L84)
 
 `window.innerWidth` at detection time.
 
@@ -242,7 +242,7 @@ Defined in: [detect/src/detect.ts:85](https://github.com/freebatteryfactory/Lite
 
 > `readonly` **webgpu**: `boolean`
 
-Defined in: [detect/src/detect.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L77)
+Defined in: [detect/src/detect.ts:76](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L76)
 
 Whether `navigator.gpu` is present (WebGPU available).
 

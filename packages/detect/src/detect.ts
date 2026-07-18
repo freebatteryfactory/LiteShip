@@ -2,13 +2,11 @@
  * Device capability detection -- probes browser APIs for GPU tier,
  * CPU cores, memory, input modality, preferences, and network info.
  *
- * Every probe uses Effect.sync with internal try/catch for graceful
- * fallback on environments where APIs are unavailable (SSR, restricted
- * contexts, etc.).
+ * Every probe is a plain synchronous function with internal try/catch for
+ * graceful fallback on environments where APIs are unavailable (SSR,
+ * restricted contexts, etc.).
  */
 
-import type { Scope } from 'effect';
-import { Effect } from 'effect';
 import type { CapTier, CapSet } from '@czap/core';
 import { Diagnostics } from '@czap/core';
 
@@ -44,6 +42,7 @@ import {
 } from './tiers.js';
 import type { DesignTier, MotionTier } from './tiers.js';
 import { GPU_TIER_PATTERNS, GPU_TIER_PRECEDENCE, GPU_TIER_DEFAULT } from './gpu-patterns.js';
+import type { Disposer } from './detect-ready.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -544,19 +543,16 @@ function computeConfidenceFromProbes(probes: DetectionProbes): number {
  * Advanced — direct invocation (all probes are synchronous):
  * ```ts
  * import { Detect } from '@czap/detect';
- * import { Effect } from 'effect';
  *
- * const tier = Effect.runSync(Detect.detectGPUTier());
+ * const tier = Detect.detectGPUTier();
  * // tier => 0 (software) | 1 (integrated) | 2 (mid) | 3 (high-end)
  * ```
  *
- * @returns An Effect yielding a {@link GPUTier} (0-3)
+ * @returns The {@link GPUTier} (0-3)
  */
-export function detectGPUTier(): Effect.Effect<GPUTier> {
-  return Effect.sync(() => {
-    const renderer = probeWebGLRenderer();
-    return hasProbeValue(renderer) ? classifyGPURenderer(renderer.value) : (1 as GPUTier);
-  });
+export function detectGPUTier(): GPUTier {
+  const renderer = probeWebGLRenderer();
+  return hasProbeValue(renderer) ? classifyGPURenderer(renderer.value) : (1 as GPUTier);
 }
 
 function describeProbeFailure(result: ProbeResult<unknown>): string | null {
@@ -612,13 +608,11 @@ function runDetection(probes: DetectionProbes): ExtendedDetectionResult {
  * `window.__CZAP_DETECT__`, so satellites and the directive runtime read it
  * for free.
  *
- * Advanced — direct invocation (there is no async work, so `runSync` is the
- * right executor):
+ * Advanced — direct invocation (all probes are synchronous):
  * ```ts
  * import { Detect } from '@czap/detect';
- * import { Effect } from 'effect';
  *
- * const result = Effect.runSync(Detect.detect());
+ * const result = Detect.detect();
  * console.log(result.capabilities.gpu);       // 0-3
  * console.log(result.capTier);                   // 'static' | 'styled' | 'reactive' | 'animated' | 'gpu'
  * console.log(result.designTier);             // 'minimal' | 'standard' | 'enhanced' | 'rich'
@@ -626,10 +620,10 @@ function runDetection(probes: DetectionProbes): ExtendedDetectionResult {
  * console.log(result.confidence);             // 0.5 - 1.0
  * ```
  *
- * @returns An Effect yielding an {@link ExtendedDetectionResult}
+ * @returns The {@link ExtendedDetectionResult}
  */
-export function detect(): Effect.Effect<ExtendedDetectionResult> {
-  return Effect.sync(() => runDetection(collectDetectionProbes()));
+export function detect(): ExtendedDetectionResult {
+  return runDetection(collectDetectionProbes());
 }
 
 /**
@@ -647,16 +641,14 @@ export function detect(): Effect.Effect<ExtendedDetectionResult> {
  * Advanced — direct invocation:
  * ```ts
  * import { Detect } from '@czap/detect';
- * import { Effect } from 'effect';
  *
- * const result = Effect.runSync(Detect.detect());
+ * const result = Detect.detect();
  * console.log(result.capabilities.prefersColorScheme); // 'light' | 'dark'
  * console.log(result.motionTier); // 'none' | 'transitions' | 'animations' | ...
  *
  * // Watch for changes
- * const watch = Effect.scoped(
- *   Detect.watchCapabilities((r) => console.log('capTier:', r.capTier)),
- * );
+ * const dispose = Detect.watchCapabilities((r) => console.log('capTier:', r.capTier));
+ * // later: dispose()
  * ```
  */
 export const Detect = {
@@ -671,7 +663,7 @@ export const Detect = {
  * Emits a fresh DetectionResult whenever viewport, color scheme, or
  * reduced motion preferences change.
  *
- * The stream is scoped -- listeners are cleaned up when the scope finalizes.
+ * Listeners are torn down when the returned {@link Disposer} is called.
  *
  * Event bursts are coalesced: re-detection is debounced to one sweep per
  * animation frame, and hardware-identity probes (GPU renderer, WebGPU, cores,
@@ -681,72 +673,64 @@ export const Detect = {
  * @example
  * ```ts
  * import { Detect } from '@czap/detect';
- * import { Effect } from 'effect';
  *
- * const program = Effect.scoped(
- *   Detect.watchCapabilities((result) => {
- *     console.log('Capabilities changed:', result.capTier);
- *   }),
- * );
+ * const dispose = Detect.watchCapabilities((result) => {
+ *   console.log('Capabilities changed:', result.capTier);
+ * });
+ * // later: dispose()
  * ```
  *
  * @param onChange - Callback invoked with fresh detection results on change
- * @returns An Effect (scoped) that sets up listeners
+ * @returns A {@link Disposer} that removes the listeners it added
  */
-export function watchCapabilities(
-  onChange: (result: ExtendedDetectionResult) => void,
-): Effect.Effect<void, never, Scope.Scope> {
-  return Effect.gen(function* () {
-    if (typeof window === 'undefined') return;
+export function watchCapabilities(onChange: (result: ExtendedDetectionResult) => void): Disposer {
+  if (typeof window === 'undefined') return () => {};
 
-    // Hardware identity cannot change while the page lives — probe once so a
-    // resize storm never allocates fresh WebGL contexts.
-    const staticProbes = collectStaticProbes();
+  // Hardware identity cannot change while the page lives — probe once so a
+  // resize storm never allocates fresh WebGL contexts.
+  const staticProbes = collectStaticProbes();
 
-    let closed = false;
-    let updateScheduled = false;
-    const runUpdate = () => {
-      updateScheduled = false;
-      if (closed) return;
-      onChange(runDetection(collectDetectionProbes(staticProbes)));
-    };
-    // Resize can fire per pixel; coalesce bursts to one sweep per frame.
-    const triggerUpdate = () => {
-      if (updateScheduled) return;
-      updateScheduled = true;
-      if (typeof requestAnimationFrame === 'function') {
-        requestAnimationFrame(runUpdate);
-      } else {
-        setTimeout(runUpdate, 16);
-      }
-    };
+  let closed = false;
+  let updateScheduled = false;
+  const runUpdate = () => {
+    updateScheduled = false;
+    if (closed) return;
+    onChange(runDetection(collectDetectionProbes(staticProbes)));
+  };
+  // Resize can fire per pixel; coalesce bursts to one sweep per frame.
+  const triggerUpdate = () => {
+    if (updateScheduled) return;
+    updateScheduled = true;
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(runUpdate);
+    } else {
+      setTimeout(runUpdate, 16);
+    }
+  };
 
-    const resizeHandler = () => triggerUpdate();
-    window.addEventListener('resize', resizeHandler);
+  const resizeHandler = () => triggerUpdate();
+  window.addEventListener('resize', resizeHandler);
 
-    const reducedMotionMql = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const colorSchemeMql = window.matchMedia('(prefers-color-scheme: dark)');
-    const contrastMql = window.matchMedia('(prefers-contrast: more)');
-    const forcedColorsMql = window.matchMedia('(forced-colors: active)');
-    const reducedTransparencyMql = window.matchMedia('(prefers-reduced-transparency: reduce)');
+  const reducedMotionMql = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const colorSchemeMql = window.matchMedia('(prefers-color-scheme: dark)');
+  const contrastMql = window.matchMedia('(prefers-contrast: more)');
+  const forcedColorsMql = window.matchMedia('(forced-colors: active)');
+  const reducedTransparencyMql = window.matchMedia('(prefers-reduced-transparency: reduce)');
 
-    const mqlHandler = () => triggerUpdate();
-    reducedMotionMql.addEventListener('change', mqlHandler);
-    colorSchemeMql.addEventListener('change', mqlHandler);
-    contrastMql.addEventListener('change', mqlHandler);
-    forcedColorsMql.addEventListener('change', mqlHandler);
-    reducedTransparencyMql.addEventListener('change', mqlHandler);
+  const mqlHandler = () => triggerUpdate();
+  reducedMotionMql.addEventListener('change', mqlHandler);
+  colorSchemeMql.addEventListener('change', mqlHandler);
+  contrastMql.addEventListener('change', mqlHandler);
+  forcedColorsMql.addEventListener('change', mqlHandler);
+  reducedTransparencyMql.addEventListener('change', mqlHandler);
 
-    yield* Effect.addFinalizer(() =>
-      Effect.sync(() => {
-        closed = true;
-        window.removeEventListener('resize', resizeHandler);
-        reducedMotionMql.removeEventListener('change', mqlHandler);
-        colorSchemeMql.removeEventListener('change', mqlHandler);
-        contrastMql.removeEventListener('change', mqlHandler);
-        forcedColorsMql.removeEventListener('change', mqlHandler);
-        reducedTransparencyMql.removeEventListener('change', mqlHandler);
-      }),
-    );
-  });
+  return () => {
+    closed = true;
+    window.removeEventListener('resize', resizeHandler);
+    reducedMotionMql.removeEventListener('change', mqlHandler);
+    colorSchemeMql.removeEventListener('change', mqlHandler);
+    contrastMql.removeEventListener('change', mqlHandler);
+    forcedColorsMql.removeEventListener('change', mqlHandler);
+    reducedTransparencyMql.removeEventListener('change', mqlHandler);
+  };
 }
