@@ -849,3 +849,84 @@ fixtures + `tests/property/reactive-conformance.prop.test.ts`).
   content-addressed equivalents were re-addressed (line 98→111, 216→284) but the FLOOR
   itself must be re-derived by `czap check --mutate` (the heavy L4 gate, not pre-commit) —
   flagged so the stale 0.75 is not mistaken for a fresh verification.
+
+## Wave 7 scars (ownership consolidation — harvest → Wave 7.5)
+
+The Wave 7 duplication consolidation (15 owners created in commit `0dde884`; ~60
+copy-sites pointed at them in `eb7a711`) surfaced these. Class recurs from S0.4
+(a copy-site that forks a truth) and the B5b "distinct ops kept distinct" doctrine.
+
+- **S7.1 — the `normalizeRepoPath` owner is TWO D9b-partitioned PARITY homes, not one
+  (a plan/law conflict resolved as cake-and-eat-it).** The master plan (line 212) had
+  `@czap/audit`'s `policy.ts` DELEGATE to `@czap/core`'s new `path-normalize` leaf
+  (`export { normalizeRepoPath } from '@czap/core'`). But the D9b law
+  (`b5-normalize-repo-path.test.ts`) forbids `@czap/audit` from importing the heavy
+  `@czap/core` runtime — audit is a downstream-installable devops engine whose only
+  blessed edges are the standalone leaves `@czap/error`/`@czap/gauntlet`/`@czap/canonical`;
+  pulling `@czap/core` (20+ transitive deps, DOM code) would regress every audit install.
+  B5b symmetrically forbids `@czap/core` from importing `@czap/audit`. So NEITHER can
+  re-export the other. Class: a plan step infeasible under a pinned architectural law.
+  Disposition: **RESOLVED — reverted the delegation; `normalizeRepoPath` is two
+  byte-identical PARITY copies (the lean-audit home + the browser-core home), the split
+  the D9b bundle boundary forces.** Cake-and-eat-it: the B5b cage's "exactly one home"
+  became "exactly two D9b-partitioned homes, drift-guarded" — a new PARITY assertion
+  (`b5-normalize-repo-path.test.ts` "the two homes are byte-identical") makes them ONE
+  contract in practice (any divergence reds), the same protection a single home gave, and
+  consistent with the repo's established parity-copy pattern (the package roster is
+  duplicated across liteship/command/audit for the same layering reason). A one-liner
+  parity copy is strictly cheaper than a heavy dep edge OR a semantic-mismatch home
+  (`@czap/canonical` is a digest kernel, not a path util). Guard:
+  `tests/unit/audit/b5-normalize-repo-path.test.ts` (two-home definer check + parity
+  drift-guard + the unchanged D9b import cage).
+
+- **S7.2 — the plan's `[DUP]` enumeration OVER-REACHED on 3 semantically-distinct ops
+  (the "distinct ops kept distinct" discipline held).** Not every site sharing a surface
+  substring is the same operation. Caught during Phase-2 QA / by the builder agents' own
+  judgment:
+  * `astro/src/integration.ts` (~592) — a SINGLE-LEVEL `readdirSync(dir)` enumerating
+    `<dir>/*<suffix>` convention files, NOT a recursive walk. `walkFiles` recurses, so the
+    swap would find nested matches the shallow scan never returns. Disposition: **left
+    inline (distinct op).**
+  * `astro/src/runtime/audio-signal.ts` (~108) — a MULTI-OBSERVER, reference-counted rAF
+    fan-out (a `Set` of callbacks, loop-lives-while-any-observer, per-callback throw
+    isolation, self-terminating in `finally`), NOT the single-callback `startRafLoop`.
+    Disposition: **left inline (distinct op).**
+  * `stage/src/dual-export.ts` (~129) `escapeAttributeValue` was a FOUR-char attribute
+    escaper (`& " < >`, no single-quote), which the plan misdescribed as "five-char."
+    `escapeHtml` is a 5-char SUPERSET (`& < > " '`) designed for double/single-quoted
+    attribute values. Disposition: **consolidated onto `escapeHtml` as a safe superset**
+    (adds `' → &#39;` hardening in a double-quoted attribute context; no byte-pinned test
+    depended on the 4-char output). This is the one that flipped to consolidate; the other
+    two stayed distinct. Class: plan mis-tag (S0.4 relative). The standing catchers
+    (`repo-truths`, the S5.1 reimplementation-smell gate) plus the agents' behavior-
+    preservation discipline held; no new duplication was introduced.
+  * Plan FILENAME errors corrected: the `editDistance <=2` copy is `scene/src/compile.ts`
+    (the plan's `compiler/src/compile.ts` does not exist); `dual-export.ts`/`motion-export.ts`
+    live in `@czap/stage` and `motion.ts` in `@czap/remotion` (the plan filed them under
+    `@czap/scene`). All done directly during QA.
+
+- **S7.3 — the audit `package-topology` D9a floor caught 5 un-blessed consolidation
+  edges (the self-check working as designed).** Adding `@czap/canonical` to
+  web/astro/cli/command and `@czap/web` to mcp-server are intentional Wave-7 edges, but
+  the `packageTopology.allowedInternalImports` declaration hadn't blessed them, so the
+  repo-audits-itself test (`audit-profile-seam.test.ts` "0 errors / 0 warnings") went to 6
+  errors (5 edges + the transient audit→core from S7.1). Class: expected floor drift on an
+  intentional dependency addition. Disposition: **RESOLVED — the 5 edges declared in
+  `packages/audit/src/policy.ts` `packageTopology` with per-edge Wave-7 comments; the S7.1
+  edge removed by the revert.** The audit engine's own default-profile floor IS the
+  standing guard (no new guard needed).
+
+- **S7.4 — process note: cross-package workspace-dep additions need `pnpm install` before
+  `tsc` resolves them.** The builder agents added `"@czap/X": "workspace:*"` to package.json
+  and their vitest suites passed (source aliases in `config.ts`/`vitest.shared.ts` resolve
+  `@czap/*` to src), but `tsc --build` resolves the new cross-package types via
+  `node_modules` symlinks that only exist after `pnpm install`. Disposition: **RESOLVED —
+  ran `pnpm install` (lockfile updated) during integration QA; consumer-wave QA must always
+  `pnpm install` after any cross-package dep addition before trusting the typecheck.**
+
+**4-identity-law + cage status (Wave 7.5 confirmation):** the content-address /
+integrity / receipt / slug separation stayed green throughout (canonical-identity
+single-canonicalizer guard, brand-validators, `_spine/core.d.ts` ADR-0012 apex pin via
+`typecheck:spine`), and `sha256Hex` is a NEW plain-hex helper never merged into the
+receipt `sha256:`-label law. The B5b/D9b normalizer cage is now a two-home parity cage
+(S7.1). No copy-site re-implemented instead of importing (no new S0.4 duplication).
