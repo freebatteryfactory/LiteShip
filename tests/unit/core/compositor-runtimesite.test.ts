@@ -24,7 +24,6 @@
 import { afterEach, describe, test, expect } from 'vitest';
 import { Boundary, Compositor, Cap, sealNode } from '@czap/core';
 import type { PolicyNode, RuntimeSite, CapTier, CapSet, CellMeta } from '@czap/core';
-import { Effect } from 'effect';
 
 const widthBoundary = Boundary.make({
   input: 'viewport.width',
@@ -39,7 +38,6 @@ function makeQuantizer(boundary: Boundary.Shape, initialState: string) {
   return {
     _tag: 'Quantizer' as const,
     boundary,
-    state: Effect.sync(() => current),
     stateSync: () => current,
     changes: null as never,
     evaluate(v: number) {

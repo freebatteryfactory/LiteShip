@@ -24,7 +24,6 @@
 
 import { describe, test, expect } from 'vitest';
 import { Boundary, Compositor } from '@czap/core';
-import { Effect } from 'effect';
 
 const widthBoundary = Boundary.make({
   input: 'viewport.width',
@@ -45,7 +44,6 @@ function liveQuantizer(boundary: Boundary.Shape) {
   return {
     _tag: 'Quantizer' as const,
     boundary,
-    state: Effect.sync(() => current),
     stateSync: () => current,
     changes: null as never,
     evaluate(v: number) {

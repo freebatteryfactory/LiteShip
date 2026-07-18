@@ -24,10 +24,6 @@ import {
   Compositor,
 } from '@czap/core';
 import { hasTag } from '@czap/error';
-// Duration is retained for Invariant 16 (Duration.millis/toMillis over the Millis
-// brand). The Compositor lifecycle invariant no longer uses Effect — create() and
-// compute() are synchronous as of the core-seams wave.
-import { Duration } from 'effect';
 
 // --- Quantizer imports ---
 import { evaluate } from '@czap/quantizer';
@@ -687,18 +683,20 @@ describe('Invariant 13: DirtyFlags mark/getDirty round-trip', () => {
 });
 
 // ===========================================================================
-// INVARIANT 14: No raw-number Effect.sleep() in production source
+// INVARIANT 14: production source imports no `effect`
 //
-// Effect.sleep() must use Duration.millis(), Duration.seconds(), or string
-// literals ('10 millis'). Raw numbers silently work but bypass intent and
-// the codebase convention. This test catches what tsc cannot enforce
-// (Effect.sleep accepts DurationInput which includes raw numbers).
+// Wave 8 shed Effect entirely — every behavior it carried moved to a LiteShip-
+// native owner (Result, Lifetime, CellKernel, the schema kernel). This is the
+// permanent tripwire: no `packages/*/src/**/*.ts` may import from 'effect'.
 //
-// See packages/core/src/zap.ts:109 for the correct pattern.
+// (Supersedes the former "Effect.sleep() must use Duration.millis()" discipline,
+// which went vacuous the moment no Effect.sleep — indeed no `effect` — remained.
+// The deeper observation the old invariant guarded, "production's relationship to
+// effect is controlled," is preserved here and strengthened to zero.)
 // ===========================================================================
 
-describe('Invariant 14: No raw-number Effect.sleep() in production source', () => {
-  test('all Effect.sleep() calls use Duration.millis() or string literals', async () => {
+describe('Invariant 14: production source is Effect-free', () => {
+  test('no packages/*/src/**/*.ts imports from effect', async () => {
     const { readFileSync, readdirSync, statSync } = await import('fs');
     const { resolve, join } = await import('path');
 
@@ -733,32 +731,27 @@ describe('Invariant 14: No raw-number Effect.sleep() in production source', () =
     const files = packageDirs.flatMap((d) => walkTs(d).map((f) => f.slice(root.length + 1)));
     const violations: string[] = [];
 
-    // Match Effect.sleep(<identifier>) or Effect.sleep(<number>) but NOT
-    // Effect.sleep(Duration.*) or Effect.sleep('...' / "...")
-    const pattern = /Effect\.sleep\(\s*(?!Duration\.|'|")/g;
+    // Any static import/re-export from the 'effect' package.
+    const pattern = /from ['"]effect['"]/;
 
     for (const file of files) {
       const content = readFileSync(join(root, file), 'utf-8');
       const lines = content.split('\n');
       for (let i = 0; i < lines.length; i++) {
-        const line = lines[i]!;
-        if (pattern.test(line)) {
-          violations.push(`  ${file}:${i + 1}: ${line.trim()}`);
+        if (pattern.test(lines[i]!)) {
+          violations.push(`  ${file}:${i + 1}: ${lines[i]!.trim()}`);
         }
-        pattern.lastIndex = 0;
       }
     }
 
     expect(
       violations,
       [
-        'INVARIANT 14 VIOLATED: Found raw-number Effect.sleep() calls in production source.',
+        'INVARIANT 14 VIOLATED: production source imports from `effect`.',
         '',
-        'Effect.sleep() must use Duration.millis(n), Duration.seconds(n),',
-        'or a string literal like "10 millis".',
-        '',
-        'Correct pattern (see packages/core/src/zap.ts:109):',
-        '  yield* Effect.sleep(Duration.millis(ms));',
+        'Effect was shed in Wave 8; every behavior it carried has a LiteShip-native',
+        'owner (Result, Lifetime, CellKernel, the schema kernel). No file under',
+        'packages/*/src may import from the `effect` package.',
         '',
         'Violations:',
         ...violations,
@@ -807,7 +800,6 @@ describe('Invariant 15: Compositor lifecycle', () => {
 // INVARIANT 16: Millis brand contracts
 //
 // Millis(n) must preserve numeric value for any non-negative number.
-// Duration.millis(Millis(n)) must produce a valid Duration.
 // The brand is zero-cost: Millis IS a number at runtime.
 // ===========================================================================
 
@@ -822,17 +814,6 @@ describe('Invariant 16: Millis brand contracts', () => {
         // Arithmetic still works
         expect(branded + 1).toBe(n + 1);
         expect(branded * 2).toBe(n * 2);
-      }),
-      { numRuns: 200 },
-    );
-  });
-
-  test('Duration.millis(Millis(n)) produces valid Duration', () => {
-    fc.assert(
-      fc.property(fc.integer({ min: 0, max: 1_000_000 }), (n) => {
-        const branded = Millis(n);
-        const dur = Duration.millis(branded);
-        expect(Duration.toMillis(dur)).toBe(n);
       }),
       { numRuns: 200 },
     );

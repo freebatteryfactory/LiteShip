@@ -1,18 +1,21 @@
 /**
  * ECS Composable Infrastructure Tests
- * 
+ *
  * Type-driven tests for ECS composition over existing primitives.
  * Tests first, implementation second - red-green methodology.
  */
 
 import { describe, test, expect } from 'vitest';
-import { Schema } from 'effect';
-import { Boundary, Composable, ComposableWorld, Part, Style, Token, World } from '@czap/core';
+import { Boundary, Composable, ComposableWorld, Part, S, Style, Token, World } from '@czap/core';
 import { hasTag } from '@czap/error';
 
 const boundary = Boundary.make({
   input: 'viewport.width',
-  at: [[0, 'mobile'], [768, 'tablet'], [1024, 'desktop']],
+  at: [
+    [0, 'mobile'],
+    [768, 'tablet'],
+    [1024, 'desktop'],
+  ],
 });
 
 const token = Token.make({
@@ -56,7 +59,7 @@ const style = Style.make({
 
 const scorePart = {
   name: 'score',
-  schema: Schema.Number,
+  schema: S.number,
 };
 
 describe('ECS Composable Infrastructure', () => {
@@ -309,6 +312,8 @@ describe('ECS Composable Infrastructure', () => {
       const dense = ComposableWorld.dense(world);
       const entity = Composable.make({ boundary });
       dense.store(entity, 1);
-    }).toThrow('ComposableWorld.store: no dense store exists — call world.create(name, capacity) before world.store(entity, value).');
+    }).toThrow(
+      'ComposableWorld.store: no dense store exists — call world.create(name, capacity) before world.store(entity, value).',
+    );
   });
 });

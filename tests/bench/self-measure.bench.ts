@@ -10,7 +10,6 @@
  */
 
 import { Bench } from 'tinybench';
-import { Effect } from 'effect';
 import { Boundary, Compositor, TokenBuffer, SpeculativeEvaluator } from '@czap/core';
 import { evaluate } from '@czap/quantizer';
 import { SPSCRing } from '@czap/worker';
@@ -111,10 +110,10 @@ bench.add('[OVERHEAD] SpeculativeEvaluator.evaluate -- far from threshold', () =
 // Compositor empty vs with quantizers
 // ---------------------------------------------------------------------------
 
-const emptyCompositor = Effect.runSync(Effect.scoped(Compositor.create()));
+const { compositor: emptyCompositor } = Compositor.create();
 
 bench.add('[SCALE] Compositor.compute -- empty', () => {
-  Effect.runSync(emptyCompositor.compute());
+  emptyCompositor.compute();
 });
 
 // ---------------------------------------------------------------------------

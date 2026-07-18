@@ -27,7 +27,6 @@ import { describe, test, expect } from 'vitest';
 import fc from 'fast-check';
 import { Boundary, Compositor } from '@czap/core';
 import { GLSLCompiler, WGSLCompiler } from '@czap/compiler';
-import { Effect } from 'effect';
 
 // Boundary states are minted as `s0, s1, ...`, so the state literal carries its
 // own index — the bridge between the string cast (CSS) and the numeric casts.
@@ -44,7 +43,6 @@ function liveQuantizer(boundary: Boundary.Shape) {
   return {
     _tag: 'Quantizer' as const,
     boundary,
-    state: Effect.sync(() => current),
     stateSync: () => current,
     changes: null as never,
     evaluate(v: number) {

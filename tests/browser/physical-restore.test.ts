@@ -1,7 +1,20 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
-import { Effect } from 'effect';
-import { capture, captureActiveElement, captureFocusState, captureIME, elementToPath, findScrollable } from '../../packages/web/src/physical/capture.js';
-import { restore, restoreActiveElement, restoreFocusState, restoreScrollPositions, restoreIME, pathToElement } from '../../packages/web/src/physical/restore.js';
+import {
+  capture,
+  captureActiveElement,
+  captureFocusState,
+  captureIME,
+  elementToPath,
+  findScrollable,
+} from '../../packages/web/src/physical/capture.js';
+import {
+  restore,
+  restoreActiveElement,
+  restoreFocusState,
+  restoreScrollPositions,
+  restoreIME,
+  pathToElement,
+} from '../../packages/web/src/physical/restore.js';
 
 describe('browser physical state capture and restore', () => {
   let root: HTMLDivElement;
@@ -91,7 +104,7 @@ describe('browser physical state capture and restore', () => {
     input.focus();
     input.setSelectionRange(1, 5);
 
-    const state = await Effect.runPromise(capture(root));
+    const state = capture(root);
 
     expect(state.focusState?.elementId).toContain('focused-input');
     expect(state.focusState?.selectionStart).toBe(1);
@@ -118,7 +131,7 @@ describe('browser physical state capture and restore', () => {
     input.focus();
     input.setSelectionRange(2, 6);
 
-    const state = await Effect.runPromise(capture(root));
+    const state = capture(root);
 
     // Destroy state
     input.blur();
@@ -126,7 +139,7 @@ describe('browser physical state capture and restore', () => {
     scrollBox.scrollTop = 0;
 
     // Restore
-    await Effect.runPromise(restore(state, root));
+    restore(state, root);
 
     expect(document.activeElement).toBe(input);
     expect(input.selectionStart).toBe(2);
@@ -140,12 +153,12 @@ describe('browser physical state capture and restore', () => {
     btn.textContent = 'Click';
     root.appendChild(btn);
 
-    await Effect.runPromise(restoreActiveElement('#restore-btn', root));
+    restoreActiveElement('#restore-btn', root);
     expect(document.activeElement).toBe(btn);
   });
 
   test('restoreActiveElement is a no-op for null path', async () => {
-    await Effect.runPromise(restoreActiveElement(null, root));
+    restoreActiveElement(null, root);
     expect(document.activeElement).not.toBe(root);
   });
 
@@ -155,13 +168,16 @@ describe('browser physical state capture and restore', () => {
     textarea.value = 'line one\nline two';
     root.appendChild(textarea);
 
-    await Effect.runPromise(restoreFocusState({
-      elementId: '#ta',
-      cursorPosition: 5,
-      selectionStart: 3,
-      selectionEnd: 10,
-      selectionDirection: 'forward',
-    }, root));
+    restoreFocusState(
+      {
+        elementId: '#ta',
+        cursorPosition: 5,
+        selectionStart: 3,
+        selectionEnd: 10,
+        selectionDirection: 'forward',
+      },
+      root,
+    );
 
     expect(document.activeElement).toBe(textarea);
     expect(textarea.selectionStart).toBe(3);
@@ -177,9 +193,12 @@ describe('browser physical state capture and restore', () => {
     box.innerHTML = '<div style="height: 200px; width: 200px;">content</div>';
     root.appendChild(box);
 
-    await Effect.runPromise(restoreScrollPositions({
-      '#scroll-box': { top: 55, left: 30 },
-    }, root));
+    restoreScrollPositions(
+      {
+        '#scroll-box': { top: 55, left: 30 },
+      },
+      root,
+    );
 
     expect(box.scrollTop).toBeCloseTo(55, 0);
     expect(box.scrollLeft).toBeCloseTo(30, 0);
@@ -191,12 +210,12 @@ describe('browser physical state capture and restore', () => {
     input.value = 'composing text';
     root.appendChild(input);
 
-    await Effect.runPromise(restoreIME({
+    restoreIME({
       elementPath: '#ime-target',
       text: 'comp',
       start: 2,
       end: 6,
-    }));
+    });
 
     expect(document.activeElement).toBe(input);
     expect(input.selectionStart).toBe(2);
@@ -205,7 +224,7 @@ describe('browser physical state capture and restore', () => {
 
   test('restoreIME is a no-op when passed null', async () => {
     const priorActive = document.activeElement;
-    await Effect.runPromise(restoreIME(null));
+    restoreIME(null);
     expect(document.activeElement).toBe(priorActive);
   });
 
@@ -260,13 +279,11 @@ describe('browser physical state capture and restore', () => {
 
     const path = elementToPath(root);
 
-    await Effect.runPromise(
-      restoreScrollPositions(
-        {
-          [path]: { top: 63, left: 21 },
-        },
-        root,
-      ),
+    restoreScrollPositions(
+      {
+        [path]: { top: 63, left: 21 },
+      },
+      root,
     );
 
     expect(root.scrollTop).toBeCloseTo(63, 0);
@@ -279,7 +296,7 @@ describe('browser physical state capture and restore', () => {
 
     const path = elementToPath(root);
 
-    await Effect.runPromise(restoreActiveElement(path, root));
+    restoreActiveElement(path, root);
 
     expect(document.activeElement).toBe(root);
   });
@@ -328,7 +345,7 @@ describe('browser physical state capture and restore', () => {
     input.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true }));
     input.dispatchEvent(new CompositionEvent('compositionupdate', { bubbles: true, data: 'han' }));
 
-    const state = await Effect.runPromise(capture(root));
+    const state = capture(root);
     expect(state.ime).not.toBeNull();
     expect(state.ime!.text).toBe('han');
 

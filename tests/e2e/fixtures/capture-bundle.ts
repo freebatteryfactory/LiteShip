@@ -5,7 +5,6 @@
  * Runs the full capture pipeline: Compositor -> VideoRenderer -> WebCodecsCapture -> MP4 blob.
  */
 
-import { Effect } from 'effect';
 import { Compositor, VideoRenderer, Millis } from '@czap/core';
 import { WebCodecsCapture, renderToCanvas } from '@czap/web';
 
@@ -25,7 +24,7 @@ declare global {
 }
 
 async function run() {
-  const compositor = Effect.runSync(Effect.scoped(Compositor.create()));
+  const { compositor } = Compositor.create();
   const renderer = VideoRenderer.make({ fps: 10, width: 640, height: 480, durationMs: Millis(500) }, compositor);
 
   const capture = WebCodecsCapture.make({

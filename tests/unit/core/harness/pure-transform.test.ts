@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { Schema } from 'effect';
-import { defineCapsule } from '@czap/core';
+import { defineCapsule, S } from '@czap/core';
 import { resetCapsuleCatalog } from '@czap/core/testing';
 import * as Harness from '@czap/core/harness';
 
@@ -8,8 +7,8 @@ const demoDouble = () =>
   defineCapsule({
     _kind: 'pureTransform',
     name: 'demo.double',
-    input: Schema.Number,
-    output: Schema.Number,
+    input: S.number,
+    output: S.number,
     capabilities: { reads: [], writes: [] },
     invariants: [{ name: 'idempotent-on-zero', check: (i: number, o: number) => i !== 0 || o === 0, message: '' }],
     budgets: { p95Ms: 1 },
