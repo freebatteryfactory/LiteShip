@@ -167,23 +167,26 @@ describe('type-export surface snapshot gate (drift)', () => {
     { timeout: scaledTimeout(60_000) },
     () => {
       const live = serializeTypeExportSurface(buildTypeExportSurface(ROSTER));
+      // if/else (NOT an early return): a bare `return` before the first `expect`
+      // trips the no-early-return-test gate — the regen branch must not read as an
+      // assertion-less test path (mirrors tests/unit/meta/api-surface.test.ts).
       if (process.env.CZAP_UPDATE_TYPE_EXPORT_SNAPSHOT === '1') {
         writeFileSync(SNAPSHOT_PATH, live);
-        return;
+      } else {
+        const committed = readFileSync(SNAPSHOT_PATH, 'utf8');
+        const drift = diffTypeExportSurface(
+          JSON.parse(committed) as TypeExportSurfaceSnapshot,
+          JSON.parse(live) as TypeExportSurfaceSnapshot,
+        );
+        expect(
+          live === committed,
+          drift.length === 0
+            ? 'Type surface serialization drifted but no per-type diff was found — regenerate with CZAP_UPDATE_TYPE_EXPORT_SNAPSHOT=1 and review.'
+            : `Public TYPE surface drifted from the committed snapshot:\n` +
+                drift.map((d) => `  • ${d.pkg}: ${d.detail} [${d.changeClass}]`).join('\n') +
+                `\n\nIf intentional, regenerate (CZAP_UPDATE_TYPE_EXPORT_SNAPSHOT=1 npx vitest run tests/unit/audit/type-export-surface.test.ts) and review the diff — a dropped type is a broken public contract, never a silent pass.`,
+        ).toBe(true);
       }
-      const committed = readFileSync(SNAPSHOT_PATH, 'utf8');
-      const drift = diffTypeExportSurface(
-        JSON.parse(committed) as TypeExportSurfaceSnapshot,
-        JSON.parse(live) as TypeExportSurfaceSnapshot,
-      );
-      expect(
-        live === committed,
-        drift.length === 0
-          ? 'Type surface serialization drifted but no per-type diff was found — regenerate with CZAP_UPDATE_TYPE_EXPORT_SNAPSHOT=1 and review.'
-          : `Public TYPE surface drifted from the committed snapshot:\n` +
-              drift.map((d) => `  • ${d.pkg}: ${d.detail} [${d.changeClass}]`).join('\n') +
-              `\n\nIf intentional, regenerate (CZAP_UPDATE_TYPE_EXPORT_SNAPSHOT=1 npx vitest run tests/unit/audit/type-export-surface.test.ts) and review the diff — a dropped type is a broken public contract, never a silent pass.`,
-      ).toBe(true);
     },
   );
 
