@@ -1,15 +1,14 @@
 /** Fixture: exports a sceneComposition capsule + contract, but the
  * compileScene function throws — exercises scene-compile's try/catch
  * fallback path. */
-import { Schema } from 'effect';
-import { defineCapsule } from '@czap/core';
+import { defineCapsule, S } from '@czap/core';
 import type { SceneContract } from '@czap/scene';
 
 export const broken = defineCapsule({
   _kind: 'sceneComposition',
   name: 'fixture.broken',
-  input: Schema.Unknown,
-  output: Schema.Unknown,
+  input: S.unknown,
+  output: S.unknown,
   capabilities: { reads: [], writes: [] },
   invariants: [],
   budgets: { p95Ms: 1 },

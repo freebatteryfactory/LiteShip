@@ -10,14 +10,14 @@ async function capture<T>(fn: () => Promise<T>): Promise<{ exit: T; stdout: stri
   let stderr = '';
   const origO = process.stdout.write.bind(process.stdout);
   const origE = process.stderr.write.bind(process.stderr);
-  (process.stdout as unknown as { write: unknown }).write = ((c: string | Uint8Array) => {
+  (process.stdout as unknown as { write: unknown }).write = (c: string | Uint8Array) => {
     stdout += typeof c === 'string' ? c : Buffer.from(c).toString();
     return true;
-  });
-  (process.stderr as unknown as { write: unknown }).write = ((c: string | Uint8Array) => {
+  };
+  (process.stderr as unknown as { write: unknown }).write = (c: string | Uint8Array) => {
     stderr += typeof c === 'string' ? c : Buffer.from(c).toString();
     return true;
-  });
+  };
   try {
     const exit = await fn();
     return { exit, stdout, stderr };
@@ -48,8 +48,8 @@ describe('scene compile (unit)', () => {
     expect(r.stderr).toMatch(/boom from compile fixture/);
   });
 
-  it('exits 0 with a valid receipt when compileFn returns an Effect', async () => {
-    const r = await capture(() => sceneCompile('tests/fixtures/scene/effect-compile.ts'));
+  it('exits 0 with a valid receipt when compileFn returns a plain value', async () => {
+    const r = await capture(() => sceneCompile('tests/fixtures/scene/value-compile.ts'));
     expect(r.exit).toBe(0);
     const receipt = JSON.parse(r.stdout.trim().split('\n').pop()!);
     expect(receipt.status).toBe('ok');

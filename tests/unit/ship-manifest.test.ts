@@ -19,7 +19,6 @@ import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { gunzipSync, gzipSync } from 'node:zlib';
-import { Effect } from 'effect';
 import {
   findWorkspaceSpecLeaks,
   tarballManifestAddress,
@@ -29,64 +28,70 @@ import {
   normalizedDryRunAddress,
 } from '../../packages/cli/src/ship-manifest.js';
 
-const run = <A, E>(eff: Effect.Effect<A, E>) => Effect.runPromise(eff);
 const REPO_ROOT = resolve(import.meta.dirname, '..', '..');
 
 describe('tarballManifestAddress', () => {
-  it('is deterministic across gzip wrappers carrying identical inner-tar content', async () => {
-    // Pack `_spine` once, then re-gzip the SAME inner tar bytes with two
-    // different gzip mtimes. Raw .tgz bytes differ; manifest address must not.
-    const sourceDir = join(REPO_ROOT, 'packages/_spine');
-    const workDir = mkdtempSync(join(tmpdir(), 'litesip-tarball-'));
-    try {
-      // Pack from the IN-WORKSPACE package dir (not a tmp copy): pnpm resolves the
-      // package's `catalog:` peer spec to its concrete range only inside the
-      // workspace — exactly as `czap ship` / `pnpm publish` do on the real release
-      // path (.github/workflows/release.yml). The shared owner (tests/support/pack.ts,
-      // scar S0.5) drops the .tgz into the clean tmp dir, leaving no artifact behind
-      // in the source package, and returns its path.
-      const tgzPath = await packInWorkspace(sourceDir, workDir);
-      const tgzBytes = new Uint8Array(readFileSync(tgzPath));
-      const innerTar = gunzipSync(tgzBytes);
-      const a = new Uint8Array(gzipSync(innerTar, { level: 6 }));
-      // Force a different gzip wrapper by changing compression level →
-      // different bytes around the same inner tar.
-      const b = new Uint8Array(gzipSync(innerTar, { level: 9 }));
+  it(
+    'is deterministic across gzip wrappers carrying identical inner-tar content',
+    async () => {
+      // Pack `_spine` once, then re-gzip the SAME inner tar bytes with two
+      // different gzip mtimes. Raw .tgz bytes differ; manifest address must not.
+      const sourceDir = join(REPO_ROOT, 'packages/_spine');
+      const workDir = mkdtempSync(join(tmpdir(), 'litesip-tarball-'));
+      try {
+        // Pack from the IN-WORKSPACE package dir (not a tmp copy): pnpm resolves the
+        // package's `catalog:` peer spec to its concrete range only inside the
+        // workspace — exactly as `czap ship` / `pnpm publish` do on the real release
+        // path (.github/workflows/release.yml). The shared owner (tests/support/pack.ts,
+        // scar S0.5) drops the .tgz into the clean tmp dir, leaving no artifact behind
+        // in the source package, and returns its path.
+        const tgzPath = await packInWorkspace(sourceDir, workDir);
+        const tgzBytes = new Uint8Array(readFileSync(tgzPath));
+        const innerTar = gunzipSync(tgzBytes);
+        const a = new Uint8Array(gzipSync(innerTar, { level: 6 }));
+        // Force a different gzip wrapper by changing compression level →
+        // different bytes around the same inner tar.
+        const b = new Uint8Array(gzipSync(innerTar, { level: 9 }));
 
-      // Sanity: the two .tgz byte sequences MUST differ — otherwise we're not
-      // actually testing the manifest-vs-tarball distinction.
-      let differ = a.length !== b.length;
-      if (!differ) {
-        for (let i = 0; i < a.length; i++) {
-          if (a[i] !== b[i]) { differ = true; break; }
+        // Sanity: the two .tgz byte sequences MUST differ — otherwise we're not
+        // actually testing the manifest-vs-tarball distinction.
+        let differ = a.length !== b.length;
+        if (!differ) {
+          for (let i = 0; i < a.length; i++) {
+            if (a[i] !== b[i]) {
+              differ = true;
+              break;
+            }
+          }
         }
-      }
-      expect(differ).toBe(true);
+        expect(differ).toBe(true);
 
-      const addrA = await run(tarballManifestAddress(a));
-      const addrB = await run(tarballManifestAddress(b));
-      expect(addrA.display_id).toBe(addrB.display_id);
-      expect(addrA.integrity_digest).toBe(addrB.integrity_digest);
-    } finally {
-      rmSync(workDir, { recursive: true, force: true });
-    }
-    // `pnpm pack` spawns a subprocess that is slow on Windows CI; the 10s default
-    // has flaked here repeatedly. Give headroom — the assertion is determinism, not speed.
-  }, scaledTimeout(30000));
+        const addrA = tarballManifestAddress(a);
+        const addrB = tarballManifestAddress(b);
+        expect(addrA.display_id).toBe(addrB.display_id);
+        expect(addrA.integrity_digest).toBe(addrB.integrity_digest);
+      } finally {
+        rmSync(workDir, { recursive: true, force: true });
+      }
+      // `pnpm pack` spawns a subprocess that is slow on Windows CI; the 10s default
+      // has flaked here repeatedly. Give headroom — the assertion is determinism, not speed.
+    },
+    scaledTimeout(30000),
+  );
 });
 
 describe('lockfileAddress', () => {
-  it('same bytes → identical AddressedDigest', async () => {
+  it('same bytes → identical AddressedDigest', () => {
     const bytes = new TextEncoder().encode('lockfileVersion: "9.0"\npackages:\n  pnpm@10.32.1: {}\n');
-    const a = await run(lockfileAddress(bytes));
-    const b = await run(lockfileAddress(new Uint8Array(bytes)));
+    const a = lockfileAddress(bytes);
+    const b = lockfileAddress(new Uint8Array(bytes));
     expect(a.display_id).toBe(b.display_id);
     expect(a.integrity_digest).toBe(b.integrity_digest);
   });
 
-  it('different bytes → different digests', async () => {
-    const a = await run(lockfileAddress(new TextEncoder().encode('lockfileVersion: "9.0"')));
-    const b = await run(lockfileAddress(new TextEncoder().encode('lockfileVersion: "9.1"')));
+  it('different bytes → different digests', () => {
+    const a = lockfileAddress(new TextEncoder().encode('lockfileVersion: "9.0"'));
+    const b = lockfileAddress(new TextEncoder().encode('lockfileVersion: "9.1"'));
     expect(a.integrity_digest).not.toBe(b.integrity_digest);
   });
 });
@@ -96,7 +101,7 @@ describe('workspaceManifestAddress', () => {
   const pkgB = new TextEncoder().encode('{"name":"@czap/b","version":"0.1.0"}');
   const pkgC = new TextEncoder().encode('{"name":"@czap/c","version":"0.1.0"}');
 
-  it('is order-independent (helper sorts internally)', async () => {
+  it('is order-independent (helper sorts internally)', () => {
     const inOrder = [
       { relative_path: 'packages/a', package_json_bytes: pkgA },
       { relative_path: 'packages/b', package_json_bytes: pkgB },
@@ -107,13 +112,13 @@ describe('workspaceManifestAddress', () => {
       { relative_path: 'packages/a', package_json_bytes: pkgA },
       { relative_path: 'packages/b', package_json_bytes: pkgB },
     ];
-    const a = await run(workspaceManifestAddress(inOrder));
-    const b = await run(workspaceManifestAddress(shuffled));
+    const a = workspaceManifestAddress(inOrder);
+    const b = workspaceManifestAddress(shuffled);
     expect(a.display_id).toBe(b.display_id);
     expect(a.integrity_digest).toBe(b.integrity_digest);
   });
 
-  it('one-byte flip in any package_json_bytes changes both digests', async () => {
+  it('one-byte flip in any package_json_bytes changes both digests', () => {
     const baseInput = [
       { relative_path: 'packages/a', package_json_bytes: pkgA },
       { relative_path: 'packages/b', package_json_bytes: pkgB },
@@ -124,8 +129,8 @@ describe('workspaceManifestAddress', () => {
       { relative_path: 'packages/a', package_json_bytes: pkgA },
       { relative_path: 'packages/b', package_json_bytes: mutatedB },
     ];
-    const a = await run(workspaceManifestAddress(baseInput));
-    const b = await run(workspaceManifestAddress(flipped));
+    const a = workspaceManifestAddress(baseInput);
+    const b = workspaceManifestAddress(flipped);
     expect(a.display_id).not.toBe(b.display_id);
     expect(a.integrity_digest).not.toBe(b.integrity_digest);
   });
@@ -143,36 +148,29 @@ describe('normalizeDryRunOutput', () => {
   });
 
   it('replaces absolute repo-root paths with <REPO>', () => {
-    const out = normalizeDryRunOutput(
-      '/var/repo/file.txt and /var/repo/packages/x',
-      { repo_root_absolute_path: '/var/repo' },
-    );
+    const out = normalizeDryRunOutput('/var/repo/file.txt and /var/repo/packages/x', {
+      repo_root_absolute_path: '/var/repo',
+    });
     expect(out).toBe('<REPO>/file.txt and <REPO>/packages/x');
   });
 
   it('replaces fractional Z timestamps with <TIME>', () => {
-    const out = normalizeDryRunOutput(
-      'published at 2026-05-13T05:11:28.838Z OK',
-      { repo_root_absolute_path: '' },
-    );
+    const out = normalizeDryRunOutput('published at 2026-05-13T05:11:28.838Z OK', { repo_root_absolute_path: '' });
     expect(out).toBe('published at <TIME> OK');
   });
 
   it('replaces offset timestamps with <TIME>', () => {
-    const out = normalizeDryRunOutput(
-      'time=2026-05-13T05:11:28+00:00 done',
-      { repo_root_absolute_path: '' },
-    );
+    const out = normalizeDryRunOutput('time=2026-05-13T05:11:28+00:00 done', { repo_root_absolute_path: '' });
     expect(out).toBe('time=<TIME> done');
   });
 
-  it('two strings differing only by timestamp → identical normalized output', async () => {
+  it('two strings differing only by timestamp → identical normalized output', () => {
     const ctx = { repo_root_absolute_path: '/tmp/repo' };
     const a = `header\n/tmp/repo/file at 2026-05-13T05:11:28.838Z   \nfooter`;
     const b = `header\n/tmp/repo/file at 2026-05-13T05:12:00.001Z   \nfooter`;
     expect(normalizeDryRunOutput(a, ctx)).toBe(normalizeDryRunOutput(b, ctx));
-    const ra = await run(normalizedDryRunAddress(a, ctx));
-    const rb = await run(normalizedDryRunAddress(b, ctx));
+    const ra = normalizedDryRunAddress(a, ctx);
+    const rb = normalizedDryRunAddress(b, ctx);
     expect(ra.display_id).toBe(rb.display_id);
     expect(ra.integrity_digest).toBe(rb.integrity_digest);
   });
@@ -220,12 +218,7 @@ const writeOctalSize = (header: Uint8Array, size: number): void => {
  * Build a single USTAR-like tar header block. `typeflag` is the single-char
  * tar typeflag. `prefix` populates the v7-extension prefix field at offset 345.
  */
-const makeTarHeader = (
-  name: string,
-  size: number,
-  typeflag: string,
-  prefix = '',
-): Uint8Array => {
+const makeTarHeader = (name: string, size: number, typeflag: string, prefix = ''): Uint8Array => {
   const header = new Uint8Array(512);
   writeAscii(header, 0, 100, name);
   writeOctalSize(header, size);
@@ -281,9 +274,9 @@ describe('parseTar GNU long-name (typeflag L)', () => {
     // *only* used the stand-in name must NOT match.
     const tgzStandIn = tgzWithPlainEntry('placeholder', contents);
 
-    const addrGnu = await run(tarballManifestAddress(tgzWithGnu));
-    const addrPlain = await run(tarballManifestAddress(tgzPlain));
-    const addrStandIn = await run(tarballManifestAddress(tgzStandIn));
+    const addrGnu = tarballManifestAddress(tgzWithGnu);
+    const addrPlain = tarballManifestAddress(tgzPlain);
+    const addrStandIn = tarballManifestAddress(tgzStandIn);
     expect(addrGnu.display_id).toBe(addrPlain.display_id);
     expect(addrGnu.integrity_digest).toBe(addrPlain.integrity_digest);
     expect(addrGnu.integrity_digest).not.toBe(addrStandIn.integrity_digest);
@@ -291,7 +284,7 @@ describe('parseTar GNU long-name (typeflag L)', () => {
 });
 
 describe('parseTar PAX header (typeflag x)', () => {
-  it('PAX `path=` record overrides the next entry\'s USTAR name; mixed non-path keys and malformed records are tolerated', async () => {
+  it("PAX `path=` record overrides the next entry's USTAR name; mixed non-path keys and malformed records are tolerated", async () => {
     // Exercises the `typeflag === 'x'` branch (ship-manifest.ts:87-100)
     // including the inner record-parsing loop's three early-continue paths:
     //   - empty line / no space (spaceIx < 0, line 93)
@@ -310,12 +303,7 @@ describe('parseTar PAX header (typeflag x)', () => {
     const pathLine = ` path=${realPath}`;
     const pathLineLen = pathLine.length + 1; // +1 for the trailing \n
     const pathLenPrefix = (pathLineLen + pathLineLen.toString().length).toString();
-    const paxRecord =
-      `\n` +
-      `no-space-here\n` +
-      `15 no-equals-here\n` +
-      `13 uid=0\n` +
-      `${pathLenPrefix}${pathLine}\n`;
+    const paxRecord = `\n` + `no-space-here\n` + `15 no-equals-here\n` + `13 uid=0\n` + `${pathLenPrefix}${pathLine}\n`;
     const paxPayload = tarPayload(paxRecord);
     const paxHeader = makeTarHeader('./PaxHeaders/0', paxPayload.size, 'x');
 
@@ -329,9 +317,9 @@ describe('parseTar PAX header (typeflag x)', () => {
     // match — confirming the PAX `path=` override actually fired.
     const tgzStandIn = tgzWithPlainEntry('short-stand-in', contents);
 
-    const addrPax = await run(tarballManifestAddress(tgzPax));
-    const addrPlain = await run(tarballManifestAddress(tgzPlain));
-    const addrStandIn = await run(tarballManifestAddress(tgzStandIn));
+    const addrPax = tarballManifestAddress(tgzPax);
+    const addrPlain = tarballManifestAddress(tgzPlain);
+    const addrStandIn = tarballManifestAddress(tgzStandIn);
     expect(addrPax.display_id).toBe(addrPlain.display_id);
     expect(addrPax.integrity_digest).toBe(addrPlain.integrity_digest);
     expect(addrPax.integrity_digest).not.toBe(addrStandIn.integrity_digest);
@@ -356,9 +344,9 @@ describe('parseTar USTAR prefix split', () => {
     // a different address — confirming the `prefix + '/' + name` join fired.
     const tgzNameOnly = tgzWithPlainEntry(name, contents);
 
-    const a = await run(tarballManifestAddress(tgzSplit));
-    const b = await run(tarballManifestAddress(tgzJoined));
-    const c = await run(tarballManifestAddress(tgzNameOnly));
+    const a = tarballManifestAddress(tgzSplit);
+    const b = tarballManifestAddress(tgzJoined);
+    const c = tarballManifestAddress(tgzNameOnly);
     expect(a.integrity_digest).toBe(b.integrity_digest);
     expect(a.integrity_digest).not.toBe(c.integrity_digest);
   });

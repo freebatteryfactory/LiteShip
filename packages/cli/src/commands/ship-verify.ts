@@ -2,7 +2,7 @@
  * verify (CLI adapter) — thin projection over `@czap/command`'s verify command
  * (ADR-0011 local verifier). The four-verdict decision tree lives in
  * `@czap/command`; this adapter parses argv, injects the file reads and the
- * Effect-backed capsule decode + tarball-manifest recompute, and renders the
+ * native (sync) capsule decode + tarball-manifest recompute, and renders the
  * ShipVerifyReceipt. No network, no pnpm, no git.
  *
  * @module
@@ -10,31 +10,12 @@
 
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { Cause, Effect, Result } from 'effect';
 import { ShipCapsule } from '@czap/core';
 import { verifyCommand, type VerifyPayload } from '@czap/command';
 import type { CommandContext } from '@czap/command';
 import { tarballManifestAddress } from '../ship-manifest.js';
 import { emit, emitError } from '../receipts.js';
 import type { ShipVerifyReceipt } from '../receipts.js';
-
-async function runEffect<A, E>(
-  effect: Effect.Effect<A, E>,
-): Promise<{ ok: true; value: A } | { ok: false; error: string }> {
-  const exit = await Effect.runPromiseExit(effect);
-  if (exit._tag === 'Success') return { ok: true, value: exit.value };
-  const found = Cause.findError(exit.cause);
-  if (Result.isSuccess(found)) {
-    const err = Result.getOrThrow(found) as unknown;
-    return { ok: false, error: err instanceof Error ? err.message : String(err) };
-  }
-  return {
-    ok: false,
-    error: Cause.prettyErrors(exit.cause)
-      .map((e) => e.message)
-      .join('; '),
-  };
-}
 
 function verifyContext(): CommandContext {
   return {
@@ -43,8 +24,11 @@ function verifyContext(): CommandContext {
       const abs = resolve(path);
       return existsSync(abs) ? new Uint8Array(readFileSync(abs)) : null;
     },
+    // The context callbacks are typed Promise-returning by @czap/command; the
+    // underlying decode/recompute are now SYNC, so these `async` wrappers just
+    // adapt the sync `Result` / sync throw into the injected-capability shape.
     decodeShipCapsule: async (bytes) => {
-      const r = await runEffect(ShipCapsule.decode(bytes));
+      const r = ShipCapsule.decode(bytes);
       if (!r.ok) return { ok: false, error: r.error };
       return {
         ok: true,
@@ -56,9 +40,12 @@ function verifyContext(): CommandContext {
       };
     },
     recomputeTarballAddress: async (bytes) => {
-      const r = await runEffect(tarballManifestAddress(bytes));
-      if (!r.ok) return { ok: false, error: r.error };
-      return { ok: true, display_id: r.value.display_id, integrity_digest: r.value.integrity_digest };
+      try {
+        const addr = tarballManifestAddress(bytes);
+        return { ok: true, display_id: addr.display_id, integrity_digest: addr.integrity_digest };
+      } catch (e) {
+        return { ok: false, error: e instanceof Error ? e.message : String(e) };
+      }
     },
   };
 }

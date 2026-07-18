@@ -104,7 +104,12 @@ describe('lockfile parser — synthetic shape coverage', () => {
     // both a dependencies + a devDependencies edge under one importer.
     expect(cli?.specifiers.map((s) => s.section).sort()).toEqual(['dependencies', 'devDependencies']);
     const leftPad = lf.packages.find((p) => p.name === 'left-pad');
-    expect(leftPad).toMatchObject({ key: 'left-pad@1.3.0', version: '1.3.0', integrity: 'sha512-leftpadbase64', resolutionKind: null });
+    expect(leftPad).toMatchObject({
+      key: 'left-pad@1.3.0',
+      version: '1.3.0',
+      integrity: 'sha512-leftpadbase64',
+      resolutionKind: null,
+    });
   });
 
   it('parses a SCOPED packages-block key into @scope/name + version (the real pnpm@9 shape)', () => {
@@ -129,7 +134,15 @@ describe('lockfile parser — synthetic shape coverage', () => {
 
   it('a key with NO version @ falls back to {name: key, version: ""} (splitKey guard)', () => {
     const lf = parseLockfile(
-      [`lockfileVersion: '9.0'`, `importers:`, `  .:`, `packages:`, `  'bareword:':`, `    resolution: {integrity: sha512-x}`, ``].join('\n'),
+      [
+        `lockfileVersion: '9.0'`,
+        `importers:`,
+        `  .:`,
+        `packages:`,
+        `  'bareword:':`,
+        `    resolution: {integrity: sha512-x}`,
+        ``,
+      ].join('\n'),
     );
     const p = lf.packages[0];
     expect(p?.name).toBe('bareword:');
@@ -161,7 +174,11 @@ describe('lockfile parser — synthetic shape coverage', () => {
   });
 
   it('a resolution map with no { } yields integrity:null, kind:null (floating unit)', () => {
-    const lf = parseLockfile([`lockfileVersion: '9.0'`, `importers:`, `  .:`, `packages:`, `  'loose@1.0.0':`, `    resolution:`, ``].join('\n'));
+    const lf = parseLockfile(
+      [`lockfileVersion: '9.0'`, `importers:`, `  .:`, `packages:`, `  'loose@1.0.0':`, `    resolution:`, ``].join(
+        '\n',
+      ),
+    );
     expect(lf.packages[0]).toMatchObject({ integrity: null, resolutionKind: null });
   });
 
@@ -218,7 +235,9 @@ describe('lockfile parser — synthetic shape coverage', () => {
   });
 
   it('handles CRLF line endings + double-quoted scalars', () => {
-    const lf = parseLockfile(`lockfileVersion: "9.0"\r\nimporters:\r\n  .:\r\npackages:\r\n  "x@1.0.0":\r\n    resolution: {integrity: sha512-x}\r\n`);
+    const lf = parseLockfile(
+      `lockfileVersion: "9.0"\r\nimporters:\r\n  .:\r\npackages:\r\n  "x@1.0.0":\r\n    resolution: {integrity: sha512-x}\r\n`,
+    );
     expect(lf.lockfileVersion).toBe('9.0');
     expect(lf.packages[0]?.name).toBe('x');
   });
@@ -236,7 +255,17 @@ describe('lockfile policy — synthetic decisions', () => {
   });
 
   it('a non-registry resolution reds git-url-dependency AND short-circuits the floating check', () => {
-    const lf = parseLockfile([`lockfileVersion: '9.0'`, `importers:`, `  .:`, `packages:`, `  'g@1.0.0':`, `    resolution: {repo: git+https://x/g}`, ``].join('\n'));
+    const lf = parseLockfile(
+      [
+        `lockfileVersion: '9.0'`,
+        `importers:`,
+        `  .:`,
+        `packages:`,
+        `  'g@1.0.0':`,
+        `    resolution: {repo: git+https://x/g}`,
+        ``,
+      ].join('\n'),
+    );
     const v = evaluateLockfilePolicy(lf, LITESHIP_LOCKFILE_POLICY, published);
     expect(v.map((x) => x.code)).toEqual(['git-url-dependency']);
     // exactly one violation: floating-resolution did NOT also fire (continue short-circuit).
@@ -244,7 +273,17 @@ describe('lockfile policy — synthetic decisions', () => {
   });
 
   it('allowNonRegistryResolutions:true lets a non-registry unit through (host-injected policy is DATA)', () => {
-    const lf = parseLockfile([`lockfileVersion: '9.0'`, `importers:`, `  .:`, `packages:`, `  'g@1.0.0':`, `    resolution: {tarball: https://x/g.tgz}`, ``].join('\n'));
+    const lf = parseLockfile(
+      [
+        `lockfileVersion: '9.0'`,
+        `importers:`,
+        `  .:`,
+        `packages:`,
+        `  'g@1.0.0':`,
+        `    resolution: {tarball: https://x/g.tgz}`,
+        ``,
+      ].join('\n'),
+    );
     const permissive: LockfilePolicy = { ...LITESHIP_LOCKFILE_POLICY, allowNonRegistryResolutions: true };
     const v = evaluateLockfilePolicy(lf, permissive, published);
     expect(v).toEqual([]);
@@ -372,7 +411,9 @@ describe('SBOM — synthetic build coverage', () => {
     const lf: ParsedLockfile = {
       lockfileVersion: '9.0',
       importers: [],
-      packages: [{ key: '@czap/cli@0.4.0', name: '@czap/cli', version: '0.4.0', integrity: 'sha512-X', resolutionKind: null }],
+      packages: [
+        { key: '@czap/cli@0.4.0', name: '@czap/cli', version: '0.4.0', integrity: 'sha512-X', resolutionKind: null },
+      ],
     };
     const sbom = generateSbom(lf, [{ name: '@czap/cli', version: '0.4.0' }]);
     const comp = sbom.components.filter((c) => c.purl === 'pkg:npm/@czap/cli@0.4.0');
@@ -385,7 +426,9 @@ describe('SBOM — synthetic build coverage', () => {
     const lf: ParsedLockfile = {
       lockfileVersion: '9.0',
       importers: [],
-      packages: [{ key: 'a@1.0.0(b@2.0.0)', name: 'a', version: '1.0.0(b@2.0.0)', integrity: 'sha512-X', resolutionKind: null }],
+      packages: [
+        { key: 'a@1.0.0(b@2.0.0)', name: 'a', version: '1.0.0(b@2.0.0)', integrity: 'sha512-X', resolutionKind: null },
+      ],
     };
     expect(generateSbom(lf, []).components[0]?.purl).toBe('pkg:npm/a@1.0.0');
   });
@@ -406,7 +449,11 @@ describe('SBOM — synthetic build coverage', () => {
 
   it('serializeSbom is key-sorted, 2-space, newline-terminated JSON that round-trips', () => {
     const sbom = generateSbom(
-      { lockfileVersion: '9.0', importers: [], packages: [{ key: 'a@1.0.0', name: 'a', version: '1.0.0', integrity: 'sha512-X', resolutionKind: null }] },
+      {
+        lockfileVersion: '9.0',
+        importers: [],
+        packages: [{ key: 'a@1.0.0', name: 'a', version: '1.0.0', integrity: 'sha512-X', resolutionKind: null }],
+      },
       [],
     );
     const json = serializeSbom(sbom);
@@ -419,7 +466,11 @@ describe('SBOM — synthetic build coverage', () => {
 
   it('the address is a content address of the canonical CBOR (deterministic, stable)', () => {
     const sbom = generateSbom(
-      { lockfileVersion: '9.0', importers: [], packages: [{ key: 'a@1.0.0', name: 'a', version: '1.0.0', integrity: 'sha512-X', resolutionKind: null }] },
+      {
+        lockfileVersion: '9.0',
+        importers: [],
+        packages: [{ key: 'a@1.0.0', name: 'a', version: '1.0.0', integrity: 'sha512-X', resolutionKind: null }],
+      },
       [],
     );
     expect(sbomAddress(sbom)).toBe(sbomAddress(sbom));
@@ -432,16 +483,25 @@ describe('SBOM — synthetic build coverage', () => {
       version: fc.constantFrom('1.0.0', '2.3.4', '0.0.1'),
     });
     fc.assert(
-      fc.property(fc.uniqueArray(pkgArb, { selector: (p) => `${p.name}@${p.version}`, minLength: 1, maxLength: 6 }), (pkgs) => {
-        const mk = (order: typeof pkgs): ParsedLockfile => ({
-          lockfileVersion: '9.0',
-          importers: [],
-          packages: order.map((p) => ({ key: `${p.name}@${p.version}`, name: p.name, version: p.version, integrity: 'sha512-X', resolutionKind: null })),
-        });
-        const forward = buildHashable(generateSbom(mk(pkgs), []));
-        const reversed = buildHashable(generateSbom(mk([...pkgs].reverse()), []));
-        return forward === reversed;
-      }),
+      fc.property(
+        fc.uniqueArray(pkgArb, { selector: (p) => `${p.name}@${p.version}`, minLength: 1, maxLength: 6 }),
+        (pkgs) => {
+          const mk = (order: typeof pkgs): ParsedLockfile => ({
+            lockfileVersion: '9.0',
+            importers: [],
+            packages: order.map((p) => ({
+              key: `${p.name}@${p.version}`,
+              name: p.name,
+              version: p.version,
+              integrity: 'sha512-X',
+              resolutionKind: null,
+            })),
+          });
+          const forward = buildHashable(generateSbom(mk(pkgs), []));
+          const reversed = buildHashable(generateSbom(mk([...pkgs].reverse()), []));
+          return forward === reversed;
+        },
+      ),
       { numRuns: 40 },
     );
   });
@@ -475,7 +535,13 @@ describe('checkSbomCompleteness — synthetic gaps + phantoms', () => {
 
   it('an SBOM component backed by no lockfile/workspace unit ⇒ phantom-sbom-component', () => {
     const { sbom, address } = buildSbom(lf, WORKSPACE);
-    const phantom = { ...sbom, components: [...sbom.components, { type: 'library' as const, name: 'ghost', version: '9.9.9', purl: 'pkg:npm/ghost@9.9.9' }] };
+    const phantom = {
+      ...sbom,
+      components: [
+        ...sbom.components,
+        { type: 'library' as const, name: 'ghost', version: '9.9.9', purl: 'pkg:npm/ghost@9.9.9' },
+      ],
+    };
     const facts = checkSbomCompleteness(phantom, lf, WORKSPACE, address);
     expect(facts.violations.some((x) => x.code === 'phantom-sbom-component')).toBe(true);
   });
@@ -516,12 +582,24 @@ const baseInput = (lockAddr: AD): ShipCapsule.Input => ({
   source_commit: '0123456789abcdef0123456789abcdef01234567',
   source_dirty: false,
   lockfile_address: lockAddr,
-  workspace_manifest_address: { display_id: ContentAddress('fnv1a:bbbbbbbb'), integrity_digest: IntegrityDigest('sha256:' + 'b'.repeat(64)), algo: 'sha256' },
-  tarball_manifest_address: { display_id: ContentAddress('fnv1a:cccccccc'), integrity_digest: IntegrityDigest('sha256:' + 'c'.repeat(64)), algo: 'sha256' },
+  workspace_manifest_address: {
+    display_id: ContentAddress('fnv1a:bbbbbbbb'),
+    integrity_digest: IntegrityDigest('sha256:' + 'b'.repeat(64)),
+    algo: 'sha256',
+  },
+  tarball_manifest_address: {
+    display_id: ContentAddress('fnv1a:cccccccc'),
+    integrity_digest: IntegrityDigest('sha256:' + 'c'.repeat(64)),
+    algo: 'sha256',
+  },
   build_env: { node_version: 'v24.0.0', pnpm_version: '10.32.1', os: 'linux', arch: 'x64' },
   package_manager: 'pnpm',
   package_manager_version: '10.32.1',
-  publish_dry_run_address: { display_id: ContentAddress('fnv1a:dddddddd'), integrity_digest: IntegrityDigest('sha256:' + 'd'.repeat(64)), algo: 'sha256' },
+  publish_dry_run_address: {
+    display_id: ContentAddress('fnv1a:dddddddd'),
+    integrity_digest: IntegrityDigest('sha256:' + 'd'.repeat(64)),
+    algo: 'sha256',
+  },
   lifecycle_scripts_observed: [],
   generated_at: { wall_ms: 1_715_500_000_000, counter: 0, node_id: 'test' } as HLC,
   previous_ship_capsule: null,
@@ -531,9 +609,8 @@ describe('validateProvenance — absent build-env', () => {
   const liveBytes = new Uint8Array([1, 2, 3, 4]);
   const liveAddr = AddressedDigest.of(liveBytes);
 
-  it('a clean capsule (matching addr, sha commit, full build-env, dirty flag) has zero violations', async () => {
-    const { Effect } = await import('effect');
-    const capsule = await Effect.runPromise(ShipCapsule.make(baseInput(liveAddr)));
+  it('a clean capsule (matching addr, sha commit, full build-env, dirty flag) has zero violations', () => {
+    const capsule = ShipCapsule.make(baseInput(liveAddr));
     const facts = validateProvenance(capsule, liveBytes);
     expect(facts.violations).toEqual([]);
     expect(facts.packageName).toBe('@czap/x');
@@ -541,43 +618,39 @@ describe('validateProvenance — absent build-env', () => {
     expect(facts.sourceDirty).toBe(false);
   });
 
-  it('an empty node_version reds absent-build-env', async () => {
-    const { Effect } = await import('effect');
+  it('an empty node_version reds absent-build-env', () => {
     const input = baseInput(liveAddr);
-    const capsule = await Effect.runPromise(ShipCapsule.make({ ...input, build_env: { ...input.build_env, node_version: '' } }));
+    const capsule = ShipCapsule.make({ ...input, build_env: { ...input.build_env, node_version: '' } });
     const facts = validateProvenance(capsule, liveBytes);
     expect(facts.violations.some((x) => x.code === 'absent-build-env')).toBe(true);
   });
 
-  it('an empty pnpm_version reds absent-build-env', async () => {
-    const { Effect } = await import('effect');
+  it('an empty pnpm_version reds absent-build-env', () => {
     const input = baseInput(liveAddr);
-    const capsule = await Effect.runPromise(ShipCapsule.make({ ...input, build_env: { ...input.build_env, pnpm_version: '' } }));
+    const capsule = ShipCapsule.make({ ...input, build_env: { ...input.build_env, pnpm_version: '' } });
     const facts = validateProvenance(capsule, liveBytes);
     expect(facts.violations.some((x) => x.code === 'absent-build-env')).toBe(true);
   });
 
-  it('reports source_dirty=true verbatim', async () => {
-    const { Effect } = await import('effect');
-    const capsule = await Effect.runPromise(ShipCapsule.make({ ...baseInput(liveAddr), source_dirty: true }));
+  it('reports source_dirty=true verbatim', () => {
+    const capsule = ShipCapsule.make({ ...baseInput(liveAddr), source_dirty: true });
     const facts = validateProvenance(capsule, liveBytes);
     expect(facts.sourceDirty).toBe(true);
   });
 });
 
 describe('decodeCapsule — tagged round-trip', () => {
-  it('decodes canonical bytes back to the capsule (ok:true)', async () => {
-    const { Effect } = await import('effect');
+  it('decodes canonical bytes back to the capsule (ok:true)', () => {
     const liveAddr = AddressedDigest.of(new Uint8Array([9]));
-    const capsule = await Effect.runPromise(ShipCapsule.make(baseInput(liveAddr)));
+    const capsule = ShipCapsule.make(baseInput(liveAddr));
     const bytes = ShipCapsule.canonicalize(capsule);
-    const result = await decodeCapsule(bytes);
+    const result = decodeCapsule(bytes);
     expect(result.ok).toBe(true);
     if (result.ok) expect(result.capsule.package_name).toBe('@czap/x');
   });
 
-  it('returns ok:false with a descriptive error on garbage bytes (never throws)', async () => {
-    const result = await decodeCapsule(new Uint8Array([0xff, 0xff, 0xff, 0xff]));
+  it('returns ok:false with a descriptive error on garbage bytes (never throws)', () => {
+    const result = decodeCapsule(new Uint8Array([0xff, 0xff, 0xff, 0xff]));
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.error).toContain('ShipCapsule.decode failed');
   });
@@ -589,7 +662,10 @@ describe('scanCiAuthority — synthetic token classes', () => {
   it('flags each long-lived publish token class', () => {
     for (const token of ['NPM_TOKEN', 'NODE_AUTH_TOKEN', 'NPM_AUTH_TOKEN', 'npm_config__authToken', '_authToken']) {
       const facts = scanCiAuthority([{ path: 'wf.yml', text: `env:\n  X: ${token}\n` }]);
-      expect(facts.violations.some((x) => x.code === 'ambient-publish-token'), token).toBe(true);
+      expect(
+        facts.violations.some((x) => x.code === 'ambient-publish-token'),
+        token,
+      ).toBe(true);
     }
   });
 
@@ -670,14 +746,17 @@ describe('readWorkflows + analyzeSupplyChain — full fold (synthetic temp repo)
     }
   });
 
-  it('analyzeSupplyChain INCLUDES provenance when a capsule is supplied (and bites address drift)', async () => {
-    const { Effect } = await import('effect');
+  it('analyzeSupplyChain INCLUDES provenance when a capsule is supplied (and bites address drift)', () => {
     const dir = mkdtempSync(join(tmpdir(), 'czap-sc-prov-'));
     try {
       const liveBytes = new Uint8Array(Buffer.from(VALID_LOCK, 'utf8'));
       // capsule records a DIFFERENT lockfile address ⇒ drift violation.
-      const wrong: AD = { display_id: ContentAddress('fnv1a:00000000'), integrity_digest: IntegrityDigest('sha256:' + '0'.repeat(64)), algo: 'sha256' };
-      const capsule = await Effect.runPromise(ShipCapsule.make(baseInput(wrong)));
+      const wrong: AD = {
+        display_id: ContentAddress('fnv1a:00000000'),
+        integrity_digest: IntegrityDigest('sha256:' + '0'.repeat(64)),
+        algo: 'sha256',
+      };
+      const capsule = ShipCapsule.make(baseInput(wrong));
       const input: AnalyzeInput = {
         repoRoot: dir,
         lockfileText: VALID_LOCK,
@@ -696,7 +775,15 @@ describe('readWorkflows + analyzeSupplyChain — full fold (synthetic temp repo)
   it('analyzeSupplyChain honors a host-injected permissive policy (DATA, not code)', () => {
     const dir = mkdtempSync(join(tmpdir(), 'czap-sc-policy-'));
     try {
-      const lock = [`lockfileVersion: '9.0'`, `importers:`, `  .:`, `packages:`, `  'g@1.0.0':`, `    resolution: {tarball: https://x/g.tgz}`, ``].join('\n');
+      const lock = [
+        `lockfileVersion: '9.0'`,
+        `importers:`,
+        `  .:`,
+        `packages:`,
+        `  'g@1.0.0':`,
+        `    resolution: {tarball: https://x/g.tgz}`,
+        ``,
+      ].join('\n');
       const permissive: LockfilePolicy = { ...LITESHIP_LOCKFILE_POLICY, allowNonRegistryResolutions: true };
       const { facts } = analyzeSupplyChain({
         repoRoot: dir,

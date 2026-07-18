@@ -14,7 +14,6 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { Effect } from 'effect';
 import { Compositor, VideoRenderer, wallClock, type Millis } from '@czap/core';
 import { AssetRegistry, detectBeats, detectOnsets, computeWaveform, type DecodedAudio } from '@czap/assets';
 import { litelaunchGauntlet, type EarlyReturnMatch, type SkipMatch } from '@czap/gauntlet';
@@ -140,10 +139,12 @@ export function createNodeCommandContext(
     loadSceneModule: async (scenePath) =>
       (await import(/* @vite-ignore */ pathToFileURL(resolveFrom(scenePath)).href)) as Record<string, unknown>,
     runSceneCompile: async (mod) => {
+      // Scene compile fns are sync (they return a CompiledScene descriptor); invoke
+      // for the compile side effect. The legacy `Effect.isEffect(result)` branch is
+      // retired — no compile fn returns an Effect anymore (Wave 8).
       const compileFn = Object.values(mod).find((v): v is () => unknown => typeof v === 'function');
       if (!compileFn) return;
-      const result = compileFn();
-      if (Effect.isEffect(result)) await Effect.runPromise(result as Effect.Effect<unknown, never, never>);
+      compileFn();
     },
     renderScene: async ({ fps, durationMs, output, width = DEFAULT_WIDTH, height = DEFAULT_HEIGHT }) => {
       // Compositor.create is sync-first (Wave 2): it returns the live instance

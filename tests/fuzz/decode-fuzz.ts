@@ -8,8 +8,8 @@
  * NaN/Infinity, duplicate-key, wrong-version, integer-overflow — :
  *
  *   it either RETURNS a valid typed value, or FAILS CLOSED with ONE canonical
- *   tagged `@czap/error` (a `ParseError` for the throw-style readers, a tagged
- *   `Effect.fail` for the Effect-style reader) — and it NEVER:
+ *   tagged verdict (a `ParseError` for the throw-style readers, a tagged
+ *   `Result` error arm for `ShipCapsule.decode`) — and it NEVER:
  *     - crashes with an UNCAUGHT/untagged error (a `TypeError`, a `RangeError`,
  *       a bare `Error`, a stack overflow surfaced as a raw throw),
  *     - hangs (bounded by the harness's per-input wall budget),
@@ -35,7 +35,6 @@
  */
 
 import * as fc from 'fast-check';
-import { Effect, Exit, Cause, Result } from 'effect';
 import { isTaggedError } from '@czap/error';
 import { decode as cborDecode } from '@czap/canonical';
 import { HLC, GraphPatch, decodeDocumentGraph, ShipCapsule } from '@czap/core';
@@ -44,7 +43,7 @@ import { HLC, GraphPatch, decodeDocumentGraph, ShipCapsule } from '@czap/core';
  * The shape of a value a decoder ingests. The CBOR decoder reads bytes; the
  * version-aware readers (`GraphPatch.decode` / `decodeDocumentGraph`) read an
  * already-lowered `unknown` value (JSON / a model proposal); the HLC reader
- * reads a string; `ShipCapsule.decode` reads bytes through an Effect.
+ * reads a string; `ShipCapsule.decode` reads bytes and returns a `Result`.
  *
  * The harness models each as a SUT that takes an opaque `unknown` and either
  * returns or fails-closed — so one runner exercises all of them, and the
@@ -241,15 +240,16 @@ export const DOCUMENT_GRAPH_SUT: DecoderSut = {
 /**
  * ShipCapsule decode — the version-aware release-artifact reader (ADR-0011).
  *
- * `ShipCapsule.decode` returns an `Effect` whose FAILURE channel is a tagged
- * STRING (`'malformed_cbor' | 'invalid_shape' | 'unsupported_version' |
- * 'non_canonical'`), not a thrown @czap/error. The harness has ONE failure
- * channel (throw), so `run` runs the Effect to an `Exit` and:
- *   - SUCCESS → returns the capsule (the `returned-typed` path),
- *   - the EXPECTED tagged failure → THROWS a sentinel carrying that string, which
+ * `ShipCapsule.decode` returns a `Result<Shape, ShipCapsuleDecodeError>` whose
+ * ERROR arm is a tagged STRING (`'malformed_cbor' | 'invalid_shape' |
+ * 'unsupported_version' | 'non_canonical'`), not a thrown @czap/error. The
+ * harness has ONE failure channel (throw), so `run`:
+ *   - OK → returns the capsule (the `returned-typed` path),
+ *   - the EXPECTED tagged error → THROWS a sentinel carrying that string, which
  *     `failClosed` recognizes (the decoder's fail-closed contract, acceptable),
- *   - a DEFECT (an Effect die — an uncaught throw inside the decode) → re-throws
- *     the raw cause, which `failClosed` does NOT recognize (a real crash finding).
+ *   - a DEFECT (an uncaught throw inside the decode, e.g. a `TypeError`) →
+ *     propagates out of `decode`/`run` unchanged, which `failClosed` does NOT
+ *     recognize (a real crash finding).
  *
  * The sentinel is a tagged carrier (not a raw string throw) so the harness's
  * single tagged-vs-untagged classifier stays uniform across every SUT.
@@ -257,7 +257,7 @@ export const DOCUMENT_GRAPH_SUT: DecoderSut = {
 const SHIP_CAPSULE_TAGS = ['malformed_cbor', 'invalid_shape', 'unsupported_version', 'non_canonical'] as const;
 type ShipCapsuleFailTag = (typeof SHIP_CAPSULE_TAGS)[number];
 
-/** A tagged carrier for an EXPECTED ShipCapsule fail-closed verdict (the Effect's failure channel). */
+/** A tagged carrier for an EXPECTED ShipCapsule fail-closed verdict (the Result's error arm). */
 interface ShipCapsuleFailClosed {
   readonly _tag: 'ShipCapsuleFailClosed';
   readonly reason: ShipCapsuleFailTag;
@@ -271,67 +271,21 @@ const isShipCapsuleFailClosed = (u: unknown): u is ShipCapsuleFailClosed =>
 export const SHIP_CAPSULE_SUT: DecoderSut = {
   id: 'ship-capsule.decode',
   inputKind: 'bytes',
-  describe:
-    'ShipCapsule.decode (@czap/core) — the version-aware release-artifact reader (ADR-0011); Effect-failure channel.',
+  describe: 'ShipCapsule.decode (@czap/core) — the version-aware release-artifact reader (ADR-0011); Result error arm.',
   run: (input) => {
-    const exit = Effect.runSyncExit(ShipCapsule.decode(input as Uint8Array));
-    if (Exit.isSuccess(exit)) {
-      return exit.value;
+    // A DEFECT (an uncaught throw inside decode) propagates straight out of this
+    // call, and the classifier sees an UNTAGGED crash. The EXPECTED tagged error
+    // arrives on the Result's `error` arm — thrown as the tagged carrier below.
+    const result = ShipCapsule.decode(input as Uint8Array);
+    if (result.ok) {
+      return result.value;
     }
-    // A FAILURE (the expected tagged string) vs a DEFECT (an uncaught throw =
-    // a crash). Exit.causeOption gives the cause; a Fail carries the tagged
-    // string, a Die carries the raw defect.
-    const cause = exit.cause;
-    // Effect's Cause: a Fail has `.error` (the tagged string); a Die has `.defect`.
-    const failure = extractShipCapsuleFailure(cause);
-    if (failure !== undefined) {
-      // EXPECTED fail-closed — throw the tagged carrier the classifier accepts.
-      const carrier: ShipCapsuleFailClosed = { _tag: 'ShipCapsuleFailClosed', reason: failure };
-      throw carrier;
-    }
-    // A DEFECT: re-throw the raw cause so the classifier sees an UNTAGGED crash.
-    throw extractShipCapsuleDefect(cause);
+    // EXPECTED fail-closed — throw the tagged carrier the classifier accepts.
+    const carrier: ShipCapsuleFailClosed = { _tag: 'ShipCapsuleFailClosed', reason: result.error };
+    throw carrier;
   },
   failClosed: (thrown) => isShipCapsuleFailClosed(thrown) || isTaggedError(thrown),
 };
-
-/**
- * Walk an Effect `Cause` for the ShipCapsule decode's EXPECTED string failure,
- * or `undefined` if the cause is a defect / interruption (a crash, not the
- * tagged channel). Reads only the public Cause shape (no `as unknown`): a `Fail`
- * cause exposes its tagged value, which the decode types as `ShipCapsuleDecodeError`.
- */
-function extractShipCapsuleFailure(cause: Cause.Cause<ShipCapsuleFailTag>): ShipCapsuleFailTag | undefined {
-  // `Cause.findError` returns a `Result<E, …>` — Success holds the FIRST EXPECTED
-  // failure (the decode's tagged string), Failure means the cause carries no
-  // expected error (a defect / interruption). Only an EXPECTED, recognized tag is
-  // the decoder's fail-closed contract.
-  const found = Cause.findError(cause);
-  // `Result.getOrNull` extracts the Success value (the expected tagged failure) or
-  // null when the cause carries no expected error (a defect / interruption).
-  const tag = Result.getOrNull(found);
-  if (tag !== null && SHIP_CAPSULE_TAGS.includes(tag)) {
-    return tag;
-  }
-  return undefined;
-}
-
-/**
- * Extract a DEFECT (uncaught throw) from a Cause, as a raw value for the crash
- * classifier. A cause with no expected failure is a DEFECT — `Cause.squash`
- * collapses it to the underlying thrown value (a TypeError, a RangeError, …), so
- * the classifier sees the real untagged crash. A non-defect terminal (an
- * interruption) collapses to a tagged carrier the classifier treats as
- * fail-closed (a non-crash, non-pollution terminal the harness does not flag).
- */
-function extractShipCapsuleDefect(cause: Cause.Cause<ShipCapsuleFailTag>): unknown {
-  const squashed = Cause.squash(cause);
-  if (squashed instanceof Error) {
-    return squashed;
-  }
-  const carrier: ShipCapsuleFailClosed = { _tag: 'ShipCapsuleFailClosed', reason: 'malformed_cbor' };
-  return carrier;
-}
 
 /** The full L4 decode-surface SUT registry — every untrusted-byte reader the fuzzer hammers. */
 export const DECODER_SUTS: readonly DecoderSut[] = [

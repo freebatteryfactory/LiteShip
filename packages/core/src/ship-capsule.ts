@@ -9,7 +9,8 @@
  * @module
  */
 
-import { Effect } from 'effect';
+import { err, ok } from '@czap/error';
+import type { Result } from '@czap/error';
 import { decode as cborDecode } from 'cborg';
 import type { AddressedDigest, ContentAddress, HLC } from './brands.js';
 import { CanonicalCbor } from './cbor.js';
@@ -96,33 +97,32 @@ const encodeIdentityBearing = (capsule: ShipCapsuleInput): Uint8Array =>
     previous_ship_capsule: capsule.previous_ship_capsule,
   });
 
-const computeId = (capsuleWithoutIdentity: ShipCapsuleInput): Effect.Effect<AddressedDigest, Error> =>
-  Effect.succeed(AddressedDigestNs.of(encodeIdentityBearing(capsuleWithoutIdentity)));
+const computeId = (capsuleWithoutIdentity: ShipCapsuleInput): AddressedDigest =>
+  AddressedDigestNs.of(encodeIdentityBearing(capsuleWithoutIdentity));
 
-const make = (input: ShipCapsuleInput): Effect.Effect<ShipCapsuleShape, Error> =>
-  Effect.gen(function* () {
-    const digest = yield* computeId(input);
-    return {
-      _kind: input._kind,
-      schema_version: input.schema_version,
-      id: digest.display_id,
-      integrity: digest,
-      package_name: input.package_name,
-      package_version: input.package_version,
-      source_commit: input.source_commit,
-      source_dirty: input.source_dirty,
-      lockfile_address: input.lockfile_address,
-      workspace_manifest_address: input.workspace_manifest_address,
-      tarball_manifest_address: input.tarball_manifest_address,
-      build_env: input.build_env,
-      package_manager: input.package_manager,
-      package_manager_version: input.package_manager_version,
-      publish_dry_run_address: input.publish_dry_run_address,
-      lifecycle_scripts_observed: input.lifecycle_scripts_observed,
-      generated_at: input.generated_at,
-      previous_ship_capsule: input.previous_ship_capsule,
-    };
-  });
+const make = (input: ShipCapsuleInput): ShipCapsuleShape => {
+  const digest = computeId(input);
+  return {
+    _kind: input._kind,
+    schema_version: input.schema_version,
+    id: digest.display_id,
+    integrity: digest,
+    package_name: input.package_name,
+    package_version: input.package_version,
+    source_commit: input.source_commit,
+    source_dirty: input.source_dirty,
+    lockfile_address: input.lockfile_address,
+    workspace_manifest_address: input.workspace_manifest_address,
+    tarball_manifest_address: input.tarball_manifest_address,
+    build_env: input.build_env,
+    package_manager: input.package_manager,
+    package_manager_version: input.package_manager_version,
+    publish_dry_run_address: input.publish_dry_run_address,
+    lifecycle_scripts_observed: input.lifecycle_scripts_observed,
+    generated_at: input.generated_at,
+    previous_ship_capsule: input.previous_ship_capsule,
+  };
+};
 
 const canonicalize = (capsule: ShipCapsuleShape): Uint8Array =>
   CanonicalCbor.encode({
@@ -174,44 +174,44 @@ const isWellShaped = (
   return true;
 };
 
-const decode = (bytes: Uint8Array): Effect.Effect<ShipCapsuleShape, ShipCapsuleDecodeError> =>
-  Effect.gen(function* () {
-    let decoded: unknown;
-    try {
-      decoded = cborDecode(bytes);
-    } catch {
-      return yield* Effect.fail('malformed_cbor' as const);
+const decode = (bytes: Uint8Array): Result<ShipCapsuleShape, ShipCapsuleDecodeError> => {
+  let decoded: unknown;
+  try {
+    decoded = cborDecode(bytes);
+  } catch {
+    return err('malformed_cbor' as const);
+  }
+  if (!isWellShaped(decoded)) {
+    return err('invalid_shape' as const);
+  }
+  // VERSION-AWARE, FAIL-CLOSED: a shape-valid capsule stamped with a
+  // schema_version this build does not understand is rejected as a DISTINCT
+  // version verdict — never coerced into the v1 shape. This is the
+  // migration boundary: a v2 writer's bytes must NOT silently misparse as v1.
+  if (decoded.schema_version !== SUPPORTED_SCHEMA_VERSION) {
+    return err('unsupported_version' as const);
+  }
+  // schema_version is now provably the supported literal — narrow to the shape.
+  const capsule = decoded as ShipCapsuleShape;
+  const reencoded = canonicalize(capsule);
+  if (reencoded.length !== bytes.length) {
+    return err('non_canonical' as const);
+  }
+  for (let i = 0; i < reencoded.length; i++) {
+    if (reencoded[i] !== bytes[i]) {
+      return err('non_canonical' as const);
     }
-    if (!isWellShaped(decoded)) {
-      return yield* Effect.fail('invalid_shape' as const);
-    }
-    // VERSION-AWARE, FAIL-CLOSED: a shape-valid capsule stamped with a
-    // schema_version this build does not understand is rejected as a DISTINCT
-    // version verdict — never coerced into the v1 shape. This is the
-    // migration boundary: a v2 writer's bytes must NOT silently misparse as v1.
-    if (decoded.schema_version !== SUPPORTED_SCHEMA_VERSION) {
-      return yield* Effect.fail('unsupported_version' as const);
-    }
-    // schema_version is now provably the supported literal — narrow to the shape.
-    const capsule = decoded as ShipCapsuleShape;
-    const reencoded = canonicalize(capsule);
-    if (reencoded.length !== bytes.length) {
-      return yield* Effect.fail('non_canonical' as const);
-    }
-    for (let i = 0; i < reencoded.length; i++) {
-      if (reencoded[i] !== bytes[i]) {
-        return yield* Effect.fail('non_canonical' as const);
-      }
-    }
-    return capsule;
-  });
+  }
+  return ok(capsule);
+};
 
 /**
  * Public namespace for ShipCapsule (ADR-0011). `make` builds a capsule from
- * input, `canonicalize` encodes it as canonical CBOR for transport / hashing,
- * `decode` round-trips canonical bytes and rejects non-canonical encodings AND
- * unknown `schema_version`s (`unsupported_version`, fail-closed),
- * `computeId` mints the fnv1a label over the canonicalized payload.
+ * input (sync), `canonicalize` encodes it as canonical CBOR for transport /
+ * hashing, `decode` round-trips canonical bytes and returns a `Result`
+ * (`@czap/error`) that rejects non-canonical encodings AND unknown
+ * `schema_version`s (`unsupported_version`, fail-closed), `computeId` mints the
+ * fnv1a label over the canonicalized payload (sync).
  */
 export const ShipCapsule = { make, canonicalize, decode, computeId };
 
