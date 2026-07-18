@@ -70,10 +70,32 @@ export const LITESHIP_SPINE_ADMISSIONS: readonly SpineAdmissionRow[] = [
   runtimeMirror('VideoConfig', `${CORE}/video.ts`), // Millis-brand-loss drift class
   runtimeMirror('CaptureResult', `${CORE}/capture.ts`), // Millis-brand-loss drift class
   runtimeMirror('CapSet', `${CORE}/caps.ts`), // Set→array drift class
-  // Codec.Shape: the schema field is spine-WIDER (kernel Schema ⊂ SchemaPort), so the
-  // whole shape is public-wider (runtime→spine holds, spine→runtime does not). This is
-  // the drift that motivated the whole gate — pinned mechanically now.
-  runtimeMirror('Codec.Shape', `${CORE}/codec.ts`, 'public-wider', 'Codec.Shape<{ readonly a: 1 }, { readonly a: 1 }>'),
+  // Codec.Shape, decomposed into FIELDS. A whole-shape `public-wider` verdict is a WEAK
+  // pin: the `schema` field alone produces (s2r=false, r2s=true), so a SECOND field
+  // (encode/decode) widening in the SAME direction is absorbed and never surfaces
+  // (adversarial QA Finding 1 — an `encode(): Result | Promise` drift passed the
+  // whole-shape pin). Pinning the fields SEPARATELY reproduces the deleted
+  // `__codecSpineTypeContract`'s bidirectional encode/decode pins exactly: encode/decode
+  // are `exact` (a transport drift reds them), `schema` is the one deliberately wider
+  // field (kernel Schema ⊂ SchemaPort). This is the drift that motivated the whole gate.
+  runtimeMirror(
+    "Codec.Shape['encode']",
+    `${CORE}/codec.ts`,
+    'exact',
+    "Codec.Shape<{ readonly a: 1 }, { readonly a: 1 }>['encode']",
+  ),
+  runtimeMirror(
+    "Codec.Shape['decode']",
+    `${CORE}/codec.ts`,
+    'exact',
+    "Codec.Shape<{ readonly a: 1 }, { readonly a: 1 }>['decode']",
+  ),
+  runtimeMirror(
+    "Codec.Shape['schema']",
+    `${CORE}/codec.ts`,
+    'public-wider',
+    "Codec.Shape<{ readonly a: 1 }, { readonly a: 1 }>['schema']",
+  ),
   runtimeMirror('Config.Shape', `${CORE}/config.ts`, 'exact', 'Config.Shape'),
 
   // ── @czap/design shapes (re-exported as Token/Theme/Style namespaces from core) ──

@@ -8,7 +8,7 @@
 
 > **relationSatisfied**(`observed`, `admitted`): `boolean`
 
-Defined in: [gauntlet/src/spine-relation-facts.ts:133](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/spine-relation-facts.ts#L133)
+Defined in: [gauntlet/src/spine-relation-facts.ts:137](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/spine-relation-facts.ts#L137)
 
 Whether an OBSERVED structural relation satisfies the ADMITTED relation — the
 two-axis conformance check the gate folds on.

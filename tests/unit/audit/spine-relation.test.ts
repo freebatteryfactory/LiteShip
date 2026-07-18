@@ -100,6 +100,25 @@ describe('spine-relation gate — REDS on the three historical drift fixtures (t
     expect(findings.some((f) => f.title.includes('CompositeState'))).toBe(true);
   });
 
+  it(
+    'Codec transport widening — encode gains a Promise arm (adversarial QA Finding 1)',
+    { timeout: scaledTimeout(60_000) },
+    () => {
+      // The gap the whole-shape `public-wider` pin missed: a SECOND field widening in the
+      // same direction as the deliberately-wider `schema`. Decomposing Codec into field
+      // admissions closes it — encode is pinned `exact`, so a transport widening reds.
+      const { facts } = driftedFacts((c) =>
+        c.replace('encode(value: A): Result<I, ParseError>;', 'encode(value: A): Result<I, ParseError> | Promise<I>;'),
+      );
+      const encode = facts.observations.find((o) => o.typeName === "Codec.Shape['encode']")!;
+      expect(encode.observedRelation).toBe('public-wider'); // widened past exact
+      const decode = facts.observations.find((o) => o.typeName === "Codec.Shape['decode']")!;
+      expect(decode.observedRelation).toBe('exact'); // decode untouched — the drift is localized
+      const findings = gateFindings(facts);
+      expect(findings.some((f) => f.title.includes("Codec.Shape['encode']"))).toBe(true);
+    },
+  );
+
   it('an unresolved mirror (a removed type) reds as a broken contract', { timeout: scaledTimeout(60_000) }, () => {
     // Rename CapSet on the spine side → the admission's spine type no longer resolves.
     const { facts } = driftedFacts((c) => c.replace('export interface CapSet {', 'export interface CapSetRenamed {'));

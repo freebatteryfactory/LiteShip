@@ -6,7 +6,7 @@
 
 # Interface: SpineTypeAdmission
 
-Defined in: [audit/src/spine-relation-build.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/spine-relation-build.ts#L53)
+Defined in: [audit/src/spine-relation-build.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/spine-relation-build.ts#L52)
 
 One admitted mirror type — the host-supplied seed row (frozen from the current
 spine-conformance pins). `spineExpr` is the type expression under the `@czap/_spine`
@@ -20,7 +20,7 @@ namespace (e.g. `CompositeState`, `Codec.Shape<{ readonly a: 1 }, { readonly a: 
 
 > `readonly` **admittedRelation**: `SurfaceRelation`
 
-Defined in: [audit/src/spine-relation-build.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/spine-relation-build.ts#L56)
+Defined in: [audit/src/spine-relation-build.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/spine-relation-build.ts#L55)
 
 ***
 
@@ -28,7 +28,7 @@ Defined in: [audit/src/spine-relation-build.ts:56](https://github.com/freebatter
 
 > `readonly` **authority**: `SpineAuthority`
 
-Defined in: [audit/src/spine-relation-build.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/spine-relation-build.ts#L55)
+Defined in: [audit/src/spine-relation-build.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/spine-relation-build.ts#L54)
 
 ***
 
@@ -36,7 +36,7 @@ Defined in: [audit/src/spine-relation-build.ts:55](https://github.com/freebatter
 
 > `readonly` **runtimeExpr**: `string`
 
-Defined in: [audit/src/spine-relation-build.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/spine-relation-build.ts#L59)
+Defined in: [audit/src/spine-relation-build.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/spine-relation-build.ts#L58)
 
 ***
 
@@ -44,7 +44,7 @@ Defined in: [audit/src/spine-relation-build.ts:59](https://github.com/freebatter
 
 > `readonly` **runtimeModule**: `string`
 
-Defined in: [audit/src/spine-relation-build.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/spine-relation-build.ts#L58)
+Defined in: [audit/src/spine-relation-build.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/spine-relation-build.ts#L57)
 
 ***
 
@@ -52,7 +52,7 @@ Defined in: [audit/src/spine-relation-build.ts:58](https://github.com/freebatter
 
 > `readonly` **spineExpr**: `string`
 
-Defined in: [audit/src/spine-relation-build.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/spine-relation-build.ts#L57)
+Defined in: [audit/src/spine-relation-build.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/spine-relation-build.ts#L56)
 
 ***
 
@@ -60,4 +60,4 @@ Defined in: [audit/src/spine-relation-build.ts:57](https://github.com/freebatter
 
 > `readonly` **typeName**: `string`
 
-Defined in: [audit/src/spine-relation-build.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/spine-relation-build.ts#L54)
+Defined in: [audit/src/spine-relation-build.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/spine-relation-build.ts#L53)

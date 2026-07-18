@@ -6,7 +6,7 @@
 
 # Interface: SpineRelationObservation
 
-Defined in: [gauntlet/src/spine-relation-facts.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/spine-relation-facts.ts#L69)
+Defined in: [gauntlet/src/spine-relation-facts.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/spine-relation-facts.ts#L73)
 
 One observed mirror→runtime relation — the flat, already-classified outcome of
 probing ONE admitted type's bidirectional assignability, plus everything the gate
@@ -22,7 +22,7 @@ structural drift the gate always reports.
 
 > `readonly` **admittedRelation**: [`SurfaceRelation`](../type-aliases/SurfaceRelation.md)
 
-Defined in: [gauntlet/src/spine-relation-facts.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/spine-relation-facts.ts#L75)
+Defined in: [gauntlet/src/spine-relation-facts.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/spine-relation-facts.ts#L79)
 
 Axis 2, DECLARED — the frozen relation this type is admitted to hold (the seed).
 
@@ -32,7 +32,7 @@ Axis 2, DECLARED — the frozen relation this type is admitted to hold (the seed
 
 > `readonly` **assignableRuntimeToSpine**: `boolean`
 
-Defined in: [gauntlet/src/spine-relation-facts.ts:81](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/spine-relation-facts.ts#L81)
+Defined in: [gauntlet/src/spine-relation-facts.ts:85](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/spine-relation-facts.ts#L85)
 
 Did the RUNTIME type prove assignable to the SPINE type? (the `_r2s` probe).
 
@@ -42,7 +42,7 @@ Did the RUNTIME type prove assignable to the SPINE type? (the `_r2s` probe).
 
 > `readonly` **assignableSpineToRuntime**: `boolean`
 
-Defined in: [gauntlet/src/spine-relation-facts.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/spine-relation-facts.ts#L79)
+Defined in: [gauntlet/src/spine-relation-facts.ts:83](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/spine-relation-facts.ts#L83)
 
 Did the SPINE type prove assignable to the RUNTIME type? (the `_s2r` probe).
 
@@ -52,7 +52,7 @@ Did the SPINE type prove assignable to the RUNTIME type? (the `_s2r` probe).
 
 > `readonly` **authority**: [`SpineAuthority`](../type-aliases/SpineAuthority.md)
 
-Defined in: [gauntlet/src/spine-relation-facts.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/spine-relation-facts.ts#L73)
+Defined in: [gauntlet/src/spine-relation-facts.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/spine-relation-facts.ts#L77)
 
 Axis 1 — who owns the type (recorded for the two-axis report + convergence evidence).
 
@@ -62,7 +62,7 @@ Axis 1 — who owns the type (recorded for the two-axis report + convergence evi
 
 > `readonly` `optional` **detail?**: `string`
 
-Defined in: [gauntlet/src/spine-relation-facts.ts:85](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/spine-relation-facts.ts#L85)
+Defined in: [gauntlet/src/spine-relation-facts.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/spine-relation-facts.ts#L89)
 
 Optional witness/context — e.g. a resolution error, when `resolved` is false.
 
@@ -72,7 +72,7 @@ Optional witness/context — e.g. a resolution error, when `resolved` is false.
 
 > `readonly` **observedRelation**: [`SurfaceRelation`](../type-aliases/SurfaceRelation.md)
 
-Defined in: [gauntlet/src/spine-relation-facts.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/spine-relation-facts.ts#L77)
+Defined in: [gauntlet/src/spine-relation-facts.ts:81](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/spine-relation-facts.ts#L81)
 
 Axis 2, OBSERVED — the relation the assignability probe actually measured.
 
@@ -82,7 +82,7 @@ Axis 2, OBSERVED — the relation the assignability probe actually measured.
 
 > `readonly` **resolved**: `boolean`
 
-Defined in: [gauntlet/src/spine-relation-facts.ts:83](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/spine-relation-facts.ts#L83)
+Defined in: [gauntlet/src/spine-relation-facts.ts:87](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/spine-relation-facts.ts#L87)
 
 Did BOTH sides import + typecheck-resolve? A false here is a hard structural drift.
 
@@ -92,6 +92,6 @@ Did BOTH sides import + typecheck-resolve? A false here is a hard structural dri
 
 > `readonly` **typeName**: `string`
 
-Defined in: [gauntlet/src/spine-relation-facts.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/spine-relation-facts.ts#L71)
+Defined in: [gauntlet/src/spine-relation-facts.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/spine-relation-facts.ts#L75)
 
 The mirror type being classified (e.g. `CompositeState`, `Codec.Shape`, `Millis`).

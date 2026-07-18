@@ -8,6 +8,6 @@
 
 > **SurfaceRelation** = `"exact"` \| `"public-narrower"` \| `"public-wider"` \| `"opaque"` \| `"brand-reanchored"` \| `"runtime-exists"` \| `"intentionally-omitted"`
 
-Defined in: [gauntlet/src/spine-relation-facts.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/spine-relation-facts.ts#L51)
+Defined in: [gauntlet/src/spine-relation-facts.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/spine-relation-facts.ts#L55)
 
 Axis 2 — how the mirror relates to its source.

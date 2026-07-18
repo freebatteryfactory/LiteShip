@@ -6,7 +6,7 @@
 
 # Interface: SpineRelationBuildOptions
 
-Defined in: [audit/src/spine-relation-build.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/spine-relation-build.ts#L63)
+Defined in: [audit/src/spine-relation-build.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/spine-relation-build.ts#L62)
 
 Options for [buildSpineRelationFacts](../functions/buildSpineRelationFacts.md).
 
@@ -16,7 +16,7 @@ Options for [buildSpineRelationFacts](../functions/buildSpineRelationFacts.md).
 
 > `readonly` `optional` **overlay?**: `Readonly`\<`Record`\<`string`, `string`\>\>
 
-Defined in: [audit/src/spine-relation-build.ts:70](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/spine-relation-build.ts#L70)
+Defined in: [audit/src/spine-relation-build.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/spine-relation-build.ts#L69)
 
 In-memory content overrides, keyed by ABSOLUTE path — the seam the acceptance test
 uses to inject a DRIFTED spine (e.g. CapSet `Set`→array) without touching disk. A

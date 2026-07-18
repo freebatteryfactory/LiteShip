@@ -31,8 +31,12 @@
  *    Authority-spine re-export (structurally identical, provenance recorded);
  *    `runtime-exists` is value-existence (a relation over types cannot prove a value
  *    EXISTS — those stay as the kept runtime-existence describes); `intentionally-
- *    omitted` is a runtime type deliberately NOT mirrored (mechanically checkable via
- *    the type-export enumerator).
+ *    omitted` is a runtime type deliberately NOT mirrored — made visible not by THIS
+ *    gate but by the committed type-export SNAPSHOT (`tests/fixtures/type-export-
+ *    surface.json`): a mirror type that vanishes reds the snapshot, and regenerating it
+ *    is the deliberate omission. `runtime-exists` and `intentionally-omitted` are
+ *    therefore vocabulary arms the structural fold defensively refuses (never admits),
+ *    not relations this gate probes.
  *
  * The SOURCE is the hand-curated mirror; the gate is a PROJECTION observing the
  * relation with a declared fidelity (§7.4: curation derives the RELATION, never the
