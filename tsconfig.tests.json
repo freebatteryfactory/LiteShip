@@ -66,6 +66,11 @@
     // a future divergence between core.d.ts and the @czap/core runtime fails the
     // typecheck rather than living as a dead assertion.
     "tests/unit/spine-conformance.test.ts",
+    // The Wave-8.5 TYPE-export surface gate (#156): the mechanism that closes the
+    // VALUE-only api-surface snapshot's structural blind spot. Typechecked here so
+    // the enumerator's descriptor/roster/reader contracts bite (a drift in the
+    // TypeExportSurfaceSnapshot shape fails the typecheck, not just the run).
+    "tests/unit/audit/type-export-surface.test.ts",
     // The cure-wave determinism + zero-alloc + perf-claim tests: typechecked here
     // so their type-level contracts (RepoIR / GateVerdictKeyParts folds, the
     // alloc-gate budget import, the gate surface) bite rather than rot.

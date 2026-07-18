@@ -1,0 +1,4571 @@
+{
+  "snapshotFormat": 1,
+  "packages": {
+    "@czap/_spine": {
+      "typeExports": [
+        {
+          "name": "AIAction",
+          "kind": "interface"
+        },
+        {
+          "name": "AIConstraint",
+          "kind": "interface"
+        },
+        {
+          "name": "AIDimension",
+          "kind": "interface"
+        },
+        {
+          "name": "AIManifest",
+          "kind": "interface"
+        },
+        {
+          "name": "AIManifestCompileResult",
+          "kind": "interface"
+        },
+        {
+          "name": "AIManifestInput",
+          "kind": "interface"
+        },
+        {
+          "name": "AIParamSchema",
+          "kind": "interface"
+        },
+        {
+          "name": "AISlot",
+          "kind": "interface"
+        },
+        {
+          "name": "AIToolDefinition",
+          "kind": "interface"
+        },
+        {
+          "name": "AIValidationIssue",
+          "kind": "interface"
+        },
+        {
+          "name": "ARIACompileResult",
+          "kind": "interface"
+        },
+        {
+          "name": "ARIAStates",
+          "kind": "interface"
+        },
+        {
+          "name": "AddressedDigest",
+          "kind": "interface"
+        },
+        {
+          "name": "AnimatedQuantizerHandle",
+          "kind": "interface"
+        },
+        {
+          "name": "AnimatedQuantizerShape",
+          "kind": "interface"
+        },
+        {
+          "name": "Animation",
+          "kind": "namespace"
+        },
+        {
+          "name": "AstroLoggerLike",
+          "kind": "interface"
+        },
+        {
+          "name": "BackpressureHint",
+          "kind": "interface"
+        },
+        {
+          "name": "BeatComponent",
+          "kind": "interface"
+        },
+        {
+          "name": "BeatHandle",
+          "kind": "interface"
+        },
+        {
+          "name": "BeatMarkerSet",
+          "kind": "interface"
+        },
+        {
+          "name": "BeatProjectionResolutionInput",
+          "kind": "interface"
+        },
+        {
+          "name": "BeatSpawn",
+          "kind": "interface"
+        },
+        {
+          "name": "BlendNode",
+          "kind": "interface"
+        },
+        {
+          "name": "BlendTree",
+          "kind": "interface"
+        },
+        {
+          "name": "BlendTree",
+          "kind": "namespace"
+        },
+        {
+          "name": "Boundary",
+          "kind": "namespace"
+        },
+        {
+          "name": "BoundaryAssetUrlMap",
+          "kind": "type"
+        },
+        {
+          "name": "BoundaryCache",
+          "kind": "interface"
+        },
+        {
+          "name": "BoundaryCrossing",
+          "kind": "type"
+        },
+        {
+          "name": "BoundaryManifest",
+          "kind": "type"
+        },
+        {
+          "name": "BoundaryManifestEntry",
+          "kind": "interface"
+        },
+        {
+          "name": "BoundaryManifestFile",
+          "kind": "interface"
+        },
+        {
+          "name": "BoundarySpec",
+          "kind": "interface"
+        },
+        {
+          "name": "CSSCompileResult",
+          "kind": "interface"
+        },
+        {
+          "name": "CSSContainerRule",
+          "kind": "interface"
+        },
+        {
+          "name": "CSSCustomProp",
+          "kind": "type"
+        },
+        {
+          "name": "CSSLength",
+          "kind": "type"
+        },
+        {
+          "name": "CSSProp",
+          "kind": "type"
+        },
+        {
+          "name": "CSSRule",
+          "kind": "interface"
+        },
+        {
+          "name": "CSSStateBody",
+          "kind": "interface"
+        },
+        {
+          "name": "CSSStateInput",
+          "kind": "type"
+        },
+        {
+          "name": "CSSStates",
+          "kind": "type"
+        },
+        {
+          "name": "CSSTime",
+          "kind": "type"
+        },
+        {
+          "name": "CapSet",
+          "kind": "interface"
+        },
+        {
+          "name": "CapTier",
+          "kind": "type"
+        },
+        {
+          "name": "CapsuleCommandDescriptor",
+          "kind": "interface"
+        },
+        {
+          "name": "CapsuleCommandInvocation",
+          "kind": "interface"
+        },
+        {
+          "name": "CapsuleCommandResult",
+          "kind": "interface"
+        },
+        {
+          "name": "CapsuleResultMetaKey",
+          "kind": "type"
+        },
+        {
+          "name": "CapsuleResultReceipt",
+          "kind": "interface"
+        },
+        {
+          "name": "CaptureConfig",
+          "kind": "interface"
+        },
+        {
+          "name": "CaptureFrame",
+          "kind": "interface"
+        },
+        {
+          "name": "CaptureResult",
+          "kind": "interface"
+        },
+        {
+          "name": "Cell",
+          "kind": "namespace"
+        },
+        {
+          "name": "CellEnvelope",
+          "kind": "interface"
+        },
+        {
+          "name": "CellKernel",
+          "kind": "namespace"
+        },
+        {
+          "name": "CellKind",
+          "kind": "type"
+        },
+        {
+          "name": "CellMeta",
+          "kind": "interface"
+        },
+        {
+          "name": "ChainValidationError",
+          "kind": "type"
+        },
+        {
+          "name": "ChainValidationOptions",
+          "kind": "interface"
+        },
+        {
+          "name": "CheckpointResult",
+          "kind": "interface"
+        },
+        {
+          "name": "ClientHints",
+          "kind": "namespace"
+        },
+        {
+          "name": "ClientHintsHeaders",
+          "kind": "interface"
+        },
+        {
+          "name": "Clock",
+          "kind": "interface"
+        },
+        {
+          "name": "Codec",
+          "kind": "namespace"
+        },
+        {
+          "name": "CollectBoundaryManifestOptions",
+          "kind": "interface"
+        },
+        {
+          "name": "CommandAnnotations",
+          "kind": "interface"
+        },
+        {
+          "name": "CommandExecutionKind",
+          "kind": "type"
+        },
+        {
+          "name": "CommandJsonSchema",
+          "kind": "interface"
+        },
+        {
+          "name": "CompileResult",
+          "kind": "type"
+        },
+        {
+          "name": "CompiledGLSLOutput",
+          "kind": "interface"
+        },
+        {
+          "name": "CompiledOutputs",
+          "kind": "interface"
+        },
+        {
+          "name": "CompiledWGSLOutput",
+          "kind": "interface"
+        },
+        {
+          "name": "CompilerDef",
+          "kind": "type"
+        },
+        {
+          "name": "Component",
+          "kind": "namespace"
+        },
+        {
+          "name": "ComponentCatalog",
+          "kind": "interface"
+        },
+        {
+          "name": "ComponentDef",
+          "kind": "interface"
+        },
+        {
+          "name": "ComponentPropDef",
+          "kind": "interface"
+        },
+        {
+          "name": "CompositeState",
+          "kind": "interface"
+        },
+        {
+          "name": "Compositor",
+          "kind": "namespace"
+        },
+        {
+          "name": "CompositorWorker",
+          "kind": "namespace"
+        },
+        {
+          "name": "CompositorWorkerShape",
+          "kind": "interface"
+        },
+        {
+          "name": "CompositorWorkerStartupStage",
+          "kind": "type"
+        },
+        {
+          "name": "CompositorWorkerStartupTelemetry",
+          "kind": "interface"
+        },
+        {
+          "name": "CompositorWorkerState",
+          "kind": "type"
+        },
+        {
+          "name": "Config",
+          "kind": "namespace"
+        },
+        {
+          "name": "ConfigTemplateResult",
+          "kind": "interface"
+        },
+        {
+          "name": "ContentAddress",
+          "kind": "type"
+        },
+        {
+          "name": "ControllableSignal",
+          "kind": "interface"
+        },
+        {
+          "name": "CrossOriginEmbedderPolicy",
+          "kind": "type"
+        },
+        {
+          "name": "CzapFetchLayer",
+          "kind": "type"
+        },
+        {
+          "name": "CzapFetchLayerConfig",
+          "kind": "interface"
+        },
+        {
+          "name": "CzapLocals",
+          "kind": "interface"
+        },
+        {
+          "name": "CzapMiddlewareConfig",
+          "kind": "interface"
+        },
+        {
+          "name": "DAGNode",
+          "kind": "interface"
+        },
+        {
+          "name": "DefKind",
+          "kind": "type"
+        },
+        {
+          "name": "DenseStore",
+          "kind": "interface"
+        },
+        {
+          "name": "DenseStore",
+          "kind": "namespace"
+        },
+        {
+          "name": "DenseSystem",
+          "kind": "interface"
+        },
+        {
+          "name": "Derived",
+          "kind": "namespace"
+        },
+        {
+          "name": "DesignTier",
+          "kind": "type"
+        },
+        {
+          "name": "DetectionResult",
+          "kind": "interface"
+        },
+        {
+          "name": "DeviceCapabilities",
+          "kind": "interface"
+        },
+        {
+          "name": "DirtyFlags",
+          "kind": "interface"
+        },
+        {
+          "name": "DirtyFlags",
+          "kind": "namespace"
+        },
+        {
+          "name": "Disposer",
+          "kind": "type"
+        },
+        {
+          "name": "EaseName",
+          "kind": "type"
+        },
+        {
+          "name": "EaseTag",
+          "kind": "type"
+        },
+        {
+          "name": "Easing",
+          "kind": "namespace"
+        },
+        {
+          "name": "EdgeHostAdapter",
+          "kind": "interface"
+        },
+        {
+          "name": "EdgeHostAdapter",
+          "kind": "namespace"
+        },
+        {
+          "name": "EdgeHostAdapterConfig",
+          "kind": "interface"
+        },
+        {
+          "name": "EdgeHostBoundaryConfig",
+          "kind": "interface"
+        },
+        {
+          "name": "EdgeHostBoundaryResolution",
+          "kind": "interface"
+        },
+        {
+          "name": "EdgeHostCacheConfig",
+          "kind": "interface"
+        },
+        {
+          "name": "EdgeHostCacheStatus",
+          "kind": "type"
+        },
+        {
+          "name": "EdgeHostCacheTags",
+          "kind": "type"
+        },
+        {
+          "name": "EdgeHostCompileContext",
+          "kind": "interface"
+        },
+        {
+          "name": "EdgeHostContext",
+          "kind": "interface"
+        },
+        {
+          "name": "EdgeHostResolution",
+          "kind": "interface"
+        },
+        {
+          "name": "EdgeTier",
+          "kind": "namespace"
+        },
+        {
+          "name": "EdgeTierResult",
+          "kind": "interface"
+        },
+        {
+          "name": "EdgeType",
+          "kind": "type"
+        },
+        {
+          "name": "Entity",
+          "kind": "interface"
+        },
+        {
+          "name": "EntityId",
+          "kind": "type"
+        },
+        {
+          "name": "EvaluateResult",
+          "kind": "interface"
+        },
+        {
+          "name": "ExtendedDetectionResult",
+          "kind": "interface"
+        },
+        {
+          "name": "ExtendedDeviceCapabilities",
+          "kind": "interface"
+        },
+        {
+          "name": "FadeEnvelope",
+          "kind": "interface"
+        },
+        {
+          "name": "FetchLayerNext",
+          "kind": "type"
+        },
+        {
+          "name": "FocusState",
+          "kind": "interface"
+        },
+        {
+          "name": "ForkViolation",
+          "kind": "interface"
+        },
+        {
+          "name": "FrameBudget",
+          "kind": "interface"
+        },
+        {
+          "name": "FrameBudget",
+          "kind": "namespace"
+        },
+        {
+          "name": "FrameCapture",
+          "kind": "interface"
+        },
+        {
+          "name": "FrameMark",
+          "kind": "type"
+        },
+        {
+          "name": "FrameMarkSum",
+          "kind": "interface"
+        },
+        {
+          "name": "FromWorkerMessage",
+          "kind": "type"
+        },
+        {
+          "name": "GLSLCompileResult",
+          "kind": "interface"
+        },
+        {
+          "name": "GLSLDefine",
+          "kind": "interface"
+        },
+        {
+          "name": "GLSLStates",
+          "kind": "type"
+        },
+        {
+          "name": "GLSLType",
+          "kind": "type"
+        },
+        {
+          "name": "GLSLUniform",
+          "kind": "interface"
+        },
+        {
+          "name": "GPUTier",
+          "kind": "type"
+        },
+        {
+          "name": "GeneratedUINode",
+          "kind": "interface"
+        },
+        {
+          "name": "GeneratedUIValidationError",
+          "kind": "interface"
+        },
+        {
+          "name": "HLC",
+          "kind": "interface"
+        },
+        {
+          "name": "HLCClock",
+          "kind": "interface"
+        },
+        {
+          "name": "HMRPayload",
+          "kind": "interface"
+        },
+        {
+          "name": "IMEState",
+          "kind": "interface"
+        },
+        {
+          "name": "IntegrationConfig",
+          "kind": "interface"
+        },
+        {
+          "name": "IntegrityDigest",
+          "kind": "type"
+        },
+        {
+          "name": "InterpolatedFrame",
+          "kind": "interface"
+        },
+        {
+          "name": "IslandMode",
+          "kind": "type"
+        },
+        {
+          "name": "KVNamespace",
+          "kind": "interface"
+        },
+        {
+          "name": "Lifetime",
+          "kind": "namespace"
+        },
+        {
+          "name": "LiveCell",
+          "kind": "interface"
+        },
+        {
+          "name": "LiveCell",
+          "kind": "namespace"
+        },
+        {
+          "name": "LiveQuantizer",
+          "kind": "interface"
+        },
+        {
+          "name": "LiveQuantizerHandle",
+          "kind": "interface"
+        },
+        {
+          "name": "MatchPriority",
+          "kind": "type"
+        },
+        {
+          "name": "MatchResult",
+          "kind": "interface"
+        },
+        {
+          "name": "MergeResult",
+          "kind": "interface"
+        },
+        {
+          "name": "Messages",
+          "kind": "namespace"
+        },
+        {
+          "name": "Millis",
+          "kind": "type"
+        },
+        {
+          "name": "MorphCallbacks",
+          "kind": "interface"
+        },
+        {
+          "name": "MorphConfig",
+          "kind": "interface"
+        },
+        {
+          "name": "MorphHints",
+          "kind": "interface"
+        },
+        {
+          "name": "MorphRejection",
+          "kind": "interface"
+        },
+        {
+          "name": "MorphResult",
+          "kind": "type"
+        },
+        {
+          "name": "MotionTier",
+          "kind": "type"
+        },
+        {
+          "name": "OpType",
+          "kind": "type"
+        },
+        {
+          "name": "OutputTarget",
+          "kind": "type"
+        },
+        {
+          "name": "OutputsFor",
+          "kind": "type"
+        },
+        {
+          "name": "OverflowPolicy",
+          "kind": "type"
+        },
+        {
+          "name": "Part",
+          "kind": "namespace"
+        },
+        {
+          "name": "PhysicalState",
+          "kind": "interface"
+        },
+        {
+          "name": "Plan",
+          "kind": "namespace"
+        },
+        {
+          "name": "PlanBuilder",
+          "kind": "interface"
+        },
+        {
+          "name": "PlanEdge",
+          "kind": "interface"
+        },
+        {
+          "name": "PlanIR",
+          "kind": "interface"
+        },
+        {
+          "name": "PlanStep",
+          "kind": "interface"
+        },
+        {
+          "name": "PlanValidationError",
+          "kind": "type"
+        },
+        {
+          "name": "PlanValidationResult",
+          "kind": "type"
+        },
+        {
+          "name": "PluginConfig",
+          "kind": "interface"
+        },
+        {
+          "name": "Prettify",
+          "kind": "type"
+        },
+        {
+          "name": "Primitive",
+          "kind": "type"
+        },
+        {
+          "name": "PrimitiveKind",
+          "kind": "type"
+        },
+        {
+          "name": "PrimitiveResolution",
+          "kind": "interface"
+        },
+        {
+          "name": "PrimitiveShape",
+          "kind": "type"
+        },
+        {
+          "name": "Priority",
+          "kind": "type"
+        },
+        {
+          "name": "PulseEnvelope",
+          "kind": "interface"
+        },
+        {
+          "name": "QuantizeBlock",
+          "kind": "interface"
+        },
+        {
+          "name": "QuantizeNestedRule",
+          "kind": "interface"
+        },
+        {
+          "name": "QuantizeProps",
+          "kind": "interface"
+        },
+        {
+          "name": "QuantizeSheetContext",
+          "kind": "interface"
+        },
+        {
+          "name": "QuantizeStateBody",
+          "kind": "interface"
+        },
+        {
+          "name": "Quantizer",
+          "kind": "interface"
+        },
+        {
+          "name": "QuantizerBoundarySource",
+          "kind": "interface"
+        },
+        {
+          "name": "QuantizerBuilder",
+          "kind": "interface"
+        },
+        {
+          "name": "QuantizerConfig",
+          "kind": "interface"
+        },
+        {
+          "name": "QuantizerCrossings",
+          "kind": "type"
+        },
+        {
+          "name": "QuantizerFromOptions",
+          "kind": "interface"
+        },
+        {
+          "name": "QuantizerOutputs",
+          "kind": "interface"
+        },
+        {
+          "name": "QuantizerRuntime",
+          "kind": "interface"
+        },
+        {
+          "name": "QuantizerState",
+          "kind": "type"
+        },
+        {
+          "name": "ReactiveQuantizer",
+          "kind": "interface"
+        },
+        {
+          "name": "ReceiptDAG",
+          "kind": "interface"
+        },
+        {
+          "name": "ReceiptEnvelope",
+          "kind": "interface"
+        },
+        {
+          "name": "ReceiptSubject",
+          "kind": "interface"
+        },
+        {
+          "name": "ReconnectConfig",
+          "kind": "interface"
+        },
+        {
+          "name": "RemotionVideoConfig",
+          "kind": "interface"
+        },
+        {
+          "name": "RenderFn",
+          "kind": "type"
+        },
+        {
+          "name": "RenderWorker",
+          "kind": "namespace"
+        },
+        {
+          "name": "RenderWorkerShape",
+          "kind": "interface"
+        },
+        {
+          "name": "ResolvedEnvelope",
+          "kind": "type"
+        },
+        {
+          "name": "ResolvedStateAckPayload",
+          "kind": "interface"
+        },
+        {
+          "name": "ResumeResponse",
+          "kind": "type"
+        },
+        {
+          "name": "ResumptionConfig",
+          "kind": "interface"
+        },
+        {
+          "name": "ResumptionState",
+          "kind": "interface"
+        },
+        {
+          "name": "ResumptionStateInput",
+          "kind": "type"
+        },
+        {
+          "name": "SPSCRing",
+          "kind": "namespace"
+        },
+        {
+          "name": "SPSCRingBufferShape",
+          "kind": "interface"
+        },
+        {
+          "name": "SPSCRingPair",
+          "kind": "interface"
+        },
+        {
+          "name": "SSEClient",
+          "kind": "interface"
+        },
+        {
+          "name": "SSEConfig",
+          "kind": "interface"
+        },
+        {
+          "name": "SSEMessage",
+          "kind": "type"
+        },
+        {
+          "name": "SSEState",
+          "kind": "type"
+        },
+        {
+          "name": "Scheduler",
+          "kind": "namespace"
+        },
+        {
+          "name": "SchemaPort",
+          "kind": "type"
+        },
+        {
+          "name": "ScrollPosition",
+          "kind": "interface"
+        },
+        {
+          "name": "SelectionState",
+          "kind": "interface"
+        },
+        {
+          "name": "ServerIslandContext",
+          "kind": "interface"
+        },
+        {
+          "name": "ShadowLayer",
+          "kind": "interface"
+        },
+        {
+          "name": "Signal",
+          "kind": "interface"
+        },
+        {
+          "name": "Signal",
+          "kind": "namespace"
+        },
+        {
+          "name": "SignalInput",
+          "kind": "type"
+        },
+        {
+          "name": "SignalSource",
+          "kind": "type"
+        },
+        {
+          "name": "SignalSourceType",
+          "kind": "type"
+        },
+        {
+          "name": "SlotConfig",
+          "kind": "interface"
+        },
+        {
+          "name": "SlotEntry",
+          "kind": "interface"
+        },
+        {
+          "name": "SlotEntryInput",
+          "kind": "interface"
+        },
+        {
+          "name": "SlotPath",
+          "kind": "type"
+        },
+        {
+          "name": "SlotRegistryShape",
+          "kind": "interface"
+        },
+        {
+          "name": "SlotsOf",
+          "kind": "type"
+        },
+        {
+          "name": "SpringConfig",
+          "kind": "interface"
+        },
+        {
+          "name": "StateName",
+          "kind": "type"
+        },
+        {
+          "name": "StateUnion",
+          "kind": "type"
+        },
+        {
+          "name": "Store",
+          "kind": "namespace"
+        },
+        {
+          "name": "Style",
+          "kind": "namespace"
+        },
+        {
+          "name": "StyleBlock",
+          "kind": "interface"
+        },
+        {
+          "name": "StyleCSSResult",
+          "kind": "interface"
+        },
+        {
+          "name": "StyleLayer",
+          "kind": "interface"
+        },
+        {
+          "name": "System",
+          "kind": "interface"
+        },
+        {
+          "name": "Theme",
+          "kind": "namespace"
+        },
+        {
+          "name": "ThemeBlock",
+          "kind": "interface"
+        },
+        {
+          "name": "ThemeCSSResult",
+          "kind": "interface"
+        },
+        {
+          "name": "ThemeCompileConfig",
+          "kind": "interface"
+        },
+        {
+          "name": "ThemeCompileResult",
+          "kind": "interface"
+        },
+        {
+          "name": "ThresholdValue",
+          "kind": "type"
+        },
+        {
+          "name": "TierKey",
+          "kind": "type"
+        },
+        {
+          "name": "Timeline",
+          "kind": "namespace"
+        },
+        {
+          "name": "ToWorkerMessage",
+          "kind": "type"
+        },
+        {
+          "name": "Token",
+          "kind": "namespace"
+        },
+        {
+          "name": "TokenBlock",
+          "kind": "interface"
+        },
+        {
+          "name": "TokenCSSResult",
+          "kind": "interface"
+        },
+        {
+          "name": "TokenJSResult",
+          "kind": "interface"
+        },
+        {
+          "name": "TokenRef",
+          "kind": "type"
+        },
+        {
+          "name": "TokenTailwindResult",
+          "kind": "interface"
+        },
+        {
+          "name": "TokensOf",
+          "kind": "type"
+        },
+        {
+          "name": "TrackEnvelope",
+          "kind": "type"
+        },
+        {
+          "name": "TrackId",
+          "kind": "type"
+        },
+        {
+          "name": "TrackKind",
+          "kind": "type"
+        },
+        {
+          "name": "TransferableCanvas",
+          "kind": "interface"
+        },
+        {
+          "name": "Transition",
+          "kind": "interface"
+        },
+        {
+          "name": "TransitionConfig",
+          "kind": "interface"
+        },
+        {
+          "name": "TransitionMap",
+          "kind": "type"
+        },
+        {
+          "name": "TypedRef",
+          "kind": "namespace"
+        },
+        {
+          "name": "VariantsOf",
+          "kind": "type"
+        },
+        {
+          "name": "VectorClock",
+          "kind": "interface"
+        },
+        {
+          "name": "VideoConfig",
+          "kind": "interface"
+        },
+        {
+          "name": "VideoFrameOutput",
+          "kind": "interface"
+        },
+        {
+          "name": "VideoRenderer",
+          "kind": "interface"
+        },
+        {
+          "name": "VideoRenderer",
+          "kind": "namespace"
+        },
+        {
+          "name": "VirtualModuleData",
+          "kind": "interface"
+        },
+        {
+          "name": "VirtualModuleId",
+          "kind": "type"
+        },
+        {
+          "name": "WGSLBinding",
+          "kind": "interface"
+        },
+        {
+          "name": "WGSLCompileResult",
+          "kind": "interface"
+        },
+        {
+          "name": "WGSLStates",
+          "kind": "type"
+        },
+        {
+          "name": "WGSLStruct",
+          "kind": "interface"
+        },
+        {
+          "name": "WGSLType",
+          "kind": "type"
+        },
+        {
+          "name": "WGSLUniformValue",
+          "kind": "type"
+        },
+        {
+          "name": "WGSLUniformVector",
+          "kind": "type"
+        },
+        {
+          "name": "WallClockTimestamp",
+          "kind": "type"
+        },
+        {
+          "name": "WebCodecsCapture",
+          "kind": "namespace"
+        },
+        {
+          "name": "WebCodecsCaptureOptions",
+          "kind": "interface"
+        },
+        {
+          "name": "WorkerConfig",
+          "kind": "interface"
+        },
+        {
+          "name": "WorkerHost",
+          "kind": "namespace"
+        },
+        {
+          "name": "WorkerHostRenderConfig",
+          "kind": "interface"
+        },
+        {
+          "name": "WorkerHostShape",
+          "kind": "interface"
+        },
+        {
+          "name": "WorkerMetrics",
+          "kind": "type"
+        },
+        {
+          "name": "WorkerUpdate",
+          "kind": "type"
+        },
+        {
+          "name": "World",
+          "kind": "interface"
+        },
+        {
+          "name": "World",
+          "kind": "namespace"
+        },
+        {
+          "name": "Zap",
+          "kind": "namespace"
+        }
+      ]
+    },
+    "@czap/assets": {
+      "typeExports": [
+        {
+          "name": "AssetCapsule",
+          "kind": "type"
+        },
+        {
+          "name": "AssetDecl",
+          "kind": "type"
+        },
+        {
+          "name": "AssetDecoder",
+          "kind": "type"
+        },
+        {
+          "name": "AssetKind",
+          "kind": "type"
+        },
+        {
+          "name": "AssetRefId",
+          "kind": "type"
+        },
+        {
+          "name": "BeatMarkerSet",
+          "kind": "type"
+        },
+        {
+          "name": "DecodedAsset",
+          "kind": "type"
+        },
+        {
+          "name": "DecodedAudio",
+          "kind": "type"
+        },
+        {
+          "name": "DecodedImage",
+          "kind": "type"
+        },
+        {
+          "name": "DecodedVideo",
+          "kind": "type"
+        },
+        {
+          "name": "FourCC",
+          "kind": "type"
+        },
+        {
+          "name": "WavChunk",
+          "kind": "type"
+        },
+        {
+          "name": "WavMetadata",
+          "kind": "type"
+        }
+      ]
+    },
+    "@czap/astro": {
+      "typeExports": [
+        {
+          "name": "AstroLoggerLike",
+          "kind": "type"
+        },
+        {
+          "name": "CrossOriginEmbedderPolicy",
+          "kind": "type"
+        },
+        {
+          "name": "CzapFetchLayer",
+          "kind": "type"
+        },
+        {
+          "name": "CzapFetchLayerConfig",
+          "kind": "type"
+        },
+        {
+          "name": "CzapLocals",
+          "kind": "type"
+        },
+        {
+          "name": "CzapMiddlewareConfig",
+          "kind": "type"
+        },
+        {
+          "name": "DocsBundleManifest",
+          "kind": "type"
+        },
+        {
+          "name": "DocsMcpBundle",
+          "kind": "type"
+        },
+        {
+          "name": "FetchLayerNext",
+          "kind": "type"
+        },
+        {
+          "name": "IntegrationConfig",
+          "kind": "type"
+        },
+        {
+          "name": "QuantizeProps",
+          "kind": "type"
+        },
+        {
+          "name": "ResolvedInitialState",
+          "kind": "type"
+        },
+        {
+          "name": "ResponsiveMediaCapsSource",
+          "kind": "type"
+        },
+        {
+          "name": "ResponsiveMediaHostProjection",
+          "kind": "type"
+        },
+        {
+          "name": "SatelliteProps",
+          "kind": "type"
+        },
+        {
+          "name": "ServerIslandContext",
+          "kind": "type"
+        }
+      ]
+    },
+    "@czap/audit": {
+      "typeExports": [
+        {
+          "name": "ActiveSurfaceReaderOptions",
+          "kind": "interface"
+        },
+        {
+          "name": "AllowlistUnexercisedEntry",
+          "kind": "interface"
+        },
+        {
+          "name": "AuditAllowlistEntry",
+          "kind": "interface"
+        },
+        {
+          "name": "AuditCounts",
+          "kind": "interface"
+        },
+        {
+          "name": "AuditCoverageClass",
+          "kind": "type"
+        },
+        {
+          "name": "AuditFinding",
+          "kind": "interface"
+        },
+        {
+          "name": "AuditLocation",
+          "kind": "interface"
+        },
+        {
+          "name": "AuditPassResult",
+          "kind": "interface"
+        },
+        {
+          "name": "AuditSection",
+          "kind": "type"
+        },
+        {
+          "name": "AuditSectionResult",
+          "kind": "interface"
+        },
+        {
+          "name": "AuditSeverity",
+          "kind": "type"
+        },
+        {
+          "name": "AuditSuppression",
+          "kind": "interface"
+        },
+        {
+          "name": "BuildRepoIROptions",
+          "kind": "interface"
+        },
+        {
+          "name": "BuildRepoIRTaintOptions",
+          "kind": "interface"
+        },
+        {
+          "name": "CapabilityLinkOptions",
+          "kind": "interface"
+        },
+        {
+          "name": "CapabilitySkipSite",
+          "kind": "interface"
+        },
+        {
+          "name": "ConditionForce",
+          "kind": "type"
+        },
+        {
+          "name": "ConditionMutant",
+          "kind": "interface"
+        },
+        {
+          "name": "ConsumerDiscovery",
+          "kind": "interface"
+        },
+        {
+          "name": "CoverageMap",
+          "kind": "interface"
+        },
+        {
+          "name": "DevopsProfile",
+          "kind": "interface"
+        },
+        {
+          "name": "EarlyReturnMatch",
+          "kind": "interface"
+        },
+        {
+          "name": "EquivalentMutantEntry",
+          "kind": "interface"
+        },
+        {
+          "name": "EquivalentMutantRegistry",
+          "kind": "interface"
+        },
+        {
+          "name": "EquivalentVerdict",
+          "kind": "interface"
+        },
+        {
+          "name": "EvaluateMutantOptions",
+          "kind": "interface"
+        },
+        {
+          "name": "FactOracle",
+          "kind": "type"
+        },
+        {
+          "name": "GenerateConditionMutantsOptions",
+          "kind": "interface"
+        },
+        {
+          "name": "GenerateMutantsOptions",
+          "kind": "interface"
+        },
+        {
+          "name": "IntegritySummary",
+          "kind": "interface"
+        },
+        {
+          "name": "KilledVerdict",
+          "kind": "interface"
+        },
+        {
+          "name": "McdcBuildOptions",
+          "kind": "interface"
+        },
+        {
+          "name": "McdcTargetFile",
+          "kind": "interface"
+        },
+        {
+          "name": "ModuleScopeDateHit",
+          "kind": "interface"
+        },
+        {
+          "name": "Mutant",
+          "kind": "interface"
+        },
+        {
+          "name": "MutantCore",
+          "kind": "interface"
+        },
+        {
+          "name": "MutantTestRunner",
+          "kind": "type"
+        },
+        {
+          "name": "MutantVerdict",
+          "kind": "type"
+        },
+        {
+          "name": "MutantVerdictCache",
+          "kind": "interface"
+        },
+        {
+          "name": "Mutation",
+          "kind": "interface"
+        },
+        {
+          "name": "MutationBuildOptions",
+          "kind": "interface"
+        },
+        {
+          "name": "MutationOperatorId",
+          "kind": "type"
+        },
+        {
+          "name": "MutationScore",
+          "kind": "interface"
+        },
+        {
+          "name": "MutationTargetFile",
+          "kind": "interface"
+        },
+        {
+          "name": "NoCoverageVerdict",
+          "kind": "interface"
+        },
+        {
+          "name": "OracleOutcome",
+          "kind": "type"
+        },
+        {
+          "name": "OrphanCoverage",
+          "kind": "interface"
+        },
+        {
+          "name": "OrphanValue",
+          "kind": "interface"
+        },
+        {
+          "name": "PackageExportTarget",
+          "kind": "interface"
+        },
+        {
+          "name": "PackageManifestInfo",
+          "kind": "interface"
+        },
+        {
+          "name": "PackagePathResolution",
+          "kind": "interface"
+        },
+        {
+          "name": "PackagePathResolver",
+          "kind": "type"
+        },
+        {
+          "name": "PackagePolicy",
+          "kind": "interface"
+        },
+        {
+          "name": "PackageTypeSurface",
+          "kind": "interface"
+        },
+        {
+          "name": "ResolvedImport",
+          "kind": "interface"
+        },
+        {
+          "name": "SourceFileRecord",
+          "kind": "interface"
+        },
+        {
+          "name": "StructureCoverageClassification",
+          "kind": "interface"
+        },
+        {
+          "name": "StructureSummary",
+          "kind": "interface"
+        },
+        {
+          "name": "SurfacePolicyShape",
+          "kind": "interface"
+        },
+        {
+          "name": "SurfaceReader",
+          "kind": "interface"
+        },
+        {
+          "name": "SurfaceSummary",
+          "kind": "interface"
+        },
+        {
+          "name": "SurvivedVerdict",
+          "kind": "interface"
+        },
+        {
+          "name": "SymbolOrphanCoverage",
+          "kind": "interface"
+        },
+        {
+          "name": "SymbolReferenceOracleInput",
+          "kind": "interface"
+        },
+        {
+          "name": "TaintRegistry",
+          "kind": "interface"
+        },
+        {
+          "name": "TopologyCoverageEntry",
+          "kind": "interface"
+        },
+        {
+          "name": "TransitionBuildOptions",
+          "kind": "interface"
+        },
+        {
+          "name": "TransitionRun",
+          "kind": "interface"
+        },
+        {
+          "name": "TypeExportDescriptor",
+          "kind": "interface"
+        },
+        {
+          "name": "TypeExportDrift",
+          "kind": "interface"
+        },
+        {
+          "name": "TypeExportKind",
+          "kind": "type"
+        },
+        {
+          "name": "TypeExportRosterEntry",
+          "kind": "interface"
+        },
+        {
+          "name": "TypeExportSurfaceSnapshot",
+          "kind": "interface"
+        }
+      ]
+    },
+    "@czap/canonical": {
+      "typeExports": []
+    },
+    "@czap/cli": {
+      "typeExports": []
+    },
+    "@czap/cloudflare": {
+      "typeExports": [
+        {
+          "name": "CloudflareCacheApi",
+          "kind": "type"
+        },
+        {
+          "name": "CloudflareEdgeCacheOptions",
+          "kind": "type"
+        },
+        {
+          "name": "CloudflareMiddlewareConfig",
+          "kind": "type"
+        },
+        {
+          "name": "CloudflareWorkersEnv",
+          "kind": "type"
+        }
+      ]
+    },
+    "@czap/command": {
+      "typeExports": [
+        {
+          "name": "AssetAnalyzePayload",
+          "kind": "type"
+        },
+        {
+          "name": "AuditEngineSummary",
+          "kind": "type"
+        },
+        {
+          "name": "AuditFloorPayload",
+          "kind": "type"
+        },
+        {
+          "name": "AuditFloorSummary",
+          "kind": "type"
+        },
+        {
+          "name": "AuditPayload",
+          "kind": "type"
+        },
+        {
+          "name": "CapsuleBenchClassification",
+          "kind": "type"
+        },
+        {
+          "name": "CapsuleCommandDescriptor",
+          "kind": "type"
+        },
+        {
+          "name": "CapsuleCommandHandler",
+          "kind": "type"
+        },
+        {
+          "name": "CapsuleCommandInvocation",
+          "kind": "type"
+        },
+        {
+          "name": "CapsuleCommandResult",
+          "kind": "type"
+        },
+        {
+          "name": "CapsuleGateSummary",
+          "kind": "type"
+        },
+        {
+          "name": "CapsuleManifest",
+          "kind": "type"
+        },
+        {
+          "name": "CapsuleManifestEntry",
+          "kind": "type"
+        },
+        {
+          "name": "CapsuleVerifyPayload",
+          "kind": "type"
+        },
+        {
+          "name": "CheckInvariantEntry",
+          "kind": "type"
+        },
+        {
+          "name": "CheckInvariantsPayload",
+          "kind": "type"
+        },
+        {
+          "name": "CheckInvariantsSummary",
+          "kind": "type"
+        },
+        {
+          "name": "CheckPayload",
+          "kind": "type"
+        },
+        {
+          "name": "CommandAnnotations",
+          "kind": "type"
+        },
+        {
+          "name": "CommandCapability",
+          "kind": "type"
+        },
+        {
+          "name": "CommandContext",
+          "kind": "type"
+        },
+        {
+          "name": "CommandExecutionKind",
+          "kind": "type"
+        },
+        {
+          "name": "CommandJsonSchema",
+          "kind": "type"
+        },
+        {
+          "name": "CommandMap",
+          "kind": "type"
+        },
+        {
+          "name": "GlossaryEntry",
+          "kind": "type"
+        },
+        {
+          "name": "GlossaryPayload",
+          "kind": "type"
+        },
+        {
+          "name": "HandledCommand",
+          "kind": "type"
+        },
+        {
+          "name": "InvariantViolation",
+          "kind": "type"
+        },
+        {
+          "name": "InvariantViolationGroup",
+          "kind": "type"
+        },
+        {
+          "name": "PackageJsonLite",
+          "kind": "type"
+        },
+        {
+          "name": "PackagePlumbEntry",
+          "kind": "type"
+        },
+        {
+          "name": "PackagePlumbStatus",
+          "kind": "type"
+        },
+        {
+          "name": "PackageSmokePayload",
+          "kind": "type"
+        },
+        {
+          "name": "PackageSmokeSpec",
+          "kind": "type"
+        },
+        {
+          "name": "PackageSmokeSummary",
+          "kind": "type"
+        },
+        {
+          "name": "PlumbGateSummary",
+          "kind": "type"
+        },
+        {
+          "name": "PlumbPayload",
+          "kind": "type"
+        },
+        {
+          "name": "PlumbSkip",
+          "kind": "type"
+        },
+        {
+          "name": "RegisteredCommand",
+          "kind": "type"
+        },
+        {
+          "name": "VerifyPayload",
+          "kind": "type"
+        },
+        {
+          "name": "VersionPayload",
+          "kind": "type"
+        },
+        {
+          "name": "WorkspacePackage",
+          "kind": "type"
+        }
+      ]
+    },
+    "@czap/compiler": {
+      "typeExports": [
+        {
+          "name": "AIAction",
+          "kind": "type"
+        },
+        {
+          "name": "AIConstraint",
+          "kind": "type"
+        },
+        {
+          "name": "AIDimension",
+          "kind": "type"
+        },
+        {
+          "name": "AIManifest",
+          "kind": "type"
+        },
+        {
+          "name": "AIManifestCompileResult",
+          "kind": "type"
+        },
+        {
+          "name": "AIManifestInput",
+          "kind": "type"
+        },
+        {
+          "name": "AIParamSchema",
+          "kind": "type"
+        },
+        {
+          "name": "AISlot",
+          "kind": "type"
+        },
+        {
+          "name": "AIToolDefinition",
+          "kind": "type"
+        },
+        {
+          "name": "AIValidationIssue",
+          "kind": "type"
+        },
+        {
+          "name": "ARIACompileResult",
+          "kind": "type"
+        },
+        {
+          "name": "ARIAStates",
+          "kind": "type"
+        },
+        {
+          "name": "CSSAtRuleGroup",
+          "kind": "type"
+        },
+        {
+          "name": "CSSCompileResult",
+          "kind": "type"
+        },
+        {
+          "name": "CSSContainerRule",
+          "kind": "type"
+        },
+        {
+          "name": "CSSRule",
+          "kind": "type"
+        },
+        {
+          "name": "CSSStateBody",
+          "kind": "type"
+        },
+        {
+          "name": "CSSStateInput",
+          "kind": "type"
+        },
+        {
+          "name": "CSSStates",
+          "kind": "type"
+        },
+        {
+          "name": "CompileMcpAppManifestInput",
+          "kind": "type"
+        },
+        {
+          "name": "CompileResult",
+          "kind": "type"
+        },
+        {
+          "name": "CompiledResponsiveMedia",
+          "kind": "type"
+        },
+        {
+          "name": "CompiledReveal",
+          "kind": "type"
+        },
+        {
+          "name": "CompiledScrollTimeline",
+          "kind": "type"
+        },
+        {
+          "name": "CompiledStagger",
+          "kind": "type"
+        },
+        {
+          "name": "CompiledStaggerItem",
+          "kind": "type"
+        },
+        {
+          "name": "CompilerDef",
+          "kind": "type"
+        },
+        {
+          "name": "ConfigTemplateResult",
+          "kind": "type"
+        },
+        {
+          "name": "GLSLCompileResult",
+          "kind": "type"
+        },
+        {
+          "name": "GLSLDefine",
+          "kind": "type"
+        },
+        {
+          "name": "GLSLStates",
+          "kind": "type"
+        },
+        {
+          "name": "GLSLType",
+          "kind": "type"
+        },
+        {
+          "name": "GLSLUniform",
+          "kind": "type"
+        },
+        {
+          "name": "ManifestPromptView",
+          "kind": "type"
+        },
+        {
+          "name": "ManifestResourceView",
+          "kind": "type"
+        },
+        {
+          "name": "ManifestToolView",
+          "kind": "type"
+        },
+        {
+          "name": "ManifestUiResourceView",
+          "kind": "type"
+        },
+        {
+          "name": "McpAppManifest",
+          "kind": "type"
+        },
+        {
+          "name": "MotionCompileInput",
+          "kind": "type"
+        },
+        {
+          "name": "MotionCompileResult",
+          "kind": "type"
+        },
+        {
+          "name": "MotionEasing",
+          "kind": "type"
+        },
+        {
+          "name": "MotionScrollTimeline",
+          "kind": "type"
+        },
+        {
+          "name": "MotionSpringConfig",
+          "kind": "type"
+        },
+        {
+          "name": "MotionViewTimeline",
+          "kind": "type"
+        },
+        {
+          "name": "StyleCSSResult",
+          "kind": "type"
+        },
+        {
+          "name": "ThemeCSSResult",
+          "kind": "type"
+        },
+        {
+          "name": "TokenCSSResult",
+          "kind": "type"
+        },
+        {
+          "name": "TokenJSResult",
+          "kind": "type"
+        },
+        {
+          "name": "TokenTailwindResult",
+          "kind": "type"
+        },
+        {
+          "name": "WGSLBinding",
+          "kind": "type"
+        },
+        {
+          "name": "WGSLCompileResult",
+          "kind": "type"
+        },
+        {
+          "name": "WGSLStates",
+          "kind": "type"
+        },
+        {
+          "name": "WGSLStruct",
+          "kind": "type"
+        },
+        {
+          "name": "WGSLType",
+          "kind": "type"
+        },
+        {
+          "name": "WGSLUniformValue",
+          "kind": "type"
+        },
+        {
+          "name": "WGSLUniformVector",
+          "kind": "type"
+        }
+      ]
+    },
+    "@czap/core": {
+      "typeExports": [
+        {
+          "name": "AIContext",
+          "kind": "type"
+        },
+        {
+          "name": "AppliedGraphVerification",
+          "kind": "type"
+        },
+        {
+          "name": "ApplyToken",
+          "kind": "type"
+        },
+        {
+          "name": "AssemblyKind",
+          "kind": "type"
+        },
+        {
+          "name": "AttributionDecl",
+          "kind": "type"
+        },
+        {
+          "name": "BoundaryCrossing",
+          "kind": "type"
+        },
+        {
+          "name": "BranchCondition",
+          "kind": "type"
+        },
+        {
+          "name": "BranchGuard",
+          "kind": "type"
+        },
+        {
+          "name": "BudgetDecl",
+          "kind": "type"
+        },
+        {
+          "name": "CapSet",
+          "kind": "type"
+        },
+        {
+          "name": "CapTier",
+          "kind": "type"
+        },
+        {
+          "name": "CapabilityDecl",
+          "kind": "type"
+        },
+        {
+          "name": "CapsuleCommandDescriptor",
+          "kind": "type"
+        },
+        {
+          "name": "CapsuleCommandInvocation",
+          "kind": "type"
+        },
+        {
+          "name": "CapsuleCommandResult",
+          "kind": "type"
+        },
+        {
+          "name": "CapsuleContract",
+          "kind": "type"
+        },
+        {
+          "name": "CapsuleDef",
+          "kind": "type"
+        },
+        {
+          "name": "CapsuleResultMetaKey",
+          "kind": "type"
+        },
+        {
+          "name": "CapsuleResultReceipt",
+          "kind": "type"
+        },
+        {
+          "name": "CaptureConfig",
+          "kind": "type"
+        },
+        {
+          "name": "CaptureFrame",
+          "kind": "type"
+        },
+        {
+          "name": "CaptureResult",
+          "kind": "type"
+        },
+        {
+          "name": "CastContextOptions",
+          "kind": "type"
+        },
+        {
+          "name": "CellEnvelope",
+          "kind": "type"
+        },
+        {
+          "name": "CellFanoutShape",
+          "kind": "type"
+        },
+        {
+          "name": "CellKind",
+          "kind": "type"
+        },
+        {
+          "name": "CellMeta",
+          "kind": "type"
+        },
+        {
+          "name": "CellReplayShape",
+          "kind": "type"
+        },
+        {
+          "name": "CellSink",
+          "kind": "type"
+        },
+        {
+          "name": "CellSubscriber",
+          "kind": "type"
+        },
+        {
+          "name": "ChainValidationError",
+          "kind": "type"
+        },
+        {
+          "name": "ChainValidationOptions",
+          "kind": "type"
+        },
+        {
+          "name": "CheckpointResult",
+          "kind": "type"
+        },
+        {
+          "name": "Clock",
+          "kind": "type"
+        },
+        {
+          "name": "ColorSpace",
+          "kind": "type"
+        },
+        {
+          "name": "CommandAnnotations",
+          "kind": "type"
+        },
+        {
+          "name": "CommandExecutionKind",
+          "kind": "type"
+        },
+        {
+          "name": "CommandJsonSchema",
+          "kind": "type"
+        },
+        {
+          "name": "ComponentNode",
+          "kind": "type"
+        },
+        {
+          "name": "ComposableEntity",
+          "kind": "type"
+        },
+        {
+          "name": "ComposableWorldShape",
+          "kind": "type"
+        },
+        {
+          "name": "CompositeState",
+          "kind": "type"
+        },
+        {
+          "name": "CompositorConfig",
+          "kind": "type"
+        },
+        {
+          "name": "CoreAstroConfig",
+          "kind": "type"
+        },
+        {
+          "name": "CorePluginConfig",
+          "kind": "type"
+        },
+        {
+          "name": "CssKeyframeStep",
+          "kind": "type"
+        },
+        {
+          "name": "CssMotionPlan",
+          "kind": "type"
+        },
+        {
+          "name": "DAGNode",
+          "kind": "type"
+        },
+        {
+          "name": "Decision",
+          "kind": "type"
+        },
+        {
+          "name": "DeclarationSchema",
+          "kind": "type"
+        },
+        {
+          "name": "DecodeIssue",
+          "kind": "type"
+        },
+        {
+          "name": "DecodeIssueCode",
+          "kind": "type"
+        },
+        {
+          "name": "DecodeIssueView",
+          "kind": "type"
+        },
+        {
+          "name": "DecodePath",
+          "kind": "type"
+        },
+        {
+          "name": "DecodeResult",
+          "kind": "type"
+        },
+        {
+          "name": "DeepReadonly",
+          "kind": "type"
+        },
+        {
+          "name": "DenseStore",
+          "kind": "type"
+        },
+        {
+          "name": "DenseSystem",
+          "kind": "type"
+        },
+        {
+          "name": "DiagnosticEvent",
+          "kind": "type"
+        },
+        {
+          "name": "DiagnosticLevel",
+          "kind": "type"
+        },
+        {
+          "name": "DiagnosticPayload",
+          "kind": "type"
+        },
+        {
+          "name": "DiagnosticsSink",
+          "kind": "type"
+        },
+        {
+          "name": "DiscreteStateTransition",
+          "kind": "type"
+        },
+        {
+          "name": "Disposer",
+          "kind": "type"
+        },
+        {
+          "name": "DocumentGraph",
+          "kind": "type"
+        },
+        {
+          "name": "DocumentGraphEdge",
+          "kind": "type"
+        },
+        {
+          "name": "DocumentGraphNode",
+          "kind": "type"
+        },
+        {
+          "name": "DocumentGraphNodeParts",
+          "kind": "type"
+        },
+        {
+          "name": "EdgePatchOp",
+          "kind": "type"
+        },
+        {
+          "name": "EdgeType",
+          "kind": "type"
+        },
+        {
+          "name": "Entity",
+          "kind": "type"
+        },
+        {
+          "name": "EntityComponents",
+          "kind": "type"
+        },
+        {
+          "name": "EntityNode",
+          "kind": "type"
+        },
+        {
+          "name": "EscalationResult",
+          "kind": "type"
+        },
+        {
+          "name": "EvaluateResult",
+          "kind": "type"
+        },
+        {
+          "name": "ExportNode",
+          "kind": "type"
+        },
+        {
+          "name": "Finalizer",
+          "kind": "type"
+        },
+        {
+          "name": "ForkViolation",
+          "kind": "type"
+        },
+        {
+          "name": "FrameCapture",
+          "kind": "type"
+        },
+        {
+          "name": "FrameType",
+          "kind": "type"
+        },
+        {
+          "name": "GapStrategy",
+          "kind": "type"
+        },
+        {
+          "name": "GeneratedUIValidator",
+          "kind": "type"
+        },
+        {
+          "name": "GraphMutationClient",
+          "kind": "type"
+        },
+        {
+          "name": "GraphMutationClientOptions",
+          "kind": "type"
+        },
+        {
+          "name": "GraphMutationOps",
+          "kind": "type"
+        },
+        {
+          "name": "GraphMutationRequest",
+          "kind": "type"
+        },
+        {
+          "name": "GraphMutationResponse",
+          "kind": "type"
+        },
+        {
+          "name": "GraphNativeGapReplayOptions",
+          "kind": "type"
+        },
+        {
+          "name": "GraphNativeGapReplayResult",
+          "kind": "type"
+        },
+        {
+          "name": "GraphQueryEtagCandidates",
+          "kind": "type"
+        },
+        {
+          "name": "GraphQueryRequest",
+          "kind": "type"
+        },
+        {
+          "name": "GraphQueryResponse",
+          "kind": "type"
+        },
+        {
+          "name": "GraphStore",
+          "kind": "type"
+        },
+        {
+          "name": "GraphSummary",
+          "kind": "type"
+        },
+        {
+          "name": "HLCBrand",
+          "kind": "type"
+        },
+        {
+          "name": "Infer",
+          "kind": "type"
+        },
+        {
+          "name": "InferEncoded",
+          "kind": "type"
+        },
+        {
+          "name": "Invariant",
+          "kind": "type"
+        },
+        {
+          "name": "JsonSchemaFragment",
+          "kind": "type"
+        },
+        {
+          "name": "JsonSchemaObject",
+          "kind": "type"
+        },
+        {
+          "name": "KernelDecodeResult",
+          "kind": "type"
+        },
+        {
+          "name": "LadderTarget",
+          "kind": "type"
+        },
+        {
+          "name": "LifetimeDisposeError",
+          "kind": "type"
+        },
+        {
+          "name": "LifetimeShape",
+          "kind": "type"
+        },
+        {
+          "name": "LiteshipStandardSchema",
+          "kind": "type"
+        },
+        {
+          "name": "LoweredMotionPlan",
+          "kind": "type"
+        },
+        {
+          "name": "LoweredProgramTimeline",
+          "kind": "type"
+        },
+        {
+          "name": "LoweredReveal",
+          "kind": "type"
+        },
+        {
+          "name": "LoweredRevealChain",
+          "kind": "type"
+        },
+        {
+          "name": "LoweredScrollTimeline",
+          "kind": "type"
+        },
+        {
+          "name": "LoweredStagger",
+          "kind": "type"
+        },
+        {
+          "name": "LoweredStaggerItem",
+          "kind": "type"
+        },
+        {
+          "name": "ManualClock",
+          "kind": "type"
+        },
+        {
+          "name": "MergeResult",
+          "kind": "type"
+        },
+        {
+          "name": "MorphStrategy",
+          "kind": "type"
+        },
+        {
+          "name": "MotionPropertyTween",
+          "kind": "type"
+        },
+        {
+          "name": "MotionTier",
+          "kind": "type"
+        },
+        {
+          "name": "NodeFamily",
+          "kind": "type"
+        },
+        {
+          "name": "NodePatchOp",
+          "kind": "type"
+        },
+        {
+          "name": "OpType",
+          "kind": "type"
+        },
+        {
+          "name": "OutputsFor",
+          "kind": "type"
+        },
+        {
+          "name": "PatchOp",
+          "kind": "type"
+        },
+        {
+          "name": "PatchReceiptEntry",
+          "kind": "type"
+        },
+        {
+          "name": "PolicyNode",
+          "kind": "type"
+        },
+        {
+          "name": "PoseNode",
+          "kind": "type"
+        },
+        {
+          "name": "Prettify",
+          "kind": "type"
+        },
+        {
+          "name": "Primitive",
+          "kind": "type"
+        },
+        {
+          "name": "PrimitiveKind",
+          "kind": "type"
+        },
+        {
+          "name": "Priority",
+          "kind": "type"
+        },
+        {
+          "name": "ProgramEnv",
+          "kind": "type"
+        },
+        {
+          "name": "ProgramSample",
+          "kind": "type"
+        },
+        {
+          "name": "ProgramTimelineEntry",
+          "kind": "type"
+        },
+        {
+          "name": "ProgramUniforms",
+          "kind": "type"
+        },
+        {
+          "name": "ProjectionKeys",
+          "kind": "type"
+        },
+        {
+          "name": "ProjectionNode",
+          "kind": "type"
+        },
+        {
+          "name": "ProjectionStateOptions",
+          "kind": "type"
+        },
+        {
+          "name": "ProjectionStateShape",
+          "kind": "type"
+        },
+        {
+          "name": "ProposalAcceptance",
+          "kind": "type"
+        },
+        {
+          "name": "ProposalRejection",
+          "kind": "type"
+        },
+        {
+          "name": "ProposalResult",
+          "kind": "type"
+        },
+        {
+          "name": "ProposalSchema",
+          "kind": "type"
+        },
+        {
+          "name": "ProposalTarget",
+          "kind": "type"
+        },
+        {
+          "name": "Quantizer",
+          "kind": "type"
+        },
+        {
+          "name": "QuantizerCrossings",
+          "kind": "type"
+        },
+        {
+          "name": "QuantizerState",
+          "kind": "type"
+        },
+        {
+          "name": "RafDebouncedTrigger",
+          "kind": "type"
+        },
+        {
+          "name": "ReactiveQuantizer",
+          "kind": "type"
+        },
+        {
+          "name": "Reason",
+          "kind": "type"
+        },
+        {
+          "name": "ReceiptDAG",
+          "kind": "type"
+        },
+        {
+          "name": "ReceiptEnvelope",
+          "kind": "type"
+        },
+        {
+          "name": "ReceiptSubject",
+          "kind": "type"
+        },
+        {
+          "name": "ReplayDiscreteFromPatchReceiptsOptions",
+          "kind": "type"
+        },
+        {
+          "name": "ReplayableRecoveryCell",
+          "kind": "type"
+        },
+        {
+          "name": "RequireAtLeastOne",
+          "kind": "type"
+        },
+        {
+          "name": "ResolvedResponsiveMedia",
+          "kind": "type"
+        },
+        {
+          "name": "ResolvedStateSnapshot",
+          "kind": "type"
+        },
+        {
+          "name": "ResponsiveMediaCandidateSet",
+          "kind": "type"
+        },
+        {
+          "name": "ResponsiveMediaCapabilities",
+          "kind": "type"
+        },
+        {
+          "name": "ResponsiveMediaIntent",
+          "kind": "type"
+        },
+        {
+          "name": "ResponsiveMediaIntentInput",
+          "kind": "type"
+        },
+        {
+          "name": "ResponsiveMediaPictureProjection",
+          "kind": "type"
+        },
+        {
+          "name": "ResponsiveMediaResolutionReason",
+          "kind": "type"
+        },
+        {
+          "name": "ResponsiveMediaVariant",
+          "kind": "type"
+        },
+        {
+          "name": "RevealChainBranch",
+          "kind": "type"
+        },
+        {
+          "name": "RevealChainInput",
+          "kind": "type"
+        },
+        {
+          "name": "RevealChainStep",
+          "kind": "type"
+        },
+        {
+          "name": "RevealIntent",
+          "kind": "type"
+        },
+        {
+          "name": "RevealIntentInput",
+          "kind": "type"
+        },
+        {
+          "name": "RevealPolicy",
+          "kind": "type"
+        },
+        {
+          "name": "RevealReducedMotion",
+          "kind": "type"
+        },
+        {
+          "name": "RevealSsrPaint",
+          "kind": "type"
+        },
+        {
+          "name": "RevealTransition",
+          "kind": "type"
+        },
+        {
+          "name": "RevealTrigger",
+          "kind": "type"
+        },
+        {
+          "name": "Rng",
+          "kind": "type"
+        },
+        {
+          "name": "RungChoice",
+          "kind": "type"
+        },
+        {
+          "name": "RuntimeCoordinatorConfig",
+          "kind": "type"
+        },
+        {
+          "name": "RuntimeEasing",
+          "kind": "type"
+        },
+        {
+          "name": "RuntimePhase",
+          "kind": "type"
+        },
+        {
+          "name": "RuntimeSite",
+          "kind": "type"
+        },
+        {
+          "name": "RuntimeWritePlan",
+          "kind": "type"
+        },
+        {
+          "name": "RuntimeWriteProperty",
+          "kind": "type"
+        },
+        {
+          "name": "RuntimeWriteWindow",
+          "kind": "type"
+        },
+        {
+          "name": "Schema",
+          "kind": "type"
+        },
+        {
+          "name": "SchemaNode",
+          "kind": "type"
+        },
+        {
+          "name": "SchemaPort",
+          "kind": "type"
+        },
+        {
+          "name": "ScrollTimelineAxis",
+          "kind": "type"
+        },
+        {
+          "name": "ScrollTimelineIntent",
+          "kind": "type"
+        },
+        {
+          "name": "ScrollTimelineIntentInput",
+          "kind": "type"
+        },
+        {
+          "name": "SendGraphQueryOptions",
+          "kind": "type"
+        },
+        {
+          "name": "ShadowLayer",
+          "kind": "type"
+        },
+        {
+          "name": "SignalNode",
+          "kind": "type"
+        },
+        {
+          "name": "SignalSource",
+          "kind": "type"
+        },
+        {
+          "name": "SignalSourceType",
+          "kind": "type"
+        },
+        {
+          "name": "Site",
+          "kind": "type"
+        },
+        {
+          "name": "SlotConfig",
+          "kind": "type"
+        },
+        {
+          "name": "StaggerChild",
+          "kind": "type"
+        },
+        {
+          "name": "StaggerIntent",
+          "kind": "type"
+        },
+        {
+          "name": "StaggerIntentInput",
+          "kind": "type"
+        },
+        {
+          "name": "StateAuthority",
+          "kind": "type"
+        },
+        {
+          "name": "StateCellKind",
+          "kind": "type"
+        },
+        {
+          "name": "StateCellRegisterOptions",
+          "kind": "type"
+        },
+        {
+          "name": "StateCellShape",
+          "kind": "type"
+        },
+        {
+          "name": "StateCellStoreShape",
+          "kind": "type"
+        },
+        {
+          "name": "StateResolutionReceipt",
+          "kind": "type"
+        },
+        {
+          "name": "StateUnion",
+          "kind": "type"
+        },
+        {
+          "name": "StructEncoded",
+          "kind": "type"
+        },
+        {
+          "name": "StructType",
+          "kind": "type"
+        },
+        {
+          "name": "StyleLayer",
+          "kind": "type"
+        },
+        {
+          "name": "System",
+          "kind": "type"
+        },
+        {
+          "name": "TokenCategory",
+          "kind": "type"
+        },
+        {
+          "name": "TransformPart",
+          "kind": "type"
+        },
+        {
+          "name": "TransitionBranch",
+          "kind": "type"
+        },
+        {
+          "name": "TransitionNode",
+          "kind": "type"
+        },
+        {
+          "name": "TransitionProgram",
+          "kind": "type"
+        },
+        {
+          "name": "TypedValue",
+          "kind": "type"
+        },
+        {
+          "name": "UIFrame",
+          "kind": "type"
+        },
+        {
+          "name": "UIQualityTier",
+          "kind": "type"
+        },
+        {
+          "name": "ValidatedProposal",
+          "kind": "type"
+        },
+        {
+          "name": "VideoConfig",
+          "kind": "type"
+        },
+        {
+          "name": "VideoFrameOutput",
+          "kind": "type"
+        },
+        {
+          "name": "WASMDispatchAPI",
+          "kind": "type"
+        },
+        {
+          "name": "WASMKernels",
+          "kind": "type"
+        },
+        {
+          "name": "WallClockTimestamp",
+          "kind": "type"
+        }
+      ]
+    },
+    "@czap/detect": {
+      "typeExports": [
+        {
+          "name": "CapAxis",
+          "kind": "type"
+        },
+        {
+          "name": "DesignTier",
+          "kind": "type"
+        },
+        {
+          "name": "DetectReadyDetail",
+          "kind": "type"
+        },
+        {
+          "name": "DetectionResult",
+          "kind": "type"
+        },
+        {
+          "name": "DeviceCapabilities",
+          "kind": "type"
+        },
+        {
+          "name": "Disposer",
+          "kind": "type"
+        },
+        {
+          "name": "ExtendedDetectionResult",
+          "kind": "type"
+        },
+        {
+          "name": "ExtendedDeviceCapabilities",
+          "kind": "type"
+        },
+        {
+          "name": "GPUTier",
+          "kind": "type"
+        },
+        {
+          "name": "HeadProbeCaps",
+          "kind": "type"
+        },
+        {
+          "name": "MotionTier",
+          "kind": "type"
+        },
+        {
+          "name": "NavigatorConnectionInfo",
+          "kind": "type"
+        }
+      ]
+    },
+    "@czap/edge": {
+      "typeExports": [
+        {
+          "name": "BoundaryCache",
+          "kind": "type"
+        },
+        {
+          "name": "BoundaryManifest",
+          "kind": "type"
+        },
+        {
+          "name": "BoundaryManifestEntry",
+          "kind": "type"
+        },
+        {
+          "name": "BoundaryManifestFile",
+          "kind": "type"
+        },
+        {
+          "name": "ClientHintsHeaders",
+          "kind": "type"
+        },
+        {
+          "name": "CompiledOutputs",
+          "kind": "type"
+        },
+        {
+          "name": "CrossOriginEmbedderPolicy",
+          "kind": "type"
+        },
+        {
+          "name": "EdgeHostAdapterConfig",
+          "kind": "type"
+        },
+        {
+          "name": "EdgeHostBoundaryConfig",
+          "kind": "type"
+        },
+        {
+          "name": "EdgeHostBoundaryResolution",
+          "kind": "type"
+        },
+        {
+          "name": "EdgeHostCacheConfig",
+          "kind": "type"
+        },
+        {
+          "name": "EdgeHostCacheStatus",
+          "kind": "type"
+        },
+        {
+          "name": "EdgeHostCacheTags",
+          "kind": "type"
+        },
+        {
+          "name": "EdgeHostCompileContext",
+          "kind": "type"
+        },
+        {
+          "name": "EdgeHostContext",
+          "kind": "type"
+        },
+        {
+          "name": "EdgeHostResolution",
+          "kind": "type"
+        },
+        {
+          "name": "EdgeTierResult",
+          "kind": "type"
+        },
+        {
+          "name": "KVNamespace",
+          "kind": "type"
+        },
+        {
+          "name": "ThemeCompileConfig",
+          "kind": "type"
+        },
+        {
+          "name": "ThemeCompileResult",
+          "kind": "type"
+        },
+        {
+          "name": "TierKey",
+          "kind": "type"
+        }
+      ]
+    },
+    "@czap/error": {
+      "typeExports": [
+        {
+          "name": "Err",
+          "kind": "type"
+        },
+        {
+          "name": "LiteShipError",
+          "kind": "type"
+        },
+        {
+          "name": "LiteShipErrorTag",
+          "kind": "type"
+        },
+        {
+          "name": "Ok",
+          "kind": "type"
+        },
+        {
+          "name": "Result",
+          "kind": "type"
+        },
+        {
+          "name": "TaggedError",
+          "kind": "type"
+        },
+        {
+          "name": "TaggedErrorValue",
+          "kind": "type"
+        }
+      ]
+    },
+    "@czap/gauntlet": {
+      "typeExports": [
+        {
+          "name": "AbsentRead",
+          "kind": "type"
+        },
+        {
+          "name": "ActiveSurfaceEntry",
+          "kind": "type"
+        },
+        {
+          "name": "ActiveSurfaceFacts",
+          "kind": "type"
+        },
+        {
+          "name": "ActiveSurfacePromotion",
+          "kind": "type"
+        },
+        {
+          "name": "ActualChange",
+          "kind": "type"
+        },
+        {
+          "name": "AlwaysBlockingSurface",
+          "kind": "type"
+        },
+        {
+          "name": "AmbitionProofHeatmap",
+          "kind": "type"
+        },
+        {
+          "name": "AssuranceLevel",
+          "kind": "type"
+        },
+        {
+          "name": "AssuranceSpec",
+          "kind": "type"
+        },
+        {
+          "name": "AssuranceSurface",
+          "kind": "type"
+        },
+        {
+          "name": "Authority",
+          "kind": "type"
+        },
+        {
+          "name": "CapabilityLinkFacts",
+          "kind": "type"
+        },
+        {
+          "name": "CapabilityLinkResult",
+          "kind": "type"
+        },
+        {
+          "name": "ChangeClass",
+          "kind": "type"
+        },
+        {
+          "name": "CiAuthorityFacts",
+          "kind": "type"
+        },
+        {
+          "name": "CompositionFacts",
+          "kind": "type"
+        },
+        {
+          "name": "CoverageClass",
+          "kind": "type"
+        },
+        {
+          "name": "CoverageEvidence",
+          "kind": "type"
+        },
+        {
+          "name": "DeclaredFix",
+          "kind": "type"
+        },
+        {
+          "name": "DeclaredFixFacts",
+          "kind": "type"
+        },
+        {
+          "name": "DecodeViolation",
+          "kind": "type"
+        },
+        {
+          "name": "DecodeViolationClass",
+          "kind": "type"
+        },
+        {
+          "name": "DecoderFuzzFact",
+          "kind": "type"
+        },
+        {
+          "name": "EarlyReturnMatch",
+          "kind": "type"
+        },
+        {
+          "name": "EvidenceChannel",
+          "kind": "type"
+        },
+        {
+          "name": "EvidenceRecorder",
+          "kind": "type"
+        },
+        {
+          "name": "Fact",
+          "kind": "type"
+        },
+        {
+          "name": "FactBundle",
+          "kind": "type"
+        },
+        {
+          "name": "FactChannel",
+          "kind": "type"
+        },
+        {
+          "name": "FactGate",
+          "kind": "type"
+        },
+        {
+          "name": "FactGateSpec",
+          "kind": "type"
+        },
+        {
+          "name": "FactKind",
+          "kind": "type"
+        },
+        {
+          "name": "FileId",
+          "kind": "type"
+        },
+        {
+          "name": "FileNode",
+          "kind": "type"
+        },
+        {
+          "name": "Finding",
+          "kind": "type"
+        },
+        {
+          "name": "FindingInput",
+          "kind": "type"
+        },
+        {
+          "name": "FixReceipt",
+          "kind": "type"
+        },
+        {
+          "name": "FixRejection",
+          "kind": "type"
+        },
+        {
+          "name": "FixRejectionClass",
+          "kind": "type"
+        },
+        {
+          "name": "FixScope",
+          "kind": "type"
+        },
+        {
+          "name": "FixSizeCap",
+          "kind": "type"
+        },
+        {
+          "name": "FixVerdict",
+          "kind": "type"
+        },
+        {
+          "name": "FloorDirection",
+          "kind": "type"
+        },
+        {
+          "name": "FloorSurface",
+          "kind": "type"
+        },
+        {
+          "name": "FuzzCorpusFacts",
+          "kind": "type"
+        },
+        {
+          "name": "Gate",
+          "kind": "type"
+        },
+        {
+          "name": "GateContext",
+          "kind": "type"
+        },
+        {
+          "name": "GateFixture",
+          "kind": "type"
+        },
+        {
+          "name": "GateFixtures",
+          "kind": "type"
+        },
+        {
+          "name": "GateMutation",
+          "kind": "type"
+        },
+        {
+          "name": "GateOutcome",
+          "kind": "type"
+        },
+        {
+          "name": "GateProof",
+          "kind": "type"
+        },
+        {
+          "name": "GateSurface",
+          "kind": "type"
+        },
+        {
+          "name": "GateVerdictCache",
+          "kind": "type"
+        },
+        {
+          "name": "GateVerdictKeyParts",
+          "kind": "type"
+        },
+        {
+          "name": "GauntletResult",
+          "kind": "type"
+        },
+        {
+          "name": "HeatmapInputs",
+          "kind": "type"
+        },
+        {
+          "name": "ImportEdge",
+          "kind": "type"
+        },
+        {
+          "name": "ImportKind",
+          "kind": "type"
+        },
+        {
+          "name": "InteractionEdge",
+          "kind": "type"
+        },
+        {
+          "name": "InvariantExpired",
+          "kind": "type"
+        },
+        {
+          "name": "InvariantProven",
+          "kind": "type"
+        },
+        {
+          "name": "InvariantState",
+          "kind": "type"
+        },
+        {
+          "name": "InvariantSurface",
+          "kind": "type"
+        },
+        {
+          "name": "InvariantUntraced",
+          "kind": "type"
+        },
+        {
+          "name": "InvariantWaived",
+          "kind": "type"
+        },
+        {
+          "name": "LevelRule",
+          "kind": "type"
+        },
+        {
+          "name": "LitelaunchCacheOptions",
+          "kind": "type"
+        },
+        {
+          "name": "LockfilePolicyFacts",
+          "kind": "type"
+        },
+        {
+          "name": "McdcConditionOutcome",
+          "kind": "type"
+        },
+        {
+          "name": "McdcFacts",
+          "kind": "type"
+        },
+        {
+          "name": "McdcPinVerdict",
+          "kind": "type"
+        },
+        {
+          "name": "MeasuredFixReality",
+          "kind": "type"
+        },
+        {
+          "name": "ModuleAmbition",
+          "kind": "type"
+        },
+        {
+          "name": "ModuleHotSpot",
+          "kind": "type"
+        },
+        {
+          "name": "ModuleProof",
+          "kind": "type"
+        },
+        {
+          "name": "ModuleProofSignals",
+          "kind": "type"
+        },
+        {
+          "name": "MutantOutcome",
+          "kind": "type"
+        },
+        {
+          "name": "MutantVerdictTag",
+          "kind": "type"
+        },
+        {
+          "name": "MutationFacts",
+          "kind": "type"
+        },
+        {
+          "name": "OracleDivergenceSpec",
+          "kind": "type"
+        },
+        {
+          "name": "PackageNode",
+          "kind": "type"
+        },
+        {
+          "name": "PkgName",
+          "kind": "type"
+        },
+        {
+          "name": "ProofFacts",
+          "kind": "type"
+        },
+        {
+          "name": "ProofSignals",
+          "kind": "type"
+        },
+        {
+          "name": "ProvenanceFacts",
+          "kind": "type"
+        },
+        {
+          "name": "RefSite",
+          "kind": "type"
+        },
+        {
+          "name": "Remediation",
+          "kind": "type"
+        },
+        {
+          "name": "ReplayDivergence",
+          "kind": "type"
+        },
+        {
+          "name": "RepoIR",
+          "kind": "type"
+        },
+        {
+          "name": "RepoIRParts",
+          "kind": "type"
+        },
+        {
+          "name": "ResolvedInvariant",
+          "kind": "type"
+        },
+        {
+          "name": "RunGatesOptions",
+          "kind": "type"
+        },
+        {
+          "name": "RunGauntletOnRepoOptions",
+          "kind": "type"
+        },
+        {
+          "name": "SanctionedSkip",
+          "kind": "type"
+        },
+        {
+          "name": "SanitizerSite",
+          "kind": "type"
+        },
+        {
+          "name": "SbomFacts",
+          "kind": "type"
+        },
+        {
+          "name": "ScenarioReplayFact",
+          "kind": "type"
+        },
+        {
+          "name": "Severity",
+          "kind": "type"
+        },
+        {
+          "name": "SimulationFacts",
+          "kind": "type"
+        },
+        {
+          "name": "SiteConditionalityResolver",
+          "kind": "type"
+        },
+        {
+          "name": "SkipCapability",
+          "kind": "type"
+        },
+        {
+          "name": "SkipConditionality",
+          "kind": "type"
+        },
+        {
+          "name": "SkipDetector",
+          "kind": "type"
+        },
+        {
+          "name": "SkipForm",
+          "kind": "type"
+        },
+        {
+          "name": "SkipMatch",
+          "kind": "type"
+        },
+        {
+          "name": "SkipSiteFact",
+          "kind": "type"
+        },
+        {
+          "name": "SkipSiteFacts",
+          "kind": "type"
+        },
+        {
+          "name": "SkipVerdict",
+          "kind": "type"
+        },
+        {
+          "name": "SourceLocation",
+          "kind": "type"
+        },
+        {
+          "name": "StandardsChange",
+          "kind": "type"
+        },
+        {
+          "name": "StandardsElement",
+          "kind": "type"
+        },
+        {
+          "name": "StandardsIntegrityFacts",
+          "kind": "type"
+        },
+        {
+          "name": "StandardsSurface",
+          "kind": "type"
+        },
+        {
+          "name": "StandardsWaiver",
+          "kind": "type"
+        },
+        {
+          "name": "SupplyChainFacts",
+          "kind": "type"
+        },
+        {
+          "name": "SupplyChainViolation",
+          "kind": "type"
+        },
+        {
+          "name": "SymbolId",
+          "kind": "type"
+        },
+        {
+          "name": "SymbolKind",
+          "kind": "type"
+        },
+        {
+          "name": "SymbolNode",
+          "kind": "type"
+        },
+        {
+          "name": "TaintEndpoint",
+          "kind": "type"
+        },
+        {
+          "name": "TaintFacts",
+          "kind": "type"
+        },
+        {
+          "name": "TaintFlow",
+          "kind": "type"
+        },
+        {
+          "name": "TaintPathStep",
+          "kind": "type"
+        },
+        {
+          "name": "TraceabilityDivergence",
+          "kind": "type"
+        },
+        {
+          "name": "TraceabilityFacts",
+          "kind": "type"
+        },
+        {
+          "name": "TransitionCase",
+          "kind": "type"
+        },
+        {
+          "name": "TransitionFacts",
+          "kind": "type"
+        },
+        {
+          "name": "TransitionStatus",
+          "kind": "type"
+        },
+        {
+          "name": "Waiver",
+          "kind": "type"
+        },
+        {
+          "name": "WaiverApplication",
+          "kind": "type"
+        },
+        {
+          "name": "WaiverSurface",
+          "kind": "type"
+        },
+        {
+          "name": "WeakeningClass",
+          "kind": "type"
+        }
+      ]
+    },
+    "@czap/genui": {
+      "typeExports": [
+        {
+          "name": "ComponentCatalog",
+          "kind": "type"
+        },
+        {
+          "name": "ComponentCatalogInput",
+          "kind": "type"
+        },
+        {
+          "name": "ComponentDef",
+          "kind": "type"
+        },
+        {
+          "name": "ComponentPropDef",
+          "kind": "type"
+        },
+        {
+          "name": "GeneratedUINode",
+          "kind": "type"
+        },
+        {
+          "name": "GeneratedUIValidationError",
+          "kind": "type"
+        },
+        {
+          "name": "RenderFromCatalogOptions",
+          "kind": "type"
+        },
+        {
+          "name": "RenderFromCatalogResult",
+          "kind": "type"
+        },
+        {
+          "name": "ValidateGeneratedUIResult",
+          "kind": "type"
+        }
+      ]
+    },
+    "@czap/mcp-server": {
+      "typeExports": [
+        {
+          "name": "FindingLevel",
+          "kind": "type"
+        },
+        {
+          "name": "FindingLike",
+          "kind": "type"
+        },
+        {
+          "name": "FindingLocationLike",
+          "kind": "type"
+        },
+        {
+          "name": "FindingRemediationLike",
+          "kind": "type"
+        },
+        {
+          "name": "FindingSeverity",
+          "kind": "type"
+        },
+        {
+          "name": "FrameReader",
+          "kind": "type"
+        },
+        {
+          "name": "GetPromptResult",
+          "kind": "type"
+        },
+        {
+          "name": "JsonRpcErrorResponse",
+          "kind": "type"
+        },
+        {
+          "name": "JsonRpcId",
+          "kind": "type"
+        },
+        {
+          "name": "JsonRpcNotification",
+          "kind": "type"
+        },
+        {
+          "name": "JsonRpcRequest",
+          "kind": "type"
+        },
+        {
+          "name": "JsonRpcResponse",
+          "kind": "type"
+        },
+        {
+          "name": "JsonRpcSuccess",
+          "kind": "type"
+        },
+        {
+          "name": "LspCodeAction",
+          "kind": "type"
+        },
+        {
+          "name": "LspCommand",
+          "kind": "type"
+        },
+        {
+          "name": "LspDiagnostic",
+          "kind": "type"
+        },
+        {
+          "name": "LspDiagnosticSeverity",
+          "kind": "type"
+        },
+        {
+          "name": "LspGauntletRunner",
+          "kind": "type"
+        },
+        {
+          "name": "LspHandleResult",
+          "kind": "type"
+        },
+        {
+          "name": "LspNotification",
+          "kind": "type"
+        },
+        {
+          "name": "LspPosition",
+          "kind": "type"
+        },
+        {
+          "name": "LspRange",
+          "kind": "type"
+        },
+        {
+          "name": "LspServerState",
+          "kind": "type"
+        },
+        {
+          "name": "LspTextEdit",
+          "kind": "type"
+        },
+        {
+          "name": "LspWorkspaceEdit",
+          "kind": "type"
+        },
+        {
+          "name": "McpPrompt",
+          "kind": "type"
+        },
+        {
+          "name": "McpPromptArgument",
+          "kind": "type"
+        },
+        {
+          "name": "McpResource",
+          "kind": "type"
+        },
+        {
+          "name": "McpResourceContents",
+          "kind": "type"
+        },
+        {
+          "name": "McpToolCall",
+          "kind": "type"
+        },
+        {
+          "name": "McpToolResult",
+          "kind": "type"
+        },
+        {
+          "name": "McpUiResource",
+          "kind": "type"
+        },
+        {
+          "name": "McpUiResourceContents",
+          "kind": "type"
+        },
+        {
+          "name": "McpUiResourceCsp",
+          "kind": "type"
+        },
+        {
+          "name": "McpUiResourceMeta",
+          "kind": "type"
+        },
+        {
+          "name": "ParseOutcome",
+          "kind": "type"
+        },
+        {
+          "name": "PublishDiagnosticsParams",
+          "kind": "type"
+        },
+        {
+          "name": "StartOpts",
+          "kind": "type"
+        }
+      ]
+    },
+    "@czap/quantizer": {
+      "typeExports": [
+        {
+          "name": "AnimatedQuantizerHandle",
+          "kind": "type"
+        },
+        {
+          "name": "AnimatedQuantizerShape",
+          "kind": "type"
+        },
+        {
+          "name": "EvaluateResult",
+          "kind": "type"
+        },
+        {
+          "name": "InterpolatedFrame",
+          "kind": "type"
+        },
+        {
+          "name": "LiveQuantizer",
+          "kind": "type"
+        },
+        {
+          "name": "LiveQuantizerHandle",
+          "kind": "type"
+        },
+        {
+          "name": "MotionTier",
+          "kind": "type"
+        },
+        {
+          "name": "OutputTarget",
+          "kind": "type"
+        },
+        {
+          "name": "QuantizerBuilder",
+          "kind": "type"
+        },
+        {
+          "name": "QuantizerConfig",
+          "kind": "type"
+        },
+        {
+          "name": "QuantizerFromOptions",
+          "kind": "type"
+        },
+        {
+          "name": "QuantizerOutputs",
+          "kind": "type"
+        },
+        {
+          "name": "QuantizerRuntime",
+          "kind": "type"
+        },
+        {
+          "name": "SpringConfig",
+          "kind": "type"
+        },
+        {
+          "name": "TransitionConfig",
+          "kind": "type"
+        },
+        {
+          "name": "TransitionMap",
+          "kind": "type"
+        },
+        {
+          "name": "TransitionType",
+          "kind": "type"
+        }
+      ]
+    },
+    "@czap/remotion": {
+      "typeExports": [
+        {
+          "name": "RemotionVideoConfig",
+          "kind": "type"
+        }
+      ]
+    },
+    "@czap/scene": {
+      "typeExports": [
+        {
+          "name": "AudioTrack",
+          "kind": "type"
+        },
+        {
+          "name": "BeatComponent",
+          "kind": "type"
+        },
+        {
+          "name": "BeatHandle",
+          "kind": "type"
+        },
+        {
+          "name": "BeatSpawn",
+          "kind": "type"
+        },
+        {
+          "name": "CompiledScene",
+          "kind": "type"
+        },
+        {
+          "name": "EaseFn",
+          "kind": "type"
+        },
+        {
+          "name": "EaseName",
+          "kind": "type"
+        },
+        {
+          "name": "EaseTag",
+          "kind": "type"
+        },
+        {
+          "name": "EffectTrack",
+          "kind": "type"
+        },
+        {
+          "name": "FadeEnvelope",
+          "kind": "type"
+        },
+        {
+          "name": "FrameMark",
+          "kind": "type"
+        },
+        {
+          "name": "FrameMarkSum",
+          "kind": "type"
+        },
+        {
+          "name": "MixReceipt",
+          "kind": "type"
+        },
+        {
+          "name": "PulseEnvelope",
+          "kind": "type"
+        },
+        {
+          "name": "ResolvedEnvelope",
+          "kind": "type"
+        },
+        {
+          "name": "ResolvedSceneContract",
+          "kind": "type"
+        },
+        {
+          "name": "SceneBeat",
+          "kind": "type"
+        },
+        {
+          "name": "SceneContext",
+          "kind": "type"
+        },
+        {
+          "name": "SceneContract",
+          "kind": "type"
+        },
+        {
+          "name": "SceneInvariant",
+          "kind": "type"
+        },
+        {
+          "name": "SceneRuntimeHandle",
+          "kind": "type"
+        },
+        {
+          "name": "SceneRuntimeOptions",
+          "kind": "type"
+        },
+        {
+          "name": "SceneSubscenePartial",
+          "kind": "type"
+        },
+        {
+          "name": "SvgAttrs",
+          "kind": "type"
+        },
+        {
+          "name": "SvgAttrsFrame",
+          "kind": "type"
+        },
+        {
+          "name": "SvgElementResolver",
+          "kind": "type"
+        },
+        {
+          "name": "TrackEnvelope",
+          "kind": "type"
+        },
+        {
+          "name": "TrackId",
+          "kind": "type"
+        },
+        {
+          "name": "TrackKind",
+          "kind": "type"
+        },
+        {
+          "name": "TrackRef",
+          "kind": "type"
+        },
+        {
+          "name": "TrackSpawn",
+          "kind": "type"
+        },
+        {
+          "name": "TransitionTrack",
+          "kind": "type"
+        },
+        {
+          "name": "VideoTrack",
+          "kind": "type"
+        }
+      ]
+    },
+    "@czap/stage": {
+      "typeExports": [
+        {
+          "name": "DualExportNodeResult",
+          "kind": "type"
+        },
+        {
+          "name": "DualExportResult",
+          "kind": "type"
+        },
+        {
+          "name": "EncodedVideo",
+          "kind": "type"
+        },
+        {
+          "name": "EncodedVideoExport",
+          "kind": "type"
+        },
+        {
+          "name": "FrameEncoder",
+          "kind": "type"
+        },
+        {
+          "name": "MotionFrameSample",
+          "kind": "type"
+        },
+        {
+          "name": "MotionTrackExport",
+          "kind": "type"
+        },
+        {
+          "name": "VideoEncodeConfig",
+          "kind": "type"
+        }
+      ]
+    },
+    "@czap/vite": {
+      "typeExports": [
+        {
+          "name": "CollectBoundaryManifestOptions",
+          "kind": "type"
+        },
+        {
+          "name": "CollectThemeManifestOptions",
+          "kind": "type"
+        },
+        {
+          "name": "CollectTokenManifestOptions",
+          "kind": "type"
+        },
+        {
+          "name": "HMRPayload",
+          "kind": "type"
+        },
+        {
+          "name": "PluginConfig",
+          "kind": "type"
+        },
+        {
+          "name": "PrimitiveKind",
+          "kind": "type"
+        },
+        {
+          "name": "PrimitiveResolution",
+          "kind": "type"
+        },
+        {
+          "name": "PrimitiveShape",
+          "kind": "type"
+        },
+        {
+          "name": "QuantizeAtRuleGroup",
+          "kind": "type"
+        },
+        {
+          "name": "QuantizeBlock",
+          "kind": "type"
+        },
+        {
+          "name": "QuantizeNestedRule",
+          "kind": "type"
+        },
+        {
+          "name": "QuantizeSheetContext",
+          "kind": "type"
+        },
+        {
+          "name": "QuantizeStateBody",
+          "kind": "type"
+        },
+        {
+          "name": "StyleBlock",
+          "kind": "type"
+        },
+        {
+          "name": "ThemeBlock",
+          "kind": "type"
+        },
+        {
+          "name": "ThemeManifest",
+          "kind": "type"
+        },
+        {
+          "name": "ThemeManifestEntry",
+          "kind": "type"
+        },
+        {
+          "name": "TokenBlock",
+          "kind": "type"
+        },
+        {
+          "name": "TokenManifest",
+          "kind": "type"
+        },
+        {
+          "name": "TokenManifestEntry",
+          "kind": "type"
+        },
+        {
+          "name": "VirtualModuleData",
+          "kind": "type"
+        },
+        {
+          "name": "VirtualModuleId",
+          "kind": "type"
+        },
+        {
+          "name": "WASMResolution",
+          "kind": "type"
+        }
+      ]
+    },
+    "@czap/web": {
+      "typeExports": [
+        {
+          "name": "ApplyVerifiablePatchAdoptResult",
+          "kind": "type"
+        },
+        {
+          "name": "ApplyVerifiablePatchResult",
+          "kind": "type"
+        },
+        {
+          "name": "AudioProcessor",
+          "kind": "type"
+        },
+        {
+          "name": "BackpressureHint",
+          "kind": "type"
+        },
+        {
+          "name": "BindGraphFormOptions",
+          "kind": "type"
+        },
+        {
+          "name": "ChunkParser",
+          "kind": "type"
+        },
+        {
+          "name": "CzapEventDetailMap",
+          "kind": "type"
+        },
+        {
+          "name": "CzapEventDisposer",
+          "kind": "type"
+        },
+        {
+          "name": "CzapEventName",
+          "kind": "type"
+        },
+        {
+          "name": "CzapMorphRejectedDetail",
+          "kind": "type"
+        },
+        {
+          "name": "CzapStreamErrorDetail",
+          "kind": "type"
+        },
+        {
+          "name": "CzapUniformUpdateDetail",
+          "kind": "type"
+        },
+        {
+          "name": "DpuAdoptClient",
+          "kind": "type"
+        },
+        {
+          "name": "DpuCapability",
+          "kind": "type"
+        },
+        {
+          "name": "DpuRung",
+          "kind": "type"
+        },
+        {
+          "name": "FocusState",
+          "kind": "type"
+        },
+        {
+          "name": "HtmlPolicy",
+          "kind": "type"
+        },
+        {
+          "name": "IMEState",
+          "kind": "type"
+        },
+        {
+          "name": "IntegrityDecision",
+          "kind": "type"
+        },
+        {
+          "name": "IntegrityResult",
+          "kind": "type"
+        },
+        {
+          "name": "IslandMode",
+          "kind": "type"
+        },
+        {
+          "name": "LLMAdapterShape",
+          "kind": "type"
+        },
+        {
+          "name": "LLMChunk",
+          "kind": "type"
+        },
+        {
+          "name": "LLMChunkType",
+          "kind": "type"
+        },
+        {
+          "name": "LLMStreamConfig",
+          "kind": "type"
+        },
+        {
+          "name": "MatchPriority",
+          "kind": "type"
+        },
+        {
+          "name": "MatchResult",
+          "kind": "type"
+        },
+        {
+          "name": "MorphCallbacks",
+          "kind": "type"
+        },
+        {
+          "name": "MorphConfig",
+          "kind": "type"
+        },
+        {
+          "name": "MorphHints",
+          "kind": "type"
+        },
+        {
+          "name": "MorphRejection",
+          "kind": "type"
+        },
+        {
+          "name": "MorphResult",
+          "kind": "type"
+        },
+        {
+          "name": "OverflowPolicy",
+          "kind": "type"
+        },
+        {
+          "name": "PhysicalState",
+          "kind": "type"
+        },
+        {
+          "name": "ReconnectConfig",
+          "kind": "type"
+        },
+        {
+          "name": "RenderFn",
+          "kind": "type"
+        },
+        {
+          "name": "ResolvedStreamRecoverySubstrate",
+          "kind": "type"
+        },
+        {
+          "name": "ResumeResponse",
+          "kind": "type"
+        },
+        {
+          "name": "ResumptionConfig",
+          "kind": "type"
+        },
+        {
+          "name": "ResumptionState",
+          "kind": "type"
+        },
+        {
+          "name": "ResumptionStateInput",
+          "kind": "type"
+        },
+        {
+          "name": "RuntimeEndpointKind",
+          "kind": "type"
+        },
+        {
+          "name": "RuntimeEndpointPolicy",
+          "kind": "type"
+        },
+        {
+          "name": "RuntimeUrlResolution",
+          "kind": "type"
+        },
+        {
+          "name": "SSEClient",
+          "kind": "type"
+        },
+        {
+          "name": "SSEConfig",
+          "kind": "type"
+        },
+        {
+          "name": "SSEEventSource",
+          "kind": "type"
+        },
+        {
+          "name": "SSEMessage",
+          "kind": "type"
+        },
+        {
+          "name": "SSEState",
+          "kind": "type"
+        },
+        {
+          "name": "ScrollPosition",
+          "kind": "type"
+        },
+        {
+          "name": "SelectionState",
+          "kind": "type"
+        },
+        {
+          "name": "ShaderIntegrity",
+          "kind": "type"
+        },
+        {
+          "name": "ShaderIntegrityMode",
+          "kind": "type"
+        },
+        {
+          "name": "SlotEntry",
+          "kind": "type"
+        },
+        {
+          "name": "SlotEntryInput",
+          "kind": "type"
+        },
+        {
+          "name": "SlotPath",
+          "kind": "type"
+        },
+        {
+          "name": "SlotRegistryShape",
+          "kind": "type"
+        },
+        {
+          "name": "StreamRecoveryHandlers",
+          "kind": "type"
+        },
+        {
+          "name": "StreamRecoveryMutationClient",
+          "kind": "type"
+        },
+        {
+          "name": "StreamRecoveryOptions",
+          "kind": "type"
+        },
+        {
+          "name": "StreamRecoverySubstrate",
+          "kind": "type"
+        },
+        {
+          "name": "StreamWireAttrKey",
+          "kind": "type"
+        },
+        {
+          "name": "StreamWireAttribute",
+          "kind": "type"
+        },
+        {
+          "name": "ToolCallAccumulator",
+          "kind": "type"
+        },
+        {
+          "name": "VerifiablePatchEnvelope",
+          "kind": "type"
+        },
+        {
+          "name": "VerifiablePatchVerification",
+          "kind": "type"
+        },
+        {
+          "name": "WatchAndPrepareHandle",
+          "kind": "type"
+        },
+        {
+          "name": "WebCodecsCaptureOptions",
+          "kind": "type"
+        }
+      ]
+    },
+    "@czap/worker": {
+      "typeExports": [
+        {
+          "name": "CompositorWorkerShape",
+          "kind": "type"
+        },
+        {
+          "name": "CompositorWorkerState",
+          "kind": "type"
+        },
+        {
+          "name": "FromWorkerMessage",
+          "kind": "type"
+        },
+        {
+          "name": "MotionSampleMessage",
+          "kind": "type"
+        },
+        {
+          "name": "ProgramUniforms",
+          "kind": "type"
+        },
+        {
+          "name": "QuantizerBoundarySource",
+          "kind": "type"
+        },
+        {
+          "name": "RenderWorkerShape",
+          "kind": "type"
+        },
+        {
+          "name": "SPSCRingBufferShape",
+          "kind": "type"
+        },
+        {
+          "name": "SPSCRingPair",
+          "kind": "type"
+        },
+        {
+          "name": "ToWorkerMessage",
+          "kind": "type"
+        },
+        {
+          "name": "TransferableCanvas",
+          "kind": "type"
+        },
+        {
+          "name": "WorkerConfig",
+          "kind": "type"
+        },
+        {
+          "name": "WorkerHostRenderConfig",
+          "kind": "type"
+        },
+        {
+          "name": "WorkerHostShape",
+          "kind": "type"
+        },
+        {
+          "name": "WorkerLike",
+          "kind": "type"
+        },
+        {
+          "name": "WorkerMetrics",
+          "kind": "type"
+        }
+      ]
+    }
+  }
+}
