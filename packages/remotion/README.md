@@ -7,10 +7,10 @@ React hooks that read precomputed per-frame state (from `@czap/core`'s `VideoRen
 ## Install
 
 ```bash
-pnpm add @czap/remotion effect@4.0.0-beta.32
+pnpm add @czap/remotion
 ```
 
-Peers: `react >= 18`, `remotion >= 4`, and `effect` v4 — which only ships as a beta, so install the pin above (any `>=4.0.0-beta.0` satisfies it).
+Peers: `react >= 18`, `remotion >= 4`.
 
 ## 30 seconds
 

@@ -15,10 +15,8 @@ LiteShip / CZAP / `@czap/*` naming: [GLOSSARY.md](./GLOSSARY.md). For Cloudflare
 In your Astro project:
 
 ```bash
-pnpm add @czap/core @czap/astro effect@beta
+pnpm add @czap/core @czap/astro
 ```
-
-`effect` is `@czap/core`'s one peer dependency, and it must be the Effect **4 beta** (`effect@beta`) — a bare `pnpm add effect` installs the 3.x `latest` tag and fails the peer check. The [support matrix](./README.md#support-matrix) covers the pin and the stabilization plan.
 
 ## 2. Your first boundary
 

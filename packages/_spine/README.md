@@ -7,7 +7,7 @@ TypeScript declaration files — no runtime code — that published `@czap/*` pa
 ## Install
 
 ```bash
-pnpm add @czap/core effect@beta # brings @czap/_spine with it
+pnpm add @czap/core # brings @czap/_spine with it
 ```
 
 ## 30 seconds

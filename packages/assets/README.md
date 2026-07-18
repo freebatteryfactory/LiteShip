@@ -7,10 +7,8 @@ Decodes WAV audio to samples (plus image/video metadata probes) and derives dete
 ## Install
 
 ```bash
-pnpm add @czap/assets effect@4.0.0-beta.32
+pnpm add @czap/assets
 ```
-
-`effect` v4 is a required peer and only ships as a beta — install the pin above (any `>=4.0.0-beta.0` satisfies it).
 
 ## 30 seconds
 

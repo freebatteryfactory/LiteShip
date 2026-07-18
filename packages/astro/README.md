@@ -9,10 +9,8 @@ Astro 7 integration that compiles your boundary definitions at build time and ac
 ## Install
 
 ```bash
-pnpm add @czap/astro @czap/core effect@beta
+pnpm add @czap/astro @czap/core
 ```
-
-`effect` must be the Effect 4 beta (`effect@beta`) — a bare `pnpm add effect` installs 3.x and fails the peer check.
 
 ## 30 seconds
 

@@ -10,8 +10,6 @@ The shared command catalog and dispatcher behind the `czap` CLI and the MCP serv
 pnpm add @czap/cli   # brings @czap/command with it
 ```
 
-This package declares `effect` (>= 4.0.0-beta.0) as a peer dependency: `pnpm add effect@beta`.
-
 ## 30 seconds
 
 ```ts

@@ -11,10 +11,10 @@ Applies streamed HTML, state-driven re-renders, and LLM output to a live browser
 
 ```bash
 pnpm add @czap/astro   # brings @czap/web with it
-# direct use: pnpm add @czap/web effect@beta
+# direct use: pnpm add @czap/web
 ```
 
-For direct use, the main entry needs the Effect 4 beta peer — `pnpm add effect@beta` (a bare `pnpm add effect` installs 3.x and fails the peer check). The `@czap/web/lite` entry used below is Effect-free.
+The `@czap/web/lite` entry used below is Effect-free.
 
 ## 30 seconds
 
@@ -32,7 +32,7 @@ morphPure(card, '<h2>Updated</h2><input name="q" />');
 
 ## Where it sits
 
-The browser runtime layer: `@czap/astro`'s client directives call into this package, and it depends only on [`@czap/core`](https://github.com/freebatteryfactory/LiteShip/tree/main/packages/core) (shared state and runtime contracts) plus `mediabunny` for WebCodecs capture. The main entry adds the Effect-scoped surfaces: `Morph` with physical-state restore, `SlotRegistry` for addressing server-rendered slots in streamed HTML, an `SSE` client with reconnect and cross-tab resumption, and `LLMAdapter` for normalizing OpenAI / Anthropic / AI SDK chunk formats. `@czap/web/lite` is the pure subset of all that with no Effect dependency. Off-thread evaluation lives in [`@czap/worker`](https://github.com/freebatteryfactory/LiteShip/tree/main/packages/worker), not here. See the
+The browser runtime layer: `@czap/astro`'s client directives call into this package, and it depends only on [`@czap/core`](https://github.com/freebatteryfactory/LiteShip/tree/main/packages/core) (shared state and runtime contracts) plus `mediabunny` for WebCodecs capture. The main entry adds the scoped runtime surfaces: `Morph` with physical-state restore, `SlotRegistry` for addressing server-rendered slots in streamed HTML, an `SSE` client with reconnect and cross-tab resumption, and `LLMAdapter` for normalizing OpenAI / Anthropic / AI SDK chunk formats. `@czap/web/lite` is the pure subset of all that. Off-thread evaluation lives in [`@czap/worker`](https://github.com/freebatteryfactory/LiteShip/tree/main/packages/worker), not here. See the
 [package surfaces map](https://github.com/freebatteryfactory/LiteShip/blob/main/PACKAGE-SURFACES.md)
 for the full layout.
 

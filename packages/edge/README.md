@@ -12,10 +12,8 @@ Detects a visitor's device capability tier from HTTP headers at the server or CD
 
 ```bash
 pnpm add @czap/cloudflare   # brings @czap/edge with it
-# direct use: pnpm add @czap/edge effect@beta
+# direct use: pnpm add @czap/edge
 ```
-
-For direct use, install the Effect 4 beta peer with `pnpm add effect@beta` — a bare `pnpm add effect` installs 3.x and fails the peer check.
 
 ## 30 seconds
 
