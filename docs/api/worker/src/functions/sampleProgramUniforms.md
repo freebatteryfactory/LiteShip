@@ -8,7 +8,7 @@
 
 > **sampleProgramUniforms**(`plan`, `t`): [`ProgramUniforms`](../interfaces/ProgramUniforms.md)
 
-Defined in: core/dist/transition-program.d.ts:177
+Defined in: core/dist/transition-program.d.ts:185
 
 Project a `sampleProgram` sample into the `czap:uniform-update` payload — the ONE
 uniform-building path shared by the `client:motion` floor (`writeContinuousMap`, which

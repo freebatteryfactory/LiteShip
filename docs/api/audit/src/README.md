@@ -94,6 +94,7 @@ package — it stays repo-local and composes these passes.
 - [CAPABILITY\_LINK\_ORACLE\_ID](variables/CAPABILITY_LINK_ORACLE_ID.md)
 - [CODE\_ONLY\_ORACLE\_ID](variables/CODE_ONLY_ORACLE_ID.md)
 - [CONDITION\_FORCES](variables/CONDITION_FORCES.md)
+- [CZAP\_PACKAGE\_ROSTER](variables/CZAP_PACKAGE_ROSTER.md)
 - [DEFAULT\_TAINT\_INTERPROCEDURAL\_DEPTH](variables/DEFAULT_TAINT_INTERPROCEDURAL_DEPTH.md)
 - [dynamicImportExemptions](variables/dynamicImportExemptions.md)
 - [foundationalPackages](variables/foundationalPackages.md)

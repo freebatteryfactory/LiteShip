@@ -8,7 +8,7 @@
 
 > **discoverInstalledPackageRoots**(`cwd`, `packageNames`): [`ConsumerDiscovery`](../interfaces/ConsumerDiscovery.md)
 
-Defined in: [audit/src/consumer.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/consumer.ts#L62)
+Defined in: [audit/src/consumer.ts:109](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/consumer.ts#L109)
 
 Discover the installed roots of `packageNames` reachable from `cwd`.
 BFS to fixpoint: each found package's realpath becomes a new seed, which

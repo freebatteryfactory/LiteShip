@@ -30,6 +30,7 @@ import type { DocumentGraph } from './document-graph.js';
 import type { DiagnosticPayload } from './diagnostics.js';
 import type { RuntimeEasing } from './easing.js';
 import { sampleRuntimeEasing } from './easing.js';
+import { clamp01 } from './math-utils.js';
 import { formatTypedValue, interpolateTyped, type TypedValue } from './interpolate.js';
 import { Plan } from './plan.js';
 import {
@@ -325,11 +326,6 @@ export function lowerTransitionProgram(
     selectedBranchIds: Object.freeze(result.selectedBranchIds),
     diagnostics: Object.freeze(diagnostics),
   });
-}
-
-/** Clamp a raw progress value to `[0,1]` (the local-t domain every easing expects). */
-function clamp01(value: number): number {
-  return value < 0 ? 0 : value > 1 ? 1 : value;
 }
 
 /** One keyed tween (opaque `key` — a `cssVar` for the runtime, a CSS `property` for keyframes). */
@@ -656,6 +652,17 @@ export function sampleProgram(plan: RuntimeWritePlan, t: number): readonly Progr
     },
   ];
   return [...walkWindows(flat, t, 'authored').entries()].map(([cssVar, value]) => ({ cssVar, value }));
+}
+
+/**
+ * Map a 0-based frame index to the normalized program time `t ∈ [0,1]` that
+ * {@link sampleProgram} samples — ENDPOINT-INCLUSIVE: `frame / max(1, totalFrames - 1)`,
+ * so `frame = 0 → 0` and `frame = totalFrames - 1 → 1` (the last frame lands exactly on
+ * the terminal pose). A degenerate timeline (`totalFrames ≤ 1`) has no span, so its only
+ * frame maps to `0`. Out-of-range frames are clamped to `[0,1]`.
+ */
+export function frameToT(frame: number, totalFrames: number): number {
+  return clamp01(frame / Math.max(1, totalFrames - 1));
 }
 
 /** Strip the `--czap-` prefix and kebab→snake a `cssVar` into a WGSL struct field name. */

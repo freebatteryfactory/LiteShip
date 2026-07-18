@@ -147,6 +147,7 @@ It ships:
 - [detectDpuCapability](functions/detectDpuCapability.md)
 - [digestHtmlFragment](functions/digestHtmlFragment.md)
 - [dispatchCzapEvent](functions/dispatchCzapEvent.md)
+- [escapeHtml](functions/escapeHtml.md)
 - [fetchSnapshot](functions/fetchSnapshot.md)
 - [getStreamRecoverySubstrate](functions/getStreamRecoverySubstrate.md)
 - [isExternalShaderSource](functions/isExternalShaderSource.md)

@@ -6,7 +6,7 @@
 
 # Interface: ProgramUniforms
 
-Defined in: core/dist/transition-program.d.ts:163
+Defined in: core/dist/transition-program.d.ts:171
 
 The uniform payload a `sampleProgram` sample projects to: formatted CSS + GPU-bound WGSL scalars.
 
@@ -16,7 +16,7 @@ The uniform payload a `sampleProgram` sample projects to: formatted CSS + GPU-bo
 
 > `readonly` **css**: `Record`\<`string`, `string`\>
 
-Defined in: core/dist/transition-program.d.ts:165
+Defined in: core/dist/transition-program.d.ts:173
 
 Every animated `cssVar` formatted for a CSS custom-property / style write.
 
@@ -26,6 +26,6 @@ Every animated `cssVar` formatted for a CSS custom-property / style write.
 
 > `readonly` **wgsl**: `Record`\<`string`, `number`\>
 
-Defined in: core/dist/transition-program.d.ts:167
+Defined in: core/dist/transition-program.d.ts:175
 
 GPU-bound numeric props (kind `number`/`opacity`) keyed by their WGSL struct field.

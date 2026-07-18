@@ -59,7 +59,7 @@ export { Hints } from './morph/hints.js';
 export { MorphOpaque } from './morph/opaque.js';
 export { bindGraphForm } from './mutation/graph-form.js';
 export type { BindGraphFormOptions } from './mutation/graph-form.js';
-export { createHtmlFragment, resolveHtmlString, sanitizeHTML } from './security/html-trust.js';
+export { createHtmlFragment, escapeHtml, resolveHtmlString, sanitizeHTML } from './security/html-trust.js';
 export { isFetchableRuntimeUrl, isPrivateOrReservedIP, resolveRuntimeUrl } from './security/runtime-url.js';
 export type { RuntimeUrlResolution } from './security/runtime-url.js';
 export {
