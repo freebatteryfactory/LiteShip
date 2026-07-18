@@ -167,12 +167,23 @@ function optional<S2 extends Schema<unknown, unknown>>(schema: S2): OptionalSche
 }
 
 /**
- * Attach an author-supplied `fast-check` arbitrary THUNK to a schema (for the
- * harness walker). Returns a fresh schema with the same decode/encode behaviour
- * — only its sampling changes. Use it to sample a narrow valid domain a
- * structural walk cannot reach (e.g. canonical CBOR bytes ⊂ `Uint8Array`).
+ * Attach an author-supplied arbitrary THUNK to a schema (for the harness
+ * walker). Returns a fresh schema with the same decode/encode behaviour — only
+ * its sampling changes. Use it to sample a narrow valid domain a structural walk
+ * cannot reach (e.g. canonical CBOR bytes ⊂ `Uint8Array`).
+ *
+ * The thunk receives `fast-check` as its argument — PROVIDED by the harness that
+ * realizes the arbitrary (`@czap/core/harness`), so the schema kernel and its
+ * capsules declare the arbitrary CONTRACT without importing the property-testing
+ * engine. Importing `@czap/core` therefore never loads `fast-check`; the testing
+ * integration owns the realization. The param is typed `unknown` (cast to the
+ * `fast-check` module inside the thunk) so no `fast-check` type reaches the
+ * public surface.
  */
-export function withArbitrary<S2 extends Schema<unknown, unknown>>(schema: S2, arbitrary: () => unknown): S2 {
+export function withArbitrary<S2 extends Schema<unknown, unknown>>(
+  schema: S2,
+  arbitrary: (fc: unknown) => unknown,
+): S2 {
   if (!isSchema(schema)) throw ValidationError('S.withArbitrary', 'the first argument must be a kernel schema');
   if (typeof arbitrary !== 'function') throw ValidationError('S.withArbitrary', 'the arbitrary must be a thunk');
   const node = schema.ast;

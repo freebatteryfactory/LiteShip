@@ -930,3 +930,27 @@ single-canonicalizer guard, brand-validators, `_spine/core.d.ts` ADR-0012 apex p
 `typecheck:spine`), and `sha256Hex` is a NEW plain-hex helper never merged into the
 receipt `sha256:`-label law. The B5b/D9b normalizer cage is now a two-home parity cage
 (S7.1). No copy-site re-implemented instead of importing (no new S0.4 duplication).
+
+## Wave 8 scars (Effect shed → closeout)
+
+- **S8.1 — the packed-consumer proof surfaced an undeclared runtime import: `@czap/core`
+  eagerly `import * as fc from 'fast-check'` (two canonical-cbor capsules, via
+  `withArbitrary`) while declaring `fast-check` NOWHERE (root devDep only).** Root-level
+  pnpm hoisting concealed it — every in-repo test resolved fast-check from the root, so a
+  fresh `pnpm add @czap/core` + `import('@czap/core')` was the FIRST context to red
+  (`ERR_MODULE_NOT_FOUND`). Effect-unrelated; the zero-Effect result stood, but the
+  self-contained runtime claim was conditional until repaired.
+  Class: monorepo can conceal undeclared runtime imports through root hoisting — the
+  packed artifact lied about its dependency closure.
+  Disposition: **RESOLVED + new guard (issue #157).** (a) Architectural fix, not "add the
+  dep": `withArbitrary(schema, thunk)` now PASSES `fast-check` into the thunk (supplied by
+  the harness that owns it, `@czap/core/harness`); the capsules declare the arbitrary
+  contract with zero fast-check imports, and no fast-check type reaches the public surface.
+  (b) **Declared-dependency-closure gate** minted — `tests/unit/devops/declared-dependency-closure.test.ts`
+  walks each publishable package's LOAD-TIME (static) import graph from its main entry over
+  emitted `dist/*.js` (TypeScript-parsed, so string-literal import text in the audit/gauntlet
+  gates isn't miscounted) and reds any static bare import not declared as a
+  dependency/optionalDependency/peerDependency. The fast-check leak is its red fixture.
+  Guarded dynamic `import()` (e.g. `@czap/cli` → `@czap/mcp-server`, deliberately undeclared
+  to break the cli↔mcp cycle) is the sanctioned optional-integration seam, out of the
+  load-time closure by design. ACTIVE since Wave 8 closeout.

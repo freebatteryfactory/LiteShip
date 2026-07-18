@@ -7,7 +7,7 @@
  * @module
  */
 
-import * as fc from 'fast-check';
+import type { Arbitrary } from 'fast-check';
 import { defineCapsule } from '../assembly.js';
 import { S, withArbitrary } from '../schema/index.js';
 import { CanonicalCbor, decode } from '../cbor.js';
@@ -127,8 +127,8 @@ function isCanonicalCborBytes(bytes: Uint8Array<ArrayBuffer>): bytes is Uint8Arr
 // so the capsule's `SchemaPort<In>` input slot is satisfied with no cast. The
 // generated domain is narrowed by the thunk (canonical CBOR bytes ⊂ Uint8Array),
 // not by a decode-time refinement — decode accepts any `Uint8Array` instance.
-export const CanonicalCborBytes = withArbitrary(S.bytes(Uint8Array), () =>
-  fc.anything().map((value) => CanonicalCbor.encode(value)),
+export const CanonicalCborBytes = withArbitrary(S.bytes(Uint8Array), (fc) =>
+  (fc as { anything(): Arbitrary<unknown> }).anything().map((value) => CanonicalCbor.encode(value)),
 );
 
 /**
