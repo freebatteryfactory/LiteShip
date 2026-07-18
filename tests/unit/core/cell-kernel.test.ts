@@ -562,6 +562,21 @@ describe('CellKernel — close-completes', () => {
     expect(() => dispose()).not.toThrow();
   });
 
+  test('fanout: after close, subscribe completes immediately and returns a callable no-op disposer', () => {
+    // The fanout twin of the replay1 close-subscribe law above. The closed-kernel
+    // branch returns NOOP_DISPOSER (a callable no-op), never null — a consumer
+    // that threads `Lifetime.add(kernel.subscribe(...))` must be able to call the
+    // returned Disposer unconditionally, even when it subscribed post-close.
+    const k = CellKernel.fanout<number>();
+    k.close();
+    let completed = 0;
+    const dispose = k.subscribe({ next: () => undefined, complete: () => (completed += 1) });
+    expect(completed).toBe(1);
+    expect(k.size).toBe(0);
+    expect(typeof dispose).toBe('function');
+    expect(() => dispose()).not.toThrow();
+  });
+
   test('replay1: read() still returns the last value after close', () => {
     const k = CellKernel.replay1(0);
     k.publish(9);

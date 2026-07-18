@@ -13,10 +13,10 @@
  *     driven with the `reactive-trace.ts` op vocabulary and folded to a
  *     `reactive-trace.ts` {@link Observation};
  *   • an IMPL side: any reactive implementation, folded to the SAME
- *     {@link Observation} shape. THIS wave: the CURRENT Effect-backed primitives
- *     via `reactive-capture.ts`. WAVE 6: the SAME model side, IMPL side flipped
- *     to the CellKernel-backed primitives — the oracle and the model do not
- *     change, only `implTraceSource`'s adapter does.
+ *     {@link Observation} shape. The migrated, Effect-free CellKernel-backed
+ *     primitives via `reactive-capture.ts`, driven through their plain
+ *     synchronous public API — the oracle and the model are unchanged from the
+ *     Wave-5.5 cage; only `implTraceSource`'s adapter and its native transport do.
  * It {@link normalize}s both observations to a comparable core, applies the
  * declared {@link EmissionPolicy} as a symmetric comparison tolerance, and
  * reports a structured {@link OracleResult}: `equivalent` (a named bisimulation
@@ -57,8 +57,9 @@
  * `divergent` under `{all}` — the exact axis Wave 6 chooses. Neither side is
  * forced; the tolerance is a declared axis of the verdict.
  *
- * PURE + DETERMINISTIC on the model side; the impl side is drained to quiescence
- * by `reactive-capture.ts`. No wall-clock enters a compared value.
+ * PURE + DETERMINISTIC on the model side; the impl side is fully synchronous
+ * (`reactive-capture.ts` drives the native transport with no async settling). No
+ * wall-clock enters a compared value.
  *
  * @module
  */
@@ -391,8 +392,9 @@ export const runModelTrace = (history: OpHistory, config: ModelConfig): Observat
           } else if (r.kind === 'unsubscribe') {
             stopSub(r.target, 'unsubscribe');
           } else {
-            // 'throw' — the listener dies: it records nothing further (its
-            // stream stops), mirroring the capture's Effect.die.
+            // 'throw' — the listener fails, isolated to this sink: it records
+            // nothing further and does NOT propagate, mirroring the native
+            // capture's per-subscriber failure isolation.
             state.stopped = true;
             state.errored = true;
           }

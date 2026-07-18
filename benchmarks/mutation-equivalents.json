@@ -40,6 +40,76 @@
       "originalText": "'sha256'",
       "mutatedText": "''",
       "justification": "The DEFAULT VALUE of the `algo` parameter (`algo: 'sha256' | 'blake3' = 'sha256'`) mutated to `algo = ''`. addressedDigestOf branches only on `if (algo === 'blake3')`; every other value (including '' and 'sha256') falls to the sha256 branch. So calling addressedDigestOf(bytes) with no algo arg produces the IDENTICAL sha256 digest whether the default is 'sha256' or ''. Verified empirically by applying the mutation to the source and comparing — byte-identical integrity_digest and algo='sha256'. (A real test pins the genuine contract: the no-arg default ≡ 'sha256' ≠ 'blake3' — but that test cannot kill THIS mutant because '' also routes to sha256. Honestly equivalent.)"
+    },
+    {
+      "mutantId": "blake3:40d7e642074404ec4c398504701d3c5635fbfb19fef87614467f2ad69b353daf",
+      "file": "packages/core/src/cell-kernel.ts",
+      "line": 98,
+      "column": 26,
+      "operator": "string-literal",
+      "originalText": "'all'",
+      "mutatedText": "''",
+      "justification": "Wave-6 reactive survivor (S6.2). The DEFAULT EmissionPolicy sentinel `const EMIT_ALL = { kind: 'all' }` mutated to `{ kind: '' }`. The emission axis is decided ONLY by `policy.kind === 'distinct'` (in replay1's `emit` and fanout's `publish`); the `'all'` pole is never compared with `===` anywhere. `'' !== 'distinct'`, so an `EMIT_ALL` whose kind is '' takes the exact same no-dedup fan-out path as `'all'` for every default-policy caller (compositor/derived/timeline-reentrancy/etc.). Verified empirically: SURVIVES the full deterministic reactive covering suite (242 tests). No test can distinguish {kind:'all'} from {kind:''} — the sentinel value is only ever the ABSENCE of 'distinct'."
+    },
+    {
+      "mutantId": "blake3:1343916e4b5d758a8b992e6015869207aeff1bdadc509ad6b55e531e1f412d41",
+      "file": "packages/core/src/cell-kernel.ts",
+      "line": 216,
+      "column": 34,
+      "operator": "string-literal",
+      "originalText": "'synchronous'",
+      "mutatedText": "''",
+      "justification": "Wave-6 reactive survivor (S6.2). The DEFAULT ReentrancyPolicy sentinel `reentrancy: ReentrancyPolicy = 'synchronous'` mutated to `= ''`. The reentrancy axis is decided ONLY by `reentrancy === 'deferred'` (in replay1's `publish`); the `'synchronous'` pole is never compared with `===`. `'' !== 'deferred'`, so a default of '' takes the identical depth-first synchronous nested fan-out path as 'synchronous' for every default-reentrancy caller (derived/timeline/compositor). Verified empirically: SURVIVES the full deterministic reactive covering suite (242 tests). The sentinel value is only ever the ABSENCE of 'deferred'; no test can distinguish it."
+    },
+    {
+      "mutantId": "blake3:01535fe21adb27e383ec937a5455fcedb0f5e1022c2ce01a2a47fba23d2bd695",
+      "file": "packages/core/src/signal.ts",
+      "line": 248,
+      "column": 62,
+      "operator": "string-literal",
+      "originalText": "'all'",
+      "mutatedText": "''",
+      "justification": "Wave-6 reactive survivor (S6.2). `Signal.make`'s explicit EmissionPolicy sentinel `CellKernel.replay1(initial, { kind: 'all' }, 'deferred')` mutated to `{ kind: '' }`. The kernel decides emission ONLY by `policy.kind === 'distinct'`; `'' !== 'distinct'` routes to the identical no-dedup fan-out as `'all'`. A signal's value channel therefore delivers every publish unchanged. Verified empirically: SURVIVES the full deterministic reactive covering suite (242 tests). The sentinel value is only ever the ABSENCE of 'distinct'; no test can distinguish {kind:'all'} from {kind:''}."
+    },
+    {
+      "mutantId": "blake3:a58485a829fc58d1864383d86227a81436cc44db533834aa8d9807c3b3da0c3f",
+      "file": "packages/core/src/signal.ts",
+      "line": 283,
+      "column": 56,
+      "operator": "string-literal",
+      "originalText": "'all'",
+      "mutatedText": "''",
+      "justification": "Wave-6 reactive survivor (S6.2). `Signal.controllable`'s explicit EmissionPolicy sentinel `CellKernel.replay1(0, { kind: 'all' }, 'deferred')` mutated to `{ kind: '' }`. The kernel decides emission ONLY by `policy.kind === 'distinct'`; `'' !== 'distinct'` routes to the identical no-dedup fan-out as `'all'` (every seek publishes). Verified empirically: SURVIVES the full deterministic reactive covering suite (242 tests). The sentinel is only ever the absence of 'distinct'; no test can distinguish {kind:'all'} from {kind:''}."
+    },
+    {
+      "mutantId": "blake3:9b55a45cb6e5f60ee337c5fadb3aea624eb6bce9ed4a52ac6de4433f16d8399c",
+      "file": "packages/core/src/signal.ts",
+      "line": 344,
+      "column": 56,
+      "operator": "string-literal",
+      "originalText": "'all'",
+      "mutatedText": "''",
+      "justification": "Wave-6 reactive survivor (S6.2). `Signal.audio`'s explicit EmissionPolicy sentinel `CellKernel.replay1(0, { kind: 'all' }, 'deferred')` mutated to `{ kind: '' }`. The kernel decides emission ONLY by `policy.kind === 'distinct'`; `'' !== 'distinct'` routes to the identical no-dedup fan-out as `'all'` (every poll publishes). Verified empirically: SURVIVES the full deterministic reactive covering suite (242 tests). NOTE: this mutant registered a FALSE KILL when scored against the reactive-conformance/reactive-capture property suites, but those are being concurrently rewritten by the S6.1 harness pass (the `subscribe-during-publish` fixture + oracle are transiently inconsistent), so they FAIL on the CLEAN tree independent of any mutant — the deterministic per-file covering suites confirm genuine equivalence."
+    },
+    {
+      "mutantId": "blake3:8abcae7a9e24a8777d5ecec621cfe8ca4d6acf41400b39aff30a58111cb7bec5",
+      "file": "packages/core/src/signal.ts",
+      "line": 213,
+      "column": 10,
+      "operator": "string-literal",
+      "originalText": "'custom'",
+      "mutatedText": "''",
+      "justification": "Wave-6 reactive survivor (S6.2 — the 'custom case' gap, reclassified). `setupListener`'s `case 'custom': return;` label mutated to `case '':`. The custom case body is a NO-OP (custom signals are driven externally via the push API — no listener is attached), and the switch has NO default. So when `source.type === 'custom'` the mutated `case ''` never matches, the source falls out of the switch, and setupListener returns undefined — byte-identical to the original explicit `return`. No listener is attached either way; nothing observable changes. Verified empirically: SURVIVES the full deterministic reactive covering suite (242 tests). Provably unkillable — a no-op case's label value cannot be observed. (The OTHER two 'custom'→'' mutants, in normalizeSource:74 and initialValueForSource:130, ARE killed by existing tests — only this no-op-case label is equivalent.)"
+    },
+    {
+      "mutantId": "blake3:8dbd25edd96b2c575b7cf66f1d355bcf9b62b683a17a1f0a58f07a1d02f3a91f",
+      "file": "packages/core/src/timeline.ts",
+      "line": 119,
+      "column": 37,
+      "operator": "arithmetic",
+      "originalText": "*",
+      "mutatedText": "/",
+      "justification": "Wave-6 reactive survivor (S6.2 — part of the 'play dt' gap, reclassified). `const dt = (now - lastTime) * direction` mutated to `(now - lastTime) / direction`. `direction` is typed `1 | -1`, initialized to `1`, and only ever toggled between `1` and `-1` by `reverse()`. For any x, `x * 1 === x / 1` and `x * -1 === x / -1` — dividing by a unit-magnitude value equals multiplying by it. So for EVERY reachable value of `direction` the two operators yield identical `dt`; no reachable state distinguishes them (the algebraic sibling of the content-address comparator equivalents, which rely on keys being distinct). Verified empirically: SURVIVES the full deterministic reactive covering suite (242 tests). NOTE: the ADJACENT `-`→`+` mutant at 119:25 is a GENUINE HOLE and is now killed by a new product test; only the `*`→`/` variant is equivalent."
     }
   ]
 }

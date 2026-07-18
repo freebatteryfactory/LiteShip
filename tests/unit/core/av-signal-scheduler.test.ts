@@ -49,6 +49,18 @@ describe('Signal.audio (sample mode)', () => {
     const sig = Signal.audio(bridge, 'sample');
     expect(sig.source.type).toBe('audio');
   });
+
+  test('sample mode returns the RAW sample even when a positive totalDurationSec is supplied', () => {
+    // poll()'s normalize guard is `mode === 'normalized' && totalDurationSec !== undefined
+    // && totalDurationSec > 0` — the mode conjunct MUST gate the duration conjuncts. A
+    // duration passed incidentally in SAMPLE mode is inert: poll returns the raw sample
+    // index, never a normalized 0..1 value. (Kills the audio-poll `&&`→`||` mutants.)
+    const bridge = AVBridge.make({ sampleRate: 48000, fps: 30 });
+    bridge.advanceSamples(5000);
+    const sig = Signal.audio(bridge, 'sample', 10);
+    expect(sig.poll()).toBe(5000);
+    expect(sig.read()).toBe(5000);
+  });
 });
 
 // ---------------------------------------------------------------------------

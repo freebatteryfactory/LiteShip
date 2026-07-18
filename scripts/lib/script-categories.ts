@@ -75,7 +75,7 @@ export const CATEGORIES: readonly CategorySpec[] = [
   {
     name: 'lint-format',
     description: 'ESLint + Prettier + structural AST lint.',
-    scripts: ['lint', 'lint:structural', 'format', 'format:check', 'check'],
+    scripts: ['lint', 'lint:structural', 'format', 'format:check', 'check', 'preflight'],
   },
   {
     name: 'audit',

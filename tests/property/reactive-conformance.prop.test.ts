@@ -1,31 +1,39 @@
 /**
- * reactive-conformance — the cross-transport DIFFERENTIAL ORACLE, driven
- * (Wave 5.5, CAGE-A). RED-FIRST: the oracle is PROVEN to red before it is
- * trusted green (the PLANT-A-DIVERGENCE self-test below — an oracle never seen
- * red is decoration).
+ * reactive-conformance — the cross-transport DIFFERENTIAL ORACLE, driven over the
+ * NATIVE CellKernel-backed primitives (Wave 5.5 CAGE-A; impl side flipped to
+ * CellKernel in Wave 6; Effect shed from the transport in Wave 6.5, scar S6.1).
+ * RED-FIRST: the oracle is PROVEN to red before it is trusted green (the
+ * PLANT-A-DIVERGENCE self-test below — an oracle never seen red is decoration).
  *
- * This suite runs `tests/support/reactive-oracle.ts` over the CURRENT
- * Effect-backed primitives (`reactive-capture.ts` adapters) AND the law-derived
- * reference model (`reactive-model.ts` via the oracle's model side), over ONE
- * op history, and asserts observational equivalence — a BISIMULATION
- * (constitution §3). It establishes the Wave-6 BASELINE: it PROVES the relation
- * where it holds and RECORDS the intentional deltas where it does not, WITHOUT
- * forcing either side (the Wave-6 EmissionPolicy / coupling decisions resolve
- * the deltas). The SAME oracle + SAME model re-run in Wave 6 with the impl side
- * flipped to CellKernel-backed primitives.
+ * This suite runs `tests/support/reactive-oracle.ts` over the migrated,
+ * Effect-free primitives (`reactive-capture.ts` adapters, now driven through their
+ * PLAIN SYNCHRONOUS public API — no Effect, no Stream, no Queue, no `runPromise`)
+ * AND the law-derived reference model (`reactive-model.ts` via the oracle's model
+ * side), over ONE op history, and asserts observational equivalence — a
+ * BISIMULATION (constitution §3). It is the STANDING post-migration acceptance
+ * proof: the durable committed evidence that the CellKernel transport is the
+ * faithful projection the reference model pins, exercising the NATIVE transport
+ * directly (no Effect bridge between the proof and the product).
  *
- * The relation the current impl exhibits, captured (not concluded):
+ * The relation the native impl exhibits, PROVEN (not merely recorded):
  *   • BISIMULATION HOLDS under {all} for Cell / Store / Signal / LiveCell-value
  *     / Timeline (non-consecutive-equal seeks) — the kernel model is a faithful
- *     projection of the current transport on the shared vocabulary.
+ *     projection of the native transport on the shared vocabulary. This now
+ *     INCLUDES, asserted POSITIVELY, the two edges the OLD Effect transport
+ *     recorded as robust deltas: the reentrancy law I5 (a nested write is
+ *     async-appended — Cell/Store ride `'deferred'`, so the model runs the SAME
+ *     arm and bisimulates) and the mutation-during-notify I6 live-set law (a
+ *     subscriber attached mid-fan-out RECEIVES the in-flight value — the kernel's
+ *     LIVE-set fan-out, which the Effect fibers' snapshot delivery had masked).
  *   • EMISSIONPOLICY AXIS: Derived (construction-time source-replay republish)
  *     and Timeline (hand-rolled state dedup) are divergent under {all},
- *     equivalent under {distinct} — the exact tolerance Wave 6 chooses.
- *   • ROBUST DELTAS (divergent under BOTH policies — Wave 6 must PIN, not
- *     policy-resolve): the reentrancy law I5 (a nested write is synchronous in
- *     the kernel model, async-appended in the current Effect impl → a delivery
- *     REORDERING) and Derived's recompute-teardown on dispose (post-dispose
- *     read freezes). These are the intentional-delta ledger for Wave 6.
+ *     equivalent under {distinct} — the tolerance Wave 6 chose ({distinct} for
+ *     Timeline; the leading-republish PRESERVED for Derived).
+ *   • REMAINING DELTA (above the kernel altitude — NOT a kernel-channel law):
+ *     Derived's recompute-teardown on dispose (a post-dispose source set no
+ *     longer recomputes, so `read()` freezes). The kernel model keeps updating
+ *     its slot, so this diverges even under {distinct} — the recorded delta the
+ *     oracle's altitude note (`reactive-oracle.ts`) draws.
  *
  * Seeds pinned; no unseeded fast-check.
  *
@@ -68,11 +76,12 @@ const timelineState = (ms: number): string => Boundary.evaluate(CAPTURE_BOUNDARY
 const IDENTITY: ModelConfig = { channel: 'replay1', initialRaw: 0 };
 const DERIVED: ModelConfig = { channel: 'replay1', initialRaw: 0, project: (x) => x + 100 };
 const TIMELINE: ModelConfig = { channel: 'replay1', initialRaw: 0, project: timelineState };
-// Cell / LiveCell-value ride the 'deferred' reentrancy arm (Wave 6 nested-write
-// RULING — PRESERVE async-append; scar S6.F.2). The model runs 'deferred' so the
-// oracle asserts that law POSITIVELY (model ≡ CellKernel-backed impl) rather than
-// merely recording a sync-model-vs-async-impl divergence.
-const CELL_DEFERRED: ModelConfig = { channel: 'replay1', initialRaw: 0, reentrancy: 'deferred' };
+// Cell / Store / Signal / LiveCell-value ride the 'deferred' reentrancy arm (Wave
+// 6 nested-write RULING — PRESERVE async-append; scar S6.F.2). The model runs the
+// SAME 'deferred' arm so the oracle asserts that I5 law POSITIVELY (model ≡
+// native CellKernel-backed impl) rather than recording a sync-model-vs-async-impl
+// divergence. Identity projection — reused by both the Cell and Store proofs.
+const DEFERRED: ModelConfig = { channel: 'replay1', initialRaw: 0, reentrancy: 'deferred' };
 
 const modelFor = (primitive: string, cfg: ModelConfig): TraceSource =>
   modelTraceSource({ ...cfg, label: `model:${primitive}` });
@@ -87,7 +96,7 @@ const unsubOn = (onValue: number, target: string): ReactionSpec => ({ kind: 'uns
 const TIMEOUT = scaledTimeout(60_000);
 
 // ===========================================================================
-// 1. BISIMULATION HOLDS — model ≡ current Effect impl, up to {all}.
+// 1. BISIMULATION HOLDS — model ≡ native CellKernel impl, up to {all}.
 // ===========================================================================
 
 interface BisimCase {
@@ -130,7 +139,7 @@ const BISIM_HOLDS: readonly BisimCase[] = [
   { primitive: 'live-cell', cfg: IDENTITY, seed: 'disposal', history: [op.subscribe('a'), op.set(150), op.dispose(), op.set(50), op.read()] },
 ];
 
-describe('bisimulation holds — reference model ≡ current Effect impl (up to {all})', () => {
+describe('bisimulation holds — reference model ≡ native CellKernel impl (up to {all})', () => {
   for (const c of BISIM_HOLDS) {
     test(
       `${c.primitive} / ${c.seed}`,
@@ -189,85 +198,81 @@ describe('EmissionPolicy axis — divergent under {all}, equivalent under {disti
 });
 
 // ===========================================================================
-// 3. ROBUST DELTAS — divergent under BOTH policies. The intentional-delta
-//    LEDGER for Wave 6: pinned EXACTLY so a Wave-6 change reds this suite and
-//    forces a deliberate ledger update (record, do not force either side).
+// 3. RESOLVED DELTAS + THE REMAINING ABOVE-KERNEL DELTA. The Effect transport's
+//    two robust deltas (I5 nested-write, I6 subscribe-during-publish) are now
+//    asserted POSITIVELY against the native CellKernel impl — the migration
+//    resolved them per the Wave-6 rulings. The one delta that survives is above
+//    the kernel channel (Derived recompute-teardown), pinned EXACTLY so a change
+//    reds this suite.
 // ===========================================================================
 
-describe('nested-write ruling (S6.F.2) — Cell async-append PRESERVED, bisimulates a deferred model', () => {
-  test(
-    'Cell nested-write — the CellKernel-backed impl bisimulates the deferred model (b: [0,1,99])',
-    async () => {
-      // RULING (scar S6.F.2): PRESERVE async-append (glitch-free / breadth-first).
-      // The migrated Cell uses CellKernel.replay1 with 'deferred', so a set(99)
-      // issued from a delivery handler is fanned out AFTER the outer set(1) reaches
-      // every subscriber → BOTH a and b see [0,1,99] (every live subscriber's
-      // terminal delivery equals read()). The model runs the SAME 'deferred' arm,
-      // so the oracle proves the preserved law POSITIVELY (bisimulation holds).
-      const history = [op.subscribe('a', [setOn(1, 99)]), op.subscribe('b'), op.set(1), op.read()];
-      const model = modelFor('cell', CELL_DEFERRED);
-      const impl = implFor('cell');
-      const underAll = await differential(model, impl, history, emissionPolicy.all());
-      if (underAll.verdict.kind !== 'equivalent') {
-        throw new Error(`expected bisimulation (async-append preserved), got: ${underAll.verdict.difference.message}`);
-      }
-      expect(underAll.verdict.relation).toBe('bisimulation');
-      // Both subscribers observe the same total order — a is [0,1,99], b is [0,1,99].
-      expect(underAll.model.subscribers.map((s) => [s.sink, s.deliveries])).toEqual([
-        ['a', [0, 1, 99]],
-        ['b', [0, 1, 99]],
-      ]);
-      expect(underAll.impl.subscribers.map((s) => [s.sink, s.deliveries])).toEqual([
-        ['a', [0, 1, 99]],
-        ['b', [0, 1, 99]],
-      ]);
-    },
-    TIMEOUT,
-  );
+describe('nested-write ruling I5 (S6.F.2) — Cell/Store async-append PRESERVED, bisimulates the deferred model', () => {
+  // RULING (scar S6.F.2): PRESERVE async-append (glitch-free / breadth-first).
+  // The migrated Cell and Store ride CellKernel.replay1 with 'deferred', so a
+  // nested write issued from a delivery handler is fanned out AFTER the outer
+  // write reaches every subscriber → BOTH subscribers see [0,1,99] (every live
+  // subscriber's terminal delivery equals read()). The model runs the SAME
+  // 'deferred' arm, so the oracle proves the preserved I5 law POSITIVELY. This is
+  // the flip the Foundation ruling anticipated ("§3 Cell/Store nested-write cases
+  // from 'robust delta' to 'bisimulation holds'").
+  for (const primitive of ['cell', 'store'] as const) {
+    test(
+      `${primitive} nested-write — the CellKernel-backed impl bisimulates the deferred model (both: [0,1,99])`,
+      async () => {
+        const history = [op.subscribe('a', [setOn(1, 99)]), op.subscribe('b'), op.set(1), op.read()];
+        const model = modelFor(primitive, DEFERRED);
+        const impl = implFor(primitive);
+        const underAll = await differential(model, impl, history, emissionPolicy.all());
+        if (underAll.verdict.kind !== 'equivalent') {
+          throw new Error(`expected bisimulation (async-append preserved), got: ${underAll.verdict.difference.message}`);
+        }
+        expect(underAll.verdict.relation).toBe('bisimulation');
+        // Both subscribers observe the same total order — a is [0,1,99], b is [0,1,99].
+        expect(underAll.model.subscribers.map((s) => [s.sink, s.deliveries])).toEqual([
+          ['a', [0, 1, 99]],
+          ['b', [0, 1, 99]],
+        ]);
+        expect(underAll.impl.subscribers.map((s) => [s.sink, s.deliveries])).toEqual([
+          ['a', [0, 1, 99]],
+          ['b', [0, 1, 99]],
+        ]);
+      },
+      TIMEOUT,
+    );
+  }
 });
 
-describe('recorded delta — reentrancy law I5 (nested write: sync-nested model vs async-appended impl)', () => {
+describe('mutation-during-notify I6 — subscribe-during-publish LIVE-set, bisimulates the model', () => {
   test(
-    'Store nested-dispatch — the same I5 reordering on the reducer channel',
+    'Cell subscribe-during-publish — the mid-fan-out subscriber RECEIVES the in-flight value in BOTH model and native impl',
     async () => {
-      const history = [op.subscribe('a', [setOn(1, 99)]), op.subscribe('b'), op.set(1), op.read()];
-      const underAll = await differential(modelFor('store', IDENTITY), implFor('store'), history, emissionPolicy.all());
-      expect(underAll.verdict.kind).toBe('divergent');
-      if (underAll.verdict.kind !== 'divergent') return;
-      expect(underAll.verdict.difference.sink).toBe('b');
-      expect(underAll.verdict.difference.model).toEqual([0, 99, 1]);
-      expect(underAll.verdict.difference.impl).toEqual([0, 1, 99]);
-    },
-    TIMEOUT,
-  );
-});
-
-describe('recorded delta — mutation-during-notify I6 (subscribe-during-publish: live-set model vs snapshot impl)', () => {
-  test(
-    'Cell subscribe-during-publish — the mid-fan-out subscriber receives the in-flight value in the model, misses it in the impl',
-    async () => {
-      // Model replay-1 LIVE-set (I6): 'late', attached mid-fan-out of set(5),
-      // RECEIVES the in-flight 5 → late=[5,5,6]. Impl SNAPSHOT: 'late' MISSES it
-      // → late=[5,6]. Under {distinct} the consecutive-equal 5 collapses, MASKING
-      // the root difference — a subtlety Wave 6 must decide deliberately.
+      // The kernel's replay-1 LIVE-set fan-out law (I6): 'late', attached
+      // mid-fan-out of set(5) from a's delivery handler, RECEIVES the in-flight 5
+      // → late=[5,5,6]. The native CellKernel transport honors this directly (the
+      // synchronous fan-out visits the just-added registration). The OLD Effect
+      // transport delivered through forked fibers, so 'late' MISSED the in-flight
+      // value (snapshot → [5,6]) — a masked I6 VIOLATION the migration corrected.
+      // The model is the SAME live-set law, so the oracle proves the native impl
+      // bisimulates it POSITIVELY (and byte-matches the regenerated fixture).
       const history = [op.subscribe('a', [subOn(5, 'late')]), op.set(5), op.set(6), op.read()];
       const model = modelFor('cell', IDENTITY);
       const impl = implFor('cell');
       const underAll = await differential(model, impl, history, emissionPolicy.all());
-      const underDistinct = await differential(model, impl, history, emissionPolicy.distinct());
-      expect(underAll.verdict.kind).toBe('divergent');
-      expect(underDistinct.verdict.kind).toBe('equivalent'); // masked by the collapse
-      if (underAll.verdict.kind !== 'divergent') return;
-      const d = underAll.verdict.difference;
-      expect(d.sink).toBe('late');
-      expect(d.model).toEqual([5, 5, 6]);
-      expect(d.impl).toEqual([5, 6]);
+      if (underAll.verdict.kind !== 'equivalent') {
+        throw new Error(`expected I6 live-set bisimulation, got: ${underAll.verdict.difference.message}`);
+      }
+      expect(underAll.verdict.relation).toBe('bisimulation');
+      // The mid-fan-out subscriber sees the in-flight 5 on BOTH sides.
+      const lateModel = underAll.model.subscribers.find((s) => s.sink === 'late')?.deliveries;
+      const lateImpl = underAll.impl.subscribers.find((s) => s.sink === 'late')?.deliveries;
+      expect(lateModel).toEqual([5, 5, 6]);
+      expect(lateImpl).toEqual([5, 5, 6]);
     },
     TIMEOUT,
   );
 });
 
-describe('recorded delta — Derived recompute-teardown (post-dispose read freezes)', () => {
+describe('remaining delta — Derived recompute-teardown (post-dispose read freezes)', () => {
   test(
     'Derived disposal — a post-dispose source set does NOT recompute the derived value (read diverges even under {distinct})',
     async () => {
@@ -353,9 +358,9 @@ const actionArb: fc.Arbitrary<CleanAction> = fc.oneof(
 
 const cleanHistoryArb: fc.Arbitrary<OpHistory> = fc.array(actionArb, { maxLength: 6 }).map(buildClean);
 
-describe('seeded property — random clean kernel histories bisimulate (Cell, model ≡ Effect impl)', () => {
+describe('seeded property — random clean kernel histories bisimulate (Cell, model ≡ native impl)', () => {
   test(
-    'model ≡ current Cell over random shared-vocabulary histories ({all})',
+    'model ≡ native Cell over random shared-vocabulary histories ({all})',
     async () => {
       const model = modelFor('cell', IDENTITY);
       const impl = implFor('cell');
