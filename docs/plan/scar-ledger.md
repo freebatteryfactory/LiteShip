@@ -954,3 +954,46 @@ receipt `sha256:`-label law. The B5b/D9b normalizer cage is now a two-home parit
   Guarded dynamic `import()` (e.g. `@czap/cli` → `@czap/mcp-server`, deliberately undeclared
   to break the cli↔mcp cycle) is the sanctioned optional-integration seam, out of the
   load-time closure by design. ACTIVE since Wave 8 closeout.
+
+## Wave 8.5 scars (public constitution + convergence evidence)
+
+- **S8.5-1 — the plan named a NEW ADR at a number Wave 8 had already claimed.** The
+  remaining-waves plan (`remaining-waves.md:246`) scheduled the reactive-convergence
+  record as `docs/adr/0042-reactive-convergence.md`, but Wave 8's effect-shed closeout
+  had already minted `docs/adr/0042-effect-shed.md`. Two ADRs cannot share a number.
+  Class: a plan authored before an earlier wave's ADR landed hard-coded a number that
+  wave then consumed — a stale file-plan reference, not a design conflict.
+  Disposition: **RESOLVED — next free number.** The reactive-convergence record took
+  `0043` (`docs/adr/0043-reactive-convergence.md`); the plan's `0042-reactive-convergence`
+  path is stale history. No guard needed: the ADR README index is the single source of
+  the number roster, and a duplicate would be visible there. STATUS: closed (0043 minted;
+  plan path reconciled).
+
+- **S8.5-2 — the plan cited ADR-0012 for the audit↔gauntlet fact-injection boundary; it
+  is actually ADR-0023.** The Wave-8.5 spine-relation plan entry attributed "heavy ts-AST
+  in `@czap/audit`, the lean gate folds injected facts" to ADR-0012. ADR-0012
+  (`0012-devops-profile-boundary.md`) is the narrower "DevopsProfile is the reusable seam;
+  conventions/quality/runtime contracts stay repo-local" boundary; the "engine is LEAN,
+  capability is host-INJECTED, `@czap/gauntlet` carries no `typescript` dependency" law is
+  **ADR-0023** (`0023-gauntlet-rigor-engine.md`). ADR-0012 is the boundary the injected
+  oracles RESPECT (the audit engine names no LiteShip policy); ADR-0023 is the injection
+  law itself.
+  Class: a plan-text citation pointed at the adjacent (respected) boundary ADR rather than
+  the governing (injection) ADR — a reference slip, not a wrong build.
+  Disposition: **RESOLVED — cited correctly in the built code.** `spine-relation-facts.ts`
+  and `spine-relation-build.ts` cite ADR-0023 for the fold/host split and ADR-0012 for the
+  policy-free (host-supplies-the-roster) discipline — both, each for its real law. STATUS:
+  closed (recorded; the code carries the correct citations).
+
+- **Conflict-1 — EXECUTED (was RESOLVED-direction).** The spine-codegen-vs-hand-curated-
+  mirrors conflict (see the Wave-5.5 §Conflict-1 entry) reached RESOLVED direction at 5.5
+  (gen-spine byte generator superseded; derive the RELATION, not the mirror bytes) with the
+  pin absorption tracked to Wave 8.5. Wave 8.5 EXECUTED it: the two-axis spine relation gate
+  (`packages/gauntlet/src/gates/spine-relation.ts` + `packages/audit/src/spine-relation-build.ts`
+  + the frozen admission table + `tests/unit/audit/spine-relation.test.ts`) went green over the
+  three historical drift fixtures (CapSet Set→array, Millis brand loss, WGSL omission) FIRST,
+  and only then were the type-by-type mirror pins absorbed from `tests/unit/spine-conformance.test.ts`
+  (the S-conflict discipline honored to the letter — never delete a pin ahead of the green gate
+  that subsumes it). STATUS: **CLOSED (executed).** The tsc-AST type-export enumerator closes the
+  companion blind spot (`intentionally-omitted` mechanically checkable). ADR-0043 records the
+  decision; the semantic-convergence report indexes the evidence.

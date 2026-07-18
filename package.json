@@ -41,6 +41,7 @@
     "coverage:merge-shards": "tsx scripts/merge-shard-coverage.ts",
     "report:runtime-seams": "pnpm exec tsx scripts/report-runtime-seams.ts",
     "report:satellite-scan": "pnpm exec tsx scripts/report-satellite-scan.ts",
+    "report:semantic-convergence": "pnpm exec tsx scripts/semantic-convergence-report.ts",
     "feedback:verify": "pnpm exec tsx scripts/feedback-verify.ts",
     "runtime:gate": "pnpm exec tsx scripts/runtime-gate.ts",
     "standards:gate": "pnpm exec tsx scripts/standards-integrity-gate.ts",
