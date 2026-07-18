@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "title": "Wave 8 — Effect shed closeout receipt",
+  "issue": 153,
+  "date": "2026-07-18",
+  "sourceSha": "5af864ce15b87d4b0a0b3af3a1231baaeaba5747",
+  "rootVersion": "0.18.0",
+  "counts": {
+    "activeProductionReferences": 0,
+    "activeTestReferences": 0,
+    "publicDeclarationReferences": 0,
+    "packagePeerDependencies": 0,
+    "packageDirectDependencies": 0,
+    "rootManifestEntries": 0,
+    "overrideEntries": 0,
+    "catalogEntries": 0,
+    "scaffoldRequirements": 0,
+    "exampleManifestEntries": 0,
+    "scriptImports": 0,
+    "lockfilePackages": 0,
+    "historicalDocumentationReferences": 5
+  },
+  "historicalReferencesClassified": true,
+  "historicalReferences": [
+    "docs/adr/0005-effect-boundary.md (superseded, retained as history)",
+    "docs/adr/0042-effect-shed.md (the shed decision + migration bridge)",
+    "packages/_spine/core.d.ts (prose: 'was Effect.Effect<...>')",
+    "packages/_spine/quantizer.d.ts (prose: 'was Effect.Effect<...>')",
+    "packages/_spine/web.d.ts (prose: 'was Effect.Effect<...>')"
+  ],
+  "guards": {
+    "productionEffectFreeInvariant": "tests/unit/core/invariants.test.ts (Invariant 14)",
+    "codecSpineBidirectionalPin": "tests/unit/spine-conformance.test.ts",
+    "testImportGuards": [
+      "tests/unit/core/harness/policy-gate.test.ts",
+      "tests/unit/core/harness/receipted-mutation.test.ts"
+    ]
+  },
+  "verification": {
+    "spineTypecheck": "passed",
+    "fullSuite": "passed (8329 passed, 23 skipped, 0 failed)",
+    "gauntlet": "passed",
+    "packageSmoke": "passed",
+    "cleanRepositoryInstall": "passed (rm -rf node_modules && pnpm install --frozen-lockfile; zero effect in node_modules or the .pnpm store; cold build passes)",
+    "packedConsumerInstall": "passed",
+    "packedConsumerDependencyTreeContainsEffect": false,
+    "consumerSmoke": "passed (packed @czap/core closure: Cell define/subscribe/dispose + S.struct/Codec.decode -> Result, executed from packed .d.ts + .js with zero effect installed)",
+    "reactivePublishAllocation": "0.0000 B/op with a live subscriber (CellKernel.fanout; was ~13 B/op via effect Queue.offerUnsafe)"
+  },
+  "notes": {
+    "adr": "ADR-0005 superseded by ADR-0042 (not erased) — the migration bridge from each Effect responsibility to its native owner.",
+    "unrelatedFinding": "The packed-consumer proof surfaced a PRE-EXISTING, effect-unrelated packaging leak: packages/core/src/capsules/canonical-cbor-decode.ts eagerly imports 'fast-check' (used by withArbitrary) but fast-check is not declared in @czap/core's package.json (root devDep only). A fresh consumer importing @czap/core must currently also install fast-check. Flagged for a separate fix (declare it optional/peer, or lazy-import); NOT part of the effect shed."
+  }
+}
