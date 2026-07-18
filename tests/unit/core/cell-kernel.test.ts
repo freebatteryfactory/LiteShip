@@ -683,3 +683,67 @@ describe('CellKernel — property: replay invariant', () => {
     );
   });
 });
+
+describe('CellKernel — exception safety (a throwing sink must not wedge the channel)', () => {
+  test('deferred: a sink that throws mid-publish does not latch inFanOut — later publishes still drain', () => {
+    const k = CellKernel.replay1(0, undefined, 'deferred');
+    const seen: number[] = [];
+    // A sink that throws on value 1 (the initial replay of 0 does not throw).
+    k.subscribe({ next: (v) => { if (v === 1) throw new Error('boom'); } });
+    k.subscribe({ next: (v) => seen.push(v) }); // records; replayed 0 on subscribe
+
+    // The throw PROPAGATES to the publisher (fail-fast) …
+    expect(() => k.publish(1)).toThrow('boom');
+    // … but the channel is NOT wedged: without the finally reset, inFanOut would stick
+    // true and this publish would buffer into `pending` and never deliver.
+    k.publish(2);
+    expect(seen).toContain(2);
+  });
+
+  test('synchronous: a throwing sink does not wedge subsequent delivery', () => {
+    const k = CellKernel.replay1(0);
+    const seen: number[] = [];
+    k.subscribe({ next: (v) => { if (v === 1) throw new Error('boom'); } });
+    k.subscribe({ next: (v) => seen.push(v) });
+    expect(() => k.publish(1)).toThrow('boom');
+    k.publish(2);
+    expect(seen).toContain(2);
+  });
+
+  test('fanout: a throwing sink does not wedge subsequent delivery', () => {
+    const k = CellKernel.fanout<number>();
+    const seen: number[] = [];
+    k.subscribe({ next: (v) => { if (v === 1) throw new Error('boom'); } });
+    k.subscribe({ next: (v) => seen.push(v) });
+    expect(() => k.publish(1)).toThrow('boom');
+    k.publish(2);
+    expect(seen).toContain(2);
+  });
+
+  test('close: a throwing complete does not stop the REMAINING sinks from completing (terminal completeness)', () => {
+    // SINK-ERROR LAW for close(): unlike fanOut (fail-fast value delivery), close is
+    // teardown — every sink must be completed exactly once even when one `complete`
+    // throws, or the rest leak (never learning the stream ended). The first fault is
+    // rethrown AFTER the pass so the closer still observes it.
+    const k = CellKernel.replay1(0);
+    const completed: string[] = [];
+    k.subscribe({ next: () => undefined, complete: () => completed.push('a') });
+    k.subscribe({ next: () => undefined, complete: () => { throw new Error('boom'); } });
+    k.subscribe({ next: () => undefined, complete: () => completed.push('c') });
+
+    // The first fault propagates …
+    expect(() => k.close()).toThrow('boom');
+    // … but BOTH non-throwing sinks were still completed (no skip after the throw).
+    expect(completed).toEqual(['a', 'c']);
+    expect(k.closed).toBe(true);
+  });
+
+  test('close: fanout completes every sink despite a throwing complete', () => {
+    const k = CellKernel.fanout<number>();
+    const completed: string[] = [];
+    k.subscribe({ next: () => undefined, complete: () => { throw new Error('boom'); } });
+    k.subscribe({ next: () => undefined, complete: () => completed.push('b') });
+    expect(() => k.close()).toThrow('boom');
+    expect(completed).toEqual(['b']);
+  });
+});

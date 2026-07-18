@@ -8,7 +8,7 @@
 
 > **Shape**\<`K`, `T`\> = `LiveCellShape`\<`K`, `T`\>
 
-Defined in: [core/src/live-cell.ts:189](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/live-cell.ts#L189)
+Defined in: [core/src/live-cell.ts:236](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/live-cell.ts#L236)
 
 Structural shape of a [LiveCell](../../../variables/LiveCell.md) parameterized by cell kind `K` and value type `T`.
 

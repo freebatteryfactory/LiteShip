@@ -103,7 +103,18 @@ function buildDerived<T>(recompute: () => T, triggers: ReadonlyArray<DerivedTrig
 
   return {
     _tag: 'Derived',
-    read: () => kernel.read(),
+    // PULL-ONLY FRESHNESS (S6 divergence closure). Sources are wired LAZILY on the
+    // first subscribe (to reproduce the leading republish), so a pull-only reader —
+    // `const d = Derived.combine([cell], …); cell.set(2); d.read()` — would otherwise
+    // freeze at the construction-time value with no subscriber to advance the slot.
+    // While UNWIRED AND source-backed, `read()` recomputes from the live sources
+    // (pull) WITHOUT wiring, so the eventual first subscribe still gets its leading
+    // republish. A SOURCELESS derived can never go stale (nothing feeds it), so it
+    // returns the cached construction value — never re-invoking a compute that may be
+    // effectful (`() => ++n`). Once wired, the kernel slot is kept current by the push
+    // subscriptions (and stays frozen at the last value after disposal — `wired` is
+    // never reset), so `read()` returns it.
+    read: () => (wired || triggers.length === 0 ? kernel.read() : recompute()),
     subscribe: (subscriber) => {
       const disposer = kernel.subscribe(subscriber);
       ensureWired();

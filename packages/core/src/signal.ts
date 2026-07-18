@@ -184,12 +184,23 @@ function setupListener(source: SignalSource, kernel: CellKernel.Replay<number>, 
         // absolute mode and deterministic when the wall clock is mocked.
         const start = wallClock.now();
         const id = { current: 0 };
+        // DISPOSAL-SAFE self-reschedule. A value subscriber may dispose the signal
+        // from WITHIN this tick's `publish`; the finalizer then cancels the frame id
+        // of the tick already executing (a no-op), and without this guard the tick
+        // would re-arm a fresh frame AFTER disposal — an inert-publish loop that runs
+        // forever. `disposed` is monotonic (never reset), so the reschedule stays
+        // permanently blocked once teardown has begun.
+        let disposed = false;
         const tick = (): void => {
           kernel.publish(wallClock.now() - start);
+          if (disposed) return;
           id.current = requestAnimationFrame(tick);
         };
         id.current = requestAnimationFrame(tick);
-        lifetime.add(() => cancelAnimationFrame(id.current));
+        lifetime.add(() => {
+          disposed = true;
+          cancelAnimationFrame(id.current);
+        });
       } else if (source.mode === 'absolute') {
         const id = setInterval(() => {
           kernel.publish(wallClock.now());

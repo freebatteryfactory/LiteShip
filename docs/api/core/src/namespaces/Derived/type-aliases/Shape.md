@@ -8,7 +8,7 @@
 
 > **Shape**\<`T`\> = `DerivedShape`\<`T`\>
 
-Defined in: [core/src/derived.ts:158](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/derived.ts#L158)
+Defined in: [core/src/derived.ts:169](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/derived.ts#L169)
 
 Structural shape of a [Derived](../../../variables/Derived.md): `_tag`, sync `read`, `subscribe`, `lifetime`.
 

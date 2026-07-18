@@ -281,6 +281,42 @@ describe('LiveCell.makeBoundary', () => {
     expect(e2.meta.version).toBe(2);
     expect(e1.id).not.toBe(e2.id);
   });
+
+  test('S2.3b nested write: crossings publish in commit order and the A→B subscriber never reads the advanced envelope', () => {
+    // An outer A→B (mobile→tablet) commit whose value subscriber performs a nested
+    // B→C (tablet→desktop) write. Before serializing the whole commit unit, only the
+    // Cell value fan-out was deferred: the nested recordMutation + crossing publish
+    // ran synchronously inside the nested call, so B→C published BEFORE A→B and the
+    // A→B subscriber read the already-advanced (desktop / version 3) envelope.
+    const cell = LiveCell.makeBoundary(viewport, 400); // mobile
+    const crossings = collectCrossings(cell);
+
+    let nested = false;
+    let envelopeAfterNestedWrite: { value: number; version: number } | null = null;
+    cell.subscribe((value) => {
+      if (value === 800 && !nested) {
+        nested = true;
+        cell.set(1200); // nested B→C write FIRST …
+        const env = cell.envelope(); // … then read: must STILL be the A→B envelope
+        envelopeAfterNestedWrite = { value: env.value as number, version: env.meta.version };
+      }
+    });
+
+    cell.set(800); // mobile -> tablet (the outer commit)
+
+    // Commit order, NOT reversed: A→B (mobile→tablet) then B→C (tablet→desktop).
+    expect(crossings.map((c) => [String(c.from), String(c.to), c.value])).toEqual([
+      ['mobile', 'tablet', 800],
+      ['tablet', 'desktop', 1200],
+    ]);
+    // Even AFTER issuing the nested write, the A→B subscriber still reads the A→B
+    // envelope (value 800, version 2) — the nested commit is deferred, not applied.
+    expect(envelopeAfterNestedWrite).toEqual({ value: 800, version: 2 });
+    // Final envelope reflects the last (drained) commit.
+    const final = cell.envelope();
+    expect(final.value).toBe(1200);
+    expect(final.meta.version).toBe(3);
+  });
 });
 
 // ---------------------------------------------------------------------------

@@ -8,7 +8,7 @@
 
 > **Shape**\<`T`\> = `SignalShape`\<`T`\>
 
-Defined in: [core/src/signal.ts:392](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/signal.ts#L392)
+Defined in: [core/src/signal.ts:403](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/signal.ts#L403)
 
 Structural shape of a passive [Signal](../../../variables/Signal.md): `source` + `read` + `subscribe` + `lifetime`.
 

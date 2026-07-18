@@ -124,6 +124,27 @@ describe('Derived.combine — captured derived.json parity', () => {
     expect(derived.read()).toBe(105);
     expect(a.values).toEqual([100, 100, 105]); // no further deliveries
   });
+
+  test('pull-only: read() reflects a source change even with NO subscriber (never stale)', () => {
+    // Sources wire lazily on the first subscribe, so a source change before anyone
+    // subscribes must not leave read() frozen at the construction-time value. An
+    // UNWIRED source-backed read recomputes from the live sources (pull), WITHOUT
+    // wiring — so the eventual first subscribe still gets its leading republish.
+    const source = Cell.make(1);
+    const derived = Derived.combine([source] as const, (value: number) => value * 2);
+    source.set(2); // no subscriber exists yet
+    expect(derived.read()).toBe(4); // pull recompute: 2 * 2, not the stale 1 * 2 = 2
+
+    // The leading-republish law is intact AND pull-reads did NOT wire the sources:
+    // the FIRST subscribe still sees the duplicate — the kernel slot's construction
+    // value (2, unchanged by pull reads) THEN the source-wiring republish (4). Had a
+    // pull read wired the sources, this subscribe would get no republish (length 1).
+    const { values } = collect(derived);
+    expect(values).toEqual([2, 4]);
+    source.set(5);
+    expect(derived.read()).toBe(10);
+    expect(values).toEqual([2, 4, 10]);
+  });
 });
 
 // ---------------------------------------------------------------------------

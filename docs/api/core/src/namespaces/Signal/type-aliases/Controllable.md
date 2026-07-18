@@ -8,7 +8,7 @@
 
 > **Controllable**\<`T`\> = `ControllableSignalShape`\<`T`\>
 
-Defined in: [core/src/signal.ts:394](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/signal.ts#L394)
+Defined in: [core/src/signal.ts:405](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/signal.ts#L405)
 
 Structural shape of a seekable, pausable signal — e.g. driven by Remotion or a scrub UI.
 

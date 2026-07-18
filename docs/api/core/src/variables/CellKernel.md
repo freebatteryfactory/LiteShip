@@ -8,7 +8,7 @@
 
 > `const` **CellKernel**: `object`
 
-Defined in: [core/src/cell-kernel.ts:408](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts#L408)
+Defined in: [core/src/cell-kernel.ts:441](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts#L441)
 
 CellKernel — the replay-current / fan-out reactive substrate. `replay1` mirrors
 the compositor's replay-1 seam (current slot + replay-on-subscribe); `fanout`

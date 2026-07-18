@@ -24,6 +24,19 @@
  * the already-consistent envelope. There is no observable gap where the value has
  * advanced but the envelope has not.
  *
+ * S2.3b NESTED-COMMIT SERIALIZATION — a commit is ONE atomic unit
+ * (`recordMutation` + value fan-out + crossing fan-out). A commit issued
+ * REENTRANTLY — a value/crossing subscriber of an in-flight commit calls
+ * `set`/`update` again — is enqueued and run only AFTER the active commit fully
+ * unwinds. Without this, only the Cell's value fan-out was deferred (kernel
+ * `'deferred'`); the surrounding `recordMutation` + crossing publish ran
+ * synchronously inside the nested call, so an outer A→B whose subscriber writes
+ * B→C published the B→C crossing BEFORE A→B (reversed history) and let the A→B
+ * subscriber read the already-advanced (C) envelope. Serializing the whole unit
+ * (a re-entrancy guard + FIFO drain, realized synchronously — no microtask) makes
+ * crossings publish in commit order and every subscriber read the envelope that
+ * matches the value it is being delivered.
+ *
  * @module
  */
 
@@ -104,14 +117,45 @@ function makeCore<K extends CellKind, T>(kind: K, initial: T, nodeId: string) {
   return { cell, crossings, recordMutation, envelope, lifetime };
 }
 
+/**
+ * Serialize LiveCell commits into one atomic unit (S2.3b). A commit issued
+ * reentrantly — from within a value/crossing subscriber of the in-flight commit —
+ * is enqueued and run AFTER the active commit fully unwinds (its `recordMutation`,
+ * value fan-out, and crossing fan-out all complete first). Mirrors the kernel's
+ * deferred re-entrancy — a guard + FIFO drain, realized SYNCHRONOUSLY (no
+ * microtask). A `run` that throws mid-drain clears the queue and releases the guard
+ * (fail-fast, matching the kernel), so one faulty commit cannot wedge the cell.
+ */
+function serializedCommit<T>(run: (value: T) => void): (value: T) => void {
+  let committing = false;
+  const queue: T[] = [];
+  return (value: T): void => {
+    if (committing) {
+      queue.push(value);
+      return;
+    }
+    committing = true;
+    try {
+      run(value);
+      while (queue.length > 0) {
+        const next = queue.shift();
+        if (next !== undefined) run(next);
+      }
+    } finally {
+      committing = false;
+      queue.length = 0;
+    }
+  };
+}
+
 function _make<K extends CellKind, T>(kind: K, initial: T): LiveCellShape<K, T> {
   const core = makeCore(kind, initial, `live-cell-${kind}`);
   const { cell, crossings, recordMutation, envelope, lifetime } = core;
 
-  const commit = (value: T): void => {
+  const commit = serializedCommit<T>((value) => {
     recordMutation(value);
     cell.set(value);
-  };
+  });
 
   return {
     _tag: 'LiveCell',
@@ -141,11 +185,14 @@ function _makeBoundary<I extends string, S extends readonly [string, ...string[]
 
   let prevState: string = Boundary.evaluate(boundary, initial);
 
-  // Commit the value AND record the mutation in one synchronous pass, no
-  // observable gap (S2.3): bump the envelope (via recordMutation) and evaluate the
-  // crossing FIRST, then fan the value out (a value subscriber that reads
-  // `envelope()` sees the already-consistent envelope), then fan the crossing out.
-  const commit = (value: number): void => {
+  // Commit the value AND record the mutation in one atomic unit, no observable gap
+  // (S2.3): bump the envelope (via recordMutation) and evaluate the crossing FIRST,
+  // then fan the value out (a value subscriber that reads `envelope()` sees the
+  // already-consistent envelope), then fan the crossing out. Wrapped in
+  // {@link serializedCommit} (S2.3b) so a nested write from within a value/crossing
+  // subscriber runs only AFTER this whole unit unwinds — crossings then publish in
+  // commit order (A→B before B→C), never reversed.
+  const commit = serializedCommit<number>((value) => {
     const stamp = recordMutation(value);
     const from = prevState;
     const to: string = Boundary.evaluateWithHysteresis(boundary, value, from);
@@ -155,7 +202,7 @@ function _makeBoundary<I extends string, S extends readonly [string, ...string[]
     if (crossed) {
       crossings.publish({ from: mkStateName(from), to: mkStateName(to), timestamp: stamp, value });
     }
-  };
+  });
 
   return {
     _tag: 'LiveCell',

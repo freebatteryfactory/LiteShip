@@ -233,4 +233,51 @@ describe('Timeline — disposal via Lifetime', () => {
     timeline.seek(Millis(150)); // inert after close (kernel closed)
     expect(got).toEqual(['idle']);
   });
+
+  test('a state subscriber disposing DURING a tick does NOT re-arm the scheduler', () => {
+    // Disposal-resurrection race: a state subscriber calls dispose() from inside
+    // setState(). The finalizer cancels the schedId of the tick already executing (a
+    // no-op) — without the monotonic `disposed` guard, step() would install a FRESH
+    // callback after disposal and tick forever. A recording scheduler makes the
+    // outstanding-callback state observable.
+    let scheduleCount = 0;
+    let pending: ((now: number) => void) | null = null;
+    let nextId = 1;
+    const scheduler: Scheduler.Shape = {
+      _tag: 'FrameScheduler',
+      schedule: (cb) => {
+        scheduleCount += 1;
+        pending = cb;
+        return nextId++;
+      },
+      cancel: () => {
+        pending = null;
+      },
+    };
+    const fire = (now: number): void => {
+      const cb = pending;
+      pending = null;
+      cb?.(now);
+    };
+
+    const timeline = Timeline.from(makeBoundary(), { duration: Millis(200), scheduler });
+    expect(scheduleCount).toBe(1); // construction armed the first callback
+
+    // Dispose the instant the state actually CHANGES (idle -> active); {distinct}
+    // suppresses same-state, so this fires exactly once, from inside setState.
+    timeline.subscribe((s) => {
+      if (s === 'active') void timeline.lifetime.dispose();
+    });
+
+    timeline.play();
+    fire(0); // primes lastTime (no advance), re-arms → scheduleCount 2
+    fire(150); // dt=150 → 'active' → subscriber disposes mid-setState → MUST NOT re-arm
+
+    expect(timeline.lifetime.disposed).toBe(true);
+    expect(pending).toBeNull(); // no callback left outstanding after disposal
+    expect(scheduleCount).toBe(2); // the disposing tick did not schedule a third frame
+
+    fire(300); // even if a stray frame existed, pending is null — provably dead
+    expect(timeline.state()).toBe('active'); // frozen; no post-dispose advancement
+  });
 });

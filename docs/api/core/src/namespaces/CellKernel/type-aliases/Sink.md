@@ -8,7 +8,7 @@
 
 > **Sink**\<`T`\> = [`CellSink`](../../../interfaces/CellSink.md)\<`T`\>
 
-Defined in: [core/src/cell-kernel.ts:425](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts#L425)
+Defined in: [core/src/cell-kernel.ts:458](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts#L458)
 
 A subscription sink — see [CellSink](../../../interfaces/CellSink.md).
 
