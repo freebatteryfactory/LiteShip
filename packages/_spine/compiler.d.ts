@@ -2,7 +2,6 @@
  * @czap/compiler type spine -- multi-target output generation.
  */
 
-import type { Effect } from 'effect';
 import type { Boundary, StateUnion, ContentAddress } from './core.d.ts';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -265,7 +264,7 @@ export declare const AIManifestCompiler: {
 
 import type { Config } from './config.d.ts';
 
-export type CSSStates  = Readonly<Record<string, Readonly<Record<string, string>>>>;
+export type CSSStates = Readonly<Record<string, Readonly<Record<string, string>>>>;
 export type GLSLStates = Readonly<Record<string, Readonly<Record<string, number>>>>;
 export type WGSLStates = Readonly<Record<string, Readonly<Record<string, WGSLUniformValue>>>>;
 export interface ARIAStates {
@@ -279,19 +278,24 @@ export interface ConfigTemplateResult {
 }
 
 export type CompilerDef =
-  | { readonly _tag: 'CSSCompiler';    readonly boundary: Boundary.Shape; readonly states: CSSStates; readonly selector?: string }
-  | { readonly _tag: 'GLSLCompiler';   readonly boundary: Boundary.Shape; readonly states: GLSLStates }
-  | { readonly _tag: 'WGSLCompiler';   readonly boundary: Boundary.Shape; readonly states: WGSLStates }
-  | { readonly _tag: 'ARIACompiler';   readonly boundary: Boundary.Shape; readonly states: ARIAStates }
-  | { readonly _tag: 'AICompiler';     readonly manifest: AIManifestInput }
+  | {
+      readonly _tag: 'CSSCompiler';
+      readonly boundary: Boundary.Shape;
+      readonly states: CSSStates;
+      readonly selector?: string;
+    }
+  | { readonly _tag: 'GLSLCompiler'; readonly boundary: Boundary.Shape; readonly states: GLSLStates }
+  | { readonly _tag: 'WGSLCompiler'; readonly boundary: Boundary.Shape; readonly states: WGSLStates }
+  | { readonly _tag: 'ARIACompiler'; readonly boundary: Boundary.Shape; readonly states: ARIAStates }
+  | { readonly _tag: 'AICompiler'; readonly manifest: AIManifestInput }
   | { readonly _tag: 'ConfigCompiler'; readonly config: Config.Shape };
 
 export type CompileResult =
-  | { readonly target: 'css';    readonly result: CSSCompileResult }
-  | { readonly target: 'glsl';   readonly result: GLSLCompileResult }
-  | { readonly target: 'wgsl';   readonly result: WGSLCompileResult }
-  | { readonly target: 'aria';   readonly result: ARIACompileResult }
-  | { readonly target: 'ai';     readonly result: AIManifestCompileResult }
+  | { readonly target: 'css'; readonly result: CSSCompileResult }
+  | { readonly target: 'glsl'; readonly result: GLSLCompileResult }
+  | { readonly target: 'wgsl'; readonly result: WGSLCompileResult }
+  | { readonly target: 'aria'; readonly result: ARIACompileResult }
+  | { readonly target: 'ai'; readonly result: AIManifestCompileResult }
   | { readonly target: 'config'; readonly result: ConfigTemplateResult };
 
 export declare function dispatch(def: CompilerDef): CompileResult;

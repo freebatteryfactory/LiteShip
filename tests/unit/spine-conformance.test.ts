@@ -5,7 +5,8 @@
  *
  * Coverage ledger for `packages/_spine/{core,design,edge}.d.ts`:
  * - Bidirectional runtime pins in this file:
- *   core: CompositeState, VideoConfig, CaptureResult, CapSet.
+ *   core: CompositeState, VideoConfig, CaptureResult, CapSet, Codec (encode/decode
+ *   Result transport + Result/ParseError payload; schema pinned runtime → spine).
  *   design: Token.Shape, Theme.Shape, Style.Shape.
  *   edge: ClientHintsHeaders, EdgeTierResult, KVNamespace, CompiledOutputs,
  *   CompiledGLSLOutput, CompiledWGSLOutput, BoundaryCache, TierKey,
@@ -61,6 +62,13 @@ import type { Theme as RtTheme } from '../../packages/core/src/theme.js';
 import type { Style as RtStyle } from '../../packages/core/src/style.js';
 import type { CapSet as RtCapSet } from '../../packages/core/src/caps.js';
 
+// Runtime truth for the @czap/core Codec SPINE mirror. The Wave-8 shed moved the
+// codec transport from `Effect.Effect<…>` to the sync `@czap/error` `Result`; the
+// spine mirror had silently retained the removed Effect type (it is NOT in the
+// bidirectional pin set above, which is exactly why it drifted). Pinned here now.
+import type { Codec as RtCodec } from '../../packages/core/src/codec.js';
+import type { Result as RtResult, ParseError as RtParseError } from '@czap/error';
+
 type IsEqual<A, B> =
   (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2
     ? (<T>() => T extends B ? 1 : 2) extends <T>() => T extends A ? 1 : 2
@@ -69,7 +77,9 @@ type IsEqual<A, B> =
     : false;
 type Assert<T extends true> = T;
 
-type _prettifyCoverage = Assert<IsEqual<SpineCore.Prettify<{ readonly a: 1 } & { readonly b: 2 }>, { readonly a: 1; readonly b: 2 }>>;
+type _prettifyCoverage = Assert<
+  IsEqual<SpineCore.Prettify<{ readonly a: 1 } & { readonly b: 2 }>, { readonly a: 1; readonly b: 2 }>
+>;
 void (0 as unknown as _prettifyCoverage);
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -141,6 +151,45 @@ function __coreSpineTypeContract(
   void _configR2S;
 }
 void __coreSpineTypeContract;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Type-level conformance: the @czap/core Codec SPINE mirror and the runtime
+// `packages/core/src/codec.ts` must agree that the encode/decode transport is the
+// SYNC `@czap/error` `Result` — never an Effect. This mirror was NOT covered by
+// the pins above and had silently retained `encode(): Effect.Effect<I>` /
+// `decode(): Effect.Effect<A>` after the runtime went native (the exact "public
+// mirror retained a removed transport type" drift). This contract closes that gap.
+//
+// The `schema` field is a deliberate spine-WIDER port (kernel `Schema<A,I>` ⊂
+// `SchemaPort<A,I>`), so it is pinned runtime → spine only. The encode/decode
+// Result transport and the `Result`/`ParseError` payload shapes are pinned
+// BIDIRECTIONALLY — a re-introduced Effect (or a drift to Promise) fails the typecheck.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// The spine's structural Codec error ports mirror @czap/error's Result/ParseError EXACTLY.
+type _codecResultParity = Assert<IsEqual<SpineCore.Codec.Result<1, 2>, RtResult<1, 2>>>;
+type _codecParseErrorParity = Assert<IsEqual<SpineCore.Codec.ParseError, RtParseError>>;
+void (0 as unknown as _codecResultParity);
+void (0 as unknown as _codecParseErrorParity);
+
+function __codecSpineTypeContract<A, I>(aShape: SpineCore.Codec.Shape<A, I>, bShape: RtCodec.Shape<A, I>): void {
+  // schema — the runtime kernel Schema satisfies the wider SchemaPort (runtime → spine).
+  const _schemaR2S: SpineCore.SchemaPort<A, I> = bShape.schema;
+
+  // encode/decode — the sync `Result<…, ParseError>` transport is identical both ways.
+  // These four assignments are the Effect-shed proof: the spine once declared Effect here.
+  const _encodeS2R: RtCodec.Shape<A, I>['encode'] = aShape.encode;
+  const _encodeR2S: SpineCore.Codec.Shape<A, I>['encode'] = bShape.encode;
+  const _decodeS2R: RtCodec.Shape<A, I>['decode'] = aShape.decode;
+  const _decodeR2S: SpineCore.Codec.Shape<A, I>['decode'] = bShape.decode;
+
+  void _schemaR2S;
+  void _encodeS2R;
+  void _encodeR2S;
+  void _decodeS2R;
+  void _decodeR2S;
+}
+void __codecSpineTypeContract;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Type-level conformance: the @czap/design SPINE mirror (`design.d.ts`) and the
@@ -386,5 +435,4 @@ describe('spine conformance — @czap/compiler', () => {
   test('dispatch exported and callable', () => {
     expect(typeof CompilerImpl.dispatch).toBe('function');
   });
-
 });
