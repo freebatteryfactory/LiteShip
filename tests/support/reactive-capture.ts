@@ -21,10 +21,11 @@
  * nested `set` issued from a delivery handler is ordered by the KERNEL, and the
  * harness needs no queue of its own to reproduce it — it just calls the sync API
  * and the kernel's `'deferred'` arm does the async-append. The subscribe- and
- * unsubscribe-during-publish edges are the kernel's LIVE-set I6 law observed
- * directly (a mid-fan-out subscriber RECEIVES the in-flight value — the pinned
- * `CellKernel.replay1` behavior the reference model encodes), no longer masked by
- * the old forked-fiber snapshot delivery.
+ * unsubscribe-during-publish edges are the kernel's dispatch-snapshot I6 MEMBERSHIP
+ * law observed directly (a mid-fan-out subscriber is outside the commit's dispatch,
+ * so it observes each commit at most once — its replay, not the in-flight value a
+ * second time; the pinned `CellKernel` behavior the reference model encodes, S6.1a),
+ * no longer masked by the old forked-fiber snapshot delivery.
  *
  * WHY THIS IS A CAPTURE, NOT A CONCLUSION (S1.5.3): the dedup question — does
  * today's Cell suppress consecutive-equal emissions? — is answered by RUNNING the
@@ -237,7 +238,8 @@ const runCapture = (adapter: PrimitiveAdapter, history: OpHistory): Observation 
     // The delivery handler runs SYNCHRONOUSLY inside the kernel fan-out. A
     // during-delivery reaction is applied inline: a nested `set` re-enters the
     // kernel (ordered by its `'deferred'` arm), a `subscribe` attaches mid-fan-out
-    // (the kernel's LIVE-set I6 law delivers the in-flight value), an
+    // (the kernel's dispatch-snapshot I6 MEMBERSHIP law: it is OUTSIDE this commit's
+    // dispatch, so it gets its replay, not the in-flight value — S6.1a), an
     // `unsubscribe` severs another sink, and a `throw` is an ISOLATED listener
     // failure — the sink stops recording without propagating (mirroring the
     // captured per-subscriber failure isolation), so the outer fan-out is
@@ -487,15 +489,7 @@ export const timelineAdapter: PrimitiveAdapter = {
 /** LiveCell — boundary kind: value channel + crossings + envelope byte-law. */
 export const liveCellAdapter: PrimitiveAdapter = {
   primitive: 'live-cell',
-  supports: new Set<ReactiveOpTag>([
-    'subscribe',
-    'unsubscribe',
-    'read',
-    'set',
-    'update',
-    'publishCrossing',
-    'dispose',
-  ]),
+  supports: new Set<ReactiveOpTag>(['subscribe', 'unsubscribe', 'read', 'set', 'update', 'publishCrossing', 'dispose']),
   build: (): CaptureHandle => {
     const cell = LiveCell.makeBoundary(captureBoundary(), 0);
     const syntheticStamp = HLC.increment(HLC.create('capture'), 0);

@@ -134,8 +134,7 @@ export type OpHistory = readonly ReactiveOp[];
  * is answered only by Foundation-A capture, never here.
  */
 export type EmissionPolicy =
-  | { readonly kind: 'all' }
-  | { readonly kind: 'distinct'; readonly equals: (a: TraceValue, b: TraceValue) => boolean };
+  { readonly kind: 'all' } | { readonly kind: 'distinct'; readonly equals: (a: TraceValue, b: TraceValue) => boolean };
 
 export const EmissionPolicies = {
   /** {all}: the pinned no-dedup law (I4). */
@@ -226,16 +225,21 @@ interface Reg {
 }
 
 /**
- * replay-1 reference: a current-value slot + synchronous LIVE-set fan-out.
+ * replay-1 reference: a current-value slot + synchronous DISPATCH-SNAPSHOT fan-out.
  *
- * Faithful projection of `cell-kernel.ts` `replay1` + `createCore.fanOutLive`:
- *  - I1: `subscribe` replays the current slot BEFORE registering.
+ * Faithful projection of `cell-kernel.ts` `replay1` + `createCore.fanOut`:
+ *  - I1 (REPLAY law): `subscribe` replays the current committed slot exactly ONCE
+ *    BEFORE registering.
  *  - I2: `read()` returns the last published value (initial until first publish).
  *  - I3: fan-out visits registrations in insertion order.
  *  - I4: `all` policy delivers every publish (no equal-consecutive suppression).
  *  - I5: a publish from within a sink recurses a full nested fan-out first.
- *  - I6 (live): a subscriber added mid-fan-out sits after the cursor and IS
- *    delivered the in-flight value; one removed before the cursor is skipped.
+ *  - I6 (MEMBERSHIP law — S6.1a ruling): dispatch membership is bounded at the
+ *    START of each committed emission. A subscriber added mid-fan-out is OUTSIDE
+ *    that dispatch's membership and does NOT receive the in-flight value — it
+ *    participates only in FUTURE commits; one removed before the cursor reaches it
+ *    is skipped. Together with the REPLAY law this makes each subscription observe
+ *    each committed emission AT MOST ONCE (no replay+live-set double delivery).
  *  - I8: `close` completes each live subscriber once, then publish is inert and
  *    subscribe completes immediately without registering or replaying.
  */
@@ -249,11 +253,15 @@ function modelReplay1(initial: TraceValue, policy: EmissionPolicy, reentrancy: R
   let inFanOut = false;
   const pending: { readonly v: TraceValue }[] = [];
 
-  // LIVE-set fan-out: re-read `regs.length` each step so a subscribe issued from
-  // within a sink (which appends after the cursor) IS reached, and an alive=false
-  // set before the cursor reaches it is skipped — Set forward-iteration fidelity.
-  const fanOutLive = (value: TraceValue): void => {
-    for (let i = 0; i < regs.length; i++) {
+  // DISPATCH-SNAPSHOT membership (I6, S6.1a ruling): capture `regs.length` ONCE at
+  // the start of the commit, so a subscribe issued from within a sink (which
+  // appends BEYOND the captured limit) is NOT reached by the in-flight fan-out —
+  // it joins only future commits. An alive=false set before the cursor reaches it
+  // is still skipped. `regs` is append-only (dispose flips `alive`, never splices),
+  // so the captured limit indexes stable registrations.
+  const fanOut = (value: TraceValue): void => {
+    const limit = regs.length;
+    for (let i = 0; i < limit; i++) {
       const reg = regs[i];
       if (reg !== undefined && reg.alive) reg.sink.next(value);
     }
@@ -264,7 +272,7 @@ function modelReplay1(initial: TraceValue, policy: EmissionPolicy, reentrancy: R
   const emit = (value: TraceValue): void => {
     if (policy.kind === 'distinct' && lastEmitted !== undefined && policy.equals(lastEmitted.v, value)) return;
     lastEmitted = { v: value };
-    fanOutLive(value);
+    fanOut(value);
   };
 
   return {
@@ -322,13 +330,16 @@ function modelReplay1(initial: TraceValue, policy: EmissionPolicy, reentrancy: R
 }
 
 /**
- * no-replay fan-out reference: fire-and-forget over a membership SNAPSHOT.
+ * no-replay fan-out reference: fire-and-forget over a DISPATCH-SNAPSHOT membership.
  *
- * Faithful projection of `cell-kernel.ts` `fanout` + `createCore.fanOutSnapshot`:
+ * Faithful projection of `cell-kernel.ts` `fanout` + `createCore.fanOut`:
  *  - I1 (negative): no replay — a subscriber attached after a publish misses it.
  *  - I3/I4: snapshot fan-out in subscription order, no dedup under `all`.
- *  - I6 (snapshot): a subscriber added mid-fan-out is NOT in the snapshot and
- *    MISSES the in-flight value; one removed mid-fan-out is re-checked and skipped.
+ *  - I6 (MEMBERSHIP law): a subscriber added mid-fan-out is OUTSIDE the dispatch
+ *    membership bounded at the commit's start and MISSES the in-flight value (it
+ *    joins future commits); one removed mid-fan-out is re-checked and skipped. This
+ *    is the SAME membership discipline as replay1 — the two channels differ ONLY in
+ *    the REPLAY law (fanout does not replay the current slot on subscribe).
  *  - I8: identical close-completes discipline.
  */
 function modelFanout(policy: EmissionPolicy): ChannelLike {
@@ -336,9 +347,14 @@ function modelFanout(policy: EmissionPolicy): ChannelLike {
   let closed = false;
   let lastEmitted: { readonly v: TraceValue } | undefined;
 
-  const fanOutSnapshot = (value: TraceValue): void => {
-    for (const reg of [...regs]) {
-      if (reg.alive) reg.sink.next(value);
+  // DISPATCH-SNAPSHOT membership: capture `regs.length` at the commit's start so a
+  // mid-fan-out subscribe (appended beyond the limit) is not reached; a disposed
+  // reg (alive=false) is skipped. Same law as replay1's `fanOut`.
+  const fanOut = (value: TraceValue): void => {
+    const limit = regs.length;
+    for (let i = 0; i < limit; i++) {
+      const reg = regs[i];
+      if (reg !== undefined && reg.alive) reg.sink.next(value);
     }
   };
 
@@ -350,7 +366,7 @@ function modelFanout(policy: EmissionPolicy): ChannelLike {
         return;
       }
       lastEmitted = { v: value };
-      fanOutSnapshot(value);
+      fanOut(value);
     },
     subscribe: (sink) => {
       if (closed) {
@@ -755,13 +771,18 @@ export function reactiveCommandArbs(channel: Channel): fc.Arbitrary<fc.Command<R
  * divergence over the random command walk reds — proving the reference is a
  * faithful projection of the CellKernel laws.
  */
-export function reactiveModelRunSetup(channel: Channel, initial: TraceValue = 0): () => {
+export function reactiveModelRunSetup(
+  channel: Channel,
+  initial: TraceValue = 0,
+): () => {
   model: Recorder;
   real: Recorder;
 } {
   return () => ({
     model: new Recorder(
-      channel === 'replay1' ? ModelChannel.replay1(initial, EmissionPolicies.all()) : ModelChannel.fanout(EmissionPolicies.all()),
+      channel === 'replay1'
+        ? ModelChannel.replay1(initial, EmissionPolicies.all())
+        : ModelChannel.fanout(EmissionPolicies.all()),
     ),
     real: new Recorder(channel === 'replay1' ? cellKernelChannel.replay1(initial) : cellKernelChannel.fanout()),
   });
@@ -962,7 +983,7 @@ export const LAW_COVERAGE: readonly LawCoverage[] = [
     law: 'I3',
     source: 'cell-kernel.test.ts (subscriber ordering)',
     statement: 'subscribers are notified in subscription order.',
-    modelInvariants: ['fanOutLive / fanOutSnapshot iterate registrations in insertion order'],
+    modelInvariants: ['fanOut iterates registrations in insertion order (both channels)'],
   },
   {
     law: 'I4',
@@ -980,13 +1001,17 @@ export const LAW_COVERAGE: readonly LawCoverage[] = [
     law: 'I6',
     source: 'cell-kernel.test.ts (mutation during notify)',
     statement:
-      'replay-1 LIVE-set: a subscriber added mid-fan-out RECEIVES the in-flight value; fan-out SNAPSHOT: it MISSES; both skip a subscriber disposed mid-fan-out.',
-    modelInvariants: ['fanOutLive append-visits (live)', 'fanOutSnapshot excludes mid-fan-out adds (snapshot)'],
+      'MEMBERSHIP law (S6.1a): dispatch membership is bounded at the start of each committed emission — a subscriber added mid-fan-out MISSES the in-flight value on BOTH channels (it joins future commits); both skip a subscriber disposed mid-fan-out. With the REPLAY law (I1) each subscription observes each committed emission at most once (no replay+live-set double delivery).',
+    modelInvariants: [
+      'fanOut captures the membership limit at the commit start (both channels)',
+      'a mid-fan-out subscribe is excluded from the in-flight dispatch (joins future commits)',
+    ],
   },
   {
     law: 'I7',
     source: 'cell-kernel.test.ts (disposer)',
-    statement: 'a disposer removes exactly one registration; the same sink twice is two registrations; repeat dispose is a no-op.',
+    statement:
+      'a disposer removes exactly one registration; the same sink twice is two registrations; repeat dispose is a no-op.',
     modelInvariants: ['Reg.alive per registration; disposer idempotent; two subscribes = two Regs'],
   },
   {
@@ -1029,7 +1054,8 @@ export const LAW_COVERAGE: readonly LawCoverage[] = [
   {
     law: 'L6',
     source: 'lifetime.test.ts (aggregate failure)',
-    statement: 'all finalizers run even if some throw; failures fold into one LifetimeDisposeError in LIFO invocation order.',
+    statement:
+      'all finalizers run even if some throw; failures fold into one LifetimeDisposeError in LIFO invocation order.',
     modelInvariants: ['predictLifetime.failed is LIFO; matches runLifetime causes; error is tagged'],
   },
   {

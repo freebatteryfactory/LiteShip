@@ -19,12 +19,13 @@
  *   • BISIMULATION HOLDS under {all} for Cell / Store / Signal / LiveCell-value
  *     / Timeline (non-consecutive-equal seeks) — the kernel model is a faithful
  *     projection of the native transport on the shared vocabulary. This now
- *     INCLUDES, asserted POSITIVELY, the two edges the OLD Effect transport
- *     recorded as robust deltas: the reentrancy law I5 (a nested write is
+ *     INCLUDES, asserted POSITIVELY, the reentrancy law I5 (a nested write is
  *     async-appended — Cell/Store ride `'deferred'`, so the model runs the SAME
- *     arm and bisimulates) and the mutation-during-notify I6 live-set law (a
- *     subscriber attached mid-fan-out RECEIVES the in-flight value — the kernel's
- *     LIVE-set fan-out, which the Effect fibers' snapshot delivery had masked).
+ *     arm and bisimulates) and the mutation-during-notify I6 MEMBERSHIP law (a
+ *     subscriber attached mid-fan-out is outside the commit's dispatch membership,
+ *     so it observes that commit at most once — S6.1a: this RETIRES the Wave-6
+ *     `[5,5,6]` double-spend the Effect fibers' snapshot delivery had masked and
+ *     driving the native transport directly exposed).
  *   • EMISSIONPOLICY AXIS: Derived (construction-time source-replay republish)
  *     and Timeline (hand-rolled state dedup) are divergent under {all},
  *     equivalent under {distinct} — the tolerance Wave 6 chose ({distinct} for
@@ -109,34 +110,134 @@ interface BisimCase {
 const BISIM_HOLDS: readonly BisimCase[] = [
   // Cell — the replay-1 workhorse. Every shared-vocabulary behavior bisimulates.
   { primitive: 'cell', cfg: IDENTITY, seed: 'initial-replay', history: [op.subscribe('a'), op.read()] },
-  { primitive: 'cell', cfg: IDENTITY, seed: 'late-subscriber-replay', history: [op.subscribe('a'), op.set(3), op.set(5), op.subscribe('b'), op.read()] },
-  { primitive: 'cell', cfg: IDENTITY, seed: 'duplicate-consecutive', history: [op.subscribe('a'), op.set(7), op.set(7), op.set(7), op.read()] },
-  { primitive: 'cell', cfg: IDENTITY, seed: 'subscriber-order', history: [op.subscribe('a'), op.subscribe('b'), op.subscribe('c'), op.set(5)] },
-  { primitive: 'cell', cfg: IDENTITY, seed: 'unsubscribe-during-publish', history: [op.subscribe('a', [unsubOn(5, 'b')]), op.subscribe('b'), op.set(5), op.set(6)] },
-  { primitive: 'cell', cfg: IDENTITY, seed: 'listener-failure', history: [op.subscribe('a', [throwOn(3)]), op.subscribe('b'), op.set(3), op.set(4), op.read()] },
-  { primitive: 'cell', cfg: IDENTITY, seed: 'disposal-completion', history: [op.subscribe('a'), op.set(1), op.dispose(), op.set(2), op.read()] },
-  { primitive: 'cell', cfg: IDENTITY, seed: 'update-path', history: [op.subscribe('a'), op.update({ kind: 'add', n: 10 }), op.update({ kind: 'mul', n: 2 }), op.read()] },
+  {
+    primitive: 'cell',
+    cfg: IDENTITY,
+    seed: 'late-subscriber-replay',
+    history: [op.subscribe('a'), op.set(3), op.set(5), op.subscribe('b'), op.read()],
+  },
+  {
+    primitive: 'cell',
+    cfg: IDENTITY,
+    seed: 'duplicate-consecutive',
+    history: [op.subscribe('a'), op.set(7), op.set(7), op.set(7), op.read()],
+  },
+  {
+    primitive: 'cell',
+    cfg: IDENTITY,
+    seed: 'subscriber-order',
+    history: [op.subscribe('a'), op.subscribe('b'), op.subscribe('c'), op.set(5)],
+  },
+  {
+    primitive: 'cell',
+    cfg: IDENTITY,
+    seed: 'unsubscribe-during-publish',
+    history: [op.subscribe('a', [unsubOn(5, 'b')]), op.subscribe('b'), op.set(5), op.set(6)],
+  },
+  {
+    primitive: 'cell',
+    cfg: IDENTITY,
+    seed: 'listener-failure',
+    history: [op.subscribe('a', [throwOn(3)]), op.subscribe('b'), op.set(3), op.set(4), op.read()],
+  },
+  {
+    primitive: 'cell',
+    cfg: IDENTITY,
+    seed: 'disposal-completion',
+    history: [op.subscribe('a'), op.set(1), op.dispose(), op.set(2), op.read()],
+  },
+  {
+    primitive: 'cell',
+    cfg: IDENTITY,
+    seed: 'update-path',
+    history: [op.subscribe('a'), op.update({ kind: 'add', n: 10 }), op.update({ kind: 'mul', n: 2 }), op.read()],
+  },
   // Store — a replace reducer is a replay-1 channel; every dispatch publishes.
   { primitive: 'store', cfg: IDENTITY, seed: 'initial-replay', history: [op.subscribe('a'), op.read()] },
-  { primitive: 'store', cfg: IDENTITY, seed: 'late-subscriber-replay', history: [op.subscribe('a'), op.set(3), op.set(5), op.subscribe('b'), op.read()] },
-  { primitive: 'store', cfg: IDENTITY, seed: 'duplicate-consecutive', history: [op.subscribe('a'), op.set(7), op.set(7), op.set(7), op.read()] },
-  { primitive: 'store', cfg: IDENTITY, seed: 'subscriber-order', history: [op.subscribe('a'), op.subscribe('b'), op.subscribe('c'), op.set(5)] },
-  { primitive: 'store', cfg: IDENTITY, seed: 'listener-failure', history: [op.subscribe('a', [throwOn(3)]), op.subscribe('b'), op.set(3), op.set(4), op.read()] },
-  { primitive: 'store', cfg: IDENTITY, seed: 'disposal', history: [op.subscribe('a'), op.set(1), op.dispose(), op.set(2), op.read()] },
+  {
+    primitive: 'store',
+    cfg: IDENTITY,
+    seed: 'late-subscriber-replay',
+    history: [op.subscribe('a'), op.set(3), op.set(5), op.subscribe('b'), op.read()],
+  },
+  {
+    primitive: 'store',
+    cfg: IDENTITY,
+    seed: 'duplicate-consecutive',
+    history: [op.subscribe('a'), op.set(7), op.set(7), op.set(7), op.read()],
+  },
+  {
+    primitive: 'store',
+    cfg: IDENTITY,
+    seed: 'subscriber-order',
+    history: [op.subscribe('a'), op.subscribe('b'), op.subscribe('c'), op.set(5)],
+  },
+  {
+    primitive: 'store',
+    cfg: IDENTITY,
+    seed: 'listener-failure',
+    history: [op.subscribe('a', [throwOn(3)]), op.subscribe('b'), op.set(3), op.set(4), op.read()],
+  },
+  {
+    primitive: 'store',
+    cfg: IDENTITY,
+    seed: 'disposal',
+    history: [op.subscribe('a'), op.set(1), op.dispose(), op.set(2), op.read()],
+  },
   // Signal (controllable) — seek is a self-ref replay-1 write.
   { primitive: 'signal', cfg: IDENTITY, seed: 'initial-replay', history: [op.subscribe('a'), op.read()] },
-  { primitive: 'signal', cfg: IDENTITY, seed: 'duplicate-consecutive', history: [op.subscribe('a'), op.set(7), op.set(7), op.set(7), op.read()] },
-  { primitive: 'signal', cfg: IDENTITY, seed: 'subscriber-order', history: [op.subscribe('a'), op.subscribe('b'), op.set(5)] },
-  { primitive: 'signal', cfg: IDENTITY, seed: 'late-subscriber-replay', history: [op.subscribe('a'), op.set(3), op.set(5), op.subscribe('b'), op.read()] },
-  { primitive: 'signal', cfg: IDENTITY, seed: 'disposal', history: [op.subscribe('a'), op.set(1), op.dispose(), op.set(2), op.read()] },
+  {
+    primitive: 'signal',
+    cfg: IDENTITY,
+    seed: 'duplicate-consecutive',
+    history: [op.subscribe('a'), op.set(7), op.set(7), op.set(7), op.read()],
+  },
+  {
+    primitive: 'signal',
+    cfg: IDENTITY,
+    seed: 'subscriber-order',
+    history: [op.subscribe('a'), op.subscribe('b'), op.set(5)],
+  },
+  {
+    primitive: 'signal',
+    cfg: IDENTITY,
+    seed: 'late-subscriber-replay',
+    history: [op.subscribe('a'), op.set(3), op.set(5), op.subscribe('b'), op.read()],
+  },
+  {
+    primitive: 'signal',
+    cfg: IDENTITY,
+    seed: 'disposal',
+    history: [op.subscribe('a'), op.set(1), op.dispose(), op.set(2), op.read()],
+  },
   // Timeline — the state channel over a boundary projection; non-equal seeks bisimulate under {all}.
   { primitive: 'timeline', cfg: TIMELINE, seed: 'initial-state', history: [op.subscribe('a'), op.read()] },
-  { primitive: 'timeline', cfg: TIMELINE, seed: 'seek-across-thresholds', history: [op.subscribe('a'), op.set(150), op.set(50), op.set(150), op.read()] },
+  {
+    primitive: 'timeline',
+    cfg: TIMELINE,
+    seed: 'seek-across-thresholds',
+    history: [op.subscribe('a'), op.set(150), op.set(50), op.set(150), op.read()],
+  },
   // LiveCell — value channel inherits the Cell replay-1 policy; crossings/meta are ABOVE the kernel altitude (excluded).
   { primitive: 'live-cell', cfg: IDENTITY, seed: 'initial-replay', history: [op.subscribe('a'), op.read()] },
-  { primitive: 'live-cell', cfg: IDENTITY, seed: 'duplicate-consecutive', history: [op.subscribe('a'), op.set(7), op.set(7), op.set(7), op.read()] },
-  { primitive: 'live-cell', cfg: IDENTITY, seed: 'manual-crossing-fanout', history: [op.subscribe('a'), op.publishCrossing('idle', 'active', 120), op.read()] },
-  { primitive: 'live-cell', cfg: IDENTITY, seed: 'disposal', history: [op.subscribe('a'), op.set(150), op.dispose(), op.set(50), op.read()] },
+  {
+    primitive: 'live-cell',
+    cfg: IDENTITY,
+    seed: 'duplicate-consecutive',
+    history: [op.subscribe('a'), op.set(7), op.set(7), op.set(7), op.read()],
+  },
+  {
+    primitive: 'live-cell',
+    cfg: IDENTITY,
+    seed: 'manual-crossing-fanout',
+    history: [op.subscribe('a'), op.publishCrossing('idle', 'active', 120), op.read()],
+  },
+  {
+    primitive: 'live-cell',
+    cfg: IDENTITY,
+    seed: 'disposal',
+    history: [op.subscribe('a'), op.set(150), op.dispose(), op.set(50), op.read()],
+  },
 ];
 
 describe('bisimulation holds — reference model ≡ native CellKernel impl (up to {all})', () => {
@@ -144,7 +245,12 @@ describe('bisimulation holds — reference model ≡ native CellKernel impl (up 
     test(
       `${c.primitive} / ${c.seed}`,
       async () => {
-        const res = await differential(modelFor(c.primitive, c.cfg), implFor(c.primitive), c.history, emissionPolicy.all());
+        const res = await differential(
+          modelFor(c.primitive, c.cfg),
+          implFor(c.primitive),
+          c.history,
+          emissionPolicy.all(),
+        );
         if (res.verdict.kind !== 'equivalent') {
           throw new Error(`expected bisimulation, got divergence: ${res.verdict.difference.message}`);
         }
@@ -168,12 +274,37 @@ const EMISSION_AXIS: readonly BisimCase[] = [
   // Derived — the construction-time source-replay adds a leading republish the
   // kernel model does not; {distinct} collapses it.
   { primitive: 'derived', cfg: DERIVED, seed: 'initial-value', history: [op.subscribe('a'), op.read()] },
-  { primitive: 'derived', cfg: DERIVED, seed: 'recompute-on-source', history: [op.subscribe('a'), op.set(5), op.read()] },
-  { primitive: 'derived', cfg: DERIVED, seed: 'duplicate-source', history: [op.subscribe('a'), op.set(5), op.set(5), op.set(8), op.read()] },
-  { primitive: 'derived', cfg: DERIVED, seed: 'subscriber-order', history: [op.subscribe('a'), op.subscribe('b'), op.set(5)] },
-  { primitive: 'derived', cfg: DERIVED, seed: 'late-subscriber-replay', history: [op.subscribe('a'), op.set(5), op.subscribe('b'), op.read()] },
+  {
+    primitive: 'derived',
+    cfg: DERIVED,
+    seed: 'recompute-on-source',
+    history: [op.subscribe('a'), op.set(5), op.read()],
+  },
+  {
+    primitive: 'derived',
+    cfg: DERIVED,
+    seed: 'duplicate-source',
+    history: [op.subscribe('a'), op.set(5), op.set(5), op.set(8), op.read()],
+  },
+  {
+    primitive: 'derived',
+    cfg: DERIVED,
+    seed: 'subscriber-order',
+    history: [op.subscribe('a'), op.subscribe('b'), op.set(5)],
+  },
+  {
+    primitive: 'derived',
+    cfg: DERIVED,
+    seed: 'late-subscriber-replay',
+    history: [op.subscribe('a'), op.set(5), op.subscribe('b'), op.read()],
+  },
   // Timeline — the hand-rolled `newState !== oldState` dedup on the state channel.
-  { primitive: 'timeline', cfg: TIMELINE, seed: 'duplicate-state-seek', history: [op.subscribe('a'), op.set(150), op.set(160), op.read()] },
+  {
+    primitive: 'timeline',
+    cfg: TIMELINE,
+    seed: 'duplicate-state-seek',
+    history: [op.subscribe('a'), op.set(150), op.set(160), op.read()],
+  },
 ];
 
 describe('EmissionPolicy axis — divergent under {all}, equivalent under {distinct}', () => {
@@ -189,7 +320,9 @@ describe('EmissionPolicy axis — divergent under {all}, equivalent under {disti
         expect(underAll.verdict.kind).toBe('divergent');
         // Under {distinct} the consecutive-equal collapse reconciles them.
         if (underDistinct.verdict.kind !== 'equivalent') {
-          throw new Error(`expected {distinct} to reconcile ${c.primitive}/${c.seed}: ${underDistinct.verdict.difference.message}`);
+          throw new Error(
+            `expected {distinct} to reconcile ${c.primitive}/${c.seed}: ${underDistinct.verdict.difference.message}`,
+          );
         }
       },
       TIMEOUT,
@@ -198,10 +331,11 @@ describe('EmissionPolicy axis — divergent under {all}, equivalent under {disti
 });
 
 // ===========================================================================
-// 3. RESOLVED DELTAS + THE REMAINING ABOVE-KERNEL DELTA. The Effect transport's
-//    two robust deltas (I5 nested-write, I6 subscribe-during-publish) are now
-//    asserted POSITIVELY against the native CellKernel impl — the migration
-//    resolved them per the Wave-6 rulings. The one delta that survives is above
+// 3. RESOLVED DELTAS + THE REMAINING ABOVE-KERNEL DELTA. The I5 nested-write law
+//    is asserted POSITIVELY against the native CellKernel impl (per the Wave-6
+//    ruling). The I6 subscribe-during-publish edge is asserted as the S6.1a
+//    MEMBERSHIP law (mid-fan-out subscriber observes each commit at most once —
+//    the `[5,5,6]` double-spend retired). The one delta that survives is above
 //    the kernel channel (Derived recompute-teardown), pinned EXACTLY so a change
 //    reds this suite.
 // ===========================================================================
@@ -224,7 +358,9 @@ describe('nested-write ruling I5 (S6.F.2) — Cell/Store async-append PRESERVED,
         const impl = implFor(primitive);
         const underAll = await differential(model, impl, history, emissionPolicy.all());
         if (underAll.verdict.kind !== 'equivalent') {
-          throw new Error(`expected bisimulation (async-append preserved), got: ${underAll.verdict.difference.message}`);
+          throw new Error(
+            `expected bisimulation (async-append preserved), got: ${underAll.verdict.difference.message}`,
+          );
         }
         expect(underAll.verdict.relation).toBe('bisimulation');
         // Both subscribers observe the same total order — a is [0,1,99], b is [0,1,99].
@@ -242,31 +378,34 @@ describe('nested-write ruling I5 (S6.F.2) — Cell/Store async-append PRESERVED,
   }
 });
 
-describe('mutation-during-notify I6 — subscribe-during-publish LIVE-set, bisimulates the model', () => {
+describe('mutation-during-notify I6 — subscribe-during-publish DISPATCH-SNAPSHOT, bisimulates the model (S6.1a)', () => {
   test(
-    'Cell subscribe-during-publish — the mid-fan-out subscriber RECEIVES the in-flight value in BOTH model and native impl',
+    'Cell subscribe-during-publish — the mid-fan-out subscriber observes the commit ONCE (replay only), no double-spend, in BOTH model and native impl',
     async () => {
-      // The kernel's replay-1 LIVE-set fan-out law (I6): 'late', attached
-      // mid-fan-out of set(5) from a's delivery handler, RECEIVES the in-flight 5
-      // → late=[5,5,6]. The native CellKernel transport honors this directly (the
-      // synchronous fan-out visits the just-added registration). The OLD Effect
-      // transport delivered through forked fibers, so 'late' MISSED the in-flight
-      // value (snapshot → [5,6]) — a masked I6 VIOLATION the migration corrected.
-      // The model is the SAME live-set law, so the oracle proves the native impl
-      // bisimulates it POSITIVELY (and byte-matches the regenerated fixture).
+      // The kernel's MEMBERSHIP law (I6, S6.1a): 'late', attached mid-fan-out of
+      // set(5) from a's delivery handler, is OUTSIDE that commit's dispatch
+      // membership (bounded at the commit's start, before 'late' existed). So it
+      // observes set(5) exactly ONCE via its replay(5) and is NOT re-delivered the
+      // in-flight 5; it then joins the next commit → late=[5,6]. This RETIRES the
+      // Wave-6 double-spend `[5,5,6]` (replay + live-set of one committed state) —
+      // a law-composition defect that the Effect fibers' snapshot delivery had
+      // MASKED and driving the native transport directly exposed. The model runs
+      // the SAME membership law, so the oracle proves the native impl bisimulates
+      // it POSITIVELY (and byte-matches the regenerated fixture).
       const history = [op.subscribe('a', [subOn(5, 'late')]), op.set(5), op.set(6), op.read()];
       const model = modelFor('cell', IDENTITY);
       const impl = implFor('cell');
       const underAll = await differential(model, impl, history, emissionPolicy.all());
       if (underAll.verdict.kind !== 'equivalent') {
-        throw new Error(`expected I6 live-set bisimulation, got: ${underAll.verdict.difference.message}`);
+        throw new Error(`expected I6 dispatch-snapshot bisimulation, got: ${underAll.verdict.difference.message}`);
       }
       expect(underAll.verdict.relation).toBe('bisimulation');
-      // The mid-fan-out subscriber sees the in-flight 5 on BOTH sides.
+      // The mid-fan-out subscriber observes set(5) once (replay) then set(6) — never
+      // the in-flight 5 a second time — on BOTH sides.
       const lateModel = underAll.model.subscribers.find((s) => s.sink === 'late')?.deliveries;
       const lateImpl = underAll.impl.subscribers.find((s) => s.sink === 'late')?.deliveries;
-      expect(lateModel).toEqual([5, 5, 6]);
-      expect(lateImpl).toEqual([5, 5, 6]);
+      expect(lateModel).toEqual([5, 6]);
+      expect(lateImpl).toEqual([5, 6]);
     },
     TIMEOUT,
   );
@@ -280,7 +419,12 @@ describe('remaining delta — Derived recompute-teardown (post-dispose read free
       // never reaches the derived → read stays 105. Model: the kernel slot keeps
       // updating → read is 109. Divergent even under {distinct} (a value, not a dup).
       const history = [op.subscribe('a'), op.set(5), op.dispose(), op.set(9), op.read()];
-      const res = await differential(modelFor('derived', DERIVED), implFor('derived'), history, emissionPolicy.distinct());
+      const res = await differential(
+        modelFor('derived', DERIVED),
+        implFor('derived'),
+        history,
+        emissionPolicy.distinct(),
+      );
       expect(res.verdict.kind).toBe('divergent');
       if (res.verdict.kind !== 'divergent') return;
       expect(res.verdict.difference.axis).toBe('reads');

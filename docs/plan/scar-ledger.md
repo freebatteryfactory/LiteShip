@@ -625,23 +625,22 @@ fixtures + `tests/property/reactive-conformance.prop.test.ts`).
   transport recorded as "robust deltas" are now proven bisimulations — **I5** nested-write
   (Cell AND Store ride `'deferred'`; the model runs the same arm → both subscribers
   `[0,1,99]`, the flip the S6.F.2 ruling anticipated) and **I6** subscribe-during-publish
-  (LIVE-set fan-out). grep-confirmed ZERO `from 'effect'` in `tests/support/reactive-*.ts`
-  + `tests/property/reactive-*.ts`. RED-FIRST preserved: the PLANT-A-DIVERGENCE self-test
-  stands, AND the flipped I5/I6 positive assertions were proven to red on a dropped
-  delivery (dropping the in-flight `late[0]` reverts I6 to the old snapshot `[5,6]` →
-  divergent). **HARVESTED CORRECTION (S6.1a):** driving the native transport DIRECTLY
-  revealed that the Effect fibers' snapshot delivery had MASKED an I6 live-set VIOLATION
-  for `cell`/`subscribe-during-publish` — the old golden fixture pinned `late=[5,6]`
-  (snapshot, a forked-fiber artifact), but `CellKernel.replay1`'s LIVE-set law (pinned in
-  `cell-kernel.test.ts`, encoded by the reference model `reactive-model.ts`) delivers the
-  in-flight value → `late=[5,5,6]`. The ONE golden row
-  (`tests/fixtures/reactive-capture/cell.json` `subscribe-during-publish`) was regenerated
-  to the native truth (traceDigest unchanged; the other 50 capture rows byte-identical);
-  this is a law-grounded correction (native HONORS the pinned I6 law the Effect transport
-  violated), PROVEN by the flipped positive bisimulation, not a fixture fudge. STATUS:
-  RESOLVED. Guard: tests/support/reactive-capture.ts (native driver) +
-  tests/property/reactive-conformance.prop.test.ts (positive bisimulation, plant-a-divergence)
-  + tests/unit/core/reactive-capture.test.ts (golden byte-law; cell I6 row corrected).
+  (now the dispatch-snapshot MEMBERSHIP law — see S6.1a). grep-confirmed ZERO `from
+  'effect'` in `tests/support/reactive-*.ts` + `tests/property/reactive-*.ts`. RED-FIRST
+  preserved: the PLANT-A-DIVERGENCE self-test stands, AND the flipped I5/I6 positive
+  assertions were proven to red on a dropped delivery. **HARVESTED CORRECTION (S6.1a) —
+  SUPERSEDED BY THE Wave-6.5.1 RULING (see the S6.1a entry below):** driving the native
+  transport DIRECTLY exposed that `cell`/`subscribe-during-publish` diverged across
+  transports (Effect snapshot `[5,6]` vs CellKernel live-set `[5,5,6]`), which the Effect-
+  Queue bridge had masked. Wave 6.5 transiently regenerated the golden row to the live-set
+  `[5,5,6]` and (incorrectly) called it "native truth honoring the pinned I6 law." The
+  maintainer RULING corrected this: `[5,5,6]` was itself a law-composition DEFECT (replay +
+  live-set observing one commit twice), and Wave 6.5.1 replaced the underspecified live-set
+  I6 with the one-observation-per-commit MEMBERSHIP + REPLAY laws → the golden row is now
+  `late=[5,6]` (traceDigest unchanged). STATUS: RESOLVED via S6.1a (Wave 6.5.1). Guard:
+  tests/support/reactive-capture.ts (native driver) +
+  tests/property/reactive-conformance.prop.test.ts (positive bisimulation at `[5,6]`,
+  plant-a-divergence) + tests/unit/core/reactive-capture.test.ts (golden byte-law).
 
 - **S6.2 — the ten reactive-kernel mutation survivors are now FULLY CLASSIFIED (Slice B).**
   With the kernels L4-promoted and the engine minting (59/69 killed; per-kernel 0.75–1.0),
@@ -656,7 +655,7 @@ fixtures + `tests/property/reactive-conformance.prop.test.ts`).
   **The 10-way breakdown (final disposition of every survivor):**
 
   GENUINE HOLES → KILLED by a new covering case (each red-first):
-   1. `cell-kernel.ts:312` closed-kernel/`fanout` disposer (`return-value`: the post-close
+   1. `cell-kernel.ts:385` closed-kernel/`fanout` disposer (`return-value`: the post-close
       branch must return `NOOP_DISPOSER`, a callable no-op, never `null`) →
       `tests/unit/core/cell-kernel.test.ts` "fanout: after close, subscribe completes
       immediately and returns a callable no-op disposer".
@@ -684,9 +683,9 @@ fixtures + `tests/property/reactive-conformance.prop.test.ts`).
 
   EQUIVALENT → recorded in `benchmarks/mutation-equivalents.json` (id-matched; re-surfaces
   if the code changes). No test can distinguish these; a fake test would be dishonest:
-   6. `cell-kernel.ts:98` `'all'`→`''` — the `EMIT_ALL` sentinel; emission is decided ONLY
+   6. `cell-kernel.ts:111` `'all'`→`''` — the `EMIT_ALL` sentinel; emission is decided ONLY
       by `policy.kind === 'distinct'`, so `''` takes the identical no-dedup path.
-   7. `cell-kernel.ts:216` `'synchronous'`→`''` — the `ReentrancyPolicy` default; reentrancy
+   7. `cell-kernel.ts:284` `'synchronous'`→`''` — the `ReentrancyPolicy` default; reentrancy
       is decided ONLY by `=== 'deferred'`, so `''` is the identical synchronous path.
    8. `signal.ts:248` `'all'`→`''` — `Signal.make`'s explicit emission sentinel (same law).
    9. `signal.ts:283` `'all'`→`''` — `Signal.controllable`'s emission sentinel (same law).
@@ -790,22 +789,63 @@ fixtures + `tests/property/reactive-conformance.prop.test.ts`).
   ACTIVE (evidence landed; closure executes on branch merge, cited in the convergence
   report). Guard: tests/component/reactive-no-effect-containment.test.ts.
 
-- **S6.1a — MAINTAINER RULING PENDING (surfaced, not silently accepted).** The
-  harness-effect-shed (S6.1) exposed that `cell`'s `subscribe-during-publish` behavior
-  ALREADY CHANGED when Wave 6 landed — from the Effect fiber's snapshot `[5,6]` to
-  CellKernel.replay1's LIVE-set `[5,5,6]` — and the Wave-6 Effect-Queue bridge MASKED it,
-  so Wave 6's "every primitive PRESERVE, byte-identical, no silent widening" claim had
-  this ONE unrecorded exception. cell.ts is byte-identical to Wave 6 (the change is
-  already shipped); Slice A corrected the test + fixture to the native truth so the proof
-  is honest. It is NOT a stale-terminal glitch (terminal delivery = `read()`); it is the
-  PINNED kernel law (compositor byte-parity, Wave 2) that the reference model encodes; the
-  double-5 is a redundant-but-consistent delivery (would collapse under `{distinct}`);
-  blast radius is ~zero (no product consumer subscribes-during-publish).
-  RECOMMENDATION (session lead): ACCEPT live-set as the Cell law — it honors the pinned
-  kernel law, isn't a glitch, and preserving the Effect snapshot artifact would mean a
-  subscription-timing policy axis (machinery for an edge nobody hits). REVERSAL PATH if
-  the maintainer prefers snapshot: add a `SubscriptionTimingPolicy` axis to CellKernel
-  (mirroring EmissionPolicy/ReentrancyPolicy) so Cell replays-only while compositor keeps
-  live-set, revert the one fixture row + the I6 assertion. Status: LANDED as accept-live-
-  set (defensible, documented, QA-landed, behavior already shipped) — flagged for explicit
-  blessing or reversal.
+- **S6.1a — MAINTAINER RULING: SEMANTIC-LAW CORRECTION (Wave 6.5.1), `[5,5,6]` NOT
+  canonized.** The harness-effect-shed (S6.1) exposed that `cell`'s `subscribe-during-
+  publish` behavior ALREADY CHANGED when Wave 6 landed — from the Effect fiber's snapshot
+  `[5,6]` to CellKernel.replay1's LIVE-set `[5,5,6]` — and the Wave-6 Effect-Queue bridge
+  MASKED it, so Wave 6's "every primitive PRESERVE, byte-identical, no silent widening"
+  claim had this ONE unrecorded exception. Wave 6.5 (Slice A) transiently landed the
+  `[5,5,6]` live-set as "native truth" with a maintainer-ruling flag. **THE RULING
+  REVERSES THAT: `[5,5,6]` is NOT product truth — it is a law-composition DEFECT.** Two
+  individually-plausible mechanisms observe the SAME committed state twice: (1) replay-on-
+  subscribe emits `5`; (2) live-set iteration later reaches the just-added subscriber and
+  emits that same `5` again. That is duplicate observation of one commit ("double-spend"),
+  not useful product semantics — the banana-split lens: replay was one fold, membership
+  another, and their independent results duplicated one semantic observation. The pinned
+  I6 "live-set" law was UNDERSPECIFIED (written below the replay layer); in isolation it
+  sounds defensible, but composed with replay-1 it creates duplicate delivery.
+
+  **The chosen product law (fullsend, long-term-pure):** *each subscription observes each
+  committed emission AT MOST ONCE. Subscription during a dispatch linearizes against the
+  current committed state — a replaying subscription receives that state exactly once; an
+  event-only subscription begins with the next emission.* I6 is REPLACED by two explicit
+  orthogonal laws: **MEMBERSHIP** (dispatch membership is bounded at each commit's start;
+  subscriptions added mid-dispatch join only future commits) and **REPLAY** (a replaying
+  subscription observes the current committed state exactly once on subscribe). Therefore a
+  replaying subscriber added during `set(5)` then followed by nested `set(6)` observes
+  `[5,6]`; a future-only (fanout) subscriber observes `[6]`. This preserves the deferred-
+  drain nested-write ordering (S6.F.2) unchanged, and no product consumer is affected (no
+  consumer subscribes-during-publish; the compositor extraction is byte-faithful — no
+  compositor test subscribes during a publish, verified).
+
+  **Implementation (S6.1a resolution):** the fan-out is now GENERATION-BOUNDED — the
+  membership limit (`registrations.length`) is captured ONCE at the commit's start and the
+  loop iterates `[0, limit)` skipping inactive records; a mid-fan-out subscribe appends
+  beyond the limit (unreached this commit), a dispose flips an `active` flag (skipped), and
+  inactive records are COMPACTED only after the outermost dispatch/drain unwinds — so the
+  compositor hot path keeps its ≈ 0 B/op profile (no per-fan-out membership copy). This
+  unifies the former replay1-LIVE / fanout-SNAPSHOT split into ONE membership law; the two
+  constructors now differ ONLY in the replay-on-subscribe. Model updated FIRST
+  (`reactive-model.ts` `modelReplay1`/`modelFanout` → generation-bounded; LAW_COVERAGE I3/
+  I6 rewritten), then red fixtures (`cell-kernel.test.ts` + `reactive-model.test.ts` mid-
+  fan-out → `late=[1]`; `reactive-conformance.prop.test.ts` I6 → `[5,6]`), then the kernel
+  (`cell-kernel.ts` `createCore`), then the ONE golden row regenerated
+  (`tests/fixtures/reactive-capture/cell.json` `subscribe-during-publish`: `late`
+  `[5,5,6]`→`[5,6]`, traceDigest `fnv1a:fe57f0ed` UNCHANGED, observationDigest
+  `56329335`→`4b3aa5a7`, all other 50 rows byte-identical). RED→GREEN captured; the live-
+  membership regression mutant (`i < limit` → `i < registrations.length`) is KILLED by 4
+  mid-fan-out tests (before this fix they asserted `[1,1]` and would have SURVIVED it — the
+  test now catches the exact regression). The masked Effect snapshot `[5,6]` and the Wave-6
+  live-set `[5,5,6]` are both RECORDED here as the counterexamples that motivated the
+  ruling; the product law is neither transport's accident but the chosen one-observation-
+  per-commit contract. Status: **RESOLVED (Wave 6.5.1)** — a transparent corrective commit,
+  no history rewrite. Guard: `tests/unit/core/cell-kernel.test.ts` (dispatch-snapshot
+  membership + no-double-spend), `tests/unit/core/reactive-model.test.ts` (I6 parity),
+  `tests/property/reactive-conformance.prop.test.ts` (positive bisimulation at `[5,6]`),
+  `tests/unit/core/reactive-capture.test.ts` (golden byte-law).
+  **HEAVY-GATE FOLLOW-UP (honest residual):** the `cell-kernel.ts` mutation-score baseline
+  (`benchmarks/mutation-score.json` = 0.75) predates the generation-bounded rewrite's new
+  branches (activeCount arithmetic, compaction, dispatchDepth gating, runBatch); the two
+  content-addressed equivalents were re-addressed (line 98→111, 216→284) but the FLOOR
+  itself must be re-derived by `czap check --mutate` (the heavy L4 gate, not pre-commit) —
+  flagged so the stale 0.75 is not mistaken for a fresh verification.

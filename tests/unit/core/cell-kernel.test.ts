@@ -12,6 +12,10 @@
  *     suppressed (no dedup — mirrors the raw compositor fan-out).
  *   - reentrancy: a publish issued from within a subscriber runs a full nested
  *     synchronous fan-out over the membership snapshot before the outer resumes.
+ *   - mid-fan-out membership (S6.1a): dispatch membership is bounded at each
+ *     commit's start on BOTH constructors — a subscriber added mid-fan-out MISSES
+ *     the in-flight value and joins future commits. With replay1's replay-once law
+ *     this makes each subscription observe each commit at most once (no double-spend).
  *   - disposer idempotence: the returned disposer removes exactly one
  *     subscription; calling it again is a no-op.
  *   - close-completes: close() completes every subscriber exactly once,
@@ -315,7 +319,9 @@ describe('CellKernel — reentrancy (publish during notify)', () => {
 // ---------------------------------------------------------------------------
 
 describe('CellKernel — ReentrancyPolicy (nested write)', () => {
-  const runNestedWrite = (k: ReturnType<typeof CellKernel.replay1<number>>): { a: number[]; b: number[]; read: number } => {
+  const runNestedWrite = (
+    k: ReturnType<typeof CellKernel.replay1<number>>,
+  ): { a: number[]; b: number[]; read: number } => {
     const a: number[] = [];
     const b: number[] = [];
     let fired = false;
@@ -388,19 +394,22 @@ describe('CellKernel — ReentrancyPolicy (nested write)', () => {
 });
 
 // ---------------------------------------------------------------------------
-// subscribe / dispose during notify — DIVERGENT delivery law by constructor:
-//   - fanout  (snapshot): a subscriber added mid-fan-out MISSES the in-flight
-//     value (membership snapshot taken at fan-out start; PubSub fidelity).
-//   - replay1 (live-Set): a subscriber added mid-fan-out RECEIVES the in-flight
-//     value — it mirrors compositor.ts:241-246 (`for (const notify of
-//     changeListeners) notify(state)`) EXACTLY, because replay1 is the
-//     extraction target Wave 2 swaps the compositor onto (behavior identity is
-//     the whole point). See the divergence-by-design note in cell-kernel.ts.
+// subscribe / dispose during notify — UNIFORM DISPATCH-SNAPSHOT membership law
+// (S6.1a ruling). Dispatch membership is bounded at the START of each committed
+// emission on BOTH constructors: a subscriber added mid-fan-out is OUTSIDE that
+// dispatch and MISSES the in-flight value — it participates only in FUTURE
+// commits. The two constructors differ ONLY in the REPLAY law:
+//   - fanout : no replay — a mid-fan-out subscriber first hears the NEXT commit.
+//   - replay1: replays the current committed slot ONCE on subscribe, then hears
+//     future commits. Because membership is dispatch-bounded, the replay is the
+//     sole delivery of the current commit — NEVER replay + in-flight of the same
+//     commit (that old live-Set double-spend was a law-composition defect: replay
+//     and live iteration observing one committed state twice; see S6.1a).
 // Both skip a subscriber DISPOSED mid-fan-out before it is reached.
 // ---------------------------------------------------------------------------
 
 describe('CellKernel — mutation during notify', () => {
-  test('fanout: a subscriber added during a fan-out MISSES the in-flight value (snapshot)', () => {
+  test('fanout: a subscriber added during a fan-out MISSES the in-flight value (dispatch-snapshot)', () => {
     const k = CellKernel.fanout<number>();
     const a: number[] = [];
     const late: number[] = [];
@@ -416,7 +425,7 @@ describe('CellKernel — mutation during notify', () => {
     expect(late).toEqual([2]);
   });
 
-  test('replay1: a subscriber added during a fan-out RECEIVES the in-flight value (live-Set; compositor parity)', () => {
+  test('replay1: a subscriber added during a fan-out MISSES the in-flight value — replay only, no double-spend (dispatch-snapshot; S6.1a)', () => {
     const k = CellKernel.replay1(0);
     const a: number[] = [];
     const late: number[] = [];
@@ -425,17 +434,19 @@ describe('CellKernel — mutation during notify', () => {
       a.push(v);
       if (v === 1 && !added) {
         added = true;
-        // Attached from WITHIN the fan-out of publish(1). Two deliveries reach
-        // it: (1) the replay of the current value on subscribe, and (2) the
-        // in-flight fan-out itself — live-Set iteration visits the just-added
-        // registration because it sits after the current cursor. Under the old
-        // snapshot fan-out only the replay (1) would arrive.
+        // Attached from WITHIN the fan-out of publish(1). ONE delivery reaches it:
+        // the replay of the current committed value (1) on subscribe. The
+        // dispatch of publish(1) captured its membership BEFORE `late` existed, so
+        // `late` is not in it and does NOT receive the in-flight 1 — it observes
+        // the commit exactly once (via replay), then joins future commits. The old
+        // live-Set fan-out delivered the in-flight 1 a SECOND time (late=[1,1]) —
+        // the S6.1a double-spend this membership law retires.
         k.subscribe((w) => late.push(w));
       }
     });
     k.publish(1);
     expect(a).toEqual([0, 1]);
-    expect(late).toEqual([1, 1]);
+    expect(late).toEqual([1]);
   });
 
   test('fanout: a subscriber disposed during a fan-out does not receive the in-flight value', () => {
@@ -453,7 +464,7 @@ describe('CellKernel — mutation during notify', () => {
     expect(b).toEqual([]);
   });
 
-  test('replay1: a subscriber disposed during a fan-out is skipped (live-Set honors removal)', () => {
+  test('replay1: a subscriber disposed during a fan-out is skipped (dispatch-snapshot honors removal)', () => {
     const k = CellKernel.replay1(0);
     const a: number[] = [];
     const b: number[] = [];

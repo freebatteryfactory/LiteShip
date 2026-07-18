@@ -12,8 +12,8 @@
  *      the very implementation the laws describe.
  *   2. Byte-exact scenario parity — the model reproduces the EXACT observations
  *      pinned in `cell-kernel.test.ts` for every enumerated invariant I1-I8,
- *      including the reentrancy (I5) and mutation-during-notify live/snapshot
- *      (I6) edges, AND agrees with CellKernel on each.
+ *      including the reentrancy (I5) and mutation-during-notify dispatch-snapshot
+ *      membership (I6, S6.1a) edges, AND agrees with CellKernel on each.
  *   3. Lifetime laws L1-L7 — {@link predictLifetime} is checked against the REAL
  *      {@link Lifetime} SUT.
  *   4. Emission policy — {all} reproduces the no-dedup law; {distinct} is a
@@ -74,14 +74,21 @@ describe('reactive-model — fc.commands self-consistency (model ≡ CellKernel)
 // ===========================================================================
 
 /** Run a scenario against BOTH the model channel and CellKernel; assert both agree and match the pin. */
-function bothChannels(channel: 'replay1' | 'fanout', initial: number): { model: () => ChannelLike; real: () => ChannelLike } {
+function bothChannels(
+  channel: 'replay1' | 'fanout',
+  initial: number,
+): { model: () => ChannelLike; real: () => ChannelLike } {
   return {
     model: () => (channel === 'replay1' ? ModelChannel.replay1(initial) : ModelChannel.fanout()),
     real: () => (channel === 'replay1' ? cellKernelChannel.replay1(initial) : cellKernelChannel.fanout()),
   };
 }
 
-const assertParity = <T>(scenario: (mk: () => ChannelLike) => T, mk: { model: () => ChannelLike; real: () => ChannelLike }, pinned: T): void => {
+const assertParity = <T>(
+  scenario: (mk: () => ChannelLike) => T,
+  mk: { model: () => ChannelLike; real: () => ChannelLike },
+  pinned: T,
+): void => {
   const modelResult = scenario(mk.model);
   const realResult = scenario(mk.real);
   expect(modelResult).toEqual(realResult); // model ≡ CellKernel
@@ -206,8 +213,8 @@ describe('reactive-model — I5 reentrancy (publish during notify)', () => {
   });
 });
 
-describe('reactive-model — I6 mutation during notify (live vs snapshot)', () => {
-  test('replay1 (live-set): a subscriber added mid-fan-out RECEIVES the in-flight value', () => {
+describe('reactive-model — I6 mutation during notify (dispatch-snapshot membership; S6.1a)', () => {
+  test('replay1 (dispatch-snapshot): a subscriber added mid-fan-out MISSES the in-flight value — replay only, no double-spend', () => {
     const scenario = (mk: () => ChannelLike): { a: number[]; late: number[] } => {
       const ch = mk();
       const a: number[] = [];
@@ -225,8 +232,11 @@ describe('reactive-model — I6 mutation during notify (live vs snapshot)', () =
       ch.publish(1);
       return { a, late };
     };
-    // replay(0)+publish(1) => a=[0,1]; late gets its own replay(1) + the in-flight fan-out(1).
-    assertParity(scenario, bothChannels('replay1', 0), { a: [0, 1], late: [1, 1] });
+    // replay(0)+publish(1) => a=[0,1]. `late` is added mid-fan-out of publish(1), so
+    // it is OUTSIDE that commit's dispatch membership: it observes the commit exactly
+    // once via its replay(1) and is NOT re-delivered the in-flight 1 (the S6.1a
+    // double-spend `[1,1]` — replay + live-set of one committed state — is retired).
+    assertParity(scenario, bothChannels('replay1', 0), { a: [0, 1], late: [1] });
   });
 
   test('fanout (snapshot): a subscriber added mid-fan-out MISSES the in-flight value', () => {
