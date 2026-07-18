@@ -1,6 +1,6 @@
 {
   "name": "@czap/worker",
-  "version": "0.17.0",
+  "version": "0.18.0",
   "description": "Move LiteShip's heavy work off the main thread: compositor and render workers plus a lock-free ring buffer that stream state and frames without janking the UI.",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",
