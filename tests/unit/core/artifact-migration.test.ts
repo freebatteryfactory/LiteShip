@@ -30,7 +30,6 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Effect } from 'effect';
 import { hasTag, getTag } from '@czap/error';
 import { encode as cborEncode } from 'cborg';
 import {
@@ -49,8 +48,6 @@ import {
   type DocumentGraph as DocumentGraphType,
   type CellMeta,
 } from '@czap/core';
-
-const run = <A, E>(eff: Effect.Effect<A, E>) => Effect.runPromise(eff);
 
 // ── Shared fixtures ──────────────────────────────────────────────────
 
@@ -105,35 +102,38 @@ const graph = (nodes: DocumentGraphNode[], edges: DocumentGraphEdge[]): Document
 // ── 1. ShipCapsule (schema_version: 1) ───────────────────────────────
 
 describe('artifact migration — ShipCapsule (schema_version)', () => {
-  test('a current-version (v1) capsule round-trips encode → decode → identical', async () => {
-    const capsule = await run(ShipCapsule.make(sampleCapsuleInput()));
+  test('a current-version (v1) capsule round-trips encode → decode → identical', () => {
+    const capsule = ShipCapsule.make(sampleCapsuleInput());
     const bytes = ShipCapsule.canonicalize(capsule);
-    const decoded = await run(ShipCapsule.decode(bytes));
-    expect(decoded).toEqual(capsule);
-    expect(decoded.schema_version).toBe(1);
+    const decoded = ShipCapsule.decode(bytes);
+    expect(decoded.ok).toBe(true);
+    if (decoded.ok) {
+      expect(decoded.value).toEqual(capsule);
+      expect(decoded.value.schema_version).toBe(1);
+    }
   });
 
-  test('a FUTURE version (schema_version: 999) is REJECTED unsupported_version — never misparsed as v1', async () => {
+  test('a FUTURE version (schema_version: 999) is REJECTED unsupported_version — never misparsed as v1', () => {
     // Forge a shape-valid capsule stamped with a future schema_version. It must
     // surface a DISTINCT version verdict (not invalid_shape, not a silent v1
     // coercion): the migration boundary is honest.
     const futureInput = sampleCapsuleInput() as ShipCapsule.Input & { schema_version: number };
     futureInput.schema_version = 999;
-    const capsule = await run(ShipCapsule.make(futureInput as ShipCapsule.Input));
+    const capsule = ShipCapsule.make(futureInput as ShipCapsule.Input);
     const bytes = ShipCapsule.canonicalize(capsule);
 
-    const exit = await Effect.runPromiseExit(ShipCapsule.decode(bytes));
-    expect(exit._tag).toBe('Failure');
-    const err = await run(ShipCapsule.decode(bytes).pipe(Effect.flip));
-    expect(err).toBe('unsupported_version');
+    const result = ShipCapsule.decode(bytes);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error).toBe('unsupported_version');
   });
 
-  test('the version verdict is DISTINCT from the shape verdict (a different drift = a different failure)', async () => {
+  test('the version verdict is DISTINCT from the shape verdict (a different drift = a different failure)', () => {
     // A wrong-shape value still reports invalid_shape; only a shape-valid,
     // wrong-version value reports unsupported_version. The two are not conflated.
     const wrongShape = new Uint8Array(cborEncode({ not: 'a capsule', schema_version: 1 }));
-    const shapeErr = await run(ShipCapsule.decode(wrongShape).pipe(Effect.flip));
-    expect(shapeErr).toBe('invalid_shape');
+    const result = ShipCapsule.decode(wrongShape);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error).toBe('invalid_shape');
   });
 });
 

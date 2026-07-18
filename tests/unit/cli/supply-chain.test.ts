@@ -18,8 +18,14 @@ import { describe, it, expect } from 'vitest';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { readFileSync } from 'node:fs';
-import { Effect } from 'effect';
-import { AddressedDigest, ShipCapsule, ContentAddress, IntegrityDigest, type AddressedDigest as AD, type HLC } from '@czap/core';
+import {
+  AddressedDigest,
+  ShipCapsule,
+  ContentAddress,
+  IntegrityDigest,
+  type AddressedDigest as AD,
+  type HLC,
+} from '@czap/core';
 import { parseLockfile } from '../../../packages/cli/src/lib/lockfile.js';
 import {
   evaluateLockfilePolicy,
@@ -49,10 +55,6 @@ const workspace: readonly WorkspacePkg[] = readWorkspacePackages(REPO_ROOT).map(
   private: p.private,
   importerPath: p.importerPath,
 }));
-
-async function run<A, E>(eff: Effect.Effect<A, E>): Promise<A> {
-  return Effect.runPromise(eff);
-}
 
 describe('pnpm-lock.yaml parser', () => {
   const parsed = parseLockfile(lockfileText);
@@ -112,7 +114,9 @@ describe('lockfile policy — BITE proofs', () => {
   });
 
   it('a floating (unhashed) unit reds the policy', () => {
-    const lf = parseLockfile(`lockfileVersion: '9.0'\nimporters:\n  .:\npackages:\n  'loose@1.0.0':\n    resolution: {}\n`);
+    const lf = parseLockfile(
+      `lockfileVersion: '9.0'\nimporters:\n  .:\npackages:\n  'loose@1.0.0':\n    resolution: {}\n`,
+    );
     const v = evaluateLockfilePolicy(lf, LITESHIP_LOCKFILE_POLICY, published);
     expect(v.some((x) => x.code === 'floating-resolution')).toBe(true);
   });
@@ -179,34 +183,50 @@ describe('provenance validation', () => {
     source_commit: '0123456789abcdef0123456789abcdef01234567',
     source_dirty: false,
     lockfile_address: lockAddr,
-    workspace_manifest_address: { display_id: ContentAddress('fnv1a:bbbbbbbb'), integrity_digest: IntegrityDigest('sha256:' + 'b'.repeat(64)), algo: 'sha256' },
-    tarball_manifest_address: { display_id: ContentAddress('fnv1a:cccccccc'), integrity_digest: IntegrityDigest('sha256:' + 'c'.repeat(64)), algo: 'sha256' },
+    workspace_manifest_address: {
+      display_id: ContentAddress('fnv1a:bbbbbbbb'),
+      integrity_digest: IntegrityDigest('sha256:' + 'b'.repeat(64)),
+      algo: 'sha256',
+    },
+    tarball_manifest_address: {
+      display_id: ContentAddress('fnv1a:cccccccc'),
+      integrity_digest: IntegrityDigest('sha256:' + 'c'.repeat(64)),
+      algo: 'sha256',
+    },
     build_env: { node_version: 'v24.0.0', pnpm_version: '10.32.1', os: 'linux', arch: 'x64' },
     package_manager: 'pnpm',
     package_manager_version: '10.32.1',
-    publish_dry_run_address: { display_id: ContentAddress('fnv1a:dddddddd'), integrity_digest: IntegrityDigest('sha256:' + 'd'.repeat(64)), algo: 'sha256' },
+    publish_dry_run_address: {
+      display_id: ContentAddress('fnv1a:dddddddd'),
+      integrity_digest: IntegrityDigest('sha256:' + 'd'.repeat(64)),
+      algo: 'sha256',
+    },
     lifecycle_scripts_observed: [],
     generated_at: { wall_ms: 1_715_500_000_000, counter: 0, node_id: 'test' } as HLC,
     previous_ship_capsule: null,
   });
 
-  it('PASSES when the capsule lockfile_address equals the LIVE pnpm-lock.yaml address', async () => {
+  it('PASSES when the capsule lockfile_address equals the LIVE pnpm-lock.yaml address', () => {
     const liveAddr = AddressedDigest.of(lockfileBytes);
-    const capsule = await run(ShipCapsule.make(baseInput(liveAddr)));
+    const capsule = ShipCapsule.make(baseInput(liveAddr));
     const facts = validateProvenance(capsule, lockfileBytes);
     expect(facts.violations).toEqual([]);
   });
 
-  it('FAILS lockfile-address-drift when the capsule recorded a different address (bite proof)', async () => {
-    const wrong: AD = { display_id: ContentAddress('fnv1a:00000000'), integrity_digest: IntegrityDigest('sha256:' + '0'.repeat(64)), algo: 'sha256' };
-    const capsule = await run(ShipCapsule.make(baseInput(wrong)));
+  it('FAILS lockfile-address-drift when the capsule recorded a different address (bite proof)', () => {
+    const wrong: AD = {
+      display_id: ContentAddress('fnv1a:00000000'),
+      integrity_digest: IntegrityDigest('sha256:' + '0'.repeat(64)),
+      algo: 'sha256',
+    };
+    const capsule = ShipCapsule.make(baseInput(wrong));
     const facts = validateProvenance(capsule, lockfileBytes);
     expect(facts.violations.some((x) => x.code === 'lockfile-address-drift')).toBe(true);
   });
 
-  it('FAILS malformed-source-commit on a non-SHA commit', async () => {
+  it('FAILS malformed-source-commit on a non-SHA commit', () => {
     const liveAddr = AddressedDigest.of(lockfileBytes);
-    const capsule = await run(ShipCapsule.make({ ...baseInput(liveAddr), source_commit: 'HEAD' }));
+    const capsule = ShipCapsule.make({ ...baseInput(liveAddr), source_commit: 'HEAD' });
     const facts = validateProvenance(capsule, lockfileBytes);
     expect(facts.violations.some((x) => x.code === 'malformed-source-commit')).toBe(true);
   });
@@ -220,14 +240,14 @@ describe('no-ambient-CI-authority', () => {
   });
 
   it('a self-documenting `# NPM_TOKEN is dead` comment does NOT trip the scan', () => {
-    const facts = scanCiAuthority([{ path: 'wf.yml', text: 'jobs:\n  x:\n    # The NPM_TOKEN secret is dead and no longer read.\n    steps: []\n' }]);
+    const facts = scanCiAuthority([
+      { path: 'wf.yml', text: 'jobs:\n  x:\n    # The NPM_TOKEN secret is dead and no longer read.\n    steps: []\n' },
+    ]);
     expect(facts.violations).toEqual([]);
   });
 
   it('a real NPM_TOKEN reference FAILS the scan (bite proof)', () => {
-    const facts = scanCiAuthority([
-      { path: 'wf.yml', text: 'env:\n  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}\n' },
-    ]);
+    const facts = scanCiAuthority([{ path: 'wf.yml', text: 'env:\n  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}\n' }]);
     expect(facts.violations.some((x) => x.code === 'ambient-publish-token')).toBe(true);
   });
 });

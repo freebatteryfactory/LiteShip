@@ -24,11 +24,15 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { existsSync, mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { Effect } from 'effect';
-import { ContentAddress, IntegrityDigest, ShipCapsule, decode, type AddressedDigest, type HLCBrand as HLC } from '@czap/core';
+import {
+  ContentAddress,
+  IntegrityDigest,
+  ShipCapsule,
+  decode,
+  type AddressedDigest,
+  type HLCBrand as HLC,
+} from '@czap/core';
 import { ShipEmit, shipEmitCapsule } from '../../packages/cli/src/capsules/ship-emit.js';
-
-const run = <A, E>(eff: Effect.Effect<A, E>) => Effect.runPromise(eff);
 
 const fakeDigest = (label: string): AddressedDigest => ({
   display_id: ContentAddress(`fnv1a:${label.padStart(8, '0').slice(0, 8)}`),
@@ -63,9 +67,9 @@ const sampleInput = (): ShipCapsule.Input => ({
 let workDir: string;
 let capsule: ShipCapsule.Shape;
 
-beforeAll(async () => {
+beforeAll(() => {
   workDir = mkdtempSync(join(tmpdir(), 'litesip-ship-emit-'));
-  capsule = await run(ShipCapsule.make(sampleInput()));
+  capsule = ShipCapsule.make(sampleInput());
 });
 
 afterAll(() => {

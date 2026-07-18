@@ -11,29 +11,15 @@
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { packInWorkspace } from '../support/pack.js';
-import {
-  existsSync,
-  mkdtempSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { gunzipSync, gzipSync } from 'node:zlib';
-import { Effect } from 'effect';
-import {
-  ContentAddress,
-  IntegrityDigest,
-  ShipCapsule,
-  type AddressedDigest,
-  type HLCBrand as HLC,
-} from '@czap/core';
+import { ContentAddress, IntegrityDigest, ShipCapsule, type AddressedDigest, type HLCBrand as HLC } from '@czap/core';
 import { tarballManifestAddress } from '../../packages/cli/src/ship-manifest.js';
 import { verify } from '../../packages/cli/src/commands/ship-verify.js';
 
 const REPO_ROOT = resolve(import.meta.dirname, '..', '..');
-const run = <A, E>(eff: Effect.Effect<A, E>) => Effect.runPromise(eff);
 
 interface CapturedReceipt {
   readonly verdict: 'Verified' | 'Mismatch' | 'Incomplete' | 'Unknown';
@@ -42,19 +28,21 @@ interface CapturedReceipt {
   readonly checks: { tarball_manifest: string };
 }
 
-async function captureVerify(args: readonly string[]): Promise<{ exit: number; receipt: CapturedReceipt | null; stdout: string; stderr: string }> {
+async function captureVerify(
+  args: readonly string[],
+): Promise<{ exit: number; receipt: CapturedReceipt | null; stdout: string; stderr: string }> {
   let stdout = '';
   let stderr = '';
   const origO = process.stdout.write.bind(process.stdout);
   const origE = process.stderr.write.bind(process.stderr);
-  (process.stdout as unknown as { write: unknown }).write = ((c: string | Uint8Array) => {
+  (process.stdout as unknown as { write: unknown }).write = (c: string | Uint8Array) => {
     stdout += typeof c === 'string' ? c : Buffer.from(c).toString();
     return true;
-  });
-  (process.stderr as unknown as { write: unknown }).write = ((c: string | Uint8Array) => {
+  };
+  (process.stderr as unknown as { write: unknown }).write = (c: string | Uint8Array) => {
     stderr += typeof c === 'string' ? c : Buffer.from(c).toString();
     return true;
-  });
+  };
   try {
     const exit = await verify(args);
     let receipt: CapturedReceipt | null = null;
@@ -102,8 +90,16 @@ const buildCapsuleInput = (tarballManifest: AddressedDigest, wallMs = 1_715_500_
   package_version: '0.1.0',
   source_commit: '0123456789abcdef0123456789abcdef01234567',
   source_dirty: false,
-  lockfile_address: { display_id: ContentAddress('fnv1a:aaaaaaaa'), integrity_digest: IntegrityDigest('sha256:' + 'a'.repeat(64)), algo: 'sha256' },
-  workspace_manifest_address: { display_id: ContentAddress('fnv1a:bbbbbbbb'), integrity_digest: IntegrityDigest('sha256:' + 'b'.repeat(64)), algo: 'sha256' },
+  lockfile_address: {
+    display_id: ContentAddress('fnv1a:aaaaaaaa'),
+    integrity_digest: IntegrityDigest('sha256:' + 'a'.repeat(64)),
+    algo: 'sha256',
+  },
+  workspace_manifest_address: {
+    display_id: ContentAddress('fnv1a:bbbbbbbb'),
+    integrity_digest: IntegrityDigest('sha256:' + 'b'.repeat(64)),
+    algo: 'sha256',
+  },
   tarball_manifest_address: tarballManifest,
   build_env: {
     node_version: 'v24.13.1',
@@ -113,7 +109,11 @@ const buildCapsuleInput = (tarballManifest: AddressedDigest, wallMs = 1_715_500_
   },
   package_manager: 'pnpm',
   package_manager_version: '10.32.1',
-  publish_dry_run_address: { display_id: ContentAddress('fnv1a:dddddddd'), integrity_digest: IntegrityDigest('sha256:' + 'd'.repeat(64)), algo: 'sha256' },
+  publish_dry_run_address: {
+    display_id: ContentAddress('fnv1a:dddddddd'),
+    integrity_digest: IntegrityDigest('sha256:' + 'd'.repeat(64)),
+    algo: 'sha256',
+  },
   lifecycle_scripts_observed: [],
   generated_at: { wall_ms: wallMs, counter: 0, node_id: 'test-node' } as HLC,
   previous_ship_capsule: null,
@@ -121,8 +121,8 @@ const buildCapsuleInput = (tarballManifest: AddressedDigest, wallMs = 1_715_500_
 
 describe('czap verify verdicts', () => {
   it('Verified (exit 0) when tarball matches capsule.tarball_manifest_address', async () => {
-    const tmAddr = await run(tarballManifestAddress(tarballBytes));
-    const capsule = await run(ShipCapsule.make(buildCapsuleInput(tmAddr)));
+    const tmAddr = tarballManifestAddress(tarballBytes);
+    const capsule = ShipCapsule.make(buildCapsuleInput(tmAddr));
     const capsuleBytes = ShipCapsule.canonicalize(capsule);
     const capsulePath = join(workDir, 'verified.shipcapsule.cbor');
     writeFileSync(capsulePath, capsuleBytes);
@@ -146,10 +146,10 @@ describe('czap verify verdicts', () => {
     // header) — any real content alteration changes the manifest sha256.
     if (tamperedInner.length > 1024) tamperedInner[1024] = (tamperedInner[1024]! ^ 0xff) & 0xff;
     const tamperedTgz = new Uint8Array(gzipSync(tamperedInner));
-    const tamperedAddr = await run(tarballManifestAddress(tamperedTgz));
+    const tamperedAddr = tarballManifestAddress(tamperedTgz);
 
     // Build a capsule that claims the tampered (different) manifest address.
-    const capsule = await run(ShipCapsule.make(buildCapsuleInput(tamperedAddr)));
+    const capsule = ShipCapsule.make(buildCapsuleInput(tamperedAddr));
     const capsuleBytes = ShipCapsule.canonicalize(capsule);
     const capsulePath = join(workDir, 'mismatch.shipcapsule.cbor');
     writeFileSync(capsulePath, capsuleBytes);
@@ -164,8 +164,8 @@ describe('czap verify verdicts', () => {
   });
 
   it('Incomplete (exit 3) when capsule is non-canonical CBOR', async () => {
-    const tmAddr = await run(tarballManifestAddress(tarballBytes));
-    const capsule = await run(ShipCapsule.make(buildCapsuleInput(tmAddr, 1_715_500_000_002)));
+    const tmAddr = tarballManifestAddress(tarballBytes);
+    const capsule = ShipCapsule.make(buildCapsuleInput(tmAddr, 1_715_500_000_002));
     const canonical = ShipCapsule.canonicalize(capsule);
     // Same longer-form schema_version trick as the ship-capsule.test.ts file.
     const keyBytes = new TextEncoder().encode('schema_version');
@@ -174,9 +174,15 @@ describe('czap verify verdicts', () => {
       if (canonical[i] !== 0x6e) continue;
       let match = true;
       for (let j = 0; j < keyBytes.length; j++) {
-        if (canonical[i + 1 + j] !== keyBytes[j]) { match = false; break; }
+        if (canonical[i + 1 + j] !== keyBytes[j]) {
+          match = false;
+          break;
+        }
       }
-      if (match) { headIdx = i; break; }
+      if (match) {
+        headIdx = i;
+        break;
+      }
     }
     expect(headIdx).toBeGreaterThanOrEqual(0);
     const valueIdx = headIdx + 1 + keyBytes.length;
@@ -196,8 +202,8 @@ describe('czap verify verdicts', () => {
   });
 
   it('Incomplete (exit 3) when capsule bytes are truncated', async () => {
-    const tmAddr = await run(tarballManifestAddress(tarballBytes));
-    const capsule = await run(ShipCapsule.make(buildCapsuleInput(tmAddr, 1_715_500_000_003)));
+    const tmAddr = tarballManifestAddress(tarballBytes);
+    const capsule = ShipCapsule.make(buildCapsuleInput(tmAddr, 1_715_500_000_003));
     const canonical = ShipCapsule.canonicalize(capsule);
     const truncated = canonical.slice(0, Math.max(1, Math.floor(canonical.length / 3)));
     const capsulePath = join(workDir, 'truncated.shipcapsule.cbor');
@@ -220,8 +226,8 @@ describe('czap verify verdicts', () => {
 
 describe('czap verify error and edge paths', () => {
   it('parses --capsule=path equals form (Verified)', async () => {
-    const tmAddr = await run(tarballManifestAddress(tarballBytes));
-    const capsule = await run(ShipCapsule.make(buildCapsuleInput(tmAddr, 1_715_500_000_010)));
+    const tmAddr = tarballManifestAddress(tarballBytes);
+    const capsule = ShipCapsule.make(buildCapsuleInput(tmAddr, 1_715_500_000_010));
     const capsulePath = join(workDir, 'equals-form.shipcapsule.cbor');
     writeFileSync(capsulePath, ShipCapsule.canonicalize(capsule));
 
@@ -231,8 +237,8 @@ describe('czap verify error and edge paths', () => {
   });
 
   it('exit 1 (emitError) when --capsule is provided but the positional tarball is missing', async () => {
-    const tmAddr = await run(tarballManifestAddress(tarballBytes));
-    const capsule = await run(ShipCapsule.make(buildCapsuleInput(tmAddr, 1_715_500_000_011)));
+    const tmAddr = tarballManifestAddress(tarballBytes);
+    const capsule = ShipCapsule.make(buildCapsuleInput(tmAddr, 1_715_500_000_011));
     const capsulePath = join(workDir, 'missing-tarball.shipcapsule.cbor');
     writeFileSync(capsulePath, ShipCapsule.canonicalize(capsule));
 
@@ -246,8 +252,8 @@ describe('czap verify error and edge paths', () => {
   });
 
   it('exit 1 (emitError) when the tarball file does not exist on disk', async () => {
-    const tmAddr = await run(tarballManifestAddress(tarballBytes));
-    const capsule = await run(ShipCapsule.make(buildCapsuleInput(tmAddr, 1_715_500_000_012)));
+    const tmAddr = tarballManifestAddress(tarballBytes);
+    const capsule = ShipCapsule.make(buildCapsuleInput(tmAddr, 1_715_500_000_012));
     const capsulePath = join(workDir, 'tarball-not-found.shipcapsule.cbor');
     writeFileSync(capsulePath, ShipCapsule.canonicalize(capsule));
 
@@ -269,8 +275,8 @@ describe('czap verify error and edge paths', () => {
   });
 
   it('Incomplete (exit 3) with recompute: prefix when the tarball bytes are not valid gzip', async () => {
-    const tmAddr = await run(tarballManifestAddress(tarballBytes));
-    const capsule = await run(ShipCapsule.make(buildCapsuleInput(tmAddr, 1_715_500_000_013)));
+    const tmAddr = tarballManifestAddress(tarballBytes);
+    const capsule = ShipCapsule.make(buildCapsuleInput(tmAddr, 1_715_500_000_013));
     const capsulePath = join(workDir, 'recompute-fail.shipcapsule.cbor');
     writeFileSync(capsulePath, ShipCapsule.canonicalize(capsule));
 
@@ -291,8 +297,18 @@ describe('czap verify error and edge paths', () => {
     // cover malformed_cbor and non_canonical).
     const wrongShape = new Uint8Array([
       0xa1, // map(1)
-      0x65, 0x68, 0x65, 0x6c, 0x6c, 0x6f, // text(5) "hello"
-      0x65, 0x77, 0x6f, 0x72, 0x6c, 0x64, // text(5) "world"
+      0x65,
+      0x68,
+      0x65,
+      0x6c,
+      0x6c,
+      0x6f, // text(5) "hello"
+      0x65,
+      0x77,
+      0x6f,
+      0x72,
+      0x6c,
+      0x64, // text(5) "world"
     ]);
     const capsulePath = join(workDir, 'invalid-shape.shipcapsule.cbor');
     writeFileSync(capsulePath, wrongShape);
@@ -307,13 +323,13 @@ describe('czap verify error and edge paths', () => {
     // Construct an AddressedDigest by hand that shares display_id with the
     // real tarball but has a deliberately-wrong integrity_digest. Exercises
     // the lines 164–165 arm in isolation from the lines 161–162 arm.
-    const realAddr = await run(tarballManifestAddress(tarballBytes));
+    const realAddr = tarballManifestAddress(tarballBytes);
     const onlyDigestDiffers: AddressedDigest = {
       display_id: realAddr.display_id,
       integrity_digest: IntegrityDigest('sha256:' + 'f'.repeat(64)),
       algo: 'sha256',
     };
-    const capsule = await run(ShipCapsule.make(buildCapsuleInput(onlyDigestDiffers, 1_715_500_000_014)));
+    const capsule = ShipCapsule.make(buildCapsuleInput(onlyDigestDiffers, 1_715_500_000_014));
     const capsulePath = join(workDir, 'digest-only-mismatch.shipcapsule.cbor');
     writeFileSync(capsulePath, ShipCapsule.canonicalize(capsule));
 

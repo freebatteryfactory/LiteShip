@@ -14,28 +14,14 @@
  */
 
 import { gunzipSync } from 'node:zlib';
-import { Effect } from 'effect';
 import { AddressedDigest, CanonicalCbor, type AddressedDigest as AddressedDigestType } from '@czap/core';
-import { bytesToHex } from '@czap/canonical';
+import { sha256Hex } from '@czap/canonical';
 import { IoError, NotFoundError } from '@czap/error';
 
-// NOTE (Wave 7 Phase 2, item 260): the local `bytesToHex` dup is now the canonical
-// owner's `bytesToHex`. The sha256 helper below stays an async `crypto.subtle`
-// Effect wrapper on purpose — swapping it to canonical's SYNC `sha256Hex` cannot be
-// done DUP-only: the four addressers `yield*` this as an Effect, so removing the
-// async boundary is the BLOCKED [EFF] "convert addressers from Effect to sync" seam.
-// Left for that seam; QA owns the coupled change.
-const sha256HexRaw = (bytes: Uint8Array): Effect.Effect<string> =>
-  Effect.tryPromise({
-    try: async () => {
-      const buffer = await crypto.subtle.digest('SHA-256', bytes as BufferSource);
-      return bytesToHex(new Uint8Array(buffer));
-    },
-    catch: (error) =>
-      IoError('sha256', `SHA-256 hash failed: ${error instanceof Error ? error.message : String(error)}`, {
-        cause: error,
-      }),
-  }).pipe(Effect.orDie);
+// Wave 8: the addressers are plain SYNC functions returning the address value
+// directly. The historic async boundary (`crypto.subtle` sha256 wrapped in an
+// Effect) is gone — `@czap/canonical`'s `sha256Hex` is SYNC and byte-identical
+// (same SHA-256 → same lowercase hex → same canonical bytes → same address).
 
 interface TarEntry {
   readonly path: string;
@@ -121,25 +107,24 @@ const parseTar = (bytes: Uint8Array): TarEntry[] => {
  * Raw `.tgz` bytes are non-deterministic across publish runs (gzip mtime); the
  * manifest is.
  */
-export const tarballManifestAddress = (tarballBytes: Uint8Array): Effect.Effect<AddressedDigestType, IoError> =>
-  Effect.gen(function* () {
-    const unzipped = yield* Effect.try({
-      try: () => new Uint8Array(gunzipSync(tarballBytes)),
-      catch: (error) =>
-        IoError('gunzip', `Failed to gunzip tarball: ${error instanceof Error ? error.message : String(error)}`, {
-          cause: error,
-        }),
+export const tarballManifestAddress = (tarballBytes: Uint8Array): AddressedDigestType => {
+  let unzipped: Uint8Array;
+  try {
+    unzipped = new Uint8Array(gunzipSync(tarballBytes));
+  } catch (error) {
+    throw IoError('gunzip', `Failed to gunzip tarball: ${error instanceof Error ? error.message : String(error)}`, {
+      cause: error,
     });
-    const entries = parseTar(unzipped);
-    const manifest: { path: string; size: number; sha256: string }[] = [];
-    for (const entry of entries) {
-      const sha256 = yield* sha256HexRaw(entry.bytes);
-      manifest.push({ path: entry.path, size: entry.size, sha256 });
-    }
-    manifest.sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0));
-    const canonical = CanonicalCbor.encode(manifest);
-    return AddressedDigest.of(canonical);
-  });
+  }
+  const entries = parseTar(unzipped);
+  const manifest: { path: string; size: number; sha256: string }[] = [];
+  for (const entry of entries) {
+    manifest.push({ path: entry.path, size: entry.size, sha256: sha256Hex(entry.bytes) });
+  }
+  manifest.sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0));
+  const canonical = CanonicalCbor.encode(manifest);
+  return AddressedDigest.of(canonical);
+};
 
 /**
  * Workspace-protocol leak check: read `package/package.json` out of the
@@ -176,8 +161,7 @@ export function findWorkspaceSpecLeaks(tarballBytes: Uint8Array): readonly strin
 }
 
 /** Address a pnpm-lock.yaml (or equivalent) by its raw file bytes. YAML is its own normalization. */
-export const lockfileAddress = (lockfileBytes: Uint8Array): Effect.Effect<AddressedDigestType, Error> =>
-  Effect.succeed(AddressedDigest.of(lockfileBytes));
+export const lockfileAddress = (lockfileBytes: Uint8Array): AddressedDigestType => AddressedDigest.of(lockfileBytes);
 
 /**
  * Address a workspace's set of package.json files. Hashes each file with
@@ -186,17 +170,15 @@ export const lockfileAddress = (lockfileBytes: Uint8Array): Effect.Effect<Addres
  */
 export const workspaceManifestAddress = (
   input: ReadonlyArray<{ relative_path: string; package_json_bytes: Uint8Array }>,
-): Effect.Effect<AddressedDigestType, Error> =>
-  Effect.gen(function* () {
-    const rows: { relative_path: string; sha256: string }[] = [];
-    for (const item of input) {
-      const sha256 = yield* sha256HexRaw(item.package_json_bytes);
-      rows.push({ relative_path: item.relative_path, sha256 });
-    }
-    rows.sort((a, b) => (a.relative_path < b.relative_path ? -1 : a.relative_path > b.relative_path ? 1 : 0));
-    const canonical = CanonicalCbor.encode(rows);
-    return AddressedDigest.of(canonical);
-  });
+): AddressedDigestType => {
+  const rows: { relative_path: string; sha256: string }[] = [];
+  for (const item of input) {
+    rows.push({ relative_path: item.relative_path, sha256: sha256Hex(item.package_json_bytes) });
+  }
+  rows.sort((a, b) => (a.relative_path < b.relative_path ? -1 : a.relative_path > b.relative_path ? 1 : 0));
+  const canonical = CanonicalCbor.encode(rows);
+  return AddressedDigest.of(canonical);
+};
 
 const ISO_TIMESTAMP_RE = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})/g;
 
@@ -224,8 +206,8 @@ export const normalizeDryRunOutput = (
 export const normalizedDryRunAddress = (
   rawStdout: string,
   normalizationContext: { repo_root_absolute_path: string },
-): Effect.Effect<AddressedDigestType, Error> => {
+): AddressedDigestType => {
   const normalized = normalizeDryRunOutput(rawStdout, normalizationContext);
   const bytes = new TextEncoder().encode(normalized);
-  return Effect.succeed(AddressedDigest.of(bytes));
+  return AddressedDigest.of(bytes);
 };

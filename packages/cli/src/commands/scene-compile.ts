@@ -10,7 +10,6 @@
 import { existsSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
-import { Effect } from 'effect';
 import { sceneCompileCommand } from '@czap/command';
 import type { CommandContext } from '@czap/command';
 import { emit, emitError } from '../receipts.js';
@@ -22,11 +21,12 @@ function compileContext(): CommandContext {
     loadSceneModule: async (scenePath) =>
       (await import(/* @vite-ignore */ pathToFileURL(resolve(scenePath)).href)) as Record<string, unknown>,
     runSceneCompile: async (mod) => {
+      // Scene compile fns are sync (they return a CompiledScene descriptor); invoke
+      // for the compile side effect. The legacy `Effect.isEffect(result)` branch is
+      // retired — no compile fn returns an Effect anymore (Wave 8).
       const compileFn = Object.values(mod).find((v): v is () => unknown => typeof v === 'function');
       if (!compileFn) return;
-      // Compile fns may return a CompiledScene descriptor or an Effect (legacy).
-      const result = compileFn();
-      if (Effect.isEffect(result)) await Effect.runPromise(result as Effect.Effect<unknown, never, never>);
+      compileFn();
     },
   };
 }

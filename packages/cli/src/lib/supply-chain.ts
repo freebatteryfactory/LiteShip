@@ -19,7 +19,6 @@
 
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { Effect } from 'effect';
 import { AddressedDigest, ShipCapsule, type AddressedDigest as AddressedDigestType } from '@czap/core';
 import type {
   SupplyChainFacts,
@@ -188,13 +187,13 @@ export function validateProvenance(capsule: ShipCapsule.Shape, liveLockfileBytes
   };
 }
 
-/** Decode a ShipCapsule from its CBOR bytes (Effect → tagged result). */
-export async function decodeCapsule(
+/** Decode a ShipCapsule from its CBOR bytes (native `Result` → tagged result). */
+export function decodeCapsule(
   bytes: Uint8Array,
-): Promise<{ ok: true; capsule: ShipCapsule.Shape } | { ok: false; error: string }> {
-  const exit = await Effect.runPromiseExit(ShipCapsule.decode(bytes));
-  if (exit._tag === 'Success') return { ok: true, capsule: exit.value };
-  return { ok: false, error: `ShipCapsule.decode failed: ${String(exit.cause)}` };
+): { ok: true; capsule: ShipCapsule.Shape } | { ok: false; error: string } {
+  const r = ShipCapsule.decode(bytes);
+  if (!r.ok) return { ok: false, error: `ShipCapsule.decode failed: ${r.error}` };
+  return { ok: true, capsule: r.value };
 }
 
 // ── no-ambient-CI-authority ──────────────────────────────────────────────────

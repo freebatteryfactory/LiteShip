@@ -11,10 +11,11 @@
 Defined in: [core/src/ship-capsule.ts:216](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ship-capsule.ts#L216)
 
 Public namespace for ShipCapsule (ADR-0011). `make` builds a capsule from
-input, `canonicalize` encodes it as canonical CBOR for transport / hashing,
-`decode` round-trips canonical bytes and rejects non-canonical encodings AND
-unknown `schema_version`s (`unsupported_version`, fail-closed),
-`computeId` mints the fnv1a label over the canonicalized payload.
+input (sync), `canonicalize` encodes it as canonical CBOR for transport /
+hashing, `decode` round-trips canonical bytes and returns a `Result`
+(`@czap/error`) that rejects non-canonical encodings AND unknown
+`schema_version`s (`unsupported_version`, fail-closed), `computeId` mints the
+fnv1a label over the canonicalized payload (sync).
 
 ## Type Declaration
 
@@ -34,7 +35,7 @@ unknown `schema_version`s (`unsupported_version`, fail-closed),
 
 ### computeId
 
-> **computeId**: (`capsuleWithoutIdentity`) => `Effect`\<`AddressedDigest`, `Error`\>
+> **computeId**: (`capsuleWithoutIdentity`) => `AddressedDigest`
 
 #### Parameters
 
@@ -44,11 +45,11 @@ unknown `schema_version`s (`unsupported_version`, fail-closed),
 
 #### Returns
 
-`Effect`\<`AddressedDigest`, `Error`\>
+`AddressedDigest`
 
 ### decode
 
-> **decode**: (`bytes`) => `Effect`\<`ShipCapsuleShape`, `ShipCapsuleDecodeError`\>
+> **decode**: (`bytes`) => `Result`\<`ShipCapsuleShape`, `ShipCapsuleDecodeError`\>
 
 #### Parameters
 
@@ -58,11 +59,11 @@ unknown `schema_version`s (`unsupported_version`, fail-closed),
 
 #### Returns
 
-`Effect`\<`ShipCapsuleShape`, `ShipCapsuleDecodeError`\>
+`Result`\<`ShipCapsuleShape`, `ShipCapsuleDecodeError`\>
 
 ### make
 
-> **make**: (`input`) => `Effect`\<`ShipCapsuleShape`, `Error`\>
+> **make**: (`input`) => `ShipCapsuleShape`
 
 #### Parameters
 
@@ -72,4 +73,4 @@ unknown `schema_version`s (`unsupported_version`, fail-closed),
 
 #### Returns
 
-`Effect`\<`ShipCapsuleShape`, `Error`\>
+`ShipCapsuleShape`

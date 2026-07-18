@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdtempSync, rmSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { Effect } from 'effect';
 import { createNodeCommandContext, startSpawnHandle } from '@czap/command/host';
 import { detectSkipsAST } from '@czap/audit';
 import { FFMPEG_RENDER_CAPABLE } from '../../helpers/ffmpeg.js';
@@ -33,7 +32,14 @@ function minimalWav(sampleCount: number): ArrayBuffer {
   new DataView(fmtLen.buffer).setUint32(0, 16, true);
   const dataLen = new Uint8Array(4);
   new DataView(dataLen.buffer).setUint32(0, data.byteLength, true);
-  const bodyLen = wave.byteLength + fmtId.byteLength + fmtLen.byteLength + fmt.byteLength + dataId.byteLength + dataLen.byteLength + data.byteLength;
+  const bodyLen =
+    wave.byteLength +
+    fmtId.byteLength +
+    fmtLen.byteLength +
+    fmt.byteLength +
+    dataId.byteLength +
+    dataLen.byteLength +
+    data.byteLength;
   const size = new Uint8Array(4);
   new DataView(size.buffer).setUint32(0, bodyLen, true);
   const out = new Uint8Array(riff.byteLength + size.byteLength + bodyLen);
@@ -154,32 +160,28 @@ describe('createNodeCommandContext', () => {
     // returns the audio built-in for EVERY id. Empty bytes carry no RIFF
     // header, so the built-in rejects regardless of the assetId supplied.
     const ctx = createNodeCommandContext({ cwd: workDir });
-    await expect(
-      ctx.runAudioProjection?.(new ArrayBuffer(0), 'waveform', 'any-asset-id'),
-    ).rejects.toThrow();
-    await expect(
-      ctx.runAudioProjection?.(new ArrayBuffer(0), 'waveform', 'never-registered-id'),
-    ).rejects.toThrow();
+    await expect(ctx.runAudioProjection?.(new ArrayBuffer(0), 'waveform', 'any-asset-id')).rejects.toThrow();
+    await expect(ctx.runAudioProjection?.(new ArrayBuffer(0), 'waveform', 'never-registered-id')).rejects.toThrow();
     // A real WAV decodes through the same built-in path — proving the empty
     // registry routes to a working decoder, not a broken one.
     const waveform = await ctx.runAudioProjection?.(minimalWav(512), 'waveform', 'any-asset-id');
     expect(waveform).toBe(512);
   });
 
-  it('loadSceneModule and runSceneCompile handle plain and Effect exports', async () => {
+  it('loadSceneModule and runSceneCompile invoke the compile fn regardless of return type', async () => {
+    // Wave 8: the legacy Effect-returning compile path is retired — compile fns are
+    // sync and return a CompiledScene descriptor (or a bare value). runSceneCompile
+    // invokes the fn for its side effect and returns void either way.
     const plainPath = join(workDir, 'plain.mjs');
     writeFileSync(plainPath, 'export function compile() { return 1; }\n');
-    const effectPath = join(workDir, 'effect.mjs');
-    writeFileSync(
-      effectPath,
-      `import { Effect } from 'effect';\nexport function compile() { return Effect.succeed(42); }\n`,
-    );
+    const descriptorPath = join(workDir, 'descriptor.mjs');
+    writeFileSync(descriptorPath, 'export function compile() { return { _kind: "compiledScene", frames: 42 }; }\n');
     const ctx = createNodeCommandContext({ cwd: workDir });
     const plainMod = await ctx.loadSceneModule?.(plainPath);
     expect(plainMod).toBeTruthy();
     await expect(ctx.runSceneCompile?.(plainMod!)).resolves.toBeUndefined();
-    const effectMod = await ctx.loadSceneModule?.(effectPath);
-    await expect(ctx.runSceneCompile?.(effectMod!)).resolves.toBeUndefined();
+    const descriptorMod = await ctx.loadSceneModule?.(descriptorPath);
+    await expect(ctx.runSceneCompile?.(descriptorMod!)).resolves.toBeUndefined();
   });
 
   it('runSceneCompile is a no-op when the module exports no callable', async () => {
@@ -187,17 +189,21 @@ describe('createNodeCommandContext', () => {
     await expect(ctx.runSceneCompile?.({ marker: 1 })).resolves.toBeUndefined();
   });
 
-  it('runVitest delegates to VitestRunner', async () => {
-    const ctx = createNodeCommandContext({ cwd: workDir });
-    const result = await ctx.runVitest?.([join(process.cwd(), 'tests/unit/command/manifest-path.test.ts')]);
-    expect(result?.exitCode).toBe(0);
-    expect(result?.stderrTail).toBeDefined();
-    // This test spawns a REAL vitest subprocess (startup + transform + run of
-    // another test file), which routinely exceeds vitest's 10s default under the
-    // gauntlet's concurrent phase load — it timed out there while passing in
-    // isolation. scaledTimeout gives CI-scaled headroom via the repo's central
-    // policy (no raw >=1000ms literal, per test-timeout-policy).
-  }, scaledTimeout(30000));
+  it(
+    'runVitest delegates to VitestRunner',
+    async () => {
+      const ctx = createNodeCommandContext({ cwd: workDir });
+      const result = await ctx.runVitest?.([join(process.cwd(), 'tests/unit/command/manifest-path.test.ts')]);
+      expect(result?.exitCode).toBe(0);
+      expect(result?.stderrTail).toBeDefined();
+      // This test spawns a REAL vitest subprocess (startup + transform + run of
+      // another test file), which routinely exceeds vitest's 10s default under the
+      // gauntlet's concurrent phase load — it timed out there while passing in
+      // isolation. scaledTimeout gives CI-scaled headroom via the repo's central
+      // policy (no raw >=1000ms literal, per test-timeout-policy).
+    },
+    scaledTimeout(30000),
+  );
 
   it('startSpawnHandle readline yields stdout lines and dispose is idempotent', async () => {
     const handle = startSpawnHandle('node', ['-e', 'process.stdout.write("alpha\\nbeta")'], {
@@ -227,14 +233,15 @@ describe('createNodeCommandContext', () => {
     // WITHOUT the detector → the token fallback misses the alias → no skip surfaced (the gap).
     const lean = createNodeCommandContext({ cwd: workDir });
     // runPlumb is provisioned in the shared host factory (sync `node:fs` walk under the hood).
-    return Promise.all([lean.runPlumb!(), createNodeCommandContext({ cwd: workDir, skipDetector: detectSkipsAST }).runPlumb!()]).then(
-      ([leanSummary, astSummary]) => {
-        expect(leanSummary.skips.some((s) => s.file.endsWith('aliased.test.ts'))).toBe(false);
-        // WITH the injected AST detector → the alias is caught → a blocking plumb finding.
-        expect(astSummary.skips.some((s) => s.file.endsWith('aliased.test.ts'))).toBe(true);
-        expect(astSummary.ok).toBe(false);
-      },
-    );
+    return Promise.all([
+      lean.runPlumb!(),
+      createNodeCommandContext({ cwd: workDir, skipDetector: detectSkipsAST }).runPlumb!(),
+    ]).then(([leanSummary, astSummary]) => {
+      expect(leanSummary.skips.some((s) => s.file.endsWith('aliased.test.ts'))).toBe(false);
+      // WITH the injected AST detector → the alias is caught → a blocking plumb finding.
+      expect(astSummary.skips.some((s) => s.file.endsWith('aliased.test.ts'))).toBe(true);
+      expect(astSummary.ok).toBe(false);
+    });
   });
 
   it.runIf(FFMPEG_RENDER_CAPABLE)('renderScene encodes frames through ffmpeg when libx264 is available', async () => {

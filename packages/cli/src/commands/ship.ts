@@ -20,7 +20,6 @@
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { hostname } from 'node:os';
-import { Cause, Effect, Result } from 'effect';
 import { HLC, ShipCapsule, wallClock, type AddressedDigest } from '@czap/core';
 import {
   packageSlug,
@@ -42,43 +41,6 @@ import { spawnArgv, spawnArgvCapture } from '../spawn-helpers.js';
 import { emit, emitError } from '../receipts.js';
 import type { ShipReceipt, ShipSkippedReceipt } from '../receipts.js';
 import { ShipEmit } from '../capsules/ship-emit.js';
-
-interface EffectOk<A> {
-  readonly ok: true;
-  readonly value: A;
-}
-interface EffectErr<E> {
-  readonly ok: false;
-  readonly error: E;
-}
-type EffectResult<A, E> = EffectOk<A> | EffectErr<E>;
-
-/**
- * Adapter that materializes an Effect into a tagged result. We avoid
- * `Effect.either` (not in effect@4.0.0-beta.32) and rely on the Exit
- * primitive — first error wins, in line with how the core helpers fail
- * (single typed failure per Effect).
- */
-async function runEffect<A, E>(effect: Effect.Effect<A, E>): Promise<EffectResult<A, E>> {
-  const exit = await Effect.runPromiseExit(effect);
-  if (exit._tag === 'Success') return { ok: true, value: exit.value };
-  const found = Cause.findError(exit.cause);
-  if (Result.isSuccess(found)) {
-    return { ok: false, error: Result.getOrThrow(found) as E };
-  }
-  // Defect / interrupt path — surface as a plain Error to the caller. The
-  // `as unknown as E` cast is the one sanctioned shape break here: callers
-  // observe a structured E in 99.9% of cases; this is the never-happens
-  // fallback for impossible defects (no Fail reasons in the Cause chain).
-  return {
-    ok: false,
-    error: new Error(
-      Cause.prettyErrors(exit.cause)
-        .map((e) => e.message)
-        .join('; '),
-    ) as unknown as E,
-  };
-}
 
 interface ShipOptions {
   readonly cwd: string;
@@ -317,19 +279,8 @@ export async function ship(args: readonly string[]): Promise<number> {
     package_json_bytes: p.packageJsonBytes,
   }));
 
-  const lockAddrResult = await runEffect(lockfileAddress(lockBytes));
-  if (!lockAddrResult.ok) {
-    emitError('ship', `lockfileAddress failed: ${lockAddrResult.error.message}`);
-    return 1;
-  }
-  const lockfileAddr = lockAddrResult.value;
-
-  const wsAddrResult = await runEffect(workspaceManifestAddress(workspaceInput));
-  if (!wsAddrResult.ok) {
-    emitError('ship', `workspaceManifestAddress failed: ${wsAddrResult.error.message}`);
-    return 1;
-  }
-  const workspaceManifestAddr = wsAddrResult.value;
+  const lockfileAddr = lockfileAddress(lockBytes);
+  const workspaceManifestAddr = workspaceManifestAddress(workspaceInput);
 
   const rootPkg = JSON.parse(readFileSync(join(cwd, 'package.json'), 'utf8')) as PackageJsonLite & {
     packageManager?: string;
@@ -428,12 +379,16 @@ export async function ship(args: readonly string[]): Promise<number> {
       return 1;
     }
 
-    const tmAddrResult = await runEffect(tarballManifestAddress(tarballBytes));
-    if (!tmAddrResult.ok) {
-      emitError('ship', `tarballManifestAddress failed for ${pkg.relativePath}: ${tmAddrResult.error.message}`);
+    let tarballManifestAddr: AddressedDigest;
+    try {
+      tarballManifestAddr = tarballManifestAddress(tarballBytes);
+    } catch (e) {
+      emitError(
+        'ship',
+        `tarballManifestAddress failed for ${pkg.relativePath}: ${e instanceof Error ? e.message : String(e)}`,
+      );
       return 1;
     }
-    const tarballManifestAddr: AddressedDigest = tmAddrResult.value;
 
     // pnpm publish --dry-run — notice block goes to stderr; the `+ name@ver`
     // line goes to stdout. Both are part of the observed dry-run; the
@@ -468,12 +423,7 @@ export async function ship(args: readonly string[]): Promise<number> {
       return 1;
     }
     const dryRunRaw = `${dryRes.stderr}\n${dryRes.stdout}`;
-    const dryAddrResult = await runEffect(normalizedDryRunAddress(dryRunRaw, { repo_root_absolute_path: cwd }));
-    if (!dryAddrResult.ok) {
-      emitError('ship', `normalizedDryRunAddress failed for ${pkg.relativePath}: ${dryAddrResult.error.message}`);
-      return 1;
-    }
-    const publishDryRunAddr = dryAddrResult.value;
+    const publishDryRunAddr = normalizedDryRunAddress(dryRunRaw, { repo_root_absolute_path: cwd });
 
     // Each capsule advances the seed HLC so a multi-package ship batch
     // carries strictly-monotone generated_at values. Named generatedHlc — it is an
@@ -499,12 +449,7 @@ export async function ship(args: readonly string[]): Promise<number> {
       previous_ship_capsule: null,
     };
 
-    const makeResult = await runEffect(ShipCapsule.make(input));
-    if (!makeResult.ok) {
-      emitError('ship', `ShipCapsule.make failed for ${pkg.relativePath}: ${makeResult.error.message}`);
-      return 1;
-    }
-    const capsule = makeResult.value;
+    const capsule = ShipCapsule.make(input);
     const capsulePath = join(pkg.absolutePath, `${slug}-${version}.shipcapsule.cbor`);
     try {
       ShipEmit.run({ capsule, capsule_path: capsulePath });
