@@ -119,6 +119,24 @@ describe('spine-relation gate — REDS on the three historical drift fixtures (t
     },
   );
 
+  it(
+    'a mirror that collapses to `any` reds as unresolved, never a false exact (review-point #2)',
+    { timeout: scaledTimeout(60_000) },
+    () => {
+      // The silent hole an unaliased cross-package import opens: a type resolving to `any`
+      // makes BOTH assignability probes trivially pass → a false `exact`. The is-any guard
+      // must catch it. Force CapSet to `any` on the spine side.
+      const { facts } = driftedFacts((c) =>
+        c.replace('export interface CapSet {', 'export type CapSet = any;\ntype _IgnoredCapSetBody = {'),
+      );
+      const capSet = facts.observations.find((o) => o.typeName === 'CapSet')!;
+      expect(capSet.resolved).toBe(false); // NOT a silent exact
+      expect(capSet.detail).toContain('any');
+      const findings = gateFindings(facts);
+      expect(findings.some((f) => f.title.includes('CapSet') && f.title.includes('no longer resolves'))).toBe(true);
+    },
+  );
+
   it('an unresolved mirror (a removed type) reds as a broken contract', { timeout: scaledTimeout(60_000) }, () => {
     // Rename CapSet on the spine side → the admission's spine type no longer resolves.
     const { facts } = driftedFacts((c) => c.replace('export interface CapSet {', 'export interface CapSetRenamed {'));
