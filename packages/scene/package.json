@@ -49,6 +49,15 @@
     "@czap/core": "workspace:*",
     "@czap/error": "workspace:*"
   },
+  "//peer-vite": "OPTIONAL peer: the scene surface (`.`) needs none of it, but the opt-in `./dev` subpath (the dev server) imports vite's `createServer` at RUNTIME. Declaring it here (optional, mirroring @czap/vite's peer) closes the public-subpath dependency closure — a fresh consumer importing `@czap/scene/dev` is told to provide vite, instead of relying on a hoisted copy. Guarded by tests/unit/devops/declared-dependency-closure.test.ts.",
+  "peerDependencies": {
+    "vite": ">=8.0.0"
+  },
+  "peerDependenciesMeta": {
+    "vite": {
+      "optional": true
+    }
+  },
   "engines": {
     "node": ">=22.13.0"
   },
