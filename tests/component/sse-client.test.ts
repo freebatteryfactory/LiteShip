@@ -394,6 +394,34 @@ describe('SSE backpressure', () => {
   });
 });
 
+describe('SSE iterator cancellation', () => {
+  test('return() settles a parked next() read (cancellation does not hang)', async () => {
+    const client = SSE.create(baseConfig);
+    const iterator = client.messages[Symbol.asyncIterator]();
+    // Park a read: nothing is buffered, so next() returns an unsettled promise.
+    const parked = iterator.next();
+    // Cancel while the read is parked.
+    const returned = await iterator.return!();
+    expect(returned.done).toBe(true);
+    // Without the return()-settles-waiter fix, `parked` never resolves — after the
+    // disposer detaches, the `complete` callback can no longer fire.
+    const result = await parked;
+    expect(result.done).toBe(true);
+    client.close();
+  });
+
+  test('stateChanges return() settles a parked next() read', async () => {
+    const client = SSE.create(baseConfig);
+    const iterator = client.stateChanges[Symbol.asyncIterator]();
+    const parked = iterator.next();
+    const returned = await iterator.return!();
+    expect(returned.done).toBe(true);
+    const result = await parked;
+    expect(result.done).toBe(true);
+    client.close();
+  });
+});
+
 describe('SSE initial lastEventId config', () => {
   test('uses lastEventId from config when provided', () => {
     const client = SSE.create({ ...baseConfig, lastEventId: 'evt-99' });

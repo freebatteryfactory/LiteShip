@@ -383,6 +383,16 @@ export const create = (config: SSEConfig): SSEClient => {
           });
         },
         return(): Promise<IteratorResult<SSEMessage, undefined>> {
+          // Settle a parked `next()` before disposing: after `disposer()` the
+          // `complete` callback can never fire, so an in-flight read would hang
+          // forever. Mark completed + resolve the waiter with `done` so cancellation
+          // code awaiting the read unblocks.
+          completed = true;
+          if (waiter !== null) {
+            const resolve = waiter;
+            waiter = null;
+            resolve({ value: undefined, done: true });
+          }
           disposer();
           return Promise.resolve({ value: undefined, done: true });
         },
@@ -433,6 +443,14 @@ export const create = (config: SSEConfig): SSEClient => {
           });
         },
         return(): Promise<IteratorResult<SSEState, undefined>> {
+          // Same settle-before-dispose fix as the `messages` iterator: a parked
+          // `next()` would otherwise never resolve once `disposer()` detaches.
+          completed = true;
+          if (waiter !== null) {
+            const resolve = waiter;
+            waiter = null;
+            resolve({ value: undefined, done: true });
+          }
           disposer();
           return Promise.resolve({ value: undefined, done: true });
         },

@@ -425,6 +425,26 @@ describe('parseMotionProgram — widened easing descriptor validation (#CSS)', (
     expect(sink.events).toHaveLength(0);
   });
 
+  test('rejects a POINT-BASED kind that is MISSING its points arm (silent-linear divergence closed, #158)', () => {
+    // sampleRuntimeEasing has NO analytic fallback for these kinds: without a points
+    // arm the JS floor silently lerps a straight LINE (points/cubicBezier) or a keyword
+    // approximation (bounce/elastic/back), diverging from the CSS linear() floor that
+    // reads the SAME sampled points. So a point-based descriptor carrying no points is a
+    // lowering bug and the guard must reject it LOUDLY, not accept it and draw a line.
+    for (const kind of ['points', 'bounce', 'elastic', 'back', 'cubicBezier'] as const) {
+      expect(parseMotionProgram(programJson({ kind })), `${kind} without points must reject`).toBeNull();
+    }
+    expect(sink.events.some((e) => e.code === 'motion-program-shape-invalid')).toBe(true);
+  });
+
+  test('accepts the `points` kind WITH a valid arm (the analytic kinds need none — covered above)', () => {
+    // Point-based `points` is accepted once its arm is present; linear (analytic) needs
+    // no arm. Together with the reject-without-points case this pins the split.
+    expect(parseMotionProgram(programJson({ kind: 'points', points: [0, 0.5, 1] }))).not.toBeNull();
+    expect(parseMotionProgram(programJson({ kind: 'linear' }))).not.toBeNull();
+    expect(sink.events).toHaveLength(0);
+  });
+
   test('rejects an easing with no kind LOUDLY (null + diagnostic)', () => {
     expect(parseMotionProgram(programJson({ points: [0, 1] }))).toBeNull();
     expect(sink.events.some((e) => e.code === 'motion-program-shape-invalid')).toBe(true);

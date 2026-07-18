@@ -64,15 +64,25 @@ function rosterEntry(pkgName: string): TypeExportRosterEntry {
 
 const ROSTER: readonly TypeExportRosterEntry[] = ROSTER_NAMES.map(rosterEntry);
 
-/** A virtual filesystem reader over a `{ absPath: content }` map — pure, disk-free. */
+/**
+ * A virtual filesystem reader over a `{ absPath: content }` map — pure, disk-free.
+ * Keys are written POSIX-style (`/virt/x.ts`), but the enumerator resolves star
+ * targets with `path.resolve`, which on Windows yields a drive letter + backslashes
+ * (`D:\virt\x.ts`). Normalize both the keys and every lookup (strip a drive letter,
+ * backslashes → forward slashes) so the virtual FS behaves like the real one on every
+ * platform — otherwise the `export *` follow silently drops on Windows.
+ */
 function virtualReader(files: Readonly<Record<string, string>>): SurfaceReader {
+  const norm = (p: string): string => p.replace(/\\/g, '/').replace(/^[a-zA-Z]:/, '');
+  const normalized: Record<string, string> = {};
+  for (const [key, value] of Object.entries(files)) normalized[norm(key)] = value;
   return {
     readFile: (path) => {
-      const text = files[path];
+      const text = normalized[norm(path)];
       if (text === undefined) throw new Error(`virtual reader: no file ${path}`);
       return text;
     },
-    fileExists: (path) => path in files,
+    fileExists: (path) => norm(path) in normalized,
   };
 }
 

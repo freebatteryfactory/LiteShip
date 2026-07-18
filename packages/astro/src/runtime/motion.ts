@@ -96,21 +96,42 @@ const RUNTIME_EASING_KINDS: ReadonlySet<string> = new Set([
 ]);
 
 /**
+ * The kinds whose ONLY faithful JS-floor rendering is the sampled `points` arm.
+ * `sampleRuntimeEasing` (core) lerps `points` when present, and for these kinds
+ * has NO analytic fallback — `points`/`cubicBezier` silently collapse to
+ * `Easing.linear` when the arm is missing (bounce/elastic/back keyword-approximate,
+ * still a curve divergence from the CSS floor). So a descriptor carrying one of
+ * these kinds WITHOUT a valid points list is a lowering bug, not a lean descriptor:
+ * the guard must reject it LOUDLY here rather than let the JS floor draw a straight
+ * line the CSS floor never would (Law 4: both floors read ONE curve).
+ */
+const POINT_BASED_EASING_KINDS: ReadonlySet<string> = new Set(['points', 'bounce', 'elastic', 'back', 'cubicBezier']);
+
+function isValidPointsArm(value: unknown): boolean {
+  if (!Array.isArray(value) || value.length < 2) return false;
+  for (const point of value) {
+    if (typeof point !== 'number' || !Number.isFinite(point)) return false;
+  }
+  return true;
+}
+
+/**
  * Structural guard for a serialized `RuntimeEasing` descriptor. Accepts the
- * widened kind vocabulary and an OPTIONAL serialized sampled-points arm (a
- * non-degenerate array of finite numbers), rejecting anything else — an absent /
- * unknown `kind` or a malformed `points` list fails LOUDLY upstream in
- * {@link parseMotionProgram}, leaving the native/CSS floor untouched (Law 1).
+ * widened kind vocabulary; the analytic kinds (`linear|ease|spring`) carry an
+ * OPTIONAL points arm, but the point-based kinds ({@link POINT_BASED_EASING_KINDS})
+ * REQUIRE a non-degenerate array of finite numbers — anything else (absent /
+ * unknown `kind`, a malformed points list, or a point-based kind missing its arm)
+ * fails LOUDLY upstream in {@link parseMotionProgram}, leaving the native/CSS floor
+ * untouched (Law 1) rather than letting the JS floor silently lerp a straight line.
  */
 function isRuntimeEasingDescriptor(value: unknown): boolean {
   if (value === null || typeof value !== 'object') return false;
   const easing = value as Record<string, unknown>;
   if (typeof easing.kind !== 'string' || !RUNTIME_EASING_KINDS.has(easing.kind)) return false;
-  if (easing.points !== undefined) {
-    if (!Array.isArray(easing.points) || easing.points.length < 2) return false;
-    for (const point of easing.points) {
-      if (typeof point !== 'number' || !Number.isFinite(point)) return false;
-    }
+  if (POINT_BASED_EASING_KINDS.has(easing.kind)) {
+    if (!isValidPointsArm(easing.points)) return false;
+  } else if (easing.points !== undefined) {
+    if (!isValidPointsArm(easing.points)) return false;
   }
   if (easing.spring !== undefined && (easing.spring === null || typeof easing.spring !== 'object')) return false;
   return true;
