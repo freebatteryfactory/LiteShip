@@ -30,6 +30,8 @@
   ],
   "guards": {
     "productionEffectFreeInvariant": "tests/unit/core/invariants.test.ts (Invariant 14)",
+    "shippedDocsEffectFreeGate": "tests/unit/devops/docs-effect-residue.test.ts (package READMEs + root README + GETTING-STARTED carry no Effect install/pin/import/usage instruction — the ecosystem-zero claim now covers consumer docs, not just src)",
+    "declaredDependencyClosureGate": "tests/unit/devops/declared-dependency-closure.test.ts (every publishable package is dependency-closed across EVERY public runtime export, not just `.`)",
     "codecSpineBidirectionalPin": "tests/unit/spine-conformance.test.ts",
     "testImportGuards": [
       "tests/unit/core/harness/policy-gate.test.ts",
@@ -54,6 +56,7 @@
   },
   "notes": {
     "adr": "ADR-0005 superseded by ADR-0042 (not erased) — the migration bridge from each Effect responsibility to its native owner.",
-    "resolvedFinding": "The packed-consumer proof surfaced a PRE-EXISTING, effect-unrelated packaging leak (issue #157, scar S8.1): @czap/core's canonical-cbor capsules eagerly imported 'fast-check' (via withArbitrary) while declaring it nowhere, so runtime execution INITIALLY required a manually-installed fast-check (declaredDependencyClosure: failed, runtimeExecution: passed_with_extra_dependency). RESOLVED in this closeout: withArbitrary now takes fast-check as a thunk argument supplied by the harness — the capsules import nothing; the packed consumer runs on its declared deps alone. A permanent declared-dependency-closure gate (tests/unit/devops/declared-dependency-closure.test.ts) was minted from the scar with the leak as its red fixture."
+    "resolvedFinding": "The packed-consumer proof surfaced a PRE-EXISTING, effect-unrelated packaging leak (issue #157, scar S8.1): @czap/core's canonical-cbor capsules eagerly imported 'fast-check' (via withArbitrary) while declaring it nowhere, so runtime execution INITIALLY required a manually-installed fast-check (declaredDependencyClosure: failed, runtimeExecution: passed_with_extra_dependency). RESOLVED: withArbitrary now takes fast-check as a thunk argument supplied by the harness — the capsules use only `import type` (erased); the MAIN entry runs on its declared deps alone. A permanent declared-dependency-closure gate was minted from the scar with the leak as its red fixture.",
+    "resolvedFindingSubpathWidening": "PR #158 (review finding #5) closed the REMAINING hole: the closure gate walked only exports['.'], so it never saw that @czap/core's PUBLIC ./harness subpath (arbitrary-from-schema) still imports fast-check at RUNTIME — a consumer importing @czap/core/harness still crashed while the gate stayed green. FULLY RESOLVED: the gate now walks EVERY public runtime export (skipping null/types-only/non-JS targets), which surfaces exactly two leaks — @czap/core/harness→fast-check and @czap/scene/dev→vite — both now declared as OPTIONAL peerDependencies (+ peerDependenciesMeta optional). The widened walk + the two optional-peer declarations make the ecosystem dependency-closed across all public subpaths, not just the main entry."
   }
 }
