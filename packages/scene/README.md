@@ -7,10 +7,8 @@ Turns a typed timeline declaration — video, audio, transition, and effect trac
 ## Install
 
 ```bash
-pnpm add @czap/scene effect@4.0.0-beta.32
+pnpm add @czap/scene
 ```
-
-`effect` v4 is a required peer and only ships as a beta — install the pin above (any `>=4.0.0-beta.0` satisfies it).
 
 ## 30 seconds
 

@@ -11,10 +11,8 @@ Compiles boundary definitions — named states over numeric thresholds — and p
 pnpm add @czap/vite # brings @czap/compiler with it
 
 # to run the example below directly (pnpm does not hoist transitives):
-pnpm add @czap/compiler @czap/core effect@beta
+pnpm add @czap/compiler @czap/core
 ```
-
-`effect` must be the Effect 4 beta — a bare `pnpm add effect` installs 3.x and fails the peer check.
 
 ## 30 seconds
 

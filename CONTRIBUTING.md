@@ -160,7 +160,7 @@ parity gate (`cargo test` + property suite against the fresh artifact).
 - TypeScript strict mode, ESM only (`.js` extensions in import specifiers
   per Node ESM rules)
 - No default exports; named exports only
-- Branded types via Effect's Brand module (`Brand.Branded<T, 'Tag'>`)
+- Branded types via a local nominal-brand helper — `brand<T, B extends symbol>()` over unique symbols, with validating smart constructors (see `packages/core/src/brands.ts`)
 - Namespace-object pattern for module facades:
 
   ```ts

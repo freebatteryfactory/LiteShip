@@ -10,7 +10,7 @@ An MCP (Model Context Protocol) server that exposes the **czap command catalog**
 pnpm add @czap/cli @czap/mcp-server   # `czap mcp` dynamically loads this package
 ```
 
-`effect` (>= 4.0.0-beta.32) is a required peer dependency: `pnpm add effect@beta`. `@czap/cli` is not a peer — this package never imports the CLI.
+`@czap/cli` is not a peer — this package never imports the CLI.
 
 ## 30 seconds
 

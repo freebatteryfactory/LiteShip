@@ -10,21 +10,20 @@ Probes browser APIs — GPU, CPU cores, memory, motion and color preferences, vi
 pnpm add @czap/astro # brings @czap/detect with it
 ```
 
-If you do install it directly, `effect` must be the Effect 4 beta: `pnpm add @czap/detect effect@beta`.
+If you do install it directly: `pnpm add @czap/detect`.
 
 ## 30 seconds
 
 ```ts
 import { Detect } from '@czap/detect';
-import { Effect } from 'effect';
 
-const result = Effect.runSync(Detect.detect());
+const result = Detect.detect();
 console.log(result.tier);       // 'static' | 'styled' | 'reactive' | 'animated' | 'gpu'
 console.log(result.motionTier); // 'none' | 'transitions' | 'animations' | 'physics' | 'compute'
 console.log(result.confidence); // 0.5–1.0 — low means probes fell back to defaults
 ```
 
-In a browser this logs the device's capability level, its motion tier (reduced-motion preference forces `'none'`), and a confidence score. All probes are synchronous and never throw — `Effect.runSync` is safe here. `Detect.watchCapabilities(onChange)` re-detects on viewport and preference changes.
+In a browser this logs the device's capability level, its motion tier (reduced-motion preference forces `'none'`), and a confidence score. All probes are synchronous and never throw. `Detect.watchCapabilities(onChange)` re-detects on viewport and preference changes.
 
 ## Where it sits
 

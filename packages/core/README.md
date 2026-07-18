@@ -7,10 +7,10 @@ Creates the definitions — boundaries (named states over a numeric signal), des
 ## Install
 
 ```bash
-pnpm add @czap/core effect@beta
+pnpm add @czap/core
 ```
 
-`effect` is the one peer dependency and it must be the Effect 4 beta (`effect@beta`) — a bare `pnpm add effect` installs 3.x and fails the peer check.
+`@czap/core` has no third-party runtime peer dependency — the `effect` peer was shed in v0.18.
 
 ## 30 seconds
 

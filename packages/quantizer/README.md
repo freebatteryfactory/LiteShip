@@ -7,17 +7,14 @@ Turns a boundary — named states over numeric thresholds — into a live state 
 ## Install
 
 ```bash
-pnpm add @czap/quantizer effect@beta
+pnpm add @czap/quantizer
 ```
-
-`effect` must be the Effect 4 beta (`effect@beta`) — a bare `pnpm add effect` installs 3.x and fails the peer check.
 
 ## 30 seconds
 
 ```ts
 import { Boundary } from '@czap/core';
 import { Q } from '@czap/quantizer';
-import { Effect } from 'effect';
 
 const width = Boundary.make({
   input: 'width',
@@ -28,18 +25,14 @@ const config = Q.from(width).outputs({
   css: { sm: { display: 'block' }, lg: { display: 'grid' } },
 });
 
-const outputs = Effect.runSync(Effect.scoped(
-  Effect.gen(function* () {
-    const live = yield* config.create();
-    live.evaluate(1024);
-    return yield* live.currentOutputs;
-  }),
-));
-
+const { quantizer: live, lifetime } = config.create();
+live.evaluate(1024);
+const outputs = live.currentOutputs.read();
 console.log(outputs.css); // { display: 'grid' }
+await lifetime.dispose();
 ```
 
-Logs `{ display: 'grid' }` — the CSS output for the `lg` state that 1024 falls into. For a one-off lookup without Effect, the synchronous `evaluate(boundary, value)` export returns `{ state, index, value, crossed }` directly.
+Logs `{ display: 'grid' }` — the CSS output for the `lg` state that 1024 falls into. For a one-off lookup, the synchronous `evaluate(boundary, value)` export returns `{ state, index, value, crossed }` directly.
 
 ## Where it sits
 

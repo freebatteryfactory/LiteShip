@@ -13,8 +13,6 @@ Astro middleware glue that serves LiteShip's per-tier compiled boundary CSS from
 pnpm add @czap/cloudflare @czap/astro @astrojs/cloudflare@^14 astro@^7 wrangler@^4
 ```
 
-Also install the Effect 4 beta peer with `pnpm add effect@beta` — a bare `pnpm add effect` installs 3.x and fails the peer check.
-
 ## 30 seconds
 
 ```ts

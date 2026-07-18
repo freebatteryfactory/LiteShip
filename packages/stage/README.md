@@ -5,10 +5,10 @@ The verb layer — casts one `DocumentGraph` to multiple carriers (a static Astr
 ## Install
 
 ```bash
-pnpm add @czap/stage effect@beta
+pnpm add @czap/stage
 ```
 
-`effect` must be the Effect 4 beta (`@czap/stage` declares it as a peer). The core entry is backend-agnostic; the headless ffmpeg byte-encoder is opt-in via the `@czap/stage/ffmpeg` subpath (it pulls `node:child_process`/`node:fs`, so it stays off the main entry).
+The core entry is backend-agnostic; the headless ffmpeg byte-encoder is opt-in via the `@czap/stage/ffmpeg` subpath (it pulls `node:child_process`/`node:fs`, so it stays off the main entry).
 
 ## 30 seconds
 
