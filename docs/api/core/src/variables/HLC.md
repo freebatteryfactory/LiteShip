@@ -8,13 +8,14 @@
 
 > `const` **HLC**: `object`
 
-Defined in: [core/src/hlc.ts:232](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/hlc.ts#L232)
+Defined in: [core/src/hlc.ts:227](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/hlc.ts#L227)
 
 HLC namespace -- Hybrid Logical Clock.
 
 Pure functions for creating, comparing, incrementing, and merging HLC
-timestamps, plus Effect-based managed clock helpers. Encodes to/from
-a deterministic colon-separated hex string format.
+timestamps, plus a plain (Effect-free) managed-clock factory
+([makeClock](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/hlc.ts) → an [HLCClock](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/hlc.ts) handle with `tick`/`receive`/`current`).
+Encodes to/from a deterministic colon-separated hex string format.
 
 ## Type Declaration
 
@@ -156,9 +157,10 @@ const hlc1 = HLC.increment(hlc0, Date.now());
 
 ### makeClock
 
-> **makeClock**: (`nodeId`) => `Effect`\<`Ref`\<`HLCShape`\>\>
+> **makeClock**: (`nodeId`, `clock`) => [`HLCClock`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/hlc.ts)
 
-Create a managed HLC clock as an Effect Ref.
+Create a managed HLC clock over an injected [Clock](../interfaces/Clock.md) (default
+[wallClock](wallClock.md)). Returns a plain [HLCClock](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/hlc.ts) handle — no `Effect`.
 
 #### Parameters
 
@@ -166,20 +168,20 @@ Create a managed HLC clock as an Effect Ref.
 
 `string`
 
+##### clock?
+
+[`Clock`](../interfaces/Clock.md) = `wallClock`
+
 #### Returns
 
-`Effect`\<`Ref`\<`HLCShape`\>\>
+[`HLCClock`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/hlc.ts)
 
 #### Example
 
 ```ts
-import { Effect } from 'effect';
-
-const program = Effect.gen(function* () {
-  const clock = yield* HLC.makeClock('node-1');
-  const ts = yield* HLC.tick(clock);
-  // ts.wall_ms === Date.now() (approximately)
-});
+const clock = HLC.makeClock('node-1');
+const ts = clock.tick();
+// ts.wall_ms === Date.now() (approximately) under the default wallClock
 ```
 
 ### merge
@@ -221,57 +223,6 @@ const merged = HLC.merge(local, remote, 1500);
 // merged.wall_ms === 2000, merged.node_id === 'A'
 ```
 
-### receive
-
-> **receive**: (`clock`, `remote`) => `Effect`\<`HLCShape`\>
-
-Receive a remote HLC timestamp and merge it into the managed clock.
-
-#### Parameters
-
-##### clock
-
-`Ref`\<`HLCShape`\>
-
-##### remote
-
-`HLCShape`
-
-#### Returns
-
-`Effect`\<`HLCShape`\>
-
-#### Example
-
-```ts
-const remoteTs = HLC.decode(remoteEncoded);
-const merged = yield* HLC.receive(clock, remoteTs);
-// merged.wall_ms >= remoteTs.wall_ms
-```
-
-### tick
-
-> **tick**: (`clock`) => `Effect`\<`HLCShape`\>
-
-Tick a managed clock forward, returning the new HLC timestamp.
-
-#### Parameters
-
-##### clock
-
-`Ref`\<`HLCShape`\>
-
-#### Returns
-
-`Effect`\<`HLCShape`\>
-
-#### Example
-
-```ts
-const ts = yield* HLC.tick(clock);
-// ts.wall_ms >= previous wall_ms
-```
-
 ## Example
 
 ```ts
@@ -282,4 +233,7 @@ const b = HLC.increment(HLC.create('B'), Date.now());
 const merged = HLC.merge(a, b, Date.now());
 const encoded = HLC.encode(merged);
 const decoded = HLC.decode(encoded);
+
+const clock = HLC.makeClock('A'); // reads wallClock by default
+const ts = clock.tick();
 ```

@@ -8,7 +8,7 @@
 
 > **SignalSource** = \{ `axis?`: `"width"` \| `"height"`; `type`: `"viewport"`; \} \| \{ `mode?`: `"elapsed"` \| `"absolute"` \| `"scheduled"`; `type`: `"time"`; \} \| \{ `axis?`: `"x"` \| `"y"` \| `"pressure"`; `type`: `"pointer"`; \} \| \{ `axis?`: `"x"` \| `"y"` \| `"progress"`; `type`: `"scroll"`; \} \| \{ `query`: `string`; `type`: `"media"`; \} \| \{ `id`: `string`; `type`: `"custom"`; \} \| \{ `mode?`: `"sample"` \| `"normalized"` \| `"amplitude"` \| `"beat"`; `type`: `"audio"`; \}
 
-Defined in: [core/src/signal.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/signal.ts#L37)
+Defined in: [core/src/signal.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/signal.ts#L51)
 
 Configuration describing what a [Signal](../variables/Signal.md) reads from: viewport axis,
 time mode, pointer axis, scroll axis, media query, custom push source,

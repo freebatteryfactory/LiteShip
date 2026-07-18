@@ -1,0 +1,19 @@
+[**LiteShip**](../../../../../README.md)
+
+***
+
+[LiteShip](../../../../../modules.md) / [core/src](../../../README.md) / [CellKernel](../README.md) / Policy
+
+# Type Alias: Policy\<T\>
+
+> **Policy**\<`T`\> = [`EmissionPolicy`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts)\<`T`\>
+
+Defined in: [core/src/cell-kernel.ts:356](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts#L356)
+
+The emission policy (dedup axis) — see the module-level [EmissionPolicy](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts).
+
+## Type Parameters
+
+### T
+
+`T`

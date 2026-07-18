@@ -68,6 +68,11 @@ const timelineState = (ms: number): string => Boundary.evaluate(CAPTURE_BOUNDARY
 const IDENTITY: ModelConfig = { channel: 'replay1', initialRaw: 0 };
 const DERIVED: ModelConfig = { channel: 'replay1', initialRaw: 0, project: (x) => x + 100 };
 const TIMELINE: ModelConfig = { channel: 'replay1', initialRaw: 0, project: timelineState };
+// Cell / LiveCell-value ride the 'deferred' reentrancy arm (Wave 6 nested-write
+// RULING — PRESERVE async-append; scar S6.F.2). The model runs 'deferred' so the
+// oracle asserts that law POSITIVELY (model ≡ CellKernel-backed impl) rather than
+// merely recording a sync-model-vs-async-impl divergence.
+const CELL_DEFERRED: ModelConfig = { channel: 'replay1', initialRaw: 0, reentrancy: 'deferred' };
 
 const modelFor = (primitive: string, cfg: ModelConfig): TraceSource =>
   modelTraceSource({ ...cfg, label: `model:${primitive}` });
@@ -189,32 +194,39 @@ describe('EmissionPolicy axis — divergent under {all}, equivalent under {disti
 //    forces a deliberate ledger update (record, do not force either side).
 // ===========================================================================
 
-describe('recorded delta — reentrancy law I5 (nested write: sync-nested model vs async-appended impl)', () => {
+describe('nested-write ruling (S6.F.2) — Cell async-append PRESERVED, bisimulates a deferred model', () => {
   test(
-    'Cell nested-write — the second subscriber sees a REORDERED sequence',
+    'Cell nested-write — the CellKernel-backed impl bisimulates the deferred model (b: [0,1,99])',
     async () => {
-      // Model (I5 synchronous reentrant fan-out): the nested set(99) runs a full
-      // fan-out BEFORE the outer set(1) reaches subscriber 'b' → b sees [0,99,1].
-      // Impl (async-appended): the nested write lands AFTER → b sees [0,1,99].
+      // RULING (scar S6.F.2): PRESERVE async-append (glitch-free / breadth-first).
+      // The migrated Cell uses CellKernel.replay1 with 'deferred', so a set(99)
+      // issued from a delivery handler is fanned out AFTER the outer set(1) reaches
+      // every subscriber → BOTH a and b see [0,1,99] (every live subscriber's
+      // terminal delivery equals read()). The model runs the SAME 'deferred' arm,
+      // so the oracle proves the preserved law POSITIVELY (bisimulation holds).
       const history = [op.subscribe('a', [setOn(1, 99)]), op.subscribe('b'), op.set(1), op.read()];
-      const model = modelFor('cell', IDENTITY);
+      const model = modelFor('cell', CELL_DEFERRED);
       const impl = implFor('cell');
       const underAll = await differential(model, impl, history, emissionPolicy.all());
-      const underDistinct = await differential(model, impl, history, emissionPolicy.distinct());
-      expect(underAll.verdict.kind).toBe('divergent');
-      // A REORDERING — not a dedup — so {distinct} does NOT reconcile it.
-      expect(underDistinct.verdict.kind).toBe('divergent');
-      if (underAll.verdict.kind !== 'divergent') return;
-      const d = underAll.verdict.difference;
-      expect(d.axis).toBe('deliveries');
-      expect(d.sink).toBe('b');
-      expect(d.index).toBe(1);
-      expect(d.model).toEqual([0, 99, 1]);
-      expect(d.impl).toEqual([0, 1, 99]);
+      if (underAll.verdict.kind !== 'equivalent') {
+        throw new Error(`expected bisimulation (async-append preserved), got: ${underAll.verdict.difference.message}`);
+      }
+      expect(underAll.verdict.relation).toBe('bisimulation');
+      // Both subscribers observe the same total order — a is [0,1,99], b is [0,1,99].
+      expect(underAll.model.subscribers.map((s) => [s.sink, s.deliveries])).toEqual([
+        ['a', [0, 1, 99]],
+        ['b', [0, 1, 99]],
+      ]);
+      expect(underAll.impl.subscribers.map((s) => [s.sink, s.deliveries])).toEqual([
+        ['a', [0, 1, 99]],
+        ['b', [0, 1, 99]],
+      ]);
     },
     TIMEOUT,
   );
+});
 
+describe('recorded delta — reentrancy law I5 (nested write: sync-nested model vs async-appended impl)', () => {
   test(
     'Store nested-dispatch — the same I5 reordering on the reducer channel',
     async () => {

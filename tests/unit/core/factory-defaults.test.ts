@@ -9,10 +9,8 @@
  */
 
 import { describe, expect, test } from 'vitest';
-import { Effect } from 'effect';
 import { AVBridge, Component, Easing, Signal, Style, Token } from '@czap/core';
 import { hasTag } from '@czap/error';
-import { runScopedAsync as runScoped } from '../../helpers/effect-test.js';
 
 // ---------------------------------------------------------------------------
 // Token.make — axes default to ['default'], fallback derives from values.default
@@ -158,30 +156,25 @@ describe('Easing.spring defaults', () => {
 // ---------------------------------------------------------------------------
 
 describe('Signal.make source defaults', () => {
-  test('viewport defaults to axis "width"', async () => {
-    const source = await runScoped(
-      Effect.gen(function* () {
-        const signal = yield* Signal.make({ type: 'viewport' });
-        return signal.source;
-      }),
-    );
-
-    expect(source).toEqual({ type: 'viewport', axis: 'width' });
+  test('viewport defaults to axis "width"', () => {
+    const signal = Signal.make({ type: 'viewport' });
+    expect(signal.source).toEqual({ type: 'viewport', axis: 'width' });
+    void signal.lifetime.dispose();
   });
 
-  test('scroll defaults to axis "y", pointer to "x", time to mode "elapsed"', async () => {
-    const sources = await runScoped(
-      Effect.gen(function* () {
-        const scroll = yield* Signal.make({ type: 'scroll' });
-        const pointer = yield* Signal.make({ type: 'pointer' });
-        const time = yield* Signal.make({ type: 'time' });
-        return { scroll: scroll.source, pointer: pointer.source, time: time.source };
-      }),
-    );
+  test('scroll defaults to axis "y", pointer to "x", time to mode "elapsed"', () => {
+    const scroll = Signal.make({ type: 'scroll' });
+    const pointer = Signal.make({ type: 'pointer' });
+    const time = Signal.make({ type: 'time' });
 
-    expect(sources.scroll).toEqual({ type: 'scroll', axis: 'y' });
-    expect(sources.pointer).toEqual({ type: 'pointer', axis: 'x' });
-    expect(sources.time).toEqual({ type: 'time', mode: 'elapsed' });
+    expect(scroll.source).toEqual({ type: 'scroll', axis: 'y' });
+    expect(pointer.source).toEqual({ type: 'pointer', axis: 'x' });
+    expect(time.source).toEqual({ type: 'time', mode: 'elapsed' });
+
+    // Release listeners / the elapsed rAF loop (the old scope-close, now Lifetime).
+    void scroll.lifetime.dispose();
+    void pointer.lifetime.dispose();
+    void time.lifetime.dispose();
   });
 });
 
@@ -218,17 +211,11 @@ describe('Signal.audio normalized-mode validation', () => {
     expect(() => Signal.audio(bridge, 'normalized', 0)).toThrow(/totalDurationSec/);
   });
 
-  test('sample mode still works without a duration', async () => {
+  test('sample mode still works without a duration', () => {
     const bridge = AVBridge.make({ sampleRate: 48_000, fps: 60 });
     bridge.advanceSamples(100);
 
-    const value = await runScoped(
-      Effect.gen(function* () {
-        const signal = yield* Signal.audio(bridge);
-        return yield* signal.poll();
-      }),
-    );
-
-    expect(value).toBe(100);
+    const signal = Signal.audio(bridge);
+    expect(signal.poll()).toBe(100);
   });
 });

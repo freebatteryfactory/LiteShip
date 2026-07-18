@@ -13,10 +13,16 @@
  *     the same scrollY (computed from the source of truth, not hardcoded).
  */
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { Effect } from 'effect';
 import { Signal } from '@czap/core';
 import { readSignalValue } from '../../../packages/astro/src/runtime/boundary.js';
-import { runScopedAsync as runScoped } from '../../helpers/effect-test.js';
+
+/** Read `scroll.progress` from the Signal source of truth (Wave 6: plain, sync). */
+function signalScrollProgress(): number {
+  const sig = Signal.make({ type: 'scroll', axis: 'progress' });
+  const value = sig.read();
+  void sig.lifetime.dispose();
+  return value;
+}
 
 function setScroll(scrollY: number, scrollHeight: number, innerHeight: number): void {
   Object.defineProperty(window, 'innerHeight', { value: innerHeight, configurable: true });
@@ -39,7 +45,7 @@ describe('scroll.progress scale drift guard', () => {
     expect(v).toBeLessThanOrEqual(1);
   });
 
-  test('runtime reader === Signal source-of-truth reader for the same scrollY', async () => {
+  test('runtime reader === Signal source-of-truth reader for the same scrollY', () => {
     // Expected is COMPUTED from the source of truth (Signal), never hardcoded.
     for (const [scrollY, scrollHeight, innerHeight] of [
       [0, 2000, 800],
@@ -49,12 +55,7 @@ describe('scroll.progress scale drift guard', () => {
     ] as const) {
       setScroll(scrollY, scrollHeight, innerHeight);
 
-      const sourceOfTruth = await runScoped(
-        Effect.gen(function* () {
-          const sig = yield* Signal.make({ type: 'scroll', axis: 'progress' });
-          return yield* sig.current;
-        }),
-      );
+      const sourceOfTruth = signalScrollProgress();
       const runtime = readSignalValue('scroll.progress');
 
       // Signal does not clamp above 1; the runtime clamps to [0,1]. Compare on
@@ -63,14 +64,9 @@ describe('scroll.progress scale drift guard', () => {
     }
   });
 
-  test('zero scrollable height yields 0 in both readers', async () => {
+  test('zero scrollable height yields 0 in both readers', () => {
     setScroll(0, 600, 600); // max <= 0
-    const sourceOfTruth = await runScoped(
-      Effect.gen(function* () {
-        const sig = yield* Signal.make({ type: 'scroll', axis: 'progress' });
-        return yield* sig.current;
-      }),
-    );
+    const sourceOfTruth = signalScrollProgress();
     expect(readSignalValue('scroll.progress')).toBe(0);
     expect(sourceOfTruth).toBe(0);
   });

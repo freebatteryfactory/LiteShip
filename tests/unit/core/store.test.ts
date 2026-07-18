@@ -1,16 +1,23 @@
 /**
- * Store -- TEA-style reducer store: make, dispatch, get, changes, effectful reducer.
+ * Store<S, Msg> — TEA-style reducer store on CellKernel (Wave 6 transport swap).
+ *
+ * RED-FIRST: authored against the plain, Effect-free API (sync `read()` +
+ * `subscribe(sink): Disposer` + sync `dispatch` + `lifetime`); the old
+ * `Effect`/`Stream` surface would not type-check or run against these assertions.
+ * `makeWithEffect` is retired (zero product consumers of an effectful reducer).
+ *
+ * The law table PINS the captured `tests/fixtures/reactive-capture/store.json`
+ * observations:
+ *  - EmissionPolicy {all} — every dispatch publishes (no dedup).
+ *  - NESTED-DISPATCH async-append ('deferred' reentrancy, S6.F.2) — a dispatch
+ *    from within a delivery handler lands AFTER the active fan-out, so BOTH
+ *    subscribers see one glitch-free total order [0,1,99].
+ *  - Subscriber teardown (unsubscribe) severs a subscriber while the value
+ *    channel survives (read keeps updating) — the captured disposal observable.
  */
 
 import { describe, test, expect } from 'vitest';
-import { Effect, Stream, Fiber } from 'effect';
 import { Store } from '@czap/core';
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-const run = <A>(effect: Effect.Effect<A>): Promise<A> => Effect.runPromise(effect);
 
 type CountMsg = { type: 'increment' } | { type: 'decrement' } | { type: 'set'; value: number };
 
@@ -25,155 +32,150 @@ const countReducer = (state: number, msg: CountMsg): number => {
   }
 };
 
+/** A replace-reducer store over numbers — mirrors the capture's `(_state, msg) => msg`. */
+const replaceStore = (initial = 0): Store.Shape<number, number> => Store.make<number, number>(initial, (_s, m) => m);
+
 // ---------------------------------------------------------------------------
-// Store.make (pure reducer)
+// Store.make — reducer basics
 // ---------------------------------------------------------------------------
 
-describe('Store.make', () => {
-  test('_tag is Store', async () => {
-    const store = await run(Store.make(0, countReducer));
+describe('Store.make — reducer basics', () => {
+  test('_tag is Store and initial state is readable', () => {
+    const store = Store.make(42, countReducer);
     expect(store._tag).toBe('Store');
+    expect(store.read()).toBe(42);
   });
 
-  test('initial state is accessible via get', async () => {
-    const store = await run(Store.make(42, countReducer));
-    const value = await run(store.get);
-    expect(value).toBe(42);
+  test('dispatch runs the reducer (increment / decrement / set)', () => {
+    const store = Store.make(0, countReducer);
+    store.dispatch({ type: 'increment' });
+    expect(store.read()).toBe(1);
+    store.dispatch({ type: 'increment' });
+    store.dispatch({ type: 'decrement' });
+    expect(store.read()).toBe(1);
+    store.dispatch({ type: 'set', value: 99 });
+    expect(store.read()).toBe(99);
   });
 
-  test('dispatch increment updates state', async () => {
-    const store = await run(Store.make(0, countReducer));
-    await run(store.dispatch({ type: 'increment' }));
-    const value = await run(store.get);
-    expect(value).toBe(1);
-  });
-
-  test('dispatch decrement updates state', async () => {
-    const store = await run(Store.make(10, countReducer));
-    await run(store.dispatch({ type: 'decrement' }));
-    const value = await run(store.get);
-    expect(value).toBe(9);
-  });
-
-  test('dispatch set replaces state', async () => {
-    const store = await run(Store.make(0, countReducer));
-    await run(store.dispatch({ type: 'set', value: 99 }));
-    const value = await run(store.get);
-    expect(value).toBe(99);
-  });
-
-  test('multiple dispatches accumulate', async () => {
-    const store = await run(Store.make(0, countReducer));
-    await run(store.dispatch({ type: 'increment' }));
-    await run(store.dispatch({ type: 'increment' }));
-    await run(store.dispatch({ type: 'increment' }));
-    await run(store.dispatch({ type: 'decrement' }));
-    const value = await run(store.get);
-    expect(value).toBe(2);
-  });
-
-  test('changes stream emits updates', async () => {
-    // SubscriptionRef.changes emits current value first, then subsequent updates
-    const collected = await run(
-      Effect.gen(function* () {
-        const store = yield* Store.make(0, countReducer);
-        const fiber = yield* Effect.forkChild(Stream.runCollect(Stream.take(store.changes, 4)));
-        yield* Effect.sleep('1 millis');
-        yield* store.dispatch({ type: 'increment' });
-        yield* store.dispatch({ type: 'increment' });
-        yield* store.dispatch({ type: 'set', value: 50 });
-        const chunk = yield* Fiber.join(fiber);
-        return Array.from(chunk);
-      }),
-    );
-    // First element is initial state (0), then dispatched updates
-    expect(collected).toEqual([0, 1, 2, 50]);
-  });
-
-  test('works with object state', async () => {
+  test('works with object state (immutable reducer)', () => {
     type AppState = { count: number; label: string };
     type AppMsg = { type: 'rename'; label: string } | { type: 'bump' };
-    const reducer = (s: AppState, m: AppMsg): AppState => {
-      switch (m.type) {
-        case 'rename':
-          return { ...s, label: m.label };
-        case 'bump':
-          return { ...s, count: s.count + 1 };
-      }
-    };
-    const store = await run(Store.make({ count: 0, label: 'hello' }, reducer));
-    await run(store.dispatch({ type: 'bump' }));
-    await run(store.dispatch({ type: 'rename', label: 'world' }));
-    const value = await run(store.get);
-    expect(value).toEqual({ count: 1, label: 'world' });
+    const reducer = (s: AppState, m: AppMsg): AppState =>
+      m.type === 'rename' ? { ...s, label: m.label } : { ...s, count: s.count + 1 };
+    const store = Store.make({ count: 0, label: 'hello' }, reducer);
+    store.dispatch({ type: 'bump' });
+    store.dispatch({ type: 'rename', label: 'world' });
+    expect(store.read()).toEqual({ count: 1, label: 'world' });
   });
 });
 
 // ---------------------------------------------------------------------------
-// Store.makeWithEffect (effectful reducer)
+// Store.make — captured store.json law table
 // ---------------------------------------------------------------------------
 
-describe('Store.makeWithEffect', () => {
-  test('_tag is Store', async () => {
-    const store = await run(Store.makeWithEffect(0, (s: number, _msg: string) => Effect.succeed(s)));
-    expect(store._tag).toBe('Store');
+describe('Store.make — captured store.json parity', () => {
+  test('initial-replay: a fresh subscriber replays the current state [0]', () => {
+    const store = replaceStore(0);
+    const a: number[] = [];
+    store.subscribe((v) => a.push(v));
+    expect(a).toEqual([0]);
   });
 
-  test('effectful reducer can transform state', async () => {
-    const store = await run(
-      Store.makeWithEffect([] as readonly string[], (state: readonly string[], msg: string) =>
-        Effect.succeed([...state, msg.toUpperCase()]),
-      ),
-    );
-    await run(store.dispatch('hello'));
-    await run(store.dispatch('world'));
-    const value = await run(store.get);
-    expect(value).toEqual(['HELLO', 'WORLD']);
+  test('late-subscriber-replay: a=[0,3,5], b=[5]', () => {
+    const store = replaceStore(0);
+    const a: number[] = [];
+    store.subscribe((v) => a.push(v));
+    store.dispatch(3);
+    store.dispatch(5);
+    const b: number[] = [];
+    store.subscribe((v) => b.push(v));
+    expect(a).toEqual([0, 3, 5]);
+    expect(b).toEqual([5]);
+    expect(store.read()).toBe(5);
   });
 
-  test('effectful reducer serializes concurrent dispatches via mutex', async () => {
-    const callOrder: number[] = [];
-    let callIndex = 0;
-    const store = await run(
-      Store.makeWithEffect(0, (state: number, msg: number) =>
-        Effect.gen(function* () {
-          const idx = callIndex++;
-          yield* Effect.sleep('1 millis');
-          callOrder.push(idx);
-          return state + msg;
-        }),
-      ),
-    );
-    await run(Effect.all([store.dispatch(1), store.dispatch(2), store.dispatch(3)], { concurrency: 'unbounded' }));
-    const value = await run(store.get);
-    expect(value).toBe(6);
-    // Mutex ensures sequential execution (each completes before next starts)
-    expect(callOrder).toEqual([0, 1, 2]);
+  test('duplicate-consecutive ({all}, no dedup): [0,7,7,7]', () => {
+    const store = replaceStore(0);
+    const a: number[] = [];
+    store.subscribe((v) => a.push(v));
+    store.dispatch(7);
+    store.dispatch(7);
+    store.dispatch(7);
+    expect(a).toEqual([0, 7, 7, 7]);
   });
 
-  test('effectful reducer error propagates', async () => {
-    const store = await run(
-      Store.makeWithEffect(0, (_state: number, msg: string) =>
-        msg === 'fail' ? Effect.fail(new Error('boom')) : Effect.succeed(42),
-      ),
-    );
-    const result = await Effect.runPromiseExit(store.dispatch('fail'));
-    expect(result._tag).toBe('Failure');
+  test('subscriber-order: a/b/c each see [0,5], in subscription order', () => {
+    const store = replaceStore(0);
+    const order: string[] = [];
+    const a: number[] = [];
+    const b: number[] = [];
+    const c: number[] = [];
+    store.subscribe((v) => {
+      a.push(v);
+      order.push('a');
+    });
+    store.subscribe((v) => {
+      b.push(v);
+      order.push('b');
+    });
+    store.subscribe((v) => {
+      c.push(v);
+      order.push('c');
+    });
+    order.length = 0; // discard replays
+    store.dispatch(5);
+    expect(a).toEqual([0, 5]);
+    expect(b).toEqual([0, 5]);
+    expect(c).toEqual([0, 5]);
+    expect(order).toEqual(['a', 'b', 'c']);
   });
 
-  test('changes stream emits on effectful dispatch', async () => {
-    const collected = await run(
-      Effect.gen(function* () {
-        const store = yield* Store.makeWithEffect('init', (_state: string, msg: string) => Effect.succeed(msg));
-        const fiber = yield* Effect.forkChild(Stream.runCollect(Stream.take(store.changes, 3)));
-        yield* Effect.sleep('1 millis');
-        yield* store.dispatch('alpha');
-        yield* store.dispatch('beta');
-        const chunk = yield* Fiber.join(fiber);
-        return Array.from(chunk);
-      }),
-    );
-    // First element is initial state, then dispatched updates
-    expect(collected).toEqual(['init', 'alpha', 'beta']);
+  test('nested-dispatch: async-append — BOTH subscribers see [0,1,99] (S6.F.2 glitch-free)', () => {
+    const store = replaceStore(0);
+    const a: number[] = [];
+    const b: number[] = [];
+    let fired = false;
+    store.subscribe((v) => {
+      a.push(v);
+      if (!fired && v === 1) {
+        fired = true;
+        store.dispatch(99); // nested dispatch from within a's delivery of 1
+      }
+    });
+    store.subscribe((v) => b.push(v));
+    store.dispatch(1);
+    expect(a).toEqual([0, 1, 99]);
+    expect(b).toEqual([0, 1, 99]); // b's terminal delivery == read() — no stale-terminal glitch
+    expect(store.read()).toBe(99);
+  });
+
+  test('subscriber teardown: unsubscribe severs a subscriber; the value channel survives (read=2)', () => {
+    const store = replaceStore(0);
+    const a: number[] = [];
+    const disposer = store.subscribe((v) => a.push(v));
+    store.dispatch(1);
+    disposer(); // the capture's `dispose` op for a value cell — sever the subscriber
+    store.dispatch(2); // the value channel is untouched, so read keeps updating
+    expect(a).toEqual([0, 1]);
+    expect(store.read()).toBe(2);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Store lifetime — full teardown (distinct from subscriber teardown above)
+// ---------------------------------------------------------------------------
+
+describe('Store — lifetime teardown', () => {
+  test('lifetime.dispose() completes subscribers once and makes dispatch inert', async () => {
+    const store = replaceStore(0);
+    let completions = 0;
+    const seen: number[] = [];
+    store.subscribe({ next: (v) => seen.push(v), complete: () => (completions += 1) });
+    store.dispatch(1);
+    await store.lifetime.dispose();
+    expect(completions).toBe(1);
+    store.dispatch(2); // kernel closed → publish inert
+    expect(store.read()).toBe(1); // frozen at the last pre-close state
+    expect(seen).toEqual([0, 1]);
   });
 });

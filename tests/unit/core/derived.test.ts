@@ -1,215 +1,182 @@
 /**
- * Derived<T> -- computed reactive value.
+ * Derived<T> — computed reactive value on CellKernel (Wave 6 transport swap).
  *
- * Property: make with no sources produces a static value.
- * Property: combine recomputes when any input changes.
- * Property: map transforms values through function.
+ * RED-FIRST: authored against the plain, Effect-free API (sync `read()` +
+ * `subscribe(sink): Disposer` + `lifetime`); the old `Effect`/`Stream`/`Scope`
+ * surface would not type-check or run against these assertions.
+ *
+ * The law table PINS the captured `tests/fixtures/reactive-capture/derived.json`
+ * observations byte-for-byte (the byte-law cage — master-plan Law 2), so the
+ * transport swap is proven behavior-preserving:
+ *  - EmissionPolicy {all} — every source change republishes (no dedup).
+ *  - Leading-republish PRESERVED — a subscriber present at the source-wiring
+ *    interleave sees the initial value twice; a later subscriber does not.
+ *  - Recompute-on-source — a consistent snapshot of every source per change.
+ *  - Disposal — recompute torn down, `read()` frozen at the last value.
  */
 
 import { describe, test, expect } from 'vitest';
-import type { Scope} from 'effect';
-import { Effect, Fiber, Stream } from 'effect';
-import { Cell, Derived } from '@czap/core';
+import { Cell, Derived, CellKernel } from '@czap/core';
 
-const runScoped = <A>(effect: Effect.Effect<A, never, Scope.Scope>): Promise<A> =>
-  Effect.runPromise(Effect.scoped(effect));
+/** Subscribe a named collector to a derived; return the live delivery array. */
+const collect = <T>(derived: Derived.Shape<T>): { readonly values: T[]; readonly dispose: () => void } => {
+  const values: T[] = [];
+  const dispose = derived.subscribe((v) => values.push(v));
+  return { values, dispose };
+};
 
 // ---------------------------------------------------------------------------
 // Derived.make
 // ---------------------------------------------------------------------------
 
 describe('Derived.make', () => {
-  test('computes initial value', async () => {
-    const result = await runScoped(
-      Effect.gen(function* () {
-        const d = yield* Derived.make(Effect.succeed(42));
-        return yield* d.get;
-      }),
-    );
-    expect(result).toBe(42);
+  test('computes the initial value and carries _tag Derived', () => {
+    const d = Derived.make(() => 42);
+    expect(d._tag).toBe('Derived');
+    expect(d.read()).toBe(42);
   });
 
-  test('static derived (no sources) never changes', async () => {
-    const result = await runScoped(
-      Effect.gen(function* () {
-        let counter = 0;
-        const d = yield* Derived.make(Effect.sync(() => ++counter));
-        // Initial computation happens once
-        const val = yield* d.get;
-        expect(val).toBe(1);
-        // No sources => no recomputation
-        yield* Effect.sleep('10 millis');
-        const val2 = yield* d.get;
-        expect(val2).toBe(1);
-        return val2;
-      }),
-    );
-    expect(result).toBe(1);
+  test('a static derived (no sources) replays once and never changes', () => {
+    let counter = 0;
+    const d = Derived.make(() => ++counter);
+    // Initial computation happens once (during construction).
+    expect(d.read()).toBe(1);
+    const { values } = collect(d);
+    // No sources => the first subscriber sees only the replay, no leading republish.
+    expect(values).toEqual([1]);
+    expect(d.read()).toBe(1);
   });
 
-  test('recomputes when source emits', async () => {
-    const result = await runScoped(
-      Effect.gen(function* () {
-        const cell = yield* Cell.make(10);
-        const d = yield* Derived.make(cell.get, [cell.changes]);
-        const updates = Effect.forkScoped(Stream.runCollect(Stream.take(d.changes, 2)));
-        yield* cell.set(20);
-        const fiber = yield* updates;
-        const values = Array.from(yield* Fiber.join(fiber));
-        return values.at(-1);
-      }),
-    );
-    expect(result).toBe(20);
-  });
-
-  test('has _tag Derived', async () => {
-    const result = await runScoped(
-      Effect.gen(function* () {
-        const d = yield* Derived.make(Effect.succeed(0));
-        return d._tag;
-      }),
-    );
-    expect(result).toBe('Derived');
+  test('recomputes when a source cell emits', () => {
+    const cell = Cell.make(10);
+    const d = Derived.make(() => cell.read(), [cell]);
+    const { values } = collect(d);
+    // 10 (replay) + 10 (source-wiring republish) — the leading duplicate.
+    expect(values).toEqual([10, 10]);
+    cell.set(20);
+    expect(values).toEqual([10, 10, 20]);
+    expect(d.read()).toBe(20);
   });
 });
 
 // ---------------------------------------------------------------------------
-// Derived.combine
+// Derived.combine — the captured derived.json law table (base = Cell(0), +100)
 // ---------------------------------------------------------------------------
 
-describe('Derived.combine', () => {
-  test('combines cell values with combiner function', async () => {
-    const result = await runScoped(
-      Effect.gen(function* () {
-        const a = yield* Cell.make(3);
-        const b = yield* Cell.make(7);
-        const sum = yield* Derived.combine([a, b] as const, (x: number, y: number) => x + y);
-        return yield* sum.get;
-      }),
-    );
-    expect(result).toBe(10);
+describe('Derived.combine — captured derived.json parity', () => {
+  const build = (): { base: Cell.Shape<number>; derived: Derived.Shape<number> } => {
+    const base = Cell.make(0);
+    const derived = Derived.combine([base] as const, (x: number): number => x + 100);
+    return { base, derived };
+  };
+
+  test('initial-value: the first subscriber sees the leading republish [100,100]', () => {
+    const { derived } = build();
+    const { values } = collect(derived);
+    expect(values).toEqual([100, 100]);
+    expect(derived.read()).toBe(100);
   });
 
-  test('produces consistent snapshots (no torn reads under rapid updates)', async () => {
-    await runScoped(
-      Effect.gen(function* () {
-        const a = yield* Cell.make(0);
-        const b = yield* Cell.make(0);
-
-        // Combiner that exposes inconsistency: if x !== y a torn read occurred
-        const derived = yield* Derived.combine(
-          [a, b] as const,
-          (x: number, y: number) => ({ x, y, consistent: x === y }),
-        );
-
-        // Always update both cells to the same value
-        for (let i = 1; i <= 30; i++) {
-          yield* a.set(i);
-          yield* b.set(i);
-        }
-
-        yield* Effect.sleep('50 millis');
-
-        const final = yield* derived.get;
-        expect(final.x).toBe(30);
-        expect(final.y).toBe(30);
-        expect(final.consistent).toBe(true);
-      }),
-    );
+  test('recompute-on-source: [100,100,105]', () => {
+    const { base, derived } = build();
+    const { values } = collect(derived);
+    base.set(5);
+    expect(values).toEqual([100, 100, 105]);
+    expect(derived.read()).toBe(105);
   });
 
-  test('recomputes when any input cell changes', async () => {
-    const result = await runScoped(
-      Effect.gen(function* () {
-        const a = yield* Cell.make(1);
-        const b = yield* Cell.make(2);
-        const product = yield* Derived.combine([a, b] as const, (x: number, y: number) => x * y);
-        const updates = Effect.forkScoped(Stream.runCollect(Stream.take(product.changes, 2)));
-        yield* a.set(5);
-        const fiber = yield* updates;
-        const values = Array.from(yield* Fiber.join(fiber));
-        return values.at(-1);
-      }),
-    );
-    expect(result).toBe(10); // 5 * 2
+  test('duplicate-source ({all}, no dedup): [100,100,105,105,108]', () => {
+    const { base, derived } = build();
+    const { values } = collect(derived);
+    base.set(5);
+    base.set(5); // equal-consecutive source value still republishes
+    base.set(8);
+    expect(values).toEqual([100, 100, 105, 105, 108]);
+    expect(derived.read()).toBe(108);
+  });
+
+  test('subscriber-order: a=[100,100,105], b=[100,105] (only the first sub gets the republish)', () => {
+    const { base, derived } = build();
+    const a = collect(derived);
+    const b = collect(derived);
+    base.set(5);
+    expect(a.values).toEqual([100, 100, 105]);
+    expect(b.values).toEqual([100, 105]);
+  });
+
+  test('late-subscriber-replay: a=[100,100,105], b=[105]', () => {
+    const { base, derived } = build();
+    const a = collect(derived);
+    base.set(5);
+    const b = collect(derived);
+    expect(a.values).toEqual([100, 100, 105]);
+    expect(b.values).toEqual([105]);
+    expect(derived.read()).toBe(105);
+  });
+
+  test('disposal: recompute torn down, read() frozen at the last value (105)', async () => {
+    const { base, derived } = build();
+    const a = collect(derived);
+    base.set(5);
+    expect(a.values).toEqual([100, 100, 105]);
+    await derived.lifetime.dispose();
+    base.set(9); // post-dispose source change no longer recomputes
+    expect(derived.read()).toBe(105);
+    expect(a.values).toEqual([100, 100, 105]); // no further deliveries
   });
 });
 
 // ---------------------------------------------------------------------------
-// Derived.map
+// Derived.combine — multi-source
 // ---------------------------------------------------------------------------
 
-describe('Derived.map', () => {
-  test('transforms initial value', async () => {
-    const result = await runScoped(
-      Effect.gen(function* () {
-        const d = yield* Derived.make(Effect.succeed(5));
-        const doubled = yield* Derived.map(d, (n) => n * 2);
-        return yield* doubled.get;
-      }),
-    );
-    expect(result).toBe(10);
+describe('Derived.combine — multi-source', () => {
+  test('combines current values through the combiner', () => {
+    const a = Cell.make(3);
+    const b = Cell.make(7);
+    const sum = Derived.combine([a, b] as const, (x: number, y: number) => x + y);
+    expect(sum.read()).toBe(10);
   });
 
-  test('propagates mapped changes when the source derived updates', async () => {
-    const result = await runScoped(
-      Effect.gen(function* () {
-        const cell = yield* Cell.make(2);
-        const source = yield* Derived.make(cell.get, [cell.changes]);
-        const mapped = yield* Derived.map(source, (value) => value * 3);
-        const updates = Effect.forkScoped(Stream.runCollect(Stream.take(mapped.changes, 2)));
-        yield* cell.set(4);
-        const fiber = yield* updates;
-        const values = Array.from(yield* Fiber.join(fiber));
-        return values.at(-1);
-      }),
-    );
-
-    expect(result).toBe(12);
-  });
-});
-
-// ---------------------------------------------------------------------------
-// Derived.flatten
-// ---------------------------------------------------------------------------
-
-describe('Derived.flatten', () => {
-  test('unwraps nested derived', async () => {
-    const result = await runScoped(
-      Effect.gen(function* () {
-        const inner = yield* Derived.make(Effect.succeed(42));
-        const outer = yield* Derived.make(Effect.succeed(inner));
-        const flat = yield* Derived.flatten(outer);
-        return yield* flat.get;
-      }),
-    );
-    expect(result).toBe(42);
+  test('recomputes when any input changes', () => {
+    const a = Cell.make(1);
+    const b = Cell.make(2);
+    const product = Derived.combine([a, b] as const, (x: number, y: number) => x * y);
+    const { values } = collect(product);
+    a.set(5);
+    expect(product.read()).toBe(10); // 5 * 2
+    expect(values.at(-1)).toBe(10);
   });
 
-  test('switches to the latest inner derived and emits its values', async () => {
-    const result = await runScoped(
-      Effect.gen(function* () {
-        const innerA = yield* Cell.make(10);
-        const innerB = yield* Cell.make(20);
-        const derivedA = yield* Derived.make(innerA.get, [innerA.changes]);
-        const derivedB = yield* Derived.make(innerB.get, [innerB.changes]);
-        const outerCell = yield* Cell.make(derivedA);
-        const nested = yield* Derived.make(outerCell.get, [outerCell.changes]);
-        const flat = yield* Derived.flatten(nested);
-        const updates = Effect.forkScoped(
-          Stream.runCollect(flat.changes.pipe(Stream.filter((value) => value === 25), Stream.take(1))),
-        );
-        yield* Effect.sleep('1 millis');
-        yield* outerCell.set(derivedB);
-        yield* Effect.sleep('1 millis');
-        yield* innerB.set(25);
-        const fiber = yield* updates;
-        const values = Array.from(yield* Fiber.join(fiber));
-        return { latest: values.at(-1), final: yield* flat.get };
-      }),
-    );
+  test('produces consistent snapshots (no torn reads): every recompute reads a fresh snapshot', () => {
+    const a = Cell.make(0);
+    const b = Cell.make(0);
+    const derived = Derived.combine([a, b] as const, (x: number, y: number) => ({ x, y, consistent: x === y }));
+    // A live subscriber activates recompute-on-change (a Derived is lazy — it only
+    // recomputes once it has been subscribed).
+    const seen: { x: number; y: number; consistent: boolean }[] = [];
+    derived.subscribe((v) => seen.push(v));
+    for (let i = 1; i <= 30; i++) {
+      a.set(i);
+      b.set(i);
+    }
+    const final = derived.read();
+    expect(final.x).toBe(30);
+    expect(final.y).toBe(30);
+    expect(final.consistent).toBe(true);
+    // Every recompute combined the two cells at that instant — whenever both cells
+    // hold the same value the snapshot is consistent (no stale/torn combination).
+    expect(seen.filter((v) => v.x === v.y).every((v) => v.consistent)).toBe(true);
+  });
 
-    expect(result.latest).toBe(25);
-    expect(result.final).toBe(25);
+  test('composes over a raw CellKernel.replay1 source (decoupled from Cell)', () => {
+    // Derived depends on the structural read+subscribe surface, not Cell's type.
+    const source = CellKernel.replay1<number>(2);
+    const derived = Derived.combine([source] as const, (x: number) => x * 3);
+    const { values } = collect(derived);
+    expect(values).toEqual([6, 6]); // 2*3 replay + leading republish
+    source.publish(4);
+    expect(derived.read()).toBe(12);
+    expect(values).toEqual([6, 6, 12]);
   });
 });

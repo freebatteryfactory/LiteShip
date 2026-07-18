@@ -450,6 +450,61 @@ describe('reactive-model — emission policy (third axis)', () => {
 });
 
 // ===========================================================================
+// 4b. Reentrancy policy — the Wave 6 nested-write ruling (fourth axis).
+//     'synchronous' (default, pinned I5) reorders; 'deferred' (Cell/Store's
+//     product law: async-append / glitch-free) preserves the captured Effect
+//     behavior. The model gains the 'deferred' arm so the differential oracle
+//     asserts Cell's async-append POSITIVELY, not as a merely-tolerated delta.
+// ===========================================================================
+
+describe('reactive-model — reentrancy policy (nested-write ruling)', () => {
+  const nestedWrite = (reentrancy: 'synchronous' | 'deferred'): { a: number[]; b: number[]; read: number } => {
+    const ch = ModelChannel.replay1(0, EmissionPolicies.all(), reentrancy);
+    const a: number[] = [];
+    const b: number[] = [];
+    let fired = false;
+    ch.subscribe({
+      next: (v) => {
+        a.push(v);
+        if (!fired && v === 1) {
+          fired = true;
+          ch.publish(99); // nested write from within a's delivery of the outer 1
+        }
+      },
+    });
+    ch.subscribe({ next: (v) => b.push(v) });
+    ch.publish(1);
+    return { a, b, read: ch.read!() };
+  };
+
+  test("'synchronous' (default): the second subscriber sees the REORDERED [0,99,1] (pinned I5)", () => {
+    const { a, b, read } = nestedWrite('synchronous');
+    expect(a).toEqual([0, 1, 99]);
+    expect(b).toEqual([0, 99, 1]);
+    expect(read).toBe(99);
+  });
+
+  test("'deferred': the second subscriber sees GLITCH-FREE async-append [0,1,99] (Cell/Store product law)", () => {
+    const { a, b, read } = nestedWrite('deferred');
+    // b's terminal delivery (99) == read() — no stale-terminal glitch; a and b
+    // agree on the total order. This is the captured Effect behavior preserved.
+    expect(a).toEqual([0, 1, 99]);
+    expect(b).toEqual([0, 1, 99]);
+    expect(read).toBe(99);
+  });
+
+  test("'deferred' with no nested write is identical to a plain synchronous publish", () => {
+    const ch = ModelChannel.replay1(0, EmissionPolicies.all(), 'deferred');
+    const got: number[] = [];
+    ch.subscribe({ next: (v) => got.push(v) });
+    ch.publish(1);
+    ch.publish(2);
+    expect(got).toEqual([0, 1, 2]);
+    expect(ch.read!()).toBe(2);
+  });
+});
+
+// ===========================================================================
 // 5. Lifetime laws L1-L7 — predictLifetime ≡ real Lifetime
 // ===========================================================================
 

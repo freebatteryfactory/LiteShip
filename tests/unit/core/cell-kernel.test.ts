@@ -166,6 +166,97 @@ describe('CellKernel — duplicate-value policy', () => {
 });
 
 // ---------------------------------------------------------------------------
+// EmissionPolicy (Wave 6 — the third axis, orthogonal to replay1/fanout):
+//   {all}      — the DEFAULT + pinned law above: every publish is delivered.
+//   {distinct} — suppress a publish whose value equals the previous EMITTED
+//                value under the supplied equality; the current slot still
+//                advances (read consistency) so a suppressed value is not lost.
+// Timeline's hand-rolled `newState !== oldState` state dedup is this arm; the
+// default stays {all} so compositor / zap / crossings byte-parity is untouched.
+// ---------------------------------------------------------------------------
+
+describe('CellKernel — EmissionPolicy {distinct}', () => {
+  test('replay1 {distinct} suppresses a consecutive-equal publish; {all} (default) does not', () => {
+    const distinct = CellKernel.replay1(0, { kind: 'distinct', equals: Object.is });
+    const got: number[] = [];
+    distinct.subscribe((v) => got.push(v));
+    distinct.publish(7);
+    distinct.publish(7); // suppressed — equals the previous emission
+    distinct.publish(8);
+    distinct.publish(7); // NOT suppressed — differs from the previous emission (8)
+    // replay(0) + 7 + 8 + 7 (the middle duplicate 7 dropped).
+    expect(got).toEqual([0, 7, 8, 7]);
+
+    const all = CellKernel.replay1(0); // default {all}
+    const allGot: number[] = [];
+    all.subscribe((v) => allGot.push(v));
+    all.publish(7);
+    all.publish(7);
+    all.publish(8);
+    all.publish(7);
+    expect(allGot).toEqual([0, 7, 7, 8, 7]);
+  });
+
+  test('fanout {distinct} suppresses a consecutive-equal publish; {all} (default) does not', () => {
+    const distinct = CellKernel.fanout<number>({ kind: 'distinct', equals: Object.is });
+    const got: number[] = [];
+    distinct.subscribe((v) => got.push(v));
+    distinct.publish(7);
+    distinct.publish(7); // suppressed
+    distinct.publish(7); // suppressed
+    distinct.publish(9);
+    expect(got).toEqual([7, 9]);
+
+    const all = CellKernel.fanout<number>();
+    const allGot: number[] = [];
+    all.subscribe((v) => allGot.push(v));
+    all.publish(7);
+    all.publish(7);
+    all.publish(7);
+    all.publish(9);
+    expect(allGot).toEqual([7, 7, 7, 9]);
+  });
+
+  test('replay1 {distinct}: a SUPPRESSED publish still advances the current slot (read tracks it — the mutation target)', () => {
+    const k = CellKernel.replay1(0, { kind: 'distinct', equals: Object.is });
+    k.publish(5);
+    k.publish(5); // fan-out suppressed, but the slot must still be 5…
+    expect(k.read()).toBe(5);
+    // …and a LATE subscriber replays the slot exactly once (not the suppressed dup twice).
+    const late: number[] = [];
+    k.subscribe((v) => late.push(v));
+    expect(late).toEqual([5]);
+  });
+
+  test('replay1 {distinct} does not suppress across a distinct value (equal-to-two-ago is delivered)', () => {
+    const k = CellKernel.replay1(0, { kind: 'distinct', equals: Object.is });
+    const got: number[] = [];
+    k.subscribe((v) => got.push(v));
+    k.publish(1);
+    k.publish(2);
+    k.publish(1); // equals two-ago, not the immediate previous — delivered
+    expect(got).toEqual([0, 1, 2, 1]);
+  });
+
+  test('{distinct} honors a custom equality (not just Object.is)', () => {
+    // Equal-by-parity: consecutive same-parity emissions are suppressed. The
+    // replayed initial (0) does NOT seed the dedup — the FIRST publish always
+    // emits (lastEmitted is undefined until a publish fans out), matching the
+    // reference model.
+    const sameParity = (a: number, b: number): boolean => a % 2 === b % 2;
+    const k = CellKernel.replay1(0, { kind: 'distinct', equals: sameParity });
+    const got: number[] = [];
+    k.subscribe((v) => got.push(v));
+    k.publish(2); // first publish → always emitted
+    k.publish(4); // even, same parity as 2 → suppressed
+    k.publish(3); // odd → delivered
+    k.publish(5); // odd, same parity as 3 → suppressed
+    k.publish(2); // even → delivered
+    expect(got).toEqual([0, 2, 3, 2]);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // reentrancy: publish during notify
 // ---------------------------------------------------------------------------
 
@@ -205,6 +296,93 @@ describe('CellKernel — reentrancy (publish during notify)', () => {
     k.publish(1);
     expect(seen).toEqual([0, 1, 2]);
     expect(readInside).toEqual([2]);
+    expect(k.read()).toBe(2);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// ReentrancyPolicy (Wave 6 — the nested-write ruling):
+//   'synchronous' (DEFAULT) — a publish issued from within a fan-out recurses a
+//     full nested fan-out depth-first before the outer resumes (the pinned I5
+//     law; compositor byte-parity). The second subscriber sees the nested value
+//     BEFORE the outer value → a REORDERING (b: [0,99,1]).
+//   'deferred' — the async-append law Cell/Store adopt (RULING: PRESERVE the
+//     captured Effect behavior — glitch-free / breadth-first). A publish issued
+//     from within a fan-out is enqueued and fanned out AFTER the active fan-out
+//     unwinds, so every subscriber observes the same total order and every live
+//     subscriber's TERMINAL delivery equals read() (b: [0,1,99]).
+// The current slot advances synchronously in BOTH arms (read() == last publish).
+// ---------------------------------------------------------------------------
+
+describe('CellKernel — ReentrancyPolicy (nested write)', () => {
+  const runNestedWrite = (k: ReturnType<typeof CellKernel.replay1<number>>): { a: number[]; b: number[]; read: number } => {
+    const a: number[] = [];
+    const b: number[] = [];
+    let fired = false;
+    k.subscribe((v) => {
+      a.push(v);
+      if (!fired && v === 1) {
+        fired = true;
+        k.publish(99); // nested write from within a's delivery of the outer 1
+      }
+    });
+    k.subscribe((v) => b.push(v));
+    k.publish(1);
+    return { a, b, read: k.read() };
+  };
+
+  test("'synchronous' (default): the second subscriber sees the REORDERED nested-first sequence (pinned I5)", () => {
+    const { a, b, read } = runNestedWrite(CellKernel.replay1(0));
+    // a: replay0, outer 1, nested 99. b: replay0, nested 99 (depth-first) then outer 1.
+    expect(a).toEqual([0, 1, 99]);
+    expect(b).toEqual([0, 99, 1]);
+    expect(read).toBe(99);
+  });
+
+  test("'deferred': the second subscriber sees GLITCH-FREE async-append (the Cell/Store product law)", () => {
+    const { a, b, read } = runNestedWrite(CellKernel.replay1(0, { kind: 'all' }, 'deferred'));
+    // Breadth-first: the outer 1 reaches EVERY subscriber, THEN the nested 99
+    // reaches every subscriber. b's terminal delivery (99) equals read() — no
+    // stale-terminal glitch, and a and b agree on the total order.
+    expect(a).toEqual([0, 1, 99]);
+    expect(b).toEqual([0, 1, 99]);
+    expect(read).toBe(99);
+  });
+
+  test("'deferred': a chain of nested writes drains FIFO (breadth-first), terminal == read()", () => {
+    const k = CellKernel.replay1(0, { kind: 'all' }, 'deferred');
+    const a: number[] = [];
+    const b: number[] = [];
+    let firedA = false;
+    let firedB = false;
+    k.subscribe((v) => {
+      a.push(v);
+      if (!firedA && v === 1) {
+        firedA = true;
+        k.publish(2);
+      }
+    });
+    k.subscribe((v) => {
+      b.push(v);
+      if (!firedB && v === 2) {
+        firedB = true;
+        k.publish(3);
+      }
+    });
+    k.publish(1);
+    // Level order: 1 to {a,b}; then 2 to {a,b} (a's nested); then 3 to {a,b} (b's nested).
+    expect(a).toEqual([0, 1, 2, 3]);
+    expect(b).toEqual([0, 1, 2, 3]);
+    expect(k.read()).toBe(3);
+  });
+
+  test("'deferred' with no nested write behaves exactly like a plain publish", () => {
+    const k = CellKernel.replay1(0, { kind: 'all' }, 'deferred');
+    const got: number[] = [];
+    k.subscribe((v) => got.push(v));
+    k.publish(1);
+    k.publish(2);
+    expect(got).toEqual([0, 1, 2]);
     expect(k.read()).toBe(2);
   });
 });

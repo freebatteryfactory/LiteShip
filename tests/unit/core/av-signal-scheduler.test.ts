@@ -1,9 +1,11 @@
 /**
  * Signal.audio and Scheduler.audioSync tests.
+ *
+ * Wave 6: Signal.audio is a plain factory (Effect-free) — `poll()` and `read()`
+ * are synchronous. The Scheduler tests are transport-agnostic.
  */
 
 import { describe, test, expect, vi } from 'vitest';
-import { Effect } from 'effect';
 import { AVBridge, Signal, Scheduler } from '@czap/core';
 
 // ---------------------------------------------------------------------------
@@ -13,67 +15,39 @@ import { AVBridge, Signal, Scheduler } from '@czap/core';
 describe('Signal.audio (sample mode)', () => {
   test('starts at 0', () => {
     const bridge = AVBridge.make({ sampleRate: 48000, fps: 30 });
-    const value = Effect.runSync(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const sig = yield* Signal.audio(bridge, 'sample');
-          return yield* sig.current;
-        }),
-      ),
-    );
-    expect(value).toBe(0);
+    const sig = Signal.audio(bridge, 'sample');
+    expect(sig.read()).toBe(0);
   });
 
   test('poll() reads current sample from bridge', () => {
     const bridge = AVBridge.make({ sampleRate: 48000, fps: 30 });
     bridge.advanceSamples(5000);
 
-    const value = Effect.runSync(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const sig = yield* Signal.audio(bridge, 'sample');
-          yield* sig.poll();
-          return yield* sig.current;
-        }),
-      ),
-    );
-    expect(value).toBe(5000);
+    const sig = Signal.audio(bridge, 'sample');
+    sig.poll();
+    expect(sig.read()).toBe(5000);
   });
 
   test('poll() updates as bridge advances', () => {
     const bridge = AVBridge.make({ sampleRate: 48000, fps: 30 });
+    const sig = Signal.audio(bridge, 'sample');
+    const results: number[] = [];
 
-    const values = Effect.runSync(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const sig = yield* Signal.audio(bridge, 'sample');
-          const results: number[] = [];
+    bridge.advanceSamples(1000);
+    sig.poll();
+    results.push(sig.read());
 
-          bridge.advanceSamples(1000);
-          yield* sig.poll();
-          results.push(yield* sig.current);
+    bridge.advanceSamples(2000);
+    sig.poll();
+    results.push(sig.read());
 
-          bridge.advanceSamples(2000);
-          yield* sig.poll();
-          results.push(yield* sig.current);
-
-          return results;
-        }),
-      ),
-    );
-    expect(values).toEqual([1000, 3000]);
+    expect(results).toEqual([1000, 3000]);
   });
 
   test('source type is audio', () => {
     const bridge = AVBridge.make({ sampleRate: 48000, fps: 30 });
-    Effect.runSync(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const sig = yield* Signal.audio(bridge, 'sample');
-          expect(sig.source.type).toBe('audio');
-        }),
-      ),
-    );
+    const sig = Signal.audio(bridge, 'sample');
+    expect(sig.source.type).toBe('audio');
   });
 });
 
@@ -84,49 +58,27 @@ describe('Signal.audio (sample mode)', () => {
 describe('Signal.audio (normalized mode)', () => {
   test('returns 0 at sample 0', () => {
     const bridge = AVBridge.make({ sampleRate: 48000, fps: 30 });
-
-    const value = Effect.runSync(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const sig = yield* Signal.audio(bridge, 'normalized', 10);
-          yield* sig.poll();
-          return yield* sig.current;
-        }),
-      ),
-    );
-    expect(value).toBe(0);
+    const sig = Signal.audio(bridge, 'normalized', 10);
+    sig.poll();
+    expect(sig.read()).toBe(0);
   });
 
   test('returns 0.5 at halfway point', () => {
     const bridge = AVBridge.make({ sampleRate: 48000, fps: 30 });
     bridge.advanceSamples(240000); // 10s * 48000 / 2
 
-    const value = Effect.runSync(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const sig = yield* Signal.audio(bridge, 'normalized', 10);
-          yield* sig.poll();
-          return yield* sig.current;
-        }),
-      ),
-    );
-    expect(value).toBeCloseTo(0.5, 5);
+    const sig = Signal.audio(bridge, 'normalized', 10);
+    sig.poll();
+    expect(sig.read()).toBeCloseTo(0.5, 5);
   });
 
   test('clamps to 1 when past duration', () => {
     const bridge = AVBridge.make({ sampleRate: 48000, fps: 30 });
     bridge.advanceSamples(960000);
 
-    const value = Effect.runSync(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const sig = yield* Signal.audio(bridge, 'normalized', 10);
-          yield* sig.poll();
-          return yield* sig.current;
-        }),
-      ),
-    );
-    expect(value).toBe(1);
+    const sig = Signal.audio(bridge, 'normalized', 10);
+    sig.poll();
+    expect(sig.read()).toBe(1);
   });
 });
 

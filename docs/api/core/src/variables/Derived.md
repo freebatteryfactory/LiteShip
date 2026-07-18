@@ -8,19 +8,24 @@
 
 > `const` **Derived**: `object`
 
-Defined in: [core/src/derived.ts:150](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/derived.ts#L150)
+Defined in: [core/src/derived.ts:149](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/derived.ts#L149)
 
-Derived — read-only reactive view computed from upstream [Cell](Cell.md)s.
-A `Derived` recomputes lazily and pushes the new value into its own stream
-when any dependency changes; composes via `combine`, `map`, and `flatten`.
+Derived — read-only reactive view computed from upstream sources, on
+[CellKernel.replay1](CellKernel.md#replay1). Recomputes lazily on any source change and
+republishes to its own subscribers; compose via `make` (factory + triggers) or
+`combine` (tuple of readable sources).
 
 ## Type Declaration
 
 ### combine
 
-> **combine**: \<`T`, `U`\>(`cells`, `combiner`) => `Effect`\<`DerivedShape`\<`U`\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\> = `_combine`
+> **combine**: \<`T`, `U`\>(`sources`, `combiner`) => `DerivedShape`\<`U`\> = `_combine`
 
-Combine multiple cells into a single derived cell of their tuple.
+Combine readable sources into a single derived value of their combiner.
+
+Combine multiple sources into a single derived value of `combiner(...values)`.
+Recomputes from a CONSISTENT snapshot of every source on each change (no torn
+reads): the recompute reads all current source values at that instant.
 
 #### Type Parameters
 
@@ -34,9 +39,9 @@ Combine multiple cells into a single derived cell of their tuple.
 
 #### Parameters
 
-##### cells
+##### sources
 
-\{ \[K in string \| number \| symbol\]: Shape\<T\[K\]\> \}
+\{ readonly \[K in string \| number \| symbol\]: DerivedSource\<T\[K\]\> \}
 
 ##### combiner
 
@@ -44,35 +49,16 @@ Combine multiple cells into a single derived cell of their tuple.
 
 #### Returns
 
-`Effect`\<`DerivedShape`\<`U`\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\>
-
-### flatten
-
-> **flatten**: \<`T`\>(`nested`) => `Effect`\<`DerivedShape`\<`T`\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\> = `_flatten`
-
-Flatten a derived-of-derived into a single derived of the inner value.
-
-#### Type Parameters
-
-##### T
-
-`T`
-
-#### Parameters
-
-##### nested
-
-`DerivedShape`\<`DerivedShape`\<`T`\>\>
-
-#### Returns
-
-`Effect`\<`DerivedShape`\<`T`\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\>
+`DerivedShape`\<`U`\>
 
 ### make
 
-> **make**: \<`T`\>(`compute`, `sources`) => `Effect`\<`DerivedShape`\<`T`\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\> = `_make`
+> **make**: \<`T`\>(`compute`, `sources`) => `DerivedShape`\<`T`\> = `_make`
 
-Build a derived cell from a factory computing against upstream sources.
+Build a derived value from a factory and the sources that recompute it.
+
+Build a derived value from a `compute` factory and the sources whose emissions
+recompute it. With no sources it is static (never recomputes).
 
 #### Type Parameters
 
@@ -84,42 +70,12 @@ Build a derived cell from a factory computing against upstream sources.
 
 ##### compute
 
-`Effect`\<`T`\>
+() => `T`
 
 ##### sources?
 
-readonly `Stream`\<`unknown`, `never`, `never`\>[] = `[]`
+readonly `DerivedTrigger`[] = `[]`
 
 #### Returns
 
-`Effect`\<`DerivedShape`\<`T`\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\>
-
-### map
-
-> **map**: \<`A`, `B`\>(`derived`, `f`) => `Effect`\<`DerivedShape`\<`B`\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\> = `_map`
-
-Pure projection of an existing cell/derived.
-
-#### Type Parameters
-
-##### A
-
-`A`
-
-##### B
-
-`B`
-
-#### Parameters
-
-##### derived
-
-`DerivedShape`\<`A`\>
-
-##### f
-
-(`a`) => `B`
-
-#### Returns
-
-`Effect`\<`DerivedShape`\<`B`\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\>
+`DerivedShape`\<`T`\>

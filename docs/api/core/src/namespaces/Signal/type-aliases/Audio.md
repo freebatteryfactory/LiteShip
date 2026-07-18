@@ -8,6 +8,6 @@
 
 > **Audio** = `AudioSignalShape`
 
-Defined in: [core/src/signal.ts:395](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/signal.ts#L395)
+Defined in: [core/src/signal.ts:396](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/signal.ts#L396)
 
 Structural shape of an audio-sourced signal backed by an [AVBridge](../../../variables/AVBridge.md).

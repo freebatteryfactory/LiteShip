@@ -13,7 +13,6 @@ import { Scheduler as SchedulerImpl } from './scheduler.js';
 import type { CompositeState, Compositor } from './compositor.js';
 import type { Signal } from './signal.js';
 import type { Millis } from './brands.js';
-import { Effect } from 'effect';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -142,12 +141,12 @@ function _make(
         scheduler.step();
         const timestamp = (i * 1000) / config.fps;
         if (signal) {
-          // SIGNAL/TIMELINE SEAM (not in this wave): signal.ts is untouched, so
-          // Signal.seek is still `Effect.Effect<void>`. This `Effect.runSync`
-          // grounding — and the `import { Effect } from 'effect'` above — MUST
-          // stay until the Signal/Timeline seam rebuilds Signal on the plain
-          // CellKernel handle. Do not delete before then.
-          Effect.runSync(signal.seek(timestamp));
+          // Signal.seek is plain (synchronous) as of the Wave 6 reactive
+          // convergence — call it directly, no Effect grounding. (The broader
+          // video.ts effect-residue cleanup is the Wave 8 consumer tail; this one
+          // line moves now because the Signal type change requires it for a green
+          // tree — the §7d producer→consumer discipline.)
+          signal.seek(timestamp);
         }
         // Compositor.compute() is synchronous as of the core-seams wave (SEAM:2):
         // it returns the CompositeState directly, no Effect wrapper to run.

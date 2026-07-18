@@ -147,6 +147,17 @@ export const EmissionPolicies = {
   }),
 } as const;
 
+/**
+ * The reentrancy policy — the Wave-6 nested-write axis, mirroring
+ * `CellKernel.ReentrancyPolicy`. `synchronous` is the pinned I5 depth-first
+ * nested fan-out (the raw kernel law + compositor parity); `deferred` is the
+ * async-append (breadth-first / glitch-free) law Cell/Store adopt in Wave 6
+ * (the RULING: PRESERVE the captured Effect behavior). The model carries both
+ * arms so the differential oracle can assert Cell's async-append POSITIVELY —
+ * Cell's channel config selects `deferred`, the compositor's stays `synchronous`.
+ */
+export type ReentrancyPolicy = 'synchronous' | 'deferred';
+
 // ===========================================================================
 // § Observation  (the canonical read of what a channel produced)
 // ===========================================================================
@@ -228,11 +239,15 @@ interface Reg {
  *  - I8: `close` completes each live subscriber once, then publish is inert and
  *    subscribe completes immediately without registering or replaying.
  */
-function modelReplay1(initial: TraceValue, policy: EmissionPolicy): ChannelLike {
+function modelReplay1(initial: TraceValue, policy: EmissionPolicy, reentrancy: ReentrancyPolicy): ChannelLike {
   const regs: Reg[] = [];
   let current = initial;
   let closed = false;
   let lastEmitted: { readonly v: TraceValue } | undefined;
+  // {deferred} async-append state: a publish issued from within an active fan-out
+  // is enqueued and drained FIFO after the fan-out unwinds (breadth-first).
+  let inFanOut = false;
+  const pending: { readonly v: TraceValue }[] = [];
 
   // LIVE-set fan-out: re-read `regs.length` each step so a subscribe issued from
   // within a sink (which appends after the cursor) IS reached, and an alive=false
@@ -244,18 +259,40 @@ function modelReplay1(initial: TraceValue, policy: EmissionPolicy): ChannelLike 
     }
   };
 
+  // Fan `value` out now, honoring the emission policy (the slot is advanced by
+  // the caller, so a {distinct}-suppressed value is not lost — read still tracks it).
+  const emit = (value: TraceValue): void => {
+    if (policy.kind === 'distinct' && lastEmitted !== undefined && policy.equals(lastEmitted.v, value)) return;
+    lastEmitted = { v: value };
+    fanOutLive(value);
+  };
+
   return {
     kind: 'replay1',
     read: () => current,
     publish: (value) => {
       if (closed) return;
-      if (policy.kind === 'distinct' && lastEmitted !== undefined && policy.equals(lastEmitted.v, value)) {
-        current = value;
+      // The slot always tracks the latest publish (read consistency), even when
+      // the emission is suppressed ({distinct}) or the fan-out is deferred.
+      current = value;
+      if (reentrancy === 'deferred') {
+        // async-append: a nested publish waits for the active fan-out to unwind,
+        // then fans out breadth-first — every subscriber sees one total order.
+        if (inFanOut) {
+          pending.push({ v: value });
+          return;
+        }
+        inFanOut = true;
+        emit(value);
+        while (pending.length > 0) {
+          const next = pending.shift();
+          if (next !== undefined) emit(next.v);
+        }
+        inFanOut = false;
         return;
       }
-      current = value;
-      lastEmitted = { v: value };
-      fanOutLive(value);
+      // synchronous (default): a nested publish recurses depth-first — pinned I5.
+      emit(value);
     },
     subscribe: (sink) => {
       if (closed) {
@@ -341,8 +378,11 @@ function modelFanout(policy: EmissionPolicy): ChannelLike {
 
 /** The reference-model channel constructors (the executable projection of I1-I8). */
 export const ModelChannel = {
-  replay1: (initial: TraceValue, policy: EmissionPolicy = EmissionPolicies.all()): ChannelLike =>
-    modelReplay1(initial, policy),
+  replay1: (
+    initial: TraceValue,
+    policy: EmissionPolicy = EmissionPolicies.all(),
+    reentrancy: ReentrancyPolicy = 'synchronous',
+  ): ChannelLike => modelReplay1(initial, policy, reentrancy),
   fanout: (policy: EmissionPolicy = EmissionPolicies.all()): ChannelLike => modelFanout(policy),
 } as const;
 

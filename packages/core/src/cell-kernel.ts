@@ -42,6 +42,25 @@
  * Effect-free by construction — the extraction that lets compositor/zap/blend/
  * live-cell shed their `effect` imports.
  *
+ * TWO ADDITIVE POLICY AXES (Wave 6), orthogonal to the replay1/fanout mode axis.
+ * Both default to the pinned laws above, so every existing caller — the Wave-2
+ * compositor `replay1`, zap/blend/crossings `fanout` — is byte-for-byte unchanged:
+ *  - {@link EmissionPolicy} `{all}` (default) | `{distinct, equals}` — whether a
+ *    publish whose value equals the previous EMITTED value is suppressed. `{all}`
+ *    is the pinned no-dedup law; `{distinct}` is Timeline's hand-rolled state
+ *    dedup made a first-class, testable capability. A suppressed publish STILL
+ *    advances the current slot (read consistency) — only the fan-out is skipped.
+ *  - {@link ReentrancyPolicy} `'synchronous'` (default) | `'deferred'` — how a
+ *    publish issued from WITHIN a fan-out is ordered. `'synchronous'` is the
+ *    pinned I5 depth-first nested fan-out (compositor parity). `'deferred'` is
+ *    the async-append (breadth-first / glitch-free) law Cell/Store adopt (Wave 6
+ *    nested-write RULING — PRESERVE the captured Effect behavior): the nested
+ *    publish is enqueued and fanned out after the active fan-out unwinds, so
+ *    every subscriber observes the same total order and every live subscriber's
+ *    terminal delivery equals `read()` (no stale-terminal glitch). It is realized
+ *    SYNCHRONOUSLY (a re-entrancy guard + FIFO drain) — no microtask, no Effect —
+ *    so the deferral is observable only in delivery ORDER, never in timing.
+ *
  * @module
  */
 
@@ -51,6 +70,32 @@
 
 /** A teardown handle returned by `subscribe`. Idempotent — a repeat call is a no-op. */
 export type Disposer = () => void;
+
+/**
+ * The emission policy — the third axis (dedup vs no-dedup), orthogonal to the
+ * replay1/fanout mode. Mirrors the reference model's `EmissionPolicy`
+ * (`tests/support/reactive-model.ts`) so the kernel and the differential oracle
+ * speak the same axis.
+ *  - `all`: deliver every publish (the pinned no-dedup law — compositor/zap).
+ *  - `distinct`: suppress a publish whose value equals the previous EMITTED value
+ *    under `equals`. The current slot still advances; only the fan-out is skipped.
+ */
+export type EmissionPolicy<T> =
+  { readonly kind: 'all' } | { readonly kind: 'distinct'; readonly equals: (a: T, b: T) => boolean };
+
+/**
+ * How a publish issued from WITHIN a fan-out (a nested/re-entrant write) is
+ * ordered relative to the outer fan-out.
+ *  - `synchronous` (default): a full nested fan-out runs depth-first before the
+ *    outer resumes — the pinned I5 law (compositor byte-parity).
+ *  - `deferred`: the nested publish is enqueued and fanned out breadth-first
+ *    after the active fan-out unwinds — the async-append / glitch-free law
+ *    Cell/Store adopt (Wave 6 nested-write ruling). Realized synchronously.
+ */
+export type ReentrancyPolicy = 'synchronous' | 'deferred';
+
+/** The default emission policy — no dedup. Shared so `replay1`/`fanout` allocate none per call. */
+const EMIT_ALL = { kind: 'all' } as const;
 
 /**
  * A subscription sink: a `next` value listener and an optional `complete`
@@ -165,18 +210,62 @@ function createCore<T>() {
 
 const NOOP_DISPOSER: Disposer = () => undefined;
 
-function replay1<T>(initial: T): CellReplayShape<T> {
+function replay1<T>(
+  initial: T,
+  policy: EmissionPolicy<T> = EMIT_ALL,
+  reentrancy: ReentrancyPolicy = 'synchronous',
+): CellReplayShape<T> {
   const core = createCore<T>();
   let current = initial;
+  // {distinct} tracks the last FANNED-OUT value, boxed so an `undefined`-typed T
+  // stays unambiguous. NEVER allocated on the {all} default (the compositor hot
+  // path): the `emit` branch below skips it entirely.
+  let lastEmitted: { readonly value: T } | undefined;
+  // {deferred} async-append state: a publish issued from within an active fan-out
+  // is enqueued here and drained FIFO after the fan-out unwinds (breadth-first).
+  let inFanOut = false;
+  const pending: { readonly value: T }[] = [];
+
+  // Fan `value` out now, honoring the emission policy. Under {all} this is a raw
+  // LIVE-Set fan-out (compositor.ts:241-246 parity — zero allocation). Under
+  // {distinct} a consecutive-equal value is NOT fanned out (the slot already
+  // advanced in `publish`).
+  const emit = (value: T): void => {
+    if (policy.kind === 'distinct') {
+      if (lastEmitted !== undefined && policy.equals(lastEmitted.value, value)) return;
+      lastEmitted = { value };
+    }
+    core.fanOutLive(value);
+  };
 
   return {
     _tag: 'CellReplay',
     read: () => current,
     publish: (value) => {
       if (core.isClosed()) return;
+      // The current-value slot always tracks the latest publish (read
+      // consistency), even when the emission is suppressed ({distinct}) or the
+      // fan-out is deferred ({deferred}).
       current = value;
-      // LIVE-Set fan-out — compositor.ts:241-246 parity (the extraction target).
-      core.fanOutLive(value);
+      if (reentrancy === 'deferred') {
+        // async-append: a nested publish waits for the active fan-out to unwind,
+        // then fans out breadth-first — every subscriber sees one total order.
+        if (inFanOut) {
+          pending.push({ value });
+          return;
+        }
+        inFanOut = true;
+        emit(value);
+        while (pending.length > 0) {
+          const next = pending.shift();
+          if (next !== undefined) emit(next.value);
+        }
+        inFanOut = false;
+        return;
+      }
+      // synchronous (default): a nested publish recurses depth-first through
+      // `emit` → fanOutLive → sink → publish — the pinned I5 reentrancy law.
+      emit(value);
     },
     subscribe: (subscriber) => {
       const sink = normalize(subscriber);
@@ -199,13 +288,19 @@ function replay1<T>(initial: T): CellReplayShape<T> {
   };
 }
 
-function fanout<T>(): CellFanoutShape<T> {
+function fanout<T>(policy: EmissionPolicy<T> = EMIT_ALL): CellFanoutShape<T> {
   const core = createCore<T>();
+  // {distinct} state — never allocated on the {all} default (zap/blend/crossings).
+  let lastEmitted: { readonly value: T } | undefined;
 
   return {
     _tag: 'CellFanout',
     publish: (value) => {
       if (core.isClosed()) return;
+      if (policy.kind === 'distinct') {
+        if (lastEmitted !== undefined && policy.equals(lastEmitted.value, value)) return;
+        lastEmitted = { value };
+      }
       // SNAPSHOT fan-out — late/mid-fan-out subscribers miss the in-flight value
       // (unbounded-PubSub fidelity).
       core.fanOutSnapshot(value);
@@ -238,9 +333,13 @@ function fanout<T>(): CellFanoutShape<T> {
  * is the strictly-simpler no-replay channel.
  */
 export const CellKernel = {
-  /** Build a replay-1 kernel seeded with `initial`. */
+  /**
+   * Build a replay-1 kernel seeded with `initial`. `policy` defaults to `{all}`
+   * (no dedup) and `reentrancy` to `'synchronous'` (the pinned I5 nested fan-out),
+   * so `replay1(initial)` is byte-for-byte the compositor extraction target.
+   */
   replay1,
-  /** Build a no-replay fan-out kernel. */
+  /** Build a no-replay fan-out kernel. `policy` defaults to `{all}` (no dedup). */
   fanout,
 } as const;
 
@@ -253,4 +352,8 @@ export declare namespace CellKernel {
   export type Sink<T> = CellSink<T>;
   /** What `subscribe` accepts — see {@link CellSubscriber}. */
   export type Subscriber<T> = CellSubscriber<T>;
+  /** The emission policy (dedup axis) — see the module-level {@link EmissionPolicy}. */
+  export type Policy<T> = EmissionPolicy<T>;
+  /** The reentrancy policy (nested-write axis) — see {@link ReentrancyPolicy}. */
+  export type Reentrancy = ReentrancyPolicy;
 }

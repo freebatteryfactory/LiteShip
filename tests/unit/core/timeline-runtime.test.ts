@@ -1,7 +1,16 @@
+// @vitest-environment jsdom
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import { Effect } from 'effect';
 import { Boundary, Millis, Scheduler, Timeline } from '@czap/core';
-import { runScopedAsync as runScoped } from '../../helpers/effect-test.js';
+
+/**
+ * Timeline<B> — Wave 6 plain CellKernel transport (Effect-free). RED-FIRST law
+ * table for the swap onto {@link CellKernel.replay1}: plain `Timeline.from` +
+ * injected `Scheduler`; `state`/`progress`/`elapsed` sync reads; play/pause/
+ * seek/scrub/reverse sync; the state channel dedups (EmissionPolicy {distinct} —
+ * the hand-rolled `newState !== oldState` guard is the product law); disposal via
+ * `Lifetime`. Behavior matches the Wave 5.5 capture
+ * (`tests/fixtures/reactive-capture/timeline.json`).
+ */
 
 const makeBoundary = () =>
   Boundary.make({
@@ -19,41 +28,30 @@ describe('Timeline runtime behavior', () => {
     vi.unstubAllGlobals();
   });
 
-  test('loops forward and backward with a fixed-step scheduler', async () => {
+  test('loops forward and backward with a fixed-step scheduler', () => {
     const scheduler = Scheduler.fixedStep(10);
+    const timeline = Timeline.from(makeBoundary(), {
+      duration: Millis(200),
+      loop: true,
+      scheduler,
+    });
 
-    const result = await runScoped(
-      Effect.gen(function* () {
-        const timeline = yield* Timeline.from(makeBoundary(), {
-          duration: Millis(200),
-          loop: true,
-          scheduler,
-        });
+    timeline.play();
+    scheduler.step();
+    scheduler.step();
 
-        yield* timeline.play();
-        yield* Effect.sync(() => {
-          scheduler.step();
-          scheduler.step();
-        });
+    timeline.reverse();
+    scheduler.step();
+    scheduler.step();
 
-        yield* timeline.reverse();
-        yield* Effect.sync(() => {
-          scheduler.step();
-          scheduler.step();
-        });
+    timeline.reverse();
+    timeline.pause();
 
-        yield* timeline.reverse();
-        yield* timeline.pause();
-
-        return {
-          elapsed: yield* timeline.elapsed,
-          progress: yield* timeline.progress,
-          state: yield* timeline.state,
-        };
-      }),
-    );
-
-    expect(result).toEqual({ elapsed: 100, progress: 0.5, state: 'active' });
+    expect({
+      elapsed: timeline.elapsed(),
+      progress: timeline.progress(),
+      state: timeline.state(),
+    }).toEqual({ elapsed: 100, progress: 0.5, state: 'active' });
   });
 
   test('uses provided duration and browser raf scheduling when no custom scheduler is passed', async () => {
@@ -73,100 +71,134 @@ describe('Timeline runtime behavior', () => {
     });
     vi.stubGlobal('cancelAnimationFrame', cancelAnimationFrameSpy);
 
-    const result = await runScoped(
-      Effect.gen(function* () {
-        const timeline = yield* Timeline.from(makeBoundary(), { duration: Millis(250) });
+    const timeline = Timeline.from(makeBoundary(), { duration: Millis(250) });
 
-        yield* Effect.sync(() => {
-          callbacks.get(1)?.(0);
-        });
-        yield* timeline.play();
-        yield* Effect.sync(() => {
-          callbacks.get(2)?.(125);
-        });
+    callbacks.get(1)?.(0);
+    timeline.play();
+    callbacks.get(2)?.(125);
 
-        return {
-          progress: yield* timeline.progress,
-          state: yield* timeline.state,
-        };
-      }),
-    );
+    expect({ progress: timeline.progress(), state: timeline.state() }).toEqual({ progress: 0.5, state: 'active' });
 
-    expect(result).toEqual({ progress: 0.5, state: 'active' });
+    // Disposal cancels the LATEST scheduled frame (the scope-bound sched.cancel of
+    // the old impl, now a Lifetime finalizer).
+    await timeline.lifetime.dispose();
     expect(cancelAnimationFrameSpy).toHaveBeenCalledWith(3);
   });
 
-  test('falls back to noop scheduling and a 1000ms duration for degenerate boundaries', async () => {
-    vi.stubGlobal('requestAnimationFrame', undefined as never);
-    vi.stubGlobal('cancelAnimationFrame', undefined as never);
+  test('falls back to noop scheduling and a 1000ms duration for degenerate boundaries', () => {
+    vi.stubGlobal('requestAnimationFrame', undefined);
+    vi.stubGlobal('cancelAnimationFrame', undefined);
 
-    const boundary = {
-      _tag: 'BoundaryDef',
-      id: 'fnv1a:degenerate',
-      input: 'time.empty',
-      thresholds: [],
-      states: ['idle'],
-    } as unknown as ReturnType<typeof makeBoundary>;
+    // A degenerate boundary with NO thresholds exercises the `duration = 1000`
+    // fallback + the noop scheduler. `Boundary.make` always yields a non-empty
+    // threshold list, so override an existing (fully-branded) boundary's
+    // thresholds to empty — evaluate then returns states[0] ('idle') for any value.
+    const boundary: ReturnType<typeof makeBoundary> = { ...makeBoundary(), thresholds: [] };
 
-    const result = await runScoped(
-      Effect.gen(function* () {
-        const timeline = yield* Timeline.from(boundary);
+    const timeline = Timeline.from(boundary);
 
-        yield* timeline.seek(Millis(1_500));
-        yield* timeline.scrub(2);
+    timeline.seek(Millis(1_500));
+    timeline.scrub(2);
 
-        return {
-          elapsed: yield* timeline.elapsed,
-          progress: yield* timeline.progress,
-          state: yield* timeline.state,
-        };
-      }),
-    );
-
-    expect(result).toEqual({ elapsed: 1_000, progress: 1, state: 'idle' });
+    expect({
+      elapsed: timeline.elapsed(),
+      progress: timeline.progress(),
+      state: timeline.state(),
+    }).toEqual({ elapsed: 1_000, progress: 1, state: 'idle' });
   });
 
-  test('derives the default duration from the final threshold when none is provided', async () => {
-    const result = await runScoped(
-      Effect.gen(function* () {
-        const timeline = yield* Timeline.from(makeBoundary());
+  test('derives the default duration from the final threshold when none is provided', () => {
+    const timeline = Timeline.from(makeBoundary());
 
-        yield* timeline.seek(Millis(400));
+    timeline.seek(Millis(400));
 
-        return {
-          elapsed: yield* timeline.elapsed,
-          progress: yield* timeline.progress,
-          state: yield* timeline.state,
-        };
-      }),
-    );
-
-    expect(result).toEqual({ elapsed: 240, progress: 1, state: 'done' });
+    expect({
+      elapsed: timeline.elapsed(),
+      progress: timeline.progress(),
+      state: timeline.state(),
+    }).toEqual({ elapsed: 240, progress: 1, state: 'done' });
   });
 
-  test('clamps seek and scrub operations while only updating state when it changes', async () => {
+  test('clamps seek and scrub operations while only updating state when it changes', () => {
     const scheduler = Scheduler.fixedStep(60);
+    const timeline = Timeline.from(makeBoundary(), {
+      duration: Millis(200),
+      scheduler,
+    });
 
-    const result = await runScoped(
-      Effect.gen(function* () {
-        const timeline = yield* Timeline.from(makeBoundary(), {
-          duration: Millis(200),
-          scheduler,
-        });
+    timeline.seek(Millis(50));
+    timeline.seek(Millis(150));
+    timeline.scrub(-1);
+    timeline.scrub(2);
 
-        yield* timeline.seek(Millis(50));
-        yield* timeline.seek(Millis(150));
-        yield* timeline.scrub(-1);
-        yield* timeline.scrub(2);
+    expect({
+      elapsed: timeline.elapsed(),
+      progress: timeline.progress(),
+      state: timeline.state(),
+    }).toEqual({ elapsed: 200, progress: 1, state: 'done' });
+  });
+});
 
-        return {
-          elapsed: yield* timeline.elapsed,
-          progress: yield* timeline.progress,
-          state: yield* timeline.state,
-        };
-      }),
-    );
+// ---------------------------------------------------------------------------
+// state channel — replay-1 subscribe + EmissionPolicy {distinct} (the product law)
+// ---------------------------------------------------------------------------
 
-    expect(result).toEqual({ elapsed: 200, progress: 1, state: 'done' });
+describe('Timeline — state channel subscribe + {distinct} dedup', () => {
+  test('subscribe replays the current state synchronously', () => {
+    const timeline = Timeline.from(makeBoundary(), { duration: Millis(200) });
+    const got: string[] = [];
+    timeline.subscribe((s) => got.push(s));
+    expect(got).toEqual(['idle']);
+  });
+
+  test('a seek into the SAME state is NOT re-published (distinct); a state change is', () => {
+    const timeline = Timeline.from(makeBoundary(), { duration: Millis(200) });
+    const got: string[] = [];
+    timeline.subscribe((s) => got.push(s));
+    timeline.seek(Millis(150)); // idle -> active (published)
+    timeline.seek(Millis(160)); // active -> active (suppressed)
+    timeline.seek(Millis(50)); // active -> idle (published)
+    expect(got).toEqual(['idle', 'active', 'idle']);
+    expect(timeline.state()).toBe('idle');
+  });
+
+  test('the FIRST publish of the initial state is suppressed (seeded {distinct})', () => {
+    const timeline = Timeline.from(makeBoundary(), { duration: Millis(200) });
+    const got: string[] = [];
+    timeline.subscribe((s) => got.push(s));
+    timeline.seek(Millis(30)); // still 'idle' — must NOT re-deliver (matches the old slot-compare guard)
+    expect(got).toEqual(['idle']);
+    expect(timeline.state()).toBe('idle');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// disposal via Lifetime
+// ---------------------------------------------------------------------------
+
+describe('Timeline — disposal via Lifetime', () => {
+  test('disposing cancels the scheduler so a later tick does not advance', () => {
+    const scheduler = Scheduler.fixedStep(10);
+    const timeline = Timeline.from(makeBoundary(), { duration: Millis(200), scheduler });
+
+    timeline.play();
+    scheduler.step(); // first tick primes lastTime (no advance)
+
+    void timeline.lifetime.dispose();
+
+    scheduler.step(); // cancelled — no callback, no advance
+    scheduler.step();
+    expect(timeline.state()).toBe('idle');
+  });
+
+  test('disposing completes state subscribers once and stops delivery', async () => {
+    const timeline = Timeline.from(makeBoundary(), { duration: Millis(200), scheduler: Scheduler.fixedStep(10) });
+    const got: string[] = [];
+    let completed = 0;
+    timeline.subscribe({ next: (s) => got.push(s), complete: () => (completed += 1) });
+    await timeline.lifetime.dispose();
+    expect(completed).toBe(1);
+    timeline.seek(Millis(150)); // inert after close (kernel closed)
+    expect(got).toEqual(['idle']);
   });
 });

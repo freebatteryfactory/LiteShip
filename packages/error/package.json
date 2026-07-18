@@ -1,6 +1,6 @@
 {
   "name": "@czap/error",
-  "version": "0.16.0",
+  "version": "0.17.0",
   "description": "The one error algebra for LiteShip: build tagged error values that work both as thrown Errors and as Effect failures, and compose your own variants on top with zero dependencies.",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",

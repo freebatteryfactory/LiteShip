@@ -8,18 +8,18 @@
 
 > `const` **LiveCell**: `object`
 
-Defined in: [core/src/live-cell.ts:189](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/live-cell.ts#L189)
+Defined in: [core/src/live-cell.ts:180](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/live-cell.ts#L180)
 
 LiveCell — bridge between the [Cell](Cell.md) reactive graph and the wire
-protocol. A `LiveCell` wraps a `Cell` with a typed [CellEnvelope](../interfaces/CellEnvelope.md) —
-kind, content address, HLC, boundary crossings — so primitives can travel
-between peers as self-describing messages.
+protocol. A `LiveCell` wraps a `Cell` with a typed [CellEnvelope](../interfaces/CellEnvelope.md) — kind,
+content address, HLC, boundary crossings — so primitives can travel between
+peers as self-describing messages.
 
 ## Type Declaration
 
 ### make
 
-> **make**: \<`K`, `T`\>(`kind`, `initial`) => `Effect`\<`LiveCellShape`\<`K`, `T`\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\> = `_make`
+> **make**: \<`K`, `T`\>(`kind`, `initial`) => `LiveCellShape`\<`K`, `T`\> = `_make`
 
 Wrap an arbitrary value in a LiveCell with freshly minted identity + HLC.
 
@@ -45,16 +45,16 @@ Wrap an arbitrary value in a LiveCell with freshly minted identity + HLC.
 
 #### Returns
 
-`Effect`\<`LiveCellShape`\<`K`, `T`\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\>
+`LiveCellShape`\<`K`, `T`\>
 
 ### makeBoundary
 
-> **makeBoundary**: \<`I`, `S`\>(`boundary`, `initial`) => `Effect`\<`LiveCellShape`\<`"boundary"`, `number`\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\> = `_makeBoundary`
+> **makeBoundary**: \<`I`, `S`\>(`boundary`, `initial`) => `LiveCellShape`\<`"boundary"`, `number`\> = `_makeBoundary`
 
 Specialized factory for boundary crossings so the envelope captures crossing metadata.
 
-Create a boundary-kind LiveCell that automatically publishes crossings
-when the numeric value transitions between boundary states.
+Create a boundary-kind LiveCell that automatically publishes crossings when the
+numeric value transitions between boundary states.
 
 #### Type Parameters
 
@@ -78,4 +78,4 @@ when the numeric value transitions between boundary states.
 
 #### Returns
 
-`Effect`\<`LiveCellShape`\<`"boundary"`, `number`\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\>
+`LiveCellShape`\<`"boundary"`, `number`\>

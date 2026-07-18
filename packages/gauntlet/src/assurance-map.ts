@@ -47,9 +47,11 @@ export interface LevelRule {
  * - **L4** — "if this lies, downstream trusts bad reality": the canonical/identity
  *   kernel (canonical/*, content-address + integrity-digest brands), the core
  *   trust spine (receipt/hlc/plan/dag/validated-output/assembly + the mixed
- *   brands file, conservatively whole until the Slice-C brand split), AND the
- *   gauntlet's own judgment core (engine/authority/waiver/gate/assurance-map/
- *   finding/assurance) — the grader that decides the cut IS the safety case.
+ *   brands file, conservatively whole until the Slice-C brand split), the REACTIVE
+ *   KERNELS (cell-kernel/cell/derived/store/signal/timeline/live-cell — the
+ *   CellKernel replay/emission/ordering value spine, Wave 6), AND the gauntlet's own
+ *   judgment core (engine/authority/waiver/gate/assurance-map/finding/assurance) —
+ *   the grader that decides the cut IS the safety case.
  * - **L3** — deterministic runtime/projection/cache AND authority-bearing tooling:
  *   the core determinism paths (signal/zap/evaluate/gen-frame/speculative/
  *   token-buffer/blend/animation/boundary + ai-cast as a deterministic proposer),
@@ -87,6 +89,20 @@ export const LITESHIP_ASSURANCE_MAP: readonly LevelRule[] = [
     glob: 'packages/core/src/{receipt,hlc,plan,dag,validated-output,assembly,brands}.ts',
     level: 'L4',
   },
+  // The REACTIVE KERNELS (Wave 6 — S5.5.1 activation). Post-migration they ARE the
+  // real reactive runtime on `CellKernel`: the replay-1 slot, the emission policy
+  // ({all}/{distinct}) dedup, the reentrancy ordering (async-append/'deferred'), and
+  // the crossing fan-out. A LYING replay/ordering/dedup is a value-graph integrity
+  // failure downstream (Derived/Store/Signal/Timeline/LiveCell + every subscriber)
+  // trusts — "if this lies, downstream trusts bad reality." Promoting them to L4
+  // scopes the mutation + transition-conformance gates onto exactly the ordering/
+  // replay/emission logic the fc.commands single-oracle model checks (a surviving
+  // ordering/replay mutant here is a MODEL HOLE). `signal` moves L4 from its former
+  // L3 (below) — it is now a CellKernel-backed value channel, not a bespoke source.
+  {
+    glob: 'packages/core/src/{cell-kernel,cell,derived,store,signal,timeline,live-cell}.ts',
+    level: 'L4',
+  },
   // The gauntlet's judgment core: it decides whether the cut may ship, so it is
   // itself part of the safety case and must clear the bar it enforces.
   {
@@ -96,7 +112,7 @@ export const LITESHIP_ASSURANCE_MAP: readonly LevelRule[] = [
 
   // ── L3: deterministic runtime/projection/cache + authority-bearing tooling ────
   {
-    glob: 'packages/core/src/{boundary,signal,zap,evaluate,gen-frame,speculative,token-buffer,blend,animation,ai-cast,clock,rng}.ts',
+    glob: 'packages/core/src/{boundary,zap,evaluate,gen-frame,speculative,token-buffer,blend,animation,ai-cast,clock,rng}.ts',
     level: 'L3',
   },
   { glob: 'packages/quantizer/src/**', level: 'L3' },

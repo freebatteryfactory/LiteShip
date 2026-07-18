@@ -9,21 +9,19 @@
 Signal namespace -- live data feeds from the browser environment.
 
 Create reactive signals from viewport, scroll, pointer, time, media query,
-audio, or custom sources. Each signal provides `.current` and `.changes`
-backed by Effect's SubscriptionRef. Scoped for automatic listener cleanup.
+audio, or custom sources. Each signal provides `.read()` and `.subscribe(sink)`
+backed by [CellKernel.replay1](../../variables/CellKernel.md#replay1), plus a [Lifetime](../../variables/Lifetime.md) for listener
+cleanup. Effect-free — consumers coordinate live state with no `effect` import.
 
 ## Example
 
 ```ts
-import { Effect } from 'effect';
 import { Signal } from '@czap/core';
 
-const program = Effect.scoped(Effect.gen(function* () {
-  const viewport = yield* Signal.make({ type: 'viewport', axis: 'width' });
-  const width = yield* viewport.current;
-  const ctrl = yield* Signal.controllable();
-  yield* ctrl.seek(500);
-}));
+const viewport = Signal.make({ type: 'viewport', axis: 'width' });
+const width = viewport.read();
+const ctrl = Signal.controllable();
+ctrl.seek(500);
 ```
 
 ## Type Aliases

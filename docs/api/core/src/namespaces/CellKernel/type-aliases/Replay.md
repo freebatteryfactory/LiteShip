@@ -8,7 +8,7 @@
 
 > **Replay**\<`T`\> = [`CellReplayShape`](../../../interfaces/CellReplayShape.md)\<`T`\>
 
-Defined in: [core/src/cell-kernel.ts:249](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts#L249)
+Defined in: [core/src/cell-kernel.ts:348](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts#L348)
 
 Live replay-1 kernel — see [CellReplayShape](../../../interfaces/CellReplayShape.md).
 

@@ -6,7 +6,7 @@
 
 # Interface: CellReplayShape\<T\>
 
-Defined in: [core/src/cell-kernel.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts#L68)
+Defined in: [core/src/cell-kernel.ts:113](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts#L113)
 
 Live replay-1 kernel: a current-value slot with synchronous replay-on-subscribe.
 
@@ -22,7 +22,7 @@ Live replay-1 kernel: a current-value slot with synchronous replay-on-subscribe.
 
 > `readonly` **\_tag**: `"CellReplay"`
 
-Defined in: [core/src/cell-kernel.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts#L69)
+Defined in: [core/src/cell-kernel.ts:114](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts#L114)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [core/src/cell-kernel.ts:69](https://github.com/freebatteryfactory/L
 
 > `readonly` **closed**: `boolean`
 
-Defined in: [core/src/cell-kernel.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts#L79)
+Defined in: [core/src/cell-kernel.ts:124](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts#L124)
 
 True once [close](#close) has run.
 
@@ -40,7 +40,7 @@ True once [close](#close) has run.
 
 > `readonly` **size**: `number`
 
-Defined in: [core/src/cell-kernel.ts:81](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts#L81)
+Defined in: [core/src/cell-kernel.ts:126](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts#L126)
 
 Current subscriber count.
 
@@ -50,7 +50,7 @@ Current subscriber count.
 
 > **close**(): `void`
 
-Defined in: [core/src/cell-kernel.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts#L77)
+Defined in: [core/src/cell-kernel.ts:122](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts#L122)
 
 Complete every subscriber exactly once and mark the kernel closed. Idempotent.
 
@@ -64,7 +64,7 @@ Complete every subscriber exactly once and mark the kernel closed. Idempotent.
 
 > **publish**(`value`): `void`
 
-Defined in: [core/src/cell-kernel.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts#L73)
+Defined in: [core/src/cell-kernel.ts:118](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts#L118)
 
 Set the current value and fan it out to every subscriber. Inert after close.
 
@@ -84,7 +84,7 @@ Set the current value and fan it out to every subscriber. Inert after close.
 
 > **read**(): `T`
 
-Defined in: [core/src/cell-kernel.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts#L71)
+Defined in: [core/src/cell-kernel.ts:116](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts#L116)
 
 The current value — the initial value until the first publish. Readable after close.
 
@@ -98,7 +98,7 @@ The current value — the initial value until the first publish. Readable after 
 
 > **subscribe**(`subscriber`): [`Disposer`](../type-aliases/Disposer.md)
 
-Defined in: [core/src/cell-kernel.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts#L75)
+Defined in: [core/src/cell-kernel.ts:120](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts#L120)
 
 Replay the current value to `subscriber`, then register it. Returns its [Disposer](../type-aliases/Disposer.md).
 

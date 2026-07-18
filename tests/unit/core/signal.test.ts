@@ -1,8 +1,17 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { Effect } from 'effect';
 import { AVBridge, Signal } from '@czap/core';
-import { runScopedAsync as runScoped } from '../../helpers/effect-test.js';
+
+/**
+ * Signal — Wave 6 plain CellKernel transport (Effect-free). RED-FIRST law table
+ * for the swap onto {@link CellKernel.replay1}: plain factories (`Signal.make`/
+ * `controllable`/`audio`) returning a `{ read, subscribe, lifetime }` handle;
+ * `current` (Effect) → sync `read()`; `changes` (Stream) → `subscribe(sink)`;
+ * `seek`/`pause`/`resume`/`poll` sync; DOM/rAF/interval listeners publish directly
+ * and their teardown is owned by the `Lifetime` (asserted via `lifetime.dispose()`).
+ * `Signal.audio`'s eager-throw is preserved. Value behavior matches the Wave 5.5
+ * capture (`tests/fixtures/reactive-capture/signal.json`).
+ */
 
 describe('Signal.make', () => {
   beforeEach(() => {
@@ -19,170 +28,101 @@ describe('Signal.make', () => {
     vi.useRealTimers();
   });
 
-  test('tracks viewport width changes', async () => {
-    const value = await runScoped(
-      Effect.gen(function* () {
-        const signal = yield* Signal.make({ type: 'viewport', axis: 'width' });
-        return yield* signal.current;
-      }),
-    );
-
-    expect(value).toBe(800);
+  test('tracks viewport width changes', () => {
+    const signal = Signal.make({ type: 'viewport', axis: 'width' });
+    expect(signal.read()).toBe(800);
   });
 
   test('tracks viewport height resize events and cleans up the listener', async () => {
     const removeListener = vi.spyOn(window, 'removeEventListener');
 
-    const value = await runScoped(
-      Effect.gen(function* () {
-        const signal = yield* Signal.make({ type: 'viewport', axis: 'height' });
+    const signal = Signal.make({ type: 'viewport', axis: 'height' });
+    Object.defineProperty(window, 'innerHeight', { value: 720, configurable: true });
+    window.dispatchEvent(new Event('resize'));
 
-        yield* Effect.promise(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
+    expect(signal.read()).toBe(720);
 
-        yield* Effect.sync(() => {
-          Object.defineProperty(window, 'innerHeight', { value: 720, configurable: true });
-          window.dispatchEvent(new Event('resize'));
-        });
-
-        return yield* signal.current;
-      }),
-    );
-
-    expect(value).toBe(720);
+    await signal.lifetime.dispose();
     expect(removeListener).toHaveBeenCalledWith('resize', expect.any(Function));
   });
 
-  test('tracks viewport width resize events through the width branch', async () => {
-    const value = await runScoped(
-      Effect.gen(function* () {
-        const signal = yield* Signal.make({ type: 'viewport', axis: 'width' });
+  test('tracks viewport width resize events through the width branch', () => {
+    const signal = Signal.make({ type: 'viewport', axis: 'width' });
+    Object.defineProperty(window, 'innerWidth', { value: 1024, configurable: true });
+    window.dispatchEvent(new Event('resize'));
 
-        yield* Effect.promise(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
-
-        yield* Effect.sync(() => {
-          Object.defineProperty(window, 'innerWidth', { value: 1024, configurable: true });
-          window.dispatchEvent(new Event('resize'));
-        });
-
-        return yield* signal.current;
-      }),
-    );
-
-    expect(value).toBe(1024);
+    expect(signal.read()).toBe(1024);
   });
 
-  test('computes scroll progress and reacts to scroll events', async () => {
+  test('computes scroll progress and reacts to scroll events', () => {
     Object.defineProperty(document.documentElement, 'scrollHeight', { value: 2000, configurable: true });
     Object.defineProperty(window, 'innerHeight', { value: 1000, configurable: true });
+    Object.defineProperty(window, 'scrollY', { value: 250, configurable: true });
 
-    const value = await runScoped(
-      Effect.gen(function* () {
-        Object.defineProperty(window, 'scrollY', { value: 250, configurable: true });
-        const signal = yield* Signal.make({ type: 'scroll', axis: 'progress' });
-        return yield* signal.current;
-      }),
-    );
-
-    expect(value).toBeCloseTo(0.25);
+    const signal = Signal.make({ type: 'scroll', axis: 'progress' });
+    expect(signal.read()).toBeCloseTo(0.25);
   });
 
-  test('tracks scroll axes and zero-progress ranges', async () => {
+  test('tracks scroll axes and zero-progress ranges', () => {
     Object.defineProperty(document.documentElement, 'scrollHeight', { value: 600, configurable: true });
     Object.defineProperty(window, 'innerHeight', { value: 600, configurable: true });
 
-    const values = await runScoped(
-      Effect.gen(function* () {
-        const xSignal = yield* Signal.make({ type: 'scroll', axis: 'x' });
-        const ySignal = yield* Signal.make({ type: 'scroll', axis: 'y' });
-        const progressSignal = yield* Signal.make({ type: 'scroll', axis: 'progress' });
+    const xSignal = Signal.make({ type: 'scroll', axis: 'x' });
+    const ySignal = Signal.make({ type: 'scroll', axis: 'y' });
+    const progressSignal = Signal.make({ type: 'scroll', axis: 'progress' });
 
-        yield* Effect.promise(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
+    Object.defineProperty(window, 'scrollX', { value: 120, configurable: true });
+    Object.defineProperty(window, 'scrollY', { value: 240, configurable: true });
+    window.dispatchEvent(new Event('scroll'));
 
-        yield* Effect.sync(() => {
-          Object.defineProperty(window, 'scrollX', { value: 120, configurable: true });
-          Object.defineProperty(window, 'scrollY', { value: 240, configurable: true });
-          window.dispatchEvent(new Event('scroll'));
-        });
-
-        return {
-          x: yield* xSignal.current,
-          y: yield* ySignal.current,
-          progress: yield* progressSignal.current,
-        };
-      }),
-    );
-
-    expect(values).toEqual({ x: 120, y: 240, progress: 0 });
+    expect({ x: xSignal.read(), y: ySignal.read(), progress: progressSignal.read() }).toEqual({
+      x: 120,
+      y: 240,
+      progress: 0,
+    });
   });
 
-  test('updates scroll progress through the positive-range event path', async () => {
+  test('updates scroll progress through the positive-range event path', () => {
     Object.defineProperty(document.documentElement, 'scrollHeight', { value: 2000, configurable: true });
     Object.defineProperty(window, 'innerHeight', { value: 1000, configurable: true });
 
-    const value = await runScoped(
-      Effect.gen(function* () {
-        const signal = yield* Signal.make({ type: 'scroll', axis: 'progress' });
+    const signal = Signal.make({ type: 'scroll', axis: 'progress' });
+    Object.defineProperty(window, 'scrollY', { value: 500, configurable: true });
+    window.dispatchEvent(new Event('scroll'));
 
-        yield* Effect.promise(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
-        yield* Effect.sync(() => {
-          Object.defineProperty(window, 'scrollY', { value: 500, configurable: true });
-          window.dispatchEvent(new Event('scroll'));
-        });
-
-        return yield* signal.current;
-      }),
-    );
-
-    expect(value).toBeCloseTo(0.5);
+    expect(signal.read()).toBeCloseTo(0.5);
   });
 
-  test('tracks pointer updates', async () => {
-    const value = await runScoped(
-      Effect.gen(function* () {
-        const signal = yield* Signal.make({ type: 'pointer', axis: 'pressure' });
-        return yield* signal.current;
-      }),
-    );
-
-    expect(value).toBe(0);
+  test('tracks pointer updates', () => {
+    const signal = Signal.make({ type: 'pointer', axis: 'pressure' });
+    expect(signal.read()).toBe(0);
   });
 
   test('tracks pointer axes and cleans up pointer listeners', async () => {
     const removeListener = vi.spyOn(window, 'removeEventListener');
 
-    const values = await runScoped(
-      Effect.gen(function* () {
-        const xSignal = yield* Signal.make({ type: 'pointer', axis: 'x' });
-        const ySignal = yield* Signal.make({ type: 'pointer', axis: 'y' });
-        const pressureSignal = yield* Signal.make({ type: 'pointer', axis: 'pressure' });
+    const xSignal = Signal.make({ type: 'pointer', axis: 'x' });
+    const ySignal = Signal.make({ type: 'pointer', axis: 'y' });
+    const pressureSignal = Signal.make({ type: 'pointer', axis: 'pressure' });
 
-        yield* Effect.promise(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
+    const event = new MouseEvent('pointermove', { clientX: 48, clientY: 96 });
+    Object.defineProperty(event, 'pressure', { value: 0.75, configurable: true });
+    window.dispatchEvent(event);
 
-        yield* Effect.sync(() => {
-          const event = new MouseEvent('pointermove', { clientX: 48, clientY: 96 });
-          Object.defineProperty(event, 'pressure', { value: 0.75, configurable: true });
-          window.dispatchEvent(event);
-        });
+    expect({ x: xSignal.read(), y: ySignal.read(), pressure: pressureSignal.read() }).toEqual({
+      x: 48,
+      y: 96,
+      pressure: 0.75,
+    });
 
-        return {
-          x: yield* xSignal.current,
-          y: yield* ySignal.current,
-          pressure: yield* pressureSignal.current,
-        };
-      }),
-    );
-
-    expect(values).toEqual({ x: 48, y: 96, pressure: 0.75 });
+    await xSignal.lifetime.dispose();
     expect(removeListener).toHaveBeenCalledWith('pointermove', expect.any(Function));
   });
 
-  test('tracks media-query changes', async () => {
-    const listeners: Array<(event: MediaQueryListEvent) => void> = [];
+  test('tracks media-query changes', () => {
     const mql = {
       matches: false,
-      addEventListener: (_type: string, listener: (event: MediaQueryListEvent) => void) => {
-        listeners.push(listener);
-      },
+      addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
     };
 
@@ -191,14 +131,8 @@ describe('Signal.make', () => {
       value: vi.fn(() => mql),
     });
 
-    const value = await runScoped(
-      Effect.gen(function* () {
-        const signal = yield* Signal.make({ type: 'media', query: '(prefers-reduced-motion: reduce)' });
-        return yield* signal.current;
-      }),
-    );
-
-    expect(value).toBe(0);
+    const signal = Signal.make({ type: 'media', query: '(prefers-reduced-motion: reduce)' });
+    expect(signal.read()).toBe(0);
   });
 
   test('tracks media-query listeners through match changes and cleanup', async () => {
@@ -216,25 +150,17 @@ describe('Signal.make', () => {
       value: vi.fn(() => mql),
     });
 
-    const value = await runScoped(
-      Effect.gen(function* () {
-        const signal = yield* Signal.make({ type: 'media', query: '(prefers-color-scheme: dark)' });
+    const signal = Signal.make({ type: 'media', query: '(prefers-color-scheme: dark)' });
+    changeListener?.({ matches: false } as MediaQueryListEvent);
 
-        yield* Effect.promise(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
-        yield* Effect.sync(() => {
-          changeListener?.({ matches: false } as MediaQueryListEvent);
-        });
-
-        return yield* signal.current;
-      }),
-    );
-
-    expect(value).toBe(0);
+    expect(signal.read()).toBe(0);
     expect(mql.addEventListener).toHaveBeenCalledWith('change', expect.any(Function));
+
+    await signal.lifetime.dispose();
     expect(mql.removeEventListener).toHaveBeenCalledWith('change', expect.any(Function));
   });
 
-  test('covers additional initial branches for viewport height, scroll axes, and matching media queries', async () => {
+  test('covers additional initial branches for viewport height, scroll axes, and matching media queries', () => {
     Object.defineProperty(window, 'innerHeight', { value: 640, configurable: true });
     Object.defineProperty(window, 'scrollX', { value: 32, configurable: true });
     Object.defineProperty(window, 'scrollY', { value: 96, configurable: true });
@@ -249,53 +175,35 @@ describe('Signal.make', () => {
       })),
     });
 
-    const values = await runScoped(
-      Effect.gen(function* () {
-        const viewport = yield* Signal.make({ type: 'viewport', axis: 'height' });
-        const scrollX = yield* Signal.make({ type: 'scroll', axis: 'x' });
-        const scrollY = yield* Signal.make({ type: 'scroll', axis: 'y' });
-        const media = yield* Signal.make({ type: 'media', query: '(prefers-contrast: more)' });
+    const viewport = Signal.make({ type: 'viewport', axis: 'height' });
+    const scrollX = Signal.make({ type: 'scroll', axis: 'x' });
+    const scrollY = Signal.make({ type: 'scroll', axis: 'y' });
+    const media = Signal.make({ type: 'media', query: '(prefers-contrast: more)' });
 
-        return {
-          viewport: yield* viewport.current,
-          scrollX: yield* scrollX.current,
-          scrollY: yield* scrollY.current,
-          media: yield* media.current,
-        };
-      }),
-    );
-
-    expect(values).toEqual({ viewport: 640, scrollX: 32, scrollY: 96, media: 1 });
+    expect({
+      viewport: viewport.read(),
+      scrollX: scrollX.read(),
+      scrollY: scrollY.read(),
+      media: media.read(),
+    }).toEqual({ viewport: 640, scrollX: 32, scrollY: 96, media: 1 });
   });
 
-  test('updates absolute time signals on their interval', async () => {
+  test('updates absolute time signals on their interval', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-01-01T00:00:00Z'));
 
-    const values = await runScoped(
-      Effect.gen(function* () {
-        const signal = yield* Signal.make({ type: 'time', mode: 'absolute' });
-        const initial = yield* signal.current;
+    const signal = Signal.make({ type: 'time', mode: 'absolute' });
+    const initial = signal.read();
 
-        yield* Effect.sync(() => {
-          vi.advanceTimersByTime(1000);
-        });
+    vi.advanceTimersByTime(1000);
 
-        return [initial, yield* signal.current] as const;
-      }),
-    );
-
-    expect(values[1]).toBe(values[0]! + 1000);
+    expect(signal.read()).toBe(initial + 1000);
   });
 
   test('updates elapsed time signals with requestAnimationFrame and cancels the latest frame on cleanup', async () => {
     const callbacks = new Map<number, FrameRequestCallback>();
     let nextId = 1;
-    let releaseSetup: (() => void) | undefined;
     let currentTime = 1_000;
-    const ready = new Promise<void>((resolve) => {
-      releaseSetup = resolve;
-    });
 
     vi.spyOn(Date, 'now').mockImplementation(() => currentTime);
 
@@ -311,98 +219,51 @@ describe('Signal.make', () => {
     vi.stubGlobal('requestAnimationFrame', requestAnimationFrameSpy);
     vi.stubGlobal('cancelAnimationFrame', cancelAnimationFrameSpy);
 
-    const elapsedPromise = runScoped(
-      Effect.gen(function* () {
-        const signal = yield* Signal.make({ type: 'time', mode: 'elapsed' });
+    // Listeners attach synchronously in make(): the rAF loop is armed immediately.
+    const signal = Signal.make({ type: 'time', mode: 'elapsed' });
 
-        yield* Effect.promise(() => ready);
-        yield* Effect.sync(() => {
-          currentTime = 1_000;
-          callbacks.get(1)?.(1_000);
-          currentTime = 1_060;
-          callbacks.get(2)?.(1_060);
-        });
+    currentTime = 1_000;
+    callbacks.get(1)?.(1_000);
+    currentTime = 1_060;
+    callbacks.get(2)?.(1_060);
 
-        return yield* signal.current;
-      }),
-    );
-
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    releaseSetup?.();
-
-    const elapsed = await elapsedPromise;
-
-    expect(elapsed).toBe(60);
+    expect(signal.read()).toBe(60);
     expect(requestAnimationFrameSpy).toHaveBeenCalledTimes(3);
+
+    await signal.lifetime.dispose();
     expect(cancelAnimationFrameSpy).toHaveBeenCalledWith(3);
   });
 
-  test('leaves elapsed time signals inert when requestAnimationFrame is unavailable', async () => {
-    vi.stubGlobal('requestAnimationFrame', undefined as never);
+  test('leaves elapsed time signals inert when requestAnimationFrame is unavailable', () => {
+    vi.stubGlobal('requestAnimationFrame', undefined);
 
-    const elapsed = await runScoped(
-      Effect.gen(function* () {
-        const signal = yield* Signal.make({ type: 'time', mode: 'elapsed' });
-        return yield* signal.current;
-      }),
-    );
-
-    expect(elapsed).toBe(0);
+    const signal = Signal.make({ type: 'time', mode: 'elapsed' });
+    expect(signal.read()).toBe(0);
   });
 
-  test('leaves scheduled time signals under external control', async () => {
-    const current = await runScoped(
-      Effect.gen(function* () {
-        const signal = yield* Signal.make({ type: 'time', mode: 'scheduled' });
-        return yield* signal.current;
-      }),
-    );
-
-    expect(current).toBe(0);
+  test('leaves scheduled time signals under external control', () => {
+    const signal = Signal.make({ type: 'time', mode: 'scheduled' });
+    expect(signal.read()).toBe(0);
   });
 
-  test('returns the default value for custom signals', async () => {
-    const current = await runScoped(
-      Effect.gen(function* () {
-        const signal = yield* Signal.make({ type: 'custom', id: 'search-query' });
-        return yield* signal.current;
-      }),
-    );
-
-    expect(current).toBe(0);
+  test('returns the default value for custom signals', () => {
+    const signal = Signal.make({ type: 'custom', id: 'search-query' });
+    expect(signal.read()).toBe(0);
   });
 
-  test('returns the default value for audio source placeholders', async () => {
-    const current = await runScoped(
-      Effect.gen(function* () {
-        const signal = yield* Signal.make({ type: 'audio', mode: 'normalized' });
-        return yield* signal.current;
-      }),
-    );
-
-    expect(current).toBe(0);
+  test('returns the default value for audio source placeholders', () => {
+    const signal = Signal.make({ type: 'audio', mode: 'normalized' });
+    expect(signal.read()).toBe(0);
   });
 
-  test('runs scheduled, custom, and audio setup paths without attaching browser listeners', async () => {
+  test('runs scheduled, custom, and audio setup paths without attaching browser listeners', () => {
     const addListener = vi.spyOn(window, 'addEventListener');
 
-    const values = await runScoped(
-      Effect.gen(function* () {
-        const scheduled = yield* Signal.make({ type: 'time', mode: 'scheduled' });
-        const custom = yield* Signal.make({ type: 'custom', id: 'runtime-mode' });
-        const audio = yield* Signal.make({ type: 'audio', mode: 'sample' });
+    const scheduled = Signal.make({ type: 'time', mode: 'scheduled' });
+    const custom = Signal.make({ type: 'custom', id: 'runtime-mode' });
+    const audio = Signal.make({ type: 'audio', mode: 'sample' });
 
-        yield* Effect.promise(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
-
-        return {
-          scheduled: yield* scheduled.current,
-          custom: yield* custom.current,
-          audio: yield* audio.current,
-        };
-      }),
-    );
-
-    expect(values).toEqual({
+    expect({ scheduled: scheduled.read(), custom: custom.read(), audio: audio.read() }).toEqual({
       scheduled: 0,
       custom: 0,
       audio: 0,
@@ -412,7 +273,7 @@ describe('Signal.make', () => {
     expect(addListener).not.toHaveBeenCalledWith('pointermove', expect.any(Function));
   });
 
-  test('gracefully leaves browser-driven signals inert when window is unavailable', async () => {
+  test('gracefully leaves browser-driven signals inert when window is unavailable', () => {
     const originalWindow = globalThis.window;
     const originalDocument = globalThis.document;
 
@@ -420,32 +281,24 @@ describe('Signal.make', () => {
     vi.stubGlobal('document', undefined);
 
     try {
-      const values = await runScoped(
-        Effect.gen(function* () {
-          const viewport = yield* Signal.make({ type: 'viewport', axis: 'width' });
-          const scroll = yield* Signal.make({ type: 'scroll', axis: 'progress' });
-          const pointer = yield* Signal.make({ type: 'pointer', axis: 'pressure' });
-          const media = yield* Signal.make({ type: 'media', query: '(prefers-color-scheme: dark)' });
+      const viewport = Signal.make({ type: 'viewport', axis: 'width' });
+      const scroll = Signal.make({ type: 'scroll', axis: 'progress' });
+      const pointer = Signal.make({ type: 'pointer', axis: 'pressure' });
+      const media = Signal.make({ type: 'media', query: '(prefers-color-scheme: dark)' });
 
-          yield* Effect.promise(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
-
-          return {
-            viewport: yield* viewport.current,
-            scroll: yield* scroll.current,
-            pointer: yield* pointer.current,
-            media: yield* media.current,
-          };
-        }),
-      );
-
-      expect(values).toEqual({ viewport: 0, scroll: 0, pointer: 0, media: 0 });
+      expect({
+        viewport: viewport.read(),
+        scroll: scroll.read(),
+        pointer: pointer.read(),
+        media: media.read(),
+      }).toEqual({ viewport: 0, scroll: 0, pointer: 0, media: 0 });
     } finally {
       vi.stubGlobal('window', originalWindow);
       vi.stubGlobal('document', originalDocument);
     }
   });
 
-  test('covers no-window setup branches and positive media transitions with explicit listener setup', async () => {
+  test('covers no-window setup branches and positive media transitions with explicit listener setup', () => {
     const originalWindow = globalThis.window;
     const originalDocument = globalThis.document;
 
@@ -453,25 +306,17 @@ describe('Signal.make', () => {
     vi.stubGlobal('document', undefined);
 
     try {
-      const inert = await runScoped(
-        Effect.gen(function* () {
-          const viewport = yield* Signal.make({ type: 'viewport', axis: 'height' });
-          const scroll = yield* Signal.make({ type: 'scroll', axis: 'x' });
-          const pointer = yield* Signal.make({ type: 'pointer', axis: 'x' });
-          const media = yield* Signal.make({ type: 'media', query: '(prefers-reduced-motion: reduce)' });
+      const viewport = Signal.make({ type: 'viewport', axis: 'height' });
+      const scroll = Signal.make({ type: 'scroll', axis: 'x' });
+      const pointer = Signal.make({ type: 'pointer', axis: 'x' });
+      const media = Signal.make({ type: 'media', query: '(prefers-reduced-motion: reduce)' });
 
-          yield* Effect.promise(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
-
-          return {
-            viewport: yield* viewport.current,
-            scroll: yield* scroll.current,
-            pointer: yield* pointer.current,
-            media: yield* media.current,
-          };
-        }),
-      );
-
-      expect(inert).toEqual({ viewport: 0, scroll: 0, pointer: 0, media: 0 });
+      expect({
+        viewport: viewport.read(),
+        scroll: scroll.read(),
+        pointer: pointer.read(),
+        media: media.read(),
+      }).toEqual({ viewport: 0, scroll: 0, pointer: 0, media: 0 });
     } finally {
       vi.stubGlobal('window', originalWindow);
       vi.stubGlobal('document', originalDocument);
@@ -491,20 +336,10 @@ describe('Signal.make', () => {
       value: vi.fn(() => mql),
     });
 
-    const value = await runScoped(
-      Effect.gen(function* () {
-        const signal = yield* Signal.make({ type: 'media', query: '(prefers-contrast: more)' });
+    const signal = Signal.make({ type: 'media', query: '(prefers-contrast: more)' });
+    changeListener?.({ matches: true } as MediaQueryListEvent);
 
-        yield* Effect.promise(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
-        yield* Effect.sync(() => {
-          changeListener?.({ matches: true } as MediaQueryListEvent);
-        });
-
-        return yield* signal.current;
-      }),
-    );
-
-    expect(value).toBe(1);
+    expect(signal.read()).toBe(1);
   });
 });
 
@@ -515,21 +350,48 @@ describe('Signal.make time-elapsed', () => {
     vi.useRealTimers();
   });
 
-  test('time-elapsed signal starts a requestAnimationFrame loop and cleans up on scope close', async () => {
+  test('time-elapsed signal starts a requestAnimationFrame loop and cleans up on dispose', async () => {
     const rafSpy = vi.spyOn(globalThis, 'requestAnimationFrame');
     const cafSpy = vi.spyOn(globalThis, 'cancelAnimationFrame');
 
-    const value = await runScoped(
-      Effect.gen(function* () {
-        const signal = yield* Signal.make({ type: 'time', mode: 'elapsed' });
-        yield* Effect.promise(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
-        return yield* signal.current;
-      }),
-    );
+    const signal = Signal.make({ type: 'time', mode: 'elapsed' });
 
-    expect(value).toBeGreaterThanOrEqual(0);
+    expect(signal.read()).toBeGreaterThanOrEqual(0);
     expect(rafSpy).toHaveBeenCalled();
+
+    await signal.lifetime.dispose();
     expect(cafSpy).toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// subscribe — replay-1 + emit-every-set on the value channel ({all})
+// ---------------------------------------------------------------------------
+
+describe('Signal.controllable — subscribe replays + emits every seek ({all})', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  test('subscribe replays the current value; every seek fans out (no dedup)', () => {
+    const signal = Signal.controllable();
+    const got: number[] = [];
+    signal.subscribe((v) => got.push(v));
+    signal.seek(7);
+    signal.seek(7);
+    signal.seek(7);
+    expect(got).toEqual([0, 7, 7, 7]);
+    expect(signal.read()).toBe(7);
+  });
+
+  test('a late subscriber replays only the latest value', () => {
+    const signal = Signal.controllable();
+    signal.seek(3);
+    signal.seek(5);
+    const got: number[] = [];
+    signal.subscribe((v) => got.push(v));
+    expect(got).toEqual([5]);
   });
 });
 
@@ -539,55 +401,48 @@ describe('Signal.controllable', () => {
     vi.unstubAllGlobals();
   });
 
-  test('seek, pause, and resume control scheduled time updates', async () => {
-    const current = await runScoped(
-      Effect.gen(function* () {
-        const signal = yield* Signal.controllable();
+  test('seek, pause, and resume control scheduled time updates', () => {
+    const signal = Signal.controllable();
 
-        yield* signal.seek(100);
-        yield* signal.pause();
-        yield* signal.seek(200);
-        yield* signal.resume();
-        yield* signal.seek(300);
+    signal.seek(100);
+    signal.pause();
+    signal.seek(200); // ignored while paused
+    signal.resume();
+    signal.seek(300);
 
-        return yield* signal.current;
-      }),
-    );
+    expect(signal.read()).toBe(300);
+  });
 
-    expect(current).toBe(300);
+  test('a seek issued while paused does not fan out to subscribers', () => {
+    const signal = Signal.controllable();
+    const got: number[] = [];
+    signal.subscribe((v) => got.push(v));
+    signal.pause();
+    signal.seek(5); // ignored
+    signal.resume();
+    signal.seek(6);
+    expect(got).toEqual([0, 6]);
   });
 });
 
 describe('Signal.audio', () => {
-  test('poll returns the raw sample count in sample mode', async () => {
+  test('poll returns the raw sample count in sample mode', () => {
     const bridge = AVBridge.make({ sampleRate: 48_000, fps: 60 });
     bridge.advanceSamples(2400);
 
-    const value = await runScoped(
-      Effect.gen(function* () {
-        const signal = yield* Signal.audio(bridge);
-        return yield* signal.poll();
-      }),
-    );
-
-    expect(value).toBe(2400);
+    const signal = Signal.audio(bridge);
+    expect(signal.poll()).toBe(2400);
   });
 
-  test('poll normalizes audio progress against total duration', async () => {
+  test('poll normalizes audio progress against total duration', () => {
     const bridge = AVBridge.make({ sampleRate: 48_000, fps: 60 });
     bridge.advanceSamples(24_000);
 
-    const value = await runScoped(
-      Effect.gen(function* () {
-        const signal = yield* Signal.audio(bridge, 'normalized', 1);
-        return yield* signal.poll();
-      }),
-    );
-
-    expect(value).toBeCloseTo(0.5);
+    const signal = Signal.audio(bridge, 'normalized', 1);
+    expect(signal.poll()).toBeCloseTo(0.5);
   });
 
-  test('normalized mode without a positive totalDurationSec throws instead of degrading', () => {
+  test('normalized mode without a positive totalDurationSec throws SYNCHRONOUSLY (eager-throw preserved)', () => {
     const bridge = AVBridge.make({ sampleRate: 48_000, fps: 60 });
 
     expect(() => Signal.audio(bridge, 'normalized')).toThrow(/totalDurationSec/);

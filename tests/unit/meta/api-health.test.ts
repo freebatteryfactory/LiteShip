@@ -72,13 +72,13 @@ const API_REGISTRY: Record<string, { methods: string[]; values?: string[] }> = {
   // core barrel alongside this removal.
 
   // ── Reactive primitives ───────────────────────────────────────────
-  Cell: { methods: ['make', 'fromStream', 'all', 'map'] },
-  Derived: { methods: ['make', 'combine', 'map', 'flatten'] },
+  Cell: { methods: ['make'] },
+  Derived: { methods: ['make', 'combine'] },
   Zap: { methods: ['make', 'fromDOMEvent', 'merge', 'map', 'filter', 'debounce', 'throttle'] },
   // `Wire` (the fluent Effect-Stream wrapper) was DELETED this wave — 100%
   // transport, zero runtime consumers (the web/astro `wire` is the unrelated
   // czap:* event registry). `isWire` + the Wire arm of `Primitive` left with it.
-  Store: { methods: ['make', 'makeWithEffect'] },
+  Store: { methods: ['make'] },
   LiveCell: { methods: ['make', 'makeBoundary'] },
 
   // ── Schema kernel + disposal/reactive substrate (Wave 0 foundations) ──
@@ -136,7 +136,7 @@ const API_REGISTRY: Record<string, { methods: string[]; values?: string[] }> = {
     ],
   },
   HLC: {
-    methods: ['create', 'compare', 'increment', 'merge', 'encode', 'decode', 'makeClock', 'tick', 'receive'],
+    methods: ['create', 'compare', 'increment', 'merge', 'encode', 'decode', 'makeClock'],
   },
   VectorClock: {
     methods: [

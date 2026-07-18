@@ -6,9 +6,10 @@
 
 # Derived
 
-Derived — read-only reactive view computed from upstream [Cell](../../variables/Cell.md)s.
-A `Derived` recomputes lazily and pushes the new value into its own stream
-when any dependency changes; composes via `combine`, `map`, and `flatten`.
+Derived — read-only reactive view computed from upstream sources, on
+[CellKernel.replay1](../../variables/CellKernel.md#replay1). Recomputes lazily on any source change and
+republishes to its own subscribers; compose via `make` (factory + triggers) or
+`combine` (tuple of readable sources).
 
 ## Type Aliases
 

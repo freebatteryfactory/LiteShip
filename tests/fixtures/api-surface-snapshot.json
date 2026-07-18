@@ -2,7 +2,7 @@
   "snapshotFormat": 1,
   "packages": {
     "@czap/assets": {
-      "version": "0.16.0",
+      "version": "0.17.0",
       "exports": [
         {
           "name": "AssetRegistry",
@@ -92,7 +92,7 @@
       ]
     },
     "@czap/astro": {
-      "version": "0.16.0",
+      "version": "0.17.0",
       "exports": [
         {
           "name": "applyResponsiveMediaVary",
@@ -187,7 +187,7 @@
       ]
     },
     "@czap/audit": {
-      "version": "0.16.0",
+      "version": "0.17.0",
       "exports": [
         {
           "name": "ACTIVE_SURFACE_ORACLE_ID",
@@ -578,7 +578,7 @@
       ]
     },
     "@czap/canonical": {
-      "version": "0.16.0",
+      "version": "0.17.0",
       "exports": [
         {
           "name": "AddressedDigest",
@@ -623,7 +623,7 @@
       ]
     },
     "@czap/cli": {
-      "version": "0.16.0",
+      "version": "0.17.0",
       "exports": [
         {
           "name": "run",
@@ -633,7 +633,7 @@
       ]
     },
     "@czap/cloudflare": {
-      "version": "0.16.0",
+      "version": "0.17.0",
       "exports": [
         {
           "name": "cloudflareAdapterCapsule",
@@ -657,7 +657,7 @@
       ]
     },
     "@czap/command": {
-      "version": "0.16.0",
+      "version": "0.17.0",
       "exports": [
         {
           "name": "AUDIT_WARNING_FLOOR",
@@ -899,7 +899,7 @@
       ]
     },
     "@czap/compiler": {
-      "version": "0.16.0",
+      "version": "0.17.0",
       "exports": [
         {
           "name": "AIManifestCompiler",
@@ -1014,7 +1014,7 @@
       ]
     },
     "@czap/core": {
-      "version": "0.16.0",
+      "version": "0.17.0",
       "exports": [
         {
           "name": "AICast",
@@ -1090,7 +1090,7 @@
         {
           "name": "Cell",
           "kind": "namespace",
-          "signature": "all:function,fromStream:function,make:function,map:function"
+          "signature": "make:function"
         },
         {
           "name": "CellKernel",
@@ -1157,7 +1157,7 @@
         {
           "name": "Derived",
           "kind": "namespace",
-          "signature": "combine:function,flatten:function,make:function,map:function"
+          "signature": "combine:function,make:function"
         },
         {
           "name": "Diagnostics",
@@ -1213,7 +1213,7 @@
         {
           "name": "HLC",
           "kind": "namespace",
-          "signature": "compare:function,create:function,decode:function,encode:function,increment:function,makeClock:function,merge:function,receive:function,tick:function"
+          "signature": "compare:function,create:function,decode:function,encode:function,increment:function,makeClock:function,merge:function"
         },
         {
           "name": "IntegrityDigest",
@@ -1360,7 +1360,7 @@
         {
           "name": "Store",
           "kind": "namespace",
-          "signature": "make:function,makeWithEffect:function"
+          "signature": "make:function"
         },
         {
           "name": "Style",
@@ -2010,7 +2010,7 @@
       ]
     },
     "@czap/detect": {
-      "version": "0.16.0",
+      "version": "0.17.0",
       "exports": [
         {
           "name": "CAP_AXES",
@@ -2110,7 +2110,7 @@
       ]
     },
     "@czap/edge": {
-      "version": "0.16.0",
+      "version": "0.17.0",
       "exports": [
         {
           "name": "ClientHints",
@@ -2188,7 +2188,7 @@
       ]
     },
     "@czap/error": {
-      "version": "0.16.0",
+      "version": "0.17.0",
       "exports": [
         {
           "name": "HostCapabilityError",
@@ -2297,7 +2297,7 @@
       ]
     },
     "@czap/gauntlet": {
-      "version": "0.16.0",
+      "version": "0.17.0",
       "exports": [
         {
           "name": "ABSENT_SUFFIX",
@@ -2960,7 +2960,7 @@
       ]
     },
     "@czap/genui": {
-      "version": "0.16.0",
+      "version": "0.17.0",
       "exports": [
         {
           "name": "ContentAddress",
@@ -3004,7 +3004,7 @@
       ]
     },
     "@czap/mcp-server": {
-      "version": "0.16.0",
+      "version": "0.17.0",
       "exports": [
         {
           "name": "APPLY_PATCH_COMMAND",
@@ -3217,7 +3217,7 @@
       ]
     },
     "@czap/quantizer": {
-      "version": "0.16.0",
+      "version": "0.17.0",
       "exports": [
         {
           "name": "AnimatedQuantizer",
@@ -3247,7 +3247,7 @@
       ]
     },
     "@czap/remotion": {
-      "version": "0.16.0",
+      "version": "0.17.0",
       "exports": [
         {
           "name": "Provider",
@@ -3301,7 +3301,7 @@
       ]
     },
     "@czap/scene": {
-      "version": "0.16.0",
+      "version": "0.17.0",
       "exports": [
         {
           "name": "AudioSystem",
@@ -3479,7 +3479,7 @@
       ]
     },
     "@czap/stage": {
-      "version": "0.16.0",
+      "version": "0.17.0",
       "exports": [
         {
           "name": "dualExport",
@@ -3519,7 +3519,7 @@
       ]
     },
     "@czap/vite": {
-      "version": "0.16.0",
+      "version": "0.17.0",
       "exports": [
         {
           "name": "collectBoundaryManifest",
@@ -3644,7 +3644,7 @@
       ]
     },
     "@czap/web": {
-      "version": "0.16.0",
+      "version": "0.17.0",
       "exports": [
         {
           "name": "CZAP_EVENT_DOCS",
@@ -3933,7 +3933,7 @@
       ]
     },
     "@czap/worker": {
-      "version": "0.16.0",
+      "version": "0.17.0",
       "exports": [
         {
           "name": "CompositorWorker",

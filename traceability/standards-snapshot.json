@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 1,
-  "address": "fnv1a:7c54a28d",
+  "address": "fnv1a:59790299",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -76,8 +76,13 @@
     },
     {
       "_tag": "assurance",
-      "glob": "packages/core/src/{boundary,signal,zap,evaluate,gen-frame,speculative,token-buffer,blend,animation,ai-cast,clock,rng}.ts",
+      "glob": "packages/core/src/{boundary,zap,evaluate,gen-frame,speculative,token-buffer,blend,animation,ai-cast,clock,rng}.ts",
       "level": "L3"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/core/src/{cell-kernel,cell,derived,store,signal,timeline,live-cell}.ts",
+      "level": "L4"
     },
     {
       "_tag": "assurance",
@@ -191,6 +196,48 @@
       "_tag": "floor",
       "name": "mutation-score::packages/canonical/src/fnv.ts",
       "value": 1,
+      "direction": "higher-is-stronger"
+    },
+    {
+      "_tag": "floor",
+      "name": "mutation-score::packages/core/src/cell-kernel.ts",
+      "value": 0.75,
+      "direction": "higher-is-stronger"
+    },
+    {
+      "_tag": "floor",
+      "name": "mutation-score::packages/core/src/cell.ts",
+      "value": 0.8333,
+      "direction": "higher-is-stronger"
+    },
+    {
+      "_tag": "floor",
+      "name": "mutation-score::packages/core/src/derived.ts",
+      "value": 0.8889,
+      "direction": "higher-is-stronger"
+    },
+    {
+      "_tag": "floor",
+      "name": "mutation-score::packages/core/src/live-cell.ts",
+      "value": 1,
+      "direction": "higher-is-stronger"
+    },
+    {
+      "_tag": "floor",
+      "name": "mutation-score::packages/core/src/signal.ts",
+      "value": 0.8333,
+      "direction": "higher-is-stronger"
+    },
+    {
+      "_tag": "floor",
+      "name": "mutation-score::packages/core/src/store.ts",
+      "value": 0.8333,
+      "direction": "higher-is-stronger"
+    },
+    {
+      "_tag": "floor",
+      "name": "mutation-score::packages/core/src/timeline.ts",
+      "value": 0.8333,
       "direction": "higher-is-stronger"
     },
     {

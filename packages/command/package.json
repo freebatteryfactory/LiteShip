@@ -1,6 +1,6 @@
 {
   "name": "@czap/command",
-  "version": "0.16.0",
+  "version": "0.17.0",
   "description": "The shared command registry behind LiteShip's tooling: one source of command definitions that both the `czap` CLI and the MCP server project from.",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",

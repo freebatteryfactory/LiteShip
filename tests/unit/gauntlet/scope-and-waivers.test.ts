@@ -29,7 +29,7 @@ import {
 
 describe('scopeContextByLevel', () => {
   const ctx: GateContext = memoryContext({
-    'packages/core/src/signal.ts': 'L3 file', // L3
+    'packages/core/src/zap.ts': 'L3 file', // L3
     'packages/canonical/src/x.ts': 'L4 file', // L4
     'packages/edge/src/manifest.ts': 'L2 file', // L2
     'packages/cli/src/lib/ansi.ts': 'L1 file', // L1
@@ -39,7 +39,7 @@ describe('scopeContextByLevel', () => {
     const scoped = scopeContextByLevel(ctx, 'L3', LITESHIP_ASSURANCE_MAP);
     expect([...scoped.files()].sort()).toEqual([
       'packages/canonical/src/x.ts',
-      'packages/core/src/signal.ts',
+      'packages/core/src/zap.ts',
     ]);
   });
 
@@ -56,7 +56,7 @@ describe('scopeContextByLevel', () => {
   it('passes readFile and repoRoot through unchanged', () => {
     const scoped = scopeContextByLevel(ctx, 'L3', LITESHIP_ASSURANCE_MAP);
     expect(scoped.repoRoot).toBe(ctx.repoRoot);
-    expect(scoped.readFile('packages/core/src/signal.ts')).toBe('L3 file');
+    expect(scoped.readFile('packages/core/src/zap.ts')).toBe('L3 file');
     // readFile is NOT scoped — only the file list is.
     expect(scoped.readFile('packages/cli/src/lib/ansi.ts')).toBe('L1 file');
   });
@@ -84,7 +84,7 @@ describe('scopeContextByLevel', () => {
     expect(real.sort()).toEqual([
       'packages/canonical/src/x.ts',
       'packages/cli/src/lib/ansi.ts',
-      'packages/core/src/signal.ts',
+      'packages/core/src/zap.ts',
       'packages/edge/src/manifest.ts',
     ]);
   });
@@ -108,7 +108,7 @@ describe('scopeContextByLevel', () => {
     runGates([probe], ctx, { assuranceMap: LITESHIP_ASSURANCE_MAP });
     // Filter out the red/green fixture files (bad.ts/good.ts) verifyGate ran over.
     const real = seen.filter((f) => f.startsWith('packages/'));
-    expect(real.sort()).toEqual(['packages/canonical/src/x.ts', 'packages/core/src/signal.ts']);
+    expect(real.sort()).toEqual(['packages/canonical/src/x.ts', 'packages/core/src/zap.ts']);
   });
 });
 

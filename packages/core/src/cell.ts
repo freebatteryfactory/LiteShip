@@ -1,132 +1,82 @@
 /**
- * Cell<T> -- writable reactive primitive.
+ * Cell<T> — writable reactive primitive.
+ *
+ * A transport swap onto {@link CellKernel}: the replay-1 current-value slot +
+ * synchronous fan-out that used to be a `SubscriptionRef` is now the extracted,
+ * Effect-free kernel. The pure reactive law is byte-identical to the captured
+ * behavior (Wave 5.5 golden fixtures `tests/fixtures/reactive-capture/cell.json`):
+ *
+ *  - EmissionPolicy `{all}` — every `set` is delivered; equal consecutive values
+ *    are NOT suppressed (`SubscriptionRef.setUnsafe` published unconditionally;
+ *    the "notify only if changed" docstrings were stale).
+ *  - ReentrancyPolicy `'deferred'` — a `set` issued from within a delivery handler
+ *    is async-appended (breadth-first / glitch-free): the outer value reaches every
+ *    subscriber, THEN the nested value reaches every subscriber, so every live
+ *    subscriber's terminal delivery equals `read()` (the Wave 6 nested-write
+ *    RULING — PRESERVE the captured Effect behavior; scar S6.F.2). Realized
+ *    synchronously by the kernel's re-entrancy guard — no Effect, no microtask.
+ *
+ * `get`/`changes` (Effect/Stream) collapse to sync `read()` +
+ * `subscribe(sink): Disposer`; `set`/`update` are sync publishes. Teardown is owned by a
+ * {@link Lifetime} whose sole finalizer closes the kernel.
  *
  * @module
  */
 
-import type { Scope } from 'effect';
-import { Effect, Stream, SubscriptionRef, Semaphore } from 'effect';
-import { tupleMap } from './tuple.js';
+import { CellKernel } from './cell-kernel.js';
+import type { Disposer } from './cell-kernel.js';
+import { Lifetime } from './lifetime.js';
 
 interface CellShape<T> {
   readonly _tag: 'Cell';
-  readonly ref: SubscriptionRef.SubscriptionRef<T>;
-  readonly changes: Stream.Stream<T>;
-  readonly get: Effect.Effect<T>;
-  set(value: T): Effect.Effect<void>;
-  update(f: (current: T) => T): Effect.Effect<void>;
+  /** Read the current value — the initial value until the first `set` (was the Effect `get`). */
+  read(): T;
+  /** Set the current value and fan it out to every subscriber (was the Effect `set`). */
+  set(value: T): void;
+  /** Functionally update the current value (was the Effect `update`). */
+  update(f: (current: T) => T): void;
+  /**
+   * Subscribe to changes — replays the current value on attach (the replay-1
+   * contract the `changes` stream gave) and returns a {@link Disposer}.
+   */
+  subscribe(subscriber: CellKernel.Subscriber<T>): Disposer;
+  /**
+   * Owns the cell's teardown. Its sole finalizer closes the reactive kernel —
+   * completing every subscriber and making publish inert — so consumers thread
+   * cell lifecycle through one uniform `dispose()`.
+   */
+  readonly lifetime: Lifetime.Shape;
 }
 
-const _make = <T>(initial: T): Effect.Effect<CellShape<T>> =>
-  Effect.gen(function* () {
-    const ref = yield* SubscriptionRef.make(initial);
+const _make = <T>(initial: T): CellShape<T> => {
+  // Replay-1 kernel under the captured product law: {all} (no dedup) +
+  // 'deferred' (async-append nested writes). See the module doc + scar S6.F.2.
+  const kernel = CellKernel.replay1<T>(initial, { kind: 'all' }, 'deferred');
+  const lifetime = Lifetime.make();
+  lifetime.add(() => kernel.close());
 
-    return {
-      _tag: 'Cell' as const,
-      ref,
-      changes: SubscriptionRef.changes(ref),
-      get: SubscriptionRef.get(ref),
-      set: (value: T) => SubscriptionRef.set(ref, value),
-      update: (f: (current: T) => T) => SubscriptionRef.update(ref, f),
-    };
-  });
-
-const _fromStream = <T>(initial: T, source: Stream.Stream<T>): Effect.Effect<CellShape<T>, never, Scope.Scope> =>
-  Effect.gen(function* () {
-    const cell = yield* _make(initial);
-
-    yield* Effect.forkScoped(Stream.runForEach(source, (value) => cell.set(value)));
-
-    return cell;
-  });
-
-/**
- * Read all values from a tuple of cells, preserving the tuple type `T`.
- *
- * Sanctioned single cast site for Cell combinators. Two type-system gaps force
- * this containment:
- *   1. `tupleMap`'s callback signature collapses to `U = Effect<T[number]>`,
- *      losing the per-element `Effect<T[K]>` relationship.
- *   2. `Effect.all`'s tuple overload returns a mapped-tuple result
- *      `{ -readonly [K in keyof ...]: _A }` that TypeScript cannot fold back
- *      to the input tuple type `T` (`T` could be instantiated with an
- *      arbitrary subtype per the structural contravariance rules).
- *
- * The runtime behavior is provably correct: `tupleMap` is total and order-
- * preserving, `Effect.all` with an array input preserves positional order and
- * arity, so the resulting values are `T` by construction.
- */
-export const readAllCellValues = <T extends readonly unknown[]>(cells: {
-  readonly [K in keyof T]: CellShape<T[K]>;
-}): Effect.Effect<T> => {
-  const gets = tupleMap(cells, (cell) => cell.get);
-  return Effect.all(gets, { concurrency: 'unbounded' }) as unknown as Effect.Effect<T>;
+  return {
+    _tag: 'Cell',
+    read: () => kernel.read(),
+    set: (value: T) => kernel.publish(value),
+    update: (f: (current: T) => T) => kernel.publish(f(kernel.read())),
+    subscribe: (subscriber) => kernel.subscribe(subscriber),
+    lifetime,
+  };
 };
 
-const _all = <const T extends readonly unknown[]>(cells: { readonly [K in keyof T]: CellShape<T[K]> }): Effect.Effect<
-  CellShape<T>,
-  never,
-  Scope.Scope
-> => {
-  const readAll = readAllCellValues(cells);
-
-  return Effect.gen(function* () {
-    const values = yield* readAll;
-    const combined = yield* _make(values);
-    const sem = Semaphore.makeUnsafe(1);
-
-    yield* Effect.forkScoped(
-      Effect.gen(function* () {
-        const changeStreams = tupleMap(cells, (cell) => cell.changes);
-        const updates = changeStreams.map((changes) =>
-          Stream.runForEach(changes, () =>
-            Semaphore.withPermits(
-              sem,
-              1,
-            )(
-              Effect.gen(function* () {
-                const newValues = yield* readAll;
-                yield* combined.set(newValues);
-              }),
-            ),
-          ),
-        );
-        yield* Effect.all(updates, { concurrency: 'unbounded' });
-      }),
-    );
-
-    return combined;
-  });
-};
-
-const _map = <T, U>(cell: CellShape<T>, fn: (value: T) => U): Effect.Effect<CellShape<U>, never, Scope.Scope> =>
-  Effect.gen(function* () {
-    const initialValue = yield* cell.get;
-    const mappedInitial = fn(initialValue);
-    const mapped = yield* _make(mappedInitial);
-
-    yield* Effect.forkScoped(Stream.runForEach(cell.changes, (value) => mapped.set(fn(value))));
-
-    return mapped;
-  });
-
 /**
- * Cell — mutable reactive primitive backed by `SubscriptionRef`.
- * The workhorse of czap's reactive graph: `get` for a snapshot, `set` to
- * push, `changes` for the stream of subsequent values.
+ * Cell — mutable reactive primitive backed by {@link CellKernel}. `read` for a
+ * snapshot, `set`/`update` to push, `subscribe` for the replay-1 stream of
+ * values (current replayed on attach). Effect-free — the transport swap that lets
+ * consumers coordinate ordinary state with no `effect` import (#153).
  */
 export const Cell = {
-  /** Build a cell with an initial value. */
+  /** Build a cell with an initial value, owned by a fresh {@link Lifetime}. */
   make: _make,
-  /** Seed a cell with an initial value and mirror every stream emission into it. */
-  fromStream: _fromStream,
-  /** Tuple-combine cells into a single cell of their current values. */
-  all: _all,
-  /** Scoped `map` — derive a new cell by applying `fn` to every emission. */
-  map: _map,
 };
 
 export declare namespace Cell {
-  /** Structural shape of a {@link Cell}: `_tag`, `get`, `set`, `changes`. */
+  /** Structural shape of a {@link Cell}: `_tag`, `read`, `set`, `update`, `subscribe`, `lifetime`. */
   export type Shape<T> = CellShape<T>;
 }

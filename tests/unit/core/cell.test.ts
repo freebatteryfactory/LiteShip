@@ -1,188 +1,190 @@
 /**
- * Cell<T> -- writable reactive primitive.
+ * Cell<T> — writable reactive primitive (Wave 6: plain CellKernel, Effect-free).
  *
- * Property: set then get returns the set value.
- * Property: update applies function to current value.
- * Property: fromStream syncs cell to stream values.
+ * RED-FIRST law table for the transport swap onto {@link CellKernel.replay1}:
+ * replay-current-on-subscribe, EmissionPolicy {all} (emit-every-set, no dedup),
+ * subscriber order, ReentrancyPolicy 'deferred' (glitch-free async-append nested
+ * write), disposer idempotence, and Lifetime-owned teardown — every law matching
+ * the Wave 5.5 capture (`tests/fixtures/reactive-capture/cell.json`).
  */
 
 import { describe, test, expect } from 'vitest';
 import fc from 'fast-check';
-import type { Scope} from 'effect';
-import { Effect, Stream } from 'effect';
 import { Cell } from '@czap/core';
 
-const runScoped = <A>(effect: Effect.Effect<A, never, Scope.Scope>): Promise<A> =>
-  Effect.runPromise(Effect.scoped(effect));
-
 // ---------------------------------------------------------------------------
-// Cell.make
+// Cell.make — value slot (read / set / update)
 // ---------------------------------------------------------------------------
 
 describe('Cell.make', () => {
-  test('initial value is retrievable via get', async () => {
-    const cell = await Effect.runPromise(Cell.make(42));
-    const value = await Effect.runPromise(cell.get);
-    expect(value).toBe(42);
+  test('initial value is retrievable via read', () => {
+    const cell = Cell.make(42);
+    expect(cell.read()).toBe(42);
   });
 
-  test('set updates value', async () => {
-    const cell = await Effect.runPromise(Cell.make(0));
-    await Effect.runPromise(cell.set(99));
-    const value = await Effect.runPromise(cell.get);
-    expect(value).toBe(99);
+  test('set updates value', () => {
+    const cell = Cell.make(0);
+    cell.set(99);
+    expect(cell.read()).toBe(99);
   });
 
-  test('update applies function to current value', async () => {
-    const cell = await Effect.runPromise(Cell.make(10));
-    await Effect.runPromise(cell.update((n) => n * 2));
-    const value = await Effect.runPromise(cell.get);
-    expect(value).toBe(20);
+  test('update applies function to current value', () => {
+    const cell = Cell.make(10);
+    cell.update((n) => n * 2);
+    expect(cell.read()).toBe(20);
   });
 
-  test('update with identity preserves value', async () => {
-    const cell = await Effect.runPromise(Cell.make('hello'));
-    await Effect.runPromise(cell.update((x) => x));
-    const value = await Effect.runPromise(cell.get);
-    expect(value).toBe('hello');
+  test('update with identity preserves value', () => {
+    const cell = Cell.make('hello');
+    cell.update((x) => x);
+    expect(cell.read()).toBe('hello');
   });
 
-  test('has _tag Cell', async () => {
-    const cell = await Effect.runPromise(Cell.make(0));
-    expect(cell._tag).toBe('Cell');
+  test('has _tag Cell', () => {
+    expect(Cell.make(0)._tag).toBe('Cell');
   });
 });
 
 // ---------------------------------------------------------------------------
-// Cell.fromStream
+// replay-current-on-subscribe (I1) + emit-every-set ({all}, I4)
 // ---------------------------------------------------------------------------
 
-describe('Cell.fromStream', () => {
-  test('initial value is set before stream starts', async () => {
-    const result = await runScoped(
-      Effect.gen(function* () {
-        const cell = yield* Cell.fromStream(42, Stream.empty);
-        return yield* cell.get;
-      }),
-    );
-    expect(result).toBe(42);
+describe('Cell — subscribe replays current + delivers every set', () => {
+  test('a new subscriber is replayed the current value synchronously', () => {
+    const cell = Cell.make(7);
+    const got: number[] = [];
+    cell.subscribe((v) => got.push(v));
+    expect(got).toEqual([7]);
   });
 
-  test('stream values update cell', async () => {
-    const result = await runScoped(
-      Effect.gen(function* () {
-        const cell = yield* Cell.fromStream(0, Stream.make(1, 2, 3));
-        // Give the forked fiber time to consume
-        yield* Effect.sleep('10 millis');
-        return yield* cell.get;
-      }),
-    );
-    expect(result).toBe(3);
+  test('a late subscriber replays the LATEST value, not the whole history', () => {
+    const cell = Cell.make(0);
+    cell.set(3);
+    cell.set(5);
+    const got: number[] = [];
+    cell.subscribe((v) => got.push(v));
+    expect(got).toEqual([5]);
+    expect(cell.read()).toBe(5);
+  });
+
+  test('EmissionPolicy {all}: equal-consecutive sets are NOT suppressed — set(7)x3 delivers [0,7,7,7]', () => {
+    const cell = Cell.make(0);
+    const got: number[] = [];
+    cell.subscribe((v) => got.push(v));
+    cell.set(7);
+    cell.set(7);
+    cell.set(7);
+    expect(got).toEqual([0, 7, 7, 7]);
+  });
+
+  test('update fans out the transformed value', () => {
+    const cell = Cell.make(0);
+    const got: number[] = [];
+    cell.subscribe((v) => got.push(v));
+    cell.update((n) => n + 10);
+    cell.update((n) => n * 2);
+    expect(got).toEqual([0, 10, 20]);
   });
 });
 
 // ---------------------------------------------------------------------------
-// Cell.map
+// subscriber ordering (I3)
 // ---------------------------------------------------------------------------
 
-describe('Cell.map', () => {
-  test('maps initial value', async () => {
-    const result = await runScoped(
-      Effect.gen(function* () {
-        const cell = yield* Effect.flatMap(Cell.make(5), (c) => Cell.map(c, (n) => n * 10));
-        return yield* cell.get;
-      }),
-    );
-    expect(result).toBe(50);
-  });
-
-  test('propagates updates through mapping function', async () => {
-    const result = await runScoped(
-      Effect.gen(function* () {
-        const base = yield* Cell.make(1);
-        const mapped = yield* Cell.map(base, (n) => n + 100);
-        yield* base.set(5);
-        yield* Effect.sleep('10 millis');
-        return yield* mapped.get;
-      }),
-    );
-    expect(result).toBe(105);
+describe('Cell — subscriber ordering', () => {
+  test('a set fans out to every subscriber in subscription order', () => {
+    const cell = Cell.make(0);
+    const order: string[] = [];
+    cell.subscribe(() => order.push('a'));
+    cell.subscribe(() => order.push('b'));
+    cell.subscribe(() => order.push('c'));
+    order.length = 0; // discard the per-subscribe replays
+    cell.set(5);
+    expect(order).toEqual(['a', 'b', 'c']);
   });
 });
 
 // ---------------------------------------------------------------------------
-// Cell.all
+// ReentrancyPolicy 'deferred' — nested write is glitch-free async-append (S6.F.2)
 // ---------------------------------------------------------------------------
 
-describe('Cell.all', () => {
-  test('combines initial values into tuple', async () => {
-    const result = await runScoped(
-      Effect.gen(function* () {
-        const a = yield* Cell.make(1);
-        const b = yield* Cell.make('hello');
-        const combined = yield* Cell.all([a, b] as const);
-        return yield* combined.get;
-      }),
-    );
-    expect(result).toEqual([1, 'hello']);
-  });
-
-  test('reads a consistent snapshot (no torn reads under rapid updates)', async () => {
-    const result = await runScoped(
-      Effect.gen(function* () {
-        const a = yield* Cell.make(0);
-        const b = yield* Cell.make(0);
-        const combined = yield* Cell.all([a, b] as const);
-
-        // Rapidly update both cells many times, always keeping them in sync
-        for (let i = 1; i <= 50; i++) {
-          yield* a.set(i);
-          yield* b.set(i);
-        }
-
-        // Allow stream propagation to settle
-        yield* Effect.sleep('50 millis');
-
-        const snapshot = yield* combined.get;
-
-        // With torn reads, snapshot[0] could differ from snapshot[1].
-        // After the loop both cells are at 50, so the combined value
-        // must converge to [50, 50].
-        expect(snapshot[0]).toBe(snapshot[1]);
-        expect(snapshot).toEqual([50, 50]);
-        return snapshot;
-      }),
-    );
-  });
-
-  test('updates when any cell changes', async () => {
-    const result = await runScoped(
-      Effect.gen(function* () {
-        const a = yield* Cell.make(1);
-        const b = yield* Cell.make(2);
-        const combined = yield* Cell.all([a, b] as const);
-        yield* a.set(10);
-        yield* Effect.sleep('10 millis');
-        return yield* combined.get;
-      }),
-    );
-    expect(result).toEqual([10, 2]);
+describe('Cell — nested write (deferred / async-append, the PRESERVED product law)', () => {
+  test('a set issued from a delivery handler reaches EVERY subscriber after the outer value (b: [0,1,99])', () => {
+    const cell = Cell.make(0);
+    const a: number[] = [];
+    const b: number[] = [];
+    let fired = false;
+    cell.subscribe((v) => {
+      a.push(v);
+      if (!fired && v === 1) {
+        fired = true;
+        cell.set(99); // nested write from within a's delivery of the outer 1
+      }
+    });
+    cell.subscribe((v) => b.push(v));
+    cell.set(1);
+    // Glitch-free: the outer 1 reaches every subscriber, THEN the nested 99. Every
+    // live subscriber's terminal delivery equals read() — no stale-terminal glitch,
+    // a and b agree on the total order (the captured async-append behavior).
+    expect(a).toEqual([0, 1, 99]);
+    expect(b).toEqual([0, 1, 99]);
+    expect(cell.read()).toBe(99);
   });
 });
 
 // ---------------------------------------------------------------------------
-// Property-based
+// disposer + Lifetime teardown
+// ---------------------------------------------------------------------------
+
+describe('Cell — disposer + Lifetime', () => {
+  test('a disposed subscriber stops receiving values; others are unaffected', () => {
+    const cell = Cell.make(0);
+    const a: number[] = [];
+    const b: number[] = [];
+    const disposeA = cell.subscribe((v) => a.push(v));
+    cell.subscribe((v) => b.push(v));
+    cell.set(1);
+    disposeA();
+    cell.set(2);
+    expect(a).toEqual([0, 1]);
+    expect(b).toEqual([0, 1, 2]);
+  });
+
+  test('the disposer is idempotent — a repeat call is a no-op', () => {
+    const cell = Cell.make(0);
+    const got: number[] = [];
+    const dispose = cell.subscribe((v) => got.push(v));
+    dispose();
+    dispose();
+    cell.set(1);
+    expect(got).toEqual([0]);
+  });
+
+  test('disposing the Lifetime completes every subscriber once and makes set inert', async () => {
+    const cell = Cell.make(0);
+    const got: number[] = [];
+    let completed = 0;
+    cell.subscribe({ next: (v) => got.push(v), complete: () => (completed += 1) });
+    await cell.lifetime.dispose();
+    expect(completed).toBe(1);
+    cell.set(1); // inert after close
+    expect(got).toEqual([0]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Property — set then read roundtrips (seeded)
 // ---------------------------------------------------------------------------
 
 describe('Cell properties', () => {
-  test('set then get roundtrips', () => {
+  test('set then read roundtrips', () => {
     fc.assert(
-      fc.asyncProperty(fc.integer(), async (value) => {
-        const cell = await Effect.runPromise(Cell.make(0));
-        await Effect.runPromise(cell.set(value));
-        const got = await Effect.runPromise(cell.get);
-        expect(got).toBe(value);
+      fc.property(fc.integer(), (value) => {
+        const cell = Cell.make(0);
+        cell.set(value);
+        expect(cell.read()).toBe(value);
       }),
+      { seed: 0xce77, numRuns: 200 },
     );
   });
 });
