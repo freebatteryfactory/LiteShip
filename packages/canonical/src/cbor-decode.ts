@@ -31,6 +31,7 @@
  */
 
 import { ParseError } from '@czap/error';
+import { compareBytes } from './compare-bytes.js';
 
 /**
  * The reason a canonical-CBOR `ParseError` was raised. Carried in the
@@ -44,16 +45,6 @@ function fail(reason: CborDecodeErrorReason, message: string, offset: number): n
 }
 
 const textDecoder = new TextDecoder('utf-8', { fatal: true });
-
-function compareBytes(a: Uint8Array, b: Uint8Array): number {
-  const len = Math.min(a.length, b.length);
-  for (let i = 0; i < len; i++) {
-    const av = a[i]!;
-    const bv = b[i]!;
-    if (av !== bv) return av - bv;
-  }
-  return a.length - b.length;
-}
 
 /** Mutable cursor over the input buffer. */
 class Reader {

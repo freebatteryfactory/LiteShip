@@ -10,6 +10,7 @@
 import { createHash } from 'node:crypto';
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join, relative, sep, dirname } from 'node:path';
+import { walkFiles } from '@czap/core/fs-walk';
 import { spawnArgv } from './lib/spawn.js';
 import { rewriteBreadcrumbDepth } from './lib/breadcrumb-depth.js';
 
@@ -29,17 +30,6 @@ function loadConfig(): TypedocConfig {
   return JSON.parse(readFileSync(TYPEDOC_JSON, 'utf8')) as TypedocConfig;
 }
 
-/** Recursively yield every `.md` file path under `root`. */
-function markdownFilesUnder(root: string): string[] {
-  const out: string[] = [];
-  for (const entry of readdirSync(root, { withFileTypes: true })) {
-    const full = join(root, entry.name);
-    if (entry.isDirectory()) out.push(...markdownFilesUnder(full));
-    else if (entry.name.endsWith('.md')) out.push(full);
-  }
-  return out;
-}
-
 /**
  * #142 — after the flatten collapses `<pkg>/<pkg>/src` to `<pkg>/src`, every page
  * moved up one directory level, so its already-emitted breadcrumb links (to the
@@ -48,7 +38,7 @@ function markdownFilesUnder(root: string): string[] {
  * moved with the page and are left intact.
  */
 function repairFlattenedBreadcrumbs(srcRoot: string): void {
-  for (const file of markdownFilesUnder(srcRoot)) {
+  for (const file of walkFiles(srcRoot, { suffixes: ['.md'] })) {
     const rel = relative(srcRoot, dirname(file));
     const depthBelowSrc = rel === '' ? 0 : rel.split(sep).length;
     const before = readFileSync(file, 'utf8');

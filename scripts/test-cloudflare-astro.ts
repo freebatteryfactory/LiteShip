@@ -3,9 +3,10 @@
  *
  * Run: pnpm run test:cloudflare
  */
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
-import { resolve, join } from 'node:path';
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { walkFiles } from '@czap/core/fs-walk';
 import { runPnpm } from './support/pnpm-process.ts';
 import { cloudflareChildEnv } from './support/cloudflare-env.ts';
 import { doctor } from '../packages/cli/src/commands/doctor.js';
@@ -22,22 +23,8 @@ function assert(condition: boolean, message: string): void {
   console.log(`  PASS: ${message}`);
 }
 
-function findFiles(dir: string, ext: string): string[] {
-  const results: string[] = [];
-  if (!existsSync(dir)) return results;
-  for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    const fullPath = join(dir, entry.name);
-    if (entry.isDirectory()) {
-      results.push(...findFiles(fullPath, ext));
-    } else if (entry.name.endsWith(ext)) {
-      results.push(fullPath);
-    }
-  }
-  return results;
-}
-
 function anyFileContains(dir: string, ext: string, needle: string): boolean {
-  for (const file of findFiles(dir, ext)) {
+  for (const file of walkFiles(dir, { suffixes: [ext] })) {
     if (readFileSync(file, 'utf-8').includes(needle)) return true;
   }
   return false;

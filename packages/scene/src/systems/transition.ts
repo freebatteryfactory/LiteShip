@@ -10,7 +10,7 @@
  * @module
  */
 
-import type { System, World } from '@czap/core';
+import { clamp01, type System, type World } from '@czap/core';
 import type { EaseTag } from '../sugar/ease.js';
 import { easeFnFor } from '../sugar/ease.js';
 
@@ -23,7 +23,7 @@ export function TransitionSystem(frameIndex: number): System {
       for (const e of entities) {
         const range = e.components.get('FrameRange') as { from: number; to: number };
         const span = Math.max(1, range.to - range.from);
-        const local = Math.max(0, Math.min(1, (frameIndex - range.from) / span));
+        const local = clamp01((frameIndex - range.from) / span);
         const easeTag = e.components.get('Ease') as EaseTag | undefined;
         const blend = easeTag !== undefined ? easeFnFor(easeTag)(local) : local;
         (e as unknown as { _blend: number })._blend = blend;

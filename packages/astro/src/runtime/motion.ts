@@ -28,9 +28,11 @@
  */
 
 import {
+  clamp01,
   Diagnostics,
   StateCellStore,
   resolveRevealInitialState,
+  startRafLoop,
   type RevealIntent,
   type RuntimeWritePlan,
   type StateCellStoreShape,
@@ -201,10 +203,6 @@ function prefersReducedMotion(): boolean {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
-function clamp01(value: number): number {
-  return value < 0 ? 0 : value > 1 ? 1 : value;
-}
-
 /** Idempotent driver: cancels the rAF / detaches the signal observer exactly once. */
 interface MotionDriver {
   readonly stop: () => void;
@@ -239,28 +237,20 @@ function startDriver(program: SerializedMotionProgram, onTick: (progress: number
     };
   }
 
-  // TIME clock — rAF wall-clock over the plan's own duration.
+  // TIME clock — rAF wall-clock over the plan's own duration. startRafLoop hands
+  // elapsed-ms-since-first-frame and is SSR-guarded (no rAF ⇒ no loop); the driver
+  // self-terminates once `t` reaches 1 (a finite one-shot, not a perpetual loop).
   const durationMs = Math.max(1, program.runtime.durationMs);
-  const hasRaf = typeof requestAnimationFrame !== 'undefined';
-  let start: number | null = null;
-  let frame: number | null = null;
-  let stopped = false;
-  const loop = (ts: number): void => {
-    if (stopped) return;
-    if (start === null) start = ts;
-    const t = Math.min(1, (ts - start) / durationMs);
+  let stopLoop: (() => void) | null = null;
+  stopLoop = startRafLoop((elapsedMs) => {
+    const t = Math.min(1, elapsedMs / durationMs);
     onTick(t);
-    if (!stopped && t < 1 && hasRaf) frame = requestAnimationFrame(loop);
-  };
-  if (hasRaf) frame = requestAnimationFrame(loop);
+    if (t >= 1) stopLoop?.();
+  });
   return {
     stop(): void {
-      if (stopped) return;
-      stopped = true;
-      if (frame !== null && typeof cancelAnimationFrame !== 'undefined') {
-        cancelAnimationFrame(frame);
-        frame = null;
-      }
+      stopLoop?.();
+      stopLoop = null;
     },
   };
 }

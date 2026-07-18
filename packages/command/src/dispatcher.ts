@@ -6,7 +6,7 @@
  *
  * @module
  */
-import { decode, type CapsuleCommandInvocation, type CapsuleCommandResult } from '@czap/core';
+import { closestMatch, decode, type CapsuleCommandInvocation, type CapsuleCommandResult } from '@czap/core';
 import {
   capabilityUnavailable,
   failed,
@@ -31,30 +31,13 @@ interface CommandDispatcherShape {
   ): Promise<CapsuleCommandResult<N extends keyof CommandMap ? CommandMap[N] : unknown>>;
 }
 
-/** Edit distance (Levenshtein) — small inputs only (command names). */
-function editDistance(left: string, right: string): number {
-  const previous = Array.from({ length: right.length + 1 }, (_, i) => i);
-  for (let i = 1; i <= left.length; i++) {
-    let diagonal = previous[0]!;
-    previous[0] = i;
-    for (let j = 1; j <= right.length; j++) {
-      const insertOrDelete = Math.min(previous[j]!, previous[j - 1]!) + 1;
-      const substitute = diagonal + (left[i - 1] === right[j - 1] ? 0 : 1);
-      diagonal = previous[j]!;
-      previous[j] = Math.min(insertOrDelete, substitute);
-    }
-  }
-  return previous[right.length]!;
-}
-
 /** Nearest registered command name, when plausibly a typo (distance ≤ 3). */
 function nearestCommand(name: string, registry: CommandRegistry.Shape): string | undefined {
-  let best: { name: string; distance: number } | undefined;
-  for (const descriptor of registry.list()) {
-    const distance = editDistance(name, descriptor.name);
-    if (!best || distance < best.distance) best = { name: descriptor.name, distance };
-  }
-  return best && best.distance <= 3 ? best.name : undefined;
+  return closestMatch(
+    name,
+    registry.list().map((descriptor) => descriptor.name),
+    3,
+  );
 }
 
 function make(registry: CommandRegistry.Shape): CommandDispatcherShape {

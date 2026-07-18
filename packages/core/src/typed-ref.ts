@@ -30,6 +30,7 @@
  */
 
 import { IntegrityError } from '@czap/error';
+import { bytesToHex } from '@czap/canonical';
 import { encode } from 'cborg';
 
 interface TypedRefShape {
@@ -60,13 +61,18 @@ export const canonicalize = (value: unknown): Uint8Array => encode(value);
  * `IntegrityError` (a real `Error`, so `instanceof Error` still holds) — the
  * rejection every content-addressing consumer awaits.
  */
+// DELIBERATE CUT (mission 5.10): only the bare-hex encoding is consolidated onto
+// @czap/canonical's `bytesToHex`. The `sha256:`-LABELED digest law below stays
+// LOCAL — it is NOT merged into `addressedDigestOf` (@czap/canonical): that path
+// digests via @noble/hashes and mints a `sha256:`/`blake3:` `IntegrityDigest` for
+// the identity layer, whereas this one digests via `crypto.subtle` and mints the
+// RECEIPT byte law's `sha256:<hex>` (see the module header). Same prefix, distinct
+// byte laws over distinct primitives — collapsing them would silently change one.
 export const hash = async (data: string | Uint8Array): Promise<string> => {
   try {
     const bytes = typeof data === 'string' ? new TextEncoder().encode(data) : data;
     const buffer = await crypto.subtle.digest('SHA-256', bytes as BufferSource);
-    const hashHex = Array.from(new Uint8Array(buffer))
-      .map((b) => b.toString(16).padStart(2, '0'))
-      .join('');
+    const hashHex = bytesToHex(new Uint8Array(buffer));
     return `sha256:${hashHex}`;
   } catch (error) {
     throw IntegrityError(

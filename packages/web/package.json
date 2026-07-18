@@ -47,6 +47,7 @@
     "prepack": "pnpm run build"
   },
   "dependencies": {
+    "@czap/canonical": "workspace:*",
     "@czap/core": "workspace:*",
     "@czap/error": "workspace:*",
     "@czap/genui": "workspace:*",

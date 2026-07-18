@@ -9,7 +9,7 @@
  *
  * @module
  */
-import { Boundary, BoundaryAttribute, Diagnostics, inputToSource, wallClock, type Clock } from '@czap/core';
+import { Boundary, BoundaryAttribute, clamp01, Diagnostics, inputToSource, wallClock, type Clock } from '@czap/core';
 import { dispatchCzapEvent, type CzapEventName } from '@czap/web';
 import { readAudioSignal, attachAudioObserver } from './audio-signal.js';
 
@@ -388,7 +388,7 @@ export function readSignalValue(input: string): number | undefined {
       // scroll.progress — 0..1, identical formula to Signal's source of truth.
       const max = document.documentElement.scrollHeight - window.innerHeight;
       if (max <= 0) return 0;
-      return Math.min(1, Math.max(0, window.scrollY / max));
+      return clamp01(window.scrollY / max);
     }
     case 'audio':
       // Only amplitude/beat are live; sample/normalized defer to the quantizer

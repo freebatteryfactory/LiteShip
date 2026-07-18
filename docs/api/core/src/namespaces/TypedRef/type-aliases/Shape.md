@@ -8,6 +8,6 @@
 
 > **Shape** = `TypedRefShape`
 
-Defined in: [core/src/typed-ref.ts:107](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/typed-ref.ts#L107)
+Defined in: [core/src/typed-ref.ts:113](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/typed-ref.ts#L113)
 
 Structural shape of a typed reference: schema hash + content hash.

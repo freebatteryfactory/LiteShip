@@ -34,10 +34,10 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { encode as cborgEncode } from 'cborg';
 import { CanonicalCbor } from '@czap/core';
+import { bytesToHex } from '@czap/canonical';
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
 const read = (rel: string): string => readFileSync(resolve(REPO, rel), 'utf8');
-const hex = (b: Uint8Array): string => Array.from(b).map((x) => x.toString(16).padStart(2, '0')).join('');
 
 /** Recursively collect every `.ts` source file under packages/<x>/src. */
 function packageSources(): string[] {
@@ -141,14 +141,14 @@ describe('typed-ref — the two byte laws diverge, and that is INTENTIONAL for r
     // harmless: it never cross-compares the two encoders. Pinned so a future
     // "let's unify the encoders" edit trips THIS guard (and re-ratification)
     // instead of silently invalidating persisted sha256 receipts.
-    const receiptBytes = hex(cborgEncode({ x: 0.5 }));
-    const identityBytes = hex(CanonicalCbor.encode({ x: 0.5 }));
+    const receiptBytes = bytesToHex(cborgEncode({ x: 0.5 }));
+    const identityBytes = bytesToHex(CanonicalCbor.encode({ x: 0.5 }));
     expect(receiptBytes).toContain('f93800');
     expect(identityBytes).toContain('fb3fe0000000000000');
     expect(receiptBytes).not.toBe(identityBytes);
   });
 
   it('both encoders agree when no float is float16/32-exact (so most receipts look identical)', () => {
-    expect(hex(cborgEncode({ x: 0.3 }))).toBe(hex(CanonicalCbor.encode({ x: 0.3 })));
+    expect(bytesToHex(cborgEncode({ x: 0.3 }))).toBe(bytesToHex(CanonicalCbor.encode({ x: 0.3 })));
   });
 });

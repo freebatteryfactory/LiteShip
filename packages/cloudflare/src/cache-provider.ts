@@ -10,7 +10,7 @@
 import { Diagnostics, type ContentAddress } from '@czap/core';
 import { createBoundaryCache } from '@czap/edge';
 import { createCloudflareEdgeCache, type CloudflareWorkersEnv } from './edge-cache.js';
-import { getDefaultWorkersEnv, loadWorkersEnvFromRuntime } from './middleware.js';
+import { loadWorkersEnvFromRuntime, resolveEnvSource } from './env-source.js';
 
 /** Structural mirror of Astro's `CacheProviderConfig`. */
 export interface AstroCacheProviderConfig {
@@ -100,17 +100,6 @@ function cacheControlValue(options: AstroCacheHeaderOptions): string | null {
   return parts.length > 0 ? parts.join(', ') : null;
 }
 
-function resolveEnvSource(options: RuntimeOptions): () => CloudflareWorkersEnv {
-  if (typeof options.env === 'function') return options.env;
-  if (options.env) return () => options.env as CloudflareWorkersEnv;
-  return () => getDefaultWorkersEnv();
-}
-
-async function primeRuntimeEnv(options: RuntimeOptions): Promise<void> {
-  if (options.env !== undefined) return;
-  await loadWorkersEnvFromRuntime();
-}
-
 /**
  * Astro config helper. Use in `astro.config.mjs`:
  *
@@ -144,7 +133,7 @@ export function createCloudflareCacheProvider(options: RuntimeOptions = {}): Ast
       return headers;
     },
     async invalidate(invalidateOptions) {
-      await primeRuntimeEnv(options);
+      if (options.env === undefined) await loadWorkersEnvFromRuntime();
       const tags = collectAstroInvalidationTags(invalidateOptions);
       for (const tag of tags) {
         await boundaryCache.invalidateByTag(tag);

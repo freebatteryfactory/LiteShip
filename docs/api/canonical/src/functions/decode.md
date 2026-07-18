@@ -8,7 +8,7 @@
 
 > **decode**(`bytes`): `unknown`
 
-Defined in: [canonical/src/cbor-decode.ts:272](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/canonical/src/cbor-decode.ts#L272)
+Defined in: [canonical/src/cbor-decode.ts:263](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/canonical/src/cbor-decode.ts#L263)
 
 Decode a canonical CBOR byte sequence produced by [CanonicalCbor.encode](../variables/CanonicalCbor.md#encode).
 

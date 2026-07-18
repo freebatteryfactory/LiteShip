@@ -30,6 +30,7 @@ import { Scheduler as SchedulerImpl } from './scheduler.js';
 import { CellKernel } from './cell-kernel.js';
 import type { Disposer } from './cell-kernel.js';
 import { Lifetime } from './lifetime.js';
+import { clamp01 } from './math-utils.js';
 
 interface TimelineShape<B extends Boundary.Shape = Boundary.Shape> {
   readonly boundary: B;
@@ -159,7 +160,7 @@ export const Timeline: TimelineFactory = {
         setState(clamped);
       },
       scrub: (progress: number) => {
-        const val = Math.max(0, Math.min(1, progress)) * duration;
+        const val = clamp01(progress) * duration;
         currentElapsed = val;
         setState(val);
       },

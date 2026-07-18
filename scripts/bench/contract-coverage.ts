@@ -20,8 +20,9 @@
  * @module
  */
 
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { readFileSync } from 'node:fs';
+import { basename, resolve } from 'node:path';
+import { walkFiles } from '@czap/core/fs-walk';
 // The ONE shared comment stripper (keeps string literals — a bench's registered
 // name is a string value that must survive; a commented-out registration must
 // vanish). Imported via the gauntlet SOURCE path (the same relative-source pattern
@@ -153,13 +154,12 @@ export function verifyDeclaredDistributions(
 ): CoverageResult {
   const dir = resolve(root, BENCH_SOURCE_DIR);
   const governedSources = new Map<string, string>();
-  if (existsSync(dir)) {
-    for (const entry of readdirSync(dir)) {
-      if (!isGovernedBenchFile(entry)) continue;
-      const relativePath = `${BENCH_SOURCE_DIR}/${entry}`;
-      const text = readFileSync(resolve(dir, entry), 'utf8');
-      governedSources.set(relativePath, commentsBlanked(text));
-    }
+  for (const abs of walkFiles(dir, { suffixes: ['.bench.ts'] })) {
+    const entry = basename(abs);
+    if (!isGovernedBenchFile(entry)) continue;
+    const relativePath = `${BENCH_SOURCE_DIR}/${entry}`;
+    const text = readFileSync(abs, 'utf8');
+    governedSources.set(relativePath, commentsBlanked(text));
   }
   return foldDeclaredDistributions(governedSources, declared);
 }

@@ -12,6 +12,7 @@ import type { Theme } from './theme.js';
 import type { Style } from './style.js';
 import { fnv1aBytes } from './fnv.js';
 import { CanonicalCbor } from './cbor.js';
+import { normalizeRepoPath } from './path-normalize.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public types
@@ -98,10 +99,7 @@ export const Config = {
   /** Materialize the `@czap/*` → source-path alias map used by the vitest runner. */
   toTestAliases(cfg: Config.Shape, repoRoot: string): Record<string, string> {
     void cfg; // cfg reserved for future per-project customisation
-    // Distinct op (NOT repo-path normalization, CUT B5b): a vitest-alias URL join.
-    // Kept inline on purpose — @czap/core is product runtime and must NOT import the
-    // devops-layer @czap/audit normalizeRepoPath. Forward-slash join for portability.
-    const r = (sub: string) => `${repoRoot.replace(/\\/g, '/')}/${sub}`;
+    const r = (sub: string) => `${normalizeRepoPath(repoRoot)}/${sub}`;
     // NOTE: longer prefixes MUST come before shorter ones — vitest's alias
     // resolver matches the first prefix in iteration order, so e.g.
     // `@czap/core/testing` would be intercepted by `@czap/core` if listed first.

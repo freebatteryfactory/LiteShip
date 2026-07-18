@@ -4,7 +4,7 @@
  * @module
  */
 
-import { createHash } from 'node:crypto';
+import { sha256Hex } from '@czap/canonical';
 
 /** One hashed file entry inside a docs-bundle manifest. */
 export interface DocsBundleIdEntry {
@@ -14,7 +14,5 @@ export interface DocsBundleIdEntry {
 
 /** Recompute the bundle id from sealed entry path+hash pairs (same law as docs:bundle). */
 export function computeBundleId(entries: readonly DocsBundleIdEntry[]): string {
-  return createHash('sha256')
-    .update(entries.map((e) => `${e.path}:${e.sha256}`).join('\n'))
-    .digest('hex');
+  return sha256Hex(entries.map((e) => `${e.path}:${e.sha256}`).join('\n'));
 }

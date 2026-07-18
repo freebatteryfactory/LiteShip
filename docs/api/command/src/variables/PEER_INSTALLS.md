@@ -8,6 +8,6 @@
 
 > `const` **PEER\_INSTALLS**: readonly `string`[]
 
-Defined in: [command/src/commands/package-smoke-registry.ts:98](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/package-smoke-registry.ts#L98)
+Defined in: [command/src/commands/package-smoke-registry.ts:104](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/package-smoke-registry.ts#L104)
 
 External peer set the consumer fixture installs alongside the packed `@czap/*` tarballs.

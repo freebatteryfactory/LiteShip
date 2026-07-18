@@ -24,6 +24,7 @@
  */
 
 import { UnsupportedError, ValidationError } from '@czap/error';
+import { compareBytes } from './compare-bytes.js';
 
 const MAJOR_UNSIGNED = 0 << 5;
 const MAJOR_NEGATIVE = 1 << 5;
@@ -133,16 +134,6 @@ function encodeArray(value: readonly unknown[]): Uint8Array {
     parts.push(_encode(item));
   }
   return concat(parts);
-}
-
-function compareBytes(a: Uint8Array, b: Uint8Array): number {
-  const len = Math.min(a.length, b.length);
-  for (let i = 0; i < len; i++) {
-    const av = a[i]!;
-    const bv = b[i]!;
-    if (av !== bv) return av - bv;
-  }
-  return a.length - b.length;
 }
 
 function encodeObject(value: Record<string, unknown>): Uint8Array {

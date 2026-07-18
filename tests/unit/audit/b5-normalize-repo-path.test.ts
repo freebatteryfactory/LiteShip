@@ -1,17 +1,27 @@
 /**
- * CUT B5b — one repo-path slash normalizer; distinct ops kept distinct.
+ * CUT B5b — one repo-path slash normalizer per bundle domain; distinct ops kept distinct.
  *
- * `@czap/audit`'s `normalizeRepoPath` (slash-only: `value.replace(/\\/g, '/')`)
- * is the single home for pure repo-path slash normalization. B5b collapses the
- * scattered private `normalizePath` copies and inline `replace(/\\/g, '/')`
- * one-liners onto it — but does NOT force-merge semantically distinct path
- * operations (regex prefix-trim, URL↔fs round-trip, dry-run redaction, /@fs
- * browser URL, test-alias join) that merely share the `\\→/` substring.
+ * `normalizeRepoPath` (slash-only: `value.replace(/\\/g, '/')`) is the single home
+ * for pure repo-path slash normalization — but Wave 7 (S7.1) split it into TWO
+ * D9b-PARTITIONED PARITY HOMES that are byte-identical and drift-guarded (the
+ * parity assertion below), NOT two independent implementations:
+ *   • `@czap/core`'s browser-safe `path-normalize` leaf — the home for browser/
+ *     core/vite/astro/scripts consumers;
+ *   • `@czap/audit`'s `policy.ts` — the LEAN-AUDIT home, because D9b forbids
+ *     `@czap/audit` from importing the heavy `@czap/core` runtime (audit stays
+ *     downstream-installable) and B5b forbids `@czap/core` from importing
+ *     `@czap/audit`, so neither can re-export the other — the parity copy is the
+ *     only D9b-legal shared contract. `import … from '@czap/audit'` (the cli's
+ *     pinned path) resolves to the audit twin.
+ * B5b still does NOT force-merge semantically distinct path operations (regex
+ * prefix-trim, URL↔fs round-trip, dry-run redaction, /@fs browser URL, test-alias
+ * join) that merely share the `\\→/` substring.
  *
- * These tests (1) pin the normalizer's cross-platform behavior, (2) cage the
- * seam so a second inline slash-normalizer can't drift into a published package,
- * and (3) prove no package-graph poisoning (@czap/core ↛ @czap/audit; @czap/audit
- * keeps zero @czap edges — the D9b standalone law).
+ * These tests (1) pin the normalizer's cross-platform behavior, (2) cage the seam
+ * so a second inline slash-normalizer can't drift into a published package, (3)
+ * pin the two homes byte-identical (the parity drift-guard), and (4) prove no
+ * package-graph poisoning (@czap/core ↛ @czap/audit; @czap/audit keeps zero heavy
+ * @czap edges — the D9b standalone law: only @czap/error/gauntlet/canonical).
  *
  * @module
  */
@@ -19,6 +29,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { normalizeRepoPath } from '@czap/audit';
+import { normalizeRepoPath as normalizeRepoPathCore } from '@czap/core';
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
 
@@ -62,17 +73,19 @@ describe('B5b — normalizeRepoPath cross-platform behavior (the pinned contract
   });
 });
 
-describe('B5b — exactly one slash-normalize home in published packages (the cage)', () => {
-  // The ONLY packages/ files allowed to inline `\\→/` are: the helper definition
-  // itself, and the two DOCUMENTED distinct ops that are not repo-path normalization.
+describe('B5b — the two D9b-partitioned slash-normalize homes (the cage)', () => {
+  // The ONLY packages/ files allowed to inline `\\→/` are: the TWO parity-home
+  // definitions (lean-audit + browser-core), and the DOCUMENTED distinct ops that
+  // are not repo-path normalization.
   const ALLOWLIST = new Set([
-    'packages/audit/src/policy.ts', // the normalizeRepoPath definition
+    'packages/audit/src/policy.ts', // the LEAN-AUDIT normalizeRepoPath home (D9b: audit can't import @czap/core)
+    'packages/core/src/path-normalize.ts', // the BROWSER-CORE normalizeRepoPath home (parity twin; browser consumers import this)
     'packages/core/src/config.ts', // toTestAliases: vitest-alias URL join (NOT repo-path normalization; @czap/core must not import @czap/audit)
     'packages/vite/src/plugin.ts', // /@fs/ browser URL construction (a URL segment, not a filesystem path)
   ]);
   const SLASH_REPLACE = /\.replace\(\/\\\\\/g,\s*['"]\/['"]\)/;
 
-  it('no published-package file inlines a slash-normalizer except the helper + documented distinct ops', () => {
+  it('no published-package file inlines a slash-normalizer except the two homes + documented distinct ops', () => {
     const offenders = walkTs(resolve(REPO, 'packages'))
       .filter((f) => SLASH_REPLACE.test(readFileSync(f, 'utf8')))
       .map(rel)
@@ -80,15 +93,29 @@ describe('B5b — exactly one slash-normalize home in published packages (the ca
     expect(offenders).toEqual([]); // any new inline slash-normalize must route through normalizeRepoPath
   });
 
-  it('normalizeRepoPath is defined exactly once under packages/', () => {
-    const definers = walkTs(resolve(REPO, 'packages')).filter((f) => /function\s+normalizeRepoPath\b/.test(readFileSync(f, 'utf8')));
-    expect(definers.map(rel)).toEqual(['packages/audit/src/policy.ts']);
+  it('normalizeRepoPath is defined in exactly the two parity homes under packages/', () => {
+    const definers = walkTs(resolve(REPO, 'packages')).filter((f) =>
+      /function\s+normalizeRepoPath\b/.test(readFileSync(f, 'utf8')),
+    );
+    expect(definers.map(rel).sort()).toEqual(['packages/audit/src/policy.ts', 'packages/core/src/path-normalize.ts']);
+  });
+
+  it('the two homes are byte-identical (parity drift-guard — S7.1)', () => {
+    // The D9b partition forces two implementations; this guard makes them ONE
+    // contract in practice — any divergence between the audit twin and the core
+    // twin reds here, exactly as a single home would have.
+    const inputs = ['C:\\a\\b', 'c:\\A\\B\\', 'foo\\bar/baz', '/x/y', '.', '', 'packages\\core'];
+    for (const input of inputs) {
+      expect(normalizeRepoPath(input)).toBe(normalizeRepoPathCore(input));
+    }
   });
 });
 
 describe('B5b — no package-graph poisoning', () => {
   it('@czap/core does not import @czap/audit', () => {
-    const importers = walkTs(resolve(REPO, 'packages/core/src')).filter((f) => /from\s+['"]@czap\/audit/.test(readFileSync(f, 'utf8')));
+    const importers = walkTs(resolve(REPO, 'packages/core/src')).filter((f) =>
+      /from\s+['"]@czap\/audit/.test(readFileSync(f, 'utf8')),
+    );
     expect(importers.map(rel)).toEqual([]);
   });
 

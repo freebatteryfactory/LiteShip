@@ -8,7 +8,7 @@
 
 > `const` **dynamicImportExemptions**: `ReadonlySet`\<`string`\>
 
-Defined in: [audit/src/policy.ts:289](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L289)
+Defined in: [audit/src/policy.ts:302](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L302)
 
 Dynamic package imports — `import('@czap/...')` — that are deliberately
 allowed despite the importer not declaring the target in its package.json.

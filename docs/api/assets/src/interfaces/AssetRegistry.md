@@ -6,7 +6,7 @@
 
 # Interface: AssetRegistry
 
-Defined in: [assets/src/contract.ts:290](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L290)
+Defined in: [assets/src/contract.ts:263](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L263)
 
 An immutable, explicitly-assembled index of asset capsules. Replaces the
 old mutable module-global registry: there is no import-time mutation, so
@@ -23,7 +23,7 @@ resolve an id (`ref`, `resolveDecoder`, the projection factories).
 
 > **assertAudioRegistered**(`audioAssetId`, `factory`): `void`
 
-Defined in: [assets/src/contract.ts:307](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L307)
+Defined in: [assets/src/contract.ts:280](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L280)
 
 Validate that an audio asset id is registered before constructing a
 projection capsule for it. Throws a registry-miss teaching error naming
@@ -49,7 +49,7 @@ projection capsule for it. Throws a registry-miss teaching error naming
 
 > **capsule**(`id`): [`AssetCapsule`](../type-aliases/AssetCapsule.md) \| `undefined`
 
-Defined in: [assets/src/contract.ts:296](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L296)
+Defined in: [assets/src/contract.ts:269](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L269)
 
 The capsule registered under `id`, or `undefined`.
 
@@ -69,7 +69,7 @@ The capsule registered under `id`, or `undefined`.
 
 > **has**(`id`): `boolean`
 
-Defined in: [assets/src/contract.ts:292](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L292)
+Defined in: [assets/src/contract.ts:265](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L265)
 
 True when `id` names a capsule in this registry.
 
@@ -89,7 +89,7 @@ True when `id` names a capsule in this registry.
 
 > **ids**(): readonly `string`[]
 
-Defined in: [assets/src/contract.ts:294](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L294)
+Defined in: [assets/src/contract.ts:267](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L267)
 
 Sorted ids of every capsule in this registry (for teaching errors / listing).
 
@@ -103,7 +103,7 @@ readonly `string`[]
 
 > **ref**(`id`): [`AssetRefId`](../type-aliases/AssetRefId.md)
 
-Defined in: [assets/src/contract.ts:301](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L301)
+Defined in: [assets/src/contract.ts:274](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L274)
 
 Validate `id` is registered and return it as a branded [AssetRefId](../type-aliases/AssetRefId.md).
 Throws a registry-miss teaching error (with did-you-mean) on an unknown id.
@@ -124,7 +124,7 @@ Throws a registry-miss teaching error (with did-you-mean) on an unknown id.
 
 > **resolveDecoder**(`assetId`): [`AssetDecoder`](../type-aliases/AssetDecoder.md)
 
-Defined in: [assets/src/contract.ts:317](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L317)
+Defined in: [assets/src/contract.ts:290](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L290)
 
 Resolve the decode function for an asset id: the registered capsule's
 `derive` handler (which carries the asset's own decoder, custom or

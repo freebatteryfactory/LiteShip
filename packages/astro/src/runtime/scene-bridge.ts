@@ -37,7 +37,7 @@
  * @module
  */
 
-import { GraphPatch, sealNode, type ContentAddress, type DocumentGraph, type PoseNode } from '@czap/core';
+import { GraphPatch, sealNode, startRafLoop, type ContentAddress, type DocumentGraph, type PoseNode } from '@czap/core';
 import { dispatchCzapEvent } from '@czap/web';
 import type { SceneRuntime } from '@czap/scene';
 import { attachSignalObserver, readSignalValue, warnIfSignalUnserved } from './boundary.js';
@@ -359,29 +359,23 @@ export function bridgeSceneToGraph(
     };
   }
 
-  // TIME clock: a plain rAF wall-clock loop. SSR-guarded — no requestAnimationFrame
-  // means no loop (the bridge is inert on the server).
-  let frame: number | null = null;
-  let lastTs: number | null = null;
-  const hasRaf = typeof requestAnimationFrame !== 'undefined';
-
-  const loop = (ts: number): void => {
+  // TIME clock: a plain rAF wall-clock loop. SSR-guarded via startRafLoop — no
+  // requestAnimationFrame means no loop (the bridge is inert on the server).
+  // startRafLoop hands elapsed-since-first-frame; the per-frame `dt` the step
+  // consumes is the difference between successive elapsed readings (0 on frame 1).
+  let lastElapsed = 0;
+  const stopLoop = startRafLoop((elapsedMs) => {
     if (stopped) return;
-    const dt = lastTs === null ? 0 : ts - lastTs;
-    lastTs = ts;
+    const dt = elapsedMs - lastElapsed;
+    lastElapsed = elapsedMs;
     void step(dt);
-    if (!stopped && hasRaf) frame = requestAnimationFrame(loop);
-  };
-  if (hasRaf) frame = requestAnimationFrame(loop);
+  });
 
   return {
     stop(): void {
       if (stopped) return;
       stopped = true;
-      if (frame !== null && typeof cancelAnimationFrame !== 'undefined') {
-        cancelAnimationFrame(frame);
-        frame = null;
-      }
+      stopLoop();
       graphHandle.release();
     },
   };

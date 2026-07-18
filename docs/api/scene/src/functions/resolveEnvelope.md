@@ -8,7 +8,7 @@
 
 > **resolveEnvelope**(`env`, `ctx`): `ResolvedEnvelope`
 
-Defined in: [scene/src/sugar/envelope.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/sugar/envelope.ts#L64)
+Defined in: [scene/src/sugar/envelope.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/sugar/envelope.ts#L65)
 
 Resolve a declared envelope's beat spans to frame counts using the
 scene's BPM + fps. Called once by `compileScene` per enveloped track;

@@ -17,6 +17,7 @@
 import { appendFileSync, existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { normalizeRepoPath } from '@czap/core';
 import libCoverage from 'istanbul-lib-coverage';
 import V8ToIstanbul from 'v8-to-istanbul';
 import { coverageInclude, coverageExclude, repoRoot } from '../vitest.shared.js';
@@ -96,10 +97,10 @@ for (const dumpName of dumpFiles) {
     const normalized = process.platform === 'win32' && filePath.startsWith('/')
       ? filePath.slice(1).replace(/\//g, '\\')
       : filePath;
-    // Distinct op (NOT plain slash normalization, CUT B5b): a file:// URL↔fs path
-    // round-trip — forward→back (native abs for V8ToIstanbul) then back→forward with a
-    // repo-root prefix strip for glob matching. Intentionally inline.
-    const relForGlob = normalized.replace(/\\/g, '/').replace(`${repoRoot.replace(/\\/g, '/')}/`, '');
+    // A file:// URL↔fs path round-trip: forward→back (native abs for V8ToIstanbul)
+    // then back→forward via normalizeRepoPath, with a repo-root prefix strip for
+    // glob matching.
+    const relForGlob = normalizeRepoPath(normalized).replace(`${normalizeRepoPath(repoRoot)}/`, '');
 
     const included = coverageInclude.some((pat) => minimatch(relForGlob, pat));
     if (!included) continue;

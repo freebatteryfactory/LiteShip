@@ -7,7 +7,8 @@
  */
 
 import { normalizeRepoPath, scanModuleScopeDateReads } from '@czap/audit';
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { walkFiles } from '@czap/core/fs-walk';
+import { existsSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
 export interface ConsumerAppFinding {
@@ -19,19 +20,6 @@ export interface ConsumerAppFinding {
 }
 
 const SKIP_DIRS = new Set(['node_modules', 'dist', '.git', 'coverage', '.astro']);
-
-function walkSource(root: string, dir: string, out: string[]): void {
-  if (!existsSync(dir)) return;
-  for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    if (SKIP_DIRS.has(entry.name)) continue;
-    const abs = join(dir, entry.name);
-    if (entry.isDirectory()) {
-      walkSource(root, abs, out);
-      continue;
-    }
-    if (/\.(ts|tsx|js|jsx|astro|mjs)$/.test(entry.name)) out.push(normalizeRepoPath(relative(root, abs)));
-  }
-}
 
 function lineOf(source: string, index: number): number {
   return source.slice(0, index).split('\n').length;
@@ -163,8 +151,12 @@ function scanFile(rel: string, source: string): ConsumerAppFinding[] {
 /** Scan consumer app source under `cwd` (prefers `src/` when present). */
 export function scanConsumerAppSource(cwd: string): readonly ConsumerAppFinding[] {
   const scanRoot = existsSync(join(cwd, 'src')) ? join(cwd, 'src') : cwd;
-  const files: string[] = [];
-  walkSource(cwd, scanRoot, files);
+  // The shared `@czap/core/fs-walk` walker (SKIP_DIRS pruned, source extensions);
+  // repo-relative POSIX ids to match the original walker's output.
+  const files = walkFiles(scanRoot, {
+    skipDirs: SKIP_DIRS,
+    extensions: ['ts', 'tsx', 'js', 'jsx', 'astro', 'mjs'],
+  }).map((abs) => normalizeRepoPath(relative(cwd, abs)));
 
   const findings: ConsumerAppFinding[] = [];
   for (const rel of files) {
