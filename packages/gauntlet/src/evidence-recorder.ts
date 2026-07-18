@@ -59,6 +59,7 @@ export const FACT_CHANNELS = [
   'supplyChain',
   'mutation',
   'transition',
+  'spineRelation',
   'mcdc',
   'simulation',
   'traceability',

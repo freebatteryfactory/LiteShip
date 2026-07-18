@@ -1580,6 +1580,14 @@
           "kind": "interface"
         },
         {
+          "name": "SpineRelationBuildOptions",
+          "kind": "interface"
+        },
+        {
+          "name": "SpineTypeAdmission",
+          "kind": "interface"
+        },
+        {
           "name": "StructureCoverageClassification",
           "kind": "interface"
         },
@@ -3586,6 +3594,18 @@
           "kind": "type"
         },
         {
+          "name": "SpineAuthority",
+          "kind": "type"
+        },
+        {
+          "name": "SpineRelationFacts",
+          "kind": "type"
+        },
+        {
+          "name": "SpineRelationObservation",
+          "kind": "type"
+        },
+        {
           "name": "StandardsChange",
           "kind": "type"
         },
@@ -3611,6 +3631,10 @@
         },
         {
           "name": "SupplyChainViolation",
+          "kind": "type"
+        },
+        {
+          "name": "SurfaceRelation",
           "kind": "type"
         },
         {

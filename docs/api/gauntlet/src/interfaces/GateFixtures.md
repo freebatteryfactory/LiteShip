@@ -6,7 +6,7 @@
 
 # Interface: GateFixtures
 
-Defined in: [gauntlet/src/gate.ts:371](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L371)
+Defined in: [gauntlet/src/gate.ts:383](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L383)
 
 The three fixtures every gate ships — the authority ratchet's evidence.
 - `red`: a known-BAD world the gate MUST flag (≥1 finding). No red → no
@@ -24,7 +24,7 @@ The three fixtures every gate ships — the authority ratchet's evidence.
 
 > `readonly` **green**: [`GateFixture`](GateFixture.md)
 
-Defined in: [gauntlet/src/gate.ts:373](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L373)
+Defined in: [gauntlet/src/gate.ts:385](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L385)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [gauntlet/src/gate.ts:373](https://github.com/freebatteryfactory/Lit
 
 > `readonly` **mutation**: [`GateMutation`](GateMutation.md)
 
-Defined in: [gauntlet/src/gate.ts:374](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L374)
+Defined in: [gauntlet/src/gate.ts:386](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L386)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [gauntlet/src/gate.ts:374](https://github.com/freebatteryfactory/Lit
 
 > `readonly` **red**: [`GateFixture`](GateFixture.md)
 
-Defined in: [gauntlet/src/gate.ts:372](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L372)
+Defined in: [gauntlet/src/gate.ts:384](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L384)

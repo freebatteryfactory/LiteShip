@@ -28,6 +28,7 @@ export * from './mcdc-engine.js';
 export * from './mcdc-facts-build.js';
 export * from './structure.js';
 export * from './type-export-surface.js';
+export * from './spine-relation-build.js';
 export * from './integrity.js';
 export * from './surface.js';
 export * from './skip-detect-ast.js';

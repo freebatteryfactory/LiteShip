@@ -76,6 +76,7 @@ export {
   requireIR,
   requireMutation,
   requireTransition,
+  requireSpineRelation,
   requireMcdc,
   requireTaint,
   requireCapabilityLink,
@@ -121,6 +122,17 @@ export { type MutationFacts, type MutantOutcome, type MutantVerdictTag } from '.
 // unevidenced). The heavy capture (unfolding op histories over both transports) lives in
 // @czap/audit's buildTransitionFacts + the Foundation harnesses; the lean gate folds.
 export { type TransitionFacts, type TransitionCase, type TransitionStatus } from './transition-facts.js';
+// The Wave-8.5 two-axis spine-relation facts + pure classifiers. INTERFACE + logic
+// only (no `typescript` dep); @czap/audit's buildSpineRelationFacts probes them, the
+// lean gate folds them.
+export {
+  type SpineRelationFacts,
+  type SpineRelationObservation,
+  type SpineAuthority,
+  type SurfaceRelation,
+  classifyStructuralRelation,
+  relationSatisfied,
+} from './spine-relation-facts.js';
 
 // The LOCAL-VS-GLOBAL correctness family — proof-strength facts + the lax-functor
 // `min`-fold over the dep DAG (the dual of assurance propagation), and the
@@ -427,6 +439,12 @@ export {
   DIVERGENCE_SEVERITY_BY_LEVEL,
   TRANSITION_FAMILY_LEVEL,
 } from './gates/transition-conformance.js';
+// The Wave-8.5 two-axis spine-relation gate. Exported but DELIBERATELY NOT in
+// LITESHIP_GATES / LITESHIP_IR_GATES: it is OPT-IN (`czap check --ir --spine-relation`)
+// — a ts.Program probe over the spine + runtime surface is too heavy for a default
+// run. The integrator composes it on like transitionConformanceGate (a ~3-line
+// wiring); @czap/audit's buildSpineRelationFacts builds the injected facts.
+export { spineRelationGate } from './gates/spine-relation.js';
 
 // The avionics-tier MC/DC-coverage gate (DO-178B Level A's Modified Condition/Decision
 // Coverage, realized as CONDITION-LEVEL MUTATION — a sound, recognized technique reusing

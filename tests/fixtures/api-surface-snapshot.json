@@ -210,6 +210,11 @@
           "kind": "const"
         },
         {
+          "name": "DEFAULT_SURFACE_READER",
+          "kind": "namespace",
+          "signature": "fileExists:function,readFile:function"
+        },
+        {
           "name": "DEFAULT_TAINT_INTERPROCEDURAL_DEPTH",
           "kind": "const"
         },
@@ -300,9 +305,19 @@
           "signature": "(1)"
         },
         {
+          "name": "buildSpineRelationFacts",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
           "name": "buildTransitionFacts",
           "kind": "function",
           "signature": "(2)"
+        },
+        {
+          "name": "buildTypeExportSurface",
+          "kind": "function",
+          "signature": "(1)"
         },
         {
           "name": "codeOnlyAST",
@@ -360,6 +375,11 @@
           "signature": "(1)"
         },
         {
+          "name": "diffTypeExportSurface",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
           "name": "discoverInstalledPackageRoots",
           "kind": "function",
           "signature": "(2)"
@@ -367,6 +387,11 @@
         {
           "name": "dynamicImportExemptions",
           "kind": "const"
+        },
+        {
+          "name": "enumeratePackageTypeExports",
+          "kind": "function",
+          "signature": "(1)"
         },
         {
           "name": "evaluateMutant",
@@ -476,6 +501,11 @@
           "signature": "(2)"
         },
         {
+          "name": "readAdmissionSource",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "readJsonFile",
           "kind": "function",
           "signature": "(1)"
@@ -537,6 +567,11 @@
         },
         {
           "name": "scoreVerdicts",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "serializeTypeExportSurface",
           "kind": "function",
           "signature": "(1)"
         },
@@ -2537,6 +2572,11 @@
           "signature": "describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
         },
         {
+          "name": "classifyStructuralRelation",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
           "name": "codeOnly",
           "kind": "function",
           "signature": "(1)"
@@ -2862,6 +2902,11 @@
           "signature": "(1)"
         },
         {
+          "name": "relationSatisfied",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
           "name": "requireCapabilityLink",
           "kind": "function",
           "signature": "(2)"
@@ -2878,6 +2923,11 @@
         },
         {
           "name": "requireMutation",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "requireSpineRelation",
           "kind": "function",
           "signature": "(2)"
         },
@@ -2930,6 +2980,11 @@
           "name": "sortSurfaceElements",
           "kind": "function",
           "signature": "(1)"
+        },
+        {
+          "name": "spineRelationGate",
+          "kind": "namespace",
+          "signature": "describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
         },
         {
           "name": "stableEvidenceDigest",

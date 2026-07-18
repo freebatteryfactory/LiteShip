@@ -190,6 +190,10 @@ export function scopeContextByLevel(
     // host injected them — the same scoped-context drop the supplyChain/mutation
     // pass-throughs above fix.
     ...(context.transition !== undefined ? { transition: context.transition } : {}),
+    // Likewise the injected two-axis spine-relation facts (Wave 8.5): the
+    // level-scoped context must carry them through so the spineRelationGate still
+    // sees the host's classification after scoping.
+    ...(context.spineRelation !== undefined ? { spineRelation: context.spineRelation } : {}),
     // Likewise the injected MC/DC facts (the avionics MC/DC tier): each
     // McdcConditionOutcome carries its own `file` + (line, column) (the gate scopes
     // itself to the file's propagated level via the IR), so file-scoping never narrows
