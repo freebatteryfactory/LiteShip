@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { Schema } from 'effect';
-import { defineCapsule } from '@czap/core';
+import { defineCapsule, S } from '@czap/core';
 import { resetCapsuleCatalog } from '@czap/core/testing';
 import * as Harness from '@czap/core/harness';
 
@@ -8,8 +7,8 @@ const audioDecode = (name = 'demo.audioDecode', budgets: { p95Ms?: number } = { 
   defineCapsule({
     _kind: 'cachedProjection',
     name,
-    input: Schema.Unknown,
-    output: Schema.Unknown,
+    input: S.unknown,
+    output: S.unknown,
     capabilities: { reads: ['fs.read'], writes: [] },
     invariants: [],
     budgets,
@@ -67,8 +66,8 @@ describe('generateCachedProjection (compile-time-resolved)', () => {
     const cap = defineCapsule({
       _kind: 'cachedProjection',
       name: 'intro-bed',
-      input: Schema.Unknown,
-      output: Schema.Unknown,
+      input: S.unknown,
+      output: S.unknown,
       capabilities: { reads: ['fs.read'], writes: [] },
       invariants: [{ name: 'positive duration', check: () => true, message: 'durations must be > 0' }],
       budgets: { p95Ms: 50 },

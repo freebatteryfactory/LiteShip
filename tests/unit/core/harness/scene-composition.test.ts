@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { Schema } from 'effect';
-import { defineCapsule } from '@czap/core';
+import { defineCapsule, S } from '@czap/core';
 import { resetCapsuleCatalog } from '@czap/core/testing';
 import * as Harness from '@czap/core/harness';
 
@@ -26,8 +25,8 @@ describe('generateSceneComposition (lane-aware)', () => {
     defineCapsule({
       _kind: 'sceneComposition',
       name,
-      input: Schema.Unknown,
-      output: Schema.Unknown,
+      input: S.unknown,
+      output: S.unknown,
       capabilities: { reads: [], writes: [] },
       invariants: [],
       budgets,
@@ -102,14 +101,11 @@ describe('generateSceneComposition (lane-aware)', () => {
   });
 
   it('no driver: a real premise-guard test pins the exemption (no empty suite)', () => {
-    const { testFile, benchFile } = Harness.generateSceneComposition(
-      sceneCap('demo.preRuntime'),
-      {
-        bindingImport: '../../packages/scene/src/capsules/demo.js',
-        bindingName: 'demoCapsule',
-        sceneDriverNotApplicableReason: 'pre-runtime transform — no tracks',
-      },
-    );
+    const { testFile, benchFile } = Harness.generateSceneComposition(sceneCap('demo.preRuntime'), {
+      bindingImport: '../../packages/scene/src/capsules/demo.js',
+      bindingName: 'demoCapsule',
+      sceneDriverNotApplicableReason: 'pre-runtime transform — no tracks',
+    });
     // A real it() guard so the file is a valid, passing suite — not an empty
     // file that would error the runner — and the exemption can't go stale.
     expect(testFile).toContain('describe(');

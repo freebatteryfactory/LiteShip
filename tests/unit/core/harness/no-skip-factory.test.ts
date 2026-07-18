@@ -16,8 +16,7 @@
  * @module
  */
 import { describe, it, expect, beforeEach } from 'vitest';
-import { Schema } from 'effect';
-import { defineCapsule } from '@czap/core';
+import { defineCapsule, S } from '@czap/core';
 import { resetCapsuleCatalog } from '@czap/core/testing';
 import * as Harness from '@czap/core/harness';
 import type { AssemblyKind } from '@czap/core';
@@ -28,8 +27,8 @@ const minimalCapsule = (kind: AssemblyKind) =>
   defineCapsule({
     _kind: kind,
     name: `degenerate.${kind}`,
-    input: Schema.Unknown,
-    output: Schema.Unknown,
+    input: S.unknown,
+    output: S.unknown,
     capabilities: { reads: [], writes: [] },
     invariants: [],
     budgets: { p95Ms: 1 },
@@ -39,9 +38,7 @@ const minimalCapsule = (kind: AssemblyKind) =>
     // VALIDLY declared and the degenerate (no-binding) case is exercised at the
     // GENERATOR, which is what this guard tests — the generator throwing on an
     // un-probed capsule, not defineCapsule throwing on a malformed one.
-    ...(kind === 'policyGate'
-      ? { decide: () => ({ effect: 'allow' as const, reasons: [] }) }
-      : {}),
+    ...(kind === 'policyGate' ? { decide: () => ({ effect: 'allow' as const, reasons: [] }) } : {}),
   });
 
 /**

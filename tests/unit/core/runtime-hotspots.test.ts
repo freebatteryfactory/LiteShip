@@ -1,12 +1,15 @@
 // @vitest-environment jsdom
 
 import { describe, expect, test } from 'vitest';
-import { Schema } from 'effect';
-import { Boundary, Millis, Part, SpeculativeEvaluator, Style, World } from '@czap/core';
+import { Boundary, Millis, Part, S, SpeculativeEvaluator, Style, World } from '@czap/core';
 import { evaluate as evaluateQuantizer } from '@czap/quantizer';
 import { GLSLCompiler } from '@czap/compiler';
 import { captureSelection, findScrollable } from '../../../packages/web/src/physical/capture.js';
-import { restoreActiveElement, restoreFocusState, restoreSelection } from '../../../packages/web/src/physical/restore.js';
+import {
+  restoreActiveElement,
+  restoreFocusState,
+  restoreSelection,
+} from '../../../packages/web/src/physical/restore.js';
 
 describe('runtime hotspot coverage', () => {
   test('World regular systems handle empty queries, component add/remove, and missing dense stores', () => {
@@ -14,8 +17,8 @@ describe('runtime hotspot coverage', () => {
     // { world, lifetime }, every method returns directly, and System.execute
     // returns void (no Effect wrapper).
     const { world } = World.make();
-    const hpPart = { name: 'hp', schema: Schema.Number };
-    const labelPart = { name: 'label', schema: Schema.String };
+    const hpPart = { name: 'hp', schema: S.number };
+    const labelPart = { name: 'label', schema: S.string };
     const presentStore = Part.dense('present', 8);
     world.addDenseStore(presentStore);
 
@@ -143,9 +146,7 @@ describe('runtime hotspot coverage', () => {
 
     const singleState = Boundary.make({
       input: 'viewport.width',
-      at: [
-        [0, 'only'],
-      ] as const,
+      at: [[0, 'only']] as const,
     });
     const noThresholds = SpeculativeEvaluator.make(singleState);
     const noNearest = noThresholds.evaluate(200, 5);

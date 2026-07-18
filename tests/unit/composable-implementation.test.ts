@@ -1,18 +1,21 @@
 /**
  * ECS Composable Implementation Tests
- * 
+ *
  * Tests that verify the actual ECS composition implementation works.
  * These tests validate the green phase of red-green development.
  */
 
 import { describe, test, expect } from 'vitest';
-import { Effect, Scope } from 'effect';
 import { Boundary, Token, Composable, ComposableWorld, World } from '@czap/core';
 
 describe('ECS Composable Implementation', () => {
   const boundary = Boundary.make({
     input: 'viewport.width',
-    at: [[0, 'mobile'], [768, 'tablet'], [1024, 'desktop']]
+    at: [
+      [0, 'mobile'],
+      [768, 'tablet'],
+      [1024, 'desktop'],
+    ],
   });
 
   const token = Token.make({
@@ -20,7 +23,7 @@ describe('ECS Composable Implementation', () => {
     category: 'color',
     axes: ['theme'],
     values: { dark: '#00e5ff', light: 'hsl(175 70% 50%)' },
-    fallback: '#00e5ff'
+    fallback: '#00e5ff',
   });
 
   test('Composable.make creates entity with deterministic ID', () => {

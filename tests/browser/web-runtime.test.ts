@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { Effect } from 'effect';
 import { AVBridge } from '@czap/core';
 import { Detect } from '@czap/detect';
 import { createAudioProcessor } from '../../packages/web/src/audio/processor.js';
@@ -37,24 +36,20 @@ describe('browser web runtime coverage', () => {
     expect(SlotRegistry.findElement('/hero' as never)).toBe(root.querySelector('[data-czap-slot="/hero"]'));
     expect(SlotRegistry.getPath(root.querySelector('[data-czap-slot="/hero"]')!)).toBe('/hero');
 
-    await Effect.runPromise(
-      Effect.scoped(
-        Effect.gen(function* () {
-          yield* SlotRegistry.observe(registry, document.body);
+    const dispose = SlotRegistry.observe(registry, document.body);
 
-          const added = document.createElement('div');
-          added.setAttribute('data-czap-slot', '/hero/footer');
-          document.body.appendChild(added);
-          yield* Effect.promise(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
+    const added = document.createElement('div');
+    added.setAttribute('data-czap-slot', '/hero/footer');
+    document.body.appendChild(added);
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
 
-          expect(registry.has('/hero/footer' as never)).toBe(true);
+    expect(registry.has('/hero/footer' as never)).toBe(true);
 
-          added.remove();
-          yield* Effect.promise(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
-          expect(registry.has('/hero/footer' as never)).toBe(false);
-        }),
-      ),
-    );
+    added.remove();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    expect(registry.has('/hero/footer' as never)).toBe(false);
+
+    dispose();
   });
 
   test('captures and restores focused input state, scroll positions, and IME metadata', async () => {
@@ -79,7 +74,7 @@ describe('browser web runtime coverage', () => {
     input.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true }));
     input.dispatchEvent(new CompositionEvent('compositionupdate', { bubbles: true, data: 'kana' }));
 
-    const state = await Effect.runPromise(capture(root));
+    const state = capture(root);
     expect(state.focusState?.elementId).toContain('focus-target');
     expect(state.scrollPositions['#scroll-box']?.top).toBeCloseTo(60, 0);
     expect(captureIME()).toEqual({
@@ -93,8 +88,8 @@ describe('browser web runtime coverage', () => {
     input.blur();
     input.setSelectionRange(0, 0);
 
-    await Effect.runPromise(restore(state, root));
-    await Effect.runPromise(restoreIME({ elementPath: '#focus-target', text: 'kana', start: 2, end: 5 }));
+    restore(state, root);
+    restoreIME({ elementPath: '#focus-target', text: 'kana', start: 2, end: 5 });
 
     expect(document.activeElement).toBe(input);
     expect(input.selectionStart).toBe(2);
@@ -220,18 +215,16 @@ describe('browser web runtime coverage', () => {
 
     const beta = document.getElementById('beta');
 
-    const result = await Effect.runPromise(
-      Morph.morphWithState(
-        root,
-        `
+    const result = Morph.morphWithState(
+      root,
+      `
           <button data-czap-id="beta-renamed" id="beta">Beta updated</button>
           <button data-czap-id="alpha" id="alpha">Alpha updated</button>
         `,
-        { morphStyle: 'innerHTML' },
-        {
-          remap: { beta: 'beta-renamed' },
-        },
-      ),
+      { morphStyle: 'innerHTML' },
+      {
+        remap: { beta: 'beta-renamed' },
+      },
     );
 
     expect(result.type).toBe('success');
@@ -374,18 +367,16 @@ describe('browser web runtime coverage', () => {
     document.body.appendChild(root);
     SlotRegistry.scanDOM(registry, root);
 
-    const result = await Effect.runPromise(
-      Morph.morphWithState(
-        root.querySelector('#shell') as HTMLElement,
-        `
+    const result = Morph.morphWithState(
+      root.querySelector('#shell') as HTMLElement,
+      `
           <article id="shell">
             <div data-czap-slot="/hero">
               <button data-czap-id="hero-action">Second</button>
             </div>
           </article>
         `,
-        { morphStyle: 'outerHTML' },
-      ),
+      { morphStyle: 'outerHTML' },
     );
 
     expect(result.type).toBe('success');

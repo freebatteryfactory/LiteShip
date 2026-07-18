@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
-import { Effect } from 'effect';
 import { Diagnostics } from '@czap/core';
 import { SlotRegistry } from '../../packages/web/src/slot/registry.js';
 import { captureDiagnostics } from '../helpers/diagnostics.js';
@@ -185,103 +184,82 @@ describe('browser SlotRegistry with real MutationObserver', () => {
   test('observe auto-registers dynamically added slot elements via MutationObserver', async () => {
     const registry = SlotRegistry.create();
 
-    await Effect.runPromise(
-      Effect.scoped(
-        Effect.gen(function* () {
-          yield* SlotRegistry.observe(registry, root);
+    const dispose = SlotRegistry.observe(registry, root);
 
-          const el = document.createElement('div');
-          el.setAttribute('data-czap-slot', '/dynamic');
-          root.appendChild(el);
+    const el = document.createElement('div');
+    el.setAttribute('data-czap-slot', '/dynamic');
+    root.appendChild(el);
 
-          // MutationObserver fires asynchronously; wait for microtask
-          yield* Effect.promise(() => new Promise<void>((r) => setTimeout(r, 0)));
-          expect(registry.has('/dynamic' as never)).toBe(true);
-        }),
-      ),
-    );
+    // MutationObserver fires asynchronously; wait for microtask
+    await new Promise<void>((r) => setTimeout(r, 0));
+    expect(registry.has('/dynamic' as never)).toBe(true);
+
+    dispose();
   });
 
   test('observe auto-unregisters removed slot elements', async () => {
     const registry = SlotRegistry.create();
 
-    await Effect.runPromise(
-      Effect.scoped(
-        Effect.gen(function* () {
-          yield* SlotRegistry.observe(registry, root);
+    const dispose = SlotRegistry.observe(registry, root);
 
-          const el = document.createElement('div');
-          el.setAttribute('data-czap-slot', '/transient');
-          root.appendChild(el);
-          yield* Effect.promise(() => new Promise<void>((r) => setTimeout(r, 0)));
-          expect(registry.has('/transient' as never)).toBe(true);
+    const el = document.createElement('div');
+    el.setAttribute('data-czap-slot', '/transient');
+    root.appendChild(el);
+    await new Promise<void>((r) => setTimeout(r, 0));
+    expect(registry.has('/transient' as never)).toBe(true);
 
-          el.remove();
-          yield* Effect.promise(() => new Promise<void>((r) => setTimeout(r, 0)));
-          expect(registry.has('/transient' as never)).toBe(false);
-        }),
-      ),
-    );
+    el.remove();
+    await new Promise<void>((r) => setTimeout(r, 0));
+    expect(registry.has('/transient' as never)).toBe(false);
+
+    dispose();
   });
 
   test('observe picks up nested slot elements added as part of a subtree', async () => {
     const registry = SlotRegistry.create();
 
-    await Effect.runPromise(
-      Effect.scoped(
-        Effect.gen(function* () {
-          yield* SlotRegistry.observe(registry, root);
+    const dispose = SlotRegistry.observe(registry, root);
 
-          const wrapper = document.createElement('div');
-          wrapper.innerHTML = `
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = `
             <div data-czap-slot="/nested/a"></div>
             <div data-czap-slot="/nested/b"></div>
           `;
-          root.appendChild(wrapper);
+    root.appendChild(wrapper);
 
-          yield* Effect.promise(() => new Promise<void>((r) => setTimeout(r, 0)));
-          expect(registry.has('/nested/a' as never)).toBe(true);
-          expect(registry.has('/nested/b' as never)).toBe(true);
-        }),
-      ),
-    );
+    await new Promise<void>((r) => setTimeout(r, 0));
+    expect(registry.has('/nested/a' as never)).toBe(true);
+    expect(registry.has('/nested/b' as never)).toBe(true);
+
+    dispose();
   });
 
   test('observe handles attribute changes on data-czap-slot', async () => {
     const registry = SlotRegistry.create();
 
-    await Effect.runPromise(
-      Effect.scoped(
-        Effect.gen(function* () {
-          yield* SlotRegistry.observe(registry, root);
+    const dispose = SlotRegistry.observe(registry, root);
 
-          const el = document.createElement('div');
-          el.setAttribute('data-czap-slot', '/original');
-          root.appendChild(el);
-          yield* Effect.promise(() => new Promise<void>((r) => setTimeout(r, 0)));
-          expect(registry.has('/original' as never)).toBe(true);
+    const el = document.createElement('div');
+    el.setAttribute('data-czap-slot', '/original');
+    root.appendChild(el);
+    await new Promise<void>((r) => setTimeout(r, 0));
+    expect(registry.has('/original' as never)).toBe(true);
 
-          el.setAttribute('data-czap-slot', '/renamed');
-          yield* Effect.promise(() => new Promise<void>((r) => setTimeout(r, 0)));
-          expect(registry.has('/original' as never)).toBe(false);
-          expect(registry.has('/renamed' as never)).toBe(true);
-        }),
-      ),
-    );
+    el.setAttribute('data-czap-slot', '/renamed');
+    await new Promise<void>((r) => setTimeout(r, 0));
+    expect(registry.has('/original' as never)).toBe(false);
+    expect(registry.has('/renamed' as never)).toBe(true);
+
+    dispose();
   });
 
-  test('observer disconnects when Effect scope closes', async () => {
+  test('observer disconnects when its disposer runs', async () => {
     const registry = SlotRegistry.create();
 
-    await Effect.runPromise(
-      Effect.scoped(
-        Effect.gen(function* () {
-          yield* SlotRegistry.observe(registry, root);
-        }),
-      ),
-    );
+    const dispose = SlotRegistry.observe(registry, root);
+    dispose();
 
-    // After scope closes, adding elements should NOT auto-register
+    // After disposal, adding elements should NOT auto-register
     const el = document.createElement('div');
     el.setAttribute('data-czap-slot', '/after-scope');
     root.appendChild(el);

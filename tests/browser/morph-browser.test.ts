@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
-import { Effect } from 'effect';
 import { Morph } from '../../packages/web/src/morph/diff.js';
 import { MorphOpaque } from '../../packages/web/src/morph/opaque.js';
 import {
@@ -28,9 +27,7 @@ describe('browser morph with real DOM', () => {
     root.innerHTML = '<p>old text</p><span>remove me</span>';
     const originalRoot = root;
 
-    await Effect.runPromise(
-      Morph.morph(root, '<p>new text</p><div>added</div>'),
-    );
+    Morph.morph(root, '<p>new text</p><div>added</div>');
 
     expect(root).toBe(originalRoot);
     expect(root.querySelector('p')?.textContent).toBe('new text');
@@ -44,9 +41,7 @@ describe('browser morph with real DOM', () => {
     child.textContent = 'old';
     root.appendChild(child);
 
-    await Effect.runPromise(
-      Morph.morph(child, '<div id="target">replaced</div>', { morphStyle: 'outerHTML' }),
-    );
+    Morph.morph(child, '<div id="target">replaced</div>', { morphStyle: 'outerHTML' });
 
     const updated = root.querySelector('#target');
     expect(updated?.textContent).toBe('replaced');
@@ -190,14 +185,12 @@ describe('browser morph with real DOM', () => {
     const input = omitted.querySelector('input') as HTMLInputElement;
     input.value = 'user';
 
-    await Effect.runPromise(
-      Morph.morph(
-        root,
-        `
+    Morph.morph(
+      root,
+      `
           <section data-czap-id="island" ${MorphOpaque.ATTR}><span>server</span></section>
           <p>new</p>
         `,
-      ),
     );
 
     expect(root.querySelector('section')).toBe(matched);
@@ -234,11 +227,13 @@ describe('browser morph with real DOM', () => {
     const btn1 = root.querySelector('#btn1')!;
     const btn2 = root.querySelector('#btn2')!;
 
-    const result = await Effect.runPromise(
-      Morph.morphWithState(root, `
+    const result = Morph.morphWithState(
+      root,
+      `
         <button data-czap-id="btn-2" id="btn2">Submit Updated</button>
         <button data-czap-id="btn-1" id="btn1">Click Updated</button>
-      `, { morphStyle: 'innerHTML' }),
+      `,
+      { morphStyle: 'innerHTML' },
     );
 
     expect(result.type).toBe('success');
@@ -252,13 +247,11 @@ describe('browser morph with real DOM', () => {
     root.innerHTML = '<div data-czap-id="old-id">content</div>';
     const el = root.querySelector('[data-czap-id="old-id"]')!;
 
-    const result = await Effect.runPromise(
-      Morph.morphWithState(
-        root,
-        '<div data-czap-id="new-id">updated content</div>',
-        { morphStyle: 'innerHTML' },
-        { remap: { 'old-id': 'new-id' } },
-      ),
+    const result = Morph.morphWithState(
+      root,
+      '<div data-czap-id="new-id">updated content</div>',
+      { morphStyle: 'innerHTML' },
+      { remap: { 'old-id': 'new-id' } },
     );
 
     expect(result.type).toBe('success');
@@ -274,13 +267,11 @@ describe('browser morph with real DOM', () => {
       rejections.push(e.detail);
     }) as EventListener);
 
-    const result = await Effect.runPromise(
-      Morph.morphWithState(
-        root,
-        '<div data-czap-id="other">different</div>',
-        { morphStyle: 'innerHTML' },
-        { preserve: ['required'] },
-      ),
+    const result = Morph.morphWithState(
+      root,
+      '<div data-czap-id="other">different</div>',
+      { morphStyle: 'innerHTML' },
+      { preserve: ['required'] },
     );
 
     expect(result.type).toBe('rejected');

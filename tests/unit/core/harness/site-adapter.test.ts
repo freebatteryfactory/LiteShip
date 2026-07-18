@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { Schema } from 'effect';
-import { defineCapsule } from '@czap/core';
+import { defineCapsule, S } from '@czap/core';
 import { resetCapsuleCatalog } from '@czap/core/testing';
 import * as Harness from '@czap/core/harness';
 
@@ -23,8 +22,8 @@ describe('generateSiteAdapter (lane-aware, declared-integration)', () => {
     defineCapsule({
       _kind: 'siteAdapter',
       name,
-      input: Schema.Unknown,
-      output: Schema.Unknown,
+      input: S.unknown,
+      output: S.unknown,
       capabilities: { reads: [], writes: [] },
       invariants: [],
       budgets: { p95Ms: 1 },

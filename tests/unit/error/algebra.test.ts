@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
 import fc from 'fast-check';
-import { Effect } from 'effect';
 import {
   taggedError,
   isTaggedError,
@@ -18,9 +17,11 @@ import {
   UnsupportedError,
   IntegrityError,
   assertNever,
+  err,
   LITESHIP_ERROR_TAGS,
   type TaggedError,
   type LiteShipError,
+  type Result,
 } from '@czap/error';
 
 // The error algebra is the spine of the gauntlet's Finding shape and of every
@@ -267,23 +268,29 @@ describe('raise — throw a tagged value with a stack trace', () => {
   });
 });
 
-// The load-bearing claim behind the zero-dep design: the SAME plain record is a
-// first-class Effect failure. Effect.catchTag keys on `_tag`, so our errors work
-// in the typed error channel without @czap/error importing effect.
-describe('Effect interop — one value, the Effect face', () => {
-  it('flows through the typed error channel and is caught by catchTag on _tag', () => {
-    const program = Effect.fail(ValidationError('Boundary.make', 'empty')).pipe(
-      Effect.catchTag('ValidationError', (e) => Effect.succeed(`recovered:${e.module}`)),
+// The load-bearing claim behind the errors-as-values design: the SAME plain
+// record rides any tag-keyed error channel and travels as inspectable data, not
+// through a throw. Native proof — no Effect: `matchTagOr` recovers on `_tag` (the
+// contract Effect's `catchTag` also keyed on), and a `Result` carries the failure
+// as a value the caller discriminates. (Wave 8: this was the former "Effect
+// interop" oracle; the OBSERVATION is preserved, the dependency retired.)
+describe('errors-as-values — one value, the typed-channel face', () => {
+  it('is recovered by a tag-keyed matcher on _tag (the catchTag-shaped contract)', () => {
+    const recovered = matchTagOr(
+      ValidationError('Boundary.make', 'empty'),
+      { ValidationError: (e) => `recovered:${e.module}` },
+      () => 'unrecovered',
     );
-    expect(Effect.runSync(program)).toBe('recovered:Boundary.make');
+    expect(recovered).toBe('recovered:Boundary.make');
   });
 
-  it('surfaces as a typed value via Effect.result (errors-as-values, not thrown)', () => {
-    const result = Effect.runSync(Effect.result(Effect.fail(ParseError('cbor', 'bad', { code: 'malformed' }))));
-    expect(result._tag).toBe('Failure'); // the failure channel as a value
-    if (result._tag === 'Failure') {
-      expect(hasTag(result.failure, 'ParseError')).toBe(true);
-      expect(result.failure.code).toBe('malformed');
+  it('surfaces as a typed value via Result (errors-as-values, not thrown)', () => {
+    const decode = (): Result<number, ParseError> => err(ParseError('cbor', 'bad', { code: 'malformed' }));
+    const result = decode();
+    expect(result.ok).toBe(false); // the failure channel as a value, not a throw
+    if (!result.ok) {
+      expect(hasTag(result.error, 'ParseError')).toBe(true);
+      expect(result.error.code).toBe('malformed');
     }
   });
 });
