@@ -3,7 +3,7 @@
   "title": "Wave 8 — Effect shed closeout receipt",
   "issue": 153,
   "date": "2026-07-18",
-  "sourceSha": "5af864ce15b87d4b0a0b3af3a1231baaeaba5747",
+  "sourceSha": "666195a6151a76d2afa8c877980c145da342a532",
   "rootVersion": "0.18.0",
   "counts": {
     "activeProductionReferences": 0,
@@ -42,13 +42,18 @@
     "gauntlet": "passed",
     "packageSmoke": "passed",
     "cleanRepositoryInstall": "passed (rm -rf node_modules && pnpm install --frozen-lockfile; zero effect in node_modules or the .pnpm store; cold build passes)",
+    "effectAbsence": "passed",
+    "packedTypecheck": "passed",
+    "declaredDependencyClosure": "passed",
+    "runtimeExecution": "passed",
+    "extraDependencies": [],
     "packedConsumerInstall": "passed",
     "packedConsumerDependencyTreeContainsEffect": false,
-    "consumerSmoke": "passed (packed @czap/core closure: Cell define/subscribe/dispose + S.struct/Codec.decode -> Result, executed from packed .d.ts + .js with zero effect installed)",
-    "reactivePublishAllocation": "0.0000 B/op with a live subscriber (CellKernel.fanout; was ~13 B/op via effect Queue.offerUnsafe)"
+    "consumerSmoke": "passed (packed @czap/core closure installed from ONLY its declared deps: Cell define/subscribe/dispose + S.struct/Codec.decode -> Result, executed from packed .d.ts + .js with zero effect installed and no undeclared extra dependency)",
+    "reactivePublishAllocation": "no measurable per-publish allocation under the allocation-gate harness with a live subscriber: 0.0000 B/op observed (CellKernel.fanout; was ~13 B/op via effect Queue.offerUnsafe — a finite-resolution benchmark, not a claim of mathematical zero)"
   },
   "notes": {
     "adr": "ADR-0005 superseded by ADR-0042 (not erased) — the migration bridge from each Effect responsibility to its native owner.",
-    "unrelatedFinding": "The packed-consumer proof surfaced a PRE-EXISTING, effect-unrelated packaging leak: packages/core/src/capsules/canonical-cbor-decode.ts eagerly imports 'fast-check' (used by withArbitrary) but fast-check is not declared in @czap/core's package.json (root devDep only). A fresh consumer importing @czap/core must currently also install fast-check. Flagged for a separate fix (declare it optional/peer, or lazy-import); NOT part of the effect shed."
+    "resolvedFinding": "The packed-consumer proof surfaced a PRE-EXISTING, effect-unrelated packaging leak (issue #157, scar S8.1): @czap/core's canonical-cbor capsules eagerly imported 'fast-check' (via withArbitrary) while declaring it nowhere, so runtime execution INITIALLY required a manually-installed fast-check (declaredDependencyClosure: failed, runtimeExecution: passed_with_extra_dependency). RESOLVED in this closeout: withArbitrary now takes fast-check as a thunk argument supplied by the harness — the capsules import nothing; the packed consumer runs on its declared deps alone. A permanent declared-dependency-closure gate (tests/unit/devops/declared-dependency-closure.test.ts) was minted from the scar with the leak as its red fixture."
   }
 }
