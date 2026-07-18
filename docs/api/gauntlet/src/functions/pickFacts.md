@@ -8,7 +8,7 @@
 
 > **pickFacts**(`context`, `requires`): [`FactBundle`](../interfaces/FactBundle.md)
 
-Defined in: [gauntlet/src/gate.ts:684](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L684)
+Defined in: [gauntlet/src/gate.ts:696](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L696)
 
 Pick EXACTLY the declared FactPacks off a context into a [FactBundle](../interfaces/FactBundle.md) — the engine
 seam that hands a [FactGate](../interfaces/FactGate.md)'s [FactGate.decide](../interfaces/FactGate.md#decide) only what it declared. A

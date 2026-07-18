@@ -22,6 +22,7 @@ import type { FileId, RepoIR } from './repo-ir.js';
 import type { SupplyChainFacts } from './supply-chain-facts.js';
 import type { MutationFacts } from './mutation-facts.js';
 import type { TransitionFacts } from './transition-facts.js';
+import type { SpineRelationFacts } from './spine-relation-facts.js';
 import type { McdcFacts } from './mcdc-facts.js';
 import type { SimulationFacts } from './simulation-facts.js';
 import type { TraceabilityFacts } from './traceability-facts.js';
@@ -154,6 +155,17 @@ export interface GateContext {
    * byte-for-byte. See {@link TransitionFacts}.
    */
   readonly transition?: TransitionFacts;
+  /**
+   * Pre-computed TWO-AXIS spine-relation classification — an INJECTED capability (the
+   * constitution's static-projection half, Wave 8.5), the same lean-engine pattern as
+   * {@link transition}. OPTIONAL: the heavy work (a `ts.Program` per build, one
+   * bidirectional-assignability probe per admitted mirror type) runs in `@czap/audit`'s
+   * `buildSpineRelationFacts`; when the host did not run it this capability is ABSENT and
+   * the {@link spineRelationGate} is simply not in the set (no cost, no noise). Each
+   * observation carries its two axes so a drift finding names WHICH relation changed.
+   * See {@link SpineRelationFacts}.
+   */
+  readonly spineRelation?: SpineRelationFacts;
   /**
    * Pre-computed MC/DC (Modified Condition/Decision Coverage) evidence — an INJECTED
    * capability (the avionics tier — DO-178B Level A's coverage requirement, realized as
@@ -868,6 +880,24 @@ export function requireTransition(context: GateContext, gateId: string): Transit
     );
   }
   return context.transition;
+}
+
+/**
+ * Read the injected {@link SpineRelationFacts} from a context, or throw a clear tagged
+ * {@link HostCapabilityError} when none were injected — the guard the
+ * {@link spineRelationGate} uses so the lean engine's optional `spineRelation` fails
+ * LOUD (never silently no-ops the gate whose whole job is the spine-relation facts).
+ * `gateId` is woven into the error for traceability. The same shape as
+ * {@link requireTransition}.
+ */
+export function requireSpineRelation(context: GateContext, gateId: string): SpineRelationFacts {
+  if (context.spineRelation === undefined) {
+    throw HostCapabilityError(
+      'spine-relation-facts',
+      `gate "${gateId}" requires the injected two-axis spine-relation facts, but none were supplied on the GateContext — a host (the CLI) must probe each admitted mirror type's bidirectional assignability via @czap/audit's buildSpineRelationFacts and inject the observed SpineRelationFacts as context.spineRelation (the opt-in \`czap check --ir --spine-relation\` path)`,
+    );
+  }
+  return context.spineRelation;
 }
 
 /**

@@ -71,6 +71,11 @@
     // the enumerator's descriptor/roster/reader contracts bite (a drift in the
     // TypeExportSurfaceSnapshot shape fails the typecheck, not just the run).
     "tests/unit/audit/type-export-surface.test.ts",
+    // The Wave-8.5 two-axis spine-relation gate acceptance (#156): the no-authority-gap
+    // proof that the gate reproduces every frozen spine-conformance pin's catch before
+    // the pins are absorbed. Typechecked here so the admission-table → SpineTypeAdmission
+    // mapping and the gate/facts contracts bite (a shape drift fails the typecheck).
+    "tests/unit/audit/spine-relation.test.ts",
     // The cure-wave determinism + zero-alloc + perf-claim tests: typechecked here
     // so their type-level contracts (RepoIR / GateVerdictKeyParts folds, the
     // alloc-gate budget import, the gate surface) bite rather than rot.

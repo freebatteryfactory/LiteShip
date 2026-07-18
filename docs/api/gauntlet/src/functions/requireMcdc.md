@@ -8,7 +8,7 @@
 
 > **requireMcdc**(`context`, `gateId`): [`McdcFacts`](../interfaces/McdcFacts.md)
 
-Defined in: [gauntlet/src/gate.ts:880](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L880)
+Defined in: [gauntlet/src/gate.ts:910](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L910)
 
 Read the injected [McdcFacts](../interfaces/McdcFacts.md) from a context, or throw a clear tagged
 [HostCapabilityError](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts) when none were injected — the guard the
