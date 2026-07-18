@@ -6,15 +6,15 @@
 
 # Function: watchCapabilities()
 
-> **watchCapabilities**(`onChange`): `Effect`\<`void`, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\>
+> **watchCapabilities**(`onChange`): [`Disposer`](../type-aliases/Disposer.md)
 
-Defined in: [detect/src/detect.ts:696](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L696)
+Defined in: [detect/src/detect.ts:686](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L686)
 
 Watch for capability changes via matchMedia listeners and resize observer.
 Emits a fresh DetectionResult whenever viewport, color scheme, or
 reduced motion preferences change.
 
-The stream is scoped -- listeners are cleaned up when the scope finalizes.
+Listeners are torn down when the returned [Disposer](../type-aliases/Disposer.md) is called.
 
 Event bursts are coalesced: re-detection is debounced to one sweep per
 animation frame, and hardware-identity probes (GPU renderer, WebGPU, cores,
@@ -31,19 +31,17 @@ Callback invoked with fresh detection results on change
 
 ## Returns
 
-`Effect`\<`void`, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\>
+[`Disposer`](../type-aliases/Disposer.md)
 
-An Effect (scoped) that sets up listeners
+A [Disposer](../type-aliases/Disposer.md) that removes the listeners it added
 
 ## Example
 
 ```ts
 import { Detect } from '@czap/detect';
-import { Effect } from 'effect';
 
-const program = Effect.scoped(
-  Detect.watchCapabilities((result) => {
-    console.log('Capabilities changed:', result.capTier);
-  }),
-);
+const dispose = Detect.watchCapabilities((result) => {
+  console.log('Capabilities changed:', result.capTier);
+});
+// later: dispose()
 ```

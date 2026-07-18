@@ -8,7 +8,7 @@
 
 > `const` **FrameBudget**: `object`
 
-Defined in: [core/src/frame-budget.ts:156](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/frame-budget.ts#L156)
+Defined in: [core/src/frame-budget.ts:147](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/frame-budget.ts#L147)
 
 FrameBudget -- rAF-based frame budget manager with priority lanes.
 Tracks remaining time per animation frame and gates work by priority:
@@ -18,7 +18,7 @@ Tracks remaining time per animation frame and gates work by priority:
 
 ### make
 
-> **make**: (`config?`) => `Effect`\<`FrameBudgetShape`, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\> = `_make`
+> **make**: (`config?`) => `FrameBudgetShape` = `_make`
 
 Creates a FrameBudget tracker tied to rAF, with priority-based scheduling.
 Critical tasks always run; lower priorities are deferred if budget is exhausted.
@@ -37,28 +37,25 @@ Critical tasks always run; lower priorities are deferred if budget is exhausted.
 
 #### Returns
 
-`Effect`\<`FrameBudgetShape`, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\>
+`FrameBudgetShape`
 
 #### Example
 
 ```ts
-const program = Effect.scoped(Effect.gen(function* () {
-  const budget = yield* FrameBudget.make({ targetFps: 60 });
-  const remaining = budget.remaining(); // ms left in this frame
-  const canAnimate = budget.canRun('high'); // true if enough budget
-  const result = yield* budget.schedule('low', Effect.succeed('done'));
-  // result is 'done' if budget permits, null otherwise
-}));
+const budget = FrameBudget.make({ targetFps: 60 });
+const remaining = budget.remaining(); // ms left in this frame
+const canAnimate = budget.canRun('high'); // true if enough budget
+const result = budget.scheduleSync('low', () => 'done');
+// result is 'done' if budget permits, null otherwise
+budget.lifetime.dispose(); // later: cancels the rAF loop
 ```
 
 ## Example
 
 ```ts
-const program = Effect.scoped(Effect.gen(function* () {
-  const budget = yield* FrameBudget.make({ targetFps: 60 });
-  if (budget.canRun('high')) {
-    yield* budget.schedule('high', Effect.succeed('rendered'));
-  }
-  const fps = yield* budget.fps; // current measured FPS
-}));
+const budget = FrameBudget.make({ targetFps: 60 });
+if (budget.canRun('high')) {
+  budget.scheduleSync('high', () => render());
+}
+const fps = budget.fpsSync; // current measured FPS
 ```

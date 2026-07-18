@@ -7,7 +7,6 @@
  */
 
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
-import { Effect } from 'effect';
 import { detect, detectGPUTier, watchCapabilities, resetDetectionCaches } from '@czap/detect';
 import {
   mockNavigator,
@@ -20,8 +19,6 @@ import {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-const run = <A>(effect: Effect.Effect<A>): A => Effect.runSync(effect);
 
 let restoreNav: (() => void) | undefined;
 let restoreMM: (() => void) | undefined;
@@ -72,61 +69,61 @@ function defineThrowingGetter(target: object, property: string, message = 'restr
 describe('GPU tier detection', () => {
   test('tier 0 for software renderers', () => {
     restoreGL = mockWebGL('SwiftShader');
-    const tier = run(detectGPUTier());
+    const tier = detectGPUTier();
     expect(tier).toBe(0);
   });
 
   test('tier 0 for llvmpipe', () => {
     restoreGL = mockWebGL('Mesa DRI Intel(R) -- llvmpipe');
-    const tier = run(detectGPUTier());
+    const tier = detectGPUTier();
     expect(tier).toBe(0);
   });
 
   test('tier 1 for Intel HD', () => {
     restoreGL = mockWebGL('Intel(R) HD Graphics 630');
-    const tier = run(detectGPUTier());
+    const tier = detectGPUTier();
     expect(tier).toBe(1);
   });
 
   test('tier 1 for Apple GPU', () => {
     restoreGL = mockWebGL('Apple GPU');
-    const tier = run(detectGPUTier());
+    const tier = detectGPUTier();
     expect(tier).toBe(1);
   });
 
   test('tier 2 for Intel Arc', () => {
     restoreGL = mockWebGL('Intel Arc A770');
-    const tier = run(detectGPUTier());
+    const tier = detectGPUTier();
     expect(tier).toBe(2);
   });
 
   test('tier 2 for Apple M1', () => {
     restoreGL = mockWebGL('Apple M1 Pro');
-    const tier = run(detectGPUTier());
+    const tier = detectGPUTier();
     expect(tier).toBe(2);
   });
 
   test('tier 3 for RTX GPU', () => {
     restoreGL = mockWebGL('NVIDIA GeForce RTX 4090');
-    const tier = run(detectGPUTier());
+    const tier = detectGPUTier();
     expect(tier).toBe(3);
   });
 
   test('tier 3 for Apple M3', () => {
     restoreGL = mockWebGL('Apple M3 Max');
-    const tier = run(detectGPUTier());
+    const tier = detectGPUTier();
     expect(tier).toBe(3);
   });
 
   test('tier 1 fallback for unknown renderer', () => {
     restoreGL = mockWebGL('Some Unknown GPU');
-    const tier = run(detectGPUTier());
+    const tier = detectGPUTier();
     expect(tier).toBe(1);
   });
 
   test('tier 1 fallback when WebGL unavailable', () => {
     // No mockWebGL — jsdom has no real WebGL
-    const tier = run(detectGPUTier());
+    const tier = detectGPUTier();
     expect(tier).toBe(1);
   });
   test('tier 1 fallback when WebGL exposes no renderer strings', () => {
@@ -145,7 +142,7 @@ describe('GPU tier detection', () => {
       } as unknown as HTMLCanvasElement;
     }) as typeof document.createElement);
 
-    const tier = run(detectGPUTier());
+    const tier = detectGPUTier();
     expect(tier).toBe(1);
   });
 });
@@ -159,7 +156,7 @@ describe('detect()', () => {
     restoreNav = mockNavigator({ hardwareConcurrency: 8, deviceMemory: 16 });
     restoreVP = mockViewport(1920, 1080, 2);
 
-    const result = run(detect());
+    const result = detect();
 
     expect(result.capabilities).toBeDefined();
     expect(result.capTier).toBeDefined();
@@ -172,19 +169,19 @@ describe('detect()', () => {
 
   test('detects CPU cores', () => {
     restoreNav = mockNavigator({ hardwareConcurrency: 16 });
-    const result = run(detect());
+    const result = detect();
     expect(result.capabilities.cores).toBe(16);
   });
 
   test('detects device memory', () => {
     restoreNav = mockNavigator({ deviceMemory: 32 });
-    const result = run(detect());
+    const result = detect();
     expect(result.capabilities.memory).toBe(32);
   });
 
   test('detects touch capability', () => {
     restoreNav = mockNavigator({ maxTouchPoints: 5 });
-    const result = run(detect());
+    const result = detect();
     expect(result.capabilities.touchPrimary).toBe(true);
   });
 
@@ -192,7 +189,7 @@ describe('detect()', () => {
     restoreNav = mockNavigator({ maxTouchPoints: 0 });
     (window as Window & { ontouchstart?: unknown }).ontouchstart = null;
 
-    const result = run(detect());
+    const result = detect();
     expect(result.capabilities.touchPrimary).toBe(true);
   });
 
@@ -203,7 +200,7 @@ describe('detect()', () => {
     if (hadTouch) {
       delete (window as any).ontouchstart;
     }
-    const result = run(detect());
+    const result = detect();
     expect(result.capabilities.touchPrimary).toBe(false);
     if (hadTouch) {
       (window as any).ontouchstart = null;
@@ -212,7 +209,7 @@ describe('detect()', () => {
 
   test('detects viewport dimensions', () => {
     restoreVP = mockViewport(768, 1024, 2);
-    const result = run(detect());
+    const result = detect();
     expect(result.capabilities.viewportWidth).toBe(768);
     expect(result.capabilities.viewportHeight).toBe(1024);
     expect(result.capabilities.devicePixelRatio).toBe(2);
@@ -222,7 +219,7 @@ describe('detect()', () => {
     restoreNav = mockNavigator({
       connection: { effectiveType: '3g', downlink: 1.5, saveData: true },
     });
-    const result = run(detect());
+    const result = detect();
     expect(result.capabilities.connection).toBeDefined();
     expect(result.capabilities.connection!.effectiveType).toBe('3g');
     expect(result.capabilities.connection!.downlink).toBe(1.5);
@@ -234,7 +231,7 @@ describe('detect()', () => {
       connection: { effectiveType: '4g' } as MockNavigatorOverrides['connection'],
     });
 
-    const result = run(detect());
+    const result = detect();
     expect(result.capabilities.connection).toEqual({
       effectiveType: '4g',
       downlink: 10,
@@ -252,7 +249,7 @@ describe('detect() media preferences', () => {
     restoreMM = mockMatchMedia({
       '(prefers-reduced-motion: reduce)': true,
     });
-    const result = run(detect());
+    const result = detect();
     expect(result.capabilities.prefersReducedMotion).toBe(true);
   });
 
@@ -260,13 +257,13 @@ describe('detect() media preferences', () => {
     restoreMM = mockMatchMedia({
       '(prefers-color-scheme: dark)': true,
     });
-    const result = run(detect());
+    const result = detect();
     expect(result.capabilities.prefersColorScheme).toBe('dark');
   });
 
   test('detects light color scheme by default', () => {
     restoreMM = mockMatchMedia({});
-    const result = run(detect());
+    const result = detect();
     expect(result.capabilities.prefersColorScheme).toBe('light');
   });
 
@@ -274,7 +271,7 @@ describe('detect() media preferences', () => {
     restoreMM = mockMatchMedia({
       '(prefers-contrast: more)': true,
     });
-    const result = run(detect());
+    const result = detect();
     expect(result.capabilities.prefersContrast).toBe('more');
   });
 
@@ -282,7 +279,7 @@ describe('detect() media preferences', () => {
     restoreMM = mockMatchMedia({
       '(forced-colors: active)': true,
     });
-    const result = run(detect());
+    const result = detect();
     expect(result.capabilities.forcedColors).toBe(true);
   });
 
@@ -290,7 +287,7 @@ describe('detect() media preferences', () => {
     restoreMM = mockMatchMedia({
       '(dynamic-range: high)': true,
     });
-    const result = run(detect());
+    const result = detect();
     expect(result.capabilities.dynamicRange).toBe('high');
   });
 
@@ -298,7 +295,7 @@ describe('detect() media preferences', () => {
     restoreMM = mockMatchMedia({
       '(color-gamut: p3)': true,
     });
-    const result = run(detect());
+    const result = detect();
     expect(result.capabilities.colorGamut).toBe('p3');
   });
 
@@ -307,16 +304,19 @@ describe('detect() media preferences', () => {
       '(color-gamut: rec2020)': true,
       '(color-gamut: p3)': true,
     });
-    const result = run(detect());
+    const result = detect();
     expect(result.capabilities.colorGamut).toBe('rec2020');
   });
 
   test('falls back to conservative defaults when matchMedia throws', () => {
-    vi.stubGlobal('matchMedia', vi.fn(() => {
-      throw new Error('blocked');
-    }) as never);
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn(() => {
+        throw new Error('blocked');
+      }) as never,
+    );
 
-    const result = run(detect());
+    const result = detect();
 
     expect(result.capabilities.prefersReducedMotion).toBe(false);
     expect(result.capabilities.prefersColorScheme).toBe('light');
@@ -334,7 +334,7 @@ describe('detect() media preferences', () => {
         restoreNav = mockNavigator({ gpu: true });
         return defineThrowingGetter(globalThis.navigator as object, 'gpu');
       },
-      assert(result: ReturnType<typeof run>) {
+      assert(result: ReturnType<typeof detect>) {
         expect(result.capabilities.webgpu).toBe(false);
       },
     },
@@ -344,7 +344,7 @@ describe('detect() media preferences', () => {
         restoreNav = mockNavigator({ hardwareConcurrency: 8 });
         return defineThrowingGetter(globalThis.navigator as object, 'hardwareConcurrency');
       },
-      assert(result: ReturnType<typeof run>) {
+      assert(result: ReturnType<typeof detect>) {
         expect(result.capabilities.cores).toBe(2);
       },
     },
@@ -354,7 +354,7 @@ describe('detect() media preferences', () => {
         restoreNav = mockNavigator({ deviceMemory: 16 });
         return defineThrowingGetter(globalThis.navigator as object, 'deviceMemory');
       },
-      assert(result: ReturnType<typeof run>) {
+      assert(result: ReturnType<typeof detect>) {
         expect(result.capabilities.memory).toBe(4);
       },
     },
@@ -373,7 +373,7 @@ describe('detect() media preferences', () => {
         vi.stubGlobal('window', throwingWindow as never);
         return () => undefined;
       },
-      assert(result: ReturnType<typeof run>) {
+      assert(result: ReturnType<typeof detect>) {
         expect(result.capabilities.touchPrimary).toBe(false);
       },
     },
@@ -382,7 +382,7 @@ describe('detect() media preferences', () => {
       install() {
         return defineThrowingGetter(window, 'innerWidth');
       },
-      assert(result: ReturnType<typeof run>) {
+      assert(result: ReturnType<typeof detect>) {
         expect(result.capabilities.viewportWidth).toBe(1920);
         expect(result.capabilities.viewportHeight).toBe(1080);
       },
@@ -392,7 +392,7 @@ describe('detect() media preferences', () => {
       install() {
         return defineThrowingGetter(window, 'devicePixelRatio');
       },
-      assert(result: ReturnType<typeof run>) {
+      assert(result: ReturnType<typeof detect>) {
         expect(result.capabilities.devicePixelRatio).toBe(1);
       },
     },
@@ -404,7 +404,7 @@ describe('detect() media preferences', () => {
         });
         return defineThrowingGetter(globalThis.navigator as object, 'connection');
       },
-      assert(result: ReturnType<typeof run>) {
+      assert(result: ReturnType<typeof detect>) {
         expect(result.capabilities.connection).toBeUndefined();
       },
     },
@@ -412,7 +412,7 @@ describe('detect() media preferences', () => {
     const cleanup = install();
 
     try {
-      const result = run(detect());
+      const result = detect();
       assert(result);
     } finally {
       cleanup();
@@ -428,7 +428,7 @@ describe('detect() confidence', () => {
   test('base confidence without WebGL is at most 0.8', () => {
     // No WebGL renderer — confidence misses the +0.2 WebGL bonus
     restoreNav = mockNavigator({ hardwareConcurrency: 4 });
-    const result = run(detect());
+    const result = detect();
     expect(result.confidence).toBeLessThanOrEqual(0.8);
     expect(result.confidence).toBeGreaterThanOrEqual(0.5);
   });
@@ -436,7 +436,7 @@ describe('detect() confidence', () => {
   test('WebGL renderer adds 0.2 confidence', () => {
     restoreGL = mockWebGL('Intel HD Graphics');
     restoreNav = mockNavigator({ hardwareConcurrency: 0 });
-    const result = run(detect());
+    const result = detect();
     expect(result.confidence).toBeGreaterThanOrEqual(0.7);
   });
 
@@ -447,7 +447,7 @@ describe('detect() confidence', () => {
       deviceMemory: 16,
       connection: { effectiveType: '4g', downlink: 10, saveData: false },
     });
-    const result = run(detect());
+    const result = detect();
     expect(result.confidence).toBeCloseTo(1.0, 10);
   });
 });
@@ -463,21 +463,17 @@ describe('watchCapabilities', () => {
 
     const results: any[] = [];
 
-    await Effect.runPromise(
-      Effect.scoped(
-        Effect.gen(function* () {
-          yield* watchCapabilities((result) => results.push(result));
+    const dispose = watchCapabilities((result) => results.push(result));
 
-          // Simulate resize
-          window.dispatchEvent(new Event('resize'));
+    // Simulate resize
+    window.dispatchEvent(new Event('resize'));
 
-          // Re-detection is debounced to one sweep per frame (rAF, or a 16ms
-          // timeout outside browsers) — wait it out INSIDE the scope, since
-          // closing the watcher drops pending updates by design.
-          yield* Effect.promise(() => new Promise((resolve) => setTimeout(resolve, 40)));
-        }),
-      ),
-    );
+    // Re-detection is debounced to one sweep per frame (rAF, or a 16ms
+    // timeout outside browsers) — wait it out BEFORE disposing, since
+    // closing the watcher drops pending updates by design.
+    await new Promise((resolve) => setTimeout(resolve, 40));
+
+    dispose();
 
     expect(results.length).toBeGreaterThanOrEqual(1);
     expect(results[0].capabilities).toBeDefined();

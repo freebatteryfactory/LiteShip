@@ -4,17 +4,17 @@
  * Tracks remaining frame budget per animation frame and
  * schedules work by priority: `critical > high > low > idle`.
  *
- * Hot path methods (remaining, canRun, scheduleSync) are plain JS.
- * Effect is used only for resource lifecycle (rAF cleanup) and
- * backwards-compatible schedule() wrapper.
+ * All methods (remaining, canRun, scheduleSync) are plain synchronous JS. The rAF
+ * loop's teardown is owned by a {@link Lifetime} (the disposal primitive that
+ * replaces Effect's `Scope` at the shed seams): `budget.lifetime.dispose()`
+ * cancels the animation frame — no Effect, no microtask.
  *
  * @module
  */
 
-import type { Scope } from 'effect';
-import { Effect } from 'effect';
 import { DEFAULT_TARGET_FPS, MS_PER_SEC } from './defaults.js';
 import { type Clock, systemClock } from './clock.js';
+import { Lifetime } from './lifetime.js';
 import { ValidationError } from '@czap/error';
 
 /**
@@ -35,12 +35,15 @@ const PRIORITY_THRESHOLDS: Record<Priority, number> = {
 interface FrameBudgetShape {
   remaining(): number;
   canRun(priority: Priority): boolean;
-  /** Synchronous scheduler for hot paths — no Effect overhead. */
+  /** Synchronous scheduler for hot paths — runs `task` iff the priority lane has budget. */
   scheduleSync<A>(priority: Priority, task: () => A): A | null;
-  schedule<A>(priority: Priority, task: Effect.Effect<A>): Effect.Effect<A | null>;
-  readonly fps: Effect.Effect<number>;
-  /** Synchronous FPS accessor for hot paths. */
+  /** Synchronous FPS accessor. */
   readonly fpsSync: number;
+  /**
+   * Owns the rAF loop teardown. Its sole finalizer cancels the animation frame,
+   * so `dispose()` stops the frame-pacing loop.
+   */
+  readonly lifetime: Lifetime.Shape;
 }
 
 /**
@@ -49,16 +52,15 @@ interface FrameBudgetShape {
  *
  * @example
  * ```ts
- * const program = Effect.scoped(Effect.gen(function* () {
- *   const budget = yield* FrameBudget.make({ targetFps: 60 });
- *   const remaining = budget.remaining(); // ms left in this frame
- *   const canAnimate = budget.canRun('high'); // true if enough budget
- *   const result = yield* budget.schedule('low', Effect.succeed('done'));
- *   // result is 'done' if budget permits, null otherwise
- * }));
+ * const budget = FrameBudget.make({ targetFps: 60 });
+ * const remaining = budget.remaining(); // ms left in this frame
+ * const canAnimate = budget.canRun('high'); // true if enough budget
+ * const result = budget.scheduleSync('low', () => 'done');
+ * // result is 'done' if budget permits, null otherwise
+ * budget.lifetime.dispose(); // later: cancels the rAF loop
  * ```
  */
-function _make(config?: { targetFps?: number; clock?: Clock }): Effect.Effect<FrameBudgetShape, never, Scope.Scope> {
+function _make(config?: { targetFps?: number; clock?: Clock }): FrameBudgetShape {
   const targetFps = config?.targetFps ?? DEFAULT_TARGET_FPS;
   if (targetFps <= 0 || !Number.isFinite(targetFps)) {
     throw ValidationError('FrameBudget.make', `targetFps must be a positive finite number, got ${targetFps}`);
@@ -75,66 +77,57 @@ function _make(config?: { targetFps?: number; clock?: Clock }): Effect.Effect<Fr
   // rather than decaying against a stale init reading.
   const hasTimeSource = config?.clock !== undefined || typeof performance !== 'undefined';
 
-  return Effect.gen(function* () {
-    let frameStart = clock.now();
-    let currentFps = targetFps;
-    let lastFrameTime = clock.now();
-    let frameCount = 0;
-    let fpsAccum = 0;
+  const lifetime = Lifetime.make();
+  let frameStart = clock.now();
+  let currentFps = targetFps;
+  let lastFrameTime = clock.now();
+  let frameCount = 0;
+  let fpsAccum = 0;
 
-    if (typeof requestAnimationFrame !== 'undefined') {
-      const tick = (now: number) => {
-        frameStart = now;
-        frameCount++;
-        fpsAccum += now - lastFrameTime;
-        lastFrameTime = now;
-        if (fpsAccum >= MS_PER_SEC) {
-          currentFps = Math.round((frameCount * MS_PER_SEC) / fpsAccum);
-          frameCount = 0;
-          fpsAccum %= MS_PER_SEC;
-        }
-        rafId = requestAnimationFrame(tick);
-      };
-      let rafId = requestAnimationFrame(tick);
-      yield* Effect.addFinalizer(() => Effect.sync(() => cancelAnimationFrame(rafId)));
-    }
-
-    const budget: FrameBudgetShape = {
-      remaining(): number {
-        if (!hasTimeSource) return frameBudgetMs;
-        return Math.max(0, frameBudgetMs - (clock.now() - frameStart));
-      },
-
-      canRun(priority: Priority): boolean {
-        const rem = budget.remaining();
-        return rem >= PRIORITY_THRESHOLDS[priority]!;
-      },
-
-      scheduleSync<A>(priority: Priority, task: () => A): A | null {
-        if (budget.canRun(priority) || priority === 'critical') {
-          return task();
-        }
-        return null;
-      },
-
-      schedule<A>(priority: Priority, task: Effect.Effect<A>): Effect.Effect<A | null> {
-        return Effect.gen(function* () {
-          if (priority === 'critical' || budget.canRun(priority)) {
-            return yield* task;
-          }
-          return null;
-        });
-      },
-
-      fps: Effect.sync(() => currentFps),
-
-      get fpsSync(): number {
-        return currentFps;
-      },
+  if (typeof requestAnimationFrame !== 'undefined') {
+    const tick = (now: number) => {
+      frameStart = now;
+      frameCount++;
+      fpsAccum += now - lastFrameTime;
+      lastFrameTime = now;
+      if (fpsAccum >= MS_PER_SEC) {
+        currentFps = Math.round((frameCount * MS_PER_SEC) / fpsAccum);
+        frameCount = 0;
+        fpsAccum %= MS_PER_SEC;
+      }
+      rafId = requestAnimationFrame(tick);
     };
+    let rafId = requestAnimationFrame(tick);
+    // The rAF loop's teardown, owned by the Lifetime (was Effect.addFinalizer).
+    lifetime.add(() => cancelAnimationFrame(rafId));
+  }
 
-    return budget;
-  });
+  const budget: FrameBudgetShape = {
+    remaining(): number {
+      if (!hasTimeSource) return frameBudgetMs;
+      return Math.max(0, frameBudgetMs - (clock.now() - frameStart));
+    },
+
+    canRun(priority: Priority): boolean {
+      const rem = budget.remaining();
+      return rem >= PRIORITY_THRESHOLDS[priority]!;
+    },
+
+    scheduleSync<A>(priority: Priority, task: () => A): A | null {
+      if (budget.canRun(priority) || priority === 'critical') {
+        return task();
+      }
+      return null;
+    },
+
+    get fpsSync(): number {
+      return currentFps;
+    },
+
+    lifetime,
+  };
+
+  return budget;
 }
 
 /**
@@ -144,18 +137,16 @@ function _make(config?: { targetFps?: number; clock?: Clock }): Effect.Effect<Fr
  *
  * @example
  * ```ts
- * const program = Effect.scoped(Effect.gen(function* () {
- *   const budget = yield* FrameBudget.make({ targetFps: 60 });
- *   if (budget.canRun('high')) {
- *     yield* budget.schedule('high', Effect.succeed('rendered'));
- *   }
- *   const fps = yield* budget.fps; // current measured FPS
- * }));
+ * const budget = FrameBudget.make({ targetFps: 60 });
+ * if (budget.canRun('high')) {
+ *   budget.scheduleSync('high', () => render());
+ * }
+ * const fps = budget.fpsSync; // current measured FPS
  * ```
  */
 export const FrameBudget = { make: _make };
 
 export declare namespace FrameBudget {
-  /** Structural shape of a {@link FrameBudget} instance — `canRun`, `schedule`, `remaining`, `fps`. */
+  /** Structural shape of a {@link FrameBudget} instance — `canRun`, `scheduleSync`, `remaining`, `fpsSync`, `lifetime`. */
   export type Shape = FrameBudgetShape;
 }

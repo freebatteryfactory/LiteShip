@@ -6,7 +6,7 @@
 
 # Interface: ExtendedDetectionResult
 
-Defined in: [detect/src/detect.ts:148](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L148)
+Defined in: [detect/src/detect.ts:147](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L147)
 
 Full detection result including design and motion tiers.
 
@@ -24,7 +24,7 @@ and compiler dispatch.
 
 > `readonly` **capabilities**: [`ExtendedDeviceCapabilities`](ExtendedDeviceCapabilities.md)
 
-Defined in: [detect/src/detect.ts:150](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L150)
+Defined in: [detect/src/detect.ts:149](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L149)
 
 Extended capabilities (superset of `DeviceCapabilities`).
 
@@ -38,7 +38,7 @@ Extended capabilities (superset of `DeviceCapabilities`).
 
 > `readonly` **capSet**: [`CapSet`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/CapSet.md)
 
-Defined in: [detect/src/detect.ts:114](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L114)
+Defined in: [detect/src/detect.ts:113](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L113)
 
 Monotone set of every [CapTier](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md) at or below `capTier`.
 
@@ -52,7 +52,7 @@ Monotone set of every [CapTier](https://github.com/freebatteryfactory/LiteShip/b
 
 > `readonly` **capTier**: [`CapTier`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md)
 
-Defined in: [detect/src/detect.ts:112](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L112)
+Defined in: [detect/src/detect.ts:111](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L111)
 
 Highest [CapTier](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md) the device qualifies for.
 
@@ -66,7 +66,7 @@ Highest [CapTier](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/
 
 > `readonly` **confidence**: `number`
 
-Defined in: [detect/src/detect.ts:116](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L116)
+Defined in: [detect/src/detect.ts:115](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L115)
 
 Heuristic confidence in `[0.5, 1]` based on how many probes succeeded.
 
@@ -80,7 +80,7 @@ Heuristic confidence in `[0.5, 1]` based on how many probes succeeded.
 
 > `readonly` **designTier**: [`DesignTier`](../type-aliases/DesignTier.md)
 
-Defined in: [detect/src/detect.ts:152](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L152)
+Defined in: [detect/src/detect.ts:151](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L151)
 
 Visual fidelity tier derived from display metadata.
 
@@ -90,6 +90,6 @@ Visual fidelity tier derived from display metadata.
 
 > `readonly` **motionTier**: `MotionTier`
 
-Defined in: [detect/src/detect.ts:154](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L154)
+Defined in: [detect/src/detect.ts:153](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L153)
 
 Motion complexity tier derived from GPU, cores, and reduced-motion.

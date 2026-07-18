@@ -8,7 +8,7 @@
 
 > **OutputsFor**\<`B`, `T`\> = `{ readonly [S in StateUnion<B>]: T }`
 
-Defined in: [core/src/type-utils.ts:21](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/type-utils.ts#L21)
+Defined in: [core/src/type-utils.ts:20](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/type-utils.ts#L20)
 
 Generate valid output shapes per state
 

@@ -466,12 +466,13 @@ export type Priority = 'critical' | 'high' | 'low' | 'idle';
 export interface FrameBudget {
   remaining(): number;
   canRun(priority: Priority): boolean;
-  schedule<A>(priority: Priority, task: Effect.Effect<A>): Effect.Effect<A | null>;
-  readonly fps: Effect.Effect<number>;
+  scheduleSync<A>(priority: Priority, task: () => A): A | null;
+  readonly fpsSync: number;
+  readonly lifetime: Lifetime.Shape;
 }
 
 export declare namespace FrameBudget {
-  export function make(config?: { targetFps?: number }): Effect.Effect<FrameBudget, never, Scope.Scope>;
+  export function make(config?: { targetFps?: number }): FrameBudget;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

@@ -91,8 +91,6 @@ export type {
   OutputsFor,
   BoundaryCrossing,
   EvaluateResult,
-  EffectValue,
-  EffectError,
   RequireAtLeastOne,
   DeepReadonly,
 } from './type-utils.js';

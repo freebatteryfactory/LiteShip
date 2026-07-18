@@ -13,13 +13,11 @@ Tracks remaining time per animation frame and gates work by priority:
 ## Example
 
 ```ts
-const program = Effect.scoped(Effect.gen(function* () {
-  const budget = yield* FrameBudget.make({ targetFps: 60 });
-  if (budget.canRun('high')) {
-    yield* budget.schedule('high', Effect.succeed('rendered'));
-  }
-  const fps = yield* budget.fps; // current measured FPS
-}));
+const budget = FrameBudget.make({ targetFps: 60 });
+if (budget.canRun('high')) {
+  budget.scheduleSync('high', () => render());
+}
+const fps = budget.fpsSync; // current measured FPS
 ```
 
 ## Type Aliases

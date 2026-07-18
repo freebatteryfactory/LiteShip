@@ -286,7 +286,7 @@ describe('browser web runtime coverage', () => {
       } as never;
     });
 
-    const result = Effect.runSync(Detect.detect());
+    const result = Detect.detect();
 
     expect(result.capabilities.gpu).toBeGreaterThanOrEqual(1);
     expect(result.capabilities.prefersReducedMotion).toBe(true);
@@ -317,7 +317,7 @@ describe('browser web runtime coverage', () => {
       throw new Error('no-webgl');
     });
 
-    const result = Effect.runSync(Detect.detect());
+    const result = Detect.detect();
 
     expect(result.capabilities.gpu).toBe(1);
     expect(result.capabilities.connection).toBeUndefined();
@@ -348,7 +348,7 @@ describe('browser web runtime coverage', () => {
       value: { effectiveType: undefined, downlink: undefined, saveData: undefined },
     });
 
-    const result = Effect.runSync(Detect.detect());
+    const result = Detect.detect();
 
     expect(result.capabilities.prefersContrast).toBe('custom');
     expect(result.capabilities.prefersReducedTransparency).toBe(true);
