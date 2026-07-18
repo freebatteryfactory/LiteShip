@@ -100,6 +100,16 @@ export type {
 // Tuple utilities
 export { tupleMap } from './tuple.js';
 
+// ── Shared leaf utilities — the browser-safe [DUP] owners ────────────────────
+// The single home for primitives the repo had inlined in many copies: the
+// unit-interval clamp, the Levenshtein table + nearest-match picker (threshold
+// caller-supplied, so one table subsumes the assets/scene/command policies), and
+// the backslash→slash repo-path normalizer (audit's B5b one-normalizer cage). The
+// Node-only `walkFiles` sibling stays OUT of this index — it rides `@czap/core/fs-walk`.
+export { clamp01 } from './math-utils.js';
+export { editDistance, closestMatch } from './string-distance.js';
+export { normalizeRepoPath } from './path-normalize.js';
+
 // Boundary. `BoundarySpec` is exported as a value+type pair (see the
 // namespace-object pattern in ADR-0001); consumers who want only the type
 // can `import type { BoundarySpec } from '@czap/core'`.
@@ -179,6 +189,7 @@ export {
   sampleProgramWindows,
   sampleProgram,
   sampleProgramUniforms,
+  frameToT,
 } from './transition-program.js';
 export type {
   TransitionProgram,
@@ -284,7 +295,8 @@ export { Timeline } from './timeline.js';
 export type { Quantizer, ReactiveQuantizer, QuantizerState, QuantizerCrossings } from './quantizer-types.js';
 
 // Scheduler
-export { Scheduler } from './scheduler.js';
+export { Scheduler, rafDebounce, startRafLoop } from './scheduler.js';
+export type { RafDebouncedTrigger } from './scheduler.js';
 
 // Compositor
 export { Compositor } from './compositor.js';

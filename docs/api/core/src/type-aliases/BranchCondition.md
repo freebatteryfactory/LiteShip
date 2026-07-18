@@ -8,7 +8,7 @@
 
 > **BranchCondition** = \{ `op`: `"lt"` \| `"lte"` \| `"gt"` \| `"gte"` \| `"eq"`; `value`: `number`; \} \| \{ `hi`: `number`; `lo`: `number`; `op`: `"between"`; \}
 
-Defined in: [core/src/transition-program.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/transition-program.ts#L52)
+Defined in: [core/src/transition-program.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/transition-program.ts#L53)
 
 A predicate over a named signal's live value that selects a `choice` branch.
 `op` mirrors the comparison vocabulary; `between` is the half-open `[lo, hi)`

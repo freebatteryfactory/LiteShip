@@ -31,6 +31,8 @@
 ## Functions
 
 - [addressedDigestOf](functions/addressedDigestOf.md)
+- [bytesToHex](functions/bytesToHex.md)
 - [decode](functions/decode.md)
 - [fnv1a](functions/fnv1a.md)
 - [fnv1aBytes](functions/fnv1aBytes.md)
+- [sha256Hex](functions/sha256Hex.md)

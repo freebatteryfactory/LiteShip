@@ -45,6 +45,11 @@
       "import": "./dist/simulation/index.js",
       "development": "./src/simulation/index.ts"
     },
+    "./fs-walk": {
+      "types": "./dist/fs-walk.d.ts",
+      "import": "./dist/fs-walk.js",
+      "development": "./src/fs-walk.ts"
+    },
     "./validated-output": null
   },
   "files": [
