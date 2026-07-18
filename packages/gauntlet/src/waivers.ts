@@ -106,10 +106,10 @@ export const LITESHIP_WAIVERS: readonly Waiver[] = [
   {
     ruleId: 'gauntlet/no-silent-catch',
     file: 'packages/cli/src/commands/ship.ts',
-    line: 169,
+    line: 131,
     owner: 'heyoub',
     reason:
-      'Best-effort workspace-glob enumeration: an entry that cannot be statSync-d (permission/race) is skipped during package discovery. Non-corrupting (a genuinely unreadable directory entry is not a publishable package) and conservative (skip rather than crash the whole ship). Documented, not empty.',
+      'Best-effort workspace-glob enumeration: an entry that cannot be statSync-d (permission/race) is skipped during package discovery. Non-corrupting (a genuinely unreadable directory entry is not a publishable package) and conservative (skip rather than crash the whole ship). Documented, not empty. (Wave 8: relocated 169→131 by the effect-shed removing the runEffect adapters above resolveGlob.)',
     expires: BOUNDARY_REVIEW,
     blastRadius:
       'A package made unreadable at the wrong moment would be silently omitted from a ship — but a publish of a known package set surfaces the omission downstream (the missing package).',

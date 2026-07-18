@@ -231,10 +231,14 @@ describe('schema strictness — coverage floors (scar S1.1)', () => {
     for (const s of skipped) {
       expect(s.reason.length, `carve-out ${s.id} has no reason`).toBeGreaterThan(0);
     }
-    // The `examples.intro` scene composition carries non-kernel plain-object I/O —
-    // it MUST land as an honest carve-out, proving non-kernel schemas are surfaced,
-    // not silently swept as if strict.
-    expect(skipped.some((s) => s.id.startsWith('examples.intro') && s.reason.includes('not a kernel schema'))).toBe(true);
+    // The `examples.intro` scene composition declares permissive `S.unknown` I/O —
+    // it MUST land as an honest carve-out (root accepts every value), proving a
+    // too-loose schema is surfaced, not silently swept as if strict. (Wave 8 moved
+    // its I/O from effect `Schema.Unknown` to the native `S.unknown` kernel schema, so
+    // the carve-out reason shifted from "not a kernel schema" to "accepts every value".)
+    expect(
+      skipped.some((s) => s.id.startsWith('examples.intro') && s.reason.includes('root accepts every value')),
+    ).toBe(true);
   });
 });
 

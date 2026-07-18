@@ -23,6 +23,7 @@
  */
 
 import { CZAP_PACKAGE_ROSTER } from '@czap/audit';
+import { InvariantViolationError } from '@czap/error';
 
 /** The ONE product definition (from #146) every catalog description is anchored to. */
 export const LITESHIP_PRODUCT_DEFINITION =
@@ -56,9 +57,9 @@ const PACKAGE_METADATA: Readonly<Record<string, PackageMetadata>> = {
   },
   '@czap/error': {
     description:
-      'The one error algebra for LiteShip: build tagged error values that work both as thrown Errors and as Effect ' +
-      'failures, and compose your own variants on top with zero dependencies.',
-    keywords: ['czap', 'liteship', 'error-handling', 'tagged-union', 'effect', 'typescript'],
+      'The one error algebra for LiteShip: build tagged error values that work as thrown Errors and as errors-as-values ' +
+      '(a Result err-arm), and compose your own variants on top with zero dependencies.',
+    keywords: ['czap', 'liteship', 'error-handling', 'tagged-union', 'typescript'],
   },
   '@czap/gauntlet': {
     description:
@@ -222,8 +223,9 @@ export const PACKAGE_METADATA_CATALOG: Readonly<Record<string, PackageMetadata>>
   CATALOG_ROSTER.map((name) => {
     const meta = PACKAGE_METADATA[name];
     if (meta === undefined) {
-      throw new Error(
-        `package-metadata-catalog: no metadata entry for "${name}" — every CZAP_PACKAGE_ROSTER member (plus the two umbrellas) must have a PACKAGE_METADATA annotation`,
+      throw InvariantViolationError(
+        'package-metadata-catalog',
+        `no metadata entry for "${name}" — every CZAP_PACKAGE_ROSTER member (plus the two umbrellas) must have a PACKAGE_METADATA annotation`,
       );
     }
     return [name, meta] as const;
