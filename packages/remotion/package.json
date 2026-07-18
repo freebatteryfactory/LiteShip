@@ -43,7 +43,6 @@
     "@czap/core": "workspace:*"
   },
   "peerDependencies": {
-    "effect": "catalog:",
     "react": ">=18",
     "remotion": ">=4"
   },

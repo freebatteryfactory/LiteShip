@@ -17,14 +17,14 @@ const manifest = JSON.parse(readFileSync(resolve(packageRoot, 'package.json'), '
 };
 
 describe('@czap/_spine package hygiene', () => {
-  test('declares effect as a peer and astro/vite as optional peers', () => {
-    expect(manifest.peerDependencies?.['effect']).toBeDefined();
+  test('declares astro/vite as optional peers and no effect peer (shed in Wave 8)', () => {
     expect(manifest.peerDependencies?.['astro']).toBeDefined();
     expect(manifest.peerDependencies?.['vite']).toBeDefined();
     expect(manifest.peerDependenciesMeta?.['astro']?.optional).toBe(true);
     expect(manifest.peerDependenciesMeta?.['vite']?.optional).toBe(true);
-    // effect types are the contract — it must stay a required peer.
-    expect(manifest.peerDependenciesMeta?.['effect']).toBeUndefined();
+    // effect was the type contract's transport; Wave 8 moved every mirrored
+    // surface to a LiteShip-native owner, so effect is no longer a peer at all.
+    expect(manifest.peerDependencies?.['effect']).toBeUndefined();
   });
 
   test('exports map routes runtime imports at the teaching stub', () => {

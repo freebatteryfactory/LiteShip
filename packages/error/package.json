@@ -16,7 +16,6 @@
     "liteship",
     "error-handling",
     "tagged-union",
-    "effect",
     "typescript"
   ],
   "type": "module",

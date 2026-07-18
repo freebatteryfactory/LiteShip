@@ -69,9 +69,6 @@
     "@noble/hashes": "^1.8.0",
     "cborg": "^4.2.0"
   },
-  "peerDependencies": {
-    "effect": "catalog:"
-  },
   "engines": {
     "node": ">=22.13.0"
   },

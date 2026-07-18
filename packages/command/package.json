@@ -59,8 +59,7 @@
     "@czap/assets": "workspace:*",
     "@czap/canonical": "workspace:*",
     "@czap/error": "workspace:*",
-    "@czap/gauntlet": "workspace:*",
-    "effect": "catalog:"
+    "@czap/gauntlet": "workspace:*"
   },
   "engines": {
     "node": ">=22.13.0"

@@ -42,9 +42,6 @@
   "dependencies": {
     "@czap/core": "workspace:*"
   },
-  "peerDependencies": {
-    "effect": "catalog:"
-  },
   "engines": {
     "node": ">=22.13.0"
   },

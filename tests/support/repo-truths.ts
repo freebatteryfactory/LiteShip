@@ -15,7 +15,7 @@
  *   - `publishablePackageDirs()` .................... `packages/<dir>/package.json` `publishConfig`
  *   - `packageRoster()` ............................. the canonical `@czap/*` fleet
  *   - `rootTsconfigReferenceDirs()` ................. root `tsconfig.json` `references`
- *   - `catalogEntry()` / `effectCatalogRange()` ..... `pnpm-workspace.yaml` `catalog:`
+ *   - `catalogEntry()` .............................. `pnpm-workspace.yaml` `catalog:`
  *
  * Drift guards import these accessors instead of re-parsing the sources. The
  * ast-grep rule `sgrules/repo-truths-no-script-parse.yml` forbids the S0.4
@@ -199,11 +199,6 @@ export function catalogEntry(name: string): string | undefined {
     if (match) return match[1]!.replace(/^['"]|['"]$/g, '');
   }
   return undefined;
-}
-
-/** The single sanctioned `effect` prerelease range from the pnpm catalog. */
-export function effectCatalogRange(): string | undefined {
-  return catalogEntry('effect');
 }
 
 // ---------------------------------------------------------------------------

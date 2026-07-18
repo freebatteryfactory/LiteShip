@@ -60,23 +60,18 @@ export interface LockfilePolicy {
 
 /**
  * LiteShip's REFERENCE lockfile policy. Repo-local data — a downstream project
- * supplies its own. The single prerelease exception is `effect`: the whole
- * monorepo's algebraic-effect substrate, currently published only as a bounded
- * `>=4.0.0-beta.32 <5` prerelease line upstream, declared identically across
- * every consuming package. It is a deliberate, reviewed seam, not drift — so it
- * is a NAMED exception, not a weakened rule (a NEW unlisted prerelease runtime
- * dep still reds the policy).
+ * supplies its own. The prerelease allowlist is EMPTY: `effect` was the whole
+ * monorepo's one sanctioned prerelease exception (its algebraic-effect
+ * substrate, published upstream only as a bounded prerelease line), and Wave 8
+ * shed it entirely — no published runtime dep carries a prerelease range any
+ * more. The MECHANISM is retained (a downstream project, or a future reviewed
+ * seam, can name its own exception here); with the list empty, ANY prerelease
+ * runtime dep in this repo now reds the policy.
  */
 export const LITESHIP_LOCKFILE_POLICY: LockfilePolicy = {
   allowNonRegistryResolutions: false,
   recognizedLockfileVersions: ['9.0'],
-  prereleaseAllowlist: [
-    {
-      dependency: 'effect',
-      reason:
-        'effect is the monorepo-wide algebraic-effect substrate, published upstream only as a bounded `>=4.0.0-beta.32 <5` prerelease line and declared identically across every published @czap package (every effect peer, plus the @czap/cli + @czap/command direct deps), with the root pnpm.overrides.effect pinning one resolved version; a reviewed seam, not drift. The lockfile freezes it to a single resolved version with an integrity hash, so reproducibility holds.',
-    },
-  ],
+  prereleaseAllowlist: [],
 };
 
 /** A specifier is a prerelease form iff it carries a SemVer prerelease tag. */

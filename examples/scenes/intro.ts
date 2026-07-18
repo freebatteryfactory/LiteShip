@@ -8,8 +8,7 @@
  * @module
  */
 
-import { Schema } from 'effect';
-import { defineCapsule } from '@czap/core';
+import { defineCapsule, S } from '@czap/core';
 import { Track, Beat, fade, syncTo, compileScene, resolveBeatProjectionToSceneBeats } from '@czap/scene';
 import type { SceneContract, SceneBeat } from '@czap/scene';
 import type { BeatMarkerSet } from '@czap/assets';
@@ -18,8 +17,8 @@ import type { BeatMarkerSet } from '@czap/assets';
 // module-global lookup, no import-order dependence).
 import { assetRegistry } from './assets.js';
 
-const SceneInputSchema = Schema.Unknown;
-const SceneOutputSchema = Schema.Unknown;
+const SceneInputSchema = S.unknown;
+const SceneOutputSchema = S.unknown;
 
 // Phantom-kinded ids — declared once, referenced by syncTo / target / between
 // so cross-kind references fail at compile time.
@@ -64,18 +63,33 @@ const contract: SceneContract = {
   bpm: 128,
   tracks: [
     Track.video('hero', {
-      from: Beat(0), to: Beat(4), source: { _t: 'quantizer', id: 'hero-boundary' }, envelope: fade.in(Beat(1)),
+      from: Beat(0),
+      to: Beat(4),
+      source: { _t: 'quantizer', id: 'hero-boundary' },
+      envelope: fade.in(Beat(1)),
     }),
     Track.video('outro', { from: Beat(4), to: Beat(8), source: { _t: 'quantizer', id: 'outro-boundary' } }),
     Track.audio('bed', {
-      from: Beat(0), to: Beat(8), source: assetRegistry.ref('intro-bed'), mix: { volume: -6 }, envelope: fade.out(Beat(2)),
+      from: Beat(0),
+      to: Beat(8),
+      source: assetRegistry.ref('intro-bed'),
+      mix: { volume: -6 },
+      envelope: fade.out(Beat(2)),
     }),
     Track.transition('fade-in', { from: Beat(0), to: Beat(1), kind: 'crossfade', between: [heroId, heroId] }),
     Track.transition('hero-outro', {
-      from: Beat(3.5), to: Beat(4.5), kind: 'crossfade', between: [heroId, outroId], ease: 'cubic',
+      from: Beat(3.5),
+      to: Beat(4.5),
+      kind: 'crossfade',
+      between: [heroId, outroId],
+      ease: 'cubic',
     }),
     Track.effect('beat-pulse', {
-      from: Beat(0), to: Beat(8), kind: 'pulse', target: heroId, syncTo: syncTo.beat(bedId),
+      from: Beat(0),
+      to: Beat(8),
+      kind: 'pulse',
+      target: heroId,
+      syncTo: syncTo.beat(bedId),
     }),
   ],
   invariants: [
