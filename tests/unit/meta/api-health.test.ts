@@ -226,6 +226,17 @@ const STANDALONE_FUNCTIONS = [
   'isCell',
   'isDerived',
   'isZap',
+  // Wave 7 duplication owners — the deduped homes for helpers that were
+  // hand-rolled across packages (string distance, path normalization, rAF
+  // scheduling, unit-interval clamp, frame→t). Public so every consumer
+  // delegates to the single owner instead of re-forking.
+  'clamp01',
+  'closestMatch',
+  'editDistance',
+  'frameToT',
+  'normalizeRepoPath',
+  'rafDebounce',
+  'startRafLoop',
   // `isWire` removed — the `Wire` primitive was deleted this wave (the guard and
   // the Wire arm of the `Primitive` union left with it).
   'fnv1a',
