@@ -166,7 +166,6 @@ package — it stays repo-local and composes these passes.
 - [normalizeRepoPath](functions/normalizeRepoPath.md)
 - [parseEquivalentMutants](functions/parseEquivalentMutants.md)
 - [partitionAllowlistedFindings](functions/partitionAllowlistedFindings.md)
-- [readAdmissionSource](functions/readAdmissionSource.md)
 - [readJsonFile](functions/readJsonFile.md)
 - [readProfileSourceFileRecords](functions/readProfileSourceFileRecords.md)
 - [readSourceFileRecords](functions/readSourceFileRecords.md)

@@ -501,11 +501,6 @@
           "signature": "(2)"
         },
         {
-          "name": "readAdmissionSource",
-          "kind": "function",
-          "signature": "(1)"
-        },
-        {
           "name": "readJsonFile",
           "kind": "function",
           "signature": "(1)"

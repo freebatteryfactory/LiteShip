@@ -12,7 +12,7 @@
 
 **Counts (read from committed artifacts).**
 - active Effect references (production + test): **0**
-- spine admitted mirror types: **40**
+- spine admitted mirror types: **42**
 - type-surface packages tracked: **23**
 
 ## #151 — audit: Effect shedding + god-file/reinvention sweep
@@ -65,7 +65,7 @@
 | `tests/fixtures/spine-relation-admissions.ts` | admission-table | the frozen admission table seeded from the current pins — every currently-pinned mirror type, so absorbing the pins opens no authority gap |
 | `tests/unit/audit/spine-relation.test.ts` | acceptance-test | green on the reconciled spine; RED on all three historical drift fixtures (CapSet Set→array, Millis brand loss, WGSL omission) + a removed-type case; self-proving via the authority ratchet |
 | `packages/audit/src/type-export-surface.ts` | gate | the tsc-AST TYPE-export enumerator that closes the value-only api-surface snapshot blind spot |
-| `tests/fixtures/type-export-surface.json` | snapshot | the committed public TYPE surface over 22 packages + @czap/_spine — a dropped/renamed type reds |
+| `tests/fixtures/type-export-surface.json` | snapshot | the committed public TYPE surface over the public package roster + the _spine mirror — a dropped/renamed type reds (the exact count is the counts.typeSurfacePackages field, read from the snapshot) |
 | `tests/unit/spine-conformance.test.ts` | acceptance-test | the type-by-type mirror pins are absorbed (Conflict-1 / S5.2 closed); only the utility asserts + runtime-existence checks the gate cannot cover remain |
 
 ---

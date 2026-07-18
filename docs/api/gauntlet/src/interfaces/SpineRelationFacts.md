@@ -6,7 +6,7 @@
 
 # Interface: SpineRelationFacts
 
-Defined in: [gauntlet/src/spine-relation-facts.ts:95](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/spine-relation-facts.ts#L95)
+Defined in: [gauntlet/src/spine-relation-facts.ts:99](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/spine-relation-facts.ts#L99)
 
 The host-supplied two-axis classification over the admitted spine mirror set. The
 probe is HEAVY (a `ts.Program` per build, one bidirectional assertion per admitted
@@ -20,6 +20,6 @@ in the set (no cost, no noise).
 
 > `readonly` **observations**: readonly [`SpineRelationObservation`](SpineRelationObservation.md)[]
 
-Defined in: [gauntlet/src/spine-relation-facts.ts:97](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/spine-relation-facts.ts#L97)
+Defined in: [gauntlet/src/spine-relation-facts.ts:101](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/spine-relation-facts.ts#L101)
 
 Every admitted mirror type's observed relation — the substrate the gate folds.

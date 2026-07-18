@@ -169,7 +169,8 @@ function buildReport(): ConvergenceReport {
     {
       artifact: at('tests/fixtures/type-export-surface.json'),
       kind: 'snapshot',
-      proves: 'the committed public TYPE surface over 22 packages + @czap/_spine — a dropped/renamed type reds',
+      proves:
+        'the committed public TYPE surface over the public package roster + the _spine mirror — a dropped/renamed type reds (the exact count is the counts.typeSurfacePackages field, read from the snapshot)',
     },
     {
       artifact: at('tests/unit/spine-conformance.test.ts'),
