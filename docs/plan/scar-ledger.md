@@ -997,3 +997,32 @@ receipt `sha256:`-label law. The B5b/D9b normalizer cage is now a two-home parit
   that subsumes it). STATUS: **CLOSED (executed).** The tsc-AST type-export enumerator closes the
   companion blind spot (`intentionally-omitted` mechanically checkable). ADR-0043 records the
   decision; the semantic-convergence report indexes the evidence.
+
+- **S8.5-3 — the adversarial QA pass caught a real authority gap the "no gap" claim
+  missed: absorbing a MULTI-FIELD shape as one `public-wider` verdict is a WEAK pin.**
+  The independent full-diff QA (Methodology §5) confirmed that admitting `Codec.Shape`
+  as a single whole-shape `public-wider` row was strictly weaker than the deleted
+  bidirectional encode/decode pins: the `schema` field alone produces `(s2r=false,
+  r2s=true)`, so a SECOND field widening in the SAME direction (an `encode(): Result |
+  Promise` drift) is absorbed into the identical aggregate verdict and never surfaces —
+  the QA reproduced it (0 gate findings on that drift, where the old `_encodeS2R` pin
+  failed the typecheck). A same-direction second-field widening is the general blind
+  spot of any `public-wider`/`public-narrower` whole-object pin.
+  Class: an aggregate two-axis verdict over a shape LOSES per-field resolution; a
+  deliberately-wider field masks a drift in a sibling field.
+  Disposition: **RESOLVED + rule.** Codec.Shape is decomposed into FIELD admissions
+  (`Codec.Shape['encode']`/`['decode']` `exact`, `['schema']` `public-wider`),
+  reproducing `__codecSpineTypeContract`'s per-field bidirectional pins exactly; the
+  encode-widen drift is now a permanent RED fixture. **Rule for future admissions:** a
+  mirror shape that carries a deliberately-wider (or narrower) field must be admitted
+  FIELD-BY-FIELD, never as one whole-shape `public-wider`/`public-narrower` verdict, so a
+  sibling-field drift cannot hide behind it. STATUS: closed (gap reproduced, fixed,
+  fixtured).
+  Accepted latent (recorded, not live regressions per the QA): (a) a runtime type that
+  resolves to `any` via the WORKSPACE_ALIASES subset would pass an `exact` admission —
+  partially guarded by the non-`exact` admissions (e.g. schema `public-wider`) whose
+  survival proves types are not universally collapsing; (b) the type-export enumerator
+  does not track `export * as NS` (unexercised — none in `packages/`; verbatim syntax
+  forces `export type {` so a bare `export { Interface }` cannot occur either); (c) the
+  convergence report indexes by existence, honest about being a derived index. These are
+  tracked fragilities, not gaps in the current tree.
