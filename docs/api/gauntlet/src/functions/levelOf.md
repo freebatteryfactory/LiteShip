@@ -8,7 +8,7 @@
 
 > **levelOf**(`file`, `map?`): [`AssuranceLevel`](../type-aliases/AssuranceLevel.md)
 
-Defined in: [gauntlet/src/assurance-map.ts:239](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/assurance-map.ts#L239)
+Defined in: [gauntlet/src/assurance-map.ts:255](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/assurance-map.ts#L255)
 
 The level of `file` per the assurance map: the FIRST matching rule's level
 (rules are most-specific first), else `L1`. Pure + deterministic — no clock,

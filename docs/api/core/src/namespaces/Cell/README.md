@@ -6,9 +6,10 @@
 
 # Cell
 
-Cell — mutable reactive primitive backed by `SubscriptionRef`.
-The workhorse of czap's reactive graph: `get` for a snapshot, `set` to
-push, `changes` for the stream of subsequent values.
+Cell — mutable reactive primitive backed by [CellKernel](../../variables/CellKernel.md). `read` for a
+snapshot, `set`/`update` to push, `subscribe` for the replay-1 stream of
+values (current replayed on attach). Effect-free — the transport swap that lets
+consumers coordinate ordinary state with no `effect` import (#153).
 
 ## Type Aliases
 

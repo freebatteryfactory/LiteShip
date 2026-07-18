@@ -6,7 +6,7 @@
 
 # Interface: CellFanoutShape\<T\>
 
-Defined in: [core/src/cell-kernel.ts:85](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts#L85)
+Defined in: [core/src/cell-kernel.ts:130](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts#L130)
 
 Live no-replay fan-out kernel: fire-and-forget publish, no current-value slot.
 
@@ -22,7 +22,7 @@ Live no-replay fan-out kernel: fire-and-forget publish, no current-value slot.
 
 > `readonly` **\_tag**: `"CellFanout"`
 
-Defined in: [core/src/cell-kernel.ts:86](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts#L86)
+Defined in: [core/src/cell-kernel.ts:131](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts#L131)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [core/src/cell-kernel.ts:86](https://github.com/freebatteryfactory/L
 
 > `readonly` **closed**: `boolean`
 
-Defined in: [core/src/cell-kernel.ts:94](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts#L94)
+Defined in: [core/src/cell-kernel.ts:139](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts#L139)
 
 True once [close](#close) has run.
 
@@ -40,7 +40,7 @@ True once [close](#close) has run.
 
 > `readonly` **size**: `number`
 
-Defined in: [core/src/cell-kernel.ts:96](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts#L96)
+Defined in: [core/src/cell-kernel.ts:141](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts#L141)
 
 Current subscriber count.
 
@@ -50,7 +50,7 @@ Current subscriber count.
 
 > **close**(): `void`
 
-Defined in: [core/src/cell-kernel.ts:92](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts#L92)
+Defined in: [core/src/cell-kernel.ts:137](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts#L137)
 
 Complete every subscriber exactly once and mark the kernel closed. Idempotent.
 
@@ -64,7 +64,7 @@ Complete every subscriber exactly once and mark the kernel closed. Idempotent.
 
 > **publish**(`value`): `void`
 
-Defined in: [core/src/cell-kernel.ts:88](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts#L88)
+Defined in: [core/src/cell-kernel.ts:133](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts#L133)
 
 Fan `value` out to every current subscriber. Late subscribers miss it. Inert after close.
 
@@ -84,7 +84,7 @@ Fan `value` out to every current subscriber. Late subscribers miss it. Inert aft
 
 > **subscribe**(`subscriber`): [`Disposer`](../type-aliases/Disposer.md)
 
-Defined in: [core/src/cell-kernel.ts:90](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts#L90)
+Defined in: [core/src/cell-kernel.ts:135](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts#L135)
 
 Register `subscriber` (no replay). Returns its [Disposer](../type-aliases/Disposer.md).
 

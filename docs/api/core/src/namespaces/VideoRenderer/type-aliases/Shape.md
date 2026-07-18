@@ -8,6 +8,6 @@
 
 > **Shape** = `VideoRendererShape`
 
-Defined in: [core/src/video.ts:178](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/video.ts#L178)
+Defined in: [core/src/video.ts:177](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/video.ts#L177)
 
 Structural shape of a renderer instance returned by [VideoRenderer.make](../../../variables/VideoRenderer.md#make).

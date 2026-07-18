@@ -1,13 +1,15 @@
 /**
  * HLC -- Hybrid Logical Clock.
  *
- * Pure functions + Effect-based managed clock.
+ * Pure functions + a plain (Effect-free) managed clock over the injected core
+ * {@link Clock} (Wave 6). The pure kernel (`create`/`compare`/`increment`/`merge`/
+ * `encode`/`decode`) is byte-identical — untouched by the clock-injection swap.
  *
  * @module
  */
 
-import { Effect, Ref, Clock } from 'effect';
 import { InvariantViolationError, ParseError } from '@czap/error';
+import { wallClock, type Clock } from './clock.js';
 
 // Hybrid Logical Clock: physical wall-clock + logical counter for causal ordering. DagPosition encodes (timestamp, counter, nodeId) for DAG vertex identity.
 
@@ -165,58 +167,48 @@ const _decode = (s: string): HLCShape => {
 };
 
 /**
- * Create a managed HLC clock as an Effect Ref.
- *
- * @example
- * ```ts
- * import { Effect } from 'effect';
- *
- * const program = Effect.gen(function* () {
- *   const clock = yield* HLC.makeClock('node-1');
- *   const ts = yield* HLC.tick(clock);
- *   // ts.wall_ms === Date.now() (approximately)
- * });
- * ```
+ * A managed HLC clock handle — a plain, Effect-free mutable holder over the pure
+ * {@link _increment}/{@link _merge} ops. It reads wall time through an injected
+ * core {@link Clock} (default {@link wallClock} = epoch ms, the HLC `wall_ms`
+ * entropy boundary): `tick`/`receive` advance the closure-held timestamp in place
+ * and return it; `current` reads it WITHOUT advancing. No `Effect`/`Ref`.
  */
-export const makeClock = (nodeId: string): Effect.Effect<Ref.Ref<HLCShape>> => Ref.make(_create(nodeId));
+export interface HLCClock {
+  /** Advance for a local event — `max(current wall, clock.now())`, bumping the counter on a tie. */
+  tick(): HLCShape;
+  /** Merge a remote timestamp into the clock (Lamport causality), returning the new value. */
+  receive(remote: HLCShape): HLCShape;
+  /** Read the current timestamp WITHOUT advancing it. */
+  current(): HLCShape;
+}
 
 /**
- * Tick a managed clock forward, returning the new HLC timestamp.
+ * Create a managed HLC clock over an injected {@link Clock} (default
+ * {@link wallClock}). Returns a plain {@link HLCClock} handle — no `Effect`.
  *
  * @example
  * ```ts
- * const ts = yield* HLC.tick(clock);
- * // ts.wall_ms >= previous wall_ms
+ * const clock = HLC.makeClock('node-1');
+ * const ts = clock.tick();
+ * // ts.wall_ms === Date.now() (approximately) under the default wallClock
  * ```
  */
-export const tick = (clock: Ref.Ref<HLCShape>): Effect.Effect<HLCShape> =>
-  // Wall time via Effect's Clock service (live by default, TestClock under test)
-  // so the managed clock advances deterministically without an ambient Date.now().
-  Clock.currentTimeMillis.pipe(
-    Effect.flatMap((wallMs) => Ref.updateAndGet(clock, (current) => _increment(current, wallMs))),
-  );
-
-/**
- * Receive a remote HLC timestamp and merge it into the managed clock.
- *
- * @example
- * ```ts
- * const remoteTs = HLC.decode(remoteEncoded);
- * const merged = yield* HLC.receive(clock, remoteTs);
- * // merged.wall_ms >= remoteTs.wall_ms
- * ```
- */
-export const receive = (clock: Ref.Ref<HLCShape>, remote: HLCShape): Effect.Effect<HLCShape> =>
-  Clock.currentTimeMillis.pipe(
-    Effect.flatMap((wallMs) => Ref.updateAndGet(clock, (current) => _merge(current, remote, wallMs))),
-  );
+export const makeClock = (nodeId: string, clock: Clock = wallClock): HLCClock => {
+  let hlc: HLCShape = _create(nodeId);
+  return {
+    tick: (): HLCShape => (hlc = _increment(hlc, clock.now())),
+    receive: (remote: HLCShape): HLCShape => (hlc = _merge(hlc, remote, clock.now())),
+    current: (): HLCShape => hlc,
+  };
+};
 
 /**
  * HLC namespace -- Hybrid Logical Clock.
  *
  * Pure functions for creating, comparing, incrementing, and merging HLC
- * timestamps, plus Effect-based managed clock helpers. Encodes to/from
- * a deterministic colon-separated hex string format.
+ * timestamps, plus a plain (Effect-free) managed-clock factory
+ * ({@link makeClock} → an {@link HLCClock} handle with `tick`/`receive`/`current`).
+ * Encodes to/from a deterministic colon-separated hex string format.
  *
  * @example
  * ```ts
@@ -227,6 +219,9 @@ export const receive = (clock: Ref.Ref<HLCShape>, remote: HLCShape): Effect.Effe
  * const merged = HLC.merge(a, b, Date.now());
  * const encoded = HLC.encode(merged);
  * const decoded = HLC.decode(encoded);
+ *
+ * const clock = HLC.makeClock('A'); // reads wallClock by default
+ * const ts = clock.tick();
  * ```
  */
 export const HLC = {
@@ -237,11 +232,11 @@ export const HLC = {
   encode: _encode,
   decode: _decode,
   makeClock,
-  tick,
-  receive,
 };
 
 export declare namespace HLC {
   /** Structural shape of a hybrid logical clock timestamp: `{ wall_ms, counter, node_id }`. */
   export type Shape = HLCShape;
+  /** A managed HLC clock handle (`tick`/`receive`/`current`) — see {@link HLCClock}. */
+  export type Clock = HLCClock;
 }

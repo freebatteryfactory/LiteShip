@@ -22,10 +22,10 @@
  * clock, an HLC-driven clock, a recorded-trace clock) by satisfying the one-method
  * structural contract, and threads it through the same optional parameter.
  *
- * Effect-based code (HLC, zap throttling, the time signal source) does NOT use
- * this value — it reads time through Effect's own `Clock` service
- * (`Clock.currentTimeMillis`), which is injectable via `TestClock` and needs no
- * waiver. This module is for the plain (non-Effect) runtime paths.
+ * As of Wave 6 the reactive runtime reads time through THIS substrate too — the HLC
+ * managed clock, the signal time source, and zap throttling all take an injected
+ * {@link Clock} (default {@link wallClock}). There is no separate Effect `Clock`
+ * service path: `clock.ts` is the ONE plain, Effect-free time substrate.
  *
  * @module
  */

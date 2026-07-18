@@ -8,67 +8,20 @@
 
 > `const` **Cell**: `object`
 
-Defined in: [core/src/cell.ts:118](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell.ts#L118)
+Defined in: [core/src/cell.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell.ts#L74)
 
-Cell — mutable reactive primitive backed by `SubscriptionRef`.
-The workhorse of czap's reactive graph: `get` for a snapshot, `set` to
-push, `changes` for the stream of subsequent values.
+Cell — mutable reactive primitive backed by [CellKernel](CellKernel.md). `read` for a
+snapshot, `set`/`update` to push, `subscribe` for the replay-1 stream of
+values (current replayed on attach). Effect-free — the transport swap that lets
+consumers coordinate ordinary state with no `effect` import (#153).
 
 ## Type Declaration
 
-### all
-
-> **all**: \<`T`\>(`cells`) => `Effect`\<`CellShape`\<`T`\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\> = `_all`
-
-Tuple-combine cells into a single cell of their current values.
-
-#### Type Parameters
-
-##### T
-
-`T` *extends* readonly `unknown`[]
-
-#### Parameters
-
-##### cells
-
-\{ readonly \[K in string \| number \| symbol\]: CellShape\<T\[K\]\> \}
-
-#### Returns
-
-`Effect`\<`CellShape`\<`T`\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\>
-
-### fromStream
-
-> **fromStream**: \<`T`\>(`initial`, `source`) => `Effect`\<`CellShape`\<`T`\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\> = `_fromStream`
-
-Seed a cell with an initial value and mirror every stream emission into it.
-
-#### Type Parameters
-
-##### T
-
-`T`
-
-#### Parameters
-
-##### initial
-
-`T`
-
-##### source
-
-`Stream`\<`T`\>
-
-#### Returns
-
-`Effect`\<`CellShape`\<`T`\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\>
-
 ### make
 
-> **make**: \<`T`\>(`initial`) => `Effect`\<`CellShape`\<`T`\>\> = `_make`
+> **make**: \<`T`\>(`initial`) => `CellShape`\<`T`\> = `_make`
 
-Build a cell with an initial value.
+Build a cell with an initial value, owned by a fresh [Lifetime](Lifetime.md).
 
 #### Type Parameters
 
@@ -84,34 +37,4 @@ Build a cell with an initial value.
 
 #### Returns
 
-`Effect`\<`CellShape`\<`T`\>\>
-
-### map
-
-> **map**: \<`T`, `U`\>(`cell`, `fn`) => `Effect`\<`CellShape`\<`U`\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\> = `_map`
-
-Scoped `map` — derive a new cell by applying `fn` to every emission.
-
-#### Type Parameters
-
-##### T
-
-`T`
-
-##### U
-
-`U`
-
-#### Parameters
-
-##### cell
-
 `CellShape`\<`T`\>
-
-##### fn
-
-(`value`) => `U`
-
-#### Returns
-
-`Effect`\<`CellShape`\<`U`\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\>

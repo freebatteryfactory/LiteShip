@@ -4,6 +4,46 @@ All notable changes to czap. The format follows [Keep a Changelog](https://keepa
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Pre-1.0
 break policy is intentionally aggressive — minor version bumps may carry breaking changes.
 
+## [0.17.0] - 2026-07-18
+
+The **reactive convergence** (Wave 6) — the reactive kernels move onto `CellKernel`/`Lifetime`
+and the public reactive API becomes **Effect-free** (#153). `Cell`/`Derived`/`Store`/`Signal`/
+`Timeline`/`LiveCell` are each a transport swap around a pure kernel that already shipped: the
+value channel is `CellKernel.replay1`, teardown is a `Lifetime`, and `get`/`current`/`state`
+collapse to a synchronous `read()` while `changes` becomes a `Disposer`-returning `subscribe`.
+`HLC.makeClock` now returns a plain `HLCClock` handle reading wall time through an injected
+`Clock`. Every migration is caged by the Wave 5.5 differential oracle, which re-ran with the
+implementation side flipped to `CellKernel`: every captured behavior is **PRESERVED** (the
+golden fixtures are byte-identical, no fixture regenerated) up to each primitive's declared
+`EmissionPolicy` — `Timeline` dedups (`{distinct}`), every other value channel emits every set
+(`{all}`) — and the deliberate nested-write law (`{deferred}` async-append for `Cell`/`Store`,
+scar S6.F.2). No product law was authored this wave that the oracle did not re-prove.
+
+### Changed
+
+- **The reactive kernels are Effect-free (Wave 6).** `Cell`/`Derived`/`Store`/`Signal`/
+  `Timeline`/`LiveCell`/`HLC` no longer expose `Effect`/`Stream`/`SubscriptionRef`/`Scope`/`Ref`/
+  `PubSub`/`Clock` in their public types. A consumer coordinating ordinary state (a `Cell` + a
+  `Derived` + a `Store`) needs no local Effect-containment module — the closure of #153. The
+  `_spine/core.d.ts` mirror was hand-updated in lockstep; the api-surface snapshot and the
+  `@czap/core` api-health registry were regenerated for the new plain/sync/`Disposer` shapes.
+- **`LiveCell` migrates atomically with `Cell` (S2.3/S2.4).** `set`/`update` commit the value and
+  record the mutation in one synchronous pass — the interleave window is closed. The `fnv1a`
+  identity law and crossing fan-out are byte-identical to the capture.
+- **`HLC` clock injection** — `makeClock(nodeId, clock = wallClock)` returns a plain mutable
+  `HLCClock` handle (`tick`/`receive`/`current`); the pure increment/compare/merge/encode/decode
+  kernel is unchanged. `clock.ts` is now the single time substrate for the reactive runtime.
+- **Lockstep 0.16.0 → 0.17.0** across all `@czap/*` (and the `create-liteship` default template's
+  `@czap/*` ranges); api-surface snapshot regenerated.
+
+### Removed
+
+- **Consumer-less reactive combinators** (greenfield-zero-debt, zero in-repo consumers, no
+  captured fixtures): `Cell.all` / `Cell.map` / `Cell.fromStream` (and the sanctioned
+  `readAllCellValues` cast site), `Derived.map` / `Derived.flatten`, `Store.makeWithEffect` (and
+  `EffectfulStoreShape`), and the free `HLC.tick` / `HLC.receive` (now methods on the `HLCClock`
+  handle). None was a behavior change to a preserved primitive.
+
 ## [0.16.0] - 2026-07-18
 
 The **transition cage** (Wave 5.5) — additive verification infrastructure that builds the

@@ -1,164 +1,159 @@
 /**
- * Derived<T> -- computed reactive value.
+ * Derived<T> — computed reactive value, rebuilt on {@link CellKernel.replay1}.
+ *
+ * A `Derived` computes an initial value into a replay-1 slot and recomputes it
+ * whenever any of its sources emits — the coalgebraic recompute-on-change loop,
+ * with NO `Effect`/`Stream`/`Scope`/`SubscriptionRef`. The compute kernel is the
+ * pure combiner/factory (byte-identical to the pre-migration logic); only the
+ * reactive carrier changed (`SubscriptionRef.make`+`changes`+`get` → the replay-1
+ * kernel; `Stream.mergeAll`+`runForEach` → kernel `subscribe`; `Scope` →
+ * {@link Lifetime}). Every factory returns a `{ derived, lifetime }` handle, the
+ * shipped Zap/Compositor precedent.
+ *
+ * EMISSION POLICY `{all}` (S6.F.1). The kernel does NOT dedup — every source change
+ * republishes even when the recomputed value is unchanged (`duplicate-source`
+ * fixture: `[100,100,105,105,108]`). This is the captured `SubscriptionRef`
+ * behavior preserved.
+ *
+ * LEADING-REPUBLISH PRESERVED (S6 Derived divergence — PRESERVE, not changed).
+ * The captured Effect impl subscribed to its sources in a forked fiber at
+ * construction; the source's replay-1 replay re-triggered compute, so a
+ * subscriber present at that interleave point saw the initial value TWICE
+ * (`initial-value` fixture: `a=[100,100]`) while a later subscriber did not
+ * (`subscriber-order`: `b=[100,105]`). This is reproduced SYNCHRONOUSLY by wiring
+ * the sources LAZILY on the FIRST subscribe: the first subscriber IS the
+ * interleave point (it gets the kernel replay, then the source-replay republish);
+ * later subscribers attach after the sources are wired and see no republish. All
+ * six `derived.json` golden observations are reproduced byte-for-byte — a
+ * transport swap, not a behavior change; no fixture regenerated.
+ *
+ * DISPOSAL (recompute-teardown, PINNED). `lifetime.dispose()` unsubscribes from
+ * the sources (LIFO: stop feeding first) then closes the kernel (completes
+ * subscribers). A post-dispose source change no longer recomputes, so `read()`
+ * freezes at the last value (`disposal` fixture: read stays `105`).
  *
  * @module
  */
 
-import type { Scope } from 'effect';
-import { Effect, Stream, SubscriptionRef } from 'effect';
-import { tupleMap } from './tuple.js';
-import type { Cell } from './cell.js';
-import { readAllCellValues } from './cell.js';
+import { CellKernel } from './cell-kernel.js';
+import type { CellSubscriber, Disposer } from './cell-kernel.js';
+import { Lifetime } from './lifetime.js';
+
+/**
+ * The minimal readable + subscribable source a {@link Derived} recomputes from —
+ * the replay-1 kernel surface `read()` + `subscribe()`. Structurally satisfied by
+ * a `Cell`, a raw {@link CellKernel.replay1}, or another `Derived`. Derived
+ * depends on this SHAPE, never on `Cell`'s concrete type (closure-not-restraint),
+ * so it composes over anything that can be read and subscribed.
+ */
+export type DerivedSource<T> = Pick<CellKernel.Replay<T>, 'read' | 'subscribe'>;
+
+/**
+ * A recompute trigger for {@link Derived.make} — only the subscribe half is
+ * needed (the factory reads whatever it wants; the trigger merely says WHEN to
+ * recompute).
+ */
+export type DerivedTrigger = Pick<CellKernel.Replay<unknown>, 'subscribe'>;
 
 interface DerivedShape<T> {
   readonly _tag: 'Derived';
-  readonly changes: Stream.Stream<T>;
-  readonly get: Effect.Effect<T>;
+  /** Current derived value (sync; was `get: Effect.Effect<T>`). */
+  read(): T;
+  /**
+   * Subscribe to derived changes — replays the current value on attach, returns
+   * a {@link Disposer} (was `changes: Stream.Stream<T>`). The FIRST subscribe
+   * lazily wires the sources (the leading-republish interleave point).
+   */
+  subscribe(subscriber: CellSubscriber<T>): Disposer;
+  /**
+   * Owns the derived's teardown. Its finalizers unsubscribe from the sources
+   * (stop recomputing) then close the kernel (complete subscribers) — so a
+   * post-dispose source change no longer recomputes and `read()` freezes at the
+   * last value. Mirrors {@link Cell}'s `lifetime` member so consumers thread
+   * lifecycle through one uniform `dispose()`.
+   */
+  readonly lifetime: Lifetime.Shape;
 }
 
-const _make = <T>(
-  compute: Effect.Effect<T>,
-  sources: ReadonlyArray<Stream.Stream<unknown>> = [],
-): Effect.Effect<DerivedShape<T>, never, Scope.Scope> =>
-  Effect.gen(function* () {
-    const initialValue = yield* compute;
-    const ref = yield* SubscriptionRef.make(initialValue);
+/**
+ * Build the derived kernel + Lifetime and wire recompute-on-source-change.
+ * `recompute()` reads the current source values and returns the derived value;
+ * `triggers` are the sources whose emissions re-run it.
+ *
+ * Sources are wired LAZILY on the FIRST subscriber so the captured
+ * leading-republish is reproduced synchronously (see the module doc). The kernel
+ * `close` finalizer is registered FIRST, so LIFO runs it LAST — after the source
+ * subscriptions are torn down.
+ */
+function buildDerived<T>(recompute: () => T, triggers: ReadonlyArray<DerivedTrigger>): DerivedShape<T> {
+  const kernel = CellKernel.replay1<T>(recompute());
+  const lifetime = Lifetime.make();
+  lifetime.add(() => kernel.close());
 
-    if (sources.length > 0) {
-      const merged = Stream.mergeAll(sources, { concurrency: 'unbounded' });
-      yield* Effect.forkScoped(
-        Stream.runForEach(merged, () =>
-          Effect.gen(function* () {
-            const newValue = yield* compute;
-            yield* SubscriptionRef.set(ref, newValue);
-          }),
-        ),
-      );
+  let wired = false;
+  const ensureWired = (): void => {
+    if (wired) return;
+    wired = true;
+    for (const source of triggers) {
+      // The source's replay-1 subscribe replays its current value NOW, re-running
+      // compute → the leading republish; each later emission recomputes + republishes.
+      lifetime.add(source.subscribe(() => kernel.publish(recompute())));
     }
+  };
 
-    return {
-      _tag: 'Derived' as const,
-      changes: SubscriptionRef.changes(ref),
-      get: SubscriptionRef.get(ref),
-    };
-  });
-
-const _combine = <T extends readonly unknown[], U>(
-  cells: { [K in keyof T]: Cell.Shape<T[K]> },
-  combiner: (...args: T) => U,
-): Effect.Effect<DerivedShape<U>, never, Scope.Scope> => {
-  const readAll = readAllCellValues<T>(cells);
-
-  return Effect.gen(function* () {
-    const initialValues = yield* readAll;
-    const initialResult = combiner(...initialValues);
-    const ref = yield* SubscriptionRef.make(initialResult);
-
-    const cellStreams = tupleMap(cells, (cell) => cell.changes);
-    const combinedStream = Stream.mergeAll(cellStreams, {
-      concurrency: 'unbounded',
-    }).pipe(
-      Stream.mapEffect(() =>
-        Effect.gen(function* () {
-          const currentValues = yield* readAll;
-          const result = combiner(...currentValues);
-          yield* SubscriptionRef.set(ref, result);
-          return result;
-        }),
-      ),
-    );
-
-    yield* Effect.forkScoped(Stream.runDrain(combinedStream));
-
-    return {
-      _tag: 'Derived' as const,
-      changes: SubscriptionRef.changes(ref),
-      get: SubscriptionRef.get(ref),
-    };
-  });
-};
-
-const _map = <A, B>(derived: DerivedShape<A>, f: (a: A) => B): Effect.Effect<DerivedShape<B>, never, Scope.Scope> =>
-  Effect.gen(function* () {
-    const initialValue = yield* derived.get;
-    const mappedValue = f(initialValue);
-    const ref = yield* SubscriptionRef.make(mappedValue);
-
-    const mappedStream = derived.changes.pipe(
-      Stream.map(f),
-      Stream.tap((value) => SubscriptionRef.set(ref, value)),
-    );
-
-    yield* Effect.forkScoped(Stream.runDrain(mappedStream));
-
-    return {
-      _tag: 'Derived' as const,
-      changes: SubscriptionRef.changes(ref),
-      get: SubscriptionRef.get(ref),
-    };
-  });
-
-const _flatten = <T>(nested: DerivedShape<DerivedShape<T>>): Effect.Effect<DerivedShape<T>, never, Scope.Scope> =>
-  Effect.gen(function* () {
-    const initialInner = yield* nested.get;
-    const initialValue = yield* initialInner.get;
-    const ref = yield* SubscriptionRef.make(initialValue);
-
-    const flattenedStream = nested.changes.pipe(
-      Stream.switchMap((inner) => {
-        let currentValue: T | undefined;
-        let hasCurrentValue = false;
-        let skippedReplay = false;
-        return Stream.concat(
-          Stream.make(inner).pipe(
-            Stream.mapEffect((currentInner) => currentInner.get),
-            Stream.tap((value) =>
-              Effect.sync(() => {
-                currentValue = value;
-                hasCurrentValue = true;
-              }),
-            ),
-          ),
-          inner.changes.pipe(
-            Stream.filter((value) => {
-              if (!skippedReplay && hasCurrentValue && Object.is(value, currentValue)) {
-                skippedReplay = true;
-                return false;
-              }
-              return true;
-            }),
-          ),
-        );
-      }),
-      Stream.tap((value) => SubscriptionRef.set(ref, value)),
-    );
-
-    yield* Effect.forkScoped(Stream.runDrain(flattenedStream));
-
-    return {
-      _tag: 'Derived' as const,
-      changes: SubscriptionRef.changes(ref),
-      get: SubscriptionRef.get(ref),
-    };
-  });
+  return {
+    _tag: 'Derived',
+    read: () => kernel.read(),
+    subscribe: (subscriber) => {
+      const disposer = kernel.subscribe(subscriber);
+      ensureWired();
+      return disposer;
+    },
+    lifetime,
+  };
+}
 
 /**
- * Derived — read-only reactive view computed from upstream {@link Cell}s.
- * A `Derived` recomputes lazily and pushes the new value into its own stream
- * when any dependency changes; composes via `combine`, `map`, and `flatten`.
+ * Build a derived value from a `compute` factory and the sources whose emissions
+ * recompute it. With no sources it is static (never recomputes).
+ */
+const _make = <T>(compute: () => T, sources: ReadonlyArray<DerivedTrigger> = []): DerivedShape<T> =>
+  buildDerived(compute, sources);
+
+/**
+ * Combine multiple sources into a single derived value of `combiner(...values)`.
+ * Recomputes from a CONSISTENT snapshot of every source on each change (no torn
+ * reads): the recompute reads all current source values at that instant.
+ */
+const _combine = <T extends readonly unknown[], U>(
+  sources: { readonly [K in keyof T]: DerivedSource<T[K]> },
+  combiner: (...args: T) => U,
+): DerivedShape<U> => {
+  // Read every source's current value, preserving tuple arity/order. `.map` over a
+  // tuple erases element types to `readonly unknown[]`; the single `as T` re-narrows
+  // it — provably safe because `.map` is total and order-preserving over the tuple.
+  const readAll = (): T => {
+    const values: readonly unknown[] = sources.map((source) => source.read());
+    return values as T;
+  };
+  const recompute = (): U => combiner(...readAll());
+  return buildDerived(recompute, sources);
+};
+
+/**
+ * Derived — read-only reactive view computed from upstream sources, on
+ * {@link CellKernel.replay1}. Recomputes lazily on any source change and
+ * republishes to its own subscribers; compose via `make` (factory + triggers) or
+ * `combine` (tuple of readable sources).
  */
 export const Derived = {
-  /** Build a derived cell from a factory computing against upstream sources. */
+  /** Build a derived value from a factory and the sources that recompute it. */
   make: _make,
-  /** Combine multiple cells into a single derived cell of their tuple. */
+  /** Combine readable sources into a single derived value of their combiner. */
   combine: _combine,
-  /** Pure projection of an existing cell/derived. */
-  map: _map,
-  /** Flatten a derived-of-derived into a single derived of the inner value. */
-  flatten: _flatten,
 };
 
 export declare namespace Derived {
-  /** Structural shape of a {@link Derived}: `_tag`, `get`, `changes`. */
+  /** Structural shape of a {@link Derived}: `_tag`, sync `read`, `subscribe`, `lifetime`. */
   export type Shape<T> = DerivedShape<T>;
 }

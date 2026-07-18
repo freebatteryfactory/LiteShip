@@ -1,6 +1,6 @@
 {
   "name": "@czap/scene",
-  "version": "0.16.0",
+  "version": "0.17.0",
   "description": "Author video timelines for LiteShip: a typed scene and track model built on the entity-component substrate in `@czap/core`.",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",

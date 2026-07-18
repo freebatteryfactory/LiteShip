@@ -4,139 +4,167 @@
  * A Timeline wraps a BoundaryDef and drives it from a time-based signal,
  * producing discrete state transitions as the elapsed time crosses thresholds.
  *
+ * Wave 6: a transport swap onto {@link CellKernel.replay1}. The state channel's
+ * hand-rolled `newState !== oldState` reference-dedup IS the product law (LOCKED
+ * ruling — scar S6.F.1), so it rides EmissionPolicy `{distinct, equals: Object.is}`
+ * rather than a bespoke inline guard: `setState` publishes unconditionally and the
+ * kernel suppresses a consecutive-equal state. `lastEmitted` is SEEDED with the
+ * initial state (a construction-time publish to zero subscribers) so the first
+ * publish of the initial state is suppressed exactly as the old slot-compare guard
+ * did — a faithful transport swap. The elapsed channel is a read-only closure (no
+ * `changes` subscribers). `state`/`progress`/`elapsed` are sync reads; the four
+ * control ops are synchronous; the scheduler cancel + kernel close are owned by a
+ * {@link Lifetime}. The pure logic (Boundary.evaluate, dt integration, clamping,
+ * looping) is byte-identical — only the reactive carrier changed. Behavior matches
+ * the captured golden fixture (`tests/fixtures/reactive-capture/timeline.json`).
+ *
  * @module
  */
 
-import type { Stream, Scope } from 'effect';
-import { Effect, SubscriptionRef, Ref } from 'effect';
 import type { Millis } from './brands.js';
 import { Millis as mkMillis } from './brands.js';
 import { Boundary } from './boundary.js';
 import type { StateUnion } from './type-utils.js';
 import type { Scheduler } from './scheduler.js';
 import { Scheduler as SchedulerImpl } from './scheduler.js';
+import { CellKernel } from './cell-kernel.js';
+import type { Disposer } from './cell-kernel.js';
+import { Lifetime } from './lifetime.js';
 
 interface TimelineShape<B extends Boundary.Shape = Boundary.Shape> {
   readonly boundary: B;
-  readonly state: Effect.Effect<StateUnion<B>>;
-  readonly progress: Effect.Effect<number>;
-  readonly elapsed: Effect.Effect<Millis>;
-  readonly changes: Stream.Stream<StateUnion<B>>;
-  play(): Effect.Effect<void>;
-  pause(): Effect.Effect<void>;
-  reverse(): Effect.Effect<void>;
-  seek(ms: Millis): Effect.Effect<void>;
-  scrub(progress: number): Effect.Effect<void>;
+  /** Current boundary state (sync; was `state: Effect.Effect<StateUnion<B>>`). */
+  state(): StateUnion<B>;
+  /** Elapsed / duration clamped to 0..1 (sync; was `progress: Effect.Effect<number>`). */
+  progress(): number;
+  /** Current elapsed time in ms (sync; was `elapsed: Effect.Effect<Millis>`). */
+  elapsed(): Millis;
+  /**
+   * Subscribe to state transitions — replays the current state on attach and
+   * returns a {@link Disposer} (was `changes: Stream.Stream<StateUnion<B>>`).
+   * Consecutive-equal states are suppressed (EmissionPolicy `{distinct}`).
+   */
+  subscribe(subscriber: CellKernel.Subscriber<StateUnion<B>>): Disposer;
+  /** Start advancing on scheduler ticks (sync; was `Effect.Effect<void>`). */
+  play(): void;
+  /** Stop advancing (sync; was `Effect.Effect<void>`). */
+  pause(): void;
+  /** Flip advance direction (sync; was `Effect.Effect<void>`). */
+  reverse(): void;
+  /** Set elapsed directly, clamped to 0..duration (sync; was `Effect.Effect<void>`). */
+  seek(ms: Millis): void;
+  /** Set elapsed by progress fraction, clamped to 0..1 (sync; was `Effect.Effect<void>`). */
+  scrub(progress: number): void;
+  /**
+   * Owns the timeline's teardown — its finalizers cancel the scheduler and close
+   * the state kernel (completing subscribers), so consumers thread the timeline
+   * lifecycle through one uniform `dispose()` (replacing the `Scope`-bound
+   * `addFinalizer(sched.cancel)`).
+   */
+  readonly lifetime: Lifetime.Shape;
 }
 
 interface TimelineFactory {
   from<B extends Boundary.Shape>(
     boundary: B,
     config?: { duration?: Millis; loop?: boolean; scheduler?: Scheduler.Shape },
-  ): Effect.Effect<TimelineShape<B>, never, Scope.Scope>;
+  ): TimelineShape<B>;
 }
 
 /**
  * Timeline — scheduler-driven advancement over a {@link Boundary}.
- * Produces a scoped reactive timeline that seeks or plays between boundary
- * states; pluggable clock via {@link Scheduler}.
+ * Produces a plain reactive timeline that seeks or plays between boundary states;
+ * pluggable clock via {@link Scheduler}, teardown via {@link Lifetime}.
  */
 export const Timeline: TimelineFactory = {
   from<B extends Boundary.Shape>(
     boundary: B,
     config?: { duration?: Millis; loop?: boolean; scheduler?: Scheduler.Shape },
-  ): Effect.Effect<TimelineShape<B>, never, Scope.Scope> {
+  ): TimelineShape<B> {
     const duration =
       config?.duration ??
       (boundary.thresholds.length > 0 ? boundary.thresholds[boundary.thresholds.length - 1]! * 1.2 : 1000);
     const loop = config?.loop ?? false;
 
-    return Effect.gen(function* () {
-      const elapsedRef = yield* SubscriptionRef.make(0);
-      const playingRef = yield* Ref.make(false);
-      const directionRef = yield* Ref.make<1 | -1>(1);
-      const initialState: StateUnion<B> = Boundary.evaluate(boundary, 0);
-      const stateRef = yield* SubscriptionRef.make<StateUnion<B>>(initialState);
-
-      const sched =
-        config?.scheduler ??
-        (typeof requestAnimationFrame !== 'undefined' ? SchedulerImpl.raf() : SchedulerImpl.noop());
-
-      let lastTime: number | null = null;
-      let playing = false;
-      let direction: 1 | -1 = 1;
-      let currentElapsed = 0;
-
-      const step = (now: number): void => {
-        if (lastTime !== null && playing) {
-          const dt = (now - lastTime) * direction;
-          let next = currentElapsed + dt;
-          if (loop) {
-            next = ((next % duration) + duration) % duration;
-          } else {
-            next = Math.max(0, Math.min(duration, next));
-          }
-          currentElapsed = next;
-          Effect.runSync(SubscriptionRef.set(elapsedRef, next));
-          const newState: StateUnion<B> = Boundary.evaluate(boundary, next);
-          const oldState = Effect.runSync(SubscriptionRef.get(stateRef));
-          if (newState !== oldState) {
-            Effect.runSync(SubscriptionRef.set(stateRef, newState));
-          }
-        }
-        lastTime = now;
-        schedId = sched.schedule(step);
-      };
-      let schedId = sched.schedule(step);
-      yield* Effect.addFinalizer(() => Effect.sync(() => sched.cancel(schedId)));
-
-      const timeline: TimelineShape<B> = {
-        boundary,
-        state: SubscriptionRef.get(stateRef),
-        progress: Effect.map(SubscriptionRef.get(elapsedRef), (e) => Math.max(0, Math.min(e / duration, 1))),
-        elapsed: Effect.map(SubscriptionRef.get(elapsedRef), (e) => mkMillis(e)),
-        changes: SubscriptionRef.changes(stateRef),
-        play: () =>
-          Effect.gen(function* () {
-            playing = true;
-            yield* Ref.set(playingRef, true);
-          }),
-        pause: () =>
-          Effect.gen(function* () {
-            playing = false;
-            yield* Ref.set(playingRef, false);
-          }),
-        reverse: () =>
-          Effect.gen(function* () {
-            direction = direction === 1 ? -1 : 1;
-            yield* Ref.update(directionRef, (d) => (d === 1 ? -1 : 1));
-          }),
-        seek: (ms: number) =>
-          Effect.gen(function* () {
-            const clamped = Math.max(0, Math.min(duration, ms));
-            currentElapsed = clamped;
-            yield* SubscriptionRef.set(elapsedRef, clamped);
-            const newState: StateUnion<B> = Boundary.evaluate(boundary, clamped);
-            const oldState = yield* SubscriptionRef.get(stateRef);
-            if (newState !== oldState) {
-              yield* SubscriptionRef.set(stateRef, newState);
-            }
-          }),
-        scrub: (progress: number) =>
-          Effect.gen(function* () {
-            const val = Math.max(0, Math.min(1, progress)) * duration;
-            currentElapsed = val;
-            yield* SubscriptionRef.set(elapsedRef, val);
-            const newState: StateUnion<B> = Boundary.evaluate(boundary, val);
-            const oldState = yield* SubscriptionRef.get(stateRef);
-            if (newState !== oldState) {
-              yield* SubscriptionRef.set(stateRef, newState);
-            }
-          }),
-      };
-
-      return timeline;
+    const initialState: StateUnion<B> = Boundary.evaluate(boundary, 0);
+    // The state channel: {distinct} — the hand-rolled `newState !== oldState`
+    // reference-dedup is the product law (LOCKED ruling S6.F.1). Boundary states
+    // are strings, so Object.is is value-equality (exactly the old `!==`).
+    const stateKernel = CellKernel.replay1<StateUnion<B>>(initialState, {
+      kind: 'distinct',
+      equals: (a, b) => Object.is(a, b),
     });
+    // Seed lastEmitted = initialState (publish to zero subscribers): the old guard
+    // compared newState against the current slot (which started at initialState),
+    // so a first publish of the initial state must be suppressed. This makes the
+    // {distinct} transport swap byte-faithful to that slot-compare guard.
+    stateKernel.publish(initialState);
+
+    const sched =
+      config?.scheduler ?? (typeof requestAnimationFrame !== 'undefined' ? SchedulerImpl.raf() : SchedulerImpl.noop());
+
+    let lastTime: number | null = null;
+    let playing = false;
+    let direction: 1 | -1 = 1;
+    let currentElapsed = 0;
+
+    // Publish the state for an elapsed value; the {distinct} kernel suppresses a
+    // consecutive-equal state (the former `if (newState !== oldState)` guard).
+    const setState = (elapsed: number): void => {
+      stateKernel.publish(Boundary.evaluate(boundary, elapsed));
+    };
+
+    const step = (now: number): void => {
+      if (lastTime !== null && playing) {
+        const dt = (now - lastTime) * direction;
+        let next = currentElapsed + dt;
+        if (loop) {
+          next = ((next % duration) + duration) % duration;
+        } else {
+          next = Math.max(0, Math.min(duration, next));
+        }
+        currentElapsed = next;
+        setState(next);
+      }
+      lastTime = now;
+      schedId = sched.schedule(step);
+    };
+    let schedId = sched.schedule(step);
+
+    const lifetime = Lifetime.make();
+    // LIFO: cancel the scheduler first (stop future ticks), then close the state
+    // kernel (complete subscribers). schedId is read at dispose time — it tracks
+    // the latest reschedule, matching the old scope-bound `sched.cancel(schedId)`.
+    lifetime.add(() => stateKernel.close());
+    lifetime.add(() => sched.cancel(schedId));
+
+    return {
+      boundary,
+      state: () => stateKernel.read(),
+      progress: () => Math.max(0, Math.min(currentElapsed / duration, 1)),
+      elapsed: () => mkMillis(currentElapsed),
+      subscribe: (subscriber) => stateKernel.subscribe(subscriber),
+      play: () => {
+        playing = true;
+      },
+      pause: () => {
+        playing = false;
+      },
+      reverse: () => {
+        direction = direction === 1 ? -1 : 1;
+      },
+      seek: (ms: Millis) => {
+        const clamped = Math.max(0, Math.min(duration, ms));
+        currentElapsed = clamped;
+        setState(clamped);
+      },
+      scrub: (progress: number) => {
+        const val = Math.max(0, Math.min(1, progress)) * duration;
+        currentElapsed = val;
+        setState(val);
+      },
+      lifetime,
+    };
   },
 };
 

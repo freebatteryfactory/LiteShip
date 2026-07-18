@@ -66,7 +66,7 @@
 import { CanonicalCbor, fnv1aBytes } from '@czap/canonical';
 import type { ContentAddress } from '@czap/canonical';
 import { ModelChannel, EmissionPolicies } from './reactive-model.js';
-import type { ChannelLike } from './reactive-model.js';
+import type { ChannelLike, ReentrancyPolicy } from './reactive-model.js';
 import { applyTransform, traceDigest } from './reactive-trace.js';
 import type {
   OpHistory,
@@ -321,6 +321,13 @@ export interface ModelConfig {
   readonly channel: 'replay1' | 'fanout';
   readonly initialRaw: number;
   readonly project?: (raw: number) => TraceValue;
+  /**
+   * The reentrancy arm the model channel runs under (Wave 6 nested-write ruling).
+   * Defaults to `'synchronous'` (the pinned I5 kernel law). Cell / Store / Signal /
+   * LiveCell-value select `'deferred'` so the oracle asserts their PRESERVED
+   * async-append behavior POSITIVELY (model ≡ impl) rather than recording a delta.
+   */
+  readonly reentrancy?: ReentrancyPolicy;
 }
 
 interface ModelSubState {
@@ -348,7 +355,7 @@ export const runModelTrace = (history: OpHistory, config: ModelConfig): Observat
   const project = config.project ?? ((raw: number): TraceValue => raw);
   const ch: ChannelLike =
     config.channel === 'replay1'
-      ? ModelChannel.replay1(config.initialRaw, EmissionPolicies.all())
+      ? ModelChannel.replay1(config.initialRaw, EmissionPolicies.all(), config.reentrancy ?? 'synchronous')
       : ModelChannel.fanout(EmissionPolicies.all());
 
   const subs = new Map<string, ModelSubState>();

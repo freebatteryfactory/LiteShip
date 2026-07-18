@@ -517,3 +517,130 @@ scar class (S1.1/S2.2) the cage exists to prevent.
   records the mutation sequentially). → Wave 6 must close it atomically (S2.3/S2.4).
 - **Signal.audio eager-throw:** normalized mode without a positive duration throws
   SYNCHRONOUSLY at construction, before returning. → preserve.
+
+## Wave 6 Foundation-phase rulings (mechanism + model + nested-write)
+
+The Foundation phase sets the SHARED mechanism + the single-oracle model + the
+nested-write ruling that the Wave-6 migrate builders consume. It migrates NO
+primitive (that is the Migrate phase). All decisions below are caged by the 5.5
+transition oracle (`tests/support/reactive-{trace,model,oracle}.ts` + the golden
+fixtures + `tests/property/reactive-conformance.prop.test.ts`).
+
+- **S6.F.1 — EmissionPolicy landed as an additive THIRD axis on `CellKernel`
+  (dedup vs no-dedup), orthogonal to the replay1/fanout mode.**
+  `packages/core/src/cell-kernel.ts` now exports `EmissionPolicy<T>` = `{all}` |
+  `{distinct, equals}` and both constructors take it as an optional param
+  DEFAULTING to `{all}`. Under `{distinct}` a publish whose value equals the
+  previous *emitted* value updates the current slot (read consistency) but is NOT
+  fanned out. This is Timeline's hand-rolled `newState !== oldState` state dedup
+  made a first-class, testable capability (LOCKED ruling: Timeline = `{distinct}`,
+  everyone else `{all}`). The `{all}` default is ZERO-code / ZERO-allocation for
+  every existing caller — the `EMIT_ALL` shared const + the policy branch means
+  the compositor's `replay1` hot path never touches `lastEmitted`; the
+  compositor-zero-alloc gate stays green (re-run: PASS). Law tests: red-first in
+  `tests/unit/core/cell-kernel.test.ts` ("EmissionPolicy {distinct}" describe — a
+  `{distinct}` suppresses a consecutive-equal, `{all}` does not, a suppressed
+  publish still advances `read()` [the mutation target], custom equality honored).
+  Guard: cell-kernel.test.ts (40/40 green).
+
+- **S6.F.2 — NESTED-WRITE RULING: PRESERVE async-append (glitch-free /
+  breadth-first) as Cell's and Store's product law. RULED EXPLICITLY, not
+  defaulted.** The captured fixtures (`cell.json` `nested-write`, `store.json`
+  `nested-dispatch`) show BOTH subscribers see `[0,1,99]` when a delivery handler
+  issues a nested `set(99)` during the fan-out of `set(1)` — the outer value
+  reaches every subscriber, THEN the nested value reaches every subscriber.
+  CellKernel's raw synchronous-nested I5 (the compositor extraction target) would
+  instead give a=`[0,1,99]`, b=`[0,99,1]` (depth-first: b sees the nested 99
+  before the outer 1). **Evidence weighed:** (a) async-append is GLITCH-FREE —
+  every live subscriber's terminal delivery equals `read()`/`finalValue` (99) and
+  all subscribers agree on one total order; synchronous-nested leaves b on a STALE
+  terminal (1 while the cell is 99) and makes a/b disagree on order — the classic
+  reactive glitch. Glitch-freedom (last-observed == current value) is the DEFINING
+  correctness property of a reactive value-cell, so async-append is the cleaner
+  *product* law even though synchronous-nested is the cleaner raw *kernel* loop
+  (the maintainer's lean holds for the compositor's frame-overwrite channel, where
+  terminal-staleness is harmless, NOT for a value cell). (b) The governing law
+  defaults to PRESERVE; blast radius is ZERO (no product consumer subscribes to a
+  Cell/Store and issues a nested write from the handler — only the reactive test
+  suites observe the ordering), so a change would buy nothing but a glitch + an
+  ADR. (c) `reactive-conformance.prop.test.ts` §3 already pins this exactly as a
+  ROBUST DELTA "Wave 6 must PIN, not policy-resolve." → **Decision: PRESERVE.
+  Fixtures stay BYTE-IDENTICAL; no fixture regenerated.**
+
+  **Mechanism (additive, keeps the pinned I5 synchronous-nested / compositor
+  byte-parity intact):** a `ReentrancyPolicy` axis on `CellKernel.replay1`,
+  `'synchronous'` (DEFAULT — depth-first nested fan-out, the pinned I5 law) |
+  `'deferred'` (async-append: a nested publish is enqueued and drained FIFO
+  breadth-first after the active fan-out unwinds, realized SYNCHRONOUSLY via a
+  re-entrancy guard — no microtask, no Effect, observable only in delivery ORDER).
+  The default is byte-for-byte the current behavior, so the compositor / zap /
+  crossings and the pinned I5 tests are unchanged.
+
+  **Model (single-oracle honesty):** `tests/support/reactive-model.ts`
+  `modelReplay1` / `ModelChannel.replay1` gained the SAME `ReentrancyPolicy` arm
+  (default `'synchronous'`), so the differential oracle can assert Cell's
+  async-append POSITIVELY (Cell's model config selects `'deferred'`) rather than
+  merely tolerating a recorded divergence. This is ADDITIVE — the model's default
+  and every existing config stay `'synchronous'`, so `reactive-model.test.ts` and
+  the `reactive-conformance` §3 pins stay green (re-run: 33/33 + 42/42 PASS). No
+  entry added to `ENUMERATED_LAWS`/`LAW_COVERAGE` — `'deferred'` is a Wave-6
+  CAPABILITY layered on the I5 kernel law (like `{distinct}` on I4), not a new
+  kernel law.
+
+  **NOTE FOR MIGRATE BUILDERS:** Cell and Store construct
+  `CellKernel.replay1(initial, { kind: 'all' }, 'deferred')` — async-append is the
+  product law. Signal / LiveCell-value inherit the Cell channel (also `'deferred'`
+  + `{all}`). Timeline uses `{distinct}` + the DEFAULT `'synchronous'`. Compositor
+  / zap / blend / crossings keep BOTH defaults (`{all}` + `'synchronous'`). The
+  Migrate phase flips the `reactive-conformance.prop.test.ts` §3 Cell/Store
+  nested-write cases from "robust delta" to "bisimulation holds" once the impl
+  side is CellKernel-backed with `'deferred'` — that retarget is theirs, not the
+  Foundation phase's. STATUS: ACTIVE (Foundation mechanism + model + ruling
+  landed; consumed by the Migrate phase).
+
+## Wave 6 scars (harvest → Wave 6.5)
+
+- **S6.1 — the STANDING acceptance test bridges through Effect.** The product
+  (cell/derived/store/signal/timeline/live-cell) is effect-free and verified PRESERVE
+  by the migrate builders' DIRECT scratch oracles (byte-identical to the 5.5 golden
+  fixtures, deleted after run) + the mutation kills. But the durable committed proof —
+  `tests/property/reactive-conformance.prop.test.ts` — still drives the migrated
+  primitives through `tests/support/reactive-capture.ts`'s Effect-Queue bridge (the
+  harness still `import`s `effect`). Reassurance: the mutation engine KILLS the
+  ordering/replay/emission mutants through this test, so it faithfully observes delivery
+  ORDER (a masked ordering could not kill ordering mutants) — the bridge is an
+  architectural smell, not a proven false-green.
+  Class: verification-harness lagging the product it verifies (an Effect import in the
+  reactive test harness, after the reactive product went Effect-free).
+  Disposition (Wave 6.5): flip the standing acceptance test to drive the PURE
+  CellKernel-backed primitives directly (the scratch-oracle path made permanent) and
+  shed `effect` from `reactive-capture.ts` — belt-and-suspenders on the durable proof.
+  ACTIVE (carried to 6.5).
+
+- **S6.2 — six adjacent-surface mutation survivors (model-hole coverage gaps).** With the
+  kernels L4-promoted and the engine minting (59/69 killed; per-kernel 0.75–1.0), six
+  survivors mark under-covered surface: `cell-kernel.ts:313` (closed-kernel disposer),
+  `derived.ts:110` (returned disposer), `signal.ts:217` ('custom' case), `signal.ts:355`
+  (audio-poll `&&`), `timeline.ts:108` (initial-paused), `timeline.ts:120` (play `dt`).
+  Four further survivors are EQUIVALENT (policy-default sentinels `all`/`synchronous`→`''`)
+  → move to `mutation-equivalents.json`.
+  Class: mutation coverage gap (a surviving non-equivalent mutant = a model/test hole).
+  Disposition (Wave 6.5): add the covering cases so each survivor dies; record the four
+  equivalents. ACTIVE.
+
+- **S6.3 — builder green ≠ full-gate green.** The migrate builders reported green but
+  shipped 8 TSDoc syntax errors, 1 unused import, 7 typedoc `{@link}` warnings, and stale
+  `docs/api`, plus omitted the #153 acceptance test — all caught + fixed by integration.
+  Class: a builder's "green" covered its own suites but not the full lint + docs:build
+  gates.
+  Disposition: integration repaired in-wave; the standing lesson — builders must run
+  lint + docs:build before claiming green, or the integration gate must be treated as the
+  authority (it is). Candidate for a builder-preflight checklist in the wave protocol.
+  ACTIVE (process).
+
+- **S6.4 — mutation baseline is a conservative covering-suite floor**, not a full
+  production `czap check --ir --mutate` mint (heavy/risky against an uncommitted tree).
+  The focused covering set ≤ the production execution-pruned set, so the production score
+  ≥ this floor — a sound first-measurement baseline, not a regression.
+  Class: measurement scope caveat.
+  Disposition (Wave 6.5 / CI): reconcile with a production mint in CI. ACTIVE.

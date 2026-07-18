@@ -3,8 +3,7 @@
  */
 
 import { describe, test, expect, vi, afterEach } from 'vitest';
-import { Effect } from 'effect';
-import { HLC } from '@czap/core';
+import { HLC, fixedClock } from '@czap/core';
 import { hasTag } from '@czap/error';
 
 /**
@@ -224,18 +223,24 @@ describe('HLC', () => {
   });
 
   describe('managed clock', () => {
-    test('tick advances the managed clock using Date.now', async () => {
+    test('tick advances the managed clock using the default wallClock (Date.now)', () => {
       vi.spyOn(Date, 'now').mockReturnValue(1234);
-      const clock = await Effect.runPromise(HLC.makeClock('node-a'));
-      const timestamp = await Effect.runPromise(HLC.tick(clock));
+      const clock = HLC.makeClock('node-a');
+      const timestamp = clock.tick();
 
       expect(timestamp).toEqual({ wall_ms: 1234, counter: 0, node_id: 'node-a' });
+      // current() reads without advancing.
+      expect(clock.current()).toEqual(timestamp);
     });
 
-    test('receive merges remote timestamps into the managed clock', async () => {
-      vi.spyOn(Date, 'now').mockReturnValue(1500);
-      const clock = await Effect.runPromise(HLC.makeClock('node-a'));
-      const timestamp = await Effect.runPromise(HLC.receive(clock, { wall_ms: 2000, counter: 3, node_id: 'node-b' }));
+    test('tick reads an injected clock, not the wall clock', () => {
+      const timestamp = HLC.makeClock('node-a', fixedClock(4242)).tick();
+      expect(timestamp).toEqual({ wall_ms: 4242, counter: 0, node_id: 'node-a' });
+    });
+
+    test('receive merges remote timestamps into the managed clock', () => {
+      const clock = HLC.makeClock('node-a', fixedClock(1500));
+      const timestamp = clock.receive({ wall_ms: 2000, counter: 3, node_id: 'node-b' });
 
       expect(timestamp).toEqual({ wall_ms: 2000, counter: 4, node_id: 'node-a' });
     });

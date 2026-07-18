@@ -1,12 +1,13 @@
 /**
  * Video rendering primitives -- FrameScheduler, VideoRenderer, controllable signals.
+ *
+ * Signal.controllable() and Timeline.* are plain (Effect-free) as of the Wave 6
+ * reactive convergence: `read()`/`state()`/`progress()`/`elapsed()` are sync reads,
+ * `seek`/`play`/`pause`/`reverse`/`scrub` are sync. VideoRenderer stays as-is (its
+ * effect-residue cleanup is the Wave 8 tail); it seeks the plain signal directly.
  */
 
 import { describe, it, expect } from 'vitest';
-// Effect is retained for the Signal/Timeline suites: those seams are NOT part of
-// the core-seams wave, so Signal.controllable()/signal.current/Timeline.* stay
-// Effect-typed. Only Compositor.create() went synchronous.
-import { Effect } from 'effect';
 import { Scheduler, VideoRenderer, Signal, Compositor, Boundary, Timeline, Easing, Millis } from '@czap/core';
 
 // ---------------------------------------------------------------------------
@@ -190,13 +191,13 @@ describe('VideoRenderer', () => {
 
   it('seeks a controllable signal before each frame when one is provided', async () => {
     const compositor = Compositor.create().compositor;
-    const signal = Effect.runSync(Effect.scoped(Signal.controllable()));
+    const signal = Signal.controllable();
     const renderer = VideoRenderer.make({ fps: 4, width: 320, height: 180, durationMs: Millis(1000) }, compositor, signal);
 
     const seen: number[] = [];
     for await (const frame of renderer.frames()) {
-      seen.push(Effect.runSync(signal.current));
-      expect(Effect.runSync(signal.current)).toBe(frame.timestamp);
+      seen.push(signal.read());
+      expect(signal.read()).toBe(frame.timestamp);
     }
 
     expect(seen).toEqual([0, 250, 500, 750]);
@@ -219,93 +220,45 @@ describe('Timeline with FixedStepScheduler', () => {
 
   it('produces deterministic state transitions', () => {
     const sched = Scheduler.fixedStep(60);
+    const tl = Timeline.from(boundary, { duration: Millis(1200), scheduler: sched });
+    tl.play();
 
-    const result = Effect.runSync(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const tl = yield* Timeline.from(boundary, {
-            duration: Millis(1200),
-            scheduler: sched,
-          });
-          yield* tl.play();
+    // Advance enough frames to cross 500ms threshold.
+    // At 60fps, each frame = ~16.67ms. 31 frames ≈ 516ms.
+    for (let i = 0; i < 31; i++) sched.step();
 
-          // Advance enough frames to cross 500ms threshold
-          // At 60fps, each frame = ~16.67ms. 31 frames ≈ 516ms
-          for (let i = 0; i < 31; i++) sched.step();
-
-          return yield* tl.state;
-        }),
-      ),
-    );
-
-    expect(result).toBe('middle');
+    expect(tl.state()).toBe('middle');
   });
 
   it('seek produces correct state without stepping', () => {
     const sched = Scheduler.fixedStep(30);
+    const tl = Timeline.from(boundary, { duration: Millis(1200), scheduler: sched });
 
-    const result = Effect.runSync(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const tl = yield* Timeline.from(boundary, {
-            duration: Millis(1200),
-            scheduler: sched,
-          });
-
-          yield* tl.seek(Millis(1050));
-          return yield* tl.state;
-        }),
-      ),
-    );
-
-    expect(result).toBe('outro');
+    tl.seek(Millis(1050));
+    expect(tl.state()).toBe('outro');
   });
 
   it('scrub to 0.5 lands in middle state', () => {
     const sched = Scheduler.fixedStep(30);
+    const tl = Timeline.from(boundary, { duration: Millis(1200), scheduler: sched });
 
-    const result = Effect.runSync(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const tl = yield* Timeline.from(boundary, {
-            duration: Millis(1200),
-            scheduler: sched,
-          });
-
-          yield* tl.scrub(0.5); // 0.5 * 1200 = 600ms -> middle
-          return yield* tl.state;
-        }),
-      ),
-    );
-
-    expect(result).toBe('middle');
+    tl.scrub(0.5); // 0.5 * 1200 = 600ms -> middle
+    expect(tl.state()).toBe('middle');
   });
 
   it('reverse changes playback direction', () => {
     const sched = Scheduler.fixedStep(60);
+    const tl = Timeline.from(boundary, { duration: Millis(1200), scheduler: sched });
 
-    const result = Effect.runSync(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const tl = yield* Timeline.from(boundary, {
-            duration: Millis(1200),
-            scheduler: sched,
-          });
+    // Seek to middle, then play in reverse.
+    tl.seek(Millis(800));
+    tl.play();
+    tl.reverse();
 
-          // Seek to middle, then play in reverse
-          yield* tl.seek(Millis(800));
-          yield* tl.play();
-          yield* tl.reverse();
+    // Step 20 frames backwards at 60fps -> ~333ms backwards -> 800 - 333 = ~467.
+    for (let i = 0; i < 20; i++) sched.step();
 
-          // Step 20 frames backwards at 60fps -> ~333ms backwards -> 800 - 333 = ~467
-          for (let i = 0; i < 20; i++) sched.step();
-
-          return yield* tl.state;
-        }),
-      ),
-    );
-
-    expect(result).toBe('intro');
+    expect(tl.state()).toBe('intro');
   });
 });
 
@@ -315,48 +268,27 @@ describe('Timeline with FixedStepScheduler', () => {
 
 describe('ControllableSignal', () => {
   it('starts at 0', () => {
-    const val = Effect.runSync(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const sig = yield* Signal.controllable();
-          expect(sig.source.type).toBe('time');
-          expect(sig.source.mode).toBe('scheduled');
-          return yield* sig.current;
-        }),
-      ),
-    );
-    expect(val).toBe(0);
+    const sig = Signal.controllable();
+    expect(sig.source.type).toBe('time');
+    expect(sig.source.mode).toBe('scheduled');
+    expect(sig.read()).toBe(0);
   });
 
   it('seek updates current value', () => {
-    const val = Effect.runSync(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const sig = yield* Signal.controllable();
-          yield* sig.seek(42);
-          return yield* sig.current;
-        }),
-      ),
-    );
-    expect(val).toBe(42);
+    const sig = Signal.controllable();
+    sig.seek(42);
+    expect(sig.read()).toBe(42);
   });
 
   it('multiple seeks update correctly', () => {
-    const vals = Effect.runSync(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const sig = yield* Signal.controllable();
-          yield* sig.seek(10);
-          const a = yield* sig.current;
-          yield* sig.seek(20);
-          const b = yield* sig.current;
-          yield* sig.seek(0);
-          const c = yield* sig.current;
-          return [a, b, c] as const;
-        }),
-      ),
-    );
-    expect(vals).toEqual([10, 20, 0]);
+    const sig = Signal.controllable();
+    sig.seek(10);
+    const a = sig.read();
+    sig.seek(20);
+    const b = sig.read();
+    sig.seek(0);
+    const c = sig.read();
+    expect([a, b, c]).toEqual([10, 20, 0]);
   });
 });
 
@@ -439,79 +371,42 @@ describe('Timeline loop and pause', () => {
 
   it('pause stops time advancement', () => {
     const sched = Scheduler.fixedStep(60);
+    const tl = Timeline.from(boundary, { duration: Millis(1200), scheduler: sched });
+    tl.play();
 
-    const result = Effect.runSync(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const tl = yield* Timeline.from(boundary, {
-            duration: Millis(1200),
-            scheduler: sched,
-          });
-          yield* tl.play();
+    // Advance a few frames.
+    for (let i = 0; i < 5; i++) sched.step();
+    tl.pause();
 
-          // Advance a few frames
-          for (let i = 0; i < 5; i++) sched.step();
-          yield* tl.pause();
+    const elapsedBefore = tl.elapsed();
 
-          const elapsedBefore = yield* tl.elapsed;
+    // Step more -- should NOT advance.
+    for (let i = 0; i < 20; i++) sched.step();
 
-          // Step more -- should NOT advance
-          for (let i = 0; i < 20; i++) sched.step();
-
-          const elapsedAfter = yield* tl.elapsed;
-          expect(elapsedAfter).toBe(elapsedBefore);
-          return yield* tl.state;
-        }),
-      ),
-    );
-
-    expect(result).toBe('intro');
+    const elapsedAfter = tl.elapsed();
+    expect(elapsedAfter).toBe(elapsedBefore);
+    expect(tl.state()).toBe('intro');
   });
 
   it('loop wraps time back to start', () => {
     const sched = Scheduler.fixedStep(60);
+    const tl = Timeline.from(boundary, { duration: Millis(1200), loop: true, scheduler: sched });
+    tl.play();
 
-    const result = Effect.runSync(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const tl = yield* Timeline.from(boundary, {
-            duration: Millis(1200),
-            loop: true,
-            scheduler: sched,
-          });
-          yield* tl.play();
+    // At 60fps, 1200ms = 72 frames for one loop.
+    // Step 80 frames -> wraps to ~133ms into second loop.
+    for (let i = 0; i < 80; i++) sched.step();
 
-          // At 60fps, 1200ms = 72 frames for one loop.
-          // Step 80 frames -> wraps to ~133ms into second loop
-          for (let i = 0; i < 80; i++) sched.step();
-
-          const elapsed = yield* tl.elapsed;
-          expect(elapsed).toBeLessThan(1200);
-          return yield* tl.state;
-        }),
-      ),
-    );
-
-    expect(result).toBe('intro');
+    const elapsed = tl.elapsed();
+    expect(elapsed).toBeLessThan(1200);
+    expect(tl.state()).toBe('intro');
   });
 
   it('progress reads correctly', () => {
     const sched = Scheduler.fixedStep(60);
+    const tl = Timeline.from(boundary, { duration: Millis(1200), scheduler: sched });
 
-    const progress = Effect.runSync(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const tl = yield* Timeline.from(boundary, {
-            duration: Millis(1200),
-            scheduler: sched,
-          });
-
-          yield* tl.seek(Millis(600));
-          return yield* tl.progress;
-        }),
-      ),
-    );
-
-    expect(progress).toBeCloseTo(0.5, 5);
+    tl.seek(Millis(600));
+    expect(tl.progress()).toBeCloseTo(0.5, 5);
   });
 });

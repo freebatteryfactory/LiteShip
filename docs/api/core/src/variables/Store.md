@@ -8,18 +8,18 @@
 
 > `const` **Store**: `object`
 
-Defined in: [core/src/store.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/store.ts#L65)
+Defined in: [core/src/store.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/store.ts#L74)
 
-Store — TEA-style state container.
-Build with an initial state and a pure `reducer(state, msg) => state`, then
-dispatch messages; the store publishes the resulting state via `changes`.
-Use `makeWithEffect` when the reducer is itself an `Effect`.
+Store — TEA-style state container over [CellKernel.replay1](CellKernel.md#replay1). Build with an
+initial state and a pure `reducer(state, msg) => state`, then dispatch messages;
+the store publishes each resulting state through `subscribe`, and
+`lifetime.dispose()` tears it down.
 
 ## Type Declaration
 
 ### make
 
-> **make**: \<`S`, `Msg`\>(`initial`, `reducer`) => `Effect`\<`StoreShape`\<`S`, `Msg`\>\> = `_make`
+> **make**: \<`S`, `Msg`\>(`initial`, `reducer`) => `StoreShape`\<`S`, `Msg`\> = `_make`
 
 Synchronous reducer store.
 
@@ -45,42 +45,4 @@ Synchronous reducer store.
 
 #### Returns
 
-`Effect`\<`StoreShape`\<`S`, `Msg`\>\>
-
-### makeWithEffect
-
-> **makeWithEffect**: \<`S`, `Msg`, `E`, `R`\>(`initial`, `reducer`) => `Effect`\<`EffectfulStoreShape`\<`S`, `Msg`, `E`, `R`\>\> = `_makeWithEffect`
-
-Reducer store where state transitions are themselves `Effect`s.
-
-#### Type Parameters
-
-##### S
-
-`S`
-
-##### Msg
-
-`Msg`
-
-##### E
-
-`E`
-
-##### R
-
-`R`
-
-#### Parameters
-
-##### initial
-
-`S`
-
-##### reducer
-
-(`state`, `msg`) => `Effect`\<`S`, `E`, `R`\>
-
-#### Returns
-
-`Effect`\<`EffectfulStoreShape`\<`S`, `Msg`, `E`, `R`\>\>
+`StoreShape`\<`S`, `Msg`\>

@@ -278,21 +278,27 @@ export type SignalSource =
   | { readonly type: 'custom'; readonly id: string }
   | { readonly type: 'audio'; readonly mode?: 'sample' | 'normalized' | 'amplitude' | 'beat' };
 
+/** Reactive signal over CellKernel.replay1 (Effect-free, Wave 6) */
 export interface Signal<T> {
   readonly source: SignalSource;
-  readonly current: Effect.Effect<T>;
-  readonly changes: Stream.Stream<T>;
+  read(): T;
+  subscribe(subscriber: CellKernel.Subscriber<T>): CellKernel.Disposer;
+  readonly lifetime: Lifetime.Shape;
 }
 
 export interface ControllableSignal<T> extends Signal<T> {
-  seek(to: T): Effect.Effect<void>;
-  pause(): Effect.Effect<void>;
-  resume(): Effect.Effect<void>;
+  seek(to: T): void;
+  pause(): void;
+  resume(): void;
 }
 
 export declare namespace Signal {
-  export function make(source: SignalSource): Effect.Effect<Signal<number>, never, Scope.Scope>;
-  export function controllable(): Effect.Effect<ControllableSignal<number>, never, Scope.Scope>;
+  /** Structural shape of a passive signal (`Signal.Shape<T>` in `@czap/core`). */
+  export type Shape<T> = Signal<T>;
+  /** Structural shape of a seekable, pausable signal (forwarded by video/remotion). */
+  export type Controllable<T> = ControllableSignal<T>;
+  export function make(source: SignalSource): Signal<number>;
+  export function controllable(): ControllableSignal<number>;
 }
 
 /**
@@ -364,24 +370,26 @@ export declare namespace Animation {
 // § 6. TIMELINE
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Quantizer over time on CellKernel.replay1 ({distinct} state channel, Effect-free, Wave 6) */
 export declare namespace Timeline {
   export interface Shape<B extends Boundary.Shape = Boundary.Shape> {
     readonly boundary: B;
-    readonly state: Effect.Effect<StateUnion<B>>;
-    readonly progress: Effect.Effect<number>;
-    readonly elapsed: Effect.Effect<number>;
-    readonly changes: Stream.Stream<StateUnion<B>>;
-    play(): Effect.Effect<void>;
-    pause(): Effect.Effect<void>;
-    reverse(): Effect.Effect<void>;
-    seek(ms: number): Effect.Effect<void>;
-    scrub(progress: number): Effect.Effect<void>;
+    state(): StateUnion<B>;
+    progress(): number;
+    elapsed(): Millis;
+    subscribe(subscriber: CellKernel.Subscriber<StateUnion<B>>): CellKernel.Disposer;
+    play(): void;
+    pause(): void;
+    reverse(): void;
+    seek(ms: Millis): void;
+    scrub(progress: number): void;
+    readonly lifetime: Lifetime.Shape;
   }
 
   export function from<B extends Boundary.Shape>(
     boundary: B,
-    config?: { duration?: number; loop?: boolean; scheduler?: Scheduler.Shape },
-  ): Effect.Effect<Shape<B>, never, Scope.Scope>;
+    config?: { duration?: Millis; loop?: boolean; scheduler?: Scheduler.Shape },
+  ): Shape<B>;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -597,45 +605,38 @@ export declare function addDenseStore<T>(world: World, store: DenseStore<T>): vo
 // § 13. REACTIVE PRIMITIVES (from @kit, v4 migrated)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-/** Reactive state container backed by SubscriptionRef */
+/** Reactive state container over CellKernel.replay1 (Effect-free, Wave 6) */
 export declare namespace Cell {
   export interface Shape<T> {
     readonly _tag: 'Cell';
-    readonly ref: SubscriptionRef.SubscriptionRef<T>;
-    readonly changes: Stream.Stream<T>;
-    readonly get: Effect.Effect<T>;
-    set(value: T): Effect.Effect<void>;
-    update(f: (current: T) => T): Effect.Effect<void>;
+    read(): T;
+    set(value: T): void;
+    update(f: (current: T) => T): void;
+    subscribe(subscriber: CellKernel.Subscriber<T>): CellKernel.Disposer;
+    readonly lifetime: Lifetime.Shape;
   }
 
-  export function make<T>(initial: T): Effect.Effect<Shape<T>>;
-  export function fromStream<T>(initial: T, source: Stream.Stream<T>): Effect.Effect<Shape<T>, never, Scope.Scope>;
-  export function all<T extends readonly unknown[]>(cells: { [K in keyof T]: Shape<T[K]> }): Effect.Effect<
-    Shape<T>,
-    never,
-    Scope.Scope
-  >;
-  export function map<T, U>(cell: Shape<T>, fn: (t: T) => U): Effect.Effect<Shape<U>, never, Scope.Scope>;
+  export function make<T>(initial: T): Shape<T>;
 }
 
-/** Read-only derived computation */
+/** Read-only derived computation over CellKernel.replay1 (Effect-free, Wave 6) */
 export declare namespace Derived {
   export interface Shape<T> {
     readonly _tag: 'Derived';
-    readonly changes: Stream.Stream<T>;
-    readonly get: Effect.Effect<T>;
+    read(): T;
+    subscribe(subscriber: CellKernel.Subscriber<T>): CellKernel.Disposer;
+    readonly lifetime: Lifetime.Shape;
   }
+  /** The readable + subscribable source `combine` recomputes from. */
+  export type Source<T> = Pick<CellKernel.Replay<T>, 'read' | 'subscribe'>;
+  /** A recompute trigger for `make` — the subscribe half of a source. */
+  export type Trigger = Pick<CellKernel.Replay<unknown>, 'subscribe'>;
 
-  export function make<T>(
-    compute: Effect.Effect<T>,
-    sources?: ReadonlyArray<Stream.Stream<unknown>>,
-  ): Effect.Effect<Shape<T>, never, Scope.Scope>;
+  export function make<T>(compute: () => T, sources?: ReadonlyArray<Trigger>): Shape<T>;
   export function combine<T extends readonly unknown[], U>(
-    cells: { [K in keyof T]: Cell.Shape<T[K]> },
+    sources: { readonly [K in keyof T]: Source<T[K]> },
     combiner: (...args: T) => U,
-  ): Effect.Effect<Shape<U>, never, Scope.Scope>;
-  export function map<A, B>(derived: Shape<A>, f: (a: A) => B): Effect.Effect<Shape<B>, never, Scope.Scope>;
-  export function flatten<T>(nested: Shape<Shape<T>>): Effect.Effect<Shape<T>, never, Scope.Scope>;
+  ): Shape<U>;
 }
 
 /**
@@ -679,27 +680,17 @@ export declare namespace Zap {
   export function throttle<T>(event: Shape<T>, ms: Millis, clock?: Clock): Handle<T>;
 }
 
-/** TEA-style reducer store */
+/** TEA-style reducer store over CellKernel.replay1 (Effect-free, Wave 6) */
 export declare namespace Store {
   export interface Shape<S, Msg> {
     readonly _tag: 'Store';
-    readonly get: Effect.Effect<S>;
-    readonly changes: Stream.Stream<S>;
-    dispatch(msg: Msg): Effect.Effect<void>;
+    read(): S;
+    subscribe(subscriber: CellKernel.Subscriber<S>): CellKernel.Disposer;
+    dispatch(msg: Msg): void;
+    readonly lifetime: Lifetime.Shape;
   }
 
-  export interface Effectful<S, Msg, E = never, R = never> {
-    readonly _tag: 'Store';
-    readonly get: Effect.Effect<S>;
-    readonly changes: Stream.Stream<S>;
-    dispatch(msg: Msg): Effect.Effect<void, E, R>;
-  }
-
-  export function make<S, Msg>(initial: S, reducer: (state: S, msg: Msg) => S): Effect.Effect<Shape<S, Msg>>;
-  export function makeWithEffect<S, Msg, E, R>(
-    initial: S,
-    reducer: (state: S, msg: Msg) => Effect.Effect<S, E, R>,
-  ): Effect.Effect<Effectful<S, Msg, E, R>>;
+  export function make<S, Msg>(initial: S, reducer: (state: S, msg: Msg) => S): Shape<S, Msg>;
 }
 
 /** Discriminated union of all primitives */
@@ -756,24 +747,27 @@ export interface ReactiveQuantizer<B extends Boundary.Shape = Boundary.Shape> ex
 // § 15. LIVE CELL (bridge: protocol envelope + reactive runtime)
 // ═══════════════════════════════════════════════════════════════════════════════
 //
-// DEFERRED — still Effect/Stream/Scope-shaped ON PURPOSE (scar S2.3). LiveCell
-// extends Cell.Shape, so it rides the Cell seam: it cannot go Promise-first until
-// Cell/Derived/Store are rebuilt on CellKernel. The core-seams wave planned it as
-// a SEAM:2 migration, but that mis-seamed it — its envelope/crossings substrate is
-// the reactive-primitives seam, not the receipt/Zap carriers this wave swapped.
-// Replanned to the reactive-primitives wave; this namespace tracks source (Effect
-// shapes) until then.
+// Effect-free (Wave 6, migrated ATOMICALLY with Cell — scar S2.3/S2.4 closed).
+// The value channel is a plain Cell ({all} + 'deferred'); the crossings channel is
+// a no-replay CellKernel.fanout; `envelope()` is a synchronous snapshot; the HLC
+// is the pure ops read against the injected wall clock. `set`/`update` record the
+// mutation (version + HLC + fnv1a id + boundary state) BEFORE the value fans out,
+// so there is no observable interleave window.
 
 export interface LiveCell<K extends CellKind, T> extends Omit<Cell.Shape<T>, '_tag'> {
   readonly _tag: 'LiveCell';
-  readonly envelope: Effect.Effect<CellEnvelope<K, T>>;
-  readonly crossings: Stream.Stream<BoundaryCrossing<string>>;
+  envelope(): CellEnvelope<K, T>;
+  readonly crossings: Pick<CellKernel.Fanout<BoundaryCrossing<string>>, 'subscribe'>;
   readonly kind: K;
-  publishCrossing(crossing: BoundaryCrossing<string>): Effect.Effect<void>;
+  publishCrossing(crossing: BoundaryCrossing<string>): void;
 }
 
 export declare namespace LiveCell {
-  export function make<K extends CellKind, T>(kind: K, initial: T): Effect.Effect<LiveCell<K, T>, never, Scope.Scope>;
+  export function make<K extends CellKind, T>(kind: K, initial: T): LiveCell<K, T>;
+  export function makeBoundary<I extends string, S extends readonly [string, ...string[]]>(
+    boundary: Boundary.Shape<I, S>,
+    initial: number,
+  ): LiveCell<'boundary', number>;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -820,6 +814,18 @@ export declare namespace TypedRef {
 // § 18. HLC (Hybrid Logical Clock)
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/**
+ * A managed HLC clock handle — a plain (Effect-free) mutable holder over the pure
+ * increment/merge ops, reading wall time through an injected {@link Clock} (Wave 6).
+ * `tick`/`receive` advance the closure-held timestamp and return it; `current`
+ * reads without advancing.
+ */
+export interface HLCClock {
+  tick(): HLC;
+  receive(remote: HLC): HLC;
+  current(): HLC;
+}
+
 export declare const HLC: {
   create(nodeId: string): HLC;
   compare(a: HLC, b: HLC): -1 | 0 | 1;
@@ -827,9 +833,7 @@ export declare const HLC: {
   merge(local: HLC, remote: HLC, now?: number): HLC;
   encode(hlc: HLC): string;
   decode(s: string): HLC;
-  makeClock(nodeId: string): Effect.Effect<import('effect').Ref.Ref<HLC>>;
-  tick(clock: import('effect').Ref.Ref<HLC>): Effect.Effect<HLC>;
-  receive(clock: import('effect').Ref.Ref<HLC>, remote: HLC): Effect.Effect<HLC>;
+  makeClock(nodeId: string, clock?: Clock): HLCClock;
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════

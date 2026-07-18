@@ -8,7 +8,7 @@
 
 > **CellSubscriber**\<`T`\> = [`CellSink`](../interfaces/CellSink.md)\<`T`\> \| ((`value`) => `void`)
 
-Defined in: [core/src/cell-kernel.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts#L65)
+Defined in: [core/src/cell-kernel.ts:110](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts#L110)
 
 What `subscribe` accepts — a full [CellSink](../interfaces/CellSink.md) or a bare value listener.
 

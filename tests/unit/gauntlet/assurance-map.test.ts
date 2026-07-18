@@ -58,8 +58,16 @@ describe('levelOf — first matching rule wins, default L1', () => {
     ['packages/core/src/brands.ts', 'L4'],
     ['packages/assets/src/brands.ts', 'L4'], // identity brand (AssetRefId)
     ['packages/genui/src/brands.ts', 'L4'], // identity brand (ContentAddress kernel)
+    // L4 — the reactive kernels (Wave 6, S5.5.1 activation): the CellKernel value
+    // spine (replay/emission/ordering). `signal` moved L3→L4 here.
+    ['packages/core/src/cell-kernel.ts', 'L4'],
+    ['packages/core/src/cell.ts', 'L4'],
+    ['packages/core/src/derived.ts', 'L4'],
+    ['packages/core/src/store.ts', 'L4'],
+    ['packages/core/src/signal.ts', 'L4'],
+    ['packages/core/src/timeline.ts', 'L4'],
+    ['packages/core/src/live-cell.ts', 'L4'],
     // L3 — the deterministic runtime / projection / cache paths
-    ['packages/core/src/signal.ts', 'L3'],
     ['packages/core/src/zap.ts', 'L3'],
     ['packages/core/src/gen-frame.ts', 'L3'],
     ['packages/core/src/token-buffer.ts', 'L3'],

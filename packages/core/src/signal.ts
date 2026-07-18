@@ -3,14 +3,28 @@
  *
  * (viewport, scroll, pointer, time, media queries, custom).
  *
+ * Wave 6: a transport swap onto {@link CellKernel.replay1}. The `SubscriptionRef`
+ * value slot becomes the extracted, Effect-free kernel; `current` (Effect) →
+ * sync `read()`; `changes` (Stream) → `subscribe(sink): Disposer`; `seek`/`pause`/
+ * `resume`/`poll` are synchronous. The DOM/rAF/interval listeners publish directly
+ * into the kernel and their teardown is owned by a {@link Lifetime} (replacing the
+ * `Scope`-bound `acquireRelease`/`addFinalizer`/`forkScoped`). The value channel is
+ * the Cell channel — EmissionPolicy `{all}` (emit every set) + ReentrancyPolicy
+ * `'deferred'` (glitch-free async-append nested write) — so the pure reactive law
+ * is byte-identical to the captured behavior
+ * (`tests/fixtures/reactive-capture/signal.json`). `Signal.audio`'s eager-throw
+ * (normalized without a positive duration throws SYNCHRONOUSLY at construction) is
+ * preserved verbatim.
+ *
  * @module
  */
 
-import type { Stream, Scope } from 'effect';
-import { Effect, SubscriptionRef, Ref } from 'effect';
 import type { AVBridge } from './av-bridge.js';
 import { wallClock } from './clock.js';
 import { ValidationError } from '@czap/error';
+import { CellKernel } from './cell-kernel.js';
+import type { Disposer } from './cell-kernel.js';
+import { Lifetime } from './lifetime.js';
 
 /** Tag of a {@link SignalSource} — the family of live data feed a signal binds to. */
 export type SignalSourceType = 'viewport' | 'time' | 'pointer' | 'scroll' | 'media' | 'custom' | 'audio';
@@ -64,14 +78,29 @@ function normalizeSource(source: SignalSource): SignalSource {
 
 interface SignalShape<T> {
   readonly source: SignalSource;
-  readonly current: Effect.Effect<T>;
-  readonly changes: Stream.Stream<T>;
+  /** Read the current value — the initial value until the first update (was the Effect `current`). */
+  read(): T;
+  /**
+   * Subscribe to changes — replays the current value on attach (the replay-1
+   * contract the `changes` stream gave) and returns a {@link Disposer}.
+   */
+  subscribe(subscriber: CellKernel.Subscriber<T>): Disposer;
+  /**
+   * Owns the signal's teardown. Its finalizers remove the browser listeners
+   * (resize/scroll/pointer/media) or cancel the rAF/interval loop, then close
+   * the reactive kernel — so consumers thread the signal lifecycle through one
+   * uniform `dispose()` (replacing the `Scope`-bound listener cleanup).
+   */
+  readonly lifetime: Lifetime.Shape;
 }
 
 interface ControllableSignalShape<T> extends SignalShape<T> {
-  seek(to: T): Effect.Effect<void>;
-  pause(): Effect.Effect<void>;
-  resume(): Effect.Effect<void>;
+  /** Drive the value (ignored while paused; was the Effect `seek`). */
+  seek(to: T): void;
+  /** Pause the seek gate — subsequent `seek`s are ignored until `resume` (was the Effect `pause`). */
+  pause(): void;
+  /** Resume the seek gate (was the Effect `resume`). */
+  resume(): void;
 }
 
 function initialValueForSource(source: SignalSource): number {
@@ -106,196 +135,172 @@ function initialValueForSource(source: SignalSource): number {
 }
 
 /**
+ * Attach the source's browser/rAF/interval listeners, publishing directly into
+ * `kernel` and registering their teardown on `lifetime`. Synchronous — the
+ * listeners are live the moment {@link _make} returns (no forked setup fiber);
+ * `lifetime.dispose()` removes every listener and cancels every loop.
+ */
+function setupListener(source: SignalSource, kernel: CellKernel.Replay<number>, lifetime: Lifetime.Shape): void {
+  switch (source.type) {
+    case 'viewport': {
+      if (typeof globalThis.window === 'undefined') return;
+      const handler = (): void => {
+        kernel.publish(source.axis === 'width' ? window.innerWidth : window.innerHeight);
+      };
+      window.addEventListener('resize', handler);
+      lifetime.add(() => window.removeEventListener('resize', handler));
+      return;
+    }
+    case 'scroll': {
+      if (typeof globalThis.window === 'undefined') return;
+      const handler = (): void => {
+        let val: number;
+        if (source.axis === 'x') val = window.scrollX;
+        else if (source.axis === 'y') val = window.scrollY;
+        else {
+          const max = document.documentElement.scrollHeight - window.innerHeight;
+          val = max > 0 ? window.scrollY / max : 0;
+        }
+        kernel.publish(val);
+      };
+      window.addEventListener('scroll', handler, { passive: true });
+      lifetime.add(() => window.removeEventListener('scroll', handler));
+      return;
+    }
+    case 'pointer': {
+      if (typeof globalThis.window === 'undefined') return;
+      const handler = (e: PointerEvent): void => {
+        kernel.publish(source.axis === 'x' ? e.clientX : source.axis === 'y' ? e.clientY : e.pressure);
+      };
+      window.addEventListener('pointermove', handler);
+      lifetime.add(() => window.removeEventListener('pointermove', handler));
+      return;
+    }
+    case 'time': {
+      if (source.mode === 'elapsed') {
+        if (typeof requestAnimationFrame === 'undefined') return;
+        // The time signal is wall-clock by nature (both modes): elapsed since
+        // subscription is measured in epoch ms via wallClock, consistent with
+        // absolute mode and deterministic when the wall clock is mocked.
+        const start = wallClock.now();
+        const id = { current: 0 };
+        const tick = (): void => {
+          kernel.publish(wallClock.now() - start);
+          id.current = requestAnimationFrame(tick);
+        };
+        id.current = requestAnimationFrame(tick);
+        lifetime.add(() => cancelAnimationFrame(id.current));
+      } else if (source.mode === 'absolute') {
+        const id = setInterval(() => {
+          kernel.publish(wallClock.now());
+        }, 1000);
+        lifetime.add(() => clearInterval(id));
+      }
+      // Scheduled mode: no automatic ticking. External code drives this signal
+      // via seek() on the ControllableSignal.
+      return;
+    }
+    case 'media': {
+      if (typeof globalThis.window === 'undefined') return;
+      const mql = window.matchMedia(source.query);
+      const handler = (e: MediaQueryListEvent): void => {
+        kernel.publish(e.matches ? 1 : 0);
+      };
+      mql.addEventListener('change', handler);
+      lifetime.add(() => mql.removeEventListener('change', handler));
+      return;
+    }
+    case 'custom':
+      // Custom signals are driven externally via Signal.custom() push API.
+      return;
+    case 'audio':
+      // Audio signals are driven externally via Signal.audio() / AVBridge
+      // ('sample'/'normalized') or a host analyser producer ('amplitude'/'beat').
+      return;
+  }
+}
+
+/**
  * Create a reactive signal from a browser environment source.
  *
- * Returns a scoped Effect that sets up event listeners (resize, scroll,
- * pointermove, etc.) and cleans them up when the scope closes. The signal
- * exposes `.current` (latest value) and `.changes` (stream of updates).
+ * Returns a plain signal owned by a {@link Lifetime}: it sets up event listeners
+ * (resize, scroll, pointermove, etc.) immediately and removes them on
+ * `signal.lifetime.dispose()`. The signal exposes `.read()` (latest value) and
+ * `.subscribe(sink)` (replay-1 stream of updates, returning a {@link Disposer}).
  *
  * @example
  * ```ts
- * import { Effect, Scope } from 'effect';
  * import { Signal } from '@czap/core';
  *
- * const program = Effect.scoped(Effect.gen(function* () {
- *   const sig = yield* Signal.make({ type: 'viewport', axis: 'width' });
- *   const width = yield* sig.current;
- *   // width === current window.innerWidth
- * }));
+ * const sig = Signal.make({ type: 'viewport', axis: 'width' });
+ * const width = sig.read(); // current window.innerWidth
+ * const off = sig.subscribe((w) => console.log(w));
+ * // ...
+ * off();
+ * await sig.lifetime.dispose();
  * ```
  */
-function _make(rawSource: SignalSource): Effect.Effect<SignalShape<number>, never, Scope.Scope> {
+function _make(rawSource: SignalSource): SignalShape<number> {
   const source = normalizeSource(rawSource);
-  return Effect.gen(function* () {
-    const initial = initialValueForSource(source);
-    const ref = yield* SubscriptionRef.make(initial);
+  const initial = initialValueForSource(source);
+  // Cell channel: {all} (emit every update) + 'deferred' (glitch-free async-append
+  // nested write). See scar S6.F.1 / S6.F.2 — Signal inherits the Cell value channel.
+  const kernel = CellKernel.replay1<number>(initial, { kind: 'all' }, 'deferred');
+  const lifetime = Lifetime.make();
 
-    const setupListener = Effect.gen(function* () {
-      switch (source.type) {
-        case 'viewport': {
-          if (typeof globalThis.window === 'undefined') return;
-          const handler = () => {
-            const val = source.axis === 'width' ? window.innerWidth : window.innerHeight;
-            Effect.runSync(SubscriptionRef.set(ref, val));
-          };
-          yield* Effect.acquireRelease(
-            Effect.sync(() => {
-              window.addEventListener('resize', handler);
-            }),
-            () =>
-              Effect.sync(() => {
-                window.removeEventListener('resize', handler);
-              }),
-          );
-          break;
-        }
-        case 'scroll': {
-          if (typeof globalThis.window === 'undefined') return;
-          const handler = () => {
-            let val: number;
-            if (source.axis === 'x') val = window.scrollX;
-            else if (source.axis === 'y') val = window.scrollY;
-            else {
-              const max = document.documentElement.scrollHeight - window.innerHeight;
-              val = max > 0 ? window.scrollY / max : 0;
-            }
-            Effect.runSync(SubscriptionRef.set(ref, val));
-          };
-          yield* Effect.acquireRelease(
-            Effect.sync(() => {
-              window.addEventListener('scroll', handler, { passive: true });
-            }),
-            () =>
-              Effect.sync(() => {
-                window.removeEventListener('scroll', handler);
-              }),
-          );
-          break;
-        }
-        case 'pointer': {
-          if (typeof globalThis.window === 'undefined') return;
-          const handler = (e: PointerEvent) => {
-            const val = source.axis === 'x' ? e.clientX : source.axis === 'y' ? e.clientY : e.pressure;
-            Effect.runSync(SubscriptionRef.set(ref, val));
-          };
-          yield* Effect.acquireRelease(
-            Effect.sync(() => {
-              window.addEventListener('pointermove', handler);
-            }),
-            () =>
-              Effect.sync(() => {
-                window.removeEventListener('pointermove', handler);
-              }),
-          );
-          break;
-        }
-        case 'time': {
-          if (source.mode === 'elapsed') {
-            if (typeof requestAnimationFrame === 'undefined') return;
-            // The time signal is wall-clock by nature (both modes): elapsed since
-            // subscription is measured in epoch ms via wallClock, consistent with
-            // absolute mode and deterministic when the wall clock is mocked.
-            const start = wallClock.now();
-            const id = { current: 0 };
-            const tick = () => {
-              Effect.runSync(SubscriptionRef.set(ref, wallClock.now() - start));
-              id.current = requestAnimationFrame(tick);
-            };
-            id.current = requestAnimationFrame(tick);
-            yield* Effect.addFinalizer(() => Effect.sync(() => cancelAnimationFrame(id.current)));
-          } else if (source.mode === 'absolute') {
-            const id = setInterval(() => {
-              Effect.runSync(SubscriptionRef.set(ref, wallClock.now()));
-            }, 1000);
-            yield* Effect.addFinalizer(() => Effect.sync(() => clearInterval(id)));
-          } else {
-            // Scheduled mode: no automatic ticking.
-            // External code drives this signal via SubscriptionRef.set(ref, value).
-            // The ref is already created -- caller controls it via ControllableSignal.
-          }
-          break;
-        }
-        case 'media': {
-          if (typeof globalThis.window === 'undefined') return;
-          const mql = window.matchMedia(source.query);
-          const handler = (e: MediaQueryListEvent) => {
-            Effect.runSync(SubscriptionRef.set(ref, e.matches ? 1 : 0));
-          };
-          yield* Effect.acquireRelease(
-            Effect.sync(() => {
-              mql.addEventListener('change', handler);
-            }),
-            () =>
-              Effect.sync(() => {
-                mql.removeEventListener('change', handler);
-              }),
-          );
-          break;
-        }
-        case 'custom':
-          // Custom signals are driven externally via Signal.custom() push API.
-          // No browser listener needed — the caller pushes values directly.
-          break;
-        case 'audio':
-          // Audio signals are driven externally via Signal.audio() / AVBridge
-          // ('sample'/'normalized') or by a host analyser producer that publishes
-          // live values ('amplitude'/'beat', e.g. the Astro audio.* rAF observer).
-          // No browser listener needed — audio analysis pushes on its own cadence.
-          break;
-      }
-    });
+  setupListener(source, kernel, lifetime);
+  // Close the kernel LAST (LIFO): listeners/loops detach before the value channel
+  // completes its subscribers, so a straggler event cannot publish post-close.
+  lifetime.add(() => kernel.close());
 
-    yield* Effect.forkScoped(setupListener);
-
-    return {
-      source,
-      current: SubscriptionRef.get(ref),
-      changes: SubscriptionRef.changes(ref),
-    };
-  });
+  return {
+    source,
+    read: () => kernel.read(),
+    subscribe: (subscriber) => kernel.subscribe(subscriber),
+    lifetime,
+  };
 }
 
 /**
  * Create a controllable time signal for video rendering / scrubbing.
  *
- * External code drives the signal value via seek(); no automatic ticking.
- * Supports pause/resume to temporarily ignore seek updates.
+ * External code drives the signal value via `seek()`; no automatic ticking.
+ * `pause()`/`resume()` gate seek updates. Effect-free — `seek`/`pause`/`resume`
+ * are synchronous.
  *
  * @example
  * ```ts
- * import { Effect } from 'effect';
  * import { Signal } from '@czap/core';
  *
- * const program = Effect.scoped(Effect.gen(function* () {
- *   const ctrl = yield* Signal.controllable();
- *   yield* ctrl.seek(1500);
- *   const t = yield* ctrl.current;
- *   // t === 1500
- *   yield* ctrl.pause();
- *   yield* ctrl.seek(2000); // ignored while paused
- * }));
+ * const ctrl = Signal.controllable();
+ * ctrl.seek(1500);
+ * const t = ctrl.read(); // 1500
+ * ctrl.pause();
+ * ctrl.seek(2000); // ignored while paused
  * ```
  */
-function _controllable(): Effect.Effect<ControllableSignalShape<number>, never, Scope.Scope> {
-  return Effect.gen(function* () {
-    const ref = yield* SubscriptionRef.make(0);
-    const pausedRef = yield* Ref.make(false);
+function _controllable(): ControllableSignalShape<number> {
+  const kernel = CellKernel.replay1<number>(0, { kind: 'all' }, 'deferred');
+  const lifetime = Lifetime.make();
+  lifetime.add(() => kernel.close());
+  // Closure paused-flag (was `Ref.make(false)`).
+  let paused = false;
 
-    return {
-      source: { type: 'time' as const, mode: 'scheduled' as const },
-      current: SubscriptionRef.get(ref),
-      changes: SubscriptionRef.changes(ref),
-      seek: (to: number) =>
-        Effect.gen(function* () {
-          const paused = yield* Ref.get(pausedRef);
-          if (!paused) {
-            yield* SubscriptionRef.set(ref, to);
-          }
-        }),
-      pause: () => Ref.set(pausedRef, true),
-      resume: () => Ref.set(pausedRef, false),
-    };
-  });
+  return {
+    source: { type: 'time' as const, mode: 'scheduled' as const },
+    read: () => kernel.read(),
+    subscribe: (subscriber) => kernel.subscribe(subscriber),
+    seek: (to: number) => {
+      if (!paused) kernel.publish(to);
+    },
+    pause: () => {
+      paused = true;
+    },
+    resume: () => {
+      paused = false;
+    },
+    lifetime,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -303,7 +308,8 @@ function _controllable(): Effect.Effect<ControllableSignalShape<number>, never, 
 // ---------------------------------------------------------------------------
 
 interface AudioSignalShape extends SignalShape<number> {
-  poll(): Effect.Effect<number>;
+  /** Read the latest sample from the bridge, publish it, and return it (was the Effect `poll`). */
+  poll(): number;
 }
 
 /**
@@ -312,82 +318,77 @@ interface AudioSignalShape extends SignalShape<number> {
  * In 'sample' mode, returns the raw sample index. In 'normalized' mode,
  * returns a 0..1 progress value based on totalDurationSec — omitting
  * `totalDurationSec` (or passing a non-positive value) in 'normalized'
- * mode throws a `ValidationError`. Call `.poll()` to read the latest
- * sample from the bridge and update the signal.
+ * mode throws a `ValidationError` SYNCHRONOUSLY at construction (the eager-throw
+ * fault edge, preserved verbatim). Call `.poll()` to read the latest sample from
+ * the bridge and update the signal.
  *
  * @example
  * ```ts
- * import { Effect } from 'effect';
  * import { Signal } from '@czap/core';
  *
- * const program = Effect.scoped(Effect.gen(function* () {
- *   const audioSig = yield* Signal.audio(bridge, 'normalized', 120);
- *   const progress = yield* audioSig.poll();
- *   // progress is a number between 0 and 1
- * }));
+ * const audioSig = Signal.audio(bridge, 'normalized', 120);
+ * const progress = audioSig.poll(); // 0..1
  * ```
  */
 function _audio(
   bridge: AVBridge.Shape,
   mode: 'sample' | 'normalized' = 'sample',
   totalDurationSec?: number,
-): Effect.Effect<AudioSignalShape, never, Scope.Scope> {
+): AudioSignalShape {
   if (mode === 'normalized' && !(totalDurationSec !== undefined && totalDurationSec > 0)) {
     throw ValidationError(
       'Signal.audio',
       `normalized mode requires totalDurationSec > 0, got ${totalDurationSec} — pass Signal.audio(bridge, "normalized", durationSec)`,
     );
   }
-  return Effect.gen(function* () {
-    const ref = yield* SubscriptionRef.make(0);
+  const kernel = CellKernel.replay1<number>(0, { kind: 'all' }, 'deferred');
+  const lifetime = Lifetime.make();
+  lifetime.add(() => kernel.close());
 
-    const poll = () =>
-      Effect.gen(function* () {
-        const sample = bridge.getCurrentSample();
-        let value: number;
-        if (mode === 'normalized' && totalDurationSec !== undefined && totalDurationSec > 0) {
-          const totalSamples = totalDurationSec * bridge.sampleRate;
-          value = Math.min(sample / totalSamples, 1);
-        } else {
-          value = sample;
-        }
-        yield* SubscriptionRef.set(ref, value);
-        return value;
-      });
+  const poll = (): number => {
+    const sample = bridge.getCurrentSample();
+    let value: number;
+    if (mode === 'normalized' && totalDurationSec !== undefined && totalDurationSec > 0) {
+      const totalSamples = totalDurationSec * bridge.sampleRate;
+      value = Math.min(sample / totalSamples, 1);
+    } else {
+      value = sample;
+    }
+    kernel.publish(value);
+    return value;
+  };
 
-    return {
-      source: { type: 'audio' as const, mode } as const,
-      current: SubscriptionRef.get(ref),
-      changes: SubscriptionRef.changes(ref),
-      poll: () => poll(),
-    };
-  });
+  return {
+    source: { type: 'audio' as const, mode } as const,
+    read: () => kernel.read(),
+    subscribe: (subscriber) => kernel.subscribe(subscriber),
+    poll,
+    lifetime,
+  };
 }
 
 /**
  * Signal namespace -- live data feeds from the browser environment.
  *
  * Create reactive signals from viewport, scroll, pointer, time, media query,
- * audio, or custom sources. Each signal provides `.current` and `.changes`
- * backed by Effect's SubscriptionRef. Scoped for automatic listener cleanup.
+ * audio, or custom sources. Each signal provides `.read()` and `.subscribe(sink)`
+ * backed by {@link CellKernel.replay1}, plus a {@link Lifetime} for listener
+ * cleanup. Effect-free — consumers coordinate live state with no `effect` import.
  *
  * @example
  * ```ts
- * import { Effect } from 'effect';
  * import { Signal } from '@czap/core';
  *
- * const program = Effect.scoped(Effect.gen(function* () {
- *   const viewport = yield* Signal.make({ type: 'viewport', axis: 'width' });
- *   const width = yield* viewport.current;
- *   const ctrl = yield* Signal.controllable();
- *   yield* ctrl.seek(500);
- * }));
+ * const viewport = Signal.make({ type: 'viewport', axis: 'width' });
+ * const width = viewport.read();
+ * const ctrl = Signal.controllable();
+ * ctrl.seek(500);
  * ```
  */
 export const Signal = { make: _make, controllable: _controllable, audio: _audio };
 
 export declare namespace Signal {
-  /** Structural shape of a passive {@link Signal}: `source` + `current` + `changes`. */
+  /** Structural shape of a passive {@link Signal}: `source` + `read` + `subscribe` + `lifetime`. */
   export type Shape<T> = SignalShape<T>;
   /** Structural shape of a seekable, pausable signal — e.g. driven by Remotion or a scrub UI. */
   export type Controllable<T> = ControllableSignalShape<T>;

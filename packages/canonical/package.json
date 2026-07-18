@@ -1,6 +1,6 @@
 {
   "name": "@czap/canonical",
-  "version": "0.16.0",
+  "version": "0.17.0",
   "description": "The content-addressing kernel for LiteShip: canonical CBOR encoding and stable digests so the same definition always hashes to the same address.",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",

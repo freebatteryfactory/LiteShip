@@ -1,6 +1,6 @@
 {
   "name": "create-liteship",
-  "version": "0.16.0",
+  "version": "0.17.0",
   "description": "Scaffold a new LiteShip project: run `npm create liteship` to get a minimal Astro app wired to the framework in one step.",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",

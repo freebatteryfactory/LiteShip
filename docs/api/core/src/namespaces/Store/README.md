@@ -6,12 +6,11 @@
 
 # Store
 
-Store — TEA-style state container.
-Build with an initial state and a pure `reducer(state, msg) => state`, then
-dispatch messages; the store publishes the resulting state via `changes`.
-Use `makeWithEffect` when the reducer is itself an `Effect`.
+Store — TEA-style state container over [CellKernel.replay1](../../variables/CellKernel.md#replay1). Build with an
+initial state and a pure `reducer(state, msg) => state`, then dispatch messages;
+the store publishes each resulting state through `subscribe`, and
+`lifetime.dispose()` tears it down.
 
 ## Type Aliases
 
-- [Effectful](type-aliases/Effectful.md)
 - [Shape](type-aliases/Shape.md)

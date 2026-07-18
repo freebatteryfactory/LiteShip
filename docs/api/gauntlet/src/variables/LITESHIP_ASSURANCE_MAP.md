@@ -8,7 +8,7 @@
 
 > `const` **LITESHIP\_ASSURANCE\_MAP**: readonly [`LevelRule`](../interfaces/LevelRule.md)[]
 
-Defined in: [gauntlet/src/assurance-map.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/assurance-map.ts#L75)
+Defined in: [gauntlet/src/assurance-map.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/assurance-map.ts#L77)
 
 LiteShip's default assurance map — ORDERED, most-specific FIRST, first match
 wins, default `L1`. Owner-redlinable: the levels here are the criticality
@@ -26,9 +26,11 @@ wrappers, previews) stays L0/L1, where ambient nondeterminism is legitimate.
 - **L4** — "if this lies, downstream trusts bad reality": the canonical/identity
   kernel (canonical/*, content-address + integrity-digest brands), the core
   trust spine (receipt/hlc/plan/dag/validated-output/assembly + the mixed
-  brands file, conservatively whole until the Slice-C brand split), AND the
-  gauntlet's own judgment core (engine/authority/waiver/gate/assurance-map/
-  finding/assurance) — the grader that decides the cut IS the safety case.
+  brands file, conservatively whole until the Slice-C brand split), the REACTIVE
+  KERNELS (cell-kernel/cell/derived/store/signal/timeline/live-cell — the
+  CellKernel replay/emission/ordering value spine, Wave 6), AND the gauntlet's own
+  judgment core (engine/authority/waiver/gate/assurance-map/finding/assurance) —
+  the grader that decides the cut IS the safety case.
 - **L3** — deterministic runtime/projection/cache AND authority-bearing tooling:
   the core determinism paths (signal/zap/evaluate/gen-frame/speculative/
   token-buffer/blend/animation/boundary + ai-cast as a deterministic proposer),

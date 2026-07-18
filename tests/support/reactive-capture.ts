@@ -1,12 +1,17 @@
 /**
- * reactive-capture — the empirical capture harness (Wave 5.5 transition cage).
+ * reactive-capture — the empirical capture harness (Wave 5.5 transition cage;
+ * impl side flipped to CellKernel in Wave 6).
  *
- * Drives the CURRENT Effect-backed reactive primitives (Cell / Derived / Store /
- * Signal / Timeline / LiveCell) over a {@link OpHistory} and records the
- * normalized {@link Observation} — the nine behaviors the converged set
- * enumerates: initial replay, duplicate consecutive values, subscriber order,
- * nested writes, subscribe/unsubscribe-during-publish, listener failure,
- * disposal, completion, concurrent async.
+ * Drives the reactive primitives (Cell / Derived / Store / Signal / Timeline /
+ * LiveCell) over a {@link OpHistory} and records the normalized
+ * {@link Observation} — the nine behaviors the converged set enumerates: initial
+ * replay, duplicate consecutive values, subscriber order, nested writes,
+ * subscribe/unsubscribe-during-publish, listener failure, disposal, completion,
+ * concurrent async. As of Wave 6 every adapter drives the migrated,
+ * CellKernel-backed primitive (plain `read`/`subscribe`/`set`), bridged onto the
+ * runner's Effect `Stream` via {@link bridge} — so this SAME harness is now the
+ * CellKernel-impl side of the differential oracle (the capture that pinned the
+ * golden fixtures against the old Effect transport is preserved byte-for-byte).
  *
  * WHY THIS IS A CAPTURE, NOT A CONCLUSION (S1.5.3): the dedup question — does
  * today's Cell suppress consecutive-equal emissions? — is answered by RUNNING
@@ -38,7 +43,7 @@
  * @module
  */
 
-import { Effect, Scope, Stream, Fiber, Exit } from 'effect';
+import { Effect, Scope, Stream, Fiber, Exit, Queue } from 'effect';
 import {
   Cell,
   Derived,
@@ -52,6 +57,8 @@ import {
   Millis,
   StateName,
 } from '@czap/core';
+import type { BoundaryCrossing } from '@czap/core';
+import type { Disposer } from '@czap/core';
 import type {
   ReactiveOp,
   ReactiveOpTag,
@@ -339,6 +346,28 @@ const hlcMonotonic = (trail: readonly HLC.Shape[]): boolean => {
 // Adapters
 // ---------------------------------------------------------------------------
 
+/**
+ * Bridge a Wave-6 plain `CellKernel` subscription onto the Effect `Stream` the
+ * generic runner drives. Each time the stream is RUN (once per subscriber fiber)
+ * it opens an INDEPENDENT kernel subscription that offers every delivery into the
+ * `Stream.callback` queue; the returned teardown Effect disposes it when the
+ * fiber is interrupted (unsubscribe / scope-close). Deliveries flow through the
+ * async queue, so a nested write issued from a delivery handler is fanned out
+ * AFTER the synchronous kernel pass unwinds — the harness reproduces the captured
+ * async-append ordering exactly as the old forked-fiber `changes` stream did.
+ */
+const bridge = <A>(subscribe: (sink: (value: A) => void) => Disposer): Stream.Stream<A> =>
+  Stream.callback<A>((queue) => {
+    // The callback effect is SETUP (it carries `Scope`), not a finalizer: subscribe
+    // the kernel now (its replay offers the current value), then register the
+    // disposer as a scope finalizer so it runs on fiber interruption / teardown.
+    // The stream stays open (the queue is never ended) until that teardown.
+    const dispose = subscribe((value: A) => {
+      Queue.offerUnsafe(queue, value);
+    });
+    return Effect.addFinalizer(() => Effect.sync(() => dispose()));
+  });
+
 const captureBoundary = (): Boundary.Shape =>
   Boundary.make({
     input: 'viewport.width',
@@ -349,79 +378,97 @@ const captureBoundary = (): Boundary.Shape =>
     ] as const,
   });
 
-/** Cell — the replay-1 workhorse. */
+/** Cell — the replay-1 workhorse (Wave 6: plain CellKernel, bridged to Stream). */
 export const cellAdapter: PrimitiveAdapter = {
   primitive: 'cell',
   supports: new Set<ReactiveOpTag>(['subscribe', 'unsubscribe', 'read', 'set', 'update', 'dispose']),
   build: () =>
-    Effect.gen(function* () {
-      const cell = yield* Cell.make(0);
+    Effect.sync(() => {
+      const cell = Cell.make(0);
       return {
-        changes: Stream.map(cell.changes, (v): TraceValue => v),
-        read: Effect.map(cell.get, (v): TraceValue => v),
+        changes: bridge<TraceValue>((sink) => cell.subscribe(sink)),
+        read: Effect.sync((): TraceValue => cell.read()),
         mutate: (o: ReactiveOp): Effect.Effect<void> => {
-          if (o._tag === 'set') return cell.set(o.value);
-          if (o._tag === 'update') return cell.update((c) => applyTransform(o.transform, c));
+          if (o._tag === 'set') return Effect.sync(() => cell.set(o.value));
+          if (o._tag === 'update') return Effect.sync(() => cell.update((c) => applyTransform(o.transform, c)));
           return Effect.void;
         },
       } satisfies CaptureHandle;
     }),
 };
 
-/** Store — TEA reducer; `set(v)` maps to `dispatch(v)` under a replace reducer. */
+/** Store — TEA reducer; `set(v)` maps to `dispatch(v)` under a replace reducer.
+ * Wave 6: plain CellKernel-backed Store, bridged to the runner's `Stream`. Like the
+ * cell adapter, the store's lifetime is NOT bound to the harness scope — a `dispose`
+ * op interrupts only subscriber fibers, so a post-dispose dispatch still advances
+ * `read()` (the captured `disposal` behavior: read returns the last value). */
 export const storeAdapter: PrimitiveAdapter = {
   primitive: 'store',
   supports: new Set<ReactiveOpTag>(['subscribe', 'unsubscribe', 'read', 'set', 'dispose']),
   build: () =>
-    Effect.gen(function* () {
-      const store = yield* Store.make<number, number>(0, (_state, msg) => msg);
+    Effect.sync(() => {
+      const store = Store.make<number, number>(0, (_state, msg) => msg);
       return {
-        changes: Stream.map(store.changes, (v): TraceValue => v),
-        read: Effect.map(store.get, (v): TraceValue => v),
+        changes: bridge<TraceValue>((sink) => store.subscribe(sink)),
+        read: Effect.sync((): TraceValue => store.read()),
         mutate: (o: ReactiveOp): Effect.Effect<void> => {
-          if (o._tag === 'set') return store.dispatch(o.value);
+          if (o._tag === 'set') return Effect.sync(() => store.dispatch(o.value));
           return Effect.void;
         },
       } satisfies CaptureHandle;
     }),
 };
 
-/** Derived — recompute-on-source-change; `set(v)` drives the source cell. */
+/** Derived — recompute-on-source-change; `set(v)` drives the source cell.
+ * Wave 6: plain CellKernel-backed Derived, bridged to the runner's `Stream`. The
+ * old adapter bound the derived to the harness scope via `Scope.provide` so a
+ * `dispose` op tore down its recompute pipeline; reproduce that by disposing the
+ * derived's `lifetime` on scope close. Post-dispose the derived unsubscribes from
+ * `base`, so a later `base.set(...)` no longer recomputes and `read()` freezes at
+ * the last value (the captured recompute-teardown behavior). `base` stays live
+ * (not scope-bound), so the post-dispose set still runs — it just reaches no one. */
 export const derivedAdapter: PrimitiveAdapter = {
   primitive: 'derived',
   supports: new Set<ReactiveOpTag>(['subscribe', 'unsubscribe', 'read', 'set', 'dispose']),
   build: (scope) =>
     Effect.gen(function* () {
-      const base = yield* Cell.make(0);
-      const derived = yield* Scope.provide(
-        Derived.combine([base] as const, (x: number): number => x + 100),
+      const base = Cell.make(0);
+      const derived = Derived.combine([base] as const, (x: number): number => x + 100);
+      yield* Scope.addFinalizer(
         scope,
+        Effect.sync(() => {
+          void derived.lifetime.dispose();
+        }),
       );
       return {
-        changes: Stream.map(derived.changes, (v): TraceValue => v),
-        read: Effect.map(derived.get, (v): TraceValue => v),
+        changes: bridge<TraceValue>((sink) => derived.subscribe(sink)),
+        read: Effect.sync((): TraceValue => derived.read()),
         mutate: (o: ReactiveOp): Effect.Effect<void> => {
-          if (o._tag === 'set') return base.set(o.value);
+          if (o._tag === 'set') return Effect.sync(() => base.set(o.value));
           return Effect.void;
         },
       } satisfies CaptureHandle;
     }),
 };
 
-/** Signal — the fully-deterministic controllable surface (seek + pause-gate). */
+/** Signal — the fully-deterministic controllable surface (Wave 6: plain CellKernel, bridged). */
 export const signalAdapter: PrimitiveAdapter = {
   primitive: 'signal',
   supports: new Set<ReactiveOpTag>(['subscribe', 'unsubscribe', 'read', 'set', 'pause', 'resume', 'dispose']),
-  build: (scope) =>
-    Effect.gen(function* () {
-      const sig = yield* Scope.provide(Signal.controllable(), scope);
+  build: () =>
+    Effect.sync(() => {
+      // Like the cell adapter, the signal's own lifetime is NOT bound to the
+      // harness scope: a `dispose` op interrupts only the subscriber fibers (the
+      // controllable signal has no listeners), so the value channel stays live —
+      // a post-dispose seek still updates `read()` (the captured behavior).
+      const sig = Signal.controllable();
       return {
-        changes: Stream.map(sig.changes, (v): TraceValue => v),
-        read: Effect.map(sig.current, (v): TraceValue => v),
+        changes: bridge<TraceValue>((sink) => sig.subscribe(sink)),
+        read: Effect.sync((): TraceValue => sig.read()),
         mutate: (o: ReactiveOp): Effect.Effect<void> => {
-          if (o._tag === 'set') return sig.seek(o.value);
-          if (o._tag === 'pause') return sig.pause();
-          if (o._tag === 'resume') return sig.resume();
+          if (o._tag === 'set') return Effect.sync(() => sig.seek(o.value));
+          if (o._tag === 'pause') return Effect.sync(() => sig.pause());
+          if (o._tag === 'resume') return Effect.sync(() => sig.resume());
           return Effect.void;
         },
       } satisfies CaptureHandle;
@@ -446,19 +493,26 @@ export const timelineAdapter: PrimitiveAdapter = {
   build: (scope) =>
     Effect.gen(function* () {
       const scheduler = Scheduler.fixedStep(10); // dt = 100ms per step
-      const timeline = yield* Scope.provide(
-        Timeline.from(captureBoundary(), { duration: Millis(200), loop: false, scheduler }),
+      const timeline = Timeline.from(captureBoundary(), { duration: Millis(200), loop: false, scheduler });
+      // The old Effect timeline bound `sched.cancel` to the harness scope (via
+      // Scope.provide); reproduce that so a `dispose` op cancels the scheduler
+      // (a post-dispose tick is inert). Disposing the timeline lifetime also closes
+      // the state kernel — harmless, since `read()` still returns the current slot.
+      yield* Scope.addFinalizer(
         scope,
+        Effect.sync(() => {
+          void timeline.lifetime.dispose();
+        }),
       );
       return {
-        changes: Stream.map(timeline.changes, (v): TraceValue => v),
-        read: Effect.map(timeline.state, (v): TraceValue => v),
+        changes: bridge<TraceValue>((sink) => timeline.subscribe(sink)),
+        read: Effect.sync((): TraceValue => timeline.state()),
         mutate: (o: ReactiveOp): Effect.Effect<void> => {
-          if (o._tag === 'set') return timeline.seek(Millis(o.value));
-          if (o._tag === 'scrub') return timeline.scrub(o.progress);
-          if (o._tag === 'play') return timeline.play();
-          if (o._tag === 'pause') return timeline.pause();
-          if (o._tag === 'reverse') return timeline.reverse();
+          if (o._tag === 'set') return Effect.sync(() => timeline.seek(Millis(o.value)));
+          if (o._tag === 'scrub') return Effect.sync(() => timeline.scrub(o.progress));
+          if (o._tag === 'play') return Effect.sync(() => timeline.play());
+          if (o._tag === 'pause') return Effect.sync(() => timeline.pause());
+          if (o._tag === 'reverse') return Effect.sync(() => timeline.reverse());
           if (o._tag === 'tick') {
             const count = o.count;
             return Effect.sync(() => {
@@ -483,33 +537,41 @@ export const liveCellAdapter: PrimitiveAdapter = {
     'publishCrossing',
     'dispose',
   ]),
-  build: (scope) =>
-    Effect.gen(function* () {
-      const cell = yield* Scope.provide(LiveCell.makeBoundary(captureBoundary(), 0), scope);
+  build: () =>
+    Effect.sync(() => {
+      const cell = LiveCell.makeBoundary(captureBoundary(), 0);
       const syntheticStamp = HLC.increment(HLC.create('capture'), 0);
       return {
-        changes: Stream.map(cell.changes, (v): TraceValue => v),
-        read: Effect.map(cell.get, (v): TraceValue => v),
-        crossings: Stream.map(cell.crossings, (c): CrossingObservation => ({
-          from: String(c.from),
-          to: String(c.to),
-          value: c.value,
-        })),
-        meta: Effect.map(cell.envelope, (env): MetaSnapshot => ({
-          version: env.meta.version,
-          id: String(env.id),
-          hlc: env.meta.updated,
-        })),
+        changes: bridge<TraceValue>((sink) => cell.subscribe(sink)),
+        read: Effect.sync((): TraceValue => cell.read()),
+        crossings: Stream.map(
+          bridge<BoundaryCrossing<string>>((sink) => cell.crossings.subscribe(sink)),
+          (c): CrossingObservation => ({
+            from: String(c.from),
+            to: String(c.to),
+            value: c.value,
+          }),
+        ),
+        meta: Effect.sync((): MetaSnapshot => {
+          const env = cell.envelope();
+          return {
+            version: env.meta.version,
+            id: String(env.id),
+            hlc: env.meta.updated,
+          };
+        }),
         mutate: (o: ReactiveOp): Effect.Effect<void> => {
-          if (o._tag === 'set') return cell.set(o.value);
-          if (o._tag === 'update') return cell.update((c) => applyTransform(o.transform, c));
+          if (o._tag === 'set') return Effect.sync(() => cell.set(o.value));
+          if (o._tag === 'update') return Effect.sync(() => cell.update((c) => applyTransform(o.transform, c)));
           if (o._tag === 'publishCrossing') {
-            return cell.publishCrossing({
-              from: StateName(o.from),
-              to: StateName(o.to),
-              timestamp: syntheticStamp,
-              value: o.value,
-            });
+            return Effect.sync(() =>
+              cell.publishCrossing({
+                from: StateName(o.from),
+                to: StateName(o.to),
+                timestamp: syntheticStamp,
+                value: o.value,
+              }),
+            );
           }
           return Effect.void;
         },

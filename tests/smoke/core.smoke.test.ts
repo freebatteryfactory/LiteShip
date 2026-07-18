@@ -6,9 +6,8 @@
  */
 
 import { describe, test, expect } from 'vitest';
-// Effect is retained for Cell.make/get and HLC.makeClock/tick — those seams are
-// NOT part of the core-seams wave and stay Effect-typed. Compositor.create went sync.
-import { Effect } from 'effect';
+// Wave 6: the whole reactive surface is Effect-free — Cell/Store/… on CellKernel,
+// HLC.makeClock returns a plain handle, Compositor.create is sync.
 import { Boundary, Compositor, ContentAddress, Cell, VectorClock, HLC, Plan, Millis } from '@czap/core';
 
 describe('core smoke', () => {
@@ -35,10 +34,9 @@ describe('core smoke', () => {
     expect(compositor).toBeDefined();
   });
 
-  test('Cell.make and get', async () => {
-    const cell = await Effect.runPromise(Cell.make(42));
-    const val = await Effect.runPromise(cell.get);
-    expect(val).toBe(42);
+  test('Cell.make and read', () => {
+    const cell = Cell.make(42);
+    expect(cell.read()).toBe(42);
   });
 
   test('VectorClock round-trip', () => {
@@ -46,13 +44,9 @@ describe('core smoke', () => {
     expect(VectorClock.toObject(vc)).toEqual({ a: 1, b: 2 });
   });
 
-  test('HLC.create produces clock', async () => {
-    const t = await Effect.runPromise(
-      Effect.gen(function* () {
-        const clock = yield* HLC.makeClock('smoke-node');
-        return yield* HLC.tick(clock);
-      }),
-    );
+  test('HLC.create produces clock', () => {
+    const clock = HLC.makeClock('smoke-node');
+    const t = clock.tick();
     expect(t.wall_ms).toBeGreaterThan(0);
   });
 

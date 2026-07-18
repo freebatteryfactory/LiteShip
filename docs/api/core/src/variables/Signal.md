@@ -8,27 +8,29 @@
 
 > `const` **Signal**: `object`
 
-Defined in: [core/src/signal.ts:387](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/signal.ts#L387)
+Defined in: [core/src/signal.ts:388](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/signal.ts#L388)
 
 Signal namespace -- live data feeds from the browser environment.
 
 Create reactive signals from viewport, scroll, pointer, time, media query,
-audio, or custom sources. Each signal provides `.current` and `.changes`
-backed by Effect's SubscriptionRef. Scoped for automatic listener cleanup.
+audio, or custom sources. Each signal provides `.read()` and `.subscribe(sink)`
+backed by [CellKernel.replay1](CellKernel.md#replay1), plus a [Lifetime](Lifetime.md) for listener
+cleanup. Effect-free — consumers coordinate live state with no `effect` import.
 
 ## Type Declaration
 
 ### audio
 
-> **audio**: (`bridge`, `mode`, `totalDurationSec?`) => `Effect`\<`AudioSignalShape`, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\> = `_audio`
+> **audio**: (`bridge`, `mode`, `totalDurationSec?`) => `AudioSignalShape` = `_audio`
 
 Create an audio signal backed by an AVBridge.
 
 In 'sample' mode, returns the raw sample index. In 'normalized' mode,
 returns a 0..1 progress value based on totalDurationSec — omitting
 `totalDurationSec` (or passing a non-positive value) in 'normalized'
-mode throws a `ValidationError`. Call `.poll()` to read the latest
-sample from the bridge and update the signal.
+mode throws a `ValidationError` SYNCHRONOUSLY at construction (the eager-throw
+fault edge, preserved verbatim). Call `.poll()` to read the latest sample from
+the bridge and update the signal.
 
 #### Parameters
 
@@ -46,59 +48,53 @@ sample from the bridge and update the signal.
 
 #### Returns
 
-`Effect`\<`AudioSignalShape`, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\>
+`AudioSignalShape`
 
 #### Example
 
 ```ts
-import { Effect } from 'effect';
 import { Signal } from '@czap/core';
 
-const program = Effect.scoped(Effect.gen(function* () {
-  const audioSig = yield* Signal.audio(bridge, 'normalized', 120);
-  const progress = yield* audioSig.poll();
-  // progress is a number between 0 and 1
-}));
+const audioSig = Signal.audio(bridge, 'normalized', 120);
+const progress = audioSig.poll(); // 0..1
 ```
 
 ### controllable
 
-> **controllable**: () => `Effect`\<`ControllableSignalShape`\<`number`\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\> = `_controllable`
+> **controllable**: () => `ControllableSignalShape`\<`number`\> = `_controllable`
 
 Create a controllable time signal for video rendering / scrubbing.
 
-External code drives the signal value via seek(); no automatic ticking.
-Supports pause/resume to temporarily ignore seek updates.
+External code drives the signal value via `seek()`; no automatic ticking.
+`pause()`/`resume()` gate seek updates. Effect-free — `seek`/`pause`/`resume`
+are synchronous.
 
 #### Returns
 
-`Effect`\<`ControllableSignalShape`\<`number`\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\>
+`ControllableSignalShape`\<`number`\>
 
 #### Example
 
 ```ts
-import { Effect } from 'effect';
 import { Signal } from '@czap/core';
 
-const program = Effect.scoped(Effect.gen(function* () {
-  const ctrl = yield* Signal.controllable();
-  yield* ctrl.seek(1500);
-  const t = yield* ctrl.current;
-  // t === 1500
-  yield* ctrl.pause();
-  yield* ctrl.seek(2000); // ignored while paused
-}));
+const ctrl = Signal.controllable();
+ctrl.seek(1500);
+const t = ctrl.read(); // 1500
+ctrl.pause();
+ctrl.seek(2000); // ignored while paused
 ```
 
 ### make
 
-> **make**: (`rawSource`) => `Effect`\<`SignalShape`\<`number`\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\> = `_make`
+> **make**: (`rawSource`) => `SignalShape`\<`number`\> = `_make`
 
 Create a reactive signal from a browser environment source.
 
-Returns a scoped Effect that sets up event listeners (resize, scroll,
-pointermove, etc.) and cleans them up when the scope closes. The signal
-exposes `.current` (latest value) and `.changes` (stream of updates).
+Returns a plain signal owned by a [Lifetime](Lifetime.md): it sets up event listeners
+(resize, scroll, pointermove, etc.) immediately and removes them on
+`signal.lifetime.dispose()`. The signal exposes `.read()` (latest value) and
+`.subscribe(sink)` (replay-1 stream of updates, returning a [Disposer](../type-aliases/Disposer.md)).
 
 #### Parameters
 
@@ -108,31 +104,28 @@ exposes `.current` (latest value) and `.changes` (stream of updates).
 
 #### Returns
 
-`Effect`\<`SignalShape`\<`number`\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\>
+`SignalShape`\<`number`\>
 
 #### Example
 
 ```ts
-import { Effect, Scope } from 'effect';
 import { Signal } from '@czap/core';
 
-const program = Effect.scoped(Effect.gen(function* () {
-  const sig = yield* Signal.make({ type: 'viewport', axis: 'width' });
-  const width = yield* sig.current;
-  // width === current window.innerWidth
-}));
+const sig = Signal.make({ type: 'viewport', axis: 'width' });
+const width = sig.read(); // current window.innerWidth
+const off = sig.subscribe((w) => console.log(w));
+// ...
+off();
+await sig.lifetime.dispose();
 ```
 
 ## Example
 
 ```ts
-import { Effect } from 'effect';
 import { Signal } from '@czap/core';
 
-const program = Effect.scoped(Effect.gen(function* () {
-  const viewport = yield* Signal.make({ type: 'viewport', axis: 'width' });
-  const width = yield* viewport.current;
-  const ctrl = yield* Signal.controllable();
-  yield* ctrl.seek(500);
-}));
+const viewport = Signal.make({ type: 'viewport', axis: 'width' });
+const width = viewport.read();
+const ctrl = Signal.controllable();
+ctrl.seek(500);
 ```
