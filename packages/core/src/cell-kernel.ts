@@ -218,12 +218,21 @@ function createCore<T>() {
   const fanOut = (value: T): void => {
     dispatchDepth++;
     const limit = registrations.length;
-    for (let i = 0; i < limit; i++) {
-      const registration = registrations[i];
-      if (registration !== undefined && registration.active) registration.sink.next(value);
+    // EXCEPTION-SAFE: a sink whose `next` throws must NOT leak `dispatchDepth` — a
+    // leaked depth wedges compaction forever (and, in the replay1 deferred wrapper,
+    // the `inFanOut` latch). The throw still PROPAGATES to the publisher (fail-fast:
+    // the kernel does not swallow a sink fault or isolate it per-subscriber — that is
+    // a deliberate delivery-semantics choice left to a follow-up); the invariants are
+    // simply restored so ONE faulty listener cannot corrupt the channel.
+    try {
+      for (let i = 0; i < limit; i++) {
+        const registration = registrations[i];
+        if (registration !== undefined && registration.active) registration.sink.next(value);
+      }
+    } finally {
+      dispatchDepth--;
+      maybeCompact();
     }
-    dispatchDepth--;
-    maybeCompact();
   };
 
   // Run a multi-emit batch (the replay1 deferred-drain) as ONE outermost dispatch
@@ -263,7 +272,22 @@ function createCore<T>() {
     const live = registrations.filter((r) => r.active);
     registrations.length = 0;
     activeCount = 0;
-    for (const registration of live) registration.sink.complete?.();
+    // SINK-ERROR LAW (terminal completeness). Unlike `fanOut` (value delivery,
+    // fail-fast), `close` is teardown: EVERY sink must be completed exactly once
+    // even when some `complete` callbacks throw — a teardown that skipped the rest
+    // of its subscribers on the first fault would leak them (they never learn the
+    // stream ended). So faults are captured, all sinks are completed, and the FIRST
+    // fault is rethrown AFTER the pass — the closer still observes the failure
+    // without the completeness invariant being sacrificed to it.
+    let firstFault: { readonly error: unknown } | undefined;
+    for (const registration of live) {
+      try {
+        registration.sink.complete?.();
+      } catch (error) {
+        if (firstFault === undefined) firstFault = { error };
+      }
+    }
+    if (firstFault !== undefined) throw firstFault.error;
   };
 
   return {
@@ -325,14 +349,23 @@ function replay1<T>(
           return;
         }
         inFanOut = true;
-        core.runBatch(() => {
-          emit(value);
-          while (pending.length > 0) {
-            const next = pending.shift();
-            if (next !== undefined) emit(next.value);
-          }
-        });
-        inFanOut = false;
+        // EXCEPTION-SAFE: if a sink throws mid-drain the latch MUST reset, else every
+        // future publish buffers into `pending` and never drains — the channel wedges
+        // permanently after one faulty listener. The throw propagates (fail-fast); the
+        // aborted batch's undelivered follow-ups are dropped so the kernel returns to a
+        // clean idle state rather than draining them out of order on the next publish.
+        try {
+          core.runBatch(() => {
+            emit(value);
+            while (pending.length > 0) {
+              const next = pending.shift();
+              if (next !== undefined) emit(next.value);
+            }
+          });
+        } finally {
+          inFanOut = false;
+          pending.length = 0;
+        }
         return;
       }
       // synchronous (default): a nested publish recurses depth-first through

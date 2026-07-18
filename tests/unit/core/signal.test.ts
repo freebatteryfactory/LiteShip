@@ -234,6 +234,44 @@ describe('Signal.make', () => {
     expect(cancelAnimationFrameSpy).toHaveBeenCalledWith(3);
   });
 
+  test('elapsed rAF loop does NOT re-arm when a subscriber disposes from INSIDE the tick', () => {
+    // Disposal-resurrection race: a value subscriber disposes the signal from within
+    // the tick's publish. The finalizer cancels the frame id of the tick already
+    // executing (a no-op) — without the monotonic `disposed` guard, tick() would then
+    // schedule a FRESH frame after disposal, an inert-publish loop that never dies.
+    const callbacks = new Map<number, FrameRequestCallback>();
+    let nextId = 1;
+    let currentTime = 1_000;
+    vi.spyOn(Date, 'now').mockImplementation(() => currentTime);
+    const rafSpy = vi.fn((cb: FrameRequestCallback) => {
+      const id = nextId++;
+      callbacks.set(id, cb);
+      return id;
+    });
+    const cafSpy = vi.fn((id: number) => {
+      callbacks.delete(id);
+    });
+    vi.stubGlobal('requestAnimationFrame', rafSpy);
+    vi.stubGlobal('cancelAnimationFrame', cafSpy);
+
+    const signal = Signal.make({ type: 'time', mode: 'elapsed' });
+    expect(rafSpy).toHaveBeenCalledTimes(1); // frame 1 armed synchronously in make()
+
+    // Dispose from within the TICK delivery only (guard on elapsed > 0 so the
+    // replay-on-subscribe of the initial 0 does not trip it).
+    signal.subscribe((v) => {
+      if (v > 0) void signal.lifetime.dispose();
+    });
+
+    currentTime = 1_060;
+    callbacks.get(1)?.(1_060); // fires the tick → positive elapsed → subscriber disposes
+
+    // The loop is DEAD: no frame scheduled after disposal (still just the initial arm).
+    expect(rafSpy).toHaveBeenCalledTimes(1);
+    expect(callbacks.has(2)).toBe(false);
+    expect(signal.lifetime.disposed).toBe(true);
+  });
+
   test('leaves elapsed time signals inert when requestAnimationFrame is unavailable', () => {
     vi.stubGlobal('requestAnimationFrame', undefined);
 

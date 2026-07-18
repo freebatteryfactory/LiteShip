@@ -8,7 +8,7 @@
 
 > `const` **Derived**: `object`
 
-Defined in: [core/src/derived.ts:149](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/derived.ts#L149)
+Defined in: [core/src/derived.ts:160](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/derived.ts#L160)
 
 Derived — read-only reactive view computed from upstream sources, on
 [CellKernel.replay1](CellKernel.md#replay1). Recomputes lazily on any source change and

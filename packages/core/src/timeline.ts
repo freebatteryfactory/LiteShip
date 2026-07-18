@@ -115,6 +115,7 @@ export const Timeline: TimelineFactory = {
       stateKernel.publish(Boundary.evaluate(boundary, elapsed));
     };
 
+    let disposed = false;
     const step = (now: number): void => {
       if (lastTime !== null && playing) {
         const dt = (now - lastTime) * direction;
@@ -128,6 +129,13 @@ export const Timeline: TimelineFactory = {
         setState(next);
       }
       lastTime = now;
+      // DISPOSAL-SAFE self-reschedule. A state subscriber may call
+      // `timeline.lifetime.dispose()` from WITHIN `setState`; the finalizer then
+      // cancels the schedId of the tick already executing (a no-op), and without
+      // this guard `step` would install a fresh callback AFTER disposal — a loop
+      // that ticks forever past teardown. `disposed` is monotonic, so once teardown
+      // has begun the reschedule stays permanently blocked.
+      if (disposed) return;
       schedId = sched.schedule(step);
     };
     let schedId = sched.schedule(step);
@@ -137,7 +145,10 @@ export const Timeline: TimelineFactory = {
     // kernel (complete subscribers). schedId is read at dispose time — it tracks
     // the latest reschedule, matching the old scope-bound `sched.cancel(schedId)`.
     lifetime.add(() => stateKernel.close());
-    lifetime.add(() => sched.cancel(schedId));
+    lifetime.add(() => {
+      disposed = true;
+      sched.cancel(schedId);
+    });
 
     return {
       boundary,
