@@ -251,10 +251,14 @@ export function isSchema(u: unknown): u is Schema<unknown, unknown> {
   return typeof u === 'object' && u !== null && schemaRegistry.has(u);
 }
 
-/** Read the {@link ArbitraryAnnotationId} thunk off a node, or `undefined` when absent. */
-export function annotatedArbitrary(node: SchemaNode): (() => unknown) | undefined {
+/**
+ * Read the {@link ArbitraryAnnotationId} thunk off a node, or `undefined` when
+ * absent. The thunk takes `fast-check` (supplied by the harness realizing it) so
+ * the kernel never imports the property-testing engine.
+ */
+export function annotatedArbitrary(node: SchemaNode): ((fc: unknown) => unknown) | undefined {
   const annotations = node.annotations;
   if (annotations === undefined) return undefined;
   const thunk = annotations[ArbitraryAnnotationId];
-  return typeof thunk === 'function' ? (thunk as () => unknown) : undefined;
+  return typeof thunk === 'function' ? (thunk as (fc: unknown) => unknown) : undefined;
 }

@@ -85,7 +85,10 @@ function unsupportedSchema(subject: string, hint?: string): UnsupportedError {
 function annotatedArb(node: SchemaNode): fc.Arbitrary<unknown> | undefined {
   const thunk = annotatedArbitrary(node);
   if (thunk === undefined) return undefined;
-  const arb = thunk();
+  // Provide fast-check to the thunk: the kernel/capsules declare the arbitrary
+  // contract without importing the engine — the harness (which legitimately owns
+  // fast-check) supplies the realization here.
+  const arb = thunk(fc);
   if (arb === undefined || arb === null || typeof (arb as { generate?: unknown }).generate !== 'function') {
     throw unsupportedSchema(node.kind, 'the withArbitrary thunk did not return a fast-check Arbitrary');
   }

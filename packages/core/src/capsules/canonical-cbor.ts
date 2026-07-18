@@ -6,7 +6,7 @@
  * @module
  */
 
-import * as fc from 'fast-check';
+import type { Arbitrary } from 'fast-check';
 import { defineCapsule } from '../assembly.js';
 import { S, withArbitrary } from '../schema/index.js';
 import { CanonicalCbor } from '../cbor.js';
@@ -22,7 +22,9 @@ export const canonicalCborCapsule = defineCapsule({
   // The encoder's output is an opaque `Uint8Array` carrier (a declaration node);
   // the `withArbitrary` thunk samples the encoder's own image — canonical CBOR
   // bytes — so any structural walk over the output stays in the valid domain.
-  output: withArbitrary(S.bytes(Uint8Array), () => fc.anything().map((value) => CanonicalCbor.encode(value))),
+  output: withArbitrary(S.bytes(Uint8Array), (fc) =>
+    (fc as { anything(): Arbitrary<unknown> }).anything().map((value) => CanonicalCbor.encode(value)),
+  ),
   capabilities: { reads: [], writes: [] },
   invariants: [
     {

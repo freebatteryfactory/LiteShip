@@ -8,7 +8,7 @@
 
 > `const` **S**: `object`
 
-Defined in: [core/src/schema/constructors.ts:191](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/constructors.ts#L191)
+Defined in: [core/src/schema/constructors.ts:202](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/constructors.ts#L202)
 
 The schema-kernel constructor namespace. Scalars are singleton VALUES
 (`S.string`); composites are constructor FUNCTIONS (`S.struct({ … })`).
