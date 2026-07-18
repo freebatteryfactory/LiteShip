@@ -93,6 +93,8 @@ interface ProbeLines {
   readonly admission: SpineTypeAdmission;
   readonly spineDeclLine: number; // 0-based line of `declare const s_i`
   readonly runtimeDeclLine: number; // 0-based line of `declare const r_i`
+  readonly spineAnyLine: number; // 0-based line of the spine-side is-any guard
+  readonly runtimeAnyLine: number; // 0-based line of the runtime-side is-any guard
   readonly s2rLine: number; // 0-based line of `const _s2r_i`
   readonly r2sLine: number; // 0-based line of `const _r2s_i`
   readonly moduleImportLine: number; // 0-based line of the runtime module's import
@@ -105,6 +107,13 @@ function generateProbe(admissions: readonly SpineTypeAdmission[]): {
 } {
   const lines: string[] = [];
   lines.push(`import type * as Spine from '${SPINE_PACKAGE}';`);
+  // The IS-ANY guard: `0 extends (1 & T)` is true ONLY when T is `any`. A per-admission
+  // guard line `const _sAny_i: IsAny<Spine.X> = false;` therefore ERRORS iff the type
+  // resolved to `any` — the exact silent hole an unaliased cross-package import or a
+  // missing module opens (an `any` type makes BOTH assignability probes trivially pass →
+  // a false `exact`). A diagnostic on the guard line downgrades the observation to
+  // unresolved, so a collapse-to-`any` reds instead of laundering green.
+  lines.push(`type IsAny<T> = 0 extends 1 & T ? true : false;`);
   // One import per distinct runtime module (stable alias by first-seen order).
   const moduleAlias = new Map<string, string>();
   const moduleImportLine = new Map<string, number>();
@@ -124,6 +133,10 @@ function generateProbe(admissions: readonly SpineTypeAdmission[]): {
     lines.push(`declare const s_${i}: ${spineType};`);
     const runtimeDeclLine = lines.length;
     lines.push(`declare const r_${i}: ${runtimeType};`);
+    const spineAnyLine = lines.length;
+    lines.push(`const _sAny_${i}: IsAny<${spineType}> = false;`);
+    const runtimeAnyLine = lines.length;
+    lines.push(`const _rAny_${i}: IsAny<${runtimeType}> = false;`);
     const s2rLine = lines.length;
     lines.push(`const _s2r_${i}: ${runtimeType} = s_${i};`);
     const r2sLine = lines.length;
@@ -132,6 +145,8 @@ function generateProbe(admissions: readonly SpineTypeAdmission[]): {
       admission,
       spineDeclLine,
       runtimeDeclLine,
+      spineAnyLine,
+      runtimeAnyLine,
       s2rLine,
       r2sLine,
       moduleImportLine: moduleImportLine.get(admission.runtimeModule)!,
@@ -206,12 +221,21 @@ export function buildSpineRelationFacts(
     const moduleFailed = linesWithDiag.has(probe.moduleImportLine);
     const spineUnresolved = linesWithDiag.has(probe.spineDeclLine);
     const runtimeUnresolved = moduleFailed || linesWithDiag.has(probe.runtimeDeclLine);
-    if (spineUnresolved || runtimeUnresolved) {
+    // A fired is-any guard means the type silently resolved to `any` (an unaliased
+    // cross-package import / a broken type) — an `any` makes both assignability probes
+    // trivially pass, so it MUST be treated as unresolved, never a false `exact`.
+    const spineIsAny = linesWithDiag.has(probe.spineAnyLine);
+    const runtimeIsAny = linesWithDiag.has(probe.runtimeAnyLine);
+    if (spineUnresolved || runtimeUnresolved || spineIsAny || runtimeIsAny) {
       const detail = moduleFailed
         ? `runtime module ${admission.runtimeModule} did not resolve: ${linesWithDiag.get(probe.moduleImportLine)}`
         : spineUnresolved
           ? `spine type Spine.${admission.spineExpr} did not resolve: ${linesWithDiag.get(probe.spineDeclLine)}`
-          : `runtime type ${admission.runtimeExpr} (${admission.runtimeModule}) did not resolve: ${linesWithDiag.get(probe.runtimeDeclLine)}`;
+          : runtimeUnresolved
+            ? `runtime type ${admission.runtimeExpr} (${admission.runtimeModule}) did not resolve: ${linesWithDiag.get(probe.runtimeDeclLine)}`
+            : spineIsAny
+              ? `spine type Spine.${admission.spineExpr} resolved to \`any\` (an unaliased cross-package import or a broken type) — the assignability probe would falsely pass`
+              : `runtime type ${admission.runtimeExpr} (${admission.runtimeModule}) resolved to \`any\` — the assignability probe would falsely pass`;
       return {
         ...base,
         observedRelation: 'opaque',

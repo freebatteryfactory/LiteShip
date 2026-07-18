@@ -1018,10 +1018,13 @@ receipt `sha256:`-label law. The B5b/D9b normalizer cage is now a two-home parit
   FIELD-BY-FIELD, never as one whole-shape `public-wider`/`public-narrower` verdict, so a
   sibling-field drift cannot hide behind it. STATUS: closed (gap reproduced, fixed,
   fixtured).
-  Accepted latent (recorded, not live regressions per the QA): (a) a runtime type that
-  resolves to `any` via the WORKSPACE_ALIASES subset would pass an `exact` admission —
-  partially guarded by the non-`exact` admissions (e.g. schema `public-wider`) whose
-  survival proves types are not universally collapsing; (b) the type-export enumerator
+  Latent findings: (a) **RESOLVED** — a type resolving to `any` (an unaliased
+  cross-package import / a broken type) would make both assignability probes trivially
+  pass as a false `exact`. Closed by a per-admission IS-ANY GUARD in the probe
+  (`0 extends 1 & T` is true only for `any`): a fired guard downgrades the observation to
+  unresolved, so a collapse-to-`any` reds. The green acceptance now doubly proves all 42
+  admissions resolve to REAL (non-`any`) types; a forced `CapSet = any` reds as
+  unresolved (review-point #2). (b) the type-export enumerator
   does not track `export * as NS` (unexercised — none in `packages/`; verbatim syntax
   forces `export type {` so a bare `export { Interface }` cannot occur either); (c) the
   convergence report indexes by existence, honest about being a derived index. These are
