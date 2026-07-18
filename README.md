@@ -72,10 +72,10 @@ For a standalone app — one you can drop into StackBlitz or CodeSandbox — sca
 Two concepts get you to a working page: `Boundary.make` (define the states) and `satelliteAttrs` (put them on an element). In an Astro project:
 
 ```bash
-pnpm add @czap/core @czap/astro effect@beta
+pnpm add @czap/core @czap/astro
 ```
 
-`effect` is `@czap/core`'s one peer dependency, and it must be the Effect **4 beta** (`effect@beta`) — the peer range is `>=4.0.0-beta.0`, while a bare `pnpm add effect` installs the 3.x `latest` tag and fails the peer check. See the [support matrix](#support-matrix) for the pin and the stabilization plan. That's the whole install for the snippets below; further packages arrive when you first import them.
+That's the whole install for the snippets below — `@czap/core` and `@czap/astro` carry **no third-party runtime peer dependencies** to pin (LiteShip runs on its own native substrate; the `effect` peer was shed in v0.18). Further packages arrive when you first import them.
 
 Prefer the whole stack in a single version-locked dependency? `npm install liteship` — the umbrella that pins **every** `@czap/*` package to one matched version. It's heavier (it pulls the tooling scopes too — CLI, audit, gauntlet), so most apps want just the two above; reach for it when you'd rather lock the fleet together than add packages as you import them.
 

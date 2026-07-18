@@ -95,7 +95,7 @@ API docs per package live at [`docs/api/<name>/`](./docs/api/); import guidance 
 | --- | --- |
 | [`@czap/core`](./packages/core) | The heart of LiteShip: define UI boundaries, tokens, themes, and signals once as a content-addressed graph, then drive the engine that keeps every rendered output in sync. |
 | [`@czap/canonical`](./packages/canonical) | The content-addressing kernel for LiteShip: canonical CBOR encoding and stable digests so the same definition always hashes to the same address. |
-| [`@czap/error`](./packages/error) | The one error algebra for LiteShip: build tagged error values that work both as thrown Errors and as Effect failures, and compose your own variants on top with zero dependencies. |
+| [`@czap/error`](./packages/error) | The one error algebra for LiteShip: build tagged error values that work as thrown Errors and as errors-as-values (a Result err-arm), and compose your own variants on top with zero dependencies. |
 | [`@czap/genui`](./packages/genui) | Render AI-generated UI safely in LiteShip: validate a model's proposed component tree against a host-owned catalog and draw only trusted, whitelisted components. |
 | [`@czap/quantizer`](./packages/quantizer) | Turn continuous signals into a few named UI states for LiteShip: evaluate boundaries, animate the transitions between states, and gate motion by device tier. |
 | [`@czap/compiler`](./packages/compiler) | Compile one LiteShip boundary definition into many outputs at once — CSS, GLSL, WGSL, ARIA, AI descriptions, and Tailwind — so every target stays in sync. |

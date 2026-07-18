@@ -14,7 +14,7 @@ Prose vocabulary: [../GLOSSARY.md](../../GLOSSARY.md).
 | [0002](./0002-zero-alloc.md)                           | Zero-allocation hot path discipline                                         | Accepted |
 | [0003](./0003-content-addressing.md)                   | Content addressing via FNV-1a + CBOR                                        | Accepted |
 | [0004](./0004-plan-coordinator.md)                     | Plan IR vs RuntimeCoordinator split                                         | Accepted |
-| [0005](./0005-effect-boundary.md)                      | Effect boundary rules                                                       | Accepted |
+| [0005](./0005-effect-boundary.md)                      | Effect boundary rules                                                       | Superseded by [0042](./0042-effect-shed.md) |
 | [0006](./0006-compiler-dispatch.md)                    | Compiler dispatch tagged union                                              | Accepted |
 | [0007](./0007-adapter-vs-peer-framing.md)              | Adapter vs peer framing (Remotion/Edge)                                     | Accepted |
 | [0008](./0008-capsule-assembly-catalog.md)             | Capsule assembly catalog (7 arms + closure rule)                            | Accepted |
@@ -51,6 +51,7 @@ Prose vocabulary: [../GLOSSARY.md](../../GLOSSARY.md).
 | [0039](./0039-multi-transition-algebra.md)             | A routing LABEL becomes a transition PROGRAM                                | Accepted |
 | [0040](./0040-cross-target-motion-parity.md)           | Cross-target motion parity: one kernel + a differential oracle              | Accepted |
 | [0041](./0041-per-property-motion-tracks.md)           | Individual transforms, a generalized `linear()` easing vocabulary, retired mixed-easing diagnostic | Accepted |
+| [0042](./0042-effect-shed.md)                          | Effect shed (LiteShip-native substrate)                                     | Accepted |
 
 ## Template
 

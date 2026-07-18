@@ -45,8 +45,7 @@
  * @module
  */
 
-import { Effect, Queue } from 'effect';
-import { Boundary, Compositor, TokenBuffer } from '@czap/core';
+import { Boundary, CellKernel, Compositor, TokenBuffer } from '@czap/core';
 import type { CompositeState } from '@czap/core';
 import type { Quantizer } from '@czap/core';
 import { InvariantViolationError } from '@czap/error';
@@ -433,18 +432,18 @@ function compositorOp(): () => void {
  * the exact mechanism `computeStateSync` runs on the hot path, in isolation (no
  * `Effect.runSync` harness, which would mask it; see {@link measureTransientBytesPerOp}).
  *
- * The publish is: stash the live state, then fan out to a compositor-owned listener
- * set. With no `changes` subscriber the set is empty and the publish allocates
- * NOTHING (the eliminated `SubscriptionRef.set` minted a PubSub/replay-buffer node
- * here regardless, ≈ 22 B/op). `withSubscriber` attaches the real `Stream.callback`
- * bridge listener — a `Queue.offerUnsafe` into an UNBOUNDED queue (the bridge's
- * actual buffer; drained each op so nothing is retained) — the only per-publish
- * allocation when a subscriber is live.
+ * The publish is the real native path: a no-replay {@link CellKernel.fanout}
+ * `publish` — the exact channel the compositor's `changes` IS (see blend.ts /
+ * cell.ts). With no subscriber the registration set is empty and the publish
+ * allocates NOTHING. `withSubscriber` attaches a live consumer of `changes`; the
+ * CellKernel fan-out is generation-bounded with no per-dispatch snapshot
+ * allocation, so even WITH a live subscriber the publish churns ~nothing — the
+ * Wave-8 win over the retired `Stream.callback` / `Queue.offerUnsafe` bridge
+ * (which minted ≈ 13 B/op per enqueue).
  *
  * This measures the PRIMITIVE, not a logic mirror of the compose body (whose
- * zero-alloc the live gate already proves); the wiring that the compositor's publish
- * IS this listener-set fan-out (never `SubscriptionRef.set`) is pinned by the source
- * drift guard `tests/property/compositor-zero-alloc.test.ts`.
+ * zero-alloc the live gate already proves); that the compositor's publish IS this
+ * CellKernel fan-out is pinned by `tests/property/compositor-zero-alloc.test.ts`.
  */
 function compositorPublishOp(withSubscriber: boolean): () => void {
   const fixedState: CompositeState = {
@@ -452,25 +451,23 @@ function compositorPublishOp(withSubscriber: boolean): () => void {
     blend: {},
     outputs: { css: {}, glsl: {}, wgsl: {}, aria: {} },
   };
-  const live: { current: CompositeState } = { current: fixedState };
-  const listeners = new Set<(state: CompositeState) => void>();
+  // The compositor's `changes` channel: a no-replay CellKernel fanout.
+  const channel = CellKernel.fanout<CompositeState>();
   if (withSubscriber) {
-    const queue = Effect.runSync(Queue.unbounded<CompositeState>());
-    listeners.add((state) => {
-      Queue.offerUnsafe(queue, state);
+    // A live consumer of `changes` — retains only the latest, dropped each op so
+    // nothing accumulates across the window (a genuine subscriber, not a leak).
+    const sink: { current: CompositeState | null } = { current: null };
+    channel.subscribe((state) => {
+      sink.current = state;
     });
     return () => {
-      live.current = fixedState;
-      for (const notify of listeners) notify(fixedState);
-      // Drain so nothing is retained across ops (a live consumer of `changes`).
-      while (Queue.takeUnsafe(queue) !== undefined) {
-        /* drain */
-      }
+      channel.publish(fixedState);
+      sink.current = null;
     };
   }
+  // No subscriber: the publish fans out to an empty set and allocates nothing.
   return () => {
-    live.current = fixedState;
-    for (const notify of listeners) notify(fixedState);
+    channel.publish(fixedState);
   };
 }
 
@@ -532,13 +529,13 @@ export function runAllocGate(): readonly AllocResult[] {
  * The TRANSIENT gate — proves the compositor's reactive publish also CHURNS nothing
  * per op (the stricter, second half of "genuinely zero-allocation"). Two fixtures:
  *
- *  - NO subscriber (the common compose tick): the raw listener-set publish fans out
- *    to an empty set and allocates NOTHING (≈ 0 B/op, dead stable). The eliminated
- *    `SubscriptionRef.set` minted a PubSub/replay-buffer node every publish (≈ 22
- *    B/op) even here — so this is the budget that catches a regression to it.
- *  - WITH a live subscriber: the publish enqueues via the `Stream.callback` bridge's
- *    `Queue.offerUnsafe` (≈ 13 B/op, deterministic) — far under the old ≈ 48 B/op
- *    PubSub-with-subscriber publish, and held to a justified subscriber budget.
+ *  - NO subscriber (the common compose tick): the CellKernel fanout publish fans out
+ *    to an empty registration set and allocates NOTHING (≈ 0 B/op, dead stable).
+ *  - WITH a live subscriber: the CellKernel fanout is generation-bounded with no
+ *    per-dispatch snapshot allocation, so the publish STILL churns nothing (≈ 0
+ *    B/op) — the Wave-8 win over the retired `Stream.callback` / `Queue.offerUnsafe`
+ *    bridge (≈ 13 B/op per enqueue). The subscriber budget is generous headroom that
+ *    still catches a regression to a per-publish-allocating bridge.
  *
  * This is the number the live gate is structurally blind to.
  */
@@ -572,12 +569,12 @@ export function runTransientGate(): readonly TransientResult[] {
  *  - token-buffer push+drainInto (LIVE) vs the retaining reference (live growth).
  *  - compositor compute          (LIVE) vs the retaining reference (live growth).
  *  - compositor publish/no-sub (TRANSIENT) vs the churning reference (churn).
- * The live-subscriber publish is a DELIBERATELY non-zero ≈ 13 B/op — the one path
- * that legitimately allocates the bridge `Queue.offerUnsafe` enqueue. It is NOT
- * claimed zero-alloc, so it is held to a BOUNDED (not zero) relative ceiling: it must
- * still be cheaper than allocating a whole churn object per op (ratio < ~0.75 of the
- * churning reference) — a portable upper bound that catches a regression to the old
- * ≈ 48 B/op PubSub-with-subscriber publish (which would exceed the churn reference).
+ * The live-subscriber publish is now ALSO ~zero-alloc: the CellKernel fanout that
+ * replaced the `Queue.offerUnsafe` bridge is generation-bounded with no per-dispatch
+ * allocation. It is held to a BOUNDED (not zero) relative ceiling — it must stay far
+ * cheaper than allocating a whole churn object per op (ratio < ~0.75 of the churning
+ * reference) — a portable upper bound retained as generous headroom that still
+ * catches a regression to a per-publish-allocating bridge.
  */
 export const RELATIVE_SUBSCRIBER_MAX_RATIO = 0.75;
 

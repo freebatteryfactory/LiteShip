@@ -1,7 +1,13 @@
 # ADR-0005 — Effect boundary rules
 
-**Status:** Accepted
+**Status:** Superseded by [ADR-0042](./0042-effect-shed.md)
 **Date:** 2026-04-21
+
+> **Historical bridge.** Wave 8 shed `effect` from the monorepo entirely; the six
+> categories below no longer describe live code. This ADR is retained — not
+> erased — because it records the boundary reasoning the LiteShip-native substrate
+> replaced. See ADR-0042 for where each responsibility moved (Scope → `Lifetime`,
+> `SubscriptionRef`/`Stream` → `CellKernel`, the typed error channel → `Result`).
 
 ## Context
 

@@ -3,11 +3,6 @@ packages:
   - 'examples/*'
   - 'tests/integration/astro'
   - 'tests/integration/vite'
-# The single sanctioned prerelease line. Every workspace manifest references it
-# as "catalog:", so per-package range agreement is structural (pnpm resolves all
-# references to this one value); pnpm.overrides.effect pins the resolved floor.
-catalog:
-  effect: '>=4.0.0-beta.32 <5'
 allowBuilds:
   '@ast-grep/cli': true
   esbuild: false
