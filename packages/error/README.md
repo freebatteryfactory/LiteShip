@@ -1,6 +1,6 @@
 # @czap/error
 
-The one LiteShip error algebra — a composable, tagged-error coproduct with zero runtime dependencies. Errors are tagged DATA values, not a class hierarchy: each variant is a `_tag`-discriminated record that is *also* a real `Error` (stack trace + `instanceof Error`), works with both `throw` and `Effect.fail`, and is extended by composing, never editing.
+The one LiteShip error algebra — a composable, tagged-error coproduct with zero runtime dependencies. Errors are tagged DATA values, not a class hierarchy: each variant is a `_tag`-discriminated record that is *also* a real `Error` (stack trace + `instanceof Error`), works with both `throw` and errors-as-values (a `Result` err-arm), and is extended by composing, never editing.
 
 ## Install
 
@@ -8,7 +8,7 @@ The one LiteShip error algebra — a composable, tagged-error coproduct with zer
 pnpm add @czap/error
 ```
 
-Zero runtime deps — it pulls in nothing, not even `effect`. The Effect interop below works because the records are plain `_tag` failures; bring your own `effect` only if you already use it.
+Zero runtime deps — it pulls in nothing. Each variant is a plain `_tag` record, so it also slots into any tag-keyed error channel you already run (including Effect's `catchTag`) with **no `effect` import here** — bring your own only if you use it. LiteShip itself shed Effect in Wave 8; this stays a compatibility property, not a dependency.
 
 ## 30 seconds
 
@@ -31,14 +31,21 @@ function explain(err: ValidationError | ParseError): string {
 }
 ```
 
-The exact same value is a first-class Effect failure — no `effect` import inside `@czap/error`, because `Effect.catchTag` keys on the `_tag` these records already carry:
+The exact same value travels as data through a `Result` — errors-as-values, never a throw:
 
 ```ts
-import { Effect } from 'effect';
+import { ok, err, type Result } from '@czap/error';
 
-Effect.fail(ParseError('profile.json', 'expected object', { offset: 12 }))
-  .pipe(Effect.catchTag('ParseError', (e) => Effect.succeed(e.detail)));
+function decode(raw: string): Result<Config, ParseError> {
+  if (!raw) return err(ParseError('profile.json', 'expected object', { offset: 12 }));
+  return ok(parse(raw));
+}
+
+const r = decode(input);
+if (!r.ok) report(r.error.source, r.error.detail); // the failure as an inspectable value
 ```
+
+Because the records are plain `_tag` failures, the same value also drops into any tag-keyed error channel a downstream project runs — e.g. `Effect.catchTag('ParseError', …)` if you use Effect — with no `effect` dependency here.
 
 ## Where it sits
 

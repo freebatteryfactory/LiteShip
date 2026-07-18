@@ -36,7 +36,6 @@
   ],
   "peerDependencies": {
     "astro": ">=7.0.0 <8",
-    "effect": "catalog:",
     "vite": ">=8.0.0"
   },
   "peerDependenciesMeta": {

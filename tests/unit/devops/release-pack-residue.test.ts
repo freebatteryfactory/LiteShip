@@ -141,11 +141,13 @@ function residueViolations(ctx: ResidueContext): string[] {
 // release.yml's own publish list) rather than derived — but drift-checked below
 // so a manifest change that empties the set of catalog:/workspace: specs fails
 // loud rather than leaving the guard vacuous. Picked by reading the manifests:
-//   - _spine    : effect `catalog:` peer, ZERO workspace deps (fast baseline).
-//   - quantizer : a leaf (only `liteship` depends on it) with effect `catalog:`
-//                 peer AND two `workspace:*` deps.
+//   - _spine    : ZERO workspace deps (astro/vite plain-range peers) — fast baseline.
+//   - quantizer : a leaf (only `liteship` depends on it) with two `workspace:*` deps.
 //   - core      : the workspace hub — three `workspace:*` deps + external plain
-//                 deps (^ ranges) that must pass through UNCHANGED + `catalog:` peer.
+//                 deps (^ ranges) that must pass through UNCHANGED.
+// (Wave 8 shed `effect`, the monorepo's ONLY `catalog:` dep — so no real manifest
+//  carries a catalog: spec any more; catalog:-residue detection now lives solely in
+//  the synthetic negative control below.)
 // ---------------------------------------------------------------------------
 const REPRESENTATIVE_DIRS: readonly string[] = ['_spine', 'quantizer', 'core'];
 
@@ -158,7 +160,7 @@ describe('release-pack residue: representative set stays meaningful', () => {
     }
   });
 
-  it('the set collectively carries at least one catalog: and one workspace: source spec', () => {
+  it('the set collectively carries at least one workspace: source spec', () => {
     const specs = REPRESENTATIVE_DIRS.flatMap((dir) => {
       const manifest = SOURCE_BY_DIR.get(dir);
       return [
@@ -166,7 +168,9 @@ describe('release-pack residue: representative set stays meaningful', () => {
         ...Object.values(manifest?.peerDependencies ?? {}),
       ];
     });
-    expect(specs.some((spec) => spec.startsWith('catalog:'))).toBe(true);
+    // Post-Wave-8 no real manifest carries a `catalog:` spec (effect was the only
+    // catalog dep); the workspace: residue class is what real packing exercises.
+    // catalog:-residue detection stays covered by the synthetic negative control.
     expect(specs.some((spec) => spec.startsWith('workspace:'))).toBe(true);
   });
 });
@@ -208,6 +212,11 @@ describe('packed release artifacts carry no workspace/catalog residue', () => {
 // red-prove — "hand a doctored manifest with a catalog: left in to the assertion
 // helper and watch it red" — made permanent, and it pins that the clean path is
 // non-vacuous (a doctored value that were left resolved would fail these).
+//
+// NOTE: the `effect` name below is SYNTHETIC illustrative fixture data — a
+// representative `catalog:` spec. `residueViolations` is name-agnostic, so this
+// coverage stands unchanged after effect's real removal (Wave 8); it is the ONLY
+// place a `catalog:` spec now appears, since no real manifest carries one.
 // ---------------------------------------------------------------------------
 describe('residueViolations detects each residue class (negative control)', () => {
   const cleanPacked: PackedManifest = {

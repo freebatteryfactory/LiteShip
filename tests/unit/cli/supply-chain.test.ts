@@ -94,8 +94,11 @@ describe('lockfile policy — REAL repo is compliant', () => {
     expect(facts.violations, JSON.stringify(facts.violations, null, 2)).toEqual([]);
   });
 
-  it('the effect prerelease is the SINGLE named exception (not a weakened rule)', () => {
-    expect(LITESHIP_LOCKFILE_POLICY.prereleaseAllowlist.map((e) => e.dependency)).toEqual(['effect']);
+  it('the prerelease allowlist is EMPTY (effect shed in Wave 8; the exception mechanism is retained)', () => {
+    // effect was the monorepo's one sanctioned prerelease exception; Wave 8 shed it,
+    // so the allowlist is now empty — ANY prerelease runtime dep reds the policy.
+    // The mechanism (a downstream project can name its own) is unchanged.
+    expect(LITESHIP_LOCKFILE_POLICY.prereleaseAllowlist).toEqual([]);
     expect(LITESHIP_LOCKFILE_POLICY.allowNonRegistryResolutions).toBe(false);
   });
 });

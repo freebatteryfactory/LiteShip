@@ -14,7 +14,6 @@
  *
  * @module
  */
-import { Effect } from 'effect';
 import { StateCellStore, mintTransition, sealGraph, sealNode } from '@czap/core';
 import type {
   CellMeta,
@@ -78,15 +77,13 @@ export function crossingReceipt(): Promise<{
   readonly receipt: ReceiptEnvelope;
   readonly transition: DiscreteStateTransition;
 }> {
-  cachedFrame ??= Effect.runPromise(
-    Effect.gen(function* () {
-      const store = StateCellStore.create();
-      store.register('workspace', ['collapsed', 'expanded']);
-      const previous = store.snapshot('workspace'); // collapsed, generation 0
-      const next = store.applyDiscrete('workspace', 'expanded'); // expanded, generation 1
-      return yield* mintTransition(previous, next, { base: INITIAL_GRAPH.id, resultId: CURRENT_GRAPH.id });
-    }),
-  );
+  cachedFrame ??= (async () => {
+    const store = StateCellStore.create();
+    store.register('workspace', ['collapsed', 'expanded']);
+    const previous = store.snapshot('workspace'); // collapsed, generation 0
+    const next = store.applyDiscrete('workspace', 'expanded'); // expanded, generation 1
+    return mintTransition(previous, next, { base: INITIAL_GRAPH.id, resultId: CURRENT_GRAPH.id });
+  })();
   return cachedFrame;
 }
 

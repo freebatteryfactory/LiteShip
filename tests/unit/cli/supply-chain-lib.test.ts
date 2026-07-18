@@ -328,24 +328,36 @@ describe('lockfile policy — synthetic decisions', () => {
     expect(v).toEqual([]);
   });
 
-  it('the allowlisted `effect` prerelease is permitted in a published runtime dep', () => {
+  it('the prerelease allowlist MECHANISM permits a named dep; the now-empty default reds', () => {
+    // Wave 8 shed `effect` — LiteShip's own allowlist is EMPTY, so an unlisted
+    // prerelease reds. The exception mechanism survives for downstream policies:
+    // a policy that NAMES the dep still permits it.
     const lf = parseLockfile(
       [
         `lockfileVersion: '9.0'`,
         `importers:`,
         `  packages/cli:`,
         `    dependencies:`,
-        `      effect:`,
-        `        specifier: '>=4.0.0-beta.32 <5'`,
-        `        version: 4.0.0-beta.32`,
+        `      somelib:`,
+        `        specifier: '>=1.0.0-beta.0 <2'`,
+        `        version: 1.0.0-beta.0`,
         `packages:`,
-        `  'effect@4.0.0-beta.32':`,
+        `  'somelib@1.0.0-beta.0':`,
         `    resolution: {integrity: sha512-x}`,
         ``,
       ].join('\n'),
     );
-    const v = evaluateLockfilePolicy(lf, LITESHIP_LOCKFILE_POLICY, published);
-    expect(v.filter((x) => x.code === 'prerelease-range')).toEqual([]);
+    // Empty default → the prerelease reds.
+    const redded = evaluateLockfilePolicy(lf, LITESHIP_LOCKFILE_POLICY, published);
+    expect(redded.some((x) => x.code === 'prerelease-range')).toBe(true);
+
+    // A custom policy naming the dep → permitted (the mechanism still works).
+    const allowing = {
+      ...LITESHIP_LOCKFILE_POLICY,
+      prereleaseAllowlist: [{ dependency: 'somelib', reason: 'reviewed downstream seam' }],
+    };
+    const permitted = evaluateLockfilePolicy(lf, allowing, published);
+    expect(permitted.filter((x) => x.code === 'prerelease-range')).toEqual([]);
   });
 
   it('a non-prerelease range in a published runtime dep is fine (only prerelease forms bite)', () => {

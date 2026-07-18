@@ -14,11 +14,15 @@ union types, given behaviour by standalone functions, and thrown/failed as
 real `Error` values (stack traces + `instanceof Error`) via [taggedError](functions/taggedError.md).
 
 Two faces, one value:
-- **Effect** packages: `Effect.fail(ValidationError(…))` +
-  `Effect.catchTag('ValidationError', …)` — `catchTag` keys on `_tag`, so the
-  plain records here are first-class Effect failures with no `effect` import.
-- **Plain** packages: `throw ValidationError(…)` + `hasTag(e, 'ValidationError')`
-  / `matchTag(e, …)` — same value, no `effect` dependency.
+- **Thrown**: `throw ValidationError(…)` + `hasTag(e, 'ValidationError')` /
+  `matchTag(e, …)` — a real `Error` on the throw channel, branched by `_tag`.
+- **Errors-as-values**: return it in a [Result](type-aliases/Result.md) err-arm; the caller
+  discriminates on `.ok` and reads the failure as data, never a throw.
+
+Because each record is just a `_tag`-keyed value, it also drops unchanged into
+any tag-keyed error channel a downstream project already runs — e.g. Effect's
+`catchTag` — with no `effect` import here. (LiteShip itself shed Effect in
+Wave 8; this stays a compatibility property, never a dependency.)
 
 Each variant name is BOTH the type and the constructor (declaration merging),
 mirroring the `@czap/core` brand idiom: `ValidationError` is a type in type

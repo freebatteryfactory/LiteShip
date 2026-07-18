@@ -19,10 +19,11 @@ import {
   DEFAULT_DIR,
   type RunIo,
 } from '../../../packages/create-liteship/src/index.js';
-// The workspace version and the pnpm catalog effect range are shared repo truths
-// owned by tests/support/repo-truths.ts (scar S0.4). The scaffold drift guards
-// below read them through the single owner; their ASSERTIONS are unchanged.
-import { effectCatalogRange, workspaceVersion } from '../../support/repo-truths.js';
+// The workspace version is a shared repo truth owned by
+// tests/support/repo-truths.ts (scar S0.4). The scaffold drift guards below read
+// it through the single owner. (Wave 8: the effect catalog-range truth was
+// retired with effect itself — the template no longer ships effect.)
+import { workspaceVersion } from '../../support/repo-truths.js';
 
 const EXPECTED_TREE = [
   '.gitignore',
@@ -76,7 +77,7 @@ describe('create-liteship scaffold', () => {
     // Every dependency must be a plain published range — workspace:/file:/link:
     // specs cannot install outside this monorepo.
     expect(Object.keys(manifest.dependencies)).toEqual(
-      expect.arrayContaining(['@czap/astro', '@czap/core', 'astro', 'effect', 'typescript']),
+      expect.arrayContaining(['@czap/astro', '@czap/core', 'astro', 'typescript']),
     );
     for (const [dep, spec] of Object.entries(manifest.dependencies)) {
       expect(spec, dep).toMatch(/^\^\d+\.\d+\.\d+/);
@@ -166,23 +167,19 @@ describe('create-liteship scaffold', () => {
     }
   });
 
-  // A2 gate: the scaffold must ship `effect` (the @czap/core/@czap/astro peer),
-  // pinned to the caret floor of the sanctioned effect range — otherwise a fresh
-  // `npm create liteship` lands with an unmet peer dependency. @czap/core's peer is
-  // now a `catalog:` reference, so the SINGLE source of truth for the effect range
-  // is the pnpm-workspace.yaml catalog entry (`effect: '>=X <5'`) that pnpm resolves
-  // it against; derive the caret floor from THAT, not a literal.
-  it('template effect pins the caret floor of the workspace catalog effect range (A2)', () => {
-    const catalogRange = effectCatalogRange();
-    const floor = catalogRange?.match(/>=(\S+)/)?.[1];
-    expect(floor, 'pnpm-workspace.yaml catalog must declare an effect floor (>=X)').toBeTruthy();
+  // A2 gate (Wave 8): the scaffold must NOT ship `effect`. It was @czap/core's one
+  // peer; the shed moved every behavior effect carried to a LiteShip-native owner,
+  // so a fresh `npm create liteship` must land with zero effect footprint — no
+  // stale peer to install, no prerelease range to resolve.
+  it('template ships no effect dependency (A2 — effect shed in Wave 8)', () => {
     const manifest = JSON.parse(readFileSync(join(defaultTemplateDir(), 'package.json'), 'utf8')) as {
-      dependencies: Record<string, string>;
+      dependencies?: Record<string, string>;
+      devDependencies?: Record<string, string>;
+      peerDependencies?: Record<string, string>;
     };
-    expect(
-      manifest.dependencies.effect,
-      'template effect must be the caret floor of the workspace catalog effect range',
-    ).toBe(`^${floor}`);
+    expect(manifest.dependencies?.effect).toBeUndefined();
+    expect(manifest.devDependencies?.effect).toBeUndefined();
+    expect(manifest.peerDependencies?.effect).toBeUndefined();
   });
 });
 
