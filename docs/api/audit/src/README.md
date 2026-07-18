@@ -69,6 +69,8 @@ package — it stays repo-local and composes these passes.
 - [SymbolReferenceOracleInput](interfaces/SymbolReferenceOracleInput.md)
 - [TaintRegistry](interfaces/TaintRegistry.md)
 - [TopologyCoverageEntry](interfaces/TopologyCoverageEntry.md)
+- [TransitionBuildOptions](interfaces/TransitionBuildOptions.md)
+- [TransitionRun](interfaces/TransitionRun.md)
 
 ## Type Aliases
 
@@ -80,6 +82,7 @@ package — it stays repo-local and composes these passes.
 - [MutantTestRunner](type-aliases/MutantTestRunner.md)
 - [MutantVerdict](type-aliases/MutantVerdict.md)
 - [MutationOperatorId](type-aliases/MutationOperatorId.md)
+- [OracleOutcome](type-aliases/OracleOutcome.md)
 - [PackagePathResolver](type-aliases/PackagePathResolver.md)
 
 ## Variables
@@ -116,6 +119,7 @@ package — it stays repo-local and composes these passes.
 - [buildPackageExportTargets](functions/buildPackageExportTargets.md)
 - [buildRepoIR](functions/buildRepoIR.md)
 - [buildRepoIRTaint](functions/buildRepoIRTaint.md)
+- [buildTransitionFacts](functions/buildTransitionFacts.md)
 - [codeOnlyAST](functions/codeOnlyAST.md)
 - [compareSeverity](functions/compareSeverity.md)
 - [conditionSourceDigest](functions/conditionSourceDigest.md)

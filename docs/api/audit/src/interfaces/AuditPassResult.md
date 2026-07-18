@@ -6,7 +6,7 @@
 
 # Interface: AuditPassResult
 
-Defined in: [audit/src/index.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/index.ts#L44)
+Defined in: [audit/src/index.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/index.ts#L45)
 
 The three audit passes plus their merged counts, run against one profile.
 
@@ -16,7 +16,7 @@ The three audit passes plus their merged counts, run against one profile.
 
 > `readonly` **counts**: [`AuditCounts`](AuditCounts.md)
 
-Defined in: [audit/src/index.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/index.ts#L48)
+Defined in: [audit/src/index.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/index.ts#L49)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [audit/src/index.ts:48](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **findings**: readonly [`AuditFinding`](AuditFinding.md)[]
 
-Defined in: [audit/src/index.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/index.ts#L49)
+Defined in: [audit/src/index.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/index.ts#L50)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [audit/src/index.ts:49](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **integrity**: [`AuditSectionResult`](AuditSectionResult.md)\<[`IntegritySummary`](IntegritySummary.md)\>
 
-Defined in: [audit/src/index.ts:46](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/index.ts#L46)
+Defined in: [audit/src/index.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/index.ts#L47)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [audit/src/index.ts:46](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **structure**: [`AuditSectionResult`](AuditSectionResult.md)\<[`StructureSummary`](StructureSummary.md)\>
 
-Defined in: [audit/src/index.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/index.ts#L45)
+Defined in: [audit/src/index.ts:46](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/index.ts#L46)
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: [audit/src/index.ts:45](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **suppressed**: readonly [`AuditSuppression`](AuditSuppression.md)[]
 
-Defined in: [audit/src/index.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/index.ts#L50)
+Defined in: [audit/src/index.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/index.ts#L51)
 
 ***
 
@@ -56,4 +56,4 @@ Defined in: [audit/src/index.ts:50](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **surface**: [`AuditSectionResult`](AuditSectionResult.md)\<[`SurfaceSummary`](SurfaceSummary.md)\>
 
-Defined in: [audit/src/index.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/index.ts#L47)
+Defined in: [audit/src/index.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/index.ts#L48)

@@ -182,6 +182,14 @@ export function scopeContextByLevel(
     // mutationDivergenceGate (an L4 gate, so always scoped) would see no facts and
     // throw `mutation-facts unavailable` even though the host injected them.
     ...(context.mutation !== undefined ? { mutation: context.mutation } : {}),
+    // Likewise the injected transition-conformance facts (Wave 5.5, the bisimulation
+    // cage): the facts describe ONE conformance family (not per-file), so file-scoping
+    // never narrows them — they pass through unchanged. Omit the key when absent.
+    // WITHOUT this pass-through the transitionConformanceGate (an L4 gate, so always
+    // scoped) would see no facts and throw `transition-facts unavailable` even though the
+    // host injected them — the same scoped-context drop the supplyChain/mutation
+    // pass-throughs above fix.
+    ...(context.transition !== undefined ? { transition: context.transition } : {}),
     // Likewise the injected MC/DC facts (the avionics MC/DC tier): each
     // McdcConditionOutcome carries its own `file` + (line, column) (the gate scopes
     // itself to the file's propagated level via the IR), so file-scoping never narrows

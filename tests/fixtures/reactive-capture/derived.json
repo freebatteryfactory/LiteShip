@@ -1,0 +1,305 @@
+[
+  {
+    "primitive": "derived",
+    "seed": "initial-value",
+    "traceDigest": "fnv1a:151dbbcc",
+    "observationDigest": "fnv1a:98025386",
+    "history": [
+      {
+        "_tag": "subscribe",
+        "sink": "a"
+      },
+      {
+        "_tag": "read"
+      }
+    ],
+    "observation": {
+      "primitive": "derived",
+      "opCount": 2,
+      "subscribers": [
+        {
+          "sink": "a",
+          "subscribedAtOp": 0,
+          "deliveries": [
+            100,
+            100
+          ],
+          "interruptedOnDispose": false,
+          "completed": false,
+          "errored": false
+        }
+      ],
+      "reads": [
+        {
+          "atOp": 1,
+          "value": 100
+        }
+      ],
+      "finalValue": 100,
+      "disposed": false
+    }
+  },
+  {
+    "primitive": "derived",
+    "seed": "recompute-on-source",
+    "traceDigest": "fnv1a:7befa366",
+    "observationDigest": "fnv1a:6c223d96",
+    "history": [
+      {
+        "_tag": "subscribe",
+        "sink": "a"
+      },
+      {
+        "_tag": "set",
+        "value": 5
+      },
+      {
+        "_tag": "read"
+      }
+    ],
+    "observation": {
+      "primitive": "derived",
+      "opCount": 3,
+      "subscribers": [
+        {
+          "sink": "a",
+          "subscribedAtOp": 0,
+          "deliveries": [
+            100,
+            100,
+            105
+          ],
+          "interruptedOnDispose": false,
+          "completed": false,
+          "errored": false
+        }
+      ],
+      "reads": [
+        {
+          "atOp": 2,
+          "value": 105
+        }
+      ],
+      "finalValue": 105,
+      "disposed": false
+    }
+  },
+  {
+    "primitive": "derived",
+    "seed": "duplicate-source",
+    "traceDigest": "fnv1a:e077a63b",
+    "observationDigest": "fnv1a:17e10d6b",
+    "history": [
+      {
+        "_tag": "subscribe",
+        "sink": "a"
+      },
+      {
+        "_tag": "set",
+        "value": 5
+      },
+      {
+        "_tag": "set",
+        "value": 5
+      },
+      {
+        "_tag": "set",
+        "value": 8
+      },
+      {
+        "_tag": "read"
+      }
+    ],
+    "observation": {
+      "primitive": "derived",
+      "opCount": 5,
+      "subscribers": [
+        {
+          "sink": "a",
+          "subscribedAtOp": 0,
+          "deliveries": [
+            100,
+            100,
+            105,
+            105,
+            108
+          ],
+          "interruptedOnDispose": false,
+          "completed": false,
+          "errored": false
+        }
+      ],
+      "reads": [
+        {
+          "atOp": 4,
+          "value": 108
+        }
+      ],
+      "finalValue": 108,
+      "disposed": false
+    }
+  },
+  {
+    "primitive": "derived",
+    "seed": "subscriber-order",
+    "traceDigest": "fnv1a:85dd2b6a",
+    "observationDigest": "fnv1a:61f05d5b",
+    "history": [
+      {
+        "_tag": "subscribe",
+        "sink": "a"
+      },
+      {
+        "_tag": "subscribe",
+        "sink": "b"
+      },
+      {
+        "_tag": "set",
+        "value": 5
+      }
+    ],
+    "observation": {
+      "primitive": "derived",
+      "opCount": 3,
+      "subscribers": [
+        {
+          "sink": "a",
+          "subscribedAtOp": 0,
+          "deliveries": [
+            100,
+            100,
+            105
+          ],
+          "interruptedOnDispose": false,
+          "completed": false,
+          "errored": false
+        },
+        {
+          "sink": "b",
+          "subscribedAtOp": 1,
+          "deliveries": [
+            100,
+            105
+          ],
+          "interruptedOnDispose": false,
+          "completed": false,
+          "errored": false
+        }
+      ],
+      "reads": [],
+      "finalValue": 105,
+      "disposed": false
+    }
+  },
+  {
+    "primitive": "derived",
+    "seed": "late-subscriber-replay",
+    "traceDigest": "fnv1a:fb122fef",
+    "observationDigest": "fnv1a:db0cea2d",
+    "history": [
+      {
+        "_tag": "subscribe",
+        "sink": "a"
+      },
+      {
+        "_tag": "set",
+        "value": 5
+      },
+      {
+        "_tag": "subscribe",
+        "sink": "b"
+      },
+      {
+        "_tag": "read"
+      }
+    ],
+    "observation": {
+      "primitive": "derived",
+      "opCount": 4,
+      "subscribers": [
+        {
+          "sink": "a",
+          "subscribedAtOp": 0,
+          "deliveries": [
+            100,
+            100,
+            105
+          ],
+          "interruptedOnDispose": false,
+          "completed": false,
+          "errored": false
+        },
+        {
+          "sink": "b",
+          "subscribedAtOp": 2,
+          "deliveries": [
+            105
+          ],
+          "interruptedOnDispose": false,
+          "completed": false,
+          "errored": false
+        }
+      ],
+      "reads": [
+        {
+          "atOp": 3,
+          "value": 105
+        }
+      ],
+      "finalValue": 105,
+      "disposed": false
+    }
+  },
+  {
+    "primitive": "derived",
+    "seed": "disposal",
+    "traceDigest": "fnv1a:c3b8563b",
+    "observationDigest": "fnv1a:58abb746",
+    "history": [
+      {
+        "_tag": "subscribe",
+        "sink": "a"
+      },
+      {
+        "_tag": "set",
+        "value": 5
+      },
+      {
+        "_tag": "dispose"
+      },
+      {
+        "_tag": "set",
+        "value": 9
+      },
+      {
+        "_tag": "read"
+      }
+    ],
+    "observation": {
+      "primitive": "derived",
+      "opCount": 5,
+      "subscribers": [
+        {
+          "sink": "a",
+          "subscribedAtOp": 0,
+          "deliveries": [
+            100,
+            100,
+            105
+          ],
+          "interruptedOnDispose": true,
+          "completed": false,
+          "errored": false
+        }
+      ],
+      "reads": [
+        {
+          "atOp": 4,
+          "value": 105
+        }
+      ],
+      "finalValue": 105,
+      "disposed": true
+    }
+  }
+]

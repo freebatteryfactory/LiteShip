@@ -8,7 +8,7 @@
 
 > **memoryContext**(`files`, `repoRoot?`): [`GateContext`](../interfaces/GateContext.md)
 
-Defined in: [gauntlet/src/engine.ts:468](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/engine.ts#L468)
+Defined in: [gauntlet/src/engine.ts:476](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/engine.ts#L476)
 
 An in-memory [GateContext](../interfaces/GateContext.md) over a `path → text` map — the substrate for
 fixtures and tests. A gate written against [GateContext](../interfaces/GateContext.md) runs against

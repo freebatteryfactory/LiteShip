@@ -23,6 +23,7 @@ export * from './mutation-engine.js';
 export * from './mutation-verdict.js';
 export * from './mutation-equivalents.js';
 export * from './mutation-facts-build.js';
+export * from './transition-facts-build.js';
 export * from './mcdc-engine.js';
 export * from './mcdc-facts-build.js';
 export * from './structure.js';

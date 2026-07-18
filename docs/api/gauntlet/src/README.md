@@ -120,6 +120,8 @@ change underneath them.
 - [TaintPathStep](interfaces/TaintPathStep.md)
 - [TraceabilityDivergence](interfaces/TraceabilityDivergence.md)
 - [TraceabilityFacts](interfaces/TraceabilityFacts.md)
+- [TransitionCase](interfaces/TransitionCase.md)
+- [TransitionFacts](interfaces/TransitionFacts.md)
 - [Waiver](interfaces/Waiver.md)
 - [WaiverApplication](interfaces/WaiverApplication.md)
 - [WaiverSurface](interfaces/WaiverSurface.md)
@@ -157,6 +159,7 @@ change underneath them.
 - [StandardsElement](type-aliases/StandardsElement.md)
 - [SymbolId](type-aliases/SymbolId.md)
 - [SymbolKind](type-aliases/SymbolKind.md)
+- [TransitionStatus](type-aliases/TransitionStatus.md)
 - [WeakeningClass](type-aliases/WeakeningClass.md)
 
 ## Variables
@@ -178,6 +181,7 @@ change underneath them.
 - [crdtLawsGate](variables/crdtLawsGate.md)
 - [declaredFixProtocolGate](variables/declaredFixProtocolGate.md)
 - [DEFAULT\_GAUNTLET\_GLOBS](variables/DEFAULT_GAUNTLET_GLOBS.md)
+- [DIVERGENCE\_SEVERITY\_BY\_LEVEL](variables/DIVERGENCE_SEVERITY_BY_LEVEL.md)
 - [FACT\_CHANNELS](variables/FACT_CHANNELS.md)
 - [FACT\_KINDS](variables/FACT_KINDS.md)
 - [fuzzCorpusGate](variables/fuzzCorpusGate.md)
@@ -224,6 +228,8 @@ change underneath them.
 - [symbolOrphanDivergenceGate](variables/symbolOrphanDivergenceGate.md)
 - [taintFlowGate](variables/taintFlowGate.md)
 - [traceabilityBridgeGate](variables/traceabilityBridgeGate.md)
+- [TRANSITION\_FAMILY\_LEVEL](variables/TRANSITION_FAMILY_LEVEL.md)
+- [transitionConformanceGate](variables/transitionConformanceGate.md)
 - [UNMEASURED\_PROOF](variables/UNMEASURED_PROOF.md)
 - [UNMEASURED\_WEAK\_LINK\_SEVERITY](variables/UNMEASURED_WEAK_LINK_SEVERITY.md)
 
@@ -283,6 +289,7 @@ change underneath them.
 - [requireMcdc](functions/requireMcdc.md)
 - [requireMutation](functions/requireMutation.md)
 - [requireTaint](functions/requireTaint.md)
+- [requireTransition](functions/requireTransition.md)
 - [runGates](functions/runGates.md)
 - [runGauntletOnRepo](functions/runGauntletOnRepo.md)
 - [sanctionedSkipFor](functions/sanctionedSkipFor.md)

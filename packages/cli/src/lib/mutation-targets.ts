@@ -104,6 +104,24 @@ const L4_SEAM_CANDIDATES: readonly string[] = [
   'packages/core/src/dag.ts',
   'packages/core/src/content-address.ts',
   'packages/core/src/graph-patch.ts',
+  // The Wave-5.5 REACTIVE KERNELS (the transition cage's mutation retarget). Enrolling
+  // the pinned kernel + the reactive primitives as mutation targets aims the existing
+  // deterministic engine at the exact ordering/replay/emission logic the fc.commands
+  // single-oracle model checks: a SURVIVING ordering/replay mutant here proves the model
+  // (and its law-table tests) has a HOLE — no external mutator adopted, the same engine
+  // retargeted. Each is intersected with the LIVE effective-L4 set in l4SeamTargets, so a
+  // path the propagated map does NOT yet rate L4 (the reactive kernels resolve L4 only
+  // once the assurance-map redline lands — remaining-waves.md §"assurance matrix") is
+  // surfaced as skippedNotL4 and never mutated on a stale assumption. Landing the
+  // candidates now is safe + forward-compatible: they ACTIVATE the moment the map (or the
+  // live import propagation) rates them L4, with zero further targeting change.
+  'packages/core/src/cell-kernel.ts',
+  'packages/core/src/cell.ts',
+  'packages/core/src/derived.ts',
+  'packages/core/src/store.ts',
+  'packages/core/src/signal.ts',
+  'packages/core/src/timeline.ts',
+  'packages/core/src/live-cell.ts',
 ];
 
 /**

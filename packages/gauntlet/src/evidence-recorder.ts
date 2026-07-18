@@ -15,8 +15,9 @@
  * wraps a {@link GateContext} so EVERY evidence read a gate performs during its
  * `run` is RECORDED: an `allFiles()` call, a `readFile(path)` for a path OUTSIDE the
  * IR, an access of `ir.facts` / `ir.refs`, and an access of each injected fact
- * channel (`supplyChain` / `mutation` / `mcdc` / `simulation` / `traceability` /
- * `standards` / `declaredFix` / `taint` / `fuzzCorpus` / `proof` / `composition`) —
+ * channel (`supplyChain` / `mutation` / `transition` / `mcdc` / `simulation` /
+ * `traceability` / `standards` / `declaredFix` / `taint` / `fuzzCorpus` / `proof` /
+ * `composition`) —
  * PRESENT or ABSENT. An access that finds a channel ABSENT (`undefined`) is recorded
  * as a distinct `<channel>:absent` marker, so a gate whose verdict DEPENDS on a
  * channel's ABSENCE (the supply-chain not-evidenced branch) folds that dependency
@@ -57,6 +58,7 @@ import type { FileId } from './repo-ir.js';
 export const FACT_CHANNELS = [
   'supplyChain',
   'mutation',
+  'transition',
   'mcdc',
   'simulation',
   'traceability',
