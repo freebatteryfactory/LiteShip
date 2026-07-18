@@ -3,8 +3,12 @@
  *
  * A transport swap onto {@link CellKernel}: the replay-1 current-value slot +
  * synchronous fan-out that used to be a `SubscriptionRef` is now the extracted,
- * Effect-free kernel. The pure reactive law is byte-identical to the captured
- * behavior (Wave 5.5 golden fixtures `tests/fixtures/reactive-capture/cell.json`):
+ * Effect-free kernel. The pure reactive law preserves the captured behavior
+ * (Wave 5.5 golden fixtures `tests/fixtures/reactive-capture/cell.json`) with ONE
+ * deliberate product-law correction: `subscribe-during-publish` observes each
+ * committed emission at most once (the dispatch-snapshot MEMBERSHIP law — a
+ * mid-fan-out subscriber gets its replay, not the in-flight value a second time;
+ * Wave 6.5.1 ruling S6.1a, `late=[5,6]`). All other captured behaviors hold:
  *
  *  - EmissionPolicy `{all}` — every `set` is delivered; equal consecutive values
  *    are NOT suppressed (`SubscriptionRef.setUnsafe` published unconditionally;

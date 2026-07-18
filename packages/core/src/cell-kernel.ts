@@ -26,18 +26,31 @@
  *    `complete` sink exactly once, synchronously (never blocks); afterwards
  *    publish is inert and subscribe completes immediately without registering.
  *
- * DIVERGENCE BY DESIGN — the mid-fan-out membership law differs per constructor,
- * because {@link replay1} is the compositor's EXTRACTION TARGET (Wave 2 swaps
- * compositor.ts onto it, so it must match byte-for-byte) whereas {@link fanout}
- * models unbounded-PubSub fidelity where a late subscriber never sees an
- * in-flight publish:
- *  - {@link replay1} fans out over the LIVE registration set — exactly
- *    compositor.ts:241-246's `for (const notify of changeListeners) notify(state)`.
- *    A subscriber ADDED mid-fan-out (from within a sink) RECEIVES the in-flight
- *    value; one REMOVED mid-fan-out before the cursor reaches it is skipped.
- *  - {@link fanout} fans out over a membership SNAPSHOT taken at fan-out start.
- *    A subscriber ADDED mid-fan-out MISSES the in-flight value; one REMOVED
- *    mid-fan-out is skipped (membership re-checked before each delivery).
+ * MEMBERSHIP LAW + REPLAY LAW (uniform across BOTH constructors; S6.1a ruling).
+ * A cell is a sequence of committed states C0→C1→C2…, and each subscription has a
+ * position in that sequence. Two orthogonal laws define delivery:
+ *  - MEMBERSHIP: dispatch membership is bounded at the START of each committed
+ *    emission. A subscriber ADDED mid-fan-out (from within a sink) is OUTSIDE that
+ *    commit's dispatch and does NOT receive the in-flight value — it participates
+ *    only in FUTURE commits. One REMOVED mid-fan-out before the cursor reaches it
+ *    is skipped. This holds identically for {@link replay1} and {@link fanout}.
+ *  - REPLAY: {@link replay1} replays the current committed slot exactly ONCE on
+ *    subscribe (the `SubscriptionRef.changes` replay-1 contract); {@link fanout}
+ *    does not replay. This is the SOLE difference between the two constructors.
+ * Together they guarantee each subscription observes each committed emission AT
+ * MOST ONCE. The earlier "replay1 fans out over the LIVE set" law was a
+ * law-composition DEFECT: replay-on-subscribe and live-set iteration observed one
+ * committed state TWICE for a mid-fan-out subscriber (a `[5,5,6]` double-spend the
+ * Effect fibers' snapshot delivery had masked). The membership law retires it; the
+ * compositor never depended on mid-fan-out in-flight delivery (no compositor test
+ * subscribes during a publish), so its extraction is byte-faithful under this law.
+ *
+ * Realized by GENERATION-BOUNDED dispatch (no per-fan-out allocation): the fan-out
+ * captures the registration-array length ONCE at the commit's start and iterates
+ * `[0, limit)`, skipping inactive records; a subscribe appends BEYOND the limit
+ * (unreached this commit), a dispose flips an `active` flag (skipped), and inactive
+ * records are COMPACTED only after the outermost dispatch/drain unwinds — so the
+ * compositor hot path stays ≈ 0 B/op.
  *
  * Effect-free by construction — the extraction that lets compositor/zap/blend/
  * live-cell shed their `effect` imports.
@@ -145,9 +158,15 @@ export interface CellFanoutShape<T> {
 // Implementation
 // ---------------------------------------------------------------------------
 
-/** A distinct registration per subscribe call — so one sink object can subscribe twice. */
+/**
+ * A distinct registration per subscribe call — so one sink object can subscribe
+ * twice. `active` is the dispatch-snapshot liveness flag: a disposer flips it
+ * false (never splicing the array mid-dispatch), and the fan-out + compaction skip
+ * inactive records.
+ */
 interface Registration<T> {
   readonly sink: CellSink<T>;
+  active: boolean;
 }
 
 const normalize = <T>(subscriber: CellSubscriber<T>): CellSink<T> =>
@@ -155,36 +174,84 @@ const normalize = <T>(subscriber: CellSubscriber<T>): CellSink<T> =>
 
 /**
  * The listener substrate both constructors share: an insertion-ordered
- * registration set, a complete-once close, and the two fan-out disciplines the
- * constructors pick between (LIVE for replay1, SNAPSHOT for fanout — see the
- * divergence-by-design note in the module doc).
+ * registration ARRAY, a complete-once close, and ONE generation-bounded fan-out
+ * (the uniform DISPATCH-SNAPSHOT membership law — see the module doc). Replaces
+ * the former per-constructor live/snapshot split: membership is now identical for
+ * replay1 and fanout, differing only in the replay-on-subscribe the constructors
+ * layer above this core.
  */
 function createCore<T>() {
-  const registrations = new Set<Registration<T>>();
+  // Insertion-ordered registrations. Append-only during a dispatch (a mid-fan-out
+  // subscribe lands BEYOND the captured limit); a disposer flips `active` false;
+  // inactive records are physically COMPACTED only when no dispatch is in flight.
+  const registrations: Registration<T>[] = [];
+  let activeCount = 0;
+  // Depth of fan-out currently on the stack (nested/reentrant fan-outs stack it),
+  // plus the deferred-drain bracket ({@link runBatch}). Compaction runs ONLY when
+  // it returns to 0 — never mid-pass, which would shift indices under a live cursor.
+  let dispatchDepth = 0;
+  let needsCompaction = false;
   let closed = false;
 
-  // LIVE-Set fan-out (replay1): iterate the registration set directly, mirroring
-  // compositor.ts:241-246 byte-for-byte. A subscriber ADDED mid-fan-out sits
-  // after the cursor and IS delivered the in-flight value; one REMOVED before
-  // the cursor reaches it is skipped (the Set iterator reflects live mutation).
-  const fanOutLive = (value: T): void => {
-    for (const registration of registrations) registration.sink.next(value);
+  // Physically drop inactive records, preserving the order of the active ones.
+  // Called only at dispatchDepth 0 (outside every fan-out and the deferred drain),
+  // so no live cursor is indexing `registrations`.
+  const compact = (): void => {
+    needsCompaction = false;
+    let w = 0;
+    for (let r = 0; r < registrations.length; r++) {
+      const reg = registrations[r];
+      if (reg !== undefined && reg.active) registrations[w++] = reg;
+    }
+    registrations.length = w;
   };
 
-  // SNAPSHOT fan-out (fanout): freeze membership at fan-out start so a subscribe
-  // mid-fan-out is NOT delivered the in-flight value; re-check membership so a
-  // dispose mid-fan-out is skipped.
-  const fanOutSnapshot = (value: T): void => {
-    for (const registration of [...registrations]) {
-      if (registrations.has(registration)) registration.sink.next(value);
+  const maybeCompact = (): void => {
+    if (dispatchDepth === 0 && needsCompaction) compact();
+  };
+
+  // GENERATION-BOUNDED fan-out (the uniform dispatch-snapshot membership law).
+  // Capture the membership limit ONCE at the commit's start: a subscribe issued
+  // from within a sink appends beyond `limit` and is NOT reached by this commit
+  // (it joins future commits); a record deactivated before the cursor reaches it
+  // is skipped. Zero per-fan-out allocation — no membership array copy.
+  const fanOut = (value: T): void => {
+    dispatchDepth++;
+    const limit = registrations.length;
+    for (let i = 0; i < limit; i++) {
+      const registration = registrations[i];
+      if (registration !== undefined && registration.active) registration.sink.next(value);
+    }
+    dispatchDepth--;
+    maybeCompact();
+  };
+
+  // Run a multi-emit batch (the replay1 deferred-drain) as ONE outermost dispatch
+  // so compaction is deferred until the whole drain unwinds ("after the outermost
+  // deferred drain, not inside publication" — S6.1a).
+  const runBatch = (fn: () => void): void => {
+    dispatchDepth++;
+    try {
+      fn();
+    } finally {
+      dispatchDepth--;
+      maybeCompact();
     }
   };
 
   const register = (sink: CellSink<T>): Disposer => {
-    const registration: Registration<T> = { sink };
-    registrations.add(registration);
+    const registration: Registration<T> = { sink, active: true };
+    registrations.push(registration);
+    activeCount += 1;
     return () => {
-      registrations.delete(registration);
+      if (!registration.active) return;
+      registration.active = false;
+      activeCount -= 1;
+      // Defer physical removal until no fan-out is in flight; outside a dispatch,
+      // reclaim now. The closure holds the record object (not an index), so it stays
+      // correct across a compaction that shifts the array.
+      if (dispatchDepth === 0) compact();
+      else needsCompaction = true;
     };
   };
 
@@ -193,18 +260,19 @@ function createCore<T>() {
     closed = true;
     // Detach before completing so a reentrant publish/subscribe from within a
     // complete callback sees the closed, empty state.
-    const snapshot = [...registrations];
-    registrations.clear();
-    for (const registration of snapshot) registration.sink.complete?.();
+    const live = registrations.filter((r) => r.active);
+    registrations.length = 0;
+    activeCount = 0;
+    for (const registration of live) registration.sink.complete?.();
   };
 
   return {
-    registrations,
-    fanOutLive,
-    fanOutSnapshot,
+    fanOut,
+    runBatch,
     register,
     close,
     isClosed: (): boolean => closed,
+    size: (): number => activeCount,
   };
 }
 
@@ -227,15 +295,15 @@ function replay1<T>(
   const pending: { readonly value: T }[] = [];
 
   // Fan `value` out now, honoring the emission policy. Under {all} this is a raw
-  // LIVE-Set fan-out (compositor.ts:241-246 parity — zero allocation). Under
-  // {distinct} a consecutive-equal value is NOT fanned out (the slot already
+  // generation-bounded fan-out (dispatch-snapshot membership — zero allocation).
+  // Under {distinct} a consecutive-equal value is NOT fanned out (the slot already
   // advanced in `publish`).
   const emit = (value: T): void => {
     if (policy.kind === 'distinct') {
       if (lastEmitted !== undefined && policy.equals(lastEmitted.value, value)) return;
       lastEmitted = { value };
     }
-    core.fanOutLive(value);
+    core.fanOut(value);
   };
 
   return {
@@ -249,17 +317,21 @@ function replay1<T>(
       current = value;
       if (reentrancy === 'deferred') {
         // async-append: a nested publish waits for the active fan-out to unwind,
-        // then fans out breadth-first — every subscriber sees one total order.
+        // then fans out breadth-first — every subscriber sees one total order. The
+        // whole drain runs as one outermost dispatch (runBatch) so a dispose during
+        // it is compacted only after the drain fully unwinds.
         if (inFanOut) {
           pending.push({ value });
           return;
         }
         inFanOut = true;
-        emit(value);
-        while (pending.length > 0) {
-          const next = pending.shift();
-          if (next !== undefined) emit(next.value);
-        }
+        core.runBatch(() => {
+          emit(value);
+          while (pending.length > 0) {
+            const next = pending.shift();
+            if (next !== undefined) emit(next.value);
+          }
+        });
         inFanOut = false;
         return;
       }
@@ -283,7 +355,7 @@ function replay1<T>(
       return core.isClosed();
     },
     get size() {
-      return core.registrations.size;
+      return core.size();
     },
   };
 }
@@ -301,9 +373,10 @@ function fanout<T>(policy: EmissionPolicy<T> = EMIT_ALL): CellFanoutShape<T> {
         if (lastEmitted !== undefined && policy.equals(lastEmitted.value, value)) return;
         lastEmitted = { value };
       }
-      // SNAPSHOT fan-out — late/mid-fan-out subscribers miss the in-flight value
-      // (unbounded-PubSub fidelity).
-      core.fanOutSnapshot(value);
+      // Generation-bounded fan-out — a late/mid-fan-out subscriber is outside this
+      // commit's dispatch membership and misses the in-flight value (it joins the
+      // next commit); a disposed subscriber is skipped.
+      core.fanOut(value);
     },
     subscribe: (subscriber) => {
       const sink = normalize(subscriber);
@@ -318,7 +391,7 @@ function fanout<T>(policy: EmissionPolicy<T> = EMIT_ALL): CellFanoutShape<T> {
       return core.isClosed();
     },
     get size() {
-      return core.registrations.size;
+      return core.size();
     },
   };
 }

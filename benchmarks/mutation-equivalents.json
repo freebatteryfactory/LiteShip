@@ -42,24 +42,24 @@
       "justification": "The DEFAULT VALUE of the `algo` parameter (`algo: 'sha256' | 'blake3' = 'sha256'`) mutated to `algo = ''`. addressedDigestOf branches only on `if (algo === 'blake3')`; every other value (including '' and 'sha256') falls to the sha256 branch. So calling addressedDigestOf(bytes) with no algo arg produces the IDENTICAL sha256 digest whether the default is 'sha256' or ''. Verified empirically by applying the mutation to the source and comparing — byte-identical integrity_digest and algo='sha256'. (A real test pins the genuine contract: the no-arg default ≡ 'sha256' ≠ 'blake3' — but that test cannot kill THIS mutant because '' also routes to sha256. Honestly equivalent.)"
     },
     {
-      "mutantId": "blake3:40d7e642074404ec4c398504701d3c5635fbfb19fef87614467f2ad69b353daf",
+      "mutantId": "blake3:48cbe5502a103dca7642e21d6d84debdb2d7ab6b48634d3960631670f4997c9a",
       "file": "packages/core/src/cell-kernel.ts",
-      "line": 98,
+      "line": 111,
       "column": 26,
       "operator": "string-literal",
       "originalText": "'all'",
       "mutatedText": "''",
-      "justification": "Wave-6 reactive survivor (S6.2). The DEFAULT EmissionPolicy sentinel `const EMIT_ALL = { kind: 'all' }` mutated to `{ kind: '' }`. The emission axis is decided ONLY by `policy.kind === 'distinct'` (in replay1's `emit` and fanout's `publish`); the `'all'` pole is never compared with `===` anywhere. `'' !== 'distinct'`, so an `EMIT_ALL` whose kind is '' takes the exact same no-dedup fan-out path as `'all'` for every default-policy caller (compositor/derived/timeline-reentrancy/etc.). Verified empirically: SURVIVES the full deterministic reactive covering suite (242 tests). No test can distinguish {kind:'all'} from {kind:''} — the sentinel value is only ever the ABSENCE of 'distinct'."
+      "justification": "Wave-6 reactive survivor (S6.2); re-addressed for the Wave-6.5.1 generation-bounded dispatch rewrite (line 98→111, S6.1a). The DEFAULT EmissionPolicy sentinel `const EMIT_ALL = { kind: 'all' }` mutated to `{ kind: '' }`. The emission axis is decided ONLY by `policy.kind === 'distinct'` (in replay1's `emit` and fanout's `publish`); the `'all'` pole is never compared with `===` anywhere. `'' !== 'distinct'`, so an `EMIT_ALL` whose kind is '' takes the exact same no-dedup fan-out path as `'all'` for every default-policy caller (compositor/derived/timeline-reentrancy/etc.). Verified empirically: SURVIVES the full deterministic reactive covering suite. No test can distinguish {kind:'all'} from {kind:''} — the sentinel value is only ever the ABSENCE of 'distinct'."
     },
     {
-      "mutantId": "blake3:1343916e4b5d758a8b992e6015869207aeff1bdadc509ad6b55e531e1f412d41",
+      "mutantId": "blake3:cde10abe1ad9fdf2dd4a038be3bd5bd7e3e9f326a9ef0ca11162ed450a770822",
       "file": "packages/core/src/cell-kernel.ts",
-      "line": 216,
+      "line": 284,
       "column": 34,
       "operator": "string-literal",
       "originalText": "'synchronous'",
       "mutatedText": "''",
-      "justification": "Wave-6 reactive survivor (S6.2). The DEFAULT ReentrancyPolicy sentinel `reentrancy: ReentrancyPolicy = 'synchronous'` mutated to `= ''`. The reentrancy axis is decided ONLY by `reentrancy === 'deferred'` (in replay1's `publish`); the `'synchronous'` pole is never compared with `===`. `'' !== 'deferred'`, so a default of '' takes the identical depth-first synchronous nested fan-out path as 'synchronous' for every default-reentrancy caller (derived/timeline/compositor). Verified empirically: SURVIVES the full deterministic reactive covering suite (242 tests). The sentinel value is only ever the ABSENCE of 'deferred'; no test can distinguish it."
+      "justification": "Wave-6 reactive survivor (S6.2); re-addressed for the Wave-6.5.1 generation-bounded dispatch rewrite (line 216→284, S6.1a). The DEFAULT ReentrancyPolicy sentinel `reentrancy: ReentrancyPolicy = 'synchronous'` mutated to `= ''`. The reentrancy axis is decided ONLY by `reentrancy === 'deferred'` (in replay1's `publish`); the `'synchronous'` pole is never compared with `===`. `'' !== 'deferred'`, so a default of '' takes the identical depth-first synchronous nested fan-out path as 'synchronous' for every default-reentrancy caller (derived/timeline/compositor). Verified empirically: SURVIVES the full deterministic reactive covering suite. The sentinel value is only ever the ABSENCE of 'deferred'; no test can distinguish it."
     },
     {
       "mutantId": "blake3:01535fe21adb27e383ec937a5455fcedb0f5e1022c2ce01a2a47fba23d2bd695",
@@ -89,7 +89,7 @@
       "operator": "string-literal",
       "originalText": "'all'",
       "mutatedText": "''",
-      "justification": "Wave-6 reactive survivor (S6.2). `Signal.audio`'s explicit EmissionPolicy sentinel `CellKernel.replay1(0, { kind: 'all' }, 'deferred')` mutated to `{ kind: '' }`. The kernel decides emission ONLY by `policy.kind === 'distinct'`; `'' !== 'distinct'` routes to the identical no-dedup fan-out as `'all'` (every poll publishes). Verified empirically: SURVIVES the full deterministic reactive covering suite (242 tests). NOTE: this mutant registered a FALSE KILL when scored against the reactive-conformance/reactive-capture property suites, but those are being concurrently rewritten by the S6.1 harness pass (the `subscribe-during-publish` fixture + oracle are transiently inconsistent), so they FAIL on the CLEAN tree independent of any mutant — the deterministic per-file covering suites confirm genuine equivalence."
+      "justification": "Wave-6 reactive survivor (S6.2). `Signal.audio`'s explicit EmissionPolicy sentinel `CellKernel.replay1(0, { kind: 'all' }, 'deferred')` mutated to `{ kind: '' }`. The kernel decides emission ONLY by `policy.kind === 'distinct'`; `'' !== 'distinct'` routes to the identical no-dedup fan-out as `'all'` (every poll publishes). Verified empirically: SURVIVES the full deterministic reactive covering suite. NOTE (RESOLVED by S6.1a / Wave 6.5.1): during the S6.1 harness pass this mutant transiently registered a FALSE KILL because the `subscribe-during-publish` fixture + oracle were mid-rewrite and red on the clean tree independent of any mutant; the S6.1a semantic-law correction (dispatch-snapshot membership, `late=[5,6]`) restored a green-on-clean reactive-conformance/reactive-capture, and the deterministic per-file covering suites confirm genuine equivalence."
     },
     {
       "mutantId": "blake3:8abcae7a9e24a8777d5ecec621cfe8ca4d6acf41400b39aff30a58111cb7bec5",

@@ -242,10 +242,13 @@ export const Compositor: CompositorFactory = {
   /** Build a compositor bound to a fresh {@link RuntimeCoordinator}, paired with its owning {@link Lifetime}. */
   create(config?: CompositorConfig): CompositorHandle {
     // Reactive notification seam — the extracted replay-1 {@link CellKernel}
-    // (`CellKernel.replay1`). Its current-value slot + synchronous live-Set
-    // fan-out ARE the code this compositor formerly inlined as `live.current` +
-    // `changeListeners` + `publishState`; the kernel was extracted from exactly
-    // those lines, so behavior is identical (pinned by cell-kernel.test.ts).
+    // (`CellKernel.replay1`). Its current-value slot + synchronous generation-
+    // bounded fan-out ARE the code this compositor formerly inlined as
+    // `live.current` + `changeListeners` + `publishState`; the kernel was extracted
+    // from exactly those lines, so behavior is identical (pinned by
+    // cell-kernel.test.ts). The compositor never subscribes during a publish, so
+    // the S6.1a membership refinement (dispatch-snapshot, retiring the mid-fan-out
+    // live-set double delivery) leaves its extraction byte-faithful.
     // `publish` assigns the slot then notifies each listener in one synchronous
     // pass — no Effect node, no PubSub/replay-buffer node per publish, so the
     // zero-transient hot path is preserved (the old `SubscriptionRef.set` minted
