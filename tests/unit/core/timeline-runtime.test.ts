@@ -54,6 +54,38 @@ describe('Timeline runtime behavior', () => {
     }).toEqual({ elapsed: 100, progress: 0.5, state: 'active' });
   });
 
+  test('stays put across scheduler ticks until play() is called (initial paused)', () => {
+    // `playing` starts false — a freshly constructed timeline does NOT advance on
+    // scheduler ticks before play(). fixedStep(10) feeds now = 0,100,200; without
+    // play() every tick is a no-op, so elapsed/state stay at their initial values.
+    const scheduler = Scheduler.fixedStep(10);
+    const timeline = Timeline.from(makeBoundary(), { duration: Millis(200), scheduler });
+
+    scheduler.step();
+    scheduler.step();
+    scheduler.step();
+
+    expect(timeline.elapsed()).toBe(0);
+    expect(timeline.state()).toBe('idle');
+  });
+
+  test('play advances elapsed by the inter-tick delta (now - lastTime), accumulated across frames', () => {
+    // fixedStep(10) feeds now = 0,100,200. Tick 1 only seeds lastTime (=0, no
+    // advance); ticks 2 and 3 each integrate a 100ms delta → elapsed 100 then 200.
+    // The third tick (lastTime=100, now=200) is where `now - lastTime` (=100) and
+    // `now + lastTime` (=300) diverge — pinning the subtraction. Duration is large
+    // so no clamp masks the delta.
+    const scheduler = Scheduler.fixedStep(10);
+    const timeline = Timeline.from(makeBoundary(), { duration: Millis(10_000), scheduler });
+
+    timeline.play();
+    scheduler.step(); // now=0   → lastTime=0 (no advance)
+    scheduler.step(); // now=100 → +100 → elapsed 100
+    scheduler.step(); // now=200 → +100 → elapsed 200 (mutant `+`: +300 → 400)
+
+    expect(timeline.elapsed()).toBe(200);
+  });
+
   test('uses provided duration and browser raf scheduling when no custom scheduler is passed', async () => {
     const callbacks = new Map<number, FrameRequestCallback>();
     let nextId = 1;

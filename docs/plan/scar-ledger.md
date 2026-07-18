@@ -612,31 +612,132 @@ fixtures + `tests/property/reactive-conformance.prop.test.ts`).
   architectural smell, not a proven false-green.
   Class: verification-harness lagging the product it verifies (an Effect import in the
   reactive test harness, after the reactive product went Effect-free).
-  Disposition (Wave 6.5): flip the standing acceptance test to drive the PURE
-  CellKernel-backed primitives directly (the scratch-oracle path made permanent) and
-  shed `effect` from `reactive-capture.ts` — belt-and-suspenders on the durable proof.
-  ACTIVE (carried to 6.5).
+  Disposition (Wave 6.5): **RESOLVED.** `tests/support/reactive-capture.ts` rewritten to
+  drive the migrated CellKernel-backed primitives through their PLAIN SYNCHRONOUS public
+  API (`read`/`subscribe(sink): Disposer`/`set`/`dispatch`/`seek`/`scrub`/`step`) — the
+  Effect `Queue`/`Stream`/`Fiber`/`Scope`/`Exit`/`runPromise` machinery and the `import
+  … from 'effect'` are all gone; a subscriber's delivery handler now runs SYNCHRONOUSLY
+  inside the kernel fan-out. The async-append nested-write order is supplied by the
+  KERNEL's `'deferred'` arm (realized synchronously), so the harness needs no queue of
+  its own (the drain-to-quiescence settle loop is deleted — quiescence is reached the
+  instant a synchronous op returns). `tests/property/reactive-conformance.prop.test.ts`
+  flipped to assert model ≡ NATIVE impl POSITIVELY: the two edges the OLD Effect
+  transport recorded as "robust deltas" are now proven bisimulations — **I5** nested-write
+  (Cell AND Store ride `'deferred'`; the model runs the same arm → both subscribers
+  `[0,1,99]`, the flip the S6.F.2 ruling anticipated) and **I6** subscribe-during-publish
+  (LIVE-set fan-out). grep-confirmed ZERO `from 'effect'` in `tests/support/reactive-*.ts`
+  + `tests/property/reactive-*.ts`. RED-FIRST preserved: the PLANT-A-DIVERGENCE self-test
+  stands, AND the flipped I5/I6 positive assertions were proven to red on a dropped
+  delivery (dropping the in-flight `late[0]` reverts I6 to the old snapshot `[5,6]` →
+  divergent). **HARVESTED CORRECTION (S6.1a):** driving the native transport DIRECTLY
+  revealed that the Effect fibers' snapshot delivery had MASKED an I6 live-set VIOLATION
+  for `cell`/`subscribe-during-publish` — the old golden fixture pinned `late=[5,6]`
+  (snapshot, a forked-fiber artifact), but `CellKernel.replay1`'s LIVE-set law (pinned in
+  `cell-kernel.test.ts`, encoded by the reference model `reactive-model.ts`) delivers the
+  in-flight value → `late=[5,5,6]`. The ONE golden row
+  (`tests/fixtures/reactive-capture/cell.json` `subscribe-during-publish`) was regenerated
+  to the native truth (traceDigest unchanged; the other 50 capture rows byte-identical);
+  this is a law-grounded correction (native HONORS the pinned I6 law the Effect transport
+  violated), PROVEN by the flipped positive bisimulation, not a fixture fudge. STATUS:
+  RESOLVED. Guard: tests/support/reactive-capture.ts (native driver) +
+  tests/property/reactive-conformance.prop.test.ts (positive bisimulation, plant-a-divergence)
+  + tests/unit/core/reactive-capture.test.ts (golden byte-law; cell I6 row corrected).
 
-- **S6.2 — six adjacent-surface mutation survivors (model-hole coverage gaps).** With the
-  kernels L4-promoted and the engine minting (59/69 killed; per-kernel 0.75–1.0), six
-  survivors mark under-covered surface: `cell-kernel.ts:313` (closed-kernel disposer),
-  `derived.ts:110` (returned disposer), `signal.ts:217` ('custom' case), `signal.ts:355`
-  (audio-poll `&&`), `timeline.ts:108` (initial-paused), `timeline.ts:120` (play `dt`).
-  Four further survivors are EQUIVALENT (policy-default sentinels `all`/`synchronous`→`''`)
-  → move to `mutation-equivalents.json`.
+- **S6.2 — the ten reactive-kernel mutation survivors are now FULLY CLASSIFIED (Slice B).**
+  With the kernels L4-promoted and the engine minting (59/69 killed; per-kernel 0.75–1.0),
+  the ten survivors were originally split 6-holes/4-equivalents. Slice B classified EVERY
+  one — not merely reduced the count — and the classification is HONEST-checked (each
+  genuine hole proven to die red-first, each equivalent proven to survive its covering
+  suite). The `59/69` FLOOR is unchanged (S6.4); this scar is about disposition, not score.
   Class: mutation coverage gap (a surviving non-equivalent mutant = a model/test hole).
-  Disposition (Wave 6.5): add the covering cases so each survivor dies; record the four
-  equivalents. ACTIVE.
+  Disposition (Slice B): **RESOLVED — 5 genuine holes KILLED, 5 mutants recorded EQUIVALENT,
+  and the reclassifications (a hole→equivalent, a split site, a former false-kill) reconciled.**
+
+  **The 10-way breakdown (final disposition of every survivor):**
+
+  GENUINE HOLES → KILLED by a new covering case (each red-first):
+   1. `cell-kernel.ts:312` closed-kernel/`fanout` disposer (`return-value`: the post-close
+      branch must return `NOOP_DISPOSER`, a callable no-op, never `null`) →
+      `tests/unit/core/cell-kernel.test.ts` "fanout: after close, subscribe completes
+      immediately and returns a callable no-op disposer".
+   2. `derived.ts:110` returned disposer (`return-value`: `return disposer`→`return null`)
+      → `tests/component/reactive-no-effect-containment.test.ts` (#153): `stopLabel()`
+      throws `TypeError` on `null`. THIS is the Slice-B blocker's resolution — the killing
+      suite always existed, but the Wave-6 mint's per-(file,line) coverage map missed it
+      because the derived-covering ORACLE (`reactive-conformance`/`reactive-capture`) was
+      red-on-clean mid-S6.1-rewrite (S6.1a). Slice A resolved the harness (both suites now
+      green-on-clean), and integration RE-PROVED the kill directly: planted `return null`
+      → #153 reds at `stopLabel()` while `reactive-conformance`/`reactive-capture` (which
+      never CALL the derived disposer) stay green → reverted, byte-clean. The #153 test is
+      the required covering suite for `derived.ts:110`.
+   3. `signal.ts:355` audio-poll `&&` (the normalize guard `mode === 'normalized' &&
+      total !== undefined && total > 0` — the mode conjunct must gate) →
+      `tests/unit/core/av-signal-scheduler.test.ts` "sample mode returns the RAW sample
+      even when a positive totalDurationSec is supplied".
+   4. `timeline.ts:107` initial-paused (`boolean-literal`: `playing` starts `false`) →
+      `tests/unit/core/timeline-runtime.test.ts` "stays put across scheduler ticks until
+      play()".
+   5. `timeline.ts:119` play `dt` SUBTRACTION `(now - lastTime)` (`arithmetic` `-`→`+`) →
+      `tests/unit/core/timeline-runtime.test.ts` "play advances elapsed by the inter-tick
+      delta" (third tick lastTime=100/now=200: `-`=100→elapsed 200, mutant `+`=300→400).
+      Integration RE-PROVED: planted `+` reds the test at `elapsed === 200`; reverted.
+
+  EQUIVALENT → recorded in `benchmarks/mutation-equivalents.json` (id-matched; re-surfaces
+  if the code changes). No test can distinguish these; a fake test would be dishonest:
+   6. `cell-kernel.ts:98` `'all'`→`''` — the `EMIT_ALL` sentinel; emission is decided ONLY
+      by `policy.kind === 'distinct'`, so `''` takes the identical no-dedup path.
+   7. `cell-kernel.ts:216` `'synchronous'`→`''` — the `ReentrancyPolicy` default; reentrancy
+      is decided ONLY by `=== 'deferred'`, so `''` is the identical synchronous path.
+   8. `signal.ts:248` `'all'`→`''` — `Signal.make`'s explicit emission sentinel (same law).
+   9. `signal.ts:283` `'all'`→`''` — `Signal.controllable`'s emission sentinel (same law).
+  10. `signal.ts:344` `'all'`→`''` — `Signal.audio`'s emission sentinel (same law). NOTE:
+      this one registered a FALSE KILL under the mid-rewrite harness (S6.1) and was
+      re-surfaced + reclassified equivalent here.
+
+  RECLASSIFIED from the original "6 holes" to equivalent (the hole framing was wrong):
+   - `signal.ts:213` `'custom'`→`''` (was "signal.ts:217 'custom' case") — the `case
+     'custom': return;` label; the case body is a NO-OP (no default in the switch), so
+     `case ''` falling through returns the identical `undefined`. Provably unkillable.
+   - `timeline.ts:119` `*`→`/` (the OTHER half of the "timeline.ts:120 play dt" split) —
+     `direction ∈ {1,-1}`, and `x*1===x/1`, `x*-1===x/-1`, so `* direction === / direction`
+     for every reachable `direction`. Integration RE-PROVED equivalence: planted `/` and
+     the timeline + `reactive-conformance` + `reactive-capture` suites STAYED green.
+   (The `-`→`+` variant at the same site is item 5 — a genuine hole; only the `*`→`/`
+   variant is equivalent. Splitting one flagged "survivor" into a killed variant + an
+   equivalent variant is the honest resolution.)
+
+  STATUS: RESOLVED (Slice B classification; integration re-verified derived.ts:110 kill +
+  timeline.ts:119 split red/green). Guards: the 3 new covering cases in
+  `tests/unit/core/{cell-kernel,av-signal-scheduler,timeline-runtime}.test.ts` +
+  `tests/component/reactive-no-effect-containment.test.ts` (derived) +
+  `benchmarks/mutation-equivalents.json` (7 Wave-6 equivalent entries, blake3-id-matched).
 
 - **S6.3 — builder green ≠ full-gate green.** The migrate builders reported green but
   shipped 8 TSDoc syntax errors, 1 unused import, 7 typedoc `{@link}` warnings, and stale
   `docs/api`, plus omitted the #153 acceptance test — all caught + fixed by integration.
   Class: a builder's "green" covered its own suites but not the full lint + docs:build
   gates.
-  Disposition: integration repaired in-wave; the standing lesson — builders must run
-  lint + docs:build before claiming green, or the integration gate must be treated as the
-  authority (it is). Candidate for a builder-preflight checklist in the wave protocol.
-  ACTIVE (process).
+  Disposition (Slice C): **RESOLVED — the builder-preflight checklist is now ONE
+  command.** `pnpm preflight` (`scripts/preflight.ts`, wired at root `package.json`
+  `scripts.preflight`) runs the exact fast pre-commit subset a builder must clear
+  before claiming green — fail-fast, cheapest→heaviest: `format:check` →
+  `lint:structural` → `lint` → `typecheck` → `docs:check` (docs freshness, the
+  `docs/api` staleness this scar was bitten by) — plus an optional targeted-test
+  arg (`pnpm preflight <test-path>` runs the builder's own suite as the final step).
+  It is a convenience+discipline WRAPPER: every step is `pnpm run <existing-script>`,
+  so it mints NO gate and changes NO gate's authority (integration still owns the
+  global gates). Wired into the protocol: master-plan Methodology step 6 now states
+  **a green claim is INVALID without a passing `pnpm preflight`** ("green that has
+  not cleared preflight is green theater"), and the workflow-agent PROTOCOL mirrors
+  it here (BUILDER PREFLIGHT: run `pnpm preflight` on your own slice before any green
+  claim; a reported blocker beats a hidden hack). FAST by design — the fast lane only,
+  no full vitest / browser / e2e / bench. Proven: `pnpm preflight` PASSES on the
+  current tree (5 static checks green, ~99s); a planted prettier violation in
+  `packages/core/src/tuple.ts` REDS it at `format:check` (exit 1, fail-fast skips the
+  heavy steps, the offending file named + remediation printed), reverted. STATUS:
+  RESOLVED since Slice C. Guard: scripts/preflight.ts + root package.json
+  `scripts.preflight` (`pnpm preflight`); methodology wiring at
+  effect-shed-master-plan.md §Methodology step 6.
 
 - **S6.4 — mutation baseline is a conservative covering-suite floor**, not a full
   production `czap check --ir --mutate` mint (heavy/risky against an uncommitted tree).
@@ -644,3 +745,67 @@ fixtures + `tests/property/reactive-conformance.prop.test.ts`).
   ≥ this floor — a sound first-measurement baseline, not a regression.
   Class: measurement scope caveat.
   Disposition (Wave 6.5 / CI): reconcile with a production mint in CI. ACTIVE.
+
+## Wave 6.5 evidence closeouts
+
+- **#153 — EVIDENCE-COMPLETE (Slice D): the downstream-consumer acceptance test now
+  proves the DOWNSTREAM story, not merely "core imports are gone."** #153 (GPT priority
+  5) asks LiteShip to make its Effect-migration seam explicit so a downstream Astro app
+  (SillPak) can use LiteShip reactive state (`Cell`/`Derived`/`Store`/`Signal`) for
+  ordinary state coordination WITHOUT importing `effect` through application code and
+  WITHOUT maintaining a local containment module (the named shim
+  `apps/shell/src/lib/liteship/effect-boundary.ts`). The Wave-6-added
+  `tests/component/reactive-no-effect-containment.test.ts` (the artifact S6.3 flagged
+  as omitted-then-added) was **assessed and found thin**: a single Cell + a one-source
+  Derived + a Store, plus one self-source grep (`/from ['"]effect['"]/`) — it omitted
+  `Signal`, used a derived over ONE cell, and its lone containment grep missed subpath
+  (`effect/…`), scoped (`@effect/…`), CJS `require`, deep `@czap/core/…` paths, and the
+  containment-shim import class #153 explicitly names. **Strengthened (Slice D) into a
+  genuine downstream-consumer contract:** imports ONLY the public `@czap/core` barrel
+  (Cell/Derived/Store/**Signal**, no deep path); builds a realistic coordinated-state
+  scenario — two writable Cells, a Derived over BOTH with a live subscriber, a
+  controllable Signal, a Store reducer, full disposal (idempotent disposers +
+  `lifetime.dispose()`); carries a compile-time containment proof (every `read()` binds
+  to a PLAIN typed value — a re-Effectified surface would fail typecheck); a broadened
+  containment grep set (bare / subpath / scoped / require / **shim** / deep-path); and a
+  PERMANENT NEGATIVE CONTROL (S0.5 discipline) proving each grep FIRES on the import form
+  it forbids (assembled via an interpolated quote so the forbidden text lives only at
+  runtime — the file source stays clean). Evidence: the file has ZERO `from 'effect'`
+  anywhere; typecheck (`tsc -p tsconfig.tests.json`) green; the 3 tests run green;
+  format:check + eslint + ast-grep structural on the file green. RED-GREEN: a planted
+  real `import { Effect } from 'effect'` REDS the containment test (observed: assertion
+  fired, other 2 pass), reverted → green — the guard bites.
+  Class: acceptance evidence completeness (downstream story vs "imports gone").
+  Disposition: **#153 is EVIDENCE-COMPLETE — READY TO CLOSE ON BRANCH MERGE, NOT CLOSED**
+  (branch `claude/liteship-open-issues-*` is not merged to `main`; claiming "closed"
+  ahead of merge is green theater). The convergence report (`scripts/semantic-convergence-
+  report.ts`, remaining-waves.md:241/248) cites THIS file as #153's closure evidence.
+  **HONEST RESIDUAL (does NOT block #153):** the reactive modules themselves
+  (`cell`/`derived`/`store`/`signal`/`cell-kernel`/`lifetime`) import ZERO effect, so the
+  reactive-state surface #153 is about IS framework-neutral; but the `@czap/core` BARREL
+  still transitively VALUE-imports Effect via `frame-budget.ts` + `ship-capsule.ts` (both
+  value-exported from `index.ts`) — that is the Wave 8 residue-scan tail for **#151/#152**
+  (whole-bundle effect shed), a DIFFERENT issue, not a #153 blocker (#153 = the consumer's
+  own application code needs no Effect for state coordination, which now holds). STATUS:
+  ACTIVE (evidence landed; closure executes on branch merge, cited in the convergence
+  report). Guard: tests/component/reactive-no-effect-containment.test.ts.
+
+- **S6.1a — MAINTAINER RULING PENDING (surfaced, not silently accepted).** The
+  harness-effect-shed (S6.1) exposed that `cell`'s `subscribe-during-publish` behavior
+  ALREADY CHANGED when Wave 6 landed — from the Effect fiber's snapshot `[5,6]` to
+  CellKernel.replay1's LIVE-set `[5,5,6]` — and the Wave-6 Effect-Queue bridge MASKED it,
+  so Wave 6's "every primitive PRESERVE, byte-identical, no silent widening" claim had
+  this ONE unrecorded exception. cell.ts is byte-identical to Wave 6 (the change is
+  already shipped); Slice A corrected the test + fixture to the native truth so the proof
+  is honest. It is NOT a stale-terminal glitch (terminal delivery = `read()`); it is the
+  PINNED kernel law (compositor byte-parity, Wave 2) that the reference model encodes; the
+  double-5 is a redundant-but-consistent delivery (would collapse under `{distinct}`);
+  blast radius is ~zero (no product consumer subscribes-during-publish).
+  RECOMMENDATION (session lead): ACCEPT live-set as the Cell law — it honors the pinned
+  kernel law, isn't a glitch, and preserving the Effect snapshot artifact would mean a
+  subscription-timing policy axis (machinery for an edge nobody hits). REVERSAL PATH if
+  the maintainer prefers snapshot: add a `SubscriptionTimingPolicy` axis to CellKernel
+  (mirroring EmissionPolicy/ReentrancyPolicy) so Cell replays-only while compositor keeps
+  live-set, revert the one fixture row + the I6 assertion. Status: LANDED as accept-live-
+  set (defensible, documented, QA-landed, behavior already shipped) — flagged for explicit
+  blessing or reversal.

@@ -293,7 +293,7 @@
     "primitive": "cell",
     "seed": "subscribe-during-publish",
     "traceDigest": "fnv1a:fe57f0ed",
-    "observationDigest": "fnv1a:4b3aa5a7",
+    "observationDigest": "fnv1a:56329335",
     "history": [
       {
         "_tag": "subscribe",
@@ -338,6 +338,7 @@
           "sink": "late",
           "subscribedAtOp": 0,
           "deliveries": [
+            5,
             5,
             6
           ],
