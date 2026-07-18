@@ -58,11 +58,13 @@ package — it stays repo-local and composes these passes.
 - [PackageManifestInfo](interfaces/PackageManifestInfo.md)
 - [PackagePathResolution](interfaces/PackagePathResolution.md)
 - [PackagePolicy](interfaces/PackagePolicy.md)
+- [PackageTypeSurface](interfaces/PackageTypeSurface.md)
 - [ResolvedImport](interfaces/ResolvedImport.md)
 - [SourceFileRecord](interfaces/SourceFileRecord.md)
 - [StructureCoverageClassification](interfaces/StructureCoverageClassification.md)
 - [StructureSummary](interfaces/StructureSummary.md)
 - [SurfacePolicyShape](interfaces/SurfacePolicyShape.md)
+- [SurfaceReader](interfaces/SurfaceReader.md)
 - [SurfaceSummary](interfaces/SurfaceSummary.md)
 - [SurvivedVerdict](interfaces/SurvivedVerdict.md)
 - [SymbolOrphanCoverage](interfaces/SymbolOrphanCoverage.md)
@@ -71,6 +73,10 @@ package — it stays repo-local and composes these passes.
 - [TopologyCoverageEntry](interfaces/TopologyCoverageEntry.md)
 - [TransitionBuildOptions](interfaces/TransitionBuildOptions.md)
 - [TransitionRun](interfaces/TransitionRun.md)
+- [TypeExportDescriptor](interfaces/TypeExportDescriptor.md)
+- [TypeExportDrift](interfaces/TypeExportDrift.md)
+- [TypeExportRosterEntry](interfaces/TypeExportRosterEntry.md)
+- [TypeExportSurfaceSnapshot](interfaces/TypeExportSurfaceSnapshot.md)
 
 ## Type Aliases
 
@@ -84,6 +90,7 @@ package — it stays repo-local and composes these passes.
 - [MutationOperatorId](type-aliases/MutationOperatorId.md)
 - [OracleOutcome](type-aliases/OracleOutcome.md)
 - [PackagePathResolver](type-aliases/PackagePathResolver.md)
+- [TypeExportKind](type-aliases/TypeExportKind.md)
 
 ## Variables
 
@@ -95,6 +102,7 @@ package — it stays repo-local and composes these passes.
 - [CODE\_ONLY\_ORACLE\_ID](variables/CODE_ONLY_ORACLE_ID.md)
 - [CONDITION\_FORCES](variables/CONDITION_FORCES.md)
 - [CZAP\_PACKAGE\_ROSTER](variables/CZAP_PACKAGE_ROSTER.md)
+- [DEFAULT\_SURFACE\_READER](variables/DEFAULT_SURFACE_READER.md)
 - [DEFAULT\_TAINT\_INTERPROCEDURAL\_DEPTH](variables/DEFAULT_TAINT_INTERPROCEDURAL_DEPTH.md)
 - [dynamicImportExemptions](variables/dynamicImportExemptions.md)
 - [foundationalPackages](variables/foundationalPackages.md)
@@ -121,6 +129,7 @@ package — it stays repo-local and composes these passes.
 - [buildRepoIR](functions/buildRepoIR.md)
 - [buildRepoIRTaint](functions/buildRepoIRTaint.md)
 - [buildTransitionFacts](functions/buildTransitionFacts.md)
+- [buildTypeExportSurface](functions/buildTypeExportSurface.md)
 - [codeOnlyAST](functions/codeOnlyAST.md)
 - [compareSeverity](functions/compareSeverity.md)
 - [conditionSourceDigest](functions/conditionSourceDigest.md)
@@ -132,7 +141,9 @@ package — it stays repo-local and composes these passes.
 - [defaultRoot](functions/defaultRoot.md)
 - [detectEarlyReturnBeforeExpectAST](functions/detectEarlyReturnBeforeExpectAST.md)
 - [detectSkipsAST](functions/detectSkipsAST.md)
+- [diffTypeExportSurface](functions/diffTypeExportSurface.md)
 - [discoverInstalledPackageRoots](functions/discoverInstalledPackageRoots.md)
+- [enumeratePackageTypeExports](functions/enumeratePackageTypeExports.md)
 - [evaluateMutant](functions/evaluateMutant.md)
 - [exportedNamesFromNode](functions/exportedNamesFromNode.md)
 - [findAllowlistReason](functions/findAllowlistReason.md)
@@ -165,6 +176,7 @@ package — it stays repo-local and composes these passes.
 - [runSurfaceAudit](functions/runSurfaceAudit.md)
 - [scanModuleScopeDateReads](functions/scanModuleScopeDateReads.md)
 - [scoreVerdicts](functions/scoreVerdicts.md)
+- [serializeTypeExportSurface](functions/serializeTypeExportSurface.md)
 - [sortFindings](functions/sortFindings.md)
 - [sortSuppressions](functions/sortSuppressions.md)
 - [symbolIdOfOrphanFact](functions/symbolIdOfOrphanFact.md)

@@ -27,6 +27,7 @@ export * from './transition-facts-build.js';
 export * from './mcdc-engine.js';
 export * from './mcdc-facts-build.js';
 export * from './structure.js';
+export * from './type-export-surface.js';
 export * from './integrity.js';
 export * from './surface.js';
 export * from './skip-detect-ast.js';
