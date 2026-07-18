@@ -97,6 +97,7 @@
       "TaintFacts": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/taint-facts.ts",
       "TaintFacts.interproceduralDepth": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/taint-facts.ts",
       "MutationFacts": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/mutation-facts.ts",
+      "TransitionFacts": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/transition-facts.ts",
       "McdcFacts": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/mcdc-facts.ts",
       "McdcConditionOutcome": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/mcdc-facts.ts",
       "Finding": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/finding.ts",

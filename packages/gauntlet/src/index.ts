@@ -75,6 +75,7 @@ export {
   defineGate,
   requireIR,
   requireMutation,
+  requireTransition,
   requireMcdc,
   requireTaint,
   requireCapabilityLink,
@@ -113,6 +114,13 @@ export {
 export { noSkippedTestFactGate, decideSkips } from './gates/no-skipped-test-fact.js';
 
 export { type MutationFacts, type MutantOutcome, type MutantVerdictTag } from './mutation-facts.js';
+
+// The BISIMULATION fact family (Wave 5.5, the transition cage) — the DYNAMIC-SUBJECT
+// half of the conformance backbone. Flat, no-heavy-dep facts (parallel to MutationFacts):
+// each case's model/impl observation digests + a status verdict (equivalent|divergent|
+// unevidenced). The heavy capture (unfolding op histories over both transports) lives in
+// @czap/audit's buildTransitionFacts + the Foundation harnesses; the lean gate folds.
+export { type TransitionFacts, type TransitionCase, type TransitionStatus } from './transition-facts.js';
 
 // The LOCAL-VS-GLOBAL correctness family — proof-strength facts + the lax-functor
 // `min`-fold over the dep DAG (the dual of assurance propagation), and the
@@ -401,6 +409,24 @@ export {
   SURVIVOR_SEVERITY_BY_LEVEL,
   KILL_FLOOR_BY_LEVEL,
 } from './gates/mutation-divergence.js';
+
+// The Wave-5.5 transition-cage TRANSITION-CONFORMANCE gate (the constitution's
+// BISIMULATION half). It folds the host-supplied TransitionFacts (each seeded op
+// history's model-vs-implementation bisimulation verdict): a DIVERGENT case becomes a
+// replayable Finding at the family's assurance level (severity by level deciding
+// blocking), an UNEVIDENCED case a coverage gap floored by the committed ratchet. The
+// heavy capture (unfolding op histories over both transports via Effect.runPromise)
+// lives in @czap/audit's buildTransitionFacts + the Foundation harnesses the @czap/cli
+// host wires. Exported but DELIBERATELY NOT in LITESHIP_GATES / LITESHIP_IR_GATES:
+// transition conformance is OPT-IN (`czap check --ir --transition`) — a fiber walk per
+// case is too heavy for a default run. The integrator composes it on like
+// mutationDivergenceGate (a ~3-line wiring). See the DIVERGENCE_SEVERITY_BY_LEVEL /
+// TRANSITION_FAMILY_LEVEL redlinable data.
+export {
+  transitionConformanceGate,
+  DIVERGENCE_SEVERITY_BY_LEVEL,
+  TRANSITION_FAMILY_LEVEL,
+} from './gates/transition-conformance.js';
 
 // The avionics-tier MC/DC-coverage gate (DO-178B Level A's Modified Condition/Decision
 // Coverage, realized as CONDITION-LEVEL MUTATION — a sound, recognized technique reusing

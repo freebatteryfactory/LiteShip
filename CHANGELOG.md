@@ -4,6 +4,37 @@ All notable changes to czap. The format follows [Keep a Changelog](https://keepa
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Pre-1.0
 break policy is intentionally aggressive — minor version bumps may carry breaking changes.
 
+## [0.16.0] - 2026-07-18
+
+The **transition cage** (Wave 5.5) — additive verification infrastructure that builds the
+differential oracle making the reactive-convergence wave safe. No runtime semantics change:
+the reactive kernels (`Cell`/`Derived`/`Store`/`Signal`/`Timeline`/`LiveCell`/`HLC`/
+`CellKernel`) are untouched. What lands is the bisimulation half of the conformance backbone —
+a `TransitionFacts` fact family, a self-proving `transition-conformance` gate, and the host
+builder that folds a single-oracle model against the live implementation over one operation
+history.
+
+### Added
+
+- **`TransitionFacts` fact family on `@czap/gauntlet`** — the lean, no-heavy-dep bisimulation
+  evidence interface (`TransitionFacts`/`TransitionCase`/`TransitionStatus`), the
+  `transitionConformanceGate` that folds it into replayable Findings at the family's assurance
+  level, the redlinable `DIVERGENCE_SEVERITY_BY_LEVEL` / `TRANSITION_FAMILY_LEVEL` data, and the
+  `requireTransition` context guard. The gate earns `blocking` authority through the shipped
+  ratchet (`verifyGate`: redCaught ∧ greenClean ∧ mutationKilled). It is exported but
+  deliberately NOT in the default gate set — transition conformance is opt-in.
+- **`buildTransitionFacts` host builder on `@czap/audit`** — the heavy half (parallel to
+  `buildMutationFacts`): takes injected per-case oracle outcomes (`OracleOutcome`,
+  `TransitionRun`, `TransitionBuildOptions`), content-addresses each op history through the
+  canonical CBOR→fnv1a currency, decides each case's `equivalent`/`divergent`/`unevidenced`
+  verdict by observation-digest equality, and emits flat, byte-stable facts the lean gate folds.
+
+### Changed
+
+- **Lockstep 0.15.0 → 0.16.0** across all `@czap/*`; api-surface snapshot regenerated (the
+  five new `@czap/gauntlet` + `@czap/audit` value exports). The `@czap/core` api-health registry
+  is unchanged — this wave adds no `@czap/core` surface.
+
 ## [0.15.0] - 2026-07-17
 
 The **ceremony cut** (Wave 5) — the command kernel stops hand-rolling its envelopes. A

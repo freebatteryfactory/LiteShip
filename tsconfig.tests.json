@@ -91,7 +91,28 @@
     // The near-miss strictness-mutator derivation (scar S1.1): its predicted
     // issue codes are typed against the kernel `DecodeIssueCode` union, so a
     // misspelled or stale code fails the typecheck rather than the property run.
-    "tests/support/near-miss.ts"
+    "tests/support/near-miss.ts",
+    // The Wave 5.5 transition-cage capture substrate: the closed operation-trace
+    // vocabulary + the empirical capture harness that drives the current
+    // Effect-backed reactive primitives. Typechecked here so the trace/observation
+    // contracts and the per-primitive adapters bite (a shape drift fails the
+    // typecheck, not just the capture run).
+    "tests/support/reactive-trace.ts",
+    "tests/support/reactive-capture.ts",
+    "tests/unit/core/reactive-capture.test.ts",
+    // The Wave 5.5 single-oracle: the fc.commands reference model DERIVED from the
+    // CellKernel/Lifetime law tables + its internal-consistency/coverage proof.
+    // Typechecked here so the op-vocabulary / Observation / LawCoverage contracts
+    // bite (a drift from the projected laws fails the typecheck, not just the run).
+    "tests/support/reactive-model.ts",
+    "tests/unit/core/reactive-model.test.ts",
+    // The Wave 5.5 cross-transport differential oracle (CAGE-A): the reusable
+    // bisimulation harness + its seeded conformance property. Typechecked here so
+    // the TraceSource / ModelConfig / OracleResult / Difference contracts bite (a
+    // model-vs-impl shape drift fails the typecheck, not just the property run),
+    // and so Wave 6 can flip the impl side against the SAME typed model surface.
+    "tests/support/reactive-oracle.ts",
+    "tests/property/reactive-conformance.prop.test.ts"
   ],
   "exclude": ["node_modules", "**/dist/**"]
 }

@@ -1,0 +1,597 @@
+[
+  {
+    "primitive": "cell",
+    "seed": "initial-replay",
+    "traceDigest": "fnv1a:151dbbcc",
+    "observationDigest": "fnv1a:54d969e3",
+    "history": [
+      {
+        "_tag": "subscribe",
+        "sink": "a"
+      },
+      {
+        "_tag": "read"
+      }
+    ],
+    "observation": {
+      "primitive": "cell",
+      "opCount": 2,
+      "subscribers": [
+        {
+          "sink": "a",
+          "subscribedAtOp": 0,
+          "deliveries": [
+            0
+          ],
+          "interruptedOnDispose": false,
+          "completed": false,
+          "errored": false
+        }
+      ],
+      "reads": [
+        {
+          "atOp": 1,
+          "value": 0
+        }
+      ],
+      "finalValue": 0,
+      "disposed": false
+    }
+  },
+  {
+    "primitive": "cell",
+    "seed": "late-subscriber-replay",
+    "traceDigest": "fnv1a:be9e0693",
+    "observationDigest": "fnv1a:7a97676f",
+    "history": [
+      {
+        "_tag": "subscribe",
+        "sink": "a"
+      },
+      {
+        "_tag": "set",
+        "value": 3
+      },
+      {
+        "_tag": "set",
+        "value": 5
+      },
+      {
+        "_tag": "subscribe",
+        "sink": "b"
+      },
+      {
+        "_tag": "read"
+      }
+    ],
+    "observation": {
+      "primitive": "cell",
+      "opCount": 5,
+      "subscribers": [
+        {
+          "sink": "a",
+          "subscribedAtOp": 0,
+          "deliveries": [
+            0,
+            3,
+            5
+          ],
+          "interruptedOnDispose": false,
+          "completed": false,
+          "errored": false
+        },
+        {
+          "sink": "b",
+          "subscribedAtOp": 3,
+          "deliveries": [
+            5
+          ],
+          "interruptedOnDispose": false,
+          "completed": false,
+          "errored": false
+        }
+      ],
+      "reads": [
+        {
+          "atOp": 4,
+          "value": 5
+        }
+      ],
+      "finalValue": 5,
+      "disposed": false
+    }
+  },
+  {
+    "primitive": "cell",
+    "seed": "duplicate-consecutive",
+    "traceDigest": "fnv1a:f0f32f10",
+    "observationDigest": "fnv1a:868dedc7",
+    "history": [
+      {
+        "_tag": "subscribe",
+        "sink": "a"
+      },
+      {
+        "_tag": "set",
+        "value": 7
+      },
+      {
+        "_tag": "set",
+        "value": 7
+      },
+      {
+        "_tag": "set",
+        "value": 7
+      },
+      {
+        "_tag": "read"
+      }
+    ],
+    "observation": {
+      "primitive": "cell",
+      "opCount": 5,
+      "subscribers": [
+        {
+          "sink": "a",
+          "subscribedAtOp": 0,
+          "deliveries": [
+            0,
+            7,
+            7,
+            7
+          ],
+          "interruptedOnDispose": false,
+          "completed": false,
+          "errored": false
+        }
+      ],
+      "reads": [
+        {
+          "atOp": 4,
+          "value": 7
+        }
+      ],
+      "finalValue": 7,
+      "disposed": false
+    }
+  },
+  {
+    "primitive": "cell",
+    "seed": "subscriber-order",
+    "traceDigest": "fnv1a:01b2fc8c",
+    "observationDigest": "fnv1a:aad11622",
+    "history": [
+      {
+        "_tag": "subscribe",
+        "sink": "a"
+      },
+      {
+        "_tag": "subscribe",
+        "sink": "b"
+      },
+      {
+        "_tag": "subscribe",
+        "sink": "c"
+      },
+      {
+        "_tag": "set",
+        "value": 5
+      }
+    ],
+    "observation": {
+      "primitive": "cell",
+      "opCount": 4,
+      "subscribers": [
+        {
+          "sink": "a",
+          "subscribedAtOp": 0,
+          "deliveries": [
+            0,
+            5
+          ],
+          "interruptedOnDispose": false,
+          "completed": false,
+          "errored": false
+        },
+        {
+          "sink": "b",
+          "subscribedAtOp": 1,
+          "deliveries": [
+            0,
+            5
+          ],
+          "interruptedOnDispose": false,
+          "completed": false,
+          "errored": false
+        },
+        {
+          "sink": "c",
+          "subscribedAtOp": 2,
+          "deliveries": [
+            0,
+            5
+          ],
+          "interruptedOnDispose": false,
+          "completed": false,
+          "errored": false
+        }
+      ],
+      "reads": [],
+      "finalValue": 5,
+      "disposed": false
+    }
+  },
+  {
+    "primitive": "cell",
+    "seed": "nested-write",
+    "traceDigest": "fnv1a:f260afe6",
+    "observationDigest": "fnv1a:214b0f20",
+    "history": [
+      {
+        "_tag": "subscribe",
+        "sink": "a",
+        "react": [
+          {
+            "kind": "set",
+            "onValue": 1,
+            "value": 99
+          }
+        ]
+      },
+      {
+        "_tag": "subscribe",
+        "sink": "b"
+      },
+      {
+        "_tag": "set",
+        "value": 1
+      },
+      {
+        "_tag": "read"
+      }
+    ],
+    "observation": {
+      "primitive": "cell",
+      "opCount": 4,
+      "subscribers": [
+        {
+          "sink": "a",
+          "subscribedAtOp": 0,
+          "deliveries": [
+            0,
+            1,
+            99
+          ],
+          "interruptedOnDispose": false,
+          "completed": false,
+          "errored": false
+        },
+        {
+          "sink": "b",
+          "subscribedAtOp": 1,
+          "deliveries": [
+            0,
+            1,
+            99
+          ],
+          "interruptedOnDispose": false,
+          "completed": false,
+          "errored": false
+        }
+      ],
+      "reads": [
+        {
+          "atOp": 3,
+          "value": 99
+        }
+      ],
+      "finalValue": 99,
+      "disposed": false
+    }
+  },
+  {
+    "primitive": "cell",
+    "seed": "subscribe-during-publish",
+    "traceDigest": "fnv1a:fe57f0ed",
+    "observationDigest": "fnv1a:4b3aa5a7",
+    "history": [
+      {
+        "_tag": "subscribe",
+        "sink": "a",
+        "react": [
+          {
+            "kind": "subscribe",
+            "onValue": 5,
+            "newSink": "late"
+          }
+        ]
+      },
+      {
+        "_tag": "set",
+        "value": 5
+      },
+      {
+        "_tag": "set",
+        "value": 6
+      },
+      {
+        "_tag": "read"
+      }
+    ],
+    "observation": {
+      "primitive": "cell",
+      "opCount": 4,
+      "subscribers": [
+        {
+          "sink": "a",
+          "subscribedAtOp": 0,
+          "deliveries": [
+            0,
+            5,
+            6
+          ],
+          "interruptedOnDispose": false,
+          "completed": false,
+          "errored": false
+        },
+        {
+          "sink": "late",
+          "subscribedAtOp": 0,
+          "deliveries": [
+            5,
+            6
+          ],
+          "interruptedOnDispose": false,
+          "completed": false,
+          "errored": false
+        }
+      ],
+      "reads": [
+        {
+          "atOp": 3,
+          "value": 6
+        }
+      ],
+      "finalValue": 6,
+      "disposed": false
+    }
+  },
+  {
+    "primitive": "cell",
+    "seed": "unsubscribe-during-publish",
+    "traceDigest": "fnv1a:3807d88e",
+    "observationDigest": "fnv1a:d7361c0f",
+    "history": [
+      {
+        "_tag": "subscribe",
+        "sink": "a",
+        "react": [
+          {
+            "kind": "unsubscribe",
+            "onValue": 5,
+            "target": "b"
+          }
+        ]
+      },
+      {
+        "_tag": "subscribe",
+        "sink": "b"
+      },
+      {
+        "_tag": "set",
+        "value": 5
+      },
+      {
+        "_tag": "set",
+        "value": 6
+      }
+    ],
+    "observation": {
+      "primitive": "cell",
+      "opCount": 4,
+      "subscribers": [
+        {
+          "sink": "a",
+          "subscribedAtOp": 0,
+          "deliveries": [
+            0,
+            5,
+            6
+          ],
+          "interruptedOnDispose": false,
+          "completed": false,
+          "errored": false
+        },
+        {
+          "sink": "b",
+          "subscribedAtOp": 1,
+          "deliveries": [
+            0
+          ],
+          "interruptedOnDispose": false,
+          "completed": false,
+          "errored": false
+        }
+      ],
+      "reads": [],
+      "finalValue": 6,
+      "disposed": false
+    }
+  },
+  {
+    "primitive": "cell",
+    "seed": "listener-failure",
+    "traceDigest": "fnv1a:6ae0c00f",
+    "observationDigest": "fnv1a:adc7d89a",
+    "history": [
+      {
+        "_tag": "subscribe",
+        "sink": "a",
+        "react": [
+          {
+            "kind": "throw",
+            "onValue": 3
+          }
+        ]
+      },
+      {
+        "_tag": "subscribe",
+        "sink": "b"
+      },
+      {
+        "_tag": "set",
+        "value": 3
+      },
+      {
+        "_tag": "set",
+        "value": 4
+      },
+      {
+        "_tag": "read"
+      }
+    ],
+    "observation": {
+      "primitive": "cell",
+      "opCount": 5,
+      "subscribers": [
+        {
+          "sink": "a",
+          "subscribedAtOp": 0,
+          "deliveries": [
+            0,
+            3
+          ],
+          "interruptedOnDispose": false,
+          "completed": false,
+          "errored": true
+        },
+        {
+          "sink": "b",
+          "subscribedAtOp": 1,
+          "deliveries": [
+            0,
+            3,
+            4
+          ],
+          "interruptedOnDispose": false,
+          "completed": false,
+          "errored": false
+        }
+      ],
+      "reads": [
+        {
+          "atOp": 4,
+          "value": 4
+        }
+      ],
+      "finalValue": 4,
+      "disposed": false
+    }
+  },
+  {
+    "primitive": "cell",
+    "seed": "disposal-completion",
+    "traceDigest": "fnv1a:0db0bea0",
+    "observationDigest": "fnv1a:da9800dd",
+    "history": [
+      {
+        "_tag": "subscribe",
+        "sink": "a"
+      },
+      {
+        "_tag": "set",
+        "value": 1
+      },
+      {
+        "_tag": "dispose"
+      },
+      {
+        "_tag": "set",
+        "value": 2
+      },
+      {
+        "_tag": "read"
+      }
+    ],
+    "observation": {
+      "primitive": "cell",
+      "opCount": 5,
+      "subscribers": [
+        {
+          "sink": "a",
+          "subscribedAtOp": 0,
+          "deliveries": [
+            0,
+            1
+          ],
+          "interruptedOnDispose": true,
+          "completed": false,
+          "errored": false
+        }
+      ],
+      "reads": [
+        {
+          "atOp": 4,
+          "value": 2
+        }
+      ],
+      "finalValue": 2,
+      "disposed": true
+    }
+  },
+  {
+    "primitive": "cell",
+    "seed": "update-path",
+    "traceDigest": "fnv1a:ed2cb991",
+    "observationDigest": "fnv1a:e3af369b",
+    "history": [
+      {
+        "_tag": "subscribe",
+        "sink": "a"
+      },
+      {
+        "_tag": "update",
+        "transform": {
+          "kind": "add",
+          "n": 10
+        }
+      },
+      {
+        "_tag": "update",
+        "transform": {
+          "kind": "mul",
+          "n": 2
+        }
+      },
+      {
+        "_tag": "read"
+      }
+    ],
+    "observation": {
+      "primitive": "cell",
+      "opCount": 4,
+      "subscribers": [
+        {
+          "sink": "a",
+          "subscribedAtOp": 0,
+          "deliveries": [
+            0,
+            10,
+            20
+          ],
+          "interruptedOnDispose": false,
+          "completed": false,
+          "errored": false
+        }
+      ],
+      "reads": [
+        {
+          "atOp": 3,
+          "value": 20
+        }
+      ],
+      "finalValue": 20,
+      "disposed": false
+    }
+  }
+]

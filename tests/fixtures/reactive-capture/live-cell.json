@@ -1,0 +1,393 @@
+[
+  {
+    "primitive": "live-cell",
+    "seed": "initial-replay",
+    "traceDigest": "fnv1a:151dbbcc",
+    "observationDigest": "fnv1a:86bc84ce",
+    "history": [
+      {
+        "_tag": "subscribe",
+        "sink": "a"
+      },
+      {
+        "_tag": "read"
+      }
+    ],
+    "observation": {
+      "primitive": "live-cell",
+      "opCount": 2,
+      "subscribers": [
+        {
+          "sink": "a",
+          "subscribedAtOp": 0,
+          "deliveries": [
+            0
+          ],
+          "interruptedOnDispose": false,
+          "completed": false,
+          "errored": false
+        }
+      ],
+      "reads": [
+        {
+          "atOp": 1,
+          "value": 0
+        }
+      ],
+      "crossings": [],
+      "meta": [],
+      "metaMonotonic": true,
+      "finalValue": 0,
+      "disposed": false
+    }
+  },
+  {
+    "primitive": "live-cell",
+    "seed": "duplicate-consecutive",
+    "traceDigest": "fnv1a:f0f32f10",
+    "observationDigest": "fnv1a:f4910b06",
+    "history": [
+      {
+        "_tag": "subscribe",
+        "sink": "a"
+      },
+      {
+        "_tag": "set",
+        "value": 7
+      },
+      {
+        "_tag": "set",
+        "value": 7
+      },
+      {
+        "_tag": "set",
+        "value": 7
+      },
+      {
+        "_tag": "read"
+      }
+    ],
+    "observation": {
+      "primitive": "live-cell",
+      "opCount": 5,
+      "subscribers": [
+        {
+          "sink": "a",
+          "subscribedAtOp": 0,
+          "deliveries": [
+            0,
+            7,
+            7,
+            7
+          ],
+          "interruptedOnDispose": false,
+          "completed": false,
+          "errored": false
+        }
+      ],
+      "reads": [
+        {
+          "atOp": 4,
+          "value": 7
+        }
+      ],
+      "crossings": [],
+      "meta": [
+        {
+          "atOp": 1,
+          "version": 2,
+          "id": "fnv1a:563bf452"
+        },
+        {
+          "atOp": 2,
+          "version": 3,
+          "id": "fnv1a:563bf452"
+        },
+        {
+          "atOp": 3,
+          "version": 4,
+          "id": "fnv1a:563bf452"
+        }
+      ],
+      "metaMonotonic": true,
+      "finalValue": 7,
+      "disposed": false
+    }
+  },
+  {
+    "primitive": "live-cell",
+    "seed": "crossings-and-identity",
+    "traceDigest": "fnv1a:41b0ce2d",
+    "observationDigest": "fnv1a:17b3fc48",
+    "history": [
+      {
+        "_tag": "subscribe",
+        "sink": "a"
+      },
+      {
+        "_tag": "set",
+        "value": 150
+      },
+      {
+        "_tag": "set",
+        "value": 50
+      },
+      {
+        "_tag": "set",
+        "value": 150
+      },
+      {
+        "_tag": "read"
+      }
+    ],
+    "observation": {
+      "primitive": "live-cell",
+      "opCount": 5,
+      "subscribers": [
+        {
+          "sink": "a",
+          "subscribedAtOp": 0,
+          "deliveries": [
+            0,
+            150,
+            50,
+            150
+          ],
+          "interruptedOnDispose": false,
+          "completed": false,
+          "errored": false
+        }
+      ],
+      "reads": [
+        {
+          "atOp": 4,
+          "value": 150
+        }
+      ],
+      "crossings": [
+        {
+          "from": "idle",
+          "to": "active",
+          "value": 150
+        },
+        {
+          "from": "active",
+          "to": "idle",
+          "value": 50
+        },
+        {
+          "from": "idle",
+          "to": "active",
+          "value": 150
+        }
+      ],
+      "meta": [
+        {
+          "atOp": 1,
+          "version": 2,
+          "id": "fnv1a:56916657"
+        },
+        {
+          "atOp": 2,
+          "version": 3,
+          "id": "fnv1a:b290642b"
+        },
+        {
+          "atOp": 3,
+          "version": 4,
+          "id": "fnv1a:56916657"
+        }
+      ],
+      "metaMonotonic": true,
+      "finalValue": 150,
+      "disposed": false
+    }
+  },
+  {
+    "primitive": "live-cell",
+    "seed": "update-crossing",
+    "traceDigest": "fnv1a:6da1fe27",
+    "observationDigest": "fnv1a:c5e05400",
+    "history": [
+      {
+        "_tag": "subscribe",
+        "sink": "a"
+      },
+      {
+        "_tag": "update",
+        "transform": {
+          "kind": "add",
+          "n": 150
+        }
+      },
+      {
+        "_tag": "read"
+      }
+    ],
+    "observation": {
+      "primitive": "live-cell",
+      "opCount": 3,
+      "subscribers": [
+        {
+          "sink": "a",
+          "subscribedAtOp": 0,
+          "deliveries": [
+            0,
+            150
+          ],
+          "interruptedOnDispose": false,
+          "completed": false,
+          "errored": false
+        }
+      ],
+      "reads": [
+        {
+          "atOp": 2,
+          "value": 150
+        }
+      ],
+      "crossings": [
+        {
+          "from": "idle",
+          "to": "active",
+          "value": 150
+        }
+      ],
+      "meta": [
+        {
+          "atOp": 1,
+          "version": 2,
+          "id": "fnv1a:56916657"
+        }
+      ],
+      "metaMonotonic": true,
+      "finalValue": 150,
+      "disposed": false
+    }
+  },
+  {
+    "primitive": "live-cell",
+    "seed": "manual-crossing-fanout",
+    "traceDigest": "fnv1a:70f3f115",
+    "observationDigest": "fnv1a:d0e20a1b",
+    "history": [
+      {
+        "_tag": "subscribe",
+        "sink": "a"
+      },
+      {
+        "_tag": "publishCrossing",
+        "from": "idle",
+        "to": "active",
+        "value": 120
+      },
+      {
+        "_tag": "read"
+      }
+    ],
+    "observation": {
+      "primitive": "live-cell",
+      "opCount": 3,
+      "subscribers": [
+        {
+          "sink": "a",
+          "subscribedAtOp": 0,
+          "deliveries": [
+            0
+          ],
+          "interruptedOnDispose": false,
+          "completed": false,
+          "errored": false
+        }
+      ],
+      "reads": [
+        {
+          "atOp": 2,
+          "value": 0
+        }
+      ],
+      "crossings": [
+        {
+          "from": "idle",
+          "to": "active",
+          "value": 120
+        }
+      ],
+      "meta": [],
+      "metaMonotonic": true,
+      "finalValue": 0,
+      "disposed": false
+    }
+  },
+  {
+    "primitive": "live-cell",
+    "seed": "disposal",
+    "traceDigest": "fnv1a:f9b3f825",
+    "observationDigest": "fnv1a:ea67ed3d",
+    "history": [
+      {
+        "_tag": "subscribe",
+        "sink": "a"
+      },
+      {
+        "_tag": "set",
+        "value": 150
+      },
+      {
+        "_tag": "dispose"
+      },
+      {
+        "_tag": "set",
+        "value": 50
+      },
+      {
+        "_tag": "read"
+      }
+    ],
+    "observation": {
+      "primitive": "live-cell",
+      "opCount": 5,
+      "subscribers": [
+        {
+          "sink": "a",
+          "subscribedAtOp": 0,
+          "deliveries": [
+            0,
+            150
+          ],
+          "interruptedOnDispose": true,
+          "completed": false,
+          "errored": false
+        }
+      ],
+      "reads": [
+        {
+          "atOp": 4,
+          "value": 50
+        }
+      ],
+      "crossings": [
+        {
+          "from": "idle",
+          "to": "active",
+          "value": 150
+        }
+      ],
+      "meta": [
+        {
+          "atOp": 1,
+          "version": 2,
+          "id": "fnv1a:56916657"
+        },
+        {
+          "atOp": 3,
+          "version": 3,
+          "id": "fnv1a:b290642b"
+        }
+      ],
+      "metaMonotonic": true,
+      "finalValue": 50,
+      "disposed": true
+    }
+  }
+]

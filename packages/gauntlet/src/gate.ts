@@ -21,6 +21,7 @@ import type { Finding } from './finding.js';
 import type { FileId, RepoIR } from './repo-ir.js';
 import type { SupplyChainFacts } from './supply-chain-facts.js';
 import type { MutationFacts } from './mutation-facts.js';
+import type { TransitionFacts } from './transition-facts.js';
 import type { McdcFacts } from './mcdc-facts.js';
 import type { SimulationFacts } from './simulation-facts.js';
 import type { TraceabilityFacts } from './traceability-facts.js';
@@ -134,6 +135,25 @@ export interface GateContext {
    * {@link MutationFacts}.
    */
   readonly mutation?: MutationFacts;
+  /**
+   * Pre-computed TRANSITION-CONFORMANCE (bisimulation) evidence — an INJECTED
+   * capability (Wave 5.5, the transition cage — the DYNAMIC-SUBJECT half of the
+   * conformance backbone), the same lean-engine pattern as {@link ir} and
+   * {@link mutation}. OPTIONAL: the heavy work (unfolding each seeded op history over
+   * BOTH the single-oracle model AND the live implementation via `Effect.runPromise`,
+   * content-addressing each observed trace, deciding the per-case bisimulation verdict)
+   * all lives in a HOST (`@czap/audit`'s `buildTransitionFacts` + the Foundation
+   * capture/model harnesses the CLI wires), which folds the verdicts into flat
+   * {@link TransitionFacts} (every case's model/impl observation digests + status + the
+   * committed unevidenced baseline) and lands them here. The
+   * {@link transitionConformanceGate} reads ONLY through this; in-memory fixtures supply
+   * a literal facts record (no primitive, no fiber, no capture). When ABSENT the gate is
+   * simply not in the set (transition conformance is opt-in: `czap check --ir
+   * --transition`), so there is no per-case cost and no noise on a default run. A
+   * `divergent` case carries its SEED, so the behavior change it folds replays
+   * byte-for-byte. See {@link TransitionFacts}.
+   */
+  readonly transition?: TransitionFacts;
   /**
    * Pre-computed MC/DC (Modified Condition/Decision Coverage) evidence — an INJECTED
    * capability (the avionics tier — DO-178B Level A's coverage requirement, realized as
@@ -830,6 +850,24 @@ export function requireMutation(context: GateContext, gateId: string): MutationF
     );
   }
   return context.mutation;
+}
+
+/**
+ * Read the injected {@link TransitionFacts} from a context, or throw a clear tagged
+ * {@link HostCapabilityError} when none were injected — the guard the
+ * {@link transitionConformanceGate} uses so the lean engine's optional `transition`
+ * fails LOUD (never silently no-ops a gate whose whole job is the bisimulation facts).
+ * `gateId` is woven into the error for traceability. The same shape as
+ * {@link requireMutation}.
+ */
+export function requireTransition(context: GateContext, gateId: string): TransitionFacts {
+  if (context.transition === undefined) {
+    throw HostCapabilityError(
+      'transition-facts',
+      `gate "${gateId}" requires the injected transition-conformance facts, but none were supplied on the GateContext — a host (the CLI) must unfold the seeded op-history corpus over BOTH the single-oracle model and the implementation via @czap/audit's buildTransitionFacts + the Foundation capture/model harnesses, and inject the decided TransitionFacts as context.transition (the opt-in \`czap check --ir --transition\` path)`,
+    );
+  }
+  return context.transition;
 }
 
 /**

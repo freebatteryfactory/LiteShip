@@ -1,6 +1,6 @@
 {
   "name": "@czap/quantizer",
-  "version": "0.15.0",
+  "version": "0.16.0",
   "description": "Turn continuous signals into a few named UI states for LiteShip: evaluate boundaries, animate the transitions between states, and gate motion by device tier.",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",

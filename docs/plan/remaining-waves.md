@@ -59,12 +59,17 @@ Tags: **[CAGE]** transition cage · **[RX]** reactive convergence · **[DUP]** d
 
 ### mutation-engine retarget (aim the existing cannon at the reactive kernels)
 
-- `packages/cli/src/lib/mutation-targets.ts` — **EDIT** [CAGE] Extend `l4SeamTargets`'s curated trust-spine subset to include the reactive kernel source paths — `packages/core/src/{cell-kernel,cell,derived,store,signal,timeline,live-cell,hlc}.js` — so the existing deterministic mutation engine mints mutants there. Each stays intersected with the effective-L4 set (a non-L4 path silently drops), so this is a curated addition, not a hardcoded override of the live propagated levels.
-- `benchmarks/mutation-score.json` — **regenerate** [CAGE] Add the reactive-kernel files' first-measurement baseline entries (the ratchet establishes their floor on first run — reported informational, never a regression per `MutationFacts.scoreBaseline` semantics).
+- `packages/cli/src/lib/mutation-targets.ts` — **EDIT** [CAGE] Extend `l4SeamTargets`'s curated trust-spine subset to include the reactive kernel source paths — `packages/core/src/{cell-kernel,cell,derived,store,signal,timeline,live-cell,hlc}.js` — so the existing deterministic mutation engine can mint mutants there. Each stays intersected with the effective-L4 set (a non-L4 path silently drops), so this is a curated addition, not a hardcoded override. **LANDED Wave 5.5, but ENROLLED-BUT-INERT** (scar S5.5.1): the kernels resolve L1–L3 today (no L4-base file imports them), so the intersection drops them and zero mutants are minted this wave. Enrollment is forward-compatible; the actual mint activates in Wave 6 (see below).
 
-### assurance surface (the DERIVED law matrix — NOT new parallel gates)
+### DEFERRED TO WAVE 6 (scar S5.5.1 — the cage wave forbids this blast radius)
 
-- `packages/gauntlet/src/assurance-map.ts` — **EDIT** [CAGE] Add/redline `LevelRule`s so the reactive kernels resolve L4 (authority-decides-assurance), scoping the mutation + transition-conformance gates onto them. The six law classes (Surface/Construction/Derivation/Transition/Projection/Evidence) are a DERIVED assurance matrix over the existing 35 gates + traceability metadata + ONE coverage-rail meta-gate (the `gates/crdt-laws.ts` + `tests/property/crdt-laws-gate.test.ts` pattern) — NOT new parallel gates (that would violate LS-001 inside the verification layer). Only the **Transition** cell is a genuine new build (the `transition-conformance` gate above); the other five cells INDEX existing gates.
+The following three items were SCOPED here by an early plan draft but DEFERRED to Wave 6, because promoting the kernels to L4 now would scope *every other L4 gate* onto them (the exact blast radius a capture-only cage wave must not introduce). They land in Wave 6, where the reactive rebuild makes the kernels genuinely high-assurance and the L4 scoping is intended:
+
+- `benchmarks/mutation-score.json` — **regenerate → WAVE 6** the reactive-kernel first-measurement baseline entries (established on the first real mint, which is Wave 6).
+- `packages/gauntlet/src/assurance-map.ts` — **EDIT → WAVE 6** Add/redline `LevelRule`s so the reactive kernels resolve L4 (authority-decides-assurance), scoping the mutation + transition-conformance gates onto them.
+- **Active kernel mutation → WAVE 6**: with L4 resolved, the existing engine mints mutants against the kernels and the model must KILL each (a surviving reorder mutant = a model hole). This wave the model's fidelity rests on the law-coverage rail (every law-table entry → a model invariant) + the differential oracle's self-test (proven to red on a deliberately-broken impl) + `fc.commands` model ≡ CellKernel self-consistency — a strong cage without active kernel-mutation.
+
+The six law classes (Surface/Construction/Derivation/Transition/Projection/Evidence) remain a DERIVED assurance matrix over the existing 35 gates + traceability metadata + ONE coverage-rail meta-gate (the `gates/crdt-laws.ts` + `tests/property/crdt-laws-gate.test.ts` pattern) — NOT new parallel gates. Only the **Transition** cell is a genuine new build (the `transition-conformance` gate above); the other five cells INDEX existing gates.
 
 ---
 

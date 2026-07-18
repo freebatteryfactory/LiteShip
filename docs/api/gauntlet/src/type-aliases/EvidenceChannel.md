@@ -8,7 +8,7 @@
 
 > **EvidenceChannel** = `"allFiles"` \| `"ir.facts"` \| `"ir.refs"` \| [`FactChannel`](FactChannel.md)
 
-Defined in: [gauntlet/src/evidence-recorder.ts:87](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/evidence-recorder.ts#L87)
+Defined in: [gauntlet/src/evidence-recorder.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/evidence-recorder.ts#L89)
 
 The closed set of EVIDENCE CHANNELS the recorder tracks — every read surface a
 gate's verdict can depend on BEYOND the in-IR coverage digest. `ir.facts` /

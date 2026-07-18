@@ -6,7 +6,7 @@
 
 # Interface: FactGate
 
-Defined in: [gauntlet/src/gate.ts:590](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L590)
+Defined in: [gauntlet/src/gate.ts:610](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L610)
 
 A FACT GATE — the "gate-as-data" variant (the FactGate PoC). It replaces the arbitrary
 [Gate.run](Gate.md#run) closure with two data-shaped halves: a DECLARATION of which host-produced
@@ -26,7 +26,7 @@ cannot read undeclared evidence — there is no `run(context)` body to smuggle a
 
 > `readonly` `optional` **coverage?**: (`ir`) => readonly `string`[]
 
-Defined in: [gauntlet/src/gate.ts:392](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L392)
+Defined in: [gauntlet/src/gate.ts:412](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L412)
 
 OPTIONAL coverage declaration (Slice B, B2 — the content-addressed cache).
 Returns the [FileId](../type-aliases/FileId.md)s whose CONTENT this gate's verdict depends on, so
@@ -65,7 +65,7 @@ readonly `string`[]
 
 > `readonly` **decide**: (`facts`) => readonly [`Finding`](Finding.md)[]
 
-Defined in: [gauntlet/src/gate.ts:593](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L593)
+Defined in: [gauntlet/src/gate.ts:613](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L613)
 
 (FactGate only) The bounded, DATA-ONLY decision: maps the declared FactPack to
 findings with NO [GateContext](GateContext.md) access. Set by [defineFactGate](../functions/defineFactGate.md); the
@@ -91,7 +91,7 @@ readonly [`Finding`](Finding.md)[]
 
 > `readonly` **describe**: `string`
 
-Defined in: [gauntlet/src/gate.ts:371](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L371)
+Defined in: [gauntlet/src/gate.ts:391](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L391)
 
 One-line human description of what it checks.
 
@@ -105,7 +105,7 @@ One-line human description of what it checks.
 
 > `readonly` `optional` **evidenceDigest?**: (`context`) => `string` \| `undefined`
 
-Defined in: [gauntlet/src/gate.ts:424](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L424)
+Defined in: [gauntlet/src/gate.ts:444](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L444)
 
 OPTIONAL out-of-IR EVIDENCE digest (the verdict-cache soundness keystone). A
 gate's [coverage](Gate.md#coverage) (or the default-to-all floor) captures only the bytes
@@ -157,7 +157,7 @@ the evidence the digest folds matches the evidence `run` reads.
 
 > `readonly` **fixtures**: [`GateFixtures`](GateFixtures.md)
 
-Defined in: [gauntlet/src/gate.ts:426](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L426)
+Defined in: [gauntlet/src/gate.ts:446](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L446)
 
 The self-proof evidence — required, by construction.
 
@@ -171,7 +171,7 @@ The self-proof evidence — required, by construction.
 
 > `readonly` **form**: `"fact"`
 
-Defined in: [gauntlet/src/gate.ts:591](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L591)
+Defined in: [gauntlet/src/gate.ts:611](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L611)
 
 The gate's EXECUTION FORM — the discriminant of the FactGate variant. Absent
 (or `'hosted'`) is the default closure gate: an arbitrary [run](Gate.md#run) body that may
@@ -189,7 +189,7 @@ evidence. Built by [defineFactGate](../functions/defineFactGate.md); never hand-
 
 > `readonly` **id**: `string`
 
-Defined in: [gauntlet/src/gate.ts:367](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L367)
+Defined in: [gauntlet/src/gate.ts:387](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L387)
 
 Stable id; namespaces every [Finding](Finding.md) it emits (traceability).
 
@@ -203,7 +203,7 @@ Stable id; namespaces every [Finding](Finding.md) it emits (traceability).
 
 > `readonly` **level**: [`AssuranceLevel`](../type-aliases/AssuranceLevel.md)
 
-Defined in: [gauntlet/src/gate.ts:369](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L369)
+Defined in: [gauntlet/src/gate.ts:389](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L389)
 
 The assurance level this gate operates at — aims its rigor.
 
@@ -217,7 +217,7 @@ The assurance level this gate operates at — aims its rigor.
 
 > `readonly` **requires**: readonly (`"skipSites"` \| `"activeSurfaceFacts"`)[]
 
-Defined in: [gauntlet/src/gate.ts:592](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L592)
+Defined in: [gauntlet/src/gate.ts:612](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L612)
 
 (FactGate only) The fact channels this gate's decision DECLARES it consumes — the
 data analogue of "what evidence does this gate read". The engine folds exactly these
@@ -234,7 +234,7 @@ STRUCTURAL (not a gate-authored [evidenceDigest](Gate.md#evidencedigest) you mus
 
 > `readonly` **run**: (`context`) => readonly [`Finding`](Finding.md)[]
 
-Defined in: [gauntlet/src/gate.ts:373](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L373)
+Defined in: [gauntlet/src/gate.ts:393](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L393)
 
 The fold: produce findings for `context`. Pure w.r.t. the context.
 

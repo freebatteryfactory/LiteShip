@@ -1,0 +1,358 @@
+[
+  {
+    "primitive": "timeline",
+    "seed": "initial-state",
+    "traceDigest": "fnv1a:151dbbcc",
+    "observationDigest": "fnv1a:dae2334e",
+    "history": [
+      {
+        "_tag": "subscribe",
+        "sink": "a"
+      },
+      {
+        "_tag": "read"
+      }
+    ],
+    "observation": {
+      "primitive": "timeline",
+      "opCount": 2,
+      "subscribers": [
+        {
+          "sink": "a",
+          "subscribedAtOp": 0,
+          "deliveries": [
+            "idle"
+          ],
+          "interruptedOnDispose": false,
+          "completed": false,
+          "errored": false
+        }
+      ],
+      "reads": [
+        {
+          "atOp": 1,
+          "value": "idle"
+        }
+      ],
+      "finalValue": "idle",
+      "disposed": false
+    }
+  },
+  {
+    "primitive": "timeline",
+    "seed": "play-advance",
+    "traceDigest": "fnv1a:a3803071",
+    "observationDigest": "fnv1a:7b98ba84",
+    "history": [
+      {
+        "_tag": "subscribe",
+        "sink": "a"
+      },
+      {
+        "_tag": "play"
+      },
+      {
+        "_tag": "tick",
+        "count": 1
+      },
+      {
+        "_tag": "tick",
+        "count": 1
+      },
+      {
+        "_tag": "tick",
+        "count": 1
+      },
+      {
+        "_tag": "read"
+      }
+    ],
+    "observation": {
+      "primitive": "timeline",
+      "opCount": 6,
+      "subscribers": [
+        {
+          "sink": "a",
+          "subscribedAtOp": 0,
+          "deliveries": [
+            "idle",
+            "active",
+            "done"
+          ],
+          "interruptedOnDispose": false,
+          "completed": false,
+          "errored": false
+        }
+      ],
+      "reads": [
+        {
+          "atOp": 5,
+          "value": "done"
+        }
+      ],
+      "finalValue": "done",
+      "disposed": false
+    }
+  },
+  {
+    "primitive": "timeline",
+    "seed": "seek-across-thresholds",
+    "traceDigest": "fnv1a:41b0ce2d",
+    "observationDigest": "fnv1a:72370b75",
+    "history": [
+      {
+        "_tag": "subscribe",
+        "sink": "a"
+      },
+      {
+        "_tag": "set",
+        "value": 150
+      },
+      {
+        "_tag": "set",
+        "value": 50
+      },
+      {
+        "_tag": "set",
+        "value": 150
+      },
+      {
+        "_tag": "read"
+      }
+    ],
+    "observation": {
+      "primitive": "timeline",
+      "opCount": 5,
+      "subscribers": [
+        {
+          "sink": "a",
+          "subscribedAtOp": 0,
+          "deliveries": [
+            "idle",
+            "active",
+            "idle",
+            "active"
+          ],
+          "interruptedOnDispose": false,
+          "completed": false,
+          "errored": false
+        }
+      ],
+      "reads": [
+        {
+          "atOp": 4,
+          "value": "active"
+        }
+      ],
+      "finalValue": "active",
+      "disposed": false
+    }
+  },
+  {
+    "primitive": "timeline",
+    "seed": "duplicate-state-seek",
+    "traceDigest": "fnv1a:a401b4c8",
+    "observationDigest": "fnv1a:687d9d97",
+    "history": [
+      {
+        "_tag": "subscribe",
+        "sink": "a"
+      },
+      {
+        "_tag": "set",
+        "value": 150
+      },
+      {
+        "_tag": "set",
+        "value": 160
+      },
+      {
+        "_tag": "read"
+      }
+    ],
+    "observation": {
+      "primitive": "timeline",
+      "opCount": 4,
+      "subscribers": [
+        {
+          "sink": "a",
+          "subscribedAtOp": 0,
+          "deliveries": [
+            "idle",
+            "active"
+          ],
+          "interruptedOnDispose": false,
+          "completed": false,
+          "errored": false
+        }
+      ],
+      "reads": [
+        {
+          "atOp": 3,
+          "value": "active"
+        }
+      ],
+      "finalValue": "active",
+      "disposed": false
+    }
+  },
+  {
+    "primitive": "timeline",
+    "seed": "scrub",
+    "traceDigest": "fnv1a:ceccbe55",
+    "observationDigest": "fnv1a:1bf147a8",
+    "history": [
+      {
+        "_tag": "subscribe",
+        "sink": "a"
+      },
+      {
+        "_tag": "scrub",
+        "progress": 0.5
+      },
+      {
+        "_tag": "scrub",
+        "progress": 1
+      },
+      {
+        "_tag": "read"
+      }
+    ],
+    "observation": {
+      "primitive": "timeline",
+      "opCount": 4,
+      "subscribers": [
+        {
+          "sink": "a",
+          "subscribedAtOp": 0,
+          "deliveries": [
+            "idle",
+            "active",
+            "done"
+          ],
+          "interruptedOnDispose": false,
+          "completed": false,
+          "errored": false
+        }
+      ],
+      "reads": [
+        {
+          "atOp": 3,
+          "value": "done"
+        }
+      ],
+      "finalValue": "done",
+      "disposed": false
+    }
+  },
+  {
+    "primitive": "timeline",
+    "seed": "pause-resume-advance",
+    "traceDigest": "fnv1a:65cf0fd7",
+    "observationDigest": "fnv1a:cda66038",
+    "history": [
+      {
+        "_tag": "subscribe",
+        "sink": "a"
+      },
+      {
+        "_tag": "play"
+      },
+      {
+        "_tag": "tick",
+        "count": 1
+      },
+      {
+        "_tag": "pause"
+      },
+      {
+        "_tag": "tick",
+        "count": 1
+      },
+      {
+        "_tag": "tick",
+        "count": 1
+      },
+      {
+        "_tag": "read"
+      }
+    ],
+    "observation": {
+      "primitive": "timeline",
+      "opCount": 7,
+      "subscribers": [
+        {
+          "sink": "a",
+          "subscribedAtOp": 0,
+          "deliveries": [
+            "idle"
+          ],
+          "interruptedOnDispose": false,
+          "completed": false,
+          "errored": false
+        }
+      ],
+      "reads": [
+        {
+          "atOp": 6,
+          "value": "idle"
+        }
+      ],
+      "finalValue": "idle",
+      "disposed": false
+    }
+  },
+  {
+    "primitive": "timeline",
+    "seed": "disposal",
+    "traceDigest": "fnv1a:919e1d2c",
+    "observationDigest": "fnv1a:8cd1fbd8",
+    "history": [
+      {
+        "_tag": "subscribe",
+        "sink": "a"
+      },
+      {
+        "_tag": "play"
+      },
+      {
+        "_tag": "tick",
+        "count": 1
+      },
+      {
+        "_tag": "dispose"
+      },
+      {
+        "_tag": "tick",
+        "count": 1
+      },
+      {
+        "_tag": "read"
+      }
+    ],
+    "observation": {
+      "primitive": "timeline",
+      "opCount": 6,
+      "subscribers": [
+        {
+          "sink": "a",
+          "subscribedAtOp": 0,
+          "deliveries": [
+            "idle"
+          ],
+          "interruptedOnDispose": true,
+          "completed": false,
+          "errored": false
+        }
+      ],
+      "reads": [
+        {
+          "atOp": 5,
+          "value": "idle"
+        }
+      ],
+      "finalValue": "idle",
+      "disposed": true
+    }
+  }
+]

@@ -455,3 +455,65 @@ Format: `S<wave>.<n>` — scar → root class → disposition (guard, status).
   relocated guarantee (the frozen pins) standing and re-home the resolution onto a
   mechanism that *can* be honest (the relation gate), never to delete the pins ahead
   of the gate.** STATUS: RESOLVED direction — pin absorption tracked to Wave 8.5.
+
+## Wave 5.5 scars
+
+- **S5.5.1 — mutation retarget enrolled-but-INERT** (the 7 reactive kernels were
+  appended to `mutation-targets.ts` `L4_SEAM_CANDIDATES`, but they resolve L1–L3 —
+  no L4-base file imports them — so the effective-L4 intersection drops them and
+  ZERO mutants are minted this wave; charter item "surviving mutant = model hole"
+  is only half-met).
+  Class: plan internal contradiction (remaining-waves.md:29 charter "one curated
+  targeting-list edit only" vs the same wave's `assurance-map.ts` L4-promotion +
+  baseline items). The integrator correctly chose the conservative side — promoting
+  the kernels to L4 in a capture-only cage wave would scope every OTHER L4 gate onto
+  them, the blast radius the cage forbids.
+  Disposition: DEFER active kernel-mutation + `mutation-score.json` baseline +
+  `assurance-map.ts` L4 promotion to Wave 6 (where the reactive rebuild makes the
+  kernels genuinely high-assurance and the L4 scoping is intended). The cage this
+  wave is still strong: law-coverage rail (every law-table entry → a model invariant)
+  + the differential oracle's self-test (PROVEN to red on a deliberately-broken impl)
+  + `fc.commands` model ≡ CellKernel self-consistency. remaining-waves.md corrected to
+  mark the three items DEFERRED. Removal condition: Wave 6 activates the mint + captures
+  the baseline. ACTIVE (carried to Wave 6).
+
+- **S5.5.2 — a plan-internal divergence was resolved silently** (§125 violation): the
+  Wave 5.5 charter forbade product-source changes beyond one targeting edit, but the
+  file plan scoped an `assurance-map.ts` L4 edit; the integrator picked the charter
+  side without harvesting the divergence.
+  Class: constitution §125 — a planner-file-plan vs doctrine divergence must become a
+  scar, not a silent pick.
+  Disposition: harvested here (S5.5.1 carries the deferred items forward); the
+  contradicting plan lines are reconciled. ACTIVE.
+
+## Wave 6 divergence decisions (from the 5.5 empirical capture)
+
+The golden fixtures (`tests/fixtures/reactive-capture/*.json`) + the differential
+oracle surfaced REAL Effect-backed-vs-CellKernel divergences. Wave 6 must decide each
+DELIBERATELY, caged by the oracle — never silently. This is precisely the silent-widening
+scar class (S1.1/S2.2) the cage exists to prevent.
+
+- **Dedup / EmissionPolicy — CAPTURED, answers the S2.x landmine:** Cell / Store /
+  Signal / LiveCell (value channel) emit EVERY set with NO consecutive-equal suppression
+  = `EmissionPolicy {all}`, matching CellKernel (SubscriptionRef.setUnsafe publishes
+  unconditionally; the "notify only if changed" docstrings are STALE). **Timeline is the
+  ONE that DEDUPS** (hand-rolled `newState !== oldState` reference-identity) = `{distinct}`.
+  → Wave 6: wrap Timeline with `{distinct}`, the rest `{all}`.
+- **Derived extra initial republish:** the source cell's replay-1 re-triggers compute
+  when the internal merge subscribes at construction → a leading duplicate
+  (`[100,100,105,105,108]`). → Wave 6: preserve or deliberately change.
+- **Nested-write reentrancy (I5) — the biggest:** today's Effect-backed Cell delivers a
+  set issued from inside a delivery handler ASYNC-APPENDED (after the outer value, to all
+  subscribers), DIVERGING from CellKernel's synchronous-nested fan-out. A real observable
+  reordering. → Wave 6: keep async-append or adopt CellKernel synchronous reentrancy —
+  a deliberate, oracle-caged choice.
+- **Dispose / completion coupling:** changes streams NEVER signal completion (teardown =
+  fiber interruption); disposal interrupts subscriber fibers; Derived post-dispose read
+  freezes (last value, no recompute). → Wave 6: define the CellKernel completion/disposal
+  semantics against this.
+- **Listener failure isolation:** a throwing handler kills only its OWN stream; other
+  subscribers unaffected. → Wave 6: match or change.
+- **LiveCell S2.3 interleave window** is present in current code (set commits value THEN
+  records the mutation sequentially). → Wave 6 must close it atomically (S2.3/S2.4).
+- **Signal.audio eager-throw:** normalized mode without a positive duration throws
+  SYNCHRONOUSLY at construction, before returning. → preserve.
