@@ -6,10 +6,11 @@
  *   2. PROTOCOL types (from typesp -- CellEnvelope, CellKind, ECS, Visual IR)
  *   3. RUNTIME types (from @kit -- Cell, Derived, Zap, Store, etc.)
  *
- * Effect v4 beta -- SubscriptionRef.changes(ref), Stream.callback, etc.
+ * Effect-free (Wave 8): every surface this spine mirrors is LiteShip-native —
+ * the reactive family (Cell/Derived/Store) over CellKernel.replay1, and Codec
+ * over the sync `@czap/error` `Result`. Nothing here imports `effect`; the
+ * prose below records what each surface REPLACED, not a live dependency.
  */
-
-import type { Effect, Stream, SubscriptionRef, Scope } from 'effect';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 0. CAPABILITY TIERS
@@ -925,10 +926,7 @@ export declare const Receipt: {
    * Pass `options.base`/`options.checkpoint` to validate a compacted tail.
    * @see validateChain for the simple Error-channel form.
    */
-  validateChainDetailed(
-    chain: ReadonlyArray<ReceiptEnvelope>,
-    options?: ChainValidationOptions,
-  ): Promise<true>;
+  validateChainDetailed(chain: ReadonlyArray<ReceiptEnvelope>, options?: ChainValidationOptions): Promise<true>;
   hashEnvelope(envelope: ReceiptEnvelope): Promise<string>;
   isGenesis(receipt: ReceiptEnvelope): boolean;
   head(chain: ReadonlyArray<ReceiptEnvelope>): ReceiptEnvelope | undefined;
@@ -1078,13 +1076,40 @@ export type SchemaPort<A, I = A> = {
 };
 
 export declare namespace Codec {
-  export interface Shape<A, I = A> {
-    readonly schema: SchemaPort<A, I>;
-    encode(value: A): Effect.Effect<I>;
-    decode(input: I): Effect.Effect<A>;
+  /**
+   * The sync tagged result a codec method returns — structurally `@czap/error`'s
+   * `Result<A, E>` (a success arm carrying `A`, or a failure arm carrying `E`,
+   * discriminated by the boolean `ok`). Named structurally here rather than
+   * imported so the spine stays install-only with zero `@czap` runtime deps
+   * (ADR-0010); parity with the runtime `Result` is pinned bidirectionally in
+   * tests/unit/spine-conformance.test.ts.
+   */
+  export type Result<A, E> = { readonly ok: true; readonly value: A } | { readonly ok: false; readonly error: E };
+
+  /**
+   * The encode/decode failure — structurally `@czap/error`'s `ParseError`
+   * variant (a `TaggedError<'ParseError'>` carrying `source`/`detail` and the
+   * optional machine fields `code`/`offset`). Parity pinned in the same test.
+   */
+  export interface ParseError {
+    readonly _tag: 'ParseError';
+    readonly message: string;
+    readonly source: string;
+    readonly detail: string;
+    readonly code?: string;
+    readonly offset?: number;
   }
 
-  export function make<A, I>(schema: SchemaPort<A, I>): Shape<A, I>;
+  export interface Shape<A, I = A> {
+    readonly schema: SchemaPort<A, I>;
+    /** Validate a domain value into its wire form. Sync `Result` — never an Effect (Wave 8). */
+    encode(value: A): Result<I, ParseError>;
+    /** Validate untrusted input into the typed value. Sync `Result` — never an Effect (Wave 8). */
+    decode(input: unknown): Result<A, ParseError>;
+  }
+
+  /** Wrap an identity kernel schema (`SchemaPort<A, A>`) in the {@link Shape} facade. */
+  export function make<A>(schema: SchemaPort<A, A>): Shape<A, A>;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
