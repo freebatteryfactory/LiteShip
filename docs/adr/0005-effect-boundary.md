@@ -6,8 +6,14 @@
 > **Historical bridge.** Wave 8 shed `effect` from the monorepo entirely; the six
 > categories below no longer describe live code. This ADR is retained — not
 > erased — because it records the boundary reasoning the LiteShip-native substrate
-> replaced. See ADR-0042 for where each responsibility moved (Scope → `Lifetime`,
-> `SubscriptionRef`/`Stream` → `CellKernel`, the typed error channel → `Result`).
+> replaced. See [ADR-0042](./0042-effect-shed.md) for where each responsibility
+> moved (Scope → `Lifetime`, `SubscriptionRef`/`Stream` → `CellKernel`, the typed
+> error channel → `Result`), and [ADR-0043](./0043-reactive-convergence.md) for the
+> reactive-convergence decisions the native substrate settled. The standing
+> tripwire that keeps this shed from regressing is the effect-residue scan —
+> Invariant 14 in `tests/unit/core/invariants.test.ts` ("no `packages/*/src/**/*.ts`
+> imports from `effect`"), whose zero-count closeout is receipted in
+> `traceability/effect-shed-receipt.json`.
 
 ## Context
 
