@@ -17,6 +17,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { PACKAGES } from '@czap/command';
+import { CZAP_PACKAGE_ROSTER } from '@czap/audit';
 import { PUBLISHABLE_ROSTER } from '../../../scripts/gen-roster.js';
 import { packageManifests } from '../../support/repo-truths.js';
 
@@ -53,6 +54,15 @@ describe('B6a — package-smoke covers exactly the publishable @czap/* roster', 
     // @czap/command cannot import the devops-layer generator, so parity is enforced here:
     // a package added to the canonical roster but not to PACKAGES fails this assertion.
     expect(smokeRosterScopes()).toEqual([...PUBLISHABLE_ROSTER].sort());
+  });
+
+  it('the smoke roster equals audit CZAP_PACKAGE_ROSTER plus the two umbrellas (the single fleet anchor)', () => {
+    // [DUP] Re-anchor: the `@czap/*` membership of the smoke PACKAGES roster is owned by
+    // `@czap/audit`'s CZAP_PACKAGE_ROSTER. `@czap/command` cannot import the devops-layer
+    // audit, so parity is enforced here against the exported anchor. The two non-`@czap`
+    // umbrellas that publish last are added explicitly — they are deliberately NOT part of
+    // the scoped fleet roster.
+    expect(smokeRosterScopes()).toEqual([...CZAP_PACKAGE_ROSTER, 'create-liteship', 'liteship'].sort());
   });
 
   it('private / non-public packages are excluded from the derived publishable set', () => {

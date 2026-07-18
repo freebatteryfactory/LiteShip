@@ -12,6 +12,7 @@
  * @module
  */
 
+import { clamp01 } from '@czap/core';
 import type {
   FadeEnvelope as _FadeEnvelope,
   PulseEnvelope as _PulseEnvelope,
@@ -93,9 +94,4 @@ export function envelopeFactor(env: ResolvedEnvelope, frameIndex: number, range:
     return clamp01((frameIndex - range.from) / span);
   }
   return clamp01((range.to - frameIndex) / span);
-}
-
-/** Clamp to the unit interval. */
-function clamp01(x: number): number {
-  return Math.min(1, Math.max(0, x));
 }

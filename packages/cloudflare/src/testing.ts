@@ -10,4 +10,4 @@
  * @module
  */
 
-export { getDefaultWorkersEnv, resetWorkersEnvForTesting, setWorkersEnvForTesting } from './middleware.js';
+export { getDefaultWorkersEnv, resetWorkersEnvForTesting, setWorkersEnvForTesting } from './env-source.js';

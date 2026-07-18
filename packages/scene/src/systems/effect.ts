@@ -11,7 +11,7 @@
  * @module
  */
 
-import type { System, World } from '@czap/core';
+import { clamp01, type System, type World } from '@czap/core';
 import type { ResolvedEnvelope } from '../sugar/envelope.js';
 import { envelopeFactor } from '../sugar/envelope.js';
 
@@ -32,7 +32,7 @@ export function EffectSystem(frameIndex: number): System {
           continue;
         }
         const span = Math.max(1, range.to - range.from);
-        const local = Math.min(1, Math.max(0, (frameIndex - range.from) / span));
+        const local = clamp01((frameIndex - range.from) / span);
         const env = e.components.get('Envelope') as ResolvedEnvelope | undefined;
         const intensity = env !== undefined ? local * envelopeFactor(env, frameIndex, range) : local;
         (e as unknown as { _intensity: number })._intensity = intensity;

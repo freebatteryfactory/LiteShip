@@ -13,6 +13,7 @@
 
 import { boundaryParseFailureMessage, parseBoundary, readSignalValue, type BoundaryStateDetail } from '../boundary.js';
 import { createHtmlFragment, dispatchCzapEvent } from '@czap/web';
+import { startRafLoop } from '@czap/core';
 import {
   castValueRows,
   deriveActiveTargets,
@@ -295,12 +296,9 @@ function renderBoundaryPanel(element: HTMLElement, container: HTMLElement): Pane
   });
   stateObserver.observe(element, { attributes: true, attributeFilter: ['data-czap-state'] });
 
-  let raf = 0;
-  const tick = (): void => {
+  const stopRafLoop = startRafLoop(() => {
     refreshObserver();
-    raf = window.requestAnimationFrame(tick);
-  };
-  raf = window.requestAnimationFrame(tick);
+  });
 
   const resizeHandler = (): void => refreshObserver();
   window.addEventListener('resize', resizeHandler, { passive: true });
@@ -311,7 +309,7 @@ function renderBoundaryPanel(element: HTMLElement, container: HTMLElement): Pane
       stateObserver.disconnect();
       castObserver.disconnect();
       element.removeEventListener('czap:uniform-update', onUniformUpdate);
-      window.cancelAnimationFrame(raf);
+      stopRafLoop();
       window.removeEventListener('resize', resizeHandler);
       window.removeEventListener('scroll', resizeHandler);
     },

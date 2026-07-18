@@ -16,16 +16,15 @@
 import { gunzipSync } from 'node:zlib';
 import { Effect } from 'effect';
 import { AddressedDigest, CanonicalCbor, type AddressedDigest as AddressedDigestType } from '@czap/core';
+import { bytesToHex } from '@czap/canonical';
 import { IoError, NotFoundError } from '@czap/error';
 
-const bytesToHex = (bytes: Uint8Array): string => {
-  let out = '';
-  for (let i = 0; i < bytes.length; i++) {
-    out += bytes[i]!.toString(16).padStart(2, '0');
-  }
-  return out;
-};
-
+// NOTE (Wave 7 Phase 2, item 260): the local `bytesToHex` dup is now the canonical
+// owner's `bytesToHex`. The sha256 helper below stays an async `crypto.subtle`
+// Effect wrapper on purpose — swapping it to canonical's SYNC `sha256Hex` cannot be
+// done DUP-only: the four addressers `yield*` this as an Effect, so removing the
+// async boundary is the BLOCKED [EFF] "convert addressers from Effect to sync" seam.
+// Left for that seam; QA owns the coupled change.
 const sha256HexRaw = (bytes: Uint8Array): Effect.Effect<string> =>
   Effect.tryPromise({
     try: async () => {

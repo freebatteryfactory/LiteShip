@@ -2,8 +2,8 @@
  * Scaffold engine for `create-liteship` — copies the embedded
  * `templates/default/` Astro + \@czap starter into a target directory.
  *
- * Zero runtime dependencies by design: template copying is a plain
- * `node:fs` walk, and the only dynamic pieces are (1) renaming
+ * Template copying is a `node:fs` copy enumerated by the shared
+ * `@czap/core` file walker; the only dynamic pieces are (1) renaming
  * `gitignore` -> `.gitignore` (npm strips `.gitignore` files from
  * published tarballs, so the template stores it un-dotted) and
  * (2) rewriting the scaffolded `package.json` `name` field to a
@@ -13,6 +13,8 @@
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync, renameSync } from 'node:fs';
 import { basename, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { normalizeRepoPath } from '@czap/core';
+import { walkFiles } from '@czap/core/fs-walk';
 import { ValidationError } from '@czap/error';
 
 /** Files stored under a neutral name in the template, restored on copy. */
@@ -55,21 +57,6 @@ export function projectNameFromDir(dir: string): string {
     .replace(/[^a-z0-9._~-]+/g, '-')
     .replace(/^[-._]+|[-._]+$/g, '');
   return name.length > 0 ? name : 'liteship-app';
-}
-
-/** List every file under `dir` recursively as sorted relative `/` paths. */
-function walkFiles(dir: string, prefix = ''): string[] {
-  const out: string[] = [];
-  for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    const rel = prefix === '' ? entry.name : `${prefix}/${entry.name}`;
-    if (entry.isDirectory()) {
-      out.push(...walkFiles(join(dir, entry.name), rel));
-    } else {
-      out.push(rel);
-    }
-  }
-  out.sort();
-  return out;
 }
 
 /**
@@ -122,5 +109,12 @@ export function scaffold(targetDir: string, options: ScaffoldOptions = {}): Scaf
   manifest['name'] = projectName;
   writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
 
-  return { projectDir, projectName, files: walkFiles(projectDir) };
+  // Shared walker returns absolute paths; the result stays sorted relative `/`
+  // paths — slice off the project root and canonicalize separators (POSIX form
+  // on every host, matching the prior local walker), then re-sort to the same
+  // full-path lexicographic order.
+  const files = walkFiles(projectDir)
+    .map((abs) => normalizeRepoPath(abs.slice(projectDir.length + 1)))
+    .sort();
+  return { projectDir, projectName, files };
 }

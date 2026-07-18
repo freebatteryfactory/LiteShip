@@ -95,7 +95,9 @@ export const packageTopology: Record<string, PackagePolicy> = {
     // CUT A3: web imports only @czap/core; quantizer/compiler were permitted but
     // never imported or declared (removed to make drift loud).
     // @czap/genui: re-exports tryParseGeneratedUIChunk for the LLM chunk seam.
-    allowedInternalImports: ['@czap/core', '@czap/genui'],
+    // Wave 7 [DUP]: @czap/canonical for bytesToHex in security/shader-integrity.ts
+    // (the shader byte-to-hex loop consolidated onto the canonical digest leaf).
+    allowedInternalImports: ['@czap/core', '@czap/genui', '@czap/canonical'],
     kind: 'layered',
   },
   '@czap/detect': {
@@ -136,6 +138,9 @@ export const packageTopology: Record<string, PackagePolicy> = {
       // 0.4.0: the SVG last-mile directive + the scene→live bridge reuse the live
       // SVG egress / scene runtime. Acyclic — @czap/scene depends only on _spine + core.
       '@czap/scene',
+      // Wave 7 [DUP]: @czap/canonical for sha256Hex in docs-bundle-id.ts (the
+      // node:crypto slug consolidated onto the canonical digest leaf).
+      '@czap/canonical',
     ],
     kind: 'host-adjacent',
   },
@@ -193,6 +198,10 @@ export const packageTopology: Record<string, PackagePolicy> = {
       '@czap/audit',
       '@czap/gauntlet',
       '@czap/edge',
+      // Wave 7 [DUP]: @czap/canonical for bytesToHex (ship-manifest.ts) + sha256Hex
+      // (gauntlet-verdict-cache.ts) — the local hex helper + node:crypto slug
+      // consolidated onto the canonical digest leaf.
+      '@czap/canonical',
     ],
     kind: 'host-adjacent',
   },
@@ -204,7 +213,9 @@ export const packageTopology: Record<string, PackagePolicy> = {
     // CUT D6: mcp-server → compiler is an allowed acyclic edge — the server feeds
     // its real registries to the pure compiler's compileMcpAppManifest projector
     // (compiler → mcp-server remains forbidden).
-    allowedInternalImports: ['@czap/core', '@czap/command', '@czap/compiler', '@czap/genui'],
+    // Wave 7 [DUP]: @czap/web for escapeHtml in ui-render.ts (the local five-char
+    // HTML escaper consolidated onto @czap/web's escapeHtml owner).
+    allowedInternalImports: ['@czap/core', '@czap/command', '@czap/compiler', '@czap/genui', '@czap/web'],
     kind: 'host-adjacent',
   },
   '@czap/_spine': {
@@ -232,7 +243,9 @@ export const packageTopology: Record<string, PackagePolicy> = {
     // (litelaunchGauntlet), so the host surface also imports @czap/gauntlet —
     // a one-way edge to a standalone leaf (the gauntlet imports only
     // @czap/error, so no cycle), blessed here.
-    allowedInternalImports: ['@czap/core', '@czap/assets', '@czap/gauntlet'],
+    // Wave 7 [DUP]: @czap/canonical for sha256Hex in host/idempotency.ts (the
+    // node:crypto slug consolidated onto the canonical digest leaf).
+    allowedInternalImports: ['@czap/core', '@czap/assets', '@czap/gauntlet', '@czap/canonical'],
     kind: 'layered',
   },
   '@czap/audit': {
@@ -512,6 +525,14 @@ export const auditAllowlist: readonly AuditAllowlistEntry[] = [
   },
 ];
 
+// B5b one-normalizer cage — the LEAN-AUDIT home. This one-liner is a PARITY COPY
+// of the browser-safe core `path-normalize` leaf (Wave 7 S7.1): the two are
+// byte-identical and drift-guarded (b5-normalize-repo-path.test.ts parity assert),
+// but they must stay SEPARATE implementations because D9b forbids @czap/audit from
+// importing the heavy core runtime (audit stays downstream-installable), and B5b
+// forbids the core package from importing @czap/audit. The cli's pinned
+// `normalizeRepoPath` import off @czap/audit resolves here; browser/core consumers
+// import the parity twin out of the core barrel.
 export function normalizeRepoPath(value: string): string {
   return value.replace(/\\/g, '/');
 }

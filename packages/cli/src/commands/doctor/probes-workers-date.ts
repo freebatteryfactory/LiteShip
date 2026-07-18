@@ -9,7 +9,8 @@
  */
 
 import { normalizeRepoPath, scanModuleScopeDateReads } from '@czap/audit';
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { walkFiles } from '@czap/core/fs-walk';
+import { existsSync, readFileSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { readWranglerConfig } from './manifest.js';
 import type { DoctorCheck } from './types.js';
@@ -50,18 +51,20 @@ function parseWranglerMain(cwd: string): string {
   return DEFAULT_WRANGLER_MAIN;
 }
 
-function walkSourceFiles(dir: string, root: string, out: string[]): void {
-  if (!existsSync(dir)) return;
-  for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    const abs = join(dir, entry.name);
-    if (entry.isDirectory()) {
-      if (entry.name === 'node_modules' || entry.name === 'dist' || entry.name.startsWith('.')) continue;
-      walkSourceFiles(abs, root, out);
-      continue;
-    }
-    if (!/\.(ts|tsx|js|mjs)$/.test(entry.name)) continue;
-    out.push(relative(root, abs));
+/**
+ * Collect source files under `root` (relative to `cwd`), via the shared
+ * `@czap/core/fs-walk` walker. It skips `node_modules`/`dist` by name; the
+ * original also pruned any dot-prefixed directory (e.g. `.astro`, `.git`), which
+ * `skipDirs` can't express, so a file under a dot-dir segment is dropped here.
+ */
+function collectSourceFiles(cwd: string, root: string): string[] {
+  const files: string[] = [];
+  for (const abs of walkFiles(root, { skipDirs: ['node_modules', 'dist'], extensions: ['ts', 'tsx', 'js', 'mjs'] })) {
+    const dirSegs = normalizeRepoPath(relative(root, abs)).split('/').slice(0, -1);
+    if (dirSegs.some((seg) => seg.startsWith('.'))) continue;
+    files.push(relative(cwd, abs));
   }
+  return files;
 }
 
 /**
@@ -91,8 +94,7 @@ export function probeWorkersModuleScopeDate(cwd: string): DoctorCheck {
   const wranglerMain = workersProject ? parseWranglerMain(cwd) : DEFAULT_WRANGLER_MAIN;
 
   const srcDir = join(cwd, 'src');
-  const files: string[] = [];
-  walkSourceFiles(existsSync(srcDir) ? srcDir : cwd, cwd, files);
+  const files = collectSourceFiles(cwd, existsSync(srcDir) ? srcDir : cwd);
 
   if (workersProject && !files.some((rel) => normalizeRepoPath(rel) === wranglerMain)) {
     const mainAbs = join(cwd, wranglerMain);

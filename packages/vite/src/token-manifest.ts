@@ -14,6 +14,7 @@ import * as path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import type { Theme, Token } from '@czap/core';
 import { Diagnostics } from '@czap/core';
+import { walkFiles } from '@czap/core/fs-walk';
 import { TokenCSSCompiler } from '@czap/compiler';
 import { findConventionFiles } from './resolve-fs.js';
 import { tryImportNamed } from './resolve-utils.js';
@@ -78,54 +79,15 @@ function isThemeModuleFile(fileName: string): boolean {
 function scanProject(projectRoot: string): ProjectScan {
   const tokenFiles: string[] = [];
   const themeFiles: string[] = [];
-  const stack: string[] = [projectRoot];
-  const visited = new Set<string>();
-
-  while (stack.length > 0) {
-    const dir = stack.pop()!;
-    let realDir: string;
-    try {
-      realDir = fs.realpathSync(dir);
-    } catch {
-      realDir = path.resolve(dir);
-    }
-    if (visited.has(realDir)) continue;
-    visited.add(realDir);
-    let entries: fs.Dirent[] = [];
-    try {
-      entries = fs.readdirSync(dir, { withFileTypes: true });
-    } catch (error) {
-      Diagnostics.warnOnce({
-        source: DIAGNOSTIC_SOURCE,
-        code: 'scan-readdir-failed',
-        message: `Could not read "${dir}" while scanning for token/theme definitions; entries under it are skipped.`,
-        cause: error,
-      });
-      continue;
-    }
-    for (const entry of entries) {
-      const entryPath = path.join(dir, entry.name);
-      let isDirectory = entry.isDirectory();
-      let isFile = entry.isFile();
-      if (entry.isSymbolicLink()) {
-        try {
-          const stat = fs.statSync(entryPath);
-          isDirectory = stat.isDirectory();
-          isFile = stat.isFile();
-        } catch {
-          continue;
-        }
-      }
-      if (isDirectory) {
-        if (!SKIP_DIRS.has(entry.name)) stack.push(entryPath);
-        continue;
-      }
-      if (!isFile) continue;
-      if (isTokenModuleFile(entry.name)) {
-        tokenFiles.push(entryPath);
-      } else if (isThemeModuleFile(entry.name)) {
-        themeFiles.push(entryPath);
-      }
+  // Symlink-following, realpath cycle-safe walk (the shared fs-walk owner);
+  // classify each absolute path by basename since the token/theme predicates
+  // are exact/suffix splits the owner's filter can't express.
+  for (const file of walkFiles(projectRoot, { skipDirs: SKIP_DIRS, followSymlinks: true })) {
+    const name = path.basename(file);
+    if (isTokenModuleFile(name)) {
+      tokenFiles.push(file);
+    } else if (isThemeModuleFile(name)) {
+      themeFiles.push(file);
     }
   }
 

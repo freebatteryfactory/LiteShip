@@ -398,6 +398,9 @@ importers:
 
   packages/astro:
     dependencies:
+      '@czap/canonical':
+        specifier: workspace:*
+        version: link:../canonical
       '@czap/core':
         specifier: workspace:*
         version: link:../core
@@ -465,6 +468,9 @@ importers:
       '@czap/audit':
         specifier: workspace:*
         version: link:../audit
+      '@czap/canonical':
+        specifier: workspace:*
+        version: link:../canonical
       '@czap/command':
         specifier: workspace:*
         version: link:../command
@@ -510,6 +516,9 @@ importers:
       '@czap/assets':
         specifier: workspace:*
         version: link:../assets
+      '@czap/canonical':
+        specifier: workspace:*
+        version: link:../canonical
       '@czap/core':
         specifier: workspace:*
         version: link:../core
@@ -558,6 +567,9 @@ importers:
 
   packages/create-liteship:
     dependencies:
+      '@czap/core':
+        specifier: workspace:*
+        version: link:../core
       '@czap/error':
         specifier: workspace:*
         version: link:../error
@@ -695,6 +707,9 @@ importers:
       '@czap/genui':
         specifier: workspace:*
         version: link:../genui
+      '@czap/web':
+        specifier: workspace:*
+        version: link:../web
       fast-glob:
         specifier: ^3.3.3
         version: 3.3.3
@@ -784,6 +799,9 @@ importers:
 
   packages/web:
     dependencies:
+      '@czap/canonical':
+        specifier: workspace:*
+        version: link:../canonical
       '@czap/core':
         specifier: workspace:*
         version: link:../core

@@ -25,7 +25,7 @@
  * @module
  */
 
-import { Diagnostics } from '@czap/core';
+import { closestMatch, Diagnostics } from '@czap/core';
 import { ValidationError } from '@czap/error';
 import type { ResolvedSceneContract, SceneContract, Track, TrackId, TrackKind } from './contract.js';
 import type { BeatBinding } from './capsules/beat-binding.js';
@@ -225,32 +225,8 @@ export function compileScene(scene: SceneContract): CompiledScene {
  * misses (distance <= 2), the typo case worth teaching.
  */
 function didYouMean(ref: string, knownIds: readonly string[]): string {
-  let best: string | undefined;
-  let bestDistance = 3;
-  for (const id of knownIds) {
-    const d = editDistance(ref, id);
-    if (d < bestDistance) {
-      bestDistance = d;
-      best = id;
-    }
-  }
+  const best = closestMatch(ref, knownIds, 2);
   return best === undefined ? '' : ` (did you mean "${best}"?)`;
-}
-
-/** Plain dynamic-programming Levenshtein distance — id lists are tiny. */
-function editDistance(a: string, b: string): number {
-  const previous = new Array<number>(b.length + 1);
-  const current = new Array<number>(b.length + 1);
-  for (let j = 0; j <= b.length; j++) previous[j] = j;
-  for (let i = 1; i <= a.length; i++) {
-    current[0] = i;
-    for (let j = 1; j <= b.length; j++) {
-      const substitution = previous[j - 1]! + (a[i - 1] === b[j - 1] ? 0 : 1);
-      current[j] = Math.min(previous[j]! + 1, current[j - 1]! + 1, substitution);
-    }
-    for (let j = 0; j <= b.length; j++) previous[j] = current[j]!;
-  }
-  return previous[b.length]!;
 }
 
 /**

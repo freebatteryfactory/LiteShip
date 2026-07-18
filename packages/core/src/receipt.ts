@@ -7,6 +7,7 @@
  */
 
 import { IntegrityError, ParseError } from '@czap/error';
+import { bytesToHex } from '@czap/canonical';
 import type { HLC } from './brands.js';
 import { TypedRef as TypedRefModule, type TypedRef } from './typed-ref.js';
 import { HLC as HLCOps } from './hlc.js';
@@ -555,8 +556,7 @@ export const macEnvelope = async (envelope: ReceiptEnvelope, key: CryptoKey): Pr
   } catch (error) {
     throw IntegrityError('signature', `Failed to MAC envelope: ${error}`);
   }
-  const signatureArray = Array.from(new Uint8Array(signatureBuffer));
-  const signature = signatureArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+  const signature = bytesToHex(new Uint8Array(signatureBuffer));
   return { ...envelope, signature };
 };
 

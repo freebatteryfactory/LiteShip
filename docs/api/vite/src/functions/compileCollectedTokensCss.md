@@ -8,7 +8,7 @@
 
 > **compileCollectedTokensCss**(`tokens`): `string`
 
-Defined in: [vite/src/token-manifest.ts:304](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/token-manifest.ts#L304)
+Defined in: [vite/src/token-manifest.ts:266](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/token-manifest.ts#L266)
 
 Compile all collected tokens into one CSS sheet: `@property` registrations
 (when applicable) plus a single merged `:root { … }` block.

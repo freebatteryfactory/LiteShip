@@ -57,6 +57,7 @@ import { resolveInitialState, satelliteAttrs } from '@czap/astro';
 // encode, so the digest is a true content address of the produced frames —
 // the byte-encode of the codec is the INJECTED seam (browser: WebCodecs via
 // `captureVideo`; node: the ffmpeg `FrameEncoder` adapter in `./ffmpeg-encoder`).
+import { escapeHtml } from '@czap/web';
 import type { captureVideo } from '@czap/web';
 
 // ---------------------------------------------------------------------------
@@ -122,11 +123,6 @@ function posesForEntity(graph: DocumentGraph, entityId: ContentAddress): readonl
 /** All pose nodes — the video cast sweeps every authored pose track. */
 function poses(graph: DocumentGraph): readonly PoseNode[] {
   return graph.nodes.filter((node): node is PoseNode => node.family === 'pose');
-}
-
-/** Escape an HTML attribute value before string interpolation. */
-function escapeAttributeValue(value: unknown): string {
-  return String(value).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 /**
@@ -199,7 +195,7 @@ export function exportAstroPage(graph: DocumentGraph): ExportNode {
     const initialState = resolveInitialState(boundary);
     const attrs = satelliteAttrs({ boundary, initialState, directive: false });
     const attrStr = Object.entries(attrs)
-      .map(([k, v]) => `${k}="${escapeAttributeValue(v)}"`)
+      .map(([k, v]) => `${k}="${escapeHtml(String(v))}"`)
       .join(' ');
     shells.push(`<div ${attrStr}></div>`);
   }

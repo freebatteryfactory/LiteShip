@@ -6,6 +6,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { CZAP_PACKAGE_ROSTER } from '@czap/audit';
 import { LITESHIP_PACKAGES } from '../../../packages/liteship/src/index.js';
 import { CANONICAL_ROSTER, renderLiteshipPackages } from '../../../scripts/gen-roster.js';
 import { packageManifests, packageRoster } from '../../support/repo-truths.js';
@@ -34,8 +35,12 @@ function generatedBlock(): string {
 }
 
 describe('liteship umbrella roster', () => {
-  it('LITESHIP_PACKAGES matches every @czap/* dependency in package.json', () => {
-    expect([...LITESHIP_PACKAGES].sort()).toEqual(czapDependenciesFromManifest());
+  it('LITESHIP_PACKAGES equals audit CZAP_PACKAGE_ROSTER (the single fleet anchor)', () => {
+    // Re-anchored to the one owner (@czap/audit's CZAP_PACKAGE_ROSTER) instead of an
+    // independently manifest-derived list. Both are the scoped `@czap/*` fleet; the
+    // manifest→disk-fleet tie survives in the disk-coverage assertion below, and the
+    // owner test pins CZAP_PACKAGE_ROSTER == the on-disk fleet.
+    expect([...LITESHIP_PACKAGES].sort()).toEqual([...CZAP_PACKAGE_ROSTER].sort());
   });
 
   it('covers EVERY publishable @czap/* on disk — the umbrella can never silently omit a new package', () => {

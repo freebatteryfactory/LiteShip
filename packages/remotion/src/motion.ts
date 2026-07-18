@@ -14,14 +14,7 @@
  * @module
  */
 
-import { formatTypedValue, sampleProgram, type RuntimeWritePlan, type TypedValue } from '@czap/core';
-
-/** Map a frame index onto the program's normalized `[0,1]` timeline (endpoint-inclusive). */
-function frameToT(frame: number, durationInFrames: number): number {
-  const denom = Math.max(1, durationInFrames - 1);
-  const raw = frame / denom;
-  return raw < 0 ? 0 : raw > 1 ? 1 : raw;
-}
+import { formatTypedValue, frameToT, sampleProgram, type RuntimeWritePlan, type TypedValue } from '@czap/core';
 
 /**
  * Sample the shared motion kernel at Remotion `frame` of a `durationInFrames`-long

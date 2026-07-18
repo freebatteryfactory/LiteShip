@@ -8,7 +8,7 @@
 
 > **sampleMotionFrame**(`plan`, `frame`, `durationInFrames`): `ReadonlyMap`\<`string`, `TypedValue`\>
 
-Defined in: [remotion/src/motion.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/remotion/src/motion.ts#L31)
+Defined in: [remotion/src/motion.ts:24](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/remotion/src/motion.ts#L24)
 
 Sample the shared motion kernel at Remotion `frame` of a `durationInFrames`-long
 composition, returning the typed `cssVar → TypedValue` leaves. The differential oracle

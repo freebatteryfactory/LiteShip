@@ -20,13 +20,7 @@
 import type { CapsuleCommandDescriptor } from '@czap/core';
 import type { GlossaryEntry } from '@czap/command';
 import type { ComponentCatalog } from '@czap/genui';
-
-/** Escape the five HTML-significant characters. Local by design (no cross-module escaper dependency). */
-function escapeHtml(value: string): string {
-  return value.replace(/[&<>"']/g, (c) =>
-    c === '&' ? '&amp;' : c === '<' ? '&lt;' : c === '>' ? '&gt;' : c === '"' ? '&quot;' : '&#39;',
-  );
-}
+import { escapeHtml } from '@czap/web';
 
 /** Wrap body markup in a minimal self-contained HTML document (no external head resources). */
 function htmlDocument(title: string, body: string): string {

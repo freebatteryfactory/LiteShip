@@ -8,7 +8,7 @@
 
 > **collectThemeManifest**(`projectRoot`, `options?`): `Promise`\<`Readonly`\<`Record`\<`string`, [`ThemeManifestEntry`](../type-aliases/ThemeManifestEntry.md)\>\>\>
 
-Defined in: [vite/src/token-manifest.ts:276](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/token-manifest.ts#L276)
+Defined in: [vite/src/token-manifest.ts:238](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/token-manifest.ts#L238)
 
 Derive the theme map for `virtual:czap/themes`.
 

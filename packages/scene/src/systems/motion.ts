@@ -18,7 +18,7 @@
  * @module
  */
 
-import { sampleProgram, type RuntimeWritePlan, type System, type TypedValue, type World } from '@czap/core';
+import { frameToT, sampleProgram, type RuntimeWritePlan, type System, type TypedValue, type World } from '@czap/core';
 
 /** The component name a `MotionSampleSystem` writes each sampled leaf under (`motion:<cssVar>`). */
 export function motionComponentName(cssVar: string): string {
@@ -33,13 +33,6 @@ export function motionComponentName(cssVar: string): string {
  */
 export function sampleSceneMotion(plan: RuntimeWritePlan, t: number): ReadonlyMap<string, TypedValue> {
   return new Map(sampleProgram(plan, t).map((s) => [s.cssVar, s.value]));
-}
-
-/** Map a frame index onto the program's normalized `[0,1]` timeline (endpoint-inclusive). */
-function frameToT(frameIndex: number, totalFrames: number): number {
-  const denom = Math.max(1, totalFrames - 1);
-  const raw = frameIndex / denom;
-  return raw < 0 ? 0 : raw > 1 ? 1 : raw;
 }
 
 /**

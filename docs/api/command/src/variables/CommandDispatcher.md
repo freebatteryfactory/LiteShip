@@ -8,7 +8,7 @@
 
 > `const` **CommandDispatcher**: `object`
 
-Defined in: [command/src/dispatcher.ts:133](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/dispatcher.ts#L133)
+Defined in: [command/src/dispatcher.ts:116](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/dispatcher.ts#L116)
 
 ## Type Declaration
 

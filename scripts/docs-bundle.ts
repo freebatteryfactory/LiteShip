@@ -7,8 +7,10 @@
  */
 
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { normalizeRepoPath } from '@czap/core';
+import { walkFiles } from '@czap/core/fs-walk';
 import { computeBundleId } from '../packages/astro/src/docs-bundle-id.js';
 
 const REPO_ROOT = join(import.meta.dirname, '..');
@@ -48,14 +50,8 @@ function collectFiles(root: string, relBase: string, out: string[]): void {
     out.push(relBase);
     return;
   }
-  for (const entry of readdirSync(root, { withFileTypes: true })) {
-    const abs = join(root, entry.name);
-    const rel = join(relBase, entry.name);
-    if (entry.isDirectory()) {
-      collectFiles(abs, rel, out);
-      continue;
-    }
-    if (entry.name.endsWith('.md') || entry.name.endsWith('.json')) out.push(rel);
+  for (const abs of walkFiles(root, { suffixes: ['.md', '.json'] })) {
+    out.push(join(relBase, abs.slice(root.length + 1)));
   }
 }
 
@@ -75,7 +71,7 @@ export async function emitDocsBundle(opts: {
     const abs = join(REPO_ROOT, rel);
     if (!existsSync(abs)) continue;
     const { sha256, bytes } = await sha256File(abs);
-    entries.push({ path: rel.replace(/\\/g, '/'), sha256, bytes });
+    entries.push({ path: normalizeRepoPath(rel), sha256, bytes });
     mkdirSync(join(opts.outDir, 'files'), { recursive: true });
     writeFileSync(join(opts.outDir, 'files', rel.replace(/[\\/]/g, '__')), readFileSync(abs));
   }

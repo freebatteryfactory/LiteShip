@@ -19,6 +19,7 @@ import { resolveAssetUrlByTier, resolveOutputsByTier } from '@czap/edge';
 import { czapMiddleware } from '@czap/astro';
 import { ValidationError } from '@czap/error';
 import { createCloudflareEdgeCache, type CloudflareWorkersEnv } from './edge-cache.js';
+import { loadWorkersEnvFromRuntime, resolveEnvSource } from './env-source.js';
 
 export interface CloudflareMiddlewareConfig {
   /** KV namespace binding name in wrangler.jsonc. Defaults to `CZAP_BOUNDARY_CACHE`. */
@@ -89,52 +90,6 @@ export interface CloudflareMiddlewareConfig {
    * When omitted, boundary-cache writes block the response path.
    */
   readonly waitUntil?: (promise: Promise<unknown>) => void;
-}
-
-let cachedWorkersEnv: CloudflareWorkersEnv | undefined;
-
-/** Read the workerd execution env captured by {@link loadWorkersEnvFromRuntime} or seeded for tests. Returns `{}` until one of those has run. */
-export function getDefaultWorkersEnv(): CloudflareWorkersEnv {
-  return cachedWorkersEnv ?? {};
-}
-
-/**
- * Seed the default Workers env (for unit tests or custom hosts).
- */
-export function setWorkersEnvForTesting(env: CloudflareWorkersEnv): void {
-  cachedWorkersEnv = env;
-}
-
-/**
- * Reset cached env between tests.
- */
-export function resetWorkersEnvForTesting(): void {
-  cachedWorkersEnv = undefined;
-}
-
-/** Load env from the workerd runtime module when available. */
-export async function loadWorkersEnvFromRuntime(): Promise<CloudflareWorkersEnv> {
-  if (cachedWorkersEnv) return cachedWorkersEnv;
-  try {
-    const mod = await import('cloudflare:workers');
-    cachedWorkersEnv = mod.env as CloudflareWorkersEnv;
-    return cachedWorkersEnv;
-  } catch {
-    Diagnostics.warnOnce({
-      source: 'czap/cloudflare.middleware',
-      code: 'workers-env-unavailable',
-      message:
-        'cloudflare:workers is unavailable (not running on workerd), so Workers env bindings cannot be read from the runtime module. ' +
-        'Fix: pass the env option to cloudflareMiddleware in tests or custom hosts.',
-    });
-    return getDefaultWorkersEnv();
-  }
-}
-
-function resolveEnvSource(config: CloudflareMiddlewareConfig): () => CloudflareWorkersEnv {
-  if (typeof config.env === 'function') return config.env;
-  if (config.env) return () => config.env as CloudflareWorkersEnv;
-  return () => getDefaultWorkersEnv();
 }
 
 function normalizeManifest(manifest: BoundaryManifest | BoundaryManifestFile): BoundaryManifest {

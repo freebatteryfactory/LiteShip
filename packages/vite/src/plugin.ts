@@ -21,7 +21,7 @@
 import { readFileSync } from 'node:fs';
 import type { EnvironmentModuleGraph, EnvironmentModuleNode, Plugin, UserConfig } from 'vite';
 import { ValidationError } from '@czap/error';
-import { contentAddressOf } from '@czap/core';
+import { contentAddressOf, normalizeRepoPath } from '@czap/core';
 import type { BoundaryManifest, BoundaryManifestEntry, BoundaryManifestFile } from '@czap/edge';
 import {
   collectBoundaryDefinitionsFromScan,
@@ -138,7 +138,7 @@ function boundaryAssetFileName(boundaryId: string, index: number, source: string
 }
 
 function publicAssetUrl(fileName: string, base: string): string {
-  const normalized = fileName.replace(/\\/g, '/').replace(/^\/+/, '');
+  const normalized = normalizeRepoPath(fileName).replace(/^\/+/, '');
   const normalizedBase = base.length === 0 ? '/' : base.endsWith('/') ? base : `${base}/`;
   return `${normalizedBase}${normalized}`;
 }
@@ -363,10 +363,10 @@ export function plugin(config?: PluginConfig): Plugin {
           return `export const wasmUrl = import.meta.ROLLUP_FILE_URL_${wasmState.resolution.emittedRefId};`;
         }
 
-        // Distinct op (NOT repo-path normalization, CUT B5b): a `/@fs/` browser URL
-        // segment for the Vite dev server — a URL, not a filesystem path. Left inline.
+        // The `/@fs/` prefix makes this a Vite dev-server browser URL rather than a repo
+        // id, but the separator canonicalization is the same backslash→slash rewrite.
         const browserUrl =
-          resolved.source === 'public' ? '/czap-compute.wasm' : `/@fs/${resolved.filePath.replace(/\\/g, '/')}`;
+          resolved.source === 'public' ? '/czap-compute.wasm' : `/@fs/${normalizeRepoPath(resolved.filePath)}`;
 
         return `export const wasmUrl = ${JSON.stringify(browserUrl)};`;
       }

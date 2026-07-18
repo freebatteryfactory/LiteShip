@@ -113,6 +113,7 @@
   },
   "dependencies": {
     "@czap/core": "workspace:*",
+    "@czap/canonical": "workspace:*",
     "@czap/error": "workspace:*",
     "@czap/vite": "workspace:*",
     "@czap/detect": "workspace:*",

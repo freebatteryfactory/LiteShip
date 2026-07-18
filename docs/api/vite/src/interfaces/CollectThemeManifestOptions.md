@@ -6,7 +6,7 @@
 
 # Interface: CollectThemeManifestOptions
 
-Defined in: [vite/src/token-manifest.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/token-manifest.ts#L57)
+Defined in: [vite/src/token-manifest.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/token-manifest.ts#L58)
 
 Options for [collectThemeManifest](../functions/collectThemeManifest.md).
 
@@ -16,7 +16,7 @@ Options for [collectThemeManifest](../functions/collectThemeManifest.md).
 
 > `readonly` `optional` **themeDir?**: `string`
 
-Defined in: [vite/src/token-manifest.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/token-manifest.ts#L62)
+Defined in: [vite/src/token-manifest.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/token-manifest.ts#L63)
 
 Extra directory holding theme definitions -- mirror of the plugin's
 `dirs.theme` override; scanned in addition to the project walk.

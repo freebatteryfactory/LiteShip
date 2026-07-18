@@ -33,6 +33,12 @@ export interface PackageSmokeSpec {
  * the devops layer and cannot import the generator; parity with the canonical
  * roster is enforced by the `package-smoke-roster` drift-guard, which asserts
  * these names equal gen-roster's `PUBLISHABLE_ROSTER`.
+ *
+ * The `@czap/*` subset of these names (and their dependency ORDER) is likewise the
+ * [DUP] province of `@czap/audit`'s `CZAP_PACKAGE_ROSTER`, the canonical owner. This
+ * copy stays local by the SAME layering — `@czap/command` cannot depend on the
+ * devops-layer `@czap/audit` — and its parity is held by the `package-smoke-roster`
+ * drift-guard, not a shared import.
  */
 export const PACKAGES: readonly PackageSmokeSpec[] = [
   // _spine is type-only (no runtime); packed and overridden so consumers

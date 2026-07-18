@@ -19,7 +19,7 @@
  */
 
 import { NotFoundError, ValidationError } from '@czap/error';
-import { defineCapsule, S } from '@czap/core';
+import { closestMatch, defineCapsule, S } from '@czap/core';
 import type { AttributionDecl, Invariant, CapsuleDef, Site } from '@czap/core';
 import { mkAssetRefId, type AssetRefId } from './brands.js';
 import { audioDecoder, type DecodedAudio } from './decoders/audio.js';
@@ -98,43 +98,16 @@ export function defaultDecodeP95MsFor(kind: AssetKind): number {
   }
 }
 
-/** Levenshtein edit distance — small inputs (asset ids), so the O(n·m) table is fine. */
-function editDistance(a: string, b: string): number {
-  const m = a.length;
-  const n = b.length;
-  if (m === 0) return n;
-  if (n === 0) return m;
-  let prev = Array.from({ length: n + 1 }, (_v, j) => j);
-  let curr = new Array<number>(n + 1);
-  for (let i = 1; i <= m; i++) {
-    curr[0] = i;
-    for (let j = 1; j <= n; j++) {
-      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-      curr[j] = Math.min(prev[j]! + 1, curr[j - 1]! + 1, prev[j - 1]! + cost);
-    }
-    [prev, curr] = [curr, prev];
-  }
-  return prev[n]!;
-}
-
 /**
  * Nearest registered id to `id` by edit distance, when one is close enough to
  * plausibly be a typo. The threshold scales with id length (≤2 edits, capped at
  * a third of the id) so 'intro-bd' → 'intro-bed' suggests but 'xyz' → 'beats'
- * stays silent.
+ * stays silent. Delegates to @czap/core's shared Levenshtein picker, passing the
+ * assets-registry threshold policy through its `threshold` parameter.
  */
 function suggestId(id: string, ids: readonly string[]): string | undefined {
-  let best: string | undefined;
-  let bestDist = Infinity;
-  for (const candidate of ids) {
-    const dist = editDistance(id, candidate);
-    if (dist < bestDist) {
-      bestDist = dist;
-      best = candidate;
-    }
-  }
   const threshold = Math.max(1, Math.min(2, Math.floor(id.length / 3)));
-  return best !== undefined && bestDist <= threshold ? best : undefined;
+  return closestMatch(id, ids, threshold);
 }
 
 function registryMissError(subject: string, id: string, ids: readonly string[]): NotFoundError {

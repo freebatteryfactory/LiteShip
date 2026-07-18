@@ -8,7 +8,7 @@
 
 > **exportMotionTrack**(`plan`, `totalFrames`): [`MotionTrackExport`](../interfaces/MotionTrackExport.md)
 
-Defined in: [stage/src/motion-export.ts:78](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/motion-export.ts#L78)
+Defined in: [stage/src/motion-export.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/motion-export.ts#L71)
 
 Cast an authored motion program to a content-addressed video track: sample every frame
 (see [sampleMotionFrames](sampleMotionFrames.md)), then content-address the folded per-frame CSS through

@@ -6,9 +6,9 @@
  * @module
  */
 
-import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
+import { sha256Hex } from '@czap/canonical';
 import { CanonicalCbor } from '@czap/core';
 
 /** Context supplied to the idempotency helpers. */
@@ -53,7 +53,7 @@ export function hashInputs(ctx: IdempotencyCtx): string {
     inputs: ctx.inputs,
     env: ctx.env ?? currentEnvFingerprint(),
   });
-  return createHash('sha256').update(canonical).digest('hex').slice(0, 16);
+  return sha256Hex(canonical).slice(0, 16);
 }
 
 /** Path where the cached receipt lives (relative to `cwd`, or process cwd). */

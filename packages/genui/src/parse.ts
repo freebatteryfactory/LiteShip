@@ -7,9 +7,7 @@
  */
 
 import type { GeneratedUINode } from './types.js';
-
-const isPlainObject = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
+import { isPlainObject } from './guards.js';
 
 const isGeneratedUINode = (value: unknown): value is GeneratedUINode => {
   if (!isPlainObject(value)) {

@@ -21,6 +21,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { CZAP_PACKAGE_ROSTER } from '@czap/audit';
 import { PUBLISHABLE_ROSTER, collectRosterDrift } from '../../../scripts/gen-roster.js';
 import { packageManifests } from '../../support/repo-truths.js';
 
@@ -117,6 +118,14 @@ describe('release.yml publish roster matches the workspace (the 4th roster locat
     // must equal gen-roster's canonical publishable roster.
     expect(releaseLoopNames()).toEqual([...PUBLISHABLE_ROSTER].sort());
     expect(releaseExpectedCount()).toBe(PUBLISHABLE_ROSTER.length);
+  });
+
+  it('the publish loop equals audit CZAP_PACKAGE_ROSTER plus the two umbrellas (the single fleet anchor)', () => {
+    // [DUP] Re-anchor: release.yml's `@czap/*` publish membership is owned by `@czap/audit`'s
+    // CZAP_PACKAGE_ROSTER. YAML cannot import TS, so the loop stays hand-ordered (topological,
+    // pinned above); this parses it and compares against the exported anchor, adding the two
+    // non-`@czap` umbrellas that publish last (deliberately absent from the scoped fleet).
+    expect(releaseLoopNames()).toEqual([...CZAP_PACKAGE_ROSTER, 'create-liteship', 'liteship'].sort());
   });
 
   it('gen-roster reports no roster drift across the authored roster and shipped copies', () => {

@@ -34,9 +34,10 @@
  * @module
  */
 
-import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { contentAddressOf } from '@czap/core';
+import { walkFiles } from '@czap/core/fs-walk';
 import { normalizeRepoPath } from '@czap/audit';
 import { ParseError, InvariantViolationError } from '@czap/error';
 import type { TraceabilityFacts, ResolvedInvariant, InvariantState, TraceabilityDivergence } from '@czap/gauntlet';
@@ -357,22 +358,11 @@ interface ProofClaim {
 function collectTestFiles(repoRoot: string, root: string): readonly string[] {
   const abs = join(repoRoot, root);
   if (!existsSync(abs)) return [];
-  const found: string[] = [];
-  const walk = (dir: string): void => {
-    const entries = readdirSync(dir);
-    for (const name of [...entries].sort()) {
-      if (name === 'node_modules' || name === 'dist') continue;
-      const full = join(dir, name);
-      const st = statSync(full);
-      if (st.isDirectory()) {
-        walk(full);
-      } else if (name.endsWith('.test.ts')) {
-        found.push(normalizeRepoPath(relative(repoRoot, full)));
-      }
-    }
-  };
-  walk(abs);
-  return found.sort();
+  // The shared `@czap/core/fs-walk` walker (skips `node_modules`/`dist`, keeps
+  // `.test.ts`); the explicit final sort preserves the original deterministic order.
+  return walkFiles(abs, { skipDirs: ['node_modules', 'dist'], suffixes: ['.test.ts'] })
+    .map((full) => normalizeRepoPath(relative(repoRoot, full)))
+    .sort();
 }
 
 /**

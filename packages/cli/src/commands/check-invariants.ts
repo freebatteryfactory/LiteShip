@@ -18,9 +18,9 @@
  *
  * @module
  */
-import { readdirSync, readFileSync } from 'node:fs';
-import type { Dirent } from 'node:fs';
-import { join, relative, resolve } from 'node:path';
+import { readFileSync } from 'node:fs';
+import { relative, resolve } from 'node:path';
+import { walkFiles } from '@czap/core/fs-walk';
 import { IoError } from '@czap/error';
 import { normalizeRepoPath } from '@czap/audit';
 import {
@@ -48,36 +48,6 @@ interface LineEndingRule {
   readonly eol: 'lf' | 'crlf' | 'binary';
 }
 
-function walkTsFiles(dir: string): string[] {
-  const results: string[] = [];
-  let entries: Dirent[];
-  try {
-    entries = readdirSync(dir, { withFileTypes: true });
-  } catch (err) {
-    // An invariant scoped to a subtree that doesn't exist in the scanned root
-    // contributes zero violations -- not a crash. The first nested-`dirs`
-    // invariant (NO_SIGNAL_INPUT_REPARSE: packages/astro/src/runtime) is the
-    // first to scan a path that can be absent: the satellite-scan fixture root
-    // only materializes packages/core/**, so astro/src/runtime is missing there.
-    // (Top-level `dirs: ['packages']` invariants never hit this; the repo always
-    // has packages/.) Treat a missing scoped dir as empty, cross-platform.
-    if ((err as NodeJS.ErrnoException).code === 'ENOENT') return results;
-    throw err;
-  }
-  for (const entry of entries) {
-    if (entry.name === 'dist' || entry.name === 'node_modules') continue;
-    const absolute = join(dir, entry.name);
-    if (entry.isDirectory()) {
-      results.push(...walkTsFiles(absolute));
-      continue;
-    }
-    if (entry.isFile() && entry.name.endsWith('.ts') && !entry.name.endsWith('.d.ts')) {
-      results.push(absolute);
-    }
-  }
-  return results;
-}
-
 function isExcluded(relativePath: string, excludes: readonly string[] | undefined): boolean {
   if (!excludes || excludes.length === 0) return false;
   const normalized = normalizeRepoPath(relativePath);
@@ -92,7 +62,14 @@ export function findViolations(invariant: CheckInvariantEntry, root: string): In
   const violations: InvariantViolation[] = [];
 
   for (const dir of invariant.dirs) {
-    for (const file of walkTsFiles(resolve(root, dir))) {
+    // The shared `@czap/core/fs-walk` walker (skips `dist`/`node_modules`, keeps
+    // `.ts`); a `.d.ts` is filtered here since `suffixes: ['.ts']` also matches it.
+    // An invariant scoped to a subtree that doesn't exist in the scanned root
+    // contributes zero violations -- walkFiles tolerates a missing dir (returns
+    // []), so a nested-`dirs` invariant whose subtree is absent in the satellite
+    // fixture root is empty, not a crash.
+    for (const file of walkFiles(resolve(root, dir), { skipDirs: ['dist', 'node_modules'], suffixes: ['.ts'] })) {
+      if (file.endsWith('.d.ts')) continue;
       // relative-then-normalize (a relativeToRoot composition); the slash step is
       // normalizeRepoPath applied to a repo-relative path.
       const rel = normalizeRepoPath(relative(root, file));

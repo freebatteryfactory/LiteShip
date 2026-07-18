@@ -51,6 +51,7 @@
     "@czap/command": "workspace:*",
     "@czap/compiler": "workspace:*",
     "@czap/genui": "workspace:*",
+    "@czap/web": "workspace:*",
     "fast-glob": "^3.3.3"
   }
 }

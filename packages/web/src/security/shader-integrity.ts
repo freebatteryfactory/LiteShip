@@ -23,6 +23,7 @@
  *
  * @module
  */
+import { bytesToHex } from '@czap/canonical';
 import { AddressedDigest } from '@czap/core';
 import { isFetchableRuntimeUrl } from './runtime-url.js';
 
@@ -147,15 +148,6 @@ export function computeShaderIntegrity(content: string): string {
   const bytes = new TextEncoder().encode(content);
   const hex = AddressedDigest.of(bytes, 'sha256').integrity_digest.slice('sha256:'.length);
   return digestHexToSri(hex);
-}
-
-/** Lowercase-hex encode a byte array (the digest comparison form). */
-function bytesToHex(bytes: Uint8Array): string {
-  let out = '';
-  for (let i = 0; i < bytes.length; i++) {
-    out += bytes[i]!.toString(16).padStart(2, '0');
-  }
-  return out;
 }
 
 /**

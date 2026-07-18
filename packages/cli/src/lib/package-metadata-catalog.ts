@@ -22,6 +22,8 @@
  * @module
  */
 
+import { CZAP_PACKAGE_ROSTER } from '@czap/audit';
+
 /** The ONE product definition (from #146) every catalog description is anchored to. */
 export const LITESHIP_PRODUCT_DEFINITION =
   'LiteShip is a constraint-based adaptive rendering framework that turns changing signals into a few named UI ' +
@@ -40,14 +42,12 @@ export interface PackageMetadata {
  * copy these strings verbatim; the prepublish check asserts the packed manifest
  * still equals its entry here.
  *
- * The KEY SET (which packages appear) mirrors the canonical publishable roster
- * owned by `scripts/gen-roster.ts` (`PUBLISHABLE_ROSTER`); the per-package
- * `description` / `keywords` are hand-authored annotations that survive over that
- * generated membership. A package added to the fleet but missing an entry here
- * fails the prepublish metadata check (no catalog entry) — the parity that keeps
- * this key set aligned with gen-roster's roster.
+ * The per-package `description` / `keywords` are hand-authored annotations; the
+ * KEY SET is no longer a private roster copy — {@link PACKAGE_METADATA_CATALOG}
+ * below keys these annotations off `@czap/audit`'s `CZAP_PACKAGE_ROSTER` (the one
+ * fleet anchor) plus the two non-`@czap` umbrellas.
  */
-export const PACKAGE_METADATA_CATALOG: Readonly<Record<string, PackageMetadata>> = {
+const PACKAGE_METADATA: Readonly<Record<string, PackageMetadata>> = {
   '@czap/_spine': {
     description:
       'Install-only TypeScript declaration spine for LiteShip: the shared type anchor that `@czap/core` and ' +
@@ -199,6 +199,36 @@ export const PACKAGE_METADATA_CATALOG: Readonly<Record<string, PackageMetadata>>
     keywords: ['liteship', 'czap', 'adaptive-rendering', 'framework', 'meta-package', 'typescript'],
   },
 };
+
+/**
+ * The publishable roster keyed into the catalog: the canonical `@czap/*` fleet from
+ * `@czap/audit`'s {@link CZAP_PACKAGE_ROSTER} (no private roster copy), plus the two
+ * non-`@czap` umbrellas that carry the whole fleet and publish last.
+ */
+const CATALOG_ROSTER: readonly string[] = [...CZAP_PACKAGE_ROSTER, 'create-liteship', 'liteship'];
+
+/**
+ * name → canonical metadata for every publishable scope. The KEY SET is derived
+ * from {@link CATALOG_ROSTER} (anchored to `CZAP_PACKAGE_ROSTER`), keying the
+ * hand-authored {@link PACKAGE_METADATA} annotations off it. The exhaustiveness
+ * check below throws at module load if a roster member has no metadata entry — so a
+ * package added to the fleet but missing an annotation fails fast, and the key set
+ * stays aligned with the one fleet anchor rather than a second hand list.
+ *
+ * The manifests on disk copy these strings verbatim; the prepublish check
+ * ({@link checkPackedMetadata}) re-derives its `expected` from this catalog.
+ */
+export const PACKAGE_METADATA_CATALOG: Readonly<Record<string, PackageMetadata>> = Object.fromEntries(
+  CATALOG_ROSTER.map((name) => {
+    const meta = PACKAGE_METADATA[name];
+    if (meta === undefined) {
+      throw new Error(
+        `package-metadata-catalog: no metadata entry for "${name}" — every CZAP_PACKAGE_ROSTER member (plus the two umbrellas) must have a PACKAGE_METADATA annotation`,
+      );
+    }
+    return [name, meta] as const;
+  }),
+);
 
 /** The packed-manifest fields the metadata check reads (a narrow view of `package.json`). */
 export interface PackedMetadata {

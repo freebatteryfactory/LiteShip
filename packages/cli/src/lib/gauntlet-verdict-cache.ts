@@ -39,9 +39,11 @@
  */
 
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, renameSync, statSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, basename } from 'node:path';
+import { sha256Hex } from '@czap/canonical';
+import { walkFiles } from '@czap/core/fs-walk';
 import { isFinding, type Finding, type GateVerdictCache } from '@czap/gauntlet';
 import { currentEnvFingerprint } from '@czap/command/host';
 import { normalizeRepoPath, type MutantVerdictCache, type MutantVerdict } from '@czap/audit';
@@ -109,7 +111,7 @@ export function makeFsMutantVerdictCache(cwd: string = process.cwd()): MutantVer
       mkdirSync(dirname(path), { recursive: true });
       // Atomic: a unique temp file, then a rename over the target (atomic on one
       // filesystem) so a concurrent reader sees the old file or the complete new one.
-      const tmp = `${path}.${process.pid}.${createHash('sha256').update(key).digest('hex').slice(0, 8)}.tmp`;
+      const tmp = `${path}.${process.pid}.${sha256Hex(key).slice(0, 8)}.tmp`;
       writeFileSync(tmp, `${tag}\n`, 'utf8');
       renameSync(tmp, path);
     },
@@ -118,7 +120,7 @@ export function makeFsMutantVerdictCache(cwd: string = process.cwd()): MutantVer
 
 /** Hash the engine's stable verdict KEY into a short filesystem-safe slug. */
 function keyToSlug(key: string): string {
-  return createHash('sha256').update(key, 'utf8').digest('hex').slice(0, 32);
+  return sha256Hex(key).slice(0, 32);
 }
 
 /** The on-disk path for a verdict keyed by the engine's `gateVerdictKey`. */
@@ -196,7 +198,7 @@ export function makeFsVerdictCache(cwd: string = process.cwd()): GateVerdictCach
       // Atomic: write a unique temp file, then rename over the target. A rename is
       // atomic on a single filesystem, so a concurrent reader sees either the old
       // file or the complete new one — never a partial write.
-      const tmp = `${path}.${process.pid}.${createHash('sha256').update(key).digest('hex').slice(0, 8)}.tmp`;
+      const tmp = `${path}.${process.pid}.${sha256Hex(key).slice(0, 8)}.tmp`;
       writeFileSync(tmp, JSON.stringify(findings, null, 2), 'utf8');
       renameSync(tmp, path);
     },
@@ -215,20 +217,9 @@ function hashFileInto(hash: ReturnType<typeof createHash>, relPath: string, absP
 
 /** Recursively collect `*.js` files under `dir`, repo-relative to `root`, SORTED. */
 function collectJsFiles(dir: string, root: string): string[] {
-  const out: string[] = [];
-  const walk = (d: string): void => {
-    for (const entry of readdirSync(d, { withFileTypes: true })) {
-      const abs = join(d, entry.name);
-      if (entry.isDirectory()) {
-        walk(abs);
-      } else if (entry.isFile() && entry.name.endsWith('.js')) {
-        out.push(abs);
-      }
-    }
-  };
-  walk(dir);
-  // Sort by the repo-relative path so the fold is order-independent across hosts.
-  return out.sort((a, b) => relTo(root, a).localeCompare(relTo(root, b)));
+  // The shared `@czap/core/fs-walk` walker (all dirs, `.js` files); the explicit
+  // repo-relative localeCompare sort is preserved so the digest fold stays byte-stable.
+  return walkFiles(dir, { suffixes: ['.js'] }).sort((a, b) => relTo(root, a).localeCompare(relTo(root, b)));
 }
 
 /**

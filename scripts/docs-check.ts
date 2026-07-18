@@ -9,9 +9,10 @@
  */
 
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, readdirSync, rmSync, existsSync } from 'node:fs';
+import { mkdtempSync, rmSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { walkFiles } from '@czap/core/fs-walk';
 
 const COMMITTED_DIR = 'docs/api';
 const DOCS_NODE_OPTIONS = ['--max-old-space-size=8192', process.env.NODE_OPTIONS ?? ''].join(' ').trim();
@@ -41,8 +42,7 @@ try {
   // leaving PARTIAL output that diffs as phantom mass-deletion drift. File
   // count is the honest signal: a fresh build that produced far fewer pages
   // than the committed tree did not finish — fail with the real cause.
-  const countMd = (dir: string): number =>
-    readdirSync(dir, { recursive: true, encoding: 'utf8' }).filter((entry) => entry.endsWith('.md')).length;
+  const countMd = (dir: string): number => walkFiles(dir, { suffixes: ['.md'] }).length;
   const committedCount = countMd(COMMITTED_DIR);
   const freshCount = countMd(tempDir);
   if (freshCount < committedCount * 0.9) {

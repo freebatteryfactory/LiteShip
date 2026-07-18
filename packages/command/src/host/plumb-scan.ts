@@ -10,6 +10,7 @@
  */
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { walkFiles } from '@czap/core/fs-walk';
 import { ParseError } from '@czap/error';
 import { detectSkips, type SkipMatch } from '@czap/gauntlet';
 import { PACKAGE_PLUMB } from '../commands/plumb-registry.js';
@@ -49,12 +50,14 @@ function collectGeneratedSkips(root: string, detect: PlumbSkipDetector): { skips
   // Scan EVERY generated lane, recursively: `.test.ts` (unit), `.bench.ts` (bench),
   // and any nested lane dir (e.g. `integration/`). The lane-aware harness routes a
   // check into the lane that fits — so a placeholder skip hiding in a non-unit lane
-  // would be the EXACT blindness this gate exists to kill. No lane is exempt.
-  const rels = readdirSync(dir, { recursive: true }) as string[];
-  for (const rel of rels) {
-    if (!rel.endsWith('.test.ts') && !rel.endsWith('.bench.ts')) continue;
+  // would be the EXACT blindness this gate exists to kill. No lane is exempt. The
+  // recursive `.test.ts`/`.bench.ts` walk is `@czap/core/fs-walk`'s `walkFiles`
+  // (deterministic, cycle-safe); its absolute paths slice back to the `tests/generated/`
+  // relative id the work-list line reports.
+  for (const abs of walkFiles(dir, { suffixes: ['.test.ts', '.bench.ts'] })) {
+    const rel = abs.slice(dir.length + 1);
     sawGenerated = true;
-    const src = readFileSync(resolve(dir, rel), 'utf8');
+    const src = readFileSync(abs, 'utf8');
     const lines = src.split('\n');
     for (const skip of detect(src)) {
       // The human-readable reason: the first string literal at/after the matched line
@@ -75,6 +78,13 @@ function collectGeneratedSkips(root: string, detect: PlumbSkipDetector): { skips
   return { skips, present: sawGenerated };
 }
 
+/**
+ * Every publishable `@czap/*` name, read DYNAMICALLY from the `packages/*` manifests on
+ * disk. The canonical roster of these names is `@czap/audit`'s `CZAP_PACKAGE_ROSTER`
+ * (the [DUP] owner); this copy stays a live filesystem re-scan by LAYERING — `@czap/command`
+ * sits below the devops layer and cannot depend on `@czap/audit` — with drift held by the
+ * release/roster guards rather than a shared import.
+ */
 function publishedPackages(root: string): string[] {
   const names: string[] = [];
   const dir = resolve(root, 'packages');

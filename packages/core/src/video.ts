@@ -13,6 +13,7 @@ import { Scheduler as SchedulerImpl } from './scheduler.js';
 import type { CompositeState, Compositor } from './compositor.js';
 import type { Signal } from './signal.js';
 import type { Millis } from './brands.js';
+import { frameToT } from './transition-program.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -154,7 +155,7 @@ function _make(
         yield {
           frame: i,
           timestamp,
-          progress: totalFrames > 1 ? i / (totalFrames - 1) : 1,
+          progress: totalFrames > 1 ? frameToT(i, totalFrames) : 1,
           state,
         };
       }

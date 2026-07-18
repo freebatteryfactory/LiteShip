@@ -8,7 +8,7 @@
 
 > **motionCssVars**(`plan`, `frame`, `durationInFrames`): `Record`\<`string`, `string`\>
 
-Defined in: [remotion/src/motion.ts:46](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/remotion/src/motion.ts#L46)
+Defined in: [remotion/src/motion.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/remotion/src/motion.ts#L39)
 
 Fold a sampled motion frame into CSS custom properties for a composition's `style`,
 mirroring `cssVarsFromState`. Formats each typed leaf through the SAME

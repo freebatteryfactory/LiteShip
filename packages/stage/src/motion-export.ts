@@ -16,7 +16,7 @@
  * @module
  */
 
-import { CanonicalCbor, AddressedDigest, formatTypedValue, sampleProgram } from '@czap/core';
+import { CanonicalCbor, AddressedDigest, formatTypedValue, frameToT, sampleProgram } from '@czap/core';
 import type { AddressedDigest as AddressedDigestShape, RuntimeWritePlan, TypedValue } from '@czap/core';
 
 /** One sampled motion frame: its index, its normalized `t`, and the typed + formatted leaves. */
@@ -37,13 +37,6 @@ export interface MotionTrackExport {
   readonly frames: readonly MotionFrameSample[];
   /** Content address of the folded per-frame motion content (the video leg's built-in oracle). */
   readonly artifactDigest: AddressedDigestShape;
-}
-
-/** Map a frame index onto the program's normalized `[0,1]` timeline (endpoint-inclusive). */
-function frameToT(frameIndex: number, totalFrames: number): number {
-  const denom = Math.max(1, totalFrames - 1);
-  const raw = frameIndex / denom;
-  return raw < 0 ? 0 : raw > 1 ? 1 : raw;
 }
 
 /**

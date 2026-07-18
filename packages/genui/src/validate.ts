@@ -6,12 +6,10 @@
 
 import type { ComponentCatalog, GeneratedUIValidationError, GeneratedUINode } from './types.js';
 import { isInteractionProp } from './interaction.js';
+import { isPlainObject } from './guards.js';
 
 export type ValidateGeneratedUIResult =
   { readonly ok: true } | { readonly ok: false; readonly error: GeneratedUIValidationError };
-
-const isPlainObject = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
 
 const propMatches = (value: unknown, type: 'string' | 'number' | 'boolean'): boolean => {
   switch (type) {

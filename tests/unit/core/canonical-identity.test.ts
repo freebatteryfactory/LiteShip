@@ -31,16 +31,16 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { encode as cborgEncode } from 'cborg';
 import { CanonicalCbor, fnv1aBytes } from '@czap/core';
+import { bytesToHex } from '@czap/canonical';
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
-const hex = (b: Uint8Array): string => Array.from(b).map((x) => x.toString(16).padStart(2, '0')).join('');
 
 describe('B1 — the divergence that made the two-encoder fork a substrate bug', () => {
   it('cborg shrinks a float16-exact value to half-precision; CanonicalCbor stays float64', () => {
     // 0.5 round-trips exactly in float16 → cborg emits `f9` (major 7, half).
     // CanonicalCbor always emits `fb` (float64). Different bytes → different fnv1a.
-    const c = hex(cborgEncode({ x: 0.5 }));
-    const k = hex(CanonicalCbor.encode({ x: 0.5 }));
+    const c = bytesToHex(cborgEncode({ x: 0.5 }));
+    const k = bytesToHex(CanonicalCbor.encode({ x: 0.5 }));
     expect(c).toContain('f93800'); // half-precision 0.5
     expect(k).toContain('fb3fe0000000000000'); // double 0.5
     expect(c).not.toBe(k);
@@ -50,7 +50,7 @@ describe('B1 — the divergence that made the two-encoder fork a substrate bug',
   it('the two encoders happen to AGREE on non-float16-exact floats — which is why the bug was latent', () => {
     // 0.3 does not round-trip in float16/32 → both emit float64 → equal. The fork
     // only bit when a payload float was float16/32-exact, so most runs looked fine.
-    expect(hex(cborgEncode({ x: 0.3 }))).toBe(hex(CanonicalCbor.encode({ x: 0.3 })));
+    expect(bytesToHex(cborgEncode({ x: 0.3 }))).toBe(bytesToHex(CanonicalCbor.encode({ x: 0.3 })));
   });
 });
 

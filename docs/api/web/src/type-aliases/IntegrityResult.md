@@ -8,7 +8,7 @@
 
 > **IntegrityResult** = \{ `_tag`: `"verified"`; `algo`: `"sha256"`; `content`: `string`; `digestHex`: `string`; \} \| \{ `_tag`: `"mismatch"`; `actualHex`: `string`; `algo`: `"sha256"`; `expectedHex`: `string`; \} \| \{ `_tag`: `"absent"`; \}
 
-Defined in: [web/src/security/shader-integrity.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/security/shader-integrity.ts#L58)
+Defined in: [web/src/security/shader-integrity.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/security/shader-integrity.ts#L59)
 
 The outcome of [verifyShaderIntegrity](../functions/verifyShaderIntegrity.md). A discriminated `_tag` the caller
 branches on — the runtime proceeds ONLY on `'verified'`.

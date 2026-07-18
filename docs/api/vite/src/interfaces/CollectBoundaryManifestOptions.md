@@ -6,7 +6,7 @@
 
 # Interface: CollectBoundaryManifestOptions
 
-Defined in: [vite/src/boundary-manifest.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/boundary-manifest.ts#L44)
+Defined in: [vite/src/boundary-manifest.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/boundary-manifest.ts#L45)
 
 Options for [collectBoundaryManifest](../functions/collectBoundaryManifest.md).
 
@@ -16,7 +16,7 @@ Options for [collectBoundaryManifest](../functions/collectBoundaryManifest.md).
 
 > `readonly` `optional` **boundaryDir?**: `string`
 
-Defined in: [vite/src/boundary-manifest.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/boundary-manifest.ts#L49)
+Defined in: [vite/src/boundary-manifest.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/boundary-manifest.ts#L50)
 
 Extra directory holding boundary definitions -- mirror of the plugin's
 `dirs.boundary` override; scanned in addition to the project walk.
@@ -27,7 +27,7 @@ Extra directory holding boundary definitions -- mirror of the plugin's
 
 > `readonly` `optional` **container?**: `string`
 
-Defined in: [vite/src/boundary-manifest.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/boundary-manifest.ts#L55)
+Defined in: [vite/src/boundary-manifest.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/boundary-manifest.ts#L56)
 
 Selector the auto-emitted viewport `@container` containment is declared
 on (default `:root`) -- mirror of the plugin's `quantize.container`, so
