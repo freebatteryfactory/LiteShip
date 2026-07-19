@@ -8,7 +8,7 @@
 
 > **wgslIdent**(`name`): `string`
 
-Defined in: [core/src/projection.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/projection.ts#L67)
+Defined in: [core/src/graph/projection.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/projection.ts#L67)
 
 Canonical WGSL struct-field identifier for a name: kebab/camelCase folded to
 snake_case, lowercased, with NO prefix. This is the exact field name the WGSL

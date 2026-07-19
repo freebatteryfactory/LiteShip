@@ -6,7 +6,7 @@
 
 # Interface: ReplayDiscreteFromPatchReceiptsOptions
 
-Defined in: [core/src/graph-query-gap-replay.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query-gap-replay.ts#L32)
+Defined in: [core/src/graph/graph-query-gap-replay.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query-gap-replay.ts#L36)
 
 Options for replaying discrete cells from a local transition/receipt chain.
 
@@ -16,7 +16,7 @@ Options for replaying discrete cells from a local transition/receipt chain.
 
 > `readonly` `optional` **applyTransition?**: (`transition`) => `void`
 
-Defined in: [core/src/graph-query-gap-replay.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query-gap-replay.ts#L38)
+Defined in: [core/src/graph/graph-query-gap-replay.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query-gap-replay.ts#L42)
 
 Typed host reflection of an applied crossing (e.g. dispatch to the DOM).
 
@@ -36,7 +36,7 @@ Typed host reflection of an applied crossing (e.g. dispatch to the DOM).
 
 > `readonly` **cellStore**: [`StateCellStoreShape`](StateCellStoreShape.md)
 
-Defined in: [core/src/graph-query-gap-replay.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query-gap-replay.ts#L36)
+Defined in: [core/src/graph/graph-query-gap-replay.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query-gap-replay.ts#L40)
 
 ***
 
@@ -44,7 +44,7 @@ Defined in: [core/src/graph-query-gap-replay.ts:36](https://github.com/freebatte
 
 > `readonly` **entries**: readonly [`PatchReceiptEntry`](PatchReceiptEntry.md)[]
 
-Defined in: [core/src/graph-query-gap-replay.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query-gap-replay.ts#L35)
+Defined in: [core/src/graph/graph-query-gap-replay.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query-gap-replay.ts#L39)
 
 ***
 
@@ -52,7 +52,7 @@ Defined in: [core/src/graph-query-gap-replay.ts:35](https://github.com/freebatte
 
 > `readonly` **localBaseId**: `ContentAddress`
 
-Defined in: [core/src/graph-query-gap-replay.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query-gap-replay.ts#L33)
+Defined in: [core/src/graph/graph-query-gap-replay.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query-gap-replay.ts#L37)
 
 ***
 
@@ -60,4 +60,4 @@ Defined in: [core/src/graph-query-gap-replay.ts:33](https://github.com/freebatte
 
 > `readonly` **serverGraphId**: `ContentAddress`
 
-Defined in: [core/src/graph-query-gap-replay.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query-gap-replay.ts#L34)
+Defined in: [core/src/graph/graph-query-gap-replay.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query-gap-replay.ts#L38)

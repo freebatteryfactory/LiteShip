@@ -9,7 +9,7 @@
 Defined in: [quantizer/src/animated-quantizer.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L56)
 
 The pair [AnimatedQuantizer.make](../variables/AnimatedQuantizer.md#make) returns: the live animated quantizer
-plus the [Lifetime](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/lifetime.ts) that owns its teardown. Dispose the lifetime to stop
+plus the [Lifetime](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts) that owns its teardown. Dispose the lifetime to stop
 observing the wrapped quantizer's crossings, abort any in-flight animation, and
 close the `interpolated` fan-out (completing subscribers, making publish inert).
 

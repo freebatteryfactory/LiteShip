@@ -50,8 +50,8 @@
  * @module
  */
 
-import type { StandardsElement, StandardsWaiver } from './standards-facts.js';
-import { diffStandardsSurface, applyStandardsWaivers } from './standards-facts.js';
+import type { StandardsElement, StandardsWaiver } from './facts/standards-facts.js';
+import { diffStandardsSurface, applyStandardsWaivers } from './facts/standards-facts.js';
 
 // ─────────────────────────────── the receipt ────────────────────────────────
 
@@ -121,7 +121,7 @@ export interface DeclaredFix {
  */
 export interface FixScope {
   /**
-   * The repo-relative file globs the fix may edit (e.g. `packages/core/src/fnv.ts`,
+   * The repo-relative file globs the fix may edit (e.g. `packages/core/src/internal/fnv.ts`,
    * `packages/astro/src/**`). A `*` matches within a path segment; `**` matches across
    * segments (the same minimal glob shape the assurance map uses). An actually-changed
    * file matching NONE of these is scope creep.

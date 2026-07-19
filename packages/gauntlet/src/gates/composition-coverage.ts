@@ -55,7 +55,7 @@ import { makeRepoIR, PLACEHOLDER_DIGEST, type RepoIR, type FileId } from '../rep
 import { levelOf } from '../assurance-map.js';
 import { propagateAssuranceLevels } from '../assurance-propagation.js';
 import { maxLevel, type AssuranceLevel } from '../assurance.js';
-import type { CompositionFacts, InteractionEdge, CoverageEvidence } from '../composition-facts.js';
+import type { CompositionFacts, InteractionEdge, CoverageEvidence } from '../facts/composition-facts.js';
 
 /** The gate id — namespaces every finding (traceability). */
 const GATE_ID = 'gauntlet/composition-coverage';
@@ -185,7 +185,7 @@ function compositionContext(ir: RepoIR, composition: CompositionFacts): GateCont
 }
 
 /** A fixtures-only L4 file id (matches the `core/.../brands.ts` L4 glob in the map). */
-const L4_FILE = 'packages/core/src/brands.ts';
+const L4_FILE = 'packages/core/src/schema/brands.ts';
 /** A fixtures-only caller of the L4 file. */
 const CALLER = 'packages/core/src/caller.ts';
 

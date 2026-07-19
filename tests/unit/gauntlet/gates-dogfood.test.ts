@@ -112,9 +112,9 @@ const GATES: ReadonlyArray<readonly [string, Gate]> = [
  * substrate boundaries is the proof the cure landed: undifferentiated red is gone.
  */
 const EXPECTED_NONDETERMINISM_L3: readonly string[] = [
-  'packages/core/src/clock.ts:60', // systemClock — monotonic boundary (performance.now / Date.now fallback)
-  'packages/core/src/clock.ts:77', // wallClock — epoch boundary
-  'packages/core/src/rng.ts:39', // systemRng — randomness boundary
+  'packages/core/src/clock/clock.ts:60', // systemClock — monotonic boundary (performance.now / Date.now fallback)
+  'packages/core/src/clock/clock.ts:77', // wallClock — epoch boundary
+  'packages/core/src/internal/rng.ts:39', // systemRng — randomness boundary
 ];
 
 describe('dogfood — the hygiene gates over the real packages/*/src tree', () => {

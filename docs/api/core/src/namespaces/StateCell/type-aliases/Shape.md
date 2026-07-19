@@ -8,7 +8,7 @@
 
 > **Shape**\<`S`\> = [`StateCell`](../../../interfaces/StateCell.md)\<`S`\>
 
-Defined in: [core/src/state-cell.ts:373](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L373)
+Defined in: [core/src/reactive/state-cell.ts:373](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/state-cell.ts#L373)
 
 Structural shape of a [StateCell](../../../variables/StateCell.md).
 

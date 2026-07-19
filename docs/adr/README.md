@@ -54,6 +54,7 @@ Prose vocabulary: [../GLOSSARY.md](../../GLOSSARY.md).
 | [0042](./0042-effect-shed.md)                          | Effect shed (LiteShip-native substrate)                                     | Accepted |
 | [0043](./0043-reactive-convergence.md)                 | Reactive convergence + the public constitution                             | Accepted |
 | [0044](./0044-liteship-brand-consolidation.md)         | LiteShip brand consolidation (one brand, `@czap` retired)                  | Accepted |
+| [0045](./0045-source-grammar.md)                       | Source grammar: package boundary, domain directory, and the facade law      | Accepted |
 
 ## Template
 

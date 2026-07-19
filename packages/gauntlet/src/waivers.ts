@@ -42,7 +42,7 @@ export const LITESHIP_WAIVERS: readonly Waiver[] = [
   // through `systemClock.now()` / `systemRng.next()`. Not debt; architecture.
   {
     ruleId: 'gauntlet/no-nondeterminism',
-    file: 'packages/core/src/clock.ts',
+    file: 'packages/core/src/clock/clock.ts',
     line: 60,
     owner: 'heyoub',
     reason:
@@ -54,7 +54,7 @@ export const LITESHIP_WAIVERS: readonly Waiver[] = [
   },
   {
     ruleId: 'gauntlet/no-nondeterminism',
-    file: 'packages/core/src/clock.ts',
+    file: 'packages/core/src/clock/clock.ts',
     line: 77,
     owner: 'heyoub',
     reason:
@@ -66,7 +66,7 @@ export const LITESHIP_WAIVERS: readonly Waiver[] = [
   },
   {
     ruleId: 'gauntlet/no-nondeterminism',
-    file: 'packages/core/src/rng.ts',
+    file: 'packages/core/src/internal/rng.ts',
     line: 39,
     owner: 'heyoub',
     reason:

@@ -8,7 +8,7 @@
 
 > `const` **Cell**: `object`
 
-Defined in: [core/src/cell.ts:78](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell.ts#L78)
+Defined in: [core/src/reactive/cell.ts:78](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/cell.ts#L78)
 
 Cell — mutable reactive primitive backed by [CellKernel](CellKernel.md). `read` for a
 snapshot, `set`/`update` to push, `subscribe` for the replay-1 stream of

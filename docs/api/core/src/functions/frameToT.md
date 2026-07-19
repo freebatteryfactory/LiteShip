@@ -8,7 +8,7 @@
 
 > **frameToT**(`frame`, `totalFrames`): `number`
 
-Defined in: [core/src/transition-program.ts:698](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/transition-program.ts#L698)
+Defined in: [core/src/motion/transition-program.ts:698](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/transition-program.ts#L698)
 
 Map a 0-based frame index to the normalized program time `t ∈ [0,1]` that
 [sampleProgram](sampleProgram.md) samples — ENDPOINT-INCLUSIVE: `frame / max(1, totalFrames - 1)`,

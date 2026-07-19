@@ -31,7 +31,7 @@ import {
   produceSkipSiteFactsFromContext,
   type SkipSiteFact,
   type SkipVerdict,
-} from '../skip-site-facts.js';
+} from '../facts/skip-site-facts.js';
 
 /** A human label for the detected skip form, for the finding detail (verbatim with the closure gate). */
 function formLabel(form: SkipForm): string {

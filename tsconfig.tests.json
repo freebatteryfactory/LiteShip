@@ -48,13 +48,13 @@
     // The AI-cast no-bypass proof: its `@ts-expect-error` asserts that raw model
     // output is NOT assignable to `ValidatedProposal` — the load-bearing security
     // property is only enforced if THIS project typechecks the directive.
-    "tests/unit/core/ai-cast.test.ts",
+    "tests/unit/core/authoring/ai-cast.test.ts",
     // The DiscreteStateTransition uncompilable-seam proof (#133, Law 16): its
     // `@ts-expect-error` asserts a continuous StateCell / raw SignalNode is NOT
     // assignable to `applyTransition`'s DiscreteStateTransition input — the
     // "widen the replay payload with a signal" fix is only uncompilable if THIS
     // project typechecks the fixture.
-    "tests/unit/core/state-transition.test.ts",
+    "tests/unit/core/motion/state-transition.test.ts",
     "tests/unit/_spine/beat-contract.test.ts",
     // The worker spine mirror (worker.d.ts) had no drift guard and silently
     // diverged; this pins it via bidirectional spine⇔runtime assignability so a

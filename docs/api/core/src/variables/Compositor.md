@@ -8,7 +8,7 @@
 
 > `const` **Compositor**: `CompositorFactory`
 
-Defined in: [core/src/compositor.ts:241](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/compositor.ts#L241)
+Defined in: [core/src/media/compositor.ts:241](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/compositor.ts#L241)
 
 Compositor — the live merge point for every attached [Quantizer](../interfaces/Quantizer.md).
 

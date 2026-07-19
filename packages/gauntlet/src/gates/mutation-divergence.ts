@@ -56,7 +56,7 @@ import { makeRepoIR, PLACEHOLDER_DIGEST, type RepoIR } from '../repo-ir.js';
 import { levelOf } from '../assurance-map.js';
 import { propagateAssuranceLevels } from '../assurance-propagation.js';
 import type { AssuranceLevel } from '../assurance.js';
-import type { MutationFacts, MutantOutcome } from '../mutation-facts.js';
+import type { MutationFacts, MutantOutcome } from '../facts/mutation-facts.js';
 
 /** The gate id — namespaces every finding (traceability). */
 const GATE_ID = 'gauntlet/mutation-divergence';
@@ -244,7 +244,7 @@ function mutationContext(ir: RepoIR, mutation: MutationFacts): GateContext {
 }
 
 /** A fixtures-only L4 file id (matches the `core/.../brands.ts` L4 glob in the map). */
-const L4_FILE = 'packages/core/src/brands.ts';
+const L4_FILE = 'packages/core/src/schema/brands.ts';
 /** A fixtures-only ordinary (L1) file id. */
 const L1_FILE = 'packages/x/src/a.ts';
 

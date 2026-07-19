@@ -8,7 +8,7 @@
 
 > `const` **Token**: `TokenFactory` & `object`
 
-Defined in: [core/src/token.ts:153](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/token.ts#L153)
+Defined in: [core/src/authoring/token.ts:153](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/token.ts#L153)
 
 Token namespace -- design token primitive for adaptive rendering.
 

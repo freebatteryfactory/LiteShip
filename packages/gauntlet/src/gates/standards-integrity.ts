@@ -41,7 +41,7 @@ import { defineGate, type GateContext, type Gate } from '../gate.js';
 import { factAccessEvidenceDigest } from '../verdict-cache.js';
 import { finding, type Finding } from '../finding.js';
 import { memoryContext } from '../engine.js';
-import type { StandardsIntegrityFacts, StandardsChange } from '../standards-facts.js';
+import type { StandardsIntegrityFacts, StandardsChange } from '../facts/standards-facts.js';
 
 const RULE_NS = 'gauntlet/standards-integrity';
 

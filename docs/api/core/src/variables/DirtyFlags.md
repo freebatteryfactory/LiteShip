@@ -8,7 +8,7 @@
 
 > `const` **DirtyFlags**: `object`
 
-Defined in: [core/src/dirty.ts:97](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/dirty.ts#L97)
+Defined in: [core/src/reactive/dirty.ts:97](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/dirty.ts#L97)
 
 DirtyFlags -- bitmask-based dirty tracking for up to 31 named keys.
 O(1) mark/clear/check operations using bitwise integer operations.

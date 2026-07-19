@@ -22,12 +22,57 @@
   "sideEffects": false,
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "//exports-allowlist": "SECURITY + LAYOUT-LOCK: the `exports` map is a CLOSED allowlist — only `.`, `./testing`, `./harness`, and `./simulation` are importable. There is DELIBERATELY no `\"./*\"` wildcard: a wildcard would expose every `src/*.ts` module as a public subpath, leaking the internal layout and preventing safe refactoring. The retained `\"./validated-output\": null` deny is belt-and-suspenders: validated-output.ts holds `mintValidated`, the sole mint site for the un-forgeable apply token, and exposing it as a public subpath would let a consumer forge a ValidatedProposal and bypass validation (lesson #12 — the TIER_TARGET_SETS subpath leak). Internal relative imports `./validated-output.js` are unaffected. Both halves (no-wildcard + the deny) are guarded by tests/unit/meta/validated-output-subpath-leak.test.ts.",
+  "//exports-allowlist": "SECURITY + LAYOUT-LOCK: the `exports` map is a CLOSED allowlist — only `.`, the nine curated DOMAIN facades (`./authoring`, `./reactive`, `./motion`, `./graph`, `./evidence`, `./schema`, `./media`, `./clock`, `./wasm`), `./testing`, `./harness`, `./simulation`, and `./fs-walk` are importable. Each domain subpath resolves to a `src/<domain>/index.ts` facade that is EXPLICIT curated named re-exports only (no `export *`), so the subpath surface is the reviewed public surface of that domain — never the raw internal layout. There is DELIBERATELY no `\"./*\"` wildcard and NO `./internal` subpath: a wildcard would expose every `src/*.ts` module as a public subpath, leaking the internal layout and preventing safe refactoring, and `./internal` holds the un-exported leaf utilities (rng/fnv/numeric/type-level/…). The retained `\"./validated-output\": null` deny is belt-and-suspenders: validated-output.ts (now under `src/evidence/`) holds `mintValidated`, the sole mint site for the un-forgeable apply token, and exposing it as a public subpath would let a consumer forge a ValidatedProposal and bypass validation (lesson #12 — the TIER_TARGET_SETS subpath leak). Internal relative imports `./evidence/validated-output.js` are unaffected. Both halves (no-wildcard + the deny) plus the closed domain allowlist are guarded by tests/unit/meta/validated-output-subpath-leak.test.ts.",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "development": "./src/index.ts"
+    },
+    "./authoring": {
+      "types": "./dist/authoring/index.d.ts",
+      "import": "./dist/authoring/index.js",
+      "development": "./src/authoring/index.ts"
+    },
+    "./reactive": {
+      "types": "./dist/reactive/index.d.ts",
+      "import": "./dist/reactive/index.js",
+      "development": "./src/reactive/index.ts"
+    },
+    "./motion": {
+      "types": "./dist/motion/index.d.ts",
+      "import": "./dist/motion/index.js",
+      "development": "./src/motion/index.ts"
+    },
+    "./graph": {
+      "types": "./dist/graph/index.d.ts",
+      "import": "./dist/graph/index.js",
+      "development": "./src/graph/index.ts"
+    },
+    "./evidence": {
+      "types": "./dist/evidence/index.d.ts",
+      "import": "./dist/evidence/index.js",
+      "development": "./src/evidence/index.ts"
+    },
+    "./schema": {
+      "types": "./dist/schema/index.d.ts",
+      "import": "./dist/schema/index.js",
+      "development": "./src/schema/index.ts"
+    },
+    "./media": {
+      "types": "./dist/media/index.d.ts",
+      "import": "./dist/media/index.js",
+      "development": "./src/media/index.ts"
+    },
+    "./clock": {
+      "types": "./dist/clock/index.d.ts",
+      "import": "./dist/clock/index.js",
+      "development": "./src/clock/index.ts"
+    },
+    "./wasm": {
+      "types": "./dist/wasm/index.d.ts",
+      "import": "./dist/wasm/index.js",
+      "development": "./src/wasm/index.ts"
     },
     "./testing": {
       "types": "./dist/testing.d.ts",

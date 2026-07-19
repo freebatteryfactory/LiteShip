@@ -8,7 +8,7 @@
 
 > **lowerTransitionProgram**(`graph`, `program`, `env?`): [`LoweredProgramTimeline`](../interfaces/LoweredProgramTimeline.md)
 
-Defined in: [core/src/transition-program.ts:311](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/transition-program.ts#L311)
+Defined in: [core/src/motion/transition-program.ts:311](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/transition-program.ts#L311)
 
 Lower a [TransitionProgram](../type-aliases/TransitionProgram.md) to a deterministic `[0,1]` timeline of
 per-transition windows.

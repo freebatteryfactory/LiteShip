@@ -8,7 +8,7 @@
 
 > **defineCapsule**\<`K`, `InS`, `OutS`, `R`\>(`decl`): [`CapsuleDef`](../interfaces/CapsuleDef.md)\<`K`, [`Infer`](../type-aliases/Infer.md)\<`InS`\>, [`Infer`](../type-aliases/Infer.md)\<`OutS`\>, `R`\>
 
-Defined in: [core/src/assembly.ts:131](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/assembly.ts#L131)
+Defined in: [core/src/authoring/assembly.ts:131](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/assembly.ts#L131)
 
 Declare a capsule. Validates shape, computes content address,
 registers in the module-level catalog, returns a typed def.

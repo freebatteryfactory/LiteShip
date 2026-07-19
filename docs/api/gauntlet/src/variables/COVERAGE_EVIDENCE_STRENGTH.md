@@ -8,6 +8,6 @@
 
 > `const` **COVERAGE\_EVIDENCE\_STRENGTH**: readonly \[`"none"`, `"static-reference"`, `"execution"`\]
 
-Defined in: [gauntlet/src/composition-facts.ts:116](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/composition-facts.ts#L116)
+Defined in: [gauntlet/src/facts/composition-facts.ts:116](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/composition-facts.ts#L116)
 
 The evidence classes in ascending strength — canonical ordering for display/sort.

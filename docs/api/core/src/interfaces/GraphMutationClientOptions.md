@@ -6,7 +6,7 @@
 
 # Interface: GraphMutationClientOptions
 
-Defined in: [core/src/graph-mutation-client.ts:19](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-mutation-client.ts#L19)
+Defined in: [core/src/graph/graph-mutation-client.ts:19](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-mutation-client.ts#L19)
 
 Configuration for [createGraphMutationClient](../functions/createGraphMutationClient.md) — endpoint, initial base, and stale-recovery policy.
 
@@ -16,7 +16,7 @@ Configuration for [createGraphMutationClient](../functions/createGraphMutationCl
 
 > `readonly` **base**: [`DocumentGraph`](DocumentGraph.md)
 
-Defined in: [core/src/graph-mutation-client.ts:23](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-mutation-client.ts#L23)
+Defined in: [core/src/graph/graph-mutation-client.ts:23](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-mutation-client.ts#L23)
 
 The initial client-side base graph (e.g. decoded from an initial GET or inlined SSR data).
 
@@ -26,7 +26,7 @@ The initial client-side base graph (e.g. decoded from an initial GET or inlined 
 
 > `readonly` `optional` **fetchImpl?**: \{(`input`, `init?`): `Promise`\<`Response`\>; (`input`, `init?`): `Promise`\<`Response`\>; \}
 
-Defined in: [core/src/graph-mutation-client.ts:25](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-mutation-client.ts#L25)
+Defined in: [core/src/graph/graph-mutation-client.ts:25](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-mutation-client.ts#L25)
 
 Injectable fetch for tests / non-browser hosts. Defaults to global fetch.
 
@@ -76,7 +76,7 @@ Injectable fetch for tests / non-browser hosts. Defaults to global fetch.
 
 > `readonly` `optional` **maxStaleRetries?**: `number`
 
-Defined in: [core/src/graph-mutation-client.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-mutation-client.ts#L33)
+Defined in: [core/src/graph/graph-mutation-client.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-mutation-client.ts#L33)
 
 Bounded stale-base retries. Default: 1 when `refreshBase` is provided, else 0.
 
@@ -86,7 +86,7 @@ Bounded stale-base retries. Default: 1 when `refreshBase` is provided, else 0.
 
 > `readonly` `optional` **refreshBase?**: () => `Promise`\<[`DocumentGraph`](DocumentGraph.md)\>
 
-Defined in: [core/src/graph-mutation-client.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-mutation-client.ts#L31)
+Defined in: [core/src/graph/graph-mutation-client.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-mutation-client.ts#L31)
 
 Host-owned base reloader (e.g. GET the host's graph endpoint and decode). When present,
 a `staleBase` refusal triggers reload + re-propose up to `maxStaleRetries` times.
@@ -102,7 +102,7 @@ LiteShip does not dictate the read endpoint's shape — the host owns it (ADR-00
 
 > `readonly` `optional` **timeoutMs?**: `number`
 
-Defined in: [core/src/graph-mutation-client.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-mutation-client.ts#L40)
+Defined in: [core/src/graph/graph-mutation-client.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-mutation-client.ts#L40)
 
 Abort a submit's request after this many milliseconds, settling it to the channel's
 `{ status: 'error' }` shape. Without it, a hung request holds the SERIALIZED submit
@@ -115,6 +115,6 @@ every queued submit on this client waits behind it. Default: no client-side time
 
 > `readonly` **url**: `string`
 
-Defined in: [core/src/graph-mutation-client.ts:21](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-mutation-client.ts#L21)
+Defined in: [core/src/graph/graph-mutation-client.ts:21](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-mutation-client.ts#L21)
 
 The mutation endpoint `sendGraphMutation` POSTs to.

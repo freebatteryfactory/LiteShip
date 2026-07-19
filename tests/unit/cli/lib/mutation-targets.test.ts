@@ -38,11 +38,11 @@ import {
 } from '../../../../packages/cli/src/lib/mutation-targets.js';
 
 /** Repo-relative seam ids the targeting LAW is exercised against. */
-const HLC = 'packages/core/src/hlc.ts'; // base L4 (the {receipt,hlc,...} glob)
-const DAG = 'packages/core/src/dag.ts'; // base L4
+const HLC = 'packages/core/src/clock/hlc.ts'; // base L4 (the clock/hlc glob)
+const DAG = 'packages/core/src/graph/dag.ts'; // base L4 (the graph/dag glob)
 const CANON_FNV = 'packages/canonical/src/fnv.ts'; // base L4 (canonical/**)
-const CONTENT_ADDR = 'packages/core/src/content-address.ts'; // base LOW — L4 only by propagation
-const GRAPH_PATCH = 'packages/core/src/graph-patch.ts'; // base LOW — L4 only by propagation
+const CONTENT_ADDR = 'packages/core/src/evidence/content-address.ts'; // base LOW — L4 only by propagation
+const GRAPH_PATCH = 'packages/core/src/graph/graph-patch.ts'; // base LOW — L4 only by propagation
 
 /** A FileNode for the in-memory IR — the placeholder digest a fixture always uses. */
 function fileNode(id: string): { readonly id: string; readonly contentDigest: string; readonly packageName: string } {
@@ -202,7 +202,7 @@ describe('partitionSeamCandidates — the deep-vs-barrel covering partition (sou
 
   it('classifies a DEEP importer (references the src/F.js path) as a precise deep importer, never a barrel one', () => {
     const root = makeRepoWithTests(
-      new Map([['tests/unit/core/deep.test.ts', `import { hlc } from '../../../packages/core/src/hlc.js';`]]),
+      new Map([['tests/unit/core/deep.test.ts', `import { hlc } from '../../../packages/core/src/clock/hlc.js';`]]),
     );
     try {
       const [seam] = partitionSeamCandidates(root, [SEAM]);
@@ -243,7 +243,7 @@ describe('partitionSeamCandidates — the deep-vs-barrel covering partition (sou
       new Map([
         [
           'tests/unit/core/both.test.ts',
-          `import { hlc } from '../../../packages/core/src/hlc.js';\nimport { z } from '@liteship/core';`,
+          `import { hlc } from '../../../packages/core/src/clock/hlc.js';\nimport { z } from '@liteship/core';`,
         ],
       ]),
     );
@@ -325,7 +325,7 @@ describe('buildSeamCoverageMap — the deterministic SOUND coverage map (barrel 
     const root = makeRepoWithTests(
       new Map([
         ['tests/unit/core/barrel.test.ts', `import { x } from '@liteship/core';`],
-        ['tests/unit/core/deep.test.ts', `import { hlc } from '../../../packages/core/src/hlc.js';`],
+        ['tests/unit/core/deep.test.ts', `import { hlc } from '../../../packages/core/src/clock/hlc.js';`],
       ]),
     );
     try {
@@ -349,7 +349,7 @@ describe('buildSeamCoverageMap — the deterministic SOUND coverage map (barrel 
 
   it('a seam with only a deep importer maps every line to that one test; no barrel candidates', () => {
     const root = makeRepoWithTests(
-      new Map([['tests/unit/core/deep.test.ts', `import { hlc } from '../../../packages/core/src/hlc.js';`]]),
+      new Map([['tests/unit/core/deep.test.ts', `import { hlc } from '../../../packages/core/src/clock/hlc.js';`]]),
     );
     try {
       const { coverage, coveringBySeam } = buildSeamCoverageMap(root, [SEAM], { _tag: 'barrel' });
@@ -380,7 +380,7 @@ describe('buildSeamCoverageMap — the deterministic SOUND coverage map (barrel 
   it('is DETERMINISTIC — the same inputs build a byte-identical covering set (the verdict-cache key LAW)', () => {
     const tests = new Map([
       ['tests/unit/core/a.test.ts', `import { x } from '@liteship/core';`],
-      ['tests/unit/core/b.test.ts', `import { hlc } from '../../../packages/core/src/hlc.js';`],
+      ['tests/unit/core/b.test.ts', `import { hlc } from '../../../packages/core/src/clock/hlc.js';`],
     ]);
     const run = (): readonly string[][] => {
       const root = makeRepoWithTests(new Map(tests));

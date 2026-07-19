@@ -1,7 +1,7 @@
 /**
  * BlendTree determinism — f32-canonical + accumulation-order independence.
  *
- * `BlendTree.computeBlend` (packages/core/src/blend.ts) is a pure f64 weighted
+ * `BlendTree.computeBlend` (packages/core/src/motion/blend.ts) is a pure f64 weighted
  * average with NO WASM twin and NO parity test — yet it sums per-node
  * contributions by iterating `nodes.values()` in Map insertion order. A weighted
  * sum in IEEE-754 is NOT associative: reordering the addends shifts the rounding,

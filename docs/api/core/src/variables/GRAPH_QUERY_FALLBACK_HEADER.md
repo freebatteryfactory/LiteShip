@@ -8,6 +8,6 @@
 
 > `const` **GRAPH\_QUERY\_FALLBACK\_HEADER**: `"X-Liteship-Query"` = `'X-Liteship-Query'`
 
-Defined in: [core/src/graph-query.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query.ts#L42)
+Defined in: [core/src/graph/graph-query.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query.ts#L42)
 
 HTTP fallback header when the host cannot dispatch `QUERY` (loud ladder, not silent).

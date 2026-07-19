@@ -8,7 +8,7 @@
 
 > **chooseTier**(`policy`, `runtimeSite`): [`EscalationResult`](../type-aliases/EscalationResult.md)
 
-Defined in: [core/src/escalation.ts:141](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/escalation.ts#L141)
+Defined in: [core/src/evidence/escalation.ts:141](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/escalation.ts#L141)
 
 Choose the minimal capability tier a [PolicyNode](../interfaces/PolicyNode.md) admits on a runtime site.
 

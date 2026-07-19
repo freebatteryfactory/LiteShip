@@ -6,7 +6,7 @@
 
 # Interface: Quantizer\<B\>
 
-Defined in: [core/src/quantizer-types.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/quantizer-types.ts#L34)
+Defined in: [core/src/schema/quantizer-types.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/quantizer-types.ts#L34)
 
 Quantizer contract — the SYNCHRONOUS base: a [Boundary](../variables/Boundary.md) definition, its
 `evaluate` transition, and an optional synchronous state accessor for hot
@@ -34,7 +34,7 @@ these structural interfaces.
 
 > `readonly` **\_tag**: `"Quantizer"`
 
-Defined in: [core/src/quantizer-types.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/quantizer-types.ts#L35)
+Defined in: [core/src/schema/quantizer-types.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/quantizer-types.ts#L35)
 
 ***
 
@@ -42,7 +42,7 @@ Defined in: [core/src/quantizer-types.ts:35](https://github.com/freebatteryfacto
 
 > `readonly` **boundary**: `B`
 
-Defined in: [core/src/quantizer-types.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/quantizer-types.ts#L36)
+Defined in: [core/src/schema/quantizer-types.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/quantizer-types.ts#L36)
 
 ***
 
@@ -50,7 +50,7 @@ Defined in: [core/src/quantizer-types.ts:36](https://github.com/freebatteryfacto
 
 > `readonly` `optional` **stateSync?**: () => [`StateUnion`](../type-aliases/StateUnion.md)\<`B`\>
 
-Defined in: [core/src/quantizer-types.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/quantizer-types.ts#L38)
+Defined in: [core/src/schema/quantizer-types.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/quantizer-types.ts#L38)
 
 Synchronous state accessor for hot paths (avoids reactive read overhead).
 
@@ -64,7 +64,7 @@ Synchronous state accessor for hot paths (avoids reactive read overhead).
 
 > **evaluate**(`value`): [`StateUnion`](../type-aliases/StateUnion.md)\<`B`\>
 
-Defined in: [core/src/quantizer-types.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/quantizer-types.ts#L39)
+Defined in: [core/src/schema/quantizer-types.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/quantizer-types.ts#L39)
 
 #### Parameters
 

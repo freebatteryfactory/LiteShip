@@ -8,6 +8,6 @@
 
 > **Shape** = `ShipCapsuleShape`
 
-Defined in: [core/src/ship-capsule.ts:220](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ship-capsule.ts#L220)
+Defined in: [core/src/authoring/ship-capsule.ts:220](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/ship-capsule.ts#L220)
 
 Decoded capsule shape returned by [ShipCapsule.make](../../../variables/ShipCapsule.md#make) and [ShipCapsule.decode](../../../variables/ShipCapsule.md#decode).

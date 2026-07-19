@@ -22,7 +22,7 @@ Defined in: [compiler/src/reveal-compile.ts:29](https://github.com/freebatteryfa
 
 ### graph
 
-> `readonly` **graph**: [`DocumentGraph`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts)
+> `readonly` **graph**: [`DocumentGraph`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts)
 
 Defined in: [compiler/src/reveal-compile.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/reveal-compile.ts#L31)
 

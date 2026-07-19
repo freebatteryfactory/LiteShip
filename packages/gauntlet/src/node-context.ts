@@ -22,13 +22,13 @@ import { resolve } from 'node:path';
 import fg from 'fast-glob';
 import type { GateContext } from './gate.js';
 import type { RepoIR } from './repo-ir.js';
-import type { SupplyChainFacts } from './supply-chain-facts.js';
-import type { MutationFacts } from './mutation-facts.js';
-import type { McdcFacts } from './mcdc-facts.js';
-import type { SimulationFacts } from './simulation-facts.js';
-import type { TraceabilityFacts } from './traceability-facts.js';
-import type { StandardsIntegrityFacts } from './standards-facts.js';
-import type { FuzzCorpusFacts } from './fuzz-facts.js';
+import type { SupplyChainFacts } from './facts/supply-chain-facts.js';
+import type { MutationFacts } from './facts/mutation-facts.js';
+import type { McdcFacts } from './facts/mcdc-facts.js';
+import type { SimulationFacts } from './facts/simulation-facts.js';
+import type { TraceabilityFacts } from './facts/traceability-facts.js';
+import type { StandardsIntegrityFacts } from './facts/standards-facts.js';
+import type { FuzzCorpusFacts } from './facts/fuzz-facts.js';
 
 /**
  * The default CONFIRMER-CORPUS globs unioned into {@link GateContext.allFiles} — the

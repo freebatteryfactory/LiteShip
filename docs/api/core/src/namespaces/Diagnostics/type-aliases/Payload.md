@@ -8,6 +8,6 @@
 
 > **Payload** = [`DiagnosticPayload`](../../../interfaces/DiagnosticPayload.md)
 
-Defined in: [core/src/diagnostics.ts:211](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/diagnostics.ts#L211)
+Defined in: [core/src/evidence/diagnostics.ts:211](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/diagnostics.ts#L211)
 
 Alias for [DiagnosticPayload](../../../interfaces/DiagnosticPayload.md).

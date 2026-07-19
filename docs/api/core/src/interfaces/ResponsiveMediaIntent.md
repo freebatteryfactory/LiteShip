@@ -6,7 +6,7 @@
 
 # Interface: ResponsiveMediaIntent
 
-Defined in: [core/src/responsive-media.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/responsive-media.ts#L38)
+Defined in: [core/src/media/responsive-media.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/responsive-media.ts#L38)
 
 Sealed responsive-media intent — data over graph, no behavior authority.
 
@@ -20,7 +20,7 @@ Sealed responsive-media intent — data over graph, no behavior authority.
 
 > `readonly` **\_tag**: `"ResponsiveMediaIntent"`
 
-Defined in: [core/src/responsive-media.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/responsive-media.ts#L39)
+Defined in: [core/src/media/responsive-media.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/responsive-media.ts#L39)
 
 ***
 
@@ -28,7 +28,7 @@ Defined in: [core/src/responsive-media.ts:39](https://github.com/freebatteryfact
 
 > `readonly` **alt**: `string`
 
-Defined in: [core/src/responsive-media.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/responsive-media.ts#L30)
+Defined in: [core/src/media/responsive-media.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/responsive-media.ts#L30)
 
 #### Inherited from
 
@@ -40,7 +40,7 @@ Defined in: [core/src/responsive-media.ts:30](https://github.com/freebatteryfact
 
 > `readonly` **id**: `string`
 
-Defined in: [core/src/responsive-media.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/responsive-media.ts#L29)
+Defined in: [core/src/media/responsive-media.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/responsive-media.ts#L29)
 
 #### Inherited from
 
@@ -52,7 +52,7 @@ Defined in: [core/src/responsive-media.ts:29](https://github.com/freebatteryfact
 
 > `readonly` `optional` **saveDataVariant?**: [`ResponsiveMediaVariant`](ResponsiveMediaVariant.md)
 
-Defined in: [core/src/responsive-media.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/responsive-media.ts#L33)
+Defined in: [core/src/media/responsive-media.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/responsive-media.ts#L33)
 
 Lighter asset used when Save-Data is on.
 
@@ -66,7 +66,7 @@ Lighter asset used when Save-Data is on.
 
 > `readonly` `optional` **sizes?**: `string`
 
-Defined in: [core/src/responsive-media.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/responsive-media.ts#L34)
+Defined in: [core/src/media/responsive-media.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/responsive-media.ts#L34)
 
 #### Inherited from
 
@@ -78,7 +78,7 @@ Defined in: [core/src/responsive-media.ts:34](https://github.com/freebatteryfact
 
 > `readonly` **variants**: readonly [`ResponsiveMediaVariant`](ResponsiveMediaVariant.md)[]
 
-Defined in: [core/src/responsive-media.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/responsive-media.ts#L31)
+Defined in: [core/src/media/responsive-media.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/responsive-media.ts#L31)
 
 #### Inherited from
 

@@ -8,7 +8,7 @@
 
 > `const` **Timeline**: `TimelineFactory`
 
-Defined in: [core/src/timeline.ts:80](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/timeline.ts#L80)
+Defined in: [core/src/motion/timeline.ts:80](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/timeline.ts#L80)
 
 Timeline — scheduler-driven advancement over a [Boundary](Boundary.md).
 Produces a plain reactive timeline that seeks or plays between boundary states;

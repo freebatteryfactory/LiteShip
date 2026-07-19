@@ -1,7 +1,7 @@
 /**
  * Property test (L4) — the formal CRDT / linearizability laws of the HLC.
  *
- * The HLC (`packages/core/src/hlc.ts`) is half of the causal trust spine: if its
+ * The HLC (`packages/core/src/clock/hlc.ts`) is half of the causal trust spine: if its
  * ordering or merge lies, every downstream consumer trusts a bad happened-before.
  * The sibling `hlc.prop.test.ts` already pins monotonicity, wall-max-on-merge,
  * node-id preservation, compare antisymmetry/reflexivity and successive-increment

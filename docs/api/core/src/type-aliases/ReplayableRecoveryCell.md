@@ -8,7 +8,7 @@
 
 > **ReplayableRecoveryCell** = [`StateCell`](../interfaces/StateCell.md) & `object`
 
-Defined in: [core/src/stream-recovery.ts:18](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stream-recovery.ts#L18)
+Defined in: [core/src/reactive/stream-recovery.ts:18](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/stream-recovery.ts#L18)
 
 Only discrete/replayable cells may enter graph-native recovery paths (#133).
 

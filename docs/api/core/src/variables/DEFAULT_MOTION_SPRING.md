@@ -8,7 +8,7 @@
 
 > `const` **DEFAULT\_MOTION\_SPRING**: `SpringConfigShape`
 
-Defined in: [core/src/easing.ts:378](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/easing.ts#L378)
+Defined in: [core/src/motion/easing.ts:378](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/easing.ts#L378)
 
 The ONE spring config both the CSS `linear()` path and the JS floor default to
 when a spring easing is authored without explicit parameters. Kept here (not in

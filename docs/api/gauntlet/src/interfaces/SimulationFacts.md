@@ -6,7 +6,7 @@
 
 # Interface: SimulationFacts
 
-Defined in: [gauntlet/src/simulation-facts.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/simulation-facts.ts#L33)
+Defined in: [gauntlet/src/facts/simulation-facts.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/simulation-facts.ts#L33)
 
 The DST evidence the host supplies — the result of running the scenario corpus
 through the `@liteship/core/simulation` harness. `runs` is EVERY scenario the host
@@ -20,6 +20,6 @@ replayed; an empty/absent `runs` is reported by the gate as an advisory
 
 > `readonly` `optional` **runs?**: readonly [`ScenarioReplayFact`](ScenarioReplayFact.md)[]
 
-Defined in: [gauntlet/src/simulation-facts.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/simulation-facts.ts#L35)
+Defined in: [gauntlet/src/facts/simulation-facts.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/simulation-facts.ts#L35)
 
 Every scenario the host replayed through the harness.

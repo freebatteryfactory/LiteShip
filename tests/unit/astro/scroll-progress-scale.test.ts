@@ -3,7 +3,7 @@
  * Drift guard: the `scroll.progress` SCALE agrees across every reader.
  *
  * CANONICAL SCALE: 0..1 (window.scrollY / max), matching `Signal` — the
- * `SignalSource` source of truth in `core/src/signal.ts`. A boundary authored
+ * `SignalSource` source of truth in `core/src/reactive/signal.ts`. A boundary authored
  * at `0.5` must mean "half scrolled" everywhere.
  *
  * Before 0.3.0 the Astro runtime (`readSignalValue`) returned 0..100 while

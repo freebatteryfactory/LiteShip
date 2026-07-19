@@ -44,7 +44,7 @@ function reanchoredBrand(typeName: string): SpineTypeAdmission {
     authority: 'spine',
     admittedRelation: 'brand-reanchored',
     spineExpr: typeName,
-    runtimeModule: 'packages/core/src/brands.ts',
+    runtimeModule: 'packages/core/src/schema/brands.ts',
     runtimeExpr: typeName,
   };
 }
@@ -55,10 +55,10 @@ const EDGE = 'packages/edge/src';
 /** The frozen admission table — every currently-pinned spine mirror type. */
 export const LITESHIP_SPINE_ADMISSIONS: readonly SpineTypeAdmission[] = [
   // ── @liteship/core runtime shapes (the three historical drift fixtures live here) ──
-  runtimeMirror('CompositeState', `${CORE}/compositor.ts`), // WGSL-omission drift class
-  runtimeMirror('VideoConfig', `${CORE}/video.ts`), // Millis-brand-loss drift class
-  runtimeMirror('CaptureResult', `${CORE}/capture.ts`), // Millis-brand-loss drift class
-  runtimeMirror('CapSet', `${CORE}/caps.ts`), // Set→array drift class
+  runtimeMirror('CompositeState', `${CORE}/media/compositor.ts`), // WGSL-omission drift class
+  runtimeMirror('VideoConfig', `${CORE}/media/video.ts`), // Millis-brand-loss drift class
+  runtimeMirror('CaptureResult', `${CORE}/evidence/capture.ts`), // Millis-brand-loss drift class
+  runtimeMirror('CapSet', `${CORE}/evidence/caps.ts`), // Set→array drift class
   // Codec.Shape, decomposed into FIELDS. A whole-shape `public-wider` verdict is a WEAK
   // pin: the `schema` field alone produces (s2r=false, r2s=true), so a SECOND field
   // (encode/decode) widening in the SAME direction is absorbed and never surfaces
@@ -69,28 +69,28 @@ export const LITESHIP_SPINE_ADMISSIONS: readonly SpineTypeAdmission[] = [
   // field (kernel Schema ⊂ SchemaPort). This is the drift that motivated the whole gate.
   runtimeMirror(
     "Codec.Shape['encode']",
-    `${CORE}/codec.ts`,
+    `${CORE}/schema/codec.ts`,
     'exact',
     "Codec.Shape<{ readonly a: 1 }, { readonly a: 1 }>['encode']",
   ),
   runtimeMirror(
     "Codec.Shape['decode']",
-    `${CORE}/codec.ts`,
+    `${CORE}/schema/codec.ts`,
     'exact',
     "Codec.Shape<{ readonly a: 1 }, { readonly a: 1 }>['decode']",
   ),
   runtimeMirror(
     "Codec.Shape['schema']",
-    `${CORE}/codec.ts`,
+    `${CORE}/schema/codec.ts`,
     'public-wider',
     "Codec.Shape<{ readonly a: 1 }, { readonly a: 1 }>['schema']",
   ),
-  runtimeMirror('Config.Shape', `${CORE}/config.ts`, 'exact', 'Config.Shape'),
+  runtimeMirror('Config.Shape', `${CORE}/authoring/config.ts`, 'exact', 'Config.Shape'),
 
   // ── @liteship/design shapes (re-exported as Token/Theme/Style namespaces from core) ──
-  runtimeMirror('Token.Shape', `${CORE}/token.ts`, 'exact', 'Token.Shape'),
-  runtimeMirror('Theme.Shape', `${CORE}/theme.ts`, 'exact', 'Theme.Shape'),
-  runtimeMirror('Style.Shape', `${CORE}/style.ts`, 'exact', 'Style.Shape'),
+  runtimeMirror('Token.Shape', `${CORE}/authoring/token.ts`, 'exact', 'Token.Shape'),
+  runtimeMirror('Theme.Shape', `${CORE}/authoring/theme.ts`, 'exact', 'Theme.Shape'),
+  runtimeMirror('Style.Shape', `${CORE}/authoring/style.ts`, 'exact', 'Style.Shape'),
 
   // ── @liteship/edge KV-cache + manifest shapes (producing modules) ──
   runtimeMirror('KVNamespace', `${EDGE}/kv-cache.ts`),

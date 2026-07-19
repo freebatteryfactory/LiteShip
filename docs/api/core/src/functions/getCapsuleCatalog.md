@@ -8,7 +8,7 @@
 
 > **getCapsuleCatalog**(): readonly [`CapsuleDef`](../interfaces/CapsuleDef.md)\<[`AssemblyKind`](../type-aliases/AssemblyKind.md), `unknown`, `unknown`, `unknown`\>[]
 
-Defined in: [core/src/assembly.ts:217](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/assembly.ts#L217)
+Defined in: [core/src/authoring/assembly.ts:217](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/assembly.ts#L217)
 
 Read-only snapshot of all registered capsules.
 

@@ -8,7 +8,7 @@
 
 > **Disposer** = () => `void`
 
-Defined in: [core/src/cell-kernel.ts:85](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts#L85)
+Defined in: [core/src/reactive/cell-kernel.ts:85](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/cell-kernel.ts#L85)
 
 A teardown handle returned by `subscribe`. Idempotent — a repeat call is a no-op.
 

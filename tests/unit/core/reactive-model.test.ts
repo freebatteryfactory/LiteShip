@@ -27,8 +27,8 @@
 import { describe, test, expect } from 'vitest';
 import fc from 'fast-check';
 import { hasTag } from '@liteship/error';
-import { Lifetime } from '../../../packages/core/src/lifetime.js';
-import type { LifetimeDisposeError } from '../../../packages/core/src/lifetime.js';
+import { Lifetime } from '../../../packages/core/src/reactive/lifetime.js';
+import type { LifetimeDisposeError } from '../../../packages/core/src/reactive/lifetime.js';
 import {
   ModelChannel,
   cellKernelChannel,

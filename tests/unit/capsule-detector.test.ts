@@ -21,7 +21,7 @@ import {
 } from '../../scripts/lib/capsule-detector.js';
 import { Config } from '@liteship/core';
 
-const CANONICAL_CBOR = resolve('packages/core/src/capsules/canonical-cbor.ts');
+const CANONICAL_CBOR = resolve('packages/core/src/authoring/capsules/canonical-cbor.ts');
 const ASSETS_SCENE = resolve('examples/scenes/assets.ts');
 const BEAT_MARKERS = resolve('packages/assets/src/analysis/beat-markers.ts');
 const EXPORT_LIST_FIXTURE = resolve('tests/fixtures/capsules/export-list-asset.ts');

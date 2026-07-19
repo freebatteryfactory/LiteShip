@@ -33,7 +33,7 @@ import { defineGate, type GateContext, type Gate } from '../gate.js';
 import { factAccessEvidenceDigest } from '../verdict-cache.js';
 import { finding, type Finding } from '../finding.js';
 import { memoryContext } from '../engine.js';
-import type { ScenarioReplayFact, SimulationFacts } from '../simulation-facts.js';
+import type { ScenarioReplayFact, SimulationFacts } from '../facts/simulation-facts.js';
 
 const RULE_NS = 'gauntlet/simulation-determinism';
 

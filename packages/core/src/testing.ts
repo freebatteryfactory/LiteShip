@@ -11,4 +11,4 @@
  * @module
  */
 
-export { resetCapsuleCatalog } from './assembly.js';
+export { resetCapsuleCatalog } from './authoring/assembly.js';

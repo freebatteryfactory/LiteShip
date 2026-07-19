@@ -8,7 +8,7 @@
 
 > `const` **Style**: `StyleFactory` & `object`
 
-Defined in: [core/src/style.ts:215](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/style.ts#L215)
+Defined in: [core/src/authoring/style.ts:215](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/style.ts#L215)
 
 Style namespace -- adaptive style primitive for constraint-based rendering.
 

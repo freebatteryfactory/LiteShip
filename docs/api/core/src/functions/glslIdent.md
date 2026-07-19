@@ -8,7 +8,7 @@
 
 > **glslIdent**(`name`): `string`
 
-Defined in: [core/src/projection.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/projection.ts#L56)
+Defined in: [core/src/graph/projection.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/projection.ts#L56)
 
 Canonical GLSL uniform identifier for a name: prefix `u_`, kebab/camelCase
 folded to snake_case, lowercased. This is the exact identifier the GLSL

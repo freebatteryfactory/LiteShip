@@ -8,6 +8,6 @@
 
 > **Shape** = `RuntimeCoordinatorShape`
 
-Defined in: [core/src/runtime-coordinator.ts:227](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/runtime-coordinator.ts#L227)
+Defined in: [core/src/reactive/runtime-coordinator.ts:227](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/runtime-coordinator.ts#L227)
 
 Alias for `RuntimeCoordinatorShape`.

@@ -8,9 +8,9 @@
 
 > **isCell**\<`T`\>(`p`): `p is Shape<T>`
 
-Defined in: [core/src/index.ts:616](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/index.ts#L616)
+Defined in: core/src/reactive/primitive.ts:20
 
-Narrow a [Primitive](../type-aliases/Primitive.md) to a [Cell](../namespaces/Cell/README.md).
+Narrow a [Primitive](../type-aliases/Primitive.md) to a [Cell](../variables/Cell.md).
 
 ## Type Parameters
 

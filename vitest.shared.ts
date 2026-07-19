@@ -1,7 +1,7 @@
 import { cpus, loadavg } from 'node:os';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { Config } from './packages/core/src/config.js';
+import { Config } from './packages/core/src/authoring/config.js';
 
 const rootDir = fileURLToPath(new URL('.', import.meta.url));
 
@@ -60,10 +60,10 @@ export const coverageExclude = [
   // calls); it can only run inside the live Vite dev server bound by
   // `startDevServer`. No in-process unit-test path.
   'packages/scene/src/dev/player.ts',
-  'packages/core/src/capture.ts',
-  'packages/core/src/protocol.ts',
-  'packages/core/src/quantizer-types.ts',
-  'packages/core/src/type-utils.ts',
+  'packages/core/src/evidence/capture.ts',
+  'packages/core/src/schema/protocol.ts',
+  'packages/core/src/schema/quantizer-types.ts',
+  'packages/core/src/internal/type-level.ts',
   'packages/web/src/lite.ts',
   'packages/web/src/types.ts',
   'packages/worker/src/compositor-types.ts',

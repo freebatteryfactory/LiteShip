@@ -8,7 +8,7 @@
 
 > **diffStandardsSurface**(`prior`, `current`): readonly [`StandardsChange`](../interfaces/StandardsChange.md)[]
 
-Defined in: [gauntlet/src/standards-facts.ts:670](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/standards-facts.ts#L670)
+Defined in: [gauntlet/src/facts/standards-facts.ts:670](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/standards-facts.ts#L670)
 
 The PURE weakening diff — classify every change between the committed snapshot's
 elements and the live surface's elements. Order-independent (keyed by

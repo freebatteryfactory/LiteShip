@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { ValidationError } from '@liteship/error';
-import { contentAddressOf } from '../../packages/core/src/content-address.js';
+import { contentAddressOf } from '../../packages/core/src/evidence/content-address.js';
 import { introBedMetadata } from '../../examples/scenes/assets.js';
 
 describe('intro-bed:wav-metadata', () => {

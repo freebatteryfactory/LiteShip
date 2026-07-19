@@ -61,7 +61,7 @@ describe('B2 — classification guard: result types name their clock', () => {
   });
 
   it('the causal ReceiptEnvelope timestamp stays an HLC (not retyped to a string)', () => {
-    const src = readFileSync(resolve(REPO, 'packages/core/src/receipt.ts'), 'utf8');
+    const src = readFileSync(resolve(REPO, 'packages/core/src/evidence/receipt.ts'), 'utf8');
     expect(src).toMatch(/readonly timestamp:\s*HLC/);
   });
 

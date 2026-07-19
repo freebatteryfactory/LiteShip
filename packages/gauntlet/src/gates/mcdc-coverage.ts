@@ -50,7 +50,7 @@ import { makeRepoIR, PLACEHOLDER_DIGEST, type RepoIR } from '../repo-ir.js';
 import { levelOf } from '../assurance-map.js';
 import { propagateAssuranceLevels } from '../assurance-propagation.js';
 import type { AssuranceLevel } from '../assurance.js';
-import { isMcdcCovered, type McdcFacts, type McdcConditionOutcome, type McdcPinVerdict } from '../mcdc-facts.js';
+import { isMcdcCovered, type McdcFacts, type McdcConditionOutcome, type McdcPinVerdict } from '../facts/mcdc-facts.js';
 
 /** The gate id — namespaces every finding (traceability). */
 const GATE_ID = 'gauntlet/mcdc-coverage';
@@ -193,7 +193,7 @@ function mcdcContext(ir: RepoIR, mcdc: McdcFacts): GateContext {
 }
 
 /** A fixtures-only L4 file id (matches the `core/.../brands.ts` L4 glob in the map). */
-const L4_FILE = 'packages/core/src/brands.ts';
+const L4_FILE = 'packages/core/src/schema/brands.ts';
 
 /** A literal IR carrying just the L4 fixture file (no imports → glob levels stand). */
 function fixtureIR(): RepoIR {

@@ -6,7 +6,7 @@
 
 # Interface: ProjectionKeys
 
-Defined in: [core/src/projection.ts:25](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/projection.ts#L25)
+Defined in: [core/src/graph/projection.ts:25](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/projection.ts#L25)
 
 The per-quantizer output keys, one per cast target.
 
@@ -16,7 +16,7 @@ The per-quantizer output keys, one per cast target.
 
 > `readonly` **ariaKey**: `string`
 
-Defined in: [core/src/projection.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/projection.ts#L33)
+Defined in: [core/src/graph/projection.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/projection.ts#L33)
 
 ARIA/data attribute:  `data-liteship-<name>` (name preserved verbatim).
 
@@ -26,7 +26,7 @@ ARIA/data attribute:  `data-liteship-<name>` (name preserved verbatim).
 
 > `readonly` **cssKey**: `string`
 
-Defined in: [core/src/projection.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/projection.ts#L27)
+Defined in: [core/src/graph/projection.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/projection.ts#L27)
 
 CSS custom property:  `--liteship-<name>` (name preserved verbatim).
 
@@ -36,7 +36,7 @@ CSS custom property:  `--liteship-<name>` (name preserved verbatim).
 
 > `readonly` **glslKey**: `string`
 
-Defined in: [core/src/projection.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/projection.ts#L29)
+Defined in: [core/src/graph/projection.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/projection.ts#L29)
 
 GLSL uniform:         `u_<snake>` (the identifier the shader declares).
 
@@ -46,6 +46,6 @@ GLSL uniform:         `u_<snake>` (the identifier the shader declares).
 
 > `readonly` **wgslKey**: `string`
 
-Defined in: [core/src/projection.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/projection.ts#L31)
+Defined in: [core/src/graph/projection.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/projection.ts#L31)
 
 WGSL struct field:    `<snake>` (the bare field name the buffer declares).

@@ -6,7 +6,7 @@
 
 # Interface: LoweredStagger
 
-Defined in: [core/src/stagger.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L65)
+Defined in: [core/src/motion/stagger.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/stagger.ts#L65)
 
 Graph bundle produced by [lowerStaggerIntent](../functions/lowerStaggerIntent.md).
 
@@ -16,7 +16,7 @@ Graph bundle produced by [lowerStaggerIntent](../functions/lowerStaggerIntent.md
 
 > `readonly` **graph**: [`DocumentGraph`](DocumentGraph.md)
 
-Defined in: [core/src/stagger.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L66)
+Defined in: [core/src/motion/stagger.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/stagger.ts#L66)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [core/src/stagger.ts:66](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **intent**: [`StaggerIntent`](StaggerIntent.md)
 
-Defined in: [core/src/stagger.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L67)
+Defined in: [core/src/motion/stagger.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/stagger.ts#L67)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [core/src/stagger.ts:67](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **items**: readonly [`LoweredStaggerItem`](LoweredStaggerItem.md)[]
 
-Defined in: [core/src/stagger.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L68)
+Defined in: [core/src/motion/stagger.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/stagger.ts#L68)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [core/src/stagger.ts:68](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **signalId**: `ContentAddress`
 
-Defined in: [core/src/stagger.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L69)
+Defined in: [core/src/motion/stagger.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/stagger.ts#L69)

@@ -8,7 +8,7 @@
 
 > **Shape**\<`B`\> = `SpeculativeEvaluatorShape`\<`B`\>
 
-Defined in: [core/src/speculative.ts:184](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/speculative.ts#L184)
+Defined in: [core/src/reactive/speculative.ts:184](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/speculative.ts#L184)
 
 Structural shape of an evaluator bound to a specific [Boundary](../../../variables/Boundary.md).
 

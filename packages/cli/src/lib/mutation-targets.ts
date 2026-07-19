@@ -100,10 +100,10 @@ const L4_SEAM_CANDIDATES: readonly string[] = [
   // if the LIVE propagation actually rates them L4 (content-address is pulled L4 by
   // validated-output; graph-patch's level is whatever the fixpoint computes — if it
   // is not L4 it is surfaced as skipped, never silently mutated).
-  'packages/core/src/hlc.ts',
-  'packages/core/src/dag.ts',
-  'packages/core/src/content-address.ts',
-  'packages/core/src/graph-patch.ts',
+  'packages/core/src/clock/hlc.ts',
+  'packages/core/src/graph/dag.ts',
+  'packages/core/src/evidence/content-address.ts',
+  'packages/core/src/graph/graph-patch.ts',
   // The Wave-5.5 REACTIVE KERNELS (the transition cage's mutation retarget). Enrolling
   // the pinned kernel + the reactive primitives as mutation targets aims the existing
   // deterministic engine at the exact ordering/replay/emission logic the fc.commands
@@ -115,13 +115,13 @@ const L4_SEAM_CANDIDATES: readonly string[] = [
   // surfaced as skippedNotL4 and never mutated on a stale assumption. Landing the
   // candidates now is safe + forward-compatible: they ACTIVATE the moment the map (or the
   // live import propagation) rates them L4, with zero further targeting change.
-  'packages/core/src/cell-kernel.ts',
-  'packages/core/src/cell.ts',
-  'packages/core/src/derived.ts',
-  'packages/core/src/store.ts',
-  'packages/core/src/signal.ts',
-  'packages/core/src/timeline.ts',
-  'packages/core/src/live-cell.ts',
+  'packages/core/src/reactive/cell-kernel.ts',
+  'packages/core/src/reactive/cell.ts',
+  'packages/core/src/reactive/derived.ts',
+  'packages/core/src/reactive/store.ts',
+  'packages/core/src/reactive/signal.ts',
+  'packages/core/src/motion/timeline.ts',
+  'packages/core/src/reactive/live-cell.ts',
 ];
 
 /**

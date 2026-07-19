@@ -8,7 +8,7 @@
 
 > **replayDiscreteFromPatchReceipts**(`options`): `Promise`\<\{ `replayedCells`: readonly [`ReplayableRecoveryCell`](../type-aliases/ReplayableRecoveryCell.md)[]; `transitions`: readonly [`DiscreteStateTransition`](../interfaces/DiscreteStateTransition.md)[]; \}\>
 
-Defined in: [core/src/graph-query-gap-replay.ts:225](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query-gap-replay.ts#L225)
+Defined in: [core/src/graph/graph-query-gap-replay.ts:229](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query-gap-replay.ts#L229)
 
 Replay missed discrete crossings from a transition/receipt chain.
 

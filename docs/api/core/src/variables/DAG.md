@@ -8,7 +8,7 @@
 
 > `const` **DAG**: `object`
 
-Defined in: [core/src/dag.ts:672](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/dag.ts#L672)
+Defined in: [core/src/graph/dag.ts:672](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/dag.ts#L672)
 
 DAG namespace -- receipt DAG merge and canonical linearization.
 

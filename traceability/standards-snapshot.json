@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 1,
-  "address": "fnv1a:3e24c2b2",
+  "address": "fnv1a:b41eeda3",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -76,17 +76,67 @@
     },
     {
       "_tag": "assurance",
-      "glob": "packages/core/src/{boundary,zap,evaluate,gen-frame,speculative,token-buffer,blend,animation,ai-cast,clock,rng}.ts",
+      "glob": "packages/core/src/authoring/{boundary,ai-cast}.ts",
       "level": "L3"
     },
     {
       "_tag": "assurance",
-      "glob": "packages/core/src/{cell-kernel,cell,derived,store,signal,timeline,live-cell}.ts",
+      "glob": "packages/core/src/authoring/{plan,assembly}.ts",
       "level": "L4"
     },
     {
       "_tag": "assurance",
-      "glob": "packages/core/src/{receipt,hlc,plan,dag,validated-output,assembly,brands}.ts",
+      "glob": "packages/core/src/clock/clock.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/core/src/clock/hlc.ts",
+      "level": "L4"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/core/src/evidence/{receipt,validated-output}.ts",
+      "level": "L4"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/core/src/graph/dag.ts",
+      "level": "L4"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/core/src/internal/rng.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/core/src/media/{gen-frame,token-buffer}.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/core/src/motion/timeline.ts",
+      "level": "L4"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/core/src/motion/{blend,animation}.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/core/src/reactive/{cell-kernel,cell,derived,store,signal,live-cell}.ts",
+      "level": "L4"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/core/src/reactive/{zap,speculative}.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/core/src/schema/brands.ts",
       "level": "L4"
     },
     {
@@ -200,43 +250,43 @@
     },
     {
       "_tag": "floor",
-      "name": "mutation-score::packages/core/src/cell-kernel.ts",
+      "name": "mutation-score::packages/core/src/motion/timeline.ts",
+      "value": 0.8333,
+      "direction": "higher-is-stronger"
+    },
+    {
+      "_tag": "floor",
+      "name": "mutation-score::packages/core/src/reactive/cell-kernel.ts",
       "value": 0.75,
       "direction": "higher-is-stronger"
     },
     {
       "_tag": "floor",
-      "name": "mutation-score::packages/core/src/cell.ts",
+      "name": "mutation-score::packages/core/src/reactive/cell.ts",
       "value": 0.8333,
       "direction": "higher-is-stronger"
     },
     {
       "_tag": "floor",
-      "name": "mutation-score::packages/core/src/derived.ts",
+      "name": "mutation-score::packages/core/src/reactive/derived.ts",
       "value": 0.8889,
       "direction": "higher-is-stronger"
     },
     {
       "_tag": "floor",
-      "name": "mutation-score::packages/core/src/live-cell.ts",
+      "name": "mutation-score::packages/core/src/reactive/live-cell.ts",
       "value": 1,
       "direction": "higher-is-stronger"
     },
     {
       "_tag": "floor",
-      "name": "mutation-score::packages/core/src/signal.ts",
+      "name": "mutation-score::packages/core/src/reactive/signal.ts",
       "value": 0.8333,
       "direction": "higher-is-stronger"
     },
     {
       "_tag": "floor",
-      "name": "mutation-score::packages/core/src/store.ts",
-      "value": 0.8333,
-      "direction": "higher-is-stronger"
-    },
-    {
-      "_tag": "floor",
-      "name": "mutation-score::packages/core/src/timeline.ts",
+      "name": "mutation-score::packages/core/src/reactive/store.ts",
       "value": 0.8333,
       "direction": "higher-is-stronger"
     },
@@ -824,19 +874,19 @@
     },
     {
       "_tag": "waiver",
-      "key": "gauntlet/no-nondeterminism|packages/core/src/clock.ts|60",
+      "key": "gauntlet/no-nondeterminism|packages/core/src/clock/clock.ts|60",
       "ruleId": "gauntlet/no-nondeterminism",
       "expiry": "2027-06-20"
     },
     {
       "_tag": "waiver",
-      "key": "gauntlet/no-nondeterminism|packages/core/src/clock.ts|77",
+      "key": "gauntlet/no-nondeterminism|packages/core/src/clock/clock.ts|77",
       "ruleId": "gauntlet/no-nondeterminism",
       "expiry": "2027-06-20"
     },
     {
       "_tag": "waiver",
-      "key": "gauntlet/no-nondeterminism|packages/core/src/rng.ts|39",
+      "key": "gauntlet/no-nondeterminism|packages/core/src/internal/rng.ts|39",
       "ruleId": "gauntlet/no-nondeterminism",
       "expiry": "2027-06-20"
     },

@@ -31,7 +31,8 @@
  */
 
 import { ValidationError } from '@liteship/error';
-import { manualClock, seededRng, type Clock, type ManualClock, type Rng } from '../index.js';
+import { manualClock, type Clock, type ManualClock } from '../clock/clock.js';
+import { seededRng, type Rng } from '../internal/rng.js';
 import type { FaultTable } from './fault.js';
 import { realLoopScheduler, type Scheduler, type SchedulerWorld } from './scheduler.js';
 

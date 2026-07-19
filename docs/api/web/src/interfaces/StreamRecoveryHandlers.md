@@ -59,7 +59,7 @@ Defined in: [web/src/stream/recovery.ts:31](https://github.com/freebatteryfactor
 Defined in: [web/src/stream/recovery.ts:46](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L46)
 
 TYPED gap-replay seam: reflect an attestation-checked
-[DiscreteStateTransition](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-transition.ts) into the host (e.g. dispatch to the DOM).
+[DiscreteStateTransition](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/state-transition.ts) into the host (e.g. dispatch to the DOM).
 The typed parameter is the uncompilable seam (Law 16) — a continuous cell /
 raw signal is not a `DiscreteStateTransition`, so it cannot be passed here.
 Optional: absent, the crossing still hydrates the cell store; only the host
@@ -69,7 +69,7 @@ DOM reflection is skipped (the latent, producer-less state).
 
 ##### transition
 
-[`DiscreteStateTransition`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-transition.ts)
+[`DiscreteStateTransition`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/state-transition.ts)
 
 #### Returns
 

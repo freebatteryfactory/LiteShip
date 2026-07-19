@@ -8,7 +8,7 @@
 
 > **Shape**\<`I`, `S`\> = `BoundaryDef`\<`I`, `S`\>
 
-Defined in: [core/src/boundary.ts:446](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/boundary.ts#L446)
+Defined in: [core/src/authoring/boundary.ts:446](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/boundary.ts#L446)
 
 Structural shape of a boundary definition parameterized by input name `I` and state tuple `S`.
 

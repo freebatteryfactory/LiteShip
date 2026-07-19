@@ -25,7 +25,7 @@ import { describe, it, test, expect } from 'vitest';
 import fc from 'fast-check';
 import { Boundary, rawIndexF32, EVALUATE_THRESHOLDS_SOURCE } from '@liteship/core';
 import { evaluate as quantizerEvaluate } from '@liteship/quantizer';
-import { fallbackKernels } from '../../packages/core/src/wasm-fallback.js';
+import { fallbackKernels } from '../../packages/core/src/wasm/wasm-fallback.js';
 import { evaluateRegistrationState } from '../../packages/worker/src/compositor-startup.js';
 
 // --- oracle: faithful simulation of the deployed f32 WASM kernel ------------

@@ -6,7 +6,7 @@
 
 # Interface: TransitionCase
 
-Defined in: [gauntlet/src/transition-facts.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/transition-facts.ts#L69)
+Defined in: [gauntlet/src/facts/transition-facts.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/transition-facts.ts#L69)
 
 One evaluated bisimulation case — the flat, decided outcome of unfolding ONE seeded
 operation history over both oracle transports, plus the data the gate needs to write
@@ -20,7 +20,7 @@ a self-explaining, REPLAYABLE Finding. An `equivalent` case is a conformant gree
 
 > `readonly` **implementationObservationDigest**: `string`
 
-Defined in: [gauntlet/src/transition-facts.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/transition-facts.ts#L79)
+Defined in: [gauntlet/src/facts/transition-facts.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/transition-facts.ts#L79)
 
 The content address of the IMPLEMENTATION's observation over this history (the transport under test).
 
@@ -30,7 +30,7 @@ The content address of the IMPLEMENTATION's observation over this history (the t
 
 > `readonly` **modelObservationDigest**: `string`
 
-Defined in: [gauntlet/src/transition-facts.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/transition-facts.ts#L77)
+Defined in: [gauntlet/src/facts/transition-facts.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/transition-facts.ts#L77)
 
 The content address of the MODEL's observation over this history (the single-oracle side).
 
@@ -40,7 +40,7 @@ The content address of the MODEL's observation over this history (the single-ora
 
 > `readonly` **operationCount**: `number`
 
-Defined in: [gauntlet/src/transition-facts.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/transition-facts.ts#L75)
+Defined in: [gauntlet/src/facts/transition-facts.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/transition-facts.ts#L75)
 
 The number of operations in the history (report context — how deep the walk was).
 
@@ -50,7 +50,7 @@ The number of operations in the history (report context — how deep the walk wa
 
 > `readonly` **seed**: `string`
 
-Defined in: [gauntlet/src/transition-facts.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/transition-facts.ts#L71)
+Defined in: [gauntlet/src/facts/transition-facts.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/transition-facts.ts#L71)
 
 The pinned seed that generated the op history — the replay key half (`{ family, seed, traceDigest }`).
 
@@ -60,7 +60,7 @@ The pinned seed that generated the op history — the replay key half (`{ family
 
 > `readonly` **status**: [`TransitionStatus`](../type-aliases/TransitionStatus.md)
 
-Defined in: [gauntlet/src/transition-facts.ts:81](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/transition-facts.ts#L81)
+Defined in: [gauntlet/src/facts/transition-facts.ts:81](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/transition-facts.ts#L81)
 
 The decided bisimulation verdict — `equivalent` (green) / `divergent` (finding) / `unevidenced` (gap).
 
@@ -70,6 +70,6 @@ The decided bisimulation verdict — `equivalent` (green) / `divergent` (finding
 
 > `readonly` **traceDigest**: `string`
 
-Defined in: [gauntlet/src/transition-facts.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/transition-facts.ts#L73)
+Defined in: [gauntlet/src/facts/transition-facts.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/transition-facts.ts#L73)
 
 The canonical SHA-256 content address of the op history (canonical-CBOR → SHA-256) — the replay key half.

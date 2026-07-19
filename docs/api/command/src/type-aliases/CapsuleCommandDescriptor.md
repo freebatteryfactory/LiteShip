@@ -8,6 +8,6 @@
 
 > **CapsuleCommandDescriptor** = `_CapsuleCommandDescriptor`
 
-Defined in: core/dist/command.d.ts:16
+Defined in: core/dist/authoring/command.d.ts:16
 
 Identity + contract driving CLI listing AND MCP tools/list from one source.

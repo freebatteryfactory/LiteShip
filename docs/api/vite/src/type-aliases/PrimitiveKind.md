@@ -8,6 +8,6 @@
 
 > **PrimitiveKind** = `"boundary"` \| `"token"` \| `"theme"` \| `"style"`
 
-Defined in: core/dist/config.d.ts:13
+Defined in: core/dist/authoring/config.d.ts:13
 
 Top-level discriminator for liteship primitives: which bucket a declaration belongs to.

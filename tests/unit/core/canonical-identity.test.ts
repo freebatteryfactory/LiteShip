@@ -12,14 +12,14 @@
  * again minted through cborg / `TypedRef.canonicalize` / raw `JSON.stringify`,
  * and (3) proves the seam is key-order-deterministic.
  *
- * CUT B5a extends the cage to `packages/core/src/config.ts` — `Config.make` was
+ * CUT B5a extends the cage to `packages/core/src/authoring/config.ts` — `Config.make` was
  * the LAST internal `fnv1a:` minter still on the off-doctrine path (top-level-only
  * key sort + `JSON.stringify`), so it is now folded into IDENTITY_FILES. The one
  * deliberate exception — `mcp-server` `canonicalJson` behind `resultId` — is a
  * JSON-PROTOCOL identity (MCP wire is JSON; D1/B2 law), not an internal content
  * address; it is guarded separately below as the single allowed JSON canonicalizer.
  *
- * CUT live-cell folds `packages/core/src/live-cell.ts` into the cage too: the
+ * CUT live-cell folds `packages/core/src/reactive/live-cell.ts` into the cage too: the
  * `CellEnvelope.id` is a content-address IDENTITY (auto-invalidates on value
  * change), so it mints `fnv1a:` via CanonicalCbor like the rest of the family —
  * it had been borrowing the sha256 receipt byte law by accident.
@@ -57,11 +57,11 @@ describe('B1 — the divergence that made the two-encoder fork a substrate bug',
 describe('B1 — identity is minted only through CanonicalCbor (source guard, the cage)', () => {
   const IDENTITY_FILES = [
     'packages/quantizer/src/quantizer.ts',
-    'packages/core/src/content-address.ts', // P2 — the extracted shared mint kernel (contentAddressOf)
-    'packages/core/src/composable.ts',
+    'packages/core/src/evidence/content-address.ts', // P2 — the extracted shared mint kernel (contentAddressOf)
+    'packages/core/src/authoring/composable.ts',
     'packages/core/src/ecs.ts',
-    'packages/core/src/config.ts', // CUT B5a — Config.make folded into the cage
-    'packages/core/src/live-cell.ts', // CUT live-cell — envelope id is fnv1a identity, not a sha256 receipt
+    'packages/core/src/authoring/config.ts', // CUT B5a — Config.make folded into the cage
+    'packages/core/src/reactive/live-cell.ts', // CUT live-cell — envelope id is fnv1a identity, not a sha256 receipt
   ];
 
   for (const rel of IDENTITY_FILES) {

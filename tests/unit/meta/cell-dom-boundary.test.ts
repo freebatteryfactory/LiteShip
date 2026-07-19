@@ -51,8 +51,8 @@ const STRICT_DOM =
 const DOM_SINK =
   /querySelector|getElementById|createElement|innerHTML|\.textContent\s*=|setAttribute|appendChild|\.append\(/;
 
-const STRICT_FILES = ['cell.ts', 'store.ts', 'derived.ts', 'live-cell.ts'];
-const SINK_FILES = ['signal.ts', 'zap.ts'];
+const STRICT_FILES = ['reactive/cell.ts', 'reactive/store.ts', 'reactive/derived.ts', 'reactive/live-cell.ts'];
+const SINK_FILES = ['reactive/signal.ts', 'reactive/zap.ts'];
 
 describe('A6 — Cell↔DOM boundary (value→wire, never value→DOM)', () => {
   describe('STRICT no-DOM tier — the value graph carries zero DOM vocabulary', () => {
@@ -90,7 +90,7 @@ describe('A6 — Cell↔DOM boundary (value→wire, never value→DOM)', () => {
 
     it('DOM_SINK does NOT bite a doc-comment sink once comments are stripped', () => {
       const planted = "/** example: document.getElementById('btn') */\nexport const z = 1;";
-      expect(read('zap.ts')).toContain("getElementById('btn')"); // it really is in zap.ts (a doc comment)
+      expect(read('reactive/zap.ts')).toContain("getElementById('btn')"); // it really is in reactive/zap.ts (a doc comment)
       expect(codeOnly(planted)).not.toMatch(DOM_SINK);
     });
   });

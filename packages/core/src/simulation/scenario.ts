@@ -26,7 +26,7 @@
  * @module
  */
 
-import type { ContentAddress } from '../brands.js';
+import type { ContentAddress } from '../schema/brands.js';
 import type { SimStep } from './scheduler.js';
 import { type SimWorld, makeWorld, type WorldOptions } from './world.js';
 import { type SimTrace, buildTrace, traceDigest, tracesAgree } from './trace.js';

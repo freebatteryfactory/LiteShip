@@ -8,7 +8,7 @@
 
 > `const` **BlendTree**: `object`
 
-Defined in: [core/src/blend.ts:144](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/blend.ts#L144)
+Defined in: [core/src/motion/blend.ts:144](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/blend.ts#L144)
 
 BlendTree -- weighted multi-state blending for numeric records.
 Add named nodes with values and weights, then compute the weighted average.

@@ -6,7 +6,7 @@
 
 # Interface: ScrollTimelineIntent
 
-Defined in: [core/src/scroll-timeline.ts:46](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/scroll-timeline.ts#L46)
+Defined in: [core/src/motion/scroll-timeline.ts:46](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/scroll-timeline.ts#L46)
 
 Sealed scroll-timeline intent — data over graph, no behavior authority.
 
@@ -20,7 +20,7 @@ Sealed scroll-timeline intent — data over graph, no behavior authority.
 
 > `readonly` **\_tag**: `"ScrollTimelineIntent"`
 
-Defined in: [core/src/scroll-timeline.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/scroll-timeline.ts#L47)
+Defined in: [core/src/motion/scroll-timeline.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/scroll-timeline.ts#L47)
 
 ***
 
@@ -28,7 +28,7 @@ Defined in: [core/src/scroll-timeline.ts:47](https://github.com/freebatteryfacto
 
 > `readonly` `optional` **axis?**: [`ScrollTimelineAxis`](../type-aliases/ScrollTimelineAxis.md)
 
-Defined in: [core/src/scroll-timeline.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/scroll-timeline.ts#L37)
+Defined in: [core/src/motion/scroll-timeline.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/scroll-timeline.ts#L37)
 
 #### Inherited from
 
@@ -40,7 +40,7 @@ Defined in: [core/src/scroll-timeline.ts:37](https://github.com/freebatteryfacto
 
 > `readonly` **from**: `Readonly`\<`Record`\<`string`, `number` \| `string`\>\>
 
-Defined in: [core/src/scroll-timeline.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/scroll-timeline.ts#L39)
+Defined in: [core/src/motion/scroll-timeline.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/scroll-timeline.ts#L39)
 
 #### Inherited from
 
@@ -52,7 +52,7 @@ Defined in: [core/src/scroll-timeline.ts:39](https://github.com/freebatteryfacto
 
 > `readonly` **policy**: [`RevealPolicy`](RevealPolicy.md)
 
-Defined in: [core/src/scroll-timeline.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/scroll-timeline.ts#L42)
+Defined in: [core/src/motion/scroll-timeline.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/scroll-timeline.ts#L42)
 
 #### Inherited from
 
@@ -64,7 +64,7 @@ Defined in: [core/src/scroll-timeline.ts:42](https://github.com/freebatteryfacto
 
 > `readonly` **range**: readonly \[`string`, `string`\]
 
-Defined in: [core/src/scroll-timeline.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/scroll-timeline.ts#L38)
+Defined in: [core/src/motion/scroll-timeline.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/scroll-timeline.ts#L38)
 
 #### Inherited from
 
@@ -76,7 +76,7 @@ Defined in: [core/src/scroll-timeline.ts:38](https://github.com/freebatteryfacto
 
 > `readonly` **target**: `string`
 
-Defined in: [core/src/scroll-timeline.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/scroll-timeline.ts#L36)
+Defined in: [core/src/motion/scroll-timeline.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/scroll-timeline.ts#L36)
 
 #### Inherited from
 
@@ -88,7 +88,7 @@ Defined in: [core/src/scroll-timeline.ts:36](https://github.com/freebatteryfacto
 
 > `readonly` **to**: `Readonly`\<`Record`\<`string`, `number` \| `string`\>\>
 
-Defined in: [core/src/scroll-timeline.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/scroll-timeline.ts#L40)
+Defined in: [core/src/motion/scroll-timeline.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/scroll-timeline.ts#L40)
 
 #### Inherited from
 
@@ -100,7 +100,7 @@ Defined in: [core/src/scroll-timeline.ts:40](https://github.com/freebatteryfacto
 
 > `readonly` **transition**: [`RevealTransition`](RevealTransition.md)
 
-Defined in: [core/src/scroll-timeline.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/scroll-timeline.ts#L41)
+Defined in: [core/src/motion/scroll-timeline.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/scroll-timeline.ts#L41)
 
 #### Inherited from
 

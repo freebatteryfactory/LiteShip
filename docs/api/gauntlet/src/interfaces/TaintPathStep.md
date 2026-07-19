@@ -6,7 +6,7 @@
 
 # Interface: TaintPathStep
 
-Defined in: [gauntlet/src/taint-facts.ts:117](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/taint-facts.ts#L117)
+Defined in: [gauntlet/src/facts/taint-facts.ts:117](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/taint-facts.ts#L117)
 
 One step on the source→sink path — the symbol the value threaded through.
 
@@ -16,7 +16,7 @@ One step on the source→sink path — the symbol the value threaded through.
 
 > `readonly` **file**: `string`
 
-Defined in: [gauntlet/src/taint-facts.ts:121](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/taint-facts.ts#L121)
+Defined in: [gauntlet/src/facts/taint-facts.ts:121](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/taint-facts.ts#L121)
 
 The repo-relative file of this step.
 
@@ -26,7 +26,7 @@ The repo-relative file of this step.
 
 > `readonly` **line**: `number`
 
-Defined in: [gauntlet/src/taint-facts.ts:123](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/taint-facts.ts#L123)
+Defined in: [gauntlet/src/facts/taint-facts.ts:123](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/taint-facts.ts#L123)
 
 1-based line of this step.
 
@@ -36,6 +36,6 @@ Defined in: [gauntlet/src/taint-facts.ts:123](https://github.com/freebatteryfact
 
 > `readonly` **via**: `string`
 
-Defined in: [gauntlet/src/taint-facts.ts:119](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/taint-facts.ts#L119)
+Defined in: [gauntlet/src/facts/taint-facts.ts:119](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/taint-facts.ts#L119)
 
 The symbol / expression the value was carried by at this step (human label).

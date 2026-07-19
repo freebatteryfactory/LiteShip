@@ -6,7 +6,7 @@
 
 # Interface: CoreAstroConfig
 
-Defined in: [core/src/config.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/config.ts#L36)
+Defined in: [core/src/authoring/config.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L36)
 
 Astro-integration slice of a liteship [Config.Shape](../namespaces/Config/interfaces/Shape.md).
 
@@ -16,7 +16,7 @@ Astro-integration slice of a liteship [Config.Shape](../namespaces/Config/interf
 
 > `readonly` `optional` **edgeRuntime?**: `boolean`
 
-Defined in: [core/src/config.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/config.ts#L38)
+Defined in: [core/src/authoring/config.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L38)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [core/src/config.ts:38](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` `optional` **satellite?**: `boolean`
 
-Defined in: [core/src/config.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/config.ts#L37)
+Defined in: [core/src/authoring/config.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L37)

@@ -8,7 +8,7 @@
 
 > **EdgeType** = `"seq"` \| `"par"` \| `"choice_then"` \| `"choice_else"`
 
-Defined in: [core/src/plan.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/plan.ts#L33)
+Defined in: [core/src/authoring/plan.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/plan.ts#L33)
 
 Edge flavor in a plan DAG: sequential (`seq`), parallel (`par`), or the two
 branches of a `choice` step (`choice_then` / `choice_else`).

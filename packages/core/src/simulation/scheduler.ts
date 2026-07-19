@@ -41,7 +41,8 @@
  * @module
  */
 
-import type { Clock, Rng } from '../index.js';
+import type { Clock } from '../clock/clock.js';
+import type { Rng } from '../internal/rng.js';
 
 /**
  * The substrate a scheduler threads into each step — the world's fixed clock and

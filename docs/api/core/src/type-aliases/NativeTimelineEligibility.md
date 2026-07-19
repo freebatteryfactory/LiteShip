@@ -8,7 +8,7 @@
 
 > **NativeTimelineEligibility** = \{ `eligible`: `true`; \} \| \{ `eligible`: `false`; `reason`: `"mixed-easing-overlap"`; \}
 
-Defined in: [core/src/interpret-transition.ts:76](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L76)
+Defined in: [core/src/motion/interpret-transition.ts:76](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpret-transition.ts#L76)
 
 Whether this plan may OWN a native CSS `animation-timeline` (a scroll/view
 `animation-name` binding). A single transition and a UNIFORM-easing composed program

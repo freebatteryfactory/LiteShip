@@ -62,7 +62,7 @@ const FIXTURE_MANIFEST = {
     {
       name: 'core.canonical-cbor',
       kind: 'pureTransform',
-      source: 'packages/core/src/capsules/canonical-cbor.ts',
+      source: 'packages/core/src/authoring/capsules/canonical-cbor.ts',
       generated: {
         testFile: 'tests/generated/core-canonical-cbor.test.ts',
         benchFile: 'tests/generated/core-canonical-cbor.bench.ts',
@@ -71,7 +71,7 @@ const FIXTURE_MANIFEST = {
     {
       name: 'core.boundary.evaluate',
       kind: 'pureTransform',
-      source: 'packages/core/src/capsules/boundary-evaluate.ts',
+      source: 'packages/core/src/authoring/capsules/boundary-evaluate.ts',
       generated: {
         testFile: 'tests/generated/core-boundary-evaluate.test.ts',
         benchFile: 'tests/generated/core-boundary-evaluate.bench.ts',

@@ -6,7 +6,7 @@
 
 # Function: useLiteshipState()
 
-> **useLiteshipState**(): [`CompositeState`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/compositor-pool.ts)
+> **useLiteshipState**(): [`CompositeState`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/compositor-pool.ts)
 
 Defined in: [remotion/src/composition.ts:148](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/remotion/src/composition.ts#L148)
 
@@ -25,7 +25,7 @@ structurally-empty `CompositeState`.
 
 ## Returns
 
-[`CompositeState`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/compositor-pool.ts)
+[`CompositeState`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/compositor-pool.ts)
 
 ## See
 

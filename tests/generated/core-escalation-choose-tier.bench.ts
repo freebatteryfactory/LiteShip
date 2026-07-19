@@ -1,7 +1,7 @@
 // GENERATED — do not edit by hand
 import { bench } from 'vitest';
 import * as fc from 'fast-check';
-import { escalationChooseTierCapsule } from '../../packages/core/src/capsules/escalation-choose-tier.js';
+import { escalationChooseTierCapsule } from '../../packages/core/src/authoring/capsules/escalation-choose-tier.js';
 import { schemaToArbitrary } from '../../packages/core/src/harness/arbitrary-from-schema.js';
 
 // REAL bench: drive the capsule's `decide` over presampled subjects — the SAME

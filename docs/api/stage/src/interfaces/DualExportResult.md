@@ -18,7 +18,7 @@ The provable result of casting one graph to two carriers from one source.
 
 ### astro
 
-> `readonly` **astro**: [`ExportNode`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts)
+> `readonly` **astro**: [`ExportNode`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts)
 
 Defined in: [stage/src/dual-export.ts:471](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L471)
 
@@ -60,7 +60,7 @@ The ONE source digest both casts derive from — `=== graph.digest`.
 
 ### video
 
-> `readonly` **video**: [`ExportNode`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts)
+> `readonly` **video**: [`ExportNode`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts)
 
 Defined in: [stage/src/dual-export.ts:473](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L473)
 

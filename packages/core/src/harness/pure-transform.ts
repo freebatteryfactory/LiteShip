@@ -14,7 +14,7 @@
  * @module
  */
 import { UnsupportedError } from '@liteship/error';
-import type { CapsuleDef } from '../assembly.js';
+import type { CapsuleDef } from '../authoring/assembly.js';
 
 /** Emitted file contents for a capsule harness (test + bench pair). */
 export interface HarnessOutput {

@@ -13,7 +13,7 @@ Immutable, content-addressed quantizer definition.
 The `id` is an FNV-1a hash over the boundary id and outputs, so two
 configs with identical definitions share the same address and are
 deduplicated by the internal memo cache. `create()` materializes a
-fresh [LiveQuantizer](LiveQuantizer.md) paired with its owning [Lifetime](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/lifetime.ts).
+fresh [LiveQuantizer](LiveQuantizer.md) paired with its owning [Lifetime](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts).
 
 ## Type Parameters
 
@@ -83,7 +83,7 @@ Motion tier gating active targets; see [QuantizerFromOptions.tier](QuantizerFrom
 
 Defined in: [quantizer/src/quantizer.ts:235](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L235)
 
-Instantiate a reactive [LiveQuantizer](LiveQuantizer.md), paired with the [Lifetime](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/lifetime.ts)
+Instantiate a reactive [LiveQuantizer](LiveQuantizer.md), paired with the [Lifetime](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts)
 that owns its teardown — disposing it closes the state / outputs / crossings
 kernels (completing every subscriber and making publish inert).
 

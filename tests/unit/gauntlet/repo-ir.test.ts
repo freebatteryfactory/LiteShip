@@ -32,15 +32,15 @@ function buildSampleIR(): RepoIR {
   return makeRepoIR({
     files: [
       { id: 'packages/core/src/index.ts', contentDigest: PLACEHOLDER_DIGEST, packageName: '@liteship/core' },
-      { id: 'packages/core/src/cell.ts', contentDigest: PLACEHOLDER_DIGEST, packageName: '@liteship/core' },
+      { id: 'packages/core/src/reactive/cell.ts', contentDigest: PLACEHOLDER_DIGEST, packageName: '@liteship/core' },
     ],
     symbols: [
       {
-        id: 'packages/core/src/cell.ts#makeCell',
+        id: 'packages/core/src/reactive/cell.ts#makeCell',
         name: 'makeCell',
         kind: 'function',
-        file: 'packages/core/src/cell.ts',
-        location: { file: 'packages/core/src/cell.ts', line: 10, column: 1 },
+        file: 'packages/core/src/reactive/cell.ts',
+        location: { file: 'packages/core/src/reactive/cell.ts', line: 10, column: 1 },
       },
     ],
     imports: [
@@ -48,7 +48,7 @@ function buildSampleIR(): RepoIR {
         fromFile: 'packages/core/src/index.ts',
         specifier: './cell.js',
         kind: 'relative',
-        targetFile: 'packages/core/src/cell.ts',
+        targetFile: 'packages/core/src/reactive/cell.ts',
       },
       { fromFile: 'packages/core/src/index.ts', specifier: 'node:fs', kind: 'external' },
     ],
@@ -57,7 +57,7 @@ function buildSampleIR(): RepoIR {
     ],
     refs: new Map([
       [
-        'packages/core/src/cell.ts#makeCell',
+        'packages/core/src/reactive/cell.ts#makeCell',
         [{ fromFile: 'packages/core/src/index.ts', coverageClass: 'symbol-evidenced' as const }],
       ],
     ]),
@@ -74,7 +74,7 @@ describe('makeRepoIR — the in-memory builder', () => {
     expect(ir.imports).toHaveLength(2);
     expect(ir.files.get('packages/core/src/index.ts')?.packageName).toBe('@liteship/core');
     expect(ir.packages.get('@liteship/core')?.manifestDeps).toEqual(['@liteship/error']);
-    expect(ir.refs.get('packages/core/src/cell.ts#makeCell')).toHaveLength(1);
+    expect(ir.refs.get('packages/core/src/reactive/cell.ts#makeCell')).toHaveLength(1);
     // levels is deferred to B3 — omitted, not present.
     expect('levels' in ir).toBe(false);
   });

@@ -31,7 +31,7 @@ import { defineGate, requireCapabilityLink, type GateContext, type Gate } from '
 import { factAccessEvidenceDigest } from '../verdict-cache.js';
 import { finding, type Finding } from '../finding.js';
 import { memoryContext } from '../engine.js';
-import type { CapabilityLinkFacts, CapabilityLinkResult } from '../capability-link-facts.js';
+import type { CapabilityLinkFacts, CapabilityLinkResult } from '../facts/capability-link-facts.js';
 
 /** The gate id — namespaces every {@link Finding} it emits (traceability). */
 const RULE_NS = 'gauntlet/capability-gate-link';

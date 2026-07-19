@@ -8,7 +8,7 @@
 
 > **Shape**\<`B`, `SN`\> = `ComponentDef`\<`B`, `SN`\>
 
-Defined in: [core/src/component.ts:113](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/component.ts#L113)
+Defined in: [core/src/authoring/component.ts:113](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/component.ts#L113)
 
 Structural shape of a component definition, parameterized by its boundary and slot names.
 

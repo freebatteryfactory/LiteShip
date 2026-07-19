@@ -38,7 +38,7 @@ import { defineGate, requireTaint, type GateContext, type Gate } from '../gate.j
 import { factAccessEvidenceDigest } from '../verdict-cache.js';
 import { finding, type Finding } from '../finding.js';
 import { memoryContext } from '../engine.js';
-import type { TaintFacts, TaintFlow } from '../taint-facts.js';
+import type { TaintFacts, TaintFlow } from '../facts/taint-facts.js';
 
 /** The gate id — namespaces every {@link Finding} it emits (traceability). */
 const RULE_NS = 'gauntlet/taint-flow';

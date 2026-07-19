@@ -6,7 +6,7 @@
 
 # Interface: EntityNode
 
-Defined in: [core/src/document-graph.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L65)
+Defined in: [core/src/graph/document-graph.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts#L65)
 
 2. Entity — ECS identity. Maps to `EntityId`/`ComposableEntity`.
 
@@ -20,7 +20,7 @@ Defined in: [core/src/document-graph.ts:65](https://github.com/freebatteryfactor
 
 > `readonly` **\_tag**: `"DocGraphEntityNode"`
 
-Defined in: [core/src/document-graph.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L49)
+Defined in: [core/src/graph/document-graph.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts#L49)
 
 #### Inherited from
 
@@ -32,7 +32,7 @@ Defined in: [core/src/document-graph.ts:49](https://github.com/freebatteryfactor
 
 > `readonly` **\_version**: `1`
 
-Defined in: [core/src/document-graph.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L50)
+Defined in: [core/src/graph/document-graph.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts#L50)
 
 #### Inherited from
 
@@ -44,7 +44,7 @@ Defined in: [core/src/document-graph.ts:50](https://github.com/freebatteryfactor
 
 > `readonly` **components**: readonly `ContentAddress`[]
 
-Defined in: [core/src/document-graph.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L67)
+Defined in: [core/src/graph/document-graph.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts#L67)
 
 Sorted refs to [ComponentNode](ComponentNode.md) ids.
 
@@ -54,7 +54,7 @@ Sorted refs to [ComponentNode](ComponentNode.md) ids.
 
 > `readonly` **family**: `"entity"`
 
-Defined in: [core/src/document-graph.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L51)
+Defined in: [core/src/graph/document-graph.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts#L51)
 
 #### Inherited from
 
@@ -66,7 +66,7 @@ Defined in: [core/src/document-graph.ts:51](https://github.com/freebatteryfactor
 
 > `readonly` **id**: `ContentAddress`
 
-Defined in: [core/src/document-graph.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L53)
+Defined in: [core/src/graph/document-graph.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts#L53)
 
 `fnv1a` content address over the node payload (set by `addressNode`/`sealNode`).
 
@@ -80,7 +80,7 @@ Defined in: [core/src/document-graph.ts:53](https://github.com/freebatteryfactor
 
 > `readonly` **meta**: [`CellMeta`](CellMeta.md)
 
-Defined in: [core/src/document-graph.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L55)
+Defined in: [core/src/graph/document-graph.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts#L55)
 
 HLC created/updated + version. Excluded from the content address (volatile).
 

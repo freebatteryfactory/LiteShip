@@ -23,8 +23,8 @@ import {
   type GateContext,
 } from '@liteship/gauntlet';
 
-// An L4 file (the `core/.../brands.ts` L4 glob) so a survivor is a blocking error.
-const FILE = 'packages/core/src/brands.ts';
+// An L4 file (the `core/.../schema/brands.ts` L4 glob) so a survivor is a blocking error.
+const FILE = 'packages/core/src/schema/brands.ts';
 const SRC = 'export function add(a: number, b: number): number { return a + b; }';
 
 /** The weak type-only runner — lets the `+`→`-` arithmetic mutant survive. */

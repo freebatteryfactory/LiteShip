@@ -16,7 +16,7 @@ import { decode as decodeSchema } from '../../../packages/core/src/schema/index.
 import {
   canonicalCborDecodeCapsule,
   _canonicalCborDecodeInternals,
-} from '../../../packages/core/src/capsules/canonical-cbor-decode.js';
+} from '../../../packages/core/src/authoring/capsules/canonical-cbor-decode.js';
 
 const { normalize, isCanonicalCborBytes } = _canonicalCborDecodeInternals;
 

@@ -7,8 +7,8 @@
  * @module
  */
 
-import { Lifetime } from './lifetime.js';
-import type { SchemaPort } from './schema-port.js';
+import { Lifetime } from './reactive/lifetime.js';
+import type { SchemaPort } from './schema/schema-port.js';
 
 /** Nominal-typed identifier for an ECS entity — a branded string minted via the {@link EntityId} helper. */
 export type EntityId = string & { readonly _brand: 'EntityId' };
@@ -16,8 +16,8 @@ export type EntityId = string & { readonly _brand: 'EntityId' };
 /** Brand an arbitrary string as an `EntityId`. Sanctioned single-site cast. */
 export const EntityId = (value: string): EntityId => value as EntityId;
 
-import { fnv1aBytes } from './fnv.js';
-import { CanonicalCbor } from './cbor.js';
+import { fnv1aBytes } from './internal/fnv.js';
+import { CanonicalCbor } from './schema/cbor.js';
 import { ValidationError } from '@liteship/error';
 
 interface EntityShape {

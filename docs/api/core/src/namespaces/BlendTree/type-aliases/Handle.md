@@ -8,7 +8,7 @@
 
 > **Handle**\<`T`\> = `BlendTreeHandle`\<`T`\>
 
-Defined in: [core/src/blend.ts:152](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/blend.ts#L152)
+Defined in: [core/src/motion/blend.ts:152](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/blend.ts#L152)
 
 The `{ tree, lifetime }` pair [BlendTree.make](../../../variables/BlendTree.md#make) returns.
 

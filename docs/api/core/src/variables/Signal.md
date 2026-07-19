@@ -8,7 +8,7 @@
 
 > `const` **Signal**: `object`
 
-Defined in: [core/src/signal.ts:418](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/signal.ts#L418)
+Defined in: [core/src/reactive/signal.ts:418](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/signal.ts#L418)
 
 Signal namespace -- live data feeds from the browser environment.
 

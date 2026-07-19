@@ -8,6 +8,6 @@
 
 > **Shape** = `UIQualityEvaluatorShape`
 
-Defined in: [core/src/ui-quality.ts:102](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ui-quality.ts#L102)
+Defined in: [core/src/evidence/ui-quality.ts:102](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/ui-quality.ts#L102)
 
 Structural shape of a UIQuality evaluator.

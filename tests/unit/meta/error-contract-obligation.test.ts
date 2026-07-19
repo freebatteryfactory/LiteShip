@@ -42,9 +42,12 @@ function pkgDirName(pkgName: string): string {
 function hasErrorContractSuite(pkgName: string): boolean {
   const dir = resolve(repoRoot, 'tests/unit', pkgDirName(pkgName));
   if (!existsSync(dir)) return false;
-  return readdirSync(dir).some(
-    (f) => f === 'error-contract.test.ts' || /error-contract.*\.test\.ts$/.test(f),
-  );
+  // Recurse: the suite may live directly under the package dir or in a domain
+  // subdirectory (e.g. tests/unit/core/authoring/error-contract.test.ts).
+  return readdirSync(dir, { withFileTypes: true }).some((entry) => {
+    if (entry.isDirectory()) return hasErrorContractSuite(join(pkgDirName(pkgName), entry.name));
+    return /error-contract.*\.test\.ts$/.test(entry.name);
+  });
 }
 
 describe('error-contract obligation — every runtime @liteship/* package', () => {

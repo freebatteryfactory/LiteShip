@@ -8,7 +8,7 @@
 
 > **TokenRef**: \<`N`\>(`value`) => [`TokenRef`](../type-aliases/TokenRef.md)\<`N`\>
 
-Defined in: [core/src/brands.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/brands.ts#L54)
+Defined in: [core/src/schema/brands.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/brands.ts#L54)
 
 Wrap a plain string as a TokenRef.
 

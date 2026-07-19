@@ -1,6 +1,6 @@
 /**
  * JSON-Schema parity fixture — the byte-parity cage over the CURRENT Effect-AST
- * deriver (packages/core/src/json-schema-from-schema.ts) captured BEFORE any
+ * deriver (packages/core/src/schema/to-json-schema.ts) captured BEFORE any
  * schema producer changes.
  *
  * Three laws:

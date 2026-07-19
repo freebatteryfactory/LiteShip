@@ -8,7 +8,7 @@
 
 > **projectQualityTiers**\<`Label`\>(`order`): `Record`\<`Label`, `ReadonlySet`\<[`QualityTierTarget`](../type-aliases/QualityTierTarget.md)\>\>
 
-Defined in: [core/src/quality-tiers.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/quality-tiers.ts#L64)
+Defined in: [core/src/evidence/quality-tiers.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/quality-tiers.ts#L64)
 
 Project [QUALITY\_TIER\_TARGETS](../variables/QUALITY_TIER_TARGETS.md) onto a vocabulary's ordered tier labels,
 producing a `Record<Label, ReadonlySet<QualityTierTarget>>`. The `order` array is

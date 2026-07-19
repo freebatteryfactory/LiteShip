@@ -8,6 +8,6 @@
 
 > **CommandAnnotations** = `_CommandAnnotations`
 
-Defined in: core/dist/command.d.ts:12
+Defined in: core/dist/authoring/command.d.ts:12
 
 Surface hints (longRunning/readOnly/destructive/cliOnly/mcpExposed) carried as data.

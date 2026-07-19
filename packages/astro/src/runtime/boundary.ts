@@ -375,7 +375,7 @@ export function attachSignalObserver(input: string, callback: () => void): (() =
  * uniformly.
  *
  * CANONICAL `scroll.progress` SCALE: **0..1**. This matches `Signal` (the
- * `SignalSource` source of truth, `core/src/signal.ts` — `window.scrollY/max`),
+ * `SignalSource` source of truth, `core/src/reactive/signal.ts` — `window.scrollY/max`),
  * which is the scale boundaries are authored against. The prior runtime
  * returned 0..100, so a boundary authored at `0.5` evaluated wrong; the scale
  * here and the inspector track max (`inspector.ts`) are pinned to agree by a

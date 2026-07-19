@@ -22,7 +22,7 @@ Defined in: [web/src/dpu/watch-and-prepare.ts:215](https://github.com/freebatter
 
 ##### graph
 
-[`DocumentGraph`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts)
+[`DocumentGraph`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts)
 
 #### Returns
 

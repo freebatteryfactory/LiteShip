@@ -6,7 +6,7 @@
 
 # Interface: GraphPatch
 
-Defined in: [core/src/graph-patch.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-patch.ts#L65)
+Defined in: [core/src/graph/graph-patch.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-patch.ts#L65)
 
 A typed, content-addressable graph mutation (C6). `base` is the graph id the
 delta applies to; `resultId` (when present) is the `apply` result's id — the
@@ -18,7 +18,7 @@ seam [receipt](../variables/GraphPatch.md#receipt) and [forkOf](../variables/Gra
 
 > `readonly` **\_tag**: `"GraphPatch"`
 
-Defined in: [core/src/graph-patch.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-patch.ts#L66)
+Defined in: [core/src/graph/graph-patch.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-patch.ts#L66)
 
 ***
 
@@ -26,7 +26,7 @@ Defined in: [core/src/graph-patch.ts:66](https://github.com/freebatteryfactory/L
 
 > `readonly` **\_version**: `1`
 
-Defined in: [core/src/graph-patch.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-patch.ts#L67)
+Defined in: [core/src/graph/graph-patch.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-patch.ts#L67)
 
 ***
 
@@ -34,7 +34,7 @@ Defined in: [core/src/graph-patch.ts:67](https://github.com/freebatteryfactory/L
 
 > `readonly` **base**: `ContentAddress`
 
-Defined in: [core/src/graph-patch.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-patch.ts#L69)
+Defined in: [core/src/graph/graph-patch.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-patch.ts#L69)
 
 The id of the [DocumentGraph](DocumentGraph.md) this patch applies to.
 
@@ -44,7 +44,7 @@ The id of the [DocumentGraph](DocumentGraph.md) this patch applies to.
 
 > `readonly` **ops**: readonly [`PatchOp`](../type-aliases/PatchOp.md)[]
 
-Defined in: [core/src/graph-patch.ts:70](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-patch.ts#L70)
+Defined in: [core/src/graph/graph-patch.ts:70](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-patch.ts#L70)
 
 ***
 
@@ -52,6 +52,6 @@ Defined in: [core/src/graph-patch.ts:70](https://github.com/freebatteryfactory/L
 
 > `readonly` `optional` **resultId?**: `ContentAddress`
 
-Defined in: [core/src/graph-patch.ts:72](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-patch.ts#L72)
+Defined in: [core/src/graph/graph-patch.ts:72](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-patch.ts#L72)
 
 The id of the graph `apply(base, this)` produces (set by `propose`/`apply`).

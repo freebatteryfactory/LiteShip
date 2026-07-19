@@ -6,7 +6,7 @@
 
 # Interface: DocumentGraph
 
-Defined in: [core/src/document-graph.ts:170](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L170)
+Defined in: [core/src/graph/document-graph.ts:170](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts#L170)
 
 The top-level addressable graph. Two-law addressing (ADR-0003/0011): `id` is
 the `fnv1a` identity (dedup), `digest` is the paired `fnv1a`+`sha256`
@@ -19,7 +19,7 @@ byte sequence over the sorted node ids + edges, so they cannot disagree.
 
 > `readonly` **\_tag**: `"DocumentGraph"`
 
-Defined in: [core/src/document-graph.ts:171](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L171)
+Defined in: [core/src/graph/document-graph.ts:171](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts#L171)
 
 ***
 
@@ -27,7 +27,7 @@ Defined in: [core/src/document-graph.ts:171](https://github.com/freebatteryfacto
 
 > `readonly` **\_version**: `1`
 
-Defined in: [core/src/document-graph.ts:172](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L172)
+Defined in: [core/src/graph/document-graph.ts:172](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts#L172)
 
 ***
 
@@ -35,7 +35,7 @@ Defined in: [core/src/document-graph.ts:172](https://github.com/freebatteryfacto
 
 > `readonly` **digest**: `AddressedDigest`
 
-Defined in: [core/src/document-graph.ts:174](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L174)
+Defined in: [core/src/graph/document-graph.ts:174](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts#L174)
 
 ***
 
@@ -43,7 +43,7 @@ Defined in: [core/src/document-graph.ts:174](https://github.com/freebatteryfacto
 
 > `readonly` **edges**: readonly [`DocumentGraphEdge`](DocumentGraphEdge.md)[]
 
-Defined in: [core/src/document-graph.ts:177](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L177)
+Defined in: [core/src/graph/document-graph.ts:177](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts#L177)
 
 ***
 
@@ -51,7 +51,7 @@ Defined in: [core/src/document-graph.ts:177](https://github.com/freebatteryfacto
 
 > `readonly` **id**: `ContentAddress`
 
-Defined in: [core/src/document-graph.ts:173](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L173)
+Defined in: [core/src/graph/document-graph.ts:173](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts#L173)
 
 ***
 
@@ -59,7 +59,7 @@ Defined in: [core/src/document-graph.ts:173](https://github.com/freebatteryfacto
 
 > `readonly` **meta**: [`CellMeta`](CellMeta.md)
 
-Defined in: [core/src/document-graph.ts:175](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L175)
+Defined in: [core/src/graph/document-graph.ts:175](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts#L175)
 
 ***
 
@@ -67,4 +67,4 @@ Defined in: [core/src/document-graph.ts:175](https://github.com/freebatteryfacto
 
 > `readonly` **nodes**: readonly [`DocumentGraphNode`](../type-aliases/DocumentGraphNode.md)[]
 
-Defined in: [core/src/document-graph.ts:176](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L176)
+Defined in: [core/src/graph/document-graph.ts:176](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts#L176)

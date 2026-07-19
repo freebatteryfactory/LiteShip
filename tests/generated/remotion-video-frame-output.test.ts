@@ -3,9 +3,9 @@ import { describe, it } from 'vitest';
 import * as fc from 'fast-check';
 import { remotionAdapterCapsule } from '../../packages/remotion/src/capsules/remotion-adapter.js';
 import { schemaToArbitrary } from '../../packages/core/src/harness/arbitrary-from-schema.js';
-import { CanonicalCbor } from '../../packages/core/src/cbor.js';
+import { CanonicalCbor } from '../../packages/core/src/schema/cbor.js';
 import { decode } from '../../packages/canonical/src/cbor-decode.js';
-import { contentAddressOf } from '../../packages/core/src/content-address.js';
+import { contentAddressOf } from '../../packages/core/src/evidence/content-address.js';
 import { scaledTimeout } from '../../vitest.shared.js';
 
 describe('remotion.video-frame-output', () => {

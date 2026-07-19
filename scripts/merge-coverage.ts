@@ -61,7 +61,7 @@ const PACKAGE_THRESHOLD_OVERRIDES: Record<string, Partial<Record<MetricKey, numb
 };
 
 const FILE_THRESHOLDS: Record<string, Partial<Record<MetricKey, number>>> = {
-  'packages/core/src/composable.ts': {
+  'packages/core/src/authoring/composable.ts': {
     lines: 95,
     statements: 95,
     functions: 95,

@@ -6,7 +6,7 @@
 
 # Interface: CapabilityDecl\<_R\>
 
-Defined in: [core/src/capsule.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L30)
+Defined in: [core/src/authoring/capsule.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L30)
 
 What services a capsule reads / writes. `_R` parameter carried for type-level inference.
 
@@ -22,7 +22,7 @@ What services a capsule reads / writes. `_R` parameter carried for type-level in
 
 > `readonly` `optional` **effects?**: readonly `string`[]
 
-Defined in: [core/src/capsule.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L33)
+Defined in: [core/src/authoring/capsule.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L33)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [core/src/capsule.ts:33](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **reads**: readonly `string`[]
 
-Defined in: [core/src/capsule.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L31)
+Defined in: [core/src/authoring/capsule.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L31)
 
 ***
 
@@ -38,4 +38,4 @@ Defined in: [core/src/capsule.ts:31](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **writes**: readonly `string`[]
 
-Defined in: [core/src/capsule.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L32)
+Defined in: [core/src/authoring/capsule.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L32)

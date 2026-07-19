@@ -10,8 +10,8 @@ Defined in: [quantizer/src/quantizer.ts:271](https://github.com/freebatteryfacto
 
 Runtime-instantiated quantizer with reactive output dispatch.
 
-Extends the core [ReactiveQuantizer](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/quantizer-types.ts) with a reactive outputs table: as
-boundary crossings are detected, the outputs [CellKernel](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts) publishes the
+Extends the core [ReactiveQuantizer](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/quantizer-types.ts) with a reactive outputs table: as
+boundary crossings are detected, the outputs [CellKernel](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/cell-kernel.ts) publishes the
 new per-target record, readable via `currentOutputs.read()` and observable via
 `outputChanges.subscribe(sink)` (replay-1: a new subscriber is replayed the
 current outputs on attach). Both views are the same underlying replay-1 kernel.
@@ -36,7 +36,7 @@ await lifetime.dispose();
 
 ## Extends
 
-- [`ReactiveQuantizer`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/quantizer-types.ts)\<`B`\>
+- [`ReactiveQuantizer`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/quantizer-types.ts)\<`B`\>
 
 ## Type Parameters
 
@@ -54,7 +54,7 @@ await lifetime.dispose();
 
 > `readonly` **\_tag**: `"Quantizer"`
 
-Defined in: core/dist/quantizer-types.d.ts:33
+Defined in: core/dist/schema/quantizer-types.d.ts:33
 
 #### Inherited from
 
@@ -66,7 +66,7 @@ Defined in: core/dist/quantizer-types.d.ts:33
 
 > `readonly` **boundary**: `B`
 
-Defined in: core/dist/quantizer-types.d.ts:34
+Defined in: core/dist/schema/quantizer-types.d.ts:34
 
 #### Inherited from
 
@@ -78,7 +78,7 @@ Defined in: core/dist/quantizer-types.d.ts:34
 
 > `readonly` **changes**: [`QuantizerCrossings`](../../../core/src/type-aliases/QuantizerCrossings.md)\<`B`\>
 
-Defined in: core/dist/quantizer-types.d.ts:63
+Defined in: core/dist/schema/quantizer-types.d.ts:63
 
 No-replay crossing subscription (was `Stream.Stream<BoundaryCrossing<StateUnion<B> & string>>`).
 
@@ -122,7 +122,7 @@ Per-target output records emitted on each boundary crossing (replay-1 subscribe 
 
 > `readonly` **state**: `QuantizerState`\<`B`\>
 
-Defined in: core/dist/quantizer-types.d.ts:61
+Defined in: core/dist/schema/quantizer-types.d.ts:61
 
 Replay-1 current-state read (was `Effect.Effect<StateUnion<B>>`).
 
@@ -136,7 +136,7 @@ Replay-1 current-state read (was `Effect.Effect<StateUnion<B>>`).
 
 > `readonly` `optional` **stateSync?**: () => `StateUnion`\<`B`\>
 
-Defined in: core/dist/quantizer-types.d.ts:36
+Defined in: core/dist/schema/quantizer-types.d.ts:36
 
 Synchronous state accessor for hot paths (avoids reactive read overhead).
 
@@ -154,7 +154,7 @@ Synchronous state accessor for hot paths (avoids reactive read overhead).
 
 > **evaluate**(`value`): `StateUnion`\<`B`\>
 
-Defined in: core/dist/quantizer-types.d.ts:37
+Defined in: core/dist/schema/quantizer-types.d.ts:37
 
 #### Parameters
 

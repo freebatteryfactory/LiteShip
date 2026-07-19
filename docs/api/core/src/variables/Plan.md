@@ -8,7 +8,7 @@
 
 > `const` **Plan**: `object`
 
-Defined in: [core/src/plan.ts:299](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/plan.ts#L299)
+Defined in: [core/src/authoring/plan.ts:299](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/plan.ts#L299)
 
 Plan namespace -- plan IR builder for universal execution DAG.
 

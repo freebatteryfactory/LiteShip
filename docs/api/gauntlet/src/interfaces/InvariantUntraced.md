@@ -6,7 +6,7 @@
 
 # Interface: InvariantUntraced
 
-Defined in: [gauntlet/src/traceability-facts.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/traceability-facts.ts#L56)
+Defined in: [gauntlet/src/facts/traceability-facts.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/traceability-facts.ts#L56)
 
 UNTRACED — declared, no proof, no waiver. A finding.
 
@@ -16,7 +16,7 @@ UNTRACED — declared, no proof, no waiver. A finding.
 
 > `readonly` **\_tag**: `"untraced"`
 
-Defined in: [gauntlet/src/traceability-facts.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/traceability-facts.ts#L57)
+Defined in: [gauntlet/src/facts/traceability-facts.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/traceability-facts.ts#L57)
 
 ***
 
@@ -24,6 +24,6 @@ Defined in: [gauntlet/src/traceability-facts.ts:57](https://github.com/freebatte
 
 > `readonly` **reason**: `string`
 
-Defined in: [gauntlet/src/traceability-facts.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/traceability-facts.ts#L59)
+Defined in: [gauntlet/src/facts/traceability-facts.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/traceability-facts.ts#L59)
 
 Why it is untraced — the human-readable WHY for the finding.

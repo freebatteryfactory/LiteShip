@@ -36,7 +36,7 @@ import { defineGate, type GateContext, type Gate } from '../gate.js';
 import { factAccessEvidenceDigest } from '../verdict-cache.js';
 import { finding, type Finding } from '../finding.js';
 import { memoryContext } from '../engine.js';
-import type { DecoderFuzzFact, DecodeViolationClass, FuzzCorpusFacts } from '../fuzz-facts.js';
+import type { DecoderFuzzFact, DecodeViolationClass, FuzzCorpusFacts } from '../facts/fuzz-facts.js';
 
 const RULE_NS = 'gauntlet/fuzz-corpus';
 

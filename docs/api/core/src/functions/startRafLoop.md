@@ -8,7 +8,7 @@
 
 > **startRafLoop**(`onFrame`): () => `void`
 
-Defined in: [core/src/scheduler.ts:228](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/scheduler.ts#L228)
+Defined in: [core/src/reactive/scheduler.ts:228](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/scheduler.ts#L228)
 
 Drive `onFrame(elapsedMs)` once per animation frame with the wall-clock time
 elapsed since the first frame — the SSR-guarded rAF loop the motion/time skins

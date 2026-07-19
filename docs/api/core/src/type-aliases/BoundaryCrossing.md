@@ -8,7 +8,7 @@
 
 > **BoundaryCrossing**\<`S`\> = `object`
 
-Defined in: [core/src/type-utils.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/type-utils.ts#L44)
+Defined in: [core/src/internal/type-level.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/internal/type-level.ts#L44)
 
 Discriminated union of boundary crossings
 
@@ -24,7 +24,7 @@ Discriminated union of boundary crossings
 
 > `readonly` **from**: [`StateName`](StateName.md)\<`S`\>
 
-Defined in: [core/src/type-utils.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/type-utils.ts#L45)
+Defined in: [core/src/internal/type-level.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/internal/type-level.ts#L45)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [core/src/type-utils.ts:45](https://github.com/freebatteryfactory/Li
 
 > `readonly` **timestamp**: [`HLCBrand`](../interfaces/HLCBrand.md)
 
-Defined in: [core/src/type-utils.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/type-utils.ts#L47)
+Defined in: [core/src/internal/type-level.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/internal/type-level.ts#L47)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [core/src/type-utils.ts:47](https://github.com/freebatteryfactory/Li
 
 > `readonly` **to**: [`StateName`](StateName.md)\<`S`\>
 
-Defined in: [core/src/type-utils.ts:46](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/type-utils.ts#L46)
+Defined in: [core/src/internal/type-level.ts:46](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/internal/type-level.ts#L46)
 
 ***
 
@@ -48,4 +48,4 @@ Defined in: [core/src/type-utils.ts:46](https://github.com/freebatteryfactory/Li
 
 > `readonly` **value**: `number`
 
-Defined in: [core/src/type-utils.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/type-utils.ts#L48)
+Defined in: [core/src/internal/type-level.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/internal/type-level.ts#L48)

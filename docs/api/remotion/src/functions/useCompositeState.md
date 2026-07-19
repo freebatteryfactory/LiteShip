@@ -6,7 +6,7 @@
 
 # Function: useCompositeState()
 
-> **useCompositeState**(`frames`): [`CompositeState`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/compositor-pool.ts)
+> **useCompositeState**(`frames`): [`CompositeState`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/compositor-pool.ts)
 
 Defined in: [remotion/src/hooks.ts:119](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/remotion/src/hooks.ts#L119)
 
@@ -31,7 +31,7 @@ Precomputed frames (see [precomputeFrames](precomputeFrames.md)).
 
 ## Returns
 
-[`CompositeState`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/compositor-pool.ts)
+[`CompositeState`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/compositor-pool.ts)
 
 State for the current Remotion frame.
 

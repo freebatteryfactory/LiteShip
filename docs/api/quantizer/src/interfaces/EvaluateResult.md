@@ -6,7 +6,7 @@
 
 # Interface: EvaluateResult\<S\>
 
-Defined in: core/dist/type-utils.d.ts:29
+Defined in: core/dist/internal/type-level.d.ts:29
 
 Result of evaluating a single numeric value against a boundary (the rich face
 of `Boundary.evaluateResult`).
@@ -27,7 +27,7 @@ effects. `index` is the position of `state` within the boundary's states tuple.
 
 > `readonly` **crossed**: `boolean`
 
-Defined in: core/dist/type-utils.d.ts:37
+Defined in: core/dist/internal/type-level.d.ts:37
 
 Whether evaluation produced a change from `previousState`.
 
@@ -37,7 +37,7 @@ Whether evaluation produced a change from `previousState`.
 
 > `readonly` **index**: `number`
 
-Defined in: core/dist/type-utils.d.ts:33
+Defined in: core/dist/internal/type-level.d.ts:33
 
 Index of `state` within the boundary's states tuple.
 
@@ -47,7 +47,7 @@ Index of `state` within the boundary's states tuple.
 
 > `readonly` **state**: `S`
 
-Defined in: core/dist/type-utils.d.ts:31
+Defined in: core/dist/internal/type-level.d.ts:31
 
 The resolved state literal.
 
@@ -57,6 +57,6 @@ The resolved state literal.
 
 > `readonly` **value**: `number`
 
-Defined in: core/dist/type-utils.d.ts:35
+Defined in: core/dist/internal/type-level.d.ts:35
 
 The input value that was evaluated.

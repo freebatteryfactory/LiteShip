@@ -13,9 +13,9 @@
  * second spec that could drift from them:
  *
  *   - CellKernel laws  → `tests/unit/core/cell-kernel.test.ts`
- *                        (docblock `packages/core/src/cell-kernel.ts:16-45`).
+ *                        (docblock `packages/core/src/reactive/cell-kernel.ts:16-45`).
  *   - Lifetime  laws   → `tests/unit/core/lifetime.test.ts`
- *                        (docblock `packages/core/src/lifetime.ts:19-31`).
+ *                        (docblock `packages/core/src/reactive/lifetime.ts:19-31`).
  *
  * Every model invariant is a projection of one enumerated law-table entry (see
  * {@link LAW_COVERAGE}, the coverage rail). The model's own test proves it is
@@ -86,10 +86,10 @@
 
 import fc from 'fast-check';
 import { hasTag } from '@liteship/error';
-import { CellKernel } from '../../packages/core/src/cell-kernel.js';
-import type { Disposer } from '../../packages/core/src/cell-kernel.js';
-import { Lifetime } from '../../packages/core/src/lifetime.js';
-import type { LifetimeDisposeError } from '../../packages/core/src/lifetime.js';
+import { CellKernel } from '../../packages/core/src/reactive/cell-kernel.js';
+import type { Disposer } from '../../packages/core/src/reactive/cell-kernel.js';
+import { Lifetime } from '../../packages/core/src/reactive/lifetime.js';
+import type { LifetimeDisposeError } from '../../packages/core/src/reactive/lifetime.js';
 
 // ===========================================================================
 // § Operation vocabulary  (shape-coordinated with Foundation-A operation-trace)

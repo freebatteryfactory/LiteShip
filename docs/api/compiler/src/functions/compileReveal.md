@@ -20,7 +20,7 @@ transitions through [MotionCompiler](../variables/MotionCompiler.md).
 
 ### graph
 
-[`DocumentGraph`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts)
+[`DocumentGraph`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts)
 
 ### transitionId
 

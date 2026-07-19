@@ -56,7 +56,7 @@ Project the submitted form into patch ops. Host-owned domain logic (nodes must b
 
 ##### base
 
-[`DocumentGraph`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts)
+[`DocumentGraph`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts)
 
 #### Returns
 

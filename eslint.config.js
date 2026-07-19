@@ -148,31 +148,30 @@ export default tseslint.config(
   {
     files: [
       // Brand factories
-      'packages/core/src/brands.ts',
+      'packages/core/src/schema/brands.ts',
       'packages/core/src/ecs.ts',
       'packages/web/src/types.ts',
 
       // Tuple + generic-preservation helpers
-      'packages/core/src/tuple.ts',
-      'packages/core/src/cell.ts',
-      'packages/core/src/boundary.ts',
-      'packages/core/src/composable.ts',
-      'packages/core/src/blend.ts',
-      'packages/core/src/interpolate.ts',
-      'packages/core/src/op.ts',
+      'packages/core/src/internal/tuple.ts',
+      'packages/core/src/reactive/cell.ts',
+      'packages/core/src/authoring/boundary.ts',
+      'packages/core/src/authoring/composable.ts',
+      'packages/core/src/motion/blend.ts',
+      'packages/core/src/motion/interpolate.ts',
 
       // Compositor / quantizer state bridges
-      'packages/core/src/compositor.ts',
-      'packages/core/src/compositor-pool.ts',
+      'packages/core/src/media/compositor.ts',
+      'packages/core/src/media/compositor-pool.ts',
       'packages/quantizer/src/quantizer.ts',
       'packages/quantizer/src/evaluate.ts',
 
       // FFI / hash primitives
-      'packages/core/src/typed-ref.ts',
-      'packages/core/src/wasm-dispatch.ts',
+      'packages/core/src/internal/typed-ref.ts',
+      'packages/core/src/wasm/wasm-dispatch.ts',
 
       // Environment / runtime introspection helpers
-      'packages/core/src/diagnostics.ts',
+      'packages/core/src/evidence/diagnostics.ts',
       'packages/worker/src/compositor-startup.ts',
       'packages/detect/src/detect.ts',
       'packages/detect/src/tiers.ts',

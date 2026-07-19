@@ -8,7 +8,7 @@
 
 > **editDistance**(`a`, `b`): `number`
 
-Defined in: [core/src/string-distance.ts:15](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/string-distance.ts#L15)
+Defined in: [core/src/internal/string-distance.ts:15](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/internal/string-distance.ts#L15)
 
 Levenshtein edit distance between `a` and `b` — one O(n·m) dynamic-programming
 table over two rolling rows (id lists are tiny, so the quadratic table is fine).

@@ -11,7 +11,7 @@ import { ValidationError, hasTag } from '@liteship/error';
 // define the sanctioned brand constructors. It is intentionally not on
 // the public package surface; tests that exercise its zero-cost identity
 // property import it from the source module directly.
-import { brand } from '../../packages/core/src/brands.js';
+import { brand } from '../../packages/core/src/schema/brands.js';
 
 describe('Core validation properties', () => {
   test('ValidationError type guard boolean invariant', () => {

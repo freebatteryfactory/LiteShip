@@ -8,7 +8,7 @@
 
 > `const` **CompositorStatePool**: `object`
 
-Defined in: [core/src/compositor-pool.ts:160](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/compositor-pool.ts#L160)
+Defined in: [core/src/media/compositor-pool.ts:160](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/compositor-pool.ts#L160)
 
 CompositorStatePool -- ring buffer of pre-allocated CompositeState objects.
 Zero-allocation hot path: acquire a state, write into it, render, then release.

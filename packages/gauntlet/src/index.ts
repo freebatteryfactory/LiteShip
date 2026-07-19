@@ -107,21 +107,21 @@ export {
   produceSkipSiteFacts,
   produceSkipSiteFactsFromContext,
   decideSkipSite,
-} from './skip-site-facts.js';
+} from './facts/skip-site-facts.js';
 
 // The FactGate form of the always-blocking no-skipped-test rule (same ruleId, same findings
 // as the closure noSkippedTestGate) — proven equivalent over the adversarial corpus by the
 // shadow-diff before any promotion to the production gate set.
 export { noSkippedTestFactGate, decideSkips } from './gates/no-skipped-test-fact.js';
 
-export { type MutationFacts, type MutantOutcome, type MutantVerdictTag } from './mutation-facts.js';
+export { type MutationFacts, type MutantOutcome, type MutantVerdictTag } from './facts/mutation-facts.js';
 
 // The BISIMULATION fact family (Wave 5.5, the transition cage) — the DYNAMIC-SUBJECT
 // half of the conformance backbone. Flat, no-heavy-dep facts (parallel to MutationFacts):
 // each case's model/impl observation digests + a status verdict (equivalent|divergent|
 // unevidenced). The heavy capture (unfolding op histories over both transports) lives in
 // @liteship/audit's buildTransitionFacts + the Foundation harnesses; the lean gate folds.
-export { type TransitionFacts, type TransitionCase, type TransitionStatus } from './transition-facts.js';
+export { type TransitionFacts, type TransitionCase, type TransitionStatus } from './facts/transition-facts.js';
 // The Wave-8.5 two-axis spine-relation facts + pure classifiers. INTERFACE + logic
 // only (no `typescript` dep); @liteship/audit's buildSpineRelationFacts probes them, the
 // lean gate folds them.
@@ -132,21 +132,21 @@ export {
   type SurfaceRelation,
   classifyStructuralRelation,
   relationSatisfied,
-} from './spine-relation-facts.js';
+} from './facts/spine-relation-facts.js';
 
 // The LOCAL-VS-GLOBAL correctness family — proof-strength facts + the lax-functor
 // `min`-fold over the dep DAG (the dual of assurance propagation), and the
 // composition-coverage facts (untested interaction edges).
-export { type ProofFacts, type ModuleProof, type ProofSignals, UNMEASURED_PROOF } from './proof-facts.js';
+export { type ProofFacts, type ModuleProof, type ProofSignals, UNMEASURED_PROOF } from './facts/proof-facts.js';
 export { propagateProofStrength, weakestLinkPath } from './proof-propagation.js';
 export {
   type CompositionFacts,
   type InteractionEdge,
   type CoverageEvidence,
   COVERAGE_EVIDENCE_STRENGTH,
-} from './composition-facts.js';
+} from './facts/composition-facts.js';
 
-export { type McdcFacts, type McdcConditionOutcome, type McdcPinVerdict, isMcdcCovered } from './mcdc-facts.js';
+export { type McdcFacts, type McdcConditionOutcome, type McdcPinVerdict, isMcdcCovered } from './facts/mcdc-facts.js';
 
 export {
   type SupplyChainFacts,
@@ -155,16 +155,16 @@ export {
   type SbomFacts,
   type ProvenanceFacts,
   type CiAuthorityFacts,
-} from './supply-chain-facts.js';
+} from './facts/supply-chain-facts.js';
 
-export { type SimulationFacts, type ScenarioReplayFact, type ReplayDivergence } from './simulation-facts.js';
+export { type SimulationFacts, type ScenarioReplayFact, type ReplayDivergence } from './facts/simulation-facts.js';
 
 export {
   type FuzzCorpusFacts,
   type DecoderFuzzFact,
   type DecodeViolation,
   type DecodeViolationClass,
-} from './fuzz-facts.js';
+} from './facts/fuzz-facts.js';
 
 export {
   type TaintFacts,
@@ -172,9 +172,9 @@ export {
   type TaintEndpoint,
   type SanitizerSite,
   type TaintPathStep,
-} from './taint-facts.js';
+} from './facts/taint-facts.js';
 
-export { type CapabilityLinkFacts, type CapabilityLinkResult } from './capability-link-facts.js';
+export { type CapabilityLinkFacts, type CapabilityLinkResult } from './facts/capability-link-facts.js';
 
 export {
   type TraceabilityFacts,
@@ -185,7 +185,7 @@ export {
   type InvariantWaived,
   type InvariantExpired,
   type TraceabilityDivergence,
-} from './traceability-facts.js';
+} from './facts/traceability-facts.js';
 
 export { type Authority, type GateProof, verifyGate, earnedAuthority } from './authority.js';
 
@@ -259,7 +259,7 @@ export {
   diffStandardsSurface,
   applyStandardsWaivers,
   type SiteConditionalityResolver,
-} from './standards-facts.js';
+} from './facts/standards-facts.js';
 
 // The AGENT-SAFETY META-GAUNTLET (the "raccoon rule") phases B+C — the DECLARED-FIX
 // PROTOCOL: the lean DeclaredFix record (intent + scope + size-cap + before/after
@@ -350,7 +350,7 @@ export {
   type ActiveSurfaceFacts,
   type ActiveSurfaceEntry,
   type ActiveSurfacePromotion,
-} from './active-surface-facts.js';
+} from './facts/active-surface-facts.js';
 export { crdtLawsGate } from './gates/crdt-laws.js';
 
 // The avionics-tier (Slice C) performance-contracts gate — a LEAN, deterministic

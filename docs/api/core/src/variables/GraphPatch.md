@@ -8,7 +8,7 @@
 
 > **GraphPatch**: `object`
 
-Defined in: [core/src/graph-patch.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-patch.ts#L65)
+Defined in: [core/src/graph/graph-patch.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-patch.ts#L65)
 
 GraphPatch namespace — the tagged-delta mutation surface over
 [DocumentGraph](../interfaces/DocumentGraph.md). Propose a delta, apply/preview it (re-addressing through

@@ -8,7 +8,7 @@
 
 > **lowerRevealChain**(`input`): [`LoweredRevealChain`](../interfaces/LoweredRevealChain.md)
 
-Defined in: [core/src/reveal.ts:378](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L378)
+Defined in: [core/src/motion/reveal.ts:378](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L378)
 
 Lower a [RevealChainInput](../interfaces/RevealChainInput.md) into ONE DocumentGraph (one signal + component +
 entity, N pose pairs + N transitions) plus a [TransitionProgram](../type-aliases/TransitionProgram.md) composing

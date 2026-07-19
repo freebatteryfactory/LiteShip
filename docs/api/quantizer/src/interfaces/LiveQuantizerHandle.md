@@ -9,7 +9,7 @@
 Defined in: [quantizer/src/quantizer.ts:289](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L289)
 
 The pair [QuantizerConfig.create](QuantizerConfig.md#create) returns: the live reactive quantizer
-plus the [Lifetime](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/lifetime.ts) that owns its teardown. Dispose the lifetime to close
+plus the [Lifetime](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts) that owns its teardown. Dispose the lifetime to close
 the state / outputs / crossings kernels (completing subscribers, making publish
 inert).
 

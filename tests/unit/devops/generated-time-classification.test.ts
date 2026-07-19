@@ -41,12 +41,12 @@ const VOLATILE_TYPE_FILES = [
 
 describe('generated-time — the causal clock (generated_at) stays HLC + identity-bearing', () => {
   it('ShipCapsule.generated_at is typed HLC (an object), not a wall-clock string', () => {
-    const src = read('packages/core/src/ship-capsule.ts');
+    const src = read('packages/core/src/authoring/ship-capsule.ts');
     expect(src).toMatch(/readonly generated_at:\s*HLC\b/);
   });
 
   it('generated_at participates in the identity-bearing capsule encoding (content address)', () => {
-    const src = read('packages/core/src/ship-capsule.ts');
+    const src = read('packages/core/src/authoring/ship-capsule.ts');
     // It is hashed into the content address inside encodeIdentityBearing — must not be dropped.
     expect(src).toMatch(/encodeIdentityBearing[\s\S]*?generated_at:\s*capsule\.generated_at/);
   });

@@ -33,7 +33,7 @@ import { defineGate, type GateContext, type Gate } from '../gate.js';
 import { factAccessEvidenceDigest } from '../verdict-cache.js';
 import { finding, type Finding } from '../finding.js';
 import { memoryContext } from '../engine.js';
-import type { SupplyChainFacts, SupplyChainViolation } from '../supply-chain-facts.js';
+import type { SupplyChainFacts, SupplyChainViolation } from '../facts/supply-chain-facts.js';
 
 const RULE_NS = 'gauntlet/supply-chain';
 

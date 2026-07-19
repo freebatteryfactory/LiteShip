@@ -8,7 +8,7 @@
 
 > **selectCandidates**(`intent`, `caps`): [`ResponsiveMediaCandidateSet`](../interfaces/ResponsiveMediaCandidateSet.md)
 
-Defined in: [core/src/responsive-media.ts:202](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/responsive-media.ts#L202)
+Defined in: [core/src/media/responsive-media.ts:202](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/responsive-media.ts#L202)
 
 THE one effective-candidate law — the single function every responsive-media
 output consumes (#140). Returns the [ResponsiveMediaCandidateSet](../interfaces/ResponsiveMediaCandidateSet.md): the

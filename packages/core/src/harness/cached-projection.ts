@@ -27,11 +27,11 @@
  */
 
 import { UnsupportedError } from '@liteship/error';
-import type { CapsuleDef } from '../assembly.js';
+import type { CapsuleDef } from '../authoring/assembly.js';
 import type { HarnessContext, HarnessOutput } from './pure-transform.js';
 
 const DEFAULT_ARBITRARY_IMPORT = '../../packages/core/src/harness/arbitrary-from-schema.js';
-const DEFAULT_CONTENT_ADDRESS_IMPORT = '../../packages/core/src/content-address.js';
+const DEFAULT_CONTENT_ADDRESS_IMPORT = '../../packages/core/src/evidence/content-address.js';
 
 /** Escape backtick + dollar-brace for a template-literal interpolation site. */
 function escapeBacktick(s: string): string {

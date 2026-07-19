@@ -8,7 +8,7 @@
 
 > **verifyAppliedGraph**(`value`): [`AppliedGraphVerification`](../type-aliases/AppliedGraphVerification.md)
 
-Defined in: [core/src/graph-mutation.ts:197](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-mutation.ts#L197)
+Defined in: [core/src/graph/graph-mutation.ts:197](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-mutation.ts#L197)
 
 The applied-graph adopt guard — proves a wire graph is a normalized,
 self-addressed base the server's own pipeline would emit. Shared by

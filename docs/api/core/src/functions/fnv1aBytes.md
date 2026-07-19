@@ -8,7 +8,7 @@
 
 > **fnv1aBytes**(`bytes`): `ContentAddress`
 
-Defined in: [core/src/fnv.ts:16](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/fnv.ts#L16)
+Defined in: [core/src/internal/fnv.ts:16](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/internal/fnv.ts#L16)
 
 FNV-1a hash of raw bytes, returned as a spine [ContentAddress](../variables/ContentAddress.md).
 

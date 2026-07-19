@@ -3,7 +3,7 @@ import { bench } from 'vitest';
 import * as fc from 'fast-check';
 import { cloudflareAdapterCapsule } from '../../packages/cloudflare/src/capsules/cloudflare-adapter.js';
 import { schemaToArbitrary } from '../../packages/core/src/harness/arbitrary-from-schema.js';
-import { CanonicalCbor } from '../../packages/core/src/cbor.js';
+import { CanonicalCbor } from '../../packages/core/src/schema/cbor.js';
 import { decode } from '../../packages/canonical/src/cbor-decode.js';
 
 const cap = cloudflareAdapterCapsule as { input: unknown };

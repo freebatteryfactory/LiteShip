@@ -8,7 +8,7 @@
 
 > `const` **Store**: `object`
 
-Defined in: [core/src/store.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/store.ts#L74)
+Defined in: [core/src/reactive/store.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/store.ts#L74)
 
 Store — TEA-style state container over [CellKernel.replay1](CellKernel.md#replay1). Build with an
 initial state and a pure `reducer(state, msg) => state`, then dispatch messages;

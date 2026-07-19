@@ -8,7 +8,7 @@
 
 > **rawIndexF32**(`thresholds`, `value`): `number`
 
-Defined in: [core/src/boundary-f32.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/boundary-f32.ts#L43)
+Defined in: [core/src/wasm/boundary-f32.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/wasm/boundary-f32.ts#L43)
 
 The single f32-canonical state-index kernel.
 

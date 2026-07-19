@@ -6,7 +6,7 @@
 
 # Interface: CompositionFacts
 
-Defined in: [gauntlet/src/composition-facts.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/composition-facts.ts#L57)
+Defined in: [gauntlet/src/facts/composition-facts.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/composition-facts.ts#L57)
 
 The composition evidence the host supplies — the interaction edges between
 individually-tested units, each already classified covered/uncovered. The host
@@ -22,6 +22,6 @@ finding (honest under-coverage, never a silent green) — see
 
 > `readonly` `optional` **edges?**: readonly [`InteractionEdge`](InteractionEdge.md)[]
 
-Defined in: [gauntlet/src/composition-facts.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/composition-facts.ts#L59)
+Defined in: [gauntlet/src/facts/composition-facts.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/composition-facts.ts#L59)
 
 Every interaction edge between two individually-tested units the host classified.

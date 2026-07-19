@@ -95,7 +95,7 @@ import { levelOf } from '../assurance-map.js';
 import { propagateAssuranceLevels } from '../assurance-propagation.js';
 import { propagateProofStrength, weakestLinkPath } from '../proof-propagation.js';
 import type { AssuranceLevel } from '../assurance.js';
-import { UNMEASURED_PROOF, type ProofFacts, type ModuleProof } from '../proof-facts.js';
+import { UNMEASURED_PROOF, type ProofFacts, type ModuleProof } from '../facts/proof-facts.js';
 
 /** The gate id — namespaces every finding (traceability). */
 const GATE_ID = 'gauntlet/proof-propagation';
@@ -310,8 +310,8 @@ function proofContext(ir: RepoIR, proof: ProofFacts): GateContext {
   return { ...memoryContext({}), ir, proof };
 }
 
-/** A fixtures-only L4 file id (matches the `core/.../brands.ts` L4 glob in the map). */
-const L4_FILE = 'packages/core/src/brands.ts';
+/** A fixtures-only L4 file id (matches the `core/schema/brands.ts` L4 glob in the map). */
+const L4_FILE = 'packages/core/src/schema/brands.ts';
 /** A fixtures-only weak dependency the L4 file imports. */
 const WEAK_DEP = 'packages/core/src/weak-helper.ts';
 

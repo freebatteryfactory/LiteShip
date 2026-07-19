@@ -8,7 +8,7 @@
 
 > **closestMatch**(`input`, `candidates`, `threshold`): `string` \| `undefined`
 
-Defined in: [core/src/string-distance.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/string-distance.ts#L44)
+Defined in: [core/src/internal/string-distance.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/internal/string-distance.ts#L44)
 
 The nearest `candidate` to `input` by [editDistance](editDistance.md), or `undefined` when
 none is within `threshold` — the "did you mean 'x'?" primitive. The `threshold`

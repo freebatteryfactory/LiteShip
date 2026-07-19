@@ -103,11 +103,11 @@ const path = SlotRegistry.getPath(el);
 
 ### observe
 
-> **observe**: (`registry`, `root`) => [`Disposer`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts)
+> **observe**: (`registry`, `root`) => [`Disposer`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/cell-kernel.ts)
 
 Scan `root` for pre-existing slots, then create a `MutationObserver` that
 automatically registers/unregisters slots as DOM elements with
-`data-liteship-slot` are added or removed. Returns a [Disposer](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts) that
+`data-liteship-slot` are added or removed. Returns a [Disposer](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/cell-kernel.ts) that
 disconnects the observer; register it on a `Lifetime` (or call it directly)
 to own the teardown.
 
@@ -130,9 +130,9 @@ The DOM root to scan and observe
 
 #### Returns
 
-[`Disposer`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts)
+[`Disposer`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/cell-kernel.ts)
 
-A [Disposer](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts) that disconnects the `MutationObserver`
+A [Disposer](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/cell-kernel.ts) that disconnects the `MutationObserver`
 
 #### Example
 

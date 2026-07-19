@@ -1,7 +1,7 @@
 #!/usr/bin/env tsx
 /**
  * capture-json-schema-parity — freeze the byte-parity cage over the CURRENT
- * Effect-AST JSON-Schema deriver (packages/core/src/json-schema-from-schema.ts)
+ * Effect-AST JSON-Schema deriver (packages/core/src/schema/to-json-schema.ts)
  * BEFORE any schema producer changes.
  *
  * WHAT IS CAGED: every command descriptor slot whose JSON-Schema is derived via

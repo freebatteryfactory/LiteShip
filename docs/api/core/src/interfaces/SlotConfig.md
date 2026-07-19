@@ -6,7 +6,7 @@
 
 # Interface: SlotConfig
 
-Defined in: [core/src/component.ts:17](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/component.ts#L17)
+Defined in: [core/src/authoring/component.ts:17](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/component.ts#L17)
 
 Per-slot configuration on a component — whether the slot must be provided, plus optional description.
 
@@ -16,7 +16,7 @@ Per-slot configuration on a component — whether the slot must be provided, plu
 
 > `readonly` `optional` **description?**: `string`
 
-Defined in: [core/src/component.ts:20](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/component.ts#L20)
+Defined in: [core/src/authoring/component.ts:20](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/component.ts#L20)
 
 ***
 
@@ -24,6 +24,6 @@ Defined in: [core/src/component.ts:20](https://github.com/freebatteryfactory/Lit
 
 > `readonly` `optional` **required?**: `boolean`
 
-Defined in: [core/src/component.ts:19](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/component.ts#L19)
+Defined in: [core/src/authoring/component.ts:19](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/component.ts#L19)
 
 Default: false.

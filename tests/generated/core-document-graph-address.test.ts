@@ -1,7 +1,7 @@
 // GENERATED — do not edit by hand
 import { describe, it } from 'vitest';
 import * as fc from 'fast-check';
-import { documentGraphAddressCapsule } from '../../packages/core/src/capsules/document-graph-address.js';
+import { documentGraphAddressCapsule } from '../../packages/core/src/authoring/capsules/document-graph-address.js';
 import { schemaToArbitrary } from '../../packages/core/src/harness/arbitrary-from-schema.js';
 import { scaledTimeout } from '../../vitest.shared.js';
 

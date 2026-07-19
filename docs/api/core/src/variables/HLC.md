@@ -8,13 +8,13 @@
 
 > `const` **HLC**: `object`
 
-Defined in: [core/src/hlc.ts:227](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/hlc.ts#L227)
+Defined in: [core/src/clock/hlc.ts:227](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/clock/hlc.ts#L227)
 
 HLC namespace -- Hybrid Logical Clock.
 
 Pure functions for creating, comparing, incrementing, and merging HLC
 timestamps, plus a plain (Effect-free) managed-clock factory
-([makeClock](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/hlc.ts) → an [HLCClock](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/hlc.ts) handle with `tick`/`receive`/`current`).
+([makeClock](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/clock/hlc.ts) → an [HLCClock](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/clock/hlc.ts) handle with `tick`/`receive`/`current`).
 Encodes to/from a deterministic colon-separated hex string format.
 
 ## Type Declaration
@@ -157,10 +157,10 @@ const hlc1 = HLC.increment(hlc0, Date.now());
 
 ### makeClock
 
-> **makeClock**: (`nodeId`, `clock`) => [`HLCClock`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/hlc.ts)
+> **makeClock**: (`nodeId`, `clock`) => [`HLCClock`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/clock/hlc.ts)
 
 Create a managed HLC clock over an injected [Clock](../interfaces/Clock.md) (default
-[wallClock](wallClock.md)). Returns a plain [HLCClock](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/hlc.ts) handle — no `Effect`.
+[wallClock](wallClock.md)). Returns a plain [HLCClock](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/clock/hlc.ts) handle — no `Effect`.
 
 #### Parameters
 
@@ -174,7 +174,7 @@ Create a managed HLC clock over an injected [Clock](../interfaces/Clock.md) (def
 
 #### Returns
 
-[`HLCClock`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/hlc.ts)
+[`HLCClock`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/clock/hlc.ts)
 
 #### Example
 

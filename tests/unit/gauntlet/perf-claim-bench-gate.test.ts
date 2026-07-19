@@ -66,7 +66,7 @@ describe('THE CLAIM-VS-REALITY LAW — a perf claim with no bench is a finding',
 
   it('CATCHES a DOC claim — the CURE-2 "zero-allocation hot path" doc with no bench', () => {
     const ctx = memoryContext({
-      'packages/core/src/compositor.ts': '/**\n * Zero-allocation hot path backed by a pool.\n */\nexport const x = 1;\n',
+      'packages/core/src/media/compositor.ts': '/**\n * Zero-allocation hot path backed by a pool.\n */\nexport const x = 1;\n',
     });
     const findings = perfClaimBenchGate.run(ctx);
     expect(findings.length).toBeGreaterThanOrEqual(1);
@@ -75,7 +75,7 @@ describe('THE CLAIM-VS-REALITY LAW — a perf claim with no bench is a finding',
 
   it('STAYS CLEAN when the same doc claim IS measured by a declared bench naming the module', () => {
     const ctx = memoryContext({
-      'packages/core/src/compositor.ts': '/**\n * Zero-allocation hot path backed by a pool.\n */\nexport const x = 1;\n',
+      'packages/core/src/media/compositor.ts': '/**\n * Zero-allocation hot path backed by a pool.\n */\nexport const x = 1;\n',
       'benchmarks/distributions.json': COMPOSITOR_BENCH,
     });
     expect(perfClaimBenchGate.run(ctx)).toHaveLength(0);

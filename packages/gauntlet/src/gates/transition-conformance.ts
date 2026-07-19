@@ -51,7 +51,7 @@ import { finding, type Finding, type Severity } from '../finding.js';
 import { memoryContext } from '../engine.js';
 import { factAccessEvidenceDigest } from '../verdict-cache.js';
 import type { AssuranceLevel } from '../assurance.js';
-import type { TransitionFacts, TransitionCase } from '../transition-facts.js';
+import type { TransitionFacts, TransitionCase } from '../facts/transition-facts.js';
 
 /** The gate id — namespaces every finding (traceability). */
 const GATE_ID = 'gauntlet/transition-conformance';

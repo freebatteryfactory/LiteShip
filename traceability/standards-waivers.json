@@ -184,17 +184,17 @@
       "expiry": "2027-06-20"
     },
     {
-      "elementKey": "waiver::gauntlet/no-nondeterminism|packages/core/src/clock.ts|60",
+      "elementKey": "waiver::gauntlet/no-nondeterminism|packages/core/src/clock/clock.ts|60",
       "weakening": "waiver-added",
       "owner": "heyoub",
-      "justification": "Same gauntlet/no-nondeterminism boundary waiver (a sanctioned Date.now() entropy boundary in packages/core/src/clock.ts), RELOCATED one line by an edit above it after the snapshot's birth — NOT a new deferral. The waiver key embeds the line number, so a one-line shift surfaces as remove(old line)+add(new line); the corresponding removal is a strengthen. No additional code is waived. Signed vs the snapshot's birth baseline (the bootstrap window).",
+      "justification": "Same gauntlet/no-nondeterminism boundary waiver (a sanctioned Date.now() entropy boundary at line 60), RELOCATED by the P4 core-domain migration that moved packages/core/src/clock.ts into packages/core/src/clock/clock.ts — NOT a new deferral. The waiver key embeds the file path, so the pure rename surfaces as remove(old path)+add(new path); the corresponding removal of the packages/core/src/clock.ts|60 waiver is a paired strengthen. No additional code is waived; the same line-60 entropy boundary is waived, only its home moved. Signed vs the base-ref baseline (the P4 restructure window).",
       "expiry": "2027-06-20"
     },
     {
-      "elementKey": "waiver::gauntlet/no-nondeterminism|packages/core/src/clock.ts|77",
+      "elementKey": "waiver::gauntlet/no-nondeterminism|packages/core/src/clock/clock.ts|77",
       "weakening": "waiver-added",
       "owner": "heyoub",
-      "justification": "Same gauntlet/no-nondeterminism boundary waiver (a sanctioned Date.now() entropy boundary in packages/core/src/clock.ts), RELOCATED one line by an edit above it after the snapshot's birth — NOT a new deferral. The waiver key embeds the line number, so a one-line shift surfaces as remove(old line)+add(new line); the corresponding removal is a strengthen. No additional code is waived. Signed vs the snapshot's birth baseline (the bootstrap window).",
+      "justification": "Same gauntlet/no-nondeterminism boundary waiver (a sanctioned Date.now() entropy boundary at line 77), RELOCATED by the P4 core-domain migration that moved packages/core/src/clock.ts into packages/core/src/clock/clock.ts — NOT a new deferral. The waiver key embeds the file path, so the pure rename surfaces as remove(old path)+add(new path); the corresponding removal of the packages/core/src/clock.ts|77 waiver is a paired strengthen. No additional code is waived; the same line-77 entropy boundary is waived, only its home moved. Signed vs the base-ref baseline (the P4 restructure window).",
       "expiry": "2027-06-20"
     },
     {
@@ -209,6 +209,20 @@
       "weakening": "waiver-added",
       "owner": "heyoub",
       "justification": "Same gauntlet/no-silent-catch benign-catch waiver (the best-effort workspace-glob enumeration in packages/cli/src/commands/ship.ts — an entry that cannot be statSync-d is skipped during package discovery, non-corrupting and conservative: a genuinely unreadable directory entry is not a publishable package), RELOCATED (169→131) by the Wave 8 effect-shed removing the runEffect adapters above resolveGlob — NOT a new deferral. The waiver key embeds the line number, so the shift surfaces as remove(line 169)+add(line 131); the corresponding removal is a strengthen. No additional code is waived (identical to the version.ts:47→46 and clock.ts:60/77 relocation precedents). Surfaces as a weakening vs origin/main now that the base ref carries the snapshot (the gate moved from birth-baseline to origin/main baseline).",
+      "expiry": "2027-06-20"
+    },
+    {
+      "elementKey": "waiver::gauntlet/no-nondeterminism|packages/core/src/internal/rng.ts|39",
+      "weakening": "waiver-added",
+      "owner": "heyoub",
+      "justification": "Same gauntlet/no-nondeterminism entropy-boundary waiver (the sanctioned seeded-RNG entropy source at line 39), RELOCATED by the P4 core-domain migration that moved packages/core/src/rng.ts into packages/core/src/internal/rng.ts — NOT a new deferral. The waiver key embeds the file path, so the pure rename surfaces as remove(packages/core/src/rng.ts|39)+add(packages/core/src/internal/rng.ts|39); the removal is a paired strengthen. No additional code is waived; the same line-39 entropy boundary is waived, only its home moved. Signed vs the base-ref baseline (the P4 restructure window).",
+      "expiry": "2027-06-20"
+    },
+    {
+      "elementKey": "assurance::packages/core/src/{receipt,hlc,plan,dag,validated-output,assembly,brands}.ts",
+      "weakening": "assurance-level-lowered",
+      "owner": "heyoub",
+      "justification": "Glob-membership RESTRUCTURE, not a rigor loss: the P4 core-domain migration split the flat L4 group {receipt,hlc,plan,dag,validated-output,assembly,brands}.ts into the domain-homed L4 globs it now lives under — evidence/{receipt,validated-output}.ts, clock/hlc.ts, authoring/{plan,assembly}.ts, graph/dag.ts, schema/brands.ts (each surfaced as a paired ADD strengthen in the same run). Every path KEPT its L4 assurance band; no file dropped a rigor level. The waiver key embeds the exact glob string, so relocating the files surfaces as remove(old flat glob)+add(new subdir globs). Net rigor unchanged. Signed vs the base-ref baseline (the P4 restructure window).",
       "expiry": "2027-06-20"
     },
     {

@@ -71,7 +71,7 @@ export const packageTopology: Record<string, PackagePolicy> = {
   },
   '@liteship/core': {
     // @liteship/_spine is the canonical type-only spine that core re-anchors
-    // its public types from (see packages/core/src/brands.ts and
+    // its public types from (see packages/core/src/schema/brands.ts and
     // capsule.ts). It compiles to .d.ts only and sits above core in the
     // dependency direction, so this is not a layering violation — it's the
     // intended source of truth for shared brand and content-address types.
@@ -499,7 +499,7 @@ export const auditAllowlist: readonly AuditAllowlistEntry[] = [
     // would defect the decoder instead of producing a parse failure.
     rule: 'fallback-laundering',
     package: '@liteship/core',
-    filePrefix: 'src/capsules/canonical-cbor-decode.ts',
+    filePrefix: 'src/authoring/capsules/canonical-cbor-decode.ts',
     summaryIncludes: 'returns false',
     reason:
       'Canonical CBOR schema refinement predicate: any decoder/encoder throwable means the byte array is not canonical input (accepted=false); returning false keeps Effect Schema on its typed parse-failure path instead of leaking defects.',

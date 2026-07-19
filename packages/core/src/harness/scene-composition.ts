@@ -37,7 +37,7 @@
  */
 
 import { InvariantViolationError } from '@liteship/error';
-import type { CapsuleDef } from '../assembly.js';
+import type { CapsuleDef } from '../authoring/assembly.js';
 import type { HarnessOutput, HarnessContext } from './pure-transform.js';
 import { benchNotApplicableMarker } from './bench-marker.js';
 

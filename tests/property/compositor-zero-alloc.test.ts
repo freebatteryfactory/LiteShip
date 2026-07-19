@@ -179,7 +179,7 @@ describe('Compositor compose is genuinely zero-allocation (INV-COMPOSITOR-ZERO-A
     // `SubscriptionRef.set` (the ≈ 22 B/op TRANSIENT floor) reintroduces the very
     // allocation this invariant eliminated — caught here before the gate even runs.
     const here = dirname(fileURLToPath(import.meta.url));
-    const source = readFileSync(resolve(here, '../../packages/core/src/compositor.ts'), 'utf8');
+    const source = readFileSync(resolve(here, '../../packages/core/src/media/compositor.ts'), 'utf8');
     // Strip line + block comments so the explanatory prose (which names the replaced
     // `SubscriptionRef.set` to document WHY) is not mistaken for a usage. We assert on
     // the CODE only.

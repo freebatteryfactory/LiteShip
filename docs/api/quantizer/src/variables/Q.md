@@ -14,7 +14,7 @@ Quantizer builder namespace.
 
 `Q.from(boundary)` starts a fluent builder that produces a content-addressed
 [QuantizerConfig](../interfaces/QuantizerConfig.md). Calling `config.create()` yields a reactive
-[LiveQuantizer](../interfaces/LiveQuantizer.md) (paired with its [Lifetime](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/lifetime.ts)) that evaluates numeric
+[LiveQuantizer](../interfaces/LiveQuantizer.md) (paired with its [Lifetime](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts)) that evaluates numeric
 input values against boundary thresholds, dispatches state transitions, and
 routes per-state outputs (CSS, GLSL, WGSL, ARIA, AI) gated by MotionTier.
 
@@ -28,7 +28,7 @@ Create a quantizer builder from a boundary definition.
 
 Starts a fluent chain: `Q.from(boundary).outputs({...})` produces a
 content-addressed `QuantizerConfig` whose `.create()` method yields a
-reactive `LiveQuantizer` paired with its owning [Lifetime](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/lifetime.ts).
+reactive `LiveQuantizer` paired with its owning [Lifetime](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts).
 
 #### Type Parameters
 

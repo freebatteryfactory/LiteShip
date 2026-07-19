@@ -8,7 +8,7 @@
 
 > `const` **EVALUATE\_THRESHOLDS\_SOURCE**: "/\*\*\n \* Evaluate which discrete state a value falls into based on thresholds.\n \* f32-canonical (Math.fround); thresholds sorted ascending; value below all\n \* thresholds maps to the first state.\n \*\n \* Canonical kernel: packages/core/src/boundary-f32.ts (rawIndexF32).\n \*\n \* @param \{number\[\]\} thresholds\n \* @param \{string\[\]\} states\n \* @param \{number\} value\n \* @returns \{string\}\n \*/\nfunction evaluateThresholds(thresholds, states, value) \{\n  const v = Math.fround(value);\n  for (let i = thresholds.length - 1; i \>= 0; i--) \{\n    if (v \>= Math.fround(thresholds\[i\])) \{\n      return states\[i\] \|\| states\[0\] \|\| \"\";\n    \}\n  \}\n  return states\[0\] \|\| \"\";\n\}"
 
-Defined in: [core/src/boundary-f32.ts:95](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/boundary-f32.ts#L95)
+Defined in: [core/src/wasm/boundary-f32.ts:95](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/wasm/boundary-f32.ts#L95)
 
 Worker-blob twin of [rawIndexF32](../functions/rawIndexF32.md), as an inlinable JavaScript source string.
 

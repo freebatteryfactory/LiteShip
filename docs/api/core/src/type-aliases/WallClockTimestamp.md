@@ -8,6 +8,6 @@
 
 > **WallClockTimestamp** = `_WallClockTimestamp`
 
-Defined in: [core/src/command.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/command.ts#L37)
+Defined in: [core/src/authoring/command.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/command.ts#L37)
 
 Volatile wall-clock ISO stamp (CUT B2) — identity-irrelevant; never an HLC.

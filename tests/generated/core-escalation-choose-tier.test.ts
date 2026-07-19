@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest';
 import * as fc from 'fast-check';
 import { decode } from '../../packages/core/src/schema/index.js';
 import type { Schema } from '../../packages/core/src/schema/index.js';
-import { escalationChooseTierCapsule } from '../../packages/core/src/capsules/escalation-choose-tier.js';
+import { escalationChooseTierCapsule } from '../../packages/core/src/authoring/capsules/escalation-choose-tier.js';
 import { schemaToArbitrary } from '../../packages/core/src/harness/arbitrary-from-schema.js';
 
 describe('core.escalation.choose-tier', () => {

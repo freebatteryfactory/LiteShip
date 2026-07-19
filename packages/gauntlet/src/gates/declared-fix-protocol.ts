@@ -103,7 +103,7 @@ function factsContext(facts: DeclaredFixFacts): GateContext {
  * fix the verifier admitted). The gate must fold this to ZERO findings.
  */
 const ADMITTED_FACTS: DeclaredFixFacts = {
-  intent: 'fix the fnv off-by-one in packages/core/src/fnv.ts',
+  intent: 'fix the fnv off-by-one in packages/core/src/internal/fnv.ts',
   verdict: { _tag: 'admitted' },
 };
 
@@ -117,14 +117,14 @@ const ADMITTED_FACTS: DeclaredFixFacts = {
  * the test suite, where each class is exercised against real measured reality.
  */
 const REJECTED_FACTS: DeclaredFixFacts = {
-  intent: 'claimed: fix one typo in packages/core/src/fnv.ts',
+  intent: 'claimed: fix one typo in packages/core/src/internal/fnv.ts',
   verdict: {
     _tag: 'rejected',
     reasons: [
       {
         class: 'scope-creep',
         detail:
-          'the fix touched "packages/gauntlet/src/gates/no-placeholder.ts", which is OUTSIDE its declared scope (globs: packages/core/src/fnv.ts).',
+          'the fix touched "packages/gauntlet/src/gates/no-placeholder.ts", which is OUTSIDE its declared scope (globs: packages/core/src/internal/fnv.ts).',
       },
     ],
   },

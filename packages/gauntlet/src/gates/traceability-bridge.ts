@@ -37,7 +37,7 @@ import { factAccessEvidenceDigest } from '../verdict-cache.js';
 import { finding, type Finding } from '../finding.js';
 import { rankOf, type AssuranceLevel } from '../assurance.js';
 import { memoryContext } from '../engine.js';
-import type { TraceabilityFacts, ResolvedInvariant, TraceabilityDivergence } from '../traceability-facts.js';
+import type { TraceabilityFacts, ResolvedInvariant, TraceabilityDivergence } from '../facts/traceability-facts.js';
 
 const RULE_NS = 'gauntlet/traceability';
 

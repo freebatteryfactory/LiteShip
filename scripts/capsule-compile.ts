@@ -76,9 +76,9 @@ import {
   type HarnessOutput,
   type HarnessContext,
 } from '../packages/core/src/harness/index.js';
-import type { CapsuleDef } from '../packages/core/src/assembly.js';
-import type { AssemblyKind } from '../packages/core/src/capsule.js';
-import type { ContentAddress } from '../packages/core/src/brands.js';
+import type { CapsuleDef } from '../packages/core/src/authoring/assembly.js';
+import type { AssemblyKind } from '../packages/core/src/authoring/capsule.js';
+import type { ContentAddress } from '../packages/core/src/schema/brands.js';
 import { detectCapsuleCalls, FACTORY_NAMING, FACTORY_HINTS } from './lib/capsule-detector.js';
 
 /** A single entry in the capsule manifest. */
@@ -854,7 +854,7 @@ async function main(): Promise<void> {
       // Canonical content-address kernel — the cachedProjection harness keys
       // its cache-hit / invalidation probes on contentAddressOf (never a
       // hand-rolled hash). Resolved as a repo-relative import for the test file.
-      const contentAddressAbs = resolve('packages/core/src/content-address.ts');
+      const contentAddressAbs = resolve('packages/core/src/evidence/content-address.ts');
       const contentAddressModule = normalizeRepoPath(relative(dirname(testPath), contentAddressAbs)).replace(
         /\.ts$/,
         '.js',
@@ -996,7 +996,7 @@ async function main(): Promise<void> {
             return spec.startsWith('.') ? spec : `./${spec}`;
           };
           const cborAbs = resolve('packages/canonical/src/cbor-decode.ts');
-          const cborEncodeAbs = resolve('packages/core/src/cbor.ts');
+          const cborEncodeAbs = resolve('packages/core/src/schema/cbor.ts');
 
           siteAdapter = {
             roundTripSchema,

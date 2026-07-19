@@ -8,7 +8,7 @@
 
 > **surfaceElementKey**(`el`): `string`
 
-Defined in: [gauntlet/src/standards-facts.ts:258](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/standards-facts.ts#L258)
+Defined in: [gauntlet/src/facts/standards-facts.ts:258](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/standards-facts.ts#L258)
 
 The STABLE IDENTITY of a surface element — the key the diff matches on (so a
 change to an element's value is seen as a MODIFY, not an add+remove). Pure +

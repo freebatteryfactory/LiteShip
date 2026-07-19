@@ -57,7 +57,7 @@ describe('REGRESSION GUARD: the mintValidated subpath leak (lesson #12)', () => 
     expect(wildcardKeys).toEqual([]);
   });
 
-  test('the ONLY deep-subpath exports are the sanctioned allowlist (./testing, ./harness, ./simulation, ./fs-walk)', () => {
+  test('the ONLY deep-subpath exports are the sanctioned allowlist (nine domain facades + ./testing, ./harness, ./simulation, ./fs-walk)', () => {
     const pkg = JSON.parse(readFileSync(corePkgPath, 'utf8')) as {
       exports: Record<string, unknown>;
     };
@@ -65,9 +65,26 @@ describe('REGRESSION GUARD: the mintValidated subpath leak (lesson #12)', () => 
 
     // Every importable deep subpath (a key past the bare `.` root) must be on the
     // allowlist. `./validated-output` maps to `null` — a DENY, not an export — so it is
-    // not importable and is excluded. Adding a new internal subpath must require a
+    // not importable and is excluded. The nine DOMAIN facades each resolve to a curated
+    // `src/<domain>/index.ts` (explicit named re-exports only, no `export *`), so a
+    // subpath exposes a reviewed public surface, never the raw internal layout — and
+    // there is deliberately NO `./internal` subpath. Adding a new subpath must require a
     // reviewer to amend THIS list, which is the layout-lock LAW.
-    const ALLOWED_SUBPATHS = ['./testing', './harness', './simulation', './fs-walk'];
+    const ALLOWED_SUBPATHS = [
+      './authoring',
+      './reactive',
+      './motion',
+      './graph',
+      './evidence',
+      './schema',
+      './media',
+      './clock',
+      './wasm',
+      './testing',
+      './harness',
+      './simulation',
+      './fs-walk',
+    ];
     const importableSubpaths = keys.filter((k) => k !== '.' && pkg.exports[k] !== null);
     expect(importableSubpaths.sort()).toEqual([...ALLOWED_SUBPATHS].sort());
   });
@@ -102,7 +119,7 @@ describe('REGRESSION GUARD: the mintValidated subpath leak (lesson #12)', () => 
     // mintValidated must remain in validated-output.ts (only it holds the private
     // witness): if a refactor relocated/removed it, the deny entry would be guarding
     // nothing and a reviewer should re-confirm the envelope still has one mint site.
-    const src = readFileSync(resolve(repoRoot, 'packages/core/src/validated-output.ts'), 'utf8');
+    const src = readFileSync(resolve(repoRoot, 'packages/core/src/evidence/validated-output.ts'), 'utf8');
     expect(src).toMatch(/export function mintValidated\b/);
   });
 });

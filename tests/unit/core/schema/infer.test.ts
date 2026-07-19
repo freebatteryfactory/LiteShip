@@ -13,7 +13,7 @@ import { S } from '../../../../packages/core/src/schema/constructors.js';
 import { isSchema } from '../../../../packages/core/src/schema/ast.js';
 import type { Infer, InferEncoded } from '../../../../packages/core/src/schema/infer.js';
 import type { IsOptional } from '../../../../packages/core/src/schema/ast.js';
-import { ContentAddress } from '../../../../packages/core/src/brands.js';
+import { ContentAddress } from '../../../../packages/core/src/schema/brands.js';
 
 type IsEqual<A, B> =
   (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2

@@ -8,7 +8,7 @@
 
 > **Priority** = `"critical"` \| `"high"` \| `"low"` \| `"idle"`
 
-Defined in: [core/src/frame-budget.ts:25](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/frame-budget.ts#L25)
+Defined in: [core/src/media/frame-budget.ts:25](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/frame-budget.ts#L25)
 
 Frame-budget priority lane in descending urgency. `critical` always runs;
 `high` / `low` / `idle` gate based on the milliseconds remaining in the

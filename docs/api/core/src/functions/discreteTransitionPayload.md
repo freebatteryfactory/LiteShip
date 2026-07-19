@@ -8,7 +8,7 @@
 
 > **discreteTransitionPayload**(`transition`): `Promise`\<`TypedRefShape`\>
 
-Defined in: [core/src/state-transition.ts:90](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-transition.ts#L90)
+Defined in: [core/src/motion/state-transition.ts:90](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/state-transition.ts#L90)
 
 The receipt PAYLOAD ref for a transition — a [TypedRef](../variables/TypedRef.md) over the crossing VALUE
 (`cell`/`previous`/`next`/`generation`/`authority`/`base`/`resultId`/`kind`). The SINGLE

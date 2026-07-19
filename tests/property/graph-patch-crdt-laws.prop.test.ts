@@ -2,7 +2,7 @@
  * Property test (L4) — the formal CRDT / strong-eventual-consistency laws of the
  * {@link GraphPatch} document-graph CRDT.
  *
- * GraphPatch (`packages/core/src/graph-patch.ts`) is the other half of the causal
+ * GraphPatch (`packages/core/src/graph/graph-patch.ts`) is the other half of the causal
  * trust spine: a tagged-delta mutation over the content-addressed
  * {@link DocumentGraph}. The sibling `tests/unit/core/graph-patch.test.ts` pins
  * the re-addressing, preview≡apply, remove round-trip and update-cell laws. This

@@ -8,7 +8,7 @@
 
 > **MotionTier** = `_MotionTier`
 
-Defined in: [core/src/ui-quality.ts:19](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ui-quality.ts#L19)
+Defined in: [core/src/evidence/ui-quality.ts:19](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/ui-quality.ts#L19)
 
 Motion tier — re-anchored from `@liteship/_spine` (the canonical declaration
 per ADR-0010). The ladder runs from lowest capability (`none`, forced by

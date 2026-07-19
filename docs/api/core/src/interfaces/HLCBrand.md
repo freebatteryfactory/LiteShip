@@ -6,7 +6,7 @@
 
 # Interface: HLCBrand
 
-Defined in: [core/src/brands.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/brands.ts#L63)
+Defined in: [core/src/schema/brands.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/brands.ts#L63)
 
 Hybrid Logical Clock
 
@@ -16,7 +16,7 @@ Hybrid Logical Clock
 
 > `readonly` **counter**: `number`
 
-Defined in: [core/src/brands.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/brands.ts#L65)
+Defined in: [core/src/schema/brands.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/brands.ts#L65)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [core/src/brands.ts:65](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **node\_id**: `string`
 
-Defined in: [core/src/brands.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/brands.ts#L66)
+Defined in: [core/src/schema/brands.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/brands.ts#L66)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [core/src/brands.ts:66](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **wall\_ms**: `number`
 
-Defined in: [core/src/brands.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/brands.ts#L64)
+Defined in: [core/src/schema/brands.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/brands.ts#L64)

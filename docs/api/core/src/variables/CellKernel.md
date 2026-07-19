@@ -8,7 +8,7 @@
 
 > `const` **CellKernel**: `object`
 
-Defined in: [core/src/cell-kernel.ts:470](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts#L470)
+Defined in: [core/src/reactive/cell-kernel.ts:470](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/cell-kernel.ts#L470)
 
 CellKernel — the replay-current / fan-out reactive substrate. `replay1` mirrors
 the compositor's replay-1 seam (current slot + replay-on-subscribe); `fanout`
@@ -32,7 +32,7 @@ Build a no-replay fan-out kernel. `policy` defaults to `{all}` (no dedup).
 
 ##### policy?
 
-[`EmissionPolicy`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts)\<`T`\> = `EMIT_ALL`
+[`EmissionPolicy`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/cell-kernel.ts)\<`T`\> = `EMIT_ALL`
 
 #### Returns
 
@@ -60,11 +60,11 @@ so `replay1(initial)` is byte-for-byte the compositor extraction target.
 
 ##### policy?
 
-[`EmissionPolicy`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts)\<`T`\> = `EMIT_ALL`
+[`EmissionPolicy`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/cell-kernel.ts)\<`T`\> = `EMIT_ALL`
 
 ##### reentrancy?
 
-[`ReentrancyPolicy`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts) = `'synchronous'`
+[`ReentrancyPolicy`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/cell-kernel.ts) = `'synchronous'`
 
 #### Returns
 

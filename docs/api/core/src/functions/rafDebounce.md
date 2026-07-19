@@ -8,7 +8,7 @@
 
 > **rafDebounce**(`callback`): [`RafDebouncedTrigger`](../interfaces/RafDebouncedTrigger.md)
 
-Defined in: [core/src/scheduler.ts:186](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/scheduler.ts#L186)
+Defined in: [core/src/reactive/scheduler.ts:186](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/scheduler.ts#L186)
 
 Coalesce a burst of calls into ONE `callback` run per animation frame — the
 rAF-throttle idiom every scroll/resize listener hand-rolled. Calling the returned

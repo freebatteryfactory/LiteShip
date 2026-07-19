@@ -6,7 +6,7 @@
 
 # Interface: RevealChainInput
 
-Defined in: [core/src/reveal.ts:353](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L353)
+Defined in: [core/src/motion/reveal.ts:353](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L353)
 
 Authoring input to [lowerRevealChain](../functions/lowerRevealChain.md) — a REAL multi-step chain on ONE
 target: a `seq` of steps, optionally followed by a `choice` (branches + an
@@ -19,7 +19,7 @@ drives, replacing the pre-W9 routing-label collapse (#141).
 
 > `readonly` `optional` **choice?**: `object`
 
-Defined in: [core/src/reveal.ts:357](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L357)
+Defined in: [core/src/motion/reveal.ts:357](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L357)
 
 #### branches
 
@@ -35,7 +35,7 @@ Defined in: [core/src/reveal.ts:357](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **policy**: [`RevealPolicy`](RevealPolicy.md)
 
-Defined in: [core/src/reveal.ts:358](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L358)
+Defined in: [core/src/motion/reveal.ts:358](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L358)
 
 ***
 
@@ -43,7 +43,7 @@ Defined in: [core/src/reveal.ts:358](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **steps**: readonly [`RevealChainStep`](RevealChainStep.md)[]
 
-Defined in: [core/src/reveal.ts:356](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L356)
+Defined in: [core/src/motion/reveal.ts:356](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L356)
 
 ***
 
@@ -51,7 +51,7 @@ Defined in: [core/src/reveal.ts:356](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **target**: `string`
 
-Defined in: [core/src/reveal.ts:354](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L354)
+Defined in: [core/src/motion/reveal.ts:354](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L354)
 
 ***
 
@@ -59,4 +59,4 @@ Defined in: [core/src/reveal.ts:354](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **trigger**: [`RevealTrigger`](../type-aliases/RevealTrigger.md)
 
-Defined in: [core/src/reveal.ts:355](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L355)
+Defined in: [core/src/motion/reveal.ts:355](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L355)

@@ -8,7 +8,7 @@
 
 > `const` **QUALITY\_TIER\_TARGETS**: readonly `ReadonlyArray`\<[`QualityTierTarget`](../type-aliases/QualityTierTarget.md)\>[]
 
-Defined in: [core/src/quality-tiers.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/quality-tiers.ts#L42)
+Defined in: [core/src/evidence/quality-tiers.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/quality-tiers.ts#L42)
 
 The admissible targets at each of the 5 quality tiers, lowest (index 0) to
 highest (index 4). Each tier is a NON-STRICT superset of the one below

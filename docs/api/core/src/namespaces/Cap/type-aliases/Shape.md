@@ -8,6 +8,6 @@
 
 > **Shape** = [`CapSet`](../../../interfaces/CapSet.md)
 
-Defined in: [core/src/caps.ts:121](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/caps.ts#L121)
+Defined in: [core/src/evidence/caps.ts:121](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/caps.ts#L121)
 
 Alias for [CapSet](../../../interfaces/CapSet.md).

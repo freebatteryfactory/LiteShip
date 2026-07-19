@@ -6,7 +6,7 @@
 
 # Interface: DiagnosticsSink
 
-Defined in: [core/src/diagnostics.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/diagnostics.ts#L36)
+Defined in: [core/src/evidence/diagnostics.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/diagnostics.ts#L36)
 
 Swappable transport that receives [DiagnosticEvent](DiagnosticEvent.md)s from [Diagnostics](../variables/Diagnostics.md).
 
@@ -16,7 +16,7 @@ Swappable transport that receives [DiagnosticEvent](DiagnosticEvent.md)s from [D
 
 > **emit**(`event`): `void`
 
-Defined in: [core/src/diagnostics.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/diagnostics.ts#L37)
+Defined in: [core/src/evidence/diagnostics.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/diagnostics.ts#L37)
 
 #### Parameters
 

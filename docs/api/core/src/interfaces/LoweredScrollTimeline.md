@@ -6,7 +6,7 @@
 
 # Interface: LoweredScrollTimeline
 
-Defined in: [core/src/scroll-timeline.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/scroll-timeline.ts#L51)
+Defined in: [core/src/motion/scroll-timeline.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/scroll-timeline.ts#L51)
 
 Graph bundle produced by [lowerScrollTimelineIntent](../functions/lowerScrollTimelineIntent.md).
 
@@ -16,7 +16,7 @@ Graph bundle produced by [lowerScrollTimelineIntent](../functions/lowerScrollTim
 
 > `readonly` **componentId**: `ContentAddress`
 
-Defined in: [core/src/scroll-timeline.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/scroll-timeline.ts#L55)
+Defined in: [core/src/motion/scroll-timeline.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/scroll-timeline.ts#L55)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [core/src/scroll-timeline.ts:55](https://github.com/freebatteryfacto
 
 > `readonly` **entityId**: `ContentAddress`
 
-Defined in: [core/src/scroll-timeline.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/scroll-timeline.ts#L56)
+Defined in: [core/src/motion/scroll-timeline.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/scroll-timeline.ts#L56)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [core/src/scroll-timeline.ts:56](https://github.com/freebatteryfacto
 
 > `readonly` **graph**: [`DocumentGraph`](DocumentGraph.md)
 
-Defined in: [core/src/scroll-timeline.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/scroll-timeline.ts#L52)
+Defined in: [core/src/motion/scroll-timeline.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/scroll-timeline.ts#L52)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [core/src/scroll-timeline.ts:52](https://github.com/freebatteryfacto
 
 > `readonly` **intent**: [`ScrollTimelineIntent`](ScrollTimelineIntent.md)
 
-Defined in: [core/src/scroll-timeline.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/scroll-timeline.ts#L53)
+Defined in: [core/src/motion/scroll-timeline.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/scroll-timeline.ts#L53)
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: [core/src/scroll-timeline.ts:53](https://github.com/freebatteryfacto
 
 > `readonly` **policyId**: `ContentAddress`
 
-Defined in: [core/src/scroll-timeline.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/scroll-timeline.ts#L57)
+Defined in: [core/src/motion/scroll-timeline.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/scroll-timeline.ts#L57)
 
 ***
 
@@ -56,7 +56,7 @@ Defined in: [core/src/scroll-timeline.ts:57](https://github.com/freebatteryfacto
 
 > `readonly` **projectionId**: `ContentAddress`
 
-Defined in: [core/src/scroll-timeline.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/scroll-timeline.ts#L58)
+Defined in: [core/src/motion/scroll-timeline.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/scroll-timeline.ts#L58)
 
 ***
 
@@ -64,4 +64,4 @@ Defined in: [core/src/scroll-timeline.ts:58](https://github.com/freebatteryfacto
 
 > `readonly` **transitionId**: `ContentAddress`
 
-Defined in: [core/src/scroll-timeline.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/scroll-timeline.ts#L54)
+Defined in: [core/src/motion/scroll-timeline.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/scroll-timeline.ts#L54)

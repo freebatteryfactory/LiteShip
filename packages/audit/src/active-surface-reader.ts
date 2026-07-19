@@ -31,7 +31,7 @@ interface EnrolledSurface {
 const TRANSITION_READER_FILES = [
   'packages/astro/src/runtime/graph-lower.ts',
   'packages/astro/src/runtime/graph-runtime.ts',
-  'packages/core/src/interpret-transition.ts',
+  'packages/core/src/motion/interpret-transition.ts',
 ] as const;
 
 /** Reader paths that MUST consume an active ExportNode when present. */
@@ -45,7 +45,7 @@ const ENROLLED_SURFACES: readonly EnrolledSurface[] = [
     family: 'transition',
     switchCaseLabel: 'transition',
     readerFiles: TRANSITION_READER_FILES,
-    dedicatedReaderFiles: new Set(['packages/core/src/interpret-transition.ts']),
+    dedicatedReaderFiles: new Set(['packages/core/src/motion/interpret-transition.ts']),
   },
   {
     family: 'export',

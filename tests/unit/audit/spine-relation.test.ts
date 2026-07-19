@@ -20,7 +20,7 @@ import { spineRelationGate } from '../../../packages/gauntlet/src/gates/spine-re
 import { memoryContext } from '../../../packages/gauntlet/src/engine.js';
 import { verifyGate } from '../../../packages/gauntlet/src/authority.js';
 import type { Finding } from '../../../packages/gauntlet/src/finding.js';
-import type { SpineRelationFacts } from '../../../packages/gauntlet/src/spine-relation-facts.js';
+import type { SpineRelationFacts } from '../../../packages/gauntlet/src/facts/spine-relation-facts.js';
 import { LITESHIP_SPINE_ADMISSIONS } from '../../../packages/cli/src/lib/spine-relation-policy.js';
 import { scaledTimeout } from '../../../vitest.shared.js';
 

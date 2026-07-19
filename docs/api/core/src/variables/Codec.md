@@ -8,7 +8,7 @@
 
 > `const` **Codec**: `object`
 
-Defined in: [core/src/codec.ts:46](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/codec.ts#L46)
+Defined in: [core/src/schema/codec.ts:46](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/codec.ts#L46)
 
 Codec — typed sync encode/decode wrapper over a kernel [Schema](../interfaces/Schema.md). Gives a
 single call site for schema-driven validation so consumers don't reach for the

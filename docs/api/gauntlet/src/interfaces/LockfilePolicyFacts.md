@@ -6,7 +6,7 @@
 
 # Interface: LockfilePolicyFacts
 
-Defined in: [gauntlet/src/supply-chain-facts.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/supply-chain-facts.ts#L59)
+Defined in: [gauntlet/src/facts/supply-chain-facts.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/supply-chain-facts.ts#L59)
 
 Lockfile-policy facts — the four hermeticity laws over pnpm-lock.yaml.
 
@@ -16,7 +16,7 @@ Lockfile-policy facts — the four hermeticity laws over pnpm-lock.yaml.
 
 > `readonly` **lockfileVersion**: `string`
 
-Defined in: [gauntlet/src/supply-chain-facts.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/supply-chain-facts.ts#L61)
+Defined in: [gauntlet/src/facts/supply-chain-facts.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/supply-chain-facts.ts#L61)
 
 The lockfile's declared `lockfileVersion` (e.g. `9.0`).
 
@@ -26,7 +26,7 @@ The lockfile's declared `lockfileVersion` (e.g. `9.0`).
 
 > `readonly` **packageCount**: `number`
 
-Defined in: [gauntlet/src/supply-chain-facts.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/supply-chain-facts.ts#L63)
+Defined in: [gauntlet/src/facts/supply-chain-facts.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/supply-chain-facts.ts#L63)
 
 Total resolved registry units the lockfile pins.
 
@@ -36,6 +36,6 @@ Total resolved registry units the lockfile pins.
 
 > `readonly` **violations**: readonly [`SupplyChainViolation`](SupplyChainViolation.md)[]
 
-Defined in: [gauntlet/src/supply-chain-facts.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/supply-chain-facts.ts#L65)
+Defined in: [gauntlet/src/facts/supply-chain-facts.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/supply-chain-facts.ts#L65)
 
 Every decided policy violation. EMPTY ⇒ the lockfile is policy-clean.

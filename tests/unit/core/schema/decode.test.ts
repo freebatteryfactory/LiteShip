@@ -16,7 +16,7 @@ import { hasTag } from '@liteship/error';
 import { S } from '../../../../packages/core/src/schema/constructors.js';
 import { decode, decodeLenient, parseErrorFromIssues } from '../../../../packages/core/src/schema/decode.js';
 import type { DecodeIssue, DecodeResult } from '../../../../packages/core/src/schema/decode.js';
-import { ContentAddress } from '../../../../packages/core/src/brands.js';
+import { ContentAddress } from '../../../../packages/core/src/schema/brands.js';
 
 function issuesOf(result: DecodeResult<unknown>): readonly DecodeIssue[] {
   if (result.ok) throw new Error('expected a failed decode');

@@ -34,7 +34,7 @@ import {
 } from '@liteship/gauntlet';
 import { isTaggedError } from '@liteship/error';
 
-const L4_FILE = 'packages/core/src/brands.ts'; // an L4 glob in the assurance map
+const L4_FILE = 'packages/core/src/schema/brands.ts'; // an L4 glob in the assurance map
 const L1_FILE = 'packages/x/src/a.ts'; // an ordinary L1 file
 const HELPER = 'packages/x/src/helper.ts'; // a helper imported by the L4 file
 

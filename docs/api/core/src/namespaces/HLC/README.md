@@ -10,7 +10,7 @@ HLC namespace -- Hybrid Logical Clock.
 
 Pure functions for creating, comparing, incrementing, and merging HLC
 timestamps, plus a plain (Effect-free) managed-clock factory
-([makeClock](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/hlc.ts) → an [HLCClock](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/hlc.ts) handle with `tick`/`receive`/`current`).
+([makeClock](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/clock/hlc.ts) → an [HLCClock](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/clock/hlc.ts) handle with `tick`/`receive`/`current`).
 Encodes to/from a deterministic colon-separated hex string format.
 
 ## Example

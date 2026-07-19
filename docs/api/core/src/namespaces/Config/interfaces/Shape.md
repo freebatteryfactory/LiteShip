@@ -6,7 +6,7 @@
 
 # Interface: Shape
 
-Defined in: [core/src/config.ts:154](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/config.ts#L154)
+Defined in: [core/src/authoring/config.ts:154](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L154)
 
 Frozen, content-addressed result of [Config.make](../../../variables/Config.md#make).
 
@@ -16,7 +16,7 @@ Frozen, content-addressed result of [Config.make](../../../variables/Config.md#m
 
 > `readonly` **\_tag**: `"ConfigDef"`
 
-Defined in: [core/src/config.ts:155](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/config.ts#L155)
+Defined in: [core/src/authoring/config.ts:155](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L155)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [core/src/config.ts:155](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` `optional` **astro?**: `Partial`\<[`CoreAstroConfig`](../../../interfaces/CoreAstroConfig.md)\>
 
-Defined in: [core/src/config.ts:162](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/config.ts#L162)
+Defined in: [core/src/authoring/config.ts:162](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L162)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [core/src/config.ts:162](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **boundaries**: `Record`\<`string`, [`Shape`](../../Boundary/type-aliases/Shape.md)\>
 
-Defined in: [core/src/config.ts:157](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/config.ts#L157)
+Defined in: [core/src/authoring/config.ts:157](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L157)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [core/src/config.ts:157](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **id**: `ContentAddress`
 
-Defined in: [core/src/config.ts:156](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/config.ts#L156)
+Defined in: [core/src/authoring/config.ts:156](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L156)
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: [core/src/config.ts:156](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **styles**: `Record`\<`string`, [`Shape`](../../Style/type-aliases/Shape.md)\>
 
-Defined in: [core/src/config.ts:160](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/config.ts#L160)
+Defined in: [core/src/authoring/config.ts:160](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L160)
 
 ***
 
@@ -56,7 +56,7 @@ Defined in: [core/src/config.ts:160](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **themes**: `Record`\<`string`, [`Shape`](../../Theme/type-aliases/Shape.md)\>
 
-Defined in: [core/src/config.ts:159](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/config.ts#L159)
+Defined in: [core/src/authoring/config.ts:159](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L159)
 
 ***
 
@@ -64,7 +64,7 @@ Defined in: [core/src/config.ts:159](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **tokens**: `Record`\<`string`, [`Shape`](../../Token/type-aliases/Shape.md)\>
 
-Defined in: [core/src/config.ts:158](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/config.ts#L158)
+Defined in: [core/src/authoring/config.ts:158](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L158)
 
 ***
 
@@ -72,4 +72,4 @@ Defined in: [core/src/config.ts:158](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` `optional` **vite?**: `Partial`\<[`CorePluginConfig`](../../../interfaces/CorePluginConfig.md)\>
 
-Defined in: [core/src/config.ts:161](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/config.ts#L161)
+Defined in: [core/src/authoring/config.ts:161](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L161)
