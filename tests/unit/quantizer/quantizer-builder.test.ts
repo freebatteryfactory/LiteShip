@@ -780,3 +780,35 @@ describe('Q live handle — disposal closes every channel despite a throwing com
     expect(quantizer.changes.closed).toBe(true);
   });
 });
+
+// ---------------------------------------------------------------------------
+// evaluate() publishes state + outputs + crossing as ONE consistent advance
+// ---------------------------------------------------------------------------
+
+describe('Q live handle — evaluate advances every channel despite a throwing subscriber', () => {
+  test('a throwing state subscriber does not strand the outputs/crossing channels', () => {
+    const b = viewport();
+    const { quantizer } = Q.from(b).outputs(simpleOutputs(b)).create();
+
+    // A state subscriber that throws on the CROSSING delivery (its initial replay of
+    // the current state does not cross, so the throw fires only on the evaluate below).
+    let stateDeliveries = 0;
+    quantizer.state.subscribe({
+      next: () => {
+        stateDeliveries += 1;
+        if (stateDeliveries > 1) throw new Error('boom');
+      },
+    });
+    const crossings: unknown[] = [];
+    quantizer.changes.subscribe((c) => crossings.push(c));
+    const outputs: unknown[] = [];
+    quantizer.outputChanges.subscribe(() => outputs.push(1));
+
+    // Evaluate across a threshold → a crossing. The state subscriber throws (the
+    // kernel fan-out is fail-fast), but the fault must NOT strand the later channels:
+    // outputs + crossing still advance, THEN the first fault rethrows.
+    expect(() => quantizer.evaluate(2000)).toThrow('boom');
+    expect(crossings).toHaveLength(1); // the crossing STILL reached `changes`
+    expect(outputs.length).toBeGreaterThanOrEqual(2); // outputs advanced beyond its initial replay
+  });
+});
