@@ -2,9 +2,9 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / RungChoice
+[LiteShip](../../../modules.md) / [core/src](../README.md) / TierChoice
 
-# Interface: RungChoice
+# Interface: TierChoice
 
 Defined in: [core/src/escalation.ts:118](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/escalation.ts#L118)
 
@@ -18,13 +18,13 @@ The successful chooser verdict.
 
 Defined in: [core/src/escalation.ts:122](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/escalation.ts#L122)
 
-The projection targets that rung admits, intersected with the rung's table.
+The projection targets that tier admits, intersected with the tier's table.
 
 ***
 
-### rung
+### tier
 
-> `readonly` **rung**: [`CapTier`](../type-aliases/CapTier.md)
+> `readonly` **tier**: [`CapTier`](../type-aliases/CapTier.md)
 
 Defined in: [core/src/escalation.ts:120](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/escalation.ts#L120)
 

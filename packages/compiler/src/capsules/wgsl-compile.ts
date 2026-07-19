@@ -178,7 +178,7 @@ export const wgslCompileCapsule = defineCapsule({
       check: (_input: unknown, output: unknown): boolean => {
         const o = output as WGSLCompileOutput;
         // All authored values are integers (the Number arbitrary mints
-        // integers), so f32 never appears here; the i32>u32 rung is exercised by
+        // integers), so f32 never appears here; the i32>u32 tier is exercised by
         // negative values. Pin the exact promotion: a field carrying any
         // negative value is i32, otherwise u32. (Float→f32 is unit-tested
         // separately since the arbitrary domain is integer-only.)

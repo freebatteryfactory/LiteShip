@@ -10,5 +10,5 @@
 
 Defined in: [core/src/caps.ts:13](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/caps.ts#L13)
 
-Rung on the rendering-capability ladder. Higher levels imply lower ones:
+Tier on the rendering-capability quality-tier scale. Higher levels imply lower ones:
 `gpu > animated > reactive > styled > static`.

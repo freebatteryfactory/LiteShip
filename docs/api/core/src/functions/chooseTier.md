@@ -2,18 +2,18 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / chooseRung
+[LiteShip](../../../modules.md) / [core/src](../README.md) / chooseTier
 
-# Function: chooseRung()
+# Function: chooseTier()
 
-> **chooseRung**(`policy`, `runtimeSite`): [`EscalationResult`](../type-aliases/EscalationResult.md)
+> **chooseTier**(`policy`, `runtimeSite`): [`EscalationResult`](../type-aliases/EscalationResult.md)
 
 Defined in: [core/src/escalation.ts:141](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/escalation.ts#L141)
 
-Choose the minimal capability rung a [PolicyNode](../interfaces/PolicyNode.md) admits on a runtime site.
+Choose the minimal capability tier a [PolicyNode](../interfaces/PolicyNode.md) admits on a runtime site.
 
-Returns `{ rung, admittedTargets }` on success, or `{ error }` if the site is
-not in `policy.sites` or no rung at or below `policy.requires` clears the
+Returns `{ tier, admittedTargets }` on success, or `{ error }` if the site is
+not in `policy.sites` or no tier at or below `policy.requires` clears the
 budgets/grants. Memoized by `policy.id + runtimeSite` (a policy id is its
 `fnv1a` content address, so equal inputs return a stable reference).
 

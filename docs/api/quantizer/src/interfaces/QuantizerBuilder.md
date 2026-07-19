@@ -35,7 +35,7 @@ Force-enable specific targets regardless of the current tier's gating set.
 
 ##### targets
 
-...[`LadderTarget`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/LadderTarget.md)[]
+...[`QualityTierTarget`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/QualityTierTarget.md)[]
 
 #### Returns
 

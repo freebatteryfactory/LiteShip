@@ -360,18 +360,18 @@ function renderEscalation(body: HTMLElement, active: readonly ActiveTarget[]): v
   const targets = active.map((a) => a.target);
   const view = escalationViewForTargets(targets, 'browser');
 
-  const rungLine = document.createElement('div');
-  rungLine.className = 'esc-line';
-  if (view.chosenRung) {
+  const tierLine = document.createElement('div');
+  tierLine.className = 'esc-line';
+  if (view.chosenTier) {
     assignInspectorHtml(
-      rungLine,
-      `rung: <span class="esc-rung">${escapeInspectorText(view.chosenRung)}</span> ` +
-        `<span class="cast-evidence">(requires ${escapeInspectorText(view.requiredRung)})</span>`,
+      tierLine,
+      `tier: <span class="esc-tier">${escapeInspectorText(view.chosenTier)}</span> ` +
+        `<span class="cast-evidence">(requires ${escapeInspectorText(view.requiredTier)})</span>`,
     );
   } else {
-    assignInspectorHtml(rungLine, `rung: <span class="esc-rung-err">unsatisfiable</span>`);
+    assignInspectorHtml(tierLine, `tier: <span class="esc-tier-err">unsatisfiable</span>`);
   }
-  body.appendChild(rungLine);
+  body.appendChild(tierLine);
 
   if (view.admittedTargets.length > 0) {
     const admitted = document.createElement('div');

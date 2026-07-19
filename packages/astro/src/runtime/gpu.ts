@@ -211,7 +211,7 @@ function createProgram(
  * @param el - Satellite element carrying the shader attributes.
  * @param opts - Directive value. `{ force: true }` (or a
  *   `data-liteship-gpu-force` attribute) boots the shader even when the resolved
- *   perf-tier is below the GPU rung — the escape hatch for headless/CI
+ *   perf-tier is below the GPU tier — the escape hatch for headless/CI
  *   (SwiftShader reports gpuTier 0 yet WebGL2 works) and real low-tier-but-
  *   capable devices. It only bypasses the *heuristic* gate; the actual
  *   `getContext('webgl2')` / WebGPU probe still guards real capability and

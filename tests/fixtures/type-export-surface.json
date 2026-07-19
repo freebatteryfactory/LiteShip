@@ -2639,10 +2639,6 @@
           "kind": "type"
         },
         {
-          "name": "LadderTarget",
-          "kind": "type"
-        },
-        {
           "name": "Lifetime",
           "kind": "namespace"
         },
@@ -2835,6 +2831,10 @@
           "kind": "type"
         },
         {
+          "name": "QualityTierTarget",
+          "kind": "type"
+        },
+        {
           "name": "Quantizer",
           "kind": "type"
         },
@@ -2964,10 +2964,6 @@
         },
         {
           "name": "Rng",
-          "kind": "type"
-        },
-        {
-          "name": "RungChoice",
           "kind": "type"
         },
         {
@@ -3160,6 +3156,10 @@
         },
         {
           "name": "ThresholdValue",
+          "kind": "type"
+        },
+        {
+          "name": "TierChoice",
           "kind": "type"
         },
         {
@@ -4643,7 +4643,7 @@
           "kind": "type"
         },
         {
-          "name": "DpuRung",
+          "name": "DpuTier",
           "kind": "type"
         },
         {

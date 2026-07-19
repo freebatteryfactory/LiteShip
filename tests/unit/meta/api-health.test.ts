@@ -317,13 +317,13 @@ const STANDALONE_FUNCTIONS = [
   // proposal validator and the @liteship/astro runtime graph loader (0.4.0 item B).
   'isWellFormedNode',
   // Escalation chooser (P5c): the reader of PolicyNode — picks the minimal
-  // CapTier rung a policy admits on a runtime site.
-  'chooseRung',
+  // CapTier quality tier a policy admits on a runtime site.
+  'chooseTier',
   // Capability-admissibility ladder projector (cap-axes rename): projects the
-  // single index-keyed `LADDER_TARGETS` ladder onto a vocabulary's rung order.
-  // The core escalation `RUNG_TARGETS` (CapTier) and the quantizer's
+  // single index-keyed `QUALITY_TIER_TARGETS` scale onto a vocabulary's tier order.
+  // The core escalation `TIER_TARGET_SETS` (CapTier) and the quantizer's
   // `TIER_TARGETS` (MotionTier) both derive from it, so the two cannot drift.
-  'projectLadder',
+  'projectQualityTiers',
   // AI cast validated-output envelope (the shared discipline for GraphPatch AND
   // genui GeneratedUITree proposals). `mintValidated` (the sole token mint site)
   // is intentionally NOT exported, so the envelope stays un-forgeable. These are
@@ -439,9 +439,9 @@ const STANDALONE_OBJECTS = [
   // →re-encode holds under the content-addressed multiset law.
   'graphPatchIdentityCapsule',
   // Escalation chooser capsule: the FIRST policyGate instance (ADR-0008). Locks
-  // chooseRung's allow/deny + reason-chain + minimal-downgrade / site-gate laws as
+  // chooseTier's allow/deny + reason-chain + minimal-downgrade / site-gate laws as
   // a standing policyGate contract — the canonical permission/authz check.
-  'escalationChooseRungCapsule',
+  'escalationChooseTierCapsule',
   // DocumentGraph addressing capsule: locks addressDocumentGraph's determinism /
   // fnv1a format / order-independence (CUT B1 code-unit guard).
   'documentGraphAddressCapsule',
@@ -490,11 +490,11 @@ const DEFAULT_CONSTANTS = [
   'EVALUATE_THRESHOLDS_SOURCE',
   // Worker-blob twin of projectionKeys as an inlinable JS source string (Phase-1).
   'PROJECTION_KEYS_SOURCE',
-  // The single index-keyed capability-admissibility ladder + its rung count, the
-  // shared source `RUNG_TARGETS` (CapTier) and `TIER_TARGETS` (MotionTier) both
-  // project from via `projectLadder` (cap-axes rename).
-  'LADDER_TARGETS',
-  'LADDER_RUNGS',
+  // The single index-keyed capability-admissibility quality-tier scale + its tier count, the
+  // shared source `TIER_TARGET_SETS` (CapTier) and `TIER_TARGETS` (MotionTier) both
+  // project from via `projectQualityTiers` (cap-axes rename).
+  'QUALITY_TIER_TARGETS',
+  'QUALITY_TIER_COUNT',
   // The ONE spring config the CSS `linear()` path and the JS floor default to (#126, Law 4).
   'DEFAULT_MOTION_SPRING',
 ];

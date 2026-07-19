@@ -32,11 +32,11 @@ Escalation gate: resolve the [PolicyNode](PolicyNode.md) (if any) that governs a
 projection, keyed by the quantizer's compositor registry name (the same
 `name` passed to `add()` — the compositor knows names, not graph projection
 ids, so a host wiring graph projections maps id → name here). When a policy applies, the compositor
-computes `chooseRung(policy, runtimeSite)` at `add` time and emits ONLY the
-targets that rung admits (`admittedTargets`). A projection with NO matching
+computes `chooseTier(policy, runtimeSite)` at `add` time and emits ONLY the
+targets that tier admits (`admittedTargets`). A projection with NO matching
 policy is pass-through (all targets emit). A policy that matches but admits
-no rung (the `{ error }` branch — site not admitted, or budgets/grants
-exhaust every rung) DENIES every target for that projection: a constraint
+no tier (the `{ error }` branch — site not admitted, or budgets/grants
+exhaust every tier) DENIES every target for that projection: a constraint
 that cannot be satisfied must not silently emit at full capability.
 
 #### Parameters

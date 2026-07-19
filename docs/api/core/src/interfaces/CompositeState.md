@@ -16,7 +16,7 @@ maps (`css` / `glsl` / `wgsl` / `aria`).
 quantizer's bare snake_case projection key). D0 carries the channel through
 the state shape, the pool, and the worker emit; D1-WGSL adds the live
 `emit-wgsl` runtime phase (below) that populates it from the state index,
-escalation-gated on the `wgsl` target (admitted only at the `gpu` rung).
+escalation-gated on the `wgsl` target (admitted only at the `gpu` tier).
 
 ## Properties
 

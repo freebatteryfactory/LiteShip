@@ -16,7 +16,7 @@ import {
   formatGraphNodeRow,
   readBoundaryPayload,
   readInjectedPayload,
-  requiredRungForTargets,
+  requiredTierForTargets,
   shortContentAddress,
   type CastTarget,
   type ElementCastSnapshot,
@@ -104,32 +104,32 @@ describe('formatCastValueRow / castValueRows', () => {
   });
 });
 
-describe('requiredRungForTargets', () => {
-  test('maps targets to the minimal admitting rung (monotone ladder)', () => {
-    expect(requiredRungForTargets([])).toBe('static');
-    expect(requiredRungForTargets(['aria'])).toBe('static');
-    expect(requiredRungForTargets(['css'])).toBe('styled');
-    expect(requiredRungForTargets(['svg'])).toBe('styled');
-    expect(requiredRungForTargets(['glsl'])).toBe('animated');
-    expect(requiredRungForTargets(['wgsl'])).toBe('gpu');
-    // The required rung is the MAX over targets.
-    expect(requiredRungForTargets(['aria', 'css', 'wgsl'])).toBe('gpu');
+describe('requiredTierForTargets', () => {
+  test('maps targets to the minimal admitting tier (monotone scale)', () => {
+    expect(requiredTierForTargets([])).toBe('static');
+    expect(requiredTierForTargets(['aria'])).toBe('static');
+    expect(requiredTierForTargets(['css'])).toBe('styled');
+    expect(requiredTierForTargets(['svg'])).toBe('styled');
+    expect(requiredTierForTargets(['glsl'])).toBe('animated');
+    expect(requiredTierForTargets(['wgsl'])).toBe('gpu');
+    // The required tier is the MAX over targets.
+    expect(requiredTierForTargets(['aria', 'css', 'wgsl'])).toBe('gpu');
   });
 });
 
-describe('escalationViewForTargets (real chooseRung)', () => {
-  test('a glsl boundary chooses the animated rung and admits glsl', () => {
+describe('escalationViewForTargets (real chooseTier)', () => {
+  test('a glsl boundary chooses the animated tier and admits glsl', () => {
     const view = escalationViewForTargets(['glsl'], 'browser');
-    expect(view.requiredRung).toBe('animated');
-    expect(view.chosenRung).toBe('animated');
+    expect(view.requiredTier).toBe('animated');
+    expect(view.chosenTier).toBe('animated');
     expect(view.admittedTargets).toContain('glsl');
     expect(view.admittedTargets).toContain('css');
-    expect(view.reason).toContain("admits rung 'animated'");
+    expect(view.reason).toContain("admits tier 'animated'");
   });
 
   test('an aria-only boundary chooses static and admits aria', () => {
     const view = escalationViewForTargets(['aria'], 'browser');
-    expect(view.chosenRung).toBe('static');
+    expect(view.chosenTier).toBe('static');
     expect(view.admittedTargets).toEqual(['aria']);
   });
 });

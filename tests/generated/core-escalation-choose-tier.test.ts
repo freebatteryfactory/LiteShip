@@ -3,11 +3,11 @@ import { describe, it, expect } from 'vitest';
 import * as fc from 'fast-check';
 import { decode } from '../../packages/core/src/schema/index.js';
 import type { Schema } from '../../packages/core/src/schema/index.js';
-import { escalationChooseRungCapsule } from '../../packages/core/src/capsules/escalation-choose-rung.js';
+import { escalationChooseTierCapsule } from '../../packages/core/src/capsules/escalation-choose-tier.js';
 import { schemaToArbitrary } from '../../packages/core/src/harness/arbitrary-from-schema.js';
 
-describe('core.escalation.choose-rung', () => {
-  const cap = escalationChooseRungCapsule as {
+describe('core.escalation.choose-tier', () => {
+  const cap = escalationChooseTierCapsule as {
     input: Schema<unknown>;
     output: Schema<unknown>;
     decide?: (subject: unknown) => { effect: 'allow' | 'deny'; reasons: ReadonlyArray<{ code: string; message: string }> };

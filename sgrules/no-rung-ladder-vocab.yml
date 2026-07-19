@@ -1,0 +1,27 @@
+# Locks in the P3 rung/ladder → quality-tier rename.
+#
+# The escalation vocabulary was retired: `chooseRung`→`chooseTier`,
+# `RungChoice`→`TierChoice`, `RUNG_TARGETS`→`TIER_TARGET_SETS`,
+# `LADDER_TARGETS`→`QUALITY_TIER_TARGETS`, `LADDER_RUNGS`→`QUALITY_TIER_COUNT`,
+# `projectLadder`→`projectQualityTiers`, `LadderTarget`→`QualityTierTarget`, and
+# `cap-ladder.ts`→`quality-tiers.ts`. This rule flags any NEW identifier that
+# reintroduces the dead vocabulary (chooseRung / rungTargets / LADDER_* / RUNG_* /
+# *Rung* / *Ladder*) anywhere under a package's `src/`, so the rename cannot rot.
+#
+# Scoped to IDENTIFIER nodes only (not comments/strings) so honest prose that
+# still says "ladder" for an unrelated subsystem (e.g. the gauntlet L4 assurance
+# ladder) never trips. Passes clean on the post-rename tree.
+id: no-rung-ladder-vocab
+language: typescript
+severity: error
+message: "Retired rung/ladder escalation vocabulary — use the quality-tier names (chooseTier, TierChoice, TIER_TARGET_SETS, QUALITY_TIER_TARGETS, QUALITY_TIER_COUNT, projectQualityTiers, QualityTierTarget). See the P3 rename."
+files:
+  - "**/packages/*/src/**"
+rule:
+  any:
+    - kind: identifier
+      regex: "chooseRung|rungTargets|LADDER_|RUNG_|Rung|Ladder"
+    - kind: type_identifier
+      regex: "Rung|Ladder"
+    - kind: property_identifier
+      regex: "chooseRung|rungTargets|LADDER_|RUNG_|Rung|Ladder"

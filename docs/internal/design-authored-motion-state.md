@@ -43,7 +43,7 @@ snaps non-numeric values at 50%. No color / unit / transform interpolation.
 |---|---|---|
 | `ProjectionNode.target` (output surface) | `css, glsl, wgsl, aria, ai, config, svg` | `document-graph.ts:104` |
 | `ExportNode.carrier` (produced artifact) | `astro-page, video, svg, ship-capsule, receipt` | `document-graph.ts:133` |
-| `LadderTarget` (capability rung) | `css, glsl, wgsl, aria, ai` | `cap-ladder.ts:29` |
+| `QualityTierTarget` (quality tier) | `css, glsl, wgsl, aria, ai` | `quality-tiers.ts:29` |
 | `RuntimePhase` (execution lane) | `compute-discrete, compute-blend, emit-css/glsl/wgsl/aria` | `runtime-coordinator.ts:23` |
 
 `motion` / `html` / `runtime` / `dom` appear in **none** of them. `video` is a
@@ -65,7 +65,7 @@ MotionIntent  (authored)  lowers into ->
   5. Adapter plan    (opt.)   — Motion/GSAP/user backend, LATER, only when CSS+runtime cannot express it
 ```
 
-Consequences: **no change** to `ProjectionNode.target`, `LadderTarget`, or
+Consequences: **no change** to `ProjectionNode.target`, `QualityTierTarget`, or
 `RuntimePhase`. The runtime write plan rides the existing continuous-writer law
 (leaf write, never a per-frame patch). This keeps the taxonomy clean and is the
 whole content of the Step-0 ADR.

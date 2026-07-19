@@ -7,7 +7,7 @@
  */
 
 /**
- * Rung on the rendering-capability ladder. Higher levels imply lower ones:
+ * Tier on the rendering-capability quality-tier scale. Higher levels imply lower ones:
  * `gpu > animated > reactive > styled > static`.
  */
 export type CapTier = 'static' | 'styled' | 'reactive' | 'animated' | 'gpu';

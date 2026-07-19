@@ -368,19 +368,19 @@ export { Store } from './store.js';
 export type { CapTier, CapSet } from './caps.js';
 export { Cap } from './caps.js';
 
-// Capability-admissibility ladder — the SINGLE index-keyed source both the core
-// escalation chooser's `RUNG_TARGETS` (CapTier-keyed) and the quantizer's
+// Capability-admissibility quality-tier scale — the SINGLE index-keyed source both
+// the core escalation chooser's `TIER_TARGET_SETS` (CapTier-keyed) and the quantizer's
 // `TIER_TARGETS` (MotionTier-keyed) project from, so the two cannot drift.
-export { LADDER_TARGETS, LADDER_RUNGS, projectLadder } from './cap-ladder.js';
-export type { LadderTarget } from './cap-ladder.js';
+export { QUALITY_TIER_TARGETS, QUALITY_TIER_COUNT, projectQualityTiers } from './quality-tiers.js';
+export type { QualityTierTarget } from './quality-tiers.js';
 
 // Escalation chooser (P5c) — the READER of PolicyNode (P2). Picks the minimal
-// CapTier rung a policy admits on a runtime site, gated by site/budgets/grants
+// CapTier quality tier a policy admits on a runtime site, gated by site/budgets/grants
 // and the CapTier↔target admissibility table projected from the shared
-// `cap-ladder.ts` ladder (no quantizer import — that would close a
-// core→quantizer cycle; both project the same ladder instead).
-export { chooseRung } from './escalation.js';
-export type { RungChoice, EscalationResult } from './escalation.js';
+// `quality-tiers.ts` scale (no quantizer import — that would close a
+// core→quantizer cycle; both project the same scale instead).
+export { chooseTier } from './escalation.js';
+export type { TierChoice, EscalationResult } from './escalation.js';
 
 // HLC
 export { HLC } from './hlc.js';
@@ -656,11 +656,11 @@ export { canonicalCborDecodeCapsule } from './capsules/canonical-cbor-decode.js'
 // registers in the live `getCapsuleCatalog()` (the contract the future graph
 // editor builds against).
 export { graphPatchIdentityCapsule } from './capsules/graph-patch-identity.js';
-// The escalation chooser capsule — locks `chooseRung`'s minimal-downgrade law
+// The escalation chooser capsule — locks `chooseTier`'s minimal-downgrade law
 // (never escalates above `requires`), the site gate, determinism, and the
 // fresh-Set memoization scar as a standing pureTransform contract. Exported here
 // so it registers in the live `getCapsuleCatalog()`.
-export { escalationChooseRungCapsule } from './capsules/escalation-choose-rung.js';
+export { escalationChooseTierCapsule } from './capsules/escalation-choose-tier.js';
 // The DocumentGraph addressing capsule — locks `addressDocumentGraph`'s
 // determinism, fnv1a format, and order-independence (the CUT B1 code-unit
 // regression guard) as a standing pureTransform contract. Exported here so it

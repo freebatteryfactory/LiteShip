@@ -1,8 +1,8 @@
 /**
- * Compositor escalation gate (E) -- chooseRung wired into the emit phase.
+ * Compositor escalation gate (E) -- chooseTier wired into the emit phase.
  *
  * Proves that a budget-constrained `PolicyNode` resolved via `getPolicy`
- * downgrades the rung and drops the targets that rung no longer admits (e.g. a
+ * downgrades the tier and drops the targets that tier no longer admits (e.g. a
  * tight `budgets.p95Ms` strips `glsl`, leaving `css`/`aria`), that a permissive
  * policy admits all targets, that an absent policy is pass-through, and that the
  * `{ error }` branch (site not admitted) denies every target for that projection.
@@ -42,7 +42,7 @@ const META: CellMeta = {
   version: 1,
 };
 
-/** Grant every rung up to and including `top` so `requires` is always reachable. */
+/** Grant every tier up to and including `top` so `requires` is always reachable. */
 const grantUpTo = (top: CapTier): CapSet => {
   const ALL: readonly CapTier[] = ['static', 'styled', 'reactive', 'animated', 'gpu'];
   return Cap.from(ALL.filter((l) => Cap.ordinal(l) <= Cap.ordinal(top)));
@@ -79,15 +79,15 @@ describe('Compositor escalation gate (E)', () => {
     compositor.add('layout', makeQuantizer(widthBoundary, 'mobile'));
     const state = compositor.compute();
 
-    // animated rung admits css/glsl/aria → every channel emits.
+    // animated tier admits css/glsl/aria → every channel emits.
     expect(state.outputs.css['--liteship-layout']).toBe('mobile');
     expect(state.outputs.glsl['u_layout']).toBe(0);
     expect(state.outputs.aria['data-liteship-layout']).toBe('mobile');
   });
 
-  test('tight p95 budget downgrades the rung and drops glsl, keeping css/aria', () => {
+  test('tight p95 budget downgrades the tier and drops glsl, keeping css/aria', () => {
     // requires gpu/animated (glsl-admitting) but a 5ms p95 only affords the
-    // reactive rung, whose admissible targets are css/aria (no glsl).
+    // reactive tier, whose admissible targets are css/aria (no glsl).
     const p = policy({
       requires: 'animated',
       grants: grantUpTo('animated'),
@@ -101,7 +101,7 @@ describe('Compositor escalation gate (E)', () => {
     compositor.add('layout', makeQuantizer(widthBoundary, 'mobile'));
     const state = compositor.compute();
 
-    // css + aria survive; glsl is dropped by the downgraded rung.
+    // css + aria survive; glsl is dropped by the downgraded tier.
     expect(state.outputs.css['--liteship-layout']).toBe('mobile');
     expect(state.outputs.aria['data-liteship-layout']).toBe('mobile');
     expect(state.outputs.glsl['u_layout']).toBeUndefined();
@@ -123,7 +123,7 @@ describe('Compositor escalation gate (E)', () => {
 
   test('unsatisfiable policy ({error} branch: site not admitted) denies every target', () => {
     // Policy admits only 'browser'; the compositor evaluates against 'node' →
-    // chooseRung returns { error } → deny-all for that projection.
+    // chooseTier returns { error } → deny-all for that projection.
     const p = policy({ requires: 'animated', grants: grantUpTo('animated'), sites: ['browser'] });
     const { compositor } = Compositor.create({
       runtimeSite: 'node',

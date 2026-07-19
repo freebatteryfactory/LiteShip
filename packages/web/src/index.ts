@@ -90,7 +90,7 @@ export {
   DPU_DIGEST_ATTR,
 } from './dpu/watch-and-prepare.js';
 export type {
-  DpuRung,
+  DpuTier,
   DpuCapability,
   VerifiablePatchEnvelope,
   VerifiablePatchVerification,

@@ -20,7 +20,7 @@ import type {
   Clock,
 } from '@liteship/core';
 import { HLC, CellKernel, Lifetime } from '@liteship/core';
-import type { MotionTier, LadderTarget } from '@liteship/core';
+import type { MotionTier, QualityTierTarget } from '@liteship/core';
 import {
   StateName as mkStateName,
   CanonicalCbor,
@@ -28,7 +28,7 @@ import {
   Easing,
   fnv1aBytes,
   wallClock,
-  projectLadder,
+  projectQualityTiers,
 } from '@liteship/core';
 import { ValidationError } from '@liteship/error';
 import { evaluate } from './evaluate.js';
@@ -60,11 +60,11 @@ function firstState<B extends Boundary.Shape>(boundary: B): StateUnion<B> {
  * MotionTier gates which targets a device is permitted to receive; see
  * {@link QuantizerFromOptions.tier} for the tier → targets table.
  *
- * Aliases `@liteship/core`'s {@link LadderTarget} — the shared codomain of the
- * capability-admissibility ladder both this gate and the core escalation gate
- * project from — so the target vocabulary itself has a single source too.
+ * Aliases `@liteship/core`'s {@link QualityTierTarget} — the shared codomain of the
+ * capability-admissibility quality-tier scale both this gate and the core escalation
+ * gate project from — so the target vocabulary itself has a single source too.
  */
-export type OutputTarget = LadderTarget;
+export type OutputTarget = QualityTierTarget;
 
 // ---------------------------------------------------------------------------
 // MotionTier gating (canonical type from @liteship/core)
@@ -74,16 +74,16 @@ export type { MotionTier } from '@liteship/core';
 
 /**
  * MotionTier → allowed {@link OutputTarget} set — a PROJECTION of `@liteship/core`'s
- * shared capability-admissibility ladder (`cap-ladder.ts`) onto the `MotionTier`
- * rung order. The core escalation chooser's `RUNG_TARGETS` projects the SAME
- * ladder onto the `CapTier` order; the two are therefore congruent by
- * construction (a drift guard pins them, computing `expected` from the ladder).
+ * shared capability-admissibility quality-tier scale (`quality-tiers.ts`) onto the
+ * `MotionTier` tier order. The core escalation chooser's `TIER_TARGET_SETS` projects
+ * the SAME scale onto the `CapTier` order; the two are therefore congruent by
+ * construction (a drift guard pins them, computing `expected` from the scale).
  *
  * Higher tiers include lower-tier targets. `none` only allows ARIA; `compute`
  * unlocks every target including WGSL and AI signal routing. `force()` can
  * override this gating per-target for prototype and test scenarios.
  */
-export const TIER_TARGETS: Record<MotionTier, ReadonlySet<OutputTarget>> = projectLadder<MotionTier>([
+export const TIER_TARGETS: Record<MotionTier, ReadonlySet<OutputTarget>> = projectQualityTiers<MotionTier>([
   'none',
   'transitions',
   'animations',

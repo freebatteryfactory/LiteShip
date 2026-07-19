@@ -1265,14 +1265,6 @@
           "signature": "(1)"
         },
         {
-          "name": "LADDER_RUNGS",
-          "kind": "const"
-        },
-        {
-          "name": "LADDER_TARGETS",
-          "kind": "const"
-        },
-        {
           "name": "Lifetime",
           "kind": "namespace",
           "signature": "make:function"
@@ -1309,6 +1301,14 @@
           "name": "ProjectionState",
           "kind": "namespace",
           "signature": "fromCells:function"
+        },
+        {
+          "name": "QUALITY_TIER_COUNT",
+          "kind": "const"
+        },
+        {
+          "name": "QUALITY_TIER_TARGETS",
+          "kind": "const"
         },
         {
           "name": "Receipt",
@@ -1567,7 +1567,7 @@
           "signature": "(3)"
         },
         {
-          "name": "chooseRung",
+          "name": "chooseTier",
           "kind": "function",
           "signature": "(2)"
         },
@@ -1652,7 +1652,7 @@
           "signature": "(2)"
         },
         {
-          "name": "escalationChooseRungCapsule",
+          "name": "escalationChooseTierCapsule",
           "kind": "namespace",
           "signature": "_kind:const,budgets:const,capabilities:const,decide:function,id:const,input:const,invariants:const,name:const,output:const,site:const"
         },
@@ -1862,7 +1862,7 @@
           "signature": "(2)"
         },
         {
-          "name": "projectLadder",
+          "name": "projectQualityTiers",
           "kind": "function",
           "signature": "(1)"
         },

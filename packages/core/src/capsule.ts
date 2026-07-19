@@ -57,7 +57,7 @@ export interface Invariant<In, Out> {
  * Only meaningful for `policyGate` arms (the verdict of {@link CapsuleContract.decide}).
  */
 export interface Reason {
-  /** Stable, machine-readable reason discriminant (e.g. `'no-rung-admits'`). */
+  /** Stable, machine-readable reason discriminant (e.g. `'no-tier-admits'`). */
   readonly code: string;
   /** Human-readable explanation of this reason. */
   readonly message: string;

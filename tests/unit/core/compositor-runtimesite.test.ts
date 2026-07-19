@@ -87,8 +87,8 @@ function detectedSiteAdmits(admitSite: RuntimeSite): boolean {
   compositor.add('layout', makeQuantizer(widthBoundary, 'mobile'));
   const state = compositor.compute();
   // Pass-through is ruled out (a policy is always returned); the projection emits
-  // css iff the chosen rung admitted it, which happens iff the detected site is in
-  // the policy's `sites`. Otherwise chooseRung → { error } → deny-all.
+  // css iff the chosen tier admitted it, which happens iff the detected site is in
+  // the policy's `sites`. Otherwise chooseTier → { error } → deny-all.
   return state.outputs.css['--liteship-layout'] !== undefined;
 }
 
@@ -123,7 +123,7 @@ describe('Compositor default runtimeSite realm detection', () => {
   });
 
   test("LESSON (runtimeSite@node): with no realm globals the default site resolves to 'node'", async () => {
-    // WHY: the fallback rung. No worker/edge/browser markers ⇒ plain node.
+    // WHY: the fallback tier. No worker/edge/browser markers ⇒ plain node.
     // (jsdom-canvas setup does not install WorkerGlobalScope/EdgeRuntime.)
     expect(await detectedSiteAdmits('node')).toBe(true);
     expect(await detectedSiteAdmits('worker')).toBe(false);

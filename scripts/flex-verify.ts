@@ -433,7 +433,7 @@ const checks: Check[] = [
         //   cachedProjection  — defineAsset / BeatMarkerProjection / WavMetadataProjection
         //   sceneComposition  — examples.intro, scene.beat-binding
         //   siteAdapter       — Remotion + Cloudflare host adapters
-        //   policyGate        — core.escalation.choose-rung (the permission/authz check)
+        //   policyGate        — core.escalation.choose-tier (the permission/authz check)
         const requiredArms = allArms;
         const missing = requiredArms.filter((a) => !kinds.has(a));
         if (missing.length > 0) {

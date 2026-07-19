@@ -1,14 +1,14 @@
 /**
  * Escalation chooser (P5c) — the READER of PolicyNode.
  *
- * Confirms `chooseRung` picks the MINIMAL CapTier rung a policy admits on a
+ * Confirms `chooseTier` picks the MINIMAL CapTier quality tier a policy admits on a
  * runtime site: site-gated, budget-downgraded, grants-bounded, and stable under
  * memoization.
  *
  * @module
  */
 import { describe, test, expect } from 'vitest';
-import { chooseRung, sealNode, Cap } from '@liteship/core';
+import { chooseTier, sealNode, Cap } from '@liteship/core';
 import type { PolicyNode, RuntimeSite, CapTier, CapSet, CellMeta } from '@liteship/core';
 
 const META: CellMeta = {
@@ -38,28 +38,28 @@ function policy(opts: {
   } as unknown as PolicyNode);
 }
 
-/** Grant every rung up to and including `top` (so `requires` is always reachable). */
+/** Grant every tier up to and including `top` (so `requires` is always reachable). */
 const grantUpTo = (top: CapTier): CapSet => {
   const ALL: readonly CapTier[] = ['static', 'styled', 'reactive', 'animated', 'gpu'];
   return Cap.from(ALL.filter((l) => Cap.ordinal(l) <= Cap.ordinal(top)));
 };
 
-const isChoice = (r: ReturnType<typeof chooseRung>): r is { rung: CapTier; admittedTargets: ReadonlySet<string> } =>
-  'rung' in r;
+const isChoice = (r: ReturnType<typeof chooseTier>): r is { tier: CapTier; admittedTargets: ReadonlySet<string> } =>
+  'tier' in r;
 
-describe('chooseRung — escalation chooser (P5c)', () => {
+describe('chooseTier — escalation chooser (P5c)', () => {
   test('requires animated on an admitted site, ample budget → animated', () => {
-    const r = chooseRung(
+    const r = chooseTier(
       policy({ requires: 'animated', grants: grantUpTo('animated'), sites: ['browser'] }),
       'browser',
     );
-    expect(isChoice(r) && r.rung).toBe('animated');
-    // The animated rung admits css/glsl/aria per the local admissibility table.
+    expect(isChoice(r) && r.tier).toBe('animated');
+    // The animated tier admits css/glsl/aria per the local admissibility table.
     expect(isChoice(r) && [...r.admittedTargets].sort()).toEqual(['aria', 'css', 'glsl']);
   });
 
   test('a runtime site not in policy.sites is unsatisfiable (error)', () => {
-    const r = chooseRung(
+    const r = chooseTier(
       policy({ requires: 'animated', grants: grantUpTo('animated'), sites: ['browser'] }),
       'edge',
     );
@@ -67,9 +67,9 @@ describe('chooseRung — escalation chooser (P5c)', () => {
     expect(!isChoice(r) && r.error).toMatch(/does not admit runtime site 'edge'/);
   });
 
-  test('a tight p95 budget downgrades the rung below requires', () => {
+  test('a tight p95 budget downgrades the tier below requires', () => {
     // requires 'gpu' (p95 floor 16ms) but budget only affords ~5ms → downgrade.
-    const r = chooseRung(
+    const r = chooseTier(
       policy({
         requires: 'gpu',
         grants: grantUpTo('gpu'),
@@ -79,13 +79,13 @@ describe('chooseRung — escalation chooser (P5c)', () => {
       'worker',
     );
     // 5ms clears reactive(4) but not animated(8)/gpu(16); walking DOWN from the
-    // required gpu rung, the first affordable rung is reactive — the LEAST
+    // required gpu tier, the first affordable tier is reactive — the LEAST
     // downgrade the budget forces.
-    expect(isChoice(r) && r.rung).toBe('reactive');
+    expect(isChoice(r) && r.tier).toBe('reactive');
   });
 
-  test("allocClass 'zero' forbids the gpu rung (downgrade)", () => {
-    const r = chooseRung(
+  test("allocClass 'zero' forbids the gpu tier (downgrade)", () => {
+    const r = chooseTier(
       policy({
         requires: 'gpu',
         grants: grantUpTo('gpu'),
@@ -95,24 +95,24 @@ describe('chooseRung — escalation chooser (P5c)', () => {
       'node',
     );
     expect(isChoice(r)).toBe(true);
-    expect(isChoice(r) && r.rung).not.toBe('gpu');
+    expect(isChoice(r) && r.tier).not.toBe('gpu');
   });
 
-  test('minimal-rung: unconstrained, the rung is exactly requires (no escalation)', () => {
+  test('minimal-tier: unconstrained, the tier is exactly requires (no escalation)', () => {
     // requires 'gpu' with full grants and no budget → the chooser never escalates
     // above requires and has no reason to downgrade, so it returns 'gpu'.
-    const r = chooseRung(
+    const r = chooseTier(
       policy({ requires: 'gpu', grants: grantUpTo('gpu'), sites: ['browser'] }),
       'browser',
     );
-    expect(isChoice(r) && r.rung).toBe('gpu');
+    expect(isChoice(r) && r.tier).toBe('gpu');
   });
 
   test('a missing intermediate grant forces a further downgrade', () => {
     // requires 'gpu', but 'gpu' and 'animated' are NOT granted; budget forbids
-    // gpu via allocClass anyway. Walking down, the first granted+affordable rung
+    // gpu via allocClass anyway. Walking down, the first granted+affordable tier
     // is reactive.
-    const r = chooseRung(
+    const r = chooseTier(
       policy({
         requires: 'gpu',
         grants: Cap.from(['static', 'styled', 'reactive']),
@@ -120,24 +120,24 @@ describe('chooseRung — escalation chooser (P5c)', () => {
       }),
       'worker',
     );
-    expect(isChoice(r) && r.rung).toBe('reactive');
+    expect(isChoice(r) && r.tier).toBe('reactive');
   });
 
-  test('no granted rung at or below requires → unsatisfiable', () => {
-    const r = chooseRung(
+  test('no granted tier at or below requires → unsatisfiable', () => {
+    const r = chooseTier(
       policy({ requires: 'styled', grants: Cap.from(['gpu']), sites: ['node'] }),
       'node',
     );
     expect(isChoice(r)).toBe(false);
-    expect(!isChoice(r) && r.error).toMatch(/admits no rung/);
+    expect(!isChoice(r) && r.error).toMatch(/admits no quality tier/);
   });
 
   test('memoization is deterministic but returns ISOLATED results (the memo cannot be polluted)', () => {
     const p = policy({ requires: 'reactive', grants: grantUpTo('reactive'), sites: ['browser', 'worker'] });
-    const a = chooseRung(p, 'browser');
-    const b = chooseRung(p, 'browser');
+    const a = chooseTier(p, 'browser');
+    const b = chooseTier(p, 'browser');
     // Same key → value-equal verdict (memoized compute), but NOT a shared reference:
-    // chooseRung returns a fresh admittedTargets copy so a caller mutating the result
+    // chooseTier returns a fresh admittedTargets copy so a caller mutating the result
     // can never pollute the process-global memo.
     expect(a).toEqual(b);
     expect(a).not.toBe(b);
@@ -145,13 +145,13 @@ describe('chooseRung — escalation chooser (P5c)', () => {
     // so it hits the same memo entry (value-equal verdict). Checked BEFORE the
     // mutation below so `a` is still pristine.
     const p2 = policy({ requires: 'reactive', grants: grantUpTo('reactive'), sites: ['browser', 'worker'] });
-    expect(chooseRung(p2, 'browser')).toEqual(a);
+    expect(chooseTier(p2, 'browser')).toEqual(a);
     // Isolation LAW (done LAST — it mutates `a`): polluting a returned set must not
     // leak into a later memo-hit.
-    if ('error' in a) throw new Error('expected a rung');
+    if ('error' in a) throw new Error('expected a tier');
     (a.admittedTargets as Set<string>).add('__probe__');
-    const c = chooseRung(p, 'browser');
-    if ('error' in c) throw new Error('expected a rung');
+    const c = chooseTier(p, 'browser');
+    if ('error' in c) throw new Error('expected a tier');
     expect((c.admittedTargets as ReadonlySet<string>).has('__probe__')).toBe(false);
   });
 });

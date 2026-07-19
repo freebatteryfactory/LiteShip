@@ -77,7 +77,7 @@ It ships:
 - [ApplyVerifiablePatchResult](type-aliases/ApplyVerifiablePatchResult.md)
 - [ChunkParser](type-aliases/ChunkParser.md)
 - [DpuCapability](type-aliases/DpuCapability.md)
-- [DpuRung](type-aliases/DpuRung.md)
+- [DpuTier](type-aliases/DpuTier.md)
 - [HtmlPolicy](type-aliases/HtmlPolicy.md)
 - [IntegrityDecision](type-aliases/IntegrityDecision.md)
 - [IntegrityResult](type-aliases/IntegrityResult.md)

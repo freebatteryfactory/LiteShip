@@ -2,12 +2,12 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [web/src](../README.md) / DpuRung
+[LiteShip](../../../modules.md) / [web/src](../README.md) / DpuTier
 
-# Type Alias: DpuRung
+# Type Alias: DpuTier
 
-> **DpuRung** = `"native-sethtml"` \| `"floor-morph"`
+> **DpuTier** = `"native-sethtml"` \| `"floor-morph"`
 
 Defined in: [web/src/dpu/watch-and-prepare.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/dpu/watch-and-prepare.ts#L37)
 
-Which rung applied or will apply a verifiable patch.
+Which tier applied or will apply a verifiable patch.

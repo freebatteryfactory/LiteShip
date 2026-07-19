@@ -157,7 +157,7 @@ describe('compositor emit-wgsl: live WGSL channel, escalation-gated at the gpu r
   });
 
   test('unsatisfiable policy ({error} branch) denies wgsl along with every target', async () => {
-    // Policy admits only 'node'; compositor runs at 'browser' → chooseRung errors → deny-all.
+    // Policy admits only 'node'; compositor runs at 'browser' → chooseTier errors → deny-all.
     const p = policy({ requires: 'gpu', grants: grantUpTo('gpu'), sites: ['node'] });
     const compositor = Compositor.create({ runtimeSite: 'browser', getPolicy: () => p }).compositor;
     compositor.add('layout', makeQuantizer(widthBoundary, 'desktop'));

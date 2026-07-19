@@ -57,7 +57,7 @@ import { COMPOSITOR_POOL_CAP, DIRTY_FLAGS_MAX } from './defaults.js';
 import { CompositorStatePool, accessCompositeState } from './compositor-pool.js';
 import { DirtyFlags } from './dirty.js';
 import type { PolicyNode, RuntimeSite } from './document-graph.js';
-import { chooseRung } from './escalation.js';
+import { chooseTier } from './escalation.js';
 import type { FrameBudget } from './frame-budget.js';
 import { projectionKeys } from './projection.js';
 import type { CompositorQuantizer } from './quantizer-types.js';
@@ -73,7 +73,7 @@ import { SpeculativeEvaluator } from './speculative.js';
  * quantizer's bare snake_case projection key). D0 carries the channel through
  * the state shape, the pool, and the worker emit; D1-WGSL adds the live
  * `emit-wgsl` runtime phase (below) that populates it from the state index,
- * escalation-gated on the `wgsl` target (admitted only at the `gpu` rung).
+ * escalation-gated on the `wgsl` target (admitted only at the `gpu` tier).
  */
 export interface CompositeState {
   readonly discrete: Record<string, string>;
@@ -100,11 +100,11 @@ export interface CompositorConfig {
    * projection, keyed by the quantizer's compositor registry name (the same
    * `name` passed to `add()` — the compositor knows names, not graph projection
    * ids, so a host wiring graph projections maps id → name here). When a policy applies, the compositor
-   * computes `chooseRung(policy, runtimeSite)` at `add` time and emits ONLY the
-   * targets that rung admits (`admittedTargets`). A projection with NO matching
+   * computes `chooseTier(policy, runtimeSite)` at `add` time and emits ONLY the
+   * targets that tier admits (`admittedTargets`). A projection with NO matching
    * policy is pass-through (all targets emit). A policy that matches but admits
-   * no rung (the `{ error }` branch — site not admitted, or budgets/grants
-   * exhaust every rung) DENIES every target for that projection: a constraint
+   * no tier (the `{ error }` branch — site not admitted, or budgets/grants
+   * exhaust every tier) DENIES every target for that projection: a constraint
    * that cannot be satisfied must not silently emit at full capability.
    */
   readonly getPolicy?: (projectionName: string) => PolicyNode | undefined;
@@ -119,7 +119,7 @@ export interface CompositorConfig {
 /**
  * Per-projection target admissibility resolved by the escalation gate. `null`
  * (the default) means no policy governs the projection, so every target emits.
- * A present set lists exactly the targets the chosen rung admits; the
+ * A present set lists exactly the targets the chosen tier admits; the
  * `{ error }` branch resolves to an EMPTY set, denying every target.
  */
 type AdmittedTargets = ReadonlySet<string> | null;
@@ -284,14 +284,14 @@ export const Compositor: CompositorFactory = {
     /**
      * Resolve the escalation-admitted target set for a projection at `add`
      * time. No policy → `null` (pass-through). A policy that resolves to the
-     * `{ error }` branch → empty set (deny all targets). Otherwise the rung's
+     * `{ error }` branch → empty set (deny all targets). Otherwise the tier's
      * `admittedTargets`.
      */
     const resolveAdmitted = (name: string): AdmittedTargets => {
       if (getPolicy === undefined) return null;
       const policy = getPolicy(name);
       if (policy === undefined) return null;
-      const choice = chooseRung(policy, runtimeSite);
+      const choice = chooseTier(policy, runtimeSite);
       return 'error' in choice ? new Set<string>() : choice.admittedTargets;
     };
     const runtime = RuntimeCoordinator.create({
@@ -495,13 +495,13 @@ export const Compositor: CompositorFactory = {
             // struct field that `WGSLCompiler` generates and the `client:gpu`
             // WGSL runtime reads from uniform-buffer slot 0 — NOT the authored
             // per-quantizer field key (those ride the payload). WGSL is the
-            // heaviest (gpu-rung) target, so it shares glsl's `high` budget gate.
+            // heaviest (gpu-tier) target, so it shares glsl's `high` budget gate.
             if (!frameBudget || frameBudget.canRun('high')) {
               for (let i = 0; i < dirtyCount; i++) {
                 const name = dirtyNamesScratch[i]!;
                 const meta = metaMap.get(name)!;
                 // Escalation gate: skip projections whose policy does not admit `wgsl`.
-                // (wgsl is admitted only at the `gpu` rung — strictly above glsl.)
+                // (wgsl is admitted only at the `gpu` tier — strictly above glsl.)
                 if (admits(meta, 'wgsl')) {
                   wgsl['state_index'] = runtime.getStateIndex(name);
                 }

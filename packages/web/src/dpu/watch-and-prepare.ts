@@ -33,13 +33,13 @@ export const DPU_RESULT_ATTR = 'data-liteship-dpu-result';
  */
 export const DPU_DIGEST_ATTR = 'data-liteship-dpu-digest';
 
-/** Which rung applied or will apply a verifiable patch. */
-export type DpuRung = 'native-sethtml' | 'floor-morph';
+/** Which tier applied or will apply a verifiable patch. */
+export type DpuTier = 'native-sethtml' | 'floor-morph';
 
 /** Feature-detected DPU capability — floor-morph is always available. */
 export type DpuCapability =
-  | { readonly available: true; readonly rung: 'native-sethtml' }
-  | { readonly available: false; readonly rung: 'floor-morph' };
+  | { readonly available: true; readonly tier: 'native-sethtml' }
+  | { readonly available: false; readonly tier: 'floor-morph' };
 
 /**
  * Stamped verifiable-patch envelope — marker + CAS base/result ids + sha256 digest
@@ -71,7 +71,7 @@ export type VerifiablePatchVerification =
 export type ApplyVerifiablePatchResult =
   | {
       readonly _tag: 'applied';
-      readonly rung: DpuRung;
+      readonly tier: DpuTier;
       readonly envelope: VerifiablePatchEnvelope;
       /** sha256 digest of `target.innerHTML` after apply — what the DOM attribute attests. */
       readonly appliedDigest: AddressedDigest;
@@ -104,10 +104,10 @@ export function detectDpuCapability(): DpuCapability {
   if (typeof Element !== 'undefined') {
     const probe = typeof document !== 'undefined' ? document.createElement('div') : null;
     if (probe && typeof (probe as ElementWithSetHtml).setHTML === 'function') {
-      return { available: true, rung: 'native-sethtml' };
+      return { available: true, tier: 'native-sethtml' };
     }
   }
-  return { available: false, rung: 'floor-morph' };
+  return { available: false, tier: 'floor-morph' };
 }
 
 /** Mint the sha256 digest for an HTML fragment (UTF-8 bytes, content-address kernel). */
@@ -197,17 +197,17 @@ export function applyVerifiablePatch(
     return { _tag: 'sanitizedEmpty', envelope };
   }
 
-  const rung: DpuRung = capability.available ? 'native-sethtml' : 'floor-morph';
+  const tier: DpuTier = capability.available ? 'native-sethtml' : 'floor-morph';
   if (capability.available) {
     applyNative(target, envelope.html);
   } else {
     applyFloor(target, envelope.html);
   }
-  // Attest the RENDERED serialization: both rungs sanitize before insertion, so
+  // Attest the RENDERED serialization: both tiers sanitize before insertion, so
   // the envelope's input bytes are not what the DOM shows.
   const appliedDigest = digestHtmlFragment(target.innerHTML);
   stampTarget(target, envelope, appliedDigest);
-  return { _tag: 'applied', rung, envelope, appliedDigest };
+  return { _tag: 'applied', tier, envelope, appliedDigest };
 }
 
 /** Host mutation client surface for adopt-under after a successful DPU apply (#120). */

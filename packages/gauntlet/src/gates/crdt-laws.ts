@@ -15,7 +15,7 @@
  * so the same gate runs against the real repo and against an in-memory fixture
  * unchanged. The laws themselves are proven IN the property tests (deterministic
  * fast-check); this gate proves those proofs EXIST and stay wired — the coverage rail
- * that keeps the L4 ladder's "CRDT laws" rung from silently rotting away.
+ * that keeps the L4 ladder's "CRDT laws" tier from silently rotting away.
  *
  * @module
  */

@@ -24,7 +24,7 @@ Only meaningful for `policyGate` arms (the verdict of [CapsuleContract.decide](C
 
 Defined in: [core/src/capsule.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L61)
 
-Stable, machine-readable reason discriminant (e.g. `'no-rung-admits'`).
+Stable, machine-readable reason discriminant (e.g. `'no-tier-admits'`).
 
 ***
 

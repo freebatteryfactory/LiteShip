@@ -6,7 +6,7 @@
  * the document `<head>` before any module graph or GPU probe exists, and writes
  * a provisional `data-liteship-tier`. The deferred GPU-probe upgrade script
  * (`emitDetectUpgradeScript`) later REWRITES `data-liteship-tier` with the real GPU
- * tier. Because BOTH scripts write the same attribute, a provisional cap-ladder
+ * tier. Because BOTH scripts write the same attribute, a provisional cap-tier ladder
  * that diverged from canonical disagreed with the upgrade by construction — the
  * exact 0.2.3/0.3.0 "detect-ladder" drift bug-class, which used to live as a
  * hand-rolled inline ladder in `@liteship/astro`'s integration.

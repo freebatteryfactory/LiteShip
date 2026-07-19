@@ -5,8 +5,8 @@
  *   live on (css / glsl / wgsl / aria / svg) from its attributes + payload, and
  *   format the CURRENT emitted values carried by `liteship:uniform-update` `detail`.
  * - **Escalation** — derive the minimal required {@link CapTier} from the
- *   active targets and run the REAL `@liteship/core` `chooseRung` against the live
- *   runtime site, surfacing the chosen rung + admitted targets + reason.
+ *   active targets and run the REAL `@liteship/core` `chooseTier` against the live
+ *   runtime site, surfacing the chosen tier + admitted targets + reason.
  * - **DocumentGraph peek** — build a read-only, content-addressed graph summary
  *   of the boundaries actually on the page (signal + component + projection
  *   nodes), using the real `@liteship/core` node-addressing kernel.
@@ -28,7 +28,7 @@
 import {
   AddressedDigest,
   Cap,
-  chooseRung,
+  chooseTier,
   projectionKeys,
   sealNode,
   type CapTier,
@@ -245,16 +245,16 @@ export function castValueRows(target: CastTarget, detail: BoundaryStateDetail | 
 
 /**
  * The minimal {@link CapTier} that admits every one of `targets`. Mirrors the
- * escalation chooser's `RUNG_TARGETS` admissibility ladder (projected from the
- * shared `cap-ladder.ts` datum in `@liteship/core`): aria→static, css→styled,
+ * escalation chooser's `TIER_TARGET_SETS` admissibility scale (projected from the
+ * shared `quality-tiers.ts` datum in `@liteship/core`): aria→static, css→styled,
  * glsl→animated, wgsl→gpu.
- * `svg` has no rung in the chooser's table; it is treated as `styled` (a CSS-
+ * `svg` has no tier in the chooser's table; it is treated as `styled` (a CSS-
  * class peer) for the purpose of the required floor.
  */
-export function requiredRungForTargets(targets: readonly CastTarget[]): CapTier {
-  let rung: CapTier = 'static';
+export function requiredTierForTargets(targets: readonly CastTarget[]): CapTier {
+  let tier: CapTier = 'static';
   const raise = (next: CapTier): void => {
-    if (Cap.ordinal(next) > Cap.ordinal(rung)) rung = next;
+    if (Cap.ordinal(next) > Cap.ordinal(tier)) tier = next;
   };
   for (const target of targets) {
     if (target === 'aria') raise('static');
@@ -262,16 +262,16 @@ export function requiredRungForTargets(targets: readonly CastTarget[]): CapTier 
     else if (target === 'glsl') raise('animated');
     else if (target === 'wgsl') raise('gpu');
   }
-  return rung;
+  return tier;
 }
 
 /** The escalation verdict for one boundary, ready to render. */
 export interface EscalationView {
-  /** The minimal rung required by the active targets (the derived `requires`). */
-  readonly requiredRung: CapTier;
-  /** The chosen rung, or `null` when the policy is unsatisfiable on the site. */
-  readonly chosenRung: CapTier | null;
-  /** The targets the chosen rung admits (sorted), or `[]` on error. */
+  /** The minimal tier required by the active targets (the derived `requires`). */
+  readonly requiredTier: CapTier;
+  /** The chosen tier, or `null` when the policy is unsatisfiable on the site. */
+  readonly chosenTier: CapTier | null;
+  /** The targets the chosen tier admits (sorted), or `[]` on error. */
   readonly admittedTargets: readonly string[];
   /** A one-line reason: the chooser's verdict or its error. */
   readonly reason: string;
@@ -280,15 +280,15 @@ export interface EscalationView {
 /**
  * Run the REAL `@liteship/core` escalation chooser for a boundary, deriving a
  * `PolicyNode` from the active cast targets. The derived policy grants every
- * rung and admits the given site, so the chosen rung equals `requires`
+ * tier and admits the given site, so the chosen tier equals `requires`
  * downgraded only by the (here-absent) budgets — i.e. it surfaces the genuine
- * minimal-rung + admitted-targets the chooser computes for this evidence.
+ * minimal-tier + admitted-targets the chooser computes for this evidence.
  *
  * @param targets - the boundary's active cast targets (from {@link deriveActiveTargets})
  * @param site - the live runtime site (`'browser'` in the dev overlay)
  */
 export function escalationViewForTargets(targets: readonly CastTarget[], site: RuntimeSite): EscalationView {
-  const requiredRung = requiredRungForTargets(targets);
+  const requiredTier = requiredTierForTargets(targets);
   const policy = sealNode<PolicyNode>({
     _tag: 'DocGraphPolicyNode',
     _version: 1,
@@ -296,20 +296,20 @@ export function escalationViewForTargets(targets: readonly CastTarget[], site: R
     id: 'fnv1a:0' as PolicyNode['id'],
     meta: ZERO_META,
     appliesTo: [],
-    requires: requiredRung,
+    requires: requiredTier,
     grants: Cap.from(['static', 'styled', 'reactive', 'animated', 'gpu']),
     sites: ['node', 'browser', 'worker', 'edge'],
   });
-  const result = chooseRung(policy, site);
+  const result = chooseTier(policy, site);
   if ('error' in result) {
-    return { requiredRung, chosenRung: null, admittedTargets: [], reason: result.error };
+    return { requiredTier, chosenTier: null, admittedTargets: [], reason: result.error };
   }
   const admitted = [...result.admittedTargets].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
   return {
-    requiredRung,
-    chosenRung: result.rung,
+    requiredTier,
+    chosenTier: result.tier,
     admittedTargets: admitted,
-    reason: `site '${site}' admits rung '${result.rung}' (derived requires='${requiredRung}'; grants=all, no budget floor)`,
+    reason: `site '${site}' admits tier '${result.tier}' (derived requires='${requiredTier}'; grants=all, no budget floor)`,
   };
 }
 

@@ -76,7 +76,7 @@ describe('astro dev inspector', () => {
     expect(casts.textContent).toContain('shader-type');
 
     const escalation = shadow.querySelector('[data-role="escalation"]')!;
-    expect(escalation.textContent).toContain('animated'); // glsl → animated rung
+    expect(escalation.textContent).toContain('animated'); // glsl → animated tier
 
     const graphSummary = Array.from(shadow.querySelectorAll('summary')).find((s) =>
       s.textContent?.includes('DocumentGraph'),

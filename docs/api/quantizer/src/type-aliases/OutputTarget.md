@@ -6,7 +6,7 @@
 
 # Type Alias: OutputTarget
 
-> **OutputTarget** = [`LadderTarget`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/LadderTarget.md)
+> **OutputTarget** = [`QualityTierTarget`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/QualityTierTarget.md)
 
 Defined in: [quantizer/src/quantizer.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L67)
 
@@ -17,6 +17,6 @@ Compilation target for quantizer per-state outputs.
 MotionTier gates which targets a device is permitted to receive; see
 [QuantizerFromOptions.tier](../interfaces/QuantizerFromOptions.md#tier) for the tier → targets table.
 
-Aliases `@liteship/core`'s [LadderTarget](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/LadderTarget.md) — the shared codomain of the
-capability-admissibility ladder both this gate and the core escalation gate
-project from — so the target vocabulary itself has a single source too.
+Aliases `@liteship/core`'s [QualityTierTarget](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/QualityTierTarget.md) — the shared codomain of the
+capability-admissibility quality-tier scale both this gate and the core escalation
+gate project from — so the target vocabulary itself has a single source too.

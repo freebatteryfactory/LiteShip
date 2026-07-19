@@ -1,6 +1,6 @@
 /**
  * REGRESSION GUARD — the `mintValidated` subpath leak (lesson #12: the
- * RUNG_TARGETS-style `./*` wildcard subpath leak).
+ * TIER_TARGET_SETS-style `./*` wildcard subpath leak).
  *
  * THE LOAD-BEARING SECURITY PROPERTY of the AI-cast envelope: a `ValidatedProposal`
  * is the ONLY artifact a host's apply/admission layer acts on, and the ONLY way to
