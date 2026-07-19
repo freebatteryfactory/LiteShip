@@ -427,13 +427,14 @@ export {
 // history's model-vs-implementation bisimulation verdict): a DIVERGENT case becomes a
 // replayable Finding at the family's assurance level (severity by level deciding
 // blocking), an UNEVIDENCED case a coverage gap floored by the committed ratchet. The
-// heavy capture (unfolding op histories over both transports via Effect.runPromise)
-// lives in @czap/audit's buildTransitionFacts + the Foundation harnesses the @czap/cli
-// host wires. Exported but DELIBERATELY NOT in LITESHIP_GATES / LITESHIP_IR_GATES:
-// transition conformance is OPT-IN (`czap check --ir --transition`) — a fiber walk per
-// case is too heavy for a default run. The integrator composes it on like
-// mutationDivergenceGate (a ~3-line wiring). See the DIVERGENCE_SEVERITY_BY_LEVEL /
-// TRANSITION_FAMILY_LEVEL redlinable data.
+// capture (unfolding op histories over the reference model + the native transport) lives in
+// @czap/audit's buildTransitionFacts + the LiteShip-local reactive capture/model runner
+// (tests/support/reactive-conformance.ts). Exported but DELIBERATELY NOT in LITESHIP_GATES /
+// LITESHIP_IR_GATES: the model + native-transport oracle are LiteShip-specific product
+// machinery in the test tree, so — per ADR-0012/0023 — the gate is HOSTED by the repo-local
+// `transition:gate` phase (scripts/transition-conformance-gate.ts, run every PR), NOT the
+// shipped `czap check` CLI. See the DIVERGENCE_SEVERITY_BY_LEVEL / TRANSITION_FAMILY_LEVEL
+// redlinable data.
 export {
   transitionConformanceGate,
   DIVERGENCE_SEVERITY_BY_LEVEL,

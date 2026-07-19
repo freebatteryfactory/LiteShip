@@ -8,7 +8,7 @@
 
 > `const` **TRANSITION\_FAMILY\_LEVEL**: `Readonly`\<`Record`\<`string`, [`AssuranceLevel`](../type-aliases/AssuranceLevel.md)\>\>
 
-Defined in: [gauntlet/src/gates/transition-conformance.ts:78](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/transition-conformance.ts#L78)
+Defined in: [gauntlet/src/gates/transition-conformance.ts:81](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/transition-conformance.ts#L81)
 
 The conformance-family → assurance-level map — exported, owner-redlinable DATA (the
 sibling of the mutation kill-floor matrix). The Wave 5.5 reactive kernels are the

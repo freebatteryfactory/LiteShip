@@ -8,7 +8,7 @@
 
 > **requireSpineRelation**(`context`, `gateId`): [`SpineRelationFacts`](../interfaces/SpineRelationFacts.md)
 
-Defined in: [gauntlet/src/gate.ts:893](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L893)
+Defined in: [gauntlet/src/gate.ts:895](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L895)
 
 Read the injected [SpineRelationFacts](../interfaces/SpineRelationFacts.md) from a context, or throw a clear tagged
 [HostCapabilityError](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts) when none were injected — the guard the

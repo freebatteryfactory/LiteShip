@@ -8,6 +8,6 @@
 
 > **FactKind** = *typeof* [`FACT_KINDS`](../variables/FACT_KINDS.md)\[`number`\]
 
-Defined in: [gauntlet/src/gate.ts:493](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L493)
+Defined in: [gauntlet/src/gate.ts:495](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L495)
 
 One FactKind — derived from [FACT\_KINDS](../variables/FACT_KINDS.md), never re-typed.

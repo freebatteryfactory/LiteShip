@@ -83,10 +83,22 @@ stale, is *unadmitted behavior* — it does not ship.
 
 ## Evidence
 
-- Reactive kernel + policy: `tests/support/reactive-model.ts` (the single oracle),
-  the transition cage (`tests/unit/gauntlet/transition-conformance.test.ts`), and
-  `tests/property/compositor-zero-alloc.test.ts` (**0 B/op** live-subscriber
-  publish).
+- Reactive kernel + policy: `tests/support/reactive-model.ts` (the single oracle) and
+  `tests/property/compositor-zero-alloc.test.ts` (**0 B/op** live-subscriber publish).
+- Transition cage (the reactive BISIMULATION proof), layered per ADR-0012/0023 — the heavy
+  model + native-transport oracle stay LiteShip-local, only the lean fact fold ships:
+  - `@czap/gauntlet` owns ONLY the lean fold — `packages/gauntlet/src/gates/transition-conformance.ts`
+    (`TransitionFacts` → `Finding[]`) + its fixture red/green/mutation self-proof
+    `tests/unit/gauntlet/transition-conformance.test.ts`;
+  - the repo-local conformance RUNNER — `tests/support/reactive-conformance.ts` — owns the
+    model configs, native adapters, the pinned corpus, and the per-family DECLARED law
+    (each family's chosen EmissionPolicy), shared IDENTICALLY by the property test and the gate
+    (no second oracle / corpus / law);
+  - the CI HOST — `scripts/transition-conformance-gate.ts`, the `transition:gate` gauntlet phase —
+    folds the runner over the native transports on every PR and reds on a regression from the
+    current declared model (green + forced-regression red-proof:
+    `tests/unit/gauntlet/transition-conformance-gate.test.ts`). It is NOT the shipped `czap check`
+    CLI: the laboratory stays repo-local; only `@czap/gauntlet`'s fold is published.
 - Reactive Effect-containment: `tests/component/reactive-no-effect-containment.test.ts`
   (the #153 acceptance contract — a realistic consumer over the public `@czap/core`
   barrel, every read a plain typed value, full idempotent teardown, no `effect`).

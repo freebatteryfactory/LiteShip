@@ -44,6 +44,7 @@ describe('gauntlet phase subset selection', () => {
       'standards:gate',
       'capability:gate',
       'spine-relation:gate',
+      'transition:gate',
     ]);
   });
 

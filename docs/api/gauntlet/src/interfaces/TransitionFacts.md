@@ -6,13 +6,15 @@
 
 # Interface: TransitionFacts
 
-Defined in: [gauntlet/src/transition-facts.ts:98](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/transition-facts.ts#L98)
+Defined in: [gauntlet/src/transition-facts.ts:100](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/transition-facts.ts#L100)
 
-The host-supplied bisimulation evidence over one conformance FAMILY's run. The
-capture is HEAVY (an `Effect.runPromise` fiber walk per case, drained to
-quiescence), so production runs it OPT-IN (`czap check --ir --transition`), scoped
-+ cached; when the host did not run it this whole capability is simply ABSENT from
-the [GateContext](GateContext.md) and the gate is not in the set (no cost, no noise). When
+The host-supplied bisimulation evidence over one conformance FAMILY's run. The capture
+is LiteShip-local product machinery (driving each seeded op history over the reference
+model + the native transport, in the test tree), so — per ADR-0012/0023 — it runs from
+the repo-local `transition:gate` phase (`scripts/transition-conformance-gate.ts`) on
+every PR, NOT the shipped `czap check` CLI; when the host did not run it this whole
+capability is simply ABSENT from the [GateContext](GateContext.md) and the gate is not in the
+set (no cost, no noise). When
 present it carries every per-case verdict plus the two transport fingerprints and
 the committed unevidenced BASELINE the ratchet compares against.
 
@@ -27,7 +29,7 @@ single-context-field shape [MutationFacts](MutationFacts.md) rides.
 
 > `readonly` **cases**: readonly [`TransitionCase`](TransitionCase.md)[]
 
-Defined in: [gauntlet/src/transition-facts.ts:120](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/transition-facts.ts#L120)
+Defined in: [gauntlet/src/transition-facts.ts:122](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/transition-facts.ts#L122)
 
 Every evaluated bisimulation case's outcome — the substrate the gate folds.
 
@@ -37,7 +39,7 @@ Every evaluated bisimulation case's outcome — the substrate the gate folds.
 
 > `readonly` **family**: `string`
 
-Defined in: [gauntlet/src/transition-facts.ts:105](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/transition-facts.ts#L105)
+Defined in: [gauntlet/src/transition-facts.ts:107](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/transition-facts.ts#L107)
 
 The conformance family this evidence covers (e.g. `'cell'`, `'store'`,
 `'reactive-replay1'`). Names WHAT bisimulation relation was checked and aims the
@@ -50,7 +52,7 @@ finding for traceability.
 
 > `readonly` **implementationDigest**: `string`
 
-Defined in: [gauntlet/src/transition-facts.ts:118](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/transition-facts.ts#L118)
+Defined in: [gauntlet/src/transition-facts.ts:120](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/transition-facts.ts#L120)
 
 The content address of the IMPLEMENTATION transport under test (the Effect-backed
 primitive this wave; the CellKernel-backed primitive in Wave 6). Fingerprints the
@@ -62,7 +64,7 @@ exact implementation the bisimulation was checked against.
 
 > `readonly` **modelDigest**: `string`
 
-Defined in: [gauntlet/src/transition-facts.ts:112](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/transition-facts.ts#L112)
+Defined in: [gauntlet/src/transition-facts.ts:114](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/transition-facts.ts#L114)
 
 The content address of the MODEL transport — the single-oracle `fc.commands` model
 DERIVED from the CellKernel/Lifetime law tables (LS-001). Fingerprints WHICH model
@@ -75,7 +77,7 @@ two transports disagreed under.
 
 > `readonly` **operationCoverage**: `Readonly`\<`Record`\<`string`, `number`\>\>
 
-Defined in: [gauntlet/src/transition-facts.ts:127](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/transition-facts.ts#L127)
+Defined in: [gauntlet/src/transition-facts.ts:129](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/transition-facts.ts#L129)
 
 How many cases exercised each operation tag (`subscribe`/`set`/`update`/… → count)
 — the coverage read of the corpus. A tag mapped to 0 (or absent) is an op the
@@ -88,7 +90,7 @@ unproven, not proven-equivalent).
 
 > `readonly` `optional` **unevidencedBaseline?**: `number`
 
-Defined in: [gauntlet/src/transition-facts.ts:136](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/transition-facts.ts#L136)
+Defined in: [gauntlet/src/transition-facts.ts:138](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/transition-facts.ts#L138)
 
 The committed maximum tolerated `unevidenced` case count for this family (the
 ratchet artifact). A fresh run whose unevidenced count RISES above this baseline is

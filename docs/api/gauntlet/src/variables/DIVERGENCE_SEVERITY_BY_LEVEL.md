@@ -8,7 +8,7 @@
 
 > `const` **DIVERGENCE\_SEVERITY\_BY\_LEVEL**: `Readonly`\<`Record`\<[`AssuranceLevel`](../type-aliases/AssuranceLevel.md), [`Severity`](../type-aliases/Severity.md)\>\>
 
-Defined in: [gauntlet/src/gates/transition-conformance.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/transition-conformance.ts#L61)
+Defined in: [gauntlet/src/gates/transition-conformance.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/transition-conformance.ts#L64)
 
 The severity a DIVERGENCE earns at a given family level — the same calibration ladder
 the mutation gate's SURVIVOR_SEVERITY_BY_LEVEL uses, exported DATA a downstream owner

@@ -6,7 +6,7 @@
 
 # Interface: FactBundle
 
-Defined in: [gauntlet/src/gate.ts:500](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L500)
+Defined in: [gauntlet/src/gate.ts:502](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L502)
 
 The bundle a [FactGate](FactGate.md)'s [FactGate.decide](FactGate.md#decide) receives — ONLY the declared
 FactPacks, picked off the context by the engine ([pickFacts](../functions/pickFacts.md)). It carries no
@@ -18,7 +18,7 @@ FactPacks, picked off the context by the engine ([pickFacts](../functions/pickFa
 
 > `readonly` `optional` **activeSurfaceFacts?**: [`ActiveSurfaceFacts`](ActiveSurfaceFacts.md)
 
-Defined in: [gauntlet/src/gate.ts:502](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L502)
+Defined in: [gauntlet/src/gate.ts:504](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L504)
 
 ***
 
@@ -26,4 +26,4 @@ Defined in: [gauntlet/src/gate.ts:502](https://github.com/freebatteryfactory/Lit
 
 > `readonly` `optional` **skipSites?**: [`SkipSiteFacts`](SkipSiteFacts.md)
 
-Defined in: [gauntlet/src/gate.ts:501](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L501)
+Defined in: [gauntlet/src/gate.ts:503](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L503)
