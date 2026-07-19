@@ -9,7 +9,7 @@
 import { existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { wallClock } from '@czap/core';
+import { wallClock } from '@liteship/core';
 import { emit, emitError } from '../receipts.js';
 
 type StartDevServerFn = (scenePath: string) => Promise<{ url: string; close(): Promise<void> }>;
@@ -32,9 +32,9 @@ async function loadStartDevServer(): Promise<StartDevServerFn> {
     return mod.startDevServer;
   }
   // Compiled mode: import from dist via the dedicated /dev sub-path. The dev
-  // server is intentionally NOT on @czap/scene's main entry (it imports
+  // server is intentionally NOT on @liteship/scene's main entry (it imports
   // node:os/node:crypto/vite-server and would break browser/Worker bundlers).
-  const mod = (await import('@czap/scene/dev')) as { startDevServer: StartDevServerFn };
+  const mod = (await import('@liteship/scene/dev')) as { startDevServer: StartDevServerFn };
   return mod.startDevServer;
 }
 

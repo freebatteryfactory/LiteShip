@@ -10,8 +10,8 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Zap } from '@czap/core';
-import type { Millis } from '@czap/core';
+import { Zap } from '@liteship/core';
+import type { Millis } from '@liteship/core';
 import { mockHTMLElement, type MockHTMLElementShape } from '../helpers/mock-dom.js';
 
 /** Settle past a macrotask so any pending debounce/throttle timer has fired. */

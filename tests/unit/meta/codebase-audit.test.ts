@@ -15,10 +15,10 @@ import { runIntegrityAudit } from '../../../scripts/audit/integrity.js';
 import { runStructureAudit } from '../../../scripts/audit/structure.js';
 import { runSurfaceAudit } from '../../../scripts/audit/surface.js';
 import { buildRuntimeSeamsReport } from '../../../scripts/report-runtime-seams.js';
-import { liteshipDevopsProfile, withRepoRoot } from '@czap/audit';
+import { liteshipDevopsProfile, withRepoRoot } from '@liteship/audit';
 
 // CUT D9a — the audit target is `profile.repoRoot`, not a positional `root`.
-// These fixtures use @czap/ package names, so the LiteShip default profile
+// These fixtures use @liteship/ package names, so the LiteShip default profile
 // (prefix + topology + surfacePolicy) applies; only the root is repointed.
 const at = (root: string) => withRepoRoot(liteshipDevopsProfile, root);
 
@@ -34,7 +34,7 @@ afterEach(() => {
 });
 
 function createRepo(files: Record<string, string>): string {
-  const root = mkdtempSync(join(os.tmpdir(), 'czap-audit-'));
+  const root = mkdtempSync(join(os.tmpdir(), 'liteship-audit-'));
   tempRoots.push(root);
 
   for (const [relativePath, content] of Object.entries(files)) {
@@ -49,7 +49,7 @@ function createRepo(files: Record<string, string>): string {
 function astroPackageJson(): string {
   return JSON.stringify(
     {
-      name: '@czap/astro',
+      name: '@liteship/astro',
       type: 'module',
       exports: {
         '.': { development: './src/index.ts' },
@@ -72,7 +72,7 @@ function baseRepoFiles(): Record<string, string> {
   return {
     'package.json': JSON.stringify(
       {
-        name: 'czap-audit-fixture',
+        name: 'liteship-audit-fixture',
         private: true,
         type: 'module',
         packageManager: 'pnpm@10.32.1',
@@ -90,7 +90,7 @@ function baseRepoFiles(): Record<string, string> {
     ),
     'packages/core/package.json': JSON.stringify(
       {
-        name: '@czap/core',
+        name: '@liteship/core',
         type: 'module',
         exports: {
           '.': { development: './src/index.ts' },
@@ -104,7 +104,7 @@ function baseRepoFiles(): Record<string, string> {
     'packages/core/src/helper.ts': 'export const helper = () => 1;\n',
     'packages/vite/package.json': JSON.stringify(
       {
-        name: '@czap/vite',
+        name: '@liteship/vite',
         type: 'module',
         exports: {
           '.': { development: './src/index.ts' },
@@ -116,12 +116,12 @@ function baseRepoFiles(): Record<string, string> {
     'packages/vite/src/index.ts': 'export { loadVirtualModule } from "./virtual-modules.js";\n',
     'packages/vite/src/virtual-modules.ts': `
 export const ids = [
-  'virtual:czap/tokens',
-  'virtual:czap/tokens.css',
-  'virtual:czap/boundaries',
-  'virtual:czap/themes',
-  'virtual:czap/hmr-client',
-  'virtual:czap/wasm-url',
+  'virtual:liteship/tokens',
+  'virtual:liteship/tokens.css',
+  'virtual:liteship/boundaries',
+  'virtual:liteship/themes',
+  'virtual:liteship/hmr-client',
+  'virtual:liteship/wasm-url',
 ] as const;
 
 export function loadVirtualModule(id: string): string | undefined {
@@ -163,30 +163,30 @@ function coverageClassificationFixtureFiles(): Record<string, string> {
 
   return {
     ...baseRepoFiles(),
-    // @czap/web has a topology policy permitting core, quantizer, compiler, but
+    // @liteship/web has a topology policy permitting core, quantizer, compiler, but
     // imports only core here -> quantizer and compiler are unexercised allowlist entries.
-    'packages/web/package.json': minimalPackage('@czap/web'),
-    'packages/web/src/index.ts': 'import { coreReady } from "@czap/core";\nexport const webReady = coreReady;\n',
+    'packages/web/package.json': minimalPackage('@liteship/web'),
+    'packages/web/src/index.ts': 'import { coreReady } from "@liteship/core";\nexport const webReady = coreReady;\n',
     // CUT A2 brings these five under topology policy. cli/mcp-server import core;
     // scene and assets each take a type-only edge to _spine; _spine imports nothing.
-    'packages/cli/package.json': minimalPackage('@czap/cli'),
+    'packages/cli/package.json': minimalPackage('@liteship/cli'),
     'packages/cli/src/index.ts': 'export const cliReady = true;\n',
-    'packages/mcp-server/package.json': minimalPackage('@czap/mcp-server'),
+    'packages/mcp-server/package.json': minimalPackage('@liteship/mcp-server'),
     'packages/mcp-server/src/index.ts': 'export const mcpReady = true;\n',
-    'packages/scene/package.json': minimalPackage('@czap/scene'),
+    'packages/scene/package.json': minimalPackage('@liteship/scene'),
     'packages/scene/src/index.ts':
-      'import { coreReady } from "@czap/core";\nimport type { SpineMarker } from "@czap/_spine";\nexport const sceneReady = coreReady;\nexport type SceneMarker = SpineMarker;\n',
-    'packages/assets/package.json': minimalPackage('@czap/assets'),
+      'import { coreReady } from "@liteship/core";\nimport type { SpineMarker } from "@liteship/_spine";\nexport const sceneReady = coreReady;\nexport type SceneMarker = SpineMarker;\n',
+    'packages/assets/package.json': minimalPackage('@liteship/assets'),
     'packages/assets/src/index.ts':
-      'import { coreReady } from "@czap/core";\nimport type { SpineMarker } from "@czap/_spine";\nexport const assetsReady = coreReady;\nexport type AssetMarker = SpineMarker;\n',
+      'import { coreReady } from "@liteship/core";\nimport type { SpineMarker } from "@liteship/_spine";\nexport const assetsReady = coreReady;\nexport type AssetMarker = SpineMarker;\n',
     'packages/_spine/package.json': JSON.stringify(
-      { name: '@czap/_spine', type: 'module', exports: { '.': { development: './index.d.ts' } } },
+      { name: '@liteship/_spine', type: 'module', exports: { '.': { development: './index.d.ts' } } },
       null,
       2,
     ),
     'packages/_spine/index.d.ts': 'export type SpineMarker = boolean;\n',
     // A package with no topology policy at all -> stays policy-absent regardless of A2.
-    'packages/experimental/package.json': minimalPackage('@czap/experimental'),
+    'packages/experimental/package.json': minimalPackage('@liteship/experimental'),
     'packages/experimental/src/index.ts': 'export const experimentalReady = true;\n',
   };
 }
@@ -482,7 +482,7 @@ describe('codebase audit loop', () => {
       ...baseRepoFiles(),
       'packages/web/package.json': JSON.stringify(
         {
-          name: '@czap/web',
+          name: '@liteship/web',
           type: 'module',
           exports: { '.': { development: './src/index.ts' } },
         },
@@ -490,10 +490,10 @@ describe('codebase audit loop', () => {
         2,
       ),
       'packages/web/src/index.ts':
-        'import { remotionReady } from "@czap/remotion";\nexport const webReady = remotionReady;\n',
+        'import { remotionReady } from "@liteship/remotion";\nexport const webReady = remotionReady;\n',
       'packages/remotion/package.json': JSON.stringify(
         {
-          name: '@czap/remotion',
+          name: '@liteship/remotion',
           type: 'module',
           exports: { '.': { development: './src/index.ts' } },
         },
@@ -513,14 +513,14 @@ describe('codebase audit loop', () => {
   const pkgJson = (name: string): string =>
     JSON.stringify({ name, type: 'module', exports: { '.': { development: './src/index.ts' } } }, null, 2);
   const isCliMcp = (f: { metadata?: { packageName?: string; targetPackage?: string } }): boolean =>
-    f.metadata?.packageName === '@czap/cli' && f.metadata?.targetPackage === '@czap/mcp-server';
+    f.metadata?.packageName === '@liteship/cli' && f.metadata?.targetPackage === '@liteship/mcp-server';
 
   test('A1-T1: a STATIC cli → mcp-server import is flagged package-topology', () => {
     const root = createRepo({
       ...baseRepoFiles(),
-      'packages/cli/package.json': pkgJson('@czap/cli'),
-      'packages/cli/src/index.ts': 'import { start } from "@czap/mcp-server";\nexport const run = start;\n',
-      'packages/mcp-server/package.json': pkgJson('@czap/mcp-server'),
+      'packages/cli/package.json': pkgJson('@liteship/cli'),
+      'packages/cli/src/index.ts': 'import { start } from "@liteship/mcp-server";\nexport const run = start;\n',
+      'packages/mcp-server/package.json': pkgJson('@liteship/mcp-server'),
       'packages/mcp-server/src/index.ts': 'export const start = true;\n',
     });
     const result = runStructureAudit(at(root));
@@ -530,9 +530,9 @@ describe('codebase audit loop', () => {
   test('A1-T2: a DYNAMIC cli → mcp-server import is exempt (no false positive)', () => {
     const root = createRepo({
       ...baseRepoFiles(),
-      'packages/cli/package.json': pkgJson('@czap/cli'),
-      'packages/cli/src/index.ts': 'export async function startMcp() {\n  return import("@czap/mcp-server");\n}\n',
-      'packages/mcp-server/package.json': pkgJson('@czap/mcp-server'),
+      'packages/cli/package.json': pkgJson('@liteship/cli'),
+      'packages/cli/src/index.ts': 'export async function startMcp() {\n  return import("@liteship/mcp-server");\n}\n',
+      'packages/mcp-server/package.json': pkgJson('@liteship/mcp-server'),
       'packages/mcp-server/src/index.ts': 'export const start = true;\n',
     });
     const result = runStructureAudit(at(root));
@@ -545,15 +545,15 @@ describe('codebase audit loop', () => {
   test('A1-T3: a non-exempt DYNAMIC pkg→pkg import absent from the manifest is flagged', () => {
     const root = createRepo({
       ...baseRepoFiles(),
-      'packages/web/package.json': pkgJson('@czap/web'),
-      'packages/web/src/index.ts': 'export async function load() {\n  return import("@czap/remotion");\n}\n',
-      'packages/remotion/package.json': pkgJson('@czap/remotion'),
+      'packages/web/package.json': pkgJson('@liteship/web'),
+      'packages/web/src/index.ts': 'export async function load() {\n  return import("@liteship/remotion");\n}\n',
+      'packages/remotion/package.json': pkgJson('@liteship/remotion'),
       'packages/remotion/src/index.ts': 'export const remotionReady = true;\n',
     });
     const result = runStructureAudit(at(root));
     expect(
       result.findings.some(
-        (f) => f.rule === 'missing-manifest-dependency-dynamic' && f.metadata?.targetPackage === '@czap/remotion',
+        (f) => f.rule === 'missing-manifest-dependency-dynamic' && f.metadata?.targetPackage === '@liteship/remotion',
       ),
     ).toBe(true);
   });
@@ -638,11 +638,11 @@ describe('codebase audit loop', () => {
       ...baseRepoFiles(),
       'packages/vite/src/virtual-modules.ts': `
 export const ids = [
-  'virtual:czap/tokens',
-  'virtual:czap/tokens.css',
-  'virtual:czap/boundaries',
-  'virtual:czap/themes',
-  'virtual:czap/hmr-client',
+  'virtual:liteship/tokens',
+  'virtual:liteship/tokens.css',
+  'virtual:liteship/boundaries',
+  'virtual:liteship/themes',
+  'virtual:liteship/hmr-client',
 ] as const;
 `.trim(),
     });
@@ -733,7 +733,7 @@ export const ids = [
         fileCount: section.files.length,
       })),
       coreFiles: report.sections
-        .find((section) => section.id === '@czap/core')
+        .find((section) => section.id === '@liteship/core')
         ?.files.map((file) => ({
           path: file.path,
           score: file.score,
@@ -794,20 +794,20 @@ export const ids = [
     expect(stableJsonView.inventoryCount).toBe(27);
     expect(stableJsonView.aggregateScore).toBeCloseTo(85.78, 2);
     expect(stableJsonView.sectionScores.map((section) => section.id)).toEqual([
-      '@czap/core',
-      '@czap/canonical',
-      '@czap/genui',
-      '@czap/quantizer',
-      '@czap/compiler',
-      '@czap/detect',
-      '@czap/web',
-      '@czap/edge',
-      '@czap/worker',
-      '@czap/vite',
-      '@czap/astro',
-      '@czap/cloudflare',
-      '@czap/remotion',
-      'czap-compute',
+      '@liteship/core',
+      '@liteship/canonical',
+      '@liteship/genui',
+      '@liteship/quantizer',
+      '@liteship/compiler',
+      '@liteship/detect',
+      '@liteship/web',
+      '@liteship/edge',
+      '@liteship/worker',
+      '@liteship/vite',
+      '@liteship/astro',
+      '@liteship/cloudflare',
+      '@liteship/remotion',
+      'liteship-compute',
       'packages/_spine',
       'tests',
       'scripts',
@@ -856,7 +856,7 @@ export const ids = [
 
     const markdown = renderCodebaseAuditMarkdown(report);
     expect(markdown).toContain('# Full-Repo HICP Audit');
-    expect(markdown).toContain('## @czap/core');
+    expect(markdown).toContain('## @liteship/core');
     expect(markdown).toContain('## repo/system/devops');
     expect(markdown).toContain('| packages/core/src/orphan.ts |');
     expect(markdown).toContain(
@@ -894,9 +894,9 @@ export const ids = [
     const policyAbsent = new Set(
       classification.topology.filter((entry) => entry.coverage === 'policy-absent').map((entry) => entry.package),
     );
-    expect(policyAbsent.has('@czap/experimental')).toBe(true);
+    expect(policyAbsent.has('@liteship/experimental')).toBe(true);
     // A package that does have a policy is not policy-absent.
-    expect(classification.topology.find((entry) => entry.package === '@czap/core')?.coverage).not.toBe('policy-absent');
+    expect(classification.topology.find((entry) => entry.package === '@liteship/core')?.coverage).not.toBe('policy-absent');
 
     // (b) Orphan detection is labelled file-proxy-only so its zero/count cannot be read as symbol-level proof.
     expect(classification.orphan.coverage).toBe('file-proxy-only');
@@ -908,7 +908,7 @@ export const ids = [
     expect(classification.allowlistUnexercised.length).toBeGreaterThanOrEqual(1);
     expect(
       classification.allowlistUnexercised.some(
-        (entry) => entry.package === '@czap/vite' && entry.permitted === '@czap/core',
+        (entry) => entry.package === '@liteship/vite' && entry.permitted === '@liteship/core',
       ),
     ).toBe(true);
     expect(
@@ -926,7 +926,7 @@ export const ids = [
 
     expect(markdown).toContain('## Audit Self-Trust');
     expect(markdown).toContain('policy-absent');
-    expect(markdown).toContain('@czap/experimental');
+    expect(markdown).toContain('@liteship/experimental');
     expect(markdown).toContain('file-proxy-only');
     // The aggregate score must remain the final line (pinned receipt invariant).
     expect(markdown.trim().split('\n').at(-1)).toBe(report.aggregateScore.toFixed(2));
@@ -1035,14 +1035,14 @@ export const ids = [
       result.summary.coverageClassification.topology.map((entry) => [entry.package, entry.coverage] as const),
     );
 
-    for (const pkg of ['@czap/cli', '@czap/mcp-server', '@czap/scene', '@czap/assets', '@czap/_spine']) {
+    for (const pkg of ['@liteship/cli', '@liteship/mcp-server', '@liteship/scene', '@liteship/assets', '@liteship/_spine']) {
       expect(coverageByPackage.get(pkg)).toBeDefined();
       expect(coverageByPackage.get(pkg)).not.toBe('policy-absent');
     }
 
     // scene -> _spine and assets -> _spine are allowed type-only edges, not topology violations.
     const spineViolations = result.findings.filter(
-      (finding) => finding.rule === 'package-topology' && finding.metadata?.targetPackage === '@czap/_spine',
+      (finding) => finding.rule === 'package-topology' && finding.metadata?.targetPackage === '@liteship/_spine',
     );
     expect(spineViolations).toHaveLength(0);
   });
@@ -1055,12 +1055,12 @@ export const ids = [
     const has = (pkg: string, permitted: string): boolean =>
       unexercised.some((entry) => entry.package === pkg && entry.permitted === permitted);
 
-    expect(has('@czap/astro', '@czap/compiler')).toBe(false);
-    expect(has('@czap/web', '@czap/quantizer')).toBe(false);
-    expect(has('@czap/web', '@czap/compiler')).toBe(false);
-    expect(has('@czap/vite', '@czap/quantizer')).toBe(false);
-    // A3b: compiler imports only core (no @czap/quantizer import, not in its
+    expect(has('@liteship/astro', '@liteship/compiler')).toBe(false);
+    expect(has('@liteship/web', '@liteship/quantizer')).toBe(false);
+    expect(has('@liteship/web', '@liteship/compiler')).toBe(false);
+    expect(has('@liteship/vite', '@liteship/quantizer')).toBe(false);
+    // A3b: compiler imports only core (no @liteship/quantizer import, not in its
     // manifest, no compiler->quantizer edge in the architecture DAG).
-    expect(has('@czap/compiler', '@czap/quantizer')).toBe(false);
+    expect(has('@liteship/compiler', '@liteship/quantizer')).toBe(false);
   });
 });

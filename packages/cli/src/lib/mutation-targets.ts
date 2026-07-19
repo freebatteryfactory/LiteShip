@@ -1,6 +1,6 @@
 /**
  * The L4-SEAM TARGETING + the SOUND covering-tests map (Slice C, the avionics tier
- * — the host half of `czap check --ir --mutate`).
+ * — the host half of `liteship check --ir --mutate`).
  *
  * Two host-only computations the mutation run needs, both PURE + deterministic over
  * the repo bytes:
@@ -27,10 +27,10 @@
  *    COVERS a seam file F (in package P) iff it either
  *      (a) DEEP-IMPORTS F's source path (the precise signal — `packages/P/src/F.js`),
  *          OR
- *      (b) imports P's BARREL (`@czap/P`) — a sound over-approximation, since a
+ *      (b) imports P's BARREL (`@liteship/P`) — a sound over-approximation, since a
  *          barrel importer pulls in F's package and could exercise any of its
  *          exports (the centralized-tests + barrel-import reality of this repo: most
- *          seam tests import `@czap/core`, not a deep path).
+ *          seam tests import `@liteship/core`, not a deep path).
  *    The union of (a) and (b) is the covering set for F; every mutant LINE of F maps
  *    to that same set (line-granularity coverage is not available without an
  *    instrumented run, so the file-granular set is used — again the SOUND direction:
@@ -44,9 +44,9 @@
 
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { normalizeRepoPath } from '@czap/audit';
-import { makeCoverageMap, type CoverageMap, type MutationTargetFile } from '@czap/audit';
-import { levelOf, propagateAssuranceLevels, type RepoIR } from '@czap/gauntlet';
+import { normalizeRepoPath } from '@liteship/audit';
+import { makeCoverageMap, type CoverageMap, type MutationTargetFile } from '@liteship/audit';
+import { levelOf, propagateAssuranceLevels, type RepoIR } from '@liteship/gauntlet';
 import {
   computeSeamExecutionCoverage,
   executionCoverageRelation,
@@ -72,7 +72,7 @@ import {
  * THE BROAD CORE TRUST-SPINE SEAMS (hlc / dag, plus content-address / graph-patch
  * whose effective-L4 status is decided by the LIVE propagation, NEVER assumed here)
  * were previously deferred: their covering set is dominated by the SOUND barrel
- * over-approximation (every `@czap/core` importer — ~220 tests), making a
+ * over-approximation (every `@liteship/core` importer — ~220 tests), making a
  * suite-run-per-mutant intractable. The EXECUTION-BASED coverage filter
  * ({@link buildSeamCoverageMap} → `seam-execution-coverage.ts`) solves exactly this:
  * a barrel importer is kept for a seam's function-body lines ONLY when it actually
@@ -226,13 +226,13 @@ function collectTestFiles(repoRoot: string, root: string): TestFile[] {
 
 /**
  * The barrel specifier for a seam file's package (`packages/<pkg>/src/...` →
- * `@czap/<pkg>`), or `null` when the file is not under a `packages/<pkg>/src/`
+ * `@liteship/<pkg>`), or `null` when the file is not under a `packages/<pkg>/src/`
  * layout (then only the deep-import signal applies). The repo's one internal scope
- * is `@czap/` (the audit profile's `internalPackagePrefix`).
+ * is `@liteship/` (the audit profile's `internalPackagePrefix`).
  */
 function barrelOf(seamFile: string): string | null {
   const m = /^packages\/([^/]+)\/src\//.exec(normalizeRepoPath(seamFile));
-  return m === null ? null : `@czap/${m[1]}`;
+  return m === null ? null : `@liteship/${m[1]}`;
 }
 
 /**
@@ -254,7 +254,7 @@ function testDeepImports(test: TestFile, seamFile: string): boolean {
 }
 
 /**
- * Does `test` import the seam's package BARREL (`@czap/P` or any `@czap/P/sub`)? A
+ * Does `test` import the seam's package BARREL (`@liteship/P` or any `@liteship/P/sub`)? A
  * barrel importer pulls in F's package — the SOUND over-approximation candidate set.
  * It is no longer counted wholesale: the EXECUTION-COVERAGE filter probes each barrel
  * importer and keeps it for F's function-body lines only when it actually executes a

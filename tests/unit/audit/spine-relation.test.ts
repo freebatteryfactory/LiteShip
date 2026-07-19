@@ -4,8 +4,8 @@
  * catch mechanically before those pins are absorbed (the S-conflict discipline — never
  * delete a pin ahead of a green gate that subsumes it).
  *
- * It drives the real @czap/audit builder (a ts.Program probe over the spine mirror +
- * the runtime surface) and folds the observed facts through the real @czap/gauntlet
+ * It drives the real @liteship/audit builder (a ts.Program probe over the spine mirror +
+ * the runtime surface) and folds the observed facts through the real @liteship/gauntlet
  * gate. GREEN on the reconciled spine; RED on each of the three historical drift
  * fixtures (CapSet Set→array, Millis brand loss, WGSL omission), injected in-memory via
  * the builder's overlay seam; deterministic; and self-proving through the authority

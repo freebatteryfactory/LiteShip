@@ -1,5 +1,5 @@
 /**
- * Explicit WASM state machine for the czap Vite plugin.
+ * Explicit WASM state machine for the liteship Vite plugin.
  *
  * The compute-binary wiring was previously three free `let`s
  * (`resolvedWasm` / `wasmEnabled` / `emittedWasmRefId`) written in

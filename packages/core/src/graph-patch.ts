@@ -27,7 +27,7 @@
  * @module
  */
 
-import { ParseError } from '@czap/error';
+import { ParseError } from '@liteship/error';
 import type { ContentAddress, HLC } from './brands.js';
 import { contentAddressOf } from './content-address.js';
 import { sealGraph, validateGraph } from './document-graph-address.js';
@@ -332,7 +332,7 @@ export function decode(value: unknown): GraphPatch {
  *
  * @example
  * ```ts
- * import { GraphPatch } from '@czap/core';
+ * import { GraphPatch } from '@liteship/core';
  *
  * const patch = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node }]);
  * const next = GraphPatch.apply(base, patch);          // re-addressed: next.id !== base.id

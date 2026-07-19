@@ -25,7 +25,7 @@ import {
   CheckInvariantsPayloadSchema,
   CapsuleVerifyPayloadSchema,
   CheckPayloadSchema,
-} from '@czap/command';
+} from '@liteship/command';
 import { dispatchToolCall, listTools } from '../../../packages/mcp-server/src/dispatch.js';
 import { validateStructural, type StructuralSchema } from '../../support/structural-schema.js';
 
@@ -80,7 +80,7 @@ describe('D2 — payload conformance + validator teeth', () => {
   // shape (see docs/superpowers/specs/2026-05-25-d2-output-schema-descriptor-law.md).
   const samples: Record<string, unknown> = {
     glossary: { term: 'boundary', entries: [{ term: 'boundary', category: 'core', definition: 'x' }] },
-    version: { czap: '0.1.3', node: '22.12.0', pnpm: '10.32.1' },
+    version: { liteship: '0.1.3', node: '22.12.0', pnpm: '10.32.1' },
     'capsule.inspect': { capsule: { name: 'core.x', kind: 'pureTransform' } },
     'capsule.list': { capsules: [{ name: 'core.x', kind: 'pureTransform' }], kind: null },
     'capsule.verify': { capsuleId: 'core.x' },
@@ -127,12 +127,12 @@ describe('D2 — payload conformance + validator teeth', () => {
       packagesPacked: 3,
       importsSmoked: 0,
       failedStep: 'pnpm install in consumer dir',
-      failure: '@czap/web missing from node_modules after install',
+      failure: '@liteship/web missing from node_modules after install',
     },
     plumb: {
       ok: false,
       skips: [{ file: 'tests/generated/x.test.ts', kind: 'it.skip', message: 'unwired' }],
-      unclassified: ['@czap/mystery'],
+      unclassified: ['@liteship/mystery'],
       generatedPresent: true,
       generatedCorpusMessage: null,
     },
@@ -163,7 +163,7 @@ describe('D2 — payload conformance + validator teeth', () => {
           severity: 'error',
           level: 'L3',
           title: 'bare throw',
-          detail: 'throw a tagged @czap/error, not a bare value',
+          detail: 'throw a tagged @liteship/error, not a bare value',
           location: { file: 'packages/x/src/y.ts', line: 12 },
         },
       ],

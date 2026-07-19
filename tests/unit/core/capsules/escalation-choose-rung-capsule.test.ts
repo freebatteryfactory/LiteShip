@@ -9,8 +9,8 @@
  * @module
  */
 import { describe, it, expect } from 'vitest';
-import { escalationChooseRungCapsule, chooseRung, sealNode, Cap } from '@czap/core';
-import type { Decision, PolicyNode, RuntimeSite, CellMeta } from '@czap/core';
+import { escalationChooseRungCapsule, chooseRung, sealNode, Cap } from '@liteship/core';
+import type { Decision, PolicyNode, RuntimeSite, CellMeta } from '@liteship/core';
 import { _escalationChooseRungInternals } from '../../../../packages/core/src/capsules/escalation-choose-rung.js';
 
 const { buildPolicy, decideEscalation, denyCode, isChoice } = _escalationChooseRungInternals;

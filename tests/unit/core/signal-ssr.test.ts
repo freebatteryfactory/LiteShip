@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, test } from 'vitest';
-import { Signal } from '@czap/core';
+import { Signal } from '@liteship/core';
 
 /** Signal SSR behavior — Wave 6 plain CellKernel (Effect-free): inert reads when
  * window-specific sources / requestAnimationFrame are unavailable on the server. */

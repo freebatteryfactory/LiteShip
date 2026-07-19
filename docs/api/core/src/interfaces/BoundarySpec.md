@@ -14,7 +14,7 @@ without external wrapping logic.
 
 Wired into the Astro runtime `evaluateBoundary` path (host-side gating before
 state transitions). JSON-serializable fields
-(`timeRange`, `experimentId`) round-trip through `data-czap-boundary`;
+(`timeRange`, `experimentId`) round-trip through `data-liteship-boundary`;
 `deviceFilter` is host-only (functions cannot cross the wire).
 
 ## Properties

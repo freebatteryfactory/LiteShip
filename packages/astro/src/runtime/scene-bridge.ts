@@ -1,9 +1,9 @@
 /**
  * Scene → live-runtime BRIDGE (0.4.0 item C).
  *
- * Lets a signal-indexed `@czap/scene` drive the LIVE DOM/GPU runtime — not just
+ * Lets a signal-indexed `@liteship/scene` drive the LIVE DOM/GPU runtime — not just
  * an offline video encode. It composes item B's runtime DocumentGraph spine
- * (`graph-runtime.ts`'s {@link GraphRuntimeHandle}) with a `@czap/scene`
+ * (`graph-runtime.ts`'s {@link GraphRuntimeHandle}) with a `@liteship/scene`
  * {@link SceneRuntimeHandle}: every frame it ticks the scene, then routes the
  * scene's per-track output across the ONE design boundary that keeps the graph
  * from being re-sealed 60×/s.
@@ -14,13 +14,13 @@
  *     active pose flips from the "from" side to the "to" side). This is SPARSE.
  *     On a crossing we build a MINIMAL {@link GraphPatch} that re-points the
  *     owning entity's pose to the new state and feed it to the live graph
- *     handle's `recast`, so the cast pipeline flips `data-czap-state` through the
+ *     handle's `recast`, so the cast pipeline flips `data-liteship-state` through the
  *     exact same delta seam `client:satellite` already drives. The graph is
  *     re-sealed ONLY on a crossing — cheap, because crossings are rare.
  *
  *   - CONTINUOUS — the in-between TWEEN value (`_blend`, eased). This moves EVERY
- *     frame. We write it to a `--czap-*` CSS custom property AND dispatch a
- *     `czap:uniform-update` GPU uniform on the resolved leaf element directly.
+ *     frame. We write it to a `--liteship-*` CSS custom property AND dispatch a
+ *     `liteship:uniform-update` GPU uniform on the resolved leaf element directly.
  *     This NEVER touches the graph — patching per frame would re-seal the graph
  *     60×/s, defeating the IR's content-addressing entirely.
  *
@@ -37,14 +37,21 @@
  * @module
  */
 
-import { GraphPatch, sealNode, startRafLoop, type ContentAddress, type DocumentGraph, type PoseNode } from '@czap/core';
-import { dispatchCzapEvent } from '@czap/web';
-import type { SceneRuntime } from '@czap/scene';
+import {
+  GraphPatch,
+  sealNode,
+  startRafLoop,
+  type ContentAddress,
+  type DocumentGraph,
+  type PoseNode,
+} from '@liteship/core';
+import { dispatchLiteshipEvent } from '@liteship/web';
+import type { SceneRuntime } from '@liteship/scene';
 import { attachSignalObserver, readSignalValue, warnIfSignalUnserved } from './boundary.js';
 import { graphRuntimeInternals, type EntityElementResolver, type GraphRuntimeHandle } from './graph-runtime.js';
 
 /**
- * The minimal `@czap/scene` runtime surface the bridge consumes: a clock-driven
+ * The minimal `@liteship/scene` runtime surface the bridge consumes: a clock-driven
  * `tick` plus a queryable `world`. The full `SceneRuntime.Handle` satisfies this
  * structurally (it exposes both), so a caller passes the real handle directly;
  * a test can pass a fake of exactly this shape to exercise the routing law
@@ -57,10 +64,10 @@ export interface BridgeableScene {
   readonly world: SceneWorld;
 }
 
-/** The narrow `world.query` surface the bridge reads — the `@czap/core` World exposes exactly this. */
+/** The narrow `world.query` surface the bridge reads — the `@liteship/core` World exposes exactly this. */
 export interface SceneWorld {
   /**
-   * Query entities carrying ALL named components. `@czap/core`'s `World.query`
+   * Query entities carrying ALL named components. `@liteship/core`'s `World.query`
    * is SYNCHRONOUS and returns the matched entities directly, so the bridge reads
    * the result inline ({@link SceneQueryEffect} = `readonly SceneEntity[]`). The
    * real `SceneRuntime.Handle.world` (whose `query` returns the world's entity
@@ -72,9 +79,9 @@ export interface SceneWorld {
 }
 
 /**
- * Compile-time anchor: a real `@czap/scene` {@link SceneRuntime.Handle} MUST be a
+ * Compile-time anchor: a real `@liteship/scene` {@link SceneRuntime.Handle} MUST be a
  * valid {@link BridgeableScene} (it exposes `tick` + a queryable `world`). This is
- * what makes `@czap/scene` a runtime CONSUMER of the bridge — a host passes the
+ * what makes `@liteship/scene` a runtime CONSUMER of the bridge — a host passes the
  * real handle straight in, no adapter. If the handle's shape drifts, this fails to
  * compile rather than failing silently at a call site.
  */
@@ -83,7 +90,7 @@ void _sceneHandleIsBridgeable;
 
 /**
  * The value `world.query(...)` returns: the matched entities, synchronously.
- * `@czap/core`'s `World.query` is sync, so the bridge reads this inline (no
+ * `@liteship/core`'s `World.query` is sync, so the bridge reads this inline (no
  * runner). A host may inject a `runQuery` projection to reshape it (e.g. lift
  * `trackId` out of the component map) before the routing loop reads each entity.
  */
@@ -91,7 +98,7 @@ export type SceneQueryEffect = readonly SceneEntity[];
 
 /**
  * One queried entity as the bridge reads it: a track id plus its live component
- * map. `trackId` is OPTIONAL because the raw `@czap/core` World stores it as a
+ * map. `trackId` is OPTIONAL because the raw `@liteship/core` World stores it as a
  * component rather than a top-level field — the reference `runQuery` projection
  * (`scene-stage.ts`) lifts it up; a fake scene supplies it directly.
  */
@@ -138,8 +145,8 @@ export interface BridgeOptions {
    */
   readonly runQuery?: (query: SceneQueryEffect) => readonly SceneEntity[] | Promise<readonly SceneEntity[]>;
   /**
-   * The `--czap-*` CSS custom property the continuous blend is written to.
-   * Defaults to `--czap-blend`. The leaf write + `czap:uniform-update` dispatch
+   * The `--liteship-*` CSS custom property the continuous blend is written to.
+   * Defaults to `--liteship-blend`. The leaf write + `liteship:uniform-update` dispatch
    * use this key so a GPU shader binds `u_blend` (the canonical `glslIdent` of
    * `blend`).
    */
@@ -162,7 +169,7 @@ function discreteStateOf(blend: number): string {
  * `nextState` — the discrete-crossing mutation. We mint a fresh {@link PoseNode}
  * for the entity at the new state (the address is content-derived) and emit a
  * single `update` op for the `pose` family. `GraphPatch.apply` re-addresses, so
- * the runtime's `recast` flips `data-czap-state` through the one delta seam.
+ * the runtime's `recast` flips `data-liteship-state` through the one delta seam.
  *
  * The pose carries NO continuous value (no `_blend` binding) — the continuous
  * tween is a LEAF write, never a graph payload, so the patch stays minimal and a
@@ -193,32 +200,32 @@ function crossingPatch(graph: DocumentGraph, entityId: ContentAddress, nextState
 }
 
 /**
- * Write the CONTINUOUS blend to a resolved leaf element: set the `--czap-*` CSS
- * custom property AND dispatch a `czap:uniform-update` carrying the blend so the
+ * Write the CONTINUOUS blend to a resolved leaf element: set the `--liteship-*` CSS
+ * custom property AND dispatch a `liteship:uniform-update` carrying the blend so the
  * GPU runtime (`gpu.ts`'s `onElementUniformUpdate`) binds the live uniform. This
  * is the per-frame write that NEVER touches the graph.
  */
 function writeContinuous(element: HTMLElement, cssVar: string, blend: number): void {
   const value = String(blend);
   element.style.setProperty(cssVar, value);
-  dispatchCzapEvent(element, 'czap:uniform-update', { css: { [cssVar]: value } });
+  dispatchLiteshipEvent(element, 'liteship:uniform-update', { css: { [cssVar]: value } });
 }
 
 /** The custom-event name the discrete crossing dispatches on (mirrors the graph runtime's default). */
-const GRAPH_STATE_EVENT = 'czap:graph-state';
+const GRAPH_STATE_EVENT = 'liteship:graph-state';
 
 /**
- * Apply a DISCRETE state to the leaf element: flip `data-czap-state` and dispatch
- * the canonical `czap:graph-state` event so downstream listeners (and the
+ * Apply a DISCRETE state to the leaf element: flip `data-liteship-state` and dispatch
+ * the canonical `liteship:graph-state` event so downstream listeners (and the
  * inspector) see the crossing — the same attribute + event the cast pipeline's
  * `applyBoundaryState` writes. The scene is the state AUTHORITY here, so this is
  * the authoritative flip; the companion `recast` keeps the graph IR in sync.
  */
 function applyDiscreteState(element: HTMLElement, state: string): void {
-  if (element.getAttribute('data-czap-state') !== state) {
-    element.setAttribute('data-czap-state', state);
+  if (element.getAttribute('data-liteship-state') !== state) {
+    element.setAttribute('data-liteship-state', state);
   }
-  dispatchCzapEvent(element, GRAPH_STATE_EVENT, { discrete: { [state]: state }, state });
+  dispatchLiteshipEvent(element, GRAPH_STATE_EVENT, { discrete: { [state]: state }, state });
 }
 
 /**
@@ -227,8 +234,8 @@ function applyDiscreteState(element: HTMLElement, state: string): void {
  * boundary:
  *
  *   - a DISCRETE crossing (`_blend` passing the 0.5 split) → a minimal
- *     {@link GraphPatch} fed to `graphHandle.recast` (flips `data-czap-state`);
- *   - the CONTINUOUS `_blend` → a `--czap-*` CSS var + `czap:uniform-update` on
+ *     {@link GraphPatch} fed to `graphHandle.recast` (flips `data-liteship-state`);
+ *   - the CONTINUOUS `_blend` → a `--liteship-*` CSS var + `liteship:uniform-update` on
  *     the leaf element EVERY frame (never a graph patch).
  *
  * The `trackId → EntityNode.id` projection is built ONCE here (it never changes
@@ -248,7 +255,7 @@ export function bridgeSceneToGraph(
 ): SceneBridgeHandle {
   const projectTrack = opts.projectTrack ?? ((trackId: string) => trackId as ContentAddress);
   const runQuery = opts.runQuery;
-  const continuousVar = opts.continuousVar ?? '--czap-blend';
+  const continuousVar = opts.continuousVar ?? '--liteship-blend';
 
   // The scene's projection into the graph: a STABLE trackId → EntityNode.id map.
   // Built ONCE, never re-derived per tick. Lazily populated on the first tick
@@ -313,11 +320,11 @@ export function bridgeSceneToGraph(
           graphHandle.recast(patch);
           const applied = graphRuntimeInternals(graphHandle)?.applyState(entityId, nextState) ?? false;
           // The SCENE is the discrete-state authority (the active pose is the
-          // scene's, not a viewport signal's), so flip `data-czap-state` on the
+          // scene's, not a viewport signal's), so flip `data-liteship-state` on the
           // leaf directly here. The cast pipeline's signal re-seed would otherwise
           // pull the state back to the signal's quantization; for a scene-driven
           // entity the scene's crossing IS the source of truth. We apply through
-          // the same attribute + `czap:graph-state` event the cast pipeline uses.
+          // the same attribute + `liteship:graph-state` event the cast pipeline uses.
           if (!applied && element) applyDiscreteState(element, nextState);
         }
       }
@@ -336,7 +343,7 @@ export function bridgeSceneToGraph(
     // scene back to an earlier timeline position.
     // Warn once at setup if the clock signal will never tick (typo or no live
     // producer here) — self-guarded for SSR so the inert-on-server contract holds.
-    warnIfSignalUnserved(clock.input, { source: 'czap/astro.scene-bridge', what: 'scene signal clock' });
+    warnIfSignalUnserved(clock.input, { source: 'liteship/astro.scene-bridge', what: 'scene signal clock' });
     let lastPositionMs = 0;
     const cleanup =
       typeof window === 'undefined'

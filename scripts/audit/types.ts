@@ -1,12 +1,12 @@
 /**
  * Audit types — split (CUT D9b-1). The reusable ENGINE types live in
- * `@czap/audit` and are re-exported here so existing `./types.js` importers are
+ * `@liteship/audit` and are re-exported here so existing `./types.js` importers are
  * unchanged. The LiteShip HICP REPORT types (section taxonomy, file scoring,
  * full-tree/protocol/framework/strike-board reports) stay repo-local below.
  *
  * @module
  */
-import type { WallClockTimestamp } from '@czap/core';
+import type { WallClockTimestamp } from '@liteship/core';
 
 export type {
   AuditSeverity,
@@ -22,27 +22,27 @@ export type {
   OrphanCoverage,
   SymbolOrphanCoverage,
   StructureCoverageClassification,
-} from '@czap/audit';
+} from '@liteship/audit';
 
-import type { AuditCounts, AuditFinding, AuditSectionResult, AuditSuppression } from '@czap/audit';
+import type { AuditCounts, AuditFinding, AuditSectionResult, AuditSuppression } from '@liteship/audit';
 
 // ── LiteShip HICP report types (repo-local) ──────────────────────────────
 
 export type FullAuditSectionId =
-  | '@czap/core'
-  | '@czap/canonical'
-  | '@czap/genui'
-  | '@czap/quantizer'
-  | '@czap/compiler'
-  | '@czap/detect'
-  | '@czap/web'
-  | '@czap/edge'
-  | '@czap/worker'
-  | '@czap/vite'
-  | '@czap/astro'
-  | '@czap/cloudflare'
-  | '@czap/remotion'
-  | 'czap-compute'
+  | '@liteship/core'
+  | '@liteship/canonical'
+  | '@liteship/genui'
+  | '@liteship/quantizer'
+  | '@liteship/compiler'
+  | '@liteship/detect'
+  | '@liteship/web'
+  | '@liteship/edge'
+  | '@liteship/worker'
+  | '@liteship/vite'
+  | '@liteship/astro'
+  | '@liteship/cloudflare'
+  | '@liteship/remotion'
+  | 'liteship-compute'
   | 'packages/_spine'
   | 'tests'
   | 'scripts'

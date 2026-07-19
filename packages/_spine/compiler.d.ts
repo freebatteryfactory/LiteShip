@@ -1,5 +1,5 @@
 /**
- * @czap/compiler type spine -- multi-target output generation.
+ * @liteship/compiler type spine -- multi-target output generation.
  */
 
 import type { Boundary, StateUnion, ContentAddress } from './core.d.ts';

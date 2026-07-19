@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 
 import { describe, expect, test } from 'vitest';
-import { Boundary, Millis, Part, S, SpeculativeEvaluator, Style, World } from '@czap/core';
-import { evaluate as evaluateQuantizer } from '@czap/quantizer';
-import { GLSLCompiler } from '@czap/compiler';
+import { Boundary, Millis, Part, S, SpeculativeEvaluator, Style, World } from '@liteship/core';
+import { evaluate as evaluateQuantizer } from '@liteship/quantizer';
+import { GLSLCompiler } from '@liteship/compiler';
 import { captureSelection, findScrollable } from '../../../packages/web/src/physical/capture.js';
 import {
   restoreActiveElement,

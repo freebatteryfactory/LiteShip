@@ -3,8 +3,8 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Boundary } from '@czap/core';
-import { Config, defineConfig } from '@czap/core';
+import { Boundary } from '@liteship/core';
+import { Config, defineConfig } from '@liteship/core';
 
 const boundary = Boundary.make({
   input: 'viewport.width',
@@ -103,28 +103,28 @@ describe('Config.toAstroConfig()', () => {
 });
 
 describe('Config.toTestAliases()', () => {
-  test('returns @czap/core alias pointing to packages/core', () => {
+  test('returns @liteship/core alias pointing to packages/core', () => {
     const cfg = Config.make({});
     const aliases = Config.toTestAliases(cfg, '/repo');
-    expect(aliases['@czap/core']).toContain('packages/core');
+    expect(aliases['@liteship/core']).toContain('packages/core');
   });
 
-  test('returns @czap/vite alias pointing to packages/vite', () => {
+  test('returns @liteship/vite alias pointing to packages/vite', () => {
     const cfg = Config.make({});
     const aliases = Config.toTestAliases(cfg, '/repo');
-    expect(aliases['@czap/vite']).toContain('packages/vite');
+    expect(aliases['@liteship/vite']).toContain('packages/vite');
   });
 
-  test('includes @czap/_spine alias', () => {
+  test('includes @liteship/_spine alias', () => {
     const cfg = Config.make({});
     const aliases = Config.toTestAliases(cfg, '/repo');
-    expect(aliases['@czap/_spine']).toContain('packages/_spine');
+    expect(aliases['@liteship/_spine']).toContain('packages/_spine');
   });
 
-  test('includes @czap/canonical and @czap/genui aliases', () => {
+  test('includes @liteship/canonical and @liteship/genui aliases', () => {
     const cfg = Config.make({});
     const aliases = Config.toTestAliases(cfg, '/repo');
-    expect(aliases['@czap/canonical']).toContain('packages/canonical');
-    expect(aliases['@czap/genui']).toContain('packages/genui');
+    expect(aliases['@liteship/canonical']).toContain('packages/canonical');
+    expect(aliases['@liteship/genui']).toContain('packages/genui');
   });
 });

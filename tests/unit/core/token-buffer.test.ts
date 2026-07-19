@@ -3,7 +3,7 @@
  */
 
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import { TokenBuffer } from '@czap/core';
+import { TokenBuffer } from '@liteship/core';
 
 describe('TokenBuffer', () => {
   afterEach(() => {

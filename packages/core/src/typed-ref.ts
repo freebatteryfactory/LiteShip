@@ -29,8 +29,8 @@
  * @module
  */
 
-import { IntegrityError } from '@czap/error';
-import { bytesToHex } from '@czap/canonical';
+import { IntegrityError } from '@liteship/error';
+import { bytesToHex } from '@liteship/canonical';
 import { encode } from 'cborg';
 
 interface TypedRefShape {
@@ -62,8 +62,8 @@ export const canonicalize = (value: unknown): Uint8Array => encode(value);
  * rejection every content-addressing consumer awaits.
  */
 // DELIBERATE CUT (mission 5.10): only the bare-hex encoding is consolidated onto
-// @czap/canonical's `bytesToHex`. The `sha256:`-LABELED digest law below stays
-// LOCAL — it is NOT merged into `addressedDigestOf` (@czap/canonical): that path
+// @liteship/canonical's `bytesToHex`. The `sha256:`-LABELED digest law below stays
+// LOCAL — it is NOT merged into `addressedDigestOf` (@liteship/canonical): that path
 // digests via @noble/hashes and mints a `sha256:`/`blake3:` `IntegrityDigest` for
 // the identity layer, whereas this one digests via `crypto.subtle` and mints the
 // RECEIPT byte law's `sha256:<hex>` (see the module header). Same prefix, distinct

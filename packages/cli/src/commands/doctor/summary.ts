@@ -34,7 +34,7 @@ export function prettySummary(
 ): string {
   const on = colorEnabled();
   const lines: string[] = [];
-  lines.push(header('czap doctor — preflight rig check', on));
+  lines.push(header('liteship doctor — preflight rig check', on));
   lines.push('');
   const widest = Math.max(...checks.map((c) => c.label.length));
   for (const c of checks) {

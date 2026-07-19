@@ -31,16 +31,16 @@ Enable the inline detect script (default `true`).
 
 Defined in: [astro/src/integration.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/integration.ts#L60)
 
-Route globs on which czap's costly runtime scripts (detect, the GPU probe,
-wasm, the dev inspector) should NOT run. For embedding czap alongside another
-Astro sub-app (e.g. a Starlight `/docs/**` section) that never consumes czap,
+Route globs on which liteship's costly runtime scripts (detect, the GPU probe,
+wasm, the dev inspector) should NOT run. For embedding liteship alongside another
+Astro sub-app (e.g. a Starlight `/docs/**` section) that never consumes liteship,
 so those pages don't pay for a pointless GPU probe or attr writes. Astro's
 `injectScript` is global (no build-time route filter), so this is a runtime
 guard: a tiny inline script matches `location.pathname` and short-circuits
 the rest (re-evaluating on View-Transition swaps). The directive bootstrap
-stays wired — it's a no-op without czap markers, and keeps View Transitions
+stays wired — it's a no-op without liteship markers, and keeps View Transitions
 working across the boundary. Supports exact paths and a trailing `**` (e.g.
-`'/docs/**'` matches `/docs` and everything under it). Default `[]` (czap
+`'/docs/**'` matches `/docs` and everything under it). Default `[]` (liteship
 runs everywhere).
 
 ***
@@ -97,9 +97,9 @@ Defined in: [astro/src/integration.ts:108](https://github.com/freebatteryfactory
 
 Opt in (`true`) to auto-register a zero-config capability-detection
 middleware, so a consumer needs no `src/middleware.ts` for the common case;
-it populates `Astro.locals.czap` from Client Hints. The edge boundary cache
+it populates `Astro.locals.liteship` from Client Hints. The edge boundary cache
 (whose `theme`/`compile` carry functions) always needs a consumer
-`src/middleware.ts` calling `czapMiddleware({ edge })`; when both are present
+`src/middleware.ts` calling `liteshipMiddleware({ edge })`; when both are present
 this auto entry runs first (`order: 'pre'`) and the consumer middleware
 refines the same locals. Default off (wire middleware yourself).
 
@@ -112,7 +112,7 @@ refines the same locals. Default off (wire middleware yourself).
 Defined in: [astro/src/integration.ts:92](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/integration.ts#L92)
 
 Continuous-motion runtime (`client:motion`). Opt-in (default off): registers
-the JS motion FLOOR that scrubs `data-czap-motion-program` when native
+the JS motion FLOOR that scrubs `data-liteship-motion-program` when native
 `animation-timeline` is unavailable. The native CSS path (`MotionCompiler`)
 needs no runtime and is unaffected.
 
@@ -150,7 +150,7 @@ Defined in: [astro/src/integration.ts:70](https://github.com/freebatteryfactory/
 
 No-op. Server Islands is stable in Astro (since v5); there is
 no experimental flag to toggle on Astro 7. Using `server:defer` with a
-configured adapter is all that's needed — czap does nothing here. This
+configured adapter is all that's needed — liteship does nothing here. This
 option is retained only so existing configs keep type-checking; it will
 be removed in a future major.
 
@@ -176,7 +176,7 @@ SSE streaming runtime configuration.
 
 Defined in: [astro/src/integration.ts:46](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/integration.ts#L46)
 
-Overrides passed through to `@czap/vite`'s plugin.
+Overrides passed through to `@liteship/vite`'s plugin.
 
 ***
 

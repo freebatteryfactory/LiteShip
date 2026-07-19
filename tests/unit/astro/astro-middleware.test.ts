@@ -3,7 +3,7 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { czapMiddleware } from '@czap/astro';
+import { liteshipMiddleware } from '@liteship/astro';
 import { onRequest as autoWiredOnRequest } from '../../../packages/astro/src/middleware-entry.js';
 
 // ---------------------------------------------------------------------------
@@ -30,14 +30,14 @@ function makeNext(body = 'OK', status = 200): () => Promise<Response> {
 // Tests
 // ---------------------------------------------------------------------------
 
-describe('czapMiddleware', () => {
+describe('liteshipMiddleware', () => {
   test('creates a middleware function', () => {
-    const middleware = czapMiddleware();
+    const middleware = liteshipMiddleware();
     expect(typeof middleware).toBe('function');
   });
 
-  test('injects czap locals with tier info', async () => {
-    const middleware = czapMiddleware();
+  test('injects liteship locals with tier info', async () => {
+    const middleware = liteshipMiddleware();
     const context = makeContext({
       'sec-ch-viewport-width': '768',
       'sec-ch-device-memory': '4',
@@ -45,14 +45,14 @@ describe('czapMiddleware', () => {
 
     await middleware(context, makeNext());
 
-    const czap = context.locals.czap as Record<string, unknown>;
-    expect(czap).toBeDefined();
-    expect(czap.tiers).toBeDefined();
-    expect(czap.capabilities).toBeDefined();
+    const liteship = context.locals.liteship as Record<string, unknown>;
+    expect(liteship).toBeDefined();
+    expect(liteship.tiers).toBeDefined();
+    expect(liteship.capabilities).toBeDefined();
   });
 
   test('sets Accept-CH response header', async () => {
-    const middleware = czapMiddleware();
+    const middleware = liteshipMiddleware();
     const context = makeContext();
 
     const response = await middleware(context, makeNext());
@@ -62,7 +62,7 @@ describe('czapMiddleware', () => {
   });
 
   test('sets Critical-CH response header including the viewport-width boot hint', async () => {
-    const middleware = czapMiddleware();
+    const middleware = liteshipMiddleware();
     const context = makeContext();
 
     const response = await middleware(context, makeNext());
@@ -75,7 +75,7 @@ describe('czapMiddleware', () => {
   });
 
   test('sets COOP and COEP headers when workers are enabled', async () => {
-    const middleware = czapMiddleware({
+    const middleware = liteshipMiddleware({
       workers: { enabled: true },
     });
     const context = makeContext();
@@ -87,7 +87,7 @@ describe('czapMiddleware', () => {
   });
 
   test('workers.coep selects the COEP value', async () => {
-    const middleware = czapMiddleware({
+    const middleware = liteshipMiddleware({
       workers: { enabled: true, coep: 'credentialless' },
     });
     const context = makeContext();
@@ -98,8 +98,8 @@ describe('czapMiddleware', () => {
     expect(response.headers.get('Cross-Origin-Embedder-Policy')).toBe('credentialless');
   });
 
-  test('pre-existing COOP/COEP set by inner middleware win over czap defaults', async () => {
-    const middleware = czapMiddleware({
+  test('pre-existing COOP/COEP set by inner middleware win over liteship defaults', async () => {
+    const middleware = liteshipMiddleware({
       workers: { enabled: true },
     });
     const context = makeContext();
@@ -118,12 +118,12 @@ describe('czapMiddleware', () => {
 
     expect(response.headers.get('Cross-Origin-Embedder-Policy')).toBe('credentialless');
     expect(response.headers.get('Cross-Origin-Opener-Policy')).toBe('same-origin-allow-popups');
-    // Client-hints headers remain czap-owned and are still applied.
+    // Client-hints headers remain liteship-owned and are still applied.
     expect(response.headers.get('Accept-CH')).toBeTruthy();
   });
 
   test('can disable client-hint headers while still preserving worker isolation headers', async () => {
-    const middleware = czapMiddleware({
+    const middleware = liteshipMiddleware({
       detect: false,
       workers: { enabled: true },
     });
@@ -138,7 +138,7 @@ describe('czapMiddleware', () => {
   });
 
   test('preserves response status and body', async () => {
-    const middleware = czapMiddleware();
+    const middleware = liteshipMiddleware();
     const context = makeContext();
 
     const response = await middleware(context, makeNext('Hello', 201));
@@ -148,44 +148,44 @@ describe('czapMiddleware', () => {
   });
 
   test('returns conservative tier for empty headers', async () => {
-    const middleware = czapMiddleware();
+    const middleware = liteshipMiddleware();
     const context = makeContext();
 
     await middleware(context, makeNext());
 
-    const czap = context.locals.czap as Record<string, unknown>;
-    const tiers = czap.tiers as Record<string, string>;
+    const liteship = context.locals.liteship as Record<string, unknown>;
+    const tiers = liteship.tiers as Record<string, string>;
     expect(tiers.tier).toBeDefined();
     expect(tiers.motion).toBeDefined();
     expect(tiers.design).toBeDefined();
   });
 
   test('does not attach edge locals when no edge adapter is configured', async () => {
-    const middleware = czapMiddleware();
+    const middleware = liteshipMiddleware();
     const context = makeContext();
 
     await middleware(context, makeNext());
 
-    const czap = context.locals.czap as Record<string, unknown>;
-    expect(czap.edge).toBeUndefined();
+    const liteship = context.locals.liteship as Record<string, unknown>;
+    expect(liteship.edge).toBeUndefined();
   });
 
   test('detects reduced motion from client hints', async () => {
-    const middleware = czapMiddleware();
+    const middleware = liteshipMiddleware();
     const context = makeContext({
       'sec-ch-prefers-reduced-motion': 'reduce',
     });
 
     await middleware(context, makeNext());
 
-    const czap = context.locals.czap as Record<string, unknown>;
-    const capabilities = czap.capabilities as Record<string, unknown>;
+    const liteship = context.locals.liteship as Record<string, unknown>;
+    const capabilities = liteship.capabilities as Record<string, unknown>;
     expect(capabilities.prefersReducedMotion).toBe(true);
   });
 
   test('uses the shared edge host adapter when configured', async () => {
     const cacheStore = new Map<string, string>();
-    const middleware = czapMiddleware({
+    const middleware = liteshipMiddleware({
       edge: {
         theme: {
           prefix: 'brand',
@@ -217,10 +217,10 @@ describe('czapMiddleware', () => {
     });
 
     const response = await middleware(context, makeNext());
-    const czap = context.locals.czap as Record<string, unknown>;
-    const edge = czap.edge as Record<string, unknown>;
+    const liteship = context.locals.liteship as Record<string, unknown>;
+    const edge = liteship.edge as Record<string, unknown>;
 
-    expect(edge.htmlAttributes).toContain('data-czap-tier=');
+    expect(edge.htmlAttributes).toContain('data-liteship-tier=');
     expect((edge.theme as Record<string, string>).css).toContain('--brand-color-primary');
     expect((edge.compiledOutputs as Record<string, string>).css).toContain('.cached');
     expect(edge.cacheStatus).toBe('miss');
@@ -229,10 +229,10 @@ describe('czapMiddleware', () => {
 });
 
 describe('auto-wired middleware entrypoint (addMiddleware target)', () => {
-  test('exports a zero-config onRequest that populates Astro.locals.czap', async () => {
+  test('exports a zero-config onRequest that populates Astro.locals.liteship', async () => {
     // The `./middleware-entry` module the integration registers via `addMiddleware`
-    // — `onRequest = czapMiddleware()`. It must behave as the default zero-config
-    // handler: Client Hints in, `locals.czap` populated, response returned.
+    // — `onRequest = liteshipMiddleware()`. It must behave as the default zero-config
+    // handler: Client Hints in, `locals.liteship` populated, response returned.
     expect(typeof autoWiredOnRequest).toBe('function');
 
     const context = makeContext({ 'sec-ch-viewport-width': '1440', 'sec-ch-device-memory': '8' });
@@ -241,7 +241,7 @@ describe('auto-wired middleware entrypoint (addMiddleware target)', () => {
       makeNext(),
     );
 
-    expect(context.locals.czap).toBeDefined();
+    expect(context.locals.liteship).toBeDefined();
     expect(response.headers.get('Accept-CH')).toContain('Sec-CH-Viewport-Width');
   });
 });

@@ -10,7 +10,7 @@
  * domain must always be accepted and one outside it must always throw.
  *
  * ContentAddress / IntegrityDigest live in THREE intentional homes across
- * `@czap/core`, `@czap/canonical`, and `@czap/genui` — a deliberate layering
+ * `@liteship/core`, `@liteship/canonical`, and `@liteship/genui` — a deliberate layering
  * (ADR-0012), NOT accidental duplication. The three-home parity drift-guard
  * below pins that they agree at runtime so the divergence can't be naively
  * "unified" away; see the long comment above that `describe` block for the
@@ -20,7 +20,7 @@
 
 import { describe, test, expect } from 'vitest';
 import fc from 'fast-check';
-import { hasTag } from '@czap/error';
+import { hasTag } from '@liteship/error';
 import {
   SignalInput,
   ThresholdValue,
@@ -31,7 +31,7 @@ import {
   Millis,
   fnv1a as coreFnv1a,
   fnv1aBytes as coreFnv1aBytes,
-} from '@czap/core';
+} from '@liteship/core';
 import {
   isContentAddress as coreIsContentAddress,
   isIntegrityDigest as coreIsIntegrityDigest,
@@ -41,10 +41,10 @@ import {
   IntegrityDigest as CanonDigest,
   fnv1a as canonFnv1a,
   fnv1aBytes as canonFnv1aBytes,
-} from '@czap/canonical';
-import { ContentAddress as GenuiAddr } from '@czap/genui';
+} from '@liteship/canonical';
+import { ContentAddress as GenuiAddr } from '@liteship/genui';
 
-/** Assert that running `fn` throws a `ValidationError` from `@czap/error`. */
+/** Assert that running `fn` throws a `ValidationError` from `@liteship/error`. */
 function expectValidationError(fn: () => unknown): void {
   let caught: unknown;
   try {
@@ -132,13 +132,13 @@ describe('IntegrityDigest', () => {
 // Cross-package parity drift-guard — THE THREE-HOME INVARIANT (ADR-0012).
 //
 // `ContentAddress` has THREE intentional homes that must NOT be merged:
-//   • `@czap/_spine` — the APEX brand: `string & { [ContentAddressBrand]: true }`
+//   • `@liteship/_spine` — the APEX brand: `string & { [ContentAddressBrand]: true }`
 //     (symbol-branded; strictest — a raw `fnv1a:...` string cannot be typed as
 //     ContentAddress without going through a validating constructor).
-//   • `@czap/core` / `@czap/genui` — RE-ANCHOR the spine brand
+//   • `@liteship/core` / `@liteship/genui` — RE-ANCHOR the spine brand
 //     (`export type ContentAddress = _ContentAddress`) with validating
 //     constructors (isContentAddress, then a checked cast).
-//   • `@czap/canonical` — intentionally ZERO-DEP (only `@czap/error`); uses a
+//   • `@liteship/canonical` — intentionally ZERO-DEP (only `@liteship/error`); uses a
 //     `` `fnv1a:${string}` `` template-literal brand whose constructor returns the
 //     validated string cast-free.
 //

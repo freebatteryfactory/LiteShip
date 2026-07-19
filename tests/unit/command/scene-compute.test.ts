@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { sceneCompileCommand, sceneRenderCommand } from '@czap/command';
+import { sceneCompileCommand, sceneRenderCommand } from '@liteship/command';
 
 const COMPILE_MOD = {
   cap: { _kind: 'sceneComposition', id: 's1', name: 'intro' },
@@ -11,7 +11,7 @@ const RENDER_MOD = {
   contract: { fps: 30, duration: 1000, tracks: [1] },
 };
 
-describe('@czap/command scene.compile', () => {
+describe('@liteship/command scene.compile', () => {
   it('ok with sceneId + trackCount, runs the compile fn', async () => {
     let ran = false;
     const r = await sceneCompileCommand.handler(
@@ -39,7 +39,7 @@ describe('@czap/command scene.compile', () => {
     expect(r.exitCode).toBe(1);
     const error = (r.payload as { error: string }).error;
     expect(error).toBe(
-      'the scene module at s.ts does not export a sceneComposition capsule or a scene contract (an export carrying a tracks array). Compare a working example: examples/scenes/intro.ts, or run: czap glossary sceneComposition',
+      'the scene module at s.ts does not export a sceneComposition capsule or a scene contract (an export carrying a tracks array). Compare a working example: examples/scenes/intro.ts, or run: liteship glossary sceneComposition',
     );
   });
 
@@ -64,7 +64,7 @@ describe('@czap/command scene.compile', () => {
   });
 });
 
-describe('@czap/command scene.render', () => {
+describe('@liteship/command scene.render', () => {
   it('omitted output derives <sceneBasename>.mp4 beside the scene file', async () => {
     let renderedTo = '';
     const r = await sceneRenderCommand.handler(

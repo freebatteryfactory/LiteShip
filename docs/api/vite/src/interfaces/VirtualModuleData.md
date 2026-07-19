@@ -20,7 +20,7 @@ at build time rather than stubbed.
 
 Defined in: [vite/src/virtual-modules.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/virtual-modules.ts#L91)
 
-Boundary manifest for `virtual:czap/boundaries` (from `collectBoundaryManifest`).
+Boundary manifest for `virtual:liteship/boundaries` (from `collectBoundaryManifest`).
 
 ***
 
@@ -40,7 +40,7 @@ Public asset URLs per boundary output-pool index.
 
 Defined in: [vite/src/virtual-modules.ts:97](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/virtual-modules.ts#L97)
 
-Theme manifest for `virtual:czap/themes`.
+Theme manifest for `virtual:liteship/themes`.
 
 ***
 
@@ -50,4 +50,4 @@ Theme manifest for `virtual:czap/themes`.
 
 Defined in: [vite/src/virtual-modules.ts:95](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/virtual-modules.ts#L95)
 
-Token manifest for `virtual:czap/tokens` and `virtual:czap/tokens.css`.
+Token manifest for `virtual:liteship/tokens` and `virtual:liteship/tokens.css`.

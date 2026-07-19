@@ -25,8 +25,8 @@
  */
 
 import { writeFileSync } from 'node:fs';
-import { CanonicalCbor, defineCapsule, S, ShipCapsule, type ContentAddress } from '@czap/core';
-import type { Infer } from '@czap/core';
+import { CanonicalCbor, defineCapsule, S, ShipCapsule, type ContentAddress } from '@liteship/core';
+import type { Infer } from '@liteship/core';
 
 /**
  * The publishable workspace snapshot the emission receipt is PURELY derived
@@ -137,7 +137,7 @@ export const shipEmitCapsule = defineCapsule({
       trigger: (): ShipEmitDecodedInput => ({
         capsule_path: '',
         capsule_id: 'fnv1a:deadbeef',
-        package_name: '@czap/_spine',
+        package_name: '@liteship/_spine',
         package_version: '0.1.0',
         source_commit: '0123456789abcdef0123456789abcdef01234567',
         lifecycle_scripts_observed: [],
@@ -150,7 +150,7 @@ export const shipEmitCapsule = defineCapsule({
       trigger: (): ShipEmitDecodedInput => ({
         capsule_path: '/tmp/x.shipcapsule.cbor',
         capsule_id: 'fnv1a:deadbeef',
-        package_name: '@czap/_spine',
+        package_name: '@liteship/_spine',
         package_version: '',
         source_commit: '0123456789abcdef0123456789abcdef01234567',
         lifecycle_scripts_observed: [],
@@ -163,7 +163,7 @@ export const shipEmitCapsule = defineCapsule({
       trigger: (): ShipEmitDecodedInput => ({
         capsule_path: '/tmp/x.shipcapsule.cbor',
         capsule_id: '',
-        package_name: '@czap/_spine',
+        package_name: '@liteship/_spine',
         package_version: '0.1.0',
         source_commit: '0123456789abcdef0123456789abcdef01234567',
         lifecycle_scripts_observed: [],

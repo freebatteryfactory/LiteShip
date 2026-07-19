@@ -6,8 +6,8 @@
  * @module
  */
 
-import { normalizeRepoPath, scanModuleScopeDateReads } from '@czap/audit';
-import { walkFiles } from '@czap/core/fs-walk';
+import { normalizeRepoPath, scanModuleScopeDateReads } from '@liteship/audit';
+import { walkFiles } from '@liteship/core/fs-walk';
 import { existsSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
@@ -119,7 +119,7 @@ function scanFile(rel: string, source: string): ConsumerAppFinding[] {
   }
 
   // Module-load ambient Date read in a Workers-targeted file — Law 5's 1970 trap. Uses the ONE shared
-  // AST scanner (`@czap/audit`) the doctor probe uses (Law 6), so the two never drift. `source` here is
+  // AST scanner (`@liteship/audit`) the doctor probe uses (Law 6), so the two never drift. `source` here is
   // already CRLF-normalized, so the reported line matches the consumer's editor.
   if (/cloudflare|wrangler|worker/i.test(rel)) {
     const dateHits = scanModuleScopeDateReads(source, rel);
@@ -134,12 +134,12 @@ function scanFile(rel: string, source: string): ConsumerAppFinding[] {
     }
   }
 
-  if (/data-czap-/.test(source) && !/@czap\//.test(source)) {
-    const idx = source.indexOf('data-czap-');
+  if (/data-liteship-/.test(source) && !/@liteship\//.test(source)) {
+    const idx = source.indexOf('data-liteship-');
     findings.push({
-      rule: 'consumer.hand-built-data-czap',
+      rule: 'consumer.hand-built-data-liteship',
       severity: 'info',
-      title: 'Hand-built data-czap-* attribute — prefer htmlAttributesMap from czapMiddleware',
+      title: 'Hand-built data-liteship-* attribute — prefer htmlAttributesMap from liteshipMiddleware',
       file: rel,
       line: lineOf(source, idx),
     });
@@ -151,7 +151,7 @@ function scanFile(rel: string, source: string): ConsumerAppFinding[] {
 /** Scan consumer app source under `cwd` (prefers `src/` when present). */
 export function scanConsumerAppSource(cwd: string): readonly ConsumerAppFinding[] {
   const scanRoot = existsSync(join(cwd, 'src')) ? join(cwd, 'src') : cwd;
-  // The shared `@czap/core/fs-walk` walker (SKIP_DIRS pruned, source extensions);
+  // The shared `@liteship/core/fs-walk` walker (SKIP_DIRS pruned, source extensions);
   // repo-relative POSIX ids to match the original walker's output.
   const files = walkFiles(scanRoot, {
     skipDirs: SKIP_DIRS,

@@ -15,14 +15,14 @@ import {
   DPU_BASE_ATTR,
   DPU_RESULT_ATTR,
   DPU_DIGEST_ATTR,
-} from '@czap/web';
-import { nodeLogicalKey, nodeFromParts } from '@czap/core';
-import type { ContentAddress } from '@czap/core';
+} from '@liteship/web';
+import { nodeLogicalKey, nodeFromParts } from '@liteship/core';
+import type { ContentAddress } from '@liteship/core';
 import { META } from '../../helpers/graph-fixtures.js';
 
-const baseId = 'czap:base' as ContentAddress;
-const nextId = 'czap:next' as ContentAddress;
-const staleId = 'czap:stale' as ContentAddress;
+const baseId = 'liteship:base' as ContentAddress;
+const nextId = 'liteship:next' as ContentAddress;
+const staleId = 'liteship:stale' as ContentAddress;
 
 function signalMarker(input: string): string {
   return nodeLogicalKey(

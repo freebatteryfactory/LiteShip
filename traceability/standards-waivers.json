@@ -44,10 +44,10 @@
       "expiry": "2027-06-20"
     },
     {
-      "elementKey": "skip-allowlist::tests/smoke/intro-render.test.ts::it.skip('skipped — ffmpeg libx264 render probe failed (see czap doctor)', () => {});",
+      "elementKey": "skip-allowlist::tests/smoke/intro-render.test.ts::it.skip('skipped — ffmpeg libx264 render probe failed (see liteship doctor)', () => {});",
       "weakening": "skip-allowlist-added",
       "owner": "heyoub",
-      "justification": "Sanctioned capability-gated skip (ffmpeg + libx264 on PATH). the end-to-end intro-scene smoke render BODY runs through ffmpeg+libx264 when present; absent the codec the doctor-probe skips (see `czap doctor`). The title names the capability (render probe failed), never a TODO — a runtime capability gate, not a placeholder. Enumerated in SANCTIONED_SKIPS at site granularity; signed vs the snapshot's birth baseline (the bootstrap window).",
+      "justification": "Sanctioned capability-gated skip (ffmpeg + libx264 on PATH). the end-to-end intro-scene smoke render BODY runs through ffmpeg+libx264 when present; absent the codec the doctor-probe skips (see `liteship doctor`). The title names the capability (render probe failed), never a TODO — a runtime capability gate, not a placeholder. Enumerated in SANCTIONED_SKIPS at site granularity; signed vs the snapshot's birth baseline (the bootstrap window).",
       "expiry": "2027-06-20"
     },
     {
@@ -72,10 +72,10 @@
       "expiry": "2027-06-20"
     },
     {
-      "elementKey": "skip-allowlist::tests/unit/core/wasm-parity.test.ts::describe.skipIf(!wasmPresent)('WASM/TS kernel parity (czap-compute vs fallbackKernels)', () => {",
+      "elementKey": "skip-allowlist::tests/unit/core/wasm-parity.test.ts::describe.skipIf(!wasmPresent)('WASM/TS kernel parity (liteship-compute vs fallbackKernels)', () => {",
       "weakening": "skip-allowlist-added",
       "owner": "heyoub",
-      "justification": "Sanctioned capability-gated skip (the loaded Rust WASM kernel). describe.skipIf(!wasmPresent) — the WASM/TS kernel parity arm BODY runs when the Rust kernel IS loaded (compares czap-compute against fallbackKernels). A runtime capability gate, not a placeholder. Enumerated in SANCTIONED_SKIPS at site granularity; signed vs the snapshot's birth baseline (the bootstrap window).",
+      "justification": "Sanctioned capability-gated skip (the loaded Rust WASM kernel). describe.skipIf(!wasmPresent) — the WASM/TS kernel parity arm BODY runs when the Rust kernel IS loaded (compares liteship-compute against fallbackKernels). A runtime capability gate, not a placeholder. Enumerated in SANCTIONED_SKIPS at site granularity; signed vs the snapshot's birth baseline (the bootstrap window).",
       "expiry": "2027-06-20"
     },
     {
@@ -86,10 +86,10 @@
       "expiry": "2027-06-20"
     },
     {
-      "elementKey": "skip-allowlist::tests/unit/core/wasm-shipping.test.ts::it.skipIf(!staged)('resolves @czap/core dist/czap-compute.wasm via the module graph', () => {",
+      "elementKey": "skip-allowlist::tests/unit/core/wasm-shipping.test.ts::it.skipIf(!staged)('resolves @liteship/core dist/liteship-compute.wasm via the module graph', () => {",
       "weakening": "skip-allowlist-added",
       "owner": "heyoub",
-      "justification": "Sanctioned capability-gated skip (the staged @czap/core dist wasm artifact). it.skipIf(!staged) — the module-graph resolution of @czap/core dist/czap-compute.wasm BODY runs only when the built artifact is staged (a publish-shape probe). A runtime capability gate, not a placeholder. Enumerated in SANCTIONED_SKIPS at site granularity; signed vs the snapshot's birth baseline (the bootstrap window).",
+      "justification": "Sanctioned capability-gated skip (the staged @liteship/core dist wasm artifact). it.skipIf(!staged) — the module-graph resolution of @liteship/core dist/liteship-compute.wasm BODY runs only when the built artifact is staged (a publish-shape probe). A runtime capability gate, not a placeholder. Enumerated in SANCTIONED_SKIPS at site granularity; signed vs the snapshot's birth baseline (the bootstrap window).",
       "expiry": "2027-06-20"
     },
     {

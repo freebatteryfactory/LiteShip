@@ -9,23 +9,23 @@ export const repoRoot = resolve(rootDir);
 
 export const alias: Record<string, string> = {
   ...Config.toTestAliases(Config.make({}), repoRoot),
-  '@czap/_spine': resolve(repoRoot, 'packages/_spine/index.d.ts'),
-  // @czap/error is the zero-dep root error algebra — outside the design-layer
+  '@liteship/_spine': resolve(repoRoot, 'packages/_spine/index.d.ts'),
+  // @liteship/error is the zero-dep root error algebra — outside the design-layer
   // alias set, so map it to source explicitly (every package imports it).
-  '@czap/error': resolve(repoRoot, 'packages/error/src/index.ts'),
-  // @czap/gauntlet is the rigor engine — outside the design-layer alias set.
-  '@czap/gauntlet': resolve(repoRoot, 'packages/gauntlet/src/index.ts'),
-  // CUT A1: @czap/command is outside the design-layer alias set, so map it to
+  '@liteship/error': resolve(repoRoot, 'packages/error/src/index.ts'),
+  // @liteship/gauntlet is the rigor engine — outside the design-layer alias set.
+  '@liteship/gauntlet': resolve(repoRoot, 'packages/gauntlet/src/index.ts'),
+  // CUT A1: @liteship/command is outside the design-layer alias set, so map it to
   // source explicitly (the CLI and MCP adapter tests import it by name). The
   // /host subpath (Node host execution) is aliased separately; the longer key
   // is listed first so it takes precedence.
-  '@czap/command/host': resolve(repoRoot, 'packages/command/src/host/index.ts'),
-  '@czap/command/host-browser': resolve(repoRoot, 'packages/command/src/host-browser/index.ts'),
+  '@liteship/command/host': resolve(repoRoot, 'packages/command/src/host/index.ts'),
+  '@liteship/command/host-browser': resolve(repoRoot, 'packages/command/src/host-browser/index.ts'),
   // Slice B (B1, step 3): the PURE invariants subpath (check-invariants-registry,
-  // zero imports) — @czap/audit's repo-IR invariant-regex oracle references the
+  // zero imports) — @liteship/audit's repo-IR invariant-regex oracle references the
   // CANONICAL NO_DEFAULT_EXPORT rule through it without pulling the command runtime.
-  '@czap/command/invariants': resolve(repoRoot, 'packages/command/src/commands/check-invariants-registry.ts'),
-  '@czap/command': resolve(repoRoot, 'packages/command/src/index.ts'),
+  '@liteship/command/invariants': resolve(repoRoot, 'packages/command/src/commands/check-invariants-registry.ts'),
+  '@liteship/command': resolve(repoRoot, 'packages/command/src/index.ts'),
 };
 
 export const coverageInclude = ['packages/*/src/**/*.ts'];
@@ -77,7 +77,7 @@ export const coverageExclude = [
   // of `git rev-parse`, `pnpm pack`, `pnpm publish --dry-run`, and the
   // final `pnpm publish` handoff. Vitest cannot meaningfully cover the
   // subprocess paths in-process; the end-to-end correctness is integration-
-  // tested by the `czap ship --dry-run` flow that runs in every gauntlet
+  // tested by the `liteship ship --dry-run` flow that runs in every gauntlet
   // (package:smoke phase). The pure helpers it composes — ship-manifest.ts,
   // ship-capsule.ts, addressed-digest.ts — are unit-tested directly.
   // Unit coverage of the subprocess wrapper itself is a post-v0.1.1
@@ -88,7 +88,7 @@ export const coverageExclude = [
   'packages/cli/src/commands/ship.ts',
   // package-smoke.ts is the ship.ts-class subprocess-orchestration command — its
   // `runPackageSmokeScan` body is a sequence of `pnpm pack` (×PACKAGES.length),
-  // `pnpm install`, `node smoke.mjs`, and `czap describe` spawns, plus `tar`-
+  // `pnpm install`, `node smoke.mjs`, and `liteship describe` spawns, plus `tar`-
   // spawning packed-manifest reads. Vitest cannot meaningfully cover the
   // subprocess paths in-process; the end-to-end correctness is integration-tested
   // by the `package:smoke` gauntlet phase (CI-grade). The pure, branch-heavy
@@ -104,7 +104,7 @@ export const coverageExclude = [
   // tests/smoke/intro-render.test.ts skips when it isn't, so this surface
   // is structurally 0% on machines without ffmpeg installed. Matches the
   // audio/processor-bootstrap.ts pattern (host-realm-dependent). Moved to
-  // @czap/command/host in CUT A1 capstone-1 (the cli path is now a re-export).
+  // @liteship/command/host in CUT A1 capstone-1 (the cli path is now a re-export).
   'packages/command/src/host/ffmpeg.ts',
   // ffmpeg-encoder.ts is the STAGE-side twin of the above: the headless
   // FrameEncoder backend that spawns the system `ffmpeg` binary to encode the
@@ -162,12 +162,12 @@ export function contentionScaleFor(load: number, cores: number): number {
 
 /**
  * The live contention scale from the host's 1-minute load average ÷ core count.
- * Set `CZAP_TEST_TIMEOUT_AUTOSCALE=0` to disable it (strict, deterministic budgets
+ * Set `LITESHIP_TEST_TIMEOUT_AUTOSCALE=0` to disable it (strict, deterministic budgets
  * — e.g. when pinning the policy, or on a dedicated CI runner that wants the tight
  * limit). Otherwise it is read fresh each call.
  */
 const contentionScale = (): number => {
-  if (process.env['CZAP_TEST_TIMEOUT_AUTOSCALE'] === '0') return 1;
+  if (process.env['LITESHIP_TEST_TIMEOUT_AUTOSCALE'] === '0') return 1;
   return contentionScaleFor(loadavg()[0] ?? 0, cpus().length);
 };
 
@@ -176,23 +176,23 @@ const contentionScale = (): number => {
  * contention scale, so the budget tracks real resource pressure WITHOUT anyone
  * having to set an env var. An idle host keeps the tight budget that fast-fails a
  * true hang; an oversubscribed one gets proportionally more room (an honest slow
- * run is not a test failure). `CZAP_TEST_TIMEOUT_SCALE=<n>` still forces a floor
- * for known-slow hardware; `CZAP_TEST_TIMEOUT_AUTOSCALE=0` disables the auto scale.
+ * run is not a test failure). `LITESHIP_TEST_TIMEOUT_SCALE=<n>` still forces a floor
+ * for known-slow hardware; `LITESHIP_TEST_TIMEOUT_AUTOSCALE=0` disables the auto scale.
  * CI on a dedicated (near-idle) runner sees scale 1, so gate semantics there are
  * unchanged; a contended runner self-corrects instead of flaking.
  */
 const timeoutScale = (): number => {
-  const parsed = Number(process.env['CZAP_TEST_TIMEOUT_SCALE'] ?? '1');
+  const parsed = Number(process.env['LITESHIP_TEST_TIMEOUT_SCALE'] ?? '1');
   const envScale = Number.isFinite(parsed) && parsed >= 1 ? parsed : 1;
   return Math.max(envScale, contentionScale());
 };
 
-// CZAP_COVERAGE is authoritative when present: test workers always receive it
+// LITESHIP_COVERAGE is authoritative when present: test workers always receive it
 // from the configs' `test.env` injection ('1' or '0'), while their argv never
 // carries --coverage. The argv probe only decides for the config process
 // itself, where the env var hasn't been injected yet.
 const coverageActive = (): boolean => {
-  const env = process.env['CZAP_COVERAGE'];
+  const env = process.env['LITESHIP_COVERAGE'];
   if (env !== undefined) return env === '1';
   return process.argv.includes('--coverage');
 };
@@ -201,11 +201,11 @@ const coverageActive = (): boolean => {
  * The ONLY sanctioned way to set an explicit vitest timeout (per-test
  * third argument, config default, or hook timeout).
  *
- * - Coverage runs (`--coverage` in the config process, `CZAP_COVERAGE=1`
+ * - Coverage runs (`--coverage` in the config process, `LITESHIP_COVERAGE=1`
  *   inside test workers — injected by the configs via `test.env`) clamp
  *   to {@link COVERAGE_TIMEOUT_FLOOR_MS} so explicit timeouts only ever
  *   raise the budget, never lower it.
- * - `CZAP_TEST_TIMEOUT_SCALE=<n>` multiplies every budget for machines
+ * - `LITESHIP_TEST_TIMEOUT_SCALE=<n>` multiplies every budget for machines
  *   running sibling workloads (slow hardware is not a test failure).
  *   CI does not set it, so gate semantics there are unchanged.
  *

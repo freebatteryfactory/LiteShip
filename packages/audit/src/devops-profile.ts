@@ -3,11 +3,11 @@
  * the audit engine. The default `liteshipDevopsProfile` references this package's
  * reference policy consts; `repoRoot` defaults to the current working directory
  * so the engine audits the caller's tree. A downstream project supplies its own
- * profile (programmatically or via `czap audit --profile`).
+ * profile (programmatically or via `liteship audit --profile`).
  *
  * @module
  */
-import { ValidationError } from '@czap/error';
+import { ValidationError } from '@liteship/error';
 import {
   packageTopology,
   surfacePolicy,
@@ -38,7 +38,7 @@ export interface SurfacePolicyShape {
   readonly astroRuntimeFiles?: readonly string[];
   readonly viteVirtualModules?: readonly string[];
   /**
-   * Package owning the Vite virtual-module inventory (e.g. `'@czap/vite'`).
+   * Package owning the Vite virtual-module inventory (e.g. `'@liteship/vite'`).
    * When absent, the legacy repo-root-relative `packages/vite/...` location
    * is used so existing profiles keep working.
    */
@@ -55,13 +55,13 @@ export interface SurfacePolicyShape {
 export interface DevopsProfile {
   /** Repo root all engine paths resolve against — the authoritative audit target. */
   readonly repoRoot: string;
-  /** Internal workspace package prefix — replaces the hardcoded `'@czap/'` import gate. */
+  /** Internal workspace package prefix — replaces the hardcoded `'@liteship/'` import gate. */
   readonly internalPackagePrefix: string;
   /** Package layering law: package → { allowedInternalImports, kind }. */
   readonly packageTopology: Record<string, PackagePolicy>;
   /**
    * Foundational packages every package may import without an explicit
-   * `allowedInternalImports` entry (the runtime analogue of `@czap/_spine`).
+   * `allowedInternalImports` entry (the runtime analogue of `@liteship/_spine`).
    * Optional: absent ⇒ no foundational exemptions (every internal edge must be
    * listed). Downstream profiles may set their own.
    */
@@ -75,7 +75,7 @@ export interface DevopsProfile {
    * When present, the passes enumerate THESE roots instead of globbing
    * `repoRoot/packages/*` — the consumer-install seam. Build one with
    * `consumerDevopsProfile()` / `discoverInstalledPackageRoots()` to audit
-   * the `@czap/*` packages installed in a downstream repo's node_modules.
+   * the `@liteship/*` packages installed in a downstream repo's node_modules.
    */
   readonly packageRoots?: Readonly<Record<string, string>>;
 }
@@ -88,7 +88,7 @@ export interface DevopsProfile {
  */
 export const liteshipDevopsProfile: DevopsProfile = {
   repoRoot: normalizeRepoPath(process.cwd()),
-  internalPackagePrefix: '@czap/',
+  internalPackagePrefix: '@liteship/',
   packageTopology,
   foundationalPackages,
   dynamicImportExemptions,
@@ -125,8 +125,8 @@ function deriveInternalPackagePrefix(profile: DevopsProfile): string {
     'devops-profile',
     `resolveDevopsProfile: internalPackagePrefix was omitted and cannot be derived — ${observed}. ` +
       `Pass it explicitly, e.g. runAuditPasses({ repoRoot, internalPackagePrefix: '@acme/' }). ` +
-      `If this repo only CONSUMES @czap/* from npm (it has no internal scope of its own), run ` +
-      `\`czap audit --consumer\` instead — it audits the installed packages and never derives a prefix. ` +
+      `If this repo only CONSUMES @liteship/* from npm (it has no internal scope of its own), run ` +
+      `\`liteship audit --consumer\` instead — it audits the installed packages and never derives a prefix. ` +
       `(A silent no-op prefix is deliberately NOT the default: a clean audit must never mean "nothing was checked".)`,
   );
 }

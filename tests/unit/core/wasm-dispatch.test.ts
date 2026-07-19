@@ -13,7 +13,7 @@
 import { describe, test, expect, vi } from 'vitest';
 import { scaledTimeout } from '../../../vitest.shared.js';
 import fc from 'fast-check';
-import { WASMDispatch, fallbackKernels, Boundary } from '@czap/core';
+import { WASMDispatch, fallbackKernels, Boundary } from '@liteship/core';
 
 // ---------------------------------------------------------------------------
 // WASMDispatch detection + fallback
@@ -549,9 +549,9 @@ describe('WASMDispatch integration', () => {
     });
 
     try {
-      const kernels = await WASMDispatch.load('http://localhost/czap-compute.wasm');
+      const kernels = await WASMDispatch.load('http://localhost/liteship-compute.wasm');
 
-      expect(globalThis.fetch).toHaveBeenCalledWith('http://localhost/czap-compute.wasm');
+      expect(globalThis.fetch).toHaveBeenCalledWith('http://localhost/liteship-compute.wasm');
       expect(instantiateSpy).toHaveBeenCalledOnce();
       expect(kernels).not.toBe(fallbackKernels);
       expect(WASMDispatch.isLoaded()).toBe(true);

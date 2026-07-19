@@ -26,14 +26,14 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { scaledTimeout } from '../../../vitest.shared.js';
 import { fileURLToPath } from 'node:url';
 import { resolve, dirname } from 'node:path';
-import { buildRepoIR, withRepoRoot, liteshipDevopsProfile } from '@czap/audit';
+import { buildRepoIR, withRepoRoot, liteshipDevopsProfile } from '@liteship/audit';
 import { liteshipRegexOracle } from '../../../packages/cli/src/lib/repo-ir-gauntlet.js';
 import {
   noVarDivergenceGate,
   noRequireDivergenceGate,
   type Fact,
   type RepoIR,
-} from '@czap/gauntlet';
+} from '@liteship/gauntlet';
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 

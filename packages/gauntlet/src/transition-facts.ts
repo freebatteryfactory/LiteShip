@@ -6,9 +6,9 @@
  *
  * This module defines the {@link TransitionFacts} INTERFACE and nothing else. Like
  * {@link MutationFacts} and {@link RepoIR}, it carries no heavy dependency:
- * `@czap/gauntlet` stays the lean engine, so it never constructs a reactive
+ * `@liteship/gauntlet` stays the lean engine, so it never constructs a reactive
  * primitive, forks a fiber, or runs a `fast-check` command walk. A HOST
- * (`@czap/audit`'s `buildTransitionFacts` + the Foundation capture/model harnesses
+ * (`@liteship/audit`'s `buildTransitionFacts` + the Foundation capture/model harnesses
  * the CLI wires) does the heavy lifting — unfold each seeded operation history over
  * BOTH the single-oracle MODEL and the IMPLEMENTATION, content-address each observed
  * trace, decide the per-case bisimulation verdict — and hands the engine these flat,
@@ -86,7 +86,7 @@ export interface TransitionCase {
  * is LiteShip-local product machinery (driving each seeded op history over the reference
  * model + the native transport, in the test tree), so — per ADR-0012/0023 — it runs from
  * the repo-local `transition:gate` phase (`scripts/transition-conformance-gate.ts`) on
- * every PR, NOT the shipped `czap check` CLI; when the host did not run it this whole
+ * every PR, NOT the shipped `liteship check` CLI; when the host did not run it this whole
  * capability is simply ABSENT from the {@link GateContext} and the gate is not in the
  * set (no cost, no noise). When
  * present it carries every per-case verdict plus the two transport fingerprints and

@@ -12,8 +12,8 @@
  */
 
 import { describe, test, expect, beforeAll, beforeEach, afterEach, vi } from 'vitest';
-import { Physical } from '@czap/web';
-import type { PhysicalState, FocusState, ScrollPosition, SelectionState, IMEState } from '@czap/web';
+import { Physical } from '@liteship/web';
+import type { PhysicalState, FocusState, ScrollPosition, SelectionState, IMEState } from '@liteship/web';
 import {
   captureIME,
   captureSelection,
@@ -52,7 +52,7 @@ describe('Physical namespace', () => {
 describe('PhysicalState shape', () => {
   test('a well-formed PhysicalState satisfies the type contract', () => {
     const state: PhysicalState = {
-      activeElementPath: '[data-czap-id="input-name"]',
+      activeElementPath: '[data-liteship-id="input-name"]',
       focusState: {
         elementId: 'input-name',
         cursorPosition: 5,
@@ -61,26 +61,26 @@ describe('PhysicalState shape', () => {
         selectionDirection: 'forward',
       },
       scrollPositions: {
-        '[data-czap-id="list"]': { top: 120, left: 0 },
+        '[data-liteship-id="list"]': { top: 120, left: 0 },
       },
       selection: {
-        elementPath: '[data-czap-id="editor"]',
+        elementPath: '[data-liteship-id="editor"]',
         start: 10,
         end: 25,
         direction: 'forward',
       },
       ime: {
-        elementPath: '[data-czap-id="input-name"]',
+        elementPath: '[data-liteship-id="input-name"]',
         text: 'composing',
         start: 5,
         end: 5,
       },
     };
 
-    expect(state.activeElementPath).toBe('[data-czap-id="input-name"]');
+    expect(state.activeElementPath).toBe('[data-liteship-id="input-name"]');
     expect(state.focusState?.elementId).toBe('input-name');
     expect(state.focusState?.cursorPosition).toBe(5);
-    expect(state.scrollPositions['[data-czap-id="list"]']?.top).toBe(120);
+    expect(state.scrollPositions['[data-liteship-id="list"]']?.top).toBe(120);
     expect(state.selection?.start).toBe(10);
     expect(state.ime?.text).toBe('composing');
   });
@@ -146,7 +146,7 @@ describe('SelectionState shape', () => {
 describe('IMEState shape', () => {
   test('records composition text and range', () => {
     const ime: IMEState = {
-      elementPath: '[data-czap-id="input"]',
+      elementPath: '[data-liteship-id="input"]',
       text: '\u304b\u306a',
       start: 0,
       end: 2,
@@ -241,9 +241,9 @@ describe('Physical.capture() behavioral', () => {
     expect(state.focusState!.selectionEnd).toBe(8);
   });
 
-  test('captures activeElementPath using data-czap-id when present', () => {
+  test('captures activeElementPath using data-liteship-id when present', () => {
     const input = document.createElement('input');
-    input.setAttribute('data-czap-id', 'semantic-input');
+    input.setAttribute('data-liteship-id', 'semantic-input');
     input.type = 'text';
     container.appendChild(input);
 
@@ -251,7 +251,7 @@ describe('Physical.capture() behavioral', () => {
 
     const state = Physical.capture(container);
 
-    expect(state.activeElementPath).toContain('data-czap-id="semantic-input"');
+    expect(state.activeElementPath).toContain('data-liteship-id="semantic-input"');
   });
 
   test('captures forward selection direction when anchor and focus share the same node', () => {
@@ -436,7 +436,7 @@ describe('Physical.capture() behavioral', () => {
 
   test('capture records scroll positions keyed by semantic id and elementPath fallback', () => {
     const withSemanticId = document.createElement('div');
-    withSemanticId.setAttribute('data-czap-id', 'scroll-semantic');
+    withSemanticId.setAttribute('data-liteship-id', 'scroll-semantic');
     withSemanticId.style.overflowY = 'auto';
     Object.defineProperty(withSemanticId, 'clientWidth', { configurable: true, value: 20 });
     Object.defineProperty(withSemanticId, 'clientHeight', { configurable: true, value: 20 });
@@ -569,21 +569,21 @@ describe('Physical.restore() behavioral', () => {
 
   test('restore remaps semantic ids for scroll, focus, and ime state', () => {
     const scrollable = document.createElement('div');
-    scrollable.setAttribute('data-czap-id', 'scroll-new');
+    scrollable.setAttribute('data-liteship-id', 'scroll-new');
     scrollable.style.overflow = 'auto';
     scrollable.style.height = '20px';
     scrollable.style.width = '20px';
     scrollable.innerHTML = '<div style="height: 200px; width: 200px;"></div>';
 
     const input = document.createElement('input');
-    input.setAttribute('data-czap-id', 'input-new');
+    input.setAttribute('data-liteship-id', 'input-new');
     input.type = 'text';
     input.value = 'hello world';
 
     container.append(scrollable, input);
 
     const state: PhysicalState = {
-      activeElementPath: '[data-czap-id="input-old"]',
+      activeElementPath: '[data-liteship-id="input-old"]',
       focusState: {
         elementId: 'input-old',
         cursorPosition: 2,
@@ -592,11 +592,11 @@ describe('Physical.restore() behavioral', () => {
         selectionDirection: 'forward',
       },
       scrollPositions: {
-        '[data-czap-id="scroll-old"]': { top: 25, left: 8 },
+        '[data-liteship-id="scroll-old"]': { top: 25, left: 8 },
       },
       selection: null,
       ime: {
-        elementPath: '[data-czap-id="input-old"]',
+        elementPath: '[data-liteship-id="input-old"]',
         text: 'ello',
         start: 1,
         end: 4,
@@ -772,9 +772,9 @@ describe('Physical.restore() behavioral', () => {
     expect(() => Physical.restore(state, container)).not.toThrow();
   });
 
-  test('restores focus using data-czap-id semantic path', () => {
+  test('restores focus using data-liteship-id semantic path', () => {
     const input = document.createElement('input');
-    input.setAttribute('data-czap-id', 'semantic-field');
+    input.setAttribute('data-liteship-id', 'semantic-field');
     input.type = 'text';
     input.value = 'semantic';
     container.appendChild(input);
@@ -786,7 +786,7 @@ describe('Physical.restore() behavioral', () => {
     // Rebuild DOM with same semantic ID
     container.innerHTML = '';
     const newInput = document.createElement('input');
-    newInput.setAttribute('data-czap-id', 'semantic-field');
+    newInput.setAttribute('data-liteship-id', 'semantic-field');
     newInput.type = 'text';
     newInput.value = 'semantic';
     container.appendChild(newInput);

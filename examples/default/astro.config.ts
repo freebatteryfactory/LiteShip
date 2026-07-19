@@ -1,6 +1,6 @@
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'astro/config';
-import { integration } from '@czap/astro';
+import { integration } from '@liteship/astro';
 
 const dir = (path: string) => fileURLToPath(new URL(path, import.meta.url));
 

@@ -7,7 +7,7 @@
  *
  * THE LAWS:
  *  - the build fix fires only for a `*.built` warn AND only inside the
- *    LiteShip workspace (name === 'czap'); outside it is refused with a
+ *    LiteShip workspace (name === 'liteship-monorepo'); outside it is refused with a
  *    `skipped: cwd is not the LiteShip workspace` failed-fix record.
  *  - before spawning the build it invalidates each package's tsbuildinfo
  *    (the TOCTOU/force path) so tsc cannot no-op against stale dist/.
@@ -28,7 +28,7 @@ import type { DoctorCheck } from '../../../../../packages/cli/src/commands/docto
 
 const tmps: string[] = [];
 function mkTmp(): string {
-  const dir = mkdtempSync(join(tmpdir(), 'czap-doctor-fix-'));
+  const dir = mkdtempSync(join(tmpdir(), 'liteship-doctor-fix-'));
   tmps.push(dir);
   return dir;
 }
@@ -42,10 +42,10 @@ beforeEach(() => {
   visibleSpy = vi.spyOn(spawnLib, 'spawnArgvVisible');
 });
 
-function writeCzapRoot(dir: string, builtPackages: readonly string[] = ['core', 'cli']): void {
+function writeLiteshipRoot(dir: string, builtPackages: readonly string[] = ['core', 'cli']): void {
   writeFileSync(
     resolve(dir, 'package.json'),
-    JSON.stringify({ name: 'czap', version: '0.0.0', scripts: { build: 'tsc --build' } }),
+    JSON.stringify({ name: 'liteship-monorepo', version: '0.0.0', scripts: { build: 'tsc --build' } }),
   );
   // loadBuiltPackages reads the buildable set from root tsconfig project
   // references (the bare `tsc --build` carries no package list), so the fixture
@@ -74,7 +74,7 @@ const hookWarn = (): DoctorCheck => ({
 describe('doctor/fix — applyFixes() build branch', () => {
   it('runs the build fix (applied) inside the workspace and invalidates tsbuildinfo first', async () => {
     const dir = mkTmp();
-    writeCzapRoot(dir);
+    writeLiteshipRoot(dir);
     // Plant a stale tsbuildinfo the fix must remove before spawning the build.
     const infoDir = resolve(dir, 'packages', 'core');
     mkdirSync(infoDir, { recursive: true });
@@ -92,7 +92,7 @@ describe('doctor/fix — applyFixes() build branch', () => {
 
   it('records a failed build fix carrying the exit code on a nonzero exit', async () => {
     const dir = mkTmp();
-    writeCzapRoot(dir);
+    writeLiteshipRoot(dir);
     visibleSpy.mockResolvedValue({ exitCode: 2, stdout: '', stderr: '' });
     const fixes = await applyFixes([builtWarn('cli.built')], dir);
     expect(fixes.find((f) => f.id === 'build')).toMatchObject({ status: 'failed', detail: 'exit 2' });
@@ -100,7 +100,7 @@ describe('doctor/fix — applyFixes() build branch', () => {
 
   it('records a failed build fix when the spawn itself rejects', async () => {
     const dir = mkTmp();
-    writeCzapRoot(dir);
+    writeLiteshipRoot(dir);
     visibleSpy.mockRejectedValue(new Error('spawn failed'));
     const fixes = await applyFixes([builtWarn('core.built')], dir);
     expect(fixes.find((f) => f.id === 'build')).toMatchObject({ status: 'failed', detail: 'exit 1' });
@@ -119,7 +119,7 @@ describe('doctor/fix — applyFixes() build branch', () => {
 
   it('does not attempt a build when no *.built check is in warn', async () => {
     const dir = mkTmp();
-    writeCzapRoot(dir);
+    writeLiteshipRoot(dir);
     visibleSpy.mockResolvedValue({ exitCode: 0, stdout: '', stderr: '' });
     const fixes = await applyFixes([{ ...builtWarn('core.built'), status: 'ok' }], dir);
     expect(fixes.find((f) => f.id === 'build')).toBeUndefined();
@@ -130,7 +130,7 @@ describe('doctor/fix — applyFixes() build branch', () => {
 describe('doctor/fix — applyFixes() git.hooks branch', () => {
   it('links the pre-commit hook (applied) inside the workspace', async () => {
     const dir = mkTmp();
-    writeCzapRoot(dir);
+    writeLiteshipRoot(dir);
     visibleSpy.mockResolvedValue({ exitCode: 0, stdout: '', stderr: '' });
     const fixes = await applyFixes([hookWarn()], dir);
     expect(visibleSpy).toHaveBeenCalledWith('pnpm', ['exec', 'tsx', 'scripts/link-pre-commit.ts'], { cwd: dir });
@@ -139,7 +139,7 @@ describe('doctor/fix — applyFixes() git.hooks branch', () => {
 
   it('records a failed hook fix on a nonzero exit', async () => {
     const dir = mkTmp();
-    writeCzapRoot(dir);
+    writeLiteshipRoot(dir);
     visibleSpy.mockResolvedValue({ exitCode: 1, stdout: '', stderr: '' });
     const fixes = await applyFixes([hookWarn()], dir);
     expect(fixes.find((f) => f.id === 'git.hooks')).toMatchObject({ status: 'failed', detail: 'exit 1' });
@@ -147,7 +147,7 @@ describe('doctor/fix — applyFixes() git.hooks branch', () => {
 
   it('records a failed hook fix when the spawn rejects', async () => {
     const dir = mkTmp();
-    writeCzapRoot(dir);
+    writeLiteshipRoot(dir);
     visibleSpy.mockRejectedValue(new Error('boom'));
     const fixes = await applyFixes([hookWarn()], dir);
     expect(fixes.find((f) => f.id === 'git.hooks')).toMatchObject({ status: 'failed', detail: 'exit 1' });
@@ -166,7 +166,7 @@ describe('doctor/fix — applyFixes() git.hooks branch', () => {
 
   it('does NOT link the hook when git.hooks warns but is not fixable (unresolved pointer)', async () => {
     const dir = mkTmp();
-    writeCzapRoot(dir);
+    writeLiteshipRoot(dir);
     visibleSpy.mockResolvedValue({ exitCode: 0, stdout: '', stderr: '' });
     const unresolved: DoctorCheck = { id: 'git.hooks', label: 'git hooks', status: 'warn', detail: 'hooks dir unresolved' };
     const fixes = await applyFixes([unresolved], dir);
@@ -178,7 +178,7 @@ describe('doctor/fix — applyFixes() git.hooks branch', () => {
 describe('doctor/fix — applyFixes() with nothing to fix', () => {
   it('returns an empty array when no check is fixable/warn', async () => {
     const dir = mkTmp();
-    writeCzapRoot(dir);
+    writeLiteshipRoot(dir);
     visibleSpy.mockResolvedValue({ exitCode: 0, stdout: '', stderr: '' });
     const fixes = await applyFixes(
       [{ id: 'node.version', label: 'Node.js', status: 'ok', detail: 'v22' }],

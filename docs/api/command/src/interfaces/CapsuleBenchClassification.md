@@ -10,7 +10,7 @@ Defined in: [command/src/registry.ts:320](https://github.com/freebatteryfactory/
 
 Bench-honesty classification across a capsule corpus — a structural mirror of
 the gate engine's result, declared here so the `capsule-verify` command's
-contract lives in `@czap/command` without a host import. `real` counts genuine
+contract lives in `@liteship/command` without a host import. `real` counts genuine
 measurements AND typed not-applicable benches (a premise-guard body); every
 name in `placeholder` is a comment-only bench measuring nothing (the bench
 analogue of `it.skip` — green but covering nothing).

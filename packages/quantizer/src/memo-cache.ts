@@ -8,7 +8,7 @@
  * @module
  */
 
-import type { ContentAddress } from '@czap/core';
+import type { ContentAddress } from '@liteship/core';
 
 interface MemoCacheShape<V> {
   get(key: ContentAddress): V | undefined;

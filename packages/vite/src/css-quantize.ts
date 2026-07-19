@@ -8,8 +8,8 @@
  * @module
  */
 
-import { Diagnostics, inputToSource, type Boundary } from '@czap/core';
-import { CSSCompiler, type CSSAtRuleGroup, type CSSRule, type CSSStateInput } from '@czap/compiler';
+import { Diagnostics, inputToSource, type Boundary } from '@liteship/core';
+import { CSSCompiler, type CSSAtRuleGroup, type CSSRule, type CSSStateInput } from '@liteship/compiler';
 import { normalizeCssLineEndings } from './normalize-css-eol.js';
 import {
   blankCssCommentsAndStrings,
@@ -329,7 +329,7 @@ function parseStateBody(css: string, pos: number): { body: QuantizeStateBody; en
     // warn with the offending segment head so the author can find the typo.
     if (terminator === '' && pos >= css.length && buf.trim().length > 0) {
       Diagnostics.warn({
-        source: 'czap/vite.css-quantize',
+        source: 'liteship/vite.css-quantize',
         code: 'unterminated-quantize-segment',
         message:
           `A segment inside a @quantize state never terminated (unbalanced parenthesis or missing brace?): ` +
@@ -492,7 +492,7 @@ export function parseQuantizeBlocks(css: string, sourceFile: string): readonly Q
 }
 
 // ---------------------------------------------------------------------------
-// Compiler (delegates to @czap/compiler CSSCompiler)
+// Compiler (delegates to @liteship/compiler CSSCompiler)
 // ---------------------------------------------------------------------------
 
 /**
@@ -560,7 +560,7 @@ export function viewportQueryAxis(input: string): 'width' | 'height' | null {
  * default. A host whose layout can't have `:root` be a container (a
  * size-contained `:root` removes it from its parent's size calc, which a
  * fixed/absolute viewport-locked wrapper conflicts with) sets the plugin's
- * `quantize.container` to a named selector (e.g. `.czap-vp`) and is then
+ * `quantize.container` to a named selector (e.g. `.liteship-vp`) and is then
  * responsible for sizing that element to the viewport. Width-only sheets
  * stay `inline-size`; a `viewport-height` name upgrades to `size` + a
  * `100dvh` block-size on the chosen selector.
@@ -612,7 +612,7 @@ function containmentRule(block: QuantizeBlock, boundary: Boundary.Shape, sheet?:
     // message; container queries only measure width and height, so
     // auto-containment would claim a dimension this signal does not have.
     Diagnostics.warn({
-      source: 'czap/vite.css-quantize',
+      source: 'liteship/vite.css-quantize',
       code: 'container-not-declared',
       message:
         `@quantize ${block.boundaryName} (${block.sourceFile}:${block.line}) measures "${boundary.input}", ` +
@@ -620,7 +620,7 @@ function containmentRule(block: QuantizeBlock, boundary: Boundary.Shape, sheet?:
         `viewport.height compile to (width ...) / (height ...) conditions, so no container was ` +
         `auto-declared and the compiled rules will match nothing. ` +
         `Fix: re-author the boundary on viewport.width or viewport.height, or use the runtime ` +
-        `satellite path (satelliteAttrs({ boundary }) + [data-czap-state="..."] selectors).`,
+        `satellite path (satelliteAttrs({ boundary }) + [data-liteship-state="..."] selectors).`,
       detail: { sourceFile: block.sourceFile, line: block.line, input: boundary.input },
     });
     return null;
@@ -633,7 +633,7 @@ function containmentRule(block: QuantizeBlock, boundary: Boundary.Shape, sheet?:
   const heightAxis = boundary.input === 'height' || boundary.input.endsWith('.height');
   const containment = heightAxis ? 'size' : 'inline-size';
   Diagnostics.warn({
-    source: 'czap/vite.css-quantize',
+    source: 'liteship/vite.css-quantize',
     code: 'container-not-declared',
     message:
       `@quantize ${block.boundaryName} (${block.sourceFile}:${block.line}) compiles to ` +
@@ -652,7 +652,7 @@ function containmentRule(block: QuantizeBlock, boundary: Boundary.Shape, sheet?:
  * to the canonical `CSSCompiler` to avoid duplicating threshold-to-query
  * logic.
  *
- * Bare declarations keep the default `.czap-boundary` selector; nested
+ * Bare declarations keep the default `.liteship-boundary` selector; nested
  * rules each compile to their own selector inside the state's
  * `@container` block.
  *

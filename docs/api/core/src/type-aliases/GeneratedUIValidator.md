@@ -15,7 +15,7 @@ The catalog-validation contract genui owns.
 RESOLVED (open question #2 — inject vs MOVE genui's `validateGeneratedUITree`
 into core). INJECTION: the cast core does NOT depend on genui's runtime, and we
 do NOT relocate genui's validator into core. The host (which already has
-`@czap/genui`) passes its `validateGeneratedUITree` in as this function, so the
+`@liteship/genui`) passes its `validateGeneratedUITree` in as this function, so the
 cast reuses genui's EXACT validation discipline with ZERO genui-file churn and
 no core→genui (renderer) edge — preserving the product boundary and keeping the
 core pure. genui's internals are untouched; this is the only seam between them.

@@ -17,8 +17,8 @@ the current interpolated output record.
 ## Example
 
 ```ts
-import { Boundary, Millis } from '@czap/core';
-import { Q, AnimatedQuantizer } from '@czap/quantizer';
+import { Boundary, Millis } from '@liteship/core';
+import { Q, AnimatedQuantizer } from '@liteship/quantizer';
 
 const boundary = Boundary.make({
   input: 'scroll',

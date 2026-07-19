@@ -24,10 +24,10 @@ This is what makes the committed waivers actually GOVERN: the waivers in
 per-gate by ruleId in [runGates](runGates.md). A boundary waiver that matches nothing
 goes stale (warning); one whose `expires` is past `now` re-reds and blocks.
 
-The optional `ir` is the INJECTED repo-IR (Slice B). The LEAN path (`czap
-check` / MCP — `@czap/command/host`) calls this with NO `ir`: the regex gates
+The optional `ir` is the INJECTED repo-IR (Slice B). The LEAN path (`liteship
+check` / MCP — `@liteship/command/host`) calls this with NO `ir`: the regex gates
 run unchanged and an IR-fold gate (Step 3) folds only when an IR is present.
-The HOST path (the CLI/scripts, where `@czap/audit` is available) builds the
+The HOST path (the CLI/scripts, where `@liteship/audit` is available) builds the
 IR via `buildRepoIR` and threads it here, landing it on every gate's context.
 
 ## Parameters
@@ -61,13 +61,13 @@ Optional pre-built repo-IR to inject (the host path).
 
 (`source`) => readonly [`SkipMatch`](../interfaces/SkipMatch.md)[]
 
-Optional host-built SOUND AST skip detector (`@czap/audit`'s
+Optional host-built SOUND AST skip detector (`@liteship/audit`'s
                 `detectSkipsAST`). The no-skipped-test gate uses it via
                 `(context.skipDetector ?? detectSkips)` — so the LEAN path, when run
-                from a host that deps `@czap/audit` (the CLI's `czap check` / `czap
+                from a host that deps `@liteship/audit` (the CLI's `liteship check` / `liteship
                 lsp`), gains the line-agnostic multi-line/ASI/inner-describe/alias
                 detection + the structural conditionality proof. Omitted on the
-                no-`@czap/audit` path (MCP) → the token fallback (the documented lean
+                no-`@liteship/audit` path (MCP) → the token fallback (the documented lean
                 degradation, like `runCheckInvariants`).
 
 ### earlyReturnDetector?
@@ -75,7 +75,7 @@ Optional host-built SOUND AST skip detector (`@czap/audit`'s
 (`source`) => readonly [`EarlyReturnMatch`](../interfaces/EarlyReturnMatch.md)[]
 
 Optional host-built SOUND AST early-return detector
-                (`@czap/audit`'s `detectEarlyReturnBeforeExpectAST`). The
+                (`@liteship/audit`'s `detectEarlyReturnBeforeExpectAST`). The
                 no-early-return-test gate uses it via
                 `(context.earlyReturnDetector ?? detectEarlyReturnBeforeExpect)`.
 

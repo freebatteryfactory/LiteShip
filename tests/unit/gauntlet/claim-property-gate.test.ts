@@ -32,7 +32,7 @@ import {
   nodeContext,
   scopeContextByLevel,
   LITESHIP_ASSURANCE_MAP,
-} from '@czap/gauntlet';
+} from '@liteship/gauntlet';
 import { claimPropertyGate, CLAIM_PROPERTY_RULE_ID } from '../../../packages/gauntlet/src/gates/claim-property.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -155,7 +155,7 @@ describe('THE CLAIM-VS-REALITY LAW — CONTENT-ADDRESS confirmer (a round-trip i
       memoryContext({
         'packages/widget/src/canon.ts': 'export function canonicalize(x: number): number { return x; }\n',
         'tests/unit/widget/canon.test.ts':
-          "import { it } from 'vitest';\nimport { addressedDigestOf } from '@czap/canonical';\nit('canonicalize round-trips: equal value, equal address', () => { void addressedDigestOf; });\n",
+          "import { it } from 'vitest';\nimport { addressedDigestOf } from '@liteship/canonical';\nit('canonicalize round-trips: equal value, equal address', () => { void addressedDigestOf; });\n",
       }),
     );
     expect(findings).toHaveLength(0);

@@ -1,5 +1,5 @@
 /**
- * @czap/quantizer type spine -- boundary detection, multi-target dispatch, animation.
+ * @liteship/quantizer type spine -- boundary detection, multi-target dispatch, animation.
  */
 
 import type {
@@ -19,7 +19,7 @@ import type {
 } from './core.d.ts';
 
 // MotionTier canonical declaration lives in core.d.ts; re-exported here so
-// `@czap/_spine` consumers reading the quantizer surface still see it on
+// `@liteship/_spine` consumers reading the quantizer surface still see it on
 // this sub-spine without an extra import.
 export type { MotionTier };
 

@@ -282,7 +282,7 @@ function _topoSort(planIR: PlanIR): TopoSortResult {
  *
  * @example
  * ```ts
- * import { Plan } from '@czap/core';
+ * import { Plan } from '@liteship/core';
  *
  * const plan = Plan.make('render-pipeline')
  *   .step('load', { type: 'effect' })

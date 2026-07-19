@@ -77,4 +77,4 @@ Defined in: [edge/src/host-adapter.ts:90](https://github.com/freebatteryfactory/
 
 Tags written into the boundary cache index when `compile` fills a KV miss.
 Use the same values as Astro `routeRules.tags` when `cache.invalidate({ tags })`
-should purge the corresponding CZAP boundary CSS variants.
+should purge the corresponding LiteShip boundary CSS variants.

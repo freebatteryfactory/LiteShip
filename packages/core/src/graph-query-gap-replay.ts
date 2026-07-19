@@ -252,7 +252,7 @@ export async function replayDiscreteFromPatchReceipts(options: ReplayDiscreteFro
       receipt.subject.id !== discreteTransitionSubjectId(transition)
     ) {
       Diagnostics.warnOnce({
-        source: 'czap/core.gap-replay',
+        source: 'liteship/core.gap-replay',
         code: 'discrete-transition-subject-mismatch',
         message:
           `graph-native gap replay refused a transition for cell "${transition.cell}": its receipt subject ` +
@@ -282,7 +282,7 @@ export async function replayDiscreteFromPatchReceipts(options: ReplayDiscreteFro
   }
   if (!validated.ok) {
     Diagnostics.warnOnce({
-      source: 'czap/core.gap-replay',
+      source: 'liteship/core.gap-replay',
       code: 'discrete-transition-chain-invalid',
       message:
         'graph-native gap replay refused a transition chain that failed the structural floor ' +
@@ -317,7 +317,7 @@ export async function replayDiscreteFromPatchReceipts(options: ReplayDiscreteFro
       // not silent (Law 1): a transition naming a cell the store never registered
       // is a wiring gap, not a condition to launder.
       Diagnostics.warnOnce({
-        source: 'czap/core.gap-replay',
+        source: 'liteship/core.gap-replay',
         code: 'discrete-transition-unknown-cell',
         message:
           `graph-native gap replay skipped a transition for cell "${transition.cell}": the StateCell store ` +

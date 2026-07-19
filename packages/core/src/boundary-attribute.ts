@@ -2,9 +2,9 @@
  * BoundaryAttribute — the shared policy for which attribute keys may cross the
  * boundary/runtime projection seam (ARIA / data projection).
  *
- * One law, two consumers: `@czap/compiler` filters compiled ARIA attribute maps
- * with it, and `@czap/astro` filters runtime boundary-state attributes with it.
- * Homing it here (both already depend on `@czap/core`, and astro must not depend
+ * One law, two consumers: `@liteship/compiler` filters compiled ARIA attribute maps
+ * with it, and `@liteship/astro` filters runtime boundary-state attributes with it.
+ * Homing it here (both already depend on `@liteship/core`, and astro must not depend
  * on the compiler) means the predicate lives in exactly one place instead of
  * two same-shape copies kept in sync by hand. Pure and dependency-free.
  *

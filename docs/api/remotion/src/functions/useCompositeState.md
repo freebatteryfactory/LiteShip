@@ -16,7 +16,7 @@ frame. Internally calls Remotion's `useCurrentFrame` and defers to
 
 This is the explicit prop-threading half of a deliberate pair: pass the
 `frames` array directly — pure, no provider required. Its sibling,
-`Provider` + `useCzapState()` in `composition.js`, resolves the same
+`Provider` + `useLiteshipState()` in `composition.js`, resolves the same
 state via implicit context lookup for deep component trees. Both clamp
 to the valid frame range and fall back to a structurally-empty
 `CompositeState`.
@@ -37,12 +37,12 @@ State for the current Remotion frame.
 
 ## See
 
-useCzapState for the context-lookup form (no prop threading).
+useLiteshipState for the context-lookup form (no prop threading).
 
 ## Example
 
 ```tsx
-import { cssVarsFromState, useCompositeState } from '@czap/remotion';
+import { cssVarsFromState, useCompositeState } from '@liteship/remotion';
 
 function MyComposition({ frames }: { frames: VideoFrameOutput[] }) {
   const state = useCompositeState(frames);

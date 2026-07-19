@@ -10,7 +10,7 @@ Defined in: [command/src/registry.ts:392](https://github.com/freebatteryfactory/
 
 One banned-pattern hit: a repo-relative `file`, 1-based `line`, and the trimmed
 source `content`. A structural mirror of the host scan's result item, declared
-here so the `check-invariants` command's contract lives in `@czap/command`
+here so the `check-invariants` command's contract lives in `@liteship/command`
 without a host import.
 
 ## Properties

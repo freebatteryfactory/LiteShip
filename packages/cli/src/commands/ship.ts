@@ -1,5 +1,5 @@
 /**
- * `czap ship` — ADR-0011 publisher verb.
+ * `liteship ship` — ADR-0011 publisher verb.
  *
  * For each target package: validates git, packs the tarball, runs
  * `pnpm publish --dry-run`, addresses each input via ShipCapsule helpers,
@@ -20,7 +20,7 @@
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { hostname } from 'node:os';
-import { HLC, ShipCapsule, wallClock, type AddressedDigest } from '@czap/core';
+import { HLC, ShipCapsule, wallClock, type AddressedDigest } from '@liteship/core';
 import {
   packageSlug,
   selectTargets,
@@ -29,7 +29,7 @@ import {
   deriveBuildEnv,
   type PackageJsonLite,
   type WorkspacePackage,
-} from '@czap/command';
+} from '@liteship/command';
 import {
   findWorkspaceSpecLeaks,
   lockfileAddress,
@@ -54,10 +54,10 @@ interface ShipOptions {
   readonly unknownFlags: readonly string[];
 }
 
-const SHIP_USAGE = `czap ship — publish workspace packages (ADR-0011 publisher verb).
+const SHIP_USAGE = `liteship ship — publish workspace packages (ADR-0011 publisher verb).
 
 Usage:
-  czap ship [--filter <pkg>] [--dry-run] [--provenance] [--otp <code>]
+  liteship ship [--filter <pkg>] [--dry-run] [--provenance] [--otp <code>]
 
 Options:
   --filter <pkg>   Ship only the named package (path or name). Default: ALL.
@@ -67,7 +67,7 @@ Options:
   -h, --help       Show this help and exit (no publish).
 
 With no --filter, ship publishes EVERY workspace package. Unrecognized flags are
-refused (fail-closed) so a typo like \`czap ship --hepl\` can never trigger a
+refused (fail-closed) so a typo like \`liteship ship --hepl\` can never trigger a
 publish.`;
 
 /**
@@ -158,7 +158,7 @@ export function buildNpmPublishArgv(tarballPath: string, opts: { provenance: boo
 }
 
 /**
- * Topologically sort ship targets so each package publishes AFTER its in-batch `@czap/*`
+ * Topologically sort ship targets so each package publishes AFTER its in-batch `@liteship/*`
  * dependencies. `pnpm -r publish` did this implicitly (dependencies before dependents);
  * the per-tarball `npm publish` handoff must preserve it, or a no-filter ship could push
  * a dependent — notably the `liteship` umbrella — before a same-version dependency exists
@@ -233,7 +233,7 @@ export async function ship(args: readonly string[]): Promise<number> {
   const opts = parseArgs(args, cwd);
 
   // FAIL-CLOSED before any side effect: `--help` prints usage and exits, and an
-  // unrecognized flag REFUSES to ship. Without this, `czap ship --help` (or any
+  // unrecognized flag REFUSES to ship. Without this, `liteship ship --help` (or any
   // typo'd flag) fell through to "no filter → publish EVERY package".
   if (opts.help) {
     process.stdout.write(`${SHIP_USAGE}\n`);
@@ -243,7 +243,7 @@ export async function ship(args: readonly string[]): Promise<number> {
     emitError(
       'ship',
       `unrecognized flag(s): ${opts.unknownFlags.join(', ')}`,
-      'Run `czap ship --help`. Ship refuses to run with unknown flags so a typo cannot trigger a publish.',
+      'Run `liteship ship --help`. Ship refuses to run with unknown flags so a typo cannot trigger a publish.',
     );
     return 1;
   }
@@ -354,7 +354,7 @@ export async function ship(args: readonly string[]): Promise<number> {
 
     // Refuse to publish a tarball whose package.json still carries
     // workspace: specs — npm consumers cannot install them (the
-    // @czap/core@0.1.4 defect), and a ShipCapsule minted over one would
+    // @liteship/core@0.1.4 defect), and a ShipCapsule minted over one would
     // be evidence of a broken artifact. package:smoke gates this in CI;
     // this closes the manual/local ship path.
     let workspaceLeaks: readonly string[];
@@ -373,7 +373,7 @@ export async function ship(args: readonly string[]): Promise<number> {
         'ship',
         `${name} packed with unresolved workspace: specs (${workspaceLeaks.join('; ')}) — npm consumers cannot ` +
           `install these. This usually means the tarball was packed outside pnpm's workspace context. ` +
-          `Fix: re-pack via \`pnpm pack\` (or publish through \`czap ship\` from the workspace root) so pnpm ` +
+          `Fix: re-pack via \`pnpm pack\` (or publish through \`liteship ship\` from the workspace root) so pnpm ` +
           `rewrites workspace: to concrete versions, then ship again.`,
       );
       return 1;
@@ -562,7 +562,7 @@ function parseArgs(args: readonly string[], cwd: string): ShipOptions {
     if (a.startsWith('-')) {
       // An unrecognized flag (e.g. `--help` typo, `--all`, `--yes`). Collect it
       // so ship() can REFUSE rather than silently fall through to "no filter →
-      // publish everything" — the footgun where `czap ship --help` shipped.
+      // publish everything" — the footgun where `liteship ship --help` shipped.
       unknownFlags.push(a);
       continue;
     }

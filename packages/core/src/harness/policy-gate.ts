@@ -29,7 +29,7 @@
  * @module
  */
 
-import { UnsupportedError } from '@czap/error';
+import { UnsupportedError } from '@liteship/error';
 import type { CapsuleDef } from '../assembly.js';
 import type { HarnessContext, HarnessOutput } from './pure-transform.js';
 

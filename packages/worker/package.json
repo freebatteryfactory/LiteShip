@@ -1,5 +1,5 @@
 {
-  "name": "@czap/worker",
+  "name": "@liteship/worker",
   "version": "0.18.0",
   "description": "Move LiteShip's heavy work off the main thread: compositor and render workers plus a lock-free ring buffer that stream state and frames without janking the UI.",
   "license": "MIT",
@@ -12,7 +12,6 @@
   "bugs": "https://github.com/freebatteryfactory/LiteShip/issues",
   "homepage": "https://github.com/freebatteryfactory/LiteShip#readme",
   "keywords": [
-    "czap",
     "liteship",
     "web-worker",
     "off-main-thread",
@@ -40,8 +39,8 @@
     "prepack": "pnpm run build"
   },
   "dependencies": {
-    "@czap/core": "workspace:*",
-    "@czap/error": "workspace:*"
+    "@liteship/core": "workspace:*",
+    "@liteship/error": "workspace:*"
   },
   "engines": {
     "node": ">=22.13.0"

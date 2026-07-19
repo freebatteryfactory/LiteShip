@@ -59,18 +59,18 @@ const graph = currentGraph();
       form { display: grid; gap: 0.75rem; margin: 1rem 0; }
       label { display: grid; gap: 0.35rem; font-weight: 650; }
       input { font: inherit; padding: 0.5rem 0.65rem; border: 1px solid color-mix(in oklab, CanvasText 25%, Canvas); border-radius: 0.4rem; }
-      form[data-czap-mutation-state="pending"] { opacity: 0.65; }
+      form[data-liteship-mutation-state="pending"] { opacity: 0.65; }
       .row { display: flex; gap: 0.75rem; flex-wrap: wrap; margin: 1rem 0; }
       button { font: inherit; padding: 0.5rem 0.9rem; border-radius: 0.5rem; cursor: pointer; }
       pre { background: color-mix(in oklab, Canvas 85%, CanvasText); padding: 1rem; border-radius: 0.6rem; white-space: pre-wrap; word-break: break-word; }
     </style>
 
-    <!-- Plain <script> (no type/is:inline): Astro processes + bundles the @czap/core
+    <!-- Plain <script> (no type/is:inline): Astro processes + bundles the @liteship/core
          imports and emits it as a module. A `type="module"` attribute would opt OUT of
          bundling, shipping the bare import to the browser unresolved. -->
     <script>
-      import { createGraphMutationClient, createGraphQueryRefreshBase, GraphPatch, sealNode, sendGraphMutation } from '@czap/core';
-      import { bindGraphForm } from '@czap/web';
+      import { createGraphMutationClient, createGraphQueryRefreshBase, GraphPatch, sealNode, sendGraphMutation } from '@liteship/core';
+      import { bindGraphForm } from '@liteship/web';
 
       const out = document.getElementById('out');
       const idEl = document.getElementById('graph-id');
@@ -120,7 +120,7 @@ const graph = currentGraph();
         },
       });
 
-      form.addEventListener('czap:mutation', (event) => {
+      form.addEventListener('liteship:mutation', (event) => {
         render(event.detail, 'FORM CLIENT — submitted axis through bindGraphForm');
       });
 

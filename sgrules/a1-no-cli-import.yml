@@ -1,15 +1,15 @@
 # Backstops tests/unit/meta/a1-seam-integrity.test.ts (CUT A1 no-cycle invariant).
 #
-# @czap/mcp-server must not import @czap/cli — that edge reintroduces the
+# @liteship/mcp-server must not import @liteship/cli — that edge reintroduces the
 # cli<->mcp dependency cycle CUT A1 broke. The meta-test matches with the regex
-#   /from\s+['"]@czap\/cli['"]/
+#   /from\s+['"]@liteship\/cli['"]/
 # which also fires inside strings and comments; this rule matches only a real
 # import statement (static or dynamic), so prose that merely names the deleted
 # edge can never trip it.
 id: a1-no-cli-import
 language: typescript
 severity: error
-message: "@czap/mcp-server must not import @czap/cli (CUT A1 no-cycle invariant) — dispatch through @czap/command instead"
+message: "@liteship/mcp-server must not import @liteship/cli (CUT A1 no-cycle invariant) — dispatch through @liteship/command instead"
 files:
   - "**/packages/mcp-server/src/**"
 rule:
@@ -17,6 +17,6 @@ rule:
     - kind: import_statement
       has:
         field: source
-        regex: "^['\"]@czap/cli['\"]$"
-    - pattern: import('@czap/cli')
-    - pattern: import("@czap/cli")
+        regex: "^['\"]@liteship/cli['\"]$"
+    - pattern: import('@liteship/cli')
+    - pattern: import("@liteship/cli")

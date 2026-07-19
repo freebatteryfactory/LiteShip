@@ -1,5 +1,5 @@
 /**
- * `@czap/error` — the one LiteShip error algebra.
+ * `@liteship/error` — the one LiteShip error algebra.
  *
  * A composable, zero-dependency tagged-error coproduct. Errors are tagged DATA
  * values (no class hierarchy): differentiated by a `_tag` field, assembled by
@@ -18,7 +18,7 @@
  * Wave 8; this stays a compatibility property, never a dependency.)
  *
  * Each variant name is BOTH the type and the constructor (declaration merging),
- * mirroring the `@czap/core` brand idiom: `ValidationError` is a type in type
+ * mirroring the `@liteship/core` brand idiom: `ValidationError` is a type in type
  * position and a factory in value position.
  *
  * Extensible + global: a downstream project imports this package, composes its

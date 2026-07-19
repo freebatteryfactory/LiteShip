@@ -1,6 +1,6 @@
 /**
  * MCP error-algebra consumption — the protocol-boundary mapping from
- * `@czap/error` tagged variants to JSON-RPC error responses.
+ * `@liteship/error` tagged variants to JSON-RPC error responses.
  *
  * The catch block in `dispatch` is the ONE site where the LiteShip error
  * algebra is consumed: every built-in variant gets a tag-discriminating arm
@@ -33,7 +33,7 @@ import {
   UnsupportedError,
   IntegrityError,
   taggedError,
-} from '@czap/error';
+} from '@liteship/error';
 import { dispatch, errorFromTagged } from '../../../packages/mcp-server/src/dispatch.js';
 import type { JsonRpcRequest } from '../../../packages/mcp-server/src/jsonrpc.js';
 

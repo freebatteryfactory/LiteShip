@@ -3,8 +3,8 @@
  */
 
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import { GenFrame, TokenBuffer } from '@czap/core';
-import type { UIQualityTier } from '@czap/core';
+import { GenFrame, TokenBuffer } from '@liteship/core';
+import type { UIQualityTier } from '@liteship/core';
 
 function makeScheduler(initialTier: UIQualityTier = 'styled') {
   let tier: UIQualityTier = initialTier;

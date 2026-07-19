@@ -6,7 +6,7 @@
  * @module
  */
 
-import { assertNever } from '@czap/error';
+import { assertNever } from '@liteship/error';
 import { defineCapsule } from '../assembly.js';
 import { S } from '../schema/index.js';
 import type { Infer } from '../schema/index.js';

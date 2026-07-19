@@ -8,7 +8,7 @@
 
 Defined in: [core/src/composable.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/composable.ts#L30)
 
-Component map for a [ComposableEntity](ComposableEntity.md) — well-known slots for czap
+Component map for a [ComposableEntity](ComposableEntity.md) — well-known slots for liteship
 primitives plus arbitrary user-defined keys.
 
 ## Indexable

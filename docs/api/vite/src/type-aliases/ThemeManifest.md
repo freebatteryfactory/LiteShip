@@ -10,4 +10,4 @@
 
 Defined in: [vite/src/token-manifest.ts:46](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/token-manifest.ts#L46)
 
-Theme export name → definition for `virtual:czap/themes`.
+Theme export name → definition for `virtual:liteship/themes`.

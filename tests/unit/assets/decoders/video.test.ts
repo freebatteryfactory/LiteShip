@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { videoDecoder } from '@czap/assets';
+import { videoDecoder } from '@liteship/assets';
 
 describe('videoDecoder', () => {
   it('returns container metadata for a minimal MP4-like fixture', async () => {

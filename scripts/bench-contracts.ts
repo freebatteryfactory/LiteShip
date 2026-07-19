@@ -28,8 +28,8 @@
  */
 
 import { resolve } from 'node:path';
-import { systemClock } from '@czap/core';
-import { ValidationError } from '@czap/error';
+import { systemClock } from '@liteship/core';
+import { ValidationError } from '@liteship/error';
 import { repoRoot } from '../vitest.shared.js';
 import { isDirectExecution, writeTextFile } from './audit/shared.js';
 import {

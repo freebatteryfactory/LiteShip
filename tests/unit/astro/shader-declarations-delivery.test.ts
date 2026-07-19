@@ -9,14 +9,14 @@
  * source of truth — the compiler's emitted `declarations` — never re-typed by
  * hand beside it. The drift guard pins the two now-redundant views (the names
  * the compiler emits vs the names the runtime binds) as one source: both derive
- * from the canonical `glslIdent` in `@czap/core`.
+ * from the canonical `glslIdent` in `@liteship/core`.
  *
  * @module
  */
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { Boundary, glslIdent } from '@czap/core';
-import { GLSLCompiler, WGSLCompiler } from '@czap/compiler';
-import { satelliteAttrs } from '@czap/astro';
+import { Boundary, glslIdent } from '@liteship/core';
+import { GLSLCompiler, WGSLCompiler } from '@liteship/compiler';
+import { satelliteAttrs } from '@liteship/astro';
 import {
   initGPUDirective,
   prependGlslDeclarations,
@@ -58,7 +58,7 @@ describe('drift guard: emitted declarations vocabulary === runtime binding vocab
 
     // SOURCE OF TRUTH: the uniform names are glslIdent(authored key), plus the
     // implicit u_state index. Computed here from the SAME canonical fn the
-    // runtime binds with (gpu.ts uses glslIdent for the `--czap-*` path and the
+    // runtime binds with (gpu.ts uses glslIdent for the `--liteship-*` path and the
     // compiler's own `detail.glsl` keys for authored uniforms) — never hardcoded.
     const expected = new Set<string>(['u_state']);
     for (const state of Object.values(authoredStates)) {
@@ -180,7 +180,7 @@ describe('acceptance: authored @glsl declarations reach gl.shaderSource and a un
 
   beforeEach(() => {
     document.body.innerHTML = '';
-    document.documentElement.setAttribute('data-czap-tier', 'reactive');
+    document.documentElement.setAttribute('data-liteship-tier', 'reactive');
   });
 
   afterEach(() => {
@@ -188,7 +188,7 @@ describe('acceptance: authored @glsl declarations reach gl.shaderSource and a un
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
     document.body.innerHTML = '';
-    document.documentElement.removeAttribute('data-czap-tier');
+    document.documentElement.removeAttribute('data-liteship-tier');
   });
 
   test('the compiler preamble reaches gl.shaderSource and u_blur_radius updates on a crossing', async () => {
@@ -213,7 +213,7 @@ void main() { fragColor = vec4(u_blur_radius, u_brightness, float(u_state), 1.0)
     });
 
     // The emitted preamble must ride the payload (the delivery seam).
-    const payload = JSON.parse(attrs['data-czap-boundary']!) as { glslDeclarations?: string };
+    const payload = JSON.parse(attrs['data-liteship-boundary']!) as { glslDeclarations?: string };
     expect(payload.glslDeclarations).toBe(compiled.declarations);
 
     const shaderSources: string[] = [];
@@ -273,7 +273,7 @@ void main() { fragColor = vec4(u_blur_radius, u_brightness, float(u_state), 1.0)
 
     const canvas = document.createElement('canvas');
     for (const [k, v] of Object.entries(attrs)) canvas.setAttribute(k, v);
-    canvas.setAttribute('data-czap-shader-src', authoredFragment);
+    canvas.setAttribute('data-liteship-shader-src', authoredFragment);
     document.body.appendChild(canvas);
     stubs.define(canvas, 'clientWidth', { configurable: true, value: 300 });
     stubs.define(canvas, 'clientHeight', { configurable: true, value: 150 });
@@ -293,7 +293,7 @@ void main() { fragColor = vec4(u_blur_radius, u_brightness, float(u_state), 1.0)
     // the uniform VALUE that already flows via detail.glsl resolves a real
     // location because the declarations put u_blur_radius in the program.
     canvas.dispatchEvent(
-      new CustomEvent('czap:uniform-update', {
+      new CustomEvent('liteship:uniform-update', {
         detail: { glsl: compiled.stateUniforms.expanded },
       }),
     );
@@ -370,7 +370,7 @@ void main() { fragColor = vec4(u_blur_radius, u_brightness, float(u_state), 1.0)
     const canvas = document.createElement('canvas');
     for (const [k, v] of Object.entries(attrs)) canvas.setAttribute(k, v);
     canvas.setAttribute(
-      'data-czap-shader-src',
+      'data-liteship-shader-src',
       '#version 300 es\nprecision mediump float;\nout vec4 fragColor;\nvoid main() { fragColor = vec4(float(u_state)); }',
     );
     document.body.appendChild(canvas);
@@ -380,9 +380,9 @@ void main() { fragColor = vec4(u_blur_radius, u_brightness, float(u_state), 1.0)
     initGPUDirective(async () => {}, canvas, { force: true });
 
     // Cross into 'expanded' (raw state index 1) via the discrete path.
-    const payload = JSON.parse(attrs['data-czap-boundary']!) as { id?: string };
+    const payload = JSON.parse(attrs['data-liteship-boundary']!) as { id?: string };
     canvas.dispatchEvent(
-      new CustomEvent('czap:uniform-update', {
+      new CustomEvent('liteship:uniform-update', {
         detail: { discrete: { [payload.id ?? 'default']: 'expanded' } },
       }),
     );
@@ -446,7 +446,7 @@ void main() { fragColor = vec4(u_blur_radius, u_brightness, float(u_state), 1.0)
 
     const canvas = document.createElement('canvas');
     canvas.setAttribute(
-      'data-czap-shader-src',
+      'data-liteship-shader-src',
       '#version 300 es\nprecision mediump float;\nout vec4 fragColor;\nvoid main() { fragColor = vec4(float(u_state)); }',
     );
     document.body.appendChild(canvas);
@@ -458,7 +458,7 @@ void main() { fragColor = vec4(u_blur_radius, u_brightness, float(u_state), 1.0)
     await Promise.resolve();
 
     document.dispatchEvent(
-      new CustomEvent('czap:uniform-update', {
+      new CustomEvent('liteship:uniform-update', {
         detail: { glsl: { u_state: 2 } },
       }),
     );

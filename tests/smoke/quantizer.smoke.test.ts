@@ -3,8 +3,8 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Boundary, Millis } from '@czap/core';
-import { evaluate, Transition } from '@czap/quantizer';
+import { Boundary, Millis } from '@liteship/core';
+import { evaluate, Transition } from '@liteship/quantizer';
 
 describe('quantizer smoke', () => {
   test('evaluate() returns result with state', () => {

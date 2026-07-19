@@ -25,7 +25,7 @@
  * @module
  */
 
-import { InvariantViolationError } from '@czap/error';
+import { InvariantViolationError } from '@liteship/error';
 import type { ContentAddress } from './brands.js';
 import { contentAddressOf } from './content-address.js';
 import type { ReceiptSubject } from './receipt.js';
@@ -39,7 +39,7 @@ import type { ReceiptSubject } from './receipt.js';
  * value, not a `declare const` phantom — the key has to exist at runtime to brand
  * the token, while staying invisible to the rest of the program.)
  */
-const ApplyTokenWitness: unique symbol = Symbol('czap.validated-output.apply-token-witness');
+const ApplyTokenWitness: unique symbol = Symbol('liteship.validated-output.apply-token-witness');
 
 /**
  * A validation-minted, host-authorized apply token. Branded with a private

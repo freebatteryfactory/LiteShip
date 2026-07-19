@@ -9,7 +9,7 @@
 Defined in: [gauntlet/src/simulation-facts.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/simulation-facts.ts#L33)
 
 The DST evidence the host supplies — the result of running the scenario corpus
-through the `@czap/core/simulation` harness. `runs` is EVERY scenario the host
+through the `@liteship/core/simulation` harness. `runs` is EVERY scenario the host
 replayed; an empty/absent `runs` is reported by the gate as an advisory
 "not-evidenced" finding (honest under-coverage, never a silent green) — see
 [simulationDeterminismGate](../variables/simulationDeterminismGate.md).

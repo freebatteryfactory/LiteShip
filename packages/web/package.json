@@ -1,5 +1,5 @@
 {
-  "name": "@czap/web",
+  "name": "@liteship/web",
   "version": "0.18.0",
   "description": "The browser runtime for LiteShip: apply CSS, streamed HTML, worker output, and LLM chunks to a live DOM with focus- and scroll-preserving morphing.",
   "license": "MIT",
@@ -12,7 +12,6 @@
   "bugs": "https://github.com/freebatteryfactory/LiteShip/issues",
   "homepage": "https://github.com/freebatteryfactory/LiteShip#readme",
   "keywords": [
-    "czap",
     "liteship",
     "dom",
     "browser-runtime",
@@ -47,10 +46,10 @@
     "prepack": "pnpm run build"
   },
   "dependencies": {
-    "@czap/canonical": "workspace:*",
-    "@czap/core": "workspace:*",
-    "@czap/error": "workspace:*",
-    "@czap/genui": "workspace:*",
+    "@liteship/canonical": "workspace:*",
+    "@liteship/core": "workspace:*",
+    "@liteship/error": "workspace:*",
+    "@liteship/genui": "workspace:*",
     "mediabunny": "^1.39.2"
   },
   "engines": {

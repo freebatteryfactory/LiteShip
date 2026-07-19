@@ -1,5 +1,5 @@
 /**
- * Unit tests for `czap scene render` covering the non-ffmpeg portions
+ * Unit tests for `liteship scene render` covering the non-ffmpeg portions
  * — input validation, cache lookup, the dynamic-import + capsule/contract
  * guards. The successful render path (await renderWithFfmpeg) is exercised
  * by tests/integration/cli/scene-render.test.ts under the `FFMPEG_AVAILABLE`
@@ -7,7 +7,7 @@
  * that returns before it.
  *
  * Every test passes an explicit `cwd: workDir` opt to sceneRender so the
- * `.czap/cache/` writes land inside the test's tmpdir, not in the repo
+ * `.liteship/cache/` writes land inside the test's tmpdir, not in the repo
  * root. No process.chdir, no shared-state mutation, no Windows worker
  * race (see PR #3 commit b1b806a for the prior chdir-race we hit).
  */
@@ -24,7 +24,7 @@ describe('scene render command — non-ffmpeg portions', () => {
   let workDir: string;
 
   beforeEach(() => {
-    workDir = mkdtempSync(join(tmpdir(), 'czap-scene-render-'));
+    workDir = mkdtempSync(join(tmpdir(), 'liteship-scene-render-'));
   });
 
   afterEach(() => {
@@ -54,7 +54,7 @@ describe('scene render command — non-ffmpeg portions', () => {
 
   it('returns 1 with emitError when the scene file does not exist', async () => {
     const { exit, stderr } = await captureCli(() =>
-      sceneRender('/__czap-nonexistent__.ts', join(workDir, 'out.mp4'), false, { cwd: workDir }),
+      sceneRender('/__liteship-nonexistent__.ts', join(workDir, 'out.mp4'), false, { cwd: workDir }),
     );
     expect(exit).toBe(1);
     expect(parseStderrReceipt(stderr).error).toMatch(/scene not found:/);

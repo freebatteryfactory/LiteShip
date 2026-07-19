@@ -1,5 +1,5 @@
 /**
- * @czap/core type spine -- the contract all implementations satisfy.
+ * @liteship/core type spine -- the contract all implementations satisfy.
  *
  * Three sections:
  *   1. NEW types (brands, boundary, signals, animation, game engine patterns)
@@ -8,7 +8,7 @@
  *
  * Effect-free (Wave 8): every surface this spine mirrors is LiteShip-native —
  * the reactive family (Cell/Derived/Store) over CellKernel.replay1, and Codec
- * over the sync `@czap/error` `Result`. Nothing here imports `effect`; the
+ * over the sync `@liteship/error` `Result`. Nothing here imports `effect`; the
  * prose below records what each surface REPLACED, not a live dependency.
  */
 
@@ -54,10 +54,10 @@ export type StateName<S extends string = string> = S & { readonly [StateNameBran
  *
  * APEX of THREE intentional homes (ADR-0012) — do NOT merge them. This spine
  * type is the strictest: a symbol-brand, so a raw `fnv1a:...` string cannot be
- * typed as ContentAddress without a validating constructor. `@czap/core` and
- * `@czap/genui` re-anchor this brand (`type ContentAddress = _ContentAddress`)
- * with validating constructors; `@czap/canonical` is intentionally zero-dep
- * (only `@czap/error`) and uses a `` `fnv1a:${string}` `` template-literal brand
+ * typed as ContentAddress without a validating constructor. `@liteship/core` and
+ * `@liteship/genui` re-anchor this brand (`type ContentAddress = _ContentAddress`)
+ * with validating constructors; `@liteship/canonical` is intentionally zero-dep
+ * (only `@liteship/error`) and uses a `` `fnv1a:${string}` `` template-literal brand
  * instead. Merging the homes would either break canonical's zero-dep property or
  * weaken this symbol-brand to a template literal. The three are parity-guarded at
  * runtime by tests/unit/core/brand-validators.test.ts ("ContentAddress three-home
@@ -294,7 +294,7 @@ export interface ControllableSignal<T> extends Signal<T> {
 }
 
 export declare namespace Signal {
-  /** Structural shape of a passive signal (`Signal.Shape<T>` in `@czap/core`). */
+  /** Structural shape of a passive signal (`Signal.Shape<T>` in `@liteship/core`). */
   export type Shape<T> = Signal<T>;
   /** Structural shape of a seekable, pausable signal (forwarded by video/remotion). */
   export type Controllable<T> = ControllableSignal<T>;
@@ -643,7 +643,7 @@ export declare namespace Derived {
 
 /**
  * A monotonic-ish millisecond time source — the injectable shape runtime time is
- * read through (mirrors `@czap/core`'s `clock.ts` export). `now()` returns
+ * read through (mirrors `@liteship/core`'s `clock.ts` export). `now()` returns
  * milliseconds, a relative duration source (deltas), never a stable identity
  * input to a hashed artifact. Threaded through {@link Zap.throttle} so the
  * throttle window is measured deterministically under an injected clock, defaulting
@@ -737,7 +737,7 @@ export type QuantizerCrossings<B extends Boundary.Shape = Boundary.Shape> = Pick
 
 /**
  * Reactive quantizer — the {@link Quantizer} base plus its reactive substrate on
- * the extracted {@link CellKernel}. This is the shape `@czap/quantizer`'s live
+ * the extracted {@link CellKernel}. This is the shape `@liteship/quantizer`'s live
  * evaluator produces; a purely-synchronous quantizer omits this extension.
  */
 export interface ReactiveQuantizer<B extends Boundary.Shape = Boundary.Shape> extends Quantizer<B> {
@@ -1077,17 +1077,17 @@ export type SchemaPort<A, I = A> = {
 
 export declare namespace Codec {
   /**
-   * The sync tagged result a codec method returns — structurally `@czap/error`'s
+   * The sync tagged result a codec method returns — structurally `@liteship/error`'s
    * `Result<A, E>` (a success arm carrying `A`, or a failure arm carrying `E`,
    * discriminated by the boolean `ok`). Named structurally here rather than
-   * imported so the spine stays install-only with zero `@czap` runtime deps
+   * imported so the spine stays install-only with zero `@liteship` runtime deps
    * (ADR-0010); parity with the runtime `Result` is pinned bidirectionally in
    * tests/unit/spine-conformance.test.ts.
    */
   export type Result<A, E> = { readonly ok: true; readonly value: A } | { readonly ok: false; readonly error: E };
 
   /**
-   * The encode/decode failure — structurally `@czap/error`'s `ParseError`
+   * The encode/decode failure — structurally `@liteship/error`'s `ParseError`
    * variant (a `TaggedError<'ParseError'>` carrying `source`/`detail` and the
    * optional machine fields `code`/`offset`). Parity pinned in the same test.
    */

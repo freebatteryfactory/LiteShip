@@ -12,7 +12,7 @@ Output of [StyleCSSCompiler.compile](../variables/StyleCSSCompiler.md#compile).
 
 Three complementary serializations: `scoped` is the raw `@scope`-wrapped
 rule block, `layers` is the same content re-wrapped in
-`@layer czap.components { … }` with any boundary `@container` rules
+`@layer liteship.components { … }` with any boundary `@container` rules
 appended, and `startingStyle` is an `@starting-style` block derived from
 the base layer for entry animations.
 
@@ -24,7 +24,7 @@ the base layer for entry animations.
 
 Defined in: [compiler/src/style-css.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/style-css.ts#L34)
 
-`@layer czap.components { … }` block including container queries.
+`@layer liteship.components { … }` block including container queries.
 
 ***
 

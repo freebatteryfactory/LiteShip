@@ -7,7 +7,7 @@
  * @module
  */
 
-import { defineCapsule, S } from '@czap/core';
+import { defineCapsule, S } from '@liteship/core';
 
 const StreamMessageSchema = S.struct({
   kind: S.union(S.literal('patch'), S.literal('batch'), S.literal('signal'), S.literal('snapshot')),

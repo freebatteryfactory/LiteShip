@@ -45,8 +45,8 @@ to capture per-stage timings.
 ## Example
 
 ```ts
-import { Boundary } from '@czap/core';
-import { CompositorWorker } from '@czap/worker';
+import { Boundary } from '@liteship/core';
+import { CompositorWorker } from '@liteship/worker';
 
 const compositor = CompositorWorker.create({ poolCapacity: 64 });
 // Boundary.make computes the content-addressed id; the quantizer

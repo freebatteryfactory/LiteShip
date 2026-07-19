@@ -19,8 +19,8 @@ current outputs on attach). Both views are the same underlying replay-1 kernel.
 ## Example
 
 ```ts
-import { Boundary } from '@czap/core';
-import { Q } from '@czap/quantizer';
+import { Boundary } from '@liteship/core';
+import { Q } from '@liteship/quantizer';
 
 const b = Boundary.make({
   input: 'w',

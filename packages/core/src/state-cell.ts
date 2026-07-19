@@ -16,7 +16,7 @@ import { StateName as mkStateName, type StateName } from './brands.js';
 import { RuntimeCoordinator } from './runtime-coordinator.js';
 import type { RuntimeCoordinatorShape } from './runtime-coordinator.js';
 import { Diagnostics } from './diagnostics.js';
-import { ValidationError } from '@czap/error';
+import { ValidationError } from '@liteship/error';
 
 /** Which subsystem owns a cell's value — the authority source. */
 export type StateAuthority = 'quantizer' | 'graph' | 'policy' | 'tier' | 'synthetic';
@@ -54,12 +54,12 @@ export interface ProjectionState<S extends string = string> {
   readonly cells: Readonly<Record<string, StateCell<S>>>;
   /** Composite dirty epoch — max of constituent cells. */
   readonly dirtyEpoch: number;
-  /** Primary discrete state for `data-czap-state` / CSS state selectors. */
+  /** Primary discrete state for `data-liteship-state` / CSS state selectors. */
   readonly resolvedState: StateName<S>;
   readonly resolution?: StateResolutionReceipt;
 }
 
-/** Worker/bootstrap interop — mirrors `ResolvedStateEntry` in `@czap/worker`. */
+/** Worker/bootstrap interop — mirrors `ResolvedStateEntry` in `@liteship/worker`. */
 export interface ResolvedStateSnapshot {
   readonly name: string;
   readonly state: StateName;
@@ -243,7 +243,7 @@ function _createStore(runtime?: RuntimeCoordinatorShape): StateCellStoreShape {
       // initial state, so bootstrap hydration is unaffected.
       if (generation < entry.generation) {
         Diagnostics.warnOnce({
-          source: 'czap/core.state-cell',
+          source: 'liteship/core.state-cell',
           code: 'discrete-generation-rollback',
           message:
             `hydrateDiscrete("${name}", "${state}", generation ${generation}) refused: it would roll the cell ` +

@@ -1,10 +1,10 @@
 {
-  "name": "czap-vite-integration-test",
+  "name": "liteship-vite-integration-test",
   "private": true,
   "type": "module",
   "dependencies": {
     "vite": "^8.0.0",
-    "@czap/vite": "workspace:*",
-    "@czap/core": "workspace:*"
+    "@liteship/vite": "workspace:*",
+    "@liteship/core": "workspace:*"
   }
 }

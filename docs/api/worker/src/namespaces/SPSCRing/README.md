@@ -17,7 +17,7 @@ fully non-blocking.
 ## Example
 
 ```ts
-import { SPSCRing } from '@czap/worker';
+import { SPSCRing } from '@liteship/worker';
 
 // Main thread: create pair and send buffer to Worker
 const { buffer, producer, consumer } = SPSCRing.createPair(128, 8);

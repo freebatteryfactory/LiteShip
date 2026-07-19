@@ -17,12 +17,12 @@
  * @module
  */
 
-import { defineCapsule, S } from '@czap/core';
+import { defineCapsule, S } from '@liteship/core';
 
-// The runtime callable now lives in @czap/command/host (CUT A1 capstone-1); this
+// The runtime callable now lives in @liteship/command/host (CUT A1 capstone-1); this
 // module keeps only the capsule DECLARATION (walked into the manifest as
 // `cli.vitest-runner`) and re-exports the runtime for stable import sites.
-export { VitestRunner } from '@czap/command/host';
+export { VitestRunner } from '@liteship/command/host';
 
 const VitestRunnerInput = S.struct({
   testFiles: S.array(S.string),

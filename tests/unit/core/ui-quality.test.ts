@@ -3,7 +3,7 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { UIQuality } from '@czap/core';
+import { UIQuality } from '@liteship/core';
 
 describe('UIQuality', () => {
   test('make creates evaluator', () => {

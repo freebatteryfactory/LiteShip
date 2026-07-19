@@ -1,9 +1,9 @@
 import type { Fetchable } from 'astro';
 import { FetchState, astro } from 'astro/fetch';
-import { czapFetchLayer } from '@czap/astro/fetch-layer';
+import { liteshipFetchLayer } from '@liteship/astro/fetch-layer';
 
-const czap = czapFetchLayer();
+const liteship = liteshipFetchLayer();
 
 export default {
-  fetch: (request: Request) => czap(request, (req) => astro(new FetchState(req))),
+  fetch: (request: Request) => liteship(request, (req) => astro(new FetchState(req))),
 } satisfies Fetchable;

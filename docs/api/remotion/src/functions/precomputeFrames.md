@@ -24,7 +24,7 @@ total frame count.
 
 `VideoRendererShape`
 
-A `VideoRenderer.Shape` produced by `@czap/core`.
+A `VideoRenderer.Shape` produced by `@liteship/core`.
 
 ## Returns
 

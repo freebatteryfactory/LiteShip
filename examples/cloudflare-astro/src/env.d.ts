@@ -1,1 +1,1 @@
-/// <reference types="@czap/vite/virtual" />
+/// <reference types="@liteship/vite/virtual" />

@@ -11,8 +11,8 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { LiveCell, HLC, StateName, Boundary, fixedClock, manualClock } from '@czap/core';
-import type { CellKind, BoundaryCrossing } from '@czap/core';
+import { LiveCell, HLC, StateName, Boundary, fixedClock, manualClock } from '@liteship/core';
+import type { CellKind, BoundaryCrossing } from '@liteship/core';
 
 const collectCrossings = (cell: {
   crossings: LiveCell.Shape<CellKind, unknown>['crossings'];

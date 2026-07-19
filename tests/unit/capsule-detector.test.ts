@@ -19,7 +19,7 @@ import {
   FACTORY_HINTS,
   FACTORY_NAMING,
 } from '../../scripts/lib/capsule-detector.js';
-import { Config } from '@czap/core';
+import { Config } from '@liteship/core';
 
 const CANONICAL_CBOR = resolve('packages/core/src/capsules/canonical-cbor.ts');
 const ASSETS_SCENE = resolve('examples/scenes/assets.ts');

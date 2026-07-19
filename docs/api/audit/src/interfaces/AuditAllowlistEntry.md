@@ -29,7 +29,7 @@ PACKAGE-RELATIVE (e.g. `src/client-directives/satellite.ts`) and matching
 resolves the finding's file through the profile's discovered package
 roots — so the same entry suppresses in the monorepo
 (`packages/astro/...`) and in a consumer install
-(`node_modules/.pnpm/.../@czap/astro/...`). Without it, `filePrefix` is
+(`node_modules/.pnpm/.../@liteship/astro/...`). Without it, `filePrefix` is
 matched against the repo-root-relative finding path verbatim.
 
 ***

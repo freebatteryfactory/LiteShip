@@ -1,7 +1,7 @@
 {
   "snapshotFormat": 1,
   "packages": {
-    "@czap/assets": {
+    "@liteship/assets": {
       "version": "0.18.0",
       "exports": [
         {
@@ -91,7 +91,7 @@
         }
       ]
     },
-    "@czap/astro": {
+    "@liteship/astro": {
       "version": "0.18.0",
       "exports": [
         {
@@ -101,21 +101,6 @@
         },
         {
           "name": "bridgeDiagnosticsToAstroLogger",
-          "kind": "function",
-          "signature": "(1)"
-        },
-        {
-          "name": "czap",
-          "kind": "function",
-          "signature": "(1)"
-        },
-        {
-          "name": "czapFetchLayer",
-          "kind": "function",
-          "signature": "(1)"
-        },
-        {
-          "name": "czapMiddleware",
           "kind": "function",
           "signature": "(1)"
         },
@@ -141,6 +126,21 @@
         },
         {
           "name": "integration",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "liteship",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "liteshipFetchLayer",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "liteshipMiddleware",
           "kind": "function",
           "signature": "(1)"
         },
@@ -186,7 +186,7 @@
         }
       ]
     },
-    "@czap/audit": {
+    "@liteship/audit": {
       "version": "0.18.0",
       "exports": [
         {
@@ -206,10 +206,6 @@
           "kind": "const"
         },
         {
-          "name": "CZAP_PACKAGE_ROSTER",
-          "kind": "const"
-        },
-        {
           "name": "DEFAULT_SURFACE_READER",
           "kind": "namespace",
           "signature": "fileExists:function,readFile:function"
@@ -220,6 +216,10 @@
         },
         {
           "name": "LANGUAGE_SERVICE_ORACLE_ID",
+          "kind": "const"
+        },
+        {
+          "name": "LITESHIP_PACKAGE_ROSTER",
           "kind": "const"
         },
         {
@@ -611,7 +611,7 @@
         }
       ]
     },
-    "@czap/canonical": {
+    "@liteship/canonical": {
       "version": "0.18.0",
       "exports": [
         {
@@ -666,7 +666,7 @@
         }
       ]
     },
-    "@czap/cli": {
+    "@liteship/cli": {
       "version": "0.18.0",
       "exports": [
         {
@@ -676,7 +676,7 @@
         }
       ]
     },
-    "@czap/cloudflare": {
+    "@liteship/cloudflare": {
       "version": "0.18.0",
       "exports": [
         {
@@ -700,7 +700,7 @@
         }
       ]
     },
-    "@czap/command": {
+    "@liteship/command": {
       "version": "0.18.0",
       "exports": [
         {
@@ -942,7 +942,7 @@
         }
       ]
     },
-    "@czap/compiler": {
+    "@liteship/compiler": {
       "version": "0.18.0",
       "exports": [
         {
@@ -1057,7 +1057,7 @@
         }
       ]
     },
-    "@czap/core": {
+    "@liteship/core": {
       "version": "0.18.0",
       "exports": [
         {
@@ -2088,7 +2088,7 @@
         }
       ]
     },
-    "@czap/detect": {
+    "@liteship/detect": {
       "version": "0.18.0",
       "exports": [
         {
@@ -2188,7 +2188,7 @@
         }
       ]
     },
-    "@czap/edge": {
+    "@liteship/edge": {
       "version": "0.18.0",
       "exports": [
         {
@@ -2266,7 +2266,7 @@
         }
       ]
     },
-    "@czap/error": {
+    "@liteship/error": {
       "version": "0.18.0",
       "exports": [
         {
@@ -2375,7 +2375,7 @@
         }
       ]
     },
-    "@czap/gauntlet": {
+    "@liteship/gauntlet": {
       "version": "0.18.0",
       "exports": [
         {
@@ -3058,7 +3058,7 @@
         }
       ]
     },
-    "@czap/genui": {
+    "@liteship/genui": {
       "version": "0.18.0",
       "exports": [
         {
@@ -3102,15 +3102,11 @@
         }
       ]
     },
-    "@czap/mcp-server": {
+    "@liteship/mcp-server": {
       "version": "0.18.0",
       "exports": [
         {
           "name": "APPLY_PATCH_COMMAND",
-          "kind": "const"
-        },
-        {
-          "name": "CZAP_CHECK_METHOD",
           "kind": "const"
         },
         {
@@ -3141,6 +3137,10 @@
           "name": "JsonRpcServer",
           "kind": "namespace",
           "signature": "errorResponse:function,parse:function,successResponse:function"
+        },
+        {
+          "name": "LITESHIP_CHECK_METHOD",
+          "kind": "const"
         },
         {
           "name": "LSP_SERVER_CAPABILITIES",
@@ -3315,7 +3315,7 @@
         }
       ]
     },
-    "@czap/quantizer": {
+    "@liteship/quantizer": {
       "version": "0.18.0",
       "exports": [
         {
@@ -3345,7 +3345,7 @@
         }
       ]
     },
-    "@czap/remotion": {
+    "@liteship/remotion": {
       "version": "0.18.0",
       "exports": [
         {
@@ -3393,13 +3393,13 @@
           "signature": "(1)"
         },
         {
-          "name": "useCzapState",
+          "name": "useLiteshipState",
           "kind": "function",
           "signature": "(0)"
         }
       ]
     },
-    "@czap/scene": {
+    "@liteship/scene": {
       "version": "0.18.0",
       "exports": [
         {
@@ -3577,7 +3577,7 @@
         }
       ]
     },
-    "@czap/stage": {
+    "@liteship/stage": {
       "version": "0.18.0",
       "exports": [
         {
@@ -3617,7 +3617,7 @@
         }
       ]
     },
-    "@czap/vite": {
+    "@liteship/vite": {
       "version": "0.18.0",
       "exports": [
         {
@@ -3661,17 +3661,17 @@
           "signature": "(2)"
         },
         {
-          "name": "czap",
-          "kind": "function",
-          "signature": "(1)"
-        },
-        {
           "name": "handleHMR",
           "kind": "function",
           "signature": "(1)"
         },
         {
           "name": "isVirtualId",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "liteship",
           "kind": "function",
           "signature": "(1)"
         },
@@ -3742,17 +3742,9 @@
         }
       ]
     },
-    "@czap/web": {
+    "@liteship/web": {
       "version": "0.18.0",
       "exports": [
-        {
-          "name": "CZAP_EVENT_DOCS",
-          "kind": "const"
-        },
-        {
-          "name": "CZAP_EVENT_NAMES",
-          "kind": "const"
-        },
         {
           "name": "DEFAULT_SHADER_INTEGRITY_MODE",
           "kind": "const"
@@ -3777,6 +3769,14 @@
           "name": "Hints",
           "kind": "namespace",
           "signature": "empty:function,fromElement:function,merge:function,preserveFocus:function,preserveIds:function,preserveScroll:function,withIdMap:function,withSemanticIds:function"
+        },
+        {
+          "name": "LITESHIP_EVENT_DOCS",
+          "kind": "const"
+        },
+        {
+          "name": "LITESHIP_EVENT_NAMES",
+          "kind": "const"
         },
         {
           "name": "LLMAdapter",
@@ -3916,7 +3916,7 @@
           "signature": "(1)"
         },
         {
-          "name": "dispatchCzapEvent",
+          "name": "dispatchLiteshipEvent",
           "kind": "function",
           "signature": "(2)"
         },
@@ -3951,7 +3951,7 @@
           "signature": "(1)"
         },
         {
-          "name": "onCzap",
+          "name": "onLiteship",
           "kind": "function",
           "signature": "(4)"
         },
@@ -4036,7 +4036,7 @@
         }
       ]
     },
-    "@czap/worker": {
+    "@liteship/worker": {
       "version": "0.18.0",
       "exports": [
         {

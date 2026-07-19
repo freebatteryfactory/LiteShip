@@ -3,7 +3,7 @@
  */
 
 import { Bench } from 'tinybench';
-import { Boundary, Token, Compositor, BlendTree, World, Part, Config } from '@czap/core';
+import { Boundary, Token, Compositor, BlendTree, World, Part, Config } from '@liteship/core';
 
 const bench = new Bench({ warmupIterations: 100 });
 
@@ -167,7 +167,7 @@ bench.add('Compositor.compute() -- empty', () => {
 
 // Config -- make() mints a CanonicalCbor + FNV-1a content address; the
 // projections (toViteConfig) are pure structural folds. Both are on the
-// adapter-config hot path every czap project pays once at startup.
+// adapter-config hot path every liteship project pays once at startup.
 const testCfg = Config.make({ boundaries: { viewport: boundary3 } });
 
 bench.add('Config.make() -- empty config', () => {

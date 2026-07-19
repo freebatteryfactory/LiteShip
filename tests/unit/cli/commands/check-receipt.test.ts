@@ -1,5 +1,5 @@
 /**
- * `czap check` adapter — the receipt projection + the stderr findings-summary
+ * `liteship check` adapter — the receipt projection + the stderr findings-summary
  * pretty-print branch, called directly through `check()`.
  *
  * The flag PLUMBING (--ir / --no-cache / the per-gate opt-ins, the lean-vs-IR
@@ -13,7 +13,7 @@
  * the receipt timestamp is a wallClock ISO boundary, asserted by shape not value).
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { finding, type GauntletResult } from '@czap/gauntlet';
+import { finding, type GauntletResult } from '@liteship/gauntlet';
 import { captureCli } from '../../../integration/cli/capture.js';
 
 const { runGauntletWithRepoIRMock } = vi.hoisted(() => ({ runGauntletWithRepoIRMock: vi.fn() }));
@@ -22,7 +22,7 @@ vi.mock('../../../../packages/cli/src/lib/repo-ir-gauntlet.js', () => ({
 }));
 
 const { handlerMock } = vi.hoisted(() => ({ handlerMock: vi.fn() }));
-vi.mock('@czap/command', async (importOriginal) => {
+vi.mock('@liteship/command', async (importOriginal) => {
   const orig = await importOriginal<Record<string, unknown>>();
   return { ...orig, checkCommand: { handler: handlerMock } };
 });
@@ -43,7 +43,7 @@ function lastReceipt(stdout: string): Record<string, unknown> {
   return JSON.parse(stdout.trim().split('\n').pop()!) as Record<string, unknown>;
 }
 
-describe('czap check (lean) — receipt projection', () => {
+describe('liteship check (lean) — receipt projection', () => {
   it('projects the lean handler CheckPayload into a CheckReceipt (status ok, ISO timestamp)', async () => {
     handlerMock.mockResolvedValue(leanPayload({ ok: true, blocked: false, findingCount: 0, findings: [] }));
     const { exit, stdout } = await captureCli(() => check());
@@ -70,7 +70,7 @@ describe('czap check (lean) — receipt projection', () => {
   });
 });
 
-describe('czap check — the human findings-summary writer (pretty)', () => {
+describe('liteship check — the human findings-summary writer (pretty)', () => {
   it('a BLOCKED run prints the "CHECK BLOCKED" banner + a line per finding with location', async () => {
     runGauntletWithRepoIRMock.mockReturnValue({
       findings: [

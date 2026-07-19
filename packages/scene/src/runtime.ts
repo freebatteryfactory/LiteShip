@@ -23,9 +23,9 @@
  * @module
  */
 
-import type { System, World as WorldNS, Entity } from '@czap/core';
-import { defineCapsule, World, S } from '@czap/core';
-import { InvariantViolationError } from '@czap/error';
+import type { System, World as WorldNS, Entity } from '@liteship/core';
+import { defineCapsule, World, S } from '@liteship/core';
+import { InvariantViolationError } from '@liteship/error';
 import type { CompiledScene } from './compile.js';
 import { BeatBinding } from './capsules/beat-binding.js';
 import { VideoSystem } from './systems/video.js';

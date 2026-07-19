@@ -1,40 +1,40 @@
 /**
- * check (CLI adapter) — thin projection over `@czap/command`'s check command
+ * check (CLI adapter) — thin projection over `@liteship/command`'s check command
  * (the PURE gauntlet engine fold). The pass/fail decision lives in
- * `@czap/command`; this adapter provisions the `runGauntlet` capability via the
+ * `@liteship/command`; this adapter provisions the `runGauntlet` capability via the
  * shared host context (which runs `litelaunchGauntlet` in-process with a
  * WALL-CLOCK `now` for waiver expiry), emits the structured receipt, and prints
  * a concise findings summary to stderr. Exit 0 ok, 1 blocked.
  *
- * This is NOT `czap gauntlet` — that command spawns the full `gauntlet:full`
- * orchestrator and streams it to the terminal. `czap check` is the in-process,
+ * This is NOT `liteship gauntlet` — that command spawns the full `gauntlet:full`
+ * orchestrator and streams it to the terminal. `liteship check` is the in-process,
  * fixture-qualified gate fold that returns a Finding[] work-list.
  *
  * TWO PATHS, ONE RECEIPT SHAPE:
  * - The LEAN path (default, no `--ir`): the IR-free, cache-free, MCP-safe six
- *   regex gates via `@czap/command`'s `check` handler. UNCHANGED — `@czap/command`
- *   and `@czap/mcp-server` never see the IR or `@czap/audit`. This is the path the
+ *   regex gates via `@liteship/command`'s `check` handler. UNCHANGED — `@liteship/command`
+ *   and `@liteship/mcp-server` never see the IR or `@liteship/audit`. This is the path the
  *   MCP server exposes (the established lean-engine boundary: MCP runs ONLY the
  *   lean handler — `--ir` is CLI-only).
- * - The IR-ENRICHED path (`--ir`, CLI-ONLY): builds the repo-IR via `@czap/audit`
+ * - The IR-ENRICHED path (`--ir`, CLI-ONLY): builds the repo-IR via `@liteship/audit`
  *   and runs the triangulated cross-check (the B1 oracle-divergence) + the B2
  *   verdict cache via `runGauntletWithRepoIR`. `--no-cache` bypasses the cache;
  *   `--supply-chain` composes the avionics-tier supplyChainGate on + injects the
  *   host-computed supply-chain facts (lockfile/SBOM/CI), namespacing the cache mode.
- *   This path lives ENTIRELY in the CLI host (which already deps `@czap/audit`) —
+ *   This path lives ENTIRELY in the CLI host (which already deps `@liteship/audit`) —
  *   never pushed into the lean engine. Both paths emit the SAME `CheckPayload`
  *   shape (ok/blocked/findingCount/findings) so the receipt is consistent.
  *
  * @module
  */
-import { checkCommand, type CheckPayload } from '@czap/command';
-import { createNodeCommandContext } from '@czap/command/host';
-import { wallClock } from '@czap/core';
-import { detectEarlyReturnBeforeExpectAST, detectSkipsAST } from '@czap/audit';
+import { checkCommand, type CheckPayload } from '@liteship/command';
+import { createNodeCommandContext } from '@liteship/command/host';
+import { wallClock } from '@liteship/core';
+import { detectEarlyReturnBeforeExpectAST, detectSkipsAST } from '@liteship/audit';
 import { emit, type WallClockTimestamp } from '../receipts.js';
 import { runGauntletWithRepoIR } from '../lib/repo-ir-gauntlet.js';
 
-/** Receipt emitted by `czap check`. */
+/** Receipt emitted by `liteship check`. */
 export interface CheckReceipt extends CheckPayload {
   readonly status: 'ok' | 'failed';
   readonly command: 'check';
@@ -92,7 +92,7 @@ export interface CheckOptions {
    * `--simulate`: also run the avionics-tier `simulationDeterminismGate` (L4 — the
    * determinism spine, DST). The host drives the committed scenario corpus — real L4
    * trust-spine SUTs (content-address / HLC / graph-patch / boundary-evaluator) —
-   * through the seeded `@czap/core/simulation` world, replaying each seed TWICE and
+   * through the seeded `@liteship/core/simulation` world, replaying each seed TWICE and
    * comparing the two byte-exact trace digests. A deterministic pair CERTIFIES
    * byte-exact reproducibility; a divergence is a REAL nondeterminism bug surfaced as
    * an L4 finding carrying the seed (never fake-passed). Only meaningful with `--ir`;
@@ -102,7 +102,7 @@ export interface CheckOptions {
   readonly simulate?: boolean;
   /**
    * `--taint`: also run the `taintFlowGate` (the TAINT-ANALYSIS family, L4). The host
-   * traces the source→sink dataflow via @czap/audit's GENERIC taint oracle, classified
+   * traces the source→sink dataflow via @liteship/audit's GENERIC taint oracle, classified
    * by the LiteShip-LOCAL source/sink/sanitizer registry the CLI injects (the shader-
    * source fetch→compile, the AI-cast graph-apply, the runtime-URL SSRF seam, …). An
    * UNSANITIZED untrusted-value→dangerous-sink flow is a finding; a sanitized flow is
@@ -143,7 +143,7 @@ export interface CheckOptions {
   readonly capabilityGate?: boolean;
   /**
    * `--spine-relation`: also run the `spineRelationGate` (Wave 8.5, the public constitution's
-   * STATIC-projection half, L4). The host probes each admitted `@czap/_spine` mirror type's
+   * STATIC-projection half, L4). The host probes each admitted `@liteship/_spine` mirror type's
    * bidirectional assignability against its runtime source (a ts.Program probe over the spine
    * + runtime surface) and injects the observed facts; a mirror whose observed relation no
    * longer satisfies its admitted (frozen) relation — or no longer resolves — is a
@@ -154,7 +154,7 @@ export interface CheckOptions {
   readonly spineRelation?: boolean;
 }
 
-/** Execute `czap check` — run the gauntlet gate fold in-process; emit the verdict + Finding[]. */
+/** Execute `liteship check` — run the gauntlet gate fold in-process; emit the verdict + Finding[]. */
 export async function check(opts: CheckOptions = {}): Promise<number> {
   const cwd = opts.cwd ?? process.cwd();
 
@@ -202,14 +202,14 @@ export async function check(opts: CheckOptions = {}): Promise<number> {
 
 /**
  * The LEAN path (no `--ir`) — the IR-free, MCP-safe six-regex gate fold via
- * `@czap/command`'s `check` handler. UNCHANGED behaviour: `@czap/command` and
- * `@czap/mcp-server` never see the IR. Projects the handler's `CheckPayload`.
+ * `@liteship/command`'s `check` handler. UNCHANGED behaviour: `@liteship/command` and
+ * `@liteship/mcp-server` never see the IR. Projects the handler's `CheckPayload`.
  */
 async function runLeanPath(cwd: string): Promise<CheckPayload> {
-  // Inject the host-built SOUND AST detectors — the CLI deps `@czap/audit`, so even the
-  // lean (`@czap/command`) check path gains parser-backed skip and early-return detection.
+  // Inject the host-built SOUND AST detectors — the CLI deps `@liteship/audit`, so even the
+  // lean (`@liteship/command`) check path gains parser-backed skip and early-return detection.
   // The MCP adapter builds the context WITHOUT them → the lean fallbacks; this keeps
-  // `@czap/audit` out of `@czap/mcp-server`.
+  // `@liteship/audit` out of `@liteship/mcp-server`.
   const context = createNodeCommandContext({
     cwd,
     skipDetector: detectSkipsAST,
@@ -220,7 +220,7 @@ async function runLeanPath(cwd: string): Promise<CheckPayload> {
 }
 
 /**
- * The IR-ENRICHED path (`--ir`, CLI-only) — builds the repo-IR via `@czap/audit`
+ * The IR-ENRICHED path (`--ir`, CLI-only) — builds the repo-IR via `@liteship/audit`
  * and runs the triangulated cross-check + the B2 verdict cache via
  * `runGauntletWithRepoIR`. `noCache` (`--no-cache`) disarms the cache (a full,
  * uncached run); `supplyChain` (`--supply-chain`) composes the avionics-tier
@@ -228,7 +228,7 @@ async function runLeanPath(cwd: string): Promise<CheckPayload> {
  * the mutationDivergenceGate on + runs the per-mutant vitest runner over the live
  * effective-L4 seams (HEAVY — must run in isolation, it mutates real source files in
  * place). `simulate` (`--simulate`) composes the simulationDeterminismGate on +
- * drives the committed scenario corpus through the `@czap/core/simulation` seeded
+ * drives the committed scenario corpus through the `@liteship/core/simulation` seeded
  * world (replaying each seed twice, folding the byte-exact-replay verdicts). The
  * wall-clock `now` is the
  * waiver-expiry calendar comparison

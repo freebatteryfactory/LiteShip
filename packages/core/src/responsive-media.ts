@@ -2,12 +2,12 @@
  * Responsive-media intent — Save-Data / DPR / Client Hints projection (#125).
  *
  * Pure resolution and srcset/image-set builders. Hosts inject capabilities from
- * `@czap/edge` `ClientHints` or `@czap/detect`; core stays dependency-free.
+ * `@liteship/edge` `ClientHints` or `@liteship/detect`; core stays dependency-free.
  *
  * @module
  */
 
-import { ValidationError } from '@czap/error';
+import { ValidationError } from '@liteship/error';
 
 /** Capability slice required to resolve a responsive media intent. */
 export interface ResponsiveMediaCapabilities {
@@ -297,7 +297,7 @@ export function projectResponsiveMediaPicture(
   const img = `<img id="${escapeAttr(intent.id)}" alt="${escapeAttr(intent.alt)}" src="${escapeAttr(resolved.src)}" srcset="${escapeAttr(srcset)}" sizes="${escapeAttr(sizes)}" loading="lazy" decoding="async" />`;
   const picture =
     sources.length > 0
-      ? `<picture data-czap-responsive="${escapeAttr(intent.id)}">${sources.join('')}${img}</picture>`
+      ? `<picture data-liteship-responsive="${escapeAttr(intent.id)}">${sources.join('')}${img}</picture>`
       : img;
 
   // Preload the EFFECTIVE set only (F-RM-1d, the worst leak — it drove the LCP):

@@ -43,7 +43,7 @@ Boundary whose state the satellite tracks.
 
 Defined in: [astro/src/Satellite.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Satellite.ts#L30)
 
-Extra CSS class names to merge with `czap-satellite`.
+Extra CSS class names to merge with `liteship-satellite`.
 
 ***
 
@@ -64,7 +64,7 @@ Component definition used to identify the satellite on the client.
 Defined in: [astro/src/Satellite.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Satellite.ts#L40)
 
 Which client directive the boot scanner should activate for this
-satellite (serialised into `data-czap-directive`). Defaults to
+satellite (serialised into `data-liteship-directive`). Defaults to
 `'satellite'` when a boundary is present — a serialized boundary
 with no evaluator is exactly the inert-island bug. Pass `false`
 for a CSS-only shell that ships zero runtime.
@@ -111,7 +111,7 @@ truth (the compiler) produces both the declarations and the per-state values.
 
 Defined in: [astro/src/Satellite.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Satellite.ts#L32)
 
-Server-side initial state (serialised into `data-czap-state`).
+Server-side initial state (serialised into `data-liteship-state`).
 
 ***
 

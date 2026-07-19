@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { tupleMap } from '@czap/core';
+import { tupleMap } from '@liteship/core';
 
 describe('tupleMap', () => {
   it('preserves tuple arity and element ordering', () => {

@@ -6,7 +6,7 @@
 
 # Variable: GRAPH\_QUERY\_FALLBACK\_HEADER
 
-> `const` **GRAPH\_QUERY\_FALLBACK\_HEADER**: `"X-Czap-Query"` = `'X-Czap-Query'`
+> `const` **GRAPH\_QUERY\_FALLBACK\_HEADER**: `"X-Liteship-Query"` = `'X-Liteship-Query'`
 
 Defined in: [core/src/graph-query.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query.ts#L42)
 

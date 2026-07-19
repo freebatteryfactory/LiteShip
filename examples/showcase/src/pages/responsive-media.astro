@@ -1,8 +1,8 @@
 ---
 import Base from '../layouts/Base.astro';
-import { ResponsiveMedia } from '@czap/core';
+import { ResponsiveMedia } from '@liteship/core';
 
-// SSR so the middleware's `Astro.locals.czap.responsiveMedia` projector runs with THIS
+// SSR so the middleware's `Astro.locals.liteship.responsiveMedia` projector runs with THIS
 // request's real Save-Data / DPR Client Hints (the production host path, #140).
 export const prerender = false;
 
@@ -23,14 +23,14 @@ const hero = ResponsiveMedia.intent({
   sizes: '(max-width: 768px) 100vw, 50vw',
 });
 
-const czap = Astro.locals.czap;
-const media = czap?.responsiveMedia(hero);
-const caps = czap?.capabilities;
+const liteship = Astro.locals.liteship;
+const media = liteship?.responsiveMedia(hero);
+const caps = liteship?.capabilities;
 const saveData = caps?.connection?.saveData ?? false;
 const dpr = caps?.devicePixelRatio ?? 1;
 ---
 
-<Base title="czap showcase -- responsive-media effective candidate law">
+<Base title="liteship showcase -- responsive-media effective candidate law">
   {/* The LCP preload lands in <head> and advertises ONLY the effective set. */}
   <Fragment slot="head" set:html={media?.preload ?? ''} />
 
@@ -38,7 +38,7 @@ const dpr = caps?.devicePixelRatio ?? 1;
     <h1>Responsive media — one effective-candidate law</h1>
     <p>
       This hero is authored once as a <code>ResponsiveMedia.intent</code> and projected by
-      <code>Astro.locals.czap.responsiveMedia(intent)</code>. Every output — the
+      <code>Astro.locals.liteship.responsiveMedia(intent)</code>. Every output — the
       <code>&lt;img src&gt;</code>, the <code>srcset</code>, each <code>&lt;source&gt;</code>,
       and the <code>&lt;link rel="preload" imagesrcset&gt;</code> in <code>&lt;head&gt;</code> —
       derives from the SAME <code>selectCandidates(intent, caps)</code>. Under
@@ -76,17 +76,17 @@ const dpr = caps?.devicePixelRatio ?? 1;
   }
   .detected {
     font-size: 0.9rem;
-    color: var(--czap-muted, #64748b);
+    color: var(--liteship-muted, #64748b);
   }
   .media-stage img {
     max-width: 100%;
     height: auto;
     border-radius: 0.5rem;
-    border: 1px solid var(--czap-border, #e2e8f0);
+    border: 1px solid var(--liteship-border, #e2e8f0);
   }
   pre {
-    background: var(--czap-surface, #f8fafc);
-    border: 1px solid var(--czap-border, #e2e8f0);
+    background: var(--liteship-surface, #f8fafc);
+    border: 1px solid var(--liteship-border, #e2e8f0);
     border-radius: 0.375rem;
     padding: 0.75rem 1rem;
     overflow-x: auto;
@@ -94,6 +94,6 @@ const dpr = caps?.devicePixelRatio ?? 1;
   }
   .footnote {
     font-size: 0.85rem;
-    color: var(--czap-muted, #64748b);
+    color: var(--liteship-muted, #64748b);
   }
 </style>

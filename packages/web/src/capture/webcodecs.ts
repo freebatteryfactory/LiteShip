@@ -7,9 +7,9 @@
  * @module
  */
 
-import type { CaptureConfig, CaptureFrame, FrameCapture, CaptureResult } from '@czap/core';
-import { CAPTURE_KEYFRAME_INTERVAL, Millis } from '@czap/core';
-import { HostCapabilityError, IoError, UnsupportedError, ValidationError } from '@czap/error';
+import type { CaptureConfig, CaptureFrame, FrameCapture, CaptureResult } from '@liteship/core';
+import { CAPTURE_KEYFRAME_INTERVAL, Millis } from '@liteship/core';
+import { HostCapabilityError, IoError, UnsupportedError, ValidationError } from '@liteship/error';
 import { BufferTarget, EncodedPacket, EncodedVideoPacketSource, Mp4OutputFormat, Output } from './mediabunny.js';
 
 // ---------------------------------------------------------------------------

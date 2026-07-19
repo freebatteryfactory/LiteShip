@@ -6,7 +6,7 @@
  *   - root tsconfig.tsbuildinfo
  *   - coverage/
  *   - reports/ (only generated artifacts, not docs/adr or other source)
- *   - .czap/generated/
+ *   - .liteship/generated/
  *   - benchmarks/raw/ (keep history.jsonl)
  *
  * Does not touch node_modules; use `pnpm install --frozen-lockfile` (or
@@ -75,7 +75,7 @@ function cleanRoot(): void {
   // didn't actually touch it, leaving stale reports/capsule-manifest.json
   // and audit outputs to mislead later runs. Fix per Codex P2 review.
   rmIfPresent(resolve(repoRoot, 'reports'));
-  rmIfPresent(resolve(repoRoot, '.czap/generated'));
+  rmIfPresent(resolve(repoRoot, '.liteship/generated'));
   // benchmarks/raw holds cross-run trend ledger (history.jsonl) plus
   // per-run scratch. Wholesale rmIfPresent would erase the ledger and
   // skew bench:trend comparisons. Keep history.jsonl, wipe the rest.
@@ -85,7 +85,7 @@ function cleanRoot(): void {
 cleanPackages();
 cleanRoot();
 
-const quiet = process.env.CZAP_QUIET_INSTALL || process.env.CI;
+const quiet = process.env.LITESHIP_QUIET_INSTALL || process.env.CI;
 if (!quiet) {
   const on = colorEnabled();
   process.stderr.write(`${header('Dry-dock', on)}: ${color('cyan', String(removed.length), on)} artifact(s) cleared.\n`);

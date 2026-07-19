@@ -22,14 +22,14 @@
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { dirname, resolve, relative } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import type { WallClockTimestamp } from '@czap/core';
+import type { WallClockTimestamp } from '@liteship/core';
 import { getCapsuleManifestPath } from '../packages/cli/src/receipts.js';
-import { normalizeRepoPath } from '@czap/audit'; // CUT B5b — one slash-normalize home
-// Relative import (not the bare `@czap/command/host` specifier): this script is
-// run from the repo root via tsx, where `@czap/command` is not a root-level
+import { normalizeRepoPath } from '@liteship/audit'; // CUT B5b — one slash-normalize home
+// Relative import (not the bare `@liteship/command/host` specifier): this script is
+// run from the repo root via tsx, where `@liteship/command` is not a root-level
 // workspace dependency — the same reason the harness + receipts imports here are
-// relative. `capsule:verify` (inside @czap/cli, which DOES depend on command)
-// imports the identical functions via the published `@czap/command/host` surface;
+// relative. `capsule:verify` (inside @liteship/cli, which DOES depend on command)
+// imports the identical functions via the published `@liteship/command/host` surface;
 // both resolve to this one module, so the compiler and verifier compute provenance
 // from one source of truth.
 import {
@@ -39,7 +39,7 @@ import {
 } from '../packages/command/src/host/capsule-provenance.js';
 import { getCapsuleGeneratedDir } from './lib/capsule-paths.js';
 import * as fc from 'fast-check';
-import { hasTag, assertNever } from '@czap/error';
+import { hasTag, assertNever } from '@liteship/error';
 import { schemaToArbitrary } from '../packages/core/src/harness/arbitrary-from-schema.js';
 
 /**
@@ -275,7 +275,7 @@ async function probeBinding(
     // cachedProjection only: its REAL-ONLY fixture form is resolved STATICALLY
     // (the factory + asset-source map, no module import needed), so a module that
     // can't be imported from the compile script (e.g. an example scene module
-    // importing the unlinked `@czap/assets` bare specifier) just leaves the
+    // importing the unlinked `@liteship/assets` bare specifier) just leaves the
     // arbitrary-derivability probe unresolved — the static cachedProjectionRealOnly
     // flag still drives the corpus. For every other probed kind an import failure
     // is a real defect and must surface, never be laundered into a skip.
@@ -560,7 +560,7 @@ interface SiteAdapterIntegrationSpec {
 const SITE_ADAPTER_INTEGRATIONS: Readonly<Record<string, SiteAdapterIntegrationSpec>> = {
   // packages/cloudflare — sites ['edge','worker']. Both tiers are proved by the
   // `test:cloudflare` real-host lane (scripts/test-cloudflare-astro.ts): a REAL
-  // @astrojs/cloudflare Workers SSR build + `czap doctor --target cloudflare`,
+  // @astrojs/cloudflare Workers SSR build + `liteship doctor --target cloudflare`,
   // followed by tests/integration/cloudflare-edge-pipeline.test.ts driving the
   // production `cloudflareMiddleware` end to end through BOTH the precompiled-
   // boundary edge tier (no KV traffic) and the compile-escape-hatch worker tier
@@ -582,7 +582,7 @@ const SITE_ADAPTER_INTEGRATIONS: Readonly<Record<string, SiteAdapterIntegrationS
   // path (precomputeFrames over a real VideoRenderer/Compositor) is proved for
   // real by tests/unit/remotion/remotion.test.ts, which imports the adapter and
   // drives precomputeFrames under the production renderer. The 'browser' hook
-  // path (Provider + useCzapState) has NO real-browser lane — only jsdom — so it
+  // path (Provider + useLiteshipState) has NO real-browser lane — only jsdom — so it
   // is recorded as an honest GAP, not papered over with a simulated host.
   'remotion.video-frame-output': {
     coverage: [
@@ -597,7 +597,7 @@ const SITE_ADAPTER_INTEGRATIONS: Readonly<Record<string, SiteAdapterIntegrationS
       {
         site: 'browser',
         reason:
-          'no real-browser render lane exercises the adapter Provider + useCzapState hook — ' +
+          'no real-browser render lane exercises the adapter Provider + useLiteshipState hook — ' +
           'only jsdom (tests/unit/remotion/remotion.test.ts) covers the React-host surface, and ' +
           'jsdom is a simulated host. A real-browser lane (vitest browser-mode under tests/browser/ ' +
           'or a Playwright e2e rendering the Remotion <Provider>) is missing.',
@@ -714,16 +714,16 @@ function resolveCapsuleName(
 async function main(): Promise<void> {
   const cwd = resolve(process.cwd());
   // Generated test/bench output dir — `tests/generated` by default, redirectable
-  // via CZAP_CAPSULE_GENERATED_DIR so parallel tests isolate their compile output
+  // via LITESHIP_CAPSULE_GENERATED_DIR so parallel tests isolate their compile output
   // and never race the shared dir on a renameSync (CUT T1).
   const generatedDir = getCapsuleGeneratedDir(cwd);
-  // Manifest-only mode (CZAP_CAPSULE_MANIFEST_ONLY): build + write the manifest
+  // Manifest-only mode (LITESHIP_CAPSULE_MANIFEST_ONLY): build + write the manifest
   // but SKIP writing the test/bench files. Tests that only need a fresh manifest
   // pointing at the already-committed tests/generated/ files use this so they
   // don't rewrite that shared dir while the parent vitest run is executing those
   // same files (CUT T1). Production / gauntlet leave it unset → full compile.
   const manifestOnly =
-    process.env.CZAP_CAPSULE_MANIFEST_ONLY === '1' || process.env.CZAP_CAPSULE_MANIFEST_ONLY === 'true';
+    process.env.LITESHIP_CAPSULE_MANIFEST_ONLY === '1' || process.env.LITESHIP_CAPSULE_MANIFEST_ONLY === 'true';
   const allFiles = await fastGlob(['packages/**/src/**/*.ts', 'examples/**/*.ts'], {
     ignore: ['**/*.d.ts', '**/node_modules/**', '**/dist/**'],
     absolute: true,
@@ -767,7 +767,7 @@ async function main(): Promise<void> {
   // Used to resolve the canonical decode fixture for projection factories that
   // name their source asset by id (BeatMarkerProjection('intro-bed')) — fully
   // static, no runtime module import (the example scene modules import the
-  // unlinked `@czap/assets` bare specifier and aren't importable from here).
+  // unlinked `@liteship/assets` bare specifier and aren't importable from here).
   const assetSourceById = new Map<string, string>();
   for (const d of byKey.values()) {
     if (d.factory === 'defineAsset' && d.declSource !== undefined) {
@@ -1186,7 +1186,7 @@ async function main(): Promise<void> {
     capsules,
   };
 
-  // Honor CZAP_CAPSULE_MANIFEST (same resolver the readers use, see
+  // Honor LITESHIP_CAPSULE_MANIFEST (same resolver the readers use, see
   // packages/cli/src/receipts.ts). Default is reports/capsule-manifest.json, so
   // production behavior is unchanged when the env var is unset; tests point both
   // sides at a temp path to avoid racing the shared default (CUT T1).

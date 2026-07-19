@@ -6,7 +6,7 @@
  */
 
 import { Bench } from 'tinybench';
-import { Boundary, Composable, ComposableWorld, Part, Style, Token, World } from '@czap/core';
+import { Boundary, Composable, ComposableWorld, Part, Style, Token, World } from '@liteship/core';
 
 const bench = new Bench({ warmupIterations: 50 });
 

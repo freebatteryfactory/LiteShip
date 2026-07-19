@@ -38,7 +38,7 @@ How it resolved.
 
 Defined in: [gauntlet/src/repo-ir.ts:186](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L186)
 
-The raw specifier as written (`'./x.js'`, `'@czap/core'`, `'node:fs'`).
+The raw specifier as written (`'./x.js'`, `'@liteship/core'`, `'node:fs'`).
 
 ***
 

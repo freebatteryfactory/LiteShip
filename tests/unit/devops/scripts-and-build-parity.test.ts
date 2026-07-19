@@ -44,7 +44,7 @@ describe('build-list parity — root tsconfig references cover every publishable
   // references, so coverage is asserted there, not by parsing the script.
   // Build-topology exclusion: the type-only `_spine` carries a publishConfig but
   // does not compile, so it is not a `tsc --build` project.
-  const NO_BUILD = new Set(['@czap/_spine']);
+  const NO_BUILD = new Set(['@liteship/_spine']);
 
   const dirToName = new Map(packageManifests().map((m) => [m.dir, m.name] as const));
   const publishableDirs = publishablePackageDirs().filter((dir) => !NO_BUILD.has(dirToName.get(dir) ?? ''));

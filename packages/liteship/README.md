@@ -1,8 +1,8 @@
 # liteship
 
-One dependency that installs every publishable `@czap/*` package at the same version — the front door to LiteShip. The mental model is one sentence: a continuous signal crosses boundaries into named states, and named states project into outputs (CSS, ARIA, shaders).
+One dependency that installs every publishable `@liteship/*` package at the same version — the front door to LiteShip. The mental model is one sentence: a continuous signal crosses boundaries into named states, and named states project into outputs (CSS, ARIA, shaders).
 
-> Install this directly when you're starting a project and want the whole stack version-locked. If you only need one slice, install that slice instead — `@czap/astro` alone pulls the core rendering stack for the Astro path.
+> Install this directly when you're starting a project and want the whole stack version-locked. If you only need one slice, install that slice instead — `@liteship/astro` alone pulls the core rendering stack for the Astro path.
 
 ## Install
 
@@ -10,12 +10,12 @@ One dependency that installs every publishable `@czap/*` package at the same ver
 npm install liteship   # or yarn add liteship
 ```
 
-**pnpm users:** pnpm's strict `node_modules` does not hoist transitive dependencies, and `liteship` re-exports nothing, so `import '@czap/core'` will not resolve through it. Add the `@czap/*` packages you import as explicit dependencies (`pnpm add @czap/core @czap/astro`), or hoist the scope with `public-hoist-pattern[]=@czap/*` in `.npmrc`. npm and yarn's hoisted layouts work as-is.
+**pnpm users:** pnpm's strict `node_modules` does not hoist transitive dependencies, and `liteship` re-exports nothing, so `import '@liteship/core'` will not resolve through it. Add the `@liteship/*` packages you import as explicit dependencies (`pnpm add @liteship/core @liteship/astro`), or hoist the scope with `public-hoist-pattern[]=@liteship/*` in `.npmrc`. npm and yarn's hoisted layouts work as-is.
 
 ## 30 seconds
 
 ```ts
-import { Boundary } from '@czap/core'; // installed for you by liteship
+import { Boundary } from '@liteship/core'; // installed for you by liteship
 
 const viewport = Boundary.make({
   input: 'viewport.width',
@@ -33,7 +33,7 @@ Logs `tablet` — the named state for a 768–1279px viewport width. That signal
 
 ## Where it sits
 
-The umbrella sits above everything: it depends on all twenty publishable `@czap/*` packages, pinned at exactly its own version, and deliberately re-exports none of them — the host integrations (`@czap/astro`, `@czap/vite`, `@czap/cloudflare`) carry host-specific peer expectations, and a barrel importing all of them would force every consumer to satisfy all of them at once. You import from the individual scopes exactly as the docs show; this package just makes sure they're installed. Its only export is `LITESHIP_PACKAGES`, the list of what it installs. See the [package surfaces map](https://github.com/freebatteryfactory/LiteShip/blob/main/PACKAGE-SURFACES.md) for the full layout.
+The umbrella sits above everything: it depends on all twenty publishable `@liteship/*` packages, pinned at exactly its own version, and deliberately re-exports none of them — the host integrations (`@liteship/astro`, `@liteship/vite`, `@liteship/cloudflare`) carry host-specific peer expectations, and a barrel importing all of them would force every consumer to satisfy all of them at once. You import from the individual scopes exactly as the docs show; this package just makes sure they're installed. Its only export is `LITESHIP_PACKAGES`, the list of what it installs. See the [package surfaces map](https://github.com/freebatteryfactory/LiteShip/blob/main/PACKAGE-SURFACES.md) for the full layout.
 
 ## Docs
 
@@ -44,4 +44,4 @@ The umbrella sits above everything: it depends on all twenty publishable `@czap/
 
 ---
 
-Part of [LiteShip](https://github.com/freebatteryfactory/LiteShip#readme) — powered by the CZAP engine (Content-Zoned Adaptive Projection), distributed as `@czap/*` packages.
+Part of [LiteShip](https://github.com/freebatteryfactory/LiteShip#readme) — distributed as `@liteship/*` packages.

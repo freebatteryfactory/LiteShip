@@ -1,11 +1,11 @@
 /**
  * The LSP rigor skin — the THIRD JSON-RPC face over the one gauntlet fold.
  *
- * `@czap/mcp-server` already owns the JSON-RPC transport (`jsonrpc.ts`); this
+ * `@liteship/mcp-server` already owns the JSON-RPC transport (`jsonrpc.ts`); this
  * subtree adds an LSP (Language Server Protocol) projection of the gauntlet
  * `Finding`: it publishes findings as live `textDocument/publishDiagnostics`
  * Diagnostics and offers their remediations as `textDocument/codeAction`
- * CodeActions. The CLI (`czap check`) and the MCP server (`tools/call`) are the
+ * CodeActions. The CLI (`liteship check`) and the MCP server (`tools/call`) are the
  * other two skins; all three read the SAME `Finding`.
  *
  * The gauntlet runner is INJECTED ({@link LspGauntletRunner}) — the engine fold
@@ -27,7 +27,7 @@ export { projectRemediation } from './code-action.js';
 export {
   handle,
   initialLspState,
-  CZAP_CHECK_METHOD,
+  LITESHIP_CHECK_METHOD,
   LSP_SERVER_CAPABILITIES,
   type LspServerState,
   type LspHandleResult,

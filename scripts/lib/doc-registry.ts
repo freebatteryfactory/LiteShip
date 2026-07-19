@@ -77,30 +77,30 @@ interface PackageGroup {
 export const PACKAGE_GROUPS: readonly PackageGroup[] = [
   {
     intro: null,
-    members: ['@czap/core', '@czap/canonical', '@czap/error', '@czap/genui', '@czap/quantizer', '@czap/compiler'],
+    members: ['@liteship/core', '@liteship/canonical', '@liteship/error', '@liteship/genui', '@liteship/quantizer', '@liteship/compiler'],
   },
   {
     intro: 'Add a host integration when you wire LiteShip into a build pipeline:',
-    members: ['@czap/vite', '@czap/astro', '@czap/edge', '@czap/cloudflare'],
+    members: ['@liteship/vite', '@liteship/astro', '@liteship/edge', '@liteship/cloudflare'],
   },
   {
     intro: 'Reach for the rest only when the surface meaning justifies the runtime escalation:',
     members: [
-      '@czap/web',
-      '@czap/detect',
-      '@czap/worker',
-      '@czap/remotion',
-      '@czap/scene',
-      '@czap/assets',
-      '@czap/stage',
-      '@czap/cli',
-      '@czap/mcp-server',
-      '@czap/_spine',
+      '@liteship/web',
+      '@liteship/detect',
+      '@liteship/worker',
+      '@liteship/remotion',
+      '@liteship/scene',
+      '@liteship/assets',
+      '@liteship/stage',
+      '@liteship/cli',
+      '@liteship/mcp-server',
+      '@liteship/_spine',
     ],
   },
   {
     intro: "You don't install these directly — they back the CLI, the MCP server, and the release tooling:",
-    members: ['@czap/command', '@czap/audit', '@czap/gauntlet'],
+    members: ['@liteship/command', '@liteship/audit', '@liteship/gauntlet'],
   },
 ];
 
@@ -113,10 +113,10 @@ export const PROSE_ONLY = ['liteship', 'create-liteship'] as const;
 
 /**
  * Publishable packages with no PACKAGE-SURFACES.md section, by design.
- * `@czap/_spine` is a type-only declaration spine — you never import from it,
+ * `@liteship/_spine` is a type-only declaration spine — you never import from it,
  * so it has no public import surface to map.
  */
-export const NO_SURFACE_SECTION = ['@czap/_spine'] as const;
+export const NO_SURFACE_SECTION = ['@liteship/_spine'] as const;
 
 function tableFor(members: readonly string[], byName: Map<string, PackageManifest>): string {
   const rows = members.map((name) => {

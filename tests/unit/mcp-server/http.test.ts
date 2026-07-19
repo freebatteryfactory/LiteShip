@@ -15,7 +15,7 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 
-vi.mock('@czap/cli', () => ({
+vi.mock('@liteship/cli', () => ({
   run: vi.fn(async (argv: string[]) => {
     process.stdout.write(JSON.stringify({ ok: true, argv }) + '\n');
     return 0;

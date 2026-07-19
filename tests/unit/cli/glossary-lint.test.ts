@@ -1,6 +1,6 @@
 /**
  * Glossary-lint: every maritime register term used in CLI user-facing
- * source must be defined in both `czap glossary` (in-CLI ENTRIES) and
+ * source must be defined in both `liteship glossary` (in-CLI ENTRIES) and
  * `GLOSSARY.md` (the documented register). This is the load-bearing
  * drift-guard for the ontology — if someone adds "Stow the cargo" to a
  * doctor hint but forgets to add "cargo" to the glossary, this test
@@ -9,7 +9,7 @@
  * The list of terms to enforce lives in this test (single source of
  * truth for what counts as a "maritime register term"). When you add a
  * new term to a CLI string, add it here AND to GLOSSARY.md AND to the
- * `czap glossary` ENTRIES array.
+ * `liteship glossary` ENTRIES array.
  */
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
@@ -26,7 +26,7 @@ const GLOSSARY_MD = resolve(REPO_ROOT, 'GLOSSARY.md');
  * Maritime register the CLI surface uses. Each entry is a `{term, regex}`
  * pair — the regex is what we look for in source strings. Adding a new
  * register term here is the deliberate gating step: if you add the term
- * here, you must also add it to GLOSSARY.md and to `czap glossary`.
+ * here, you must also add it to GLOSSARY.md and to `liteship glossary`.
  */
 const MARITIME_TERMS: ReadonlyArray<{ term: string; pattern: RegExp }> = [
   { term: 'hull', pattern: /\b[Hh]ull\b/ },
@@ -76,7 +76,7 @@ describe('glossary lint', () => {
     expect(missing, `terms used in CLI source but missing from GLOSSARY.md: ${missing.join(', ')}`).toEqual([]);
   });
 
-  it('every maritime term used in CLI source resolves to ≥1 entry in `czap glossary`', async () => {
+  it('every maritime term used in CLI source resolves to ≥1 entry in `liteship glossary`', async () => {
     const missing: string[] = [];
     for (const { term, pattern } of MARITIME_TERMS) {
       if (!pattern.test(cliContent)) continue;
@@ -84,7 +84,7 @@ describe('glossary lint', () => {
       const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
       if (receipt.status !== 'ok' || receipt.entries.length === 0) missing.push(term);
     }
-    expect(missing, `terms used in CLI source but no match in \`czap glossary\`: ${missing.join(', ')}`).toEqual([]);
+    expect(missing, `terms used in CLI source but no match in \`liteship glossary\`: ${missing.join(', ')}`).toEqual([]);
   });
 
   it('the MARITIME_TERMS list itself is non-empty (sanity check)', () => {

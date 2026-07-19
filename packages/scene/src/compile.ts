@@ -25,8 +25,8 @@
  * @module
  */
 
-import { closestMatch, Diagnostics } from '@czap/core';
-import { ValidationError } from '@czap/error';
+import { closestMatch, Diagnostics } from '@liteship/core';
+import { ValidationError } from '@liteship/error';
 import type { ResolvedSceneContract, SceneContract, Track, TrackId, TrackKind } from './contract.js';
 import type { BeatBinding } from './capsules/beat-binding.js';
 import { resolveFrameMark } from './sugar/beat.js';
@@ -156,7 +156,7 @@ export function compileScene(scene: SceneContract): CompiledScene {
     for (const track of resolved.tracks) {
       if (track.to > durationFrames) {
         Diagnostics.warnOnce({
-          source: 'czap/scene.compile',
+          source: 'liteship/scene.compile',
           code: 'track-past-duration',
           message: `scene "${resolved.name}": track "${track.id}" extends to frame ${track.to} but the declared duration ${resolved.duration}ms ends at frame ${durationFrames} — the track will be truncated. Extend duration, shorten the track, or omit duration to derive it from the tracks.`,
         });

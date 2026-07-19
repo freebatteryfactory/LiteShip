@@ -5,7 +5,7 @@
  * `pnpm pack` — `ERR_PNPM_CATALOG_ENTRY_NOT_FOUND` outside workspace context.
  * `catalog:` and `workspace:*` specs only resolve to concrete ranges when pnpm
  * packs from INSIDE the workspace. The real release path
- * (`.github/workflows/release.yml` → `czap ship` →
+ * (`.github/workflows/release.yml` → `liteship ship` →
  * `spawnArgvCapture('pnpm', ['pack'], { cwd: pkgDir })`) packs each package from
  * its own directory *within the monorepo*, so pnpm rewrites the specs. A pack
  * from a tmp copy severed from the workspace does not — that was the bug.
@@ -103,7 +103,7 @@ export interface PackedManifest {
  * metadata block that reuses the same name from masquerading as the file.
  * `package/package.json` is a short path pnpm packs as a plain USTAR entry, so
  * the GNU-long-name / PAX-`path=` / prefix-split encodings `parseTar` handles in
- * `@czap/cli` are not reachable here. Returns `null` when the entry is absent.
+ * `@liteship/cli` are not reachable here. Returns `null` when the entry is absent.
  */
 function extractTarEntryUtf8(tar: Uint8Array, wantPath: string): string | null {
   const decoder = new TextDecoder();

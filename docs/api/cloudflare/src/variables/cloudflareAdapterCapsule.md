@@ -10,5 +10,5 @@
 
 Defined in: [cloudflare/src/capsules/cloudflare-adapter.ts:21](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cloudflare/src/capsules/cloudflare-adapter.ts#L21)
 
-Declared capsule for `@czap/cloudflare`. Registered in the module-level
+Declared capsule for `@liteship/cloudflare`. Registered in the module-level
 catalog at import time; walked by the factory compiler.

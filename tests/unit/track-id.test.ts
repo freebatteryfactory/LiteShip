@@ -9,7 +9,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { Track, syncTo } from '@czap/scene';
+import { Track, syncTo } from '@liteship/scene';
 
 describe('TrackId phantom-kind branding', () => {
   it('Track.audioId mints a typed audio id (runtime: bare string)', () => {

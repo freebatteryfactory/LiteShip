@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { defineCapsule, S } from '@czap/core';
-import { resetCapsuleCatalog } from '@czap/core/testing';
-import * as Harness from '@czap/core/harness';
+import { defineCapsule, S } from '@liteship/core';
+import { resetCapsuleCatalog } from '@liteship/core/testing';
+import * as Harness from '@liteship/core/harness';
 
 describe('generatePolicyGate', () => {
   beforeEach(() => resetCapsuleCatalog());

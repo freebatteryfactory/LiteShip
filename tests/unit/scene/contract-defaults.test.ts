@@ -12,8 +12,8 @@
  * so authors stop re-minting ids at every reference site.
  */
 import { describe, it, expect } from 'vitest';
-import { Track, compileScene, syncTo } from '@czap/scene';
-import type { ResolvedSceneContract, SceneContract } from '@czap/scene';
+import { Track, compileScene, syncTo } from '@liteship/scene';
+import type { ResolvedSceneContract, SceneContract } from '@liteship/scene';
 
 describe('compileScene contract defaults', () => {
   it('compiles a minimal contract — name, fps, bpm, tracks only', () => {

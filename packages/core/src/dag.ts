@@ -6,7 +6,7 @@
  * @module
  */
 
-import { InvariantViolationError } from '@czap/error';
+import { InvariantViolationError } from '@liteship/error';
 import { compare as hlcCompare, HLC } from './hlc.js';
 import { TypedRef } from './typed-ref.js';
 import type { ReceiptEnvelope } from './receipt.js';
@@ -578,7 +578,7 @@ export const spliceCheckpoint = (dag: ReceiptDAG, dropSet: ReadonlySet<string>):
  *   (`dag.checkpoint.not-dominated`).
  *
  * The checkpoint is a real genesis-shaped {@link ReceiptEnvelope}
- * (`previous = GENESIS`, `subject.id = "czap/checkpoint:<W>"` committing the
+ * (`previous = GENESIS`, `subject.id = "liteship/checkpoint:<W>"` committing the
  * watermark, `timestamp` = HLC-max over the dropped envelopes), hashed via
  * `Receipt.hashEnvelope` so two replicas that reach the same `W` mint a
  * byte-identical attestation. It is RETURNED OUT-OF-BAND, never inserted as a
@@ -639,7 +639,7 @@ export const checkpoint = async (dag: ReceiptDAG, options: { readonly below: str
   // (a sibling-root attestation, NOT an ancestor of any survivor).
   const checkpointEnvelope = await createEnvelope(
     'checkpoint',
-    { type: 'run', id: `czap/checkpoint:${watermark}` },
+    { type: 'run', id: `liteship/checkpoint:${watermark}` },
     payload,
     maxTs!,
     GENESIS,
@@ -661,7 +661,7 @@ export const checkpoint = async (dag: ReceiptDAG, options: { readonly below: str
  *
  * @example
  * ```ts
- * import { DAG } from '@czap/core';
+ * import { DAG } from '@liteship/core';
  *
  * const dag = DAG.fromReceipts(envelopes);
  * const ordered = DAG.linearize(dag);

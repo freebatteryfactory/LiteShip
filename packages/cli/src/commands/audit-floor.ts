@@ -1,22 +1,22 @@
 /**
- * audit-floor (CLI adapter, CUT A4) — thin projection over `@czap/command`'s
+ * audit-floor (CLI adapter, CUT A4) — thin projection over `@liteship/command`'s
  * audit-floor handler (the warning-floor gate, migrated from
- * `scripts/audit-floor.ts`). The pass/fail decision lives in `@czap/command`;
+ * `scripts/audit-floor.ts`). The pass/fail decision lives in `@liteship/command`;
  * the CLI is the ONLY adapter that wires the heavy `runAuditFloor` capability: it
- * imports `@czap/audit` (the three-pass engine), collects the `rule@file` warning
+ * imports `@liteship/audit` (the three-pass engine), collects the `rule@file` warning
  * inventory, and diffs it against the pinned `AUDIT_WARNING_FLOOR` (re-exported
- * from `@czap/command`). `@czap/command` and `@czap/mcp-server` never see the
+ * from `@liteship/command`). `@liteship/command` and `@liteship/mcp-server` never see the
  * engine. Exit 0 ok, 1 gate failed (drift or any error).
  *
  * @module
  */
-import { auditFloorCommand, type AuditFloorPayload, type AuditFloorSummary } from '@czap/command';
-import { AUDIT_WARNING_FLOOR, diffInventories } from '@czap/command';
-import type { CommandContext } from '@czap/command';
-import { runStructureAudit, runIntegrityAudit, runSurfaceAudit } from '@czap/audit';
+import { auditFloorCommand, type AuditFloorPayload, type AuditFloorSummary } from '@liteship/command';
+import { AUDIT_WARNING_FLOOR, diffInventories } from '@liteship/command';
+import type { CommandContext } from '@liteship/command';
+import { runStructureAudit, runIntegrityAudit, runSurfaceAudit } from '@liteship/audit';
 import { emit, type WallClockTimestamp } from '../receipts.js';
 
-/** Receipt emitted by `czap audit-floor`. */
+/** Receipt emitted by `liteship audit-floor`. */
 export interface AuditFloorReceipt extends AuditFloorPayload {
   readonly status: 'ok' | 'failed';
   readonly command: 'audit-floor';
@@ -25,7 +25,7 @@ export interface AuditFloorReceipt extends AuditFloorPayload {
 
 /**
  * Collect the sorted `rule@file` warning inventory from the artifact-independent
- * three-pass `@czap/audit` engine (the heavy half of the deleted
+ * three-pass `@liteship/audit` engine (the heavy half of the deleted
  * `scripts/lib/audit-floor.ts`). Exported so meta-tests can assert the live repo
  * inventory matches the pinned floor without re-running the whole gate.
  */
@@ -66,7 +66,7 @@ function runAuditFloorScan(): AuditFloorSummary {
   };
 }
 
-/** Execute `czap audit-floor` — run the three-pass engine, diff the warning inventory; emit a verdict. */
+/** Execute `liteship audit-floor` — run the three-pass engine, diff the warning inventory; emit a verdict. */
 export async function auditFloor(opts: { cwd?: string; pretty?: boolean } = {}): Promise<number> {
   const cwd = opts.cwd ?? process.cwd();
 

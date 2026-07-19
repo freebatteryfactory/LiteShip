@@ -8,8 +8,8 @@
 
 import { describe, expect, test } from 'vitest';
 import fc from 'fast-check';
-import { Boundary, type OutputsFor, type StateUnion } from '@czap/core';
-import { Q, type OutputTarget, type QuantizerConfig, type QuantizerOutputs } from '@czap/quantizer';
+import { Boundary, type OutputsFor, type StateUnion } from '@liteship/core';
+import { Q, type OutputTarget, type QuantizerConfig, type QuantizerOutputs } from '@liteship/quantizer';
 
 const outputTargets = ['css', 'glsl', 'wgsl', 'aria', 'ai'] as const satisfies readonly OutputTarget[];
 

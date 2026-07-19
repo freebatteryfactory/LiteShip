@@ -62,13 +62,13 @@ async function runStreamHarness() {
     let signalCount = 0;
     let reconnectCount = 0;
 
-    host.addEventListener('czap:stream-morph', () => {
+    host.addEventListener('liteship:stream-morph', () => {
       morphCount += 1;
     });
-    host.addEventListener('czap:signal', () => {
+    host.addEventListener('liteship:signal', () => {
       signalCount += 1;
     });
-    host.addEventListener('czap:stream-disconnected', () => {
+    host.addEventListener('liteship:stream-disconnected', () => {
       reconnectCount += 1;
     });
 
@@ -82,7 +82,7 @@ async function runStreamHarness() {
     firstSource.emitMessage(
       JSON.stringify({
         type: 'patch',
-        data: '<section id="stream-root" data-czap-stream-url="/stream" data-czap-stream-morph="outerHTML"><div data-czap-id="hero-copy">first</div></section>',
+        data: '<section id="stream-root" data-liteship-stream-url="/stream" data-liteship-stream-morph="outerHTML"><div data-liteship-id="hero-copy">first</div></section>',
       }),
       'evt-1',
     );
@@ -109,7 +109,7 @@ async function runStreamHarness() {
       JSON.stringify({
         type: 'snapshot',
         data: {
-          html: '<section id="stream-root" data-czap-stream-url="/stream" data-czap-stream-morph="outerHTML"><div data-czap-id="hero-copy">second</div></section>',
+          html: '<section id="stream-root" data-liteship-stream-url="/stream" data-liteship-stream-morph="outerHTML"><div data-liteship-id="hero-copy">second</div></section>',
         },
       }),
       'evt-2',

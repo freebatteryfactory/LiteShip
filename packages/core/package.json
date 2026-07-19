@@ -1,5 +1,5 @@
 {
-  "name": "@czap/core",
+  "name": "@liteship/core",
   "version": "0.18.0",
   "description": "The heart of LiteShip: define UI boundaries, tokens, themes, and signals once as a content-addressed graph, then drive the engine that keeps every rendered output in sync.",
   "license": "MIT",
@@ -12,7 +12,6 @@
   "bugs": "https://github.com/freebatteryfactory/LiteShip/issues",
   "homepage": "https://github.com/freebatteryfactory/LiteShip#readme",
   "keywords": [
-    "czap",
     "liteship",
     "adaptive-rendering",
     "constraint-based",
@@ -62,14 +61,14 @@
     "prepack": "pnpm run build"
   },
   "dependencies": {
-    "@czap/_spine": "workspace:*",
-    "@czap/canonical": "workspace:*",
-    "@czap/error": "workspace:*",
+    "@liteship/_spine": "workspace:*",
+    "@liteship/canonical": "workspace:*",
+    "@liteship/error": "workspace:*",
     "@standard-schema/spec": "^1.1.0",
     "@noble/hashes": "^1.8.0",
     "cborg": "^4.2.0"
   },
-  "//peer-fast-check": "OPTIONAL peer: the core surface (`.`) needs none of it, but the opt-in `./harness` subpath (arbitrary-from-schema) imports fast-check at RUNTIME to realize schema-derived arbitraries. Declaring it here (optional) closes the public-subpath dependency closure — a fresh consumer importing `@czap/core/harness` is told to provide fast-check, instead of silently relying on a hoisted dev copy (the Wave-8 fast-check scar). Guarded by tests/unit/devops/declared-dependency-closure.test.ts.",
+  "//peer-fast-check": "OPTIONAL peer: the core surface (`.`) needs none of it, but the opt-in `./harness` subpath (arbitrary-from-schema) imports fast-check at RUNTIME to realize schema-derived arbitraries. Declaring it here (optional) closes the public-subpath dependency closure — a fresh consumer importing `@liteship/core/harness` is told to provide fast-check, instead of silently relying on a hoisted dev copy (the Wave-8 fast-check scar). Guarded by tests/unit/devops/declared-dependency-closure.test.ts.",
   "peerDependencies": {
     "fast-check": ">=4.0.0"
   },

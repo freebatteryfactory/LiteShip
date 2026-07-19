@@ -92,8 +92,8 @@ An [AnimatedQuantizerHandle](../interfaces/AnimatedQuantizerHandle.md) — the i
 #### Example
 
 ```ts
-import { Boundary, Millis } from '@czap/core';
-import { Q, AnimatedQuantizer } from '@czap/quantizer';
+import { Boundary, Millis } from '@liteship/core';
+import { Q, AnimatedQuantizer } from '@liteship/quantizer';
 
 const boundary = Boundary.make({
   input: 'scroll',
@@ -112,8 +112,8 @@ live.evaluate(600); // triggers interpolation
 ## Example
 
 ```ts
-import { Boundary, Millis } from '@czap/core';
-import { Q, AnimatedQuantizer } from '@czap/quantizer';
+import { Boundary, Millis } from '@liteship/core';
+import { Q, AnimatedQuantizer } from '@liteship/quantizer';
 
 const boundary = Boundary.make({
   input: 'scroll',

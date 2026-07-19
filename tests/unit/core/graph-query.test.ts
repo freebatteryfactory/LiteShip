@@ -123,7 +123,7 @@ describe('graph query — sendGraphQuery (client)', () => {
     if (res.status === 'not_modified') expect(res.etag).toBe(etag);
   });
 
-  test('QUERY 405 falls back to POST with X-Czap-Query (loud ladder)', async () => {
+  test('QUERY 405 falls back to POST with X-Liteship-Query (loud ladder)', async () => {
     const base = graph([node('scroll.y')]);
     const store = memStore(base);
     const methods: string[] = [];

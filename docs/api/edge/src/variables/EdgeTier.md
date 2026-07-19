@@ -13,7 +13,7 @@ Defined in: [edge/src/edge-tier.ts:130](https://github.com/freebatteryfactory/Li
 Edge tier detection namespace.
 
 Pairs [ClientHints.parseClientHints](ClientHints.md#parseclienthints) with the pure tier-mapping
-functions from `@czap/detect` so the edge and the browser produce the
+functions from `@liteship/detect` so the edge and the browser produce the
 same `capTier`/`motionTier`/`designTier` triple for a given device.
 
 ## Type Declaration
@@ -41,7 +41,7 @@ and the same pure tier mapping functions used on the client.
 
 > **tierDataAttributes**: (`result`) => `string`
 
-Render an `EdgeTierResult` into a `data-czap-*` attribute STRING for the root HTML element.
+Render an `EdgeTierResult` into a `data-liteship-*` attribute STRING for the root HTML element.
 
 Generate the HTML data-attribute STRING for injection into the `<html>`
 element. Serialized from [tierDataAttributesMap](#tierdataattributesmap), so the string and
@@ -61,19 +61,19 @@ spreadable-map forms can never disagree.
 
 ```
 tierDataAttributes(result)
-// => 'data-czap-tier="reactive" data-czap-motion="animations" data-czap-design="enhanced"'
+// => 'data-liteship-tier="reactive" data-liteship-motion="animations" data-liteship-design="enhanced"'
 ```
 
 ### tierDataAttributesMap
 
-> **tierDataAttributesMap**: (`result`) => `Readonly`\<`Record`\<`` `data-czap-${CapAxis}` ``, `string`\>\>
+> **tierDataAttributesMap**: (`result`) => `Readonly`\<`Record`\<`` `data-liteship-${CapAxis}` ``, `string`\>\>
 
-Structured, spreadable `data-czap-*` map for the root HTML element (auto-includes every CAP_AXES axis).
+Structured, spreadable `data-liteship-*` map for the root HTML element (auto-includes every CAP_AXES axis).
 
-Structured `data-czap-*` attribute map for the root `<html>` element — the
+Structured `data-liteship-*` attribute map for the root `<html>` element — the
 spreadable form of [tierDataAttributes](#tierdataattributes).
 
-Keyed by the FULL attribute name (`data-czap-<axis>`), built by iterating the
+Keyed by the FULL attribute name (`data-liteship-<axis>`), built by iterating the
 canonical CAP_AXES registry, so a newly-added capability axis appears
 automatically. A consumer that spreads this map (`<html {...map}>`) can never
 silently MISS an axis the way a hand-written attribute list does — the whole
@@ -87,14 +87,14 @@ point of exposing it alongside the pre-serialized string.
 
 #### Returns
 
-`Readonly`\<`Record`\<`` `data-czap-${CapAxis}` ``, `string`\>\>
+`Readonly`\<`Record`\<`` `data-liteship-${CapAxis}` ``, `string`\>\>
 
 #### Example
 
 ```ts
 // Astro: <html {...EdgeTier.tierDataAttributesMap(result)}>
 tierDataAttributesMap(result)
-// => { 'data-czap-tier': 'reactive', 'data-czap-motion': 'animations', 'data-czap-design': 'enhanced' }
+// => { 'data-liteship-tier': 'reactive', 'data-liteship-motion': 'animations', 'data-liteship-design': 'enhanced' }
 ```
 
 ### tierFromParsed
@@ -119,9 +119,9 @@ using the same pure functions as the client runtime.
 ## Example
 
 ```ts
-import { EdgeTier } from '@czap/edge';
+import { EdgeTier } from '@liteship/edge';
 
 const result = EdgeTier.detectTier(request.headers);
 const html = `<html ${EdgeTier.tierDataAttributes(result)}>`;
-// `<html data-czap-tier="reactive" data-czap-motion="animations" data-czap-design="enhanced">`
+// `<html data-liteship-tier="reactive" data-liteship-motion="animations" data-liteship-design="enhanced">`
 ```

@@ -13,8 +13,8 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { Scene, inheritContext } from '@czap/scene';
-import type { SceneContext, SceneSubscenePartial } from '@czap/scene';
+import { Scene, inheritContext } from '@liteship/scene';
+import type { SceneContext, SceneSubscenePartial } from '@liteship/scene';
 
 describe('SceneContext inheritance', () => {
   const parent: SceneContext = { bpm: 120, fps: 60, rootTimeMs: 0 };

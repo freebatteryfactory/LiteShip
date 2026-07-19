@@ -46,7 +46,7 @@ const _canonicalLevels = (levels: Iterable<CapTier>): readonly CapTier[] =>
  * of valid tiers. The graph-node schema demands canonical levels so a non-canonical array
  * (`['gpu','static']`, or a dup) cannot seal and content-address DIFFERENTLY from the same
  * logical set built via {@link Cap.from} — the identity law holds at the untrusted boundary too.
- * Not re-exported from `@czap/core`: it is the schema's internal gate, not public surface.
+ * Not re-exported from `@liteship/core`: it is the schema's internal gate, not public surface.
  */
 export const isCanonicalCapSet = (caps: { readonly levels: readonly CapTier[] }): boolean => {
   for (let i = 1; i < caps.levels.length; i++) {

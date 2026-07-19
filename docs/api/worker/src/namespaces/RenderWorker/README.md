@@ -16,7 +16,7 @@ off the main thread. Transfer control via
 ## Example
 
 ```ts
-import { RenderWorker } from '@czap/worker';
+import { RenderWorker } from '@liteship/worker';
 
 // Pace frame emission at 30fps wall-clock (live preview); omit
 // targetFps to free-run at maximum speed (offline encode).

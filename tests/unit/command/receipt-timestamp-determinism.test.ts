@@ -2,7 +2,7 @@
  * Determinism win for the command-receipt `timestamp` field.
  *
  * Every command result carries `timestamp: new Date(wallClock.now()).toISOString()`
- * — routed through @czap/core's single sanctioned EPOCH boundary (`wallClock`),
+ * — routed through @liteship/core's single sanctioned EPOCH boundary (`wallClock`),
  * never a raw argless `new Date()`. The two-clock law ([clock-substrate]) makes
  * the timestamp injectable at the module boundary: pin `wallClock.now()` to a
  * fixed epoch and the FULL receipt becomes byte-reproducible run-to-run.
@@ -19,18 +19,18 @@
  * @module
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import type * as CzapCore from '@czap/core';
+import type * as LiteshipCore from '@liteship/core';
 
 // A frozen epoch — the receipt timestamp must equal its ISO form exactly.
 const FIXED_EPOCH_MS = 1_716_508_800_000; // 2024-05-24T00:00:00.000Z
 const FIXED_ISO = new Date(FIXED_EPOCH_MS).toISOString();
 
-// Stub ONLY `wallClock` on @czap/core; every other export passes through, so the
+// Stub ONLY `wallClock` on @liteship/core; every other export passes through, so the
 // dispatcher, registry, and result types behave exactly as in production. This
 // is the module-boundary injection the two-clock law buys (timestamps route
 // through the wallClock export, not a per-call `context.clock`, by design).
-vi.mock('@czap/core', async (importOriginal) => {
-  const actual = await importOriginal<typeof CzapCore>();
+vi.mock('@liteship/core', async (importOriginal) => {
+  const actual = await importOriginal<typeof LiteshipCore>();
   return { ...actual, wallClock: { now: (): number => FIXED_EPOCH_MS } };
 });
 
@@ -43,7 +43,7 @@ describe('command receipt timestamp is byte-reproducible under a fixed wallClock
   });
 
   it('the dispatcher unknown-command receipt stamps the injected epoch, not the ambient wall clock', async () => {
-    const { CommandRegistry, CommandDispatcher } = await import('@czap/command');
+    const { CommandRegistry, CommandDispatcher } = await import('@liteship/command');
     const dispatcher = CommandDispatcher.make(CommandRegistry.make([]));
 
     const first = await dispatcher.dispatch({ name: 'no.such.command', args: {} }, {});

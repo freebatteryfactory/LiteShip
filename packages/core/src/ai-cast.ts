@@ -48,12 +48,12 @@ import { GraphPatch, SUPPORTED_PATCH_VERSION } from './graph-patch.js';
 import type { PatchOp } from './graph-patch.js';
 import type { ValidatedProposal, ProposalTarget } from './validated-output.js';
 import { mintValidated, assertTokenBinds } from './validated-output.js';
-import { InvariantViolationError, ValidationError } from '@czap/error';
+import { InvariantViolationError, ValidationError } from '@liteship/error';
 
-// genui types are re-anchored from the shared spine (the same source `@czap/genui`
+// genui types are re-anchored from the shared spine (the same source `@liteship/genui`
 // uses) — TYPES ONLY, no genui runtime import, so the cast stays pure and core
 // gains no edge into genui's renderer.
-import type { ComponentCatalog, GeneratedUINode } from '@czap/_spine';
+import type { ComponentCatalog, GeneratedUINode } from '@liteship/_spine';
 
 // ---------------------------------------------------------------------------
 // Cast OUT — the model-facing AIContext
@@ -453,14 +453,14 @@ export type ProposalResult<T> = ProposalAcceptance<T> | ProposalRejection;
 // Untrusted-node validation — FACTORED OUT to `document-graph-schema.ts`.
 //
 // A model-proposed node is untrusted JSON, and so is a serialized graph the
-// runtime loader (`@czap/astro`) lowers. The per-family `Schema.Union` that
+// runtime loader (`@liteship/astro`) lowers. The per-family `Schema.Union` that
 // answers "is this a well-formed DocumentGraphNode?" now lives in ONE place so
 // BOTH this AI seam AND the loader share a single trust gate (no second,
 // drifting copy). The schema + its compile-time family-exhaustiveness check
 // moved verbatim; `isWellFormedNode` is re-exported below for back-compat.
 // ---------------------------------------------------------------------------
 
-/** Re-exported from `document-graph-schema.ts` so existing `@czap/core` consumers keep the same import site. */
+/** Re-exported from `document-graph-schema.ts` so existing `@liteship/core` consumers keep the same import site. */
 export { isWellFormedNode, DocumentGraphNodeSchema } from './document-graph-schema.js';
 
 // ---------------------------------------------------------------------------
@@ -854,7 +854,7 @@ export function validateGraphPatchProposal(graph: DocumentGraph, patch: GraphPat
  * RESOLVED (open question #2 — inject vs MOVE genui's `validateGeneratedUITree`
  * into core). INJECTION: the cast core does NOT depend on genui's runtime, and we
  * do NOT relocate genui's validator into core. The host (which already has
- * `@czap/genui`) passes its `validateGeneratedUITree` in as this function, so the
+ * `@liteship/genui`) passes its `validateGeneratedUITree` in as this function, so the
  * cast reuses genui's EXACT validation discipline with ZERO genui-file churn and
  * no core→genui (renderer) edge — preserving the product boundary and keeping the
  * core pure. genui's internals are untouched; this is the only seam between them.
@@ -883,7 +883,7 @@ export type GeneratedUIValidator = (
  * more than a GraphPatch can reach a host mutator un-validated.
  *
  * The validator is injected (not imported) to keep the cast core free of the
- * genui renderer dependency; pass `validateGeneratedUITree` from `@czap/genui`.
+ * genui renderer dependency; pass `validateGeneratedUITree` from `@liteship/genui`.
  */
 export function validateGeneratedUIProposal(
   node: GeneratedUINode,
@@ -992,7 +992,7 @@ export function applyValidatedPatch(graph: DocumentGraph, proposal: ValidatedPro
  *
  * @example
  * ```ts
- * import { AICast, GraphPatch } from '@czap/core';
+ * import { AICast, GraphPatch } from '@liteship/core';
  *
  * const ctx = AICast.castContext(graph, { tokenBudget: 512 }); // cast OUT
  * // ... a producer feeds ctx.systemPrompt + ctx.proposalSchemas to a model,

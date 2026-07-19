@@ -1,11 +1,11 @@
 /**
- * Bridge `@czap/*` {@link Diagnostics} into Astro's integration logger.
+ * Bridge `@liteship/*` {@link Diagnostics} into Astro's integration logger.
  *
- * Runtime boundaries across `@czap/core` / `@czap/edge` emit operator
+ * Runtime boundaries across `@liteship/core` / `@liteship/edge` emit operator
  * diagnostics through the swappable {@link Diagnostics} sink (e.g. the kv-cache
  * "invalid cache entry" warning, the host-adapter missing-`prefix` warning).
  * By default those go straight to `console`. Inside an Astro project we'd rather
- * they flow through Astro's own logger, so they carry the czap label, respect
+ * they flow through Astro's own logger, so they carry the liteship label, respect
  * `astro dev --json` structured output, and land in the same stream CI and
  * agents already parse — one log stream, not two.
  *
@@ -15,8 +15,8 @@
  * @module
  */
 
-import { Diagnostics } from '@czap/core';
-import type { DiagnosticEvent, DiagnosticsSink } from '@czap/core';
+import { Diagnostics } from '@liteship/core';
+import type { DiagnosticEvent, DiagnosticsSink } from '@liteship/core';
 
 /**
  * Structural shape of Astro's integration logger (`AstroIntegrationLogger`):

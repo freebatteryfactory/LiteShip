@@ -1,8 +1,8 @@
 import { describe, expect, test, vi } from 'vitest';
-import { Boundary, Millis, CellKernel, StateName } from '@czap/core';
-import type { BoundaryCrossing, ReactiveQuantizer } from '@czap/core';
-import { AnimatedQuantizer, Q } from '@czap/quantizer';
-import type { AnimatedQuantizerShape, InterpolatedFrame } from '@czap/quantizer';
+import { Boundary, Millis, CellKernel, StateName } from '@liteship/core';
+import type { BoundaryCrossing, ReactiveQuantizer } from '@liteship/core';
+import { AnimatedQuantizer, Q } from '@liteship/quantizer';
+import type { AnimatedQuantizerShape, InterpolatedFrame } from '@liteship/quantizer';
 
 function makeBoundary() {
   return Boundary.make({

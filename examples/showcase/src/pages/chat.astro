@@ -2,7 +2,7 @@
 import Base from '../layouts/Base.astro';
 ---
 
-<Base title="czap showcase -- LLM chat">
+<Base title="liteship showcase -- LLM chat">
   <header class="page-header">
     <h1>Generative UI Chat</h1>
     <p>
@@ -15,8 +15,8 @@ import Base from '../layouts/Base.astro';
   <section class="chat-demo">
     <div
       class="chat-container"
-      data-czap-llm-url="/api/chat"
-      data-czap-llm-mode="append"
+      data-liteship-llm-url="/api/chat"
+      data-liteship-llm-mode="append"
       client:llm
     >
       <div class="chat-messages">
@@ -45,15 +45,15 @@ import Base from '../layouts/Base.astro';
     font-size: 2rem;
     font-weight: 800;
     letter-spacing: -0.02em;
-    color: var(--czap-primary, #4f46e5);
+    color: var(--liteship-primary, #4f46e5);
   }
   .page-header p {
     margin-top: 0.5rem;
-    color: var(--czap-muted, #64748b);
+    color: var(--liteship-muted, #64748b);
     max-width: 40rem;
   }
   .page-header code {
-    background: var(--czap-border, #e2e8f0);
+    background: var(--liteship-border, #e2e8f0);
     padding: 0.125rem 0.375rem;
     border-radius: 0.25rem;
     font-size: 0.85em;
@@ -64,7 +64,7 @@ import Base from '../layouts/Base.astro';
   }
 
   .chat-container {
-    border: 1px solid var(--czap-border, #e2e8f0);
+    border: 1px solid var(--liteship-border, #e2e8f0);
     border-radius: 0.75rem;
     overflow: hidden;
     display: flex;
@@ -90,8 +90,8 @@ import Base from '../layouts/Base.astro';
   }
 
   .chat-message--system {
-    background: color-mix(in srgb, var(--czap-surface, #ffffff) 90%, var(--czap-muted, #64748b));
-    color: var(--czap-muted, #64748b);
+    background: color-mix(in srgb, var(--liteship-surface, #ffffff) 90%, var(--liteship-muted, #64748b));
+    color: var(--liteship-muted, #64748b);
     font-style: italic;
     align-self: center;
     max-width: 100%;
@@ -102,29 +102,29 @@ import Base from '../layouts/Base.astro';
     display: flex;
     gap: 0.5rem;
     padding: 1rem;
-    border-top: 1px solid var(--czap-border, #e2e8f0);
-    background: var(--czap-surface, #ffffff);
+    border-top: 1px solid var(--liteship-border, #e2e8f0);
+    background: var(--liteship-surface, #ffffff);
   }
 
   .chat-input__field {
     flex: 1;
     padding: 0.5rem 0.75rem;
-    border: 1px solid var(--czap-border, #e2e8f0);
+    border: 1px solid var(--liteship-border, #e2e8f0);
     border-radius: 0.375rem;
     font-size: 0.9375rem;
-    background: var(--czap-surface, #ffffff);
-    color: var(--czap-text, #1e293b);
+    background: var(--liteship-surface, #ffffff);
+    color: var(--liteship-text, #1e293b);
     outline: none;
   }
   .chat-input__field:focus {
-    border-color: var(--czap-primary, #4f46e5);
-    box-shadow: 0 0 0 2px color-mix(in srgb, var(--czap-primary, #4f46e5) 25%, transparent);
+    border-color: var(--liteship-primary, #4f46e5);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--liteship-primary, #4f46e5) 25%, transparent);
   }
 
   .chat-input__btn {
     appearance: none;
     border: none;
-    background: var(--czap-primary, #4f46e5);
+    background: var(--liteship-primary, #4f46e5);
     color: #ffffff;
     padding: 0.5rem 1.25rem;
     border-radius: 0.375rem;
@@ -134,6 +134,6 @@ import Base from '../layouts/Base.astro';
     transition: background 0.15s;
   }
   .chat-input__btn:hover {
-    background: color-mix(in srgb, var(--czap-primary, #4f46e5) 85%, black);
+    background: color-mix(in srgb, var(--liteship-primary, #4f46e5) 85%, black);
   }
 </style>

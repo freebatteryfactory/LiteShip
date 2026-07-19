@@ -1,5 +1,5 @@
 {
-  "name": "czap-remotion-demo",
+  "name": "liteship-remotion-demo",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,9 +8,9 @@
     "render": "tsx render.ts"
   },
   "dependencies": {
-    "@czap/core": "workspace:*",
-    "@czap/quantizer": "workspace:*",
-    "@czap/remotion": "workspace:*",
+    "@liteship/core": "workspace:*",
+    "@liteship/quantizer": "workspace:*",
+    "@liteship/remotion": "workspace:*",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "remotion": "^4.0.0",

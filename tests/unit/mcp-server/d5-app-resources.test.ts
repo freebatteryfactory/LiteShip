@@ -9,8 +9,8 @@
  * @module
  */
 import { describe, it, expect } from 'vitest';
-import { COMMAND_CATALOG } from '@czap/command';
-import { fnv1a } from '@czap/core';
+import { COMMAND_CATALOG } from '@liteship/command';
+import { fnv1a } from '@liteship/core';
 import { dispatch, dispatchToolCall, listTools } from '../../../packages/mcp-server/src/dispatch.js';
 import { listUiResources, readUiResource } from '../../../packages/mcp-server/src/ui-resources.js';
 import { listAppResources, readAppResource } from '../../../packages/mcp-server/src/app-resources.js';
@@ -54,7 +54,7 @@ describe('D5 — D4 static surface stays frozen', () => {
     // CUT A5: `package-smoke` (the release pack/install smoke, migrated from scripts/)
     // joined COMMAND_CATALOG → the registry/commands UI body changed, re-pinning it.
     // B5b CLI-only: `check-invariants` went MCP-exposed → CLI-only (its scan needs
-    // @czap/audit's normalizeRepoPath), flipping its annotations (mcpExposed dropped,
+    // @liteship/audit's normalizeRepoPath), flipping its annotations (mcpExposed dropped,
     // cliOnly added) in COMMAND_CATALOG → the registry/commands UI body shifted.
     // Re-pinned again when the capsule-verify handler command (CLI-only) joined
     // the registry, growing the commands UI projection by one entry.
@@ -67,7 +67,8 @@ describe('D5 — D4 static surface stays frozen', () => {
     // `astro.status`, `astro.stop`) joined COMMAND_CATALOG.
     // Re-pinned again when the glossary shake-down/first-run entries were
     // reworded for the `pnpm verify` rename (shakedown script retired).
-    expect(pin).toBe('fnv1a:4bb42f31');
+    // Re-pinned for the LiteShip brand consolidation (engine-name glossary entry removed; catalog content changed).
+    expect(pin).toBe('fnv1a:6cf1e938');
   });
 });
 

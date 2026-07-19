@@ -18,7 +18,7 @@ level, title, detail, location?, remediation?), so they ride the
 `structuredContent` and the CLI receipt with no separate adapter. `blocked`
 mirrors the engine's single blocking verdict; `ok` is its negation.
 
-The modelled `findings` element faithfully mirrors `@czap/gauntlet`'s `Finding`
+The modelled `findings` element faithfully mirrors `@liteship/gauntlet`'s `Finding`
 EXCEPT its `remediation?` — a heterogeneous non-literal union
 (`{kind:'patch',…} | {kind:'instruction',…}`) the structural dialect cannot
 represent soundly (no `oneOf`). `CheckPayload` below keeps the canonical

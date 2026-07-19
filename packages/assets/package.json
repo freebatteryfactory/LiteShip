@@ -1,5 +1,5 @@
 {
-  "name": "@czap/assets",
+  "name": "@liteship/assets",
   "version": "0.18.0",
   "description": "Manage media assets for LiteShip: declare audio, video, and image assets and read cached analysis such as waveforms, beat markers, and onsets.",
   "license": "MIT",
@@ -12,7 +12,6 @@
   "bugs": "https://github.com/freebatteryfactory/LiteShip/issues",
   "homepage": "https://github.com/freebatteryfactory/LiteShip#readme",
   "keywords": [
-    "czap",
     "liteship",
     "assets",
     "audio",
@@ -40,9 +39,9 @@
     "prepack": "pnpm run build"
   },
   "dependencies": {
-    "@czap/_spine": "workspace:*",
-    "@czap/core": "workspace:*",
-    "@czap/error": "workspace:*"
+    "@liteship/_spine": "workspace:*",
+    "@liteship/core": "workspace:*",
+    "@liteship/error": "workspace:*"
   },
   "engines": {
     "node": ">=22.13.0"

@@ -1,16 +1,16 @@
-import { ValidationError } from '@czap/error';
+import { ValidationError } from '@liteship/error';
 
 /**
  * Canonical gauntlet phase profile (CUT D8) — the ONE source of truth for the
  * release-grade gauntlet sequence. Every projection derives from this list:
  *   - the executor `scripts/gauntlet.ts` (imports + loops these serially);
- *   - the CLI dry-run (`czap gauntlet --dry-run` projects `label`s);
+ *   - the CLI dry-run (`liteship gauntlet --dry-run` projects `label`s);
  *   - the meta tests.
  *
  * It lives in the CLI package because the CLI is a composite project (`rootDir:
  * ./src`) that cannot import out to `scripts/`; the proven direction is the
  * reverse — `scripts/gauntlet.ts` imports DOWN into the CLI (the same pattern as
- * `scripts/lib/spawn.ts → @czap/cli`). It is the published command surface owning
+ * `scripts/lib/spawn.ts → @liteship/cli`). It is the published command surface owning
  * the phase vocabulary it exposes, not "the CLI owning devops".
  *
  * Order + commands are transcribed verbatim from the executor's real run-order.
@@ -95,20 +95,20 @@ export const gauntletPhases: readonly GauntletPhase[] = [
   // (via a REAL `git show`, not an injected hermetic reader) and reds on any UNSIGNED
   // weakening of the gauntlet's own rigor. FAIL-CLOSED — an unresolvable base ref / an
   // absent baseline snapshot THROWS (the gate refuses, never silently passes). CI sets
-  // `CZAP_STANDARDS_BASE_REF` to a ref that has the snapshot + fetches its history
+  // `LITESHIP_STANDARDS_BASE_REF` to a ref that has the snapshot + fetches its history
   // (see .github/workflows/ci.yml); a local run defaults to `main`.
   { label: 'standards:gate', command: 'pnpm run standards:gate' },
   // The capability-link proof (codex round-8 #1b) — the sanctioned-skip INTEGRITY family, beside
   // standards:gate/plumb:gate: every sanctioned capability-gated skip's guard must DERIVE FROM its
   // declared capability's probe (a ts.Program over the sanctioned files + the canonical capability
-  // modules), or the cut reds. Opt-in `czap check --ir --capability-gate` runs the same proof.
+  // modules), or the cut reds. Opt-in `liteship check --ir --capability-gate` runs the same proof.
   { label: 'capability:gate', command: 'pnpm run capability:gate' },
   // The two-axis spine-relation proof (Wave 8.5, #156) — the CONSTITUTION / public-surface
-  // INTEGRITY family, beside standards:gate/capability:gate: every admitted @czap/_spine mirror
+  // INTEGRITY family, beside standards:gate/capability:gate: every admitted @liteship/_spine mirror
   // type's OBSERVED bidirectional-assignability relation must still satisfy its ADMITTED (frozen)
   // relation (a ts.Program probe over the spine + runtime surface), or the cut reds. A SECOND
-  // ts.Program build (~3.25s) too heavy for the default `czap check --ir`, so it runs HERE as its
-  // own phase; the equivalent opt-in path is `czap check --ir --spine-relation`.
+  // ts.Program build (~3.25s) too heavy for the default `liteship check --ir`, so it runs HERE as its
+  // own phase; the equivalent opt-in path is `liteship check --ir --spine-relation`.
   { label: 'spine-relation:gate', command: 'pnpm run spine-relation:gate' },
   // The reactive BISIMULATION proof (Wave 5.5, the transition cage) — the CONSTITUTION /
   // conformance INTEGRITY family, beside spine-relation:gate/capability:gate: every pinned

@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import type { WallClockTimestamp } from '@czap/core';
+import type { WallClockTimestamp } from '@liteship/core';
 import { writeTextFile } from '../audit/shared.js';
 import type { ReplicateResult } from './directive-suite.ts';
 

@@ -6,7 +6,7 @@
 
 import { describe, test, expect } from 'vitest';
 import fc from 'fast-check';
-import { Receipt, HLC } from '@czap/core';
+import { Receipt, HLC } from '@liteship/core';
 
 describe('Receipt properties', () => {
   test('GENESIS is a known constant', () => {

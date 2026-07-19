@@ -14,7 +14,7 @@ Tokens are content-addressed and produce CSS custom property references.
 ## Example
 
 ```ts
-import { Token } from '@czap/core';
+import { Token } from '@liteship/core';
 
 const spacing = Token.make({
   name: 'gap', category: 'spacing',
@@ -25,7 +25,7 @@ const spacing = Token.make({
 const resolved = Token.tap(spacing, { density: 'compact' });
 // resolved === '4px'
 const cssRef = Token.cssVar(spacing);
-// cssRef === 'var(--czap-gap)'
+// cssRef === 'var(--liteship-gap)'
 ```
 
 ## Type Aliases

@@ -1,15 +1,15 @@
 /**
- * czapFetchLayer tests — the front-of-pipeline edge layer.
+ * liteshipFetchLayer tests — the front-of-pipeline edge layer.
  *
- * Proves the layer shares ONE resolution path with czapMiddleware (resolution
+ * Proves the layer shares ONE resolution path with liteshipMiddleware (resolution
  * parity), can serve boundary CSS and skip the downstream on the hot path, and
  * composes into Astro 7's `Fetchable` (`src/fetch.ts`) shape.
  */
 
 import { describe, test, expect, vi } from 'vitest';
-import { czapMiddleware, czapFetchLayer, serializeBoundaryCss } from '@czap/astro';
+import { liteshipMiddleware, liteshipFetchLayer, serializeBoundaryCss } from '@liteship/astro';
 import type { Fetchable } from 'astro';
-import type { EdgeHostResolution } from '@czap/edge';
+import type { EdgeHostResolution } from '@liteship/edge';
 
 function makeRequest(headers: Record<string, string> = {}): Request {
   return new Request('http://localhost/', { headers: new Headers(headers) });
@@ -78,13 +78,13 @@ describe('serializeBoundaryCss', () => {
   });
 });
 
-describe('czapFetchLayer', () => {
+describe('liteshipFetchLayer', () => {
   test('is a layer factory', () => {
-    expect(typeof czapFetchLayer()).toBe('function');
+    expect(typeof liteshipFetchLayer()).toBe('function');
   });
 
   test('pass-through (default): runs the downstream and decorates Client-Hints headers', async () => {
-    const layer = czapFetchLayer();
+    const layer = liteshipFetchLayer();
     const next = vi.fn(nextOk());
     const res = await layer(makeRequest({ 'sec-ch-viewport-width': '768' }), next);
 
@@ -94,7 +94,7 @@ describe('czapFetchLayer', () => {
   });
 
   test('edge serve: serves boundary CSS and never invokes the downstream', async () => {
-    const layer = czapFetchLayer({ edge: themeEdge, serveFromEdge: () => true });
+    const layer = liteshipFetchLayer({ edge: themeEdge, serveFromEdge: () => true });
     const next = vi.fn(nextOk());
     const res = await layer(makeRequest(), next);
 
@@ -109,7 +109,7 @@ describe('czapFetchLayer', () => {
     // With detect off the client-hints Vary no longer advertises Save-Data / DPR, but a page can
     // still render `responsiveMedia()` output that varies by them — the merge must key it apart so
     // a CDN cannot serve the light srcset to a normal client (or vice versa) under one cache key.
-    const res = await czapFetchLayer({ detect: false })(makeRequest(), nextOk());
+    const res = await liteshipFetchLayer({ detect: false })(makeRequest(), nextOk());
     const vary = res.headers.get('Vary') ?? '';
     expect(vary).toContain('Save-Data');
     expect(vary).toContain('Sec-CH-DPR');
@@ -118,34 +118,34 @@ describe('czapFetchLayer', () => {
   test('edge serve does NOT advertise the responsive-media Vary axis (boundary CSS carries no such output)', async () => {
     // Detect off, so the only way Save-Data could enter Vary is the responsive-media merge — which
     // the edge-serve CSS path must skip, keeping the boundary stylesheet cache-shared.
-    const layer = czapFetchLayer({ detect: false, edge: themeEdge, serveFromEdge: () => true });
+    const layer = liteshipFetchLayer({ detect: false, edge: themeEdge, serveFromEdge: () => true });
     const res = await layer(makeRequest(), nextOk());
     expect(res.headers.get('Vary') ?? '').not.toContain('Save-Data');
   });
 
-  test('Vary parity: pass-through merges the SAME responsive-media axis as czapMiddleware', async () => {
-    const mwRes = await czapMiddleware({ detect: false })({ request: makeRequest(), locals: {} }, nextOk());
-    const layerRes = await czapFetchLayer({ detect: false })(makeRequest(), nextOk());
+  test('Vary parity: pass-through merges the SAME responsive-media axis as liteshipMiddleware', async () => {
+    const mwRes = await liteshipMiddleware({ detect: false })({ request: makeRequest(), locals: {} }, nextOk());
+    const layerRes = await liteshipFetchLayer({ detect: false })(makeRequest(), nextOk());
     expect(layerRes.headers.get('Vary')).toBe(mwRes.headers.get('Vary'));
   });
 
-  test('resolution parity: same response headers as czapMiddleware for the same request', async () => {
+  test('resolution parity: same response headers as liteshipMiddleware for the same request', async () => {
     const headers = { 'sec-ch-viewport-width': '1280', 'sec-ch-device-memory': '8' };
 
-    const mwRes = await czapMiddleware({ edge: themeEdge })({ request: makeRequest(headers), locals: {} }, nextOk());
-    const layerRes = await czapFetchLayer({ edge: themeEdge })(makeRequest(headers), nextOk());
+    const mwRes = await liteshipMiddleware({ edge: themeEdge })({ request: makeRequest(headers), locals: {} }, nextOk());
+    const layerRes = await liteshipFetchLayer({ edge: themeEdge })(makeRequest(headers), nextOk());
 
     expect(layerRes.headers.get('Accept-CH')).toBe(mwRes.headers.get('Accept-CH'));
     expect(layerRes.headers.get('Critical-CH')).toBe(mwRes.headers.get('Critical-CH'));
   });
 
   test('no-edge mode still applies the client-hints headers', async () => {
-    const res = await czapFetchLayer()(makeRequest(), nextOk());
+    const res = await liteshipFetchLayer()(makeRequest(), nextOk());
     expect(res.headers.get('Accept-CH')).toContain('Sec-CH-Viewport-Width');
   });
 
   test('composes into a Fetchable (Astro 7 src/fetch.ts shape)', async () => {
-    const layer = czapFetchLayer();
+    const layer = liteshipFetchLayer();
     const handler = {
       fetch: (request: Request) => layer(request, nextOk('astro')),
     } satisfies Fetchable;

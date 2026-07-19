@@ -67,7 +67,7 @@ describe('generated-time — volatile report/artifact fields are WallClockTimest
       const src = read(rel);
       // No bare `generatedAt: string` (or `?: string` / `: string | null`) remains.
       expect(src, `${rel} must not declare a bare generatedAt: string`).not.toMatch(/generatedAt\??:\s*string\b/);
-      // The alias is in use (type-only import from @czap/core, one vocabulary).
+      // The alias is in use (type-only import from @liteship/core, one vocabulary).
       expect(src, `${rel} must use WallClockTimestamp`).toMatch(/WallClockTimestamp/);
     });
   }

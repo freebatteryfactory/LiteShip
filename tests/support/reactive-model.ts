@@ -85,7 +85,7 @@
  */
 
 import fc from 'fast-check';
-import { hasTag } from '@czap/error';
+import { hasTag } from '@liteship/error';
 import { CellKernel } from '../../packages/core/src/cell-kernel.js';
 import type { Disposer } from '../../packages/core/src/cell-kernel.js';
 import { Lifetime } from '../../packages/core/src/lifetime.js';

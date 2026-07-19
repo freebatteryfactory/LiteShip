@@ -5,8 +5,8 @@
  * KV / a DB / a per-session store. The channel doesn't care where it lives — it
  * only validates a client's proposed patch against whatever loadGraph returns.
  */
-import { sealNode, sealGraph } from '@czap/core';
-import type { DocumentGraph, DocumentGraphNode, DocumentGraphEdge, SignalNode, CellMeta, GraphStore } from '@czap/core';
+import { sealNode, sealGraph } from '@liteship/core';
+import type { DocumentGraph, DocumentGraphNode, DocumentGraphEdge, SignalNode, CellMeta, GraphStore } from '@liteship/core';
 
 const META: CellMeta = {
   created: { wall_ms: 0, counter: 0, node_id: 'server' },

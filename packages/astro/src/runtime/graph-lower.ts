@@ -43,7 +43,7 @@ import {
   type PoseNode,
   type ProjectionNode,
   type SignalNode,
-} from '@czap/core';
+} from '@liteship/core';
 import type { RuntimeBoundary } from './boundary.js';
 
 /** The cast targets a lowered boundary drives on the live runtime (the IR's projection vocabulary, minus the offline ones). */
@@ -62,11 +62,11 @@ export interface LoweredBinding {
   readonly boundary: RuntimeBoundary;
   readonly targets: readonly LoweredTarget[];
   /**
-   * Authored per-state CSS custom properties (`--czap-*` keys), keyed by state.
+   * Authored per-state CSS custom properties (`--liteship-*` keys), keyed by state.
    * The CSS analog of the boundary's `glslStateUniforms`/`stateWgsl`: `RuntimeBoundary`
    * has no per-state CSS slot (CSS rides `applyBoundaryState`'s `state.css`, not a
    * boundary field), so the runtime threads this into the apply call directly.
-   * Absent when no pose carries a `--czap-*` binding.
+   * Absent when no pose carries a `--liteship-*` binding.
    */
   readonly stateCss?: Readonly<Record<string, Readonly<Record<string, string | number>>>>;
 }
@@ -84,7 +84,7 @@ function isGlslUniformKey(key: string): boolean {
  * channel maps the {@link RuntimeBoundary} carries. A pose's bindings are a flat
  * `Record<key, value>`; the key vocabulary decides the channel:
  *
- *   - `--czap-*` (CSS custom property)          → `stateCss`
+ *   - `--liteship-*` (CSS custom property)          → `stateCss`
  *   - `role` / `aria-*` (string values)         → `stateAttributes`
  *   - `u_*` (number values)                     → `glslStateUniforms`
  *   - every other number value                  → `stateWgsl` (bare field names)

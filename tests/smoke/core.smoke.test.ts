@@ -8,7 +8,7 @@
 import { describe, test, expect } from 'vitest';
 // Wave 6: the whole reactive surface is Effect-free — Cell/Store/… on CellKernel,
 // HLC.makeClock returns a plain handle, Compositor.create is sync.
-import { Boundary, Compositor, ContentAddress, Cell, VectorClock, HLC, Plan, Millis } from '@czap/core';
+import { Boundary, Compositor, ContentAddress, Cell, VectorClock, HLC, Plan, Millis } from '@liteship/core';
 
 describe('core smoke', () => {
   test('Boundary.make + evaluate', () => {

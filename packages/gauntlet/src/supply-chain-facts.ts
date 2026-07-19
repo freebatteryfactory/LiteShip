@@ -4,9 +4,9 @@
  * tier).
  *
  * This module defines the {@link SupplyChainFacts} INTERFACE and nothing else.
- * Like {@link RepoIR}, it carries no heavy dependency: `@czap/gauntlet` stays
+ * Like {@link RepoIR}, it carries no heavy dependency: `@liteship/gauntlet` stays
  * the lean engine, so it never parses a YAML lockfile, walks a workspace, or
- * decodes a CBOR ShipCapsule. A HOST (the CLI's `@czap/cli` supply-chain
+ * decodes a CBOR ShipCapsule. A HOST (the CLI's `@liteship/cli` supply-chain
  * analyzer) does the heavy lifting — lockfile parse + policy eval, SBOM build,
  * ShipCapsule provenance re-read, CI-workflow scan — and hands the engine these
  * flat, already-decided facts. The gate's only job is to FOLD them into Findings

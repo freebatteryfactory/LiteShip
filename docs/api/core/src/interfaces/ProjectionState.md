@@ -66,4 +66,4 @@ Defined in: [core/src/state-cell.ts:59](https://github.com/freebatteryfactory/Li
 
 Defined in: [core/src/state-cell.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L58)
 
-Primary discrete state for `data-czap-state` / CSS state selectors.
+Primary discrete state for `data-liteship-state` / CSS state selectors.

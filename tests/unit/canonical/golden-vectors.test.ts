@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { AddressedDigest, CanonicalCbor, addressedDigestOf, fnv1a, fnv1aBytes } from '@czap/canonical';
+import { AddressedDigest, CanonicalCbor, addressedDigestOf, fnv1a, fnv1aBytes } from '@liteship/canonical';
 
 describe('canonical golden vectors', () => {
   it('CanonicalCbor.encode pins integer zero', () => {
@@ -32,7 +32,8 @@ describe('canonical golden vectors', () => {
     // `<=` reads str[str.length] = undefined → charCodeAt → NaN → a DIFFERENT hash, so
     // these pins go red on the mutation. (L4: the canonical FNV deserves a golden pin.)
     expect(fnv1a('hello')).toBe('fnv1a:4f9f2cab');
-    expect(fnv1a('czap')).toBe('fnv1a:f9752f31');
+    // Re-pinned for the LiteShip brand rename (test vector string changed).
+    expect(fnv1a('liteship')).toBe('fnv1a:bcf7c7a3');
     // The empty string folds nothing → the FNV offset basis (the same anchor the loop
     // bound must respect: 0 iterations for an empty string).
     expect(fnv1a('')).toBe('fnv1a:811c9dc5');

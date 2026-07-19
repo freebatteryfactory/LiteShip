@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { RuntimeCoordinator } from '@czap/core';
+import { RuntimeCoordinator } from '@liteship/core';
 
 describe('RuntimeCoordinator', () => {
   test('exposes a stable phase plan and topological order', () => {

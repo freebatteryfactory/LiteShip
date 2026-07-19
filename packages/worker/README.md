@@ -1,17 +1,17 @@
-# @czap/worker
+# @liteship/worker
 
 Evaluates boundary states in a Web Worker so the main thread never blocks on them.
 
 > You usually don't install this directly — it arrives as a dependency of
-> [`@czap/astro`](https://github.com/freebatteryfactory/LiteShip/tree/main/packages/astro),
+> [`@liteship/astro`](https://github.com/freebatteryfactory/LiteShip/tree/main/packages/astro),
 > whose `client:worker` directive routes through it. Install that instead
 > unless you are hosting an off-thread evaluator in your own (non-Astro) runtime.
 
 ## Install
 
 ```bash
-pnpm add @czap/astro   # brings @czap/worker with it
-# direct use: pnpm add @czap/worker @czap/core
+pnpm add @liteship/astro   # brings @liteship/worker with it
+# direct use: pnpm add @liteship/worker @liteship/core
 ```
 
 Workers are spawned from inline Blob URLs — no separate worker entry file, no bundler configuration. Only the `SPSCRing` shared-memory channel needs the page served with `Cross-Origin-Opener-Policy: same-origin` and `Cross-Origin-Embedder-Policy: require-corp`; without those headers `new SharedArrayBuffer(...)` throws. Everything below works without them.
@@ -19,8 +19,8 @@ Workers are spawned from inline Blob URLs — no separate worker entry file, no 
 ## 30 seconds
 
 ```ts
-import { Boundary, StateName } from '@czap/core';
-import { CompositorWorker } from '@czap/worker';
+import { Boundary, StateName } from '@liteship/core';
+import { CompositorWorker } from '@liteship/worker';
 
 // A boundary names the thresholds where one state becomes the next.
 const layout = Boundary.make({
@@ -48,7 +48,7 @@ Logs `compact` (below 768px) or `wide` — selected inside the worker, delivered
 
 ## Where it sits
 
-A runtime layer one step below the host integrations: `@czap/astro` delegates its worker directive here rather than carrying its own worker protocol. Its only dependency is [`@czap/core`](https://github.com/freebatteryfactory/LiteShip/tree/main/packages/core), for boundary definitions and the shared state-snapshot contracts. It also ships `SPSCRing` (a lock-free shared-memory ring for streaming values out of a worker without blocking either side), `RenderWorker` for OffscreenCanvas rendering, and `WorkerHost`, a typed lifecycle wrapper around `Worker`. See the
+A runtime layer one step below the host integrations: `@liteship/astro` delegates its worker directive here rather than carrying its own worker protocol. Its only dependency is [`@liteship/core`](https://github.com/freebatteryfactory/LiteShip/tree/main/packages/core), for boundary definitions and the shared state-snapshot contracts. It also ships `SPSCRing` (a lock-free shared-memory ring for streaming values out of a worker without blocking either side), `RenderWorker` for OffscreenCanvas rendering, and `WorkerHost`, a typed lifecycle wrapper around `Worker`. See the
 [package surfaces map](https://github.com/freebatteryfactory/LiteShip/blob/main/PACKAGE-SURFACES.md)
 for the full layout.
 
@@ -58,7 +58,7 @@ for the full layout.
 
 ## Authored-motion adapter (minimal)
 
-`motionSampleMessage(plan, t)` is the worker's deliberately **thin** authored-motion adapter (#130): it runs the ONE shared kernel (`@czap/core`'s `sampleProgram`, via the re-exported `sampleProgramUniforms`) off the main thread and returns a structured-clone-safe `{ type: 'motion-sample', css, wgsl }` envelope. The host relays `css`/`wgsl` onto a bound element with `dispatchCzapEvent(el, 'czap:uniform-update', …)` — the SAME channel the main-thread floor already dispatches. There is no new compositor, render loop, or protocol; the sample envelope is kept out of the `FromWorkerMessage` union on purpose. A differential oracle proves the worker leg renders identically to every other target ([ADR-0040](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/adr/0040-cross-target-motion-parity.md)).
+`motionSampleMessage(plan, t)` is the worker's deliberately **thin** authored-motion adapter (#130): it runs the ONE shared kernel (`@liteship/core`'s `sampleProgram`, via the re-exported `sampleProgramUniforms`) off the main thread and returns a structured-clone-safe `{ type: 'motion-sample', css, wgsl }` envelope. The host relays `css`/`wgsl` onto a bound element with `dispatchLiteshipEvent(el, 'liteship:uniform-update', …)` — the SAME channel the main-thread floor already dispatches. There is no new compositor, render loop, or protocol; the sample envelope is kept out of the `FromWorkerMessage` union on purpose. A differential oracle proves the worker leg renders identically to every other target ([ADR-0040](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/adr/0040-cross-target-motion-parity.md)).
 
 ## Docs
 
@@ -69,4 +69,4 @@ for the full layout.
 
 ---
 
-Part of [LiteShip](https://github.com/freebatteryfactory/LiteShip#readme) — powered by the CZAP engine (Content-Zoned Adaptive Projection), distributed as `@czap/*` packages.
+Part of [LiteShip](https://github.com/freebatteryfactory/LiteShip#readme) — distributed as `@liteship/*` packages.

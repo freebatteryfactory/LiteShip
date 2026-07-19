@@ -5,7 +5,7 @@
  * @module
  */
 
-import { defineAsset, AssetRegistry, BeatMarkerProjection, WavMetadataProjection } from '@czap/assets';
+import { defineAsset, AssetRegistry, BeatMarkerProjection, WavMetadataProjection } from '@liteship/assets';
 
 /** Intro audio bed — silent 1-second fixture for testing. */
 export const introBed = defineAsset({

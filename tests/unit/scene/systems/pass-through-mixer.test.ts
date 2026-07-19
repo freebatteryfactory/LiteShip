@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { World } from '@czap/core';
-import { PassThroughMixer } from '@czap/scene';
+import { World } from '@liteship/core';
+import { PassThroughMixer } from '@liteship/scene';
 
 describe('PassThroughMixer', () => {
   it('emits a receipt entry per audio entity per tick', () => {

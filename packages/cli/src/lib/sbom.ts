@@ -6,7 +6,7 @@
  * FORMAT: CycloneDX 1.5 JSON (the simpler, widely-tooled choice over SPDX —
  * documented here). Every component is a `pkg:` PURL with its resolved version
  * and, for external registry units, the lockfile's integrity hash mapped onto a
- * CycloneDX `hashes` entry. Internal `@czap/*` workspace packages are emitted as
+ * CycloneDX `hashes` entry. Internal `@liteship/*` workspace packages are emitted as
  * `application` components (no registry integrity — they ARE the build), every
  * external lockfile unit as a `library` component.
  *
@@ -20,7 +20,7 @@
  * @module
  */
 
-import { AddressedDigest, CanonicalCbor } from '@czap/core';
+import { AddressedDigest, CanonicalCbor } from '@liteship/core';
 import type { ParsedLockfile } from './lockfile.js';
 
 /** A single CycloneDX component (a package in the bill of materials). */

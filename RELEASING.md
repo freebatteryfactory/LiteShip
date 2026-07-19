@@ -1,6 +1,6 @@
-# Releasing LiteShip (`@czap/*`)
+# Releasing LiteShip (`@liteship/*`)
 
-Operator vocabulary: [GLOSSARY.md](./GLOSSARY.md). LiteShip (product), CZAP (engine), `@czap/*` (packages). CLI and commands stay `czap`.
+Operator vocabulary: [GLOSSARY.md](./GLOSSARY.md). LiteShip (product and engine), `@liteship/*` (packages). CLI and commands stay `liteship`.
 
 Operator checklist for public npm and GitHub releases. Run destructive git steps locally.
 
@@ -10,10 +10,10 @@ Operator checklist for public npm and GitHub releases. Run destructive git steps
 
 - Release-blocking gates (for example `pnpm run gauntlet:full`) are green on the ship commit.
 - Run `pnpm run package:smoke` on the ship commit. This packs every publishable
-  `@czap/*` scope, installs the tarballs in a throwaway consumer, verifies export
+  `@liteship/*` scope, installs the tarballs in a throwaway consumer, verifies export
   imports, runs the CLI, and fails if a packed manifest still contains
   `workspace:*`.
-- Let `czap ship` do the publish. It packs each package with `pnpm pack` (which rewrites
+- Let `liteship ship` do the publish. It packs each package with `pnpm pack` (which rewrites
   `workspace:*` to concrete versions in the tarball), then uploads that tarball with the
   npm CLI (`npm publish <tgz>`). Do NOT `npm publish` a workspace *directory* directly —
   npm won't rewrite `workspace:*`; the rewrite only happens in the `pnpm pack` step.
@@ -21,14 +21,14 @@ Operator checklist for public npm and GitHub releases. Run destructive git steps
 
 ## Build the WASM artifact (0.2.1+)
 
-The `czap-compute` kernel ships inside `@czap/core`, so it must be staged into `packages/core/dist/` before `czap ship` packs the tarball. CI's `release.yml` does this automatically (a `wasm32-unknown-unknown` Rust toolchain + `pnpm run build:wasm` before the ship loop). For a local release, after `pnpm run build`:
+The `liteship-compute` kernel ships inside `@liteship/core`, so it must be staged into `packages/core/dist/` before `liteship ship` packs the tarball. CI's `release.yml` does this automatically (a `wasm32-unknown-unknown` Rust toolchain + `pnpm run build:wasm` before the ship loop). For a local release, after `pnpm run build`:
 
 ```bash
 rustup target add wasm32-unknown-unknown   # one-time
 pnpm run build:wasm
 ```
 
-Without it, the published `@czap/core` carries no binary and `czap({ wasm: { enabled: true } })` silently runs the TypeScript fallback.
+Without it, the published `@liteship/core` carries no binary and `liteship({ wasm: { enabled: true } })` silently runs the TypeScript fallback.
 
 ## Extract release notes
 
@@ -44,7 +44,7 @@ gh release create vX.Y.Z --title "vX.Y.Z" --notes-file RELEASE_NOTES_vX.Y.Z.md
 
 ## Publish packages
 
-Publish via `czap ship`, which mints a `ShipCapsule` for every non-private `packages/*` workspace, then uploads each already-packed tarball with `npm publish <tgz> --provenance` (ADR-0011). A **ShipCapsule** is a content-addressed release receipt: a `.cbor` (binary) manifest that pins each package's tarball to the exact commit and build that produced it, so a consumer can verify what they install independently of npm. The default (no filter) is every publishable workspace package. `pnpm pack` rewrites `workspace:*` to concrete versions in the tarball; the npm CLI (>= 11.5.1) uploads it and performs npm's OIDC trusted-publishing token exchange in CI — which `pnpm publish` does not (pnpm#11513 / pnpm#9812), the gap that `ENEEDAUTH`'d the 0.4.0 and 0.6.0 cuts.
+Publish via `liteship ship`, which mints a `ShipCapsule` for every non-private `packages/*` workspace, then uploads each already-packed tarball with `npm publish <tgz> --provenance` (ADR-0011). A **ShipCapsule** is a content-addressed release receipt: a `.cbor` (binary) manifest that pins each package's tarball to the exact commit and build that produced it, so a consumer can verify what they install independently of npm. The default (no filter) is every publishable workspace package. `pnpm pack` rewrites `workspace:*` to concrete versions in the tarball; the npm CLI (>= 11.5.1) uploads it and performs npm's OIDC trusted-publishing token exchange in CI — which `pnpm publish` does not (pnpm#11513 / pnpm#9812), the gap that `ENEEDAUTH`'d the 0.4.0 and 0.6.0 cuts.
 
 Dry-run first so the receipts and `pnpm publish --dry-run` outputs are both observable without uploading:
 
@@ -59,20 +59,20 @@ The dry-run still writes `<pkg>-<version>.shipcapsule.cbor` next to each `<pkg>-
 pnpm run verify -- <tarball> --capsule <cbor>
 ```
 
-To publish a single package (e.g. a hotfix), pass its name or path: `pnpm run ship -- --filter @czap/cli`.
+To publish a single package (e.g. a hotfix), pass its name or path: `pnpm run ship -- --filter @liteship/cli`.
 
 ## Attach ShipCapsules to the GitHub Release
 
 After publish, attach every capsule to the GitHub release so downstream consumers can verify their npm-downloaded tarballs against a non-npm-hosted receipt:
 
 ```bash
-gh release upload vX.Y.Z packages/*/czap-*-X.Y.Z.shipcapsule.cbor
+gh release upload vX.Y.Z packages/*/liteship-*-X.Y.Z.shipcapsule.cbor
 ```
 
 The `.tgz` files in `packages/*/` after ship are intermediate (npm has the canonical copy). Clean them up once the release is final:
 
 ```bash
-rm -f packages/*/czap-*-X.Y.Z.tgz
+rm -f packages/*/liteship-*-X.Y.Z.tgz
 ```
 
 ## Verifying a published package (consumer side)
@@ -80,9 +80,9 @@ rm -f packages/*/czap-*-X.Y.Z.tgz
 Anyone with the published `.tgz` and the GitHub-attached `.shipcapsule.cbor` can verify locally:
 
 ```bash
-npm pack @czap/core@X.Y.Z   # or download the .tgz from npm directly
-gh release download vX.Y.Z -p 'czap-core-X.Y.Z.shipcapsule.cbor'
-npx @czap/cli verify czap-core-X.Y.Z.tgz --capsule czap-core-X.Y.Z.shipcapsule.cbor
+npm pack @liteship/core@X.Y.Z   # or download the .tgz from npm directly
+gh release download vX.Y.Z -p 'liteship-core-X.Y.Z.shipcapsule.cbor'
+npx @liteship/cli verify liteship-core-X.Y.Z.tgz --capsule liteship-core-X.Y.Z.shipcapsule.cbor
 ```
 
 Verdicts and exit codes:
@@ -105,8 +105,8 @@ Use `git push --force-with-lease` only after a coordinated history rewrite.
 
 ## MCP and CLI
 
-`@czap/cli` loads `@czap/mcp-server` only for the `czap mcp` subcommand (dynamic
-`import()`); add `@czap/mcp-server` when you use MCP mode. Ship matching versions
+`@liteship/cli` loads `@liteship/mcp-server` only for the `liteship mcp` subcommand (dynamic
+`import()`); add `@liteship/mcp-server` when you use MCP mode. Ship matching versions
 whenever you publish either package.
 
 ## v0.1.1+ — releases from GitHub Actions
@@ -118,9 +118,9 @@ trusted publisher). From v0.1.1 onward, releases run through
 
 v0.1.x authenticated via the `NPM_TOKEN` repo secret — a granular access
 token with `bypass_2fa: true`, installed into `~/.npmrc` before the
-`czap ship` step. That token has been revoked. **v0.2 onward uses OIDC
+`liteship ship` step. That token has been revoked. **v0.2 onward uses OIDC
 trusted publishing**: the workflow carries `id-token: write`, and
-`czap ship` publishes each packed tarball with the **npm CLI** (>= 11.5.1,
+`liteship ship` publishes each packed tarball with the **npm CLI** (>= 11.5.1,
 installed in `release.yml` before the ship loop), which exchanges the
 GitHub Actions OIDC token for a short-lived publish credential at publish
 time — with `--provenance` so every tarball links back to its workflow
@@ -131,9 +131,9 @@ configuring a trusted publisher per package, form values below.
 
 ### One-time trusted-publisher setup (per package, REQUIRED before v0.2)
 
-For each of the 25 publishable packages (23 `@czap/*` scopes — including `@czap/stage`, public as of 0.2.0, and the 0.4.0 additions `@czap/error` (the foundational error algebra) and `@czap/gauntlet` (the rigor engine) — plus `create-liteship` + `liteship`), open
+For each of the 25 publishable packages (23 `@liteship/*` scopes — including `@liteship/stage`, public as of 0.2.0, and the 0.4.0 additions `@liteship/error` (the foundational error algebra) and `@liteship/gauntlet` (the rigor engine) — plus `create-liteship` + `liteship`), open
 `https://www.npmjs.com/package/<name>/access` (e.g.
-`https://www.npmjs.com/package/@czap/core/access`,
+`https://www.npmjs.com/package/@liteship/core/access`,
 `https://www.npmjs.com/package/liteship/access`) and add a trusted publisher
 with these exact values:
 
@@ -146,7 +146,7 @@ with these exact values:
 | Environment name | (leave blank) |
 
 A package without a trusted publisher fails its publish with an auth
-error; configure it and re-run the workflow — `czap ship` treats
+error; configure it and re-run the workflow — `liteship ship` treats
 already-published versions as idempotent success (`ShipSkippedReceipt`),
 so partial-batch re-runs are safe. Once configured, future releases need
 zero auth setup, and the dead `NPM_TOKEN` secret can be deleted from the
@@ -155,7 +155,7 @@ repo settings.
 ### Cutting a release
 
 1. Bump versions in every `packages/*/package.json` to the new minor (e.g. `0.1.1`).
-   Also bump the `@czap/*` dependency ranges in
+   Also bump the `@liteship/*` dependency ranges in
    `packages/create-liteship/templates/default/package.json` — the template is
    scaffolder *data* (plain `^x.y.z` strings, not workspace specs), so the
    workspace bump does not touch it automatically.

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { detectOnsets, OnsetProjection, defineAsset, AssetRegistry } from '@czap/assets';
+import { detectOnsets, OnsetProjection, defineAsset, AssetRegistry } from '@liteship/assets';
 
 const registry = AssetRegistry.make([defineAsset({ id: 'intro-bed', source: 'intro-bed.wav', kind: 'audio' })]);
 

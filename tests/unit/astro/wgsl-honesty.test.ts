@@ -5,7 +5,7 @@
  * @module
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { Diagnostics } from '@czap/core';
+import { Diagnostics } from '@liteship/core';
 import { initWGSLRuntime } from '../../../packages/astro/src/runtime/wgpu.js';
 
 interface FakeGpuHarness {
@@ -141,7 +141,7 @@ describe('WGSL honesty — #106 unfed uniform diagnostic', () => {
     const dispose = await initWGSLRuntime(canvas, CUSTOM_FIELD_SHADER, el);
     expect(events.filter((e) => e.code === 'wgsl-uniform-unfed')).toHaveLength(1);
 
-    el.dispatchEvent(new CustomEvent('czap:uniform-update', { detail: { wgsl: { glow: 0.75 } } }));
+    el.dispatchEvent(new CustomEvent('liteship:uniform-update', { detail: { wgsl: { glow: 0.75 } } }));
     expect(events.filter((e) => e.code === 'wgsl-uniform-unfed')).toHaveLength(1);
     dispose!();
   });
@@ -167,7 +167,7 @@ describe('WGSL honesty — #107 integer vector layout + write', () => {
     expect(dispose).not.toBeNull();
 
     el.dispatchEvent(
-      new CustomEvent('czap:uniform-update', {
+      new CustomEvent('liteship:uniform-update', {
         detail: { wgsl: { state_index: 1, offset: [-3, 42] } },
       }),
     );
@@ -201,7 +201,7 @@ describe('WGSL honesty — #107 integer vector layout + write', () => {
     expect(events).toContainEqual(expect.objectContaining({ code: 'wgsl-uniform-bool-unsupported' }));
 
     el.dispatchEvent(
-      new CustomEvent('czap:uniform-update', {
+      new CustomEvent('liteship:uniform-update', {
         detail: { wgsl: { state_index: 0, strength: 1.25 } },
       }),
     );
@@ -243,7 +243,7 @@ describe('WGSL honesty — #107 integer vector layout + write', () => {
     expect(dispose).not.toBeNull();
 
     el.dispatchEvent(
-      new CustomEvent('czap:uniform-update', {
+      new CustomEvent('liteship:uniform-update', {
         detail: { wgsl: { state_index: 1, flags: [3, 7] } },
       }),
     );

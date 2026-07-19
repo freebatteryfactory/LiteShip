@@ -1,5 +1,5 @@
 /**
- * @czap/genui type spine — host-owned generated UI catalog contracts.
+ * @liteship/genui type spine — host-owned generated UI catalog contracts.
  */
 
 import type { ContentAddress } from './core.d.ts';

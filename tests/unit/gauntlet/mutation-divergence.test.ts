@@ -30,8 +30,8 @@ import {
   type RepoIR,
   type MutationFacts,
   type MutantOutcome,
-} from '@czap/gauntlet';
-import { isTaggedError } from '@czap/error';
+} from '@liteship/gauntlet';
+import { isTaggedError } from '@liteship/error';
 
 const L4_FILE = 'packages/core/src/brands.ts'; // an L4 glob in the assurance map
 const L1_FILE = 'packages/x/src/a.ts'; // an ordinary L1 file
@@ -164,7 +164,7 @@ describe('mutationDivergenceGate — THE LAW: the level is PROPAGATED from the l
     // The helper's glob level is L1, but the L4 file imports it → it inherits L4.
     const ir = makeRepoIR({
       files: [
-        { id: L4_FILE, contentDigest: PLACEHOLDER_DIGEST, packageName: '@czap/core' },
+        { id: L4_FILE, contentDigest: PLACEHOLDER_DIGEST, packageName: '@liteship/core' },
         { id: HELPER, contentDigest: PLACEHOLDER_DIGEST, packageName: null },
       ],
       imports: [{ fromFile: L4_FILE, specifier: './helper.js', kind: 'relative', targetFile: HELPER }],

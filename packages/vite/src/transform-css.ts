@@ -17,8 +17,8 @@
  * @module
  */
 
-import type { Boundary, Token, Theme, Style } from '@czap/core';
-import { ValidationError } from '@czap/error';
+import type { Boundary, Token, Theme, Style } from '@liteship/core';
+import { ValidationError } from '@liteship/error';
 import { parseQuantizeBlocks, compileQuantizeBlock, viewportContainmentRule } from './css-quantize.js';
 import { blankCssCommentsAndStrings, braceDepthDelta, cssPrologueEnd } from './css-scan.js';
 import { resolvePrimitive, unresolvedPrimitiveWarning } from './primitive-resolve.js';
@@ -137,7 +137,7 @@ function watchPrimitiveSource(ctx: TransformCssContext, source: string | undefin
 
 /**
  * Run the staged CSS transform on a single sheet. Returns the rewritten CSS,
- * or `null` when nothing changed (no `@czap` at-rules, or every block was
+ * or `null` when nothing changed (no `@liteship` at-rules, or every block was
  * left untransformed). Emits doctor-style warnings through `ctx.warn`, and
  * re-registers resolved convention files through `ctx.addWatchFile`.
  *
@@ -149,14 +149,14 @@ function watchPrimitiveSource(ctx: TransformCssContext, source: string | undefin
 export async function transformCss(code: string, id: string, ctx: TransformCssContext): Promise<string | null> {
   const { cache, projectRoot, dirs, quantizeContainer } = ctx;
 
-  // Quick check -- skip files with no @czap at-rules
+  // Quick check -- skip files with no @liteship at-rules
   const hasToken = code.includes('@token');
   const hasTheme = code.includes('@theme');
   const hasStyle = code.includes('@style');
   const hasQuantize = code.includes('@quantize');
 
   // Boundary-shadowing diagnostic (#114): must run BEFORE the early return so a
-  // foreign app.css (no @czap at-rules) still gets checked against compiled
+  // foreign app.css (no @liteship at-rules) still gets checked against compiled
   // boundary output from other sheets in the same project.
   if (!hasQuantize && cache.lastCompiledBoundaryCss.size > 0) {
     const { diagnoseBoundaryShadowing } = await import('./boundary-shadowing.js');

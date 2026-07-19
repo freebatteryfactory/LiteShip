@@ -1,9 +1,9 @@
 /**
- * CUT D9b-2 — `czap audit` is a real handler-backed command wired through the A1
+ * CUT D9b-2 — `liteship audit` is a real handler-backed command wired through the A1
  * registry via the injected `runAudit` capability. Proves: the descriptor +
  * schemas + handler classification; that the handler calls `context.runAudit`
- * and degrades to a structured failure without it; that @czap/command and
- * @czap/mcp-server never take a build edge on @czap/audit; and that the CLI
+ * and degrades to a structured failure without it; that @liteship/command and
+ * @liteship/mcp-server never take a build edge on @liteship/audit; and that the CLI
  * adapter loads explicit profiles (.json/.mjs), defaults in-repo, and never
  * shells out to `pnpm run audit`.
  *
@@ -14,10 +14,10 @@ import { scaledTimeout } from '../../../vitest.shared.js';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
-import { auditCommand, commandRegistry, mcpExposedDescriptors, type CommandContext } from '@czap/command';
+import { auditCommand, commandRegistry, mcpExposedDescriptors, type CommandContext } from '@liteship/command';
 import { audit } from '../../../packages/cli/src/commands/audit.js';
 import { loadProfile } from '../../../packages/cli/src/lib/load-profile.js';
-import { AUDIT_WARNING_FLOOR } from '@czap/command';
+import { AUDIT_WARNING_FLOOR } from '@liteship/command';
 import { collectWarningInventory } from '../../../packages/cli/src/commands/audit-floor.js';
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
@@ -66,7 +66,7 @@ async function captureStdio<T>(fn: () => Promise<T>): Promise<{ result: T; stdou
 
 /** Build a synthetic @acme/ repo and an explicit profile file; return both paths. */
 function acmeFixture(profileExt: 'json' | 'mjs'): { root: string; profilePath: string } {
-  const root = mkdtempSync(join(tmpdir(), 'czap-d9b2-'));
+  const root = mkdtempSync(join(tmpdir(), 'liteship-d9b2-'));
   fixtures.push(root);
   const files: Record<string, string> = {
     'package.json': JSON.stringify({ name: 'acme-root', private: true, type: 'module' }),
@@ -94,7 +94,7 @@ function acmeFixture(profileExt: 'json' | 'mjs'): { root: string; profilePath: s
     '@acme/core': { allowedInternalImports: [], kind: 'core' },
   };
   if (profileExt === 'json') {
-    files['czap.profile.json'] = JSON.stringify({
+    files['liteship.profile.json'] = JSON.stringify({
       repoRoot: root,
       internalPackagePrefix: '@acme/',
       packageTopology: topology,
@@ -102,7 +102,7 @@ function acmeFixture(profileExt: 'json' | 'mjs'): { root: string; profilePath: s
       surfacePolicy: emptySurface,
     });
   } else {
-    files['czap.profile.mjs'] =
+    files['liteship.profile.mjs'] =
       `export default ${JSON.stringify({ repoRoot: root, internalPackagePrefix: '@acme/', packageTopology: topology, dynamicImportExemptions: [], surfacePolicy: emptySurface })};\n`;
   }
   for (const [rel, content] of Object.entries(files)) {
@@ -110,7 +110,7 @@ function acmeFixture(profileExt: 'json' | 'mjs'): { root: string; profilePath: s
     mkdirSync(resolve(abs, '..'), { recursive: true });
     writeFileSync(abs, content, 'utf8');
   }
-  return { root, profilePath: resolve(root, `czap.profile.${profileExt}`) };
+  return { root, profilePath: resolve(root, `liteship.profile.${profileExt}`) };
 }
 
 describe('D9b-2 — the audit descriptor is a registry handler, not MCP-exposed', () => {
@@ -183,25 +183,25 @@ describe('D9b-2 — the handler is engine-agnostic (context.runAudit injection)'
   });
 });
 
-describe('D9b-2 — @czap/command + @czap/mcp-server never take the engine edge', () => {
-  it('no @czap/command source imports @czap/audit', () => {
+describe('D9b-2 — @liteship/command + @liteship/mcp-server never take the engine edge', () => {
+  it('no @liteship/command source imports @liteship/audit', () => {
     for (const file of tsFiles(resolve(REPO, 'packages/command/src'))) {
-      expect(readFileSync(file, 'utf8'), file).not.toMatch(/from\s*['"]@czap\/audit['"]/);
+      expect(readFileSync(file, 'utf8'), file).not.toMatch(/from\s*['"]@liteship\/audit['"]/);
     }
   });
 
-  it('no @czap/mcp-server source imports @czap/audit, and its manifest does not depend on it', () => {
+  it('no @liteship/mcp-server source imports @liteship/audit, and its manifest does not depend on it', () => {
     for (const file of tsFiles(resolve(REPO, 'packages/mcp-server/src'))) {
-      expect(readFileSync(file, 'utf8'), file).not.toMatch(/@czap\/audit/);
+      expect(readFileSync(file, 'utf8'), file).not.toMatch(/@liteship\/audit/);
     }
     const pkg = JSON.parse(readFileSync(resolve(REPO, 'packages/mcp-server/package.json'), 'utf8')) as {
       dependencies?: Record<string, string>;
     };
-    expect(pkg.dependencies?.['@czap/audit']).toBeUndefined();
+    expect(pkg.dependencies?.['@liteship/audit']).toBeUndefined();
   });
 });
 
-describe('D9b-2 — czap audit (CLI adapter)', () => {
+describe('D9b-2 — liteship audit (CLI adapter)', () => {
   it('does not spawn pnpm run audit (no shell-out; engine runs in-process)', () => {
     const src = readFileSync(resolve(REPO, 'packages/cli/src/commands/audit.ts'), 'utf8');
     expect(src).not.toMatch(/pnpm run audit/);
@@ -281,7 +281,7 @@ describe('D9b-2 — czap audit (CLI adapter)', () => {
   it('--consumer + --profile uses the profile as the consumer discovery base', async () => {
     // A downstream audits THEIR OWN topology in consumer mode: the `--profile`
     // becomes the discovery base, so the resolved profile carries the acme
-    // identity (internalPackagePrefix / packageTopology), not LiteShip's `@czap/`.
+    // identity (internalPackagePrefix / packageTopology), not LiteShip's `@liteship/`.
     const { root, profilePath } = acmeFixture('json');
     const { profile, source } = await loadProfile(profilePath, root, { consumer: true });
     expect(source).toBe('consumer');
@@ -294,7 +294,7 @@ describe('D9b-2 — czap audit (CLI adapter)', () => {
     const { result, stdout } = await captureStdout(() => audit({ consumer: true, cwd: root, pretty: false }));
     const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
     expect(receipt.profileSource).toBe('consumer');
-    // Nothing from the czap topology is installed in the fixture: the unshipped
+    // Nothing from the liteship topology is installed in the fixture: the unshipped
     // host surface is pruned (no error spam), but ZERO audited packages must
     // read as the single no-packages-discovered error — clean must never be
     // confused with unchecked (CUT A0).

@@ -4,14 +4,14 @@
  * each chunk is [fourCC id] [uint32 size] [size bytes payload]
  * with 2-byte alignment padding between chunks.
  *
- * Supports the WAV subset used by @czap/assets: 'fmt ', 'data', 'LIST'
+ * Supports the WAV subset used by @liteship/assets: 'fmt ', 'data', 'LIST'
  * (typed by listType), and unknown passthrough chunks that we preserve
  * for metadata projections.
  *
  * @module
  */
 
-import { ParseError } from '@czap/error';
+import { ParseError } from '@liteship/error';
 
 /** Four-character code, e.g. 'RIFF', 'fmt ', 'data', 'LIST', 'INFO'. */
 export type FourCC = string;

@@ -55,7 +55,7 @@ export function unreadable(e: unknown): { kind: 'unreadable'; detail: string } {
   return { kind: 'unreadable', detail: e instanceof Error ? e.message : String(e) };
 }
 
-/** Receipt shape emitted by `czap doctor`. */
+/** Receipt shape emitted by `liteship doctor`. */
 export interface DoctorReceipt {
   readonly status: 'ok' | 'failed';
   readonly command: 'doctor';
@@ -88,7 +88,7 @@ export function parseEngineMajor(s: string | undefined): number | null {
 /**
  * Per-probe subprocess bound (CUT test-flake). External probes (`pnpm`/`cargo`/`git`/
  * `wrangler`) shell out; under parallel load those spawns can drag past the test
- * timeout. A bound keeps `czap doctor` deterministic and non-hanging: a slow/wedged
+ * timeout. A bound keeps `liteship doctor` deterministic and non-hanging: a slow/wedged
  * tool degrades to a `warn` ("didn't answer in time") instead of blocking forever.
  * Concurrency (see runAllProbes) makes the path "max single probe", not the sum —
  * so 4s is comfortable.

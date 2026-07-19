@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { S } from '@czap/core';
-import type { CapsuleContract, AssemblyKind } from '@czap/core';
+import { S } from '@liteship/core';
+import type { CapsuleContract, AssemblyKind } from '@liteship/core';
 
 describe('CapsuleContract', () => {
   it('accepts a valid pureTransform contract shape', () => {

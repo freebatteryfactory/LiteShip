@@ -30,8 +30,8 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { encode as cborgEncode } from 'cborg';
-import { CanonicalCbor, fnv1aBytes } from '@czap/core';
-import { bytesToHex } from '@czap/canonical';
+import { CanonicalCbor, fnv1aBytes } from '@liteship/core';
+import { bytesToHex } from '@liteship/canonical';
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
 

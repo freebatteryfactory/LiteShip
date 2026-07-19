@@ -1,7 +1,7 @@
 /**
  * `compositeStateToRgba` — the ONE deterministic frame painter both headless
- * ffmpeg backends (the `@czap/command` `scene render` backend AND the
- * `@czap/stage` encoder) share. This pins the LAWS the smoking-gun fix depends on:
+ * ffmpeg backends (the `@liteship/command` `scene render` backend AND the
+ * `@liteship/stage` encoder) share. This pins the LAWS the smoking-gun fix depends on:
  *
  *   (1) DETERMINISTIC — the same CompositeState yields byte-identical RGBA.
  *   (2) VARIES with state — distinct discrete/css state yields distinct pixels
@@ -14,8 +14,8 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { compositeStateToRgba } from '@czap/core';
-import type { CompositeState } from '@czap/core';
+import { compositeStateToRgba } from '@liteship/core';
+import type { CompositeState } from '@liteship/core';
 
 function state(discrete: Record<string, string>, css: Record<string, number | string>): CompositeState {
   return { discrete, blend: {}, outputs: { css, glsl: {}, wgsl: {}, aria: {} } };
@@ -26,7 +26,7 @@ const H = 3;
 
 describe('compositeStateToRgba — the shared deterministic frame painter', () => {
   it('(1) is deterministic: identical state → byte-identical RGBA', () => {
-    const s = state({ viewport: 'mobile' }, { '--czap-card': '14px' });
+    const s = state({ viewport: 'mobile' }, { '--liteship-card': '14px' });
     const a = compositeStateToRgba(s, W, H);
     const b = compositeStateToRgba(s, W, H);
     expect(Array.from(a)).toEqual(Array.from(b));
@@ -40,13 +40,13 @@ describe('compositeStateToRgba — the shared deterministic frame painter', () =
   });
 
   it('(2b) varies with css outputs: a different compiled value → different pixels', () => {
-    const a = compositeStateToRgba(state({}, { '--czap-card': '14px' }), W, H);
-    const b = compositeStateToRgba(state({}, { '--czap-card': '18px' }), W, H);
+    const a = compositeStateToRgba(state({}, { '--liteship-card': '14px' }), W, H);
+    const b = compositeStateToRgba(state({}, { '--liteship-card': '18px' }), W, H);
     expect(Array.from(a)).not.toEqual(Array.from(b));
   });
 
   it('(3) non-empty state is NOT an all-black frame (the old stub bug)', () => {
-    const px = compositeStateToRgba(state({ viewport: 'desktop' }, { '--czap-x': '1' }), W, H);
+    const px = compositeStateToRgba(state({ viewport: 'desktop' }, { '--liteship-x': '1' }), W, H);
     let rgbSum = 0;
     for (let i = 0; i < px.length; i += 4) rgbSum += px[i]! + px[i + 1]! + px[i + 2]!;
     // The black stub emitted r=g=b=0 for every pixel; a real painter does not.

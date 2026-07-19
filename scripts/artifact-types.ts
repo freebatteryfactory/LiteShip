@@ -1,6 +1,6 @@
 import type { ArtifactExpectedCounts } from './artifact-context.js';
 import type { PairedTruthEntry } from './paired-truth.js';
-import type { WallClockTimestamp } from '@czap/core';
+import type { WallClockTimestamp } from '@liteship/core';
 
 export type MetricKey = 'lines' | 'statements' | 'functions' | 'branches';
 

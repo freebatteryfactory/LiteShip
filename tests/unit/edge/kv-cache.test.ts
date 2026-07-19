@@ -4,10 +4,10 @@
 
 import { afterEach, describe, test, expect, vi } from 'vitest';
 import fc from 'fast-check';
-import { Diagnostics } from '@czap/core';
-import { createBoundaryCache } from '@czap/edge';
-import type { ContentAddress } from '@czap/core';
-import type { KVNamespace } from '@czap/edge';
+import { Diagnostics } from '@liteship/core';
+import { createBoundaryCache } from '@liteship/edge';
+import type { ContentAddress } from '@liteship/core';
+import type { KVNamespace } from '@liteship/edge';
 
 // Minimal in-memory KV mock
 function createMockKV(): KVNamespace & { store: Map<string, string> } {
@@ -56,8 +56,8 @@ describe('createBoundaryCache', () => {
     const kv = createMockKV();
     const cache = createBoundaryCache(kv);
     const outputs = {
-      css: ':root { --czap-scale: 1; }',
-      propertyRegistrations: '@property --czap-scale { syntax: "<number>"; }',
+      css: ':root { --liteship-scale: 1; }',
+      propertyRegistrations: '@property --liteship-scale { syntax: "<number>"; }',
       containerQueries: '@container (min-width: 768px) { ... }',
     };
 
@@ -73,7 +73,7 @@ describe('createBoundaryCache', () => {
   test('theme fingerprint segregates the cache key — a per-request theme cannot serve another theme CSS', async () => {
     const kv = createMockKV();
     const cache = createBoundaryCache(kv);
-    const themedA = { css: ':root { --czap-accent: red; }', propertyRegistrations: '', containerQueries: '' };
+    const themedA = { css: ':root { --liteship-accent: red; }', propertyRegistrations: '', containerQueries: '' };
 
     // Cache the output compiled under theme A's fingerprint.
     await cache.putCompiledOutputs(boundaryId, tierResult, themedA, undefined, 'themeAAA');
@@ -161,7 +161,7 @@ describe('createBoundaryCache', () => {
     Diagnostics.setSink(sink);
 
     // Manually inject bad data
-    const key = `czap:boundary:${boundaryId}:${tierResult.motionTier}:${tierResult.designTier}`;
+    const key = `liteship:boundary:${boundaryId}:${tierResult.motionTier}:${tierResult.designTier}`;
     kv.store.set(key, 'not valid json');
 
     const result = await cache.getCompiledOutputs(boundaryId, tierResult);
@@ -169,7 +169,7 @@ describe('createBoundaryCache', () => {
     expect(events).toEqual([
       expect.objectContaining({
         level: 'warn',
-        source: 'czap/edge.kv-cache',
+        source: 'liteship/edge.kv-cache',
         code: 'invalid-cache-entry',
         message: expect.stringContaining('Probable cause: a foreign writer or truncated value'),
       }),
@@ -183,7 +183,7 @@ describe('createBoundaryCache', () => {
     const { sink, events } = Diagnostics.createBufferSink();
     Diagnostics.setSink(sink);
 
-    const key = `czap:boundary:${boundaryId}:${tierResult.motionTier}:${tierResult.designTier}`;
+    const key = `liteship:boundary:${boundaryId}:${tierResult.motionTier}:${tierResult.designTier}`;
     kv.store.set(key, JSON.stringify({ css: 'only css, missing others' }));
 
     const result = await cache.getCompiledOutputs(boundaryId, tierResult);
@@ -191,7 +191,7 @@ describe('createBoundaryCache', () => {
     expect(events).toEqual([
       expect.objectContaining({
         level: 'warn',
-        source: 'czap/edge.kv-cache',
+        source: 'liteship/edge.kv-cache',
         code: 'cache-entry-shape-mismatch',
       }),
     ]);
@@ -209,7 +209,7 @@ describe('createBoundaryCache', () => {
     });
 
     expect(kv.put).toHaveBeenCalledWith(
-      `czap:boundary:${boundaryId}:${tierResult.motionTier}:${tierResult.designTier}`,
+      `liteship:boundary:${boundaryId}:${tierResult.motionTier}:${tierResult.designTier}`,
       JSON.stringify({ css: 'a', propertyRegistrations: 'b', containerQueries: 'c' }),
       { expirationTtl: 60 },
     );
@@ -218,7 +218,7 @@ describe('createBoundaryCache', () => {
   test('getCompiledOutputs rethrows non-SyntaxError parse failures', async () => {
     const kv = createMockKV();
     const cache = createBoundaryCache(kv);
-    const key = `czap:boundary:${boundaryId}:${tierResult.motionTier}:${tierResult.designTier}`;
+    const key = `liteship:boundary:${boundaryId}:${tierResult.motionTier}:${tierResult.designTier}`;
     kv.store.set(key, '{"css":"ok"}');
     const parseSpy = vi.spyOn(JSON, 'parse').mockImplementation(() => {
       throw new TypeError('parse boom');
@@ -231,7 +231,7 @@ describe('createBoundaryCache', () => {
 });
 
 describe('parseShaderCast degradation — malformed shader payload omits the cast (never coerces)', () => {
-  const key = `czap:boundary:${boundaryId}:${tierResult.motionTier}:${tierResult.designTier}`;
+  const key = `liteship:boundary:${boundaryId}:${tierResult.motionTier}:${tierResult.designTier}`;
 
   // A WELL-FORMED base entry whose css/propertyRegistrations/containerQueries pass
   // the outer shape check, so the parser reaches (and judges) the glsl/wgsl cast.

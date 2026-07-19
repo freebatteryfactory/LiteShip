@@ -17,7 +17,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as fc from 'fast-check';
-import { hasTag } from '@czap/error';
+import { hasTag } from '@liteship/error';
 import {
   resolveExecutable,
   tarballFileUrl,
@@ -42,7 +42,7 @@ describe('peerDependenciesOnly — PEER_INSTALLS → {name: version} (split on L
   it('property: a `<name>@<version>` specifier round-trips to {name: version}', () => {
     fc.assert(
       fc.property(
-        fc.constantFrom('@scope/a', '@czap/core', 'react', 'cborg', 'mediabunny'),
+        fc.constantFrom('@scope/a', '@liteship/core', 'react', 'cborg', 'mediabunny'),
         fc.constantFrom('1.0.0', '0.4.0', '18.2.1', '^2.0.0'),
         (name, version) => {
           const result = peerDependenciesOnly([`${name}@${version}`]);
@@ -99,15 +99,15 @@ describe('resolveExecutable — platform/npm_execpath executable resolution', ()
 
 describe('tarballFileUrl — tarball path → file:// URL round-trip', () => {
   it('produces a file:// URL that decodes back to the original path', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'czap-tarball-url-'));
+    const dir = mkdtempSync(join(tmpdir(), 'liteship-tarball-url-'));
     try {
-      const tarball = join(dir, '@czap-core-0.4.0.tgz');
+      const tarball = join(dir, '@liteship-core-0.4.0.tgz');
       writeFileSync(tarball, 'x');
       const url = tarballFileUrl(tarball);
       expect(url.startsWith('file://')).toBe(true);
       // On POSIX the decode is exact; on win32 realpath may canonicalize case —
       // assert the basename survives the URL round-trip cross-platform.
-      expect(fileURLToPath(url).endsWith('@czap-core-0.4.0.tgz')).toBe(true);
+      expect(fileURLToPath(url).endsWith('@liteship-core-0.4.0.tgz')).toBe(true);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
@@ -117,7 +117,7 @@ describe('tarballFileUrl — tarball path → file:// URL round-trip', () => {
 describe('findConsumerDependencyRoot — the three pnpm resolution strategies', () => {
   let consumer: string;
   beforeEach(() => {
-    consumer = mkdtempSync(join(tmpdir(), 'czap-consumer-'));
+    consumer = mkdtempSync(join(tmpdir(), 'liteship-consumer-'));
   });
   afterEach(() => rmSync(consumer, { recursive: true, force: true }));
 
@@ -128,58 +128,58 @@ describe('findConsumerDependencyRoot — the three pnpm resolution strategies', 
   }
 
   it('strategy 1: a direct node_modules/<pkg> install', () => {
-    plant(join('node_modules', '@czap', 'core'));
-    const root = findConsumerDependencyRoot(consumer, '@czap/core');
-    expect(root).toBe(join(consumer, 'node_modules', '@czap', 'core'));
+    plant(join('node_modules', '@liteship', 'core'));
+    const root = findConsumerDependencyRoot(consumer, '@liteship/core');
+    expect(root).toBe(join(consumer, 'node_modules', '@liteship', 'core'));
   });
 
   it('strategy 2: the hoisted .pnpm/node_modules/<pkg> location', () => {
-    plant(join('node_modules', '.pnpm', 'node_modules', '@czap', 'core'));
-    const root = findConsumerDependencyRoot(consumer, '@czap/core');
-    expect(root).toBe(join(consumer, 'node_modules', '.pnpm', 'node_modules', '@czap', 'core'));
+    plant(join('node_modules', '.pnpm', 'node_modules', '@liteship', 'core'));
+    const root = findConsumerDependencyRoot(consumer, '@liteship/core');
+    expect(root).toBe(join(consumer, 'node_modules', '.pnpm', 'node_modules', '@liteship', 'core'));
   });
 
   it('strategy 3: a scan of the .pnpm store for <pkg>@ver/node_modules/<pkg>', () => {
-    plant(join('node_modules', '.pnpm', '@czap+core@0.4.0', 'node_modules', '@czap', 'core'));
-    const root = findConsumerDependencyRoot(consumer, '@czap/core');
+    plant(join('node_modules', '.pnpm', '@liteship+core@0.4.0', 'node_modules', '@liteship', 'core'));
+    const root = findConsumerDependencyRoot(consumer, '@liteship/core');
     expect(root).toBe(
-      join(consumer, 'node_modules', '.pnpm', '@czap+core@0.4.0', 'node_modules', '@czap', 'core'),
+      join(consumer, 'node_modules', '.pnpm', '@liteship+core@0.4.0', 'node_modules', '@liteship', 'core'),
     );
   });
 
   it('returns undefined when no strategy resolves (no store at all)', () => {
-    expect(findConsumerDependencyRoot(consumer, '@czap/core')).toBeUndefined();
+    expect(findConsumerDependencyRoot(consumer, '@liteship/core')).toBeUndefined();
   });
 
   it('returns undefined when the store exists but holds no matching entry', () => {
     mkdirSync(join(consumer, 'node_modules', '.pnpm', 'unrelated@1.0.0'), { recursive: true });
-    expect(findConsumerDependencyRoot(consumer, '@czap/core')).toBeUndefined();
+    expect(findConsumerDependencyRoot(consumer, '@liteship/core')).toBeUndefined();
   });
 });
 
 describe('assertConsumerDependencyInstalled — fail-closed when a dep is unresolvable', () => {
   let consumer: string;
   beforeEach(() => {
-    consumer = mkdtempSync(join(tmpdir(), 'czap-assert-dep-'));
+    consumer = mkdtempSync(join(tmpdir(), 'liteship-assert-dep-'));
   });
   afterEach(() => rmSync(consumer, { recursive: true, force: true }));
 
   it('is silent when the dependency resolves', () => {
-    const dir = join(consumer, 'node_modules', '@czap', 'core');
+    const dir = join(consumer, 'node_modules', '@liteship', 'core');
     mkdirSync(dir, { recursive: true });
-    writeFileSync(join(dir, 'package.json'), '{"name":"@czap/core"}');
-    expect(() => assertConsumerDependencyInstalled(consumer, '@czap/core')).not.toThrow();
+    writeFileSync(join(dir, 'package.json'), '{"name":"@liteship/core"}');
+    expect(() => assertConsumerDependencyInstalled(consumer, '@liteship/core')).not.toThrow();
   });
 
   it('throws a tagged IntegrityError naming the package + node_modules when absent', () => {
     let caught: unknown;
     try {
-      assertConsumerDependencyInstalled(consumer, '@czap/ghost');
+      assertConsumerDependencyInstalled(consumer, '@liteship/ghost');
     } catch (err) {
       caught = err;
     }
     expect(hasTag(caught, 'IntegrityError')).toBe(true);
-    expect((caught as Error).message).toContain('@czap/ghost');
+    expect((caught as Error).message).toContain('@liteship/ghost');
     expect((caught as Error).message).toContain('node_modules');
     expect((caught as Error).message).toContain('import-smoke cannot resolve it');
   });

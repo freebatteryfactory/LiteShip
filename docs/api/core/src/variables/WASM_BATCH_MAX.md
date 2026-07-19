@@ -12,7 +12,7 @@ Defined in: [core/src/defaults.ts:45](https://github.com/freebatteryfactory/Lite
 
 Max values the WASM `batch_boundary_eval` kernel evaluates per call. The
 crate's static output buffer clamps `values_len` to this (MUST equal
-`MAX_VALUES` in crates/czap-compute/src/boundary.rs — pinned by
+`MAX_VALUES` in crates/liteship-compute/src/boundary.rs — pinned by
 tests/property/boundary-evaluate-batch.prop.test.ts); larger inputs are
 chunked by `Boundary.evaluateBatch` so every value is evaluated. Used by:
 boundary.ts

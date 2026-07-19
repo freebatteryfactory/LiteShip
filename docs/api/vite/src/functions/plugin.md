@@ -10,7 +10,7 @@
 
 Defined in: [vite/src/plugin.ts:182](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/plugin.ts#L182)
 
-Create the czap Vite plugin.
+Create the liteship Vite plugin.
 
 Transforms CSS files containing `@token`, `@theme`, `@style`, and
 `@quantize` blocks into native CSS custom properties,
@@ -33,6 +33,6 @@ uniform updates.
 
 ```ts
 // vite.config.ts
-import { czap } from '@czap/vite';
-const config = { plugins: [czap()] };
+import { liteship } from '@liteship/vite';
+const config = { plugins: [liteship()] };
 ```

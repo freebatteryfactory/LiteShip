@@ -14,7 +14,7 @@ import type { StateUnion } from './type-utils.js';
 import { CanonicalCbor } from './cbor.js';
 import { Diagnostics } from './diagnostics.js';
 import { fnv1aBytes } from './fnv.js';
-import { ValidationError } from '@czap/error';
+import { ValidationError } from '@liteship/error';
 
 /** Single `box-shadow` layer — compiled into a space-separated CSS value by {@link Style.tap}. */
 export interface ShadowLayer {
@@ -151,7 +151,7 @@ function _tap(style: StyleDef, state?: string): Record<string, string> {
     const knownStates = style.boundary.states as readonly string[];
     if (!knownStates.includes(state)) {
       Diagnostics.warnOnce({
-        source: 'czap/core.Style',
+        source: 'liteship/core.Style',
         code: 'style-unknown-state',
         message: `Style.tap: state "${state}" is not a state of the style's boundary [${knownStates.join(', ')}]; returning base styles.`,
       });
@@ -199,7 +199,7 @@ function _tap(style: StyleDef, state?: string): Record<string, string> {
  *
  * @example
  * ```ts
- * import { Boundary, Style } from '@czap/core';
+ * import { Boundary, Style } from '@liteship/core';
  *
  * const bp = Boundary.make({ input: 'viewport.width', at: [[0, 'sm'], [768, 'lg']] });
  * const style = Style.make({

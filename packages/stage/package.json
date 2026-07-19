@@ -1,5 +1,5 @@
 {
-  "name": "@czap/stage",
+  "name": "@liteship/stage",
   "version": "0.18.0",
   "description": "Export one LiteShip document graph to many carriers: prove a single source renders to both a static Astro page and a video, joined under one receipt.",
   "license": "MIT",
@@ -12,7 +12,6 @@
   "bugs": "https://github.com/freebatteryfactory/LiteShip/issues",
   "homepage": "https://github.com/freebatteryfactory/LiteShip#readme",
   "keywords": [
-    "czap",
     "liteship",
     "dual-export",
     "video",
@@ -45,11 +44,11 @@
     "prepack": "pnpm run build"
   },
   "dependencies": {
-    "@czap/astro": "workspace:*",
-    "@czap/compiler": "workspace:*",
-    "@czap/core": "workspace:*",
-    "@czap/error": "workspace:*",
-    "@czap/web": "workspace:*"
+    "@liteship/astro": "workspace:*",
+    "@liteship/compiler": "workspace:*",
+    "@liteship/core": "workspace:*",
+    "@liteship/error": "workspace:*",
+    "@liteship/web": "workspace:*"
   },
   "engines": {
     "node": ">=22.13.0"

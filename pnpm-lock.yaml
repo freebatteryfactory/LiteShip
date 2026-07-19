@@ -35,49 +35,49 @@ importers:
       '@ast-grep/cli':
         specifier: ^0.44.0
         version: 0.44.0
-      '@czap/astro':
+      '@liteship/astro':
         specifier: workspace:*
         version: link:packages/astro
-      '@czap/audit':
+      '@liteship/audit':
         specifier: workspace:*
         version: link:packages/audit
-      '@czap/canonical':
+      '@liteship/canonical':
         specifier: workspace:*
         version: link:packages/canonical
-      '@czap/compiler':
+      '@liteship/compiler':
         specifier: workspace:*
         version: link:packages/compiler
-      '@czap/core':
+      '@liteship/core':
         specifier: workspace:*
         version: link:packages/core
-      '@czap/detect':
+      '@liteship/detect':
         specifier: workspace:*
         version: link:packages/detect
-      '@czap/edge':
+      '@liteship/edge':
         specifier: workspace:*
         version: link:packages/edge
-      '@czap/error':
+      '@liteship/error':
         specifier: workspace:*
         version: link:packages/error
-      '@czap/gauntlet':
+      '@liteship/gauntlet':
         specifier: workspace:*
         version: link:packages/gauntlet
-      '@czap/quantizer':
+      '@liteship/quantizer':
         specifier: workspace:*
         version: link:packages/quantizer
-      '@czap/remotion':
+      '@liteship/remotion':
         specifier: workspace:*
         version: link:packages/remotion
-      '@czap/stage':
+      '@liteship/stage':
         specifier: workspace:*
         version: link:packages/stage
-      '@czap/vite':
+      '@liteship/vite':
         specifier: workspace:*
         version: link:packages/vite
-      '@czap/web':
+      '@liteship/web':
         specifier: workspace:*
         version: link:packages/web
-      '@czap/worker':
+      '@liteship/worker':
         specifier: workspace:*
         version: link:packages/worker
       '@playwright/test':
@@ -197,10 +197,10 @@ importers:
       '@astrojs/node':
         specifier: ^11.0.0
         version: 11.0.2(astro@7.0.3(@astrojs/markdown-remark@7.2.0)(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(@types/node@24.13.2)(jiti@2.6.1)(rollup@4.59.0)(terser@5.46.1)(tsx@4.22.4)(yaml@2.8.3))
-      '@czap/astro':
+      '@liteship/astro':
         specifier: workspace:*
         version: link:../../packages/astro
-      '@czap/core':
+      '@liteship/core':
         specifier: workspace:*
         version: link:../../packages/core
       astro:
@@ -212,7 +212,7 @@ importers:
 
   examples/05-ai-patch-refused:
     dependencies:
-      '@czap/core':
+      '@liteship/core':
         specifier: workspace:*
         version: link:../../packages/core
       astro:
@@ -227,13 +227,13 @@ importers:
       '@astrojs/node':
         specifier: ^11.0.0
         version: 11.0.2(astro@7.0.3(@astrojs/markdown-remark@7.2.0)(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(@types/node@24.13.2)(jiti@2.6.1)(rollup@4.59.0)(terser@5.46.1)(tsx@4.22.4)(yaml@2.8.3))
-      '@czap/astro':
+      '@liteship/astro':
         specifier: workspace:*
         version: link:../../packages/astro
-      '@czap/core':
+      '@liteship/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@czap/web':
+      '@liteship/web':
         specifier: workspace:*
         version: link:../../packages/web
       astro:
@@ -248,19 +248,19 @@ importers:
       '@astrojs/cloudflare':
         specifier: ^14.0.0
         version: 14.0.1(@types/node@24.13.2)(astro@7.0.3(@astrojs/markdown-remark@7.2.0)(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(@types/node@24.13.2)(jiti@2.6.1)(rollup@4.59.0)(terser@5.46.1)(tsx@4.22.4)(yaml@2.8.3))(esbuild@0.28.1)(jiti@2.6.1)(terser@5.46.1)(tsx@4.22.4)(workerd@1.20260603.1)(wrangler@4.98.0)(yaml@2.8.3)
-      '@czap/astro':
+      '@liteship/astro':
         specifier: workspace:*
         version: link:../../packages/astro
-      '@czap/cloudflare':
+      '@liteship/cloudflare':
         specifier: workspace:*
         version: link:../../packages/cloudflare
-      '@czap/core':
+      '@liteship/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@czap/edge':
+      '@liteship/edge':
         specifier: workspace:*
         version: link:../../packages/edge
-      '@czap/vite':
+      '@liteship/vite':
         specifier: workspace:*
         version: link:../../packages/vite
       astro:
@@ -276,10 +276,10 @@ importers:
 
   examples/default:
     dependencies:
-      '@czap/astro':
+      '@liteship/astro':
         specifier: workspace:*
         version: link:../../packages/astro
-      '@czap/core':
+      '@liteship/core':
         specifier: workspace:*
         version: link:../../packages/core
       astro:
@@ -291,13 +291,13 @@ importers:
 
   examples/remotion-demo:
     dependencies:
-      '@czap/core':
+      '@liteship/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@czap/quantizer':
+      '@liteship/quantizer':
         specifier: workspace:*
         version: link:../../packages/quantizer
-      '@czap/remotion':
+      '@liteship/remotion':
         specifier: workspace:*
         version: link:../../packages/remotion
       '@remotion/bundler':
@@ -331,16 +331,16 @@ importers:
       '@astrojs/cloudflare':
         specifier: ^14.0.0
         version: 14.0.1(@types/node@24.13.2)(astro@7.0.3(@astrojs/markdown-remark@7.2.0)(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(@types/node@24.13.2)(jiti@2.6.1)(rollup@4.59.0)(terser@5.46.1)(tsx@4.22.4)(yaml@2.8.3))(esbuild@0.28.1)(jiti@2.6.1)(terser@5.46.1)(tsx@4.22.4)(workerd@1.20260603.1)(wrangler@4.98.0)(yaml@2.8.3)
-      '@czap/astro':
+      '@liteship/astro':
         specifier: workspace:*
         version: link:../../packages/astro
-      '@czap/compiler':
+      '@liteship/compiler':
         specifier: workspace:*
         version: link:../../packages/compiler
-      '@czap/core':
+      '@liteship/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@czap/edge':
+      '@liteship/edge':
         specifier: workspace:*
         version: link:../../packages/edge
       astro:
@@ -352,10 +352,10 @@ importers:
 
   examples/tutorial:
     dependencies:
-      '@czap/astro':
+      '@liteship/astro':
         specifier: workspace:*
         version: link:../../packages/astro
-      '@czap/core':
+      '@liteship/core':
         specifier: workspace:*
         version: link:../../packages/core
       astro:
@@ -376,46 +376,46 @@ importers:
 
   packages/assets:
     dependencies:
-      '@czap/_spine':
+      '@liteship/_spine':
         specifier: workspace:*
         version: link:../_spine
-      '@czap/core':
+      '@liteship/core':
         specifier: workspace:*
         version: link:../core
-      '@czap/error':
+      '@liteship/error':
         specifier: workspace:*
         version: link:../error
 
   packages/astro:
     dependencies:
-      '@czap/canonical':
+      '@liteship/canonical':
         specifier: workspace:*
         version: link:../canonical
-      '@czap/core':
+      '@liteship/core':
         specifier: workspace:*
         version: link:../core
-      '@czap/detect':
+      '@liteship/detect':
         specifier: workspace:*
         version: link:../detect
-      '@czap/edge':
+      '@liteship/edge':
         specifier: workspace:*
         version: link:../edge
-      '@czap/error':
+      '@liteship/error':
         specifier: workspace:*
         version: link:../error
-      '@czap/genui':
+      '@liteship/genui':
         specifier: workspace:*
         version: link:../genui
-      '@czap/scene':
+      '@liteship/scene':
         specifier: workspace:*
         version: link:../scene
-      '@czap/vite':
+      '@liteship/vite':
         specifier: workspace:*
         version: link:../vite
-      '@czap/web':
+      '@liteship/web':
         specifier: workspace:*
         version: link:../web
-      '@czap/worker':
+      '@liteship/worker':
         specifier: workspace:*
         version: link:../worker
     devDependencies:
@@ -425,13 +425,13 @@ importers:
 
   packages/audit:
     dependencies:
-      '@czap/canonical':
+      '@liteship/canonical':
         specifier: workspace:*
         version: link:../canonical
-      '@czap/error':
+      '@liteship/error':
         specifier: workspace:*
         version: link:../error
-      '@czap/gauntlet':
+      '@liteship/gauntlet':
         specifier: workspace:*
         version: link:../gauntlet
       fast-glob:
@@ -443,7 +443,7 @@ importers:
 
   packages/canonical:
     dependencies:
-      '@czap/error':
+      '@liteship/error':
         specifier: workspace:*
         version: link:../error
       '@noble/hashes':
@@ -452,31 +452,31 @@ importers:
 
   packages/cli:
     dependencies:
-      '@czap/assets':
+      '@liteship/assets':
         specifier: workspace:*
         version: link:../assets
-      '@czap/audit':
+      '@liteship/audit':
         specifier: workspace:*
         version: link:../audit
-      '@czap/canonical':
+      '@liteship/canonical':
         specifier: workspace:*
         version: link:../canonical
-      '@czap/command':
+      '@liteship/command':
         specifier: workspace:*
         version: link:../command
-      '@czap/core':
+      '@liteship/core':
         specifier: workspace:*
         version: link:../core
-      '@czap/edge':
+      '@liteship/edge':
         specifier: workspace:*
         version: link:../edge
-      '@czap/error':
+      '@liteship/error':
         specifier: workspace:*
         version: link:../error
-      '@czap/gauntlet':
+      '@liteship/gauntlet':
         specifier: workspace:*
         version: link:../gauntlet
-      '@czap/scene':
+      '@liteship/scene':
         specifier: workspace:*
         version: link:../scene
       undici:
@@ -485,55 +485,55 @@ importers:
 
   packages/cloudflare:
     dependencies:
-      '@czap/astro':
+      '@liteship/astro':
         specifier: workspace:*
         version: link:../astro
-      '@czap/core':
+      '@liteship/core':
         specifier: workspace:*
         version: link:../core
-      '@czap/edge':
+      '@liteship/edge':
         specifier: workspace:*
         version: link:../edge
-      '@czap/error':
+      '@liteship/error':
         specifier: workspace:*
         version: link:../error
 
   packages/command:
     dependencies:
-      '@czap/assets':
+      '@liteship/assets':
         specifier: workspace:*
         version: link:../assets
-      '@czap/canonical':
+      '@liteship/canonical':
         specifier: workspace:*
         version: link:../canonical
-      '@czap/core':
+      '@liteship/core':
         specifier: workspace:*
         version: link:../core
-      '@czap/error':
+      '@liteship/error':
         specifier: workspace:*
         version: link:../error
-      '@czap/gauntlet':
+      '@liteship/gauntlet':
         specifier: workspace:*
         version: link:../gauntlet
 
   packages/compiler:
     dependencies:
-      '@czap/core':
+      '@liteship/core':
         specifier: workspace:*
         version: link:../core
-      '@czap/error':
+      '@liteship/error':
         specifier: workspace:*
         version: link:../error
 
   packages/core:
     dependencies:
-      '@czap/_spine':
+      '@liteship/_spine':
         specifier: workspace:*
         version: link:../_spine
-      '@czap/canonical':
+      '@liteship/canonical':
         specifier: workspace:*
         version: link:../canonical
-      '@czap/error':
+      '@liteship/error':
         specifier: workspace:*
         version: link:../error
       '@noble/hashes':
@@ -551,28 +551,28 @@ importers:
 
   packages/create-liteship:
     dependencies:
-      '@czap/core':
+      '@liteship/core':
         specifier: workspace:*
         version: link:../core
-      '@czap/error':
+      '@liteship/error':
         specifier: workspace:*
         version: link:../error
 
   packages/detect:
     dependencies:
-      '@czap/core':
+      '@liteship/core':
         specifier: workspace:*
         version: link:../core
 
   packages/edge:
     dependencies:
-      '@czap/core':
+      '@liteship/core':
         specifier: workspace:*
         version: link:../core
-      '@czap/detect':
+      '@liteship/detect':
         specifier: workspace:*
         version: link:../detect
-      '@czap/error':
+      '@liteship/error':
         specifier: workspace:*
         version: link:../error
 
@@ -580,7 +580,7 @@ importers:
 
   packages/gauntlet:
     dependencies:
-      '@czap/error':
+      '@liteship/error':
         specifier: workspace:*
         version: link:../error
       fast-glob:
@@ -589,106 +589,106 @@ importers:
 
   packages/genui:
     dependencies:
-      '@czap/_spine':
+      '@liteship/_spine':
         specifier: workspace:*
         version: link:../_spine
-      '@czap/canonical':
+      '@liteship/canonical':
         specifier: workspace:*
         version: link:../canonical
-      '@czap/error':
+      '@liteship/error':
         specifier: workspace:*
         version: link:../error
 
   packages/liteship:
     dependencies:
-      '@czap/_spine':
+      '@liteship/_spine':
         specifier: workspace:*
         version: link:../_spine
-      '@czap/assets':
+      '@liteship/assets':
         specifier: workspace:*
         version: link:../assets
-      '@czap/astro':
+      '@liteship/astro':
         specifier: workspace:*
         version: link:../astro
-      '@czap/audit':
+      '@liteship/audit':
         specifier: workspace:*
         version: link:../audit
-      '@czap/canonical':
+      '@liteship/canonical':
         specifier: workspace:*
         version: link:../canonical
-      '@czap/cli':
+      '@liteship/cli':
         specifier: workspace:*
         version: link:../cli
-      '@czap/cloudflare':
+      '@liteship/cloudflare':
         specifier: workspace:*
         version: link:../cloudflare
-      '@czap/command':
+      '@liteship/command':
         specifier: workspace:*
         version: link:../command
-      '@czap/compiler':
+      '@liteship/compiler':
         specifier: workspace:*
         version: link:../compiler
-      '@czap/core':
+      '@liteship/core':
         specifier: workspace:*
         version: link:../core
-      '@czap/detect':
+      '@liteship/detect':
         specifier: workspace:*
         version: link:../detect
-      '@czap/edge':
+      '@liteship/edge':
         specifier: workspace:*
         version: link:../edge
-      '@czap/error':
+      '@liteship/error':
         specifier: workspace:*
         version: link:../error
-      '@czap/gauntlet':
+      '@liteship/gauntlet':
         specifier: workspace:*
         version: link:../gauntlet
-      '@czap/genui':
+      '@liteship/genui':
         specifier: workspace:*
         version: link:../genui
-      '@czap/mcp-server':
+      '@liteship/mcp-server':
         specifier: workspace:*
         version: link:../mcp-server
-      '@czap/quantizer':
+      '@liteship/quantizer':
         specifier: workspace:*
         version: link:../quantizer
-      '@czap/remotion':
+      '@liteship/remotion':
         specifier: workspace:*
         version: link:../remotion
-      '@czap/scene':
+      '@liteship/scene':
         specifier: workspace:*
         version: link:../scene
-      '@czap/stage':
+      '@liteship/stage':
         specifier: workspace:*
         version: link:../stage
-      '@czap/vite':
+      '@liteship/vite':
         specifier: workspace:*
         version: link:../vite
-      '@czap/web':
+      '@liteship/web':
         specifier: workspace:*
         version: link:../web
-      '@czap/worker':
+      '@liteship/worker':
         specifier: workspace:*
         version: link:../worker
 
   packages/mcp-server:
     dependencies:
-      '@czap/command':
+      '@liteship/command':
         specifier: workspace:*
         version: link:../command
-      '@czap/compiler':
+      '@liteship/compiler':
         specifier: workspace:*
         version: link:../compiler
-      '@czap/core':
+      '@liteship/core':
         specifier: workspace:*
         version: link:../core
-      '@czap/error':
+      '@liteship/error':
         specifier: workspace:*
         version: link:../error
-      '@czap/genui':
+      '@liteship/genui':
         specifier: workspace:*
         version: link:../genui
-      '@czap/web':
+      '@liteship/web':
         specifier: workspace:*
         version: link:../web
       fast-glob:
@@ -697,16 +697,16 @@ importers:
 
   packages/quantizer:
     dependencies:
-      '@czap/core':
+      '@liteship/core':
         specifier: workspace:*
         version: link:../core
-      '@czap/error':
+      '@liteship/error':
         specifier: workspace:*
         version: link:../error
 
   packages/remotion:
     dependencies:
-      '@czap/core':
+      '@liteship/core':
         specifier: workspace:*
         version: link:../core
       react:
@@ -722,49 +722,49 @@ importers:
 
   packages/scene:
     dependencies:
-      '@czap/_spine':
+      '@liteship/_spine':
         specifier: workspace:*
         version: link:../_spine
-      '@czap/core':
+      '@liteship/core':
         specifier: workspace:*
         version: link:../core
-      '@czap/error':
+      '@liteship/error':
         specifier: workspace:*
         version: link:../error
 
   packages/stage:
     dependencies:
-      '@czap/astro':
+      '@liteship/astro':
         specifier: workspace:*
         version: link:../astro
-      '@czap/compiler':
+      '@liteship/compiler':
         specifier: workspace:*
         version: link:../compiler
-      '@czap/core':
+      '@liteship/core':
         specifier: workspace:*
         version: link:../core
-      '@czap/error':
+      '@liteship/error':
         specifier: workspace:*
         version: link:../error
-      '@czap/web':
+      '@liteship/web':
         specifier: workspace:*
         version: link:../web
 
   packages/vite:
     dependencies:
-      '@czap/compiler':
+      '@liteship/compiler':
         specifier: workspace:*
         version: link:../compiler
-      '@czap/core':
+      '@liteship/core':
         specifier: workspace:*
         version: link:../core
-      '@czap/edge':
+      '@liteship/edge':
         specifier: workspace:*
         version: link:../edge
-      '@czap/error':
+      '@liteship/error':
         specifier: workspace:*
         version: link:../error
-      '@czap/web':
+      '@liteship/web':
         specifier: workspace:*
         version: link:../web
     devDependencies:
@@ -777,16 +777,16 @@ importers:
 
   packages/web:
     dependencies:
-      '@czap/canonical':
+      '@liteship/canonical':
         specifier: workspace:*
         version: link:../canonical
-      '@czap/core':
+      '@liteship/core':
         specifier: workspace:*
         version: link:../core
-      '@czap/error':
+      '@liteship/error':
         specifier: workspace:*
         version: link:../error
-      '@czap/genui':
+      '@liteship/genui':
         specifier: workspace:*
         version: link:../genui
       mediabunny:
@@ -795,16 +795,16 @@ importers:
 
   packages/worker:
     dependencies:
-      '@czap/core':
+      '@liteship/core':
         specifier: workspace:*
         version: link:../core
-      '@czap/error':
+      '@liteship/error':
         specifier: workspace:*
         version: link:../error
 
   tests/integration/astro:
     dependencies:
-      '@czap/astro':
+      '@liteship/astro':
         specifier: workspace:*
         version: link:../../../packages/astro
       astro:
@@ -813,10 +813,10 @@ importers:
 
   tests/integration/vite:
     dependencies:
-      '@czap/core':
+      '@liteship/core':
         specifier: workspace:*
         version: link:../../../packages/core
-      '@czap/vite':
+      '@liteship/vite':
         specifier: workspace:*
         version: link:../../../packages/vite
       vite:

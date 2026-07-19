@@ -1,5 +1,5 @@
 /**
- * `@czap/canonical` — self-contained canonical bytes kernel.
+ * `@liteship/canonical` — self-contained canonical bytes kernel.
  *
  * @module
  */

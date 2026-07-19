@@ -11,13 +11,13 @@
  *
  * This is that path. It mirrors the satellite runtime's signal-clock shape:
  *
- *  - Discovery — scan a root for `[data-czap-entity]` SVG elements and build
+ *  - Discovery — scan a root for `[data-liteship-entity]` SVG elements and build
  *    an {@link SvgElementResolver} (`entityId → SVGElement`) the egress
  *    applicator consumes verbatim.
  *  - Source — the first cut reads per-state authored attrs off the element's
- *    own `data-czap-svg` JSON (keyed `state → { attr: value }`, the satellite
+ *    own `data-liteship-svg` JSON (keyed `state → { attr: value }`, the satellite
  *    `stateAttributes` shape) and resolves the active state from a serialized
- *    boundary on `data-czap-boundary`. No scene runtime needed (that is item
+ *    boundary on `data-liteship-boundary`. No scene runtime needed (that is item
  *    C); the point is the LIVE DOM applicator path exists and is wired to a
  *    directive.
  *  - Clock — {@link attachSignalObserver} (viewport / scroll / audio), the
@@ -35,9 +35,9 @@
  * @module
  */
 
-import { Diagnostics } from '@czap/core';
-import { applySvgAttrs } from '@czap/scene';
-import type { SvgAttrs, SvgAttrsFrame, SvgElementResolver } from '@czap/scene';
+import { Diagnostics } from '@liteship/core';
+import { applySvgAttrs } from '@liteship/scene';
+import type { SvgAttrs, SvgAttrsFrame, SvgElementResolver } from '@liteship/scene';
 import {
   attachSignalObserver,
   evaluateBoundary,
@@ -49,12 +49,12 @@ import {
 import { bootDirectiveEntry } from './directive-bound.js';
 
 /** Attribute carrying the entity id an SVG element is bound to. */
-const ENTITY_ATTRIBUTE = 'data-czap-entity';
+const ENTITY_ATTRIBUTE = 'data-liteship-entity';
 /** Attribute carrying the per-state authored SVG attrs JSON (`state → attrs`). */
-const SVG_STATE_ATTRIBUTE = 'data-czap-svg';
+const SVG_STATE_ATTRIBUTE = 'data-liteship-svg';
 
 /**
- * Authored per-state SVG attrs, as serialized onto `data-czap-svg`. Keyed by
+ * Authored per-state SVG attrs, as serialized onto `data-liteship-svg`. Keyed by
  * state label, then by the {@link SvgAttrs} field name a renderer would emit
  * (`transform` / `opacity` / `mixBlendMode` / `clipPath`). Values are the raw
  * authored strings/numbers; only the populated fields per state are touched
@@ -71,7 +71,7 @@ export type SvgStateAttrs = Readonly<Record<string, Readonly<Partial<Omit<SvgAtt
 export type SvgEntityElementResolver = SvgElementResolver;
 
 /**
- * Parse the per-state authored SVG attrs off a `data-czap-svg` payload.
+ * Parse the per-state authored SVG attrs off a `data-liteship-svg` payload.
  * Returns `null` for an absent / malformed / non-object payload so the caller
  * treats the element as carrying no authored attrs (inert), never throwing
  * mid-discovery. Only object-valued states survive, so a stray scalar can't
@@ -84,11 +84,11 @@ export function parseSvgStateAttrs(json: string | null): SvgStateAttrs | null {
     parsed = JSON.parse(json);
   } catch (err) {
     Diagnostics.warnOnce({
-      source: 'czap/astro.svg',
+      source: 'liteship/astro.svg',
       code: 'svg-attrs-parse-failed',
       message:
-        `Failed to parse the data-czap-svg per-state attrs as JSON (${String(err)}). ` +
-        `The entity carries no authored SVG attrs. Fix: emit valid JSON for data-czap-svg.`,
+        `Failed to parse the data-liteship-svg per-state attrs as JSON (${String(err)}). ` +
+        `The entity carries no authored SVG attrs. Fix: emit valid JSON for data-liteship-svg.`,
     });
     return null;
   }
@@ -102,8 +102,8 @@ export function parseSvgStateAttrs(json: string | null): SvgStateAttrs | null {
 }
 
 /**
- * Build an {@link SvgEntityElementResolver} over the `[data-czap-entity]`
- * SVGElements under `root`. Non-SVG matches (a plain `<div data-czap-entity>`)
+ * Build an {@link SvgEntityElementResolver} over the `[data-liteship-entity]`
+ * SVGElements under `root`. Non-SVG matches (a plain `<div data-liteship-entity>`)
  * are skipped — `applySvgAttrs` writes SVG presentation attributes, so only
  * real `SVGElement`s are mapped. The map is built once at discovery; the
  * returned resolver is a pure lookup the egress applicator can call each
@@ -140,9 +140,9 @@ interface SvgEntity {
 }
 
 /**
- * Discover the drivable SVG entities under `root`: each `[data-czap-entity]`
- * SVGElement that also carries a parseable `data-czap-svg` per-state attrs map
- * AND a parseable `data-czap-boundary` (the signal clock that decides which
+ * Discover the drivable SVG entities under `root`: each `[data-liteship-entity]`
+ * SVGElement that also carries a parseable `data-liteship-svg` per-state attrs map
+ * AND a parseable `data-liteship-boundary` (the signal clock that decides which
  * state is live). Elements missing either payload are skipped — they have no
  * live source this cut, so there is nothing to drive.
  */
@@ -155,7 +155,7 @@ function discoverSvgEntities(root: ParentNode): SvgEntity[] {
     if (!entityId) continue;
     const stateAttrs = parseSvgStateAttrs(el.getAttribute(SVG_STATE_ATTRIBUTE));
     if (!stateAttrs) continue;
-    const boundary = parseBoundary(el.getAttribute('data-czap-boundary'));
+    const boundary = parseBoundary(el.getAttribute('data-liteship-boundary'));
     if (!boundary) continue;
     entities.push({ entityId, stateAttrs, boundary });
   }
@@ -164,7 +164,7 @@ function discoverSvgEntities(root: ParentNode): SvgEntity[] {
 
 /**
  * Wire the SVG last-mile runtime under `root` (defaults to `document`):
- * discover `[data-czap-entity]` SVG elements, resolve each to its live
+ * discover `[data-liteship-entity]` SVG elements, resolve each to its live
  * SVGElement, and on every signal crossing of its boundary apply the active
  * state's authored attrs through {@link applySvgAttrs} so the live SVG
  * presentation attributes update in place.
@@ -194,7 +194,7 @@ export function attachSvgRuntime(
     // the first crossing only fires on a genuine change, not a redundant
     // re-application of the initial server state.
     const el = resolver(entity.entityId);
-    let previousState = (el instanceof SVGElement ? el.getAttribute('data-czap-state') : null) ?? '';
+    let previousState = (el instanceof SVGElement ? el.getAttribute('data-liteship-state') : null) ?? '';
 
     const update = (): void => {
       const value = readSignalValue(entity.boundary.input);
@@ -203,24 +203,24 @@ export function attachSvgRuntime(
       if (state === previousState) return;
       previousState = state;
       // Reflect the live state onto the element (parity with the satellite
-      // directive's data-czap-state write) before applying its authored attrs.
+      // directive's data-liteship-state write) before applying its authored attrs.
       const target = resolver(entity.entityId);
-      if (target instanceof SVGElement && target.getAttribute('data-czap-state') !== state) {
-        target.setAttribute('data-czap-state', state);
+      if (target instanceof SVGElement && target.getAttribute('data-liteship-state') !== state) {
+        target.setAttribute('data-liteship-state', state);
       }
       applySvgAttrs(frameForState(entity.entityId, entity.stateAttrs, state), resolver);
     };
 
     // Apply once at boot so an authored initial state reaches the DOM even
     // before the first signal crossing.
-    warnIfSignalUnserved(entity.boundary.input, { source: 'czap/astro.svg', what: 'boundary signal' });
+    warnIfSignalUnserved(entity.boundary.input, { source: 'liteship/astro.svg', what: 'boundary signal' });
     const initialValue = readSignalValue(entity.boundary.input);
     if (initialValue !== undefined) {
       const initialState = evaluateBoundary(entity.boundary, initialValue, previousState || undefined);
       previousState = initialState;
       const target = resolver(entity.entityId);
-      if (target instanceof SVGElement && target.getAttribute('data-czap-state') !== initialState) {
-        target.setAttribute('data-czap-state', initialState);
+      if (target instanceof SVGElement && target.getAttribute('data-liteship-state') !== initialState) {
+        target.setAttribute('data-liteship-state', initialState);
       }
       applySvgAttrs(frameForState(entity.entityId, entity.stateAttrs, initialState), resolver);
     }
@@ -240,7 +240,7 @@ export function attachSvgRuntime(
 
 /**
  * Entry point used by the `client:svg` directive. Wires {@link attachSvgRuntime}
- * over the document and honors `czap:reinit` (re-read) / `czap:teardown` (final
+ * over the document and honors `liteship:reinit` (re-read) / `liteship:teardown` (final
  * tear-down) so a View-Transition re-render or teardown re-reads / detaches
  * without remounting. SSR-safe.
  *
@@ -248,7 +248,7 @@ export function attachSvgRuntime(
  *   other directive entries; the SVG runtime does its work synchronously).
  * @param element - The discovered directive element (used only to scope reinit /
  *   dispose listeners). Discovery itself scans the whole document so a single
- *   directive marker can drive every `[data-czap-entity]` SVG on the page.
+ *   directive marker can drive every `[data-liteship-entity]` SVG on the page.
  */
 export function initSvgDirective(load: () => Promise<unknown>, element: HTMLElement): void {
   if (typeof window === 'undefined') {
@@ -262,11 +262,11 @@ export function initSvgDirective(load: () => Promise<unknown>, element: HTMLElem
     cleanup = null;
   };
 
-  element.addEventListener('czap:reinit', () => {
+  element.addEventListener('liteship:reinit', () => {
     dispose();
     cleanup = attachSvgRuntime(document);
   });
-  element.addEventListener('czap:teardown', () => {
+  element.addEventListener('liteship:teardown', () => {
     dispose();
   });
 

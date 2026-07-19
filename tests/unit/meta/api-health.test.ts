@@ -1,7 +1,7 @@
 /**
  * API Health Canary -- programmatic verification of all public APIs.
  *
- * This test is the czap equivalent of free-batteries' ANTI-ALMOST-CORRECTNESS
+ * This test is the liteship equivalent of free-batteries' ANTI-ALMOST-CORRECTNESS
  * PROTOCOL. It catches hallucinated, renamed, or removed APIs before they
  * reach production.
  *
@@ -9,12 +9,12 @@
  * If an AI model generates code referencing a non-existent API, THIS test
  * would have caught the discrepancy.
  *
- * The registry below is the ground truth for what @czap/core exports.
+ * The registry below is the ground truth for what @liteship/core exports.
  * Update it when you intentionally add/remove/rename APIs.
  */
 
 import { describe, test, expect } from 'vitest';
-import * as Core from '@czap/core';
+import * as Core from '@liteship/core';
 
 // ── Ground-truth API registry ───────────────────────────────────────
 // Every namespace object and its expected methods/values.
@@ -77,7 +77,7 @@ const API_REGISTRY: Record<string, { methods: string[]; values?: string[] }> = {
   Zap: { methods: ['make', 'fromDOMEvent', 'merge', 'map', 'filter', 'debounce', 'throttle'] },
   // `Wire` (the fluent Effect-Stream wrapper) was DELETED this wave — 100%
   // transport, zero runtime consumers (the web/astro `wire` is the unrelated
-  // czap:* event registry). `isWire` + the Wire arm of `Primitive` left with it.
+  // liteship:* event registry). `isWire` + the Wire arm of `Primitive` left with it.
   Store: { methods: ['make'] },
   LiveCell: { methods: ['make', 'makeBoundary'] },
 
@@ -210,7 +210,7 @@ const API_REGISTRY: Record<string, { methods: string[]; values?: string[] }> = {
     ],
   },
 
-  // Harness lives at `@czap/core/harness` sub-path — intentionally NOT in
+  // Harness lives at `@liteship/core/harness` sub-path — intentionally NOT in
   // the main entry to keep fast-check + code-gen surface out of every
   // consumer's bundle. Verified separately below.
 };
@@ -244,15 +244,15 @@ const STANDALONE_FUNCTIONS = [
   // The Effect-AST `schemaToJsonSchema` deriver was DELETED this wave. The single
   // JSON-Schema deriver is now the kernel `toJsonSchema` (registered below), which
   // walks the effect-free kernel AST and holds byte-parity with the retired deriver
-  // (the `tests/fixtures/json-schema-parity/` cage). @czap/command carries the
+  // (the `tests/fixtures/json-schema-parity/` cage). @liteship/command carries the
   // as-const JSON-Schema constants directly — no runtime derivation at the barrel.
   // `isValidationError` removed from the main entry — core migrated to the
-  // `@czap/error` algebra; consumers use `hasTag(e, 'ValidationError')` from
-  // `@czap/error` (no per-package guard re-export, no compat shim).
+  // `@liteship/error` algebra; consumers use `hasTag(e, 'ValidationError')` from
+  // `@liteship/error` (no per-package guard re-export, no compat shim).
   'defineConfig',
   'tupleMap',
   // The single f32-canonical boundary state-index kernel (Phase-0 evaluator
-  // consolidation). Public so @czap/worker's host startup path delegates to it.
+  // consolidation). Public so @liteship/worker's host startup path delegates to it.
   'rawIndexF32',
   // Projection vocabulary (Phase-1 Layer 1): per-quantizer output key naming +
   // the canonical GLSL identifier, shared by compositor/worker/astro-gpu/compiler.
@@ -272,7 +272,7 @@ const STANDALONE_FUNCTIONS = [
   // node/graph seal/validate/linearize surface.
   'contentAddressOf',
   // The canonical-CBOR byte serializer behind `contentAddressOf` — surfaced so the
-  // capsule generator-provenance digests (@czap/command) hash the SAME canonical
+  // capsule generator-provenance digests (@liteship/command) hash the SAME canonical
   // bytes the content-address kernel does (one canonicalization, no fork).
   'canonicalAddressBytes',
   'sealNode',
@@ -314,7 +314,7 @@ const STANDALONE_FUNCTIONS = [
   // ParseError instead of silently misparsing it into a v1 shape.
   'decodeDocumentGraph',
   // DocumentGraph node well-formedness — the ONE trust gate shared by the AI
-  // proposal validator and the @czap/astro runtime graph loader (0.4.0 item B).
+  // proposal validator and the @liteship/astro runtime graph loader (0.4.0 item B).
   'isWellFormedNode',
   // Escalation chooser (P5c): the reader of PolicyNode — picks the minimal
   // CapTier rung a policy admits on a runtime site.
@@ -338,11 +338,11 @@ const STANDALONE_FUNCTIONS = [
   'proposalReceiptSubject',
   'defineCapsule',
   'getCapsuleCatalog',
-  // `resetCapsuleCatalog` lives at `@czap/core/testing` sub-path — see below.
+  // `resetCapsuleCatalog` lives at `@liteship/core/testing` sub-path — see below.
   // ShipCapsule release-input addressing helpers (tarballManifestAddress,
   // lockfileAddress, workspaceManifestAddress, normalizedDryRunAddress,
-  // normalizeDryRunOutput) live in @czap/cli per ADR-0011 — they import
-  // node:zlib and must stay out of the browser-bundleable @czap/core.
+  // normalizeDryRunOutput) live in @liteship/cli per ADR-0011 — they import
+  // node:zlib and must stay out of the browser-bundleable @liteship/core.
   // The determinism substrate (0.4.0) — the FUNCTION half: deterministic clock/rng
   // factories. `fixedClock`/`manualClock` build injectable test clocks; `seededRng`
   // a replayable RNG. (The singleton boundaries systemClock/wallClock/systemRng are
@@ -414,9 +414,9 @@ const STANDALONE_FUNCTIONS = [
 ];
 
 // ── Error classes ───────────────────────────────────────────────────
-// Empty: core migrated to the `@czap/error` algebra. `CzapValidationError`
+// Empty: core migrated to the `@liteship/error` algebra. `LiteshipValidationError`
 // (the old ad-hoc class) was deleted — validation failures are now the tagged
-// `ValidationError` value from `@czap/error`, never re-exported from core.
+// `ValidationError` value from `@liteship/error`, never re-exported from core.
 const ERROR_CLASSES: string[] = [];
 
 // Namespace objects that aren't in the main API_REGISTRY (utility re-exports)
@@ -591,12 +591,12 @@ describe('API health canary', () => {
     }
 
     // Footgun gate: the old ad-hoc error classes were deleted when core moved
-    // to the `@czap/error` algebra. They must NOT reappear on the surface —
-    // validation/guard helpers now live in `@czap/error` (`ValidationError`,
+    // to the `@liteship/error` algebra. They must NOT reappear on the surface —
+    // validation/guard helpers now live in `@liteship/error` (`ValidationError`,
     // `hasTag(e, 'ValidationError')`), never re-exported here.
     test('the deleted ad-hoc error classes are NOT on the main entry', () => {
       const core = Core as Record<string, unknown>;
-      expect(core.CzapValidationError).toBeUndefined();
+      expect(core.LiteshipValidationError).toBeUndefined();
       expect(core.isValidationError).toBeUndefined();
     });
   });
@@ -627,13 +627,13 @@ describe('API health canary', () => {
   });
 
   describe('sub-path exports', () => {
-    test('@czap/core/testing exposes resetCapsuleCatalog', async () => {
-      const Testing = await import('@czap/core/testing');
+    test('@liteship/core/testing exposes resetCapsuleCatalog', async () => {
+      const Testing = await import('@liteship/core/testing');
       expect(typeof Testing.resetCapsuleCatalog).toBe('function');
     });
 
-    test('@czap/core/harness exposes the harness generators', async () => {
-      const Harness = await import('@czap/core/harness');
+    test('@liteship/core/harness exposes the harness generators', async () => {
+      const Harness = await import('@liteship/core/harness');
       const expected = [
         'generatePureTransform',
         'generateReceiptedMutation',

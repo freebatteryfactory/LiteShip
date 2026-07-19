@@ -2,15 +2,15 @@
  * Build-side token/theme manifest derivation tests.
  *
  * `collectTokenManifest` / `collectThemeManifest` scan a project for
- * convention modules and derive the manifests behind `virtual:czap/tokens`,
- * `virtual:czap/tokens.css`, and `virtual:czap/themes`.
+ * convention modules and derive the manifests behind `virtual:liteship/tokens`,
+ * `virtual:liteship/tokens.css`, and `virtual:liteship/themes`.
  */
 
 import { afterEach, describe, expect, test } from 'vitest';
 import { mkdtempSync, mkdirSync, rmSync, symlinkSync, utimesSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { Diagnostics, Token, Theme } from '@czap/core';
+import { Diagnostics, Token, Theme } from '@liteship/core';
 import { symlinkUnprivileged } from '../../helpers/capabilities.js';
 import {
   collectTokenManifest,
@@ -23,7 +23,7 @@ import { loadVirtualModule } from '../../../packages/vite/src/virtual-modules.js
 const tempDirs: string[] = [];
 
 function makeTempDir(): string {
-  const dir = mkdtempSync(join(tmpdir(), 'czap-token-manifest-'));
+  const dir = mkdtempSync(join(tmpdir(), 'liteship-token-manifest-'));
   tempDirs.push(dir);
   return dir;
 }
@@ -57,7 +57,7 @@ export const accent = {
   axes: [],
   values: {},
   fallback: '#4f46e5',
-  cssProperty: '--czap-accent',
+  cssProperty: '--liteship-accent',
 };
 `;
 
@@ -92,7 +92,7 @@ describe('collectTokenManifest', () => {
     const css = compileCollectedTokensCss(manifest);
 
     expect(css).toContain(':root {');
-    expect(css).toContain('--czap-accent: #4f46e5');
+    expect(css).toContain('--liteship-accent: #4f46e5');
     expect(css.match(/:root \{/g)?.length).toBe(1);
   });
 
@@ -154,13 +154,13 @@ describe('collectThemeManifest', () => {
   });
 });
 
-describe('plugin virtual:czap/tokens wiring', () => {
+describe('plugin virtual:liteship/tokens wiring', () => {
   function makeModuleGraphMock() {
     const invalidated: string[] = [];
     const virtualModules = [
-      { id: '\0virtual:czap/tokens' },
-      { id: '\0virtual:czap/tokens.css' },
-      { id: '\0virtual:czap/themes' },
+      { id: '\0virtual:liteship/tokens' },
+      { id: '\0virtual:liteship/tokens.css' },
+      { id: '\0virtual:liteship/themes' },
     ];
     return {
       invalidated,
@@ -187,20 +187,20 @@ describe('plugin virtual:czap/tokens wiring', () => {
 
     const tokensLoad = await (vitePlugin.load as (id: string) => Promise<string | undefined>).call(
       undefined as never,
-      '\0virtual:czap/tokens',
+      '\0virtual:liteship/tokens',
     );
     expect(tokensLoad).toContain(referenceToken.id);
     expect(tokensLoad).not.toBe('export const tokens = {};');
 
     const cssLoad = await (vitePlugin.load as (id: string) => Promise<string | undefined>).call(
       undefined as never,
-      '\0virtual:czap/tokens.css',
+      '\0virtual:liteship/tokens.css',
     );
-    expect(cssLoad).toContain('--czap-accent');
+    expect(cssLoad).toContain('--liteship-accent');
 
     const themesLoad = await (vitePlugin.load as (id: string) => Promise<string | undefined>).call(
       undefined as never,
-      '\0virtual:czap/themes',
+      '\0virtual:liteship/themes',
     );
     expect(themesLoad).toContain(referenceTheme.id);
 
@@ -210,9 +210,9 @@ describe('plugin virtual:czap/tokens wiring', () => {
       { environment: { moduleGraph } },
       { file: join(srcDir, 'extra.tokens.ts'), modules: [] },
     );
-    expect(invalidated).toContain('\0virtual:czap/tokens');
-    expect(invalidated).toContain('\0virtual:czap/tokens.css');
-    expect(invalidated).toContain('\0virtual:czap/themes');
+    expect(invalidated).toContain('\0virtual:liteship/tokens');
+    expect(invalidated).toContain('\0virtual:liteship/tokens.css');
+    expect(invalidated).toContain('\0virtual:liteship/themes');
   });
 
   test('editing an EXISTING tokens module busts the ESM import cache on reload', async () => {
@@ -225,7 +225,7 @@ describe('plugin virtual:czap/tokens wiring', () => {
 
     const first = await (vitePlugin.load as (id: string) => Promise<string | undefined>).call(
       undefined as never,
-      '\0virtual:czap/tokens.css',
+      '\0virtual:liteship/tokens.css',
     );
     expect(first).toContain('#4f46e5');
 
@@ -239,7 +239,7 @@ describe('plugin virtual:czap/tokens wiring', () => {
 
     const second = await (vitePlugin.load as (id: string) => Promise<string | undefined>).call(
       undefined as never,
-      '\0virtual:czap/tokens.css',
+      '\0virtual:liteship/tokens.css',
     );
     expect(second).toContain('#111111');
     expect(second).not.toContain('#4f46e5');
@@ -273,14 +273,14 @@ describe('loadVirtualModule token/theme data', () => {
     const tokens = await collectTokenManifest(root);
     const themes = await collectThemeManifest(root);
 
-    expect(loadVirtualModule('\0virtual:czap/tokens', { tokens })).toContain(referenceToken.id);
-    expect(loadVirtualModule('\0virtual:czap/tokens.css', { tokens })).toContain('--czap-accent');
-    expect(loadVirtualModule('\0virtual:czap/themes', { themes })).toContain(referenceTheme.id);
+    expect(loadVirtualModule('\0virtual:liteship/tokens', { tokens })).toContain(referenceToken.id);
+    expect(loadVirtualModule('\0virtual:liteship/tokens.css', { tokens })).toContain('--liteship-accent');
+    expect(loadVirtualModule('\0virtual:liteship/themes', { themes })).toContain(referenceTheme.id);
   });
 
   test('degrades to empty stubs without data (type-checker / bare-bundler path)', () => {
-    expect(loadVirtualModule('\0virtual:czap/tokens')).toBe('export const tokens = {};');
-    expect(loadVirtualModule('\0virtual:czap/tokens.css')).toBe(':root {}');
-    expect(loadVirtualModule('\0virtual:czap/themes')).toBe('export const themes = {};');
+    expect(loadVirtualModule('\0virtual:liteship/tokens')).toBe('export const tokens = {};');
+    expect(loadVirtualModule('\0virtual:liteship/tokens.css')).toBe(':root {}');
+    expect(loadVirtualModule('\0virtual:liteship/themes')).toBe('export const themes = {};');
   });
 });

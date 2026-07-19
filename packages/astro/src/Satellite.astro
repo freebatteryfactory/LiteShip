@@ -2,18 +2,18 @@
 /**
  * Satellite -- the canonical adaptive shell for an Astro page.
  *
- * Wraps a `<div>` with `data-czap-*` attributes derived from a Boundary
+ * Wraps a `<div>` with `data-liteship-*` attributes derived from a Boundary
  * (and optionally a Component or initial state). The integration's
- * injected directive boot scanner reads `data-czap-directive` and
+ * injected directive boot scanner reads `data-liteship-directive` and
  * activates the boundary evaluator on the client — no `client:*`
  * attribute needed (Astro never fires those on `.astro` components).
  * CSS transitions handle visual changes; the directive's only runtime
- * job is to evaluate live signals and update `data-czap-state`.
+ * job is to evaluate live signals and update `data-liteship-state`.
  *
  * @example
  * ```astro
  * ---
- * import Satellite from '@czap/astro/Satellite';
+ * import Satellite from '@liteship/astro/Satellite';
  * import { heroLayout } from '../boundaries.js';
  * ---
  *
@@ -60,7 +60,7 @@ if (
   Astro.props.boundary
 ) {
   try {
-    const { boundaries } = (await import('virtual:czap/boundaries')) as {
+    const { boundaries } = (await import('virtual:liteship/boundaries')) as {
       boundaries: Record<
         string,
         {
@@ -80,7 +80,7 @@ if (
     resolvedGlslDeclarations ??= entry?.outputs.find((o) => o.glsl?.declarations)?.glsl?.declarations;
     resolvedWgslDeclarations ??= entry?.outputs.find((o) => o.wgsl?.declarations)?.wgsl?.declarations;
   } catch {
-    // virtual:czap/boundaries unavailable (e.g. rendered outside the czap
+    // virtual:liteship/boundaries unavailable (e.g. rendered outside the liteship
     // integration) — authored ARIA/GLSL can still be supplied via the props.
   }
 }

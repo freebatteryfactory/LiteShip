@@ -10,7 +10,7 @@ Defined in: [mcp-server/src/lsp/server.ts:110](https://github.com/freebatteryfac
 
 The server's mutable lifecycle state. Composition-over-inheritance: this is a
 DATA record threaded through [handle](../functions/handleLspMessage.md), not an object with methods. The
-findings from the last `czap/check` are cached so a follow-up `codeAction`
+findings from the last `liteship/check` are cached so a follow-up `codeAction`
 request resolves remediations against the same fold the diagnostics came from
 (the §CodeAction.diagnostics back-link must reference the published squiggle).
 

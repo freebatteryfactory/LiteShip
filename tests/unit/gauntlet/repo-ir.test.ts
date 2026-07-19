@@ -10,8 +10,8 @@ import {
   type RepoIR,
   type GateContext,
   type Fact,
-} from '@czap/gauntlet';
-import { isTaggedError } from '@czap/error';
+} from '@liteship/gauntlet';
+import { isTaggedError } from '@liteship/error';
 
 // The B1 foundational contract: the RepoIR interface + the pure in-memory
 // builder. These pin the invariant guards (avionics-grade — an impossible IR
@@ -31,8 +31,8 @@ function buildSampleIR(): RepoIR {
   };
   return makeRepoIR({
     files: [
-      { id: 'packages/core/src/index.ts', contentDigest: PLACEHOLDER_DIGEST, packageName: '@czap/core' },
-      { id: 'packages/core/src/cell.ts', contentDigest: PLACEHOLDER_DIGEST, packageName: '@czap/core' },
+      { id: 'packages/core/src/index.ts', contentDigest: PLACEHOLDER_DIGEST, packageName: '@liteship/core' },
+      { id: 'packages/core/src/cell.ts', contentDigest: PLACEHOLDER_DIGEST, packageName: '@liteship/core' },
     ],
     symbols: [
       {
@@ -53,7 +53,7 @@ function buildSampleIR(): RepoIR {
       { fromFile: 'packages/core/src/index.ts', specifier: 'node:fs', kind: 'external' },
     ],
     packages: [
-      { name: '@czap/core', srcDir: 'packages/core/src', manifestDeps: ['@czap/error'] },
+      { name: '@liteship/core', srcDir: 'packages/core/src', manifestDeps: ['@liteship/error'] },
     ],
     refs: new Map([
       [
@@ -72,8 +72,8 @@ describe('makeRepoIR — the in-memory builder', () => {
     expect(ir.symbols.size).toBe(1);
     expect(ir.packages.size).toBe(1);
     expect(ir.imports).toHaveLength(2);
-    expect(ir.files.get('packages/core/src/index.ts')?.packageName).toBe('@czap/core');
-    expect(ir.packages.get('@czap/core')?.manifestDeps).toEqual(['@czap/error']);
+    expect(ir.files.get('packages/core/src/index.ts')?.packageName).toBe('@liteship/core');
+    expect(ir.packages.get('@liteship/core')?.manifestDeps).toEqual(['@liteship/error']);
     expect(ir.refs.get('packages/core/src/cell.ts#makeCell')).toHaveLength(1);
     // levels is deferred to B3 — omitted, not present.
     expect('levels' in ir).toBe(false);
@@ -131,10 +131,10 @@ describe('makeRepoIR — invariant guards bite (tagged, never bare)', () => {
   it('throws on a duplicate PkgName', () => {
     expect(() =>
       makeRepoIR({
-        files: [{ id: 'a.ts', contentDigest: PLACEHOLDER_DIGEST, packageName: '@czap/core' }],
+        files: [{ id: 'a.ts', contentDigest: PLACEHOLDER_DIGEST, packageName: '@liteship/core' }],
         packages: [
-          { name: '@czap/core', srcDir: 'packages/core/src', manifestDeps: [] },
-          { name: '@czap/core', srcDir: 'packages/core/src', manifestDeps: [] },
+          { name: '@liteship/core', srcDir: 'packages/core/src', manifestDeps: [] },
+          { name: '@liteship/core', srcDir: 'packages/core/src', manifestDeps: [] },
         ],
       }),
     ).toThrow(/duplicate PkgName/);

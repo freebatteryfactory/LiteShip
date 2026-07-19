@@ -3,7 +3,7 @@
  * `@starting-style`.
  *
  * Emits component-scoped CSS using modern CSS features:
- * - `@layer czap.components` for cascade ordering
+ * - `@layer liteship.components` for cascade ordering
  * - `@scope` for DOM subtree containment
  * - `@starting-style` for entry animations
  * - `@container` queries via {@link CSSCompiler} delegation for boundary states
@@ -11,7 +11,7 @@
  * @module
  */
 
-import type { Style, StyleLayer, ShadowLayer } from '@czap/core';
+import type { Style, StyleLayer, ShadowLayer } from '@liteship/core';
 import { CSSCompiler } from './css.js';
 
 // ---------------------------------------------------------------------------
@@ -23,14 +23,14 @@ import { CSSCompiler } from './css.js';
  *
  * Three complementary serializations: `scoped` is the raw `@scope`-wrapped
  * rule block, `layers` is the same content re-wrapped in
- * `@layer czap.components { … }` with any boundary `@container` rules
+ * `@layer liteship.components { … }` with any boundary `@container` rules
  * appended, and `startingStyle` is an `@starting-style` block derived from
  * the base layer for entry animations.
  */
 export interface StyleCSSResult {
   /** `@scope`-wrapped rule block (or plain rules when no component name). */
   readonly scoped: string;
-  /** `@layer czap.components { … }` block including container queries. */
+  /** `@layer liteship.components { … }` block including container queries. */
   readonly layers: string;
   /** `@starting-style { … }` block for entry animations (may be empty). */
   readonly startingStyle: string;
@@ -144,13 +144,13 @@ function emitBoundaryStates(style: Style.Shape, selector: string): string {
  * Compile a {@link Style.Shape} into layered, scoped CSS.
  *
  * When `componentName` is supplied the output is wrapped in an `@scope`
- * block targeting `.czap-<name>` and bounded at `[data-czap-slot]`
+ * block targeting `.liteship-<name>` and bounded at `[data-liteship-slot]`
  * children. Boundary states are compiled into nested `@container` rules
  * via the core {@link CSSCompiler}.
  */
 function compile(style: Style.Shape, componentName?: string): StyleCSSResult {
-  const selector = componentName ? `.czap-${componentName}` : ':where(.czap-styled)';
-  const scopeEnd = componentName ? ' to ([data-czap-slot])' : '';
+  const selector = componentName ? `.liteship-${componentName}` : ':where(.liteship-styled)';
+  const scopeEnd = componentName ? ' to ([data-liteship-slot])' : '';
 
   // Scoped rules (base layer + pseudo-selectors)
   const scopedLines: string[] = [];
@@ -182,7 +182,9 @@ function compile(style: Style.Shape, componentName?: string): StyleCSSResult {
     layerContent.push(containerRules);
   }
 
-  const layers = [`@layer czap.components {`, ...layerContent.map((line) => (line ? `  ${line}` : '')), `}`].join('\n');
+  const layers = [`@layer liteship.components {`, ...layerContent.map((line) => (line ? `  ${line}` : '')), `}`].join(
+    '\n',
+  );
 
   // @starting-style
   const startingStyle = emitStartingStyle(style.base, selector);
@@ -195,7 +197,7 @@ function compile(style: Style.Shape, componentName?: string): StyleCSSResult {
  *
  * Compiles a {@link Style.Shape} into cascade-layered, scoped CSS using
  * `@layer`, `@scope`, `@starting-style`, and `@container` — the modern CSS
- * features that let czap deliver component isolation and state-driven
+ * features that let liteship deliver component isolation and state-driven
  * restyling without runtime class toggling.
  */
 export const StyleCSSCompiler = {

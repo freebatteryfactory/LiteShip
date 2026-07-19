@@ -1,5 +1,5 @@
 /**
- * ffmpeg render capability probe — shared by the render backend, `czap doctor`,
+ * ffmpeg render capability probe — shared by the render backend, `liteship doctor`,
  * and ffmpeg-gated integration tests. CI installs Ubuntu `ffmpeg` (includes
  * libx264); Fedora often ships `ffmpeg-free` without it.
  *

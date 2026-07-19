@@ -30,7 +30,7 @@ Sanctioned manifest-absent dynamic edges (`"<importer> -> <target>"`).
 Defined in: [audit/src/devops-profile.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L68)
 
 Foundational packages every package may import without an explicit
-`allowedInternalImports` entry (the runtime analogue of `@czap/_spine`).
+`allowedInternalImports` entry (the runtime analogue of `@liteship/_spine`).
 Optional: absent ⇒ no foundational exemptions (every internal edge must be
 listed). Downstream profiles may set their own.
 
@@ -42,7 +42,7 @@ listed). Downstream profiles may set their own.
 
 Defined in: [audit/src/devops-profile.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L59)
 
-Internal workspace package prefix — replaces the hardcoded `'@czap/'` import gate.
+Internal workspace package prefix — replaces the hardcoded `'@liteship/'` import gate.
 
 ***
 
@@ -56,7 +56,7 @@ Optional explicit package-root map: package name → ABSOLUTE package dir.
 When present, the passes enumerate THESE roots instead of globbing
 `repoRoot/packages/*` — the consumer-install seam. Build one with
 `consumerDevopsProfile()` / `discoverInstalledPackageRoots()` to audit
-the `@czap/*` packages installed in a downstream repo's node_modules.
+the `@liteship/*` packages installed in a downstream repo's node_modules.
 
 ***
 

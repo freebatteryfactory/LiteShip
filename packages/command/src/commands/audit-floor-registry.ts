@@ -1,8 +1,8 @@
 /**
  * The audit-floor ledger (relocated from `scripts/lib/audit-floor.ts` when the
- * gate became the `audit-floor` command). PURE — no Node, no `@czap/audit` — so
+ * gate became the `audit-floor` command). PURE — no Node, no `@liteship/audit` — so
  * it lives in the pure registry entry. The HEAVY half (`collectWarningInventory`,
- * which runs the `@czap/audit` three-pass engine) stays on the CLI adapter where
+ * which runs the `@liteship/audit` three-pass engine) stays on the CLI adapter where
  * `runAuditFloor` is provisioned; only the floor data + the diff are pure and
  * belong here.
  *

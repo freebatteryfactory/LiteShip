@@ -3,7 +3,7 @@
  */
 
 import { afterEach, describe, test, expect, vi } from 'vitest';
-import { TypedRef } from '@czap/core';
+import { TypedRef } from '@liteship/core';
 
 afterEach(() => {
   vi.restoreAllMocks();

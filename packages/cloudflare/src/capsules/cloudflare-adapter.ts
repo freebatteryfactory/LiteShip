@@ -1,11 +1,11 @@
 /**
- * Capsule declaration for `@czap/cloudflare` — the second `siteAdapter`
+ * Capsule declaration for `@liteship/cloudflare` — the second `siteAdapter`
  * instance (Cloudflare Workers KV boundary cache).
  *
  * @module
  */
 
-import { defineCapsule, S } from '@czap/core';
+import { defineCapsule, S } from '@liteship/core';
 
 const ClientHintsInputSchema = S.record(S.string);
 
@@ -15,7 +15,7 @@ const BoundaryResolutionSchema = S.struct({
 });
 
 /**
- * Declared capsule for `@czap/cloudflare`. Registered in the module-level
+ * Declared capsule for `@liteship/cloudflare`. Registered in the module-level
  * catalog at import time; walked by the factory compiler.
  */
 export const cloudflareAdapterCapsule = defineCapsule({
@@ -45,7 +45,7 @@ export const cloudflareAdapterCapsule = defineCapsule({
   site: ['edge', 'worker'],
   attribution: {
     license: 'MIT',
-    author: 'LiteShip (@czap/cloudflare)',
+    author: 'LiteShip (@liteship/cloudflare)',
     url: 'https://github.com/freebatteryfactory/LiteShip/tree/main/packages/cloudflare',
   },
 });

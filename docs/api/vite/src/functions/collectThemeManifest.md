@@ -10,7 +10,7 @@
 
 Defined in: [vite/src/token-manifest.ts:238](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/token-manifest.ts#L238)
 
-Derive the theme map for `virtual:czap/themes`.
+Derive the theme map for `virtual:liteship/themes`.
 
 ## Parameters
 

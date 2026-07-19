@@ -7,7 +7,7 @@ Current node lane: **7786 passing tests** (23 skipped) across **649 files** (0.1
 captured from a fresh `pnpm test` on 2026-07-13).
 Current browser lane: shared-runtime suites run against a Chromium + Firefox + WebKit matrix, with capability-specific browser tests remaining Chromium-first where the platform surface is intentionally non-uniform.
 
-**Shipped since this baseline (0.7.0 → 0.8.1):** the client→server mutation channel (`graphMutationRoute` / `createGraphMutationClient` / `sendGraphMutation`, ADR-0030), form-to-mutation binding (`bindGraphForm`, ADR-0031), morph-opaque client-owned subtrees (`data-czap-morph-opaque`, ADR-0032), Standard Schema interop on the node schema (`DocumentGraphNodeSchema.~standard`, ADR-0033), the Workers static-assets boundary-CSS dev path (ADR-0025), Receipt-DAG compaction (ADR-0026), the Cell value→wire boundary (ADR-0027), Epic 9 motion/stream spine (PR #135: `interpretTransition`, `MotionCompiler`, `StateCell`, wire-contract registry, active-surface gate #132), and **0.8.1** test/bench/CI hardening (parallel CI, `check:gates`, honest benches). Publishing is OIDC trusted publishing with provenance (no `NPM_TOKEN`). Neither dogfood consumer exercises the mutation channel or `bindGraphForm` in production yet — that surface is proven by tests + `examples/06-mutation-roundtrip`, not yet by a live consumer.
+**Shipped since this baseline (0.7.0 → 0.8.1):** the client→server mutation channel (`graphMutationRoute` / `createGraphMutationClient` / `sendGraphMutation`, ADR-0030), form-to-mutation binding (`bindGraphForm`, ADR-0031), morph-opaque client-owned subtrees (`data-liteship-morph-opaque`, ADR-0032), Standard Schema interop on the node schema (`DocumentGraphNodeSchema.~standard`, ADR-0033), the Workers static-assets boundary-CSS dev path (ADR-0025), Receipt-DAG compaction (ADR-0026), the Cell value→wire boundary (ADR-0027), Epic 9 motion/stream spine (PR #135: `interpretTransition`, `MotionCompiler`, `StateCell`, wire-contract registry, active-surface gate #132), and **0.8.1** test/bench/CI hardening (parallel CI, `check:gates`, honest benches). Publishing is OIDC trusted publishing with provenance (no `NPM_TOKEN`). Neither dogfood consumer exercises the mutation channel or `bindGraphForm` in production yet — that surface is proven by tests + `examples/06-mutation-roundtrip`, not yet by a live consumer.
 
 **Shipped in the 0.9 completion campaign (2026-07-13, semantic-truth pass over the 25-package system):**
 moved several seams from *structural* completion (a field is read, a fallback is exported) to *semantic*
@@ -25,7 +25,7 @@ error XOR, `Vary` token merge, deployed-doctor semantic header checks + swallow-
 AST-based Workers-`Date` analysis, and answer-first npm metadata for all 25 packages with a prepublish
 gate (#146). Full node vitest suite green (7786/7809).
 
-Product naming for prose elsewhere: [GLOSSARY.md](./GLOSSARY.md). Tables below stay operational. Identifiers like `host-wired` and `pnpm exec czap` are literal gate vocabulary, not marketing rename targets.
+Product naming for prose elsewhere: [GLOSSARY.md](./GLOSSARY.md). Tables below stay operational. Identifiers like `host-wired` and `pnpm exec liteship` are literal gate vocabulary, not marketing rename targets.
 
 Current first-class support target (tier-1, CI-gated):
 
@@ -40,7 +40,7 @@ macOS (tier-2, best-effort, real CI signal):
 
 `macos-smoke` runs every PR on `macos-latest` via `.github/workflows/ci.yml`. The job is `continue-on-error: true`, so a macOS regression will not block merge to main; it surfaces as a yellow check, not silence. The smoke covers: build, typecheck, lint, invariants, test, test:vite, test:astro, test:cloudflare, test:tailwind, test:redteam, package:smoke. Playwright-browser-dependent lanes (`test:e2e`, `coverage:browser`) stay Linux-only because Playwright dep install on macOS is a separate path. Known divergence areas the smoke does not catch:
 
-- Vite filesystem watchers use FSEvents on APFS vs inotify / ReadDirectoryChangesW on ext4 / NTFS; HMR behavior under `@czap/vite` may differ.
+- Vite filesystem watchers use FSEvents on APFS vs inotify / ReadDirectoryChangesW on ext4 / NTFS; HMR behavior under `@liteship/vite` may differ.
 - Worker startup on Apple Silicon is faster than the Linux baseline the bench gates are calibrated against; hard gates should still pass, distributions will differ.
 - The `coverage:browser` lane is Linux-only; merged coverage on macOS is partial.
 
@@ -59,10 +59,10 @@ Current security/default-trust posture:
 - LLM rendering defaults to text-safe behavior
 - stream and LLM HTML flows route through shared `text` / `sanitized-html` / explicit `trusted-html` trust surfaces
 - morph parsing strips executable markup classes
-- boundary state writes default to `--czap-*`, `aria-*`, and `role`
+- boundary state writes default to `--liteship-*`, `aria-*`, and `role`
 - theme compilation rejects unsafe prefixes and CSS-breaking token values
-- `__CZAP_DETECT__` is a frozen, non-enumerable, minimal runtime snapshot rather than a writable probe dump
-- `__CZAP_RUNTIME_POLICY__` is a frozen, non-enumerable runtime trust snapshot for endpoint and HTML policy decisions
+- `__LITESHIP_DETECT__` is a frozen, non-enumerable, minimal runtime snapshot rather than a writable probe dump
+- `__LITESHIP_RUNTIME_POLICY__` is a frozen, non-enumerable runtime trust snapshot for endpoint and HTML policy decisions
 
 Current browser-security posture:
 
@@ -91,12 +91,12 @@ Current browser-security posture:
 | `pnpm run test:e2e`         | green, `retries: 0`                                     | any                |
 | `pnpm run test:e2e:stress`  | green, 10x repeated WebCodecs capture run               | any                |
 | `pnpm run test:e2e:stream-stress` | green, 10x repeated stream reconnect / retarget run | any                |
-| `pnpm run test:flake`       | green, repeated scheduler / stream / worker-sensitive suites; browser repeat pass defaults to Chromium unless `CZAP_VITEST_BROWSERS` is set | any           |
+| `pnpm run test:flake`       | green, repeated scheduler / stream / worker-sensitive suites; browser repeat pass defaults to Chromium unless `LITESHIP_VITEST_BROWSERS` is set | any           |
 | `pnpm run test:redteam`     | green, dedicated negative trust-boundary regression lane | any               |
 | `pnpm run bench`            | green                                                   | any                |
 | `pnpm run bench:gate`       | green, replicated statistical gate                      | any                |
 | `pnpm run bench:reality`    | green, browser cold-start evidence artifact             | any                |
-| `pnpm run package:smoke`    | green, pack/install/export smoke for every publishable `@czap/*` scope | any           |
+| `pnpm run package:smoke`    | green, pack/install/export smoke for every publishable `@liteship/*` scope | any           |
 | `pnpm run coverage:node`    | green, v8 coverage output                               | any                |
 | `pnpm run coverage:browser` | green, Vitest browser mode with Chromium-only coverage collection (matrix correctness runs separately) | any |
 | `pnpm run coverage:merge`   | green, merged thresholds enforced                       | any                |
@@ -108,8 +108,8 @@ Current browser-security posture:
 | `pnpm run gauntlet:full`    | canonical full sequential gauntlet                      | any                |
 | `pnpm run capsule:compile`  | green, emits reports/capsule-manifest.json + tests/generated/* harness files | any |
 | `pnpm run capsule:verify`   | green, runs all generated tests + benches               | any                |
-| `pnpm exec czap describe`   | green, emits JSON schema of catalog + commands          | any                |
-| `pnpm exec czap mcp`        | runs indefinitely on stdio; MCP tools/list + tools/call | any                |
+| `pnpm exec liteship describe`   | green, emits JSON schema of catalog + commands          | any                |
+| `pnpm exec liteship mcp`        | runs indefinitely on stdio; MCP tools/list + tools/call | any                |
 
 `pnpm run coverage:merge` is the source of truth for threshold enforcement.
 It seeds missing runtime files, merges node + browser lanes, and hard-fails if
@@ -203,7 +203,7 @@ Startup steering now follows a generic `paired-truth` model:
 source of truth — `packages/cli/src/gauntlet-phases.ts` — and `scripts/gauntlet.ts`
 simply loops it; there are no per-phase `run(...)` call sites to count against. Do not
 re-list the phases here (a hand-maintained mirror drifts the moment a phase is added,
-removed, or reordered). To see the live ordered sequence, run `czap gauntlet --dry-run`
+removed, or reordered). To see the live ordered sequence, run `liteship gauntlet --dry-run`
 or read `gauntlet-phases.ts` directly. The per-phase timing table below is a captured
 **performance snapshot**, not the authoritative sequence.
 
@@ -261,7 +261,7 @@ For the canonical, current truth, read `benchmarks/gauntlet-phase-timings.json` 
 ## Quality Policy
 
 - Package source files do not use raw `console.*` for runtime boundary logging.
-  Centralized diagnostics now flow through `@czap/core` `Diagnostics`.
+  Centralized diagnostics now flow through `@liteship/core` `Diagnostics`.
 - Diagnostics are typed (`level`, `source`, `code`, `message`, optional
   `cause`, optional `detail`) and testable via a swappable sink.
 - `warnOnce` is the standard path for deduped capability and fallback notices.
@@ -278,15 +278,15 @@ logic.
 
 | Classification | Package / Surface | Current status |
 | -------------- | ----------------- | -------------- |
-| `host-wired` | `@czap/astro` shared runtime adapters | `satellite`, `stream`, `llm`, `worker`, and `wasm` all route through `packages/astro/src/runtime/*` |
-| `host-wired` | `@czap/web` DOM runtime | Astro stream + LLM paths use shared `SSE`, `Resumption`, `Morph`, `SlotRegistry`, and `LLMAdapter` |
-| `host-wired` | `@czap/worker` | Astro worker directive now uses `WorkerHost` rather than inline Blob worker protocol |
-| `host-wired` | `@czap/core` runtime coordination + WASM / GenUI surfaces | Compositor and worker host paths now expose shared `RuntimeCoordinator` state; Astro wasm uses `WASMDispatch`; Astro llm uses `TokenBuffer`, `UIQuality`, `GenFrame`, `Receipt`, and `DAG`-ordered replay plumbing |
-| `host-wired` | `@czap/vite` wasm asset path | `virtual:czap/wasm-url` is wired into the real plugin/integration path |
-| `host-wired` | `@czap/edge` request + cache/theme host path | Astro middleware now routes through `createEdgeHostAdapter`, which resolves `ClientHints`, `EdgeTier`, `compileTheme`, and `createBoundaryCache` in one host path |
-| `host-wired` | `@czap/cloudflare` Workers KV glue | `cloudflareMiddleware` maps `cloudflare:workers` env bindings to `@czap/edge` KV cache; cache config is build-derived from the `virtual:czap/boundaries` manifest (minted ids + precompiled per-tier outputs); proof at `examples/cloudflare-astro/` |
-| `standalone subsystem` | `@czap/remotion` | supported video branch, not part of the default Astro/Web runtime path |
-| `host-wired` | `@czap/core` `Plan` / `ECS` | promoted through `RuntimeCoordinator`; the compositor and worker host paths now use a real plan graph plus ECS-backed dense stores for runtime bookkeeping |
+| `host-wired` | `@liteship/astro` shared runtime adapters | `satellite`, `stream`, `llm`, `worker`, and `wasm` all route through `packages/astro/src/runtime/*` |
+| `host-wired` | `@liteship/web` DOM runtime | Astro stream + LLM paths use shared `SSE`, `Resumption`, `Morph`, `SlotRegistry`, and `LLMAdapter` |
+| `host-wired` | `@liteship/worker` | Astro worker directive now uses `WorkerHost` rather than inline Blob worker protocol |
+| `host-wired` | `@liteship/core` runtime coordination + WASM / GenUI surfaces | Compositor and worker host paths now expose shared `RuntimeCoordinator` state; Astro wasm uses `WASMDispatch`; Astro llm uses `TokenBuffer`, `UIQuality`, `GenFrame`, `Receipt`, and `DAG`-ordered replay plumbing |
+| `host-wired` | `@liteship/vite` wasm asset path | `virtual:liteship/wasm-url` is wired into the real plugin/integration path |
+| `host-wired` | `@liteship/edge` request + cache/theme host path | Astro middleware now routes through `createEdgeHostAdapter`, which resolves `ClientHints`, `EdgeTier`, `compileTheme`, and `createBoundaryCache` in one host path |
+| `host-wired` | `@liteship/cloudflare` Workers KV glue | `cloudflareMiddleware` maps `cloudflare:workers` env bindings to `@liteship/edge` KV cache; cache config is build-derived from the `virtual:liteship/boundaries` manifest (minted ids + precompiled per-tier outputs); proof at `examples/cloudflare-astro/` |
+| `standalone subsystem` | `@liteship/remotion` | supported video branch, not part of the default Astro/Web runtime path |
+| `host-wired` | `@liteship/core` `Plan` / `ECS` | promoted through `RuntimeCoordinator`; the compositor and worker host paths now use a real plan graph plus ECS-backed dense stores for runtime bookkeeping |
 
 ---
 
@@ -423,7 +423,7 @@ Merged thresholds currently enforced:
 
 - Bench pairs run against shared production/runtime helpers, not benchmark-only
   duplicate logic.
-- The `stream` directive benchmark reuses `@czap/web` `SSE.parseMessage()`
+- The `stream` directive benchmark reuses `@liteship/web` `SSE.parseMessage()`
   instead of a local parser copy.
 - Hard-gated pairs: `satellite`, `stream`, `llm`, `worker`,
   `llm-startup-shared`, `llm-promoted-startup-shared`,
@@ -508,22 +508,22 @@ emits stable mix receipts end-to-end through the SceneRuntime).
 
 First-run developer experience built on top of the existing CLI dispatch:
 
-- **`czap doctor`** — preflight rig check with 9 probes (Node, pnpm,
+- **`liteship doctor`** — preflight rig check with 9 probes (Node, pnpm,
   workspace install, core/cli built, git hooks, git config, Playwright,
   WASM toolchain). Emits JSON receipt on stdout + colored TTY summary on
   stderr. Three bearings (`ok`/`warn`/`fail`) aggregate to one verdict
   (`ready`/`caution`/`blocked`).
-- **`czap doctor --fix`** — cheap, local remediation: invalidates
+- **`liteship doctor --fix`** — cheap, local remediation: invalidates
   tsbuildinfo and rebuilds when dist/ is missing-but-tsconfig-thinks-fresh;
   re-links pre-commit hook. Receipt records `fixed: DoctorFix[]`.
-- **`czap doctor --ci`** — escalates `caution` to exit 1 (warnings block
+- **`liteship doctor --ci`** — escalates `caution` to exit 1 (warnings block
   CI). Verdict stays honest; only exit code escalates. Records
   `strict: true` in the receipt.
-- **`czap glossary [term]`** — terminal access to the prose register
-  (LiteShip / CZAP / @czap/* naming + maritime CLI ontology).
-- **`czap help`** — verb table grouped by phase (cast off, compose + render,
-  manifest, ship out, servers); `czap help` projects the live grouping.
-- **`czap completion <bash|zsh|fish>`** — shell tab-completion scripts.
+- **`liteship glossary [term]`** — terminal access to the prose register
+  (LiteShip / @liteship/* naming + maritime CLI ontology).
+- **`liteship help`** — verb table grouped by phase (cast off, compose + render,
+  manifest, ship out, servers); `liteship help` projects the live grouping.
+- **`liteship completion <bash|zsh|fish>`** — shell tab-completion scripts.
   Drift-guarded by `tests/unit/cli/commands/completion.test.ts` parsing
   dispatch.ts.
 - **`pnpm verify`** — guided first-run check: doctor → build → test with
@@ -538,7 +538,7 @@ First-run developer experience built on top of the existing CLI dispatch:
   parses the build script out of root package.json; can't drift.
 - **Glossary-lint** — `tests/unit/cli/glossary-lint.test.ts` scans CLI
   source for maritime register terms and asserts each is defined in both
-  `GLOSSARY.md` and `czap glossary`. Future ontology additions can't
+  `GLOSSARY.md` and `liteship glossary`. Future ontology additions can't
   land without their glossary entry.
 - **`SKIP_PRECOMMIT=1`** escape hatch in pre-commit hook (with re-run
   reminder banner).
@@ -548,7 +548,7 @@ First-run developer experience built on top of the existing CLI dispatch:
   vitest-stack, lint-stack, framework-stack) + monthly github-actions.
 
 Receipts on stdout stay machine-clean; colored output goes to stderr only,
-so `czap doctor | jq` and MCP-mode usage keep working.
+so `liteship doctor | jq` and MCP-mode usage keep working.
 
 ## Decided (Closed)
 
@@ -572,7 +572,7 @@ Documented in README.
 
 ### B.3: RESOLVED
 
-~~Comment `fx.components` in style-css.ts:5~~ -- fixed to `czap.components`.
+~~Comment `fx.components` in style-css.ts:5~~ -- fixed to `liteship.components`.
 
 ---
 
@@ -635,7 +635,7 @@ worth keeping under stress coverage.
 
 `virtual-modules.ts` returns `export const tokens = {}` etc. This is
 intentional: transform pipeline replaces @token/@theme blocks inline in CSS files.
-Stubs exist for explicit `import 'virtual:czap/tokens'` use (type-checker/bundler
+Stubs exist for explicit `import 'virtual:liteship/tokens'` use (type-checker/bundler
 happy path). Documented in JSDoc.
 
 ---
@@ -669,8 +669,8 @@ through `workspace:*` links until each external npm cut.
 
 - package surfaces, `dist/` outputs, export maps, and type entrypoints must
   stay release-ready
-- `package:smoke` is required proof for every publishable `@czap/*` scope
-  (including type-only `@czap/_spine`); the roster is derived from the package
+- `package:smoke` is required proof for every publishable `@liteship/*` scope
+  (including type-only `@liteship/_spine`); the roster is derived from the package
   manifests and guarded by `tests/unit/devops/package-smoke-roster.test.ts`
 - external publishing remains a deliberate release decision, not an accidental
   side effect of package shape
@@ -693,19 +693,19 @@ Lens C/E micro-cuts, D10 interactivity, MCP Apps spec-completeness, and Lens W (
 | `wgsl-gpu-runtime` | WGSL directives use WebGPU path (`wgpu.ts`) with WebGL2 fallback |
 | `mcp-apps-spec-completeness` | UI resources emit `_meta.ui.permissions` + `prefersBorder` |
 | `d10-interactive-widgets` | View bridge `callServerTool` + server `ui/call-tool` handler |
-| `webmcp-host-browser` | `@czap/command/host-browser` + `registerWebMcpTools()` |
+| `webmcp-host-browser` | `@liteship/command/host-browser` + `registerWebMcpTools()` |
 
 ---
 
 ## Framework primitives (v0.2 prep)
 
-- **`@czap/canonical`** — standalone bytes kernel (RFC 8949 §4.2.1 CBOR, FNV-1a labels, sync `AddressedDigest`); sole runtime dependency is `@noble/hashes`; no spine/core/Effect graph in-package.
-- **`@czap/genui`** — closed catalog renderer (`defineComponentCatalog`, `validateGeneratedUITree`, `renderFromCatalog`); allowlisted DOM only — no model HTML; host owns interaction authority via `genui:interaction`.
+- **`@liteship/canonical`** — standalone bytes kernel (RFC 8949 §4.2.1 CBOR, FNV-1a labels, sync `AddressedDigest`); sole runtime dependency is `@noble/hashes`; no spine/core/Effect graph in-package.
+- **`@liteship/genui`** — closed catalog renderer (`defineComponentCatalog`, `validateGeneratedUITree`, `renderFromCatalog`); allowlisted DOM only — no model HTML; host owns interaction authority via `genui:interaction`.
 - **`GenFrame.receiptId`** — each frame mints a deterministic content address from stable fields (`frameCount`, `type`, `tokens`, `qualityTier`, `morphStrategy`, `bufferPosition`) via `CanonicalCbor.encode`; timestamp stays metadata.
-- **`@czap/core` shim** — re-exports the canonical kernel at its export boundary; byte parity pinned in `tests/unit/canonical/core-shim-conformance.test.ts`.
+- **`@liteship/core` shim** — re-exports the canonical kernel at its export boundary; byte parity pinned in `tests/unit/canonical/core-shim-conformance.test.ts`.
 - **Golden vectors** — encoder and digest output pinned under `tests/unit/canonical/` (ADR-0013).
 - **GenUI stream discriminator** — catalog trees arrive as `{ "_genui": true, name, props, ... }`; legacy token/text/HTML streaming unchanged when the marker is absent (ADR-0014).
-- **25 publishable packages** — 23 `@czap/*` scopes plus `create-liteship` and `liteship`; `package:smoke` roster derived from manifests; B6a guard in `tests/unit/devops/package-smoke-roster.test.ts` prevents silent skips.
+- **25 publishable packages** — 23 `@liteship/*` scopes plus `create-liteship` and `liteship`; `package:smoke` roster derived from manifests; B6a guard in `tests/unit/devops/package-smoke-roster.test.ts` prevents silent skips.
 
 ---
 
@@ -738,9 +738,9 @@ Lens C/E micro-cuts, D10 interactivity, MCP Apps spec-completeness, and Lens W (
 | ---------------------------- | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Phase 1: Conveyor Belt       | 8/8   | CompositorStatePool, DirtyFlags wiring, MotionTier gating, MemoCache, springToLinearCSS, FrameBudget priority lanes, SpeculativeEvaluator, microtask batching  |
 | Phase 1.5: GenUI Pipeline    | 5/5   | TokenBuffer (jitter buffer + EMA), UIQuality (ABR tiers), GenFrame (I/P/B frames + receipt chain), LLMAdapter (provider-agnostic), gap resolution orchestrator |
-| Phase 2: Edge Pipeline       | 4/4   | Client Hints parser (13 headers), EdgeTier detection + data-czap-\* attributes, KV boundary cache (content-addressed), per-tenant theme compilation            |
+| Phase 2: Edge Pipeline       | 4/4   | Client Hints parser (13 headers), EdgeTier detection + data-liteship-\* attributes, KV boundary cache (content-addressed), per-tenant theme compilation            |
 | Phase 3: Worker Architecture | 4/4   | SPSC lock-free ring buffer (SharedArrayBuffer), compositor worker (typed messages), VideoRenderer + OffscreenCanvas, main-thread host coordinator              |
-| Phase 4: WASM Escape Hatch   | 3/3   | czap-compute Rust crate (#![no_std], C-ABI), WASMDispatch detection/loading, TypeScript fallback kernels                                                       |
+| Phase 4: WASM Escape Hatch   | 3/3   | liteship-compute Rust crate (#![no_std], C-ABI), WASMDispatch detection/loading, TypeScript fallback kernels                                                       |
 | Phase 5: A/V Convergence     | 5/5   | AVBridge (atomic sample counter on SAB), Signal.audio() (sample/normalized), Scheduler.audioSync(), AVRenderer (deterministic offline), AudioWorklet processor |
 
 ### Phase 6 Waves (all verified green)
@@ -748,7 +748,7 @@ Lens C/E micro-cuts, D10 interactivity, MCP Apps spec-completeness, and Lens W (
 | Wave                       | Items               | Scope                                                                                                                                                                                                   |
 | -------------------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Wave 1: Showstoppers       | 6/6                 | WebCodecs sync, AnimatedQuantizer, Op.retry, Derived.flatten, Codec errors, receipt MAC                                                                                                                 |
-| Wave 2: Ontological Rename | 3/3                 | `--fx-` -> `--czap-`, `data-fx-` -> `data-czap-`, `virtual:fx/` -> `virtual:czap/`                                                                                                                      |
+| Wave 2: Ontological Rename | 3/3                 | `--fx-` -> `--liteship-`, `data-fx-` -> `data-liteship-`, `virtual:fx/` -> `virtual:liteship/`                                                                                                                      |
 | Wave 3: Almost-Correct     | 11/11               | Zap.debounce, Cell.all semaphore, Op.allSettled, Spring scaling, Animation duration, Compositor blend, Video scheduler, CSS inferSyntax, Plan.topoSort, Vite CSS parser, DOM diff + WGSL + ComponentCSS |
 | Wave 4: Architectural      | 5/5                 | DAG multi-parent, LiveCell crossings + `makeBoundary`, CSS block overrides, HMR virtual module, test imports                                                                                            |
 | Wave 5: Platform + Cleanup | 17 items            | HLC overflow, Boundary validation, Wire shutdown, SSE queue, resumption URL, restore try/catch, dead code removal, ARIA/WGSL fixes, bench setup                                                         |

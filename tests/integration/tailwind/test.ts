@@ -1,16 +1,16 @@
 /**
  * Tailwind v4 Integration Test
  *
- * Proves the czap token -> Tailwind pipeline works end-to-end:
- *   1. Create czap tokens via Token.make()
+ * Proves the liteship token -> Tailwind pipeline works end-to-end:
+ *   1. Create liteship tokens via Token.make()
  *   2. Compile them to a @theme block via TokenTailwindCompiler
  *   3. Feed the @theme block into Tailwind v4's compile() API
  *   4. Build CSS for utility classes that reference the theme tokens
  *   5. Verify the generated CSS contains correct custom properties and values
  */
 
-import { Token } from '@czap/core';
-import { TokenTailwindCompiler } from '@czap/compiler';
+import { Token } from '@liteship/core';
+import { TokenTailwindCompiler } from '@liteship/compiler';
 import { compile } from '@tailwindcss/node';
 import { resolve } from 'node:path';
 
@@ -36,7 +36,7 @@ function assertContains(haystack: string, needle: string, label: string): void {
 }
 
 // ---------------------------------------------------------------------------
-// 1. Define czap tokens
+// 1. Define liteship tokens
 // ---------------------------------------------------------------------------
 
 const tokens = [
@@ -88,7 +88,7 @@ const tokens = [
 // 2. Compile tokens -> @theme block
 // ---------------------------------------------------------------------------
 
-console.log('\n=== czap -> Tailwind v4 Integration Test ===\n');
+console.log('\n=== liteship -> Tailwind v4 Integration Test ===\n');
 
 console.log('[Phase 1] TokenTailwindCompiler output\n');
 

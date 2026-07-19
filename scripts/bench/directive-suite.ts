@@ -1,9 +1,9 @@
 import { Bench, type FnOptions } from 'tinybench';
 import { LLM_STEADY_DIRECTIVE_P99_MAX_NS, LLM_STEADY_REPLICATE_EXCEEDANCE_MAX } from './flex-policy.js';
-import { Boundary, GenFrame, TokenBuffer, UIQuality, RuntimeCoordinator, type CompositeState } from '@czap/core';
-import { ClientHints, compileTheme, createEdgeHostAdapter, EdgeTier } from '@czap/edge';
-import { LLMChunkNormalization, SSE, type LLMChunk } from '@czap/web';
-import { WorkerHost } from '@czap/worker';
+import { Boundary, GenFrame, TokenBuffer, UIQuality, RuntimeCoordinator, type CompositeState } from '@liteship/core';
+import { ClientHints, compileTheme, createEdgeHostAdapter, EdgeTier } from '@liteship/edge';
+import { LLMChunkNormalization, SSE, type LLMChunk } from '@liteship/web';
+import { WorkerHost } from '@liteship/worker';
 import { evaluateBoundary, parseBoundary } from '../../packages/astro/src/runtime/boundary.ts';
 import { parseLLMChunk } from '../../packages/astro/src/runtime/llm.ts';
 import { makeResolvedStateEnvelope } from '../../packages/worker/src/messages.ts';
@@ -293,9 +293,9 @@ export function buildDirectiveBenchConfig(replicates = DEFAULT_GATE_REPLICATES):
 
 function buildCompositeState(state: string): void {
   const discrete: Record<string, string> = { layout: state };
-  const css: Record<string, string> = { '--czap-layout': state };
+  const css: Record<string, string> = { '--liteship-layout': state };
   const glsl: Record<string, number> = { u_layout: satelliteBoundary.states.indexOf(state) };
-  const aria: Record<string, string> = { 'data-czap-layout': state };
+  const aria: Record<string, string> = { 'data-liteship-layout': state };
   void discrete;
   void css;
   void glsl;
@@ -310,9 +310,9 @@ function buildCompositePayload(state: string): {
 } {
   return {
     discrete: { layout: state },
-    css: { '--czap-layout': state },
+    css: { '--liteship-layout': state },
     glsl: { u_layout: satelliteBoundary.states.indexOf(state) },
-    aria: { 'data-czap-layout': state },
+    aria: { 'data-liteship-layout': state },
   };
 }
 
@@ -325,9 +325,9 @@ function buildWorkerCompositeState(name: string, state: string): CompositeState 
       [name]: Object.fromEntries(satelliteBoundary.states.map((candidate) => [candidate, candidate === state ? 1 : 0])),
     },
     outputs: {
-      css: { [`--czap-${name}`]: state },
+      css: { [`--liteship-${name}`]: state },
       glsl: { [`u_${name}`]: stateIndex },
-      aria: { [`data-czap-${name}`]: state },
+      aria: { [`data-liteship-${name}`]: state },
     },
   };
 }
@@ -1387,7 +1387,7 @@ export const DIRECTIVE_BENCH_TASKS: readonly DirectiveBenchTaskDefinition[] = [
     fn: () => {
       repeatHotPath(() => {
         const state = evaluateSatelliteDirectiveState(SATELLITE_HOT_VALUE);
-        void `data-czap-state=${state}`;
+        void `data-liteship-state=${state}`;
       });
     },
     options: syncBenchTaskOptions,
@@ -1397,7 +1397,7 @@ export const DIRECTIVE_BENCH_TASKS: readonly DirectiveBenchTaskDefinition[] = [
     fn: () => {
       repeatHotPath(() => {
         const state = evaluateSatelliteBaselineState(SATELLITE_HOT_VALUE);
-        void `data-czap-state=${state}`;
+        void `data-liteship-state=${state}`;
       });
     },
     options: syncBenchTaskOptions,

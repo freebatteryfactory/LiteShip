@@ -10,8 +10,8 @@ import {
   lowerScrollTimelineIntent,
   interpretTransition,
   resolveScrollTimelineInitialState,
-} from '@czap/core';
-import { compileScrollTimeline } from '@czap/compiler';
+} from '@liteship/core';
+import { compileScrollTimeline } from '@liteship/compiler';
 
 function heroScrollIntent() {
   return ScrollTimeline.intent({
@@ -84,8 +84,8 @@ describe('ScrollTimeline graph → CSS', () => {
     const lowered = lowerScrollTimelineIntent(heroScrollIntent());
     const compiled = compileScrollTimeline(lowered.graph, lowered.transitionId, lowered.intent);
     expect(compiled.css.raw).toContain('@media (prefers-reduced-motion: reduce)');
-    // Targets the real stamped selector, not an unstamped [data-czap-scroll] attribute.
-    expect(compiled.css.raw).not.toContain('data-czap-scroll');
+    // Targets the real stamped selector, not an unstamped [data-liteship-scroll] attribute.
+    expect(compiled.css.raw).not.toContain('data-liteship-scroll');
     const guard = compiled.css.raw.slice(compiled.css.raw.indexOf('@media (prefers-reduced-motion: reduce)'));
     expect(guard).toContain('animation: none !important');
     expect(guard).toContain('opacity');

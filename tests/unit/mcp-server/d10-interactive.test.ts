@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { dispatch } from '@czap/mcp-server';
+import { dispatch } from '@liteship/mcp-server';
 import { renderCapsuleInspectWidget } from '../../../packages/mcp-server/src/app-render.js';
 import { SERVER_CAPABILITIES } from '../../../packages/mcp-server/src/capabilities.js';
 

@@ -1,5 +1,5 @@
 {
-  "name": "@czap/genui",
+  "name": "@liteship/genui",
   "version": "0.18.0",
   "description": "Render AI-generated UI safely in LiteShip: validate a model's proposed component tree against a host-owned catalog and draw only trusted, whitelisted components.",
   "license": "MIT",
@@ -12,7 +12,6 @@
   "bugs": "https://github.com/freebatteryfactory/LiteShip/issues",
   "homepage": "https://github.com/freebatteryfactory/LiteShip#readme",
   "keywords": [
-    "czap",
     "liteship",
     "generative-ui",
     "ai-safety",
@@ -40,9 +39,9 @@
     "prepack": "pnpm run build"
   },
   "dependencies": {
-    "@czap/_spine": "workspace:*",
-    "@czap/canonical": "workspace:*",
-    "@czap/error": "workspace:*"
+    "@liteship/_spine": "workspace:*",
+    "@liteship/canonical": "workspace:*",
+    "@liteship/error": "workspace:*"
   },
   "engines": {
     "node": ">=22.13.0"

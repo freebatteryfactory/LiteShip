@@ -11,14 +11,14 @@
  * @module
  */
 
-import type { Site } from '@czap/core';
+import type { Site } from '@liteship/core';
 import type {
   TrackId as _TrackId,
   TrackKind as _TrackKind,
   FrameMark as _FrameMark,
   TrackEnvelope,
   EaseTag,
-} from '@czap/_spine';
+} from '@liteship/_spine';
 import type { BeatBinding } from './capsules/beat-binding.js';
 
 /** Closed set of track kinds. */

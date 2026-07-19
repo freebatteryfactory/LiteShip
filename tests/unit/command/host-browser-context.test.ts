@@ -7,7 +7,7 @@
  * @module
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { createBrowserCommandContext, browserSafeCommandNames } from '@czap/command/host-browser';
+import { createBrowserCommandContext, browserSafeCommandNames } from '@liteship/command/host-browser';
 
 function stubFetch(body: unknown): ReturnType<typeof vi.fn> {
   const mock = vi.fn(async () => ({ json: async () => body }));
@@ -80,7 +80,7 @@ describe('renderScene MCP delegation (fetch stubbed)', () => {
     expect(failure).toContain(`browser-context.render (${URL})`);
     expect(failure).toContain('scene.render delegation failed');
     expect(failure).toContain('"boom"');
-    expect(failure).toContain('czap mcp --http=PORT');
+    expect(failure).toContain('liteship mcp --http=PORT');
   });
 
   it('result.isError throws the delegation failure too', async () => {

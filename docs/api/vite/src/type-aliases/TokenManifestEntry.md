@@ -10,7 +10,7 @@
 
 Defined in: [vite/src/token-manifest.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/token-manifest.ts#L28)
 
-Serializable token entry exported from `virtual:czap/tokens`.
+Serializable token entry exported from `virtual:liteship/tokens`.
 
 ## Type Declaration
 

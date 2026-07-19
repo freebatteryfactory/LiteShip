@@ -1,5 +1,5 @@
 /**
- * Explicit resolution-cache state for the czap Vite plugin's transform
+ * Explicit resolution-cache state for the liteship Vite plugin's transform
  * pipeline.
  *
  * The CSS `transform` hook resolves `@token` / `@theme` / `@style` /
@@ -29,11 +29,11 @@
  * @module
  */
 
-import type { Boundary, Token, Theme, Style } from '@czap/core';
-import type { BoundaryManifest } from '@czap/edge';
+import type { Boundary, Token, Theme, Style } from '@liteship/core';
+import type { BoundaryManifest } from '@liteship/edge';
 import type { collectTokenManifest, collectThemeManifest } from './token-manifest.js';
 
-/** Lazily-collected token/theme manifest backing `virtual:czap/tokens(.css)` + `themes`. */
+/** Lazily-collected token/theme manifest backing `virtual:liteship/tokens(.css)` + `themes`. */
 export interface TokenThemeManifest {
   readonly tokens: Awaited<ReturnType<typeof collectTokenManifest>>;
   readonly themes: Awaited<ReturnType<typeof collectThemeManifest>>;
@@ -58,7 +58,7 @@ export interface PrimitiveResolutionCache {
   readonly style: Map<string, Style.Shape | null>;
   /** Resolved convention-file path per cache key (`${name}:${id}`). */
   readonly source: Map<string, string>;
-  /** Lazily-collected boundary manifest backing `virtual:czap/boundaries`. */
+  /** Lazily-collected boundary manifest backing `virtual:liteship/boundaries`. */
   readonly boundaryManifest: { value: Promise<BoundaryManifest> | null };
   /** Lazily-collected token/theme manifest backing the design virtual modules. */
   readonly tokenThemeManifest: { value: Promise<TokenThemeManifest> | null };

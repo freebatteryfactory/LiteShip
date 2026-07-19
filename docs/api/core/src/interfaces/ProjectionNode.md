@@ -10,7 +10,7 @@ Defined in: [core/src/document-graph.ts:112](https://github.com/freebatteryfacto
 
 6. Projection — the cast of a component to a target. Wraps a compiler
 `CompileResult` BY REFERENCE (`resultDigest`), never inlined: the node stays
-small/cacheable and `@czap/core` does not type-import `@czap/compiler`.
+small/cacheable and `@liteship/core` does not type-import `@liteship/compiler`.
 
 ## Extends
 

@@ -1,8 +1,8 @@
 /**
- * Minimal entry point that imports @czap/core to prove the vite plugin
- * can process a project that depends on czap packages.
+ * Minimal entry point that imports @liteship/core to prove the vite plugin
+ * can process a project that depends on liteship packages.
  */
-import { Boundary } from '@czap/core';
+import { Boundary } from '@liteship/core';
 
 const boundary = Boundary.make({
   input: 'container-width',
@@ -12,5 +12,5 @@ const boundary = Boundary.make({
   ],
 });
 
-document.getElementById('app')!.textContent = `czap boundary: ${boundary.states.join(', ')}`;
-console.log('[czap-vite-test] boundary loaded:', boundary.states);
+document.getElementById('app')!.textContent = `liteship boundary: ${boundary.states.join(', ')}`;
+console.log('[liteship-vite-test] boundary loaded:', boundary.states);

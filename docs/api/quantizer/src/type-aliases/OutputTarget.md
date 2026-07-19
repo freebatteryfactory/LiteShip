@@ -17,6 +17,6 @@ Compilation target for quantizer per-state outputs.
 MotionTier gates which targets a device is permitted to receive; see
 [QuantizerFromOptions.tier](../interfaces/QuantizerFromOptions.md#tier) for the tier → targets table.
 
-Aliases `@czap/core`'s [LadderTarget](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/LadderTarget.md) — the shared codomain of the
+Aliases `@liteship/core`'s [LadderTarget](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/LadderTarget.md) — the shared codomain of the
 capability-admissibility ladder both this gate and the core escalation gate
 project from — so the target vocabulary itself has a single source too.

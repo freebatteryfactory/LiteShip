@@ -23,7 +23,7 @@ import {
   type Finding,
   type GateContext,
   type Gate,
-} from '@czap/gauntlet';
+} from '@liteship/gauntlet';
 
 // ── scopeContextByLevel ──────────────────────────────────────────────────────
 

@@ -19,7 +19,7 @@
  *
  * This module is transport-agnostic on purpose: `handleGraphMutation` takes an
  * already-parsed request and a host-owned {@link GraphStore}, and returns a plain
- * result — no `Request`/`Response`, no framework. `@czap/astro` wraps it into an
+ * result — no `Request`/`Response`, no framework. `@liteship/astro` wraps it into an
  * Astro API route; any host with a POST endpoint can wrap it the same way. The
  * host owns the graph store and thus the authority (ADR-0015): LiteShip provides
  * the channel and the gate, never the persistence.
@@ -192,7 +192,7 @@ export async function handleGraphMutation(
 /**
  * The applied-graph adopt guard — proves a wire graph is a normalized,
  * self-addressed base the server's own pipeline would emit. Shared by
- * `sendGraphMutation` and `@czap/astro`'s `adoptAppliedGraph`.
+ * `sendGraphMutation` and `@liteship/astro`'s `adoptAppliedGraph`.
  */
 export function verifyAppliedGraph(value: unknown): AppliedGraphVerification {
   try {

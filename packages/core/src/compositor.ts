@@ -228,13 +228,13 @@ function admits(meta: QuantizerMeta, target: string): boolean {
  *
  * @example
  * ```ts
- * import { Compositor } from '@czap/core';
+ * import { Compositor } from '@liteship/core';
  *
  * const { compositor, lifetime } = Compositor.create({ poolCapacity: 64, speculative: true });
  * compositor.add('viewport', viewportQuantizer);
  * const state = compositor.compute();
  * // state.discrete.viewport === 'tablet'
- * // state.outputs.css['--czap-viewport'] === 'tablet'
+ * // state.outputs.css['--liteship-viewport'] === 'tablet'
  * await lifetime.dispose();
  * ```
  */
@@ -296,7 +296,7 @@ export const Compositor: CompositorFactory = {
     };
     const runtime = RuntimeCoordinator.create({
       capacity: Math.max(config?.poolCapacity ?? COMPOSITOR_POOL_CAP, MAX_DIRTY_KEYS + 8),
-      name: 'czap-compositor-runtime',
+      name: 'liteship-compositor-runtime',
     });
 
     const speculativeEvaluators = new Map<string, SpeculativeEvaluator.Shape<Boundary.Shape>>();

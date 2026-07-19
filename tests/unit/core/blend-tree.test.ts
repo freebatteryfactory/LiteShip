@@ -13,7 +13,7 @@
 
 import { describe, test, expect } from 'vitest';
 import fc from 'fast-check';
-import { BlendTree } from '@czap/core';
+import { BlendTree } from '@liteship/core';
 
 // ---------------------------------------------------------------------------
 // Basic operations

@@ -20,7 +20,7 @@ import {
   type ComponentNode,
   type SignalNode,
   type RuntimeEasing,
-} from '@czap/core';
+} from '@liteship/core';
 
 const META: CellMeta = {
   created: { wall_ms: 0, counter: 0, node_id: 't' },
@@ -76,7 +76,7 @@ function revealFixture(
     meta: META,
     entityRef: entity.id,
     state: 'before',
-    bindings: { opacity: 0, '--czap-hero-y': '24px' },
+    bindings: { opacity: 0, '--liteship-hero-y': '24px' },
   } as unknown as PoseNode);
 
   const toPose = sealNode({
@@ -87,7 +87,7 @@ function revealFixture(
     meta: META,
     entityRef: entity.id,
     state: 'after',
-    bindings: { opacity: 1, '--czap-hero-y': '0px' },
+    bindings: { opacity: 1, '--liteship-hero-y': '0px' },
   } as unknown as PoseNode);
 
   const transition = sealNode({
@@ -147,7 +147,7 @@ describe('interpretTransition', () => {
     expect(opacity?.from).toEqual({ k: 'opacity', v: 0 });
     expect(opacity?.to).toEqual({ k: 'opacity', v: 1 });
 
-    const y = plan.css?.properties.find((p) => p.property === '--czap-hero-y');
+    const y = plan.css?.properties.find((p) => p.property === '--liteship-hero-y');
     expect(y?.from).toEqual({ k: 'length', v: 24, unit: 'px' });
     expect(y?.to).toEqual({ k: 'length', v: 0, unit: 'px' });
   });
@@ -171,8 +171,8 @@ describe('interpretTransition', () => {
     expect(opacityVar?.from).toEqual({ k: 'opacity', v: 0 });
     expect(opacityVar?.to).toEqual({ k: 'opacity', v: 1 });
 
-    const yVar = plan.runtime?.properties.find((p) => p.cssVar === '--czap-hero-y');
-    expect(yVar?.cssVar).toBe('--czap-hero-y');
+    const yVar = plan.runtime?.properties.find((p) => p.cssVar === '--liteship-hero-y');
+    expect(yVar?.cssVar).toBe('--liteship-hero-y');
   });
 
   test('par routing keeps from-pose at 0% and to-pose at 100%', () => {

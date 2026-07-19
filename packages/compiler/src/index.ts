@@ -1,5 +1,5 @@
 /**
- * `@czap/compiler` — **CZAP** projection targets: turns boundary definitions
+ * `@liteship/compiler` — **LiteShip** projection targets: turns boundary definitions
  * and per-bearing values into **cast** output (CSS, GLSL, WGSL, ARIA, AI, …).
  *
  * @module
@@ -110,7 +110,7 @@ export type { CompiledResponsiveMedia } from './responsive-media-compile.js';
 // Concrete `pureTransform` instances of the 7-arm capsule factory, exported here
 // so they register in the live `getCapsuleCatalog()` and the type-directed
 // capsule detector (`scripts/lib/capsule-detector.ts`) walks them from
-// `@czap/compiler`'s source root. Each pins the GLSL / WGSL / ARIA compiler's
+// `@liteship/compiler`'s source root. Each pins the GLSL / WGSL / ARIA compiler's
 // LAWS over a seeded Boundary + per-state value domain.
 export { glslCompileCapsule } from './capsules/glsl-compile.js';
 export { wgslCompileCapsule } from './capsules/wgsl-compile.js';

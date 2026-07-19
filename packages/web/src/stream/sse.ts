@@ -13,7 +13,7 @@
  * getters. See ADR-0005 §Category 4 for the rationale.
  */
 
-import { CellKernel, Lifetime, Diagnostics, SSE_BUFFER_SIZE, SSE_HEARTBEAT_MS } from '@czap/core';
+import { CellKernel, Lifetime, Diagnostics, SSE_BUFFER_SIZE, SSE_HEARTBEAT_MS } from '@liteship/core';
 import type { SSEConfig, SSEState, SSEMessage, BackpressureHint, OverflowPolicy } from '../types.js';
 
 /**
@@ -107,7 +107,7 @@ export const buildUrl = _buildUrl;
  *
  * @example
  * ```ts
- * import { SSE } from '@czap/web';
+ * import { SSE } from '@liteship/web';
  *
  * const client = SSE.create({ url: '/api/stream', artifactId: 'doc-1' });
  * for await (const msg of client.messages) {
@@ -120,7 +120,7 @@ export const buildUrl = _buildUrl;
  * ```ts
  * // Fully synchronous consumption (the live morph directives): pass callbacks
  * // and skip the async buffer entirely.
- * import { SSE } from '@czap/web';
+ * import { SSE } from '@liteship/web';
  *
  * const client = SSE.create({
  *   url: '/api/stream',
@@ -200,7 +200,7 @@ export const create = (config: SSEConfig): SSEClient => {
       stateEdges.publish(next);
     } catch (error) {
       Diagnostics.warnOnce({
-        source: 'czap/web.SSE',
+        source: 'liteship/web.SSE',
         code: 'sse-state-listener-threw',
         message: `An SSE stateChanges subscriber threw on the "${next}" transition; the transport teardown/reconnect bookkeeping is unaffected. Cause: ${String(error)}`,
       });
@@ -211,7 +211,7 @@ export const create = (config: SSEConfig): SSEClient => {
       config.onStateChange?.(next);
     } catch (error) {
       Diagnostics.warnOnce({
-        source: 'czap/web.SSE',
+        source: 'liteship/web.SSE',
         code: 'sse-onstatechange-threw',
         message: `The SSE onStateChange callback threw on the "${next}" transition; the transport teardown/reconnect bookkeeping is unaffected. Cause: ${String(error)}`,
       });
@@ -350,7 +350,7 @@ export const create = (config: SSEConfig): SSEClient => {
         config.onMessage(message);
       } catch (error) {
         Diagnostics.warnOnce({
-          source: 'czap/web.SSE',
+          source: 'liteship/web.SSE',
           code: 'sse-onmessage-threw',
           message: `The SSE onMessage callback threw for a live message; the transport heartbeat/reconnect bookkeeping is unaffected. Cause: ${String(error)}`,
         });
@@ -368,7 +368,7 @@ export const create = (config: SSEConfig): SSEClient => {
       // overflowing and the policy is now actively shedding load.
       machine.saturated = true;
       Diagnostics.warnOnce({
-        source: 'czap/web.sse',
+        source: 'liteship/web.sse',
         code: 'sse-buffer-saturated',
         message: 'SSE receive buffer saturated; applying overflow policy.',
         detail: { policy: overflowPolicy, maxBufferSize, bufferSize: pendingMessages.length },
@@ -596,7 +596,7 @@ export const create = (config: SSEConfig): SSEClient => {
  *
  * @example
  * ```ts
- * import { SSE } from '@czap/web';
+ * import { SSE } from '@liteship/web';
  *
  * const client = SSE.create({ url: '/api/events' });
  * const state = client.state; // 'connecting' | 'connected' | ...

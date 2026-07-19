@@ -1,10 +1,10 @@
 /**
  * THE LITESHIP-LOCAL CAPABILITY-GATE POLICY — the host-injected knowledge the generic
- * `@czap/audit` capability-link oracle needs (the ADR-0012 / D7b boundary; the audit engine names no
+ * `@liteship/audit` capability-link oracle needs (the ADR-0012 / D7b boundary; the audit engine names no
  * LiteShip capability). It supplies (a) the canonical capability symbol-table module SET the linker
  * reads, and (b) the resolved sanctioned skip sites (file + line + declared capability) to prove.
  *
- * The capability ids themselves come from `@czap/gauntlet`'s `SKIP_CAPABILITIES` (the closed set the
+ * The capability ids themselves come from `@liteship/gauntlet`'s `SKIP_CAPABILITIES` (the closed set the
  * allowlist already uses); the export NAME of each canonical-module probe IS its capability id
  * (camelCase ↔ kebab), so the registry self-assembles from the repo — add a capability ⇒ add an
  * export to one of these modules. See `tests/helpers/capabilities.ts` for the symbol table.
@@ -13,8 +13,8 @@
  */
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { detectSkipsAST, type CapabilitySkipSite } from '@czap/audit';
-import { SANCTIONED_SKIPS, normalizeSiteLine, SKIP_CAPABILITIES } from '@czap/gauntlet';
+import { detectSkipsAST, type CapabilitySkipSite } from '@liteship/audit';
+import { SANCTIONED_SKIPS, normalizeSiteLine, SKIP_CAPABILITIES } from '@liteship/gauntlet';
 
 /**
  * The canonical capability symbol-table modules (repo-relative) — the SET the linker reads as ONE

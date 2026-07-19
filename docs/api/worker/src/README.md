@@ -6,7 +6,7 @@
 
 # worker/src
 
-`@czap/worker` — **LiteShip** off-deck crew: compositor and render workers
+`@liteship/worker` — **LiteShip** off-deck crew: compositor and render workers
 that keep the main thread trim while boundaries and media stay live.
 
 This package ships:

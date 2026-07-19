@@ -7,7 +7,7 @@
  * @module
  */
 
-import { ValidationError } from '@czap/error';
+import { ValidationError } from '@liteship/error';
 import { walkRiff } from './riff.js';
 
 /**

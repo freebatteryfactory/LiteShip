@@ -4,18 +4,18 @@
  * artifact-independent three-pass warning inventory drifts from the pinned
  * `AUDIT_WARNING_FLOOR`, or when ANY error-severity finding is present.
  *
- * The engine (`@czap/audit`'s structure/integrity/surface passes) is INJECTED via
- * `context.runAuditFloor`, never imported here, so `@czap/command` (and the MCP
+ * The engine (`@liteship/audit`'s structure/integrity/surface passes) is INJECTED via
+ * `context.runAuditFloor`, never imported here, so `@liteship/command` (and the MCP
  * server that re-uses it) stays free of the TypeScript-compiler/fast-glob audit
  * engine. Unlike `plumb`/`check-invariants` (whose scans are pure `node:fs` and
  * are provisioned in the shared host factory), this gate rides the HEAVY
- * `@czap/audit` engine — exactly like `audit` — so it is CLI-only and NOT
- * MCP-exposed: only `@czap/cli` injects `runAuditFloor`, and over MCP the command
+ * `@liteship/audit` engine — exactly like `audit` — so it is CLI-only and NOT
+ * MCP-exposed: only `@liteship/cli` injects `runAuditFloor`, and over MCP the command
  * degrades to a structured `capabilityUnavailable` failure.
  *
  * @module
  */
-import { type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
+import { type CapsuleCommandResult, type CommandJsonSchema } from '@liteship/core';
 import {
   capabilityUnavailable,
   failed,
@@ -75,7 +75,7 @@ export const auditFloorCommand: HandledCommand = {
     requires: ['runAuditFloor'] satisfies readonly CommandCapability[],
     inputSchema: { type: 'object', properties: {} } as const satisfies CommandJsonSchema,
     outputSchema: AuditFloorPayloadSchema,
-    // NOT mcpExposed: the engine is the heavy CLI-injected `@czap/audit` (runAuditFloor); cli-only by design.
+    // NOT mcpExposed: the engine is the heavy CLI-injected `@liteship/audit` (runAuditFloor); cli-only by design.
     annotations: { readOnly: true, cliOnly: true, group: 'castoff' },
   },
   handler: async (_invocation, context: CommandContext): Promise<CapsuleCommandResult> => {

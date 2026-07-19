@@ -7,7 +7,7 @@
 
 import { describe, test } from 'vitest';
 import fc from 'fast-check';
-import { Boundary, Composable, ComposableWorld, Part, Style, Token, World } from '@czap/core';
+import { Boundary, Composable, ComposableWorld, Part, Style, Token, World } from '@liteship/core';
 
 const arbThresholdPairs = fc
   .uniqueArray(fc.integer({ min: 0, max: 10000 }), { minLength: 2, maxLength: 5 })

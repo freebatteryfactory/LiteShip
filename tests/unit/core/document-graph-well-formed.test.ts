@@ -6,7 +6,7 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Cap, isWellFormedNode, type DocumentGraphNode, type NodeFamily } from '@czap/core';
+import { Cap, isWellFormedNode, type DocumentGraphNode, type NodeFamily } from '@liteship/core';
 
 const ADDR = 'fnv1a:00000001' as const;
 const ADDR2 = 'fnv1a:00000002' as const;

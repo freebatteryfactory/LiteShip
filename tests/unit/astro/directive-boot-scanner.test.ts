@@ -6,9 +6,9 @@ import { DIRECTIVE_ATTRIBUTE_REGISTRY } from '../../../packages/astro/src/runtim
 type RegistryDirectiveName = keyof typeof DIRECTIVE_ATTRIBUTE_REGISTRY;
 
 function markBound(element: HTMLElement, name: string): void {
-  const names = new Set((element.getAttribute('data-czap-directive-bound') ?? '').split(/\s+/).filter(Boolean));
+  const names = new Set((element.getAttribute('data-liteship-directive-bound') ?? '').split(/\s+/).filter(Boolean));
   names.add(name);
-  element.setAttribute('data-czap-directive-bound', [...names].join(' '));
+  element.setAttribute('data-liteship-directive-bound', [...names].join(' '));
 }
 
 afterEach(() => {
@@ -39,21 +39,21 @@ describe('Astro directive boot scanner', () => {
     const { scanAndBootDirectives } = await import('../../../packages/astro/src/runtime/directive-boot.js');
 
     document.body.innerHTML = `
-      <div id="plain" data-czap-stream-url="/api/plain"></div>
-      <div id="island" data-czap-stream-url="/api/island"></div>
+      <div id="plain" data-liteship-stream-url="/api/plain"></div>
+      <div id="island" data-liteship-stream-url="/api/island"></div>
     `;
 
     const plain = document.getElementById('plain')!;
     const island = document.getElementById('island')!;
 
     exportedStreamDirective(() => Promise.resolve(), {}, island);
-    expect(island.getAttribute('data-czap-directive-bound')).toBe('stream');
+    expect(island.getAttribute('data-liteship-directive-bound')).toBe('stream');
 
     await scanAndBootDirectives(['stream']);
 
     expect(initStreamDirective).toHaveBeenCalledTimes(2);
     expect(initStreamDirective.mock.calls.map(([, element]) => element)).toEqual([island, plain]);
-    expect(plain.getAttribute('data-czap-directive-bound')).toBe('stream');
+    expect(plain.getAttribute('data-liteship-directive-bound')).toBe('stream');
 
     await scanAndBootDirectives(['stream']);
     expect(initStreamDirective).toHaveBeenCalledTimes(2);
@@ -110,7 +110,7 @@ describe('Astro directive boot scanner', () => {
     for (const { name, attribute } of implicitEntries) {
       const element = document.createElement('div');
       element.id = `implicit-${name}`;
-      element.setAttribute(attribute, attribute === 'data-czap-wasm' ? 'true' : `/${String(name)}`);
+      element.setAttribute(attribute, attribute === 'data-liteship-wasm' ? 'true' : `/${String(name)}`);
       document.body.appendChild(element);
     }
 
@@ -122,12 +122,12 @@ describe('Astro directive boot scanner', () => {
       expect(call, `missing test mock for implicit directive ${String(name)}`).toBeDefined();
       expect(call).toHaveBeenCalledTimes(1);
       expect(call.mock.calls[0]?.some((arg) => arg === element)).toBe(true);
-      expect(element?.getAttribute('data-czap-directive-bound')).toBe(name);
+      expect(element?.getAttribute('data-liteship-directive-bound')).toBe(name);
     }
   });
 
   test('warns once when a bare boundary payload has no explicit directive marker', async () => {
-    const { Diagnostics } = await import('@czap/core');
+    const { Diagnostics } = await import('@liteship/core');
     const { sink, events } = Diagnostics.createBufferSink();
     Diagnostics.clearOnce();
     Diagnostics.setSink(sink);
@@ -135,51 +135,51 @@ describe('Astro directive boot scanner', () => {
     const { scanAndBootDirectives } = await import('../../../packages/astro/src/runtime/directive-boot.js');
 
     const bare = document.createElement('div');
-    bare.setAttribute('data-czap-boundary', '{}');
+    bare.setAttribute('data-liteship-boundary', '{}');
     document.body.appendChild(bare);
 
     await scanAndBootDirectives([]);
     await scanAndBootDirectives([]);
 
-    const warnings = events.filter((event) => event.code === 'directive-attribute-requires-marker:data-czap-boundary');
+    const warnings = events.filter((event) => event.code === 'directive-attribute-requires-marker:data-liteship-boundary');
     expect(warnings).toHaveLength(1);
     expect(warnings[0]).toMatchObject({
-      source: 'czap/astro.directive-boot',
-      detail: { attribute: 'data-czap-boundary' },
+      source: 'liteship/astro.directive-boot',
+      detail: { attribute: 'data-liteship-boundary' },
     });
     expect(warnings[0]?.message).toContain('Fix:');
 
     const marked = document.createElement('div');
-    marked.setAttribute('data-czap-boundary', '{}');
-    marked.setAttribute('data-czap-directive', 'satellite');
+    marked.setAttribute('data-liteship-boundary', '{}');
+    marked.setAttribute('data-liteship-directive', 'satellite');
     document.body.replaceChildren(marked);
 
     Diagnostics.clearOnce();
     events.length = 0;
     await scanAndBootDirectives([]);
 
-    expect(events.some((event) => event.code === 'directive-attribute-requires-marker:data-czap-boundary')).toBe(false);
+    expect(events.some((event) => event.code === 'directive-attribute-requires-marker:data-liteship-boundary')).toBe(false);
   });
 
   test('warns for a bare boundary payload even beside a non-consuming implicit peer (gpu)', async () => {
-    const { Diagnostics } = await import('@czap/core');
+    const { Diagnostics } = await import('@liteship/core');
     const { sink, events } = Diagnostics.createBufferSink();
     Diagnostics.clearOnce();
     Diagnostics.setSink(sink);
 
     const { scanAndBootDirectives } = await import('../../../packages/astro/src/runtime/directive-boot.js');
 
-    // data-czap-boundary (a satellite/worker payload) beside a gpu shader attr, but NO
+    // data-liteship-boundary (a satellite/worker payload) beside a gpu shader attr, but NO
     // satellite/worker marker. gpu does not evaluate the boundary, so it stays inert --
     // the marker warning must still fire, not be suppressed by the non-consuming peer.
     const el = document.createElement('div');
-    el.setAttribute('data-czap-boundary', '{}');
-    el.setAttribute('data-czap-shader-src', '/shader.frag');
+    el.setAttribute('data-liteship-boundary', '{}');
+    el.setAttribute('data-liteship-shader-src', '/shader.frag');
     document.body.appendChild(el);
 
     await scanAndBootDirectives([]);
 
-    const warnings = events.filter((event) => event.code === 'directive-attribute-requires-marker:data-czap-boundary');
+    const warnings = events.filter((event) => event.code === 'directive-attribute-requires-marker:data-liteship-boundary');
     expect(warnings).toHaveLength(1);
   });
 
@@ -210,7 +210,7 @@ describe('Astro directive boot scanner', () => {
     vi.doMock('../../../packages/astro/src/client-directives/satellite.js', () => ({ default: vi.fn() }));
     vi.doMock('../../../packages/astro/src/client-directives/gpu.js', () => ({ default: vi.fn() }));
 
-    const { Diagnostics } = await import('@czap/core');
+    const { Diagnostics } = await import('@liteship/core');
     const { sink, events } = Diagnostics.createBufferSink();
     Diagnostics.clearOnce();
     Diagnostics.setSink(sink);
@@ -218,7 +218,7 @@ describe('Astro directive boot scanner', () => {
     const { scanAndBootDirectives } = await import('../../../packages/astro/src/runtime/directive-boot.js');
 
     const el = document.createElement('div');
-    el.setAttribute('data-czap-directive', 'satellite gpu');
+    el.setAttribute('data-liteship-directive', 'satellite gpu');
     document.body.appendChild(el);
 
     await scanAndBootDirectives(['satellite', 'gpu']);

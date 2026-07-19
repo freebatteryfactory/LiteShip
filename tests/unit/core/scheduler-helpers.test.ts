@@ -10,7 +10,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { rafDebounce, startRafLoop } from '@czap/core';
+import { rafDebounce, startRafLoop } from '@liteship/core';
 
 // A controllable `requestAnimationFrame` so the "one call per frame" law is pinned
 // deterministically (the core test env is Node, where real rAF is absent).

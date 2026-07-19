@@ -54,8 +54,8 @@ A [WGSLCompileResult](../interfaces/WGSLCompileResult.md) with structs, bindings
 #### Example
 
 ```ts
-import { Boundary } from '@czap/core';
-import { WGSLCompiler } from '@czap/compiler';
+import { Boundary } from '@liteship/core';
+import { WGSLCompiler } from '@liteship/compiler';
 
 const boundary = Boundary.make({
   input: 'viewport',
@@ -93,7 +93,7 @@ A WGSL declaration string
 #### Example
 
 ```ts
-import { WGSLCompiler } from '@czap/compiler';
+import { WGSLCompiler } from '@liteship/compiler';
 
 const result = WGSLCompiler.compile(boundary, states);
 const wgsl = WGSLCompiler.serialize(result);
@@ -103,8 +103,8 @@ const wgsl = WGSLCompiler.serialize(result);
 ## Example
 
 ```ts
-import { Boundary } from '@czap/core';
-import { WGSLCompiler } from '@czap/compiler';
+import { Boundary } from '@liteship/core';
+import { WGSLCompiler } from '@liteship/compiler';
 
 const boundary = Boundary.make({
   input: 'viewport',

@@ -38,7 +38,7 @@ A [Disposer](../type-aliases/Disposer.md) that removes the listeners it added
 ## Example
 
 ```ts
-import { Detect } from '@czap/detect';
+import { Detect } from '@liteship/detect';
 
 const dispose = Detect.watchCapabilities((result) => {
   console.log('Capabilities changed:', result.capTier);

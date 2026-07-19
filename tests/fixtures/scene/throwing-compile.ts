@@ -1,8 +1,8 @@
 /** Fixture: exports a sceneComposition capsule + contract, but the
  * compileScene function throws — exercises scene-compile's try/catch
  * fallback path. */
-import { defineCapsule, S } from '@czap/core';
-import type { SceneContract } from '@czap/scene';
+import { defineCapsule, S } from '@liteship/core';
+import type { SceneContract } from '@liteship/scene';
 
 export const broken = defineCapsule({
   _kind: 'sceneComposition',

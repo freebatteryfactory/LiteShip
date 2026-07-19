@@ -13,7 +13,7 @@ Defined in: [core/src/projection.ts:56](https://github.com/freebatteryfactory/Li
 Canonical GLSL uniform identifier for a name: prefix `u_`, kebab/camelCase
 folded to snake_case, lowercased. This is the exact identifier the GLSL
 compiler declares, so runtime values key onto the right uniform. Shared by
-`@czap/compiler`'s GLSL arm (`toUniformName`) and the runtime so the build
+`@liteship/compiler`'s GLSL arm (`toUniformName`) and the runtime so the build
 and runtime cannot disagree.
 
 ## Parameters

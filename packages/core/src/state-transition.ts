@@ -23,7 +23,7 @@
  * @module
  */
 
-import { ParseError } from '@czap/error';
+import { ParseError } from '@liteship/error';
 import type { ContentAddress, HLC, StateName } from './brands.js';
 import { Receipt, type ReceiptEnvelope } from './receipt.js';
 import { TypedRef } from './typed-ref.js';

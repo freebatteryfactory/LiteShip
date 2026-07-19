@@ -2,8 +2,8 @@
  * Vitest shard runner for parallel CI — one shard index with isolated coverage dirs.
  *
  * Env:
- *   CZAP_SHARD_INDEX — 1-based shard index (required)
- *   CZAP_SHARD_TOTAL — total shard count (default 4)
+ *   LITESHIP_SHARD_INDEX — 1-based shard index (required)
+ *   LITESHIP_SHARD_TOTAL — total shard count (default 4)
  *
  * Writes node coverage to `coverage/node-shard-<index>/` and subprocess dumps to
  * `coverage/subprocess-raw-shard/<index>/`.
@@ -17,12 +17,12 @@ import { spawnArgvVisible } from './lib/spawn.js';
 import { CI_PARALLEL_TEST_SHARD_COUNT } from '../packages/cli/src/gauntlet-phases.js';
 import { repoRoot } from '../vitest.shared.js';
 
-const shardIndex = Number(process.env.CZAP_SHARD_INDEX ?? '');
-const shardTotal = Number(process.env.CZAP_SHARD_TOTAL ?? CI_PARALLEL_TEST_SHARD_COUNT);
+const shardIndex = Number(process.env.LITESHIP_SHARD_INDEX ?? '');
+const shardTotal = Number(process.env.LITESHIP_SHARD_TOTAL ?? CI_PARALLEL_TEST_SHARD_COUNT);
 
 if (!Number.isInteger(shardIndex) || shardIndex < 1 || shardIndex > shardTotal) {
   console.error(
-    `[test-shard] CZAP_SHARD_INDEX must be an integer in [1, ${shardTotal}] (got ${process.env.CZAP_SHARD_INDEX ?? 'unset'})`,
+    `[test-shard] LITESHIP_SHARD_INDEX must be an integer in [1, ${shardTotal}] (got ${process.env.LITESHIP_SHARD_INDEX ?? 'unset'})`,
   );
   process.exit(1);
 }
@@ -52,7 +52,7 @@ async function main(): Promise<void> {
       cwd: repoRoot,
       env: {
         ...process.env,
-        CZAP_COVERAGE_SHARD_DIR: coverageShardRel,
+        LITESHIP_COVERAGE_SHARD_DIR: coverageShardRel,
         NODE_V8_COVERAGE: `coverage/subprocess-raw-shard/${shardIndex}`,
       },
     },

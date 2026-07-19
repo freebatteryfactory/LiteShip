@@ -21,7 +21,7 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import fg from 'fast-glob';
 import { getCapsuleManifestPath } from '../packages/cli/src/receipts.js';
-import { normalizeRepoPath } from '@czap/audit'; // CUT B5b — one slash-normalize home
+import { normalizeRepoPath } from '@liteship/audit'; // CUT B5b — one slash-normalize home
 import {
   ACCEPTED_BENCH_STABILITY_NOISY_LABELS,
   LLM_STEADY_DIRECTIVE_P99_MAX_NS,
@@ -339,7 +339,7 @@ const checks: Check[] = [
       // benign source-fingerprint drift from intermediate phases — which is
       // exactly the noise the previous "fingerprint-drift(non-blocking)"
       // label was papering over. Trust the gauntlet's prior pass instead.
-      if (process.env.CZAP_GAUNTLET === '1') {
+      if (process.env.LITESHIP_GAUNTLET === '1') {
         return {
           pass: docsCheck.ok,
           detail: `feedback-verify=trusted-from-gauntlet-phase docs-check=${docsCheck.ok}`,

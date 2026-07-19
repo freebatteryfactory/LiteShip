@@ -1,15 +1,15 @@
 /**
  * Satellite -- server-side helper for rendering adaptive container divs.
  *
- * A satellite is czap's island primitive: a plain div annotated with
- * data-czap-* attributes that the client directive hydrates by evaluating
- * live signals and updating `data-czap-state`. CSS transitions handle
+ * A satellite is liteship's island primitive: a plain div annotated with
+ * data-liteship-* attributes that the client directive hydrates by evaluating
+ * live signals and updating `data-liteship-state`. CSS transitions handle
  * the visual changes -- zero JS layout work.
  *
  * @module
  */
 
-import type { Boundary, Component } from '@czap/core';
+import type { Boundary, Component } from '@liteship/core';
 import type { DirectiveName } from './runtime/directive-boot.js';
 import type { WgslUniformValue } from './runtime/boundary.js';
 
@@ -26,13 +26,13 @@ export interface SatelliteProps {
   readonly boundary?: Boundary.Shape;
   /** Component definition used to identify the satellite on the client. */
   readonly component?: Component.Shape;
-  /** Extra CSS class names to merge with `czap-satellite`. */
+  /** Extra CSS class names to merge with `liteship-satellite`. */
   readonly class?: string;
-  /** Server-side initial state (serialised into `data-czap-state`). */
+  /** Server-side initial state (serialised into `data-liteship-state`). */
   readonly initialState?: string;
   /**
    * Which client directive the boot scanner should activate for this
-   * satellite (serialised into `data-czap-directive`). Defaults to
+   * satellite (serialised into `data-liteship-directive`). Defaults to
    * `'satellite'` when a boundary is present — a serialized boundary
    * with no evaluator is exactly the inert-island bug. Pass `false`
    * for a CSS-only shell that ships zero runtime.
@@ -103,14 +103,14 @@ export interface SatelliteProps {
 export function satelliteAttrs(props: SatelliteProps): Record<string, string> {
   const attrs: Record<string, string> = {};
 
-  attrs['class'] = ['czap-satellite', props.class].filter(Boolean).join(' ');
+  attrs['class'] = ['liteship-satellite', props.class].filter(Boolean).join(' ');
 
   if (props.component) {
-    attrs['data-czap-satellite'] = props.component.name;
+    attrs['data-liteship-satellite'] = props.component.name;
   }
 
   if (props.boundary) {
-    attrs['data-czap-boundary'] = JSON.stringify({
+    attrs['data-liteship-boundary'] = JSON.stringify({
       id: props.boundary.id,
       input: props.boundary.input,
       thresholds: props.boundary.thresholds,
@@ -134,10 +134,10 @@ export function satelliteAttrs(props: SatelliteProps): Record<string, string> {
       ...(props.wgslDeclarations ? { wgslDeclarations: props.wgslDeclarations } : {}),
     });
     if (props.directive !== false) {
-      attrs['data-czap-directive'] = props.directive ?? 'satellite';
+      attrs['data-liteship-directive'] = props.directive ?? 'satellite';
     }
     const initial = props.initialState ?? resolveInitialStateFallback(props.boundary);
-    attrs['data-czap-state'] = initial;
+    attrs['data-liteship-state'] = initial;
     // SSR the initial state's authored ARIA so first paint is accessible before
     // hydration; `applyBoundaryState` updates these on every crossing.
     const initialAria = props.aria?.[initial];
@@ -147,7 +147,7 @@ export function satelliteAttrs(props: SatelliteProps): Record<string, string> {
       }
     }
   } else if (props.initialState) {
-    attrs['data-czap-state'] = props.initialState;
+    attrs['data-liteship-state'] = props.initialState;
   }
 
   return attrs;

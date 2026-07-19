@@ -35,7 +35,7 @@ A string of `@property` declarations, or empty string if none found
 ## Example
 
 ```ts
-import { CSSCompiler } from '@czap/compiler';
+import { CSSCompiler } from '@liteship/compiler';
 
 const states = {
   sm: { '--card-bg': '#ffffff', '--card-radius': '4px' },

@@ -8,8 +8,8 @@
  * @module
  */
 
-import type { Token } from '@czap/core';
-import { TokenCSSCompiler } from '@czap/compiler';
+import type { Token } from '@liteship/core';
+import { TokenCSSCompiler } from '@liteship/compiler';
 import { normalizeCssLineEndings } from './normalize-css-eol.js';
 import { blankCssCommentsAndStrings, lineOfOffset, parseFlatDeclarations } from './css-scan.js';
 
@@ -75,7 +75,7 @@ export function parseTokenBlocks(css: string, sourceFile: string): readonly Toke
 }
 
 // ---------------------------------------------------------------------------
-// Compiler (delegates to @czap/compiler TokenCSSCompiler)
+// Compiler (delegates to @liteship/compiler TokenCSSCompiler)
 // ---------------------------------------------------------------------------
 
 /**

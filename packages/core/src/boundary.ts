@@ -18,7 +18,7 @@ import { Diagnostics } from './diagnostics.js';
 import { inputToSource } from './signal-input.js';
 import { wallClock } from './clock.js';
 import type { EvaluateResult } from './type-utils.js';
-import { ValidationError } from '@czap/error';
+import { ValidationError } from '@liteship/error';
 
 /** The core primitive. Source of truth for quantization boundaries. */
 interface BoundaryDef<
@@ -93,7 +93,7 @@ function _evaluate<B extends BoundaryDef>(boundary: B, value: number): B['states
  * indices — the `i` such that `boundary.states[i]` is the state for that value.
  *
  * This is the WASM-accelerated face of {@link _evaluate}. It routes through
- * `WASMDispatch.kernels().batchBoundaryEval`: the Rust `czap-compute` kernel
+ * `WASMDispatch.kernels().batchBoundaryEval`: the Rust `liteship-compute` kernel
  * once {@link WASMDispatch.load} has run, the pure-TS `fallbackKernels`
  * otherwise. BOTH select the identical index — the fallback IS the
  * {@link rawIndexF32} loop and the WASM kernel is locked to it by the
@@ -163,7 +163,7 @@ function _evaluateResult<B extends BoundaryDef>(
     // A foreign previousState is almost always a stale or typo'd value from
     // another boundary; warnOnce keeps this hot path cheap after first emit.
     Diagnostics.warnOnce({
-      source: 'czap/core',
+      source: 'liteship/core',
       code: 'unknown-previous-state',
       message: `evaluateResult(): previousState "${String(previousState)}" is not a state of boundary "${boundary.input}" (states: ${(states as readonly string[]).join(', ')}); treating as a crossing. Check that the state came from this boundary.`,
     });
@@ -241,7 +241,7 @@ function _evaluateWithHysteresis<B extends BoundaryDef>(
  *
  * @example
  * ```ts
- * import { Boundary } from '@czap/core';
+ * import { Boundary } from '@liteship/core';
  *
  * const bp = Boundary.make({
  *   input: 'viewport.width',
@@ -279,7 +279,7 @@ function _isActive<B extends BoundaryDef>(
  *
  * @example
  * ```ts
- * import { Boundary } from '@czap/core';
+ * import { Boundary } from '@liteship/core';
  *
  * const viewport = Boundary.make({
  *   input: 'viewport.width',
@@ -353,7 +353,7 @@ export const Boundary: BoundaryFactory & {
       const maxThreshold = Math.max(...pairs.map(([t]) => t));
       if (maxThreshold > 1) {
         Diagnostics.warnOnce({
-          source: 'czap/core.boundary',
+          source: 'liteship/core.boundary',
           code: 'scroll-progress-threshold-scale',
           message:
             `Boundary "${config.input}" uses thresholds with max ${maxThreshold}, but scroll.progress is canonical 0..1 — ` +
@@ -365,7 +365,7 @@ export const Boundary: BoundaryFactory & {
       const maxThreshold = Math.max(...pairs.map(([t]) => t));
       if (maxThreshold > 1) {
         Diagnostics.warnOnce({
-          source: 'czap/core.boundary',
+          source: 'liteship/core.boundary',
           code: 'audio-threshold-scale',
           message:
             `Boundary "${config.input}" uses thresholds with max ${maxThreshold}, but audio.* signals normalize to 0..1 — ` +
@@ -399,7 +399,7 @@ export const Boundary: BoundaryFactory & {
  *
  * Wired into the Astro runtime `evaluateBoundary` path (host-side gating before
  * state transitions). JSON-serializable fields
- * (`timeRange`, `experimentId`) round-trip through `data-czap-boundary`;
+ * (`timeRange`, `experimentId`) round-trip through `data-liteship-boundary`;
  * `deviceFilter` is host-only (functions cannot cross the wire).
  */
 export interface BoundarySpec {

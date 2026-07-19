@@ -16,8 +16,8 @@
  * @module
  */
 
-import type { RuntimeCoordinator, ContentAddress } from '@czap/core';
-import { StateName as mkStateName } from '@czap/core';
+import type { RuntimeCoordinator, ContentAddress } from '@liteship/core';
+import { StateName as mkStateName } from '@liteship/core';
 import type { WorkerUpdate, BootstrapQuantizerRegistration, ResolvedStateEntry } from './messages.js';
 import { makeResolvedStateEnvelope } from './messages.js';
 import type {

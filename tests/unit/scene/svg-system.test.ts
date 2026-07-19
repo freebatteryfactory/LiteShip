@@ -14,7 +14,7 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import { World } from '@czap/core';
+import { World } from '@liteship/core';
 import {
   SVGSystem,
   VideoSystem,
@@ -22,8 +22,8 @@ import {
   Track,
   compileScene,
   SceneRuntime,
-} from '@czap/scene';
-import type { SceneContract } from '@czap/scene';
+} from '@liteship/scene';
+import type { SceneContract } from '@liteship/scene';
 
 interface SvgAttrsRead {
   readonly _tag: 'SvgAttrs';

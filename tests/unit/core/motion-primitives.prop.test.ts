@@ -14,8 +14,8 @@ import {
   interpretTransition,
   ResponsiveMedia,
   resolveResponsiveMedia,
-} from '@czap/core';
-import { compileStagger, compileScrollTimeline, MotionCompiler } from '@czap/compiler';
+} from '@liteship/core';
+import { compileStagger, compileScrollTimeline, MotionCompiler } from '@liteship/compiler';
 
 describe('Motion primitives property laws', () => {
   test('every stagger child delay equals index * stepMs', () => {
@@ -77,7 +77,7 @@ describe('Motion primitives property laws', () => {
 
   test('compiled scroll CSS emits individual transform props, never a translate3d consumer', () => {
     // Wave-4 track-based emission: the native path writes the individual `translate:`
-    // property off the per-axis `--czap-*` vars instead of a single `translate3d()`
+    // property off the per-axis `--liteship-*` vars instead of a single `translate3d()`
     // consumer rule (appendTranslateConsumer is deleted). Holds across every axis mix.
     fc.assert(
       fc.property(
@@ -98,7 +98,7 @@ describe('Motion primitives property laws', () => {
           return (
             !compiled.css.raw.includes('translate3d') &&
             compiled.css.raw.includes('translate:') &&
-            compiled.css.raw.includes('--czap-panel-y')
+            compiled.css.raw.includes('--liteship-panel-y')
           );
         },
       ),

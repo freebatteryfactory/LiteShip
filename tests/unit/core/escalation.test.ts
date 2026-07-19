@@ -8,8 +8,8 @@
  * @module
  */
 import { describe, test, expect } from 'vitest';
-import { chooseRung, sealNode, Cap } from '@czap/core';
-import type { PolicyNode, RuntimeSite, CapTier, CapSet, CellMeta } from '@czap/core';
+import { chooseRung, sealNode, Cap } from '@liteship/core';
+import type { PolicyNode, RuntimeSite, CapTier, CapSet, CellMeta } from '@liteship/core';
 
 const META: CellMeta = {
   created: { wall_ms: 0, counter: 0, node_id: 't' },

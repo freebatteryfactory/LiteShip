@@ -3,8 +3,8 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Receipt, HLC } from '@czap/core';
-import type { ReceiptEnvelope, ReceiptSubject, ChainValidationError } from '@czap/core';
+import { Receipt, HLC } from '@liteship/core';
+import type { ReceiptEnvelope, ReceiptSubject, ChainValidationError } from '@liteship/core';
 
 /**
  * Await a promise expected to REJECT and hand back the rejection reason typed as

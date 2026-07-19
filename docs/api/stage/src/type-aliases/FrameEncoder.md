@@ -14,7 +14,7 @@ The byte-encode seam: turn the produced per-frame [CompositeState](https://githu
 snapshots into real encoded video bytes. Stage's CORE owns no encoder — this
 is INJECTED at the call site so the pure graph-walk never imports a codec:
 
- - browser/worker: WebCodecs over an OffscreenCanvas (`@czap/web` capture);
+ - browser/worker: WebCodecs over an OffscreenCanvas (`@liteship/web` capture);
  - node/headless: the ffmpeg child-process adapter in `./ffmpeg-encoder`.
 
 Both are real backends of this one shape; neither lives in `dual-export.ts`.

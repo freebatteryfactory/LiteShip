@@ -1,8 +1,8 @@
 /**
  * CUT A1 (capstone) — A1-T8 + the no-cycle invariant. Proves the cli↔mcp cycle
  * and the stdout-capture seam are gone for good:
- *   - the mcp→cli .d.ts shim (czap-cli-shim.d.ts) is deleted;
- *   - @czap/mcp-server source imports neither @czap/cli nor process.stdout
+ *   - the mcp→cli .d.ts shim (liteship-cli-shim.d.ts) is deleted;
+ *   - @liteship/mcp-server source imports neither @liteship/cli nor process.stdout
  *     monkey-patching nor a buildArgv argv-flattener;
  *   - the surviving cli→mcp shim is minimal (the exempt one-way dynamic import).
  *
@@ -24,13 +24,13 @@ function allMcpSource(): string {
 
 describe('A1-T8 — cli↔mcp cycle + stdout-capture seam are deleted', () => {
   it('the mcp→cli .d.ts shim is gone', () => {
-    expect(existsSync(resolve(MCP_SRC, 'czap-cli-shim.d.ts'))).toBe(false);
+    expect(existsSync(resolve(MCP_SRC, 'liteship-cli-shim.d.ts'))).toBe(false);
   });
 
-  it('@czap/mcp-server source imports neither @czap/cli nor cli run()', () => {
+  it('@liteship/mcp-server source imports neither @liteship/cli nor cli run()', () => {
     const src = allMcpSource();
-    expect(src).not.toMatch(/from\s+['"]@czap\/cli['"]/);
-    expect(src).not.toMatch(/import\(\s*['"]@czap\/cli['"]\s*\)/);
+    expect(src).not.toMatch(/from\s+['"]@liteship\/cli['"]/);
+    expect(src).not.toMatch(/import\(\s*['"]@liteship\/cli['"]\s*\)/);
   });
 
   it('no stdout monkey-patch or buildArgv survives in the MCP dispatch path', () => {
@@ -40,15 +40,15 @@ describe('A1-T8 — cli↔mcp cycle + stdout-capture seam are deleted', () => {
     expect(dispatch).not.toMatch(/process\.stdout[\s\S]{0,40}\.write\s*=/);
     expect(dispatch).not.toMatch(/\bfunction buildArgv\b/);
     expect(dispatch).not.toContain('buildArgv(');
-    // The replacement: structured dispatch through @czap/command.
+    // The replacement: structured dispatch through @liteship/command.
     expect(dispatch).toContain('structuredContent');
   });
 
   it('the surviving cli→mcp shim is minimal (two server-launch entry points: start + runLspStdio)', () => {
     const shim = readFileSync(resolve(REPO, 'packages/cli/src/mcp-server.d.ts'), 'utf8');
     // The cli launches BOTH server faces over the SAME minimal ambient shim:
-    //   • `start`       — the MCP server (`czap mcp`, optionally over HTTP);
-    //   • `runLspStdio` — the LSP rigor skin (`czap lsp`, over stdio with a
+    //   • `start`       — the MCP server (`liteship mcp`, optionally over HTTP);
+    //   • `runLspStdio` — the LSP rigor skin (`liteship lsp`, over stdio with a
     //     CLI-host-built gauntlet runner injected).
     // Both are legitimate one-way dynamic-launch entry points; the seam stays
     // minimal (it just launches two servers now), not a re-declaration of the cli

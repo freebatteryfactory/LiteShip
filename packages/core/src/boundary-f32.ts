@@ -1,7 +1,7 @@
 /**
  * f32-canonical boundary comparison seam (CUT B1.5).
  *
- * The WASM batch kernel (crates/czap-compute/src/boundary.rs) evaluates
+ * The WASM batch kernel (crates/liteship-compute/src/boundary.rs) evaluates
  * boundaries in f32, and `WASMDispatch.batchBoundaryEval` down-casts thresholds
  * and values to f32 (Float32Array) before the call. The JS scalar path and the
  * JS batch fallback historically compared in f64 — so a value within
@@ -79,7 +79,7 @@ export function rawIndexF32(thresholds: ArrayLike<number>, value: number): numbe
  *
  * Worker blob scripts run in a classic Worker created from a Blob and cannot use
  * ES module imports, so the threshold-evaluation logic must be embedded as a
- * string. This is the single source of that string — `@czap/worker`'s
+ * string. This is the single source of that string — `@liteship/worker`'s
  * `render-worker` and `compositor` blob scripts both interpolate it, so they
  * cannot drift from each other. It is a linear reverse-scan, f32-canonical
  * (`Math.fround`) to match {@link rawIndexF32} and the deployed WASM kernel.

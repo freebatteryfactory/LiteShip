@@ -14,7 +14,7 @@
  * @module
  */
 
-import { inputToSource } from '@czap/core';
+import { inputToSource } from '@liteship/core';
 import type { SerializedBoundary } from '../boundary.js';
 
 /** Rewrite one threshold in serialized boundary JSON. Returns null when invalid. */

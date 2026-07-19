@@ -1,5 +1,5 @@
 /**
- * Supply-chain analyzer (host) — the heavy lifting the lean `@czap/gauntlet`
+ * Supply-chain analyzer (host) — the heavy lifting the lean `@liteship/gauntlet`
  * supply-chain gate refuses to do (Slice C, the avionics tier).
  *
  * This is the HOST (ADR-0012): it parses pnpm-lock.yaml, enforces the
@@ -7,19 +7,19 @@
  * ShipCapsule's recorded addresses and validates them against the LIVE tree, and
  * scans `.github/workflows` for ambient publish authority. It folds all four
  * into the flat {@link SupplyChainFacts} the gate consumes. No re-capture: the
- * provenance step RE-READS the evidence `czap ship` already minted and turns it
+ * provenance step RE-READS the evidence `liteship ship` already minted and turns it
  * into an ENFORCED contract.
  *
  * All hashing routes through the ONE content-address kernel (AddressedDigest /
  * CanonicalCbor) — never forked — so the lockfile address this analyzer recomputes
- * is byte-identical to the one `czap ship` recorded in the ShipCapsule.
+ * is byte-identical to the one `liteship ship` recorded in the ShipCapsule.
  *
  * @module
  */
 
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { AddressedDigest, ShipCapsule, type AddressedDigest as AddressedDigestType } from '@czap/core';
+import { AddressedDigest, ShipCapsule, type AddressedDigest as AddressedDigestType } from '@liteship/core';
 import type {
   SupplyChainFacts,
   LockfilePolicyFacts,
@@ -27,7 +27,7 @@ import type {
   ProvenanceFacts,
   CiAuthorityFacts,
   SupplyChainViolation,
-} from '@czap/gauntlet';
+} from '@liteship/gauntlet';
 import { parseLockfile, type ParsedLockfile } from './lockfile.js';
 import {
   evaluateLockfilePolicy,
@@ -147,7 +147,7 @@ const SHA1_RE = /^[0-9a-f]{40}$/;
  * `source_commit` must be a well-formed SHA-1; `build_env` must be present.
  *
  * The lockfile address is recomputed through the SAME `AddressedDigest.of(bytes)`
- * kernel `czap ship`'s `lockfileAddress` uses, so a match is a real byte-identity
+ * kernel `liteship ship`'s `lockfileAddress` uses, so a match is a real byte-identity
  * proof, never a re-implemented mirror.
  */
 export function validateProvenance(capsule: ShipCapsule.Shape, liveLockfileBytes: Uint8Array): ProvenanceFacts {

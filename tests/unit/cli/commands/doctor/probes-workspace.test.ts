@@ -22,13 +22,13 @@ import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
-import type * as CommandHost from '@czap/command/host';
+import type * as CommandHost from '@liteship/command/host';
 
 const spawnMock = vi.hoisted(() => ({ spawnArgvCapture: vi.fn() }));
 const ffmpegMock = vi.hoisted(() => ({ probeFfmpegRender: vi.fn() }));
 
 vi.mock('../../../../../packages/cli/src/lib/spawn.js', () => spawnMock);
-vi.mock('@czap/command/host', async (importOriginal) => {
+vi.mock('@liteship/command/host', async (importOriginal) => {
   const actual = await importOriginal<typeof CommandHost>();
   return { ...actual, probeFfmpegRender: ffmpegMock.probeFfmpegRender };
 });
@@ -49,7 +49,7 @@ import type { EngineMinima } from '../../../../../packages/cli/src/commands/doct
 
 const tmps: string[] = [];
 function mkTmp(): string {
-  const dir = mkdtempSync(join(tmpdir(), 'czap-doctor-ws-'));
+  const dir = mkdtempSync(join(tmpdir(), 'liteship-doctor-ws-'));
   tmps.push(dir);
   return dir;
 }
@@ -170,11 +170,11 @@ describe('doctor/probes-workspace — probeBuilt()', () => {
     const dir = mkTmp();
     mkdirSync(resolve(dir, 'packages', 'core', 'dist'), { recursive: true });
     writeFileSync(resolve(dir, 'packages', 'core', 'dist', 'index.js'), '// built\n');
-    expect(probeBuilt(dir, 'core', '@czap/core build')).toMatchObject({ id: 'core.built', status: 'ok' });
+    expect(probeBuilt(dir, 'core', '@liteship/core build')).toMatchObject({ id: 'core.built', status: 'ok' });
   });
 
   it('a FIXABLE warn when dist/ is not laid', () => {
-    const r = probeBuilt(mkTmp(), 'cli', '@czap/cli build');
+    const r = probeBuilt(mkTmp(), 'cli', '@liteship/cli build');
     expect(r).toMatchObject({ id: 'cli.built', status: 'warn', fixable: true });
   });
 });

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import { FrameBudget, manualClock } from '@czap/core';
+import { FrameBudget, manualClock } from '@liteship/core';
 
 describe('FrameBudget runtime behavior', () => {
   afterEach(() => {

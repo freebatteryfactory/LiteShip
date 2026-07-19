@@ -4,7 +4,7 @@
 
 import { describe, test } from 'vitest';
 import fc from 'fast-check';
-import { Boundary } from '@czap/core';
+import { Boundary } from '@liteship/core';
 
 // ---------------------------------------------------------------------------
 // Arbitrary: sorted threshold-state pairs

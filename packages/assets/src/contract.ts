@@ -18,9 +18,9 @@
  * @module
  */
 
-import { NotFoundError, ValidationError } from '@czap/error';
-import { closestMatch, defineCapsule, S } from '@czap/core';
-import type { AttributionDecl, Invariant, CapsuleDef, Site } from '@czap/core';
+import { NotFoundError, ValidationError } from '@liteship/error';
+import { closestMatch, defineCapsule, S } from '@liteship/core';
+import type { AttributionDecl, Invariant, CapsuleDef, Site } from '@liteship/core';
 import { mkAssetRefId, type AssetRefId } from './brands.js';
 import { audioDecoder, type DecodedAudio } from './decoders/audio.js';
 import { videoDecoder, type DecodedVideo } from './decoders/video.js';
@@ -102,7 +102,7 @@ export function defaultDecodeP95MsFor(kind: AssetKind): number {
  * Nearest registered id to `id` by edit distance, when one is close enough to
  * plausibly be a typo. The threshold scales with id length (≤2 edits, capped at
  * a third of the id) so 'intro-bd' → 'intro-bed' suggests but 'xyz' → 'beats'
- * stays silent. Delegates to @czap/core's shared Levenshtein picker, passing the
+ * stays silent. Delegates to @liteship/core's shared Levenshtein picker, passing the
  * assets-registry threshold policy through its `threshold` parameter.
  */
 function suggestId(id: string, ids: readonly string[]): string | undefined {

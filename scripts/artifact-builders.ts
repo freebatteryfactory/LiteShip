@@ -1,12 +1,12 @@
 import { existsSync, readFileSync, statSync } from 'node:fs';
-import type { WallClockTimestamp } from '@czap/core';
+import type { WallClockTimestamp } from '@liteship/core';
 import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 import fg from 'fast-glob';
 import libCoverage from 'istanbul-lib-coverage';
-// CUT B5b — pure repo-path slash normalization routes through the one @czap/audit
+// CUT B5b — pure repo-path slash normalization routes through the one @liteship/audit
 // home; aliased to the local name so call sites are unchanged (identical body).
-import { normalizeRepoPath as normalizePath } from '@czap/audit';
+import { normalizeRepoPath as normalizePath } from '@liteship/audit';
 import { coverageExclude, coverageInclude, repoRoot } from '../vitest.shared.js';
 import type { ArtifactExpectedCounts } from './artifact-context.js';
 import {

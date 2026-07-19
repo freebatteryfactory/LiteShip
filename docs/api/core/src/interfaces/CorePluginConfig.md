@@ -8,7 +8,7 @@
 
 Defined in: [core/src/config.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/config.ts#L28)
 
-Vite-plugin slice of a czap [Config.Shape](../namespaces/Config/interfaces/Shape.md): source directories per
+Vite-plugin slice of a liteship [Config.Shape](../namespaces/Config/interfaces/Shape.md): source directories per
 primitive kind, HMR opt-in, environment targeting, and optional WASM hints.
 
 ## Properties

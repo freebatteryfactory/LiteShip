@@ -11,7 +11,7 @@
  *
  * @module
  */
-import type { CapsuleCommandDescriptor } from '@czap/core';
+import type { CapsuleCommandDescriptor } from '@liteship/core';
 import { CommandRegistry, type RegisteredCommand } from './registry.js';
 import { glossaryCommand } from './commands/glossary.js';
 import { versionCommand } from './commands/version.js';
@@ -74,7 +74,7 @@ export interface CommandMap {
 /**
  * Descriptors for commands whose execution is owned by the CLI (terminal
  * orchestration, destructive/streaming workflows, host-probe batteries, catalog
- * projections) — they intentionally have NO `@czap/command` handler. They are
+ * projections) — they intentionally have NO `@liteship/command` handler. They are
  * still first-class catalog entries for identity + discovery. Tagged
  * `executionKind: 'cli-orchestration'` structurally at assembly below, so a
  * CLI-owned entry can never silently look like a finite command that lost its

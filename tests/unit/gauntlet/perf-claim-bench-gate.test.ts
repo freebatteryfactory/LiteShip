@@ -14,7 +14,7 @@
 import { describe, it, expect } from 'vitest';
 import { fileURLToPath } from 'node:url';
 import { resolve, dirname } from 'node:path';
-import { verifyGate, runGates, memoryContext, nodeContext } from '@czap/gauntlet';
+import { verifyGate, runGates, memoryContext, nodeContext } from '@liteship/gauntlet';
 import {
   perfClaimBenchGate,
   PERF_CLAIM_BENCH_RULE_ID,

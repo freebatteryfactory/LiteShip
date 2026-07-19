@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { commandRegistry, COMMAND_CATALOG, mcpExposedDescriptors } from '@czap/command';
+import { commandRegistry, COMMAND_CATALOG, mcpExposedDescriptors } from '@liteship/command';
 
 /** Commands whose execution is CLI-owned (executionKind 'cli-orchestration', no handler). */
 const CLI_ORCHESTRATION = [
@@ -18,7 +18,7 @@ const CLI_ORCHESTRATION = [
   'ship',
 ] as const;
 
-/** Every command czap currently routes — the single canonical catalog. */
+/** Every command liteship currently routes — the single canonical catalog. */
 const EXPECTED_NAMES = [
   'asset.analyze',
   'asset.verify',
@@ -61,7 +61,7 @@ const EXPECTED_NAMES = [
  * agent tool. `check` IS exposed: it runs the PURE gauntlet gate fold in-process
  * (`litelaunchGauntlet`) and returns the Finding[] work-list — the tasks-vs-gates
  * weld, an ideal agent tool (distinct from the CLI-owned `gauntlet` orchestrator).
- * `check-invariants` is NOT exposed: its scan needs `@czap/audit`'s
+ * `check-invariants` is NOT exposed: its scan needs `@liteship/audit`'s
  * `normalizeRepoPath` (the one B5b slash-normalize home), so — like `audit`/
  * `audit-floor` — it is CLI-only and the capability is absent over MCP.
  * `capsule-verify` is NOT exposed either: like `package-smoke` its engine is a
@@ -81,7 +81,7 @@ const EXPECTED_MCP_NAMES = [
   'scene.verify',
 ] as const;
 
-describe('@czap/command canonical catalog', () => {
+describe('@liteship/command canonical catalog', () => {
   it('registry.list() is the full catalog, sorted and deduped', () => {
     const names = commandRegistry.list().map((d) => d.name);
     expect(names).toEqual([...EXPECTED_NAMES]);

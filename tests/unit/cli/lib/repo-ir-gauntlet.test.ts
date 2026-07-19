@@ -1,6 +1,6 @@
 /**
  * The HOST injection path (`packages/cli/src/lib/repo-ir-gauntlet.ts`, Slice B/C) —
- * the CLI-only wiring that builds the repo-IR via `@czap/audit`, host-injects the
+ * the CLI-only wiring that builds the repo-IR via `@liteship/audit`, host-injects the
  * LiteShip `invariant-regex` oracle, composes the avionics opt-in gates, and runs
  * the gauntlet with the IR threaded in.
  *
@@ -15,7 +15,7 @@
  *    PURE + DETERMINISTIC (a property over arbitrary text).
  *
  *  - THE IR BUILD: `buildRepoIRForRepo` materializes a real `RepoIR` over a tiny but
- *    REAL `@czap/`-scoped fixture, carrying BOTH the audit AST oracle's facts AND the
+ *    REAL `@liteship/`-scoped fixture, carrying BOTH the audit AST oracle's facts AND the
  *    host regex oracle's `invariant-regex` facts (the triangulation substrate), and is
  *    deterministic over the source bytes (the same bytes → an identical IR).
  *
@@ -30,7 +30,7 @@
  *    mutation-score baseline, and a corrupt equivalent-mutant registry are TAGGED
  *    throws (a corrupt artifact must be visible, never a silent green).
  *
- * The fixture is a hermetic tmp repo (a single `@czap/` package + the committed
+ * The fixture is a hermetic tmp repo (a single `@liteship/` package + the committed
  * traceability ledger + a standards snapshot generated from the live surface so the
  * always-on raccoon-rule gate has matching ground truth). No network; the injected
  * clock makes every run byte-reproducible.
@@ -43,8 +43,8 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
 import { scaledTimeout, repoRoot } from '../../../../vitest.shared.js';
-import { isTaggedError } from '@czap/error';
-import { INVARIANTS } from '@czap/command/invariants';
+import { isTaggedError } from '@liteship/error';
+import { INVARIANTS } from '@liteship/command/invariants';
 import { readFileSync } from 'node:fs';
 import {
   readLiveStandardsSurface,
@@ -52,7 +52,7 @@ import {
   STANDARDS_SNAPSHOT_PATH,
   type GitShowReader,
 } from '../../../../packages/cli/src/lib/standards-surface.js';
-import type { Fact, FileId } from '@czap/gauntlet';
+import type { Fact, FileId } from '@liteship/gauntlet';
 import {
   liteshipRegexOracle,
   buildRepoIRForRepo,
@@ -99,7 +99,7 @@ const HEAVY = scaledTimeout(120_000);
 
 /** Invoke the host oracle the way `buildRepoIR` does, over an in-memory file. */
 function runOracle(file: FileId, text: string): readonly Fact[] {
-  return liteshipRegexOracle({ file, text, packageName: '@czap/example', sourceFile: undefined });
+  return liteshipRegexOracle({ file, text, packageName: '@liteship/example', sourceFile: undefined });
 }
 
 /** The per-line property facts emitted under a given oracle property (the regex fired). */
@@ -205,14 +205,14 @@ describe('liteshipRegexOracle — the host-injected invariant-regex oracle', () 
 // 2 + 3. THE IR BUILD + THE RUN — over a hermetic real fixture
 // ───────────────────────────────────────────────────────────────────────────
 
-/** A minimal `@czap/`-scoped package manifest (the profile globs `packages/*`). */
+/** A minimal `@liteship/`-scoped package manifest (the profile globs `packages/*`). */
 function pkgManifest(name: string): string {
   return JSON.stringify({ name, version: '0.0.0', exports: { '.': { development: './src/index.ts' } } });
 }
 
 /** Lay a fixture tree under a fresh tmp root and return the absolute root path. */
 function makeFixture(files: Record<string, string>): string {
-  const root = mkdtempSync(join(tmpdir(), 'czap-rig-'));
+  const root = mkdtempSync(join(tmpdir(), 'liteship-rig-'));
   for (const [rel, content] of Object.entries(files)) {
     const abs = resolve(root, rel);
     mkdirSync(resolve(abs, '..'), { recursive: true });
@@ -244,8 +244,8 @@ function makeFixture(files: Record<string, string>): string {
 /** The single-package source fixture: one named export + an internal relative import. */
 function sourceFiles(): Record<string, string> {
   return {
-    'package.json': JSON.stringify({ name: 'czap-fixture-root', private: true, type: 'module' }),
-    'packages/example/package.json': pkgManifest('@czap/example'),
+    'package.json': JSON.stringify({ name: 'liteship-fixture-root', private: true, type: 'module' }),
+    'packages/example/package.json': pkgManifest('@liteship/example'),
     'packages/example/src/index.ts': "import { helper } from './helper.js';\nexport const value = helper() + 1;\n",
     'packages/example/src/helper.ts': 'export function helper(): number {\n  return 41;\n}\n',
   };
@@ -444,7 +444,7 @@ describe('runGauntletWithRepoIR — build IR + always-on facts + run + receipt',
         'pnpm-workspace.yaml': "packages:\n  - 'packages/*'\n",
         'pnpm-lock.yaml': "lockfileVersion: '9.0'\nimporters:\n  .:\npackages:\n",
         'packages/example/package.json': JSON.stringify({
-          name: '@czap/example',
+          name: '@liteship/example',
           version: '0.0.0',
           private: true,
           exports: { '.': { development: './src/index.ts' } },
@@ -572,7 +572,7 @@ describe('runGauntletWithRepoIR — fail-loud edges (tagged throws, never a sile
 
 // ───────────────────────────────────────────────────────────────────────────
 // 5. THE --spine-relation HOST PATH — over the REAL repo (needs the real _spine
-//    mirror + runtime surface; a hermetic @czap/example fixture has neither).
+//    mirror + runtime surface; a hermetic @liteship/example fixture has neither).
 // ───────────────────────────────────────────────────────────────────────────
 
 describe('runGauntletWithRepoIR — the --spine-relation host path blocks on a planted drift (#156)', () => {
@@ -584,7 +584,7 @@ describe('runGauntletWithRepoIR — the --spine-relation host path blocks on a p
   const realSnapshotBase: GitShowReader = (r) => readFileSync(join(r, STANDARDS_SNAPSHOT_PATH), 'utf8');
 
   it(
-    'a planted Millis-brand-loss drift reds the spine-relation gate → `czap check --ir --spine-relation` BLOCKS',
+    'a planted Millis-brand-loss drift reds the spine-relation gate → `liteship check --ir --spine-relation` BLOCKS',
     async () => {
       const drifted = readFileSync(CORE_DTS, 'utf8').replace(
         'readonly durationMs: Millis;',

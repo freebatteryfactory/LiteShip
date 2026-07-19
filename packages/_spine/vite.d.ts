@@ -1,5 +1,5 @@
 /**
- * @czap/vite type spine -- Vite 8 plugin for @token, @theme, @style, @quantize processing + HMR.
+ * @liteship/vite type spine -- Vite 8 plugin for @token, @theme, @style, @quantize processing + HMR.
  */
 
 import type { Boundary } from './core.d.ts';
@@ -160,12 +160,12 @@ export declare function primitiveSearchPatterns(
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export type VirtualModuleId =
-  | 'virtual:czap/tokens'
-  | 'virtual:czap/tokens.css'
-  | 'virtual:czap/boundaries'
-  | 'virtual:czap/themes'
-  | 'virtual:czap/wasm-url'
-  | 'virtual:czap/config';
+  | 'virtual:liteship/tokens'
+  | 'virtual:liteship/tokens.css'
+  | 'virtual:liteship/boundaries'
+  | 'virtual:liteship/themes'
+  | 'virtual:liteship/wasm-url'
+  | 'virtual:liteship/config';
 
 export type BoundaryAssetUrlMap = Readonly<Record<string, Readonly<Record<number, string>>>>;
 
@@ -198,7 +198,7 @@ export declare function serializeBoundaryOutput(output: CompiledOutputs): string
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export interface HMRPayload {
-  readonly type: 'czap:update';
+  readonly type: 'liteship:update';
   readonly boundary: string;
   readonly css?: string;
   readonly uniforms?: Record<string, number>;

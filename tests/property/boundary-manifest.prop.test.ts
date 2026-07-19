@@ -13,13 +13,13 @@ import fc from 'fast-check';
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { Boundary } from '@czap/core';
-import { collectBoundaryManifest } from '@czap/vite';
+import { Boundary } from '@liteship/core';
+import { collectBoundaryManifest } from '@liteship/vite';
 
 const tempDirs: string[] = [];
 
 function makeTempDir(): string {
-  const dir = mkdtempSync(join(tmpdir(), 'czap-manifest-prop-'));
+  const dir = mkdtempSync(join(tmpdir(), 'liteship-manifest-prop-'));
   tempDirs.push(dir);
   return dir;
 }
@@ -54,7 +54,7 @@ describe('boundary manifest identity properties', () => {
           writeFileSync(
             join(srcDir, 'boundaries.ts'),
             `
-import { Boundary } from '@czap/core';
+import { Boundary } from '@liteship/core';
 
 export const generated = Boundary.make({
   input: ${JSON.stringify(input)},

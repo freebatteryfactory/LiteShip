@@ -1,19 +1,19 @@
 /**
- * audit (CLI adapter, CUT D9b-2) — thin projection over `@czap/command`'s audit
+ * audit (CLI adapter, CUT D9b-2) — thin projection over `@liteship/command`'s audit
  * handler. The CLI is the ONLY adapter that wires the `runAudit` capability: it
- * imports `@czap/audit` (the engine), loads the explicit `--profile` if given,
+ * imports `@liteship/audit` (the engine), loads the explicit `--profile` if given,
  * runs the three passes, and hands a structured summary back to the handler.
- * `@czap/command` and `@czap/mcp-server` never see the engine.
+ * `@liteship/command` and `@liteship/mcp-server` never see the engine.
  *
  * @module
  */
-import { wallClock } from '@czap/core';
-import { auditCommand, type AuditPayload, type AuditEngineSummary } from '@czap/command';
-import { runAuditPasses } from '@czap/audit';
+import { wallClock } from '@liteship/core';
+import { auditCommand, type AuditPayload, type AuditEngineSummary } from '@liteship/command';
+import { runAuditPasses } from '@liteship/audit';
 import { loadProfile } from '../lib/load-profile.js';
 import { emit, emitError, type WallClockTimestamp } from '../receipts.js';
 
-/** Receipt emitted by `czap audit`. */
+/** Receipt emitted by `liteship audit`. */
 export interface AuditReceipt extends AuditPayload {
   readonly status: 'ok' | 'failed';
   readonly command: 'audit';
@@ -23,7 +23,7 @@ export interface AuditReceipt extends AuditPayload {
 /** Exit code when the engine/profile load fails before producing a summary. */
 const LOAD_FAILURE_EXIT = 1;
 
-/** Execute `czap audit [--profile <path>] [--consumer] [--consumer-app] [--findings]`. */
+/** Execute `liteship audit [--profile <path>] [--consumer] [--consumer-app] [--findings]`. */
 export async function audit(
   opts: {
     profile?: string;
@@ -93,7 +93,7 @@ export async function audit(
       repoRoot: profile.repoRoot,
       profileSource: source,
       // Engine findings are already pass-merged and per-pass sorted, and are
-      // structurally assignable to the @czap/command AuditEngineFinding mirror.
+      // structurally assignable to the @liteship/command AuditEngineFinding mirror.
       ...(includeFindings ? { findings: result.findings } : {}),
     };
   };

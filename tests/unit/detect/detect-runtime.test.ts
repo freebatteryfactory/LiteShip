@@ -13,7 +13,7 @@ import {
   motionTierFromCapabilities,
   capTierFromCapabilities,
 } from '../../../packages/detect/src/tiers.js';
-import { Diagnostics } from '@czap/core';
+import { Diagnostics } from '@liteship/core';
 
 type MockMediaQueryList = MediaQueryList & {
   dispatchChange(): void;
@@ -822,7 +822,7 @@ describe('device detection runtime', () => {
 
     const events = buffer.events.filter((e) => e.code === 'unrecognized-gpu-renderer');
     expect(events).toHaveLength(1);
-    expect(events[0]?.source).toBe('czap/detect');
+    expect(events[0]?.source).toBe('liteship/detect');
     expect(events[0]?.message).toContain('"Acme XG-9"');
     expect(events[0]?.message).toContain('tier 1');
     expect(events[0]?.message).toContain('github.com/freebatteryfactory/LiteShip/issues');
@@ -847,7 +847,7 @@ describe('device detection runtime', () => {
 
     const events = buffer.events.filter((e) => e.code === 'probes-defaulted');
     expect(events).toHaveLength(1);
-    expect(events[0]?.source).toBe('czap/detect');
+    expect(events[0]?.source).toBe('liteship/detect');
     expect(events[0]?.message).toContain('renderer (threw: Error: SecurityError: fingerprinting protection)');
     expect(events[0]?.message).toContain('connection (API unavailable)');
     expect(events[0]?.message).toContain('confidence');

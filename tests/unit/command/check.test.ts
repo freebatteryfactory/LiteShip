@@ -15,9 +15,9 @@
  * @module
  */
 import { describe, it, expect } from 'vitest';
-import { checkCommand, commandRegistry, mcpExposedDescriptors } from '@czap/command';
-import type { CheckPayload, CommandContext } from '@czap/command';
-import type { Finding, GauntletResult } from '@czap/gauntlet';
+import { checkCommand, commandRegistry, mcpExposedDescriptors } from '@liteship/command';
+import type { CheckPayload, CommandContext } from '@liteship/command';
+import type { Finding, GauntletResult } from '@liteship/gauntlet';
 
 // ── Single-source drift-guard ────────────────────────────────────────────────
 // `SchemaFinding` is the finding element of the command's EXPORTED `CheckPayload`
@@ -51,12 +51,12 @@ const BARE_THROW: Finding = {
   severity: 'error',
   level: 'L3',
   title: 'bare throw',
-  detail: 'throw a tagged @czap/error, not a bare value',
+  detail: 'throw a tagged @liteship/error, not a bare value',
   location: { file: 'packages/x/src/y.ts', line: 12 },
   remediation: {
     kind: 'instruction',
     description: 'Replace the bare throw with a tagged error',
-    steps: ['import the @czap/error constructor', 'throw the tagged variant instead'],
+    steps: ['import the @liteship/error constructor', 'throw the tagged variant instead'],
   },
 };
 

@@ -34,8 +34,8 @@ A [CompileResult](../type-aliases/CompileResult.md) tagged by target
 ## Example
 
 ```ts
-import { Boundary } from '@czap/core';
-import { dispatch } from '@czap/compiler';
+import { Boundary } from '@liteship/core';
+import { dispatch } from '@liteship/compiler';
 
 const boundary = Boundary.make({
   input: 'width',

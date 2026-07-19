@@ -31,8 +31,8 @@ import {
   type RepoIR,
   type McdcFacts,
   type McdcConditionOutcome,
-} from '@czap/gauntlet';
-import { isTaggedError } from '@czap/error';
+} from '@liteship/gauntlet';
+import { isTaggedError } from '@liteship/error';
 
 const L4_FILE = 'packages/core/src/brands.ts'; // an L4 glob in the assurance map
 const L1_FILE = 'packages/x/src/a.ts'; // an ordinary L1 file
@@ -137,7 +137,7 @@ describe('mcdcCoverageGate — THE LAW: the level is PROPAGATED from the live IR
   it('a helper IMPORTED by an L4 file inherits L4 (not its L1 glob level)', () => {
     const ir = makeRepoIR({
       files: [
-        { id: L4_FILE, contentDigest: PLACEHOLDER_DIGEST, packageName: '@czap/core' },
+        { id: L4_FILE, contentDigest: PLACEHOLDER_DIGEST, packageName: '@liteship/core' },
         { id: HELPER, contentDigest: PLACEHOLDER_DIGEST, packageName: null },
       ],
       imports: [{ fromFile: L4_FILE, specifier: './helper.js', kind: 'relative', targetFile: HELPER }],

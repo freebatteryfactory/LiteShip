@@ -15,8 +15,8 @@
  * @module
  */
 
-import { err } from '@czap/error';
-import type { ParseError, Result } from '@czap/error';
+import { err } from '@liteship/error';
+import type { ParseError, Result } from '@liteship/error';
 import { decode, parseErrorFromIssues } from './schema/index.js';
 import type { Schema } from './schema/index.js';
 

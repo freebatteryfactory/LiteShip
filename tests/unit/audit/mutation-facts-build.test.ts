@@ -13,7 +13,7 @@ import {
   makeCoverageMap,
   generateMutants,
   type MutantTestRunner,
-} from '@czap/audit';
+} from '@liteship/audit';
 import ts from 'typescript';
 import {
   mutationDivergenceGate,
@@ -21,7 +21,7 @@ import {
   memoryContext,
   PLACEHOLDER_DIGEST,
   type GateContext,
-} from '@czap/gauntlet';
+} from '@liteship/gauntlet';
 
 // An L4 file (the `core/.../brands.ts` L4 glob) so a survivor is a blocking error.
 const FILE = 'packages/core/src/brands.ts';
@@ -39,7 +39,7 @@ function coverageFor() {
 function irFor(): GateContext {
   return {
     ...memoryContext({}),
-    ir: makeRepoIR({ files: [{ id: FILE, contentDigest: PLACEHOLDER_DIGEST, packageName: '@czap/core' }] }),
+    ir: makeRepoIR({ files: [{ id: FILE, contentDigest: PLACEHOLDER_DIGEST, packageName: '@liteship/core' }] }),
   };
 }
 

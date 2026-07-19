@@ -6,8 +6,8 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Boundary, Composable, ComposableWorld, Part, S, Style, Token, World } from '@czap/core';
-import { hasTag } from '@czap/error';
+import { Boundary, Composable, ComposableWorld, Part, S, Style, Token, World } from '@liteship/core';
+import { hasTag } from '@liteship/error';
 
 const boundary = Boundary.make({
   input: 'viewport.width',

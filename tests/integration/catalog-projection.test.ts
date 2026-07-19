@@ -1,14 +1,14 @@
 /**
  * CUT A1 (catalog collapse): every command surface is a projection of the ONE
- * canonical catalog in @czap/command. These tests prove the duplication is gone
+ * canonical catalog in @liteship/command. These tests prove the duplication is gone
  * — no surface maintains its own parallel command table.
  *
  * @module
  */
 import { describe, it, expect } from 'vitest';
-import { run } from '@czap/cli';
-import { COMMAND_CATALOG, mcpExposedDescriptors } from '@czap/command';
-import { listTools, readResource } from '@czap/mcp-server';
+import { run } from '@liteship/cli';
+import { COMMAND_CATALOG, mcpExposedDescriptors } from '@liteship/command';
+import { listTools, readResource } from '@liteship/mcp-server';
 import { TOP_LEVEL_VERBS } from '../../packages/cli/src/commands/completion.js';
 import { HELP_TEXT } from '../../packages/cli/src/commands/help.js';
 import { captureCli } from './cli/capture.js';

@@ -4,9 +4,9 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "paths": {
-      "@czap/_spine": ["../_spine/index.d.ts"],
-      "@czap/canonical": ["../canonical/src/index.ts"],
-      "@czap/error": ["../error/src/index.ts"]
+      "@liteship/_spine": ["../_spine/index.d.ts"],
+      "@liteship/canonical": ["../canonical/src/index.ts"],
+      "@liteship/error": ["../error/src/index.ts"]
     }
   },
   "references": [{ "path": "../canonical" }, { "path": "../error" }],

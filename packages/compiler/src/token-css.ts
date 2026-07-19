@@ -7,7 +7,7 @@
  * @module
  */
 
-import type { Token, Theme } from '@czap/core';
+import type { Token, Theme } from '@liteship/core';
 import { inferSyntax, stringifyCSSValue } from './css-utils.js';
 
 // ---------------------------------------------------------------------------
@@ -39,10 +39,10 @@ export interface TokenCSSResult {
 
 /**
  * Derive the CSS custom property name from a `Token.Shape`.
- * Uses the token's `cssProperty` if set, otherwise generates `--czap-<name>`.
+ * Uses the token's `cssProperty` if set, otherwise generates `--liteship-<name>`.
  */
 function propName(token: Token.Shape): string {
-  return token.cssProperty ?? `--czap-${token.name}`;
+  return token.cssProperty ?? `--liteship-${token.name}`;
 }
 
 /**

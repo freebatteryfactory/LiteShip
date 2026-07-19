@@ -34,11 +34,11 @@ const SNAPSHOT_PATH = resolve(REPO_ROOT, 'tests/fixtures/type-export-surface.jso
 
 /**
  * The type-surface roster: every public runtime barrel the value gate locks, PLUS
- * `@czap/_spine` (the `.d.ts`-only mirror the value gate cannot enumerate at all,
+ * `@liteship/_spine` (the `.d.ts`-only mirror the value gate cannot enumerate at all,
  * and the whole reason a TYPE surface is needed). Deliberately data, resolved to
  * each package's SOURCE entry (`development`/`types`, never the built `dist`).
  */
-const ROSTER_NAMES: readonly string[] = [...LITESHIP_API_SURFACE_POLICY.publicPackages, '@czap/_spine'];
+const ROSTER_NAMES: readonly string[] = [...LITESHIP_API_SURFACE_POLICY.publicPackages, '@liteship/_spine'];
 
 interface ManifestExports {
   readonly '.'?: { readonly development?: string; readonly types?: string; readonly import?: string };
@@ -126,7 +126,7 @@ describe('type-export enumerator — precision (pure synthetic walk)', () => {
     // syntactically type-only. The enumerator now resolves the original name against the
     // target module's type surface, so the dual's type half (and a re-exported interface)
     // are captured, while a pure value re-export still contributes nothing. Mirrors the
-    // real `@czap/canonical` case (`export { ContentAddress } from './brands.js'`).
+    // real `@liteship/canonical` case (`export { ContentAddress } from './brands.js'`).
     const files = {
       '/p/index.ts': [
         `export { Brand, mkBrand } from './brand.js';`, // Brand = dual (type half kept); mkBrand = value (skip)
@@ -161,8 +161,8 @@ describe('type-export enumerator — precision (pure synthetic walk)', () => {
 describe('type-export enumerator — teeth (the CapSet class of slip / value gate is blind)', () => {
   it('surfaces the spine mirror type `CapSet`, and a dropped mirror type reds as removed', () => {
     const live = buildTypeExportSurface(ROSTER);
-    const spine = live.packages['@czap/_spine'];
-    expect(spine, '@czap/_spine must be in the type surface roster').toBeDefined();
+    const spine = live.packages['@liteship/_spine'];
+    expect(spine, '@liteship/_spine must be in the type surface roster').toBeDefined();
     const hasCapSet = spine!.typeExports.some((d) => d.name === 'CapSet');
     expect(hasCapSet, 'the spine mirror declares interface CapSet').toBe(true);
 
@@ -172,20 +172,20 @@ describe('type-export enumerator — teeth (the CapSet class of slip / value gat
       ...live,
       packages: {
         ...live.packages,
-        '@czap/_spine': {
+        '@liteship/_spine': {
           typeExports: spine!.typeExports.filter((d) => d.name !== 'CapSet'),
         },
       },
     };
     const drift = diffTypeExportSurface(dropped, live);
-    const capSetDrift = drift.filter((d) => d.pkg === '@czap/_spine' && d.detail.includes('CapSet'));
+    const capSetDrift = drift.filter((d) => d.pkg === '@liteship/_spine' && d.detail.includes('CapSet'));
     expect(capSetDrift).toHaveLength(1);
     expect(capSetDrift[0]!.changeClass).toBe('added'); // live has it, "dropped" baseline does not
   });
 
   it('captures a type-only export the VALUE api-surface snapshot is structurally blind to', () => {
     const live = buildTypeExportSurface(ROSTER);
-    const coreTypes = live.packages['@czap/core']!.typeExports.map((d) => d.name);
+    const coreTypes = live.packages['@liteship/core']!.typeExports.map((d) => d.name);
     // `SchemaPort` is `export type { SchemaPort } from './schema-port.js'` — a
     // type-only export: present here, absent from the runtime value surface.
     expect(coreTypes).toContain('SchemaPort');
@@ -195,21 +195,21 @@ describe('type-export enumerator — teeth (the CapSet class of slip / value gat
     ) as {
       packages: Record<string, { exports: readonly { name: string }[] }>;
     };
-    const coreValues = valueSnapshot.packages['@czap/core']!.exports.map((e) => e.name);
+    const coreValues = valueSnapshot.packages['@liteship/core']!.exports.map((e) => e.name);
     expect(coreValues, 'SchemaPort is a TYPE — it must not appear in the value surface').not.toContain('SchemaPort');
   });
 });
 
 describe('type-export surface snapshot gate (drift)', () => {
   it(
-    'the committed snapshot matches the live type surface (regenerate with CZAP_UPDATE_TYPE_EXPORT_SNAPSHOT=1)',
+    'the committed snapshot matches the live type surface (regenerate with LITESHIP_UPDATE_TYPE_EXPORT_SNAPSHOT=1)',
     { timeout: scaledTimeout(60_000) },
     () => {
       const live = serializeTypeExportSurface(buildTypeExportSurface(ROSTER));
       // if/else (NOT an early return): a bare `return` before the first `expect`
       // trips the no-early-return-test gate — the regen branch must not read as an
       // assertion-less test path (mirrors tests/unit/meta/api-surface.test.ts).
-      if (process.env.CZAP_UPDATE_TYPE_EXPORT_SNAPSHOT === '1') {
+      if (process.env.LITESHIP_UPDATE_TYPE_EXPORT_SNAPSHOT === '1') {
         writeFileSync(SNAPSHOT_PATH, live);
       } else {
         const committed = readFileSync(SNAPSHOT_PATH, 'utf8');
@@ -220,10 +220,10 @@ describe('type-export surface snapshot gate (drift)', () => {
         expect(
           live === committed,
           drift.length === 0
-            ? 'Type surface serialization drifted but no per-type diff was found — regenerate with CZAP_UPDATE_TYPE_EXPORT_SNAPSHOT=1 and review.'
+            ? 'Type surface serialization drifted but no per-type diff was found — regenerate with LITESHIP_UPDATE_TYPE_EXPORT_SNAPSHOT=1 and review.'
             : `Public TYPE surface drifted from the committed snapshot:\n` +
                 drift.map((d) => `  • ${d.pkg}: ${d.detail} [${d.changeClass}]`).join('\n') +
-                `\n\nIf intentional, regenerate (CZAP_UPDATE_TYPE_EXPORT_SNAPSHOT=1 npx vitest run tests/unit/audit/type-export-surface.test.ts) and review the diff — a dropped type is a broken public contract, never a silent pass.`,
+                `\n\nIf intentional, regenerate (LITESHIP_UPDATE_TYPE_EXPORT_SNAPSHOT=1 npx vitest run tests/unit/audit/type-export-surface.test.ts) and review the diff — a dropped type is a broken public contract, never a silent pass.`,
         ).toBe(true);
       }
     },

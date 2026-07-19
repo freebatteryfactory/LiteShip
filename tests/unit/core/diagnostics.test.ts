@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import { Diagnostics, fixedClock } from '@czap/core';
+import { Diagnostics, fixedClock } from '@liteship/core';
 
 afterEach(() => {
   Diagnostics.reset();
@@ -13,13 +13,13 @@ describe('Diagnostics', () => {
     Diagnostics.setSink(sink);
 
     Diagnostics.warn({
-      source: 'czap/test',
+      source: 'liteship/test',
       code: 'warn-code',
       message: 'Warned once.',
       detail: { path: '/tmp/example' },
     });
     Diagnostics.error({
-      source: 'czap/test',
+      source: 'liteship/test',
       code: 'error-code',
       message: 'Errored once.',
       cause: new Error('boom'),
@@ -28,14 +28,14 @@ describe('Diagnostics', () => {
     expect(events).toEqual([
       expect.objectContaining({
         level: 'warn',
-        source: 'czap/test',
+        source: 'liteship/test',
         code: 'warn-code',
         message: 'Warned once.',
         detail: { path: '/tmp/example' },
       }),
       expect.objectContaining({
         level: 'error',
-        source: 'czap/test',
+        source: 'liteship/test',
         code: 'error-code',
         message: 'Errored once.',
         cause: expect.any(Error),
@@ -50,13 +50,13 @@ describe('Diagnostics', () => {
     const previous = Diagnostics.setClock(fixedClock(1_700_000_000_000));
     expect(typeof previous.now).toBe('function');
 
-    Diagnostics.warn({ source: 'czap/test', code: 'ts', message: 'stamped' });
+    Diagnostics.warn({ source: 'liteship/test', code: 'ts', message: 'stamped' });
     expect(events).toHaveLength(1);
     expect(events[0]?.timestamp).toBe(1_700_000_000_000);
 
     // resetClock() restores the default wall clock (a real, non-fixed timestamp).
     Diagnostics.resetClock();
-    const after = Diagnostics.warn({ source: 'czap/test', code: 'ts2', message: 'real' });
+    const after = Diagnostics.warn({ source: 'liteship/test', code: 'ts2', message: 'real' });
     expect(after.timestamp).not.toBe(1_700_000_000_000);
   });
 
@@ -65,7 +65,7 @@ describe('Diagnostics', () => {
     Diagnostics.setSink(sink);
 
     const payload = {
-      source: 'czap/test',
+      source: 'liteship/test',
       code: 'dedupe',
       message: 'Only emit me once.',
     } as const;
@@ -84,7 +84,7 @@ describe('Diagnostics', () => {
     Diagnostics.setSink(first.sink);
 
     const payload = {
-      source: 'czap/test',
+      source: 'liteship/test',
       code: 'reset-once',
       message: 'Reset me.',
     } as const;
@@ -106,21 +106,21 @@ describe('Diagnostics', () => {
 
     expect(() =>
       Diagnostics.warn({
-        source: 'czap/test',
+        source: 'liteship/test',
         code: 'missing-warn',
         message: 'No warn method is available.',
       }),
     ).not.toThrow();
 
     Diagnostics.error({
-      source: 'czap/test',
+      source: 'liteship/test',
       code: 'has-error',
       message: 'Error still routes through the console sink.',
       detail: { retry: false },
     });
 
     expect(error).toHaveBeenCalledWith(
-      '[czap/test] has-error: Error still routes through the console sink.',
+      '[liteship/test] has-error: Error still routes through the console sink.',
       { retry: false },
     );
   });
@@ -131,20 +131,20 @@ describe('Diagnostics', () => {
     vi.stubGlobal('console', { error });
 
     Diagnostics.error({
-      source: 'czap/test',
+      source: 'liteship/test',
       code: 'has-cause',
       message: 'Cause still routes through the console sink.',
       cause: boom,
     });
 
-    expect(error).toHaveBeenCalledWith('[czap/test] has-cause: Cause still routes through the console sink.', boom);
+    expect(error).toHaveBeenCalledWith('[liteship/test] has-cause: Cause still routes through the console sink.', boom);
   });
 
   test('default sink is a no-op when globalThis.console is not an object', () => {
     vi.stubGlobal('console', undefined as never);
     expect(() =>
       Diagnostics.warn({
-        source: 'czap/test',
+        source: 'liteship/test',
         code: 'no-console',
         message: 'Console is missing entirely.',
       }),
@@ -155,14 +155,14 @@ describe('Diagnostics', () => {
     vi.stubGlobal('console', { log: vi.fn() });
     expect(() =>
       Diagnostics.warn({
-        source: 'czap/test',
+        source: 'liteship/test',
         code: 'no-methods',
         message: 'Console exists but lacks warn/error.',
       }),
     ).not.toThrow();
     expect(() =>
       Diagnostics.error({
-        source: 'czap/test',
+        source: 'liteship/test',
         code: 'no-methods',
         message: 'Console exists but lacks warn/error.',
       }),

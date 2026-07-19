@@ -7,7 +7,7 @@
  * `.github/workflows/release.yml`'s publish loop reads that JSON with jq rather
  * than carrying a hand-maintained list. Before this single-sourcing, release.yml
  * carried TWO hand-maintained facts — a drift guard `EXPECTED_PUBLISHABLE=<n>`
- * and the explicit `for pkg in ...; do` loop — and BOTH drifted when `@czap/stage`
+ * and the explicit `for pkg in ...; do` loop — and BOTH drifted when `@liteship/stage`
  * was promoted to public: the loop omitted it and the count stayed 22, so a
  * `v0.2.0` tag would have hit the workflow's own guard and aborted before shipping
  * ANY package. release.yml is tag-triggered and never runs in the gauntlet, so
@@ -16,7 +16,7 @@
  * This guard DERIVES the publishable set from the manifests on disk (release.yml's
  * own predicate: `private != true`) and asserts the GENERATED roster matches it —
  * `publish-roster.json` is the roster location the release loop, `liteship` deps,
- * the `package-smoke` command's `PACKAGES` roster (in `@czap/command`), and
+ * the `package-smoke` command's `PACKAGES` roster (in `@liteship/command`), and
  * `scripts/lib/capsule-detector.ts` all agree on. Pins the LAW (roster == workspace,
  * count == length), not a number, so caret-clean promotions need no churn here but
  * omissions fail loud.
@@ -26,7 +26,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { CZAP_PACKAGE_ROSTER } from '@czap/audit';
+import { LITESHIP_PACKAGE_ROSTER } from '@liteship/audit';
 import { PUBLISHABLE_ROSTER, collectRosterDrift } from '../../../scripts/gen-roster.js';
 import { packageManifests } from '../../support/repo-truths.js';
 
@@ -84,16 +84,16 @@ describe('release publish roster matches the workspace (scripts/ci/publish-roste
     expect(publishRoster().expectedPublishable).toBe(publishRoster().packages.length);
   });
 
-  it('@czap/stage is in the publish roster (the package whose promotion drifted release.yml)', () => {
-    expect(publishRoster().packages).toContain('@czap/stage');
+  it('@liteship/stage is in the publish roster (the package whose promotion drifted release.yml)', () => {
+    expect(publishRoster().packages).toContain('@liteship/stage');
   });
 
   it('publishes every dependency BEFORE its dependent (topological order)', () => {
-    // The tag release ships one package per `czap ship --filter` invocation, so the ROSTER
+    // The tag release ships one package per `liteship ship --filter` invocation, so the ROSTER
     // ORDER — not any in-process sort — decides registry order. A dependent published
     // before its same-version dependency leaves a window where it is installable but
     // unresolvable. Pin the order topological so a roster regeneration that reintroduces a
-    // violation (e.g. @czap/core before @czap/canonical) fails here instead of on a live tag.
+    // violation (e.g. @liteship/core before @liteship/canonical) fails here instead of on a live tag.
     const order = publishRoster().packages;
     const pos = new Map(order.map((name, i) => [name, i] as const));
     const deps = publishableDeps();
@@ -115,11 +115,11 @@ describe('release publish roster matches the workspace (scripts/ci/publish-roste
     expect(publishRoster().expectedPublishable).toBe(PUBLISHABLE_ROSTER.length);
   });
 
-  it('the generated roster equals audit CZAP_PACKAGE_ROSTER plus the two umbrellas (the single fleet anchor)', () => {
-    // [DUP] Re-anchor: the publish roster's `@czap/*` membership is owned by `@czap/audit`'s
-    // CZAP_PACKAGE_ROSTER; the two non-`@czap` umbrellas that publish last are added on top
+  it('the generated roster equals audit LITESHIP_PACKAGE_ROSTER plus the two umbrellas (the single fleet anchor)', () => {
+    // [DUP] Re-anchor: the publish roster's `@liteship/*` membership is owned by `@liteship/audit`'s
+    // LITESHIP_PACKAGE_ROSTER; the two non-`@liteship` umbrellas that publish last are added on top
     // (deliberately absent from the scoped fleet).
-    expect([...publishRoster().packages].sort()).toEqual([...CZAP_PACKAGE_ROSTER, 'create-liteship', 'liteship'].sort());
+    expect([...publishRoster().packages].sort()).toEqual([...LITESHIP_PACKAGE_ROSTER, 'create-liteship', 'liteship'].sort());
   });
 
   it('gen-roster reports no roster drift across the authored roster and shipped copies', () => {

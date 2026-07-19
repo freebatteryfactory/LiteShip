@@ -8,10 +8,10 @@
  */
 
 import { describe, test, expect, beforeEach } from 'vitest';
-import { Boundary, Diagnostics, CellKernel } from '@czap/core';
-import type { MotionTier, ReactiveQuantizer } from '@czap/core';
-import { hasTag } from '@czap/error';
-import { AnimatedQuantizer, Q, evaluate } from '@czap/quantizer';
+import { Boundary, Diagnostics, CellKernel } from '@liteship/core';
+import type { MotionTier, ReactiveQuantizer } from '@liteship/core';
+import { hasTag } from '@liteship/error';
+import { AnimatedQuantizer, Q, evaluate } from '@liteship/quantizer';
 import { captureDiagnostics } from '../../helpers/diagnostics.js';
 
 // ---------------------------------------------------------------------------
@@ -77,7 +77,7 @@ describe('tier-gated output diagnostics', () => {
 
       expect(events).toEqual([
         expect.objectContaining({
-          source: 'czap/quantizer',
+          source: 'liteship/quantizer',
           code: 'tier-gated-output-dropped',
           message:
             "you defined `glsl` outputs but tier 'transitions' only emits css+aria, so they will never fire. " +
@@ -132,10 +132,10 @@ describe('evaluate() unknown previousState', () => {
 
       expect(result.crossed).toBe(true);
       // Phase-0 consolidation: the canonical evaluator (and this diagnostic) now
-      // live in @czap/core; `evaluate` re-exports `Boundary.evaluateResult`.
+      // live in @liteship/core; `evaluate` re-exports `Boundary.evaluateResult`.
       expect(events).toEqual([
         expect.objectContaining({
-          source: 'czap/core',
+          source: 'liteship/core',
           code: 'unknown-previous-state',
           message:
             'evaluateResult(): previousState "medium" is not a state of boundary "width" (states: sm, md, lg); ' +
@@ -194,7 +194,7 @@ describe('AnimatedQuantizer uncovered states', () => {
 
       expect(events).toEqual([
         expect.objectContaining({
-          source: 'czap/quantizer',
+          source: 'liteship/quantizer',
           code: 'uncovered-animation-states',
           message:
             'AnimatedQuantizer outputs cover [compact] but boundary "viewport-width" has states ' +

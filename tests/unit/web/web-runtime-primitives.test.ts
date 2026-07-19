@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { Diagnostics } from '@czap/core';
+import { Diagnostics } from '@liteship/core';
 import {
   applyIdMap,
   ATTR,
@@ -205,7 +205,7 @@ describe('web runtime primitives', () => {
     expect(merged.remap).toEqual({ hero: 'hero-v2' });
 
     const root = document.createElement('div');
-    root.innerHTML = '<div id="alpha"></div><div data-czap-id="hero"></div>';
+    root.innerHTML = '<div id="alpha"></div><div data-liteship-id="hero"></div>';
     document.body.appendChild(root);
 
     expect(
@@ -228,7 +228,7 @@ describe('web runtime primitives', () => {
       missingIds: ['missing-id'],
       reason:
         'Morph rejected: elements [missing-id] were required by a preserve hint but are missing from the new HTML.',
-      hint: expect.stringMatching(/data-czap-id elements \[missing-id\]/) as string,
+      hint: expect.stringMatching(/data-liteship-id elements \[missing-id\]/) as string,
     });
 
     const remappedState = applyRemap(
@@ -245,13 +245,13 @@ describe('web runtime primitives', () => {
           alpha: { top: 4, left: 5 },
         },
         selection: {
-          elementPath: '[data-czap-id="hero"]',
+          elementPath: '[data-liteship-id="hero"]',
           start: 0,
           end: 4,
           direction: 'forward',
         },
         ime: {
-          elementPath: '[data-czap-id="hero"]',
+          elementPath: '[data-liteship-id="hero"]',
           text: 'kana',
           start: 0,
           end: 4,
@@ -404,14 +404,14 @@ describe('web runtime primitives', () => {
     expect(current.checked).toBe(true);
 
     const oldParent = document.createElement('div');
-    oldParent.innerHTML = '<p data-czap-id="alpha">First</p>tail<span>drop</span>';
+    oldParent.innerHTML = '<p data-liteship-id="alpha">First</p>tail<span>drop</span>';
     const newParent = document.createElement('div');
-    newParent.innerHTML = 'lead<p data-czap-id="alpha">Updated</p><p id="fresh">Fresh</p>';
+    newParent.innerHTML = 'lead<p data-liteship-id="alpha">Updated</p><p id="fresh">Fresh</p>';
 
     syncChildren(oldParent, newParent);
 
     expect(oldParent.textContent).toContain('leadUpdatedFresh');
-    expect(oldParent.querySelector('[data-czap-id="alpha"]')?.textContent).toBe('Updated');
+    expect(oldParent.querySelector('[data-liteship-id="alpha"]')?.textContent).toBe('Updated');
     expect(oldParent.querySelector('#fresh')).not.toBeNull();
     expect(oldParent.querySelector('span')).toBeNull();
 
@@ -419,13 +419,13 @@ describe('web runtime primitives', () => {
     expect(best?.id).toBe('fresh');
 
     const outer = document.createElement('div');
-    outer.innerHTML = '<div data-czap-id="current">Old</div>';
+    outer.innerHTML = '<div data-liteship-id="current">Old</div>';
     document.body.appendChild(outer);
     const stable = outer.firstElementChild as Element;
 
     morphPure(
       stable,
-      '<div data-czap-id="server">New <strong>markup</strong></div>',
+      '<div data-liteship-id="server">New <strong>markup</strong></div>',
       { morphStyle: 'outerHTML' },
       { idMap: new Map([['server', 'current']]) },
     );
@@ -559,11 +559,11 @@ describe('web runtime primitives', () => {
     const oldParent = document.createElement('div');
     const staleComment = document.createComment('stale');
     const existing = document.createElement('span');
-    existing.setAttribute('data-czap-id', 'stable');
+    existing.setAttribute('data-liteship-id', 'stable');
     oldParent.append(staleComment, existing);
 
     const newParent = document.createElement('div');
-    newParent.innerHTML = '<span data-czap-id="stable">moved</span><!--ignored--><em>fresh</em>';
+    newParent.innerHTML = '<span data-liteship-id="stable">moved</span><!--ignored--><em>fresh</em>';
 
     staleComment.remove();
     syncChildren(oldParent, newParent);
@@ -577,7 +577,7 @@ describe('web runtime primitives', () => {
     document.body.appendChild(outer);
     morphPure(
       outer,
-      'lead<span data-czap-id="server">body</span>',
+      'lead<span data-liteship-id="server">body</span>',
       { morphStyle: 'outerHTML' },
       {
         idMap: new Map([['server', 'client']]),
@@ -663,7 +663,7 @@ describe('web runtime primitives', () => {
     editor.textContent = 'editable text';
 
     const sameId = document.createElement('div');
-    sameId.setAttribute('data-czap-id', 'hero');
+    sameId.setAttribute('data-liteship-id', 'hero');
     editor.appendChild(sameId);
 
     const nonScrollable = document.createElement('div');
@@ -807,12 +807,12 @@ describe('web runtime primitives', () => {
   test('covers physical restore helpers, including remapping and invalid selectors', async () => {
     const root = document.createElement('div');
     const scrollBox = document.createElement('div');
-    scrollBox.setAttribute('data-czap-id', 'panel');
+    scrollBox.setAttribute('data-liteship-id', 'panel');
     scrollBox.style.overflow = 'auto';
     defineScrollBox(scrollBox, 400, 120);
 
     const input = document.createElement('input');
-    input.setAttribute('data-czap-id', 'focus-next');
+    input.setAttribute('data-liteship-id', 'focus-next');
     input.value = 'abcdef';
 
     const textarea = document.createElement('textarea');
@@ -838,7 +838,7 @@ describe('web runtime primitives', () => {
     expect(input.selectionEnd).toBe(5);
 
     const editor = document.createElement('div');
-    editor.setAttribute('data-czap-id', 'editor');
+    editor.setAttribute('data-liteship-id', 'editor');
     editor.contentEditable = 'true';
     editor.setAttribute('contenteditable', 'true');
     Object.defineProperty(editor, 'isContentEditable', {
@@ -868,7 +868,7 @@ describe('web runtime primitives', () => {
     expect(textarea.selectionEnd).toBe(4);
 
     await restoreSelection({
-      elementPath: '[data-czap-id="editor"]',
+      elementPath: '[data-liteship-id="editor"]',
       start: 9,
       end: 13,
       direction: 'forward',
@@ -900,7 +900,7 @@ describe('web runtime primitives', () => {
 
     await restoreScrollPositions(
       {
-        '[data-czap-id="panel"]': { top: 90, left: 12 },
+        '[data-liteship-id="panel"]': { top: 90, left: 12 },
         '[': { top: 1, left: 1 },
       },
       root,
@@ -926,16 +926,16 @@ describe('web runtime primitives', () => {
     expect(root.scrollTop).toBe(33);
     expect(root.scrollLeft).toBe(7);
 
-    await restoreIME({ elementPath: '[data-czap-id="focus-next"]', text: 'kana', start: 0, end: 2 });
+    await restoreIME({ elementPath: '[data-liteship-id="focus-next"]', text: 'kana', start: 0, end: 2 });
     expect(document.activeElement).toBe(input);
     expect(input.selectionEnd).toBe(2);
 
-    await restoreIME({ elementPath: '[data-czap-id="editor"]', text: 'kana', start: 0, end: 2 });
+    await restoreIME({ elementPath: '[data-liteship-id="editor"]', text: 'kana', start: 0, end: 2 });
     expect(document.activeElement).toBe(input);
 
     const remappedRoot = document.createElement('div');
     const remappedInput = document.createElement('input');
-    remappedInput.setAttribute('data-czap-id', 'focus-final');
+    remappedInput.setAttribute('data-liteship-id', 'focus-final');
     remappedRoot.appendChild(remappedInput);
     document.body.appendChild(remappedRoot);
 
@@ -974,14 +974,14 @@ describe('web runtime primitives', () => {
     const root = document.createElement('div');
     const disabledInput = document.createElement('input');
     disabledInput.disabled = true;
-    disabledInput.setAttribute('data-czap-id', 'disabled');
+    disabledInput.setAttribute('data-liteship-id', 'disabled');
 
     const plainDiv = document.createElement('div');
-    plainDiv.setAttribute('data-czap-id', 'plain');
+    plainDiv.setAttribute('data-liteship-id', 'plain');
     plainDiv.textContent = 'plain';
 
     const editor = document.createElement('div');
-    editor.setAttribute('data-czap-id', 'editor-2');
+    editor.setAttribute('data-liteship-id', 'editor-2');
     editor.contentEditable = 'true';
     editor.setAttribute('contenteditable', 'true');
     Object.defineProperty(editor, 'isContentEditable', {
@@ -991,13 +991,13 @@ describe('web runtime primitives', () => {
     editor.textContent = 'short';
 
     const textarea = document.createElement('textarea');
-    textarea.setAttribute('data-czap-id', 'notes-2');
+    textarea.setAttribute('data-liteship-id', 'notes-2');
     textarea.value = 'textarea value';
 
     root.append(disabledInput, plainDiv, editor, textarea);
     document.body.appendChild(root);
 
-    await restoreActiveElement('[data-czap-id="disabled"]', root);
+    await restoreActiveElement('[data-liteship-id="disabled"]', root);
     expect(document.activeElement).not.toBe(disabledInput);
 
     await restoreFocusState(
@@ -1026,7 +1026,7 @@ describe('web runtime primitives', () => {
     expect(window.getSelection()?.rangeCount ?? 0).toBeGreaterThanOrEqual(0);
 
     await restoreSelection({
-      elementPath: '[data-czap-id="editor-2"]',
+      elementPath: '[data-liteship-id="editor-2"]',
       start: 20,
       end: 25,
       direction: 'forward',
@@ -1035,7 +1035,7 @@ describe('web runtime primitives', () => {
 
     await restoreSelection({ elementPath: '[', start: 0, end: 1, direction: 'forward' });
 
-    await restoreIME({ elementPath: '[data-czap-id="notes-2"]', text: 'kana', start: 2, end: 5 });
+    await restoreIME({ elementPath: '[data-liteship-id="notes-2"]', text: 'kana', start: 2, end: 5 });
     expect(document.activeElement).toBe(textarea);
     expect(textarea.selectionStart).toBe(2);
     expect(textarea.selectionEnd).toBe(5);
@@ -1051,7 +1051,7 @@ describe('web runtime primitives', () => {
     input.value = 'abcdef';
 
     const editor = document.createElement('div');
-    editor.setAttribute('data-czap-id', 'explode-editor');
+    editor.setAttribute('data-liteship-id', 'explode-editor');
     editor.textContent = 'editable text';
     editor.contentEditable = 'true';
     editor.setAttribute('contenteditable', 'true');
@@ -1095,7 +1095,7 @@ describe('web runtime primitives', () => {
 
     expect(() =>
       restoreSelection({
-        elementPath: '[data-czap-id="explode-editor"]',
+        elementPath: '[data-liteship-id="explode-editor"]',
         start: 0,
         end: 4,
         direction: 'forward',
@@ -1132,7 +1132,7 @@ describe('web runtime primitives', () => {
 
   test('treats unsupported DOM range and missing IME targets as best-effort noops', async () => {
     const editor = document.createElement('div');
-    editor.setAttribute('data-czap-id', 'range-editor');
+    editor.setAttribute('data-liteship-id', 'range-editor');
     editor.textContent = 'hello';
     editor.contentEditable = 'true';
     editor.setAttribute('contenteditable', 'true');
@@ -1151,7 +1151,7 @@ describe('web runtime primitives', () => {
 
     expect(
       restoreSelection({
-        elementPath: '[data-czap-id="range-editor"]',
+        elementPath: '[data-liteship-id="range-editor"]',
         start: 0,
         end: 2,
         direction: 'forward',
@@ -1170,7 +1170,7 @@ describe('web runtime primitives', () => {
 
   test('covers additional restore best-effort branches for tabindex focus, empty ranges, and unsupported DOM exceptions', async () => {
     const generic = document.createElement('div');
-    generic.setAttribute('data-czap-id', 'tabbable');
+    generic.setAttribute('data-liteship-id', 'tabbable');
     generic.tabIndex = 0;
     document.body.appendChild(generic);
 
@@ -1181,7 +1181,7 @@ describe('web runtime primitives', () => {
     expect(document.activeElement).toBe(generic);
 
     const emptyEditor = document.createElement('div');
-    emptyEditor.setAttribute('data-czap-id', 'empty-editor');
+    emptyEditor.setAttribute('data-liteship-id', 'empty-editor');
     emptyEditor.textContent = '';
     emptyEditor.contentEditable = 'true';
     emptyEditor.setAttribute('contenteditable', 'true');
@@ -1193,7 +1193,7 @@ describe('web runtime primitives', () => {
 
     expect(
       restoreSelection({
-        elementPath: '[data-czap-id="empty-editor"]',
+        elementPath: '[data-liteship-id="empty-editor"]',
         start: 0,
         end: 1,
         direction: 'forward',
@@ -1225,7 +1225,7 @@ describe('web runtime primitives', () => {
     plain.textContent = 'plain';
 
     const editor = document.createElement('div');
-    editor.setAttribute('data-czap-id', 'editor-null-selection');
+    editor.setAttribute('data-liteship-id', 'editor-null-selection');
     editor.contentEditable = 'true';
     editor.setAttribute('contenteditable', 'true');
     Object.defineProperty(editor, 'isContentEditable', {
@@ -1269,7 +1269,7 @@ describe('web runtime primitives', () => {
     expect(document.activeElement).toBe(editor);
 
     await restoreSelection({
-      elementPath: '[data-czap-id="editor-null-selection"]',
+      elementPath: '[data-liteship-id="editor-null-selection"]',
       start: 0,
       end: 4,
       direction: 'forward',
@@ -1284,7 +1284,7 @@ describe('web runtime primitives', () => {
     const scroller = document.createElement('div');
     scroller.id = 'scroll-next';
     const focusTarget = document.createElement('input');
-    focusTarget.setAttribute('data-czap-id', 'focus-next');
+    focusTarget.setAttribute('data-liteship-id', 'focus-next');
     focusTarget.value = 'abcdef';
     root.append(scroller, focusTarget);
     document.body.appendChild(root);
@@ -1308,9 +1308,9 @@ describe('web runtime primitives', () => {
     expect(scroller.scrollLeft).toBe(3);
 
     const oldParent = document.createElement('div');
-    oldParent.innerHTML = '<div data-czap-id="hero-old"></div><p id="remove-me">stale</p>';
+    oldParent.innerHTML = '<div data-liteship-id="hero-old"></div><p id="remove-me">stale</p>';
     const newParent = document.createElement('div');
-    newParent.innerHTML = '<div data-czap-id="hero-new"></div><span class="fresh">hello</span>';
+    newParent.innerHTML = '<div data-liteship-id="hero-new"></div><span class="fresh">hello</span>';
     syncChildren(oldParent, newParent, {
       semanticIds: ['hero-old', 'hero-new'],
     });
@@ -1335,13 +1335,13 @@ describe('web runtime primitives', () => {
   test('covers slot registry registration, prefix queries, and observation edge cases', async () => {
     await captureDiagnosticsAsync(async ({ events }) => {
       const registry = SlotRegistry.create();
-      document.documentElement.setAttribute('data-czap-slot', '/root-shell');
+      document.documentElement.setAttribute('data-liteship-slot', '/root-shell');
       const root = document.createElement('section');
       root.innerHTML = `
-        <div data-czap-slot="/hero"></div>
-        <div data-czap-slot="/hero/body" data-mode="replace"></div>
-        <div data-czap-slot="invalid"></div>
-        <div data-czap-slot=""></div>
+        <div data-liteship-slot="/hero"></div>
+        <div data-liteship-slot="/hero/body" data-mode="replace"></div>
+        <div data-liteship-slot="invalid"></div>
+        <div data-liteship-slot=""></div>
       `;
       document.body.appendChild(root);
 
@@ -1352,7 +1352,7 @@ describe('web runtime primitives', () => {
 
       registry.register({
         path: '/hero' as never,
-        element: root.querySelector('[data-czap-slot="/hero"]')!,
+        element: root.querySelector('[data-liteship-slot="/hero"]')!,
         mode: 'partial',
         mounted: true,
       });
@@ -1363,31 +1363,31 @@ describe('web runtime primitives', () => {
 
         const nested = document.createElement('div');
         nested.appendChild(document.createTextNode('ignored'));
-        nested.innerHTML += '<div data-czap-slot="relative-footer"></div><div data-czap-slot="/hero/footer"></div>';
+        nested.innerHTML += '<div data-liteship-slot="relative-footer"></div><div data-liteship-slot="/hero/footer"></div>';
         root.appendChild(nested);
         root.appendChild(document.createTextNode('still-ignored'));
         await flushMutations();
         expect(registry.has('/hero/footer' as never)).toBe(true);
 
         const attrNode = nested.lastElementChild as Element;
-        attrNode.setAttribute('data-czap-slot', '/hero/footer-next');
+        attrNode.setAttribute('data-liteship-slot', '/hero/footer-next');
         await flushMutations();
         expect(registry.has('/hero/footer' as never)).toBe(false);
         expect(registry.has('/hero/footer-next' as never)).toBe(true);
 
-        attrNode.setAttribute('data-czap-slot', 'relative-footer');
+        attrNode.setAttribute('data-liteship-slot', 'relative-footer');
         await flushMutations();
         expect(registry.has('/hero/footer-next' as never)).toBe(false);
         expect(SlotRegistry.getPath(attrNode)).toBeNull();
 
-        attrNode.setAttribute('data-czap-slot', '/hero/footer-return');
+        attrNode.setAttribute('data-liteship-slot', '/hero/footer-return');
         await flushMutations();
         expect(registry.has('/hero/footer-return' as never)).toBe(true);
 
         // Add a node that is ITSELF a slot (not just containing slot descendants)
         // so the observer hits the added-node branch that registers it directly.
         const directSlot = document.createElement('div');
-        directSlot.setAttribute('data-czap-slot', '/hero/direct');
+        directSlot.setAttribute('data-liteship-slot', '/hero/direct');
         root.appendChild(directSlot);
         await flushMutations();
         expect(registry.has('/hero/direct' as never)).toBe(true);
@@ -1407,26 +1407,26 @@ describe('web runtime primitives', () => {
 
       registry.unregister('/missing' as never);
       expect(SlotRegistry.findElement('/root-shell' as never)).toBe(document.documentElement);
-      expect(SlotRegistry.findElement('/hero' as never)).toBe(root.querySelector('[data-czap-slot="/hero"]'));
-      expect(SlotRegistry.getPath(root.querySelector('[data-czap-slot="/hero"]')!)).toBe('/hero');
+      expect(SlotRegistry.findElement('/hero' as never)).toBe(root.querySelector('[data-liteship-slot="/hero"]'));
+      expect(SlotRegistry.getPath(root.querySelector('[data-liteship-slot="/hero"]')!)).toBe('/hero');
       expect(SlotRegistry.findElement('/missing' as never)).toBeNull();
       expect(registry.findByPrefix('/missing' as never)).toEqual([]);
 
       const tricky = document.createElement('div');
-      tricky.setAttribute('data-czap-slot', '/hero/"][data-evil="1');
+      tricky.setAttribute('data-liteship-slot', '/hero/"][data-evil="1');
       document.body.appendChild(tricky);
-      expect(SlotRegistry.findElement('/hero' as never)).toBe(root.querySelector('[data-czap-slot="/hero"]'));
+      expect(SlotRegistry.findElement('/hero' as never)).toBe(root.querySelector('[data-liteship-slot="/hero"]'));
       tricky.remove();
 
       const attrOnly = document.createElement('div');
       root.appendChild(attrOnly);
       {
         const dispose = SlotRegistry.observe(registry, root);
-        attrOnly.setAttribute('data-czap-slot', '/hero/attr-only');
+        attrOnly.setAttribute('data-liteship-slot', '/hero/attr-only');
         await flushMutations();
         expect(registry.has('/hero/attr-only' as never)).toBe(true);
 
-        attrOnly.setAttribute('data-czap-slot', 'invalid');
+        attrOnly.setAttribute('data-liteship-slot', 'invalid');
         await flushMutations();
         expect(registry.has('/hero/attr-only' as never)).toBe(false);
         dispose();
@@ -1436,7 +1436,7 @@ describe('web runtime primitives', () => {
       // pre-existing DOM first (wave-2 item 57) and re-warns the
       // still-present invalid slot path.
       expect(events.filter((event) => event.code === 'invalid-slot-path')).toHaveLength(3);
-      document.documentElement.removeAttribute('data-czap-slot');
+      document.documentElement.removeAttribute('data-liteship-slot');
     });
   });
 });

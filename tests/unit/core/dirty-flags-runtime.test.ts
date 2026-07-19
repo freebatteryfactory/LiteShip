@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { DirtyFlags } from '@czap/core';
+import { DirtyFlags } from '@liteship/core';
 
 describe('DirtyFlags runtime edge cases', () => {
   test('ignores unknown keys when marking, clearing, and checking dirtiness', () => {

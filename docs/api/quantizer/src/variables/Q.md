@@ -59,8 +59,8 @@ A [QuantizerBuilder](../interfaces/QuantizerBuilder.md) for chaining `.outputs()
 #### Example
 
 ```ts
-import { Boundary } from '@czap/core';
-import { Q } from '@czap/quantizer';
+import { Boundary } from '@liteship/core';
+import { Q } from '@liteship/quantizer';
 
 const boundary = Boundary.make({
   input: 'width',
@@ -77,8 +77,8 @@ await lifetime.dispose();
 ## Example
 
 ```ts
-import { Boundary } from '@czap/core';
-import { Q } from '@czap/quantizer';
+import { Boundary } from '@liteship/core';
+import { Q } from '@liteship/quantizer';
 
 const boundary = Boundary.make({
   input: 'width',

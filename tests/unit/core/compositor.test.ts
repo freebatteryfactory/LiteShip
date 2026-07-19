@@ -12,8 +12,8 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Boundary, Compositor, DIRTY_FLAGS_MAX } from '@czap/core';
-import type { CompositeState } from '@czap/core';
+import { Boundary, Compositor, DIRTY_FLAGS_MAX } from '@liteship/core';
+import type { CompositeState } from '@liteship/core';
 
 const widthBoundary = Boundary.make({
   input: 'viewport.width',
@@ -67,9 +67,9 @@ describe('Compositor', () => {
       const state = compositor.compute();
 
       expect(state.discrete['layout']).toBe('mobile');
-      expect(state.outputs.css['--czap-layout']).toBe('mobile');
+      expect(state.outputs.css['--liteship-layout']).toBe('mobile');
       expect(state.outputs.glsl['u_layout']).toBe(0);
-      expect(state.outputs.aria['data-czap-layout']).toBe('mobile');
+      expect(state.outputs.aria['data-liteship-layout']).toBe('mobile');
     });
 
     test('remove quantizer clears its output', () => {
@@ -164,9 +164,9 @@ describe('Compositor', () => {
       compositor.add('layout', q);
       const state = compositor.compute();
 
-      expect(state.outputs.css['--czap-layout']).toBe('tablet');
+      expect(state.outputs.css['--liteship-layout']).toBe('tablet');
       expect(state.outputs.glsl['u_layout']).toBeUndefined();
-      expect(state.outputs.aria['data-czap-layout']).toBeUndefined();
+      expect(state.outputs.aria['data-liteship-layout']).toBeUndefined();
     });
 
     test('uses speculative prefetched states and clears them when confidence drops', () => {
@@ -197,8 +197,8 @@ describe('Compositor', () => {
       const state = compositor.compute();
 
       expect(state.discrete['layout']).toBeUndefined();
-      expect(state.outputs.css['--czap-layout']).toBeUndefined();
-      expect(state.outputs.aria['data-czap-layout']).toBeUndefined();
+      expect(state.outputs.css['--liteship-layout']).toBeUndefined();
+      expect(state.outputs.aria['data-liteship-layout']).toBeUndefined();
       expect(state.outputs.glsl['u_layout']).toBe(0);
       expect(state.blend['layout']).toEqual({});
     });
@@ -263,8 +263,8 @@ describe('Compositor', () => {
       const state = compositor.compute();
       expect(state.discrete['layout']).toBe('tablet');
       expect(state.discrete['theme']).toBe('light');
-      expect(state.outputs.css['--czap-layout']).toBe('tablet');
-      expect(state.outputs.css['--czap-theme']).toBe('light');
+      expect(state.outputs.css['--liteship-layout']).toBe('tablet');
+      expect(state.outputs.css['--liteship-theme']).toBe('light');
     });
   });
 

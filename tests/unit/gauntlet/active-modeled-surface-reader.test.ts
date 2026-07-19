@@ -8,8 +8,8 @@ import { describe, it, expect } from 'vitest';
 import {
   activeModeledSurfaceReaderGate,
   verifyGate,
-} from '@czap/gauntlet';
-import { buildActiveSurfaceFacts } from '@czap/audit';
+} from '@liteship/gauntlet';
+import { buildActiveSurfaceFacts } from '@liteship/audit';
 import {
   LITESHIP_EXPORT_REQUIRED_FIELDS,
   LITESHIP_TRANSITION_REQUIRED_FIELDS,

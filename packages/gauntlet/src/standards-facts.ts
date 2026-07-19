@@ -13,11 +13,11 @@
  *
  * Like {@link TraceabilityFacts}, {@link RepoIR}, {@link SupplyChainFacts}, and
  * {@link MutationFacts}, this module defines ONLY the lean INTERFACE + the PURE
- * diff/classify functions and carries NO heavy dependency: `@czap/gauntlet` stays
+ * diff/classify functions and carries NO heavy dependency: `@liteship/gauntlet` stays
  * the lean engine, so it never reads the filesystem, never content-addresses (the
- * fnv1a kernel lives in `@czap/core`), and never reads a clock. A HOST (the CLI's
+ * fnv1a kernel lives in `@liteship/core`), and never reads a clock. A HOST (the CLI's
  * `packages/cli/src/lib/standards-surface.ts` extractor) does the heavy lifting —
- * read the live config off `@czap/gauntlet`'s own exports + the committed
+ * read the live config off `@liteship/gauntlet`'s own exports + the committed
  * `benchmarks/`/`traceability/` artifacts, content-address the surface via the ONE
  * `contentAddressOf` kernel, diff it against the committed snapshot, apply the
  * owner sign-offs — and hands the engine these flat, already-decided facts. The
@@ -47,7 +47,7 @@ import {
 
 /**
  * Resolve the STRUCTURAL conditionality of a sanctioned skip site (the AST proof), injected by the
- * host (which parses the live source via `@czap/audit`'s `detectSkipsAST`). `undefined` ⇒ the site
+ * host (which parses the live source via `@liteship/audit`'s `detectSkipsAST`). `undefined` ⇒ the site
  * was not found / no AST available → the title-keyword heuristic is the documented lean fallback.
  * The lean engine carries no `typescript`, so the SOUND proof is host-computed and injected here —
  * the same boundary as the no-skip gate's `skipDetector`.

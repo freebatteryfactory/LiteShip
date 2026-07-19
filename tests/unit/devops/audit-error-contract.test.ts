@@ -22,7 +22,7 @@ import {
   runStructureAudit,
   runSurfaceAudit,
   type DevopsProfile,
-} from '@czap/audit';
+} from '@liteship/audit';
 import { loadProfile } from '../../../packages/cli/src/lib/load-profile.js';
 
 const fixtures: string[] = [];
@@ -31,7 +31,7 @@ afterEach(() => {
 });
 
 function makeFixture(files: Record<string, string>): string {
-  const root = mkdtempSync(join(tmpdir(), 'czap-errcontract-'));
+  const root = mkdtempSync(join(tmpdir(), 'liteship-errcontract-'));
   fixtures.push(root);
   for (const [rel, content] of Object.entries(files)) {
     const abs = resolve(root, rel);

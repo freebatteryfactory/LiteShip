@@ -2,7 +2,7 @@
  * The HOST standards-surface EXTRACTOR — the AGENT-SAFETY META-GAUNTLET (the
  * "raccoon rule"), phase A: read the LIVE standards surface, content-address it,
  * diff it against the committed snapshot, apply the owner sign-offs, and produce the
- * flat {@link StandardsIntegrityFacts} the lean `@czap/gauntlet`
+ * flat {@link StandardsIntegrityFacts} the lean `@liteship/gauntlet`
  * `standardsIntegrityGate` folds.
  *
  * "The repairman may be a raccoon with commit access." This is the UNCONDITIONAL
@@ -22,7 +22,7 @@
  *
  * This is the SAME host-injection pattern as `traceability.ts` (the host computes
  * the heavy facts off disk; the lean engine just folds): the gauntlet carries no
- * `@czap/core` content-address kernel and reads no clock, so the addressing + the
+ * `@liteship/core` content-address kernel and reads no clock, so the addressing + the
  * sign-off-expiry comparison live HERE. The extractor is DETERMINISTIC — the same
  * live config + committed snapshot + sign-offs + injected date yield a byte-identical
  * surface and the same verdicts.
@@ -43,8 +43,8 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { contentAddressOf } from '@czap/core';
-import { InvariantViolationError, IoError, ParseError } from '@czap/error';
+import { contentAddressOf } from '@liteship/core';
+import { InvariantViolationError, IoError, ParseError } from '@liteship/error';
 import {
   LITESHIP_GATES,
   LITESHIP_IR_GATES,
@@ -72,8 +72,8 @@ import {
   type StandardsWaiver,
   type StandardsIntegrityFacts,
   type SiteConditionalityResolver,
-} from '@czap/gauntlet';
-import { detectSkipsAST } from '@czap/audit';
+} from '@liteship/gauntlet';
+import { detectSkipsAST } from '@liteship/audit';
 import { buildTraceabilityFacts } from './traceability.js';
 
 /** Repo-relative location of the committed, reviewable standards snapshot. */
@@ -332,7 +332,7 @@ export function readCommittedSnapshot(repoRoot: string): StandardsSurface {
   if (!existsSync(path)) {
     throw InvariantViolationError(
       'standards-surface',
-      `the committed standards snapshot ${STANDARDS_SNAPSHOT_PATH} is missing — the raccoon-rule backstop needs the committed ground truth to diff against. Generate it intentionally (CZAP_UPDATE_STANDARDS_SNAPSHOT=1).`,
+      `the committed standards snapshot ${STANDARDS_SNAPSHOT_PATH} is missing — the raccoon-rule backstop needs the committed ground truth to diff against. Generate it intentionally (LITESHIP_UPDATE_STANDARDS_SNAPSHOT=1).`,
     );
   }
   return parseSnapshot(readFileSync(path, 'utf8'), STANDARDS_SNAPSHOT_PATH);
@@ -350,7 +350,7 @@ export function readCommittedSnapshot(repoRoot: string): StandardsSurface {
 // shipping the lie and its cover-up together.
 
 /** Override the resolved base ref (CI sets this to the PR base / integration branch). */
-export const STANDARDS_BASE_REF_ENV = 'CZAP_STANDARDS_BASE_REF';
+export const STANDARDS_BASE_REF_ENV = 'LITESHIP_STANDARDS_BASE_REF';
 /** The default integration baseline when no explicit base ref is supplied. */
 export const STANDARDS_DEFAULT_BASE_REF = 'main';
 
@@ -501,7 +501,7 @@ export const STANDARDS_BASE_PROBE_PATH = 'package.json';
  * Resolve the BASE REF the live surface is diffed against — the snapshot the change is
  * being REVIEWED against, NOT the working-tree snapshot. Deterministic precedence:
  *
- *  1. `CZAP_STANDARDS_BASE_REF` — an explicit override (CI sets it to the PR base, e.g.
+ *  1. `LITESHIP_STANDARDS_BASE_REF` — an explicit override (CI sets it to the PR base, e.g.
  *     `origin/main`, OR, for a PUSH, `github.event.before`: the SHA the ref pointed at
  *     BEFORE the push, so the diff covers the ENTIRE pushed range — not just `HEAD~1`,
  *     which would miss a weakening introduced earlier in a multi-commit push). Highest
@@ -821,7 +821,7 @@ function activeFacts(
 
 /**
  * Build the host's {@link SiteConditionalityResolver} — given a sanctioned skip's `(file, site)`, the
- * STRUCTURAL conditionality of that site in the LIVE working tree, via `@czap/audit`'s sound
+ * STRUCTURAL conditionality of that site in the LIVE working tree, via `@liteship/audit`'s sound
  * `detectSkipsAST` (the same proof the no-skip gate uses). Each file is parsed AT MOST ONCE (cached),
  * and only when the resolver is actually invoked (lazy — the partition calls it solely for a
  * `skip-allowlist-added` change). A site absent from the live parse (e.g. an addition whose source

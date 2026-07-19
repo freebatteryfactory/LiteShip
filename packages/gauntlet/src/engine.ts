@@ -77,7 +77,7 @@ export interface RunGatesOptions {
    * ALONGSIDE {@link toolchainDigest}, each gate's RAW `gate.run` output is cached
    * against the content digest of its covered files; an unchanged digest serves
    * the cached raw findings and SKIPS the expensive `gate.run`. Omit it (the lean
-   * `czap check` / MCP path, or any caller that wants a full run) and the engine
+   * `liteship check` / MCP path, or any caller that wants a full run) and the engine
    * behaves EXACTLY as before — a full run, no caching. The cache NEVER changes a
    * verdict; it only avoids recomputing a provably-identical one. See
    * {@link GateVerdictCache} for the soundness model.

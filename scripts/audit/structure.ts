@@ -1,5 +1,5 @@
 /**
- * Structure audit CLI wrapper (CUT D9b-1). The engine lives in `@czap/audit`;
+ * Structure audit CLI wrapper (CUT D9b-1). The engine lives in `@liteship/audit`;
  * this thin script re-exports it (so `report.ts` and tests keep importing
  * `./structure.js`) and provides the `pnpm run audit:structure` entry that
  * writes the JSON section report against the LiteShip repo root.
@@ -7,12 +7,12 @@
  * @module
  */
 import { resolve } from 'node:path';
-import { runStructureAudit, liteshipDevopsProfile, withRepoRoot } from '@czap/audit';
+import { runStructureAudit, liteshipDevopsProfile, withRepoRoot } from '@liteship/audit';
 import { reportPaths } from './policy.js';
 import { createCounts, isDirectExecution, relativeToRoot, repoRoot, writeTextFile } from './shared.js';
 
-export { runStructureAudit } from '@czap/audit';
-export type { StructureSummary } from '@czap/audit';
+export { runStructureAudit } from '@liteship/audit';
+export type { StructureSummary } from '@liteship/audit';
 
 function main(): void {
   const result = runStructureAudit(withRepoRoot(liteshipDevopsProfile, repoRoot));

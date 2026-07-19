@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { run } from '@czap/cli';
+import { run } from '@liteship/cli';
 
 function capture<T>(fn: () => Promise<T>): Promise<{ exit: T; stdout: string; stderr: string }> {
   let stdout = '';
@@ -22,7 +22,7 @@ function capture<T>(fn: () => Promise<T>): Promise<{ exit: T; stdout: string; st
     });
 }
 
-describe('czap scene compile', () => {
+describe('liteship scene compile', () => {
   it('emits a receipt with sceneId + trackCount for the intro example', async () => {
     const { exit, stdout } = await capture(() => run(['scene', 'compile', 'examples/scenes/intro.ts']));
     expect(exit).toBe(0);

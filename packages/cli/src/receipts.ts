@@ -6,14 +6,14 @@
  * @module
  */
 
-import { wallClock, type ContentAddress, type WallClockTimestamp } from '@czap/core';
+import { wallClock, type ContentAddress, type WallClockTimestamp } from '@liteship/core';
 
 /** Re-exported so CLI receipt structs share one wall-clock-timestamp vocabulary (CUT B2). */
-export type { WallClockTimestamp } from '@czap/core';
+export type { WallClockTimestamp } from '@liteship/core';
 
-// Manifest-path resolution moved to @czap/command/host (CUT A1 capstone-1);
+// Manifest-path resolution moved to @liteship/command/host (CUT A1 capstone-1);
 // re-exported here so CLI command import sites resolve unchanged.
-export { getCapsuleManifestPath } from '@czap/command/host';
+export { getCapsuleManifestPath } from '@liteship/command/host';
 
 /** Base shape carried by every CLI command receipt. */
 export interface BaseReceipt {
@@ -53,7 +53,7 @@ export interface AssetAnalyzeReceipt extends BaseReceipt {
   readonly markerCount: number;
 }
 
-/** Receipt emitted by `czap ship` for each package whose ShipCapsule was minted. */
+/** Receipt emitted by `liteship ship` for each package whose ShipCapsule was minted. */
 export interface ShipReceipt extends BaseReceipt {
   readonly command: 'ship';
   readonly package_name: string;
@@ -66,7 +66,7 @@ export interface ShipReceipt extends BaseReceipt {
 }
 
 /**
- * Receipt emitted by `czap ship` when a package's version is already on the
+ * Receipt emitted by `liteship ship` when a package's version is already on the
  * registry. Idempotent re-runs (a release workflow retried mid-batch) are
  * success, not failure — the package on npm already matches the canonical
  * state, so there is nothing to mint or publish.
@@ -78,7 +78,7 @@ export interface ShipSkippedReceipt extends BaseReceipt {
   readonly already_published: true;
 }
 
-/** Per-input check outcomes recorded by `czap verify`. Forward-compat fields stay `'skipped'` in v0.1.0. */
+/** Per-input check outcomes recorded by `liteship verify`. Forward-compat fields stay `'skipped'` in v0.1.0. */
 export interface ShipVerifyChecks {
   readonly tarball_manifest: 'match' | 'mismatch' | 'skipped';
   readonly lockfile: 'skipped';
@@ -86,7 +86,7 @@ export interface ShipVerifyChecks {
   readonly chain_link: 'skipped';
 }
 
-/** Receipt emitted by `czap verify` per ADR-0011. Verdict drives exit code. */
+/** Receipt emitted by `liteship verify` per ADR-0011. Verdict drives exit code. */
 export interface ShipVerifyReceipt extends BaseReceipt {
   readonly command: 'verify';
   readonly verdict: 'Verified' | 'Mismatch' | 'Incomplete' | 'Unknown';
@@ -96,7 +96,7 @@ export interface ShipVerifyReceipt extends BaseReceipt {
   readonly mismatches: readonly string[];
 }
 
-/** Receipt emitted by `czap sbom` (Slice C — supply chain). */
+/** Receipt emitted by `liteship sbom` (Slice C — supply chain). */
 export interface SbomReceipt extends BaseReceipt {
   readonly command: 'sbom';
   /** Repo-relative path the deterministic SBOM was written to. */

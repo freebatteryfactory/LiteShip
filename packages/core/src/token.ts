@@ -11,7 +11,7 @@ import type { ContentAddress } from './brands.js';
 import { CanonicalCbor } from './cbor.js';
 import { Diagnostics } from './diagnostics.js';
 import { fnv1aBytes } from './fnv.js';
-import { ValidationError } from '@czap/error';
+import { ValidationError } from '@liteship/error';
 
 /** Design-system category of a {@link Token} — governs compilation strategy and CSS property prefix. */
 export type TokenCategory = 'color' | 'spacing' | 'typography' | 'shadow' | 'radius' | 'animation' | 'effect';
@@ -99,7 +99,7 @@ function _tap<T = unknown>(token: TokenDef, axisValues: Record<string, string>):
   if (!(key in token.values)) {
     // Falling back is the designed behavior; the warn makes a typo'd axis value observable.
     Diagnostics.warnOnce({
-      source: 'czap/core.Token',
+      source: 'liteship/core.Token',
       code: 'token-tap-miss',
       message: `Token "${token.name}": no value for key "${key}" — known keys: [${Object.keys(token.values).join(', ')}]; returning fallback.`,
     });
@@ -110,7 +110,7 @@ function _tap<T = unknown>(token: TokenDef, axisValues: Record<string, string>):
 /**
  * Generate a CSS var() reference for a token.
  *
- * Returns a `var(--czap-<name>)` string suitable for use in CSS properties.
+ * Returns a `var(--liteship-<name>)` string suitable for use in CSS properties.
  *
  * @example
  * ```ts
@@ -121,11 +121,11 @@ function _tap<T = unknown>(token: TokenDef, axisValues: Record<string, string>):
  *   fallback: '#888',
  * });
  * const ref = Token.cssVar(token);
- * // ref === 'var(--czap-primary)'
+ * // ref === 'var(--liteship-primary)'
  * ```
  */
-function _cssVar<N extends string>(token: TokenDef<N>): `var(--czap-${N})` {
-  return `var(--czap-${token.name})` as `var(--czap-${N})`;
+function _cssVar<N extends string>(token: TokenDef<N>): `var(--liteship-${N})` {
+  return `var(--liteship-${token.name})` as `var(--liteship-${N})`;
 }
 
 /**
@@ -136,7 +136,7 @@ function _cssVar<N extends string>(token: TokenDef<N>): `var(--czap-${N})` {
  *
  * @example
  * ```ts
- * import { Token } from '@czap/core';
+ * import { Token } from '@liteship/core';
  *
  * const spacing = Token.make({
  *   name: 'gap', category: 'spacing',
@@ -147,7 +147,7 @@ function _cssVar<N extends string>(token: TokenDef<N>): `var(--czap-${N})` {
  * const resolved = Token.tap(spacing, { density: 'compact' });
  * // resolved === '4px'
  * const cssRef = Token.cssVar(spacing);
- * // cssRef === 'var(--czap-gap)'
+ * // cssRef === 'var(--liteship-gap)'
  * ```
  */
 export const Token: TokenFactory & {
@@ -177,7 +177,7 @@ export const Token: TokenFactory & {
    *   fallback: '#ccc',
    * });
    * // token._tag === 'TokenDef'
-   * // token.cssProperty === '--czap-bg'
+   * // token.cssProperty === '--liteship-bg'
    * ```
    */
   make<N extends string, const A extends readonly [string, ...string[]] = readonly ['default']>(
@@ -213,7 +213,7 @@ export const Token: TokenFactory & {
         axes,
         values,
         fallback,
-        cssProperty: `--czap-${simple.name}` as const,
+        cssProperty: `--liteship-${simple.name}` as const,
       });
     }
 
@@ -270,7 +270,7 @@ export const Token: TokenFactory & {
       axes,
       values: full.values,
       fallback,
-      cssProperty: `--czap-${full.name}` as const,
+      cssProperty: `--liteship-${full.name}` as const,
     });
   },
   tap: _tap,

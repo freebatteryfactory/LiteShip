@@ -8,7 +8,7 @@
 // PROVES: INV-CONTENT-ADDRESS-DETERMINISTIC
 import { describe, test, expect } from 'vitest';
 import fc from 'fast-check';
-import { Boundary } from '@czap/core';
+import { Boundary } from '@liteship/core';
 
 describe('Content address properties', () => {
   test('same boundary config → same content address', () => {

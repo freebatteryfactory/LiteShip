@@ -8,7 +8,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { editDistance, closestMatch } from '@czap/core';
+import { editDistance, closestMatch } from '@liteship/core';
 
 describe('editDistance', () => {
   it('is 0 for identical strings and equals the length against an empty string', () => {

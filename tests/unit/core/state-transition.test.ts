@@ -17,7 +17,7 @@ import {
   sealGraph,
   sealNode,
   transitionReceipt,
-} from '@czap/core';
+} from '@liteship/core';
 import type {
   CellMeta,
   DiscreteStateTransition,
@@ -26,7 +26,7 @@ import type {
   SignalNode,
   StateCellShape,
   StateCellStoreShape,
-} from '@czap/core';
+} from '@liteship/core';
 
 // Self-contained sealed-node/graph helpers (mirrors ai-cast.test.ts) so this
 // typechecked file does not depend on the shared graph-fixtures helper.

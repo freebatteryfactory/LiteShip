@@ -2,7 +2,7 @@
 /**
  * Tutorial 01 -- Your First Boundary
  *
- * A "boundary" is the core primitive of czap. It quantizes a continuous
+ * A "boundary" is the core primitive of liteship. It quantizes a continuous
  * signal (like viewport width) into discrete, named states (like "compact"
  * and "wide"). This is fundamentally different from media queries:
  *
@@ -14,13 +14,13 @@
  *
  * In this tutorial you will:
  *   1. Import a boundary definition (viewport.boundaries.ts)
- *   2. Label the element with data-czap="viewport" for the Vite macro
+ *   2. Label the element with data-liteship="viewport" for the Vite macro
  *   3. Spread satelliteAttrs() to wire boundary JSON + the satellite directive
- *   4. Write CSS that targets data-czap-state="compact|wide"
+ *   4. Write CSS that targets data-liteship-state="compact|wide"
  */
 
 import Base from '../layouts/Base.astro';
-import { satelliteAttrs } from '@czap/astro';
+import { satelliteAttrs } from '@liteship/astro';
 import { viewport } from '../boundaries/viewport.boundaries.js';
 ---
 
@@ -38,13 +38,13 @@ import { viewport } from '../boundaries/viewport.boundaries.js';
          viewport.width >= 768 --> "wide"
 
        The definition lives in src/boundaries/viewport.boundaries.ts.
-       It's just a call to Boundary.make() from @czap/core.
+       It's just a call to Boundary.make() from @liteship/core.
   -->
 
   <h1>01 -- Your First Boundary</h1>
 
   <p>
-    A <strong>boundary</strong> is czap's core primitive. It quantizes a
+    A <strong>boundary</strong> is liteship's core primitive. It quantizes a
     continuous signal (viewport width, device memory, network speed) into
     discrete named states. Unlike media queries, boundaries are portable
     data -- they work on the server, the client, and in tests.
@@ -65,7 +65,7 @@ import { viewport } from '../boundaries/viewport.boundaries.js';
 
   <h2>The Definition</h2>
 
-  <pre><code>import {'{'} Boundary {'}'} from '@czap/core';
+  <pre><code>import {'{'} Boundary {'}'} from '@liteship/core';
 
 export const viewport = Boundary.make({'{'}&br;
   input: 'viewport.width',
@@ -85,14 +85,14 @@ export const viewport = Boundary.make({'{'}&br;
   <!-- ============================================================
        STEP 3: Wiring It Up
 
-       Spread {@link satelliteAttrs} from @czap/astro — it serializes the
-       boundary, sets data-czap-directive="satellite", and optional
-       data-czap-state for SSR. Pair it with data-czap="viewport" so the
+       Spread {@link satelliteAttrs} from @liteship/astro — it serializes the
+       boundary, sets data-liteship-directive="satellite", and optional
+       data-liteship-state for SSR. Pair it with data-liteship="viewport" so the
        Vite plugin resolves the named export at build time.
 
        Under the hood, satelliteAttrs emits the same attributes you could
-       hand-roll: data-czap-boundary='{...}', data-czap-directive, and
-       data-czap-state. Manual wiring is fine for debugging; prefer the
+       hand-roll: data-liteship-boundary='{...}', data-liteship-directive, and
+       data-liteship-state. Manual wiring is fine for debugging; prefer the
        helper in app code.
   -->
 
@@ -101,12 +101,12 @@ export const viewport = Boundary.make({'{'}&br;
   <p>
     Import the boundary and spread <code>satelliteAttrs</code> onto your
     container — that alone serializes the boundary onto the element. (The
-    <code>data-czap="viewport"</code> macro is the <em>no-import</em>
+    <code>data-liteship="viewport"</code> macro is the <em>no-import</em>
     alternative that resolves a named boundary at build time; you don't
     need both, and the scaffold uses <code>satelliteAttrs</code> only.)
   </p>
 
-  <pre><code>import {'{'} satelliteAttrs {'}'} from '@czap/astro';
+  <pre><code>import {'{'} satelliteAttrs {'}'} from '@liteship/astro';
 import {'{'} viewport {'}'} from '../boundaries/viewport.boundaries.js';
 
 &lt;div
@@ -119,11 +119,11 @@ import {'{'} viewport {'}'} from '../boundaries/viewport.boundaries.js';
        STEP 4: Live Demo
 
        This is the actual live boundary. Resize your browser window
-       to see data-czap-state toggle between "compact" and "wide".
+       to see data-liteship-state toggle between "compact" and "wide".
 
        The CSS below targets:
-         [data-czap-state="compact"] .demo-card  --> stacked layout
-         [data-czap-state="wide"] .demo-card     --> side-by-side layout
+         [data-liteship-state="compact"] .demo-card  --> stacked layout
+         [data-liteship-state="wide"] .demo-card     --> side-by-side layout
 
        No media queries. The satellite directive manages the state
        attribute; CSS just reacts to it.
@@ -143,7 +143,7 @@ import {'{'} viewport {'}'} from '../boundaries/viewport.boundaries.js';
          These cards are the content that adapts. In compact state
          they stack vertically. In wide state they sit side by side.
          The transition is CSS-only -- the satellite directive just
-         flips the data-czap-state attribute.
+         flips the data-liteship-state attribute.
     -------------------------------------------------------- -->
 
     <div class="demo-card">
@@ -152,7 +152,7 @@ import {'{'} viewport {'}'} from '../boundaries/viewport.boundaries.js';
     </div>
     <div class="demo-card">
       <h3>Card B</h3>
-      <p>No media queries -- just data-czap-state and CSS.</p>
+      <p>No media queries -- just data-liteship-state and CSS.</p>
     </div>
   </div>
 
@@ -162,22 +162,22 @@ import {'{'} viewport {'}'} from '../boundaries/viewport.boundaries.js';
        The CSS uses attribute selectors to target boundary states.
        This is the "effect" side of the boundary/effect split.
 
-       [data-czap-state="compact"] targets the compact state.
-       [data-czap-state="wide"] targets the wide state.
+       [data-liteship-state="compact"] targets the compact state.
+       [data-liteship-state="wide"] targets the wide state.
 
-       The transition property smooths the layout change -- czap
+       The transition property smooths the layout change -- liteship
        encourages smooth state transitions rather than hard cuts.
   -->
 
   <h2>How the CSS Works</h2>
 
   <pre><code>/* Compact: single-column stack */
-.boundary-demo[data-czap-state="compact"] {'{'}&br;
+.boundary-demo[data-liteship-state="compact"] {'{'}&br;
   flex-direction: column;
 {'}'}
 
 /* Wide: two-column row */
-.boundary-demo[data-czap-state="wide"] {'{'}&br;
+.boundary-demo[data-liteship-state="wide"] {'{'}&br;
   flex-direction: row;
 {'}'}</code></pre>
 
@@ -200,15 +200,15 @@ import {'{'} viewport {'}'} from '../boundaries/viewport.boundaries.js';
 
   <ul>
     <li><code>Boundary.make()</code> creates a content-addressed boundary definition.</li>
-    <li><code>data-czap-boundary</code> serializes the boundary for the client.</li>
-    <li><code>data-czap-state</code> holds the current evaluated state.</li>
+    <li><code>data-liteship-boundary</code> serializes the boundary for the client.</li>
+    <li><code>data-liteship-state</code> holds the current evaluated state.</li>
     <li><code>client:satellite</code> hydrates the boundary with live signal evaluation.</li>
     <li>CSS attribute selectors target each state -- no JavaScript layout logic.</li>
   </ul>
 
   <p>
     <strong>Next:</strong> <a href="/02-tokens">02 -- Design Tokens</a> --
-    learn how czap tokens become CSS custom properties.
+    learn how liteship tokens become CSS custom properties.
   </p>
 
 </Base>
@@ -216,9 +216,9 @@ import {'{'} viewport {'}'} from '../boundaries/viewport.boundaries.js';
 <!-- ================================================================
      Scoped styles for this tutorial page.
 
-     The key pattern: use [data-czap-state="..."] attribute selectors
+     The key pattern: use [data-liteship-state="..."] attribute selectors
      to apply different visual treatments per boundary state. The
-     satellite directive keeps data-czap-state in sync with the
+     satellite directive keeps data-liteship-state in sync with the
      actual viewport width.
 ================================================================ -->
 
@@ -231,12 +231,12 @@ import {'{'} viewport {'}'} from '../boundaries/viewport.boundaries.js';
   }
 
   /* Compact state: stack vertically */
-  .boundary-demo[data-czap-state="compact"] {
+  .boundary-demo[data-liteship-state="compact"] {
     flex-direction: column;
   }
 
   /* Wide state: lay out horizontally */
-  .boundary-demo[data-czap-state="wide"] {
+  .boundary-demo[data-liteship-state="wide"] {
     flex-direction: row;
   }
 

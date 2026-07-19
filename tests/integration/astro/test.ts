@@ -1,5 +1,5 @@
 /**
- * Integration test for @czap/astro.
+ * Integration test for @liteship/astro.
  *
  * Validates that the Astro integration bootstraps correctly by:
  *   1. Building the workspace packages (so dist/ exports resolve)
@@ -63,7 +63,7 @@ function anyFileContains(dir: string, ext: string, needle: string): boolean {
 // ---------------------------------------------------------------------------
 
 async function main(): Promise<void> {
-  console.log('\n=== @czap/astro integration test ===\n');
+  console.log('\n=== @liteship/astro integration test ===\n');
 
   // Step 1 -- Build workspace packages so dist/ exports resolve
   console.log('[1/3] Building workspace packages...');
@@ -105,24 +105,24 @@ async function main(): Promise<void> {
   assert(indexHtml !== undefined, 'index.html found in output');
 
   const html = readFileSync(indexHtml!, 'utf-8');
-  assert(html.includes('__CZAP_DETECT__'), 'detect script injected (contains __CZAP_DETECT__)');
-  assert(html.includes('data-czap-boundary'), 'satellite boundary element preserved');
-  assert(html.includes('czap integration test'), 'page content rendered');
+  assert(html.includes('__LITESHIP_DETECT__'), 'detect script injected (contains __LITESHIP_DETECT__)');
+  assert(html.includes('data-liteship-boundary'), 'satellite boundary element preserved');
+  assert(html.includes('liteship integration test'), 'page content rendered');
 
   // Verify the view-transition reinit script was injected.
   // Astro may place `injectScript('page', ...)` in an external JS bundle rather
   // than inline in HTML, so we check both HTML and JS assets.
-  const reinitInHtml = html.includes('czap:reinit');
-  const reinitInJs = anyFileContains(DIST_DIR, '.js', 'czap:reinit');
-  assert(reinitInHtml || reinitInJs, 'view-transition reinit script emitted (czap:reinit in HTML or JS)');
+  const reinitInHtml = html.includes('liteship:reinit');
+  const reinitInJs = anyFileContains(DIST_DIR, '.js', 'liteship:reinit');
+  assert(reinitInHtml || reinitInJs, 'view-transition reinit script emitted (liteship:reinit in HTML or JS)');
 
   // Verify Satellite.astro emitted the canonical directive marker and the
   // injected bootstrap carries the boot scanner. Function names get
   // minified, so probe for the scanner's window-global string literal.
-  assert(html.includes('data-czap-directive="satellite"'), 'Satellite shell emits data-czap-directive marker');
-  const bootInHtml = html.includes('__CZAP_DIRECTIVE_BOOTSTRAPPED__');
-  const bootInJs = anyFileContains(DIST_DIR, '.js', '__CZAP_DIRECTIVE_BOOTSTRAPPED__');
-  assert(bootInHtml || bootInJs, 'directive boot scanner emitted (__CZAP_DIRECTIVE_BOOTSTRAPPED__ in HTML or JS)');
+  assert(html.includes('data-liteship-directive="satellite"'), 'Satellite shell emits data-liteship-directive marker');
+  const bootInHtml = html.includes('__LITESHIP_DIRECTIVE_BOOTSTRAPPED__');
+  const bootInJs = anyFileContains(DIST_DIR, '.js', '__LITESHIP_DIRECTIVE_BOOTSTRAPPED__');
+  assert(bootInHtml || bootInJs, 'directive boot scanner emitted (__LITESHIP_DIRECTIVE_BOOTSTRAPPED__ in HTML or JS)');
 
   console.log('\n=== ALL CHECKS PASSED ===\n');
 }

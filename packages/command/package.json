@@ -1,7 +1,7 @@
 {
-  "name": "@czap/command",
+  "name": "@liteship/command",
   "version": "0.18.0",
-  "description": "The shared command registry behind LiteShip's tooling: one source of command definitions that both the `czap` CLI and the MCP server project from.",
+  "description": "The shared command registry behind LiteShip's tooling: one source of command definitions that both the `liteship` CLI and the MCP server project from.",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",
   "repository": {
@@ -12,7 +12,6 @@
   "bugs": "https://github.com/freebatteryfactory/LiteShip/issues",
   "homepage": "https://github.com/freebatteryfactory/LiteShip#readme",
   "keywords": [
-    "czap",
     "liteship",
     "cli",
     "mcp",
@@ -55,11 +54,11 @@
     "prepack": "pnpm run build"
   },
   "dependencies": {
-    "@czap/core": "workspace:*",
-    "@czap/assets": "workspace:*",
-    "@czap/canonical": "workspace:*",
-    "@czap/error": "workspace:*",
-    "@czap/gauntlet": "workspace:*"
+    "@liteship/core": "workspace:*",
+    "@liteship/assets": "workspace:*",
+    "@liteship/canonical": "workspace:*",
+    "@liteship/error": "workspace:*",
+    "@liteship/gauntlet": "workspace:*"
   },
   "engines": {
     "node": ">=22.13.0"

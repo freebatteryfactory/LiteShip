@@ -13,7 +13,7 @@ applyValidatedPatch` — now bidirectional and human-driven (sort / filter / edi
 export const POST: APIRoute = ({ request }) => graphMutationRoute(store)(request);
 ```
 
-`graphMutationRoute(store)` wraps `@czap/core`'s `handleGraphMutation`: decode the proposed
+`graphMutationRoute(store)` wraps `@liteship/core`'s `handleGraphMutation`: decode the proposed
 `GraphPatch` → validate it against `store.loadGraph()` → apply → `store.saveGraph(next)`.
 **200** on apply (body = the new sealed graph), **409** on stale-base/lost-update refusal
 (body includes `staleBase: true`), **422** on invalid proposal refusal. The host owns `store`
@@ -22,8 +22,8 @@ export const POST: APIRoute = ({ request }) => graphMutationRoute(store)(request
 **Client** (`src/pages/index.astro`):
 
 ```ts
-import { createGraphMutationClient } from '@czap/core';
-import { bindGraphForm } from '@czap/web';
+import { createGraphMutationClient } from '@liteship/core';
+import { bindGraphForm } from '@liteship/web';
 
 const client = createGraphMutationClient({ url: '/api/graph', base, refreshBase });
 
@@ -32,16 +32,16 @@ bindGraphForm(form, {
   toOps: (data, base) => [{ op: 'add', family: 'signal', node: signal(base.meta, data.get('axis')) }],
 });
 
-form.addEventListener('czap:mutation', (event) => {
-  // event.detail is the channel response; the form also carries data-czap-mutation-state.
+form.addEventListener('liteship:mutation', (event) => {
+  // event.detail is the channel response; the form also carries data-liteship-mutation-state.
 });
 ```
 
 ## What it demonstrates
 
 - **The primitive flow.** The form captures `FormData`, `bindGraphForm` runs host-owned
-  `toOps`, `createGraphMutationClient` proposes/sends, and the form emits `czap:mutation`
-  while reflecting `data-czap-mutation-state`.
+  `toOps`, `createGraphMutationClient` proposes/sends, and the form emits `liteship:mutation`
+  while reflecting `data-liteship-mutation-state`.
 - **Optimistic concurrency for free.** A patch cast against a stale base (`patch.base` no
   longer matches the server's `graph.id`) is **refused** with `staleBase: true` and HTTP
   **409**. The client primitive can recover by calling the host-owned `refreshBase`, then
@@ -56,7 +56,7 @@ form.addEventListener('czap:mutation', (event) => {
 ## Run it
 
 ```sh
-pnpm --filter @czap/example-mutation-roundtrip dev
+pnpm --filter @liteship/example-mutation-roundtrip dev
 ```
 
 Open the page, submit the form, and watch the server graph id advance through the client

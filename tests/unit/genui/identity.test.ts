@@ -1,9 +1,9 @@
 /**
- * @czap/genui identity hash tests.
+ * @liteship/genui identity hash tests.
  */
 
 import { describe, expect, it } from 'vitest';
-import { catalogHash, defineComponentCatalog, DEMO_COMPONENT_CATALOG, renderHash } from '@czap/genui';
+import { catalogHash, defineComponentCatalog, DEMO_COMPONENT_CATALOG, renderHash } from '@liteship/genui';
 
 describe('genui identity hashes', () => {
   it('catalogHash matches defineComponentCatalog.catalogHash', () => {

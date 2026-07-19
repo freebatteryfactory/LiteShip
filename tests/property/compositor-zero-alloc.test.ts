@@ -1,6 +1,6 @@
 // PROVES: INV-COMPOSITOR-ZERO-ALLOC
 /**
- * The MEASURED proof that `@czap/core`'s Compositor per-frame compose hot path is
+ * The MEASURED proof that `@liteship/core`'s Compositor per-frame compose hot path is
  * GENUINELY zero-allocation — zero RETAINED *and* zero TRANSIENT — the claim the
  * module + factory docs make ("zero-allocation hot path backed by
  * CompositorStatePool"), held to a real allocation measurement in BOTH senses.
@@ -31,8 +31,8 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { resolve, dirname } from 'node:path';
-import { Boundary, Compositor } from '@czap/core';
-import type { CompositorQuantizer, Quantizer, ReactiveQuantizer } from '@czap/core';
+import { Boundary, Compositor } from '@liteship/core';
+import type { CompositorQuantizer, Quantizer, ReactiveQuantizer } from '@liteship/core';
 import { scaledTimeout } from '../../vitest.shared.js';
 import { spawnArgvCapture } from '../../scripts/lib/spawn.js';
 import { RELATIVE_MAX_RATIO, RELATIVE_SUBSCRIBER_MAX_RATIO } from '../../scripts/alloc-gate.js';

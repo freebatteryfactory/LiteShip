@@ -107,9 +107,9 @@ export function motionPropToBinding(target: string, key: string): string {
   const motionMatch = /^translate([XYZ])$/i.exec(key);
   if (motionMatch) {
     const axis = motionMatch[1]!.toLowerCase();
-    return `--czap-${target}-${axis}`;
+    return `--liteship-${target}-${axis}`;
   }
-  return `--czap-${target}-${key.replace(/([A-Z])/g, '-$1').toLowerCase()}`;
+  return `--liteship-${target}-${key.replace(/([A-Z])/g, '-$1').toLowerCase()}`;
 }
 
 function normalizeBindings(

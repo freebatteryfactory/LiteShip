@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Track } from '@czap/scene';
+import { Track } from '@liteship/scene';
 
 describe('Track.transition', () => {
   const a = Track.videoId('a');

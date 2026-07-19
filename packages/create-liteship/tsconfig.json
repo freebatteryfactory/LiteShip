@@ -6,7 +6,7 @@
     "rootDir": "./src",
     "types": ["node"],
     "paths": {
-      "@czap/error": ["../error/src/index.ts"]
+      "@liteship/error": ["../error/src/index.ts"]
     }
   },
   "references": [{ "path": "../error" }],

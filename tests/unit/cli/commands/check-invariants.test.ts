@@ -1,5 +1,5 @@
 /**
- * `czap check-invariants` adapter — the CLI-only fast-lane invariant gate.
+ * `liteship check-invariants` adapter — the CLI-only fast-lane invariant gate.
  *
  * Two layers, both the adapter's own in-process logic (the line-ending parsing
  * fns are tested separately in tests/unit/meta/invariant-script.test.ts — this
@@ -11,7 +11,7 @@
  *     `.d.ts` skips; the exclude prefix; the missing-scoped-dir → empty branch)
  *     and `expectedLineEnding`'s precedence / binary / no-match branches.
  *
- *  2. The ADAPTER projection: with the heavy `@czap/audit`-backed scan mocked, the
+ *  2. The ADAPTER projection: with the heavy `@liteship/audit`-backed scan mocked, the
  *     receipt shape, the exit-code mapping, and BOTH pretty-print branches (the
  *     grouped invariant work-list + the line-ending policy section).
  */
@@ -24,7 +24,7 @@ import { captureCli } from '../../../integration/cli/capture.js';
 const { runCheckInvariantsScanMock } = vi.hoisted(() => ({ runCheckInvariantsScanMock: vi.fn() }));
 // The adapter calls runCheckInvariantsScan(cwd) THROUGH the injected context; we
 // mock the host's spawn capability so the real scan never spawns `git ls-files`.
-vi.mock('@czap/command/host', async (importOriginal) => {
+vi.mock('@liteship/command/host', async (importOriginal) => {
   const orig = await importOriginal<Record<string, unknown>>();
   return { ...orig, spawnArgvCapture: runCheckInvariantsScanMock };
 });
@@ -43,7 +43,7 @@ afterEach(() => vi.restoreAllMocks());
 describe('findViolations — banned-pattern scan (real fixture tree)', () => {
   let root: string;
   beforeEach(() => {
-    root = mkdtempSync(join(tmpdir(), 'czap-invariants-'));
+    root = mkdtempSync(join(tmpdir(), 'liteship-invariants-'));
   });
   afterEach(() => rmSync(root, { recursive: true, force: true }));
 
@@ -114,10 +114,10 @@ function lastReceipt(stdout: string): Record<string, unknown> {
   return JSON.parse(stdout.trim().split('\n').pop()!) as Record<string, unknown>;
 }
 
-describe('czap check-invariants — adapter projection (scan via injected capability)', () => {
+describe('liteship check-invariants — adapter projection (scan via injected capability)', () => {
   let root: string;
   beforeEach(() => {
-    root = mkdtempSync(join(tmpdir(), 'czap-inv-adapter-'));
+    root = mkdtempSync(join(tmpdir(), 'liteship-inv-adapter-'));
     // A clean `git ls-files --eol` probe → no line-ending violations by default.
     runCheckInvariantsScanMock.mockReset().mockResolvedValue({ exitCode: 0, stdout: '' });
   });

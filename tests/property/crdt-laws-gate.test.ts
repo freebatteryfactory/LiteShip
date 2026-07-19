@@ -11,7 +11,7 @@
  *     presence-only mutant — which cannot tell an incomplete law file from a
  *     complete one — is killed by the present-but-incomplete red fixture).
  *
- * The gate is NOT yet wired into @czap/gauntlet's barrel / LITESHIP_IR_GATES — the
+ * The gate is NOT yet wired into @liteship/gauntlet's barrel / LITESHIP_IR_GATES — the
  * integrator wires that (this wave builds in NEW files only, like the B3.3
  * symbol-orphan gate). So the gate is imported via its src path (the established
  * "src-path import = no public surface until wired" pattern) and fully self-proven
@@ -24,7 +24,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { crdtLawsGate } from '../../packages/gauntlet/src/gates/crdt-laws.js';
-import { verifyGate, type GateContext } from '@czap/gauntlet';
+import { verifyGate, type GateContext } from '@liteship/gauntlet';
 
 const REPO_ROOT = fileURLToPath(new URL('../..', import.meta.url));
 

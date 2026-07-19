@@ -9,7 +9,7 @@
  * @module
  */
 
-import { ValidationError } from '@czap/error';
+import { ValidationError } from '@liteship/error';
 import type { ContentAddress, IntegrityDigest, StateName } from './brands.js';
 import { Cap, type CapTier } from './caps.js';
 import { sealGraph, sealNode } from './document-graph-address.js';

@@ -1,14 +1,14 @@
 /**
  * Pure ship-planning helpers (CUT A1) — the genuinely side-effect-free parts of
- * the `czap ship` release workflow: tarball slug derivation, target selection,
+ * the `liteship ship` release workflow: tarball slug derivation, target selection,
  * lifecycle-script detection, build-env validation, package-manager version
  * parsing. No fs / spawn / process here — the CLI owns the orchestration,
  * destructive publish, and streaming; these are the planning primitives it uses.
  *
  * @module
  */
-import type { ShipCapsule } from '@czap/core';
-import { UnsupportedError } from '@czap/error';
+import type { ShipCapsule } from '@liteship/core';
+import { UnsupportedError } from '@liteship/error';
 
 const LIFECYCLE_KEYS = ['prepack', 'prepare', 'prepublishOnly', 'prepublish'] as const;
 
@@ -81,10 +81,10 @@ export function deriveBuildEnv(input: {
 }): ShipCapsule.BuildEnv {
   const { os, arch, nodeVersion, pmVersion } = input;
   if (os !== 'linux' && os !== 'darwin' && os !== 'win32') {
-    throw UnsupportedError('platform', `czap ship: ${os} (ShipCapsule.BuildEnv only models linux/darwin/win32)`);
+    throw UnsupportedError('platform', `liteship ship: ${os} (ShipCapsule.BuildEnv only models linux/darwin/win32)`);
   }
   if (arch !== 'x64' && arch !== 'arm64') {
-    throw UnsupportedError('arch', `czap ship: ${arch} (ShipCapsule.BuildEnv only models x64/arm64)`);
+    throw UnsupportedError('arch', `liteship ship: ${arch} (ShipCapsule.BuildEnv only models x64/arm64)`);
   }
   return { node_version: nodeVersion, pnpm_version: pmVersion, os, arch };
 }

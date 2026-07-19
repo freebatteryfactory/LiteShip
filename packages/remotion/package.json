@@ -1,5 +1,5 @@
 {
-  "name": "@czap/remotion",
+  "name": "@liteship/remotion",
   "version": "0.18.0",
   "description": "Use LiteShip inside Remotion: React hooks and composition helpers that drive video frames and shader surfaces from the same boundary state used everywhere else.",
   "license": "MIT",
@@ -12,7 +12,6 @@
   "bugs": "https://github.com/freebatteryfactory/LiteShip/issues",
   "homepage": "https://github.com/freebatteryfactory/LiteShip#readme",
   "keywords": [
-    "czap",
     "liteship",
     "remotion",
     "video",
@@ -40,7 +39,7 @@
     "prepack": "pnpm run build"
   },
   "dependencies": {
-    "@czap/core": "workspace:*"
+    "@liteship/core": "workspace:*"
   },
   "peerDependencies": {
     "react": ">=18",

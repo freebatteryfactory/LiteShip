@@ -12,8 +12,8 @@
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { gpuAbsent } from '../../helpers/capabilities.browser.js';
-import { Diagnostics } from '@czap/core';
-import { parseShaderIntegrity } from '@czap/web';
+import { Diagnostics } from '@liteship/core';
+import { parseShaderIntegrity } from '@liteship/web';
 import { initWGSLRuntime, warnWebGpuUnavailable } from '../../../packages/astro/src/runtime/wgpu.js';
 
 interface FakeGpuHarness {
@@ -339,7 +339,7 @@ const UNIFORM_DECLARATIONS =
   'struct BoundaryState { state_index: u32, blur_radius: f32, scale: f32, pad: f32 }\n' +
   '@group(0) @binding(0) var<uniform> boundary_state: BoundaryState;';
 
-describe('initWGSLRuntime — czap:uniform-update → uniform buffer (D1-WGSL live cast)', () => {
+describe('initWGSLRuntime — liteship:uniform-update → uniform buffer (D1-WGSL live cast)', () => {
   it('binds detail.wgsl field values into the uniform buffer on every crossing', async () => {
     const harness = makeGpuHarness();
     stubGpu(harness.gpu);
@@ -359,7 +359,7 @@ describe('initWGSLRuntime — czap:uniform-update → uniform buffer (D1-WGSL li
     // A boundary crossing: detail.wgsl carries the live state index plus an
     // authored field. state_index claims slot 0 (u32); blur_radius the next (f32).
     el.dispatchEvent(
-      new CustomEvent('czap:uniform-update', {
+      new CustomEvent('liteship:uniform-update', {
         detail: { wgsl: { state_index: 1, blur_radius: 2.5 } },
       }),
     );
@@ -369,7 +369,7 @@ describe('initWGSLRuntime — czap:uniform-update → uniform buffer (D1-WGSL li
 
     // A field keeps its slot across crossings (stable offset).
     el.dispatchEvent(
-      new CustomEvent('czap:uniform-update', {
+      new CustomEvent('liteship:uniform-update', {
         detail: { wgsl: { state_index: 0, blur_radius: 0.5 } },
       }),
     );
@@ -390,7 +390,7 @@ describe('initWGSLRuntime — czap:uniform-update → uniform buffer (D1-WGSL li
     const dispose = await initWGSLRuntime(canvas, UNIFORM_SHADER, el, UNIFORM_DECLARATIONS);
     const writesBefore = harness.calls.bufferWrites.length;
     // No `wgsl` key → the handler is a no-op (no extra buffer write).
-    el.dispatchEvent(new CustomEvent('czap:uniform-update', { detail: { glsl: { u_layout: 1 } } }));
+    el.dispatchEvent(new CustomEvent('liteship:uniform-update', { detail: { glsl: { u_layout: 1 } } }));
     expect(harness.calls.bufferWrites.length).toBe(writesBefore);
     dispose!();
   });
@@ -423,7 +423,7 @@ describe('initWGSLRuntime — czap:uniform-update → uniform buffer (D1-WGSL li
     const el = document.createElement('div');
 
     const dispose = await initWGSLRuntime(canvas, UNIFORM_SHADER, el, UNIFORM_DECLARATIONS);
-    el.dispatchEvent(new CustomEvent('czap:uniform-update', { detail: { wgsl: { scale: 7.5 } } }));
+    el.dispatchEvent(new CustomEvent('liteship:uniform-update', { detail: { wgsl: { scale: 7.5 } } }));
     const dv = new DataView(harness.calls.bufferWrites.at(-1)!.buffer);
     expect(dv.getFloat32(8, true)).toBe(7.5); // scale → declared slot 2 (offset 8)
     expect(dv.getFloat32(4, true)).toBe(0); // blur_radius slot untouched (not in event)
@@ -528,7 +528,7 @@ describe('initWGSLRuntime — czap:uniform-update → uniform buffer (D1-WGSL li
     expect(harness.calls.bufferWrites.at(-1)!.length).toBe(48);
 
     el.dispatchEvent(
-      new CustomEvent('czap:uniform-update', {
+      new CustomEvent('liteship:uniform-update', {
         detail: {
           wgsl: {
             state_index: 2,
@@ -564,7 +564,7 @@ describe('initWGSLRuntime — czap:uniform-update → uniform buffer (D1-WGSL li
     dispose!();
     const writesAfterDispose = harness.calls.bufferWrites.length;
     // Post-dispose crossings must not write the buffer (listener removed).
-    el.dispatchEvent(new CustomEvent('czap:uniform-update', { detail: { wgsl: { state_index: 9 } } }));
+    el.dispatchEvent(new CustomEvent('liteship:uniform-update', { detail: { wgsl: { state_index: 9 } } }));
     expect(harness.calls.bufferWrites.length).toBe(writesAfterDispose);
   });
 
@@ -576,7 +576,7 @@ describe('initWGSLRuntime — czap:uniform-update → uniform buffer (D1-WGSL li
     const el = document.createElement('div');
     const dispose = await initWGSLRuntime(canvas, 'inline', el);
     expect(dispose).not.toBeNull();
-    el.dispatchEvent(new CustomEvent('czap:uniform-update', { detail: { wgsl: { state_index: 1 } } }));
+    el.dispatchEvent(new CustomEvent('liteship:uniform-update', { detail: { wgsl: { state_index: 1 } } }));
     dispose?.();
     /* v8 ignore stop */
   },

@@ -1,4 +1,4 @@
-import { Diagnostics } from '@czap/core';
+import { Diagnostics } from '@liteship/core';
 
 export interface CapturedDiagnostics {
   readonly events: Diagnostics.Event[];

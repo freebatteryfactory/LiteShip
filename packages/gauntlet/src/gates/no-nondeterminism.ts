@@ -15,7 +15,7 @@
  * monotonic clock is exactly as non-reproducible as a `Date.now()` timestamp, and
  * (per the clock-substrate law) funnelling it into the wrong boundary is the
  * monotonic-into-timestamp laundering bug. Each ambient read must instead come
- * from an INJECTED source (the `@czap/core` `systemClock` / `wallClock` /
+ * from an INJECTED source (the `@liteship/core` `systemClock` / `wallClock` /
  * `systemRng` substrate, threaded as a `Clock` / `Rng`) so the path is
  * reproducible and testable. A legitimately-declared boundary (the single
  * sanctioned read every other path routes through) is sanctioned by a WAIVER in
@@ -61,7 +61,7 @@ function scan(context: GateContext): readonly Finding[] {
             severity: 'error',
             level: 'L3',
             title: 'Ambient nondeterminism (Date.now / performance.now / Math.random / argless new Date)',
-            detail: `${file}:${i + 1} reads an ambient nondeterministic source. The L3 contract is determinism — the same input must yield the same output run-to-run — and a wall-clock read (Date.now / new Date), a monotonic-clock read (performance.now), or an unseeded random breaks it. The value must come from an injected clock / RNG (the @czap/core systemClock / wallClock / systemRng substrate) instead — or, if this IS the single declared boundary, be sanctioned by an owner waiver.`,
+            detail: `${file}:${i + 1} reads an ambient nondeterministic source. The L3 contract is determinism — the same input must yield the same output run-to-run — and a wall-clock read (Date.now / new Date), a monotonic-clock read (performance.now), or an unseeded random breaks it. The value must come from an injected clock / RNG (the @liteship/core systemClock / wallClock / systemRng substrate) instead — or, if this IS the single declared boundary, be sanctioned by an owner waiver.`,
             location: { file, line: i + 1 },
             remediation: {
               kind: 'instruction',

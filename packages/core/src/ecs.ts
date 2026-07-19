@@ -18,7 +18,7 @@ export const EntityId = (value: string): EntityId => value as EntityId;
 
 import { fnv1aBytes } from './fnv.js';
 import { CanonicalCbor } from './cbor.js';
-import { ValidationError } from '@czap/error';
+import { ValidationError } from '@liteship/error';
 
 interface EntityShape {
   readonly id: EntityId;

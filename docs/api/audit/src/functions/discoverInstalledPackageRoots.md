@@ -12,9 +12,9 @@ Defined in: [audit/src/consumer.ts:109](https://github.com/freebatteryfactory/Li
 
 Discover the installed roots of `packageNames` reachable from `cwd`.
 BFS to fixpoint: each found package's realpath becomes a new seed, which
-is what surfaces pnpm's hidden transitive `@czap/*` dependencies (they
+is what surfaces pnpm's hidden transitive `@liteship/*` dependencies (they
 live next to their importer inside the virtual store, not under the
-project's top-level `node_modules/@czap`).
+project's top-level `node_modules/@liteship`).
 
 ## Parameters
 

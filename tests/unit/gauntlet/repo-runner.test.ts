@@ -35,7 +35,7 @@ import {
   noPlaceholderGate,
   noEarlyReturnTestGate,
   type Waiver,
-} from '@czap/gauntlet';
+} from '@liteship/gauntlet';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(HERE, '..', '..', '..');

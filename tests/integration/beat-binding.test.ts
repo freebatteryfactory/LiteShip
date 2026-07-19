@@ -20,8 +20,8 @@ import {
   BeatBinding,
   beatBindingCapsule,
   bindBeats,
-} from '@czap/scene';
-import type { SceneContract, BeatComponent } from '@czap/scene';
+} from '@liteship/scene';
+import type { SceneContract, BeatComponent } from '@liteship/scene';
 
 function buildSceneWithBeats(beats: readonly BeatComponent[]): SceneContract {
   const heroId = Track.videoId('hero');

@@ -48,7 +48,7 @@ export function renderBenchBlock(): string {
     '',
     `- \`pnpm run gauntlet:full\` ${s.gauntlet.status} end-to-end in ${s.gauntlet.durationFormatted} under CI conditions.`,
     `- \`bench:gate\` passed: ${s.benchGate.hardGateCount} hard gates, ${s.benchGate.failedHardGateCount} failed, ${s.benchGate.replicateCount} replicates.`,
-    '- `package:smoke` passed for every publishable `@czap/*` scope.',
+    '- `package:smoke` passed for every publishable `@liteship/*` scope.',
     '',
     '| Hard-gated pair | Median directive | Median baseline | Median overhead | Threshold |',
     '| --- | ---: | ---: | ---: | ---: |',

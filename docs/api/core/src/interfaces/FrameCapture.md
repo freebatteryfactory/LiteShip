@@ -9,8 +9,8 @@
 Defined in: [core/src/capture.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capture.ts#L35)
 
 Minimal encoder contract: `init` to open the encoder, `capture` per frame,
-`finalize` to flush and return the encoded blob. Implemented by `@czap/web`
-(WebCodecs) and `@czap/remotion` (Remotion capture).
+`finalize` to flush and return the encoded blob. Implemented by `@liteship/web`
+(WebCodecs) and `@liteship/remotion` (Remotion capture).
 
 ## Properties
 

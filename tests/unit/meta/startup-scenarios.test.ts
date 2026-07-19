@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import type { CompositeState } from '@czap/core';
-import type { WorkerHost } from '@czap/worker';
+import type { CompositeState } from '@liteship/core';
+import type { WorkerHost } from '@liteship/worker';
 import {
   buildWorkerStartupSplitMetrics,
   buildWorkerStartupComparisonAudit,

@@ -7,7 +7,7 @@
  *
  * @module
  */
-import { S, type CapsuleCommandResult, type CommandJsonSchema, type ContentAddress } from '@czap/core';
+import { S, type CapsuleCommandResult, type CommandJsonSchema, type ContentAddress } from '@liteship/core';
 import { defineCommand, failed, ok } from '../registry.js';
 
 type Verdict = 'Verified' | 'Mismatch' | 'Incomplete' | 'Unknown';

@@ -10,7 +10,7 @@
  */
 
 import { describe, test, expect, vi } from 'vitest';
-import { Boundary, Compositor, CompositorStatePool, FrameBudget } from '@czap/core';
+import { Boundary, Compositor, CompositorStatePool, FrameBudget } from '@liteship/core';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -90,8 +90,8 @@ describe('Compositor pipeline integration', () => {
 
     // But q2's state is still present (copied from previous)
     expect(state.discrete['theme']).toBe('light');
-    expect(state.outputs.css['--czap-theme']).toBe('light');
-    expect(state.outputs.aria['data-czap-theme']).toBe('light');
+    expect(state.outputs.css['--liteship-theme']).toBe('light');
+    expect(state.outputs.aria['data-liteship-theme']).toBe('light');
 
     // And q1 reflects the update
     expect(state.discrete['layout']).toBe('desktop');
@@ -126,8 +126,8 @@ describe('Compositor pipeline integration', () => {
 
     // And should be structurally equal but potentially the same recycled object
     // (pool reuses objects — this is the observable behavior)
-    expect(state1.outputs.css['--czap-layout']).toBe('mobile');
-    expect(state2.outputs.css['--czap-layout']).toBe('mobile');
+    expect(state1.outputs.css['--liteship-layout']).toBe('mobile');
+    expect(state2.outputs.css['--liteship-layout']).toBe('mobile');
   });
 
   test('full pipeline: signal change → dirty → selective recompute → output', async () => {
@@ -172,9 +172,9 @@ describe('Compositor pipeline integration', () => {
     expect(state.discrete['density']).toBe('1x');
 
     // CSS vars are all present
-    expect(state.outputs.css['--czap-layout']).toBe('tablet');
-    expect(state.outputs.css['--czap-theme']).toBe('light');
-    expect(state.outputs.css['--czap-density']).toBe('1x');
+    expect(state.outputs.css['--liteship-layout']).toBe('tablet');
+    expect(state.outputs.css['--liteship-theme']).toBe('light');
+    expect(state.outputs.css['--liteship-density']).toBe('1x');
 
     // GLSL uniforms are present
     expect(state.outputs.glsl['u_layout']).toBe(1); // tablet is index 1
@@ -182,8 +182,8 @@ describe('Compositor pipeline integration', () => {
     expect(state.outputs.glsl['u_density']).toBe(0); // 1x is index 0
 
     // ARIA attributes present
-    expect(state.outputs.aria['data-czap-layout']).toBe('tablet');
-    expect(state.outputs.aria['data-czap-theme']).toBe('light');
+    expect(state.outputs.aria['data-liteship-layout']).toBe('tablet');
+    expect(state.outputs.aria['data-liteship-theme']).toBe('light');
     expect(compositor.runtime.phases).toEqual([
       'compute-discrete',
       'compute-blend',

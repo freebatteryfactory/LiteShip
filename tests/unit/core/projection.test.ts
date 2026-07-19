@@ -10,7 +10,7 @@
  * @module
  */
 import { describe, it, expect } from 'vitest';
-import { projectionKeys, glslIdent, wgslIdent, PROJECTION_KEYS_SOURCE } from '@czap/core';
+import { projectionKeys, glslIdent, wgslIdent, PROJECTION_KEYS_SOURCE } from '@liteship/core';
 
 /** Execute the worker-blob source exactly as the worker does. */
 const blobProjectionKeys = new Function(
@@ -21,10 +21,10 @@ const blobProjectionKeys = new Function(
 describe('projectionKeys', () => {
   it('mints css/aria keys with the name verbatim, glsl as u_<snake>, wgsl as bare <snake>', () => {
     expect(projectionKeys('hero')).toEqual({
-      cssKey: '--czap-hero',
+      cssKey: '--liteship-hero',
       glslKey: 'u_hero',
       wgslKey: 'hero',
-      ariaKey: 'data-czap-hero',
+      ariaKey: 'data-liteship-hero',
     });
   });
 
@@ -49,8 +49,8 @@ describe('projectionKeys', () => {
   });
 
   it('css/aria keys preserve case (custom properties + data attributes are case-sensitive)', () => {
-    expect(projectionKeys('heroImage').cssKey).toBe('--czap-heroImage');
-    expect(projectionKeys('heroImage').ariaKey).toBe('data-czap-heroImage');
+    expect(projectionKeys('heroImage').cssKey).toBe('--liteship-heroImage');
+    expect(projectionKeys('heroImage').ariaKey).toBe('data-liteship-heroImage');
   });
 });
 

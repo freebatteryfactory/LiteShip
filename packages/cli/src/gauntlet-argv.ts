@@ -4,7 +4,7 @@
  * @module
  */
 
-import { wallClock } from '@czap/core';
+import { wallClock } from '@liteship/core';
 
 /** Parsed gauntlet CLI argv. */
 export interface GauntletArgv {

@@ -33,7 +33,7 @@ import {
   type SignalNode,
   type TransitionProgram,
   type TypedValue,
-} from '@czap/core';
+} from '@liteship/core';
 
 const META: CellMeta = {
   created: { wall_ms: 0, counter: 0, node_id: 't' },
@@ -119,9 +119,9 @@ function makeStep(
   return { transitionId: transition.id, nodes: [fromPose, toPose, transition] };
 }
 
-// Two distinct-property steps: A opacity over 200ms, B --czap-hero-x over 600ms.
+// Two distinct-property steps: A opacity over 200ms, B --liteship-hero-x over 600ms.
 const stepA = makeStep({ opacity: 0 }, { opacity: 1 }, 200);
-const stepB = makeStep({ '--czap-hero-x': '0px' }, { '--czap-hero-x': '100px' }, 600);
+const stepB = makeStep({ '--liteship-hero-x': '0px' }, { '--liteship-hero-x': '100px' }, 600);
 NODES.push(signal, component, entity, ...stepA.nodes, ...stepB.nodes);
 
 const graph: DocumentGraph = sealGraph({
@@ -205,7 +205,7 @@ describe('TransitionProgram — RED-first: seq/par no longer collapse to one lab
     // At the 0.25 seam: opacity fully 1 (A complete), x still 0px (B not started).
     const seam = plan.css!.keyframes.find((k) => k.offset === 0.25)!;
     expect(seam.properties.opacity).toBe('1');
-    expect(seam.properties['--czap-hero-x']).toBe('0px');
+    expect(seam.properties['--liteship-hero-x']).toBe('0px');
   });
 });
 
@@ -228,7 +228,7 @@ describe('TransitionProgram — algebra LAWS', () => {
   });
 
   test('seq: three steps keep deterministic ascending order (Plan.topoSort substrate)', () => {
-    const s3 = makeStep({ '--czap-hero-z': '0px' }, { '--czap-hero-z': '9px' }, 100);
+    const s3 = makeStep({ '--liteship-hero-z': '0px' }, { '--liteship-hero-z': '9px' }, 100);
     const g3 = sealGraph({
       _tag: 'DocumentGraph',
       _version: 1,
@@ -258,7 +258,7 @@ describe('TransitionProgram — algebra LAWS', () => {
     expect(sampleVar(parProg, 'opacity', 200 / 600)).toBeCloseTo(1, 10); // A just done
     expect(sampleVar(parProg, 'opacity', 0.9)).toBe(1); // A holds
     // B is only ~90% through at t=0.9 (linear): x ≈ 90px.
-    expect(sampleVar(parProg, '--czap-hero-x', 0.9)).toBeCloseTo(90, 6);
+    expect(sampleVar(parProg, '--liteship-hero-x', 0.9)).toBeCloseTo(90, 6);
   });
 
   test('choice: executes EXACTLY one branch — cover branch-0, otherwise, and unmatched', () => {
@@ -319,7 +319,7 @@ describe('TransitionProgram — algebra LAWS', () => {
     const plan = interpretProgram(graph, seqProg);
     const sample = sampleProgramWindows(plan.runtime!.windows!, 0.5);
     const opacity = sample.find((s) => s.cssVar === 'opacity')!;
-    const x = sample.find((s) => s.cssVar === '--czap-hero-x')!;
+    const x = sample.find((s) => s.cssVar === '--liteship-hero-x')!;
     expect(num(opacity.value)).toBe(1); // A complete, holds
     // B local progress at t=0.5: (0.5-0.25)/0.75 = 1/3 → 33.33px (linear).
     expect(num(x.value)).toBeCloseTo(100 / 3, 6);
@@ -348,18 +348,18 @@ describe('TransitionProgram — algebra LAWS', () => {
     // Settling at t=1 pins each property to its window `to` (opacity 1, x 100px).
     const terminal = sampleProgramWindows(plan.runtime!.windows!, 1);
     expect(num(terminal.find((s) => s.cssVar === 'opacity')!.value)).toBe(1);
-    expect(num(terminal.find((s) => s.cssVar === '--czap-hero-x')!.value)).toBe(100);
+    expect(num(terminal.find((s) => s.cssVar === '--liteship-hero-x')!.value)).toBe(100);
   });
 });
 
 describe('TransitionProgram — same-key sequential windows (Codex P2 / Greptile P1 regression)', () => {
   // A seq chain that animates the SAME key across BOTH steps — the case the algebra
-  // tests above never hit (they use opacity for A, --czap-hero-x for B). A future
+  // tests above never hit (they use opacity for A, --liteship-hero-x for B). A future
   // window, clamped to its `from` before it starts, must NOT clobber the earlier
   // ACTIVE window on last-window-wins, or an in-progress tween freezes at the next
   // step's start value.
-  const rampA = makeStep({ '--czap-hero-x': '0px' }, { '--czap-hero-x': '100px' }, 400);
-  const rampB = makeStep({ '--czap-hero-x': '100px' }, { '--czap-hero-x': '200px' }, 400);
+  const rampA = makeStep({ '--liteship-hero-x': '0px' }, { '--liteship-hero-x': '100px' }, 400);
+  const rampB = makeStep({ '--liteship-hero-x': '100px' }, { '--liteship-hero-x': '200px' }, 400);
   const rampGraph = sealGraph({
     _tag: 'DocumentGraph',
     _version: 1,
@@ -379,7 +379,7 @@ describe('TransitionProgram — same-key sequential windows (Codex P2 / Greptile
     const plan = interpretProgram(rampGraph, ramp);
     const windows = plan.runtime!.windows!;
     const x = (t: number): number =>
-      num(sampleProgramWindows(windows, t).find((s) => s.cssVar === '--czap-hero-x')!.value);
+      num(sampleProgramWindows(windows, t).find((s) => s.cssVar === '--liteship-hero-x')!.value);
     // seq windows: rampA [0,0.5], rampB [0.5,1]. Mid the FIRST leg the value is the
     // in-progress 0→100 tween (≈50 at t=0.25) — NOT 100 frozen by rampB.from.
     expect(x(0.25)).toBeCloseTo(50, 6);
@@ -393,15 +393,15 @@ describe('TransitionProgram — same-key sequential windows (Codex P2 / Greptile
     const kf = plan.css!.keyframes;
     expect(kf.map((k) => k.offset)).toEqual([0, 0.5, 1]);
     // 0% is rampA.from (0px) — a not-yet-started rampB must not overwrite it to 100px.
-    expect(kf.find((k) => k.offset === 0)!.properties['--czap-hero-x']).toBe('0px');
-    expect(kf.find((k) => k.offset === 0.5)!.properties['--czap-hero-x']).toBe('100px');
+    expect(kf.find((k) => k.offset === 0)!.properties['--liteship-hero-x']).toBe('0px');
+    expect(kf.find((k) => k.offset === 0.5)!.properties['--liteship-hero-x']).toBe('100px');
     // 100% is the program terminal (rampB.to), not the first step`s 100px.
-    expect(kf.find((k) => k.offset === 1)!.properties['--czap-hero-x']).toBe('200px');
+    expect(kf.find((k) => k.offset === 1)!.properties['--liteship-hero-x']).toBe('200px');
   });
 
   test('the flat CSS `properties` fold keeps FIRST `from` (init) but LAST `to` (terminal)', () => {
     const plan = interpretProgram(rampGraph, ramp);
-    const tween = plan.css!.properties.find((p) => p.property === '--czap-hero-x')!;
+    const tween = plan.css!.properties.find((p) => p.property === '--liteship-hero-x')!;
     expect(num(tween.from)).toBe(0); // first occurrence — @property initial-value
     expect(num(tween.to)).toBe(200); // last occurrence — terminal, not the first step`s 100
   });
@@ -490,7 +490,7 @@ describe('TransitionProgram — authoring sugar (Reveal.chain / staggerProgram)'
     expect(wide.selectedBranchIds).toEqual(['branch-0']);
     const plan = interpretProgram(chain.graph, chain.program, { signals: { 'viewport.width': 1200 } });
     // Teal (not amber) at the terminal pose — the otherwise arm never wrote.
-    const color = sampleProgramWindows(plan.runtime!.windows!, 1).find((s) => s.cssVar === '--czap-hero-color');
+    const color = sampleProgramWindows(plan.runtime!.windows!, 1).find((s) => s.cssVar === '--liteship-hero-color');
     expect(color).toBeDefined();
   });
 

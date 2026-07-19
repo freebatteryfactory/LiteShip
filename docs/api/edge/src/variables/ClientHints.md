@@ -13,7 +13,7 @@ Defined in: [edge/src/client-hints.ts:371](https://github.com/freebatteryfactory
 Client Hints namespace.
 
 Parses HTTP Client Hints headers into the same
-[ExtendedDeviceCapabilities](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md) structure used by `@czap/detect`,
+[ExtendedDeviceCapabilities](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md) structure used by `@liteship/detect`,
 enabling server-side / edge-side tier mapping without browser APIs.
 Also generates the `Accept-CH` and `Critical-CH` response headers needed
 to request hints from the browser.
@@ -38,7 +38,7 @@ A comma-separated list of Client Hint header names
 #### Example
 
 ```ts
-import { ClientHints } from '@czap/edge';
+import { ClientHints } from '@liteship/edge';
 
 const response = new Response('OK', {
   headers: { 'Accept-CH': ClientHints.acceptCHHeader() },
@@ -63,7 +63,7 @@ A comma-separated list of critical Client Hint header names
 #### Example
 
 ```ts
-import { ClientHints } from '@czap/edge';
+import { ClientHints } from '@liteship/edge';
 
 const response = new Response('OK', {
   headers: {
@@ -101,7 +101,7 @@ An [ExtendedDeviceCapabilities](https://github.com/freebatteryfactory/LiteShip/b
 #### Example
 
 ```ts
-import { ClientHints } from '@czap/edge';
+import { ClientHints } from '@liteship/edge';
 
 const caps = ClientHints.parseClientHints({
   'sec-ch-device-memory': '8',
@@ -165,7 +165,7 @@ inputs or they can serve the wrong tier's representation (#122).
 ## Example
 
 ```ts
-import { ClientHints } from '@czap/edge';
+import { ClientHints } from '@liteship/edge';
 
 // In an edge handler:
 const caps = ClientHints.parseClientHints(request.headers);

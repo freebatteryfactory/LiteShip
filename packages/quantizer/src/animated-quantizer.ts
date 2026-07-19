@@ -12,8 +12,8 @@ import type {
   ReactiveQuantizer,
   Easing,
   Scheduler,
-} from '@czap/core';
-import { Diagnostics, systemClock, Animation, Millis as mkMillis, CellKernel, Lifetime } from '@czap/core';
+} from '@liteship/core';
+import { Diagnostics, systemClock, Animation, Millis as mkMillis, CellKernel, Lifetime } from '@liteship/core';
 import type { Transition, TransitionMap } from './transition.js';
 import { Transition as TransitionFactory } from './transition.js';
 
@@ -232,8 +232,8 @@ function abortAwareScheduler(base: Scheduler.Shape, signal: AbortSignal): Schedu
  *
  * @example
  * ```ts
- * import { Boundary, Millis } from '@czap/core';
- * import { Q, AnimatedQuantizer } from '@czap/quantizer';
+ * import { Boundary, Millis } from '@liteship/core';
+ * import { Q, AnimatedQuantizer } from '@liteship/quantizer';
  *
  * const boundary = Boundary.make({
  *   input: 'scroll',
@@ -281,7 +281,7 @@ function makeAnimatedQuantizer<B extends Boundary.Shape>(
     const uncovered = stateNames.filter((s) => effectiveOutputs[s] === undefined);
     if (uncovered.length > 0) {
       Diagnostics.warn({
-        source: 'czap/quantizer',
+        source: 'liteship/quantizer',
         code: 'uncovered-animation-states',
         message: `AnimatedQuantizer outputs cover [${Object.keys(effectiveOutputs).join(', ')}] but boundary "${boundary.input}" has states [${stateNames.join(', ')}]; transitions into ${uncovered.map((s) => `'${s}'`).join(', ')} will animate to empty outputs.`,
       });
@@ -452,8 +452,8 @@ function makeAnimatedQuantizer<B extends Boundary.Shape>(
  *
  * @example
  * ```ts
- * import { Boundary, Millis } from '@czap/core';
- * import { Q, AnimatedQuantizer } from '@czap/quantizer';
+ * import { Boundary, Millis } from '@liteship/core';
+ * import { Q, AnimatedQuantizer } from '@liteship/quantizer';
  *
  * const boundary = Boundary.make({
  *   input: 'scroll',

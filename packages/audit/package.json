@@ -1,5 +1,5 @@
 {
-  "name": "@czap/audit",
+  "name": "@liteship/audit",
   "version": "0.18.0",
   "description": "Audit a LiteShip project's structure, integrity, and public surface: a downstream-installable engine that builds a model of the repository and runs configurable checks over it.",
   "license": "MIT",
@@ -12,7 +12,6 @@
   "bugs": "https://github.com/freebatteryfactory/LiteShip/issues",
   "homepage": "https://github.com/freebatteryfactory/LiteShip#readme",
   "keywords": [
-    "czap",
     "liteship",
     "audit",
     "static-analysis",
@@ -40,9 +39,9 @@
     "prepack": "pnpm run build"
   },
   "dependencies": {
-    "@czap/canonical": "workspace:*",
-    "@czap/error": "workspace:*",
-    "@czap/gauntlet": "workspace:*",
+    "@liteship/canonical": "workspace:*",
+    "@liteship/error": "workspace:*",
+    "@liteship/gauntlet": "workspace:*",
     "fast-glob": "^3.3.3",
     "typescript": "^5.9.3"
   },

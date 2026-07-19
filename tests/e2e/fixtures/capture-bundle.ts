@@ -5,8 +5,8 @@
  * Runs the full capture pipeline: Compositor -> VideoRenderer -> WebCodecsCapture -> MP4 blob.
  */
 
-import { Compositor, VideoRenderer, Millis } from '@czap/core';
-import { WebCodecsCapture, renderToCanvas } from '@czap/web';
+import { Compositor, VideoRenderer, Millis } from '@liteship/core';
+import { WebCodecsCapture, renderToCanvas } from '@liteship/web';
 
 declare global {
   interface Window {

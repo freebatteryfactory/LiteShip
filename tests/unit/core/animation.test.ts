@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import { Animation, Millis, Scheduler, Easing } from '@czap/core';
-import { hasTag } from '@czap/error';
+import { Animation, Millis, Scheduler, Easing } from '@liteship/core';
+import { hasTag } from '@liteship/error';
 import { interpolate as rawInterpolate } from '../../../packages/core/src/interpolate.js';
 
 // ---------------------------------------------------------------------------

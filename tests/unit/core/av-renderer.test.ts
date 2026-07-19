@@ -3,7 +3,7 @@
  */
 
 import { describe, test, expect, vi } from 'vitest';
-import { AVRenderer, AVBridge, Compositor, Millis } from '@czap/core';
+import { AVRenderer, AVBridge, Compositor, Millis } from '@liteship/core';
 
 // Compositor.create() is synchronous as of the core-seams wave: it returns a
 // { compositor, lifetime } handle. AVRenderer.make consumes the compositor

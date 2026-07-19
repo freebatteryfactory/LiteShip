@@ -16,7 +16,7 @@ Defined in: [cloudflare/src/edge-cache.ts:13](https://github.com/freebatteryfact
 
 Defined in: [cloudflare/src/edge-cache.ts:15](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cloudflare/src/edge-cache.ts#L15)
 
-KV namespace binding name (e.g. `CZAP_BOUNDARY_CACHE`).
+KV namespace binding name (e.g. `LITESHIP_BOUNDARY_CACHE`).
 
 ***
 

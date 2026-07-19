@@ -7,8 +7,8 @@
  */
 
 import fc from 'fast-check';
-import { Boundary, Token, Theme, Style } from '@czap/core';
-import type { PrimitiveKind } from '@czap/core';
+import { Boundary, Token, Theme, Style } from '@liteship/core';
+import type { PrimitiveKind } from '@liteship/core';
 
 export const PRIMITIVE_KINDS = ['boundary', 'token', 'theme', 'style'] as const satisfies PrimitiveKind[];
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { imageDecoder } from '@czap/assets';
+import { imageDecoder } from '@liteship/assets';
 
 describe('imageDecoder', () => {
   it('reads PNG dimensions from IHDR', async () => {

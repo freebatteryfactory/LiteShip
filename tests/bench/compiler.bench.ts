@@ -3,7 +3,7 @@
  */
 
 import { Bench } from 'tinybench';
-import { Boundary, Token, Theme, Style } from '@czap/core';
+import { Boundary, Token, Theme, Style } from '@liteship/core';
 import {
   CSSCompiler,
   GLSLCompiler,
@@ -12,7 +12,7 @@ import {
   ThemeCSSCompiler,
   StyleCSSCompiler,
   dispatch,
-} from '@czap/compiler';
+} from '@liteship/compiler';
 
 const bench = new Bench({ warmupIterations: 100 });
 
@@ -56,7 +56,7 @@ const style = Style.make({
     properties: {
       'font-size': '16px',
       padding: '8px',
-      color: 'var(--czap-primary)',
+      color: 'var(--liteship-primary)',
     },
   },
   states: {

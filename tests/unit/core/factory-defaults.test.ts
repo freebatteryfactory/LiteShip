@@ -9,8 +9,8 @@
  */
 
 import { describe, expect, test } from 'vitest';
-import { AVBridge, Component, Easing, Signal, Style, Token } from '@czap/core';
-import { hasTag } from '@czap/error';
+import { AVBridge, Component, Easing, Signal, Style, Token } from '@liteship/core';
+import { hasTag } from '@liteship/error';
 
 // ---------------------------------------------------------------------------
 // Token.make — axes default to ['default'], fallback derives from values.default

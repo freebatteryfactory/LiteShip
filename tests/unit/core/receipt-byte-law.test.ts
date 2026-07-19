@@ -33,8 +33,8 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { encode as cborgEncode } from 'cborg';
-import { CanonicalCbor } from '@czap/core';
-import { bytesToHex } from '@czap/canonical';
+import { CanonicalCbor } from '@liteship/core';
+import { bytesToHex } from '@liteship/canonical';
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
 const read = (rel: string): string => readFileSync(resolve(REPO, rel), 'utf8');

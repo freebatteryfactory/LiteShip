@@ -9,8 +9,8 @@
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { normalizeRepoPath } from '@czap/core';
-import { walkFiles } from '@czap/core/fs-walk';
+import { normalizeRepoPath } from '@liteship/core';
+import { walkFiles } from '@liteship/core/fs-walk';
 import { computeBundleId } from '../packages/astro/src/docs-bundle-id.js';
 
 const REPO_ROOT = join(import.meta.dirname, '..');

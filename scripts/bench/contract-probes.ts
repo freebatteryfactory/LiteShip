@@ -30,7 +30,7 @@
  * @module
  */
 
-import { Boundary, contentAddressOf } from '@czap/core';
+import { Boundary, contentAddressOf } from '@liteship/core';
 import type { ComplexityProbe } from './contracts.ts';
 
 /** A fixed 3-threshold boundary the batch probe evaluates many values against. */

@@ -6,10 +6,10 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Boundary, Millis, CellKernel } from '@czap/core';
-import type { ReactiveQuantizer, BoundaryCrossing } from '@czap/core';
-import { AnimatedQuantizer } from '@czap/quantizer';
-import type { TransitionMap } from '@czap/quantizer';
+import { Boundary, Millis, CellKernel } from '@liteship/core';
+import type { ReactiveQuantizer, BoundaryCrossing } from '@liteship/core';
+import { AnimatedQuantizer } from '@liteship/quantizer';
+import type { TransitionMap } from '@liteship/quantizer';
 
 /**
  * Build a mock reactive Quantizer with controllable boundary crossings. `state`

@@ -69,9 +69,9 @@ import {
   Millis,
   StateName,
   fixedClock,
-} from '@czap/core';
-import type { BoundaryCrossing } from '@czap/core';
-import type { Disposer } from '@czap/core';
+} from '@liteship/core';
+import type { BoundaryCrossing } from '@liteship/core';
+import type { Disposer } from '@liteship/core';
 import type {
   ReactiveOp,
   ReactiveOpTag,

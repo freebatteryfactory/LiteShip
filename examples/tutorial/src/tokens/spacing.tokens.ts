@@ -2,7 +2,7 @@
  * Spacing design tokens.
  *
  * Tokens are named design values that can vary across axes (theme, density,
- * contrast, etc.). czap compiles them to CSS custom properties so they
+ * contrast, etc.). liteship compiles them to CSS custom properties so they
  * participate in the cascade naturally.
  *
  * Each token below defines a single axis ("density") with two variants:
@@ -12,12 +12,12 @@
  * The `fallback` is used when no axis value matches.
  *
  * In CSS, these become:
- *   --czap-gap-sm: <resolved value>;
- *   --czap-gap-md: <resolved value>;
- *   --czap-gap-lg: <resolved value>;
+ *   --liteship-gap-sm: <resolved value>;
+ *   --liteship-gap-md: <resolved value>;
+ *   --liteship-gap-lg: <resolved value>;
  */
 
-import { Token } from '@czap/core';
+import { Token } from '@liteship/core';
 
 export const gapSm = Token.make({
   name: 'gap-sm',

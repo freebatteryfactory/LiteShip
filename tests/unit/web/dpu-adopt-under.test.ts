@@ -11,7 +11,7 @@ import {
   verifyVerifiablePatch,
   DPU_MARKER_ATTR,
 } from '../../../packages/web/src/dpu/watch-and-prepare.js';
-import type { ContentAddress, DocumentGraph } from '@czap/core';
+import type { ContentAddress, DocumentGraph } from '@liteship/core';
 
 function graphWithId(id: string): DocumentGraph {
   return {

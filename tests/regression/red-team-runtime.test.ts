@@ -154,7 +154,7 @@ describe('red-team runtime regressions', () => {
     applyBoundaryState(element, boundary!, {
       discrete: { hero: 'compact' },
       outputs: {
-        css: { '--czap-gap': 12, color: 'red' },
+        css: { '--liteship-gap': 12, color: 'red' },
         glsl: {},
         aria: { 'aria-hidden': 'true', onclick: 'alert(1)' },
       },
@@ -162,7 +162,7 @@ describe('red-team runtime regressions', () => {
       aria: { style: 'display:none', role: 'status' },
     });
 
-    expect(element.style.getPropertyValue('--czap-gap')).toBe('12');
+    expect(element.style.getPropertyValue('--liteship-gap')).toBe('12');
     expect(element.style.getPropertyValue('color')).toBe('');
     expect(element.style.getPropertyValue('background-image')).toBe('');
     expect(element.getAttribute('aria-hidden')).toBe('true');

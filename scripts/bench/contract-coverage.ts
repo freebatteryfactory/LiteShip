@@ -22,13 +22,13 @@
 
 import { readFileSync } from 'node:fs';
 import { basename, resolve } from 'node:path';
-import { walkFiles } from '@czap/core/fs-walk';
+import { walkFiles } from '@liteship/core/fs-walk';
 // The ONE shared comment stripper (keeps string literals — a bench's registered
 // name is a string value that must survive; a commented-out registration must
 // vanish). Imported via the gauntlet SOURCE path (the same relative-source pattern
 // the directive-suite uses to reach package internals), so the script strips bench
 // source through the identical implementation the gate uses, never a copy.
-// @czap/gauntlet is not a root dep.
+// @liteship/gauntlet is not a root dep.
 import { commentsBlanked } from '../../packages/gauntlet/src/gates/code-only.ts';
 import { type BenchDistribution, extractRegisteredBenches } from './contracts.ts';
 

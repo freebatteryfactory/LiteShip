@@ -8,18 +8,18 @@
  *
  * The scan engine (`node:fs` source walk + the `git ls-files --eol` line-ending
  * probe + the `INVARIANTS` rule set) is INJECTED via `context.runCheckInvariants`,
- * never imported here, so `@czap/command` stays free of `node:fs`/`child_process`.
- * Like `audit`/`audit-floor` (and UNLIKE `plumb`), the scan needs `@czap/audit`'s
- * `normalizeRepoPath` (the one B5b slash-normalize home) and `@czap/command` may
- * not import `@czap/audit` (it would drag the heavy TS-compiler/glob engine into
- * `@czap/mcp-server`). So the capability is provisioned ONLY by `@czap/cli`, not
+ * never imported here, so `@liteship/command` stays free of `node:fs`/`child_process`.
+ * Like `audit`/`audit-floor` (and UNLIKE `plumb`), the scan needs `@liteship/audit`'s
+ * `normalizeRepoPath` (the one B5b slash-normalize home) and `@liteship/command` may
+ * not import `@liteship/audit` (it would drag the heavy TS-compiler/glob engine into
+ * `@liteship/mcp-server`). So the capability is provisioned ONLY by `@liteship/cli`, not
  * in the shared host factory: the command is CLI-only and NOT `mcpExposed` —
  * over MCP the capability is absent and the handler degrades to a structured
  * `capabilityUnavailable` failure.
  *
  * @module
  */
-import { type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
+import { type CapsuleCommandResult, type CommandJsonSchema } from '@liteship/core';
 import {
   capabilityUnavailable,
   failed,
@@ -87,8 +87,8 @@ export const checkInvariantsCommand: HandledCommand = {
     requires: ['runCheckInvariants'] satisfies readonly CommandCapability[],
     inputSchema: { type: 'object', properties: {} } as const satisfies CommandJsonSchema,
     outputSchema: CheckInvariantsPayloadSchema,
-    // NOT mcpExposed: the scan needs @czap/audit's normalizeRepoPath (B5b cage),
-    // so it is CLI-only by design — only @czap/cli injects runCheckInvariants.
+    // NOT mcpExposed: the scan needs @liteship/audit's normalizeRepoPath (B5b cage),
+    // so it is CLI-only by design — only @liteship/cli injects runCheckInvariants.
     annotations: { readOnly: true, cliOnly: true, group: 'castoff' },
   },
   handler: async (_invocation, context: CommandContext): Promise<CapsuleCommandResult> => {

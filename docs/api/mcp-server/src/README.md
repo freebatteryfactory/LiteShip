@@ -58,7 +58,6 @@
 
 - [APPLY\_PATCH\_COMMAND](variables/APPLY_PATCH_COMMAND.md)
 - [CodeActionKind](variables/CodeActionKind.md)
-- [CZAP\_CHECK\_METHOD](variables/CZAP_CHECK_METHOD.md)
 - [DIAGNOSTIC\_SOURCE](variables/DIAGNOSTIC_SOURCE.md)
 - [DiagnosticSeverity](variables/DiagnosticSeverity.md)
 - [errorResponse](variables/errorResponse.md)
@@ -67,6 +66,7 @@
 - [InvalidRequest](variables/InvalidRequest.md)
 - [JsonRpcServer](variables/JsonRpcServer.md)
 - [jsonRpcServerCapsule](variables/jsonRpcServerCapsule.md)
+- [LITESHIP\_CHECK\_METHOD](variables/LITESHIP_CHECK_METHOD.md)
 - [LSP\_SERVER\_CAPABILITIES](variables/LSP_SERVER_CAPABILITIES.md)
 - [MethodNotFound](variables/MethodNotFound.md)
 - [parse](variables/parse.md)

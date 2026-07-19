@@ -9,8 +9,8 @@ import { describe, test, expect } from 'vitest';
 import fc from 'fast-check';
 
 // --- Core design primitives ---
-import { Token, Style, Theme, Component, Boundary, TokenRef, Easing, Millis } from '@czap/core';
-import type { StyleLayer } from '@czap/core';
+import { Token, Style, Theme, Component, Boundary, TokenRef, Easing, Millis } from '@liteship/core';
+import type { StyleLayer } from '@liteship/core';
 
 // --- Compilers ---
 import {
@@ -21,11 +21,11 @@ import {
   StyleCSSCompiler,
   ComponentCSSCompiler,
   generatePropertyRegistrations,
-} from '@czap/compiler';
+} from '@liteship/compiler';
 
 // --- Detect ---
-import { designTierFromCapabilities, motionTierFromCapabilities } from '@czap/detect';
-import type { ExtendedDeviceCapabilities } from '@czap/detect';
+import { designTierFromCapabilities, motionTierFromCapabilities } from '@liteship/detect';
+import type { ExtendedDeviceCapabilities } from '@liteship/detect';
 
 // ===========================================================================
 // FIXTURES
@@ -72,7 +72,7 @@ const fbfTheme = Theme.make({
 const cardStyle = Style.make({
   boundary: viewport,
   base: {
-    properties: { padding: '16px', 'border-radius': '8px', background: 'var(--czap-surface)' },
+    properties: { padding: '16px', 'border-radius': '8px', background: 'var(--liteship-surface)' },
     boxShadow: [{ x: 0, y: 2, blur: 8, spread: 0, color: 'rgba(0,0,0,0.1)' }],
   },
   states: {
@@ -104,7 +104,7 @@ describe('Token', () => {
     expect(primaryToken.id).toMatch(/^fnv1a:[0-9a-f]{8}$/);
     expect(primaryToken.name).toBe('primary');
     expect(primaryToken.category).toBe('color');
-    expect(primaryToken.cssProperty).toBe('--czap-primary');
+    expect(primaryToken.cssProperty).toBe('--liteship-primary');
   });
 
   test('same inputs -> same content address (deterministic)', () => {
@@ -150,7 +150,7 @@ describe('Token', () => {
   });
 
   test('Token.cssVar() returns CSS var reference', () => {
-    expect(Token.cssVar(primaryToken)).toBe('var(--czap-primary)');
+    expect(Token.cssVar(primaryToken)).toBe('var(--liteship-primary)');
   });
 
   test('resolves multi-axis token with compound keys', () => {
@@ -479,10 +479,10 @@ describe('Component', () => {
 describe('TokenCSSCompiler', () => {
   test('compile() emits @property and :root', () => {
     const result = TokenCSSCompiler.compile(primaryToken);
-    expect(result.customProperties).toContain('@property --czap-primary');
+    expect(result.customProperties).toContain('@property --liteship-primary');
     expect(result.customProperties).toContain(':root');
     expect(result.customProperties).toContain('oklch(0.5 0.1 260)');
-    expect(result.properties).toContain('--czap-primary');
+    expect(result.properties).toContain('--liteship-primary');
   });
 
   test('compile() with theme emits html[data-theme] selectors', () => {
@@ -528,8 +528,8 @@ describe('TokenCSSCompiler', () => {
     };
 
     const result = TokenCSSCompiler.compile(token);
-    expect(result.properties).toEqual(['--czap-runtime-gap']);
-    expect(result.customProperties).toContain('--czap-runtime-gap: 8px;');
+    expect(result.properties).toEqual(['--liteship-runtime-gap']);
+    expect(result.customProperties).toContain('--liteship-runtime-gap: 8px;');
   });
 
   test('compile() infers percentage syntax and leaves themed overrides empty when the theme has no matching token', () => {
@@ -556,7 +556,7 @@ describe('TokenCSSCompiler', () => {
     });
 
     const result = TokenCSSCompiler.compile(token);
-    expect(result.customProperties).toContain('--czap-weight: 400');
+    expect(result.customProperties).toContain('--liteship-weight: 400');
   });
 
   test('compile() stringifies non-string non-number fallback values', () => {
@@ -569,7 +569,7 @@ describe('TokenCSSCompiler', () => {
     });
 
     const result = TokenCSSCompiler.compile(token);
-    expect(result.customProperties).toContain('--czap-flag: true');
+    expect(result.customProperties).toContain('--liteship-flag: true');
     expect(result.customProperties).not.toContain('@property');
   });
 
@@ -670,8 +670,8 @@ describe('ThemeCSSCompiler', () => {
     const result = ThemeCSSCompiler.compile(fbfTheme);
     expect(result.transitions).not.toBe('');
     expect(result.transitions).toContain('transition-property');
-    expect(result.transitions).toContain('--czap-primary');
-    expect(result.transitions).toContain('--czap-surface');
+    expect(result.transitions).toContain('--liteship-primary');
+    expect(result.transitions).toContain('--liteship-surface');
     expect(result.transitions).toContain('transition-duration: 200ms');
     expect(result.transitions).toContain('transition-timing-function: ease-in-out');
   });
@@ -694,9 +694,9 @@ describe('ThemeCSSCompiler', () => {
 describe('StyleCSSCompiler', () => {
   test('compile() emits @layer and @scope', () => {
     const result = StyleCSSCompiler.compile(cardStyle, 'card');
-    expect(result.layers).toContain('@layer czap.components');
+    expect(result.layers).toContain('@layer liteship.components');
     expect(result.scoped).toContain('@scope');
-    expect(result.scoped).toContain('.czap-card');
+    expect(result.scoped).toContain('.liteship-card');
   });
 
   test('compile() emits @starting-style', () => {
@@ -712,8 +712,8 @@ describe('StyleCSSCompiler', () => {
 describe('ComponentCSSCompiler', () => {
   test('compile() emits satellite container and slot styling', () => {
     const result = ComponentCSSCompiler.compile(cardComponent);
-    expect(result.layers).toContain('@layer czap.components');
-    expect(result.scoped).toContain('data-czap-slot');
+    expect(result.layers).toContain('@layer liteship.components');
+    expect(result.scoped).toContain('data-liteship-slot');
   });
 });
 
@@ -724,12 +724,12 @@ describe('ComponentCSSCompiler', () => {
 describe('generatePropertyRegistrations', () => {
   test('emits @property for custom property values', () => {
     const result = generatePropertyRegistrations({
-      mobile: { '--czap-primary': '#00e5ff', '--czap-gap': '8px' },
-      desktop: { '--czap-primary': '#ffffff', '--czap-gap': '16px' },
+      mobile: { '--liteship-primary': '#00e5ff', '--liteship-gap': '8px' },
+      desktop: { '--liteship-primary': '#ffffff', '--liteship-gap': '16px' },
     });
-    expect(result).toContain('@property --czap-primary');
+    expect(result).toContain('@property --liteship-primary');
     expect(result).toContain('syntax: "<color>"');
-    expect(result).toContain('@property --czap-gap');
+    expect(result).toContain('@property --liteship-gap');
     expect(result).toContain('syntax: "<length>"');
   });
 

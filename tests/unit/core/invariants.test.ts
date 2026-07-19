@@ -22,11 +22,11 @@ import {
   TokenBuffer,
   Millis,
   Compositor,
-} from '@czap/core';
-import { hasTag } from '@czap/error';
+} from '@liteship/core';
+import { hasTag } from '@liteship/error';
 
 // --- Quantizer imports ---
-import { evaluate } from '@czap/quantizer';
+import { evaluate } from '@liteship/quantizer';
 
 // ---------------------------------------------------------------------------
 // Arbitraries -- shared test data generators

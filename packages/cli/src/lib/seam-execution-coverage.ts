@@ -4,8 +4,8 @@
  *
  * THE BARREL PROBLEM. {@link buildSeamCoverageMap}'s sound covering model is the
  * union of (a) DEEP-importers of a seam's source path and (b) BARREL-importers of
- * the seam's package (`@czap/core`). (b) is sound but over-broad: ~220 tests import
- * `@czap/core`, so every broad-package L4 seam (hlc / dag / content-address) maps to
+ * the seam's package (`@liteship/core`). (b) is sound but over-broad: ~220 tests import
+ * `@liteship/core`, so every broad-package L4 seam (hlc / dag / content-address) maps to
  * ALL ~220 — ~220 subprocess suite runs PER MUTANT. The broad seams were deferred
  * for exactly this reason.
  *
@@ -21,7 +21,7 @@
  * test ever calls into F. Statement coverage therefore CANNOT distinguish "executed
  * F's logic" from "merely imported F". The per-FUNCTION hit map can: a test that only
  * imports F covers 0 of F's functions; a test that exercises F covers ≥1. (Proven on
- * this repo: an unrelated `@czap/core` barrel importer shows 11/64 statements but
+ * this repo: an unrelated `@liteship/core` barrel importer shows 11/64 statements but
  * 0/13 FUNCTIONS of `hlc.ts` covered — pure import-time init — while `hlc.test.ts`
  * shows 13/13.)
  *
@@ -65,9 +65,9 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
-import { AddressedDigest, CanonicalCbor } from '@czap/core';
-import { normalizeRepoPath, type MutationTargetFile } from '@czap/audit';
-import { IoError } from '@czap/error';
+import { AddressedDigest, CanonicalCbor } from '@liteship/core';
+import { normalizeRepoPath, type MutationTargetFile } from '@liteship/audit';
+import { IoError } from '@liteship/error';
 
 /**
  * The injected probe launcher — runs ONE test file under vitest with v8 coverage
@@ -258,8 +258,8 @@ interface PerTestCandidacy {
 
 /**
  * Group the per-seam barrel candidates by TEST id (sorted, deterministic) — the
- * substrate for one-probe-per-test batching. A test that imports `@czap/core` is a
- * barrel candidate for every `@czap/core` seam, so it appears once here with all those
+ * substrate for one-probe-per-test batching. A test that imports `@liteship/core` is a
+ * barrel candidate for every `@liteship/core` seam, so it appears once here with all those
  * seams, and is probed ONCE for all of them.
  */
 function groupBarrelCandidatesByTest(candidates: readonly SeamCandidates[]): ReadonlyMap<string, PerTestCandidacy> {
@@ -343,7 +343,7 @@ export function defaultCoverageProbe(
   testId: string,
   timeoutMs: number,
 ): readonly LineRange[] | null {
-  const reportsDir = mkdtempSync(join(tmpdir(), 'czap-seam-cov-'));
+  const reportsDir = mkdtempSync(join(tmpdir(), 'liteship-seam-cov-'));
   try {
     const args = [
       'exec',
@@ -442,7 +442,7 @@ export function defaultBatchedCoverageProbe(
   testId: string,
   timeoutMs: number,
 ): ReadonlyMap<string, readonly LineRange[]> {
-  const reportsDir = mkdtempSync(join(tmpdir(), 'czap-seam-cov-'));
+  const reportsDir = mkdtempSync(join(tmpdir(), 'liteship-seam-cov-'));
   try {
     const args = [
       'exec',
@@ -603,7 +603,7 @@ function numericLine(value: unknown): number | null {
 /**
  * Build the SOUND, TRACTABLE per-`(file, line, testId)` coverage relation from the
  * execution decisions — the substrate `makeCoverageMap` folds into the verdict's
- * {@link import('@czap/audit').CoverageMap}.
+ * {@link import('@liteship/audit').CoverageMap}.
  *
  * For each seam F (1..`lineCount(F)` lines):
  *   - A line INSIDE any covered-function range of an executing test maps to that
@@ -678,14 +678,14 @@ function lineInRanges(line: number, ranges: readonly LineRange[]): boolean {
  * The fs-backed {@link SeamCoverageProbeCache} rooted at `cwd` — the production half
  * of the B2 content-addressed probe store, mirroring the mutant-verdict cache's
  * sound-MISS discipline. Stores each probe's covered-function ranges as JSON under
- * `.czap/cache/seam-coverage/<keyhash>.json`. A `read` returns `null` (a MISS →
+ * `.liteship/cache/seam-coverage/<keyhash>.json`. A `read` returns `null` (a MISS →
  * re-probe, the SAFE direction) for ANY uncertain case — absent, unreadable, or
  * malformed — so a corrupt/stale/hand-edited entry can never serve a fake coverage
  * decision (under-mapping from a bad cache would mint a false survivor). `write` is
  * ATOMIC (temp + rename) so a crash mid-write never leaves a half file.
  */
 export function makeFsSeamCoverageProbeCache(cwd: string = process.cwd()): SeamCoverageProbeCache {
-  const dir = join(cwd, '.czap', 'cache', 'seam-coverage');
+  const dir = join(cwd, '.liteship', 'cache', 'seam-coverage');
   return {
     read(key: string): readonly LineRange[] | null {
       const path = probePath(dir, key);

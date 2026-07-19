@@ -18,11 +18,11 @@
  *
  * @module
  */
-import { COMMAND_CATALOG, GLOSSARY_ENTRIES } from '@czap/command';
-import { DEMO_COMPONENT_CATALOG } from '@czap/genui';
+import { COMMAND_CATALOG, GLOSSARY_ENTRIES } from '@liteship/command';
+import { DEMO_COMPONENT_CATALOG } from '@liteship/genui';
 import { serverInfo } from './server-info.js';
 import { PROTOCOL_VERSION, SERVER_CAPABILITIES } from './capabilities.js';
-import { NotFoundError } from '@czap/error';
+import { NotFoundError } from '@liteship/error';
 
 /** Product-owned resource URI scheme (no maintainer identity). */
 const SCHEME = 'liteship://';
@@ -52,7 +52,7 @@ function json(value: unknown): string {
   return JSON.stringify(value, null, 2);
 }
 
-/** `liteship://glossary/<term>` — the term is percent-encoded so special chars (`@czap/*`) stay URI-safe + unique. */
+/** `liteship://glossary/<term>` — the term is percent-encoded so special chars (`@liteship/*`) stay URI-safe + unique. */
 function glossaryTermUri(term: string): string {
   return `${SCHEME}glossary/${encodeURIComponent(term)}`;
 }
@@ -98,7 +98,7 @@ const REGISTRY: readonly ResourceEntry[] = [
     resource: {
       uri: `${SCHEME}glossary`,
       name: 'glossary',
-      description: 'Index of the LiteShip/CZAP public ontology — every term and its resource URI.',
+      description: 'Index of the LiteShip public ontology — every term and its resource URI.',
       mimeType: JSON_MIME,
     },
     read: () => json({ terms: SORTED_GLOSSARY.map((e) => ({ term: e.term, uri: glossaryTermUri(e.term) })) }),

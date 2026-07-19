@@ -1,9 +1,9 @@
 /**
- * Re-export FNV-1a helpers from `@czap/canonical`, re-anchored to spine brands.
+ * Re-export FNV-1a helpers from `@liteship/canonical`, re-anchored to spine brands.
  * @module
  */
 
-import { fnv1a as canonicalFnv1a, fnv1aBytes as canonicalFnv1aBytes } from '@czap/canonical';
+import { fnv1a as canonicalFnv1a, fnv1aBytes as canonicalFnv1aBytes } from '@liteship/canonical';
 import type { ContentAddress } from './brands.js';
 import { ContentAddress as mkContentAddress } from './brands.js';
 

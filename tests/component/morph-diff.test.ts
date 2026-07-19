@@ -7,8 +7,8 @@
  */
 
 import { describe, test, expect, beforeAll, vi } from 'vitest';
-import { Diagnostics } from '@czap/core';
-import { Morph, SemanticId, Hints, MorphOpaque } from '@czap/web';
+import { Diagnostics } from '@liteship/core';
+import { Morph, SemanticId, Hints, MorphOpaque } from '@liteship/web';
 
 // jsdom lacks CSS.escape — polyfill for tests
 beforeAll(() => {
@@ -175,42 +175,42 @@ describe('Morph.morph outerHTML', () => {
 // ---------------------------------------------------------------------------
 
 describe('Morph semantic ID matching', () => {
-  test('elements with same data-czap-id are reused', () => {
-    const root = el('<div><p data-czap-id="para1">old</p></div>');
+  test('elements with same data-liteship-id are reused', () => {
+    const root = el('<div><p data-liteship-id="para1">old</p></div>');
     document.body.appendChild(root);
-    const origP = root.querySelector('[data-czap-id="para1"]')!;
-    run(Morph.morph(root, '<p data-czap-id="para1">new</p>'));
-    const currentP = root.querySelector('[data-czap-id="para1"]')!;
+    const origP = root.querySelector('[data-liteship-id="para1"]')!;
+    run(Morph.morph(root, '<p data-liteship-id="para1">new</p>'));
+    const currentP = root.querySelector('[data-liteship-id="para1"]')!;
     expect(currentP).toBe(origP);
     expect(currentP.textContent).toBe('new');
     root.remove();
   });
 
   test('elements with different semantic IDs are not reused', () => {
-    const root = el('<div><p data-czap-id="a">old</p></div>');
+    const root = el('<div><p data-liteship-id="a">old</p></div>');
     document.body.appendChild(root);
-    run(Morph.morph(root, '<p data-czap-id="b">new</p>'));
+    run(Morph.morph(root, '<p data-liteship-id="b">new</p>'));
     // The old element should be removed and a new one inserted
-    expect(root.querySelector('[data-czap-id="a"]')).toBeNull();
-    expect(root.querySelector('[data-czap-id="b"]')).not.toBeNull();
+    expect(root.querySelector('[data-liteship-id="a"]')).toBeNull();
+    expect(root.querySelector('[data-liteship-id="b"]')).not.toBeNull();
     root.remove();
   });
 
   test('idMap hints remap incoming semantic IDs before matching existing nodes in outerHTML mode', () => {
-    const root = el('<p data-czap-id="mapped">old</p>');
+    const root = el('<p data-liteship-id="mapped">old</p>');
     document.body.appendChild(root);
     const original = root;
 
     run(
       Morph.morph(
         root,
-        '<p data-czap-id="incoming">new</p>',
+        '<p data-liteship-id="incoming">new</p>',
         { morphStyle: 'outerHTML' },
         Hints.withIdMap(new Map([['incoming', 'mapped']])),
       ),
     );
 
-    const current = document.body.querySelector('[data-czap-id="mapped"]')!;
+    const current = document.body.querySelector('[data-liteship-id="mapped"]')!;
     expect(current).toBe(original);
     expect(current.textContent).toBe('new');
     root.remove();
@@ -291,14 +291,14 @@ describe('Morph child ordering', () => {
   });
 
   test('matched nodes preserve identity even when order changes', () => {
-    const root = el('<div><p data-czap-id="x">X</p><p data-czap-id="y">Y</p></div>');
+    const root = el('<div><p data-liteship-id="x">X</p><p data-liteship-id="y">Y</p></div>');
     document.body.appendChild(root);
-    const origX = root.querySelector('[data-czap-id="x"]')!;
-    const origY = root.querySelector('[data-czap-id="y"]')!;
-    run(Morph.morph(root, '<p data-czap-id="y">Y2</p><p data-czap-id="x">X2</p>'));
+    const origX = root.querySelector('[data-liteship-id="x"]')!;
+    const origY = root.querySelector('[data-liteship-id="y"]')!;
+    run(Morph.morph(root, '<p data-liteship-id="y">Y2</p><p data-liteship-id="x">X2</p>'));
     // Both elements should still be in the DOM with updated content
-    const currentX = root.querySelector('[data-czap-id="x"]')!;
-    const currentY = root.querySelector('[data-czap-id="y"]')!;
+    const currentX = root.querySelector('[data-liteship-id="x"]')!;
+    const currentY = root.querySelector('[data-liteship-id="y"]')!;
     expect(currentX).toBe(origX);
     expect(currentY).toBe(origY);
     expect(currentX.textContent).toBe('X2');
@@ -321,7 +321,7 @@ describe('Morph.morphWithState', () => {
   });
 
   test('dispatches rejection event when preserved ID missing', () => {
-    const root = el('<div><p data-czap-id="keep">preserve me</p></div>');
+    const root = el('<div><p data-liteship-id="keep">preserve me</p></div>');
     document.body.appendChild(root);
 
     const hints = Hints.preserveIds('keep');
@@ -332,11 +332,11 @@ describe('Morph.morphWithState', () => {
   });
 
   test('dispatches a snapshot request event with the rejection reason when preserve validation fails', () => {
-    const root = el('<div><p data-czap-id="keep">preserve me</p></div>');
+    const root = el('<div><p data-liteship-id="keep">preserve me</p></div>');
     document.body.appendChild(root);
     let snapshotReason: string | null = null;
 
-    root.addEventListener('czap:request-snapshot', ((event: Event) => {
+    root.addEventListener('liteship:request-snapshot', ((event: Event) => {
       snapshotReason = (event as CustomEvent<{ reason: string }>).detail.reason;
     }) as EventListener);
 
@@ -374,7 +374,7 @@ describe('Morph.morphWithState', () => {
       expect(result.type).toBe('rejected');
       expect(warnSpy).toHaveBeenCalledWith(
         expect.objectContaining({
-          source: 'czap/web.morph',
+          source: 'liteship/web.morph',
           code: 'preserve-id-missing',
         }),
       );
@@ -385,7 +385,7 @@ describe('Morph.morphWithState', () => {
   });
 
   test('uses idMap hints as restore remaps when explicit remap hints are absent', () => {
-    const root = el('<div><input data-czap-id="before" value="keep" /><p>old</p></div>') as HTMLElement;
+    const root = el('<div><input data-liteship-id="before" value="keep" /><p>old</p></div>') as HTMLElement;
     document.body.appendChild(root);
 
     const before = root.querySelector('input') as HTMLInputElement;
@@ -395,7 +395,7 @@ describe('Morph.morphWithState', () => {
     const result = run(
       Morph.morphWithState(
         root,
-        '<input data-czap-id="after" value="keep" /><p>new</p>',
+        '<input data-liteship-id="after" value="keep" /><p>new</p>',
         {
           preserveFocus: true,
           preserveSelection: true,
@@ -404,7 +404,7 @@ describe('Morph.morphWithState', () => {
       ),
     );
 
-    const after = root.querySelector('[data-czap-id="after"]') as HTMLInputElement;
+    const after = root.querySelector('[data-liteship-id="after"]') as HTMLInputElement;
     expect(result.type).toBe('success');
     expect(document.activeElement).toBe(after);
     expect(after.selectionStart).toBe(1);
@@ -413,13 +413,13 @@ describe('Morph.morphWithState', () => {
   });
 
   test('applies idMap hints to element nodes without tripping on text siblings', () => {
-    const root = el('<div><span data-czap-id="before">old</span></div>');
+    const root = el('<div><span data-liteship-id="before">old</span></div>');
     document.body.appendChild(root);
 
     const result = run(
       Morph.morph(
         root,
-        'lead<span data-czap-id="server">body</span>',
+        'lead<span data-liteship-id="server">body</span>',
         undefined,
         Hints.withIdMap(new Map([['server', 'client']])),
       ),
@@ -438,7 +438,7 @@ describe('Morph.morphWithState', () => {
 
 describe('Morph idempotency', () => {
   test('morphing same HTML twice produces identical DOM', () => {
-    const html = '<p class="x" data-czap-id="z">content</p>';
+    const html = '<p class="x" data-liteship-id="z">content</p>';
     const root = el(`<div>${html}</div>`);
     document.body.appendChild(root);
 
@@ -455,7 +455,7 @@ describe('Morph idempotency', () => {
 describe('morph-opaque subtrees', () => {
   test('L1 matched opaque keeps identity, children, attributes, and input state untouched', () => {
     const root = el(
-      `<div><section data-czap-id="island" ${MorphOpaque.ATTR} class="client"><input value="server"><span>client child</span></section></div>`,
+      `<div><section data-liteship-id="island" ${MorphOpaque.ATTR} class="client"><input value="server"><span>client child</span></section></div>`,
     );
     document.body.appendChild(root);
     const island = root.querySelector('section')!;
@@ -465,7 +465,7 @@ describe('morph-opaque subtrees', () => {
     run(
       Morph.morph(
         root,
-        `<section data-czap-id="island" ${MorphOpaque.ATTR} class="server"><input value="reset"><span>server child</span></section>`,
+        `<section data-liteship-id="island" ${MorphOpaque.ATTR} class="server"><input value="reset"><span>server child</span></section>`,
       ),
     );
 
@@ -477,7 +477,7 @@ describe('morph-opaque subtrees', () => {
   });
 
   test('L2 omitting an old opaque island never removes it', () => {
-    const root = el(`<div><section ${MorphOpaque.ATTR} data-czap-id="owned">client</section><p>old</p></div>`);
+    const root = el(`<div><section ${MorphOpaque.ATTR} data-liteship-id="owned">client</section><p>old</p></div>`);
     document.body.appendChild(root);
     const island = root.querySelector('section')!;
 
@@ -732,7 +732,7 @@ describe('SemanticId', () => {
   });
 
   test('buildIndex indexes all semantic IDs', () => {
-    const root = el('<div><p data-czap-id="a">A</p><p data-czap-id="b">B</p></div>');
+    const root = el('<div><p data-liteship-id="a">A</p><p data-liteship-id="b">B</p></div>');
     const index = SemanticId.buildIndex(root);
     expect(index.size).toBe(2);
     expect(index.get('a')?.textContent).toBe('A');
@@ -740,7 +740,7 @@ describe('SemanticId', () => {
   });
 
   test('find locates element by semantic ID', () => {
-    const root = el('<div><span data-czap-id="target">found</span></div>');
+    const root = el('<div><span data-liteship-id="target">found</span></div>');
     const found = SemanticId.find(root, 'target');
     expect(found?.textContent).toBe('found');
   });

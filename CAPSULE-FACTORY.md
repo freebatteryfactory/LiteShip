@@ -1,6 +1,6 @@
 # Capsule factory + video stack (2026-04-23)
 
-Part of LiteShip: the CZAP engine's capsule and scene assembly. Vocabulary: [GLOSSARY.md](./GLOSSARY.md).
+Part of LiteShip: capsule and scene assembly. Vocabulary: [GLOSSARY.md](./GLOSSARY.md).
 
 Landed by spec `2026-04-23-capsule-factory-video-stack-design.md` (the spec itself was an internal design document; the resulting decisions live in ADRs 0007, 0008, 0009, and 0010 in this repo).
 
@@ -21,12 +21,12 @@ Landed by spec `2026-04-23-capsule-factory-video-stack-design.md` (the spec itse
 
 ## Assets
 
-- `packages/assets/`: `defineAsset` wraps `cachedProjection`, decoders for audio/video/image, analysis projections (`BeatMarkerProjection`, `OnsetProjection`, `WaveformProjection`, `WavMetadataProjection`). These run **offline** at build time; the live `audio.amplitude` / `audio.beat` boundary signals (a main-thread `AnalyserNode` producer in `@czap/astro/runtime`) mirror the same RMS/flux DSP at runtime.
+- `packages/assets/`: `defineAsset` wraps `cachedProjection`, decoders for audio/video/image, analysis projections (`BeatMarkerProjection`, `OnsetProjection`, `WaveformProjection`, `WavMetadataProjection`). These run **offline** at build time; the live `audio.amplitude` / `audio.beat` boundary signals (a main-thread `AnalyserNode` producer in `@liteship/astro/runtime`) mirror the same RMS/flux DSP at runtime.
 
 ## CLI + MCP
 
 - `packages/cli/`: dual-audience surface. JSON receipts by default; TTY-detect for human-pretty summaries. Commands: describe / scene.{compile,render,verify,dev} / asset.{analyze,verify} / capsule.{inspect,verify,list} / gauntlet / mcp.
-- `packages/mcp-server/`: thin MCP runner. Stdio default, `--http=:port` optional. Dispatches tools/call through `@czap/command`.
+- `packages/mcp-server/`: thin MCP runner. Stdio default, `--http=:port` optional. Dispatches tools/call through `@liteship/command`.
 
 ## Spine as Canonical Types
 

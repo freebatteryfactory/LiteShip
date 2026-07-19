@@ -21,7 +21,7 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import { World } from '@czap/core';
+import { World } from '@liteship/core';
 import {
   SVGSystem,
   VideoSystem,
@@ -31,8 +31,8 @@ import {
   SceneRuntime,
   collectSvgAttrs,
   applySvgAttrs,
-} from '@czap/scene';
-import type { SceneContract, SvgAttrs, SvgAttrsFrame } from '@czap/scene';
+} from '@liteship/scene';
+import type { SceneContract, SvgAttrs, SvgAttrsFrame } from '@liteship/scene';
 
 describe('collectSvgAttrs (pure egress core)', () => {
   it('collects persisted _svgAttrs into an entity-keyed frame after a tick', () => {

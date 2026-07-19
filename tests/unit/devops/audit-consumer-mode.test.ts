@@ -1,5 +1,5 @@
 /**
- * Consumer mode — @czap/audit against a downstream repo's INSTALLED packages.
+ * Consumer mode — @liteship/audit against a downstream repo's INSTALLED packages.
  *
  * The engine's claim is "downstream-installable", but discovery used to glob
  * `repoRoot/packages/*` and hardcode `packages/astro` / `packages/vite` path
@@ -21,7 +21,7 @@ import {
   runStructureAudit,
   runSurfaceAudit,
   type DevopsProfile,
-} from '@czap/audit';
+} from '@liteship/audit';
 import { symlinkUnprivileged } from '../../helpers/capabilities.js';
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
@@ -32,7 +32,7 @@ afterEach(() => {
 });
 
 function makeFixture(files: Record<string, string>): string {
-  const root = mkdtempSync(join(tmpdir(), 'czap-consumer-'));
+  const root = mkdtempSync(join(tmpdir(), 'liteship-consumer-'));
   fixtures.push(root);
   for (const [rel, content] of Object.entries(files)) {
     const abs = resolve(root, rel);
@@ -95,7 +95,7 @@ describe('consumer mode — discovery walks node_modules to a fixpoint', () => {
 
   it('does NOT flag unknown-internal-package for a not-discovered transitive @scope import (consumer-scoping fix)', () => {
     // The 0.4.0 consumer regression: a discovered package imports an internal
-    // package (e.g. @acme/error, like the new @czap/error) that ISN'T in the
+    // package (e.g. @acme/error, like the new @liteship/error) that ISN'T in the
     // discovery seed — transitive/hoisted, or omitted from the topology. In the
     // source monorepo that's a real unknown-internal-package error; in a consumer
     // it's noise the consumer can't act on (it's the vendor's own wiring).
@@ -362,7 +362,7 @@ describe('consumer mode — installed exports targets are verified (dist truth)'
   });
 
   it('a types-only export (no development/import condition) is still verified (Codex P2)', () => {
-    // The @czap/_spine shape: { ".": { types: "./index.d.ts" } }. The
+    // The @liteship/_spine shape: { ".": { types: "./index.d.ts" } }. The
     // development-candidate gate must not skip it in consumer mode.
     const root = makeFixture({
       'package.json': JSON.stringify({ name: 'consumer-site', private: true, type: 'module' }),
@@ -428,40 +428,40 @@ describe('consumer mode — allowlist entries follow the package, not the monore
   // match a node_modules path. Entries now carry `{ package, filePrefix }`
   // (package-relative), resolved through the profile's discovered roots.
 
-  function czapBase(topology: Record<string, { allowedInternalImports: string[]; kind: 'standalone' }>): DevopsProfile {
+  function liteshipBase(topology: Record<string, { allowedInternalImports: string[]; kind: 'standalone' }>): DevopsProfile {
     return {
       ...acmeBase(),
-      internalPackagePrefix: '@czap/',
+      internalPackagePrefix: '@liteship/',
       packageTopology: topology,
     };
   }
 
   const STANDALONE = { allowedInternalImports: [] as string[], kind: 'standalone' as const };
 
-  it('suppresses default-export on an installed @czap/astro client directive (report finding 1)', () => {
+  it('suppresses default-export on an installed @liteship/astro client directive (report finding 1)', () => {
     const root = makeFixture({
       'package.json': JSON.stringify({ name: 'consumer-site', private: true, type: 'module' }),
-      'node_modules/@czap/astro/package.json': PKG('@czap/astro'),
-      'node_modules/@czap/astro/src/index.ts': 'export const astroReady = true;\n',
-      'node_modules/@czap/astro/src/client-directives/satellite.ts':
+      'node_modules/@liteship/astro/package.json': PKG('@liteship/astro'),
+      'node_modules/@liteship/astro/src/index.ts': 'export const astroReady = true;\n',
+      'node_modules/@liteship/astro/src/client-directives/satellite.ts':
         'export default (load: () => Promise<unknown>, _opts: Record<string, unknown>, el: HTMLElement) => {\n  void load;\n  void el;\n};\n',
     });
-    const result = runStructureAudit(consumerDevopsProfile(root, czapBase({ '@czap/astro': STANDALONE })));
+    const result = runStructureAudit(consumerDevopsProfile(root, liteshipBase({ '@liteship/astro': STANDALONE })));
     expect(result.findings.filter((f) => f.rule === 'default-export')).toHaveLength(0);
     const suppressed = result.suppressed.filter((s) => s.rule === 'default-export');
     expect(suppressed).toHaveLength(1);
-    expect(suppressed[0]!.finding.location?.file).toContain('node_modules/@czap/astro/src/client-directives/satellite.ts');
+    expect(suppressed[0]!.finding.location?.file).toContain('node_modules/@liteship/astro/src/client-directives/satellite.ts');
   });
 
-  it('does NOT flag the audit policy prose self-mention in an installed @czap/audit — precise detector, no allowlist entry needed (report finding 2)', () => {
+  it('does NOT flag the audit policy prose self-mention in an installed @liteship/audit — precise detector, no allowlist entry needed (report finding 2)', () => {
     const root = makeFixture({
       'package.json': JSON.stringify({ name: 'consumer-site', private: true, type: 'module' }),
-      'node_modules/@czap/audit/package.json': PKG('@czap/audit'),
-      'node_modules/@czap/audit/src/index.ts': 'export const auditReady = true;\n',
-      'node_modules/@czap/audit/src/policy.ts':
+      'node_modules/@liteship/audit/package.json': PKG('@liteship/audit'),
+      'node_modules/@liteship/audit/src/index.ts': 'export const auditReady = true;\n',
+      'node_modules/@liteship/audit/src/policy.ts':
         "export const stubReason = 'documented placeholder stubs populated by the transform pipeline';\n",
     });
-    const result = runIntegrityAudit(consumerDevopsProfile(root, czapBase({ '@czap/audit': STANDALONE })));
+    const result = runIntegrityAudit(consumerDevopsProfile(root, liteshipBase({ '@liteship/audit': STANDALONE })));
     // The string literal merely NAMES the forbidden word; it is not a placeholder.
     // The precise detector (form-based: directive comments + lorem-ipsum, never a
     // marker word inside a string) flags it nowhere AND needs no allowlist
@@ -471,23 +471,23 @@ describe('consumer mode — allowlist entries follow the package, not the monore
     expect(result.suppressed.filter((s) => s.rule === 'placeholder-content')).toHaveLength(0);
   });
 
-  it('suppresses the workspace-guard fail-closed fallback in an installed @czap/cli (report finding 3)', () => {
+  it('suppresses the workspace-guard fail-closed fallback in an installed @liteship/cli (report finding 3)', () => {
     // The guard moved from commands/doctor.ts to lib/workspace.ts when
     // gauntlet started sharing it — the allowlist entry follows the code.
     const root = makeFixture({
       'package.json': JSON.stringify({ name: 'consumer-site', private: true, type: 'module' }),
-      'node_modules/@czap/cli/package.json': PKG('@czap/cli'),
-      'node_modules/@czap/cli/src/index.ts': 'export const cliReady = true;\n',
-      'node_modules/@czap/cli/src/lib/workspace.ts':
+      'node_modules/@liteship/cli/package.json': PKG('@liteship/cli'),
+      'node_modules/@liteship/cli/src/index.ts': 'export const cliReady = true;\n',
+      'node_modules/@liteship/cli/src/lib/workspace.ts':
         'export function isWorkspace(read: () => string): boolean {\n' +
         '  try {\n' +
-        "    return read() === 'czap';\n" +
+        "    return read() === 'liteship';\n" +
         '  } catch {\n' +
         '    return false;\n' +
         '  }\n' +
         '}\n',
     });
-    const result = runIntegrityAudit(consumerDevopsProfile(root, czapBase({ '@czap/cli': STANDALONE })));
+    const result = runIntegrityAudit(consumerDevopsProfile(root, liteshipBase({ '@liteship/cli': STANDALONE })));
     expect(result.findings.filter((f) => f.rule === 'fallback-laundering')).toHaveLength(0);
     expect(result.suppressed.filter((s) => s.rule === 'fallback-laundering')).toHaveLength(1);
   });
@@ -495,20 +495,20 @@ describe('consumer mode — allowlist entries follow the package, not the monore
   it('does NOT suppress the same file shape under a different package (entries pin the package name)', () => {
     const root = makeFixture({
       'package.json': JSON.stringify({ name: 'consumer-site', private: true, type: 'module' }),
-      'node_modules/@czap/web/package.json': PKG('@czap/web'),
-      'node_modules/@czap/web/src/index.ts': 'export const webReady = true;\n',
+      'node_modules/@liteship/web/package.json': PKG('@liteship/web'),
+      'node_modules/@liteship/web/src/index.ts': 'export const webReady = true;\n',
       // Same package-relative path + same catch shape as the allowlisted
-      // @czap/cli doctor entry — but in @czap/web, so it must stay a finding.
-      'node_modules/@czap/web/src/commands/doctor.ts':
+      // @liteship/cli doctor entry — but in @liteship/web, so it must stay a finding.
+      'node_modules/@liteship/web/src/commands/doctor.ts':
         'export function isWorkspace(read: () => string): boolean {\n' +
         '  try {\n' +
-        "    return read() === 'czap';\n" +
+        "    return read() === 'liteship';\n" +
         '  } catch {\n' +
         '    return false;\n' +
         '  }\n' +
         '}\n',
     });
-    const result = runIntegrityAudit(consumerDevopsProfile(root, czapBase({ '@czap/web': STANDALONE })));
+    const result = runIntegrityAudit(consumerDevopsProfile(root, liteshipBase({ '@liteship/web': STANDALONE })));
     expect(result.findings.filter((f) => f.rule === 'fallback-laundering')).toHaveLength(1);
     expect(result.suppressed.filter((s) => s.rule === 'fallback-laundering')).toHaveLength(0);
   });

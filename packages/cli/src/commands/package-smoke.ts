@@ -1,12 +1,12 @@
 /**
- * package-smoke (CLI adapter, CUT A5) — thin projection over `@czap/command`'s
+ * package-smoke (CLI adapter, CUT A5) — thin projection over `@liteship/command`'s
  * package-smoke handler (the release-grade pack/install/import smoke, migrated
  * from `scripts/package-smoke.ts`). The pass/fail decision lives in
- * `@czap/command`; the CLI is the ONLY adapter that wires the heavy
+ * `@liteship/command`; the CLI is the ONLY adapter that wires the heavy
  * `runPackageSmoke` capability: it spawns `pnpm pack` per publishable scope,
  * installs the tarballs into an isolated consumer fixture, asserts no `workspace:`
- * leak, and import-smokes every declared specifier (plus the `czap` binstub).
- * `@czap/command` and `@czap/mcp-server` never see the subprocess engine. Exit 0
+ * leak, and import-smokes every declared specifier (plus the `liteship` binstub).
+ * `@liteship/command` and `@liteship/mcp-server` never see the subprocess engine. Exit 0
  * ok, 1 gate failed.
  *
  * @module
@@ -23,9 +23,9 @@ import {
   PACKAGES,
   PEER_INSTALLS,
   type PackageSmokeSpec,
-} from '@czap/command';
-import type { CommandContext } from '@czap/command';
-import { IntegrityError, InvariantViolationError } from '@czap/error';
+} from '@liteship/command';
+import type { CommandContext } from '@liteship/command';
+import { IntegrityError, InvariantViolationError } from '@liteship/error';
 import {
   assertConsumerDependencyInstalled,
   findConsumerDependencyRoot,
@@ -41,7 +41,7 @@ function peerDependenciesOnly(): Record<string, string> {
   return peerDependenciesOnlyHelper(PEER_INSTALLS);
 }
 
-/** Receipt emitted by `czap package-smoke`. */
+/** Receipt emitted by `liteship package-smoke`. */
 export interface PackageSmokeReceipt extends PackageSmokePayload {
   readonly status: 'ok' | 'failed';
   readonly command: 'package-smoke';
@@ -59,7 +59,7 @@ async function createScratchDir(root: string): Promise<string> {
     await mkdir(base, { recursive: true });
     return mkdtemp(join(base, 'run-'));
   }
-  return mkdtemp(join(tmpdir(), 'czap-package-smoke-'));
+  return mkdtemp(join(tmpdir(), 'liteship-package-smoke-'));
 }
 
 function run(command: string, args: readonly string[], cwd: string): string {
@@ -100,7 +100,7 @@ function readPackedManifest(tarballPath: string): {
   };
 }
 
-/** Expand a `pnpm pack` tarball into `node_modules/@czap/<name>/` (Windows-safe). */
+/** Expand a `pnpm pack` tarball into `node_modules/@liteship/<name>/` (Windows-safe). */
 function extractPackedPackage(tarballPath: string, destinationDir: string): void {
   mkdirSync(destinationDir, { recursive: true });
   execFileSync('tar', ['-xzf', tarballPath, '-C', destinationDir, '--strip-components=1'], { stdio: 'inherit' });
@@ -114,7 +114,7 @@ function collectPackedExternalDependencies(tarballByPackage: Map<string, string>
     const manifest = readPackedManifest(tarballByPackage.get(pkg.name)!);
     for (const field of ['dependencies', 'optionalDependencies'] as const) {
       for (const [name, version] of Object.entries(manifest[field] ?? {})) {
-        if (name.startsWith('@czap/') || version.startsWith('workspace:') || name in peers) {
+        if (name.startsWith('@liteship/') || version.startsWith('workspace:') || name in peers) {
           continue;
         }
         external[name] = version;
@@ -125,10 +125,10 @@ function collectPackedExternalDependencies(tarballByPackage: Map<string, string>
 }
 
 /**
- * Tar-extracted `@czap/*` trees live under nested `node_modules/`. Node resolves
+ * Tar-extracted `@liteship/*` trees live under nested `node_modules/`. Node resolves
  * bare imports from the importing file upward; pnpm's default linker often leaves
  * mediabunny/cborg only at the consumer root. Mirror them beside each package
- * that declares them so `import 'mediabunny'` from `@czap/web/dist/...` works.
+ * that declares them so `import 'mediabunny'` from `@liteship/web/dist/...` works.
  */
 function linkHoistedDepsBesidePackedPackages(
   consumerDir: string,
@@ -156,7 +156,7 @@ function linkHoistedDepsBesidePackedPackages(
         mkdirSync(dirname(target), { recursive: true });
         if (process.platform === 'win32') {
           // Junction symlinks are brittle on GHA Windows (ENOENT when the
-          // hoisted store path and nested @czap/*/node_modules layout diverge).
+          // hoisted store path and nested @liteship/*/node_modules layout diverge).
           // A recursive copy matches Linux symlink semantics for import-smoke.
           cpSync(source, target, { recursive: true });
         } else {
@@ -244,14 +244,14 @@ export async function runPackageSmokeScan(root: string): Promise<PackageSmokeSum
     if (process.platform === 'win32') {
       const externalDeps = collectPackedExternalDependencies(tarballByPackage);
 
-      // Install peers + packed externals before extracting @czap/* tarballs. If the
+      // Install peers + packed externals before extracting @liteship/* tarballs. If the
       // scoped trees land first, pnpm treats their package.json deps as already
       // materialized and skips hoisting cborg/mediabunny to the consumer root.
       await writeFile(
         join(consumerDir, 'package.json'),
         JSON.stringify(
           {
-            name: 'czap-package-smoke-consumer',
+            name: 'liteship-package-smoke-consumer',
             private: true,
             type: 'module',
             dependencies: { ...peerDependenciesOnly(), ...externalDeps },
@@ -278,14 +278,14 @@ export async function runPackageSmokeScan(root: string): Promise<PackageSmokeSum
       }
       stepOk(`verified externals on disk: ${Object.keys(externalDeps).join(', ') || 'none'}`);
 
-      step(`materialize ${PACKAGES.length} packed @czap/* trees under consumer node_modules (Windows)`);
+      step(`materialize ${PACKAGES.length} packed @liteship/* trees under consumer node_modules (Windows)`);
       for (const pkg of PACKAGES) {
         const dest = join(consumerDir, 'node_modules', ...pkg.name.split('/'));
         extractPackedPackage(tarballByPackage.get(pkg.name)!, dest);
       }
-      stepOk(`extracted ${PACKAGES.length} @czap/* packages into node_modules`);
+      stepOk(`extracted ${PACKAGES.length} @liteship/* packages into node_modules`);
 
-      step('link hoisted peers/externals beside tar-extracted @czap/* packages (Windows)');
+      step('link hoisted peers/externals beside tar-extracted @liteship/* packages (Windows)');
       linkHoistedDepsBesidePackedPackages(consumerDir, tarballByPackage, externalDeps);
       stepOk('nested node_modules links materialized');
     } else {
@@ -304,7 +304,7 @@ export async function runPackageSmokeScan(root: string): Promise<PackageSmokeSum
         join(consumerDir, 'package.json'),
         JSON.stringify(
           {
-            name: 'czap-package-smoke-consumer',
+            name: 'liteship-package-smoke-consumer',
             private: true,
             type: 'module',
             dependencies,
@@ -370,15 +370,15 @@ for (const specifier of imports) {
     importsSmoked = allImports.length;
     stepOk('all imports resolved');
 
-    step('czap describe --format=json (binstub resolution check)');
+    step('liteship describe --format=json (binstub resolution check)');
     if (process.platform === 'win32') {
-      // Tar-extracted @czap/cli has no node_modules/.bin shim; run the packed bin directly.
-      const czapBin = join(consumerDir, 'node_modules', '@czap', 'cli', 'bin', 'czap.mjs');
-      run('node', [czapBin, 'describe', '--format=json'], consumerDir);
+      // Tar-extracted @liteship/cli has no node_modules/.bin shim; run the packed bin directly.
+      const liteshipBin = join(consumerDir, 'node_modules', '@liteship', 'cli', 'bin', 'liteship.mjs');
+      run('node', [liteshipBin, 'describe', '--format=json'], consumerDir);
     } else {
-      run('pnpm', ['exec', 'czap', 'describe', '--format=json'], consumerDir);
+      run('pnpm', ['exec', 'liteship', 'describe', '--format=json'], consumerDir);
     }
-    stepOk('czap binstub resolved and produced a describe receipt');
+    stepOk('liteship binstub resolved and produced a describe receipt');
 
     process.stderr.write(`[package:smoke] ok Package smoke passed for ${PACKAGES.length} packages.\n`);
     return { ok: true, packagesPacked, importsSmoked, failedStep: null, failure: null };
@@ -395,7 +395,7 @@ for (const specifier of imports) {
   }
 }
 
-/** Execute `czap package-smoke` — pack/install/import-smoke every publishable scope; emit a verdict. */
+/** Execute `liteship package-smoke` — pack/install/import-smoke every publishable scope; emit a verdict. */
 export async function packageSmoke(opts: { cwd?: string; pretty?: boolean } = {}): Promise<number> {
   const cwd = opts.cwd ?? process.cwd();
 

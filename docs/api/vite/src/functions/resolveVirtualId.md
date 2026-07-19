@@ -12,7 +12,7 @@ Defined in: [vite/src/virtual-modules.ts:64](https://github.com/freebatteryfacto
 
 Resolve a virtual module ID to its internal null-byte-prefixed form
 (as expected by Vite's module graph). Returns `undefined` when `id`
-is not a recognised czap virtual module.
+is not a recognised liteship virtual module.
 
 ## Parameters
 

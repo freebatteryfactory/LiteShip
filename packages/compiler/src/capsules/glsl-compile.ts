@@ -28,8 +28,8 @@
  * @module
  */
 
-import { defineCapsule, Boundary, glslIdent, S } from '@czap/core';
-import type { Infer } from '@czap/core';
+import { defineCapsule, Boundary, glslIdent, S } from '@liteship/core';
+import type { Infer } from '@liteship/core';
 import { GLSLCompiler } from '../glsl.js';
 import type { GLSLCompileResult } from '../glsl.js';
 

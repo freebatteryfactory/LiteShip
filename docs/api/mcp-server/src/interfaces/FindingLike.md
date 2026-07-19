@@ -8,10 +8,10 @@
 
 Defined in: [mcp-server/src/lsp/types.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L52)
 
-The structural finding the projections read. The real `@czap/gauntlet`
+The structural finding the projections read. The real `@liteship/gauntlet`
 `Finding` is assignable to this (same field names + types). Declaring it here
-— instead of importing the engine type — keeps `@czap/mcp-server` free of a
-`@czap/gauntlet` dependency (the lean-server invariant). The injected runner
+— instead of importing the engine type — keeps `@liteship/mcp-server` free of a
+`@liteship/gauntlet` dependency (the lean-server invariant). The injected runner
 supplies values that satisfy this shape.
 
 ## Properties

@@ -20,6 +20,6 @@ LOWERER decides this — it alone sees the overlapping windows and their curves 
 records it here as DATA, so the compiler never has to guess eligibility from the
 keyframe stops (an absent per-keyframe easing is ambiguous: it can also mean ordinary
 default `ease`). When `eligible: false` the compiler emits NO native ownership block,
-so `getComputedStyle(el).animationName` carries no `czap-motion-*` name and the
+so `getComputedStyle(el).animationName` carries no `liteship-motion-*` name and the
 per-window RUNTIME floor (`client:motion`, which samples each window at its OWN easing)
 stays the faithful renderer (ADR-0041).

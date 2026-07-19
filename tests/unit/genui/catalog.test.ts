@@ -1,5 +1,5 @@
 /**
- * @czap/genui catalog definition tests.
+ * @liteship/genui catalog definition tests.
  *
  * `defineComponentCatalog` mints a content address over the canonical catalog
  * bytes (version + component defs). These tests pin its determinism and the
@@ -7,8 +7,8 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import type { ComponentDef } from '@czap/genui';
-import { defineComponentCatalog } from '@czap/genui';
+import type { ComponentDef } from '@liteship/genui';
+import { defineComponentCatalog } from '@liteship/genui';
 
 const components: Readonly<Record<string, ComponentDef>> = {
   Box: { tag: 'div', props: { label: { type: 'string', required: true } }, children: 'none' },

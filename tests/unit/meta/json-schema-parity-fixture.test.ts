@@ -41,7 +41,7 @@ describe('json-schema parity fixture', () => {
     const map = buildParityMap();
     const version = map['version#outputSchema'];
     expect(version).toBe(
-      '{"properties":{"czap":{"type":"string"},"node":{"type":"string"},"pnpm":{"type":["string","null"]}},"required":["czap","node","pnpm"],"type":"object"}',
+      '{"properties":{"liteship":{"type":"string"},"node":{"type":"string"},"pnpm":{"type":["string","null"]}},"required":["liteship","node","pnpm"],"type":"object"}',
     );
   });
 

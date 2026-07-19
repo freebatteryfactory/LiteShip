@@ -1,5 +1,5 @@
 /**
- * Unit tests for `czap glossary`. The catalog mirrors GLOSSARY.md;
+ * Unit tests for `liteship glossary`. The catalog mirrors GLOSSARY.md;
  * we check shape + a few canonical terms so a future refactor of the
  * entries can't silently lose them.
  */
@@ -41,7 +41,7 @@ describe('glossary command', () => {
 
   it('catalog includes the load-bearing ontology terms', () => {
     const terms = new Set(GLOSSARY_ENTRIES.map((e) => e.term));
-    for (const required of ['LiteShip', 'CZAP', '@czap/*', 'boundary', 'cast', 'rig', 'bearing', 'capsule', 'gauntlet']) {
+    for (const required of ['LiteShip', '@liteship/*', 'boundary', 'cast', 'rig', 'bearing', 'capsule', 'gauntlet']) {
       expect(terms).toContain(required);
     }
   });

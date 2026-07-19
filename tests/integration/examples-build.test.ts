@@ -4,7 +4,7 @@ import { join, resolve } from 'node:path';
 import { scaledTimeout } from '../../vitest.shared.js';
 import { spawnArgvCapture } from '../../scripts/lib/spawn.js';
 
-const INSPECTOR_DIST_MARKERS = ['czap-inspector', 'inspector-toolbar-app', 'runtime/inspector.ts'] as const;
+const INSPECTOR_DIST_MARKERS = ['liteship-inspector', 'inspector-toolbar-app', 'runtime/inspector.ts'] as const;
 
 function collectFiles(dir: string): string[] {
   const entries = readdirSync(dir);
@@ -125,10 +125,10 @@ describe.sequential('examples build', () => {
     const distClient = join(examplesRoot, 'cloudflare-astro', 'dist', 'client');
     const normalizedDistClient = distClient.replace(/\\/g, '/');
     const files = collectFiles(distClient).map((file) => file.replace(/\\/g, '/'));
-    const boundaryCss = files.filter((file) => /\/_czap\/[0-9a-f]{8}\/[0-9]+\.[A-Za-z0-9_-]+\.css$/.test(file));
+    const boundaryCss = files.filter((file) => /\/_liteship\/[0-9a-f]{8}\/[0-9]+\.[A-Za-z0-9_-]+\.css$/.test(file));
     expect(boundaryCss.length).toBeGreaterThan(0);
 
-    const manifestPath = join(distClient, 'czap-boundary-manifest.json');
+    const manifestPath = join(distClient, 'liteship-boundary-manifest.json');
     expect(existsSync(manifestPath)).toBe(true);
     const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as {
       boundaries?: Record<string, { assetUrls?: Record<string, string> }>;

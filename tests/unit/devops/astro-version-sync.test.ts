@@ -9,7 +9,7 @@ import { join, resolve, relative } from 'node:path';
  * `pnpm.overrides.astro` resolution — that single override physically forces
  * every transitive `astro` to the same version. But the example/template/
  * fixture manifests carry their own caret pins (`astro: ^7.0.0`), and the
- * `@czap/astro` / `@czap/_spine` peers carry bounded ranges. Nothing stops one
+ * `@liteship/astro` / `@liteship/_spine` peers carry bounded ranges. Nothing stops one
  * of those from drifting to a different major than the override resolves to —
  * a published peer that advertises `>=6` while the workspace ships 7, or a
  * template that scaffolds `astro@^6` while `npm create liteship` users get a 7

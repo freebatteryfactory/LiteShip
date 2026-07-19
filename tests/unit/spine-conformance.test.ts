@@ -21,7 +21,7 @@
  * WHAT STAYS HERE, because the relation gate does NOT subsume it:
  *  1. Type-UTILITY / error-PORT asserts that are not a mirror↔runtime relation: the
  *     `Prettify` utility (no runtime twin) and the in-`Codec` `Result` / `ParseError`
- *     structural ports pinned against `@czap/error` (the relation gate classifies the
+ *     structural ports pinned against `@liteship/error` (the relation gate classifies the
  *     whole `Codec.Shape`, but these pin the exact error-port parity explicitly).
  *  2. Runtime-EXISTENCE checks — a relation gate over TYPES cannot prove a VALUE export
  *     EXISTS and is callable (`Config.make`, `Boundary`, `resolvePrimitive`,
@@ -29,16 +29,16 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import type * as SpineCore from '@czap/_spine';
-import * as CoreImpl from '@czap/core';
-import * as ViteImpl from '@czap/vite';
-import * as CompilerImpl from '@czap/compiler';
+import type * as SpineCore from '@liteship/_spine';
+import * as CoreImpl from '@liteship/core';
+import * as ViteImpl from '@liteship/vite';
+import * as CompilerImpl from '@liteship/compiler';
 
-// Runtime truth for the @czap/core Codec error PORTS. The spine's structural
-// `Codec.Result` / `Codec.ParseError` ports mirror `@czap/error`'s `Result` /
+// Runtime truth for the @liteship/core Codec error PORTS. The spine's structural
+// `Codec.Result` / `Codec.ParseError` ports mirror `@liteship/error`'s `Result` /
 // `ParseError` EXACTLY; the relation gate classifies the whole `Codec.Shape`, but this
 // pins the error-port parity explicitly (a distinct concern from the mirror shape).
-import type { Result as RtResult, ParseError as RtParseError } from '@czap/error';
+import type { Result as RtResult, ParseError as RtParseError } from '@liteship/error';
 
 type IsEqual<A, B> =
   (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2
@@ -56,7 +56,7 @@ type _prettifyCoverage = Assert<
 >;
 void (0 as unknown as _prettifyCoverage);
 
-// The spine's structural Codec error ports mirror @czap/error's Result/ParseError
+// The spine's structural Codec error ports mirror @liteship/error's Result/ParseError
 // EXACTLY. These were the Effect-shed proof (the spine once declared Effect here); kept
 // as an explicit error-port parity pin alongside the relation gate's whole-shape check.
 type _codecResultParity = Assert<IsEqual<SpineCore.Codec.Result<1, 2>, RtResult<1, 2>>>;
@@ -78,7 +78,7 @@ void _plugin;
 // EXISTS and is callable, so these stay here permanently.
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe('spine conformance — @czap/core', () => {
+describe('spine conformance — @liteship/core', () => {
   test('Config.make exported and callable', () => {
     expect(typeof CoreImpl.Config.make).toBe('function');
     const cfg = CoreImpl.Config.make({});
@@ -96,12 +96,12 @@ describe('spine conformance — @czap/core', () => {
     expect(typeof CoreImpl.defineConfig).toBe('function');
   });
 
-  test('Boundary exported from @czap/core (regression guard)', () => {
+  test('Boundary exported from @liteship/core (regression guard)', () => {
     expect(typeof CoreImpl.Boundary.make).toBe('function');
   });
 });
 
-describe('spine conformance — @czap/vite', () => {
+describe('spine conformance — @liteship/vite', () => {
   test('resolvePrimitive exported and callable', () => {
     expect(typeof ViteImpl.resolvePrimitive).toBe('function');
   });
@@ -111,7 +111,7 @@ describe('spine conformance — @czap/vite', () => {
   });
 });
 
-describe('spine conformance — @czap/compiler', () => {
+describe('spine conformance — @liteship/compiler', () => {
   test('dispatch exported and callable', () => {
     expect(typeof CompilerImpl.dispatch).toBe('function');
   });

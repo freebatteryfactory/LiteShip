@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { clamp01, frameToT } from '@czap/core';
+import { clamp01, frameToT } from '@liteship/core';
 
 describe('clamp01', () => {
   it('leaves the closed-interval endpoints fixed', () => {

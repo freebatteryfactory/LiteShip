@@ -10,8 +10,8 @@ import {
   lowerStaggerIntent,
   interpretTransition,
   resolveStaggerInitialState,
-} from '@czap/core';
-import { compileStagger } from '@czap/compiler';
+} from '@liteship/core';
+import { compileStagger } from '@liteship/compiler';
 
 function listIntent(childCount = 3) {
   return Stagger.intent({
@@ -92,8 +92,8 @@ describe('Stagger graph → CSS', () => {
     expect(compiled.items[0]!.css.scrollTimeline).toContain('animation-timeline: view()');
     expect(compiled.items[1]!.css.scrollTimeline).toContain('animation-delay: 80ms');
     expect(compiled.items[1]!.css.transition).toContain('300ms ease 80ms');
-    expect(compiled.raw).toContain('[data-czap-boundary="item-0"]');
-    expect(compiled.raw).toContain('[data-czap-boundary="item-1"]');
+    expect(compiled.raw).toContain('[data-liteship-boundary="item-0"]');
+    expect(compiled.raw).toContain('[data-liteship-boundary="item-1"]');
   });
 
   test('compileStagger with prefersReducedMotion settle zeros delays (#124)', () => {
@@ -110,9 +110,9 @@ describe('Stagger graph → CSS', () => {
     const compiled = compileStagger(lowered);
     expect(compiled.raw).toContain('@media (prefers-reduced-motion: reduce)');
     // The guard targets the REAL stamped selector, not an unstamped attribute.
-    expect(compiled.raw).not.toContain('data-czap-stagger');
+    expect(compiled.raw).not.toContain('data-liteship-stagger');
     const guard = compiled.raw.slice(compiled.raw.indexOf('@media (prefers-reduced-motion: reduce)'));
-    expect(guard).toContain('[data-czap-boundary="item-0"]');
+    expect(guard).toContain('[data-liteship-boundary="item-0"]');
     expect(guard).toContain('animation: none !important');
     // End-pose settles VISIBLE — a from{opacity:0} boundary must not freeze hidden.
     expect(guard).toContain('opacity');

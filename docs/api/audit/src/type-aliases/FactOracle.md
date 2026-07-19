@@ -10,7 +10,7 @@
 
 Defined in: [audit/src/repo-ir-build.ts:104](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/repo-ir-build.ts#L104)
 
-A host-supplied fact oracle — the injection hook that keeps `@czap/audit`
+A host-supplied fact oracle — the injection hook that keeps `@liteship/audit`
 LiteShip-agnostic (ADR-0012). It is a PURE function the host passes to
 [buildRepoIR](../functions/buildRepoIR.md): given one source file's raw text + path + owning package,
 it returns the [Fact](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts)s it observes. `buildRepoIR` invokes each injected
@@ -19,9 +19,9 @@ NOTHING about what they check.
 
 This is where a repo-LOCAL rule set enters the IR WITHOUT the engine importing
 it. The canonical example is the host's `invariant-regex` oracle: the CLI (which
-deps `@czap/command`) constructs an oracle that runs LiteShip's
+deps `@liteship/command`) constructs an oracle that runs LiteShip's
 `NO_DEFAULT_EXPORT` rule over the file text and emits `is-default-export`
-`text-only` facts — the audit engine never sees `@czap/command`. The generic
+`text-only` facts — the audit engine never sees `@liteship/command`. The generic
 structural facts (`is-default-export` via AST, `bare-throw`) STAY in audit
 because they are facts EVERY TS repo has, not LiteShip config.
 

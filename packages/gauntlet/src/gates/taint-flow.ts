@@ -16,10 +16,10 @@
  *
  * LEAN BY CONSTRUCTION (ADR-0012 / D7b): the gate builds NO `ts.Program`, walks NO
  * checker, and references NO LiteShip-specific source/sink name. The HOST
- * (`@czap/audit`'s taint oracle, classified by the LiteShip-LOCAL registry the
- * `@czap/cli` host injects) traces the flows and injects them via
+ * (`@liteship/audit`'s taint oracle, classified by the LiteShip-LOCAL registry the
+ * `@liteship/cli` host injects) traces the flows and injects them via
  * {@link GateContext.taint}; this gate only folds. The gate REQUIRES the facts
- * (taint is opt-in: `czap check --ir --taint`) — when absent it is simply not in
+ * (taint is opt-in: `liteship check --ir --taint`) — when absent it is simply not in
  * the set, so there is no whole-corpus trace cost and no noise on a default run.
  *
  * LEVEL: the gate's base level is L4 (the trust-spine seams — shader compile,

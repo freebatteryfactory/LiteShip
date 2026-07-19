@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { World } from '@czap/core';
-import { TransitionSystem, ease } from '@czap/scene';
-import type { EaseTag } from '@czap/scene';
+import { World } from '@liteship/core';
+import { TransitionSystem, ease } from '@liteship/scene';
+import type { EaseTag } from '@liteship/scene';
 
 describe('TransitionSystem', () => {
   it('emits linear blend between transition.from and transition.to', () => {

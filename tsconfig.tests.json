@@ -8,29 +8,29 @@
     "noEmit": true,
     "types": ["node"],
     "paths": {
-      "@czap/error": ["./packages/error/src/index.ts"],
-      "@czap/gauntlet": ["./packages/gauntlet/src/index.ts"],
-      "@czap/canonical": ["./packages/canonical/src/index.ts"],
-      "@czap/genui": ["./packages/genui/src/index.ts"],
-      "@czap/core": ["./packages/core/src/index.ts"],
-      "@czap/quantizer": ["./packages/quantizer/src/index.ts"],
-      "@czap/compiler": ["./packages/compiler/src/index.ts"],
-      "@czap/web/lite": ["./packages/web/src/lite.ts"],
-      "@czap/web": ["./packages/web/src/index.ts"],
-      "@czap/detect": ["./packages/detect/src/index.ts"],
-      "@czap/vite/html-transform": ["./packages/vite/src/html-transform.ts"],
-      "@czap/vite": ["./packages/vite/src/index.ts"],
-      "@czap/astro/runtime": ["./packages/astro/src/runtime/index.ts"],
-      "@czap/astro": ["./packages/astro/src/index.ts"],
-      "@czap/remotion": ["./packages/remotion/src/index.ts"],
-      "@czap/scene": ["./packages/scene/src/index.ts"],
-      "@czap/assets": ["./packages/assets/src/index.ts"],
-      "@czap/cli": ["./packages/cli/src/index.ts"],
-      "@czap/mcp-server": ["./packages/mcp-server/src/index.ts"],
-      "@czap/edge": ["./packages/edge/src/index.ts"],
-      "@czap/cloudflare": ["./packages/cloudflare/src/index.ts"],
-      "@czap/worker": ["./packages/worker/src/index.ts"],
-      "@czap/_spine": ["./packages/_spine"]
+      "@liteship/error": ["./packages/error/src/index.ts"],
+      "@liteship/gauntlet": ["./packages/gauntlet/src/index.ts"],
+      "@liteship/canonical": ["./packages/canonical/src/index.ts"],
+      "@liteship/genui": ["./packages/genui/src/index.ts"],
+      "@liteship/core": ["./packages/core/src/index.ts"],
+      "@liteship/quantizer": ["./packages/quantizer/src/index.ts"],
+      "@liteship/compiler": ["./packages/compiler/src/index.ts"],
+      "@liteship/web/lite": ["./packages/web/src/lite.ts"],
+      "@liteship/web": ["./packages/web/src/index.ts"],
+      "@liteship/detect": ["./packages/detect/src/index.ts"],
+      "@liteship/vite/html-transform": ["./packages/vite/src/html-transform.ts"],
+      "@liteship/vite": ["./packages/vite/src/index.ts"],
+      "@liteship/astro/runtime": ["./packages/astro/src/runtime/index.ts"],
+      "@liteship/astro": ["./packages/astro/src/index.ts"],
+      "@liteship/remotion": ["./packages/remotion/src/index.ts"],
+      "@liteship/scene": ["./packages/scene/src/index.ts"],
+      "@liteship/assets": ["./packages/assets/src/index.ts"],
+      "@liteship/cli": ["./packages/cli/src/index.ts"],
+      "@liteship/mcp-server": ["./packages/mcp-server/src/index.ts"],
+      "@liteship/edge": ["./packages/edge/src/index.ts"],
+      "@liteship/cloudflare": ["./packages/cloudflare/src/index.ts"],
+      "@liteship/worker": ["./packages/worker/src/index.ts"],
+      "@liteship/_spine": ["./packages/_spine"]
     }
   },
   // Scoped to tests that carry compile-time assertions (@ts-expect-error and
@@ -60,10 +60,10 @@
     // diverged; this pins it via bidirectional spine⇔runtime assignability so a
     // future divergence fails the typecheck (see the file's module doc).
     "tests/unit/_spine/worker-contract.test.ts",
-    // The @czap/core spine conformance guard: its type-level assignments
+    // The @liteship/core spine conformance guard: its type-level assignments
     // (Config.Shape ⇔ runtime, and the CompositeState / VideoConfig / CaptureResult
     // bidirectional pins) only bite if THIS project typechecks them. Listed here so
-    // a future divergence between core.d.ts and the @czap/core runtime fails the
+    // a future divergence between core.d.ts and the @liteship/core runtime fails the
     // typecheck rather than living as a dead assertion.
     "tests/unit/spine-conformance.test.ts",
     // The Wave-8.5 TYPE-export surface gate (#156): the mechanism that closes the

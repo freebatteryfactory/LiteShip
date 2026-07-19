@@ -9,8 +9,8 @@
  */
 
 import { describe, test, expect, vi } from 'vitest';
-import { FrameBudget } from '@czap/core';
-import { hasTag } from '@czap/error';
+import { FrameBudget } from '@liteship/core';
+import { hasTag } from '@liteship/error';
 
 // ---------------------------------------------------------------------------
 // Basic operations

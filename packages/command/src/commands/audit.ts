@@ -1,13 +1,13 @@
 /**
  * audit (CUT D9b-2) — run the profile-driven structure/integrity/surface audit
- * and report a structured summary. The engine (`@czap/audit`) is INJECTED via
- * `context.runAudit`, never imported here, so `@czap/command` (and the MCP
+ * and report a structured summary. The engine (`@liteship/audit`) is INJECTED via
+ * `context.runAudit`, never imported here, so `@liteship/command` (and the MCP
  * server that re-uses it) stays free of the TypeScript-compiler/fast-glob audit
  * engine. Not MCP-exposed: it needs the CLI-only `runAudit` capability.
  *
  * @module
  */
-import { S, type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
+import { S, type CapsuleCommandResult, type CommandJsonSchema } from '@liteship/core';
 import {
   capabilityUnavailable,
   defineCommand,

@@ -1,25 +1,25 @@
 /**
  * package-smoke (CUT A5) — the release-grade pack/install/import smoke as a
  * finite, structured command (migrated from `scripts/package-smoke.ts`). It fails
- * when a publishable `@czap/*` scope would ship broken: a tarball that won't pack,
+ * when a publishable `@liteship/*` scope would ship broken: a tarball that won't pack,
  * a `workspace:` protocol leaked into a packed manifest, a consumer install that
  * doesn't materialize the package, an import specifier that won't resolve, or a
- * `czap` binstub that won't run.
+ * `liteship` binstub that won't run.
  *
  * The engine (per-package `pnpm pack`, `pnpm install` into an isolated consumer
  * fixture, `tar` extraction, `node` import-smoke) is INJECTED via
- * `context.runPackageSmoke`, never imported here, so `@czap/command` (and the MCP
+ * `context.runPackageSmoke`, never imported here, so `@liteship/command` (and the MCP
  * server that re-uses it) stays free of the subprocess/child_process edge. Unlike
  * `plumb`/`check-invariants` (whose scans are pure `node:fs` and are provisioned
  * in the shared host factory), this gate is a terminal-streaming SUBPROCESS
  * orchestrator — minutes of `pnpm pack`/`install`/`tar`/`node` mutating a scratch
  * tree — in the same category as `gauntlet`/`ship`. So like `audit-floor` it is
- * CLI-only and NOT MCP-exposed: only `@czap/cli` injects `runPackageSmoke`, and
+ * CLI-only and NOT MCP-exposed: only `@liteship/cli` injects `runPackageSmoke`, and
  * over MCP the command degrades to a structured `capabilityUnavailable` failure.
  *
  * @module
  */
-import { type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
+import { type CapsuleCommandResult, type CommandJsonSchema } from '@liteship/core';
 import {
   capabilityUnavailable,
   failed,
@@ -38,7 +38,7 @@ export const PackageSmokePayloadSchema = {
   type: 'object',
   properties: {
     ok: { type: 'boolean' },
-    /** Number of `@czap/*` (+ unscoped) scopes packed via `pnpm pack`. */
+    /** Number of `@liteship/*` (+ unscoped) scopes packed via `pnpm pack`. */
     packagesPacked: { type: 'number' },
     /** Number of module specifiers the import-smoke resolved (0 when it never ran). */
     importsSmoked: { type: 'number' },
@@ -64,7 +64,7 @@ export const packageSmokeCommand: HandledCommand = {
   descriptor: {
     name: 'package-smoke',
     summary:
-      'Release gate: pack every publishable @czap/* scope, install into an isolated consumer, and import-smoke every module specifier (+ czap binstub).',
+      'Release gate: pack every publishable @liteship/* scope, install into an isolated consumer, and import-smoke every module specifier (+ liteship binstub).',
     requires: ['runPackageSmoke'] satisfies readonly CommandCapability[],
     inputSchema: { type: 'object', properties: {} } as const satisfies CommandJsonSchema,
     outputSchema: PackageSmokePayloadSchema,

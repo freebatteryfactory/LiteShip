@@ -3,7 +3,7 @@
  */
 
 import { describe, test, expect, vi } from 'vitest';
-import { Boundary, SpeculativeEvaluator } from '@czap/core';
+import { Boundary, SpeculativeEvaluator } from '@liteship/core';
 
 const boundary = Boundary.make({
   input: 'width',

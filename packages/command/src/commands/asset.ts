@@ -2,12 +2,12 @@
  * asset analyze / verify (CUT A1) — analysis + generated-test verification over
  * registered asset capsules. Pure structured logic: the adapter injects the
  * manifest read, asset-byte loading, the audio projection (DSP from
- * @czap/assets), the receipt cache, and the vitest runner. No fs/spawn/DSP edge
- * lives in @czap/command itself.
+ * @liteship/assets), the receipt cache, and the vitest runner. No fs/spawn/DSP edge
+ * lives in @liteship/command itself.
  *
  * @module
  */
-import { S, type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
+import { S, type CapsuleCommandResult, type CommandJsonSchema } from '@liteship/core';
 import { capabilityUnavailable, defineCommand, failed, ok, type CommandCapability } from '../registry.js';
 import { loadManifest, manifestUnavailable } from './manifest.js';
 

@@ -1,5 +1,5 @@
 /**
- * Type-level utilities for `@czap/core`.
+ * Type-level utilities for `@liteship/core`.
  *
  * Mapped types, conditional helpers, and structural utilities
  * used across boundary definitions and compositor outputs.

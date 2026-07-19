@@ -26,7 +26,7 @@
 
 import { describe, test, expect } from 'vitest';
 import fc from 'fast-check';
-import { hasTag } from '@czap/error';
+import { hasTag } from '@liteship/error';
 import { Lifetime } from '../../../packages/core/src/lifetime.js';
 import type { LifetimeDisposeError } from '../../../packages/core/src/lifetime.js';
 import {

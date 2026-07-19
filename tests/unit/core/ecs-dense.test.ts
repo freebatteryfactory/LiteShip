@@ -4,9 +4,9 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Part, World } from '@czap/core';
-import { hasTag } from '@czap/error';
-import type { EntityId, DenseStore } from '@czap/core';
+import { Part, World } from '@liteship/core';
+import { hasTag } from '@liteship/error';
+import type { EntityId, DenseStore } from '@liteship/core';
 
 // ---------------------------------------------------------------------------
 // Part.dense -- standalone store operations

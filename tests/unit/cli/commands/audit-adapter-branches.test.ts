@@ -1,5 +1,5 @@
 /**
- * Branch coverage for the `czap audit` CLI adapter's defensive seams
+ * Branch coverage for the `liteship audit` CLI adapter's defensive seams
  * (runtime-seams hotspot). The devops suite drives the REAL engine; these
  * arms only fire when the handler misbehaves or returns degraded shapes —
  * so the handler is mocked here, never the engine:
@@ -11,11 +11,11 @@
  * @module
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import type * as CzapCommand from '@czap/command';
+import type * as LiteshipCommand from '@liteship/command';
 
 const { handlerMock } = vi.hoisted(() => ({ handlerMock: vi.fn() }));
-vi.mock('@czap/command', async (importOriginal) => {
-  const actual = await importOriginal<typeof CzapCommand>();
+vi.mock('@liteship/command', async (importOriginal) => {
+  const actual = await importOriginal<typeof LiteshipCommand>();
   return { ...actual, auditCommand: { ...actual.auditCommand, handler: handlerMock } };
 });
 

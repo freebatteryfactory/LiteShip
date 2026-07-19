@@ -1,14 +1,14 @@
 /**
  * CUT A4 — `BoundaryAttribute.isAllowedKey`: the shared predicate for which
  * attribute keys may cross the boundary/runtime projection seam (ARIA / data).
- * Homed in `@czap/core` so `@czap/compiler` (ARIA compilation) and `@czap/astro`
+ * Homed in `@liteship/core` so `@liteship/compiler` (ARIA compilation) and `@liteship/astro`
  * (runtime boundary attributes) consume one law instead of keeping two
  * same-shape copies in sync by hand.
  *
  * @module
  */
 import { describe, it, expect } from 'vitest';
-import { BoundaryAttribute } from '@czap/core';
+import { BoundaryAttribute } from '@liteship/core';
 
 describe('BoundaryAttribute.isAllowedKey', () => {
   it('accepts any aria-* prefixed attribute', () => {
@@ -30,11 +30,11 @@ describe('BoundaryAttribute.isAllowedKey', () => {
       'style',
       'id',
       'href',
-      'data-czap-boundary',
+      'data-liteship-boundary',
       'roles', // not the exact 'role'
       'role ', // trailing space
       'ARIA-label', // case-sensitive: not 'aria-'
-      '--czap-x', // CSS var, not an attribute key
+      '--liteship-x', // CSS var, not an attribute key
       '',
     ]) {
       expect(BoundaryAttribute.isAllowedKey(key), `expected ${JSON.stringify(key)} rejected`).toBe(false);

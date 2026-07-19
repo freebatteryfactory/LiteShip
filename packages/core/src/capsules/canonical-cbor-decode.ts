@@ -11,7 +11,7 @@ import type { Arbitrary } from 'fast-check';
 import { defineCapsule } from '../assembly.js';
 import { S, withArbitrary } from '../schema/index.js';
 import { CanonicalCbor, decode } from '../cbor.js';
-import { ValidationError } from '@czap/error';
+import { ValidationError } from '@liteship/error';
 
 /**
  * Normalize a value into the encoder's image: the encoder coerces top-level

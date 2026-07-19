@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { WASMDispatch, Diagnostics, HLC, Receipt, TypedRef } from '@czap/core';
-import { Resumption } from '@czap/web';
+import { WASMDispatch, Diagnostics, HLC, Receipt, TypedRef } from '@liteship/core';
+import { Resumption } from '@liteship/web';
 import { configureRuntimePolicy, _resetRuntimePolicyForTests } from '../../../packages/astro/src/runtime/policy.js';
 import { MockEventSource } from '../../helpers/mock-event-source.js';
 
@@ -17,7 +17,7 @@ function makeEl(tag: string, attrs: Record<string, string> = {}): HTMLElement {
 
 function disposeTree(): void {
   document.querySelectorAll<HTMLElement>('*').forEach((element) => {
-    element.dispatchEvent(new CustomEvent('czap:teardown'));
+    element.dispatchEvent(new CustomEvent('liteship:teardown'));
   });
 }
 
@@ -63,32 +63,32 @@ describe('satellite directive', () => {
 
   test('evaluates initial state from viewport width through shared boundary primitives', async () => {
     vi.stubGlobal('innerWidth', 1024);
-    const el = makeEl('div', { 'data-czap-boundary': BOUNDARY });
+    const el = makeEl('div', { 'data-liteship-boundary': BOUNDARY });
 
     const mod = await import('../../../packages/astro/src/client-directives/satellite.js');
     mod.default(noop, {}, el);
 
-    expect(el.getAttribute('data-czap-state')).toBe('tablet');
+    expect(el.getAttribute('data-liteship-state')).toBe('tablet');
   });
 
   test('handles reinit with updated boundary state', async () => {
     vi.stubGlobal('innerWidth', 400);
-    const el = makeEl('div', { 'data-czap-boundary': BOUNDARY });
+    const el = makeEl('div', { 'data-liteship-boundary': BOUNDARY });
 
     const mod = await import('../../../packages/astro/src/client-directives/satellite.js');
     mod.default(noop, {}, el);
-    expect(el.getAttribute('data-czap-state')).toBe('mobile');
+    expect(el.getAttribute('data-liteship-state')).toBe('mobile');
 
     vi.stubGlobal('innerWidth', 1500);
-    el.dispatchEvent(new CustomEvent('czap:reinit', { bubbles: true }));
-    expect(el.getAttribute('data-czap-state')).toBe('desktop');
+    el.dispatchEvent(new CustomEvent('liteship:reinit', { bubbles: true }));
+    expect(el.getAttribute('data-liteship-state')).toBe('desktop');
   });
 
   test('skips duplicate satellite state emissions and exits early for invalid boundaries', async () => {
     vi.stubGlobal('innerWidth', 1024);
-    const valid = makeEl('div', { 'data-czap-boundary': BOUNDARY });
+    const valid = makeEl('div', { 'data-liteship-boundary': BOUNDARY });
     let eventCount = 0;
-    valid.addEventListener('czap:satellite-state', () => {
+    valid.addEventListener('liteship:satellite-state', () => {
       eventCount += 1;
     });
 
@@ -96,28 +96,28 @@ describe('satellite directive', () => {
     mod.default(noop, {}, valid);
     expect(eventCount).toBe(1);
 
-    valid.dispatchEvent(new CustomEvent('czap:reinit', { bubbles: true }));
+    valid.dispatchEvent(new CustomEvent('liteship:reinit', { bubbles: true }));
     expect(eventCount).toBe(1);
 
-    const invalid = makeEl('div', { 'data-czap-boundary': '{bad-json' });
+    const invalid = makeEl('div', { 'data-liteship-boundary': '{bad-json' });
     const load = vi.fn(() => Promise.resolve());
     mod.default(load, {}, invalid);
     expect(load).not.toHaveBeenCalled();
   });
 
-  test('satellite reinit falls back to an empty previous state when no data-czap-state attribute is present', async () => {
+  test('satellite reinit falls back to an empty previous state when no data-liteship-state attribute is present', async () => {
     vi.stubGlobal('innerWidth', 1024);
-    const el = makeEl('div', { 'data-czap-boundary': BOUNDARY });
+    const el = makeEl('div', { 'data-liteship-boundary': BOUNDARY });
 
     const mod = await import('../../../packages/astro/src/client-directives/satellite.js');
     mod.default(noop, {}, el);
-    expect(el.getAttribute('data-czap-state')).toBe('tablet');
+    expect(el.getAttribute('data-liteship-state')).toBe('tablet');
 
-    el.removeAttribute('data-czap-state');
+    el.removeAttribute('data-liteship-state');
     vi.stubGlobal('innerWidth', 400);
-    el.dispatchEvent(new CustomEvent('czap:reinit', { bubbles: true }));
+    el.dispatchEvent(new CustomEvent('liteship:reinit', { bubbles: true }));
 
-    expect(el.getAttribute('data-czap-state')).toBe('mobile');
+    expect(el.getAttribute('data-liteship-state')).toBe('mobile');
   });
 });
 
@@ -145,7 +145,7 @@ describe('stream directive', () => {
 
   test('opens EventSource to configured URL', async () => {
     const el = makeEl('div', {
-      'data-czap-stream-url': '/api/feed',
+      'data-liteship-stream-url': '/api/feed',
     });
 
     const mod = await import('../../../packages/astro/src/client-directives/stream.js');
@@ -157,8 +157,8 @@ describe('stream directive', () => {
 
   test('applies patch messages through the shared morph runtime', async () => {
     const el = makeEl('div', {
-      'data-czap-stream-url': '/api/feed',
-      'data-czap-slot': '/hero',
+      'data-liteship-stream-url': '/api/feed',
+      'data-liteship-slot': '/hero',
     });
     el.innerHTML = '<p>Original</p>';
 
@@ -169,7 +169,7 @@ describe('stream directive', () => {
     source.simulateMessage(
       JSON.stringify({
         type: 'patch',
-        data: '<div data-czap-slot="/hero"><p>Updated content</p></div>',
+        data: '<div data-liteship-slot="/hero"><p>Updated content</p></div>',
       }),
       'evt-1',
     );
@@ -181,16 +181,16 @@ describe('stream directive', () => {
 
   test('dispatches signals and reconnect lifecycle events', async () => {
     const el = makeEl('div', {
-      'data-czap-stream-url': '/api/feed',
-      'data-czap-stream-artifact': 'hero',
+      'data-liteship-stream-url': '/api/feed',
+      'data-liteship-stream-artifact': 'hero',
     });
 
     let connected = false;
     let signalData: unknown = null;
-    el.addEventListener('czap:stream-connected', () => {
+    el.addEventListener('liteship:stream-connected', () => {
       connected = true;
     });
-    el.addEventListener('czap:signal', ((event: CustomEvent) => {
+    el.addEventListener('liteship:signal', ((event: CustomEvent) => {
       signalData = event.detail;
     }) as EventListener);
 
@@ -210,7 +210,7 @@ describe('stream directive', () => {
     const clearTimeoutMock = vi.fn();
     const resumeSpy = vi.spyOn(Resumption, 'resume').mockResolvedValue({
       type: 'snapshot',
-      html: '<div data-czap-stream-url="/api/feed" data-czap-stream-artifact="hero">Recovered</div>',
+      html: '<div data-liteship-stream-url="/api/feed" data-liteship-stream-artifact="hero">Recovered</div>',
       signals: null,
       lastEventId: 'evt-10',
     });
@@ -222,8 +222,8 @@ describe('stream directive', () => {
     vi.stubGlobal('clearTimeout', clearTimeoutMock as never);
 
     const el = makeEl('div', {
-      'data-czap-stream-url': '/api/feed',
-      'data-czap-stream-artifact': 'hero',
+      'data-liteship-stream-url': '/api/feed',
+      'data-liteship-stream-artifact': 'hero',
     });
 
     const mod = await import('../../../packages/astro/src/client-directives/stream.js');
@@ -264,11 +264,11 @@ describe('stream directive', () => {
     const disconnects: string[] = [];
     const errors: unknown[] = [];
     const el = makeEl('div', {
-      'data-czap-stream-url': '/api/feed',
-      'data-czap-stream-artifact': 'hero',
+      'data-liteship-stream-url': '/api/feed',
+      'data-liteship-stream-artifact': 'hero',
     });
-    el.addEventListener('czap:stream-disconnected', () => disconnects.push('d'));
-    el.addEventListener('czap:stream-error', ((e: CustomEvent) => errors.push(e.detail)) as EventListener);
+    el.addEventListener('liteship:stream-disconnected', () => disconnects.push('d'));
+    el.addEventListener('liteship:stream-error', ((e: CustomEvent) => errors.push(e.detail)) as EventListener);
 
     const mod = await import('../../../packages/astro/src/client-directives/stream.js');
     mod.default(noop, {}, el);
@@ -285,7 +285,7 @@ describe('stream directive', () => {
     }
     source.simulateError();
 
-    // The loss is surfaced (czap:stream-disconnected) and, once the retry budget
+    // The loss is surfaced (liteship:stream-disconnected) and, once the retry budget
     // is exhausted, exactly the max-reconnect-attempts error fires. The SSE.create
     // model coalesces consecutive `reconnecting` transitions, so this pins the
     // contract (loss surfaced + a single terminal error), not the bygone
@@ -305,17 +305,17 @@ describe('stream directive', () => {
     const resumeSpy = vi.spyOn(Resumption, 'resume').mockResolvedValue({
       type: 'replay',
       patches: [
-        { data: '<section data-czap-id="semantic-stream"><div class="replayed-data">first</div></section>' },
-        { html: '<section data-czap-id="semantic-stream"><div class="replayed-html">second</div></section>' },
+        { data: '<section data-liteship-id="semantic-stream"><div class="replayed-data">first</div></section>' },
+        { html: '<section data-liteship-id="semantic-stream"><div class="replayed-html">second</div></section>' },
         { html: 123 },
       ] as unknown[],
     });
 
     const el = makeEl('section', {
-      'data-czap-stream-url': '/api/feed',
-      'data-czap-stream-artifact': 'semantic-stream',
-      'data-czap-stream-morph': 'outerHTML',
-      'data-czap-id': 'semantic-stream',
+      'data-liteship-stream-url': '/api/feed',
+      'data-liteship-stream-artifact': 'semantic-stream',
+      'data-liteship-stream-morph': 'outerHTML',
+      'data-liteship-id': 'semantic-stream',
     });
 
     const mod = await import('../../../packages/astro/src/client-directives/stream.js');
@@ -325,7 +325,7 @@ describe('stream directive', () => {
     source.simulateMessage(
       JSON.stringify({
         type: 'patch',
-        data: '<section data-czap-id="semantic-stream"><div class="outer-swap">outer</div></section>',
+        data: '<section data-liteship-id="semantic-stream"><div class="outer-swap">outer</div></section>',
       }),
       'evt-1',
     );
@@ -346,7 +346,7 @@ describe('stream directive', () => {
     await Promise.resolve();
 
     expect(resumeSpy).toHaveBeenCalledWith('semantic-stream', 'evt-2', {});
-    const target = document.querySelector('[data-czap-id="semantic-stream"]');
+    const target = document.querySelector('[data-liteship-id="semantic-stream"]');
     expect(target?.innerHTML).toContain('replayed-html');
   });
 
@@ -373,9 +373,9 @@ describe('stream directive', () => {
 
     const el = makeEl('section', {
       id: 'stream-id-target',
-      'data-czap-stream-url': '/api/feed',
-      'data-czap-stream-artifact': 'hero',
-      'data-czap-stream-morph': 'outerHTML',
+      'data-liteship-stream-url': '/api/feed',
+      'data-liteship-stream-artifact': 'hero',
+      'data-liteship-stream-morph': 'outerHTML',
     });
 
     const mod = await import('../../../packages/astro/src/client-directives/stream.js');
@@ -432,14 +432,14 @@ describe('stream directive', () => {
 
     const resumeSpy = vi.spyOn(Resumption, 'resume').mockResolvedValue({
       type: 'snapshot',
-      html: '<div data-czap-stream-url="/api/feed" data-czap-stream-artifact="hero">Recovered</div>',
+      html: '<div data-liteship-stream-url="/api/feed" data-liteship-stream-artifact="hero">Recovered</div>',
       signals: null,
       lastEventId: 'evt-4',
     });
 
     const el = makeEl('div', {
-      'data-czap-stream-url': '/api/feed',
-      'data-czap-stream-artifact': 'hero',
+      'data-liteship-stream-url': '/api/feed',
+      'data-liteship-stream-artifact': 'hero',
     });
 
     const mod = await import('../../../packages/astro/src/client-directives/stream.js');
@@ -490,7 +490,7 @@ describe('llm directive', () => {
 
   test('opens EventSource to the configured endpoint', async () => {
     const el = makeEl('div', {
-      'data-czap-llm-url': '/api/chat',
+      'data-liteship-llm-url': '/api/chat',
     });
 
     const mod = await import('../../../packages/astro/src/client-directives/llm.js');
@@ -502,8 +502,8 @@ describe('llm directive', () => {
 
   test('streams text through LLMAdapter -> TokenBuffer -> UIQuality -> GenFrame', async () => {
     const el = makeEl('div', {
-      'data-czap-llm-url': '/api/chat',
-      'data-czap-llm-mode': 'append',
+      'data-liteship-llm-url': '/api/chat',
+      'data-liteship-llm-mode': 'append',
     });
 
     const mod = await import('../../../packages/astro/src/client-directives/llm.js');
@@ -521,15 +521,15 @@ describe('llm directive', () => {
 
   test('dispatches parsed tool events and done', async () => {
     const el = makeEl('div', {
-      'data-czap-llm-url': '/api/chat',
+      'data-liteship-llm-url': '/api/chat',
     });
 
     let toolResult: { name: string; args: unknown } | null = null;
     let done = false;
-    el.addEventListener('czap:llm-tool-end', ((event: CustomEvent) => {
+    el.addEventListener('liteship:llm-tool-end', ((event: CustomEvent) => {
       toolResult = event.detail;
     }) as EventListener);
-    el.addEventListener('czap:llm-done', () => {
+    el.addEventListener('liteship:llm-done', () => {
       done = true;
     });
 
@@ -552,8 +552,8 @@ describe('llm directive', () => {
 
   test('ignores unknown structured payloads and accepts valid receipt envelopes without interrupting text flow', async () => {
     const el = makeEl('div', {
-      'data-czap-llm-url': '/api/chat',
-      'data-czap-llm-mode': 'append',
+      'data-liteship-llm-url': '/api/chat',
+      'data-liteship-llm-mode': 'append',
     });
 
     const mod = await import('../../../packages/astro/src/client-directives/llm.js');
@@ -573,13 +573,13 @@ describe('llm directive', () => {
 
   test('falls back to the host element target and surfaces structured error payloads', async () => {
     const el = makeEl('div', {
-      'data-czap-llm-url': '/api/chat',
-      'data-czap-llm-target': '.missing-target',
-      'data-czap-llm-mode': 'append',
+      'data-liteship-llm-url': '/api/chat',
+      'data-liteship-llm-target': '.missing-target',
+      'data-liteship-llm-mode': 'append',
     });
 
     const errors: Array<{ message: string }> = [];
-    el.addEventListener('czap:llm-error', ((event: CustomEvent<{ message: string }>) =>
+    el.addEventListener('liteship:llm-error', ((event: CustomEvent<{ message: string }>) =>
       errors.push(event.detail)) as EventListener);
 
     const mod = await import('../../../packages/astro/src/client-directives/llm.js');
@@ -622,12 +622,12 @@ describe('worker directive', () => {
   test('falls back to main-thread evaluation when workers are unavailable', async () => {
     vi.stubGlobal('innerWidth', 1024);
     Object.defineProperty(globalThis, 'crossOriginIsolated', { value: false, configurable: true });
-    const el = makeEl('div', { 'data-czap-boundary': BOUNDARY });
+    const el = makeEl('div', { 'data-liteship-boundary': BOUNDARY });
 
     const mod = await import('../../../packages/astro/src/client-directives/worker.js');
     mod.default(noop, {}, el);
 
-    expect(el.getAttribute('data-czap-state')).toBe('tablet');
+    expect(el.getAttribute('data-liteship-state')).toBe('tablet');
   });
 });
 
@@ -644,14 +644,14 @@ describe('wasm directive', () => {
   });
 
   test('reads the wasm URL from the shared runtime configuration and loads through WASMDispatch', async () => {
-    const el = makeEl('div', { 'data-czap-wasm': 'true' });
-    document.documentElement.setAttribute('data-czap-wasm-url', '/czap-compute.wasm');
+    const el = makeEl('div', { 'data-liteship-wasm': 'true' });
+    document.documentElement.setAttribute('data-liteship-wasm-url', '/liteship-compute.wasm');
     const loadSpy = vi.spyOn(WASMDispatch, 'load').mockResolvedValue(WASMDispatch.kernels());
 
     const mod = await import('../../../packages/astro/src/client-directives/wasm.js');
     mod.default(noop, {}, el);
     await Promise.resolve();
 
-    expect(loadSpy).toHaveBeenCalledWith('/czap-compute.wasm');
+    expect(loadSpy).toHaveBeenCalledWith('/liteship-compute.wasm');
   });
 });

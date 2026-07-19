@@ -1,6 +1,6 @@
-import { Diagnostics } from '@czap/core';
-import type { RuntimeEndpointKind, RuntimeEndpointPolicy } from '@czap/web';
-import { resolveRuntimeUrl } from '@czap/web';
+import { Diagnostics } from '@liteship/core';
+import type { RuntimeEndpointKind, RuntimeEndpointPolicy } from '@liteship/web';
+import { resolveRuntimeUrl } from '@liteship/web';
 import { readRuntimeEndpointPolicy } from './policy.js';
 
 interface RuntimeEndpointDiagnosticCodes {
@@ -39,7 +39,7 @@ export function allowSameOriginRuntimeUrl(rawUrl: string | null, source: string,
 }
 
 const ENDPOINT_POLICY_FIX =
-  "Fix: czap({ security: { endpointPolicy: { mode: 'allowlist', allowOrigins: ['https://your-origin.example'] } } }).";
+  "Fix: liteship({ security: { endpointPolicy: { mode: 'allowlist', allowOrigins: ['https://your-origin.example'] } } }).";
 
 function defaultDiagnosticCodes(kind: RuntimeEndpointKind): RuntimeEndpointDiagnosticCodes {
   return {

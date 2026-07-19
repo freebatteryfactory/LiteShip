@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /**
  * Scene-stage REFERENCE CONSUMER (0.4.0 items C + D) — the REAL producer→consumer
- * path, driven by a REAL compiled `@czap/scene`, NOT a hand-faked scene.
+ * path, driven by a REAL compiled `@liteship/scene`, NOT a hand-faked scene.
  *
  * `scene-bridge.test.ts` proves the bridge's routing LAW with a fake scene (the
  * exact shape the bridge reads). This file proves the IN-REPO REFERENCE CONSUMER
@@ -14,7 +14,7 @@
  *     `trackId` out of the world entity's component map (the projection a fake
  *     scene hand-waves and a real one MUST perform);
  *   - the transition crosses 0.5 at a KNOWN frame → EXACTLY ONE recast fires and
- *     `data-czap-state` flips, while the continuous `--czap-blend` var moves on
+ *     `data-liteship-state` flips, while the continuous `--liteship-blend` var moves on
  *     intermediate frames and never recasts.
  *
  * And for item D, the AI-apply reference consumer (`applyGraphSuggestion`) admits
@@ -31,7 +31,7 @@ import {
   GraphPatch,
   projectionKeys,
   HLC,
-} from '@czap/core';
+} from '@liteship/core';
 import type {
   DocumentGraph,
   SignalNode,
@@ -41,9 +41,9 @@ import type {
   PoseNode,
   ContentAddress,
   CellMeta,
-} from '@czap/core';
-import { Track, compileScene, SceneRuntime } from '@czap/scene';
-import type { SceneContract } from '@czap/scene';
+} from '@liteship/core';
+import { Track, compileScene, SceneRuntime } from '@liteship/scene';
+import type { SceneContract } from '@liteship/scene';
 import { loadGraphRuntime } from '../../../packages/astro/src/runtime/graph-runtime.js';
 import {
   driveSceneStage,
@@ -121,8 +121,8 @@ function buildSceneGraph(): { graph: DocumentGraph; entityId: ContentAddress } {
     components: [comp.id],
   });
   const proj = projection('css', comp.id, 'fx');
-  const poseFrom = pose(ent.id, 'from', { '--czap-fx': '0' });
-  const poseTo = pose(ent.id, 'to', { '--czap-fx': '1' });
+  const poseFrom = pose(ent.id, 'from', { '--liteship-fx': '0' });
+  const poseTo = pose(ent.id, 'to', { '--liteship-fx': '1' });
 
   const graph = sealGraph({
     _tag: 'DocumentGraph',
@@ -214,7 +214,7 @@ describe('scene-stage reference consumer — a REAL compiled scene drives the li
     const scene = await SceneRuntime.build(compiled);
 
     const uniformSpy = vi.fn();
-    el.addEventListener('czap:uniform-update', uniformSpy);
+    el.addEventListener('liteship:uniform-update', uniformSpy);
     const setPropSpy = vi.spyOn(el.style, 'setProperty');
 
     // Drive the REAL scene handle through the reference consumer.
@@ -230,11 +230,11 @@ describe('scene-stage reference consumer — a REAL compiled scene drives the li
 
       // No crossing yet (blend < 0.5) → NO recast, state still 'from'.
       expect(recastSpy).not.toHaveBeenCalled();
-      expect(el.getAttribute('data-czap-state')).toBe('from');
+      expect(el.getAttribute('data-liteship-state')).toBe('from');
 
       // The CONTINUOUS tween moved every frame: the leaf CSS var was written with a
-      // rising blend and a czap:uniform-update dispatched — driven by REAL _blend.
-      const blendWrites = setPropSpy.mock.calls.filter(([k]) => k === '--czap-blend');
+      // rising blend and a liteship:uniform-update dispatched — driven by REAL _blend.
+      const blendWrites = setPropSpy.mock.calls.filter(([k]) => k === '--liteship-blend');
       expect(blendWrites.length).toBeGreaterThanOrEqual(2);
       const lastBelow = Number(blendWrites.at(-1)![1]);
       expect(lastBelow).toBeGreaterThan(0);
@@ -244,7 +244,7 @@ describe('scene-stage reference consumer — a REAL compiled scene drives the li
       // Advance PAST the crossing: t 300ms → frame 18 → blend 0.6 ≥ 0.5.
       await pump(300);
       expect(recastSpy).toHaveBeenCalledTimes(1);
-      expect(el.getAttribute('data-czap-state')).toBe('to');
+      expect(el.getAttribute('data-liteship-state')).toBe('to');
 
       // Staying past the crossing does NOT recast again (no new crossing).
       await pump(400); // frame 24 → blend 0.8.
@@ -311,8 +311,8 @@ describe('scene-stage reference consumer — the AI-apply seam (item D)', () => 
       components: [comp.id],
     });
     const proj = projection('css', comp.id, 'card');
-    const poseMobile = pose(ent.id, 'mobile', { '--czap-card': '14px' });
-    const poseDesktop = pose(ent.id, 'desktop', { '--czap-card': '18px' });
+    const poseMobile = pose(ent.id, 'mobile', { '--liteship-card': '14px' });
+    const poseDesktop = pose(ent.id, 'desktop', { '--liteship-card': '18px' });
     const graph = sealGraph({
       _tag: 'DocumentGraph',
       _version: 1,
@@ -337,7 +337,7 @@ describe('scene-stage reference consumer — the AI-apply seam (item D)', () => 
     expect(ctx.base).toBe(baseId);
 
     // Cast IN: a REAL validated candidate (a pose tweak) admitted onto the live graph.
-    const newPose = pose(entId, 'mobile', { '--czap-card': '16px' });
+    const newPose = pose(entId, 'mobile', { '--liteship-card': '16px' });
     const candidate = GraphPatch.propose(handle.graph, [{ op: 'update', family: 'pose', node: newPose }]);
     const result = applyGraphSuggestion(handle, candidate);
 
@@ -363,7 +363,7 @@ describe('scene-stage reference consumer — the AI-apply seam (item D)', () => 
       components: [comp.id],
     });
     const proj = projection('css', comp.id, 'card');
-    const poseMobile = pose(ent.id, 'mobile', { '--czap-card': '14px' });
+    const poseMobile = pose(ent.id, 'mobile', { '--liteship-card': '14px' });
     const graph = sealGraph({
       _tag: 'DocumentGraph',
       _version: 1,

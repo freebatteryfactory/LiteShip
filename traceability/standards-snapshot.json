@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 1,
-  "address": "fnv1a:3c6d8faa",
+  "address": "fnv1a:3e24c2b2",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -717,7 +717,7 @@
     {
       "_tag": "skip-allowlist",
       "file": "tests/smoke/intro-render.test.ts",
-      "site": "it.skip('skipped — ffmpeg libx264 render probe failed (see czap doctor)', () => {});",
+      "site": "it.skip('skipped — ffmpeg libx264 render probe failed (see liteship doctor)', () => {});",
       "capability": "ffmpeg-absent"
     },
     {
@@ -759,7 +759,7 @@
     {
       "_tag": "skip-allowlist",
       "file": "tests/unit/core/wasm-parity.test.ts",
-      "site": "describe.skipIf(!wasmPresent)('WASM/TS kernel parity (czap-compute vs fallbackKernels)', () => {",
+      "site": "describe.skipIf(!wasmPresent)('WASM/TS kernel parity (liteship-compute vs fallbackKernels)', () => {",
       "capability": "wasm-absent"
     },
     {
@@ -771,7 +771,7 @@
     {
       "_tag": "skip-allowlist",
       "file": "tests/unit/core/wasm-shipping.test.ts",
-      "site": "it.skipIf(!staged)('resolves @czap/core dist/czap-compute.wasm via the module graph', () => {",
+      "site": "it.skipIf(!staged)('resolves @liteship/core dist/liteship-compute.wasm via the module graph', () => {",
       "capability": "wasm-dist-staged"
     },
     {

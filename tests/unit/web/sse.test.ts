@@ -7,8 +7,8 @@
  */
 
 import { describe, test, expect, vi } from 'vitest';
-import { SSE, Resumption } from '@czap/web';
-import type { ReconnectConfig } from '@czap/web';
+import { SSE, Resumption } from '@liteship/web';
+import type { ReconnectConfig } from '@liteship/web';
 
 // ===========================================================================
 // SSE.parseMessage

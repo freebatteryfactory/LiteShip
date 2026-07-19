@@ -22,7 +22,7 @@
  * @module
  */
 
-import type { World } from '@czap/core';
+import type { World } from '@liteship/core';
 import type { SvgAttrs } from './svg.js';
 
 /**

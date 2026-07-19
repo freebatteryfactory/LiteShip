@@ -3,7 +3,7 @@
  *
  * Turns the hand-maintained `api-health.test.ts` registry — a footgun that must
  * be remembered on every export change — into a GENERATED, deterministic
- * serialization of each published `@czap/*` main barrel's public surface. A
+ * serialization of each published `@liteship/*` main barrel's public surface. A
  * committed snapshot (`tests/fixtures/api-surface-snapshot.json`) is the
  * reviewable ground truth; the gate REGENERATES the live surface and DIFFS it,
  * so an accidental public-API change is impossible to miss and a deliberate one
@@ -54,7 +54,7 @@ export interface ApiSurfaceSnapshot {
 const looksLikeClass = (value: (...args: readonly unknown[]) => unknown): boolean => {
   // A `class` declaration's source starts with `class`; an arrow/plain function
   // does not. This is the cheap, robust discriminator (the brand FACTORIES in
-  // @czap/core are plain functions, NOT classes, and must read as `function`).
+  // @liteship/core are plain functions, NOT classes, and must read as `function`).
   return /^class[\s{]/.test(Function.prototype.toString.call(value));
 };
 

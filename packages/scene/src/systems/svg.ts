@@ -20,7 +20,7 @@
  * @module
  */
 
-import type { System, World } from '@czap/core';
+import type { System, World } from '@liteship/core';
 
 /**
  * Composed SVG attribute struct written to the `_svgAttrs` output

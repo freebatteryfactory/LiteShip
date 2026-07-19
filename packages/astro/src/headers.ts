@@ -1,21 +1,21 @@
 /**
- * HTTP header helpers shipped by `@czap/astro`.
+ * HTTP header helpers shipped by `@liteship/astro`.
  *
  * Encodes the two concerns the integration cares about: asking browsers
- * for the Client Hints czap uses (tier detection), and shipping the
+ * for the Client Hints liteship uses (tier detection), and shipping the
  * COOP/COEP pair required by `SharedArrayBuffer`-backed workers.
  *
  * @module
  */
 
-import { ClientHints, CrossOriginIsolation, type CrossOriginEmbedderPolicy } from '@czap/edge';
+import { ClientHints, CrossOriginIsolation, type CrossOriginEmbedderPolicy } from '@liteship/edge';
 
 /**
- * Default `Accept-CH` / `Critical-CH` response headers czap requests so the browser
+ * Default `Accept-CH` / `Critical-CH` response headers liteship requests so the browser
  * sends the hints on the next navigation (and resends the critical ones before the first
  * render).
  *
- * DERIVED from `@czap/edge`'s single source (`ClientHints.acceptCHHeader()` /
+ * DERIVED from `@liteship/edge`'s single source (`ClientHints.acceptCHHeader()` /
  * `criticalCHHeader()`) — NOT a hand-kept copy. This module is read by the dev-server
  * middleware while the production middleware calls `ClientHints` directly; deriving both
  * from one list is the only way they can't request different hints. Pinned by
@@ -28,23 +28,23 @@ export const CLIENT_HINTS_HEADERS: Record<string, string> = {
 };
 
 /**
- * COEP values czap can emit. Both establish cross-origin isolation
+ * COEP values liteship can emit. Both establish cross-origin isolation
  * (required for `SharedArrayBuffer`); `credentialless` loads CORP-less
  * third-party subresources without credentials instead of blocking them.
  *
- * DERIVED from `@czap/edge` (the single cross-origin vocabulary source) — re-exported
- * so existing `@czap/astro` importers keep the same type name.
+ * DERIVED from `@liteship/edge` (the single cross-origin vocabulary source) — re-exported
+ * so existing `@liteship/astro` importers keep the same type name.
  */
 export type { CrossOriginEmbedderPolicy };
 
 /**
  * COOP/COEP header pair required for `SharedArrayBuffer` (used by
- * `@czap/worker`'s SPSC ring). Applied only when the integration is
+ * `@liteship/worker`'s SPSC ring). Applied only when the integration is
  * configured with `workers: { enabled: true }`; the COEP value is
  * overridable via `workers.coep`.
  *
- * DERIVED from `@czap/edge`'s `CrossOriginIsolation.isolationHeaders()` (NOT a
- * hand-kept copy) so the values czap EMITS and the values `czap doctor --deployed`
+ * DERIVED from `@liteship/edge`'s `CrossOriginIsolation.isolationHeaders()` (NOT a
+ * hand-kept copy) so the values liteship EMITS and the values `liteship doctor --deployed`
  * VALIDATES can never diverge. Pinned by tests/unit/astro/critical-ch-drift.test.ts.
  *
  * Parked-by-design (#129): COEP is consumer-overridable (set-only-when-absent
@@ -54,7 +54,7 @@ export type { CrossOriginEmbedderPolicy };
  */
 export const CROSS_ORIGIN_HEADERS: Record<string, string> = CrossOriginIsolation.isolationHeaders();
 
-/** Header names whose pre-existing response values czap must not clobber. */
+/** Header names whose pre-existing response values liteship must not clobber. */
 const CONSUMER_OVERRIDABLE_HEADERS: ReadonlySet<string> = new Set([
   'Cross-Origin-Opener-Policy',
   'Cross-Origin-Embedder-Policy',
@@ -69,10 +69,10 @@ function splitVaryTokens(value: string): string[] {
 }
 
 /**
- * Union czap's `Vary` tokens with any pre-existing `Vary` value.
+ * Union liteship's `Vary` tokens with any pre-existing `Vary` value.
  *
  * `Vary` is an ADDITIVE token-list header (RFC 9110 §12.5.5): each token names a
- * request header a cache must key on. czap adds its Client-Hint axes, but a consumer,
+ * request header a cache must key on. liteship adds its Client-Hint axes, but a consumer,
  * a compression layer, or the app may already vary on `Cookie` / `Accept-Encoding` /
  * app-specific axes — a `headers.set('Vary', …)` clobber silently drops those and can
  * make a CDN serve a gzip response as identity, or one user's cookie'd page to another.
@@ -81,7 +81,7 @@ function splitVaryTokens(value: string): string[] {
  * case-insensitive (field names are case-insensitive) so we never emit a duplicate.
  * A literal `*` on either side means "varies on everything" and absorbs the merge.
  *
- * Single source for the merge law — both the `Headers` sink ({@link applyCzapHeaders})
+ * Single source for the merge law — both the `Headers` sink ({@link applyLiteshipHeaders})
  * and the dev-server `res.setHeader` sink call through here so they cannot drift.
  */
 export function mergeVaryHeader(existing: string | null | undefined, incoming: string): string {
@@ -106,11 +106,11 @@ export function mergeVaryHeader(existing: string | null | undefined, incoming: s
 }
 
 /**
- * Build the `[header, value]` entries czap wants to emit for a given
+ * Build the `[header, value]` entries liteship wants to emit for a given
  * feature toggle set. Used by dev-server middleware and edge adapters
  * that prefer tuple iteration over the `Headers` API.
  */
-export function getCzapHeaderEntries(options: {
+export function getLiteshipHeaderEntries(options: {
   readonly detectEnabled: boolean;
   readonly workersEnabled: boolean;
   readonly coep?: CrossOriginEmbedderPolicy;
@@ -146,19 +146,19 @@ export function getCzapHeaderEntries(options: {
 }
 
 /**
- * Apply the czap header set to an existing {@link Headers} bag and
+ * Apply the liteship header set to an existing {@link Headers} bag and
  * return it (for chaining). Convenience wrapper over
- * {@link getCzapHeaderEntries} for middleware that already has a
+ * {@link getLiteshipHeaderEntries} for middleware that already has a
  * `Headers` object in hand.
  *
  * COOP/COEP are set only when absent: a consumer middleware (or route
  * handler) that explicitly set either one wins regardless of
  * `sequence()` order. Weakening or removing them is then on the
  * consumer — workers still need cross-origin isolation to get
- * `SharedArrayBuffer`. Client-hints headers are always czap's to own
+ * `SharedArrayBuffer`. Client-hints headers are always liteship's to own
  * and are set unconditionally.
  */
-export function applyCzapHeaders(
+export function applyLiteshipHeaders(
   headers: Headers,
   options: {
     readonly detectEnabled: boolean;
@@ -168,7 +168,7 @@ export function applyCzapHeaders(
     readonly criticalCH?: string;
   },
 ): Headers {
-  for (const [header, value] of getCzapHeaderEntries(options)) {
+  for (const [header, value] of getLiteshipHeaderEntries(options)) {
     if (CONSUMER_OVERRIDABLE_HEADERS.has(header) && headers.has(header)) {
       continue;
     }

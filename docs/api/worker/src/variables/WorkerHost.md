@@ -52,7 +52,7 @@ render worker is created lazily on the first
 ## Example
 
 ```ts
-import { WorkerHost } from '@czap/worker';
+import { WorkerHost } from '@liteship/worker';
 
 const host = WorkerHost.create({ poolCapacity: 64 });
 host.attachCanvas(canvas);

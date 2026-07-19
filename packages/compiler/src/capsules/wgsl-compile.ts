@@ -21,8 +21,8 @@
  * @module
  */
 
-import { defineCapsule, Boundary, wgslIdent, S } from '@czap/core';
-import type { Infer } from '@czap/core';
+import { defineCapsule, Boundary, wgslIdent, S } from '@liteship/core';
+import type { Infer } from '@liteship/core';
 import { WGSLCompiler } from '../wgsl.js';
 import type { WGSLCompileResult } from '../wgsl.js';
 

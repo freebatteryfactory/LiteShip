@@ -6,7 +6,7 @@ import type { APIRoute } from 'astro';
  * On-demand (`prerender = false`) so it serves a REAL `text/event-stream` with the
  * correct MIME when deployed — a prerendered EventSource becomes a static snapshot a
  * static host mislabels, so the stream never opens. The showcase keeps every PAGE
- * static; only this route runs on the adapter. The `data-czap-stream-url="/api/feed"`
+ * static; only this route runs on the adapter. The `data-liteship-stream-url="/api/feed"`
  * element morphs in this patch the moment the EventSource connects.
  */
 export const prerender = false;

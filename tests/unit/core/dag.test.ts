@@ -3,8 +3,8 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { DAG, Receipt, HLC } from '@czap/core';
-import type { ReceiptSubject, ReceiptEnvelope } from '@czap/core';
+import { DAG, Receipt, HLC } from '@liteship/core';
+import type { ReceiptSubject, ReceiptEnvelope } from '@liteship/core';
 
 const subject = (id: string): ReceiptSubject => ({ type: 'effect', id });
 const payload = () => ({ schema_hash: 'sha256:test', content_hash: 'sha256:dag' });

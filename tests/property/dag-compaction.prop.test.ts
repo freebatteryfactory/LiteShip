@@ -14,7 +14,7 @@
 
 import { describe, test, expect } from 'vitest';
 import fc from 'fast-check';
-import { DAG, Receipt, HLC, type ChainValidationError } from '@czap/core';
+import { DAG, Receipt, HLC, type ChainValidationError } from '@liteship/core';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -114,7 +114,7 @@ describe('DAG.checkpoint — boundary validation (A)', () => {
     const droppedSet = new Set(dropped);
     const tail = chain.filter((e) => !droppedSet.has(e.hash));
 
-    // Real checkpoint (subject = czap/checkpoint:W) bound to a different base.
+    // Real checkpoint (subject = liteship/checkpoint:W) bound to a different base.
     const mismatched = await flip(Receipt.validateChainDetailed(tail, { base: chain[1]!.hash, checkpoint }));
     expect(mismatched.type).toBe('checkpoint_invalid');
 
@@ -195,8 +195,8 @@ describe('DAG.checkpoint — boundary validation (A)', () => {
     const [forged] = await Receipt.buildChain([
       {
         kind: 'checkpoint',
-        subject: { type: 'run' as const, id: `czap/checkpoint:${truncateAt}` },
-        payload: { schema_hash: 'czap/checkpoint-summary/v1', content_hash: 'fabricated' },
+        subject: { type: 'run' as const, id: `liteship/checkpoint:${truncateAt}` },
+        payload: { schema_hash: 'liteship/checkpoint-summary/v1', content_hash: 'fabricated' },
         timestamp: { wall_ms: 1, counter: 0, node_id: 'attacker' } as HLC.Shape,
       },
     ]);

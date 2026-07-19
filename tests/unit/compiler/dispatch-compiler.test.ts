@@ -6,10 +6,10 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Boundary, Config } from '@czap/core';
-import { hasTag } from '@czap/error';
-import { dispatch } from '@czap/compiler';
-import type { AIManifest, CompilerDef } from '@czap/compiler';
+import { Boundary, Config } from '@liteship/core';
+import { hasTag } from '@liteship/error';
+import { dispatch } from '@liteship/compiler';
+import type { AIManifest, CompilerDef } from '@liteship/compiler';
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -110,10 +110,10 @@ describe('dispatch() arm defaults', () => {
     }
   });
 
-  test('CSSCompiler def without selector uses the documented .czap-boundary default', () => {
+  test('CSSCompiler def without selector uses the documented .liteship-boundary default', () => {
     const result = dispatch({ _tag: 'CSSCompiler', boundary, states: cssStates });
     if (result.target === 'css') {
-      expect(result.result.raw).toContain('.czap-boundary {');
+      expect(result.result.raw).toContain('.liteship-boundary {');
     }
   });
 
@@ -121,7 +121,7 @@ describe('dispatch() arm defaults', () => {
     const result = dispatch({ _tag: 'CSSCompiler', boundary, states: cssStates, selector: '.card' });
     if (result.target === 'css') {
       expect(result.result.raw).toContain('.card {');
-      expect(result.result.raw).not.toContain('.czap-boundary');
+      expect(result.result.raw).not.toContain('.liteship-boundary');
     }
   });
 

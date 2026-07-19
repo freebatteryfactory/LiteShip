@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # ============================================================================
-# czap verification harness
+# liteship verification harness
 #
 # Runs all quality gates in dependency order. Exit code 0 = all green.
 # Optimized for TypeScript: install → build → test → typecheck
@@ -19,7 +19,7 @@ if [ "${1:-}" = "--quick" ]; then
   QUICK=true
 fi
 
-echo "=== czap verification ==="
+echo "=== liteship verification ==="
 echo ""
 
 # ── Gate 1: install ──────────────────────────────────────────────────

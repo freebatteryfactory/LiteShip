@@ -5,9 +5,9 @@
  */
 
 import type { SlotPath, SlotEntry, SlotEntryInput, IslandMode } from '../types.js';
-import { dispatchCzapEvent } from '../wire/dispatch.js';
-import { Diagnostics } from '@czap/core';
-import type { Disposer } from '@czap/core';
+import { dispatchLiteshipEvent } from '../wire/dispatch.js';
+import { Diagnostics } from '@liteship/core';
+import type { Disposer } from '@liteship/core';
 import { SlotAddressing, SlotPath as mkSlotPath } from './addressing.js';
 
 /**
@@ -22,11 +22,11 @@ const narrowIslandMode = (raw: string | null): IslandMode | null =>
   raw !== null && raw.length > 0 ? (raw as IslandMode) : null;
 
 /**
- * Read the island mode from an element, checking both `data-czap-mode` and
+ * Read the island mode from an element, checking both `data-liteship-mode` and
  * legacy `data-mode` attributes. Returns `null` if neither is set.
  */
 const readIslandMode = (element: Element): IslandMode | null =>
-  narrowIslandMode(element.getAttribute('data-czap-mode')) ?? narrowIslandMode(element.getAttribute('data-mode'));
+  narrowIslandMode(element.getAttribute('data-liteship-mode')) ?? narrowIslandMode(element.getAttribute('data-mode'));
 
 /**
  * Slot registry interface -- manages mapping between slot paths and DOM elements.
@@ -45,7 +45,7 @@ export interface SlotRegistryShape {
  *
  * @example
  * ```ts
- * import { SlotRegistry, SlotAddressing } from '@czap/web';
+ * import { SlotRegistry, SlotAddressing } from '@liteship/web';
  *
  * const heroPath = SlotAddressing.brand('/hero');
  * const registry = SlotRegistry.create();
@@ -64,7 +64,7 @@ export const create = (): SlotRegistryShape => {
 
     /**
      * Registers a slot entry (`mode` defaults to `'partial'`, `mounted` to `true`).
-     * Dispatches `czap:slot-mounted` on the entry element (public observability
+     * Dispatches `liteship:slot-mounted` on the entry element (public observability
      * event). Idempotent: re-registering the same path with the same element and
      * mode is a no-op, so `scanDOM` + `observe` never double-dispatch.
      */
@@ -80,17 +80,17 @@ export const create = (): SlotRegistryShape => {
         return;
       }
       registry.set(normalized.path, normalized);
-      dispatchCzapEvent(normalized.element, 'czap:slot-mounted', {
+      dispatchLiteshipEvent(normalized.element, 'liteship:slot-mounted', {
         path: normalized.path,
         mode: normalized.mode,
       });
     },
 
-    /** Unregisters a slot. Dispatches `czap:slot-unmounted` on document (element may be detached). */
+    /** Unregisters a slot. Dispatches `liteship:slot-unmounted` on document (element may be detached). */
     unregister: (path: SlotPath) => {
       const entry = registry.get(path);
       registry.delete(path);
-      dispatchCzapEvent(document, 'czap:slot-unmounted', { path, mode: entry?.mode });
+      dispatchLiteshipEvent(document, 'liteship:slot-unmounted', { path, mode: entry?.mode });
     },
 
     has: (path: SlotPath) => registry.has(path),
@@ -112,16 +112,16 @@ export const create = (): SlotRegistryShape => {
 };
 
 /**
- * Scan the DOM subtree for elements with `data-czap-slot` attributes and
+ * Scan the DOM subtree for elements with `data-liteship-slot` attributes and
  * register them in the given registry.
  *
  * @example
  * ```ts
- * import { SlotRegistry } from '@czap/web';
+ * import { SlotRegistry } from '@liteship/web';
  *
  * const registry = SlotRegistry.create();
  * SlotRegistry.scanDOM(registry, document.body);
- * // All elements with data-czap-slot="/..." are now registered
+ * // All elements with data-liteship-slot="/..." are now registered
  * ```
  *
  * @param registry    - The slot registry to populate
@@ -129,10 +129,10 @@ export const create = (): SlotRegistryShape => {
  * @param defaultMode - Default island mode for discovered slots (defaults to 'partial')
  */
 export const scanDOM = (registry: SlotRegistryShape, root: Element, defaultMode: IslandMode = 'partial'): void => {
-  const elements = root.querySelectorAll('[data-czap-slot]');
+  const elements = root.querySelectorAll('[data-liteship-slot]');
 
   for (const element of Array.from(elements)) {
-    const slotPath = element.getAttribute('data-czap-slot');
+    const slotPath = element.getAttribute('data-liteship-slot');
 
     if (slotPath && SlotAddressing.isValid(slotPath)) {
       const mode = readIslandMode(element) ?? defaultMode;
@@ -146,7 +146,7 @@ export const scanDOM = (registry: SlotRegistryShape, root: Element, defaultMode:
       registry.register(entry);
     } else if (slotPath) {
       Diagnostics.warn({
-        source: 'czap/web.SlotRegistry',
+        source: 'liteship/web.SlotRegistry',
         code: 'invalid-slot-path',
         message: `Invalid slot path "${slotPath}". Must start with "/" and contain only alphanumeric, hyphens, underscores, e.g. "/hero" or "/sidebar/nav".`,
       });
@@ -157,7 +157,7 @@ export const scanDOM = (registry: SlotRegistryShape, root: Element, defaultMode:
 /**
  * Scan `root` for pre-existing slots, then create a `MutationObserver` that
  * automatically registers/unregisters slots as DOM elements with
- * `data-czap-slot` are added or removed. Returns a {@link Disposer} that
+ * `data-liteship-slot` are added or removed. Returns a {@link Disposer} that
  * disconnects the observer; register it on a `Lifetime` (or call it directly)
  * to own the teardown.
  *
@@ -166,8 +166,8 @@ export const scanDOM = (registry: SlotRegistryShape, root: Element, defaultMode:
  *
  * @example
  * ```ts
- * import { SlotRegistry } from '@czap/web';
- * import { Lifetime } from '@czap/core';
+ * import { SlotRegistry } from '@liteship/web';
+ * import { Lifetime } from '@liteship/core';
  *
  * const registry = SlotRegistry.create();
  * const lifetime = Lifetime.make();
@@ -188,7 +188,7 @@ export const observe = (registry: SlotRegistryShape, root: Element): Disposer =>
     for (const mutation of mutations) {
       for (const node of Array.from(mutation.addedNodes)) {
         if (node instanceof Element) {
-          const slotPath = node.getAttribute('data-czap-slot');
+          const slotPath = node.getAttribute('data-liteship-slot');
           if (slotPath && SlotAddressing.isValid(slotPath)) {
             const mode = readIslandMode(node) ?? 'partial';
             const entry: SlotEntry = {
@@ -200,9 +200,9 @@ export const observe = (registry: SlotRegistryShape, root: Element): Disposer =>
             registry.register(entry);
           }
 
-          const descendants = node.querySelectorAll('[data-czap-slot]');
+          const descendants = node.querySelectorAll('[data-liteship-slot]');
           for (const desc of Array.from(descendants)) {
-            const descPath = desc.getAttribute('data-czap-slot');
+            const descPath = desc.getAttribute('data-liteship-slot');
             if (descPath && SlotAddressing.isValid(descPath)) {
               const mode = readIslandMode(desc) ?? 'partial';
               const entry: SlotEntry = {
@@ -219,14 +219,14 @@ export const observe = (registry: SlotRegistryShape, root: Element): Disposer =>
 
       for (const node of Array.from(mutation.removedNodes)) {
         if (node instanceof Element) {
-          const slotPath = node.getAttribute('data-czap-slot');
+          const slotPath = node.getAttribute('data-liteship-slot');
           if (slotPath && SlotAddressing.isValid(slotPath)) {
             registry.unregister(mkSlotPath(slotPath));
           }
 
-          const descendants = node.querySelectorAll('[data-czap-slot]');
+          const descendants = node.querySelectorAll('[data-liteship-slot]');
           for (const desc of Array.from(descendants)) {
-            const descPath = desc.getAttribute('data-czap-slot');
+            const descPath = desc.getAttribute('data-liteship-slot');
             if (descPath && SlotAddressing.isValid(descPath)) {
               registry.unregister(mkSlotPath(descPath));
             }
@@ -236,12 +236,12 @@ export const observe = (registry: SlotRegistryShape, root: Element): Disposer =>
 
       if (
         mutation.type === 'attributes' &&
-        mutation.attributeName === 'data-czap-slot' &&
+        mutation.attributeName === 'data-liteship-slot' &&
         mutation.target instanceof Element
       ) {
         const element = mutation.target;
         const oldPath = mutation.oldValue;
-        const newPath = element.getAttribute('data-czap-slot');
+        const newPath = element.getAttribute('data-liteship-slot');
 
         if (oldPath && SlotAddressing.isValid(oldPath)) {
           registry.unregister(mkSlotPath(oldPath));
@@ -266,7 +266,7 @@ export const observe = (registry: SlotRegistryShape, root: Element): Disposer =>
     subtree: true,
     attributes: true,
     attributeOldValue: true,
-    attributeFilter: ['data-czap-slot'],
+    attributeFilter: ['data-liteship-slot'],
   });
 
   return () => observer.disconnect();
@@ -277,10 +277,10 @@ export const observe = (registry: SlotRegistryShape, root: Element): Disposer =>
  *
  * @example
  * ```ts
- * import { SlotRegistry, SlotAddressing } from '@czap/web';
+ * import { SlotRegistry, SlotAddressing } from '@liteship/web';
  *
  * const el = SlotRegistry.findElement(SlotAddressing.brand('/sidebar'));
- * // el => <div data-czap-slot="/sidebar"> or null
+ * // el => <div data-liteship-slot="/sidebar"> or null
  * ```
  *
  * @param path - The slot path to search for
@@ -289,12 +289,12 @@ export const observe = (registry: SlotRegistryShape, root: Element): Disposer =>
 export const findElement = (path: SlotPath): Element | null => {
   const root = document.documentElement;
 
-  if (root.getAttribute('data-czap-slot') === path) {
+  if (root.getAttribute('data-liteship-slot') === path) {
     return root;
   }
 
-  for (const element of Array.from(root.querySelectorAll('[data-czap-slot]'))) {
-    if (element.getAttribute('data-czap-slot') === path) {
+  for (const element of Array.from(root.querySelectorAll('[data-liteship-slot]'))) {
+    if (element.getAttribute('data-liteship-slot') === path) {
       return element;
     }
   }
@@ -303,13 +303,13 @@ export const findElement = (path: SlotPath): Element | null => {
 };
 
 /**
- * Get the slot path from a DOM element's `data-czap-slot` attribute.
+ * Get the slot path from a DOM element's `data-liteship-slot` attribute.
  *
  * @example
  * ```ts
- * import { SlotRegistry } from '@czap/web';
+ * import { SlotRegistry } from '@liteship/web';
  *
- * const el = document.querySelector('[data-czap-slot]')!;
+ * const el = document.querySelector('[data-liteship-slot]')!;
  * const path = SlotRegistry.getPath(el);
  * // path => '/hero' or null if not a slot element
  * ```
@@ -318,7 +318,7 @@ export const findElement = (path: SlotPath): Element | null => {
  * @returns The slot path, or null if the element is not a slot
  */
 export const getPath = (element: Element): SlotPath | null => {
-  const slotPath = element.getAttribute('data-czap-slot');
+  const slotPath = element.getAttribute('data-liteship-slot');
 
   if (slotPath && SlotAddressing.isValid(slotPath)) {
     return mkSlotPath(slotPath);
@@ -330,13 +330,13 @@ export const getPath = (element: Element): SlotPath | null => {
 /**
  * Slot registry namespace.
  *
- * Maps `SlotPath` identifiers (from `data-czap-slot` attributes) to DOM
+ * Maps `SlotPath` identifiers (from `data-liteship-slot` attributes) to DOM
  * elements for efficient lookup and patching. Provides DOM scanning,
  * `MutationObserver`-based auto-registration, and path lookup utilities.
  *
  * @example
  * ```ts
- * import { SlotRegistry } from '@czap/web';
+ * import { SlotRegistry } from '@liteship/web';
  *
  * const registry = SlotRegistry.create();
  * SlotRegistry.scanDOM(registry, document.body);

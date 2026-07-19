@@ -69,7 +69,7 @@ traces:
       - "tests/unit/core/simulation-determinism-substrate.test.ts::the trace digest is minted through the ONE content-address kernel (contentAddressOf), never forked"
   - id: INV-DST-NO-AMBIENT-ENTROPY
     tests:
-      - "tests/unit/core/simulation-determinism-substrate.test.ts::the harness imports its time/randomness ONLY from the @czap/core substrate (manualClock / seededRng)"
+      - "tests/unit/core/simulation-determinism-substrate.test.ts::the harness imports its time/randomness ONLY from the @liteship/core substrate (manualClock / seededRng)"
 
   # ── Supply-chain — tests/unit/gauntlet/supply-chain-gate.test.ts ────────────
   - id: INV-SUPPLY-CHAIN-HERMETIC

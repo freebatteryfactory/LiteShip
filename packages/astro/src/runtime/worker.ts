@@ -1,6 +1,6 @@
-import { Diagnostics, StateName } from '@czap/core';
-import { dispatchCzapEvent } from '@czap/web';
-import { WorkerHost } from '@czap/worker';
+import { Diagnostics, StateName } from '@liteship/core';
+import { dispatchLiteshipEvent } from '@liteship/web';
+import { WorkerHost } from '@liteship/worker';
 import {
   applyBoundaryState,
   attachSignalObserver,
@@ -98,13 +98,13 @@ function canUseWorkerRuntime(): boolean {
  * Entry point used by the `client:worker` directive.
  *
  * Parses the serialised boundary off `element`, spins up (or reuses)
- * a {@link WorkerHost.Shape} from `@czap/worker`, bootstraps the
+ * a {@link WorkerHost.Shape} from `@liteship/worker`, bootstraps the
  * boundary in the worker, and streams resolved state back into DOM
  * via {@link applyBoundaryState}. Falls back to an inline evaluation
  * when `SharedArrayBuffer` / cross-origin isolation is unavailable.
  */
 export function initWorkerDirective(load: () => Promise<unknown>, element: HTMLElement): void {
-  let runtimeBoundary = parseBoundary(element.getAttribute('data-czap-boundary'));
+  let runtimeBoundary = parseBoundary(element.getAttribute('data-liteship-boundary'));
   if (!runtimeBoundary) {
     return;
   }
@@ -115,7 +115,7 @@ export function initWorkerDirective(load: () => Promise<unknown>, element: HTMLE
   let ackUnsubscribe: (() => void) | null = null;
   let workerMessageHandler: ((event: MessageEvent<{ type?: string }>) => void) | null = null;
   let workerRef: Worker | null = null;
-  let previousState = element.getAttribute('data-czap-state') ?? '';
+  let previousState = element.getAttribute('data-liteship-state') ?? '';
   let lastAppliedDetail: BoundaryStateDetail | null = null;
   let seededGeneration = 0;
   let lastAppliedGeneration = 0;
@@ -166,7 +166,7 @@ export function initWorkerDirective(load: () => Promise<unknown>, element: HTMLE
         {
           discrete: { [runtimeBoundary.name]: nextState },
         },
-        'czap:worker-state',
+        'liteship:worker-state',
       );
     };
 
@@ -207,7 +207,7 @@ export function initWorkerDirective(load: () => Promise<unknown>, element: HTMLE
       const payload = {
         discrete: { [boundary.name]: stateName },
       };
-      applyBoundaryState(element, boundary, payload, 'czap:worker-state');
+      applyBoundaryState(element, boundary, payload, 'liteship:worker-state');
       previousState = stateName;
       lastAppliedDetail = normalizeBoundaryState(payload);
       lastAppliedGeneration = generation;
@@ -221,7 +221,7 @@ export function initWorkerDirective(load: () => Promise<unknown>, element: HTMLE
 
     const onWorkerMessage = (event: MessageEvent<{ type?: string }>): void => {
       if (event.data?.type === 'ready') {
-        dispatchCzapEvent(element, 'czap:worker-ready');
+        dispatchLiteshipEvent(element, 'liteship:worker-ready');
       }
     };
     workerMessageHandler = onWorkerMessage;
@@ -264,7 +264,7 @@ export function initWorkerDirective(load: () => Promise<unknown>, element: HTMLE
         return;
       }
 
-      applyBoundaryState(element, boundary, state, 'czap:worker-state');
+      applyBoundaryState(element, boundary, state, 'liteship:worker-state');
       lastAppliedDetail = normalized;
       if (workerGeneration !== undefined) {
         lastAppliedGeneration = workerGeneration;
@@ -302,16 +302,16 @@ export function initWorkerDirective(load: () => Promise<unknown>, element: HTMLE
 
   const init = (): void => {
     if (runtimeBoundary) {
-      warnIfSignalUnserved(runtimeBoundary.input, { source: 'czap/astro.worker', what: 'boundary signal' });
+      warnIfSignalUnserved(runtimeBoundary.input, { source: 'liteship/astro.worker', what: 'boundary signal' });
     }
     if (!canUseWorkerRuntime()) {
       Diagnostics.warnOnce({
-        source: 'czap/astro.worker',
+        source: 'liteship/astro.worker',
         code: 'worker-runtime-unavailable',
         message:
           `Worker runtime unavailable (crossOriginIsolated=${String(globalThis.crossOriginIsolated)}, ` +
           `SharedArrayBuffer=${typeof SharedArrayBuffer !== 'undefined'}). ` +
-          `Fix: czap({ workers: { enabled: true } }) — COOP/COEP response headers are emitted automatically.`,
+          `Fix: liteship({ workers: { enabled: true } }) — COOP/COEP response headers are emitted automatically.`,
       });
       initFallback();
       return;
@@ -322,7 +322,7 @@ export function initWorkerDirective(load: () => Promise<unknown>, element: HTMLE
       return;
     } catch (error) {
       Diagnostics.warn({
-        source: 'czap/astro.worker',
+        source: 'liteship/astro.worker',
         code: 'worker-host-fallback',
         message: 'WorkerHost could not initialize, falling back to main-thread evaluation.',
         detail: error instanceof Error ? error.message : String(error),
@@ -332,10 +332,10 @@ export function initWorkerDirective(load: () => Promise<unknown>, element: HTMLE
     initFallback();
   };
 
-  element.addEventListener('czap:reinit', () => {
+  element.addEventListener('liteship:reinit', () => {
     cleanup();
-    runtimeBoundary = parseBoundary(element.getAttribute('data-czap-boundary'));
-    previousState = element.getAttribute('data-czap-state') ?? '';
+    runtimeBoundary = parseBoundary(element.getAttribute('data-liteship-boundary'));
+    previousState = element.getAttribute('data-liteship-state') ?? '';
     lastAppliedDetail = null;
     seededGeneration = 0;
     lastAppliedGeneration = 0;
@@ -344,7 +344,7 @@ export function initWorkerDirective(load: () => Promise<unknown>, element: HTMLE
     init();
   });
 
-  element.addEventListener('czap:teardown', () => {
+  element.addEventListener('liteship:teardown', () => {
     cleanup();
   });
 

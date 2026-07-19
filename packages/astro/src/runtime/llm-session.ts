@@ -1,14 +1,14 @@
-import type { ContentAddress, Receipt, UIFrame } from '@czap/core';
-import { Diagnostics } from '@czap/core';
-import { renderFromCatalog, type ComponentCatalog, type GeneratedUINode } from '@czap/genui';
+import type { ContentAddress, Receipt, UIFrame } from '@liteship/core';
+import { Diagnostics } from '@liteship/core';
+import { renderFromCatalog, type ComponentCatalog, type GeneratedUINode } from '@liteship/genui';
 import {
   LLMChunkNormalization,
   createHtmlFragment,
-  dispatchCzapEvent,
+  dispatchLiteshipEvent,
   type HtmlPolicy,
   type LLMChunk,
   type ToolCallAccumulator,
-} from '@czap/web';
+} from '@liteship/web';
 import { createLLMRenderPipeline, type LLMRenderPipeline } from './llm-render-pipeline.js';
 import { createLLMReceiptTracker, type LLMReceiptTracker } from './llm-receipt-tracker.js';
 import type { RuntimeSessionState } from './runtime-session.js';
@@ -22,7 +22,7 @@ type DeviceTier = 'none' | 'transitions' | 'animations' | 'physics' | 'compute';
  * strategy.
  */
 export interface LLMSessionConfig {
-  /** Host element (directive root). Receives `czap:llm-*` events. */
+  /** Host element (directive root). Receives `liteship:llm-*` events. */
   readonly element: HTMLElement;
   /** Text-sink element (typically a child of `element`). */
   readonly target: HTMLElement;
@@ -130,7 +130,7 @@ function writeHtml(target: HTMLElement, html: string, htmlPolicy: HtmlPolicy, al
 
 /**
  * Build an {@link LLMSessionHost} that writes text/frames directly to
- * the DOM and dispatches `czap:llm-*` custom events on `element`.
+ * the DOM and dispatches `liteship:llm-*` custom events on `element`.
  * Default host used by {@link createLLMSession}.
  */
 export function createDOMLLMSessionHost(
@@ -190,23 +190,23 @@ export function createDOMLLMSessionHost(
     },
 
     emitToken(text, accumulated) {
-      dispatchCzapEvent(element, 'czap:llm-token', { text, accumulated });
+      dispatchLiteshipEvent(element, 'liteship:llm-token', { text, accumulated });
     },
 
     emitFrame(frame) {
-      dispatchCzapEvent(element, 'czap:llm-frame', frame);
+      dispatchLiteshipEvent(element, 'liteship:llm-frame', frame);
     },
 
     emitToolStart(name) {
-      dispatchCzapEvent(element, 'czap:llm-tool-start', { name });
+      dispatchLiteshipEvent(element, 'liteship:llm-tool-start', { name });
     },
 
     emitToolEnd(name, args) {
-      dispatchCzapEvent(element, 'czap:llm-tool-end', { name, args });
+      dispatchLiteshipEvent(element, 'liteship:llm-tool-end', { name, args });
     },
 
     emitDone(accumulated) {
-      dispatchCzapEvent(element, 'czap:llm-done', { accumulated });
+      dispatchLiteshipEvent(element, 'liteship:llm-done', { accumulated });
     },
 
     renderGeneratedUI(node, renderId) {
@@ -221,22 +221,22 @@ export function createDOMLLMSessionHost(
       if (!result.ok) {
         // Surface the validation rejection through the existing Diagnostics
         // channel instead of dropping a bare boolean (genui itself stays
-        // @czap/core-free; the astro layer does the emission). The host contract
+        // @liteship/core-free; the astro layer does the emission). The host contract
         // stays boolean.
         Diagnostics.warnOnce({
-          source: 'czap/astro.llm-session',
+          source: 'liteship/astro.llm-session',
           code: 'genui-render-rejected',
           message: `Generated UI tree rejected before render: ${result.error.message}`,
           detail: { code: result.error.code, path: result.error.path, renderId: String(renderId) },
         });
         return false;
       }
-      currentTarget.dataset.czapGenuiRenderHash = String(renderId);
+      currentTarget.dataset.liteshipGenuiRenderHash = String(renderId);
       return true;
     },
 
     emitGeneratedUI(node, renderId) {
-      dispatchCzapEvent(element, 'czap:llm-genui', { node, renderHash: renderId });
+      dispatchLiteshipEvent(element, 'liteship:llm-genui', { node, renderHash: renderId });
     },
   };
 }

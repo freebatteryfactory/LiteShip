@@ -1,6 +1,6 @@
 /**
  * Dev-mode Vite server for the scene player. Serves player.html, watches
- * the scene file, emits `czap:scene-update` events via WebSocket when
+ * the scene file, emits `liteship:scene-update` events via WebSocket when
  * the scene module changes, so the browser player can reload without
  * losing the current playhead.
  *
@@ -8,7 +8,7 @@
  */
 
 import type { ViteDevServer, InlineConfig } from 'vite';
-import { HostCapabilityError } from '@czap/error';
+import { HostCapabilityError } from '@liteship/error';
 import { existsSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -24,10 +24,10 @@ export interface DevServerHandle {
 /** Start the scene-dev Vite server bound to `scenePath`. */
 export async function startDevServer(scenePath: string): Promise<DevServerHandle> {
   // GUARDED optional-integration seam (the sanctioned dynamic-import pattern, same
-  // as @czap/cli → @czap/mcp-server): `vite` is a heavy dev-only dependency the
-  // scene runtime surface (`@czap/scene` main entry) never touches — only this
+  // as @liteship/cli → @liteship/mcp-server): `vite` is a heavy dev-only dependency the
+  // scene runtime surface (`@liteship/scene` main entry) never touches — only this
   // `./dev` server does. Loading it lazily behind a teaching error keeps it OUT of
-  // the package's load-time dependency closure (a fresh consumer of `@czap/scene`
+  // the package's load-time dependency closure (a fresh consumer of `@liteship/scene`
   // pulls no vite), so it is deliberately undeclared and the declared-dependency
   // gate is satisfied without a peer that would fracture vite's module identity.
   let createServer: (config?: InlineConfig) => Promise<ViteDevServer>;
@@ -36,7 +36,7 @@ export async function startDevServer(scenePath: string): Promise<DevServerHandle
   } catch {
     throw HostCapabilityError(
       'vite',
-      'the @czap/scene/dev server requires vite — install it as a dev dependency (pnpm add -D vite)',
+      'the @liteship/scene/dev server requires vite — install it as a dev dependency (pnpm add -D vite)',
     );
   }
   const here = dirname(fileURLToPath(import.meta.url));
@@ -53,7 +53,7 @@ export async function startDevServer(scenePath: string): Promise<DevServerHandle
   // rolldown's dep-scan plugin. Isolating each instance to its own cache
   // dir eliminates the race; cost is a one-time scan per process, which is
   // negligible for the player.html entry.
-  const cacheDir = join(tmpdir(), `czap-scene-dev-${process.pid}-${randomBytes(4).toString('hex')}`);
+  const cacheDir = join(tmpdir(), `liteship-scene-dev-${process.pid}-${randomBytes(4).toString('hex')}`);
   const server: ViteDevServer = await createServer({
     root: playerRoot,
     cacheDir,
@@ -70,12 +70,12 @@ export async function startDevServer(scenePath: string): Promise<DevServerHandle
     optimizeDeps: { noDiscovery: true, include: [] },
     plugins: [
       {
-        name: 'czap-scene-watch',
+        name: 'liteship-scene-watch',
         configureServer(s) {
           s.watcher.add(resolve(scenePath));
           s.watcher.on('change', (file) => {
             if (file.endsWith(scenePath) || resolve(file) === resolve(scenePath)) {
-              s.ws.send({ type: 'custom', event: 'czap:scene-update', data: { sceneId: file } });
+              s.ws.send({ type: 'custom', event: 'liteship:scene-update', data: { sceneId: file } });
             }
           });
         },

@@ -6,7 +6,7 @@
 
 # gauntlet/src
 
-`@czap/gauntlet` — the self-proving, extendable rigor engine.
+`@liteship/gauntlet` — the self-proving, extendable rigor engine.
 
 The foundations (Slice A): the [Finding](interfaces/Finding.md) vocabulary humans and agents
 share, [AssuranceLevel](type-aliases/AssuranceLevel.md) (the hazard model that aims rigor), the

@@ -143,7 +143,7 @@ export function codeOnly(src: string): string {
   // Template ${…} substitution tracking: a backtick only CLOSES the template from template TEXT
   // (inSubst === false), so a NESTED template inside a substitution (`` `a ${ `b` } c` ``) is blanked
   // wholesale instead of the inner backtick falsely closing the outer (the char-machine's parser-shaped
-  // blind spot, caught by the differential test vs the sound @czap/audit scanner). Literal braces in
+  // blind spot, caught by the differential test vs the sound @liteship/audit scanner). Literal braces in
   // template text are ignored; only `${` opens a substitution. The residual the lexer cannot balance —
   // a string carrying an unbalanced brace INSIDE a substitution — is vanishingly rare; the injected
   // scanner has no such limit.

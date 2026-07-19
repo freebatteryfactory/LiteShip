@@ -1,7 +1,7 @@
-import { czapMiddleware } from '@czap/astro';
+import { liteshipMiddleware } from '@liteship/astro';
 
 /**
  * Astro middleware -- parses Client Hints, computes device tier,
- * and injects czap locals for downstream components.
+ * and injects liteship locals for downstream components.
  */
-export const onRequest = czapMiddleware();
+export const onRequest = liteshipMiddleware();

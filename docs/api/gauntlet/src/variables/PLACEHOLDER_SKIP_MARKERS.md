@@ -22,4 +22,4 @@ from the lie a sign-off must never be able to launder past the capability-gate c
 Re-derived here (NOT imported from `no-placeholder.ts`, which keeps its detector private +
 comment-anchored): the matcher below is WHOLE-WORD for the single-token markers (so
 `SwiPe` / `stubbornly` never false-trip) and a substring for the multi-word phrase
-`not implemented`. Case-insensitive. The lean engine stays `@czap/core`-free — pure regex.
+`not implemented`. Case-insensitive. The lean engine stays `@liteship/core`-free — pure regex.

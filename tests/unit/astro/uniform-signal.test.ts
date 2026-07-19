@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * driveUniformFromSignal: continuous signal -> czap:uniform-update bridge.
+ * driveUniformFromSignal: continuous signal -> liteship:uniform-update bridge.
  *
  * Pins the contract the GPU runtime consumes: a continuous signal value is
  * written to BOTH the glsl and wgsl uniform maps under the requested name, the
@@ -39,7 +39,7 @@ function setScroll(scrollY: number, scrollHeight: number, innerHeight: number): 
 
 function capture(el: HTMLElement): BoundaryStateDetail[] {
   const seen: BoundaryStateDetail[] = [];
-  el.addEventListener('czap:uniform-update', (e) => seen.push((e as CustomEvent<BoundaryStateDetail>).detail));
+  el.addEventListener('liteship:uniform-update', (e) => seen.push((e as CustomEvent<BoundaryStateDetail>).detail));
   return seen;
 }
 

@@ -6,21 +6,21 @@
  * sorted uncompressed-manifest CBOR, never the raw `.tgz` bytes, since gzip
  * timestamps make those non-deterministic across publish runs.
  *
- * Lives in `@czap/cli` (not `@czap/core`) because it imports `node:zlib`
- * for gzip decoding; `@czap/core` must remain browser-bundleable for Astro
+ * Lives in `@liteship/cli` (not `@liteship/core`) because it imports `node:zlib`
+ * for gzip decoding; `@liteship/core` must remain browser-bundleable for Astro
  * runtime hydration.
  *
  * @module
  */
 
 import { gunzipSync } from 'node:zlib';
-import { AddressedDigest, CanonicalCbor, type AddressedDigest as AddressedDigestType } from '@czap/core';
-import { sha256Hex } from '@czap/canonical';
-import { IoError, NotFoundError } from '@czap/error';
+import { AddressedDigest, CanonicalCbor, type AddressedDigest as AddressedDigestType } from '@liteship/core';
+import { sha256Hex } from '@liteship/canonical';
+import { IoError, NotFoundError } from '@liteship/error';
 
 // Wave 8: the addressers are plain SYNC functions returning the address value
 // directly. The historic async boundary (`crypto.subtle` sha256 wrapped in an
-// Effect) is gone — `@czap/canonical`'s `sha256Hex` is SYNC and byte-identical
+// Effect) is gone — `@liteship/canonical`'s `sha256Hex` is SYNC and byte-identical
 // (same SHA-256 → same lowercase hex → same canonical bytes → same address).
 
 interface TarEntry {
@@ -131,8 +131,8 @@ export const tarballManifestAddress = (tarballBytes: Uint8Array): AddressedDiges
  * packed tarball and return every dependency entry (dependencies /
  * optionalDependencies / peerDependencies) still carrying the
  * `workspace:` protocol — specs npm consumers cannot install.
- * `@czap/core@0.1.4` shipped exactly this defect; `package:smoke` gates
- * it in CI, and this guard closes the manual/local `czap ship` path,
+ * `@liteship/core@0.1.4` shipped exactly this defect; `package:smoke` gates
+ * it in CI, and this guard closes the manual/local `liteship ship` path,
  * where a tarball with workspace specs would also poison the
  * ShipCapsule's publish evidence.
  *

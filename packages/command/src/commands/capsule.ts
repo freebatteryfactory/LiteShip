@@ -2,11 +2,11 @@
  * capsule inspect / list / verify (CUT A1) — read operations over the capsule
  * manifest, plus generated-test verification. Pure logic returning structured
  * results: the adapter resolves + reads the manifest (honoring
- * CZAP_CAPSULE_MANIFEST) and runs vitest; these handlers parse + decide.
+ * LITESHIP_CAPSULE_MANIFEST) and runs vitest; these handlers parse + decide.
  *
  * @module
  */
-import { S, type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
+import { S, type CapsuleCommandResult, type CommandJsonSchema } from '@liteship/core';
 import { capabilityUnavailable, defineCommand, failed, ok, type CommandCapability } from '../registry.js';
 import { loadManifest, manifestUnavailable } from './manifest.js';
 

@@ -8,8 +8,8 @@ import {
   createGraphMutationClient,
   decodeDocumentGraph,
   sealGraph,
-} from '@czap/core';
-import type { DocumentGraph, StateAuthority, StateCellKind, StateCellStoreShape } from '@czap/core';
+} from '@liteship/core';
+import type { DocumentGraph, StateAuthority, StateCellKind, StateCellStoreShape } from '@liteship/core';
 import {
   Morph,
   Resumption,
@@ -17,7 +17,7 @@ import {
   SlotAddressing,
   SlotRegistry,
   resolveHtmlString,
-  dispatchCzapEvent,
+  dispatchLiteshipEvent,
   streamWireAttr,
   bindRequestSnapshotRecovery,
   fetchSnapshot,
@@ -25,8 +25,8 @@ import {
   getStreamRecoverySubstrate,
   recordStreamPatchReceipt,
   registerStreamRecoverySubstrate,
-} from '@czap/web';
-import type { ResumeResponse, SSEClient, SSEMessage, SSEState } from '@czap/web';
+} from '@liteship/web';
+import type { ResumeResponse, SSEClient, SSEMessage, SSEState } from '@liteship/web';
 import { bootstrapSlots, rescanSlots } from './slots.js';
 import { readRuntimeHtmlPolicy, readRuntimeEndpointPolicy } from './policy.js';
 import { createStreamScheduler } from './stream-session.js';
@@ -39,7 +39,7 @@ type Locator =
   | { readonly type: 'semantic-id'; readonly value: string };
 
 function targetLocator(element: HTMLElement): Locator | null {
-  const slot = element.getAttribute('data-czap-slot');
+  const slot = element.getAttribute('data-liteship-slot');
   if (slot) {
     return { type: 'slot', value: slot };
   }
@@ -48,7 +48,7 @@ function targetLocator(element: HTMLElement): Locator | null {
     return { type: 'id', value: element.id };
   }
 
-  const semanticId = element.getAttribute('data-czap-id');
+  const semanticId = element.getAttribute('data-liteship-id');
   if (semanticId) {
     return { type: 'semantic-id', value: semanticId };
   }
@@ -73,12 +73,12 @@ function findTarget(locator: Locator | null): HTMLElement | null {
       return document.getElementById(locator.value);
     case 'semantic-id': {
       const root = document.documentElement;
-      if (root.getAttribute('data-czap-id') === locator.value) {
+      if (root.getAttribute('data-liteship-id') === locator.value) {
         return root;
       }
 
-      for (const candidate of Array.from(root.querySelectorAll('[data-czap-id]'))) {
-        if (candidate.getAttribute('data-czap-id') === locator.value && candidate instanceof HTMLElement) {
+      for (const candidate of Array.from(root.querySelectorAll('[data-liteship-id]'))) {
+        if (candidate.getAttribute('data-liteship-id') === locator.value && candidate instanceof HTMLElement) {
           return candidate;
         }
       }
@@ -151,8 +151,8 @@ function patchCouldInvalidateSlots(
   }
 
   return (
-    html.includes('data-czap-slot') ||
-    html.includes('data-czap-id') ||
+    html.includes('data-liteship-slot') ||
+    html.includes('data-liteship-id') ||
     html.includes(' id=') ||
     html.includes(' id="') ||
     html.includes(" id='")
@@ -187,23 +187,23 @@ function hasCustomEndpointPolicy(policy: ReturnType<typeof readRuntimeEndpointPo
 
 /**
  * Graph-native recovery opt-in attributes (#133-full). Read DIRECTLY off the host
- * element (like `client:graph`'s `data-czap-graph`), not through the stream wire
+ * element (like `client:graph`'s `data-liteship-graph`), not through the stream wire
  * registry: they configure the host-owned recovery SUBSTRATE, not the SSE
- * transport. A plain stream (no `data-czap-stream-graph`) keeps the snapshot floor
+ * transport. A plain stream (no `data-liteship-stream-graph`) keeps the snapshot floor
  * unchanged — the graph-native path is strictly additive and never the default.
  *
- * - `data-czap-stream-graph`   — the host's QUERY read-leg (and mutation POST)
+ * - `data-liteship-stream-graph`   — the host's QUERY read-leg (and mutation POST)
  *   endpoint. Its presence GATES the whole substrate.
- * - `data-czap-stream-graph-base` — the SSR-inlined, sealed {@link DocumentGraph}
+ * - `data-liteship-stream-graph-base` — the SSR-inlined, sealed {@link DocumentGraph}
  *   the client starts from (the local base the QUERY re-adopts against). Inlined,
  *   not fetched, so registration is synchronous and cannot race a reinit.
- * - `data-czap-stream-cells`   — the SSR-inlined StateCell registrations the
+ * - `data-liteship-stream-cells`   — the SSR-inlined StateCell registrations the
  *   crossings replay INTO. Gap replay skips a cell the store never registered
  *   (host owns the registry), so the host must declare them here.
  */
-const STREAM_GRAPH_QUERY_ATTR = 'data-czap-stream-graph';
-const STREAM_GRAPH_BASE_ATTR = 'data-czap-stream-graph-base';
-const STREAM_GRAPH_CELLS_ATTR = 'data-czap-stream-cells';
+const STREAM_GRAPH_QUERY_ATTR = 'data-liteship-stream-graph';
+const STREAM_GRAPH_BASE_ATTR = 'data-liteship-stream-graph-base';
+const STREAM_GRAPH_CELLS_ATTR = 'data-liteship-stream-cells';
 
 /** One SSR-inlined StateCell registration for the graph-native recovery store. */
 interface StreamCellRegistration {
@@ -239,7 +239,7 @@ function decodeStreamGraphBase(raw: string): DocumentGraph | null {
     return sealGraph(decodeDocumentGraph(JSON.parse(raw) as unknown));
   } catch (cause) {
     Diagnostics.warnOnce({
-      source: 'czap/astro.stream',
+      source: 'liteship/astro.stream',
       code: 'stream-graph-base-malformed',
       message:
         `The ${STREAM_GRAPH_BASE_ATTR} inlined base graph did not decode as a well-formed DocumentGraph — ` +
@@ -258,7 +258,7 @@ function parseStreamCellRegistrations(raw: string): readonly StreamCellRegistrat
     parsed = JSON.parse(raw);
   } catch (cause) {
     Diagnostics.warnOnce({
-      source: 'czap/astro.stream',
+      source: 'liteship/astro.stream',
       code: 'stream-graph-cells-malformed',
       message: `The ${STREAM_GRAPH_CELLS_ATTR} inlined cell registrations were not valid JSON — graph-native recovery is NOT armed.`,
       cause,
@@ -267,7 +267,7 @@ function parseStreamCellRegistrations(raw: string): readonly StreamCellRegistrat
   }
   if (!Array.isArray(parsed) || parsed.length === 0 || !parsed.every(isStreamCellRegistration)) {
     Diagnostics.warnOnce({
-      source: 'czap/astro.stream',
+      source: 'liteship/astro.stream',
       code: 'stream-graph-cells-malformed',
       message:
         `The ${STREAM_GRAPH_CELLS_ATTR} inlined cell registrations must be a non-empty array of ` +
@@ -280,9 +280,9 @@ function parseStreamCellRegistrations(raw: string): readonly StreamCellRegistrat
 
 /**
  * Entry point for the `client:stream` directive. Opens an SSE client
- * to the `data-czap-stream-url` endpoint, funnels incoming HTML
+ * to the `data-liteship-stream-url` endpoint, funnels incoming HTML
  * patches through a {@link createStreamScheduler}, and triggers slot
- * rescans when necessary. Honors `czap:reinit` (re-read) / `czap:teardown`
+ * rescans when necessary. Honors `liteship:reinit` (re-read) / `liteship:teardown`
  * (final tear-down) to survive Astro view transitions.
  */
 export function initStreamDirective(load: () => Promise<unknown>, element: HTMLElement): void {
@@ -300,7 +300,7 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
   const streamUrl = allowRuntimeEndpointUrl(
     target.getAttribute(streamWireAttr('url')),
     'stream',
-    'czap/astro.stream',
+    'liteship/astro.stream',
     {
       crossOriginRejected: 'stream-cross-origin-url-rejected',
       malformedUrl: 'stream-malformed-url-rejected',
@@ -319,7 +319,7 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
     allowRuntimeEndpointUrl(
       target.getAttribute(streamWireAttr('snapshotUrl')),
       'snapshot',
-      'czap/astro.stream',
+      'liteship/astro.stream',
       {
         crossOriginRejected: 'snapshot-cross-origin-url-rejected',
         malformedUrl: 'snapshot-malformed-url-rejected',
@@ -332,7 +332,7 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
     allowRuntimeEndpointUrl(
       target.getAttribute(streamWireAttr('replayUrl')),
       'replay',
-      'czap/astro.stream',
+      'liteship/astro.stream',
       {
         crossOriginRejected: 'replay-cross-origin-url-rejected',
         malformedUrl: 'replay-malformed-url-rejected',
@@ -345,10 +345,10 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
   let recoveryPending = false;
   let pendingLocator: Locator | null = null;
 
-  // The hardened SSE primitive (`@czap/web` `SSE.create`) now owns the
+  // The hardened SSE primitive (`@liteship/web` `SSE.create`) now owns the
   // `EventSource`, exponential-backoff reconnect, the heartbeat watchdog, and
   // the bounded overflow buffer (default `coalesce-by-id` — stream patches are
-  // `data-czap-id`-addressed). Messages and connection edges are delivered
+  // `data-liteship-id`-addressed). Messages and connection edges are delivered
   // SYNCHRONOUSLY via `onMessage` / `onStateChange` callbacks, so this directive
   // owns just ONE `Lifetime` per connection (replacing the former per-connection
   // ManagedRuntime+Scope): the client's transport teardown (EventSource close +
@@ -375,9 +375,9 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
       return;
     }
 
-    reinitTarget?.removeEventListener('czap:reinit', handleReinit);
+    reinitTarget?.removeEventListener('liteship:reinit', handleReinit);
     reinitTarget = nextTarget;
-    reinitTarget.addEventListener('czap:reinit', handleReinit);
+    reinitTarget.addEventListener('liteship:reinit', handleReinit);
   };
 
   const patchScheduler = createStreamScheduler({
@@ -405,7 +405,7 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
       bindReinit(target);
       bindSnapshotRecovery(target);
       for (let index = 0; index < patchCount; index++) {
-        dispatchCzapEvent(target, 'czap:stream-morph');
+        dispatchLiteshipEvent(target, 'liteship:stream-morph');
       }
       pendingLocator = null;
     },
@@ -428,7 +428,7 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
     if (response.type === 'snapshot') {
       const signalsError = validateSnapshotSignalsField(response.signals);
       if (signalsError) {
-        dispatchCzapEvent(target, 'czap:stream-error', {
+        dispatchLiteshipEvent(target, 'liteship:stream-error', {
           reason: 'snapshot-signals-invalid',
           message: signalsError,
         });
@@ -437,7 +437,7 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
 
       await enqueueHtml(response.html);
       applyDiscreteSnapshotSignals(response.signals, (payload) => {
-        dispatchCzapEvent(target, 'czap:signal', payload);
+        dispatchLiteshipEvent(target, 'liteship:signal', payload);
       });
       return;
     }
@@ -463,7 +463,7 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
 
     if (dropped) {
       try {
-        // `fetchSnapshot` is Promise-first (rejects with a tagged @czap/error on
+        // `fetchSnapshot` is Promise-first (rejects with a tagged @liteship/error on
         // failure) — await it directly; the surrounding catch handles rejection.
         const snapshot = await fetchSnapshot(artifactId!, {
           ...(snapshotUrl ? { snapshotUrl } : {}),
@@ -471,7 +471,7 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
         });
         const signalsError = validateSnapshotSignalsField(snapshot.signals);
         if (signalsError) {
-          dispatchCzapEvent(target, 'czap:stream-error', {
+          dispatchLiteshipEvent(target, 'liteship:stream-error', {
             reason: 'resume-failed',
             message: signalsError,
           });
@@ -479,7 +479,7 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
         }
         recoveredSignals = snapshot.signals;
       } catch (error) {
-        dispatchCzapEvent(target, 'czap:stream-error', {
+        dispatchLiteshipEvent(target, 'liteship:stream-error', {
           reason: 'resume-failed',
           message: error instanceof Error ? error.message : String(error),
         });
@@ -499,7 +499,7 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
 
     if (recoveredSignals !== undefined) {
       applyDiscreteSnapshotSignals(recoveredSignals, (payload) => {
-        dispatchCzapEvent(target, 'czap:signal', payload);
+        dispatchLiteshipEvent(target, 'liteship:signal', payload);
       });
     }
 
@@ -519,14 +519,14 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
       artifactId !== undefined &&
       getStreamRecoverySubstrate(artifactId) !== undefined
     ) {
-      dispatchCzapEvent(target, 'czap:request-snapshot', { reason: 'resume-receipts', domStale: false });
+      dispatchLiteshipEvent(target, 'liteship:request-snapshot', { reason: 'resume-receipts', domStale: false });
     }
   };
 
   const reconcileResumption = async (currentEventId: string): Promise<void> => {
     const resolvedArtifactId = artifactId!;
     try {
-      // `Resumption.resume` is Promise-first (rejects with a tagged @czap/error on
+      // `Resumption.resume` is Promise-first (rejects with a tagged @liteship/error on
       // failure) — await it directly; the surrounding catch handles rejection.
       const response = await Resumption.resume(resolvedArtifactId, currentEventId, {
         ...(snapshotUrl ? { snapshotUrl } : {}),
@@ -535,7 +535,7 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
       });
       await applyResumeResponse(response);
     } catch (error) {
-      dispatchCzapEvent(target, 'czap:stream-error', {
+      dispatchLiteshipEvent(target, 'liteship:stream-error', {
         reason: 'resume-failed',
         message: error instanceof Error ? error.message : String(error),
       });
@@ -567,7 +567,7 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
     }
 
     if (message.type === 'signal') {
-      dispatchCzapEvent(target, 'czap:signal', message.data);
+      dispatchLiteshipEvent(target, 'liteship:signal', message.data);
       return;
     }
 
@@ -602,15 +602,15 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
     switch (state) {
       case 'connected':
         patchScheduler.activate();
-        dispatchCzapEvent(target, 'czap:stream-connected');
+        dispatchLiteshipEvent(target, 'liteship:stream-connected');
         return;
       case 'reconnecting':
         recoveryPending = artifactId !== undefined && (client ? client.lastEventId !== null : false);
         patchScheduler.beginReconnect();
-        dispatchCzapEvent(target, 'czap:stream-disconnected');
+        dispatchLiteshipEvent(target, 'liteship:stream-disconnected');
         return;
       case 'error':
-        dispatchCzapEvent(target, 'czap:stream-error', { reason: 'max-reconnect-attempts' });
+        dispatchLiteshipEvent(target, 'liteship:stream-error', { reason: 'max-reconnect-attempts' });
         return;
       default:
         // 'connecting' (initial) and 'disconnected' (intentional close) carry
@@ -665,7 +665,7 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
 
   // Host-owned graph-native recovery substrate (#133-full). Registered here — in
   // the PRODUCTION directive, not test glue — when the element opts in via
-  // `data-czap-stream-graph`. The registry THROWS on double-registration (Law 1),
+  // `data-liteship-stream-graph`. The registry THROWS on double-registration (Law 1),
   // so `setupGraphSubstrate` DISPOSES any prior registration before re-registering:
   // it is safe to call repeatedly (init and every reinit).
   let unbindGraphSubstrate: (() => void) | null = null;
@@ -685,7 +685,7 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
     }
     if (artifactId === undefined) {
       Diagnostics.warnOnce({
-        source: 'czap/astro.stream',
+        source: 'liteship/astro.stream',
         code: 'stream-graph-without-artifact',
         message:
           `${STREAM_GRAPH_QUERY_ATTR} requires ${streamWireAttr('artifact')} — graph-native recovery is keyed by ` +
@@ -696,7 +696,7 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
 
     // The graph endpoint is a same-origin recovery read leg by default — resolve it
     // under the runtime endpoint policy (reusing the `snapshot` recovery kind).
-    const graphQueryUrl = allowRuntimeEndpointUrl(rawGraphUrl, 'snapshot', 'czap/astro.stream', {
+    const graphQueryUrl = allowRuntimeEndpointUrl(rawGraphUrl, 'snapshot', 'liteship/astro.stream', {
       crossOriginRejected: 'stream-graph-cross-origin-url-rejected',
       malformedUrl: 'stream-graph-malformed-url-rejected',
       originNotAllowed: 'stream-graph-origin-not-allowed',
@@ -710,7 +710,7 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
     const rawCells = target.getAttribute(STREAM_GRAPH_CELLS_ATTR);
     if (rawBase === null || rawCells === null) {
       Diagnostics.warnOnce({
-        source: 'czap/astro.stream',
+        source: 'liteship/astro.stream',
         code: 'stream-graph-substrate-incomplete',
         message:
           `${STREAM_GRAPH_QUERY_ATTR} is set but ${STREAM_GRAPH_BASE_ATTR} and/or ${STREAM_GRAPH_CELLS_ATTR} are missing — ` +
@@ -774,7 +774,7 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
       artifactId,
       ...(snapshotUrl ? { snapshotUrl } : {}),
       ...(hasCustomEndpointPolicy(endpointPolicy) ? { endpointPolicy } : {}),
-      // `czap:request-snapshot` is dispatched by `Morph.morphWithState` ONLY after a
+      // `liteship:request-snapshot` is dispatched by `Morph.morphWithState` ONLY after a
       // preserve-hint rejection (packages/web/src/morph/diff.ts) — the morph already
       // clobbered the DOM, so the rendered view is KNOWN-STALE. Mark it so, so the
       // graph-native gap-replay path (below) does not early-return on an `ok`/`304`
@@ -795,16 +795,16 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
       handlers: {
         applyHtml: enqueueHtml,
         applyDiscreteSignal: (payload) => {
-          dispatchCzapEvent(target, 'czap:signal', payload);
+          dispatchLiteshipEvent(target, 'liteship:signal', payload);
         },
         // Reflect each gap-replayed crossing back to the host as the SAME discrete signal the
         // snapshot floor emits (`{ [cell]: next }`). The morph-rejection path converges the host
         // via fresh snapshot HTML + signals, but a receipt-only resume (`domStale: false`) skips
         // that floor — without this the crossing would hydrate ONLY the private recovery cell
-        // store, dispatching no `czap:signal` and leaving downstream listeners / rendered state
+        // store, dispatching no `liteship:signal` and leaving downstream listeners / rendered state
         // stale even though it was attested and replayed (Codex P2).
         applyTransition: (transition) => {
-          dispatchCzapEvent(target, 'czap:signal', { [transition.cell]: transition.next });
+          dispatchLiteshipEvent(target, 'liteship:signal', { [transition.cell]: transition.next });
         },
       },
     });
@@ -816,7 +816,7 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
   bindSnapshotRecovery(target);
 
   openClient();
-  element.addEventListener('czap:teardown', () => {
+  element.addEventListener('liteship:teardown', () => {
     unbindGraphSubstrate?.();
     unbindSnapshotRecovery?.();
     closeClient();

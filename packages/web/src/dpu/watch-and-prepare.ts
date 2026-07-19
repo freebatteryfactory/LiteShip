@@ -2,7 +2,7 @@
  * DPU watch-and-prepare — stamped verifiable HTML patches with feature detection
  * and a permanent floor path (#120).
  *
- * Marker names ride the stable `nodeLogicalKey` from `@czap/core` (never node
+ * Marker names ride the stable `nodeLogicalKey` from `@liteship/core` (never node
  * ContentAddresses, which self-invalidate on payload change). Each fragment is stamped
  * with base/result graph ids plus a sha256 {@link AddressedDigest} so `staleBase`
  * lifts to the DOM layer — the same CAS discipline as a GraphPatch, transport-agnostic.
@@ -13,25 +13,25 @@
  *
  * @module
  */
-import type { AddressedDigest, ContentAddress, DocumentGraph } from '@czap/core';
-import { AddressedDigest as AddressedDigestNS } from '@czap/core';
-import { ValidationError } from '@czap/error';
+import type { AddressedDigest, ContentAddress, DocumentGraph } from '@liteship/core';
+import { AddressedDigest as AddressedDigestNS } from '@liteship/core';
+import { ValidationError } from '@liteship/error';
 import { morphPure } from '../morph/diff-pure.js';
 import { createHtmlFragment } from '../security/html-trust.js';
 
 /** DOM attribute carrying the stable DPU marker name (a logicalKey, not a content address). */
-export const DPU_MARKER_ATTR = 'data-czap-dpu-marker';
+export const DPU_MARKER_ATTR = 'data-liteship-dpu-marker';
 /** DOM attribute stamped with the base graph id the patch was prepared against. */
-export const DPU_BASE_ATTR = 'data-czap-dpu-base';
+export const DPU_BASE_ATTR = 'data-liteship-dpu-base';
 /** DOM attribute stamped with the result graph id after a successful apply. */
-export const DPU_RESULT_ATTR = 'data-czap-dpu-result';
+export const DPU_RESULT_ATTR = 'data-liteship-dpu-result';
 /**
  * DOM attribute stamped with the sha256 integrity digest of the APPLIED DOM
  * serialization (`target.innerHTML` after sanitize + apply) — NOT the envelope's
  * pre-sanitization input bytes. The envelope digest verifies transport integrity
  * before apply; this attribute attests what is actually rendered.
  */
-export const DPU_DIGEST_ATTR = 'data-czap-dpu-digest';
+export const DPU_DIGEST_ATTR = 'data-liteship-dpu-digest';
 
 /** Which rung applied or will apply a verifiable patch. */
 export type DpuRung = 'native-sethtml' | 'floor-morph';
@@ -268,7 +268,7 @@ const markerRegistry = new Map<string, Element>();
 
 /**
  * Watch a DOM slot under `marker` and prepare stamped verifiable patches against it.
- * The target is annotated with `data-czap-dpu-marker` immediately; successful applies
+ * The target is annotated with `data-liteship-dpu-marker` immediately; successful applies
  * also stamp base/result ids and the applied-DOM digest on the element.
  *
  * Throws when `marker` is already watched on a DIFFERENT connected element —

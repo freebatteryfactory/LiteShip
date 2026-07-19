@@ -6,7 +6,7 @@
 
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import fc from 'fast-check';
-import { resolveRuntimeUrl, SlotRegistry } from '@czap/web';
+import { resolveRuntimeUrl, SlotRegistry } from '@liteship/web';
 
 // Mock DOM APIs for Node.js test environment
 const mockCreateElement = vi.fn(() => ({

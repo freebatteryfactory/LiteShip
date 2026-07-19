@@ -1,8 +1,8 @@
 /**
- * @czap/command — the shared command registry + dispatcher (CUT A1).
+ * @liteship/command — the shared command registry + dispatcher (CUT A1).
  *
- * One canonical command language (re-anchored from @czap/_spine via @czap/core),
- * one registry, one dispatcher. `@czap/cli` and `@czap/mcp-server` are thin
+ * One canonical command language (re-anchored from @liteship/_spine via @liteship/core),
+ * one registry, one dispatcher. `@liteship/cli` and `@liteship/mcp-server` are thin
  * projection adapters over this package; neither imports the other.
  *
  * @module
@@ -14,7 +14,7 @@ export type {
   CommandAnnotations,
   CommandExecutionKind,
   CommandJsonSchema,
-} from '@czap/core';
+} from '@liteship/core';
 
 export { CommandRegistry, capabilityUnavailable, ok, failed, defineCommand } from './registry.js';
 export type {

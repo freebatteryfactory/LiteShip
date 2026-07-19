@@ -12,7 +12,7 @@
  *    manifest `benchExemption`) — or a banned lazy placeholder / marker↔manifest
  *    drift?
  *
- * It lives in `@czap/core/harness` (next to `bench-marker.ts`, whose
+ * It lives in `@liteship/core/harness` (next to `bench-marker.ts`, whose
  * `BENCH_NOT_APPLICABLE_RE` it consumes) rather than in a loose script, so the
  * capsule-verify gate, its unit test, and its integration test all share one
  * source of "real vs placeholder vs typed-N/A".

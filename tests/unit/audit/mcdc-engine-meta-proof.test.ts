@@ -48,7 +48,7 @@ import {
   CONDITION_FORCES,
   type ConditionMutant,
   type MutantTestRunner,
-} from '@czap/audit';
+} from '@liteship/audit';
 
 /** Parse a TS source string into a `ts.SourceFile` (setParentNodes for getStart). */
 function parse(file: string, source: string): ts.SourceFile {

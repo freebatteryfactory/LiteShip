@@ -16,7 +16,7 @@ Encodes to/from a deterministic colon-separated hex string format.
 ## Example
 
 ```ts
-import { HLC } from '@czap/core';
+import { HLC } from '@liteship/core';
 
 const a = HLC.increment(HLC.create('A'), Date.now());
 const b = HLC.increment(HLC.create('B'), Date.now());

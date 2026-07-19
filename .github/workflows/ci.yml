@@ -92,7 +92,7 @@ jobs:
           set -euo pipefail
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             git fetch --no-tags --depth=1 origin "$BASE_REF"
-            echo "CZAP_STANDARDS_BASE_REF=origin/$BASE_REF" >> "$GITHUB_ENV"
+            echo "LITESHIP_STANDARDS_BASE_REF=origin/$BASE_REF" >> "$GITHUB_ENV"
           else
             ZERO="0000000000000000000000000000000000000000"
             BASE="$PUSH_BEFORE"
@@ -112,7 +112,7 @@ jobs:
               # `git show <before>:…` resolves over the whole pushed range.
               git fetch --no-tags origin "$BASE" || true
             fi
-            echo "CZAP_STANDARDS_BASE_REF=$BASE" >> "$GITHUB_ENV"
+            echo "LITESHIP_STANDARDS_BASE_REF=$BASE" >> "$GITHUB_ENV"
           fi
       - run: pnpm run gauntlet:full
         env:
@@ -209,8 +209,8 @@ jobs:
       - run: pnpm run test:shard
         env:
           CI: true
-          CZAP_SHARD_INDEX: ${{ matrix.shard }}
-          CZAP_SHARD_TOTAL: 4
+          LITESHIP_SHARD_INDEX: ${{ matrix.shard }}
+          LITESHIP_SHARD_TOTAL: 4
       - name: Stage shard coverage for artifact upload
         if: always()
         run: |
@@ -438,7 +438,7 @@ jobs:
           set -euo pipefail
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             git fetch --no-tags --depth=1 origin "$BASE_REF"
-            echo "CZAP_STANDARDS_BASE_REF=origin/$BASE_REF" >> "$GITHUB_ENV"
+            echo "LITESHIP_STANDARDS_BASE_REF=origin/$BASE_REF" >> "$GITHUB_ENV"
           else
             ZERO="0000000000000000000000000000000000000000"
             BASE="$PUSH_BEFORE"
@@ -453,7 +453,7 @@ jobs:
             else
               git fetch --no-tags origin "$BASE" || true
             fi
-            echo "CZAP_STANDARDS_BASE_REF=$BASE" >> "$GITHUB_ENV"
+            echo "LITESHIP_STANDARDS_BASE_REF=$BASE" >> "$GITHUB_ENV"
           fi
       - uses: actions/download-artifact@v7
         with:
@@ -514,17 +514,17 @@ jobs:
       - run: pnpm exec vitest run --config vitest.browser.config.ts
         env:
           CI: true
-          CZAP_VITEST_BROWSERS: ${{ matrix.browser }}
+          LITESHIP_VITEST_BROWSERS: ${{ matrix.browser }}
       - run: pnpm run test:e2e
         if: matrix.browser == 'chromium'
         env:
           CI: true
-          CZAP_PLAYWRIGHT_BROWSER: ${{ matrix.browser }}
+          LITESHIP_PLAYWRIGHT_BROWSER: ${{ matrix.browser }}
       - run: pnpm exec playwright test --config tests/e2e/playwright.config.ts tests/e2e/stream.e2e.ts --workers 1
         if: matrix.browser != 'chromium'
         env:
           CI: true
-          CZAP_PLAYWRIGHT_BROWSER: ${{ matrix.browser }}
+          LITESHIP_PLAYWRIGHT_BROWSER: ${{ matrix.browser }}
       - uses: actions/upload-artifact@v7
         if: always()
         continue-on-error: true
@@ -535,7 +535,7 @@ jobs:
             playwright-report
           if-no-files-found: ignore
 
-  # Rust/WASM kernel truth: the czap-compute crate's unit tests, a fresh
+  # Rust/WASM kernel truth: the liteship-compute crate's unit tests, a fresh
   # wasm32 build from source, and the WASM-vs-fallbackKernels parity
   # property suite running against that fresh artifact — the "build truth"
   # doctrine applied to the compute kernels (nothing prebuilt is trusted).
@@ -551,11 +551,11 @@ jobs:
           toolchain: stable
           targets: wasm32-unknown-unknown
       - run: cargo test
-        working-directory: crates/czap-compute
+        working-directory: crates/liteship-compute
         env:
           RUSTFLAGS: -D warnings
       - run: cargo build --release --target wasm32-unknown-unknown
-        working-directory: crates/czap-compute
+        working-directory: crates/liteship-compute
         env:
           RUSTFLAGS: -D warnings
       - uses: pnpm/action-setup@v6
@@ -565,13 +565,13 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       # Build the TS workspace so the vitest config can load: its alias setup
-      # imports `@czap/core` config → `cbor.ts` → `@czap/canonical`, whose
+      # imports `@liteship/core` config → `cbor.ts` → `@liteship/canonical`, whose
       # config-load resolution needs the package's `dist` (the `development→src`
       # export condition is not honored when the config bundle is built). The
       # WASM kernel is still rebuilt from Rust above — nothing prebuilt is trusted.
       - run: pnpm run build
       - name: Artifact must exist — otherwise the parity suite self-skips
-        run: test -f crates/czap-compute/target/wasm32-unknown-unknown/release/czap_compute.wasm
+        run: test -f crates/liteship-compute/target/wasm32-unknown-unknown/release/liteship_compute.wasm
       # Run the WASM/TS kernel parity suite AND the float-determinism property
       # tests against the freshly-built wasm artifact — the blend kernel has no
       # WASM twin but is accumulation-order-sensitive, so its determinism proof
@@ -582,15 +582,15 @@ jobs:
           tests/property/blend-determinism.prop.test.ts
         env:
           CI: true
-      # 0.2.1 shipping path: stage the freshly-built kernel into @czap/core's
-      # publish surface and prove it lands where the @czap/vite resolver and the
-      # `./czap-compute.wasm` export expect it — the artifact an installed
+      # 0.2.1 shipping path: stage the freshly-built kernel into @liteship/core's
+      # publish surface and prove it lands where the @liteship/vite resolver and the
+      # `./liteship-compute.wasm` export expect it — the artifact an installed
       # consumer resolves from node_modules, validated on the one runner that
       # has the Rust toolchain.
       - name: Stage + verify the shipped artifact
         run: |
           pnpm run build:wasm
-          test -f packages/core/dist/czap-compute.wasm
+          test -f packages/core/dist/liteship-compute.wasm
       - run: pnpm exec vitest run tests/unit/core/wasm-shipping.test.ts
         env:
           CI: true

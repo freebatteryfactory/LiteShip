@@ -2,7 +2,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { ValidationError } from '@czap/error';
+import { ValidationError } from '@liteship/error';
 import { contentAddressOf } from '../../packages/core/src/content-address.js';
 import { introBedBeats } from '../../examples/scenes/assets.js';
 
@@ -30,7 +30,7 @@ describe('intro-bed:beats', () => {
 
   // Content-addressed cache model: a cachedProjection's cache is keyed on the
   // CONTENT ADDRESS of its source bytes (contentAddressOf — the canonical
-  // @czap/core kernel: canonicalize -> CanonicalCbor -> fnv1a), its value the
+  // @liteship/core kernel: canonicalize -> CanonicalCbor -> fnv1a), its value the
   // derived output. We drive a Map<ContentAddress, Out> through the REAL derive
   // to prove the two cache laws over real fixture bytes — not a hand-rolled
   // hash, not a vacuous placeholder.

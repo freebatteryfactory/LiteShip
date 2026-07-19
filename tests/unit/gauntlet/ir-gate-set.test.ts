@@ -23,7 +23,7 @@ import {
   litelaunchGauntletWithIR,
   makeRepoIR,
   type RepoIR,
-} from '@czap/gauntlet';
+} from '@liteship/gauntlet';
 
 const REPO_ROOT = resolve(import.meta.dirname, '..', '..', '..');
 

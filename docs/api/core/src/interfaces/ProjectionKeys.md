@@ -18,7 +18,7 @@ The per-quantizer output keys, one per cast target.
 
 Defined in: [core/src/projection.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/projection.ts#L33)
 
-ARIA/data attribute:  `data-czap-<name>` (name preserved verbatim).
+ARIA/data attribute:  `data-liteship-<name>` (name preserved verbatim).
 
 ***
 
@@ -28,7 +28,7 @@ ARIA/data attribute:  `data-czap-<name>` (name preserved verbatim).
 
 Defined in: [core/src/projection.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/projection.ts#L27)
 
-CSS custom property:  `--czap-<name>` (name preserved verbatim).
+CSS custom property:  `--liteship-<name>` (name preserved verbatim).
 
 ***
 

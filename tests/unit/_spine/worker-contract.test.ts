@@ -1,6 +1,6 @@
 /**
- * Worker spine conformance — the `@czap/_spine/worker.d.ts` mirror IS the
- * `@czap/worker` runtime contract.
+ * Worker spine conformance — the `@liteship/_spine/worker.d.ts` mirror IS the
+ * `@liteship/worker` runtime contract.
  *
  * `packages/_spine/worker.d.ts` is a hand-authored type mirror that
  * published packages treat as the canonical worker type contract (ADR-0010).
@@ -35,7 +35,7 @@ import type {
   CompositorWorkerShape as SpineCompositorShape,
   QuantizerBoundarySource as SpineBoundarySource,
   CompositorWorkerStartupTelemetry as SpineStartupTelemetry,
-} from '@czap/_spine';
+} from '@liteship/_spine';
 
 // Runtime truth — imported from the producing modules DIRECTLY (not the
 // package index) so the guarded surface is exactly the runtime types.
@@ -58,7 +58,7 @@ import type {
 
 // Public re-export surface — the worker exposes these names from its index;
 // drift in the index re-export set also breaks the contract.
-import { Messages, SPSCRing, CompositorWorker } from '@czap/worker';
+import { Messages, SPSCRing, CompositorWorker } from '@liteship/worker';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Type-level bidirectional assignability (spine ⇔ runtime). If a member, field,
@@ -77,10 +77,10 @@ import { Messages, SPSCRing, CompositorWorker } from '@czap/worker';
 //   the resolved-state family (`bootstrap-resolved-state`, `apply-resolved-state`,
 //   `resolved-state-ack`) that had silently drifted out of the spine.
 //
-//   SCOPING: three message members re-use @czap/core types as their payload —
+//   SCOPING: three message members re-use @liteship/core types as their payload —
 //   `start-render` carries a `VideoConfig`, `state` carries a `CompositeState`,
 //   `frame` carries a `VideoFrameOutput` (which embeds a `CompositeState`).
-//   Those payloads are owned by the @czap/core SPINE (core.d.ts), NOT the
+//   Those payloads are owned by the @liteship/core SPINE (core.d.ts), NOT the
 //   worker spine — the worker mirror merely imports them. A bidirectional union
 //   assertion would drag any core-spine-vs-core-runtime drift (which is real
 //   and pre-existing — `VideoConfig.durationMs` branding, the `wgsl` output —
@@ -99,7 +99,7 @@ type FrameOf<U> = Extract<U, { readonly type: 'frame' }>;
 //   assertion:
 //     - `runtime`: the spine declares `unknown` (RuntimeCoordinator is out of
 //       worker-spine scope) — a deliberate loosening, not drift.
-//     - `onState`: its `CompositorWorkerState` payload extends the @czap/core
+//     - `onState`: its `CompositorWorkerState` payload extends the @liteship/core
 //       `CompositeState` whose core-spine mirror is independently guarded.
 //   Every other method — including the previously-drifted `onMetrics` (now a
 //   single `WorkerMetrics` record, not `(fps, budgetUsed)`), the new
@@ -211,7 +211,7 @@ function __workerSpineTypeContract(
 }
 void __workerSpineTypeContract;
 
-describe('worker spine conformance — @czap/_spine/worker.d.ts mirrors @czap/worker', () => {
+describe('worker spine conformance — @liteship/_spine/worker.d.ts mirrors @liteship/worker', () => {
   it('exposes the message-protocol guards (runtime surface backing the compile-time mirror)', () => {
     expect(typeof Messages.isToWorker).toBe('function');
     expect(typeof Messages.isFromWorker).toBe('function');

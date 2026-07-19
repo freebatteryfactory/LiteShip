@@ -11,7 +11,7 @@ const arb = schemaToArbitrary(cap.output as never) as fc.Arbitrary<unknown>;
 const natives = fc.sample(arb, { numRuns: 64, seed: 0x5eed });
 let i = 0;
 
-bench(`remotion.video-frame-output — native -> czap -> native round trip`, () => {
+bench(`remotion.video-frame-output — native -> liteship -> native round trip`, () => {
   const native = natives[i++ % natives.length];
   decode(CanonicalCbor.encode(native));
 }, { time: 500 });

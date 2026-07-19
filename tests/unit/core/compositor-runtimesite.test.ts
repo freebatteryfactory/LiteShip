@@ -22,8 +22,8 @@
  */
 
 import { afterEach, describe, test, expect } from 'vitest';
-import { Boundary, Compositor, Cap, sealNode } from '@czap/core';
-import type { PolicyNode, RuntimeSite, CapTier, CapSet, CellMeta } from '@czap/core';
+import { Boundary, Compositor, Cap, sealNode } from '@liteship/core';
+import type { PolicyNode, RuntimeSite, CapTier, CapSet, CellMeta } from '@liteship/core';
 
 const widthBoundary = Boundary.make({
   input: 'viewport.width',
@@ -89,7 +89,7 @@ function detectedSiteAdmits(admitSite: RuntimeSite): boolean {
   // Pass-through is ruled out (a policy is always returned); the projection emits
   // css iff the chosen rung admitted it, which happens iff the detected site is in
   // the policy's `sites`. Otherwise chooseRung → { error } → deny-all.
-  return state.outputs.css['--czap-layout'] !== undefined;
+  return state.outputs.css['--liteship-layout'] !== undefined;
 }
 
 const g = globalThis as Record<string, unknown>;

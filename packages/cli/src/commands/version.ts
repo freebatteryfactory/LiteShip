@@ -1,7 +1,7 @@
 /**
- * version (CLI adapter) — thin projection over `@czap/command`'s version
- * command. The structured payload (czap/node/pnpm) is assembled in
- * `@czap/command`; this adapter injects the Node-coupled I/O (the CLI's own
+ * version (CLI adapter) — thin projection over `@liteship/command`'s version
+ * command. The structured payload (liteship/node/pnpm) is assembled in
+ * `@liteship/command`; this adapter injects the Node-coupled I/O (the CLI's own
  * package version + the pnpm spawn probe), then renders the JSON receipt to
  * stdout and a pretty one-liner to stderr.
  *
@@ -14,18 +14,18 @@ import { fileURLToPath } from 'node:url';
 import { runCliCommand } from '../lib/run-command.js';
 import { emit, type WallClockTimestamp } from '../receipts.js';
 
-/** Receipt shape emitted by `czap version`. */
+/** Receipt shape emitted by `liteship version`. */
 export interface VersionReceipt {
   readonly status: 'ok';
   readonly command: 'version';
   readonly timestamp: WallClockTimestamp;
-  readonly czap: string;
+  readonly liteship: string;
   readonly node: string;
   readonly pnpm: string | null;
 }
 
 /**
- * Read the @czap/cli package version off disk. This is `czap version`'s own
+ * Read the @liteship/cli package version off disk. This is `liteship version`'s own
  * logic (not doctoring), so it lives here beside its primary caller.
  *
  * Resolution order:
@@ -52,7 +52,7 @@ export function readCliVersion(cwd?: string): string {
   for (const path of candidates) {
     if (!existsSync(path)) continue;
     const pkg = JSON.parse(readFileSync(path, 'utf8')) as { name?: string; version?: string };
-    if (pkg.name === '@czap/cli' && typeof pkg.version === 'string') return pkg.version;
+    if (pkg.name === '@liteship/cli' && typeof pkg.version === 'string') return pkg.version;
   }
   return '0.0.0-unknown';
 }
@@ -73,7 +73,7 @@ export async function version(opts: { pretty?: boolean; cwd?: string } = {}): Pr
         status: 'ok',
         command: 'version',
         timestamp: result.timestamp,
-        czap: payload.czap,
+        liteship: payload.liteship,
         node: payload.node,
         pnpm: payload.pnpm,
       };
@@ -81,7 +81,9 @@ export async function version(opts: { pretty?: boolean; cwd?: string } = {}): Pr
 
       const wantPretty = opts.pretty ?? Boolean(process.stderr.isTTY);
       if (wantPretty) {
-        process.stderr.write(`czap ${receipt.czap}  (Node ${receipt.node}, pnpm ${receipt.pnpm ?? 'not found'})\n`);
+        process.stderr.write(
+          `liteship ${receipt.liteship}  (Node ${receipt.node}, pnpm ${receipt.pnpm ?? 'not found'})\n`,
+        );
       }
 
       return 0;

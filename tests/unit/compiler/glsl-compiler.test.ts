@@ -8,8 +8,8 @@
 
 import { describe, test, expect } from 'vitest';
 import fc from 'fast-check';
-import { Boundary } from '@czap/core';
-import { GLSLCompiler } from '@czap/compiler';
+import { Boundary } from '@liteship/core';
+import { GLSLCompiler } from '@liteship/compiler';
 
 // ---------------------------------------------------------------------------
 // Fixtures

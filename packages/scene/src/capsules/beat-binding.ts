@@ -17,14 +17,14 @@
  * @module
  */
 
-import { defineCapsule, S } from '@czap/core';
-import type { BeatComponent as _BeatComponent, BeatSpawn as _BeatSpawn } from '@czap/_spine';
+import { defineCapsule, S } from '@liteship/core';
+import type { BeatComponent as _BeatComponent, BeatSpawn as _BeatSpawn } from '@liteship/_spine';
 
 /**
  * Component shape for beat entities — what SyncSystem queries via
  * `world.query('Beat')`. Aliased to the canonical spine contract (CUT A5):
  * the scene/world timeline-space stage of the beat family. The raw
- * asset/sample-space sibling is `@czap/assets`' `BeatMarkerSet`; the official
+ * asset/sample-space sibling is `@liteship/assets`' `BeatMarkerSet`; the official
  * bridge between them is `resolveBeatProjectionToSceneBeats` (./beat-projection).
  */
 export type BeatComponent = _BeatComponent;
@@ -60,7 +60,7 @@ export const beatBindingCapsule = defineCapsule({
   name: 'scene.beat-binding',
   site: ['node', 'browser'],
   // `asset:beats` carries the raw asset-space `BeatMarkerSet` (bpm + sample
-  // indices) produced by `@czap/assets`; it is resolved to scene-space
+  // indices) produced by `@liteship/assets`; it is resolved to scene-space
   // BeatComponent[] via resolveBeatProjectionToSceneBeats before binding.
   capabilities: { reads: ['scene', 'asset:beats'], writes: ['ecs.world'] },
   input: BindingInputSchema,

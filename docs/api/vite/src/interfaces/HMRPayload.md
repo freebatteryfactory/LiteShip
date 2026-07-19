@@ -8,7 +8,7 @@
 
 Defined in: [vite/src/hmr.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/hmr.ts#L30)
 
-Shape of the HMR payload the czap Vite plugin ships over the Vite
+Shape of the HMR payload the liteship Vite plugin ships over the Vite
 dev-server WebSocket. Handled by [handleHMR](../functions/handleHMR.md) on the client.
 
 ## Properties
@@ -35,11 +35,11 @@ New compiled CSS (omitted when only uniforms changed).
 
 ### type
 
-> `readonly` **type**: `"czap:update"`
+> `readonly` **type**: `"liteship:update"`
 
 Defined in: [vite/src/hmr.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/hmr.ts#L32)
 
-Message discriminator. Always `'czap:update'`.
+Message discriminator. Always `'liteship:update'`.
 
 ***
 

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { World } from '@czap/core';
-import { EffectSystem } from '@czap/scene';
+import { World } from '@liteship/core';
+import { EffectSystem } from '@liteship/scene';
 
 describe('EffectSystem', () => {
   it('produces intensity for effect entities in range', () => {

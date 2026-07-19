@@ -23,7 +23,7 @@ const VECTORS: readonly string[] = [
   'with space',
   'with"quote',
   'path/with/slashes.ts',
-  'C:\\Users\\testuser\\.projects\\czap',
+  'C:\\Users\\testuser\\.projects\\liteship',
   'metachar-semi;echo pwned',
   'pipe|tricks',
   'amp&amp',

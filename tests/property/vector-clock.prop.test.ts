@@ -7,7 +7,7 @@
 
 import { describe, test, expect } from 'vitest';
 import fc from 'fast-check';
-import { VectorClock } from '@czap/core';
+import { VectorClock } from '@liteship/core';
 
 // ---------------------------------------------------------------------------
 // Arbitrary: vector clock from a small set of peer IDs

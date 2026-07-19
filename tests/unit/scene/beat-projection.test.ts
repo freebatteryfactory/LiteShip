@@ -7,14 +7,14 @@
  * (see the former ghost bridge in examples/scenes/intro.ts).
  *
  * The resolver is a pure scene-domain transform: it imports the shared spine
- * types only (never `@czap/assets`), so it adds no scene → assets edge.
+ * types only (never `@liteship/assets`), so it adds no scene → assets edge.
  *
  * @module
  */
 import { describe, it, expect } from 'vitest';
-import { hasTag } from '@czap/error';
-import { resolveBeatProjectionToSceneBeats } from '@czap/scene';
-import type { BeatMarkerSet } from '@czap/_spine';
+import { hasTag } from '@liteship/error';
+import { resolveBeatProjectionToSceneBeats } from '@liteship/scene';
+import type { BeatMarkerSet } from '@liteship/_spine';
 
 describe('resolveBeatProjectionToSceneBeats', () => {
   it('converts sample indices to milliseconds: timeMs = sampleIndex / sampleRate * 1000', () => {

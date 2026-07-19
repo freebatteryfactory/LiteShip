@@ -7,9 +7,9 @@
  * This module defines the {@link SpineRelationFacts} INTERFACE and the two PURE
  * classifiers ({@link classifyStructuralRelation}, {@link relationSatisfied}) — and
  * nothing else. Like {@link TransitionFacts} / {@link MutationFacts}, it carries no
- * heavy dependency: `@czap/gauntlet` stays the lean engine with NO `typescript`
+ * heavy dependency: `@liteship/gauntlet` stays the lean engine with NO `typescript`
  * dependency, so it never opens a `ts.Program` or runs the type checker. A HOST
- * (`@czap/audit`'s `buildSpineRelationFacts`) does the heavy lifting — generate a
+ * (`@liteship/audit`'s `buildSpineRelationFacts`) does the heavy lifting — generate a
  * bidirectional-assignability probe per admitted mirror type, compile it, read the
  * compiler's own diagnostics, classify each relation — and hands the engine these
  * flat, already-observed facts. The gate's only job is to FOLD them into Findings

@@ -12,7 +12,7 @@ Structured verdict returned by the injected [CommandContext.runAuditFloor](Comma
 capability — the artifact-independent three-pass warning floor, diffed against
 the pinned `AUDIT_WARNING_FLOOR`. `ok` ⟺ no warning drift (no added/removed
 inventory keys) AND no errors. Declared here so the `audit-floor` command's
-contract lives in `@czap/command` without an import of the heavy engine.
+contract lives in `@liteship/command` without an import of the heavy engine.
 
 ## Properties
 

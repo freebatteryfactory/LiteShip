@@ -7,8 +7,8 @@
  * restricted contexts, etc.).
  */
 
-import type { CapTier, CapSet } from '@czap/core';
-import { Diagnostics } from '@czap/core';
+import type { CapTier, CapSet } from '@liteship/core';
+import { Diagnostics } from '@liteship/core';
 
 // ---------------------------------------------------------------------------
 // Navigator augmentation -- non-standard but widely-shipped APIs
@@ -206,7 +206,7 @@ function hasProbeValue<T>(result: ProbeResult<T>): result is Extract<ProbeResult
  * Pure and side-effect-free apart from a one-time diagnostic on an unrecognized
  * string (which still classifies conservatively as tier 1).
  *
- * Both this runtime classifier AND the `@czap/astro` head-inline probe derive
+ * Both this runtime classifier AND the `@liteship/astro` head-inline probe derive
  * from the SAME {@link GPU_TIER_PATTERNS} datum — the probe's script is
  * generated from it by `emitDetectUpgradeScript` — so the two can never be
  * hand-copies that drift. There is one list of patterns, consumed here and
@@ -224,7 +224,7 @@ export function classifyGPURenderer(renderer: string): GPUTier {
   // Unmatched renderers (e.g. next year's GPU) classify conservatively, but
   // silently: confidence still gets the renderer bonus, so make it audible.
   Diagnostics.warnOnce({
-    source: 'czap/detect',
+    source: 'liteship/detect',
     code: 'unrecognized-gpu-renderer',
     message: `unrecognized GPU renderer "${renderer}" — defaulting to tier 1 (integrated). If this is a real GPU, file the renderer string at https://github.com/freebatteryfactory/LiteShip/issues so a pattern can be added.`,
     detail: { renderer },
@@ -537,12 +537,12 @@ function computeConfidenceFromProbes(probes: DetectionProbes): number {
  * Detect GPU tier from WebGL renderer string heuristics.
  * Falls back to tier 1 (integrated) when WebGL is unavailable.
  *
- * You usually never call this yourself: the `@czap/astro` boundary runs the
+ * You usually never call this yourself: the `@liteship/astro` boundary runs the
  * same classification automatically and publishes it for the runtime to read.
  *
  * Advanced — direct invocation (all probes are synchronous):
  * ```ts
- * import { Detect } from '@czap/detect';
+ * import { Detect } from '@liteship/detect';
  *
  * const tier = Detect.detectGPUTier();
  * // tier => 0 (software) | 1 (integrated) | 2 (mid) | 3 (high-end)
@@ -577,7 +577,7 @@ function reportDegradedProbes(probes: DetectionProbes, confidence: number): void
   }
   if (degraded.length === 0) return;
   Diagnostics.warnOnce({
-    source: 'czap/detect',
+    source: 'liteship/detect',
     code: 'probes-defaulted',
     message: `${degraded.length} probe(s) defaulted: ${degraded.join(', ')} — conservative fallback values were used; confidence ${confidence}.`,
     detail: { degraded, confidence },
@@ -603,14 +603,14 @@ function runDetection(probes: DetectionProbes): ExtendedDetectionResult {
  * All probes are synchronous with internal error handling -- gracefully
  * falls back to conservative defaults when APIs are unavailable.
  *
- * You usually never call this yourself: in an Astro project the `@czap/astro`
+ * You usually never call this yourself: in an Astro project the `@liteship/astro`
  * boundary runs detection after DOMContentLoaded and publishes the result as
- * `window.__CZAP_DETECT__`, so satellites and the directive runtime read it
+ * `window.__LITESHIP_DETECT__`, so satellites and the directive runtime read it
  * for free.
  *
  * Advanced — direct invocation (all probes are synchronous):
  * ```ts
- * import { Detect } from '@czap/detect';
+ * import { Detect } from '@liteship/detect';
  *
  * const result = Detect.detect();
  * console.log(result.capabilities.gpu);       // 0-3
@@ -634,13 +634,13 @@ export function detect(): ExtendedDetectionResult {
  * {@link CapTier}, {@link CapSet}, {@link DesignTier}, and {@link MotionTier}.
  * Supports live watching for preference and viewport changes.
  *
- * You usually never call these yourself — the `@czap/astro` boundary runs
- * detection automatically and publishes `window.__CZAP_DETECT__` for the
+ * You usually never call these yourself — the `@liteship/astro` boundary runs
+ * detection automatically and publishes `window.__LITESHIP_DETECT__` for the
  * runtime to read.
  *
  * Advanced — direct invocation:
  * ```ts
- * import { Detect } from '@czap/detect';
+ * import { Detect } from '@liteship/detect';
  *
  * const result = Detect.detect();
  * console.log(result.capabilities.prefersColorScheme); // 'light' | 'dark'
@@ -672,7 +672,7 @@ export const Detect = {
  *
  * @example
  * ```ts
- * import { Detect } from '@czap/detect';
+ * import { Detect } from '@liteship/detect';
  *
  * const dispose = Detect.watchCapabilities((result) => {
  *   console.log('Capabilities changed:', result.capTier);

@@ -6,11 +6,11 @@
 
 # Function: streamWireAttr()
 
-> **streamWireAttr**(`key`): `` `data-czap-${string}` ``
+> **streamWireAttr**(`key`): `` `data-liteship-${string}` ``
 
 Defined in: [web/src/wire/stream-attributes.ts:24](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/wire/stream-attributes.ts#L24)
 
-Project a stream wire key to its canonical `data-czap-*` attribute name.
+Project a stream wire key to its canonical `data-liteship-*` attribute name.
 
 ## Parameters
 
@@ -20,4 +20,4 @@ Project a stream wire key to its canonical `data-czap-*` attribute name.
 
 ## Returns
 
-`` `data-czap-${string}` ``
+`` `data-liteship-${string}` ``

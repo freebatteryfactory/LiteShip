@@ -3,8 +3,8 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Plan } from '@czap/core';
-import type { OpType } from '@czap/core';
+import { Plan } from '@liteship/core';
+import type { OpType } from '@liteship/core';
 
 const noop: OpType = { type: 'noop' };
 const pure: OpType = { type: 'pure', fn: 'identity' };

@@ -3,7 +3,7 @@
  *
  * `collectBoundaryManifest` scans a project for boundary definition
  * modules and `@quantize` CSS blocks, then derives the manifest behind
- * `virtual:czap/boundaries`: real `Boundary.make` content addresses plus
+ * `virtual:liteship/boundaries`: real `Boundary.make` content addresses plus
  * precompiled outputs for the full (motion x design) tier grid.
  */
 
@@ -12,10 +12,10 @@ import { mkdtempSync, mkdirSync, rmSync, symlinkSync, writeFileSync, utimesSync 
 import { join } from 'node:path';
 import { captureDiagnosticsAsync } from '../../helpers/diagnostics.js';
 import { tmpdir } from 'node:os';
-import type { ContentAddress } from '@czap/core';
-import { Boundary, Diagnostics } from '@czap/core';
-import { createBoundaryCache, enumerateTierKeys, resolveOutputsByTier, tierKey } from '@czap/edge';
-import type { KVNamespace } from '@czap/edge';
+import type { ContentAddress } from '@liteship/core';
+import { Boundary, Diagnostics } from '@liteship/core';
+import { createBoundaryCache, enumerateTierKeys, resolveOutputsByTier, tierKey } from '@liteship/edge';
+import type { KVNamespace } from '@liteship/edge';
 import { symlinkUnprivileged } from '../../helpers/capabilities.js';
 import {
   collectBoundaryManifest,
@@ -30,7 +30,7 @@ import { loadVirtualModule } from '../../../packages/vite/src/virtual-modules.js
 const tempDirs: string[] = [];
 
 function makeTempDir(): string {
-  const dir = mkdtempSync(join(tmpdir(), 'czap-manifest-'));
+  const dir = mkdtempSync(join(tmpdir(), 'liteship-manifest-'));
   tempDirs.push(dir);
   return dir;
 }
@@ -448,7 +448,7 @@ ${Object.entries(attrs)
     // wrapped in the boundary selector, never emitted raw inside @supports.
     const supportsBody = extractAtRuleBody(devQueries, '@supports (display: grid)');
     expect(supportsBody).not.toBeNull();
-    expect(supportsBody).toContain('.czap-boundary {');
+    expect(supportsBody).toContain('.liteship-boundary {');
     expect(topLevelBareDeclarations(supportsBody!)).toEqual([]);
     expect(supportsBody).toContain('display: grid');
   });
@@ -564,10 +564,10 @@ export const drawer = {
   });
 });
 
-describe('plugin virtual:czap/boundaries wiring', () => {
+describe('plugin virtual:liteship/boundaries wiring', () => {
   function makeModuleGraphMock() {
     const invalidated: string[] = [];
-    const manifestModule = { id: '\0virtual:czap/boundaries' };
+    const manifestModule = { id: '\0virtual:liteship/boundaries' };
     return {
       invalidated,
       moduleGraph: {
@@ -593,7 +593,7 @@ describe('plugin virtual:czap/boundaries wiring', () => {
 
     const first = await (vitePlugin.load as (id: string) => Promise<string | undefined>).call(
       undefined as never,
-      '\0virtual:czap/boundaries',
+      '\0virtual:liteship/boundaries',
     );
     expect(first).toContain(referenceBoundary.id);
     expect(first).not.toBe('export const boundaries = {};');
@@ -612,11 +612,11 @@ describe('plugin virtual:czap/boundaries wiring', () => {
       { environment: { moduleGraph } },
       { type: 'create', file: join(srcDir, 'extra.boundaries.ts'), modules: [] },
     );
-    expect(invalidated).toContain('\0virtual:czap/boundaries');
+    expect(invalidated).toContain('\0virtual:liteship/boundaries');
 
     const second = await (vitePlugin.load as (id: string) => Promise<string | undefined>).call(
       undefined as never,
-      '\0virtual:czap/boundaries',
+      '\0virtual:liteship/boundaries',
     );
     expect(second).toContain('sidebar');
     expect(second).toContain('viewport');
@@ -701,7 +701,7 @@ describe('plugin virtual:czap/boundaries wiring', () => {
 
     const first = await (vitePlugin.load as (id: string) => Promise<string | undefined>).call(
       undefined as never,
-      '\0virtual:czap/boundaries',
+      '\0virtual:liteship/boundaries',
     );
     expect(first).toContain(referenceBoundary.id);
 
@@ -720,7 +720,7 @@ describe('plugin virtual:czap/boundaries wiring', () => {
 
     const second = await (vitePlugin.load as (id: string) => Promise<string | undefined>).call(
       undefined as never,
-      '\0virtual:czap/boundaries',
+      '\0virtual:liteship/boundaries',
     );
     expect(second).toContain('fnv1a:00009999');
     expect(second).not.toContain(referenceBoundary.id);
@@ -740,7 +740,7 @@ describe('plugin virtual:czap/boundaries wiring', () => {
 
     const first = await (vitePlugin.load as (id: string) => Promise<string | undefined>).call(
       undefined as never,
-      '\0virtual:czap/boundaries',
+      '\0virtual:liteship/boundaries',
     );
     expect(first).toContain('gap: 4px');
 
@@ -750,11 +750,11 @@ describe('plugin virtual:czap/boundaries wiring', () => {
       { environment: { moduleGraph } },
       { file: join(srcDir, 'Page.astro').replace(/\\/g, '/'), modules: [] },
     );
-    expect(invalidated).toContain('\0virtual:czap/boundaries');
+    expect(invalidated).toContain('\0virtual:liteship/boundaries');
 
     const second = await (vitePlugin.load as (id: string) => Promise<string | undefined>).call(
       undefined as never,
-      '\0virtual:czap/boundaries',
+      '\0virtual:liteship/boundaries',
     );
     expect(second).toContain('9px');
   });
@@ -770,7 +770,7 @@ describe('plugin virtual:czap/boundaries wiring', () => {
 
     const first = await (vitePlugin.load as (id: string) => Promise<string | undefined>).call(
       undefined as never,
-      '\0virtual:czap/boundaries',
+      '\0virtual:liteship/boundaries',
     );
     expect(first).toContain('24px');
     expect(first).not.toContain('64px');
@@ -783,12 +783,12 @@ describe('plugin virtual:czap/boundaries wiring', () => {
     const affected = (
       vitePlugin.hotUpdate as (this: unknown, options: { file: string; modules: unknown[] }) => unknown
     ).call({ environment: { moduleGraph } }, { file: join(srcDir, 'styles.css'), modules: [] });
-    expect(invalidated).toContain('\0virtual:czap/boundaries');
-    expect(affected).toContainEqual(expect.objectContaining({ id: '\0virtual:czap/boundaries' }));
+    expect(invalidated).toContain('\0virtual:liteship/boundaries');
+    expect(affected).toContainEqual(expect.objectContaining({ id: '\0virtual:liteship/boundaries' }));
 
     const second = await (vitePlugin.load as (id: string) => Promise<string | undefined>).call(
       undefined as never,
-      '\0virtual:czap/boundaries',
+      '\0virtual:liteship/boundaries',
     );
     expect(second).toContain('64px');
   });
@@ -802,7 +802,7 @@ describe('loadVirtualModule boundaries data', () => {
     writeModule(srcDir, 'styles.css', QUANTIZE_CSS);
     const manifest = await collectBoundaryManifest(root);
 
-    const source = loadVirtualModule('\0virtual:czap/boundaries', { boundaries: manifest });
+    const source = loadVirtualModule('\0virtual:liteship/boundaries', { boundaries: manifest });
 
     expect(source).toContain('export const boundaries = ');
     expect(source).toContain(referenceBoundary.id);
@@ -810,6 +810,6 @@ describe('loadVirtualModule boundaries data', () => {
   });
 
   test('degrades to the empty-object stub without data (type-checker / bare-bundler path)', () => {
-    expect(loadVirtualModule('\0virtual:czap/boundaries')).toBe('export const boundaries = {};');
+    expect(loadVirtualModule('\0virtual:liteship/boundaries')).toBe('export const boundaries = {};');
   });
 });

@@ -12,6 +12,6 @@ Defined in: [core/src/easing.ts:378](https://github.com/freebatteryfactory/LiteS
 
 The ONE spring config both the CSS `linear()` path and the JS floor default to
 when a spring easing is authored without explicit parameters. Kept here (not in
-`@czap/compiler`) so the native compiler (`resolveEasing`) and the runtime
+`@liteship/compiler`) so the native compiler (`resolveEasing`) and the runtime
 sampler ([sampleRuntimeEasing](../functions/sampleRuntimeEasing.md)) read the SAME default — Law 4: one kernel,
 never forked.

@@ -17,8 +17,8 @@
  * four "model proposals" (one valid, three hallucinated) through the same seam and shows
  * that every refusal leaves the graph BYTE-IDENTICAL.
  */
-import { AICast, GraphPatch, sealNode, sealGraph } from '@czap/core';
-import type { SignalNode, DocumentGraphNode, DocumentGraphEdge, DocumentGraph, CellMeta } from '@czap/core';
+import { AICast, GraphPatch, sealNode, sealGraph } from '@liteship/core';
+import type { SignalNode, DocumentGraphNode, DocumentGraphEdge, DocumentGraph, CellMeta } from '@liteship/core';
 
 const META: CellMeta = {
   created: { wall_ms: 0, counter: 0, node_id: 'example' },
@@ -60,7 +60,7 @@ const run = (title: string, patch: GraphPatch): Row => {
 const rows: Row[] = [
   run('A well-formed proposal that fits the graph', GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('viewport.width') }])),
   run('A proposal cast against a DIFFERENT graph', GraphPatch.propose(graph([node('other.graph')]), [{ op: 'add', family: 'signal', node: node('x') }])),
-  run('A proposal with an edge to a node that does not exist', GraphPatch.propose(base, [{ op: 'add', edge: { from: base.nodes[0]!.id, to: 'czap:nope' as DocumentGraphEdge['to'], type: 'seq' } }])),
+  run('A proposal with an edge to a node that does not exist', GraphPatch.propose(base, [{ op: 'add', edge: { from: base.nodes[0]!.id, to: 'liteship:nope' as DocumentGraphEdge['to'], type: 'seq' } }])),
   run('A hallucinated, off-version envelope', { _tag: 'GraphPatch', _version: 999, ops: [] } as unknown as GraphPatch),
 ];
 ---

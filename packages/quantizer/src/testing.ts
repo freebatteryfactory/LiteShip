@@ -1,6 +1,6 @@
 /**
- * Test-only entrypoint for `@czap/quantizer`. Imported as
- * `@czap/quantizer/testing`.
+ * Test-only entrypoint for `@liteship/quantizer`. Imported as
+ * `@liteship/quantizer/testing`.
  *
  * `MemoCache` and `TIER_TARGETS` are implementation primitives that
  * power the public `Q.from()` builder internally. Consumers don't need

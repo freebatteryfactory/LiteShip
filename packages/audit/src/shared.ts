@@ -12,7 +12,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { dirname, relative, resolve } from 'node:path';
-import { IoError } from '@czap/error';
+import { IoError } from '@liteship/error';
 import fg from 'fast-glob';
 import ts from 'typescript';
 import { auditIgnoreGlobs, auditSourceGlobs, findAllowlistReason, normalizeRepoPath } from './policy.js';
@@ -223,9 +223,9 @@ export function sortSuppressions<T extends AuditSuppression>(suppressions: reado
 
 /**
  * Map repo-relative finding paths to their owning package via the profile's
- * discovered manifests. Monorepo: `packages/astro/src/x.ts` → `@czap/astro` +
+ * discovered manifests. Monorepo: `packages/astro/src/x.ts` → `@liteship/astro` +
  * `src/x.ts`. Consumer install: the same file resolves identically from its
- * `node_modules/.../@czap/astro` root, so package-relative allowlist entries
+ * `node_modules/.../@liteship/astro` root, so package-relative allowlist entries
  * suppress in both layouts. Longest root wins (pnpm virtual-store roots nest
  * under `node_modules/.pnpm/...`).
  */

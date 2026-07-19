@@ -1,7 +1,7 @@
 /**
  * WASM/TS kernel parity — the falsifiable version of the comment.
  *
- * `crates/czap-compute/src/boundary.rs` says "matching TypeScript
+ * `crates/liteship-compute/src/boundary.rs` says "matching TypeScript
  * `evaluateBoundary` semantics" and `wasm-fallback.ts` claims results
  * "bit-identical (within float precision) to the Rust WASM kernels" — but
  * until this suite nothing ever executed both sides against each other.
@@ -18,7 +18,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import * as fc from 'fast-check';
-import { WASMDispatch, fallbackKernels, type WASMKernels } from '@czap/core';
+import { WASMDispatch, fallbackKernels, type WASMKernels } from '@liteship/core';
 import { wasmAbsent } from '../../helpers/capabilities.js';
 
 const WASM_PATH = resolve(
@@ -26,7 +26,7 @@ const WASM_PATH = resolve(
   '..',
   '..',
   '..',
-  'crates/czap-compute/target/wasm32-unknown-unknown/release/czap_compute.wasm',
+  'crates/liteship-compute/target/wasm32-unknown-unknown/release/liteship_compute.wasm',
 );
 
 // The presence probe is single-sourced in the canonical capability symbol table (same artifact path)
@@ -39,7 +39,7 @@ const wasmPresent = !wasmAbsent;
 const f32 = (constraints: { min: number; max: number }): fc.Arbitrary<number> =>
   fc.double({ ...constraints, noNaN: true, noDefaultInfinity: true }).map((v) => Math.fround(v));
 
-describe.skipIf(!wasmPresent)('WASM/TS kernel parity (czap-compute vs fallbackKernels)', () => {
+describe.skipIf(!wasmPresent)('WASM/TS kernel parity (liteship-compute vs fallbackKernels)', () => {
   let wasm: WASMKernels;
 
   beforeAll(async () => {

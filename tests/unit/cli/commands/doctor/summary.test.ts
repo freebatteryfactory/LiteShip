@@ -68,7 +68,7 @@ describe('doctor/summary — prettySummary()', () => {
       ],
       'ready',
     );
-    expect(out).toContain('czap doctor');
+    expect(out).toContain('liteship doctor');
     expect(out).toContain('Node.js');
     expect(out).toContain('v22.4.0');
     expect(out).toContain('pnpm');

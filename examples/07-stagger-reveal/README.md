@@ -4,7 +4,7 @@ Committed `Stagger.intent` data for the motion vertical slice. The preset is com
 `tests/unit/examples/stagger-reveal-dogfood.test.ts` — not a standalone runnable app.
 
 See [`GETTING-STARTED.md`](../../GETTING-STARTED.md) for the learning path; core stagger
-machinery lives in `@czap/core` / `@czap/compiler`.
+machinery lives in `@liteship/core` / `@liteship/compiler`.
 
 ## Multi-step composition (#141)
 

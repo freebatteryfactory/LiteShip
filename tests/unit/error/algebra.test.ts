@@ -22,7 +22,7 @@ import {
   type TaggedError,
   type LiteShipError,
   type Result,
-} from '@czap/error';
+} from '@liteship/error';
 
 // The error algebra is the spine of the gauntlet's Finding shape and of every
 // package's failure path, so these tests pin its LAWS — the guarantees callers

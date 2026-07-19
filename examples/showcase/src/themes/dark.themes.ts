@@ -1,4 +1,4 @@
-import { Theme } from '@czap/core';
+import { Theme } from '@liteship/core';
 
 /**
  * Dark theme definition.

@@ -7,19 +7,19 @@
  * This is the pipe between two pipeline stages that used to be crossed by
  * hand at every call site:
  *
- *   `@czap/assets`  decoded audio → BeatMarkerSet (sample indices)
- *   `@czap/scene`   ← THIS BRIDGE →  BeatComponent[] (timeMs)
- *   `@czap/scene`   BeatComponent[] → BeatSpawn[] → ECS Beat entities
+ *   `@liteship/assets`  decoded audio → BeatMarkerSet (sample indices)
+ *   `@liteship/scene`   ← THIS BRIDGE →  BeatComponent[] (timeMs)
+ *   `@liteship/scene`   BeatComponent[] → BeatSpawn[] → ECS Beat entities
  *
  * Scene-owned because the output is scene-domain data; it depends only on the
- * shared `@czap/_spine` contract, never on `@czap/assets`, so it introduces no
+ * shared `@liteship/_spine` contract, never on `@liteship/assets`, so it introduces no
  * `scene → assets` edge. Pure: it neither mutates its input nor performs I/O.
  *
  * @module
  */
 
-import type { BeatComponent, BeatProjectionResolutionInput } from '@czap/_spine';
-import { ValidationError } from '@czap/error';
+import type { BeatComponent, BeatProjectionResolutionInput } from '@liteship/_spine';
+import { ValidationError } from '@liteship/error';
 
 /**
  * Resolve a raw beat-marker projection into scene-ready beat components.

@@ -6,8 +6,8 @@
  * @module
  */
 
-import { IntegrityError, ParseError } from '@czap/error';
-import { bytesToHex } from '@czap/canonical';
+import { IntegrityError, ParseError } from '@liteship/error';
+import { bytesToHex } from '@liteship/canonical';
 import type { HLC } from './brands.js';
 import { TypedRef as TypedRefModule, type TypedRef } from './typed-ref.js';
 import { HLC as HLCOps } from './hlc.js';
@@ -58,7 +58,7 @@ export type ChainValidationError =
  *   prefix.
  * - `checkpoint`: the genesis-shaped checkpoint attestation that authorizes
  *   `base`. When supplied it is integrity-checked (hash + genesis shape +
- *   `subject.id === "czap/checkpoint:<base>"`); a mismatch fails `checkpoint_invalid`.
+ *   `subject.id === "liteship/checkpoint:<base>"`); a mismatch fails `checkpoint_invalid`.
  * - `verifyCheckpoint`: an OPTIONAL provenance verifier for the checkpoint — the
  *   injectable capability that closes the one gap the structural checks cannot.
  */
@@ -97,7 +97,7 @@ export const GENESIS: string = 'genesis';
  * shape — single source of truth, imported by `dag.ts` so the mint and the
  * verifier can never drift.
  */
-export const CHECKPOINT_ATTESTATION_SCHEMA = 'czap/checkpoint-summary/v1';
+export const CHECKPOINT_ATTESTATION_SCHEMA = 'liteship/checkpoint-summary/v1';
 
 /**
  * Compute the content hash of a receipt envelope.
@@ -316,7 +316,7 @@ export const validateChainDetailed = async (
       };
     }
     // Bind to the MINTED checkpoint shape, not just kind + subject id: DAG.checkpoint
-    // stamps subject.type "run" and a "czap/checkpoint-summary" payload. Otherwise a
+    // stamps subject.type "run" and a "liteship/checkpoint-summary" payload. Otherwise a
     // forger could mint a genesis-shaped kind:"checkpoint" envelope with the right
     // subject id but an arbitrary payload + an older timestamp to authorize a
     // truncated tail. (Full cryptographic provenance would need a signature; this
@@ -339,7 +339,7 @@ export const validateChainDetailed = async (
         reason: 'checkpoint is not genesis-shaped (previous must be GENESIS)',
       };
     }
-    const expectedSubjectId = `czap/checkpoint:${base}`;
+    const expectedSubjectId = `liteship/checkpoint:${base}`;
     if (checkpoint.subject.id !== expectedSubjectId) {
       throw {
         type: 'checkpoint_invalid' as const,
@@ -595,7 +595,7 @@ export const verifyMAC = async (envelope: ReceiptEnvelope, key: CryptoKey): Prom
  *
  * @example
  * ```ts
- * import { Receipt, HLC } from '@czap/core';
+ * import { Receipt, HLC } from '@liteship/core';
  *
  * const ts = HLC.increment(HLC.create('node-1'), Date.now());
  * const chain = await Receipt.buildChain([

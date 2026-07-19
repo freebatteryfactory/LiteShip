@@ -1,5 +1,5 @@
 import { defineConfig } from 'astro/config';
-import { integration } from '@czap/astro';
+import { integration } from '@liteship/astro';
 
 export default defineConfig({
   integrations: [

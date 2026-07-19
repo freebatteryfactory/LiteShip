@@ -59,8 +59,8 @@ const FNV_PRIME = 0x01000193;
  * outputs.
  *
  * This is the SINGLE source of truth for "frame state → pixels" shared by BOTH
- * headless byte-encoders — the `@czap/command` ffmpeg render backend that the
- * shipping `scene render` CLI drives, and the `@czap/stage` ffmpeg `FrameEncoder`.
+ * headless byte-encoders — the `@liteship/command` ffmpeg render backend that the
+ * shipping `scene render` CLI drives, and the `@liteship/stage` ffmpeg `FrameEncoder`.
  * Neither owns its own painter, so
  * the same `CompositeState` always yields byte-identical pixels regardless of
  * which path encoded it. It is HONEST, not a black stub: distinct frames (the

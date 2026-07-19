@@ -15,8 +15,8 @@
  * (harness/arbitrary-from-schema rewrite) lands.
  */
 import { describe, expect, it } from 'vitest';
-import { hasTag } from '@czap/error';
-import type { UnsupportedError } from '@czap/error';
+import { hasTag } from '@liteship/error';
+import type { UnsupportedError } from '@liteship/error';
 import { S } from '../../../../packages/core/src/schema/constructors.js';
 import { toJsonSchema } from '../../../../packages/core/src/schema/to-json-schema.js';
 import { validateStructural } from '../../../support/structural-schema.js';
@@ -208,7 +208,7 @@ describe('toJsonSchema — reproduction proof (real plumb/check payloads conform
   const plumbSample = {
     ok: false,
     skips: [{ file: 'tests/generated/x.test.ts', kind: 'it.skip', message: 'unwired' }],
-    unclassified: ['@czap/mystery'],
+    unclassified: ['@liteship/mystery'],
     generatedPresent: true,
     generatedCorpusMessage: null,
   };

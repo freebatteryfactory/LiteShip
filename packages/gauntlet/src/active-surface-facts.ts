@@ -1,7 +1,7 @@
 /**
  * Active-surface FactPack — the type-only fact shape for field-level
  * active-modeled-surface-has-reader (#132). NO `typescript` dependency: the
- * HOST (`@czap/audit`'s `buildActiveSurfaceFacts`) produces these facts;
+ * HOST (`@liteship/audit`'s `buildActiveSurfaceFacts`) produces these facts;
  * the {@link activeModeledSurfaceReaderGate} decides over them.
  *
  * @module

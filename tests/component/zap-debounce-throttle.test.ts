@@ -10,7 +10,7 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Zap, Millis } from '@czap/core';
+import { Zap, Millis } from '@liteship/core';
 
 /** Wait `ms` real milliseconds so a debounce window / throttle gap elapses. */
 function delay(ms: number): Promise<void> {

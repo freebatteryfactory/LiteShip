@@ -8,13 +8,13 @@
  *   client: sendGraphQuery(url, \{ ifNoneMatch \})
  *   server: handleGraphQuery(request, store)
  *
- * `@czap/astro` wraps `handleGraphQuery` into `graphQueryRoute`; the host mounts
- * it on `export const QUERY` (POST + `X-Czap-Query` fallback when QUERY is absent).
+ * `@liteship/astro` wraps `handleGraphQuery` into `graphQueryRoute`; the host mounts
+ * it on `export const QUERY` (POST + `X-Liteship-Query` fallback when QUERY is absent).
  *
  * @module
  */
 
-import { ValidationError } from '@czap/error';
+import { ValidationError } from '@liteship/error';
 import type { DocumentGraph } from './document-graph.js';
 import type { GraphStore } from './graph-mutation.js';
 import { verifyAppliedGraph } from './graph-mutation.js';
@@ -39,7 +39,7 @@ export type GraphQueryResponse =
   | { readonly status: 'error'; readonly message: string };
 
 /** HTTP fallback header when the host cannot dispatch `QUERY` (loud ladder, not silent). */
-export const GRAPH_QUERY_FALLBACK_HEADER = 'X-Czap-Query';
+export const GRAPH_QUERY_FALLBACK_HEADER = 'X-Liteship-Query';
 
 const SHA256_ETAG_RE = /^sha256:[0-9a-f]{64}$/;
 const FNV_ETAG_RE = /^fnv1a:[0-9a-f]{8}$/;

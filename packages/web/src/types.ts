@@ -1,5 +1,5 @@
 /**
- * `@czap/web` -- Core Web Types
+ * `@liteship/web` -- Core Web Types
  *
  * DOM runtime type definitions for slot addressing, island modes,
  * physical state capture/restore, morph configuration, SSE streaming,
@@ -8,7 +8,7 @@
  * @module
  */
 
-import type { Millis } from '@czap/core';
+import type { Millis } from '@liteship/core';
 
 // =============================================================================
 // Slot Types

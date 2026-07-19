@@ -1,5 +1,5 @@
 /**
- * Wave-3 DX regression guards for @czap/vite.
+ * Wave-3 DX regression guards for @liteship/vite.
  *
  * Each test is a self-documenting LESSON pinning a LAW about the plugin's
  * ergonomic surface — backward-compatible defaults and clear error-contract
@@ -13,10 +13,10 @@ import fc from 'fast-check';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { Boundary, Diagnostics } from '@czap/core';
+import { Boundary, Diagnostics } from '@liteship/core';
 
 // These tests simulate consumer projects via temp roots. The packaged-wasm
-// source resolves @czap/core through the module graph (which vitest would always
+// source resolves @liteship/core through the module graph (which vitest would always
 // resolve to the workspace), so force it absent — the "no binary" / public-only
 // scenarios below are then driven entirely by the temp-root fixtures.
 vi.mock('../../../packages/vite/src/wasm-package-resolve.js', () => ({ resolvePackagedWasm: () => null }));
@@ -29,7 +29,7 @@ import { transformHTML } from '../../../packages/vite/src/html-transform.js';
 const tempDirs: string[] = [];
 
 function makeTempDir(): string {
-  const dir = mkdtempSync(join(tmpdir(), 'czap-vite-dx-'));
+  const dir = mkdtempSync(join(tmpdir(), 'liteship-vite-dx-'));
   tempDirs.push(dir);
   return dir;
 }
@@ -37,7 +37,7 @@ function makeTempDir(): string {
 function writePublicWasm(root: string): void {
   const publicDir = join(root, 'public');
   mkdirSync(publicDir, { recursive: true });
-  writeFileSync(join(publicDir, 'czap-compute.wasm'), Buffer.from([0x00, 0x61, 0x73, 0x6d]));
+  writeFileSync(join(publicDir, 'liteship-compute.wasm'), Buffer.from([0x00, 0x61, 0x73, 0x6d]));
 }
 
 afterEach(() => {
@@ -49,15 +49,15 @@ afterEach(() => {
 });
 
 // ---------------------------------------------------------------------------
-// #81 — the `czap` alias is the public name
+// #81 — the `liteship` alias is the public name
 // ---------------------------------------------------------------------------
 
-describe('LESSON (#81): the import-site rename ritual is gone — `czap` is exported directly', () => {
-  test('`czap` is exported and is the very same factory as `plugin`', () => {
-    // LAW: consumers type `import { czap } from '@czap/vite'` with no rename;
+describe('LESSON (#81): the import-site rename ritual is gone — `liteship` is exported directly', () => {
+  test('`liteship` is exported and is the very same factory as `plugin`', () => {
+    // LAW: consumers type `import { liteship } from '@liteship/vite'` with no rename;
     // it must be IDENTICAL to `plugin`, not a thin wrapper that could drift.
-    expect(IndexModule.czap).toBe(IndexModule.plugin);
-    expect(typeof IndexModule.czap).toBe('function');
+    expect(IndexModule.liteship).toBe(IndexModule.plugin);
+    expect(typeof IndexModule.liteship).toBe('function');
   });
 });
 
@@ -76,7 +76,7 @@ describe('LESSON (#80): WASM auto-enables when a binary is present — no double
     const vitePlugin = plugin(); // no wasm option at all
     vitePlugin.configResolved?.({ root, command: 'serve' } as never);
 
-    expect(vitePlugin.load?.('\0virtual:czap/wasm-url')).toContain('/czap-compute.wasm');
+    expect(vitePlugin.load?.('\0virtual:liteship/wasm-url')).toContain('/liteship-compute.wasm');
   });
 
   test('omitting `wasm` stays silent and disabled when no binary exists', () => {
@@ -91,7 +91,7 @@ describe('LESSON (#80): WASM auto-enables when a binary is present — no double
     vitePlugin.buildStart?.call({ warn, emitFile: vi.fn() } as never);
 
     expect(warn).not.toHaveBeenCalled();
-    expect(vitePlugin.load?.('\0virtual:czap/wasm-url')).toContain('export const wasmUrl = null');
+    expect(vitePlugin.load?.('\0virtual:liteship/wasm-url')).toContain('export const wasmUrl = null');
   });
 
   test('`wasm: false` and `{ enabled: false }` force WASM off even when a binary exists', () => {
@@ -103,7 +103,7 @@ describe('LESSON (#80): WASM auto-enables when a binary is present — no double
     for (const off of [false, { enabled: false } as const]) {
       const vitePlugin = plugin({ wasm: off });
       vitePlugin.configResolved?.({ root, command: 'serve' } as never);
-      expect(vitePlugin.load?.('\0virtual:czap/wasm-url')).toContain('export const wasmUrl = null');
+      expect(vitePlugin.load?.('\0virtual:liteship/wasm-url')).toContain('export const wasmUrl = null');
     }
   });
 
@@ -118,7 +118,7 @@ describe('LESSON (#80): WASM auto-enables when a binary is present — no double
     vitePlugin.buildStart?.call({ warn, emitFile: vi.fn() } as never);
 
     expect(warn).toHaveBeenCalledWith(
-      expect.stringContaining('WASM support was enabled, but no czap-compute binary could be resolved.'),
+      expect.stringContaining('WASM support was enabled, but no liteship-compute binary could be resolved.'),
     );
   });
 
@@ -134,7 +134,7 @@ describe('LESSON (#80): WASM auto-enables when a binary is present — no double
 
     const message = warn.mock.calls[0]?.[0] as string;
     expect(message).toContain('Searched:');
-    expect(message).toContain('public/czap-compute.wasm');
+    expect(message).toContain('public/liteship-compute.wasm');
     expect(message).toContain('cargo build --target wasm32-unknown-unknown --release');
     expect(message).toContain('wasm: { path:');
   });
@@ -243,13 +243,13 @@ describe('LESSON (#84/#87): resolve failures teach the exact next step', () => {
 
 describe('LESSON (#88): an unresolved HTML boundary spells out the silent consequence', () => {
   test('the warning says the attribute is left untransformed and the element loses reactivity', async () => {
-    // LAW: a missing boundary in `data-czap="..."` silently renders an inert
+    // LAW: a missing boundary in `data-liteship="..."` silently renders an inert
     // element — the message must name that consequence, not just the search.
     const root = makeTempDir();
     const { sink, events } = Diagnostics.createBufferSink();
     Diagnostics.setSink(sink);
 
-    const html = '<main data-czap="hero">content</main>';
+    const html = '<main data-liteship="hero">content</main>';
     const result = await transformHTML(html, join(root, 'src', 'index.astro'), root);
 
     // Untransformed: the attribute is left exactly as-authored.
@@ -280,10 +280,10 @@ describe('LESSON (#88): an unresolved HTML boundary spells out the silent conseq
     const { sink, events } = Diagnostics.createBufferSink();
     Diagnostics.setSink(sink);
 
-    const html = '<main data-czap="hero">content</main>';
+    const html = '<main data-liteship="hero">content</main>';
     const result = await transformHTML(html, join(srcDir, 'index.astro'), root);
 
-    expect(result).toContain('data-czap-boundary=');
+    expect(result).toContain('data-liteship-boundary=');
     expect(events.some((e) => e.code === 'boundary-not-found')).toBe(false);
   });
 });

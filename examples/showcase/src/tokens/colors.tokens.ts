@@ -1,4 +1,4 @@
-import { Token } from '@czap/core';
+import { Token } from '@liteship/core';
 
 export const primary = Token.make({
   name: 'primary',

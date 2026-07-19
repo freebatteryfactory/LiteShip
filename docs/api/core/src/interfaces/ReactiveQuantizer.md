@@ -10,7 +10,7 @@ Defined in: [core/src/quantizer-types.ts:70](https://github.com/freebatteryfacto
 
 Reactive quantizer — the [Quantizer](Quantizer.md) base plus its reactive substrate: a
 replay-1 current-state read and a no-replay crossing subscription, both on the
-extracted [CellKernel](../variables/CellKernel.md). This is the shape `@czap/quantizer`'s live
+extracted [CellKernel](../variables/CellKernel.md). This is the shape `@liteship/quantizer`'s live
 evaluator produces; a purely-synchronous quantizer omits this extension.
 
 ## Extends

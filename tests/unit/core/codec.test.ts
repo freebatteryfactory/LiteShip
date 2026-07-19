@@ -9,7 +9,7 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { S, Codec } from '@czap/core';
+import { S, Codec } from '@liteship/core';
 
 describe('Codec', () => {
   describe('roundtrip with a struct schema', () => {

@@ -4,7 +4,7 @@
  * Builder utilities for creating and merging morph hints.
  */
 
-import { Diagnostics } from '@czap/core';
+import { Diagnostics } from '@liteship/core';
 import type { MorphHints, MorphRejection, PhysicalState } from '../types.js';
 import * as SemanticIdModule from './semantic-id.js';
 
@@ -170,7 +170,7 @@ export const fromElement = (element: Element): MorphHints => {
     } catch (cause) {
       // The hint must not break the morph, but a typo'd map should be visible.
       Diagnostics.warn({
-        source: 'czap/web.morph',
+        source: 'liteship/web.morph',
         code: 'invalid-morph-id-map',
         message: `data-morph-id-map contains invalid JSON: ${idMapAttr}. The id map was skipped. Expected a JSON object mapping old ids to new ids, e.g. data-morph-id-map='{"old-id":"new-id"}'.`,
         cause,
@@ -214,7 +214,7 @@ export const rejectIfMissing = (hints: MorphHints, element: Element): MorphRejec
       missingIds,
       reason: `Morph rejected: elements [${missingIds.join(', ')}] were required by a preserve hint but are missing from the new HTML.`,
       hint:
-        `Keep the data-czap-id elements [${missingIds.join(', ')}] in the server HTML, ` +
+        `Keep the data-liteship-id elements [${missingIds.join(', ')}] in the server HTML, ` +
         'or drop them from the preserve hint (Hints.preserveIds / data-morph-preserve).',
     };
   }
@@ -277,7 +277,7 @@ function remapPath(path: string | null, remap: Record<string, string>): string |
 
   let remappedPath = path;
   for (const [oldId, newId] of Object.entries(remap)) {
-    remappedPath = remappedPath.replace(`[data-czap-id="${oldId}"]`, `[data-czap-id="${newId}"]`);
+    remappedPath = remappedPath.replace(`[data-liteship-id="${oldId}"]`, `[data-liteship-id="${newId}"]`);
     remappedPath = remappedPath.replace(`#${CSS.escape(oldId)}`, `#${CSS.escape(newId)}`);
   }
   return remappedPath;

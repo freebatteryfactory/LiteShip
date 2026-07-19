@@ -5,7 +5,7 @@
  *
  * This module defines the {@link FuzzCorpusFacts} INTERFACE and nothing else.
  * Like {@link RepoIR}, {@link SupplyChainFacts}, and {@link SimulationFacts}, it
- * carries NO heavy dependency: `@czap/gauntlet` stays the lean engine, so it
+ * carries NO heavy dependency: `@liteship/gauntlet` stays the lean engine, so it
  * never imports `fast-check`, the corpus, or any decoder. A HOST (the repo's
  * `tests/fuzz` driver via the CLI fuzz path) hammers every L4 decode surface with
  * the committed corpus + a fixed, seeded count of generated inputs, classifies
@@ -16,7 +16,7 @@
  *
  * THE FAIL-CLOSED SPINE: a decode SURFACE ingests untrusted serialized bytes; the
  * one invariant is that under ANY input it either returns a typed value or fails
- * closed with a tagged `@czap/error` — never crashes, hangs, misparses, or
+ * closed with a tagged `@liteship/error` — never crashes, hangs, misparses, or
  * pollutes `Object.prototype`. A `crashed` / `polluted` / `misparsed` verdict is
  * the cardinal failure — a real security finding on the trust spine. The host
  * records it as a fact (the decoder id + the seed/source that reproduces it); the

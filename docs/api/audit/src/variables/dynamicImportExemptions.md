@@ -8,9 +8,9 @@
 
 > `const` **dynamicImportExemptions**: `ReadonlySet`\<`string`\>
 
-Defined in: [audit/src/policy.ts:302](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L302)
+Defined in: [audit/src/policy.ts:308](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L308)
 
-Dynamic package imports — `import('@czap/...')` — that are deliberately
+Dynamic package imports — `import('@liteship/...')` — that are deliberately
 allowed despite the importer not declaring the target in its package.json.
 Format: `"<importer> -> <target>"`. Everything else that dynamic-imports a
 workspace package absent from its manifest is flagged

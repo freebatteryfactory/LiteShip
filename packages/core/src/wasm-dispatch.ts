@@ -1,7 +1,7 @@
 /**
  * WASM escape hatch -- capability detection, module loading, and dispatch.
  *
- * Detects WebAssembly availability, loads the czap-compute WASM module,
+ * Detects WebAssembly availability, loads the liteship-compute WASM module,
  * and provides a unified kernel interface that transparently falls back
  * to pure TypeScript implementations when WASM is unavailable.
  *
@@ -13,7 +13,7 @@
  * @module
  */
 
-import { InvariantViolationError, IoError } from '@czap/error';
+import { InvariantViolationError, IoError } from '@liteship/error';
 import { fallbackKernels } from './wasm-fallback.js';
 import { WASM_SCRATCH_BASE } from './defaults.js';
 
@@ -47,7 +47,7 @@ export interface WASMKernels {
 // WASM instance state
 // ---------------------------------------------------------------------------
 
-/** Raw WASM export signatures matching C-ABI from czap-compute. */
+/** Raw WASM export signatures matching C-ABI from liteship-compute. */
 interface WASMExports {
   memory: WebAssembly.Memory;
   spring_curve(stiffness: number, damping: number, mass: number, samples: number): number;
@@ -80,7 +80,7 @@ const validateWASMExports = (exports: WebAssembly.Exports): WASMExports => {
   const mem = exports['memory'];
   const isMemoryShape =
     mem !== null && typeof mem === 'object' && 'buffer' in mem && Reflect.get(mem, 'buffer') instanceof ArrayBuffer;
-  /* v8 ignore next 5 — sanctioned cast containment: the czap-compute WASM module always
+  /* v8 ignore next 5 — sanctioned cast containment: the liteship-compute WASM module always
      exports `memory` as a WebAssembly.Memory (whose `.buffer` is an ArrayBuffer); this
      guard exists only so the cast to WASMExports stays runtime-safe if a caller ever
      supplies a drift/tampered module. Cannot be reached by valid instantiate output. */

@@ -1,5 +1,5 @@
 {
-  "name": "@czap/edge",
+  "name": "@liteship/edge",
   "version": "0.18.0",
   "description": "Choose the right UI state at the CDN edge for LiteShip: read Client Hints into a device tier, serve a content-addressed boundary cache, and compile the theme for first paint.",
   "license": "MIT",
@@ -12,7 +12,6 @@
   "bugs": "https://github.com/freebatteryfactory/LiteShip/issues",
   "homepage": "https://github.com/freebatteryfactory/LiteShip#readme",
   "keywords": [
-    "czap",
     "liteship",
     "edge",
     "cdn",
@@ -40,9 +39,9 @@
     "prepack": "pnpm run build"
   },
   "dependencies": {
-    "@czap/core": "workspace:*",
-    "@czap/detect": "workspace:*",
-    "@czap/error": "workspace:*"
+    "@liteship/core": "workspace:*",
+    "@liteship/detect": "workspace:*",
+    "@liteship/error": "workspace:*"
   },
   "engines": {
     "node": ">=22.13.0"

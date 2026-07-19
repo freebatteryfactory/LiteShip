@@ -3,13 +3,13 @@
  *
  * - **Active casts** — derive which projection targets a boundary element is
  *   live on (css / glsl / wgsl / aria / svg) from its attributes + payload, and
- *   format the CURRENT emitted values carried by `czap:uniform-update` `detail`.
+ *   format the CURRENT emitted values carried by `liteship:uniform-update` `detail`.
  * - **Escalation** — derive the minimal required {@link CapTier} from the
- *   active targets and run the REAL `@czap/core` `chooseRung` against the live
+ *   active targets and run the REAL `@liteship/core` `chooseRung` against the live
  *   runtime site, surfacing the chosen rung + admitted targets + reason.
  * - **DocumentGraph peek** — build a read-only, content-addressed graph summary
  *   of the boundaries actually on the page (signal + component + projection
- *   nodes), using the real `@czap/core` node-addressing kernel.
+ *   nodes), using the real `@liteship/core` node-addressing kernel.
  *
  * Every export here is a PURE function of its inputs (the live DOM read happens
  * in {@link deriveActiveTargets}, which takes the element; the rest are data →
@@ -38,7 +38,7 @@ import {
   type ProjectionNode,
   type RuntimeSite,
   type SignalNode,
-} from '@czap/core';
+} from '@liteship/core';
 import type { BoundaryStateDetail, SerializedBoundary } from './boundary.js';
 
 /** A cast/projection target the inspector visualizes. */
@@ -58,13 +58,13 @@ export interface ActiveTarget {
  * persisted, so the volatile timestamps are irrelevant.
  */
 const ZERO_META = {
-  created: { wall_ms: 0, counter: 0, node_id: 'czap-inspector' },
-  updated: { wall_ms: 0, counter: 0, node_id: 'czap-inspector' },
+  created: { wall_ms: 0, counter: 0, node_id: 'liteship-inspector' },
+  updated: { wall_ms: 0, counter: 0, node_id: 'liteship-inspector' },
   version: 0,
 } as const;
 
 /**
- * Parse a `data-czap-boundary` payload leniently for the inspector. Returns
+ * Parse a `data-liteship-boundary` payload leniently for the inspector. Returns
  * `null` on malformed JSON (the panels degrade to "no payload" rather than
  * throwing mid-render). Mirrors the runtime's parse posture without re-running
  * the full validating `parseBoundary`.
@@ -107,7 +107,7 @@ function hasEntries(record: Readonly<Record<string, unknown>>): boolean {
 export function deriveActiveTargets(snapshot: ElementCastSnapshot): readonly ActiveTarget[] {
   const out: ActiveTarget[] = [];
 
-  // CSS — any live --czap-* custom property on the element, or an emitted css map.
+  // CSS — any live --liteship-* custom property on the element, or an emitted css map.
   const cssProps = snapshot.cssCustomProps;
   const emittedCss = snapshot.detail ? Object.keys(snapshot.detail.css).length : 0;
   if (cssProps.length > 0 || emittedCss > 0) {
@@ -115,7 +115,7 @@ export function deriveActiveTargets(snapshot: ElementCastSnapshot): readonly Act
       target: 'css',
       evidence:
         cssProps.length > 0
-          ? `${cssProps.length} live --czap-* custom prop${cssProps.length === 1 ? '' : 's'}`
+          ? `${cssProps.length} live --liteship-* custom prop${cssProps.length === 1 ? '' : 's'}`
           : `${emittedCss} emitted css var${emittedCss === 1 ? '' : 's'}`,
     });
   }
@@ -128,7 +128,7 @@ export function deriveActiveTargets(snapshot: ElementCastSnapshot): readonly Act
       target: 'glsl',
       evidence:
         snapshot.shaderType === 'glsl'
-          ? 'data-czap-shader-type="glsl"'
+          ? 'data-liteship-shader-type="glsl"'
           : glslAuthored
             ? 'authored @glsl uniforms'
             : `${emittedGlsl} emitted u_* uniform${emittedGlsl === 1 ? '' : 's'}`,
@@ -143,7 +143,7 @@ export function deriveActiveTargets(snapshot: ElementCastSnapshot): readonly Act
       target: 'wgsl',
       evidence:
         snapshot.shaderType === 'wgsl'
-          ? 'data-czap-shader-type="wgsl"'
+          ? 'data-liteship-shader-type="wgsl"'
           : wgslAuthored
             ? 'authored @wgsl bindings'
             : `${emittedWgsl} emitted binding${emittedWgsl === 1 ? '' : 's'}`,
@@ -165,9 +165,9 @@ export function deriveActiveTargets(snapshot: ElementCastSnapshot): readonly Act
   }
 
   // SVG — the satellite carries no SVG cast attribute today; an explicit
-  // data-czap-shader-type="svg" is the only honest on-page evidence.
+  // data-liteship-shader-type="svg" is the only honest on-page evidence.
   if (snapshot.shaderType === 'svg') {
-    out.push({ target: 'svg', evidence: 'data-czap-shader-type="svg"' });
+    out.push({ target: 'svg', evidence: 'data-liteship-shader-type="svg"' });
   }
 
   return out;
@@ -177,11 +177,11 @@ export function deriveActiveTargets(snapshot: ElementCastSnapshot): readonly Act
 export interface ElementCastSnapshot {
   readonly shaderType: string | null;
   readonly authoredTargets: Set<CastTarget>;
-  /** Names of live `--czap-*` custom properties set on the element. */
+  /** Names of live `--liteship-*` custom properties set on the element. */
   readonly cssCustomProps: readonly string[];
   /** Names of live `aria-*` / `role` attributes on the element. */
   readonly ariaAttrs: readonly string[];
-  /** Latest emitted `czap:uniform-update` detail, if one has fired. */
+  /** Latest emitted `liteship:uniform-update` detail, if one has fired. */
   readonly detail: BoundaryStateDetail | null;
 }
 
@@ -193,12 +193,12 @@ export function snapshotElementCasts(element: HTMLElement, detail: BoundaryState
   const inlineStyle = element.getAttribute('style') ?? '';
   for (const declaration of inlineStyle.split(';')) {
     const name = declaration.split(':')[0]?.trim();
-    if (name && name.startsWith('--czap-')) cssCustomProps.push(name);
+    if (name && name.startsWith('--liteship-')) cssCustomProps.push(name);
   }
   const ariaAttrs = element.getAttributeNames().filter((name) => ARIA_ATTR_RE.test(name));
   return {
-    shaderType: element.getAttribute('data-czap-shader-type'),
-    authoredTargets: authoredTargetsFromPayload(readBoundaryPayload(element.getAttribute('data-czap-boundary'))),
+    shaderType: element.getAttribute('data-liteship-shader-type'),
+    authoredTargets: authoredTargetsFromPayload(readBoundaryPayload(element.getAttribute('data-liteship-boundary'))),
     cssCustomProps,
     ariaAttrs,
     detail,
@@ -221,7 +221,7 @@ export function formatCastValueRow(key: string, value: string | number | readonl
   return `${key} = ${value}`;
 }
 
-/** Collect the emitted value rows for a target from a `czap:uniform-update` detail. */
+/** Collect the emitted value rows for a target from a `liteship:uniform-update` detail. */
 export function castValueRows(target: CastTarget, detail: BoundaryStateDetail | null): readonly string[] {
   if (!detail) return [];
   const map: Record<string, string | number | readonly number[]> =
@@ -246,7 +246,7 @@ export function castValueRows(target: CastTarget, detail: BoundaryStateDetail | 
 /**
  * The minimal {@link CapTier} that admits every one of `targets`. Mirrors the
  * escalation chooser's `RUNG_TARGETS` admissibility ladder (projected from the
- * shared `cap-ladder.ts` datum in `@czap/core`): aria→static, css→styled,
+ * shared `cap-ladder.ts` datum in `@liteship/core`): aria→static, css→styled,
  * glsl→animated, wgsl→gpu.
  * `svg` has no rung in the chooser's table; it is treated as `styled` (a CSS-
  * class peer) for the purpose of the required floor.
@@ -278,7 +278,7 @@ export interface EscalationView {
 }
 
 /**
- * Run the REAL `@czap/core` escalation chooser for a boundary, deriving a
+ * Run the REAL `@liteship/core` escalation chooser for a boundary, deriving a
  * `PolicyNode` from the active cast targets. The derived policy grants every
  * rung and admits the given site, so the chosen rung equals `requires`
  * downgraded only by the (here-absent) budgets — i.e. it surfaces the genuine
@@ -372,7 +372,7 @@ export function formatGraphNodeRow(node: DocumentGraphNode): GraphNodeRow {
 
 /**
  * Build a read-only DocumentGraph peek from the boundaries on a page. For each
- * boundary we mint (via the real `@czap/core` `sealNode` content-addressing):
+ * boundary we mint (via the real `@liteship/core` `sealNode` content-addressing):
  *
  * - one `signal` node for its `input`,
  * - one `component` node carrying its name + thresholds + states,
@@ -467,7 +467,7 @@ function addEdge(
 
 /**
  * The optional dev-only payload an integration MAY inject onto the page as
- * `window.__CZAP_INSPECTOR__`. Today nothing populates it (no authored
+ * `window.__LITESHIP_INSPECTOR__`. Today nothing populates it (no authored
  * `PolicyNode` / build-time `DocumentGraph` is serialized per page), so the
  * panels fall back to the page-derived views above. This is the seam a future
  * integration plugs an authored escalation + graph payload into; the panels
@@ -480,10 +480,10 @@ export interface InjectedInspectorPayload {
 
 /** Read the injected dev payload if an integration provided one; else `null`. */
 export function readInjectedPayload(
-  win: { readonly __CZAP_INSPECTOR__?: InjectedInspectorPayload } = typeof window !== 'undefined'
-    ? (window as unknown as { __CZAP_INSPECTOR__?: InjectedInspectorPayload })
+  win: { readonly __LITESHIP_INSPECTOR__?: InjectedInspectorPayload } = typeof window !== 'undefined'
+    ? (window as unknown as { __LITESHIP_INSPECTOR__?: InjectedInspectorPayload })
     : {},
 ): InjectedInspectorPayload | null {
-  const payload = win.__CZAP_INSPECTOR__;
+  const payload = win.__LITESHIP_INSPECTOR__;
   return payload && typeof payload === 'object' ? payload : null;
 }

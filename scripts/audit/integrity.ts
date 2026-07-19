@@ -1,15 +1,15 @@
 /**
- * Integrity audit CLI wrapper (CUT D9b-1). Engine in `@czap/audit`; this thin
+ * Integrity audit CLI wrapper (CUT D9b-1). Engine in `@liteship/audit`; this thin
  * script re-exports it and provides the `pnpm run audit:integrity` entry.
  *
  * @module
  */
-import { runIntegrityAudit, liteshipDevopsProfile, withRepoRoot } from '@czap/audit';
+import { runIntegrityAudit, liteshipDevopsProfile, withRepoRoot } from '@liteship/audit';
 import { reportPaths } from './policy.js';
 import { createCounts, isDirectExecution, repoRoot, writeTextFile } from './shared.js';
 
-export { runIntegrityAudit } from '@czap/audit';
-export type { IntegritySummary } from '@czap/audit';
+export { runIntegrityAudit } from '@liteship/audit';
+export type { IntegritySummary } from '@liteship/audit';
 
 function main(): void {
   const result = runIntegrityAudit(withRepoRoot(liteshipDevopsProfile, repoRoot));

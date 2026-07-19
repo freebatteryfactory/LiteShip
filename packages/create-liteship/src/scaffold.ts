@@ -1,9 +1,9 @@
 /**
  * Scaffold engine for `create-liteship` — copies the embedded
- * `templates/default/` Astro + \@czap starter into a target directory.
+ * `templates/default/` Astro + \@liteship starter into a target directory.
  *
  * Template copying is a `node:fs` copy enumerated by the shared
- * `@czap/core` file walker; the only dynamic pieces are (1) renaming
+ * `@liteship/core` file walker; the only dynamic pieces are (1) renaming
  * `gitignore` -> `.gitignore` (npm strips `.gitignore` files from
  * published tarballs, so the template stores it un-dotted) and
  * (2) rewriting the scaffolded `package.json` `name` field to a
@@ -13,9 +13,9 @@
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync, renameSync } from 'node:fs';
 import { basename, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { normalizeRepoPath } from '@czap/core';
-import { walkFiles } from '@czap/core/fs-walk';
-import { ValidationError } from '@czap/error';
+import { normalizeRepoPath } from '@liteship/core';
+import { walkFiles } from '@liteship/core/fs-walk';
+import { ValidationError } from '@liteship/error';
 
 /** Files stored under a neutral name in the template, restored on copy. */
 const TEMPLATE_RENAMES: Readonly<Record<string, string>> = {

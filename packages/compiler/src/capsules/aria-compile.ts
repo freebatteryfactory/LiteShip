@@ -22,8 +22,8 @@
  * @module
  */
 
-import { defineCapsule, Boundary, Diagnostics, BoundaryAttribute, S } from '@czap/core';
-import type { Infer } from '@czap/core';
+import { defineCapsule, Boundary, Diagnostics, BoundaryAttribute, S } from '@liteship/core';
+import type { Infer } from '@liteship/core';
 import { ARIACompiler } from '../aria.js';
 import type { ARIACompileResult } from '../aria.js';
 

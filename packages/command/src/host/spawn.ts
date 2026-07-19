@@ -12,8 +12,8 @@
  * automatic. A drift-guard test (tests/unit/meta/spawn-coverage-inheritance.test.ts)
  * fails CI if any future commit adds an env override.
  *
- * Lives in `@czap/command/host` (CUT A1 capstone-1) — the canonical home for
- * Node host execution shared by the CLI and MCP adapters. `@czap/cli`'s
+ * Lives in `@liteship/command/host` (CUT A1 capstone-1) — the canonical home for
+ * Node host execution shared by the CLI and MCP adapters. `@liteship/cli`'s
  * `lib/spawn.ts` / `spawn-helpers.ts` and `scripts/lib/spawn.ts` are thin
  * re-exports so existing import paths keep working; this is the one impl the
  * spawn drift-guard tests pin.
@@ -22,7 +22,7 @@
  */
 
 import { execSync, spawn, type ChildProcess } from 'node:child_process';
-import { IoError } from '@czap/error';
+import { IoError } from '@liteship/error';
 
 /**
  * Discriminate a "the process is already gone" kill failure (the designed
@@ -88,7 +88,7 @@ export interface SpawnCaptureOpts {
   readonly captureBytes?: number;
   /**
    * If set, kill the child after this many ms and resolve with `timedOut: true`
-   * (never rejects on timeout). For bounding short external probes (e.g. `czap
+   * (never rejects on timeout). For bounding short external probes (e.g. `liteship
    * doctor`'s `pnpm --version`) so a slow/wedged tool can't hang the caller.
    * Omitted → existing behavior (resolve only on the child's `close`).
    */
@@ -199,7 +199,7 @@ export function spawnArgv(command: string, args: readonly string[], opts: SpawnA
  * stdout must NOT pollute our own stdout. Child stdout is piped to our
  * stderr; child stderr inherits to our stderr; child stdin is closed.
  *
- * Use this for commands like `czap doctor --fix` whose stdout contract is
+ * Use this for commands like `liteship doctor --fix` whose stdout contract is
  * JSON-only (the doctor receipt is written to stdout AFTER the fixes run,
  * and would otherwise be preceded by the build's tsc output line by line).
  *

@@ -1,18 +1,18 @@
-import { SlotRegistry, dispatchCzapEvent } from '@czap/web';
+import { SlotRegistry, dispatchLiteshipEvent } from '@liteship/web';
 import type { DirectiveName } from './directive-boot.js';
 import { readRuntimeGlobal, writeRuntimeGlobal } from './globals.js';
 
 interface RuntimeWindow extends Window {
-  __CZAP_SLOT_REGISTRY__?: SlotRegistry.Shape;
-  __CZAP_SLOT_BOOTSTRAPPED__?: boolean;
-  __CZAP_SLOTS__?: {
+  __LITESHIP_SLOT_REGISTRY__?: SlotRegistry.Shape;
+  __LITESHIP_SLOT_BOOTSTRAPPED__?: boolean;
+  __LITESHIP_SLOTS__?: {
     readonly registry: SlotRegistry.Shape;
     readonly entries: Record<string, { path: string; mode: string }>;
   };
 }
 
 /** The explicit cross-directive marker used by the plain-element boot scanner. */
-export const DIRECTIVE_MARKER_ATTRIBUTE = 'data-czap-directive';
+export const DIRECTIVE_MARKER_ATTRIBUTE = 'data-liteship-directive';
 
 /** One directive-owned root attribute and whether it is unambiguous enough for implicit boot. */
 export interface DirectiveRootAttribute {
@@ -26,14 +26,14 @@ export interface DirectiveRootAttribute {
  * scanner derives its implicit plain-element selectors from the same data.
  */
 export const DIRECTIVE_ATTRIBUTE_REGISTRY = {
-  satellite: [{ attribute: 'data-czap-boundary', implicitBoot: false }],
-  stream: [{ attribute: 'data-czap-stream-url', implicitBoot: true }],
-  llm: [{ attribute: 'data-czap-llm-url', implicitBoot: true }],
-  worker: [{ attribute: 'data-czap-boundary', implicitBoot: false }],
-  gpu: [{ attribute: 'data-czap-shader-src', implicitBoot: true }],
-  wasm: [{ attribute: 'data-czap-wasm', implicitBoot: true }],
-  graph: [{ attribute: 'data-czap-graph', implicitBoot: true }],
-  motion: [{ attribute: 'data-czap-motion-program', implicitBoot: true }],
+  satellite: [{ attribute: 'data-liteship-boundary', implicitBoot: false }],
+  stream: [{ attribute: 'data-liteship-stream-url', implicitBoot: true }],
+  llm: [{ attribute: 'data-liteship-llm-url', implicitBoot: true }],
+  worker: [{ attribute: 'data-liteship-boundary', implicitBoot: false }],
+  gpu: [{ attribute: 'data-liteship-shader-src', implicitBoot: true }],
+  wasm: [{ attribute: 'data-liteship-wasm', implicitBoot: true }],
+  graph: [{ attribute: 'data-liteship-graph', implicitBoot: true }],
+  motion: [{ attribute: 'data-liteship-motion-program', implicitBoot: true }],
   svg: [],
 } as const satisfies Record<DirectiveName, readonly DirectiveRootAttribute[]>;
 
@@ -76,7 +76,7 @@ function runtimeWindow(): RuntimeWindow | null {
 
 /**
  * Return the document-scoped {@link SlotRegistry.Shape}, creating and
- * persisting one on `window.__CZAP_SLOT_REGISTRY__` the first time
+ * persisting one on `window.__LITESHIP_SLOT_REGISTRY__` the first time
  * it's requested. Returns a detached registry under SSR.
  */
 export function getSlotRegistry(): SlotRegistry.Shape {
@@ -85,9 +85,9 @@ export function getSlotRegistry(): SlotRegistry.Shape {
     return SlotRegistry.create();
   }
 
-  const existingRegistry = readRuntimeGlobal('__CZAP_SLOT_REGISTRY__', isSlotRegistryShape);
+  const existingRegistry = readRuntimeGlobal('__LITESHIP_SLOT_REGISTRY__', isSlotRegistryShape);
   if (!existingRegistry) {
-    return writeRuntimeGlobal('__CZAP_SLOT_REGISTRY__', SlotRegistry.create());
+    return writeRuntimeGlobal('__LITESHIP_SLOT_REGISTRY__', SlotRegistry.create());
   }
 
   return existingRegistry;
@@ -95,8 +95,8 @@ export function getSlotRegistry(): SlotRegistry.Shape {
 
 /**
  * Clear and rebuild the slot registry by scanning `root` for
- * `data-czap-slot` elements. Also writes a serialised
- * `__CZAP_SLOTS__` snapshot for devtools / diagnostics consumers.
+ * `data-liteship-slot` elements. Also writes a serialised
+ * `__LITESHIP_SLOTS__` snapshot for devtools / diagnostics consumers.
  */
 export function rescanSlots(root: ParentNode = document): SlotRegistry.Shape {
   const registry = getSlotRegistry();
@@ -110,7 +110,7 @@ export function rescanSlots(root: ParentNode = document): SlotRegistry.Shape {
 
   const win = runtimeWindow();
   if (win) {
-    writeRuntimeGlobal('__CZAP_SLOTS__', {
+    writeRuntimeGlobal('__LITESHIP_SLOTS__', {
       registry,
       entries: Object.fromEntries(
         Array.from(registry.entries().entries()).map(([path, entry]) => [path, { path, mode: entry.mode }]),
@@ -141,8 +141,8 @@ export function bootstrapSlots(): SlotRegistry.Shape {
     rescanSlots(document.documentElement);
   };
 
-  if (!readRuntimeGlobal('__CZAP_SLOT_BOOTSTRAPPED__', isBoolean)) {
-    writeRuntimeGlobal('__CZAP_SLOT_BOOTSTRAPPED__', true);
+  if (!readRuntimeGlobal('__LITESHIP_SLOT_BOOTSTRAPPED__', isBoolean)) {
+    writeRuntimeGlobal('__LITESHIP_SLOT_BOOTSTRAPPED__', true);
 
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', scan, { once: true });
@@ -155,12 +155,12 @@ export function bootstrapSlots(): SlotRegistry.Shape {
 }
 
 /**
- * Dispatch `czap:reinit` on every known directive root so directives can RE-READ
- * fresh `data-czap-*` attributes without remounting. The reinit handlers
- * self-clean (each directive's `czap:reinit` listener disposes its prior wiring
- * before re-initializing), so this no longer broadcasts `czap:teardown` — that
+ * Dispatch `liteship:reinit` on every known directive root so directives can RE-READ
+ * fresh `data-liteship-*` attributes without remounting. The reinit handlers
+ * self-clean (each directive's `liteship:reinit` listener disposes its prior wiring
+ * before re-initializing), so this no longer broadcasts `liteship:teardown` — that
  * event is reserved for FINAL teardown ({@link teardownDirectives}). Conflating
- * the two (the old single `czap:dispose`) forced gpu.ts to special-case "dispose
+ * the two (the old single `liteship:dispose`) forced gpu.ts to special-case "dispose
  * during a live reinit"; splitting them removes that hazard (F-2).
  *
  * Used after Astro View Transitions `after-swap` (the third step of the swap
@@ -168,18 +168,18 @@ export function bootstrapSlots(): SlotRegistry.Shape {
  */
 export function reinitializeDirectives(): void {
   document.querySelectorAll<HTMLElement>(REINIT_SELECTOR).forEach((element) => {
-    dispatchCzapEvent(element, 'czap:reinit');
+    dispatchLiteshipEvent(element, 'liteship:reinit');
   });
 }
 
 /**
- * Dispatch `czap:teardown` on every known directive root — the FINAL teardown
+ * Dispatch `liteship:teardown` on every known directive root — the FINAL teardown
  * signal (the page/element is going away for good). Directives release every
  * observer/listener and do NOT re-initialize. Distinct from
  * {@link reinitializeDirectives} (re-read attrs, stay live).
  */
 export function teardownDirectives(): void {
   document.querySelectorAll<HTMLElement>(REINIT_SELECTOR).forEach((element) => {
-    dispatchCzapEvent(element, 'czap:teardown');
+    dispatchLiteshipEvent(element, 'liteship:teardown');
   });
 }

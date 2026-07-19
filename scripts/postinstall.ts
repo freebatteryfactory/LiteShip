@@ -15,7 +15,7 @@ const repoRoot = resolve(import.meta.dirname, '..');
 
 function main(): void {
   // Don't decorate CI logs.
-  if (process.env.CI || process.env.CZAP_QUIET_INSTALL) return;
+  if (process.env.CI || process.env.LITESHIP_QUIET_INSTALL) return;
 
   // Detect first-time vs repeat install. Repeat installs already have at
   // least one package's dist/ on disk; first-time has none.
@@ -45,7 +45,7 @@ function main(): void {
     lines.push('');
     lines.push('  Find your way around:');
     lines.push(`    ${color('cyan', 'pnpm scripts', on)}         ${color('dim', '# categorized catalog of all dev scripts', on)}`);
-    lines.push(`    ${color('cyan', 'pnpm run glossary', on)}    ${color('dim', '# look up a LiteShip / CZAP term', on)}`);
+    lines.push(`    ${color('cyan', 'pnpm run glossary', on)}    ${color('dim', '# look up a LiteShip term', on)}`);
   } else {
     lines.push('');
     lines.push('  Get going with:');

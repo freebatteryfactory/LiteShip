@@ -1,7 +1,7 @@
 {
   "snapshotFormat": 1,
   "packages": {
-    "@czap/_spine": {
+    "@liteship/_spine": {
       "typeExports": [
         {
           "name": "AIAction",
@@ -368,22 +368,6 @@
           "kind": "type"
         },
         {
-          "name": "CzapFetchLayer",
-          "kind": "type"
-        },
-        {
-          "name": "CzapFetchLayerConfig",
-          "kind": "interface"
-        },
-        {
-          "name": "CzapLocals",
-          "kind": "interface"
-        },
-        {
-          "name": "CzapMiddlewareConfig",
-          "kind": "interface"
-        },
-        {
           "name": "DAGNode",
           "kind": "interface"
         },
@@ -630,6 +614,22 @@
         {
           "name": "Lifetime",
           "kind": "namespace"
+        },
+        {
+          "name": "LiteshipFetchLayer",
+          "kind": "type"
+        },
+        {
+          "name": "LiteshipFetchLayerConfig",
+          "kind": "interface"
+        },
+        {
+          "name": "LiteshipLocals",
+          "kind": "interface"
+        },
+        {
+          "name": "LiteshipMiddlewareConfig",
+          "kind": "interface"
         },
         {
           "name": "LiveCell",
@@ -1229,7 +1229,7 @@
         }
       ]
     },
-    "@czap/assets": {
+    "@liteship/assets": {
       "typeExports": [
         {
           "name": "AssetCapsule",
@@ -1289,7 +1289,7 @@
         }
       ]
     },
-    "@czap/astro": {
+    "@liteship/astro": {
       "typeExports": [
         {
           "name": "AstroLoggerLike",
@@ -1297,22 +1297,6 @@
         },
         {
           "name": "CrossOriginEmbedderPolicy",
-          "kind": "type"
-        },
-        {
-          "name": "CzapFetchLayer",
-          "kind": "type"
-        },
-        {
-          "name": "CzapFetchLayerConfig",
-          "kind": "type"
-        },
-        {
-          "name": "CzapLocals",
-          "kind": "type"
-        },
-        {
-          "name": "CzapMiddlewareConfig",
           "kind": "type"
         },
         {
@@ -1329,6 +1313,22 @@
         },
         {
           "name": "IntegrationConfig",
+          "kind": "type"
+        },
+        {
+          "name": "LiteshipFetchLayer",
+          "kind": "type"
+        },
+        {
+          "name": "LiteshipFetchLayerConfig",
+          "kind": "type"
+        },
+        {
+          "name": "LiteshipLocals",
+          "kind": "type"
+        },
+        {
+          "name": "LiteshipMiddlewareConfig",
           "kind": "type"
         },
         {
@@ -1357,7 +1357,7 @@
         }
       ]
     },
-    "@czap/audit": {
+    "@liteship/audit": {
       "typeExports": [
         {
           "name": "ActiveSurfaceReaderOptions",
@@ -1661,7 +1661,7 @@
         }
       ]
     },
-    "@czap/canonical": {
+    "@liteship/canonical": {
       "typeExports": [
         {
           "name": "AddressedDigest",
@@ -1681,10 +1681,10 @@
         }
       ]
     },
-    "@czap/cli": {
+    "@liteship/cli": {
       "typeExports": []
     },
-    "@czap/cloudflare": {
+    "@liteship/cloudflare": {
       "typeExports": [
         {
           "name": "CloudflareCacheApi",
@@ -1704,7 +1704,7 @@
         }
       ]
     },
-    "@czap/command": {
+    "@liteship/command": {
       "typeExports": [
         {
           "name": "AssetAnalyzePayload",
@@ -1884,7 +1884,7 @@
         }
       ]
     },
-    "@czap/compiler": {
+    "@liteship/compiler": {
       "typeExports": [
         {
           "name": "AIAction",
@@ -2112,7 +2112,7 @@
         }
       ]
     },
-    "@czap/core": {
+    "@liteship/core": {
       "typeExports": [
         {
           "name": "AIContext",
@@ -3264,7 +3264,7 @@
         }
       ]
     },
-    "@czap/detect": {
+    "@liteship/detect": {
       "typeExports": [
         {
           "name": "CapAxis",
@@ -3316,7 +3316,7 @@
         }
       ]
     },
-    "@czap/edge": {
+    "@liteship/edge": {
       "typeExports": [
         {
           "name": "BoundaryCache",
@@ -3420,7 +3420,7 @@
         }
       ]
     },
-    "@czap/error": {
+    "@liteship/error": {
       "typeExports": [
         {
           "name": "Err",
@@ -3484,7 +3484,7 @@
         }
       ]
     },
-    "@czap/gauntlet": {
+    "@liteship/gauntlet": {
       "typeExports": [
         {
           "name": "AbsentRead",
@@ -4036,7 +4036,7 @@
         }
       ]
     },
-    "@czap/genui": {
+    "@liteship/genui": {
       "typeExports": [
         {
           "name": "ComponentCatalog",
@@ -4080,7 +4080,7 @@
         }
       ]
     },
-    "@czap/mcp-server": {
+    "@liteship/mcp-server": {
       "typeExports": [
         {
           "name": "FindingLevel",
@@ -4240,7 +4240,7 @@
         }
       ]
     },
-    "@czap/quantizer": {
+    "@liteship/quantizer": {
       "typeExports": [
         {
           "name": "AnimatedQuantizer",
@@ -4320,7 +4320,7 @@
         }
       ]
     },
-    "@czap/remotion": {
+    "@liteship/remotion": {
       "typeExports": [
         {
           "name": "RemotionVideoConfig",
@@ -4328,7 +4328,7 @@
         }
       ]
     },
-    "@czap/scene": {
+    "@liteship/scene": {
       "typeExports": [
         {
           "name": "AudioTrack",
@@ -4476,7 +4476,7 @@
         }
       ]
     },
-    "@czap/stage": {
+    "@liteship/stage": {
       "typeExports": [
         {
           "name": "DualExportNodeResult",
@@ -4512,7 +4512,7 @@
         }
       ]
     },
-    "@czap/vite": {
+    "@liteship/vite": {
       "typeExports": [
         {
           "name": "CollectBoundaryManifestOptions",
@@ -4608,7 +4608,7 @@
         }
       ]
     },
-    "@czap/web": {
+    "@liteship/web": {
       "typeExports": [
         {
           "name": "ApplyVerifiablePatchAdoptResult",
@@ -4632,30 +4632,6 @@
         },
         {
           "name": "ChunkParser",
-          "kind": "type"
-        },
-        {
-          "name": "CzapEventDetailMap",
-          "kind": "type"
-        },
-        {
-          "name": "CzapEventDisposer",
-          "kind": "type"
-        },
-        {
-          "name": "CzapEventName",
-          "kind": "type"
-        },
-        {
-          "name": "CzapMorphRejectedDetail",
-          "kind": "type"
-        },
-        {
-          "name": "CzapStreamErrorDetail",
-          "kind": "type"
-        },
-        {
-          "name": "CzapUniformUpdateDetail",
           "kind": "type"
         },
         {
@@ -4712,6 +4688,30 @@
         },
         {
           "name": "LLMStreamConfig",
+          "kind": "type"
+        },
+        {
+          "name": "LiteshipEventDetailMap",
+          "kind": "type"
+        },
+        {
+          "name": "LiteshipEventDisposer",
+          "kind": "type"
+        },
+        {
+          "name": "LiteshipEventName",
+          "kind": "type"
+        },
+        {
+          "name": "LiteshipMorphRejectedDetail",
+          "kind": "type"
+        },
+        {
+          "name": "LiteshipStreamErrorDetail",
+          "kind": "type"
+        },
+        {
+          "name": "LiteshipUniformUpdateDetail",
           "kind": "type"
         },
         {
@@ -4896,7 +4896,7 @@
         }
       ]
     },
-    "@czap/worker": {
+    "@liteship/worker": {
       "typeExports": [
         {
           "name": "CompositorWorker",

@@ -254,7 +254,7 @@ function classify(result: FetchResult): string {
   }
 
   const path = result.reference.url.pathname;
-  if (path.includes('@czap') || path.includes('czap') || path.includes('virtual:czap')) {
+  if (path.includes('@liteship') || path.includes('liteship') || path.includes('virtual:liteship')) {
     return `probable LiteShip-injected ${result.reference.kind} (${path})`;
   }
   if (path.includes('/_astro/') || path.includes('/@fs/') || path.includes('/@id/') || path.includes('/@vite/')) {
@@ -282,8 +282,8 @@ function printResults(results: readonly FetchResult[]): void {
 async function main(): Promise<void> {
   console.log('\n=== Cloudflare + Astro dev integration test ===\n');
 
-  if (process.env.CZAP_SKIP_WORKSPACE_BUILD === '1') {
-    console.log('[1/4] Workspace build skipped (CZAP_SKIP_WORKSPACE_BUILD=1).\n');
+  if (process.env.LITESHIP_SKIP_WORKSPACE_BUILD === '1') {
+    console.log('[1/4] Workspace build skipped (LITESHIP_SKIP_WORKSPACE_BUILD=1).\n');
   } else {
     console.log('[1/4] Building workspace packages...');
     const build = await runPnpm(['run', 'build'], { cwd: REPO_ROOT, env: { FORCE_COLOR: '0' } });

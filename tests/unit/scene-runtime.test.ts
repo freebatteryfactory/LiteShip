@@ -8,8 +8,8 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { Track, compileScene, SceneRuntime, sceneRuntimeCapsule, Beat, pulse, syncTo } from '@czap/scene';
-import type { SceneContract, MixReceipt, TrackId } from '@czap/scene';
+import { Track, compileScene, SceneRuntime, sceneRuntimeCapsule, Beat, pulse, syncTo } from '@liteship/scene';
+import type { SceneContract, MixReceipt, TrackId } from '@liteship/scene';
 
 function buildScene(): SceneContract {
   const hero = Track.videoId('hero');

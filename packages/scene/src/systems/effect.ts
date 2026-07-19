@@ -11,7 +11,7 @@
  * @module
  */
 
-import { clamp01, type System, type World } from '@czap/core';
+import { clamp01, type System, type World } from '@liteship/core';
 import type { ResolvedEnvelope } from '../sugar/envelope.js';
 import { envelopeFactor } from '../sugar/envelope.js';
 

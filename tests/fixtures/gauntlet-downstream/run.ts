@@ -2,18 +2,18 @@
  * The downstream runner — composes LiteShip's built-in gate set with the project's
  * OWN custom gate and runs them over the project's source tree.
  *
- * This is the exact shape a downstream integrator writes after `npm i @czap/gauntlet`:
+ * This is the exact shape a downstream integrator writes after `npm i @liteship/gauntlet`:
  * import the built-in {@link LITESHIP_GATES}, append your own {@link noConsoleLogGate},
  * and hand the combined set to {@link runGauntletOnRepo}. The engine qualifies every
  * gate — theirs and ours — through the one authority ratchet. No fork, no rebuild,
  * no reach into the engine internals: every gauntlet import below is from the
- * package barrel `@czap/gauntlet`, and the custom gate is a sibling module that is
+ * package barrel `@liteship/gauntlet`, and the custom gate is a sibling module that is
  * ALSO authored only against that barrel.
  *
  * @module
  */
 
-import { runGauntletOnRepo, LITESHIP_GATES, type Gate, type GauntletResult } from '@czap/gauntlet';
+import { runGauntletOnRepo, LITESHIP_GATES, type Gate, type GauntletResult } from '@liteship/gauntlet';
 import { noConsoleLogGate } from './no-console-log.gate.js';
 
 /**

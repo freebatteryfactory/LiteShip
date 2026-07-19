@@ -2,7 +2,7 @@
  * Declared-dependency closure gate — the package law minted from the Wave-8
  * fast-check scar (issue #154), WIDENED to every public runtime export (PR #158).
  *
- * For every publishable @czap package this walks the SHIPPED runtime graph from
+ * For every publishable @liteship package this walks the SHIPPED runtime graph from
  * EVERY PUBLIC runtime entry — not just `exports['.'].import` but every `exports`
  * subpath that maps to a JS `import` target (`./harness`, `./dev`, `./testing`,
  * client directives, …), over emitted `dist/*.js` — collects every bare (external)
@@ -11,13 +11,13 @@
  * dependency — never declared by the package itself — reds: a fresh consumer that
  * installs the package plus its declared deps would fail to resolve it.
  *
- * The earlier "main entry only" scope was itself a hole: `@czap/core` publicly
+ * The earlier "main entry only" scope was itself a hole: `@liteship/core` publicly
  * exports `./harness`, whose `arbitrary-from-schema` imports `fast-check` at
  * RUNTIME while the package declared it nowhere — a consumer importing
- * `@czap/core/harness` still crashed, yet the `.`-only gate stayed green (the exact
+ * `@liteship/core/harness` still crashed, yet the `.`-only gate stayed green (the exact
  * class this law exists to catch). Walking every public subpath closes it. It
- * surfaces two leaks: `@czap/core/harness → fast-check` (a consumer-facing testing
- * util, now a declared OPTIONAL peer) and `@czap/scene/dev → vite` (a dev-only
+ * surfaces two leaks: `@liteship/core/harness → fast-check` (a consumer-facing testing
+ * util, now a declared OPTIONAL peer) and `@liteship/scene/dev → vite` (a dev-only
  * server; moved to a GUARDED dynamic `import('vite')` — the sanctioned
  * optional-integration seam, excluded from the load-time closure, so it needs no
  * peer that would fracture vite's module identity in tests).
@@ -52,7 +52,7 @@ const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
  * gauntlet gates that manipulate import syntax as data) is never mistaken for a
  * real import. Covers static `import`/`export … from` and side-effect `import 'x'`.
  * Dynamic `import()` is deliberately EXCLUDED — it is the guarded optional-
- * integration seam (@czap/cli → @czap/mcp-server), outside the load-time closure.
+ * integration seam (@liteship/cli → @liteship/mcp-server), outside the load-time closure.
  */
 function allSpecifiers(js: string, fileName: string): readonly string[] {
   const sf = ts.createSourceFile(fileName, js, ts.ScriptTarget.ESNext, /*setParentNodes*/ false);
@@ -151,7 +151,7 @@ describe('declared-dependency closure — every PUBLIC runtime export is depende
     const pkgDir = resolve(REPO_ROOT, 'packages', dir);
     const manifest = JSON.parse(readFileSync(join(pkgDir, 'package.json'), 'utf8')) as Manifest;
     const runtimeEntries = publicRuntimeEntries(manifest);
-    // Type-only / declaration-only packages (e.g. @czap/_spine ships a stub) have
+    // Type-only / declaration-only packages (e.g. @liteship/_spine ships a stub) have
     // no runtime entry at all — nothing to walk, trivially closed.
     if (runtimeEntries.length === 0) continue;
 
@@ -184,10 +184,10 @@ describe('declared-dependency closure — every PUBLIC runtime export is depende
 describe('declared-dependency closure — the checker has teeth (negative control / the fast-check red fixture)', () => {
   it('flags an undeclared bare import (the exact fast-check leak class)', () => {
     const violations = declaredDependencyClosureViolations({
-      packageName: '@czap/example',
-      declared: new Set(['@czap/error']),
+      packageName: '@liteship/example',
+      declared: new Set(['@liteship/error']),
       bareImports: [
-        { specifier: '@czap/error', file: 'dist/index.js' }, // declared → OK
+        { specifier: '@liteship/error', file: 'dist/index.js' }, // declared → OK
         { specifier: 'node:fs', file: 'dist/index.js' }, // builtin → OK
         { specifier: 'fast-check', file: 'dist/capsules/x.js' }, // UNDECLARED → red
       ],
@@ -197,25 +197,25 @@ describe('declared-dependency closure — the checker has teeth (negative contro
     expect(violations[0]).toContain('not a declared');
   });
 
-  it('flags an undeclared import reached via a public SUBPATH (the @czap/core/harness → fast-check class), and declaring it as an optional peer turns it green', () => {
+  it('flags an undeclared import reached via a public SUBPATH (the @liteship/core/harness → fast-check class), and declaring it as an optional peer turns it green', () => {
     // The widened walk feeds the checker bare imports from EVERY public export
     // subpath, not just `.`. A subpath-only runtime dep the package declares nowhere
     // reds exactly like a main-entry leak — the fast-check-via-`./harness` scar that
     // a `.`-only walk missed entirely.
     const subpathBareImport = [{ specifier: 'fast-check', file: 'dist/harness/arbitrary-from-schema.js' }];
     const red = declaredDependencyClosureViolations({
-      packageName: '@czap/core',
-      declared: new Set(['@czap/error', 'cborg']), // fast-check declared NOWHERE
+      packageName: '@liteship/core',
+      declared: new Set(['@liteship/error', 'cborg']), // fast-check declared NOWHERE
       bareImports: subpathBareImport,
     });
     expect(red).toHaveLength(1);
     expect(red[0]).toContain('fast-check');
 
     // Declaring it (as an OPTIONAL peer — peer names land in `declared`) closes it:
-    // a consumer importing `@czap/core/harness` is now told to provide fast-check.
+    // a consumer importing `@liteship/core/harness` is now told to provide fast-check.
     const green = declaredDependencyClosureViolations({
-      packageName: '@czap/core',
-      declared: new Set(['@czap/error', 'cborg', 'fast-check']),
+      packageName: '@liteship/core',
+      declared: new Set(['@liteship/error', 'cborg', 'fast-check']),
       bareImports: subpathBareImport,
     });
     expect(green).toEqual([]);
@@ -223,12 +223,12 @@ describe('declared-dependency closure — the checker has teeth (negative contro
 
   it('a declared dependency and its subpath both pass', () => {
     const violations = declaredDependencyClosureViolations({
-      packageName: '@czap/core',
+      packageName: '@liteship/core',
       declared: new Set(['cborg']),
       bareImports: [
         { specifier: 'cborg', file: 'dist/a.js' },
         { specifier: 'cborg/length', file: 'dist/b.js' }, // subpath of a declared dep → OK
-        { specifier: '@czap/core/harness', file: 'dist/c.js' }, // own subpath → OK
+        { specifier: '@liteship/core/harness', file: 'dist/c.js' }, // own subpath → OK
       ],
     });
     expect(violations).toEqual([]);
@@ -253,7 +253,7 @@ describe('declared-dependency closure — the checker has teeth (negative contro
   });
 
   it('classifies specifiers into package names + builtins', () => {
-    expect(packageNameOfSpecifier('@czap/core/harness')).toBe('@czap/core');
+    expect(packageNameOfSpecifier('@liteship/core/harness')).toBe('@liteship/core');
     expect(packageNameOfSpecifier('fast-check/lib/x')).toBe('fast-check');
     expect(isNodeBuiltin('node:fs')).toBe(true);
     expect(isNodeBuiltin('fs')).toBe(true);

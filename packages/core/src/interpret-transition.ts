@@ -69,7 +69,7 @@ export interface CssKeyframeStep {
  * records it here as DATA, so the compiler never has to guess eligibility from the
  * keyframe stops (an absent per-keyframe easing is ambiguous: it can also mean ordinary
  * default `ease`). When `eligible: false` the compiler emits NO native ownership block,
- * so `getComputedStyle(el).animationName` carries no `czap-motion-*` name and the
+ * so `getComputedStyle(el).animationName` carries no `liteship-motion-*` name and the
  * per-window RUNTIME floor (`client:motion`, which samples each window at its OWN easing)
  * stays the faithful renderer (ADR-0041).
  */
@@ -191,7 +191,7 @@ function resolveSignal(
 function cssVarForProperty(property: string): string {
   if (property.startsWith('--')) return property;
   if (property === 'opacity') return 'opacity';
-  return `--czap-${property.replace(/([A-Z])/g, '-$1').toLowerCase()}`;
+  return `--liteship-${property.replace(/([A-Z])/g, '-$1').toLowerCase()}`;
 }
 
 function diffBindings(
@@ -329,7 +329,7 @@ export function interpretTransition(graph: DocumentGraph, transitionId: ContentA
   const routing = transition.routing;
   const properties = diffBindings(fromPose.bindings, toPose.bindings);
   const keyframes = twoFrameKeyframes(properties);
-  const selector = `[data-czap-boundary="${component.name}"]`;
+  const selector = `[data-liteship-boundary="${component.name}"]`;
   const transitionProperty = properties.map((p) => p.property).join(', ');
 
   const css: CssMotionPlan = Object.freeze({

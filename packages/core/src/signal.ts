@@ -21,7 +21,7 @@
 
 import type { AVBridge } from './av-bridge.js';
 import { wallClock, type Clock } from './clock.js';
-import { ValidationError } from '@czap/error';
+import { ValidationError } from '@liteship/error';
 import { CellKernel } from './cell-kernel.js';
 import type { Disposer } from './cell-kernel.js';
 import { Lifetime } from './lifetime.js';
@@ -45,7 +45,7 @@ export type SignalSourceType = 'viewport' | 'time' | 'pointer' | 'scroll' | 'med
  * - `amplitude` / `beat` — LIVE analyser-driven feeds, published by a runtime
  *   producer (e.g. the Astro `audio.*` rAF observer reading an AnalyserNode).
  *   `amplitude` is 0..1 RMS loudness; `beat` is a 0/1 onset pulse. These are
- *   "driven externally" stubs here — `@czap/core` owns the vocabulary and
+ *   "driven externally" stubs here — `@liteship/core` owns the vocabulary and
  *   initial value; the host publishes the live samples.
  */
 export type SignalSource =
@@ -260,7 +260,7 @@ function setupListener(
  *
  * @example
  * ```ts
- * import { Signal } from '@czap/core';
+ * import { Signal } from '@liteship/core';
  *
  * const sig = Signal.make({ type: 'viewport', axis: 'width' });
  * const width = sig.read(); // current window.innerWidth
@@ -300,7 +300,7 @@ function _make(rawSource: SignalSource, clock: Clock = wallClock): SignalShape<n
  *
  * @example
  * ```ts
- * import { Signal } from '@czap/core';
+ * import { Signal } from '@liteship/core';
  *
  * const ctrl = Signal.controllable();
  * ctrl.seek(1500);
@@ -354,7 +354,7 @@ interface AudioSignalShape extends SignalShape<number> {
  *
  * @example
  * ```ts
- * import { Signal } from '@czap/core';
+ * import { Signal } from '@liteship/core';
  *
  * const audioSig = Signal.audio(bridge, 'normalized', 120);
  * const progress = audioSig.poll(); // 0..1
@@ -407,7 +407,7 @@ function _audio(
  *
  * @example
  * ```ts
- * import { Signal } from '@czap/core';
+ * import { Signal } from '@liteship/core';
  *
  * const viewport = Signal.make({ type: 'viewport', axis: 'width' });
  * const width = viewport.read();

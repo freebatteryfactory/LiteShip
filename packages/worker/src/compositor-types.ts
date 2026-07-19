@@ -4,7 +4,7 @@
  * @module
  */
 
-import type { RuntimeCoordinator, CompositeState, ContentAddress, StateName } from '@czap/core';
+import type { RuntimeCoordinator, CompositeState, ContentAddress, StateName } from '@liteship/core';
 import type {
   WorkerUpdate,
   BootstrapQuantizerRegistration,
@@ -53,7 +53,7 @@ export interface ResolvedStateAckPayload {
 /**
  * The boundary surface {@link CompositorWorkerShape.addQuantizer} derives
  * a registration from — structurally satisfied by a `Boundary.make`
- * result from `@czap/core`, whose content-addressed `id` and `input`
+ * result from `@liteship/core`, whose content-addressed `id` and `input`
  * name make hand-assembled registrations unnecessary.
  */
 export interface QuantizerBoundarySource {

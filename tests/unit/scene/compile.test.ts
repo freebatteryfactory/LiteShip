@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { Track, compileScene, SceneRuntime, Beat, fade, pulse, Scene } from '@czap/scene';
-import type { SceneContract } from '@czap/scene';
+import { Track, compileScene, SceneRuntime, Beat, fade, pulse, Scene } from '@liteship/scene';
+import type { SceneContract } from '@liteship/scene';
 
 describe('compileScene', () => {
   const hero = Track.videoId('hero');

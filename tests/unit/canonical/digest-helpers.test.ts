@@ -12,7 +12,7 @@
  * @module
  */
 import { describe, it, expect } from 'vitest';
-import { CanonicalCbor, addressedDigestOf, bytesToHex, decode, sha256Hex } from '@czap/canonical';
+import { CanonicalCbor, addressedDigestOf, bytesToHex, decode, sha256Hex } from '@liteship/canonical';
 // compareBytes is module-internal (kept OUT of the public index for minimal
 // surface), so it is imported from the source leaf directly.
 import { compareBytes } from '../../../packages/canonical/src/compare-bytes.js';

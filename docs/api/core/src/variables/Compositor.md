@@ -21,12 +21,12 @@ outputs all flow through the zero-allocation hot path backed by
 ## Example
 
 ```ts
-import { Compositor } from '@czap/core';
+import { Compositor } from '@liteship/core';
 
 const { compositor, lifetime } = Compositor.create({ poolCapacity: 64, speculative: true });
 compositor.add('viewport', viewportQuantizer);
 const state = compositor.compute();
 // state.discrete.viewport === 'tablet'
-// state.outputs.css['--czap-viewport'] === 'tablet'
+// state.outputs.css['--liteship-viewport'] === 'tablet'
 await lifetime.dispose();
 ```

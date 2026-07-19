@@ -8,7 +8,7 @@
  * @module
  */
 
-import { InvariantViolationError, ParseError } from '@czap/error';
+import { InvariantViolationError, ParseError } from '@liteship/error';
 import { wallClock, type Clock } from './clock.js';
 
 // Hybrid Logical Clock: physical wall-clock + logical counter for causal ordering. DagPosition encodes (timestamp, counter, nodeId) for DAG vertex identity.
@@ -212,7 +212,7 @@ export const makeClock = (nodeId: string, clock: Clock = wallClock): HLCClock =>
  *
  * @example
  * ```ts
- * import { HLC } from '@czap/core';
+ * import { HLC } from '@liteship/core';
  *
  * const a = HLC.increment(HLC.create('A'), Date.now());
  * const b = HLC.increment(HLC.create('B'), Date.now());

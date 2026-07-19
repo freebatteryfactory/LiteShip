@@ -3,11 +3,11 @@
  * {@link codeOnly} text so a PROSE mention of `it.skip` in a docstring (or a fixture STRING)
  * is never a real skip.
  *
- * WHY A COMPREHENSIVE TOKEN MATCHER, NOT AN AST. `@czap/gauntlet` is the LEAN engine: by
+ * WHY A COMPREHENSIVE TOKEN MATCHER, NOT AN AST. `@liteship/gauntlet` is the LEAN engine: by
  * load-bearing LAW it carries NO `typescript` dependency (the RepoIR is an INJECTED
  * capability — the host builds it via one `ts.Program` and hands it in via `GateContext.ir`;
  * the engine never reaches for the compiler). `detectSkips` is a pure, dependency-free
- * primitive both this package's `no-skipped-test` gate AND `@czap/command`'s plumb-scan
+ * primitive both this package's `no-skipped-test` gate AND `@liteship/command`'s plumb-scan
  * delegate to, so it must run with zero injected capability — it cannot parse with the TS
  * compiler API. The robust answer within that contract is a TOKEN-AWARE matcher: tokenize
  * the {@link codeOnly}-stripped line into identifiers / `.` / `[...]` / string-literals, then
@@ -126,7 +126,7 @@ export type SkipForm =
  *
  * This is the F2-soundness discriminant. The TOKEN {@link detectSkips} cannot decide it (it
  * cannot see an enclosing `if (<cond>) { … }` ancestor), so it leaves it `undefined`; the
- * AST detector (`detectSkipsAST`, in `@czap/audit`) sets it from a real ancestor walk:
+ * AST detector (`detectSkipsAST`, in `@liteship/audit`) sets it from a real ancestor walk:
  *  - `'skipIf'` / `'runIf'` — the call member IS the runtime gate (`it.skipIf(cond)(…)`);
  *  - `'ternary'` — the skip accessor is a TERNARY ARM (`cond ? it : it.skip`);
  *  - `'enclosing-if'` — the skip CALL sits inside an `if (<cond>) { … }` whose body holds it

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { ARIACompiler } from '../../../packages/compiler/src/aria.js';
 import { NUMBER_RE, inferSyntax } from '../../../packages/compiler/src/css-utils.js';
-import { Boundary, Component, Style, Theme, Token } from '@czap/core';
+import { Boundary, Component, Style, Theme, Token } from '@liteship/core';
 import { CSSCompiler } from '../../../packages/compiler/src/css.js';
 import { ThemeCSSCompiler } from '../../../packages/compiler/src/theme-css.js';
 import { TokenJSCompiler } from '../../../packages/compiler/src/token-js.js';
@@ -110,7 +110,7 @@ describe('compiler branch coverage', () => {
     expect(themed.selectors).toContain('html[data-theme="light"]');
     expect(themed.selectors).toContain('html[data-theme="dark"]');
     expect(themed.selectors).not.toContain('html[data-theme="contrast"]');
-    expect(themed.transitions).toContain('transition-property: --czap-accent;');
+    expect(themed.transitions).toContain('transition-property: --liteship-accent;');
 
     const noMeta = ThemeCSSCompiler.compile(
       Theme.make({
@@ -124,7 +124,7 @@ describe('compiler branch coverage', () => {
       }),
     );
 
-    expect(noMeta.selectors).toContain('--czap-accent: #ffffff;');
+    expect(noMeta.selectors).toContain('--liteship-accent: #ffffff;');
     expect(noMeta.transitions).toBe('');
   });
 
@@ -315,7 +315,7 @@ describe('compiler branch coverage', () => {
     expect(compiled.containerRules).toHaveLength(1);
     expect(compiled.containerRules[0]!.query).toBe('(width >= 768px)');
     expect(compiled.containerRules[0]!.rules).toEqual([
-      { selector: '.czap-boundary', properties: { color: 'blue' } },
+      { selector: '.liteship-boundary', properties: { color: 'blue' } },
     ]);
   });
 
@@ -463,8 +463,8 @@ describe('compiler branch coverage', () => {
     });
 
     const compiled = ComponentCSSCompiler.compile(component);
-    expect(compiled.scoped).toContain('[data-czap-slot] { display: contents; }');
-    expect(compiled.layers).toContain('[data-czap-satellite="hero-card"] { container-type: inline-size; }');
+    expect(compiled.scoped).toContain('[data-liteship-slot] { display: contents; }');
+    expect(compiled.layers).toContain('[data-liteship-satellite="hero-card"] { container-type: inline-size; }');
     expect(compiled.layers).toContain('@container viewport-width');
   });
 
@@ -482,9 +482,9 @@ describe('compiler branch coverage', () => {
 
     const compiled = ComponentCSSCompiler.compile(component);
 
-    expect(compiled.layers).toContain('@layer czap.components');
-    expect(compiled.layers).toContain('[data-czap-slot] { display: contents; }');
-    expect(compiled.layers).toContain('[data-czap-satellite="plain-card"] { container-type: inline-size; }');
+    expect(compiled.layers).toContain('@layer liteship.components');
+    expect(compiled.layers).toContain('[data-liteship-slot] { display: contents; }');
+    expect(compiled.layers).toContain('[data-liteship-satellite="plain-card"] { container-type: inline-size; }');
   });
 
   test('TokenJSCompiler reuses category buckets and serializes numeric fallbacks', () => {
@@ -584,8 +584,8 @@ describe('compiler branch coverage', () => {
 
     const compiled = StyleCSSCompiler.compile(style);
 
-    expect(compiled.scoped).toContain(':where(.czap-styled):hover');
-    expect(compiled.layers).toContain('@layer czap.components');
+    expect(compiled.scoped).toContain(':where(.liteship-styled):hover');
+    expect(compiled.layers).toContain('@layer liteship.components');
     expect(compiled.layers).toContain('box-shadow: inset 0px 2px 8px 1px #00000033;');
     expect(compiled.startingStyle).toBe('');
   });
@@ -625,7 +625,7 @@ describe('compiler branch coverage', () => {
     expect(compiled.scoped).toContain('box-shadow: 0px 4px 12px #00000022;');
     expect(compiled.scoped).toContain(':scope:focus-visible');
     expect(compiled.scoped).not.toContain(':scope:hover');
-    expect(compiled.layers).toContain('@layer czap.components');
+    expect(compiled.layers).toContain('@layer liteship.components');
     expect(compiled.startingStyle).toContain('@starting-style');
   });
 
@@ -673,9 +673,9 @@ describe('compiler branch coverage', () => {
       },
     } as Theme.Shape);
 
-    expect(compiled.selectors).toContain('--czap-radius: 12;');
-    expect(compiled.selectors).toContain('--czap-radius: 16;');
-    expect(compiled.selectors).toContain('--czap-contrast: true;');
+    expect(compiled.selectors).toContain('--liteship-radius: 12;');
+    expect(compiled.selectors).toContain('--liteship-radius: 16;');
+    expect(compiled.selectors).toContain('--liteship-contrast: true;');
     expect(compiled.transitions).toBe('');
   });
 
@@ -782,7 +782,7 @@ describe('CSSCompiler unknown state keys', () => {
       // ...and said so, with the case-insensitive suggestion.
       expect(events).toEqual([
         expect.objectContaining({
-          source: 'czap/compiler.css',
+          source: 'liteship/compiler.css',
           code: 'unknown-state-key',
           message:
             'State "Sm" is not one of boundary "width" states [sm, lg]; its CSS was skipped. Did you mean "sm"?',

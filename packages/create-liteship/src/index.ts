@@ -7,7 +7,7 @@
 
 import { createInterface } from 'node:readline/promises';
 import { relative } from 'node:path';
-import { hasTag } from '@czap/error';
+import { hasTag } from '@liteship/error';
 import { scaffold } from './scaffold.js';
 
 export {
@@ -21,7 +21,7 @@ export {
 /** Directory suggested when the user does not name one. */
 export const DEFAULT_DIR = 'my-liteship-app';
 
-const HELP = `create-liteship — scaffold a minimal Astro + @czap project
+const HELP = `create-liteship — scaffold a minimal Astro + @liteship project
 
 Usage:
   npm create liteship [dir]

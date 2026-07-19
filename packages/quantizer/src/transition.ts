@@ -5,8 +5,8 @@
  * @module
  */
 
-import type { Boundary, StateUnion, Quantizer, Easing, Millis } from '@czap/core';
-import { Millis as mkMillis } from '@czap/core';
+import type { Boundary, StateUnion, Quantizer, Easing, Millis } from '@liteship/core';
+import { Millis as mkMillis } from '@liteship/core';
 
 /**
  * Per-transition animation parameters.
@@ -16,7 +16,7 @@ import { Millis as mkMillis } from '@czap/core';
  *
  * Plain `number` literals are accepted alongside branded {@link Millis};
  * the resolver brands internally (the one sanctioned cast site lives in
- * `@czap/core` brands), so `{ duration: 300 }` needs no import.
+ * `@liteship/core` brands), so `{ duration: 300 }` needs no import.
  */
 export interface TransitionConfig {
   /** Animation duration in milliseconds (plain `number` or branded {@link Millis}). */

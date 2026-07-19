@@ -1,13 +1,13 @@
-import { Diagnostics } from '@czap/core';
-import type { Receipt } from '@czap/core';
-import { dispatchCzapEvent, type LLMChunk } from '@czap/web';
-import { DEMO_COMPONENT_CATALOG } from '@czap/genui';
+import { Diagnostics } from '@liteship/core';
+import type { Receipt } from '@liteship/core';
+import { dispatchLiteshipEvent, type LLMChunk } from '@liteship/web';
+import { DEMO_COMPONENT_CATALOG } from '@liteship/genui';
 import { createLLMSession } from './llm-session.js';
 import { readRuntimeHtmlPolicy, readRuntimeEndpointPolicy } from './policy.js';
 import { allowRuntimeEndpointUrl } from './url-policy.js';
 import { bootDirectiveEntry } from './directive-bound.js';
 
-const SAFE_LLM_TARGET_SELECTOR = /^(?:#[A-Za-z][\w-]*|\.[A-Za-z_][\w-]*|\[data-czap-target="[-:A-Za-z0-9_]+"\])$/;
+const SAFE_LLM_TARGET_SELECTOR = /^(?:#[A-Za-z][\w-]*|\.[A-Za-z_][\w-]*|\[data-liteship-target="[-:A-Za-z0-9_]+"\])$/;
 
 const parseJSONUnknown = (text: string): unknown => JSON.parse(text);
 
@@ -74,10 +74,10 @@ export function parseLLMChunk(event: Pick<MessageEvent, 'data'>): LLMChunk | nul
 
 function mapDeviceTier(): 'none' | 'transitions' | 'animations' | 'physics' | 'compute' {
   // Source of truth: the probe (and EdgeTier server-side) write the CANONICAL
-  // motion tier to data-czap-motion. Read it directly rather than re-deriving
-  // motion from the capability tier (data-czap-tier), which drifts from
+  // motion tier to data-liteship-motion. Read it directly rather than re-deriving
+  // motion from the capability tier (data-liteship-tier), which drifts from
   // motionTierFromCapabilities.
-  const motion = document.documentElement.getAttribute('data-czap-motion');
+  const motion = document.documentElement.getAttribute('data-liteship-motion');
   if (
     motion === 'none' ||
     motion === 'transitions' ||
@@ -88,8 +88,8 @@ function mapDeviceTier(): 'none' | 'transitions' | 'animations' | 'physics' | 'c
     return motion;
   }
   // Pre-probe provisional fallback: derive a coarse motion tier from the
-  // capability tier until data-czap-motion is present.
-  switch (document.documentElement.getAttribute('data-czap-tier')) {
+  // capability tier until data-liteship-motion is present.
+  switch (document.documentElement.getAttribute('data-liteship-tier')) {
     case 'static':
       return 'none';
     case 'styled':
@@ -223,7 +223,7 @@ function resolveLLMTarget(element: HTMLElement, selector: string | null): HTMLEl
 
 /**
  * Entry point used by the `client:llm` directive to start a streaming
- * LLM session on `element`. Reads `data-czap-llm-url` (plus optional
+ * LLM session on `element`. Reads `data-liteship-llm-url` (plus optional
  * target / mode attributes), validates it against the runtime
  * endpoint policy, opens an SSE stream, and drives an
  * {@link LLMSessionShape} to completion.
@@ -232,9 +232,9 @@ export function initLLMDirective(load: () => Promise<unknown>, element: HTMLElem
   const endpointPolicy = readRuntimeEndpointPolicy();
   const htmlPolicy = readRuntimeHtmlPolicy();
   const llmUrl = allowRuntimeEndpointUrl(
-    element.getAttribute('data-czap-llm-url'),
+    element.getAttribute('data-liteship-llm-url'),
     'llm',
-    'czap/astro.llm',
+    'liteship/astro.llm',
     {
       crossOriginRejected: 'llm-cross-origin-url-rejected',
       malformedUrl: 'llm-malformed-url-rejected',
@@ -247,14 +247,14 @@ export function initLLMDirective(load: () => Promise<unknown>, element: HTMLElem
     return;
   }
 
-  const mode = element.getAttribute('data-czap-llm-mode') ?? 'append';
-  const targetSelector = element.getAttribute('data-czap-llm-target');
+  const mode = element.getAttribute('data-liteship-llm-mode') ?? 'append';
+  const targetSelector = element.getAttribute('data-liteship-llm-target');
   const resolveTarget = (): HTMLElement => resolveLLMTarget(element, targetSelector);
   const resetTarget = (target: HTMLElement): void => {
     target.replaceChildren();
   };
 
-  const genuiCatalog = element.hasAttribute('data-czap-genui') ? DEMO_COMPONENT_CATALOG : undefined;
+  const genuiCatalog = element.hasAttribute('data-liteship-genui') ? DEMO_COMPONENT_CATALOG : undefined;
 
   const session = createLLMSession({
     element,
@@ -295,7 +295,7 @@ export function initLLMDirective(load: () => Promise<unknown>, element: HTMLElem
         session.rememberEnvelope(decoded.envelope);
         return;
       case 'error':
-        dispatchCzapEvent(element, 'czap:llm-error', { message: decoded.message });
+        dispatchLiteshipEvent(element, 'liteship:llm-error', { message: decoded.message });
         // Terminal: a server-sent error ends the stream — close the live
         // EventSource so it stops delivering frames. The rendered content stays;
         // the session is not disposed.
@@ -327,7 +327,7 @@ export function initLLMDirective(load: () => Promise<unknown>, element: HTMLElem
       return;
     }
 
-    dispatchCzapEvent(element, 'czap:llm-error', {
+    dispatchLiteshipEvent(element, 'liteship:llm-error', {
       reason: 'connection-error',
       strategy: strategy.type,
     });
@@ -343,7 +343,7 @@ export function initLLMDirective(load: () => Promise<unknown>, element: HTMLElem
 
     source.onopen = () => {
       session.activate();
-      dispatchCzapEvent(element, 'czap:llm-start');
+      dispatchLiteshipEvent(element, 'liteship:llm-start');
     };
 
     // Process each frame SYNCHRONOUSLY within the dispatch turn: `decodeLLMEventData`
@@ -362,7 +362,7 @@ export function initLLMDirective(load: () => Promise<unknown>, element: HTMLElem
     connect();
   } catch (error) {
     Diagnostics.error({
-      source: 'czap/astro.llm',
+      source: 'liteship/astro.llm',
       code: 'llm-runtime-init-failed',
       message: 'The shared LLM runtime could not initialize.',
       detail: error instanceof Error ? error.message : String(error),
@@ -370,11 +370,11 @@ export function initLLMDirective(load: () => Promise<unknown>, element: HTMLElem
     cleanup();
   }
 
-  element.addEventListener('czap:reinit', () => {
+  element.addEventListener('liteship:reinit', () => {
     connect();
   });
 
-  element.addEventListener('czap:teardown', () => {
+  element.addEventListener('liteship:teardown', () => {
     cleanup();
   });
 

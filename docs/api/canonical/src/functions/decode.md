@@ -29,4 +29,4 @@ out-of-order map keys, trailing bytes) raises a typed `ParseError`
 
 ## Throws
 
-A `@czap/error` `ParseError` (`source` `'cbor'`).
+A `@liteship/error` `ParseError` (`source` `'cbor'`).

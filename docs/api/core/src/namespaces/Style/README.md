@@ -14,7 +14,7 @@ CSS transitions. Resolve to flat property maps for any given state.
 ## Example
 
 ```ts
-import { Boundary, Style } from '@czap/core';
+import { Boundary, Style } from '@liteship/core';
 
 const bp = Boundary.make({ input: 'viewport.width', at: [[0, 'sm'], [768, 'lg']] });
 const style = Style.make({

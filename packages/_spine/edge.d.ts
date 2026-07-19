@@ -1,5 +1,5 @@
 /**
- * @czap/edge type spine -- CDN-edge tier detection, boundary caching, theme compilation.
+ * @liteship/edge type spine -- CDN-edge tier detection, boundary caching, theme compilation.
  */
 
 import type { CapTier, ContentAddress } from './core.d.ts';
@@ -162,7 +162,7 @@ export declare function resolveAssetUrlByTier(
 export type BoundaryManifest = Readonly<Record<string, BoundaryManifestEntry>>;
 
 export interface BoundaryManifestFile {
-  readonly _tag: 'CzapBoundaryManifest';
+  readonly _tag: 'LiteshipBoundaryManifest';
   readonly _version: 2;
   readonly boundaries: BoundaryManifest;
 }
@@ -249,7 +249,7 @@ export interface EdgeHostResolution extends EdgeHostContext {
   readonly assetUrl?: string;
   readonly boundaries?: Readonly<Record<string, EdgeHostBoundaryResolution>>;
   readonly htmlAttributes: string;
-  /** Spreadable map form of {@link htmlAttributes}, keyed by `data-czap-<axis>` (auto-includes every `CAP_AXES` axis). */
+  /** Spreadable map form of {@link htmlAttributes}, keyed by `data-liteship-<axis>` (auto-includes every `CAP_AXES` axis). */
   readonly htmlAttributesMap: Readonly<Record<string, string>>;
   readonly responseHeaders: {
     readonly acceptCH: string;

@@ -17,8 +17,8 @@ import {
   parseQuantizeBlocks,
   compileQuantizeBlock,
   viewportContainmentRule,
-} from '@czap/vite';
-import { Boundary } from '@czap/core';
+} from '@liteship/vite';
+import { Boundary } from '@liteship/core';
 import { blankCssCommentsAndStrings, cssPrologueEnd } from '../../../packages/vite/src/css-scan.js';
 import { TokenCSSCompiler } from '../../../packages/compiler/src/token-css.js';
 import { StyleCSSCompiler } from '../../../packages/compiler/src/style-css.js';
@@ -925,7 +925,7 @@ describe('compiler-re-serialized single-line CSS', () => {
 
   test('parses a mid-line single-line @quantize block with nested rules', () => {
     const css =
-      '.header:where(.astro-x){padding:0}@quantize layout{mobile {.grid {display: grid; gap: var(--czap-spacing-sm);}} desktop {.grid {grid-template-columns: repeat(3,1fr);}}}.after{color:red}';
+      '.header:where(.astro-x){padding:0}@quantize layout{mobile {.grid {display: grid; gap: var(--liteship-spacing-sm);}} desktop {.grid {grid-template-columns: repeat(3,1fr);}}}.after{color:red}';
 
     const blocks = parseQuantizeBlocks(css, FILE);
 
@@ -933,7 +933,7 @@ describe('compiler-re-serialized single-line CSS', () => {
     expect(blocks[0]!.boundaryName).toBe('layout');
     expect(blocks[0]!.states['mobile']).toEqual({
       bareProps: {},
-      rules: [{ selector: '.grid', props: { display: 'grid', gap: 'var(--czap-spacing-sm)' } }],
+      rules: [{ selector: '.grid', props: { display: 'grid', gap: 'var(--liteship-spacing-sm)' } }],
     });
     expect(blocks[0]!.states['desktop']).toEqual({
       bareProps: {},
@@ -942,15 +942,15 @@ describe('compiler-re-serialized single-line CSS', () => {
   });
 
   test('parses a mid-line single-line @theme block', () => {
-    const css = 'html{line-height:1.6}@theme dark{--czap-primary: #818cf8;--czap-surface: #0f172a}body{margin:0}';
+    const css = 'html{line-height:1.6}@theme dark{--liteship-primary: #818cf8;--liteship-surface: #0f172a}body{margin:0}';
 
     const blocks = parseThemeBlocks(css, FILE);
 
     expect(blocks).toHaveLength(1);
     expect(blocks[0]!.themeName).toBe('dark');
     expect(blocks[0]!.declarations).toEqual({
-      '--czap-primary': '#818cf8',
-      '--czap-surface': '#0f172a',
+      '--liteship-primary': '#818cf8',
+      '--liteship-surface': '#0f172a',
     });
   });
 
@@ -1091,7 +1091,7 @@ describe('compileQuantizeBlock nested selectors', () => {
     const compiled = compileQuantizeBlock(block!, boundary);
 
     expect(compiled).toContain(
-      '@container viewport-width (width < 768px) {\n.czap-boundary {\n  gap: 1rem;\n}\n.grid {\n  grid-template-columns: 1fr;\n}\n.hero {\n  padding: 2rem;\n}\n}',
+      '@container viewport-width (width < 768px) {\n.liteship-boundary {\n  gap: 1rem;\n}\n.grid {\n  grid-template-columns: 1fr;\n}\n.hero {\n  padding: 2rem;\n}\n}',
     );
   });
 
@@ -1118,7 +1118,7 @@ describe('compileQuantizeBlock nested selectors', () => {
     expect(compiled).toContain('@container scroll-y (width < 400px)');
     expect(events).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ source: 'czap/vite.css-quantize', code: 'container-not-declared' }),
+        expect.objectContaining({ source: 'liteship/vite.css-quantize', code: 'container-not-declared' }),
       ]),
     );
   });
@@ -1228,16 +1228,16 @@ describe('viewport containment aggregation', () => {
   });
 
   test('a custom container selector retargets the containment off :root (inline-size)', () => {
-    const containment = viewportContainmentRule(['viewport-width'], '.czap-vp');
-    expect(containment).toBe('.czap-vp {\n  container-type: inline-size;\n  container-name: viewport-width;\n}');
+    const containment = viewportContainmentRule(['viewport-width'], '.liteship-vp');
+    expect(containment).toBe('.liteship-vp {\n  container-type: inline-size;\n  container-name: viewport-width;\n}');
     // default is unchanged when the selector is omitted
     expect(viewportContainmentRule(['viewport-width'])).toContain(':root {');
   });
 
   test('a custom container selector also retargets the size-containment rule', () => {
-    const containment = viewportContainmentRule(['viewport-height'], '.czap-vp');
+    const containment = viewportContainmentRule(['viewport-height'], '.liteship-vp');
     expect(containment).toBe(
-      '.czap-vp {\n  container-type: size;\n  block-size: 100dvh;\n  container-name: viewport-height;\n}',
+      '.liteship-vp {\n  container-type: size;\n  block-size: 100dvh;\n  container-name: viewport-height;\n}',
     );
   });
 
@@ -1274,7 +1274,7 @@ describe('viewport containment aggregation', () => {
     expect(events).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          source: 'czap/vite.css-quantize',
+          source: 'liteship/vite.css-quantize',
           code: 'container-not-declared',
           message: expect.stringContaining('viewport.height'),
         }),
@@ -1317,7 +1317,7 @@ describe('viewport containment aggregation', () => {
     expect(sheet.viewportContainerNames.size).toBe(0);
     expect(events).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ source: 'czap/vite.css-quantize', code: 'container-not-declared' }),
+        expect.objectContaining({ source: 'liteship/vite.css-quantize', code: 'container-not-declared' }),
       ]),
     );
   });
@@ -1554,11 +1554,11 @@ describe('CSS override flow-through', () => {
     };
 
     vi.spyOn(TokenCSSCompiler, 'compile').mockReturnValueOnce({
-      customProperties: ':root { --czap-accent: #fff; }',
-      themed: 'html[data-theme="dark"] { --czap-accent: #000; }',
+      customProperties: ':root { --liteship-accent: #fff; }',
+      themed: 'html[data-theme="dark"] { --liteship-accent: #000; }',
     });
 
-    expect(compileTokenBlock(block, {} as never)).toContain('--czap-accent');
+    expect(compileTokenBlock(block, {} as never)).toContain('--liteship-accent');
 
     vi.spyOn(TokenCSSCompiler, 'compile').mockReturnValueOnce({
       customProperties: '',
@@ -1783,10 +1783,10 @@ describe('CSS override flow-through', () => {
     // The parser captured the bare declarations into the group's bareProps…
     expect(block.states.compact?.atRuleGroups?.[0]?.bareProps).toEqual({ display: 'grid', gap: '1rem' });
 
-    // …and serialization wraps them under the .czap-boundary selector, never bare.
+    // …and serialization wraps them under the .liteship-boundary selector, never bare.
     const supportsBody = extractAtRuleBody(compiled, '@supports (display: grid)');
     expect(supportsBody).not.toBeNull();
-    expect(supportsBody).toContain('.czap-boundary {');
+    expect(supportsBody).toContain('.liteship-boundary {');
     expect(topLevelBareDeclarations(supportsBody!)).toEqual([]);
     expect(compiled).toContain('display: grid');
     expect(compiled).toContain('gap: 1rem');

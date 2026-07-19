@@ -23,7 +23,7 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Boundary, Compositor } from '@czap/core';
+import { Boundary, Compositor } from '@liteship/core';
 
 const widthBoundary = Boundary.make({
   input: 'viewport.width',
@@ -66,7 +66,7 @@ describe('Compositor evaluate→markDirty contract', () => {
     // #1 — initial compute establishes the baseline (mobile / index 0).
     const s1 = compositor.compute();
     expect(s1.discrete['layout']).toBe('mobile');
-    expect(s1.outputs.css['--czap-layout']).toBe('mobile');
+    expect(s1.outputs.css['--liteship-layout']).toBe('mobile');
     expect(s1.outputs.glsl['u_layout']).toBe(0);
     expect(s1.outputs.wgsl['state_index']).toBe(0);
 
@@ -76,7 +76,7 @@ describe('Compositor evaluate→markDirty contract', () => {
     // #2 — NO markDirty: the composite must be FROZEN at the #1 snapshot.
     const s2 = compositor.compute();
     expect(s2.discrete['layout']).toBe('mobile');
-    expect(s2.outputs.css['--czap-layout']).toBe('mobile');
+    expect(s2.outputs.css['--liteship-layout']).toBe('mobile');
     expect(s2.outputs.glsl['u_layout']).toBe(0);
     expect(s2.outputs.wgsl['state_index']).toBe(0);
 
@@ -86,7 +86,7 @@ describe('Compositor evaluate→markDirty contract', () => {
     // #3 — markDirty fired: the composite now reflects the NEW band everywhere.
     const s3 = compositor.compute();
     expect(s3.discrete['layout']).toBe('tablet');
-    expect(s3.outputs.css['--czap-layout']).toBe('tablet');
+    expect(s3.outputs.css['--liteship-layout']).toBe('tablet');
     expect(s3.outputs.glsl['u_layout']).toBe(1);
     expect(s3.outputs.wgsl['state_index']).toBe(1);
   });

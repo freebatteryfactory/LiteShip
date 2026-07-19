@@ -21,7 +21,7 @@ import {
   memoryContext,
   type GateContext,
   type SupplyChainFacts,
-} from '@czap/gauntlet';
+} from '@liteship/gauntlet';
 
 function ctx(facts: SupplyChainFacts | undefined): GateContext {
   return facts === undefined ? memoryContext({}) : { ...memoryContext({}), supplyChain: facts };
@@ -30,7 +30,7 @@ function ctx(facts: SupplyChainFacts | undefined): GateContext {
 const CLEAN: SupplyChainFacts = {
   lockfile: { lockfileVersion: '9.0', packageCount: 2, violations: [] },
   sbom: { artifactPath: 'reports/sbom.json', contentAddress: 'addr', componentCount: 2, violations: [] },
-  provenance: { packageName: '@czap/x', sourceCommit: '0'.repeat(40), sourceDirty: false, violations: [] },
+  provenance: { packageName: '@liteship/x', sourceCommit: '0'.repeat(40), sourceDirty: false, violations: [] },
   ci: { workflowsScanned: ['.github/workflows/release.yml'], violations: [] },
 };
 
@@ -82,10 +82,10 @@ describe('supplyChainGate — each family reds independently (bite proofs)', () 
     const facts: SupplyChainFacts = {
       ...CLEAN,
       provenance: {
-        packageName: '@czap/x',
+        packageName: '@liteship/x',
         sourceCommit: '0'.repeat(40),
         sourceDirty: false,
-        violations: [{ code: 'lockfile-address-drift', subject: '@czap/x', detail: 'drift' }],
+        violations: [{ code: 'lockfile-address-drift', subject: '@liteship/x', detail: 'drift' }],
       },
     };
     const f = supplyChainGate.run(ctx(facts));

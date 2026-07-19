@@ -1,15 +1,15 @@
 // @vitest-environment jsdom
 /**
- * Wave-2 error-contract tests for @czap/web: every rewritten message must
+ * Wave-2 error-contract tests for @liteship/web: every rewritten message must
  * say what happened, name its subject, and state the literal next step.
  *
  * Codes are unchanged; only message texts are pinned here.
  */
 
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
-import { Diagnostics } from '@czap/core';
-import { hasTag } from '@czap/error';
-import { Morph, SlotAddressing, SSE } from '@czap/web';
+import { Diagnostics } from '@liteship/core';
+import { hasTag } from '@liteship/error';
+import { Morph, SlotAddressing, SSE } from '@liteship/web';
 import { resolveHtmlString } from '../../../packages/web/src/security/html-trust.js';
 import { restoreFocusState } from '../../../packages/web/src/physical/restore.js';
 
@@ -75,17 +75,17 @@ describe('preserve-id-missing warning', () => {
     const events = captureDiagnostics();
 
     const root = document.createElement('div');
-    root.innerHTML = '<span data-czap-id="kept">x</span>';
+    root.innerHTML = '<span data-liteship-id="kept">x</span>';
     document.body.append(root);
 
-    Morph.morphWithState(root, '<div><span data-czap-id="kept">y</span></div>', undefined, {
+    Morph.morphWithState(root, '<div><span data-liteship-id="kept">y</span></div>', undefined, {
       preserveIds: ['kept', 'cart'],
     });
 
     const warning = events.find((e) => e.code === 'preserve-id-missing');
     expect(warning).toBeDefined();
     expect(warning!.message).toContain('Preserve ID "cart" was not found in the old DOM tree before morphing.');
-    expect(warning!.message).toContain('data-czap-id="cart"');
+    expect(warning!.message).toContain('data-liteship-id="cart"');
   });
 });
 
@@ -96,11 +96,11 @@ describe('preserve-id-missing warning', () => {
 describe('morph rejection contract', () => {
   test('rejection reason names the missing ids and both remedies; event detail carries recovery', () => {
     const root = document.createElement('div');
-    root.innerHTML = '<span data-czap-id="cart">x</span>';
+    root.innerHTML = '<span data-liteship-id="cart">x</span>';
     document.body.append(root);
 
     let rejectedDetail: { reason: string; recovery?: string } | null = null;
-    root.addEventListener('czap:morph-rejected', (event) => {
+    root.addEventListener('liteship:morph-rejected', (event) => {
       rejectedDetail = (event as CustomEvent<{ reason: string; recovery?: string }>).detail;
     });
 
@@ -119,7 +119,7 @@ describe('morph rejection contract', () => {
     }
 
     expect(rejectedDetail).not.toBeNull();
-    expect(rejectedDetail!.recovery).toContain('czap:request-snapshot');
+    expect(rejectedDetail!.recovery).toContain('liteship:request-snapshot');
   });
 });
 

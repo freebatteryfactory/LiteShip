@@ -11,7 +11,7 @@ Defined in: [quantizer/src/quantizer.ts:130](https://github.com/freebatteryfacto
 Spring physics parameters for CSS easing auto-generation.
 
 When a [QuantizerConfig](QuantizerConfig.md) carries a spring, its CSS outputs receive an
-injected `--czap-easing` custom property derived via `Easing.springToLinearCSS`
+injected `--liteship-easing` custom property derived via `Easing.springToLinearCSS`
 so native `linear()` timing matches the physical spring response.
 
 ## Properties

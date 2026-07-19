@@ -43,7 +43,7 @@
  * @module
  */
 
-import { assertNever } from '@czap/error';
+import { assertNever } from '@liteship/error';
 import type { LiteralValue, Schema, SchemaNode } from '../../packages/core/src/schema/ast.js';
 import type { DecodeIssueCode, DecodePath } from '../../packages/core/src/schema/decode.js';
 

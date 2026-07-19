@@ -1,7 +1,7 @@
 /**
- * @czap command spine — declaration-only contract for the shared command
- * registry (CUT A1). One canonical command language: `@czap/command` owns the
- * runtime (registry + dispatcher + handlers); `@czap/cli` and `@czap/mcp-server`
+ * @liteship command spine — declaration-only contract for the shared command
+ * registry (CUT A1). One canonical command language: `@liteship/command` owns the
+ * runtime (registry + dispatcher + handlers); `@liteship/cli` and `@liteship/mcp-server`
  * are projection adapters. These types carry no runtime behavior.
  */
 
@@ -56,7 +56,7 @@ export interface CommandAnnotations {
  * What execution shape a command is — the central command law:
  *
  *   - `handler`: finite structured invocation → returns a `CapsuleCommandResult`
- *     via a `@czap/command` handler. The only kind eligible for MCP exposure.
+ *     via a `@liteship/command` handler. The only kind eligible for MCP exposure.
  *   - `cli-orchestration`: terminal UX, inherited stdio, long-running servers,
  *     destructive workflows, visible repairs, streaming receipts, or catalog
  *     projections. Registry-described for identity/discovery, but intentionally

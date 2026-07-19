@@ -1,4 +1,4 @@
-import { Boundary } from '@czap/core';
+import { Boundary } from '@liteship/core';
 
 /**
  * One boundary, cast to two targets. `nav` quantizes viewport width into

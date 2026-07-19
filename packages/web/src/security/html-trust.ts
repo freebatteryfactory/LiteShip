@@ -1,10 +1,10 @@
 /**
  * HTML trust helpers -- parse an untrusted HTML string under a
  * configurable {@link HtmlPolicy} (text escape, sanitise, or pass
- * through after an opt-in). Backs `@czap/web`'s DOM morph and slot
+ * through after an opt-in). Backs `@liteship/web`'s DOM morph and slot
  * injection so callers never touch `innerHTML` directly.
  *
- * When the host installs a Trusted Types policy named `czap` (see
+ * When the host installs a Trusted Types policy named `liteship` (see
  * `SECURITY.md` for the recipe), all `innerHTML` assignments below
  * route through `policy.createHTML(html)` so the runtime is
  * compatible with `require-trusted-types-for 'script'`. If no
@@ -14,7 +14,7 @@
  *
  * @module
  */
-import { Diagnostics } from '@czap/core';
+import { Diagnostics } from '@liteship/core';
 import type { HtmlPolicy } from '../types.js';
 
 /**
@@ -79,12 +79,12 @@ const URL_SINK_ATTRIBUTES = new Set([
 let trustedTypesPolicy: { createHTML(input: string): string } | null | undefined;
 
 /**
- * Look up (or create) the `czap` Trusted Types policy. Returns `null`
+ * Look up (or create) the `liteship` Trusted Types policy. Returns `null`
  * when Trusted Types is unavailable or unsupported. The lookup is
  * cached after the first call.
  *
- * Hosts that install their own `czap` policy (see SECURITY.md) get
- * picked up via `trustedTypes.getPolicy?.('czap')`. If the host hasn't
+ * Hosts that install their own `liteship` policy (see SECURITY.md) get
+ * picked up via `trustedTypes.getPolicy?.('liteship')`. If the host hasn't
  * installed one but Trusted Types is enforced via CSP, this helper
  * creates a passthrough policy so the runtime's HTML sinks don't
  * throw at first projection.
@@ -98,14 +98,14 @@ function getTrustedTypesPolicy(): { createHTML(input: string): string } | null {
     return null;
   }
 
-  const existing = tt.getPolicy?.('czap');
+  const existing = tt.getPolicy?.('liteship');
   if (existing) {
     trustedTypesPolicy = existing;
     return existing;
   }
 
   try {
-    trustedTypesPolicy = tt.createPolicy('czap', {
+    trustedTypesPolicy = tt.createPolicy('liteship', {
       createHTML: (input: string) => input,
     });
     return trustedTypesPolicy;
@@ -114,7 +114,7 @@ function getTrustedTypesPolicy(): { createHTML(input: string): string } | null {
     // exists with a different definition, or `trusted-types` directive
     // disallows the name). Fall back to null so the assignment proceeds
     // with the raw string — which will throw under enforcement, signalling
-    // the host to install a `czap` policy.
+    // the host to install a `liteship` policy.
     trustedTypesPolicy = null;
     return null;
   }
@@ -140,7 +140,7 @@ function assignInnerHTML(target: { innerHTML: string }, html: string): void {
  * later replacements are not double-escaped.
  *
  * This is the text-escape primitive behind the `'text'` HTML policy; it is
- * also the single owner that emitters (`@czap/mcp-server`, stage) import
+ * also the single owner that emitters (`@liteship/mcp-server`, stage) import
  * instead of re-hand-rolling the same five `replaceAll` chain.
  */
 export function escapeHtml(raw: string): string {
@@ -158,7 +158,7 @@ function effectiveHtmlPolicy(options?: HtmlTrustOptions): HtmlPolicy {
     // The downgrade keeps the trust boundary narrow by design; it just must
     // not be silent. warnOnce dedupes per session.
     Diagnostics.warnOnce({
-      source: 'czap/web.htmlTrust',
+      source: 'liteship/web.htmlTrust',
       code: 'trusted-html-downgraded',
       message:
         'policy "trusted-html" was downgraded to "sanitized-html" because allowTrustedHtml is not true. If this HTML is genuinely trusted, pass { policy: "trusted-html", allowTrustedHtml: true }.',

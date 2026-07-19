@@ -1,14 +1,14 @@
 /**
  * Audit policy — split (CUT D9b-1). The reusable ENGINE policy (topology,
  * surface data, exemptions, allowlist, source globs, prefix normalizer) lives in
- * `@czap/audit` and is re-exported here so existing `./policy.js` importers are
+ * `@liteship/audit` and is re-exported here so existing `./policy.js` importers are
  * unchanged. The LiteShip HICP rubric (section taxonomy, file-class weights,
  * named-offense map, inventory matchers, report paths) stays repo-local below.
  *
  * @module
  */
 import { resolve } from 'node:path';
-import { normalizeRepoPath } from '@czap/audit';
+import { normalizeRepoPath } from '@liteship/audit';
 import type { AuditFileClass, FullAuditSectionId } from './types.js';
 
 export {
@@ -20,26 +20,26 @@ export {
   auditAllowlist,
   findAllowlistReason,
   normalizeRepoPath,
-} from '@czap/audit';
-export type { PackagePolicy, AuditAllowlistEntry } from '@czap/audit';
+} from '@liteship/audit';
+export type { PackagePolicy, AuditAllowlistEntry } from '@liteship/audit';
 
 // ── LiteShip HICP rubric (repo-local) ────────────────────────────────────
 
 export const hicpSectionOrder = [
-  '@czap/core',
-  '@czap/canonical',
-  '@czap/genui',
-  '@czap/quantizer',
-  '@czap/compiler',
-  '@czap/detect',
-  '@czap/web',
-  '@czap/edge',
-  '@czap/worker',
-  '@czap/vite',
-  '@czap/astro',
-  '@czap/cloudflare',
-  '@czap/remotion',
-  'czap-compute',
+  '@liteship/core',
+  '@liteship/canonical',
+  '@liteship/genui',
+  '@liteship/quantizer',
+  '@liteship/compiler',
+  '@liteship/detect',
+  '@liteship/web',
+  '@liteship/edge',
+  '@liteship/worker',
+  '@liteship/vite',
+  '@liteship/astro',
+  '@liteship/cloudflare',
+  '@liteship/remotion',
+  'liteship-compute',
   'packages/_spine',
   'tests',
   'scripts',
@@ -149,20 +149,20 @@ export const reportPaths = {
 } as const;
 
 export const hicpSectionTitles: Record<FullAuditSectionId, string> = {
-  '@czap/core': '@czap/core',
-  '@czap/canonical': '@czap/canonical',
-  '@czap/genui': '@czap/genui',
-  '@czap/quantizer': '@czap/quantizer',
-  '@czap/compiler': '@czap/compiler',
-  '@czap/detect': '@czap/detect',
-  '@czap/web': '@czap/web',
-  '@czap/edge': '@czap/edge',
-  '@czap/worker': '@czap/worker',
-  '@czap/vite': '@czap/vite',
-  '@czap/astro': '@czap/astro',
-  '@czap/cloudflare': '@czap/cloudflare',
-  '@czap/remotion': '@czap/remotion',
-  'czap-compute': 'czap-compute',
+  '@liteship/core': '@liteship/core',
+  '@liteship/canonical': '@liteship/canonical',
+  '@liteship/genui': '@liteship/genui',
+  '@liteship/quantizer': '@liteship/quantizer',
+  '@liteship/compiler': '@liteship/compiler',
+  '@liteship/detect': '@liteship/detect',
+  '@liteship/web': '@liteship/web',
+  '@liteship/edge': '@liteship/edge',
+  '@liteship/worker': '@liteship/worker',
+  '@liteship/vite': '@liteship/vite',
+  '@liteship/astro': '@liteship/astro',
+  '@liteship/cloudflare': '@liteship/cloudflare',
+  '@liteship/remotion': '@liteship/remotion',
+  'liteship-compute': 'liteship-compute',
   'packages/_spine': 'packages/_spine',
   tests: 'tests',
   scripts: 'scripts',
@@ -187,20 +187,20 @@ export function matchesHicpInventory(relativePath: string): boolean {
 
 export function sectionForInventoryPath(relativePath: string): FullAuditSectionId {
   const matchers: readonly [RegExp, FullAuditSectionId][] = [
-    [/^packages\/core\//, '@czap/core'],
-    [/^packages\/canonical\//, '@czap/canonical'],
-    [/^packages\/genui\//, '@czap/genui'],
-    [/^packages\/quantizer\//, '@czap/quantizer'],
-    [/^packages\/compiler\//, '@czap/compiler'],
-    [/^packages\/detect\//, '@czap/detect'],
-    [/^packages\/web\//, '@czap/web'],
-    [/^packages\/edge\//, '@czap/edge'],
-    [/^packages\/worker\//, '@czap/worker'],
-    [/^packages\/vite\//, '@czap/vite'],
-    [/^packages\/astro\//, '@czap/astro'],
-    [/^packages\/cloudflare\//, '@czap/cloudflare'],
-    [/^packages\/remotion\//, '@czap/remotion'],
-    [/^crates\/czap-compute\//, 'czap-compute'],
+    [/^packages\/core\//, '@liteship/core'],
+    [/^packages\/canonical\//, '@liteship/canonical'],
+    [/^packages\/genui\//, '@liteship/genui'],
+    [/^packages\/quantizer\//, '@liteship/quantizer'],
+    [/^packages\/compiler\//, '@liteship/compiler'],
+    [/^packages\/detect\//, '@liteship/detect'],
+    [/^packages\/web\//, '@liteship/web'],
+    [/^packages\/edge\//, '@liteship/edge'],
+    [/^packages\/worker\//, '@liteship/worker'],
+    [/^packages\/vite\//, '@liteship/vite'],
+    [/^packages\/astro\//, '@liteship/astro'],
+    [/^packages\/cloudflare\//, '@liteship/cloudflare'],
+    [/^packages\/remotion\//, '@liteship/remotion'],
+    [/^crates\/liteship-compute\//, 'liteship-compute'],
     [/^packages\/_spine\//, 'packages/_spine'],
     [/^tests\//, 'tests'],
     [/^scripts\//, 'scripts'],

@@ -14,7 +14,7 @@ paths. The reactive machinery (a current-state read and a crossing
 subscription) is layered on by [ReactiveQuantizer](ReactiveQuantizer.md); a consumer that only
 evaluates and reads `stateSync` never touches the reactive substrate.
 
-The concrete reactive implementation is produced by `@czap/quantizer`'s
+The concrete reactive implementation is produced by `@liteship/quantizer`'s
 `Q.from()` builder (a [ReactiveQuantizer](ReactiveQuantizer.md)); consumers interact only via
 these structural interfaces.
 

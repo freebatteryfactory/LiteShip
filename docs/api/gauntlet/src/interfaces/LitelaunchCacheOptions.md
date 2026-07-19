@@ -47,7 +47,7 @@ Defined in: [gauntlet/src/runner.ts:607](https://github.com/freebatteryfactory/L
 
 OPTIONAL host-computed capability-link facts (codex round-8, #1b) threaded onto the
 [GateContext](GateContext.md) for `capabilityGateLinkGate` to fold. Supplied ONLY on the
-`czap check --ir --capability-gate` run, alongside a `gates` override that includes the gate. The
+`liteship check --ir --capability-gate` run, alongside a `gates` override that includes the gate. The
 cache key is namespaced by the capability-gate mode (a capability-gate verdict never serves a
 non-capability-gate run).
 
@@ -59,7 +59,7 @@ non-capability-gate run).
 
 Defined in: [gauntlet/src/runner.ts:679](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L679)
 
-OPTIONAL host-built SOUND scanner codeOnly floor (`@czap/audit`'s `codeOnlyAST`) threaded onto the
+OPTIONAL host-built SOUND scanner codeOnly floor (`@liteship/audit`'s `codeOnlyAST`) threaded onto the
 [GateContext](GateContext.md) as `codeOnly`. Code-scanning gates use it via `(context.codeOnly ?? codeOnly)`.
 Supplied on the `--ir` path; omitted on the lean path (char-machine fallback, pinned equivalent).
 
@@ -84,7 +84,7 @@ Defined in: [gauntlet/src/runner.ts:643](https://github.com/freebatteryfactory/L
 OPTIONAL host-computed composition-coverage facts (the LOCAL-VS-GLOBAL correctness
 family — "locally green, globally untested interaction") threaded onto the
 [GateContext](GateContext.md) for `compositionCoverageGate` to fold. Supplied ONLY on the
-`czap check --ir --composition` run, alongside a `gates` override that includes the
+`liteship check --ir --composition` run, alongside a `gates` override that includes the
 gate. The composition MODE namespaces the verdict cache key.
 
 ***
@@ -141,7 +141,7 @@ Defined in: [gauntlet/src/runner.ts:581](https://github.com/freebatteryfactory/L
 
 OPTIONAL host-computed MC/DC facts (the avionics tier — DO-178B Level A coverage via
 condition-level mutation) threaded onto the [GateContext](GateContext.md) for
-`mcdcCoverageGate` to fold. Supplied ONLY on the `czap check --ir --mcdc` run,
+`mcdcCoverageGate` to fold. Supplied ONLY on the `liteship check --ir --mcdc` run,
 alongside a `gates` override that includes the gate. The cache key is namespaced by
 the MC/DC mode (an MC/DC verdict can never be served to a non-MC/DC run, or vice
 versa) — exactly the `--mutate` cache-soundness lesson.
@@ -156,7 +156,7 @@ Defined in: [gauntlet/src/runner.ts:572](https://github.com/freebatteryfactory/L
 
 OPTIONAL host-computed mutation facts (Slice C — mutation-as-divergence) threaded
 onto the [GateContext](GateContext.md) for `mutationDivergenceGate` to fold. Supplied ONLY
-on the `czap check --ir --mutate` run, alongside a `gates` override that includes
+on the `liteship check --ir --mutate` run, alongside a `gates` override that includes
 the gate. The cache key is namespaced by the mutation mode (a mutation-run
 verdict can never be served to a non-mutation run, or vice versa).
 
@@ -170,7 +170,7 @@ Defined in: [gauntlet/src/runner.ts:635](https://github.com/freebatteryfactory/L
 
 OPTIONAL host-computed proof-strength facts (the LOCAL-VS-GLOBAL correctness family
 — the lax-functor) threaded onto the [GateContext](GateContext.md) for `proofPropagationGate`
-to propagate along the dep DAG. Supplied ONLY on the `czap check --ir --proof` run,
+to propagate along the dep DAG. Supplied ONLY on the `liteship check --ir --proof` run,
 alongside a `gates` override that includes the gate. The proof MODE namespaces the
 verdict cache key (a proof-run verdict can never be served to a non-proof run, or
 vice versa) — the same `--mutate` cache-soundness lesson.
@@ -185,7 +185,7 @@ Defined in: [gauntlet/src/runner.ts:590](https://github.com/freebatteryfactory/L
 
 OPTIONAL host-computed DST (deterministic-simulation) facts (the determinism
 spine) threaded onto the [GateContext](GateContext.md) for `simulationDeterminismGate` to
-fold. Supplied ONLY on the `czap check --ir --simulate` run, alongside a `gates`
+fold. Supplied ONLY on the `liteship check --ir --simulate` run, alongside a `gates`
 override that includes the gate. The cache key is namespaced by the simulation
 mode (a simulation-run verdict can never be served to a non-simulation run, or
 vice versa).
@@ -198,12 +198,12 @@ vice versa).
 
 Defined in: [gauntlet/src/runner.ts:668](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L668)
 
-OPTIONAL host-built SOUND AST skip detector (`@czap/audit`'s `detectSkipsAST`) threaded onto
+OPTIONAL host-built SOUND AST skip detector (`@liteship/audit`'s `detectSkipsAST`) threaded onto
 the [GateContext](GateContext.md) as `skipDetector`. The no-skipped-test gate uses it via
 `(context.skipDetector ?? detectSkips)` — gaining line-agnostic multi-line/ASI/inner-describe
 detection + the structural F2 conditionality the token scanner cannot produce. Supplied
-ALWAYS-ON on the `--ir` path (the host deps `@czap/audit`, the parse is cheap); omitted on the
-lean `czap check` / MCP path, where the token `detectSkips` fallback runs unchanged.
+ALWAYS-ON on the `--ir` path (the host deps `@liteship/audit`, the parse is cheap); omitted on the
+lean `liteship check` / MCP path, where the token `detectSkips` fallback runs unchanged.
 
 #### Parameters
 
@@ -225,7 +225,7 @@ Defined in: [gauntlet/src/runner.ts:652](https://github.com/freebatteryfactory/L
 
 OPTIONAL host-computed two-axis spine-relation facts (Wave 8.5, the public
 constitution's STATIC-projection half) threaded onto the [GateContext](GateContext.md) for
-`spineRelationGate` to fold. Supplied ONLY on the `czap check --ir --spine-relation`
+`spineRelationGate` to fold. Supplied ONLY on the `liteship check --ir --spine-relation`
 run, alongside a `gates` override that includes the gate. The spine-relation MODE
 namespaces the verdict cache key (a spine-relation verdict never serves a
 non-spine-relation run).
@@ -268,7 +268,7 @@ Defined in: [gauntlet/src/runner.ts:599](https://github.com/freebatteryfactory/L
 
 OPTIONAL host-computed taint-flow facts (the TAINT-ANALYSIS family) threaded onto
 the [GateContext](GateContext.md) for `taintFlowGate` to fold. Supplied ONLY on the
-`czap check --ir --taint` run, alongside a `gates` override that includes the gate.
+`liteship check --ir --taint` run, alongside a `gates` override that includes the gate.
 The cache key is namespaced by the taint mode (a taint-run verdict can never be
 served to a non-taint run, or vice versa) — exactly the `--mutate` cache-soundness
 lesson.

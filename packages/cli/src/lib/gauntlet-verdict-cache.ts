@@ -2,15 +2,15 @@
  * The fs-backed gate-verdict cache + the TOOLCHAIN DIGEST (Slice B, B2 — the HOST
  * half of the content-addressed incremental system).
  *
- * The lean `@czap/gauntlet` engine DEFINES the cache (the `GateVerdictCache`
+ * The lean `@liteship/gauntlet` engine DEFINES the cache (the `GateVerdictCache`
  * interface, the pure `gateVerdictKey` / `coverageDigestOf` key builders) and
  * carries NO `fs` and NO crypto. This module — in the CLI, which already owns
  * `fs` + `node:crypto` (the idempotency layer) — supplies the two host-built
  * capabilities the engine consumes:
  *
  * 1. {@link makeFsVerdictCache} — a {@link GateVerdictCache} that stores each
- *    gate's RAW findings as JSON under `.czap/cache/gauntlet/<keyhash>.json`,
- *    reusing the idempotency `.czap/cache` layout + an atomic temp-then-rename
+ *    gate's RAW findings as JSON under `.liteship/cache/gauntlet/<keyhash>.json`,
+ *    reusing the idempotency `.liteship/cache` layout + an atomic temp-then-rename
  *    write. A read that is absent, unreadable, or malformed returns `null` (a
  *    cache MISS) — a SANCTIONED fallthrough (documented below), never a corrupt
  *    serve and never a silent swallow: it falls through to a re-run, the SAFE
@@ -19,9 +19,9 @@
  * 2. {@link gauntletToolchainDigest} — the ANTI-LIE KEYSTONE. A hash over the
  *    BUILT artifacts (the `dist/**.js` bytes + the package version) of EVERY
  *    package whose code computes a gate's verdict OR the IR/facts a gate folds —
- *    `@czap/gauntlet` (the gates), `@czap/cli` (the host oracle that mints the
+ *    `@liteship/gauntlet` (the gates), `@liteship/cli` (the host oracle that mints the
  *    `invariant-regex` facts + the IR-build wiring + this very `repo-ir-gauntlet`
- *    host path), and `@czap/audit` (the `ts.Program` IR builder + the
+ *    host path), and `@liteship/audit` (the `ts.Program` IR builder + the
  *    LanguageService `symbol-orphan` oracle) — plus the env fingerprint. It
  *    CHANGES when ANY of that fact-producing logic changes (a gate edit OR an
  *    oracle edit → `tsc` rebuild → new dist bytes → new digest → every cached
@@ -42,18 +42,18 @@ import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, renameSync, statSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, basename } from 'node:path';
-import { sha256Hex } from '@czap/canonical';
-import { walkFiles } from '@czap/core/fs-walk';
-import { isFinding, type Finding, type GateVerdictCache } from '@czap/gauntlet';
-import { currentEnvFingerprint } from '@czap/command/host';
-import { normalizeRepoPath, type MutantVerdictCache, type MutantVerdict } from '@czap/audit';
-import { IoError } from '@czap/error';
+import { sha256Hex } from '@liteship/canonical';
+import { walkFiles } from '@liteship/core/fs-walk';
+import { isFinding, type Finding, type GateVerdictCache } from '@liteship/gauntlet';
+import { currentEnvFingerprint } from '@liteship/command/host';
+import { normalizeRepoPath, type MutantVerdictCache, type MutantVerdict } from '@liteship/audit';
+import { IoError } from '@liteship/error';
 
-/** The cache sub-directory under `.czap/cache` (sibling to the idempotency receipts). */
-const GAUNTLET_CACHE_DIR = ['.czap', 'cache', 'gauntlet'] as const;
+/** The cache sub-directory under `.liteship/cache` (sibling to the idempotency receipts). */
+const GAUNTLET_CACHE_DIR = ['.liteship', 'cache', 'gauntlet'] as const;
 
-/** The mutation-verdict cache sub-directory under `.czap/cache` (sibling to gauntlet). */
-const MUTATION_CACHE_DIR = ['.czap', 'cache', 'mutation'] as const;
+/** The mutation-verdict cache sub-directory under `.liteship/cache` (sibling to gauntlet). */
+const MUTATION_CACHE_DIR = ['.liteship', 'cache', 'mutation'] as const;
 
 /** The closed set of mutant-verdict tags a cache file may hold (the only valid values). */
 const MUTANT_VERDICT_TAGS: ReadonlySet<MutantVerdict['_tag']> = new Set(['killed', 'survived', 'no-coverage']);
@@ -68,7 +68,7 @@ function mutantVerdictPath(key: string, cwd: string): string {
  * of the B2 content-addressed mutant-verdict store the avionics mutation run keys
  * against (`mutantVerdictKey` = `mutant.id + coveringTestsDigest + toolchainDigest`).
  * It stores ONLY the verdict TAG (a single line) under
- * `.czap/cache/mutation/<keyhash>.txt`, mirroring the gauntlet verdict cache's
+ * `.liteship/cache/mutation/<keyhash>.txt`, mirroring the gauntlet verdict cache's
  * sound-MISS discipline:
  *
  * `read` returns `null` (a MISS → re-run, the SAFE direction) for ANY uncertain case
@@ -159,7 +159,7 @@ function parseFindings(raw: string): readonly Finding[] | null {
 /**
  * Build an fs-backed {@link GateVerdictCache} rooted at `cwd` (defaults to
  * `process.cwd()`). Stores each gate's RAW findings as pretty JSON under
- * `.czap/cache/gauntlet/<keyhash>.json`.
+ * `.liteship/cache/gauntlet/<keyhash>.json`.
  *
  * `read` returns `null` (a MISS → re-run) for ANY uncertain case — absent file,
  * unreadable file, or malformed contents — the documented fallthrough that keeps
@@ -217,14 +217,14 @@ function hashFileInto(hash: ReturnType<typeof createHash>, relPath: string, absP
 
 /** Recursively collect `*.js` files under `dir`, repo-relative to `root`, SORTED. */
 function collectJsFiles(dir: string, root: string): string[] {
-  // The shared `@czap/core/fs-walk` walker (all dirs, `.js` files); the explicit
+  // The shared `@liteship/core/fs-walk` walker (all dirs, `.js` files); the explicit
   // repo-relative localeCompare sort is preserved so the digest fold stays byte-stable.
   return walkFiles(dir, { suffixes: ['.js'] }).sort((a, b) => relTo(root, a).localeCompare(relTo(root, b)));
 }
 
 /**
  * POSIX-normalized path of `abs` relative to `root` (stable across platforms).
- * Slash normalization routes through `@czap/audit`'s single `normalizeRepoPath`
+ * Slash normalization routes through `@liteship/audit`'s single `normalizeRepoPath`
  * home (the B5b one-normalizer cage), never an inline `\\→/` copy.
  */
 function relTo(root: string, abs: string): string {
@@ -235,30 +235,30 @@ function relTo(root: string, abs: string): string {
  * The fact-producing packages whose BUILT `dist` the toolchain digest folds, in a
  * FIXED, sorted order so the fold is deterministic regardless of host. Each is a
  * package whose CODE affects a cached gate's raw verdict:
- *  - `@czap/gauntlet` — the gate logic itself (a gate edit changes a verdict).
- *  - `@czap/cli` — the HOST oracle that mints the `invariant-regex` facts the
+ *  - `@liteship/gauntlet` — the gate logic itself (a gate edit changes a verdict).
+ *  - `@liteship/cli` — the HOST oracle that mints the `invariant-regex` facts the
  *    divergence gates fold (`liteshipRegexOracle` in `repo-ir-gauntlet.ts`), the
  *    IR-build wiring, and the host fact-builders; its dist is fact-producing code.
- *  - `@czap/audit` — the `ts.Program` IR builder + the LanguageService
+ *  - `@liteship/audit` — the `ts.Program` IR builder + the LanguageService
  *    `symbol-orphan` oracle whose facts the symbol-orphan-divergence gate folds.
  *
- * `@czap/gauntlet` + `@czap/audit` are dependencies of `@czap/cli` (this module's
- * own package) and so resolve via `import.meta.resolve`; `@czap/cli` resolves to
+ * `@liteship/gauntlet` + `@liteship/audit` are dependencies of `@liteship/cli` (this module's
+ * own package) and so resolve via `import.meta.resolve`; `@liteship/cli` resolves to
  * ITSELF (this module's own dist), located by walking up from `import.meta.url` to
  * the package root rather than self-resolving (a package's `exports` need not name
  * itself). The order is sorted so {@link gauntletToolchainDigest} folds them
  * identically every run.
  */
-export const TOOLCHAIN_PACKAGES = ['@czap/audit', '@czap/cli', '@czap/gauntlet'] as const;
+export const TOOLCHAIN_PACKAGES = ['@liteship/audit', '@liteship/cli', '@liteship/gauntlet'] as const;
 
 /**
  * Locate the BUILT `dist` directory + the manifest version of one fact-producing
- * package. `@czap/cli` is THIS module's own package, resolved by walking up from
- * `import.meta.url` to the nearest `package.json` named `@czap/cli` (a package's own
+ * package. `@liteship/cli` is THIS module's own package, resolved by walking up from
+ * `import.meta.url` to the nearest `package.json` named `@liteship/cli` (a package's own
  * `exports` map need not expose a self-import condition, so `import.meta.resolve`
  * is not reliable for self-resolution). Every OTHER package is a declared dependency
  * resolved via `import.meta.resolve` (the ESM resolver — NOT `createRequire`, because
- * the `@czap/*` `exports` are import-only and the CJS resolver throws
+ * the `@liteship/*` `exports` are import-only and the CJS resolver throws
  * `ERR_PACKAGE_PATH_NOT_EXPORTED` even on a correct build; the same ESM-only-exports
  * trap `wasm-package-resolve.ts` documents). A package that cannot be resolved or
  * whose `dist` is absent THROWS a tagged {@link IoError} — caching against a digest
@@ -269,7 +269,7 @@ export const TOOLCHAIN_PACKAGES = ['@czap/audit', '@czap/cli', '@czap/gauntlet']
  */
 function resolvePackageDist(pkg: string): { distDir: string; version: string } {
   let packageRoot: string;
-  if (pkg === '@czap/cli') {
+  if (pkg === '@liteship/cli') {
     packageRoot = ownPackageRoot();
   } else {
     let entry: string;
@@ -297,11 +297,11 @@ function resolvePackageDist(pkg: string): { distDir: string; version: string } {
 }
 
 /**
- * Walk up from THIS module's URL to the nearest `package.json` named `@czap/cli` —
+ * Walk up from THIS module's URL to the nearest `package.json` named `@liteship/cli` —
  * the package root of the CLI host. The host oracle, the IR-build wiring, and this
  * very module all live under that root's `dist`. Throws a tagged {@link IoError}
  * if the walk runs out of parents without finding the manifest (an impossible
- * layout — this module IS inside `@czap/cli`).
+ * layout — this module IS inside `@liteship/cli`).
  */
 function ownPackageRoot(): string {
   let dir = dirname(fileURLToPath(import.meta.url));
@@ -310,7 +310,7 @@ function ownPackageRoot(): string {
     const manifestPath = join(dir, 'package.json');
     if (existsSync(manifestPath)) {
       const parsed: unknown = JSON.parse(readFileSync(manifestPath, 'utf8'));
-      if (typeof parsed === 'object' && parsed !== null && (parsed as { name?: unknown }).name === '@czap/cli') {
+      if (typeof parsed === 'object' && parsed !== null && (parsed as { name?: unknown }).name === '@liteship/cli') {
         return dir;
       }
     }
@@ -318,7 +318,7 @@ function ownPackageRoot(): string {
   }
   throw IoError(
     'gauntletToolchainDigest',
-    'cannot locate the @czap/cli package root from this module — the toolchain digest cannot fold the host oracle dist',
+    'cannot locate the @liteship/cli package root from this module — the toolchain digest cannot fold the host oracle dist',
     { path: fileURLToPath(import.meta.url) },
   );
 }
@@ -335,10 +335,10 @@ function ownPackageRoot(): string {
  *   the idempotency layer folds, so a verdict cached under one runtime is never
  *   served to another).
  *
- * Folding `@czap/cli` + `@czap/audit` alongside `@czap/gauntlet` closes the deeper
+ * Folding `@liteship/cli` + `@liteship/audit` alongside `@liteship/gauntlet` closes the deeper
  * soundness hole: a "pure-IR" divergence gate folds `ir.facts`/`ir.refs` whose
- * VALUES are computed by the host's `liteshipRegexOracle` (`@czap/cli`) and the
- * audit LanguageService oracle (`@czap/audit`); their code is therefore as
+ * VALUES are computed by the host's `liteshipRegexOracle` (`@liteship/cli`) and the
+ * audit LanguageService oracle (`@liteship/audit`); their code is therefore as
  * load-bearing on the verdict as the gate's own. An oracle-logic change with
  * byte-identical source + an unchanged gauntlet dist now still flips the digest →
  * no stale hit.
@@ -374,8 +374,8 @@ export interface ToolchainPackageSegment {
  * `tc-sha256:<32hex>` digest.
  *
  * Because EVERY segment's bytes fold in, a change to ANY fact-producing package's
- * dist (the gates in `@czap/gauntlet`, the host oracle in `@czap/cli`, the IR
- * builder / LS oracle in `@czap/audit`) flips the digest — the keystone that makes
+ * dist (the gates in `@liteship/gauntlet`, the host oracle in `@liteship/cli`, the IR
+ * builder / LS oracle in `@liteship/audit`) flips the digest — the keystone that makes
  * an oracle-logic change invalidate every cached verdict even when the source bytes
  * + the other packages' dist are byte-identical. {@link gauntletToolchainDigest}
  * resolves the real packages and delegates here.

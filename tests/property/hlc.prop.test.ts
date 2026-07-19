@@ -4,7 +4,7 @@
 
 import { describe, test } from 'vitest';
 import fc from 'fast-check';
-import { HLC } from '@czap/core';
+import { HLC } from '@liteship/core';
 
 // ---------------------------------------------------------------------------
 // Arbitrary: HLC values

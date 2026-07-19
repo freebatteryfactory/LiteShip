@@ -15,7 +15,7 @@ is stale against a fresh regeneration, no bench is a lazy placeholder/drift, and
 the whole generated suite passes; `stale` means a missing/stale/dishonest
 artifact (run `capsule:compile`); `failed` means the generated tests ran red.
 `errors` is the human work-list (empty on success). Declared here so the
-`capsule-verify` command's contract lives in `@czap/command` without a host import.
+`capsule-verify` command's contract lives in `@liteship/command` without a host import.
 
 ## Properties
 

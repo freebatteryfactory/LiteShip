@@ -3,8 +3,8 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { EdgeTier, ClientHints } from '@czap/edge';
-import { CAP_AXES, capAxisAttr } from '@czap/detect';
+import { EdgeTier, ClientHints } from '@liteship/edge';
+import { CAP_AXES, capAxisAttr } from '@liteship/detect';
 
 describe('EdgeTier', () => {
   test('detectTier returns all three tier axes', () => {
@@ -34,9 +34,9 @@ describe('EdgeTier', () => {
   test('tierDataAttributes generates valid HTML attributes', () => {
     const result = EdgeTier.detectTier({});
     const attrs = EdgeTier.tierDataAttributes(result);
-    expect(attrs).toContain('data-czap-tier=');
-    expect(attrs).toContain('data-czap-motion=');
-    expect(attrs).toContain('data-czap-design=');
+    expect(attrs).toContain('data-liteship-tier=');
+    expect(attrs).toContain('data-liteship-motion=');
+    expect(attrs).toContain('data-liteship-design=');
   });
 
   test('tierDataAttributes includes actual tier values', () => {
@@ -46,7 +46,7 @@ describe('EdgeTier', () => {
       designTier: 'enhanced' as const,
     };
     const attrs = EdgeTier.tierDataAttributes(result);
-    expect(attrs).toBe('data-czap-tier="reactive" data-czap-motion="animations" data-czap-design="enhanced"');
+    expect(attrs).toBe('data-liteship-tier="reactive" data-liteship-motion="animations" data-liteship-design="enhanced"');
   });
 
   test('tierDataAttributesMap is the spreadable form, one key per CAP_AXES axis (auto-includes new axes)', () => {
@@ -61,9 +61,9 @@ describe('EdgeTier', () => {
     // addition appears here automatically (never hand-written, never missed).
     expect(Object.keys(map).sort()).toEqual(CAP_AXES.map(capAxisAttr).sort());
     expect(map).toEqual({
-      'data-czap-tier': 'reactive',
-      'data-czap-motion': 'animations',
-      'data-czap-design': 'enhanced',
+      'data-liteship-tier': 'reactive',
+      'data-liteship-motion': 'animations',
+      'data-liteship-design': 'enhanced',
     });
   });
 

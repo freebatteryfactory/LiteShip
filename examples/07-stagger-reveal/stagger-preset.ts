@@ -4,7 +4,7 @@
  * @module
  */
 
-import { Stagger } from '@czap/core';
+import { Stagger } from '@liteship/core';
 
 /** List reveal stagger preset used by examples/07-stagger-reveal and its compile test. */
 export const staggerRevealPreset = Stagger.intent({

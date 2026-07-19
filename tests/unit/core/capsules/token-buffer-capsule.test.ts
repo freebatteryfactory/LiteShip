@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { tokenBufferCapsule } from '@czap/core';
-import { hasTag } from '@czap/error';
+import { tokenBufferCapsule } from '@liteship/core';
+import { hasTag } from '@liteship/error';
 
 describe('tokenBufferCapsule', () => {
   it('declares a stateMachine for the LLM token buffer', () => {

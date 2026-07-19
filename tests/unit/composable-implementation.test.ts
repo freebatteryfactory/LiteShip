@@ -6,7 +6,7 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Boundary, Token, Composable, ComposableWorld, World } from '@czap/core';
+import { Boundary, Token, Composable, ComposableWorld, World } from '@liteship/core';
 
 describe('ECS Composable Implementation', () => {
   const boundary = Boundary.make({

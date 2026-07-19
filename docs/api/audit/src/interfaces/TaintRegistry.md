@@ -10,7 +10,7 @@ Defined in: [audit/src/repo-ir-taint.ts:129](https://github.com/freebatteryfacto
 
 The INJECTED source/sink/sanitizer classification — the host-supplied registry
 (the ADR-0012 / D7b boundary). The oracle references NONE of these names itself;
-the `@czap/cli` host supplies the LiteShip-LOCAL set. Each is matched against a
+the `@liteship/cli` host supplies the LiteShip-LOCAL set. Each is matched against a
 call expression's CALLEE NAME — the bare identifier (`fetch`, `eval`) OR the
 member name (`shaderSource`, `createShaderModule`, `innerHTML` as an assignment
 target, `validateGraphPatchProposal`). [memberSinks](#membersinks) adds a third channel:

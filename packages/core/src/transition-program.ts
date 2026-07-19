@@ -585,7 +585,7 @@ export function interpretProgram(
   const unionCss = [...cssByProp.values()];
 
   const signals = [...new Set(result.windows.flatMap((w) => w.step.signals))];
-  const selector = `[data-czap-boundary="${first.step.target}"]`;
+  const selector = `[data-liteship-boundary="${first.step.target}"]`;
 
   // Native-timeline eligibility is the LOWERER's call: a composed program whose overlapping
   // windows disagree on easing (`par` of differently-eased children, #148) is denied native
@@ -699,10 +699,10 @@ export function frameToT(frame: number, totalFrames: number): number {
   return clamp01(frame / Math.max(1, totalFrames - 1));
 }
 
-/** Strip the `--czap-` prefix and kebab→snake a `cssVar` into a WGSL struct field name. */
+/** Strip the `--liteship-` prefix and kebab→snake a `cssVar` into a WGSL struct field name. */
 function wgslFieldFromCssVar(cssVar: string): string {
   const stripped = cssVar.startsWith('--') ? cssVar.slice(2) : cssVar;
-  const withoutPrefix = stripped.startsWith('czap-') ? stripped.slice(5) : stripped;
+  const withoutPrefix = stripped.startsWith('liteship-') ? stripped.slice(5) : stripped;
   return withoutPrefix.replace(/-/g, '_');
 }
 
@@ -715,9 +715,9 @@ export interface ProgramUniforms {
 }
 
 /**
- * Project a `sampleProgram` sample into the `czap:uniform-update` payload — the ONE
+ * Project a `sampleProgram` sample into the `liteship:uniform-update` payload — the ONE
  * uniform-building path shared by the `client:motion` floor (`writeContinuousMap`, which
- * adds the DOM writes) and the `@czap/worker` off-thread sampler (which posts it across the
+ * adds the DOM writes) and the `@liteship/worker` off-thread sampler (which posts it across the
  * worker boundary). Keeping the formatting here (not forked per host) is Law 4: the leaf a
  * browser writes and the leaf a worker posts are byte-identical because they format ONE
  * kernel sample.

@@ -8,7 +8,7 @@
  */
 
 import { EASING_SPRING_STEPS, SPRING_DEFAULT_STIFFNESS, SPRING_DEFAULT_DAMPING } from './defaults.js';
-import { ValidationError } from '@czap/error';
+import { ValidationError } from '@liteship/error';
 
 type EasingFnShape = (t: number) => number;
 
@@ -371,7 +371,7 @@ export declare namespace Easing {
 /**
  * The ONE spring config both the CSS `linear()` path and the JS floor default to
  * when a spring easing is authored without explicit parameters. Kept here (not in
- * `@czap/compiler`) so the native compiler (`resolveEasing`) and the runtime
+ * `@liteship/compiler`) so the native compiler (`resolveEasing`) and the runtime
  * sampler ({@link sampleRuntimeEasing}) read the SAME default — Law 4: one kernel,
  * never forked.
  */

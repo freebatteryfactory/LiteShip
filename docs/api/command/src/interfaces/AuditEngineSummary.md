@@ -9,8 +9,8 @@
 Defined in: [command/src/registry.ts:253](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L253)
 
 Structured summary returned by the injected [CommandContext.runAudit](CommandContext.md#runaudit)
-capability — a structural mirror of `@czap/audit`'s pass result, declared here
-so the contract lives in `@czap/command` without an import of the engine.
+capability — a structural mirror of `@liteship/audit`'s pass result, declared here
+so the contract lives in `@liteship/command` without an import of the engine.
 
 ## Properties
 

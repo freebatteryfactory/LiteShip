@@ -12,7 +12,7 @@ Defined in: [web/src/slot/registry.ts:353](https://github.com/freebatteryfactory
 
 Slot registry namespace.
 
-Maps `SlotPath` identifiers (from `data-czap-slot` attributes) to DOM
+Maps `SlotPath` identifiers (from `data-liteship-slot` attributes) to DOM
 elements for efficient lookup and patching. Provides DOM scanning,
 `MutationObserver`-based auto-registration, and path lookup utilities.
 
@@ -33,7 +33,7 @@ A new [SlotRegistryShape](../interfaces/SlotRegistryShape.md) instance
 #### Example
 
 ```ts
-import { SlotRegistry, SlotAddressing } from '@czap/web';
+import { SlotRegistry, SlotAddressing } from '@liteship/web';
 
 const heroPath = SlotAddressing.brand('/hero');
 const registry = SlotRegistry.create();
@@ -65,17 +65,17 @@ The matching Element, or null
 #### Example
 
 ```ts
-import { SlotRegistry, SlotAddressing } from '@czap/web';
+import { SlotRegistry, SlotAddressing } from '@liteship/web';
 
 const el = SlotRegistry.findElement(SlotAddressing.brand('/sidebar'));
-// el => <div data-czap-slot="/sidebar"> or null
+// el => <div data-liteship-slot="/sidebar"> or null
 ```
 
 ### getPath
 
 > **getPath**: (`element`) => [`SlotPath`](../type-aliases/SlotPath.md) \| `null`
 
-Get the slot path from a DOM element's `data-czap-slot` attribute.
+Get the slot path from a DOM element's `data-liteship-slot` attribute.
 
 #### Parameters
 
@@ -94,9 +94,9 @@ The slot path, or null if the element is not a slot
 #### Example
 
 ```ts
-import { SlotRegistry } from '@czap/web';
+import { SlotRegistry } from '@liteship/web';
 
-const el = document.querySelector('[data-czap-slot]')!;
+const el = document.querySelector('[data-liteship-slot]')!;
 const path = SlotRegistry.getPath(el);
 // path => '/hero' or null if not a slot element
 ```
@@ -107,7 +107,7 @@ const path = SlotRegistry.getPath(el);
 
 Scan `root` for pre-existing slots, then create a `MutationObserver` that
 automatically registers/unregisters slots as DOM elements with
-`data-czap-slot` are added or removed. Returns a [Disposer](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts) that
+`data-liteship-slot` are added or removed. Returns a [Disposer](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts) that
 disconnects the observer; register it on a `Lifetime` (or call it directly)
 to own the teardown.
 
@@ -137,8 +137,8 @@ A [Disposer](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/c
 #### Example
 
 ```ts
-import { SlotRegistry } from '@czap/web';
-import { Lifetime } from '@czap/core';
+import { SlotRegistry } from '@liteship/web';
+import { Lifetime } from '@liteship/core';
 
 const registry = SlotRegistry.create();
 const lifetime = Lifetime.make();
@@ -151,7 +151,7 @@ lifetime.add(SlotRegistry.observe(registry, document.body));
 
 > **scanDOM**: (`registry`, `root`, `defaultMode`) => `void`
 
-Scan the DOM subtree for elements with `data-czap-slot` attributes and
+Scan the DOM subtree for elements with `data-liteship-slot` attributes and
 register them in the given registry.
 
 #### Parameters
@@ -181,17 +181,17 @@ Default island mode for discovered slots (defaults to 'partial')
 #### Example
 
 ```ts
-import { SlotRegistry } from '@czap/web';
+import { SlotRegistry } from '@liteship/web';
 
 const registry = SlotRegistry.create();
 SlotRegistry.scanDOM(registry, document.body);
-// All elements with data-czap-slot="/..." are now registered
+// All elements with data-liteship-slot="/..." are now registered
 ```
 
 ## Example
 
 ```ts
-import { SlotRegistry } from '@czap/web';
+import { SlotRegistry } from '@liteship/web';
 
 const registry = SlotRegistry.create();
 SlotRegistry.scanDOM(registry, document.body);

@@ -13,9 +13,9 @@ Defined in: [compiler/src/component-css.ts:60](https://github.com/freebatteryfac
 Component CSS compiler namespace.
 
 Wraps [StyleCSSCompiler](StyleCSSCompiler.md) with component-scoped conventions: children
-inside `[data-czap-slot]` use `display: contents` so slotted content
+inside `[data-liteship-slot]` use `display: contents` so slotted content
 inherits layout from the surrounding parent, and elements tagged
-`[data-czap-satellite="<name>"]` get `container-type: inline-size` so
+`[data-liteship-satellite="<name>"]` get `container-type: inline-size` so
 satellite-mounted instances participate in container queries.
 
 ## Type Declaration

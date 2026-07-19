@@ -5,9 +5,9 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Boundary, Millis } from '@czap/core';
-import { Transition } from '@czap/quantizer';
-import type { TransitionConfig } from '@czap/quantizer';
+import { Boundary, Millis } from '@liteship/core';
+import { Transition } from '@liteship/quantizer';
+import type { TransitionConfig } from '@liteship/quantizer';
 
 // ---------------------------------------------------------------------------
 // Fixtures

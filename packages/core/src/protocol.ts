@@ -1,7 +1,7 @@
 /**
  * Protocol types -- CellEnvelope, CellKind, CellMeta.
  *
- * These types form the wire-level protocol for cells in the czap system.
+ * These types form the wire-level protocol for cells in the liteship system.
  * Every cell has a kind, content address, metadata, and value.
  *
  * @module

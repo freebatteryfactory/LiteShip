@@ -5,11 +5,11 @@
  * The publish roster (count + package list, in publish order) is owned by
  * `scripts/gen-roster.ts` and stamped into `scripts/ci/publish-roster.json` by its
  * `--write` mode. `.github/workflows/release.yml`'s publish job reads that JSON with
- * jq instead of carrying a `for pkg in @czap/... ; do` list that drifts on every
- * package add/remove (the exact scar that stranded `@czap/stage` out of the loop).
+ * jq instead of carrying a `for pkg in @liteship/... ; do` list that drifts on every
+ * package add/remove (the exact scar that stranded `@liteship/stage` out of the loop).
  *
  * This meta guard pins the SHAPE of that single-sourcing at the YAML level: the
- * publish job's run blocks carry no `@czap/*` literals, they reference the generated
+ * publish job's run blocks carry no `@liteship/*` literals, they reference the generated
  * JSON, and they run the gen-roster `--check` gate before publishing. It also proves
  * the generated JSON is internally consistent and that its package set equals the
  * repo-truths publishable set on disk — so a regeneration that drops or invents a
@@ -37,7 +37,7 @@ function publishJobText(): string {
 /**
  * The concatenated `run:` script bodies of the publish job (block scalars and
  * single-line runs), stripped of comment lines. Scoping to run bodies means an
- * `@czap/*` mention in a step's `name:` or a `#` comment cannot false-trip the
+ * `@liteship/*` mention in a step's `name:` or a `#` comment cannot false-trip the
  * literal check — only executable shell counts.
  */
 function publishJobRunBlocks(): string {
@@ -92,11 +92,11 @@ function publishableNames(): string[] {
 }
 
 describe('release.yml publish job is a projection of scripts/ci/publish-roster.json', () => {
-  it('carries no @czap/* package literals in its run blocks', () => {
-    const literals = [...publishJobRunBlocks().matchAll(/@czap\/[a-z_-]+/g)].map((match) => match[0]);
+  it('carries no @liteship/* package literals in its run blocks', () => {
+    const literals = [...publishJobRunBlocks().matchAll(/@liteship\/[a-z_-]+/g)].map((match) => match[0]);
     expect(
       literals,
-      `release.yml publish job hard-codes @czap/* package names — the roster must come from scripts/ci/publish-roster.json: ${literals.join(', ')}`,
+      `release.yml publish job hard-codes @liteship/* package names — the roster must come from scripts/ci/publish-roster.json: ${literals.join(', ')}`,
     ).toEqual([]);
   });
 

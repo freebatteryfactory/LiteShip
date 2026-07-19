@@ -8,7 +8,7 @@
  * @module
  */
 
-import type { Component } from '@czap/core';
+import type { Component } from '@liteship/core';
 import type { StyleCSSResult } from './style-css.js';
 import { StyleCSSCompiler } from './style-css.js';
 
@@ -23,12 +23,12 @@ import { StyleCSSCompiler } from './style-css.js';
 function compile(component: Component.Shape): StyleCSSResult {
   const base = StyleCSSCompiler.compile(component.styles, component.name);
 
-  // Slot marker: children of [data-czap-slot] use display: contents to avoid
+  // Slot marker: children of [data-liteship-slot] use display: contents to avoid
   // layout interference from the slot wrapper element.
-  const slotRule = `[data-czap-slot] { display: contents; }`;
+  const slotRule = `[data-liteship-slot] { display: contents; }`;
 
   // Satellite container: enables container queries on satellite-mounted instances.
-  const satelliteRule = `[data-czap-satellite="${component.name}"] { container-type: inline-size; }`;
+  const satelliteRule = `[data-liteship-satellite="${component.name}"] { container-type: inline-size; }`;
 
   // Append slot + satellite rules to the scoped output
   const scoped = [base.scoped, '', slotRule, '', satelliteRule].join('\n');
@@ -39,7 +39,7 @@ function compile(component: Component.Shape): StyleCSSResult {
   // @container rules already emitted by the base compiler.
   const layers = base.layers
     ? base.layers.replace(/\}\s*$/, `\n  ${slotRule}\n\n  ${satelliteRule}\n}`)
-    : `@layer czap.components {\n  ${slotRule}\n\n  ${satelliteRule}\n}`;
+    : `@layer liteship.components {\n  ${slotRule}\n\n  ${satelliteRule}\n}`;
 
   return {
     scoped,
@@ -52,9 +52,9 @@ function compile(component: Component.Shape): StyleCSSResult {
  * Component CSS compiler namespace.
  *
  * Wraps {@link StyleCSSCompiler} with component-scoped conventions: children
- * inside `[data-czap-slot]` use `display: contents` so slotted content
+ * inside `[data-liteship-slot]` use `display: contents` so slotted content
  * inherits layout from the surrounding parent, and elements tagged
- * `[data-czap-satellite="<name>"]` get `container-type: inline-size` so
+ * `[data-liteship-satellite="<name>"]` get `container-type: inline-size` so
  * satellite-mounted instances participate in container queries.
  */
 export const ComponentCSSCompiler = {

@@ -12,7 +12,7 @@ Defined in: [audit/src/consumer.ts:160](https://github.com/freebatteryfactory/Li
 
 Build a consumer-mode profile: the base profile (LiteShip's by default)
 re-rooted at `cwd` with `packageRoots` resolved from the installed
-`@czap/*` packages. Packages from the topology that aren't installed are
+`@liteship/*` packages. Packages from the topology that aren't installed are
 simply absent — a consumer audits what it actually ships — and the same
 principle prunes the host-surface policy: a consumer that doesn't install
 the astro/vite host packages should not eat `*-missing` errors for

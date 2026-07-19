@@ -8,14 +8,14 @@
 
 Slot registry namespace.
 
-Maps `SlotPath` identifiers (from `data-czap-slot` attributes) to DOM
+Maps `SlotPath` identifiers (from `data-liteship-slot` attributes) to DOM
 elements for efficient lookup and patching. Provides DOM scanning,
 `MutationObserver`-based auto-registration, and path lookup utilities.
 
 ## Example
 
 ```ts
-import { SlotRegistry } from '@czap/web';
+import { SlotRegistry } from '@liteship/web';
 
 const registry = SlotRegistry.create();
 SlotRegistry.scanDOM(registry, document.body);

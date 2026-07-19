@@ -164,7 +164,7 @@ unforgeable token — so a UI tree cannot reach a host renderer un-validated any
 more than a GraphPatch can reach a host mutator un-validated.
 
 The validator is injected (not imported) to keep the cast core free of the
-genui renderer dependency; pass `validateGeneratedUITree` from `@czap/genui`.
+genui renderer dependency; pass `validateGeneratedUITree` from `@liteship/genui`.
 
 #### Parameters
 
@@ -215,7 +215,7 @@ never become a `ValidatedProposal`.
 ## Example
 
 ```ts
-import { AICast, GraphPatch } from '@czap/core';
+import { AICast, GraphPatch } from '@liteship/core';
 
 const ctx = AICast.castContext(graph, { tokenBudget: 512 }); // cast OUT
 // ... a producer feeds ctx.systemPrompt + ctx.proposalSchemas to a model,

@@ -7,14 +7,14 @@
  * @module
  */
 import { describe, test, expect } from 'vitest';
-import { GraphPatch, sealNode, sealGraph } from '@czap/core';
+import { GraphPatch, sealNode, sealGraph } from '@liteship/core';
 import type {
   SignalNode,
   DocumentGraphNode,
   DocumentGraphEdge,
   DocumentGraph as DocumentGraphType,
   CellMeta,
-} from '@czap/core';
+} from '@liteship/core';
 
 const META: CellMeta = {
   created: { wall_ms: 0, counter: 0, node_id: 't' },

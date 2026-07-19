@@ -18,9 +18,9 @@
  *
  * @module
  */
-import type { CapsuleCommandResult, CommandMap } from '@czap/command';
-import { CommandDispatcher, commandRegistry } from '@czap/command';
-import { createNodeCommandContext } from '@czap/command/host';
+import type { CapsuleCommandResult, CommandMap } from '@liteship/command';
+import { CommandDispatcher, commandRegistry } from '@liteship/command';
+import { createNodeCommandContext } from '@liteship/command/host';
 import { emitError } from '../receipts.js';
 
 /** The single dispatcher over the canonical registry (the CLI's projection edge). */

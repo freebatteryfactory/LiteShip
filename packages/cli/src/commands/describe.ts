@@ -2,16 +2,16 @@
  * describe (CLI adapter) — dumps the capsule assembly-kind catalog + the
  * command surface. Both the JSON command list and the `--format=mcp` tool
  * manifest are PROJECTIONS of the one canonical command catalog in
- * `@czap/command`; this file maintains no parallel command table. Default
+ * `@liteship/command`; this file maintains no parallel command table. Default
  * format is JSON; `--format=mcp` emits the MCP tool manifest (the mcpExposed
- * subset — identical to `@czap/mcp-server`'s `listTools()`).
+ * subset — identical to `@liteship/mcp-server`'s `listTools()`).
  *
  * @module
  */
 
 import { existsSync, readFileSync } from 'node:fs';
-import { COMMAND_CATALOG, mcpExposedDescriptors } from '@czap/command';
-import type { CapsuleCommandDescriptor } from '@czap/core';
+import { COMMAND_CATALOG, mcpExposedDescriptors } from '@liteship/command';
+import type { CapsuleCommandDescriptor } from '@liteship/core';
 
 /** Closed catalog of the seven assembly kinds (matches ADR-0008). */
 const ASSEMBLY_KINDS = [
@@ -41,7 +41,7 @@ export interface McpToolDescriptor {
 
 /**
  * Project the mcpExposed catalog subset into MCP tool descriptors. Must stay
- * byte-identical to @czap/mcp-server's `listTools()` (A1-T4 parity), so it emits
+ * byte-identical to @liteship/mcp-server's `listTools()` (A1-T4 parity), so it emits
  * `outputSchema` (CUT D2) and `_meta.ui.resourceUri` (CUT D5) for the same descriptors.
  */
 function mcpTools(): readonly McpToolDescriptor[] {
@@ -59,7 +59,7 @@ export function describe(
   args: { format?: 'json' | 'mcp' } = {},
 ): DescribeReceipt | { tools: readonly McpToolDescriptor[] } {
   if (args.format === 'mcp') {
-    const cachedManifest = '.czap/generated/mcp-manifest.json';
+    const cachedManifest = '.liteship/generated/mcp-manifest.json';
     if (existsSync(cachedManifest)) {
       return JSON.parse(readFileSync(cachedManifest, 'utf8')) as { tools: readonly McpToolDescriptor[] };
     }

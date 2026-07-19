@@ -2,16 +2,16 @@
  * DOM Diff Algorithm
  *
  * Idiomorph-inspired DOM diffing that:
- * - Matches nodes by semantic ID (data-czap-id)
+ * - Matches nodes by semantic ID (data-liteship-id)
  * - Minimizes DOM mutations
  * - Preserves element identity where possible
  * - Captures and restores physical state
  * - Validates preserve constraints and emits rejections
  */
 
-import { Diagnostics } from '@czap/core';
+import { Diagnostics } from '@liteship/core';
 import type { MorphConfig, MorphHints, MorphResult } from '../types.js';
-import { dispatchCzapEvent } from '../wire/dispatch.js';
+import { dispatchLiteshipEvent } from '../wire/dispatch.js';
 import * as SemanticIdModule from './semantic-id.js';
 import * as HintsModule from './hints.js';
 import * as Physical from '../physical/capture.js';
@@ -50,8 +50,8 @@ export const morph = (oldNode: Element, newHTML: string, config?: Partial<MorphC
  * Morph with physical state capture and restore — the default entry point.
  *
  * Captures focus/scroll/selection before the morph (gated on config flags),
- * validates preserve hints afterwards (dispatching `czap:morph-rejected` and
- * `czap:request-snapshot` on violation), and restores physical state. When no
+ * validates preserve hints afterwards (dispatching `liteship:morph-rejected` and
+ * `liteship:request-snapshot` on violation), and restores physical state. When no
  * flags or hints apply it degrades to a plain {@link morph}.
  */
 export const morphWithState = (
@@ -73,9 +73,9 @@ export const morphWithState = (
     for (const id of preserveIds) {
       if (!preserveIndex.has(id)) {
         Diagnostics.warn({
-          source: 'czap/web.morph',
+          source: 'liteship/web.morph',
           code: 'preserve-id-missing',
-          message: `Preserve ID "${id}" was not found in the old DOM tree before morphing. Preserve IDs are matched against data-czap-id attributes — check for a typo, or add data-czap-id="${id}" to the element you want preserved.`,
+          message: `Preserve ID "${id}" was not found in the old DOM tree before morphing. Preserve IDs are matched against data-liteship-id attributes — check for a typo, or add data-liteship-id="${id}" to the element you want preserved.`,
         });
       }
     }
@@ -85,12 +85,12 @@ export const morphWithState = (
 
   const rejection = HintsModule.rejectIfMissing(hints ?? {}, oldNode);
   if (rejection) {
-    dispatchCzapEvent(oldNode, 'czap:morph-rejected', {
+    dispatchLiteshipEvent(oldNode, 'liteship:morph-rejected', {
       ...rejection,
-      recovery: 'A czap:request-snapshot event was dispatched to recover — listen for it to fetch fresh state.',
+      recovery: 'A liteship:request-snapshot event was dispatched to recover — listen for it to fetch fresh state.',
     });
 
-    dispatchCzapEvent(oldNode, 'czap:request-snapshot', { reason: rejection.reason });
+    dispatchLiteshipEvent(oldNode, 'liteship:request-snapshot', { reason: rejection.reason });
 
     return { type: 'rejected' as const, rejection };
   }

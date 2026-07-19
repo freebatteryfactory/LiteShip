@@ -1,9 +1,9 @@
 /**
- * `czap sbom` — emit the deterministic, content-addressed Software Bill of
+ * `liteship sbom` — emit the deterministic, content-addressed Software Bill of
  * Materials (Slice C, the avionics tier — supply chain).
  *
  * Thin CLI adapter: reads pnpm-lock.yaml + the workspace manifests, runs the
- * `@czap/cli` supply-chain analyzer (lockfile policy + CycloneDX SBOM +
+ * `@liteship/cli` supply-chain analyzer (lockfile policy + CycloneDX SBOM +
  * completeness), writes the reviewable artifact to {@link SBOM_ARTIFACT_PATH},
  * and emits a {@link SbomReceipt}. Deterministic by construction — two runs over
  * the same lockfile write a byte-identical SBOM with a stable content address.
@@ -16,8 +16,8 @@
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { ContentAddress, wallClock } from '@czap/core';
-import { hasTag } from '@czap/error';
+import { ContentAddress, wallClock } from '@liteship/core';
+import { hasTag } from '@liteship/error';
 import { isLiteShipWorkspace, readWorkspacePackages, type WorkspacePackageIdentity } from '../lib/workspace.js';
 import {
   analyzeLockfile,
@@ -33,11 +33,11 @@ function toAnalyzerPkg(p: WorkspacePackageIdentity): WorkspacePkg {
   return { name: p.name, version: p.version, private: p.private, importerPath: p.importerPath };
 }
 
-/** Execute `czap sbom`. */
+/** Execute `liteship sbom`. */
 export function sbom(_args: readonly string[]): number {
   const cwd = process.cwd();
   if (!isLiteShipWorkspace(cwd)) {
-    emitError('sbom', 'not a LiteShip workspace (root package.json is not "czap")');
+    emitError('sbom', 'not a LiteShip workspace (root package.json is not "liteship")');
     return 1;
   }
 

@@ -15,7 +15,7 @@ state output records. `duration` of `0` produces an instantaneous snap.
 
 Plain `number` literals are accepted alongside branded [Millis](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/Millis.md);
 the resolver brands internally (the one sanctioned cast site lives in
-`@czap/core` brands), so `{ duration: 300 }` needs no import.
+`@liteship/core` brands), so `{ duration: 300 }` needs no import.
 
 ## Properties
 

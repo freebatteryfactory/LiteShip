@@ -5,9 +5,9 @@
  *
  * @module
  */
-import { GenFrame, TokenBuffer, UIQuality } from '@czap/core';
-import type { ContentAddress, UIFrame } from '@czap/core';
-import { renderHash, tryParseGeneratedUIChunk, type ComponentCatalog, type GeneratedUINode } from '@czap/genui';
+import { GenFrame, TokenBuffer, UIQuality } from '@liteship/core';
+import type { ContentAddress, UIFrame } from '@liteship/core';
+import { renderHash, tryParseGeneratedUIChunk, type ComponentCatalog, type GeneratedUINode } from '@liteship/genui';
 
 type DeviceTier = 'none' | 'transitions' | 'animations' | 'physics' | 'compute';
 

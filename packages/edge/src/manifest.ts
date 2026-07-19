@@ -2,7 +2,7 @@
  * Boundary manifest contract -- the build-to-edge handoff for precompiled
  * boundary outputs (ADR-0003 content addressing).
  *
- * The build pipeline (`@czap/vite` `collectBoundaryManifest`) derives every
+ * The build pipeline (`@liteship/vite` `collectBoundaryManifest`) derives every
  * boundary's `ContentAddress` and per-tier {@link CompiledOutputs} at build
  * time; edge hosts consume the manifest so they never hand-type a boundary
  * id or re-implement the CSS compiler inside a worker bundle.
@@ -10,9 +10,9 @@
  * @module
  */
 
-import { ParseError } from '@czap/error';
-import type { ContentAddress, MotionTier } from '@czap/core';
-import type { DesignTier } from '@czap/detect';
+import { ParseError } from '@liteship/error';
+import type { ContentAddress, MotionTier } from '@liteship/core';
+import type { DesignTier } from '@liteship/detect';
 import type { EdgeTierResult } from './edge-tier.js';
 import type { CompiledOutputs } from './kv-cache.js';
 
@@ -22,7 +22,7 @@ import type { CompiledOutputs } from './kv-cache.js';
 
 /**
  * Every {@link MotionTier}, in escalation order. Kept in lockstep with the
- * `MotionTier` union in `@czap/core` -- the `satisfies` clause plus the
+ * `MotionTier` union in `@liteship/core` -- the `satisfies` clause plus the
  * exhaustiveness check below fail compilation if the vocabulary drifts.
  */
 export const MOTION_TIERS = [
@@ -35,7 +35,7 @@ export const MOTION_TIERS = [
 
 /**
  * Every `DesignTier`, in escalation order. Kept in lockstep with the
- * `DesignTier` union in `@czap/detect` -- the `satisfies` clause plus the
+ * `DesignTier` union in `@liteship/detect` -- the `satisfies` clause plus the
  * exhaustiveness check below fail compilation if the vocabulary drifts.
  */
 export const DESIGN_TIERS = ['minimal', 'standard', 'enhanced', 'rich'] as const satisfies readonly DesignTier[];
@@ -174,7 +174,7 @@ export function resolveOutputsByTier(
       'manifest',
       'Boundary manifest entry has no `outputs` pool — the manifest predates the deduplicated v2 format ' +
         '(cells held CompiledOutputs objects, not pool indices) or was edited by hand. ' +
-        'Fix: rebuild the project so collectBoundaryManifest emits the v2 shape (czap-boundary-manifest.json with `_version: 2`).',
+        'Fix: rebuild the project so collectBoundaryManifest emits the v2 shape (liteship-boundary-manifest.json with `_version: 2`).',
       { code: 'malformed' },
     );
   }
@@ -187,7 +187,7 @@ export function resolveOutputsByTier(
         `Boundary manifest cell "${key}" references outputs[${String(index)}], but the entry's outputs pool has ` +
           `${pool.length} item(s), so the tier cannot be resolved. ` +
           'Why: the manifest predates the deduplicated v2 format (cells held CompiledOutputs objects, not pool indices) or was edited by hand. ' +
-          'Fix: rebuild the project so collectBoundaryManifest emits the v2 shape (czap-boundary-manifest.json with `_version: 2`).',
+          'Fix: rebuild the project so collectBoundaryManifest emits the v2 shape (liteship-boundary-manifest.json with `_version: 2`).',
         { code: 'malformed' },
       );
     }
@@ -212,18 +212,18 @@ export function resolveAssetUrlByTier(
 /**
  * Build-derived boundary manifest: boundary export name to
  * {@link BoundaryManifestEntry}. This is the value of the
- * `virtual:czap/boundaries` virtual module and the `boundaries` field of
- * the emitted `czap-boundary-manifest.json`.
+ * `virtual:liteship/boundaries` virtual module and the `boundaries` field of
+ * the emitted `liteship-boundary-manifest.json`.
  */
 export type BoundaryManifest = Readonly<Record<string, BoundaryManifestEntry>>;
 
 /**
- * Versioned envelope written to `czap-boundary-manifest.json` by the
- * `@czap/astro` integration at `astro:build:done` -- for hosts that read
- * the manifest from disk instead of importing `virtual:czap/boundaries`.
+ * Versioned envelope written to `liteship-boundary-manifest.json` by the
+ * `@liteship/astro` integration at `astro:build:done` -- for hosts that read
+ * the manifest from disk instead of importing `virtual:liteship/boundaries`.
  */
 export interface BoundaryManifestFile {
-  readonly _tag: 'CzapBoundaryManifest';
+  readonly _tag: 'LiteshipBoundaryManifest';
   /** v2: entries carry a deduplicated `outputs` pool; `outputsByTier` cells are pool indices. */
   readonly _version: 2;
   readonly boundaries: BoundaryManifest;

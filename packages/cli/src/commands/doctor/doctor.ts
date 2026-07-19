@@ -12,7 +12,7 @@
  * @module
  */
 
-import { wallClock } from '@czap/core';
+import { wallClock } from '@liteship/core';
 import { color, colorEnabled } from '../../lib/ansi.js';
 import { emit, emitError } from '../../receipts.js';
 import { findWorkspaceRoot } from './manifest.js';
@@ -46,7 +46,7 @@ export async function doctor(
   } = {},
 ): Promise<number> {
   // Explicit cwd from tests/MCP is used verbatim (predictable fixtures).
-  // Default behavior anchors probes to the workspace root so `czap doctor`
+  // Default behavior anchors probes to the workspace root so `liteship doctor`
   // works correctly from any monorepo subdir, not just the repo root.
   const cwd = opts.cwd ?? findWorkspaceRoot(process.cwd());
 

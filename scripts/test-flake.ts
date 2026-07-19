@@ -7,7 +7,7 @@ const root = resolve(import.meta.dirname, '..');
 
 const repetitions = 5;
 const browserFlakeEnv = {
-  CZAP_VITEST_BROWSERS: process.env.CZAP_VITEST_BROWSERS ?? 'chromium',
+  LITESHIP_VITEST_BROWSERS: process.env.LITESHIP_VITEST_BROWSERS ?? 'chromium',
 };
 
 async function assertTargetsExist(label: string, targets: readonly string[]): Promise<void> {

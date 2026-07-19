@@ -8,7 +8,7 @@
  */
 
 import { DIRTY_FLAGS_MAX } from './defaults.js';
-import { ValidationError } from '@czap/error';
+import { ValidationError } from '@liteship/error';
 
 interface DirtyFlagsShape<K extends string = string> {
   mark(key: K): void;

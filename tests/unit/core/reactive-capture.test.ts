@@ -16,7 +16,7 @@
  *     what makes the golden fixtures trustworthy.
  *  2. GOLDEN-FIXTURE MATCH (the byte-law cage): the captured observation must
  *     equal the committed fixture. Regenerate deliberately with
- *     `CZAP_CAPTURE_UPDATE=1`.
+ *     `LITESHIP_CAPTURE_UPDATE=1`.
  *
  * THE DEDUP QUESTION is answered here by CAPTURE (the `duplicate-consecutive`
  * seeds + the explicit "dedup verdict" describe): does today's primitive suppress
@@ -28,7 +28,7 @@
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { afterAll, describe, expect, test } from 'vitest';
-import { AVBridge, Signal } from '@czap/core';
+import { AVBridge, Signal } from '@liteship/core';
 import { capture } from '../../support/reactive-capture.js';
 import {
   captureEntry,
@@ -163,7 +163,7 @@ const CORPUS: Readonly<Record<string, readonly CorpusEntry[]>> = {
 // ---------------------------------------------------------------------------
 
 const FIXTURE_DIR = fileURLToPath(new URL('../../fixtures/reactive-capture/', import.meta.url));
-const UPDATE = process.env.CZAP_CAPTURE_UPDATE === '1';
+const UPDATE = process.env.LITESHIP_CAPTURE_UPDATE === '1';
 
 const fixturePath = (primitive: string): string => `${FIXTURE_DIR}${primitive}.json`;
 
@@ -180,7 +180,7 @@ const goldenBySeed = (primitive: string): Map<string, CaptureEntry> => {
   return map;
 };
 
-// Accumulates freshly captured entries for the CZAP_CAPTURE_UPDATE write pass.
+// Accumulates freshly captured entries for the LITESHIP_CAPTURE_UPDATE write pass.
 const generated = new Map<string, CaptureEntry[]>();
 const recordGenerated = (primitive: string, entry: CaptureEntry): void => {
   const list = generated.get(primitive) ?? [];
@@ -223,7 +223,7 @@ for (const [primitive, corpus] of Object.entries(CORPUS)) {
 
         // Gate 2: golden-fixture match (the byte-law cage).
         const pinned = golden.get(seed);
-        expect(pinned, `missing golden fixture for ${primitive}/${seed} — regenerate with CZAP_CAPTURE_UPDATE=1`).toBeDefined();
+        expect(pinned, `missing golden fixture for ${primitive}/${seed} — regenerate with LITESHIP_CAPTURE_UPDATE=1`).toBeDefined();
         if (pinned === undefined) return;
         expect(entry.observationDigest).toBe(pinned.observationDigest);
         expect(entry.observation).toEqual(pinned.observation);

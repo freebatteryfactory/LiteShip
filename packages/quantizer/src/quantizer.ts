@@ -18,9 +18,9 @@ import type {
   OutputsFor,
   HLCBrand,
   Clock,
-} from '@czap/core';
-import { HLC, CellKernel, Lifetime } from '@czap/core';
-import type { MotionTier, LadderTarget } from '@czap/core';
+} from '@liteship/core';
+import { HLC, CellKernel, Lifetime } from '@liteship/core';
+import type { MotionTier, LadderTarget } from '@liteship/core';
 import {
   StateName as mkStateName,
   CanonicalCbor,
@@ -29,8 +29,8 @@ import {
   fnv1aBytes,
   wallClock,
   projectLadder,
-} from '@czap/core';
-import { ValidationError } from '@czap/error';
+} from '@liteship/core';
+import { ValidationError } from '@liteship/error';
 import { evaluate } from './evaluate.js';
 import type { EvaluateResult } from './evaluate.js';
 import { MemoCache } from './memo-cache.js';
@@ -60,20 +60,20 @@ function firstState<B extends Boundary.Shape>(boundary: B): StateUnion<B> {
  * MotionTier gates which targets a device is permitted to receive; see
  * {@link QuantizerFromOptions.tier} for the tier → targets table.
  *
- * Aliases `@czap/core`'s {@link LadderTarget} — the shared codomain of the
+ * Aliases `@liteship/core`'s {@link LadderTarget} — the shared codomain of the
  * capability-admissibility ladder both this gate and the core escalation gate
  * project from — so the target vocabulary itself has a single source too.
  */
 export type OutputTarget = LadderTarget;
 
 // ---------------------------------------------------------------------------
-// MotionTier gating (canonical type from @czap/core)
+// MotionTier gating (canonical type from @liteship/core)
 // ---------------------------------------------------------------------------
 
-export type { MotionTier } from '@czap/core';
+export type { MotionTier } from '@liteship/core';
 
 /**
- * MotionTier → allowed {@link OutputTarget} set — a PROJECTION of `@czap/core`'s
+ * MotionTier → allowed {@link OutputTarget} set — a PROJECTION of `@liteship/core`'s
  * shared capability-admissibility ladder (`cap-ladder.ts`) onto the `MotionTier`
  * rung order. The core escalation chooser's `RUNG_TARGETS` projects the SAME
  * ladder onto the `CapTier` order; the two are therefore congruent by
@@ -124,7 +124,7 @@ export interface QuantizerOutputs<B extends Boundary.Shape> {
  * Spring physics parameters for CSS easing auto-generation.
  *
  * When a {@link QuantizerConfig} carries a spring, its CSS outputs receive an
- * injected `--czap-easing` custom property derived via `Easing.springToLinearCSS`
+ * injected `--liteship-easing` custom property derived via `Easing.springToLinearCSS`
  * so native `linear()` timing matches the physical spring response.
  */
 export interface SpringConfig {
@@ -145,7 +145,7 @@ export interface SpringConfig {
  *
  * `tier` gates which output targets get produced (see the table on
  * {@link QuantizerFromOptions.tier}).
- * `spring` enables automatic CSS `--czap-easing` injection on CSS outputs.
+ * `spring` enables automatic CSS `--liteship-easing` injection on CSS outputs.
  */
 export interface QuantizerFromOptions {
   /**
@@ -178,7 +178,7 @@ export interface QuantizerFromOptions {
  * Runtime injection for {@link QuantizerConfig.create}.
  *
  * The crossing `timestamp` is an HLC whose `wall_ms` is epoch ms, so the
- * monotonic clock is the {@link Clock} WALL boundary (`@czap/core`'s
+ * monotonic clock is the {@link Clock} WALL boundary (`@liteship/core`'s
  * `wallClock`), NOT the monotonic `systemClock`. It is injected here — at
  * instantiation, NOT in {@link QuantizerFromOptions} — so it never enters the
  * content address (a clock is a volatile boundary, not part of a config's
@@ -191,7 +191,7 @@ export interface QuantizerFromOptions {
 export interface QuantizerRuntime {
   /**
    * Wall-clock boundary advancing this instance's HLC; defaults to
-   * `@czap/core`'s `wallClock`. Pass a `fixedClock`/`manualClock` for
+   * `@liteship/core`'s `wallClock`. Pass a `fixedClock`/`manualClock` for
    * deterministic, replayable crossing timestamps.
    */
   readonly clock?: Clock;
@@ -229,7 +229,7 @@ export interface QuantizerConfig<B extends Boundary.Shape, O extends QuantizerOu
    *
    * Pass a {@link QuantizerRuntime} to inject the wall-clock boundary that
    * advances this instance's monotonic crossing HLC; omit it to default to
-   * `@czap/core`'s `wallClock`. The clock is per-instantiation, never part of
+   * `@liteship/core`'s `wallClock`. The clock is per-instantiation, never part of
    * the cached config's identity.
    */
   create(runtime?: QuantizerRuntime): LiveQuantizerHandle<B, O>;
@@ -253,8 +253,8 @@ type OutputRecord = Partial<{ [K in OutputTarget]: Record<string, unknown> }>;
  *
  * @example
  * ```ts
- * import { Boundary } from '@czap/core';
- * import { Q } from '@czap/quantizer';
+ * import { Boundary } from '@liteship/core';
+ * import { Q } from '@liteship/quantizer';
  *
  * const b = Boundary.make({
  *   input: 'w',
@@ -321,7 +321,7 @@ type CachedQuantizerConfig = QuantizerConfig<Boundary.Shape, QuantizerOutputs<Bo
 
 /**
  * Config identity covers EVERYTHING the cached config closes over: boundary,
- * outputs, tier (gates `allowedTargets`), spring (drives `--czap-easing`),
+ * outputs, tier (gates `allowedTargets`), spring (drives `--liteship-easing`),
  * and `force()` targets. Omitting any of these lets the first config minted
  * for a boundary+outputs pair poison later configs built with different
  * options — the same outputs at `tier: 'physics'` would silently reuse a
@@ -416,7 +416,7 @@ function resolveOutputs<B extends Boundary.Shape, O extends QuantizerOutputs<B>>
     if (stateOutputs !== undefined) {
       if (target === 'css' && springCSS) {
         // Inject the spring easing CSS custom property alongside CSS outputs
-        result[target] = { ...stateOutputs, '--czap-easing': springCSS };
+        result[target] = { ...stateOutputs, '--liteship-easing': springCSS };
       } else {
         result[target] = stateOutputs;
       }
@@ -454,8 +454,8 @@ function getSpringCSS(spring: SpringConfig): string {
  *
  * @example
  * ```ts
- * import { Boundary } from '@czap/core';
- * import { Q } from '@czap/quantizer';
+ * import { Boundary } from '@liteship/core';
+ * import { Q } from '@liteship/quantizer';
  *
  * const boundary = Boundary.make({
  *   input: 'width',
@@ -496,7 +496,7 @@ function fromBoundary<B extends Boundary.Shape>(boundary: B, options?: Quantizer
         for (const target of Object.keys(outputs) as readonly OutputTarget[]) {
           if (outputs[target] === undefined || allowedTargets.has(target) || frozenForced?.has(target)) continue;
           Diagnostics.warnOnce({
-            source: 'czap/quantizer',
+            source: 'liteship/quantizer',
             code: 'tier-gated-output-dropped',
             message: `you defined \`${target}\` outputs but tier '${tier}' only emits ${[...allowedTargets].join('+')}, so they will never fire. Pass a tier that includes ${target} to Q.from(boundary, { tier }), or chain .force('${target}').`,
           });
@@ -655,8 +655,8 @@ function fromBoundary<B extends Boundary.Shape>(boundary: B, options?: Quantizer
  *
  * @example
  * ```ts
- * import { Boundary } from '@czap/core';
- * import { Q } from '@czap/quantizer';
+ * import { Boundary } from '@liteship/core';
+ * import { Q } from '@liteship/quantizer';
  *
  * const boundary = Boundary.make({
  *   input: 'width',

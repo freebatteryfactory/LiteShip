@@ -114,7 +114,7 @@ const renderNode = (
   if (node.slots) {
     for (const [slotName, slotValue] of Object.entries(node.slots)) {
       const slotHost = document.createElement('div');
-      slotHost.setAttribute('data-czap-genui-slot', slotName);
+      slotHost.setAttribute('data-liteship-genui-slot', slotName);
       const slotNodes = Array.isArray(slotValue) ? slotValue : [slotValue];
       for (const slotNode of slotNodes) {
         slotHost.appendChild(renderNode(slotNode, catalog, eventRoot, signal));

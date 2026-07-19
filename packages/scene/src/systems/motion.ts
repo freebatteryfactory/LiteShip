@@ -1,12 +1,12 @@
 /**
- * MotionSampleSystem — the `@czap/scene` MOTION ADAPTER for authored motion.
+ * MotionSampleSystem — the `@liteship/scene` MOTION ADAPTER for authored motion.
  *
  * This is ADDITIVE to (never a merge with) {@link TransitionSystem}. The two model
  * DIFFERENT concepts:
  *   - `TransitionSystem` computes a video-CROSSFADE `_blend` factor between two
  *     `Between` entities (a compositor mix). Untouched by W10.
  *   - `MotionSampleSystem` samples an AUTHORED motion program — the ONE shared kernel
- *     `sampleProgram` (`@czap/core`, Law 4) — at the entity's current frame and writes
+ *     `sampleProgram` (`@liteship/core`, Law 4) — at the entity's current frame and writes
  *     each typed leaf value as a scene component. This is the SAME reader the browser
  *     runtime floor, the stage/remotion video legs, and the worker off-thread sampler
  *     call; the differential oracle proves they all agree.
@@ -18,7 +18,14 @@
  * @module
  */
 
-import { frameToT, sampleProgram, type RuntimeWritePlan, type System, type TypedValue, type World } from '@czap/core';
+import {
+  frameToT,
+  sampleProgram,
+  type RuntimeWritePlan,
+  type System,
+  type TypedValue,
+  type World,
+} from '@liteship/core';
 
 /** The component name a `MotionSampleSystem` writes each sampled leaf under (`motion:<cssVar>`). */
 export function motionComponentName(cssVar: string): string {

@@ -19,8 +19,8 @@ Options for [runGauntletOnRepo](../functions/runGauntletOnRepo.md).
 Defined in: [gauntlet/src/runner.ts:243](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L243)
 
 The INJECTED capability-link facts (codex round-8, #1b) — OPTIONAL. A host (the CLI's
-`czap check --ir --capability-gate` path) resolves each sanctioned skip's guard against the
-canonical capability symbol table via `@czap/audit`'s capability-link oracle and threads the
+`liteship check --ir --capability-gate` path) resolves each sanctioned skip's guard against the
+canonical capability symbol table via `@liteship/audit`'s capability-link oracle and threads the
 decided [CapabilityLinkFacts](CapabilityLinkFacts.md) here for `capabilityGateLinkGate` to fold. Omit them ⇒ the
 gate is not in the set.
 
@@ -32,7 +32,7 @@ gate is not in the set.
 
 Defined in: [gauntlet/src/runner.ts:155](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L155)
 
-The INJECTED SOUND `codeOnly` floor (the @czap/audit scanner `codeOnlyAST`) — OPTIONAL, same
+The INJECTED SOUND `codeOnly` floor (the @liteship/audit scanner `codeOnlyAST`) — OPTIONAL, same
 pattern as [skipDetector](#skipdetector). Lands on the [GateContext](GateContext.md) for code-scanning gates to use
 via `(context.codeOnly ?? codeOnly)`. Omit it (the lean path) and the char-machine fallback runs.
 
@@ -56,7 +56,7 @@ Defined in: [gauntlet/src/runner.ts:273](https://github.com/freebatteryfactory/L
 
 The INJECTED composition-coverage facts (the LOCAL-VS-GLOBAL correctness family —
 "locally green, globally untested interaction") — OPTIONAL. A host (the CLI's
-`czap check --ir --composition` path) derives the interaction edges from the IR
+`liteship check --ir --composition` path) derives the interaction edges from the IR
 call graph and classifies each integration-covered/uncovered, then threads the
 decided [CompositionFacts](CompositionFacts.md) here, where they land on the [GateContext](GateContext.md)
 for `compositionCoverageGate` to fold. Omit them (the default `--ir` run) and the
@@ -119,9 +119,9 @@ Repo-relative glob patterns selecting the files the gates consider.
 Defined in: [gauntlet/src/runner.ts:163](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L163)
 
 The INJECTED repo-IR (Slice B) — OPTIONAL. The gauntlet is the lean engine
-and never builds an IR; a host (the CLI, via `@czap/audit`'s `ts.Program`)
+and never builds an IR; a host (the CLI, via `@liteship/audit`'s `ts.Program`)
 builds it and threads it here, where it lands on the [GateContext](GateContext.md) for
-an IR-fold gate to read. Omit it (the lean path: `czap check` / MCP) and the
+an IR-fold gate to read. Omit it (the lean path: `liteship check` / MCP) and the
 regex gates run unchanged.
 
 ***
@@ -133,7 +133,7 @@ regex gates run unchanged.
 Defined in: [gauntlet/src/runner.ts:192](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L192)
 
 The INJECTED MC/DC facts (the avionics tier — DO-178B Level A's coverage requirement,
-realized as condition-level mutation) — OPTIONAL. A host (`@czap/audit`'s
+realized as condition-level mutation) — OPTIONAL. A host (`@liteship/audit`'s
 condition-mutation engine + the CLI's per-pin vitest runner) generates + evaluates
 the force-true/force-false pins per atomic condition, folds the two pins per
 condition, then threads the decided [McdcFacts](McdcFacts.md) here, where they land on the
@@ -150,7 +150,7 @@ suite-runs, no cost.
 Defined in: [gauntlet/src/runner.ts:181](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L181)
 
 The INJECTED mutation facts (Slice C, the avionics tier — mutation-as-divergence)
-— OPTIONAL. A host (`@czap/audit`'s mutation engine + the CLI's per-mutant vitest
+— OPTIONAL. A host (`@liteship/audit`'s mutation engine + the CLI's per-mutant vitest
 runner) generates + evaluates the mutants, then threads the decided
 [MutationFacts](MutationFacts.md) here, where they land on the [GateContext](GateContext.md) for
 `mutationDivergenceGate` to fold. Omit them (the default `--ir` run) and the gate
@@ -165,7 +165,7 @@ is simply not in the set — no mutants generated, no suite-runs, no cost.
 Defined in: [gauntlet/src/runner.ts:263](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L263)
 
 The INJECTED proof-strength facts (the LOCAL-VS-GLOBAL correctness family — the
-lax-functor) — OPTIONAL. A host (the CLI's `czap check --ir --proof` path) reads
+lax-functor) — OPTIONAL. A host (the CLI's `liteship check --ir --proof` path) reads
 the proof signals (mutation score / coverage / property tests / enrolled
 invariants), blends them into per-module scalars, and threads the decided
 [ProofFacts](ProofFacts.md) here, where they land on the [GateContext](GateContext.md) for
@@ -191,8 +191,8 @@ Absolute root of the repo to run against.
 Defined in: [gauntlet/src/runner.ts:203](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L203)
 
 The INJECTED DST (deterministic-simulation) facts (the avionics tier — the
-determinism spine) — OPTIONAL. A host (the CLI's `czap check --ir --simulate`
-path) drives the scenario corpus through the `@czap/core/simulation` harness
+determinism spine) — OPTIONAL. A host (the CLI's `liteship check --ir --simulate`
+path) drives the scenario corpus through the `@liteship/core/simulation` harness
 (replaying each seed twice, content-addressing the two byte-exact traces) and
 threads the decided [SimulationFacts](SimulationFacts.md) here, where they land on the
 [GateContext](GateContext.md) for `simulationDeterminismGate` to fold. Omit them (the
@@ -208,10 +208,10 @@ scenario run, no cost.
 Defined in: [gauntlet/src/runner.ts:143](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L143)
 
 The INJECTED SOUND skip detector (the AST detector) — OPTIONAL. The gauntlet is the lean
-engine and never deps `typescript`; a host (the CLI, which deps `@czap/audit`) builds
+engine and never deps `typescript`; a host (the CLI, which deps `@liteship/audit`) builds
 `detectSkipsAST` and threads it here, where it lands on the [GateContext](GateContext.md) for the
 no-skipped-test gate to use via `(context.skipDetector ?? detectSkips)`. Omit it (the lean
-path: `czap check` / MCP) and the token `detectSkips` fallback runs unchanged.
+path: `liteship check` / MCP) and the token `detectSkips` fallback runs unchanged.
 
 #### Parameters
 
@@ -232,8 +232,8 @@ readonly [`SkipMatch`](SkipMatch.md)[]
 Defined in: [gauntlet/src/runner.ts:283](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L283)
 
 The INJECTED two-axis spine-relation facts (Wave 8.5, the public constitution's
-STATIC-projection half) — OPTIONAL. A host (the CLI's `czap check --ir
---spine-relation` path) probes each admitted `@czap/_spine` mirror type's bidirectional
+STATIC-projection half) — OPTIONAL. A host (the CLI's `liteship check --ir
+--spine-relation` path) probes each admitted `@liteship/_spine` mirror type's bidirectional
 assignability against its runtime source, then threads the decided
 [SpineRelationFacts](SpineRelationFacts.md) here, where they land on the [GateContext](GateContext.md) for
 `spineRelationGate` to fold. Omit them (the default `--ir` run) and the gate is simply
@@ -265,7 +265,7 @@ not in the set — no surface read, no addressing cost.
 Defined in: [gauntlet/src/runner.ts:172](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L172)
 
 The INJECTED supply-chain facts (Slice C, the avionics tier) — OPTIONAL. A
-host (the CLI's `@czap/cli` analyzer) parses the lockfile, builds the SBOM,
+host (the CLI's `@liteship/cli` analyzer) parses the lockfile, builds the SBOM,
 and scans the workflows, then threads the decided [SupplyChainFacts](SupplyChainFacts.md)
 here, where they land on the [GateContext](GateContext.md) for `supplyChainGate` to
 fold. Omit them (the default `--ir` run) and the gate is simply not in the
@@ -280,8 +280,8 @@ set — no facts computed, no SBOM cost, no `not-evidenced` noise.
 Defined in: [gauntlet/src/runner.ts:235](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L235)
 
 The INJECTED taint-flow facts (the TAINT-ANALYSIS family) — OPTIONAL. A host (the
-CLI's `czap check --ir --taint` path) traces the source→sink dataflow via
-`@czap/audit`'s GENERIC taint oracle (classified by the host-injected LiteShip
+CLI's `liteship check --ir --taint` path) traces the source→sink dataflow via
+`@liteship/audit`'s GENERIC taint oracle (classified by the host-injected LiteShip
 source/sink/sanitizer registry) and threads the decided [TaintFacts](TaintFacts.md) here,
 where they land on the [GateContext](GateContext.md) for `taintFlowGate` to fold. Omit them
 (the default `--ir` run) and the gate is simply not in the set — no dataflow trace,

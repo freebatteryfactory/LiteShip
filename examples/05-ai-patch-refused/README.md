@@ -17,7 +17,7 @@ mint into a module-private registry — there is no public constructor, and even
 look-alike object fails the runtime membership check. So a raw or hallucinated model patch
 cannot reach `apply` **through this seam**: validation is the only way in.
 
-That guarantee is about the AI seam, not global immutability — `@czap/core` still exports
+That guarantee is about the AI seam, not global immutability — `@liteship/core` still exports
 the lower-level `GraphPatch.apply` kernel for a host running its own validation. The point
 is that the AI cast routes through validation _by construction_, so a model proposal can
 only ever arrive at the graph already validated.
@@ -36,13 +36,13 @@ hallucinated, off-graph, or off-version output ever reaches the truth.
 ## Run it
 
 ```sh
-pnpm --filter @czap/example-ai-patch-refused dev
+pnpm --filter @liteship/example-ai-patch-refused dev
 # or, from this directory:
 pnpm dev
 ```
 
 The whole demo runs at build time in `src/pages/index.astro` — the seam is pure
-`@czap/core`, so it needs no server, no boundaries, and no client directives.
+`@liteship/core`, so it needs no server, no boundaries, and no client directives.
 
 ## Why this is the keystone
 

@@ -11,8 +11,8 @@
  */
 
 import { describe, test, expect, beforeEach, afterEach } from 'vitest';
-import { Boundary } from '@czap/core';
-import { CompositorWorker, WorkerHost } from '@czap/worker';
+import { Boundary } from '@liteship/core';
+import { CompositorWorker, WorkerHost } from '@liteship/worker';
 import { MockWorker } from '../../helpers/mock-worker.js';
 import { mockCanvas } from '../../helpers/mock-dom.js';
 

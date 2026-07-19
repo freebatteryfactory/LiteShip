@@ -55,8 +55,8 @@ A [GLSLCompileResult](../interfaces/GLSLCompileResult.md) with defines, uniforms
 #### Example
 
 ```ts
-import { Boundary } from '@czap/core';
-import { GLSLCompiler } from '@czap/compiler';
+import { Boundary } from '@liteship/core';
+import { GLSLCompiler } from '@liteship/compiler';
 
 const boundary = Boundary.make({
   input: 'width',
@@ -98,7 +98,7 @@ A GLSL preamble string
 #### Example
 
 ```ts
-import { GLSLCompiler } from '@czap/compiler';
+import { GLSLCompiler } from '@liteship/compiler';
 
 const result = GLSLCompiler.compile(boundary, states);
 const glsl = GLSLCompiler.serialize(result);
@@ -109,8 +109,8 @@ const shaderSource = glsl + '\n' + mainShaderCode;
 ## Example
 
 ```ts
-import { Boundary } from '@czap/core';
-import { GLSLCompiler } from '@czap/compiler';
+import { Boundary } from '@liteship/core';
+import { GLSLCompiler } from '@liteship/compiler';
 
 const boundary = Boundary.make({
   input: 'width',

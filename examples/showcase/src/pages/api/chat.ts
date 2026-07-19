@@ -3,7 +3,7 @@ import type { APIRoute } from 'astro';
 /**
  * Echo-LLM stub for the generative-UI showcase (chat.astro / `client:llm`).
  *
- * Treats an LLM token stream as adaptive media: the `data-czap-llm-url`
+ * Treats an LLM token stream as adaptive media: the `data-liteship-llm-url`
  * element opens an EventSource here and appends each `text` chunk as it
  * arrives, then `done` closes the turn. On-demand (`prerender = false`) so the
  * SSE serves with the correct MIME when deployed; the showcase keeps pages static

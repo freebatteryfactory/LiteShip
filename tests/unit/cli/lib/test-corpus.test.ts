@@ -24,7 +24,7 @@ import { collectRepoTestFiles, type RepoTestFile } from '../../../../packages/cl
 let root: string;
 
 beforeEach(() => {
-  root = mkdtempSync(join(tmpdir(), 'czap-corpus-'));
+  root = mkdtempSync(join(tmpdir(), 'liteship-corpus-'));
 });
 afterEach(() => {
   rmSync(root, { recursive: true, force: true });
@@ -142,7 +142,7 @@ describe('test-corpus reader — determinism', () => {
           { selector: ([r, rel]) => `${r}/${rel}`, minLength: 1, maxLength: 12 },
         ),
         (entries) => {
-          const fresh = mkdtempSync(join(tmpdir(), 'czap-corpus-prop-'));
+          const fresh = mkdtempSync(join(tmpdir(), 'liteship-corpus-prop-'));
           try {
             const expected = new Set<string>();
             for (const [r, rel] of entries) {

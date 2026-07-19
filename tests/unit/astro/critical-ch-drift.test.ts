@@ -2,7 +2,7 @@
 /**
  * Critical-CH drift guard.
  *
- * `@czap/edge` owns the client-hint vocabulary; `@czap/astro`'s `CLIENT_HINTS_HEADERS`
+ * `@liteship/edge` owns the client-hint vocabulary; `@liteship/astro`'s `CLIENT_HINTS_HEADERS`
  * (read by the dev-server middleware) must send the SAME hints the production middleware
  * does (which calls `ClientHints.acceptCHHeader()` / `criticalCHHeader()` directly). The
  * two were hand-mirrored and had silently diverged: dev listed `Sec-CH-Viewport-Width` as
@@ -26,7 +26,7 @@ const split = (header: string): string[] =>
     .filter(Boolean);
 
 describe('Critical-CH drift guard', () => {
-  test('@czap/astro CLIENT_HINTS_HEADERS is derived from @czap/edge — the two can never diverge', () => {
+  test('@liteship/astro CLIENT_HINTS_HEADERS is derived from @liteship/edge — the two can never diverge', () => {
     expect(CLIENT_HINTS_HEADERS['Accept-CH']).toBe(ClientHints.acceptCHHeader());
     expect(CLIENT_HINTS_HEADERS['Critical-CH']).toBe(ClientHints.criticalCHHeader());
     expect(CLIENT_HINTS_HEADERS['Vary']).toBe(ClientHints.varyCHHeader());
@@ -45,8 +45,8 @@ describe('Critical-CH drift guard', () => {
 });
 
 describe('Cross-origin isolation drift guard', () => {
-  test('@czap/astro CROSS_ORIGIN_HEADERS is derived from @czap/edge CrossOriginIsolation — the emitter and the doctor validator share one source', () => {
-    // The values czap EMITS (astro) and the values `czap doctor --deployed` VALIDATES
+  test('@liteship/astro CROSS_ORIGIN_HEADERS is derived from @liteship/edge CrossOriginIsolation — the emitter and the doctor validator share one source', () => {
+    // The values liteship EMITS (astro) and the values `liteship doctor --deployed` VALIDATES
     // (edge) must be the same, or a correctly-configured deploy would warn.
     expect(CROSS_ORIGIN_HEADERS).toEqual(CrossOriginIsolation.isolationHeaders());
     expect(CROSS_ORIGIN_HEADERS['Cross-Origin-Opener-Policy']).toBe(CrossOriginIsolation.openerPolicy());

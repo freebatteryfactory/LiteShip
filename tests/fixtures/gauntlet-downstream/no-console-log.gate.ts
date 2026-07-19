@@ -2,10 +2,10 @@
  * The downstream-authored custom gate — the extensibility proof's payload.
  *
  * This file simulates a DOWNSTREAM project's own fitness function. It is written
- * ONLY against the public `@czap/gauntlet` plugin surface (`defineGate`, the
+ * ONLY against the public `@liteship/gauntlet` plugin surface (`defineGate`, the
  * {@link GateContext} read API, `finding`, and `memoryContext` for its fixtures) —
- * the exact imports a project that ran `npm i @czap/gauntlet` would have. It reaches
- * into NO `@czap/gauntlet/src/*` internal, monkey-patches NOTHING, and adds NO
+ * the exact imports a project that ran `npm i @liteship/gauntlet` would have. It reaches
+ * into NO `@liteship/gauntlet/src/*` internal, monkey-patches NOTHING, and adds NO
  * field to the engine. If this gate can earn blocking authority through the SAME
  * authority ratchet LiteShip's built-ins use, the engine is genuinely extendable
  * with zero rebuild + no fork (ADR-0012).
@@ -24,7 +24,7 @@ import {
   type Gate,
   type GateContext,
   type Finding,
-} from '@czap/gauntlet';
+} from '@liteship/gauntlet';
 
 /**
  * Match a `console.log(` call. Narrow on purpose: the downstream rule forbids

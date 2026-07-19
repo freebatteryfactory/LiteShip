@@ -10,7 +10,7 @@ Defined in: [worker/src/compositor-types.ts:59](https://github.com/freebatteryfa
 
 The boundary surface [CompositorWorkerShape.addQuantizer](CompositorWorkerShape.md#addquantizer) derives
 a registration from — structurally satisfied by a `Boundary.make`
-result from `@czap/core`, whose content-addressed `id` and `input`
+result from `@liteship/core`, whose content-addressed `id` and `input`
 name make hand-assembled registrations unnecessary.
 
 ## Properties

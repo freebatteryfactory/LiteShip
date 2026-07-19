@@ -25,7 +25,7 @@
  * in-scope, sized, non-weakening, receipted fix is admitted clean.
  *
  * LEAN BY CONSTRUCTION (ADR-0012): the gate reads NO config off disk, content-addresses
- * NOTHING (the host minted the receipts via `@czap/core`'s kernel), and reads NO clock
+ * NOTHING (the host minted the receipts via `@liteship/core`'s kernel), and reads NO clock
  * (the host injected `now` into the verifier). It only FOLDS the decided verdict.
  * REPORT-not-DECIDE.
  *

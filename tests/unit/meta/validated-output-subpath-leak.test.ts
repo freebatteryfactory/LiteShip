@@ -9,9 +9,9 @@
  * DELIBERATELY not re-exported from the package index, so no consumer can forge a
  * proposal and bypass validation.
  *
- * THE ORIGINAL SCAR: `@czap/core`'s `package.json` `exports` once carried a `"./*"`
+ * THE ORIGINAL SCAR: `@liteship/core`'s `package.json` `exports` once carried a `"./*"`
  * wildcard, which — absent an explicit deny — made EVERY `src/*.ts` module importable
- * as a subpath (`@czap/core/validated-output`), re-exposing `mintValidated` to any
+ * as a subpath (`@liteship/core/validated-output`), re-exposing `mintValidated` to any
  * consumer and defeating the whole envelope.
  *
  * THE LAYOUT-LOCK: the wildcard is now GONE. The `exports` map is a CLOSED allowlist —
@@ -27,7 +27,7 @@
  *     `./harness`, `./simulation`, `./fs-walk`) — a new internal subpath cannot be
  *     added without a reviewer amending this LAW;
  *  3. the package-manifest deny entry for `./validated-output` survives;
- *  4. `mintValidated` is absent from the public `@czap/core` surface;
+ *  4. `mintValidated` is absent from the public `@liteship/core` surface;
  *  5. the index re-exports the SAFE consumer symbols (the envelope is usable without
  *     the minter).
  *
@@ -37,7 +37,7 @@ import { describe, test, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
-import * as Core from '@czap/core';
+import * as Core from '@liteship/core';
 
 const here = dirname(fileURLToPath(import.meta.url));
 // tests/unit/meta → repo root is three up.
@@ -81,7 +81,7 @@ describe('REGRESSION GUARD: the mintValidated subpath leak (lesson #12)', () => 
     expect(pkg.exports['./validated-output']).toBeNull();
   });
 
-  test('mintValidated is NOT on the public @czap/core surface (the sole mint site stays private)', () => {
+  test('mintValidated is NOT on the public @liteship/core surface (the sole mint site stays private)', () => {
     // The forger function must not be reachable through the package index by any
     // name — surfacing it would let a consumer mint a ValidatedProposal without
     // running a validator.

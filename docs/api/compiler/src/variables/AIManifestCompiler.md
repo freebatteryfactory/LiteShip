@@ -46,7 +46,7 @@ An [AIManifestCompileResult](../interfaces/AIManifestCompileResult.md) with tool
 #### Example
 
 ```ts
-import { AIManifestCompiler } from '@czap/compiler';
+import { AIManifestCompiler } from '@liteship/compiler';
 
 const manifest = {
   actions: {
@@ -85,7 +85,7 @@ A markdown-formatted system prompt string
 #### Example
 
 ```ts
-import { AIManifestCompiler } from '@czap/compiler';
+import { AIManifestCompiler } from '@liteship/compiler';
 
 const prompt = AIManifestCompiler.generateSystemPrompt(manifest);
 // Use as the system prompt for an LLM conversation
@@ -114,7 +114,7 @@ An array of [AIToolDefinition](../interfaces/AIToolDefinition.md) objects
 #### Example
 
 ```ts
-import { AIManifestCompiler } from '@czap/compiler';
+import { AIManifestCompiler } from '@liteship/compiler';
 
 const tools = AIManifestCompiler.generateToolDefinitions(manifest);
 // tools[0] => { name: 'setTheme', description: '...', parameters: {...}, returns: {...} }
@@ -163,7 +163,7 @@ An object with `valid` boolean, `errors` array, and structured `issues` array
 #### Example
 
 ```ts
-import { AIManifestCompiler } from '@czap/compiler';
+import { AIManifestCompiler } from '@liteship/compiler';
 
 const manifest = {
   actions: { setLayout: { params: { cols: { type: 'number', required: true, min: 1, max: 12, description: 'Column count' } }, effects: [], description: 'Set grid layout' } },
@@ -178,7 +178,7 @@ console.log(check.valid); // true
 ## Example
 
 ```ts
-import { AIManifestCompiler } from '@czap/compiler';
+import { AIManifestCompiler } from '@liteship/compiler';
 
 const manifest = {
   dimensions: { theme: { states: ['light', 'dark'], current: 'light', exclusive: true, description: 'Color theme' } },

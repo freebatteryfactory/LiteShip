@@ -1,5 +1,5 @@
 /**
- * @czap/remotion type spine -- React adapter for Remotion video rendering.
+ * @liteship/remotion type spine -- React adapter for Remotion video rendering.
  */
 
 import type { CompositeState, Compositor, ControllableSignal, VideoFrameOutput, VideoRenderer } from './core';
@@ -56,4 +56,4 @@ export declare function rendererFromRemotionConfig(
 
 export declare function Provider(props: { frames: ReadonlyArray<VideoFrameOutput>; children: unknown }): unknown;
 
-export declare function useCzapState(): CompositeState;
+export declare function useLiteshipState(): CompositeState;

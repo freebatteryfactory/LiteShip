@@ -15,7 +15,7 @@ GUARDED by a runtime condition (a capability gate) or is UNCONDITIONAL (a placeh
 
 This is the F2-soundness discriminant. The TOKEN [detectSkips](../functions/detectSkips.md) cannot decide it (it
 cannot see an enclosing `if (<cond>) { … }` ancestor), so it leaves it `undefined`; the
-AST detector (`detectSkipsAST`, in `@czap/audit`) sets it from a real ancestor walk:
+AST detector (`detectSkipsAST`, in `@liteship/audit`) sets it from a real ancestor walk:
  - `'skipIf'` / `'runIf'` — the call member IS the runtime gate (`it.skipIf(cond)(…)`);
  - `'ternary'` — the skip accessor is a TERNARY ARM (`cond ? it : it.skip`);
  - `'enclosing-if'` — the skip CALL sits inside an `if (<cond>) { … }` whose body holds it

@@ -28,7 +28,7 @@ Defined in: [mcp-server/src/lsp/server.ts:100](https://github.com/freebatteryfac
 
 Defined in: [mcp-server/src/lsp/server.ts:98](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L98)
 
-Server→client notifications to emit (e.g. publishDiagnostics after czap/check).
+Server→client notifications to emit (e.g. publishDiagnostics after liteship/check).
 
 ***
 

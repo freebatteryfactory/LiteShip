@@ -6,7 +6,7 @@
  */
 
 import { describe, test, expect, vi } from 'vitest';
-import { AVBridge, Signal, Scheduler } from '@czap/core';
+import { AVBridge, Signal, Scheduler } from '@liteship/core';
 
 // ---------------------------------------------------------------------------
 // Signal.audio -- sample mode

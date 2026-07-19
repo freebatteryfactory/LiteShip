@@ -14,8 +14,8 @@ import {
   ssrRevealPaint,
   motionPropToBinding,
   interpretTransition,
-} from '@czap/core';
-import { compileReveal } from '@czap/compiler';
+} from '@liteship/core';
+import { compileReveal } from '@liteship/compiler';
 
 const REPO_ROOT = resolve(import.meta.dirname, '..', '..', '..');
 
@@ -61,26 +61,26 @@ describe('Reveal.intent → graph', () => {
     }
   });
 
-  test('maps translateY to --czap-{target}-y bindings on poses', () => {
+  test('maps translateY to --liteship-{target}-y bindings on poses', () => {
     const lowered = lowerRevealIntent(heroIntent());
     const fromPose = lowered.graph.nodes.find((n) => n.family === 'pose' && n.state === 'before');
     expect(fromPose?.family).toBe('pose');
     if (fromPose?.family === 'pose') {
-      expect(fromPose.bindings).toEqual({ opacity: 0, '--czap-hero-y': '24px' });
+      expect(fromPose.bindings).toEqual({ opacity: 0, '--liteship-hero-y': '24px' });
     }
     const toPose = lowered.graph.nodes.find((n) => n.family === 'pose' && n.state === 'after');
     expect(toPose?.family).toBe('pose');
     if (toPose?.family === 'pose') {
-      expect(toPose.bindings).toEqual({ opacity: 1, '--czap-hero-y': '0px' });
+      expect(toPose.bindings).toEqual({ opacity: 1, '--liteship-hero-y': '0px' });
     }
   });
 
   test('motionPropToBinding preserves opacity and maps motion axes', () => {
     expect(motionPropToBinding('hero', 'opacity')).toBe('opacity');
-    expect(motionPropToBinding('hero', 'translateY')).toBe('--czap-hero-y');
-    expect(motionPropToBinding('hero', 'translateX')).toBe('--czap-hero-x');
-    expect(motionPropToBinding('hero', 'translateZ')).toBe('--czap-hero-z');
-    expect(motionPropToBinding('hero', '--czap-custom')).toBe('--czap-custom');
+    expect(motionPropToBinding('hero', 'translateY')).toBe('--liteship-hero-y');
+    expect(motionPropToBinding('hero', 'translateX')).toBe('--liteship-hero-x');
+    expect(motionPropToBinding('hero', 'translateZ')).toBe('--liteship-hero-z');
+    expect(motionPropToBinding('hero', '--liteship-custom')).toBe('--liteship-custom');
   });
 });
 
@@ -90,16 +90,16 @@ describe('Reveal graph → CSS equivalence', () => {
     const lowered = lowerRevealIntent(intent);
     const compiled = compileReveal(lowered.graph, lowered.transitionId, intent);
 
-    expect(compiled.css.raw).toContain('@property --czap-hero-y');
+    expect(compiled.css.raw).toContain('@property --liteship-hero-y');
     // Wave-4: the native path emits the individual `translate:` property off the per-axis
     // custom props — NOT a `translate3d()` transform consumer (appendTranslateConsumer is
-    // deleted). The runtime floor keeps writing the same `--czap-hero-*` vars.
+    // deleted). The runtime floor keeps writing the same `--liteship-hero-*` vars.
     expect(compiled.css.raw).not.toContain('translate3d');
     expect(compiled.css.raw).toContain('translate:');
-    expect(compiled.css.raw).toContain('var(--czap-hero-y,0px)');
-    expect(compiled.css.keyframes).toContain('@keyframes czap-motion-hero-before-after');
+    expect(compiled.css.raw).toContain('var(--liteship-hero-y,0px)');
+    expect(compiled.css.keyframes).toContain('@keyframes liteship-motion-hero-before-after');
     expect(compiled.css.startingStyle).toContain('@starting-style');
-    expect(compiled.css.startingStyle).toContain('[data-czap-boundary="hero"]');
+    expect(compiled.css.startingStyle).toContain('[data-liteship-boundary="hero"]');
     expect(compiled.css.transition).toContain('420ms');
     expect(compiled.css.scrollTimeline).toContain('animation-timeline: view()');
     expect(compiled.css.scrollTimeline).toContain('entry 0% cover 60%');
@@ -145,12 +145,12 @@ describe('Reveal graph → CSS equivalence', () => {
     });
     const lowered = lowerRevealIntent(intent);
     const compiled = compileReveal(lowered.graph, lowered.transitionId, intent);
-    expect(compiled.css.raw).toContain('@property --czap-hero-card-y');
+    expect(compiled.css.raw).toContain('@property --liteship-hero-card-y');
     // Individual `translate:` property, not a `translate3d()` consumer, on the
     // hyphenated target's per-axis vars.
     expect(compiled.css.raw).not.toContain('translate3d');
     expect(compiled.css.raw).toContain('translate:');
-    expect(compiled.css.raw).toContain('var(--czap-hero-card-y,0px)');
+    expect(compiled.css.raw).toContain('var(--liteship-hero-card-y,0px)');
   });
 });
 
@@ -165,8 +165,8 @@ describe('Reveal reduced-motion settle', () => {
     const intent = heroIntent();
     const paint = ssrRevealPaint(intent, { prefersReducedMotion: true });
     expect(paint.state).toBe('after');
-    expect(paint.cssVars['--czap-opacity']).toBe('1');
-    expect(paint.cssVars['--czap-hero-y']).toBe('0px');
+    expect(paint.cssVars['--liteship-opacity']).toBe('1');
+    expect(paint.cssVars['--liteship-hero-y']).toBe('0px');
     expect(paint.boundaryAttr).toBe('hero');
   });
 
@@ -174,8 +174,8 @@ describe('Reveal reduced-motion settle', () => {
     const intent = heroIntent();
     const paint = ssrRevealPaint(intent, { prefersReducedMotion: false });
     expect(paint.state).toBe('before');
-    expect(paint.cssVars['--czap-opacity']).toBe('0');
-    expect(paint.cssVars['--czap-hero-y']).toBe('24px');
+    expect(paint.cssVars['--liteship-opacity']).toBe('0');
+    expect(paint.cssVars['--liteship-hero-y']).toBe('24px');
   });
 });
 
@@ -185,7 +185,7 @@ describe('Reveal continuous-write law', () => {
     expect(src).not.toContain('GraphPatch');
     expect(src).not.toContain('graph-patch');
     expect(src).toContain('writeContinuousMap');
-    expect(src).toContain('czap:uniform-update');
+    expect(src).toContain('liteship:uniform-update');
   });
 });
 

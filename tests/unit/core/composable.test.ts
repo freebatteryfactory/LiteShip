@@ -13,8 +13,8 @@ import {
   Token,
   Style,
   World,
-} from '@czap/core';
-import type { ComposableEntity, EntityComponents } from '@czap/core';
+} from '@liteship/core';
+import type { ComposableEntity, EntityComponents } from '@liteship/core';
 
 // ---------------------------------------------------------------------------
 // Shared fixtures

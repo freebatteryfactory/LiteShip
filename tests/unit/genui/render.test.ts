@@ -5,9 +5,9 @@
 // @vitest-environment jsdom
 
 import { describe, expect, it } from 'vitest';
-import { defineComponentCatalog, DEMO_COMPONENT_CATALOG, renderFromCatalog } from '@czap/genui';
+import { defineComponentCatalog, DEMO_COMPONENT_CATALOG, renderFromCatalog } from '@liteship/genui';
 
-describe('@czap/genui renderFromCatalog', () => {
+describe('@liteship/genui renderFromCatalog', () => {
   it('renders trusted components without executing script-like prop strings', () => {
     const target = document.createElement('div');
     const { ok } = renderFromCatalog(
@@ -30,7 +30,7 @@ describe('@czap/genui renderFromCatalog', () => {
     expect(target.textContent).toBe('keep');
   });
 
-  it('renders named slots under data-czap-genui-slot containers', () => {
+  it('renders named slots under data-liteship-genui-slot containers', () => {
     const target = document.createElement('div');
     const { ok } = renderFromCatalog(
       {
@@ -43,7 +43,7 @@ describe('@czap/genui renderFromCatalog', () => {
       { catalog: DEMO_COMPONENT_CATALOG, target },
     );
     expect(ok).toBe(true);
-    const slot = target.querySelector('[data-czap-genui-slot="footer"]');
+    const slot = target.querySelector('[data-liteship-genui-slot="footer"]');
     expect(slot?.textContent).toBe('foot');
   });
 
@@ -201,7 +201,7 @@ describe('@czap/genui renderFromCatalog', () => {
       { catalog, target },
     );
     expect(ok).toBe(true);
-    const slot = target.querySelector('[data-czap-genui-slot="body"]')!;
+    const slot = target.querySelector('[data-liteship-genui-slot="body"]')!;
     expect(slot.querySelectorAll('p')).toHaveLength(2);
     expect(slot.textContent).toBe('ab');
   });

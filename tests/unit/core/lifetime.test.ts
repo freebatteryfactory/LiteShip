@@ -10,13 +10,13 @@
  *     no-op returning the same promise.
  *   - late registration after dispose runs immediately.
  *   - aggregate failure: all finalizers run even if one throws; the failures
- *     fold into one @czap/error LifetimeDisposeError.
+ *     fold into one @liteship/error LifetimeDisposeError.
  *   - AbortSignal projection: signal aborts synchronously at dispose start.
  */
 
 import { describe, test, expect } from 'vitest';
 import fc from 'fast-check';
-import { hasTag } from '@czap/error';
+import { hasTag } from '@liteship/error';
 import { Lifetime, LifetimeDisposeError } from '../../../packages/core/src/lifetime.js';
 
 /** Deterministic external-settle handle — no timers in test logic. */

@@ -19,7 +19,7 @@ import { describe, it, expect, afterEach } from 'vitest';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
-import { buildRepoIR, resolveDevopsProfile, type DevopsProfile } from '@czap/audit';
+import { buildRepoIR, resolveDevopsProfile, type DevopsProfile } from '@liteship/audit';
 import { liteshipRegexOracle } from '../../../packages/cli/src/lib/repo-ir-gauntlet.js';
 import {
   noVarDivergenceGate,
@@ -28,7 +28,7 @@ import {
   type Fact,
   type GateContext,
   type RepoIR,
-} from '@czap/gauntlet';
+} from '@liteship/gauntlet';
 
 const fixtures: string[] = [];
 afterEach(() => {
@@ -36,7 +36,7 @@ afterEach(() => {
 });
 
 function makeFixture(files: Record<string, string>): string {
-  const root = mkdtempSync(join(tmpdir(), 'czap-var-require-'));
+  const root = mkdtempSync(join(tmpdir(), 'liteship-var-require-'));
   fixtures.push(root);
   for (const [rel, content] of Object.entries(files)) {
     const abs = resolve(root, rel);

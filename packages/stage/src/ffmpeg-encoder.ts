@@ -7,7 +7,7 @@
  * This module is NODE-ONLY (`node:child_process`, `node:fs`) and is deliberately
  * NOT imported by `dual-export.ts` (stage's pure graph-walk core). It is
  * INJECTED at the call site — `exportVideoEncoded(graph, ffmpegFrameEncoder())`.
- * The browser counterpart is `@czap/web`'s WebCodecs `captureVideo`; both are
+ * The browser counterpart is `@liteship/web`'s WebCodecs `captureVideo`; both are
  * real backends of the one {@link FrameEncoder} shape.
  *
  * ffmpeg is a standard dev/CI binary, not a hard dependency: {@link ffmpegEncodeAvailable}
@@ -21,9 +21,9 @@ import { spawn, spawnSync } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import type { CompositeState } from '@czap/core';
-import { compositeStateToRgba } from '@czap/core';
-import { HostCapabilityError, IoError, ValidationError } from '@czap/error';
+import type { CompositeState } from '@liteship/core';
+import { compositeStateToRgba } from '@liteship/core';
+import { HostCapabilityError, IoError, ValidationError } from '@liteship/error';
 import type { EncodedVideo, FrameEncoder, VideoEncodeConfig } from './dual-export.js';
 
 // ---------------------------------------------------------------------------
@@ -104,7 +104,7 @@ function platformHint(): string {
 }
 
 // ---------------------------------------------------------------------------
-// Frame → RGBA: the ONE shared painter (`@czap/core`'s `compositeStateToRgba`).
+// Frame → RGBA: the ONE shared painter (`@liteship/core`'s `compositeStateToRgba`).
 // The command ffmpeg render backend uses the SAME function, so a given
 // CompositeState yields byte-identical pixels on either headless path.
 // ---------------------------------------------------------------------------
@@ -167,7 +167,7 @@ export function ffmpegFrameEncoder(options?: FfmpegEncoderOptions): FrameEncoder
       throw ValidationError('ffmpeg.encode', 'no frames to encode');
     }
 
-    const dir = mkdtempSync(join(tmpdir(), 'czap-stage-encode-'));
+    const dir = mkdtempSync(join(tmpdir(), 'liteship-stage-encode-'));
     const output = join(dir, 'out.mp4');
     try {
       const args = [

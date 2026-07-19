@@ -14,7 +14,7 @@
  *    (direct → hoisted `.pnpm/node_modules` → `.pnpm/<pkg>@ver/...` store scan).
  *
  * The remaining package-smoke.ts logic is pure subprocess orchestration
- * (`pnpm pack` ×N → `pnpm install` → `node smoke.mjs` → `czap describe`) plus
+ * (`pnpm pack` ×N → `pnpm install` → `node smoke.mjs` → `liteship describe`) plus
  * `tar`-spawning manifest reads, so that file stays coverage-excluded.
  *
  * @module
@@ -22,7 +22,7 @@
 import { existsSync, readdirSync, realpathSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { IntegrityError } from '@czap/error';
+import { IntegrityError } from '@liteship/error';
 
 /**
  * Resolve the executable to spawn for `command`. `pnpm` invoked through an

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { AVBridge, Signal, manualClock, fixedClock } from '@czap/core';
+import { AVBridge, Signal, manualClock, fixedClock } from '@liteship/core';
 
 /**
  * Signal — Wave 6 plain CellKernel transport (Effect-free). RED-FIRST law table

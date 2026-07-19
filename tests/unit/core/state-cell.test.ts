@@ -5,7 +5,7 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { StateCell, ProjectionState, StateCellStore, StateName, RuntimeCoordinator } from '@czap/core';
+import { StateCell, ProjectionState, StateCellStore, StateName, RuntimeCoordinator } from '@liteship/core';
 
 describe('StateCell authority model', () => {
   test('discrete cells are replayable; continuous cells are not', () => {

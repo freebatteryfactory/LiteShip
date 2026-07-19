@@ -10,7 +10,7 @@
 
 Defined in: [vite/src/html-transform.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/html-transform.ts#L27)
 
-Transform HTML source, replacing `data-czap="name"` with resolved boundary JSON.
+Transform HTML source, replacing `data-liteship="name"` with resolved boundary JSON.
 
 ## Parameters
 

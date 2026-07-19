@@ -22,7 +22,7 @@ bare so consumers can apply their own units downstream.
 
 Defined in: [edge/src/theme-compiler.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/theme-compiler.ts#L30)
 
-CSS custom property prefix. Defaults to `'czap'`.
+CSS custom property prefix. Defaults to `'liteship'`.
 
 ***
 

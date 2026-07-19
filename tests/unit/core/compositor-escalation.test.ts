@@ -11,8 +11,8 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Boundary, Compositor, Cap, sealNode } from '@czap/core';
-import type { PolicyNode, RuntimeSite, CapTier, CapSet, CellMeta, ContentAddress } from '@czap/core';
+import { Boundary, Compositor, Cap, sealNode } from '@liteship/core';
+import type { PolicyNode, RuntimeSite, CapTier, CapSet, CellMeta, ContentAddress } from '@liteship/core';
 
 const widthBoundary = Boundary.make({
   input: 'viewport.width',
@@ -80,9 +80,9 @@ describe('Compositor escalation gate (E)', () => {
     const state = compositor.compute();
 
     // animated rung admits css/glsl/aria → every channel emits.
-    expect(state.outputs.css['--czap-layout']).toBe('mobile');
+    expect(state.outputs.css['--liteship-layout']).toBe('mobile');
     expect(state.outputs.glsl['u_layout']).toBe(0);
-    expect(state.outputs.aria['data-czap-layout']).toBe('mobile');
+    expect(state.outputs.aria['data-liteship-layout']).toBe('mobile');
   });
 
   test('tight p95 budget downgrades the rung and drops glsl, keeping css/aria', () => {
@@ -102,8 +102,8 @@ describe('Compositor escalation gate (E)', () => {
     const state = compositor.compute();
 
     // css + aria survive; glsl is dropped by the downgraded rung.
-    expect(state.outputs.css['--czap-layout']).toBe('mobile');
-    expect(state.outputs.aria['data-czap-layout']).toBe('mobile');
+    expect(state.outputs.css['--liteship-layout']).toBe('mobile');
+    expect(state.outputs.aria['data-liteship-layout']).toBe('mobile');
     expect(state.outputs.glsl['u_layout']).toBeUndefined();
   });
 
@@ -116,9 +116,9 @@ describe('Compositor escalation gate (E)', () => {
     compositor.add('layout', makeQuantizer(widthBoundary, 'tablet'));
     const state = compositor.compute();
 
-    expect(state.outputs.css['--czap-layout']).toBe('tablet');
+    expect(state.outputs.css['--liteship-layout']).toBe('tablet');
     expect(state.outputs.glsl['u_layout']).toBe(1);
-    expect(state.outputs.aria['data-czap-layout']).toBe('tablet');
+    expect(state.outputs.aria['data-liteship-layout']).toBe('tablet');
   });
 
   test('unsatisfiable policy ({error} branch: site not admitted) denies every target', () => {
@@ -134,9 +134,9 @@ describe('Compositor escalation gate (E)', () => {
 
     // Discrete bookkeeping still tracks the projection, but NO target emits.
     expect(state.discrete['layout']).toBe('desktop');
-    expect(state.outputs.css['--czap-layout']).toBeUndefined();
+    expect(state.outputs.css['--liteship-layout']).toBeUndefined();
     expect(state.outputs.glsl['u_layout']).toBeUndefined();
-    expect(state.outputs.aria['data-czap-layout']).toBeUndefined();
+    expect(state.outputs.aria['data-liteship-layout']).toBeUndefined();
   });
 
   test('per-projection gate: governed projection drops glsl, ungoverned one keeps it', () => {
@@ -155,14 +155,14 @@ describe('Compositor escalation gate (E)', () => {
     const state = compositor.compute();
 
     // Gated projection: glsl dropped, css/aria kept.
-    expect(state.outputs.css['--czap-gated']).toBe('mobile');
+    expect(state.outputs.css['--liteship-gated']).toBe('mobile');
     expect(state.outputs.glsl['u_gated']).toBeUndefined();
-    expect(state.outputs.aria['data-czap-gated']).toBe('mobile');
+    expect(state.outputs.aria['data-liteship-gated']).toBe('mobile');
 
     // Ungoverned projection: every target emits.
-    expect(state.outputs.css['--czap-free']).toBe('tablet');
+    expect(state.outputs.css['--liteship-free']).toBe('tablet');
     expect(state.outputs.glsl['u_free']).toBe(1);
-    expect(state.outputs.aria['data-czap-free']).toBe('tablet');
+    expect(state.outputs.aria['data-liteship-free']).toBe('tablet');
   });
 
   test('LESSON (getPolicy name-keyed): getPolicy receives the registry NAME passed to add(), not a content address', () => {

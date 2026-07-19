@@ -1,5 +1,5 @@
 {
-  "name": "@czap/vite",
+  "name": "@liteship/vite",
   "version": "0.18.0",
   "description": "The Vite plugin for LiteShip: compile `@token`, `@theme`, `@style`, and `@quantize` blocks into native CSS and hot-reload boundary definitions as you edit.",
   "license": "MIT",
@@ -12,7 +12,6 @@
   "bugs": "https://github.com/freebatteryfactory/LiteShip/issues",
   "homepage": "https://github.com/freebatteryfactory/LiteShip#readme",
   "keywords": [
-    "czap",
     "liteship",
     "vite-plugin",
     "css",
@@ -49,11 +48,11 @@
     "prepack": "pnpm run build"
   },
   "dependencies": {
-    "@czap/core": "workspace:*",
-    "@czap/compiler": "workspace:*",
-    "@czap/edge": "workspace:*",
-    "@czap/error": "workspace:*",
-    "@czap/web": "workspace:*"
+    "@liteship/core": "workspace:*",
+    "@liteship/compiler": "workspace:*",
+    "@liteship/edge": "workspace:*",
+    "@liteship/error": "workspace:*",
+    "@liteship/web": "workspace:*"
   },
   "peerDependencies": {
     "vite": ">=8.0.0"

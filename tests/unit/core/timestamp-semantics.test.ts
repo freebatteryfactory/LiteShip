@@ -12,7 +12,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { HLC, type WallClockTimestamp } from '@czap/core';
+import { HLC, type WallClockTimestamp } from '@liteship/core';
 import { dispatchToolCall } from '../../../packages/mcp-server/src/dispatch.js';
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');

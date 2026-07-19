@@ -5,8 +5,8 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { VideoRenderer, Compositor } from '@czap/core';
-import type { FrameCapture, CaptureConfig, CaptureFrame, CaptureResult, CompositeState } from '@czap/core';
+import { VideoRenderer, Compositor } from '@liteship/core';
+import type { FrameCapture, CaptureConfig, CaptureFrame, CaptureResult, CompositeState } from '@liteship/core';
 
 // ---------------------------------------------------------------------------
 // Mock FrameCapture
@@ -183,14 +183,14 @@ describe('Capture with VideoRenderer', () => {
 
 describe('cssVarsFromState', () => {
   it('converts CompositeState outputs.css to string map', () => {
-    // Inline implementation test (same logic as @czap/remotion)
+    // Inline implementation test (same logic as @liteship/remotion)
     const state: CompositeState = {
       discrete: { viewport: 'desktop' },
       blend: { viewport: { mobile: 0, tablet: 0, desktop: 1 } },
       outputs: {
-        css: { '--czap-viewport': 'desktop', '--czap-size': 18 },
+        css: { '--liteship-viewport': 'desktop', '--liteship-size': 18 },
         glsl: { u_viewport: 2 },
-        aria: { 'data-czap-viewport': 'desktop' },
+        aria: { 'data-liteship-viewport': 'desktop' },
       },
     };
 
@@ -199,7 +199,7 @@ describe('cssVarsFromState', () => {
       vars[key] = String(value);
     }
 
-    expect(vars['--czap-viewport']).toBe('desktop');
-    expect(vars['--czap-size']).toBe('18');
+    expect(vars['--liteship-viewport']).toBe('desktop');
+    expect(vars['--liteship-size']).toBe('18');
   });
 });

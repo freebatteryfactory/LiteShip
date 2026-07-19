@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { S, TypeValidator } from '@czap/core';
+import { S, TypeValidator } from '@liteship/core';
 
 describe('TypeValidator', () => {
   it('returns an ok result carrying the decoded value on a match', () => {

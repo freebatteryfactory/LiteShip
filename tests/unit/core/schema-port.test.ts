@@ -5,8 +5,8 @@
  * module carries (the rest is erased structural types).
  */
 import { describe, it, expect } from 'vitest';
-import { asDeclaration } from '@czap/core';
-import type { SchemaPort, DeclarationSchema } from '@czap/core';
+import { asDeclaration } from '@liteship/core';
+import type { SchemaPort, DeclarationSchema } from '@liteship/core';
 
 describe('asDeclaration — the schema-port declaration brand', () => {
   it('returns the exact same value (a pure passthrough — no runtime slot for the brand)', () => {

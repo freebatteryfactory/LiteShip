@@ -1,4 +1,4 @@
-import { Boundary } from '@czap/core';
+import { Boundary } from '@liteship/core';
 
 export const layout = Boundary.make({
   input: 'viewport.width',

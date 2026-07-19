@@ -2,7 +2,7 @@
 
 ## Purpose
 
-How to author with LiteShip: the CZAP engine's rigging surface, shipped as `@czap/*` packages.
+How to author with LiteShip: LiteShip's rigging surface, shipped as `@liteship/*` packages.
 
 Naming: [GLOSSARY.md](./GLOSSARY.md).
 
@@ -28,7 +28,7 @@ signal ─▶ boundary ─▶ graph ─▶ cast ─▶ patch
 
 For designers, brand directors, and agency PMs reading alongside an engineer. Engineering-fluent readers can skip this section.
 
-- **signal** — a continuously changing value the system watches, such as viewport width, scroll progress, device capability tier, or live audio amplitude/beat. The canonical input vocabulary is `SignalSource` in `@czap/core` (the dot-string forms like `viewport.width`, `audio.amplitude`).
+- **signal** — a continuously changing value the system watches, such as viewport width, scroll progress, device capability tier, or live audio amplitude/beat. The canonical input vocabulary is `SignalSource` in `@liteship/core` (the dot-string forms like `viewport.width`, `audio.amplitude`).
 - **boundary** — a definition that carves a continuous signal into a small set of named states (e.g. `stacked / split / cinematic`), so the rest of the system only ever sees discrete labels, not raw numbers.
 - **hysteresis** — a deliberate gap between the threshold where a state turns on and the threshold where it turns off, like a thermostat's dead-band that prevents the heater from flickering on and off when the temperature hovers near the setpoint.
 - **named state** — a label like `stacked`, `split`, or `cinematic` that the author chooses to stand in for a chunk of the signal range; the rest of the system reads names, not numbers.
@@ -210,7 +210,7 @@ Avoid IDs that merely restate the primitive type:
 ### Boundary
 
 ```ts
-import { Boundary } from '@czap/core';
+import { Boundary } from '@liteship/core';
 
 export const heroLayout = Boundary.make({
   input: 'viewport.width',
@@ -226,7 +226,7 @@ export const heroLayout = Boundary.make({
 ### Token
 
 ```ts
-import { Token } from '@czap/core';
+import { Token } from '@liteship/core';
 
 export const accent = Token.make({
   name: 'accent',
@@ -243,7 +243,7 @@ export const accent = Token.make({
 ### Theme
 
 ```ts
-import { Theme } from '@czap/core';
+import { Theme } from '@liteship/core';
 
 export const brandTheme = Theme.make({
   name: 'brand',
@@ -264,7 +264,7 @@ export const brandTheme = Theme.make({
 ### Style
 
 ```ts
-import { Style } from '@czap/core';
+import { Style } from '@liteship/core';
 import { heroLayout } from './boundaries.js';
 
 export const heroShell = Style.make({
@@ -272,7 +272,7 @@ export const heroShell = Style.make({
   base: {
     properties: {
       display: 'grid',
-      gap: 'var(--czap-space-section)',
+      gap: 'var(--liteship-space-section)',
     },
   },
   states: {
@@ -345,11 +345,11 @@ Example:
 
 ```css
 @token accent {
-  color: var(--czap-accent);
+  color: var(--liteship-accent);
 }
 
 @theme brand {
-  color: var(--czap-accent);
+  color: var(--liteship-accent);
 }
 
 @style heroShell {
@@ -370,7 +370,7 @@ Example:
 
 `@quantize` states accept two declaration forms, freely mixed:
 
-- **bare declarations** (`gap: 1rem;`) compile onto the boundary element selector (`.czap-boundary` by default), and
+- **bare declarations** (`gap: 1rem;`) compile onto the boundary element selector (`.liteship-boundary` by default), and
 - **nested selector rules** (`<selector> { ... }`) compile to one rule per selector inside the state's `@container` block — the form for adapting several elements per state:
 
 ```css
@@ -426,7 +426,7 @@ Two concrete patterns:
 ```ts
 // A disclosure surface: states correspond to expanded/collapsed; aria-expanded
 // flips with the layout.
-import { ARIACompiler } from '@czap/compiler';
+import { ARIACompiler } from '@liteship/compiler';
 import { disclosureBoundary } from './boundaries.js';
 
 const aria = ARIACompiler.compile(disclosureBoundary, {
@@ -439,8 +439,8 @@ const aria = ARIACompiler.compile(disclosureBoundary, {
 // A reduced-motion-aware surface: when motionTier is 'none', the boundary
 // pins to a still state and the live-region announces transitions instead of
 // animating them.
-import { Boundary } from '@czap/core';
-import { motionTierFromCapabilities } from '@czap/detect';
+import { Boundary } from '@liteship/core';
+import { motionTierFromCapabilities } from '@liteship/detect';
 
 export const heroMotion = Boundary.make({
   input: 'motion.tier',
@@ -459,7 +459,7 @@ A few rules of thumb:
 - For a *continuous* authored motion (a `Reveal.intent` scrubbed off scroll), author it once and let it project two ways: `MotionCompiler` compiles the native `animation-timeline` CSS, and `client:motion` runs the JS FLOOR wherever that is unsupported — both sampling the intent's ONE easing config, so the curve is identical (Law 4). The floor honors reduced-motion directly: with `policy.reducedMotion: 'settle'` it pins the final pose once and skips the tween (no per-frame writes). The runnable cookbook is `examples/showcase` → `/motion` (`src/server/motion-program.ts` + `src/pages/motion.astro`); the continuous-motion runtime is documented in [ASTRO-RUNTIME-MODEL.md](./ASTRO-RUNTIME-MODEL.md) under `### motion`.
 - For a *multi-step* motion — "A then B", "A with B", "A or B" — compose transitions into a `TransitionProgram` (ADR-0039), NOT a per-node `routing` label. `seq` sequences (total is `Σ` of the parts + delays, each mapped to a disjoint sub-window); `par` runs children together (total is the `max`; a short child holds its final pose); `choice` executes EXACTLY one branch, selected by a `BranchCondition` over a named signal (the pick is an auditable receipt; the unchosen arms never write). `interpretProgram` lowers the program to REAL multi-offset keyframes + per-window sub-samplers that scrub through the SAME `client:motion` floor. Author it with `Reveal.chain` (`lowerRevealChain`: a `seq` + optional trailing `choice`) or `staggerProgram` (a `par` over stagger children). Reduced-motion settles to the terminal step's `to` pose. The runnable cookbook is `examples/showcase` → `/motion-chain` (`src/server/motion-chain.ts` + `src/pages/motion-chain.astro`).
 - Never stash arbitrary attributes through the ARIA compiler. The validator drops anything that isn't `aria-*` or `role`; that's intentional. Use `data-*` attributes via your own template if you need extra DOM hooks.
-- Boundary state is applied as `data-czap-state` on the satellite, so CSS attribute selectors keyed on `[data-czap-state="expanded"]` and ARIA attributes resolve from the same evaluator on the same element. There is no two-write race; both are written synchronously inside `applyBoundaryState`.
+- Boundary state is applied as `data-liteship-state` on the satellite, so CSS attribute selectors keyed on `[data-liteship-state="expanded"]` and ARIA attributes resolve from the same evaluator on the same element. There is no two-write race; both are written synchronously inside `applyBoundaryState`.
 
 ---
 

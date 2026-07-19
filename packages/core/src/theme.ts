@@ -10,7 +10,7 @@
 import type { ContentAddress } from './brands.js';
 import { CanonicalCbor } from './cbor.js';
 import { fnv1aBytes } from './fnv.js';
-import { ValidationError } from '@czap/error';
+import { ValidationError } from '@liteship/error';
 
 interface ThemeDef<V extends readonly string[] = readonly string[]> {
   readonly _tag: 'ThemeDef';
@@ -82,7 +82,7 @@ function _tap<V extends readonly string[]>(theme: ThemeDef<V>, variant: V[number
  *
  * @example
  * ```ts
- * import { Theme } from '@czap/core';
+ * import { Theme } from '@liteship/core';
  *
  * const theme = Theme.make({
  *   name: 'brand',

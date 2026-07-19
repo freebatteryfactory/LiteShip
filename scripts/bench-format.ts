@@ -1,4 +1,4 @@
-import { Boundary } from '@czap/core';
+import { Boundary } from '@liteship/core';
 
 export type ThroughputTier = 'very-low' | 'low' | 'moderate' | 'high' | 'very-high';
 

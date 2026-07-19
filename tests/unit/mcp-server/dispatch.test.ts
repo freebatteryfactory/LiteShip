@@ -1,7 +1,7 @@
 /**
  * Unit tests for the MCP `dispatch` router (CUT A1 capstone). tools/call now
- * routes through the shared @czap/command dispatcher and returns the structured
- * `CapsuleCommandResult.payload` as `structuredContent` — no @czap/cli import,
+ * routes through the shared @liteship/command dispatcher and returns the structured
+ * `CapsuleCommandResult.payload` as `structuredContent` — no @liteship/cli import,
  * no stdout capture, no buildArgv flattening.
  *
  * Branches: tools/list, tools/call success (structuredContent), tools/call
@@ -10,7 +10,7 @@
  * notification path (null per §4.1).
  */
 import { describe, it, expect } from 'vitest';
-import { mcpExposedDescriptors } from '@czap/command';
+import { mcpExposedDescriptors } from '@liteship/command';
 import { dispatch, dispatchToolCall, listTools } from '../../../packages/mcp-server/src/dispatch.js';
 import type { JsonRpcRequest, JsonRpcNotification } from '../../../packages/mcp-server/src/jsonrpc.js';
 import { validateStructural, type StructuralSchema } from '../../support/structural-schema.js';

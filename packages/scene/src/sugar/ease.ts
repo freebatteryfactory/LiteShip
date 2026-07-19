@@ -10,17 +10,17 @@
  * @module
  */
 
-import type { EaseName as _EaseName, EaseTag as _EaseTag } from '@czap/_spine';
+import type { EaseName as _EaseName, EaseTag as _EaseTag } from '@liteship/_spine';
 
 /** Easing function signature: maps normalized time t in [0,1] to a value. */
 export type EaseFn = (t: number) => number;
 
-/** Closed set of parameterless named easings. Mirror of the `@czap/_spine` declaration. */
+/** Closed set of parameterless named easings. Mirror of the `@liteship/_spine` declaration. */
 export type EaseName = _EaseName;
 
 /**
  * Serializable ease reference stored on a TransitionTrack (`ease:` field)
- * and emitted as the `Ease` ECS component. Mirror of the `@czap/_spine`
+ * and emitted as the `Ease` ECS component. Mirror of the `@liteship/_spine`
  * declaration. `{ stepped: n }` carries the step count for the
  * `ease.stepped(n)` factory.
  */

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Pre-commit hook for czap.
+# Pre-commit hook for liteship.
 # Auto-installed via `prepare` script in package.json on `pnpm install`.
 # Manual install: ln -sf ../../scripts/pre-commit.sh .git/hooks/pre-commit
 #

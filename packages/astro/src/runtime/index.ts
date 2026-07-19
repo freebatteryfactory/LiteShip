@@ -39,7 +39,7 @@ export type { LoweredBinding, LoweredTarget } from './graph-lower.js';
 export { castGraphContext, admitGraphPatchProposal, adoptAppliedGraph } from './graph-ai-apply.js';
 export type { AdmitPatchResult } from './graph-ai-apply.js';
 // Scene → live-runtime bridge (0.4.0 item C): drive the live graph runtime from a
-// signal-indexed `@czap/scene`, splitting DISCRETE crossings (→ recast) from the
+// signal-indexed `@liteship/scene`, splitting DISCRETE crossings (→ recast) from the
 // CONTINUOUS tween (→ leaf CSS var / GPU uniform). Continuous motion never recasts.
 export { bridgeSceneToGraph } from './scene-bridge.js';
 export { writeContinuousMap } from './write-continuous-map.js';
@@ -57,7 +57,7 @@ export type {
   SceneQueryEffect,
 } from './scene-bridge.js';
 // Scene-stage REFERENCE CONSUMER: the in-repo caller that drives a REAL compiled
-// `@czap/scene` runtime through `bridgeSceneToGraph` onto a live graph (item C),
+// `@liteship/scene` runtime through `bridgeSceneToGraph` onto a live graph (item C),
 // and composes `castGraphContext` → `admitGraphPatchProposal` for the AI seam
 // (item D). This is the real producer→consumer wiring the seams' exports stop at.
 export { driveSceneStage, castStageContext, applyGraphSuggestion, sceneStageRunQuery } from './scene-stage.js';
@@ -72,7 +72,7 @@ export {
   readRuntimePolicy,
   readRuntimePolicyWithSource,
 } from './policy.js';
-export type { RuntimeEndpointKind, RuntimeEndpointPolicy, HtmlPolicy } from '@czap/web';
+export type { RuntimeEndpointKind, RuntimeEndpointPolicy, HtmlPolicy } from '@liteship/web';
 export type {
   RuntimeHtmlPolicy,
   RuntimeSecurityPolicy,
@@ -80,6 +80,6 @@ export type {
   RuntimePolicySource,
   RuntimePolicyReadout,
 } from './policy.js';
-// SVG last-mile: live DOM applicator around @czap/scene's pure svg-egress.
+// SVG last-mile: live DOM applicator around @liteship/scene's pure svg-egress.
 export { attachSvgRuntime, initSvgDirective, buildEntityElementResolver, parseSvgStateAttrs } from './svg.js';
 export type { SvgStateAttrs, SvgEntityElementResolver } from './svg.js';

@@ -670,7 +670,7 @@ function confirmSite(site: ClaimSite, inputs: ConfirmerInputs): Confirmation {
         how: 'remove the ambient read — thread an injected clock/RNG so the path is genuinely pure',
         steps: [
           `Line ${inputs.entropyLine} reads an ambient nondeterministic source — a "pure" function cannot read the wall clock or unseeded randomness.`,
-          'Inject the clock/RNG (the @czap/core systemClock / wallClock / systemRng substrate) and thread it through, or drop the purity claim.',
+          'Inject the clock/RNG (the @liteship/core systemClock / wallClock / systemRng substrate) and thread it through, or drop the purity claim.',
         ],
         location: { file: site.file, line: inputs.entropyLine },
       };
@@ -744,7 +744,7 @@ const GREEN_PURE =
   '/** A pure projection. */\nexport function pureProject(clock: { now(): number }): number {\n  return clock.now();\n}\n';
 const GREEN_CONTENT = 'export function canonicalize(x: number): number {\n  return x;\n}\n';
 const GREEN_CONTENT_TEST =
-  "import { it } from 'vitest';\nimport { addressedDigestOf } from '@czap/canonical';\nit('canonicalize round-trips: equal value, equal address', () => {\n  void addressedDigestOf;\n});\n";
+  "import { it } from 'vitest';\nimport { addressedDigestOf } from '@liteship/canonical';\nit('canonicalize round-trips: equal value, equal address', () => {\n  void addressedDigestOf;\n});\n";
 
 /**
  * The OUT-OF-IR EVIDENCE digest — the verdict-cache soundness fold for this gate. The

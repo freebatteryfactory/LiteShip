@@ -64,7 +64,7 @@
  * @module
  */
 import ts from 'typescript';
-import { CanonicalCbor, addressedDigestOf, type IntegrityDigest } from '@czap/canonical';
+import { CanonicalCbor, addressedDigestOf, type IntegrityDigest } from '@liteship/canonical';
 import type { MutantCore } from './mutation-engine.js';
 import { applyMutant } from './mutation-engine.js';
 

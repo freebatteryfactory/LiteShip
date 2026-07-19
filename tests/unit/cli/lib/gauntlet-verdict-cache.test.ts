@@ -13,7 +13,7 @@ import { mkdtempSync, rmSync, writeFileSync, mkdirSync, readdirSync, statSync, c
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import fc from 'fast-check';
-import { hasTag } from '@czap/error';
+import { hasTag } from '@liteship/error';
 import {
   finding,
   gateVerdictKey,
@@ -21,7 +21,7 @@ import {
   makeRepoIR,
   MISSING_DIGEST_SENTINEL,
   type Finding,
-} from '@czap/gauntlet';
+} from '@liteship/gauntlet';
 import {
   makeFsVerdictCache,
   makeFsMutantVerdictCache,
@@ -35,7 +35,7 @@ import { eaccesUntestableAsRoot } from '../../../helpers/capabilities.js';
 let dir: string;
 
 beforeEach(() => {
-  dir = mkdtempSync(join(tmpdir(), 'czap-verdict-cache-'));
+  dir = mkdtempSync(join(tmpdir(), 'liteship-verdict-cache-'));
 });
 afterEach(() => {
   rmSync(dir, { recursive: true, force: true });
@@ -53,14 +53,14 @@ const SAMPLE: readonly Finding[] = [
 ];
 
 describe('makeFsVerdictCache — round-trip', () => {
-  it('writes then reads back the identical raw findings under .czap/cache/gauntlet', () => {
+  it('writes then reads back the identical raw findings under .liteship/cache/gauntlet', () => {
     const cache = makeFsVerdictCache(dir);
     expect(cache.read('key-1')).toBeNull(); // absent → MISS
     cache.write('key-1', SAMPLE);
     expect(cache.read('key-1')).toEqual(SAMPLE); // round-trips exactly
 
     // The store lives under the idempotency-sibling layout.
-    const files = readdirSync(join(dir, '.czap', 'cache', 'gauntlet'));
+    const files = readdirSync(join(dir, '.liteship', 'cache', 'gauntlet'));
     expect(files.length).toBe(1);
     expect(files[0]?.endsWith('.json')).toBe(true);
   });
@@ -79,7 +79,7 @@ describe('makeFsVerdictCache — malformed/corrupt file is a MISS (the safe fall
     const cache = makeFsVerdictCache(dir);
     // Write the cache, then corrupt the on-disk file with non-JSON garbage.
     cache.write('key-x', SAMPLE);
-    const gdir = join(dir, '.czap', 'cache', 'gauntlet');
+    const gdir = join(dir, '.liteship', 'cache', 'gauntlet');
     const file = join(gdir, readdirSync(gdir)[0] as string);
     writeFileSync(file, '{ this is : not json', 'utf8');
     expect(cache.read('key-x')).toBeNull(); // corrupt → MISS, never a stale serve
@@ -88,7 +88,7 @@ describe('makeFsVerdictCache — malformed/corrupt file is a MISS (the safe fall
   it('a JSON array of the WRONG shape (not Findings) is a MISS, not a corrupt serve', () => {
     const cache = makeFsVerdictCache(dir);
     cache.write('key-y', SAMPLE);
-    const gdir = join(dir, '.czap', 'cache', 'gauntlet');
+    const gdir = join(dir, '.liteship', 'cache', 'gauntlet');
     const file = join(gdir, readdirSync(gdir)[0] as string);
     writeFileSync(file, JSON.stringify([{ not: 'a finding' }, 42]), 'utf8');
     expect(cache.read('key-y')).toBeNull(); // wrong shape → MISS
@@ -99,7 +99,7 @@ describe('makeFsVerdictCache — malformed/corrupt file is a MISS (the safe fall
     // cannot predict the slug, so write via the cache then overwrite contents.
     const cache = makeFsVerdictCache(dir);
     cache.write('key-z', SAMPLE);
-    const gdir = join(dir, '.czap', 'cache', 'gauntlet');
+    const gdir = join(dir, '.liteship', 'cache', 'gauntlet');
     const file = join(gdir, readdirSync(gdir)[0] as string);
     writeFileSync(file, JSON.stringify({ ruleId: 'x' }), 'utf8');
     expect(cache.read('key-z')).toBeNull();
@@ -162,11 +162,11 @@ describe('gauntletToolchainDigest — deterministic + dist-sensitive (the anti-l
 // ── TEETH (P1 #1): the toolchain digest folds EVERY fact-producing package's dist ──
 //
 // The "pure-IR" divergence gates fold `ir.facts`/`ir.refs` whose VALUES are computed
-// by the host `liteshipRegexOracle` (@czap/cli) + the audit LanguageService oracle
-// (@czap/audit). The PRE-FIX digest folded ONLY @czap/gauntlet's dist, so an
+// by the host `liteshipRegexOracle` (@liteship/cli) + the audit LanguageService oracle
+// (@liteship/audit). The PRE-FIX digest folded ONLY @liteship/gauntlet's dist, so an
 // ORACLE-logic change with byte-identical source + an unchanged gauntlet dist produced
 // an IDENTICAL digest → a warm cache STALE-HIT (the deeper lie). These tests build two
-// fake dist trees that differ ONLY in the @czap/cli (or @czap/audit) segment — an
+// fake dist trees that differ ONLY in the @liteship/cli (or @liteship/audit) segment — an
 // oracle-logic edit — and assert the now-extended digest CHANGES. The `oldGauntletOnly`
 // helper reproduces the PRE-FIX fold and is RED (digest IDENTICAL → stale hit) under the
 // exact same edit, proving the bug existed and the fold cures it.
@@ -175,7 +175,7 @@ describe('toolchainDigest folds cli + audit (the oracle-code soundness keystone)
   let fakeDistRoot: string;
 
   beforeEach(() => {
-    fakeDistRoot = mkdtempSync(join(tmpdir(), 'czap-tc-segments-'));
+    fakeDistRoot = mkdtempSync(join(tmpdir(), 'liteship-tc-segments-'));
   });
   afterEach(() => {
     rmSync(fakeDistRoot, { recursive: true, force: true });
@@ -203,18 +203,18 @@ describe('toolchainDigest folds cli + audit (the oracle-code soundness keystone)
   /** The three fact-producing segments, with the cli/audit oracle bodies parameterized. */
   function segments(opts: { cliOracle: string; auditOracle: string }): ToolchainPackageSegment[] {
     return [
-      { label: '@czap/audit', distDir: fakeDist('audit', opts.auditOracle), version: '0.4.0' },
-      { label: '@czap/cli', distDir: fakeDist('cli', opts.cliOracle), version: '0.4.0' },
-      { label: '@czap/gauntlet', distDir: fakeDist('gauntlet', 'export const gate = 1;\n'), version: '0.4.0' },
+      { label: '@liteship/audit', distDir: fakeDist('audit', opts.auditOracle), version: '0.4.0' },
+      { label: '@liteship/cli', distDir: fakeDist('cli', opts.cliOracle), version: '0.4.0' },
+      { label: '@liteship/gauntlet', distDir: fakeDist('gauntlet', 'export const gate = 1;\n'), version: '0.4.0' },
     ];
   }
 
   /**
-   * The PRE-FIX fold: ONLY the @czap/gauntlet segment (the bug). Reproduced here so the
+   * The PRE-FIX fold: ONLY the @liteship/gauntlet segment (the bug). Reproduced here so the
    * RED-before is concrete — under a cli/audit oracle edit this digest does NOT change.
    */
   function oldGauntletOnly(segs: readonly ToolchainPackageSegment[]): string {
-    const gauntletOnly = segs.filter((s) => s.label === '@czap/gauntlet');
+    const gauntletOnly = segs.filter((s) => s.label === '@liteship/gauntlet');
     return toolchainDigestOf(gauntletOnly, ENV);
   }
 
@@ -225,7 +225,7 @@ describe('toolchainDigest folds cli + audit (the oracle-code soundness keystone)
     expect(a).toMatch(/^tc-sha256:[0-9a-f]{32}$/); // unchanged scheme
   });
 
-  it('changing the @czap/cli HOST-ORACLE dist (source + gauntlet unchanged) FLIPS the digest — no stale hit', () => {
+  it('changing the @liteship/cli HOST-ORACLE dist (source + gauntlet unchanged) FLIPS the digest — no stale hit', () => {
     const before = segments({ cliOracle: 'liteshipRegexOracle@v1', auditOracle: 'lsOracle@v1' });
     const afterCliEdit = segments({ cliOracle: 'liteshipRegexOracle@v2-EDITED', auditOracle: 'lsOracle@v1' });
 
@@ -237,7 +237,7 @@ describe('toolchainDigest folds cli + audit (the oracle-code soundness keystone)
     expect(toolchainDigestOf(afterCliEdit, ENV)).not.toBe(toolchainDigestOf(before, ENV));
   });
 
-  it('changing the @czap/audit LS-ORACLE / IR-builder dist FLIPS the digest — no stale hit', () => {
+  it('changing the @liteship/audit LS-ORACLE / IR-builder dist FLIPS the digest — no stale hit', () => {
     const before = segments({ cliOracle: 'regex@v1', auditOracle: 'symbolOrphanOracle@v1' });
     const afterAuditEdit = segments({ cliOracle: 'regex@v1', auditOracle: 'symbolOrphanOracle@v2-EDITED' });
 
@@ -251,7 +251,7 @@ describe('toolchainDigest folds cli + audit (the oracle-code soundness keystone)
   it('the real gauntletToolchainDigest declares ALL THREE fact-producing packages (cli + audit + gauntlet)', () => {
     // The fix is the SET: a future refactor that drops cli or audit from the fold would
     // silently reopen the hole, so pin the membership as a law.
-    expect([...TOOLCHAIN_PACKAGES].sort()).toEqual(['@czap/audit', '@czap/cli', '@czap/gauntlet']);
+    expect([...TOOLCHAIN_PACKAGES].sort()).toEqual(['@liteship/audit', '@liteship/cli', '@liteship/gauntlet']);
     // And the live digest (resolving the real built dist) is well-formed + deterministic.
     expect(gauntletToolchainDigest(ENV)).toBe(gauntletToolchainDigest(ENV));
     expect(gauntletToolchainDigest(ENV)).toMatch(/^tc-sha256:[0-9a-f]{32}$/);
@@ -265,7 +265,7 @@ describe('THE CONTENT-ADDRESS LAW (the host fs store keyed by the engine key) �
 
   /** An IR where FILE has a given content address (the byte-state the cache keys on). */
   function irWith(contentDigest: string) {
-    return makeRepoIR({ files: [{ id: FILE, contentDigest, packageName: '@czap/core' }] });
+    return makeRepoIR({ files: [{ id: FILE, contentDigest, packageName: '@liteship/core' }] });
   }
 
   it('UNCHANGED coverage hash → a HIT (the same engine key resolves the same on-disk slug)', () => {
@@ -323,7 +323,7 @@ describe('makeFsVerdictCache.read — the EISDIR/EACCES sound-MISS arm (uncertai
     // Write a real entry, then REPLACE its file with a directory at the same path so the
     // existsSync passes but readFileSync throws EISDIR → the sanctioned best-effort MISS.
     cache.write('eisdir-key', SAMPLE);
-    const gdir = join(dir, '.czap', 'cache', 'gauntlet');
+    const gdir = join(dir, '.liteship', 'cache', 'gauntlet');
     const file = join(gdir, readdirSync(gdir)[0] as string);
     rmSync(file);
     mkdirSync(file); // now a directory at the verdict path
@@ -334,7 +334,7 @@ describe('makeFsVerdictCache.read — the EISDIR/EACCES sound-MISS arm (uncertai
   it.skipIf(eaccesUntestableAsRoot)('a cache file with the read bit cleared (EACCES) reads as a MISS, not a throw', () => {
     const cache = makeFsVerdictCache(dir);
     cache.write('eacces-key', SAMPLE);
-    const gdir = join(dir, '.czap', 'cache', 'gauntlet');
+    const gdir = join(dir, '.liteship', 'cache', 'gauntlet');
     const file = join(gdir, readdirSync(gdir)[0] as string);
     chmodSync(file, 0o000);
     try {
@@ -346,7 +346,7 @@ describe('makeFsVerdictCache.read — the EISDIR/EACCES sound-MISS arm (uncertai
 });
 
 describe('makeFsMutantVerdictCache — the B2 content-addressed mutant-verdict store (the sound-MISS twin)', () => {
-  it('round-trips a verdict TAG under .czap/cache/mutation, distinct keys do not collide', () => {
+  it('round-trips a verdict TAG under .liteship/cache/mutation, distinct keys do not collide', () => {
     const cache = makeFsMutantVerdictCache(dir);
     expect(cache.read('m-1')).toBeNull(); // absent → MISS
     cache.write('m-1', 'killed');
@@ -354,7 +354,7 @@ describe('makeFsMutantVerdictCache — the B2 content-addressed mutant-verdict s
     expect(cache.read('m-1')).toBe('killed');
     expect(cache.read('m-2')).toBe('survived');
 
-    const files = readdirSync(join(dir, '.czap', 'cache', 'mutation'));
+    const files = readdirSync(join(dir, '.liteship', 'cache', 'mutation'));
     expect(files.length).toBe(2);
     expect(files.every((f) => f.endsWith('.txt'))).toBe(true);
   });
@@ -364,7 +364,7 @@ describe('makeFsMutantVerdictCache — the B2 content-addressed mutant-verdict s
     cache.write('m-x', 'no-coverage');
     expect(cache.read('m-x')).toBe('no-coverage');
 
-    const mdir = join(dir, '.czap', 'cache', 'mutation');
+    const mdir = join(dir, '.liteship', 'cache', 'mutation');
     const file = join(mdir, readdirSync(mdir)[0] as string);
     // A hand-edit / schema-drift value that is NOT one of the three tags → MISS.
     writeFileSync(file, 'equivalent\n', 'utf8'); // a real verdict tag, but NOT in the write set
@@ -376,7 +376,7 @@ describe('makeFsMutantVerdictCache — the B2 content-addressed mutant-verdict s
   it('trims surrounding whitespace before validating the tag (an atomic-write newline is fine)', () => {
     const cache = makeFsMutantVerdictCache(dir);
     cache.write('m-trim', 'killed');
-    const mdir = join(dir, '.czap', 'cache', 'mutation');
+    const mdir = join(dir, '.liteship', 'cache', 'mutation');
     const file = join(mdir, readdirSync(mdir)[0] as string);
     writeFileSync(file, '   survived  \n\n', 'utf8');
     expect(cache.read('m-trim')).toBe('survived');
@@ -385,7 +385,7 @@ describe('makeFsMutantVerdictCache — the B2 content-addressed mutant-verdict s
   it('a mutation cache PATH that is a directory (EISDIR) reads as a MISS, not a throw', () => {
     const cache = makeFsMutantVerdictCache(dir);
     cache.write('m-eisdir', 'killed');
-    const mdir = join(dir, '.czap', 'cache', 'mutation');
+    const mdir = join(dir, '.liteship', 'cache', 'mutation');
     const file = join(mdir, readdirSync(mdir)[0] as string);
     rmSync(file);
     mkdirSync(file);
@@ -395,7 +395,7 @@ describe('makeFsMutantVerdictCache — the B2 content-addressed mutant-verdict s
   it.skipIf(eaccesUntestableAsRoot)('a mutation cache file with the read bit cleared (EACCES) reads as a MISS, not a throw', () => {
     const cache = makeFsMutantVerdictCache(dir);
     cache.write('m-eacces', 'killed');
-    const mdir = join(dir, '.czap', 'cache', 'mutation');
+    const mdir = join(dir, '.liteship', 'cache', 'mutation');
     const file = join(mdir, readdirSync(mdir)[0] as string);
     chmodSync(file, 0o000);
     try {
@@ -408,7 +408,7 @@ describe('makeFsMutantVerdictCache — the B2 content-addressed mutant-verdict s
   it('write is ATOMIC (no leftover .tmp files after a successful write)', () => {
     const cache = makeFsMutantVerdictCache(dir);
     cache.write('m-atomic', 'killed');
-    const mdir = join(dir, '.czap', 'cache', 'mutation');
+    const mdir = join(dir, '.liteship', 'cache', 'mutation');
     const leftovers = readdirSync(mdir).filter((f) => f.endsWith('.tmp'));
     expect(leftovers).toEqual([]); // the temp-then-rename left no half-file
   });

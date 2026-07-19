@@ -13,7 +13,7 @@
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { resolve } from 'node:path';
-import { probeFfmpegRender } from '@czap/command/host';
+import { probeFfmpegRender } from '@liteship/command/host';
 import { spawnArgvCapture } from '../../lib/spawn.js';
 import { findWorkspaceRoot } from './manifest.js';
 import {

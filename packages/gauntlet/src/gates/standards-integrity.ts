@@ -26,7 +26,7 @@
  *    snapshot intentionally"), NOT blocking-as-weakening (a stale-but-safe snapshot).
  *
  * LEAN BY CONSTRUCTION (ADR-0012): the gate reads NO config off disk, content-
- * addresses NOTHING (the fnv1a kernel lives in `@czap/core`), and reads NO clock.
+ * addresses NOTHING (the fnv1a kernel lives in `@liteship/core`), and reads NO clock.
  * The HOST extractor does all of that and injects the decided facts via
  * {@link GateContext.standards}; this gate only FOLDS. REPORT-not-DECIDE.
  *
@@ -59,7 +59,7 @@ function unsignedFinding(change: StandardsChange): Finding {
       description: `Reverse the weakening, or sign it off explicitly.`,
       steps: [
         `If this weakening is UNINTENDED (a raccoon edit, an accidental gate drop / level demotion / floor relaxation), REVERT it — the standards must not erode silently.`,
-        `If it is GENUINELY intended, add an owner-signed standards-waiver to traceability/standards-waivers.json: { elementKey: "${change.elementKey}", weakening: "${change.weakening ?? ''}", owner, justification, expiry } — then regenerate the snapshot (CZAP_UPDATE_STANDARDS_SNAPSHOT=1).`,
+        `If it is GENUINELY intended, add an owner-signed standards-waiver to traceability/standards-waivers.json: { elementKey: "${change.elementKey}", weakening: "${change.weakening ?? ''}", owner, justification, expiry } — then regenerate the snapshot (LITESHIP_UPDATE_STANDARDS_SNAPSHOT=1).`,
         `NEVER widen the snapshot to launder a weakening without the matching sign-off (that is the laundering the backstop exists to catch).`,
       ],
     },
@@ -133,13 +133,13 @@ function strengthenFinding(change: StandardsChange): Finding {
     severity: 'warning',
     level: 'L4',
     title: `Standards snapshot is stale (un-regenerated strengthen): ${change.elementKey}`,
-    detail: `${change.detail} The live standards surface STRENGTHENED but the committed snapshot was not regenerated. This is SAFE (the standards grew, not shrank) but the snapshot must be kept current so the backstop diffs against truth. Regenerate it intentionally (CZAP_UPDATE_STANDARDS_SNAPSHOT=1) and review the diff.`,
+    detail: `${change.detail} The live standards surface STRENGTHENED but the committed snapshot was not regenerated. This is SAFE (the standards grew, not shrank) but the snapshot must be kept current so the backstop diffs against truth. Regenerate it intentionally (LITESHIP_UPDATE_STANDARDS_SNAPSHOT=1) and review the diff.`,
     location: { file: 'traceability/standards-snapshot.json' },
     remediation: {
       kind: 'instruction',
       description: `Regenerate the committed standards snapshot.`,
       steps: [
-        `Run CZAP_UPDATE_STANDARDS_SNAPSHOT=1 <the standards-integrity meta-check> and commit the updated traceability/standards-snapshot.json.`,
+        `Run LITESHIP_UPDATE_STANDARDS_SNAPSHOT=1 <the standards-integrity meta-check> and commit the updated traceability/standards-snapshot.json.`,
       ],
     },
   });

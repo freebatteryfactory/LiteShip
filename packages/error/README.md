@@ -1,11 +1,11 @@
-# @czap/error
+# @liteship/error
 
 The one LiteShip error algebra — a composable, tagged-error coproduct with zero runtime dependencies. Errors are tagged DATA values, not a class hierarchy: each variant is a `_tag`-discriminated record that is *also* a real `Error` (stack trace + `instanceof Error`), works with both `throw` and errors-as-values (a `Result` err-arm), and is extended by composing, never editing.
 
 ## Install
 
 ```bash
-pnpm add @czap/error
+pnpm add @liteship/error
 ```
 
 Zero runtime deps — it pulls in nothing. Each variant is a plain `_tag` record, so it also slots into any tag-keyed error channel you already run (including Effect's `catchTag`) with **no `effect` import here** — bring your own only if you use it. LiteShip itself shed Effect in Wave 8; this stays a compatibility property, not a dependency.
@@ -13,7 +13,7 @@ Zero runtime deps — it pulls in nothing. Each variant is a plain `_tag` record
 ## 30 seconds
 
 ```ts
-import { ValidationError, ParseError, hasTag, matchTag } from '@czap/error';
+import { ValidationError, ParseError, hasTag, matchTag } from '@liteship/error';
 
 // A variant is a VALUE and a TYPE. Throw it — it's a real Error:
 throw ValidationError('Boundary.make', 'width must be > 0');
@@ -34,7 +34,7 @@ function explain(err: ValidationError | ParseError): string {
 The exact same value travels as data through a `Result` — errors-as-values, never a throw:
 
 ```ts
-import { ok, err, type Result } from '@czap/error';
+import { ok, err, type Result } from '@liteship/error';
 
 function decode(raw: string): Result<Config, ParseError> {
   if (!raw) return err(ParseError('profile.json', 'expected object', { offset: 12 }));
@@ -49,14 +49,14 @@ Because the records are plain `_tag` failures, the same value also drops into an
 
 ## Where it sits
 
-This is the foundational leaf the rest of the stack adopts — `standalone`, with zero `@czap/*` dependencies, so any package can fail with it. The built-in variants form one CLOSED coproduct (`LiteShipError` = `ValidationError | ParseError | IoError | HostCapabilityError | InvariantViolationError | NotFoundError | UnsupportedError | IntegrityError`) over the open `TaggedError` contract every helper (`hasTag`, `matchTag`, `matchTagOr`, `raise`, `assertNever`) operates on. See the [package surfaces map](https://github.com/freebatteryfactory/LiteShip/blob/main/PACKAGE-SURFACES.md) for the full layout.
+This is the foundational leaf the rest of the stack adopts — `standalone`, with zero `@liteship/*` dependencies, so any package can fail with it. The built-in variants form one CLOSED coproduct (`LiteShipError` = `ValidationError | ParseError | IoError | HostCapabilityError | InvariantViolationError | NotFoundError | UnsupportedError | IntegrityError`) over the open `TaggedError` contract every helper (`hasTag`, `matchTag`, `matchTagOr`, `raise`, `assertNever`) operates on. See the [package surfaces map](https://github.com/freebatteryfactory/LiteShip/blob/main/PACKAGE-SURFACES.md) for the full layout.
 
 ## When a variant doesn't fit
 
-Do not subclass — there is no base class to extend. You compose: conform a record to `TaggedError`, build it with the one `taggedError` composer, and widen the union by `|`. Editing `@czap/error` is never the extension path.
+Do not subclass — there is no base class to extend. You compose: conform a record to `TaggedError`, build it with the one `taggedError` composer, and widen the union by `|`. Editing `@liteship/error` is never the extension path.
 
 ```ts
-import { taggedError, type TaggedError, type LiteShipError } from '@czap/error';
+import { taggedError, type TaggedError, type LiteShipError } from '@liteship/error';
 
 interface RateLimitError extends TaggedError<'RateLimitError'> {
   readonly retryAfter: number;
@@ -78,4 +78,4 @@ Every helper keeps working on the widened union unchanged — `matchTagOr` handl
 
 ---
 
-Part of [LiteShip](https://github.com/freebatteryfactory/LiteShip#readme) — powered by the CZAP engine (Content-Zoned Adaptive Projection), distributed as `@czap/*` packages.
+Part of [LiteShip](https://github.com/freebatteryfactory/LiteShip#readme) — distributed as `@liteship/*` packages.

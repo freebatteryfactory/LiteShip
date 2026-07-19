@@ -1,20 +1,20 @@
-# @czap/quantizer
+# @liteship/quantizer
 
 Turns a boundary — named states over numeric thresholds — into a live state machine that emits per-state outputs (CSS, shader uniforms, ARIA attributes) when a value crosses a threshold.
 
-> Install this directly when you need live boundary evaluation outside a framework integration. If you're starting a new project, start with [liteship](https://www.npmjs.com/package/liteship) or [@czap/astro](https://www.npmjs.com/package/@czap/astro) instead.
+> Install this directly when you need live boundary evaluation outside a framework integration. If you're starting a new project, start with [liteship](https://www.npmjs.com/package/liteship) or [@liteship/astro](https://www.npmjs.com/package/@liteship/astro) instead.
 
 ## Install
 
 ```bash
-pnpm add @czap/quantizer
+pnpm add @liteship/quantizer
 ```
 
 ## 30 seconds
 
 ```ts
-import { Boundary } from '@czap/core';
-import { Q } from '@czap/quantizer';
+import { Boundary } from '@liteship/core';
+import { Q } from '@liteship/quantizer';
 
 const width = Boundary.make({
   input: 'width',
@@ -36,7 +36,7 @@ Logs `{ display: 'grid' }` — the CSS output for the `lg` state that 1024 falls
 
 ## Where it sits
 
-This is a layered package between definitions and hosts: it imports `Boundary`, easing, and content-address utilities from `@czap/core` — its only `@czap` dependency. Compiling outputs to static CSS text for a build step is `@czap/compiler`'s job; this package is for runtime, where the value keeps changing. See the
+This is a layered package between definitions and hosts: it imports `Boundary`, easing, and content-address utilities from `@liteship/core` — its only `@liteship` dependency. Compiling outputs to static CSS text for a build step is `@liteship/compiler`'s job; this package is for runtime, where the value keeps changing. See the
 [package surfaces map](https://github.com/freebatteryfactory/LiteShip/blob/main/PACKAGE-SURFACES.md)
 for the full layout.
 
@@ -53,4 +53,4 @@ If you pass `tier` to `Q.from(boundary, { tier })`, outputs for targets outside 
 
 ---
 
-Part of [LiteShip](https://github.com/freebatteryfactory/LiteShip#readme) — powered by the CZAP engine (Content-Zoned Adaptive Projection), distributed as `@czap/*` packages.
+Part of [LiteShip](https://github.com/freebatteryfactory/LiteShip#readme) — distributed as `@liteship/*` packages.

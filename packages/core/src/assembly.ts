@@ -6,7 +6,7 @@
  * @module
  */
 
-import { InvariantViolationError } from '@czap/error';
+import { InvariantViolationError } from '@liteship/error';
 import type { CapsuleContract, AssemblyKind } from './capsule.js';
 import type { ContentAddress } from './brands.js';
 import type { SchemaPort } from './schema-port.js';

@@ -10,9 +10,9 @@
  */
 
 import { Bench } from 'tinybench';
-import { Boundary, Compositor, TokenBuffer, SpeculativeEvaluator } from '@czap/core';
-import { evaluate } from '@czap/quantizer';
-import { SPSCRing } from '@czap/worker';
+import { Boundary, Compositor, TokenBuffer, SpeculativeEvaluator } from '@liteship/core';
+import { evaluate } from '@liteship/quantizer';
+import { SPSCRing } from '@liteship/worker';
 import { classifyThroughputTier, throughputTierBadge } from '../../scripts/bench-format.ts';
 
 const bench = new Bench({ warmupIterations: 200, iterations: 1000 });
@@ -236,9 +236,9 @@ bench.add('[DIRECTIVE] satellite full cycle -- parse + evaluate', () => {
 bench.add('[DIRECTIVE] worker inline composite build -- 1 quantizer', () => {
   const state = satelliteEvaluate(satThresholds, satStates, 800);
   const discrete: Record<string, string> = { layout: state };
-  const css: Record<string, string> = { '--czap-layout': state };
+  const css: Record<string, string> = { '--liteship-layout': state };
   const glsl: Record<string, number> = { u_layout: satStates.indexOf(state) };
-  const aria: Record<string, string> = { 'data-czap-layout': state };
+  const aria: Record<string, string> = { 'data-liteship-layout': state };
   void discrete;
   void css;
   void glsl;

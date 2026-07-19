@@ -39,7 +39,7 @@
  * LEAN BY CONSTRUCTION (ADR-0012): like {@link StandardsIntegrityFacts}, this module
  * defines ONLY the lean DATA + the PURE verifier. It carries NO heavy dependency —
  * it never reads the filesystem, never content-addresses (the `contentAddressOf`
- * kernel lives in `@czap/core`; the HOST mints the receipts), and never reads a clock
+ * kernel lives in `@liteship/core`; the HOST mints the receipts), and never reads a clock
  * (the HOST injects `now` for the sign-off-expiry check). The host measures the
  * actual change + mints the receipts + supplies the before/after standards surfaces;
  * the verifier just decides.

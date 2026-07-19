@@ -51,8 +51,8 @@ const initialState = resolveInitialState(nav, { clientHints, userAgent });
 ```
 
 1. **The exact `Sec-CH-Viewport-Width` client hint** when the browser sends it. Chromium
-   does, and the czap middleware's `Critical-CH` makes it resend the hint _before_ the
-   first render — so the SSR'd `data-czap-state` (and the `aria-hidden` it carries)
+   does, and the liteship middleware's `Critical-CH` makes it resend the hint _before_ the
+   first render — so the SSR'd `data-liteship-state` (and the `aria-hidden` it carries)
    matches the container-query CSS at byte one, cold visits included.
 2. **A `User-Agent` estimate** when it doesn't — Firefox and Safari send no viewport hint,
    and no server can know their exact width. This nails the device class, not the window.
@@ -67,7 +67,7 @@ rest — instead of shipping a fixed guess and hoping.
 ## Run it
 
 ```sh
-pnpm --filter @czap/example-cast-aria dev
+pnpm --filter @liteship/example-cast-aria dev
 ```
 
 Resize the window and inspect the `.extra` element — `aria-hidden` flips with the

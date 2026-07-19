@@ -10,9 +10,9 @@
  * @module
  */
 
-import type { CompositeState, VideoConfig, Millis } from '@czap/core';
-import { Millis as mkMillis } from '@czap/core';
-import { HostCapabilityError } from '@czap/error';
+import type { CompositeState, VideoConfig, Millis } from '@liteship/core';
+import { Millis as mkMillis } from '@liteship/core';
+import { HostCapabilityError } from '@liteship/error';
 import type { WorkerConfig } from './messages.js';
 import { CompositorWorker, type CompositorWorkerStartupTelemetry } from './compositor-worker.js';
 import { RenderWorker } from './render-worker.js';
@@ -227,7 +227,7 @@ function _createWorkerHost(
  *
  * @example
  * ```ts
- * import { WorkerHost } from '@czap/worker';
+ * import { WorkerHost } from '@liteship/worker';
  *
  * const host = WorkerHost.create({ poolCapacity: 64 });
  * host.attachCanvas(canvas);

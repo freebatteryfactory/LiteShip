@@ -11,7 +11,7 @@
  * a proxy.
  *
  * It deliberately scans the harness modules only — the world fixes time/randomness
- * by injecting the `@czap/core` substrate (manualClock / seededRng), so the ONLY
+ * by injecting the `@liteship/core` substrate (manualClock / seededRng), so the ONLY
  * sanctioned entropy boundaries (systemClock / wallClock / systemRng) live in
  * `clock.ts` / `rng.ts` and are owner-waived; the harness must reach NONE of them.
  *
@@ -66,7 +66,7 @@ describe('DETERMINISM DRIFT GUARD: the DST harness reads zero ambient time/rando
     });
   }
 
-  it('the harness imports its time/randomness ONLY from the @czap/core substrate (manualClock / seededRng)', () => {
+  it('the harness imports its time/randomness ONLY from the @liteship/core substrate (manualClock / seededRng)', () => {
     const world = readFileSync(resolve(simDir, 'world.ts'), 'utf8');
     // The world's determinism comes from the injected substrate, named explicitly.
     expect(world).toMatch(/manualClock/);

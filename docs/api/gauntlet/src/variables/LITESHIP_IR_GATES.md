@@ -25,5 +25,5 @@ a reusable LAYER, not a one-off.
 
 These IR-fold gates [requireIR](../functions/requireIR.md), so they CANNOT run on the lean
 MCP/command path (no IR) — they appear ONLY here, the IR-present composition. The
-lean [LITESHIP\_GATES](LITESHIP_GATES.md) default is unchanged: `czap check` / MCP still runs
+lean [LITESHIP\_GATES](LITESHIP_GATES.md) default is unchanged: `liteship check` / MCP still runs
 the seven regex gates IR-free.

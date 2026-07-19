@@ -3,10 +3,10 @@
  * that folds the deterministic mutation engine + the injected test runner into the
  * flat {@link MutationFacts} the lean `mutationDivergenceGate` consumes).
  *
- * `@czap/gauntlet` DEFINES the {@link MutationFacts} interface but carries no
+ * `@liteship/gauntlet` DEFINES the {@link MutationFacts} interface but carries no
  * `typescript` dep and runs no test suite — it is the lean engine and mutation is an
  * INJECTED capability (the same ADR-0012 boundary as the IR / supply-chain). THIS
- * module is the host half: `@czap/audit` (which deps `typescript`) generates the
+ * module is the host half: `@liteship/audit` (which deps `typescript`) generates the
  * deterministic mutant catalogue per file ({@link generateMutants}), evaluates each
  * mutant against the INJECTED test runner ({@link evaluateMutant}), and folds the
  * verdicts into the flat facts. The CLI integrator wires the production vitest runner
@@ -22,7 +22,7 @@
  * @module
  */
 import ts from 'typescript';
-import type { MutationFacts, MutantOutcome } from '@czap/gauntlet';
+import type { MutationFacts, MutantOutcome } from '@liteship/gauntlet';
 import { generateMutants, type GenerateMutantsOptions } from './mutation-engine.js';
 import {
   evaluateMutant,

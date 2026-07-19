@@ -1,6 +1,6 @@
 /**
  * The DETERMINISTIC per-mutant runner safety proof (Slice C, the avionics tier —
- * `czap check --ir --mutate`). Two keystones:
+ * `liteship check --ir --mutate`). Two keystones:
  *
  * THE RESTORE KEYSTONE — the runner mutates REAL trust-spine source files in place, so
  * a crash, a test failure, or an infra fault must NEVER leave a mutated source on disk.
@@ -37,7 +37,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdtempSync, rmSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { hasTag } from '@czap/error';
+import { hasTag } from '@liteship/error';
 import {
   makeVitestMutationRunner,
   type MutationSubprocessResult,
@@ -51,7 +51,7 @@ let root: string;
 const TARGET = 'seam.ts';
 
 beforeEach(() => {
-  root = mkdtempSync(join(tmpdir(), 'czap-mutrunner-'));
+  root = mkdtempSync(join(tmpdir(), 'liteship-mutrunner-'));
   writeFileSync(join(root, TARGET), ORIGINAL, 'utf8');
 });
 afterEach(() => {

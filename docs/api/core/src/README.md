@@ -6,7 +6,7 @@
 
 # core/src
 
-`@czap/core` — **LiteShip** primitives for the **CZAP** engine: boundaries,
+`@liteship/core` — **LiteShip** primitives: boundaries,
 tokens, styles, themes, signals, and working-deck coordination (compositor,
 plan graph, ECS, capsule factory).
 

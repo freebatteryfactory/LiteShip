@@ -1,7 +1,7 @@
 {
-  "name": "@czap/cli",
+  "name": "@liteship/cli",
   "version": "0.18.0",
-  "description": "The `czap` command-line tool for LiteShip: JSON-in, JSON-out verbs built for AI agents, with a human-friendly terminal mode.",
+  "description": "The `liteship` command-line tool for LiteShip: JSON-in, JSON-out verbs built for AI agents, with a human-friendly terminal mode.",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",
   "repository": {
@@ -12,7 +12,6 @@
   "bugs": "https://github.com/freebatteryfactory/LiteShip/issues",
   "homepage": "https://github.com/freebatteryfactory/LiteShip#readme",
   "keywords": [
-    "czap",
     "liteship",
     "cli",
     "command-line",
@@ -22,7 +21,7 @@
   "type": "module",
   "sideEffects": false,
   "bin": {
-    "czap": "./bin/czap.mjs"
+    "liteship": "./bin/liteship.mjs"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -44,15 +43,15 @@
     "prepack": "pnpm run build"
   },
   "dependencies": {
-    "@czap/core": "workspace:*",
-    "@czap/canonical": "workspace:*",
-    "@czap/command": "workspace:*",
-    "@czap/scene": "workspace:*",
-    "@czap/assets": "workspace:*",
-    "@czap/audit": "workspace:*",
-    "@czap/edge": "workspace:*",
-    "@czap/gauntlet": "workspace:*",
-    "@czap/error": "workspace:*",
+    "@liteship/core": "workspace:*",
+    "@liteship/canonical": "workspace:*",
+    "@liteship/command": "workspace:*",
+    "@liteship/scene": "workspace:*",
+    "@liteship/assets": "workspace:*",
+    "@liteship/audit": "workspace:*",
+    "@liteship/edge": "workspace:*",
+    "@liteship/gauntlet": "workspace:*",
+    "@liteship/error": "workspace:*",
     "undici": ">=7.28.0 <8"
   },
   "engines": {

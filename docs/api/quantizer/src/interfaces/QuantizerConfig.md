@@ -89,7 +89,7 @@ kernels (completing every subscriber and making publish inert).
 
 Pass a [QuantizerRuntime](QuantizerRuntime.md) to inject the wall-clock boundary that
 advances this instance's monotonic crossing HLC; omit it to default to
-`@czap/core`'s `wallClock`. The clock is per-instantiation, never part of
+`@liteship/core`'s `wallClock`. The clock is per-instantiation, never part of
 the cached config's identity.
 
 #### Parameters

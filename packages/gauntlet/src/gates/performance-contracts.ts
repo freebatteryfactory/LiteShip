@@ -29,13 +29,13 @@
  * It is LEAN (no `typescript`, no IR requirement — a pure fold over GateContext
  * bytes) and ships red/green/mutation fixtures, so it self-proves via the ratchet.
  * It does NOT {@link requireIR}, but it ships in `LITESHIP_IR_GATES` (the IR-host
- * composition the CLI runs on `czap check --ir`) alongside the other Slice B/C
+ * composition the CLI runs on `liteship check --ir`) alongside the other Slice B/C
  * gates — NOT the lean cut `LITESHIP_GATES` the MCP/command path runs.
  *
  * @module
  */
 
-import { ValidationError } from '@czap/error';
+import { ValidationError } from '@liteship/error';
 import { defineGate, type GateContext, type Gate } from '../gate.js';
 import { finding, type Finding } from '../finding.js';
 import { memoryContext } from '../engine.js';
@@ -65,7 +65,7 @@ const MIN_FIT_R2 = 0.5;
 
 // The complexity-class ladder, ordered ascending by growth — DUPLICATED here as
 // the gate's own closed constant (the gauntlet is lean and must NOT import the
-// scripts/bench contract library, which pulls @czap/core). The gate only needs
+// scripts/bench contract library, which pulls @liteship/core). The gate only needs
 // the ORDERING to rank a committed class against its ceiling; the ranks must
 // match scripts/bench/contracts.ts COMPLEXITY_CLASSES, pinned by a guard test.
 const COMPLEXITY_LADDER = ['O(1)', 'O(log n)', 'O(n)', 'O(n log n)', 'O(n^2)'] as const;

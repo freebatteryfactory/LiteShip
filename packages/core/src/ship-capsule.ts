@@ -9,8 +9,8 @@
  * @module
  */
 
-import { err, ok } from '@czap/error';
-import type { Result } from '@czap/error';
+import { err, ok } from '@liteship/error';
+import type { Result } from '@liteship/error';
 import { decode as cborDecode } from 'cborg';
 import type { AddressedDigest, ContentAddress, HLC } from './brands.js';
 import { CanonicalCbor } from './cbor.js';
@@ -209,7 +209,7 @@ const decode = (bytes: Uint8Array): Result<ShipCapsuleShape, ShipCapsuleDecodeEr
  * Public namespace for ShipCapsule (ADR-0011). `make` builds a capsule from
  * input (sync), `canonicalize` encodes it as canonical CBOR for transport /
  * hashing, `decode` round-trips canonical bytes and returns a `Result`
- * (`@czap/error`) that rejects non-canonical encodings AND unknown
+ * (`@liteship/error`) that rejects non-canonical encodings AND unknown
  * `schema_version`s (`unsupported_version`, fail-closed), `computeId` mints the
  * fnv1a label over the canonicalized payload (sync).
  */

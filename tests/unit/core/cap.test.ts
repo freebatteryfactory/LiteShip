@@ -3,8 +3,8 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Cap, isWellFormedNode } from '@czap/core';
-import type { CapTier } from '@czap/core';
+import { Cap, isWellFormedNode } from '@liteship/core';
+import type { CapTier } from '@liteship/core';
 
 describe('Cap', () => {
   describe('construction', () => {

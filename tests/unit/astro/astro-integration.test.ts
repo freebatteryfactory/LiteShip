@@ -2,7 +2,7 @@
  * Astro integration tests -- satellite attributes, initial state resolution,
  * and integration hook configuration.
  *
- * Tests the @czap/astro public API: satelliteAttrs, resolveInitialState,
+ * Tests the @liteship/astro public API: satelliteAttrs, resolveInitialState,
  * resolveInitialStateFallback, and integration factory configuration.
  */
 
@@ -11,9 +11,9 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { satelliteAttrs, resolveInitialStateFallback, resolveInitialState, resolveInitialStateWithReceipt, integration } from '@czap/astro';
-import type { SatelliteProps } from '@czap/astro';
-import { Boundary, Diagnostics } from '@czap/core';
+import { satelliteAttrs, resolveInitialStateFallback, resolveInitialState, resolveInitialStateWithReceipt, integration } from '@liteship/astro';
+import type { SatelliteProps } from '@liteship/astro';
+import { Boundary, Diagnostics } from '@liteship/core';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -40,31 +40,31 @@ function makeComponentStub(name: string) {
 }
 
 // ---------------------------------------------------------------------------
-// satelliteAttrs -- data-czap-* attribute generation
+// satelliteAttrs -- data-liteship-* attribute generation
 // ---------------------------------------------------------------------------
 
 describe('satelliteAttrs', () => {
-  test('generates base czap-satellite class with no props', () => {
+  test('generates base liteship-satellite class with no props', () => {
     const attrs = satelliteAttrs({});
 
-    expect(attrs['class']).toBe('czap-satellite');
+    expect(attrs['class']).toBe('liteship-satellite');
   });
 
-  test('merges custom class with czap-satellite', () => {
+  test('merges custom class with liteship-satellite', () => {
     const attrs = satelliteAttrs({ class: 'my-widget' });
 
-    expect(attrs['class']).toBe('czap-satellite my-widget');
+    expect(attrs['class']).toBe('liteship-satellite my-widget');
   });
 
-  test('sets data-czap-satellite from component name', () => {
+  test('sets data-liteship-satellite from component name', () => {
     const attrs = satelliteAttrs({
       component: makeComponentStub('HeroCard') as SatelliteProps['component'],
     });
 
-    expect(attrs['data-czap-satellite']).toBe('HeroCard');
+    expect(attrs['data-liteship-satellite']).toBe('HeroCard');
   });
 
-  test('sets data-czap-boundary as serialized JSON from boundary shape', () => {
+  test('sets data-liteship-boundary as serialized JSON from boundary shape', () => {
     const boundary = makeBoundary('viewport', [
       [0, 'compact'],
       [768, 'wide'],
@@ -72,29 +72,29 @@ describe('satelliteAttrs', () => {
 
     const attrs = satelliteAttrs({ boundary });
 
-    expect(attrs['data-czap-boundary']).toBeDefined();
-    const parsed = JSON.parse(attrs['data-czap-boundary']!);
+    expect(attrs['data-liteship-boundary']).toBeDefined();
+    const parsed = JSON.parse(attrs['data-liteship-boundary']!);
     expect(parsed.id).toBe(boundary.id);
     expect(parsed.input).toBe(boundary.input);
     expect(parsed.thresholds).toEqual(boundary.thresholds);
     expect(parsed.states).toEqual(boundary.states);
   });
 
-  test('emits the data-czap-directive marker when a boundary is present', () => {
+  test('emits the data-liteship-directive marker when a boundary is present', () => {
     const boundary = makeBoundary('viewport', [
       [0, 'compact'],
       [768, 'wide'],
     ]);
 
-    expect(satelliteAttrs({ boundary })['data-czap-directive']).toBe('satellite');
-    expect(satelliteAttrs({ boundary, directive: 'worker' })['data-czap-directive']).toBe('worker');
+    expect(satelliteAttrs({ boundary })['data-liteship-directive']).toBe('satellite');
+    expect(satelliteAttrs({ boundary, directive: 'worker' })['data-liteship-directive']).toBe('worker');
     // CSS-only shells opt out of any client runtime.
-    expect(satelliteAttrs({ boundary, directive: false })['data-czap-directive']).toBeUndefined();
+    expect(satelliteAttrs({ boundary, directive: false })['data-liteship-directive']).toBeUndefined();
     // No boundary -> nothing for a directive to evaluate -> no marker.
-    expect(satelliteAttrs({})['data-czap-directive']).toBeUndefined();
+    expect(satelliteAttrs({})['data-liteship-directive']).toBeUndefined();
   });
 
-  test('serializes hysteresis in data-czap-boundary when present', () => {
+  test('serializes hysteresis in data-liteship-boundary when present', () => {
     const boundary = makeBoundary(
       'viewport',
       [
@@ -106,32 +106,32 @@ describe('satelliteAttrs', () => {
 
     const attrs = satelliteAttrs({ boundary });
 
-    const parsed = JSON.parse(attrs['data-czap-boundary']!);
+    const parsed = JSON.parse(attrs['data-liteship-boundary']!);
     expect(parsed.hysteresis).toBe(50);
   });
 
-  test('sets data-czap-state from initialState', () => {
+  test('sets data-liteship-state from initialState', () => {
     const attrs = satelliteAttrs({ initialState: 'compact' });
 
-    expect(attrs['data-czap-state']).toBe('compact');
+    expect(attrs['data-liteship-state']).toBe('compact');
   });
 
-  test('omits data-czap-satellite when no component provided', () => {
+  test('omits data-liteship-satellite when no component provided', () => {
     const attrs = satelliteAttrs({});
 
-    expect(attrs['data-czap-satellite']).toBeUndefined();
+    expect(attrs['data-liteship-satellite']).toBeUndefined();
   });
 
-  test('omits data-czap-boundary when no boundary provided', () => {
+  test('omits data-liteship-boundary when no boundary provided', () => {
     const attrs = satelliteAttrs({});
 
-    expect(attrs['data-czap-boundary']).toBeUndefined();
+    expect(attrs['data-liteship-boundary']).toBeUndefined();
   });
 
-  test('omits data-czap-state when no initialState provided', () => {
+  test('omits data-liteship-state when no initialState provided', () => {
     const attrs = satelliteAttrs({});
 
-    expect(attrs['data-czap-state']).toBeUndefined();
+    expect(attrs['data-liteship-state']).toBeUndefined();
   });
 
   test('combines all props into a complete attribute set', () => {
@@ -147,10 +147,10 @@ describe('satelliteAttrs', () => {
       initialState: 'mobile',
     });
 
-    expect(attrs['class']).toBe('czap-satellite main-grid');
-    expect(attrs['data-czap-satellite']).toBe('DashGrid');
-    expect(attrs['data-czap-state']).toBe('mobile');
-    expect(attrs['data-czap-boundary']).toBeDefined();
+    expect(attrs['class']).toBe('liteship-satellite main-grid');
+    expect(attrs['data-liteship-satellite']).toBe('DashGrid');
+    expect(attrs['data-liteship-state']).toBe('mobile');
+    expect(attrs['data-liteship-boundary']).toBeDefined();
   });
 });
 
@@ -419,7 +419,7 @@ describe('integration', () => {
   test('returns an AstroIntegration with correct name', () => {
     const integ = integration();
 
-    expect(integ.name).toBe('@czap/astro');
+    expect(integ.name).toBe('@liteship/astro');
   });
 
   test('exposes required Astro lifecycle hooks', () => {
@@ -435,7 +435,7 @@ describe('integration', () => {
   test('accepts empty config', () => {
     const integ = integration({});
 
-    expect(integ.name).toBe('@czap/astro');
+    expect(integ.name).toBe('@liteship/astro');
     expect(integ.hooks['astro:config:setup']).toBeInstanceOf(Function);
   });
 
@@ -453,7 +453,7 @@ describe('integration', () => {
       },
     });
 
-    expect(integ.name).toBe('@czap/astro');
+    expect(integ.name).toBe('@liteship/astro');
     expect(integ.hooks['astro:config:setup']).toBeInstanceOf(Function);
   });
 
@@ -510,15 +510,15 @@ describe('integration', () => {
     ]);
     expect(updates[0]).toMatchObject({
       vite: {
-        plugins: [expect.objectContaining({ name: '@czap/vite' })],
+        plugins: [expect.objectContaining({ name: '@liteship/vite' })],
       },
     });
     const detectScript = scripts.find(
-      (script) => script.stage === 'head-inline' && script.content.includes('__CZAP_DETECT__'),
+      (script) => script.stage === 'head-inline' && script.content.includes('__LITESHIP_DETECT__'),
     );
     const gpuUpgradeScript = scripts.find(
       (script) =>
-        script.stage === 'page' && script.content.includes('gpuTier') && script.content.includes('__CZAP_DETECT__'),
+        script.stage === 'page' && script.content.includes('gpuTier') && script.content.includes('__LITESHIP_DETECT__'),
     );
 
     expect(detectScript).toBeDefined();
@@ -526,10 +526,10 @@ describe('integration', () => {
     expect(detectScript?.content).toContain('writable: false');
     expect(detectScript?.content).toContain('provisional: true');
     // Collision guard: the head script writes the reduced-motion PREFERENCE to
-    // data-czap-reduced-motion, never data-czap-motion — which is the motion
+    // data-liteship-reduced-motion, never data-liteship-motion — which is the motion
     // capability TIER (EdgeTier.tierDataAttributes). The two must not share an attr.
-    expect(detectScript?.content).toContain('data-czap-reduced-motion');
-    expect(detectScript?.content).not.toContain("setAttribute('data-czap-motion'");
+    expect(detectScript?.content).toContain('data-liteship-reduced-motion');
+    expect(detectScript?.content).not.toContain("setAttribute('data-liteship-motion'");
     // The runtime SNAPSHOT (writeDetectState payload) stays minimal — just the
     // provisional tier + flag, never the full probe payload. The cap-tier ladder
     // is now DERIVED from canonical headProbeCapTier, so its body legitimately
@@ -541,7 +541,7 @@ describe('integration', () => {
     expect(detectScript?.content).not.toContain('new Function');
     expect(gpuUpgradeScript?.content).toContain('Object.freeze');
     expect(gpuUpgradeScript?.content).toContain('writable: false');
-    expect(gpuUpgradeScript?.content).not.toContain('window.__CZAP_DETECT__ || {}');
+    expect(gpuUpgradeScript?.content).not.toContain('window.__LITESHIP_DETECT__ || {}');
     expect(scripts.some((script) => script.stage === 'page' && script.content.includes('bootstrapSlots'))).toBe(true);
     expect(scripts.some((script) => script.stage === 'page' && script.content.includes('installSwapPipeline'))).toBe(
       true,
@@ -562,9 +562,9 @@ describe('integration', () => {
       logger: { info() {}, warn(message: string) { warns.push(message); }, error() {} },
     } as never);
 
-    Diagnostics.warn({ source: 'czap/test', code: 'before', message: 'before teardown' });
+    Diagnostics.warn({ source: 'liteship/test', code: 'before', message: 'before teardown' });
     integ.hooks['astro:server:done']?.({ logger: { info() {}, warn() {}, error() {} } } as never);
-    Diagnostics.warn({ source: 'czap/test', code: 'after', message: 'after teardown' });
+    Diagnostics.warn({ source: 'liteship/test', code: 'after', message: 'after teardown' });
 
     expect(warns).toHaveLength(1);
     expect(warns[0]).toContain('before teardown');
@@ -583,7 +583,7 @@ describe('integration', () => {
       },
       logger: { info() {} },
     } as never);
-    expect(wired).toContainEqual({ order: 'pre', entrypoint: '@czap/astro/middleware-entry' });
+    expect(wired).toContainEqual({ order: 'pre', entrypoint: '@liteship/astro/middleware-entry' });
 
     // Default (no opt-in): nothing auto-wired.
     let calledByDefault = false;
@@ -626,10 +626,10 @@ describe('integration', () => {
       command: 'build',
     } as never);
 
-    const inspector = devApps.find((app) => app.id === 'czap-inspector');
+    const inspector = devApps.find((app) => app.id === 'liteship-inspector');
     expect(inspector).toBeDefined();
-    expect(inspector?.entrypoint).toBe('@czap/astro/runtime/inspector-toolbar-app');
-    expect(buildApps.some((app) => app.id === 'czap-inspector')).toBe(false);
+    expect(inspector?.entrypoint).toBe('@liteship/astro/runtime/inspector-toolbar-app');
+    expect(buildApps.some((app) => app.id === 'liteship-inspector')).toBe(false);
   });
 
   test('config:setup skips the inspector toolbar app when inspector: false', () => {
@@ -647,7 +647,7 @@ describe('integration', () => {
       command: 'dev',
     } as never);
 
-    expect(apps.some((app) => app.id === 'czap-inspector')).toBe(false);
+    expect(apps.some((app) => app.id === 'liteship-inspector')).toBe(false);
   });
 
   test('config:setup honors worker, wasm, and disabled directives; serverIslands is a no-op', () => {
@@ -689,11 +689,11 @@ describe('integration', () => {
     ]);
     // serverIslands must NOT produce any experimental config bridge anymore.
     expect(updates.some((config) => 'experimental' in config)).toBe(false);
-    expect(scripts.some((script) => script.includes('__CZAP_DETECT__'))).toBe(false);
+    expect(scripts.some((script) => script.includes('__LITESHIP_DETECT__'))).toBe(false);
     // The wasm bootstrap advertises the URL AND eagerly auto-loads at the
     // document level — without this, enabling wasm in config silently no-ops
     // unless the page carries a per-element `client:wasm` directive.
-    const wasmBootstrap = scripts.find((script) => script.includes('virtual:czap/wasm-url'));
+    const wasmBootstrap = scripts.find((script) => script.includes('virtual:liteship/wasm-url'));
     expect(wasmBootstrap).toBeDefined();
     expect(wasmBootstrap).toContain('configureWasmRuntime(wasmUrl)');
     expect(wasmBootstrap).toContain('loadWasmRuntime(document.documentElement)');
@@ -715,7 +715,7 @@ describe('integration', () => {
       logger: { info() {} },
     } as never);
 
-    expect(scripts.some((script) => script.stage === 'head-inline' && script.content.includes('__CZAP_DETECT__'))).toBe(
+    expect(scripts.some((script) => script.stage === 'head-inline' && script.content.includes('__LITESHIP_DETECT__'))).toBe(
       true,
     );
     expect(scripts.some((script) => script.content.includes('navigator.gpu'))).toBe(false);
@@ -765,13 +765,13 @@ describe('integration', () => {
 
     expect(nextCalled).toBe(true);
     expect(headers.get('Accept-CH')).toContain('Sec-CH-Viewport-Width');
-    // Derived from @czap/edge's single critical-hint source (exact equality pinned by
+    // Derived from @liteship/edge's single critical-hint source (exact equality pinned by
     // critical-ch-drift.test.ts); here we just assert the dev middleware, like production,
     // marks viewport-width critical.
     expect(headers.get('Critical-CH')).toContain('Sec-CH-Viewport-Width');
     expect(headers.get('Cross-Origin-Opener-Policy')).toBe('same-origin');
     expect(headers.get('Cross-Origin-Embedder-Policy')).toBe('require-corp');
-    expect(logs).toContain('@czap dev server middleware active');
+    expect(logs).toContain('@liteship dev server middleware active');
   });
 
   test('server:setup skips middleware when detect is disabled', () => {
@@ -831,7 +831,7 @@ describe('integration', () => {
   test('config:done and build:done log the final integration status', async () => {
     const integ = integration();
     const logs: string[] = [];
-    const root = mkdtempSync(join(tmpdir(), 'czap-astro-int-'));
+    const root = mkdtempSync(join(tmpdir(), 'liteship-astro-int-'));
     try {
       integ.hooks['astro:config:done']({
         config: { output: 'server', root: pathToFileURL(root) },
@@ -854,13 +854,13 @@ describe('integration', () => {
       rmSync(root, { recursive: true, force: true });
     }
 
-    expect(logs).toContain('@czap configured for server output');
-    expect(logs).toContain('@czap build integration complete');
+    expect(logs).toContain('@liteship configured for server output');
+    expect(logs).toContain('@liteship build integration complete');
   });
 
-  test('build:done emits czap-boundary-manifest.json with derived ids when the project defines boundaries', async () => {
+  test('build:done emits liteship-boundary-manifest.json with derived ids when the project defines boundaries', async () => {
     const integ = integration();
-    const root = mkdtempSync(join(tmpdir(), 'czap-astro-manifest-'));
+    const root = mkdtempSync(join(tmpdir(), 'liteship-astro-manifest-'));
     const outDir = join(root, 'dist');
     mkdirSync(join(root, 'src'), { recursive: true });
     mkdirSync(outDir, { recursive: true });
@@ -910,7 +910,7 @@ export const viewport = {
         logger: silentLogger,
       } as never);
 
-      const manifestPath = join(outDir, 'czap-boundary-manifest.json');
+      const manifestPath = join(outDir, 'liteship-boundary-manifest.json');
       // v2 envelope: entries pool distinct outputs; cells hold pool indices.
       const file = JSON.parse(readFileSync(manifestPath, 'utf8')) as {
         _tag: string;
@@ -918,7 +918,7 @@ export const viewport = {
         boundaries: Record<string, { id: string; outputs: { css: string }[]; outputsByTier: Record<string, number> }>;
       };
 
-      expect(file._tag).toBe('CzapBoundaryManifest');
+      expect(file._tag).toBe('LiteshipBoundaryManifest');
       expect(file._version).toBe(2);
       expect(file.boundaries['viewport']!.id).toBe(reference.id);
       const entry = file.boundaries['viewport']!;
@@ -930,7 +930,7 @@ export const viewport = {
 
   test('build:done emits no manifest file for a project without boundaries', async () => {
     const integ = integration();
-    const root = mkdtempSync(join(tmpdir(), 'czap-astro-empty-'));
+    const root = mkdtempSync(join(tmpdir(), 'liteship-astro-empty-'));
     const outDir = join(root, 'dist');
     mkdirSync(outDir, { recursive: true });
 
@@ -945,14 +945,14 @@ export const viewport = {
         logger: silentLogger,
       } as never);
 
-      expect(existsSync(join(outDir, 'czap-boundary-manifest.json'))).toBe(false);
+      expect(existsSync(join(outDir, 'liteship-boundary-manifest.json'))).toBe(false);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
   });
 
   test('config:setup watches the convention primitive files (addWatchFile battery)', () => {
-    const root = mkdtempSync(join(tmpdir(), 'czap-watch-'));
+    const root = mkdtempSync(join(tmpdir(), 'liteship-watch-'));
     const src = join(root, 'src');
     mkdirSync(src, { recursive: true });
     try {

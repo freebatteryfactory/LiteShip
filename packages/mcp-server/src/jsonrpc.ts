@@ -21,7 +21,7 @@
  * @module
  */
 
-import { defineCapsule, S } from '@czap/core';
+import { defineCapsule, S } from '@liteship/core';
 
 // ---------- JSON-RPC 2.0 types (wire-shape) ----------
 

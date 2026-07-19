@@ -170,9 +170,9 @@ completeness obligation as high as it will go before it becomes a gauntlet fact:
 _unrepresentable_ (a node family you can't add to the union without its interpreter case;
 a signal typed `discrete | continuous` so a continuous value cannot type-pass into a
 replay path — which makes the old-brain "widen the SSE replay payload" fix _uncompilable_),
-then _uncompilable_ (exhaustive unions + `assertNever`; a typed `dispatchCzapEvent(name,
+then _uncompilable_ (exhaustive unions + `assertNever`; a typed `dispatchLiteshipEvent(name,
 detail)` over a source-derived event union, so a fabricated event name like
-`czap:stream-reconnecting` is a compile error, not a shipped bug), and only then
+`liteship:stream-reconnecting` is a compile error, not a shipped bug), and only then
 _unmergeable_ (#132 reachability, for the cross-module cases types can't see). **Generate**
 docs and wire-contracts from the typed source so drift is impossible by construction —
 never a prose mirror to police. Keep the types load-bearing and readable: a type-level

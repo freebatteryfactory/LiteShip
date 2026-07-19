@@ -14,7 +14,7 @@
  *
  * @module
  */
-import { StateCellStore, mintTransition, sealGraph, sealNode } from '@czap/core';
+import { StateCellStore, mintTransition, sealGraph, sealNode } from '@liteship/core';
 import type {
   CellMeta,
   DocumentGraph,
@@ -22,7 +22,7 @@ import type {
   ReceiptEnvelope,
   SignalNode,
   DiscreteStateTransition,
-} from '@czap/core';
+} from '@liteship/core';
 
 const META: CellMeta = {
   created: { wall_ms: 0, counter: 0, node_id: 'showcase' },

@@ -6,14 +6,14 @@
 
 # vite/src
 
-`@czap/vite` — **LiteShip** Vite 8 plugin: turns `@token` / `@theme` /
+`@liteship/vite` — **LiteShip** Vite 8 plugin: turns `@token` / `@theme` /
 `@style` / `@quantize` at-rule blocks into native CSS and **rigs** HMR for
-`@czap/*` definitions.
+`@liteship/*` definitions.
 
 The plugin hooks into Vite's `resolveId`, `load`, `transform`, and
 `handleHotUpdate` phases:
 
-- `resolveId` + `load`: map `virtual:czap/*` specifiers to generated
+- `resolveId` + `load`: map `virtual:liteship/*` specifiers to generated
   modules (device capabilities, WASM URL, ...).
 - `transform`: rewrite `@token`, `@theme`, `@style`, and `@quantize`
   at-rule blocks into native CSS (custom properties,
@@ -33,10 +33,10 @@ per primitive kind via [PluginConfig.dirs](interfaces/PluginConfig.md#dirs).
 ```ts
 // vite.config.ts
 import { defineConfig } from 'vite';
-import { czap } from '@czap/vite';
+import { liteship } from '@liteship/vite';
 
 const config = defineConfig({
-  plugins: [czap({ dirs: { theme: 'src/themes' }, hmr: true })],
+  plugins: [liteship({ dirs: { theme: 'src/themes' }, hmr: true })],
 });
 ```
 
@@ -97,6 +97,6 @@ const config = defineConfig({
 
 ## References
 
-### czap
+### liteship
 
 Renames and re-exports [plugin](functions/plugin.md)

@@ -6,7 +6,7 @@
  * @module
  */
 
-import { HLC } from '@czap/core';
+import { HLC } from '@liteship/core';
 
 /**
  * Parse an event ID to extract sequence number and other components.

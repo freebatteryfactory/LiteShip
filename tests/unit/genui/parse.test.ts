@@ -3,7 +3,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { tryParseGeneratedUIChunk } from '@czap/genui';
+import { tryParseGeneratedUIChunk } from '@liteship/genui';
 
 describe('tryParseGeneratedUIChunk', () => {
   it('parses discriminated JSON trees', () => {

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { WASMDispatch } from '@czap/core';
+import { WASMDispatch } from '@liteship/core';
 import satelliteDirective from '../../packages/astro/src/client-directives/satellite.js';
 import workerDirective from '../../packages/astro/src/client-directives/worker.js';
 import wasmDirective from '../../packages/astro/src/client-directives/wasm.js';
@@ -20,12 +20,12 @@ describe('browser astro directive coverage', () => {
 
   beforeEach(() => {
     document.body.innerHTML = '';
-    document.documentElement.setAttribute('data-czap-tier', 'animated');
+    document.documentElement.setAttribute('data-liteship-tier', 'animated');
   });
 
   afterEach(() => {
     document.querySelectorAll<HTMLElement>('*').forEach((element) => {
-      element.dispatchEvent(new CustomEvent('czap:teardown'));
+      element.dispatchEvent(new CustomEvent('liteship:teardown'));
     });
     stubs.restoreAll();
     vi.restoreAllMocks();
@@ -52,18 +52,18 @@ describe('browser astro directive coverage', () => {
     );
 
     const el = document.createElement('div');
-    el.setAttribute('data-czap-boundary', boundary);
+    el.setAttribute('data-liteship-boundary', boundary);
     document.body.appendChild(el);
 
     satelliteDirective(noop, {}, el);
-    expect(el.getAttribute('data-czap-state')).toBe('compact');
+    expect(el.getAttribute('data-liteship-state')).toBe('compact');
 
     vi.stubGlobal('innerWidth', 790);
     resizeCallback?.([] as never, {} as never);
-    expect(el.getAttribute('data-czap-state')).toBe('expanded');
+    expect(el.getAttribute('data-liteship-state')).toBe('expanded');
 
     el.setAttribute(
-      'data-czap-boundary',
+      'data-liteship-boundary',
       JSON.stringify({
         id: 'hero',
         input: 'viewport.width',
@@ -72,10 +72,10 @@ describe('browser astro directive coverage', () => {
       }),
     );
     vi.stubGlobal('innerWidth', 500);
-    el.dispatchEvent(new CustomEvent('czap:reinit'));
-    expect(el.getAttribute('data-czap-state')).toBe('narrow');
+    el.dispatchEvent(new CustomEvent('liteship:reinit'));
+    expect(el.getAttribute('data-liteship-state')).toBe('narrow');
 
-    el.dispatchEvent(new CustomEvent('czap:teardown'));
+    el.dispatchEvent(new CustomEvent('liteship:teardown'));
     expect(disconnect).toHaveBeenCalled();
   });
 
@@ -135,7 +135,7 @@ describe('browser astro directive coverage', () => {
                       discrete: { hero: 'expanded' },
                       blend: {},
                       outputs: {
-                        css: { '--czap-hero-gap': '16px' },
+                        css: { '--liteship-hero-gap': '16px' },
                         glsl: {},
                         aria: {},
                       },
@@ -178,7 +178,7 @@ describe('browser astro directive coverage', () => {
     vi.stubGlobal('innerWidth', 1024);
 
     const el = document.createElement('div');
-    el.setAttribute('data-czap-boundary', boundary);
+    el.setAttribute('data-liteship-boundary', boundary);
     document.body.appendChild(el);
 
     workerDirective(noop, {}, el);
@@ -186,9 +186,9 @@ describe('browser astro directive coverage', () => {
     await Promise.resolve();
 
     expect(workers).toHaveLength(1);
-    expect(el.getAttribute('data-czap-state')).toBe('expanded');
+    expect(el.getAttribute('data-liteship-state')).toBe('expanded');
 
-    el.dispatchEvent(new CustomEvent('czap:reinit'));
+    el.dispatchEvent(new CustomEvent('liteship:reinit'));
     await Promise.resolve();
     await Promise.resolve();
 
@@ -202,21 +202,21 @@ describe('browser astro directive coverage', () => {
 
   test('wasm directive resolves through WASMDispatch and shared runtime config', async () => {
     const wasmElement = document.createElement('div');
-    wasmElement.setAttribute('data-czap-wasm', 'true');
-    document.documentElement.setAttribute('data-czap-wasm-url', '/czap-compute.wasm');
+    wasmElement.setAttribute('data-liteship-wasm', 'true');
+    document.documentElement.setAttribute('data-liteship-wasm-url', '/liteship-compute.wasm');
     document.body.appendChild(wasmElement);
 
     const loadSpy = vi.spyOn(WASMDispatch, 'load').mockResolvedValue(WASMDispatch.kernels());
 
     const readyEvents: unknown[] = [];
-    document.addEventListener('czap:wasm-ready', ((event: CustomEvent) => readyEvents.push(event.detail)) as EventListener);
+    document.addEventListener('liteship:wasm-ready', ((event: CustomEvent) => readyEvents.push(event.detail)) as EventListener);
 
     wasmDirective(noop, {}, wasmElement);
     await Promise.resolve();
     await Promise.resolve();
 
-    expect(loadSpy).toHaveBeenCalledWith('/czap-compute.wasm');
-    expect(readyEvents).toEqual([{ url: '/czap-compute.wasm' }]);
+    expect(loadSpy).toHaveBeenCalledWith('/liteship-compute.wasm');
+    expect(readyEvents).toEqual([{ url: '/liteship-compute.wasm' }]);
   });
 
   test('gpu directive initializes a WebGL shader path and reacts to uniform updates', async () => {
@@ -270,11 +270,11 @@ describe('browser astro directive coverage', () => {
     );
 
     const el = document.createElement('canvas');
-    el.setAttribute('data-czap-boundary', boundary);
+    el.setAttribute('data-liteship-boundary', boundary);
     document.body.appendChild(el);
 
     let ready = false;
-    el.addEventListener('czap:gpu-ready', () => {
+    el.addEventListener('liteship:gpu-ready', () => {
       ready = true;
     });
 
@@ -285,10 +285,10 @@ describe('browser astro directive coverage', () => {
     expect(ready).toBe(true);
 
     el.dispatchEvent(
-      new CustomEvent('czap:uniform-update', {
+      new CustomEvent('liteship:uniform-update', {
         detail: {
           discrete: { hero: 'expanded' },
-          css: { '--czap-state': '1' },
+          css: { '--liteship-state': '1' },
         },
       }),
     );

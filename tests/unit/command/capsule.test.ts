@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { capsuleInspectCommand, capsuleListCommand, capsuleVerifyCommand } from '@czap/command';
+import { capsuleInspectCommand, capsuleListCommand, capsuleVerifyCommand } from '@liteship/command';
 
 const MANIFEST = JSON.stringify({
   capsules: [
@@ -8,7 +8,7 @@ const MANIFEST = JSON.stringify({
   ],
 });
 
-describe('@czap/command capsule commands', () => {
+describe('@liteship/command capsule commands', () => {
   it('inspect returns the matching entry as a structured ok result', async () => {
     const r = await capsuleInspectCommand.handler({ name: 'capsule.inspect', args: { id: 'alpha' } }, { manifestSource: () => MANIFEST });
     expect(r.status).toBe('ok');

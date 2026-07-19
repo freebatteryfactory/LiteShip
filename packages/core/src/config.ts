@@ -18,11 +18,11 @@ import { normalizeRepoPath } from './path-normalize.js';
 // Public types
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Top-level discriminator for czap primitives: which bucket a declaration belongs to. */
+/** Top-level discriminator for liteship primitives: which bucket a declaration belongs to. */
 export type PrimitiveKind = 'boundary' | 'token' | 'theme' | 'style';
 
 /**
- * Vite-plugin slice of a czap {@link Config.Shape}: source directories per
+ * Vite-plugin slice of a liteship {@link Config.Shape}: source directories per
  * primitive kind, HMR opt-in, environment targeting, and optional WASM hints.
  */
 export interface PluginConfig {
@@ -32,7 +32,7 @@ export interface PluginConfig {
   readonly wasm?: boolean | { readonly enabled?: boolean; readonly path?: string };
 }
 
-/** Astro-integration slice of a czap {@link Config.Shape}. */
+/** Astro-integration slice of a liteship {@link Config.Shape}. */
 export interface AstroConfig {
   readonly satellite?: boolean;
   readonly edgeRuntime?: boolean;
@@ -43,7 +43,7 @@ export interface AstroConfig {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Config namespace — the single hub that every czap adapter (Vite, Astro, test
+ * Config namespace — the single hub that every liteship adapter (Vite, Astro, test
  * runners, edge runtime) projects from. {@link Config.make} produces a frozen,
  * FNV-1a content-addressed {@link Config.Shape}; every projection function
  * (`toViteConfig`, `toAstroConfig`, `toTestAliases`) is pure.
@@ -78,7 +78,7 @@ export const Config = {
     });
   },
 
-  /** Project the Vite-plugin slice of a config for `@czap/vite`. */
+  /** Project the Vite-plugin slice of a config for `@liteship/vite`. */
   toViteConfig(cfg: Config.Shape): PluginConfig {
     return {
       ...(cfg.vite?.dirs !== undefined && { dirs: cfg.vite.dirs }),
@@ -88,7 +88,7 @@ export const Config = {
     };
   },
 
-  /** Project the Astro-integration slice of a config for `@czap/astro`. */
+  /** Project the Astro-integration slice of a config for `@liteship/astro`. */
   toAstroConfig(cfg: Config.Shape): AstroConfig {
     return {
       ...(cfg.astro?.satellite !== undefined && { satellite: cfg.astro.satellite }),
@@ -96,45 +96,45 @@ export const Config = {
     };
   },
 
-  /** Materialize the `@czap/*` → source-path alias map used by the vitest runner. */
+  /** Materialize the `@liteship/*` → source-path alias map used by the vitest runner. */
   toTestAliases(cfg: Config.Shape, repoRoot: string): Record<string, string> {
     void cfg; // cfg reserved for future per-project customisation
     const r = (sub: string) => `${normalizeRepoPath(repoRoot)}/${sub}`;
     // NOTE: longer prefixes MUST come before shorter ones — vitest's alias
     // resolver matches the first prefix in iteration order, so e.g.
-    // `@czap/core/testing` would be intercepted by `@czap/core` if listed first.
+    // `@liteship/core/testing` would be intercepted by `@liteship/core` if listed first.
     return {
-      '@czap/canonical': r('packages/canonical/src/index.ts'),
-      '@czap/genui': r('packages/genui/src/index.ts'),
-      '@czap/core/testing': r('packages/core/src/testing.ts'),
-      '@czap/core/harness': r('packages/core/src/harness/index.ts'),
-      '@czap/core/simulation': r('packages/core/src/simulation/index.ts'),
-      '@czap/core/fs-walk': r('packages/core/src/fs-walk.ts'),
-      '@czap/core': r('packages/core/src/index.ts'),
-      '@czap/quantizer/testing': r('packages/quantizer/src/testing.ts'),
-      '@czap/quantizer': r('packages/quantizer/src/index.ts'),
-      '@czap/compiler': r('packages/compiler/src/index.ts'),
-      '@czap/web/lite': r('packages/web/src/lite.ts'),
-      '@czap/web': r('packages/web/src/index.ts'),
-      '@czap/detect': r('packages/detect/src/index.ts'),
-      '@czap/vite/html-transform': r('packages/vite/src/html-transform.ts'),
-      '@czap/vite': r('packages/vite/src/index.ts'),
-      '@czap/astro/runtime': r('packages/astro/src/runtime/index.ts'),
-      '@czap/astro': r('packages/astro/src/index.ts'),
-      '@czap/stage/ffmpeg': r('packages/stage/src/ffmpeg.ts'),
-      '@czap/stage': r('packages/stage/src/index.ts'),
-      '@czap/remotion': r('packages/remotion/src/index.ts'),
-      '@czap/scene/dev': r('packages/scene/src/dev/server.ts'),
-      '@czap/scene': r('packages/scene/src/index.ts'),
-      '@czap/assets': r('packages/assets/src/index.ts'),
-      '@czap/audit': r('packages/audit/src/index.ts'),
-      '@czap/cli': r('packages/cli/src/index.ts'),
-      '@czap/mcp-server': r('packages/mcp-server/src/index.ts'),
-      '@czap/edge': r('packages/edge/src/index.ts'),
-      '@czap/cloudflare/testing': r('packages/cloudflare/src/testing.ts'),
-      '@czap/cloudflare': r('packages/cloudflare/src/index.ts'),
-      '@czap/worker': r('packages/worker/src/index.ts'),
-      '@czap/_spine': r('packages/_spine'),
+      '@liteship/canonical': r('packages/canonical/src/index.ts'),
+      '@liteship/genui': r('packages/genui/src/index.ts'),
+      '@liteship/core/testing': r('packages/core/src/testing.ts'),
+      '@liteship/core/harness': r('packages/core/src/harness/index.ts'),
+      '@liteship/core/simulation': r('packages/core/src/simulation/index.ts'),
+      '@liteship/core/fs-walk': r('packages/core/src/fs-walk.ts'),
+      '@liteship/core': r('packages/core/src/index.ts'),
+      '@liteship/quantizer/testing': r('packages/quantizer/src/testing.ts'),
+      '@liteship/quantizer': r('packages/quantizer/src/index.ts'),
+      '@liteship/compiler': r('packages/compiler/src/index.ts'),
+      '@liteship/web/lite': r('packages/web/src/lite.ts'),
+      '@liteship/web': r('packages/web/src/index.ts'),
+      '@liteship/detect': r('packages/detect/src/index.ts'),
+      '@liteship/vite/html-transform': r('packages/vite/src/html-transform.ts'),
+      '@liteship/vite': r('packages/vite/src/index.ts'),
+      '@liteship/astro/runtime': r('packages/astro/src/runtime/index.ts'),
+      '@liteship/astro': r('packages/astro/src/index.ts'),
+      '@liteship/stage/ffmpeg': r('packages/stage/src/ffmpeg.ts'),
+      '@liteship/stage': r('packages/stage/src/index.ts'),
+      '@liteship/remotion': r('packages/remotion/src/index.ts'),
+      '@liteship/scene/dev': r('packages/scene/src/dev/server.ts'),
+      '@liteship/scene': r('packages/scene/src/index.ts'),
+      '@liteship/assets': r('packages/assets/src/index.ts'),
+      '@liteship/audit': r('packages/audit/src/index.ts'),
+      '@liteship/cli': r('packages/cli/src/index.ts'),
+      '@liteship/mcp-server': r('packages/mcp-server/src/index.ts'),
+      '@liteship/edge': r('packages/edge/src/index.ts'),
+      '@liteship/cloudflare/testing': r('packages/cloudflare/src/testing.ts'),
+      '@liteship/cloudflare': r('packages/cloudflare/src/index.ts'),
+      '@liteship/worker': r('packages/worker/src/index.ts'),
+      '@liteship/_spine': r('packages/_spine'),
     };
   },
 };

@@ -1,5 +1,5 @@
 /**
- * `czap capsule-verify` adapter — the CLI-only capsule-corpus freshness gate.
+ * `liteship capsule-verify` adapter — the CLI-only capsule-corpus freshness gate.
  *
  * `runCapsuleGateScan` is a subprocess orchestrator at its core (it spawns
  * `capsule:compile` to regeneration-confirm staleness and `vitest run` over
@@ -7,12 +7,12 @@
  * any spawn: the manifest-missing guard, the per-capsule artifact existence checks,
  * the bench classification (`real` vs placeholder), the bench-honesty fold, and the
  * content-hash staleness suspicion. THOSE are what these tests pin — driven over a
- * real temp manifest (via the `CZAP_CAPSULE_MANIFEST` host override) with the
+ * real temp manifest (via the `LITESHIP_CAPSULE_MANIFEST` host override) with the
  * harness + digest helpers mocked so no `capsule:compile` / `vitest` ever spawns
  * (a capsule that produces errors short-circuits BEFORE the vitest spawn).
  *
  * The handler/projection contract (status mirror, exit-code, payload shape) is also
- * tested at the @czap/command layer (tests/unit/command/capsule-verify-gate.test.ts);
+ * tested at the @liteship/command layer (tests/unit/command/capsule-verify-gate.test.ts);
  * this file extends that by pinning the CLI ADAPTER's receipt + pretty-print branch.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -25,7 +25,7 @@ const { classifyBenchSourceMock, benchHonestyErrorMock } = vi.hoisted(() => ({
   classifyBenchSourceMock: vi.fn(),
   benchHonestyErrorMock: vi.fn(),
 }));
-vi.mock('@czap/core/harness', async (importOriginal) => {
+vi.mock('@liteship/core/harness', async (importOriginal) => {
   const orig = await importOriginal<Record<string, unknown>>();
   return { ...orig, classifyBenchSource: classifyBenchSourceMock, benchHonestyError: benchHonestyErrorMock };
 });
@@ -40,7 +40,7 @@ const { sourceProvenanceDigestMock, generatorVersionDigestMock } = vi.hoisted(()
   sourceProvenanceDigestMock: vi.fn(),
   generatorVersionDigestMock: vi.fn(),
 }));
-vi.mock('@czap/command/host', async (importOriginal) => {
+vi.mock('@liteship/command/host', async (importOriginal) => {
   const orig = await importOriginal<Record<string, unknown>>();
   return {
     ...orig,
@@ -52,10 +52,10 @@ vi.mock('@czap/command/host', async (importOriginal) => {
 import { capsuleVerify, runCapsuleGateScan } from '../../../../packages/cli/src/commands/capsule-verify.js';
 
 let root: string;
-const ORIG_MANIFEST_ENV = process.env.CZAP_CAPSULE_MANIFEST;
+const ORIG_MANIFEST_ENV = process.env.LITESHIP_CAPSULE_MANIFEST;
 
 beforeEach(() => {
-  root = mkdtempSync(join(tmpdir(), 'czap-capsule-verify-'));
+  root = mkdtempSync(join(tmpdir(), 'liteship-capsule-verify-'));
   classifyBenchSourceMock.mockReset().mockReturnValue('real');
   benchHonestyErrorMock.mockReset().mockReturnValue(null);
   // Default: the live digests MATCH the recorded ones ⇒ no staleness suspects ⇒
@@ -68,8 +68,8 @@ beforeEach(() => {
 });
 afterEach(() => {
   rmSync(root, { recursive: true, force: true });
-  if (ORIG_MANIFEST_ENV === undefined) delete process.env.CZAP_CAPSULE_MANIFEST;
-  else process.env.CZAP_CAPSULE_MANIFEST = ORIG_MANIFEST_ENV;
+  if (ORIG_MANIFEST_ENV === undefined) delete process.env.LITESHIP_CAPSULE_MANIFEST;
+  else process.env.LITESHIP_CAPSULE_MANIFEST = ORIG_MANIFEST_ENV;
   vi.restoreAllMocks();
 });
 
@@ -78,7 +78,7 @@ function writeManifest(manifest: unknown): void {
   const manifestPath = join(root, 'reports', 'capsule-manifest.json');
   mkdirSync(join(root, 'reports'), { recursive: true });
   writeFileSync(manifestPath, JSON.stringify(manifest));
-  process.env.CZAP_CAPSULE_MANIFEST = manifestPath;
+  process.env.LITESHIP_CAPSULE_MANIFEST = manifestPath;
 }
 
 function writeArtifact(rel: string, content: string): void {
@@ -102,7 +102,7 @@ function freshCapsule(name: string) {
 
 describe('runCapsuleGateScan — in-process branches (no spawn)', () => {
   it('manifest missing ⇒ stale with a compile hint and zero capsules', async () => {
-    process.env.CZAP_CAPSULE_MANIFEST = join(root, 'reports', 'capsule-manifest.json');
+    process.env.LITESHIP_CAPSULE_MANIFEST = join(root, 'reports', 'capsule-manifest.json');
     const summary = await runCapsuleGateScan(root);
     expect(summary.status).toBe('stale');
     expect(summary.errors).toEqual(['manifest missing; run capsule:compile first']);
@@ -177,7 +177,7 @@ describe('runCapsuleGateScan — in-process branches (no spawn)', () => {
 /**
  * Drive a `execSync` double that distinguishes the two spawns the scan makes:
  *  - `capsule:compile` (regeneration): writes `regenManifest` to the temp manifest
- *    path the scan passes via `CZAP_CAPSULE_MANIFEST` in the spawn env. `null`
+ *    path the scan passes via `LITESHIP_CAPSULE_MANIFEST` in the spawn env. `null`
  *    regen ⇒ the compile "fails" (throws), exercising the fail-closed branch.
  *  - `vitest run` (suite): returns '' (pass) unless `vitestFails` is set.
  */
@@ -185,7 +185,7 @@ function wireExecSync(opts: { regenManifest: unknown | null; vitestFails?: boole
   execSyncMock.mockImplementation((cmd: string, spawnOpts?: { env?: Record<string, string> }) => {
     if (cmd.includes('capsule:compile')) {
       if (opts.regenManifest === null) throw new Error('compile failed');
-      const target = spawnOpts?.env?.['CZAP_CAPSULE_MANIFEST'];
+      const target = spawnOpts?.env?.['LITESHIP_CAPSULE_MANIFEST'];
       if (target) writeFileSync(target, JSON.stringify(opts.regenManifest));
       return '';
     }
@@ -272,7 +272,7 @@ function lastReceipt(stdout: string): Record<string, unknown> {
   return JSON.parse(stdout.trim().split('\n').pop()!) as Record<string, unknown>;
 }
 
-describe('czap capsule-verify — adapter projection (receipt + pretty-print)', () => {
+describe('liteship capsule-verify — adapter projection (receipt + pretty-print)', () => {
   it('an empty-capsules manifest passes the gate (exit 0, ok receipt)', async () => {
     writeManifest({ generatorVersion: 'gen-v1', capsules: [] });
     const { exit, stdout, stderr } = await captureCli(() => capsuleVerify({ cwd: root, pretty: true }));
@@ -283,7 +283,7 @@ describe('czap capsule-verify — adapter projection (receipt + pretty-print)', 
   });
 
   it('a missing manifest fails the gate (exit 1) and prints the stale work-list (pretty)', async () => {
-    process.env.CZAP_CAPSULE_MANIFEST = join(root, 'reports', 'capsule-manifest.json');
+    process.env.LITESHIP_CAPSULE_MANIFEST = join(root, 'reports', 'capsule-manifest.json');
     const { exit, stdout, stderr } = await captureCli(() => capsuleVerify({ cwd: root, pretty: true }));
     expect(exit).toBe(1);
     const receipt = lastReceipt(stdout);
@@ -293,7 +293,7 @@ describe('czap capsule-verify — adapter projection (receipt + pretty-print)', 
   });
 
   it('a failed gate stays SILENT on stderr when pretty is off (still exits 1)', async () => {
-    process.env.CZAP_CAPSULE_MANIFEST = join(root, 'reports', 'capsule-manifest.json');
+    process.env.LITESHIP_CAPSULE_MANIFEST = join(root, 'reports', 'capsule-manifest.json');
     const { exit, stderr } = await captureCli(() => capsuleVerify({ cwd: root, pretty: false }));
     expect(exit).toBe(1);
     expect(stderr).toBe('');

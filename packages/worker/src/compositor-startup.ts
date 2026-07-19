@@ -9,7 +9,7 @@
  * @module
  */
 
-import { RuntimeCoordinator, StateName, rawIndexF32, systemClock } from '@czap/core';
+import { RuntimeCoordinator, StateName, rawIndexF32, systemClock } from '@liteship/core';
 import type { ToWorkerMessage, BootstrapQuantizerRegistration, ResolvedStateEntry } from './messages.js';
 import type {
   CompositorWorkerStartupTelemetry,
@@ -57,7 +57,7 @@ let standbyCompositorLease: StandbyCompositorLease | null = null;
 /**
  * Return the current high-resolution wall-clock time in nanoseconds.
  *
- * Reads through `@czap/core`'s `systemClock` -- the single audited entropy
+ * Reads through `@liteship/core`'s `systemClock` -- the single audited entropy
  * boundary -- which itself prefers `performance.now()` and falls back to
  * `Date.now()` where the performance timeline is absent. This is an
  * inherently-live observability read (it only feeds telemetry stage deltas,
@@ -219,13 +219,13 @@ function getCompositorWorkerUrl(): string {
 
 function createRawCompositorWorker(): Worker {
   const url = getCompositorWorkerUrl();
-  return new Worker(url, { type: 'classic', name: 'czap-compositor' });
+  return new Worker(url, { type: 'classic', name: 'liteship-compositor' });
 }
 
 function createRuntimeCoordinator(capacity: number): RuntimeCoordinator.Shape {
   return RuntimeCoordinator.create({
     capacity,
-    name: 'czap-worker-runtime',
+    name: 'liteship-worker-runtime',
   });
 }
 

@@ -1,7 +1,7 @@
 /**
- * `czap audit-floor` adapter — the CLI-only projection of the warning-floor gate.
+ * `liteship audit-floor` adapter — the CLI-only projection of the warning-floor gate.
  *
- * The CLI is the ONLY adapter that wires the heavy `@czap/audit` three-pass engine
+ * The CLI is the ONLY adapter that wires the heavy `@liteship/audit` three-pass engine
  * (`runStructureAudit` / `runIntegrityAudit` / `runSurfaceAudit`) into the
  * `runAuditFloor` capability; those three are mocked so these assertions pin the
  * ADAPTER's in-process logic — `runAuditFloorScan`'s warning filter + sort, the
@@ -21,7 +21,7 @@ const { structureMock, integrityMock, surfaceMock } = vi.hoisted(() => ({
   integrityMock: vi.fn(),
   surfaceMock: vi.fn(),
 }));
-vi.mock('@czap/audit', async (importOriginal) => {
+vi.mock('@liteship/audit', async (importOriginal) => {
   const orig = await importOriginal<Record<string, unknown>>();
   return {
     ...orig,
@@ -52,7 +52,7 @@ function lastReceipt(stdout: string): Record<string, unknown> {
   return JSON.parse(stdout.trim().split('\n').pop()!) as Record<string, unknown>;
 }
 
-describe('czap audit-floor — clean inventory matches the empty floor (exit 0)', () => {
+describe('liteship audit-floor — clean inventory matches the empty floor (exit 0)', () => {
   it('passes with zero warnings/errors and writes no drift report', async () => {
     const { exit, stdout, stderr } = await captureCli(() => auditFloor({ pretty: true }));
     expect(exit).toBe(0);
@@ -70,7 +70,7 @@ describe('czap audit-floor — clean inventory matches the empty floor (exit 0)'
   });
 });
 
-describe('czap audit-floor — a new warning is drift against the zero floor (exit 1)', () => {
+describe('liteship audit-floor — a new warning is drift against the zero floor (exit 1)', () => {
   it('reports the ADDED key in the receipt delta and the pretty drift report', async () => {
     structureMock.mockReturnValue(pass([finding('no-foo', 'warning', 'packages/x/src/a.ts')]));
     const { exit, stdout, stderr } = await captureCli(() => auditFloor({ pretty: true }));

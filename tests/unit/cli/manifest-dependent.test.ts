@@ -81,26 +81,26 @@ const FIXTURE_MANIFEST = {
 };
 
 describe('cli — manifest-dependent commands (serialized)', () => {
-  // CUT T1: the whole suite operates on a temp manifest via CZAP_CAPSULE_MANIFEST.
+  // CUT T1: the whole suite operates on a temp manifest via LITESHIP_CAPSULE_MANIFEST.
   // The CLI commands under test resolve the manifest through getCapsuleManifestPath(),
   // which honors this env var, so nothing here touches the shared real path.
   beforeAll(() => {
-    manifestTmpRoot = mkdtempSync(pathJoin(tmpdir(), 'czap-manifest-dep-'));
+    manifestTmpRoot = mkdtempSync(pathJoin(tmpdir(), 'liteship-manifest-dep-'));
     MANIFEST_PATH = pathJoin(manifestTmpRoot, 'reports', 'capsule-manifest.json');
     mkdirSync(dirname(MANIFEST_PATH), { recursive: true });
-    priorManifestEnv = process.env.CZAP_CAPSULE_MANIFEST;
-    process.env.CZAP_CAPSULE_MANIFEST = MANIFEST_PATH;
+    priorManifestEnv = process.env.LITESHIP_CAPSULE_MANIFEST;
+    process.env.LITESHIP_CAPSULE_MANIFEST = MANIFEST_PATH;
   });
   beforeEach(() => {
     // Re-assert the override (the nested override-describe deletes it) and reset content.
-    process.env.CZAP_CAPSULE_MANIFEST = MANIFEST_PATH;
+    process.env.LITESHIP_CAPSULE_MANIFEST = MANIFEST_PATH;
     mkdirSync(dirname(MANIFEST_PATH), { recursive: true });
     writeFileSync(MANIFEST_PATH, JSON.stringify(FIXTURE_MANIFEST), 'utf8');
-    if (existsSync('.czap/cache')) rmSync('.czap/cache', { recursive: true, force: true });
+    if (existsSync('.liteship/cache')) rmSync('.liteship/cache', { recursive: true, force: true });
   });
   afterAll(() => {
-    if (priorManifestEnv === undefined) delete process.env.CZAP_CAPSULE_MANIFEST;
-    else process.env.CZAP_CAPSULE_MANIFEST = priorManifestEnv;
+    if (priorManifestEnv === undefined) delete process.env.LITESHIP_CAPSULE_MANIFEST;
+    else process.env.LITESHIP_CAPSULE_MANIFEST = priorManifestEnv;
     rmSync(manifestTmpRoot, { recursive: true, force: true });
   });
 
@@ -341,18 +341,18 @@ describe('cli — manifest-dependent commands (serialized)', () => {
     expect(Array.isArray(receipt.phases)).toBe(true);
   });
 
-  describe('CZAP_CAPSULE_MANIFEST override', () => {
+  describe('LITESHIP_CAPSULE_MANIFEST override', () => {
     let tmpManifest: string;
 
     beforeEach(() => {
-      const dir = mkdtempSync(pathJoin(tmpdir(), 'czap-cap-'));
+      const dir = mkdtempSync(pathJoin(tmpdir(), 'liteship-cap-'));
       tmpManifest = pathJoin(dir, 'manifest.json');
-      process.env.CZAP_CAPSULE_MANIFEST = tmpManifest;
+      process.env.LITESHIP_CAPSULE_MANIFEST = tmpManifest;
       writeFileSync(tmpManifest, JSON.stringify(FIXTURE_MANIFEST), 'utf8');
     });
 
     afterEach(() => {
-      delete process.env.CZAP_CAPSULE_MANIFEST;
+      delete process.env.LITESHIP_CAPSULE_MANIFEST;
       rmSync(dirname(tmpManifest), { recursive: true, force: true });
     });
 

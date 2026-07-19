@@ -9,7 +9,7 @@
  * @module
  */
 import { describe, it, expect } from 'vitest';
-import { graphPatchIdentityCapsule, GraphPatch } from '@czap/core';
+import { graphPatchIdentityCapsule, GraphPatch } from '@liteship/core';
 import { _graphPatchIdentityInternals } from '../../../../packages/core/src/capsules/graph-patch-identity.js';
 
 const { buildGraph, sameGraph, signalNode } = _graphPatchIdentityInternals;

@@ -9,9 +9,9 @@
  * @module
  */
 import { describe, it, expect } from 'vitest';
-import { CommandRegistry, CommandDispatcher, defineCommand, ok } from '@czap/command';
-import type { RegisteredCommand, CommandJsonSchema } from '@czap/command';
-import { S } from '@czap/core';
+import { CommandRegistry, CommandDispatcher, defineCommand, ok } from '@liteship/command';
+import type { RegisteredCommand, CommandJsonSchema } from '@liteship/command';
+import { S } from '@liteship/core';
 
 const SCENE_INPUT: CommandJsonSchema = {
   type: 'object',
@@ -52,7 +52,7 @@ describe('dispatcher decodes args against the declared argsSchema', () => {
       },
     });
     const dispatcher = CommandDispatcher.make(CommandRegistry.make([probe]));
-    // `czap scene --scene=123`-style mistyping: a number where a string is required.
+    // `liteship scene --scene=123`-style mistyping: a number where a string is required.
     const result = await dispatcher.dispatch({ name: 'scene.probe', args: { scene: 123 } }, {});
     expect(result.status).toBe('failed');
     expect(result.exitCode).toBe(1);

@@ -10,7 +10,7 @@ import {
   type BenchArtifact,
 } from '../../../scripts/artifact-integrity.js';
 import { buildCodebaseAuditReport } from '../../../scripts/audit/report.js';
-import { liteshipDevopsProfile, withRepoRoot } from '@czap/audit';
+import { liteshipDevopsProfile, withRepoRoot } from '@liteship/audit';
 import { buildDirectiveBenchConfig } from '../../../scripts/bench/directive-suite.js';
 import { buildStartupRealityArtifact } from '../../../scripts/bench-reality.js';
 import {
@@ -32,7 +32,7 @@ afterEach(() => {
 });
 
 function createRepo(files: Record<string, string>): string {
-  const root = mkdtempSync(join(os.tmpdir(), 'czap-scan-'));
+  const root = mkdtempSync(join(os.tmpdir(), 'liteship-scan-'));
   tempRoots.push(root);
 
   for (const [relativePath, content] of Object.entries(files)) {
@@ -48,7 +48,7 @@ function baseRepoFiles(): Record<string, string> {
   return {
     'package.json': JSON.stringify(
       {
-        name: 'czap-scan-fixture',
+        name: 'liteship-scan-fixture',
         private: true,
         type: 'module',
         packageManager: 'pnpm@10.32.1',
@@ -66,7 +66,7 @@ function baseRepoFiles(): Record<string, string> {
     ),
     'packages/core/package.json': JSON.stringify(
       {
-        name: '@czap/core',
+        name: '@liteship/core',
         type: 'module',
         exports: {
           '.': { development: './src/index.ts' },
@@ -79,7 +79,7 @@ function baseRepoFiles(): Record<string, string> {
     'packages/core/src/runtime-helper.ts': 'export const runtimeHelper = true;\n',
     'packages/web/package.json': JSON.stringify(
       {
-        name: '@czap/web',
+        name: '@liteship/web',
         type: 'module',
         exports: {
           '.': { development: './src/index.ts' },

@@ -18,7 +18,7 @@ guarantees exhaustiveness and no runtime `unknown`/`as` casts are required.
 
 Arms:
 - `CSSCompiler`    — boundary + per-state CSS property maps → `@container` rules.
-                     Bare properties target `selector` (default `.czap-boundary`).
+                     Bare properties target `selector` (default `.liteship-boundary`).
 - `GLSLCompiler`   — boundary + per-state numeric uniforms → GLSL uniform block.
 - `WGSLCompiler`   — boundary + per-state scalar/vector uniforms → WGSL bindings.
 - `ARIACompiler`   — boundary + per-state attribute maps + active state → ARIA attributes.
@@ -44,7 +44,7 @@ Arms:
 
 > `readonly` `optional` **selector?**: `string`
 
-CSS selector for bare properties; defaults to `.czap-boundary`.
+CSS selector for bare properties; defaults to `.liteship-boundary`.
 
 #### states
 

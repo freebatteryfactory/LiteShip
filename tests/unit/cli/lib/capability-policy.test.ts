@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
-import { SANCTIONED_SKIPS } from '@czap/gauntlet';
+import { SANCTIONED_SKIPS } from '@liteship/gauntlet';
 import { resolveCapabilitySites } from '../../../../packages/cli/src/lib/capability-policy.js';
 
 function writeSanctionedSkipFixture(root: string, duplicateFile?: string): void {

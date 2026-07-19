@@ -1,16 +1,24 @@
 /**
  * Client-runtime helpers for parsing serialized boundaries out of
- * `data-czap-boundary` attributes, attaching signal observers
+ * `data-liteship-boundary` attributes, attaching signal observers
  * (viewport, scroll), evaluating boundaries live, and applying the
  * resulting state to a satellite element.
  *
  * Consumed by the Astro `client:satellite` / `client:worker` directives
- * when they hydrate a server-rendered `<div data-czap-boundary="...">`.
+ * when they hydrate a server-rendered `<div data-liteship-boundary="...">`.
  *
  * @module
  */
-import { Boundary, BoundaryAttribute, clamp01, Diagnostics, inputToSource, wallClock, type Clock } from '@czap/core';
-import { dispatchCzapEvent, type CzapEventName } from '@czap/web';
+import {
+  Boundary,
+  BoundaryAttribute,
+  clamp01,
+  Diagnostics,
+  inputToSource,
+  wallClock,
+  type Clock,
+} from '@liteship/core';
+import { dispatchLiteshipEvent, type LiteshipEventName } from '@liteship/web';
 import { readAudioSignal, attachAudioObserver } from './audio-signal.js';
 
 /** JSON-safe authored WGSL vector value carried in boundary payloads. */
@@ -115,13 +123,13 @@ export interface RuntimeBoundary {
 
 /**
  * Normalised boundary-state payload used for `CustomEvent` dispatch and
- * DOM application. CSS keys are filtered to `--czap-*`; ARIA keys to
+ * DOM application. CSS keys are filtered to `--liteship-*`; ARIA keys to
  * `role` / `aria-*`.
  */
 export interface BoundaryStateDetail {
   /** Discrete state per quantizer name. */
   readonly discrete: Record<string, string>;
-  /** Whitelisted `--czap-*` CSS variable map. */
+  /** Whitelisted `--liteship-*` CSS variable map. */
   readonly css: Record<string, string | number>;
   /** GLSL uniform map (`u_*`). */
   readonly glsl: Record<string, number>;
@@ -133,12 +141,12 @@ export interface BoundaryStateDetail {
 
 /** Boundary state events that share {@link BoundaryStateDetail} / uniform payloads. */
 export type BoundaryStateEventName = Extract<
-  CzapEventName,
-  'czap:state' | 'czap:satellite-state' | 'czap:graph-state' | 'czap:worker-state'
+  LiteshipEventName,
+  'liteship:state' | 'liteship:satellite-state' | 'liteship:graph-state' | 'liteship:worker-state'
 >;
 
 function isAllowedBoundaryCssProperty(property: string): boolean {
-  return property.startsWith('--czap-');
+  return property.startsWith('--liteship-');
 }
 
 /** User-facing parse failure text shared by the runtime and dev inspector. */
@@ -150,8 +158,8 @@ export function boundaryParseFailureMessage(boundaryJson: string | null): string
   const parsed = parseBoundaryPayload(boundaryJson);
   if (!parsed) {
     return (
-      `data-czap-boundary on this element is not valid JSON — the satellite runtime will stay inert. ` +
-      `Fix: spread satelliteAttrs({ boundary }) from @czap/astro or re-serialize with JSON.stringify.`
+      `data-liteship-boundary on this element is not valid JSON — the satellite runtime will stay inert. ` +
+      `Fix: spread satelliteAttrs({ boundary }) from @liteship/astro or re-serialize with JSON.stringify.`
     );
   }
 
@@ -165,7 +173,7 @@ export function boundaryParseFailureMessage(boundaryJson: string | null): string
     !parsed.states.every((value) => typeof value === 'string')
   ) {
     return (
-      `data-czap-boundary JSON is missing required fields (input, thresholds, states) — ` +
+      `data-liteship-boundary JSON is missing required fields (input, thresholds, states) — ` +
       `the satellite runtime will stay inert. Fix: export a Boundary.make({ input, at }) value via satelliteAttrs().`
     );
   }
@@ -205,7 +213,7 @@ export function parseBoundary(boundaryJson: string | null): RuntimeBoundary | nu
   if (failureMessage) {
     const code = failureMessage.includes('not valid JSON') ? 'boundary-json-invalid' : 'boundary-json-shape-invalid';
     Diagnostics.warnOnce({
-      source: 'czap/astro.boundary',
+      source: 'liteship/astro.boundary',
       code,
       message: failureMessage,
       detail: { snippet: boundaryJson.slice(0, 120) },
@@ -254,7 +262,7 @@ export function buildBoundaryActivationContext(clock: Clock = wallClock): {
   activeExperiments: readonly string[];
 } {
   const experimentsAttr =
-    typeof document !== 'undefined' ? document.documentElement.getAttribute('data-czap-experiments') : null;
+    typeof document !== 'undefined' ? document.documentElement.getAttribute('data-liteship-experiments') : null;
   const activeExperiments = experimentsAttr
     ? experimentsAttr
         .split(',')
@@ -328,7 +336,7 @@ function attachScrollListener(axis: 'x' | 'y' | 'progress', callback: () => void
  * - `audio.*`    — rAF observer over the host-published analyser value
  *
  * The signal family is derived from the SOURCE OF TRUTH ({@link inputToSource}
- * in `@czap/core`), never re-parsed here — every reader on the hot path shares
+ * in `@liteship/core`), never re-parsed here — every reader on the hot path shares
  * the one parse so the vocabulary cannot drift.
  *
  * Returns a cleanup function, or `null` when no observer was attached
@@ -362,7 +370,7 @@ export function attachSignalObserver(input: string, callback: () => void): (() =
  *
  * The axis is derived from the SOURCE OF TRUTH ({@link inputToSource}), never
  * re-parsed here. Returns `undefined` for inputs outside the vocabulary
- * (feed those through `@czap/quantizer`'s `live.evaluate()` instead); returns
+ * (feed those through `@liteship/quantizer`'s `live.evaluate()` instead); returns
  * `0` in non-DOM environments so callers can treat SSR and malformed signals
  * uniformly.
  *
@@ -498,9 +506,9 @@ export function evaluateBoundary(
 
 /**
  * Merge `state.*` and `state.outputs.*` fields into a single
- * {@link BoundaryStateDetail}, filtering CSS keys to `--czap-*` and
+ * {@link BoundaryStateDetail}, filtering CSS keys to `--liteship-*` and
  * ARIA keys to `role` / `aria-*`. Used as the `detail` of the
- * `czap:state` custom event.
+ * `liteship:state` custom event.
  */
 export function normalizeBoundaryState(state: {
   readonly discrete?: Record<string, string>;
@@ -529,8 +537,8 @@ export function normalizeBoundaryState(state: {
 
 /**
  * Apply a normalised state to a satellite element: sets
- * `data-czap-state`, writes whitelisted CSS variables and ARIA
- * attributes, and dispatches `eventName` + `czap:uniform-update`
+ * `data-liteship-state`, writes whitelisted CSS variables and ARIA
+ * attributes, and dispatches `eventName` + `liteship:uniform-update`
  * custom events for downstream listeners (GPU/WASM runtimes).
  */
 export function applyBoundaryState(
@@ -582,8 +590,8 @@ export function applyBoundaryState(
     ...(authoredWgsl ? { wgsl: { ...normalized.wgsl, ...authoredWgsl } } : {}),
   };
 
-  if (stateName && element.getAttribute('data-czap-state') !== stateName) {
-    element.setAttribute('data-czap-state', stateName);
+  if (stateName && element.getAttribute('data-liteship-state') !== stateName) {
+    element.setAttribute('data-liteship-state', stateName);
   }
 
   for (const [property, value] of Object.entries(detail.css)) {
@@ -594,6 +602,6 @@ export function applyBoundaryState(
     element.setAttribute(attribute, value);
   }
 
-  dispatchCzapEvent(element, eventName, detail);
-  dispatchCzapEvent(element, 'czap:uniform-update', detail);
+  dispatchLiteshipEvent(element, eventName, detail);
+  dispatchLiteshipEvent(element, 'liteship:uniform-update', detail);
 }

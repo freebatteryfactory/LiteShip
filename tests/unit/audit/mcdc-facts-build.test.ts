@@ -13,7 +13,7 @@ import {
   makeCoverageMap,
   type McdcTargetFile,
   type MutantTestRunner,
-} from '@czap/audit';
+} from '@liteship/audit';
 
 const FILE = 'r.ts';
 const SRC = 'export function inRange(x: number, lo: number, hi: number): boolean { return x >= lo && x <= hi; }';

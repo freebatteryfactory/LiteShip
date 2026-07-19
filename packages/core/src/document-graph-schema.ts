@@ -8,7 +8,7 @@
  *
  * This module factors that check OUT of `ai-cast.ts` (where it began life
  * gating model proposals) so BOTH the AI seam AND the runtime graph loader
- * (`@czap/astro`'s `loadGraphRuntime`) share ONE trust gate — a node the loader
+ * (`@liteship/astro`'s `loadGraphRuntime`) share ONE trust gate — a node the loader
  * accepts is a node the AI validator would accept, and vice versa. There is no
  * second, drifting copy of "is this a well-formed node?".
  *
@@ -27,7 +27,7 @@
  * @module
  */
 
-import { ValidationError } from '@czap/error';
+import { ValidationError } from '@liteship/error';
 import { S, decode, toStandardSchema } from './schema/index.js';
 import { isCanonicalCapSet } from './caps.js';
 import type { DocumentGraphNode, NodeFamily } from './document-graph.js';

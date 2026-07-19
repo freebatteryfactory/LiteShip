@@ -31,7 +31,7 @@ Content-addressed receipt cache (adapter-backed; fs on the CLI side).
 Defined in: [command/src/registry.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L27)
 
 MONOTONIC clock for measuring command DURATIONS (e.g. compile `durationMs`).
-Defaults to `@czap/core`'s `systemClock` (`performance.now`) at the call site.
+Defaults to `@liteship/core`'s `systemClock` (`performance.now`) at the call site.
 Injected so a deterministic replay/test can thread a `manualClock`. This is a
 DURATION boundary — never feed its reading into a `new Date()` / ISO stamp /
 HLC (those are TIMESTAMPS and use the wall clock).
@@ -95,7 +95,7 @@ Does a file exist? Adapter-backed (fs). Keeps handlers free of `node:fs`.
 
 Defined in: [command/src/registry.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L42)
 
-The host adapter's own czap version (its package version). Supplied by the
+The host adapter's own liteship version (its package version). Supplied by the
 adapter because the version is a fact about the host, not this package.
 
 #### Returns
@@ -136,7 +136,7 @@ reads the file). Null when no source file is found.
 Defined in: [command/src/registry.ts:186](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L186)
 
 Dynamically load a user scene module (the adapter owns the dynamic import,
-keeping @czap/command free of it — relevant to the A1-T3 dynamic-import
+keeping @liteship/command free of it — relevant to the A1-T3 dynamic-import
 audit). Null when the module can't be loaded.
 
 #### Parameters
@@ -175,7 +175,7 @@ path-less wording.
 Defined in: [command/src/registry.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L48)
 
 Raw capsule-manifest JSON text, or null when absent. The adapter resolves
-the path (honoring CZAP_CAPSULE_MANIFEST) and reads it; the handler parses.
+the path (honoring LITESHIP_CAPSULE_MANIFEST) and reads it; the handler parses.
 Keeps path/env policy on the adapter side.
 
 #### Returns
@@ -232,7 +232,7 @@ Defined in: [command/src/registry.ts:200](https://github.com/freebatteryfactory/
 
 Render a scene to the output path via the host's compositor + ffmpeg
 pipeline, returning frame metrics. Adapter-backed (Compositor/VideoRenderer
-+ ffmpeg spawn); keeps the render backend out of @czap/command.
++ ffmpeg spawn); keeps the render backend out of @liteship/command.
 
 #### Parameters
 
@@ -275,7 +275,7 @@ Render width in pixels; the host defaults to 1280 when absent.
 Defined in: [command/src/registry.ts:176](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L176)
 
 Run an audio projection over decoded bytes and return the marker count.
-Adapter-backed by @czap/assets — injected (not imported) so @czap/command
+Adapter-backed by @liteship/assets — injected (not imported) so @liteship/command
 does not yet take a domain-package build edge. (Heavy-tier decision: whether
 command should depend on assets/scene directly, or keep injecting.)
 
@@ -310,10 +310,10 @@ registry) instead of hardwiring the audio built-in.
 Defined in: [command/src/registry.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L71)
 
 Run the profile-driven audit engine (structure/integrity/surface) and return
-a structured summary. Adapter-backed by `@czap/audit`, which is INJECTED here
-(not imported) so `@czap/command` — and therefore `@czap/mcp-server` — never
+a structured summary. Adapter-backed by `@liteship/audit`, which is INJECTED here
+(not imported) so `@liteship/command` — and therefore `@liteship/mcp-server` — never
 takes a build edge on the TypeScript-compiler/fast-glob audit engine. Only
-`@czap/cli` provides it; `audit` is not MCP-exposed, so the capability is
+`@liteship/cli` provides it; `audit` is not MCP-exposed, so the capability is
 absent in the MCP context and the handler degrades to a structured failure.
 
 #### Parameters
@@ -348,8 +348,8 @@ Run the audit-floor gate over the repo at `cwd`: run the artifact-independent
 three-pass audit engine, collect the `rule@file` warning inventory, and diff
 it against the pinned `AUDIT_WARNING_FLOOR`. Drift (added/removed warnings or
 ANY error) fails the gate. Returns a structured verdict — no process.exit, no
-stdout. Like [runAudit](#runaudit), it is backed by the heavy `@czap/audit` engine,
-so it is NOT provisioned in the shared host factory: only `@czap/cli` injects
+stdout. Like [runAudit](#runaudit), it is backed by the heavy `@liteship/audit` engine,
+so it is NOT provisioned in the shared host factory: only `@liteship/cli` injects
 it. `audit-floor` is therefore not MCP-exposed — over MCP the capability is
 absent and the handler degrades to a structured failure (capabilityUnavailable).
 
@@ -374,7 +374,7 @@ structured verdict — no process.exit, no stdout. Like [runPackageSmoke](#runpa
 (and unlike the pure `node:fs` scans `runPlumb` / `runCheckInvariants`), the
 freshness confirmation spawns `capsule:compile` and the final pass spawns
 `vitest` — a terminal-streaming SUBPROCESS orchestrator. So it is NOT
-provisioned in the shared host factory: only `@czap/cli` injects it, and the
+provisioned in the shared host factory: only `@liteship/cli` injects it, and the
 command is NOT MCP-exposed — over MCP it degrades to a structured
 `capabilityUnavailable`.
 
@@ -395,7 +395,7 @@ source for banned patterns (require / module.exports / `var` / non-sanctioned
 default export / hand-parsed signal axis) and check every committed text file
 matches the `.gitattributes` eol policy. Returns a structured verdict — no
 process.exit, no stdout. Backed by `node:fs` + a `git ls-files --eol` probe,
-so like `runPlumb` (and unlike the heavy `@czap/audit` `runAudit` engine) it is
+so like `runPlumb` (and unlike the heavy `@liteship/audit` `runAudit` engine) it is
 provisioned in the shared host factory (`createNodeCommandContext`) and is
 therefore available to BOTH the CLI and the MCP host — an agent can call
 `check-invariants` over MCP and read the grouped violation list.
@@ -419,8 +419,8 @@ the authority ratchet, and returns the structured [GauntletResult](https://githu
 (findings + per-gate outcomes + a single blocking verdict). This is the
 tasks-vs-gates distinction made real: `check` is the fixture-qualified gate
 FOLD, whereas the CLI-owned `gauntlet` command spawns the full
-`gauntlet:full` orchestrator. Backed by `@czap/gauntlet`'s `node:fs` glob,
-so — like `runPlumb` / `runCheckInvariants`, and unlike the heavy `@czap/audit`
+`gauntlet:full` orchestrator. Backed by `@liteship/gauntlet`'s `node:fs` glob,
+so — like `runPlumb` / `runCheckInvariants`, and unlike the heavy `@liteship/audit`
 engine — it is provisioned in the shared host factory
 (`createNodeCommandContext`) and is therefore available to BOTH the CLI and
 the MCP host: an agent can call `check` over MCP and read the Finding[] work-list.
@@ -448,16 +448,16 @@ readonly `string`[]
 Defined in: [command/src/registry.ts:101](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L101)
 
 Run the package-smoke release gate over the repo at `cwd`: `pnpm pack` every
-publishable `@czap/*` scope, install the tarballs into an isolated consumer
+publishable `@liteship/*` scope, install the tarballs into an isolated consumer
 fixture, assert no `workspace:` protocol leaked into the packed manifests, and
-import-smoke every declared module specifier (plus the `czap` binstub).
+import-smoke every declared module specifier (plus the `liteship` binstub).
 Returns a structured pass/fail verdict — no process.exit, no stdout. Unlike
 the `node:fs` scan gates (`runPlumb` / `runCheckInvariants`, host-provisioned
 and MCP-exposed), this gate is a terminal-streaming SUBPROCESS orchestrator —
 it spawns `pnpm pack` per package, `pnpm install`, `tar`, and `node` (minutes
 of runtime, mutating a scratch tree under `os.tmpdir()`), in the same category
 as `gauntlet`/`ship`. So like `runAuditFloor` it is NOT provisioned in the
-shared host factory: only `@czap/cli` injects it, and the command is NOT
+shared host factory: only `@liteship/cli` injects it, and the command is NOT
 MCP-exposed — over MCP it degrades to a structured `capabilityUnavailable`.
 
 #### Returns
@@ -477,7 +477,7 @@ Run the plumb-completeness gate over the repo at `cwd`: scan
 coverage) and check every published package carries a `PACKAGE_PLUMB`
 classification. Returns a structured verdict — no process.exit, no stdout.
 Backed by `node:fs` directory scanning, so unlike `runAudit` (the heavy
-`@czap/audit` engine) it is provisioned in the shared host factory
+`@liteship/audit` engine) it is provisioned in the shared host factory
 (`createNodeCommandContext`) and is therefore available to BOTH the CLI and
 the MCP host — an agent can call `plumb` over MCP and read the work-list.
 
@@ -495,7 +495,7 @@ Defined in: [command/src/registry.ts:194](https://github.com/freebatteryfactory/
 
 Execute a loaded scene module's compile function (the adapter runs it,
 including any Effect). Keeps the `effect` runtime + arbitrary-user-code
-execution out of @czap/command. Throws on compile failure.
+execution out of @liteship/command. Throws on compile failure.
 
 #### Parameters
 
@@ -537,7 +537,7 @@ readonly `string`[]
 Defined in: [command/src/registry.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L34)
 
 Capture a subprocess's stdout + exit code. Adapters back this with their
-own spawn helper (e.g. @czap/cli's `spawnArgvCapture`); handlers stay free
+own spawn helper (e.g. @liteship/cli's `spawnArgvCapture`); handlers stay free
 of `node:child_process`. Absent in pure/test contexts — handlers must
 degrade gracefully (treat as "not available").
 

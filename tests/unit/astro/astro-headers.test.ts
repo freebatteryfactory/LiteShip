@@ -1,15 +1,15 @@
 import { describe, expect, test } from 'vitest';
 import {
-  applyCzapHeaders,
+  applyLiteshipHeaders,
   CLIENT_HINTS_HEADERS,
   CROSS_ORIGIN_HEADERS,
-  getCzapHeaderEntries,
+  getLiteshipHeaderEntries,
   mergeVaryHeader,
 } from '../../../packages/astro/src/headers.js';
 
 describe('astro header helpers', () => {
   test('omits empty client hint override values while preserving worker headers', () => {
-    const entries = getCzapHeaderEntries({
+    const entries = getLiteshipHeaderEntries({
       detectEnabled: true,
       workersEnabled: true,
       acceptCH: '',
@@ -20,7 +20,7 @@ describe('astro header helpers', () => {
   });
 
   test('uses default client hint headers when detection is enabled without overrides', () => {
-    const entries = getCzapHeaderEntries({
+    const entries = getLiteshipHeaderEntries({
       detectEnabled: true,
       workersEnabled: false,
     });
@@ -32,9 +32,9 @@ describe('astro header helpers', () => {
     ]);
   });
 
-  test('applyCzapHeaders mutates and returns the provided Headers instance', () => {
+  test('applyLiteshipHeaders mutates and returns the provided Headers instance', () => {
     const headers = new Headers({ 'x-test': 'keep' });
-    const result = applyCzapHeaders(headers, {
+    const result = applyLiteshipHeaders(headers, {
       detectEnabled: false,
       workersEnabled: true,
     });
@@ -48,7 +48,7 @@ describe('astro header helpers', () => {
   });
 
   test('coep option selects the embedder policy value', () => {
-    const entries = getCzapHeaderEntries({
+    const entries = getLiteshipHeaderEntries({
       detectEnabled: false,
       workersEnabled: true,
       coep: 'credentialless',
@@ -60,13 +60,13 @@ describe('astro header helpers', () => {
     ]);
   });
 
-  test('applyCzapHeaders leaves pre-existing COOP/COEP untouched but always owns client hints', () => {
+  test('applyLiteshipHeaders leaves pre-existing COOP/COEP untouched but always owns client hints', () => {
     const headers = new Headers({
       'Cross-Origin-Embedder-Policy': 'credentialless',
       'Accept-CH': 'Stale-Hint',
     });
 
-    applyCzapHeaders(headers, {
+    applyLiteshipHeaders(headers, {
       detectEnabled: true,
       workersEnabled: true,
     });
@@ -76,21 +76,21 @@ describe('astro header helpers', () => {
     expect(headers.get('Accept-CH')).toBe(CLIENT_HINTS_HEADERS['Accept-CH']);
   });
 
-  // F-RM-2: Vary is an additive token-list header (RFC 9110 §12.5.5). czap must UNION
+  // F-RM-2: Vary is an additive token-list header (RFC 9110 §12.5.5). liteship must UNION
   // its client-hint tokens with any pre-existing Vary (Cookie / Accept-Encoding / app
   // cache axes), never headers.set()-clobber them — clobbering silently drops a
   // consumer's or compression layer's cache axes and can poison a CDN.
-  test('applyCzapHeaders merges Vary with pre-existing tokens instead of clobbering them', () => {
+  test('applyLiteshipHeaders merges Vary with pre-existing tokens instead of clobbering them', () => {
     const headers = new Headers({ Vary: 'Cookie, Accept-Encoding' });
 
-    applyCzapHeaders(headers, { detectEnabled: true, workersEnabled: false });
+    applyLiteshipHeaders(headers, { detectEnabled: true, workersEnabled: false });
 
     const vary = headers.get('Vary') ?? '';
     const tokens = vary.split(',').map((t) => t.trim().toLowerCase());
     // pre-existing content-negotiation / cookie cache axes survive
     expect(tokens).toContain('cookie');
     expect(tokens).toContain('accept-encoding');
-    // czap's client-hint tokens are also present
+    // liteship's client-hint tokens are also present
     for (const chToken of CLIENT_HINTS_HEADERS['Vary']!.split(',').map((t) => t.trim().toLowerCase())) {
       expect(tokens).toContain(chToken);
     }

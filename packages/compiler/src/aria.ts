@@ -8,8 +8,8 @@
  * @module
  */
 
-import { Diagnostics, BoundaryAttribute } from '@czap/core';
-import type { Boundary, StateUnion } from '@czap/core';
+import { Diagnostics, BoundaryAttribute } from '@liteship/core';
+import type { Boundary, StateUnion } from '@liteship/core';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -37,7 +37,7 @@ export interface ARIACompileResult<S extends string = string> {
 /**
  * Filter and validate ARIA attributes, keeping only valid ones — the allowed
  * keys are governed by the shared {@link BoundaryAttribute.isAllowedKey} policy
- * in `@czap/core` (any `aria-*` attribute or the exact `role`). Warns via
+ * in `@liteship/core` (any `aria-*` attribute or the exact `role`). Warns via
  * Diagnostics when invalid keys are dropped, naming the state they came from.
  */
 function validateAttributes(attrs: Record<string, string>, stateName: string): Record<string, string> {
@@ -47,7 +47,7 @@ function validateAttributes(attrs: Record<string, string>, stateName: string): R
       result[key] = value;
     } else {
       Diagnostics.warn({
-        source: 'czap/compiler.aria',
+        source: 'liteship/compiler.aria',
         code: 'invalid-aria-key',
         message: `Attribute "${key}" in state "${stateName}" is not a valid ARIA key and was dropped. Use an aria-* attribute or "role" — e.g. 'aria-expanded': 'false'.`,
       });
@@ -70,8 +70,8 @@ function validateAttributes(attrs: Record<string, string>, stateName: string): R
  *
  * @example
  * ```ts
- * import { Boundary } from '@czap/core';
- * import { ARIACompiler } from '@czap/compiler';
+ * import { Boundary } from '@liteship/core';
+ * import { ARIACompiler } from '@liteship/compiler';
  *
  * const boundary = Boundary.make({
  *   input: 'width',
@@ -111,7 +111,7 @@ function compile<B extends Boundary.Shape>(
   const current = stateAttributes[currentState];
   if (current === undefined) {
     Diagnostics.warn({
-      source: 'czap/compiler.aria',
+      source: 'liteship/compiler.aria',
       code: 'unknown-current-state',
       message: `currentState "${String(currentState)}" is not one of [${stateNames.join(', ')}]; emitting no attributes. Pass one of the boundary's state names.`,
     });
@@ -131,8 +131,8 @@ function compile<B extends Boundary.Shape>(
  *
  * @example
  * ```ts
- * import { Boundary } from '@czap/core';
- * import { ARIACompiler } from '@czap/compiler';
+ * import { Boundary } from '@liteship/core';
+ * import { ARIACompiler } from '@liteship/compiler';
  *
  * const boundary = Boundary.make({
  *   input: 'width',

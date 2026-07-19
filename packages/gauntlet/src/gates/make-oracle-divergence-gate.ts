@@ -275,7 +275,7 @@ function buildFixtures(spec: OracleDivergenceSpec) {
         makeRepoIR({
           files: [
             { id: FIXTURE_FILE, contentDigest: PLACEHOLDER, packageName: null },
-            { id: FIXTURE_EXCLUDED_FILE, contentDigest: PLACEHOLDER, packageName: '@czap/x' },
+            { id: FIXTURE_EXCLUDED_FILE, contentDigest: PLACEHOLDER, packageName: '@liteship/x' },
           ],
           facts: [
             propFact(spec, FIXTURE_FILE, 7, AST_ORACLE, AST_CLASS),

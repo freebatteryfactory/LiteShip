@@ -1,5 +1,5 @@
 /**
- * @czap config type spine -- Config.Shape and defineConfig() contract.
+ * @liteship config type spine -- Config.Shape and defineConfig() contract.
  */
 
 import type { ContentAddress, Boundary } from './core.d.ts';
@@ -37,5 +37,5 @@ export declare namespace Config {
   }
 }
 
-/** Ergonomic alias for czap.config.ts usage at the workspace root */
+/** Ergonomic alias for liteship.config.ts usage at the workspace root */
 export declare function defineConfig(input: Config.Input): Config.Shape;

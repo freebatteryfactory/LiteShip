@@ -1,9 +1,9 @@
 /**
  * The read-only, content-addressed DocumentGraph peek section of the inspector.
  *
- * Prefers an injected authored graph (`window.__CZAP_INSPECTOR__`) when present;
+ * Prefers an injected authored graph (`window.__LITESHIP_INSPECTOR__`) when present;
  * otherwise builds the page-derived graph from the live boundaries using the real
- * `@czap/core` node-addressing kernel.
+ * `@liteship/core` node-addressing kernel.
  *
  * @module
  */
@@ -34,7 +34,7 @@ export function renderGraphPeek(body: HTMLElement, elements: readonly HTMLElemen
     buildGraphPeek(
       elements
         .map((element) => {
-          const payload = readBoundaryPayload(element.getAttribute('data-czap-boundary'));
+          const payload = readBoundaryPayload(element.getAttribute('data-liteship-boundary'));
           if (!payload) return null;
           const snapshot = snapshotElementCasts(element, null);
           const targets: CastTarget[] = deriveActiveTargets(snapshot).map((a) => a.target);
@@ -82,8 +82,8 @@ export function renderGraphPeek(body: HTMLElement, elements: readonly HTMLElemen
   const disclaimer = document.createElement('div');
   disclaimer.className = 'panel-disclaimer';
   disclaimer.textContent = injected?.graph
-    ? 'Injected authored graph (window.__CZAP_INSPECTOR__).'
-    : 'Page-derived (real @czap/core content addresses); the authored build-time graph is not serialized per page.';
+    ? 'Injected authored graph (window.__LITESHIP_INSPECTOR__).'
+    : 'Page-derived (real @liteship/core content addresses); the authored build-time graph is not serialized per page.';
   section.appendChild(disclaimer);
 
   body.appendChild(section);

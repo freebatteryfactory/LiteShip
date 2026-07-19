@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { World } from '@czap/core';
-import { VideoSystem } from '@czap/scene';
+import { World } from '@liteship/core';
+import { VideoSystem } from '@liteship/scene';
 
 describe('VideoSystem', () => {
   it('updates opacity for entities within FrameRange', () => {

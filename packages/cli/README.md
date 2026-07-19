@@ -1,19 +1,19 @@
-# @czap/cli
+# @liteship/cli
 
-The `czap` command-line tool: every verb emits one JSON receipt (a structured result line) on stdout and keeps human-readable summaries on stderr, so output pipes cleanly into `jq`, CI, or an AI agent.
+The `liteship` command-line tool: every verb emits one JSON receipt (a structured result line) on stdout and keeps human-readable summaries on stderr, so output pipes cleanly into `jq`, CI, or an AI agent.
 
-> Install this directly when you want the `czap` verbs in a project or CI. If you're starting a new project, start with [liteship](https://www.npmjs.com/package/liteship) instead — it installs this package along with the rest of the stack.
+> Install this directly when you want the `liteship` verbs in a project or CI. If you're starting a new project, start with [liteship](https://www.npmjs.com/package/liteship) instead — it installs this package along with the rest of the stack.
 
 ## Install
 
 ```bash
-pnpm add -D @czap/cli
+pnpm add -D @liteship/cli
 ```
 
 ## 30 seconds
 
 ```bash
-npx czap doctor
+npx liteship doctor
 ```
 
 ```json
@@ -29,31 +29,31 @@ You should see one JSON line like the above on stdout (shown wrapped here) and, 
 
 | Verb | What it does |
 | --- | --- |
-| `czap doctor [--fix] [--ci] [--preflight] [--target cloudflare\|astro]` | Environment preflight: Node, pnpm, install, build artifacts, git hooks, or focused Cloudflare/Astro host probes. `--fix` applies cheap remediations. |
-| `czap help` · `czap version` · `czap glossary [term]` | Help chart, version receipt, vocabulary lookup. |
-| `czap completion <bash\|zsh\|fish>` | Tab-completion script — the one verb that writes a raw script, not JSON, to stdout. |
-| `czap describe [--format json\|mcp]` | Machine-readable description of every verb and schema. |
-| `czap mcp [--http :3838]` | Start the MCP server (requires `@czap/mcp-server` installed). |
-| `czap astro dev\|status\|stop` | Delegate to Astro 7 background dev-server management and emit a JSON receipt. |
-| `czap scene compile\|dev\|render\|verify <path>` | Compile, watch, render, or check a scene definition. |
-| `czap asset analyze\|verify` | Analyze (beats, onsets, waveform) or check an asset. |
-| `czap capsule list\|inspect\|verify` | Work with capsules — self-describing component packages — from the manifest. |
-| `czap audit [--profile <p>] [--consumer] [--findings]` | Run the `@czap/audit` structure/integrity/surface engine; receipt carries the counts (exit 1 on any error finding). `--profile <p>` audits a custom topology (`.json`/`.js`/`.mjs`/`.ts`, explicit path, no walk-up); `--consumer` audits the packages installed under `node_modules` instead of the repo source; combine them to audit a downstream's OWN topology — the profile becomes the discovery base. `--findings` adds per-finding detail to the receipt. |
-| `czap check [--ir]` | Run the gauntlet gate fold in-process (`litelaunchGauntlet`) — structured findings + a blocking verdict, no subprocess. `--ir` selects the IR-enriched fold. |
-| `czap plumb` | Plumb-completeness gate: fail on any `tests/generated/` placeholder skip or any published package not classified runtime/tooling/deferred. |
-| `czap sbom` | Emit the deterministic, content-addressed SBOM (lockfile policy + CycloneDX + completeness) as a reviewable working-tree artifact. |
-| `czap lsp [--ir]` | Launch the gauntlet rigor language server over stdio (an editor spawns it) — gauntlet findings as live LSP diagnostics. |
-| `czap gauntlet` · `czap ship <pkg>` · `czap verify` | Release gate, npm publish, post-publish verification. |
+| `liteship doctor [--fix] [--ci] [--preflight] [--target cloudflare\|astro]` | Environment preflight: Node, pnpm, install, build artifacts, git hooks, or focused Cloudflare/Astro host probes. `--fix` applies cheap remediations. |
+| `liteship help` · `liteship version` · `liteship glossary [term]` | Help chart, version receipt, vocabulary lookup. |
+| `liteship completion <bash\|zsh\|fish>` | Tab-completion script — the one verb that writes a raw script, not JSON, to stdout. |
+| `liteship describe [--format json\|mcp]` | Machine-readable description of every verb and schema. |
+| `liteship mcp [--http :3838]` | Start the MCP server (requires `@liteship/mcp-server` installed). |
+| `liteship astro dev\|status\|stop` | Delegate to Astro 7 background dev-server management and emit a JSON receipt. |
+| `liteship scene compile\|dev\|render\|verify <path>` | Compile, watch, render, or check a scene definition. |
+| `liteship asset analyze\|verify` | Analyze (beats, onsets, waveform) or check an asset. |
+| `liteship capsule list\|inspect\|verify` | Work with capsules — self-describing component packages — from the manifest. |
+| `liteship audit [--profile <p>] [--consumer] [--findings]` | Run the `@liteship/audit` structure/integrity/surface engine; receipt carries the counts (exit 1 on any error finding). `--profile <p>` audits a custom topology (`.json`/`.js`/`.mjs`/`.ts`, explicit path, no walk-up); `--consumer` audits the packages installed under `node_modules` instead of the repo source; combine them to audit a downstream's OWN topology — the profile becomes the discovery base. `--findings` adds per-finding detail to the receipt. |
+| `liteship check [--ir]` | Run the gauntlet gate fold in-process (`litelaunchGauntlet`) — structured findings + a blocking verdict, no subprocess. `--ir` selects the IR-enriched fold. |
+| `liteship plumb` | Plumb-completeness gate: fail on any `tests/generated/` placeholder skip or any published package not classified runtime/tooling/deferred. |
+| `liteship sbom` | Emit the deterministic, content-addressed SBOM (lockfile policy + CycloneDX + completeness) as a reviewable working-tree artifact. |
+| `liteship lsp [--ir]` | Launch the gauntlet rigor language server over stdio (an editor spawns it) — gauntlet findings as live LSP diagnostics. |
+| `liteship gauntlet` · `liteship ship <pkg>` · `liteship verify` | Release gate, npm publish, post-publish verification. |
 
 Renders and analyses are cached by a hash of their inputs; pass `--force` to re-run. Unknown verbs exit 1 with a trailing `{"error":"unknown_command"}` line on stderr.
 
 ## Where it sits
 
-`@czap/cli` is a terminal adapter over `@czap/command`, the shared command catalog and dispatcher — the MCP server projects the same catalog, and neither imports the other (`czap mcp` only dynamically loads `@czap/mcp-server`). Scene and asset verbs execute through `@czap/scene` and `@czap/assets`, `czap audit` wires the `@czap/audit` engine, and shared types come from `@czap/core`. See the [package surfaces map](https://github.com/freebatteryfactory/LiteShip/blob/main/PACKAGE-SURFACES.md) for the full layout.
+`@liteship/cli` is a terminal adapter over `@liteship/command`, the shared command catalog and dispatcher — the MCP server projects the same catalog, and neither imports the other (`liteship mcp` only dynamically loads `@liteship/mcp-server`). Scene and asset verbs execute through `@liteship/scene` and `@liteship/assets`, `liteship audit` wires the `@liteship/audit` engine, and shared types come from `@liteship/core`. See the [package surfaces map](https://github.com/freebatteryfactory/LiteShip/blob/main/PACKAGE-SURFACES.md) for the full layout.
 
 ## If it does nothing
 
-`capsule` verbs read a capsule manifest, by default `reports/capsule-manifest.json` under the current directory; outside a repo that has one they fail with a manifest-missing receipt. Set `CZAP_CAPSULE_MANIFEST` to point at yours.
+`capsule` verbs read a capsule manifest, by default `reports/capsule-manifest.json` under the current directory; outside a repo that has one they fail with a manifest-missing receipt. Set `LITESHIP_CAPSULE_MANIFEST` to point at yours.
 
 ## Docs
 
@@ -64,4 +64,4 @@ Renders and analyses are cached by a hash of their inputs; pass `--force` to re-
 
 ---
 
-Part of [LiteShip](https://github.com/freebatteryfactory/LiteShip#readme) — powered by the CZAP engine (Content-Zoned Adaptive Projection), distributed as `@czap/*` packages.
+Part of [LiteShip](https://github.com/freebatteryfactory/LiteShip#readme) — distributed as `@liteship/*` packages.

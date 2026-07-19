@@ -99,13 +99,13 @@ describe('runCliCommand', () => {
   it('threads context overrides into the handler and hands the typed payload to projectOk', async () => {
     const { exit, stdout } = await captureCli(() =>
       runCliCommand('version', {}, { overrides: { hostVersion: () => 'TEST-9.9.9' } }, (payload) => {
-        // payload is CommandMap['version'] (VersionPayload) — .czap needs no cast.
-        emit({ czap: payload.czap });
+        // payload is CommandMap['version'] (VersionPayload) — .liteship needs no cast.
+        emit({ liteship: payload.liteship });
         return 0;
       }),
     );
     expect(exit).toBe(0);
     const rec = JSON.parse(stdout.trim());
-    expect(rec.czap).toBe('TEST-9.9.9');
+    expect(rec.liteship).toBe('TEST-9.9.9');
   });
 });

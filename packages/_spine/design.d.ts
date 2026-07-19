@@ -1,5 +1,5 @@
 /**
- * @czap/design layer type spine -- tokens, styles, themes, components.
+ * @liteship/design layer type spine -- tokens, styles, themes, components.
  *
  * Extends the core spine with design primitives that compile to
  * CSS custom properties, @layer, @scope, @property, @container,
@@ -20,7 +20,7 @@ export type TokenRef<N extends string = string> = N & { readonly [TokenRefBrand]
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export type CSSCustomProp = `--${string}`;
-export type CSSProp = `--czap-${string}`;
+export type CSSProp = `--liteship-${string}`;
 export type CSSLength = `${number}px` | `${number}rem` | `${number}em` | `${number}%` | `${number}vw` | `${number}vh`;
 export type CSSTime = `${number}ms` | `${number}s`;
 

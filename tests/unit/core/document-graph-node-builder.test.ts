@@ -2,8 +2,8 @@
  * DocumentGraph node from-parts builder (#112) — computes id via sealNode kernel.
  */
 import { describe, expect, it } from 'vitest';
-import { nodeFromParts, sealNode, contentAddressOf } from '@czap/core';
-import type { SignalNode, ComponentNode } from '@czap/core';
+import { nodeFromParts, sealNode, contentAddressOf } from '@liteship/core';
+import type { SignalNode, ComponentNode } from '@liteship/core';
 import { META } from '../../helpers/graph-fixtures.js';
 
 describe('nodeFromParts (#112)', () => {
@@ -47,7 +47,7 @@ describe('nodeFromParts (#112)', () => {
   });
 
   it('ignores a supplied placeholder id', () => {
-    const forged = 'czap:forged' as never;
+    const forged = 'liteship:forged' as never;
     const built = nodeFromParts<ComponentNode>({
       _tag: 'DocGraphComponentNode',
       _version: 1,

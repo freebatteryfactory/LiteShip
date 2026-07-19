@@ -29,8 +29,8 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { isTaggedError } from '@czap/error';
-import { contentAddressOf } from '@czap/core';
+import { isTaggedError } from '@liteship/error';
+import { contentAddressOf } from '@liteship/core';
 import {
   readLiveStandardsSurface,
   serializeStandardsSurface,
@@ -44,7 +44,7 @@ import {
   type GitShowReader,
   type GitIntroCommitReader,
 } from '../../../../packages/cli/src/lib/standards-surface.js';
-import type { StandardsElement, StandardsWaiver } from '@czap/gauntlet';
+import type { StandardsElement, StandardsWaiver } from '@liteship/gauntlet';
 import type { StandardsIntegrityResult } from '../../../../packages/cli/src/lib/standards-surface.js';
 
 /**
@@ -76,7 +76,7 @@ function baseGitShow(base: { snapshotFormat: 1; elements: readonly StandardsElem
  * INACTIVE (a loud pass). The probe path returns bytes; the snapshot path returns undefined.
  */
 const resolvableBaseNoSnapshot: GitShowReader = (_root, _ref, path) =>
-  path === STANDARDS_BASE_PROBE_PATH ? '{"name":"czap"}' : undefined;
+  path === STANDARDS_BASE_PROBE_PATH ? '{"name":"liteship"}' : undefined;
 
 /**
  * A {@link GitShowReader} modeling the CONFIG-ERROR side: the base ref is UNRESOLVABLE —
@@ -140,7 +140,7 @@ function writeFloors(): void {
 }
 
 beforeEach(() => {
-  root = mkdtempSync(join(tmpdir(), 'czap-standards-'));
+  root = mkdtempSync(join(tmpdir(), 'liteship-standards-'));
   writeTraceability();
   writeFloors();
 });
@@ -465,7 +465,7 @@ describe('buildStandardsIntegrityFacts — GENESIS vs CONFIG ERROR (resolvable-b
     const birthBytes = serializeStandardsSurface(readLiveStandardsSurface(root, NOW));
     const gitShow: GitShowReader = (_root, ref, path) => {
       if (path === STANDARDS_SNAPSHOT_PATH) return ref === INTRO ? birthBytes : undefined;
-      if (path === STANDARDS_BASE_PROBE_PATH) return '{"name":"czap"}';
+      if (path === STANDARDS_BASE_PROBE_PATH) return '{"name":"liteship"}';
       return undefined;
     };
     const gitIntroCommit: GitIntroCommitReader = () => INTRO;
@@ -492,7 +492,7 @@ describe('buildStandardsIntegrityFacts — GENESIS vs CONFIG ERROR (resolvable-b
     const birthBytes = serializeStandardsSurface(strongerBirth);
     const gitShow: GitShowReader = (_root, ref, path) => {
       if (path === STANDARDS_SNAPSHOT_PATH) return ref === INTRO ? birthBytes : undefined;
-      if (path === STANDARDS_BASE_PROBE_PATH) return '{"name":"czap"}';
+      if (path === STANDARDS_BASE_PROBE_PATH) return '{"name":"liteship"}';
       return undefined;
     };
     const result = buildStandardsIntegrityFacts(root, NOW, { gitShow, gitIntroCommit: () => INTRO });
@@ -505,7 +505,7 @@ describe('buildStandardsIntegrityFacts — GENESIS vs CONFIG ERROR (resolvable-b
     // A git inconsistency: the intro commit resolves, but `git show <intro>:<snapshot>` is
     // undefined. The backstop must refuse rather than pass without a baseline.
     const gitShow: GitShowReader = (_root, _ref, path) =>
-      path === STANDARDS_BASE_PROBE_PATH ? '{"name":"czap"}' : undefined;
+      path === STANDARDS_BASE_PROBE_PATH ? '{"name":"liteship"}' : undefined;
     expect(() =>
       buildStandardsIntegrityFacts(root, NOW, { gitShow, gitIntroCommit: () => 'c'.repeat(40) }),
     ).toThrow();

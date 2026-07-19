@@ -38,7 +38,7 @@
  * model + native-transport oracle are LiteShip-local (product machinery in the test tree), so
  * — per ADR-0012/0023 — the host is the repo-local `transition:gate` phase
  * (`scripts/transition-conformance-gate.ts`, run every PR over the shared
- * `tests/support/reactive-conformance.ts` runner), NOT the shipped `czap check` CLI; the lean
+ * `tests/support/reactive-conformance.ts` runner), NOT the shipped `liteship check` CLI; the lean
  * MCP/command path does not run it. Composition over inheritance: a `status` fold +
  * standalone functions, no class. Earns blocking authority via the SHIPPED ratchet
  * ({@link verifyGate}: redCaught ∧ greenClean ∧ mutationKilled — Axiom 5).
@@ -274,7 +274,7 @@ const FIXTURES = {
  * level deciding blocking); each `unevidenced` case is a coverage gap floored by the
  * committed ratchet. REPORT-not-DECIDE. It {@link requireTransition}, so it runs only when a
  * host injects the facts — the repo-local `transition:gate` phase
- * (`scripts/transition-conformance-gate.ts`), NOT the shipped `czap check` CLI. Earns
+ * (`scripts/transition-conformance-gate.ts`), NOT the shipped `liteship check` CLI. Earns
  * blocking authority via the shipped ratchet.
  */
 export const transitionConformanceGate: Gate = defineGate({

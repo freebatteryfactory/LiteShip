@@ -1,6 +1,6 @@
 /**
- * Command language re-anchored from `@czap/_spine` (the canonical type source,
- * ADR-0010). The shared command registry runtime lives in `@czap/command`; these
+ * Command language re-anchored from `@liteship/_spine` (the canonical type source,
+ * ADR-0010). The shared command registry runtime lives in `@liteship/command`; these
  * are the declaration-only contract types the CLI and MCP adapters share. (CUT A1)
  *
  * @module
@@ -15,7 +15,7 @@ import type {
   CommandExecutionKind as _CommandExecutionKind,
   CommandJsonSchema as _CommandJsonSchema,
   WallClockTimestamp as _WallClockTimestamp,
-} from '@czap/_spine';
+} from '@liteship/_spine';
 
 /** Minimal JSON-Schema object shape for a command's input/output contract. */
 export type CommandJsonSchema = _CommandJsonSchema;

@@ -9,8 +9,8 @@
  * @module
  */
 
-import { Diagnostics, contentAddressOf, decodeLenient, S, type ContentAddress } from '@czap/core';
-import { ValidationError } from '@czap/error';
+import { Diagnostics, contentAddressOf, decodeLenient, S, type ContentAddress } from '@liteship/core';
+import { ValidationError } from '@liteship/error';
 import type { EdgeTierResult } from './edge-tier.js';
 import { tierKey } from './manifest.js';
 
@@ -79,7 +79,7 @@ export interface CompiledOutputs {
 /**
  * Serialized GLSL cast artifact stored on {@link CompiledOutputs.glsl}: the
  * shader preamble plus default uniform values. JSON-round-trippable subset of
- * `@czap/compiler`'s `GLSLCompileResult` (the structured `defines`/`uniforms`
+ * `@liteship/compiler`'s `GLSLCompileResult` (the structured `defines`/`uniforms`
  * arrays re-derive from `declarations`, so only the runtime-needed fields are
  * stored).
  */
@@ -108,7 +108,7 @@ type WGSLUniformValue = number | WGSLUniformVector;
 /**
  * Serialized WGSL cast artifact stored on {@link CompiledOutputs.wgsl}: the
  * WebGPU preamble plus default binding values. JSON-round-trippable subset of
- * `@czap/compiler`'s `WGSLCompileResult`.
+ * `@liteship/compiler`'s `WGSLCompileResult`.
  */
 export interface CompiledWGSLOutput {
   /** State consts + uniform struct + `@group/@binding` preamble block. */
@@ -191,7 +191,7 @@ interface CacheOptions {
    */
   readonly ttl?: number;
   /**
-   * KV key prefix (default `czap`). Doubles as the per-deploy CONTENT VERSION
+   * KV key prefix (default `liteship`). Doubles as the per-deploy CONTENT VERSION
    * for a bundled `compile` callback: when compile's output depends on
    * build-time content the boundary id does not cover, set `prefix` to a hash
    * of that compiled output (e.g. `layout-${fnv1a(compileLayoutCss())}`) so a
@@ -274,7 +274,7 @@ function parseTagIndex(raw: string | null): string[] {
 /** One-time diagnostic when invalidation can't run because the KV provider lacks a capability. */
 function warnInvalidationUnsupported(operation: string, missing: 'delete' | 'list'): void {
   Diagnostics.warnOnce({
-    source: 'czap/edge.kv-cache',
+    source: 'liteship/edge.kv-cache',
     code: 'invalidation-unsupported',
     message:
       `${operation} requires KVNamespace.${missing}, which this KV provider does not implement — ` +
@@ -430,7 +430,7 @@ const WGSLUniformValueSchema = S.brand(
   (candidate: unknown): WGSLUniformValue => {
     const parsed = asWGSLUniformValue(candidate);
     if (parsed === undefined) {
-      throw ValidationError('czap/edge.kv-cache', 'expected a finite scalar or 2/3/4-vector WGSL value');
+      throw ValidationError('liteship/edge.kv-cache', 'expected a finite scalar or 2/3/4-vector WGSL value');
     }
     return parsed;
   },
@@ -530,8 +530,8 @@ function parseWGSLShaderCast(value: unknown): CompiledWGSLOutput | null {
  *
  * @example
  * ```ts
- * import { KVCache, EdgeTier } from '@czap/edge';
- * import { Boundary } from '@czap/core';
+ * import { KVCache, EdgeTier } from '@liteship/edge';
+ * import { Boundary } from '@liteship/core';
  *
  * const kv = { get: async (k: string) => null, put: async (k: string, v: string) => {} };
  * const cache = KVCache.createBoundaryCache(kv, { ttl: 3600, prefix: 'myapp' });
@@ -561,7 +561,7 @@ function parseWGSLShaderCast(value: unknown): CompiledWGSLOutput | null {
  * @returns A {@link BoundaryCache} instance
  */
 export function createBoundaryCache(kv: KVNamespace, options?: CacheOptions): BoundaryCache {
-  const prefix = options?.prefix ?? 'czap';
+  const prefix = options?.prefix ?? 'liteship';
   const ttl = options?.ttl;
 
   return {
@@ -583,7 +583,7 @@ export function createBoundaryCache(kv: KVNamespace, options?: CacheOptions): Bo
         if (error instanceof SyntaxError) {
           invalidJson = true;
           Diagnostics.warnOnce({
-            source: 'czap/edge.kv-cache',
+            source: 'liteship/edge.kv-cache',
             code: 'invalid-cache-entry',
             message:
               `Boundary cache entry "${key}" could not be parsed and will be treated as a cache miss. ` +
@@ -637,7 +637,7 @@ export function createBoundaryCache(kv: KVNamespace, options?: CacheOptions): Bo
       }
 
       Diagnostics.warnOnce({
-        source: 'czap/edge.kv-cache',
+        source: 'liteship/edge.kv-cache',
         code: 'cache-entry-shape-mismatch',
         message:
           `Boundary cache entry "${key}" parsed as JSON but is missing css, propertyRegistrations, or containerQueries and will be treated as a cache miss. ` +
@@ -717,7 +717,7 @@ export function createBoundaryCache(kv: KVNamespace, options?: CacheOptions): Bo
  *
  * @example
  * ```ts
- * import { KVCache } from '@czap/edge';
+ * import { KVCache } from '@liteship/edge';
  *
  * const kv = { get: async (k: string) => null, put: async (k: string, v: string) => {} };
  * const cache = KVCache.createBoundaryCache(kv, { ttl: 3600 });

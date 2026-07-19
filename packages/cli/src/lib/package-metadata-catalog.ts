@@ -15,15 +15,15 @@
  * They are anchored to the one {@link LITESHIP_PRODUCT_DEFINITION} so every scope
  * reads as one product with a precise per-package role.
  *
- * This module is DELIBERATELY not re-exported from `@czap/cli`'s public barrel
+ * This module is DELIBERATELY not re-exported from `@liteship/cli`'s public barrel
  * (`src/index.ts` exports only `run`): it is internal enforcement plumbing, so it
  * adds nothing to the locked API surface.
  *
  * @module
  */
 
-import { CZAP_PACKAGE_ROSTER } from '@czap/audit';
-import { InvariantViolationError } from '@czap/error';
+import { LITESHIP_PACKAGE_ROSTER } from '@liteship/audit';
+import { InvariantViolationError } from '@liteship/error';
 
 /** The ONE product definition (from #146) every catalog description is anchored to. */
 export const LITESHIP_PRODUCT_DEFINITION =
@@ -45,172 +45,172 @@ export interface PackageMetadata {
  *
  * The per-package `description` / `keywords` are hand-authored annotations; the
  * KEY SET is no longer a private roster copy — {@link PACKAGE_METADATA_CATALOG}
- * below keys these annotations off `@czap/audit`'s `CZAP_PACKAGE_ROSTER` (the one
- * fleet anchor) plus the two non-`@czap` umbrellas.
+ * below keys these annotations off `@liteship/audit`'s `LITESHIP_PACKAGE_ROSTER` (the one
+ * fleet anchor) plus the two non-`@liteship` umbrellas.
  */
 const PACKAGE_METADATA: Readonly<Record<string, PackageMetadata>> = {
-  '@czap/_spine': {
+  '@liteship/_spine': {
     description:
-      'Install-only TypeScript declaration spine for LiteShip: the shared type anchor that `@czap/core` and ' +
-      '`@czap/scene` reference from their published `.d.ts` — there is nothing to import at runtime.',
-    keywords: ['czap', 'liteship', 'typescript', 'types', 'declarations'],
+      'Install-only TypeScript declaration spine for LiteShip: the shared type anchor that `@liteship/core` and ' +
+      '`@liteship/scene` reference from their published `.d.ts` — there is nothing to import at runtime.',
+    keywords: ['liteship', 'typescript', 'types', 'declarations'],
   },
-  '@czap/error': {
+  '@liteship/error': {
     description:
       'The one error algebra for LiteShip: build tagged error values that work as thrown Errors and as errors-as-values ' +
       '(a Result err-arm), and compose your own variants on top with zero dependencies.',
-    keywords: ['czap', 'liteship', 'error-handling', 'tagged-union', 'typescript'],
+    keywords: ['liteship', 'error-handling', 'tagged-union', 'typescript'],
   },
-  '@czap/gauntlet': {
+  '@liteship/gauntlet': {
     description:
       "The rigor engine behind LiteShip's release gates: define quality gates that report findings and earn " +
       'blocking power only by proving themselves against their own fixtures.',
-    keywords: ['czap', 'liteship', 'quality-gate', 'fitness-function', 'static-analysis', 'typescript'],
+    keywords: ['liteship', 'quality-gate', 'fitness-function', 'static-analysis', 'typescript'],
   },
-  '@czap/canonical': {
+  '@liteship/canonical': {
     description:
       'The content-addressing kernel for LiteShip: canonical CBOR encoding and stable digests so the same ' +
       'definition always hashes to the same address.',
-    keywords: ['czap', 'liteship', 'content-addressing', 'cbor', 'hashing', 'typescript'],
+    keywords: ['liteship', 'content-addressing', 'cbor', 'hashing', 'typescript'],
   },
-  '@czap/genui': {
+  '@liteship/genui': {
     description:
       "Render AI-generated UI safely in LiteShip: validate a model's proposed component tree against a host-owned " +
       'catalog and draw only trusted, whitelisted components.',
-    keywords: ['czap', 'liteship', 'generative-ui', 'ai-safety', 'component-catalog', 'typescript'],
+    keywords: ['liteship', 'generative-ui', 'ai-safety', 'component-catalog', 'typescript'],
   },
-  '@czap/core': {
+  '@liteship/core': {
     description:
       'The heart of LiteShip: define UI boundaries, tokens, themes, and signals once as a content-addressed graph, ' +
       'then drive the engine that keeps every rendered output in sync.',
-    keywords: ['czap', 'liteship', 'adaptive-rendering', 'constraint-based', 'ui-framework', 'typescript'],
+    keywords: ['liteship', 'adaptive-rendering', 'constraint-based', 'ui-framework', 'typescript'],
   },
-  '@czap/quantizer': {
+  '@liteship/quantizer': {
     description:
       'Turn continuous signals into a few named UI states for LiteShip: evaluate boundaries, animate the ' +
       'transitions between states, and gate motion by device tier.',
-    keywords: ['czap', 'liteship', 'adaptive-rendering', 'state-machine', 'boundary', 'typescript'],
+    keywords: ['liteship', 'adaptive-rendering', 'state-machine', 'boundary', 'typescript'],
   },
-  '@czap/compiler': {
+  '@liteship/compiler': {
     description:
       'Compile one LiteShip boundary definition into many outputs at once — CSS, GLSL, WGSL, ARIA, AI descriptions, ' +
       'and Tailwind — so every target stays in sync.',
-    keywords: ['czap', 'liteship', 'css', 'shaders', 'aria', 'compiler', 'typescript'],
+    keywords: ['liteship', 'css', 'shaders', 'aria', 'compiler', 'typescript'],
   },
-  '@czap/web': {
+  '@liteship/web': {
     description:
       'The browser runtime for LiteShip: apply CSS, streamed HTML, worker output, and LLM chunks to a live DOM ' +
       'with focus- and scroll-preserving morphing.',
-    keywords: ['czap', 'liteship', 'dom', 'browser-runtime', 'streaming', 'typescript'],
+    keywords: ['liteship', 'dom', 'browser-runtime', 'streaming', 'typescript'],
   },
-  '@czap/detect': {
+  '@liteship/detect': {
     description:
       'Detect device capabilities for LiteShip: probe GPU tier, CPU, memory, motion preference, and network, then ' +
       'map them to the tiers that select which UI state renders.',
-    keywords: ['czap', 'liteship', 'device-detection', 'capability-probe', 'gpu-tier', 'typescript'],
+    keywords: ['liteship', 'device-detection', 'capability-probe', 'gpu-tier', 'typescript'],
   },
-  '@czap/edge': {
+  '@liteship/edge': {
     description:
       'Choose the right UI state at the CDN edge for LiteShip: read Client Hints into a device tier, serve a ' +
       'content-addressed boundary cache, and compile the theme for first paint.',
-    keywords: ['czap', 'liteship', 'edge', 'cdn', 'client-hints', 'typescript'],
+    keywords: ['liteship', 'edge', 'cdn', 'client-hints', 'typescript'],
   },
-  '@czap/cloudflare': {
+  '@liteship/cloudflare': {
     description:
       'Run LiteShip on Cloudflare Workers: a site adapter with a KV-backed edge cache and the Astro middleware ' +
       'glue that caches boundaries at the edge.',
-    keywords: ['czap', 'liteship', 'cloudflare', 'workers', 'edge', 'typescript'],
+    keywords: ['liteship', 'cloudflare', 'workers', 'edge', 'typescript'],
   },
-  '@czap/worker': {
+  '@liteship/worker': {
     description:
       "Move LiteShip's heavy work off the main thread: compositor and render workers plus a lock-free ring buffer " +
       'that stream state and frames without janking the UI.',
-    keywords: ['czap', 'liteship', 'web-worker', 'off-main-thread', 'offscreen-canvas', 'typescript'],
+    keywords: ['liteship', 'web-worker', 'off-main-thread', 'offscreen-canvas', 'typescript'],
   },
-  '@czap/vite': {
+  '@liteship/vite': {
     description:
       'The Vite plugin for LiteShip: compile `@token`, `@theme`, `@style`, and `@quantize` blocks into native CSS ' +
       'and hot-reload boundary definitions as you edit.',
-    keywords: ['czap', 'liteship', 'vite-plugin', 'css', 'hmr', 'typescript'],
+    keywords: ['liteship', 'vite-plugin', 'css', 'hmr', 'typescript'],
   },
-  '@czap/astro': {
+  '@liteship/astro': {
     description:
       'The Astro integration for LiteShip: render adaptive UI as islands with the `client:satellite` directive and ' +
       'resolve device tiers on the server for first paint.',
-    keywords: ['czap', 'liteship', 'astro', 'integration', 'islands', 'typescript'],
+    keywords: ['liteship', 'astro', 'integration', 'islands', 'typescript'],
   },
-  '@czap/remotion': {
+  '@liteship/remotion': {
     description:
       'Use LiteShip inside Remotion: React hooks and composition helpers that drive video frames and shader ' +
       'surfaces from the same boundary state used everywhere else.',
-    keywords: ['czap', 'liteship', 'remotion', 'video', 'react', 'typescript'],
+    keywords: ['liteship', 'remotion', 'video', 'react', 'typescript'],
   },
-  '@czap/scene': {
+  '@liteship/scene': {
     description:
       'Author video timelines for LiteShip: a typed scene and track model built on the entity-component substrate ' +
-      'in `@czap/core`.',
-    keywords: ['czap', 'liteship', 'scene', 'timeline', 'video', 'typescript'],
+      'in `@liteship/core`.',
+    keywords: ['liteship', 'scene', 'timeline', 'video', 'typescript'],
   },
-  '@czap/stage': {
+  '@liteship/stage': {
     description:
       'Export one LiteShip document graph to many carriers: prove a single source renders to both a static Astro ' +
       'page and a video, joined under one receipt.',
-    keywords: ['czap', 'liteship', 'dual-export', 'video', 'static-site', 'typescript'],
+    keywords: ['liteship', 'dual-export', 'video', 'static-site', 'typescript'],
   },
-  '@czap/assets': {
+  '@liteship/assets': {
     description:
       'Manage media assets for LiteShip: declare audio, video, and image assets and read cached analysis such as ' +
       'waveforms, beat markers, and onsets.',
-    keywords: ['czap', 'liteship', 'assets', 'audio', 'waveform', 'typescript'],
+    keywords: ['liteship', 'assets', 'audio', 'waveform', 'typescript'],
   },
-  '@czap/audit': {
+  '@liteship/audit': {
     description:
       "Audit a LiteShip project's structure, integrity, and public surface: a downstream-installable engine that " +
       'builds a model of the repository and runs configurable checks over it.',
-    keywords: ['czap', 'liteship', 'audit', 'static-analysis', 'code-quality', 'typescript'],
+    keywords: ['liteship', 'audit', 'static-analysis', 'code-quality', 'typescript'],
   },
-  '@czap/command': {
+  '@liteship/command': {
     description:
       "The shared command registry behind LiteShip's tooling: one source of command definitions that both the " +
-      '`czap` CLI and the MCP server project from.',
-    keywords: ['czap', 'liteship', 'cli', 'mcp', 'command-registry', 'typescript'],
+      '`liteship` CLI and the MCP server project from.',
+    keywords: ['liteship', 'cli', 'mcp', 'command-registry', 'typescript'],
   },
-  '@czap/cli': {
+  '@liteship/cli': {
     description:
-      'The `czap` command-line tool for LiteShip: JSON-in, JSON-out verbs built for AI agents, with a ' +
+      'The `liteship` command-line tool for LiteShip: JSON-in, JSON-out verbs built for AI agents, with a ' +
       'human-friendly terminal mode.',
-    keywords: ['czap', 'liteship', 'cli', 'command-line', 'json', 'typescript'],
+    keywords: ['liteship', 'cli', 'command-line', 'json', 'typescript'],
   },
-  '@czap/mcp-server': {
+  '@liteship/mcp-server': {
     description:
-      'The Model Context Protocol server for LiteShip: exposes the `czap` commands and capsule catalog as MCP ' +
+      'The Model Context Protocol server for LiteShip: exposes the `liteship` commands and capsule catalog as MCP ' +
       'tools that AI assistants can call.',
-    keywords: ['czap', 'liteship', 'mcp', 'model-context-protocol', 'ai-tooling', 'typescript'],
+    keywords: ['liteship', 'mcp', 'model-context-protocol', 'ai-tooling', 'typescript'],
   },
   'create-liteship': {
     description:
       'Scaffold a new LiteShip project: run `npm create liteship` to get a minimal Astro app wired to the ' +
       'framework in one step.',
-    keywords: ['create-liteship', 'liteship', 'czap', 'scaffold', 'astro', 'typescript'],
+    keywords: ['create-liteship', 'liteship', 'scaffold', 'astro', 'typescript'],
   },
   liteship: {
     description:
-      'The LiteShip umbrella package: one dependency that installs the whole `@czap/*` adaptive rendering stack — ' +
+      'The LiteShip umbrella package: one dependency that installs the whole `@liteship/*` adaptive rendering stack — ' +
       'you still import from the individual scopes.',
-    keywords: ['liteship', 'czap', 'adaptive-rendering', 'framework', 'meta-package', 'typescript'],
+    keywords: ['liteship', 'adaptive-rendering', 'framework', 'meta-package', 'typescript'],
   },
 };
 
 /**
- * The publishable roster keyed into the catalog: the canonical `@czap/*` fleet from
- * `@czap/audit`'s {@link CZAP_PACKAGE_ROSTER} (no private roster copy), plus the two
- * non-`@czap` umbrellas that carry the whole fleet and publish last.
+ * The publishable roster keyed into the catalog: the canonical `@liteship/*` fleet from
+ * `@liteship/audit`'s {@link LITESHIP_PACKAGE_ROSTER} (no private roster copy), plus the two
+ * non-`@liteship` umbrellas that carry the whole fleet and publish last.
  */
-const CATALOG_ROSTER: readonly string[] = [...CZAP_PACKAGE_ROSTER, 'create-liteship', 'liteship'];
+const CATALOG_ROSTER: readonly string[] = [...LITESHIP_PACKAGE_ROSTER, 'create-liteship', 'liteship'];
 
 /**
  * name → canonical metadata for every publishable scope. The KEY SET is derived
- * from {@link CATALOG_ROSTER} (anchored to `CZAP_PACKAGE_ROSTER`), keying the
+ * from {@link CATALOG_ROSTER} (anchored to `LITESHIP_PACKAGE_ROSTER`), keying the
  * hand-authored {@link PACKAGE_METADATA} annotations off it. The exhaustiveness
  * check below throws at module load if a roster member has no metadata entry — so a
  * package added to the fleet but missing an annotation fails fast, and the key set
@@ -225,7 +225,7 @@ export const PACKAGE_METADATA_CATALOG: Readonly<Record<string, PackageMetadata>>
     if (meta === undefined) {
       throw InvariantViolationError(
         'package-metadata-catalog',
-        `no metadata entry for "${name}" — every CZAP_PACKAGE_ROSTER member (plus the two umbrellas) must have a PACKAGE_METADATA annotation`,
+        `no metadata entry for "${name}" — every LITESHIP_PACKAGE_ROSTER member (plus the two umbrellas) must have a PACKAGE_METADATA annotation`,
       );
     }
     return [name, meta] as const;
@@ -258,8 +258,8 @@ const MIN_DESCRIPTION_LENGTH = 24;
  */
 const INVENTORY_RE = /^[A-Za-z][\w /-]{0,28}:\s+[A-Z][\w.]*(?:,\s+[A-Z][\w.]*){2,}/;
 
-/** A dependency-list opener — `(deps `@czap/…`)` and friends — instead of what the package does. */
-const DEPENDENCY_LIST_RE = /\bdeps?\b[^)]*`?@czap\//i;
+/** A dependency-list opener — `(deps `@liteship/…`)` and friends — instead of what the package does. */
+const DEPENDENCY_LIST_RE = /\bdeps?\b[^)]*`?@liteship\//i;
 
 /**
  * Return the reason `description` fails the answer-first bar, or `null` if it

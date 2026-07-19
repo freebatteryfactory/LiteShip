@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { CanonicalCbor } from '@czap/canonical';
+import { CanonicalCbor } from '@liteship/canonical';
 
 describe('CanonicalCbor.encode — RFC 8949 Appendix A vectors', () => {
   it('encodes unsigned integers in shortest form', () => {

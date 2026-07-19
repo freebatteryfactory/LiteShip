@@ -23,8 +23,8 @@ import {
   type ComponentNode,
   type SignalNode,
   type RuntimeWritePlan,
-} from '@czap/core';
-import { writeContinuousMap } from '@czap/astro/runtime';
+} from '@liteship/core';
+import { writeContinuousMap } from '@liteship/astro/runtime';
 
 const META: CellMeta = {
   created: { wall_ms: 0, counter: 0, node_id: 't' },
@@ -77,7 +77,7 @@ function revealFixture(): { graph: DocumentGraph; transitionId: ContentAddress; 
     meta: META,
     entityRef: entity.id,
     state: 'before',
-    bindings: { opacity: 0, '--czap-hero-y': '24px' },
+    bindings: { opacity: 0, '--liteship-hero-y': '24px' },
   } as unknown as PoseNode);
 
   const toPose = sealNode({
@@ -88,7 +88,7 @@ function revealFixture(): { graph: DocumentGraph; transitionId: ContentAddress; 
     meta: META,
     entityRef: entity.id,
     state: 'after',
-    bindings: { opacity: 1, '--czap-hero-y': '0px' },
+    bindings: { opacity: 1, '--liteship-hero-y': '0px' },
   } as unknown as PoseNode);
 
   const transition = sealNode({
@@ -123,14 +123,14 @@ describe('writeContinuousMap', () => {
     writeContinuousMap(el, plan, 0.5);
 
     expect(el.style.opacity).toBe('0.5');
-    expect(el.style.getPropertyValue('--czap-hero-y')).toBe('12px');
+    expect(el.style.getPropertyValue('--liteship-hero-y')).toBe('12px');
   });
 
-  test('dispatches czap:uniform-update with detail.css always and detail.wgsl for numeric props', () => {
+  test('dispatches liteship:uniform-update with detail.css always and detail.wgsl for numeric props', () => {
     const { plan } = revealFixture();
     const el = document.createElement('div');
     const spy = vi.fn();
-    el.addEventListener('czap:uniform-update', spy);
+    el.addEventListener('liteship:uniform-update', spy);
 
     writeContinuousMap(el, plan, 0.25);
 
@@ -138,7 +138,7 @@ describe('writeContinuousMap', () => {
     const detail = (spy.mock.calls[0]![0] as CustomEvent).detail;
     expect(detail.css).toEqual({
       opacity: '0.25',
-      '--czap-hero-y': '18px',
+      '--liteship-hero-y': '18px',
     });
     expect(detail.wgsl).toEqual({ opacity: 0.25 });
     expect(detail.wgsl).not.toHaveProperty('hero_y');
@@ -150,11 +150,11 @@ describe('writeContinuousMap', () => {
 
     writeContinuousMap(el, plan, 0);
     expect(el.style.opacity).toBe('0');
-    expect(el.style.getPropertyValue('--czap-hero-y')).toBe('24px');
+    expect(el.style.getPropertyValue('--liteship-hero-y')).toBe('24px');
 
     writeContinuousMap(el, plan, 1);
     expect(el.style.opacity).toBe('1');
-    expect(el.style.getPropertyValue('--czap-hero-y')).toBe('0px');
+    expect(el.style.getPropertyValue('--liteship-hero-y')).toBe('0px');
   });
 
   test('applies the plan easing to raw t BEFORE interpolating (spring floor = Easing.spring kernel)', () => {
@@ -168,9 +168,9 @@ describe('writeContinuousMap', () => {
     for (const t of [0.25, 0.5, 0.75]) {
       writeContinuousMap(el, springPlan, t);
       const eased = kernel(t);
-      // opacity lerps 0→1, so the written value IS eased(t); --czap-hero-y lerps 24→0px.
+      // opacity lerps 0→1, so the written value IS eased(t); --liteship-hero-y lerps 24→0px.
       expect(Number(el.style.opacity)).toBeCloseTo(eased, 10);
-      expect(el.style.getPropertyValue('--czap-hero-y')).toBe(`${24 - 24 * eased}px`);
+      expect(el.style.getPropertyValue('--liteship-hero-y')).toBe(`${24 - 24 * eased}px`);
     }
 
     // Endpoints stay pinned regardless of easing (spring(0)=0, spring(1)=1).

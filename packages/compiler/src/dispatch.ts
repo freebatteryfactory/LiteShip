@@ -7,13 +7,13 @@
  * escapes the static type at runtime fails as a typed `InvariantViolationError`.
  */
 
-import type { Boundary, Config } from '@czap/core';
+import type { Boundary, Config } from '@liteship/core';
 import type { CSSCompileResult, CSSStateInput } from './css.js';
 import type { GLSLCompileResult } from './glsl.js';
 import type { WGSLCompileResult, WGSLUniformValue } from './wgsl.js';
 import type { ARIACompileResult } from './aria.js';
 import type { AIManifestCompileResult, AIManifestInput } from './ai-manifest.js';
-import { assertNever } from '@czap/error';
+import { assertNever } from '@liteship/error';
 import { CSSCompiler } from './css.js';
 import { GLSLCompiler } from './glsl.js';
 import { WGSLCompiler } from './wgsl.js';
@@ -55,7 +55,7 @@ export interface ARIAStates {
 // Config compiler output
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Result of the `ConfigCompiler` arm — pretty-printed JSON of a `czap.config`. */
+/** Result of the `ConfigCompiler` arm — pretty-printed JSON of a `liteship.config`. */
 export interface ConfigTemplateResult {
   /** Pretty-printed JSON string (2-space indent). */
   readonly json: string;
@@ -80,7 +80,7 @@ const ConfigTemplateCompiler = {
  *
  * Arms:
  * - `CSSCompiler`    — boundary + per-state CSS property maps → `@container` rules.
- *                      Bare properties target `selector` (default `.czap-boundary`).
+ *                      Bare properties target `selector` (default `.liteship-boundary`).
  * - `GLSLCompiler`   — boundary + per-state numeric uniforms → GLSL uniform block.
  * - `WGSLCompiler`   — boundary + per-state scalar/vector uniforms → WGSL bindings.
  * - `ARIACompiler`   — boundary + per-state attribute maps + active state → ARIA attributes.
@@ -93,7 +93,7 @@ export type CompilerDef =
       readonly _tag: 'CSSCompiler';
       readonly boundary: Boundary.Shape;
       readonly states: CSSStates;
-      /** CSS selector for bare properties; defaults to `.czap-boundary`. */
+      /** CSS selector for bare properties; defaults to `.liteship-boundary`. */
       readonly selector?: string;
     }
   | { readonly _tag: 'GLSLCompiler'; readonly boundary: Boundary.Shape; readonly states: GLSLStates }
@@ -136,8 +136,8 @@ export type CompileResult =
  *
  * @example
  * ```ts
- * import { Boundary } from '@czap/core';
- * import { dispatch } from '@czap/compiler';
+ * import { Boundary } from '@liteship/core';
+ * import { dispatch } from '@liteship/compiler';
  *
  * const boundary = Boundary.make({
  *   input: 'width',

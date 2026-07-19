@@ -14,7 +14,6 @@
   "keywords": [
     "create-liteship",
     "liteship",
-    "czap",
     "scaffold",
     "astro",
     "typescript"
@@ -45,8 +44,8 @@
     "prepack": "pnpm run build"
   },
   "dependencies": {
-    "@czap/core": "workspace:*",
-    "@czap/error": "workspace:*"
+    "@liteship/core": "workspace:*",
+    "@liteship/error": "workspace:*"
   },
   "engines": {
     "node": ">=22.13.0"

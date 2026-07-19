@@ -3,11 +3,11 @@
  * `spineRelationGate` classifies against (Wave 8.5, issue #156). Relocated from the test
  * fixture tree into the CLI host, alongside the sibling injected policies
  * (`taint-policy.ts`, `capability-policy.ts`, `active-surface-policy.ts`): WHICH types
- * LiteShip mirrors in `@czap/_spine`, their runtime producers, and the FROZEN relation
+ * LiteShip mirrors in `@liteship/_spine`, their runtime producers, and the FROZEN relation
  * each holds are repo-local CONTRACTS a reviewer owns — not a published surface.
  *
- * This is DATA, not policy logic (ADR-0012): `@czap/audit`'s `buildSpineRelationFacts` and
- * `@czap/gauntlet`'s gate are reusable and name no LiteShip mirror; the CLI host threads
+ * This is DATA, not policy logic (ADR-0012): `@liteship/audit`'s `buildSpineRelationFacts` and
+ * `@liteship/gauntlet`'s gate are reusable and name no LiteShip mirror; the CLI host threads
  * this table in as a value (the same boundary the taint registry / capability modules ride).
  *
  * SEEDED FROM THE FROZEN PINS (the relocated guarantee — S5.2 / Conflict-1). Every row here
@@ -25,7 +25,7 @@
  * @module
  */
 
-import type { SpineTypeAdmission } from '@czap/audit';
+import type { SpineTypeAdmission } from '@liteship/audit';
 
 /** A runtime-authority mirror (the runtime owns the shape; the spine hand-mirrors it). */
 function runtimeMirror(
@@ -54,7 +54,7 @@ const EDGE = 'packages/edge/src';
 
 /** The frozen admission table — every currently-pinned spine mirror type. */
 export const LITESHIP_SPINE_ADMISSIONS: readonly SpineTypeAdmission[] = [
-  // ── @czap/core runtime shapes (the three historical drift fixtures live here) ──
+  // ── @liteship/core runtime shapes (the three historical drift fixtures live here) ──
   runtimeMirror('CompositeState', `${CORE}/compositor.ts`), // WGSL-omission drift class
   runtimeMirror('VideoConfig', `${CORE}/video.ts`), // Millis-brand-loss drift class
   runtimeMirror('CaptureResult', `${CORE}/capture.ts`), // Millis-brand-loss drift class
@@ -87,12 +87,12 @@ export const LITESHIP_SPINE_ADMISSIONS: readonly SpineTypeAdmission[] = [
   ),
   runtimeMirror('Config.Shape', `${CORE}/config.ts`, 'exact', 'Config.Shape'),
 
-  // ── @czap/design shapes (re-exported as Token/Theme/Style namespaces from core) ──
+  // ── @liteship/design shapes (re-exported as Token/Theme/Style namespaces from core) ──
   runtimeMirror('Token.Shape', `${CORE}/token.ts`, 'exact', 'Token.Shape'),
   runtimeMirror('Theme.Shape', `${CORE}/theme.ts`, 'exact', 'Theme.Shape'),
   runtimeMirror('Style.Shape', `${CORE}/style.ts`, 'exact', 'Style.Shape'),
 
-  // ── @czap/edge KV-cache + manifest shapes (producing modules) ──
+  // ── @liteship/edge KV-cache + manifest shapes (producing modules) ──
   runtimeMirror('KVNamespace', `${EDGE}/kv-cache.ts`),
   runtimeMirror('CompiledOutputs', `${EDGE}/kv-cache.ts`),
   runtimeMirror('CompiledGLSLOutput', `${EDGE}/kv-cache.ts`),
@@ -103,7 +103,7 @@ export const LITESHIP_SPINE_ADMISSIONS: readonly SpineTypeAdmission[] = [
   runtimeMirror('BoundaryManifestFile', `${EDGE}/manifest.ts`),
   runtimeMirror('TierKey', `${EDGE}/manifest.ts`),
 
-  // ── @czap/edge public host surface (the @czap/edge index barrel) ──
+  // ── @liteship/edge public host surface (the @liteship/edge index barrel) ──
   runtimeMirror('ClientHintsHeaders', `${EDGE}/index.ts`),
   runtimeMirror('EdgeTierResult', `${EDGE}/index.ts`),
   runtimeMirror('ThemeCompileConfig', `${EDGE}/index.ts`),
@@ -119,7 +119,7 @@ export const LITESHIP_SPINE_ADMISSIONS: readonly SpineTypeAdmission[] = [
   runtimeMirror('EdgeHostResolution', `${EDGE}/index.ts`),
   runtimeMirror('EdgeHostAdapter', `${EDGE}/index.ts`),
 
-  // ── @czap/_spine-owned branded scalars (ADR-0010: the spine owns, the runtime re-exports) ──
+  // ── @liteship/_spine-owned branded scalars (ADR-0010: the spine owns, the runtime re-exports) ──
   reanchoredBrand('Millis'),
   reanchoredBrand('ContentAddress'),
   reanchoredBrand('IntegrityDigest'),

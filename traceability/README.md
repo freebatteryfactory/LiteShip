@@ -18,7 +18,7 @@ a LAW with no proof is a hole in the safety case.
 
 - **`invariants.yaml`** — the requirements register. Each entry DECLARES one
   invariant: `{ id, law, level, category }`. These are SYSTEM LAWS, distinct from the
-  code-style banned-pattern rules in `@czap/command`'s `INVARIANTS` (`NO_DEFAULT_EXPORT`
+  code-style banned-pattern rules in `@liteship/command`'s `INVARIANTS` (`NO_DEFAULT_EXPORT`
   &c.). Only enroll an invariant that has a REAL proving test — never fabricate a law.
 
 - **`testing-ledger.yaml`** — the trace. Each entry maps an invariant `id` to EITHER
@@ -49,5 +49,5 @@ detectable, and the **wall-clock** date for expiry is INJECTED (the two-clock la
 expiry is a calendar comparison, never `systemClock`).
 
 The host computes these `TraceabilityFacts` and injects them into the lean
-`@czap/gauntlet` engine; the `traceability-bridge` gate only FOLDS them — the same
+`@liteship/gauntlet` engine; the `traceability-bridge` gate only FOLDS them — the same
 host-injection pattern as the IR / supply-chain / mutation / simulation facts.

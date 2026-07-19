@@ -12,7 +12,7 @@
 
 import { describe, it, expect } from 'vitest';
 import fc from 'fast-check';
-import { hasTag } from '@czap/error';
+import { hasTag } from '@liteship/error';
 import { S } from '../../../../packages/core/src/schema/constructors.js';
 import { decode, decodeLenient, parseErrorFromIssues } from '../../../../packages/core/src/schema/decode.js';
 import type { DecodeIssue, DecodeResult } from '../../../../packages/core/src/schema/decode.js';

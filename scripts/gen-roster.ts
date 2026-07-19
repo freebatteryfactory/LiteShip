@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 /**
- * gen-roster — the single owner of the canonical `@czap/*` fleet roster and the
+ * gen-roster — the single owner of the canonical `@liteship/*` fleet roster and the
  * publishable-set projection, plus a byte-compare staleness gate over every
  * hand-maintained roster copy (plan [CER] `scripts/gen-roster.ts`, master-plan
  * line 446).
@@ -56,38 +56,38 @@ const REPO_ROOT = resolve(fileURLToPath(import.meta.url), '..', '..');
 // ---------------------------------------------------------------------------
 
 /**
- * Every non-private `@czap/*` package, in dependency (install) order. This is
+ * Every non-private `@liteship/*` package, in dependency (install) order. This is
  * the canonical roster the five hand-maintained copies mirror; `--check` proves
  * its membership equals the repo-truths-derived set on disk.
  */
 export const CANONICAL_ROSTER: readonly string[] = [
-  '@czap/_spine',
-  '@czap/error',
-  '@czap/canonical',
-  '@czap/core',
-  '@czap/genui',
-  '@czap/quantizer',
-  '@czap/compiler',
-  '@czap/web',
-  '@czap/detect',
-  '@czap/edge',
-  '@czap/vite',
-  '@czap/worker',
-  '@czap/remotion',
-  '@czap/scene',
-  '@czap/astro',
-  '@czap/cloudflare',
-  '@czap/stage',
-  '@czap/assets',
-  '@czap/gauntlet',
-  '@czap/audit',
-  '@czap/command',
-  '@czap/cli',
-  '@czap/mcp-server',
+  '@liteship/_spine',
+  '@liteship/error',
+  '@liteship/canonical',
+  '@liteship/core',
+  '@liteship/genui',
+  '@liteship/quantizer',
+  '@liteship/compiler',
+  '@liteship/web',
+  '@liteship/detect',
+  '@liteship/edge',
+  '@liteship/vite',
+  '@liteship/worker',
+  '@liteship/remotion',
+  '@liteship/scene',
+  '@liteship/astro',
+  '@liteship/cloudflare',
+  '@liteship/stage',
+  '@liteship/assets',
+  '@liteship/gauntlet',
+  '@liteship/audit',
+  '@liteship/command',
+  '@liteship/cli',
+  '@liteship/mcp-server',
 ];
 
 /**
- * The two non-`@czap` publishable umbrellas the release loop also ships. They
+ * The two non-`@liteship` publishable umbrellas the release loop also ships. They
  * carry the whole fleet as deps (`liteship`) or scaffold it (`create-liteship`)
  * so they publish last, after every scope they depend on.
  */
@@ -100,7 +100,7 @@ export const PUBLISHABLE_ROSTER: readonly string[] = [...CANONICAL_ROSTER, ...PU
 // Derived truths (repo-truths single owner).
 // ---------------------------------------------------------------------------
 
-/** The non-private `@czap/*` names on disk (repo-truths), sorted. */
+/** The non-private `@liteship/*` names on disk (repo-truths), sorted. */
 function derivedRosterSet(): readonly string[] {
   return packageRoster();
 }
@@ -134,7 +134,7 @@ function readReleaseYaml(): string {
 /**
  * The text of the `publish:` job (the file's last job, so from its header to
  * EOF). The gate's literal-free / references-the-JSON assertions scope to this
- * so an `@czap/` mention elsewhere in the workflow (comments, other jobs) does
+ * so an `@liteship/` mention elsewhere in the workflow (comments, other jobs) does
  * not false-trip the guard.
  */
 export function publishJobText(yaml: string): string {
@@ -235,14 +235,14 @@ export function collectRosterDrift(): readonly Drift[] {
   const derivedRoster = derivedRosterSet();
   const derivedPublishable = derivedPublishableNames();
 
-  // 1. Authored CANONICAL_ROSTER covers exactly the on-disk @czap/* set.
+  // 1. Authored CANONICAL_ROSTER covers exactly the on-disk @liteship/* set.
   if (new Set(CANONICAL_ROSTER).size !== CANONICAL_ROSTER.length) {
     drift.push({ copy: 'CANONICAL_ROSTER', detail: 'contains duplicate entries' });
   }
   if (!setEqual(CANONICAL_ROSTER, derivedRoster)) {
     drift.push({
       copy: 'CANONICAL_ROSTER',
-      detail: `membership != repo-truths @czap set — ${symmetricDiff(CANONICAL_ROSTER, derivedRoster)}`,
+      detail: `membership != repo-truths @liteship set — ${symmetricDiff(CANONICAL_ROSTER, derivedRoster)}`,
     });
   }
 
@@ -274,12 +274,12 @@ export function collectRosterDrift(): readonly Drift[] {
   }
 
   // 4. release.yml's publish job sources its roster from the generated JSON and
-  //    carries NO hand-written `@czap/` package literals of its own.
+  //    carries NO hand-written `@liteship/` package literals of its own.
   const publishJob = publishJobText(readReleaseYaml());
-  if (publishJob.includes('@czap/')) {
+  if (publishJob.includes('@liteship/')) {
     drift.push({
       copy: 'release.yml publish job',
-      detail: `carries a hand-written \`@czap/\` package literal — the roster must come from ${PUBLISH_ROSTER_JSON}`,
+      detail: `carries a hand-written \`@liteship/\` package literal — the roster must come from ${PUBLISH_ROSTER_JSON}`,
     });
   }
   if (!publishJob.includes(PUBLISH_ROSTER_JSON)) {
@@ -296,7 +296,7 @@ function check(): number {
   const drift = collectRosterDrift();
   if (drift.length === 0) {
     process.stdout.write(
-      `gen-roster: roster in sync — ${CANONICAL_ROSTER.length} @czap packages, ${PUBLISHABLE_ROSTER.length} publishable.\n`,
+      `gen-roster: roster in sync — ${CANONICAL_ROSTER.length} @liteship packages, ${PUBLISHABLE_ROSTER.length} publishable.\n`,
     );
     return 0;
   }

@@ -6,7 +6,7 @@
 
 # quantizer/src
 
-`@czap/quantizer` — **LiteShip** quantizer: **rigged** boundary evaluation,
+`@liteship/quantizer` — **LiteShip** quantizer: **rigged** boundary evaluation,
 live state, animated transitions between bearings, and motion-tier gating on
 the working line.
 

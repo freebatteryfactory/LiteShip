@@ -3,7 +3,7 @@
  *
  * A space-form `--flag <value>` must refuse to consume a following token that
  * begins with `-` (that token is the NEXT flag). Before the shared `takeFlagValue`
- * parser, `czap doctor --deployed --fix` read deployed='--fix' and probed the
+ * parser, `liteship doctor --deployed --fix` read deployed='--fix' and probed the
  * literal string "--fix" as a URL; `--target --fix` reported "got: --fix".
  *
  * The `doctor` command is mocked so these assert PURELY the argv→options parsing
@@ -54,14 +54,14 @@ describe('dispatch — a value-taking flag never swallows the next flag (F-PROTO
     const r = await capture(() => run(['doctor', '--deployed', '--fix']));
     expect(r.exit).toBe(1);
     expect(doctorMock).not.toHaveBeenCalled();
-    expect(lastStderrReceipt(r.stderr).error).toBe('usage: czap doctor --deployed <url>');
+    expect(lastStderrReceipt(r.stderr).error).toBe('usage: liteship doctor --deployed <url>');
   });
 
   it('doctor --deployed with no value refuses cleanly', async () => {
     const r = await capture(() => run(['doctor', '--deployed']));
     expect(r.exit).toBe(1);
     expect(doctorMock).not.toHaveBeenCalled();
-    expect(lastStderrReceipt(r.stderr).error).toBe('usage: czap doctor --deployed <url>');
+    expect(lastStderrReceipt(r.stderr).error).toBe('usage: liteship doctor --deployed <url>');
   });
 
   it('doctor --deployed=https://x forwards the URL (equals form still works)', async () => {

@@ -3,8 +3,8 @@
  *
  * Scans a project for boundary definition modules (`boundaries.ts` /
  * `*.boundaries.ts`) and `@quantize` CSS blocks, then derives the
- * `BoundaryManifest` that `virtual:czap/boundaries` exports and the
- * `@czap/astro` integration writes to `czap-boundary-manifest.json`: each
+ * `BoundaryManifest` that `virtual:liteship/boundaries` exports and the
+ * `@liteship/astro` integration writes to `liteship-boundary-manifest.json`: each
  * boundary's `Boundary.make` content address plus precompiled
  * `CompiledOutputs` for every (motion x design) tier.
  *
@@ -18,13 +18,13 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { Diagnostics } from '@czap/core';
-import type { Boundary } from '@czap/core';
-import { walkFiles } from '@czap/core/fs-walk';
-import { CSSCompiler, dispatch, type CSSAtRuleGroup } from '@czap/compiler';
-import type { WGSLUniformValue, WGSLUniformVector } from '@czap/compiler';
-import { DESIGN_TIERS, MOTION_TIERS, dedupeOutputsByTier, tierKey } from '@czap/edge';
-import type { BoundaryManifest, BoundaryManifestEntry, CompiledOutputs, TierKey } from '@czap/edge';
+import { Diagnostics } from '@liteship/core';
+import type { Boundary } from '@liteship/core';
+import { walkFiles } from '@liteship/core/fs-walk';
+import { CSSCompiler, dispatch, type CSSAtRuleGroup } from '@liteship/compiler';
+import type { WGSLUniformValue, WGSLUniformVector } from '@liteship/compiler';
+import { DESIGN_TIERS, MOTION_TIERS, dedupeOutputsByTier, tierKey } from '@liteship/edge';
+import type { BoundaryManifest, BoundaryManifestEntry, CompiledOutputs, TierKey } from '@liteship/edge';
 import {
   CAST_TARGETS,
   parseQuantizeBlocks,
@@ -36,7 +36,7 @@ import {
 } from './css-quantize.js';
 import { findConventionFiles } from './resolve-fs.js';
 
-const DIAGNOSTIC_SOURCE = 'czap/vite.boundary-manifest';
+const DIAGNOSTIC_SOURCE = 'liteship/vite.boundary-manifest';
 
 /** Directory names never descended into while scanning a project. */
 const SKIP_DIRS = new Set(['node_modules', 'dist', 'coverage', '.git', '.astro', '.wrangler', '.cache', '.output']);
@@ -266,7 +266,7 @@ function wgslCastState(attrs: Record<string, string>): Record<string, WGSLUnifor
     const parsed = parseWgslCastValue(value);
     if (parsed === 'invalid') {
       Diagnostics.warnOnce({
-        source: 'czap/vite.wgsl-cast',
+        source: 'liteship/vite.wgsl-cast',
         code: `wgsl-cast-value-malformed:${key}`,
         message:
           `@wgsl uniform "${key}" value "${value}" is not a valid uniform -- expected a number, a ` +
@@ -503,8 +503,8 @@ export function serializeBoundaryOutput(output: CompiledOutputs): string {
  *
  * @example
  * ```ts
- * import { collectBoundaryManifest } from '@czap/vite';
- * import { resolveOutputsByTier } from '@czap/edge';
+ * import { collectBoundaryManifest } from '@liteship/vite';
+ * import { resolveOutputsByTier } from '@liteship/edge';
  *
  * const manifest = await collectBoundaryManifest('/path/to/app');
  * // manifest.viewport.id === 'fnv1a:…' (Boundary.make's address)

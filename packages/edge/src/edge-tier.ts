@@ -1,19 +1,19 @@
 /**
  * Edge-side tier detection -- wraps the pure tier mapping functions from
- * `@czap/detect` for use with HTTP Client Hints headers at the edge.
+ * `@liteship/detect` for use with HTTP Client Hints headers at the edge.
  *
  * @module
  */
 
-import type { CapTier } from '@czap/core';
+import type { CapTier } from '@liteship/core';
 import {
   capTierFromCapabilities,
   motionTierFromCapabilities,
   designTierFromCapabilities,
   CAP_AXES,
   capAxisAttr,
-} from '@czap/detect';
-import type { DesignTier, ExtendedDeviceCapabilities, MotionTier, CapAxis } from '@czap/detect';
+} from '@liteship/detect';
+import type { DesignTier, ExtendedDeviceCapabilities, MotionTier, CapAxis } from '@liteship/detect';
 import { ClientHints } from './client-hints.js';
 import type { ClientHintsHeaders } from './client-hints.js';
 
@@ -26,7 +26,7 @@ import type { ClientHintsHeaders } from './client-hints.js';
  *
  * All three fields use the same branded tier types as the client runtime,
  * so downstream boundary evaluation and output gating reuse the exact
- * code paths from `@czap/detect`.
+ * code paths from `@liteship/detect`.
  */
 export interface EdgeTierResult {
   /** Highest {@link CapTier} the device qualifies for. */
@@ -61,10 +61,10 @@ function detectTier(headers: Headers | ClientHintsHeaders): EdgeTierResult {
 }
 
 /**
- * Structured `data-czap-*` attribute map for the root `<html>` element — the
+ * Structured `data-liteship-*` attribute map for the root `<html>` element — the
  * spreadable form of {@link tierDataAttributes}.
  *
- * Keyed by the FULL attribute name (`data-czap-<axis>`), built by iterating the
+ * Keyed by the FULL attribute name (`data-liteship-<axis>`), built by iterating the
  * canonical CAP_AXES registry, so a newly-added capability axis appears
  * automatically. A consumer that spreads this map (`<html {...map}>`) can never
  * silently MISS an axis the way a hand-written attribute list does — the whole
@@ -74,19 +74,19 @@ function detectTier(headers: Headers | ClientHintsHeaders): EdgeTierResult {
  * ```ts
  * // Astro: <html {...EdgeTier.tierDataAttributesMap(result)}>
  * tierDataAttributesMap(result)
- * // => { 'data-czap-tier': 'reactive', 'data-czap-motion': 'animations', 'data-czap-design': 'enhanced' }
+ * // => { 'data-liteship-tier': 'reactive', 'data-liteship-motion': 'animations', 'data-liteship-design': 'enhanced' }
  * ```
  */
-function tierDataAttributesMap(result: EdgeTierResult): Readonly<Record<`data-czap-${CapAxis}`, string>> {
+function tierDataAttributesMap(result: EdgeTierResult): Readonly<Record<`data-liteship-${CapAxis}`, string>> {
   // The canonical axis registry is the single source: attribute names can never
-  // drift from the `Astro.locals.czap.tiers` field names / runtime readers.
+  // drift from the `Astro.locals.liteship.tiers` field names / runtime readers.
   const value: Record<CapAxis, string> = {
     tier: result.capTier,
     motion: result.motionTier,
     design: result.designTier,
   };
   return Object.fromEntries(CAP_AXES.map((axis) => [capAxisAttr(axis), value[axis]])) as Readonly<
-    Record<`data-czap-${CapAxis}`, string>
+    Record<`data-liteship-${CapAxis}`, string>
   >;
 }
 
@@ -98,7 +98,7 @@ function tierDataAttributesMap(result: EdgeTierResult): Readonly<Record<`data-cz
  * @example
  * ```
  * tierDataAttributes(result)
- * // => 'data-czap-tier="reactive" data-czap-motion="animations" data-czap-design="enhanced"'
+ * // => 'data-liteship-tier="reactive" data-liteship-motion="animations" data-liteship-design="enhanced"'
  * ```
  */
 function tierDataAttributes(result: EdgeTierResult): string {
@@ -115,16 +115,16 @@ function tierDataAttributes(result: EdgeTierResult): string {
  * Edge tier detection namespace.
  *
  * Pairs {@link ClientHints.parseClientHints} with the pure tier-mapping
- * functions from `@czap/detect` so the edge and the browser produce the
+ * functions from `@liteship/detect` so the edge and the browser produce the
  * same `capTier`/`motionTier`/`designTier` triple for a given device.
  *
  * @example
  * ```ts
- * import { EdgeTier } from '@czap/edge';
+ * import { EdgeTier } from '@liteship/edge';
  *
  * const result = EdgeTier.detectTier(request.headers);
  * const html = `<html ${EdgeTier.tierDataAttributes(result)}>`;
- * // `<html data-czap-tier="reactive" data-czap-motion="animations" data-czap-design="enhanced">`
+ * // `<html data-liteship-tier="reactive" data-liteship-motion="animations" data-liteship-design="enhanced">`
  * ```
  */
 export const EdgeTier = {
@@ -132,9 +132,9 @@ export const EdgeTier = {
   detectTier,
   /** Map parsed Client Hints capabilities to an {@link EdgeTierResult}. */
   tierFromParsed,
-  /** Render an `EdgeTierResult` into a `data-czap-*` attribute STRING for the root HTML element. */
+  /** Render an `EdgeTierResult` into a `data-liteship-*` attribute STRING for the root HTML element. */
   tierDataAttributes,
-  /** Structured, spreadable `data-czap-*` map for the root HTML element (auto-includes every CAP_AXES axis). */
+  /** Structured, spreadable `data-liteship-*` map for the root HTML element (auto-includes every CAP_AXES axis). */
   tierDataAttributesMap,
 } as const;
 

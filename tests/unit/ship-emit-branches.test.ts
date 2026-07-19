@@ -31,7 +31,7 @@ import {
   decode,
   type AddressedDigest,
   type HLCBrand as HLC,
-} from '@czap/core';
+} from '@liteship/core';
 import { ShipEmit, shipEmitCapsule } from '../../packages/cli/src/capsules/ship-emit.js';
 
 const fakeDigest = (label: string): AddressedDigest => ({
@@ -43,7 +43,7 @@ const fakeDigest = (label: string): AddressedDigest => ({
 const sampleInput = (): ShipCapsule.Input => ({
   _kind: 'shipCapsule',
   schema_version: 1,
-  package_name: '@czap/_spine',
+  package_name: '@liteship/_spine',
   package_version: '0.1.0',
   source_commit: '0123456789abcdef0123456789abcdef01234567',
   source_dirty: false,
@@ -108,7 +108,7 @@ describe('ShipEmit.run write-path', () => {
 const sampleSnapshot = () => ({
   capsule_path: '/tmp/x.shipcapsule.cbor',
   capsule_id: 'fnv1a:deadbeef',
-  package_name: '@czap/_spine',
+  package_name: '@liteship/_spine',
   package_version: '0.1.0',
   source_commit: '0123456789abcdef0123456789abcdef01234567',
   lifecycle_scripts_observed: [] as string[],

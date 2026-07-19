@@ -1,5 +1,5 @@
 /**
- * `@czap/web` — DOM runtime for **LiteShip**: stitches **CZAP** projections
+ * `@liteship/web` — DOM runtime for **LiteShip**: stitches **LiteShip** projections
  * (CSS, streamed HTML, LLM chunks, workers) into a live browser document.
  *
  * It ships:
@@ -159,25 +159,25 @@ export type { AudioProcessor } from './audio/processor.js';
 // Capsules
 export { streamReceiptCapsule } from './capsules/stream-receipt.js';
 
-// Wire contract (typed czap:* events + stream data-czap-* attributes)
+// Wire contract (typed liteship:* events + stream data-liteship-* attributes)
 export type {
-  CzapEventDetailMap,
-  CzapEventDisposer,
-  CzapEventName,
-  CzapMorphRejectedDetail,
-  CzapStreamErrorDetail,
-  CzapUniformUpdateDetail,
+  LiteshipEventDetailMap,
+  LiteshipEventDisposer,
+  LiteshipEventName,
+  LiteshipMorphRejectedDetail,
+  LiteshipStreamErrorDetail,
+  LiteshipUniformUpdateDetail,
   StreamWireAttrKey,
   StreamWireAttribute,
 } from './wire/index.js';
 export {
-  CZAP_EVENT_DOCS,
-  CZAP_EVENT_NAMES,
+  LITESHIP_EVENT_DOCS,
+  LITESHIP_EVENT_NAMES,
   STREAM_WIRE_ATTRIBUTE_DOCS,
   STREAM_WIRE_ATTRIBUTES,
   STREAM_WIRE_ATTR_KEYS,
-  dispatchCzapEvent,
-  onCzap,
+  dispatchLiteshipEvent,
+  onLiteship,
   renderWireContractDoc,
   streamWireAttr,
 } from './wire/index.js';

@@ -5,11 +5,11 @@
  * Provides:
  *   - A <nav> linking to each tutorial step so you can navigate freely.
  *   - A <slot /> where each page injects its content.
- *   - Minimal global styles to keep the focus on czap concepts.
+ *   - Minimal global styles to keep the focus on liteship concepts.
  *
- * The @czap/astro integration automatically injects its detect script
+ * The @liteship/astro integration automatically injects its detect script
  * into <head> (configured in astro.config.ts), so every page gets
- * data-czap-tier, data-czap-scheme, and --czap-vw on the <html> element
+ * data-liteship-tier, data-liteship-scheme, and --liteship-vw on the <html> element
  * without any work here.
  */
 
@@ -25,10 +25,10 @@ const { title } = Astro.props;
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{title} | czap Tutorial</title>
+    <title>{title} | liteship Tutorial</title>
     <style>
       /* ---------------------------------------------------------------
-         Global reset and base styles. Nothing czap-specific here --
+         Global reset and base styles. Nothing liteship-specific here --
          just enough to make the tutorial readable.
       --------------------------------------------------------------- */
       *,
@@ -123,7 +123,7 @@ const { title } = Astro.props;
   </head>
   <body>
     <nav>
-      <span class="brand">czap</span>
+      <span class="brand">liteship</span>
       <a href="/01-boundary">01 Boundary</a>
       <a href="/02-tokens">02 Tokens</a>
       <a href="/03-themes">03 Themes</a>

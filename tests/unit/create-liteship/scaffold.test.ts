@@ -2,7 +2,7 @@
  * Unit tests for the create-liteship scaffolder. Everything runs against
  * temp dirs and the real embedded template (packages/create-liteship/
  * templates/default) — no network, no published packages. A full
- * `astro build` e2e of the scaffolded app needs the published @czap/*
+ * `astro build` e2e of the scaffolded app needs the published @liteship/*
  * tarballs and is the post-publish smoke, not a unit concern.
  */
 
@@ -10,7 +10,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { hasTag } from '@czap/error';
+import { hasTag } from '@liteship/error';
 import {
   scaffold,
   defaultTemplateDir,
@@ -77,7 +77,7 @@ describe('create-liteship scaffold', () => {
     // Every dependency must be a plain published range — workspace:/file:/link:
     // specs cannot install outside this monorepo.
     expect(Object.keys(manifest.dependencies)).toEqual(
-      expect.arrayContaining(['@czap/astro', '@czap/core', 'astro', 'typescript']),
+      expect.arrayContaining(['@liteship/astro', '@liteship/core', 'astro', 'typescript']),
     );
     for (const [dep, spec] of Object.entries(manifest.dependencies)) {
       expect(spec, dep).toMatch(/^\^\d+\.\d+\.\d+/);
@@ -91,11 +91,11 @@ describe('create-liteship scaffold', () => {
     expect(index).toContain('@quantize layout {');
     const boundary = readFileSync(join(result.projectDir, 'src/boundaries/layout.boundaries.ts'), 'utf8');
     expect(boundary).toContain('Boundary.make(');
-    expect(boundary).toContain("import { Boundary } from '@czap/core'");
+    expect(boundary).toContain("import { Boundary } from '@liteship/core'");
     const config = readFileSync(join(result.projectDir, 'astro.config.ts'), 'utf8');
-    expect(config).toContain("import { integration } from '@czap/astro'");
-    expect(index).toContain('@czap/genui');
-    expect(readFileSync(join(result.projectDir, 'README.md'), 'utf8')).toContain('@czap/genui');
+    expect(config).toContain("import { integration } from '@liteship/astro'");
+    expect(index).toContain('@liteship/genui');
+    expect(readFileSync(join(result.projectDir, 'README.md'), 'utf8')).toContain('@liteship/genui');
   });
 
   it('accepts an existing but empty directory', () => {
@@ -145,19 +145,19 @@ describe('create-liteship scaffold', () => {
 
   // Drift guard: a scaffolded app must pull the SAME release line the workspace
   // is publishing, not a stale one. `^0.1.5` once survived into a 0.2.0 cut
-  // because nothing pinned the template's @czap/* ranges to the release version
+  // because nothing pinned the template's @liteship/* ranges to the release version
   // — `npm create liteship@latest` would then hand users a previous-minor app.
   // Pin the LAW (major.minor must match the workspace version), not the exact
   // patch, so caret-compatible patch releases need no template churn.
-  it('template @czap/* ranges track the workspace release line (no stale-minor drift)', () => {
+  it('template @liteship/* ranges track the workspace release line (no stale-minor drift)', () => {
     const rootVersion = workspaceVersion();
     const [rootMajor, rootMinor] = rootVersion.split('.');
     const manifest = JSON.parse(readFileSync(join(defaultTemplateDir(), 'package.json'), 'utf8')) as {
       dependencies: Record<string, string>;
     };
-    const czapDeps = Object.entries(manifest.dependencies).filter(([dep]) => dep.startsWith('@czap/'));
-    expect(czapDeps.length, 'template should depend on at least one @czap/* package').toBeGreaterThan(0);
-    for (const [dep, spec] of czapDeps) {
+    const liteshipDeps = Object.entries(manifest.dependencies).filter(([dep]) => dep.startsWith('@liteship/'));
+    expect(liteshipDeps.length, 'template should depend on at least one @liteship/* package').toBeGreaterThan(0);
+    for (const [dep, spec] of liteshipDeps) {
       const match = spec.match(/^\^(\d+)\.(\d+)\.\d+/);
       expect(match, `${dep} spec ${spec} should be a caret range`).not.toBeNull();
       const [, major, minor] = match!;
@@ -167,7 +167,7 @@ describe('create-liteship scaffold', () => {
     }
   });
 
-  // A2 gate (Wave 8): the scaffold must NOT ship `effect`. It was @czap/core's one
+  // A2 gate (Wave 8): the scaffold must NOT ship `effect`. It was @liteship/core's one
   // peer; the shed moved every behavior effect carried to a LiteShip-native owner,
   // so a fresh `npm create liteship` must land with zero effect footprint — no
   // stale peer to install, no prerelease range to resolve.

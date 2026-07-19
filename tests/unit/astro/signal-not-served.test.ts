@@ -13,7 +13,7 @@
  * `expected` from, so the table auto-adjusts if the served set ever changes.
  */
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
-import { Diagnostics } from '@czap/core';
+import { Diagnostics } from '@liteship/core';
 import {
   classifySignalServing,
   warnIfSignalUnserved,
@@ -64,7 +64,7 @@ describe('warnIfSignalUnserved / classifySignalServing', () => {
       // expected is DERIVED from classifySignalServing — the table auto-adjusts.
       const expectedCode = codeFor(classifySignalServing(input));
 
-      warnIfSignalUnserved(input, { source: 'czap/astro.test', what: 'boundary signal' });
+      warnIfSignalUnserved(input, { source: 'liteship/astro.test', what: 'boundary signal' });
 
       const codes = events.map((e) => e.code);
       if (expectedCode === null) {
@@ -79,8 +79,8 @@ describe('warnIfSignalUnserved / classifySignalServing', () => {
   }
 
   test('warnOnce dedups a repeated unserved setup read (reinit-safe)', () => {
-    warnIfSignalUnserved('time.elapsed', { source: 'czap/astro.test', what: 'boundary signal' });
-    warnIfSignalUnserved('time.elapsed', { source: 'czap/astro.test', what: 'boundary signal' });
+    warnIfSignalUnserved('time.elapsed', { source: 'liteship/astro.test', what: 'boundary signal' });
+    warnIfSignalUnserved('time.elapsed', { source: 'liteship/astro.test', what: 'boundary signal' });
     expect(events.filter((e) => e.code === UNSERVED_CODE)).toHaveLength(1);
   });
 });

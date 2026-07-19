@@ -61,7 +61,7 @@ Defined in: [audit/src/devops-profile.ts:48](https://github.com/freebatteryfacto
 
 Defined in: [audit/src/devops-profile.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L45)
 
-Package owning the Vite virtual-module inventory (e.g. `'@czap/vite'`).
+Package owning the Vite virtual-module inventory (e.g. `'@liteship/vite'`).
 When absent, the legacy repo-root-relative `packages/vite/...` location
 is used so existing profiles keep working.
 

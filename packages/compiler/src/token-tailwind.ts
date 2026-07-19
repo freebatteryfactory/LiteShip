@@ -7,7 +7,7 @@
  * @module
  */
 
-import type { Token, TokenCategory } from '@czap/core';
+import type { Token, TokenCategory } from '@liteship/core';
 import { stringifyCSSValue, groupTokensByCategory } from './css-utils.js';
 
 // ---------------------------------------------------------------------------
@@ -120,7 +120,7 @@ function compile(tokens: readonly Token.Shape[]): TokenTailwindResult {
 /**
  * Token Tailwind compiler namespace.
  *
- * Adapts a `@czap/core` token set to Tailwind v4's CSS-first theming
+ * Adapts a `@liteship/core` token set to Tailwind v4's CSS-first theming
  * pipeline by emitting a single `@theme { }` block with the category
  * prefixes Tailwind expects (`--color-`, `--spacing-`, `--font-`, …).
  */

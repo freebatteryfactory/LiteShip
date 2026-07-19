@@ -6,7 +6,7 @@
  * store, and the patch/receipt chain spanning the gap. The first three are
  * host-owned by design (ADR-0015) — so the host registers them here, keyed by
  * artifact id, and the `client:stream` directive looks them up when it binds
- * `czap:request-snapshot` recovery. Receipt frames arriving on the SSE stream
+ * `liteship:request-snapshot` recovery. Receipt frames arriving on the SSE stream
  * are recorded through {@link recordStreamPatchReceipt}; the registry hands out
  * a LIVE (bounded) entries array so entries recorded after binding are still
  * visible at recovery time.
@@ -17,7 +17,7 @@
  * @module
  */
 
-import type { DiscreteStateTransition, PatchReceiptEntry, ReceiptEnvelope, StateCellStoreShape } from '@czap/core';
+import type { DiscreteStateTransition, PatchReceiptEntry, ReceiptEnvelope, StateCellStoreShape } from '@liteship/core';
 import {
   Diagnostics,
   Receipt,
@@ -25,8 +25,8 @@ import {
   decodeDiscreteStateTransition,
   discreteTransitionPayload,
   discreteTransitionSubjectId,
-} from '@czap/core';
-import { ValidationError } from '@czap/error';
+} from '@liteship/core';
+import { ValidationError } from '@liteship/error';
 import type { StreamRecoveryMutationClient } from './recovery.js';
 
 /** Host-supplied gap-replay substrate for one streamed artifact. */
@@ -97,7 +97,7 @@ export function getStreamRecoverySubstrate(artifactId: string): ResolvedStreamRe
 
 const warnRejectedFrame = (artifactId: string, reason: string, cause?: unknown): void => {
   Diagnostics.warnOnce({
-    source: 'czap/web.stream-recovery',
+    source: 'liteship/web.stream-recovery',
     code: 'unattested-patch-receipt-frame',
     message:
       `SSE receipt frame for artifact "${artifactId}" was REFUSED (${reason}). A frame must be a ` +

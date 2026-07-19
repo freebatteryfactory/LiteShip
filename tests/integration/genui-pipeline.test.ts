@@ -9,10 +9,10 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { TokenBuffer, UIQuality, GenFrame } from '@czap/core';
-import type { UIQualityTier, UIFrame, ContentAddress } from '@czap/core';
-import { LLMAdapter } from '@czap/web';
-import type { LLMChunk } from '@czap/web';
+import { TokenBuffer, UIQuality, GenFrame } from '@liteship/core';
+import type { UIQualityTier, UIFrame, ContentAddress } from '@liteship/core';
+import { LLMAdapter } from '@liteship/web';
+import type { LLMChunk } from '@liteship/web';
 
 // ---------------------------------------------------------------------------
 // Helpers

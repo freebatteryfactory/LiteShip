@@ -7,8 +7,8 @@
 
 import { describe, test, expect } from 'vitest';
 import fc from 'fast-check';
-import { Boundary } from '@czap/core';
-import { ARIACompiler } from '@czap/compiler';
+import { Boundary } from '@liteship/core';
+import { ARIACompiler } from '@liteship/compiler';
 import { captureDiagnostics } from '../../helpers/diagnostics.js';
 
 // ---------------------------------------------------------------------------
@@ -43,8 +43,8 @@ describe('ARIACompiler.compile', () => {
       expect(result.currentAttributes['data-test']).toBeUndefined();
       expect(result.currentAttributes['class']).toBeUndefined();
       expect(events).toEqual([
-        expect.objectContaining({ code: 'invalid-aria-key', source: 'czap/compiler.aria' }),
-        expect.objectContaining({ code: 'invalid-aria-key', source: 'czap/compiler.aria' }),
+        expect.objectContaining({ code: 'invalid-aria-key', source: 'liteship/compiler.aria' }),
+        expect.objectContaining({ code: 'invalid-aria-key', source: 'liteship/compiler.aria' }),
       ]);
       // The diagnostic names the state and the literal next thing to type.
       expect(events[0]!.message).toBe(
@@ -148,7 +148,7 @@ describe('ARIACompiler.compile', () => {
       expect(events).toEqual([
         expect.objectContaining({
           code: 'unknown-current-state',
-          source: 'czap/compiler.aria',
+          source: 'liteship/compiler.aria',
           message:
             'currentState "missing-state" is not one of [collapsed, expanded]; emitting no attributes. ' +
             "Pass one of the boundary's state names.",

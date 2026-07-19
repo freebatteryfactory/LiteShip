@@ -4,8 +4,8 @@
  * @module
  */
 
-import type { Compositor, Signal, VideoFrameOutput, CompositeState } from '@czap/core';
-import { Diagnostics, Millis, VideoRenderer } from '@czap/core';
+import type { Compositor, Signal, VideoFrameOutput, CompositeState } from '@liteship/core';
+import { Diagnostics, Millis, VideoRenderer } from '@liteship/core';
 import { createContext, useContext, createElement } from 'react';
 import type { ReactElement, ReactNode } from 'react';
 import { useCurrentFrame } from 'remotion';
@@ -24,7 +24,7 @@ import { stateAtFrame } from './hooks.js';
  * re-invoking the renderer. The returned array's length is the renderer's
  * total frame count.
  *
- * @param renderer - A `VideoRenderer.Shape` produced by `@czap/core`.
+ * @param renderer - A `VideoRenderer.Shape` produced by `@liteship/core`.
  * @returns Frames in timeline order.
  *
  * @example
@@ -62,7 +62,7 @@ export interface RemotionVideoConfig {
  *
  * @param config - Remotion's video config (`useVideoConfig()` /
  *   `calculateMetadata` output).
- * @param compositor - The `Compositor` driving the czap state pipeline.
+ * @param compositor - The `Compositor` driving the liteship state pipeline.
  * @param signal - Optional controllable time signal, seeked per frame.
  * @returns A `VideoRenderer.Shape` ready for {@link precomputeFrames}.
  *
@@ -107,11 +107,11 @@ const emptyState: CompositeState = {
   outputs: { css: {}, glsl: {}, wgsl: {}, aria: {} },
 };
 
-const CzapContext = createContext<ReadonlyArray<VideoFrameOutput>>([]);
+const LiteshipContext = createContext<ReadonlyArray<VideoFrameOutput>>([]);
 
 /**
  * React context provider that makes precomputed frames available to
- * {@link useCzapState} anywhere in the subtree. Use this when you prefer
+ * {@link useLiteshipState} anywhere in the subtree. Use this when you prefer
  * implicit frame lookup over threading the `frames` array through props.
  *
  * @example
@@ -126,7 +126,7 @@ export function Provider(props: { frames: ReadonlyArray<VideoFrameOutput>; child
   // `unknown` children/return typing made Provider unusable as a JSX component under
   // strict JSX element typing (React 18/19 `@types/react`), which the demo's own
   // typecheck could never pass. Real types, identical runtime.
-  return createElement(CzapContext.Provider, { value: props.frames }, props.children);
+  return createElement(LiteshipContext.Provider, { value: props.frames }, props.children);
 }
 
 /**
@@ -137,7 +137,7 @@ export function Provider(props: { frames: ReadonlyArray<VideoFrameOutput>; child
  * `<Provider frames={...}>` so the unstyled render is not silent.
  *
  * This is the implicit context-lookup half of a deliberate pair: mount a
- * {@link Provider} once and call `useCzapState()` anywhere in the subtree
+ * {@link Provider} once and call `useLiteshipState()` anywhere in the subtree
  * — no prop threading. Its sibling, `useCompositeState(frames)` in
  * `hooks.js`, takes the frames array explicitly for shallow trees and
  * pure components. Both clamp to the valid frame range and fall back to a
@@ -145,15 +145,15 @@ export function Provider(props: { frames: ReadonlyArray<VideoFrameOutput>; child
  *
  * @see useCompositeState for the explicit prop-threading form.
  */
-export function useCzapState(): CompositeState {
-  const frames = useContext(CzapContext);
+export function useLiteshipState(): CompositeState {
+  const frames = useContext(LiteshipContext);
   const frame = useCurrentFrame();
   if (frames.length === 0) {
     Diagnostics.warnOnce({
-      source: 'czap/remotion',
+      source: 'liteship/remotion',
       code: 'no-provider-frames',
       message:
-        'useCzapState(): no <Provider frames={...}> found above this component (or it received an empty array) — returning empty state, so your CSS vars will all be missing. Wrap your composition: <Provider frames={frames}><MyComposition /></Provider>, where frames = await precomputeFrames(renderer).',
+        'useLiteshipState(): no <Provider frames={...}> found above this component (or it received an empty array) — returning empty state, so your CSS vars will all be missing. Wrap your composition: <Provider frames={frames}><MyComposition /></Provider>, where frames = await precomputeFrames(renderer).',
     });
     return emptyState;
   }

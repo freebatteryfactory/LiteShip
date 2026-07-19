@@ -2,7 +2,7 @@
 
 ## Purpose
 
-How to think with LiteShip when building visually rich Astro websites. The CZAP engine evaluates boundaries, casts styles, and keeps the working deck trim; you still install and import `@czap/*` packages.
+How to think with LiteShip when building visually rich Astro websites. LiteShip evaluates boundaries, casts styles, and keeps the working deck trim; you still install and import `@liteship/*` packages.
 
 Naming: [GLOSSARY.md](./GLOSSARY.md).
 
@@ -27,7 +27,7 @@ LiteShip is strongest when the site is visual, adaptive, media-aware, and mostly
 
 ## Core idea
 
-The CZAP engine partitions continuous signals into discrete visual bearings, with hysteresis at every threshold to prevent flicker.
+LiteShip partitions continuous signals into discrete visual bearings, with hysteresis at every threshold to prevent flicker.
 
 Reality is continuous:
 
@@ -68,9 +68,9 @@ Examples with built-in observers (the Astro runtime reads and watches these for 
 - `scroll.x`
 - `scroll.y`
 - `scroll.progress` (document scroll position, 0–1)
-- `audio.amplitude` / `audio.beat` (wire a live source with `driveAudioFromAnalyser` from `@czap/astro/runtime`; WebAudio needs a user gesture)
+- `audio.amplitude` / `audio.beat` (wire a live source with `driveAudioFromAnalyser` from `@liteship/astro/runtime`; WebAudio needs a user gesture)
 
-Any other numeric signal works too — buffer occupancy, sensor data — but has no built-in reader: feed measured values through `@czap/quantizer`'s `live.evaluate(value)` yourself. Non-numeric observations like `network.effectiveType` are not signals at all; they belong to tier detection (see `@czap/detect` and Client Hints), which quantizes them server-side. The input strings above are the canonical Signal vocabulary — `SignalSource` in `@czap/core`, with `sourceToInput`/`inputToSource` round-tripping the dot-string form.
+Any other numeric signal works too — buffer occupancy, sensor data — but has no built-in reader: feed measured values through `@liteship/quantizer`'s `live.evaluate(value)` yourself. Non-numeric observations like `network.effectiveType` are not signals at all; they belong to tier detection (see `@liteship/detect` and Client Hints), which quantizes them server-side. The input strings above are the canonical Signal vocabulary — `SignalSource` in `@liteship/core`, with `sourceToInput`/`inputToSource` round-tripping the dot-string form.
 
 Signals are not presentation. They are observations.
 
@@ -224,7 +224,7 @@ Astro is a strong host for LiteShip because Astro already assumes:
 In practice, the Astro side of the model is:
 
 1. render semantic HTML
-2. attach `data-czap-*` meaning to shells
+2. attach `data-liteship-*` meaning to shells
 3. let CSS and compiled outputs carry as much of the experience as possible
 4. use directives where the experience truly needs runtime adaptation
 

@@ -25,14 +25,14 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { contentAddressOf } from '@czap/core';
+import { contentAddressOf } from '@liteship/core';
 import {
   assertReplayDeterministic,
   type SimScenario,
   type SimWorld,
   type SimStep,
   type SchedulerWorld,
-} from '@czap/core/simulation';
+} from '@liteship/core/simulation';
 import { SIMULATION_CORPUS, runSimulationCorpus } from '../../../../packages/cli/src/lib/simulation-corpus.js';
 
 describe('SIMULATION_CORPUS — the committed L4 trust-spine corpus', () => {

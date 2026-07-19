@@ -15,7 +15,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { verifyGate, runGates, memoryContext } from '@czap/gauntlet';
+import { verifyGate, runGates, memoryContext } from '@liteship/gauntlet';
 import {
   performanceContractsGate,
   PERFORMANCE_CONTRACTS_RULE_ID,

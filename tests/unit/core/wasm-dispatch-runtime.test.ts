@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { WASMDispatch, fallbackKernels } from '@czap/core';
+import { WASMDispatch, fallbackKernels } from '@liteship/core';
 
 function createMockWasmEnvironment() {
   const buffer = new ArrayBuffer(65_536);
@@ -111,9 +111,9 @@ describe('WASMDispatch runtime loading', () => {
       } as unknown as typeof WebAssembly,
     );
 
-    const kernels = await WASMDispatch.load('/czap-compute.wasm');
+    const kernels = await WASMDispatch.load('/liteship-compute.wasm');
 
-    expect(fetchMock).toHaveBeenCalledWith('/czap-compute.wasm');
+    expect(fetchMock).toHaveBeenCalledWith('/liteship-compute.wasm');
     expect(instantiateMock).toHaveBeenCalledOnce();
     expect(WASMDispatch.isLoaded()).toBe(true);
     expect(WASMDispatch.kernels()).toBe(kernels);

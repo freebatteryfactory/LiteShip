@@ -34,10 +34,10 @@ describe('test helper contract parity', () => {
   });
 
   test('MockWorker captures constructor args and throws after terminate', () => {
-    const worker = new MockWorker('blob:worker', { type: 'module', name: 'czap-worker' });
+    const worker = new MockWorker('blob:worker', { type: 'module', name: 'liteship-worker' });
 
     expect(worker.url).toBe('blob:worker');
-    expect(worker.options).toEqual({ type: 'module', name: 'czap-worker' });
+    expect(worker.options).toEqual({ type: 'module', name: 'liteship-worker' });
 
     worker.postMessage({ type: 'ping' });
     expect(worker.postedMessages).toEqual([{ data: { type: 'ping' }, transfer: undefined }]);

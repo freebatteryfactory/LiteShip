@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, test } from 'vitest';
-import { Cap, DocumentGraphNodeSchema, isWellFormedNode } from '@czap/core';
-import type { CapTier } from '@czap/core';
+import { Cap, DocumentGraphNodeSchema, isWellFormedNode } from '@liteship/core';
+import type { CapTier } from '@liteship/core';
 
 const META = {
   created: { wall_ms: 0, counter: 0, node_id: 't' },

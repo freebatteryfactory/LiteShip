@@ -1,7 +1,7 @@
 /**
  * Artifact-MIGRATION harness (Slice C, the avionics tier).
  *
- * Every versioned serialized artifact in `@czap/core` must have a VERSION-AWARE,
+ * Every versioned serialized artifact in `@liteship/core` must have a VERSION-AWARE,
  * FAIL-CLOSED reader: a current-version artifact round-trips, and an
  * UNKNOWN/FUTURE version is REJECTED with ONE canonical tagged error — never
  * silently misparsed into the current shape. Pre-stable, an artifact break is
@@ -30,7 +30,7 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { hasTag, getTag } from '@czap/error';
+import { hasTag, getTag } from '@liteship/error';
 import { encode as cborEncode } from 'cborg';
 import {
   ContentAddress,
@@ -47,7 +47,7 @@ import {
   type DocumentGraphEdge,
   type DocumentGraph as DocumentGraphType,
   type CellMeta,
-} from '@czap/core';
+} from '@liteship/core';
 
 // ── Shared fixtures ──────────────────────────────────────────────────
 
@@ -60,7 +60,7 @@ const fakeDigest = (label: string): AddressedDigest => ({
 const sampleCapsuleInput = (overrides: Partial<ShipCapsule.Input> = {}): ShipCapsule.Input => ({
   _kind: 'shipCapsule',
   schema_version: 1,
-  package_name: '@czap/_spine',
+  package_name: '@liteship/_spine',
   package_version: '0.1.0',
   source_commit: '0123456789abcdef0123456789abcdef01234567',
   source_dirty: false,
@@ -164,7 +164,7 @@ describe('artifact migration — DocumentGraph (_version)', () => {
     expect(getTag(thrown)).toBe('ParseError');
     expect((thrown as { source: string }).source).toBe('DocumentGraph');
     expect((thrown as { code?: string }).code).toBe('unsupported_version');
-    // The error is a REAL Error (stack + instanceof), per the @czap/error algebra.
+    // The error is a REAL Error (stack + instanceof), per the @liteship/error algebra.
     expect(thrown).toBeInstanceOf(Error);
   });
 
@@ -259,7 +259,7 @@ describe('artifact migration — Receipt (kind discriminator, no _version)', () 
     // byte law hashes a `kind`-discriminated envelope; there is no schema_version
     // to migrate, so no version-aware decode is owed. Adding a `_version` here
     // would be a real artifact change that THIS guard would surface.
-    const { Receipt, HLC: HLCNs, TypedRef } = await import('@czap/core');
+    const { Receipt, HLC: HLCNs, TypedRef } = await import('@liteship/core');
     const ts = HLCNs.create('migration-test');
     // TypedRef.create / Receipt.createEnvelope are Promise-first as of the
     // core-seams wave (ShipCapsule above stays Effect — no mapped seam this wave).

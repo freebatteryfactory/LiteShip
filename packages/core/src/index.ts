@@ -1,5 +1,5 @@
 /**
- * `@czap/core` — **LiteShip** primitives for the **CZAP** engine: boundaries,
+ * `@liteship/core` — **LiteShip** primitives: boundaries,
  * tokens, styles, themes, signals, and working-deck coordination (compositor,
  * plan graph, ECS, capsule factory).
  * @module
@@ -9,13 +9,13 @@
 // intentionally NOT re-exported here; it is the unsafe escape-hatch used
 // by `brands.ts` itself to define the sanctioned set, and exposing it on
 // the public surface would let consumers forge any brand. Code that
-// genuinely needs to mint a new brand should import from `@czap/core/brands`
+// genuinely needs to mint a new brand should import from `@liteship/core/brands`
 // directly and document the use site.
 export { SignalInput, ThresholdValue, StateName, ContentAddress, IntegrityDigest, TokenRef, Millis } from './brands.js';
 export type { HLC as HLCBrand } from './brands.js';
 
 // Command language (CUT A1) — declaration-only contract re-anchored from
-// @czap/_spine; the registry/dispatcher runtime lives in @czap/command.
+// @liteship/_spine; the registry/dispatcher runtime lives in @liteship/command.
 export type {
   CapsuleCommandDescriptor,
   CapsuleCommandInvocation,
@@ -40,7 +40,7 @@ export { CanonicalCbor } from './cbor.js';
 // lenient `decode` with the tagged `DecodeIssue` algebra, the `toJsonSchema`
 // deriver, and the `~standard` bridge. The full surface (`S`, `toJsonSchema`,
 // `Infer`, the `DecodeIssue` algebra, `JsonSchemaObject`/`JsonSchemaFragment`,
-// the `~standard` bridge) ships HERE on the main `@czap/core` barrel.
+// the `~standard` bridge) ships HERE on the main `@liteship/core` barrel.
 export {
   S,
   withArbitrary,
@@ -103,14 +103,14 @@ export { tupleMap } from './tuple.js';
 // unit-interval clamp, the Levenshtein table + nearest-match picker (threshold
 // caller-supplied, so one table subsumes the assets/scene/command policies), and
 // the backslash→slash repo-path normalizer (audit's B5b one-normalizer cage). The
-// Node-only `walkFiles` sibling stays OUT of this index — it rides `@czap/core/fs-walk`.
+// Node-only `walkFiles` sibling stays OUT of this index — it rides `@liteship/core/fs-walk`.
 export { clamp01 } from './math-utils.js';
 export { editDistance, closestMatch } from './string-distance.js';
 export { normalizeRepoPath } from './path-normalize.js';
 
 // Boundary. `BoundarySpec` is exported as a value+type pair (see the
 // namespace-object pattern in ADR-0001); consumers who want only the type
-// can `import type { BoundarySpec } from '@czap/core'`.
+// can `import type { BoundarySpec } from '@liteship/core'`.
 export { Boundary, BoundarySpec } from './boundary.js';
 
 // The determinism substrate: the one injectable shape time + randomness are read
@@ -122,17 +122,17 @@ export { type Rng, systemRng, seededRng } from './rng.js';
 
 // The single f32-canonical state-index kernel and its worker-blob twin string.
 // `rawIndexF32` is THE numeric semantics for boundary evaluation; the host
-// startup path (@czap/worker) delegates to it, and `EVALUATE_THRESHOLDS_SOURCE`
+// startup path (@liteship/worker) delegates to it, and `EVALUATE_THRESHOLDS_SOURCE`
 // is the inlinable mirror the worker/render blob scripts embed.
 export { rawIndexF32, EVALUATE_THRESHOLDS_SOURCE } from './boundary-f32.js';
 // Projection vocabulary — the single home of per-quantizer output key naming
 // (CSS custom property / GLSL uniform / WGSL struct field / ARIA attribute).
-// `glslIdent` is shared with @czap/compiler's GLSL arm and `wgslIdent` with its
+// `glslIdent` is shared with @liteship/compiler's GLSL arm and `wgslIdent` with its
 // WGSL arm; `PROJECTION_KEYS_SOURCE` is the worker twin.
 export { projectionKeys, glslIdent, wgslIdent, PROJECTION_KEYS_SOURCE } from './projection.js';
 export type { ProjectionKeys } from './projection.js';
 // Shared boundary/runtime attribute-projection predicate (CUT A4) — consumed by
-// @czap/compiler (ARIA compilation) and @czap/astro (runtime boundary attrs).
+// @liteship/compiler (ARIA compilation) and @liteship/astro (runtime boundary attrs).
 export { BoundaryAttribute } from './boundary-attribute.js';
 
 // Token
@@ -438,7 +438,7 @@ export {
 } from './document-graph-address.js';
 export type { DocumentGraphNodeParts } from './document-graph-address.js';
 // The one node well-formedness trust gate, shared by the AI proposal validator
-// (ai-cast.ts) and the runtime graph loader (@czap/astro) — untrusted JSON, one
+// (ai-cast.ts) and the runtime graph loader (@liteship/astro) — untrusted JSON, one
 // schema. Factored out of ai-cast.ts so neither seam owns a drifting copy.
 export { isWellFormedNode, DocumentGraphNodeSchema } from './document-graph-schema.js';
 // The one content-addressing kernel (canonicalize → CanonicalCbor → fnv1a),
@@ -600,7 +600,7 @@ export type { DiagnosticEvent, DiagnosticLevel, DiagnosticPayload, DiagnosticsSi
 
 // AddressedDigest + ShipCapsule (ADR-0011)
 // Browser-bundleable: pure type + crypto.subtle hashing. The Node-only
-// release-input manifest helpers (gzip/tar/yaml) live in @czap/cli.
+// release-input manifest helpers (gzip/tar/yaml) live in @liteship/cli.
 export { AddressedDigest } from './addressed-digest.js';
 export { ShipCapsule } from './ship-capsule.js';
 
@@ -609,7 +609,7 @@ import type { Cell as _Cell } from './cell.js';
 import type { Derived as _Derived } from './derived.js';
 import type { Zap as _Zap } from './zap.js';
 
-/** Union of the three reactive primitives the CZAP graph exposes to user code. */
+/** Union of the three reactive primitives the LiteShip graph exposes to user code. */
 export type Primitive<T> = _Cell.Shape<T> | _Derived.Shape<T> | _Zap.Shape<T>;
 
 /** Narrow a {@link Primitive} to a {@link Cell}. */
@@ -641,7 +641,7 @@ export { TypeValidator } from './capsule.js';
 export { defineCapsule, getCapsuleCatalog } from './assembly.js';
 export type { CapsuleDef } from './assembly.js';
 // `resetCapsuleCatalog` is intentionally NOT re-exported here — it mutates
-// global registry state and ships from `@czap/core/testing` only.
+// global registry state and ships from `@liteship/core/testing` only.
 
 // Capsule declarations — concrete instances of the 7-arm factory
 export { boundaryEvaluateCapsule } from './capsules/boundary-evaluate.js';
@@ -678,6 +678,6 @@ export { aiCastSummarizeCapsule } from './capsules/ai-cast-summarize.js';
 // Exported here so it registers in the live `getCapsuleCatalog()`.
 export { aiCastProposalCapsule } from './capsules/ai-cast-proposal.js';
 
-// Harness lives at `@czap/core/harness` — per-arm test + bench template
+// Harness lives at `@liteship/core/harness` — per-arm test + bench template
 // generators. Not re-exported here so consumers don't pull fast-check and
 // the code-gen surface into every bundle.

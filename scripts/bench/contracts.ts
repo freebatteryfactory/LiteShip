@@ -40,8 +40,8 @@
 
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { ValidationError } from '@czap/error';
-import { systemClock, type Clock } from '@czap/core';
+import { ValidationError } from '@liteship/error';
+import { systemClock, type Clock } from '@liteship/core';
 
 /**
  * The DECLARED input distribution of a benchmark — the law's anchor. A bench

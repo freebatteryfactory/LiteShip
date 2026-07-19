@@ -5,11 +5,11 @@
  * declared duration) warns through Diagnostics instead of failing.
  */
 import { describe, it, expect, afterEach } from 'vitest';
-import { Track, compileScene, SceneRuntime, SyncSystem, resolveBeatProjectionToSceneBeats } from '@czap/scene';
-import type { SceneContract } from '@czap/scene';
-import { Diagnostics } from '@czap/core';
-import { hasTag } from '@czap/error';
-import type { ValidationError } from '@czap/error';
+import { Track, compileScene, SceneRuntime, SyncSystem, resolveBeatProjectionToSceneBeats } from '@liteship/scene';
+import type { SceneContract } from '@liteship/scene';
+import { Diagnostics } from '@liteship/core';
+import { hasTag } from '@liteship/error';
+import type { ValidationError } from '@liteship/error';
 
 afterEach(() => {
   Diagnostics.reset();

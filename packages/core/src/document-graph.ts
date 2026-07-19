@@ -14,8 +14,8 @@
  * `document-graph-address.ts` and routes through the one shared kernel
  * (`content-address.ts`) so DocumentGraph ids cannot diverge from EntityId /
  * BoundaryDef.id. Compiler/edge outputs are referenced ONLY via
- * `AddressedDigest` (opaque), never type-imported, so `@czap/core` never gains
- * a circular edge back to `@czap/compiler` / `@czap/edge`.
+ * `AddressedDigest` (opaque), never type-imported, so `@liteship/core` never gains
+ * a circular edge back to `@liteship/compiler` / `@liteship/edge`.
  *
  * @module
  */
@@ -107,7 +107,7 @@ export interface TransitionNode extends NodeBase<'transition'> {
 /**
  * 6. Projection — the cast of a component to a target. Wraps a compiler
  * `CompileResult` BY REFERENCE (`resultDigest`), never inlined: the node stays
- * small/cacheable and `@czap/core` does not type-import `@czap/compiler`.
+ * small/cacheable and `@liteship/core` does not type-import `@liteship/compiler`.
  */
 export interface ProjectionNode extends NodeBase<'projection'> {
   readonly target: 'css' | 'glsl' | 'wgsl' | 'aria' | 'ai' | 'config' | 'svg';

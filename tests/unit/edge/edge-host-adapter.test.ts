@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import { Boundary } from '@czap/core';
-import { createEdgeHostAdapter, ClientHints, enumerateTierKeys } from '@czap/edge';
+import { Boundary } from '@liteship/core';
+import { createEdgeHostAdapter, ClientHints, enumerateTierKeys } from '@liteship/edge';
 import * as ThemeCompiler from '../../../packages/edge/src/theme-compiler.js';
 import { captureDiagnosticsAsync } from '../../helpers/diagnostics.js';
 
@@ -54,7 +54,7 @@ describe('createEdgeHostAdapter', () => {
 
     expect(result.capabilities.viewportWidth).toBe(1280);
     expect(result.tier.capTier).toBeDefined();
-    expect(result.htmlAttributes).toContain('data-czap-tier=');
+    expect(result.htmlAttributes).toContain('data-liteship-tier=');
     expect(result.responseHeaders.acceptCH).toContain('Sec-CH-Viewport-Width');
     expect(result.cacheStatus).toBe('disabled');
   });
@@ -192,9 +192,9 @@ describe('createEdgeHostAdapter', () => {
       ],
     });
     const outputs = {
-      css: '@container viewport-width (width >= 768px) {.czap-boundary {--gap: 24px;}}',
+      css: '@container viewport-width (width >= 768px) {.liteship-boundary {--gap: 24px;}}',
       propertyRegistrations: '',
-      containerQueries: '@container viewport-width (width >= 768px) {.czap-boundary {--gap: 24px;}}',
+      containerQueries: '@container viewport-width (width >= 768px) {.liteship-boundary {--gap: 24px;}}',
     };
     const precompiled = Object.fromEntries(enumerateTierKeys().map((key) => [key, outputs]));
     const getSpy = vi.spyOn(kv, 'get');
@@ -218,7 +218,7 @@ describe('createEdgeHostAdapter', () => {
     const { kv } = makeKV();
     const outputs = { css: '.asset{}', propertyRegistrations: '', containerQueries: '' };
     const precompiled = Object.fromEntries(enumerateTierKeys().map((key) => [key, outputs]));
-    const assetUrlsByTier = Object.fromEntries(enumerateTierKeys().map((key) => [key, `/_czap/${key}.css`]));
+    const assetUrlsByTier = Object.fromEntries(enumerateTierKeys().map((key) => [key, `/_liteship/${key}.css`]));
     const adapter = createEdgeHostAdapter({
       cache: {
         kv,
@@ -230,7 +230,7 @@ describe('createEdgeHostAdapter', () => {
 
     const result = await adapter.resolve(makeHeaders());
 
-    expect(result.assetUrl).toBe('/_czap/animations:enhanced.css');
+    expect(result.assetUrl).toBe('/_liteship/animations:enhanced.css');
     expect(result.compiledOutputs).toEqual(outputs);
   });
 
@@ -287,7 +287,7 @@ describe('createEdgeHostAdapter', () => {
     await adapter.resolve(makeHeaders());
 
     const dataKey = [...store.keys()].find((key) => key.includes(boundary.id))!;
-    const tagKeys = JSON.parse(store.get('czap:tag:products') ?? '[]') as string[];
+    const tagKeys = JSON.parse(store.get('liteship:tag:products') ?? '[]') as string[];
     expect(tagKeys).toEqual([dataKey]);
   });
 
@@ -309,8 +309,8 @@ describe('createEdgeHostAdapter', () => {
     await adapter.resolve(makeHeaders());
 
     const dataKey = [...store.keys()].find((key) => key.includes(testBoundary.id))!;
-    const routeTagKeys = JSON.parse(store.get('czap:tag:route:hero') ?? '[]') as string[];
-    const boundaryTagKeys = JSON.parse(store.get(`czap:tag:${testBoundary.id}`) ?? '[]') as string[];
+    const routeTagKeys = JSON.parse(store.get('liteship:tag:route:hero') ?? '[]') as string[];
+    const boundaryTagKeys = JSON.parse(store.get(`liteship:tag:${testBoundary.id}`) ?? '[]') as string[];
     expect(routeTagKeys).toEqual([dataKey]);
     expect(boundaryTagKeys).toEqual([dataKey]);
   });
@@ -493,7 +493,7 @@ describe('createEdgeHostAdapter (multi-boundary)', () => {
 
   test('a sole boundaries entry still populates the top-level compiledOutputs', async () => {
     const { kv } = makeKV();
-    const assetUrlsByTier = Object.fromEntries(enumerateTierKeys().map((key) => [key, `/_czap/hero/${key}.css`]));
+    const assetUrlsByTier = Object.fromEntries(enumerateTierKeys().map((key) => [key, `/_liteship/hero/${key}.css`]));
     const adapter = createEdgeHostAdapter({
       cache: {
         kv,
@@ -504,9 +504,9 @@ describe('createEdgeHostAdapter (multi-boundary)', () => {
     const result = await adapter.resolve(makeHeaders());
 
     expect(result.compiledOutputs?.css).toBe('.hero{}');
-    expect(result.assetUrl).toBe('/_czap/hero/animations:enhanced.css');
+    expect(result.assetUrl).toBe('/_liteship/hero/animations:enhanced.css');
     expect(result.boundaries?.hero?.compiledOutputs?.css).toBe('.hero{}');
-    expect(result.boundaries?.hero?.assetUrl).toBe('/_czap/hero/animations:enhanced.css');
+    expect(result.boundaries?.hero?.assetUrl).toBe('/_liteship/hero/animations:enhanced.css');
   });
 
   test('top-level cacheStatus aggregates worst case across boundaries', async () => {

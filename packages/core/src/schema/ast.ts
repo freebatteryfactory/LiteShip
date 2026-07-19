@@ -48,10 +48,10 @@ export type SchemaAnnotations = Readonly<Record<symbol, unknown>>;
  * generator here and the harness walker honours it ahead of structural
  * derivation. The annotated value is a thunk so the arbitrary is built lazily.
  */
-export const ArbitraryAnnotationId: unique symbol = Symbol.for('@czap/core/schema/arbitrary');
+export const ArbitraryAnnotationId: unique symbol = Symbol.for('@liteship/core/schema/arbitrary');
 
 /** The runtime brand marking a schema as a struct-field optional (see `S.optional`). */
-export const OptionalId: unique symbol = Symbol('@czap/core/schema/optional');
+export const OptionalId: unique symbol = Symbol('@liteship/core/schema/optional');
 
 // ---------------------------------------------------------------------------
 // The node vocabulary — CLOSED. Adding a producer without a matching decode /

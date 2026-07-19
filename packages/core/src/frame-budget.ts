@@ -15,7 +15,7 @@
 import { DEFAULT_TARGET_FPS, MS_PER_SEC } from './defaults.js';
 import { type Clock, systemClock } from './clock.js';
 import { Lifetime } from './lifetime.js';
-import { ValidationError } from '@czap/error';
+import { ValidationError } from '@liteship/error';
 
 /**
  * Frame-budget priority lane in descending urgency. `critical` always runs;

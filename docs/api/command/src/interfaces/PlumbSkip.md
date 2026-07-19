@@ -10,7 +10,7 @@ Defined in: [command/src/registry.ts:354](https://github.com/freebatteryfactory/
 
 One skipped generated test — a placeholder standing in for unwired work. A
 structural mirror of the host scan's result item, declared here so the
-`plumb` command's contract lives in `@czap/command` without a host import.
+`plumb` command's contract lives in `@liteship/command` without a host import.
 
 ## Properties
 
@@ -29,7 +29,7 @@ Defined in: [command/src/registry.ts:355](https://github.com/freebatteryfactory/
 Defined in: [command/src/registry.ts:364](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L364)
 
 The detected skip TOKEN as it appears in source — the SAME alias-aware detector the
-`no-skipped-test` gate uses (`@czap/gauntlet`'s `detectSkips`). Covers every form a
+`no-skipped-test` gate uses (`@liteship/gauntlet`'s `detectSkips`). Covers every form a
 generated test can carry: the plain call (`it.skip` / `test.skip` / `describe.skip` /
 `bench.skip` / `it.todo` / `xit`), the runtime-conditional (`it.skipIf` / `it.runIf`),
 and the bare alias reference (`it.skip` behind a `COND ? it : it.skip` ternary). A

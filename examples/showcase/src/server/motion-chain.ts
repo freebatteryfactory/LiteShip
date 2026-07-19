@@ -21,8 +21,8 @@ import {
   type ProgramEnv,
   type RevealIntent,
   type RuntimeWritePlan,
-} from '@czap/core';
-import type { SerializedMotionProgram } from '@czap/astro/runtime';
+} from '@liteship/core';
+import type { SerializedMotionProgram } from '@liteship/astro/runtime';
 
 /** The authored chain: rise, THEN choose the terminal hue by viewport width. */
 const CHAIN = lowerRevealChain({

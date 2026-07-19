@@ -8,10 +8,10 @@
  * lowest-capability to highest. They are the same index-keyed admissibility
  * table in two costumes. Encoding it ONCE here — as
  * pure index-keyed data with no dependency on either vocabulary's string union —
- * lets both `@czap/core`'s `RUNG_TARGETS` and `@czap/quantizer`'s `TIER_TARGETS`
+ * lets both `@liteship/core`'s `RUNG_TARGETS` and `@liteship/quantizer`'s `TIER_TARGETS`
  * PROJECT from one source, so the two can never drift.
  *
- * This module lives in `@czap/core` rather than `@czap/_spine` because `_spine`
+ * This module lives in `@liteship/core` rather than `@liteship/_spine` because `_spine`
  * is type-only (it ships no runtime JavaScript), and this is runtime DATA. The
  * quantizer already depends on core, so importing it here closes no cycle —
  * core does NOT import the quantizer, which is the near-cycle this lifting was
@@ -20,7 +20,7 @@
  * @module
  */
 
-import { InvariantViolationError } from '@czap/error';
+import { InvariantViolationError } from '@liteship/error';
 
 /**
  * A projection target a rung may admit (the shared codomain of the core

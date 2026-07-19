@@ -10,7 +10,7 @@
  * @module
  */
 
-import { clamp01, type System, type World } from '@czap/core';
+import { clamp01, type System, type World } from '@liteship/core';
 import type { EaseTag } from '../sugar/ease.js';
 import { easeFnFor } from '../sugar/ease.js';
 

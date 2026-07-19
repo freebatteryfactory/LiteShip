@@ -11,7 +11,7 @@
  * @module
  */
 
-import type { AVBridge } from '@czap/core';
+import type { AVBridge } from '@liteship/core';
 import type { AudioProcessor } from './processor.js';
 
 const PROCESSOR_SOURCE = /* js */ `

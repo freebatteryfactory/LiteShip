@@ -24,7 +24,7 @@ import { taggedError, type TaggedError } from './contract.js';
  * structurally fine but semantically rejected (out of range, empty, mutually
  * exclusive options, call-order violation).
  *
- * Migration target for: `CzapValidationError`, `InvalidParamsError`, and the
+ * Migration target for: `LiteshipValidationError`, `InvalidParamsError`, and the
  * argument/config validation throws across `cli`, `core`, `cloudflare`.
  */
 export interface ValidationError extends TaggedError<'ValidationError'> {

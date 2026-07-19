@@ -1,5 +1,5 @@
 /**
- * Centralized default constants for `@czap/core` and downstream packages.
+ * Centralized default constants for `@liteship/core` and downstream packages.
  *
  * Avoids magic numbers scattered across modules. Each constant documents
  * its purpose and which modules consume it.
@@ -37,7 +37,7 @@ export const WASM_SCRATCH_BASE = 32768;
 /**
  * Max values the WASM `batch_boundary_eval` kernel evaluates per call. The
  * crate's static output buffer clamps `values_len` to this (MUST equal
- * `MAX_VALUES` in crates/czap-compute/src/boundary.rs — pinned by
+ * `MAX_VALUES` in crates/liteship-compute/src/boundary.rs — pinned by
  * tests/property/boundary-evaluate-batch.prop.test.ts); larger inputs are
  * chunked by `Boundary.evaluateBatch` so every value is evaluated. Used by:
  * boundary.ts

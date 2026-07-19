@@ -7,14 +7,14 @@
  * `items` validation beyond the declared property types. It checks the STABLE
  * contract (top-level + declared property types/required), not internal guts.
  *
- * Not a dependency, not exported from `@czap/command`: D2 is schema LAW, not a
+ * Not a dependency, not exported from `@liteship/command`: D2 is schema LAW, not a
  * runtime validation framework. Promote with evidence if a later cut needs
  * runtime validation.
  *
  * @module
  */
 
-import type { CommandJsonSchema } from '@czap/_spine';
+import type { CommandJsonSchema } from '@liteship/_spine';
 
 /** The minimal JSON-Schema subset these schemas use. */
 export interface StructuralSchema {
@@ -63,7 +63,7 @@ export function validateStructural(schema: StructuralSchema, value: unknown): re
 }
 
 // Compile-time conformance: every CommandJsonSchema (the production command
-// input/output contract from @czap/command) is validatable as a
+// input/output contract from @liteship/command) is validatable as a
 // StructuralSchema. If the production schema shape grows past this subset,
 // the build breaks here instead of the validator silently under-checking.
 const _commandSchemaIsStructural = (schema: CommandJsonSchema): StructuralSchema => schema;

@@ -11,7 +11,7 @@
  * @module
  */
 import { describe, it, expect } from 'vitest';
-import { Boundary } from '@czap/core';
+import { Boundary } from '@liteship/core';
 import { fallbackKernels } from '../../../packages/core/src/wasm-fallback.js';
 
 /** Faithful simulation of the deployed WASM: dispatch down-casts to f32 (Float32Array),

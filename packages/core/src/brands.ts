@@ -1,10 +1,10 @@
 /**
- * Branded type factories for `@czap/core`.
+ * Branded type factories for `@liteship/core`.
  *
  * All custom brands use unique symbols for nominal typing safety.
  * Brand helpers produce branded wrappers at zero runtime cost.
  *
- * Types are re-anchored from `@czap/_spine` (the canonical source) via local
+ * Types are re-anchored from `@liteship/_spine` (the canonical source) via local
  * type aliases so the names remain valid value exports (runtime constructors)
  * in the same module without triggering `isolatedModules` conflicts.
  *
@@ -20,8 +20,8 @@ import type {
   AddressedDigest as _AddressedDigest,
   TokenRef as _TokenRef,
   Millis as _Millis,
-} from '@czap/_spine';
-import { ValidationError } from '@czap/error';
+} from '@liteship/_spine';
+import { ValidationError } from '@liteship/error';
 
 // Re-anchor types from the canonical source (_spine).
 // Using local type aliases preserves declaration-merging with the const constructors below.
@@ -135,7 +135,7 @@ export const ThresholdValue = (value: number): ThresholdValue => {
 /**
  * Wrap a plain string as a {@link StateName}.
  *
- * A state name is serialized into the `data-czap` state token and used as a
+ * A state name is serialized into the `data-liteship` state token and used as a
  * CSS/selector-addressable label, so it must be a non-empty token with no
  * whitespace (e.g. `mobile`, `sm`, `desktop`).
  *

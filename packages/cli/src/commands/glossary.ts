@@ -1,12 +1,12 @@
 /**
- * glossary (CLI adapter) — thin projection over `@czap/command`'s glossary
- * command. The catalog + lookup are the single source in `@czap/command`; this
+ * glossary (CLI adapter) — thin projection over `@liteship/command`'s glossary
+ * command. The catalog + lookup are the single source in `@liteship/command`; this
  * adapter renders the JSON receipt to stdout and a pretty summary to stderr.
  *
  * @module
  */
 
-import { glossaryCommand, GLOSSARY_ENTRIES, type GlossaryEntry, type GlossaryPayload } from '@czap/command';
+import { glossaryCommand, GLOSSARY_ENTRIES, type GlossaryEntry, type GlossaryPayload } from '@liteship/command';
 import { color, colorEnabled } from '../lib/ansi.js';
 import { emit, emitError } from '../receipts.js';
 

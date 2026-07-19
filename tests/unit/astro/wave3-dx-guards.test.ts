@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
 /**
- * Wave-3 DX regression guards (@czap/astro) — pins the LAWS behind the
+ * Wave-3 DX regression guards (@liteship/astro) — pins the LAWS behind the
  * "defaults-pass" + "error-contract" sweep so a benign refactor can't
  * silently revert the ergonomics:
  *
- *  - #90 satelliteAttrs defaults `data-czap-state` to the first state when
+ *  - #90 satelliteAttrs defaults `data-liteship-state` to the first state when
  *    `initialState` is omitted but a boundary is present (no flash of
  *    unstated content). LAW: a boundary-bearing satellite is NEVER shipped
  *    without a server state.
@@ -12,12 +12,12 @@
  *    callable with no context / partial context — and still resolves a
  *    real state. LAW: graceful degradation, never throws on absent fields.
  *  - #92 integration → middleware toggle seam: worker isolation is
- *    configured ONCE in integration() and czapMiddleware() derives it.
+ *    configured ONCE in integration() and liteshipMiddleware() derives it.
  *    LAW: configure-once; the two never diverge by default.
- *  - #93 `czap` is exported and is referentially the SAME factory as
+ *  - #93 `liteship` is exported and is referentially the SAME factory as
  *    `integration` — the rename ritual is unnecessary. LAW: alias identity.
  *  - #95–#100 error-contract: every runtime failure diagnostic carries the
- *    literal next thing to type (`Fix: czap({ ... })`), not just a code.
+ *    literal next thing to type (`Fix: liteship({ ... })`), not just a code.
  *    LAW: an actionable fix-instruction rides every inert-island failure.
  *
  * Style per testing-philosophy: property-based where the input space
@@ -28,15 +28,15 @@
  */
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 import * as fc from 'fast-check';
-import { Boundary, Diagnostics } from '@czap/core';
+import { Boundary, Diagnostics } from '@liteship/core';
 import {
   satelliteAttrs,
   resolveInitialState,
   resolveInitialStateFallback,
   integration,
-  czap,
-  czapMiddleware,
-} from '@czap/astro';
+  liteship,
+  liteshipMiddleware,
+} from '@liteship/astro';
 import {
   resolveIntegrationToggles,
   publishIntegrationToggles,
@@ -80,16 +80,16 @@ const arbBoundary = fc.uniqueArray(stateLabel, { minLength: 1, maxLength: 5 }).c
 // ---------------------------------------------------------------------------
 
 describe('LESSON (#90): a boundary-bearing satellite always ships a server state', () => {
-  test('PROPERTY: omitting initialState defaults data-czap-state to states[0]', () => {
+  test('PROPERTY: omitting initialState defaults data-liteship-state to states[0]', () => {
     fc.assert(
       fc.property(arbBoundary, (boundary) => {
         const attrs = satelliteAttrs({ boundary });
         // The state attribute is present (never undefined → CSS keyed on
-        // [data-czap-state] matches at first paint, no flash-of-unstated).
-        expect(attrs['data-czap-state']).toBeDefined();
+        // [data-liteship-state] matches at first paint, no flash-of-unstated).
+        expect(attrs['data-liteship-state']).toBeDefined();
         // …and it equals the fallback heuristic exactly, not some other state.
-        expect(attrs['data-czap-state']).toBe(resolveInitialStateFallback(boundary));
-        expect(boundary.states).toContain(attrs['data-czap-state']);
+        expect(attrs['data-liteship-state']).toBe(resolveInitialStateFallback(boundary));
+        expect(boundary.states).toContain(attrs['data-liteship-state']);
       }),
     );
   });
@@ -99,7 +99,7 @@ describe('LESSON (#90): a boundary-bearing satellite always ships a server state
       fc.property(arbBoundary, (boundary) => {
         const chosen = boundary.states[boundary.states.length - 1]!;
         const attrs = satelliteAttrs({ boundary, initialState: chosen });
-        expect(attrs['data-czap-state']).toBe(chosen);
+        expect(attrs['data-liteship-state']).toBe(chosen);
       }),
     );
   });
@@ -188,13 +188,13 @@ describe('LESSON (#92): worker isolation is configured once and derived, never d
     expect(overridden.workersEnabled).toBe(true);
   });
 
-  test('END-TO-END: building the integration once makes czapMiddleware() emit COOP/COEP', async () => {
+  test('END-TO-END: building the integration once makes liteshipMiddleware() emit COOP/COEP', async () => {
     resetIntegrationTogglesForTesting();
     // Stating workers exactly once, in integration(), publishes the toggle.
     integration({ workers: { enabled: true } });
 
     // Middleware with NO workers config now emits the isolation headers.
-    const middleware = czapMiddleware();
+    const middleware = liteshipMiddleware();
     const context = {
       request: new Request('http://localhost/'),
       locals: {} as Record<string, unknown>,
@@ -207,17 +207,17 @@ describe('LESSON (#92): worker isolation is configured once and derived, never d
 });
 
 // ---------------------------------------------------------------------------
-// #93 — czap alias identity law
+// #93 — liteship alias identity law
 // ---------------------------------------------------------------------------
 
-describe('LESSON (#93): `czap` is the same factory as `integration` (no rename ritual)', () => {
+describe('LESSON (#93): `liteship` is the same factory as `integration` (no rename ritual)', () => {
   test('the alias is referentially identical to integration', () => {
-    expect(czap).toBe(integration);
+    expect(liteship).toBe(integration);
   });
 
-  test('czap(...) produces an equivalent AstroIntegration', () => {
-    expect(czap().name).toBe('@czap/astro');
-    expect(czap().name).toBe(integration().name);
+  test('liteship(...) produces an equivalent AstroIntegration', () => {
+    expect(liteship().name).toBe('@liteship/astro');
+    expect(liteship().name).toBe(integration().name);
   });
 });
 
@@ -247,7 +247,7 @@ describe('LESSON (#95): boundary parse failure names the fix, not just the sympt
       expect(parseBoundary('{broken')).toBeNull();
       return events;
     });
-    const boundaryWarn = events.find((e) => e.source === 'czap/astro.boundary');
+    const boundaryWarn = events.find((e) => e.source === 'liteship/astro.boundary');
     expect(boundaryWarn).toBeDefined();
     expect(boundaryWarn?.message).toMatch(/satelliteAttrs|JSON/);
   });
@@ -255,7 +255,7 @@ describe('LESSON (#95): boundary parse failure names the fix, not just the sympt
   test('PROPERTY: a well-formed satelliteAttrs payload NEVER produces a parse-failure message', () => {
     fc.assert(
       fc.property(arbBoundary, (boundary) => {
-        const json = satelliteAttrs({ boundary })['data-czap-boundary']!;
+        const json = satelliteAttrs({ boundary })['data-liteship-boundary']!;
         expect(boundaryParseFailureMessage(json)).toBeNull();
         expect(parseBoundary(json)).not.toBeNull();
       }),

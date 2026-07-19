@@ -4,7 +4,7 @@
  * Cross-target motion parity — THE #130 differential oracle.
  *
  * ONE authored motion program renders identically across EVERY target because every
- * non-CSS target samples the ONE shared kernel `sampleProgram` (`@czap/core`, Law 4) and
+ * non-CSS target samples the ONE shared kernel `sampleProgram` (`@liteship/core`, Law 4) and
  * the declarative CSS `@keyframes` are generated from the SAME kernel. This test is the
  * READER that makes each adapter load-bearing (Law 16): for each fixture × canonical
  * sample time it computes the reference vector from `sampleProgram`, then asserts every
@@ -15,7 +15,7 @@
  *   - scene           — `sampleSceneMotion` (the `MotionSampleSystem` projection);
  *   - stage video leg — `sampleMotionFrames` (per FrameRange index);
  *   - remotion        — `sampleMotionFrame` (per composition frame);
- *   - worker          — `motionSampleMessage` (off-thread sampler → `czap:uniform-update`);
+ *   - worker          — `motionSampleMessage` (off-thread sampler → `liteship:uniform-update`);
  *   - browser CSS     — reconstructed from the emitted `css.keyframes`.
  *
  * EPSILON + its source (blueprint risk #6): the non-CSS targets all call `sampleProgram`,
@@ -45,7 +45,7 @@ import {
   type RuntimeEasing,
   type RuntimeWritePlan,
   type TypedValue,
-} from '@czap/core';
+} from '@liteship/core';
 import { writeContinuousMap } from '../../../packages/astro/src/runtime/write-continuous-map.js';
 import { sampleSceneMotion } from '../../../packages/scene/src/systems/motion.js';
 import { sampleMotionFrames } from '../../../packages/stage/src/motion-export.js';

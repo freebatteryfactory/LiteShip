@@ -20,7 +20,7 @@
  *   • `symbol-reference-count` (number) — references OUTSIDE the declaration file.
  *   • `symbol-orphan` (boolean) — true iff that external count is zero.
  *
- * The `symbol-orphan-divergence` gate (in `@czap/gauntlet`) folds these against
+ * The `symbol-orphan-divergence` gate (in `@liteship/gauntlet`) folds these against
  * the IR's `file-proxy-only` `refs` reverse index. Where they DISAGREE — the
  * file-proxy graph credits a reference the LanguageService cannot resolve (a name
  * collision the weak graph launders), or the LanguageService resolves one the
@@ -45,8 +45,8 @@
  */
 import ts from 'typescript';
 import { resolve } from 'node:path';
-import { InvariantViolationError } from '@czap/error';
-import type { Fact, FileId, SymbolId } from '@czap/gauntlet';
+import { InvariantViolationError } from '@liteship/error';
+import type { Fact, FileId, SymbolId } from '@liteship/gauntlet';
 import { liteshipDevopsProfile } from './devops-profile.js';
 import type { DevopsProfile } from './devops-profile.js';
 import { readProfileSourceFileRecords, listProfilePackageManifests } from './shared.js';

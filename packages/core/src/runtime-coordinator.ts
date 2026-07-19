@@ -88,7 +88,7 @@ function orderedPhases(plan: Plan.IR): readonly RuntimePhase[] {
     .filter((phase): phase is RuntimePhase => typeof phase === 'string');
 }
 
-const RUNTIME_PLAN_TEMPLATE = makeRuntimePlan('czap-runtime');
+const RUNTIME_PLAN_TEMPLATE = makeRuntimePlan('liteship-runtime');
 const RUNTIME_PHASES = orderedPhases(RUNTIME_PLAN_TEMPLATE);
 
 /**
@@ -97,7 +97,7 @@ const RUNTIME_PHASES = orderedPhases(RUNTIME_PLAN_TEMPLATE);
  * the exported entry point.
  */
 export function createRuntimeCoordinator(config?: RuntimeCoordinatorConfig): RuntimeCoordinatorShape {
-  const name = config?.name ?? 'czap-runtime';
+  const name = config?.name ?? 'liteship-runtime';
   const plan = name === RUNTIME_PLAN_TEMPLATE.name ? RUNTIME_PLAN_TEMPLATE : { ...RUNTIME_PLAN_TEMPLATE, name };
   const phases = RUNTIME_PHASES;
   const stateIndex = Part.dense('state-index', config?.capacity ?? DEFAULT_RUNTIME_CAPACITY);

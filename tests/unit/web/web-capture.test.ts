@@ -235,8 +235,8 @@ describe('web capture runtime', () => {
         blend: {},
         outputs: {
           css: {
-            '--czap-background': 'black',
-            '--czap-foreground': 'white',
+            '--liteship-background': 'black',
+            '--liteship-foreground': 'white',
           },
           glsl: {},
           aria: {},
@@ -250,8 +250,8 @@ describe('web capture runtime', () => {
         blend: {},
         outputs: {
           css: {
-            '--czap-bg': 'navy',
-            '--czap-color': 'gold',
+            '--liteship-bg': 'navy',
+            '--liteship-color': 'gold',
           },
           glsl: {},
           aria: {},

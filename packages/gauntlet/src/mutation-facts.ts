@@ -5,8 +5,8 @@
  *
  * This module defines the {@link MutationFacts} INTERFACE and nothing else. Like
  * {@link RepoIR} and {@link SupplyChainFacts}, it carries no heavy dependency:
- * `@czap/gauntlet` stays the lean engine, so it never parses a TS AST, generates a
- * mutant, or spawns a test run. A HOST (`@czap/audit`'s mutation engine + the CLI's
+ * `@liteship/gauntlet` stays the lean engine, so it never parses a TS AST, generates a
+ * mutant, or spawns a test run. A HOST (`@liteship/audit`'s mutation engine + the CLI's
  * vitest runner) does the heavy lifting — generate the deterministic mutant
  * catalogue, run the covering tests per mutant, decide each kill/survive verdict —
  * and hands the engine these flat, already-decided facts. The gate's only job is to

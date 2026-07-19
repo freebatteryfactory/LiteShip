@@ -22,7 +22,7 @@ runs against the real repo and against an in-memory fixture unchanged.
 Defined in: [gauntlet/src/gate.ts:362](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L362)
 
 Pre-computed ACTIVE-SURFACE field-read evidence — an INJECTED FactPack (#132).
-The HOST (`@czap/audit`'s `buildActiveSurfaceFacts`) scans reader paths with
+The HOST (`@liteship/audit`'s `buildActiveSurfaceFacts`) scans reader paths with
 TS-AST and lands flat [ActiveSurfaceFacts](ActiveSurfaceFacts.md); the
 [activeModeledSurfaceReaderGate](../variables/activeModeledSurfaceReaderGate.md) decides over them. When ABSENT the gate
 folds an empty verdict. See [ActiveSurfaceFacts](ActiveSurfaceFacts.md).
@@ -37,11 +37,11 @@ Defined in: [gauntlet/src/gate.ts:285](https://github.com/freebatteryfactory/Lit
 
 The host-supplied [CapabilityLinkFacts](CapabilityLinkFacts.md) (codex round-8, #1b) — the dataflow proof that every
 sanctioned capability-gated skip's GUARD DERIVES FROM its declared capability's probe. The heavy
-`ts.Program`/checker `linker` lives in a HOST (`@czap/audit`'s capability-link oracle, fed the
-canonical capability-module SET + the sanctioned sites the `@czap/cli` host injects — the audit
+`ts.Program`/checker `linker` lives in a HOST (`@liteship/audit`'s capability-link oracle, fed the
+canonical capability-module SET + the sanctioned sites the `@liteship/cli` host injects — the audit
 engine names no LiteShip capability, ADR-0012/D7b). The [capabilityGateLinkGate](../variables/capabilityGateLinkGate.md) reads ONLY
 through this; fixtures supply a literal facts record. When ABSENT the gate is not in the set
-(capability-link is opt-in: `czap check --ir --capability-gate`). A skip whose guard derives from
+(capability-link is opt-in: `liteship check --ir --capability-gate`). A skip whose guard derives from
 NO capability probe (`if (Math.random())`) — or the WRONG one (a mislabel) — folds to an L4 finding.
 
 ***
@@ -54,7 +54,7 @@ Defined in: [gauntlet/src/gate.ts:101](https://github.com/freebatteryfactory/Lit
 
 The sound, parser-backed `codeOnly` floor — an INJECTED capability, the same shape as
 [skipDetector](#skipdetector). The lean char-state-machine `codeOnly` (gates/code-only.ts) is the
-no-typescript FALLBACK; the host (the CLI, which deps `@czap/audit`) builds `codeOnlyAST` (a real
+no-typescript FALLBACK; the host (the CLI, which deps `@liteship/audit`) builds `codeOnlyAST` (a real
 `ts.createSourceFile` token walk that the parser disambiguates — regex-vs-division, nested
 templates, comments) and injects it here. A code-scanning gate calls `(context.codeOnly ?? codeOnly)(text)`
 — the scanner when injected, the char-machine otherwise. The two are pinned equivalent by the
@@ -84,7 +84,7 @@ interaction"), the same lean-engine pattern as [ir](#ir) and [proof](#proof).
 OPTIONAL: the heavy work (deriving the interaction edges from the IR call graph,
 deciding which units are individually tested, and deciding which edges an
 integration test exercises TOGETHER — by a per-test execution-coverage probe or
-the sound static-reference proxy) lives in a HOST (the CLI's `czap check --ir
+the sound static-reference proxy) lives in a HOST (the CLI's `liteship check --ir
 --composition` path), which folds the classified edges into flat
 [CompositionFacts](CompositionFacts.md) and lands them here. The [compositionCoverageGate](../variables/compositionCoverageGate.md)
 reads ONLY through this; in-memory fixtures supply a literal facts record (no
@@ -127,9 +127,9 @@ here at the commit gate (phase C) — one engine. See [DeclaredFixFacts](Declare
 
 Defined in: [gauntlet/src/gate.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L91)
 
-The SOUND early-return detector — an INJECTED capability. `@czap/gauntlet` carries NO
+The SOUND early-return detector — an INJECTED capability. `@liteship/gauntlet` carries NO
 `typescript` dep; the token `detectEarlyReturnBeforeExpect` is its fallback. The host injects
-`detectEarlyReturnBeforeExpectAST` from `@czap/audit`. The no-early-return-test gate calls
+`detectEarlyReturnBeforeExpectAST` from `@liteship/audit`. The no-early-return-test gate calls
 `(context.earlyReturnDetector ?? detectEarlyReturnBeforeExpect)(text)`.
 
 #### Parameters
@@ -177,8 +177,8 @@ the decode crash/pollution it folds replays byte-for-byte. See
 Defined in: [gauntlet/src/gate.ts:112](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L112)
 
 The triangulated repo-IR — an INJECTED capability (Slice B). OPTIONAL by
-design: `@czap/gauntlet` is the lean engine and the IR is built+injected by
-a host (the CLI, via `@czap/audit`'s `ts.Program`), so the gauntlet never
+design: `@liteship/gauntlet` is the lean engine and the IR is built+injected by
+a host (the CLI, via `@liteship/audit`'s `ts.Program`), so the gauntlet never
 carries the heavy `typescript` dep. An existing regex gate ignores it
 entirely; a new IR-fold gate that REQUIRES it must guard `ir === undefined`
 (or use [requireIR](../functions/requireIR.md), which throws a clear tagged error when no IR was
@@ -198,12 +198,12 @@ capability (the avionics tier — DO-178B Level A's coverage requirement, realiz
 CONDITION-LEVEL MUTATION), the same lean-engine pattern as [mutation](#mutation).
 OPTIONAL: the heavy work (decomposing every L4 decision into its atomic conditions,
 minting the force-true/force-false pin per condition, running the covering tests per
-pin) all lives in a HOST (`@czap/audit`'s condition-mutation engine + the CLI's
+pin) all lives in a HOST (`@liteship/audit`'s condition-mutation engine + the CLI's
 per-mutant vitest runner), which folds the two pins per condition into flat
 [McdcFacts](McdcFacts.md) (each condition MC/DC-covered iff BOTH pins were KILLED) and lands
 them here. The [mcdcCoverageGate](../variables/mcdcCoverageGate.md) reads ONLY through this; in-memory fixtures
 supply a literal facts record (no parse, no test run). When ABSENT the gate is simply
-not in the set (MC/DC is opt-in: `czap check --ir --mcdc`), so there is no per-pin
+not in the set (MC/DC is opt-in: `liteship check --ir --mcdc`), so there is no per-pin
 cost and no noise on a default run. See [McdcFacts](McdcFacts.md).
 
 ***
@@ -217,12 +217,12 @@ Defined in: [gauntlet/src/gate.ts:138](https://github.com/freebatteryfactory/Lit
 Pre-computed mutation evidence — an INJECTED capability (Slice C, the avionics
 tier — mutation-as-divergence), the same lean-engine pattern as [ir](#ir) and
 [supplyChain](#supplychain). OPTIONAL: the heavy AST mutation + the per-mutant vitest
-runs all live in a HOST (`@czap/audit`'s mutation engine + the CLI's vitest
+runs all live in a HOST (`@liteship/audit`'s mutation engine + the CLI's vitest
 runner), which folds them into flat [MutationFacts](MutationFacts.md) (every mutant's
 kill/survive verdict + the committed score baseline) and lands them here. The
 [mutationDivergenceGate](../variables/mutationDivergenceGate.md) reads ONLY through this; in-memory fixtures
 supply a literal facts record (no parse, no test run). When ABSENT the gate is
-simply not in the set (mutation is opt-in: `czap check --ir --mutate`), so
+simply not in the set (mutation is opt-in: `liteship check --ir --mutate`), so
 there is no per-mutant cost and no noise on a default run. See
 [MutationFacts](MutationFacts.md).
 
@@ -240,7 +240,7 @@ dependency), the same lean-engine pattern as [ir](#ir), [mutation](#mutation), a
 [simulation](#simulation). OPTIONAL: the heavy work (reading the proof signals —
 mutation-score baseline, coverage report, property-test presence, the enrolled
 invariants ledger — and blending them into a per-module proof scalar) lives in a
-HOST (the CLI's `czap check --ir --proof` path), which folds them into flat
+HOST (the CLI's `liteship check --ir --proof` path), which folds them into flat
 [ProofFacts](ProofFacts.md) and lands them here. The [proofPropagationGate](../variables/proofPropagationGate.md)
 PROPAGATES the scalar along the IR's dep DAG (the `min`-fixpoint dual of
 assurance propagation) and reads ONLY through this; in-memory fixtures supply a
@@ -272,7 +272,7 @@ Pre-computed DETERMINISTIC-SIMULATION (DST) evidence — an INJECTED capability
 [supplyChain](#supplychain), and [mutation](#mutation). OPTIONAL: the heavy work (minting a
 seeded world, running the scenario corpus, replaying each seed twice, and
 content-addressing the byte-exact traces) all lives in a HOST (the CLI's
-`czap check --ir --simulate` path, driving the `@czap/core/simulation`
+`liteship check --ir --simulate` path, driving the `@liteship/core/simulation`
 harness), which folds the verdicts into flat [SimulationFacts](SimulationFacts.md) (every
 scenario's two replay digests + any divergence) and lands them here. The
 [simulationDeterminismGate](../variables/simulationDeterminismGate.md) reads ONLY through this; in-memory fixtures
@@ -291,13 +291,13 @@ Defined in: [gauntlet/src/gate.ts:84](https://github.com/freebatteryfactory/Lite
 
 The SOUND skip detector — an INJECTED capability (the AST detector, the cure that ends the
 token-scanner whack-a-mole). OPTIONAL by design, the SAME lean-engine pattern as [ir](#ir):
-`@czap/gauntlet` carries NO `typescript` dep, so the dependency-free token `detectSkips` is its
-FALLBACK; the host (the CLI, which deps `@czap/audit`) builds `detectSkipsAST` (a real
+`@liteship/gauntlet` carries NO `typescript` dep, so the dependency-free token `detectSkips` is its
+FALLBACK; the host (the CLI, which deps `@liteship/audit`) builds `detectSkipsAST` (a real
 `ts.createSourceFile` AST walk + local binding analysis + conditionality classification) and
 injects it here. A skip-reading gate / scan calls `(context.skipDetector ?? detectSkips)(text)`
 — the AST detector when injected (line-agnostic, catches every multi-line/ASI/inner-describe
 spelling, and produces the `conditional` F2 discriminant), the token fallback otherwise. When
-ABSENT the token detector runs unchanged (back-compat; the lean `czap check` path). See
+ABSENT the token detector runs unchanged (back-compat; the lean `liteship check` path). See
 [SkipMatch](SkipMatch.md).
 
 #### Parameters
@@ -342,7 +342,7 @@ Defined in: [gauntlet/src/gate.ts:170](https://github.com/freebatteryfactory/Lit
 Pre-computed TWO-AXIS spine-relation classification — an INJECTED capability (the
 constitution's static-projection half, Wave 8.5), the same lean-engine pattern as
 [transition](#transition). OPTIONAL: the heavy work (a `ts.Program` per build, one
-bidirectional-assignability probe per admitted mirror type) runs in `@czap/audit`'s
+bidirectional-assignability probe per admitted mirror type) runs in `@liteship/audit`'s
 `buildSpineRelationFacts`; when the host did not run it this capability is ABSENT and
 the [spineRelationGate](../variables/spineRelationGate.md) is simply not in the set (no cost, no noise). Each
 observation carries its two axes so a drift finding names WHICH relation changed.
@@ -383,7 +383,7 @@ Defined in: [gauntlet/src/gate.ts:124](https://github.com/freebatteryfactory/Lit
 Pre-computed supply-chain evidence — an INJECTED capability (Slice C, the
 avionics tier), the same lean-engine pattern as [ir](#ir). OPTIONAL: the
 heavy lockfile parse / SBOM build / ShipCapsule decode / CI scan all live in
-a HOST (the CLI's `@czap/cli` supply-chain analyzer), which folds them into
+a HOST (the CLI's `@liteship/cli` supply-chain analyzer), which folds them into
 flat [SupplyChainFacts](SupplyChainFacts.md) and lands them here. The
 [supplyChainGate](../variables/supplyChainGate.md) reads ONLY through this; in-memory fixtures supply a
 literal facts record (no I/O, no YAML). When ABSENT the supply-chain gate
@@ -404,14 +404,14 @@ TAINT-ANALYSIS family), the same lean-engine pattern as [ir](#ir),
 and [standards](#standards). OPTIONAL: the heavy work (a whole-corpus `ts.Program` +
 a type-checker dataflow trace from each untrusted SOURCE call to each dangerous
 SINK call argument, observing the SANITIZER on the path) lives in a HOST
-(`@czap/audit`'s taint oracle, classified by the LiteShip-LOCAL source/sink/
-sanitizer registry the `@czap/cli` host injects — the audit engine itself
+(`@liteship/audit`'s taint oracle, classified by the LiteShip-LOCAL source/sink/
+sanitizer registry the `@liteship/cli` host injects — the audit engine itself
 references NO LiteShip policy, ADR-0012/D7b), which folds the traced flows into
 flat [TaintFacts](TaintFacts.md) (every source→sink flow + its sanitizer, if any + the
 honest interprocedural depth the trace covered) and lands them here. The
 [taintFlowGate](../variables/taintFlowGate.md) reads ONLY through this; in-memory fixtures supply a
 literal facts record (no program, no checker). When ABSENT the gate is simply
-not in the set (taint is opt-in: `czap check --ir --taint`). An UNSANITIZED
+not in the set (taint is opt-in: `liteship check --ir --taint`). An UNSANITIZED
 source→sink flow folds to a Finding at the sink's (propagated) level — L4 for a
 trust-spine sink. See [TaintFacts](TaintFacts.md).
 
@@ -451,7 +451,7 @@ conformance backbone), the same lean-engine pattern as [ir](#ir) and
 [mutation](#mutation). OPTIONAL: the heavy work (unfolding each seeded op history over
 BOTH the single-oracle model AND the live implementation over the native transport,
 content-addressing each observed trace, deciding the per-case bisimulation verdict)
-all lives in a HOST (`@czap/audit`'s `buildTransitionFacts` + the LiteShip-local
+all lives in a HOST (`@liteship/audit`'s `buildTransitionFacts` + the LiteShip-local
 reactive capture/model runner `tests/support/reactive-conformance.ts`), which folds the
 verdicts into flat [TransitionFacts](TransitionFacts.md) (every case's model/impl observation digests +
 status + the committed unevidenced baseline) and lands them here. The
@@ -460,7 +460,7 @@ a literal facts record (no primitive, no capture). When ABSENT the gate is simpl
 the set. The reactive model + native-transport oracle are LiteShip-local (product
 machinery in the test tree), so — per ADR-0012/0023 — the gate is HOSTED by the repo-local
 `transition:gate` phase (`scripts/transition-conformance-gate.ts`, run every PR), NOT the
-shipped `czap check` CLI, so there is no per-case cost and no noise on a default run. A
+shipped `liteship check` CLI, so there is no per-case cost and no noise on a default run. A
 `divergent` case carries its SEED, so the behavior change it folds replays
 byte-for-byte. See [TransitionFacts](TransitionFacts.md).
 

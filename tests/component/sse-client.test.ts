@@ -12,9 +12,9 @@
  */
 
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
-import { SSE } from '@czap/web';
-import type { SSEConfig } from '@czap/web';
-import { Millis } from '@czap/core';
+import { SSE } from '@liteship/web';
+import type { SSEConfig } from '@liteship/web';
+import { Millis } from '@liteship/core';
 import { MockEventSource } from '../helpers/mock-event-source.js';
 
 // ---------------------------------------------------------------------------

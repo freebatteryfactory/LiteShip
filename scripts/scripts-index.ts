@@ -58,5 +58,5 @@ if (other.length > 0) {
 }
 
 process.stdout.write(
-  `${color('dim', 'Tip:', on)} \`${color('cyan', 'czap help', on)}\` is the chart; \`${color('cyan', 'czap glossary', on)}\` is the ontology.\n`,
+  `${color('dim', 'Tip:', on)} \`${color('cyan', 'liteship help', on)}\` is the chart; \`${color('cyan', 'liteship glossary', on)}\` is the ontology.\n`,
 );

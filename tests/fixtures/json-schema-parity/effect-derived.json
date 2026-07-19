@@ -34,5 +34,5 @@
   "verify#inputSchema": "{\"properties\":{\"capsule\":{\"type\":\"string\"},\"tarball\":{\"type\":\"string\"}},\"required\":[\"tarball\"],\"type\":\"object\"}",
   "verify#outputSchema": "{\"properties\":{\"capsule_id\":{\"type\":[\"string\",\"null\"]},\"checks\":{\"properties\":{\"chain_link\":{\"const\":\"skipped\"},\"lockfile\":{\"const\":\"skipped\"},\"tarball_manifest\":{\"enum\":[\"match\",\"mismatch\",\"skipped\"]},\"workspace_manifest\":{\"const\":\"skipped\"}},\"required\":[\"tarball_manifest\",\"lockfile\",\"workspace_manifest\",\"chain_link\"],\"type\":\"object\"},\"mismatches\":{\"items\":{\"type\":\"string\"},\"type\":\"array\"},\"tarball\":{\"type\":\"string\"}},\"required\":[\"tarball\",\"capsule_id\",\"checks\",\"mismatches\"],\"type\":\"object\"}",
   "version#inputSchema": "{\"properties\":{},\"type\":\"object\"}",
-  "version#outputSchema": "{\"properties\":{\"czap\":{\"type\":\"string\"},\"node\":{\"type\":\"string\"},\"pnpm\":{\"type\":[\"string\",\"null\"]}},\"required\":[\"czap\",\"node\",\"pnpm\"],\"type\":\"object\"}"
+  "version#outputSchema": "{\"properties\":{\"liteship\":{\"type\":\"string\"},\"node\":{\"type\":\"string\"},\"pnpm\":{\"type\":[\"string\",\"null\"]}},\"required\":[\"liteship\",\"node\",\"pnpm\"],\"type\":\"object\"}"
 }

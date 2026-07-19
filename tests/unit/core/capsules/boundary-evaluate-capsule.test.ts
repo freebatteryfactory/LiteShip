@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { boundaryEvaluateCapsule } from '@czap/core';
+import { boundaryEvaluateCapsule } from '@liteship/core';
 
 describe('boundaryEvaluateCapsule', () => {
   it('declares a pureTransform capsule with content-addressed id', () => {

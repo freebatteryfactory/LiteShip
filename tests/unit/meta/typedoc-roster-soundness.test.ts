@@ -4,7 +4,7 @@
  * `docs:check` regenerates the API docs from `typedoc.json`'s `entryPoints` and diffs against the
  * committed `docs/api`. That makes it blind to OMISSION: a published package absent from the roster
  * has no generated page, so there is nothing to diff, so the gate stays green while the package is
- * undocumented (the exact hole that let new `@czap/gauntlet` exports "pass" docs:check — the package
+ * undocumented (the exact hole that let new `@liteship/gauntlet` exports "pass" docs:check — the package
  * was never in the roster). A gate that cannot see a gap is a gate giving false green.
  *
  * This guard makes the roster CHECKED-AGAINST-SOURCE: every non-private package in the workspace MUST

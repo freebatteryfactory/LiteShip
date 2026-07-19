@@ -16,7 +16,7 @@ cleanup. Effect-free — consumers coordinate live state with no `effect` import
 ## Example
 
 ```ts
-import { Signal } from '@czap/core';
+import { Signal } from '@liteship/core';
 
 const viewport = Signal.make({ type: 'viewport', axis: 'width' });
 const width = viewport.read();

@@ -13,7 +13,7 @@
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { normalizeRepoPath } from '@czap/audit';
+import { normalizeRepoPath } from '@liteship/audit';
 
 /** The repo-relative test roots scanned for the corpus (the vitest include set). */
 const TEST_ROOTS: readonly string[] = [

@@ -1,8 +1,8 @@
-/** @czap/compiler error contract */
+/** @liteship/compiler error contract */
 import { describe, it, expect } from 'vitest';
-import { hasTag } from '@czap/error';
-import { sealGraph, Reveal, type DocumentGraph } from '@czap/core';
-import { compileReveal } from '@czap/compiler';
+import { hasTag } from '@liteship/error';
+import { sealGraph, Reveal, type DocumentGraph } from '@liteship/core';
+import { compileReveal } from '@liteship/compiler';
 
 const META = { created: { wall_ms: 0, counter: 0, node_id: 't' }, updated: { wall_ms: 0, counter: 0, node_id: 't' }, version: 1 };
 
@@ -15,7 +15,7 @@ const minimalIntent = Reveal.intent({
   policy: { reducedMotion: 'settle', motionTier: 'transitions' },
 });
 
-describe('@czap/compiler error contract', () => {
+describe('@liteship/compiler error contract', () => {
   it('compileReveal without a css plan names compileReveal and the missing plan', () => {
     const empty = sealGraph({ _tag: 'DocumentGraph', _version: 1, meta: META, nodes: [], edges: [] } as Omit<DocumentGraph, 'id' | 'digest'>);
     try {

@@ -2,7 +2,7 @@
  * CUT D9a — the audit profile seam is complete end-to-end.
  *
  * D7 threaded the profile through `runStructureAudit` only. D9a finishes the job:
- *   • integrity + surface honor the supplied profile (no hardcoded `@czap/`);
+ *   • integrity + surface honor the supplied profile (no hardcoded `@liteship/`);
  *   • `profile.repoRoot` is the single, authoritative audit target — no parallel
  *     `root` param that silently shadows it;
  *   • the default LiteShip profile reproduces the engine floor byte-for-byte.
@@ -20,11 +20,11 @@ import { resolve, join } from 'node:path';
 import { runStructureAudit } from '../../../scripts/audit/structure.js';
 import { runIntegrityAudit } from '../../../scripts/audit/integrity.js';
 import { runSurfaceAudit } from '../../../scripts/audit/surface.js';
-import { AUDIT_WARNING_FLOOR, diffInventories } from '@czap/command';
+import { AUDIT_WARNING_FLOOR, diffInventories } from '@liteship/command';
 import { collectWarningInventory } from '../../../packages/cli/src/commands/audit-floor.js';
 import { buildCodebaseAuditReport } from '../../../scripts/audit/report.js';
-import { liteshipDevopsProfile, withRepoRoot } from '@czap/audit';
-import type { DevopsProfile } from '@czap/audit';
+import { liteshipDevopsProfile, withRepoRoot } from '@liteship/audit';
+import type { DevopsProfile } from '@liteship/audit';
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
 
@@ -34,7 +34,7 @@ afterEach(() => {
 });
 
 function makeFixture(files: Record<string, string>): string {
-  const root = mkdtempSync(join(tmpdir(), 'czap-d9a-'));
+  const root = mkdtempSync(join(tmpdir(), 'liteship-d9a-'));
   fixtures.push(root);
   for (const [rel, content] of Object.entries(files)) {
     const abs = resolve(root, rel);
@@ -72,7 +72,7 @@ function acmeRepo(): string {
   });
 }
 
-describe('D9a — surface audit honors the profile (the @czap/ host-surface leak is gone)', () => {
+describe('D9a — surface audit honors the profile (the @liteship/ host-surface leak is gone)', () => {
   it('an @acme/ profile (empty surfacePolicy) yields ZERO host-surface findings', () => {
     const result = runSurfaceAudit(acmeProfile(acmeRepo()));
     expect(result.findings.filter((f) => f.rule === 'host-surface')).toHaveLength(0);
@@ -99,15 +99,15 @@ describe('D9a — integrity audit honors profile.internalPackagePrefix', () => {
     expect(result.findings.some((f) => f.rule === 'suspicious-reimplementation')).toBe(true);
   });
 
-  it('does NOT treat a @czap/ import as internal under an @acme/ profile', () => {
+  it('does NOT treat a @liteship/ import as internal under an @acme/ profile', () => {
     const root = makeFixture({
       'packages/core/package.json': PKG('@acme/core'),
       'packages/core/src/index.ts': 'export const coreThing = 1;\n',
       'packages/app/package.json': PKG('@acme/app'),
-      // Imports @czap/ — under an @acme profile this is EXTERNAL, so no
+      // Imports @liteship/ — under an @acme profile this is EXTERNAL, so no
       // internal-import bookkeeping → no reimplementation smell from it.
       'packages/app/src/index.ts':
-        "import { whatever } from '@czap/core';\nexport function appThing(): number { return 41 + 1; }\n",
+        "import { whatever } from '@liteship/core';\nexport function appThing(): number { return 41 + 1; }\n",
     });
     const result = runIntegrityAudit(acmeProfile(root));
     expect(result.findings.some((f) => f.rule === 'suspicious-reimplementation')).toBe(false);
@@ -124,7 +124,7 @@ describe('D9a — profile.repoRoot is the authoritative audit target', () => {
 
   it('withRepoRoot repoints the LiteShip default without a parallel root argument', () => {
     const root = makeFixture({
-      'packages/core/package.json': PKG('@czap/core'),
+      'packages/core/package.json': PKG('@liteship/core'),
       'packages/core/src/index.ts': 'export const coreThing = 1;\n',
     });
     const result = runStructureAudit(withRepoRoot(liteshipDevopsProfile, root));
@@ -133,7 +133,7 @@ describe('D9a — profile.repoRoot is the authoritative audit target', () => {
 });
 
 describe('D9a — the whole bundle decouples (all three passes follow the profile)', () => {
-  it('buildCodebaseAuditReport on an @acme/ repo carries no @czap/ host-surface error and roots at the profile', () => {
+  it('buildCodebaseAuditReport on an @acme/ repo carries no @liteship/ host-surface error and roots at the profile', () => {
     const report = buildCodebaseAuditReport({ profile: acmeProfile(acmeRepo()), generatedAt: '2026-05-26T00:00:00.000Z' });
     expect(report.surface.findings.filter((f) => f.rule === 'host-surface')).toHaveLength(0);
     expect(report.structure.summary.packageEdges).toContainEqual({ from: '@acme/app', to: '@acme/core', count: 1 });
@@ -141,16 +141,16 @@ describe('D9a — the whole bundle decouples (all three passes follow the profil
   });
 });
 
-describe('D9a/D9b — no repo-local @czap/ gate remains in the audit engine (source-grep)', () => {
-  // CUT D9b-1 relocated the engine into @czap/audit; report.ts (the HICP bundle)
+describe('D9a/D9b — no repo-local @liteship/ gate remains in the audit engine (source-grep)', () => {
+  // CUT D9b-1 relocated the engine into @liteship/audit; report.ts (the HICP bundle)
   // stays repo-local, so its test-import classifier is still greppable in scripts.
-  it('integrity + report classify by profile prefix, not a @czap/ literal', () => {
+  it('integrity + report classify by profile prefix, not a @liteship/ literal', () => {
     const integrity = readFileSync(resolve(REPO, 'packages/audit/src/integrity.ts'), 'utf8');
-    expect(integrity).not.toMatch(/startsWith\(\s*['"]@czap\//);
+    expect(integrity).not.toMatch(/startsWith\(\s*['"]@liteship\//);
     expect(integrity).toContain('profile.internalPackagePrefix');
 
     const report = readFileSync(resolve(REPO, 'scripts/audit/report.ts'), 'utf8');
-    expect(report).not.toMatch(/startsWith\(\s*['"]@czap\//);
+    expect(report).not.toMatch(/startsWith\(\s*['"]@liteship\//);
   });
 
   it('surface reads its surface policy from the profile, not the policy const', () => {
@@ -159,9 +159,9 @@ describe('D9a/D9b — no repo-local @czap/ gate remains in the audit engine (sou
     expect(surface).toMatch(/const\s*\{\s*surfacePolicy\s*\}\s*=\s*profile/);
   });
 
-  it('the @czap/ prefix literal lives only in the default profile (single source)', () => {
+  it('the @liteship/ prefix literal lives only in the default profile (single source)', () => {
     const profileSrc = readFileSync(resolve(REPO, 'packages/audit/src/devops-profile.ts'), 'utf8');
-    expect(profileSrc).toContain("internalPackagePrefix: '@czap/'");
+    expect(profileSrc).toContain("internalPackagePrefix: '@liteship/'");
   });
 });
 

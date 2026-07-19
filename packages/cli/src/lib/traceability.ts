@@ -3,7 +3,7 @@
  * ledger, DO-178B-style) — parse `traceability/*.yaml`, scan the test corpus for
  * `// PROVES:` headers, run the deterministic lifecycle fold, content-address the
  * resolved ledger, and produce the flat {@link TraceabilityFacts} the lean
- * `@czap/gauntlet` `traceabilityBridgeGate` folds.
+ * `@liteship/gauntlet` `traceabilityBridgeGate` folds.
  *
  * This is the SAME host-injection pattern as `repo-ir-gauntlet.ts`'s `--supply-chain`
  * block (the host computes the heavy facts; the lean engine just folds): the YAML
@@ -23,7 +23,7 @@
  * The transition function is a pure fold over (the ledger + the discovered PROVES
  * headers + the waivers + the wall-clock date). The wall-clock date is INJECTED (the
  * TWO-CLOCK LAW: expiry is a CALENDAR comparison, never `systemClock`). The resolved
- * ledger is content-addressed (the ONE `contentAddressOf` kernel from `@czap/core`),
+ * ledger is content-addressed (the ONE `contentAddressOf` kernel from `@liteship/core`),
  * so DRIFT in the resolved trace is detectable. A malformed ledger FAILS LOUD (a
  * tagged error), never silently misparses.
  *
@@ -36,11 +36,11 @@
 
 import { existsSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
-import { contentAddressOf } from '@czap/core';
-import { walkFiles } from '@czap/core/fs-walk';
-import { normalizeRepoPath } from '@czap/audit';
-import { ParseError, InvariantViolationError } from '@czap/error';
-import type { TraceabilityFacts, ResolvedInvariant, InvariantState, TraceabilityDivergence } from '@czap/gauntlet';
+import { contentAddressOf } from '@liteship/core';
+import { walkFiles } from '@liteship/core/fs-walk';
+import { normalizeRepoPath } from '@liteship/audit';
+import { ParseError, InvariantViolationError } from '@liteship/error';
+import type { TraceabilityFacts, ResolvedInvariant, InvariantState, TraceabilityDivergence } from '@liteship/gauntlet';
 
 /** Repo-relative location of the requirements register. */
 const INVARIANTS_PATH = 'traceability/invariants.yaml';
@@ -358,7 +358,7 @@ interface ProofClaim {
 function collectTestFiles(repoRoot: string, root: string): readonly string[] {
   const abs = join(repoRoot, root);
   if (!existsSync(abs)) return [];
-  // The shared `@czap/core/fs-walk` walker (skips `node_modules`/`dist`, keeps
+  // The shared `@liteship/core/fs-walk` walker (skips `node_modules`/`dist`, keeps
   // `.test.ts`); the explicit final sort preserves the original deterministic order.
   return walkFiles(abs, { skipDirs: ['node_modules', 'dist'], suffixes: ['.test.ts'] })
     .map((full) => normalizeRepoPath(relative(repoRoot, full)))
@@ -568,7 +568,7 @@ export function buildTraceabilityFacts(repoRoot: string, now: Date): Traceabilit
 
   const divergences = detectDivergences(declared, traces, claims, corpusFiles, provesByFile);
 
-  // Content-address the RESOLVED ledger (the one @czap/core kernel) — the drift
+  // Content-address the RESOLVED ledger (the one @liteship/core kernel) — the drift
   // keystone. The address omits `now` so it stays stable across a same-day re-run;
   // it folds the invariants' resolved states + the divergences (the verdict surface).
   const ledgerAddress = contentAddressOf({ invariants, divergences });

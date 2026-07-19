@@ -1,7 +1,7 @@
 /**
- * verify (CLI adapter) — thin projection over `@czap/command`'s verify command
+ * verify (CLI adapter) — thin projection over `@liteship/command`'s verify command
  * (ADR-0011 local verifier). The four-verdict decision tree lives in
- * `@czap/command`; this adapter parses argv, injects the file reads and the
+ * `@liteship/command`; this adapter parses argv, injects the file reads and the
  * native (sync) capsule decode + tarball-manifest recompute, and renders the
  * ShipVerifyReceipt. No network, no pnpm, no git.
  *
@@ -10,9 +10,9 @@
 
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { ShipCapsule } from '@czap/core';
-import { verifyCommand, type VerifyPayload } from '@czap/command';
-import type { CommandContext } from '@czap/command';
+import { ShipCapsule } from '@liteship/core';
+import { verifyCommand, type VerifyPayload } from '@liteship/command';
+import type { CommandContext } from '@liteship/command';
 import { tarballManifestAddress } from '../ship-manifest.js';
 import { emit, emitError } from '../receipts.js';
 import type { ShipVerifyReceipt } from '../receipts.js';
@@ -24,7 +24,7 @@ function verifyContext(): CommandContext {
       const abs = resolve(path);
       return existsSync(abs) ? new Uint8Array(readFileSync(abs)) : null;
     },
-    // The context callbacks are typed Promise-returning by @czap/command; the
+    // The context callbacks are typed Promise-returning by @liteship/command; the
     // underlying decode/recompute are now SYNC, so these `async` wrappers just
     // adapt the sync `Result` / sync throw into the injected-capability shape.
     decodeShipCapsule: async (bytes) => {

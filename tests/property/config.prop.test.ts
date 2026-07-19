@@ -5,7 +5,7 @@
 
 import { describe, test } from 'vitest';
 import fc from 'fast-check';
-import { Config } from '@czap/core';
+import { Config } from '@liteship/core';
 import { arbConfigInput } from '../helpers/primitive-harness.js';
 
 describe('Config determinism (property)', () => {

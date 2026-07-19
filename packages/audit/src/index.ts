@@ -1,5 +1,5 @@
 /**
- * @czap/audit — the profile-driven, downstream-installable audit engine.
+ * @liteship/audit — the profile-driven, downstream-installable audit engine.
  *
  * Runs the structure / integrity / surface passes against a `DevopsProfile`
  * (`profile.repoRoot` is the authoritative audit target). The LiteShip HICP
@@ -83,12 +83,12 @@ function consumerMissingFindings(profile: DevopsProfile): AuditFinding[] {
  * a deceptively green zero-findings result.
  */
 function nothingAuditedFinding(profile: DevopsProfile): AuditFinding {
-  const prefix = profile.internalPackagePrefix || '@czap/';
+  const prefix = profile.internalPackagePrefix || '@liteship/';
   const summary = profile.packageRoots
     ? `No installed packages from the profile's packageTopology were found under ${profile.repoRoot} — ` +
       `nothing was audited. Install the ${prefix}* packages you ship, or audit a workspace by passing --profile instead.`
     : `No packages were discovered under ${profile.repoRoot}/packages/* — nothing was audited. ` +
-      `If this repo consumes ${prefix}* packages from npm, run \`czap audit --consumer\`; ` +
+      `If this repo consumes ${prefix}* packages from npm, run \`liteship audit --consumer\`; ` +
       `otherwise pass --profile pointing at your workspace.`;
   return {
     id: 'support/no-packages',

@@ -62,7 +62,7 @@ Number of module specifiers the import-smoke resolved (0 when it never ran).
 
 > `readonly` **packagesPacked**: `object`
 
-Number of `@czap/*` (+ unscoped) scopes packed via `pnpm pack`.
+Number of `@liteship/*` (+ unscoped) scopes packed via `pnpm pack`.
 
 #### properties.packagesPacked.type
 

@@ -6,7 +6,7 @@
  * @module
  */
 
-import { Diagnostics } from '@czap/core';
+import { Diagnostics } from '@liteship/core';
 import type { CloudflareWorkersEnv } from './edge-cache.js';
 
 /**
@@ -49,7 +49,7 @@ export async function loadWorkersEnvFromRuntime(): Promise<CloudflareWorkersEnv>
     return cachedWorkersEnv;
   } catch {
     Diagnostics.warnOnce({
-      source: 'czap/cloudflare.middleware',
+      source: 'liteship/cloudflare.middleware',
       code: 'workers-env-unavailable',
       message:
         'cloudflare:workers is unavailable (not running on workerd), so Workers env bindings cannot be read from the runtime module. ' +

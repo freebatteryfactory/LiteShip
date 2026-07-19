@@ -4,7 +4,7 @@ This file is the shortest route to the right document.
 
 Use it as the entry point for humans and agents.
 
-Shared vocabulary (LiteShip / CZAP / `@czap/*`): [GLOSSARY.md](./GLOSSARY.md).
+Shared vocabulary (LiteShip / `@liteship/*`): [GLOSSARY.md](./GLOSSARY.md).
 
 ---
 
@@ -84,7 +84,7 @@ This is the mechanics layer:
 
 Read [ASTRO-RUNTIME-MODEL.md](./ASTRO-RUNTIME-MODEL.md).
 
-This is the LiteShip host layer (Astro + CZAP runtime):
+This is the LiteShip host layer (Astro + LiteShip runtime):
 
 - integration
 - middleware
@@ -136,7 +136,7 @@ Read [CHANGELOG.md](./CHANGELOG.md). For shipping npm/GitHub releases, see
 
 ### If you're new (theory-first arc)
 
-1. [GLOSSARY.md](./GLOSSARY.md): LiteShip / CZAP / `@czap/*` + prose register (short; read once)
+1. [GLOSSARY.md](./GLOSSARY.md): LiteShip / `@liteship/*` + prose register (short; read once)
 2. [ASTRO-STATIC-MENTAL-MODEL.md](./ASTRO-STATIC-MENTAL-MODEL.md)
 3. [ARCHITECTURE.md](./ARCHITECTURE.md)
 4. [ADR-0002 zero-alloc](./docs/adr/0002-zero-alloc.md) + [ADR-0004 plan/coordinator](./docs/adr/0004-plan-coordinator.md)
@@ -181,7 +181,7 @@ For agents and grep-first humans, here is where the canonical answer lives:
 | Where is `Token` defined? | `packages/core/src/token.ts` |
 | Where is `Style` defined? | `packages/core/src/style.ts` |
 | Where is `Theme` defined? | `packages/core/src/theme.ts` |
-| Where does the canonical CBOR encoder live? | `packages/canonical/src/cbor.ts` (`@czap/canonical`; re-exported from `packages/core/src/cbor.ts`) |
+| Where does the canonical CBOR encoder live? | `packages/canonical/src/cbor.ts` (`@liteship/canonical`; re-exported from `packages/core/src/cbor.ts`) |
 | Where is the FNV-1a hash? | `packages/canonical/src/fnv.ts` (re-exported from `packages/core/src/fnv.ts`) |
 | Where is the generated UI catalog renderer? | `packages/genui/src/` (`defineComponentCatalog`, `renderFromCatalog`; ADR-0014) |
 | Where is the SPSC ring buffer? | `packages/worker/src/spsc-ring.ts` |
@@ -191,12 +191,12 @@ For agents and grep-first humans, here is where the canonical answer lives:
 | Where is the SSRF / private-IP guard? | `packages/web/src/security/runtime-url.ts` |
 | Where is the runtime policy global written? | `packages/astro/src/runtime/policy.ts`, via `globals.ts` |
 | Where does `client:satellite` register? | `packages/astro/src/integration.ts` |
-| Where is the `Satellite` Astro component? | `packages/astro/src/Satellite.astro` (default export from `@czap/astro/Satellite`) |
+| Where is the `Satellite` Astro component? | `packages/astro/src/Satellite.astro` (default export from `@liteship/astro/Satellite`) |
 | Where is the document graph IR? | `packages/core/src/document-graph.ts` + `document-graph-address.ts` (`sealNode`/`sealGraph`; ADR-0015) |
 | How do I mutate a graph? | `packages/core/src/graph-patch.ts` (`GraphPatch.diff`/`apply`/`validate`; apply re-seals) |
 | Where is the AI cast / how is a model proposal validated? | `packages/core/src/ai-cast.ts` (`castContext` → `validateGraphPatchProposal` → `applyValidatedPatch`); envelope in `validated-output.ts` (ADR-0015) |
 | How does a surface choose a render tier? | `packages/core/src/escalation.ts` (`chooseRung`; budget-gated, wired in the compositor) |
-| Where is the dual-export (one graph → page + video)? | `packages/stage/src/dual-export.ts` (`dualExport`; ffmpeg backend on `@czap/stage/ffmpeg`) |
+| Where is the dual-export (one graph → page + video)? | `packages/stage/src/dual-export.ts` (`dualExport`; ffmpeg backend on `@liteship/stage/ffmpeg`) |
 | What runs in `lint:structural`? | `sgconfig.yml` + `sgrules/` (AST guards; `AUDIT.md` "Structural lint") |
 | How do I add a new compile target? | `docs/adr/0006-compiler-dispatch.md`, then `packages/compiler/src/dispatch.ts` |
 | How do I add a new primitive? | `docs/adr/0001-namespace-pattern.md`, then mirror the existing primitive shape in `packages/core/src/` |
@@ -207,17 +207,17 @@ For agents and grep-first humans, here is where the canonical answer lives:
 | Where is the red-team regression suite? | `tests/regression/red-team-runtime.test.ts` |
 | What does `flex:verify` check? | `scripts/flex-verify.ts` (7 dimensions; gauntlet's final phase rollup) |
 | How do I batch-evaluate many values against one boundary? | `Boundary.evaluateBatch(boundary, values)` in `packages/core/src/boundary.ts` (routed through `WASMDispatch.kernels()`; output-identical to scalar `evaluate`) |
-| Where does the WASM kernel ship / get resolved? | `scripts/build-wasm.ts` stages it into `@czap/core/dist`; `packages/vite/src/wasm-resolve.ts` resolves it through the module graph (`@czap/vite` → `@czap/core`) |
-| How do I force the GPU shader below the tier gate? | `client:gpu={{ force: true }}` or `data-czap-gpu-force` (ASTRO-RUNTIME-MODEL.md § `gpu`; `packages/astro/src/runtime/gpu.ts`) |
-| When does capability detection finish? | the `czap:detect-ready` event on `document` (ASTRO-RUNTIME-MODEL.md § "Capability detection"; `packages/astro/src/detect-upgrade.ts`) |
-| How do I read the resolved GPU tier client-side? | the `czap:detect-ready` detail or `window.__CZAP_DETECT__` — `gpuTier`/`webgpu` are not `<html>` attributes (as of 0.3.0) |
-| How do I drive a boundary from live audio? | `driveAudioFromAnalyser(analyser)` from `@czap/astro/runtime`, then `Boundary.make({ input: 'audio.amplitude' or 'audio.beat', ... })` (`packages/astro/src/runtime/audio-signal.ts`) |
+| Where does the WASM kernel ship / get resolved? | `scripts/build-wasm.ts` stages it into `@liteship/core/dist`; `packages/vite/src/wasm-resolve.ts` resolves it through the module graph (`@liteship/vite` → `@liteship/core`) |
+| How do I force the GPU shader below the tier gate? | `client:gpu={{ force: true }}` or `data-liteship-gpu-force` (ASTRO-RUNTIME-MODEL.md § `gpu`; `packages/astro/src/runtime/gpu.ts`) |
+| When does capability detection finish? | the `liteship:detect-ready` event on `document` (ASTRO-RUNTIME-MODEL.md § "Capability detection"; `packages/astro/src/detect-upgrade.ts`) |
+| How do I read the resolved GPU tier client-side? | the `liteship:detect-ready` detail or `window.__LITESHIP_DETECT__` — `gpuTier`/`webgpu` are not `<html>` attributes (as of 0.3.0) |
+| How do I drive a boundary from live audio? | `driveAudioFromAnalyser(analyser)` from `@liteship/astro/runtime`, then `Boundary.make({ input: 'audio.amplitude' or 'audio.beat', ... })` (`packages/astro/src/runtime/audio-signal.ts`) |
 | Where is the canonical signal-input vocabulary? | `SignalSource` + `sourceToInput`/`inputToSource` in `packages/core/src/signal-input.ts` (source of truth for `viewport.width`, `scroll.progress`, `audio.amplitude`, ...) |
-| How do I open the dev boundary inspector? | the Astro dev-toolbar (czap toolbar icon) in `astro dev`; opt out with `czap({ inspector: false })` |
-| How do I skip the manual `src/middleware.ts`? | `czap({ middleware: true })` auto-wires detection (`@czap/astro/middleware-entry`); typed `Astro.locals.czap.tiers` |
+| How do I open the dev boundary inspector? | the Astro dev-toolbar (liteship toolbar icon) in `astro dev`; opt out with `liteship({ inspector: false })` |
+| How do I skip the manual `src/middleware.ts`? | `liteship({ middleware: true })` auto-wires detection (`@liteship/astro/middleware-entry`); typed `Astro.locals.liteship.tiers` |
 | How does a client send an edit back to the server? | `createGraphMutationClient` + `sendGraphMutation` (`packages/core/src/graph-mutation-client.ts`, `graph-mutation.ts`); the host route is `graphMutationRoute` (ARCHITECTURE.md § "The mutation channel"; `examples/06-mutation-roundtrip`) |
-| How do I bind a form to the mutation channel? | `bindGraphForm` from `@czap/web` (`packages/web/src/mutation/graph-form.ts`; ADR-0031; `examples/06-mutation-roundtrip`) |
-| How do I keep the morph out of a client-owned subtree (CodeMirror, canvas)? | mark it `data-czap-morph-opaque` — `MorphOpaque` in `@czap/web` (`packages/web/src/morph/opaque.ts`; ADR-0032) |
+| How do I bind a form to the mutation channel? | `bindGraphForm` from `@liteship/web` (`packages/web/src/mutation/graph-form.ts`; ADR-0031; `examples/06-mutation-roundtrip`) |
+| How do I keep the morph out of a client-owned subtree (CodeMirror, canvas)? | mark it `data-liteship-morph-opaque` — `MorphOpaque` in `@liteship/web` (`packages/web/src/morph/opaque.ts`; ADR-0032) |
 | How do I use LiteShip's node schema with a Standard-Schema-aware library? | `DocumentGraphNodeSchema` carries `~standard` (Standard Schema V1) (`packages/core/src/document-graph-schema.ts`; ADR-0033) |
 | What does a `staleBase` refusal / HTTP 409 mean? | the mutation was proposed against a base the server has moved past — reload and re-propose (the client does this automatically with `refreshBase`); `packages/core/src/graph-mutation.ts`, ADR-0031 |
 

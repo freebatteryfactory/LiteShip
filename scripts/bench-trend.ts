@@ -26,7 +26,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { repoRoot } from '../vitest.shared.js';
-import type { WallClockTimestamp } from '@czap/core';
+import type { WallClockTimestamp } from '@liteship/core';
 
 /** Number of most-recent distinct entries to consider as the rolling window. */
 const ROLLING_WINDOW = 10;

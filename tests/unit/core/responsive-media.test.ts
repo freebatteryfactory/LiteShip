@@ -13,8 +13,8 @@ import {
   buildResponsiveSrcset,
   buildResponsiveImageSet,
   projectResponsiveMediaPicture,
-} from '@czap/core';
-import { compileResponsiveMedia } from '@czap/compiler';
+} from '@liteship/core';
+import { compileResponsiveMedia } from '@liteship/compiler';
 
 function heroMediaIntent() {
   return ResponsiveMedia.intent({
@@ -155,7 +155,7 @@ describe('ResponsiveMedia projection', () => {
       devicePixelRatio: 1,
       saveData: false,
     });
-    expect(projection.picture).toContain('<picture data-czap-responsive="hero-img">');
+    expect(projection.picture).toContain('<picture data-liteship-responsive="hero-img">');
     expect(projection.picture).toContain('prefers-reduced-data: reduce');
     expect(projection.picture).toContain('srcset="/img/hero-lite.jpg');
     expect(projection.resolved.src).toBe('/img/hero-800.jpg');

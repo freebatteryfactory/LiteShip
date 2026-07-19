@@ -69,13 +69,13 @@ describe('B6b — the roster doc names the real package set (command + audit pre
   // of the 0.6.0 front-door cut the README no longer enumerates packages — its aperture
   // is pinned separately by tests/unit/meta/front-door.test.ts — so ARCHITECTURE.md is
   // the single roster doc that must name the real package set.
-  it('ARCHITECTURE.md lists @czap/command and @czap/audit', () => {
+  it('ARCHITECTURE.md lists @liteship/command and @liteship/audit', () => {
     const src = read('ARCHITECTURE.md');
-    expect(src, 'ARCHITECTURE.md must list @czap/command').toMatch(/@czap\/command/);
-    expect(src, 'ARCHITECTURE.md must list @czap/audit').toMatch(/@czap\/audit/);
+    expect(src, 'ARCHITECTURE.md must list @liteship/command').toMatch(/@liteship\/command/);
+    expect(src, 'ARCHITECTURE.md must list @liteship/audit').toMatch(/@liteship\/audit/);
   });
-  it('the CLI README documents the `czap audit` verb (added in D9b)', () => {
-    expect(read('packages/cli/README.md')).toMatch(/czap audit/);
+  it('the CLI README documents the `liteship audit` verb (added in D9b)', () => {
+    expect(read('packages/cli/README.md')).toMatch(/liteship audit/);
   });
 });
 

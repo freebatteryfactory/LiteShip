@@ -3,8 +3,8 @@
  */
 
 import { describe, test, expect, beforeEach } from 'vitest';
-import { AVBridge } from '@czap/core';
-import { hasTag } from '@czap/error';
+import { AVBridge } from '@liteship/core';
+import { hasTag } from '@liteship/error';
 
 describe('AVBridge construction', () => {
   test('creates a bridge with correct sampleRate and fps', () => {

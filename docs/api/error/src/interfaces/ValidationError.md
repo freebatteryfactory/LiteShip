@@ -12,7 +12,7 @@ A precondition, argument, or factory-input check failed — the value was
 structurally fine but semantically rejected (out of range, empty, mutually
 exclusive options, call-order violation).
 
-Migration target for: `CzapValidationError`, `InvalidParamsError`, and the
+Migration target for: `LiteshipValidationError`, `InvalidParamsError`, and the
 argument/config validation throws across `cli`, `core`, `cloudflare`.
 
 ## Extends

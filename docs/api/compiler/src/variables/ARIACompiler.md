@@ -65,8 +65,8 @@ An [ARIACompileResult](../interfaces/ARIACompileResult.md) with validated state 
 #### Example
 
 ```ts
-import { Boundary } from '@czap/core';
-import { ARIACompiler } from '@czap/compiler';
+import { Boundary } from '@liteship/core';
+import { ARIACompiler } from '@liteship/compiler';
 
 const boundary = Boundary.make({
   input: 'width',
@@ -83,8 +83,8 @@ console.log(result.currentAttributes);
 ## Example
 
 ```ts
-import { Boundary } from '@czap/core';
-import { ARIACompiler } from '@czap/compiler';
+import { Boundary } from '@liteship/core';
+import { ARIACompiler } from '@liteship/compiler';
 
 const boundary = Boundary.make({
   input: 'width',

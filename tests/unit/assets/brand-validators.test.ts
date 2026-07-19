@@ -12,7 +12,7 @@
 
 import { describe, test, expect } from 'vitest';
 import fc from 'fast-check';
-import { hasTag } from '@czap/error';
+import { hasTag } from '@liteship/error';
 import { mkAssetRefId, isAssetRefId } from '../../../packages/assets/src/brands.js';
 
 function expectValidationError(fn: () => unknown): void {

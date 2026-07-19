@@ -2,7 +2,7 @@
  * The HOST builders for the LOCAL-VS-GLOBAL correctness family (the lax-functor
  * proof-propagation + the composition-coverage analysis). The heavy IR/graph/signal
  * work lives HERE (the CLI host owns `fs` + the IR + the test corpus, ADR-0012); the
- * lean `@czap/gauntlet` gates only FOLD the flat facts these builders produce.
+ * lean `@liteship/gauntlet` gates only FOLD the flat facts these builders produce.
  *
  * Both builders are PURE + DETERMINISTIC over the repo bytes + the injected IR — no
  * clock, no rng, no network. The same repo state yields byte-identical facts (the
@@ -27,8 +27,8 @@
  */
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { InvariantViolationError } from '@czap/error';
-import { normalizeRepoPath } from '@czap/audit';
+import { InvariantViolationError } from '@liteship/error';
+import { normalizeRepoPath } from '@liteship/audit';
 import type {
   CompositionFacts,
   InteractionEdge,
@@ -37,7 +37,7 @@ import type {
   ProofSignals,
   RepoIR,
   FileId,
-} from '@czap/gauntlet';
+} from '@liteship/gauntlet';
 import { collectRepoTestFiles, type RepoTestFile } from './test-corpus.js';
 
 /** The committed per-file mutation-score baseline (the ratchet artifact). */

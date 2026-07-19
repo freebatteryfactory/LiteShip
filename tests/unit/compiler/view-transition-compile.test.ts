@@ -11,7 +11,7 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Easing, DEFAULT_MOTION_SPRING } from '@czap/core';
+import { Easing, DEFAULT_MOTION_SPRING } from '@liteship/core';
 import {
   compileViewTransition,
   type ViewTransitionCompileResult,
@@ -21,19 +21,19 @@ describe('compileViewTransition — view-transition-name per boundary', () => {
   test('assigns a sanitized custom-ident to the boundary selector', () => {
     const result = compileViewTransition({ boundary: 'hero', durationMs: 420, easing: 'ease' });
 
-    expect(result.viewTransitionName).toBe('czap-vt-hero');
-    expect(result.nameAssignment).toContain('[data-czap-boundary="hero"]');
-    expect(result.nameAssignment).toContain('view-transition-name: czap-vt-hero;');
+    expect(result.viewTransitionName).toBe('liteship-vt-hero');
+    expect(result.nameAssignment).toContain('[data-liteship-boundary="hero"]');
+    expect(result.nameAssignment).toContain('view-transition-name: liteship-vt-hero;');
   });
 
   test('escapes special characters in the DEFAULT attribute-selector value (no broken CSS)', () => {
     const result = compileViewTransition({ boundary: 'hero"card', durationMs: 420, easing: 'ease' });
     // The quote is backslash-escaped so the attribute selector stays one string …
-    expect(result.nameAssignment).toContain('[data-czap-boundary="hero\\"card"]');
+    expect(result.nameAssignment).toContain('[data-liteship-boundary="hero\\"card"]');
     // … NOT the raw form that terminates the string early and drops the assignment.
-    expect(result.nameAssignment).not.toContain('[data-czap-boundary="hero"card"]');
+    expect(result.nameAssignment).not.toContain('[data-liteship-boundary="hero"card"]');
     // The name remains a valid custom-ident (the quote collapsed to a hyphen).
-    expect(result.viewTransitionName).toBe('czap-vt-hero-card');
+    expect(result.viewTransitionName).toBe('liteship-vt-hero-card');
   });
 
   test('honors an explicit selector for the name assignment', () => {
@@ -45,15 +45,15 @@ describe('compileViewTransition — view-transition-name per boundary', () => {
     });
 
     expect(result.nameAssignment).toContain('.gallery > figure {');
-    expect(result.nameAssignment).toContain('view-transition-name: czap-vt-card;');
+    expect(result.nameAssignment).toContain('view-transition-name: liteship-vt-card;');
   });
 
   test('sanitizes a boundary with whitespace/special chars into a valid custom-ident', () => {
     const result = compileViewTransition({ boundary: 'Hero Card #2', durationMs: 200, easing: 'ease' });
 
     // Only [A-Za-z0-9_-] survive; runs collapse to a single hyphen; no leading/trailing hyphen.
-    expect(result.viewTransitionName).toBe('czap-vt-Hero-Card-2');
-    expect(result.viewTransitionName).toMatch(/^czap-vt-[A-Za-z0-9_-]+$/);
+    expect(result.viewTransitionName).toBe('liteship-vt-Hero-Card-2');
+    expect(result.viewTransitionName).toMatch(/^liteship-vt-[A-Za-z0-9_-]+$/);
     expect(result.viewTransitionName).not.toMatch(/-$/);
   });
 });
@@ -66,8 +66,8 @@ describe('compileViewTransition — ::view-transition pseudo styles reuse the co
 
     const result = compileViewTransition({ boundary: 'hero', durationMs: 420, easing: springEasing });
 
-    expect(result.pseudoStyles).toContain('::view-transition-old(czap-vt-hero)');
-    expect(result.pseudoStyles).toContain('::view-transition-new(czap-vt-hero)');
+    expect(result.pseudoStyles).toContain('::view-transition-old(liteship-vt-hero)');
+    expect(result.pseudoStyles).toContain('::view-transition-new(liteship-vt-hero)');
     // Reuse, not recompute: the identical linear() list appears in the pseudo rules.
     const occurrences = result.pseudoStyles.split(springEasing).length - 1;
     expect(occurrences).toBeGreaterThanOrEqual(1);

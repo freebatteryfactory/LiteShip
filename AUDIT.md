@@ -14,7 +14,7 @@ CI failure.
 - `pnpm run audit:integrity` -> runtime hollow-path smells in package source
 - `pnpm run audit:surface` -> package export surface, Astro runtime/directive surface, Vite virtual modules
 - `pnpm run audit:report` -> writes the combined report artifacts
-- `czap audit --consumer [--findings]` -> from a DOWNSTREAM app, audit the installed `@czap/*` packages in its `node_modules` (walks the consumer install, not `packages/*`). `--findings` includes the per-finding array in the JSON receipt (stdout); diagnostics go to stderr, so the receipt stays parseable
+- `liteship audit --consumer [--findings]` -> from a DOWNSTREAM app, audit the installed `@liteship/*` packages in its `node_modules` (walks the consumer install, not `packages/*`). `--findings` includes the per-finding array in the JSON receipt (stdout); diagnostics go to stderr, so the receipt stays parseable
 
 ## Artifacts
 
@@ -127,7 +127,7 @@ line-anchored regex misses (a multiline call signature, a renamed import). Curre
 - `raw-vitest-option-timeout` / `raw-vitest-trailing-timeout` — force `scaledTimeout` over
   raw millis, so coverage runs do not false-fail under load (scar #lessons).
 - `c8-ignore-without-reason` — every coverage-ignore carries a reason.
-- `detect-tier-vocab-drift` — tier vocabulary stays in sync across `@czap/detect`.
+- `detect-tier-vocab-drift` — tier vocabulary stays in sync across `@liteship/detect`.
 - `hallucinated-themes-option` — blocks a doc-cut config option from creeping back in.
 
 Every rule passes clean on the current tree. To add one: drop a rule file in `sgrules/`,
@@ -137,13 +137,13 @@ remain the semantic truth.
 
 ## Gauntlet gates & FactGate
 
-Above the advisory audit and the structural lint sits the **gauntlet** (`@czap/gauntlet`,
+Above the advisory audit and the structural lint sits the **gauntlet** (`@liteship/gauntlet`,
 [ADR-0023](./docs/adr/0023-gauntlet-rigor-engine.md)) — the self-proving rigor engine the
 `gauntlet:full` phases run. A `Gate` is a `(context) => Finding[]` fitness function that
 earns *blocking* authority only by self-proving against its own red/green/mutation fixtures
 (the authority ratchet); `AssuranceLevel` (L0–L4) aims its rigor by the hazard it governs,
 not by folder location. The engine is lean — the triangulated repo-IR and the
-mutation/MC-DC/taint/fuzz oracles are built by the `@czap/audit` host and injected through
+mutation/MC-DC/taint/fuzz oracles are built by the `@liteship/audit` host and injected through
 `GateContext` ([ADR-0012](./docs/adr/0012-devops-profile-boundary.md)), so the gauntlet
 never carries the heavy `typescript` dep.
 

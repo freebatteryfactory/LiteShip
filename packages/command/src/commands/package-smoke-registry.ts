@@ -2,10 +2,10 @@
  * The package-smoke roster (relocated from `scripts/package-smoke.ts`, CUT A5).
  * Pure data — no Node edge — so it can be projected by the meta-test
  * (`tests/unit/devops/package-smoke-roster.test.ts`) AND consumed by the CLI-only
- * smoke engine (`runPackageSmokeScan` in `@czap/cli`) without either reaching into
+ * smoke engine (`runPackageSmokeScan` in `@liteship/cli`) without either reaching into
  * a self-executing script.
  *
- * `PACKAGES` mirrors every publishable `@czap/*` scope under `packages/*` (see
+ * `PACKAGES` mirrors every publishable `@liteship/*` scope under `packages/*` (see
  * `pnpm-workspace.yaml`); `imports` is the set of module specifiers the
  * import-smoke resolves for that package. `PEER_INSTALLS` is the external peer
  * set the consumer fixture installs alongside the packed tarballs. The B6a guard
@@ -27,94 +27,102 @@ export interface PackageSmokeSpec {
  * Mirrors every publishable scope under `packages/*` (see `pnpm-workspace.yaml`).
  *
  * The MEMBERSHIP of this roster (the `name` set) is owned by
- * `scripts/gen-roster.ts` (`PUBLISHABLE_ROSTER` = the `@czap/*` fleet plus the
+ * `scripts/gen-roster.ts` (`PUBLISHABLE_ROSTER` = the `@liteship/*` fleet plus the
  * `create-liteship` / `liteship` umbrellas). This copy stays local — and keeps
- * its hand-authored `imports` / `dir` fields — because `@czap/command` sits below
+ * its hand-authored `imports` / `dir` fields — because `@liteship/command` sits below
  * the devops layer and cannot import the generator; parity with the canonical
  * roster is enforced by the `package-smoke-roster` drift-guard, which asserts
  * these names equal gen-roster's `PUBLISHABLE_ROSTER`.
  *
- * The `@czap/*` subset of these names (and their dependency ORDER) is likewise the
- * [DUP] province of `@czap/audit`'s `CZAP_PACKAGE_ROSTER`, the canonical owner. This
- * copy stays local by the SAME layering — `@czap/command` cannot depend on the
- * devops-layer `@czap/audit` — and its parity is held by the `package-smoke-roster`
+ * The `@liteship/*` subset of these names (and their dependency ORDER) is likewise the
+ * [DUP] province of `@liteship/audit`'s `LITESHIP_PACKAGE_ROSTER`, the canonical owner. This
+ * copy stays local by the SAME layering — `@liteship/command` cannot depend on the
+ * devops-layer `@liteship/audit` — and its parity is held by the `package-smoke-roster`
  * drift-guard, not a shared import.
  */
 export const PACKAGES: readonly PackageSmokeSpec[] = [
   // _spine is type-only (no runtime); packed and overridden so consumers
-  // can resolve `@czap/core`'s and `@czap/scene`'s declared dep on it
+  // can resolve `@liteship/core`'s and `@liteship/scene`'s declared dep on it
   // during `pnpm install`. No runtime `import()` smoke needed.
-  { dir: 'packages/_spine', name: '@czap/_spine', imports: [] },
-  // @czap/error is the foundational zero-dep error algebra — every package's
+  { dir: 'packages/_spine', name: '@liteship/_spine', imports: [] },
+  // @liteship/error is the foundational zero-dep error algebra — every package's
   // runtime dep; packed first so consumers resolve the declared workspace edge.
-  { dir: 'packages/error', name: '@czap/error', imports: ['@czap/error'] },
-  { dir: 'packages/gauntlet', name: '@czap/gauntlet', imports: ['@czap/gauntlet'] },
-  { dir: 'packages/canonical', name: '@czap/canonical', imports: ['@czap/canonical'] },
-  { dir: 'packages/genui', name: '@czap/genui', imports: ['@czap/genui'] },
-  { dir: 'packages/core', name: '@czap/core', imports: ['@czap/core', '@czap/core/testing', '@czap/core/harness'] },
-  { dir: 'packages/quantizer', name: '@czap/quantizer', imports: ['@czap/quantizer', '@czap/quantizer/testing'] },
-  { dir: 'packages/compiler', name: '@czap/compiler', imports: ['@czap/compiler'] },
-  { dir: 'packages/web', name: '@czap/web', imports: ['@czap/web', '@czap/web/lite'] },
-  { dir: 'packages/detect', name: '@czap/detect', imports: ['@czap/detect'] },
-  { dir: 'packages/edge', name: '@czap/edge', imports: ['@czap/edge'] },
+  { dir: 'packages/error', name: '@liteship/error', imports: ['@liteship/error'] },
+  { dir: 'packages/gauntlet', name: '@liteship/gauntlet', imports: ['@liteship/gauntlet'] },
+  { dir: 'packages/canonical', name: '@liteship/canonical', imports: ['@liteship/canonical'] },
+  { dir: 'packages/genui', name: '@liteship/genui', imports: ['@liteship/genui'] },
+  {
+    dir: 'packages/core',
+    name: '@liteship/core',
+    imports: ['@liteship/core', '@liteship/core/testing', '@liteship/core/harness'],
+  },
+  {
+    dir: 'packages/quantizer',
+    name: '@liteship/quantizer',
+    imports: ['@liteship/quantizer', '@liteship/quantizer/testing'],
+  },
+  { dir: 'packages/compiler', name: '@liteship/compiler', imports: ['@liteship/compiler'] },
+  { dir: 'packages/web', name: '@liteship/web', imports: ['@liteship/web', '@liteship/web/lite'] },
+  { dir: 'packages/detect', name: '@liteship/detect', imports: ['@liteship/detect'] },
+  { dir: 'packages/edge', name: '@liteship/edge', imports: ['@liteship/edge'] },
   {
     dir: 'packages/cloudflare',
-    name: '@czap/cloudflare',
-    imports: ['@czap/cloudflare', '@czap/cloudflare/testing', '@czap/cloudflare/cache-provider'],
+    name: '@liteship/cloudflare',
+    imports: ['@liteship/cloudflare', '@liteship/cloudflare/testing', '@liteship/cloudflare/cache-provider'],
   },
-  { dir: 'packages/worker', name: '@czap/worker', imports: ['@czap/worker'] },
-  { dir: 'packages/vite', name: '@czap/vite', imports: ['@czap/vite', '@czap/vite/html-transform'] },
+  { dir: 'packages/worker', name: '@liteship/worker', imports: ['@liteship/worker'] },
+  { dir: 'packages/vite', name: '@liteship/vite', imports: ['@liteship/vite', '@liteship/vite/html-transform'] },
   {
     dir: 'packages/astro',
-    name: '@czap/astro',
+    name: '@liteship/astro',
     imports: [
-      '@czap/astro',
-      '@czap/astro/client-directives/satellite',
-      '@czap/astro/client-directives/stream',
-      '@czap/astro/client-directives/llm',
-      '@czap/astro/client-directives/worker',
-      '@czap/astro/client-directives/gpu',
-      '@czap/astro/client-directives/wasm',
-      '@czap/astro/middleware',
-      '@czap/astro/fetch-layer',
-      '@czap/astro/runtime',
+      '@liteship/astro',
+      '@liteship/astro/client-directives/satellite',
+      '@liteship/astro/client-directives/stream',
+      '@liteship/astro/client-directives/llm',
+      '@liteship/astro/client-directives/worker',
+      '@liteship/astro/client-directives/gpu',
+      '@liteship/astro/client-directives/wasm',
+      '@liteship/astro/middleware',
+      '@liteship/astro/fetch-layer',
+      '@liteship/astro/runtime',
     ],
   },
-  { dir: 'packages/remotion', name: '@czap/remotion', imports: ['@czap/remotion'] },
-  { dir: 'packages/scene', name: '@czap/scene', imports: ['@czap/scene', '@czap/scene/dev'] },
+  { dir: 'packages/remotion', name: '@liteship/remotion', imports: ['@liteship/remotion'] },
+  { dir: 'packages/scene', name: '@liteship/scene', imports: ['@liteship/scene', '@liteship/scene/dev'] },
   // The verb / orchestration layer (P4). `.` is the pure graph-walk core;
   // `./ffmpeg` is the node-only headless byte-encode backend (child_process).
-  { dir: 'packages/stage', name: '@czap/stage', imports: ['@czap/stage', '@czap/stage/ffmpeg'] },
-  { dir: 'packages/assets', name: '@czap/assets', imports: ['@czap/assets'] },
-  { dir: 'packages/audit', name: '@czap/audit', imports: ['@czap/audit'] },
-  // Shared command registry (CUT A1) — the dispatch layer @czap/cli and
-  // @czap/mcp-server both consume. `./host` carries the Node-only manifest helpers.
-  { dir: 'packages/command', name: '@czap/command', imports: ['@czap/command', '@czap/command/host'] },
-  { dir: 'packages/cli', name: '@czap/cli', imports: ['@czap/cli'] },
-  { dir: 'packages/mcp-server', name: '@czap/mcp-server', imports: ['@czap/mcp-server'] },
+  { dir: 'packages/stage', name: '@liteship/stage', imports: ['@liteship/stage', '@liteship/stage/ffmpeg'] },
+  { dir: 'packages/assets', name: '@liteship/assets', imports: ['@liteship/assets'] },
+  { dir: 'packages/audit', name: '@liteship/audit', imports: ['@liteship/audit'] },
+  // Shared command registry (CUT A1) — the dispatch layer @liteship/cli and
+  // @liteship/mcp-server both consume. `./host` carries the Node-only manifest helpers.
+  { dir: 'packages/command', name: '@liteship/command', imports: ['@liteship/command', '@liteship/command/host'] },
+  { dir: 'packages/cli', name: '@liteship/cli', imports: ['@liteship/cli'] },
+  { dir: 'packages/mcp-server', name: '@liteship/mcp-server', imports: ['@liteship/mcp-server'] },
   // The unscoped scaffolder — consumed via `npm create liteship` (bin), but
   // its main entry exports the scaffold function; smoke verifies it resolves.
   { dir: 'packages/create-liteship', name: 'create-liteship', imports: ['create-liteship'] },
-  // The unscoped umbrella — manifest-level deps on every @czap/* scope,
+  // The unscoped umbrella — manifest-level deps on every @liteship/* scope,
   // zero source imports; smoke verifies its own entrypoint resolves.
   { dir: 'packages/liteship', name: 'liteship', imports: ['liteship'] },
 ];
 
-/** External peer set the consumer fixture installs alongside the packed `@czap/*` tarballs. */
+/** External peer set the consumer fixture installs alongside the packed `@liteship/*` tarballs. */
 export const PEER_INSTALLS: readonly string[] = [
   'effect@4.0.0-beta.32',
   // vite must be >= 8.1.0: astro@7 depends on esbuild ^0.28, and vite@8.0.0
   // peered esbuild ^0.27.0 only (→ strict-peer install failure in the smoke
   // consumer). vite@8.1.0 widened the peer to `^0.27.0 || ^0.28.0`.
   'vite@8.1.0',
-  // Must satisfy @czap/astro's `astro >=7.0.0 <8` peer (a stale `astro@6.0.0`
+  // Must satisfy @liteship/astro's `astro >=7.0.0 <8` peer (a stale `astro@6.0.0`
   // here failed the consumer install under strict-peer once we hard-cut to 7).
   'astro@7.0.0',
   'react@19.2.0',
   'react-dom@19.2.0',
   'remotion@4.0.440',
   'fast-check@4.7.0',
-  // @czap/audit's runtime deps — the engine parses + globs the target repo.
+  // @liteship/audit's runtime deps — the engine parses + globs the target repo.
   'typescript@5.9.3',
   'fast-glob@3.3.3',
 ];

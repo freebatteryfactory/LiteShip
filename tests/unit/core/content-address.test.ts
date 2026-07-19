@@ -1,6 +1,6 @@
 /**
  * Unit pins for the content-addressing kernel's PRIMITIVE-PASSTHROUGH branch
- * (`@czap/core`'s `contentAddressOf` → `canonicalizeForAddress`).
+ * (`@liteship/core`'s `contentAddressOf` → `canonicalizeForAddress`).
  *
  * The kernel canonicalizes a value before hashing; the primitive guard
  *   `value === null || typeof value === 'string' || typeof value === 'number' ||
@@ -16,7 +16,7 @@
  * @module
  */
 import { describe, it, expect } from 'vitest';
-import { contentAddressOf } from '@czap/core';
+import { contentAddressOf } from '@liteship/core';
 
 const FNV_RE = /^fnv1a:[0-9a-f]{8}$/;
 

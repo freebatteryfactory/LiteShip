@@ -57,7 +57,7 @@ export async function run(argv: readonly string[]): Promise<number> {
         return 1;
       }
       if (deployed.present && !deployed.value) {
-        emitError('doctor', 'usage: czap doctor --deployed <url>');
+        emitError('doctor', 'usage: liteship doctor --deployed <url>');
         return 1;
       }
       return doctor({
@@ -97,7 +97,7 @@ export async function run(argv: readonly string[]): Promise<number> {
         if (scene === undefined) {
           emitError(
             `scene.${sub}`,
-            `usage: czap scene ${sub} <path-to-scene.ts>${sub === 'render' ? ' [-o <output.mp4>]' : ''}`,
+            `usage: liteship scene ${sub} <path-to-scene.ts>${sub === 'render' ? ' [-o <output.mp4>]' : ''}`,
           );
           return 1;
         }
@@ -111,11 +111,11 @@ export async function run(argv: readonly string[]): Promise<number> {
         // of silently discarding the user's path (with output now DERIVED when empty).
         const output = takeFlagValue(subRest, ['-o', '--output']);
         if (output.present && output.value === undefined) {
-          emitError('scene.render', 'usage: czap scene render <path-to-scene.ts> -o <output.mp4>');
+          emitError('scene.render', 'usage: liteship scene render <path-to-scene.ts> -o <output.mp4>');
           return 1;
         }
         const force = subRest.includes('--force');
-        // Empty output is the "derive <scene>.mp4" default, resolved in @czap/command.
+        // Empty output is the "derive <scene>.mp4" default, resolved in @liteship/command.
         return sceneRender(scene ?? '', output.value ?? '', force);
       }
       if (sub === 'verify') return sceneVerify(scene ?? '');
@@ -135,14 +135,14 @@ export async function run(argv: readonly string[]): Promise<number> {
       const id = positional(subRest);
       if (sub === 'analyze') {
         if (id === undefined) {
-          emitError('asset.analyze', 'usage: czap asset analyze <asset-id> --projection=<beat|onset|waveform>');
+          emitError('asset.analyze', 'usage: liteship asset analyze <asset-id> --projection=<beat|onset|waveform>');
           return 1;
         }
         const projectionRaw = parseFlag(subRest, '--projection');
         if (projectionRaw === undefined) {
           emitError(
             'asset.analyze',
-            'missing --projection. Choose one: --projection=beat | onset | waveform. Example: czap asset analyze kick-loop --projection=beat',
+            'missing --projection. Choose one: --projection=beat | onset | waveform. Example: liteship asset analyze kick-loop --projection=beat',
           );
           return 1;
         }
@@ -155,7 +155,7 @@ export async function run(argv: readonly string[]): Promise<number> {
       }
       if (sub === 'verify') {
         if (id === undefined) {
-          emitError('asset.verify', 'usage: czap asset verify <asset-id>');
+          emitError('asset.verify', 'usage: liteship asset verify <asset-id>');
           return 1;
         }
         return assetVerify(id);
@@ -168,7 +168,7 @@ export async function run(argv: readonly string[]): Promise<number> {
       const name = positional(subRest);
       if (sub === 'inspect' || sub === 'verify') {
         if (name === undefined) {
-          emitError(`capsule.${sub}`, `usage: czap capsule ${sub} <capsule-name>`);
+          emitError(`capsule.${sub}`, `usage: liteship capsule ${sub} <capsule-name>`);
           return 1;
         }
         return sub === 'inspect' ? capsuleInspect(name) : capsuleVerify(name);
@@ -199,10 +199,10 @@ export async function run(argv: readonly string[]): Promise<number> {
     }
     case 'check': {
       // `--ir` opts into the CLI-ONLY IR-enriched path (the triangulated
-      // oracle-divergence cross-check + the B2 verdict cache via @czap/audit);
-      // `--no-cache` bypasses that cache. WITHOUT `--ir`, `czap check` stays the
+      // oracle-divergence cross-check + the B2 verdict cache via @liteship/audit);
+      // `--no-cache` bypasses that cache. WITHOUT `--ir`, `liteship check` stays the
       // lean, IR-free, MCP-safe six-regex fold (the MCP server exposes only that
-      // lean handler — `--ir` never crosses into @czap/command / @czap/mcp-server).
+      // lean handler — `--ir` never crosses into @liteship/command / @liteship/mcp-server).
       const ir = rest.includes('--ir');
       const noCache = rest.includes('--no-cache');
       // `--symbols` adds the heavy symbol-evidenced LanguageService oracle (B3.3) —
@@ -232,13 +232,13 @@ export async function run(argv: readonly string[]): Promise<number> {
       const mcdc = rest.includes('--mcdc');
       // `--simulate` composes the avionics-tier simulationDeterminismGate (L4 — the
       // determinism spine, DST) on + drives the committed scenario corpus through the
-      // `@czap/core/simulation` seeded world (each scenario replayed twice; a
+      // `@liteship/core/simulation` seeded world (each scenario replayed twice; a
       // byte-exact divergence is a real nondeterminism bug surfaced as an L4 finding
       // carrying the seed). Only meaningful with `--ir`; opt-in (no not-evidenced
       // advisory on the default `--ir` run); the cache key is namespaced by this mode.
       const simulate = rest.includes('--simulate');
       // `--taint` composes the taintFlowGate (the TAINT-ANALYSIS family, L4) on + traces
-      // the source→sink dataflow via @czap/audit's generic taint oracle, classified by
+      // the source→sink dataflow via @liteship/audit's generic taint oracle, classified by
       // the LiteShip-LOCAL source/sink/sanitizer registry the CLI injects (the shader
       // fetch→compile, the AI-cast graph-apply, the runtime-URL SSRF seam). An
       // UNSANITIZED untrusted-value→dangerous-sink flow is a finding. Only meaningful
@@ -266,7 +266,7 @@ export async function run(argv: readonly string[]): Promise<number> {
       // files + capability modules); the cache key is namespaced by this mode.
       const capabilityGate = rest.includes('--capability-gate');
       // `--spine-relation` composes the spineRelationGate (Wave 8.5, the public constitution's
-      // STATIC-projection half, L4) on + probes each admitted @czap/_spine mirror type's
+      // STATIC-projection half, L4) on + probes each admitted @liteship/_spine mirror type's
       // bidirectional assignability against its runtime source (a ts.Program probe over the
       // spine + runtime surface): a mirror whose observed relation no longer satisfies its
       // admitted (frozen) relation, or no longer resolves, is a public-contract drift finding.
@@ -314,12 +314,12 @@ export async function run(argv: readonly string[]): Promise<number> {
       return sbom(rest);
     }
     case 'mcp': {
-      // @czap/mcp-server is an optional sibling install, not a dependency of
-      // @czap/cli — an unguarded import would break the one-JSON-line-on-stderr
+      // @liteship/mcp-server is an optional sibling install, not a dependency of
+      // @liteship/cli — an unguarded import would break the one-JSON-line-on-stderr
       // contract with a raw ERR_MODULE_NOT_FOUND stack trace.
       let mcpServer: { start: (opts: { readonly http?: string }) => Promise<void> };
       try {
-        mcpServer = await import('@czap/mcp-server');
+        mcpServer = await import('@liteship/mcp-server');
       } catch (err) {
         // Node puts ERR_MODULE_NOT_FOUND on err.code; wrapping loaders
         // (custom ESM hooks, test harnesses) carry the original on cause.
@@ -331,8 +331,8 @@ export async function run(argv: readonly string[]): Promise<number> {
         const [major, minor] = readCliVersion().split('.');
         emitError(
           'mcp',
-          '@czap/mcp-server is not installed',
-          `Install it next to @czap/cli on the same version line: pnpm add @czap/mcp-server@${major}.${minor}.x`,
+          '@liteship/mcp-server is not installed',
+          `Install it next to @liteship/cli on the same version line: pnpm add @liteship/mcp-server@${major}.${minor}.x`,
         );
         return 1;
       }
@@ -342,8 +342,8 @@ export async function run(argv: readonly string[]): Promise<number> {
     }
     case 'lsp': {
       // The THIRD JSON-RPC skin: launch the gauntlet LSP rigor server over stdio
-      // (the editor spawns `czap lsp` as its language server). The runner is built
-      // in the CLI host and injected, so @czap/mcp-server stays lean — see
+      // (the editor spawns `liteship lsp` as its language server). The runner is built
+      // in the CLI host and injected, so @liteship/mcp-server stays lean — see
       // commands/lsp.ts. `--ir` selects the IR-enriched fold.
       return lsp({ ir: rest.includes('--ir') });
     }
@@ -354,7 +354,7 @@ export async function run(argv: readonly string[]): Promise<number> {
       // consumers can read it as the trailing line of stderr.
       const on = colorEnabled();
       process.stderr.write(
-        `${color('red', 'No such bearing:', on)} \`${rawCmd}\`.\nTry \`${color('cyan', 'czap help', on)}\` for the chart.\n`,
+        `${color('red', 'No such bearing:', on)} \`${rawCmd}\`.\nTry \`${color('cyan', 'liteship help', on)}\` for the chart.\n`,
       );
       process.stderr.write(JSON.stringify({ error: 'unknown_command', command: rawCmd }) + '\n');
       return 1;
@@ -364,8 +364,8 @@ export async function run(argv: readonly string[]): Promise<number> {
 
 /**
  * Normalize top-level argv[0]. Standard help/version flags fold into
- * their verb counterparts so `czap --help` and `czap -h` behave like
- * `czap help`. Returns the input unchanged otherwise.
+ * their verb counterparts so `liteship --help` and `liteship -h` behave like
+ * `liteship help`. Returns the input unchanged otherwise.
  */
 function normalizeTopLevel(raw: string | undefined): string | undefined {
   if (raw === '--help' || raw === '-h') return 'help';

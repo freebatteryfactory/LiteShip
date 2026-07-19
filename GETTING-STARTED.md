@@ -2,7 +2,7 @@
 
 From `pnpm add` in your Astro project to a boundary changing state as you drag the window edge, in about five minutes. Two concepts get you there: `Boundary.make` and `satelliteAttrs`. Everything else (tokens, styles, casting to CSS) is layered behind links.
 
-LiteShip / CZAP / `@czap/*` naming: [GLOSSARY.md](./GLOSSARY.md). For Cloudflare Workers hosting, see [HOSTING.md](./HOSTING.md#cloudflare-workers) and [examples/cloudflare-astro/](./examples/cloudflare-astro/). Contributing to LiteShip itself (cloning the monorepo, building, running the gauntlet) is a different path: [CONTRIBUTING.md](./CONTRIBUTING.md).
+LiteShip / `@liteship/*` naming: [GLOSSARY.md](./GLOSSARY.md). For Cloudflare Workers hosting, see [HOSTING.md](./HOSTING.md#cloudflare-workers) and [examples/cloudflare-astro/](./examples/cloudflare-astro/). Contributing to LiteShip itself (cloning the monorepo, building, running the gauntlet) is a different path: [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## Prerequisites
 
@@ -15,7 +15,7 @@ LiteShip / CZAP / `@czap/*` naming: [GLOSSARY.md](./GLOSSARY.md). For Cloudflare
 In your Astro project:
 
 ```bash
-pnpm add @czap/core @czap/astro
+pnpm add @liteship/core @liteship/astro
 ```
 
 ## 2. Your first boundary
@@ -24,7 +24,7 @@ A boundary is a continuous-to-discrete signal mapping: here, viewport width → 
 
 ```ts
 // src/boundaries.ts
-import { Boundary } from '@czap/core';
+import { Boundary } from '@liteship/core';
 
 export const viewport = Boundary.make({
   input: 'viewport.width',
@@ -46,7 +46,7 @@ Register the integration (it injects the client boot scanner that activates boun
 ```js
 // astro.config.mjs
 import { defineConfig } from 'astro/config';
-import { integration } from '@czap/astro';
+import { integration } from '@liteship/astro';
 
 export default defineConfig({
   integrations: [integration()],
@@ -57,7 +57,7 @@ Then spread `satelliteAttrs` onto any element in a `.astro` page:
 
 ```astro
 ---
-import { satelliteAttrs } from '@czap/astro';
+import { satelliteAttrs } from '@liteship/astro';
 import { viewport } from '../boundaries.js';
 ---
 
@@ -66,20 +66,20 @@ import { viewport } from '../boundaries.js';
 </div>
 ```
 
-Run `pnpm dev`, open the page, and drag the window edge: the element's `data-czap-state` attribute flips `mobile` → `tablet` → `desktop`. Your CSS can key off it directly:
+Run `pnpm dev`, open the page, and drag the window edge: the element's `data-liteship-state` attribute flips `mobile` → `tablet` → `desktop`. Your CSS can key off it directly:
 
 ```css
-.card[data-czap-state='mobile'] {
+.card[data-liteship-state='mobile'] {
   padding: 0.5rem;
 }
-.card[data-czap-state='desktop'] {
+.card[data-liteship-state='desktop'] {
   padding: 2rem;
 }
 ```
 
-`satelliteAttrs` serializes the boundary plus a `data-czap-directive="satellite"` marker; the integration's injected boot scanner activates the boundary evaluator on the client (only the evaluator — not a whole framework tree). The `Satellite` component (`import Satellite from '@czap/astro/Satellite'`) wraps the same attributes around a div for you. Always go through `satelliteAttrs` or `Satellite` — the `data-czap-*` attributes are an internal serialization contract, not a hand-authoring surface; writing them by hand drifts the moment that contract changes.
+`satelliteAttrs` serializes the boundary plus a `data-liteship-directive="satellite"` marker; the integration's injected boot scanner activates the boundary evaluator on the client (only the evaluator — not a whole framework tree). The `Satellite` component (`import Satellite from '@liteship/astro/Satellite'`) wraps the same attributes around a div for you. Always go through `satelliteAttrs` or `Satellite` — the `data-liteship-*` attributes are an internal serialization contract, not a hand-authoring surface; writing them by hand drifts the moment that contract changes.
 
-Plain elements, not just islands. `client:stream` / `client:llm` / `client:gpu` / `client:wasm` / `client:graph` now boot on any plain element, not only framework islands — the integration scans for the directive's runtime attribute and activates it. `data-czap-boundary` is the exception: it's also a worker/GPU payload, so it stays explicit (`data-czap-directive` / `Satellite`), and you'll get a one-time console warning if you leave one bare.
+Plain elements, not just islands. `client:stream` / `client:llm` / `client:gpu` / `client:wasm` / `client:graph` now boot on any plain element, not only framework islands — the integration scans for the directive's runtime attribute and activates it. `data-liteship-boundary` is the exception: it's also a worker/GPU payload, so it stays explicit (`data-liteship-directive` / `Satellite`), and you'll get a one-time console warning if you leave one bare.
 
 That's the whole layer-1 loop: define states, attach them to an element, let CSS respond.
 
@@ -88,14 +88,14 @@ That's the whole layer-1 loop: define states, attach them to an element, let CSS
 For `client:llm` streaming, LiteShip can render **structured UI trees** instead of model-emitted HTML. You define which components exist; the model references them by name. LiteShip validates props and renders through a trusted catalog — interactions surface as DOM events for your app to handle.
 
 ```bash
-pnpm add @czap/genui
+pnpm add @liteship/genui
 ```
 
 Register a catalog (component names, prop schemas, allowed children):
 
 ```ts
 // src/genui-catalog.ts
-import { defineComponentCatalog } from '@czap/genui';
+import { defineComponentCatalog } from '@liteship/genui';
 
 export const appCatalog = defineComponentCatalog({
   version: 'app-1',
@@ -115,10 +115,10 @@ export const appCatalog = defineComponentCatalog({
 });
 ```
 
-Wire the catalog into an LLM session (or add `data-czap-genui` on the directive root to use the built-in demo catalog). Stream chunks use the discriminator `{ "_genui": true, "name": "...", "props": { ... } }` — legacy token/text paths stay unchanged when the marker is absent.
+Wire the catalog into an LLM session (or add `data-liteship-genui` on the directive root to use the built-in demo catalog). Stream chunks use the discriminator `{ "_genui": true, "name": "...", "props": { ... } }` — legacy token/text paths stay unchanged when the marker is absent.
 
 ```ts
-import { createLLMSession } from '@czap/astro/runtime';
+import { createLLMSession } from '@liteship/astro/runtime';
 import { appCatalog } from './genui-catalog.js';
 
 const session = createLLMSession({
@@ -130,26 +130,26 @@ const session = createLLMSession({
 });
 ```
 
-Rendered output carries `data-czap-genui-render-hash` for cache/replay; click handlers emit `genui:interaction` on the directive root — your app decides what they mean (navigation, tool call, or nothing). LiteShip owns render **safety**; it does not own render **authority**.
+Rendered output carries `data-liteship-genui-render-hash` for cache/replay; click handlers emit `genui:interaction` on the directive root — your app decides what they mean (navigation, tool call, or nothing). LiteShip owns render **safety**; it does not own render **authority**.
 
 ## Dev inspector (astro dev only)
 
-While running `pnpm dev`, open the czap boundary inspector from the Astro dev-toolbar (click the czap toolbar icon) — a panel that lists every `[data-czap-boundary]` element, live signal values, draggable threshold notches, and a **Copy Boundary.make** button for paste-back into source. DOM edits are session-only (source files are untouched). Opt out with `integration({ inspector: false })` in `astro.config.mjs`.
+While running `pnpm dev`, open the liteship boundary inspector from the Astro dev-toolbar (click the liteship toolbar icon) — a panel that lists every `[data-liteship-boundary]` element, live signal values, draggable threshold notches, and a **Copy Boundary.make** button for paste-back into source. DOM edits are session-only (source files are untouched). Opt out with `integration({ inspector: false })` in `astro.config.mjs`.
 
 <!-- gif: inspector dev-toolbar app tuning thresholds and copying snippet -->
 
 ## 4. Cast to CSS (the compiler path)
 
-Hand-written `[data-czap-state]` selectors work, but the same boundary can also emit its CSS. Add the compiler:
+Hand-written `[data-liteship-state]` selectors work, but the same boundary can also emit its CSS. Add the compiler:
 
 ```bash
-pnpm add @czap/compiler
+pnpm add @liteship/compiler
 ```
 
 `compile()` takes the boundary, a per-state property map, and an optional selector:
 
 ```ts
-import { CSSCompiler } from '@czap/compiler';
+import { CSSCompiler } from '@liteship/compiler';
 import { viewport } from './boundaries.js';
 
 const result = CSSCompiler.compile(
@@ -198,7 +198,7 @@ Server side is one route; you own the endpoint and the store:
 ```ts
 // src/pages/api/graph.ts
 import type { APIRoute } from 'astro';
-import { graphMutationRoute } from '@czap/astro';
+import { graphMutationRoute } from '@liteship/astro';
 import { store } from '../../server/graph-store'; // your GraphStore: loadGraph + compare-and-swap saveGraph
 
 export const prerender = false;
@@ -206,12 +206,12 @@ export const POST: APIRoute = ({ request }) => graphMutationRoute(store)(request
 ```
 
 Client side, `createGraphMutationClient` tracks the current base and serializes
-submits, and `bindGraphForm` (from `@czap/web`) turns a form submit into a
+submits, and `bindGraphForm` (from `@liteship/web`) turns a form submit into a
 validated patch:
 
 ```ts
-import { createGraphMutationClient } from '@czap/core';
-import { bindGraphForm } from '@czap/web';
+import { createGraphMutationClient } from '@liteship/core';
+import { bindGraphForm } from '@liteship/web';
 
 const client = createGraphMutationClient({ url: '/api/graph', base, refreshBase });
 bindGraphForm(form, { client, toOps: (data, base) => [/* your sealed ops */] });
@@ -254,11 +254,11 @@ pnpm verify   # first-run aggregate: doctor → build → test
 
 ### First-boundary authoring
 
-**The same value evaluates to different states each call.** You probably reused a state name across the threshold list. `Boundary.make` requires unique state names; passing `[[0, 'small'], [768, 'small']]` throws at construction with a `CzapValidationError`. If the error fires at runtime in a hot path, the boundary was constructed lazily inside a render function — hoist it out.
+**The same value evaluates to different states each call.** You probably reused a state name across the threshold list. `Boundary.make` requires unique state names; passing `[[0, 'small'], [768, 'small']]` throws at construction with a `LiteshipValidationError`. If the error fires at runtime in a hot path, the boundary was constructed lazily inside a render function — hoist it out.
 
-**The CSS doesn't update when the window resizes.** Two usual suspects: the element never got a directive marker (the boot scanner activates `data-czap-directive="satellite"` — emitted automatically by `Satellite` / `satelliteAttrs()` when a boundary is present; Astro's own `client:visible` / `client:idle` won't wire the boundary evaluator), or the CSS was generated against a stale boundary id (rebuild after editing the boundary; content addresses change with the definition, so old emitted CSS keys won't match the new id).
+**The CSS doesn't update when the window resizes.** Two usual suspects: the element never got a directive marker (the boot scanner activates `data-liteship-directive="satellite"` — emitted automatically by `Satellite` / `satelliteAttrs()` when a boundary is present; Astro's own `client:visible` / `client:idle` won't wire the boundary evaluator), or the CSS was generated against a stale boundary id (rebuild after editing the boundary; content addresses change with the definition, so old emitted CSS keys won't match the new id).
 
-**A GPU shader (or other directive) never starts on an element that also carries `satelliteAttrs`.** Two czap directives on one element collide — each takes over the node, so `satelliteAttrs()` (which stamps `data-czap-directive="satellite"`) and a `client:gpu` on the same canvas silently fight, and one loses (usually the shader). The console warns once (`directive-collision:…`) naming both. Put each directive on its own element.
+**A GPU shader (or other directive) never starts on an element that also carries `satelliteAttrs`.** Two liteship directives on one element collide — each takes over the node, so `satelliteAttrs()` (which stamps `data-liteship-directive="satellite"`) and a `client:gpu` on the same canvas silently fight, and one loses (usually the shader). The console warns once (`directive-collision:…`) naming both. Put each directive on its own element.
 
 **The boundary state flickers when dragging the window edge near a threshold.** Add or increase `hysteresis`. The field is optional and the default is zero (no dead-zone). A value of 16–24 px is enough to absorb display jitter on most setups; the algorithm is a half-width dead-zone, so `hysteresis: 20` requires the signal to move 10px past the threshold before committing the transition.
 

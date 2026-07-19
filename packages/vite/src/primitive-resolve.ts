@@ -16,8 +16,8 @@
  * @module
  */
 
-import type { Boundary, Token, Theme, Style } from '@czap/core';
-import type { PrimitiveKind } from '@czap/core';
+import type { Boundary, Token, Theme, Style } from '@liteship/core';
+import type { PrimitiveKind } from '@liteship/core';
 import * as path from 'node:path';
 import { fileExists, findConventionFiles } from './resolve-fs.js';
 import { tryImportNamed } from './resolve-utils.js';
@@ -127,7 +127,7 @@ export function unresolvedPrimitiveWarning(
     `Could not resolve ${kind} "${name}" referenced in ${id}:${line}. ` +
     `Searched for an export named "${name}" in: ${searched} (none matched). ` +
     `Fix: add \`export const ${name} = ${KIND_FACTORY[kind]}.make({ ... })\` to one of those files, ` +
-    `or point the plugin at your ${kind} definitions: czap({ dirs: { ${kind}: './path/to/dir' } }).`
+    `or point the plugin at your ${kind} definitions: liteship({ dirs: { ${kind}: './path/to/dir' } }).`
   );
 }
 
@@ -150,7 +150,7 @@ export async function resolvePrimitive<K extends PrimitiveKind>(
   userDir?: string,
 ): Promise<PrimitiveResolution<K> | null> {
   const { file, suffix, tag } = KIND_META[kind];
-  const diagnosticSource = `czap/vite.${kind}-resolve`;
+  const diagnosticSource = `liteship/vite.${kind}-resolve`;
 
   const searchDirs = buildSearchDirs(fromFile, projectRoot, userDir);
 

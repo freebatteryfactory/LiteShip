@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { run } from '@czap/cli';
+import { run } from '@liteship/cli';
 import { captureCli } from './capture.js';
 
-describe('czap gauntlet', () => {
+describe('liteship gauntlet', () => {
   it('dry-run emits the canonical phase list', async () => {
     const { exit, stdout } = await captureCli(() => run(['gauntlet', '--dry-run']));
     expect(exit).toBe(0);

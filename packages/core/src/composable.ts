@@ -17,14 +17,14 @@ import { Style as StyleNS } from './style.js';
 import { Boundary } from './boundary.js';
 import { Part } from './ecs.js';
 import { contentAddressOf } from './content-address.js';
-import { ValidationError } from '@czap/error';
+import { ValidationError } from '@liteship/error';
 
 // ---------------------------------------------------------------------------
 // Entity Composition Types
 // ---------------------------------------------------------------------------
 
 /**
- * Component map for a {@link ComposableEntity} — well-known slots for czap
+ * Component map for a {@link ComposableEntity} — well-known slots for liteship
  * primitives plus arbitrary user-defined keys.
  */
 export interface EntityComponents {
@@ -256,7 +256,7 @@ function makeComposableDenseStore(world: World.Shape): ComposableDenseStore {
 // ---------------------------------------------------------------------------
 
 /**
- * Composable — content-addressed entity algebra over czap primitives.
+ * Composable — content-addressed entity algebra over liteship primitives.
  *
  * Build entities from a bag of components (boundaries, tokens, styles, …),
  * merge them associatively via `Composable.compose` / `Composable.merge`, and

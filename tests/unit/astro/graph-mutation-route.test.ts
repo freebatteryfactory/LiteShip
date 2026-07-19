@@ -9,7 +9,7 @@
 import { describe, test, expect } from 'vitest';
 import { graphMutationRoute } from '../../../packages/astro/src/graph-mutation-route.js';
 import { GraphPatch, sealNode, sealGraph } from '../../../packages/core/src/index.js';
-import type { DocumentGraph, DocumentGraphNode, DocumentGraphEdge, SignalNode, CellMeta, GraphStore } from '@czap/core';
+import type { DocumentGraph, DocumentGraphNode, DocumentGraphEdge, SignalNode, CellMeta, GraphStore } from '@liteship/core';
 
 const META: CellMeta = {
   created: { wall_ms: 0, counter: 0, node_id: 't' },

@@ -44,8 +44,8 @@ The derived manifest (empty object when nothing is found).
 ## Example
 
 ```ts
-import { collectBoundaryManifest } from '@czap/vite';
-import { resolveOutputsByTier } from '@czap/edge';
+import { collectBoundaryManifest } from '@liteship/vite';
+import { resolveOutputsByTier } from '@liteship/edge';
 
 const manifest = await collectBoundaryManifest('/path/to/app');
 // manifest.viewport.id === 'fnv1a:…' (Boundary.make's address)

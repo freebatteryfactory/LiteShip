@@ -13,7 +13,7 @@
  * @module
  */
 
-import { ValidationError } from '@czap/error';
+import { ValidationError } from '@liteship/error';
 
 // ---------------------------------------------------------------------------
 // Types

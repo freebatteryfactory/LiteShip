@@ -35,7 +35,7 @@ import {
   type GateVerdictCache,
   type RepoIR,
   type Waiver,
-} from '@czap/gauntlet';
+} from '@liteship/gauntlet';
 
 // ── test scaffolding ─────────────────────────────────────────────────────────
 

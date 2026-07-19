@@ -31,7 +31,7 @@
  * @module
  */
 
-import { taggedError, type TaggedError } from '@czap/error';
+import { taggedError, type TaggedError } from '@liteship/error';
 
 // ---------------------------------------------------------------------------
 // Types

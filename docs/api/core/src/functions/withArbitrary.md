@@ -16,9 +16,9 @@ its sampling changes. Use it to sample a narrow valid domain a structural walk
 cannot reach (e.g. canonical CBOR bytes ⊂ `Uint8Array`).
 
 The thunk receives `fast-check` as its argument — PROVIDED by the harness that
-realizes the arbitrary (`@czap/core/harness`), so the schema kernel and its
+realizes the arbitrary (`@liteship/core/harness`), so the schema kernel and its
 capsules declare the arbitrary CONTRACT without importing the property-testing
-engine. Importing `@czap/core` therefore never loads `fast-check`; the testing
+engine. Importing `@liteship/core` therefore never loads `fast-check`; the testing
 integration owns the realization. The param is typed `unknown` (cast to the
 `fast-check` module inside the thunk) so no `fast-check` type reaches the
 public surface.

@@ -1,5 +1,5 @@
 /**
- * @czap type spine index -- re-exports all package spines.
+ * @liteship type spine index -- re-exports all package spines.
  */
 
 export * from './core.d.ts';

@@ -9,9 +9,9 @@
  * @module
  */
 
-import { Boundary, Compositor, Millis, VideoRenderer } from '@czap/core';
-import type { VideoFrameOutput } from '@czap/core';
-import { Q } from '@czap/quantizer';
+import { Boundary, Compositor, Millis, VideoRenderer } from '@liteship/core';
+import type { VideoFrameOutput } from '@liteship/core';
+import { Q } from '@liteship/quantizer';
 
 // ---------------------------------------------------------------------------
 // Constants

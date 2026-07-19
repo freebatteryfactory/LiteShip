@@ -1,5 +1,5 @@
 /**
- * `czap sbom` adapter — the in-process orchestration of the supply-chain
+ * `liteship sbom` adapter — the in-process orchestration of the supply-chain
  * analyzer into a deterministic, content-addressed SBOM receipt.
  *
  * The heavy analyzer (`analyzeLockfile` / `buildSbom` / `checkSbomCompleteness`)
@@ -70,7 +70,7 @@ beforeEach(() => {
   // Default: a healthy LiteShip workspace with a present lockfile.
   isLiteShipWorkspaceMock.mockReturnValue(true);
   readWorkspacePackagesMock.mockReturnValue([
-    { name: '@czap/core', version: '0.4.0', private: false, importerPath: 'packages/core' },
+    { name: '@liteship/core', version: '0.4.0', private: false, importerPath: 'packages/core' },
   ]);
   existsSyncMock.mockReturnValue(true);
   readFileSyncMock.mockReturnValue('lockfileVersion: 9.0\n');
@@ -78,7 +78,7 @@ beforeEach(() => {
   mkdirSyncMock.mockReturnValue(undefined);
   analyzeLockfileMock.mockImplementation(() => lockfileFacts([]));
   buildSbomMock.mockReturnValue({
-    sbom: { components: [{ purl: 'pkg:npm/@czap/core@0.4.0' }, { purl: 'pkg:npm/cborg@4.0.0' }] },
+    sbom: { components: [{ purl: 'pkg:npm/@liteship/core@0.4.0' }, { purl: 'pkg:npm/cborg@4.0.0' }] },
     serialized: '{"bomFormat":"CycloneDX"}',
     address: 'fnv1a:deadbeef',
   });
@@ -90,7 +90,7 @@ function lastReceipt(stdout: string): Record<string, unknown> {
   return JSON.parse(stdout.trim().split('\n').pop()!) as Record<string, unknown>;
 }
 
-describe('czap sbom — workspace + lockfile guards (exit 1, emitError, no artifact write)', () => {
+describe('liteship sbom — workspace + lockfile guards (exit 1, emitError, no artifact write)', () => {
   it('refuses a non-LiteShip workspace before reading anything', async () => {
     isLiteShipWorkspaceMock.mockReturnValue(false);
     const { exit, stderr } = await captureCli(async () => sbom([]));
@@ -113,7 +113,7 @@ describe('czap sbom — workspace + lockfile guards (exit 1, emitError, no artif
   });
 });
 
-describe('czap sbom — lockfile parse fails LOUD (no partial SBOM over a half-parsed lock)', () => {
+describe('liteship sbom — lockfile parse fails LOUD (no partial SBOM over a half-parsed lock)', () => {
   it('surfaces a tagged ParseError message verbatim', async () => {
     const parseError = Object.assign(new Error('unreadable lockfile shape at line 3'), { _tag: 'ParseError' });
     analyzeLockfileMock.mockImplementation(() => {
@@ -140,7 +140,7 @@ describe('czap sbom — lockfile parse fails LOUD (no partial SBOM over a half-p
   });
 });
 
-describe('czap sbom — clean run emits a deterministic, content-addressed receipt (exit 0)', () => {
+describe('liteship sbom — clean run emits a deterministic, content-addressed receipt (exit 0)', () => {
   it('writes the reviewable artifact and projects the SBOM receipt shape', async () => {
     const { exit, stdout } = await captureCli(async () => sbom([]));
     expect(exit).toBe(0);
@@ -178,13 +178,13 @@ describe('czap sbom — clean run emits a deterministic, content-addressed recei
   });
 });
 
-describe('czap sbom — a non-hermetic supply chain fails (exit 1) with flattened violations', () => {
+describe('liteship sbom — a non-hermetic supply chain fails (exit 1) with flattened violations', () => {
   it('merges lockfile-policy + SBOM-completeness violations into {code,subject} and exits 1', async () => {
     analyzeLockfileMock.mockImplementation(() =>
       lockfileFacts([{ code: 'unpinned-dependency', subject: 'left-pad' }]),
     );
     checkSbomCompletenessMock.mockReturnValue({
-      violations: [{ code: 'incomplete-sbom', subject: '@czap/web', detail: 'ignored field' }],
+      violations: [{ code: 'incomplete-sbom', subject: '@liteship/web', detail: 'ignored field' }],
     });
     const { exit, stdout } = await captureCli(async () => sbom([]));
     expect(exit).toBe(1);
@@ -193,7 +193,7 @@ describe('czap sbom — a non-hermetic supply chain fails (exit 1) with flattene
     // Both sources flattened to the {code, subject} projection (detail dropped).
     expect(receipt['violations']).toEqual([
       { code: 'unpinned-dependency', subject: 'left-pad' },
-      { code: 'incomplete-sbom', subject: '@czap/web' },
+      { code: 'incomplete-sbom', subject: '@liteship/web' },
     ]);
     // The artifact is still written — the SBOM is reviewable even when non-hermetic.
     expect(writeFileSyncMock).toHaveBeenCalledTimes(1);

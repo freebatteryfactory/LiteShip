@@ -5,7 +5,7 @@
  */
 
 import { describe, test, expect, beforeEach, afterEach } from 'vitest';
-import { interpolateTyped, parseTypedBinding, formatTypedValue, Diagnostics, type TypedValue } from '@czap/core';
+import { interpolateTyped, parseTypedBinding, formatTypedValue, Diagnostics, type TypedValue } from '@liteship/core';
 
 describe('parseTypedBinding', () => {
   test('parses numeric opacity', () => {
@@ -13,7 +13,7 @@ describe('parseTypedBinding', () => {
   });
 
   test('parses length with unit', () => {
-    expect(parseTypedBinding('--czap-hero-y', '24px')).toEqual({ k: 'length', v: 24, unit: 'px' });
+    expect(parseTypedBinding('--liteship-hero-y', '24px')).toEqual({ k: 'length', v: 24, unit: 'px' });
   });
 
   test('parses transform function strings', () => {
@@ -27,7 +27,7 @@ describe('parseTypedBinding', () => {
   test('warns on unparseable binding instead of silently defaulting to zero', () => {
     const sink = Diagnostics.createBufferSink();
     Diagnostics.setSink(sink.sink);
-    const parsed = parseTypedBinding('--czap-hero-y', 'not-a-value');
+    const parsed = parseTypedBinding('--liteship-hero-y', 'not-a-value');
     expect(parsed).toEqual({ k: 'number', v: 0 });
     expect(sink.events.some((e) => e.code === 'unparseable-binding')).toBe(true);
     Diagnostics.reset();
@@ -93,13 +93,13 @@ describe('color TypedValue (F-MOT-3)', () => {
   afterEach(() => Diagnostics.reset());
 
   test('parses #rrggbb and #rgb hex into sRGB 0..255 components', () => {
-    expect(parseTypedBinding('--czap-hero-color', '#ff0000')).toEqual({
+    expect(parseTypedBinding('--liteship-hero-color', '#ff0000')).toEqual({
       k: 'color',
       space: 'srgb',
       components: [255, 0, 0],
     });
     // #f00 shorthand expands to the same triple.
-    expect(parseTypedBinding('--czap-hero-color', '#f00')).toEqual({
+    expect(parseTypedBinding('--liteship-hero-color', '#f00')).toEqual({
       k: 'color',
       space: 'srgb',
       components: [255, 0, 0],

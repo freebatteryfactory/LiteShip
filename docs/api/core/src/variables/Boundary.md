@@ -42,7 +42,7 @@ can be gated by a [BoundarySpec](BoundarySpec.md) for A/B or device-conditional 
 ## Example
 
 ```ts
-import { Boundary } from '@czap/core';
+import { Boundary } from '@liteship/core';
 
 const viewport = Boundary.make({
   input: 'viewport.width',

@@ -7,7 +7,7 @@ import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node
 import { dirname } from 'node:path';
 import { describe } from '../../../../packages/cli/src/commands/describe.js';
 
-const MANIFEST_PATH = '.czap/generated/mcp-manifest.json';
+const MANIFEST_PATH = '.liteship/generated/mcp-manifest.json';
 let preexisting: string | undefined;
 
 describeTest('describe command', () => {

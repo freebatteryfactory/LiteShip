@@ -8,6 +8,6 @@
 
 > `const` **glossaryCommand**: [`HandledCommand`](../interfaces/HandledCommand.md)
 
-Defined in: [command/src/commands/glossary.ts:250](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/glossary.ts#L250)
+Defined in: [command/src/commands/glossary.ts:243](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/glossary.ts#L243)
 
 The glossary command: descriptor + handler returning a structured result.

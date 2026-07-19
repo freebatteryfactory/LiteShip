@@ -4,10 +4,10 @@
  * - {@link SignalSource} — the typed discriminated union ({@link signal.ts}),
  *   the SOURCE OF TRUTH for what a signal reads from.
  * - {@link SignalInput} — the branded dot-string ({@link brands.ts}) carried on
- *   the wire (`data-czap-boundary`, the serialized boundary `input` field).
+ *   the wire (`data-liteship-boundary`, the serialized boundary `input` field).
  *
  * Before this module the two were structurally unrelated: the runtime hot path
- * (`@czap/astro` boundary/inspector, `@czap/vite` css-quantize) re-parsed the
+ * (`@liteship/astro` boundary/inspector, `@liteship/vite` css-quantize) re-parsed the
  * dot-string with hand-rolled `input.startsWith('scroll.')` forks, each free to
  * drift from the union's vocabulary AND from each other. This module is the
  * single place that knows the grammar, so every reader derives its axis from

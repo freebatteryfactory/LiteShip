@@ -24,7 +24,7 @@ encoder receives — the page-digest == video-source-digest assertion holds
 headless, identical to the browser path.
 
 Stage's core imports no codec: `encode` is injected. In node, wire
-`ffmpegFrameEncoder()` from `@czap/stage/ffmpeg` (env-gate with
+`ffmpegFrameEncoder()` from `@liteship/stage/ffmpeg` (env-gate with
 `ffmpegEncodeAvailable()` first); in a browser wrapper, wire WebCodecs.
 
 ## Parameters
@@ -44,8 +44,8 @@ Stage's core imports no codec: `encode` is injected. In node, wire
 ## Example
 
 ```ts
-import { dualExportNode } from '@czap/stage';
-import { ffmpegFrameEncoder, ffmpegEncodeAvailable } from '@czap/stage/ffmpeg';
+import { dualExportNode } from '@liteship/stage';
+import { ffmpegFrameEncoder, ffmpegEncodeAvailable } from '@liteship/stage/ffmpeg';
 
 if (ffmpegEncodeAvailable()) {
   const r = await dualExportNode(graph, ffmpegFrameEncoder());

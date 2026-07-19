@@ -1,13 +1,13 @@
 /**
  * Diagnostics → Astro logger bridge tests.
  *
- * Proves czap runtime diagnostics route through an Astro-shaped logger by
+ * Proves liteship runtime diagnostics route through an Astro-shaped logger by
  * severity, and that installing the bridge swaps the global sink and restores it.
  */
 
 import { describe, test, expect, afterEach } from 'vitest';
-import { Diagnostics } from '@czap/core';
-import { bridgeDiagnosticsToAstroLogger, installDiagnosticsBridge } from '@czap/astro';
+import { Diagnostics } from '@liteship/core';
+import { bridgeDiagnosticsToAstroLogger, installDiagnosticsBridge } from '@liteship/astro';
 
 afterEach(() => {
   Diagnostics.reset();
@@ -17,9 +17,9 @@ describe('bridgeDiagnosticsToAstroLogger', () => {
   test('routes warn-level diagnostics to logger.warn with source/code/message', () => {
     const warns: string[] = [];
     const sink = bridgeDiagnosticsToAstroLogger({ warn: (m) => warns.push(m), error: () => {} });
-    sink.emit({ level: 'warn', source: 'czap/edge', code: 'invalid-cache-entry', message: 'bad', timestamp: 0 });
+    sink.emit({ level: 'warn', source: 'liteship/edge', code: 'invalid-cache-entry', message: 'bad', timestamp: 0 });
     expect(warns).toHaveLength(1);
-    expect(warns[0]).toContain('czap/edge');
+    expect(warns[0]).toContain('liteship/edge');
     expect(warns[0]).toContain('invalid-cache-entry');
     expect(warns[0]).toContain('bad');
   });
@@ -53,13 +53,13 @@ describe('installDiagnosticsBridge', () => {
     const warns: string[] = [];
     const restore = installDiagnosticsBridge({ warn: (m) => warns.push(m), error: () => {} });
 
-    Diagnostics.warn({ source: 'czap/test', code: 'x', message: 'live' });
+    Diagnostics.warn({ source: 'liteship/test', code: 'x', message: 'live' });
     expect(warns).toHaveLength(1);
     expect(warns[0]).toContain('live');
 
     restore();
     // After restore the bridge no longer receives events.
-    Diagnostics.warn({ source: 'czap/test', code: 'x2', message: 'after' });
+    Diagnostics.warn({ source: 'liteship/test', code: 'x2', message: 'after' });
     expect(warns).toHaveLength(1);
   });
 });

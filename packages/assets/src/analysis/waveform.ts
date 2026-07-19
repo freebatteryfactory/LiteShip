@@ -6,8 +6,8 @@
  * @module
  */
 
-import { defineCapsule, S } from '@czap/core';
-import type { CapsuleDef } from '@czap/core';
+import { defineCapsule, S } from '@liteship/core';
+import type { CapsuleDef } from '@liteship/core';
 import type { AssetRegistry } from '../contract.js';
 
 /** Compute a normalized RMS-per-bin waveform. */

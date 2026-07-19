@@ -31,7 +31,7 @@ Remotion's video config (`useVideoConfig()` /
 
 `CompositorShape`
 
-The `Compositor` driving the czap state pipeline.
+The `Compositor` driving the liteship state pipeline.
 
 ### signal?
 

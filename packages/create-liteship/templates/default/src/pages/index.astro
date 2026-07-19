@@ -1,12 +1,12 @@
 ---
 import Base from '../layouts/Base.astro';
-import { satelliteAttrs } from '@czap/astro';
-// Optional LLM catalog path: `pnpm add @czap/genui`, register a catalog with
+import { satelliteAttrs } from '@liteship/astro';
+// Optional LLM catalog path: `pnpm add @liteship/genui`, register a catalog with
 // defineComponentCatalog, wire `genuiCatalog` on client:llm / createLLMSession.
 // Structured chunks use `{ "_genui": true, "name": "...", "props": { ... } }`.
 // The shared layout boundary (mobile / tablet / desktop) drives both
 // halves of the adaptive story: satelliteAttrs() serializes it for the
-// client runtime (data-czap-state updates), and the @quantize block in
+// client runtime (data-liteship-state updates), and the @quantize block in
 // the <style> below resolves the same export to compile static
 // @container queries.
 import { layout } from '../boundaries/layout.boundaries.js';
@@ -14,7 +14,7 @@ import { layout } from '../boundaries/layout.boundaries.js';
 
 <Base>
   <header class="header">
-    <h1>czap starter</h1>
+    <h1>liteship starter</h1>
     <p>Constraint-based adaptive rendering</p>
   </header>
 
@@ -37,33 +37,33 @@ import { layout } from '../boundaries/layout.boundaries.js';
 <style>
   .header {
     text-align: center;
-    padding: var(--czap-spacing-lg) 0;
+    padding: var(--liteship-spacing-lg) 0;
   }
 
   .header h1 {
-    font-size: var(--czap-font-size-lg);
+    font-size: var(--liteship-font-size-lg);
     font-weight: 700;
   }
 
   .header p {
-    font-size: var(--czap-font-size-md);
+    font-size: var(--liteship-font-size-md);
     opacity: 0.7;
   }
 
   .card {
-    padding: var(--czap-spacing-md);
+    padding: var(--liteship-spacing-md);
     border: 1px solid currentColor;
     border-radius: 0.5rem;
     opacity: 0.85;
   }
 
   .card h2 {
-    font-size: var(--czap-font-size-md);
-    margin-bottom: var(--czap-spacing-sm);
+    font-size: var(--liteship-font-size-md);
+    margin-bottom: var(--liteship-spacing-sm);
   }
 
   .card p {
-    font-size: var(--czap-font-size-sm);
+    font-size: var(--liteship-font-size-sm);
   }
 
   @quantize layout {
@@ -71,7 +71,7 @@ import { layout } from '../boundaries/layout.boundaries.js';
       .grid {
         display: grid;
         grid-template-columns: 1fr;
-        gap: var(--czap-spacing-sm);
+        gap: var(--liteship-spacing-sm);
       }
     }
 
@@ -79,7 +79,7 @@ import { layout } from '../boundaries/layout.boundaries.js';
       .grid {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
-        gap: var(--czap-spacing-md);
+        gap: var(--liteship-spacing-md);
       }
     }
 
@@ -87,7 +87,7 @@ import { layout } from '../boundaries/layout.boundaries.js';
       .grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: var(--czap-spacing-lg);
+        gap: var(--liteship-spacing-lg);
       }
     }
   }

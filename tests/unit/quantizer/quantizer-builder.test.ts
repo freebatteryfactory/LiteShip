@@ -7,9 +7,9 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Boundary, fixedClock, manualClock, type Clock } from '@czap/core';
-import { Q, type OutputTarget, type MotionTier, type QuantizerConfig, type LiveQuantizer } from '@czap/quantizer';
-import { TIER_TARGETS, MemoCache } from '@czap/quantizer/testing';
+import { Boundary, fixedClock, manualClock, type Clock } from '@liteship/core';
+import { Q, type OutputTarget, type MotionTier, type QuantizerConfig, type LiveQuantizer } from '@liteship/quantizer';
+import { TIER_TARGETS, MemoCache } from '@liteship/quantizer/testing';
 
 // ---------------------------------------------------------------------------
 // Shared fixtures
@@ -284,9 +284,9 @@ describe('config identity includes tier/spring/force', () => {
     const stiffCss = lqStiff.currentOutputs.read().css ?? {};
     const softCss = lqSoft.currentOutputs.read().css ?? {};
 
-    expect(stiffCss['--czap-easing']).toBeDefined();
-    expect(softCss['--czap-easing']).toBeDefined();
-    expect(stiffCss['--czap-easing']).not.toBe(softCss['--czap-easing']);
+    expect(stiffCss['--liteship-easing']).toBeDefined();
+    expect(softCss['--liteship-easing']).toBeDefined();
+    expect(stiffCss['--liteship-easing']).not.toBe(softCss['--liteship-easing']);
   });
 
   test('force() targets are part of config identity', async () => {
@@ -335,7 +335,7 @@ describe('force() escape hatch', () => {
 // ---------------------------------------------------------------------------
 
 describe('springToLinearCSS auto-generation', () => {
-  test('injects --czap-easing when spring config + CSS outputs present', async () => {
+  test('injects --liteship-easing when spring config + CSS outputs present', async () => {
     const b = viewport();
     const tag = `spring${++outputCounter}`;
     const config = Q.from(b, { spring: { stiffness: 170, damping: 26 } }).outputs({
@@ -350,13 +350,13 @@ describe('springToLinearCSS auto-generation', () => {
     const outputs = lq.currentOutputs.read();
 
     expect(outputs.css).toBeDefined();
-    expect(outputs.css!['--czap-easing']).toBeDefined();
-    expect(typeof outputs.css!['--czap-easing']).toBe('string');
+    expect(outputs.css!['--liteship-easing']).toBeDefined();
+    expect(typeof outputs.css!['--liteship-easing']).toBe('string');
     // Should be a linear() CSS function
-    expect(outputs.css!['--czap-easing']).toMatch(/^linear\(/);
+    expect(outputs.css!['--liteship-easing']).toMatch(/^linear\(/);
   });
 
-  test('no spring config = no --czap-easing injection', async () => {
+  test('no spring config = no --liteship-easing injection', async () => {
     const b = viewport();
     const tag = `nospring${++outputCounter}`;
     const config = Q.from(b).outputs({
@@ -371,7 +371,7 @@ describe('springToLinearCSS auto-generation', () => {
     const outputs = lq.currentOutputs.read();
 
     expect(outputs.css).toBeDefined();
-    expect(outputs.css!['--czap-easing']).toBeUndefined();
+    expect(outputs.css!['--liteship-easing']).toBeUndefined();
   });
 
   test('spring CSS is cached (same spring config = same string)', async () => {
@@ -392,7 +392,7 @@ describe('springToLinearCSS auto-generation', () => {
     const o1 = lq1.currentOutputs.read();
     const o2 = lq2.currentOutputs.read();
 
-    expect(o1.css!['--czap-easing']).toBe(o2.css!['--czap-easing']);
+    expect(o1.css!['--liteship-easing']).toBe(o2.css!['--liteship-easing']);
   });
 });
 

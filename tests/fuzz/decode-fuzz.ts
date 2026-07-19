@@ -28,16 +28,16 @@
  * the invariant; the gauntlet `fuzzCorpusGate` folds the host-injected verdicts.
  *
  * Lives under `tests/fuzz/` (NOT a published `packages` src tree) on purpose:
- * `fast-check` is a repo-level test dependency, never a shipped `@czap` runtime
+ * `fast-check` is a repo-level test dependency, never a shipped `@liteship` runtime
  * dependency — a decode fuzzer is test infrastructure, not product.
  *
  * @module
  */
 
 import * as fc from 'fast-check';
-import { isTaggedError } from '@czap/error';
-import { decode as cborDecode } from '@czap/canonical';
-import { HLC, GraphPatch, decodeDocumentGraph, ShipCapsule } from '@czap/core';
+import { isTaggedError } from '@liteship/error';
+import { decode as cborDecode } from '@liteship/canonical';
+import { HLC, GraphPatch, decodeDocumentGraph, ShipCapsule } from '@liteship/core';
 
 /**
  * The shape of a value a decoder ingests. The CBOR decoder reads bytes; the
@@ -58,7 +58,7 @@ export type DecoderInputKind = 'bytes' | 'value' | 'string';
  */
 export type DecodeOutcomeTag =
   | 'returned-typed' // decoder returned a value, prototype intact — OK
-  | 'failed-closed' // decoder threw / Effect-failed a tagged @czap/error — OK
+  | 'failed-closed' // decoder threw / Effect-failed a tagged @liteship/error — OK
   | 'crashed' // decoder threw an UNTAGGED error (the bug: a raw crash)
   | 'polluted' // Object.prototype was mutated by the decode (the CVE class)
   | 'misparsed'; // reserved: a structurally-impossible return (decoder-specific)
@@ -191,20 +191,20 @@ export function classifyDecode(sut: DecoderSut, input: unknown): DecodeOutcome {
   return {
     tag: 'crashed',
     crashName,
-    detail: `decoder threw an UNTAGGED ${crashName} ("${message}") — a raw crash, not a fail-closed @czap/error`,
+    detail: `decoder threw an UNTAGGED ${crashName} ("${message}") — a raw crash, not a fail-closed @liteship/error`,
   };
 }
 
 // ── The SUT registry — the L4 decode surfaces that ingest untrusted bytes ─────
 
-/** Default fail-closed predicate: a thrown value is the contract iff it is a tagged @czap/error. */
+/** Default fail-closed predicate: a thrown value is the contract iff it is a tagged @liteship/error. */
 const taggedFailClosed = (thrown: unknown): boolean => isTaggedError(thrown);
 
 /** CBOR decode — the canonical-CBOR reader (the CVE site: `__proto__` map key). */
 export const CBOR_SUT: DecoderSut = {
   id: 'canonical-cbor.decode',
   inputKind: 'bytes',
-  describe: 'Canonical CBOR decoder (@czap/canonical) — the strict RFC 8949 §4.2.1 reader; the __proto__ CVE site.',
+  describe: 'Canonical CBOR decoder (@liteship/canonical) — the strict RFC 8949 §4.2.1 reader; the __proto__ CVE site.',
   run: (input) => cborDecode(input as Uint8Array),
   failClosed: taggedFailClosed,
 };
@@ -213,7 +213,7 @@ export const CBOR_SUT: DecoderSut = {
 export const HLC_SUT: DecoderSut = {
   id: 'hlc.decode',
   inputKind: 'string',
-  describe: 'HLC.decode (@czap/core) — the hybrid-logical-clock stamp reader (wall:counter:node hex).',
+  describe: 'HLC.decode (@liteship/core) — the hybrid-logical-clock stamp reader (wall:counter:node hex).',
   run: (input) => HLC.decode(input as string),
   failClosed: taggedFailClosed,
 };
@@ -222,7 +222,7 @@ export const HLC_SUT: DecoderSut = {
 export const GRAPH_PATCH_SUT: DecoderSut = {
   id: 'graph-patch.decode',
   inputKind: 'value',
-  describe: 'GraphPatch.decode (@czap/core) — the version-aware fail-closed reader for an untrusted patch envelope.',
+  describe: 'GraphPatch.decode (@liteship/core) — the version-aware fail-closed reader for an untrusted patch envelope.',
   run: (input) => GraphPatch.decode(input),
   failClosed: taggedFailClosed,
 };
@@ -232,7 +232,7 @@ export const DOCUMENT_GRAPH_SUT: DecoderSut = {
   id: 'document-graph.decode',
   inputKind: 'value',
   describe:
-    'decodeDocumentGraph (@czap/core) — the version-aware fail-closed reader for an untrusted DocumentGraph envelope.',
+    'decodeDocumentGraph (@liteship/core) — the version-aware fail-closed reader for an untrusted DocumentGraph envelope.',
   run: (input) => decodeDocumentGraph(input),
   failClosed: taggedFailClosed,
 };
@@ -242,7 +242,7 @@ export const DOCUMENT_GRAPH_SUT: DecoderSut = {
  *
  * `ShipCapsule.decode` returns a `Result<Shape, ShipCapsuleDecodeError>` whose
  * ERROR arm is a tagged STRING (`'malformed_cbor' | 'invalid_shape' |
- * 'unsupported_version' | 'non_canonical'`), not a thrown @czap/error. The
+ * 'unsupported_version' | 'non_canonical'`), not a thrown @liteship/error. The
  * harness has ONE failure channel (throw), so `run`:
  *   - OK → returns the capsule (the `returned-typed` path),
  *   - the EXPECTED tagged error → THROWS a sentinel carrying that string, which
@@ -271,7 +271,7 @@ const isShipCapsuleFailClosed = (u: unknown): u is ShipCapsuleFailClosed =>
 export const SHIP_CAPSULE_SUT: DecoderSut = {
   id: 'ship-capsule.decode',
   inputKind: 'bytes',
-  describe: 'ShipCapsule.decode (@czap/core) — the version-aware release-artifact reader (ADR-0011); Result error arm.',
+  describe: 'ShipCapsule.decode (@liteship/core) — the version-aware release-artifact reader (ADR-0011); Result error arm.',
   run: (input) => {
     // A DEFECT (an uncaught throw inside decode) propagates straight out of this
     // call, and the classifier sees an UNTAGGED crash. The EXPECTED tagged error

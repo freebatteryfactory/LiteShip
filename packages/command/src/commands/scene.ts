@@ -7,7 +7,7 @@
  *
  * @module
  */
-import { S, systemClock, type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
+import { S, systemClock, type CapsuleCommandResult, type CommandJsonSchema } from '@liteship/core';
 import { capabilityUnavailable, defineCommand, failed, ok, type CommandCapability } from '../registry.js';
 import { loadManifest, manifestUnavailable } from './manifest.js';
 
@@ -92,7 +92,7 @@ function missingSceneExports(scenePath: string, cap: unknown, contract: unknown)
   ]
     .filter((m): m is string => m !== null)
     .join(' or ');
-  return `the scene module at ${scenePath} does not export ${missing}. Compare a working example: examples/scenes/intro.ts, or run: czap glossary sceneComposition`;
+  return `the scene module at ${scenePath} does not export ${missing}. Compare a working example: examples/scenes/intro.ts, or run: liteship glossary sceneComposition`;
 }
 
 /** `scene verify <scene.ts>` — run the scene capsule's generated tests. */
@@ -115,7 +115,7 @@ export const sceneVerifyCommand = defineCommand({
     if (!cap) {
       return fail(
         'scene.verify',
-        `no sceneComposition capsule exported from ${scenePath} — export the capsule returned by your scene definition (czap glossary capsule)`,
+        `no sceneComposition capsule exported from ${scenePath} — export the capsule returned by your scene definition (liteship glossary capsule)`,
         1,
       );
     }

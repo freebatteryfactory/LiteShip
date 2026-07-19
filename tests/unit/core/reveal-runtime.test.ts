@@ -6,9 +6,9 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Reveal, lowerRevealIntent, interpretTransition, Easing, DEFAULT_MOTION_SPRING } from '@czap/core';
-import { compileReveal } from '@czap/compiler';
-import { writeContinuousMap, loadGraphRuntime, lowerGraph } from '@czap/astro/runtime';
+import { Reveal, lowerRevealIntent, interpretTransition, Easing, DEFAULT_MOTION_SPRING } from '@liteship/core';
+import { compileReveal } from '@liteship/compiler';
+import { writeContinuousMap, loadGraphRuntime, lowerGraph } from '@liteship/astro/runtime';
 
 function heroIntent() {
   return Reveal.intent({
@@ -34,12 +34,12 @@ describe('Reveal end-to-end runtime floor', () => {
     expect(plan.runtime.easing).toEqual({ kind: 'spring' });
 
     const el = document.createElement('div');
-    el.setAttribute('data-czap-boundary', 'hero');
+    el.setAttribute('data-liteship-boundary', 'hero');
     writeContinuousMap(el, plan.runtime, 0.5);
 
     const eased = Easing.spring(DEFAULT_MOTION_SPRING)(0.5); // the shared-default spring kernel
     expect(Number(el.style.opacity)).toBeCloseTo(eased, 10); // opacity lerps 0→1 → value IS eased
-    expect(el.style.getPropertyValue('--czap-hero-y')).toBe(`${24 - 24 * eased}px`); // 24px → 0px
+    expect(el.style.getPropertyValue('--liteship-hero-y')).toBe(`${24 - 24 * eased}px`); // 24px → 0px
   });
 
   test('simulated animation frames dispatch uniform-update without graph mutation', () => {
@@ -50,7 +50,7 @@ describe('Reveal end-to-end runtime floor', () => {
 
     const el = document.createElement('div');
     const events: CustomEvent[] = [];
-    el.addEventListener('czap:uniform-update', (e) => events.push(e as CustomEvent));
+    el.addEventListener('liteship:uniform-update', (e) => events.push(e as CustomEvent));
 
     for (const t of [0, 0.25, 0.5, 0.75, 1]) {
       writeContinuousMap(el, plan.runtime, t);
@@ -59,7 +59,7 @@ describe('Reveal end-to-end runtime floor', () => {
     expect(events).toHaveLength(5);
     expect(events[0]!.detail.css.opacity).toBe('0');
     expect(events[4]!.detail.css.opacity).toBe('1');
-    expect(events[4]!.detail.css['--czap-hero-y']).toBe('0px');
+    expect(events[4]!.detail.css['--liteship-hero-y']).toBe('0px');
   });
 
   test('reduced-motion settle endpoint matches runtime t=1 values', () => {
@@ -72,7 +72,7 @@ describe('Reveal end-to-end runtime floor', () => {
     writeContinuousMap(el, plan.runtime, 1);
 
     expect(el.style.opacity).toBe('1');
-    expect(el.style.getPropertyValue('--czap-hero-y')).toBe('0px');
+    expect(el.style.getPropertyValue('--liteship-hero-y')).toBe('0px');
   });
 });
 
@@ -102,7 +102,7 @@ describe('Reveal compile → runtime contract', () => {
     const intent = heroIntent();
     const lowered = lowerRevealIntent(intent);
     const compiled = compileReveal(lowered.graph, lowered.transitionId, intent);
-    expect(compiled.css.startingStyle).toContain('[data-czap-boundary="hero"]');
+    expect(compiled.css.startingStyle).toContain('[data-liteship-boundary="hero"]');
     expect(compiled.motion.target).toBe('hero');
   });
 });

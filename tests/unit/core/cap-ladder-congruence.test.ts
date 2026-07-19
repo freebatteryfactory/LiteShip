@@ -2,7 +2,7 @@
  * Cap-ladder congruence drift guard.
  *
  * The capability-admissibility ladder is encoded ONCE as pure index-keyed data
- * in `@czap/core/cap-ladder` (`LADDER_TARGETS`). Two vocabularies project it:
+ * in `@liteship/core/cap-ladder` (`LADDER_TARGETS`). Two vocabularies project it:
  *
  *   - the core escalation chooser's `RUNG_TARGETS`, keyed by the `CapTier`
  *     lattice (`static < styled < reactive < animated < gpu`), read here via
@@ -19,14 +19,14 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { LADDER_TARGETS, LADDER_RUNGS, projectLadder } from '@czap/core';
-import type { CapTier, LadderTarget } from '@czap/core';
-// `rungTargets` is module-internal (not re-exported via the @czap/core public
+import { LADDER_TARGETS, LADDER_RUNGS, projectLadder } from '@liteship/core';
+import type { CapTier, LadderTarget } from '@liteship/core';
+// `rungTargets` is module-internal (not re-exported via the @liteship/core public
 // surface on purpose — it would hand out the mutable escalation Set table). The
 // src-path import reaches the pure accessor without widening the public API.
 import { rungTargets } from '../../../packages/core/src/escalation.js';
-import { TIER_TARGETS } from '@czap/quantizer/testing';
-import type { MotionTier } from '@czap/core';
+import { TIER_TARGETS } from '@liteship/quantizer/testing';
+import type { MotionTier } from '@liteship/core';
 
 // The two vocabularies' rung orders, lowest-to-highest. These ARE the projection
 // inputs; the test asserts each projection equals `LADDER_TARGETS[i]`, so the

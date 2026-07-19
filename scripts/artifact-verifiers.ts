@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-// CUT B5b — slash normalization routes through the one @czap/audit home (aliased).
-import { normalizeRepoPath as normalizePath } from '@czap/audit';
+// CUT B5b — slash normalization routes through the one @liteship/audit home (aliased).
+import { normalizeRepoPath as normalizePath } from '@liteship/audit';
 import { repoRoot } from '../vitest.shared.js';
 import { buildCurrentArtifactContext } from './artifact-context.js';
 import {

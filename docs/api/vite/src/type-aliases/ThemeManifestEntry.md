@@ -10,7 +10,7 @@
 
 Defined in: [vite/src/token-manifest.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/token-manifest.ts#L40)
 
-Serializable theme entry exported from `virtual:czap/themes`.
+Serializable theme entry exported from `virtual:liteship/themes`.
 
 ## Type Declaration
 

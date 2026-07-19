@@ -103,8 +103,8 @@ export async function runConsumerAppProbes(cwd: string): Promise<readonly Doctor
 
 /**
  * Generic consumer probe profile — auto-selected when `cwd` is not the
- * LiteShip workspace (root package.json name !== 'czap'). A consumer who
- * installed @czap/cli in their own app gets the environment checks that
+ * LiteShip workspace (root package.json name !== 'liteship-monorepo'). A consumer who
+ * installed @liteship/cli in their own app gets the environment checks that
  * apply to them (node, pnpm, install state, ffmpeg) instead of the
  * maintainer probes (packages/<pkg>/dist, scripts/link-pre-commit.ts,
  * crates/ WASM toolchain), which are all wrong outside this repo.
@@ -141,8 +141,8 @@ export async function runAllProbes(cwd: string, opts: RunProbesOptions = {}): Pr
     probeNode(minima),
     pnpm,
     probeWorkspaceInstalled(cwd),
-    probeBuilt(cwd, 'core', '@czap/core build'),
-    probeBuilt(cwd, 'cli', '@czap/cli build'),
+    probeBuilt(cwd, 'core', '@liteship/core build'),
+    probeBuilt(cwd, 'cli', '@liteship/cli build'),
     probeGitHooks(cwd),
     gitConfig,
     probePlaywright(cwd),

@@ -8,7 +8,7 @@
 
 Defined in: [core/src/state-cell.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L63)
 
-Worker/bootstrap interop — mirrors `ResolvedStateEntry` in `@czap/worker`.
+Worker/bootstrap interop — mirrors `ResolvedStateEntry` in `@liteship/worker`.
 
 ## Properties
 

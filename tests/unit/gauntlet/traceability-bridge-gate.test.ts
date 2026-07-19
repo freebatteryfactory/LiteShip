@@ -21,7 +21,7 @@ import {
   type GateContext,
   type TraceabilityFacts,
   type ResolvedInvariant,
-} from '@czap/gauntlet';
+} from '@liteship/gauntlet';
 
 /** A GateContext carrying a literal TraceabilityFacts record. */
 function ctx(facts: TraceabilityFacts): GateContext {

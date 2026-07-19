@@ -21,7 +21,7 @@
  */
 import { describe, test, expect } from 'vitest';
 import { execFileSync } from 'node:child_process';
-import { sealNode, sealGraph, AddressedDigest, CanonicalCbor, projectionKeys, HLC } from '@czap/core';
+import { sealNode, sealGraph, AddressedDigest, CanonicalCbor, projectionKeys, HLC } from '@liteship/core';
 import type {
   DocumentGraph,
   ComponentNode,
@@ -30,9 +30,9 @@ import type {
   EntityNode,
   ContentAddress,
   CellMeta,
-} from '@czap/core';
-import { dualExport, dualExportNode, exportVideo } from '@czap/stage';
-import { ffmpegFrameEncoder, ffmpegEncodeAvailable } from '@czap/stage/ffmpeg';
+} from '@liteship/core';
+import { dualExport, dualExportNode, exportVideo } from '@liteship/stage';
+import { ffmpegFrameEncoder, ffmpegEncodeAvailable } from '@liteship/stage/ffmpeg';
 import { FFMPEG_RENDER_CAPABLE } from '../../helpers/ffmpeg.js';
 
 const ts = HLC.increment(HLC.create('test'), 1);

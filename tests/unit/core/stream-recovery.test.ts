@@ -11,7 +11,7 @@ import {
   signalPayloadKind,
   signalSourceKind,
   validateSnapshotSignalsField,
-} from '@czap/core';
+} from '@liteship/core';
 
 describe('stream-recovery replay law', () => {
   test('recovery entry type-refuses continuous cells — only discrete/replayable recover', () => {

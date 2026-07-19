@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { World } from '@czap/core';
-import { SyncSystem } from '@czap/scene';
+import { World } from '@liteship/core';
+import { SyncSystem } from '@liteship/scene';
 
 /**
  * SyncSystem post-Task-9: reads beat markers from `Beat`-tagged

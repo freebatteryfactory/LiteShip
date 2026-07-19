@@ -47,14 +47,14 @@
 // PROVES: INV-GRAPHPATCH-IDEMPOTENT, INV-GRAPHPATCH-COMMUTATIVE, INV-GRAPHPATCH-CONVERGENCE, INV-GRAPHPATCH-CONFLICT-BOUNDARY
 import { describe, test, expect } from 'vitest';
 import fc from 'fast-check';
-import { GraphPatch, DAG, ContentAddress, sealNode, sealGraph } from '@czap/core';
+import { GraphPatch, DAG, ContentAddress, sealNode, sealGraph } from '@liteship/core';
 import type {
   SignalNode,
   DocumentGraphNode,
   DocumentGraph as DocumentGraphType,
   CellMeta,
   PatchOp,
-} from '@czap/core';
+} from '@liteship/core';
 
 const SEED = 0x5eed;
 const RUNS = 300;

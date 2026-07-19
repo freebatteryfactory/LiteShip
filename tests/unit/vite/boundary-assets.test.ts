@@ -3,13 +3,13 @@ import { build, type RollupOutput } from 'vite';
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { Boundary } from '@czap/core';
-import { plugin } from '@czap/vite';
-import type { BoundaryManifestFile } from '@czap/edge';
+import { Boundary } from '@liteship/core';
+import { plugin } from '@liteship/vite';
+import type { BoundaryManifestFile } from '@liteship/edge';
 
 describe('emitBoundaryAssets', () => {
   test('emits one content-hashed CSS asset per pooled boundary output and stitches manifest URLs', async () => {
-    const dir = mkdtempSync(join(tmpdir(), 'czap-boundary-assets-'));
+    const dir = mkdtempSync(join(tmpdir(), 'liteship-boundary-assets-'));
     try {
       const src = join(dir, 'src');
       mkdirSync(src, { recursive: true });
@@ -45,8 +45,8 @@ export const viewport = {
       const entry = join(src, 'entry.js');
       writeFileSync(
         entry,
-        "import { boundaries } from 'virtual:czap/boundaries';\n" +
-          'globalThis.__CZAP_BOUNDARIES__ = boundaries;\n',
+        "import { boundaries } from 'virtual:liteship/boundaries';\n" +
+          'globalThis.__LITESHIP_BOUNDARIES__ = boundaries;\n',
       );
 
       const result = (await build({
@@ -67,11 +67,11 @@ export const viewport = {
       const cssAssets = output.filter((item) => item.type === 'asset' && item.fileName.endsWith('.css'));
       expect(cssAssets).toHaveLength(2);
       for (const asset of cssAssets) {
-        expect(asset.fileName).toMatch(/^_czap\/[0-9a-f]{8}\/[01]\.[A-Za-z0-9_-]+\.css$/);
+        expect(asset.fileName).toMatch(/^_liteship\/[0-9a-f]{8}\/[01]\.[A-Za-z0-9_-]+\.css$/);
       }
 
       const manifestAsset = output.find(
-        (item) => item.type === 'asset' && item.fileName === 'czap-boundary-manifest.json',
+        (item) => item.type === 'asset' && item.fileName === 'liteship-boundary-manifest.json',
       );
       expect(manifestAsset).toBeDefined();
       const manifest = JSON.parse(String(manifestAsset!.source)) as BoundaryManifestFile;
@@ -84,7 +84,7 @@ export const viewport = {
       expect(entryChunk).toBeDefined();
       const code = (entryChunk as Extract<(typeof output)[number], { type: 'chunk' }>).code;
       expect(code).not.toMatch(/ROLLUP_FILE_URL_/);
-      expect(code).toContain('_czap/');
+      expect(code).toContain('_liteship/');
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

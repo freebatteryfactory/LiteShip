@@ -14,7 +14,7 @@
  */
 
 import { createServer } from 'node:http';
-import { ValidationError } from '@czap/error';
+import { ValidationError } from '@liteship/error';
 import { handleRequest } from './http.js';
 
 /**

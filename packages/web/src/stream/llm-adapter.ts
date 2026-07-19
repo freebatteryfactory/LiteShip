@@ -1,10 +1,10 @@
 /**
  * LLM Adapter -- provider-agnostic LLM stream adapter.
  *
- * Thin adapter that normalizes any LLM streaming API into czap's
+ * Thin adapter that normalizes any LLM streaming API into liteship's
  * token buffer. Pure plumbing, model-blind.
  *
- * The user provides a ChunkParser function. czap handles everything
+ * The user provides a ChunkParser function. liteship handles everything
  * downstream: buffering, quality adaptation, frame scheduling,
  * DOM application, receipt tracking.
  *
@@ -14,7 +14,7 @@
 import type { SSEMessage } from '../types.js';
 import { LLMChunkNormalization, type LLMChunk, type ToolCallAccumulator } from './llm-chunks.js';
 export type { LLMChunk, LLMChunkType } from './llm-chunks.js';
-export { tryParseGeneratedUIChunk } from '@czap/genui';
+export { tryParseGeneratedUIChunk } from '@liteship/genui';
 
 // ---------------------------------------------------------------------------
 // Chunk parser (user-provided)
@@ -69,7 +69,7 @@ export interface LLMAdapterShape {
  *
  * @example
  * ```ts
- * import { LLMAdapter } from '@czap/web';
+ * import { LLMAdapter } from '@liteship/web';
  *
  * const adapter = LLMAdapter.create({
  *   source: sseMessageStream,
@@ -154,14 +154,14 @@ function _collect(config: {
  * LLM adapter namespace.
  *
  * Provider-agnostic LLM stream adapter. Normalizes any LLM streaming API
- * (OpenAI, Anthropic, etc.) into czap's typed chunk buffer via a user-provided
+ * (OpenAI, Anthropic, etc.) into liteship's typed chunk buffer via a user-provided
  * {@link ChunkParser}. Handles tool-call accumulation, JSON argument parsing,
  * and produces a convenience `textTokens` stream for feeding into a
  * token buffer.
  *
  * @example
  * ```ts
- * import { LLMAdapter, SSE } from '@czap/web';
+ * import { LLMAdapter, SSE } from '@liteship/web';
  *
  * const client = SSE.create({ url: '/api/llm/stream' });
  * const adapter = LLMAdapter.create({

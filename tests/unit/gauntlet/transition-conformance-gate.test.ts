@@ -18,7 +18,7 @@
  * @module
  */
 import { describe, it, expect } from 'vitest';
-import { transitionConformanceGate, memoryContext } from '@czap/gauntlet';
+import { transitionConformanceGate, memoryContext } from '@liteship/gauntlet';
 import { emissionPolicy } from '../../support/reactive-oracle.js';
 import {
   FAMILY_LAWS,

@@ -11,7 +11,7 @@
 Defined in: [audit/src/ts-program.ts:72](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/ts-program.ts#L72)
 
 Build the shared [ts.CompilerOptions](https://www.typescriptlang.org/docs/handbook/compiler-options.html) for a type-directed program rooted
-at `baseUrl` (the repo root the `@czap/*` aliases resolve against). The options
+at `baseUrl` (the repo root the `@liteship/*` aliases resolve against). The options
 are the proven capsule-detector configuration: strict, bundler resolution, the
 `.ts`-source alias `paths`, and `noEmit` (the program is for the checker only).
 

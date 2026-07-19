@@ -21,9 +21,9 @@ import {
   Style,
   Token,
   World,
-} from '@czap/core';
-import { hasTag } from '@czap/error';
-import type { EntityId } from '@czap/core';
+} from '@liteship/core';
+import { hasTag } from '@liteship/error';
+import type { EntityId } from '@liteship/core';
 
 /**
  * Await a promise expected to REJECT and hand back the rejection reason typed as

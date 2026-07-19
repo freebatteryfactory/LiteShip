@@ -1,5 +1,5 @@
 {
-  "name": "@czap/astro",
+  "name": "@liteship/astro",
   "version": "0.18.0",
   "description": "The Astro integration for LiteShip: render adaptive UI as islands with the `client:satellite` directive and resolve device tiers on the server for first paint.",
   "license": "MIT",
@@ -12,7 +12,6 @@
   "bugs": "https://github.com/freebatteryfactory/LiteShip/issues",
   "homepage": "https://github.com/freebatteryfactory/LiteShip#readme",
   "keywords": [
-    "czap",
     "liteship",
     "astro",
     "integration",
@@ -112,16 +111,16 @@
     "prepack": "pnpm run build"
   },
   "dependencies": {
-    "@czap/core": "workspace:*",
-    "@czap/canonical": "workspace:*",
-    "@czap/error": "workspace:*",
-    "@czap/vite": "workspace:*",
-    "@czap/detect": "workspace:*",
-    "@czap/edge": "workspace:*",
-    "@czap/genui": "workspace:*",
-    "@czap/scene": "workspace:*",
-    "@czap/web": "workspace:*",
-    "@czap/worker": "workspace:*"
+    "@liteship/core": "workspace:*",
+    "@liteship/canonical": "workspace:*",
+    "@liteship/error": "workspace:*",
+    "@liteship/vite": "workspace:*",
+    "@liteship/detect": "workspace:*",
+    "@liteship/edge": "workspace:*",
+    "@liteship/genui": "workspace:*",
+    "@liteship/scene": "workspace:*",
+    "@liteship/web": "workspace:*",
+    "@liteship/worker": "workspace:*"
   },
   "peerDependencies": {
     "astro": ">=7.0.0 <8"

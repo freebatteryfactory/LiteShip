@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { World } from '@czap/core';
-import { AudioSystem } from '@czap/scene';
+import { World } from '@liteship/core';
+import { AudioSystem } from '@liteship/scene';
 
 describe('AudioSystem', () => {
   it('produces frame-sample mapping for audio entities in range', () => {

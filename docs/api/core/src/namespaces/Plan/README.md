@@ -14,7 +14,7 @@ computation graphs with sequential, parallel, and conditional edges.
 ## Example
 
 ```ts
-import { Plan } from '@czap/core';
+import { Plan } from '@liteship/core';
 
 const plan = Plan.make('render-pipeline')
   .step('load', { type: 'effect' })

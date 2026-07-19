@@ -16,7 +16,7 @@ Defined in: [cloudflare/src/middleware.ts:24](https://github.com/freebatteryfact
 
 Defined in: [cloudflare/src/middleware.ts:26](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L26)
 
-KV namespace binding name in wrangler.jsonc. Defaults to `CZAP_BOUNDARY_CACHE`.
+KV namespace binding name in wrangler.jsonc. Defaults to `LITESHIP_BOUNDARY_CACHE`.
 
 ***
 
@@ -98,8 +98,8 @@ Pass a getter in tests or when env is injected by the host framework.
 Defined in: [cloudflare/src/middleware.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L33)
 
 Build-derived boundary manifest -- import it from
-`virtual:czap/boundaries` or read the emitted
-`czap-boundary-manifest.json`. The middleware derives `boundaryId`
+`virtual:liteship/boundaries` or read the emitted
+`liteship-boundary-manifest.json`. The middleware derives `boundaryId`
 and per-tier precompiled outputs from it, so nothing is hand-typed.
 
 ***
@@ -122,7 +122,7 @@ Defined in: [cloudflare/src/middleware.ts:78](https://github.com/freebatteryfact
 
 Tags written with boundary cache entries when a compile fallback fills KV.
 Pass the same values as Astro `routeRules.tags` so `cache.invalidate({ tags })`
-can purge CZAP boundary variants. A manifest config may use a boundary-name
+can purge LiteShip boundary variants. A manifest config may use a boundary-name
 map; a resolver can branch on `context.boundaryName` / `context.boundaryId`.
 
 ***

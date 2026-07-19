@@ -124,7 +124,7 @@ An [SSEClient](../interfaces/SSEClient.md)
 #### Examples
 
 ```ts
-import { SSE } from '@czap/web';
+import { SSE } from '@liteship/web';
 
 const client = SSE.create({ url: '/api/stream', artifactId: 'doc-1' });
 for await (const msg of client.messages) {
@@ -136,7 +136,7 @@ client.close();
 ```ts
 // Fully synchronous consumption (the live morph directives): pass callbacks
 // and skip the async buffer entirely.
-import { SSE } from '@czap/web';
+import { SSE } from '@liteship/web';
 
 const client = SSE.create({
   url: '/api/stream',
@@ -178,7 +178,7 @@ There is intentionally no opt-out — see red-team regression suite.
 ## Example
 
 ```ts
-import { SSE } from '@czap/web';
+import { SSE } from '@liteship/web';
 
 const client = SSE.create({ url: '/api/events' });
 const state = client.state; // 'connecting' | 'connected' | ...

@@ -1,9 +1,9 @@
 /**
- * `czap lsp` CLI launch wiring (Slice B/B3 — the THIRD JSON-RPC skin).
+ * `liteship lsp` CLI launch wiring (Slice B/B3 — the THIRD JSON-RPC skin).
  *
- * Proves the editor-spawnable language server is wired to the production `czap`
- * dispatch: `czap lsp` dynamically imports `@czap/mcp-server` and hands it an
- * INJECTED gauntlet runner built in the CLI host (so the engine + `@czap/audit`
+ * Proves the editor-spawnable language server is wired to the production `liteship`
+ * dispatch: `liteship lsp` dynamically imports `@liteship/mcp-server` and hands it an
+ * INJECTED gauntlet runner built in the CLI host (so the engine + `@liteship/audit`
  * stay out of the lean server). The default path builds the runner over the LEAN
  * `litelaunchGauntlet`; `--ir` builds it over `runGauntletWithRepoIR`.
  *
@@ -14,13 +14,13 @@
  * @module
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { finding, type GauntletResult } from '@czap/gauntlet';
+import { finding, type GauntletResult } from '@liteship/gauntlet';
 
 const { runLspStdioMock } = vi.hoisted(() => ({ runLspStdioMock: vi.fn() }));
-vi.mock('@czap/mcp-server', () => ({ runLspStdio: runLspStdioMock }));
+vi.mock('@liteship/mcp-server', () => ({ runLspStdio: runLspStdioMock }));
 
 const { litelaunchGauntletMock } = vi.hoisted(() => ({ litelaunchGauntletMock: vi.fn() }));
-vi.mock('@czap/gauntlet', async (importOriginal) => {
+vi.mock('@liteship/gauntlet', async (importOriginal) => {
   const orig = await importOriginal<Record<string, unknown>>();
   return { ...orig, litelaunchGauntlet: litelaunchGauntletMock };
 });
@@ -53,7 +53,7 @@ beforeEach(() => {
 });
 afterEach(() => vi.restoreAllMocks());
 
-describe('czap lsp — launch wiring', () => {
+describe('liteship lsp — launch wiring', () => {
   it('dispatches `lsp` to the mcp-server LSP driver with an injected runner (exit 0)', async () => {
     const code = await run(['lsp']);
     expect(code).toBe(0);

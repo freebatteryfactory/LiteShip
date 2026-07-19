@@ -53,7 +53,7 @@ the bridge and update the signal.
 #### Example
 
 ```ts
-import { Signal } from '@czap/core';
+import { Signal } from '@liteship/core';
 
 const audioSig = Signal.audio(bridge, 'normalized', 120);
 const progress = audioSig.poll(); // 0..1
@@ -76,7 +76,7 @@ are synchronous.
 #### Example
 
 ```ts
-import { Signal } from '@czap/core';
+import { Signal } from '@liteship/core';
 
 const ctrl = Signal.controllable();
 ctrl.seek(1500);
@@ -117,7 +117,7 @@ elapsed/absolute signal deterministically without touching the ambient clock.
 #### Example
 
 ```ts
-import { Signal } from '@czap/core';
+import { Signal } from '@liteship/core';
 
 const sig = Signal.make({ type: 'viewport', axis: 'width' });
 const width = sig.read(); // current window.innerWidth
@@ -130,7 +130,7 @@ await sig.lifetime.dispose();
 ## Example
 
 ```ts
-import { Signal } from '@czap/core';
+import { Signal } from '@liteship/core';
 
 const viewport = Signal.make({ type: 'viewport', axis: 'width' });
 const width = viewport.read();

@@ -10,7 +10,7 @@
 
 Defined in: [core/src/index.ts:613](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/index.ts#L613)
 
-Union of the three reactive primitives the CZAP graph exposes to user code.
+Union of the three reactive primitives the LiteShip graph exposes to user code.
 
 ## Type Parameters
 

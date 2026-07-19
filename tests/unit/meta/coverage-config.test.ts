@@ -33,7 +33,7 @@ describe('coverage config drift guard', () => {
     // the targets are exercised via vitest-runner + spawn-quoting-drift).
     // + 2 subprocess-style command modules added with ADR-0011 ShipCapsule:
     // cli/src/commands/ship.ts (orchestrates git + pnpm pack + pnpm publish
-    // --dry-run + pnpm publish; integration-tested via the czap ship
+    // --dry-run + pnpm publish; integration-tested via the liteship ship
     // --dry-run path that runs in every package:smoke gauntlet phase) and
     // cli/src/render-backend/ffmpeg.ts (spawns ffmpeg; skip-when-unavailable
     // smoke test makes this structurally 0% on machines without ffmpeg).
@@ -44,7 +44,7 @@ describe('coverage config drift guard', () => {
     // CI condition). Happy path stays tested by tests/unit/stage/ffmpeg-encoder.test.ts.
     // + 1 subprocess-style command (0.4.0 gauntlet-host coverage wave):
     // cli/src/commands/package-smoke.ts — the SAME earned precedent as ship.ts: it
-    // orchestrates `pnpm pack` ×N → install → smoke-import → czap describe (pure
+    // orchestrates `pnpm pack` ×N → install → smoke-import → liteship describe (pure
     // subprocess glue with no in-process branch surface). Its genuinely pure logic
     // (executable resolution, pnpm-store dependency resolution, tarball URLs) was
     // EXTRACTED to cli/src/lib/package-smoke-helpers.ts and unit-tested directly

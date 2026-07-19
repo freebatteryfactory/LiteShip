@@ -15,7 +15,7 @@ Compile a parsed [QuantizeBlock](../interfaces/QuantizeBlock.md) plus its resolv
 to the canonical `CSSCompiler` to avoid duplicating threshold-to-query
 logic.
 
-Bare declarations keep the default `.czap-boundary` selector; nested
+Bare declarations keep the default `.liteship-boundary` selector; nested
 rules each compile to their own selector inside the state's
 `@container` block.
 

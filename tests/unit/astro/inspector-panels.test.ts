@@ -67,7 +67,7 @@ describe('deriveActiveTargets', () => {
     const active = deriveActiveTargets(
       snapshot({
         shaderType: 'glsl',
-        cssCustomProps: ['--czap-blur'],
+        cssCustomProps: ['--liteship-blur'],
         ariaAttrs: ['aria-expanded'],
       }),
     );
@@ -194,8 +194,8 @@ describe('buildGraphPeek (real content addressing)', () => {
 describe('readInjectedPayload', () => {
   test('reads a provided payload and returns null otherwise', () => {
     expect(readInjectedPayload({})).toBeNull();
-    expect(readInjectedPayload({ __CZAP_INSPECTOR__: undefined })).toBeNull();
+    expect(readInjectedPayload({ __LITESHIP_INSPECTOR__: undefined })).toBeNull();
     const payload = { graph: { nodes: [], edges: [] } };
-    expect(readInjectedPayload({ __CZAP_INSPECTOR__: payload })).toBe(payload);
+    expect(readInjectedPayload({ __LITESHIP_INSPECTOR__: payload })).toBe(payload);
   });
 });

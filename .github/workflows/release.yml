@@ -5,7 +5,7 @@ name: Release (OIDC trusted publishing)
 #   git tag -a v0.2.0 -m "v0.2.0"
 #   git push origin v0.2.0
 #
-# auth: OIDC trusted publishing — no tokens anywhere. `czap ship` packs each
+# auth: OIDC trusted publishing — no tokens anywhere. `liteship ship` packs each
 # package with pnpm (which rewrites `workspace:*` to concrete versions) and then
 # hands the tarball to the **npm CLI** (`npm publish <tgz> --provenance`) for the
 # upload. npm >= 11.5.1 performs npm's OIDC trusted-publishing token exchange
@@ -16,7 +16,7 @@ name: Release (OIDC trusted publishing)
 # configured at https://www.npmjs.com/package/<name>/access (org+repo:
 # freebatteryfactory/LiteShip, workflow filename: release.yml — see RELEASING.md
 # §Trusted publishing). A package without one fails its publish loudly with an auth
-# error; fix the npm-side config and re-run — `czap ship` treats already-published
+# error; fix the npm-side config and re-run — `liteship ship` treats already-published
 # versions as idempotent success, so re-runs are safe. The NPM_TOKEN repo secret is
 # dead (its token was revoked) and is no longer read.
 
@@ -85,7 +85,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          fetch-depth: 0     # czap ship reads git rev-parse HEAD + git status
+          fetch-depth: 0     # liteship ship reads git rev-parse HEAD + git status
 
       - uses: pnpm/action-setup@v6
 
@@ -102,7 +102,7 @@ jobs:
           cache: pnpm
 
       # npm's OIDC trusted publishing needs npm CLI >= 11.5.1, but Node 22 ships
-      # npm 10. Upgrade it globally so the `npm publish <tgz>` handoff in `czap ship`
+      # npm 10. Upgrade it globally so the `npm publish <tgz>` handoff in `liteship ship`
       # (packages/cli/src/commands/ship.ts) performs the OIDC token exchange. `pnpm
       # publish` does NOT do this (pnpm#11513) — hence the ENEEDAUTH at prior cuts.
       - name: Upgrade npm CLI for OIDC trusted publishing (>= 11.5.1)
@@ -126,10 +126,10 @@ jobs:
 
       - run: pnpm run build
 
-      # Build the czap-compute WASM kernel from Rust and stage it into the core
+      # Build the liteship-compute WASM kernel from Rust and stage it into the core
       # package's dist BEFORE the ship loop packs the tarball — otherwise the
       # published core package carries no `.wasm` and an installed consumer's
-      # `czap({ wasm: { enabled: true } })` silently runs the TS fallback (the
+      # `liteship({ wasm: { enabled: true } })` silently runs the TS fallback (the
       # 0.2.1 fix). Build-truth: rebuilt from source here, never committed.
       - uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # stable, pinned (2026-03-27)
         with:
@@ -179,7 +179,7 @@ jobs:
       - name: Verify publish roster is in sync (gen-roster gate)
         run: pnpm exec tsx scripts/gen-roster.ts --check
 
-      # One `czap ship` per package: the roster comes from
+      # One `liteship ship` per package: the roster comes from
       # scripts/ci/publish-roster.json (read with jq) in publish order, so the
       # umbrella package (whose deps must already exist on the registry at the
       # new version) publishes LAST. ship itself treats already-published
@@ -189,7 +189,7 @@ jobs:
       # package's capsule uploads IMMEDIATELY after its ship so no later failure
       # can orphan it; a skipped package mints no capsule — its capsule is
       # already attached by the run that published it.
-      - name: czap ship (per package, OIDC + provenance, attach-as-minted)
+      - name: liteship ship (per package, OIDC + provenance, attach-as-minted)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ATTACH: ${{ inputs.dry-run != 'true' && github.ref_type == 'tag' }}
@@ -223,7 +223,7 @@ jobs:
 
           for pkg in $(jq -r '.packages[]' scripts/ci/publish-roster.json); do
             echo "::group::$pkg"
-            node packages/cli/bin/czap.mjs ship --filter "$pkg" --provenance $DRY_RUN_FLAG
+            node packages/cli/bin/liteship.mjs ship --filter "$pkg" --provenance $DRY_RUN_FLAG
             if [ "$ATTACH" = "true" ]; then
               shopt -s nullglob
               capsules=(packages/*/*-"$VERSION".shipcapsule.cbor)

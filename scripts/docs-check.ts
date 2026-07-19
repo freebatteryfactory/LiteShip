@@ -12,7 +12,7 @@ import { spawnSync } from 'node:child_process';
 import { mkdtempSync, rmSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { walkFiles } from '@czap/core/fs-walk';
+import { walkFiles } from '@liteship/core/fs-walk';
 
 const COMMITTED_DIR = 'docs/api';
 const DOCS_NODE_OPTIONS = ['--max-old-space-size=8192', process.env.NODE_OPTIONS ?? ''].join(' ').trim();
@@ -22,7 +22,7 @@ if (!existsSync(COMMITTED_DIR)) {
   process.exit(1);
 }
 
-const tempDir = mkdtempSync(join(tmpdir(), 'czap-docs-check-'));
+const tempDir = mkdtempSync(join(tmpdir(), 'liteship-docs-check-'));
 
 try {
   const build = spawnSync('pnpm', ['exec', 'typedoc', '--out', tempDir], {

@@ -7,7 +7,7 @@
 
 import { describe, test } from 'vitest';
 import fc from 'fast-check';
-import { Easing } from '@czap/core';
+import { Easing } from '@liteship/core';
 
 const standardEasings: Array<[string, (t: number) => number]> = [
   ['linear', Easing.linear],

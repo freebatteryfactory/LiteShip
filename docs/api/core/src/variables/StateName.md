@@ -12,7 +12,7 @@ Defined in: [core/src/brands.ts:36](https://github.com/freebatteryfactory/LiteSh
 
 Wrap a plain string as a StateName.
 
-A state name is serialized into the `data-czap` state token and used as a
+A state name is serialized into the `data-liteship` state token and used as a
 CSS/selector-addressable label, so it must be a non-empty token with no
 whitespace (e.g. `mobile`, `sm`, `desktop`).
 

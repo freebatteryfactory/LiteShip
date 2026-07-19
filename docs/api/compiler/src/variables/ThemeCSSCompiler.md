@@ -13,7 +13,7 @@ Defined in: [compiler/src/theme-css.ts:99](https://github.com/freebatteryfactory
 Theme CSS compiler namespace.
 
 Serializes a [Theme.Shape](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Theme/type-aliases/Shape.md) into `html[data-theme="…"]` selector
-overrides of `--czap-*` custom properties and, when theme metadata
+overrides of `--liteship-*` custom properties and, when theme metadata
 requests it, a `:root` transition block that animates all theme
 property changes.
 

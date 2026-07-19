@@ -9,7 +9,7 @@
  * This pins that the directive now warns once (`canvas-default-size`) on the
  * unsized path and stays quiet when the host has real layout, for BOTH the
  * wrapper-element path and a directly-passed `<canvas>`. `expected` for the
- * backing-store size is imported from `@czap/core`, never a literal 300/150.
+ * backing-store size is imported from `@liteship/core`, never a literal 300/150.
  */
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
@@ -71,7 +71,7 @@ describe('client:gpu unsized-canvas warn (B-gpu)', () => {
 
   beforeEach(() => {
     document.body.innerHTML = '';
-    document.documentElement.setAttribute('data-czap-tier', 'gpu');
+    document.documentElement.setAttribute('data-liteship-tier', 'gpu');
     _resetRuntimePolicyForTests();
     configureRuntimePolicy();
     vi.stubGlobal('requestAnimationFrame', vi.fn(() => 1));
@@ -109,7 +109,7 @@ describe('client:gpu unsized-canvas warn (B-gpu)', () => {
     const warns = sizeWarns();
     expect(warns).toHaveLength(1);
     expect(host.querySelector('canvas')).not.toBeNull();
-    // `expected` for the fallback dims comes from @czap/core, never a literal.
+    // `expected` for the fallback dims comes from @liteship/core, never a literal.
     expect(warns[0].detail).toMatchObject({
       clientWidth: 0,
       clientHeight: 0,
@@ -138,7 +138,7 @@ describe('client:gpu unsized-canvas warn (B-gpu)', () => {
 
   test('warns on the WGSL branch too (shared helper, before the async runtime)', () => {
     const host = document.createElement('div');
-    host.setAttribute('data-czap-shader-type', 'wgsl');
+    host.setAttribute('data-liteship-shader-type', 'wgsl');
     document.body.appendChild(host);
     gpuDirective(async () => {}, {}, host);
 

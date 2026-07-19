@@ -14,7 +14,7 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { LiveCell, Boundary, Millis, Timeline, manualClock } from '@czap/core';
+import { LiveCell, Boundary, Millis, Timeline, manualClock } from '@liteship/core';
 
 describe('LiveCell._make — a post-dispose set() is fully inert (no envelope/value divergence)', () => {
   test('scalar LiveCell: value frozen, version + content-address id do not drift', async () => {

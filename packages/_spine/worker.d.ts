@@ -1,5 +1,5 @@
 /**
- * @czap/worker type spine -- off-main-thread compositor and render workers.
+ * @liteship/worker type spine -- off-main-thread compositor and render workers.
  */
 
 import type { CompositeState, VideoConfig, VideoFrameOutput, ContentAddress, StateName } from './core.d.ts';
@@ -326,7 +326,7 @@ export interface ResolvedStateAckPayload {
 
 /**
  * The boundary surface addQuantizer derives a registration from —
- * structurally satisfied by a `Boundary.make` result from @czap/core.
+ * structurally satisfied by a `Boundary.make` result from @liteship/core.
  */
 export interface QuantizerBoundarySource {
   readonly id: ContentAddress;
@@ -339,7 +339,7 @@ export interface QuantizerBoundarySource {
 
 export interface CompositorWorkerShape {
   readonly worker: Worker;
-  /** Runtime coordination surface (internal shape, see @czap/core RuntimeCoordinator). */
+  /** Runtime coordination surface (internal shape, see @liteship/core RuntimeCoordinator). */
   readonly runtime: unknown;
   /** Register a quantizer from a Boundary.make result; name defaults to boundary.input. */
   addQuantizer(boundary: QuantizerBoundarySource): void;

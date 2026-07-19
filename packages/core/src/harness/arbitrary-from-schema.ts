@@ -34,7 +34,7 @@
  *     the smart constructor would be silent widening; the author attaches a
  *     generator that produces valid branded values.
  *
- * REFUSED — a tagged {@link UnsupportedError} (`@czap/error`), never a silent
+ * REFUSED — a tagged {@link UnsupportedError} (`@liteship/error`), never a silent
  * fallback (honest skip):
  *   - `bytes` / `brand` WITHOUT a `withArbitrary` thunk (the opaque / narrow
  *     families above — justified refusal, never silent widening)
@@ -43,14 +43,14 @@
  * @module
  */
 import * as fc from 'fast-check';
-import { assertNever, UnsupportedError } from '@czap/error';
+import { assertNever, UnsupportedError } from '@liteship/error';
 import { annotatedArbitrary } from '../schema/ast.js';
 import type { Schema, SchemaNode, StructField } from '../schema/ast.js';
 
 // Re-exported so the GENERATED test templates (which import their helpers from
 // this module via `${arbitraryImport}`) can `hasTag(err, 'UnsupportedError')`
 // on a caught derivation failure without a second import specifier.
-export { hasTag } from '@czap/error';
+export { hasTag } from '@liteship/error';
 
 // Re-exported so this module's documented explicit-override surface stays
 // self-contained: `withArbitrary` attaches the generator thunk the walker reads,

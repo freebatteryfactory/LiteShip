@@ -1,6 +1,6 @@
-import { RuntimeCoordinator, type CompositeState } from '@czap/core';
-import { LLMChunkNormalization, type LLMChunk } from '@czap/web';
-import type { WorkerHost } from '@czap/worker';
+import { RuntimeCoordinator, type CompositeState } from '@liteship/core';
+import { LLMChunkNormalization, type LLMChunk } from '@liteship/web';
+import type { WorkerHost } from '@liteship/worker';
 import { parseLLMChunk } from '../../../packages/astro/src/runtime/llm.ts';
 
 export type WorkerStartupStage =
@@ -210,9 +210,9 @@ function buildWorkerStartupCompositeState(name: string, state: string): Composit
       [name]: Object.fromEntries(WORKER_STARTUP_QUANTIZER.states.map((candidate) => [candidate, candidate === state ? 1 : 0])),
     },
     outputs: {
-      css: { [`--czap-${name}`]: state },
+      css: { [`--liteship-${name}`]: state },
       glsl: { [`u_${name}`]: WORKER_STARTUP_QUANTIZER.states.indexOf(state) },
-      aria: { [`data-czap-${name}`]: state },
+      aria: { [`data-liteship-${name}`]: state },
     },
   };
 }

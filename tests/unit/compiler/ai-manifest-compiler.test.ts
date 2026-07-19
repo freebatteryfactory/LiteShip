@@ -8,8 +8,8 @@
 
 import { describe, test, expect } from 'vitest';
 import fc from 'fast-check';
-import { AIManifestCompiler } from '@czap/compiler';
-import type { AIManifest } from '@czap/compiler';
+import { AIManifestCompiler } from '@liteship/compiler';
+import type { AIManifest } from '@liteship/compiler';
 
 // ---------------------------------------------------------------------------
 // Fixtures

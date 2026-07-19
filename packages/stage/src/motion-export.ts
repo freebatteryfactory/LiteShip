@@ -1,7 +1,7 @@
 /**
- * Motion export — the `@czap/stage` video-leg MOTION ADAPTER for authored motion.
+ * Motion export — the `@liteship/stage` video-leg MOTION ADAPTER for authored motion.
  *
- * The video export samples the ONE shared kernel `sampleProgram` (`@czap/core`, Law 4)
+ * The video export samples the ONE shared kernel `sampleProgram` (`@liteship/core`, Law 4)
  * at each `FrameRange` index and folds the sampled leaves into per-frame content, then
  * content-addresses the whole track through the SAME `CanonicalCbor.encode` →
  * `AddressedDigest.of` kernel the dual-export video carrier uses (ADR-0003/0011). The
@@ -16,8 +16,8 @@
  * @module
  */
 
-import { CanonicalCbor, AddressedDigest, formatTypedValue, frameToT, sampleProgram } from '@czap/core';
-import type { AddressedDigest as AddressedDigestShape, RuntimeWritePlan, TypedValue } from '@czap/core';
+import { CanonicalCbor, AddressedDigest, formatTypedValue, frameToT, sampleProgram } from '@liteship/core';
+import type { AddressedDigest as AddressedDigestShape, RuntimeWritePlan, TypedValue } from '@liteship/core';
 
 /** One sampled motion frame: its index, its normalized `t`, and the typed + formatted leaves. */
 export interface MotionFrameSample {

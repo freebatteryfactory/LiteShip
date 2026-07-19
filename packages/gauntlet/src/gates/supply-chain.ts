@@ -17,7 +17,7 @@
  *    the workflows — publish authority is the short-lived OIDC token only.
  *
  * LEAN BY CONSTRUCTION (ADR-0012): the gate parses NO YAML, decodes NO CBOR, and
- * touches NO workspace. The HOST (the CLI's `@czap/cli` analyzer) computes the
+ * touches NO workspace. The HOST (the CLI's `@liteship/cli` analyzer) computes the
  * facts and injects them via {@link GateContext.supplyChain}; this gate only
  * folds. An ABSENT fact family is reported as an HONEST advisory "not-evidenced"
  * finding (a host that supplied no supply-chain facts at all gets four
@@ -70,7 +70,7 @@ function notEvidencedFinding(family: string): Finding {
       kind: 'instruction',
       description: `Supply the ${family} facts so the avionics gate can attest them.`,
       steps: [
-        `Run the @czap/cli supply-chain analyzer, which builds the ${family} facts.`,
+        `Run the @liteship/cli supply-chain analyzer, which builds the ${family} facts.`,
         `Inject the resulting SupplyChainFacts via the GateContext (context.supplyChain.${family}).`,
       ],
     },
@@ -128,7 +128,7 @@ const CLEAN_FACTS: SupplyChainFacts = {
     violations: [],
   },
   provenance: {
-    packageName: '@czap/example',
+    packageName: '@liteship/example',
     sourceCommit: '0'.repeat(40),
     sourceDirty: false,
     violations: [],
@@ -162,13 +162,13 @@ const DIRTY_FACTS: SupplyChainFacts = {
     ],
   },
   provenance: {
-    packageName: '@czap/example',
+    packageName: '@liteship/example',
     sourceCommit: 'not-a-sha',
     sourceDirty: true,
     violations: [
       {
         code: 'lockfile-address-drift',
-        subject: '@czap/example',
+        subject: '@liteship/example',
         detail:
           "the ShipCapsule's recorded lockfile_address does not equal the live pnpm-lock.yaml address — the release was built from a drifted tree.",
       },

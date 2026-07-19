@@ -3,8 +3,8 @@
  */
 
 import { describe, test, expect, vi, afterEach } from 'vitest';
-import { HLC, fixedClock } from '@czap/core';
-import { hasTag } from '@czap/error';
+import { HLC, fixedClock } from '@liteship/core';
+import { hasTag } from '@liteship/error';
 
 /**
  * Capture the `code` of a thrown {@link ParseError}, or `undefined` if `fn` did not

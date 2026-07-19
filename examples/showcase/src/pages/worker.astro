@@ -1,10 +1,10 @@
 ---
 import Base from '../layouts/Base.astro';
-import { satelliteAttrs } from '@czap/astro';
+import { satelliteAttrs } from '@liteship/astro';
 import { layout } from '../boundaries/layout.boundaries.ts';
 ---
 
-<Base title="czap showcase -- worker compositor">
+<Base title="liteship showcase -- worker compositor">
   <header class="page-header">
     <h1>Off-Thread Compositor</h1>
     <p>
@@ -16,7 +16,7 @@ import { layout } from '../boundaries/layout.boundaries.ts';
 
   <section class="worker-demo">
     <!-- The panel shows exactly what the worker directive writes back to the DOM:
-         the resolved boundary state on data-czap-state. Resize the window and watch
+         the resolved boundary state on data-liteship-state. Resize the window and watch
          it flip off the main thread. (The directive publishes no other DOM telemetry;
          this panel deliberately displays only what is real.) -->
     <div {...satelliteAttrs({ boundary: layout, directive: 'worker', class: 'worker-container' })}>
@@ -25,7 +25,7 @@ import { layout } from '../boundaries/layout.boundaries.ts';
         <div class="worker-status">
           <div class="worker-status__row">
             <span class="worker-status__label">Boundary</span>
-            <span class="worker-status__value" data-czap-state>pending</span>
+            <span class="worker-status__value" data-liteship-state>pending</span>
           </div>
         </div>
         <p class="worker-note">
@@ -46,11 +46,11 @@ import { layout } from '../boundaries/layout.boundaries.ts';
     font-size: 2rem;
     font-weight: 800;
     letter-spacing: -0.02em;
-    color: var(--czap-primary, #4f46e5);
+    color: var(--liteship-primary, #4f46e5);
   }
   .page-header p {
     margin-top: 0.5rem;
-    color: var(--czap-muted, #64748b);
+    color: var(--liteship-muted, #64748b);
     max-width: 40rem;
   }
 
@@ -59,7 +59,7 @@ import { layout } from '../boundaries/layout.boundaries.ts';
   }
 
   .worker-container {
-    border: 1px solid var(--czap-border, #e2e8f0);
+    border: 1px solid var(--liteship-border, #e2e8f0);
     border-radius: 0.75rem;
     padding: 1.5rem;
     max-width: 32rem;
@@ -68,7 +68,7 @@ import { layout } from '../boundaries/layout.boundaries.ts';
   .worker-panel h2 {
     font-size: 1.125rem;
     font-weight: 700;
-    color: var(--czap-primary, #4f46e5);
+    color: var(--liteship-primary, #4f46e5);
     margin-bottom: 1rem;
   }
 
@@ -83,12 +83,12 @@ import { layout } from '../boundaries/layout.boundaries.ts';
     justify-content: space-between;
     align-items: center;
     padding: 0.5rem 0;
-    border-bottom: 1px solid var(--czap-border, #e2e8f0);
+    border-bottom: 1px solid var(--liteship-border, #e2e8f0);
   }
 
   .worker-status__label {
     font-size: 0.8125rem;
-    color: var(--czap-muted, #64748b);
+    color: var(--liteship-muted, #64748b);
     text-transform: uppercase;
     letter-spacing: 0.04em;
     font-weight: 600;
@@ -97,14 +97,14 @@ import { layout } from '../boundaries/layout.boundaries.ts';
   .worker-status__value {
     font-size: 0.875rem;
     font-weight: 600;
-    color: var(--czap-text, #1e293b);
+    color: var(--liteship-text, #1e293b);
     font-variant-numeric: tabular-nums;
   }
 
   .worker-note {
     margin-top: 1rem;
     font-size: 0.8125rem;
-    color: var(--czap-muted, #64748b);
+    color: var(--liteship-muted, #64748b);
     line-height: 1.4;
   }
 </style>

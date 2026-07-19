@@ -7,10 +7,10 @@
  * routing law directly:
  *
  *   (1) BEFORE the crossing (blend < 0.5 every frame): NO graph `recast` fires
- *       (spied), but the entity's CONTINUOUS state moves — the `--czap-blend` CSS
- *       var updates and a `czap:uniform-update` dispatches every frame.
+ *       (spied), but the entity's CONTINUOUS state moves — the `--liteship-blend` CSS
+ *       var updates and a `liteship:uniform-update` dispatches every frame.
  *   (2) PAST the crossing (blend passes 0.5): EXACTLY ONE recast fires and the
- *       entity's `data-czap-state` flips to the new discrete pose.
+ *       entity's `data-liteship-state` flips to the new discrete pose.
  *   (3) `stop()` cancels the rAF and releases the graph handle cleanly.
  *
  * The scene is faked to the exact shape the bridge consumes (`tick` + a queryable
@@ -20,7 +20,7 @@
  */
 
 import { describe, test, expect, beforeEach, vi } from 'vitest';
-import { sealNode, sealGraph, AddressedDigest, CanonicalCbor, projectionKeys, HLC } from '@czap/core';
+import { sealNode, sealGraph, AddressedDigest, CanonicalCbor, projectionKeys, HLC } from '@liteship/core';
 import type {
   DocumentGraph,
   SignalNode,
@@ -30,7 +30,7 @@ import type {
   PoseNode,
   ContentAddress,
   CellMeta,
-} from '@czap/core';
+} from '@liteship/core';
 import { loadGraphRuntime } from '../../../packages/astro/src/runtime/graph-runtime.js';
 import { bridgeSceneToGraph } from '../../../packages/astro/src/runtime/scene-bridge.js';
 import type { BridgeableScene, SceneQueryEffect } from '../../../packages/astro/src/runtime/scene-bridge.js';
@@ -108,8 +108,8 @@ function buildSceneGraph(): { graph: DocumentGraph; entityId: ContentAddress } {
     components: [comp.id],
   });
   const proj = projection('css', comp.id, 'fx');
-  const poseFrom = pose(ent.id, 'from', { '--czap-fx': '0' });
-  const poseTo = pose(ent.id, 'to', { '--czap-fx': '1' });
+  const poseFrom = pose(ent.id, 'from', { '--liteship-fx': '0' });
+  const poseTo = pose(ent.id, 'to', { '--liteship-fx': '1' });
 
   const graph = sealGraph({
     _tag: 'DocumentGraph',
@@ -229,7 +229,7 @@ describe('bridgeSceneToGraph — discrete crossing recasts, continuous tween nev
     const fake = makeFakeScene('fx', durationMs);
 
     const uniformSpy = vi.fn();
-    el.addEventListener('czap:uniform-update', uniformSpy);
+    el.addEventListener('liteship:uniform-update', uniformSpy);
     const setPropSpy = vi.spyOn(el.style, 'setProperty');
 
     const bridge = bridgeSceneToGraph(
@@ -252,20 +252,20 @@ describe('bridgeSceneToGraph — discrete crossing recasts, continuous tween nev
     expect(recastSpy).not.toHaveBeenCalled();
 
     // But the CONTINUOUS tween moved every frame: the leaf CSS var was written and
-    // a czap:uniform-update dispatched with the rising blend.
-    const blendWrites = setPropSpy.mock.calls.filter(([k]) => k === '--czap-blend');
+    // a liteship:uniform-update dispatched with the rising blend.
+    const blendWrites = setPropSpy.mock.calls.filter(([k]) => k === '--liteship-blend');
     expect(blendWrites.length).toBeGreaterThanOrEqual(2);
     const lastBlend = Number(blendWrites.at(-1)![1]);
     expect(lastBlend).toBeGreaterThan(0);
     expect(lastBlend).toBeLessThan(0.5);
     expect(uniformSpy).toHaveBeenCalled();
     const uniformDetail = uniformSpy.mock.calls.at(-1)![0].detail as { css: Record<string, string> };
-    expect(typeof uniformDetail.css['--czap-blend']).toBe('string');
+    expect(typeof uniformDetail.css['--liteship-blend']).toBe('string');
 
     bridge.stop();
   });
 
-  test('past crossing: exactly one recast fires and data-czap-state flips to the to-pose', async () => {
+  test('past crossing: exactly one recast fires and data-liteship-state flips to the to-pose', async () => {
     const { graph, entityId } = buildSceneGraph();
     const handle = loadGraphRuntime(graph, () => el)!;
     const recastSpy = vi.spyOn(handle, 'recast');
@@ -288,15 +288,15 @@ describe('bridgeSceneToGraph — discrete crossing recasts, continuous tween nev
     await pump(0); // blend 0 → seeds discrete 'from', no recast (seed is not a crossing).
     await pump(100); // blend 0.1
     expect(recastSpy).not.toHaveBeenCalled();
-    expect(el.getAttribute('data-czap-state')).toBe('from');
+    expect(el.getAttribute('data-liteship-state')).toBe('from');
 
     await pump(600); // dt 500 → time 600ms → blend 0.6 ≥ 0.5 → CROSSING.
 
     // Exactly ONE recast fired on the single crossing.
     expect(recastSpy).toHaveBeenCalledTimes(1);
     // The discrete pose flipped through the cast pipeline.
-    expect(el.getAttribute('data-czap-state')).toBe('to');
-    expect(el.style.getPropertyValue('--czap-fx')).toBe('1');
+    expect(el.getAttribute('data-liteship-state')).toBe('to');
+    expect(el.style.getPropertyValue('--liteship-fx')).toBe('1');
 
     // Staying past the crossing does NOT recast again (no new crossing).
     await pump(700); // blend 0.7, still 'to' side.

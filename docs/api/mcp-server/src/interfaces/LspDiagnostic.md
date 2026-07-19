@@ -9,7 +9,7 @@
 Defined in: [mcp-server/src/lsp/types.ts:113](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L113)
 
 LSP `Diagnostic` (§Diagnostic). `code` carries the gate `ruleId`; `source` is
-the fixed `'czap-gauntlet'` provenance; `data` carries the assurance level +
+the fixed `'liteship-gauntlet'` provenance; `data` carries the assurance level +
 coverage class (the rigor metadata an editor surfaces and a code-action reads
 back). `message` is the finding's WHY (title + detail).
 

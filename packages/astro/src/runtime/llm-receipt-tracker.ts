@@ -1,5 +1,5 @@
-import type { Receipt, UIFrame } from '@czap/core';
-import { GenFrame } from '@czap/core';
+import type { Receipt, UIFrame } from '@liteship/core';
+import { GenFrame } from '@liteship/core';
 import { createReceiptChain } from './receipt-chain.js';
 import type { LLMRenderPipeline, LLMRenderHost } from './llm-render-pipeline.js';
 

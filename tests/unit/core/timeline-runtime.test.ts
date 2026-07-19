@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import { Boundary, Millis, Scheduler, Timeline } from '@czap/core';
+import { Boundary, Millis, Scheduler, Timeline } from '@liteship/core';
 
 /**
  * Timeline<B> — Wave 6 plain CellKernel transport (Effect-free). RED-FIRST law

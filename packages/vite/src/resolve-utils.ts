@@ -2,7 +2,7 @@
  * Shared utilities for convention-based resolve modules.
  */
 
-import { Diagnostics } from '@czap/core';
+import { Diagnostics } from '@liteship/core';
 import { pathToFileURL } from 'node:url';
 
 /** Map diagnostic nouns to factory namespaces for teaching errors. */
@@ -34,7 +34,7 @@ const TAG_TO_FACTORY: Record<string, string> = {
  * @param expectedTag - The `_tag` value that identifies a valid export
  *   (e.g. `'BoundaryDef'`).
  * @param diagnosticSource - The source string used in `Diagnostics`
- *   warnings (e.g. `'czap/vite.boundary-resolve'`).
+ *   warnings (e.g. `'liteship/vite.boundary-resolve'`).
  * @param diagnosticNoun - Human-readable noun for the warning message
  *   (e.g. `'boundary'`).
  * @returns The matched export cast to `T`, or `undefined` if not found

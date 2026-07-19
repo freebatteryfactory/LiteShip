@@ -6,7 +6,7 @@
 
 # cloudflare/src
 
-@czap/cloudflare — Cloudflare Workers siteAdapter and Astro middleware glue.
+@liteship/cloudflare — Cloudflare Workers siteAdapter and Astro middleware glue.
 
 ## Interfaces
 

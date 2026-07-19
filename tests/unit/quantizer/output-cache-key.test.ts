@@ -6,8 +6,8 @@
 import { describe, test, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { Boundary } from '@czap/core';
-import { Q } from '@czap/quantizer';
+import { Boundary } from '@liteship/core';
+import { Q } from '@liteship/quantizer';
 
 const REPO = resolve(import.meta.dirname, '../../..');
 const QUANTIZER_SRC = readFileSync(resolve(REPO, 'packages/quantizer/src/quantizer.ts'), 'utf8');

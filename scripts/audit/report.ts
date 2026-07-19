@@ -1,15 +1,15 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { basename, resolve } from 'node:path';
-import type { WallClockTimestamp } from '@czap/core';
+import type { WallClockTimestamp } from '@liteship/core';
 import libCoverage from 'istanbul-lib-coverage';
 import { verifyRuntimeSeamsReport, type RuntimeSeamsReportArtifact } from '../artifact-integrity.js';
 import { ensureArtifactContext } from '../artifact-context.js';
-// CUT A3 — the invariant rule set is now `@czap/command` data; the scan engine is
-// the CLI-only adapter (B5b: it imports @czap/audit's normalizeRepoPath, so it
-// cannot live in @czap/command/@czap/mcp-server — see check-invariants CLI-only).
-// Imported via the source path (not the `@czap/command` package name): this script
-// runs under tsx, which resolves through node_modules, and @czap/command is NOT a
-// root devDep / linked there (app-layer, like @czap/cli on the next line) — only the
+// CUT A3 — the invariant rule set is now `@liteship/command` data; the scan engine is
+// the CLI-only adapter (B5b: it imports @liteship/audit's normalizeRepoPath, so it
+// cannot live in @liteship/command/@liteship/mcp-server — see check-invariants CLI-only).
+// Imported via the source path (not the `@liteship/command` package name): this script
+// runs under tsx, which resolves through node_modules, and @liteship/command is NOT a
+// root devDep / linked there (app-layer, like @liteship/cli on the next line) — only the
 // vitest alias resolves the package name, which a plain tsx script does not have.
 import { INVARIANTS } from '../../packages/command/src/commands/check-invariants-registry.js';
 import { findViolations } from '../../packages/cli/src/commands/check-invariants.js';
@@ -40,8 +40,8 @@ import {
 } from './shared.js';
 import { runIntegrityAudit } from './integrity.js';
 import { runStructureAudit } from './structure.js';
-import { liteshipDevopsProfile } from '@czap/audit';
-import type { DevopsProfile } from '@czap/audit';
+import { liteshipDevopsProfile } from '@liteship/audit';
+import type { DevopsProfile } from '@liteship/audit';
 import { runSurfaceAudit } from './surface.js';
 import type {
   AuditArtifactStatus,
@@ -1629,7 +1629,7 @@ function buildFrameworkBlueprintReport(root: string): FrameworkBlueprintReport {
       group: 'runtime',
       title: 'Vite-centered delivery model',
       status: 'present',
-      summary: 'czap already ships as a Vite plugin plus Astro integration rather than as a monolithic standalone CLI runtime.',
+      summary: 'liteship already ships as a Vite plugin plus Astro integration rather than as a monolithic standalone CLI runtime.',
       evidence: ['packages/vite/src/plugin.ts', 'packages/astro/src/integration.ts', 'README.md'],
       recommendation: 'no_action',
     },
@@ -1728,7 +1728,7 @@ function buildFrameworkBlueprintReport(root: string): FrameworkBlueprintReport {
       group: 'features',
       title: 'Workerd/edge-first optimization',
       status: 'partial',
-      summary: '@czap/cloudflare is now a first-party siteAdapter with KV middleware glue and a gauntlet-gated example, but platform-owned runtime contracts beyond KV boundary cache are still evolving.',
+      summary: '@liteship/cloudflare is now a first-party siteAdapter with KV middleware glue and a gauntlet-gated example, but platform-owned runtime contracts beyond KV boundary cache are still evolving.',
       evidence: ['HOSTING.md', 'packages/cloudflare/src/middleware.ts', 'examples/cloudflare-astro/'],
       recommendation: 'architecture_hardening',
     },

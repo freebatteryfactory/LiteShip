@@ -11,10 +11,10 @@ Defined in: [command/src/registry.ts:300](https://github.com/freebatteryfactory/
 Structured verdict returned by the injected [CommandContext.runPackageSmoke](CommandContext.md#runpackagesmoke)
 capability — the release-grade pack/install/import smoke. `ok` ⟺ every package
 packed, installed, carried no `workspace:` leak, and every declared module
-specifier (plus the `czap` binstub) resolved. `failedStep` + `failure` carry the
+specifier (plus the `liteship` binstub) resolved. `failedStep` + `failure` carry the
 bracketed step label and message of the first failure (so a CI log identifies it
 without artifact download). Declared here so the `package-smoke` command's
-contract lives in `@czap/command` without an import of the heavy CLI engine.
+contract lives in `@liteship/command` without an import of the heavy CLI engine.
 
 ## Properties
 
@@ -62,4 +62,4 @@ Defined in: [command/src/registry.ts:301](https://github.com/freebatteryfactory/
 
 Defined in: [command/src/registry.ts:303](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L303)
 
-Number of `@czap/*` (+ unscoped) scopes packed via `pnpm pack`.
+Number of `@liteship/*` (+ unscoped) scopes packed via `pnpm pack`.

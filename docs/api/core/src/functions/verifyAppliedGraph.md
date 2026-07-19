@@ -12,7 +12,7 @@ Defined in: [core/src/graph-mutation.ts:197](https://github.com/freebatteryfacto
 
 The applied-graph adopt guard — proves a wire graph is a normalized,
 self-addressed base the server's own pipeline would emit. Shared by
-`sendGraphMutation` and `@czap/astro`'s `adoptAppliedGraph`.
+`sendGraphMutation` and `@liteship/astro`'s `adoptAppliedGraph`.
 
 ## Parameters
 

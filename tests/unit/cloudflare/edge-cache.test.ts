@@ -1,7 +1,7 @@
 import { afterEach, describe, it, expect, vi } from 'vitest';
-import { Boundary, Diagnostics } from '@czap/core';
-import { createBoundaryCache, EdgeTier } from '@czap/edge';
-import { createCloudflareEdgeCache, resolveKvBinding } from '@czap/cloudflare';
+import { Boundary, Diagnostics } from '@liteship/core';
+import { createBoundaryCache, EdgeTier } from '@liteship/edge';
+import { createCloudflareEdgeCache, resolveKvBinding } from '@liteship/cloudflare';
 
 afterEach(() => {
   Diagnostics.reset();
@@ -11,7 +11,7 @@ describe('createCloudflareEdgeCache', () => {
   it('resolves KV get/put through a binding name', async () => {
     const store = new Map<string, string>();
     const env = {
-      CZAP_BOUNDARY_CACHE: {
+      LITESHIP_BOUNDARY_CACHE: {
         async get(key: string) {
           return store.get(key) ?? null;
         },
@@ -20,7 +20,7 @@ describe('createCloudflareEdgeCache', () => {
         },
       },
     };
-    const kv = createCloudflareEdgeCache(() => env, { binding: 'CZAP_BOUNDARY_CACHE' });
+    const kv = createCloudflareEdgeCache(() => env, { binding: 'LITESHIP_BOUNDARY_CACHE' });
     await kv.put('k1', 'v1');
     expect(await kv.get('k1')).toBe('v1');
     expect(await kv.get('missing')).toBeNull();
@@ -36,7 +36,7 @@ describe('createCloudflareEdgeCache', () => {
     expect(events).toEqual([
       expect.objectContaining({
         level: 'warn',
-        source: 'czap/cloudflare.edge-cache',
+        source: 'liteship/cloudflare.edge-cache',
         code: 'kv-binding-missing',
         message: expect.stringContaining('MISSING'),
       }),
@@ -48,7 +48,7 @@ describe('createCloudflareEdgeCache', () => {
     const { sink, events } = Diagnostics.createBufferSink();
     Diagnostics.setSink(sink);
     const kv = createCloudflareEdgeCache(() => ({ OTHER: { get: async () => null, put: async () => {} } }), {
-      binding: 'CZAP_BOUNDARY_CACHE',
+      binding: 'LITESHIP_BOUNDARY_CACHE',
     });
     await kv.get('k');
     expect(events[0]?.message).toContain('available: OTHER');

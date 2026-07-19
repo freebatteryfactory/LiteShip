@@ -3,7 +3,7 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { CompositorStatePool } from '@czap/core';
+import { CompositorStatePool } from '@liteship/core';
 
 describe('CompositorStatePool', () => {
   test('make creates pool with default capacity', () => {

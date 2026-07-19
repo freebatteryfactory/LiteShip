@@ -1,4 +1,4 @@
-import { Token } from '@czap/core';
+import { Token } from '@liteship/core';
 
 export const fontSizeSm = Token.make({
   name: 'font-size-sm',

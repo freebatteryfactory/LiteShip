@@ -14,7 +14,7 @@ Worker-blob twin of [rawIndexF32](../functions/rawIndexF32.md), as an inlinable 
 
 Worker blob scripts run in a classic Worker created from a Blob and cannot use
 ES module imports, so the threshold-evaluation logic must be embedded as a
-string. This is the single source of that string — `@czap/worker`'s
+string. This is the single source of that string — `@liteship/worker`'s
 `render-worker` and `compositor` blob scripts both interpolate it, so they
 cannot drift from each other. It is a linear reverse-scan, f32-canonical
 (`Math.fround`) to match [rawIndexF32](../functions/rawIndexF32.md) and the deployed WASM kernel.

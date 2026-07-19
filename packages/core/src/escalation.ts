@@ -10,12 +10,12 @@
  * Determinism: minimal-rung by `Cap.ordinal` ascending; ties (which the total
  * `CapTier` order makes impossible, but we keep the rule explicit so the
  * contract survives future lattice changes) break by the Astro directive
- * escalation order `satellite < stream < llm < worker < gpu < wasm`. `@czap/core`
- * cannot import `@czap/astro`, so that order is encoded locally below.
+ * escalation order `satellite < stream < llm < worker < gpu < wasm`. `@liteship/core`
+ * cannot import `@liteship/astro`, so that order is encoded locally below.
  *
  * Cycle discipline: the CapTier-to-target admissibility table PROJECTS from the
  * shared {@link LADDER_TARGETS} datum (`cap-ladder.ts`). We deliberately do NOT
- * import `TIER_TARGETS` from `@czap/quantizer`: the quantizer depends on core,
+ * import `TIER_TARGETS` from `@liteship/quantizer`: the quantizer depends on core,
  * so core importing the quantizer would close a dependency cycle. Instead both
  * `RUNG_TARGETS` here and the quantizer's `TIER_TARGETS` are projections of the
  * SAME index-keyed ladder — one source, no drift (see `cap-ladder.ts`).
@@ -49,9 +49,9 @@ const RUNG_TARGETS: Record<CapTier, ReadonlySet<ProjectionTarget>> = projectLadd
 
 /**
  * Immutable view of a rung's admissible targets. The raw `RUNG_TARGETS` table is
- * module-PRIVATE on purpose: it holds mutable `Set`s, and `@czap/core` publishes
+ * module-PRIVATE on purpose: it holds mutable `Set`s, and `@liteship/core` publishes
  * wildcard subpaths (`./*`), so exporting it would let any consumer reach
- * `@czap/core/escalation` and `.clear()`/`.add()` the escalation lattice
+ * `@liteship/core/escalation` and `.clear()`/`.add()` the escalation lattice
  * process-wide. This returns a fresh copy each call.
  */
 export function rungTargets(rung: CapTier): ReadonlySet<ProjectionTarget> {
@@ -60,7 +60,7 @@ export function rungTargets(rung: CapTier): ReadonlySet<ProjectionTarget> {
 
 /**
  * The Astro directive escalation order, encoded locally (core cannot import
- * `@czap/astro`). Used ONLY as the deterministic tiebreak after `Cap.ordinal`.
+ * `@liteship/astro`). Used ONLY as the deterministic tiebreak after `Cap.ordinal`.
  * Each `CapTier` is mapped to the directive whose capability ceiling it
  * matches, so the tiebreak stays a single total order.
  */
@@ -210,7 +210,7 @@ function compute(policy: PolicyNode, runtimeSite: RuntimeSite): EscalationResult
   };
 }
 
-/** Test-only: clear the chooser memo. Not part of the public `@czap/core` surface. */
+/** Test-only: clear the chooser memo. Not part of the public `@liteship/core` surface. */
 export function _resetEscalationMemo(): void {
   memo.clear();
 }

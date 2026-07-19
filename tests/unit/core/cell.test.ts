@@ -10,7 +10,7 @@
 
 import { describe, test, expect } from 'vitest';
 import fc from 'fast-check';
-import { Cell } from '@czap/core';
+import { Cell } from '@liteship/core';
 
 // ---------------------------------------------------------------------------
 // Cell.make — value slot (read / set / update)

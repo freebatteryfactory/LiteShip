@@ -53,6 +53,7 @@ Prose vocabulary: [../GLOSSARY.md](../../GLOSSARY.md).
 | [0041](./0041-per-property-motion-tracks.md)           | Individual transforms, a generalized `linear()` easing vocabulary, retired mixed-easing diagnostic | Accepted |
 | [0042](./0042-effect-shed.md)                          | Effect shed (LiteShip-native substrate)                                     | Accepted |
 | [0043](./0043-reactive-convergence.md)                 | Reactive convergence + the public constitution                             | Accepted |
+| [0044](./0044-liteship-brand-consolidation.md)         | LiteShip brand consolidation (one brand, `@czap` retired)                  | Accepted |
 
 ## Template
 

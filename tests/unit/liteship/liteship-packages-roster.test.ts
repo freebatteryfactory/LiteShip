@@ -6,23 +6,23 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { CZAP_PACKAGE_ROSTER } from '@czap/audit';
+import { LITESHIP_PACKAGE_ROSTER } from '@liteship/audit';
 import { LITESHIP_PACKAGES } from '../../../packages/liteship/src/index.js';
 import { CANONICAL_ROSTER, renderLiteshipPackages } from '../../../scripts/gen-roster.js';
 import { packageManifests, packageRoster } from '../../support/repo-truths.js';
 
-// The manifest truth (packages/*/package.json) and the canonical `@czap/*` roster
+// The manifest truth (packages/*/package.json) and the canonical `@liteship/*` roster
 // are owned by tests/support/repo-truths.ts (scar S0.4). `packageRoster()` IS the
-// non-private `@czap/*` fleet — the same predicate release.yml uses, scoped to
-// `@czap/*` (the umbrella can't depend on the non-scoped `liteship` /
+// non-private `@liteship/*` fleet — the same predicate release.yml uses, scoped to
+// `@liteship/*` (the umbrella can't depend on the non-scoped `liteship` /
 // `create-liteship`). This guard's ASSERTIONS are unchanged.
 
 const LITESHIP_INDEX = resolve(import.meta.dirname, '..', '..', '..', 'packages/liteship/src/index.ts');
 
-function czapDependenciesFromManifest(): string[] {
+function liteshipDependenciesFromManifest(): string[] {
   const liteship = packageManifests().find((manifest) => manifest.dir === 'liteship');
   return Object.keys(liteship?.dependencies ?? {})
-    .filter((name) => name.startsWith('@czap/'))
+    .filter((name) => name.startsWith('@liteship/'))
     .sort();
 }
 
@@ -35,31 +35,31 @@ function generatedBlock(): string {
 }
 
 describe('liteship umbrella roster', () => {
-  it('LITESHIP_PACKAGES equals audit CZAP_PACKAGE_ROSTER (the single fleet anchor)', () => {
-    // Re-anchored to the one owner (@czap/audit's CZAP_PACKAGE_ROSTER) instead of an
-    // independently manifest-derived list. Both are the scoped `@czap/*` fleet; the
+  it('LITESHIP_PACKAGES equals audit LITESHIP_PACKAGE_ROSTER (the single fleet anchor)', () => {
+    // Re-anchored to the one owner (@liteship/audit's LITESHIP_PACKAGE_ROSTER) instead of an
+    // independently manifest-derived list. Both are the scoped `@liteship/*` fleet; the
     // manifest→disk-fleet tie survives in the disk-coverage assertion below, and the
-    // owner test pins CZAP_PACKAGE_ROSTER == the on-disk fleet.
-    expect([...LITESHIP_PACKAGES].sort()).toEqual([...CZAP_PACKAGE_ROSTER].sort());
+    // owner test pins LITESHIP_PACKAGE_ROSTER == the on-disk fleet.
+    expect([...LITESHIP_PACKAGES].sort()).toEqual([...LITESHIP_PACKAGE_ROSTER].sort());
   });
 
-  it('covers EVERY publishable @czap/* on disk — the umbrella can never silently omit a new package', () => {
+  it('covers EVERY publishable @liteship/* on disk — the umbrella can never silently omit a new package', () => {
     // liteship is the 4th roster location (release.yml + package-smoke + capsule-detector
-    // are the others), and its PROMISE is "installs every publishable @czap/* at one
+    // are the others), and its PROMISE is "installs every publishable @liteship/* at one
     // version." The sibling guards pin their lists to the disk-derived publishable set;
-    // this pins the umbrella's dependencies to the same source, so a newly-public @czap/*
+    // this pins the umbrella's dependencies to the same source, so a newly-public @liteship/*
     // package that isn't added to liteship fails loud here instead of shipping an
     // incomplete umbrella.
-    expect(czapDependenciesFromManifest()).toEqual([...packageRoster()]);
+    expect(liteshipDependenciesFromManifest()).toEqual([...packageRoster()]);
   });
 
   it('includes framework primitive packages', () => {
-    expect(LITESHIP_PACKAGES).toContain('@czap/canonical');
-    expect(LITESHIP_PACKAGES).toContain('@czap/genui');
+    expect(LITESHIP_PACKAGES).toContain('@liteship/canonical');
+    expect(LITESHIP_PACKAGES).toContain('@liteship/genui');
   });
 
   // gen-roster (scripts/gen-roster.ts) is the single owner of the canonical
-  // dependency-ordered `@czap/*` fleet; `LITESHIP_PACKAGES` is its tarball-shipped
+  // dependency-ordered `@liteship/*` fleet; `LITESHIP_PACKAGES` is its tarball-shipped
   // mirror. These two assertions close the loop begun above (copy == repo-truths):
   // copy == gen-roster's roster, in the SAME order, and byte-for-byte the generator
   // output between the source's generated-block markers.

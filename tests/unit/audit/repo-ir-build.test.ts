@@ -2,7 +2,7 @@
  * Slice B (B1, step 2) — the HOST-SIDE repo-IR builder + the injection seam.
  *
  * `buildRepoIR` materializes a real `RepoIR` from a `DevopsProfile`'s source
- * corpus using ONE type-directed `ts.Program` (the shared `@czap/audit` config).
+ * corpus using ONE type-directed `ts.Program` (the shared `@liteship/audit` config).
  * This test proves the builder over a tiny but REAL in-repo fixture (a tmp
  * `packages/<pkg>/src` tree with a default export, an `export =`, named exports,
  * and an internal relative import) is FAITHFUL — files carry non-placeholder
@@ -27,7 +27,7 @@ import {
   liteshipDevopsProfile,
   resolveDevopsProfile,
   type FactOracle,
-} from '@czap/audit';
+} from '@liteship/audit';
 import {
   PLACEHOLDER_DIGEST,
   litelaunchGauntlet,
@@ -39,7 +39,7 @@ import {
   makeRepoIR,
   type Gate,
   type RepoIR,
-} from '@czap/gauntlet';
+} from '@liteship/gauntlet';
 
 const fixtures: string[] = [];
 afterEach(() => {
@@ -47,7 +47,7 @@ afterEach(() => {
 });
 
 function makeFixture(files: Record<string, string>): string {
-  const root = mkdtempSync(join(tmpdir(), 'czap-repo-ir-'));
+  const root = mkdtempSync(join(tmpdir(), 'liteship-repo-ir-'));
   fixtures.push(root);
   for (const [rel, content] of Object.entries(files)) {
     const abs = resolve(root, rel);
@@ -164,7 +164,7 @@ describe('buildRepoIR — faithful materialization over a real tmp corpus', () =
 
   it('emits NO LiteShip-local invariant-regex fact from the engine (ADR-0012 boundary)', () => {
     // The audit engine references no LiteShip-local contract: it imports no
-    // @czap/command rule set and emits NO `invariant-regex` facts of its own. That
+    // @liteship/command rule set and emits NO `invariant-regex` facts of its own. That
     // oracle is the HOST's job (the CLI injects it via extraFactOracles, proven by
     // the seam test below + the CLI-host composition tests).
     const ir = buildRepoIR(acmeProfile(fixtureRepo()));

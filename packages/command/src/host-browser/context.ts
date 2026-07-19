@@ -1,12 +1,12 @@
 /**
  * Browser host execution for the command registry.
  *
- * Mirrors the Node host boundary (`@czap/command/host`) with browser APIs.
+ * Mirrors the Node host boundary (`@liteship/command/host`) with browser APIs.
  * Heavy tools delegate to an optional MCP HTTP server when configured.
  *
  * @module
  */
-import { IoError } from '@czap/error';
+import { IoError } from '@liteship/error';
 import type { CommandContext } from '../registry.js';
 
 const BROWSER_SAFE_COMMANDS = new Set(['capsule.inspect', 'capsule.list', 'glossary']);
@@ -62,7 +62,7 @@ export function createBrowserCommandContext(
           if (remote.failed) {
             throw IoError(
               'browser-context.render',
-              `scene.render delegation failed: ${JSON.stringify(remote.payload)} — is the MCP HTTP server running (\`czap mcp --http=PORT\`)?`,
+              `scene.render delegation failed: ${JSON.stringify(remote.payload)} — is the MCP HTTP server running (\`liteship mcp --http=PORT\`)?`,
               { path: opts.mcpServerUrl },
             );
           }

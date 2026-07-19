@@ -1,6 +1,6 @@
 /**
  * The ALLOCATION GATE — the committed, MEASURED proof that the two
- * "zero-allocation hot path" claims (`@czap/core` compositor compose + token-buffer
+ * "zero-allocation hot path" claims (`@liteship/core` compositor compose + token-buffer
  * push/drainInto) are GENUINELY TRUE, not aspirational prose.
  *
  * THE MEASUREMENT (the only honest one for a GC'd runtime): per-op LIVE heap
@@ -45,10 +45,10 @@
  * @module
  */
 
-import { Boundary, CellKernel, Compositor, TokenBuffer } from '@czap/core';
-import type { CompositeState } from '@czap/core';
-import type { CompositorQuantizer } from '@czap/core';
-import { InvariantViolationError } from '@czap/error';
+import { Boundary, CellKernel, Compositor, TokenBuffer } from '@liteship/core';
+import type { CompositeState } from '@liteship/core';
+import type { CompositorQuantizer } from '@liteship/core';
+import { InvariantViolationError } from '@liteship/error';
 
 /** The forced-GC handle `--expose-gc` installs. Absent ⇒ the gate cannot measure. */
 function forceGc(): void {

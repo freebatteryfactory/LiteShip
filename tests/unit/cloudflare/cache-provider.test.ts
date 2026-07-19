@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test } from 'vitest';
-import { Boundary, Diagnostics } from '@czap/core';
-import { createBoundaryCache, EdgeTier, type KVNamespace } from '@czap/edge';
+import { Boundary, Diagnostics } from '@liteship/core';
+import { createBoundaryCache, EdgeTier, type KVNamespace } from '@liteship/edge';
 import {
   astroPathTag,
   cloudflareCacheProvider,
@@ -45,10 +45,10 @@ const boundary = Boundary.make({ input: 'viewport.width', at: [[0, 'compact']] }
 const tier = EdgeTier.detectTier(new Headers({ 'sec-ch-viewport-width': '1280' }));
 const outputs = { css: '.x{}', propertyRegistrations: '', containerQueries: '' };
 
-describe('@czap/cloudflare/cache-provider', () => {
+describe('@liteship/cloudflare/cache-provider', () => {
   test('config helper returns an Astro CacheProviderConfig entrypoint', () => {
     expect(cloudflareCacheProvider({ binding: 'KV', prefix: 'app' })).toEqual({
-      entrypoint: '@czap/cloudflare/cache-provider',
+      entrypoint: '@liteship/cloudflare/cache-provider',
       config: { binding: 'KV', prefix: 'app' },
     });
   });
@@ -108,7 +108,7 @@ describe('@czap/cloudflare/cache-provider', () => {
     const { sink, events } = Diagnostics.createBufferSink();
     Diagnostics.setSink(sink);
 
-    const provider = createCloudflareCacheProvider({ env: { CZAP_BOUNDARY_CACHE: kv } });
+    const provider = createCloudflareCacheProvider({ env: { LITESHIP_BOUNDARY_CACHE: kv } });
     await provider.invalidate({ path: '/products' });
 
     expect([...store.keys()].some((key) => key.includes(boundary.id))).toBe(false);

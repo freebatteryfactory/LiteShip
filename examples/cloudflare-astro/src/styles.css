@@ -3,8 +3,8 @@
  * the page CSS AND per-tier precompiled outputs in the boundary manifest
  * that src/middleware.ts serves from Workers KV-backed edge resolution. */
 
-/* stylelint-disable -- @quantize is czap's custom at-rule (its state names
- * are not type selectors); @czap/vite compiles this block away at build
+/* stylelint-disable -- @quantize is liteship's custom at-rule (its state names
+ * are not type selectors); @liteship/vite compiles this block away at build
  * time, so linters never see it in the emitted CSS. */
 @quantize viewport {
   compact {

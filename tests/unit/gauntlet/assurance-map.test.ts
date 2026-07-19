@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { levelOf, matchesGlob, LITESHIP_ASSURANCE_MAP, type LevelRule } from '@czap/gauntlet';
+import { levelOf, matchesGlob, LITESHIP_ASSURANCE_MAP, type LevelRule } from '@liteship/gauntlet';
 
 describe('matchesGlob — the small dialect (** / * / {a,b})', () => {
   it('* matches within a single segment only (not across a slash)', () => {

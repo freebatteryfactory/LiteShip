@@ -12,8 +12,8 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { COMMAND_CATALOG, GLOSSARY_ENTRIES, mcpExposedDescriptors, commandRegistry } from '@czap/command';
-import { fnv1a } from '@czap/core';
+import { COMMAND_CATALOG, GLOSSARY_ENTRIES, mcpExposedDescriptors, commandRegistry } from '@liteship/command';
+import { fnv1a } from '@liteship/core';
 import { dispatch, dispatchToolCall, listTools } from '../../../packages/mcp-server/src/dispatch.js';
 import { listResources, readResource } from '../../../packages/mcp-server/src/resources.js';
 import { listUiResources } from '../../../packages/mcp-server/src/ui-resources.js';
@@ -129,7 +129,7 @@ describe('D3 resources/read — real projected JSON', () => {
     expect(new Set(index.terms.map((t) => t.term))).toEqual(new Set(GLOSSARY_ENTRIES.map((e) => e.term)));
   });
 
-  it('each glossary term resource round-trips to its entry (including the @czap/* special-char term)', async () => {
+  it('each glossary term resource round-trips to its entry (including the @liteship/* special-char term)', async () => {
     for (const entry of GLOSSARY_ENTRIES) {
       const listed = listResources().find((x) => x.name === `glossary/${entry.term}`);
       expect(listed, `glossary term ${entry.term} must be a concrete listed resource`).toBeDefined();
@@ -221,7 +221,8 @@ describe('D3 stability — projection drift tripwire', () => {
   it('the {resources, prompts} projection matches its pinned content address', () => {
     const address = fnv1a(JSON.stringify({ resources: listResources(), prompts: listPrompts() }));
     // 0.2.0 framework primitives: added liteship://registry/components JSON resource.
-    expect(address).toBe('fnv1a:97d412ae');
+    // Re-pinned for the LiteShip brand consolidation (engine-name glossary entry removed; catalog content changed).
+    expect(address).toBe('fnv1a:eddcf488');
   });
 });
 
@@ -248,11 +249,10 @@ describe('D3 non-regression — D1 envelope + D2 outputSchema law untouched', ()
 });
 
 describe('D3 namespace law — protocol surfaces stay product-owned', () => {
-  it('no maintainer identity (heyoub) and no czap:// scheme in the D3 protocol-surface source', () => {
+  it('no maintainer identity (heyoub) and the liteship:// scheme in the D3 protocol-surface source', () => {
     for (const file of ['resources.ts', 'prompts.ts', 'capabilities.ts', 'dispatch.ts', 'ui-resources.ts', 'ui-render.ts', 'app-resources.ts', 'app-render.ts', 'manifest-resource.ts']) {
       const src = readFileSync(resolve(SRC, file), 'utf8');
       expect(src, `${file} must not embed maintainer identity`).not.toContain('heyoub');
-      expect(src, `${file} must use the liteship:// scheme, not czap://`).not.toContain('czap://');
     }
   });
 });
@@ -270,12 +270,12 @@ describe('error contract — failures name the subject and the literal next step
     );
   });
 
-  it('tool.use on a CLI-owned command says to run it as `czap <name>`', () => {
+  it('tool.use on a CLI-owned command says to run it as `liteship <name>`', () => {
     // gauntlet is in the catalog but not MCP-exposed.
-    expect(() => getPrompt('liteship.tool.use', { tool: 'gauntlet' })).toThrow(/run it as `czap gauntlet`/i);
+    expect(() => getPrompt('liteship.tool.use', { tool: 'gauntlet' })).toThrow(/run it as `liteship gauntlet`/i);
   });
 
-  it('tool.use on a name outside the catalog says so (no bogus czap remedy)', () => {
+  it('tool.use on a name outside the catalog says so (no bogus liteship remedy)', () => {
     expect(() => getPrompt('liteship.tool.use', { tool: '__nope__' })).toThrow(
       /not in the command catalog.*tools\/list/,
     );

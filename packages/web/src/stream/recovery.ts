@@ -1,5 +1,5 @@
 /**
- * Graph-native stream recovery — wires `czap:request-snapshot` and supplements
+ * Graph-native stream recovery — wires `liteship:request-snapshot` and supplements
  * HTML-only gap replay with snapshot re-sync for missed discrete crossings (#133).
  *
  * @module
@@ -11,12 +11,12 @@ import type {
   GraphMutationClient,
   PatchReceiptEntry,
   StateCellStoreShape,
-} from '@czap/core';
-import { createGraphQueryRefreshBase, graphQueryEtag, runGraphNativeGapReplay } from '@czap/core';
-import { filterDiscreteSnapshotSignals, replayDroppedSignals, validateSnapshotSignalsField } from '@czap/core';
-import { ValidationError } from '@czap/error';
+} from '@liteship/core';
+import { createGraphQueryRefreshBase, graphQueryEtag, runGraphNativeGapReplay } from '@liteship/core';
+import { filterDiscreteSnapshotSignals, replayDroppedSignals, validateSnapshotSignalsField } from '@liteship/core';
+import { ValidationError } from '@liteship/error';
 import type { ResumptionConfig, ResumeResponse } from '../types.js';
-import { onCzap, dispatchCzapEvent } from '../wire/dispatch.js';
+import { onLiteship, dispatchLiteshipEvent } from '../wire/dispatch.js';
 import { Resumption } from './resumption.js';
 
 type SnapshotResponse = Extract<ResumeResponse, { readonly type: 'snapshot' }>;
@@ -50,7 +50,7 @@ export interface StreamRecoveryHandlers {
  * Configuration for {@link bindRequestSnapshotRecovery} and {@link runGraphNativeRecovery}.
  *
  * When `graphQueryUrl`, `mutationClient`, `cellStore`, and `patchReceiptEntries` are all
- * present, recovery prefers `runGraphNativeGapReplay` from `@czap/core` (#133-full)
+ * present, recovery prefers `runGraphNativeGapReplay` from `@liteship/core` (#133-full)
  * over the interim HTML snapshot path. Snapshot remains the permanent floor when any
  * of those are absent.
  */
@@ -234,13 +234,13 @@ export const supplementReplayIfSignalsDropped = async (
 };
 
 /**
- * Wire the production listener for `czap:request-snapshot` (morph rejection recovery).
+ * Wire the production listener for `liteship:request-snapshot` (morph rejection recovery).
  * Returns a disposer for teardown.
  */
 export const bindRequestSnapshotRecovery = (target: EventTarget, options: StreamRecoveryOptions): (() => void) => {
   let inFlight = false;
 
-  return onCzap(target, 'czap:request-snapshot', (detail) => {
+  return onLiteship(target, 'liteship:request-snapshot', (detail) => {
     if (inFlight) {
       return;
     }
@@ -253,7 +253,7 @@ export const bindRequestSnapshotRecovery = (target: EventTarget, options: Stream
     const effective = detail?.domStale !== undefined ? { ...options, domStale: () => detail.domStale! } : options;
     void runGraphNativeRecovery(effective)
       .catch((error) => {
-        dispatchCzapEvent(target, 'czap:stream-error', {
+        dispatchLiteshipEvent(target, 'liteship:stream-error', {
           reason: 'snapshot-recovery-failed',
           message: error instanceof Error ? error.message : String(error),
         });

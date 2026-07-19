@@ -1,9 +1,9 @@
 /**
- * HTML transform tests -- data-czap="name" -> resolved boundary JSON.
+ * HTML transform tests -- data-liteship="name" -> resolved boundary JSON.
  */
 
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import { Diagnostics } from '@czap/core';
+import { Diagnostics } from '@liteship/core';
 import { captureDiagnosticsAsync } from '../../helpers/diagnostics.js';
 
 afterEach(() => {
@@ -13,28 +13,28 @@ afterEach(() => {
 });
 
 describe('transformHTML', () => {
-  test('returns source unchanged when no data-czap attributes found', async () => {
-    const { transformHTML } = await import('@czap/vite/html-transform');
+  test('returns source unchanged when no data-liteship attributes found', async () => {
+    const { transformHTML } = await import('@liteship/vite/html-transform');
     const source = '<div class="foo">hello</div>';
     const result = await transformHTML(source, '/test/page.astro', '/test');
     expect(result).toBe(source);
   });
 
-  test('does not modify data-czap-boundary (already resolved)', async () => {
-    const { transformHTML } = await import('@czap/vite/html-transform');
-    const source = '<div data-czap-boundary=\'{"id":"hero"}\'></div>';
+  test('does not modify data-liteship-boundary (already resolved)', async () => {
+    const { transformHTML } = await import('@liteship/vite/html-transform');
+    const source = '<div data-liteship-boundary=\'{"id":"hero"}\'></div>';
     const result = await transformHTML(source, '/test/page.astro', '/test');
     expect(result).toBe(source);
   });
 
-  test('does not modify data-czap-state or other data-czap-* attrs', async () => {
-    const { transformHTML } = await import('@czap/vite/html-transform');
-    const source = '<div data-czap-state="mobile" data-czap-stream-url="/api"></div>';
+  test('does not modify data-liteship-state or other data-liteship-* attrs', async () => {
+    const { transformHTML } = await import('@liteship/vite/html-transform');
+    const source = '<div data-liteship-state="mobile" data-liteship-stream-url="/api"></div>';
     const result = await transformHTML(source, '/test/page.astro', '/test');
     expect(result).toBe(source);
   });
 
-  test('ignores data-czap macros inside HTML comments and code samples', async () => {
+  test('ignores data-liteship macros inside HTML comments and code samples', async () => {
     vi.doMock('../../../packages/vite/src/primitive-resolve.js', async (importOriginal) => {
       const actual = await importOriginal();
       return {
@@ -52,21 +52,21 @@ describe('transformHTML', () => {
       };
     });
 
-    const { transformHTML } = await import('@czap/vite/html-transform');
-    const commentLine = '<!-- teaching: data-czap="viewport" is the macro label -->';
-    const codeSample = '<pre><code>&lt;div data-czap="viewport"&gt;</code></pre>';
-    const live = '<div data-czap="viewport"></div>';
+    const { transformHTML } = await import('@liteship/vite/html-transform');
+    const commentLine = '<!-- teaching: data-liteship="viewport" is the macro label -->';
+    const codeSample = '<pre><code>&lt;div data-liteship="viewport"&gt;</code></pre>';
+    const live = '<div data-liteship="viewport"></div>';
     const source = [commentLine, codeSample, live].join('\n');
     const result = await transformHTML(source, '/test/page.astro', '/test');
 
     expect(result).toContain(commentLine);
     expect(result).toContain(codeSample);
-    expect(result).toContain('data-czap-boundary=');
-    expect(result).toContain('data-czap-directive="satellite"');
-    expect(result.match(/data-czap-boundary=/g)).toHaveLength(1);
+    expect(result).toContain('data-liteship-boundary=');
+    expect(result).toContain('data-liteship-directive="satellite"');
+    expect(result.match(/data-liteship-boundary=/g)).toHaveLength(1);
   });
 
-  test('replaces data-czap names with serialized boundary payloads when resolution succeeds', async () => {
+  test('replaces data-liteship names with serialized boundary payloads when resolution succeeds', async () => {
     vi.doMock('../../../packages/vite/src/primitive-resolve.js', async (importOriginal) => {
       const actual = await importOriginal();
       return {
@@ -84,14 +84,14 @@ describe('transformHTML', () => {
       };
     });
 
-    const { transformHTML } = await import('@czap/vite/html-transform');
-    const source = '<section data-czap="hero"><slot /></section>';
+    const { transformHTML } = await import('@liteship/vite/html-transform');
+    const source = '<section data-liteship="hero"><slot /></section>';
     const result = await transformHTML(source, '/test/page.astro', '/test');
 
-    expect(result).toContain("data-czap-boundary='");
+    expect(result).toContain("data-liteship-boundary='");
     expect(result).toContain('"id":"hero"');
-    expect(result).toContain('data-czap-directive="satellite"');
-    expect(result).not.toContain('data-czap="hero"');
+    expect(result).toContain('data-liteship-directive="satellite"');
+    expect(result).not.toContain('data-liteship="hero"');
   });
 
   test('passes the boundary dirs override through to primitive resolution', async () => {
@@ -113,8 +113,8 @@ describe('transformHTML', () => {
       };
     });
 
-    const { transformHTML } = await import('@czap/vite/html-transform');
-    const source = '<section data-czap="hero"></section>';
+    const { transformHTML } = await import('@liteship/vite/html-transform');
+    const source = '<section data-liteship="hero"></section>';
     await transformHTML(source, '/test/page.astro', '/test', '/test/defs');
 
     expect(resolveSpy).toHaveBeenCalledWith('boundary', 'hero', '/test/page.astro', '/test', '/test/defs');
@@ -130,8 +130,8 @@ describe('transformHTML', () => {
     });
 
     await captureDiagnosticsAsync(async ({ events }) => {
-      const { transformHTML } = await import('@czap/vite/html-transform');
-      const source = '<div data-czap="hero"></div>';
+      const { transformHTML } = await import('@liteship/vite/html-transform');
+      const source = '<div data-liteship="hero"></div>';
       const result = await transformHTML(source, '/test/page.astro', '/test');
       const boundaryWarnings = events.filter((event) => event.code === 'boundary-not-found');
 

@@ -30,7 +30,7 @@ Override source directories for each primitive kind.
 Defined in: [vite/src/plugin.ts:85](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/plugin.ts#L85)
 
 Emit each deduplicated boundary CSS output as an immutable build asset and
-add `assetUrls` to `virtual:czap/boundaries`. Default `false`: manifests
+add `assetUrls` to `virtual:liteship/boundaries`. Default `false`: manifests
 still carry compiled strings only.
 
 ***
@@ -65,7 +65,7 @@ Defined in: [vite/src/plugin.ts:77](https://github.com/freebatteryfactory/LiteSh
 
 `container` is the selector the auto-emitted viewport `@container`
 containment is declared on — `:root` by default. Set it to a named
-selector (e.g. `'.czap-vp'`) when `:root` can't be a container in your
+selector (e.g. `'.liteship-vp'`) when `:root` can't be a container in your
 layout (size containment removes `:root` from its parent's size calc,
 which a fixed/absolute viewport-locked wrapper conflicts with); you then
 own sizing that element to the viewport. Applies to both the CSS

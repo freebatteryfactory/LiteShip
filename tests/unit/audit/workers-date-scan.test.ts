@@ -10,7 +10,7 @@
  * @module
  */
 import { describe, expect, test } from 'vitest';
-import { scanModuleScopeDateReads, hasModuleScopeDateRead } from '@czap/audit';
+import { scanModuleScopeDateReads, hasModuleScopeDateRead } from '@liteship/audit';
 
 const flagged = (src: string): boolean => hasModuleScopeDateRead(src, 'x.worker.ts');
 

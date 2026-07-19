@@ -14,7 +14,7 @@ token resolution (e.g. light/dark themes). Content-addressed via FNV-1a.
 ## Example
 
 ```ts
-import { Theme } from '@czap/core';
+import { Theme } from '@liteship/core';
 
 const theme = Theme.make({
   name: 'brand',

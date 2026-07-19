@@ -11,7 +11,7 @@ Defined in: [quantizer/src/quantizer.ts:191](https://github.com/freebatteryfacto
 Runtime injection for [QuantizerConfig.create](QuantizerConfig.md#create).
 
 The crossing `timestamp` is an HLC whose `wall_ms` is epoch ms, so the
-monotonic clock is the [Clock](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Clock.md) WALL boundary (`@czap/core`'s
+monotonic clock is the [Clock](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Clock.md) WALL boundary (`@liteship/core`'s
 `wallClock`), NOT the monotonic `systemClock`. It is injected here — at
 instantiation, NOT in [QuantizerFromOptions](QuantizerFromOptions.md) — so it never enters the
 content address (a clock is a volatile boundary, not part of a config's
@@ -30,7 +30,7 @@ no process-wide HLC.
 Defined in: [quantizer/src/quantizer.ts:197](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L197)
 
 Wall-clock boundary advancing this instance's HLC; defaults to
-`@czap/core`'s `wallClock`. Pass a `fixedClock`/`manualClock` for
+`@liteship/core`'s `wallClock`. Pass a `fixedClock`/`manualClock` for
 deterministic, replayable crossing timestamps.
 
 ***

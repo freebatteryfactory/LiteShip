@@ -17,7 +17,7 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Store } from '@czap/core';
+import { Store } from '@liteship/core';
 
 type CountMsg = { type: 'increment' } | { type: 'decrement' } | { type: 'set'; value: number };
 

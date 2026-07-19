@@ -3,10 +3,10 @@
  * Tutorial 04 -- Server Streaming
  *
  * The client:stream directive connects a DOM element to a Server-Sent
- * Events (SSE) endpoint. When the server pushes messages, czap morphs
+ * Events (SSE) endpoint. When the server pushes messages, liteship morphs
  * the element's DOM -- preserving scroll position, focus, and form state.
  *
- * This is czap's alternative to full-page re-renders or complex
+ * This is liteship's alternative to full-page re-renders or complex
  * WebSocket setups. The server sends structured JSON messages over SSE;
  * the directive applies them as DOM patches.
  *
@@ -28,11 +28,11 @@ import Base from '../layouts/Base.astro';
        ============================================================
 
        Traditional web apps re-render entire pages or use WebSockets
-       for real-time updates. czap takes a middle path:
+       for real-time updates. liteship takes a middle path:
 
          1. Server sends SSE messages (simple HTTP, works everywhere)
          2. Client receives structured JSON (type + data)
-         3. czap morphs the DOM (not innerHTML replace -- smart diff)
+         3. liteship morphs the DOM (not innerHTML replace -- smart diff)
          4. Scroll position, focus, and form state are preserved
 
        This is particularly powerful for:
@@ -47,13 +47,13 @@ import Base from '../layouts/Base.astro';
   <p>
     The <code>client:stream</code> directive connects a DOM element to
     a Server-Sent Events (SSE) endpoint. When the server pushes new
-    content, czap morphs the element's DOM while preserving scroll
+    content, liteship morphs the element's DOM while preserving scroll
     position, focus, and form state.
   </p>
 
   <div class="note">
     <strong>Key idea:</strong> SSE is simpler than WebSockets (plain HTTP,
-    automatic reconnection, works through proxies). czap adds smart DOM
+    automatic reconnection, works through proxies). liteship adds smart DOM
     morphing on top -- the server sends HTML patches, and the client applies
     them without destroying user state.
   </div>
@@ -63,21 +63,21 @@ import Base from '../layouts/Base.astro';
 
        To enable streaming on an element, you need two things:
 
-       data-czap-stream-url="/api/feed"
+       data-liteship-stream-url="/api/feed"
          The SSE endpoint URL. The directive opens an EventSource
          to this URL when the element hydrates.
 
        client:stream
-         The Astro client directive registered by @czap/astro.
+         The Astro client directive registered by @liteship/astro.
          It tells Astro to load the stream hydration script.
 
        Optional attributes:
 
-       data-czap-stream-artifact="my-artifact"
+       data-liteship-stream-artifact="my-artifact"
          Appended to the stream URL as a path segment. Useful when
          one endpoint serves multiple artifacts.
 
-       data-czap-stream-morph="innerHTML" (default) or "outerHTML"
+       data-liteship-stream-morph="innerHTML" (default) or "outerHTML"
          Controls whether patches replace the element's inner content
          or the entire element including its wrapper.
   -->
@@ -85,8 +85,8 @@ import Base from '../layouts/Base.astro';
   <h2>The Markup</h2>
 
   <pre><code>&lt;div
-  data-czap-stream-url="/api/feed"
-  data-czap-stream-morph="innerHTML"
+  data-liteship-stream-url="/api/feed"
+  data-liteship-stream-morph="innerHTML"
   client:stream
 &gt;
   &lt;p&gt;Loading...&lt;/p&gt;
@@ -114,7 +114,7 @@ import Base from '../layouts/Base.astro';
          Example: { "type": "snapshot", "data": { "html": "<div>...</div>" } }
 
        "signal"
-         Dispatches a custom event (czap:signal) on the element.
+         Dispatches a custom event (liteship:signal) on the element.
          Used for non-visual data (e.g., updating a counter, triggering
          a boundary re-evaluation).
          Example: { "type": "signal", "data": { "count": 42 } }
@@ -151,7 +151,7 @@ res.write(`data: ${'{'}&br;JSON.stringify({'{'}&br;
   data: {'{'} html: '&lt;div&gt;Full state here&lt;/div&gt;' {'}'}
 {'}'}){'}'}\\n\\n`);
 
-// Send a signal -- non-visual data, fires czap:signal event
+// Send a signal -- non-visual data, fires liteship:signal event
 res.write(`data: ${'{'}&br;JSON.stringify({'{'}&br;
   type: 'signal',
   data: {'{'} count: 42, status: 'active' {'}'}
@@ -168,7 +168,7 @@ res.write(`data: ${'{'}&br;JSON.stringify({'{'}&br;
        This demo element has client:stream pointed at /api/feed.
        Since there's no actual SSE server running in this tutorial,
        it will show the initial content and dispatch a
-       czap:stream-disconnected event after the connection fails.
+       liteship:stream-disconnected event after the connection fails.
 
        In a real app, your server would send patches and this
        element's content would update in real time.
@@ -184,7 +184,7 @@ res.write(`data: ${'{'}&br;JSON.stringify({'{'}&br;
   <!-- --------------------------------------------------------
        The streaming container.
 
-       data-czap-stream-url: points to the SSE endpoint.
+       data-liteship-stream-url: points to the SSE endpoint.
        client:stream: activates the stream directive.
 
        When the directive hydrates, it:
@@ -197,7 +197,7 @@ res.write(`data: ${'{'}&br;JSON.stringify({'{'}&br;
   <div
     class="stream-target"
     id="stream-demo"
-    data-czap-stream-url="/api/feed"
+    data-liteship-stream-url="/api/feed"
     client:stream
   >
     <!-- Fallback content before the SSE client connects. The /api/feed
@@ -216,7 +216,7 @@ res.write(`data: ${'{'}&br;JSON.stringify({'{'}&br;
        3. Replaces innerHTML (or outerHTML) with the new HTML
        4. Restores scroll positions on elements that survived the morph
        5. Re-focuses the previously focused element (if still in DOM)
-       6. Dispatches czap:stream-morph event on the container
+       6. Dispatches liteship:stream-morph event on the container
 
        This means users typing in a form field inside the stream
        container won't lose their cursor position. Lists with scroll
@@ -227,7 +227,7 @@ res.write(`data: ${'{'}&br;JSON.stringify({'{'}&br;
   <h2>DOM Morphing Preserves State</h2>
 
   <p>
-    When a patch arrives, czap does not just slam <code>innerHTML</code>.
+    When a patch arrives, liteship does not just slam <code>innerHTML</code>.
     It preserves user state:
   </p>
 
@@ -237,13 +237,13 @@ res.write(`data: ${'{'}&br;JSON.stringify({'{'}&br;
     <li>Applies the HTML patch</li>
     <li>Restores scroll positions on surviving elements</li>
     <li>Re-focuses the previously focused element</li>
-    <li>Dispatches <code>czap:stream-morph</code> event</li>
+    <li>Dispatches <code>liteship:stream-morph</code> event</li>
   </ol>
 
   <div class="note">
     <strong>Why this matters:</strong> In a chat UI, the user might be
     scrolled up reading history while new messages arrive. Without scroll
-    preservation, every patch would jump them to the top. czap handles
+    preservation, every patch would jump them to the top. liteship handles
     this automatically.
   </div>
 
@@ -251,11 +251,11 @@ res.write(`data: ${'{'}&br;JSON.stringify({'{'}&br;
     <strong>Key idea — opting a subtree out entirely:</strong> some DOM is not
     the server's to morph. A CodeMirror editor, a canvas, a chart — after first
     paint, the <em>client</em> owns them. Mark the element
-    <code>data-czap-morph-opaque</code> and the morph never syncs its
+    <code>data-liteship-morph-opaque</code> and the morph never syncs its
     attributes, never descends into its children, and never removes it — even
     when the server HTML omits it entirely. Sanitization still runs on incoming
     HTML: opacity exempts a subtree from <em>diffing</em>, never from the trust
-    boundary. (The marker lives in <code>@czap/web</code> as
+    boundary. (The marker lives in <code>@liteship/web</code> as
     <code>MorphOpaque</code>.)
   </div>
 
@@ -270,7 +270,7 @@ res.write(`data: ${'{'}&br;JSON.stringify({'{'}&br;
          - Max delay: 30 seconds
          - Max attempts: 10
 
-       After 10 failed attempts, it dispatches czap:stream-error
+       After 10 failed attempts, it dispatches liteship:stream-error
        with reason "max-reconnect-attempts" and stops trying.
 
        The directive also supports SSE lastEventId: if the server
@@ -287,7 +287,7 @@ res.write(`data: ${'{'}&br;JSON.stringify({'{'}&br;
 //   Attempt 3: ~4s    (4000ms +/- 25% jitter)
 //   ...
 //   Attempt 10: ~30s  (capped at maxDelay)
-//   After 10: gives up, fires czap:stream-error</code></pre>
+//   After 10: gives up, fires liteship:stream-error</code></pre>
 
   <p>
     The directive also tracks the SSE <code>lastEventId</code>. On
@@ -301,11 +301,11 @@ res.write(`data: ${'{'}&br;JSON.stringify({'{'}&br;
        The directive dispatches custom events on the container
        element so you can react to stream lifecycle changes:
 
-       czap:stream-connected    -- EventSource opened successfully
-       czap:stream-morph        -- after a patch/snapshot is applied
-       czap:stream-disconnected -- connection closed (before retry)
-       czap:stream-error        -- max reconnection attempts exceeded
-       czap:signal              -- server sent a "signal" type message
+       liteship:stream-connected    -- EventSource opened successfully
+       liteship:stream-morph        -- after a patch/snapshot is applied
+       liteship:stream-disconnected -- connection closed (before retry)
+       liteship:stream-error        -- max reconnection attempts exceeded
+       liteship:signal              -- server sent a "signal" type message
   -->
 
   <h2>Lifecycle Events</h2>
@@ -314,25 +314,25 @@ res.write(`data: ${'{'}&br;JSON.stringify({'{'}&br;
     Listen for these custom events on the stream container:
   </p>
 
-  <pre><code>const el = document.querySelector('[data-czap-stream-url]');
+  <pre><code>const el = document.querySelector('[data-liteship-stream-url]');
 
-el.addEventListener('czap:stream-connected', () =&gt; {'{'}&br;
+el.addEventListener('liteship:stream-connected', () =&gt; {'{'}&br;
   console.log('Stream connected');
 {'}'});
 
-el.addEventListener('czap:stream-morph', () =&gt; {'{'}&br;
+el.addEventListener('liteship:stream-morph', () =&gt; {'{'}&br;
   console.log('DOM patched');
 {'}'});
 
-el.addEventListener('czap:stream-disconnected', () =&gt; {'{'}&br;
+el.addEventListener('liteship:stream-disconnected', () =&gt; {'{'}&br;
   console.log('Disconnected, will retry...');
 {'}'});
 
-el.addEventListener('czap:stream-error', (e) =&gt; {'{'}&br;
+el.addEventListener('liteship:stream-error', (e) =&gt; {'{'}&br;
   console.log('Stream failed:', e.detail.reason);
 {'}'});
 
-el.addEventListener('czap:signal', (e) =&gt; {'{'}&br;
+el.addEventListener('liteship:signal', (e) =&gt; {'{'}&br;
   console.log('Signal received:', e.detail);
 {'}'});</code></pre>
 
@@ -347,15 +347,15 @@ el.addEventListener('czap:signal', (e) =&gt; {'{'}&br;
     const demo = document.getElementById('stream-demo');
     const status = demo?.querySelector('.stream-status');
 
-    demo?.addEventListener('czap:stream-connected', () => {
+    demo?.addEventListener('liteship:stream-connected', () => {
       if (status) status.textContent = 'Stream connected -- receiving patches...';
     });
 
-    demo?.addEventListener('czap:stream-disconnected', () => {
+    demo?.addEventListener('liteship:stream-disconnected', () => {
       if (status) status.textContent = 'Disconnected. Reconnecting...';
     });
 
-    demo?.addEventListener('czap:stream-error', () => {
+    demo?.addEventListener('liteship:stream-error', () => {
       if (status) status.textContent = 'Stream unavailable (no SSE server running for this demo).';
     });
   </script>
@@ -364,7 +364,7 @@ el.addEventListener('czap:signal', (e) =&gt; {'{'}&br;
 
   <ul>
     <li><code>client:stream</code> connects an element to an SSE endpoint.</li>
-    <li><code>data-czap-stream-url</code> specifies the endpoint URL.</li>
+    <li><code>data-liteship-stream-url</code> specifies the endpoint URL.</li>
     <li>The server sends JSON messages: patch, snapshot, signal, heartbeat.</li>
     <li>DOM morphing preserves scroll position, focus, and form state.</li>
     <li>Exponential backoff reconnection with jitter handles network issues.</li>

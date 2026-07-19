@@ -6,10 +6,10 @@
 
 # command/src
 
-@czap/command — the shared command registry + dispatcher (CUT A1).
+@liteship/command — the shared command registry + dispatcher (CUT A1).
 
-One canonical command language (re-anchored from @czap/_spine via @czap/core),
-one registry, one dispatcher. `@czap/cli` and `@czap/mcp-server` are thin
+One canonical command language (re-anchored from @liteship/_spine via @liteship/core),
+one registry, one dispatcher. `@liteship/cli` and `@liteship/mcp-server` are thin
 projection adapters over this package; neither imports the other.
 
 ## Namespaces

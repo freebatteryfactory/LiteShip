@@ -1,7 +1,7 @@
 /**
  * Quantizer interface -- the base contract for quantizer implementations.
  *
- * The canonical implementation lives in `@czap/quantizer` (`Q.from()` builder API).
+ * The canonical implementation lives in `@liteship/quantizer` (`Q.from()` builder API).
  *
  * The contract is split in two: a purely SYNCHRONOUS base ({@link Quantizer}) and
  * a reactive extension ({@link ReactiveQuantizer}). The base carries only what a
@@ -27,7 +27,7 @@ import type { StateUnion, BoundaryCrossing } from './type-utils.js';
  * subscription) is layered on by {@link ReactiveQuantizer}; a consumer that only
  * evaluates and reads `stateSync` never touches the reactive substrate.
  *
- * The concrete reactive implementation is produced by `@czap/quantizer`'s
+ * The concrete reactive implementation is produced by `@liteship/quantizer`'s
  * `Q.from()` builder (a {@link ReactiveQuantizer}); consumers interact only via
  * these structural interfaces.
  */
@@ -64,7 +64,7 @@ export type QuantizerCrossings<B extends Boundary.Shape = Boundary.Shape> = Pick
 /**
  * Reactive quantizer — the {@link Quantizer} base plus its reactive substrate: a
  * replay-1 current-state read and a no-replay crossing subscription, both on the
- * extracted {@link CellKernel}. This is the shape `@czap/quantizer`'s live
+ * extracted {@link CellKernel}. This is the shape `@liteship/quantizer`'s live
  * evaluator produces; a purely-synchronous quantizer omits this extension.
  */
 export interface ReactiveQuantizer<B extends Boundary.Shape = Boundary.Shape> extends Quantizer<B> {

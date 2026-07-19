@@ -10,12 +10,12 @@
  *   1. Define a theme with light and dark variants using Theme.make()
  *   2. See how themes map to the data-theme attribute on <html>
  *   3. Build a theme toggle button
- *   4. Learn about @theme CSS blocks compiled by @czap/vite
+ *   4. Learn about @theme CSS blocks compiled by @liteship/vite
  *   5. Understand how themes compose with boundaries
  */
 
 import Base from '../layouts/Base.astro';
-import { Theme } from '@czap/core';
+import { Theme } from '@liteship/core';
 
 // Define a simple theme with light and dark variants.
 // Each key in `tokens` is a token name; each value is a map of
@@ -70,7 +70,7 @@ const darkTokens = Theme.tap(brandTheme, 'dark');
   <p>
     A <strong>theme</strong> groups tokens into coherent variants. Switch
     one attribute and every color, spacing, and shadow value updates
-    together. Themes use <code>Theme.make()</code> from <code>@czap/core</code>.
+    together. Themes use <code>Theme.make()</code> from <code>@liteship/core</code>.
   </p>
 
   <div class="note">
@@ -95,7 +95,7 @@ const darkTokens = Theme.tap(brandTheme, 'dark');
 
   <h2>The Definition</h2>
 
-  <pre><code>import {'{'} Theme {'}'} from '@czap/core';
+  <pre><code>import {'{'} Theme {'}'} from '@liteship/core';
 
 const brandTheme = Theme.make({'{'}&br;
   name: 'brand',
@@ -124,7 +124,7 @@ const brandTheme = Theme.make({'{'}&br;
        The conventional way to activate a theme variant is the
        data-theme attribute on <html> (or any ancestor element).
 
-       The @czap/vite plugin compiles @theme CSS blocks into
+       The @liteship/vite plugin compiles @theme CSS blocks into
        attribute selectors:
 
          @theme light { --bg: #ffffff; --fg: #1a1a2e; }
@@ -143,12 +143,12 @@ const brandTheme = Theme.make({'{'}&br;
 
   <p>
     Set <code>data-theme="light"</code> or <code>data-theme="dark"</code>
-    on any ancestor element. The @czap/vite plugin compiles
+    on any ancestor element. The @liteship/vite plugin compiles
     <code>@theme</code> CSS blocks into <code>[data-theme="..."]</code>
     attribute selectors, so the cascade handles the rest.
   </p>
 
-  <pre><code>/* Input (authored with @czap/vite): */
+  <pre><code>/* Input (authored with @liteship/vite): */
 @theme light {'{'}&br;
   --bg: #ffffff;
   --fg: #1a1a2e;
@@ -176,7 +176,7 @@ const brandTheme = Theme.make({'{'}&br;
        via the cascade -- no re-render, no FOUC.
 
        The toggle script is minimal: read current data-theme, flip
-       it, write it back. czap encourages this pattern because it
+       it, write it back. liteship encourages this pattern because it
        keeps theme switching as a pure DOM attribute change.
   -->
 
@@ -230,9 +230,9 @@ const brandTheme = Theme.make({'{'}&br;
 
        This is intentionally simple. In a real app, you'd persist
        the user's choice (localStorage, cookie for SSR) and respect
-       the system preference via prefers-color-scheme. The @czap/astro
+       the system preference via prefers-color-scheme. The @liteship/astro
        detect script already reads color-scheme preference and sets
-       data-czap-scheme="dark|light" on <html>, which you can use
+       data-liteship-scheme="dark|light" on <html>, which you can use
        as the initial value.
   -->
 
@@ -254,20 +254,20 @@ const brandTheme = Theme.make({'{'}&br;
 
        Themes and boundaries are orthogonal. You can have:
 
-         data-theme="dark" data-czap-state="compact"
+         data-theme="dark" data-liteship-state="compact"
 
        The CSS targets both independently:
 
          [data-theme="dark"] { --bg: #0f0f23; }
-         [data-czap-state="compact"] { flex-direction: column; }
+         [data-liteship-state="compact"] { flex-direction: column; }
 
        Or you can combine them for specific overrides:
 
-         [data-theme="dark"][data-czap-state="compact"] {
+         [data-theme="dark"][data-liteship-state="compact"] {
            --bg-surface: #1a1a2e;
          }
 
-       This composability is why czap separates data from effects.
+       This composability is why liteship separates data from effects.
   -->
 
   <h2>Composing with Boundaries</h2>
@@ -278,10 +278,10 @@ const brandTheme = Theme.make({'{'}&br;
 
   <pre><code>/* Independent targeting: */
 [data-theme="dark"]              {'{'} --bg: #0f0f23; {'}'}
-[data-czap-state="compact"]      {'{'} flex-direction: column; {'}'}
+[data-liteship-state="compact"]      {'{'} flex-direction: column; {'}'}
 
 /* Combined targeting for specific overrides: */
-[data-theme="dark"][data-czap-state="compact"] {'{'}&br;
+[data-theme="dark"][data-liteship-state="compact"] {'{'}&br;
   --bg-surface: #1a1a3e;  /* slightly different in dark+compact */
 {'}'}</code></pre>
 

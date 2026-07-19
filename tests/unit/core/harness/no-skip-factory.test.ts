@@ -16,10 +16,10 @@
  * @module
  */
 import { describe, it, expect, beforeEach } from 'vitest';
-import { defineCapsule, S } from '@czap/core';
-import { resetCapsuleCatalog } from '@czap/core/testing';
-import * as Harness from '@czap/core/harness';
-import type { AssemblyKind } from '@czap/core';
+import { defineCapsule, S } from '@liteship/core';
+import { resetCapsuleCatalog } from '@liteship/core/testing';
+import * as Harness from '@liteship/core/harness';
+import type { AssemblyKind } from '@liteship/core';
 
 const SKIP_CALL = /\b(it|test|describe|bench)\.skip\(/;
 

@@ -1,6 +1,6 @@
 /**
  * The EXECUTION-COVERAGE map proof (Slice C, the avionics tier — the barrel-problem
- * fix for `czap check --ir --mutate`). The execution filter prunes the ~220 `@czap/core`
+ * fix for `liteship check --ir --mutate`). The execution filter prunes the ~220 `@liteship/core`
  * barrel importers of a broad L4 seam to the handful that actually EXECUTE a function
  * of the seam, making the broad seams tractable WITHOUT under-mapping (an under-mapped
  * seam mints a false survivor — the worst error). This suite proves the two
@@ -19,7 +19,7 @@
  *     a BYTE-IDENTICAL covering set on every run.
  *
  * The probe is INJECTED, so this proof is hermetic. The integration with the real
- * scoped-v8-coverage probe is proven by the live `czap check --ir --mutate` run.
+ * scoped-v8-coverage probe is proven by the live `liteship check --ir --mutate` run.
  *
  * @module
  */
@@ -94,7 +94,7 @@ const SEAM_LINES = SEAM_TEXT.split('\n').length; // 5
 
 /** Build a throwaway repo dir with the seam's package + a set of test files. */
 function makeRepo(tests: ReadonlyMap<string, string>): { root: string; seams: MutationTargetFile[] } {
-  const root = mkdtempSync(join(tmpdir(), 'czap-seam-cov-test-'));
+  const root = mkdtempSync(join(tmpdir(), 'liteship-seam-cov-test-'));
   for (const [rel, text] of tests) {
     const abs = join(root, rel);
     mkdirSync(join(abs, '..'), { recursive: true });
@@ -105,13 +105,13 @@ function makeRepo(tests: ReadonlyMap<string, string>): { root: string; seams: Mu
 
 describe('seam execution coverage — the barrel-problem fix', () => {
   it('SOUNDNESS — excludes a barrel importer that executes no function; keeps the one that does; top-level lines keep the full barrel closure; deep importers cover every line', () => {
-    // Three barrel importers of @czap/core + one deep importer.
+    // Three barrel importers of @liteship/core + one deep importer.
     //  - barrel-executes:   imports the barrel AND (per the probe) executes function f.
     //  - barrel-imports-only: imports the barrel but executes NO function of the seam.
     //  - deep:              deep-imports the seam's source path.
     const tests = new Map<string, string>([
-      ['tests/unit/core/barrel-executes.test.ts', `import { f } from '@czap/core';`],
-      ['tests/unit/core/barrel-imports-only.test.ts', `import { other } from '@czap/core';`],
+      ['tests/unit/core/barrel-executes.test.ts', `import { f } from '@liteship/core';`],
+      ['tests/unit/core/barrel-imports-only.test.ts', `import { other } from '@liteship/core';`],
       ['tests/unit/core/deep.test.ts', `import { f } from '../../../packages/core/src/demo-seam.js';`],
     ]);
     const { root, seams } = makeRepo(tests);
@@ -167,8 +167,8 @@ describe('seam execution coverage — the barrel-problem fix', () => {
 
   it('DETERMINISM — the same inputs build a byte-identical covering set on every run', () => {
     const tests = new Map<string, string>([
-      ['tests/unit/core/a.test.ts', `import { f } from '@czap/core';`],
-      ['tests/unit/core/b.test.ts', `import { g } from '@czap/core';`],
+      ['tests/unit/core/a.test.ts', `import { f } from '@liteship/core';`],
+      ['tests/unit/core/b.test.ts', `import { g } from '@liteship/core';`],
     ]);
     const { root, seams } = makeRepo(tests);
     try {
@@ -670,7 +670,7 @@ describe('makeFsSeamCoverageProbeCache — the fs-backed B2 probe store (atomic 
   }
 
   it('round-trips ranges: write then read returns the same ranges (content-addressed key → stable path)', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'czap-fs-cache-'));
+    const dir = mkdtempSync(join(tmpdir(), 'liteship-fs-cache-'));
     try {
       const cache = makeFsSeamCoverageProbeCache(dir);
       const key = 'seamdigAtestdigBtctc1';
@@ -686,7 +686,7 @@ describe('makeFsSeamCoverageProbeCache — the fs-backed B2 probe store (atomic 
   });
 
   it('an empty ranges list (covers nothing) round-trips as [] — distinct from a MISS (null)', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'czap-fs-cache-'));
+    const dir = mkdtempSync(join(tmpdir(), 'liteship-fs-cache-'));
     try {
       const cache = makeFsSeamCoverageProbeCache(dir);
       cache.write('k', []);
@@ -697,11 +697,11 @@ describe('makeFsSeamCoverageProbeCache — the fs-backed B2 probe store (atomic 
   });
 
   it('a write is ATOMIC — no .tmp file is left behind after a successful write', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'czap-fs-cache-'));
+    const dir = mkdtempSync(join(tmpdir(), 'liteship-fs-cache-'));
     try {
       const cache = makeFsSeamCoverageProbeCache(dir);
       cache.write('k', [{ startLine: 1, endLine: 1 }]);
-      const cacheDir = join(dir, '.czap', 'cache', 'seam-coverage');
+      const cacheDir = join(dir, '.liteship', 'cache', 'seam-coverage');
       const leftovers = readdirSync(cacheDir).filter((f) => f.endsWith('.tmp'));
       expect(leftovers).toEqual([]);
     } finally {
@@ -710,13 +710,13 @@ describe('makeFsSeamCoverageProbeCache — the fs-backed B2 probe store (atomic 
   });
 
   it('a malformed/hand-edited cache file is a sound MISS (null), never a partial/garbage decision', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'czap-fs-cache-'));
+    const dir = mkdtempSync(join(tmpdir(), 'liteship-fs-cache-'));
     try {
       const cache = makeFsSeamCoverageProbeCache(dir);
       const key = 'k';
       // Seed a real entry, then corrupt the on-disk file with several malformed shapes.
       cache.write(key, [{ startLine: 1, endLine: 2 }]);
-      const file = onlyJsonFile(join(dir, '.czap', 'cache', 'seam-coverage'));
+      const file = onlyJsonFile(join(dir, '.liteship', 'cache', 'seam-coverage'));
       for (const garbage of [
         'not json{',                                   // invalid JSON → SyntaxError → null
         '{"not":"an array"}',                          // not an array → null
@@ -738,7 +738,7 @@ describe('makeFsSeamCoverageProbeCache — the fs-backed B2 probe store (atomic 
   });
 
   it('reading an absent key (no file) is a MISS (null), never a throw', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'czap-fs-cache-'));
+    const dir = mkdtempSync(join(tmpdir(), 'liteship-fs-cache-'));
     try {
       expect(makeFsSeamCoverageProbeCache(dir).read('never-written')).toBeNull();
     } finally {
@@ -747,13 +747,13 @@ describe('makeFsSeamCoverageProbeCache — the fs-backed B2 probe store (atomic 
   });
 
   it('a directory at the cache path (EISDIR on read) is a sound MISS, not a throw', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'czap-fs-cache-'));
+    const dir = mkdtempSync(join(tmpdir(), 'liteship-fs-cache-'));
     try {
       const cache = makeFsSeamCoverageProbeCache(dir);
       // Write a real entry to learn the on-disk file path, then replace the FILE with a DIR.
       const key = 'eisdir-key';
       cache.write(key, [{ startLine: 1, endLine: 1 }]);
-      const file = onlyJsonFile(join(dir, '.czap', 'cache', 'seam-coverage'));
+      const file = onlyJsonFile(join(dir, '.liteship', 'cache', 'seam-coverage'));
       rmSync(file, { force: true });
       mkdirSync(file); // now reading `file` as a regular file fails EISDIR
       expect(cache.read(key)).toBeNull(); // the typed-ENOENT/EISDIR/EACCES/EPERM guard → MISS

@@ -5,7 +5,7 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 
-vi.mock('@czap/cli', () => ({
+vi.mock('@liteship/cli', () => ({
   run: vi.fn(async () => 0),
 }));
 

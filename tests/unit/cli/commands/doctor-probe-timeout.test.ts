@@ -59,7 +59,7 @@ describe('doctor — timed-out external probe → warn, bounded (CUT test-flake)
     const { stdout } = await captureCli(() => doctor({ pretty: false }));
     const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
     const wasm = receipt.checks.find((c: { id: string }) => c.id === 'wasm.toolchain');
-    expect(wasm).toBeDefined(); // repo has crates/czap-compute
+    expect(wasm).toBeDefined(); // repo has crates/liteship-compute
     expect(wasm.status).toBe('warn');
     expect(wasm.detail.toLowerCase()).toMatch(/respond|timeout|slow|contended/);
   });

@@ -1,8 +1,8 @@
 /**
  * The DETERMINISTIC, ISOLATED per-mutant test runner (Slice C, the avionics tier
- * — the production half of mutation-as-divergence; `czap check --ir --mutate`).
+ * — the production half of mutation-as-divergence; `liteship check --ir --mutate`).
  *
- * `@czap/audit`'s {@link evaluateMutant} takes an INJECTED runner
+ * `@liteship/audit`'s {@link evaluateMutant} takes an INJECTED runner
  * `(mutatedSource, coveringTests) → { failed }` and never spawns a test process
  * itself — the meta-proof injects a pure stub; PRODUCTION injects THIS. For ONE
  * mutant this runner:
@@ -55,8 +55,8 @@
 import { spawnSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { IoError } from '@czap/error';
-import type { MutantTestRunner } from '@czap/audit';
+import { IoError } from '@liteship/error';
+import type { MutantTestRunner } from '@liteship/audit';
 
 /**
  * The synchronous subprocess outcome the runner reads — the discriminated subset of

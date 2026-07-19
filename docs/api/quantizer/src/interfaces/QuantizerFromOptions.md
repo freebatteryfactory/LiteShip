@@ -12,7 +12,7 @@ Options accepted by [Q.from](../variables/Q.md#from).
 
 `tier` gates which output targets get produced (see the table on
 [QuantizerFromOptions.tier](#tier)).
-`spring` enables automatic CSS `--czap-easing` injection on CSS outputs.
+`spring` enables automatic CSS `--liteship-easing` injection on CSS outputs.
 
 ## Properties
 

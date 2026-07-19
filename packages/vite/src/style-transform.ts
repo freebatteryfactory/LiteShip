@@ -9,8 +9,8 @@
  * @module
  */
 
-import type { Style } from '@czap/core';
-import { StyleCSSCompiler } from '@czap/compiler';
+import type { Style } from '@liteship/core';
+import { StyleCSSCompiler } from '@liteship/compiler';
 import { normalizeCssLineEndings } from './normalize-css-eol.js';
 import {
   blankCssCommentsAndStrings,
@@ -134,7 +134,7 @@ export function parseStyleBlocks(css: string, sourceFile: string): readonly Styl
 }
 
 // ---------------------------------------------------------------------------
-// Compiler (delegates to @czap/compiler StyleCSSCompiler)
+// Compiler (delegates to @liteship/compiler StyleCSSCompiler)
 // ---------------------------------------------------------------------------
 
 /**

@@ -1,6 +1,6 @@
 /**
- * @czap/web type spine -- DOM runtime (morph, slots, SSE, physical state).
- * Salvaged from @kit/web, rebranded data-kit-* -> data-czap-*.
+ * @liteship/web type spine -- DOM runtime (morph, slots, SSE, physical state).
+ * Salvaged from @kit/web, rebranded data-kit-* -> data-liteship-*.
  */
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -322,7 +322,7 @@ export declare const Resumption: {
   /** Drop the persisted cursor synchronously (was `Effect.Effect<void>`). */
   clearState(artifactId: string): void;
   canResume(lastEventId: string, serverOldestId: string): boolean;
-  /** Reconcile the replay gap — Promise-first, rejecting with a tagged `@czap/error` (was `Effect.Effect<ResumeResponse, Error>`). */
+  /** Reconcile the replay gap — Promise-first, rejecting with a tagged `@liteship/error` (was `Effect.Effect<ResumeResponse, Error>`). */
   resume(
     artifactId: string,
     currentEventId: string,

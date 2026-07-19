@@ -16,7 +16,7 @@ import {
   type MotionPropertyTween,
   type RuntimeEasing,
   type TypedValue,
-} from '@czap/core';
+} from '@liteship/core';
 
 /** Spring physics config — mirrors `Easing.spring` input. */
 export interface MotionSpringConfig {
@@ -79,8 +79,8 @@ function syntaxForTypedValue(value: TypedValue): string | null {
 }
 
 function keyframeName(plan: CssMotionPlan): string {
-  const target = plan.selector.match(/data-czap-boundary="([^"]+)"/)?.[1] ?? 'motion';
-  return `czap-motion-${target}-${plan.fromState}-${plan.toState}`;
+  const target = plan.selector.match(/data-liteship-boundary="([^"]+)"/)?.[1] ?? 'motion';
+  return `liteship-motion-${target}-${plan.fromState}-${plan.toState}`;
 }
 
 function emitPropertyRegistrations(properties: readonly MotionPropertyTween[]): string {
@@ -306,7 +306,7 @@ function emitTransitionRule(plan: CssMotionPlan, easingFn: string, delayMs?: num
       : '';
 
   return [
-    `${plan.selector}[data-czap-state="${plan.toState}"] {`,
+    `${plan.selector}[data-liteship-state="${plan.toState}"] {`,
     ...(endDecls.length > 0 ? [endDecls] : []),
     `  transition: ${transitionDecls(plan, easingFn, delayMs)};`,
     `}`,
@@ -339,7 +339,7 @@ function emitViewTimeline(
 
   const fallback = [
     `@supports not (animation-timeline: view()) {`,
-    `  ${plan.selector}[data-czap-state="${plan.toState}"] {`,
+    `  ${plan.selector}[data-liteship-state="${plan.toState}"] {`,
     `    transition: ${transitionDecls(plan, easingFn, delayMs)};`,
     `  }`,
     `}`,
@@ -347,7 +347,7 @@ function emitViewTimeline(
 
   // A plan DENIED native-timeline ownership (overlapping windows disagree on easing, #148)
   // emits NO `@supports (animation-timeline)` ownership block: without an `animation-name`
-  // binding `getComputedStyle(el).animationName` carries no `czap-motion-*` name, so the
+  // binding `getComputedStyle(el).animationName` carries no `liteship-motion-*` name, so the
   // Astro runtime's `nativeTimelineOwnsElement` stays false and the per-window runtime floor
   // renders each child at its own easing (ADR-0041). The no-support transition fallback still
   // ships for browsers lacking `animation-timeline` (where the floor already owns rendering).
@@ -382,7 +382,7 @@ function emitScrollRootTimeline(
 
   const fallback = [
     `@supports not (animation-timeline: scroll()) {`,
-    `  ${plan.selector}[data-czap-state="${plan.toState}"] {`,
+    `  ${plan.selector}[data-liteship-state="${plan.toState}"] {`,
     `    transition: ${transitionDecls(plan, easingFn, delayMs)};`,
     `  }`,
     `}`,

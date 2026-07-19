@@ -1,12 +1,12 @@
 /**
- * Re-export sync {@link AddressedDigest} from `@czap/canonical`.
+ * Re-export sync {@link AddressedDigest} from `@liteship/canonical`.
  *
- * Types re-anchored to `@czap/_spine` at the `@czap/core` export boundary.
+ * Types re-anchored to `@liteship/_spine` at the `@liteship/core` export boundary.
  *
  * @module
  */
 
-import { addressedDigestOf } from '@czap/canonical';
+import { addressedDigestOf } from '@liteship/canonical';
 import type { AddressedDigest as _AddressedDigest } from './brands.js';
 import { ContentAddress, IntegrityDigest } from './brands.js';
 

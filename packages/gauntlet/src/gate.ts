@@ -14,7 +14,7 @@
  * @module
  */
 
-import { ValidationError, HostCapabilityError } from '@czap/error';
+import { ValidationError, HostCapabilityError } from '@liteship/error';
 import type { AssuranceLevel } from './assurance.js';
 import type { EarlyReturnMatch } from './gates/early-return-detect.js';
 import type { Finding } from './finding.js';
@@ -72,27 +72,27 @@ export interface GateContext {
   /**
    * The SOUND skip detector — an INJECTED capability (the AST detector, the cure that ends the
    * token-scanner whack-a-mole). OPTIONAL by design, the SAME lean-engine pattern as {@link ir}:
-   * `@czap/gauntlet` carries NO `typescript` dep, so the dependency-free token `detectSkips` is its
-   * FALLBACK; the host (the CLI, which deps `@czap/audit`) builds `detectSkipsAST` (a real
+   * `@liteship/gauntlet` carries NO `typescript` dep, so the dependency-free token `detectSkips` is its
+   * FALLBACK; the host (the CLI, which deps `@liteship/audit`) builds `detectSkipsAST` (a real
    * `ts.createSourceFile` AST walk + local binding analysis + conditionality classification) and
    * injects it here. A skip-reading gate / scan calls `(context.skipDetector ?? detectSkips)(text)`
    * — the AST detector when injected (line-agnostic, catches every multi-line/ASI/inner-describe
    * spelling, and produces the `conditional` F2 discriminant), the token fallback otherwise. When
-   * ABSENT the token detector runs unchanged (back-compat; the lean `czap check` path). See
+   * ABSENT the token detector runs unchanged (back-compat; the lean `liteship check` path). See
    * {@link SkipMatch}.
    */
   readonly skipDetector?: (source: string) => readonly SkipMatch[];
   /**
-   * The SOUND early-return detector — an INJECTED capability. `@czap/gauntlet` carries NO
+   * The SOUND early-return detector — an INJECTED capability. `@liteship/gauntlet` carries NO
    * `typescript` dep; the token `detectEarlyReturnBeforeExpect` is its fallback. The host injects
-   * `detectEarlyReturnBeforeExpectAST` from `@czap/audit`. The no-early-return-test gate calls
+   * `detectEarlyReturnBeforeExpectAST` from `@liteship/audit`. The no-early-return-test gate calls
    * `(context.earlyReturnDetector ?? detectEarlyReturnBeforeExpect)(text)`.
    */
   readonly earlyReturnDetector?: (source: string) => readonly EarlyReturnMatch[];
   /**
    * The sound, parser-backed `codeOnly` floor — an INJECTED capability, the same shape as
    * {@link skipDetector}. The lean char-state-machine `codeOnly` (gates/code-only.ts) is the
-   * no-typescript FALLBACK; the host (the CLI, which deps `@czap/audit`) builds `codeOnlyAST` (a real
+   * no-typescript FALLBACK; the host (the CLI, which deps `@liteship/audit`) builds `codeOnlyAST` (a real
    * `ts.createSourceFile` token walk that the parser disambiguates — regex-vs-division, nested
    * templates, comments) and injects it here. A code-scanning gate calls `(context.codeOnly ?? codeOnly)(text)`
    * — the scanner when injected, the char-machine otherwise. The two are pinned equivalent by the
@@ -101,8 +101,8 @@ export interface GateContext {
   readonly codeOnly?: (source: string) => string;
   /**
    * The triangulated repo-IR — an INJECTED capability (Slice B). OPTIONAL by
-   * design: `@czap/gauntlet` is the lean engine and the IR is built+injected by
-   * a host (the CLI, via `@czap/audit`'s `ts.Program`), so the gauntlet never
+   * design: `@liteship/gauntlet` is the lean engine and the IR is built+injected by
+   * a host (the CLI, via `@liteship/audit`'s `ts.Program`), so the gauntlet never
    * carries the heavy `typescript` dep. An existing regex gate ignores it
    * entirely; a new IR-fold gate that REQUIRES it must guard `ir === undefined`
    * (or use {@link requireIR}, which throws a clear tagged error when no IR was
@@ -114,7 +114,7 @@ export interface GateContext {
    * Pre-computed supply-chain evidence — an INJECTED capability (Slice C, the
    * avionics tier), the same lean-engine pattern as {@link ir}. OPTIONAL: the
    * heavy lockfile parse / SBOM build / ShipCapsule decode / CI scan all live in
-   * a HOST (the CLI's `@czap/cli` supply-chain analyzer), which folds them into
+   * a HOST (the CLI's `@liteship/cli` supply-chain analyzer), which folds them into
    * flat {@link SupplyChainFacts} and lands them here. The
    * {@link supplyChainGate} reads ONLY through this; in-memory fixtures supply a
    * literal facts record (no I/O, no YAML). When ABSENT the supply-chain gate
@@ -126,12 +126,12 @@ export interface GateContext {
    * Pre-computed mutation evidence — an INJECTED capability (Slice C, the avionics
    * tier — mutation-as-divergence), the same lean-engine pattern as {@link ir} and
    * {@link supplyChain}. OPTIONAL: the heavy AST mutation + the per-mutant vitest
-   * runs all live in a HOST (`@czap/audit`'s mutation engine + the CLI's vitest
+   * runs all live in a HOST (`@liteship/audit`'s mutation engine + the CLI's vitest
    * runner), which folds them into flat {@link MutationFacts} (every mutant's
    * kill/survive verdict + the committed score baseline) and lands them here. The
    * {@link mutationDivergenceGate} reads ONLY through this; in-memory fixtures
    * supply a literal facts record (no parse, no test run). When ABSENT the gate is
-   * simply not in the set (mutation is opt-in: `czap check --ir --mutate`), so
+   * simply not in the set (mutation is opt-in: `liteship check --ir --mutate`), so
    * there is no per-mutant cost and no noise on a default run. See
    * {@link MutationFacts}.
    */
@@ -143,7 +143,7 @@ export interface GateContext {
    * {@link mutation}. OPTIONAL: the heavy work (unfolding each seeded op history over
    * BOTH the single-oracle model AND the live implementation over the native transport,
    * content-addressing each observed trace, deciding the per-case bisimulation verdict)
-   * all lives in a HOST (`@czap/audit`'s `buildTransitionFacts` + the LiteShip-local
+   * all lives in a HOST (`@liteship/audit`'s `buildTransitionFacts` + the LiteShip-local
    * reactive capture/model runner `tests/support/reactive-conformance.ts`), which folds the
    * verdicts into flat {@link TransitionFacts} (every case's model/impl observation digests +
    * status + the committed unevidenced baseline) and lands them here. The
@@ -152,7 +152,7 @@ export interface GateContext {
    * the set. The reactive model + native-transport oracle are LiteShip-local (product
    * machinery in the test tree), so — per ADR-0012/0023 — the gate is HOSTED by the repo-local
    * `transition:gate` phase (`scripts/transition-conformance-gate.ts`, run every PR), NOT the
-   * shipped `czap check` CLI, so there is no per-case cost and no noise on a default run. A
+   * shipped `liteship check` CLI, so there is no per-case cost and no noise on a default run. A
    * `divergent` case carries its SEED, so the behavior change it folds replays
    * byte-for-byte. See {@link TransitionFacts}.
    */
@@ -161,7 +161,7 @@ export interface GateContext {
    * Pre-computed TWO-AXIS spine-relation classification — an INJECTED capability (the
    * constitution's static-projection half, Wave 8.5), the same lean-engine pattern as
    * {@link transition}. OPTIONAL: the heavy work (a `ts.Program` per build, one
-   * bidirectional-assignability probe per admitted mirror type) runs in `@czap/audit`'s
+   * bidirectional-assignability probe per admitted mirror type) runs in `@liteship/audit`'s
    * `buildSpineRelationFacts`; when the host did not run it this capability is ABSENT and
    * the {@link spineRelationGate} is simply not in the set (no cost, no noise). Each
    * observation carries its two axes so a drift finding names WHICH relation changed.
@@ -174,12 +174,12 @@ export interface GateContext {
    * CONDITION-LEVEL MUTATION), the same lean-engine pattern as {@link mutation}.
    * OPTIONAL: the heavy work (decomposing every L4 decision into its atomic conditions,
    * minting the force-true/force-false pin per condition, running the covering tests per
-   * pin) all lives in a HOST (`@czap/audit`'s condition-mutation engine + the CLI's
+   * pin) all lives in a HOST (`@liteship/audit`'s condition-mutation engine + the CLI's
    * per-mutant vitest runner), which folds the two pins per condition into flat
    * {@link McdcFacts} (each condition MC/DC-covered iff BOTH pins were KILLED) and lands
    * them here. The {@link mcdcCoverageGate} reads ONLY through this; in-memory fixtures
    * supply a literal facts record (no parse, no test run). When ABSENT the gate is simply
-   * not in the set (MC/DC is opt-in: `czap check --ir --mcdc`), so there is no per-pin
+   * not in the set (MC/DC is opt-in: `liteship check --ir --mcdc`), so there is no per-pin
    * cost and no noise on a default run. See {@link McdcFacts}.
    */
   readonly mcdc?: McdcFacts;
@@ -189,7 +189,7 @@ export interface GateContext {
    * {@link supplyChain}, and {@link mutation}. OPTIONAL: the heavy work (minting a
    * seeded world, running the scenario corpus, replaying each seed twice, and
    * content-addressing the byte-exact traces) all lives in a HOST (the CLI's
-   * `czap check --ir --simulate` path, driving the `@czap/core/simulation`
+   * `liteship check --ir --simulate` path, driving the `@liteship/core/simulation`
    * harness), which folds the verdicts into flat {@link SimulationFacts} (every
    * scenario's two replay digests + any divergence) and lands them here. The
    * {@link simulationDeterminismGate} reads ONLY through this; in-memory fixtures
@@ -260,14 +260,14 @@ export interface GateContext {
    * and {@link standards}. OPTIONAL: the heavy work (a whole-corpus `ts.Program` +
    * a type-checker dataflow trace from each untrusted SOURCE call to each dangerous
    * SINK call argument, observing the SANITIZER on the path) lives in a HOST
-   * (`@czap/audit`'s taint oracle, classified by the LiteShip-LOCAL source/sink/
-   * sanitizer registry the `@czap/cli` host injects — the audit engine itself
+   * (`@liteship/audit`'s taint oracle, classified by the LiteShip-LOCAL source/sink/
+   * sanitizer registry the `@liteship/cli` host injects — the audit engine itself
    * references NO LiteShip policy, ADR-0012/D7b), which folds the traced flows into
    * flat {@link TaintFacts} (every source→sink flow + its sanitizer, if any + the
    * honest interprocedural depth the trace covered) and lands them here. The
    * {@link taintFlowGate} reads ONLY through this; in-memory fixtures supply a
    * literal facts record (no program, no checker). When ABSENT the gate is simply
-   * not in the set (taint is opt-in: `czap check --ir --taint`). An UNSANITIZED
+   * not in the set (taint is opt-in: `liteship check --ir --taint`). An UNSANITIZED
    * source→sink flow folds to a Finding at the sink's (propagated) level — L4 for a
    * trust-spine sink. See {@link TaintFacts}.
    */
@@ -275,11 +275,11 @@ export interface GateContext {
   /**
    * The host-supplied {@link CapabilityLinkFacts} (codex round-8, #1b) — the dataflow proof that every
    * sanctioned capability-gated skip's GUARD DERIVES FROM its declared capability's probe. The heavy
-   * `ts.Program`/checker `linker` lives in a HOST (`@czap/audit`'s capability-link oracle, fed the
-   * canonical capability-module SET + the sanctioned sites the `@czap/cli` host injects — the audit
+   * `ts.Program`/checker `linker` lives in a HOST (`@liteship/audit`'s capability-link oracle, fed the
+   * canonical capability-module SET + the sanctioned sites the `@liteship/cli` host injects — the audit
    * engine names no LiteShip capability, ADR-0012/D7b). The {@link capabilityGateLinkGate} reads ONLY
    * through this; fixtures supply a literal facts record. When ABSENT the gate is not in the set
-   * (capability-link is opt-in: `czap check --ir --capability-gate`). A skip whose guard derives from
+   * (capability-link is opt-in: `liteship check --ir --capability-gate`). A skip whose guard derives from
    * NO capability probe (`if (Math.random())`) — or the WRONG one (a mislabel) — folds to an L4 finding.
    */
   readonly capabilityLink?: CapabilityLinkFacts;
@@ -310,7 +310,7 @@ export interface GateContext {
    * {@link simulation}. OPTIONAL: the heavy work (reading the proof signals —
    * mutation-score baseline, coverage report, property-test presence, the enrolled
    * invariants ledger — and blending them into a per-module proof scalar) lives in a
-   * HOST (the CLI's `czap check --ir --proof` path), which folds them into flat
+   * HOST (the CLI's `liteship check --ir --proof` path), which folds them into flat
    * {@link ProofFacts} and lands them here. The {@link proofPropagationGate}
    * PROPAGATES the scalar along the IR's dep DAG (the `min`-fixpoint dual of
    * assurance propagation) and reads ONLY through this; in-memory fixtures supply a
@@ -327,7 +327,7 @@ export interface GateContext {
    * OPTIONAL: the heavy work (deriving the interaction edges from the IR call graph,
    * deciding which units are individually tested, and deciding which edges an
    * integration test exercises TOGETHER — by a per-test execution-coverage probe or
-   * the sound static-reference proxy) lives in a HOST (the CLI's `czap check --ir
+   * the sound static-reference proxy) lives in a HOST (the CLI's `liteship check --ir
    * --composition` path), which folds the classified edges into flat
    * {@link CompositionFacts} and lands them here. The {@link compositionCoverageGate}
    * reads ONLY through this; in-memory fixtures supply a literal facts record (no
@@ -354,7 +354,7 @@ export interface GateContext {
   readonly skipSites?: SkipSiteFacts;
   /**
    * Pre-computed ACTIVE-SURFACE field-read evidence — an INJECTED FactPack (#132).
-   * The HOST (`@czap/audit`'s `buildActiveSurfaceFacts`) scans reader paths with
+   * The HOST (`@liteship/audit`'s `buildActiveSurfaceFacts`) scans reader paths with
    * TS-AST and lands flat {@link ActiveSurfaceFacts}; the
    * {@link activeModeledSurfaceReaderGate} decides over them. When ABSENT the gate
    * folds an empty verdict. See {@link ActiveSurfaceFacts}.
@@ -842,7 +842,7 @@ export function requireIR(context: GateContext, gateId: string): RepoIR {
   if (context.ir === undefined) {
     throw HostCapabilityError(
       'repo-IR',
-      `gate "${gateId}" requires the injected repo-IR, but none was supplied on the GateContext — a host (the CLI) must build it via @czap/audit's ts.Program and inject it as context.ir`,
+      `gate "${gateId}" requires the injected repo-IR, but none was supplied on the GateContext — a host (the CLI) must build it via @liteship/audit's ts.Program and inject it as context.ir`,
     );
   }
   return context.ir;
@@ -860,7 +860,7 @@ export function requireMutation(context: GateContext, gateId: string): MutationF
   if (context.mutation === undefined) {
     throw HostCapabilityError(
       'mutation-facts',
-      `gate "${gateId}" requires the injected mutation facts, but none were supplied on the GateContext — a host (the CLI) must generate mutants via @czap/audit's mutation engine, run the covering tests, and inject the decided MutationFacts as context.mutation (the opt-in \`czap check --ir --mutate\` path)`,
+      `gate "${gateId}" requires the injected mutation facts, but none were supplied on the GateContext — a host (the CLI) must generate mutants via @liteship/audit's mutation engine, run the covering tests, and inject the decided MutationFacts as context.mutation (the opt-in \`liteship check --ir --mutate\` path)`,
     );
   }
   return context.mutation;
@@ -878,7 +878,7 @@ export function requireTransition(context: GateContext, gateId: string): Transit
   if (context.transition === undefined) {
     throw HostCapabilityError(
       'transition-facts',
-      `gate "${gateId}" requires the injected transition-conformance facts, but none were supplied on the GateContext — a host must unfold the seeded op-history corpus over BOTH the single-oracle model and the native transport via @czap/audit's buildTransitionFacts + the LiteShip-local reactive capture/model runner (tests/support/reactive-conformance.ts), and inject the decided TransitionFacts as context.transition. The repo-local host is the \`transition:gate\` phase (scripts/transition-conformance-gate.ts), run on every PR`,
+      `gate "${gateId}" requires the injected transition-conformance facts, but none were supplied on the GateContext — a host must unfold the seeded op-history corpus over BOTH the single-oracle model and the native transport via @liteship/audit's buildTransitionFacts + the LiteShip-local reactive capture/model runner (tests/support/reactive-conformance.ts), and inject the decided TransitionFacts as context.transition. The repo-local host is the \`transition:gate\` phase (scripts/transition-conformance-gate.ts), run on every PR`,
     );
   }
   return context.transition;
@@ -896,7 +896,7 @@ export function requireSpineRelation(context: GateContext, gateId: string): Spin
   if (context.spineRelation === undefined) {
     throw HostCapabilityError(
       'spine-relation-facts',
-      `gate "${gateId}" requires the injected two-axis spine-relation facts, but none were supplied on the GateContext — a host (the CLI) must probe each admitted mirror type's bidirectional assignability via @czap/audit's buildSpineRelationFacts and inject the observed SpineRelationFacts as context.spineRelation (the opt-in \`czap check --ir --spine-relation\` path)`,
+      `gate "${gateId}" requires the injected two-axis spine-relation facts, but none were supplied on the GateContext — a host (the CLI) must probe each admitted mirror type's bidirectional assignability via @liteship/audit's buildSpineRelationFacts and inject the observed SpineRelationFacts as context.spineRelation (the opt-in \`liteship check --ir --spine-relation\` path)`,
     );
   }
   return context.spineRelation;
@@ -913,7 +913,7 @@ export function requireMcdc(context: GateContext, gateId: string): McdcFacts {
   if (context.mcdc === undefined) {
     throw HostCapabilityError(
       'mcdc-facts',
-      `gate "${gateId}" requires the injected MC/DC facts, but none were supplied on the GateContext — a host (the CLI) must generate the condition-mutants via @czap/audit's condition-mutation engine, run the covering tests per pin, and inject the decided McdcFacts as context.mcdc (the opt-in \`czap check --ir --mcdc\` path)`,
+      `gate "${gateId}" requires the injected MC/DC facts, but none were supplied on the GateContext — a host (the CLI) must generate the condition-mutants via @liteship/audit's condition-mutation engine, run the covering tests per pin, and inject the decided McdcFacts as context.mcdc (the opt-in \`liteship check --ir --mcdc\` path)`,
     );
   }
   return context.mcdc;
@@ -931,7 +931,7 @@ export function requireTaint(context: GateContext, gateId: string): TaintFacts {
   if (context.taint === undefined) {
     throw HostCapabilityError(
       'taint-facts',
-      `gate "${gateId}" requires the injected taint facts, but none were supplied on the GateContext — a host (the CLI) must trace the source→sink dataflow via @czap/audit's taint oracle (classified by the host-injected LiteShip source/sink/sanitizer registry) and inject the decided TaintFacts as context.taint (the opt-in \`czap check --ir --taint\` path)`,
+      `gate "${gateId}" requires the injected taint facts, but none were supplied on the GateContext — a host (the CLI) must trace the source→sink dataflow via @liteship/audit's taint oracle (classified by the host-injected LiteShip source/sink/sanitizer registry) and inject the decided TaintFacts as context.taint (the opt-in \`liteship check --ir --taint\` path)`,
     );
   }
   return context.taint;
@@ -946,7 +946,7 @@ export function requireCapabilityLink(context: GateContext, gateId: string): Cap
   if (context.capabilityLink === undefined) {
     throw HostCapabilityError(
       'capability-link-facts',
-      `gate "${gateId}" requires the injected capability-link facts, but none were supplied on the GateContext — a host (the CLI) must resolve each sanctioned skip's guard against the canonical capability symbol table via @czap/audit's capability-link oracle and inject the decided CapabilityLinkFacts as context.capabilityLink (the opt-in \`czap check --ir --capability-gate\` path)`,
+      `gate "${gateId}" requires the injected capability-link facts, but none were supplied on the GateContext — a host (the CLI) must resolve each sanctioned skip's guard against the canonical capability symbol table via @liteship/audit's capability-link oracle and inject the decided CapabilityLinkFacts as context.capabilityLink (the opt-in \`liteship check --ir --capability-gate\` path)`,
     );
   }
   return context.capabilityLink;

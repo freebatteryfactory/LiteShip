@@ -21,9 +21,9 @@ import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { manualClock } from '@czap/core';
-import type { CompositeState, VideoFrameOutput } from '@czap/core';
-import { renderWithFfmpeg } from '@czap/command/host';
+import { manualClock } from '@liteship/core';
+import type { CompositeState, VideoFrameOutput } from '@liteship/core';
+import { renderWithFfmpeg } from '@liteship/command/host';
 import { FFMPEG_RENDER_CAPABLE } from '../../helpers/ffmpeg.js';
 
 function frame(n: number, discrete: Record<string, string>): VideoFrameOutput {
@@ -54,7 +54,7 @@ describe('renderWithFfmpeg — real pixels from frame state + monotonic duration
     });
   } else {
     test('encodes NON-BLACK pixels derived from each frame CompositeState', async () => {
-      const dir = mkdtempSync(join(tmpdir(), 'czap-render-backend-'));
+      const dir = mkdtempSync(join(tmpdir(), 'liteship-render-backend-'));
       const output = join(dir, 'out.mp4');
       try {
         // Two distinct discrete states → two distinct painted colors.
@@ -79,7 +79,7 @@ describe('renderWithFfmpeg — real pixels from frame state + monotonic duration
     });
 
     test('two different graph states encode to two different first-frame colors', async () => {
-      const dir = mkdtempSync(join(tmpdir(), 'czap-render-backend-'));
+      const dir = mkdtempSync(join(tmpdir(), 'liteship-render-backend-'));
       const a = join(dir, 'a.mp4');
       const b = join(dir, 'b.mp4');
       try {
@@ -104,7 +104,7 @@ describe('renderWithFfmpeg — real pixels from frame state + monotonic duration
     });
 
     test('elapsedMs is read from the injected (monotonic) clock — a duration, not Date.now', async () => {
-      const dir = mkdtempSync(join(tmpdir(), 'czap-render-backend-'));
+      const dir = mkdtempSync(join(tmpdir(), 'liteship-render-backend-'));
       const output = join(dir, 'out.mp4');
       try {
         // A manual clock advances by a fixed amount across the two reads the backend

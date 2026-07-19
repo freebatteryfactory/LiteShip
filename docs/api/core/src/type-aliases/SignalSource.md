@@ -25,5 +25,5 @@ Audio modes:
 - `amplitude` / `beat` — LIVE analyser-driven feeds, published by a runtime
   producer (e.g. the Astro `audio.*` rAF observer reading an AnalyserNode).
   `amplitude` is 0..1 RMS loudness; `beat` is a 0/1 onset pulse. These are
-  "driven externally" stubs here — `@czap/core` owns the vocabulary and
+  "driven externally" stubs here — `@liteship/core` owns the vocabulary and
   initial value; the host publishes the live samples.

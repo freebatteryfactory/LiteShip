@@ -3,15 +3,15 @@
  * end-to-end. Declares a sceneComposition capsule with a video
  * quantizer, audio bed, crossfade transitions, and a beat-pulsed
  * effect. Compiles via capsule:compile, can render via a (future)
- * czap scene render command.
+ * liteship scene render command.
  *
  * @module
  */
 
-import { defineCapsule, S } from '@czap/core';
-import { Track, Beat, fade, syncTo, compileScene, resolveBeatProjectionToSceneBeats } from '@czap/scene';
-import type { SceneContract, SceneBeat } from '@czap/scene';
-import type { BeatMarkerSet } from '@czap/assets';
+import { defineCapsule, S } from '@liteship/core';
+import { Track, Beat, fade, syncTo, compileScene, resolveBeatProjectionToSceneBeats } from '@liteship/scene';
+import type { SceneContract, SceneBeat } from '@liteship/scene';
+import type { BeatMarkerSet } from '@liteship/assets';
 // The scene's immutable asset registry — assembled in ./assets.ts from the
 // declared capsules. `ref('intro-bed')` validates the id against it (no
 // module-global lookup, no import-order dependence).

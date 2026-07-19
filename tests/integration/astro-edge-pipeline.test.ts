@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import { Boundary } from '@czap/core';
-import { czapMiddleware } from '@czap/astro';
+import { Boundary } from '@liteship/core';
+import { liteshipMiddleware } from '@liteship/astro';
 
 describe('Astro edge host pipeline integration', () => {
   test('resolves hints, tier, theme, and cached outputs through the middleware host path', async () => {
@@ -14,7 +14,7 @@ describe('Astro edge host pipeline integration', () => {
         [768, 'wide'],
       ],
     });
-    const middleware = czapMiddleware({
+    const middleware = liteshipMiddleware({
       edge: {
         theme: ({ tier }) => ({
           prefix: 'brand',
@@ -54,11 +54,11 @@ describe('Astro edge host pipeline integration', () => {
     };
 
     const response = await middleware(context, async () => {
-      const czap = context.locals.czap as Record<string, any>;
+      const liteship = context.locals.liteship as Record<string, any>;
       return new Response(
         JSON.stringify({
-          tiers: czap.tiers,
-          edge: czap.edge,
+          tiers: liteship.tiers,
+          edge: liteship.edge,
         }),
         { status: 200 },
       );

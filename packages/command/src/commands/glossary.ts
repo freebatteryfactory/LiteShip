@@ -5,7 +5,7 @@
  *
  * @module
  */
-import { S, type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
+import { S, type CapsuleCommandResult, type CommandJsonSchema } from '@liteship/core';
 import { defineCommand, failed, ok } from '../registry.js';
 
 /** One ontology term. Mirrors a row in GLOSSARY.md. */
@@ -54,21 +54,14 @@ export const GLOSSARY_ENTRIES: readonly GlossaryEntry[] = [
     term: 'LiteShip',
     category: 'naming',
     definition:
-      'Product and distribution layer. Use this name in READMEs, social posts, and anywhere a reader adopts the framework.',
-    seeAlso: ['CZAP', '@czap/*'],
+      'The one brand: product, distribution, engine, and architecture. Use this name in READMEs, social posts, ADRs, and anywhere a reader adopts the framework.',
+    seeAlso: ['@liteship/*'],
   },
   {
-    term: 'CZAP',
-    category: 'naming',
-    definition:
-      'Engine name (Content-Zoned Adaptive Projection, "see-zap"). Use this in architecture docs, ADRs, and when describing how projection and zones work.',
-    seeAlso: ['LiteShip', 'cast'],
-  },
-  {
-    term: '@czap/*',
+    term: '@liteship/*',
     category: 'naming',
     definition: 'npm namespace. Used in install lines, imports, and package lists. Never renamed in prose.',
-    seeAlso: ['LiteShip', 'CZAP'],
+    seeAlso: ['LiteShip'],
   },
   {
     term: 'boundary',
@@ -176,7 +169,7 @@ export const GLOSSARY_ENTRIES: readonly GlossaryEntry[] = [
     term: 'hull',
     category: 'translator-note',
     definition:
-      'The built `dist/` artifact of a package. "Hull not yet laid" = no dist/ on disk; "Hull check" = the rolled-up status emitted by `czap doctor`.',
+      'The built `dist/` artifact of a package. "Hull not yet laid" = no dist/ on disk; "Hull check" = the rolled-up status emitted by `liteship doctor`.',
     seeAlso: ['keel', 'shake-down'],
   },
   {
@@ -190,7 +183,7 @@ export const GLOSSARY_ENTRIES: readonly GlossaryEntry[] = [
     term: 'cast off',
     category: 'translator-note',
     definition:
-      'Begin the run: leave the dock. Used for first actions after install ("Cast off with: pnpm verify") and for non-blocking states ("you can cast off") in `czap doctor`.',
+      'Begin the run: leave the dock. Used for first actions after install ("Cast off with: pnpm verify") and for non-blocking states ("you can cast off") in `liteship doctor`.',
     seeAlso: ['moored'],
   },
   {
@@ -210,14 +203,14 @@ export const GLOSSARY_ENTRIES: readonly GlossaryEntry[] = [
   {
     term: 'chart',
     category: 'translator-note',
-    definition: 'The verb table (`czap help`). The map of CLI bearings — what verb does what, grouped by phase.',
+    definition: 'The verb table (`liteship help`). The map of CLI bearings — what verb does what, grouped by phase.',
     seeAlso: ['deck plan'],
   },
   {
     term: 'quay',
     category: 'translator-note',
     definition:
-      'The release surface. Where a package ties up before being shipped to npm. "Tied up at the quay" = the package is packed and the capsule is written, awaiting `npm publish`. Used in `czap help` "Ship out (quay-side, release)" and in the release-flow hint.',
+      'The release surface. Where a package ties up before being shipped to npm. "Tied up at the quay" = the package is packed and the capsule is written, awaiting `npm publish`. Used in `liteship help` "Ship out (quay-side, release)" and in the release-flow hint.',
     seeAlso: ['gauntlet'],
   },
   {

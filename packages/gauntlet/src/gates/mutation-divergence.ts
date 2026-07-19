@@ -41,7 +41,7 @@
  * the file.
  *
  * It {@link requireMutation} (and reads the IR for level propagation), so it runs
- * ONLY on the opt-in host path (`czap check --ir --mutate` — the CLI generates +
+ * ONLY on the opt-in host path (`liteship check --ir --mutate` — the CLI generates +
  * runs + injects the facts); the lean MCP/command path does not run it. Composition
  * over inheritance: a `_tag` fold + standalone functions, no class.
  *
@@ -252,7 +252,7 @@ const L1_FILE = 'packages/x/src/a.ts';
 function fixtureIR(): RepoIR {
   return makeRepoIR({
     files: [
-      { id: L4_FILE, contentDigest: PLACEHOLDER_DIGEST, packageName: '@czap/core' },
+      { id: L4_FILE, contentDigest: PLACEHOLDER_DIGEST, packageName: '@liteship/core' },
       { id: L1_FILE, contentDigest: PLACEHOLDER_DIGEST, packageName: null },
     ],
   });

@@ -2,7 +2,7 @@
  * Motion-parity fixture corpus (#130) — a handful of authored motion programs, each
  * lowered to the {@link RuntimeWritePlan} + {@link CssMotionPlan} the differential oracle
  * samples across every target. Programs are built DIRECTLY (no `Reveal` sugar) with
- * `--czap-*` / `opacity` property names so a CSS `property` key equals its runtime `cssVar`
+ * `--liteship-*` / `opacity` property names so a CSS `property` key equals its runtime `cssVar`
  * — the oracle can then compare the CSS leg (property-keyed) against the kernel reference
  * (cssVar-keyed) without a rename step.
  *
@@ -33,7 +33,7 @@ import {
   type ComponentNode,
   type SignalNode,
   type TransitionProgram,
-} from '@czap/core';
+} from '@liteship/core';
 
 const META: CellMeta = {
   created: { wall_ms: 0, counter: 0, node_id: 't' },
@@ -174,8 +174,8 @@ export interface MotionParityFixture {
 
 // -- 1. Single reveal (SPRING) — exercises the 32-sample linear() approximation ---------
 const revealStep = makeStep(
-  { opacity: 0, '--czap-hero-y': '24px' },
-  { opacity: 1, '--czap-hero-y': '0px' },
+  { opacity: 0, '--liteship-hero-y': '24px' },
+  { opacity: 1, '--liteship-hero-y': '0px' },
   420,
   SPRING,
 );
@@ -184,7 +184,7 @@ const revealPlan = interpretTransition(revealGraph, revealStep.transitionId);
 
 // -- 2. Seq of 2 (LINEAR) — opacity over [0,0.25], then x over [0.25,1] ------------------
 const seqA = makeStep({ opacity: 0 }, { opacity: 1 }, 200, LINEAR);
-const seqB = makeStep({ '--czap-hero-x': '0px' }, { '--czap-hero-x': '100px' }, 600, LINEAR);
+const seqB = makeStep({ '--liteship-hero-x': '0px' }, { '--liteship-hero-x': '100px' }, 600, LINEAR);
 const seqGraph = makeGraph([seqA, seqB]);
 const seqProgram: TransitionProgram = {
   kind: 'seq',
@@ -224,8 +224,8 @@ const choiceNarrowPlan = interpretProgram(seqGraph, choiceProgram, { signals: { 
 // A single reveal whose easing is the serialized `easeOutBounce` point list. The native
 // CSS `linear()` and the JS floor read the SAME points → bit-exact Law 4 across targets.
 const pointsBounceStep = makeStep(
-  { opacity: 0, '--czap-hero-y': '24px' },
-  { opacity: 1, '--czap-hero-y': '0px' },
+  { opacity: 0, '--liteship-hero-y': '24px' },
+  { opacity: 1, '--liteship-hero-y': '0px' },
   420,
   POINTS_BOUNCE,
 );
@@ -240,7 +240,7 @@ const pointsBouncePlan = interpretTransition(pointsBounceGraph, pointsBounceStep
 // runtime floor ALWAYS sampled each window at its own easing — this fixture pins that the
 // native/CSS path now matches it too.
 const parEasedA = makeStep({ opacity: 0 }, { opacity: 1 }, 200, LINEAR);
-const parEasedB = makeStep({ '--czap-hero-x': '0px' }, { '--czap-hero-x': '100px' }, 600, EASE);
+const parEasedB = makeStep({ '--liteship-hero-x': '0px' }, { '--liteship-hero-x': '100px' }, 600, EASE);
 const parEasedGraph = makeGraph([parEasedA, parEasedB]);
 const parEasedProgram: TransitionProgram = {
   kind: 'par',
@@ -271,7 +271,7 @@ export const MOTION_PARITY_FIXTURES: readonly MotionParityFixture[] = [
     // Grid-aligned to the 32-sample linear() so the CSS leg carries no extra
     // piecewise-linear interpolation error (0=0/32, 0.5=16/32, 1=32/32).
     sampleTimes: [0, 0.5, 1],
-    terminalPose: { opacity: '1', '--czap-hero-y': '0px' },
+    terminalPose: { opacity: '1', '--liteship-hero-y': '0px' },
   },
   {
     name: 'seq-2-linear',
@@ -280,7 +280,7 @@ export const MOTION_PARITY_FIXTURES: readonly MotionParityFixture[] = [
     cssTiming: LINEAR,
     // begin, the seq seam (0.25), a cancelled-at-0.5 point, terminal.
     sampleTimes: [0, 0.25, 0.5, 1],
-    terminalPose: { opacity: '1', '--czap-hero-x': '100px' },
+    terminalPose: { opacity: '1', '--liteship-hero-x': '100px' },
   },
   {
     name: 'par-2-linear',
@@ -289,7 +289,7 @@ export const MOTION_PARITY_FIXTURES: readonly MotionParityFixture[] = [
     cssTiming: LINEAR,
     // begin, the parallel-overlap point where the short child completes (200/600), 0.5, terminal.
     sampleTimes: [0, 200 / 600, 0.5, 1],
-    terminalPose: { opacity: '1', '--czap-hero-x': '100px' },
+    terminalPose: { opacity: '1', '--liteship-hero-x': '100px' },
   },
   {
     name: 'choice-wide-opacity',
@@ -305,7 +305,7 @@ export const MOTION_PARITY_FIXTURES: readonly MotionParityFixture[] = [
     css: choiceNarrowPlan.css!,
     cssTiming: LINEAR,
     sampleTimes: [0, 0.5, 1],
-    terminalPose: { '--czap-hero-x': '100px' },
+    terminalPose: { '--liteship-hero-x': '100px' },
   },
   {
     name: 'catalog-points-bounce',
@@ -316,7 +316,7 @@ export const MOTION_PARITY_FIXTURES: readonly MotionParityFixture[] = [
     // leg lands exactly on stops — no piecewise-linear interpolation error, and the
     // kernel reference (which now samples the SAME points) equals it bit-for-bit.
     sampleTimes: [0, 0.25, 0.5, 0.75, 1],
-    terminalPose: { opacity: '1', '--czap-hero-y': '0px' },
+    terminalPose: { opacity: '1', '--liteship-hero-y': '0px' },
   },
   {
     name: 'reduced-motion-settle',
@@ -325,7 +325,7 @@ export const MOTION_PARITY_FIXTURES: readonly MotionParityFixture[] = [
     cssTiming: LINEAR,
     // Reduced motion pins t=1; the oracle asserts every target settles to `terminalPose`.
     sampleTimes: [1],
-    terminalPose: { opacity: '1', '--czap-hero-x': '100px' },
+    terminalPose: { opacity: '1', '--liteship-hero-x': '100px' },
     reducedMotion: true,
   },
 ];

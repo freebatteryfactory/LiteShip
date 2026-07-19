@@ -1,15 +1,15 @@
 /**
- * help — friendly usage text for the `czap` CLI. The verb table ("the chart")
- * is PROJECTED from the one canonical command catalog in `@czap/command`,
+ * help — friendly usage text for the `liteship` CLI. The verb table ("the chart")
+ * is PROJECTED from the one canonical command catalog in `@liteship/command`,
  * grouped by each command's `group` (phase) annotation — no hand-maintained
  * command list lives here. Output is human-readable text to stdout (no JSON
- * wrapping); the AI-facing discovery surface is `czap describe`.
+ * wrapping); the AI-facing discovery surface is `liteship describe`.
  *
  * @module
  */
 
-import { COMMAND_CATALOG } from '@czap/command';
-import type { CapsuleCommandDescriptor } from '@czap/core';
+import { COMMAND_CATALOG } from '@liteship/command';
+import type { CapsuleCommandDescriptor } from '@liteship/core';
 
 /** Presentation: group key → human label + chart order. */
 const GROUP_CHART: ReadonlyArray<{ readonly key: string; readonly label: string }> = [
@@ -22,10 +22,10 @@ const GROUP_CHART: ReadonlyArray<{ readonly key: string; readonly label: string 
 
 const HINTS = `Hints (a working deck):
   - First time? Run \`pnpm shakedown\` for the full first-run aggregate.
-  - Stuck? \`czap doctor\` triages your environment; \`czap doctor --fix\` repairs.
+  - Stuck? \`liteship doctor\` triages your environment; \`liteship doctor --fix\` repairs.
   - All commands emit JSON receipts on stdout; pretty output is on stderr.
   - Suppress color: NO_COLOR=1.  Force color in CI logs: FORCE_COLOR=1.
-  - Releasing? \`czap ship\` ties packages up at the quay; \`czap verify\` checks the receipt before they sail.
+  - Releasing? \`liteship ship\` ties packages up at the quay; \`liteship verify\` checks the receipt before they sail.
 
 Docs:
   https://github.com/freebatteryfactory/LiteShip
@@ -55,10 +55,10 @@ function renderChart(catalog: readonly CapsuleCommandDescriptor[]): string {
   return sections.join('\n\n');
 }
 
-const USAGE = `czap — LiteShip CLI
+const USAGE = `liteship — LiteShip CLI
 
 Usage:
-  czap <command> [args]
+  liteship <command> [args]
 
 ${renderChart(COMMAND_CATALOG)}
 

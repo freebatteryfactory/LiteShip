@@ -133,7 +133,7 @@ Optional projection handler for `cachedProjection` arms: derives the
 decoded output from a decoded source. The harness checks determinism
 (same source → deep-equal output) and every declared [Invariant](Invariant.md)
 under random sources. May be async — asset decoders
-(`AssetDecl.decoder` and the `@czap/assets` built-ins) all return
+(`AssetDecl.decoder` and the `@liteship/assets` built-ins) all return
 Promises, so the harness awaits every probe.
 
 #### Parameters

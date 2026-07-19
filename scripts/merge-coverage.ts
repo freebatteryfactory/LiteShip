@@ -4,7 +4,7 @@ import fg from 'fast-glob';
 import libCoverage from 'istanbul-lib-coverage';
 import libReport from 'istanbul-lib-report';
 import reports from 'istanbul-reports';
-import { normalizeRepoPath } from '@czap/audit'; // CUT B5b — one slash-normalize home
+import { normalizeRepoPath } from '@liteship/audit'; // CUT B5b — one slash-normalize home
 import { buildCoverageFacts, buildCoverageMetaArtifact } from './artifact-integrity.js';
 import { ensureArtifactContext } from './artifact-context.js';
 import { writeTextFile } from './audit/shared.js';
@@ -138,7 +138,7 @@ if (!existsSync(nodeCoveragePath)) {
 // remove their node entries before the merge so the browser entry survives.
 // Matched by repo-relative suffix against the absolute coverage keys.
 const BROWSER_AUTHORITATIVE_FILES: readonly string[] = [
-  // @czap/astro browser-boot surfaces — driven by tests/browser/astro-*.test.ts,
+  // @liteship/astro browser-boot surfaces — driven by tests/browser/astro-*.test.ts,
   // never executable in the node (jsdom) pass.
   'packages/astro/src/runtime/directive-boot.ts',
   'packages/astro/src/runtime/inspector.ts',

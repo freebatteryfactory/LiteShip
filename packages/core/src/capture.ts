@@ -29,8 +29,8 @@ export interface CaptureFrame {
 
 /**
  * Minimal encoder contract: `init` to open the encoder, `capture` per frame,
- * `finalize` to flush and return the encoded blob. Implemented by `@czap/web`
- * (WebCodecs) and `@czap/remotion` (Remotion capture).
+ * `finalize` to flush and return the encoded blob. Implemented by `@liteship/web`
+ * (WebCodecs) and `@liteship/remotion` (Remotion capture).
  */
 export interface FrameCapture {
   readonly _tag: 'FrameCapture';

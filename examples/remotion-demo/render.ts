@@ -1,5 +1,5 @@
 /**
- * CLI render script -- bundles the Remotion project and renders CzapDemo to MP4.
+ * CLI render script -- bundles the Remotion project and renders LiteshipDemo to MP4.
  *
  * Usage: tsx render.ts
  *
@@ -11,10 +11,10 @@ import { bundle } from '@remotion/bundler';
 import { renderMedia, selectComposition } from '@remotion/renderer';
 
 const ROOT_ENTRY = path.resolve(import.meta.dirname, 'src/Root.tsx');
-const OUTPUT_PATH = path.resolve(import.meta.dirname, 'out/czap-demo.mp4');
+const OUTPUT_PATH = path.resolve(import.meta.dirname, 'out/liteship-demo.mp4');
 
 async function main(): Promise<void> {
-  console.log('[czap] Bundling Remotion project...');
+  console.log('[liteship] Bundling Remotion project...');
   const bundleLocation = await bundle({
     entryPoint: ROOT_ENTRY,
     onProgress: (progress: number) => {
@@ -24,13 +24,13 @@ async function main(): Promise<void> {
     },
   });
 
-  console.log('[czap] Selecting composition "CzapDemo"...');
+  console.log('[liteship] Selecting composition "LiteshipDemo"...');
   const composition = await selectComposition({
     serveUrl: bundleLocation,
-    id: 'CzapDemo',
+    id: 'LiteshipDemo',
   });
 
-  console.log(`[czap] Rendering ${composition.durationInFrames} frames at ${composition.fps}fps...`);
+  console.log(`[liteship] Rendering ${composition.durationInFrames} frames at ${composition.fps}fps...`);
   await renderMedia({
     composition,
     serveUrl: bundleLocation,
@@ -44,10 +44,10 @@ async function main(): Promise<void> {
     },
   });
 
-  console.log(`\n[czap] Done -> ${OUTPUT_PATH}`);
+  console.log(`\n[liteship] Done -> ${OUTPUT_PATH}`);
 }
 
 main().catch((err) => {
-  console.error('[czap] Render failed:', err);
+  console.error('[liteship] Render failed:', err);
   process.exit(1);
 });

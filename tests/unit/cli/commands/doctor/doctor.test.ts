@@ -7,7 +7,7 @@
  * cannot deterministically hit — specifically the `caution` + pretty path that
  * appends the zsh-paste-trap advisory to stderr.
  *
- * The fixtures are synthetic temp workspaces (name 'czap' to keep the
+ * The fixtures are synthetic temp workspaces (name 'liteship' to keep the
  * maintainer profile) crafted so the verdict is a known `caution` — no
  * dependence on the runner's real environment.
  */
@@ -21,7 +21,7 @@ import { captureCli } from '../../../../integration/cli/capture.js';
 
 const tmps: string[] = [];
 function mkTmp(): string {
-  const dir = mkdtempSync(join(tmpdir(), 'czap-doctor-orch-'));
+  const dir = mkdtempSync(join(tmpdir(), 'liteship-doctor-orch-'));
   tmps.push(dir);
   return dir;
 }
@@ -35,7 +35,7 @@ afterEach(() => {
  * exactly one warn remains. No .git ⇒ git probes report ok-not-a-worktree.
  */
 function writeCautionWorkspace(dir: string): void {
-  writeFileSync(resolve(dir, 'package.json'), JSON.stringify({ name: 'czap', version: '0.0.0', engines: { node: '>=1', pnpm: '>=1' } }));
+  writeFileSync(resolve(dir, 'package.json'), JSON.stringify({ name: 'liteship-monorepo', version: '0.0.0', engines: { node: '>=1', pnpm: '>=1' } }));
   mkdirSync(resolve(dir, 'node_modules'), { recursive: true });
   writeFileSync(resolve(dir, 'node_modules', '.modules.yaml'), 'lockfile: stub\n');
   for (const pkg of ['core', 'cli']) {
@@ -95,7 +95,7 @@ describe('doctor/doctor — orchestration', () => {
     const dir = mkTmp();
     writeFileSync(
       resolve(dir, 'package.json'),
-      JSON.stringify({ name: 'czap', version: '0.0.0', dependencies: { astro: '^6', '@astrojs/cloudflare': '^13' } }),
+      JSON.stringify({ name: 'liteship-monorepo', version: '0.0.0', dependencies: { astro: '^6', '@astrojs/cloudflare': '^13' } }),
     );
     const spy = vi.spyOn(spawnLib, 'spawnArgvCapture').mockResolvedValue({
       exitCode: 0,
@@ -116,7 +116,7 @@ describe('doctor/doctor — orchestration', () => {
     }
   });
 
-  it('a non-czap cwd auto-selects the consumer profile (no maintainer probes)', async () => {
+  it('a non-liteship cwd auto-selects the consumer profile (no maintainer probes)', async () => {
     const dir = mkTmp();
     writeFileSync(resolve(dir, 'package.json'), JSON.stringify({ name: 'consumer-app', version: '1.0.0' }));
     mkdirSync(resolve(dir, 'node_modules'), { recursive: true });
@@ -142,7 +142,7 @@ describe('doctor/doctor — orchestration', () => {
     const dir = mkTmp();
     // dist absent → core.built/cli.built warn; preflight excludes them so the
     // remaining probes drive the verdict.
-    writeFileSync(resolve(dir, 'package.json'), JSON.stringify({ name: 'czap', version: '0.0.0', engines: { node: '>=1', pnpm: '>=1' } }));
+    writeFileSync(resolve(dir, 'package.json'), JSON.stringify({ name: 'liteship-monorepo', version: '0.0.0', engines: { node: '>=1', pnpm: '>=1' } }));
     mkdirSync(resolve(dir, 'node_modules'), { recursive: true });
     writeFileSync(resolve(dir, 'node_modules', '.modules.yaml'), 'x\n');
     const spy = vi.spyOn(spawnLib, 'spawnArgvCapture').mockResolvedValue({
@@ -166,10 +166,10 @@ describe('doctor/doctor — orchestration', () => {
 
   it('--fix re-probes after a fix runs (covers the re-probe arm), no real build', async () => {
     const dir = mkTmp();
-    // A czap workspace with dist/ ABSENT → core.built / cli.built warn (fixable).
+    // A liteship workspace with dist/ ABSENT → core.built / cli.built warn (fixable).
     writeFileSync(
       resolve(dir, 'package.json'),
-      JSON.stringify({ name: 'czap', version: '0.0.0', scripts: { build: 'tsc -b packages/core packages/cli' } }),
+      JSON.stringify({ name: 'liteship-monorepo', version: '0.0.0', scripts: { build: 'tsc -b packages/core packages/cli' } }),
     );
     mkdirSync(resolve(dir, 'node_modules'), { recursive: true });
     writeFileSync(resolve(dir, 'node_modules', '.modules.yaml'), 'x\n');

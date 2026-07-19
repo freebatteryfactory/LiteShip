@@ -1,13 +1,13 @@
-# czap Remotion demo
+# liteship Remotion demo
 
 The last rung of the ladder: the same definitions that style a page render a
 video, headless. A `scale` boundary quantizes a 0–100 progress signal at
 thresholds 0/33/66; each Remotion frame evaluates it, and the resulting
 `CompositeState` drives CSS custom properties (scale, background, foreground)
-on the composition — `useCzapState()` reads the current frame's state from the
+on the composition — `useLiteshipState()` reads the current frame's state from the
 `<Provider>` context.
 
-When installing from npm (outside the monorepo), pin `@czap/*` packages at `^0.18.0`.
+When installing from npm (outside the monorepo), pin `@liteship/*` packages at `^0.18.0`.
 
 ## Run it
 

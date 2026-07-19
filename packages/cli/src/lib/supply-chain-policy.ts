@@ -26,7 +26,7 @@
  * @module
  */
 
-import type { SupplyChainViolation } from '@czap/gauntlet';
+import type { SupplyChainViolation } from '@liteship/gauntlet';
 import type { ParsedLockfile, LockfileImporter } from './lockfile.js';
 
 /** A dependency sanctioned to use a prerelease/range spec, with its reason. */

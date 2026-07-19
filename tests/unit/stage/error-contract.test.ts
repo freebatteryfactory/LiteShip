@@ -1,13 +1,13 @@
-/** @czap/stage error contract */
+/** @liteship/stage error contract */
 import { describe, it, expect } from 'vitest';
-import { sealNode, sealGraph, CanonicalCbor, AddressedDigest, projectionKeys, HLC } from '@czap/core';
-import type { ComponentNode, ProjectionNode, ContentAddress, CellMeta } from '@czap/core';
-import { exportAstroPage } from '@czap/stage';
+import { sealNode, sealGraph, CanonicalCbor, AddressedDigest, projectionKeys, HLC } from '@liteship/core';
+import type { ComponentNode, ProjectionNode, ContentAddress, CellMeta } from '@liteship/core';
+import { exportAstroPage } from '@liteship/stage';
 
 const ts = HLC.increment(HLC.create('test'), 1);
 const meta: CellMeta = { created: ts, updated: ts, version: 1 };
 
-describe('@czap/stage error contract', () => {
+describe('@liteship/stage error contract', () => {
   it('exportAstroPage on a component without states/thresholds names the boundary guard', () => {
     const emptyComponent = sealNode<ComponentNode>({
       _tag: 'DocGraphComponentNode',

@@ -13,7 +13,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import * as fc from 'fast-check';
-import { hasTag, ValidationError } from '@czap/error';
+import { hasTag, ValidationError } from '@liteship/error';
 import { S, decode } from '../../packages/core/src/schema/index.js';
 import type { Schema } from '../../packages/core/src/schema/index.js';
 import {

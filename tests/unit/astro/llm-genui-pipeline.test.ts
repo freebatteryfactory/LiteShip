@@ -5,7 +5,7 @@
 // @vitest-environment jsdom
 
 import { describe, expect, it, vi } from 'vitest';
-import { DEMO_COMPONENT_CATALOG } from '@czap/genui';
+import { DEMO_COMPONENT_CATALOG } from '@liteship/genui';
 import { createLLMRenderPipeline } from '../../../packages/astro/src/runtime/llm-render-pipeline.js';
 
 describe('LLMRenderPipeline.tryRenderGeneratedUI', () => {

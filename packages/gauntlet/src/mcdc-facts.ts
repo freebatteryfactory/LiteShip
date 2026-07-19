@@ -6,8 +6,8 @@
  *
  * This module defines the {@link McdcFacts} INTERFACE and nothing else. Like
  * {@link RepoIR} / {@link MutationFacts} / {@link SupplyChainFacts}, it carries no heavy
- * dependency: `@czap/gauntlet` stays the lean engine, so it never parses a TS AST,
- * generates a condition-mutant, or spawns a test run. A HOST (`@czap/audit`'s
+ * dependency: `@liteship/gauntlet` stays the lean engine, so it never parses a TS AST,
+ * generates a condition-mutant, or spawns a test run. A HOST (`@liteship/audit`'s
  * condition-mutation engine + the CLI's per-mutant vitest runner) does the heavy
  * lifting — decompose every L4 decision into its atomic conditions, mint the
  * force-true/force-false pin per condition, run the covering tests per pin, decide each
@@ -27,7 +27,7 @@
  * DECIDE: the gate names the uncovered condition + which pin survived; the human/agent
  * writes the missing distinguishing test. Sound (a surviving pin is always a real gap,
  * never a false green) and the established condition-mutation approximation of MC/DC
- * (masking-MC/DC for short-circuit decisions — see `@czap/audit`'s `mcdc-engine.ts`).
+ * (masking-MC/DC for short-circuit decisions — see `@liteship/audit`'s `mcdc-engine.ts`).
  *
  * @module
  */

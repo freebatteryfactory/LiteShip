@@ -1,6 +1,6 @@
 /**
  * check (the tasks-vs-gates weld) — the PURE gauntlet engine fold as a finite,
- * structured command. `czap check` runs `litelaunchGauntlet` IN-PROCESS (no
+ * structured command. `liteship check` runs `litelaunchGauntlet` IN-PROCESS (no
  * subprocess, no terminal streaming): it binds the built-in LiteShip gates, the
  * committed assurance map, and the committed waivers, runs the authority ratchet,
  * and returns the {@link Finding}[] work-list plus the single blocking verdict.
@@ -11,15 +11,15 @@
  * Finding[] is exactly the structured work-list a human (CLI) or an agent (MCP)
  * should be able to read and act on without a human in the loop.
  *
- * The engine (`@czap/gauntlet`'s `node:fs` glob + the gate set) is INJECTED via
- * `context.runGauntlet`, never run here, so `@czap/command` stays free of the
+ * The engine (`@liteship/gauntlet`'s `node:fs` glob + the gate set) is INJECTED via
+ * `context.runGauntlet`, never run here, so `@liteship/command` stays free of the
  * filesystem walk and the waiver-expiry clock. The adapter owns the wall-clock
  * `now` (waiver expiry is a calendar comparison — NEVER a monotonic reading).
  *
  * @module
  */
-import { S, type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
-import type { Finding } from '@czap/gauntlet';
+import { S, type CapsuleCommandResult, type CommandJsonSchema } from '@liteship/core';
+import type { Finding } from '@liteship/gauntlet';
 import { capabilityUnavailable, defineCommand, failed, ok, type CommandCapability } from '../registry.js';
 
 /**
@@ -31,7 +31,7 @@ import { capabilityUnavailable, defineCommand, failed, ok, type CommandCapabilit
  * `structuredContent` and the CLI receipt with no separate adapter. `blocked`
  * mirrors the engine's single blocking verdict; `ok` is its negation.
  *
- * The modelled `findings` element faithfully mirrors `@czap/gauntlet`'s `Finding`
+ * The modelled `findings` element faithfully mirrors `@liteship/gauntlet`'s `Finding`
  * EXCEPT its `remediation?` — a heterogeneous non-literal union
  * (`{kind:'patch',…} | {kind:'instruction',…}`) the structural dialect cannot
  * represent soundly (no `oneOf`). `CheckPayload` below keeps the canonical
@@ -75,7 +75,7 @@ export const CheckPayloadSchema = {
 
 /**
  * Structured payload returned by `check`. Mirrors `CheckPayloadSchema` for every
- * field EXCEPT `findings`, which keeps the canonical `@czap/gauntlet` `Finding`
+ * field EXCEPT `findings`, which keeps the canonical `@liteship/gauntlet` `Finding`
  * type (so `remediation` — undescribable in the outputSchema's dialect — stays in
  * the type and is never narrowed away from a consumer). The type is a faithful
  * superset on exactly that one field.

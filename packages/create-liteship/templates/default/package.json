@@ -8,8 +8,8 @@
     "preview": "astro preview"
   },
   "dependencies": {
-    "@czap/astro": "^0.18.0",
-    "@czap/core": "^0.18.0",
+    "@liteship/astro": "^0.18.0",
+    "@liteship/core": "^0.18.0",
     "astro": "^7.0.0",
     "typescript": "^5.7.0"
   }

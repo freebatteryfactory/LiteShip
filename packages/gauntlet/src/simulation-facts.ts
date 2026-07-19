@@ -5,10 +5,10 @@
  *
  * This module defines the {@link SimulationFacts} INTERFACE and nothing else.
  * Like {@link RepoIR} and {@link SupplyChainFacts}, it carries NO heavy
- * dependency: `@czap/gauntlet` stays the lean engine, so it never imports the DST
+ * dependency: `@liteship/gauntlet` stays the lean engine, so it never imports the DST
  * harness, mints a world, runs a scenario, or content-addresses a trace. A HOST
- * (the CLI's `czap check --ir --simulate` path) runs the scenario corpus through
- * the `@czap/core/simulation` harness — `replay`/`assertReplayDeterministic` — and
+ * (the CLI's `liteship check --ir --simulate` path) runs the scenario corpus through
+ * the `@liteship/core/simulation` harness — `replay`/`assertReplayDeterministic` — and
  * hands the engine these flat, already-decided facts. The gate's only job is to
  * FOLD them into Findings at the avionics level (ADR-0012: the lean engine folds
  * facts; the host computes them).
@@ -25,7 +25,7 @@
 
 /**
  * The DST evidence the host supplies — the result of running the scenario corpus
- * through the `@czap/core/simulation` harness. `runs` is EVERY scenario the host
+ * through the `@liteship/core/simulation` harness. `runs` is EVERY scenario the host
  * replayed; an empty/absent `runs` is reported by the gate as an advisory
  * "not-evidenced" finding (honest under-coverage, never a silent green) — see
  * {@link simulationDeterminismGate}.

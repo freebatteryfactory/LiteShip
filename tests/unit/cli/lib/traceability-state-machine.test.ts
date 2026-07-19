@@ -19,13 +19,13 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { isTaggedError } from '@czap/error';
+import { isTaggedError } from '@liteship/error';
 import { buildTraceabilityFacts } from '../../../../packages/cli/src/lib/traceability.js';
 
 let root: string;
 
 beforeEach(() => {
-  root = mkdtempSync(join(tmpdir(), 'czap-trace-'));
+  root = mkdtempSync(join(tmpdir(), 'liteship-trace-'));
   mkdirSync(join(root, 'traceability'), { recursive: true });
   mkdirSync(join(root, 'tests', 'property'), { recursive: true });
 });

@@ -451,7 +451,7 @@ const valid = await Receipt.verifyMAC(signedEnvelope, key);
 ## Example
 
 ```ts
-import { Receipt, HLC } from '@czap/core';
+import { Receipt, HLC } from '@liteship/core';
 
 const ts = HLC.increment(HLC.create('node-1'), Date.now());
 const chain = await Receipt.buildChain([

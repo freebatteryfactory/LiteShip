@@ -5,13 +5,13 @@
  * for pure repo-path slash normalization — but Wave 7 (S7.1) split it into TWO
  * D9b-PARTITIONED PARITY HOMES that are byte-identical and drift-guarded (the
  * parity assertion below), NOT two independent implementations:
- *   • `@czap/core`'s browser-safe `path-normalize` leaf — the home for browser/
+ *   • `@liteship/core`'s browser-safe `path-normalize` leaf — the home for browser/
  *     core/vite/astro/scripts consumers;
- *   • `@czap/audit`'s `policy.ts` — the LEAN-AUDIT home, because D9b forbids
- *     `@czap/audit` from importing the heavy `@czap/core` runtime (audit stays
- *     downstream-installable) and B5b forbids `@czap/core` from importing
- *     `@czap/audit`, so neither can re-export the other — the parity copy is the
- *     only D9b-legal shared contract. `import … from '@czap/audit'` (the cli's
+ *   • `@liteship/audit`'s `policy.ts` — the LEAN-AUDIT home, because D9b forbids
+ *     `@liteship/audit` from importing the heavy `@liteship/core` runtime (audit stays
+ *     downstream-installable) and B5b forbids `@liteship/core` from importing
+ *     `@liteship/audit`, so neither can re-export the other — the parity copy is the
+ *     only D9b-legal shared contract. `import … from '@liteship/audit'` (the cli's
  *     pinned path) resolves to the audit twin.
  * B5b still does NOT force-merge semantically distinct path operations (regex
  * prefix-trim, URL↔fs round-trip, dry-run redaction, /@fs browser URL, test-alias
@@ -20,16 +20,16 @@
  * These tests (1) pin the normalizer's cross-platform behavior, (2) cage the seam
  * so a second inline slash-normalizer can't drift into a published package, (3)
  * pin the two homes byte-identical (the parity drift-guard), and (4) prove no
- * package-graph poisoning (@czap/core ↛ @czap/audit; @czap/audit keeps zero heavy
- * @czap edges — the D9b standalone law: only @czap/error/gauntlet/canonical).
+ * package-graph poisoning (@liteship/core ↛ @liteship/audit; @liteship/audit keeps zero heavy
+ * @liteship edges — the D9b standalone law: only @liteship/error/gauntlet/canonical).
  *
  * @module
  */
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { resolve, join } from 'node:path';
-import { normalizeRepoPath } from '@czap/audit';
-import { normalizeRepoPath as normalizeRepoPathCore } from '@czap/core';
+import { normalizeRepoPath } from '@liteship/audit';
+import { normalizeRepoPath as normalizeRepoPathCore } from '@liteship/core';
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
 
@@ -78,9 +78,9 @@ describe('B5b — the two D9b-partitioned slash-normalize homes (the cage)', () 
   // definitions (lean-audit + browser-core), and the DOCUMENTED distinct ops that
   // are not repo-path normalization.
   const ALLOWLIST = new Set([
-    'packages/audit/src/policy.ts', // the LEAN-AUDIT normalizeRepoPath home (D9b: audit can't import @czap/core)
+    'packages/audit/src/policy.ts', // the LEAN-AUDIT normalizeRepoPath home (D9b: audit can't import @liteship/core)
     'packages/core/src/path-normalize.ts', // the BROWSER-CORE normalizeRepoPath home (parity twin; browser consumers import this)
-    'packages/core/src/config.ts', // toTestAliases: vitest-alias URL join (NOT repo-path normalization; @czap/core must not import @czap/audit)
+    'packages/core/src/config.ts', // toTestAliases: vitest-alias URL join (NOT repo-path normalization; @liteship/core must not import @liteship/audit)
     'packages/vite/src/plugin.ts', // /@fs/ browser URL construction (a URL segment, not a filesystem path)
   ]);
   const SLASH_REPLACE = /\.replace\(\/\\\\\/g,\s*['"]\/['"]\)/;
@@ -112,37 +112,37 @@ describe('B5b — the two D9b-partitioned slash-normalize homes (the cage)', () 
 });
 
 describe('B5b — no package-graph poisoning', () => {
-  it('@czap/core does not import @czap/audit', () => {
+  it('@liteship/core does not import @liteship/audit', () => {
     const importers = walkTs(resolve(REPO, 'packages/core/src')).filter((f) =>
-      /from\s+['"]@czap\/audit/.test(readFileSync(f, 'utf8')),
+      /from\s+['"]@liteship\/audit/.test(readFileSync(f, 'utf8')),
     );
     expect(importers.map(rel)).toEqual([]);
   });
 
-  it('@czap/audit imports only the blessed standalone leaves (D9b + Slice B law)', () => {
+  it('@liteship/audit imports only the blessed standalone leaves (D9b + Slice B law)', () => {
     // D9b: the audit engine stays downstream-installable — it must not pull the
     // heavy monorepo runtime. The blessed edges are STANDALONE leaves that each
     // install from npm exactly like a third-party dep, so they do not poison the
     // package graph:
-    //   • @czap/error    — the zero-dep error algebra (the @czap/_spine analogue);
-    //   • @czap/gauntlet — Slice B (B1): the lean rigor engine DEFINES the RepoIR
+    //   • @liteship/error    — the zero-dep error algebra (the @liteship/_spine analogue);
+    //   • @liteship/gauntlet — Slice B (B1): the lean rigor engine DEFINES the RepoIR
     //     interface; audit is the HOST that BUILDS it (buildRepoIR). Gauntlet deps
-    //     only @czap/error + fast-glob, so audit → gauntlet is acyclic;
-    //   • @czap/canonical — the blake3 content-address kernel for per-file digests
-    //     (deps only @czap/error + @noble/hashes), acyclic.
+    //     only @liteship/error + fast-glob, so audit → gauntlet is acyclic;
+    //   • @liteship/canonical — the blake3 content-address kernel for per-file digests
+    //     (deps only @liteship/error + @noble/hashes), acyclic.
     // The audit engine references NO LiteShip-local contract (ADR-0012): it must
-    // NOT import @czap/command — not even the pure `/invariants` subpath — because
+    // NOT import @liteship/command — not even the pure `/invariants` subpath — because
     // that bakes LiteShip-LOCAL config (the NO_DEFAULT_EXPORT rule + its exclude
     // list) into the downstream-installable engine. The repo-IR builder emits only
     // STRUCTURAL AST facts (is-default-export / bare-throw, which any TS repo has)
     // and exposes a `FactOracle` injection hook; LiteShip's repo-LOCAL
     // invariant-regex oracle is built + INJECTED by the CLI HOST (which legitimately
-    // deps @czap/command). Any @czap import beyond the three blessed leaves would
+    // deps @liteship/command). Any @liteship import beyond the three blessed leaves would
     // poison the package graph and is forbidden.
-    const ALLOWED = /from\s+['"]@czap\/(?:error|gauntlet|canonical)['"]/;
+    const ALLOWED = /from\s+['"]@liteship\/(?:error|gauntlet|canonical)['"]/;
     const importers = walkTs(resolve(REPO, 'packages/audit/src')).filter((f) => {
       const text = readFileSync(f, 'utf8');
-      const lines = text.split('\n').filter((l) => /from\s+['"]@czap\//.test(l));
+      const lines = text.split('\n').filter((l) => /from\s+['"]@liteship\//.test(l));
       return lines.some((l) => !ALLOWED.test(l));
     });
     expect(importers.map(rel)).toEqual([]);

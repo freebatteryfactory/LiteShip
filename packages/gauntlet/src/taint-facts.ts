@@ -4,10 +4,10 @@
  *
  * This module defines the {@link TaintFacts} INTERFACE and nothing else. Like
  * {@link RepoIR}, {@link SupplyChainFacts}, and {@link MutationFacts}, it carries
- * no heavy dependency: `@czap/gauntlet` stays the lean engine, so it never builds
+ * no heavy dependency: `@liteship/gauntlet` stays the lean engine, so it never builds
  * a `ts.Program`, walks a checker, or traces a dataflow graph. A HOST
- * (`@czap/audit`'s taint oracle, classified by the LiteShip-LOCAL source/sink/
- * sanitizer registry the `@czap/cli` host injects) does the heavy lifting — trace
+ * (`@liteship/audit`'s taint oracle, classified by the LiteShip-LOCAL source/sink/
+ * sanitizer registry the `@liteship/cli` host injects) does the heavy lifting — trace
  * each value from a SOURCE call to a SINK call argument over the type-checker +
  * symbol references — and hands the engine these flat, already-traced facts. The
  * gate's only job is to FOLD them into Findings at the right (propagated)
@@ -31,7 +31,7 @@
 /**
  * The host-supplied taint evidence over one run. The taint oracle is HEAVY (a
  * whole-corpus `ts.Program` + a checker walk + reference queries), so production
- * runs it OPT-IN (`czap check --ir --taint`), cached; when the host did not run
+ * runs it OPT-IN (`liteship check --ir --taint`), cached; when the host did not run
  * taint this whole capability is simply ABSENT from the GateContext and the gate
  * is not in the set (no cost, no noise). When present it carries every traced
  * flow plus the depth the trace actually covered — the HONEST under-approximation

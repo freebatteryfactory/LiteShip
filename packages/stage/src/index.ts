@@ -1,5 +1,5 @@
 /**
- * `@czap/stage` — the verb / orchestration layer.
+ * `@liteship/stage` — the verb / orchestration layer.
  *
  * Core stays pure (nouns: the addressed `DocumentGraph` IR and its kernel).
  * Stage owns the verbs that CAST one graph to many carriers, reusing the

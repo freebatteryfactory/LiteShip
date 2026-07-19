@@ -1,7 +1,7 @@
 /**
  * A6 — the Cell↔DOM boundary is a hard structural law. The reactive value
  * primitives are value→wire, never value→DOM: DOM *application* lives only in
- * @czap/web `Morph`. This guard pins that seam at the source so a future agent
+ * @liteship/web `Morph`. This guard pins that seam at the source so a future agent
  * can't quietly grow a `el.textContent = …` write into the core value layer.
  *
  * Two tiers:

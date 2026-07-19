@@ -25,7 +25,7 @@
  *    change to HOW artifacts are generated invalidates the whole corpus, exactly
  *    like the toolchain-digest keystone.
  *
- * Both digests are blake3 (via the `@czap/core` `AddressedDigest` over canonical
+ * Both digests are blake3 (via the `@liteship/core` `AddressedDigest` over canonical
  * CBOR bytes), NOT bare fnv1a — fnv1a is the 32-bit display id and collides at
  * repo scale. Neither digest mixes in any volatile field (no `Date.now`, no
  * mtime, no run id); `generatedAt` stays a separate volatile manifest field,
@@ -43,18 +43,18 @@
 
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { InvariantViolationError } from '@czap/error';
-import { AddressedDigest, canonicalAddressBytes } from '@czap/core';
+import { InvariantViolationError } from '@liteship/error';
+import { AddressedDigest, canonicalAddressBytes } from '@liteship/core';
 
 /**
  * THE PATH CONTRACT for the provenance digests: callers pass REPO-RELATIVE POSIX
  * paths. This is the manifest invariant — `scripts/capsule-compile.ts` normalizes
- * every path through `@czap/audit`'s `normalizeRepoPath` (the single B5b slash-
+ * every path through `@liteship/audit`'s `normalizeRepoPath` (the single B5b slash-
  * normalize home) BEFORE writing `reports/capsule-manifest.json`, so every path
- * that flows back into these digests is already forward-slashed. `@czap/command`
+ * that flows back into these digests is already forward-slashed. `@liteship/command`
  * therefore does NOT (and must not) re-normalize: it never imports the heavy
- * `@czap/audit` TS-compiler/glob engine — the ADR-0012/D7b host-injection
- * boundary that keeps `@czap/mcp-server` lean.
+ * `@liteship/audit` TS-compiler/glob engine — the ADR-0012/D7b host-injection
+ * boundary that keeps `@liteship/mcp-server` lean.
  *
  * `assertRepoRelativePosix` is a GUARD, not a normalizer: it fails LOUD with a
  * tagged error if a caller violates the contract (a backslash slipped through),

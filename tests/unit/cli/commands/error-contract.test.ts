@@ -2,7 +2,7 @@
  * CLI error-contract upgrades:
  *  - emitError carries an optional `hint` field (the literal next thing to
  *    type — the doctor-check convention generalized into the envelope).
- *  - `czap mcp` without @czap/mcp-server installed emits the structured
+ *  - `liteship mcp` without @liteship/mcp-server installed emits the structured
  *    one-JSON-line-on-stderr envelope instead of a raw ERR_MODULE_NOT_FOUND
  *    stack trace.
  */
@@ -10,8 +10,8 @@ import { describe, it, expect, vi } from 'vitest';
 import { emitError } from '../../../../packages/cli/src/receipts.js';
 import { readCliVersion } from '../../../../packages/cli/src/commands/version.js';
 
-vi.mock('@czap/mcp-server', () => {
-  const err = new Error("Cannot find package '@czap/mcp-server'");
+vi.mock('@liteship/mcp-server', () => {
+  const err = new Error("Cannot find package '@liteship/mcp-server'");
   (err as Error & { code: string }).code = 'ERR_MODULE_NOT_FOUND';
   throw err;
 });
@@ -35,13 +35,13 @@ async function captureStderr<T>(fn: () => Promise<T> | T): Promise<{ result: T; 
 
 describe('emitError hint field', () => {
   it('includes hint in the stderr JSON envelope when supplied', async () => {
-    const { stderr } = await captureStderr(() => emitError('demo', 'something broke', 'Type this: czap doctor'));
+    const { stderr } = await captureStderr(() => emitError('demo', 'something broke', 'Type this: liteship doctor'));
     const receipt = JSON.parse(stderr.trim());
     expect(receipt).toMatchObject({
       status: 'failed',
       command: 'demo',
       error: 'something broke',
-      hint: 'Type this: czap doctor',
+      hint: 'Type this: liteship doctor',
     });
     expect(typeof receipt.timestamp).toBe('string');
   });
@@ -53,7 +53,7 @@ describe('emitError hint field', () => {
   });
 });
 
-describe('czap mcp without @czap/mcp-server installed', () => {
+describe('liteship mcp without @liteship/mcp-server installed', () => {
   it('emits a structured install-teaching error instead of a raw module-not-found stack', async () => {
     const { result, stderr } = await captureStderr(() => run(['mcp']));
     expect(result).toBe(1);
@@ -62,15 +62,15 @@ describe('czap mcp without @czap/mcp-server installed', () => {
     const receipt = JSON.parse(lines[lines.length - 1]!);
     expect(receipt.status).toBe('failed');
     expect(receipt.command).toBe('mcp');
-    expect(receipt.error).toBe('@czap/mcp-server is not installed');
+    expect(receipt.error).toBe('@liteship/mcp-server is not installed');
     // Pin the LAW, not the literal: the hint pins the sibling MCP server to the
     // CLI's OWN minor line, so it tracks every release bump (a hard-coded `0.1.x`
     // is exactly what drifted — Codex P2, #45). Assert the shape too, so a broken
     // readCliVersion can't make this vacuous.
     const [major, minor] = readCliVersion().split('.');
     expect(receipt.hint).toBe(
-      `Install it next to @czap/cli on the same version line: pnpm add @czap/mcp-server@${major}.${minor}.x`,
+      `Install it next to @liteship/cli on the same version line: pnpm add @liteship/mcp-server@${major}.${minor}.x`,
     );
-    expect(receipt.hint).toMatch(/pnpm add @czap\/mcp-server@\d+\.\d+\.x$/);
+    expect(receipt.hint).toMatch(/pnpm add @liteship\/mcp-server@\d+\.\d+\.x$/);
   });
 });

@@ -1,5 +1,5 @@
 {
-  "name": "@czap/showcase",
+  "name": "@liteship/showcase",
   "private": true,
   "type": "module",
   "scripts": {
@@ -9,10 +9,10 @@
   },
   "dependencies": {
     "@astrojs/cloudflare": "^14.0.0",
-    "@czap/core": "workspace:*",
-    "@czap/astro": "workspace:*",
-    "@czap/compiler": "workspace:*",
-    "@czap/edge": "workspace:*",
+    "@liteship/core": "workspace:*",
+    "@liteship/astro": "workspace:*",
+    "@liteship/compiler": "workspace:*",
+    "@liteship/edge": "workspace:*",
     "astro": "^7.0.0",
     "typescript": "^5.7.0"
   }

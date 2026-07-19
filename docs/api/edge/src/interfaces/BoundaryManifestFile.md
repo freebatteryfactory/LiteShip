@@ -8,15 +8,15 @@
 
 Defined in: [edge/src/manifest.ts:225](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/manifest.ts#L225)
 
-Versioned envelope written to `czap-boundary-manifest.json` by the
-`@czap/astro` integration at `astro:build:done` -- for hosts that read
-the manifest from disk instead of importing `virtual:czap/boundaries`.
+Versioned envelope written to `liteship-boundary-manifest.json` by the
+`@liteship/astro` integration at `astro:build:done` -- for hosts that read
+the manifest from disk instead of importing `virtual:liteship/boundaries`.
 
 ## Properties
 
 ### \_tag
 
-> `readonly` **\_tag**: `"CzapBoundaryManifest"`
+> `readonly` **\_tag**: `"LiteshipBoundaryManifest"`
 
 Defined in: [edge/src/manifest.ts:226](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/manifest.ts#L226)
 

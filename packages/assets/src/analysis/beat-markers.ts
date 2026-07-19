@@ -8,16 +8,16 @@
  * @module
  */
 
-import { defineCapsule, S } from '@czap/core';
-import type { CapsuleDef } from '@czap/core';
+import { defineCapsule, S } from '@liteship/core';
+import type { CapsuleDef } from '@liteship/core';
 import { AssetBytes, type AssetRegistry } from '../contract.js';
 import { audioDecoder } from '../decoders/audio.js';
-import type { BeatMarkerSet as _BeatMarkerSet } from '@czap/_spine';
+import type { BeatMarkerSet as _BeatMarkerSet } from '@liteship/_spine';
 
 /**
  * Detected beat markers + overall BPM estimate — the raw asset/sample-space
  * projection carried by the `asset:beats` capability. Aliased to the canonical
- * spine contract (CUT A5) so the shape lives in exactly one place; `@czap/scene`
+ * spine contract (CUT A5) so the shape lives in exactly one place; `@liteship/scene`
  * consumes the same family via {@link BeatMarkerSet}'s sibling `BeatComponent`.
  */
 export type BeatMarkerSet = _BeatMarkerSet;

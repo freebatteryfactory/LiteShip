@@ -16,7 +16,7 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Cell, Derived, CellKernel } from '@czap/core';
+import { Cell, Derived, CellKernel } from '@liteship/core';
 
 /** Subscribe a named collector to a derived; return the live delivery array. */
 const collect = <T>(derived: Derived.Shape<T>): { readonly values: T[]; readonly dispose: () => void } => {

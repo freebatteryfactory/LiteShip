@@ -13,7 +13,7 @@
  * sorted, content-addressed catalogue of mutants for a source file. The
  * kill/survive VERDICT (the second oracle's answer) lives in
  * {@link evaluateMutant}; the divergence GATE that folds survivors into Findings
- * lives in `@czap/gauntlet`'s `gates/mutation-divergence.ts`. Same ADR-0012
+ * lives in `@liteship/gauntlet`'s `gates/mutation-divergence.ts`. Same ADR-0012
  * boundary as the IR / supply-chain: the heavy `ts`-AST work lives HERE (audit, the
  * host); the lean gauntlet gate FOLDS the facts the host injects.
  *
@@ -43,7 +43,7 @@
  * @module
  */
 import ts from 'typescript';
-import { CanonicalCbor, addressedDigestOf, type IntegrityDigest } from '@czap/canonical';
+import { CanonicalCbor, addressedDigestOf, type IntegrityDigest } from '@liteship/canonical';
 
 /** UTF-8 encoder reused across the module (stateless, deterministic). */
 const UTF8 = new TextEncoder();

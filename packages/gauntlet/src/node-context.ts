@@ -2,7 +2,7 @@
  * The real-filesystem {@link GateContext} — the one bridge from the pure core to
  * the actual repo.
  *
- * Everything else in `@czap/gauntlet` (finding / gate / engine / assurance /
+ * Everything else in `@liteship/gauntlet` (finding / gate / engine / assurance /
  * authority) is deliberately filesystem-free: a gate reads ONLY through a
  * {@link GateContext}, so it runs against an in-memory fixture and against the
  * real tree unchanged. This module is the SOLE place that touches `node:fs` and
@@ -50,13 +50,13 @@ const CONFIRMER_CORPUS_GLOBS: readonly string[] = ['tests/**/*.ts'];
  * - `repoRoot` is returned verbatim.
  *
  * The optional `ir` is the INJECTED repo-IR capability (Slice B): a host (the
- * CLI, via `@czap/audit`'s `ts.Program`) builds it and threads it through so an
+ * CLI, via `@liteship/audit`'s `ts.Program`) builds it and threads it through so an
  * IR-fold gate can read `context.ir`. The gauntlet stays lean — it RECEIVES the
  * IR, never builds one. When omitted, `ir` is absent and regex gates run
  * unchanged (back-compat).
  *
  * The optional `supplyChain` is the INJECTED supply-chain facts capability
- * (Slice C, the avionics tier): a host (the CLI's `@czap/cli` analyzer) parses
+ * (Slice C, the avionics tier): a host (the CLI's `@liteship/cli` analyzer) parses
  * the lockfile, builds the SBOM, decodes the ShipCapsule, and scans the
  * workflows, then threads the decided {@link SupplyChainFacts} through so the
  * `supplyChainGate` can fold them. Same lean-engine pattern as `ir` — the
@@ -65,7 +65,7 @@ const CONFIRMER_CORPUS_GLOBS: readonly string[] = ['tests/**/*.ts'];
  * @param repoRoot Absolute root the gate's paths resolve against.
  * @param globs Repo-relative glob patterns selecting the gate's file scope.
  * The optional `mutation` is the INJECTED mutation-facts capability (Slice C, the
- * avionics tier — mutation-as-divergence): a host (`@czap/audit`'s mutation engine +
+ * avionics tier — mutation-as-divergence): a host (`@liteship/audit`'s mutation engine +
  * the CLI's per-mutant vitest runner) generates the mutants, evaluates each, and
  * folds the verdicts into {@link MutationFacts}, then threads them through so the
  * `mutationDivergenceGate` can fold them. Same lean-engine pattern as `ir` /
@@ -74,8 +74,8 @@ const CONFIRMER_CORPUS_GLOBS: readonly string[] = ['tests/**/*.ts'];
  *
  * The optional `simulation` is the INJECTED DST (deterministic-simulation) facts
  * capability (the avionics tier — the determinism spine): a host (the CLI's
- * `czap check --ir --simulate` path) drives the scenario corpus through the
- * `@czap/core/simulation` harness (replaying each seed twice, content-addressing the
+ * `liteship check --ir --simulate` path) drives the scenario corpus through the
+ * `@liteship/core/simulation` harness (replaying each seed twice, content-addressing the
  * two byte-exact traces) and folds the verdicts into {@link SimulationFacts}, then
  * threads them through so the `simulationDeterminismGate` can fold them. Same
  * lean-engine pattern as `ir` / `supplyChain` / `mutation` — the gauntlet RECEIVES

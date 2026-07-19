@@ -126,19 +126,19 @@ describe('graph-query gap replay — chain selection (#133-full)', () => {
       transition: { base, resultId: result } as DiscreteStateTransition,
     });
     const entries: PatchReceiptEntry[] = [];
-    let frontier = ['czap:base'];
+    let frontier = ['liteship:base'];
     for (let depth = 0; depth < 12; depth++) {
       const next: string[] = [];
       for (const base of frontier) {
-        const left = `czap:L${depth}-${base}-0`;
-        const right = `czap:L${depth}-${base}-1`;
+        const left = `liteship:L${depth}-${base}-0`;
+        const right = `liteship:L${depth}-${base}-1`;
         entries.push(mkFast(base, left), mkFast(base, right));
         next.push(left, right);
       }
       frontier = next;
     }
     const start = performance.now();
-    const chain = chainPatchesBetween('czap:base' as never, 'czap:unreachable' as never, entries);
+    const chain = chainPatchesBetween('liteship:base' as never, 'liteship:unreachable' as never, entries);
     expect(chain).toEqual([]);
     expect(performance.now() - start).toBeLessThan(200);
   });

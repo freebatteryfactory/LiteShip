@@ -10,10 +10,10 @@
  * Surfaces under test:
  *   1. core kernel        — `rawIndexF32`
  *   2. core scalar        — `Boundary.evaluate` (string) and `Boundary.evaluateResult().index`
- *   3. quantizer delegate — `evaluate` from `@czap/quantizer` (now re-exports core)
+ *   3. quantizer delegate — `evaluate` from `@liteship/quantizer` (now re-exports core)
  *   4. worker inline      — `EVALUATE_THRESHOLDS_SOURCE` executed via `new Function`
  *   5. JS batch fallback  — `fallbackKernels.batchBoundaryEval`
- *   6. host startup twin  — `evaluateRegistrationState` (`@czap/worker`)
+ *   6. host startup twin  — `evaluateRegistrationState` (`@liteship/worker`)
  *   7. oracle             — `simWasmIndex` (faithful f32 WASM simulation)
  *
  * This file is the "same source → same state across the worker/render seam"
@@ -23,8 +23,8 @@
  */
 import { describe, it, test, expect } from 'vitest';
 import fc from 'fast-check';
-import { Boundary, rawIndexF32, EVALUATE_THRESHOLDS_SOURCE } from '@czap/core';
-import { evaluate as quantizerEvaluate } from '@czap/quantizer';
+import { Boundary, rawIndexF32, EVALUATE_THRESHOLDS_SOURCE } from '@liteship/core';
+import { evaluate as quantizerEvaluate } from '@liteship/quantizer';
 import { fallbackKernels } from '../../packages/core/src/wasm-fallback.js';
 import { evaluateRegistrationState } from '../../packages/worker/src/compositor-startup.js';
 

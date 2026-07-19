@@ -15,7 +15,7 @@
  * one identical curve.
  *
  * Plus: NO per-frame graph mutation (continuous law), exactly one discrete crossing
- * at the threshold, `czap:uniform-update` each frame; reduced-motion settles to t=1
+ * at the threshold, `liteship:uniform-update` each frame; reduced-motion settles to t=1
  * with no tween; teardown frees the store and re-init does not double-hold.
  */
 
@@ -43,8 +43,8 @@ import {
   type EntityNode,
   type ComponentNode,
   type SignalNode,
-} from '@czap/core';
-import { MotionCompiler } from '@czap/compiler';
+} from '@liteship/core';
+import { MotionCompiler } from '@liteship/compiler';
 import motionDirective from '../../../packages/astro/src/client-directives/motion.js';
 import { parseMotionProgram } from '../../../packages/astro/src/runtime/motion.js';
 import type { SerializedMotionProgram } from '../../../packages/astro/src/runtime/motion.js';
@@ -78,10 +78,10 @@ const PAR_META: CellMeta = {
 };
 
 /**
- * A mixed-easing OVERLAPPING `par` on ONE target `hero`: opacity tweens `linear`, `--czap-hero-y`
+ * A mixed-easing OVERLAPPING `par` on ONE target `hero`: opacity tweens `linear`, `--liteship-hero-y`
  * tweens `ease`, both over the shared window. The lowerer denies this native ownership (#148,
- * ADR-0041); the compiler emits no `czap-motion-*` binding, so a CAPABLE browser reports no native
- * ownership (getComputedStyle carries no czap-motion name) and the per-window RUNTIME floor renders
+ * ADR-0041); the compiler emits no `liteship-motion-*` binding, so a CAPABLE browser reports no native
+ * ownership (getComputedStyle carries no liteship-motion name) and the per-window RUNTIME floor renders
  * each child at its OWN easing. Returns the serialized program the directive drives PLUS the plan's
  * `css` (so the test derives the element's real animation-name from the compiled output — a true
  * core → compiler → runtime chain, not a hand-picked stub value).
@@ -156,7 +156,7 @@ function buildMixedEasingParProgram(): { serialized: SerializedMotionProgram; cs
   // opacity animates LINEAR; y animates EASE — the two children DISAGREE on easing over their
   // shared window, the exact #148 mixed-overlap case.
   const a = mkStep({ opacity: 0 }, { opacity: 1 }, { kind: 'linear' });
-  const b = mkStep({ '--czap-hero-y': '24px' }, { '--czap-hero-y': '0px' }, { kind: 'ease' });
+  const b = mkStep({ '--liteship-hero-y': '24px' }, { '--liteship-hero-y': '0px' }, { kind: 'ease' });
   const nodes: DocumentGraphNode[] = [signal, component, entity, a.fp, a.tp, a, b.fp, b.tp, b];
   const edges: DocumentGraphEdge[] = [{ from: signal.id, to: component.id, type: 'seq' }];
   const g: DocumentGraph = sealGraph({ _tag: 'DocumentGraph', _version: 1, meta: PAR_META, nodes, edges } as Omit<
@@ -219,17 +219,17 @@ function stepScroll(offset: number): void {
 
 function makeEl(program: SerializedMotionProgram | string): HTMLElement {
   const el = document.createElement('div');
-  el.setAttribute('data-czap-boundary', 'hero');
-  el.setAttribute('data-czap-motion-program', typeof program === 'string' ? program : JSON.stringify(program));
+  el.setAttribute('data-liteship-boundary', 'hero');
+  el.setAttribute('data-liteship-motion-program', typeof program === 'string' ? program : JSON.stringify(program));
   document.body.appendChild(el);
   return el;
 }
 
 function readY(el: HTMLElement): number {
-  return Number.parseFloat(el.style.getPropertyValue('--czap-hero-y'));
+  return Number.parseFloat(el.style.getPropertyValue('--liteship-hero-y'));
 }
 function readColor(el: HTMLElement): number[] {
-  const m = /^rgb\(([^)]+)\)$/.exec(el.style.getPropertyValue('--czap-hero-color'));
+  const m = /^rgb\(([^)]+)\)$/.exec(el.style.getPropertyValue('--liteship-hero-color'));
   return m![1]!.split(' ').map(Number);
 }
 
@@ -250,7 +250,7 @@ describe('client:motion — JS floor is the production driver (retires LATENT)',
   });
 
   afterEach(() => {
-    document.querySelectorAll<HTMLElement>('*').forEach((el) => el.dispatchEvent(new CustomEvent('czap:teardown')));
+    document.querySelectorAll<HTMLElement>('*').forEach((el) => el.dispatchEvent(new CustomEvent('liteship:teardown')));
     for (const restore of restores.splice(0).reverse()) restore();
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
@@ -261,7 +261,7 @@ describe('client:motion — JS floor is the production driver (retires LATENT)',
     const el = makeEl(buildProgram());
     const uniforms: number = 0;
     const uniformFrames: unknown[] = [];
-    el.addEventListener('czap:uniform-update', (e) => uniformFrames.push((e as CustomEvent).detail));
+    el.addEventListener('liteship:uniform-update', (e) => uniformFrames.push((e as CustomEvent).detail));
 
     motionDirective(noop, {}, el); // seed frame at progress 0 runs synchronously
 
@@ -281,7 +281,7 @@ describe('client:motion — JS floor is the production driver (retires LATENT)',
       expect(Number(el.style.opacity)).toBeCloseTo(cssLinearStopAt(offset), 4);
     }
     void uniforms;
-    // czap:uniform-update fired once PER FRAME (seed + 4 steps = 5 leaf writes).
+    // liteship:uniform-update fired once PER FRAME (seed + 4 steps = 5 leaf writes).
     expect(uniformFrames).toHaveLength(5);
     // Every frame carried the css leaf payload — never a graph payload.
     for (const detail of uniformFrames) {
@@ -294,20 +294,20 @@ describe('client:motion — JS floor is the production driver (retires LATENT)',
     const el = makeEl(buildProgram());
     const graphStates: Array<{ state: string }> = [];
     let uniformCount = 0;
-    el.addEventListener('czap:graph-state', (e) => graphStates.push((e as CustomEvent).detail));
-    el.addEventListener('czap:uniform-update', () => uniformCount++);
+    el.addEventListener('liteship:graph-state', (e) => graphStates.push((e as CustomEvent).detail));
+    el.addEventListener('liteship:uniform-update', () => uniformCount++);
 
     motionDirective(noop, {}, el);
     // Seed: initial discrete 'before' applied once.
-    expect(el.getAttribute('data-czap-state')).toBe('before');
+    expect(el.getAttribute('data-liteship-state')).toBe('before');
 
     stepScroll(0.25); // below threshold — no crossing
-    expect(el.getAttribute('data-czap-state')).toBe('before');
+    expect(el.getAttribute('data-liteship-state')).toBe('before');
     stepScroll(0.5); // crosses 0.5 → 'after'
     stepScroll(0.75); // stays past — no re-cross
     stepScroll(1);
 
-    expect(el.getAttribute('data-czap-state')).toBe('after');
+    expect(el.getAttribute('data-liteship-state')).toBe('after');
     // EXACTLY ONE crossing to 'after' (sparse) — not one per frame.
     expect(graphStates.filter((s) => s.state === 'after')).toHaveLength(1);
     // Continuous leaf writes moved EVERY frame (seed + 4 steps = 5), far more than
@@ -327,12 +327,12 @@ describe('client:motion — JS floor is the production driver (retires LATENT)',
 
     const el = makeEl(buildProgram('settle'));
     let uniformCount = 0;
-    el.addEventListener('czap:uniform-update', () => uniformCount++);
+    el.addEventListener('liteship:uniform-update', () => uniformCount++);
 
     motionDirective(noop, {}, el);
 
     // Settled to the FINAL semantic state + endpoint values, no tween.
-    expect(el.getAttribute('data-czap-state')).toBe('after');
+    expect(el.getAttribute('data-liteship-state')).toBe('after');
     expect(Number(el.style.opacity)).toBe(1);
     expect(readY(el)).toBe(0);
     expect(readColor(el)).toEqual([255, 255, 255]);
@@ -347,20 +347,20 @@ describe('client:motion — JS floor is the production driver (retires LATENT)',
   test('teardown frees the store and re-init does not double-hold', () => {
     const el = makeEl(buildProgram());
     let uniformCount = 0;
-    el.addEventListener('czap:uniform-update', () => uniformCount++);
+    el.addEventListener('liteship:uniform-update', () => uniformCount++);
 
     motionDirective(noop, {}, el); // seed = 1
     stepScroll(0.25); // = 2
     expect(uniformCount).toBe(2);
 
     // Teardown: the driver stops — a further scroll writes nothing.
-    el.dispatchEvent(new CustomEvent('czap:teardown'));
+    el.dispatchEvent(new CustomEvent('liteship:teardown'));
     stepScroll(0.5);
     expect(uniformCount).toBe(2);
 
     // Re-init: re-arms a SINGLE fresh driver (dispose-before-register). One scroll
     // ⇒ exactly ONE new write, not two — proof the old registration was freed.
-    el.dispatchEvent(new CustomEvent('czap:reinit')); // seed on reinit = +1 → 3
+    el.dispatchEvent(new CustomEvent('liteship:reinit')); // seed on reinit = +1 → 3
     expect(uniformCount).toBe(3);
     stepScroll(0.75); // exactly one more → 4 (not 5)
     expect(uniformCount).toBe(4);
@@ -368,26 +368,26 @@ describe('client:motion — JS floor is the production driver (retires LATENT)',
 
   test('native timeline CSS owns the CONTINUOUS scrub, but the DISCRETE crossing still fires', () => {
     vi.stubGlobal('CSS', { supports: () => true, escape: (s: string) => s });
-    // Simulate the emitted MotionCompiler CSS: this element carries a czap-motion
+    // Simulate the emitted MotionCompiler CSS: this element carries a liteship-motion
     // animation bound to a scroll/view timeline, so native CSS actually owns the scrub.
-    vi.stubGlobal('getComputedStyle', () => ({ animationName: 'czap-motion-hero-before-after' }));
+    vi.stubGlobal('getComputedStyle', () => ({ animationName: 'liteship-motion-hero-before-after' }));
     const el = makeEl(buildProgram());
     let uniformCount = 0;
     const graphStates: Array<{ state: string }> = [];
-    el.addEventListener('czap:uniform-update', () => uniformCount++);
-    el.addEventListener('czap:graph-state', (e) => graphStates.push((e as CustomEvent).detail));
+    el.addEventListener('liteship:uniform-update', () => uniformCount++);
+    el.addEventListener('liteship:graph-state', (e) => graphStates.push((e as CustomEvent).detail));
 
     motionDirective(noop, {}, el);
     // First paint: discrete initial state set; NO continuous leaf writes (CSS owns those).
-    expect(el.getAttribute('data-czap-state')).toBe('before');
+    expect(el.getAttribute('data-liteship-state')).toBe('before');
     expect(uniformCount).toBe(0);
 
     // Scroll past the threshold: CSS keyframes cannot flip the semantic state, so the JS
-    // threshold observer MUST — data-czap-state advances + czap:graph-state fires — while
+    // threshold observer MUST — data-liteship-state advances + liteship:graph-state fires — while
     // the continuous leaf writes stay idle (opacity is never written by the floor).
     stepScroll(0.5);
     stepScroll(1);
-    expect(el.getAttribute('data-czap-state')).toBe('after');
+    expect(el.getAttribute('data-liteship-state')).toBe('after');
     expect(graphStates.some((s) => s.state === 'after')).toBe(true);
     expect(uniformCount).toBe(0);
     expect(el.style.opacity).toBe('');
@@ -402,7 +402,7 @@ describe('client:motion — JS floor is the production driver (retires LATENT)',
     vi.stubGlobal('getComputedStyle', () => ({ animationName: 'none' }));
     const el = makeEl(buildProgram());
     let uniformCount = 0;
-    el.addEventListener('czap:uniform-update', () => uniformCount++);
+    el.addEventListener('liteship:uniform-update', () => uniformCount++);
 
     motionDirective(noop, {}, el);
     // The floor ran: the seed frame wrote leaf values, so first paint is NOT stuck.
@@ -414,21 +414,21 @@ describe('client:motion — JS floor is the production driver (retires LATENT)',
 
   test('#148 E2E: a mixed-easing par is denied native ownership, so a capable browser runs the floor for BOTH children', () => {
     // The full core → compiler → runtime chain. The lowerer denies the mixed-easing par native
-    // ownership; the compiler emits no `czap-motion-*` binding; a CAPABLE browser therefore reports
+    // ownership; the compiler emits no `liteship-motion-*` binding; a CAPABLE browser therefore reports
     // no native ownership and the per-window floor renders each child at its OWN easing (ADR-0041).
     const { serialized, css } = buildMixedEasingParProgram();
     expect(css.nativeTimeline).toEqual({ eligible: false, reason: 'mixed-easing-overlap' });
 
     // Compile with a scroll timeline and DERIVE the element's real animation-name from the output —
-    // there is no ownership binding, so a capable browser's getComputedStyle carries no czap-motion
+    // there is no ownership binding, so a capable browser's getComputedStyle carries no liteship-motion
     // name (we assert that, then feed it to the runtime rather than hand-picking 'none').
     const compiled = MotionCompiler.compile({ plan: css, scrollTimeline: { range: ['0%', '100%'] } });
-    const boundAnimationName = /animation-name:\s*(czap-motion-[\w-]+)/.exec(compiled.scrollTimeline)?.[1];
+    const boundAnimationName = /animation-name:\s*(liteship-motion-[\w-]+)/.exec(compiled.scrollTimeline)?.[1];
     expect(boundAnimationName).toBeUndefined();
     const computedAnimationName = boundAnimationName ?? 'none';
 
     // Simulate a CAPABLE browser (animation-timeline supported) that nonetheless carries no
-    // czap-motion name for this element (the compiled reality above).
+    // liteship-motion name for this element (the compiled reality above).
     vi.stubGlobal('CSS', { supports: () => true, escape: (s: string) => s });
     vi.stubGlobal('getComputedStyle', () => ({ animationName: computedAnimationName }));
 
@@ -439,13 +439,13 @@ describe('client:motion — JS floor is the production driver (retires LATENT)',
 
     const el = makeEl(serialized);
     let uniformCount = 0;
-    el.addEventListener('czap:uniform-update', () => uniformCount++);
+    el.addEventListener('liteship:uniform-update', () => uniformCount++);
 
     motionDirective(noop, {}, el);
     // The floor RUNS (native ownership was denied): first paint wrote both children, not stuck.
     expect(uniformCount).toBe(1);
     expect(el.style.opacity).not.toBe('');
-    expect(el.style.getPropertyValue('--czap-hero-y')).not.toBe('');
+    expect(el.style.getPropertyValue('--liteship-hero-y')).not.toBe('');
 
     // Scrub to completion: both children reach their terminal values through the floor.
     stepScroll(0.5);
@@ -524,11 +524,11 @@ describe('client:motion — JS floor is the production driver (retires LATENT)',
       }));
       const el = makeEl(buildChainProgram('settle'));
       let uniformCount = 0;
-      el.addEventListener('czap:uniform-update', () => uniformCount++);
+      el.addEventListener('liteship:uniform-update', () => uniformCount++);
 
       motionDirective(noop, {}, el);
       // Terminal semantic state + every window at its `to` — the whole chain settled.
-      expect(el.getAttribute('data-czap-state')).toBe('after');
+      expect(el.getAttribute('data-liteship-state')).toBe('after');
       expect(Number(el.style.opacity)).toBe(1);
       expect(readY(el)).toBe(0);
       expect(uniformCount).toBe(1);

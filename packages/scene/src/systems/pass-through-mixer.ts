@@ -1,5 +1,5 @@
 /**
- * PassThroughMixer — czap's only shipped mixer. Forwards each audio
+ * PassThroughMixer — liteship's only shipped mixer. Forwards each audio
  * entity's Volume/Pan components verbatim to a receipt sink. Proves
  * the mix vocabulary + system-contract wiring end-to-end without
  * performing any signal processing. Real DSP is user-provided.
@@ -7,7 +7,7 @@
  * @module
  */
 
-import type { System } from '@czap/core';
+import type { System } from '@liteship/core';
 
 /** Mix receipt shape emitted by PassThroughMixer per entity per tick. */
 export interface MixReceipt {

@@ -3,7 +3,7 @@
 #
 # These are SYSTEM LAWS (determinism / CRDT convergence / content-address identity
 # / assurance propagation / hermeticity), NOT the code-style banned-pattern rules in
-# @czap/command's INVARIANTS (NO_DEFAULT_EXPORT &c.) — do not conflate them.
+# @liteship/command's INVARIANTS (NO_DEFAULT_EXPORT &c.) — do not conflate them.
 #
 # RULE: only enroll an invariant that has a REAL proving test. The trace must be
 # genuine — never fabricate a law, never enroll one with no proof. The matching
@@ -83,7 +83,7 @@ invariants:
     level: L4
     category: determinism
   - id: INV-DST-NO-AMBIENT-ENTROPY
-    law: "The DST harness reads time/randomness ONLY from the injected @czap/core substrate (manualClock / seededRng) — no ambient Date.now / performance.now / Math.random in its code."
+    law: "The DST harness reads time/randomness ONLY from the injected @liteship/core substrate (manualClock / seededRng) — no ambient Date.now / performance.now / Math.random in its code."
     level: L4
     category: determinism
 

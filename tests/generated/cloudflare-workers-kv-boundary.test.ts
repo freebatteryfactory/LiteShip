@@ -9,8 +9,8 @@ import { contentAddressOf } from '../../packages/core/src/content-address.js';
 import { scaledTimeout } from '../../vitest.shared.js';
 
 describe('cloudflare.workers-kv-boundary', () => {
-  // UNIT LANE — pure round-trip equality. The adapter's native <-> czap boundary
-  // is its 'input' schema; czap's canonical serialization is the
+  // UNIT LANE — pure round-trip equality. The adapter's native <-> liteship boundary
+  // is its 'input' schema; liteship's canonical serialization is the
   // round trip. capsule:compile resolved this schema as arbitrary-derivable, so we
   // sample it via the canonical schemaToArbitrary walker (never a hand-built
   // fixture), encode -> decode through CanonicalCbor, and assert structure is
@@ -19,7 +19,7 @@ describe('cloudflare.workers-kv-boundary', () => {
   const cap = cloudflareAdapterCapsule as { input: unknown };
   const arb = schemaToArbitrary(cap.input as never) as fc.Arbitrary<unknown>;
 
-  it('round-trip equality: native -> czap -> native preserves structure', () => {
+  it('round-trip equality: native -> liteship -> native preserves structure', () => {
     fc.assert(
       fc.property(arb, (native) => {
         const back = decode(CanonicalCbor.encode(native));

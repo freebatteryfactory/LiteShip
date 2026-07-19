@@ -8,8 +8,8 @@
  * @module
  */
 
-import type { Theme } from '@czap/core';
-import { ThemeCSSCompiler } from '@czap/compiler';
+import type { Theme } from '@liteship/core';
+import { ThemeCSSCompiler } from '@liteship/compiler';
 import { normalizeCssLineEndings } from './normalize-css-eol.js';
 import { blankCssCommentsAndStrings, lineOfOffset, parseFlatDeclarations } from './css-scan.js';
 
@@ -78,7 +78,7 @@ export function parseThemeBlocks(css: string, sourceFile: string): readonly Them
 }
 
 // ---------------------------------------------------------------------------
-// Compiler (delegates to @czap/compiler ThemeCSSCompiler)
+// Compiler (delegates to @liteship/compiler ThemeCSSCompiler)
 // ---------------------------------------------------------------------------
 
 /**

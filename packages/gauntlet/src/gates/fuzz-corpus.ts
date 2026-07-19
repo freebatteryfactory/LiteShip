@@ -6,7 +6,7 @@
  * DocumentGraph, a model-proposed GraphPatch, a published ShipCapsule, a CBOR
  * payload, an HLC stamp). Each such decoder must satisfy ONE invariant under ANY
  * input: it either returns a typed value or FAILS CLOSED with a tagged
- * `@czap/error` — it NEVER crashes (a raw untagged throw), hangs, misparses, or
+ * `@liteship/error` — it NEVER crashes (a raw untagged throw), hangs, misparses, or
  * POLLUTES `Object.prototype` (the known `__proto__` CVE class). The host's
  * decode fuzzer (the `tests/fuzz` harness — `fast-check` over the committed
  * corpus + a fixed, seeded count of generated inputs) PROVES that per decoder by
@@ -42,7 +42,7 @@ const RULE_NS = 'gauntlet/fuzz-corpus';
 
 /** Human label for each cardinal violation class — woven into the finding title/detail. */
 const CLASS_LABEL: Readonly<Record<DecodeViolationClass, string>> = {
-  crashed: 'a raw untagged crash (not a fail-closed @czap/error)',
+  crashed: 'a raw untagged crash (not a fail-closed @liteship/error)',
   polluted: 'a prototype pollution (Object.prototype was mutated by the decode — the __proto__ CVE class)',
   misparsed: 'a misparse (a malformed input produced a value instead of failing closed)',
 };
@@ -67,19 +67,19 @@ function violationFinding(fact: DecoderFuzzFact): Finding {
       `The decoder "${fact.decoderId}" failed the fail-closed-or-typed invariant on a fuzz input: ${CLASS_LABEL[cls]}. ` +
       `Reproducer: ${source}. ${why}. The decode surface ingests UNTRUSTED serialized bytes, so this is a security ` +
       `finding on the trust spine — a decoder must NEVER crash, hang, misparse, or pollute Object.prototype; it must ` +
-      `return a typed value or fail closed with a tagged @czap/error. The engine picks no winner; reproduce it from "${source}".`,
+      `return a typed value or fail closed with a tagged @liteship/error. The engine picks no winner; reproduce it from "${source}".`,
     location: { file: fact.decoderId },
     remediation: {
       kind: 'instruction',
       description:
-        'Make the decoder fail closed on the offending input — return a typed value or throw ONE tagged @czap/error.',
+        'Make the decoder fail closed on the offending input — return a typed value or throw ONE tagged @liteship/error.',
       steps: [
         `Reproduce: replay the source \`${source}\` through the \`tests/fuzz\` harness against "${fact.decoderId}" (the fuzz is deterministic — the seed/seed-id reproduces the input byte-exact).`,
         cls === 'polluted'
           ? 'Close the pollution: a decoded map key (__proto__ / constructor / prototype) must become an OWN data property via Object.defineProperty, never a bare `out[key] = value` that walks the prototype setter.'
           : cls === 'crashed'
-            ? 'Close the crash: wrap the offending read so every malformed-input path raises a tagged @czap/error (ParseError) instead of a raw TypeError/RangeError/stack-overflow throw.'
-            : 'Close the misparse: a malformed input that currently RETURNS a value must instead fail closed — tighten the reader so the structural/version check rejects it with a tagged @czap/error.',
+            ? 'Close the crash: wrap the offending read so every malformed-input path raises a tagged @liteship/error (ParseError) instead of a raw TypeError/RangeError/stack-overflow throw.'
+            : 'Close the misparse: a malformed input that currently RETURNS a value must instead fail closed — tighten the reader so the structural/version check rejects it with a tagged @liteship/error.',
         'Promote the reproducer to a PERMANENT corpus seed (the deopt→test slot in `tests/fixtures/fuzz-corpus`) so the fixed bug can never silently regress, then re-run the fuzzer — the violation must clear.',
       ],
     },

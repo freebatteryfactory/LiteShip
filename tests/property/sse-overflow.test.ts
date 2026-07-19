@@ -17,9 +17,9 @@
 
 import { describe, test, expect, afterEach, vi } from 'vitest';
 import fc from 'fast-check';
-import { Diagnostics, SSE_BUFFER_SIZE } from '@czap/core';
-import { SSE } from '@czap/web';
-import type { SSEMessage } from '@czap/web';
+import { Diagnostics, SSE_BUFFER_SIZE } from '@liteship/core';
+import { SSE } from '@liteship/web';
+import type { SSEMessage } from '@liteship/web';
 import { applyOverflow, extractCoalesceKey, defaultOverflowPolicy } from '../../packages/web/src/stream/sse-pure.js';
 import { MockEventSource } from '../helpers/mock-event-source.js';
 
@@ -33,7 +33,7 @@ const tokenMessage = (n: number): SSEMessage => ({ type: 'batch', data: `tok:${n
 /** An id-keyed, idempotent patch (a newer version supersedes the older). */
 const patchMessage = (id: string, version: number): SSEMessage => ({
   type: 'patch',
-  data: `<div data-czap-id="${id}">v${version}</div>`,
+  data: `<div data-liteship-id="${id}">v${version}</div>`,
 });
 
 const isTokenData = (data: unknown): data is string => typeof data === 'string' && data.startsWith('tok:');
@@ -73,9 +73,9 @@ describe('applyOverflow — coalesce-by-id safety invariants', () => {
     expect(result.buffer).toEqual([tokenMessage(7), patchMessage('a', 2)]);
   });
 
-  test('a single-quoted data-czap-id patch is still keyed (both quote styles coalesce)', () => {
-    const doubleQuoted: SSEMessage = { type: 'patch', data: `<div data-czap-id="hero">v1</div>` };
-    const singleQuoted: SSEMessage = { type: 'patch', data: `<div data-czap-id='hero'>v2</div>` };
+  test('a single-quoted data-liteship-id patch is still keyed (both quote styles coalesce)', () => {
+    const doubleQuoted: SSEMessage = { type: 'patch', data: `<div data-liteship-id="hero">v1</div>` };
+    const singleQuoted: SSEMessage = { type: 'patch', data: `<div data-liteship-id='hero'>v2</div>` };
     const dqKey = extractCoalesceKey(doubleQuoted);
     const sqKey = extractCoalesceKey(singleQuoted);
     // Both quote styles are valid HTML — a single-quoted addressed patch must NOT be
@@ -85,14 +85,14 @@ describe('applyOverflow — coalesce-by-id safety invariants', () => {
   });
 
   test('the coalesce key comes from a real attribute, not a substring in text or another attribute', () => {
-    // data-czap-id appears only inside a title attribute's VALUE and as text — never as
+    // data-liteship-id appears only inside a title attribute's VALUE and as text — never as
     // a real attribute — so it must NOT produce a key (fail-safe: treated as keyless).
     const decoy: SSEMessage = {
       type: 'patch',
-      data: `<div title='literal data-czap-id="x"'>data-czap-id="y"</div>`,
+      data: `<div title='literal data-liteship-id="x"'>data-liteship-id="y"</div>`,
     };
     expect(extractCoalesceKey(decoy)).toBeNull();
-    const real: SSEMessage = { type: 'patch', data: `<div data-czap-id="hero">x</div>` };
+    const real: SSEMessage = { type: 'patch', data: `<div data-liteship-id="hero">x</div>` };
     expect(extractCoalesceKey(real)).not.toBeNull();
   });
 
@@ -249,7 +249,7 @@ describe('SSE saturation diagnostics (BITE)', () => {
     const client = SSE.create({ url: 'http://localhost/sse' });
     const es = MockEventSource.instances[0]!;
 
-    // Keyless patches (data {i} has no data-czap-id) -> drop-oldest
+    // Keyless patches (data {i} has no data-liteship-id) -> drop-oldest
     // fallback once the buffer saturates at SSE_BUFFER_SIZE.
     for (let i = 0; i < SSE_BUFFER_SIZE + 5; i++) {
       es.simulateMessage(JSON.stringify({ type: 'patch', data: { i } }));
@@ -257,7 +257,7 @@ describe('SSE saturation diagnostics (BITE)', () => {
 
     const saturationEvents = events.filter((e) => e.code === 'sse-buffer-saturated');
     expect(saturationEvents).toHaveLength(1);
-    expect(saturationEvents[0]!.source).toBe('czap/web.sse');
+    expect(saturationEvents[0]!.source).toBe('liteship/web.sse');
 
     const bp = client.backpressure;
     expect(bp.dropping).toBe(true);

@@ -292,8 +292,8 @@ export function runStructureAudit(
     if (cached !== undefined) return cached;
     // Seed the discovery with the already-discovered package names so its fixpoint
     // re-seeds from THEIR roots — that's how a pnpm/npm-nested dep that lives only
-    // under the importer's own node_modules (e.g. @czap/error nested under
-    // @czap/core) is reached. A bare [target] lookup from repoRoot would miss it.
+    // under the importer's own node_modules (e.g. @liteship/error nested under
+    // @liteship/core) is reached. A bare [target] lookup from repoRoot would miss it.
     const installed =
       discoverInstalledPackageRoots(profile.repoRoot, [...discoveredSeed, target]).packageRoots[target] != null;
     consumerInstalled.set(target, installed);
@@ -373,7 +373,7 @@ export function runStructureAudit(
               rule: 'default-export',
               severity: 'warning',
               title: 'Default export found in package source',
-              summary: 'czap standardizes on named exports; this default export should be justified or removed.',
+              summary: 'liteship standardizes on named exports; this default export should be justified or removed.',
               location: {
                 file: record.relativePath,
                 line,
@@ -559,7 +559,7 @@ export function runStructureAudit(
         }
       }
 
-      // Dynamic import — `import('@czap/...')`. The static branches above only
+      // Dynamic import — `import('@liteship/...')`. The static branches above only
       // visit import/export DECLARATIONS, so a dynamic package import would slip
       // past the manifest audit entirely (the seam the cli↔mcp cycle hid behind).
       // A1-T3: surface pkg→pkg dynamic imports of a workspace package that the

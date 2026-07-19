@@ -12,7 +12,7 @@ Defined in: [compiler/src/token-tailwind.ts:127](https://github.com/freebatteryf
 
 Token Tailwind compiler namespace.
 
-Adapts a `@czap/core` token set to Tailwind v4's CSS-first theming
+Adapts a `@liteship/core` token set to Tailwind v4's CSS-first theming
 pipeline by emitting a single `@theme { }` block with the category
 prefixes Tailwind expects (`--color-`, `--spacing-`, `--font-`, …).
 

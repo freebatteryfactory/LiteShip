@@ -4,10 +4,10 @@
  *
  * This is the verb/orchestration layer. It owns no identity kernel of its own:
  * every content address is minted through `CanonicalCbor.encode` →
- * `AddressedDigest.of` (the `@czap/core` kernel, ADR-0003/0011), and every
- * caster it drives already EXISTS — `CSSCompiler.compile` (`@czap/compiler`),
- * `resolveInitialState`/`satelliteAttrs` (`@czap/astro`), `VideoRenderer.make`
- * over a `Compositor` (`@czap/core`). Stage reinvents none of them; it only
+ * `AddressedDigest.of` (the `@liteship/core` kernel, ADR-0003/0011), and every
+ * caster it drives already EXISTS — `CSSCompiler.compile` (`@liteship/compiler`),
+ * `resolveInitialState`/`satelliteAttrs` (`@liteship/astro`), `VideoRenderer.make`
+ * over a `Compositor` (`@liteship/core`). Stage reinvents none of them; it only
  * walks the graph and binds the casters' outputs back to the graph's source.
  *
  * The shared-source hash is the **DocumentGraph.digest** itself — not a hash of
@@ -33,8 +33,8 @@ import type {
   ReceiptEnvelope,
   ContentAddress,
   Millis,
-} from '@czap/core';
-import type { AddressedDigest } from '@czap/core';
+} from '@liteship/core';
+import type { AddressedDigest } from '@liteship/core';
 import {
   CanonicalCbor,
   AddressedDigest as AddressedDigestNS,
@@ -45,10 +45,10 @@ import {
   Receipt,
   TypedRef,
   HLC,
-} from '@czap/core';
-import { ValidationError } from '@czap/error';
-import { CSSCompiler } from '@czap/compiler';
-import { resolveInitialState, satelliteAttrs } from '@czap/astro';
+} from '@liteship/core';
+import { ValidationError } from '@liteship/error';
+import { CSSCompiler } from '@liteship/compiler';
+import { resolveInitialState, satelliteAttrs } from '@liteship/astro';
 // `captureVideo` is the real WebCodecs/Canvas egress for the video carrier. It
 // requires OffscreenCanvas / createImageBitmap, which are not present in a
 // headless Node test env (see packages/web/src/capture/pipeline.ts). We import
@@ -58,8 +58,8 @@ import { resolveInitialState, satelliteAttrs } from '@czap/astro';
 // encode, so the digest is a true content address of the produced frames —
 // the byte-encode of the codec is the INJECTED seam (browser: WebCodecs via
 // `captureVideo`; node: the ffmpeg `FrameEncoder` adapter in `./ffmpeg-encoder`).
-import { escapeHtml } from '@czap/web';
-import type { captureVideo } from '@czap/web';
+import { escapeHtml } from '@liteship/web';
+import type { captureVideo } from '@liteship/web';
 
 // ---------------------------------------------------------------------------
 // FrameEncoder — the injectable byte-encode seam (two real backends, one shape)
@@ -88,7 +88,7 @@ export interface EncodedVideo {
  * snapshots into real encoded video bytes. Stage's CORE owns no encoder — this
  * is INJECTED at the call site so the pure graph-walk never imports a codec:
  *
- *  - browser/worker: WebCodecs over an OffscreenCanvas (`@czap/web` capture);
+ *  - browser/worker: WebCodecs over an OffscreenCanvas (`@liteship/web` capture);
  *  - node/headless: the ffmpeg child-process adapter in `./ffmpeg-encoder`.
  *
  * Both are real backends of this one shape; neither lives in `dual-export.ts`.
@@ -489,9 +489,9 @@ async function childReceipt(
   graph: DocumentGraph,
 ): Promise<ReceiptEnvelope> {
   // TypedRef.create / Receipt.createEnvelope are now Promise-first (throwing
-  // tagged @czap/error), so this is a plain async function — the Effect.gen +
+  // tagged @liteship/error), so this is a plain async function — the Effect.gen +
   // yield* harness is gone, the receipt kernel identical.
-  const payload: TypedRef.Shape = await TypedRef.create(`czap/stage.export.${carrier}`, {
+  const payload: TypedRef.Shape = await TypedRef.create(`liteship/stage.export.${carrier}`, {
     carrier,
     exportId: exportNode.id,
     artifactDigest: exportNode.artifactDigest.display_id,
@@ -503,7 +503,7 @@ async function childReceipt(
     `stage.export.${carrier}`,
     { type: 'artifact', id: exportNode.id },
     payload,
-    HLC.increment(HLC.create('czap-stage'), 1),
+    HLC.increment(HLC.create('liteship-stage'), 1),
     Receipt.GENESIS,
   );
 }
@@ -541,7 +541,7 @@ export async function dualExport(graph: DocumentGraph): Promise<DualExportResult
   const astroReceipt = await childReceipt('astro-page', astro, graph);
   const videoReceipt = await childReceipt('video', video, graph);
 
-  const mergePayload: TypedRef.Shape = await TypedRef.create('czap/stage.dual-export.merge', {
+  const mergePayload: TypedRef.Shape = await TypedRef.create('liteship/stage.dual-export.merge', {
     sharedSourceDigest: sharedSourceDigest.display_id,
     sharedSourceIntegrity: sharedSourceDigest.integrity_digest,
     graphId: graph.id,
@@ -553,7 +553,7 @@ export async function dualExport(graph: DocumentGraph): Promise<DualExportResult
     'stage.dual-export',
     { type: 'artifact', id: graph.id },
     mergePayload,
-    HLC.increment(HLC.create('czap-stage'), 2),
+    HLC.increment(HLC.create('liteship-stage'), 2),
     [astroReceipt.hash, videoReceipt.hash],
   );
 
@@ -595,13 +595,13 @@ export interface DualExportNodeResult extends DualExportResult {
  * headless, identical to the browser path.
  *
  * Stage's core imports no codec: `encode` is injected. In node, wire
- * `ffmpegFrameEncoder()` from `@czap/stage/ffmpeg` (env-gate with
+ * `ffmpegFrameEncoder()` from `@liteship/stage/ffmpeg` (env-gate with
  * `ffmpegEncodeAvailable()` first); in a browser wrapper, wire WebCodecs.
  *
  * @example
  * ```ts
- * import { dualExportNode } from '@czap/stage';
- * import { ffmpegFrameEncoder, ffmpegEncodeAvailable } from '@czap/stage/ffmpeg';
+ * import { dualExportNode } from '@liteship/stage';
+ * import { ffmpegFrameEncoder, ffmpegEncodeAvailable } from '@liteship/stage/ffmpeg';
  *
  * if (ffmpegEncodeAvailable()) {
  *   const r = await dualExportNode(graph, ffmpegFrameEncoder());

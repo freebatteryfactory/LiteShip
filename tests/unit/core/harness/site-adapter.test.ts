@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { defineCapsule, S } from '@czap/core';
-import { resetCapsuleCatalog } from '@czap/core/testing';
-import * as Harness from '@czap/core/harness';
+import { defineCapsule, S } from '@liteship/core';
+import { resetCapsuleCatalog } from '@liteship/core/testing';
+import * as Harness from '@liteship/core/harness';
 
 /**
  * Lane-aware siteAdapter harness contract (LAWS, not implementation strings):
@@ -69,7 +69,7 @@ describe('generateSiteAdapter (lane-aware, declared-integration)', () => {
     expect(out.integrationFile ?? '').toContain('host capability');
     // The coverage link's teeth are emitted (the suite ref + needle).
     expect(out.integrationFile ?? '').toContain('tests/integration/demo-host.test.ts');
-    // REAL bench: times the pure native -> czap -> native round trip over the
+    // REAL bench: times the pure native -> liteship -> native round trip over the
     // resolved round-trip schema — no not-applicable marker, no bench.skip.
     expect(out.benchFile).not.toContain('// BENCH-NOT-APPLICABLE:');
     expect(out.benchFile).toContain('demo.wired');

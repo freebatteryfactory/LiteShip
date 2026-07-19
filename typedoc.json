@@ -41,7 +41,7 @@
   "hidePageHeader": false,
   "hideGenerator": true,
   "externalSymbolLinkMappings": {
-    "@czap/core": {
+    "@liteship/core": {
       "Diagnostics": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/variables/Diagnostics.md",
       "DiagnosticsSink": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/DiagnosticsSink.md",
       "DiscreteStateTransition": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-transition.ts",
@@ -61,7 +61,7 @@
       "Clock": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Clock.md",
       "Rng": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Rng.md",
       "LadderTarget": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/LadderTarget.md",
-      "CzapValidationError": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/classes/CzapValidationError.md",
+      "LiteshipValidationError": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/classes/LiteshipValidationError.md",
       "FaultDecl.trigger": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts",
       "EscalationSubject": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsules/escalation-choose-rung.ts",
       "mintValidated": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/validated-output.ts",
@@ -87,13 +87,13 @@
     "@types/node": {
       "__global.AbortController": "https://developer.mozilla.org/en-US/docs/Web/API/AbortController"
     },
-    "@czap/error": {
+    "@liteship/error": {
       "ValidationError": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts",
       "ParseError": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts",
       "InvariantViolationError": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts",
       "HostCapabilityError": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts"
     },
-    "@czap/gauntlet": {
+    "@liteship/gauntlet": {
       "RepoIR": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts",
       "Fact": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts",
       "Fact.value": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts",
@@ -108,32 +108,32 @@
       "GauntletResult": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/engine.ts",
       "CapabilityLinkFacts": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/capability-link-facts.ts"
     },
-    "@czap/command": {
+    "@liteship/command": {
       "AuditEngineFinding": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts"
     },
-    "@czap/_spine": {
+    "@liteship/_spine": {
       "GeneratedUINode": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/genui.d.ts",
       "ComponentCatalog.catalogHash": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/genui.d.ts"
     },
-    "@czap/worker": {
+    "@liteship/worker": {
       "MetricsMessage": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/worker/src/interfaces/MetricsMessage.md",
       "_makeRing": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/spsc-ring.ts"
     },
-    "@czap/vite": {
+    "@liteship/vite": {
       "CAST_TARGETS": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/boundary-manifest.ts"
     },
-    "@czap/detect": {
+    "@liteship/detect": {
       "ExtendedDeviceCapabilities": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md",
       "CapAxis": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/detect/src/type-aliases/CapAxis.md"
     },
-    "@czap/scene": {
+    "@liteship/scene": {
       "CANONICAL_SYSTEM_COUNT": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/runtime.ts",
       "DEFAULT_MIX_RECEIPT_CAP": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/runtime.ts"
     },
-    "@czap/edge": {
+    "@liteship/edge": {
       "KVNamespace": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/edge/src/interfaces/KVNamespace.md"
     },
-    "@czap/mcp-server": {
+    "@liteship/mcp-server": {
       "ResourceNotFoundError": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/errors.ts",
       "InvalidParamsError": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/errors.ts",
       "RECEIPT_META_KEY": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts"

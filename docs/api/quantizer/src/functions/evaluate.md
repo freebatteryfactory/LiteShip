@@ -12,7 +12,7 @@ Defined in: [quantizer/src/evaluate.ts:42](https://github.com/freebatteryfactory
 
 Find which state a value maps to via the canonical f32-canonical kernel, with
 optional hysteresis and crossing detection. Delegates to
-[Boundary.evaluateResult](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/boundary-f32.ts) in `@czap/core`.
+[Boundary.evaluateResult](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/boundary-f32.ts) in `@liteship/core`.
 
 The explicit signature (over the public `Boundary.Shape`/`StateUnion` types,
 not core's internal `BoundaryDef`) keeps the emitted `.d.ts` nameable across

@@ -13,9 +13,9 @@
  *
  * @module
  */
-import { COMMAND_CATALOG, GLOSSARY_ENTRIES } from '@czap/command';
-import { DEMO_COMPONENT_CATALOG } from '@czap/genui';
-import { NotFoundError } from '@czap/error';
+import { COMMAND_CATALOG, GLOSSARY_ENTRIES } from '@liteship/command';
+import { DEMO_COMPONENT_CATALOG } from '@liteship/genui';
+import { NotFoundError } from '@liteship/error';
 import { renderCommandCatalog, renderComponentCatalog, renderGlossary } from './ui-render.js';
 
 /** The MCP Apps UI content type (exact literal per SEP-1865 2026-01-26). */

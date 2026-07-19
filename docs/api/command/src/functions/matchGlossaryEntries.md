@@ -8,7 +8,7 @@
 
 > **matchGlossaryEntries**(`query`): readonly [`GlossaryEntry`](../type-aliases/GlossaryEntry.md)[]
 
-Defined in: [command/src/commands/glossary.ts:239](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/glossary.ts#L239)
+Defined in: [command/src/commands/glossary.ts:232](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/glossary.ts#L232)
 
 Match entries: exact term wins, else substring over term + definition.
 

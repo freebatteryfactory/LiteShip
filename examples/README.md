@@ -36,5 +36,5 @@ pnpm install
 pnpm --filter <example-package-name> dev   # or: cd examples/<folder> && pnpm dev
 ```
 
-Inside the monorepo the examples resolve the workspace `@czap/*`. Copying an example out
-standalone, pin `@czap/*` at `^0.18.0`.
+Inside the monorepo the examples resolve the workspace `@liteship/*`. Copying an example out
+standalone, pin `@liteship/*` at `^0.18.0`.

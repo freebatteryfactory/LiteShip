@@ -5,7 +5,7 @@
  *
  * This module defines the {@link TraceabilityFacts} INTERFACE + the resolved-state
  * `_tag` union and NOTHING else. Like {@link RepoIR}, {@link SupplyChainFacts}, and
- * {@link MutationFacts}, it carries NO heavy dependency: `@czap/gauntlet` stays the
+ * {@link MutationFacts}, it carries NO heavy dependency: `@liteship/gauntlet` stays the
  * lean engine, so it never parses YAML, never scans the test corpus, and never reads
  * a wall clock. A HOST (the CLI's `packages/cli/src/lib/traceability.ts` state
  * machine) does the heavy lifting — parse `traceability/*.yaml`, scan the test corpus

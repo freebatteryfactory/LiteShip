@@ -21,8 +21,8 @@
  * @module
  */
 
-import { assertNever, err, hasTag, ok, ParseError } from '@czap/error';
-import type { Result } from '@czap/error';
+import { assertNever, err, hasTag, ok, ParseError } from '@liteship/error';
+import type { Result } from '@liteship/error';
 import type { Schema, SchemaNode } from './ast.js';
 
 /** A location within the decoded value — object keys and array indices. */

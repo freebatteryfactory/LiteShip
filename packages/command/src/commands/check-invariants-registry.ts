@@ -2,7 +2,7 @@
  * The banned-pattern invariant ledger (relocated from `scripts/check-invariants.ts`
  * when the gate became the `check-invariants` command). Pure data — no Node
  * coupling — so the CLI-only scan capability (`runCheckInvariants`, provisioned
- * by `@czap/cli`) can import it without pulling fs into the pure registry entry,
+ * by `@liteship/cli`) can import it without pulling fs into the pure registry entry,
  * and so `scripts/audit/report.ts` can import the rule set directly.
  *
  * `INVARIANTS` is the fast-lane rule set: each entry is a banned source pattern
@@ -86,7 +86,7 @@ export const INVARIANTS: readonly CheckInvariantEntry[] = [
   },
   {
     // 0.3.0 signal source-of-truth: the runtime hot path must derive its signal
-    // axis from `inputToSource` (@czap/core, the SignalSource source of truth),
+    // axis from `inputToSource` (@liteship/core, the SignalSource source of truth),
     // never re-parse the dot-string with `startsWith('scroll.'/'viewport.')`.
     // The two diagnostic sites below legitimately namespace-check the input to
     // pick a teaching message (not to read a value), so they are excluded.
@@ -101,7 +101,7 @@ export const INVARIANTS: readonly CheckInvariantEntry[] = [
       'packages/astro/src/runtime/inspector/',
     ],
     message:
-      'Derive the signal axis from inputToSource(@czap/core), not a startsWith re-parse. ' +
+      'Derive the signal axis from inputToSource(@liteship/core), not a startsWith re-parse. ' +
       'If this is a diagnostic namespace check, add the file to the NO_SIGNAL_INPUT_REPARSE exclude.',
   },
 ] as const;

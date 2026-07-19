@@ -56,7 +56,7 @@ A consumer-side [SPSCRingBufferShape](../interfaces/SPSCRingBufferShape.md)
 #### Example
 
 ```ts
-import { SPSCRing } from '@czap/worker';
+import { SPSCRing } from '@liteship/worker';
 
 // On the main thread after receiving buffer from Worker:
 const consumer = SPSCRing.attachConsumer(sharedBuffer);
@@ -102,7 +102,7 @@ A producer-side [SPSCRingBufferShape](../interfaces/SPSCRingBufferShape.md)
 #### Example
 
 ```ts
-import { SPSCRing } from '@czap/worker';
+import { SPSCRing } from '@liteship/worker';
 
 // Inside a Worker's message handler:
 self.onmessage = (e) => {
@@ -147,7 +147,7 @@ A [SPSCRingPair](../interfaces/SPSCRingPair.md): the shared buffer + producer/co
 #### Example
 
 ```ts
-import { SPSCRing } from '@czap/worker';
+import { SPSCRing } from '@liteship/worker';
 
 const { buffer, producer, consumer } = SPSCRing.createPair(64, 4);
 // producer.push(new Float64Array([1, 2, 3, 4])); // true
@@ -168,7 +168,7 @@ values fail loudly.
 ## Example
 
 ```ts
-import { SPSCRing } from '@czap/worker';
+import { SPSCRing } from '@liteship/worker';
 
 // Main thread: create pair and send buffer to Worker
 const { buffer, producer, consumer } = SPSCRing.createPair(128, 8);

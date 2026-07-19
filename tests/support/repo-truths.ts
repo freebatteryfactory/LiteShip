@@ -13,7 +13,7 @@
  *   - `rootManifest()` / `workspaceVersion()` ....... root `package.json`
  *   - `packageManifests()` / `workspaceManifests()` . `packages/*` (+ `examples/*`) `package.json`
  *   - `publishablePackageDirs()` .................... `packages/<dir>/package.json` `publishConfig`
- *   - `packageRoster()` ............................. the canonical `@czap/*` fleet
+ *   - `packageRoster()` ............................. the canonical `@liteship/*` fleet
  *   - `rootTsconfigReferenceDirs()` ................. root `tsconfig.json` `references`
  *   - `catalogEntry()` .............................. `pnpm-workspace.yaml` `catalog:`
  *
@@ -136,18 +136,18 @@ export function publishablePackageDirs(): readonly string[] {
 }
 
 /**
- * The canonical dependency-fleet roster: every non-private `@czap/*` package on
+ * The canonical dependency-fleet roster: every non-private `@liteship/*` package on
  * disk, sorted.
  *
- * The plan (T148 / duplication workstream) designates `@czap/audit`'s exported
- * `CZAP_PACKAGE_ROSTER` as the eventual single roster anchor; it does not exist
+ * The plan (T148 / duplication workstream) designates `@liteship/audit`'s exported
+ * `LITESHIP_PACKAGE_ROSTER` as the eventual single roster anchor; it does not exist
  * yet (grep of `packages/` finds no such export as of this wave), so the roster
  * is DERIVED here from the publishable set. When audit ships the export, this
  * accessor should delegate to it and the derivation drops out.
  */
 export function packageRoster(): readonly string[] {
   return packageManifests()
-    .filter((m) => m.private !== true && m.name != null && m.name.startsWith('@czap/'))
+    .filter((m) => m.private !== true && m.name != null && m.name.startsWith('@liteship/'))
     .map((m) => m.name as string)
     .sort();
 }

@@ -20,7 +20,7 @@ import {
   type GateContext,
   type CapabilityLinkFacts,
   type CapabilityLinkResult,
-} from '@czap/gauntlet';
+} from '@liteship/gauntlet';
 
 function ctx(facts: CapabilityLinkFacts | undefined): GateContext {
   return facts === undefined ? memoryContext({}) : { ...memoryContext({}), capabilityLink: facts };

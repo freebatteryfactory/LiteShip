@@ -8,7 +8,7 @@
  * boundary state.
  *
  * The three casts speak different vocabularies for the same fact:
- *   - CSS  emits the state STRING   (`--czap-<name>` = `s3`), via `emit-css`.
+ *   - CSS  emits the state STRING   (`--liteship-<name>` = `s3`), via `emit-css`.
  *   - GLSL emits the state INDEX    (`u_<name>` = 3),         via `emit-glsl`.
  *   - WGSL emits the state INDEX    (`state_index` = 3),      via `emit-wgsl`.
  * They are driven by the SAME boundary state through one Compositor tick, and
@@ -25,8 +25,8 @@
  */
 import { describe, test, expect } from 'vitest';
 import fc from 'fast-check';
-import { Boundary, Compositor } from '@czap/core';
-import { GLSLCompiler, WGSLCompiler } from '@czap/compiler';
+import { Boundary, Compositor } from '@liteship/core';
+import { GLSLCompiler, WGSLCompiler } from '@liteship/compiler';
 
 // Boundary states are minted as `s0, s1, ...`, so the state literal carries its
 // own index — the bridge between the string cast (CSS) and the numeric casts.
@@ -71,7 +71,7 @@ async function castIndices(
   const state = compositor.compute();
 
   return {
-    css: idxOf(state.outputs.css['--czap-layout'] as string),
+    css: idxOf(state.outputs.css['--liteship-layout'] as string),
     glsl: state.outputs.glsl['u_layout']!,
     wgsl: state.outputs.wgsl['state_index']!,
     oracle: Boundary.evaluateResult(boundary, value).index,

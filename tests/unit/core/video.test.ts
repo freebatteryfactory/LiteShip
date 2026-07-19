@@ -8,7 +8,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { Scheduler, VideoRenderer, Signal, Compositor, Boundary, Timeline, Easing, Millis } from '@czap/core';
+import { Scheduler, VideoRenderer, Signal, Compositor, Boundary, Timeline, Easing, Millis } from '@liteship/core';
 
 // ---------------------------------------------------------------------------
 // § 1. FrameScheduler

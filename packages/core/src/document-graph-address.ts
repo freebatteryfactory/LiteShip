@@ -15,7 +15,7 @@
  * @module
  */
 
-import { ParseError } from '@czap/error';
+import { ParseError } from '@liteship/error';
 import type { ContentAddress, AddressedDigest } from './brands.js';
 import { IntegrityDigest } from './brands.js';
 import { fnv1aBytes } from './fnv.js';

@@ -25,9 +25,9 @@ import {
   ssrRevealPaint,
   type RevealIntent,
   type RuntimeWritePlan,
-} from '@czap/core';
-import { MotionCompiler } from '@czap/compiler';
-import type { SerializedMotionProgram } from '@czap/astro/runtime';
+} from '@liteship/core';
+import { MotionCompiler } from '@liteship/compiler';
+import type { SerializedMotionProgram } from '@liteship/astro/runtime';
 
 /** The spring authored once and read by BOTH projections (one kernel). */
 const HERO_SPRING = { stiffness: 200, damping: 20 } as const;

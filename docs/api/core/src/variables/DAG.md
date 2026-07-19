@@ -119,7 +119,7 @@ Preconditions:
   (`dag.checkpoint.not-dominated`).
 
 The checkpoint is a real genesis-shaped [ReceiptEnvelope](../interfaces/ReceiptEnvelope.md)
-(`previous = GENESIS`, `subject.id = "czap/checkpoint:<W>"` committing the
+(`previous = GENESIS`, `subject.id = "liteship/checkpoint:<W>"` committing the
 watermark, `timestamp` = HLC-max over the dropped envelopes), hashed via
 `Receipt.hashEnvelope` so two replicas that reach the same `W` mint a
 byte-identical attestation. It is RETURNED OUT-OF-BAND, never inserted as a
@@ -523,7 +523,7 @@ const compacted = DAG.spliceCheckpoint(dag, new Set([oldRoot, ...ancestors]));
 ## Example
 
 ```ts
-import { DAG } from '@czap/core';
+import { DAG } from '@liteship/core';
 
 const dag = DAG.fromReceipts(envelopes);
 const ordered = DAG.linearize(dag);

@@ -1,15 +1,15 @@
 /**
- * THE EXTENSIBILITY PROOF — `@czap/gauntlet` is genuinely extendable, downstream-
+ * THE EXTENSIBILITY PROOF — `@liteship/gauntlet` is genuinely extendable, downstream-
  * installable, zero-rebuild, no-fork (ADR-0012's whole point).
  *
  * The plan's verification item, verbatim: "a throwaway downstream fixture repo
- * `npm i`s @czap/gauntlet, registers one custom fitness function, runs green
+ * `npm i`s @liteship/gauntlet, registers one custom fitness function, runs green
  * WITHOUT touching the engine (zero-rebuild; human + agent usable)."
  *
  * The fixture lives in `tests/fixtures/gauntlet-downstream/`: a self-contained
- * "downstream project" with its OWN `package.json` (declaring `@czap/gauntlet:
+ * "downstream project" with its OWN `package.json` (declaring `@liteship/gauntlet:
  * workspace:*` — the same engine, not a copy), a custom gate authored ONLY against
- * the public `@czap/gauntlet` barrel (`no-console-log.gate.ts`), a green sample
+ * the public `@liteship/gauntlet` barrel (`no-console-log.gate.ts`), a green sample
  * source tree (`src/`), a red sample tree the gate must bite (`red/`), and a runner
  * (`run.ts`) that composes LiteShip's built-ins with the custom gate.
  *
@@ -20,18 +20,18 @@
  *     green sample tree, block nothing.
  *  3. THE GATE BITES — the same composed run over the red sample tree fails, and the
  *     finding is the custom gate's (not a built-in's) — proof it is a real gate.
- *  4. ZERO ENGINE EDIT — the fixture imports ONLY the `@czap/gauntlet` barrel (no
+ *  4. ZERO ENGINE EDIT — the fixture imports ONLY the `@liteship/gauntlet` barrel (no
  *     relative reach into `packages/gauntlet/src/*`, no monkey-patch), proven by
  *     reading the fixture's own source and asserting every gauntlet import is the
  *     package specifier.
  *  5. DUAL-ERGONOMIC — the custom gate's finding has the self-explaining shape an
  *     agent acts on (ruleId, level, the WHY in `detail`, a `location`, a structured
  *     `remediation`).
- *  6. LEAN INSTALL — `@czap/gauntlet`'s declared runtime deps are ONLY `@czap/error`
+ *  6. LEAN INSTALL — `@liteship/gauntlet`'s declared runtime deps are ONLY `@liteship/error`
  *     + `fast-glob` (no typescript, no monorepo) — "downstream-installable" concretely.
  *
  * The engine path is the same one LiteShip's own gates take: there is no
- * branch in `@czap/gauntlet` that knows this gate is "downstream". That is the proof.
+ * branch in `@liteship/gauntlet` that knows this gate is "downstream". That is the proof.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -45,7 +45,7 @@ import {
   LITESHIP_GATES,
   isFinding,
   type Finding,
-} from '@czap/gauntlet';
+} from '@liteship/gauntlet';
 import { noConsoleLogGate } from '../../fixtures/gauntlet-downstream/no-console-log.gate.js';
 import { DOWNSTREAM_GATES, runDownstreamGauntlet } from '../../fixtures/gauntlet-downstream/run.js';
 
@@ -53,7 +53,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 // The downstream fixture project root (tests/fixtures/gauntlet-downstream).
 const FIXTURE_ROOT = resolve(HERE, '..', '..', 'fixtures', 'gauntlet-downstream');
 
-describe('extensibility proof — a downstream project extends @czap/gauntlet with zero engine edit', () => {
+describe('extensibility proof — a downstream project extends @liteship/gauntlet with zero engine edit', () => {
   it('SELF-PROOF: the custom gate earns blocking authority through the same ratchet as the built-ins', () => {
     // The downstream gate is qualified by `verifyGate` — the exact path the engine
     // runs every built-in through. No special-casing: it earns blocking, it is not
@@ -174,7 +174,7 @@ describe('extensibility proof — ZERO ENGINE EDIT (the fixture touches only the
     for (const { path, text } of sources) {
       for (const match of text.matchAll(SPECIFIER)) {
         const spec = match[1] ?? '';
-        if (spec === '@czap/gauntlet') {
+        if (spec === '@liteship/gauntlet') {
           referencedBarrel = true;
           continue;
         }
@@ -182,7 +182,7 @@ describe('extensibility proof — ZERO ENGINE EDIT (the fixture touches only the
         // any specifier that resolves into packages/gauntlet/src (by path or by a
         // gauntlet subpath) would mean the fixture is NOT using the public surface.
         const reachesEngine =
-          spec.includes('packages/gauntlet') || spec.startsWith('@czap/gauntlet/');
+          spec.includes('packages/gauntlet') || spec.startsWith('@liteship/gauntlet/');
         if (reachesEngine) offenders.push(`${path}: ${spec}`);
       }
     }
@@ -191,27 +191,27 @@ describe('extensibility proof — ZERO ENGINE EDIT (the fixture touches only the
       [],
     );
     // And it DOES use the public barrel — so this isn't vacuously true.
-    expect(referencedBarrel, 'the fixture must import from the @czap/gauntlet barrel').toBe(true);
+    expect(referencedBarrel, 'the fixture must import from the @liteship/gauntlet barrel').toBe(true);
   });
 
-  it('the fixture package.json declares @czap/gauntlet as a workspace dependency (the same engine, not a copy)', () => {
+  it('the fixture package.json declares @liteship/gauntlet as a workspace dependency (the same engine, not a copy)', () => {
     const pkg = JSON.parse(readFileSync(join(FIXTURE_ROOT, 'package.json'), 'utf8')) as {
       dependencies?: Record<string, string>;
     };
-    expect(pkg.dependencies?.['@czap/gauntlet']).toBe('workspace:*');
+    expect(pkg.dependencies?.['@liteship/gauntlet']).toBe('workspace:*');
   });
 });
 
 describe('extensibility proof — LEAN INSTALL (a downstream gets a tiny engine)', () => {
-  it('@czap/gauntlet declares ONLY @czap/error + fast-glob as runtime deps (no typescript, no monorepo)', () => {
+  it('@liteship/gauntlet declares ONLY @liteship/error + fast-glob as runtime deps (no typescript, no monorepo)', () => {
     // Read the engine's own package.json — the contract a downstream `npm i` honours.
     const gauntletPkgPath = resolve(HERE, '..', '..', '..', 'packages', 'gauntlet', 'package.json');
     const pkg = JSON.parse(readFileSync(gauntletPkgPath, 'utf8')) as {
       dependencies?: Record<string, string>;
     };
     const deps = Object.keys(pkg.dependencies ?? {}).sort();
-    expect(deps).toEqual(['@czap/error', 'fast-glob']);
-    // The heavy `typescript` dep lives in the HOST (@czap/audit / the CLI), never
+    expect(deps).toEqual(['@liteship/error', 'fast-glob']);
+    // The heavy `typescript` dep lives in the HOST (@liteship/audit / the CLI), never
     // the engine — the IR is an injected capability, so a downstream's install stays lean.
     expect(deps).not.toContain('typescript');
   });

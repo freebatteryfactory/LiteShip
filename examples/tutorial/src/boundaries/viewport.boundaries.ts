@@ -2,9 +2,9 @@
  * Viewport boundary definition.
  *
  * A boundary quantizes a continuous signal (viewport width in pixels) into
- * discrete named states. The czap runtime evaluates this boundary on the
- * client using a ResizeObserver, setting `data-czap-state="compact"` or
- * `data-czap-state="wide"` on the element. CSS rules then target these
+ * discrete named states. The liteship runtime evaluates this boundary on the
+ * client using a ResizeObserver, setting `data-liteship-state="compact"` or
+ * `data-liteship-state="wide"` on the element. CSS rules then target these
  * states -- no JavaScript layout logic required.
  *
  * The `at` tuples define thresholds:
@@ -15,7 +15,7 @@
  * may define 3-5 states with hysteresis to prevent jitter.
  */
 
-import { Boundary } from '@czap/core';
+import { Boundary } from '@liteship/core';
 
 export const viewport = Boundary.make({
   // The signal this boundary listens to. "viewport.width" is a built-in

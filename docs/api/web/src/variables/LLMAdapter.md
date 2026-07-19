@@ -13,7 +13,7 @@ Defined in: [web/src/stream/llm-adapter.ts:180](https://github.com/freebatteryfa
 LLM adapter namespace.
 
 Provider-agnostic LLM stream adapter. Normalizes any LLM streaming API
-(OpenAI, Anthropic, etc.) into czap's typed chunk buffer via a user-provided
+(OpenAI, Anthropic, etc.) into liteship's typed chunk buffer via a user-provided
 [ChunkParser](../type-aliases/ChunkParser.md). Handles tool-call accumulation, JSON argument parsing,
 and produces a convenience `textTokens` stream for feeding into a
 token buffer.
@@ -68,7 +68,7 @@ An [LLMAdapterShape](../interfaces/LLMAdapterShape.md) with `chunks` and `textTo
 #### Example
 
 ```ts
-import { LLMAdapter } from '@czap/web';
+import { LLMAdapter } from '@liteship/web';
 
 const adapter = LLMAdapter.create({
   source: sseMessageStream,
@@ -89,7 +89,7 @@ for await (const token of adapter.textTokens) process.stdout.write(token);
 ## Example
 
 ```ts
-import { LLMAdapter, SSE } from '@czap/web';
+import { LLMAdapter, SSE } from '@liteship/web';
 
 const client = SSE.create({ url: '/api/llm/stream' });
 const adapter = LLMAdapter.create({

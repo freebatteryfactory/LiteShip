@@ -98,7 +98,7 @@ export function runSurfaceAudit(profile: DevopsProfile = liteshipDevopsProfile):
       // exports condition (types/import/default — not just development) must
       // resolve, or the install is broken / the tarball shipped without its
       // dist. Runs BEFORE the development-candidate gate so types-only
-      // exports (e.g. @czap/_spine) are verified too (Codex P2, PR #11).
+      // exports (e.g. @liteship/_spine) are verified too (Codex P2, PR #11).
       // The monorepo skips this — dist/ legitimately doesn't exist on a
       // fresh clone, and package:smoke proves the tarball side at release.
       if (profile.packageRoots !== undefined) {
@@ -163,7 +163,7 @@ export function runSurfaceAudit(profile: DevopsProfile = liteshipDevopsProfile):
       summary:
         `${surfacePolicy.astroPackage} is named in surfacePolicy.astroPackage but no such package was ` +
         `discovered. If this project has no Astro host, omit astroPackage (or set it to '') in your ` +
-        `profile — or run \`czap audit --consumer\`, which prunes host surfaces you don't ship.`,
+        `profile — or run \`liteship audit --consumer\`, which prunes host surfaces you don't ship.`,
       location: {
         file: surfacePolicy.astroPackage,
       },

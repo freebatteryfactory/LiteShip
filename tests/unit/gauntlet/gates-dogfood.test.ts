@@ -43,7 +43,7 @@ import {
   LITESHIP_ASSURANCE_MAP,
   memoryContext,
   type Gate,
-} from '@czap/gauntlet';
+} from '@liteship/gauntlet';
 
 // Resolve the repo root from THIS file's location (tests/unit/gauntlet/…), so
 // the run is independent of the process cwd — deterministic by construction.
@@ -98,7 +98,7 @@ const GATES: ReadonlyArray<readonly [string, Gate]> = [
 /**
  * The TRUE L3 nondeterminism backlog — the raw unscoped set NARROWED through the
  * assurance map to only L3+ files. After the determinism cure this collapses to
- * exactly the THREE declared entropy boundaries of the @czap/core clock/rng
+ * exactly the THREE declared entropy boundaries of the @liteship/core clock/rng
  * substrate: the `systemClock` monotonic read (performance.now, with the flagged
  * Date.now fallback) + the `wallClock` epoch read + the `systemRng` Math.random.
  * Every other runtime read now threads an injected clock/rng defaulting to these,
@@ -161,7 +161,7 @@ describe('dogfood — the hygiene gates over the real packages/*/src tree', () =
     // assurance map so the gate (L3) sees only L3+ files; the L1/L2 command-surface
     // receipt timestamps drop out. After the determinism cure the L3 set collapses
     // to exactly the THREE declared entropy boundaries — every other deterministic
-    // read threads the @czap/core clock/rng substrate. This is what decides the
+    // read threads the @liteship/core clock/rng substrate. This is what decides the
     // gate's blocking authority, so it is the set worth pinning. The raw/unscoped
     // count is deliberately NOT pinned here: it is an L1/L2 backlog other slices
     // are actively curing, and pinning it would flap on every unrelated cure.
@@ -180,7 +180,7 @@ describe('dogfood — the hygiene gates over the real packages/*/src tree', () =
 
     // The raw/unscoped run over the REAL repo no longer EXCEEDS the L3 set — and
     // that is a WIN, not a regression: the B3.4 determinism cure routed every
-    // L1/L2 receipt timestamp through the @czap/core wallClock boundary, so the
+    // L1/L2 receipt timestamp through the @liteship/core wallClock boundary, so the
     // whole tree's nondeterminism reads are now exactly the three substrate
     // boundaries. raw == scoped is the cured, cleaner state (the L1/L2 backlog this
     // used to filter is gone). Scoping never ADDS, so the floor invariant holds:

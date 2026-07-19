@@ -1,5 +1,5 @@
 /**
- * `@czap/quantizer` — **LiteShip** quantizer: **rigged** boundary evaluation,
+ * `@liteship/quantizer` — **LiteShip** quantizer: **rigged** boundary evaluation,
  * live state, animated transitions between bearings, and motion-tier gating on
  * the working line.
  *
@@ -25,6 +25,6 @@ export type {
   QuantizerRuntime,
   LiveQuantizerHandle,
 } from './quantizer.js';
-// `MemoCache` and `TIER_TARGETS` ship via `@czap/quantizer/testing` —
+// `MemoCache` and `TIER_TARGETS` ship via `@liteship/quantizer/testing` —
 // implementation primitives that power the public `Q.from()` builder
 // internally but are not consumer-facing API.

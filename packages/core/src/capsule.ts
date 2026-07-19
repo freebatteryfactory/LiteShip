@@ -1,14 +1,14 @@
 /**
  * Capsule — typed declaration of a business-logic unit that emits
  * runtime behavior plus generated tests, benches, docs, and audit
- * receipts through the czap factory.
+ * receipts through the liteship factory.
  *
  * @module
  */
 
-import { err } from '@czap/error';
-import type { ParseError, Result as ErrorResult } from '@czap/error';
-import type { ContentAddress } from '@czap/_spine';
+import { err } from '@liteship/error';
+import type { ParseError, Result as ErrorResult } from '@liteship/error';
+import type { ContentAddress } from '@liteship/_spine';
 import type { SchemaPort, DeclarationSchema } from './schema-port.js';
 import { decode, parseErrorFromIssues } from './schema/index.js';
 import type { Schema } from './schema/index.js';
@@ -169,7 +169,7 @@ export interface CapsuleContract<K extends AssemblyKind, In, Out, R> {
    * decoded output from a decoded source. The harness checks determinism
    * (same source → deep-equal output) and every declared {@link Invariant}
    * under random sources. May be async — asset decoders
-   * (`AssetDecl.decoder` and the `@czap/assets` built-ins) all return
+   * (`AssetDecl.decoder` and the `@liteship/assets` built-ins) all return
    * Promises, so the harness awaits every probe.
    */
   readonly derive?: (source: In) => Out | Promise<Out>;

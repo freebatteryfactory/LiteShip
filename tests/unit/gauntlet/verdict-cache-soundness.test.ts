@@ -39,7 +39,7 @@ import {
   type GateContext,
   type MutationFacts,
   type RepoIR,
-} from '@czap/gauntlet';
+} from '@liteship/gauntlet';
 
 // ── scaffolding ──────────────────────────────────────────────────────────────
 

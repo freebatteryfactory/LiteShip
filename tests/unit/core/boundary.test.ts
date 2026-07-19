@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest';
-import { Boundary, BoundarySpec, Diagnostics } from '@czap/core';
+import { Boundary, BoundarySpec, Diagnostics } from '@liteship/core';
 
 describe('Boundary.make', () => {
   test('creates a content-addressed boundary from ascending thresholds', () => {

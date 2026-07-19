@@ -1,7 +1,7 @@
 /**
  * Continuous signal → shader uniform bridge.
  *
- * The `czap:uniform-update` event and its GPU consumer (the `client:gpu` /
+ * The `liteship:uniform-update` event and its GPU consumer (the `client:gpu` /
  * `client:wgsl` runtimes) already exist; today the event fires only on DISCRETE
  * boundary-state crossings. This bridge drives the SAME event CONTINUOUSLY from
  * a continuous signal (e.g. `scroll.progress` at 0..1), so a host can wire a
@@ -18,14 +18,14 @@
  */
 
 import type { BoundaryStateDetail } from './boundary.js';
-import { dispatchCzapEvent } from '@czap/web';
+import { dispatchLiteshipEvent } from '@liteship/web';
 import { readSignalValue, attachSignalObserver, warnIfSignalUnserved } from './boundary.js';
 
 /**
  * Drive a shader uniform continuously from a canonical continuous signal.
  *
  * Reads `input` (e.g. `'scroll.progress'`, `'viewport.width'`) via
- * {@link readSignalValue} and dispatches a `czap:uniform-update` `CustomEvent`
+ * {@link readSignalValue} and dispatches a `liteship:uniform-update` `CustomEvent`
  * on `element` whenever the signal changes, writing `value` to `uniform` in
  * both the GLSL and WGSL uniform maps the GPU runtime consumes. Emits one frame
  * immediately, then re-emits on each (rAF-throttled) observer tick.
@@ -42,7 +42,7 @@ import { readSignalValue, attachSignalObserver, warnIfSignalUnserved } from './b
  *
  * @example
  * ```ts
- * // <canvas data-czap-shader-src="..." client:gpu>
+ * // <canvas data-liteship-shader-src="..." client:gpu>
  * const stop = driveUniformFromSignal(canvas, 'scroll.progress', 'u_progress');
  * // ...later: stop();
  * ```
@@ -58,7 +58,7 @@ export function driveUniformFromSignal(element: HTMLElement, input: string, unif
       wgsl: { [uniform]: value },
       aria: {},
     };
-    dispatchCzapEvent(element, 'czap:uniform-update', detail);
+    dispatchLiteshipEvent(element, 'liteship:uniform-update', detail);
   };
 
   emit(); // seed the initial frame so the uniform is correct before the first change
@@ -67,7 +67,7 @@ export function driveUniformFromSignal(element: HTMLElement, input: string, unif
   // A signal that never feeds this uniform is silent today — either a typo
   // outside the vocabulary or a recognized signal with no live producer here
   // (it freezes). Warn once at setup; the two codes are disjoint by construction.
-  warnIfSignalUnserved(input, { source: 'czap/astro.uniform-signal', what: `uniform "${uniform}" signal` });
+  warnIfSignalUnserved(input, { source: 'liteship/astro.uniform-signal', what: `uniform "${uniform}" signal` });
 
   return () => {
     stop?.();

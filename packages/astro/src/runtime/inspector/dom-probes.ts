@@ -8,7 +8,7 @@
  * @module
  */
 
-const DIRECTIVE_ATTR = 'data-czap-directive';
+const DIRECTIVE_ATTR = 'data-liteship-directive';
 const LEGACY_DIRECTIVE_PREFIX = 'client:';
 
 /** Whether any stylesheet declares the given container name. */
@@ -67,5 +67,5 @@ export function isDirectiveActive(element: HTMLElement): boolean {
       return true;
     }
   }
-  return element.hasAttribute('data-czap-directive-bound');
+  return element.hasAttribute('data-liteship-directive-bound');
 }

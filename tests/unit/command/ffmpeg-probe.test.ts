@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ffmpegRenderCapable, probeFfmpegRender } from '@czap/command/host';
+import { ffmpegRenderCapable, probeFfmpegRender } from '@liteship/command/host';
 
 describe('ffmpeg render probe', () => {
   it('probeFfmpegRender returns a structured result', () => {

@@ -26,7 +26,7 @@ import {
   assertTokenBinds,
   proposalSubject,
   proposalReceiptSubject,
-} from '@czap/core';
+} from '@liteship/core';
 import type {
   SignalNode,
   DocumentGraphNode,
@@ -35,9 +35,9 @@ import type {
   CellMeta,
   ValidatedProposal,
   GeneratedUIValidator,
-} from '@czap/core';
-import { validateGeneratedUITree, defineComponentCatalog } from '@czap/genui';
-import type { GeneratedUINode } from '@czap/genui';
+} from '@liteship/core';
+import { validateGeneratedUITree, defineComponentCatalog } from '@liteship/genui';
+import type { GeneratedUINode } from '@liteship/genui';
 
 const META: CellMeta = {
   created: { wall_ms: 0, counter: 0, node_id: 't' },
@@ -95,7 +95,7 @@ describe('AI cast: no apply-without-validate path (the load-bearing rule)', () =
   test('an INVALID patch (dangling edge) is rejected — no proposal is minted, so apply is impossible', () => {
     const base = graph([node('a')]);
     // An edge to a node that does not exist → dangling endpoint → validate fails.
-    const danglingEdge: DocumentGraphEdge = { from: base.nodes[0]!.id, to: 'czap:nope' as never, type: 'seq' };
+    const danglingEdge: DocumentGraphEdge = { from: base.nodes[0]!.id, to: 'liteship:nope' as never, type: 'seq' };
     const bad = GraphPatch.propose(base, [{ op: 'add', edge: danglingEdge }]);
 
     const checked = AICast.validateGraphPatchProposal(base, bad);
@@ -165,7 +165,7 @@ describe('AI cast: no apply-without-validate path (the load-bearing rule)', () =
     expect(honest.resultId).toBeDefined();
 
     // A model forges a stale/wrong resultId on the SAME ops.
-    const forged = { ...honest, resultId: 'czap:forged-stale-id' as never } as GraphPatch;
+    const forged = { ...honest, resultId: 'liteship:forged-stale-id' as never } as GraphPatch;
     const checked = AICast.validateGraphPatchProposal(base, forged);
     expect(checked.ok).toBe(true);
     if (!checked.ok) return;
@@ -173,7 +173,7 @@ describe('AI cast: no apply-without-validate path (the load-bearing rule)', () =
     // The minted envelope carries the RECOMPUTED result id (== the honest one), not
     // the forged value — a host that cites/caches by resultId gets the right identity.
     expect(checked.proposal.payload.resultId).toBe(honest.resultId);
-    expect(checked.proposal.payload.resultId).not.toBe('czap:forged-stale-id');
+    expect(checked.proposal.payload.resultId).not.toBe('liteship:forged-stale-id');
   });
 
   test('applyValidatedPatch verifies the PRIVATE WITNESS — a forged proposal with a correct subject but no witness is refused', () => {
@@ -979,7 +979,7 @@ describe('AI cast: genui GeneratedUITree rides the SAME validated-proposal envel
 describe('AI cast: purity (== no producer)', () => {
   // RESOLVED (open question #6 — purity enforcement mechanism). The proper home
   // for "the AI-cast module imports no network/provider/credential API" is a real
-  // `@czap/audit` POLICY (a declarative capability rule the audit engine walks).
+  // `@liteship/audit` POLICY (a declarative capability rule the audit engine walks).
   // That engine is not built yet, so until it lands we enforce purity HERE with a
   // robust import-grep over the actual source: it asserts neither ai-cast.ts nor
   // validated-output.ts imports a network transport (net/http/https/tls/ws/dns),

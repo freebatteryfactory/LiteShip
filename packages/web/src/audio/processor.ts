@@ -16,7 +16,7 @@
  * @module
  */
 
-import type { AVBridge } from '@czap/core';
+import type { AVBridge } from '@liteship/core';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -44,5 +44,5 @@ export interface AudioProcessor {
 }
 
 // Re-export the factory from the bootstrap module so callers keep using
-// `import { createAudioProcessor } from '@czap/web'`.
+// `import { createAudioProcessor } from '@liteship/web'`.
 export { createAudioProcessor } from './processor-bootstrap.js';

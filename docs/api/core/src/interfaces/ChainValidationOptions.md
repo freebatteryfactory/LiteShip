@@ -17,7 +17,7 @@ back-compat genesis-rooted check.
   prefix.
 - `checkpoint`: the genesis-shaped checkpoint attestation that authorizes
   `base`. When supplied it is integrity-checked (hash + genesis shape +
-  `subject.id === "czap/checkpoint:<base>"`); a mismatch fails `checkpoint_invalid`.
+  `subject.id === "liteship/checkpoint:<base>"`); a mismatch fails `checkpoint_invalid`.
 - `verifyCheckpoint`: an OPTIONAL provenance verifier for the checkpoint — the
   injectable capability that closes the one gap the structural checks cannot.
 

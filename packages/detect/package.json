@@ -1,5 +1,5 @@
 {
-  "name": "@czap/detect",
+  "name": "@liteship/detect",
   "version": "0.18.0",
   "description": "Detect device capabilities for LiteShip: probe GPU tier, CPU, memory, motion preference, and network, then map them to the tiers that select which UI state renders.",
   "license": "MIT",
@@ -12,7 +12,6 @@
   "bugs": "https://github.com/freebatteryfactory/LiteShip/issues",
   "homepage": "https://github.com/freebatteryfactory/LiteShip#readme",
   "keywords": [
-    "czap",
     "liteship",
     "device-detection",
     "capability-probe",
@@ -40,7 +39,7 @@
     "prepack": "pnpm run build"
   },
   "dependencies": {
-    "@czap/core": "workspace:*"
+    "@liteship/core": "workspace:*"
   },
   "engines": {
     "node": ">=22.13.0"

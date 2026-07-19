@@ -9,8 +9,8 @@
  * @module
  */
 
-import type { Boundary, StateUnion } from '@czap/core';
-import { glslIdent } from '@czap/core';
+import type { Boundary, StateUnion } from '@liteship/core';
+import { glslIdent } from '@liteship/core';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -88,7 +88,7 @@ export interface GLSLCompileResult {
 
 /**
  * Convert a JS camelCase or kebab-case name to a GLSL-friendly uniform name.
- * Delegates to the shared {@link glslIdent} in `@czap/core` so the build-time
+ * Delegates to the shared {@link glslIdent} in `@liteship/core` so the build-time
  * uniform declarations and the runtime projection vocabulary cannot diverge.
  */
 function toUniformName(key: string): string {
@@ -130,8 +130,8 @@ function appendComment(line: string, comment: string): string {
  *
  * @example
  * ```ts
- * import { Boundary } from '@czap/core';
- * import { GLSLCompiler } from '@czap/compiler';
+ * import { Boundary } from '@liteship/core';
+ * import { GLSLCompiler } from '@liteship/compiler';
  *
  * const boundary = Boundary.make({
  *   input: 'width',
@@ -267,7 +267,7 @@ function compile<B extends Boundary.Shape>(
  *
  * @example
  * ```ts
- * import { GLSLCompiler } from '@czap/compiler';
+ * import { GLSLCompiler } from '@liteship/compiler';
  *
  * const result = GLSLCompiler.compile(boundary, states);
  * const glsl = GLSLCompiler.serialize(result);
@@ -280,7 +280,7 @@ function compile<B extends Boundary.Shape>(
  */
 function serialize(result: GLSLCompileResult): string {
   return [
-    '// === czap GLSL Preamble ===',
+    '// === liteship GLSL Preamble ===',
     result.declarations,
     '',
     '// === Bind Uniforms Helper ===',
@@ -297,8 +297,8 @@ function serialize(result: GLSLCompileResult): string {
  *
  * @example
  * ```ts
- * import { Boundary } from '@czap/core';
- * import { GLSLCompiler } from '@czap/compiler';
+ * import { Boundary } from '@liteship/core';
+ * import { GLSLCompiler } from '@liteship/compiler';
  *
  * const boundary = Boundary.make({
  *   input: 'width',

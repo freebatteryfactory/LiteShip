@@ -16,7 +16,7 @@ can be gated by a [BoundarySpec](../../variables/BoundarySpec.md) for A/B or dev
 ## Example
 
 ```ts
-import { Boundary } from '@czap/core';
+import { Boundary } from '@liteship/core';
 
 const viewport = Boundary.make({
   input: 'viewport.width',

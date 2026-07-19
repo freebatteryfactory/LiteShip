@@ -1,4 +1,4 @@
-import { Boundary } from '@czap/core';
+import { Boundary } from '@liteship/core';
 
 /**
  * Viewport-width boundary driving the example's adaptive layout.

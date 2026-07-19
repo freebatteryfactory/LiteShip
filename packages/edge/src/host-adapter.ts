@@ -7,10 +7,10 @@
  * @module
  */
 
-import { ValidationError } from '@czap/error';
-import { Diagnostics, contentAddressOf } from '@czap/core';
-import type { ContentAddress } from '@czap/core';
-import type { ExtendedDeviceCapabilities } from '@czap/detect';
+import { ValidationError } from '@liteship/error';
+import { Diagnostics, contentAddressOf } from '@liteship/core';
+import type { ContentAddress } from '@liteship/core';
+import type { ExtendedDeviceCapabilities } from '@liteship/detect';
 import { ClientHints } from './client-hints.js';
 import type { ClientHintsHeaders } from './client-hints.js';
 import { EdgeTier } from './edge-tier.js';
@@ -85,7 +85,7 @@ export interface EdgeHostBoundaryConfig {
   /**
    * Tags written into the boundary cache index when `compile` fills a KV miss.
    * Use the same values as Astro `routeRules.tags` when `cache.invalidate({ tags })`
-   * should purge the corresponding CZAP boundary CSS variants.
+   * should purge the corresponding LiteShip boundary CSS variants.
    */
   readonly tags?: EdgeHostCacheTags;
 }
@@ -205,7 +205,7 @@ export interface EdgeHostBoundaryResolution {
  * Full per-request resolution output from {@link EdgeHostAdapter.resolve}.
  *
  * Carries the device context, optional theme and compiled outputs, the
- * `data-czap-*` attribute string for the root HTML element, and the
+ * `data-liteship-*` attribute string for the root HTML element, and the
  * `Accept-CH`/`Critical-CH` headers the response should send back.
  */
 export interface EdgeHostResolution extends EdgeHostContext {
@@ -221,11 +221,11 @@ export interface EdgeHostResolution extends EdgeHostContext {
   readonly assetUrl?: string;
   /** Per-boundary outcomes, keyed by name; present with the `boundaries` cache form. */
   readonly boundaries?: Readonly<Record<string, EdgeHostBoundaryResolution>>;
-  /** `data-czap-tier`/`data-czap-motion`/`data-czap-design` string for `<html>` (one per `CAP_AXES`). */
+  /** `data-liteship-tier`/`data-liteship-motion`/`data-liteship-design` string for `<html>` (one per `CAP_AXES`). */
   readonly htmlAttributes: string;
   /**
    * Spreadable map form of {@link htmlAttributes}, keyed by full attribute name
-   * (`data-czap-<axis>`) and built from the canonical `CAP_AXES` registry, so a
+   * (`data-liteship-<axis>`) and built from the canonical `CAP_AXES` registry, so a
    * new axis appears automatically. Astro: `<html {...htmlAttributesMap}>` — a
    * consumer that spreads it can never silently miss an axis (vs hand-writing).
    */
@@ -299,7 +299,7 @@ function normalizeBoundaries(cache: EdgeHostCacheConfig): readonly NormalizedBou
         throw ValidationError(
           'host-adapter',
           `EdgeHostCacheConfig boundary "${name}" has neither \`precompiled\` nor \`compile\`, so its outputs can never resolve. ` +
-            'Fix: pass `precompiled: resolveOutputsByTier(manifestEntry)` (entry from `virtual:czap/boundaries` or czap-boundary-manifest.json), ' +
+            'Fix: pass `precompiled: resolveOutputsByTier(manifestEntry)` (entry from `virtual:liteship/boundaries` or liteship-boundary-manifest.json), ' +
             'or supply a `compile` callback to build outputs on KV cache miss.',
         );
       }
@@ -317,7 +317,7 @@ function normalizeBoundaries(cache: EdgeHostCacheConfig): readonly NormalizedBou
     throw ValidationError(
       'host-adapter',
       'EdgeHostCacheConfig needs a source of compiled outputs, but neither `precompiled` nor `compile` was provided. ' +
-        'Fix: pass `precompiled: resolveOutputsByTier(manifestEntry)` (entry from `virtual:czap/boundaries` or czap-boundary-manifest.json), ' +
+        'Fix: pass `precompiled: resolveOutputsByTier(manifestEntry)` (entry from `virtual:liteship/boundaries` or liteship-boundary-manifest.json), ' +
         'or supply a `compile` callback to build outputs on KV cache miss.',
     );
   }
@@ -407,7 +407,7 @@ async function resolveBoundaryOutputs(
       background.waitUntil(
         writeBack.catch((error: unknown) => {
           Diagnostics.warnOnce({
-            source: 'czap/edge.host-adapter',
+            source: 'liteship/edge.host-adapter',
             code: 'boundary-cache-writeback-failed',
             message:
               `Deferred boundary-cache write-back failed for boundary "${source.boundaryId}": ` +
@@ -422,7 +422,7 @@ async function resolveBoundaryOutputs(
     return { boundaryId: source.boundaryId, compiledOutputs, ...withAssetUrl, cacheStatus: 'miss' };
   }
   Diagnostics.warnOnce({
-    source: 'czap/edge.host-adapter',
+    source: 'liteship/edge.host-adapter',
     code: 'manifest-tier-gap',
     message:
       `Precompiled manifest for boundary "${source.boundaryId}" has no entry for tier "${tierKey(context.tier)}" ` +
@@ -456,7 +456,7 @@ export function createEdgeHostAdapter(config: EdgeHostAdapterConfig = {}): EdgeH
     // resulting cross-deploy staleness can't ship silently.
     if (config.cache.prefix === undefined && boundarySources.some(([, s]) => s.compile !== undefined)) {
       Diagnostics.warnOnce({
-        source: 'czap/edge.host-adapter',
+        source: 'liteship/edge.host-adapter',
         code: 'compile-without-content-version',
         message:
           "A boundary `compile` callback is configured without a `prefix`. If compile's output depends on " +

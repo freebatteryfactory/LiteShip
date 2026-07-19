@@ -41,8 +41,8 @@
  *
  * @module
  */
-import { InvariantViolationError } from '@czap/error';
-import { CanonicalCbor, addressedDigestOf } from '@czap/canonical';
+import { InvariantViolationError } from '@liteship/error';
+import { CanonicalCbor, addressedDigestOf } from '@liteship/canonical';
 import type { Mutant, MutantCore } from './mutation-engine.js';
 import { applyMutant } from './mutation-engine.js';
 
@@ -173,7 +173,7 @@ export interface EquivalentMutantRegistry {
 
 /**
  * The injected verdict store — the B2 content-addressed cache for mutant verdicts,
- * mirroring `@czap/gauntlet`'s `GateVerdictCache`. Keys on the mutant's content
+ * mirroring `@liteship/gauntlet`'s `GateVerdictCache`. Keys on the mutant's content
  * address bound to its covering-tests digest + the toolchain digest. `read` returns
  * `null` on any MISS (absent / unreadable / stale) — every uncertain case re-runs,
  * never serves a stale verdict (a stale "killed" hiding a now-surviving mutant would

@@ -32,7 +32,7 @@ describe('docsMcpRoute (#113)', () => {
   });
 
   test('list/search/get round-trip over a sealed bundle', async () => {
-    const dir = mkdtempSync(join(tmpdir(), 'czap-docs-bundle-'));
+    const dir = mkdtempSync(join(tmpdir(), 'liteship-docs-bundle-'));
     await emitDocsBundle({ outDir: dir, sources: ['GLOSSARY.md'], version: 'test' });
     const bundle = loadDocsMcpBundle(dir);
     const route = docsMcpRoute(bundle);
@@ -72,7 +72,7 @@ describe('docsMcpRoute (#113)', () => {
   });
 
   test('malformed JSON body → TOP-LEVEL parse error (-32700, id: null), never a result envelope', async () => {
-    const dir = mkdtempSync(join(tmpdir(), 'czap-docs-bundle-'));
+    const dir = mkdtempSync(join(tmpdir(), 'liteship-docs-bundle-'));
     await emitDocsBundle({ outDir: dir, sources: ['GLOSSARY.md'], version: 'test' });
     const route = docsMcpRoute(loadDocsMcpBundle(dir));
 
@@ -88,7 +88,7 @@ describe('docsMcpRoute (#113)', () => {
   });
 
   test('unknown method → TOP-LEVEL method-not-found error (-32601), never nested under result', async () => {
-    const dir = mkdtempSync(join(tmpdir(), 'czap-docs-bundle-'));
+    const dir = mkdtempSync(join(tmpdir(), 'liteship-docs-bundle-'));
     await emitDocsBundle({ outDir: dir, sources: ['GLOSSARY.md'], version: 'test' });
     const route = docsMcpRoute(loadDocsMcpBundle(dir));
 
@@ -106,7 +106,7 @@ describe('docsMcpRoute (#113)', () => {
   });
 
   test('unknown doc path → TOP-LEVEL invalid-params error (-32602), not laundered into result', async () => {
-    const dir = mkdtempSync(join(tmpdir(), 'czap-docs-bundle-'));
+    const dir = mkdtempSync(join(tmpdir(), 'liteship-docs-bundle-'));
     await emitDocsBundle({ outDir: dir, sources: ['GLOSSARY.md'], version: 'test' });
     const route = docsMcpRoute(loadDocsMcpBundle(dir));
 
@@ -123,7 +123,7 @@ describe('docsMcpRoute (#113)', () => {
   });
 
   test('manifest-listed doc MISSING on disk throws loudly — integrity loss is never laundered to "unknown doc"', async () => {
-    const dir = mkdtempSync(join(tmpdir(), 'czap-docs-bundle-'));
+    const dir = mkdtempSync(join(tmpdir(), 'liteship-docs-bundle-'));
     await emitDocsBundle({ outDir: dir, sources: ['GLOSSARY.md'], version: 'test' });
     const bundle = loadDocsMcpBundle(dir);
 
@@ -157,7 +157,7 @@ describe('docsMcpRoute (#113)', () => {
   });
 
   test('manifest-listed doc whose BYTES drifted after docs:bundle throws (content-addressed seal)', async () => {
-    const dir = mkdtempSync(join(tmpdir(), 'czap-docs-bundle-'));
+    const dir = mkdtempSync(join(tmpdir(), 'liteship-docs-bundle-'));
     await emitDocsBundle({ outDir: dir, sources: ['GLOSSARY.md'], version: 'test' });
 
     const filesDir = join(dir, 'files');
@@ -169,7 +169,7 @@ describe('docsMcpRoute (#113)', () => {
   });
 
   test('tampered top-level bundleId with valid entry shas is rejected at load', async () => {
-    const dir = mkdtempSync(join(tmpdir(), 'czap-docs-bundle-'));
+    const dir = mkdtempSync(join(tmpdir(), 'liteship-docs-bundle-'));
     const manifest = await emitDocsBundle({ outDir: dir, sources: ['GLOSSARY.md'], version: 'test' });
     writeFileSync(
       join(dir, 'manifest.json'),

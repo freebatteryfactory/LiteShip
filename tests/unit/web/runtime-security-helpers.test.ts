@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { Diagnostics } from '@czap/core';
+import { Diagnostics } from '@liteship/core';
 import { allowRuntimeEndpointUrl, allowSameOriginRuntimeUrl, isSameOriginRuntimeUrl } from '../../../packages/astro/src/runtime/url-policy.js';
 import { isPrivateOrReservedIP, resolveRuntimeUrl } from '../../../packages/web/src/security/runtime-url.js';
 import {
