@@ -101,19 +101,56 @@ function make(): LifetimeShape {
   const stack: Entry[] = [];
   const controller = new AbortController();
   let disposedFlag = false;
+  // TRUE only while the disposal pass has not yet quiesced. Distinguishes a registration made
+  // FROM WITHIN a running finalizer (the pass is still active — fold it into THIS pass) from a
+  // registration made after dispose() already settled (nothing to fold into — run + drop).
+  let disposing = false;
   // Assigned synchronously at the start of the first dispose(), so a re-entrant
   // dispose() (from within a finalizer) returns THIS promise instead of
   // starting a second pass — the exactly-once guard.
   let disposePromise: Promise<void> | undefined;
+  // The active disposal pass's shared state (only mutated while `disposing`): per-slot failures
+  // keyed by invocation order (LIFO for the initial pass, ascending thereafter) + the async
+  // finalizers still to settle. Drained to quiescence so a finalizer registered mid-pass — even
+  // from within an async finalizer's own resolution — is awaited + its failure folded.
+  const errors = new Map<number, unknown>();
+  const pending: Promise<void>[] = [];
+  let nextOrder = 0;
+
+  /** Run one finalizer NOW, folding its outcome into the active pass's shared errors/pending. */
+  const runFinalizer = (finalizer: Finalizer): void => {
+    const slot = nextOrder++;
+    try {
+      const result = finalizer();
+      if (isPromiseLike(result)) {
+        pending.push(
+          Promise.resolve(result).then(
+            () => undefined,
+            (error: unknown) => {
+              errors.set(slot, error);
+            },
+          ),
+        );
+      }
+    } catch (error) {
+      errors.set(slot, error);
+    }
+  };
 
   const add: LifetimeShape['add'] = (finalizer) => {
     if (disposedFlag) {
-      // Late registration: nothing to defer to, so run now. The sync arm
-      // executes synchronously; a late async rejection has no aggregate to fold
-      // into (dispose() already settled), so it is caught and dropped rather
-      // than surfacing as an unhandled rejection.
-      const result = finalizer();
-      if (isPromiseLike(result)) void Promise.resolve(result).catch(() => undefined);
+      if (disposing) {
+        // Registered FROM WITHIN the in-progress disposal (a running finalizer added another):
+        // run it now and fold it into the ACTIVE pass, so dispose() awaits its async arm and
+        // surfaces its rejection in the aggregate — never silently dropped.
+        runFinalizer(finalizer);
+      } else {
+        // The disposal already SETTLED: nothing to fold into. The sync arm executes synchronously;
+        // a late async rejection has no aggregate, so it is caught and dropped rather than
+        // surfacing as an unhandled rejection.
+        const result = finalizer();
+        if (isPromiseLike(result)) void Promise.resolve(result).catch(() => undefined);
+      }
       return () => undefined;
     }
     const entry: Entry = { fn: finalizer };
@@ -137,49 +174,30 @@ function make(): LifetimeShape {
     });
 
     disposedFlag = true;
+    disposing = true;
     controller.abort();
 
-    // Drain the stack synchronously so a finalizer that re-enters add() hits the
-    // late-registration path rather than mutating what we iterate; reverse puts
-    // the entries in LIFO invocation order.
-    const entries = stack.splice(0).reverse();
-    const errors = new Map<number, unknown>();
-    const pending: Promise<void>[] = [];
+    // One synchronous invocation pass over the LIFO stack — sync finalizers complete here (their
+    // side effects land before dispose() returns); async ones are collected into `pending`. Splice
+    // + reverse so a finalizer that re-enters add() mutates a fresh pass, not what we iterate.
+    for (const entry of stack.splice(0).reverse()) runFinalizer(entry.fn);
 
-    // One synchronous invocation pass — sync finalizers complete here (their
-    // side effects land before dispose() returns); async ones are collected.
-    for (let order = 0; order < entries.length; order++) {
-      const entry = entries[order];
-      if (entry === undefined) continue;
-      const slot = order;
-      try {
-        const result = entry.fn();
-        if (isPromiseLike(result)) {
-          pending.push(
-            Promise.resolve(result).then(
-              () => undefined,
-              (error: unknown) => {
-                errors.set(slot, error);
-              },
-            ),
-          );
-        }
-      } catch (error) {
-        errors.set(slot, error);
-      }
-    }
-
-    // The async-dispose leg: settle once every async finalizer settles. The
-    // pending promises never reject (each records into `errors`), so this only
-    // resolves — settle/fail cannot throw.
-    void Promise.all(pending).then(() => {
+    // Drain to QUIESCENCE: a finalizer — or an async finalizer's own resolution — may register
+    // MORE teardown via add() while `disposing` is true, so keep awaiting until no pending work
+    // remains. `disposing` flips false + the aggregate folds in the SAME synchronous continuation
+    // as the empty-check, so no late registration can slip past unawaited. The pending promises
+    // never reject (each records into `errors`), so settle/fail cannot throw.
+    const drain = async (): Promise<void> => {
+      while (pending.length > 0) await Promise.all(pending.splice(0));
+      disposing = false;
       if (errors.size === 0) {
         settle();
         return;
       }
       const causes = [...errors.keys()].sort((a, b) => a - b).map((key) => errors.get(key));
       fail(LifetimeDisposeError(causes));
-    });
+    };
+    void drain();
     return disposePromise;
   };
 

@@ -8,7 +8,7 @@
 
 > **parseErrorFromIssues**(`issues`, `source?`): [`ParseError`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts)
 
-Defined in: [core/src/schema/decode.ts:346](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/decode.ts#L346)
+Defined in: [core/src/schema/decode.ts:368](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/decode.ts#L368)
 
 Fold a [DecodeIssue](../interfaces/DecodeIssue.md) list into a single tagged `ParseError` (the value-or-
 tagged-error shape a sync validator returns). The first issue's `code` and

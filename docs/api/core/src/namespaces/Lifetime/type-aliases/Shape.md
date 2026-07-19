@@ -8,6 +8,6 @@
 
 > **Shape** = [`LifetimeShape`](../../../interfaces/LifetimeShape.md)
 
-Defined in: [core/src/lifetime.ts:213](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/lifetime.ts#L213)
+Defined in: [core/src/lifetime.ts:231](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/lifetime.ts#L231)
 
 Live runtime handle — see [LifetimeShape](../../../interfaces/LifetimeShape.md).
