@@ -762,4 +762,42 @@ describe('CellKernel — exception safety (a throwing sink must not wedge the ch
     expect(completeCount).toBe(1); // completed exactly once
     expect(() => disposer()).not.toThrow(); // a no-op disposer
   });
+
+  test('close: a disposer fired from within a complete callback does not drive size negative', () => {
+    // close() detaches its registrations and zeroes activeCount, then completes each.
+    // A disposer invoked DURING a complete callback must find its registration already
+    // inactive — otherwise it decrements the already-zeroed count and the public size
+    // goes NEGATIVE (once per former subscriber). Marking every detached registration
+    // inactive BEFORE the completion pass makes the disposer a no-op.
+    const k = CellKernel.fanout<number>();
+    // Holder so the complete callback can reference its OWN disposer (which is only
+    // available after subscribe returns).
+    const self: { dispose?: () => void } = {};
+    self.dispose = k.subscribe({
+      next: () => undefined,
+      complete: () => self.dispose?.(), // dispose SELF mid-teardown
+    });
+    k.subscribe({ next: () => undefined, complete: () => undefined });
+
+    k.close();
+    expect(k.size).toBe(0); // exactly zero, NEVER negative
+    // The retained disposer stays a no-op after close (idempotent, still non-negative).
+    expect(() => self.dispose?.()).not.toThrow();
+    expect(k.size).toBe(0);
+  });
+
+  test('close: a disposer RETAINED and called after close is a no-op (size stays 0, not negative)', () => {
+    // The post-close variant: a consumer that threaded the disposer through
+    // `Lifetime.add` calls it after the kernel already closed. The registration was
+    // marked inactive during close, so the late disposer neither throws nor pushes
+    // size below zero.
+    const k = CellKernel.replay1(0);
+    const disposeA = k.subscribe({ next: () => undefined, complete: () => undefined });
+    const disposeB = k.subscribe({ next: () => undefined, complete: () => undefined });
+    k.close();
+    expect(k.size).toBe(0);
+    disposeA();
+    disposeB();
+    expect(k.size).toBe(0); // two late disposals, still exactly zero
+  });
 });

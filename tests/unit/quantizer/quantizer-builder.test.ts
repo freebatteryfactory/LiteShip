@@ -748,3 +748,35 @@ describe('injected-HLC determinism (A-1)', () => {
     expect(stamps.cb.node_id).toBe('B');
   });
 });
+
+// ---------------------------------------------------------------------------
+// Teardown: close ALL channels even when a completion callback throws
+// ---------------------------------------------------------------------------
+
+describe('Q live handle — disposal closes every channel despite a throwing complete', () => {
+  test('a throwing state-complete does not strand the output/crossing channels open', async () => {
+    const b = viewport();
+    const { quantizer, lifetime } = Q.from(b).outputs(simpleOutputs(b)).create();
+
+    // A state subscriber whose `complete` throws during teardown. `CellKernel.close`
+    // rethrows the first fault (the sink-error law), so the finalizer's `stateCell.close()`
+    // throws.
+    quantizer.state.subscribe({ next: () => undefined, complete: () => { throw new Error('boom'); } });
+
+    // Disposing runs the single finalizer. A bare sequential
+    // `stateCell.close(); outputCell.close(); crossingChannel.close();` would let the
+    // stateCell throw STRAND the output + crossing channels open — evaluate() could
+    // still publish into subscribers that were never completed. The fault folds into a
+    // LifetimeDisposeError (aggregate-failure law), which we swallow here.
+    try {
+      await lifetime.dispose();
+    } catch {
+      /* expected: the folded fault still surfaces */
+    }
+
+    // ALL three channels closed despite the earlier throw.
+    expect(quantizer.state.closed).toBe(true);
+    expect(quantizer.outputChanges.closed).toBe(true);
+    expect(quantizer.changes.closed).toBe(true);
+  });
+});
