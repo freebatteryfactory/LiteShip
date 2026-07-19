@@ -31,13 +31,15 @@ import { run } from '../../../../packages/cli/src/dispatch.js';
 function captureStdout<T>(fn: () => Promise<T>): Promise<{ result: T; stdout: string }> {
   let stdout = '';
   const orig = process.stdout.write.bind(process.stdout);
-  (process.stdout as unknown as { write: unknown }).write = ((c: string | Uint8Array) => {
+  (process.stdout as unknown as { write: unknown }).write = (c: string | Uint8Array) => {
     stdout += typeof c === 'string' ? c : Buffer.from(c).toString();
     return true;
-  });
-  return fn().finally(() => {
-    (process.stdout as unknown as { write: typeof orig }).write = orig;
-  }).then((result) => ({ result, stdout }));
+  };
+  return fn()
+    .finally(() => {
+      (process.stdout as unknown as { write: typeof orig }).write = orig;
+    })
+    .then((result) => ({ result, stdout }));
 }
 
 const okResult: GauntletResult = { findings: [], outcomes: [], blocked: false };
@@ -71,12 +73,31 @@ describe('czap check --ir — the CLI-only IR-enriched path', () => {
     // (repoRoot, now: Date, globs, { noCache, withSymbolReferences, withSupplyChain })
     const [, now, , cacheOpts] = runGauntletWithRepoIRMock.mock.calls[0]!;
     expect(now).toBeInstanceOf(Date);
-    expect(cacheOpts).toEqual({ noCache: false, withSymbolReferences: false, withSupplyChain: false, withMutate: false, withMcdc: false, withSimulate: false, withTaint: false, withProof: false, withComposition: false, withCapabilityGate: false });
+    expect(cacheOpts).toEqual({
+      noCache: false,
+      withSymbolReferences: false,
+      withSupplyChain: false,
+      withMutate: false,
+      withMcdc: false,
+      withSimulate: false,
+      withTaint: false,
+      withProof: false,
+      withComposition: false,
+      withCapabilityGate: false,
+      withSpineRelation: false,
+    });
     // The lean handler is NEVER touched on the IR path.
     expect(handlerMock).not.toHaveBeenCalled();
     // The receipt carries the SAME CheckPayload shape (ok/blocked/findingCount/findings).
     const receipt = JSON.parse(stdout.trim());
-    expect(receipt).toMatchObject({ command: 'check', status: 'ok', ok: true, blocked: false, findingCount: 0, findings: [] });
+    expect(receipt).toMatchObject({
+      command: 'check',
+      status: 'ok',
+      ok: true,
+      blocked: false,
+      findingCount: 0,
+      findings: [],
+    });
   });
 
   it('--ir --no-cache threads the cache BYPASS through to runGauntletWithRepoIR', async () => {
@@ -84,7 +105,19 @@ describe('czap check --ir — the CLI-only IR-enriched path', () => {
     const code = await captureStdout(() => run(['check', '--ir', '--no-cache']));
     expect(code.result).toBe(0);
     const [, , , cacheOpts] = runGauntletWithRepoIRMock.mock.calls[0]!;
-    expect(cacheOpts).toEqual({ noCache: true, withSymbolReferences: false, withSupplyChain: false, withMutate: false, withMcdc: false, withSimulate: false, withTaint: false, withProof: false, withComposition: false, withCapabilityGate: false });
+    expect(cacheOpts).toEqual({
+      noCache: true,
+      withSymbolReferences: false,
+      withSupplyChain: false,
+      withMutate: false,
+      withMcdc: false,
+      withSimulate: false,
+      withTaint: false,
+      withProof: false,
+      withComposition: false,
+      withCapabilityGate: false,
+      withSpineRelation: false,
+    });
   });
 
   it('--ir --symbols threads the symbol-evidenced oracle opt-in through to runGauntletWithRepoIR', async () => {
@@ -92,7 +125,19 @@ describe('czap check --ir — the CLI-only IR-enriched path', () => {
     const code = await captureStdout(() => run(['check', '--ir', '--symbols']));
     expect(code.result).toBe(0);
     const [, , , cacheOpts] = runGauntletWithRepoIRMock.mock.calls[0]!;
-    expect(cacheOpts).toEqual({ noCache: false, withSymbolReferences: true, withSupplyChain: false, withMutate: false, withMcdc: false, withSimulate: false, withTaint: false, withProof: false, withComposition: false, withCapabilityGate: false });
+    expect(cacheOpts).toEqual({
+      noCache: false,
+      withSymbolReferences: true,
+      withSupplyChain: false,
+      withMutate: false,
+      withMcdc: false,
+      withSimulate: false,
+      withTaint: false,
+      withProof: false,
+      withComposition: false,
+      withCapabilityGate: false,
+      withSpineRelation: false,
+    });
   });
 
   it('--ir --supply-chain threads the avionics supply-chain opt-in through to runGauntletWithRepoIR', async () => {
@@ -100,7 +145,19 @@ describe('czap check --ir — the CLI-only IR-enriched path', () => {
     const code = await captureStdout(() => run(['check', '--ir', '--supply-chain']));
     expect(code.result).toBe(0);
     const [, , , cacheOpts] = runGauntletWithRepoIRMock.mock.calls[0]!;
-    expect(cacheOpts).toEqual({ noCache: false, withSymbolReferences: false, withSupplyChain: true, withMutate: false, withMcdc: false, withSimulate: false, withTaint: false, withProof: false, withComposition: false, withCapabilityGate: false });
+    expect(cacheOpts).toEqual({
+      noCache: false,
+      withSymbolReferences: false,
+      withSupplyChain: true,
+      withMutate: false,
+      withMcdc: false,
+      withSimulate: false,
+      withTaint: false,
+      withProof: false,
+      withComposition: false,
+      withCapabilityGate: false,
+      withSpineRelation: false,
+    });
   });
 
   it('--ir --mutate threads the avionics mutation opt-in through to runGauntletWithRepoIR', async () => {
@@ -108,7 +165,19 @@ describe('czap check --ir — the CLI-only IR-enriched path', () => {
     const code = await captureStdout(() => run(['check', '--ir', '--mutate']));
     expect(code.result).toBe(0);
     const [, , , cacheOpts] = runGauntletWithRepoIRMock.mock.calls[0]!;
-    expect(cacheOpts).toEqual({ noCache: false, withSymbolReferences: false, withSupplyChain: false, withMutate: true, withMcdc: false, withSimulate: false, withTaint: false, withProof: false, withComposition: false, withCapabilityGate: false });
+    expect(cacheOpts).toEqual({
+      noCache: false,
+      withSymbolReferences: false,
+      withSupplyChain: false,
+      withMutate: true,
+      withMcdc: false,
+      withSimulate: false,
+      withTaint: false,
+      withProof: false,
+      withComposition: false,
+      withCapabilityGate: false,
+      withSpineRelation: false,
+    });
   });
 
   it('--ir --simulate threads the avionics DST (simulation) opt-in through to runGauntletWithRepoIR', async () => {
@@ -116,7 +185,19 @@ describe('czap check --ir — the CLI-only IR-enriched path', () => {
     const code = await captureStdout(() => run(['check', '--ir', '--simulate']));
     expect(code.result).toBe(0);
     const [, , , cacheOpts] = runGauntletWithRepoIRMock.mock.calls[0]!;
-    expect(cacheOpts).toEqual({ noCache: false, withSymbolReferences: false, withSupplyChain: false, withMutate: false, withMcdc: false, withSimulate: true, withTaint: false, withProof: false, withComposition: false, withCapabilityGate: false });
+    expect(cacheOpts).toEqual({
+      noCache: false,
+      withSymbolReferences: false,
+      withSupplyChain: false,
+      withMutate: false,
+      withMcdc: false,
+      withSimulate: true,
+      withTaint: false,
+      withProof: false,
+      withComposition: false,
+      withCapabilityGate: false,
+      withSpineRelation: false,
+    });
   });
 
   it('--ir --mcdc threads the avionics MC/DC opt-in through to runGauntletWithRepoIR', async () => {
@@ -124,7 +205,19 @@ describe('czap check --ir — the CLI-only IR-enriched path', () => {
     const code = await captureStdout(() => run(['check', '--ir', '--mcdc']));
     expect(code.result).toBe(0);
     const [, , , cacheOpts] = runGauntletWithRepoIRMock.mock.calls[0]!;
-    expect(cacheOpts).toEqual({ noCache: false, withSymbolReferences: false, withSupplyChain: false, withMutate: false, withMcdc: true, withSimulate: false, withTaint: false, withProof: false, withComposition: false, withCapabilityGate: false });
+    expect(cacheOpts).toEqual({
+      noCache: false,
+      withSymbolReferences: false,
+      withSupplyChain: false,
+      withMutate: false,
+      withMcdc: true,
+      withSimulate: false,
+      withTaint: false,
+      withProof: false,
+      withComposition: false,
+      withCapabilityGate: false,
+      withSpineRelation: false,
+    });
   });
 
   it('--ir --taint threads the taint-flow opt-in through to runGauntletWithRepoIR', async () => {
@@ -132,7 +225,19 @@ describe('czap check --ir — the CLI-only IR-enriched path', () => {
     const code = await captureStdout(() => run(['check', '--ir', '--taint']));
     expect(code.result).toBe(0);
     const [, , , cacheOpts] = runGauntletWithRepoIRMock.mock.calls[0]!;
-    expect(cacheOpts).toEqual({ noCache: false, withSymbolReferences: false, withSupplyChain: false, withMutate: false, withMcdc: false, withSimulate: false, withTaint: true, withProof: false, withComposition: false, withCapabilityGate: false });
+    expect(cacheOpts).toEqual({
+      noCache: false,
+      withSymbolReferences: false,
+      withSupplyChain: false,
+      withMutate: false,
+      withMcdc: false,
+      withSimulate: false,
+      withTaint: true,
+      withProof: false,
+      withComposition: false,
+      withCapabilityGate: false,
+      withSpineRelation: false,
+    });
   });
 
   it('--ir --proof threads the proof-propagation opt-in through to runGauntletWithRepoIR', async () => {
@@ -140,7 +245,19 @@ describe('czap check --ir — the CLI-only IR-enriched path', () => {
     const code = await captureStdout(() => run(['check', '--ir', '--proof']));
     expect(code.result).toBe(0);
     const [, , , cacheOpts] = runGauntletWithRepoIRMock.mock.calls[0]!;
-    expect(cacheOpts).toEqual({ noCache: false, withSymbolReferences: false, withSupplyChain: false, withMutate: false, withMcdc: false, withSimulate: false, withTaint: false, withProof: true, withComposition: false, withCapabilityGate: false });
+    expect(cacheOpts).toEqual({
+      noCache: false,
+      withSymbolReferences: false,
+      withSupplyChain: false,
+      withMutate: false,
+      withMcdc: false,
+      withSimulate: false,
+      withTaint: false,
+      withProof: true,
+      withComposition: false,
+      withCapabilityGate: false,
+      withSpineRelation: false,
+    });
   });
 
   it('--ir --composition threads the composition-coverage opt-in through to runGauntletWithRepoIR', async () => {
@@ -148,7 +265,19 @@ describe('czap check --ir — the CLI-only IR-enriched path', () => {
     const code = await captureStdout(() => run(['check', '--ir', '--composition']));
     expect(code.result).toBe(0);
     const [, , , cacheOpts] = runGauntletWithRepoIRMock.mock.calls[0]!;
-    expect(cacheOpts).toEqual({ noCache: false, withSymbolReferences: false, withSupplyChain: false, withMutate: false, withMcdc: false, withSimulate: false, withTaint: false, withProof: false, withComposition: true, withCapabilityGate: false });
+    expect(cacheOpts).toEqual({
+      noCache: false,
+      withSymbolReferences: false,
+      withSupplyChain: false,
+      withMutate: false,
+      withMcdc: false,
+      withSimulate: false,
+      withTaint: false,
+      withProof: false,
+      withComposition: true,
+      withCapabilityGate: false,
+      withSpineRelation: false,
+    });
   });
 
   it('--ir --capability-gate threads the capability-link opt-in through to runGauntletWithRepoIR', async () => {
@@ -156,13 +285,54 @@ describe('czap check --ir — the CLI-only IR-enriched path', () => {
     const code = await captureStdout(() => run(['check', '--ir', '--capability-gate']));
     expect(code.result).toBe(0);
     const [, , , cacheOpts] = runGauntletWithRepoIRMock.mock.calls[0]!;
-    expect(cacheOpts).toEqual({ noCache: false, withSymbolReferences: false, withSupplyChain: false, withMutate: false, withMcdc: false, withSimulate: false, withTaint: false, withProof: false, withComposition: false, withCapabilityGate: true });
+    expect(cacheOpts).toEqual({
+      noCache: false,
+      withSymbolReferences: false,
+      withSupplyChain: false,
+      withMutate: false,
+      withMcdc: false,
+      withSimulate: false,
+      withTaint: false,
+      withProof: false,
+      withComposition: false,
+      withCapabilityGate: true,
+      withSpineRelation: false,
+    });
+  });
+
+  it('--ir --spine-relation threads the spine-relation opt-in through to runGauntletWithRepoIR', async () => {
+    runGauntletWithRepoIRMock.mockReturnValue(okResult);
+    const code = await captureStdout(() => run(['check', '--ir', '--spine-relation']));
+    expect(code.result).toBe(0);
+    const [, , , cacheOpts] = runGauntletWithRepoIRMock.mock.calls[0]!;
+    expect(cacheOpts).toEqual({
+      noCache: false,
+      withSymbolReferences: false,
+      withSupplyChain: false,
+      withMutate: false,
+      withMcdc: false,
+      withSimulate: false,
+      withTaint: false,
+      withProof: false,
+      withComposition: false,
+      withCapabilityGate: false,
+      withSpineRelation: true,
+    });
   });
 
   it('a bare --capability-gate (no --ir) stays on the lean path (no silent IR/Program run)', async () => {
     const { result } = await captureStdout(() => run(['check', '--capability-gate']));
     expect(result).toBe(0);
     expect(handlerMock).toHaveBeenCalledTimes(1);
+    expect(runGauntletWithRepoIRMock).not.toHaveBeenCalled();
+  });
+
+  it('a bare --spine-relation (no --ir) stays on the lean path (no silent IR/Program run)', async () => {
+    const { result } = await captureStdout(() => run(['check', '--spine-relation']));
+    expect(result).toBe(0);
+    expect(handlerMock).toHaveBeenCalledTimes(1);
+    // The spine probe is a second ts.Program build — a bare --spine-relation must NEVER
+    // silently trigger it off the lean path.
     expect(runGauntletWithRepoIRMock).not.toHaveBeenCalled();
   });
 

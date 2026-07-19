@@ -21,21 +21,15 @@ import { memoryContext } from '../../../packages/gauntlet/src/engine.js';
 import { verifyGate } from '../../../packages/gauntlet/src/authority.js';
 import type { Finding } from '../../../packages/gauntlet/src/finding.js';
 import type { SpineRelationFacts } from '../../../packages/gauntlet/src/spine-relation-facts.js';
-import { LITESHIP_SPINE_ADMISSIONS } from '../../fixtures/spine-relation-admissions.js';
+import { LITESHIP_SPINE_ADMISSIONS } from '../../../packages/cli/src/lib/spine-relation-policy.js';
 import { scaledTimeout } from '../../../vitest.shared.js';
 
 const REPO_ROOT = resolve(fileURLToPath(import.meta.url), '../../../..');
 const CORE_DTS = resolve(REPO_ROOT, 'packages/_spine/core.d.ts');
 const REAL_CORE = readFileSync(CORE_DTS, 'utf8');
 
-const ADMISSIONS: readonly SpineTypeAdmission[] = LITESHIP_SPINE_ADMISSIONS.map((row) => ({
-  typeName: row.typeName,
-  authority: row.authority,
-  admittedRelation: row.relation,
-  spineExpr: row.spineExpr,
-  runtimeModule: row.runtimeModule,
-  runtimeExpr: row.runtimeExpr,
-}));
+// The source-owned admission table is already `SpineTypeAdmission[]` — no remap needed.
+const ADMISSIONS: readonly SpineTypeAdmission[] = LITESHIP_SPINE_ADMISSIONS;
 
 /** Fold facts through the real gate (a minimal context carrying only the facts). */
 function gateFindings(facts: SpineRelationFacts): readonly Finding[] {

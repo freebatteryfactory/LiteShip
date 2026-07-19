@@ -43,6 +43,7 @@ describe('gauntlet phase subset selection', () => {
       'test (unit + component + property + integration)',
       'standards:gate',
       'capability:gate',
+      'spine-relation:gate',
     ]);
   });
 

@@ -1,59 +1,48 @@
 /**
- * The SPINE-RELATION admission table — the LiteShip-local, host-injectable seed the
- * two-axis {@link spineRelationGate} classifies against (Wave 8.5, issue #156).
+ * The SPINE-RELATION admission table — the LiteShip-LOCAL, host-owned seed the two-axis
+ * `spineRelationGate` classifies against (Wave 8.5, issue #156). Relocated from the test
+ * fixture tree into the CLI host, alongside the sibling injected policies
+ * (`taint-policy.ts`, `capability-policy.ts`, `active-surface-policy.ts`): WHICH types
+ * LiteShip mirrors in `@czap/_spine`, their runtime producers, and the FROZEN relation
+ * each holds are repo-local CONTRACTS a reviewer owns — not a published surface.
  *
- * This is DATA, not a published surface (ADR-0012): `@czap/audit`'s
- * `buildSpineRelationFacts` and `@czap/gauntlet`'s gate are reusable and name no
- * LiteShip mirror; WHICH types LiteShip mirrors, their runtime producers, and the
- * FROZEN relation each holds are repo-local contracts, threaded in as a value.
+ * This is DATA, not policy logic (ADR-0012): `@czap/audit`'s `buildSpineRelationFacts` and
+ * `@czap/gauntlet`'s gate are reusable and name no LiteShip mirror; the CLI host threads
+ * this table in as a value (the same boundary the taint registry / capability modules ride).
  *
- * SEEDED FROM THE FROZEN PINS (the relocated guarantee — S5.2 / Conflict-1). Every
- * row here was a bidirectional `IsEqual` / assignability pin in
- * `tests/unit/spine-conformance.test.ts`; the relation gate reproduces each pin's
- * catch mechanically over this COMPLETE set, so the pins can be absorbed without an
- * authority gap. The `relation` field is the FROZEN two-axis fidelity the reconciled
- * (post-Wave-8) spine exhibits — a drift moves the OBSERVED relation away from it.
+ * SEEDED FROM THE FROZEN PINS (the relocated guarantee — S5.2 / Conflict-1). Every row here
+ * was a bidirectional `IsEqual` / assignability pin in `tests/unit/spine-conformance.test.ts`;
+ * the relation gate reproduces each pin's catch mechanically over this COMPLETE set, so the
+ * pins can be absorbed without an authority gap. The `admittedRelation` field is the FROZEN
+ * two-axis fidelity the reconciled (post-Wave-8) spine exhibits — a drift moves the OBSERVED
+ * relation away from it.
  *
- * Two axes (ADR-0010): `authority` — `runtime` for shapes the runtime owns and the
- * spine hand-mirrors; `spine` for branded scalars the spine OWNS and the runtime
- * re-exports (`brand-reanchored`). `relation` — the structural fidelity the checker
- * observes (`exact` / `public-wider` / …), or `brand-reanchored` for the re-anchored
- * scalars.
+ * Two axes (ADR-0010): `authority` — `runtime` for shapes the runtime owns and the spine
+ * hand-mirrors; `spine` for branded scalars the spine OWNS and the runtime re-exports
+ * (`brand-reanchored`). `admittedRelation` — the structural fidelity the checker observes
+ * (`exact` / `public-wider` / …), or `brand-reanchored` for the re-anchored scalars.
  *
  * @module
  */
 
-import type { SpineAuthority, SurfaceRelation } from '@czap/gauntlet';
-
-/** One admitted mirror type (mirrors `SpineTypeAdmission` in @czap/audit — data-only). */
-export interface SpineAdmissionRow {
-  readonly typeName: string;
-  readonly authority: SpineAuthority;
-  readonly relation: SurfaceRelation;
-  /** Type expression under the `@czap/_spine` namespace. */
-  readonly spineExpr: string;
-  /** Repo-relative `.ts` source path of the runtime producer. */
-  readonly runtimeModule: string;
-  /** Type expression under the runtime module's namespace. */
-  readonly runtimeExpr: string;
-}
+import type { SpineTypeAdmission } from '@czap/audit';
 
 /** A runtime-authority mirror (the runtime owns the shape; the spine hand-mirrors it). */
 function runtimeMirror(
   typeName: string,
   runtimeModule: string,
-  relation: SurfaceRelation = 'exact',
+  admittedRelation: SpineTypeAdmission['admittedRelation'] = 'exact',
   expr: string = typeName,
-): SpineAdmissionRow {
-  return { typeName, authority: 'runtime', relation, spineExpr: expr, runtimeModule, runtimeExpr: expr };
+): SpineTypeAdmission {
+  return { typeName, authority: 'runtime', admittedRelation, spineExpr: expr, runtimeModule, runtimeExpr: expr };
 }
 
 /** A spine-authority branded scalar (the spine owns the brand; the runtime re-exports it). */
-function reanchoredBrand(typeName: string): SpineAdmissionRow {
+function reanchoredBrand(typeName: string): SpineTypeAdmission {
   return {
     typeName,
     authority: 'spine',
-    relation: 'brand-reanchored',
+    admittedRelation: 'brand-reanchored',
     spineExpr: typeName,
     runtimeModule: 'packages/core/src/brands.ts',
     runtimeExpr: typeName,
@@ -64,7 +53,7 @@ const CORE = 'packages/core/src';
 const EDGE = 'packages/edge/src';
 
 /** The frozen admission table — every currently-pinned spine mirror type. */
-export const LITESHIP_SPINE_ADMISSIONS: readonly SpineAdmissionRow[] = [
+export const LITESHIP_SPINE_ADMISSIONS: readonly SpineTypeAdmission[] = [
   // ── @czap/core runtime shapes (the three historical drift fixtures live here) ──
   runtimeMirror('CompositeState', `${CORE}/compositor.ts`), // WGSL-omission drift class
   runtimeMirror('VideoConfig', `${CORE}/video.ts`), // Millis-brand-loss drift class

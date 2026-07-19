@@ -265,10 +265,18 @@ export async function run(argv: readonly string[]): Promise<number> {
       // guard is a finding. Only meaningful with `--ir`; opt-in (a ts.Program over the sanctioned
       // files + capability modules); the cache key is namespaced by this mode.
       const capabilityGate = rest.includes('--capability-gate');
+      // `--spine-relation` composes the spineRelationGate (Wave 8.5, the public constitution's
+      // STATIC-projection half, L4) on + probes each admitted @czap/_spine mirror type's
+      // bidirectional assignability against its runtime source (a ts.Program probe over the
+      // spine + runtime surface): a mirror whose observed relation no longer satisfies its
+      // admitted (frozen) relation, or no longer resolves, is a public-contract drift finding.
+      // Only meaningful with `--ir`; opt-in (a second ts.Program build, ~3.25s, is HEAVY) but
+      // REQUIRED in the release/CI profile; the cache key is namespaced by this mode.
+      const spineRelation = rest.includes('--spine-relation');
       // `--no-cache` / `--symbols` / `--supply-chain` / `--mutate` / `--simulate` /
-      // `--taint` / `--proof` / `--composition` / `--capability-gate` are only meaningful on the IR
-      // path (the lean path has no cache + no IR). A bare flag there is a no-op, never a silent
-      // wrong run.
+      // `--taint` / `--proof` / `--composition` / `--capability-gate` / `--spine-relation` are
+      // only meaningful on the IR path (the lean path has no cache + no IR). A bare flag there
+      // is a no-op, never a silent wrong run.
       return check({
         ...(ir ? { ir } : {}),
         ...(noCache ? { noCache } : {}),
@@ -281,6 +289,7 @@ export async function run(argv: readonly string[]): Promise<number> {
         ...(proof ? { proof } : {}),
         ...(composition ? { composition } : {}),
         ...(capabilityGate ? { capabilityGate } : {}),
+        ...(spineRelation ? { spineRelation } : {}),
       });
     }
     case 'check-invariants': {

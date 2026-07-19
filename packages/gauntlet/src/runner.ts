@@ -32,6 +32,7 @@ import type { StandardsIntegrityFacts } from './standards-facts.js';
 import type { FuzzCorpusFacts } from './fuzz-facts.js';
 import type { ProofFacts } from './proof-facts.js';
 import type { CompositionFacts } from './composition-facts.js';
+import type { SpineRelationFacts } from './spine-relation-facts.js';
 import type { ActiveSurfaceFacts } from './active-surface-facts.js';
 import { runGates, type GauntletResult, type RunGatesOptions } from './engine.js';
 import type { GateVerdictCache } from './verdict-cache.js';
@@ -270,6 +271,16 @@ export interface RunGauntletOnRepoOptions {
    * gate is simply not in the set — no corpus scan, no cost.
    */
   readonly composition?: CompositionFacts;
+  /**
+   * The INJECTED two-axis spine-relation facts (Wave 8.5, the public constitution's
+   * STATIC-projection half) — OPTIONAL. A host (the CLI's `czap check --ir
+   * --spine-relation` path) probes each admitted `@czap/_spine` mirror type's bidirectional
+   * assignability against its runtime source, then threads the decided
+   * {@link SpineRelationFacts} here, where they land on the {@link GateContext} for
+   * `spineRelationGate` to fold. Omit them (the default `--ir` run) and the gate is simply
+   * not in the set — no ts.Program probe, no cost.
+   */
+  readonly spineRelation?: SpineRelationFacts;
 }
 
 /**
@@ -304,6 +315,7 @@ export function runGauntletOnRepo(
   const context =
     opts.proof !== undefined ||
     opts.composition !== undefined ||
+    opts.spineRelation !== undefined ||
     opts.taint !== undefined ||
     opts.capabilityLink !== undefined ||
     opts.skipDetector !== undefined ||
@@ -313,6 +325,7 @@ export function runGauntletOnRepo(
           ...baseContext,
           ...(opts.proof !== undefined ? { proof: opts.proof } : {}),
           ...(opts.composition !== undefined ? { composition: opts.composition } : {}),
+          ...(opts.spineRelation !== undefined ? { spineRelation: opts.spineRelation } : {}),
           ...(opts.taint !== undefined ? { taint: opts.taint } : {}),
           ...(opts.capabilityLink !== undefined ? { capabilityLink: opts.capabilityLink } : {}),
           // The SOUND AST skip detector (injected by the CLI host); spread additively so the
@@ -489,6 +502,10 @@ export function litelaunchGauntletWithIR(
       // analysis) when supplied — `compositionCoverageGate` folds them. Omitted ⇒
       // absent ⇒ the gate is not in the set (composition is opt-in: `--composition`).
       ...(cacheOpts.composition !== undefined ? { composition: cacheOpts.composition } : {}),
+      // Inject the host-computed two-axis spine-relation facts (Wave 8.5) when supplied —
+      // `spineRelationGate` folds them. Omitted ⇒ absent ⇒ the gate is not in the set on the
+      // default `--ir` run (spine-relation is opt-in: `--spine-relation`).
+      ...(cacheOpts.spineRelation !== undefined ? { spineRelation: cacheOpts.spineRelation } : {}),
       // Inject the host-computed active-surface field-read facts (#132) when supplied —
       // `activeModeledSurfaceReaderGate` folds them. Omitted ⇒ absent ⇒ the gate folds
       // an empty verdict.
@@ -624,6 +641,15 @@ export interface LitelaunchCacheOptions {
    * gate. The composition MODE namespaces the verdict cache key.
    */
   readonly composition?: CompositionFacts;
+  /**
+   * OPTIONAL host-computed two-axis spine-relation facts (Wave 8.5, the public
+   * constitution's STATIC-projection half) threaded onto the {@link GateContext} for
+   * `spineRelationGate` to fold. Supplied ONLY on the `czap check --ir --spine-relation`
+   * run, alongside a `gates` override that includes the gate. The spine-relation MODE
+   * namespaces the verdict cache key (a spine-relation verdict never serves a
+   * non-spine-relation run).
+   */
+  readonly spineRelation?: SpineRelationFacts;
   /**
    * OPTIONAL host-computed active-surface field-read facts (#132) threaded onto the
    * {@link GateContext} for `activeModeledSurfaceReaderGate` to fold. Supplied
