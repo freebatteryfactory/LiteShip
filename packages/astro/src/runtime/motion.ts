@@ -251,13 +251,17 @@ export function nativeTimelineSupported(): boolean {
  * NOT enough: a program surface (e.g. a `Reveal.chain`) that inlines
  * `data-czap-motion-program` but emits no `MotionCompiler` CSS would otherwise be
  * stranded at first paint on a capable browser — floor skipped, no CSS to scrub it.
- * `MotionCompiler` binds its `czap-motion-*` keyframes (see its `keyframeName`) to a
- * scroll/view `animation-timeline` INSIDE a `supports(animation-timeline)` block. With
- * per-track native emission a boundary composes one `czap-motion-*-<prop>` `@keyframes`
- * per property into an `animation` shorthand LIST, so `getComputedStyle().animationName`
- * is a comma-separated list — hence the `.split(',').some(...)` scan: ANY `czap-motion-*`
- * name in it means native CSS is BOTH supported here AND emitted for this element. Absent
- * it, the floor runs (Law 1).
+ * `MotionCompiler` binds its single `czap-motion-<target>-<from>-<to>` `@keyframes` (see its
+ * `keyframeName`) to a scroll/view `animation-timeline` INSIDE a `supports(animation-timeline)`
+ * block — but ONLY for a plan eligible to own a native timeline. A composed program whose
+ * overlapping windows disagree on easing (`par` of differently-eased children, #148) is
+ * `nativeTimeline: { eligible: false }`, so the compiler emits NO ownership block and no
+ * `animation-name` binding — this scan then correctly returns false and the floor keeps
+ * ownership (ADR-0041). `getComputedStyle().animationName` may still be a comma-separated list
+ * (a single reveal can bind `czap-motion-*` ALONGSIDE an author `translate`/`opacity`
+ * animation), hence the `.split(',').some(...)` scan: ANY `czap-motion-*` name in it means
+ * native CSS is BOTH supported here AND emitted for this element. Absent it, the floor runs
+ * (Law 1).
  */
 function nativeTimelineOwnsElement(element: HTMLElement): boolean {
   if (!nativeTimelineSupported() || typeof getComputedStyle !== 'function') return false;

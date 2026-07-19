@@ -520,6 +520,88 @@ describe('MotionCompiler — composed TransitionProgram keyframes (#141, backend
     expect(kinds).toContain('ease');
     expect(new Set(kinds).size).toBeGreaterThan(1);
   });
+
+  // ── #148 / ADR-0041 Option A: native-timeline ownership eligibility ───────────
+  // The LOWERER decides eligibility (it alone sees the overlapping windows + curves) and
+  // records it on the plan; the compiler READS that DATA to decide whether to emit the
+  // native `animation-name`/`animation-timeline` ownership block — it never guesses from
+  // the (ambiguous) keyframe stops. A mixed-easing overlapping `par` is DENIED ownership so
+  // the per-window runtime floor stays the faithful renderer.
+  const SCROLL: { readonly range: readonly [string, string] } = { range: ['0%', '100%'] };
+
+  test('the lowerer marks a mixed-easing overlapping par NOT native-eligible', () => {
+    const spring: RuntimeEasing = { kind: 'spring', spring: { stiffness: 210, damping: 18 } };
+    const { graph: g, a, b } = twoStepGraph(spring, { kind: 'ease' });
+    const par = interpretProgram(g, {
+      kind: 'par',
+      children: [
+        { kind: 'step', transitionId: a },
+        { kind: 'step', transitionId: b },
+      ],
+    });
+    expect(par.css!.nativeTimeline).toEqual({ eligible: false, reason: 'mixed-easing-overlap' });
+  });
+
+  test('the lowerer keeps a UNIFORM-easing seq and a single transition native-eligible', () => {
+    const spring: RuntimeEasing = { kind: 'spring', spring: { stiffness: 210, damping: 18 } };
+    const { graph: g, a, b } = twoStepGraph(spring, spring);
+    const seq = interpretProgram(g, {
+      kind: 'seq',
+      children: [
+        { kind: 'step', transitionId: a },
+        { kind: 'step', transitionId: b },
+      ],
+    });
+    expect(seq.css!.nativeTimeline).toEqual({ eligible: true });
+    expect(revealCssPlan().nativeTimeline).toEqual({ eligible: true });
+  });
+
+  test('a mixed-easing par compiled with a scroll timeline emits NO native ownership block (#148)', () => {
+    const spring: RuntimeEasing = { kind: 'spring', spring: { stiffness: 210, damping: 18 } };
+    const { graph: g, a, b } = twoStepGraph(spring, { kind: 'ease' });
+    const par = interpretProgram(g, {
+      kind: 'par',
+      children: [
+        { kind: 'step', transitionId: a },
+        { kind: 'step', transitionId: b },
+      ],
+    });
+    const out = MotionCompiler.compile({ plan: par.css!, scrollTimeline: SCROLL });
+    // No native ownership: no `animation-name` binding and no `@supports (animation-timeline)`
+    // OWNERSHIP block (distinct from the `@supports not (...)` fallback) — so getComputedStyle
+    // carries no czap-motion name.
+    expect(out.scrollTimeline).not.toContain('animation-name: czap-motion-');
+    expect(out.scrollTimeline).not.toContain('animation-timeline: scroll();');
+    expect(out.scrollTimeline).not.toContain('@supports (animation-timeline: scroll())');
+    // The no-support transition fallback still ships (graceful degradation for JS-less clients).
+    expect(out.scrollTimeline).toContain('@supports not (animation-timeline: scroll())');
+    // Same denial under a view timeline.
+    const view = MotionCompiler.compile({ plan: par.css!, viewTimeline: { range: ['entry 0%', 'cover 100%'] } });
+    expect(view.scrollTimeline).not.toContain('animation-name: czap-motion-');
+    expect(view.scrollTimeline).not.toContain('@supports (animation-timeline: view())');
+    expect(view.scrollTimeline).toContain('@supports not (animation-timeline: view())');
+  });
+
+  test('a UNIFORM-easing composed program and a single transition STILL own the native timeline', () => {
+    const spring: RuntimeEasing = { kind: 'spring', spring: { stiffness: 210, damping: 18 } };
+    const { graph: g, a, b } = twoStepGraph(spring, spring);
+    const seq = interpretProgram(g, {
+      kind: 'seq',
+      children: [
+        { kind: 'step', transitionId: a },
+        { kind: 'step', transitionId: b },
+      ],
+    });
+    const uniform = MotionCompiler.compile({ plan: seq.css!, scrollTimeline: SCROLL });
+    expect(uniform.scrollTimeline).toContain('@supports (animation-timeline: scroll())');
+    expect(uniform.scrollTimeline).toContain('animation-name: czap-motion-');
+    expect(uniform.scrollTimeline).toContain('animation-timeline: scroll()');
+
+    // A single transition is unchanged (byte-identical native ownership path).
+    const single = MotionCompiler.compile({ plan: revealCssPlan(), scrollTimeline: SCROLL });
+    expect(single.scrollTimeline).toContain('@supports (animation-timeline: scroll())');
+    expect(single.scrollTimeline).toContain('animation-name: czap-motion-hero-before-after');
+  });
 });
 
 describe('dispatch() MotionCompiler arm', () => {

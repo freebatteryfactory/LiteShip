@@ -6,7 +6,7 @@
 
 # Interface: LoweredProgramTimeline
 
-Defined in: [core/src/transition-program.ts:105](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/transition-program.ts#L105)
+Defined in: [core/src/transition-program.ts:106](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/transition-program.ts#L106)
 
 Result of [lowerTransitionProgram](../functions/lowerTransitionProgram.md): the composed duration + ordered windows.
 
@@ -16,7 +16,7 @@ Result of [lowerTransitionProgram](../functions/lowerTransitionProgram.md): the 
 
 > `readonly` **diagnostics**: readonly [`DiagnosticPayload`](DiagnosticPayload.md)[]
 
-Defined in: [core/src/transition-program.ts:111](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/transition-program.ts#L111)
+Defined in: [core/src/transition-program.ts:112](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/transition-program.ts#L112)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [core/src/transition-program.ts:111](https://github.com/freebatteryf
 
 > `readonly` **entries**: readonly [`ProgramTimelineEntry`](ProgramTimelineEntry.md)[]
 
-Defined in: [core/src/transition-program.ts:108](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/transition-program.ts#L108)
+Defined in: [core/src/transition-program.ts:109](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/transition-program.ts#L109)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [core/src/transition-program.ts:108](https://github.com/freebatteryf
 
 > `readonly` **selectedBranchIds**: readonly `string`[]
 
-Defined in: [core/src/transition-program.ts:110](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/transition-program.ts#L110)
+Defined in: [core/src/transition-program.ts:111](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/transition-program.ts#L111)
 
 The `branchId` of every executed `choice` arm, in traversal order (auditable).
 
@@ -42,6 +42,6 @@ The `branchId` of every executed `choice` arm, in traversal order (auditable).
 
 > `readonly` **totalMs**: `number`
 
-Defined in: [core/src/transition-program.ts:107](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/transition-program.ts#L107)
+Defined in: [core/src/transition-program.ts:108](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/transition-program.ts#L108)
 
 Total composed duration in ms (seq: `Σ`; par: `max`; choice: selected branch).

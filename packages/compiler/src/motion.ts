@@ -337,6 +337,22 @@ function emitViewTimeline(
   const [start, end] = viewTimeline.range;
   const delay = delayMs !== undefined && delayMs > 0 ? `\n    animation-delay: ${delayMs}ms;` : '';
 
+  const fallback = [
+    `@supports not (animation-timeline: view()) {`,
+    `  ${plan.selector}[data-czap-state="${plan.toState}"] {`,
+    `    transition: ${transitionDecls(plan, easingFn, delayMs)};`,
+    `  }`,
+    `}`,
+  ].join('\n');
+
+  // A plan DENIED native-timeline ownership (overlapping windows disagree on easing, #148)
+  // emits NO `@supports (animation-timeline)` ownership block: without an `animation-name`
+  // binding `getComputedStyle(el).animationName` carries no `czap-motion-*` name, so the
+  // Astro runtime's `nativeTimelineOwnsElement` stays false and the per-window runtime floor
+  // renders each child at its own easing (ADR-0041). The no-support transition fallback still
+  // ships for browsers lacking `animation-timeline` (where the floor already owns rendering).
+  if (!plan.nativeTimeline.eligible) return fallback;
+
   const supported = [
     `@supports (animation-timeline: view()) {`,
     `  ${plan.selector} {`,
@@ -346,14 +362,6 @@ function emitViewTimeline(
     `    animation-fill-mode: both;`,
     `    animation-timeline: view();`,
     `    animation-range: ${start} ${end};${delay}`,
-    `  }`,
-    `}`,
-  ].join('\n');
-
-  const fallback = [
-    `@supports not (animation-timeline: view()) {`,
-    `  ${plan.selector}[data-czap-state="${plan.toState}"] {`,
-    `    transition: ${transitionDecls(plan, easingFn, delayMs)};`,
     `  }`,
     `}`,
   ].join('\n');
@@ -372,6 +380,18 @@ function emitScrollRootTimeline(
   const timeline = scrollTimelineFn(scrollTimeline);
   const delay = delayMs !== undefined && delayMs > 0 ? `\n    animation-delay: ${delayMs}ms;` : '';
 
+  const fallback = [
+    `@supports not (animation-timeline: scroll()) {`,
+    `  ${plan.selector}[data-czap-state="${plan.toState}"] {`,
+    `    transition: ${transitionDecls(plan, easingFn, delayMs)};`,
+    `  }`,
+    `}`,
+  ].join('\n');
+
+  // See emitViewTimeline: a plan denied native ownership (#148) emits only the no-support
+  // fallback, leaving the per-window runtime floor to own rendering (ADR-0041).
+  if (!plan.nativeTimeline.eligible) return fallback;
+
   const supported = [
     `@supports (animation-timeline: scroll()) {`,
     `  ${plan.selector} {`,
@@ -381,14 +401,6 @@ function emitScrollRootTimeline(
     `    animation-fill-mode: both;`,
     `    animation-timeline: ${timeline};`,
     `    animation-range: ${start} ${end};${delay}`,
-    `  }`,
-    `}`,
-  ].join('\n');
-
-  const fallback = [
-    `@supports not (animation-timeline: scroll()) {`,
-    `  ${plan.selector}[data-czap-state="${plan.toState}"] {`,
-    `    transition: ${transitionDecls(plan, easingFn, delayMs)};`,
     `  }`,
     `}`,
   ].join('\n');

@@ -26,12 +26,25 @@ import {
   lowerRevealChain,
   interpretTransition,
   interpretProgram,
+  sealNode,
+  sealGraph,
   Easing,
   Diagnostics,
   DEFAULT_MOTION_SPRING,
   type RevealIntent,
   type RuntimeWritePlan,
+  type CssMotionPlan,
+  type CellMeta,
+  type DocumentGraph,
+  type DocumentGraphNode,
+  type DocumentGraphEdge,
+  type PoseNode,
+  type TransitionNode,
+  type EntityNode,
+  type ComponentNode,
+  type SignalNode,
 } from '@czap/core';
+import { MotionCompiler } from '@czap/compiler';
 import motionDirective from '../../../packages/astro/src/client-directives/motion.js';
 import { parseMotionProgram } from '../../../packages/astro/src/runtime/motion.js';
 import type { SerializedMotionProgram } from '../../../packages/astro/src/runtime/motion.js';
@@ -56,6 +69,117 @@ function buildProgram(reducedMotion: 'settle' | 'none' = 'none'): SerializedMoti
   const plan = interpretTransition(lowered.graph, lowered.transitionId);
   const runtime = plan.runtime as RuntimeWritePlan;
   return { intent, runtime, signals: plan.signals, threshold: 0.5 };
+}
+
+const PAR_META: CellMeta = {
+  created: { wall_ms: 0, counter: 0, node_id: 't' },
+  updated: { wall_ms: 0, counter: 0, node_id: 't' },
+  version: 1,
+};
+
+/**
+ * A mixed-easing OVERLAPPING `par` on ONE target `hero`: opacity tweens `linear`, `--czap-hero-y`
+ * tweens `ease`, both over the shared window. The lowerer denies this native ownership (#148,
+ * ADR-0041); the compiler emits no `czap-motion-*` binding, so a CAPABLE browser reports no native
+ * ownership (getComputedStyle carries no czap-motion name) and the per-window RUNTIME floor renders
+ * each child at its OWN easing. Returns the serialized program the directive drives PLUS the plan's
+ * `css` (so the test derives the element's real animation-name from the compiled output — a true
+ * core → compiler → runtime chain, not a hand-picked stub value).
+ */
+function buildMixedEasingParProgram(): { serialized: SerializedMotionProgram; css: CssMotionPlan } {
+  const node = <T>(n: unknown): T => sealNode(n as never) as unknown as T;
+  const signal = node<SignalNode>({
+    _tag: 'DocGraphSignalNode',
+    _version: 1,
+    family: 'signal',
+    id: '',
+    meta: PAR_META,
+    input: 'scroll.progress',
+  });
+  const component = node<ComponentNode>({
+    _tag: 'DocGraphComponentNode',
+    _version: 1,
+    family: 'component',
+    id: '',
+    meta: PAR_META,
+    name: 'hero',
+    thresholds: [0, 1],
+    states: ['before', 'after'],
+  });
+  const entity = node<EntityNode>({
+    _tag: 'DocGraphEntityNode',
+    _version: 1,
+    family: 'entity',
+    id: '',
+    meta: PAR_META,
+    components: [component.id],
+  });
+  const mkStep = (
+    from: Record<string, number | string>,
+    to: Record<string, number | string>,
+    easing: unknown,
+  ): TransitionNode & { fp: PoseNode; tp: PoseNode } => {
+    const fp = node<PoseNode>({
+      _tag: 'DocGraphPoseNode',
+      _version: 1,
+      family: 'pose',
+      id: '',
+      meta: PAR_META,
+      entityRef: entity.id,
+      state: 'before',
+      bindings: from,
+    });
+    const tp = node<PoseNode>({
+      _tag: 'DocGraphPoseNode',
+      _version: 1,
+      family: 'pose',
+      id: '',
+      meta: PAR_META,
+      entityRef: entity.id,
+      state: 'after',
+      bindings: to,
+    });
+    const tr = node<TransitionNode>({
+      _tag: 'DocGraphTransitionNode',
+      _version: 1,
+      family: 'transition',
+      id: '',
+      meta: PAR_META,
+      fromPose: fp.id,
+      toPose: tp.id,
+      routing: 'seq',
+      durationMs: 600,
+      easing,
+    });
+    return Object.assign(tr, { fp, tp });
+  };
+  // opacity animates LINEAR; y animates EASE — the two children DISAGREE on easing over their
+  // shared window, the exact #148 mixed-overlap case.
+  const a = mkStep({ opacity: 0 }, { opacity: 1 }, { kind: 'linear' });
+  const b = mkStep({ '--czap-hero-y': '24px' }, { '--czap-hero-y': '0px' }, { kind: 'ease' });
+  const nodes: DocumentGraphNode[] = [signal, component, entity, a.fp, a.tp, a, b.fp, b.tp, b];
+  const edges: DocumentGraphEdge[] = [{ from: signal.id, to: component.id, type: 'seq' }];
+  const g: DocumentGraph = sealGraph({ _tag: 'DocumentGraph', _version: 1, meta: PAR_META, nodes, edges } as Omit<
+    DocumentGraph,
+    'id' | 'digest'
+  >);
+  const plan = interpretProgram(g, {
+    kind: 'par',
+    children: [
+      { kind: 'step', transitionId: a.id },
+      { kind: 'step', transitionId: b.id },
+    ],
+  });
+  const runtime = plan.runtime as RuntimeWritePlan;
+  const intent = Reveal.intent({
+    target: 'hero',
+    trigger: { type: 'scroll', axis: 'progress' },
+    from: { opacity: 0, translateY: '24px' },
+    to: { opacity: 1, translateY: '0px' },
+    transition: { durationMs: runtime.durationMs, easing: 'linear' },
+    policy: { reducedMotion: 'none', motionTier: 'transitions' },
+  });
+  return { serialized: { intent, runtime, signals: plan.signals, threshold: 0.5 }, css: plan.css! };
 }
 
 /** The CSS `linear()` stop value at `offset` — the native path's sample of the SAME kernel. */
@@ -286,6 +410,49 @@ describe('client:motion — JS floor is the production driver (retires LATENT)',
     expect(el.style.opacity).not.toBe('');
     stepScroll(0.5);
     expect(uniformCount).toBe(2); // continues to scrub on scroll
+  });
+
+  test('#148 E2E: a mixed-easing par is denied native ownership, so a capable browser runs the floor for BOTH children', () => {
+    // The full core → compiler → runtime chain. The lowerer denies the mixed-easing par native
+    // ownership; the compiler emits no `czap-motion-*` binding; a CAPABLE browser therefore reports
+    // no native ownership and the per-window floor renders each child at its OWN easing (ADR-0041).
+    const { serialized, css } = buildMixedEasingParProgram();
+    expect(css.nativeTimeline).toEqual({ eligible: false, reason: 'mixed-easing-overlap' });
+
+    // Compile with a scroll timeline and DERIVE the element's real animation-name from the output —
+    // there is no ownership binding, so a capable browser's getComputedStyle carries no czap-motion
+    // name (we assert that, then feed it to the runtime rather than hand-picking 'none').
+    const compiled = MotionCompiler.compile({ plan: css, scrollTimeline: { range: ['0%', '100%'] } });
+    const boundAnimationName = /animation-name:\s*(czap-motion-[\w-]+)/.exec(compiled.scrollTimeline)?.[1];
+    expect(boundAnimationName).toBeUndefined();
+    const computedAnimationName = boundAnimationName ?? 'none';
+
+    // Simulate a CAPABLE browser (animation-timeline supported) that nonetheless carries no
+    // czap-motion name for this element (the compiled reality above).
+    vi.stubGlobal('CSS', { supports: () => true, escape: (s: string) => s });
+    vi.stubGlobal('getComputedStyle', () => ({ animationName: computedAnimationName }));
+
+    // The runtime plan hands the floor TWO windows carrying DIFFERENT easings (the per-child curves).
+    const kinds = (serialized.runtime.windows ?? []).map((w) => w.easing.kind);
+    expect(kinds).toContain('linear');
+    expect(kinds).toContain('ease');
+
+    const el = makeEl(serialized);
+    let uniformCount = 0;
+    el.addEventListener('czap:uniform-update', () => uniformCount++);
+
+    motionDirective(noop, {}, el);
+    // The floor RUNS (native ownership was denied): first paint wrote both children, not stuck.
+    expect(uniformCount).toBe(1);
+    expect(el.style.opacity).not.toBe('');
+    expect(el.style.getPropertyValue('--czap-hero-y')).not.toBe('');
+
+    // Scrub to completion: both children reach their terminal values through the floor.
+    stepScroll(0.5);
+    stepScroll(1);
+    expect(uniformCount).toBe(3);
+    expect(Number(el.style.opacity)).toBeCloseTo(1, 6);
+    expect(readY(el)).toBeCloseTo(0, 6);
   });
 
   /**

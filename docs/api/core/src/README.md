@@ -264,6 +264,7 @@ plan graph, ECS, capsule factory).
 - [Millis](type-aliases/Millis.md)
 - [MorphStrategy](type-aliases/MorphStrategy.md)
 - [MotionTier](type-aliases/MotionTier.md)
+- [NativeTimelineEligibility](type-aliases/NativeTimelineEligibility.md)
 - [NodeFamily](type-aliases/NodeFamily.md)
 - [OpType](type-aliases/OpType.md)
 - [OutputsFor](type-aliases/OutputsFor.md)
