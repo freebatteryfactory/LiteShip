@@ -290,7 +290,13 @@ function _makeWorld(): WorldHandle {
       // observes it the same tick — so queries are re-run per system against the
       // current state, never snapshotted at tick start (scene SVGSystem reads
       // `_opacity`/`_blend` written by Video/Transition earlier this tick).
-      for (const system of systems) {
+      //
+      // The SYSTEM LIST, however, IS snapshotted per tick: a system that calls
+      // `world.addSystem()` from its `execute` registers for the NEXT tick, not the
+      // current one — otherwise the freshly-pushed system would run mid-tick, and a
+      // system that repeatedly registers another could grow the tick without bound.
+      // This snapshots only WHICH systems run; the live component reads are unaffected.
+      for (const system of [...systems]) {
         if (isDenseSystem(system)) {
           // Dense path: collect the stores this system queries
           const queriedStores = new Map<string, DenseStoreShape>();

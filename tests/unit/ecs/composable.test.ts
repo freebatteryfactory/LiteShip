@@ -140,6 +140,44 @@ describe('ECS Composable Infrastructure', () => {
     expect(executions.lastMatched).toBe(2);
   });
 
+  test('a system that calls addSystem() during execute registers for the NEXT tick, not the current one', () => {
+    const { world } = World.make();
+    world.spawn({ position: { x: 1, y: 2 } });
+
+    const runs: string[] = [];
+    let registered = false;
+
+    world.addSystem({
+      name: 'spawner',
+      query: ['position'],
+      execute() {
+        runs.push('spawner');
+        // Register a second system mid-tick. It must NOT run in this same tick:
+        // the tick iterates a SNAPSHOT of the system list taken at tick start,
+        // otherwise the freshly-pushed system runs immediately and a system that
+        // keeps registering another could grow a single tick without bound.
+        if (!registered) {
+          registered = true;
+          world.addSystem({
+            name: 'late',
+            query: ['position'],
+            execute() {
+              runs.push('late');
+            },
+          });
+        }
+      },
+    });
+
+    world.tick();
+    // First tick: only the pre-registered system ran; the mid-tick registration is deferred.
+    expect(runs).toEqual(['spawner']);
+
+    world.tick();
+    // Second tick: both run — the deferred registration is now live.
+    expect(runs).toEqual(['spawner', 'spawner', 'late']);
+  });
+
   test('dense systems execute only when all queried stores are registered', () => {
     const { world } = World.make();
     const posX = Part.dense('posX', 8);
