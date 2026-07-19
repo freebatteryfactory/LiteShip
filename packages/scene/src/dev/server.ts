@@ -7,7 +7,7 @@
  * @module
  */
 
-import { createServer, type ViteDevServer } from 'vite';
+import type { ViteDevServer, InlineConfig } from 'vite';
 import { existsSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -22,6 +22,22 @@ export interface DevServerHandle {
 
 /** Start the scene-dev Vite server bound to `scenePath`. */
 export async function startDevServer(scenePath: string): Promise<DevServerHandle> {
+  // GUARDED optional-integration seam (the sanctioned dynamic-import pattern, same
+  // as @czap/cli → @czap/mcp-server): `vite` is a heavy dev-only dependency the
+  // scene runtime surface (`@czap/scene` main entry) never touches — only this
+  // `./dev` server does. Loading it lazily behind a teaching error keeps it OUT of
+  // the package's load-time dependency closure (a fresh consumer of `@czap/scene`
+  // pulls no vite), so it is deliberately undeclared and the declared-dependency
+  // gate is satisfied without a peer that would fracture vite's module identity.
+  let createServer: (config?: InlineConfig) => Promise<ViteDevServer>;
+  try {
+    ({ createServer } = await import('vite'));
+  } catch (cause) {
+    throw new Error(
+      'The scene dev server (@czap/scene/dev) requires `vite` — install it as a dev dependency (`pnpm add -D vite`) to use it.',
+      { cause },
+    );
+  }
   const here = dirname(fileURLToPath(import.meta.url));
   // player.html is the Vite entry; it ships in src/dev/ rather than dist/dev/
   // because tsc doesn't copy non-TS assets. In tsx (workspace dev) `here` is

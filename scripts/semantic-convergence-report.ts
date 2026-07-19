@@ -280,7 +280,7 @@ function buildReport(): ConvergenceReport {
         'the packed .d.ts declares the types the runtime surface actually exposes — proven by the two-axis spine relation gate (structural fidelity) + the type-export enumerator (surface completeness)',
       ],
       declaredDependencies: [
-        'the packed artifact runs on the dependencies it declares — proven by the declared-dependency-closure gate, widened to every public runtime export (the fast-check-via-./harness and vite-via-./dev leaks are its red fixtures)',
+        'the packed artifact runs on the dependencies it declares — proven by the declared-dependency-closure gate, widened to every public runtime export: fast-check-via-./harness is now a declared optional peer; vite-via-./dev is a guarded dynamic import (the sanctioned optional-integration seam, outside the load-time closure)',
       ],
     },
     provenance: {
