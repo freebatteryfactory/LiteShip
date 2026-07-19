@@ -145,6 +145,21 @@ describe('Derived.combine — captured derived.json parity', () => {
     expect(derived.read()).toBe(10);
     expect(values).toEqual([2, 4, 10]);
   });
+
+  test('disposal BEFORE first subscribe freezes read() — a later source change does not move it', async () => {
+    // A source-backed derived disposed while still UNWIRED (never subscribed) must
+    // honor the teardown contract: read() stops reflecting source mutations. Without
+    // the `lifetime.disposed` guard the unwired pull branch would keep recomputing
+    // from the live source, so a post-dispose set() would still move the value.
+    const source = Cell.make(1);
+    const derived = Derived.combine([source] as const, (value: number) => value * 2);
+    source.set(3);
+    expect(derived.read()).toBe(6); // pull recompute while alive + unwired
+
+    await derived.lifetime.dispose();
+    source.set(100); // post-dispose source change must NOT recompute
+    expect(derived.read()).toBe(6); // frozen at the last observed value, not 200
+  });
 });
 
 // ---------------------------------------------------------------------------

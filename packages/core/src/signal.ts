@@ -190,11 +190,20 @@ function setupListener(source: SignalSource, kernel: CellKernel.Replay<number>, 
         // would re-arm a fresh frame AFTER disposal — an inert-publish loop that runs
         // forever. `disposed` is monotonic (never reset), so the reschedule stays
         // permanently blocked once teardown has begun.
+        //
+        // EXCEPTION-SAFE re-arm: if a subscriber throws during `publish`, the next
+        // frame MUST still be scheduled in a `finally`, else the signal permanently
+        // stops advancing even after the faulty subscription is removed (the same
+        // re-arm-despite-fault law timeline.ts follows). The listener fault still
+        // surfaces — it propagates out of the rAF callback to the host — but the tick
+        // has already re-armed. Disposal (checked after publish) still blocks re-arm.
         let disposed = false;
         const tick = (): void => {
-          kernel.publish(wallClock.now() - start);
-          if (disposed) return;
-          id.current = requestAnimationFrame(tick);
+          try {
+            kernel.publish(wallClock.now() - start);
+          } finally {
+            if (!disposed) id.current = requestAnimationFrame(tick);
+          }
         };
         id.current = requestAnimationFrame(tick);
         lifetime.add(() => {
