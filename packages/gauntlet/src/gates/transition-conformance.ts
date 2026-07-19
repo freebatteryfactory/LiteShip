@@ -199,10 +199,10 @@ const CELL_FAMILY = 'cell';
 function divergentCase(seed: string): TransitionCase {
   return {
     seed,
-    traceDigest: 'fnv1a:deadbeef',
+    traceDigest: 'sha256:deadbeef',
     operationCount: 4,
-    modelObservationDigest: 'fnv1a:00000001',
-    implementationObservationDigest: 'fnv1a:00000002',
+    modelObservationDigest: 'sha256:00000001',
+    implementationObservationDigest: 'sha256:00000002',
     status: 'divergent',
   };
 }
@@ -211,10 +211,10 @@ function divergentCase(seed: string): TransitionCase {
 function equivalentCase(seed: string): TransitionCase {
   return {
     seed,
-    traceDigest: 'fnv1a:cafebabe',
+    traceDigest: 'sha256:cafebabe',
     operationCount: 4,
-    modelObservationDigest: 'fnv1a:0000abcd',
-    implementationObservationDigest: 'fnv1a:0000abcd',
+    modelObservationDigest: 'sha256:0000abcd',
+    implementationObservationDigest: 'sha256:0000abcd',
     status: 'equivalent',
   };
 }
@@ -234,8 +234,8 @@ const FIXTURES = {
     name: 'transition facts with a DIVERGENT cell case (a transport-changed behavior the gate must flag)',
     context: transitionContext({
       family: CELL_FAMILY,
-      modelDigest: 'fnv1a:100d0000',
-      implementationDigest: 'fnv1a:1e100000',
+      modelDigest: 'sha256:100d0000',
+      implementationDigest: 'sha256:1e100000',
       cases: [divergentCase('0xred')],
       operationCoverage: { subscribe: 1, set: 1, read: 1, dispose: 1 },
     }),
@@ -244,8 +244,8 @@ const FIXTURES = {
     name: 'transition facts with only an EQUIVALENT cell case (the bisimulation held — conformant, no gap)',
     context: transitionContext({
       family: CELL_FAMILY,
-      modelDigest: 'fnv1a:100d0000',
-      implementationDigest: 'fnv1a:1e100000',
+      modelDigest: 'sha256:100d0000',
+      implementationDigest: 'sha256:1e100000',
       cases: [equivalentCase('0xgreen')],
       operationCoverage: { subscribe: 1, set: 1, read: 1, dispose: 1 },
     }),

@@ -39,10 +39,10 @@ import { isTaggedError } from '@czap/error';
 function transitionCase(over: Partial<TransitionCase> & Pick<TransitionCase, 'status'>): TransitionCase {
   return {
     seed: '0xseed',
-    traceDigest: 'fnv1a:00000000',
+    traceDigest: 'sha256:00000000',
     operationCount: 4,
-    modelObservationDigest: 'fnv1a:0000aaaa',
-    implementationObservationDigest: over.status === 'divergent' ? 'fnv1a:0000bbbb' : 'fnv1a:0000aaaa',
+    modelObservationDigest: 'sha256:0000aaaa',
+    implementationObservationDigest: over.status === 'divergent' ? 'sha256:0000bbbb' : 'sha256:0000aaaa',
     ...over,
   };
 }
@@ -56,8 +56,8 @@ function ctx(facts: TransitionFacts): GateContext {
 function facts(family: string, cases: readonly TransitionCase[], over: Partial<TransitionFacts> = {}): TransitionFacts {
   return {
     family,
-    modelDigest: 'fnv1a:100d0000',
-    implementationDigest: 'fnv1a:1e100000',
+    modelDigest: 'sha256:100d0000',
+    implementationDigest: 'sha256:1e100000',
     cases,
     operationCoverage: { subscribe: 1, set: 1 },
     ...over,
@@ -82,9 +82,9 @@ describe('transitionConformanceGate — divergence reporting (REPORT-not-DECIDE)
           transitionCase({
             status: 'divergent',
             seed: '0xdiverge',
-            traceDigest: 'fnv1a:deadbeef',
-            modelObservationDigest: 'fnv1a:11110000',
-            implementationObservationDigest: 'fnv1a:22220000',
+            traceDigest: 'sha256:deadbeef',
+            modelObservationDigest: 'sha256:11110000',
+            implementationObservationDigest: 'sha256:22220000',
           }),
         ]),
       ),
@@ -94,9 +94,9 @@ describe('transitionConformanceGate — divergence reporting (REPORT-not-DECIDE)
     expect(findings[0]!.level).toBe('L4');
     // The finding is REPLAYABLE — it names the seed + the trace + both observation digests.
     expect(findings[0]!.detail).toContain('0xdiverge');
-    expect(findings[0]!.detail).toContain('fnv1a:deadbeef');
-    expect(findings[0]!.detail).toContain('fnv1a:11110000');
-    expect(findings[0]!.detail).toContain('fnv1a:22220000');
+    expect(findings[0]!.detail).toContain('sha256:deadbeef');
+    expect(findings[0]!.detail).toContain('sha256:11110000');
+    expect(findings[0]!.detail).toContain('sha256:22220000');
     expect(findings[0]!.title).toContain('cell');
   });
 
@@ -149,9 +149,16 @@ describe('transitionConformanceGate — unevidenced is SEPARATE from divergence 
   it('an unevidenced count ABOVE the baseline ESCALATES to blocking (the ratchet: the count may only fall)', () => {
     const findings = transitionConformanceGate.run(
       ctx(
-        facts('cell', [transitionCase({ status: 'unevidenced', seed: '0xa' }), transitionCase({ status: 'unevidenced', seed: '0xb' })], {
-          unevidencedBaseline: 1, // measured 2 > baseline 1 → regression
-        }),
+        facts(
+          'cell',
+          [
+            transitionCase({ status: 'unevidenced', seed: '0xa' }),
+            transitionCase({ status: 'unevidenced', seed: '0xb' }),
+          ],
+          {
+            unevidencedBaseline: 1, // measured 2 > baseline 1 → regression
+          },
+        ),
       ),
     );
     expect(findings).toHaveLength(2);
@@ -161,7 +168,12 @@ describe('transitionConformanceGate — unevidenced is SEPARATE from divergence 
 
   it('an equivalent + an unevidenced case: only the unevidenced surfaces (equivalent is silent)', () => {
     const findings = transitionConformanceGate.run(
-      ctx(facts('cell', [transitionCase({ status: 'equivalent', seed: '0xok' }), transitionCase({ status: 'unevidenced', seed: '0xgap' })])),
+      ctx(
+        facts('cell', [
+          transitionCase({ status: 'equivalent', seed: '0xok' }),
+          transitionCase({ status: 'unevidenced', seed: '0xgap' }),
+        ]),
+      ),
     );
     expect(findings).toHaveLength(1);
     expect(findings[0]!.title).toContain('unevidenced');

@@ -72,4 +72,4 @@ The decided bisimulation verdict — `equivalent` (green) / `divergent` (finding
 
 Defined in: [gauntlet/src/transition-facts.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/transition-facts.ts#L73)
 
-The content address of the op history (canonical-CBOR → fnv1a) — the replay key half.
+The canonical SHA-256 content address of the op history (canonical-CBOR → SHA-256) — the replay key half.
