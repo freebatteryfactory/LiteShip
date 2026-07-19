@@ -8,6 +8,6 @@
 
 > **Handle** = `CompositorHandle`
 
-Defined in: [core/src/compositor.ts:670](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/compositor.ts#L670)
+Defined in: [core/src/compositor.ts:674](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/compositor.ts#L674)
 
 The `{ compositor, lifetime }` pair returned by [Compositor.create](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/compositor.ts).

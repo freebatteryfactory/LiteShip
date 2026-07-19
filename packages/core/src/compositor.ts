@@ -60,7 +60,7 @@ import type { PolicyNode, RuntimeSite } from './document-graph.js';
 import { chooseRung } from './escalation.js';
 import type { FrameBudget } from './frame-budget.js';
 import { projectionKeys } from './projection.js';
-import type { Quantizer, ReactiveQuantizer } from './quantizer-types.js';
+import type { CompositorQuantizer } from './quantizer-types.js';
 import { RuntimeCoordinator } from './runtime-coordinator.js';
 import { SpeculativeEvaluator } from './speculative.js';
 
@@ -138,12 +138,12 @@ function defaultRuntimeSite(): RuntimeSite {
 }
 
 /**
- * Widen a Quantizer's boundary parameter to Boundary.Shape for storage in
- * a heterogeneous registry. Safe because Quantizer<B> is covariant in B
- * (B only appears in return positions on Quantizer).
+ * Widen a CompositorQuantizer's boundary parameter to Boundary.Shape for storage
+ * in a heterogeneous registry. Safe because the quantizer is covariant in B
+ * (B only appears in return positions).
  */
-function widenQuantizer<B extends Boundary.Shape>(q: Quantizer<B>): Quantizer<Boundary.Shape> {
-  return q as unknown as Quantizer<Boundary.Shape>;
+function widenQuantizer<B extends Boundary.Shape>(q: CompositorQuantizer<B>): CompositorQuantizer<Boundary.Shape> {
+  return q as unknown as CompositorQuantizer<Boundary.Shape>;
 }
 
 /**
@@ -158,7 +158,7 @@ function widenQuantizer<B extends Boundary.Shape>(q: Quantizer<B>): Quantizer<Bo
 type CompositorChanges = Pick<CellKernel.Replay<CompositeState>, 'subscribe' | 'read' | 'closed' | 'size'>;
 
 interface CompositorShape {
-  add<B extends Boundary.Shape>(name: string, quantizer: Quantizer<B>): void;
+  add<B extends Boundary.Shape>(name: string, quantizer: CompositorQuantizer<B>): void;
   remove(name: string): void;
   compute(): CompositeState;
   setBlendWeights(name: string, weights: Record<string, number>): void;
@@ -271,7 +271,7 @@ export const Compositor: CompositorFactory = {
       cell.publish(state);
     }
 
-    const qMap = new Map<string, Quantizer<Boundary.Shape>>();
+    const qMap = new Map<string, CompositorQuantizer<Boundary.Shape>>();
     const metaMap = new Map<string, QuantizerMeta>();
     const overrides = new Map<string, Record<string, number>>();
 
@@ -430,16 +430,20 @@ export const Compositor: CompositorFactory = {
               const quantizer = qMap.get(name)!;
 
               const prefetched = prefetchedStates.get(name);
-              // Sync hot path prefers `stateSync()`; the reactive fallback reads the
-              // current discrete state off the quantizer's replay-1 CellKernel. A
-              // quantizer with no `stateSync` is necessarily a ReactiveQuantizer (the
-              // `@czap/quantizer` builder always produces one), so the narrowing cast
-              // is sound. No residual Effect in this file.
+              // The accepted type is `CompositorQuantizer` — EITHER a base quantizer with
+              // a REQUIRED `stateSync`, OR a `ReactiveQuantizer` carrying `state`. The
+              // `'state' in quantizer` guard discriminates the union with NO cast (a
+              // base-only quantizer — neither arm — is now a compile-time error at
+              // `add()`). Within each arm the sync hot path still prefers `stateSync()`,
+              // falling back to the replay-1 `state.read()` only when it is absent. No
+              // residual Effect in this file.
               const stateStr =
                 prefetched ??
-                (quantizer.stateSync
-                  ? quantizer.stateSync()
-                  : (quantizer as ReactiveQuantizer<Boundary.Shape>).state.read());
+                ('state' in quantizer
+                  ? quantizer.stateSync
+                    ? quantizer.stateSync()
+                    : quantizer.state.read()
+                  : quantizer.stateSync());
               discrete[name] = stateStr;
               runtime.setState(name, stateStr);
               prefetchedStates.delete(name);
@@ -542,7 +546,7 @@ export const Compositor: CompositorFactory = {
     }
 
     const compositor: CompositorShape = {
-      add: <B extends Boundary.Shape>(name: string, quantizer: Quantizer<B>): void => {
+      add: <B extends Boundary.Shape>(name: string, quantizer: CompositorQuantizer<B>): void => {
         // Quantizer<B> is covariant in B (B only appears in return types), so widening
         // to Quantizer<Boundary.Shape> is sound; wrap in a named helper to document.
         qMap.set(name, widenQuantizer(quantizer));

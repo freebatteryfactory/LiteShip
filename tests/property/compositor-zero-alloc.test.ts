@@ -31,6 +31,8 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { resolve, dirname } from 'node:path';
+import { Boundary, Compositor } from '@czap/core';
+import type { CompositorQuantizer, Quantizer, ReactiveQuantizer } from '@czap/core';
 import { scaledTimeout } from '../../vitest.shared.js';
 import { spawnArgvCapture } from '../../scripts/lib/spawn.js';
 import { RELATIVE_MAX_RATIO, RELATIVE_SUBSCRIBER_MAX_RATIO } from '../../scripts/alloc-gate.js';
@@ -74,6 +76,59 @@ function parseRelative(
   }
   return out;
 }
+
+// This file is listed in tsconfig.tests.json's include, so the `@ts-expect-error`
+// below is LOAD-BEARING: it is only verified because THIS project typechecks it.
+describe('Compositor.add — CompositorQuantizer accepted-type contract (compile-time)', () => {
+  const boundary = Boundary.make({
+    input: 'viewport.width',
+    at: [
+      [0, 'mobile'],
+      [768, 'tablet'],
+      [1024, 'desktop'],
+    ] as const,
+  });
+  type B = typeof boundary;
+
+  it('REJECTS a base-only quantizer (no stateSync, no reactive state) at the type level', () => {
+    // COMPILE-ONLY: this closure is NEVER invoked. A bare Quantizer base — `_tag` +
+    // `boundary` + `evaluate`, but NEITHER the synchronous `stateSync` NOR the reactive
+    // `state`/`changes` — is rejected by `Compositor.add`'s `CompositorQuantizer` type.
+    // Encoding the requirement in the accepted type makes it a COMPILE error — the fix
+    // that let compositor.ts drop the read-site `(q as ReactiveQuantizer).state.read()`
+    // cast. At RUNTIME the same quantizer would CRASH in the compute-discrete pass
+    // (`quantizer.state.read()` on an absent `state`), which is exactly the failure the
+    // type prevents — so the assertion lives in a closure that is only typechecked, not
+    // run. If the `@ts-expect-error` stops biting, the tightening regressed to the cast.
+    const _rejectsBaseOnly = (
+      compositor: ReturnType<typeof Compositor.create>['compositor'],
+      baseOnly: Quantizer<B>,
+    ): void => {
+      // @ts-expect-error — Quantizer<B> carries no required stateSync and no reactive state.
+      compositor.add('bad', baseOnly);
+    };
+    expect(typeof _rejectsBaseOnly).toBe('function');
+  });
+
+  it('ACCEPTS a synchronous (required-stateSync) quantizer — no cast needed', () => {
+    const { compositor } = Compositor.create();
+    const sync: CompositorQuantizer<B> = {
+      _tag: 'Quantizer',
+      boundary,
+      stateSync: () => 'mobile',
+      evaluate: () => 'mobile',
+    };
+    compositor.add('sync', sync);
+    expect(sync.stateSync()).toBe('mobile');
+  });
+
+  it('a ReactiveQuantizer is one arm of the accepted type (the reactive path stays valid)', () => {
+    // Type-level: a ReactiveQuantizer<B> is assignable to CompositorQuantizer<B>, so the
+    // reactive `state.read()` fallback the compositor keeps is a first-class accepted arm.
+    const widen = (q: ReactiveQuantizer<B>): CompositorQuantizer<B> => q;
+    expect(typeof widen).toBe('function');
+  });
+});
 
 describe('Compositor compose is genuinely zero-allocation (INV-COMPOSITOR-ZERO-ALLOC)', () => {
   it('the compositor compose hot path is a NEGLIGIBLE fraction of a known-allocating reference (platform-robust live ratio)', async () => {

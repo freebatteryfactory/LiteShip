@@ -73,3 +73,16 @@ export interface ReactiveQuantizer<B extends Boundary.Shape = Boundary.Shape> ex
   /** No-replay crossing subscription (was `Stream.Stream<BoundaryCrossing<StateUnion<B> & string>>`). */
   readonly changes: QuantizerCrossings<B>;
 }
+
+/**
+ * A quantizer the {@link Compositor} can drive: it must be able to produce its
+ * current discrete state, EITHER synchronously (a REQUIRED {@link Quantizer.stateSync})
+ * OR reactively (a full {@link ReactiveQuantizer} with `state.read()`). The bare
+ * {@link Quantizer} base — no `stateSync`, no reactive `state` — is deliberately
+ * rejected: `Compositor.add` reads the state during its initial `compute-discrete`
+ * pass, so a base-only quantizer would crash at runtime. Encoding the requirement
+ * in the accepted type turns that into a compile-time error instead (the base
+ * `Quantizer` contract is public, so a consumer could otherwise satisfy it and fail).
+ */
+export type CompositorQuantizer<B extends Boundary.Shape = Boundary.Shape> =
+  (Quantizer<B> & { readonly stateSync: () => StateUnion<B> }) | ReactiveQuantizer<B>;

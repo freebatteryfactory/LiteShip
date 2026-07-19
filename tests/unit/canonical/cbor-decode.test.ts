@@ -174,16 +174,30 @@ describe('decode — strict rejection of non-canonical input', () => {
 });
 
 describe('canonicalCborDecodeCapsule input schema', () => {
-  // The input is a kernel `S.bytes(Uint8Array)` DECLARATION carrying a
-  // `withArbitrary` thunk; strict kernel decode accepts any `Uint8Array`
-  // instance (the decoder's own `decode()` is what rejects non-canonical bytes at
-  // run time). The canonical-CBOR DOMAIN — the narrow subset the thunk samples
-  // within — is defined by `isCanonicalCborBytes`, asserted directly below.
-  it('is a bytes declaration whose strict decode accepts a Uint8Array and refuses non-bytes', () => {
+  // The input is a kernel `S.bytes(Uint8Array)` DECLARATION wrapped in an
+  // `S.brand` DECODE-TIME refinement (and carrying a `withArbitrary` thunk).
+  // Strict kernel decode first checks the `Uint8Array` carrier, THEN runs the
+  // canonical-CBOR refinement — so non-canonical bytes are rejected at decode,
+  // not merely at the decoder's own run-time `decode()`. The canonical-CBOR
+  // DOMAIN the refinement enforces is defined by `isCanonicalCborBytes`.
+  it('is a branded bytes declaration whose strict decode accepts canonical bytes and refuses non-bytes', () => {
     const canonical = CanonicalCbor.encode({ ok: true });
     expect(decodeSchema(canonicalCborDecodeCapsule.input as never, canonical).ok).toBe(true);
     // A non-Uint8Array value is refused by the bytes-carrier check.
     expect(decodeSchema(canonicalCborDecodeCapsule.input as never, { not: 'bytes' }).ok).toBe(false);
+  });
+
+  it('REJECTS a non-canonical Uint8Array at decode time via the `schema/brand` refinement', () => {
+    // Trailing bytes after the top-level item ([0x00, 0x00]) are a well-formed
+    // `Uint8Array` but NOT canonical CBOR — the carrier check passes, then the
+    // brand refinement throws and folds into a `schema/brand` decode issue. Before
+    // the refinement this reached `run` as an "any Uint8Array" input.
+    const nonCanonical = new Uint8Array([0x00, 0x00]);
+    const result = decodeSchema(canonicalCborDecodeCapsule.input as never, nonCanonical);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.some((issue) => issue.code === 'schema/brand')).toBe(true);
+    }
   });
 
   it('the canonical-CBOR domain predicate accepts encoder output and rejects non-canonical bytes', () => {

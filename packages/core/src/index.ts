@@ -290,7 +290,13 @@ export type { ReplayableRecoveryCell } from './stream-recovery.js';
 export { Timeline } from './timeline.js';
 
 // Quantizer types
-export type { Quantizer, ReactiveQuantizer, QuantizerState, QuantizerCrossings } from './quantizer-types.js';
+export type {
+  Quantizer,
+  ReactiveQuantizer,
+  CompositorQuantizer,
+  QuantizerState,
+  QuantizerCrossings,
+} from './quantizer-types.js';
 
 // Scheduler
 export { Scheduler, rafDebounce, startRafLoop } from './scheduler.js';

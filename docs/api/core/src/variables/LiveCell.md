@@ -8,7 +8,7 @@
 
 > `const` **LiveCell**: `object`
 
-Defined in: [core/src/live-cell.ts:231](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/live-cell.ts#L231)
+Defined in: [core/src/live-cell.ts:241](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/live-cell.ts#L241)
 
 LiveCell — bridge between the [Cell](Cell.md) reactive graph and the wire
 protocol. A `LiveCell` wraps a `Cell` with a typed [CellEnvelope](../interfaces/CellEnvelope.md) — kind,

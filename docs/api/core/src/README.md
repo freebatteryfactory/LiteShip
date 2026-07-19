@@ -232,6 +232,7 @@ plan graph, ECS, capsule factory).
 - [CommandAnnotations](type-aliases/CommandAnnotations.md)
 - [CommandExecutionKind](type-aliases/CommandExecutionKind.md)
 - [CommandJsonSchema](type-aliases/CommandJsonSchema.md)
+- [CompositorQuantizer](type-aliases/CompositorQuantizer.md)
 - [ContentAddress](type-aliases/ContentAddress.md)
 - [DecodeIssueCode](type-aliases/DecodeIssueCode.md)
 - [DecodePath](type-aliases/DecodePath.md)
