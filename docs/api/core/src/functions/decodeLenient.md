@@ -8,7 +8,7 @@
 
 > **decodeLenient**\<`A`, `I`\>(`schema`, `input`): `A` \| `null`
 
-Defined in: [core/src/schema/decode.ts:392](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/decode.ts#L392)
+Defined in: [core/src/schema/decode.ts:358](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/decode.ts#L358)
 
 LENIENT decode — coerce-or-null / prune. Returns the decoded `A`, or `null`
 when a required leaf could not be produced. Malformed record/array leaves and
