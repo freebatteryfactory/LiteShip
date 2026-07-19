@@ -6,7 +6,7 @@
 
 # Interface: TypeExportDrift
 
-Defined in: [audit/src/type-export-surface.ts:263](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/type-export-surface.ts#L263)
+Defined in: [audit/src/type-export-surface.ts:324](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/type-export-surface.ts#L324)
 
 One per-type difference between a committed and a live type-export surface.
 
@@ -16,7 +16,7 @@ One per-type difference between a committed and a live type-export surface.
 
 > `readonly` **changeClass**: `"added"` \| `"removed"` \| `"kind-changed"` \| `"package-added"` \| `"package-removed"`
 
-Defined in: [audit/src/type-export-surface.ts:266](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/type-export-surface.ts#L266)
+Defined in: [audit/src/type-export-surface.ts:327](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/type-export-surface.ts#L327)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [audit/src/type-export-surface.ts:266](https://github.com/freebatter
 
 > `readonly` **detail**: `string`
 
-Defined in: [audit/src/type-export-surface.ts:265](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/type-export-surface.ts#L265)
+Defined in: [audit/src/type-export-surface.ts:326](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/type-export-surface.ts#L326)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [audit/src/type-export-surface.ts:265](https://github.com/freebatter
 
 > `readonly` **pkg**: `string`
 
-Defined in: [audit/src/type-export-surface.ts:264](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/type-export-surface.ts#L264)
+Defined in: [audit/src/type-export-surface.ts:325](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/type-export-surface.ts#L325)

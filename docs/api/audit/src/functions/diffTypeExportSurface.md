@@ -8,7 +8,7 @@
 
 > **diffTypeExportSurface**(`committed`, `live`): readonly [`TypeExportDrift`](../interfaces/TypeExportDrift.md)[]
 
-Defined in: [audit/src/type-export-surface.ts:274](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/type-export-surface.ts#L274)
+Defined in: [audit/src/type-export-surface.ts:335](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/type-export-surface.ts#L335)
 
 Per-type diff of two surfaces — the human-readable drift report the gate prints
 so a reviewer sees exactly which type left or entered the surface (the CapSet
