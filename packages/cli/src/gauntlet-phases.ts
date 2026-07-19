@@ -33,7 +33,7 @@ export interface GauntletPhase {
   readonly gracePeriodMs?: number;
 }
 
-/** The canonical 41-phase gauntlet sequence, in execution order. */
+/** The canonical gauntlet sequence, in execution order (length = gauntletPhases.length). */
 export const gauntletPhases: readonly GauntletPhase[] = [
   // ── Phase 0: Rig-check (env preflight) ─────────────────────────────
   { label: 'rig-check', command: 'pnpm run doctor -- --preflight --ci' },

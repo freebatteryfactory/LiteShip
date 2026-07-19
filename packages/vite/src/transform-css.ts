@@ -1,7 +1,7 @@
 /**
  * Standalone `@token` / `@theme` / `@style` / `@quantize` CSS transform.
  *
- * This is the 4-phase CSS walk lifted out of the Vite plugin's `transform`
+ * This is the staged CSS walk lifted out of the Vite plugin's `transform`
  * hook into a pure function over an explicit {@link TransformCssContext}, so
  * it is testable without the Vite plugin lifecycle: pass a `warn` sink, a
  * {@link PrimitiveResolutionCache}, the project root + dirs, and you exercise
@@ -136,7 +136,7 @@ function watchPrimitiveSource(ctx: TransformCssContext, source: string | undefin
 // ---------------------------------------------------------------------------
 
 /**
- * Run the 4-phase CSS transform on a single sheet. Returns the rewritten CSS,
+ * Run the staged CSS transform on a single sheet. Returns the rewritten CSS,
  * or `null` when nothing changed (no `@czap` at-rules, or every block was
  * left untransformed). Emits doctor-style warnings through `ctx.warn`, and
  * re-registers resolved convention files through `ctx.addWatchFile`.

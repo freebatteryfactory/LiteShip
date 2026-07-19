@@ -144,7 +144,7 @@ export interface CommandContext {
    * the authority ratchet, and returns the structured {@link GauntletResult}
    * (findings + per-gate outcomes + a single blocking verdict). This is the
    * tasks-vs-gates distinction made real: `check` is the fixture-qualified gate
-   * FOLD, whereas the CLI-owned `gauntlet` command spawns the 28-phase
+   * FOLD, whereas the CLI-owned `gauntlet` command spawns the full
    * `gauntlet:full` orchestrator. Backed by `@czap/gauntlet`'s `node:fs` glob,
    * so — like `runPlumb` / `runCheckInvariants`, and unlike the heavy `@czap/audit`
    * engine — it is provisioned in the shared host factory

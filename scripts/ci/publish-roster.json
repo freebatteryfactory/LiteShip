@@ -1,0 +1,31 @@
+{
+  "$generated": "by scripts/gen-roster.ts — do not hand-edit; regenerate with: pnpm exec tsx scripts/gen-roster.ts --write",
+  "expectedPublishable": 25,
+  "packages": [
+    "@czap/_spine",
+    "@czap/error",
+    "@czap/canonical",
+    "@czap/core",
+    "@czap/genui",
+    "@czap/quantizer",
+    "@czap/compiler",
+    "@czap/web",
+    "@czap/detect",
+    "@czap/edge",
+    "@czap/vite",
+    "@czap/worker",
+    "@czap/remotion",
+    "@czap/scene",
+    "@czap/astro",
+    "@czap/cloudflare",
+    "@czap/stage",
+    "@czap/assets",
+    "@czap/gauntlet",
+    "@czap/audit",
+    "@czap/command",
+    "@czap/cli",
+    "@czap/mcp-server",
+    "create-liteship",
+    "liteship"
+  ]
+}

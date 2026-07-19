@@ -20,8 +20,8 @@ export const LIFECYCLE_SCRIPTS = ['prepare', 'postinstall'] as const;
 export const CATEGORIES: readonly CategorySpec[] = [
   {
     name: 'dev-experience',
-    description: 'First-run sugar, doctor, clean. Start here on a fresh clone.',
-    scripts: ['shakedown', 'doctor', 'dev', 'clean', 'scripts', 'glossary', 'fix'],
+    description: 'First-run verify, dev host, doctor, clean. Start here on a fresh clone.',
+    scripts: ['verify', 'doctor', 'dev', 'clean', 'scripts', 'glossary', 'fix'],
   },
   {
     name: 'build',
@@ -33,6 +33,7 @@ export const CATEGORIES: readonly CategorySpec[] = [
     description: 'Run vitest lanes. `test` is the default fast loop.',
     scripts: [
       'test',
+      'test:watch',
       'test:unit',
       'test:smoke',
       'test:property',
@@ -108,8 +109,8 @@ export const CATEGORIES: readonly CategorySpec[] = [
   },
   {
     name: 'release',
-    description: 'Ship + verify + gauntlet (the full release-grade gate).',
-    scripts: ['ship', 'verify', 'gauntlet:full', 'package:smoke', 'release:notes'],
+    description: 'Ship + verify:receipts + gauntlet (the full release-grade gate).',
+    scripts: ['ship', 'verify:receipts', 'gauntlet:full', 'package:smoke', 'release:notes'],
   },
   {
     name: 'docs',

@@ -148,7 +148,7 @@ const CLI_OWNED_DESCRIPTORS: readonly CapsuleCommandDescriptor[] = [
     summary: 'Run the full release-grade gauntlet.',
     inputSchema: { type: 'object', properties: { 'dry-run': { type: 'boolean' } } },
     // NOT mcpExposed: gauntlet is a blocking spawnSync(stdio:inherit) that streams
-    // a 28-phase run to a terminal — terminal orchestration, not an MCP tool.
+    // the full `gauntlet:full` run to a terminal — terminal orchestration, not an MCP tool.
     annotations: { group: 'ship' },
   },
   {

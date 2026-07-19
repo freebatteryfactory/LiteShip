@@ -6,7 +6,7 @@
  * WALL-CLOCK `now` for waiver expiry), emits the structured receipt, and prints
  * a concise findings summary to stderr. Exit 0 ok, 1 blocked.
  *
- * This is NOT `czap gauntlet` — that command spawns the 28-phase `gauntlet:full`
+ * This is NOT `czap gauntlet` — that command spawns the full `gauntlet:full`
  * orchestrator and streams it to the terminal. `czap check` is the in-process,
  * fixture-qualified gate fold that returns a Finding[] work-list.
  *

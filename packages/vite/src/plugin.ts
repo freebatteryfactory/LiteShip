@@ -10,7 +10,7 @@
  * The factory is thin: it builds the explicit per-instance state — a
  * {@link PrimitiveResolutionCache} (the resolution + watch caches) and a
  * {@link WasmState} (the compute-binary state machine) — then wires the
- * standalone hook logic over it. The 4-phase CSS walk lives in
+ * standalone hook logic over it. The staged CSS walk lives in
  * {@link transformCss} (testable without the Vite lifecycle), and the WASM
  * transitions live in `wasm-state.ts`; no hook communicates through hidden
  * closure `let`s.

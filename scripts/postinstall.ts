@@ -26,31 +26,31 @@ function main(): void {
 
   const lines: string[] = [];
   lines.push('');
-  lines.push(`  ${header('LiteShip', on)} — moored.`);
+  lines.push(`  ${header('LiteShip', on)} — installed.`);
   if (firstTime) {
     lines.push('');
-    lines.push('  First time aboard? One command runs the whole shakedown:');
+    lines.push('  First time here? One command runs the whole first-run check:');
     lines.push('');
-    lines.push(`    ${color('cyan', 'pnpm shakedown', on)}`);
-    lines.push(`    ${color('dim', 'rig-check + build + test', on)}`);
+    lines.push(`    ${color('cyan', 'pnpm verify', on)}`);
+    lines.push(`    ${color('dim', 'doctor + build + test', on)}`);
     lines.push('');
     lines.push('  Or step through it yourself (one command per line):');
     lines.push('');
     lines.push(`    ${color('cyan', 'pnpm run doctor', on)}`);
-    lines.push(`    ${color('dim', 'preflight rig-check only', on)}`);
-    lines.push(`    ${color('cyan', 'pnpm run build', on)}`);
-    lines.push(`    ${color('dim', 'lay the keel (tsc across 14 packages)', on)}`);
+    lines.push(`    ${color('dim', 'preflight checks only', on)}`);
+    lines.push(`    ${color('cyan', 'pnpm dev', on)}`);
+    lines.push(`    ${color('dim', 'run the dev host', on)}`);
     lines.push(`    ${color('cyan', 'pnpm test', on)}`);
     lines.push(`    ${color('dim', 'fast inner loop (~75s)', on)}`);
     lines.push('');
-    lines.push('  Bearings & sugar:');
+    lines.push('  Find your way around:');
     lines.push(`    ${color('cyan', 'pnpm scripts', on)}         ${color('dim', '# categorized catalog of all dev scripts', on)}`);
     lines.push(`    ${color('cyan', 'pnpm run glossary', on)}    ${color('dim', '# look up a LiteShip / CZAP term', on)}`);
   } else {
     lines.push('');
-    lines.push('  Cast off with:');
+    lines.push('  Get going with:');
     lines.push(
-      `    ${color('cyan', 'pnpm run build', on)}   ${color('cyan', 'pnpm test', on)}   ${color('cyan', 'pnpm run doctor', on)}   ${color('cyan', 'pnpm scripts', on)}`,
+      `    ${color('cyan', 'pnpm verify', on)}   ${color('cyan', 'pnpm dev', on)}   ${color('cyan', 'pnpm test', on)}   ${color('cyan', 'pnpm scripts', on)}`,
     );
   }
   lines.push('');

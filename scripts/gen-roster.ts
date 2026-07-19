@@ -29,25 +29,22 @@
  *
  * ## Modes
  *
- *   - default (emit): print the regenerated roster blocks to stdout so the
- *     consumer-phase edits can adopt them between generated-block markers.
+ *   - default (emit): print the regenerated roster blocks to stdout for review.
+ *   - `--write`: stamp the generated artifacts in place — the
+ *     `LITESHIP_PACKAGES` block in `packages/liteship/src/index.ts` (between its
+ *     `BEGIN/END gen-roster` markers) and the fully-generated publish roster at
+ *     `scripts/ci/publish-roster.json`. Idempotent: re-running with no roster
+ *     change leaves both bytes unchanged.
  *   - `--check`: the staleness gate. Assert the authored roster + the shipped
  *     copies match the repo-truths-derived set; non-zero exit on any drift.
- *
- * The consumer files themselves are NOT written by this producer slice; the
- * consumer phase adopts the emitted blocks behind generated-block markers.
  *
  * @module
  */
 
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import {
-  packageRoster,
-  publishablePackageDirs,
-  packageManifests,
-} from '../tests/support/repo-truths.js';
+import { packageRoster, publishablePackageDirs, packageManifests } from '../tests/support/repo-truths.js';
 import { isDirectExecution } from './audit/shared.js';
 
 const REPO_ROOT = resolve(fileURLToPath(import.meta.url), '..', '..');
@@ -73,13 +70,13 @@ export const CANONICAL_ROSTER: readonly string[] = [
   '@czap/compiler',
   '@czap/web',
   '@czap/detect',
-  '@czap/vite',
-  '@czap/astro',
   '@czap/edge',
-  '@czap/cloudflare',
+  '@czap/vite',
   '@czap/worker',
   '@czap/remotion',
   '@czap/scene',
+  '@czap/astro',
+  '@czap/cloudflare',
   '@czap/stage',
   '@czap/assets',
   '@czap/gauntlet',
@@ -97,10 +94,7 @@ export const CANONICAL_ROSTER: readonly string[] = [
 export const PUBLISHABLE_UMBRELLAS: readonly string[] = ['create-liteship', 'liteship'];
 
 /** The full publishable set the release workflow iterates: fleet then umbrellas. */
-export const PUBLISHABLE_ROSTER: readonly string[] = [
-  ...CANONICAL_ROSTER,
-  ...PUBLISHABLE_UMBRELLAS,
-];
+export const PUBLISHABLE_ROSTER: readonly string[] = [...CANONICAL_ROSTER, ...PUBLISHABLE_UMBRELLAS];
 
 // ---------------------------------------------------------------------------
 // Derived truths (repo-truths single owner).
@@ -120,37 +114,39 @@ function derivedPublishableNames(): readonly string[] {
 }
 
 // ---------------------------------------------------------------------------
-// release.yml parse (the one YAML copy — YAML cannot import TS, so it is a list
-// the gate verifies rather than a regenerated block).
+// release.yml — the one YAML copy. YAML cannot import TS, so the publish loop
+// sources its roster from the generated `scripts/ci/publish-roster.json` (read
+// with jq) rather than carrying hand-written package literals. The gate proves
+// that JSON is the current projection and that the publish job stays literal-free.
 // ---------------------------------------------------------------------------
 
-interface ReleaseRoster {
-  /** The `EXPECTED_PUBLISHABLE=<n>` drift-guard count. */
-  readonly expectedPublishable: number;
-  /** The `for pkg in ...; do` publish-loop package list, in file order. */
-  readonly loopPackages: readonly string[];
-}
+/** Repo-relative path of the generated publish-roster JSON the release loop reads. */
+export const PUBLISH_ROSTER_JSON = 'scripts/ci/publish-roster.json';
 
-/** Parse the publish-loop list + EXPECTED_PUBLISHABLE count out of release.yml. */
-export function parseReleaseRoster(yaml: string): ReleaseRoster {
-  const countMatch = /EXPECTED_PUBLISHABLE=(\d+)/.exec(yaml);
-  if (countMatch == null) {
-    throw new Error('release.yml: EXPECTED_PUBLISHABLE=<n> not found');
-  }
-  const loopMatch = /for pkg in ([^\n]+?);\s*do/.exec(yaml);
-  if (loopMatch == null) {
-    throw new Error('release.yml: `for pkg in ...; do` publish loop not found');
-  }
-  const loopPackages = loopMatch[1]!.trim().split(/\s+/).filter((token) => token.length > 0);
-  return { expectedPublishable: Number(countMatch[1]), loopPackages };
+function publishRosterJsonPath(): string {
+  return resolve(REPO_ROOT, PUBLISH_ROSTER_JSON);
 }
 
 function readReleaseYaml(): string {
   return readFileSync(resolve(REPO_ROOT, '.github', 'workflows', 'release.yml'), 'utf8');
 }
 
+/**
+ * The text of the `publish:` job (the file's last job, so from its header to
+ * EOF). The gate's literal-free / references-the-JSON assertions scope to this
+ * so an `@czap/` mention elsewhere in the workflow (comments, other jobs) does
+ * not false-trip the guard.
+ */
+export function publishJobText(yaml: string): string {
+  const index = yaml.indexOf('\n  publish:');
+  if (index === -1) {
+    throw new Error('release.yml: `publish:` job not found');
+  }
+  return yaml.slice(index);
+}
+
 // ---------------------------------------------------------------------------
-// Emit — the regenerated blocks (stdout only; consumer phase adopts them).
+// Render — the generated artifacts (stamped by --write, verified by --check).
 // ---------------------------------------------------------------------------
 
 /** The `LITESHIP_PACKAGES` const body (dependency order), the tarball-shipped mirror. */
@@ -159,19 +155,55 @@ export function renderLiteshipPackages(): string {
   return `export const LITESHIP_PACKAGES = [\n${entries}\n] as const;`;
 }
 
-/** The release.yml publish-loop line + EXPECTED_PUBLISHABLE count. */
-export function renderReleaseLoop(): string {
-  return [
-    `EXPECTED_PUBLISHABLE=${PUBLISHABLE_ROSTER.length}`,
-    `for pkg in ${PUBLISHABLE_ROSTER.join(' ')}; do`,
-  ].join('\n');
+/**
+ * The fully-generated `scripts/ci/publish-roster.json` body: the publishable
+ * count + the publish-order roster the release loop reads with jq. 2-space
+ * indent, trailing newline, byte-stable so `--check` can compare it exactly.
+ */
+export function renderPublishRosterJson(): string {
+  const payload = {
+    $generated:
+      'by scripts/gen-roster.ts — do not hand-edit; regenerate with: pnpm exec tsx scripts/gen-roster.ts --write',
+    expectedPublishable: PUBLISHABLE_ROSTER.length,
+    packages: [...PUBLISHABLE_ROSTER],
+  };
+  return `${JSON.stringify(payload, null, 2)}\n`;
 }
 
 function emit(): void {
   process.stdout.write('# LITESHIP_PACKAGES (packages/liteship/src/index.ts)\n');
   process.stdout.write(`${renderLiteshipPackages()}\n\n`);
-  process.stdout.write('# release.yml publish loop (.github/workflows/release.yml)\n');
-  process.stdout.write(`${renderReleaseLoop()}\n`);
+  process.stdout.write(`# publish roster (${PUBLISH_ROSTER_JSON})\n`);
+  process.stdout.write(renderPublishRosterJson());
+}
+
+// ---------------------------------------------------------------------------
+// Write — stamp the generated artifacts in place (idempotent).
+// ---------------------------------------------------------------------------
+
+const LITESHIP_INDEX_REL = 'packages/liteship/src/index.ts';
+
+/** The `BEGIN/END gen-roster: LITESHIP_PACKAGES` marker span, keeping the marker lines. */
+const LITESHIP_BLOCK =
+  /(\/\* BEGIN gen-roster: LITESHIP_PACKAGES[^\n]*\*\/\n)[\s\S]*?(\n\/\* END gen-roster: LITESHIP_PACKAGES \*\/)/;
+
+function write(): number {
+  const indexPath = resolve(REPO_ROOT, LITESHIP_INDEX_REL);
+  const src = readFileSync(indexPath, 'utf8');
+  if (!LITESHIP_BLOCK.test(src)) {
+    process.stderr.write(
+      `gen-roster --write: BEGIN/END gen-roster: LITESHIP_PACKAGES markers not found in ${LITESHIP_INDEX_REL}\n`,
+    );
+    return 1;
+  }
+  const stamped = src.replace(
+    LITESHIP_BLOCK,
+    (_match, begin: string, end: string) => `${begin}${renderLiteshipPackages()}${end}`,
+  );
+  if (stamped !== src) writeFileSync(indexPath, stamped);
+  writeFileSync(publishRosterJsonPath(), renderPublishRosterJson());
+  process.stdout.write(`gen-roster --write: stamped ${LITESHIP_INDEX_REL} and ${PUBLISH_ROSTER_JSON}.\n`);
+  return 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -222,18 +254,38 @@ export function collectRosterDrift(): readonly Drift[] {
     });
   }
 
-  // 3. release.yml EXPECTED_PUBLISHABLE + publish loop agree with the derived set.
-  const release = parseReleaseRoster(readReleaseYaml());
-  if (release.expectedPublishable !== derivedPublishable.length) {
+  // 3. The generated publish-roster.json equals the current PUBLISHABLE_ROSTER
+  //    projection byte-for-byte (the release loop reads this file with jq).
+  let jsonOnDisk: string | undefined;
+  try {
+    jsonOnDisk = readFileSync(publishRosterJsonPath(), 'utf8');
+  } catch {
     drift.push({
-      copy: 'release.yml EXPECTED_PUBLISHABLE',
-      detail: `${release.expectedPublishable} != ${derivedPublishable.length} publishable on disk`,
+      copy: PUBLISH_ROSTER_JSON,
+      detail: 'missing — run `pnpm exec tsx scripts/gen-roster.ts --write`',
     });
   }
-  if (!setEqual(release.loopPackages, derivedPublishable)) {
+  if (jsonOnDisk != null && jsonOnDisk !== renderPublishRosterJson()) {
     drift.push({
-      copy: 'release.yml publish loop',
-      detail: `membership != repo-truths publishable set — ${symmetricDiff(release.loopPackages, derivedPublishable)}`,
+      copy: PUBLISH_ROSTER_JSON,
+      detail:
+        'content != PUBLISHABLE_ROSTER projection — regenerate with `pnpm exec tsx scripts/gen-roster.ts --write`',
+    });
+  }
+
+  // 4. release.yml's publish job sources its roster from the generated JSON and
+  //    carries NO hand-written `@czap/` package literals of its own.
+  const publishJob = publishJobText(readReleaseYaml());
+  if (publishJob.includes('@czap/')) {
+    drift.push({
+      copy: 'release.yml publish job',
+      detail: `carries a hand-written \`@czap/\` package literal — the roster must come from ${PUBLISH_ROSTER_JSON}`,
+    });
+  }
+  if (!publishJob.includes(PUBLISH_ROSTER_JSON)) {
+    drift.push({
+      copy: 'release.yml publish job',
+      detail: `does not reference ${PUBLISH_ROSTER_JSON} — the publish loop must source its roster from the generated JSON`,
     });
   }
 
@@ -264,6 +316,7 @@ function check(): number {
 
 export function main(argv: readonly string[]): number {
   if (argv.includes('--check')) return check();
+  if (argv.includes('--write')) return write();
   emit();
   return 0;
 }

@@ -156,7 +156,7 @@ LiteShip is greenfield-first. There is no migration guide for porting an existin
 | Vite / Astro | 8 / 7 | same — no known gap |
 | Browsers | Chromium + Firefox + WebKit | same — no known gap |
 
-**Peer dependency on Effect is currently `>=4.0.0-beta.0`.** Effect 4 is still in beta upstream (the `latest` dist-tag points at Effect 3.x). LiteShip's published packages declare a broad beta range so consumers can pick the beta they want to vendor; the workspace dev-pins `4.0.0-beta.32` as the tested baseline. When Effect 4.0 stable ships, LiteShip will tighten the peer range to `^4.0.0` in a minor release with a documented upgrade path. If your procurement process doesn't accept beta runtime dependencies, this is the load-bearing item to evaluate before adopting LiteShip in production.
+**Zero third-party runtime peer dependencies.** `@czap/core` and `@czap/astro` — and every other published package — declare no third-party runtime peer dependency. The authoring layer produces plain CSS strings, GLSL preambles, ARIA records, and TypeScript unions using only the platform and each package's own workspace siblings, and its API surface is synchronous (`.read()` / `.subscribe()` / plain function calls). The `effect` runtime that earlier previews carried was fully removed (see `traceability/effect-shed-receipt.json`, ADR-0042 / ADR-0043), so there is no beta runtime dependency to clear through procurement before adopting LiteShip in production.
 
 **Windows + Linux are tier-1.** Every push and pull request runs the full `gauntlet:full` on Linux (`truth-linux`) and a broad smoke sweep on Windows (`windows-smoke`) via `.github/workflows/ci.yml`. Both jobs are required for merge. Automated regression catches OS-specific drift before it lands. WebCodecs capture and related browser-specific paths are Chromium-first.
 
@@ -217,7 +217,7 @@ ffmpeg (libx264) + Playwright stack CI uses on `ubuntu-latest`.
 
 ```bash
 pnpm install
-pnpm shakedown            # first-run aggregate: doctor → install → build → test
+pnpm verify            # first-run aggregate: doctor → install → build → test
 # ...or step through it yourself:
 pnpm run doctor           # preflight rig-check (Node, pnpm, build, hooks)
 pnpm run build
@@ -226,7 +226,7 @@ pnpm test                 # unit + component + property + integration (~75s)
 pnpm run gauntlet:full    # full release-grade gate (~22min)
 ```
 
-Dev-loop ergonomics: `pnpm dev` (vitest watch), `pnpm run clean` (dry-dock), `pnpm scripts` (categorized script index), `pnpm run glossary <term>` (CLI lookup into the ontology), `pnpm fix` (prettier + eslint --fix). The CLI mirrors the same surface: `czap doctor`, `czap help`, `czap version`, `czap glossary cast`.
+Dev-loop ergonomics: `pnpm dev` (showcase example dev server), `pnpm test:watch` (vitest watch), `pnpm run clean` (dry-dock), `pnpm scripts` (categorized script index), `pnpm run glossary <term>` (CLI lookup into the ontology), `pnpm fix` (prettier + eslint --fix). The CLI mirrors the same surface: `czap doctor`, `czap help`, `czap version`, `czap glossary cast`.
 
 Other lanes (`test:vite`, `test:astro`, `test:tailwind`, `test:e2e`, `test:e2e:stress`, `test:e2e:stream-stress`, `test:redteam`, `package:smoke`, `bench`, `bench:gate`, `bench:reality`, `coverage:merge`, `report:runtime-seams`, `audit`, `report:satellite-scan`, `feedback:verify`) are documented in [CONTRIBUTING.md](./CONTRIBUTING.md).
 

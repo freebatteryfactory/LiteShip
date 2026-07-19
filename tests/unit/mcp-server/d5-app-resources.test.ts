@@ -65,7 +65,9 @@ describe('D5 — D4 static surface stays frozen', () => {
     // COMMAND_CATALOG — the registry/commands UI body grew by one entry.
     // Re-pinned again when Astro 7 background-dev commands (`astro.dev`,
     // `astro.status`, `astro.stop`) joined COMMAND_CATALOG.
-    expect(pin).toBe('fnv1a:d57167cb');
+    // Re-pinned again when the glossary shake-down/first-run entries were
+    // reworded for the `pnpm verify` rename (shakedown script retired).
+    expect(pin).toBe('fnv1a:4bb42f31');
   });
 });
 

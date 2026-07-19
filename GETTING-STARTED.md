@@ -245,7 +245,7 @@ The contributor path (cloning the monorepo, workspace install, Playwright browse
 git clone https://github.com/freebatteryfactory/LiteShip.git
 cd LiteShip
 pnpm install
-pnpm shakedown   # first-run aggregate: doctor → build → test
+pnpm verify   # first-run aggregate: doctor → build → test
 ```
 
 `pnpm scripts` prints the categorized index of all dev scripts; `pnpm run doctor` is the on-demand preflight rig-check.

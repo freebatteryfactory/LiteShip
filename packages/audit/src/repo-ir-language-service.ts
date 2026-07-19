@@ -257,7 +257,7 @@ export function symbolReferenceOracle(input: SymbolReferenceOracleInput = {}): r
     // (every source record is discovered through a package) — fail loud.
     throw InvariantViolationError(
       'symbolReferenceOracle',
-      `read ${records.length} source records but discovered 0 packages under "${profile.repoRoot}" — the corpus and package discovery diverged`,
+      `read ${records.length} source records but discovered no packages under "${profile.repoRoot}" — the corpus and package discovery diverged`,
     );
   }
 

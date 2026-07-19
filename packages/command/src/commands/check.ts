@@ -6,7 +6,7 @@
  * and returns the {@link Finding}[] work-list plus the single blocking verdict.
  *
  * This is deliberately NOT the existing `gauntlet` command — that one is CLI-owned
- * terminal orchestration that spawns the 28-phase `gauntlet:full` run. `check` is
+ * terminal orchestration that spawns the full `gauntlet:full` run. `check` is
  * the fixture-qualified gate FOLD: pure, fast, and `mcpExposed` because its
  * Finding[] is exactly the structured work-list a human (CLI) or an agent (MCP)
  * should be able to read and act on without a human in the loop.

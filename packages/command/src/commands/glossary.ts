@@ -164,7 +164,7 @@ export const GLOSSARY_ENTRIES: readonly GlossaryEntry[] = [
     term: 'shake-down',
     category: 'translator-note',
     definition:
-      'The first-run aggregate (`pnpm shakedown`). Run on a new hull before sailing — install, build, smoke test.',
+      'The first-run aggregate (`pnpm verify`). Run on a new hull before sailing — install, build, smoke test.',
   },
   {
     term: 'dry-dock',
@@ -190,7 +190,7 @@ export const GLOSSARY_ENTRIES: readonly GlossaryEntry[] = [
     term: 'cast off',
     category: 'translator-note',
     definition:
-      'Begin the run: leave the dock. Used for first actions after install ("Cast off with: pnpm shakedown") and for non-blocking states ("you can cast off") in `czap doctor`.',
+      'Begin the run: leave the dock. Used for first actions after install ("Cast off with: pnpm verify") and for non-blocking states ("you can cast off") in `czap doctor`.',
     seeAlso: ['moored'],
   },
   {

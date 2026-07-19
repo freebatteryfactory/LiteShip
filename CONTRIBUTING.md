@@ -24,7 +24,7 @@ cd LiteShip
 pnpm install
 
 # First-run shake-down: rig-check + build + test
-pnpm shakedown
+pnpm verify
 
 # Or step through it manually (one command per line — see Shell paste traps below):
 pnpm run doctor
@@ -68,9 +68,10 @@ mid-run.
 Discoverable verbs at the workspace root:
 
 ```bash
-pnpm shakedown        # rig-check + build + test (first-run aggregate)
+pnpm verify        # rig-check + build + test (first-run aggregate)
 pnpm run doctor       # preflight rig-check, emits JSON receipt + TTY summary
-pnpm dev              # vitest in watch mode (the inner loop)
+pnpm dev              # launch the showcase example dev server
+pnpm test:watch       # vitest in watch mode (the inner loop)
 pnpm run clean        # dry-dock: wipe dist/, coverage/, reports/, .tsbuildinfo
 pnpm scripts          # categorized index of every dev script
 pnpm run glossary     # look up a LiteShip / CZAP term (e.g. `pnpm run glossary boundary`)
