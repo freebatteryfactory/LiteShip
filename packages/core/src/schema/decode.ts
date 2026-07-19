@@ -71,6 +71,16 @@ function ownData(obj: Record<string, unknown>, key: string): { readonly present:
   return { present: true, value: descriptor.value };
 }
 
+/**
+ * Read one array element as OWN DATA by index — a hole, an inherited indexed property, or an
+ * accessor (getter) reports as `undefined` (absent), so decode NEVER invokes a getter (which
+ * could throw or run side effects, violating the never-throw / never-invoke-getters contract)
+ * and NEVER walks the prototype. The indexed sibling of {@link ownData}.
+ */
+function ownIndex(arr: readonly unknown[], i: number): unknown {
+  return ownData(arr as unknown as Record<string, unknown>, String(i)).value;
+}
+
 /** Install an output property as own data via `defineProperty` — safe even for `__proto__`. */
 function defineData(target: Record<string, unknown>, key: string, value: unknown): void {
   Object.defineProperty(target, key, { value, enumerable: true, writable: true, configurable: true });
@@ -132,7 +142,7 @@ function decodeStrictNode(node: SchemaNode, input: unknown, path: DecodePath, is
       const out: unknown[] = [];
       let clean = true;
       for (let i = 0; i < input.length; i++) {
-        const outcome = decodeStrictNode(node.element, input[i], [...path, i], issues);
+        const outcome = decodeStrictNode(node.element, ownIndex(input, i), [...path, i], issues);
         if (outcome.ok) out.push(outcome.value);
         else clean = false;
       }
@@ -157,7 +167,7 @@ function decodeStrictNode(node: SchemaNode, input: unknown, path: DecodePath, is
       const out: unknown[] = [];
       let clean = true;
       for (const [i, element] of node.elements.entries()) {
-        const outcome = decodeStrictNode(element, input[i], [...path, i], issues);
+        const outcome = decodeStrictNode(element, ownIndex(input, i), [...path, i], issues);
         if (outcome.ok) out.push(outcome.value);
         else clean = false;
       }
@@ -176,7 +186,12 @@ function decodeStrictNode(node: SchemaNode, input: unknown, path: DecodePath, is
           clean = false;
           continue;
         }
-        const outcome = decodeStrictNode(node.value, ownData(input, key).value, [...path, key], issues);
+        const slot = ownData(input, key);
+        // An ENUMERABLE ACCESSOR is in Object.keys but reports absent — decode never invokes its
+        // getter, so the slot is INVISIBLE: skip it (never materialize a fabricated `undefined`,
+        // which would also spuriously fail a narrower value schema).
+        if (!slot.present) continue;
+        const outcome = decodeStrictNode(node.value, slot.value, [...path, key], issues);
         if (outcome.ok) defineData(out, key, outcome.value);
         else clean = false;
       }
@@ -262,8 +277,11 @@ function decodeLenientNode(node: SchemaNode, input: unknown): unknown {
     case 'array': {
       if (!Array.isArray(input)) return PRUNE;
       const out: unknown[] = [];
-      for (const item of input) {
-        const decoded = decodeLenientNode(node.element, item);
+      // Read each slot as OWN DATA by index (never via a for-of, which reads through the array
+      // iterator and would invoke an accessor/inherited element's getter) — decode never invokes
+      // a getter on untrusted input.
+      for (let i = 0; i < input.length; i++) {
+        const decoded = decodeLenientNode(node.element, ownIndex(input, i));
         if (decoded !== PRUNE) out.push(decoded);
       }
       return out;
@@ -276,7 +294,7 @@ function decodeLenientNode(node: SchemaNode, input: unknown): unknown {
       if (!Array.isArray(input) || input.length !== node.elements.length) return PRUNE;
       const out: unknown[] = [];
       for (const [i, element] of node.elements.entries()) {
-        const decoded = decodeLenientNode(element, input[i]);
+        const decoded = decodeLenientNode(element, ownIndex(input, i));
         if (decoded === PRUNE) return PRUNE;
         out.push(decoded);
       }
@@ -287,7 +305,11 @@ function decodeLenientNode(node: SchemaNode, input: unknown): unknown {
       const out: Record<string, unknown> = {};
       for (const key of Object.keys(input)) {
         if (POISON_KEYS.has(key)) continue;
-        const decoded = decodeLenientNode(node.value, ownData(input, key).value);
+        const slot = ownData(input, key);
+        // An enumerable accessor slot is invisible (decode never invokes its getter) — skip it
+        // rather than materialize a fabricated `undefined`.
+        if (!slot.present) continue;
+        const decoded = decodeLenientNode(node.value, slot.value);
         if (decoded !== PRUNE) defineData(out, key, decoded);
       }
       return out;

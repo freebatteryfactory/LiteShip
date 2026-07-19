@@ -141,6 +141,56 @@ describe('strict decode — array & record', () => {
     expect(issuesOf(decode(S.array(S.number), { length: 0 }))[0]?.code).toBe('schema/type');
   });
 
+  it('array/tuple: NEVER invokes an element getter — own-data read, not input[i] (round-11)', () => {
+    // An untrusted array whose index is an ACCESSOR: a direct `input[i]` would invoke the getter,
+    // violating the never-throw / never-invoke-getters contract (a side-effecting or throwing
+    // getter would run during validation). The own-data-descriptor read treats the accessor slot
+    // as absent (undefined), so decode reports a clean issue and never touches the getter.
+    let invoked = 0;
+    const evil: unknown[] = [1];
+    Object.defineProperty(evil, 1, {
+      enumerable: true,
+      configurable: true,
+      get() {
+        invoked++;
+        throw new Error('element getter must not run during decode');
+      },
+    });
+    // strict array: slot 1 reads `undefined` → a clean per-element type issue, never a throw.
+    expect(() => decode(S.array(S.number), evil)).not.toThrow();
+    expect(decode(S.array(S.number), evil).ok).toBe(false);
+    // lenient array: the accessor slot prunes (undefined ≠ number), never invoking the getter.
+    expect(() => decodeLenient(S.array(S.number), evil)).not.toThrow();
+    // strict + lenient tuple: same own-data read on the fixed positions.
+    const pair = S.tuple(S.number, S.number);
+    expect(() => decode(pair, evil)).not.toThrow();
+    expect(decode(pair, evil).ok).toBe(false);
+    expect(decodeLenient(pair, evil)).toBeNull();
+    expect(invoked).toBe(0);
+  });
+
+  it('record: an enumerable accessor slot is INVISIBLE — never invoked, never materialized (round-12)', () => {
+    // `Object.keys` includes an enumerable accessor, but `ownData` reports it absent — decode must
+    // SKIP it, never invoke its getter, and never materialize a fabricated `undefined` (which would
+    // also spuriously fail a narrower value schema).
+    let invoked = 0;
+    const rec: Record<string, unknown> = { a: 1 };
+    Object.defineProperty(rec, 'evil', {
+      enumerable: true,
+      configurable: true,
+      get() {
+        invoked++;
+        throw new Error('record value getter must not run during decode');
+      },
+    });
+    const strict = decode(S.record(S.number), rec);
+    expect(strict.ok).toBe(true); // 'evil' skipped, not a bogus type error
+    expect(valueOf(strict)).toEqual({ a: 1 });
+    expect(Object.prototype.hasOwnProperty.call(valueOf(strict), 'evil')).toBe(false);
+    expect(decodeLenient(S.record(S.number), rec)).toEqual({ a: 1 });
+    expect(invoked).toBe(0);
+  });
+
   it('record: decodes string-keyed values', () => {
     expect(valueOf(decode(S.record(S.number), { a: 1, b: 2 }))).toEqual({ a: 1, b: 2 });
   });

@@ -217,6 +217,43 @@ describe('Lifetime — late registration', () => {
     await lt.dispose();
     expect(count).toBe(1);
   });
+
+  test('a finalizer registered DURING disposal is AWAITED by dispose() (not dropped) — round-11', async () => {
+    const lt = Lifetime.make();
+    const order: string[] = [];
+    let lateSettled = false;
+    lt.add(() => {
+      // Runs inside the disposal pass; registers ANOTHER (async) finalizer mid-pass.
+      lt.add(async () => {
+        await Promise.resolve();
+        lateSettled = true;
+        order.push('late-async');
+      });
+      order.push('outer');
+    });
+    await lt.dispose();
+    // dispose() awaited the mid-pass registration — its async arm settled before the promise resolved.
+    expect(lateSettled).toBe(true);
+    expect(order).toEqual(['outer', 'late-async']);
+  });
+
+  test('a rejection from a finalizer registered DURING disposal folds into the aggregate — round-11', async () => {
+    const lt = Lifetime.make();
+    const lateErr = new Error('late finalizer boom');
+    lt.add(() => {
+      lt.add(async () => {
+        await Promise.resolve();
+        throw lateErr;
+      });
+    });
+    const rejection = await lt.dispose().then(
+      () => undefined,
+      (e: unknown) => e,
+    );
+    // The late async rejection is surfaced in LifetimeDisposeError, never silently discarded.
+    expect(hasTag(rejection, 'LifetimeDisposeError')).toBe(true);
+    expect((rejection as LifetimeDisposeError).causes).toContain(lateErr);
+  });
 });
 
 // ---------------------------------------------------------------------------
