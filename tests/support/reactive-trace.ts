@@ -193,16 +193,30 @@ export interface CrossingObservation {
 }
 
 /**
+ * The HLC byte-law fields — a STRUCTURAL mirror of `HLC.Shape` so this trace-type
+ * module imports nothing from `@czap/core` (see the module header).
+ */
+export interface HlcObservation {
+  readonly wall_ms: number;
+  readonly counter: number;
+  readonly node_id: string;
+}
+
+/**
  * A LiveCell envelope snapshot taken after a mutation — the DETERMINISTIC byte-law
- * fields only (version counter + fnv1a content-address id). The HLC `wall_ms`/
- * `counter` are wall-clock-sourced pre-Wave-6 (Effect `Clock.currentTimeMillis`
- * reads `Date.now()`), so they are recorded as the monotonicity boolean
- * {@link Observation.metaMonotonic}, never as raw nondeterministic bytes.
+ * fields (version counter + fnv1a content-address id + the raw HLC). Since Wave 6's
+ * clock injection the capture drives LiveCell with a `fixedClock(0)`, so the HLC
+ * `wall_ms`/`counter` are a pure function of the op-sequence and pinned here as RAW
+ * BYTES — superseding the pre-Wave-6 monotonicity-boolean workaround, which existed
+ * only because the HLC then read the ambient `Date.now()`. The monotonicity boolean
+ * {@link Observation.metaMonotonic} is retained as an explicit ordering law.
  */
 export interface MetaObservation {
   readonly atOp: number;
   readonly version: number;
   readonly id: string;
+  /** The envelope HLC (`updated`) at this op — raw bytes, deterministic under the injected fixed clock. */
+  readonly hlc: HlcObservation;
 }
 
 /**

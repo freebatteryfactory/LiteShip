@@ -40,14 +40,15 @@
  * nondeterministic harness reds it). There is no settle loop to tune — quiescence
  * is reached the instant a synchronous op returns.
  *
- * NONDETERMINISTIC SOURCES ARE NOT CAPTURED HERE, BY DESIGN. `Signal.make` time/
- * viewport/scroll sources read `wallClock`/DOM and rAF; `LiveCell` envelope HLC
- * reads the injected `wallClock`. Those wall-clock bytes are recorded only as
- * their DETERMINISTIC projections (Signal capture uses the fully-deterministic
- * `controllable` surface; LiveCell records the fnv1a id + version + an
- * HLC-monotonicity boolean, never raw `wall_ms`). This keeps the golden fixtures
- * replayable while still pinning the byte-law facts (fnv1a identity, monotonic
- * version, monotonic HLC).
+ * NONDETERMINISTIC SOURCES ARE CAPTURED THROUGH AN INJECTED CLOCK. `Signal.make`
+ * viewport/scroll sources read DOM + rAF (captured via the deterministic
+ * `controllable` surface); the `LiveCell` envelope HLC now reads an INJECTED
+ * `Clock` (clock.ts cake-and-eat-it law), so the capture drives it with a
+ * `fixedClock(0)` and pins the RAW HLC bytes (`wall_ms`/`counter`) in the golden as
+ * a pure function of the op-sequence — no ambient `Date.now()`, no
+ * monotonicity-boolean workaround. The fnv1a id + version + the raw HLC are all
+ * byte-law facts now; {@link Observation.metaMonotonic} is retained as an explicit
+ * ordering assertion.
  *
  * ZERO RUNTIME EDITS. This harness imports the primitives and observes them; it
  * changes no runtime file. The Wave 5.5 PRIME CONSTRAINT holds.
@@ -67,6 +68,7 @@ import {
   HLC,
   Millis,
   StateName,
+  fixedClock,
 } from '@czap/core';
 import type { BoundaryCrossing } from '@czap/core';
 import type { Disposer } from '@czap/core';
@@ -271,7 +273,12 @@ const runCapture = (adapter: PrimitiveAdapter, history: OpHistory): Observation 
   const snapshotMeta = (atOp: number): void => {
     if (handle.meta === undefined) return;
     const m = handle.meta();
-    metaTrail.push({ atOp, version: m.version, id: m.id });
+    metaTrail.push({
+      atOp,
+      version: m.version,
+      id: m.id,
+      hlc: { wall_ms: m.hlc.wall_ms, counter: m.hlc.counter, node_id: m.hlc.node_id },
+    });
     hlcTrail.push(m.hlc);
   };
 
@@ -491,7 +498,10 @@ export const liveCellAdapter: PrimitiveAdapter = {
   primitive: 'live-cell',
   supports: new Set<ReactiveOpTag>(['subscribe', 'unsubscribe', 'read', 'set', 'update', 'publishCrossing', 'dispose']),
   build: (): CaptureHandle => {
-    const cell = LiveCell.makeBoundary(captureBoundary(), 0);
+    // Drive the envelope HLC with a fixed clock so `wall_ms`/`counter` are a pure
+    // function of the op-sequence — the raw bytes are pinned in the golden (no
+    // ambient Date.now(), no monotonicity-boolean workaround).
+    const cell = LiveCell.makeBoundary(captureBoundary(), 0, fixedClock(0));
     const syntheticStamp = HLC.increment(HLC.create('capture'), 0);
     return {
       read: (): TraceValue => cell.read(),

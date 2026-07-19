@@ -45,7 +45,7 @@
     "primitive": "live-cell",
     "seed": "duplicate-consecutive",
     "traceDigest": "fnv1a:f0f32f10",
-    "observationDigest": "fnv1a:f4910b06",
+    "observationDigest": "fnv1a:1e9f60bd",
     "history": [
       {
         "_tag": "subscribe",
@@ -96,17 +96,32 @@
         {
           "atOp": 1,
           "version": 2,
-          "id": "fnv1a:563bf452"
+          "id": "fnv1a:563bf452",
+          "hlc": {
+            "wall_ms": 0,
+            "counter": 2,
+            "node_id": "live-cell-boundary"
+          }
         },
         {
           "atOp": 2,
           "version": 3,
-          "id": "fnv1a:563bf452"
+          "id": "fnv1a:563bf452",
+          "hlc": {
+            "wall_ms": 0,
+            "counter": 3,
+            "node_id": "live-cell-boundary"
+          }
         },
         {
           "atOp": 3,
           "version": 4,
-          "id": "fnv1a:563bf452"
+          "id": "fnv1a:563bf452",
+          "hlc": {
+            "wall_ms": 0,
+            "counter": 4,
+            "node_id": "live-cell-boundary"
+          }
         }
       ],
       "metaMonotonic": true,
@@ -118,7 +133,7 @@
     "primitive": "live-cell",
     "seed": "crossings-and-identity",
     "traceDigest": "fnv1a:41b0ce2d",
-    "observationDigest": "fnv1a:17b3fc48",
+    "observationDigest": "fnv1a:8a3771e7",
     "history": [
       {
         "_tag": "subscribe",
@@ -185,17 +200,32 @@
         {
           "atOp": 1,
           "version": 2,
-          "id": "fnv1a:56916657"
+          "id": "fnv1a:56916657",
+          "hlc": {
+            "wall_ms": 0,
+            "counter": 2,
+            "node_id": "live-cell-boundary"
+          }
         },
         {
           "atOp": 2,
           "version": 3,
-          "id": "fnv1a:b290642b"
+          "id": "fnv1a:b290642b",
+          "hlc": {
+            "wall_ms": 0,
+            "counter": 3,
+            "node_id": "live-cell-boundary"
+          }
         },
         {
           "atOp": 3,
           "version": 4,
-          "id": "fnv1a:56916657"
+          "id": "fnv1a:56916657",
+          "hlc": {
+            "wall_ms": 0,
+            "counter": 4,
+            "node_id": "live-cell-boundary"
+          }
         }
       ],
       "metaMonotonic": true,
@@ -207,7 +237,7 @@
     "primitive": "live-cell",
     "seed": "update-crossing",
     "traceDigest": "fnv1a:6da1fe27",
-    "observationDigest": "fnv1a:c5e05400",
+    "observationDigest": "fnv1a:a30a9aba",
     "history": [
       {
         "_tag": "subscribe",
@@ -257,7 +287,12 @@
         {
           "atOp": 1,
           "version": 2,
-          "id": "fnv1a:56916657"
+          "id": "fnv1a:56916657",
+          "hlc": {
+            "wall_ms": 0,
+            "counter": 2,
+            "node_id": "live-cell-boundary"
+          }
         }
       ],
       "metaMonotonic": true,
@@ -323,7 +358,7 @@
     "primitive": "live-cell",
     "seed": "disposal",
     "traceDigest": "fnv1a:f9b3f825",
-    "observationDigest": "fnv1a:ea67ed3d",
+    "observationDigest": "fnv1a:3430c936",
     "history": [
       {
         "_tag": "subscribe",
@@ -377,12 +412,22 @@
         {
           "atOp": 1,
           "version": 2,
-          "id": "fnv1a:56916657"
+          "id": "fnv1a:56916657",
+          "hlc": {
+            "wall_ms": 0,
+            "counter": 2,
+            "node_id": "live-cell-boundary"
+          }
         },
         {
           "atOp": 3,
           "version": 3,
-          "id": "fnv1a:b290642b"
+          "id": "fnv1a:b290642b",
+          "hlc": {
+            "wall_ms": 0,
+            "counter": 3,
+            "node_id": "live-cell-boundary"
+          }
         }
       ],
       "metaMonotonic": true,

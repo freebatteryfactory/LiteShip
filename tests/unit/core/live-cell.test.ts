@@ -11,7 +11,7 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { LiveCell, HLC, StateName, Boundary } from '@czap/core';
+import { LiveCell, HLC, StateName, Boundary, fixedClock, manualClock } from '@czap/core';
 import type { CellKind, BoundaryCrossing } from '@czap/core';
 
 const collectCrossings = (cell: {
@@ -490,5 +490,81 @@ describe('LiveCell — S2.3 kernel preservation + atomic set-and-record', () => 
     ]);
     expect(env.value).toBe(1);
     expect(env.meta.version).toBe(2);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Injected-clock determinism — the envelope HLC + crossing timestamps are a pure
+// function of the op-sequence when a manual/fixed Clock is passed (clock.ts law).
+// No ambient wallClock, no Date mocking.
+// ---------------------------------------------------------------------------
+
+describe('LiveCell — injected clock determinism', () => {
+  const viewport = Boundary.make({
+    input: 'viewport.width',
+    at: [
+      [0, 'mobile'],
+      [768, 'tablet'],
+      [1024, 'desktop'],
+    ] as const,
+  });
+
+  test('identical op-sequences under the same manualClock produce byte-identical envelopes + crossing timestamps', () => {
+    const run = (): {
+      envelopes: { version: number; id: string; updated: HLC.Shape; created: HLC.Shape }[];
+      crossings: BoundaryCrossing<string>[];
+    } => {
+      // A fresh manual clock advanced by the SAME deterministic schedule each run.
+      const clock = manualClock(1_000);
+      const cell = LiveCell.makeBoundary(viewport, 400, clock); // mobile
+      const crossings = collectCrossings(cell);
+      const envelopes: { version: number; id: string; updated: HLC.Shape; created: HLC.Shape }[] = [];
+      const snap = (): void => {
+        const e = cell.envelope();
+        envelopes.push({ version: e.meta.version, id: String(e.id), updated: e.meta.updated, created: e.meta.created });
+      };
+      clock.advance(5);
+      cell.set(1200); // desktop crossing
+      snap();
+      clock.advance(7);
+      cell.set(500); // back to mobile crossing
+      snap();
+      return { envelopes, crossings };
+    };
+    const a = run();
+    const b = run();
+    // Pure function of the op-sequence: the wall_ms/counter bytes match exactly.
+    expect(a.envelopes).toEqual(b.envelopes);
+    expect(a.crossings).toEqual(b.crossings);
+    // And the timestamps are the injected clock's, not the ambient wall clock.
+    expect(a.crossings.map((c) => (c.timestamp as HLC.Shape).wall_ms)).toEqual([1005, 1012]);
+    expect(a.envelopes.map((e) => e.updated.wall_ms)).toEqual([1005, 1012]);
+  });
+
+  test('a fixedClock pins wall_ms constant while the HLC counter increments per mutation', () => {
+    const cell = LiveCell.make('state', 0, fixedClock(9000));
+    const created = cell.envelope().meta.created;
+    cell.set(1);
+    const afterOne = cell.envelope().meta.updated;
+    cell.set(2);
+    const afterTwo = cell.envelope().meta.updated;
+    // Constant wall_ms (the fixed clock never advances)...
+    expect(created.wall_ms).toBe(9000);
+    expect(afterOne.wall_ms).toBe(9000);
+    expect(afterTwo.wall_ms).toBe(9000);
+    // ...so the HLC counter carries the monotonic ordering deterministically.
+    expect(afterOne.counter).toBe(created.counter + 1);
+    expect(afterTwo.counter).toBe(afterOne.counter + 1);
+    // Monotonic under HLC.compare regardless — the byte-law fact the fixture pins.
+    expect(HLC.compare(created, afterOne)).toBeLessThan(0);
+    expect(HLC.compare(afterOne, afterTwo)).toBeLessThan(0);
+  });
+
+  test('the default clock still reads the ambient wall clock (no behavior change for casual callers)', () => {
+    const before = Date.now();
+    const wall = LiveCell.make('state', 0).envelope().meta.created.wall_ms;
+    const after = Date.now();
+    expect(wall).toBeGreaterThanOrEqual(before);
+    expect(wall).toBeLessThanOrEqual(after);
   });
 });
