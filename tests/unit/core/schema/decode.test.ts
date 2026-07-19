@@ -194,6 +194,39 @@ describe('strict decode — array & record', () => {
   it('record: decodes string-keyed values', () => {
     expect(valueOf(decode(S.record(S.number), { a: 1, b: 2 }))).toEqual({ a: 1, b: 2 });
   });
+
+  it('hostile/revoked Proxy reflection traps FAIL CLOSED — decode/decodeLenient never throw (round-14)', () => {
+    // A Proxy whose ownKeys / getOwnPropertyDescriptor traps throw must not escape the
+    // never-throw contract: the reflection TypeError is caught (→ no own keys / absent
+    // slot), not propagated. Strict → a value or issues; lenient → a value/null/prune.
+    const throwingTraps = new Proxy(
+      { a: 1 },
+      {
+        ownKeys() {
+          throw new Error('ownKeys trap boom');
+        },
+        getOwnPropertyDescriptor() {
+          throw new Error('getOwnPropertyDescriptor trap boom');
+        },
+      },
+    );
+    expect(() => decode(S.record(S.number), throwingTraps)).not.toThrow();
+    expect(decode(S.record(S.number), throwingTraps).ok).toBe(true); // no readable own keys → empty record
+    expect(valueOf(decode(S.record(S.number), throwingTraps))).toEqual({});
+    expect(() => decodeLenient(S.record(S.number), throwingTraps)).not.toThrow();
+
+    // A revoked Proxy makes Array.isArray / Object.keys / getOwnPropertyDescriptor all
+    // throw; every decode entry point must still fail closed rather than propagate.
+    const revocable = Proxy.revocable<Record<string, unknown>>({ a: 1 }, {});
+    revocable.revoke();
+    const dead = revocable.proxy;
+    expect(() => decode(S.record(S.number), dead)).not.toThrow();
+    expect(() => decode(S.array(S.number), dead)).not.toThrow();
+    expect(decode(S.array(S.number), dead).ok).toBe(false); // safeIsArray → not an array → type issue
+    expect(() => decode(S.tuple(S.number, S.number), dead)).not.toThrow();
+    expect(() => decodeLenient(S.record(S.number), dead)).not.toThrow();
+    expect(() => decodeLenient(S.array(S.number), dead)).not.toThrow();
+  });
 });
 
 describe('strict decode — tuple (fixed arity)', () => {

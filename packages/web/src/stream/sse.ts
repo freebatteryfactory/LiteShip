@@ -341,8 +341,20 @@ export const create = (config: SSEConfig): SSEClient => {
     if (config.onMessage) {
       // Synchronous consumer: deliver in-turn and skip the async buffer entirely.
       // A synchronous consumer holds no buffer, so there is nothing to overflow;
-      // `parseMessage` already gated this message upstream.
-      config.onMessage(message);
+      // `parseMessage` already gated this message upstream. ISOLATE the listener fault
+      // (the same law as setStatus/onStateChange): a throwing onMessage must NOT abort
+      // the caller's post-message bookkeeping — the `onmessage` handler still has to run
+      // `resetHeartbeat()`, else the watchdog stays armed on a healthy stream and
+      // eventually forces a spurious close+reconnect. Surface via Diagnostics.
+      try {
+        config.onMessage(message);
+      } catch (error) {
+        Diagnostics.warnOnce({
+          source: 'czap/web.SSE',
+          code: 'sse-onmessage-threw',
+          message: `The SSE onMessage callback threw for a live message; the transport heartbeat/reconnect bookkeeping is unaffected. Cause: ${String(error)}`,
+        });
+      }
       return;
     }
     const result = applyOverflow(pendingMessages, message, overflowPolicy, maxBufferSize);

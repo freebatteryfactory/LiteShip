@@ -8,7 +8,7 @@
 
 > **decode**\<`A`, `I`\>(`schema`, `input`): [`DecodeResult`](../type-aliases/DecodeResult.md)\<`A`\>
 
-Defined in: [core/src/schema/decode.ts:249](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/decode.ts#L249)
+Defined in: [core/src/schema/decode.ts:283](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/decode.ts#L283)
 
 STRICT decode — fail-closed. Returns the decoded `A`, or an accumulated,
 path-tagged [DecodeIssue](../interfaces/DecodeIssue.md) list. Never throws on bad input; never mutates

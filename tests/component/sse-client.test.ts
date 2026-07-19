@@ -169,6 +169,33 @@ describe('SSE reconnection', () => {
     expect(client.state).toBe('disconnected');
   });
 
+  test('a throwing onMessage does NOT strand the transport bookkeeping (listener fault isolated)', () => {
+    let calls = 0;
+    const client = SSE.create({
+      ...baseConfig,
+      onMessage: () => {
+        calls++;
+        throw new Error('onMessage boom');
+      },
+    });
+    const es = MockEventSource.instances[0]!;
+    // The synchronous onMessage runs inside the source's onmessage handler, right before the
+    // post-message resetHeartbeat(). A throw must be ISOLATED (Diagnostics) — not propagate out
+    // of the handler, not abort the heartbeat reset, not tear down the healthy source. Every
+    // later message still delivers, and no spurious close+reconnect is triggered.
+    expect(() => es.simulateMessage(JSON.stringify({ type: 'heartbeat' }))).not.toThrow();
+    expect(() => es.simulateMessage(JSON.stringify({ type: 'heartbeat' }))).not.toThrow();
+    expect(calls).toBe(2);
+    expect(client.state).toBe('connected');
+    expect(es.readyState).toBe(MockEventSource.OPEN);
+    expect(MockEventSource.instances).toHaveLength(1);
+    // The heartbeat WAS reset on each message: crossing the original deadline does not trip the
+    // watchdog (a stranded reset would have fired a reconnect here).
+    vi.advanceTimersByTime(4999);
+    expect(client.state).toBe('connected');
+    expect(MockEventSource.instances).toHaveLength(1);
+  });
+
   test('reconnect delay increases exponentially', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.5);
 

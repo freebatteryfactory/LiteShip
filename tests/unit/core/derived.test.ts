@@ -160,6 +160,35 @@ describe('Derived.combine — captured derived.json parity', () => {
     source.set(100); // post-dispose source change must NOT recompute
     expect(derived.read()).toBe(6); // frozen at the last observed value, not 200
   });
+
+  test('disposal freezes the LAST PULL-READ value, not a teardown recompute of a never-observed source', async () => {
+    // Stricter than the above: the source changes AFTER the final read() but BEFORE
+    // dispose. A teardown-time recompute would capture the never-observed value (12);
+    // the contract freezes the LAST value read() actually returned (4).
+    const source = Cell.make(2);
+    const derived = Derived.combine([source] as const, (value: number) => value * 2);
+    expect(derived.read()).toBe(4); // last observed pull value
+
+    source.set(6); // would compute 12, but is NEVER read
+    await derived.lifetime.dispose();
+    expect(derived.read()).toBe(4); // frozen at the last OBSERVED value (4), not 12
+  });
+
+  test('disposal never invokes the combiner (a throwing combiner does not run at teardown)', async () => {
+    // The snapshot-recompute approach would call the combiner during dispose; a combiner
+    // that throws must not turn teardown into a throw. Freezing the cached pull value
+    // sidesteps the combiner entirely once disposed.
+    let calls = 0;
+    const source = Cell.make(1);
+    const derived = Derived.combine([source] as const, (value: number) => {
+      calls += 1;
+      if (calls > 2) throw new Error('combiner must not run at teardown');
+      return value * 2;
+    });
+    expect(derived.read()).toBe(2); // calls: construction(1) + this read(2)
+    await expect(derived.lifetime.dispose()).resolves.toBeUndefined(); // no combiner call → no throw
+    expect(derived.read()).toBe(2); // still frozen, still no further combiner call
+  });
 });
 
 // ---------------------------------------------------------------------------
