@@ -8,7 +8,7 @@
 
 > **Subscriber**\<`T`\> = [`CellSubscriber`](../../../type-aliases/CellSubscriber.md)\<`T`\>
 
-Defined in: [core/src/cell-kernel.ts:476](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts#L476)
+Defined in: [core/src/cell-kernel.ts:489](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts#L489)
 
 What `subscribe` accepts — see [CellSubscriber](../../../type-aliases/CellSubscriber.md).
 

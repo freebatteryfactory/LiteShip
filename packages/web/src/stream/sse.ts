@@ -391,6 +391,10 @@ export const create = (config: SSEConfig): SSEClient => {
       // would let the second call overwrite the first, orphaning its promise forever.
       const waiters: Array<(result: IteratorResult<SSEMessage, undefined>) => void> = [];
       let completed = false;
+      // `return()` (explicit cancellation) is distinct from the source `complete` (natural
+      // end): after return() every next() yields done immediately and discards the buffer;
+      // natural completion still drains the buffer first (only return() sets `returned`).
+      let returned = false;
       const drain = (): void => {
         while (waiters.length > 0 && pendingMessages.length > 0) {
           waiters.shift()!({ value: pendingMessages.shift()!, done: false });
@@ -408,6 +412,9 @@ export const create = (config: SSEConfig): SSEClient => {
       });
       return {
         next(): Promise<IteratorResult<SSEMessage, undefined>> {
+          if (returned) {
+            return Promise.resolve({ value: undefined, done: true });
+          }
           if (pendingMessages.length > 0) {
             return Promise.resolve({ value: pendingMessages.shift()!, done: false });
           }
@@ -423,7 +430,9 @@ export const create = (config: SSEConfig): SSEClient => {
           // Settle EVERY parked `next()` before disposing: after `disposer()` the
           // `complete` callback can never fire, so any in-flight read would hang
           // forever. Mark completed + resolve all waiters with `done` so cancellation
-          // code awaiting an outstanding read unblocks.
+          // code awaiting an outstanding read unblocks; `returned` makes every later next()
+          // yield done (async-iterator protocol) instead of pulling a buffered message.
+          returned = true;
           completed = true;
           while (waiters.length > 0) waiters.shift()!({ value: undefined, done: true });
           disposer();
@@ -442,6 +451,9 @@ export const create = (config: SSEConfig): SSEClient => {
       // must each get their own slot, never overwrite a single waiter.
       const waiters: Array<(result: IteratorResult<SSEState, undefined>) => void> = [];
       let completed = false;
+      // return() (cancellation) vs source complete (natural end) — see the `messages`
+      // iterator: only return() sets `returned`, forcing every later next() to done.
+      let returned = false;
       const deliver = (): void => {
         while (waiters.length > 0 && buffer.length > 0) {
           waiters.shift()!({ value: buffer.shift()!, done: false });
@@ -462,6 +474,9 @@ export const create = (config: SSEConfig): SSEClient => {
       });
       return {
         next(): Promise<IteratorResult<SSEState, undefined>> {
+          if (returned) {
+            return Promise.resolve({ value: undefined, done: true });
+          }
           if (buffer.length > 0) {
             return Promise.resolve({ value: buffer.shift()!, done: false });
           }
@@ -475,7 +490,9 @@ export const create = (config: SSEConfig): SSEClient => {
         },
         return(): Promise<IteratorResult<SSEState, undefined>> {
           // Same settle-before-dispose fix as the `messages` iterator: every parked
-          // `next()` would otherwise never resolve once `disposer()` detaches.
+          // `next()` would otherwise never resolve once `disposer()` detaches. `returned`
+          // makes every later next() yield done (protocol) instead of a buffered edge.
+          returned = true;
           completed = true;
           while (waiters.length > 0) waiters.shift()!({ value: undefined, done: true });
           disposer();

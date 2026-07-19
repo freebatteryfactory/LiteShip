@@ -260,16 +260,16 @@ describe('config identity includes tier/spring/force', () => {
     const lqPhysics = physics.create().quantizer;
     const lqUngated = ungated.create().quantizer;
 
-    expect((lqTransitions.currentOutputs.read()).glsl).toBeUndefined();
-    expect((lqPhysics.currentOutputs.read()).glsl).toBeDefined();
-    expect((lqUngated.currentOutputs.read()).glsl).toBeDefined();
+    expect(lqTransitions.currentOutputs.read().glsl).toBeUndefined();
+    expect(lqPhysics.currentOutputs.read().glsl).toBeDefined();
+    expect(lqUngated.currentOutputs.read().glsl).toBeDefined();
 
     // Crossing-time resolution must stay per-config too (output cache key).
     lqPhysics.evaluate(800);
     const physicsOutputs = lqPhysics.currentOutputs.read();
     expect(physicsOutputs.glsl).toEqual({ u_identity_scale: 1.0 });
     lqTransitions.evaluate(800);
-    expect((lqTransitions.currentOutputs.read()).glsl).toBeUndefined();
+    expect(lqTransitions.currentOutputs.read().glsl).toBeUndefined();
   });
 
   test('distinct springs with identical outputs produce distinct configs and easings', async () => {
@@ -281,8 +281,8 @@ describe('config identity includes tier/spring/force', () => {
 
     const lqStiff = stiff.create().quantizer;
     const lqSoft = soft.create().quantizer;
-    const stiffCss = (lqStiff.currentOutputs.read()).css ?? {};
-    const softCss = (lqSoft.currentOutputs.read()).css ?? {};
+    const stiffCss = lqStiff.currentOutputs.read().css ?? {};
+    const softCss = lqSoft.currentOutputs.read().css ?? {};
 
     expect(stiffCss['--czap-easing']).toBeDefined();
     expect(softCss['--czap-easing']).toBeDefined();
@@ -299,8 +299,8 @@ describe('config identity includes tier/spring/force', () => {
     const lqPlain = plain.create().quantizer;
     const lqForced = forced.create().quantizer;
 
-    expect((lqPlain.currentOutputs.read()).glsl).toBeUndefined();
-    expect((lqForced.currentOutputs.read()).glsl).toBeDefined();
+    expect(lqPlain.currentOutputs.read().glsl).toBeUndefined();
+    expect(lqForced.currentOutputs.read().glsl).toBeDefined();
   });
 });
 
@@ -761,7 +761,12 @@ describe('Q live handle — disposal closes every channel despite a throwing com
     // A state subscriber whose `complete` throws during teardown. `CellKernel.close`
     // rethrows the first fault (the sink-error law), so the finalizer's `stateCell.close()`
     // throws.
-    quantizer.state.subscribe({ next: () => undefined, complete: () => { throw new Error('boom'); } });
+    quantizer.state.subscribe({
+      next: () => undefined,
+      complete: () => {
+        throw new Error('boom');
+      },
+    });
 
     // Disposing runs the single finalizer. A bare sequential
     // `stateCell.close(); outputCell.close(); crossingChannel.close();` would let the
@@ -810,5 +815,22 @@ describe('Q live handle — evaluate advances every channel despite a throwing s
     expect(() => quantizer.evaluate(2000)).toThrow('boom');
     expect(crossings).toHaveLength(1); // the crossing STILL reached `changes`
     expect(outputs.length).toBeGreaterThanOrEqual(2); // outputs advanced beyond its initial replay
+  });
+});
+
+describe('LiveQuantizer.evaluate — post-dispose inertness', () => {
+  test('a post-dispose evaluate() freezes the discrete state (stateSync + state.read do not advance)', async () => {
+    const b = viewport();
+    const { quantizer, lifetime } = Q.from(b)
+      .outputs(simpleOutputs(b))
+      .create({ clock: manualClock(1000) });
+    expect(quantizer.evaluate(50)).toBe('compact'); // committed 'compact'
+    await lifetime.dispose();
+    // After dispose the state/outputs/crossing kernels are closed; evaluate must freeze
+    // rather than advance previousState/HLC while the reactive channels stay put — else a
+    // disposed-but-referenced quantizer reports a discrete state its own channel never emits.
+    expect(quantizer.evaluate(1300)).toBe('compact'); // would-be 'expanded' is NOT committed
+    expect(quantizer.stateSync?.()).toBe('compact');
+    expect(quantizer.state.read()).toBe('compact');
   });
 });

@@ -173,11 +173,16 @@ export const Timeline: TimelineFactory = {
         direction = direction === 1 ? -1 : 1;
       },
       seek: (ms: Millis) => {
+        // Disposed → the state kernel is closed and `setState` is inert; advancing
+        // `currentElapsed` here would move `elapsed()`/`progress()` while `state()` stays
+        // frozen — a post-teardown divergence. Keep seek/scrub inert once disposed.
+        if (disposed) return;
         const clamped = Math.max(0, Math.min(duration, ms));
         currentElapsed = clamped;
         setState(clamped);
       },
       scrub: (progress: number) => {
+        if (disposed) return;
         const val = clamp01(progress) * duration;
         currentElapsed = val;
         setState(val);

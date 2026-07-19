@@ -167,6 +167,11 @@ function _make<K extends CellKind, T>(kind: K, initial: T, clock: Clock = wallCl
   const { cell, crossings, recordMutation, envelope, lifetime } = core;
 
   const commit = serializedCommit<T>((op) => {
+    // Once the lifetime is disposed the value kernel is closed and `cell.set` is inert, so
+    // advancing the envelope (recordMutation bumps version/id/HLC) would leave the content-
+    // addressed `id` describing a value `read()` never returns — an envelope/value divergence
+    // that also drifts the version unbounded on repeated post-dispose writes. Fully inert.
+    if (lifetime.disposed) return;
     const value = op(cell.read());
     recordMutation(value);
     cell.set(value);
@@ -209,6 +214,10 @@ function _makeBoundary<I extends string, S extends readonly [string, ...string[]
   // subscriber runs only AFTER this whole unit unwinds — crossings then publish in
   // commit order (A→B before B→C), never reversed.
   const commit = serializedCommit<number>((op) => {
+    // Disposed → the value kernel is closed and `cell.set` is inert; advancing the envelope
+    // (recordMutation) or `prevState` would diverge the content-addressed `id`/crossing
+    // baseline from the frozen `read()`. Stop the commit so a post-dispose write is inert.
+    if (lifetime.disposed) return;
     const value = op(cell.read());
     const stamp = recordMutation(value);
     const from = prevState;

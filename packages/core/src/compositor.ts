@@ -536,12 +536,16 @@ export const Compositor: CompositorFactory = {
       const releasable = priorPreviousState;
       priorPreviousState = previousState;
       previousState = state;
-      // Raw zero-allocation reactive publish (replaces `SubscriptionRef.set`).
-      // The two-slot rotation above guarantees `state` stays live + stable for
-      // one more tick, so a subscriber that reads it on this same tick sees valid
-      // pooled data before it can be recycled.
-      publishState(state);
+      // Release the now-two-generations-old slot BEFORE publishing: its "one more tick"
+      // window has expired (no consumer still holds it), so recycling it now is safe — and
+      // it must happen BEFORE the fail-fast `publishState`, else a `changes` subscriber that
+      // throws would skip the release and strand a pooled state per fault (depleting the pool
+      // and defeating the zero-allocation invariant under a faulting listener).
       if (releasable && releasable !== state) pool.release(releasable);
+      // Raw zero-allocation reactive publish (replaces `SubscriptionRef.set`). The two-slot
+      // rotation above guarantees `state` stays live + stable for one more tick, so a
+      // subscriber that reads it on this same tick sees valid pooled data before recycling.
+      publishState(state);
       return state;
     }
 

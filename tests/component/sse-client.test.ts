@@ -482,6 +482,41 @@ describe('SSE iterator cancellation', () => {
     client.close();
   });
 
+  test('next() after return() yields done and does NOT pull a buffered message (protocol + no steal)', async () => {
+    vi.useRealTimers();
+    try {
+      const client = SSE.create(baseConfig);
+      const es = MockEventSource.instances[0]!;
+      // Buffer a message into the shared overflow buffer (no iterator parked yet).
+      es.simulateMessage(JSON.stringify({ type: 'patch', data: { i: 1 } }));
+
+      const iterator = client.messages[Symbol.asyncIterator]();
+      const returned = await iterator.return!();
+      expect(returned.done).toBe(true);
+      // A post-return() next() must be done — NEVER the still-buffered message. Pre-fix it
+      // checked the buffer before the completed flag and handed back { done: false, value }.
+      const after = await iterator.next();
+      expect(after.done).toBe(true);
+
+      // And it did not STEAL the shared-buffered message — a fresh iterator still gets it.
+      const [msg] = await takeAsync(client.messages, 1);
+      expect(msg).toBeDefined();
+      client.close();
+    } finally {
+      vi.useFakeTimers();
+    }
+  });
+
+  test('stateChanges next() after return() yields done', async () => {
+    const client = SSE.create(baseConfig);
+    const iterator = client.stateChanges[Symbol.asyncIterator]();
+    const returned = await iterator.return!();
+    expect(returned.done).toBe(true);
+    const after = await iterator.next();
+    expect(after.done).toBe(true);
+    client.close();
+  });
+
   test('two concurrent next() reads before any message each settle, in FIFO order', async () => {
     vi.useRealTimers();
     try {
