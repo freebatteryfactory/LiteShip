@@ -189,6 +189,24 @@ describe('Derived.combine — captured derived.json parity', () => {
     await expect(derived.lifetime.dispose()).resolves.toBeUndefined(); // no combiner call → no throw
     expect(derived.read()).toBe(2); // still frozen, still no further combiner call
   });
+
+  test('subscribing to an already-disposed source-backed Derived does not wire sources or recompute (round-14)', async () => {
+    // subscribe() after disposal must not call ensureWired(): the kernel is closed (the
+    // subscribe delivers nothing), and each source.subscribe would replay synchronously →
+    // recompute after teardown → throw out of subscribe() if the combiner throws.
+    let calls = 0;
+    const source = Cell.make(1);
+    const derived = Derived.combine([source] as const, (value: number) => {
+      calls += 1;
+      if (calls > 1) throw new Error('combiner must not run after disposal');
+      return value * 2;
+    });
+    expect(calls).toBe(1); // construction-time compute only
+    await derived.lifetime.dispose();
+    // Without the guard, ensureWired() → source replay → recompute → throw. Guarded, it is a no-op.
+    expect(() => derived.subscribe(() => undefined)).not.toThrow();
+    expect(calls).toBe(1); // no wiring, no second compute
+  });
 });
 
 // ---------------------------------------------------------------------------

@@ -140,7 +140,11 @@ function buildDerived<T>(recompute: () => T, triggers: ReadonlyArray<DerivedTrig
     },
     subscribe: (subscriber) => {
       const disposer = kernel.subscribe(subscriber);
-      ensureWired();
+      // Skip source wiring once disposed: the kernel is closed (this subscribe is a
+      // no-op that delivers nothing), and each `source.subscribe` would replay
+      // synchronously — recomputing after teardown, and throwing out of subscribe() if
+      // the combiner throws — for a value that can never be delivered.
+      if (!lifetime.disposed) ensureWired();
       return disposer;
     },
     lifetime,
