@@ -350,23 +350,24 @@ export const create = (config: SSEConfig): SSEClient => {
   // the iterator parks is returned immediately by the pull-first check.
   const messages: AsyncIterable<SSEMessage> = {
     [Symbol.asyncIterator](): AsyncIterator<SSEMessage, undefined> {
-      let waiter: ((result: IteratorResult<SSEMessage, undefined>) => void) | null = null;
+      // A FIFO QUEUE of parked reads, not a single slot: concurrent `next()` calls
+      // (prefetch, `Promise.all`) are valid on an AsyncIterator, and a single `waiter`
+      // would let the second call overwrite the first, orphaning its promise forever.
+      const waiters: Array<(result: IteratorResult<SSEMessage, undefined>) => void> = [];
       let completed = false;
+      const drain = (): void => {
+        while (waiters.length > 0 && pendingMessages.length > 0) {
+          waiters.shift()!({ value: pendingMessages.shift()!, done: false });
+        }
+        if (completed) {
+          while (waiters.length > 0) waiters.shift()!({ value: undefined, done: true });
+        }
+      };
       const disposer = messageWakeup.subscribe({
-        next: () => {
-          if (waiter !== null && pendingMessages.length > 0) {
-            const resolve = waiter;
-            waiter = null;
-            resolve({ value: pendingMessages.shift()!, done: false });
-          }
-        },
+        next: () => drain(),
         complete: () => {
           completed = true;
-          if (waiter !== null) {
-            const resolve = waiter;
-            waiter = null;
-            resolve({ value: undefined, done: true });
-          }
+          drain();
         },
       });
       return {
@@ -379,20 +380,16 @@ export const create = (config: SSEConfig): SSEClient => {
             return Promise.resolve({ value: undefined, done: true });
           }
           return new Promise((resolve) => {
-            waiter = resolve;
+            waiters.push(resolve);
           });
         },
         return(): Promise<IteratorResult<SSEMessage, undefined>> {
-          // Settle a parked `next()` before disposing: after `disposer()` the
-          // `complete` callback can never fire, so an in-flight read would hang
-          // forever. Mark completed + resolve the waiter with `done` so cancellation
-          // code awaiting the read unblocks.
+          // Settle EVERY parked `next()` before disposing: after `disposer()` the
+          // `complete` callback can never fire, so any in-flight read would hang
+          // forever. Mark completed + resolve all waiters with `done` so cancellation
+          // code awaiting an outstanding read unblocks.
           completed = true;
-          if (waiter !== null) {
-            const resolve = waiter;
-            waiter = null;
-            resolve({ value: undefined, done: true });
-          }
+          while (waiters.length > 0) waiters.shift()!({ value: undefined, done: true });
           disposer();
           return Promise.resolve({ value: undefined, done: true });
         },
@@ -405,18 +402,16 @@ export const create = (config: SSEConfig): SSEClient => {
   const stateChanges: AsyncIterable<SSEState> = {
     [Symbol.asyncIterator](): AsyncIterator<SSEState, undefined> {
       const buffer: SSEState[] = [];
-      let waiter: ((result: IteratorResult<SSEState, undefined>) => void) | null = null;
+      // FIFO queue of parked reads (see the `messages` iterator): concurrent `next()`
+      // must each get their own slot, never overwrite a single waiter.
+      const waiters: Array<(result: IteratorResult<SSEState, undefined>) => void> = [];
       let completed = false;
       const deliver = (): void => {
-        if (waiter === null) return;
-        if (buffer.length > 0) {
-          const resolve = waiter;
-          waiter = null;
-          resolve({ value: buffer.shift()!, done: false });
-        } else if (completed) {
-          const resolve = waiter;
-          waiter = null;
-          resolve({ value: undefined, done: true });
+        while (waiters.length > 0 && buffer.length > 0) {
+          waiters.shift()!({ value: buffer.shift()!, done: false });
+        }
+        if (completed) {
+          while (waiters.length > 0) waiters.shift()!({ value: undefined, done: true });
         }
       };
       const disposer = stateEdges.subscribe({
@@ -439,18 +434,14 @@ export const create = (config: SSEConfig): SSEClient => {
             return Promise.resolve({ value: undefined, done: true });
           }
           return new Promise((resolve) => {
-            waiter = resolve;
+            waiters.push(resolve);
           });
         },
         return(): Promise<IteratorResult<SSEState, undefined>> {
-          // Same settle-before-dispose fix as the `messages` iterator: a parked
+          // Same settle-before-dispose fix as the `messages` iterator: every parked
           // `next()` would otherwise never resolve once `disposer()` detaches.
           completed = true;
-          if (waiter !== null) {
-            const resolve = waiter;
-            waiter = null;
-            resolve({ value: undefined, done: true });
-          }
+          while (waiters.length > 0) waiters.shift()!({ value: undefined, done: true });
           disposer();
           return Promise.resolve({ value: undefined, done: true });
         },

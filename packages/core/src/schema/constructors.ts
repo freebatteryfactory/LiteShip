@@ -46,6 +46,13 @@ function literal<const V extends LiteralValue>(value: V): Schema<V, V> {
   if (!(typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean' || value === null)) {
     throw ValidationError('S.literal', 'a literal must be a string, number, boolean, or null');
   }
+  // Reject non-finite numeric literals: `S.literal(NaN)` can never decode (literal
+  // matching is `===`, and `NaN !== NaN`), and `±Infinity` is silently rewritten to
+  // `null` when the node is serialized to JSON Schema for CLI/MCP descriptors —
+  // either way the constraint the caller wrote is not the one that ships.
+  if (typeof value === 'number' && !Number.isFinite(value)) {
+    throw ValidationError('S.literal', `a numeric literal must be finite — got ${String(value)}`);
+  }
   return makeSchema<V, V>(Object.freeze({ kind: 'literal', value }));
 }
 

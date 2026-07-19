@@ -381,6 +381,14 @@ function replay1<T>(
       // Replay before registering (compositor ordering): the just-attached sink
       // is not re-delivered a value published from within its own replay.
       sink.next(current);
+      // The replay may have SYNCHRONOUSLY closed the kernel (a sink that calls
+      // close() from within its own replay). Re-check before registering, else the
+      // sink joins a closed core — reported `closed` yet `size === 1`, and it would
+      // never receive `complete`. Complete it now and hand back a no-op disposer.
+      if (core.isClosed()) {
+        sink.complete?.();
+        return NOOP_DISPOSER;
+      }
       return core.register(sink);
     },
     close: core.close,

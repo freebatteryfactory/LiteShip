@@ -27,6 +27,21 @@ function valueOf<A>(result: DecodeResult<A>): A {
   return result.value;
 }
 
+describe('literal construction — non-finite numbers rejected', () => {
+  it('S.literal(NaN) throws at construction (=== matching can never decode NaN)', () => {
+    expect(() => S.literal(NaN)).toThrow(/finite/);
+  });
+  it('S.literal(±Infinity) throws (they serialize to null in the generated JSON Schema)', () => {
+    expect(() => S.literal(Infinity)).toThrow(/finite/);
+    expect(() => S.literal(-Infinity)).toThrow(/finite/);
+  });
+  it('a finite numeric literal still constructs and decodes', () => {
+    const schema = S.literal(42);
+    expect(valueOf(decode(schema, 42))).toBe(42);
+    expect(issuesOf(decode(schema, 43)).length).toBeGreaterThan(0);
+  });
+});
+
 describe('strict decode — scalars', () => {
   it('accepts matching primitives and reports the value verbatim', () => {
     expect(valueOf(decode(S.string, 'hi'))).toBe('hi');
