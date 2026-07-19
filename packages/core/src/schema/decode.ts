@@ -56,17 +56,51 @@ const POISON_KEYS: ReadonlySet<string> = new Set(['__proto__', 'constructor', 'p
 /** The lenient "no value here" sentinel — distinct from a genuinely-decoded `null`. */
 const PRUNE: unique symbol = Symbol('prune');
 
-/** Any non-null, non-array object — the shape struct/record decode reads OWN keys off. */
-function isObjectInput(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
+/**
+ * `Array.isArray`, but FAIL-CLOSED: a revoked `Proxy` makes `Array.isArray` throw a
+ * `TypeError`, which would escape decode's never-throw contract. A throw ⇒ "not an
+ * array" — the caller then treats it as a non-array input and rejects with a normal
+ * type issue instead of propagating the reflection fault.
+ */
+function safeIsArray(value: unknown): value is unknown[] {
+  try {
+    return Array.isArray(value);
+  } catch {
+    return false;
+  }
 }
 
 /**
- * Read one OWN DATA property. An inherited property, or an accessor (getter),
- * reports absent — decode never walks a prototype and never invokes a getter.
+ * `Object.keys`, but FAIL-CLOSED: a hostile/revoked `Proxy` `ownKeys`/descriptor trap
+ * can throw. A throw ⇒ "no own keys", so a record/struct walk over hostile input yields
+ * decode issues (missing required fields) rather than escaping the never-throw contract.
+ */
+function safeOwnKeys(obj: Record<string, unknown>): string[] {
+  try {
+    return Object.keys(obj);
+  } catch {
+    return [];
+  }
+}
+
+/** Any non-null, non-array object — the shape struct/record decode reads OWN keys off. */
+function isObjectInput(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !safeIsArray(value);
+}
+
+/**
+ * Read one OWN DATA property. An inherited property, or an accessor (getter), reports
+ * absent — decode never walks a prototype and never invokes a getter. A hostile/revoked
+ * `Proxy` whose `getOwnPropertyDescriptor` trap throws is FAILED CLOSED to "absent", so
+ * a reflection fault never escapes decode's never-throw contract.
  */
 function ownData(obj: Record<string, unknown>, key: string): { readonly present: boolean; readonly value: unknown } {
-  const descriptor = Object.getOwnPropertyDescriptor(obj, key);
+  let descriptor: PropertyDescriptor | undefined;
+  try {
+    descriptor = Object.getOwnPropertyDescriptor(obj, key);
+  } catch {
+    return { present: false, value: undefined };
+  }
   if (descriptor === undefined || !('value' in descriptor)) return { present: false, value: undefined };
   return { present: true, value: descriptor.value };
 }
@@ -135,7 +169,7 @@ function decodeStrictNode(node: SchemaNode, input: unknown, path: DecodePath, is
       return { ok: false };
     }
     case 'array': {
-      if (!Array.isArray(input)) {
+      if (!safeIsArray(input)) {
         addIssue(issues, path, 'schema/type', 'expected an array');
         return { ok: false };
       }
@@ -149,7 +183,7 @@ function decodeStrictNode(node: SchemaNode, input: unknown, path: DecodePath, is
       return clean ? { ok: true, value: out } : { ok: false };
     }
     case 'tuple': {
-      if (!Array.isArray(input)) {
+      if (!safeIsArray(input)) {
         addIssue(issues, path, 'schema/type', 'expected a tuple (array)');
         return { ok: false };
       }
@@ -180,7 +214,7 @@ function decodeStrictNode(node: SchemaNode, input: unknown, path: DecodePath, is
       }
       const out: Record<string, unknown> = {};
       let clean = true;
-      for (const key of Object.keys(input)) {
+      for (const key of safeOwnKeys(input)) {
         if (POISON_KEYS.has(key)) {
           addIssue(issues, [...path, key], 'schema/poison-key', `refusing prototype-poisoning key "${key}"`);
           clean = false;
@@ -275,7 +309,7 @@ function decodeLenientNode(node: SchemaNode, input: unknown): unknown {
       return PRUNE;
     }
     case 'array': {
-      if (!Array.isArray(input)) return PRUNE;
+      if (!safeIsArray(input)) return PRUNE;
       const out: unknown[] = [];
       // Read each slot as OWN DATA by index (never via a for-of, which reads through the array
       // iterator and would invoke an accessor/inherited element's getter) — decode never invokes
@@ -291,7 +325,7 @@ function decodeLenientNode(node: SchemaNode, input: unknown): unknown {
       // pruned (pruning would break arity and produce a value that lies about its
       // type). The coerce-or-null contract collapses the whole tuple to `null` on a
       // wrong length or any failed position.
-      if (!Array.isArray(input) || input.length !== node.elements.length) return PRUNE;
+      if (!safeIsArray(input) || input.length !== node.elements.length) return PRUNE;
       const out: unknown[] = [];
       for (const [i, element] of node.elements.entries()) {
         const decoded = decodeLenientNode(element, ownIndex(input, i));
@@ -303,7 +337,7 @@ function decodeLenientNode(node: SchemaNode, input: unknown): unknown {
     case 'record': {
       if (!isObjectInput(input)) return PRUNE;
       const out: Record<string, unknown> = {};
-      for (const key of Object.keys(input)) {
+      for (const key of safeOwnKeys(input)) {
         if (POISON_KEYS.has(key)) continue;
         const slot = ownData(input, key);
         // An enumerable accessor slot is invisible (decode never invokes its getter) — skip it

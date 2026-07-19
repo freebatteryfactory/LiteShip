@@ -91,17 +91,14 @@ function buildDerived<T>(recompute: () => T, triggers: ReadonlyArray<DerivedTrig
   lifetime.add(() => kernel.close());
 
   let wired = false;
-  // SNAPSHOT-ON-DISPOSE (source-backed, never wired). An unwired pull read recomputes
-  // WITHOUT advancing the kernel slot, so the slot still holds the construction value.
-  // If such a derived is disposed before its first subscribe, freezing at `kernel.read()`
-  // alone would surface the construction value, not the LAST OBSERVED one. Snapshot a
-  // final recompute into the slot at teardown (kernel still open — this finalizer is
-  // registered AFTER `kernel.close`, so LIFO runs it FIRST) so the frozen value matches
-  // what `read()` last returned. A wired derived already holds its last pushed value; a
-  // sourceless derived must not re-invoke a possibly-effectful compute — both skipped.
-  lifetime.add(() => {
-    if (!wired && triggers.length > 0) kernel.publish(recompute());
-  });
+  // The value the LAST unwired pull `read()` returned. Frozen at disposal so a source
+  // mutation AFTER that final read cannot move the "disposed" value, and so teardown
+  // NEVER re-invokes a possibly-throwing/effectful combiner (a snapshot-recompute at
+  // dispose would capture a never-observed source value and could throw during
+  // teardown). `hasPulled` distinguishes "never pull-read" (freeze at the kernel's
+  // construction value) from "pulled at least once" (freeze at that observed value).
+  let hasPulled = false;
+  let lastPulled!: T;
 
   const ensureWired = (): void => {
     if (wired) return;
@@ -127,12 +124,20 @@ function buildDerived<T>(recompute: () => T, triggers: ReadonlyArray<DerivedTrig
     // subscriptions (and stays frozen at the last value after disposal — `wired` is
     // never reset), so `read()` returns it.
     //
-    // DISPOSED FREEZE: a source-backed derived disposed BEFORE its first subscribe
-    // never wired, so the pull branch would keep recomputing from live sources and a
-    // later source mutation would still move the "disposed" value — violating the
-    // teardown contract. Once disposed, fall back to the frozen kernel value (the last
-    // observed / construction value) exactly as a wired-then-disposed derived does.
-    read: () => (lifetime.disposed || wired || triggers.length === 0 ? kernel.read() : recompute()),
+    // DISPOSED FREEZE: a source-backed derived disposed BEFORE its first subscribe never
+    // wired, so the pull branch would keep recomputing from live sources and a later
+    // source mutation would still move the "disposed" value — violating the teardown
+    // contract. Once disposed, return the LAST value a pull `read()` actually observed
+    // (or the kernel's construction value if none was ever pulled), never a fresh
+    // recompute — exactly as a wired-then-disposed derived freezes at its last pushed
+    // value. Each live unwired pull caches its result into `lastPulled`.
+    read: () => {
+      if (wired || triggers.length === 0) return kernel.read();
+      if (lifetime.disposed) return hasPulled ? lastPulled : kernel.read();
+      lastPulled = recompute();
+      hasPulled = true;
+      return lastPulled;
+    },
     subscribe: (subscriber) => {
       const disposer = kernel.subscribe(subscriber);
       ensureWired();
