@@ -26,6 +26,16 @@ describe('compileViewTransition — view-transition-name per boundary', () => {
     expect(result.nameAssignment).toContain('view-transition-name: czap-vt-hero;');
   });
 
+  test('escapes special characters in the DEFAULT attribute-selector value (no broken CSS)', () => {
+    const result = compileViewTransition({ boundary: 'hero"card', durationMs: 420, easing: 'ease' });
+    // The quote is backslash-escaped so the attribute selector stays one string …
+    expect(result.nameAssignment).toContain('[data-czap-boundary="hero\\"card"]');
+    // … NOT the raw form that terminates the string early and drops the assignment.
+    expect(result.nameAssignment).not.toContain('[data-czap-boundary="hero"card"]');
+    // The name remains a valid custom-ident (the quote collapsed to a hyphen).
+    expect(result.viewTransitionName).toBe('czap-vt-hero-card');
+  });
+
   test('honors an explicit selector for the name assignment', () => {
     const result = compileViewTransition({
       boundary: 'card',

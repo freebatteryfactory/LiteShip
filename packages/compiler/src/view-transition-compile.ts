@@ -84,12 +84,30 @@ function viewTransitionNameFor(boundary: string): string {
 }
 
 /**
+ * Escape a value for interpolation inside a DOUBLE-QUOTED CSS string (here, the
+ * default attribute-selector value). A raw `"` closes the string and can
+ * terminate the rule, `\` starts an escape, and a raw newline/CR/FF is invalid
+ * inside a CSS string — so backslash + quote are backslash-escaped and the line
+ * terminators use the CSS hex-escape form (`\A `/`\D `/`\C `). Without this a
+ * boundary like `hero"card` would emit `[data-czap-boundary="hero"card"]` and the
+ * `view-transition-name` assignment would be silently dropped (CSS Syntax §4.3.5).
+ */
+function escapeCssString(value: string): string {
+  return value.replace(/[\\"\n\r\f]/g, (ch) => {
+    if (ch === '\n') return '\\A ';
+    if (ch === '\r') return '\\D ';
+    if (ch === '\f') return '\\C ';
+    return `\\${ch}`;
+  });
+}
+
+/**
  * Compile the build-time View-Transition CSS for a single boundary. Pure and
  * deterministic — identical input yields byte-identical output.
  */
 export function compileViewTransition(input: ViewTransitionCompileInput): ViewTransitionCompileResult {
   const { boundary, durationMs, easing, mpaNavigation, delayMs } = input;
-  const selector = input.selector ?? `[data-czap-boundary="${boundary}"]`;
+  const selector = input.selector ?? `[data-czap-boundary="${escapeCssString(boundary)}"]`;
   const viewTransitionName = viewTransitionNameFor(boundary);
 
   const nameAssignment = [`${selector} {`, `  view-transition-name: ${viewTransitionName};`, `}`].join('\n');
