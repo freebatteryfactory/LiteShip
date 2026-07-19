@@ -272,6 +272,52 @@ describe('Signal.make', () => {
     expect(signal.lifetime.disposed).toBe(true);
   });
 
+  test('elapsed rAF loop RE-ARMS the next frame even when a subscriber throws in the tick', () => {
+    // Exception-safety: a subscriber fault during publish must not permanently
+    // freeze the signal. The tick re-arms the next frame in a `finally`, the fault
+    // still surfaces (propagates out of the rAF callback), and once the faulty
+    // subscription is removed the loop keeps advancing.
+    const callbacks = new Map<number, FrameRequestCallback>();
+    let nextId = 1;
+    let currentTime = 1_000;
+    vi.spyOn(Date, 'now').mockImplementation(() => currentTime);
+    const rafSpy = vi.fn((cb: FrameRequestCallback) => {
+      const id = nextId++;
+      callbacks.set(id, cb);
+      return id;
+    });
+    vi.stubGlobal('requestAnimationFrame', rafSpy);
+    vi.stubGlobal('cancelAnimationFrame', (id: number) => callbacks.delete(id));
+
+    const signal = Signal.make({ type: 'time', mode: 'elapsed' });
+    expect(rafSpy).toHaveBeenCalledTimes(1); // frame 1 armed synchronously in make()
+
+    const boom = new Error('subscriber boom');
+    const remove = signal.subscribe((v) => {
+      if (v > 0) throw boom;
+    });
+
+    // Fire frame 1: positive elapsed → subscriber throws. The fault surfaces...
+    currentTime = 1_060;
+    expect(() => callbacks.get(1)!(1_060)).toThrow(boom);
+    // ...but the next frame WAS re-armed despite the throw (not frozen).
+    expect(rafSpy).toHaveBeenCalledTimes(2);
+    expect(callbacks.has(2)).toBe(true);
+
+    // With the faulty subscription removed, the loop keeps advancing cleanly.
+    remove();
+    let last = -1;
+    signal.subscribe((v) => {
+      last = v;
+    });
+    currentTime = 1_100;
+    callbacks.get(2)!(1_100);
+    expect(last).toBe(100);
+    expect(rafSpy).toHaveBeenCalledTimes(3);
+
+    void signal.lifetime.dispose();
+  });
+
   test('leaves elapsed time signals inert when requestAnimationFrame is unavailable', () => {
     vi.stubGlobal('requestAnimationFrame', undefined);
 

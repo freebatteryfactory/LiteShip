@@ -91,6 +91,18 @@ function buildDerived<T>(recompute: () => T, triggers: ReadonlyArray<DerivedTrig
   lifetime.add(() => kernel.close());
 
   let wired = false;
+  // SNAPSHOT-ON-DISPOSE (source-backed, never wired). An unwired pull read recomputes
+  // WITHOUT advancing the kernel slot, so the slot still holds the construction value.
+  // If such a derived is disposed before its first subscribe, freezing at `kernel.read()`
+  // alone would surface the construction value, not the LAST OBSERVED one. Snapshot a
+  // final recompute into the slot at teardown (kernel still open — this finalizer is
+  // registered AFTER `kernel.close`, so LIFO runs it FIRST) so the frozen value matches
+  // what `read()` last returned. A wired derived already holds its last pushed value; a
+  // sourceless derived must not re-invoke a possibly-effectful compute — both skipped.
+  lifetime.add(() => {
+    if (!wired && triggers.length > 0) kernel.publish(recompute());
+  });
+
   const ensureWired = (): void => {
     if (wired) return;
     wired = true;
@@ -114,7 +126,13 @@ function buildDerived<T>(recompute: () => T, triggers: ReadonlyArray<DerivedTrig
     // effectful (`() => ++n`). Once wired, the kernel slot is kept current by the push
     // subscriptions (and stays frozen at the last value after disposal — `wired` is
     // never reset), so `read()` returns it.
-    read: () => (wired || triggers.length === 0 ? kernel.read() : recompute()),
+    //
+    // DISPOSED FREEZE: a source-backed derived disposed BEFORE its first subscribe
+    // never wired, so the pull branch would keep recomputing from live sources and a
+    // later source mutation would still move the "disposed" value — violating the
+    // teardown contract. Once disposed, fall back to the frozen kernel value (the last
+    // observed / construction value) exactly as a wired-then-disposed derived does.
+    read: () => (lifetime.disposed || wired || triggers.length === 0 ? kernel.read() : recompute()),
     subscribe: (subscriber) => {
       const disposer = kernel.subscribe(subscriber);
       ensureWired();
