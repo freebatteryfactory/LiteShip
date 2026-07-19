@@ -540,9 +540,23 @@ function fromBoundary<B extends Boundary.Shape>(boundary: B, options?: Quantizer
 
           const lifetime = Lifetime.make();
           lifetime.add(() => {
-            stateCell.close();
-            outputCell.close();
-            crossingChannel.close();
+            // Close ALL three channels even if one channel's completion pass throws
+            // (a `complete` callback can throw, and `CellKernel.close` rethrows the
+            // first fault per the sink-error law). A bare sequential
+            // `stateCell.close(); outputCell.close(); crossingChannel.close();` would
+            // let the first throw STRAND the later channels open, so a still-open
+            // channel could keep publishing to subscribers that were never completed.
+            // Complete every channel, then rethrow the first fault (same law the
+            // kernel's own `close` applies to its sinks).
+            let firstFault: { readonly error: unknown } | undefined;
+            for (const closeChannel of [stateCell.close, outputCell.close, crossingChannel.close]) {
+              try {
+                closeChannel();
+              } catch (error) {
+                if (firstFault === undefined) firstFault = { error };
+              }
+            }
+            if (firstFault !== undefined) throw firstFault.error;
           });
 
           let previousState: StateUnion<B> = initialState;

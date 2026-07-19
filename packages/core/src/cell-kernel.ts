@@ -272,6 +272,14 @@ function createCore<T>() {
     const live = registrations.filter((r) => r.active);
     registrations.length = 0;
     activeCount = 0;
+    // Mark every detached registration INACTIVE before completing any of them, so a
+    // disposer invoked DURING a `complete` callback — or a disposer retained by a
+    // consumer and called after `close()` — is a no-op (it guards on
+    // `registration.active`) instead of decrementing the already-zeroed `activeCount`
+    // below zero, which would make the public `size` negative (once per former
+    // subscriber). Done in a pass BEFORE completion so a `complete` that disposes a
+    // SIBLING registration also finds it already inactive.
+    for (const registration of live) registration.active = false;
     // SINK-ERROR LAW (terminal completeness). Unlike `fanOut` (value delivery,
     // fail-fast), `close` is teardown: EVERY sink must be completed exactly once
     // even when some `complete` callbacks throw — a teardown that skipped the rest
