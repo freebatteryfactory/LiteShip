@@ -8,7 +8,7 @@
 
 > **withArbitrary**\<`S2`\>(`schema`, `arbitrary`): `S2`
 
-Defined in: [core/src/schema/constructors.ts:183](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/constructors.ts#L183)
+Defined in: [core/src/schema/constructors.ts:190](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/constructors.ts#L190)
 
 Attach an author-supplied arbitrary THUNK to a schema (for the harness
 walker). Returns a fresh schema with the same decode/encode behaviour — only

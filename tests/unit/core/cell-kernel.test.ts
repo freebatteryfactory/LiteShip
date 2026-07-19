@@ -746,4 +746,20 @@ describe('CellKernel — exception safety (a throwing sink must not wedge the ch
     expect(() => k.close()).toThrow('boom');
     expect(completed).toEqual(['b']);
   });
+
+  test('replay1: a sink that closes the kernel from within its OWN replay is completed, not left registered', () => {
+    // The replay delivery (`sink.next(current)`) can synchronously close the kernel.
+    // Without the post-replay closure re-check the sink is registered into a closed
+    // core — `closed === true` yet `size === 1`, and it never receives `complete`.
+    const k = CellKernel.replay1(7);
+    let completeCount = 0;
+    const disposer = k.subscribe({
+      next: () => k.close(),
+      complete: () => { completeCount += 1; },
+    });
+    expect(k.closed).toBe(true);
+    expect(k.size).toBe(0); // NOT registered into the closed kernel
+    expect(completeCount).toBe(1); // completed exactly once
+    expect(() => disposer()).not.toThrow(); // a no-op disposer
+  });
 });

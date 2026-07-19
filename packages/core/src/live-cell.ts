@@ -137,9 +137,13 @@ function serializedCommit<T>(run: (value: T) => void): (value: T) => void {
     committing = true;
     try {
       run(value);
+      // `queue.length > 0` already proves an entry exists, so pass the dequeued
+      // value to `run` UNCONDITIONALLY — a `next !== undefined` guard would silently
+      // drop a legitimately-queued `undefined` for a LiveCell whose value type
+      // includes `undefined` (reentrant `set(undefined)`), leaving that mutation
+      // undelivered. `shift()!` narrows away only the empty-array `undefined`.
       while (queue.length > 0) {
-        const next = queue.shift();
-        if (next !== undefined) run(next);
+        run(queue.shift()!);
       }
     } finally {
       committing = false;

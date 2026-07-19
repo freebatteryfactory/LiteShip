@@ -420,6 +420,31 @@ describe('SSE iterator cancellation', () => {
     expect(result.done).toBe(true);
     client.close();
   });
+
+  test('two concurrent next() reads before any message each settle, in FIFO order', async () => {
+    vi.useRealTimers();
+    try {
+      const client = SSE.create(baseConfig);
+      const es = MockEventSource.instances[0]!;
+      const iterator = client.messages[Symbol.asyncIterator]();
+      // Two parked reads BEFORE any message. With a single waiter slot the second
+      // next() overwrites the first's resolver, orphaning p1 forever.
+      const p1 = iterator.next();
+      const p2 = iterator.next();
+      es.simulateMessage(JSON.stringify({ type: 'patch', data: { i: 1 } }));
+      es.simulateMessage(JSON.stringify({ type: 'patch', data: { i: 2 } }));
+      const [r1, r2] = await Promise.all([p1, p2]);
+      expect(r1.done).toBe(false);
+      expect(r2.done).toBe(false);
+      // FIFO: the first parked read gets the first message.
+      expect((r1.value as { data: { i: number } }).data.i).toBe(1);
+      expect((r2.value as { data: { i: number } }).data.i).toBe(2);
+      await iterator.return!();
+      client.close();
+    } finally {
+      vi.useFakeTimers();
+    }
+  });
 });
 
 describe('SSE initial lastEventId config', () => {

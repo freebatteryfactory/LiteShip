@@ -8,7 +8,7 @@
 
 > `const` **SSE**: `object`
 
-Defined in: [web/src/stream/sse.ts:565](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/sse.ts#L565)
+Defined in: [web/src/stream/sse.ts:556](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/sse.ts#L556)
 
 SSE client namespace.
 

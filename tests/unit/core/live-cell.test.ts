@@ -193,6 +193,26 @@ describe('LiveCell', () => {
     cell.set(20);
     expect(values).toEqual([0, 10, 20]);
   });
+
+  test('S2.3b: a reentrant set(undefined) is DRAINED, not dropped (value type includes undefined)', () => {
+    // The serialized-commit drain must run a dequeued value unconditionally; a
+    // `next !== undefined` guard would silently discard a legitimately-queued
+    // `undefined` for a LiveCell whose value type includes it.
+    const cell = LiveCell.make<'state', number | undefined>('state', 1);
+    const seen: (number | undefined)[] = [];
+    let nested = false;
+    cell.subscribe((v) => {
+      seen.push(v);
+      if (v === 2 && !nested) {
+        nested = true;
+        cell.set(undefined); // reentrant write, queued while the outer commit runs
+      }
+    });
+    cell.set(2);
+    expect(seen).toEqual([1, 2, undefined]); // the nested undefined WAS delivered
+    expect(cell.read()).toBeUndefined();
+    expect(cell.envelope().meta.version).toBe(3); // init(1) → set(2) → set(undefined)
+  });
 });
 
 // ---------------------------------------------------------------------------
