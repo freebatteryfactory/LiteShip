@@ -213,6 +213,52 @@ describe('LiveCell', () => {
     expect(cell.read()).toBeUndefined();
     expect(cell.envelope().meta.version).toBe(3); // init(1) → set(2) → set(undefined)
   });
+
+  test('S2.3b: reentrant update() composes on FRESH drained state — two +1 updates land 3, not a lost 2', () => {
+    // Two reentrant RELATIVE updates issued while the outer set(1) commit is in
+    // flight. The commit queues the OPERATION `(n) => n + 1`, applied against the
+    // cell's state AT DRAIN TIME. If instead `f` were evaluated EAGERLY against
+    // `cell.read()` at call time (queuing a pre-computed value), BOTH updates would
+    // read the same pre-drain 1 and enqueue the value 2 — the second write clobbering
+    // the first, landing a lost-update 2. Deferring `f` to the drain composes them.
+    const cell = LiveCell.make('state', 0);
+    let fired = false;
+    cell.subscribe((v) => {
+      if (v === 1 && !fired) {
+        fired = true;
+        cell.update((n) => n + 1);
+        cell.update((n) => n + 1);
+      }
+    });
+    cell.set(1);
+    expect(cell.read()).toBe(3); // 1 → (+1) → 2 → (+1) → 3, NOT a clobbered 2
+    expect(cell.envelope().meta.version).toBe(4); // init(0) → set(1) → +1 → +1
+  });
+
+  test('S2.3b: two subscribers each issuing one reentrant update(+1) compose across the drain (3, not 2)', () => {
+    // The cross-subscriber interleaving: both value subscribers observe 1 and each
+    // enqueue ONE `(n) => n + 1`. Eager pre-drain evaluation would have both read 1
+    // and enqueue 2 (lost update → 2); operation-queuing applies the second against
+    // the first's already-drained result → 3.
+    const cell = LiveCell.make('state', 0);
+    let firedA = false;
+    let firedB = false;
+    cell.subscribe((v) => {
+      if (v === 1 && !firedA) {
+        firedA = true;
+        cell.update((n) => n + 1);
+      }
+    });
+    cell.subscribe((v) => {
+      if (v === 1 && !firedB) {
+        firedB = true;
+        cell.update((n) => n + 1);
+      }
+    });
+    cell.set(1);
+    expect(cell.read()).toBe(3);
+    expect(cell.envelope().meta.version).toBe(4); // init(0) → set(1) → +1 → +1
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -336,6 +382,32 @@ describe('LiveCell.makeBoundary', () => {
     const final = cell.envelope();
     expect(final.value).toBe(1200);
     expect(final.meta.version).toBe(3);
+  });
+
+  test('S2.3b: reentrant boundary update() composes on FRESH drained state (makeBoundary path)', () => {
+    // The boundary commit shares the operation-queuing serializer. A subscriber that
+    // observes tablet (800) issues two reentrant `update(n => n + 400)` writes. With
+    // eager pre-drain evaluation both would read 800 and enqueue 1200, and the second
+    // (1200 → desktop, no fresh crossing) would clobber the first — landing 1200.
+    // Operation-queuing composes them: 800 → 1200 → 1600.
+    const cell = LiveCell.makeBoundary(viewport, 400); // mobile
+    const crossings = collectCrossings(cell);
+    let fired = false;
+    cell.subscribe((v) => {
+      if (v === 800 && !fired) {
+        fired = true;
+        cell.update((n) => n + 400);
+        cell.update((n) => n + 400);
+      }
+    });
+    cell.set(800); // mobile -> tablet (outer commit)
+    expect(cell.read()).toBe(1600); // 800 → 1200 → 1600, NOT a clobbered 1200
+    // Crossings still publish in commit order: mobile→tablet, then tablet→desktop
+    // (the 1200 → 1600 step stays in desktop, so it emits no further crossing).
+    expect(crossings.map((c) => [String(c.from), String(c.to)])).toEqual([
+      ['mobile', 'tablet'],
+      ['tablet', 'desktop'],
+    ]);
   });
 });
 

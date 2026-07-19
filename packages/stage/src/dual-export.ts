@@ -29,6 +29,7 @@ import type {
   PoseNode,
   CompositeState,
   Quantizer,
+  CompositorQuantizer,
   ReceiptEnvelope,
   ContentAddress,
   Millis,
@@ -236,13 +237,15 @@ export function exportAstroPage(graph: DocumentGraph): ExportNode {
 /**
  * A pose-driven quantizer: holds a graph component's boundary, parks on a state.
  *
- * Purely SYNCHRONOUS — it returns the sync {@link Quantizer} base (boundary +
- * `evaluate` + `stateSync`) and omits the reactive extension entirely. The
- * compositor reads its state through `stateSync()` on the sync hot path, so this
- * never fabricates a reactive `state`/`changes` it does not have (the retyped
- * quantizer-types split is exactly what lets a sync consumer omit them).
+ * Purely SYNCHRONOUS — it satisfies the {@link CompositorQuantizer} sync arm (the
+ * {@link Quantizer} base plus a REQUIRED `stateSync`) and omits the reactive
+ * extension entirely. The compositor reads its state through `stateSync()` on the
+ * sync hot path, so this never fabricates a reactive `state`/`changes` it does not
+ * have (the retyped quantizer-types split is exactly what lets a sync consumer omit
+ * them). The `CompositorQuantizer` return type is what `Compositor.add` requires —
+ * the required `stateSync` proves at compile time this quantizer can produce a state.
  */
-function poseQuantizer(boundary: Boundary.Shape, initialState: string): Quantizer<Boundary.Shape> {
+function poseQuantizer(boundary: Boundary.Shape, initialState: string): CompositorQuantizer<Boundary.Shape> {
   let current = initialState;
   return {
     _tag: 'Quantizer',

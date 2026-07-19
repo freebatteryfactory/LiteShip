@@ -125,23 +125,31 @@ function makeCore<K extends CellKind, T>(kind: K, initial: T, nodeId: string) {
  * deferred re-entrancy — a guard + FIFO drain, realized SYNCHRONOUSLY (no
  * microtask). A `run` that throws mid-drain clears the queue and releases the guard
  * (fail-fast, matching the kernel), so one faulty commit cannot wedge the cell.
+ *
+ * The queue holds OPERATIONS `(current: T) => T`, never pre-computed values, and
+ * `run` applies each against the cell's state AT DRAIN TIME. This is the fix for a
+ * lost-update hazard: an `update(f)` whose `f` was evaluated eagerly against
+ * `cell.read()` at CALL time would, when it and a sibling reentrant `update` both
+ * fire during the same in-flight commit, read the same pre-drain value and clobber
+ * each other (two `+1` updates landing 2, not 3). Deferring `f`'s evaluation to the
+ * drain — where the prior queued operation's `cell.set` has already landed — makes
+ * a relative update compose on the freshest value. A `set(v)` enqueues the constant
+ * operation `() => v`, so an absolute write still ignores intervening state.
  */
-function serializedCommit<T>(run: (value: T) => void): (value: T) => void {
+function serializedCommit<T>(run: (op: (current: T) => T) => void): (op: (current: T) => T) => void {
   let committing = false;
-  const queue: T[] = [];
-  return (value: T): void => {
+  const queue: Array<(current: T) => T> = [];
+  return (op: (current: T) => T): void => {
     if (committing) {
-      queue.push(value);
+      queue.push(op);
       return;
     }
     committing = true;
     try {
-      run(value);
-      // `queue.length > 0` already proves an entry exists, so pass the dequeued
-      // value to `run` UNCONDITIONALLY — a `next !== undefined` guard would silently
-      // drop a legitimately-queued `undefined` for a LiveCell whose value type
-      // includes `undefined` (reentrant `set(undefined)`), leaving that mutation
-      // undelivered. `shift()!` narrows away only the empty-array `undefined`.
+      run(op);
+      // The queue holds operation closures (always truthy), so `shift()!` only
+      // narrows away the empty-array `undefined` the `queue.length > 0` guard has
+      // already excluded — there is no in-band sentinel to confuse with a real entry.
       while (queue.length > 0) {
         run(queue.shift()!);
       }
@@ -156,7 +164,8 @@ function _make<K extends CellKind, T>(kind: K, initial: T): LiveCellShape<K, T> 
   const core = makeCore(kind, initial, `live-cell-${kind}`);
   const { cell, crossings, recordMutation, envelope, lifetime } = core;
 
-  const commit = serializedCommit<T>((value) => {
+  const commit = serializedCommit<T>((op) => {
+    const value = op(cell.read());
     recordMutation(value);
     cell.set(value);
   });
@@ -164,8 +173,8 @@ function _make<K extends CellKind, T>(kind: K, initial: T): LiveCellShape<K, T> 
   return {
     _tag: 'LiveCell',
     read: () => cell.read(),
-    set: (value: T) => commit(value),
-    update: (f: (current: T) => T) => commit(f(cell.read())),
+    set: (value: T) => commit(() => value),
+    update: (f: (current: T) => T) => commit(f),
     subscribe: (subscriber) => cell.subscribe(subscriber),
     lifetime,
     kind,
@@ -196,7 +205,8 @@ function _makeBoundary<I extends string, S extends readonly [string, ...string[]
   // {@link serializedCommit} (S2.3b) so a nested write from within a value/crossing
   // subscriber runs only AFTER this whole unit unwinds — crossings then publish in
   // commit order (A→B before B→C), never reversed.
-  const commit = serializedCommit<number>((value) => {
+  const commit = serializedCommit<number>((op) => {
+    const value = op(cell.read());
     const stamp = recordMutation(value);
     const from = prevState;
     const to: string = Boundary.evaluateWithHysteresis(boundary, value, from);
@@ -211,8 +221,8 @@ function _makeBoundary<I extends string, S extends readonly [string, ...string[]
   return {
     _tag: 'LiveCell',
     read: () => cell.read(),
-    set: (value: number) => commit(value),
-    update: (f: (current: number) => number) => commit(f(cell.read())),
+    set: (value: number) => commit(() => value),
+    update: (f: (current: number) => number) => commit(f),
     subscribe: (subscriber) => cell.subscribe(subscriber),
     lifetime,
     kind,

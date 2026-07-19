@@ -8,6 +8,6 @@
 
 > **Shape** = `CompositorShape`
 
-Defined in: [core/src/compositor.ts:666](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/compositor.ts#L666)
+Defined in: [core/src/compositor.ts:670](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/compositor.ts#L670)
 
 Structural shape of a live compositor instance.

@@ -47,7 +47,7 @@
 
 import { Boundary, CellKernel, Compositor, TokenBuffer } from '@czap/core';
 import type { CompositeState } from '@czap/core';
-import type { Quantizer } from '@czap/core';
+import type { CompositorQuantizer } from '@czap/core';
 import { InvariantViolationError } from '@czap/error';
 
 /** The forced-GC handle `--expose-gc` installs. Absent ⇒ the gate cannot measure. */
@@ -386,8 +386,10 @@ const ALLOC_BOUNDARY = Boundary.make({
  */
 type AllocState = (typeof ALLOC_BOUNDARY)['states'][number];
 
-function fixedQuantizer(state: AllocState): Quantizer<typeof ALLOC_BOUNDARY> {
+function fixedQuantizer(state: AllocState): CompositorQuantizer<typeof ALLOC_BOUNDARY> {
   const fixed = state;
+  // A synchronous compositor quantizer: the REQUIRED `stateSync` satisfies the
+  // `CompositorQuantizer` sync arm (no reactive `state`/`changes` needed).
   return {
     _tag: 'Quantizer',
     boundary: ALLOC_BOUNDARY,
