@@ -148,6 +148,30 @@ describe('Animation.run', () => {
     // advances — the first pull stays pending forever (the old timeout law).
     expect(settled).toBe(false);
   });
+
+  test('an abort signal settles the pending read under an undriven scheduler (cancellation is not deadlocked)', async () => {
+    // With an undriven clock (`Scheduler.noop`, or a fixed-step/audio clock no longer
+    // ticked) the first pull parks on the scheduled read forever, so a bare `return()`
+    // can never reach `finally`. An AbortSignal RACES that read: aborting settles it,
+    // the loop observes the abort and returns (done) — cancellation is no longer queued
+    // behind a read that will never resolve.
+    const controller = new AbortController();
+    const iterator = Animation.run({ duration: Millis(1000), scheduler: Scheduler.noop(), signal: controller.signal });
+
+    const pull = iterator.next();
+    let done: boolean | undefined;
+    void pull.then((r) => {
+      done = r.done;
+    });
+
+    await settle();
+    expect(done).toBeUndefined(); // still parked — the noop clock never fires
+
+    controller.abort();
+    const result = await pull; // resolves now instead of hanging forever
+    expect(result.done).toBe(true);
+    expect(done).toBe(true);
+  });
 });
 
 describe('Animation.interpolate', () => {

@@ -8,7 +8,7 @@
 
 > `const` **Animation**: `object`
 
-Defined in: [core/src/animation.ts:99](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/animation.ts#L99)
+Defined in: [core/src/animation.ts:126](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/animation.ts#L126)
 
 Animation — rAF-driven value interpolation exposed as an `AsyncIterable`.
 Pairs a duration and easing with either primitive lerping or the generic
@@ -86,6 +86,10 @@ finalizer (`addFinalizer(sched.cancel)`).
 ###### scheduler?
 
 `SchedulerShape`
+
+###### signal?
+
+[`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal)
 
 #### Returns
 

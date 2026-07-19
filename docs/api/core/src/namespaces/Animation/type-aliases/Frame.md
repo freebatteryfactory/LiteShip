@@ -8,6 +8,6 @@
 
 > **Frame** = `AnimationFrameShape`
 
-Defined in: [core/src/animation.ts:108](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/animation.ts#L108)
+Defined in: [core/src/animation.ts:135](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/animation.ts#L135)
 
 Structural shape of a single frame emitted by [Animation.run](../../../variables/Animation.md#run).
