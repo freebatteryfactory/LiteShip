@@ -137,15 +137,62 @@ function isRuntimeEasingDescriptor(value: unknown): boolean {
   return true;
 }
 
+/** The serialized {@link TypedValue} kinds — the discriminant `k` the sampler reads. */
+const TYPED_VALUE_KINDS: ReadonlySet<string> = new Set(['number', 'opacity', 'length', 'angle', 'color', 'transform']);
+
+/** A typed endpoint the floor interpolates: an object whose `k` names a known kind. */
+function isTypedValue(value: unknown): boolean {
+  return value !== null && typeof value === 'object' && TYPED_VALUE_KINDS.has((value as { k?: unknown }).k as string);
+}
+
+/** One runtime leaf-write property: a `cssVar` string plus typed `from`/`to` endpoints. */
+function isRuntimeWriteProperty(value: unknown): boolean {
+  if (value === null || typeof value !== 'object') return false;
+  const property = value as Record<string, unknown>;
+  return typeof property.cssVar === 'string' && isTypedValue(property.from) && isTypedValue(property.to);
+}
+
+/** A properties array whose EVERY entry is a valid {@link RuntimeWriteProperty}. */
+function isRuntimeWritePropertyArray(value: unknown): boolean {
+  return Array.isArray(value) && value.every(isRuntimeWriteProperty);
+}
+
+/**
+ * One per-window sub-sampler of a composed program: a local `[start,end]` slice, its
+ * own properties, and its own easing descriptor. The floor's `sampleProgram` walks
+ * `w.properties.map(...)`, so a window missing (or malforming) `properties`/`easing`
+ * must be rejected HERE rather than throwing on the first sampled frame.
+ */
+function isRuntimeWriteWindow(value: unknown): boolean {
+  if (value === null || typeof value !== 'object') return false;
+  const window = value as Record<string, unknown>;
+  return (
+    typeof window.windowStart === 'number' &&
+    typeof window.windowEnd === 'number' &&
+    isRuntimeWritePropertyArray(window.properties) &&
+    isRuntimeEasingDescriptor(window.easing)
+  );
+}
+
+/**
+ * Structural guard for the serialized {@link RuntimeWritePlan}. Validates the leaf
+ * entries the floor actually dereferences — every `properties` entry (cssVar + typed
+ * `from`/`to`) and, when present, every composed `windows` entry (its own properties +
+ * easing) — not merely that `properties` is an array. A single malformed tween or
+ * `windows: [{}]` previously satisfied the shallow check, then crashed downstream in
+ * `sampleProgram`'s `w.properties.map(...)` instead of leaving the JS floor inert
+ * (Law 1) with the documented `motion-program-shape-invalid` diagnostic.
+ */
 function isRuntimeWritePlan(value: unknown): value is RuntimeWritePlan {
   if (value === null || typeof value !== 'object') return false;
   const plan = value as Record<string, unknown>;
   return (
-    Array.isArray(plan.properties) &&
+    isRuntimeWritePropertyArray(plan.properties) &&
     typeof plan.fromState === 'string' &&
     typeof plan.toState === 'string' &&
     typeof plan.durationMs === 'number' &&
-    isRuntimeEasingDescriptor(plan.easing)
+    isRuntimeEasingDescriptor(plan.easing) &&
+    (plan.windows === undefined || (Array.isArray(plan.windows) && plan.windows.every(isRuntimeWriteWindow)))
   );
 }
 

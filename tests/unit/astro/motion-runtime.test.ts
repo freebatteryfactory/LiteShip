@@ -467,4 +467,53 @@ describe('parseMotionProgram — widened easing descriptor validation (#CSS)', (
     expect(parseMotionProgram(programJson(undefined))).toBeNull();
     expect(sink.events.some((e) => e.code === 'motion-program-shape-invalid')).toBe(true);
   });
+
+  // The floor dereferences leaf entries (`p.cssVar`, `p.from`/`p.to`, and each
+  // `window.properties.map(...)`), so the guard must validate them — a shallow
+  // "properties is an array" check let a malformed tween or `windows: [{}]` through
+  // to crash `sampleProgram` instead of leaving the JS floor inert (#158).
+  const validProperty = { cssVar: '--x', from: { k: 'number', v: 0 }, to: { k: 'number', v: 1 } };
+  const runtimeProgram = (runtime: Record<string, unknown>): string =>
+    JSON.stringify({ intent: { policy: { reducedMotion: 'none' } }, runtime, signals: [] });
+
+  test('rejects a plan whose windows entry is structurally malformed (windows: [{}]) LOUDLY', () => {
+    const withBadWindow = runtimeProgram({
+      properties: [validProperty],
+      fromState: 'a',
+      toState: 'b',
+      durationMs: 300,
+      easing: { kind: 'linear' },
+      windows: [{}], // no properties/easing → sampleProgram's `w.properties.map(...)` would throw
+    });
+    expect(parseMotionProgram(withBadWindow)).toBeNull();
+    expect(sink.events.some((e) => e.code === 'motion-program-shape-invalid')).toBe(true);
+  });
+
+  test('rejects a malformed properties entry ({}), and still ACCEPTS a well-formed windowed plan', () => {
+    // A property missing cssVar/from/to reaches the sampler's `interpolateTyped` → reject.
+    expect(
+      parseMotionProgram(
+        runtimeProgram({
+          properties: [{}],
+          fromState: 'a',
+          toState: 'b',
+          durationMs: 300,
+          easing: { kind: 'linear' },
+        }),
+      ),
+    ).toBeNull();
+    // A fully-formed multi-window plan is NOT over-rejected by the stricter guard.
+    const goodWindows = runtimeProgram({
+      properties: [validProperty],
+      fromState: 'a',
+      toState: 'b',
+      durationMs: 300,
+      easing: { kind: 'linear' },
+      windows: [
+        { windowStart: 0, windowEnd: 0.5, properties: [validProperty], easing: { kind: 'linear' } },
+        { windowStart: 0.5, windowEnd: 1, properties: [validProperty], easing: { kind: 'ease' } },
+      ],
+    });
+    expect(parseMotionProgram(goodWindows)).not.toBeNull();
+  });
 });
