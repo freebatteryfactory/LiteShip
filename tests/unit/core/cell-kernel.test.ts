@@ -391,6 +391,50 @@ describe('CellKernel — ReentrancyPolicy (nested write)', () => {
     expect(got).toEqual([0, 1, 2]);
     expect(k.read()).toBe(2);
   });
+
+  test("'deferred': a subscribe DURING a nested-write drain replays the last COMMITTED value, then receives the queued value ONCE (at-most-once, I6)", () => {
+    // Regression for the eager-`current` double-delivery: `publish` advances the read
+    // slot eagerly, so a sink that attaches mid-drain must NOT replay the queued (not-
+    // yet-emitted) value — it replays the last value actually fanned out (1, the value
+    // being delivered), then receives the queued 2 once, in order. The pre-fix kernel
+    // replayed the eager slot (2) and then delivered 2 again → [2, 2].
+    const k = CellKernel.replay1(0, { kind: 'all' }, 'deferred');
+    const a: number[] = [];
+    const late: number[] = [];
+    let fired = false;
+    k.subscribe((v) => {
+      a.push(v);
+      if (!fired && v === 1) {
+        fired = true;
+        k.publish(2); // queued (nested during a's delivery of 1)
+        k.subscribe((x) => late.push(x)); // 'late' attaches mid-drain
+      }
+    });
+    k.publish(1);
+    expect(late).toEqual([1, 2]); // replay of committed 1, then the queued 2 ONCE — never [2, 2]
+    expect(a).toEqual([0, 1, 2]);
+    expect(k.read()).toBe(2);
+  });
+
+  test("'deferred': a mid-drain subscribe with MULTIPLE queued writes sees them in total order (no reorder)", () => {
+    // Two pending values: `late` replays the committed 1, then the drain delivers 2 then
+    // 3 in order → [1, 2, 3]. The pre-fix kernel replayed the eager slot (3) then drained
+    // 2, 3 → [3, 2, 3] (out of order AND double).
+    const k = CellKernel.replay1(0, { kind: 'all' }, 'deferred');
+    const late: number[] = [];
+    let fired = false;
+    k.subscribe((v) => {
+      if (!fired && v === 1) {
+        fired = true;
+        k.publish(2);
+        k.publish(3);
+        k.subscribe((x) => late.push(x));
+      }
+    });
+    k.publish(1);
+    expect(late).toEqual([1, 2, 3]);
+    expect(k.read()).toBe(3);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -689,7 +733,11 @@ describe('CellKernel — exception safety (a throwing sink must not wedge the ch
     const k = CellKernel.replay1(0, undefined, 'deferred');
     const seen: number[] = [];
     // A sink that throws on value 1 (the initial replay of 0 does not throw).
-    k.subscribe({ next: (v) => { if (v === 1) throw new Error('boom'); } });
+    k.subscribe({
+      next: (v) => {
+        if (v === 1) throw new Error('boom');
+      },
+    });
     k.subscribe({ next: (v) => seen.push(v) }); // records; replayed 0 on subscribe
 
     // The throw PROPAGATES to the publisher (fail-fast) …
@@ -703,7 +751,11 @@ describe('CellKernel — exception safety (a throwing sink must not wedge the ch
   test('synchronous: a throwing sink does not wedge subsequent delivery', () => {
     const k = CellKernel.replay1(0);
     const seen: number[] = [];
-    k.subscribe({ next: (v) => { if (v === 1) throw new Error('boom'); } });
+    k.subscribe({
+      next: (v) => {
+        if (v === 1) throw new Error('boom');
+      },
+    });
     k.subscribe({ next: (v) => seen.push(v) });
     expect(() => k.publish(1)).toThrow('boom');
     k.publish(2);
@@ -713,7 +765,11 @@ describe('CellKernel — exception safety (a throwing sink must not wedge the ch
   test('fanout: a throwing sink does not wedge subsequent delivery', () => {
     const k = CellKernel.fanout<number>();
     const seen: number[] = [];
-    k.subscribe({ next: (v) => { if (v === 1) throw new Error('boom'); } });
+    k.subscribe({
+      next: (v) => {
+        if (v === 1) throw new Error('boom');
+      },
+    });
     k.subscribe({ next: (v) => seen.push(v) });
     expect(() => k.publish(1)).toThrow('boom');
     k.publish(2);
@@ -728,7 +784,12 @@ describe('CellKernel — exception safety (a throwing sink must not wedge the ch
     const k = CellKernel.replay1(0);
     const completed: string[] = [];
     k.subscribe({ next: () => undefined, complete: () => completed.push('a') });
-    k.subscribe({ next: () => undefined, complete: () => { throw new Error('boom'); } });
+    k.subscribe({
+      next: () => undefined,
+      complete: () => {
+        throw new Error('boom');
+      },
+    });
     k.subscribe({ next: () => undefined, complete: () => completed.push('c') });
 
     // The first fault propagates …
@@ -741,7 +802,12 @@ describe('CellKernel — exception safety (a throwing sink must not wedge the ch
   test('close: fanout completes every sink despite a throwing complete', () => {
     const k = CellKernel.fanout<number>();
     const completed: string[] = [];
-    k.subscribe({ next: () => undefined, complete: () => { throw new Error('boom'); } });
+    k.subscribe({
+      next: () => undefined,
+      complete: () => {
+        throw new Error('boom');
+      },
+    });
     k.subscribe({ next: () => undefined, complete: () => completed.push('b') });
     expect(() => k.close()).toThrow('boom');
     expect(completed).toEqual(['b']);
@@ -755,7 +821,9 @@ describe('CellKernel — exception safety (a throwing sink must not wedge the ch
     let completeCount = 0;
     const disposer = k.subscribe({
       next: () => k.close(),
-      complete: () => { completeCount += 1; },
+      complete: () => {
+        completeCount += 1;
+      },
     });
     expect(k.closed).toBe(true);
     expect(k.size).toBe(0); // NOT registered into the closed kernel

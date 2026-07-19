@@ -8,7 +8,7 @@
 
 > **Fanout**\<`T`\> = [`CellFanoutShape`](../../../interfaces/CellFanoutShape.md)\<`T`\>
 
-Defined in: [core/src/cell-kernel.ts:472](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts#L472)
+Defined in: [core/src/cell-kernel.ts:485](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts#L485)
 
 Live no-replay fan-out kernel — see [CellFanoutShape](../../../interfaces/CellFanoutShape.md).
 

@@ -317,6 +317,13 @@ function replay1<T>(
 ): CellReplayShape<T> {
   const core = createCore<T>();
   let current = initial;
+  // The last value actually FANNED OUT — what a subscriber attaching NOW replays.
+  // Kept distinct from `current` (the latest write, which `read()` returns) so the
+  // {deferred} arm's EAGER `current` advance cannot leak a queued-but-not-yet-emitted
+  // value through replay: a subscribe during a nested-write drain must replay the last
+  // committed value and then receive the queued value once, in order (at-most-once +
+  // total-order), NOT replay the queued value and then receive it a second time.
+  let committed = initial;
   // {distinct} tracks the last FANNED-OUT value, boxed so an `undefined`-typed T
   // stays unambiguous. NEVER allocated on the {all} default (the compositor hot
   // path): the `emit` branch below skips it entirely.
@@ -335,6 +342,9 @@ function replay1<T>(
       if (lastEmitted !== undefined && policy.equals(lastEmitted.value, value)) return;
       lastEmitted = { value };
     }
+    // Advance the replay slot WITH the emission (not with the eager `current` write),
+    // so a late subscriber replays what was actually delivered.
+    committed = value;
     core.fanOut(value);
   };
 
@@ -386,9 +396,12 @@ function replay1<T>(
         sink.complete?.();
         return NOOP_DISPOSER;
       }
-      // Replay before registering (compositor ordering): the just-attached sink
-      // is not re-delivered a value published from within its own replay.
-      sink.next(current);
+      // Replay the last COMMITTED (fanned-out) value before registering — NOT the
+      // eager `current` slot, which under {deferred} may hold a queued value whose
+      // fan-out has not begun (replaying it there would double-deliver it once the
+      // drain reaches this now-registered sink). Compositor ordering: a value published
+      // from within this sink's own replay is not re-delivered to it.
+      sink.next(committed);
       // The replay may have SYNCHRONOUSLY closed the kernel (a sink that calls
       // close() from within its own replay). Re-check before registering, else the
       // sink joins a closed core — reported `closed` yet `size === 1`, and it would

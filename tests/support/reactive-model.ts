@@ -246,6 +246,11 @@ interface Reg {
 function modelReplay1(initial: TraceValue, policy: EmissionPolicy, reentrancy: ReentrancyPolicy): ChannelLike {
   const regs: Reg[] = [];
   let current = initial;
+  // The last value actually FANNED OUT — what a fresh subscribe replays. Distinct from
+  // `current` (the latest write, returned by `read()`) so the {deferred} arm's eager
+  // `current` advance cannot leak a queued-but-unemitted value through replay (the
+  // at-most-once law I6 documents: no replay+live-set double delivery).
+  let committed = initial;
   let closed = false;
   let lastEmitted: { readonly v: TraceValue } | undefined;
   // {deferred} async-append state: a publish issued from within an active fan-out
@@ -272,6 +277,8 @@ function modelReplay1(initial: TraceValue, policy: EmissionPolicy, reentrancy: R
   const emit = (value: TraceValue): void => {
     if (policy.kind === 'distinct' && lastEmitted !== undefined && policy.equals(lastEmitted.v, value)) return;
     lastEmitted = { v: value };
+    // Advance the replay slot WITH the emission (not the eager `current` write).
+    committed = value;
     fanOut(value);
   };
 
@@ -307,9 +314,11 @@ function modelReplay1(initial: TraceValue, policy: EmissionPolicy, reentrancy: R
         sink.complete?.();
         return NOOP_DISPOSER;
       }
-      // Replay BEFORE registering: a value published from within the sink's own
-      // replay is not re-delivered to it (compositor ordering).
-      sink.next(current);
+      // Replay the last COMMITTED (fanned-out) value BEFORE registering — NOT the eager
+      // `current` slot, which under {deferred} may hold a queued value whose fan-out has
+      // not begun. (A value published from within the sink's own replay is not
+      // re-delivered to it — compositor ordering.)
+      sink.next(committed);
       const reg: Reg = { sink, alive: true };
       regs.push(reg);
       return () => {

@@ -570,6 +570,13 @@ function fromBoundary<B extends Boundary.Shape>(boundary: B, options?: Quantizer
             changes: crossingChannel,
 
             evaluate(value: number): StateUnion<B> {
+              // Disposed → the state/outputs/crossing kernels are closed and their publishes
+              // are inert; advancing `previousState`/HLC here would diverge `stateSync()` (and
+              // this return) from the frozen `state.read()`/`currentOutputs.read()` — and a
+              // disposed-but-referenced quantizer would report an advancing discrete state its
+              // own reactive channel never emits (Compositor.computeStateSync reads stateSync()).
+              // Freeze at the last committed state.
+              if (lifetime.disposed) return previousState;
               const result: EvaluateResult<StateUnion<B> & string> = evaluate(boundary, value, previousState);
 
               if (result.crossed) {
