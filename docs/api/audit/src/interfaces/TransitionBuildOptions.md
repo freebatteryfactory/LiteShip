@@ -6,7 +6,7 @@
 
 # Interface: TransitionBuildOptions
 
-Defined in: [audit/src/transition-facts-build.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/transition-facts-build.ts#L71)
+Defined in: [audit/src/transition-facts-build.ts:92](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/transition-facts-build.ts#L92)
 
 Options for [buildTransitionFacts](../functions/buildTransitionFacts.md) — the family + the two transport fingerprints + the ratchet.
 
@@ -16,7 +16,7 @@ Options for [buildTransitionFacts](../functions/buildTransitionFacts.md) — the
 
 > `readonly` **family**: `string`
 
-Defined in: [audit/src/transition-facts-build.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/transition-facts-build.ts#L73)
+Defined in: [audit/src/transition-facts-build.ts:94](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/transition-facts-build.ts#L94)
 
 The conformance family this run covers (e.g. `'cell'`) — aims the gate's level, woven into findings.
 
@@ -26,7 +26,7 @@ The conformance family this run covers (e.g. `'cell'`) — aims the gate's level
 
 > `readonly` **implementationDigest**: `string`
 
-Defined in: [audit/src/transition-facts-build.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/transition-facts-build.ts#L77)
+Defined in: [audit/src/transition-facts-build.ts:98](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/transition-facts-build.ts#L98)
 
 The content address of the IMPLEMENTATION transport under test.
 
@@ -36,7 +36,7 @@ The content address of the IMPLEMENTATION transport under test.
 
 > `readonly` **modelDigest**: `string`
 
-Defined in: [audit/src/transition-facts-build.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/transition-facts-build.ts#L75)
+Defined in: [audit/src/transition-facts-build.ts:96](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/transition-facts-build.ts#L96)
 
 The content address of the MODEL transport (the single-oracle fingerprint).
 
@@ -46,7 +46,7 @@ The content address of the MODEL transport (the single-oracle fingerprint).
 
 > `readonly` `optional` **unevidencedBaseline?**: `number`
 
-Defined in: [audit/src/transition-facts-build.ts:83](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/transition-facts-build.ts#L83)
+Defined in: [audit/src/transition-facts-build.ts:104](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/transition-facts-build.ts#L104)
 
 The committed maximum tolerated `unevidenced` case count for this family (the
 ratchet floor). Omitted → no committed floor (the family's first measurement,

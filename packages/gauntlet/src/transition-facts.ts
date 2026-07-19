@@ -69,7 +69,7 @@ export type TransitionStatus = 'equivalent' | 'divergent' | 'unevidenced';
 export interface TransitionCase {
   /** The pinned seed that generated the op history — the replay key half (`{ family, seed, traceDigest }`). */
   readonly seed: string;
-  /** The content address of the op history (canonical-CBOR → fnv1a) — the replay key half. */
+  /** The canonical SHA-256 content address of the op history (canonical-CBOR → SHA-256) — the replay key half. */
   readonly traceDigest: string;
   /** The number of operations in the history (report context — how deep the walk was). */
   readonly operationCount: number;

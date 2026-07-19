@@ -26,25 +26,46 @@
  * builder's, so the single-oracle law (a divergence is a real digest disagreement, not
  * a re-derivation) lives here, in the host, not smuggled into the lean gate.
  *
- * DETERMINISM. The builder content-addresses each history through the ONE canonical
- * encoder (`@czap/canonical`'s `CanonicalCbor` → `fnv1aBytes`, the exact currency the
- * Foundation `reactive-trace.traceDigest` uses) and sorts the cases by `(seed,
+ * DETERMINISM + IDENTITY CLASS. The builder OWNS the bisimulation comparison: it
+ * canonical-encodes each side's observation through the ONE encoder (`@czap/canonical`'s
+ * `CanonicalCbor`) and decides `equivalent` by comparing the EXACT canonical bytes — never
+ * a hash equality, so no digest collision can ever launder a real divergence into a false
+ * `equivalent` green (SKILL.md §4: a weak hash may not be the sole witness of an L4
+ * conformance decision). The stored fact digests (the two observation addresses + the
+ * history `traceDigest`) are the canonical SHA-256 content address (`sha256:<hex>`) of those
+ * same bytes — a collision-resistant, trust-bearing replay identity. Cases sort by `(seed,
  * traceDigest)`, so the same inputs yield BYTE-IDENTICAL facts across runs.
  *
  * @module
  */
-import { CanonicalCbor, fnv1aBytes } from '@czap/canonical';
+import { CanonicalCbor, sha256Hex } from '@czap/canonical';
 import type { TransitionFacts, TransitionCase, TransitionStatus } from '@czap/gauntlet';
 
+/** The canonical SHA-256 content address (`sha256:<64-hex>`) of a value's canonical CBOR bytes. */
+function sha256Address(value: unknown): string {
+  return `sha256:${sha256Hex(CanonicalCbor.encode(value))}`;
+}
+
+/** Byte-exact equality of two `Uint8Array`s — the bisimulation decision's collision-free witness. */
+function bytesEqual(a: Uint8Array, b: Uint8Array): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
+}
+
 /**
- * One oracle side's outcome for a case — either a content-addressed OBSERVATION (the
- * side produced a comparable trace) or an UNEVIDENCED marker (the side produced no
- * trace: a construction fault, an unsupported op, a drained-empty result). The caller's
- * harness computes the observation digest through the SAME canonical encoder the
- * builder uses for the history (so the digests are comparable across the cage).
+ * One oracle side's outcome for a case — either the NORMALIZED OBSERVATION the side
+ * produced (any CBOR-encodable trace value: the closed `Observation` record the Foundation
+ * harness folds, e.g.) or an UNEVIDENCED marker (the side produced no trace: a construction
+ * fault, an unsupported op, a drained-empty result). The caller hands the builder the raw
+ * observation, NOT a pre-computed digest: the builder owns the canonical encoding + the
+ * byte-exact comparison, so the bisimulation verdict never rides a hash equality (a digest
+ * collision could otherwise certify a real divergence as `equivalent` — a false L4 green).
  */
 export type OracleOutcome =
-  | { readonly kind: 'observed'; readonly observationDigest: string }
+  | { readonly kind: 'observed'; readonly observation: unknown }
   | { readonly kind: 'unevidenced'; readonly reason: string };
 
 /**
@@ -88,23 +109,37 @@ const NO_OBSERVATION = '' as const;
 
 /**
  * Decide one case's bisimulation verdict from the two oracle outcomes. `unevidenced` iff
- * EITHER side produced no trace (Axiom 4: an absent witness is kept separate from a
- * fidelity claim); otherwise `equivalent` iff the two observation digests AGREE, else
- * `divergent`. Returns the verdict + the two digests the case records (a missing side's
- * digest is the {@link NO_OBSERVATION} sentinel).
+ * EITHER side produced no trace (Axiom 4: an absent witness is kept separate from a fidelity
+ * claim); otherwise `equivalent` iff the two NORMALIZED observations are BYTE-IDENTICAL under
+ * the canonical encoder, else `divergent`. The decision is on the exact canonical bytes — NOT
+ * a hash equality — so no digest collision can ever certify a real divergence as `equivalent`
+ * (a false L4 green). Returns the verdict + the two SHA-256 addresses the case records (a
+ * missing side's digest is the {@link NO_OBSERVATION} sentinel).
  */
 function decideCase(run: TransitionRun): {
   readonly status: TransitionStatus;
   readonly modelObservationDigest: string;
   readonly implementationObservationDigest: string;
 } {
-  const modelDigest = run.model.kind === 'observed' ? run.model.observationDigest : NO_OBSERVATION;
-  const implDigest = run.implementation.kind === 'observed' ? run.implementation.observationDigest : NO_OBSERVATION;
-  if (run.model.kind === 'unevidenced' || run.implementation.kind === 'unevidenced') {
-    return { status: 'unevidenced', modelObservationDigest: modelDigest, implementationObservationDigest: implDigest };
+  const model = run.model;
+  const impl = run.implementation;
+  if (model.kind === 'unevidenced' || impl.kind === 'unevidenced') {
+    return {
+      status: 'unevidenced',
+      modelObservationDigest: model.kind === 'observed' ? sha256Address(model.observation) : NO_OBSERVATION,
+      implementationObservationDigest: impl.kind === 'observed' ? sha256Address(impl.observation) : NO_OBSERVATION,
+    };
   }
-  const status: TransitionStatus = modelDigest === implDigest ? 'equivalent' : 'divergent';
-  return { status, modelObservationDigest: modelDigest, implementationObservationDigest: implDigest };
+  // Both sides observed: decide on the EXACT canonical bytes; the stored digests are the
+  // SHA-256 of those same bytes (the compact, collision-resistant replay identity).
+  const modelBytes = CanonicalCbor.encode(model.observation);
+  const implBytes = CanonicalCbor.encode(impl.observation);
+  const status: TransitionStatus = bytesEqual(modelBytes, implBytes) ? 'equivalent' : 'divergent';
+  return {
+    status,
+    modelObservationDigest: `sha256:${sha256Hex(modelBytes)}`,
+    implementationObservationDigest: `sha256:${sha256Hex(implBytes)}`,
+  };
 }
 
 /**
@@ -119,7 +154,7 @@ export function buildTransitionFacts(runs: readonly TransitionRun[], options: Tr
   const operationCoverage: Record<string, number> = {};
 
   for (const run of runs) {
-    const traceDigest = fnv1aBytes(CanonicalCbor.encode(run.history));
+    const traceDigest = sha256Address(run.history);
     const decided = decideCase(run);
     cases.push({
       seed: run.seed,
