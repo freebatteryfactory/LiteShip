@@ -141,6 +141,17 @@ export interface CheckOptions {
    * namespaced by this mode (a capability-gate verdict never serves a non-capability-gate run).
    */
   readonly capabilityGate?: boolean;
+  /**
+   * `--spine-relation`: also run the `spineRelationGate` (Wave 8.5, the public constitution's
+   * STATIC-projection half, L4). The host probes each admitted `@czap/_spine` mirror type's
+   * bidirectional assignability against its runtime source (a ts.Program probe over the spine
+   * + runtime surface) and injects the observed facts; a mirror whose observed relation no
+   * longer satisfies its admitted (frozen) relation — or no longer resolves — is a
+   * public-contract drift finding. Only meaningful with `--ir`; opt-in (a second ts.Program
+   * build, ~3.25s, is HEAVY) but REQUIRED in the release/CI profile. The cache key is
+   * namespaced by this mode (a spine-relation verdict never serves a non-spine-relation run).
+   */
+  readonly spineRelation?: boolean;
 }
 
 /** Execute `czap check` — run the gauntlet gate fold in-process; emit the verdict + Finding[]. */
@@ -161,6 +172,7 @@ export async function check(opts: CheckOptions = {}): Promise<number> {
           opts.proof === true,
           opts.composition === true,
           opts.capabilityGate === true,
+          opts.spineRelation === true,
         )
       : await runLeanPath(cwd);
 
@@ -236,6 +248,7 @@ async function runIrPath(
   proof: boolean,
   composition: boolean,
   capabilityGate: boolean,
+  spineRelation: boolean,
 ): Promise<CheckPayload> {
   const now = new Date(wallClock.now());
   const result = await runGauntletWithRepoIR(cwd, now, undefined, {
@@ -249,6 +262,7 @@ async function runIrPath(
     withProof: proof,
     withComposition: composition,
     withCapabilityGate: capabilityGate,
+    withSpineRelation: spineRelation,
   });
   const findings = result.findings;
   return {

@@ -93,6 +93,7 @@ export const CATEGORIES: readonly CategorySpec[] = [
       'runtime:gate',
       'standards:gate',
       'capability:gate',
+      'spine-relation:gate',
       'check:gates',
       'plumb:gate',
       'flex:verify',

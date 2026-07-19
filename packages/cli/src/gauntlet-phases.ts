@@ -103,6 +103,13 @@ export const gauntletPhases: readonly GauntletPhase[] = [
   // declared capability's probe (a ts.Program over the sanctioned files + the canonical capability
   // modules), or the cut reds. Opt-in `czap check --ir --capability-gate` runs the same proof.
   { label: 'capability:gate', command: 'pnpm run capability:gate' },
+  // The two-axis spine-relation proof (Wave 8.5, #156) — the CONSTITUTION / public-surface
+  // INTEGRITY family, beside standards:gate/capability:gate: every admitted @czap/_spine mirror
+  // type's OBSERVED bidirectional-assignability relation must still satisfy its ADMITTED (frozen)
+  // relation (a ts.Program probe over the spine + runtime surface), or the cut reds. A SECOND
+  // ts.Program build (~3.25s) too heavy for the default `czap check --ir`, so it runs HERE as its
+  // own phase; the equivalent opt-in path is `czap check --ir --spine-relation`.
+  { label: 'spine-relation:gate', command: 'pnpm run spine-relation:gate' },
   { label: 'plumb:gate', command: 'pnpm run plumb:gate' },
   { label: 'capsule:verify', command: 'pnpm run capsule:verify' },
   { label: 'flex:verify', command: 'pnpm run flex:verify' },
@@ -138,6 +145,7 @@ export const CI_PARALLEL_FINAL_LABELS: readonly string[] = [
   'runtime:gate',
   'standards:gate',
   'capability:gate',
+  'spine-relation:gate',
   'plumb:gate',
   'flex:verify',
 ];
@@ -167,6 +175,7 @@ export const LOCAL_SAFE_LABELS: readonly string[] = [
   CI_PARALLEL_SHARDED_TEST_LABEL,
   'standards:gate',
   'capability:gate',
+  'spine-relation:gate',
 ];
 
 export const CI_PARALLEL_INTEGRATION_LABELS: readonly string[] = [

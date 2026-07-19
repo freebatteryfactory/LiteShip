@@ -46,8 +46,11 @@ import {
   buildRepoIRTaint,
   buildCapabilityLinkFacts,
   buildActiveSurfaceFacts,
+  buildSpineRelationFacts,
   type EquivalentMutantRegistry,
+  type SpineRelationBuildOptions,
 } from '@czap/audit';
+import { LITESHIP_SPINE_ADMISSIONS } from './spine-relation-policy.js';
 import { LITESHIP_EXPORT_REQUIRED_FIELDS, LITESHIP_TRANSITION_REQUIRED_FIELDS } from './active-surface-policy.js';
 import { LITESHIP_TAINT_REGISTRY } from './taint-policy.js';
 import { LITESHIP_CAPABILITY_MODULES, LITESHIP_CAPABILITY_IDS, resolveCapabilitySites } from './capability-policy.js';
@@ -64,6 +67,7 @@ import {
   proofPropagationGate,
   compositionCoverageGate,
   activeModeledSurfaceReaderGate,
+  spineRelationGate,
   LITESHIP_IR_GATES,
   type Fact,
   type FileId,
@@ -82,6 +86,7 @@ import {
   type ProofFacts,
   type CompositionFacts,
   type ActiveSurfaceFacts,
+  type SpineRelationFacts,
 } from '@czap/gauntlet';
 import { buildProofFacts, buildCompositionFacts } from './local-vs-global.js';
 import { buildTraceabilityFacts } from './traceability.js';
@@ -309,6 +314,7 @@ export async function runGauntletWithRepoIR(
   let capabilityLinkFacts: CapabilityLinkFacts | undefined;
   let proofFacts: ProofFacts | undefined;
   let compositionFacts: CompositionFacts | undefined;
+  let spineRelationFacts: SpineRelationFacts | undefined;
 
   // The requirements-traceability ledger (the avionics-tier bidirectional trace) is
   // ALWAYS-ON on the `--ir` path: the committed `traceability/*.yaml` is cheap to fold
@@ -459,6 +465,23 @@ export async function runGauntletWithRepoIR(
     compositionFacts = buildCompositionFacts(repoRoot, ir);
   }
 
+  // The `--spine-relation` opt-in (Wave 8.5, the public constitution's STATIC-projection
+  // half): the host probes each admitted `@czap/_spine` mirror type's bidirectional
+  // assignability against its runtime source via @czap/audit's `buildSpineRelationFacts` (a
+  // ts.Program probe over the spine + runtime surface), classified against the LiteShip-LOCAL
+  // admission table injected HERE (the ADR-0012 boundary — the audit engine names no mirror),
+  // and injects the observed facts; compose `spineRelationGate`. An admitted mirror whose
+  // OBSERVED relation no longer satisfies its ADMITTED (frozen) relation — or a mirror that no
+  // longer resolves — is a public-contract drift finding. Opt-in (NOT always-on): the second
+  // ts.Program build measures ~3.25s over the reconciled spine, too heavy for the default
+  // `--ir` run — but REQUIRED in the release/CI profile, so the L4 constitution check runs on
+  // every PR (reachable, never fixture-only). The cache key is namespaced by this mode (see
+  // resolveVerdictCache) so a spine-relation verdict never serves a non-spine-relation run.
+  if (cacheOpts.withSpineRelation === true) {
+    gateSet.push(spineRelationGate);
+    spineRelationFacts = buildSpineRelationFacts(LITESHIP_SPINE_ADMISSIONS, repoRoot, cacheOpts.spineRelation ?? {});
+  }
+
   // The active-surface field-read oracle (#132) is ALWAYS-ON on the `--ir` path:
   // the host scans enrolled reader paths with TS-AST (cheap) and injects facts for
   // `activeModeledSurfaceReaderGate`. Live TransitionNode field-read orphan is BLOCKING on `--ir`.
@@ -499,6 +522,7 @@ export async function runGauntletWithRepoIR(
     ...(capabilityLinkFacts !== undefined ? { capabilityLink: capabilityLinkFacts } : {}),
     ...(proofFacts !== undefined ? { proof: proofFacts } : {}),
     ...(compositionFacts !== undefined ? { composition: compositionFacts } : {}),
+    ...(spineRelationFacts !== undefined ? { spineRelation: spineRelationFacts } : {}),
     activeSurfaceFacts,
   };
   const effectiveGlobs = globs ?? DEFAULT_GAUNTLET_GLOBS_SENTINEL;
@@ -859,6 +883,27 @@ export interface RepoIRGauntletCacheOptions {
    */
   readonly withComposition?: boolean;
   /**
+   * Compose the `spineRelationGate` (Wave 8.5, the public constitution's STATIC-projection
+   * half, L4) onto the run and inject the host-computed {@link SpineRelationFacts} (`czap
+   * check --ir --spine-relation`). The host probes each admitted `@czap/_spine` mirror type's
+   * bidirectional assignability against its runtime source (a ts.Program probe over the spine
+   * + runtime surface, classified against the LiteShip-LOCAL {@link LITESHIP_SPINE_ADMISSIONS}
+   * injected from the CLI host — the ADR-0012 boundary); a mirror whose observed relation no
+   * longer satisfies its admitted one, or no longer resolves, is a public-contract drift. It
+   * changes BOTH which gates run AND the injected facts, so the verdict cache is NAMESPACED by
+   * this mode (see {@link resolveVerdictCache}). HEAVY (a second ts.Program build, ~3.25s over
+   * the reconciled spine) — opt-in, but REQUIRED in the release/CI profile so the constitution
+   * check runs on every PR (reachable, never fixture-only).
+   */
+  readonly withSpineRelation?: boolean;
+  /**
+   * Test/CI seam for the spine-relation probe ({@link SpineRelationBuildOptions}) — the
+   * in-memory `overlay` that injects a DRIFTED spine (e.g. a Millis-brand loss) without
+   * touching disk, so an integration test can prove `czap check --ir --spine-relation` BLOCKS
+   * on a planted drift. Only consulted when {@link withSpineRelation} is set.
+   */
+  readonly spineRelation?: SpineRelationBuildOptions;
+  /**
    * The always-on raccoon-rule backstop ({@link standardsIntegrityGate}) diffs the LIVE
    * standards surface against a PRIOR, INDEPENDENT baseline — the standards snapshot AS
    * COMMITTED ON THE BASE REF the change is reviewed against (read from git), NOT the
@@ -933,6 +978,11 @@ function resolveVerdictCache(repoRoot: string, opts: RepoIRGauntletCacheOptions)
     // namespace the key — else a composition-run verdict could be served to a
     // non-composition run (the same stale-serve LIE the --symbols namespacing fixes).
     ...(opts.withComposition === true ? { compositionMode: 'composition' } : {}),
+    // The spine-relation MODE changes BOTH the gate set (spineRelationGate composed on) AND
+    // the injected facts WITHOUT changing any file's content digest, so it must namespace the
+    // key — else a spine-relation verdict could be served to a non-spine-relation run (the
+    // same stale-serve LIE the --symbols namespacing fixes).
+    ...(opts.withSpineRelation === true ? { spineRelationMode: 'spine-relation' } : {}),
   };
   return {
     cache: makeFsVerdictCache(opts.cacheCwd ?? repoRoot),
