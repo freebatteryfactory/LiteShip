@@ -8,7 +8,7 @@
 
 > `const` **LiveCell**: `object`
 
-Defined in: [core/src/live-cell.ts:258](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/live-cell.ts#L258)
+Defined in: [core/src/live-cell.ts:261](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/live-cell.ts#L261)
 
 LiveCell — bridge between the [Cell](Cell.md) reactive graph and the wire
 protocol. A `LiveCell` wraps a `Cell` with a typed [CellEnvelope](../interfaces/CellEnvelope.md) — kind,
@@ -19,9 +19,11 @@ peers as self-describing messages.
 
 ### make
 
-> **make**: \<`K`, `T`\>(`kind`, `initial`) => `LiveCellShape`\<`K`, `T`\> = `_make`
+> **make**: \<`K`, `T`\>(`kind`, `initial`, `clock`) => `LiveCellShape`\<`K`, `T`\> = `_make`
 
 Wrap an arbitrary value in a LiveCell with freshly minted identity + HLC.
+`clock` (default [wallClock](wallClock.md)) is the injected time source for the envelope
+HLC — pass a `manualClock`/`fixedClock` for deterministic replay.
 
 #### Type Parameters
 
@@ -43,15 +45,21 @@ Wrap an arbitrary value in a LiveCell with freshly minted identity + HLC.
 
 `T`
 
+##### clock?
+
+[`Clock`](../interfaces/Clock.md) = `wallClock`
+
 #### Returns
 
 `LiveCellShape`\<`K`, `T`\>
 
 ### makeBoundary
 
-> **makeBoundary**: \<`I`, `S`\>(`boundary`, `initial`) => `LiveCellShape`\<`"boundary"`, `number`\> = `_makeBoundary`
+> **makeBoundary**: \<`I`, `S`\>(`boundary`, `initial`, `clock`) => `LiveCellShape`\<`"boundary"`, `number`\> = `_makeBoundary`
 
-Specialized factory for boundary crossings so the envelope captures crossing metadata.
+Specialized factory for boundary crossings so the envelope captures crossing
+metadata. `clock` (default [wallClock](wallClock.md)) is the injected time source for the
+envelope HLC and crossing timestamps — pass a manual/fixed clock for determinism.
 
 Create a boundary-kind LiveCell that automatically publishes crossings when the
 numeric value transitions between boundary states.
@@ -75,6 +83,10 @@ numeric value transitions between boundary states.
 ##### initial
 
 `number`
+
+##### clock?
+
+[`Clock`](../interfaces/Clock.md) = `wallClock`
 
 #### Returns
 

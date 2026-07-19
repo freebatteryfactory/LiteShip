@@ -20,7 +20,7 @@
  */
 
 import type { AVBridge } from './av-bridge.js';
-import { wallClock } from './clock.js';
+import { wallClock, type Clock } from './clock.js';
 import { ValidationError } from '@czap/error';
 import { CellKernel } from './cell-kernel.js';
 import type { Disposer } from './cell-kernel.js';
@@ -103,7 +103,7 @@ interface ControllableSignalShape<T> extends SignalShape<T> {
   resume(): void;
 }
 
-function initialValueForSource(source: SignalSource): number {
+function initialValueForSource(source: SignalSource, clock: Clock): number {
   switch (source.type) {
     case 'viewport':
       return typeof globalThis.window !== 'undefined'
@@ -123,8 +123,9 @@ function initialValueForSource(source: SignalSource): number {
       return 0;
     case 'time':
       // Absolute mode emits the current wall-clock instant as the signal VALUE
-      // (epoch ms) — wallClock, not the monotonic systemClock.
-      return source.mode === 'absolute' ? wallClock.now() : 0;
+      // (epoch ms) through the INJECTED clock (default wallClock, not the monotonic
+      // systemClock) — a manual/fixed clock makes it deterministic.
+      return source.mode === 'absolute' ? clock.now() : 0;
     case 'media':
       return typeof globalThis.window !== 'undefined' && window.matchMedia(source.query).matches ? 1 : 0;
     case 'custom':
@@ -140,7 +141,12 @@ function initialValueForSource(source: SignalSource): number {
  * listeners are live the moment {@link _make} returns (no forked setup fiber);
  * `lifetime.dispose()` removes every listener and cancels every loop.
  */
-function setupListener(source: SignalSource, kernel: CellKernel.Replay<number>, lifetime: Lifetime.Shape): void {
+function setupListener(
+  source: SignalSource,
+  kernel: CellKernel.Replay<number>,
+  lifetime: Lifetime.Shape,
+  clock: Clock,
+): void {
   switch (source.type) {
     case 'viewport': {
       if (typeof globalThis.window === 'undefined') return;
@@ -180,9 +186,9 @@ function setupListener(source: SignalSource, kernel: CellKernel.Replay<number>, 
       if (source.mode === 'elapsed') {
         if (typeof requestAnimationFrame === 'undefined') return;
         // The time signal is wall-clock by nature (both modes): elapsed since
-        // subscription is measured in epoch ms via wallClock, consistent with
-        // absolute mode and deterministic when the wall clock is mocked.
-        const start = wallClock.now();
+        // subscription is measured in epoch ms via the INJECTED clock, consistent
+        // with absolute mode and deterministic when a manual/fixed clock is passed.
+        const start = clock.now();
         const id = { current: 0 };
         // DISPOSAL-SAFE self-reschedule. A value subscriber may dispose the signal
         // from WITHIN this tick's `publish`; the finalizer then cancels the frame id
@@ -200,7 +206,7 @@ function setupListener(source: SignalSource, kernel: CellKernel.Replay<number>, 
         let disposed = false;
         const tick = (): void => {
           try {
-            kernel.publish(wallClock.now() - start);
+            kernel.publish(clock.now() - start);
           } finally {
             if (!disposed) id.current = requestAnimationFrame(tick);
           }
@@ -212,7 +218,7 @@ function setupListener(source: SignalSource, kernel: CellKernel.Replay<number>, 
         });
       } else if (source.mode === 'absolute') {
         const id = setInterval(() => {
-          kernel.publish(wallClock.now());
+          kernel.publish(clock.now());
         }, 1000);
         lifetime.add(() => clearInterval(id));
       }
@@ -248,6 +254,10 @@ function setupListener(source: SignalSource, kernel: CellKernel.Replay<number>, 
  * `signal.lifetime.dispose()`. The signal exposes `.read()` (latest value) and
  * `.subscribe(sink)` (replay-1 stream of updates, returning a {@link Disposer}).
  *
+ * `clock` (default {@link wallClock}) is the injected time source for the `time`
+ * source family (elapsed/absolute) — pass a `manualClock`/`fixedClock` to drive an
+ * elapsed/absolute signal deterministically without touching the ambient clock.
+ *
  * @example
  * ```ts
  * import { Signal } from '@czap/core';
@@ -260,15 +270,15 @@ function setupListener(source: SignalSource, kernel: CellKernel.Replay<number>, 
  * await sig.lifetime.dispose();
  * ```
  */
-function _make(rawSource: SignalSource): SignalShape<number> {
+function _make(rawSource: SignalSource, clock: Clock = wallClock): SignalShape<number> {
   const source = normalizeSource(rawSource);
-  const initial = initialValueForSource(source);
+  const initial = initialValueForSource(source, clock);
   // Cell channel: {all} (emit every update) + 'deferred' (glitch-free async-append
   // nested write). See scar S6.F.1 / S6.F.2 — Signal inherits the Cell value channel.
   const kernel = CellKernel.replay1<number>(initial, { kind: 'all' }, 'deferred');
   const lifetime = Lifetime.make();
 
-  setupListener(source, kernel, lifetime);
+  setupListener(source, kernel, lifetime, clock);
   // Close the kernel LAST (LIFO): listeners/loops detach before the value channel
   // completes its subscribers, so a straggler event cannot publish post-close.
   lifetime.add(() => kernel.close());

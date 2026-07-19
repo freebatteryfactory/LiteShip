@@ -8,7 +8,7 @@
 
 > `const` **Signal**: `object`
 
-Defined in: [core/src/signal.ts:408](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/signal.ts#L408)
+Defined in: [core/src/signal.ts:418](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/signal.ts#L418)
 
 Signal namespace -- live data feeds from the browser environment.
 
@@ -87,7 +87,7 @@ ctrl.seek(2000); // ignored while paused
 
 ### make
 
-> **make**: (`rawSource`) => `SignalShape`\<`number`\> = `_make`
+> **make**: (`rawSource`, `clock`) => `SignalShape`\<`number`\> = `_make`
 
 Create a reactive signal from a browser environment source.
 
@@ -96,11 +96,19 @@ Returns a plain signal owned by a [Lifetime](Lifetime.md): it sets up event list
 `signal.lifetime.dispose()`. The signal exposes `.read()` (latest value) and
 `.subscribe(sink)` (replay-1 stream of updates, returning a [Disposer](../type-aliases/Disposer.md)).
 
+`clock` (default [wallClock](wallClock.md)) is the injected time source for the `time`
+source family (elapsed/absolute) — pass a `manualClock`/`fixedClock` to drive an
+elapsed/absolute signal deterministically without touching the ambient clock.
+
 #### Parameters
 
 ##### rawSource
 
 [`SignalSource`](../type-aliases/SignalSource.md)
+
+##### clock?
+
+[`Clock`](../interfaces/Clock.md) = `wallClock`
 
 #### Returns
 

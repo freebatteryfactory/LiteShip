@@ -12,8 +12,10 @@
  *  - the crossings channel is a `CellKernel.fanout` — the no-replay channel the
  *    kernel was built for (a late subscriber misses prior crossings);
  *  - the five `Ref` holders (version/created/updated/id/prevState) become plain
- *    closures; the managed HLC is the pure `HLC.create`/`HLC.increment` ops read
- *    against the injected {@link wallClock} (`hlc.ts` untouched this slice);
+ *    closures; the managed HLC is an `HLC.makeClock` handle over the injected core
+ *    {@link Clock} (default {@link wallClock}), so the envelope + crossing
+ *    timestamps are a pure function of the op-sequence when a manual/fixed clock is
+ *    passed — LiveCell never reaches for the ambient wall-clock singleton;
  *  - `computeId` is the CUT identity law — `fnv1aBytes(CanonicalCbor.encode(...))`
  *    — kept VERBATIM (never the sha256 receipt byte-law); envelope assembly and
  *    `Boundary.evaluate`/`evaluateWithHysteresis` are byte-identical.
@@ -51,7 +53,7 @@ import { HLC } from './hlc.js';
 import { fnv1aBytes } from './fnv.js';
 import { CanonicalCbor } from './cbor.js';
 import { Boundary } from './boundary.js';
-import { wallClock } from './clock.js';
+import { wallClock, type Clock } from './clock.js';
 
 /** The no-replay crossings channel — a late subscriber misses prior crossings. */
 type CrossingsChannel = Pick<CellKernel.Fanout<BoundaryCrossing<string>>, 'subscribe'>;
@@ -73,15 +75,18 @@ interface LiveCellShape<K extends CellKind, T> extends Omit<Cell.Shape<T>, '_tag
  * mutation. `recordMutation` bumps version + HLC + id BEFORE the caller fans the
  * value out (the S2.3 gap closure).
  */
-function makeCore<K extends CellKind, T>(kind: K, initial: T, nodeId: string) {
+function makeCore<K extends CellKind, T>(kind: K, initial: T, nodeId: string, clock: Clock) {
   const cell = Cell.make(initial);
   const crossings = CellKernel.fanout<BoundaryCrossing<string>>();
 
-  // Managed HLC via the pure ops + the injected wall clock (hlc.ts untouched this
-  // slice). The first tick mints `created` (matching the old `HLC.tick` at build).
-  let hlc: HLC.Shape = HLC.increment(HLC.create(nodeId), wallClock.now());
-  const created: HLC.Shape = hlc;
-  let updated: HLC.Shape = hlc;
+  // Managed HLC over the INJECTED core Clock (the clock.ts cake-and-eat-it law):
+  // `makeClock`'s first tick mints `created` (byte-identical to the old build-time
+  // `HLC.increment(HLC.create(nodeId), clock.now())`). Passing a manual/fixed clock
+  // makes the envelope + crossing timestamps a pure function of the op-sequence
+  // (deterministic replay); the default wallClock preserves the epoch-ms `wall_ms`.
+  const hlcClock = HLC.makeClock(nodeId, clock);
+  const created: HLC.Shape = hlcClock.tick();
+  let updated: HLC.Shape = created;
   let version = 1;
 
   // CUT live-cell — the envelope id is a content-address IDENTITY (auto-invalidates
@@ -91,10 +96,7 @@ function makeCore<K extends CellKind, T>(kind: K, initial: T, nodeId: string) {
   const computeId = (value: T): ContentAddress => fnv1aBytes(CanonicalCbor.encode({ kind, value }));
   let id: ContentAddress = computeId(initial);
 
-  const tick = (): HLC.Shape => {
-    hlc = HLC.increment(hlc, wallClock.now());
-    return hlc;
-  };
+  const tick = (): HLC.Shape => hlcClock.tick();
 
   /** Advance version + HLC + id (the envelope) — called BEFORE the value fan-out. */
   const recordMutation = (value: T): HLC.Shape => {
@@ -160,8 +162,8 @@ function serializedCommit<T>(run: (op: (current: T) => T) => void): (op: (curren
   };
 }
 
-function _make<K extends CellKind, T>(kind: K, initial: T): LiveCellShape<K, T> {
-  const core = makeCore(kind, initial, `live-cell-${kind}`);
+function _make<K extends CellKind, T>(kind: K, initial: T, clock: Clock = wallClock): LiveCellShape<K, T> {
+  const core = makeCore(kind, initial, `live-cell-${kind}`, clock);
   const { cell, crossings, recordMutation, envelope, lifetime } = core;
 
   const commit = serializedCommit<T>((op) => {
@@ -191,9 +193,10 @@ function _make<K extends CellKind, T>(kind: K, initial: T): LiveCellShape<K, T> 
 function _makeBoundary<I extends string, S extends readonly [string, ...string[]]>(
   boundary: Boundary.Shape<I, S>,
   initial: number,
+  clock: Clock = wallClock,
 ): LiveCellShape<'boundary', number> {
   const kind = 'boundary' as const;
-  const core = makeCore(kind, initial, 'live-cell-boundary');
+  const core = makeCore(kind, initial, 'live-cell-boundary', clock);
   const { cell, crossings, recordMutation, envelope, lifetime } = core;
 
   let prevState: string = Boundary.evaluate(boundary, initial);
@@ -256,9 +259,17 @@ function _makeBoundary<I extends string, S extends readonly [string, ...string[]
  * peers as self-describing messages.
  */
 export const LiveCell = {
-  /** Wrap an arbitrary value in a {@link LiveCell} with freshly minted identity + HLC. */
+  /**
+   * Wrap an arbitrary value in a {@link LiveCell} with freshly minted identity + HLC.
+   * `clock` (default {@link wallClock}) is the injected time source for the envelope
+   * HLC — pass a `manualClock`/`fixedClock` for deterministic replay.
+   */
   make: _make,
-  /** Specialized factory for boundary crossings so the envelope captures crossing metadata. */
+  /**
+   * Specialized factory for boundary crossings so the envelope captures crossing
+   * metadata. `clock` (default {@link wallClock}) is the injected time source for the
+   * envelope HLC and crossing timestamps — pass a manual/fixed clock for determinism.
+   */
   makeBoundary: _makeBoundary,
 };
 

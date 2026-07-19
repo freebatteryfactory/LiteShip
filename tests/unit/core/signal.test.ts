@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { AVBridge, Signal } from '@czap/core';
+import { AVBridge, Signal, manualClock, fixedClock } from '@czap/core';
 
 /**
  * Signal — Wave 6 plain CellKernel transport (Effect-free). RED-FIRST law table
@@ -532,5 +532,60 @@ describe('Signal.audio', () => {
     expect(() => Signal.audio(bridge, 'normalized')).toThrow(/totalDurationSec/);
     expect(() => Signal.audio(bridge, 'normalized', 0)).toThrow(/totalDurationSec/);
     expect(() => Signal.audio(bridge, 'normalized', Number.NaN)).toThrow(/totalDurationSec/);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Injected-clock determinism — an elapsed/absolute time Signal driven by a
+// manual/fixed Clock produces its values as a pure function of the clock's
+// advances. No Date mocking; the ambient wall clock is never read.
+// ---------------------------------------------------------------------------
+
+describe('Signal.make — injected clock determinism', () => {
+  test('elapsed time signal reports clock.now() - start via the INJECTED clock, no Date mock', () => {
+    const callbacks = new Map<number, FrameRequestCallback>();
+    let nextId = 1;
+    const rafSpy = vi.fn((cb: FrameRequestCallback) => {
+      const id = nextId++;
+      callbacks.set(id, cb);
+      return id;
+    });
+    vi.stubGlobal('requestAnimationFrame', rafSpy);
+    vi.stubGlobal('cancelAnimationFrame', (id: number) => callbacks.delete(id));
+    // A Date that would DISAGREE with the injected clock if it were consulted.
+    const dateSpy = vi.spyOn(Date, 'now').mockReturnValue(500_000);
+
+    const clock = manualClock(1_000); // start = 1000, independent of Date.now()
+    const signal = Signal.make({ type: 'time', mode: 'elapsed' }, clock);
+    const values: number[] = [];
+    signal.subscribe((v) => values.push(v));
+
+    clock.advance(16);
+    callbacks.get(1)?.(0); // rAF timestamp arg is ignored; the signal reads the clock
+    clock.advance(16);
+    callbacks.get(2)?.(0);
+
+    // Elapsed = clock.now() - start = 16, then 32 — from the injected clock only.
+    expect(values).toEqual([0, 16, 32]);
+    // Date.now() was never the source of the elapsed value.
+    expect(dateSpy).not.toHaveBeenCalled();
+
+    void signal.lifetime.dispose();
+  });
+
+  test('absolute time signal seeds its initial value from the injected clock', () => {
+    const signal = Signal.make({ type: 'time', mode: 'absolute' }, fixedClock(1_700_000_000_000));
+    expect(signal.read()).toBe(1_700_000_000_000);
+    void signal.lifetime.dispose();
+  });
+
+  test('the default clock still reads the ambient wall clock for absolute mode', () => {
+    const before = Date.now();
+    const signal = Signal.make({ type: 'time', mode: 'absolute' });
+    const v = signal.read();
+    const after = Date.now();
+    expect(v).toBeGreaterThanOrEqual(before);
+    expect(v).toBeLessThanOrEqual(after);
+    void signal.lifetime.dispose();
   });
 });
