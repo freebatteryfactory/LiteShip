@@ -2258,6 +2258,10 @@
           "kind": "type"
         },
         {
+          "name": "CompositorQuantizer",
+          "kind": "type"
+        },
+        {
           "name": "CoreAstroConfig",
           "kind": "type"
         },
