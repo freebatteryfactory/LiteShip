@@ -8,6 +8,7 @@
  */
 
 import type { ViteDevServer, InlineConfig } from 'vite';
+import { HostCapabilityError } from '@czap/error';
 import { existsSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -32,10 +33,10 @@ export async function startDevServer(scenePath: string): Promise<DevServerHandle
   let createServer: (config?: InlineConfig) => Promise<ViteDevServer>;
   try {
     ({ createServer } = await import('vite'));
-  } catch (cause) {
-    throw new Error(
-      'The scene dev server (@czap/scene/dev) requires `vite` — install it as a dev dependency (`pnpm add -D vite`) to use it.',
-      { cause },
+  } catch {
+    throw HostCapabilityError(
+      'vite',
+      'the @czap/scene/dev server requires vite — install it as a dev dependency (pnpm add -D vite)',
     );
   }
   const here = dirname(fileURLToPath(import.meta.url));
