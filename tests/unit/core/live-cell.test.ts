@@ -14,7 +14,9 @@ import { describe, test, expect } from 'vitest';
 import { LiveCell, HLC, StateName, Boundary } from '@czap/core';
 import type { CellKind, BoundaryCrossing } from '@czap/core';
 
-const collectCrossings = (cell: { crossings: LiveCell.Shape<CellKind, unknown>['crossings'] }): BoundaryCrossing<string>[] => {
+const collectCrossings = (cell: {
+  crossings: LiveCell.Shape<CellKind, unknown>['crossings'];
+}): BoundaryCrossing<string>[] => {
   const out: BoundaryCrossing<string>[] = [];
   cell.crossings.subscribe((c) => out.push(c));
   return out;
@@ -297,6 +299,24 @@ describe('LiveCell.makeBoundary', () => {
     cell.set(500); // still mobile
     cell.set(600); // still mobile
     expect(crossings).toEqual([]);
+  });
+
+  test('publishes the crossing even when a VALUE subscriber throws (the edge is never lost)', () => {
+    // The mutation is already committed (envelope bumped, prevState advanced to `to`) before the
+    // value fan-out, so a throwing value subscriber must NOT swallow the crossing edge — a
+    // downstream crossing consumer would otherwise permanently miss it and no later write could
+    // reconstruct it. The listener fault still surfaces (rethrown after the crossing publishes).
+    const cell = LiveCell.makeBoundary(viewport, 400); // mobile
+    const crossings = collectCrossings(cell);
+    // Throw only on the crossing write (replay-1 delivers the initial 400 at subscribe time).
+    cell.subscribe((v) => {
+      if (v === 1200) throw new Error('value subscriber boom');
+    });
+    expect(() => cell.set(1200)).toThrow(); // desktop — the value fault still surfaces
+    expect(crossings).toHaveLength(1);
+    expect(crossings[0]!.from).toBe('mobile');
+    expect(crossings[0]!.to).toBe('desktop');
+    expect(crossings[0]!.value).toBe(1200);
   });
 
   test('boundary update publishes crossings through the update path too', () => {

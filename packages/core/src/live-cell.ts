@@ -212,10 +212,27 @@ function _makeBoundary<I extends string, S extends readonly [string, ...string[]
     const to: string = Boundary.evaluateWithHysteresis(boundary, value, from);
     const crossed = to !== from;
     if (crossed) prevState = to;
-    cell.set(value);
-    if (crossed) {
-      crossings.publish({ from: mkStateName(from), to: mkStateName(to), timestamp: stamp, value });
+    // The mutation is already committed (envelope bumped, `prevState` advanced to `to`), so
+    // the crossing edge MUST be published even if a value subscriber throws during the value
+    // fan-out — otherwise a downstream crossing consumer permanently misses this edge and no
+    // later write can reconstruct it (`prevState` already reflects the new state). Attempt
+    // BOTH fan-outs, then rethrow the FIRST fault (the value fault takes precedence) so the
+    // listener error still surfaces — the same advance-all-channels law the CellKernel /
+    // quantizer commit paths follow.
+    let fault: { readonly error: unknown } | undefined;
+    try {
+      cell.set(value);
+    } catch (error) {
+      fault = { error };
     }
+    if (crossed) {
+      try {
+        crossings.publish({ from: mkStateName(from), to: mkStateName(to), timestamp: stamp, value });
+      } catch (error) {
+        if (fault === undefined) fault = { error };
+      }
+    }
+    if (fault !== undefined) throw fault.error;
   });
 
   return {

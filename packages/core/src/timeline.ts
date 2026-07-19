@@ -117,26 +117,33 @@ export const Timeline: TimelineFactory = {
 
     let disposed = false;
     const step = (now: number): void => {
-      if (lastTime !== null && playing) {
-        const dt = (now - lastTime) * direction;
-        let next = currentElapsed + dt;
-        if (loop) {
-          next = ((next % duration) + duration) % duration;
-        } else {
-          next = Math.max(0, Math.min(duration, next));
+      try {
+        if (lastTime !== null && playing) {
+          const dt = (now - lastTime) * direction;
+          let next = currentElapsed + dt;
+          if (loop) {
+            next = ((next % duration) + duration) % duration;
+          } else {
+            next = Math.max(0, Math.min(duration, next));
+          }
+          currentElapsed = next;
+          setState(next);
         }
-        currentElapsed = next;
-        setState(next);
+      } finally {
+        // The tick OCCURRED (elapsed already advanced), so `lastTime` must advance and the
+        // next tick must be armed even if a state subscriber THREW from `setState` — otherwise
+        // one listener fault wedges the timeline forever (it stays `playing` but never ticks
+        // again, and a huge `dt` would accrue if lastTime lagged). Running the bookkeeping in a
+        // `finally` re-arms the scheduler while the listener error still propagates out of the
+        // scheduler callback (surfaced to the host), it just no longer strands the clock.
+        lastTime = now;
+        // DISPOSAL-SAFE self-reschedule. A state subscriber may call
+        // `timeline.lifetime.dispose()` from WITHIN `setState`; the finalizer then cancels the
+        // schedId of the tick already executing (a no-op), and without this guard `step` would
+        // install a fresh callback AFTER disposal — a loop that ticks forever past teardown.
+        // `disposed` is monotonic, so once teardown has begun the reschedule stays blocked.
+        if (!disposed) schedId = sched.schedule(step);
       }
-      lastTime = now;
-      // DISPOSAL-SAFE self-reschedule. A state subscriber may call
-      // `timeline.lifetime.dispose()` from WITHIN `setState`; the finalizer then
-      // cancels the schedId of the tick already executing (a no-op), and without
-      // this guard `step` would install a fresh callback AFTER disposal — a loop
-      // that ticks forever past teardown. `disposed` is monotonic, so once teardown
-      // has begun the reschedule stays permanently blocked.
-      if (disposed) return;
-      schedId = sched.schedule(step);
     };
     let schedId = sched.schedule(step);
 

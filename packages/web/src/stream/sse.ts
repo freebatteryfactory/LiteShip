@@ -188,10 +188,34 @@ export const create = (config: SSEConfig): SSEClient => {
       return;
     }
     machine.status = next;
-    stateEdges.publish(next);
-    // Synchronous edge delivery (callback form of `stateChanges`) for consumers
-    // that drive lifecycle within the dispatch turn.
-    config.onStateChange?.(next);
+    // External state listeners (the `stateChanges` edge fan-out + the synchronous
+    // `onStateChange` callback) must NOT abort the transport bookkeeping that TRIGGERED this
+    // transition: a throw here during `close()` would strand `lifetime.dispose()` (leaking the
+    // live EventSource + timers), and during `handleConnectionLoss()` would abort before the
+    // reconnect timer is scheduled (a stranded, permanently-closed source). The status has
+    // already committed, so attempt BOTH channels, ISOLATE each fault, and surface it via
+    // Diagnostics rather than propagating into the caller — the same "an external listener fault
+    // never corrupts transport/kernel bookkeeping" law the reactive kernels follow.
+    try {
+      stateEdges.publish(next);
+    } catch (error) {
+      Diagnostics.warnOnce({
+        source: 'czap/web.SSE',
+        code: 'sse-state-listener-threw',
+        message: `An SSE stateChanges subscriber threw on the "${next}" transition; the transport teardown/reconnect bookkeeping is unaffected. Cause: ${String(error)}`,
+      });
+    }
+    // Synchronous edge delivery (callback form of `stateChanges`) for consumers that drive
+    // lifecycle within the dispatch turn — isolated the same way.
+    try {
+      config.onStateChange?.(next);
+    } catch (error) {
+      Diagnostics.warnOnce({
+        source: 'czap/web.SSE',
+        code: 'sse-onstatechange-threw',
+        message: `The SSE onStateChange callback threw on the "${next}" transition; the transport teardown/reconnect bookkeeping is unaffected. Cause: ${String(error)}`,
+      });
+    }
   };
 
   const clearReconnectHandle = (): void => {
