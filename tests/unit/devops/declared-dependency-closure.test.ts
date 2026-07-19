@@ -15,9 +15,12 @@
  * exports `./harness`, whose `arbitrary-from-schema` imports `fast-check` at
  * RUNTIME while the package declared it nowhere — a consumer importing
  * `@czap/core/harness` still crashed, yet the `.`-only gate stayed green (the exact
- * class this law exists to catch). Walking every public subpath closes it; the two
- * leaks it surfaces (`@czap/core/harness → fast-check`, `@czap/scene/dev → vite`)
- * are now declared as OPTIONAL peers.
+ * class this law exists to catch). Walking every public subpath closes it. It
+ * surfaces two leaks: `@czap/core/harness → fast-check` (a consumer-facing testing
+ * util, now a declared OPTIONAL peer) and `@czap/scene/dev → vite` (a dev-only
+ * server; moved to a GUARDED dynamic `import('vite')` — the sanctioned
+ * optional-integration seam, excluded from the load-time closure, so it needs no
+ * peer that would fracture vite's module identity in tests).
  *
  * Skipped export values: `null` (a denied subpath), entries with no JS `import`
  * condition (types-only / declaration-only), and non-JS targets (`.astro` / string

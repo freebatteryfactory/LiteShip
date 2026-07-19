@@ -8,7 +8,7 @@
 
 **Two-axis packed-artifact truth.**
 - **Declared types:** the packed .d.ts declares the types the runtime surface actually exposes — proven by the two-axis spine relation gate (structural fidelity) + the type-export enumerator (surface completeness)
-- **Declared dependencies:** the packed artifact runs on the dependencies it declares — proven by the declared-dependency-closure gate, widened to every public runtime export (the fast-check-via-./harness and vite-via-./dev leaks are its red fixtures)
+- **Declared dependencies:** the packed artifact runs on the dependencies it declares — proven by the declared-dependency-closure gate, widened to every public runtime export: fast-check-via-./harness is now a declared optional peer; vite-via-./dev is a guarded dynamic import (the sanctioned optional-integration seam, outside the load-time closure)
 
 **Counts (read from committed artifacts).**
 - active Effect references (production + test): **0**
@@ -27,12 +27,12 @@
 
 | Artifact | Kind | Content digest | Proves |
 | --- | --- | --- | --- |
-| `traceability/effect-shed-receipt.json` | receipt | `sha256:e978e04982c…` | every Effect reference count (production, test, declaration, peer, dep, root, override, catalog, scaffold, example, script, lockfile) is 0; cold-install proof; declared-dependency-closure passed |
+| `traceability/effect-shed-receipt.json` | receipt | `sha256:aefb19a8484…` | every Effect reference count (production, test, declaration, peer, dep, root, override, catalog, scaffold, example, script, lockfile) is 0; cold-install proof; declared-dependency-closure passed |
 | `tests/unit/core/invariants.test.ts` | invariant | `sha256:37ceb46cddd…` | Invariant 14 — the permanent tripwire: no .ts under packages/<pkg>/src imports from effect |
 | `tests/unit/devops/docs-effect-residue.test.ts` | acceptance-test | `sha256:cc034898cbe…` | the shipped-docs residue gate: no package README / root README / GETTING-STARTED carries an Effect install, version pin, import, or usage instruction (the ecosystem-zero claim now covers consumer docs, not just src) |
 | `docs/adr/0042-effect-shed.md` | adr | `sha256:29394335754…` | the shed decision + the per-responsibility migration bridge (Scope→Lifetime, SubscriptionRef/Stream→CellKernel, typed channel→Result) |
 | `packages/cli/src/lib/declared-dependency-closure.ts` | gate | `sha256:bfc6030721e…` | the declared-dependency-closure law minted from the fast-check scar (#157): a shipped load-time import must be a declared dependency |
-| `tests/unit/devops/declared-dependency-closure.test.ts` | acceptance-test | `sha256:294646534e1…` | every publishable package is dependency-closed across EVERY public runtime export (not just `.`); the fast-check-via-./harness and vite-via-./dev leaks are declared as optional peers |
+| `tests/unit/devops/declared-dependency-closure.test.ts` | acceptance-test | `sha256:d9fd9b2fb6a…` | every publishable package is dependency-closed across EVERY public runtime export (not just `.`); the fast-check-via-./harness and vite-via-./dev leaks are declared as optional peers |
 
 ## #152 — audit: Effect shedding + god-file/reinvention sweep (operational baseline)
 
@@ -41,12 +41,12 @@
 
 | Artifact | Kind | Content digest | Proves |
 | --- | --- | --- | --- |
-| `traceability/effect-shed-receipt.json` | receipt | `sha256:e978e04982c…` | every Effect reference count (production, test, declaration, peer, dep, root, override, catalog, scaffold, example, script, lockfile) is 0; cold-install proof; declared-dependency-closure passed |
+| `traceability/effect-shed-receipt.json` | receipt | `sha256:aefb19a8484…` | every Effect reference count (production, test, declaration, peer, dep, root, override, catalog, scaffold, example, script, lockfile) is 0; cold-install proof; declared-dependency-closure passed |
 | `tests/unit/core/invariants.test.ts` | invariant | `sha256:37ceb46cddd…` | Invariant 14 — the permanent tripwire: no .ts under packages/<pkg>/src imports from effect |
 | `tests/unit/devops/docs-effect-residue.test.ts` | acceptance-test | `sha256:cc034898cbe…` | the shipped-docs residue gate: no package README / root README / GETTING-STARTED carries an Effect install, version pin, import, or usage instruction (the ecosystem-zero claim now covers consumer docs, not just src) |
 | `docs/adr/0042-effect-shed.md` | adr | `sha256:29394335754…` | the shed decision + the per-responsibility migration bridge (Scope→Lifetime, SubscriptionRef/Stream→CellKernel, typed channel→Result) |
 | `packages/cli/src/lib/declared-dependency-closure.ts` | gate | `sha256:bfc6030721e…` | the declared-dependency-closure law minted from the fast-check scar (#157): a shipped load-time import must be a declared dependency |
-| `tests/unit/devops/declared-dependency-closure.test.ts` | acceptance-test | `sha256:294646534e1…` | every publishable package is dependency-closed across EVERY public runtime export (not just `.`); the fast-check-via-./harness and vite-via-./dev leaks are declared as optional peers |
+| `tests/unit/devops/declared-dependency-closure.test.ts` | acceptance-test | `sha256:d9fd9b2fb6a…` | every publishable package is dependency-closed across EVERY public runtime export (not just `.`); the fast-check-via-./harness and vite-via-./dev leaks are declared as optional peers |
 
 ## #153 — reactive containment (Effect out of the reactive family)
 
@@ -76,4 +76,4 @@
 | `tests/unit/spine-conformance.test.ts` | acceptance-test | `sha256:41129577496…` | the type-by-type mirror pins are absorbed (Conflict-1 / S5.2 closed); only the utility asserts + runtime-existence checks the gate cannot cover remain |
 
 ---
-Evidence digest: `sha256:5d0e9783abb39e65d…`
+Evidence digest: `sha256:9d3d88330ab0491f2…`
