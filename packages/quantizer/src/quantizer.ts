@@ -589,11 +589,27 @@ function fromBoundary<B extends Boundary.Shape>(boundary: B, options?: Quantizer
                 previousState = result.state;
 
                 const newOutputs = resolveOutputs(outputs, result.state, allowedTargets, frozenForced, id, springCSS);
-                // Raw synchronous publishes (were `Effect.runSync(Effect.all([...]))`
-                // + `Queue.offerUnsafe`): assign the slots and fan out in one pass.
-                stateCell.publish(result.state);
-                outputCell.publish(newOutputs);
-                crossingChannel.publish(crossing);
+                // Publish state + outputs + crossing as ONE consistent advance (were
+                // `Effect.runSync(Effect.all([...]))` + `Queue.offerUnsafe`). The kernel
+                // fan-out is fail-fast, so a bare sequential publish would let a throwing
+                // subscriber on the first channel ABORT before the later channels advance —
+                // stranding `currentOutputs`/`changes` on the old state while `previousState`
+                // has already moved (an inconsistent public view that can strand a
+                // crossing-driven AnimatedQuantizer). Attempt all three, then rethrow the
+                // first listener fault — the same sink-error law the disposal path applies.
+                let publishFault: { readonly error: unknown } | undefined;
+                for (const publish of [
+                  (): void => stateCell.publish(result.state),
+                  (): void => outputCell.publish(newOutputs),
+                  (): void => crossingChannel.publish(crossing),
+                ]) {
+                  try {
+                    publish();
+                  } catch (error) {
+                    if (publishFault === undefined) publishFault = { error };
+                  }
+                }
+                if (publishFault !== undefined) throw publishFault.error;
               }
 
               return result.state;
