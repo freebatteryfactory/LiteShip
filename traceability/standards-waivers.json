@@ -203,6 +203,20 @@
       "owner": "heyoub",
       "justification": "Same gauntlet/no-silent-catch benign-catch waiver (readCliVersion's best-effort import.meta.url fall-through in packages/cli/src/commands/version.ts, non-corrupting: a real version is still resolved from the workspace), RELOCATED one line (47→46) by the Wave 5 runCliCommand migration dropping the spawn imports above it — NOT a new deferral. The waiver key embeds the line number, so a one-line shift surfaces as remove(line 47)+add(line 46); the corresponding removal is a strengthen. No additional code is waived (identical to the clock.ts:60/77 relocation precedent). Signed vs the snapshot's birth baseline (the bootstrap window).",
       "expiry": "2027-06-20"
+    },
+    {
+      "elementKey": "waiver::gauntlet/no-silent-catch|packages/cli/src/commands/ship.ts|131",
+      "weakening": "waiver-added",
+      "owner": "heyoub",
+      "justification": "Same gauntlet/no-silent-catch benign-catch waiver (the best-effort workspace-glob enumeration in packages/cli/src/commands/ship.ts — an entry that cannot be statSync-d is skipped during package discovery, non-corrupting and conservative: a genuinely unreadable directory entry is not a publishable package), RELOCATED (169→131) by the Wave 8 effect-shed removing the runEffect adapters above resolveGlob — NOT a new deferral. The waiver key embeds the line number, so the shift surfaces as remove(line 169)+add(line 131); the corresponding removal is a strengthen. No additional code is waived (identical to the version.ts:47→46 and clock.ts:60/77 relocation precedents). Surfaces as a weakening vs origin/main now that the base ref carries the snapshot (the gate moved from birth-baseline to origin/main baseline).",
+      "expiry": "2027-06-20"
+    },
+    {
+      "elementKey": "assurance::packages/core/src/{boundary,signal,zap,evaluate,gen-frame,speculative,token-buffer,blend,animation,ai-cast,clock,rng}.ts",
+      "weakening": "assurance-level-lowered",
+      "owner": "heyoub",
+      "justification": "Glob-membership RESTRUCTURE, not a rigor loss: the former L3 group {boundary,signal,zap,evaluate,gen-frame,speculative,token-buffer,blend,animation,ai-cast,clock,rng}.ts was SPLIT — signal.ts moved into the new reactive-core group {cell-kernel,cell,derived,store,signal,timeline,live-cell}.ts at L4 (a PROMOTION L3→L4; see assurance-map.ts: 'signal moves L4 from its former L3 … a CellKernel-backed value channel, not a bespoke source') plus a new mutation-score floor, and the remaining paths stay L3 under the renamed glob {boundary,zap,evaluate,gen-frame,speculative,token-buffer,blend,animation,ai-cast,clock,rng}.ts (surfaced as the paired ADD strengthen). The waiver key embeds the exact glob string, so editing group membership surfaces as remove(old glob)+add(new glob) — no path lost its rigor band; net rigor INCREASED. Surfaces as a weakening vs origin/main now that the base ref carries the snapshot (the gate moved from birth-baseline to origin/main baseline).",
+      "expiry": "2027-06-20"
     }
   ]
 }
