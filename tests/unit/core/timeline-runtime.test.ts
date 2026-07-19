@@ -54,6 +54,48 @@ describe('Timeline runtime behavior', () => {
     }).toEqual({ elapsed: 100, progress: 0.5, state: 'active' });
   });
 
+  test('re-arms the scheduler after a state subscriber throws — a listener fault never wedges the clock', () => {
+    // A MANUAL scheduler so the tick timestamps are fully controlled: each `tick(now)` fires the
+    // currently-armed callback with `now`, and the timeline's `step` re-arms it (setting `pending`)
+    // via `schedule`. `scheduleCount` observes that the clock stays armed across a throwing tick.
+    let pending: ((now: number) => void) | null = null;
+    let scheduleCount = 0;
+    const scheduler: Scheduler.Shape = {
+      _tag: 'FrameScheduler',
+      schedule: (cb: (now: number) => void) => {
+        pending = cb;
+        return ++scheduleCount;
+      },
+      cancel: () => {
+        pending = null;
+      },
+    };
+    const tick = (now: number): void => {
+      const cb = pending;
+      pending = null;
+      cb?.(now);
+    };
+
+    const timeline = Timeline.from(makeBoundary(), { duration: Millis(200), scheduler });
+    timeline.subscribe((s) => {
+      // Throw when the idle→active edge is delivered.
+      if (s === 'active') throw new Error('state subscriber boom');
+    });
+    timeline.play();
+
+    tick(0); // seeds lastTime, no state change
+    const armedBeforeThrow = scheduleCount;
+    // dt=100 → elapsed 100 → state 'active' (idle→active edge) → the subscriber throws OUT of the
+    // scheduler callback...
+    expect(() => tick(100)).toThrow('state subscriber boom');
+    // ...but the timeline RE-ARMED the scheduler in its `finally` despite the throw (exactly one
+    // new schedule), so the clock is not wedged.
+    expect(scheduleCount).toBe(armedBeforeThrow + 1);
+    tick(200); // dt=100 → elapsed 200 → state 'done' — proof the clock kept ticking past the fault
+    expect(timeline.elapsed()).toBe(200);
+    expect(timeline.state()).toBe('done');
+  });
+
   test('stays put across scheduler ticks until play() is called (initial paused)', () => {
     // `playing` starts false — a freshly constructed timeline does NOT advance on
     // scheduler ticks before play(). fixedStep(10) feeds now = 0,100,200; without

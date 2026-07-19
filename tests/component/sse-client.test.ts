@@ -135,6 +135,40 @@ describe('SSE reconnection', () => {
     expect(MockEventSource.instances).toHaveLength(2);
   });
 
+  test('a throwing onStateChange does NOT strand the reconnect bookkeeping (listener fault isolated)', () => {
+    let calls = 0;
+    const client = SSE.create({
+      ...baseConfig,
+      onStateChange: () => {
+        calls++;
+        throw new Error('onStateChange boom');
+      },
+    });
+    // The loss path calls setStatus('reconnecting') → the throwing onStateChange; the fault must
+    // NOT abort handleConnectionLoss before the reconnect timer is scheduled (else the client is
+    // stranded with a closed source). simulateError() would itself throw without the isolation.
+    MockEventSource.instances[0]!.simulateError();
+    expect(client.state).toBe('reconnecting');
+    expect(calls).toBeGreaterThan(0);
+    vi.advanceTimersByTime(150);
+    expect(MockEventSource.instances).toHaveLength(2); // the reconnect fired despite the throw
+  });
+
+  test('a throwing onStateChange during close() still tears the transport down (no leaked source)', () => {
+    const client = SSE.create({
+      ...baseConfig,
+      onStateChange: () => {
+        throw new Error('onStateChange boom');
+      },
+    });
+    const es = MockEventSource.instances[0]!;
+    // close() calls setStatus('disconnected') BEFORE lifetime.dispose(); a listener fault there
+    // must not abort the teardown, or the EventSource + timers leak.
+    client.close();
+    expect(es.readyState).toBe(MockEventSource.CLOSED);
+    expect(client.state).toBe('disconnected');
+  });
+
   test('reconnect delay increases exponentially', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.5);
 
