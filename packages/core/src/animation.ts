@@ -54,8 +54,11 @@ async function* _run(config: {
   duration: Millis;
   easing?: Easing.Fn;
   scheduler?: Scheduler.Shape;
+  signal?: AbortSignal;
 }): AsyncGenerator<AnimationFrameShape, void, void> {
-  const { duration, easing = EasingImpl.linear } = config;
+  const { duration, easing = EasingImpl.linear, signal } = config;
+
+  if (signal?.aborted) return;
 
   if (duration <= 0) {
     yield { progress: 1, eased: easing(1), elapsed: mkMillis(0), timestamp: 0 };
@@ -72,13 +75,37 @@ async function* _run(config: {
 
   try {
     while (true) {
+      if (signal?.aborted) return;
       // Bridge the push-based scheduler onto the pull-based generator: schedule
-      // one tick, await the timestamp it fires with. `resolve` IS the frame
-      // callback the scheduler stores under `schedId`.
+      // one tick, await the timestamp it fires with. `finish` IS the frame callback
+      // the scheduler stores under `schedId`. An optional `signal` RACES the tick:
+      // without it, a suspended await on an UNDRIVEN clock (SSR `Scheduler.noop`, or
+      // a fixed-step / audio clock no longer ticked) never resolves, so the
+      // consumer's `return()`/cancellation queues behind the pending read forever and
+      // `finally` never runs. On abort the read settles (NaN) so the loop observes
+      // the abort and reaches the scheduler cancel. `finish` is idempotent and clears
+      // its own abort listener, so exactly one of {tick, abort} wins per frame.
       const timestamp = await new Promise<number>((resolve) => {
-        schedId = sched.schedule(resolve);
+        let settled = false;
+        let onAbort: (() => void) | undefined;
+        const finish = (now: number): void => {
+          if (settled) return;
+          settled = true;
+          if (onAbort !== undefined) signal?.removeEventListener('abort', onAbort);
+          resolve(now);
+        };
+        schedId = sched.schedule(finish);
+        if (signal !== undefined) {
+          if (signal.aborted) {
+            finish(Number.NaN);
+          } else {
+            onAbort = (): void => finish(Number.NaN);
+            signal.addEventListener('abort', onAbort, { once: true });
+          }
+        }
       });
 
+      if (signal?.aborted) return;
       if (startTime === null) startTime = timestamp;
       const frame = sampleFrame(timestamp - startTime, duration, easing, timestamp);
       yield frame;
