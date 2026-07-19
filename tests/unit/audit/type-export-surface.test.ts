@@ -120,6 +120,35 @@ describe('type-export enumerator — precision (pure synthetic walk)', () => {
     expect(byName).not.toHaveProperty('internalValue');
   });
 
+  it('resolves the TYPE half of a PLAIN named re-export (value+type dual, interface, alias); still skips pure values', () => {
+    // The blind spot: a value+type DUAL re-exported via a plain `export { X } from './x'`
+    // (NOT `export type`) — its type half was invisible because the specifier is not
+    // syntactically type-only. The enumerator now resolves the original name against the
+    // target module's type surface, so the dual's type half (and a re-exported interface)
+    // are captured, while a pure value re-export still contributes nothing. Mirrors the
+    // real `@czap/canonical` case (`export { ContentAddress } from './brands.js'`).
+    const files = {
+      '/p/index.ts': [
+        `export { Brand, mkBrand } from './brand.js';`, // Brand = dual (type half kept); mkBrand = value (skip)
+        `export { Shape } from './shape.js';`, // interface re-export
+        `export { Brand as AliasedBrand } from './brand.js';`, // aliased: type half under the new name
+      ].join('\n'),
+      // `Brand` is a value+type dual — a branded type alias AND a same-named constructor.
+      '/p/brand.ts': [
+        `export type Brand = string & { readonly _brand: 'Brand' };`,
+        `export const Brand = (s: string): Brand => s as Brand;`,
+        `export const mkBrand = Brand;`,
+      ].join('\n'),
+      '/p/shape.ts': `export interface Shape { readonly n: number }`,
+    } as const;
+    const got = enumeratePackageTypeExports('/p/index.ts', virtualReader(files));
+    const byName = Object.fromEntries(got.map((d) => [d.name, d.kind]));
+    expect(byName.Brand).toBe('type'); // the dual's TYPE half — previously LOST
+    expect(byName.AliasedBrand).toBe('type'); // recorded under the re-export alias
+    expect(byName.Shape).toBe('interface');
+    expect(byName).not.toHaveProperty('mkBrand'); // a pure value never enters the type plane
+  });
+
   it('is order-deterministic (sorted by name, then kind)', () => {
     const files = {
       '/v/index.ts': `export type Zed = 1;\nexport interface Amy {}\nexport type Amy2 = 2;`,

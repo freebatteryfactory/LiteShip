@@ -8,7 +8,7 @@
 
 > **serializeTypeExportSurface**(`snapshot`): `string`
 
-Defined in: [audit/src/type-export-surface.ts:248](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/type-export-surface.ts#L248)
+Defined in: [audit/src/type-export-surface.ts:309](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/type-export-surface.ts#L309)
 
 Byte-canonical serialization of a type-export surface: package names sorted,
 each descriptor emitted `name` → `kind` in fixed key order, 2-space indent,

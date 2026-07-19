@@ -125,6 +125,20 @@ function elementIsTypeOnly(decl: ts.ExportDeclaration, element: ts.ExportSpecifi
 }
 
 /**
+ * A PLAIN (value-or-type) named re-export `export { A as B } from './rel'` whose
+ * TYPE half — if any — is resolved by looking the ORIGINAL name (`A`) up in the
+ * target module's type surface. `importedName` is `A` (the source name under
+ * aliasing), `exportedName` is `B` (the name it is re-exported under here). A pure
+ * VALUE re-export resolves to nothing; the type half of a value+type dual (a branded
+ * `ContentAddress`, a namespace, an interface) is recorded under `exportedName`.
+ */
+interface NamedReExport {
+  readonly target: string;
+  readonly importedName: string;
+  readonly exportedName: string;
+}
+
+/**
  * The direct type exports DECLARED or type-only RE-EXPORTED in one source file,
  * plus the relative `export * from './x'` targets to follow. A star re-export from
  * a BARE specifier (an external package) is unresolvable here and contributes
@@ -133,7 +147,11 @@ function elementIsTypeOnly(decl: ts.ExportDeclaration, element: ts.ExportSpecifi
 function scanFile(
   file: string,
   reader: SurfaceReader,
-): { readonly exports: readonly TypeExportDescriptor[]; readonly starTargets: readonly string[] } {
+): {
+  readonly exports: readonly TypeExportDescriptor[];
+  readonly starTargets: readonly string[];
+  readonly namedReExports: readonly NamedReExport[];
+} {
   const text = reader.readFile(file);
   const sourceFile = ts.createSourceFile(
     file,
@@ -144,6 +162,7 @@ function scanFile(
   );
   const exports: TypeExportDescriptor[] = [];
   const starTargets: string[] = [];
+  const namedReExports: NamedReExport[] = [];
 
   for (const node of sourceFile.statements) {
     if (ts.isInterfaceDeclaration(node) && hasModifier(node, ts.SyntaxKind.ExportKeyword)) {
@@ -175,53 +194,95 @@ function scanFile(
         }
         continue;
       }
-      // `export { … } from '…'` or local `export { … }` — record only the
-      // TYPE-only elements (a value re-export is the api-surface gate's concern).
+      // `export { … } from '…'` or local `export { … }`. A TYPE-only element is a
+      // type directly. A PLAIN element re-exported from a RELATIVE module may still
+      // carry a TYPE half — a value+type dual (a branded `ContentAddress`), a
+      // namespace, or an interface backing a same-named value — so it is deferred to
+      // a NAMED-RE-EXPORT check that resolves the ORIGINAL name against the target
+      // module's type surface (a pure-value re-export resolves to nothing, so the
+      // value surface stays the api-surface gate's concern; the type half is no
+      // longer lost). NOTE: a purely LOCAL `export { X }` (no module specifier) that
+      // names a NON-exported same-file type is out of scope — the shipped barrels
+      // re-export their duals through a relative specifier, which this covers.
       if (ts.isNamedExports(node.exportClause)) {
+        const relTarget =
+          node.moduleSpecifier !== undefined &&
+          ts.isStringLiteral(node.moduleSpecifier) &&
+          node.moduleSpecifier.text.startsWith('.')
+            ? resolveRelativeSource(file, node.moduleSpecifier.text, reader)
+            : null;
         for (const element of node.exportClause.elements) {
           if (elementIsTypeOnly(node, element)) {
             exports.push({ name: element.name.text, kind: 'type' });
+          } else if (relTarget !== null) {
+            namedReExports.push({
+              target: relTarget,
+              importedName: (element.propertyName ?? element.name).text,
+              exportedName: element.name.text,
+            });
           }
         }
       }
     }
   }
-  return { exports, starTargets };
+  return { exports, starTargets, namedReExports };
 }
 
 /**
- * Enumerate a package's PUBLIC type surface: BFS from `entryFile` over relative
- * `export *` re-exports, collecting every exported type. Deterministic — the
- * result is de-duplicated by `(name, kind)` and sorted by name then kind.
+ * The complete type surface a single `file` contributes: its own declared types,
+ * the union of every relative `export *` target's surface, AND — for each PLAIN
+ * named re-export `export { A as B } from './rel'` — the type half of `A` resolved
+ * against `./rel`'s surface (recorded under `B`). Memoized by file so a diamond
+ * re-export is scanned once; the memo doubles as a cycle guard (an in-progress file
+ * resolves to its partial surface rather than recursing forever).
+ */
+function typeSurfaceOf(
+  file: string,
+  reader: SurfaceReader,
+  memo: Map<string, TypeExportDescriptor[]>,
+): readonly TypeExportDescriptor[] {
+  const cached = memo.get(file);
+  if (cached !== undefined) return cached;
+  const out: TypeExportDescriptor[] = [];
+  memo.set(file, out); // cycle guard: a re-entrant call reads this (growing) array
+  let scanned: ReturnType<typeof scanFile>;
+  try {
+    scanned = scanFile(file, reader);
+  } catch {
+    return out;
+  }
+  out.push(...scanned.exports);
+  for (const target of scanned.starTargets) out.push(...typeSurfaceOf(target, reader, memo));
+  for (const re of scanned.namedReExports) {
+    // A plain named re-export carries a TYPE half iff its ORIGINAL name resolves to a
+    // type in the target's surface. A pure-value re-export finds nothing here.
+    for (const descriptor of typeSurfaceOf(re.target, reader, memo)) {
+      if (descriptor.name === re.importedName) out.push({ name: re.exportedName, kind: descriptor.kind });
+    }
+  }
+  return out;
+}
+
+/**
+ * Enumerate a package's PUBLIC type surface from `entryFile`, following relative
+ * `export *` re-exports AND resolving the TYPE half of plain named re-exports
+ * (value+type duals, re-exported namespaces/interfaces — the blind spot a
+ * type-only-specifier scan left open). Deterministic — the result is de-duplicated
+ * by `(name, kind)` and sorted by name then kind.
  */
 export function enumeratePackageTypeExports(
   entryFile: string,
   reader: SurfaceReader = DEFAULT_SURFACE_READER,
 ): readonly TypeExportDescriptor[] {
-  const visited = new Set<string>();
-  const queue: string[] = [entryFile];
+  const surface = typeSurfaceOf(entryFile, reader, new Map());
   const seen = new Set<string>();
   const collected: TypeExportDescriptor[] = [];
-
-  while (queue.length > 0) {
-    const file = queue.shift()!;
-    if (visited.has(file)) continue;
-    visited.add(file);
-    let scanned: ReturnType<typeof scanFile>;
-    try {
-      scanned = scanFile(file, reader);
-    } catch {
-      continue;
-    }
-    for (const descriptor of scanned.exports) {
-      const key = `${descriptor.name} ${descriptor.kind}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      collected.push(descriptor);
-    }
-    for (const target of scanned.starTargets) queue.push(target);
+  for (const descriptor of surface) {
+    const key = `${descriptor.name} ${descriptor.kind}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    collected.push(descriptor);
   }
-
   return collected.sort((a, b) => codeUnitCompare(a.name, b.name) || codeUnitCompare(a.kind, b.kind));
 }
 
