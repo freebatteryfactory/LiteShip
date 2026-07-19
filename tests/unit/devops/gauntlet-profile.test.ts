@@ -66,15 +66,16 @@ const EXPECTED: ReadonlyArray<{ label: string; command: string }> = [
   { label: 'standards:gate', command: 'pnpm run standards:gate' },
   { label: 'capability:gate', command: 'pnpm run capability:gate' },
   { label: 'spine-relation:gate', command: 'pnpm run spine-relation:gate' },
+  { label: 'transition:gate', command: 'pnpm run transition:gate' },
   { label: 'plumb:gate', command: 'pnpm run plumb:gate' },
   { label: 'capsule:verify', command: 'pnpm run capsule:verify' },
   { label: 'flex:verify', command: 'pnpm run flex:verify' },
 ];
 
 describe('D8 — canonical gauntlet phase profile', () => {
-  it('has exactly 42 phases', () => {
-    expect(gauntletPhases.length).toBe(42);
-    expect(gauntletPhaseLabels().length).toBe(42);
+  it('has exactly 43 phases', () => {
+    expect(gauntletPhases.length).toBe(43);
+    expect(gauntletPhaseLabels().length).toBe(43);
   });
 
   it('matches the executor HEAD run-order, label + command, in sequence (no drift)', () => {

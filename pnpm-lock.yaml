@@ -41,6 +41,9 @@ importers:
       '@czap/audit':
         specifier: workspace:*
         version: link:packages/audit
+      '@czap/canonical':
+        specifier: workspace:*
+        version: link:packages/canonical
       '@czap/compiler':
         specifier: workspace:*
         version: link:packages/compiler
@@ -56,6 +59,9 @@ importers:
       '@czap/error':
         specifier: workspace:*
         version: link:packages/error
+      '@czap/gauntlet':
+        specifier: workspace:*
+        version: link:packages/gauntlet
       '@czap/quantizer':
         specifier: workspace:*
         version: link:packages/quantizer

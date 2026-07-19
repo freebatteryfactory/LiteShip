@@ -122,7 +122,16 @@
     // model-vs-impl shape drift fails the typecheck, not just the property run),
     // and so Wave 6 can flip the impl side against the SAME typed model surface.
     "tests/support/reactive-oracle.ts",
-    "tests/property/reactive-conformance.prop.test.ts"
+    // The Wave 5.5 SHARED conformance runner: the single owner of the model configs,
+    // native adapters, reaction vocabulary, PINNED corpus, and per-family declared law.
+    // Consumed by BOTH the property test and the repo-local transition-conformance gate
+    // script (no second oracle / corpus / law), so a drift fails the typecheck.
+    "tests/support/reactive-conformance.ts",
+    "tests/property/reactive-conformance.prop.test.ts",
+    // The transition-conformance gate RUNNER proof (green over the native transports + red on
+    // a forced divergence) — folds the shared runner through the lean gate exactly as the CI
+    // gate script does, so a runner/law drift fails the typecheck.
+    "tests/unit/gauntlet/transition-conformance-gate.test.ts"
   ],
   "exclude": ["node_modules", "**/dist/**"]
 }

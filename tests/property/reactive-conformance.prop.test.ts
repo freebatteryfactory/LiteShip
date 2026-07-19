@@ -15,6 +15,13 @@
  * faithful projection the reference model pins, exercising the NATIVE transport
  * directly (no Effect bridge between the proof and the product).
  *
+ * The model configs, native adapters, reaction vocabulary, and the pinned corpus
+ * (`BISIM_HOLDS` / `EMISSION_AXIS`) live in the SHARED runner
+ * `tests/support/reactive-conformance.ts`, consumed IDENTICALLY by the repo-local
+ * `scripts/transition-conformance-gate.ts` — one model, one corpus, one law table
+ * (no second oracle). This suite adds the GENERATED histories, shrinking, and the
+ * plant-a-divergence red-proof; the gate folds the same corpus into CI findings.
+ *
  * The relation the native impl exhibits, PROVEN (not merely recorded):
  *   • BISIMULATION HOLDS under {all} for Cell / Store / Signal / LiveCell-value
  *     / Timeline (non-consecutive-equal seeks) — the kernel model is a faithful
@@ -43,202 +50,34 @@
 
 import { describe, test, expect } from 'vitest';
 import fc from 'fast-check';
-import { Boundary } from '@czap/core';
 import { op, traceDigest } from '../support/reactive-trace.js';
-import type { OpHistory, ReactiveOp, ReactionSpec, UpdateTransform } from '../support/reactive-trace.js';
-import { adapters } from '../support/reactive-capture.js';
+import type { OpHistory, ReactiveOp, UpdateTransform } from '../support/reactive-trace.js';
 import {
   differential,
   shrinkDivergence,
-  modelTraceSource,
-  implTraceSource,
   withDroppedDelivery,
   emissionPolicy,
   runModelTrace,
-  type ModelConfig,
-  type TraceSource,
 } from '../support/reactive-oracle.js';
+import {
+  IDENTITY,
+  DERIVED,
+  DEFERRED,
+  modelFor,
+  implFor,
+  setOn,
+  subOn,
+  BISIM_HOLDS,
+  EMISSION_AXIS,
+} from '../support/reactive-conformance.js';
 import { scaledTimeout } from '../../vitest.shared.js';
-
-// ---------------------------------------------------------------------------
-// Model configs — how each primitive maps onto the kernel channel.
-// ---------------------------------------------------------------------------
-
-const CAPTURE_BOUNDARY = Boundary.make({
-  input: 'viewport.width',
-  at: [
-    [0, 'idle'],
-    [100, 'active'],
-    [200, 'done'],
-  ] as const,
-});
-const timelineState = (ms: number): string => Boundary.evaluate(CAPTURE_BOUNDARY, Math.max(0, Math.min(200, ms)));
-
-const IDENTITY: ModelConfig = { channel: 'replay1', initialRaw: 0 };
-const DERIVED: ModelConfig = { channel: 'replay1', initialRaw: 0, project: (x) => x + 100 };
-const TIMELINE: ModelConfig = { channel: 'replay1', initialRaw: 0, project: timelineState };
-// Cell / Store / Signal / LiveCell-value ride the 'deferred' reentrancy arm (Wave
-// 6 nested-write RULING — PRESERVE async-append; scar S6.F.2). The model runs the
-// SAME 'deferred' arm so the oracle asserts that I5 law POSITIVELY (model ≡
-// native CellKernel-backed impl) rather than recording a sync-model-vs-async-impl
-// divergence. Identity projection — reused by both the Cell and Store proofs.
-const DEFERRED: ModelConfig = { channel: 'replay1', initialRaw: 0, reentrancy: 'deferred' };
-
-const modelFor = (primitive: string, cfg: ModelConfig): TraceSource =>
-  modelTraceSource({ ...cfg, label: `model:${primitive}` });
-const implFor = (primitive: string): TraceSource => implTraceSource(adapters[primitive]!);
-
-// Reaction builders (the DATA encoding of the during-delivery behaviors).
-const setOn = (onValue: number, value: number): ReactionSpec => ({ kind: 'set', onValue, value });
-const subOn = (onValue: number, newSink: string): ReactionSpec => ({ kind: 'subscribe', onValue, newSink });
-const throwOn = (onValue: number): ReactionSpec => ({ kind: 'throw', onValue });
-const unsubOn = (onValue: number, target: string): ReactionSpec => ({ kind: 'unsubscribe', onValue, target });
 
 const TIMEOUT = scaledTimeout(60_000);
 
 // ===========================================================================
 // 1. BISIMULATION HOLDS — model ≡ native CellKernel impl, up to {all}.
+//    The corpus is the shared BISIM_HOLDS (tests/support/reactive-conformance.ts).
 // ===========================================================================
-
-interface BisimCase {
-  readonly primitive: string;
-  readonly cfg: ModelConfig;
-  readonly seed: string;
-  readonly history: OpHistory;
-}
-
-const BISIM_HOLDS: readonly BisimCase[] = [
-  // Cell — the replay-1 workhorse. Every shared-vocabulary behavior bisimulates.
-  { primitive: 'cell', cfg: IDENTITY, seed: 'initial-replay', history: [op.subscribe('a'), op.read()] },
-  {
-    primitive: 'cell',
-    cfg: IDENTITY,
-    seed: 'late-subscriber-replay',
-    history: [op.subscribe('a'), op.set(3), op.set(5), op.subscribe('b'), op.read()],
-  },
-  {
-    primitive: 'cell',
-    cfg: IDENTITY,
-    seed: 'duplicate-consecutive',
-    history: [op.subscribe('a'), op.set(7), op.set(7), op.set(7), op.read()],
-  },
-  {
-    primitive: 'cell',
-    cfg: IDENTITY,
-    seed: 'subscriber-order',
-    history: [op.subscribe('a'), op.subscribe('b'), op.subscribe('c'), op.set(5)],
-  },
-  {
-    primitive: 'cell',
-    cfg: IDENTITY,
-    seed: 'unsubscribe-during-publish',
-    history: [op.subscribe('a', [unsubOn(5, 'b')]), op.subscribe('b'), op.set(5), op.set(6)],
-  },
-  {
-    primitive: 'cell',
-    cfg: IDENTITY,
-    seed: 'listener-failure',
-    history: [op.subscribe('a', [throwOn(3)]), op.subscribe('b'), op.set(3), op.set(4), op.read()],
-  },
-  {
-    primitive: 'cell',
-    cfg: IDENTITY,
-    seed: 'disposal-completion',
-    history: [op.subscribe('a'), op.set(1), op.dispose(), op.set(2), op.read()],
-  },
-  {
-    primitive: 'cell',
-    cfg: IDENTITY,
-    seed: 'update-path',
-    history: [op.subscribe('a'), op.update({ kind: 'add', n: 10 }), op.update({ kind: 'mul', n: 2 }), op.read()],
-  },
-  // Store — a replace reducer is a replay-1 channel; every dispatch publishes.
-  { primitive: 'store', cfg: IDENTITY, seed: 'initial-replay', history: [op.subscribe('a'), op.read()] },
-  {
-    primitive: 'store',
-    cfg: IDENTITY,
-    seed: 'late-subscriber-replay',
-    history: [op.subscribe('a'), op.set(3), op.set(5), op.subscribe('b'), op.read()],
-  },
-  {
-    primitive: 'store',
-    cfg: IDENTITY,
-    seed: 'duplicate-consecutive',
-    history: [op.subscribe('a'), op.set(7), op.set(7), op.set(7), op.read()],
-  },
-  {
-    primitive: 'store',
-    cfg: IDENTITY,
-    seed: 'subscriber-order',
-    history: [op.subscribe('a'), op.subscribe('b'), op.subscribe('c'), op.set(5)],
-  },
-  {
-    primitive: 'store',
-    cfg: IDENTITY,
-    seed: 'listener-failure',
-    history: [op.subscribe('a', [throwOn(3)]), op.subscribe('b'), op.set(3), op.set(4), op.read()],
-  },
-  {
-    primitive: 'store',
-    cfg: IDENTITY,
-    seed: 'disposal',
-    history: [op.subscribe('a'), op.set(1), op.dispose(), op.set(2), op.read()],
-  },
-  // Signal (controllable) — seek is a self-ref replay-1 write.
-  { primitive: 'signal', cfg: IDENTITY, seed: 'initial-replay', history: [op.subscribe('a'), op.read()] },
-  {
-    primitive: 'signal',
-    cfg: IDENTITY,
-    seed: 'duplicate-consecutive',
-    history: [op.subscribe('a'), op.set(7), op.set(7), op.set(7), op.read()],
-  },
-  {
-    primitive: 'signal',
-    cfg: IDENTITY,
-    seed: 'subscriber-order',
-    history: [op.subscribe('a'), op.subscribe('b'), op.set(5)],
-  },
-  {
-    primitive: 'signal',
-    cfg: IDENTITY,
-    seed: 'late-subscriber-replay',
-    history: [op.subscribe('a'), op.set(3), op.set(5), op.subscribe('b'), op.read()],
-  },
-  {
-    primitive: 'signal',
-    cfg: IDENTITY,
-    seed: 'disposal',
-    history: [op.subscribe('a'), op.set(1), op.dispose(), op.set(2), op.read()],
-  },
-  // Timeline — the state channel over a boundary projection; non-equal seeks bisimulate under {all}.
-  { primitive: 'timeline', cfg: TIMELINE, seed: 'initial-state', history: [op.subscribe('a'), op.read()] },
-  {
-    primitive: 'timeline',
-    cfg: TIMELINE,
-    seed: 'seek-across-thresholds',
-    history: [op.subscribe('a'), op.set(150), op.set(50), op.set(150), op.read()],
-  },
-  // LiveCell — value channel inherits the Cell replay-1 policy; crossings/meta are ABOVE the kernel altitude (excluded).
-  { primitive: 'live-cell', cfg: IDENTITY, seed: 'initial-replay', history: [op.subscribe('a'), op.read()] },
-  {
-    primitive: 'live-cell',
-    cfg: IDENTITY,
-    seed: 'duplicate-consecutive',
-    history: [op.subscribe('a'), op.set(7), op.set(7), op.set(7), op.read()],
-  },
-  {
-    primitive: 'live-cell',
-    cfg: IDENTITY,
-    seed: 'manual-crossing-fanout',
-    history: [op.subscribe('a'), op.publishCrossing('idle', 'active', 120), op.read()],
-  },
-  {
-    primitive: 'live-cell',
-    cfg: IDENTITY,
-    seed: 'disposal',
-    history: [op.subscribe('a'), op.set(150), op.dispose(), op.set(50), op.read()],
-  },
-];
 
 describe('bisimulation holds — reference model ≡ native CellKernel impl (up to {all})', () => {
   for (const c of BISIM_HOLDS) {
@@ -267,45 +106,8 @@ describe('bisimulation holds — reference model ≡ native CellKernel impl (up 
 // ===========================================================================
 // 2. EMISSIONPOLICY AXIS — divergent under {all}, reconciled under {distinct}.
 //    This is the intentional delta Wave 6 resolves by CHOOSING {distinct}, not
-//    a bug. Recorded, not forced.
+//    a bug. Recorded, not forced. Corpus: the shared EMISSION_AXIS.
 // ===========================================================================
-
-const EMISSION_AXIS: readonly BisimCase[] = [
-  // Derived — the construction-time source-replay adds a leading republish the
-  // kernel model does not; {distinct} collapses it.
-  { primitive: 'derived', cfg: DERIVED, seed: 'initial-value', history: [op.subscribe('a'), op.read()] },
-  {
-    primitive: 'derived',
-    cfg: DERIVED,
-    seed: 'recompute-on-source',
-    history: [op.subscribe('a'), op.set(5), op.read()],
-  },
-  {
-    primitive: 'derived',
-    cfg: DERIVED,
-    seed: 'duplicate-source',
-    history: [op.subscribe('a'), op.set(5), op.set(5), op.set(8), op.read()],
-  },
-  {
-    primitive: 'derived',
-    cfg: DERIVED,
-    seed: 'subscriber-order',
-    history: [op.subscribe('a'), op.subscribe('b'), op.set(5)],
-  },
-  {
-    primitive: 'derived',
-    cfg: DERIVED,
-    seed: 'late-subscriber-replay',
-    history: [op.subscribe('a'), op.set(5), op.subscribe('b'), op.read()],
-  },
-  // Timeline — the hand-rolled `newState !== oldState` dedup on the state channel.
-  {
-    primitive: 'timeline',
-    cfg: TIMELINE,
-    seed: 'duplicate-state-seek',
-    history: [op.subscribe('a'), op.set(150), op.set(160), op.read()],
-  },
-];
 
 describe('EmissionPolicy axis — divergent under {all}, equivalent under {distinct}', () => {
   for (const c of EMISSION_AXIS) {

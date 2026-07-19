@@ -34,8 +34,11 @@
  * to re-pin as a product law. The engine picks no winner (S1.5.3: capture-not-conclude,
  * lifted to the gate).
  *
- * It {@link requireTransition}, so it runs ONLY on the opt-in host path (`czap check
- * --ir --transition` — the CLI unfolds + captures + injects the facts); the lean
+ * It {@link requireTransition}, so it runs ONLY when a host injects the facts. The reference
+ * model + native-transport oracle are LiteShip-local (product machinery in the test tree), so
+ * — per ADR-0012/0023 — the host is the repo-local `transition:gate` phase
+ * (`scripts/transition-conformance-gate.ts`, run every PR over the shared
+ * `tests/support/reactive-conformance.ts` runner), NOT the shipped `czap check` CLI; the lean
  * MCP/command path does not run it. Composition over inheritance: a `status` fold +
  * standalone functions, no class. Earns blocking authority via the SHIPPED ratchet
  * ({@link verifyGate}: redCaught ∧ greenClean ∧ mutationKilled — Axiom 5).
@@ -269,8 +272,10 @@ const FIXTURES = {
  * The transition-conformance gate — each `divergent` bisimulation case becomes a
  * self-explaining, REPLAYABLE Finding at the family's assurance level (severity by
  * level deciding blocking); each `unevidenced` case is a coverage gap floored by the
- * committed ratchet. REPORT-not-DECIDE. It {@link requireTransition}, so it runs only
- * on the opt-in host path. Earns blocking authority via the shipped ratchet.
+ * committed ratchet. REPORT-not-DECIDE. It {@link requireTransition}, so it runs only when a
+ * host injects the facts — the repo-local `transition:gate` phase
+ * (`scripts/transition-conformance-gate.ts`), NOT the shipped `czap check` CLI. Earns
+ * blocking authority via the shipped ratchet.
  */
 export const transitionConformanceGate: Gate = defineGate({
   id: GATE_ID,

@@ -82,11 +82,13 @@ export interface TransitionCase {
 }
 
 /**
- * The host-supplied bisimulation evidence over one conformance FAMILY's run. The
- * capture is HEAVY (an `Effect.runPromise` fiber walk per case, drained to
- * quiescence), so production runs it OPT-IN (`czap check --ir --transition`), scoped
- * + cached; when the host did not run it this whole capability is simply ABSENT from
- * the {@link GateContext} and the gate is not in the set (no cost, no noise). When
+ * The host-supplied bisimulation evidence over one conformance FAMILY's run. The capture
+ * is LiteShip-local product machinery (driving each seeded op history over the reference
+ * model + the native transport, in the test tree), so — per ADR-0012/0023 — it runs from
+ * the repo-local `transition:gate` phase (`scripts/transition-conformance-gate.ts`) on
+ * every PR, NOT the shipped `czap check` CLI; when the host did not run it this whole
+ * capability is simply ABSENT from the {@link GateContext} and the gate is not in the
+ * set (no cost, no noise). When
  * present it carries every per-case verdict plus the two transport fingerprints and
  * the committed unevidenced BASELINE the ratchet compares against.
  *

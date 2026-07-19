@@ -110,6 +110,14 @@ export const gauntletPhases: readonly GauntletPhase[] = [
   // ts.Program build (~3.25s) too heavy for the default `czap check --ir`, so it runs HERE as its
   // own phase; the equivalent opt-in path is `czap check --ir --spine-relation`.
   { label: 'spine-relation:gate', command: 'pnpm run spine-relation:gate' },
+  // The reactive BISIMULATION proof (Wave 5.5, the transition cage) — the CONSTITUTION /
+  // conformance INTEGRITY family, beside spine-relation:gate/capability:gate: every pinned
+  // op history that bisimulates the CURRENT declared reactive model must still bisimulate on
+  // the native transport (each family under its declared EmissionPolicy), or the cut reds. The
+  // reference model + native-transport oracle are LiteShip-local (tests/support), so — per
+  // ADR-0012/0023 — the gate is HOSTED here as a repo-local phase rather than the shipped CLI,
+  // guaranteeing the L4 conformance proof runs on every PR (reachable, never fixture-only).
+  { label: 'transition:gate', command: 'pnpm run transition:gate' },
   { label: 'plumb:gate', command: 'pnpm run plumb:gate' },
   { label: 'capsule:verify', command: 'pnpm run capsule:verify' },
   { label: 'flex:verify', command: 'pnpm run flex:verify' },
@@ -146,6 +154,7 @@ export const CI_PARALLEL_FINAL_LABELS: readonly string[] = [
   'standards:gate',
   'capability:gate',
   'spine-relation:gate',
+  'transition:gate',
   'plumb:gate',
   'flex:verify',
 ];
@@ -176,6 +185,7 @@ export const LOCAL_SAFE_LABELS: readonly string[] = [
   'standards:gate',
   'capability:gate',
   'spine-relation:gate',
+  'transition:gate',
 ];
 
 export const CI_PARALLEL_INTEGRATION_LABELS: readonly string[] = [
