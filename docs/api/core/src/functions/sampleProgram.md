@@ -8,7 +8,7 @@
 
 > **sampleProgram**(`plan`, `t`): readonly [`ProgramSample`](../interfaces/ProgramSample.md)[]
 
-Defined in: [core/src/transition-program.ts:644](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/transition-program.ts#L644)
+Defined in: [core/src/transition-program.ts:678](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/transition-program.ts#L678)
 
 `sampleProgram` — THE shared motion kernel every non-CSS target samples (#130, Law 4).
 

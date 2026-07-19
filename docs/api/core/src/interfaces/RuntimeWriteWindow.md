@@ -6,7 +6,7 @@
 
 # Interface: RuntimeWriteWindow
 
-Defined in: [core/src/interpret-transition.ts:87](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L87)
+Defined in: [core/src/interpret-transition.ts:116](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L116)
 
 A per-window runtime sub-sampler for a composed [TransitionProgram](../type-aliases/TransitionProgram.md): the
 properties one transition tweens over its `[windowStart, windowEnd]` slice of the
@@ -20,7 +20,7 @@ path). The `client:motion` floor samples these to scrub a multi-step chain.
 
 > `readonly` **easing**: [`RuntimeEasing`](RuntimeEasing.md)
 
-Defined in: [core/src/interpret-transition.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L91)
+Defined in: [core/src/interpret-transition.ts:120](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L120)
 
 ***
 
@@ -28,7 +28,7 @@ Defined in: [core/src/interpret-transition.ts:91](https://github.com/freebattery
 
 > `readonly` **properties**: readonly [`RuntimeWriteProperty`](RuntimeWriteProperty.md)[]
 
-Defined in: [core/src/interpret-transition.ts:90](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L90)
+Defined in: [core/src/interpret-transition.ts:119](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L119)
 
 ***
 
@@ -36,7 +36,7 @@ Defined in: [core/src/interpret-transition.ts:90](https://github.com/freebattery
 
 > `readonly` **windowEnd**: `number`
 
-Defined in: [core/src/interpret-transition.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L89)
+Defined in: [core/src/interpret-transition.ts:118](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L118)
 
 ***
 
@@ -44,4 +44,4 @@ Defined in: [core/src/interpret-transition.ts:89](https://github.com/freebattery
 
 > `readonly` **windowStart**: `number`
 
-Defined in: [core/src/interpret-transition.ts:88](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L88)
+Defined in: [core/src/interpret-transition.ts:117](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpret-transition.ts#L117)

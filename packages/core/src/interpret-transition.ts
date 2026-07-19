@@ -58,6 +58,27 @@ export interface CssKeyframeStep {
   readonly easing?: RuntimeEasing;
 }
 
+/**
+ * Whether this plan may OWN a native CSS `animation-timeline` (a scroll/view
+ * `animation-name` binding). A single transition and a UNIFORM-easing composed program
+ * are `eligible` — one native `@keyframes` renders them faithfully. A composed program
+ * whose OVERLAPPING windows disagree on easing (a `par` of differently-eased children,
+ * #148) is NOT: no single native `@keyframes` timing-function can serve both curves over
+ * their shared segment, so a native timeline would silently render the wrong easing. The
+ * LOWERER decides this — it alone sees the overlapping windows and their curves — and
+ * records it here as DATA, so the compiler never has to guess eligibility from the
+ * keyframe stops (an absent per-keyframe easing is ambiguous: it can also mean ordinary
+ * default `ease`). When `eligible: false` the compiler emits NO native ownership block,
+ * so `getComputedStyle(el).animationName` carries no `czap-motion-*` name and the
+ * per-window RUNTIME floor (`client:motion`, which samples each window at its OWN easing)
+ * stays the faithful renderer (ADR-0041).
+ */
+export type NativeTimelineEligibility =
+  { readonly eligible: true } | { readonly eligible: false; readonly reason: 'mixed-easing-overlap' };
+
+/** The shared `{ eligible: true }` verdict — a single transition is always native-eligible. */
+const eligibleNativeTimeline: NativeTimelineEligibility = { eligible: true };
+
 /** CSS projection plan — keyframes / transition keyed on discrete state. */
 export interface CssMotionPlan {
   readonly selector: string;
@@ -68,6 +89,14 @@ export interface CssMotionPlan {
   readonly routing: EdgeType;
   readonly keyframes: readonly CssKeyframeStep[];
   readonly transitionProperty: string;
+  /**
+   * Whether this plan may own a native `animation-timeline`. `interpretTransition` always
+   * mints the eligible verdict (a single transition is uniform by construction);
+   * `interpretProgram` computes it from the composed windows — the ineligible
+   * `mixed-easing-overlap` verdict when overlapping windows disagree on easing. The compiler
+   * reads this to decide whether to emit the native ownership block.
+   */
+  readonly nativeTimeline: NativeTimelineEligibility;
 }
 
 /** One runtime leaf-write descriptor (typed CSS custom property floor). */
@@ -312,6 +341,9 @@ export function interpretTransition(graph: DocumentGraph, transitionId: ContentA
     routing,
     keyframes: Object.freeze(keyframes),
     transitionProperty,
+    // A single transition is uniform by construction — one native `@keyframes` renders it
+    // faithfully, so it is always eligible to own a native timeline.
+    nativeTimeline: eligibleNativeTimeline,
   });
 
   const runtime: RuntimeWritePlan = Object.freeze({

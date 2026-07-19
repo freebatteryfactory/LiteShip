@@ -37,6 +37,7 @@ import {
   interpretTransition,
   type CssKeyframeStep,
   type CssMotionPlan,
+  type NativeTimelineEligibility,
   type LoweredMotionPlan,
   type MotionPropertyTween,
   type RuntimeWriteProperty,
@@ -467,6 +468,29 @@ function buildKeyframes(windows: readonly AbsWindow[], totalMs: number): CssKeyf
   });
 }
 
+/**
+ * Does this composed program have an OVERLAPPING segment whose active windows DISAGREE on
+ * easing? Mirrors {@link buildKeyframes}' per-segment walk: over each `[offset, next]`
+ * segment the active windows are exactly those that FULLY cover it, and a segment served by
+ * two windows with DIFFERENT normalized curves cannot be expressed by one native per-keyframe
+ * timing function. Such a program is DENIED native-timeline ownership (rendered faithfully by
+ * the per-window runtime floor instead — ADR-0041, #148); a uniform-easing program (every
+ * active set agrees) OR a non-overlapping `seq` of differently-eased steps (each segment has
+ * ONE active window, so the per-keyframe curve serves it) stays eligible. This is the DATA the
+ * lowerer hands the compiler so it never guesses eligibility from an (ambiguous) absent
+ * per-keyframe easing.
+ */
+function hasMixedEasingOverlap(windows: readonly AbsWindow[], totalMs: number): boolean {
+  const { walk, offsets } = cssWalkWindows(windows, totalMs);
+  for (let i = 0; i < offsets.length - 1; i++) {
+    const offset = offsets[i]!;
+    const next = offsets[i + 1]!;
+    const active = walk.filter((w) => w.windowStart <= offset && w.windowEnd >= next);
+    if (new Set(active.map((w) => easingKey(w.easing))).size > 1) return true;
+  }
+  return false;
+}
+
 function emptyProgramPlan(graphId: ContentAddress, diagnostics: readonly DiagnosticPayload[]): LoweredMotionPlan {
   return Object.freeze({
     graphId,
@@ -563,6 +587,15 @@ export function interpretProgram(
   const signals = [...new Set(result.windows.flatMap((w) => w.step.signals))];
   const selector = `[data-czap-boundary="${first.step.target}"]`;
 
+  // Native-timeline eligibility is the LOWERER's call: a composed program whose overlapping
+  // windows disagree on easing (`par` of differently-eased children, #148) is denied native
+  // ownership so the compiler emits no `animation-name` binding and the per-window runtime
+  // floor stays the faithful renderer (ADR-0041). Uniform + non-overlapping-seq programs stay
+  // eligible for the single native `@keyframes` leg.
+  const nativeTimeline: NativeTimelineEligibility = hasMixedEasingOverlap(result.windows, result.totalMs)
+    ? { eligible: false, reason: 'mixed-easing-overlap' }
+    : { eligible: true };
+
   const css: CssMotionPlan = Object.freeze({
     selector,
     fromState: first.step.fromState,
@@ -572,6 +605,7 @@ export function interpretProgram(
     routing: 'seq',
     keyframes: Object.freeze(buildKeyframes(result.windows, result.totalMs)),
     transitionProperty: unionCss.map((p) => p.property).join(', '),
+    nativeTimeline,
   });
 
   const runtime: RuntimeWritePlan = Object.freeze({

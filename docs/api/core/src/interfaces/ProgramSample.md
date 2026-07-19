@@ -6,7 +6,7 @@
 
 # Interface: ProgramSample
 
-Defined in: [core/src/transition-program.ts:598](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/transition-program.ts#L598)
+Defined in: [core/src/transition-program.ts:632](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/transition-program.ts#L632)
 
 One sampled leaf: a `cssVar` and its interpolated [TypedValue](../type-aliases/TypedValue.md) at a given `t`.
 
@@ -16,7 +16,7 @@ One sampled leaf: a `cssVar` and its interpolated [TypedValue](../type-aliases/T
 
 > `readonly` **cssVar**: `string`
 
-Defined in: [core/src/transition-program.ts:599](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/transition-program.ts#L599)
+Defined in: [core/src/transition-program.ts:633](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/transition-program.ts#L633)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [core/src/transition-program.ts:599](https://github.com/freebatteryf
 
 > `readonly` **value**: [`TypedValue`](../type-aliases/TypedValue.md)
 
-Defined in: [core/src/transition-program.ts:600](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/transition-program.ts#L600)
+Defined in: [core/src/transition-program.ts:634](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/transition-program.ts#L634)

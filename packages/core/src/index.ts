@@ -171,6 +171,7 @@ export { interpretTransition } from './interpret-transition.js';
 export type {
   LoweredMotionPlan,
   CssMotionPlan,
+  NativeTimelineEligibility,
   RuntimeWritePlan,
   RuntimeWriteProperty,
   RuntimeWriteWindow,

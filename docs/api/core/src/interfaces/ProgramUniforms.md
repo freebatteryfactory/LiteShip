@@ -6,7 +6,7 @@
 
 # Interface: ProgramUniforms
 
-Defined in: [core/src/transition-program.ts:676](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/transition-program.ts#L676)
+Defined in: [core/src/transition-program.ts:710](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/transition-program.ts#L710)
 
 The uniform payload a `sampleProgram` sample projects to: formatted CSS + GPU-bound WGSL scalars.
 
@@ -16,7 +16,7 @@ The uniform payload a `sampleProgram` sample projects to: formatted CSS + GPU-bo
 
 > `readonly` **css**: `Record`\<`string`, `string`\>
 
-Defined in: [core/src/transition-program.ts:678](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/transition-program.ts#L678)
+Defined in: [core/src/transition-program.ts:712](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/transition-program.ts#L712)
 
 Every animated `cssVar` formatted for a CSS custom-property / style write.
 
@@ -26,6 +26,6 @@ Every animated `cssVar` formatted for a CSS custom-property / style write.
 
 > `readonly` **wgsl**: `Record`\<`string`, `number`\>
 
-Defined in: [core/src/transition-program.ts:680](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/transition-program.ts#L680)
+Defined in: [core/src/transition-program.ts:714](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/transition-program.ts#L714)
 
 GPU-bound numeric props (kind `number`/`opacity`) keyed by their WGSL struct field.
