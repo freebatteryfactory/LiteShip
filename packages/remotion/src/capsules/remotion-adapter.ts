@@ -7,14 +7,14 @@
  * @module
  */
 
-import { defineCapsule, S } from '@liteship/core';
+import { defineCapsule, schema } from '@liteship/core';
 
-const VideoRendererShapeSchema = S.unknown;
-const VideoFrameOutputSchema = S.struct({
-  frame: S.number,
-  timestamp: S.number,
-  progress: S.number,
-  state: S.unknown,
+const VideoRendererShapeSchema = schema.unknown;
+const VideoFrameOutputSchema = schema.struct({
+  frame: schema.number,
+  timestamp: schema.number,
+  progress: schema.number,
+  state: schema.unknown,
 });
 
 /**
@@ -25,7 +25,7 @@ export const remotionAdapterCapsule = defineCapsule({
   _kind: 'siteAdapter',
   name: 'remotion.video-frame-output',
   input: VideoRendererShapeSchema,
-  output: S.array(VideoFrameOutputSchema),
+  output: schema.array(VideoFrameOutputSchema),
   capabilities: { reads: [], writes: [] },
   invariants: [
     {

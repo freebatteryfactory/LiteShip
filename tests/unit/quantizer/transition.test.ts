@@ -5,7 +5,7 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Boundary, Millis } from '@liteship/core';
+import { Millis, defineBoundary } from '@liteship/core';
 import { Transition } from '@liteship/quantizer';
 import type { TransitionConfig } from '@liteship/quantizer';
 
@@ -13,7 +13,7 @@ import type { TransitionConfig } from '@liteship/quantizer';
 // Fixtures
 // ---------------------------------------------------------------------------
 
-const boundary = Boundary.make({
+const boundary = defineBoundary({
   input: 'width',
   at: [
     [0, 'mobile'],

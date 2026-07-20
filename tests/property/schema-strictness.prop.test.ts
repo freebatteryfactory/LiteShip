@@ -2,7 +2,7 @@
  * schema-strictness — auto-derived near-miss strictness properties (scar S1.1 / GUARD 3).
  *
  * The EdgeSeed scar (`docs/plan/scar-ledger.md` S1.1): an arity-2 tuple silently
- * widened to `S.array(S.number)` because the Wave-0 kernel had no tuple node, and
+ * widened to `schema.array(schema.number)` because the Wave-0 kernel had no tuple node, and
  * EVERY existing test stayed green because tests feed VALID values. The disposition
  * (master plan Methodology §7) is auto-derived strictness properties: derive
  * near-miss mutators from each schema's OWN AST and property-assert that strict
@@ -23,7 +23,7 @@
  * For each schema: seeded valid values strict-decode ok, and EVERY derived near-miss
  * is rejected with the predicted code + path prefix. Carve-outs are recorded with an
  * explicit reason — never a silent skip. The final case is the RED-PROVE: it
- * constructs a tuple's `S.array` twin in memory and shows the derived arity near-miss
+ * constructs a tuple's `schema.array` twin in memory and shows the derived arity near-miss
  * distinguishes them (the tuple rejects it; the array twin swallows it) — exactly the
  * EdgeSeed widening this scar closes.
  */
@@ -38,7 +38,7 @@ import { hasTag } from '@liteship/error';
 import { getCapsuleCatalog } from '@liteship/core';
 import { scaledTimeout } from '../../vitest.shared.js';
 import { detectCapsuleCalls, FACTORY_HINTS } from '../../scripts/lib/capsule-detector.js';
-import { S, withArbitrary, decode, isSchema } from '../../packages/core/src/schema/index.js';
+import { withArbitrary, decode, isSchema, schema } from '../../packages/core/src/schema/index.js';
 import { schemaToArbitrary } from '../../packages/core/src/harness/arbitrary-from-schema.js';
 import type { Schema } from '../../packages/core/src/schema/ast.js';
 import type { DecodePath } from '../../packages/core/src/schema/decode.js';
@@ -125,25 +125,25 @@ function corpus(id: string, schema: Schema<unknown, unknown>): Named {
 }
 
 const kernelCorpus: readonly Named[] = [
-  corpus('corpus:scalars', S.struct({ id: S.string, count: S.number, active: S.boolean })),
-  corpus('corpus:edge-seed-tuple', S.tuple(S.number, S.number)),
-  corpus('corpus:tuple-in-struct', S.struct({ edge: S.tuple(S.number, S.number), label: S.literal('edge') })),
-  corpus('corpus:heterogeneous-tuple', S.tuple(S.string, S.number, S.boolean)),
-  corpus('corpus:union', S.union(S.literal('a'), S.literal('b'), S.number)),
-  corpus('corpus:union-in-struct', S.struct({ tag: S.union(S.literal('x'), S.number), n: S.number })),
-  corpus('corpus:record', S.record(S.number)),
-  corpus('corpus:array-of-struct', S.array(S.struct({ x: S.number, y: S.optional(S.string) }))),
+  corpus('corpus:scalars', schema.struct({ id: schema.string, count: schema.number, active: schema.boolean })),
+  corpus('corpus:edge-seed-tuple', schema.tuple(schema.number, schema.number)),
+  corpus('corpus:tuple-in-struct', schema.struct({ edge: schema.tuple(schema.number, schema.number), label: schema.literal('edge') })),
+  corpus('corpus:heterogeneous-tuple', schema.tuple(schema.string, schema.number, schema.boolean)),
+  corpus('corpus:union', schema.union(schema.literal('a'), schema.literal('b'), schema.number)),
+  corpus('corpus:union-in-struct', schema.struct({ tag: schema.union(schema.literal('x'), schema.number), n: schema.number })),
+  corpus('corpus:record', schema.record(schema.number)),
+  corpus('corpus:array-of-struct', schema.array(schema.struct({ x: schema.number, y: schema.optional(schema.string) }))),
   corpus(
     'corpus:nested',
-    S.struct({
-      meta: S.record(S.string),
-      pair: S.tuple(S.string, S.number),
-      tags: S.array(S.string),
-      opt: S.optional(S.boolean),
+    schema.struct({
+      meta: schema.record(schema.string),
+      pair: schema.tuple(schema.string, schema.number),
+      tags: schema.array(schema.string),
+      opt: schema.optional(schema.boolean),
     }),
   ),
-  corpus('corpus:literals', S.struct({ nothing: S.literal(null), one: S.literal(1), yes: S.literal(true) })),
-  corpus('corpus:bytes', withArbitrary(S.bytes(Uint8Array), () => fc.uint8Array({ minLength: 1, maxLength: 8 }))),
+  corpus('corpus:literals', schema.struct({ nothing: schema.literal(null), one: schema.literal(1), yes: schema.literal(true) })),
+  corpus('corpus:bytes', withArbitrary(schema.bytes(Uint8Array), () => fc.uint8Array({ minLength: 1, maxLength: 8 }))),
 ];
 
 // ── Classify every candidate into swept vs. carved-out ──────────────────────
@@ -165,7 +165,7 @@ for (const named of [...catalogNamed, ...kernelCorpus]) {
     skipped.push({
       id: named.id,
       origin: named.origin,
-      reason: 'root accepts every value (S.unknown / S.any) — no strictness near-miss exists',
+      reason: 'root accepts every value (schema.unknown / schema.any) — no strictness near-miss exists',
     });
     continue;
   }
@@ -231,10 +231,10 @@ describe('schema strictness — coverage floors (scar S1.1)', () => {
     for (const s of skipped) {
       expect(s.reason.length, `carve-out ${s.id} has no reason`).toBeGreaterThan(0);
     }
-    // The `examples.intro` scene composition declares permissive `S.unknown` I/O —
+    // The `examples.intro` scene composition declares permissive `schema.unknown` I/O —
     // it MUST land as an honest carve-out (root accepts every value), proving a
     // too-loose schema is surfaced, not silently swept as if strict. (Wave 8 moved
-    // its I/O from effect `Schema.Unknown` to the native `S.unknown` kernel schema, so
+    // its I/O from effect `Schema.Unknown` to the native `schema.unknown` kernel schema, so
     // the carve-out reason shifted from "not a kernel schema" to "accepts every value".)
     expect(
       skipped.some((s) => s.id.startsWith('examples.intro') && s.reason.includes('root accepts every value')),
@@ -245,9 +245,9 @@ describe('schema strictness — coverage floors (scar S1.1)', () => {
 // ── RED-PROVE — the EdgeSeed tuple→array widening the scar names ─────────────
 
 describe('schema strictness — EdgeSeed widening red-prove (scar S1.1)', () => {
-  it('the derived tuple arity near-miss distinguishes a tuple from its S.array twin', () => {
-    const tuplePair = S.tuple(S.number, S.number); // the correct, strict shape
-    const arrayTwin = S.array(S.number); // the silent EdgeSeed widening
+  it('the derived tuple arity near-miss distinguishes a tuple from its schema.array twin', () => {
+    const tuplePair = schema.tuple(schema.number, schema.number); // the correct, strict shape
+    const arrayTwin = schema.array(schema.number); // the silent EdgeSeed widening
     const seed: readonly number[] = [1, 2];
 
     const nearMisses = deriveNearMisses(tuplePair, seed);
@@ -271,7 +271,7 @@ describe('schema strictness — EdgeSeed widening red-prove (scar S1.1)', () => 
       }
     }
 
-    // The S.array twin SWALLOWS both — every element is a number. So had the tuple
+    // The schema.array twin SWALLOWS both — every element is a number. So had the tuple
     // been silently widened to its array twin, these near-misses would stop being
     // rejected and the sweep above would go RED. That is precisely the EdgeSeed blind
     // spot this scar closes: happy-path tests never notice, the near-miss suite does.

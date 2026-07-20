@@ -67,7 +67,7 @@ export type EdgeHostCacheTags =
  * required.
  */
 export interface EdgeHostBoundaryConfig {
-  /** Content address of the boundary being compiled (`Boundary.make`'s `id`). */
+  /** Content address of the boundary being compiled (`defineBoundary`'s `id`). */
   readonly boundaryId: ContentAddress;
   /**
    * Build-derived outputs keyed by {@link TierKey} -- the `outputsByTier`
@@ -107,7 +107,7 @@ export interface EdgeHostCacheConfig {
   /** KV namespace backing the boundary cache. */
   readonly kv: KVNamespace;
   /**
-   * Content address of the boundary being compiled (`Boundary.make`'s
+   * Content address of the boundary being compiled (`defineBoundary`'s
    * `id`). Single-boundary form; exclusive with `boundaries`.
    */
   readonly boundaryId?: ContentAddress;
@@ -310,7 +310,7 @@ function normalizeBoundaries(cache: EdgeHostCacheConfig): readonly NormalizedBou
     throw ValidationError(
       'host-adapter',
       'EdgeHostCacheConfig identifies no boundary: neither `boundaryId` (single form) nor `boundaries` (multi form) was provided. ' +
-        'Fix: pass `boundaryId: Boundary.make(...).id` with `precompiled`/`compile`, or a `boundaries` record keyed by name.',
+        'Fix: pass `boundaryId: defineBoundary(...).id` with `precompiled`/`compile`, or a `boundaries` record keyed by name.',
     );
   }
   if (!cache.precompiled && !cache.compile) {
@@ -373,7 +373,7 @@ async function resolveBoundaryOutputs(
     return { boundaryId: source.boundaryId, compiledOutputs: precompiled, ...withAssetUrl, cacheStatus: 'precompiled' };
   }
   // The boundary NAME qualifies the KV key: two names can share one
-  // ContentAddress (same Boundary.make definition) while their @quantize
+  // ContentAddress (same defineBoundary definition) while their @quantize
   // CSS differs — id+tier alone would let the first compile serve both.
   const qualifier = name ?? undefined;
   // The resolved theme is a real input to a compiled output (compile may bake

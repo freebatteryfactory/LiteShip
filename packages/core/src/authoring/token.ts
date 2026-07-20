@@ -28,24 +28,6 @@ interface TokenDef<N extends string = string, Axes extends readonly string[] = r
   readonly cssProperty: `--${string}`;
 }
 
-interface TokenFactory {
-  make<N extends string>(config: {
-    readonly name: N;
-    readonly category: TokenCategory;
-    /** Single-value shorthand — derives `axes: []`, `values: {}`, `fallback: value`. */
-    readonly value: unknown;
-  }): TokenDef<N, readonly []>;
-  make<N extends string, const A extends readonly [string, ...string[]] = readonly ['default']>(config: {
-    readonly name: N;
-    readonly category: TokenCategory;
-    /** Default: ['default'] — single-value tokens need no axis declaration. */
-    readonly axes?: A;
-    readonly values: Record<string, unknown>;
-    /** Default: derived from values.default when omitted; omitting both is a validation error. */
-    readonly fallback?: unknown;
-  }): TokenDef<N, A>;
-}
-
 function deterministicId(
   name: string,
   category: string,
@@ -81,7 +63,7 @@ function deterministicId(
  *
  * @example
  * ```ts
- * const token = Token.make({
+ * const token = defineToken({
  *   name: 'primary', category: 'color',
  *   axes: ['theme'],
  *   values: { 'light': '#000', 'dark': '#fff' },
@@ -114,7 +96,7 @@ function _tap<T = unknown>(token: TokenDef, axisValues: Record<string, string>):
  *
  * @example
  * ```ts
- * const token = Token.make({
+ * const token = defineToken({
  *   name: 'primary', category: 'color',
  *   axes: ['theme'],
  *   values: { 'light': '#000' },
@@ -136,9 +118,9 @@ function _cssVar<N extends string>(token: TokenDef<N>): `var(--liteship-${N})` {
  *
  * @example
  * ```ts
- * import { Token } from '@liteship/core';
+ * import { defineToken, Token } from '@liteship/core';
  *
- * const spacing = Token.make({
+ * const spacing = defineToken({
  *   name: 'gap', category: 'spacing',
  *   axes: ['density'],
  *   values: { 'compact': '4px', 'comfortable': '8px' },
@@ -150,129 +132,152 @@ function _cssVar<N extends string>(token: TokenDef<N>): `var(--liteship-${N})` {
  * // cssRef === 'var(--liteship-gap)'
  * ```
  */
-export const Token: TokenFactory & {
-  tap: typeof _tap;
-  cssVar: typeof _cssVar;
-} = {
-  /**
-   * Create a new TokenDef from a configuration object.
-   *
-   * The token is content-addressed via FNV-1a hash of its name, category,
-   * axes, and values. The resulting object is frozen.
-   *
-   * `axes` defaults to `['default']` and `fallback` derives from
-   * `values.default` when omitted, so a single-value token is just
-   * `Token.make({ name, category, values: { default: '#ccc' } })`.
-   *
-   * Multi-axis value keys join one value per axis with ':' in alphabetical
-   * axis-name order — for `axes: ['theme', 'contrast']` the key order is
-   * `<contrast>:<theme>` (contrast sorts first).
-   *
-   * @example
-   * ```ts
-   * const token = Token.make({
-   *   name: 'bg', category: 'color',
-   *   axes: ['theme', 'contrast'],
-   *   values: { 'normal:light': '#fff', 'normal:dark': '#111' },
-   *   fallback: '#ccc',
-   * });
-   * // token._tag === 'TokenDef'
-   * // token.cssProperty === '--liteship-bg'
-   * ```
-   */
-  make<N extends string, const A extends readonly [string, ...string[]] = readonly ['default']>(
-    config:
-      | {
-          readonly name: N;
-          readonly category: TokenCategory;
-          readonly value: unknown;
-        }
-      | {
-          readonly name: N;
-          readonly category: TokenCategory;
-          readonly axes?: A;
-          readonly values: Record<string, unknown>;
-          readonly fallback?: unknown;
-        },
-  ): TokenDef<N, A> {
-    if ('value' in config && !('values' in config)) {
-      const simple = config as { name: N; category: TokenCategory; value: unknown };
-      if (simple.name === '') {
-        throw ValidationError('Token.make', 'Token name must not be empty.');
+/**
+ * Define a design token — a named design value that varies across axes (theme,
+ * density, contrast, …).
+ *
+ * The token is content-addressed via FNV-1a hash of its name, category, axes,
+ * and values. The resulting object is frozen.
+ *
+ * `axes` defaults to `['default']` and `fallback` derives from `values.default`
+ * when omitted, so a single-value token is just
+ * `defineToken({ name, category, values: { default: '#ccc' } })`.
+ *
+ * Multi-axis value keys join one value per axis with ':' in alphabetical
+ * axis-name order — for `axes: ['theme', 'contrast']` the key order is
+ * `<contrast>:<theme>` (contrast sorts first).
+ *
+ * @example
+ * ```ts
+ * const token = defineToken({
+ *   name: 'bg', category: 'color',
+ *   axes: ['theme', 'contrast'],
+ *   values: { 'normal:light': '#fff', 'normal:dark': '#111' },
+ *   fallback: '#ccc',
+ * });
+ * // token._tag === 'TokenDef'
+ * // token.cssProperty === '--liteship-bg'
+ * ```
+ */
+export function defineToken<N extends string>(config: {
+  readonly name: N;
+  readonly category: TokenCategory;
+  /** Single-value shorthand — derives `axes: []`, `values: {}`, `fallback: value`. */
+  readonly value: unknown;
+}): TokenDef<N, readonly []>;
+export function defineToken<
+  N extends string,
+  const A extends readonly [string, ...string[]] = readonly ['default'],
+>(config: {
+  readonly name: N;
+  readonly category: TokenCategory;
+  /** Default: ['default'] — single-value tokens need no axis declaration. */
+  readonly axes?: A;
+  readonly values: Record<string, unknown>;
+  /** Default: derived from values.default when omitted; omitting both is a validation error. */
+  readonly fallback?: unknown;
+}): TokenDef<N, A>;
+export function defineToken<N extends string, const A extends readonly [string, ...string[]] = readonly ['default']>(
+  config:
+    | {
+        readonly name: N;
+        readonly category: TokenCategory;
+        readonly value: unknown;
       }
-      const axes = [] as unknown as A;
-      const values = {};
-      const fallback = simple.value;
-      const id = deterministicId(simple.name, simple.category, axes, values, fallback);
-      return Object.freeze({
-        _tag: 'TokenDef' as const,
-        _version: 1 as const,
-        id,
-        name: simple.name,
-        category: simple.category,
-        axes,
-        values,
-        fallback,
-        cssProperty: `--liteship-${simple.name}` as const,
-      });
+    | {
+        readonly name: N;
+        readonly category: TokenCategory;
+        readonly axes?: A;
+        readonly values: Record<string, unknown>;
+        readonly fallback?: unknown;
+      },
+): TokenDef<N, A> {
+  if ('value' in config && !('values' in config)) {
+    const simple = config as { name: N; category: TokenCategory; value: unknown };
+    if (simple.name === '') {
+      throw ValidationError('defineToken', 'Token name must not be empty.');
     }
-
-    const full = config as {
-      readonly name: N;
-      readonly category: TokenCategory;
-      readonly axes?: A;
-      readonly values: Record<string, unknown>;
-      readonly fallback?: unknown;
-    };
-    if (full.name === '') {
-      throw ValidationError('Token.make', 'Token name must not be empty.');
-    }
-    const axes = (full.axes ?? ['default']) as A;
-    const seen = new Set<string>();
-    for (const axis of axes) {
-      if (seen.has(axis)) {
-        throw ValidationError('Token.make', `duplicate axis "${axis}". Each axis must have a unique name.`);
-      }
-      seen.add(axis);
-    }
-
-    const sortedAxes = [...axes].sort();
-    for (const key of Object.keys(full.values)) {
-      const segments = key.split(':').length;
-      if (segments !== axes.length) {
-        throw ValidationError(
-          'Token.make',
-          `values key "${key}" has ${segments} segment(s) but the token declares ${axes.length} axes [${axes.join(', ')}]. ` +
-            `Keys join one value per axis with ':' in alphabetical axis-name order — e.g. "${sortedAxes.map((axis) => `<${axis}>`).join(':')}".`,
-        );
-      }
-    }
-
-    let fallback = full.fallback;
-    if (!('fallback' in full)) {
-      if (!('default' in full.values)) {
-        throw ValidationError(
-          'Token.make',
-          'fallback omitted and values has no "default" key — add values.default or pass fallback explicitly.',
-        );
-      }
-      fallback = full.values['default'];
-    }
-
-    const id = deterministicId(full.name, full.category, axes, full.values, fallback);
-
+    const axes = [] as unknown as A;
+    const values = {};
+    const fallback = simple.value;
+    const id = deterministicId(simple.name, simple.category, axes, values, fallback);
     return Object.freeze({
       _tag: 'TokenDef' as const,
       _version: 1 as const,
       id,
-      name: full.name,
-      category: full.category,
+      name: simple.name,
+      category: simple.category,
       axes,
-      values: full.values,
+      values,
       fallback,
-      cssProperty: `--liteship-${full.name}` as const,
+      cssProperty: `--liteship-${simple.name}` as const,
     });
-  },
+  }
+
+  const full = config as {
+    readonly name: N;
+    readonly category: TokenCategory;
+    readonly axes?: A;
+    readonly values: Record<string, unknown>;
+    readonly fallback?: unknown;
+  };
+  if (full.name === '') {
+    throw ValidationError('defineToken', 'Token name must not be empty.');
+  }
+  const axes = (full.axes ?? ['default']) as A;
+  const seen = new Set<string>();
+  for (const axis of axes) {
+    if (seen.has(axis)) {
+      throw ValidationError('defineToken', `duplicate axis "${axis}". Each axis must have a unique name.`);
+    }
+    seen.add(axis);
+  }
+
+  const sortedAxes = [...axes].sort();
+  for (const key of Object.keys(full.values)) {
+    const segments = key.split(':').length;
+    if (segments !== axes.length) {
+      throw ValidationError(
+        'defineToken',
+        `values key "${key}" has ${segments} segment(s) but the token declares ${axes.length} axes [${axes.join(', ')}]. ` +
+          `Keys join one value per axis with ':' in alphabetical axis-name order — e.g. "${sortedAxes.map((axis) => `<${axis}>`).join(':')}".`,
+      );
+    }
+  }
+
+  let fallback = full.fallback;
+  if (!('fallback' in full)) {
+    if (!('default' in full.values)) {
+      throw ValidationError(
+        'defineToken',
+        'fallback omitted and values has no "default" key — add values.default or pass fallback explicitly.',
+      );
+    }
+    fallback = full.values['default'];
+  }
+
+  const id = deterministicId(full.name, full.category, axes, full.values, fallback);
+
+  return Object.freeze({
+    _tag: 'TokenDef' as const,
+    _version: 1 as const,
+    id,
+    name: full.name,
+    category: full.category,
+    axes,
+    values: full.values,
+    fallback,
+    cssProperty: `--liteship-${full.name}` as const,
+  });
+}
+
+/**
+ * Token — the resolution namespace for a {@link Token} definition. Construction
+ * lives in the standalone {@link defineToken}; this object carries
+ * {@link Token.tap} (resolve a value for given axis values) and
+ * {@link Token.cssVar} (the `var(--liteship-<name>)` reference).
+ */
+export const Token = {
   tap: _tap,
   cssVar: _cssVar,
 };

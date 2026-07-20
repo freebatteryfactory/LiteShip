@@ -6,7 +6,7 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Boundary, Millis, CellKernel } from '@liteship/core';
+import { Boundary, Millis, CellKernel, defineBoundary } from '@liteship/core';
 import type { ReactiveQuantizer, BoundaryCrossing } from '@liteship/core';
 import { AnimatedQuantizer } from '@liteship/quantizer';
 import type { TransitionMap } from '@liteship/quantizer';
@@ -37,7 +37,7 @@ function makeMockQuantizer(boundary: Boundary, initialState: string) {
   };
 }
 
-const widthBoundary = Boundary.make({
+const widthBoundary = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'mobile'],

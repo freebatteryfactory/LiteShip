@@ -1,7 +1,7 @@
 /**
  * Config -- unified project configuration hub.
  *
- * Config.make() produces a frozen, FNV-1a content-addressed Config.
+ * defineConfig() produces a frozen, FNV-1a content-addressed Config.
  * Projection functions are pure — no side effects, no I/O.
  */
 
@@ -44,40 +44,12 @@ export interface AstroConfig {
 
 /**
  * Config namespace — the single hub that every liteship adapter (Vite, Astro, test
- * runners, edge runtime) projects from. {@link Config.make} produces a frozen,
- * FNV-1a content-addressed {@link Config}; every projection function
- * (`toViteConfig`, `toAstroConfig`, `toTestAliases`) is pure.
+ * runners, edge runtime) projects from. Construction lives in the standalone
+ * {@link defineConfig}, which produces a frozen, FNV-1a content-addressed
+ * {@link Config}; every projection function here (`toViteConfig`, `toAstroConfig`,
+ * `toTestAliases`) is pure.
  */
 export const Config = {
-  /** Build a frozen, content-addressed {@link Config} from raw input. */
-  make(input: Config.Input): Config {
-    // CUT B5a — mint the internal identity through the CanonicalCbor doctrine
-    // (RFC 8949 §4.2.1, recursive key sort, always-float64), the same path as
-    // every other `fnv1a:` content address. This replaces the old top-level-only
-    // `JSON.stringify` sort, which left nested non-`id` fields insertion-order
-    // dependent. CanonicalCbor sorts keys recursively, so no manual sort is needed.
-    const id = fnv1aBytes(
-      CanonicalCbor.encode({
-        boundaries: input.boundaries ?? {},
-        tokens: input.tokens ?? {},
-        themes: input.themes ?? {},
-        styles: input.styles ?? {},
-        vite: input.vite,
-        astro: input.astro,
-      }),
-    );
-    return Object.freeze({
-      _tag: 'ConfigDef' as const,
-      id,
-      boundaries: input.boundaries ?? {},
-      tokens: input.tokens ?? {},
-      themes: input.themes ?? {},
-      styles: input.styles ?? {},
-      vite: input.vite,
-      astro: input.astro,
-    });
-  },
-
   /** Project the Vite-plugin slice of a config for `@liteship/vite`. */
   toViteConfig(cfg: Config): PluginConfig {
     return {
@@ -139,7 +111,7 @@ export const Config = {
   },
 };
 
-/** Frozen, content-addressed result of {@link Config.make}. */
+/** Frozen, content-addressed result of {@link defineConfig}. */
 export interface Config {
   readonly _tag: 'ConfigDef';
   readonly id: ContentAddress;
@@ -151,19 +123,45 @@ export interface Config {
   readonly astro?: Partial<AstroConfig>;
 }
 
-export declare namespace Config {
-  /** Raw user-facing input to {@link Config.make} — every field is optional. */
-  interface Input {
-    readonly boundaries?: Record<string, Boundary>;
-    readonly tokens?: Record<string, Token>;
-    readonly themes?: Record<string, Theme>;
-    readonly styles?: Record<string, Style>;
-    readonly vite?: Partial<PluginConfig>;
-    readonly astro?: Partial<AstroConfig>;
-  }
+/** Raw user-facing input to {@link defineConfig} — every field is optional. */
+export interface ConfigInput {
+  readonly boundaries?: Record<string, Boundary>;
+  readonly tokens?: Record<string, Token>;
+  readonly themes?: Record<string, Theme>;
+  readonly styles?: Record<string, Style>;
+  readonly vite?: Partial<PluginConfig>;
+  readonly astro?: Partial<AstroConfig>;
 }
 
-/** Thin alias for {@link Config.make} — matches the `defineConfig(...)` ergonomics other tools use. */
-export function defineConfig(input: Config.Input): Config {
-  return Config.make(input);
+/**
+ * Define a liteship {@link Config} — the single project-configuration hub every
+ * adapter (Vite, Astro, test runners, edge runtime) projects from. Produces a
+ * frozen, FNV-1a content-addressed value from raw {@link ConfigInput}.
+ */
+export function defineConfig(input: ConfigInput): Config {
+  // CUT B5a — mint the internal identity through the CanonicalCbor doctrine
+  // (RFC 8949 §4.2.1, recursive key sort, always-float64), the same path as
+  // every other `fnv1a:` content address. This replaces the old top-level-only
+  // `JSON.stringify` sort, which left nested non-`id` fields insertion-order
+  // dependent. CanonicalCbor sorts keys recursively, so no manual sort is needed.
+  const id = fnv1aBytes(
+    CanonicalCbor.encode({
+      boundaries: input.boundaries ?? {},
+      tokens: input.tokens ?? {},
+      themes: input.themes ?? {},
+      styles: input.styles ?? {},
+      vite: input.vite,
+      astro: input.astro,
+    }),
+  );
+  return Object.freeze({
+    _tag: 'ConfigDef' as const,
+    id,
+    boundaries: input.boundaries ?? {},
+    tokens: input.tokens ?? {},
+    themes: input.themes ?? {},
+    styles: input.styles ?? {},
+    vite: input.vite,
+    astro: input.astro,
+  });
 }

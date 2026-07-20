@@ -28,7 +28,7 @@
  * @module
  */
 
-import { Boundary } from '@liteship/core';
+import { Boundary, defineBoundary } from '@liteship/core';
 import { buildTransitionFacts, type TransitionRun } from '@liteship/audit';
 import { CanonicalCbor, sha256Hex } from '@liteship/canonical';
 import type { TransitionFacts } from '@liteship/gauntlet';
@@ -50,7 +50,7 @@ import {
 // ---------------------------------------------------------------------------
 
 /** The Timeline boundary projection: elapsed ms → the discrete state string. */
-export const CAPTURE_BOUNDARY = Boundary.make({
+export const CAPTURE_BOUNDARY = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'idle'],

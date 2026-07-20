@@ -25,11 +25,11 @@
  * honours that thunk ahead of structural derivation — the canonical way to sample
  * a narrow valid domain a structural walk can't reach. This is the SANCTIONED path
  * for the two node families structural walking must refuse:
- *   - `bytes` — an opaque binary carrier (`S.bytes(Uint8Array)`): random bytes
+ *   - `bytes` — an opaque binary carrier (`schema.bytes(Uint8Array)`): random bytes
  *     conform to the carrier yet miss the handler's real domain (canonical CBOR
  *     bytes ⊂ `Uint8Array`), so the author attaches a generator that samples the
  *     valid subset.
- *   - `brand` — a nominal refinement (`S.brand(base, smartConstructor)`): a brand
+ *   - `brand` — a nominal refinement (`schema.brand(base, smartConstructor)`): a brand
  *     narrows to a valid SUBSET, so sampling the wider base and hoping it passes
  *     the smart constructor would be silent widening; the author attaches a
  *     generator that produces valid branded values.

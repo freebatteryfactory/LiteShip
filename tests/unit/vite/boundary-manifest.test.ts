@@ -3,7 +3,7 @@
  *
  * `collectBoundaryManifest` scans a project for boundary definition
  * modules and `@quantize` CSS blocks, then derives the manifest behind
- * `virtual:liteship/boundaries`: real `Boundary.make` content addresses plus
+ * `virtual:liteship/boundaries`: real `defineBoundary` content addresses plus
  * precompiled outputs for the full (motion x design) tier grid.
  */
 
@@ -13,7 +13,7 @@ import { join } from 'node:path';
 import { captureDiagnosticsAsync } from '../../helpers/diagnostics.js';
 import { tmpdir } from 'node:os';
 import type { ContentAddress } from '@liteship/core';
-import { Boundary, Diagnostics } from '@liteship/core';
+import { Diagnostics, defineBoundary } from '@liteship/core';
 import { createBoundaryCache, enumerateTierKeys, resolveOutputsByTier, tierKey } from '@liteship/edge';
 import type { KVNamespace } from '@liteship/edge';
 import { symlinkUnprivileged } from '../../helpers/capabilities.js';
@@ -80,7 +80,7 @@ afterEach(() => {
  * Reference boundary mirroring the fixture module below -- the manifest
  * id must equal this minted address (ADR-0003 identity law).
  */
-const referenceBoundary = Boundary.make({
+const referenceBoundary = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'compact'],
@@ -345,7 +345,7 @@ ${Object.entries(attrs)
 
     expect(Object.keys(manifest)).toEqual(['viewport']);
     const entry = manifest['viewport']!;
-    // Identity is derived, never hand-typed: same address Boundary.make mints.
+    // Identity is derived, never hand-typed: same address defineBoundary mints.
     expect(entry.id).toBe(referenceBoundary.id);
     expect(entry.id).toMatch(/^fnv1a:[0-9a-f]{8}$/);
 
@@ -456,7 +456,7 @@ ${Object.entries(attrs)
   test('viewport.height boundaries carry their own :root size containment and (height ...) queries', async () => {
     const root = makeTempDir();
     const srcDir = join(root, 'src');
-    const heightBoundary = Boundary.make({
+    const heightBoundary = defineBoundary({
       input: 'viewport.height',
       at: [
         [0, 'short'],

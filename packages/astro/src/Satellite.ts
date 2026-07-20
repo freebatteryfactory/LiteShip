@@ -165,6 +165,6 @@ export function satelliteAttrs(props: SatelliteProps): Record<string, string> {
  * `resolveInitialState` from `./quantize.js` instead.
  */
 export function resolveInitialStateFallback(boundary: Boundary): string {
-  // Boundary.make() guarantees at least one state for every Boundary.
+  // defineBoundary() guarantees at least one state for every Boundary.
   return boundary.states[0]!;
 }

@@ -65,10 +65,10 @@ An [ARIACompileResult](../interfaces/ARIACompileResult.md) with validated state 
 #### Example
 
 ```ts
-import { Boundary } from '@liteship/core';
+import { defineBoundary } from '@liteship/core';
 import { ARIACompiler } from '@liteship/compiler';
 
-const boundary = Boundary.make({
+const boundary = defineBoundary({
   input: 'width',
   at: [[0, 'collapsed'], [768, 'expanded']],
 });
@@ -83,10 +83,10 @@ console.log(result.currentAttributes);
 ## Example
 
 ```ts
-import { Boundary } from '@liteship/core';
+import { defineBoundary } from '@liteship/core';
 import { ARIACompiler } from '@liteship/compiler';
 
-const boundary = Boundary.make({
+const boundary = defineBoundary({
   input: 'width',
   at: [[0, 'sm'], [768, 'lg']],
 });

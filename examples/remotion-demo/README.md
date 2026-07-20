@@ -26,5 +26,5 @@ pnpm build    # typecheck — the CI gate for this example
 - `src/setup.ts` precomputes every frame's `CompositeState` once (wired through
   Remotion's `calculateMetadata` in `src/Root.tsx`), so rendering indexes an
   array instead of re-running the compositor per frame.
-- It's the same `Boundary.make` the browser examples use — video is just
+- It's the same `defineBoundary` the browser examples use — video is just
   another cast surface.

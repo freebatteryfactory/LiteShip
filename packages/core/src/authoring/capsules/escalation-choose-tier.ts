@@ -35,7 +35,7 @@
 
 import type { ContentAddress } from '../../schema/brands.js';
 import { defineCapsule } from '../assembly.js';
-import { S } from '../../schema/constructors.js';
+import { schema } from '../../schema/constructors.js';
 import type { Infer } from '../../schema/infer.js';
 import type { Decision } from '../capsule.js';
 import { sealNode } from '../../graph/document-graph-address.js';
@@ -46,19 +46,24 @@ import { chooseTier, tierTargets, _resetEscalationMemo } from '../../evidence/es
 import type { EscalationResult, TierChoice } from '../../evidence/escalation.js';
 
 /** The five quality tiers, as a schema literal union the arbitrary fully supports. */
-const CapTierSchema = S.union(
-  S.literal('static'),
-  S.literal('styled'),
-  S.literal('reactive'),
-  S.literal('animated'),
-  S.literal('gpu'),
+const CapTierSchema = schema.union(
+  schema.literal('static'),
+  schema.literal('styled'),
+  schema.literal('reactive'),
+  schema.literal('animated'),
+  schema.literal('gpu'),
 );
 
 /** The four runtime sites, as a schema literal union. */
-const RuntimeSiteSchema = S.union(S.literal('node'), S.literal('browser'), S.literal('worker'), S.literal('edge'));
+const RuntimeSiteSchema = schema.union(
+  schema.literal('node'),
+  schema.literal('browser'),
+  schema.literal('worker'),
+  schema.literal('edge'),
+);
 
 /** Optional allocation class — the only budget axis with a categorical floor. */
-const AllocClassSchema = S.union(S.literal('zero'), S.literal('bounded'), S.literal('unbounded'));
+const AllocClassSchema = schema.union(schema.literal('zero'), schema.literal('bounded'), schema.literal('unbounded'));
 
 /**
  * Seed material the schema-arbitrary CAN produce: the policy's capability /
@@ -66,21 +71,21 @@ const AllocClassSchema = S.union(S.literal('zero'), S.literal('bounded'), S.lite
  * real {@link PolicyNode} from this and calls `chooseTier`. This IS the policyGate
  * SUBJECT — the typed thing the verdict is resolved against.
  */
-const EscalationSubject = S.struct({
+const EscalationSubject = schema.struct({
   /** The required {@link CapTier} — the tier ceiling the chooser starts at and only DOWNGRADES from. */
   requires: CapTierSchema,
   /** The granted tiers — a tier the chooser would pick must be granted here. */
-  grants: S.array(CapTierSchema),
+  grants: schema.array(CapTierSchema),
   /** The runtime sites the policy admits. */
-  sites: S.array(RuntimeSiteSchema),
+  sites: schema.array(RuntimeSiteSchema),
   /** The site the chooser decides on — may or may not be in `sites` (the deny path). */
   site: RuntimeSiteSchema,
   /** Optional p95 latency budget (ms) — below a tier's floor forces a downgrade. */
-  p95Ms: S.optional(S.number),
+  p95Ms: schema.optional(schema.number),
   /** Optional working-set budget (MB) — below a tier's floor forces a downgrade. */
-  memoryMb: S.optional(S.number),
+  memoryMb: schema.optional(schema.number),
   /** Optional allocation class — `'zero'` forbids the heap-hungry `gpu` tier. */
-  allocClass: S.optional(AllocClassSchema),
+  allocClass: schema.optional(AllocClassSchema),
 });
 
 type EscalationSubjectValue = Infer<typeof EscalationSubject>;
@@ -91,13 +96,13 @@ type EscalationSubjectValue = Infer<typeof EscalationSubject>;
  * round-trips every verdict through it (the policyGate analogue of the receipt
  * byte law).
  */
-const ReasonSchema = S.struct({
-  code: S.string,
-  message: S.string,
+const ReasonSchema = schema.struct({
+  code: schema.string,
+  message: schema.string,
 });
-const DecisionSchema = S.struct({
-  effect: S.union(S.literal('allow'), S.literal('deny')),
-  reasons: S.array(ReasonSchema),
+const DecisionSchema = schema.struct({
+  effect: schema.union(schema.literal('allow'), schema.literal('deny')),
+  reasons: schema.array(ReasonSchema),
 });
 
 /** Fixed volatile meta — excluded from the content address, so a constant is faithful. */

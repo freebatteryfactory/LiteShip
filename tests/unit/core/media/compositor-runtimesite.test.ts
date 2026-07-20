@@ -22,10 +22,10 @@
  */
 
 import { afterEach, describe, test, expect } from 'vitest';
-import { Boundary, Compositor, Cap, sealNode } from '@liteship/core';
+import { Boundary, Compositor, Cap, sealNode, defineBoundary } from '@liteship/core';
 import type { PolicyNode, RuntimeSite, CapTier, CapSet, CellMeta } from '@liteship/core';
 
-const widthBoundary = Boundary.make({
+const widthBoundary = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'mobile'],

@@ -25,7 +25,7 @@
  */
 import { describe, test, expect } from 'vitest';
 import fc from 'fast-check';
-import { Boundary, Compositor } from '@liteship/core';
+import { Boundary, Compositor, defineBoundary } from '@liteship/core';
 import { GLSLCompiler, WGSLCompiler } from '@liteship/compiler';
 
 // Boundary states are minted as `s0, s1, ...`, so the state literal carries its
@@ -34,7 +34,7 @@ const idxOf = (state: string): number => Number(state.slice(1));
 
 function makeBoundary(thresholds: readonly number[]) {
   const at = thresholds.map((t, i) => [t, `s${i}`] as const);
-  return Boundary.make({ input: 'viewport.width', at: at as never });
+  return defineBoundary({ input: 'viewport.width', at: at as never });
 }
 
 /** A live quantizer whose `evaluate(v)` re-derives state from the same boundary. */

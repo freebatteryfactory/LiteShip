@@ -21,19 +21,19 @@
  * @module
  */
 
-import { defineCapsule, Boundary, wgslIdent, S } from '@liteship/core';
-import type { Infer } from '@liteship/core';
+import { defineCapsule, wgslIdent, defineBoundary, schema } from '@liteship/core';
+import type { Infer, Boundary } from '@liteship/core';
 import { WGSLCompiler } from '../wgsl.js';
 import type { WGSLCompileResult } from '../wgsl.js';
 
 /** Seed material the schema-arbitrary CAN produce. `run` normalizes it. */
-const WGSLCompileSeed = S.struct({
+const WGSLCompileSeed = schema.struct({
   /** Candidate state names → deduped, ascending-thresholded boundary states. */
-  states: S.array(S.string),
+  states: schema.array(schema.string),
   /** Candidate field names → deduped authored struct-field key set. */
-  fields: S.array(S.string),
+  fields: schema.array(schema.string),
   /** Value matrix `values[stateIdx][fieldIdx]`; a short row omits the tail. */
-  values: S.array(S.array(S.number)),
+  values: schema.array(schema.array(schema.number)),
 });
 
 type WGSLCompileSeedValue = Infer<typeof WGSLCompileSeed>;
@@ -52,7 +52,7 @@ interface WGSLCompileOutput {
 /** Build a valid Boundary from a recorded (deduped) state-name list. */
 function makeBoundary(stateNames: readonly string[]): Boundary {
   const at = stateNames.map((name, i) => [i, name] as const);
-  return Boundary.make({
+  return defineBoundary({
     input: 'seed.signal',
     at: at as unknown as readonly [readonly [number, string]],
   }) as unknown as Boundary;
@@ -121,7 +121,7 @@ export const wgslCompileCapsule = defineCapsule({
   _kind: 'pureTransform',
   name: 'compiler.wgsl-compile',
   input: WGSLCompileSeed,
-  output: S.unknown,
+  output: schema.unknown,
   capabilities: { reads: [], writes: [] },
   invariants: [
     {

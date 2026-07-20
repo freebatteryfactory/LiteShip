@@ -1,11 +1,11 @@
 import { describe, expect, test, vi } from 'vitest';
-import { Boundary, Millis, CellKernel, StateName } from '@liteship/core';
+import { Millis, CellKernel, StateName, defineBoundary } from '@liteship/core';
 import type { BoundaryCrossing, ReactiveQuantizer } from '@liteship/core';
-import { AnimatedQuantizer, Q } from '@liteship/quantizer';
+import { AnimatedQuantizer, defineQuantizer, createQuantizer } from '@liteship/quantizer';
 import type { AnimatedQuantizerShape, InterpolatedFrame } from '@liteship/quantizer';
 
 function makeBoundary() {
-  return Boundary.make({
+  return defineBoundary({
     input: 'viewport.width',
     at: [
       [0, 'compact'],
@@ -367,13 +367,15 @@ describe('AnimatedQuantizer.make', () => {
 
   test('derives interpolation outputs from a LiveQuantizer config.outputs.css when outputs are omitted', async () => {
     const boundary = makeBoundary();
-    const config = Q.from(boundary).outputs({
-      css: {
-        compact: { opacity: '0', width: '10px' },
-        expanded: { opacity: '1', width: '20px' },
+    const config = defineQuantizer(boundary, {
+      outputs: {
+        css: {
+          compact: { opacity: '0', width: '10px' },
+          expanded: { opacity: '1', width: '20px' },
+        },
       },
     });
-    const { quantizer: live, lifetime: liveLifetime } = config.create();
+    const { quantizer: live, lifetime: liveLifetime } = createQuantizer(config);
     const { animated, lifetime } = AnimatedQuantizer.make(live, { '*': { duration: 0 } });
     const { settled, dispose } = collectN(animated, 1);
     live.evaluate(900); // compact -> expanded crossing
@@ -393,13 +395,15 @@ describe('AnimatedQuantizer.make', () => {
 
   test('explicit outputs still override derivation for a LiveQuantizer', async () => {
     const boundary = makeBoundary();
-    const config = Q.from(boundary).outputs({
-      css: {
-        compact: { opacity: '0.25' },
-        expanded: { opacity: '0.75' },
+    const config = defineQuantizer(boundary, {
+      outputs: {
+        css: {
+          compact: { opacity: '0.25' },
+          expanded: { opacity: '0.75' },
+        },
       },
     });
-    const { quantizer: live, lifetime: liveLifetime } = config.create();
+    const { quantizer: live, lifetime: liveLifetime } = createQuantizer(config);
     const { animated, lifetime } = AnimatedQuantizer.make(
       live,
       { '*': { duration: 0 } },

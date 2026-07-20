@@ -2,7 +2,7 @@
  * Self-measuring benchmark infrastructure.
  *
  * Implements the "benchmarks eat their own product" philosophy:
- * - Uses Boundary.make() for performance threshold classification
+ * - Uses defineBoundary() for performance threshold classification
  * - Competing implementations run on identical inputs
  * - Diagnostic output teaches, not just reports
  *
@@ -10,7 +10,7 @@
  */
 
 import { Bench } from 'tinybench';
-import { Boundary, Compositor, TokenBuffer, SpeculativeEvaluator } from '@liteship/core';
+import { Boundary, Compositor, TokenBuffer, SpeculativeEvaluator, defineBoundary } from '@liteship/core';
 import { evaluate } from '@liteship/quantizer';
 import { SPSCRing } from '@liteship/worker';
 import { classifyThroughputTier, throughputTierBadge } from '../../scripts/bench-format.ts';
@@ -21,7 +21,7 @@ const bench = new Bench({ warmupIterations: 200, iterations: 1000 });
 // Fixtures
 // ---------------------------------------------------------------------------
 
-const boundary3 = Boundary.make({
+const boundary3 = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'mobile'],
@@ -30,7 +30,7 @@ const boundary3 = Boundary.make({
   ] as const,
 });
 
-const boundary5 = Boundary.make({
+const boundary5 = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'xs'],
@@ -41,7 +41,7 @@ const boundary5 = Boundary.make({
   ] as const,
 });
 
-const boundaryHyst = Boundary.make({
+const boundaryHyst = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'mobile'],

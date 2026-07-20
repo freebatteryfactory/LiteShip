@@ -45,7 +45,7 @@
  * @module
  */
 
-import { Boundary, CellKernel, Compositor, TokenBuffer } from '@liteship/core';
+import { CellKernel, Compositor, TokenBuffer, defineBoundary } from '@liteship/core';
 import type { CompositeState } from '@liteship/core';
 import type { CompositorQuantizer } from '@liteship/core';
 import { InvariantViolationError } from '@liteship/error';
@@ -364,7 +364,7 @@ export const TRANSIENT_BUDGET_BYTES_PER_OP = 2;
  */
 export const TRANSIENT_SUBSCRIBER_BUDGET_BYTES_PER_OP = 16;
 
-const ALLOC_BOUNDARY = Boundary.make({
+const ALLOC_BOUNDARY = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'mobile'],

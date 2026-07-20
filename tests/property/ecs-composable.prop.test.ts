@@ -7,14 +7,15 @@
 
 import { describe, test } from 'vitest';
 import fc from 'fast-check';
-import { Boundary, Composable, ComposableWorld, Part, Style, Token, World } from '@liteship/core';
+import type { Style, Token} from '@liteship/core';
+import { Boundary, Composable, ComposableWorld, Part, World, defineBoundary, defineToken, defineStyle } from '@liteship/core';
 
 const arbThresholdPairs = fc
   .uniqueArray(fc.integer({ min: 0, max: 10000 }), { minLength: 2, maxLength: 5 })
   .map((vals) => vals.sort((a, b) => a - b).map((t, i) => [t, `s${i}`] as const));
 
 const arbBoundary = arbThresholdPairs.map((pairs) =>
-  Boundary.make({
+  defineBoundary({
     input: 'viewport.width',
     at: pairs as unknown as readonly [readonly [number, string], ...(readonly [number, string][])],
   }),
@@ -144,7 +145,7 @@ describe('ECS Composable Properties', () => {
         for (const hasBoundary of flags) {
           if (hasBoundary) {
             composableWorld.spawn({
-              boundary: Boundary.make({
+              boundary: defineBoundary({
                 input: 'viewport.width',
                 at: [
                   [0, 'a'],
@@ -154,7 +155,7 @@ describe('ECS Composable Properties', () => {
             });
           } else {
             composableWorld.spawn({
-              token: Token.make({
+              token: defineToken({
                 name: 'x',
                 category: 'color',
                 axes: ['themeLevel'] as const,
@@ -175,9 +176,9 @@ describe('ECS Composable Properties', () => {
   test('Style state selected by ComposableWorld.evaluate matches Boundary-selected state', () => {
     fc.assert(
       fc.property(arbThresholdPairs, fc.integer({ min: 0, max: 10000 }), (pairs, value) => {
-        const boundary = Boundary.make({ input: 'viewport.width', at: pairs as any });
+        const boundary = defineBoundary({ input: 'viewport.width', at: pairs as any });
         const chosen = Boundary.evaluate(boundary, value);
-        const style = Style.make({
+        const style = defineStyle({
           boundary,
           base: { properties: { padding: '0px' } },
           states: Object.fromEntries(
@@ -202,7 +203,7 @@ describe('ECS Composable Properties', () => {
         fc.string({ minLength: 1, maxLength: 8 }),
         fc.string({ minLength: 1, maxLength: 8 }),
         (dark, light) => {
-          const token = Token.make({
+          const token = defineToken({
             name: 'primary',
             category: 'color',
             axes: ['themeLevel'] as const,

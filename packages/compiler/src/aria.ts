@@ -70,10 +70,10 @@ function validateAttributes(attrs: Record<string, string>, stateName: string): R
  *
  * @example
  * ```ts
- * import { Boundary } from '@liteship/core';
+ * import { defineBoundary } from '@liteship/core';
  * import { ARIACompiler } from '@liteship/compiler';
  *
- * const boundary = Boundary.make({
+ * const boundary = defineBoundary({
  *   input: 'width',
  *   at: [[0, 'collapsed'], [768, 'expanded']],
  * });
@@ -131,10 +131,10 @@ function compile<B extends Boundary>(
  *
  * @example
  * ```ts
- * import { Boundary } from '@liteship/core';
+ * import { defineBoundary } from '@liteship/core';
  * import { ARIACompiler } from '@liteship/compiler';
  *
- * const boundary = Boundary.make({
+ * const boundary = defineBoundary({
  *   input: 'width',
  *   at: [[0, 'sm'], [768, 'lg']],
  * });

@@ -28,7 +28,7 @@
 
 import type { ContentAddress } from '../../schema/brands.js';
 import { defineCapsule } from '../assembly.js';
-import { S } from '../../schema/constructors.js';
+import { schema } from '../../schema/constructors.js';
 import type { Infer } from '../../schema/infer.js';
 import { sealGraph, sealNode } from '../../graph/document-graph-address.js';
 import { GraphPatch } from '../../graph/graph-patch.js';
@@ -39,20 +39,20 @@ import type { CellMeta } from '../../schema/protocol.js';
  * Seed material the schema-arbitrary CAN produce (String/Tuple/Number are all
  * fully supported AST nodes): two graphs described by their signal-axis name
  * lists plus acyclic edge index pairs. An edge is a fixed-arity
- * `S.tuple(S.number, S.number)` whose two positions `run` reads as `[i, j]`
+ * `schema.tuple(schema.number, schema.number)` whose two positions `run` reads as `[i, j]`
  * (arity 2 is decode-enforced). `run` seals these into real graphs.
  */
-const EdgeSeed = S.tuple(S.number, S.number);
+const EdgeSeed = schema.tuple(schema.number, schema.number);
 
-const GraphSeed = S.struct({
+const GraphSeed = schema.struct({
   /** Signal-axis names → one sealed `SignalNode` per DISTINCT name. */
-  inputs: S.array(S.string),
+  inputs: schema.array(schema.string),
   /** `[i, j]` index pairs → a `from`→`to` edge between sealed nodes (normalized acyclic). */
-  edges: S.array(EdgeSeed),
+  edges: schema.array(EdgeSeed),
 });
 
 /** The capsule input: seeds for the two graphs the round-trip carries between. */
-const GraphPatchIdentityInput = S.struct({
+const GraphPatchIdentityInput = schema.struct({
   a: GraphSeed,
   b: GraphSeed,
 });
@@ -98,7 +98,7 @@ function buildGraph(seed: GraphSeedValue): DocumentGraph {
   const edgeKeys = new Set<string>();
   if (nodes.length >= 2) {
     for (const pair of seed.edges) {
-      // An edge seed is an `S.tuple(S.number, S.number)`: decode enforces arity 2,
+      // An edge seed is an `schema.tuple(schema.number, schema.number)`: decode enforces arity 2,
       // so both `[i, j]` positions are present numbers.
       const [rawI, rawJ] = pair;
       const i = Math.abs(Math.trunc(rawI)) % nodes.length;
@@ -181,7 +181,7 @@ export const graphPatchIdentityCapsule = defineCapsule({
   _kind: 'pureTransform',
   name: 'core.graph-patch-identity',
   input: GraphPatchIdentityInput,
-  output: S.unknown,
+  output: schema.unknown,
   capabilities: { reads: [], writes: [] },
   invariants: [
     {

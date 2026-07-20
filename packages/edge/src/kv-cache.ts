@@ -9,7 +9,7 @@
  * @module
  */
 
-import { Diagnostics, contentAddressOf, decodeLenient, S, type ContentAddress } from '@liteship/core';
+import { Diagnostics, contentAddressOf, decodeLenient, type ContentAddress, schema } from '@liteship/core';
 import { ValidationError } from '@liteship/error';
 import type { EdgeTierResult } from './edge-tier.js';
 import { tierKey } from './manifest.js';
@@ -132,7 +132,7 @@ export interface BoundaryCache {
   /**
    * `qualifier` joins the key when two NAMES share one boundary
    * `ContentAddress` but carry different compiled CSS (the same
-   * `Boundary.make` definition referenced by two `@quantize` blocks) —
+   * `defineBoundary` definition referenced by two `@quantize` blocks) —
    * without it, the first name's compile result would serve every name.
    * `themeFp` likewise segregates outputs compiled under different resolved
    * themes (a per-request theme is a real input to the cached CSS).
@@ -419,14 +419,14 @@ function asWGSLUniformValue(value: unknown): WGSLUniformValue | undefined {
 // this file's own degradation policy.
 
 /** GLSL uniform values map — numeric leaves (`NaN`/`Infinity` ride through, as before). */
-const UniformValuesSchema = S.record(S.number);
+const UniformValuesSchema = schema.record(schema.number);
 
 /** Per-state GLSL uniforms — `state → (u_* → number)`. */
-const NestedUniformValuesSchema = S.record(UniformValuesSchema);
+const NestedUniformValuesSchema = schema.record(UniformValuesSchema);
 
 /** A WGSL binding value leaf: coerce-or-reject through {@link asWGSLUniformValue}. */
-const WGSLUniformValueSchema = S.brand(
-  S.unknown,
+const WGSLUniformValueSchema = schema.brand(
+  schema.unknown,
   (candidate: unknown): WGSLUniformValue => {
     const parsed = asWGSLUniformValue(candidate);
     if (parsed === undefined) {
@@ -438,22 +438,22 @@ const WGSLUniformValueSchema = S.brand(
 );
 
 /** A WGSL binding values map — `field → WGSLUniformValue`. */
-const WGSLBindingValuesSchema = S.record(WGSLUniformValueSchema);
+const WGSLBindingValuesSchema = schema.record(WGSLUniformValueSchema);
 
 /** Per-state WGSL bindings — `state → (field → WGSLUniformValue)`. */
-const NestedWGSLBindingValuesSchema = S.record(WGSLBindingValuesSchema);
+const NestedWGSLBindingValuesSchema = schema.record(WGSLBindingValuesSchema);
 
 /** GLSL cast head — the required `declarations` preamble (emptiness judged by the caller). */
-const GLSLCastHeadSchema = S.struct({ declarations: S.string });
+const GLSLCastHeadSchema = schema.struct({ declarations: schema.string });
 
 /** WGSL cast shape — preamble + default binding values. */
-const WGSLCastSchema = S.struct({ declarations: S.string, bindingValues: WGSLBindingValuesSchema });
+const WGSLCastSchema = schema.struct({ declarations: schema.string, bindingValues: WGSLBindingValuesSchema });
 
 /** Compiled-outputs entry head — the three required fields that carry the outer shape. */
-const CompiledEntryHeadSchema = S.struct({
-  css: S.unknown,
-  propertyRegistrations: S.unknown,
-  containerQueries: S.unknown,
+const CompiledEntryHeadSchema = schema.struct({
+  css: schema.unknown,
+  propertyRegistrations: schema.unknown,
+  containerQueries: schema.unknown,
 });
 
 /**
@@ -531,12 +531,12 @@ function parseWGSLShaderCast(value: unknown): CompiledWGSLOutput | null {
  * @example
  * ```ts
  * import { KVCache, EdgeTier } from '@liteship/edge';
- * import { Boundary } from '@liteship/core';
+ * import { defineBoundary } from '@liteship/core';
  *
  * const kv = { get: async (k: string) => null, put: async (k: string, v: string) => {} };
  * const cache = KVCache.createBoundaryCache(kv, { ttl: 3600, prefix: 'myapp' });
  *
- * const myBoundary = Boundary.make({
+ * const myBoundary = defineBoundary({
  *   input: 'viewport.width',
  *   at: [[0, 'compact'], [768, 'wide']],
  * });

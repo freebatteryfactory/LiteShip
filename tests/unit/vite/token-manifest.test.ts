@@ -10,7 +10,7 @@ import { afterEach, describe, expect, test } from 'vitest';
 import { mkdtempSync, mkdirSync, rmSync, symlinkSync, utimesSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { Diagnostics, Token, Theme } from '@liteship/core';
+import { Diagnostics, defineToken, defineTheme } from '@liteship/core';
 import { symlinkUnprivileged } from '../../helpers/capabilities.js';
 import {
   collectTokenManifest,
@@ -40,8 +40,8 @@ afterEach(() => {
   }
 });
 
-const referenceToken = Token.make({ name: 'accent', category: 'color', value: '#4f46e5' });
-const referenceTheme = Theme.make({
+const referenceToken = defineToken({ name: 'accent', category: 'color', value: '#4f46e5' });
+const referenceTheme = defineTheme({
   name: 'brand',
   variants: ['light', 'dark'] as const,
   tokens: { accent: { light: '#4f46e5', dark: '#818cf8' } },

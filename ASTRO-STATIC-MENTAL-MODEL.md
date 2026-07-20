@@ -85,7 +85,7 @@ A boundary names where one experience becomes another, not where one number beco
 Example:
 
 ```ts
-Boundary.make({
+defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'stacked'],

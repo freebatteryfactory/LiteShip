@@ -3,14 +3,14 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Boundary, Composable, ComposableWorld, Style, Token, World } from '@liteship/core';
+import { Composable, ComposableWorld, World, defineBoundary, defineToken, defineStyle } from '@liteship/core';
 
-const boundary = Boundary.make({
+const boundary = defineBoundary({
   input: 'viewport.width',
   at: [[0, 'mobile'], [768, 'tablet'], [1024, 'desktop']],
 });
 
-const token = Token.make({
+const token = defineToken({
   name: 'primary',
   category: 'color',
   axes: ['themeLevel'] as const,
@@ -21,7 +21,7 @@ const token = Token.make({
   fallback: '#00e5ff',
 });
 
-const style = Style.make({
+const style = defineStyle({
   boundary,
   base: {
     properties: {

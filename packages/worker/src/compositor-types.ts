@@ -52,12 +52,12 @@ export interface ResolvedStateAckPayload {
 
 /**
  * The boundary surface {@link CompositorWorkerShape.addQuantizer} derives
- * a registration from — structurally satisfied by a `Boundary.make`
+ * a registration from — structurally satisfied by a `defineBoundary`
  * result from `@liteship/core`, whose content-addressed `id` and `input`
  * name make hand-assembled registrations unnecessary.
  */
 export interface QuantizerBoundarySource {
-  /** Content address computed by `Boundary.make` (ADR-0003). */
+  /** Content address computed by `defineBoundary` (ADR-0003). */
   readonly id: ContentAddress;
   /** Signal input name — used as the quantizer name when none is given. */
   readonly input: string;
@@ -80,7 +80,7 @@ export interface CompositorWorkerShape {
   readonly runtime: RuntimeCoordinator;
 
   /**
-   * Register a quantizer from a `Boundary.make` result — id, states, and
+   * Register a quantizer from a `defineBoundary` result — id, states, and
    * thresholds are derived; the quantizer name defaults to `boundary.input`.
    */
   addQuantizer(boundary: QuantizerBoundarySource): void;

@@ -44,13 +44,13 @@ export { CanonicalCbor } from './schema/index.js';
 
 // ── Schema kernel — the transport-agnostic (effect-free) schema substrate ─────
 // The single JSON-Schema deriver (successor to the deleted Effect-AST deriver):
-// `S.*` constructors over a frozen plain-data AST, type-level `Infer`, strict/
+// `schema.*` constructors over a frozen plain-data AST, type-level `Infer`, strict/
 // lenient `decode` with the tagged `DecodeIssue` algebra, the `toJsonSchema`
-// deriver, and the `~standard` bridge. The full surface (`S`, `toJsonSchema`,
+// deriver, and the `~standard` bridge. The full surface (`schema`, `toJsonSchema`,
 // `Infer`, the `DecodeIssue` algebra, `JsonSchemaObject`/`JsonSchemaFragment`,
 // the `~standard` bridge) ships HERE on the main `@liteship/core` barrel.
 export {
-  S,
+  schema,
   withArbitrary,
   isSchema,
   decode,
@@ -119,7 +119,7 @@ export { normalizeRepoPath } from './internal/path-normalize.js';
 // Boundary. `BoundarySpec` is exported as a value+type pair (see the
 // namespace-object pattern in ADR-0001); consumers who want only the type
 // can `import type { BoundarySpec } from '@liteship/core'`.
-export { Boundary, BoundarySpec } from './authoring/index.js';
+export { Boundary, defineBoundary, BoundarySpec } from './authoring/index.js';
 
 // The determinism substrate: the one injectable shape time + randomness are read
 // through, so the ONLY ambient wall-clock / Math.random read in the runtime lives
@@ -144,15 +144,15 @@ export type { ProjectionKeys } from './graph/index.js';
 export { BoundaryAttribute } from './authoring/index.js';
 
 // Token
-export { Token } from './authoring/index.js';
+export { Token, defineToken } from './authoring/index.js';
 export type { TokenCategory } from './authoring/index.js';
 
 // Style
-export { Style } from './authoring/index.js';
+export { Style, defineStyle } from './authoring/index.js';
 export type { StyleLayer, ShadowLayer } from './authoring/index.js';
 
 // Theme
-export { Theme } from './authoring/index.js';
+export { Theme, defineTheme } from './authoring/index.js';
 
 // Component
 export { Component } from './authoring/index.js';
@@ -302,7 +302,8 @@ export {
 export type { ReplayableRecoveryCell } from './reactive/index.js';
 
 // Timeline
-export { Timeline } from './motion/index.js';
+export { createTimeline } from './motion/index.js';
+export type { Timeline } from './motion/index.js';
 
 // Quantizer types
 export type {
@@ -367,16 +368,18 @@ export { Composable, ComposableWorld } from './authoring/index.js';
 export type { EntityComponents, ComposableEntity, ComposableWorldShape } from './authoring/index.js';
 
 // Cell
-export { Cell } from './reactive/index.js';
+export { createCell } from './reactive/index.js';
+export type { Cell } from './reactive/index.js';
 
 // Derived
-export { Derived } from './reactive/index.js';
+export { Derived, computed } from './reactive/index.js';
 
 // Zap
 export { Zap } from './reactive/index.js';
 
 // Store
-export { Store } from './reactive/index.js';
+export { createStore } from './reactive/index.js';
+export type { Store } from './reactive/index.js';
 
 // Cap
 export type { CapTier, CapSet } from './evidence/index.js';
@@ -625,7 +628,7 @@ export type { Primitive } from './reactive/index.js';
 
 // Config hub
 export { Config, defineConfig } from './authoring/index.js';
-export type { PrimitiveKind, CorePluginConfig, CoreAstroConfig } from './authoring/index.js';
+export type { PrimitiveKind, CorePluginConfig, CoreAstroConfig, ConfigInput } from './authoring/index.js';
 
 // Capsule factory base types
 export type {

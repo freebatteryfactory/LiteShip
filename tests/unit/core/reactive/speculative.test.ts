@@ -3,9 +3,9 @@
  */
 
 import { describe, test, expect, vi } from 'vitest';
-import { Boundary, SpeculativeEvaluator } from '@liteship/core';
+import { SpeculativeEvaluator, defineBoundary } from '@liteship/core';
 
-const boundary = Boundary.make({
+const boundary = defineBoundary({
   input: 'width',
   at: [
     [0, 'small'],
@@ -67,7 +67,7 @@ describe('SpeculativeEvaluator', () => {
   });
 
   test('works with boundary without hysteresis', () => {
-    const simpleB = Boundary.make({
+    const simpleB = defineBoundary({
       input: 'x',
       at: [
         [0, 'low'],

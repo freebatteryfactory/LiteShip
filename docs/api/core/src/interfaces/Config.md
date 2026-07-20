@@ -6,9 +6,9 @@
 
 # Interface: Config
 
-Defined in: [core/src/authoring/config.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L51)
+Defined in: [core/src/authoring/config.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L52)
 
-Frozen, content-addressed result of [Config.make](../variables/Config.md#make).
+Frozen, content-addressed result of [defineConfig](../functions/defineConfig.md).
 
 ## Properties
 
@@ -16,7 +16,7 @@ Frozen, content-addressed result of [Config.make](../variables/Config.md#make).
 
 > `readonly` **\_tag**: `"ConfigDef"`
 
-Defined in: [core/src/authoring/config.ts:144](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L144)
+Defined in: [core/src/authoring/config.ts:116](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L116)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [core/src/authoring/config.ts:144](https://github.com/freebatteryfac
 
 > `readonly` `optional` **astro?**: `Partial`\<[`CoreAstroConfig`](CoreAstroConfig.md)\>
 
-Defined in: [core/src/authoring/config.ts:151](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L151)
+Defined in: [core/src/authoring/config.ts:123](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L123)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [core/src/authoring/config.ts:151](https://github.com/freebatteryfac
 
 > `readonly` **boundaries**: `Record`\<`string`, [`Boundary`](../type-aliases/Boundary.md)\>
 
-Defined in: [core/src/authoring/config.ts:146](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L146)
+Defined in: [core/src/authoring/config.ts:118](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L118)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [core/src/authoring/config.ts:146](https://github.com/freebatteryfac
 
 > `readonly` **id**: `ContentAddress`
 
-Defined in: [core/src/authoring/config.ts:145](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L145)
+Defined in: [core/src/authoring/config.ts:117](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L117)
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: [core/src/authoring/config.ts:145](https://github.com/freebatteryfac
 
 > `readonly` **styles**: `Record`\<`string`, [`Style`](../type-aliases/Style.md)\>
 
-Defined in: [core/src/authoring/config.ts:149](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L149)
+Defined in: [core/src/authoring/config.ts:121](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L121)
 
 ***
 
@@ -56,7 +56,7 @@ Defined in: [core/src/authoring/config.ts:149](https://github.com/freebatteryfac
 
 > `readonly` **themes**: `Record`\<`string`, [`Theme`](../type-aliases/Theme.md)\>
 
-Defined in: [core/src/authoring/config.ts:148](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L148)
+Defined in: [core/src/authoring/config.ts:120](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L120)
 
 ***
 
@@ -64,7 +64,7 @@ Defined in: [core/src/authoring/config.ts:148](https://github.com/freebatteryfac
 
 > `readonly` **tokens**: `Record`\<`string`, [`Token`](../type-aliases/Token.md)\>
 
-Defined in: [core/src/authoring/config.ts:147](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L147)
+Defined in: [core/src/authoring/config.ts:119](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L119)
 
 ***
 
@@ -72,4 +72,4 @@ Defined in: [core/src/authoring/config.ts:147](https://github.com/freebatteryfac
 
 > `readonly` `optional` **vite?**: `Partial`\<[`CorePluginConfig`](CorePluginConfig.md)\>
 
-Defined in: [core/src/authoring/config.ts:150](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L150)
+Defined in: [core/src/authoring/config.ts:122](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L122)

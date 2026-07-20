@@ -45,6 +45,7 @@ import {
   Receipt,
   TypedRef,
   HLC,
+  defineBoundary,
 } from '@liteship/core';
 import { ValidationError } from '@liteship/error';
 import { CSSCompiler } from '@liteship/compiler';
@@ -137,7 +138,7 @@ function boundaryOf(component: ComponentNode): Boundary {
   const states = (component.states ?? []) as readonly string[];
   const thresholds = (component.thresholds ?? []) as readonly number[];
   const at = states.map((state, i) => [thresholds[i] ?? 0, state] as const);
-  // Boundary.make requires a non-empty tuple — validate before the cast lies,
+  // defineBoundary requires a non-empty tuple — validate before the cast lies,
   // so an empty ComponentNode fails with a clear message, not a cryptic one.
   if (at.length === 0) {
     throw ValidationError(
@@ -145,7 +146,7 @@ function boundaryOf(component: ComponentNode): Boundary {
       `ComponentNode "${component.name}" has no states/thresholds — cannot reconstruct a Boundary for the cast.`,
     );
   }
-  return Boundary.make({
+  return defineBoundary({
     input: component.name,
     at: at as unknown as readonly [readonly [number, string], ...(readonly [number, string])[]],
   }) as Boundary;

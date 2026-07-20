@@ -8,22 +8,22 @@
 
 import { assertNever } from '@liteship/error';
 import { defineCapsule } from '../assembly.js';
-import { S } from '../../schema/constructors.js';
+import { schema } from '../../schema/constructors.js';
 import type { Infer } from '../../schema/infer.js';
 import { TokenBuffer } from '../../media/token-buffer.js';
 
-const TokenEventSchema = S.union(
-  S.struct({ _tag: S.literal('push'), token: S.string }),
-  S.struct({ _tag: S.literal('flush') }),
-  S.struct({ _tag: S.literal('reset') }),
+const TokenEventSchema = schema.union(
+  schema.struct({ _tag: schema.literal('push'), token: schema.string }),
+  schema.struct({ _tag: schema.literal('flush') }),
+  schema.struct({ _tag: schema.literal('reset') }),
 );
 
-const PhaseSchema = S.union(S.literal('idle'), S.literal('buffering'), S.literal('draining'));
+const PhaseSchema = schema.union(schema.literal('idle'), schema.literal('buffering'), schema.literal('draining'));
 
-const BufferStateSchema = S.struct({
+const BufferStateSchema = schema.struct({
   phase: PhaseSchema,
-  tokens: S.array(S.string),
-  totalBytes: S.number,
+  tokens: schema.array(schema.string),
+  totalBytes: schema.number,
 });
 
 type TokenEvent = Infer<typeof TokenEventSchema>;

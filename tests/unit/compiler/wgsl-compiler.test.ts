@@ -8,14 +8,14 @@
 
 import { describe, test, expect } from 'vitest';
 import fc from 'fast-check';
-import { Boundary } from '@liteship/core';
+import { defineBoundary } from '@liteship/core';
 import { WGSLCompiler } from '@liteship/compiler';
 
 // ---------------------------------------------------------------------------
 // Fixtures
 // ---------------------------------------------------------------------------
 
-const widthBoundary = Boundary.make({
+const widthBoundary = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'mobile'],
@@ -24,7 +24,7 @@ const widthBoundary = Boundary.make({
   ] as const,
 });
 
-const simpleBoundary = Boundary.make({
+const simpleBoundary = defineBoundary({
   input: 'brightness',
   at: [
     [0, 'dark'],

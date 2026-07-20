@@ -10,7 +10,7 @@
 
 Defined in: [core/src/reactive/primitive.ts:20](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/primitive.ts#L20)
 
-Narrow a [Primitive](../type-aliases/Primitive.md) to a [Cell](../variables/Cell.md).
+Narrow a [Primitive](../type-aliases/Primitive.md) to a [Cell](../type-aliases/Cell.md).
 
 ## Type Parameters
 

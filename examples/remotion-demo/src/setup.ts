@@ -9,9 +9,9 @@
  * @module
  */
 
-import { Boundary, Compositor, Millis, VideoRenderer } from '@liteship/core';
+import { Compositor, Millis, VideoRenderer, defineBoundary } from '@liteship/core';
 import type { VideoFrameOutput } from '@liteship/core';
-import { Q } from '@liteship/quantizer';
+import { defineQuantizer, createQuantizer } from '@liteship/quantizer';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -26,7 +26,7 @@ export const HEIGHT = 720;
 // Boundary: 3-state scale with thresholds at 0, 33, 66 (normalized 0-100)
 // ---------------------------------------------------------------------------
 
-const scaleBoundary = Boundary.make({
+const scaleBoundary = defineBoundary({
   input: 'progress',
   at: [
     [0, 'small'],
@@ -39,11 +39,13 @@ const scaleBoundary = Boundary.make({
 // Quantizer config: CSS outputs per state
 // ---------------------------------------------------------------------------
 
-const scaleQuantizerConfig = Q.from(scaleBoundary).outputs({
-  css: {
-    small: { '--scale': 0.5, '--bg': '#1a1a2e', '--fg': '#ffffff' },
-    medium: { '--scale': 1.0, '--bg': '#16213e', '--fg': '#ffffff' },
-    large: { '--scale': 1.5, '--bg': '#0f3460', '--fg': '#ffffff' },
+const scaleQuantizerConfig = defineQuantizer(scaleBoundary, {
+  outputs: {
+    css: {
+      small: { '--scale': 0.5, '--bg': '#1a1a2e', '--fg': '#ffffff' },
+      medium: { '--scale': 1.0, '--bg': '#16213e', '--fg': '#ffffff' },
+      large: { '--scale': 1.5, '--bg': '#0f3460', '--fg': '#ffffff' },
+    },
   },
 });
 
@@ -58,7 +60,7 @@ export async function buildFrames(): Promise<ReadonlyArray<VideoFrameOutput>> {
   const { compositor } = Compositor.create();
 
   // Materialize the live quantizer from its content-addressed config.
-  const { quantizer } = scaleQuantizerConfig.create();
+  const { quantizer } = createQuantizer(scaleQuantizerConfig);
 
   // Add quantizer to compositor under the name "scale"
   compositor.add('scale', quantizer);

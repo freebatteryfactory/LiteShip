@@ -1,5 +1,5 @@
 import { afterEach, describe, it, expect, vi } from 'vitest';
-import { Boundary, Diagnostics } from '@liteship/core';
+import { Diagnostics, defineBoundary } from '@liteship/core';
 import { createBoundaryCache, EdgeTier } from '@liteship/edge';
 import { createCloudflareEdgeCache, resolveKvBinding } from '@liteship/cloudflare';
 
@@ -75,7 +75,7 @@ describe('createCloudflareEdgeCache', () => {
         },
       },
     };
-    const boundary = Boundary.make({ input: 'viewport.width', at: [[0, 'compact']] });
+    const boundary = defineBoundary({ input: 'viewport.width', at: [[0, 'compact']] });
     const tier = EdgeTier.detectTier(new Headers({ 'sec-ch-viewport-width': '1280' }));
     const cache = createBoundaryCache(createCloudflareEdgeCache(() => env, { binding: 'KV' }));
 
@@ -111,7 +111,7 @@ describe('createCloudflareEdgeCache', () => {
         },
       },
     };
-    const boundary = Boundary.make({ input: 'viewport.width', at: [[0, 'compact']] });
+    const boundary = defineBoundary({ input: 'viewport.width', at: [[0, 'compact']] });
     const tier = EdgeTier.detectTier(new Headers({ 'sec-ch-viewport-width': '1280' }));
     const boundaryCache = createBoundaryCache(createCloudflareEdgeCache(() => env, { binding: 'KV', cache: cacheApi }));
 

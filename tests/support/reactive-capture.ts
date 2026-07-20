@@ -57,20 +57,20 @@
  */
 
 import {
-  Cell,
   Derived,
-  Store,
   Signal,
-  Timeline,
   LiveCell,
-  Boundary,
   Scheduler,
   HLC,
   Millis,
   StateName,
   fixedClock,
+  defineBoundary,
+  createCell,
+  createStore,
+  createTimeline,
 } from '@liteship/core';
-import type { BoundaryCrossing } from '@liteship/core';
+import type { BoundaryCrossing, Boundary } from '@liteship/core';
 import type { Disposer } from '@liteship/core';
 import type {
   ReactiveOp,
@@ -360,7 +360,7 @@ export const captureHistory = (adapter: PrimitiveAdapter, history: OpHistory): P
 // ---------------------------------------------------------------------------
 
 const captureBoundary = (): Boundary =>
-  Boundary.make({
+  defineBoundary({
     input: 'viewport.width',
     at: [
       [0, 'idle'],
@@ -374,7 +374,7 @@ export const cellAdapter: PrimitiveAdapter = {
   primitive: 'cell',
   supports: new Set<ReactiveOpTag>(['subscribe', 'unsubscribe', 'read', 'set', 'update', 'dispose']),
   build: (): CaptureHandle => {
-    const cell = Cell.make(0);
+    const cell = createCell(0);
     return {
       read: (): TraceValue => cell.read(),
       subscribe: (sink) => cell.subscribe(sink),
@@ -395,7 +395,7 @@ export const storeAdapter: PrimitiveAdapter = {
   primitive: 'store',
   supports: new Set<ReactiveOpTag>(['subscribe', 'unsubscribe', 'read', 'set', 'dispose']),
   build: (): CaptureHandle => {
-    const store = Store.make<number, number>(0, (_state, msg) => msg);
+    const store = createStore<number, number>(0, (_state, msg) => msg);
     return {
       read: (): TraceValue => store.read(),
       subscribe: (sink) => store.subscribe(sink),
@@ -416,7 +416,7 @@ export const derivedAdapter: PrimitiveAdapter = {
   primitive: 'derived',
   supports: new Set<ReactiveOpTag>(['subscribe', 'unsubscribe', 'read', 'set', 'dispose']),
   build: (): CaptureHandle => {
-    const base = Cell.make(0);
+    const base = createCell(0);
     const derived = Derived.combine([base] as const, (x: number): number => x + 100);
     return {
       read: (): TraceValue => derived.read(),
@@ -470,7 +470,7 @@ export const timelineAdapter: PrimitiveAdapter = {
   ]),
   build: (): CaptureHandle => {
     const scheduler = Scheduler.fixedStep(10); // dt = 100ms per step
-    const timeline = Timeline.from(captureBoundary(), { duration: Millis(200), loop: false, scheduler });
+    const timeline = createTimeline(captureBoundary(), { duration: Millis(200), loop: false, scheduler });
     return {
       read: (): TraceValue => timeline.state(),
       subscribe: (sink) => timeline.subscribe(sink),

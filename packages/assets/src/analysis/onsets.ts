@@ -6,7 +6,7 @@
  * @module
  */
 
-import { defineCapsule, S } from '@liteship/core';
+import { defineCapsule, schema } from '@liteship/core';
 import type { CapsuleDef } from '@liteship/core';
 import type { AssetRegistry } from '../contract.js';
 
@@ -61,8 +61,8 @@ export function OnsetProjection(
   return defineCapsule({
     _kind: 'cachedProjection',
     name: `${audioAssetId}:onsets`,
-    input: S.unknown,
-    output: S.array(S.number),
+    input: schema.unknown,
+    output: schema.array(schema.number),
     capabilities: { reads: [`asset:${audioAssetId}`], writes: [] },
     invariants: [
       {

@@ -13,7 +13,7 @@ import fc from 'fast-check';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { Boundary, Diagnostics } from '@liteship/core';
+import { Diagnostics, defineBoundary } from '@liteship/core';
 
 // These tests simulate consumer projects via temp roots. The packaged-wasm
 // source resolves @liteship/core through the module graph (which vitest would always
@@ -214,7 +214,7 @@ describe('LESSON (#84/#87): resolve failures teach the exact next step', () => {
     const mismatch = events.find((e) => e.code === 'export-tag-mismatch');
     expect(mismatch?.message).toContain('Found export "primary"');
     expect(mismatch?.message).toContain('not a token definition');
-    expect(mismatch?.message).toContain('Token.make({');
+    expect(mismatch?.message).toContain('defineToken({');
   });
 
   test('an import failure surfaces the cause inline and the tsc next-step', async () => {
@@ -268,7 +268,7 @@ describe('LESSON (#88): an unresolved HTML boundary spells out the silent conseq
     const srcDir = join(root, 'src');
     mkdirSync(srcDir, { recursive: true });
 
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'compact'],

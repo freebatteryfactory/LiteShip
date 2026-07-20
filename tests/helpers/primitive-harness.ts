@@ -7,8 +7,8 @@
  */
 
 import fc from 'fast-check';
-import { Boundary, Token, Theme, Style } from '@liteship/core';
-import type { PrimitiveKind } from '@liteship/core';
+import { defineBoundary, defineToken, defineTheme, defineStyle } from '@liteship/core';
+import type { PrimitiveKind , Boundary, Token, Theme, Style} from '@liteship/core';
 
 export const PRIMITIVE_KINDS = ['boundary', 'token', 'theme', 'style'] as const satisfies PrimitiveKind[];
 
@@ -19,7 +19,7 @@ export const PRIMITIVE_KINDS = ['boundary', 'token', 'theme', 'style'] as const 
 export const arbPrimitiveKind: fc.Arbitrary<PrimitiveKind> = fc.constantFrom(...PRIMITIVE_KINDS);
 
 export const arbBoundaryShape: fc.Arbitrary<Boundary> = fc.constant(
-  Boundary.make({
+  defineBoundary({
     input: 'viewport.width',
     at: [
       [0, 'small'],
@@ -29,7 +29,7 @@ export const arbBoundaryShape: fc.Arbitrary<Boundary> = fc.constant(
 );
 
 export const arbTokenShape: fc.Arbitrary<Token> = fc.constant(
-  Token.make({
+  defineToken({
     name: 'spacing',
     category: 'spacing',
     axes: ['base'] as const,
@@ -39,7 +39,7 @@ export const arbTokenShape: fc.Arbitrary<Token> = fc.constant(
 );
 
 export const arbThemeShape: fc.Arbitrary<Theme> = fc.constant(
-  Theme.make({
+  defineTheme({
     name: 'default',
     variants: ['light'] as const,
     tokens: {},
@@ -47,8 +47,8 @@ export const arbThemeShape: fc.Arbitrary<Theme> = fc.constant(
 );
 
 export const arbStyleShape: fc.Arbitrary<Style> = fc.constant(
-  Style.make({
-    boundary: Boundary.make({ input: 'viewport.width', at: [[0, 'sm']] as const }),
+  defineStyle({
+    boundary: defineBoundary({ input: 'viewport.width', at: [[0, 'sm']] as const }),
     base: { properties: {} },
   }),
 );

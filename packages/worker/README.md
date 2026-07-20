@@ -19,11 +19,11 @@ Workers are spawned from inline Blob URLs — no separate worker entry file, no 
 ## 30 seconds
 
 ```ts
-import { Boundary, StateName } from '@liteship/core';
+import { defineBoundary, StateName } from '@liteship/core';
 import { CompositorWorker } from '@liteship/worker';
 
 // A boundary names the thresholds where one state becomes the next.
-const layout = Boundary.make({
+const layout = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'compact'],
@@ -54,7 +54,7 @@ for the full layout.
 
 ## If it does nothing
 
-`onState` callbacks only fire after a compute round: if you `evaluate(...)` and never see a snapshot, you likely skipped `requestCompute()`. Pass a real `Boundary.make(...).id` to `addQuantizer` — the id is a content address (a hash of the definition), and downstream caching keys on it.
+`onState` callbacks only fire after a compute round: if you `evaluate(...)` and never see a snapshot, you likely skipped `requestCompute()`. Pass a real `defineBoundary(...).id` to `addQuantizer` — the id is a content address (a hash of the definition), and downstream caching keys on it.
 
 ## Authored-motion adapter (minimal)
 

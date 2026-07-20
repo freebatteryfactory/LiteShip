@@ -9,7 +9,7 @@
 
 import type { Arbitrary } from 'fast-check';
 import { defineCapsule } from '../assembly.js';
-import { S, withArbitrary } from '../../schema/constructors.js';
+import { withArbitrary, schema } from '../../schema/constructors.js';
 import { CanonicalCbor, decode } from '../../schema/cbor.js';
 import { ValidationError } from '@liteship/error';
 
@@ -109,7 +109,7 @@ function isCanonicalCborBytes(bytes: Uint8Array<ArrayBuffer>): bytes is Uint8Arr
 /**
  * Branded input schema for the decoder: NOT "any `Uint8Array`" but the narrow
  * domain "canonical CBOR bytes". Its encoded carrier is still a `Uint8Array`,
- * but decode now runs an `S.brand` refinement that REJECTS a non-canonical
+ * but decode now runs an `schema.brand` refinement that REJECTS a non-canonical
  * `Uint8Array` (folding a thrown {@link ValidationError} into a `schema/brand`
  * issue) instead of forwarding it to the decoder. It also carries an explicit
  * harness arbitrary that samples a value with `fc.anything()` and runs it
@@ -125,8 +125,8 @@ function isCanonicalCborBytes(bytes: Uint8Array<ArrayBuffer>): bytes is Uint8Arr
  * holds because the canonical encoder is idempotent under `decode`. The
  * standing definition of that domain is {@link isCanonicalCborBytes}.
  */
-// The kernel `S.bytes(Uint8Array)` DECLARATION node carries a precise Type AND
-// Encoded of `Uint8Array`; the `S.brand` wrapper layers a DECODE-TIME refinement
+// The kernel `schema.bytes(Uint8Array)` DECLARATION node carries a precise Type AND
+// Encoded of `Uint8Array`; the `schema.brand` wrapper layers a DECODE-TIME refinement
 // that narrows that carrier to the canonical-CBOR-bytes domain, and the
 // `withArbitrary` pass-through preserves the (now branded) schema type — so the
 // capsule's `SchemaPort<In>` input slot is still satisfied with no cast. The
@@ -138,8 +138,8 @@ function isCanonicalCborBytes(bytes: Uint8Array<ArrayBuffer>): bytes is Uint8Arr
 // decode, bounded by the capsule's `p95Ms` budget, that buys a self-checking input
 // contract in place of a bare `Uint8Array` that under-specifies the decoder domain.
 export const CanonicalCborBytes = withArbitrary(
-  S.brand(
-    S.bytes(Uint8Array),
+  schema.brand(
+    schema.bytes(Uint8Array),
     (bytes: Uint8Array): Uint8Array => {
       if (!isCanonicalCborBytes(bytes as Uint8Array<ArrayBuffer>)) {
         throw ValidationError(
@@ -162,7 +162,7 @@ export const canonicalCborDecodeCapsule = defineCapsule({
   _kind: 'pureTransform',
   name: 'core.canonical-cbor-decode',
   input: CanonicalCborBytes,
-  output: S.unknown,
+  output: schema.unknown,
   capabilities: { reads: [], writes: [] },
   invariants: [
     {

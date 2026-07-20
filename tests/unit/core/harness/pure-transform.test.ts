@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { defineCapsule, S } from '@liteship/core';
+import { defineCapsule, schema } from '@liteship/core';
 import { resetCapsuleCatalog } from '@liteship/core/testing';
 import * as Harness from '@liteship/core/harness';
 
@@ -7,8 +7,8 @@ const demoDouble = () =>
   defineCapsule({
     _kind: 'pureTransform',
     name: 'demo.double',
-    input: S.number,
-    output: S.number,
+    input: schema.number,
+    output: schema.number,
     capabilities: { reads: [], writes: [] },
     invariants: [{ name: 'idempotent-on-zero', check: (i: number, o: number) => i !== 0 || o === 0, message: '' }],
     budgets: { p95Ms: 1 },

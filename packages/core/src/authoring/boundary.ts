@@ -35,15 +35,6 @@ interface BoundaryDef<
   readonly spec?: BoundarySpec;
 }
 
-interface BoundaryFactory {
-  make<I extends string, const S extends readonly [string, ...string[]]>(config: {
-    readonly input: I;
-    readonly at: { readonly [K in keyof S]: readonly [number, S[K]] };
-    readonly hysteresis?: number;
-    readonly spec?: BoundarySpec;
-  }): BoundaryDef<I, S>;
-}
-
 /**
  * Compute the content address for a boundary synchronously.
  * FNV-1a hash of the RFC 8949 §4.2.1 canonical CBOR encoding (ADR-0003).
@@ -79,7 +70,7 @@ function deterministicId(
  *
  * @example
  * ```ts
- * const bp = Boundary.make({ input: 'viewport.width', at: [[0, 'sm'], [768, 'md'], [1024, 'lg']] });
+ * const bp = defineBoundary({ input: 'viewport.width', at: [[0, 'sm'], [768, 'md'], [1024, 'lg']] });
  * const state = Boundary.evaluate(bp, 800);
  * // state === 'md'
  * ```
@@ -107,7 +98,7 @@ function _evaluate<B extends BoundaryDef>(boundary: B, value: number): B['states
  *
  * @example
  * ```ts
- * const bp = Boundary.make({ input: 'scroll', at: [[0, 'top'], [500, 'mid'], [1500, 'deep']] });
+ * const bp = defineBoundary({ input: 'scroll', at: [[0, 'top'], [500, 'mid'], [1500, 'deep']] });
  * const idx = Boundary.evaluateBatch(bp, [120, 800, 2000]);
  * // idx → Uint32Array [0, 1, 2]; bp.states[idx[1]] === 'mid'
  * ```
@@ -218,7 +209,7 @@ function _evaluateResult<B extends BoundaryDef>(
  *
  * @example
  * ```ts
- * const bp = Boundary.make({ input: 'viewport.width', at: [[0, 'sm'], [768, 'md']], hysteresis: 20 });
+ * const bp = defineBoundary({ input: 'viewport.width', at: [[0, 'sm'], [768, 'md']], hysteresis: 20 });
  * const state1 = Boundary.evaluateWithHysteresis(bp, 770, 'sm');
  * // state1 === 'sm' (within dead zone, stays at previous)
  * const state2 = Boundary.evaluateWithHysteresis(bp, 780, 'sm');
@@ -241,9 +232,9 @@ function _evaluateWithHysteresis<B extends BoundaryDef>(
  *
  * @example
  * ```ts
- * import { Boundary } from '@liteship/core';
+ * import { defineBoundary, Boundary } from '@liteship/core';
  *
- * const bp = Boundary.make({
+ * const bp = defineBoundary({
  *   input: 'viewport.width',
  *   at: [[0, 'mobile'], [768, 'tablet'], [1024, 'desktop']],
  *   hysteresis: 20,
@@ -270,121 +261,112 @@ function _isActive<B extends BoundaryDef>(
 }
 
 /**
- * Boundary — core primitive of constraint-based adaptive rendering.
+ * Define a boundary — the core primitive of constraint-based adaptive rendering.
  *
- * A boundary quantizes a continuous signal (viewport, scroll, audio, …) into
- * a discrete set of named states. Every boundary is content-addressed via
- * FNV-1a, supports optional hysteresis to prevent flicker at thresholds, and
- * can be gated by a {@link BoundarySpec} for A/B or device-conditional activation.
+ * A boundary quantizes a continuous signal (viewport, scroll, audio, …) into a
+ * discrete set of named states. Every boundary is content-addressed via FNV-1a
+ * (thresholds must be strictly ascending), supports optional hysteresis to
+ * prevent flicker at thresholds, and can be gated by a {@link BoundarySpec} for
+ * A/B or device-conditional activation.
  *
  * @example
  * ```ts
- * import { Boundary } from '@liteship/core';
+ * import { defineBoundary, Boundary } from '@liteship/core';
  *
- * const viewport = Boundary.make({
+ * const viewport = defineBoundary({
  *   input: 'viewport.width',
  *   at: [[0, 'mobile'], [640, 'tablet'], [1024, 'desktop']],
  *   hysteresis: 16,
  * });
+ * // viewport._tag === 'BoundaryDef'
+ * // viewport.id === 'fnv1a:...' (content address)
+ * // viewport.states === ['mobile', 'tablet', 'desktop']
  * Boundary.evaluate(viewport, 800); // 'tablet'
  * ```
  */
-export const Boundary: BoundaryFactory & {
-  evaluate: typeof _evaluate;
-  evaluateResult: typeof _evaluateResult;
-  evaluateBatch: typeof _evaluateBatch;
-  evaluateWithHysteresis: typeof _evaluateWithHysteresis;
-  isActive: typeof _isActive;
-} = {
-  /**
-   * Create a new `BoundaryDef` from a configuration object.
-   *
-   * Thresholds must be strictly ascending. The boundary is content-addressed
-   * via FNV-1a hash of its definition.
-   *
-   * @example
-   * ```ts
-   * const bp = Boundary.make({
-   *   input: 'viewport.width',
-   *   at: [[0, 'sm'], [768, 'md'], [1024, 'lg']],
-   *   hysteresis: 10,
-   * });
-   * // bp._tag === 'BoundaryDef'
-   * // bp.id === 'fnv1a:...' (content address)
-   * // bp.states === ['sm', 'md', 'lg']
-   * ```
-   */
-  make<I extends string, const S extends readonly [string, ...string[]]>(config: {
-    readonly input: I;
-    readonly at: { readonly [K in keyof S]: readonly [number, S[K]] };
-    readonly hysteresis?: number;
-    readonly spec?: BoundarySpec;
-  }): BoundaryDef<I, S> {
-    const pairs = config.at;
-    for (let i = 1; i < pairs.length; i++) {
-      if (pairs[i]![0] <= pairs[i - 1]![0]) {
-        // Build the copy-pasteable fix from the user's own pairs, sorted.
-        const sorted = [...(pairs as readonly (readonly [number, string])[])].sort((a, b) => a[0] - b[0]);
-        const suggestion = sorted.map(([t, s]) => `[${t}, '${s}']`).join(', ');
-        throw ValidationError(
-          'Boundary.make',
-          `thresholds must be strictly ascending. Got ${pairs[i - 1]![0]} before ${pairs[i]![0]} at index ${i}. Reorder your \`at:\` pairs so thresholds increase: at: [${suggestion}].`,
-        );
-      }
+export function defineBoundary<I extends string, const S extends readonly [string, ...string[]]>(config: {
+  readonly input: I;
+  readonly at: { readonly [K in keyof S]: readonly [number, S[K]] };
+  readonly hysteresis?: number;
+  readonly spec?: BoundarySpec;
+}): BoundaryDef<I, S> {
+  const pairs = config.at;
+  for (let i = 1; i < pairs.length; i++) {
+    if (pairs[i]![0] <= pairs[i - 1]![0]) {
+      // Build the copy-pasteable fix from the user's own pairs, sorted.
+      const sorted = [...(pairs as readonly (readonly [number, string])[])].sort((a, b) => a[0] - b[0]);
+      const suggestion = sorted.map(([t, s]) => `[${t}, '${s}']`).join(', ');
+      throw ValidationError(
+        'defineBoundary',
+        `thresholds must be strictly ascending. Got ${pairs[i - 1]![0]} before ${pairs[i]![0]} at index ${i}. Reorder your \`at:\` pairs so thresholds increase: at: [${suggestion}].`,
+      );
     }
-    const stateNames = pairs.map(([, s]) => s);
-    const seen = new Set<string>();
-    for (const name of stateNames) {
-      if (seen.has(name)) {
-        throw ValidationError(
-          'Boundary.make',
-          `duplicate state name "${name}" (used by two thresholds). Each threshold needs its own state — rename one, e.g. at: [[0, 'small'], [768, 'medium']]. If this throws mid-render, the boundary was constructed inside a render function; hoist it to module scope.`,
-        );
-      }
-      seen.add(name);
+  }
+  const stateNames = pairs.map(([, s]) => s);
+  const seen = new Set<string>();
+  for (const name of stateNames) {
+    if (seen.has(name)) {
+      throw ValidationError(
+        'defineBoundary',
+        `duplicate state name "${name}" (used by two thresholds). Each threshold needs its own state — rename one, e.g. at: [[0, 'small'], [768, 'medium']]. If this throws mid-render, the boundary was constructed inside a render function; hoist it to module scope.`,
+      );
     }
-    const thresholds = pairs.map(([t]) => mkThresholdValue(t));
-    // tupleMap preserves arity but fn returns `string`, not per-element S[K]; one narrow cast is unavoidable.
-    const states = pairs.map(([, s]) => s) as unknown as S;
-    const id = deterministicId(config.input, thresholds, states, config.hysteresis, config.spec);
+    seen.add(name);
+  }
+  const thresholds = pairs.map(([t]) => mkThresholdValue(t));
+  // tupleMap preserves arity but fn returns `string`, not per-element S[K]; one narrow cast is unavoidable.
+  const states = pairs.map(([, s]) => s) as unknown as S;
+  const id = deterministicId(config.input, thresholds, states, config.hysteresis, config.spec);
 
-    const source = inputToSource(config.input);
-    if (source?.type === 'scroll' && source.axis === 'progress') {
-      const maxThreshold = Math.max(...pairs.map(([t]) => t));
-      if (maxThreshold > 1) {
-        Diagnostics.warnOnce({
-          source: 'liteship/core.boundary',
-          code: 'scroll-progress-threshold-scale',
-          message:
-            `Boundary "${config.input}" uses thresholds with max ${maxThreshold}, but scroll.progress is canonical 0..1 — ` +
-            'thresholds above 1 pin the boundary at the lowest state on every built-in consumer path. ' +
-            'Author thresholds as fractions (e.g. [0, "arrival"], [0.2, "showroom"]) not percentages.',
-        });
-      }
-    } else if (source?.type === 'audio') {
-      const maxThreshold = Math.max(...pairs.map(([t]) => t));
-      if (maxThreshold > 1) {
-        Diagnostics.warnOnce({
-          source: 'liteship/core.boundary',
-          code: 'audio-threshold-scale',
-          message:
-            `Boundary "${config.input}" uses thresholds with max ${maxThreshold}, but audio.* signals normalize to 0..1 — ` +
-            'thresholds above 1 will never cross on the built-in runtime path.',
-        });
-      }
+  const source = inputToSource(config.input);
+  if (source?.type === 'scroll' && source.axis === 'progress') {
+    const maxThreshold = Math.max(...pairs.map(([t]) => t));
+    if (maxThreshold > 1) {
+      Diagnostics.warnOnce({
+        source: 'liteship/core.boundary',
+        code: 'scroll-progress-threshold-scale',
+        message:
+          `Boundary "${config.input}" uses thresholds with max ${maxThreshold}, but scroll.progress is canonical 0..1 — ` +
+          'thresholds above 1 pin the boundary at the lowest state on every built-in consumer path. ' +
+          'Author thresholds as fractions (e.g. [0, "arrival"], [0.2, "showroom"]) not percentages.',
+      });
     }
+  } else if (source?.type === 'audio') {
+    const maxThreshold = Math.max(...pairs.map(([t]) => t));
+    if (maxThreshold > 1) {
+      Diagnostics.warnOnce({
+        source: 'liteship/core.boundary',
+        code: 'audio-threshold-scale',
+        message:
+          `Boundary "${config.input}" uses thresholds with max ${maxThreshold}, but audio.* signals normalize to 0..1 — ` +
+          'thresholds above 1 will never cross on the built-in runtime path.',
+      });
+    }
+  }
 
-    return {
-      _tag: 'BoundaryDef',
-      _version: 1,
-      id,
-      input: mkSignalInput(config.input),
-      thresholds,
-      states,
-      ...(config.hysteresis !== undefined ? { hysteresis: config.hysteresis } : {}),
-      ...(config.spec !== undefined ? { spec: config.spec } : {}),
-    };
-  },
+  return {
+    _tag: 'BoundaryDef',
+    _version: 1,
+    id,
+    input: mkSignalInput(config.input),
+    thresholds,
+    states,
+    ...(config.hysteresis !== undefined ? { hysteresis: config.hysteresis } : {}),
+    ...(config.spec !== undefined ? { spec: config.spec } : {}),
+  };
+}
+
+/**
+ * Boundary — the evaluation namespace for a {@link Boundary} definition.
+ *
+ * Construction lives in the standalone {@link defineBoundary}; this object
+ * carries the pure evaluation faces: {@link Boundary.evaluate} (cheap state
+ * lookup), {@link Boundary.evaluateResult} (rich `{state, index, value, crossed}`
+ * + hysteresis), {@link Boundary.evaluateBatch} (WASM-accelerated bulk),
+ * {@link Boundary.evaluateWithHysteresis}, and {@link Boundary.isActive} (spec
+ * gating).
+ */
+export const Boundary = {
   evaluate: _evaluate,
   evaluateResult: _evaluateResult,
   evaluateBatch: _evaluateBatch,
@@ -446,8 +428,3 @@ export type Boundary<
   I extends string = string,
   S extends readonly [string, ...string[]] = readonly [string, ...string[]],
 > = BoundaryDef<I, S>;
-
-export declare namespace Boundary {
-  /** Alias for {@link BoundarySpec}. */
-  export type Spec = BoundarySpec;
-}

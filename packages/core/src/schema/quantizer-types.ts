@@ -1,7 +1,8 @@
 /**
  * Quantizer interface -- the base contract for quantizer implementations.
  *
- * The canonical implementation lives in `@liteship/quantizer` (`Q.from()` builder API).
+ * The canonical implementation lives in `@liteship/quantizer` (the `defineQuantizer` /
+ * `createQuantizer` two-step API).
  *
  * The contract is split in two: a purely SYNCHRONOUS base ({@link Quantizer}) and
  * a reactive extension ({@link ReactiveQuantizer}). The base carries only what a
@@ -28,7 +29,7 @@ import type { StateUnion, BoundaryCrossing } from '../internal/type-level.js';
  * evaluates and reads `stateSync` never touches the reactive substrate.
  *
  * The concrete reactive implementation is produced by `@liteship/quantizer`'s
- * `Q.from()` builder (a {@link ReactiveQuantizer}); consumers interact only via
+ * `createQuantizer` (a {@link ReactiveQuantizer}); consumers interact only via
  * these structural interfaces.
  */
 export interface Quantizer<B extends Boundary = Boundary> {

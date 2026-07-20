@@ -13,7 +13,7 @@
 import { describe, test, expect, vi } from 'vitest';
 import { scaledTimeout } from '../../../../vitest.shared.js';
 import fc from 'fast-check';
-import { WASMDispatch, fallbackKernels, Boundary } from '@liteship/core';
+import { WASMDispatch, fallbackKernels, Boundary, defineBoundary } from '@liteship/core';
 
 // ---------------------------------------------------------------------------
 // WASMDispatch detection + fallback
@@ -144,7 +144,7 @@ describe('batchBoundaryEval fallback', () => {
   });
 
   test('matches individual evaluateBoundary calls', () => {
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport-width',
       at: [
         [0, 'compact'],

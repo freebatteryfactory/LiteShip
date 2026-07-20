@@ -6,7 +6,7 @@
  *
  * @module
  */
-import { S, type CapsuleCommandResult, type CommandJsonSchema } from '@liteship/core';
+import { type CapsuleCommandResult, type CommandJsonSchema, schema } from '@liteship/core';
 import { capabilityUnavailable, defineCommand, failed, ok, type CommandCapability } from '../registry.js';
 import { loadManifest, manifestUnavailable } from './manifest.js';
 
@@ -64,7 +64,7 @@ export const capsuleInspectCommand = defineCommand({
     // CUT D5: link a live MCP Apps view that renders this tool's result (host-injected).
     ui: { resourceUri: 'ui://liteship/app/capsule-inspect' },
   },
-  argsSchema: S.struct({ id: S.string }),
+  argsSchema: schema.struct({ id: schema.string }),
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
     const loaded = loadManifest(context);
     if (!loaded.ok) return manifestUnavailable('capsule.inspect', loaded, context);
@@ -88,7 +88,7 @@ export const capsuleListCommand = defineCommand({
     outputSchema: CapsuleListPayloadSchema,
     annotations: { readOnly: true, mcpExposed: true, group: 'manifest' },
   },
-  argsSchema: S.struct({ kind: S.optional(S.string) }),
+  argsSchema: schema.struct({ kind: schema.optional(schema.string) }),
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
     const loaded = loadManifest(context);
     if (!loaded.ok) return manifestUnavailable('capsule.list', loaded, context);
@@ -109,7 +109,7 @@ export const capsuleVerifyCommand = defineCommand({
     outputSchema: CapsuleVerifyPayloadSchema,
     annotations: { mcpExposed: true, group: 'manifest' },
   },
-  argsSchema: S.struct({ id: S.string }),
+  argsSchema: schema.struct({ id: schema.string }),
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
     const loaded = loadManifest(context);
     if (!loaded.ok) return manifestUnavailable('capsule.verify', loaded, context);

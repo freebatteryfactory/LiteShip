@@ -35,7 +35,7 @@
 
 import type { ContentAddress } from '../../schema/brands.js';
 import { defineCapsule } from '../assembly.js';
-import { S } from '../../schema/constructors.js';
+import { schema } from '../../schema/constructors.js';
 import type { Infer } from '../../schema/infer.js';
 import { sealGraph, sealNode } from '../../graph/document-graph-address.js';
 import { summarizeGraph } from '../ai-cast.js';
@@ -49,13 +49,13 @@ import type { CellMeta } from '../../schema/protocol.js';
  * monotonicity law has two points to compare. `run` seals the graph and
  * summarizes at both.
  */
-const AiCastSummarizeSeed = S.struct({
+const AiCastSummarizeSeed = schema.struct({
   /** Signal-axis names → one sealed `SignalNode` per DISTINCT name. */
-  inputs: S.array(S.string),
+  inputs: schema.array(schema.string),
   /** A token budget (clamped to ≥ 0 in `run`). */
-  budgetA: S.number,
+  budgetA: schema.number,
   /** A second token budget (clamped to ≥ 0 in `run`) — compared against `budgetA`. */
-  budgetB: S.number,
+  budgetB: schema.number,
 });
 
 type AiCastSummarizeSeedValue = Infer<typeof AiCastSummarizeSeed>;
@@ -136,7 +136,7 @@ export const aiCastSummarizeCapsule = defineCapsule({
   _kind: 'pureTransform',
   name: 'core.ai-cast.summarize',
   input: AiCastSummarizeSeed,
-  output: S.unknown,
+  output: schema.unknown,
   capabilities: { reads: [], writes: [] },
   invariants: [
     {

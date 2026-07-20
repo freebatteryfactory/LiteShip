@@ -15,9 +15,9 @@ npm install liteship   # or yarn add liteship
 ## 30 seconds
 
 ```ts
-import { Boundary } from '@liteship/core'; // installed for you by liteship
+import { Boundary, defineBoundary } from '@liteship/core'; // installed for you by liteship
 
-const viewport = Boundary.make({
+const viewport = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'mobile'],

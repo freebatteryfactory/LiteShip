@@ -25,7 +25,7 @@
  */
 
 import { writeFileSync } from 'node:fs';
-import { CanonicalCbor, defineCapsule, S, ShipCapsule, type ContentAddress } from '@liteship/core';
+import { CanonicalCbor, defineCapsule, ShipCapsule, type ContentAddress, schema } from '@liteship/core';
 import type { Infer } from '@liteship/core';
 
 /**
@@ -33,13 +33,13 @@ import type { Infer } from '@liteship/core';
  * from. Every field is a plain scalar / array (arbitrary-derivable), so the
  * harness can sample it for the contract round-trip AND drive `mutate` twice.
  */
-const ShipEmitInput = S.struct({
-  capsule_path: S.string,
-  capsule_id: S.string,
-  package_name: S.string,
-  package_version: S.string,
-  source_commit: S.string,
-  lifecycle_scripts_observed: S.array(S.string),
+const ShipEmitInput = schema.struct({
+  capsule_path: schema.string,
+  capsule_id: schema.string,
+  package_name: schema.string,
+  package_version: schema.string,
+  source_commit: schema.string,
+  lifecycle_scripts_observed: schema.array(schema.string),
 });
 
 /**
@@ -47,13 +47,13 @@ const ShipEmitInput = S.struct({
  * to (`emitted` on the happy path, `rejected` when the snapshot is unshippable),
  * which is what makes the fault-injection check real.
  */
-const ShipEmitOutput = S.struct({
-  status: S.union(S.literal('emitted'), S.literal('rejected')),
-  bytes_written: S.number,
-  capsule_path: S.string,
-  capsule_id: S.string,
-  package_name: S.string,
-  package_version: S.string,
+const ShipEmitOutput = schema.struct({
+  status: schema.union(schema.literal('emitted'), schema.literal('rejected')),
+  bytes_written: schema.number,
+  capsule_path: schema.string,
+  capsule_id: schema.string,
+  package_name: schema.string,
+  package_version: schema.string,
 });
 
 type ShipEmitDecodedInput = Infer<typeof ShipEmitInput>;

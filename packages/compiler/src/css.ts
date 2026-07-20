@@ -241,10 +241,10 @@ function isStateBody(input: CSSStateInput): input is CSSStateBody {
  *
  * @example
  * ```ts
- * import { Boundary } from '@liteship/core';
+ * import { defineBoundary } from '@liteship/core';
  * import { CSSCompiler } from '@liteship/compiler';
  *
- * const boundary = Boundary.make({
+ * const boundary = defineBoundary({
  *   input: 'width',
  *   at: [[0, 'sm'], [768, 'lg']],
  * });
@@ -451,10 +451,10 @@ export function generatePropertyRegistrations(
  *
  * @example
  * ```ts
- * import { Boundary } from '@liteship/core';
+ * import { defineBoundary } from '@liteship/core';
  * import { CSSCompiler } from '@liteship/compiler';
  *
- * const boundary = Boundary.make({
+ * const boundary = defineBoundary({
  *   input: 'width',
  *   at: [[0, 'sm'], [768, 'lg']],
  * });

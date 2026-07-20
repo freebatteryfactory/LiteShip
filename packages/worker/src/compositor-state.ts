@@ -315,7 +315,7 @@ function sendResolvedStateMessage(
 // ---------------------------------------------------------------------------
 
 /**
- * Register a quantizer, either from a `Boundary.make` result (single-arg)
+ * Register a quantizer, either from a `defineBoundary` result (single-arg)
  * or under an explicit name with a branded boundary (two-arg).
  */
 export function addQuantizer(

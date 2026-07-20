@@ -8,7 +8,7 @@
  * @module
  */
 
-import { defineCapsule, S } from '@liteship/core';
+import { defineCapsule, schema } from '@liteship/core';
 import { Track, Beat, fade, syncTo, compileScene, resolveBeatProjectionToSceneBeats } from '@liteship/scene';
 import type { SceneContract, SceneBeat } from '@liteship/scene';
 import type { BeatMarkerSet } from '@liteship/assets';
@@ -17,8 +17,8 @@ import type { BeatMarkerSet } from '@liteship/assets';
 // module-global lookup, no import-order dependence).
 import { assetRegistry } from './assets.js';
 
-const SceneInputSchema = S.unknown;
-const SceneOutputSchema = S.unknown;
+const SceneInputSchema = schema.unknown;
+const SceneOutputSchema = schema.unknown;
 
 // Phantom-kinded ids — declared once, referenced by syncTo / target / between
 // so cross-kind references fail at compile time.

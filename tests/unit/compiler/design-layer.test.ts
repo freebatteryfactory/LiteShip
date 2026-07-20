@@ -9,7 +9,7 @@ import { describe, test, expect } from 'vitest';
 import fc from 'fast-check';
 
 // --- Core design primitives ---
-import { Token, Style, Theme, Component, Boundary, TokenRef, Easing, Millis } from '@liteship/core';
+import { Token, Style, Theme, Component, TokenRef, Easing, Millis, defineBoundary, defineToken, defineTheme, defineStyle } from '@liteship/core';
 import type { StyleLayer } from '@liteship/core';
 
 // --- Compilers ---
@@ -31,7 +31,7 @@ import type { ExtendedDeviceCapabilities } from '@liteship/detect';
 // FIXTURES
 // ===========================================================================
 
-const viewport = Boundary.make({
+const viewport = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'mobile'],
@@ -40,7 +40,7 @@ const viewport = Boundary.make({
   ] as const,
 });
 
-const primaryToken = Token.make({
+const primaryToken = defineToken({
   name: 'primary',
   category: 'color',
   axes: ['theme'] as const,
@@ -48,7 +48,7 @@ const primaryToken = Token.make({
   fallback: 'oklch(0.5 0.1 260)',
 });
 
-const spacingToken = Token.make({
+const spacingToken = defineToken({
   name: 'gap',
   category: 'spacing',
   axes: ['density'] as const,
@@ -56,7 +56,7 @@ const spacingToken = Token.make({
   fallback: '16px',
 });
 
-const fbfTheme = Theme.make({
+const fbfTheme = defineTheme({
   name: 'fbf',
   variants: ['dark', 'light'] as const,
   tokens: {
@@ -69,7 +69,7 @@ const fbfTheme = Theme.make({
   },
 });
 
-const cardStyle = Style.make({
+const cardStyle = defineStyle({
   boundary: viewport,
   base: {
     properties: { padding: '16px', 'border-radius': '8px', background: 'var(--liteship-surface)' },
@@ -108,7 +108,7 @@ describe('Token', () => {
   });
 
   test('same inputs -> same content address (deterministic)', () => {
-    const token2 = Token.make({
+    const token2 = defineToken({
       name: 'primary',
       category: 'color',
       axes: ['theme'] as const,
@@ -119,7 +119,7 @@ describe('Token', () => {
   });
 
   test('different inputs -> different content address', () => {
-    const otherToken = Token.make({
+    const otherToken = defineToken({
       name: 'secondary',
       category: 'color',
       axes: ['theme'] as const,
@@ -130,7 +130,7 @@ describe('Token', () => {
   });
 
   test('different fallback -> different content address', () => {
-    const token = Token.make({
+    const token = defineToken({
       name: 'primary',
       category: 'color',
       axes: ['theme'] as const,
@@ -154,7 +154,7 @@ describe('Token', () => {
   });
 
   test('resolves multi-axis token with compound keys', () => {
-    const token = Token.make({
+    const token = defineToken({
       name: 'spacing',
       category: 'spacing',
       axes: ['density', 'breakpoint'] as const,
@@ -181,7 +181,7 @@ describe('Token', () => {
   });
 
   test('resolves a multi-axis token when one axis is intentionally omitted', () => {
-    const token = Token.make({
+    const token = defineToken({
       name: 'layout-gap',
       category: 'spacing',
       axes: ['density', 'breakpoint'] as const,
@@ -197,7 +197,7 @@ describe('Token', () => {
 
   test('make() throws on empty name', () => {
     expect(() =>
-      Token.make({
+      defineToken({
         name: '' as 'x',
         category: 'color',
         axes: ['theme'] as const,
@@ -209,7 +209,7 @@ describe('Token', () => {
 
   test('make() throws on duplicate axis names', () => {
     expect(() =>
-      Token.make({
+      defineToken({
         name: 'dup',
         category: 'color',
         axes: ['theme', 'theme'] as unknown as readonly ['theme', 'theme'],
@@ -239,7 +239,7 @@ describe('Style', () => {
 
   test('make() throws on invalid state name', () => {
     expect(() =>
-      Style.make({
+      defineStyle({
         boundary: viewport,
         base: { properties: {} },
         states: { nonexistent: { properties: { color: 'red' } } } as any,
@@ -317,7 +317,7 @@ describe('Style', () => {
   });
 
   test('Style.tap() falls back to base without state maps and preserves mixed box-shadow serialization', () => {
-    const shadowStyle = Style.make({
+    const shadowStyle = defineStyle({
       base: {
         properties: { color: 'red' },
         boxShadow: [{ x: 1, y: 2, blur: 3, color: '#111111' }],
@@ -347,7 +347,7 @@ describe('Style', () => {
   });
 
   test('Style.tap() flattens pseudo selectors and serializes inset shadows with spread overrides', () => {
-    const style = Style.make({
+    const style = defineStyle({
       base: {
         properties: { color: 'red' },
         pseudo: { ':hover': { color: 'blue' } },
@@ -386,7 +386,7 @@ describe('Theme', () => {
   });
 
   test('different meta -> different content address', () => {
-    const withoutMeta = Theme.make({
+    const withoutMeta = defineTheme({
       name: 'fbf',
       variants: ['dark', 'light'] as const,
       tokens: {
@@ -399,7 +399,7 @@ describe('Theme', () => {
 
   test('make() throws on missing variant value', () => {
     expect(() =>
-      Theme.make({
+      defineTheme({
         name: 'broken',
         variants: ['a', 'b'] as const,
         tokens: { foo: { a: 'yes' } as any },
@@ -499,7 +499,7 @@ describe('TokenCSSCompiler', () => {
 
   test('compile() uses explicit cssProperty names and skips @property registration for non-typed fallbacks', () => {
     const token = {
-      ...Token.make({
+      ...defineToken({
         name: 'fluid-gap',
         category: 'spacing',
         axes: ['density'] as const,
@@ -517,7 +517,7 @@ describe('TokenCSSCompiler', () => {
 
   test('compile() defensively falls back to the generated property name when cssProperty is nullish at runtime', () => {
     const token = {
-      ...Token.make({
+      ...defineToken({
         name: 'runtime-gap',
         category: 'spacing',
         axes: ['density'] as const,
@@ -533,7 +533,7 @@ describe('TokenCSSCompiler', () => {
   });
 
   test('compile() infers percentage syntax and leaves themed overrides empty when the theme has no matching token', () => {
-    const token = Token.make({
+    const token = defineToken({
       name: 'alpha',
       category: 'effect',
       axes: ['theme'] as const,
@@ -547,7 +547,7 @@ describe('TokenCSSCompiler', () => {
   });
 
   test('compile() stringifies numeric fallback values', () => {
-    const token = Token.make({
+    const token = defineToken({
       name: 'weight',
       category: 'typography',
       axes: ['density'] as const,
@@ -560,7 +560,7 @@ describe('TokenCSSCompiler', () => {
   });
 
   test('compile() stringifies non-string non-number fallback values', () => {
-    const token = Token.make({
+    const token = defineToken({
       name: 'flag',
       category: 'effect',
       axes: ['mode'] as const,
@@ -574,7 +574,7 @@ describe('TokenCSSCompiler', () => {
   });
 
   test('compile() infers <number> syntax for unit-less numeric fallbacks', () => {
-    const token = Token.make({
+    const token = defineToken({
       name: 'ratio',
       category: 'effect',
       axes: ['mode'] as const,
@@ -595,7 +595,7 @@ describe('TokenCSSCompiler', () => {
       },
     } as Theme;
 
-    const token = Token.make({
+    const token = defineToken({
       name: 'primary',
       category: 'color',
       axes: ['theme'] as const,
@@ -622,7 +622,7 @@ describe('TokenTailwindCompiler', () => {
   });
 
   test('compile() stringifies non-string fallback values and skips undefined axis entries', () => {
-    const flagToken = Token.make({
+    const flagToken = defineToken({
       name: 'flag',
       category: 'effect',
       axes: ['mode'] as const,
@@ -677,7 +677,7 @@ describe('ThemeCSSCompiler', () => {
   });
 
   test('compile() emits empty transitions when theme lacks meta', () => {
-    const noMetaTheme = Theme.make({
+    const noMetaTheme = defineTheme({
       name: 'plain',
       variants: ['a', 'b'] as const,
       tokens: { fg: { a: 'black', b: 'white' } },
@@ -871,21 +871,21 @@ describe('Spring CSS Helpers', () => {
 // ===========================================================================
 
 describe('Property-based: Token determinism', () => {
-  test('Token.make is deterministic across calls (single axis)', () => {
+  test('defineToken is deterministic across calls (single axis)', () => {
     fc.assert(
       fc.property(
         fc.string({ minLength: 1, maxLength: 20 }).filter((s) => /^[a-z]/.test(s)),
         fc.constantFrom('color', 'spacing', 'typography', 'shadow', 'radius', 'animation', 'effect' as const),
         (name, category) => {
-          const t1 = Token.make({ name, category, axes: ['a'] as const, values: { x: '1' }, fallback: '0' });
-          const t2 = Token.make({ name, category, axes: ['a'] as const, values: { x: '1' }, fallback: '0' });
+          const t1 = defineToken({ name, category, axes: ['a'] as const, values: { x: '1' }, fallback: '0' });
+          const t2 = defineToken({ name, category, axes: ['a'] as const, values: { x: '1' }, fallback: '0' });
           return t1.id === t2.id;
         },
       ),
     );
   });
 
-  test('Token.make is deterministic with multi-axis compound keys', () => {
+  test('defineToken is deterministic with multi-axis compound keys', () => {
     // Arbitrary that generates 1-3 axes and matching compound key values
     const axisArb = fc.uniqueArray(fc.constantFrom('theme', 'density', 'breakpoint', 'contrast', 'motion'), {
       minLength: 1,
@@ -911,8 +911,8 @@ describe('Property-based: Token determinism', () => {
             values,
             fallback: 'fb',
           };
-          const t1 = Token.make(config);
-          const t2 = Token.make(config);
+          const t1 = defineToken(config);
+          const t2 = defineToken(config);
           return t1.id === t2.id;
         },
       ),
@@ -925,7 +925,7 @@ describe('Property-based: Token determinism', () => {
         fc.constantFrom('color', 'spacing', 'typography' as const),
         fc.constantFrom('theme', 'density'),
         fc.constantFrom('breakpoint', 'contrast'),
-        // ':' is the reserved compound-key separator — Token.make rejects
+        // ':' is the reserved compound-key separator — defineToken rejects
         // values keys whose segment count diverges from the axis count.
         fc.string({ minLength: 1, maxLength: 5 }).filter((s) => /^[a-z]/.test(s) && !s.includes(':')),
         fc.string({ minLength: 1, maxLength: 5 }).filter((s) => /^[a-z]/.test(s) && !s.includes(':')),
@@ -934,7 +934,7 @@ describe('Property-based: Token determinism', () => {
           const sorted = [...axes].sort();
           // Build key in sorted order
           const key = sorted.map((a) => (a === axis1 ? val1 : val2)).join(':');
-          const token = Token.make({
+          const token = defineToken({
             name: 'test',
             category,
             axes,
@@ -969,7 +969,7 @@ describe('Property-based: Theme resolution completeness', () => {
           for (const name of uniqueNames) {
             tokens[name] = { [variant]: `val-${name}` };
           }
-          const theme = Theme.make({
+          const theme = defineTheme({
             name: 'test',
             variants: [variant] as const,
             tokens: tokens as any,
@@ -1002,7 +1002,7 @@ describe('Property-based: Theme resolution completeness', () => {
             }
             tokens[name] = variantMap;
           }
-          const theme = Theme.make({
+          const theme = defineTheme({
             name: 'multi',
             variants: variants as unknown as readonly [string, ...string[]],
             tokens: tokens as any,

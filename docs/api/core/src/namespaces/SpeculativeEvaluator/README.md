@@ -13,7 +13,7 @@ using velocity estimation and hysteresis-based prefetch windows.
 ## Example
 
 ```ts
-const boundary = Boundary.make({
+const boundary = defineBoundary({
   thresholds: [600],
   states: ['small', 'large'] as const,
 });

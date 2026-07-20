@@ -2,7 +2,7 @@
  * Property test: boundary manifest identity.
  *
  * For any boundary definition, the id `collectBoundaryManifest` emits is
- * exactly the content address `Boundary.make` mints for the same
+ * exactly the content address `defineBoundary` mints for the same
  * definition (ADR-0003 identity law) and matches the pinned
  * `fnv1a:xxxxxxxx` format -- the manifest is a derivation, never a
  * re-hash or a hand-typed value.
@@ -13,7 +13,7 @@ import fc from 'fast-check';
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { Boundary } from '@liteship/core';
+import { defineBoundary } from '@liteship/core';
 import { collectBoundaryManifest } from '@liteship/vite';
 
 const tempDirs: string[] = [];
@@ -31,7 +31,7 @@ afterEach(() => {
 });
 
 describe('boundary manifest identity properties', () => {
-  test('manifest ids equal Boundary.make ids for arbitrary definitions', async () => {
+  test('manifest ids equal defineBoundary ids for arbitrary definitions', async () => {
     await fc.assert(
       fc.asyncProperty(
         fc.uniqueArray(fc.integer({ min: 0, max: 10000 }), { minLength: 2, maxLength: 5 }),
@@ -39,7 +39,7 @@ describe('boundary manifest identity properties', () => {
         async (rawThresholds, input) => {
           const sorted = [...rawThresholds].sort((a, b) => a - b);
           const pairs = sorted.map((t, i) => [t, `state${i}`] as const);
-          const reference = Boundary.make({
+          const reference = defineBoundary({
             input,
             at: pairs as unknown as readonly [readonly [number, string]],
           });
@@ -47,16 +47,16 @@ describe('boundary manifest identity properties', () => {
           const root = makeTempDir();
           const srcDir = join(root, 'src');
           mkdirSync(srcDir, { recursive: true });
-          // The fixture mints its own id via Boundary.make (resolved through
+          // The fixture mints its own id via defineBoundary (resolved through
           // the workspace test alias), so the assertion below proves the
           // manifest carries the minted address -- not a re-hash, not a copy
           // of anything this test file computed.
           writeFileSync(
             join(srcDir, 'boundaries.ts'),
             `
-import { Boundary } from '@liteship/core';
+import { defineBoundary } from '@liteship/core';
 
-export const generated = Boundary.make({
+export const generated = defineBoundary({
   input: ${JSON.stringify(input)},
   at: ${JSON.stringify(pairs)},
 });

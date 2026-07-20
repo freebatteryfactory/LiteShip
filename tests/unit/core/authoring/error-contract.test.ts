@@ -8,7 +8,6 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 import {
   AVBridge,
-  Boundary,
   Composable,
   ComposableWorld,
   Diagnostics,
@@ -20,8 +19,7 @@ import {
   Receipt,
   Style,
   Token,
-  World,
-} from '@liteship/core';
+  World, defineBoundary, defineToken, defineStyle } from '@liteship/core';
 import { hasTag } from '@liteship/error';
 import type { EntityId } from '@liteship/core';
 
@@ -179,7 +177,7 @@ describe('tap-miss diagnostics', () => {
   });
 
   test('Token.tap warns once per missed key with known keys listed', () => {
-    const token = Token.make({
+    const token = defineToken({
       name: 'bg',
       category: 'color',
       axes: ['theme'],
@@ -201,8 +199,8 @@ describe('tap-miss diagnostics', () => {
   });
 
   test('Style.tap warns when the state is outside the boundary state set', () => {
-    const boundary = Boundary.make({ input: 'viewport.width', at: [[0, 'sm'], [768, 'lg']] });
-    const style = Style.make({
+    const boundary = defineBoundary({ input: 'viewport.width', at: [[0, 'sm'], [768, 'lg']] });
+    const style = defineStyle({
       boundary,
       base: { properties: { color: 'black' } },
       states: { lg: { properties: { color: 'white' } } },

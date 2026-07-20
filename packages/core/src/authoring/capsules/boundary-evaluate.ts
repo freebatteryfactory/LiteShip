@@ -14,20 +14,20 @@
  */
 
 import { defineCapsule } from '../assembly.js';
-import { S } from '../../schema/constructors.js';
-import { Boundary } from '../boundary.js';
+import { schema } from '../../schema/constructors.js';
+import { Boundary, defineBoundary } from '../boundary.js';
 
-const EvaluateInputSchema = S.struct({
+const EvaluateInputSchema = schema.struct({
   // Random arrays — the run handler dedupes states and aligns lengths.
-  // We use `S.array` (not a non-empty variant) for compatibility with the
+  // We use `schema.array` (not a non-empty variant) for compatibility with the
   // edge case `length === 0`, which we handle by short-circuiting in run.
-  thresholds: S.array(S.number),
-  states: S.array(S.string),
-  value: S.number,
+  thresholds: schema.array(schema.number),
+  states: schema.array(schema.string),
+  value: schema.number,
 });
-const EvaluateOutputSchema = S.struct({
-  state: S.string,
-  matched: S.boolean,
+const EvaluateOutputSchema = schema.struct({
+  state: schema.string,
+  matched: schema.boolean,
 });
 
 type EvaluateInput = {
@@ -68,11 +68,11 @@ function _runBoundary(input: EvaluateInput): EvaluateOutput {
       prev = t;
     }
   }
-  // Boundary.make requires at least one [threshold, state] pair.
+  // defineBoundary requires at least one [threshold, state] pair.
   if (ascending.length === 0) {
     // Fabricate a single-anchor boundary at 0 with the first state.
     const onlyState = uniqueStates[0]!;
-    const b = Boundary.make({
+    const b = defineBoundary({
       input: 'cap.boundary-evaluate',
       at: [[0, onlyState]] as const,
     });
@@ -85,7 +85,7 @@ function _runBoundary(input: EvaluateInput): EvaluateOutput {
   for (let i = 0; i < usableLen; i++) {
     pairs.push([ascending[i]!, uniqueStates[i]!] as const);
   }
-  const b = Boundary.make({
+  const b = defineBoundary({
     input: 'cap.boundary-evaluate',
     at: pairs as never,
   });

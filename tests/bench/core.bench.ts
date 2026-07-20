@@ -3,7 +3,7 @@
  */
 
 import { Bench } from 'tinybench';
-import { Boundary, Token, Compositor, BlendTree, World, Part, Config } from '@liteship/core';
+import { Boundary, Compositor, BlendTree, World, Part, Config, defineBoundary, defineToken, defineConfig } from '@liteship/core';
 
 const bench = new Bench({ warmupIterations: 100 });
 
@@ -11,7 +11,7 @@ const bench = new Bench({ warmupIterations: 100 });
 // Fixtures
 // ---------------------------------------------------------------------------
 
-const boundary3 = Boundary.make({
+const boundary3 = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'mobile'],
@@ -20,7 +20,7 @@ const boundary3 = Boundary.make({
   ] as const,
 });
 
-const boundary5 = Boundary.make({
+const boundary5 = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'xs'],
@@ -31,7 +31,7 @@ const boundary5 = Boundary.make({
   ] as const,
 });
 
-const boundary10 = Boundary.make({
+const boundary10 = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 's0'],
@@ -47,7 +47,7 @@ const boundary10 = Boundary.make({
   ] as const,
 });
 
-const boundaryHyst = Boundary.make({
+const boundaryHyst = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'mobile'],
@@ -61,8 +61,8 @@ const boundaryHyst = Boundary.make({
 // Benchmarks
 // ---------------------------------------------------------------------------
 
-bench.add('Boundary.make() -- 3 thresholds', () => {
-  Boundary.make({
+bench.add('defineBoundary() -- 3 thresholds', () => {
+  defineBoundary({
     input: 'viewport.width',
     at: [
       [0, 'mobile'],
@@ -88,8 +88,8 @@ bench.add('Boundary.evaluateWithHysteresis -- 3 thresholds', () => {
   Boundary.evaluateWithHysteresis(boundaryHyst, 780, 'mobile');
 });
 
-bench.add('Token.make() + FNV-1a', () => {
-  Token.make({
+bench.add('defineToken() + FNV-1a', () => {
+  defineToken({
     name: 'primary',
     category: 'color',
     axes: ['theme'] as const,
@@ -168,14 +168,14 @@ bench.add('Compositor.compute() -- empty', () => {
 // Config -- make() mints a CanonicalCbor + FNV-1a content address; the
 // projections (toViteConfig) are pure structural folds. Both are on the
 // adapter-config hot path every liteship project pays once at startup.
-const testCfg = Config.make({ boundaries: { viewport: boundary3 } });
+const testCfg = defineConfig({ boundaries: { viewport: boundary3 } });
 
-bench.add('Config.make() -- empty config', () => {
-  Config.make({});
+bench.add('defineConfig() -- empty config', () => {
+  defineConfig({});
 });
 
-bench.add('Config.make() -- with boundaries', () => {
-  Config.make({ boundaries: { viewport: boundary3, layout: boundary5 } });
+bench.add('defineConfig() -- with boundaries', () => {
+  defineConfig({ boundaries: { viewport: boundary3, layout: boundary5 } });
 });
 
 bench.add('Config.toViteConfig() -- projection', () => {

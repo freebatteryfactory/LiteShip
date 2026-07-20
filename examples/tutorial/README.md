@@ -19,9 +19,9 @@ Open the printed URL and start at `/01-boundary`.
 
 | Page | What it teaches |
 |---|---|
-| `01-boundary` | `Boundary.make` — quantize a continuous signal (viewport width) into named states; resize across 768px and watch `data-liteship-state` flip |
-| `02-tokens` | `Token.make` + `@token` blocks — axis-varying values compiled to `--liteship-*` custom properties |
-| `03-themes` | `Theme.make` / `Theme.tap` — multi-variant theming over the same tokens |
+| `01-boundary` | `defineBoundary` — quantize a continuous signal (viewport width) into named states; resize across 768px and watch `data-liteship-state` flip |
+| `02-tokens` | `defineToken` + `@token` blocks — axis-varying values compiled to `--liteship-*` custom properties |
+| `03-themes` | `defineTheme` / `Theme.tap` — multi-variant theming over the same tokens |
 | `04-streaming` | `client:stream` — server-sent patches morphed into the live DOM with focus and scroll preserved, and how to opt a client-owned subtree out entirely |
 | `05-llm` | `client:llm` — LLM token streaming, the CapTier ABR ladder, and the optional generated-UI catalog path |
 

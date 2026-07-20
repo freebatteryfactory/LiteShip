@@ -10,38 +10,38 @@
 
 import { describe, test, expect } from 'vitest';
 import fc from 'fast-check';
-import { Cell } from '@liteship/core';
+import { createCell } from '@liteship/core';
 
 // ---------------------------------------------------------------------------
-// Cell.make — value slot (read / set / update)
+// createCell — value slot (read / set / update)
 // ---------------------------------------------------------------------------
 
-describe('Cell.make', () => {
+describe('createCell', () => {
   test('initial value is retrievable via read', () => {
-    const cell = Cell.make(42);
+    const cell = createCell(42);
     expect(cell.read()).toBe(42);
   });
 
   test('set updates value', () => {
-    const cell = Cell.make(0);
+    const cell = createCell(0);
     cell.set(99);
     expect(cell.read()).toBe(99);
   });
 
   test('update applies function to current value', () => {
-    const cell = Cell.make(10);
+    const cell = createCell(10);
     cell.update((n) => n * 2);
     expect(cell.read()).toBe(20);
   });
 
   test('update with identity preserves value', () => {
-    const cell = Cell.make('hello');
+    const cell = createCell('hello');
     cell.update((x) => x);
     expect(cell.read()).toBe('hello');
   });
 
   test('has _tag Cell', () => {
-    expect(Cell.make(0)._tag).toBe('Cell');
+    expect(createCell(0)._tag).toBe('Cell');
   });
 });
 
@@ -51,14 +51,14 @@ describe('Cell.make', () => {
 
 describe('Cell — subscribe replays current + delivers every set', () => {
   test('a new subscriber is replayed the current value synchronously', () => {
-    const cell = Cell.make(7);
+    const cell = createCell(7);
     const got: number[] = [];
     cell.subscribe((v) => got.push(v));
     expect(got).toEqual([7]);
   });
 
   test('a late subscriber replays the LATEST value, not the whole history', () => {
-    const cell = Cell.make(0);
+    const cell = createCell(0);
     cell.set(3);
     cell.set(5);
     const got: number[] = [];
@@ -68,7 +68,7 @@ describe('Cell — subscribe replays current + delivers every set', () => {
   });
 
   test('EmissionPolicy {all}: equal-consecutive sets are NOT suppressed — set(7)x3 delivers [0,7,7,7]', () => {
-    const cell = Cell.make(0);
+    const cell = createCell(0);
     const got: number[] = [];
     cell.subscribe((v) => got.push(v));
     cell.set(7);
@@ -78,7 +78,7 @@ describe('Cell — subscribe replays current + delivers every set', () => {
   });
 
   test('update fans out the transformed value', () => {
-    const cell = Cell.make(0);
+    const cell = createCell(0);
     const got: number[] = [];
     cell.subscribe((v) => got.push(v));
     cell.update((n) => n + 10);
@@ -93,7 +93,7 @@ describe('Cell — subscribe replays current + delivers every set', () => {
 
 describe('Cell — subscriber ordering', () => {
   test('a set fans out to every subscriber in subscription order', () => {
-    const cell = Cell.make(0);
+    const cell = createCell(0);
     const order: string[] = [];
     cell.subscribe(() => order.push('a'));
     cell.subscribe(() => order.push('b'));
@@ -110,7 +110,7 @@ describe('Cell — subscriber ordering', () => {
 
 describe('Cell — nested write (deferred / async-append, the PRESERVED product law)', () => {
   test('a set issued from a delivery handler reaches EVERY subscriber after the outer value (b: [0,1,99])', () => {
-    const cell = Cell.make(0);
+    const cell = createCell(0);
     const a: number[] = [];
     const b: number[] = [];
     let fired = false;
@@ -138,7 +138,7 @@ describe('Cell — nested write (deferred / async-append, the PRESERVED product 
 
 describe('Cell — disposer + Lifetime', () => {
   test('a disposed subscriber stops receiving values; others are unaffected', () => {
-    const cell = Cell.make(0);
+    const cell = createCell(0);
     const a: number[] = [];
     const b: number[] = [];
     const disposeA = cell.subscribe((v) => a.push(v));
@@ -151,7 +151,7 @@ describe('Cell — disposer + Lifetime', () => {
   });
 
   test('the disposer is idempotent — a repeat call is a no-op', () => {
-    const cell = Cell.make(0);
+    const cell = createCell(0);
     const got: number[] = [];
     const dispose = cell.subscribe((v) => got.push(v));
     dispose();
@@ -161,7 +161,7 @@ describe('Cell — disposer + Lifetime', () => {
   });
 
   test('disposing the Lifetime completes every subscriber once and makes set inert', async () => {
-    const cell = Cell.make(0);
+    const cell = createCell(0);
     const got: number[] = [];
     let completed = 0;
     cell.subscribe({ next: (v) => got.push(v), complete: () => (completed += 1) });
@@ -180,7 +180,7 @@ describe('Cell properties', () => {
   test('set then read roundtrips', () => {
     fc.assert(
       fc.property(fc.integer(), (value) => {
-        const cell = Cell.make(0);
+        const cell = createCell(0);
         cell.set(value);
         expect(cell.read()).toBe(value);
       }),

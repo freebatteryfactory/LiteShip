@@ -32,7 +32,7 @@ interface SpeculativeEvaluatorShape<B extends Boundary> {
  *
  * @example
  * ```ts
- * const boundary = Boundary.make({
+ * const boundary = defineBoundary({
  *   thresholds: [768, 1024],
  *   states: ['mobile', 'tablet', 'desktop'] as const,
  *   hysteresis: 20,
@@ -66,7 +66,7 @@ function _make<B extends Boundary>(boundary: B, clock: Clock = systemClock): Spe
   // 2-sample velocity estimation buffer — gives instant responsiveness
   const HISTORY_SIZE = 2;
 
-  // Boundary.make guarantees states is non-empty (readonly [string, ...string[]]).
+  // defineBoundary guarantees states is non-empty (readonly [string, ...string[]]).
   let previousState: StateUnion<B> = boundary.states[0];
 
   // Simple finite difference (not least-squares) — 2-sample gives instant responsiveness
@@ -168,7 +168,7 @@ function _make<B extends Boundary>(boundary: B, clock: Clock = systemClock): Spe
  *
  * @example
  * ```ts
- * const boundary = Boundary.make({
+ * const boundary = defineBoundary({
  *   thresholds: [600],
  *   states: ['small', 'large'] as const,
  * });

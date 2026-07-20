@@ -85,7 +85,7 @@ export function enumerateTierKeys(): readonly TierKey[] {
 
 /**
  * One boundary's manifest entry: its minted `ContentAddress` (always
- * `Boundary.make`'s id -- never hand-typed) plus precompiled
+ * `defineBoundary`'s id -- never hand-typed) plus precompiled
  * {@link CompiledOutputs} for the tier grid, deduplicated.
  *
  * Most of a boundary's compiled CSS is tier-invariant (the container
@@ -105,7 +105,7 @@ export function enumerateTierKeys(): readonly TierKey[] {
  * derive cache configuration from it.
  */
 export interface BoundaryManifestEntry {
-  /** Content address minted by `Boundary.make` (`fnv1a:xxxxxxxx`). */
+  /** Content address minted by `defineBoundary` (`fnv1a:xxxxxxxx`). */
   readonly id: ContentAddress;
   /** Deduplicated pool of distinct compiled outputs; `outputsByTier` cells index into it. */
   readonly outputs: readonly CompiledOutputs[];

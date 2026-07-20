@@ -22,13 +22,15 @@ import * as Core from '@liteship/core';
 
 const API_REGISTRY: Record<string, { methods: string[]; values?: string[] }> = {
   // ── Rendering primitives ──────────────────────────────────────────
-  Boundary: { methods: ['make', 'evaluate', 'evaluateWithHysteresis'] },
+  // Construction moved to the standalone `defineBoundary` (verb grammar, ADR-0046);
+  // the `Boundary` namespace object now carries only the pure evaluation faces.
+  Boundary: { methods: ['evaluate', 'evaluateWithHysteresis'] },
   BoundarySpec: { methods: ['isActive'] },
   BoundaryAttribute: { methods: ['isAllowedKey'] },
-  Token: { methods: ['make', 'tap', 'cssVar'] },
+  Token: { methods: ['tap', 'cssVar'] },
   TokenBuffer: { methods: ['make'] },
-  Style: { methods: ['make', 'tap', 'mergeLayers'] },
-  Theme: { methods: ['make', 'tap'] },
+  Style: { methods: ['tap', 'mergeLayers'] },
+  Theme: { methods: ['tap'] },
   Component: { methods: ['make'] },
   Signal: { methods: ['make', 'controllable', 'audio'] },
   Easing: {
@@ -53,7 +55,7 @@ const API_REGISTRY: Record<string, { methods: string[]; values?: string[] }> = {
     ],
   },
   Animation: { methods: ['run', 'interpolate'] },
-  Timeline: { methods: ['from'] },
+  // `Timeline` is now type-only; construction is the standalone `createTimeline`.
 
   // ── Compositor / ECS / scheduling ─────────────────────────────────
   Compositor: { methods: ['create'] },
@@ -72,20 +74,22 @@ const API_REGISTRY: Record<string, { methods: string[]; values?: string[] }> = {
   // core barrel alongside this removal.
 
   // ── Reactive primitives ───────────────────────────────────────────
-  Cell: { methods: ['make'] },
-  Derived: { methods: ['make', 'combine'] },
+  // `Cell` / `Store` are now type-only; construction is the standalone
+  // `createCell` / `createStore`. `Derived` construction is the standalone
+  // `computed`; the namespace object keeps `combine`.
+  Derived: { methods: ['combine'] },
   Zap: { methods: ['make', 'fromDOMEvent', 'merge', 'map', 'filter', 'debounce', 'throttle'] },
   // `Wire` (the fluent Effect-Stream wrapper) was DELETED this wave — 100%
   // transport, zero runtime consumers (the web/astro `wire` is the unrelated
   // liteship:* event registry). `isWire` + the Wire arm of `Primitive` left with it.
-  Store: { methods: ['make'] },
   LiveCell: { methods: ['make', 'makeBoundary'] },
 
   // ── Schema kernel + disposal/reactive substrate (Wave 0 foundations) ──
-  // The effect-free schema substrate: `S.*` constructors over a frozen plain-data
-  // AST. `S`'s FUNCTION members are the constructors; its OBJECT members
-  // (`any`/`boolean`/`number`/`string`/`unknown`) are pre-built inert schema nodes.
-  S: {
+  // The effect-free schema substrate: `schema.*` constructors over a frozen
+  // plain-data AST. `schema`'s FUNCTION members are the constructors; its OBJECT
+  // members (`any`/`boolean`/`number`/`string`/`unknown`) are pre-built inert
+  // schema nodes.
+  schema: {
     methods: ['array', 'brand', 'bytes', 'hole', 'literal', 'optional', 'record', 'struct', 'tuple', 'union'],
     values: ['any', 'boolean', 'number', 'string', 'unknown'],
   },
@@ -164,7 +168,9 @@ const API_REGISTRY: Record<string, { methods: string[]; values?: string[] }> = {
   Diagnostics: {
     methods: ['warn', 'error', 'warnOnce', 'setSink', 'resetSink', 'clearOnce', 'reset', 'createBufferSink'],
   },
-  Config: { methods: ['make', 'toViteConfig', 'toAstroConfig', 'toTestAliases'] },
+  // Construction moved to the standalone `defineConfig`; the `Config` namespace
+  // object now carries only the projection functions.
+  Config: { methods: ['toViteConfig', 'toAstroConfig', 'toTestAliases'] },
 
   // ── Generative UI / video ─────────────────────────────────────────
   GenFrame: { methods: ['make', 'resolveGap'] },
@@ -250,6 +256,17 @@ const STANDALONE_FUNCTIONS = [
   // `@liteship/error` algebra; consumers use `hasTag(e, 'ValidationError')` from
   // `@liteship/error` (no per-package guard re-export, no compat shim).
   'defineConfig',
+  // Verb-grammar construction functions (ADR-0046): the standalone `define*` /
+  // `create*` / `computed` factories that replaced the namespace `.make` / `.from`
+  // members on Boundary/Token/Theme/Style/Cell/Derived/Store/Timeline.
+  'defineBoundary',
+  'defineToken',
+  'defineTheme',
+  'defineStyle',
+  'createCell',
+  'computed',
+  'createStore',
+  'createTimeline',
   'tupleMap',
   // The single f32-canonical boundary state-index kernel (Phase-0 evaluator
   // consolidation). Public so @liteship/worker's host startup path delegates to it.

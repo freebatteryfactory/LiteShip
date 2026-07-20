@@ -31,7 +31,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { resolve, dirname } from 'node:path';
-import { Boundary, Compositor } from '@liteship/core';
+import { Compositor, defineBoundary } from '@liteship/core';
 import type { CompositorQuantizer, Quantizer, ReactiveQuantizer } from '@liteship/core';
 import { scaledTimeout } from '../../vitest.shared.js';
 import { spawnArgvCapture } from '../../scripts/lib/spawn.js';
@@ -80,7 +80,7 @@ function parseRelative(
 // This file is listed in tsconfig.tests.json's include, so the `@ts-expect-error`
 // below is LOAD-BEARING: it is only verified because THIS project typechecks it.
 describe('Compositor.add — CompositorQuantizer accepted-type contract (compile-time)', () => {
-  const boundary = Boundary.make({
+  const boundary = defineBoundary({
     input: 'viewport.width',
     at: [
       [0, 'mobile'],

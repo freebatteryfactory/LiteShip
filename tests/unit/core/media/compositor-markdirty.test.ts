@@ -23,9 +23,9 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Boundary, Compositor } from '@liteship/core';
+import { Boundary, Compositor, defineBoundary } from '@liteship/core';
 
-const widthBoundary = Boundary.make({
+const widthBoundary = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'mobile'],

@@ -2,23 +2,23 @@
 /**
  * Factory defaults — sensible-default widenings on core factories.
  *
- * Covers: Token.make axes/fallback defaults + value-key validation,
+ * Covers: defineToken axes/fallback defaults + value-key validation,
  * Component.make implied slots, Easing.spring engine defaults,
- * Signal.make source-payload defaults, Style.make plain-number durations,
+ * Signal.make source-payload defaults, defineStyle plain-number durations,
  * Signal.audio normalized-mode validation.
  */
 
 import { describe, expect, test } from 'vitest';
-import { AVBridge, Component, Easing, Signal, Style, Token } from '@liteship/core';
+import { AVBridge, Component, Easing, Signal, Token, defineToken, defineStyle } from '@liteship/core';
 import { hasTag } from '@liteship/error';
 
 // ---------------------------------------------------------------------------
-// Token.make — axes default to ['default'], fallback derives from values.default
+// defineToken — axes default to ['default'], fallback derives from values.default
 // ---------------------------------------------------------------------------
 
-describe('Token.make defaults', () => {
+describe('defineToken defaults', () => {
   test('axes default to ["default"] and fallback derives from values.default', () => {
-    const token = Token.make({ name: 'primary', category: 'color', values: { default: '#000' } });
+    const token = defineToken({ name: 'primary', category: 'color', values: { default: '#000' } });
 
     expect(token.axes).toEqual(['default']);
     expect(token.fallback).toBe('#000');
@@ -26,8 +26,8 @@ describe('Token.make defaults', () => {
 
   test('throws a teaching error when fallback is omitted and values has no "default" key', () => {
     try {
-      Token.make({ name: 'primary', category: 'color', values: { light: '#000' } });
-      expect.unreachable('expected Token.make to throw');
+      defineToken({ name: 'primary', category: 'color', values: { light: '#000' } });
+      expect.unreachable('expected defineToken to throw');
     } catch (error) {
       expect(hasTag(error, 'ValidationError')).toBe(true);
       expect(String(error)).toMatch(/values\.default/);
@@ -35,7 +35,7 @@ describe('Token.make defaults', () => {
   });
 
   test('explicit axes + fallback behave as before', () => {
-    const token = Token.make({
+    const token = defineToken({
       name: 'gap',
       category: 'spacing',
       axes: ['density'],
@@ -50,20 +50,20 @@ describe('Token.make defaults', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Token.make — value keys must have one segment per axis
+// defineToken — value keys must have one segment per axis
 // ---------------------------------------------------------------------------
 
-describe('Token.make value-key validation', () => {
+describe('defineToken value-key validation', () => {
   test('rejects keys whose segment count does not match the axis count', () => {
     try {
-      Token.make({
+      defineToken({
         name: 'bg',
         category: 'color',
         axes: ['theme', 'contrast'],
         values: { light: '#fff' },
         fallback: '#ccc',
       });
-      expect.unreachable('expected Token.make to throw');
+      expect.unreachable('expected defineToken to throw');
     } catch (error) {
       expect(hasTag(error, 'ValidationError')).toBe(true);
       expect(String(error)).toMatch(/segment/);
@@ -72,7 +72,7 @@ describe('Token.make value-key validation', () => {
   });
 
   test('accepts keys with one value per axis', () => {
-    const token = Token.make({
+    const token = defineToken({
       name: 'bg',
       category: 'color',
       axes: ['theme', 'contrast'],
@@ -84,7 +84,7 @@ describe('Token.make value-key validation', () => {
   });
 
   test('value shorthand derives empty axes and uses value as fallback', () => {
-    const token = Token.make({ name: 'gap', category: 'spacing', value: '8px' });
+    const token = defineToken({ name: 'gap', category: 'spacing', value: '8px' });
     expect(token.axes).toEqual([]);
     expect(token.values).toEqual({});
     expect(token.fallback).toBe('8px');
@@ -97,7 +97,7 @@ describe('Token.make value-key validation', () => {
 // ---------------------------------------------------------------------------
 
 describe('Component.make defaults', () => {
-  const styles = Style.make({ base: { properties: { display: 'flex' } } });
+  const styles = defineStyle({ base: { properties: { display: 'flex' } } });
 
   test('slots default to an implied children slot with defaultSlot "children"', () => {
     const component = Component.make({ name: 'button', styles });
@@ -179,12 +179,12 @@ describe('Signal.make source defaults', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Style.make — plain-number transition durations are branded internally
+// defineStyle — plain-number transition durations are branded internally
 // ---------------------------------------------------------------------------
 
-describe('Style.make transition duration', () => {
+describe('defineStyle transition duration', () => {
   test('accepts a plain number duration', () => {
-    const style = Style.make({
+    const style = defineStyle({
       base: { properties: { color: 'black' } },
       transition: { duration: 200 },
     });

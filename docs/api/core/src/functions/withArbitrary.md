@@ -6,9 +6,9 @@
 
 # Function: withArbitrary()
 
-> **withArbitrary**\<`S2`\>(`schema`, `arbitrary`): `S2`
+> **withArbitrary**\<`S2`\>(`inner`, `arbitrary`): `S2`
 
-Defined in: [core/src/schema/constructors.ts:190](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/constructors.ts#L190)
+Defined in: [core/src/schema/constructors.ts:191](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/constructors.ts#L191)
 
 Attach an author-supplied arbitrary THUNK to a schema (for the harness
 walker). Returns a fresh schema with the same decode/encode behaviour — only
@@ -31,7 +31,7 @@ public surface.
 
 ## Parameters
 
-### schema
+### inner
 
 `S2`
 

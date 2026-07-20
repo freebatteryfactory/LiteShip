@@ -63,7 +63,7 @@ export function rewriteBoundaryThreshold(
   });
 }
 
-/** Format a paste-ready `Boundary.make` snippet from serialized boundary JSON. */
+/** Format a paste-ready `defineBoundary` snippet from serialized boundary JSON. */
 export function formatBoundaryMakeSnippet(boundaryJson: string): string {
   const parsed = JSON.parse(boundaryJson) as SerializedBoundary;
   const atPairs = parsed.thresholds.map((threshold, index) => `[${threshold}, '${parsed.states[index]}']`);
@@ -74,7 +74,7 @@ export function formatBoundaryMakeSnippet(boundaryJson: string): string {
   if (parsed.id) {
     lines.push(`  // id: ${parsed.id}`);
   }
-  return `Boundary.make({\n${lines.join('\n')}\n})`;
+  return `defineBoundary({\n${lines.join('\n')}\n})`;
 }
 
 /** Derive the CSS container name a quantize block would use for an input. */

@@ -65,4 +65,4 @@ Human-readable summary. Doubles as the transport `Error.message`.
 
 Defined in: [error/src/variants.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts#L32)
 
-The unit that rejected the input, e.g. `'Boundary.make'`.
+The unit that rejected the input, e.g. `'defineBoundary'`.

@@ -9,7 +9,7 @@
 Defined in: [edge/src/manifest.ts:107](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/manifest.ts#L107)
 
 One boundary's manifest entry: its minted `ContentAddress` (always
-`Boundary.make`'s id -- never hand-typed) plus precompiled
+`defineBoundary`'s id -- never hand-typed) plus precompiled
 [CompiledOutputs](CompiledOutputs.md) for the tier grid, deduplicated.
 
 Most of a boundary's compiled CSS is tier-invariant (the container
@@ -46,7 +46,7 @@ Optional immutable static-asset URL per output-pool index.
 
 Defined in: [edge/src/manifest.ts:109](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/manifest.ts#L109)
 
-Content address minted by `Boundary.make` (`fnv1a:xxxxxxxx`).
+Content address minted by `defineBoundary` (`fnv1a:xxxxxxxx`).
 
 ***
 

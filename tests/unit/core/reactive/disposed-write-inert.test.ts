@@ -14,7 +14,7 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { LiveCell, Boundary, Millis, Timeline, manualClock } from '@liteship/core';
+import { LiveCell, Millis, manualClock, defineBoundary, createTimeline } from '@liteship/core';
 
 describe('LiveCell._make — a post-dispose set() is fully inert (no envelope/value divergence)', () => {
   test('scalar LiveCell: value frozen, version + content-address id do not drift', async () => {
@@ -32,7 +32,7 @@ describe('LiveCell._make — a post-dispose set() is fully inert (no envelope/va
 
 describe('LiveCell._makeBoundary — a post-dispose set() is fully inert', () => {
   test('boundary LiveCell: value + envelope frozen even for a would-be crossing', async () => {
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'x',
       at: [
         [0, 'lo'],
@@ -52,7 +52,7 @@ describe('LiveCell._makeBoundary — a post-dispose set() is fully inert', () =>
 
 describe('Timeline — a post-dispose seek/scrub does not move elapsed while state() is frozen', () => {
   const makeBoundary = () =>
-    Boundary.make({
+    defineBoundary({
       input: 'time.elapsed',
       at: [
         [0, 'idle'],
@@ -62,7 +62,7 @@ describe('Timeline — a post-dispose seek/scrub does not move elapsed while sta
     });
 
   test('seek after dispose leaves elapsed()/progress() at 0 (state frozen)', async () => {
-    const timeline = Timeline.from(makeBoundary(), { duration: Millis(200) });
+    const timeline = createTimeline(makeBoundary(), { duration: Millis(200) });
     const state0 = timeline.state();
     await timeline.lifetime.dispose();
     timeline.seek(Millis(150));
@@ -72,7 +72,7 @@ describe('Timeline — a post-dispose seek/scrub does not move elapsed while sta
   });
 
   test('scrub after dispose is inert too', async () => {
-    const timeline = Timeline.from(makeBoundary(), { duration: Millis(200) });
+    const timeline = createTimeline(makeBoundary(), { duration: Millis(200) });
     await timeline.lifetime.dispose();
     timeline.scrub(0.75);
     expect(timeline.elapsed()).toBe(Millis(0));

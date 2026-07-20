@@ -8,7 +8,7 @@
  */
 
 import type { MotionTier as _MotionTier } from '@liteship/_spine';
-import { Boundary } from '../authoring/boundary.js';
+import { Boundary, defineBoundary } from '../authoring/boundary.js';
 
 /**
  * Motion tier — re-anchored from `@liteship/_spine` (the canonical declaration
@@ -34,7 +34,7 @@ export type UIQualityBoundary = Boundary<
  * Pre-built boundary for UI quality based on buffer occupancy signal.
  * Thresholds tuned for streaming UI: aggressive degradation when buffer low.
  */
-const uiQualityBoundary: UIQualityBoundary = Boundary.make({
+const uiQualityBoundary: UIQualityBoundary = defineBoundary({
   input: 'buffer-occupancy',
   at: [
     [0.0, 'skeleton'],

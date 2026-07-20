@@ -1,6 +1,6 @@
-import { Boundary } from '@liteship/core';
+import { defineBoundary } from '@liteship/core';
 
-export const layout = Boundary.make({
+export const layout = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'mobile'],

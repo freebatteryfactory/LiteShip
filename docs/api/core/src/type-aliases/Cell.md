@@ -8,7 +8,7 @@
 
 > **Cell**\<`T`\> = `CellShape`\<`T`\>
 
-Defined in: [core/src/reactive/cell.ts:78](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/cell.ts#L78)
+Defined in: [core/src/reactive/cell.ts:80](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/cell.ts#L80)
 
 Public structural type for `Cell`.
 

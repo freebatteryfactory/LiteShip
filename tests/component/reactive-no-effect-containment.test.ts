@@ -40,7 +40,7 @@
 import { describe, test, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { Cell, Derived, Store, Signal } from '@liteship/core';
+import { Signal, createCell, computed, createStore } from '@liteship/core';
 
 /**
  * The downstream consumer's own action vocabulary — an ordinary discriminated
@@ -60,15 +60,15 @@ describe('#153 — a downstream consumer coordinates reactive state with no Effe
     //  - `nowPlaying` is a Derived over BOTH cells (a read-only projection),
     //  - `playhead` is a controllable Signal (a DOM-free scrubbable feed),
     //  - `journal` is a Store reducing a PlayerEvent stream into an ordered log.
-    const volume = Cell.make(50);
-    const track = Cell.make(1);
+    const volume = createCell(50);
+    const track = createCell(1);
 
     // A derived value over TWO cells — recomputes when EITHER source changes.
-    const nowPlaying = Derived.make(() => `track ${track.read()} @ vol ${volume.read()}`, [volume, track]);
+    const nowPlaying = computed(() => `track ${track.read()} @ vol ${volume.read()}`, [volume, track]);
 
     const playhead = Signal.controllable();
 
-    const journal = Store.make<readonly string[], PlayerEvent>([], (log, ev) => [...log, `${ev.kind}:${ev.value}`]);
+    const journal = createStore<readonly string[], PlayerEvent>([], (log, ev) => [...log, `${ev.kind}:${ev.value}`]);
 
     // Compile-time containment proof: every reactive read binds directly to a
     // PLAIN value the consumer uses as-is — a number, a string. Were any `read()`

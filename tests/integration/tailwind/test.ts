@@ -2,14 +2,14 @@
  * Tailwind v4 Integration Test
  *
  * Proves the liteship token -> Tailwind pipeline works end-to-end:
- *   1. Create liteship tokens via Token.make()
+ *   1. Create liteship tokens via defineToken()
  *   2. Compile them to a @theme block via TokenTailwindCompiler
  *   3. Feed the @theme block into Tailwind v4's compile() API
  *   4. Build CSS for utility classes that reference the theme tokens
  *   5. Verify the generated CSS contains correct custom properties and values
  */
 
-import { Token } from '@liteship/core';
+import { defineToken } from '@liteship/core';
 import { TokenTailwindCompiler } from '@liteship/compiler';
 import { compile } from '@tailwindcss/node';
 import { resolve } from 'node:path';
@@ -40,42 +40,42 @@ function assertContains(haystack: string, needle: string, label: string): void {
 // ---------------------------------------------------------------------------
 
 const tokens = [
-  Token.make({
+  defineToken({
     name: 'primary',
     category: 'color',
     axes: ['theme'] as const,
     values: { light: '#3b82f6', dark: '#60a5fa' },
     fallback: '#3b82f6',
   }),
-  Token.make({
+  defineToken({
     name: 'surface',
     category: 'color',
     axes: ['theme'] as const,
     values: { light: '#ffffff', dark: '#1e293b' },
     fallback: '#ffffff',
   }),
-  Token.make({
+  defineToken({
     name: 'sm',
     category: 'spacing',
     axes: ['density'] as const,
     values: { compact: '0.25rem', normal: '0.5rem', loose: '0.75rem' },
     fallback: '0.5rem',
   }),
-  Token.make({
+  defineToken({
     name: 'base',
     category: 'radius',
     axes: ['density'] as const,
     values: { compact: '0.25rem', normal: '0.5rem' },
     fallback: '0.5rem',
   }),
-  Token.make({
+  defineToken({
     name: 'card',
     category: 'shadow',
     axes: ['theme'] as const,
     values: { light: '0 1px 3px rgba(0,0,0,0.12)', dark: '0 1px 3px rgba(0,0,0,0.4)' },
     fallback: '0 1px 3px rgba(0,0,0,0.12)',
   }),
-  Token.make({
+  defineToken({
     name: 'sans',
     category: 'typography',
     axes: ['platform'] as const,

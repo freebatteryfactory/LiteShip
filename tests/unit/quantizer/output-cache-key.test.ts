@@ -6,15 +6,15 @@
 import { describe, test, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { Boundary } from '@liteship/core';
-import { Q } from '@liteship/quantizer';
+import { defineBoundary } from '@liteship/core';
+import { defineQuantizer, createQuantizer } from '@liteship/quantizer';
 
 const REPO = resolve(import.meta.dirname, '../../..');
 const QUANTIZER_SRC = readFileSync(resolve(REPO, 'packages/quantizer/src/quantizer.ts'), 'utf8');
 const FNV1A_RE = /^fnv1a:[0-9a-f]{8}$/;
 
 function viewport() {
-  return Boundary.make({
+  return defineBoundary({
     input: 'viewport-width',
     at: [
       [0, 'compact'],
@@ -33,11 +33,13 @@ describe('quantizer output cache key law', () => {
   });
 
   test('config id matches fnv1a:XXXXXXXX', () => {
-    const config = Q.from(viewport()).outputs({
-      css: {
-        compact: { '--gap': '0.5rem' },
-        medium: { '--gap': '1rem' },
-        expanded: { '--gap': '2rem' },
+    const config = defineQuantizer(viewport(), {
+      outputs: {
+        css: {
+          compact: { '--gap': '0.5rem' },
+          medium: { '--gap': '1rem' },
+          expanded: { '--gap': '2rem' },
+        },
       },
     });
     expect(config.id).toMatch(FNV1A_RE);
@@ -45,11 +47,11 @@ describe('quantizer output cache key law', () => {
 
   test('distinct outputs produce distinct config ids (cache key inputs diverge)', () => {
     const b = viewport();
-    const a = Q.from(b).outputs({
-      css: { compact: { '--a': 1 }, medium: { '--a': 2 }, expanded: { '--a': 3 } },
+    const a = defineQuantizer(b, {
+      outputs: { css: { compact: { '--a': 1 }, medium: { '--a': 2 }, expanded: { '--a': 3 } } },
     });
-    const c = Q.from(b).outputs({
-      css: { compact: { '--b': 1 }, medium: { '--b': 2 }, expanded: { '--b': 3 } },
+    const c = defineQuantizer(b, {
+      outputs: { css: { compact: { '--b': 1 }, medium: { '--b': 2 }, expanded: { '--b': 3 } } },
     });
     expect(a.id).toMatch(FNV1A_RE);
     expect(c.id).toMatch(FNV1A_RE);
@@ -57,15 +59,18 @@ describe('quantizer output cache key law', () => {
   });
 
   test('evaluate with spring produces legal config id (spring path exercises output cache)', () => {
-    const config = Q.from(viewport(), { spring: { stiffness: 200, damping: 20 } }).outputs({
-      css: {
-        compact: { '--gap': '0.5rem' },
-        medium: { '--gap': '1rem' },
-        expanded: { '--gap': '2rem' },
+    const config = defineQuantizer(viewport(), {
+      spring: { stiffness: 200, damping: 20 },
+      outputs: {
+        css: {
+          compact: { '--gap': '0.5rem' },
+          medium: { '--gap': '1rem' },
+          expanded: { '--gap': '2rem' },
+        },
       },
     });
     expect(config.id).toMatch(FNV1A_RE);
-    const { quantizer: lq } = config.create();
+    const { quantizer: lq } = createQuantizer(config);
     const outputs = lq.currentOutputs.read();
     expect(outputs.css).toBeDefined();
   });

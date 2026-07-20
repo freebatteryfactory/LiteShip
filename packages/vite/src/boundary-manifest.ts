@@ -5,7 +5,7 @@
  * `*.boundaries.ts`) and `@quantize` CSS blocks, then derives the
  * `BoundaryManifest` that `virtual:liteship/boundaries` exports and the
  * `@liteship/astro` integration writes to `liteship-boundary-manifest.json`: each
- * boundary's `Boundary.make` content address plus precompiled
+ * boundary's `defineBoundary` content address plus precompiled
  * `CompiledOutputs` for every (motion x design) tier.
  *
  * This is the build half of the edge caching design (ADR-0003): identity
@@ -504,7 +504,7 @@ export function serializeBoundaryOutput(output: CompiledOutputs): string {
  * import { resolveOutputsByTier } from '@liteship/edge';
  *
  * const manifest = await collectBoundaryManifest('/path/to/app');
- * // manifest.viewport.id === 'fnv1a:…' (Boundary.make's address)
+ * // manifest.viewport.id === 'fnv1a:…' (defineBoundary's address)
  * // resolveOutputsByTier(manifest.viewport)['transitions:standard'].css
  * ```
  *
@@ -563,7 +563,7 @@ export async function collectBoundaryManifestFromScan(
           message:
             `@quantize block in ${cssFile}:${block.line} references boundary "${block.boundaryName}", ` +
             `but no boundaries.ts / *.boundaries.ts module in ${projectRoot} exports it, so it has no manifest entry. ` +
-            `Fix: add \`export const ${block.boundaryName} = Boundary.make({ ... })\` to a boundary module.`,
+            `Fix: add \`export const ${block.boundaryName} = defineBoundary({ ... })\` to a boundary module.`,
         });
         continue;
       }

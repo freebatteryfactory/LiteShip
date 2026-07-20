@@ -210,9 +210,9 @@ Avoid IDs that merely restate the primitive type:
 ### Boundary
 
 ```ts
-import { Boundary } from '@liteship/core';
+import { defineBoundary } from '@liteship/core';
 
-export const heroLayout = Boundary.make({
+export const heroLayout = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'stacked'],
@@ -226,9 +226,9 @@ export const heroLayout = Boundary.make({
 ### Token
 
 ```ts
-import { Token } from '@liteship/core';
+import { defineToken } from '@liteship/core';
 
-export const accent = Token.make({
+export const accent = defineToken({
   name: 'accent',
   category: 'color',
   axes: ['theme'],
@@ -243,9 +243,9 @@ export const accent = Token.make({
 ### Theme
 
 ```ts
-import { Theme } from '@liteship/core';
+import { defineTheme } from '@liteship/core';
 
-export const brandTheme = Theme.make({
+export const brandTheme = defineTheme({
   name: 'brand',
   variants: ['light', 'dark'],
   tokens: {
@@ -264,10 +264,10 @@ export const brandTheme = Theme.make({
 ### Style
 
 ```ts
-import { Style } from '@liteship/core';
+import { defineStyle } from '@liteship/core';
 import { heroLayout } from './boundaries.js';
 
-export const heroShell = Style.make({
+export const heroShell = defineStyle({
   boundary: heroLayout,
   base: {
     properties: {
@@ -439,10 +439,10 @@ const aria = ARIACompiler.compile(disclosureBoundary, {
 // A reduced-motion-aware surface: when motionTier is 'none', the boundary
 // pins to a still state and the live-region announces transitions instead of
 // animating them.
-import { Boundary } from '@liteship/core';
+import { defineBoundary } from '@liteship/core';
 import { motionTierFromCapabilities } from '@liteship/detect';
 
-export const heroMotion = Boundary.make({
+export const heroMotion = defineBoundary({
   input: 'motion.tier',
   at: [
     [0, 'still'], // motionTier === 'none'

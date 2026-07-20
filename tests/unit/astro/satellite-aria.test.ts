@@ -11,11 +11,11 @@
  * @module
  */
 import { describe, test, expect } from 'vitest';
-import { Boundary } from '@liteship/core';
+import { defineBoundary } from '@liteship/core';
 import { satelliteAttrs } from '@liteship/astro';
 import { applyBoundaryState, parseBoundary } from '../../../packages/astro/src/runtime/boundary.js';
 
-const boundary = Boundary.make({
+const boundary = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'collapsed'],

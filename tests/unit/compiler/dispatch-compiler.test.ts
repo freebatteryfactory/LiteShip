@@ -6,7 +6,7 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Boundary, Config } from '@liteship/core';
+import { defineBoundary, defineConfig } from '@liteship/core';
 import { hasTag } from '@liteship/error';
 import { dispatch } from '@liteship/compiler';
 import type { AIManifest, CompilerDef } from '@liteship/compiler';
@@ -15,7 +15,7 @@ import type { AIManifest, CompilerDef } from '@liteship/compiler';
 // Fixtures
 // ---------------------------------------------------------------------------
 
-const boundary = Boundary.make({
+const boundary = defineBoundary({
   input: 'width',
   at: [
     [0, 'small'],
@@ -89,7 +89,7 @@ describe('dispatch()', () => {
   });
 
   test('ConfigCompiler def returns json string', () => {
-    const cfg = Config.make({});
+    const cfg = defineConfig({});
     const def: CompilerDef = { _tag: 'ConfigCompiler', config: cfg };
     const result = dispatch(def);
     expect(result.target).toBe('config');

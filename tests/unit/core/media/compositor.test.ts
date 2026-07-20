@@ -12,10 +12,10 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Boundary, Compositor, DIRTY_FLAGS_MAX } from '@liteship/core';
+import { Boundary, Compositor, DIRTY_FLAGS_MAX, defineBoundary } from '@liteship/core';
 import type { CompositeState } from '@liteship/core';
 
-const widthBoundary = Boundary.make({
+const widthBoundary = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'mobile'],
@@ -246,7 +246,7 @@ describe('Compositor', () => {
     test('handles multiple quantizers correctly', () => {
       const { compositor } = Compositor.create();
 
-      const colorBoundary = Boundary.make({
+      const colorBoundary = defineBoundary({
         input: 'prefers-color-scheme',
         at: [
           [0, 'light'],

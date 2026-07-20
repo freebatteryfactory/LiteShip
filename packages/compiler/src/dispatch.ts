@@ -136,10 +136,10 @@ export type CompileResult =
  *
  * @example
  * ```ts
- * import { Boundary } from '@liteship/core';
+ * import { defineBoundary } from '@liteship/core';
  * import { dispatch } from '@liteship/compiler';
  *
- * const boundary = Boundary.make({
+ * const boundary = defineBoundary({
  *   input: 'width',
  *   at: [[0, 'sm'], [768, 'lg']],
  * });
@@ -167,7 +167,7 @@ export function dispatch(def: CompilerDef): CompileResult {
     case 'ARIACompiler':
       return {
         target: 'aria',
-        // Boundary.make guarantees a non-empty states tuple, so states[0] is the canonical initial state.
+        // defineBoundary guarantees a non-empty states tuple, so states[0] is the canonical initial state.
         result: ARIACompiler.compile(
           def.boundary,
           def.states.states,

@@ -1,4 +1,4 @@
-import { Boundary } from '@liteship/core';
+import { defineBoundary } from '@liteship/core';
 
 /**
  * Viewport-width boundary for adaptive layout.
@@ -10,7 +10,7 @@ import { Boundary } from '@liteship/core';
  *
  * Hysteresis of 40px prevents rapid toggling near thresholds.
  */
-export const layout = Boundary.make({
+export const layout = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'mobile'],

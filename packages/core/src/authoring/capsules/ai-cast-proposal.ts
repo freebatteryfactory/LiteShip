@@ -40,7 +40,7 @@
 
 import type { ContentAddress } from '../../schema/brands.js';
 import { defineCapsule } from '../assembly.js';
-import { S } from '../../schema/constructors.js';
+import { schema } from '../../schema/constructors.js';
 import type { Infer } from '../../schema/infer.js';
 import { sealGraph, sealNode } from '../../graph/document-graph-address.js';
 import { contentAddressOf } from '../../evidence/content-address.js';
@@ -54,20 +54,20 @@ import type { DocumentGraph, DocumentGraphNode, SignalNode } from '../../graph/d
 import type { CellMeta } from '../../schema/protocol.js';
 
 /** One add/remove op descriptor the seed can produce (signal nodes only — fully supported). */
-const AddOpSeed = S.struct({ kind: S.literal('add'), input: S.string });
-const RemoveOpSeed = S.struct({ kind: S.literal('remove'), index: S.number });
-const OpSeed = S.union(AddOpSeed, RemoveOpSeed);
+const AddOpSeed = schema.struct({ kind: schema.literal('add'), input: schema.string });
+const RemoveOpSeed = schema.struct({ kind: schema.literal('remove'), index: schema.number });
+const OpSeed = schema.union(AddOpSeed, RemoveOpSeed);
 
 /**
  * Seed material the schema-arbitrary CAN produce: the base graph's signal-axis
  * names plus a list of op descriptors. `run` seals the graph, lowers the
  * descriptors to real `PatchOp`s over real sealed nodes, and proposes+validates.
  */
-const AiCastProposalSeed = S.struct({
+const AiCastProposalSeed = schema.struct({
   /** Base-graph signal-axis names → one sealed `SignalNode` per DISTINCT name. */
-  base: S.array(S.string),
+  base: schema.array(schema.string),
   /** Op descriptors: add a new signal axis, or remove an existing node by index. */
-  ops: S.array(OpSeed),
+  ops: schema.array(OpSeed),
 });
 
 type AiCastProposalSeedValue = Infer<typeof AiCastProposalSeed>;
@@ -158,7 +158,7 @@ export const aiCastProposalCapsule = defineCapsule({
   _kind: 'pureTransform',
   name: 'core.ai-cast.proposal',
   input: AiCastProposalSeed,
-  output: S.unknown,
+  output: schema.unknown,
   capabilities: { reads: [], writes: [] },
   invariants: [
     {

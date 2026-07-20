@@ -22,15 +22,6 @@ interface ThemeDef<V extends readonly string[] = readonly string[]> {
   readonly meta?: Record<V[number] & string, { readonly label: string; readonly mode: 'light' | 'dark' }>;
 }
 
-interface ThemeFactory {
-  make<const V extends readonly [string, ...string[]]>(config: {
-    readonly name: string;
-    readonly variants: V;
-    readonly tokens: Record<string, Record<V[number] & string, unknown>>;
-    readonly meta?: ThemeDef<V>['meta'];
-  }): ThemeDef<V>;
-}
-
 function deterministicId<V extends readonly string[]>(
   name: string,
   variants: V,
@@ -57,7 +48,7 @@ function deterministicId<V extends readonly string[]>(
  *
  * @example
  * ```ts
- * const theme = Theme.make({
+ * const theme = defineTheme({
  *   name: 'brand',
  *   variants: ['light', 'dark'],
  *   tokens: { bg: { light: '#fff', dark: '#111' }, fg: { light: '#000', dark: '#eee' } },
@@ -82,9 +73,9 @@ function _tap<V extends readonly string[]>(theme: ThemeDef<V>, variant: V[number
  *
  * @example
  * ```ts
- * import { Theme } from '@liteship/core';
+ * import { defineTheme, Theme } from '@liteship/core';
  *
- * const theme = Theme.make({
+ * const theme = defineTheme({
  *   name: 'brand',
  *   variants: ['light', 'dark'],
  *   tokens: {
@@ -96,54 +87,59 @@ function _tap<V extends readonly string[]>(theme: ThemeDef<V>, variant: V[number
  * // lightTokens === { bg: '#fff', fg: '#000' }
  * ```
  */
-export const Theme: ThemeFactory & {
-  tap: typeof _tap;
-} = {
-  /**
-   * Create a new ThemeDef from a configuration object.
-   *
-   * Validates that every token has a value for each declared variant.
-   * The resulting object is frozen and content-addressed.
-   *
-   * @example
-   * ```ts
-   * const theme = Theme.make({
-   *   name: 'ocean',
-   *   variants: ['light', 'dark'],
-   *   tokens: { primary: { light: '#0066cc', dark: '#3399ff' } },
-   *   meta: { light: { label: 'Light', mode: 'light' }, dark: { label: 'Dark', mode: 'dark' } },
-   * });
-   * // theme._tag === 'ThemeDef'
-   * // theme.id === 'fnv1a:...'
-   * ```
-   */
-  make<const V extends readonly [string, ...string[]]>(config: {
-    readonly name: string;
-    readonly variants: V;
-    readonly tokens: Record<string, Record<V[number] & string, unknown>>;
-    readonly meta?: ThemeDef<V>['meta'];
-  }): ThemeDef<V> {
-    const variantSet = new Set(config.variants as readonly string[]);
-    for (const [tokenName, variantMap] of Object.entries(config.tokens)) {
-      for (const variant of variantSet) {
-        if (!(variant in variantMap)) {
-          throw ValidationError('Theme.make', `Token "${tokenName}" is missing value for variant "${variant}"`);
-        }
+/**
+ * Define a theme — maps token names to variant-keyed values, enabling coherent
+ * multi-variant token resolution (e.g. light/dark themes).
+ *
+ * Validates that every token has a value for each declared variant. The
+ * resulting object is frozen and content-addressed via FNV-1a.
+ *
+ * @example
+ * ```ts
+ * const theme = defineTheme({
+ *   name: 'ocean',
+ *   variants: ['light', 'dark'],
+ *   tokens: { primary: { light: '#0066cc', dark: '#3399ff' } },
+ *   meta: { light: { label: 'Light', mode: 'light' }, dark: { label: 'Dark', mode: 'dark' } },
+ * });
+ * // theme._tag === 'ThemeDef'
+ * // theme.id === 'fnv1a:...'
+ * ```
+ */
+export function defineTheme<const V extends readonly [string, ...string[]]>(config: {
+  readonly name: string;
+  readonly variants: V;
+  readonly tokens: Record<string, Record<V[number] & string, unknown>>;
+  readonly meta?: ThemeDef<V>['meta'];
+}): ThemeDef<V> {
+  const variantSet = new Set(config.variants as readonly string[]);
+  for (const [tokenName, variantMap] of Object.entries(config.tokens)) {
+    for (const variant of variantSet) {
+      if (!(variant in variantMap)) {
+        throw ValidationError('defineTheme', `Token "${tokenName}" is missing value for variant "${variant}"`);
       }
     }
+  }
 
-    const id = deterministicId<V>(config.name, config.variants, config.tokens, config.meta);
+  const id = deterministicId<V>(config.name, config.variants, config.tokens, config.meta);
 
-    return Object.freeze({
-      _tag: 'ThemeDef' as const,
-      _version: 1 as const,
-      id,
-      name: config.name,
-      variants: config.variants,
-      tokens: config.tokens,
-      ...(config.meta !== undefined ? { meta: config.meta } : {}),
-    });
-  },
+  return Object.freeze({
+    _tag: 'ThemeDef' as const,
+    _version: 1 as const,
+    id,
+    name: config.name,
+    variants: config.variants,
+    tokens: config.tokens,
+    ...(config.meta !== undefined ? { meta: config.meta } : {}),
+  });
+}
+
+/**
+ * Theme — the resolution namespace for a {@link Theme} definition. Construction
+ * lives in the standalone {@link defineTheme}; this object carries
+ * {@link Theme.tap} (resolve all tokens for a given variant).
+ */
+export const Theme = {
   tap: _tap,
 };
 

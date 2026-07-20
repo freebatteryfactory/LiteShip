@@ -8,7 +8,7 @@
 
 > **LiveCell**\<`K`, `T`\> = `LiveCellShape`\<`K`, `T`\>
 
-Defined in: [core/src/reactive/live-cell.ts:270](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/live-cell.ts#L270)
+Defined in: [core/src/reactive/live-cell.ts:271](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/live-cell.ts#L271)
 
 Public structural type for `LiveCell`.
 

@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { ARIACompiler } from '../../../packages/compiler/src/aria.js';
 import { NUMBER_RE, inferSyntax } from '../../../packages/compiler/src/css-utils.js';
-import { Boundary, Component, Style, Theme, Token } from '@liteship/core';
+import type { Theme} from '@liteship/core';
+import { Component, defineBoundary, defineToken, defineTheme, defineStyle } from '@liteship/core';
 import { CSSCompiler } from '../../../packages/compiler/src/css.js';
 import { ThemeCSSCompiler } from '../../../packages/compiler/src/theme-css.js';
 import { TokenJSCompiler } from '../../../packages/compiler/src/token-js.js';
@@ -55,21 +56,21 @@ afterEach(() => {
 describe('compiler branch coverage', () => {
   test('TokenJSCompiler serializes mixed fallback types and groups categories', () => {
     const result = TokenJSCompiler.compile([
-      Token.make({
+      defineToken({
         name: 'accent',
         category: 'color',
         axes: ['theme'] as const,
         values: { light: '#fff' },
         fallback: '#fff',
       }),
-      Token.make({
+      defineToken({
         name: 'enabled',
         category: 'effect',
         axes: ['theme'] as const,
         values: {},
         fallback: true,
       }),
-      Token.make({
+      defineToken({
         name: 'steps',
         category: 'animation',
         axes: ['theme'] as const,
@@ -111,7 +112,7 @@ describe('compiler branch coverage', () => {
     expect(themed.transitions).toContain('transition-property: --liteship-accent;');
 
     const noMeta = ThemeCSSCompiler.compile(
-      Theme.make({
+      defineTheme({
         name: 'plain',
         variants: ['light'] as const,
         tokens: {
@@ -127,7 +128,7 @@ describe('compiler branch coverage', () => {
   });
 
   test('CSSCompiler covers single-state, ranged, and typed custom property registration branches', () => {
-    const singletonBoundary = Boundary.make({
+    const singletonBoundary = defineBoundary({
       input: 'viewport.width',
       at: [[0, 'only']] as const,
     });
@@ -142,7 +143,7 @@ describe('compiler branch coverage', () => {
 
     expect(singleton.raw).toContain('@container viewport-width (width >= 0px)');
 
-    const rangedBoundary = Boundary.make({
+    const rangedBoundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'compact'],
@@ -185,7 +186,7 @@ describe('compiler branch coverage', () => {
   });
 
   test('CSSCompiler skips empty states, emits middle-range queries, and serializes empty declarations consistently', () => {
-    const threeStateBoundary = Boundary.make({
+    const threeStateBoundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'compact'],
@@ -222,7 +223,7 @@ describe('compiler branch coverage', () => {
   });
 
   test('CSSCompiler compiles height-measuring boundary inputs to (height ...) queries', () => {
-    const threeStateBoundary = Boundary.make({
+    const threeStateBoundary = defineBoundary({
       input: 'viewport.height',
       at: [
         [0, 'short'],
@@ -246,7 +247,7 @@ describe('compiler branch coverage', () => {
     expect(compiled.raw).toContain('@container viewport-height (height >= 900px)');
     expect(compiled.raw).not.toContain('(width');
 
-    const singletonBoundary = Boundary.make({
+    const singletonBoundary = defineBoundary({
       input: 'viewport.height',
       at: [[0, 'only']] as const,
     });
@@ -257,7 +258,7 @@ describe('compiler branch coverage', () => {
   });
 
   test('CSSCompiler emits one rule per nested selector from structured state bodies', () => {
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'mobile'],
@@ -297,7 +298,7 @@ describe('compiler branch coverage', () => {
   });
 
   test('CSSCompiler skips structured states whose bare props and nested rules are all empty', () => {
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'mobile'],
@@ -318,7 +319,7 @@ describe('compiler branch coverage', () => {
   });
 
   test('CSSCompiler classifies an atRuleGroups-only state body as structured (F-CSS-1)', () => {
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [[0, 'only']] as const,
     });
@@ -351,7 +352,7 @@ describe('compiler branch coverage', () => {
   });
 
   test('CSSCompiler wraps bare declarations inside a conditional group in the boundary selector (F-CSS-2)', () => {
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [[0, 'only']] as const,
     });
@@ -383,7 +384,7 @@ describe('compiler branch coverage', () => {
   });
 
   test('CSSCompiler.serialize reproduces the wrapped conditional group of the compile result (F-CSS-2 round-trip)', () => {
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [[0, 'only']] as const,
     });
@@ -423,7 +424,7 @@ describe('compiler branch coverage', () => {
   });
 
   test('ComponentCSSCompiler appends slot and satellite rules to the layered output', () => {
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'compact'],
@@ -431,7 +432,7 @@ describe('compiler branch coverage', () => {
       ] as const,
     });
 
-    const styles = Style.make({
+    const styles = defineStyle({
       boundary,
       base: {
         properties: {
@@ -487,14 +488,14 @@ describe('compiler branch coverage', () => {
 
   test('TokenJSCompiler reuses category buckets and serializes numeric fallbacks', () => {
     const result = TokenJSCompiler.compile([
-      Token.make({
+      defineToken({
         name: 'space-sm',
         category: 'spacing',
         axes: ['density'] as const,
         values: {},
         fallback: 8,
       }),
-      Token.make({
+      defineToken({
         name: 'space-lg',
         category: 'spacing',
         axes: ['density'] as const,
@@ -513,21 +514,21 @@ describe('compiler branch coverage', () => {
     expect(empty.themeBlock).toBe('@theme {\n\n}');
 
     const compiled = TokenTailwindCompiler.compile([
-      Token.make({
+      defineToken({
         name: 'space-sm',
         category: 'spacing',
         axes: ['density'] as const,
         values: {},
         fallback: 8,
       }),
-      Token.make({
+      defineToken({
         name: 'space-lg',
         category: 'spacing',
         axes: ['density'] as const,
         values: {},
         fallback: 16,
       }),
-      Token.make({
+      defineToken({
         name: 'primary',
         category: 'color',
         axes: ['theme'] as const,
@@ -547,7 +548,7 @@ describe('compiler branch coverage', () => {
   });
 
   test('StyleCSSCompiler handles pseudo-only layers, empty base layers, and unscoped output', () => {
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'compact'],
@@ -555,7 +556,7 @@ describe('compiler branch coverage', () => {
       ] as const,
     });
 
-    const style = Style.make({
+    const style = defineStyle({
       boundary,
       base: {
         properties: {},
@@ -587,7 +588,7 @@ describe('compiler branch coverage', () => {
   });
 
   test('StyleCSSCompiler covers spread-less shadows, default transitions, skipped pseudos, and empty state layers', () => {
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'compact'],
@@ -596,7 +597,7 @@ describe('compiler branch coverage', () => {
     });
 
     const compiled = StyleCSSCompiler.compile(
-      Style.make({
+      defineStyle({
         boundary,
         transition: { duration: 180 },
         base: {
@@ -626,7 +627,7 @@ describe('compiler branch coverage', () => {
   });
 
   test('StyleCSSCompiler skips container output when every boundary state layer is absent', () => {
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'compact'],
@@ -718,7 +719,7 @@ describe('compiler branch coverage', () => {
 
   test('ARIACompiler drops invalid keys and falls back to an empty current state map', () => {
     captureDiagnostics(({ events }) => {
-      const boundary = Boundary.make({
+      const boundary = defineBoundary({
         input: 'viewport.width',
         at: [
           [0, 'compact'],
@@ -759,7 +760,7 @@ describe('compiler branch coverage', () => {
 
 describe('CSSCompiler unknown state keys', () => {
   test('a supplied key matching no boundary state warns with a did-you-mean', () => {
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'width',
       at: [
         [0, 'sm'],
@@ -787,7 +788,7 @@ describe('CSSCompiler unknown state keys', () => {
   });
 
   test('an unmatched key without a close match warns without a suggestion', () => {
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'width',
       at: [
         [0, 'sm'],

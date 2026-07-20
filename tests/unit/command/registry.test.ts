@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { CommandRegistry, CommandDispatcher, commandRegistry, ok, failed, defineCommand } from '@liteship/command';
 import type { RegisteredCommand } from '@liteship/command';
 import type { GlossaryPayload } from '@liteship/command';
-import { S } from '@liteship/core';
+import { schema } from '@liteship/core';
 
 function fakeCommand(name: string): RegisteredCommand {
   return {
@@ -138,7 +138,7 @@ describe('RegisteredCommand carries a declared argsSchema slot', () => {
         summary: 'declares an args schema',
         inputSchema: { type: 'object', properties: { scene: { type: 'string' } }, required: ['scene'] },
       },
-      argsSchema: S.struct({ scene: S.string }),
+      argsSchema: schema.struct({ scene: schema.string }),
       handler: async (invocation) => ok('schema.cmd', { scene: invocation.args.scene }),
     });
     const registry = CommandRegistry.make([command]);

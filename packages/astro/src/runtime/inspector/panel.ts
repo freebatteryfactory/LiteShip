@@ -212,7 +212,7 @@ function renderBoundaryPanel(element: HTMLElement, container: HTMLElement): Pane
   const copy = document.createElement('button');
   copy.type = 'button';
   copy.className = 'copy';
-  copy.textContent = 'Copy Boundary.make';
+  copy.textContent = 'Copy defineBoundary';
   copy.addEventListener('click', () => {
     // Read the LIVE attribute (post-drag) so the copied snippet reflects the
     // current threshold; fall back to the in-progress JSON when absent.

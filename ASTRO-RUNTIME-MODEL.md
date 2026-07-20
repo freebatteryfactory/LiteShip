@@ -168,9 +168,9 @@ The corresponding `boundaries.js` is plain TypeScript:
 
 ```ts
 // src/boundaries.ts
-import { Boundary } from '@liteship/core';
+import { defineBoundary } from '@liteship/core';
 
-export const heroLayout = Boundary.make({
+export const heroLayout = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'stacked'],
@@ -181,7 +181,7 @@ export const heroLayout = Boundary.make({
 });
 ```
 
-And the compiled CSS the Vite plugin emits for `.hero` (from a paired `Style.make({...})` definition) looks like:
+And the compiled CSS the Vite plugin emits for `.hero` (from a paired `defineStyle({...})` definition) looks like:
 
 ```css
 .hero {

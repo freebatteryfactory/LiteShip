@@ -1,9 +1,9 @@
 import { describe, expect, test, vi } from 'vitest';
-import { Boundary, BoundarySpec, Diagnostics } from '@liteship/core';
+import { Boundary, BoundarySpec, Diagnostics, defineBoundary } from '@liteship/core';
 
-describe('Boundary.make', () => {
+describe('defineBoundary', () => {
   test('creates a content-addressed boundary from ascending thresholds', () => {
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'mobile'],
@@ -20,7 +20,7 @@ describe('Boundary.make', () => {
   });
 
   test('changes content address when spec changes', () => {
-    const base = Boundary.make({
+    const base = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'mobile'],
@@ -28,7 +28,7 @@ describe('Boundary.make', () => {
       ] as const,
     });
 
-    const withSpec = Boundary.make({
+    const withSpec = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'mobile'],
@@ -44,7 +44,7 @@ describe('Boundary.make', () => {
 
   test('rejects non-ascending thresholds', () => {
     expect(() =>
-      Boundary.make({
+      defineBoundary({
         input: 'viewport.width',
         at: [
           [0, 'mobile'],
@@ -57,7 +57,7 @@ describe('Boundary.make', () => {
 
   test('non-ascending threshold error includes a copy-pasteable reorder of the user pairs', () => {
     expect(() =>
-      Boundary.make({
+      defineBoundary({
         input: 'viewport.width',
         at: [
           [768, 'lg'],
@@ -71,7 +71,7 @@ describe('Boundary.make', () => {
 
   test('rejects duplicate state names', () => {
     expect(() =>
-      Boundary.make({
+      defineBoundary({
         input: 'viewport.width',
         at: [
           [0, 'mobile'],
@@ -83,7 +83,7 @@ describe('Boundary.make', () => {
 
   test('duplicate state error names the state, the rename fix, and the hoist hint', () => {
     expect(() =>
-      Boundary.make({
+      defineBoundary({
         input: 'viewport.width',
         at: [
           [0, 'small'],
@@ -91,7 +91,7 @@ describe('Boundary.make', () => {
         ] as const,
       }),
     ).toThrow(
-      'Boundary.make: duplicate state name "small" (used by two thresholds). Each threshold needs its own state — rename one, e.g. at: [[0, \'small\'], [768, \'medium\']]. If this throws mid-render, the boundary was constructed inside a render function; hoist it to module scope.',
+      'defineBoundary: duplicate state name "small" (used by two thresholds). Each threshold needs its own state — rename one, e.g. at: [[0, \'small\'], [768, \'medium\']]. If this throws mid-render, the boundary was constructed inside a render function; hoist it to module scope.',
     );
   });
 
@@ -99,7 +99,7 @@ describe('Boundary.make', () => {
     const { sink, events } = Diagnostics.createBufferSink();
     Diagnostics.setSink(sink);
     try {
-      Boundary.make({
+      defineBoundary({
         input: 'scroll.progress',
         at: [
           [0, 'a'],
@@ -116,7 +116,7 @@ describe('Boundary.make', () => {
 });
 
 describe('Boundary.evaluate', () => {
-  const boundary = Boundary.make({
+  const boundary = defineBoundary({
     input: 'viewport.width',
     at: [
       [0, 'mobile'],
@@ -136,7 +136,7 @@ describe('Boundary.evaluate', () => {
 });
 
 describe('Boundary.evaluateWithHysteresis', () => {
-  const boundary = Boundary.make({
+  const boundary = defineBoundary({
     input: 'viewport.width',
     at: [
       [0, 'mobile'],
@@ -147,7 +147,7 @@ describe('Boundary.evaluateWithHysteresis', () => {
   });
 
   test('falls back to raw evaluation when hysteresis is disabled or previous state is unknown', () => {
-    const noHysteresis = Boundary.make({
+    const noHysteresis = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'mobile'],
@@ -172,7 +172,7 @@ describe('Boundary.evaluateWithHysteresis', () => {
 
 describe('Boundary.isActive / BoundarySpec.isActive', () => {
   test('returns true when no spec is present', () => {
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'mobile'],
@@ -253,7 +253,7 @@ describe('Boundary.isActive / BoundarySpec.isActive', () => {
       deviceFilter: () => false,
       timeRange: { from: 100, until: 200 },
       experimentId: 'exp-a',
-    } satisfies Boundary.Spec;
+    } satisfies BoundarySpec;
 
     expect(BoundarySpec.isActive(spec)).toBe(true);
     expect(BoundarySpec.isActive({ timeRange: { until: 125 } })).toBe(false);

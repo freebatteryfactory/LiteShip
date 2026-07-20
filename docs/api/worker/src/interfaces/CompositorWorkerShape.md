@@ -43,7 +43,7 @@ The underlying Worker instance.
 
 Defined in: [worker/src/compositor-types.ts:86](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/compositor-types.ts#L86)
 
-Register a quantizer from a `Boundary.make` result — id, states, and
+Register a quantizer from a `defineBoundary` result — id, states, and
 thresholds are derived; the quantizer name defaults to `boundary.input`.
 
 ##### Parameters

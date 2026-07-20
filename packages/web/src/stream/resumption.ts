@@ -5,7 +5,7 @@
  * Implements replay/snapshot fallback when events are missed.
  */
 
-import { Millis, S, decode, wallClock, type Clock } from '@liteship/core';
+import { Millis, decode, wallClock, type Clock, schema } from '@liteship/core';
 import { IoError, ParseError, ValidationError } from '@liteship/error';
 import type { ResumptionConfig, ResumptionState, ResumptionStateInput, ResumeResponse } from '../types.js';
 import { appendArtifactIdToUrl, validateArtifactId } from './sse-pure.js';
@@ -25,23 +25,23 @@ export const canResume = _canResume;
 // and dependency-light.
 
 /** The persisted sessionStorage shape — all four fields required and typed. */
-const ResumptionStateSchema = S.struct({
-  lastEventId: S.string,
-  lastSequence: S.number,
-  artifactId: S.string,
-  timestamp: S.number,
+const ResumptionStateSchema = schema.struct({
+  lastEventId: schema.string,
+  lastSequence: schema.number,
+  artifactId: schema.string,
+  timestamp: schema.number,
 });
 
 /** Snapshot response: `html`/`lastEventId` strings plus an opaque `signals` payload. */
-const SnapshotPayloadSchema = S.struct({
-  html: S.string,
-  signals: S.unknown,
-  lastEventId: S.string,
+const SnapshotPayloadSchema = schema.struct({
+  html: schema.string,
+  signals: schema.unknown,
+  lastEventId: schema.string,
 });
 
 /** Replay response: a `patches` array of opaque JSON-patch entries. */
-const ReplayPayloadSchema = S.struct({
-  patches: S.array(S.unknown),
+const ReplayPayloadSchema = schema.struct({
+  patches: schema.array(schema.unknown),
 });
 
 /**

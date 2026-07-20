@@ -2,9 +2,9 @@
  * Minimal entry point that imports @liteship/core to prove the vite plugin
  * can process a project that depends on liteship packages.
  */
-import { Boundary } from '@liteship/core';
+import { defineBoundary } from '@liteship/core';
 
-const boundary = Boundary.make({
+const boundary = defineBoundary({
   input: 'container-width',
   at: [
     [0, 'compact'],

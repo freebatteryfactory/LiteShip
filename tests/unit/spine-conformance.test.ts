@@ -24,7 +24,7 @@
  *     structural ports pinned against `@liteship/error` (the relation gate classifies the
  *     whole `Codec`, but these pin the exact error-port parity explicitly).
  *  2. Runtime-EXISTENCE checks — a relation gate over TYPES cannot prove a VALUE export
- *     EXISTS and is callable (`Config.make`, `Boundary`, `resolvePrimitive`,
+ *     EXISTS and is callable (`defineConfig`, `Boundary`, `resolvePrimitive`,
  *     `dispatch`), so those `describe` blocks are KEPT PERMANENTLY.
  */
 
@@ -66,9 +66,9 @@ void (0 as unknown as _codecParseErrorParity);
 
 // Factory runtime values satisfy the spine (a VALUE-satisfies-spine check via the
 // package index — the relation gate classifies TYPES, not that a factory's OUTPUT is
-// assignable to the spine surface): `Config.make` / `defineConfig` outputs are
+// assignable to the spine surface): `defineConfig` / `defineConfig` outputs are
 // assignable to the spine `Config`.
-const _coreConfig: SpineCore.Config = CoreImpl.Config.make({});
+const _coreConfig: SpineCore.Config = CoreImpl.defineConfig({});
 const _plugin: ReturnType<typeof CoreImpl.defineConfig> = CoreImpl.defineConfig({});
 void _coreConfig;
 void _plugin;
@@ -79,16 +79,16 @@ void _plugin;
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('spine conformance — @liteship/core', () => {
-  test('Config.make exported and callable', () => {
-    expect(typeof CoreImpl.Config.make).toBe('function');
-    const cfg = CoreImpl.Config.make({});
+  test('defineConfig exported and callable', () => {
+    expect(typeof CoreImpl.defineConfig).toBe('function');
+    const cfg = CoreImpl.defineConfig({});
     expect(cfg._tag).toBe('ConfigDef');
     expect(cfg.id).toMatch(/^fnv1a:/);
   });
 
   test('Config.toViteConfig exported and callable', () => {
     expect(typeof CoreImpl.Config.toViteConfig).toBe('function');
-    const cfg = CoreImpl.Config.make({});
+    const cfg = CoreImpl.defineConfig({});
     expect(CoreImpl.Config.toViteConfig(cfg)).toBeDefined();
   });
 
@@ -97,7 +97,7 @@ describe('spine conformance — @liteship/core', () => {
   });
 
   test('Boundary exported from @liteship/core (regression guard)', () => {
-    expect(typeof CoreImpl.Boundary.make).toBe('function');
+    expect(typeof CoreImpl.defineBoundary).toBe('function');
   });
 });
 

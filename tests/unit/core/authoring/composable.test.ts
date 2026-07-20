@@ -6,14 +6,14 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Composable, ComposableWorld, Boundary, Token, Style, World } from '@liteship/core';
-import type { ComposableEntity, EntityComponents } from '@liteship/core';
+import { Composable, ComposableWorld, World, defineBoundary, defineToken, defineStyle } from '@liteship/core';
+import type { ComposableEntity, EntityComponents , Boundary, Token} from '@liteship/core';
 
 // ---------------------------------------------------------------------------
 // Shared fixtures
 // ---------------------------------------------------------------------------
 
-const widthBoundary = Boundary.make({
+const widthBoundary = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'sm'],
@@ -22,7 +22,7 @@ const widthBoundary = Boundary.make({
   ] as const,
 });
 
-const colorToken = Token.make({
+const colorToken = defineToken({
   name: 'primary',
   category: 'color',
   axes: ['theme'] as const,
@@ -30,7 +30,7 @@ const colorToken = Token.make({
   fallback: '#888',
 });
 
-const baseStyle = Style.make({
+const baseStyle = defineStyle({
   boundary: widthBoundary,
   base: { properties: { 'font-size': '14px', color: 'black' } },
   states: {
@@ -142,7 +142,7 @@ describe('Composable.make -- determinism', () => {
 describe('Composable.compose -- precedence', () => {
   test('entity2 components override entity1', () => {
     // Use same boundary shape but different thresholds
-    const altBoundary = Boundary.make({
+    const altBoundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'sm'],
@@ -193,14 +193,14 @@ describe('Composable.compose -- precedence', () => {
 
 describe('Composable.merge -- reduces correctly', () => {
   test('merging 3 entities folds left with later overriding earlier', () => {
-    const tokenA = Token.make({
+    const tokenA = defineToken({
       name: 'a',
       category: 'spacing',
       axes: ['density'] as const,
       values: { compact: '4px' },
       fallback: '8px',
     });
-    const tokenB = Token.make({
+    const tokenB = defineToken({
       name: 'b',
       category: 'spacing',
       axes: ['density'] as const,
@@ -253,7 +253,7 @@ describe('ComposableWorld.evaluate -- Boundary', () => {
   });
 
   test('boundary defaults to first state for value below all thresholds', () => {
-    const bp = Boundary.make({
+    const bp = defineBoundary({
       input: 'viewport.width',
       at: [
         [320, 'sm'],
@@ -275,7 +275,7 @@ describe('ComposableWorld.evaluate -- Boundary', () => {
 
 describe('ComposableWorld.evaluate -- Token', () => {
   test('resolves token value from matching axis', () => {
-    const token = Token.make({
+    const token = defineToken({
       name: 'bg',
       category: 'color',
       axes: ['theme'] as const,
@@ -304,7 +304,7 @@ describe('ComposableWorld.evaluate -- Token', () => {
   });
 
   test('token resolves matching axis values after numeric inputs are coerced to strings', () => {
-    const token = Token.make({
+    const token = defineToken({
       name: 'accent',
       category: 'color',
       axes: ['theme'] as const,
@@ -346,7 +346,7 @@ describe('ComposableWorld.evaluate -- Style', () => {
   });
 
   test('style uses base properties when no boundary state matches', () => {
-    const styleNoBoundary = Style.make({
+    const styleNoBoundary = defineStyle({
       base: { properties: { display: 'flex', gap: '8px' } },
     });
 

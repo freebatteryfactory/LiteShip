@@ -17,9 +17,9 @@
  *   --liteship-gap-lg: <resolved value>;
  */
 
-import { Token } from '@liteship/core';
+import { defineToken } from '@liteship/core';
 
-export const gapSm = Token.make({
+export const gapSm = defineToken({
   name: 'gap-sm',
   category: 'spacing',
   axes: ['density'],
@@ -30,7 +30,7 @@ export const gapSm = Token.make({
   fallback: '0.5rem',
 });
 
-export const gapMd = Token.make({
+export const gapMd = defineToken({
   name: 'gap-md',
   category: 'spacing',
   axes: ['density'],
@@ -41,7 +41,7 @@ export const gapMd = Token.make({
   fallback: '1rem',
 });
 
-export const gapLg = Token.make({
+export const gapLg = defineToken({
   name: 'gap-lg',
   category: 'spacing',
   axes: ['density'],

@@ -7,7 +7,7 @@
  *
  * @module
  */
-import { S, type CapsuleCommandResult, type CommandJsonSchema } from '@liteship/core';
+import { type CapsuleCommandResult, type CommandJsonSchema, schema } from '@liteship/core';
 import {
   capabilityUnavailable,
   defineCommand,
@@ -116,10 +116,10 @@ export const auditCommand = defineCommand({
     // NOT mcpExposed: the engine is CLI-injected (runAudit); cli-only by design.
     annotations: { readOnly: true, cliOnly: true, group: 'castoff' },
   },
-  argsSchema: S.struct({
-    profile: S.optional(S.string),
-    consumer: S.optional(S.boolean),
-    findings: S.optional(S.boolean),
+  argsSchema: schema.struct({
+    profile: schema.optional(schema.string),
+    consumer: schema.optional(schema.boolean),
+    findings: schema.optional(schema.boolean),
   }),
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
     // Direct-invocation guard; the dispatcher already enforces `requires`.

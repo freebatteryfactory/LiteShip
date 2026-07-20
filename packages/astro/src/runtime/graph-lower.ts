@@ -17,7 +17,7 @@
  * THE MAPPING (per the keystone IR):
  *   - a {@link ComponentNode} (name + thresholds + states) is a boundary;
  *   - its SIGNAL comes from the incoming edge from a {@link SignalNode}
- *     (`Boundary.make(signal.input, zip(thresholds, states))`);
+ *     (`defineBoundary(signal.input, zip(thresholds, states))`);
  *   - its CHANNELS are the {@link ProjectionNode}s it feeds (component→projection
  *     edges) whose `target` is one of css / aria / glsl / wgsl;
  *   - its per-state BINDINGS come from the {@link PoseNode}s of the entity that
@@ -31,8 +31,8 @@
  * @module
  */
 
+import type { Boundary } from '@liteship/core';
 import {
-  Boundary,
   BoundaryAttribute,
   linearizeGraph,
   type ComponentNode,
@@ -43,6 +43,7 @@ import {
   type PoseNode,
   type ProjectionNode,
   type SignalNode,
+  defineBoundary,
 } from '@liteship/core';
 import type { RuntimeBoundary } from './boundary.js';
 
@@ -231,7 +232,7 @@ export function lowerGraph(graph: DocumentGraph): readonly LoweredBinding[] {
     const first = [thresholds[0] as number, String(states[0])] as const;
     const rest = states.slice(1).map((state, i) => [thresholds[i + 1] as number, String(state)] as const);
     const at = [first, ...rest] as const;
-    // `Boundary.make` THROWS on non-strictly-ascending thresholds / duplicate
+    // `defineBoundary` THROWS on non-strictly-ascending thresholds / duplicate
     // state names — both pass the node schema + graph validation, so an UNTRUSTED
     // graph can reach here with either. Lowering must stay TOTAL (the loader's
     // contract is to return cleanly, never throw mid-hydration), so a component
@@ -239,7 +240,7 @@ export function lowerGraph(graph: DocumentGraph): readonly LoweredBinding[] {
     // bindings, exactly like a component with no signal or no thresholds.
     let shape: Boundary;
     try {
-      shape = Boundary.make({ input: signal.input, at });
+      shape = defineBoundary({ input: signal.input, at });
     } catch {
       continue;
     }

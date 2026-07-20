@@ -12,8 +12,8 @@ Defined in: [core/src/reactive/derived.ts:187](https://github.com/freebatteryfac
 
 Derived — read-only reactive view computed from upstream sources, on
 [CellKernel.replay1](CellKernel.md#replay1). Recomputes lazily on any source change and
-republishes to its own subscribers; compose via `make` (factory + triggers) or
-`combine` (tuple of readable sources).
+republishes to its own subscribers; compose via the standalone [computed](../functions/computed.md)
+(factory + triggers) or [Derived.combine](#combine) (tuple of readable sources).
 
 ## Type Declaration
 
@@ -50,32 +50,3 @@ reads): the recompute reads all current source values at that instant.
 #### Returns
 
 `DerivedShape`\<`U`\>
-
-### make
-
-> **make**: \<`T`\>(`compute`, `sources`) => `DerivedShape`\<`T`\> = `_make`
-
-Build a derived value from a factory and the sources that recompute it.
-
-Build a derived value from a `compute` factory and the sources whose emissions
-recompute it. With no sources it is static (never recomputes).
-
-#### Type Parameters
-
-##### T
-
-`T`
-
-#### Parameters
-
-##### compute
-
-() => `T`
-
-##### sources?
-
-readonly `DerivedTrigger`[] = `[]`
-
-#### Returns
-
-`DerivedShape`\<`T`\>

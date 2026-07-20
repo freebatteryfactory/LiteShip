@@ -6,9 +6,9 @@
  * marker for the injected boot scanner.
  */
 import Satellite from '@liteship/astro/Satellite';
-import { Boundary } from '@liteship/core';
+import { defineBoundary } from '@liteship/core';
 
-const layout = Boundary.make({
+const layout = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'compact'],

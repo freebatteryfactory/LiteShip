@@ -12,32 +12,32 @@
  * accepts is a node the AI validator would accept, and vice versa. There is no
  * second, drifting copy of "is this a well-formed node?".
  *
- * Each family is a kernel `S.struct`; the union over all EIGHT families is the
+ * Each family is a kernel `schema.struct`; the union over all EIGHT families is the
  * single source of truth. The compile-time exhaustiveness check makes "added a
  * family to document-graph.ts but not a schema here" a BUILD error — closing the
  * "validator missed a family" class for good (no runtime table to forget).
  *
  * Branded string types (ContentAddress / SignalInput / StateName /
- * AddressedDigest) validate as plain `S.string`: the brand is a compile-time
+ * AddressedDigest) validate as plain `schema.string`: the brand is a compile-time
  * refinement and the address FORMAT is an invariant, not a wire law. `meta` and
  * the structurally-opaque fields (CapSet aside, the digests, ProjectionKeys, the
- * evaluate cache) are `S.unknown` — presence is the contract; their shape is
+ * evaluate cache) are `schema.unknown` — presence is the contract; their shape is
  * sealed/derived elsewhere.
  *
  * @module
  */
 
 import { ValidationError } from '@liteship/error';
-import { S } from '../schema/constructors.js';
+import { schema } from '../schema/constructors.js';
 import { decode } from '../schema/decode.js';
 import { toStandardSchema } from '../schema/standard.js';
 import { isCanonicalCapSet } from '../evidence/caps.js';
 import type { DocumentGraphNode, NodeFamily } from './document-graph.js';
 
 /** Branded-string fields validate as plain strings (brand + format are compile-time / invariant laws). */
-const Addr = S.string;
+const Addr = schema.string;
 /** `meta` + structurally-opaque fields: presence is the contract, internal shape is sealed/derived elsewhere. */
-const Opaque = S.unknown;
+const Opaque = schema.unknown;
 
 /**
  * `range` was an effect `Schema.Tuple([Number, Number])`. The kernel AST has no
@@ -46,8 +46,8 @@ const Opaque = S.unknown;
  * effect Tuple's reject-on-wrong-arity behaviour rather than widening to a
  * variable-length `number[]`.
  */
-const RangeTuple = S.brand(
-  S.array(S.number),
+const RangeTuple = schema.brand(
+  schema.array(schema.number),
   (arr): readonly [number, number] => {
     if (arr.length !== 2) {
       throw ValidationError('DocGraph.range', 'range must be a [start, end] pair of exactly two numbers');
@@ -62,81 +62,86 @@ const RangeTuple = S.brand(
   'DocGraphRange',
 );
 
-const SignalNodeSchema = S.struct({
-  _tag: S.literal('DocGraphSignalNode'),
-  _version: S.literal(1),
-  family: S.literal('signal'),
+const SignalNodeSchema = schema.struct({
+  _tag: schema.literal('DocGraphSignalNode'),
+  _version: schema.literal(1),
+  family: schema.literal('signal'),
   id: Addr,
   meta: Opaque,
-  input: S.string,
-  range: S.optional(RangeTuple),
+  input: schema.string,
+  range: schema.optional(RangeTuple),
 });
-const EntityNodeSchema = S.struct({
-  _tag: S.literal('DocGraphEntityNode'),
-  _version: S.literal(1),
-  family: S.literal('entity'),
+const EntityNodeSchema = schema.struct({
+  _tag: schema.literal('DocGraphEntityNode'),
+  _version: schema.literal(1),
+  family: schema.literal('entity'),
   id: Addr,
   meta: Opaque,
-  components: S.array(Addr),
+  components: schema.array(Addr),
 });
-const ComponentNodeSchema = S.struct({
-  _tag: S.literal('DocGraphComponentNode'),
-  _version: S.literal(1),
-  family: S.literal('component'),
+const ComponentNodeSchema = schema.struct({
+  _tag: schema.literal('DocGraphComponentNode'),
+  _version: schema.literal(1),
+  family: schema.literal('component'),
   id: Addr,
   meta: Opaque,
-  name: S.string,
-  boundaryRef: S.optional(Addr),
-  thresholds: S.optional(S.array(Opaque)),
-  states: S.optional(S.array(S.string)),
+  name: schema.string,
+  boundaryRef: schema.optional(Addr),
+  thresholds: schema.optional(schema.array(Opaque)),
+  states: schema.optional(schema.array(schema.string)),
 });
-const PoseNodeSchema = S.struct({
-  _tag: S.literal('DocGraphPoseNode'),
-  _version: S.literal(1),
-  family: S.literal('pose'),
+const PoseNodeSchema = schema.struct({
+  _tag: schema.literal('DocGraphPoseNode'),
+  _version: schema.literal(1),
+  family: schema.literal('pose'),
   id: Addr,
   meta: Opaque,
   entityRef: Addr,
-  state: S.string,
-  bindings: S.record(S.union(S.number, S.string)),
-  evaluated: S.optional(Opaque),
+  state: schema.string,
+  bindings: schema.record(schema.union(schema.number, schema.string)),
+  evaluated: schema.optional(Opaque),
 });
-const TransitionNodeSchema = S.struct({
-  _tag: S.literal('DocGraphTransitionNode'),
-  _version: S.literal(1),
-  family: S.literal('transition'),
+const TransitionNodeSchema = schema.struct({
+  _tag: schema.literal('DocGraphTransitionNode'),
+  _version: schema.literal(1),
+  family: schema.literal('transition'),
   id: Addr,
   meta: Opaque,
   fromPose: Addr,
   toPose: Addr,
-  routing: S.union(S.literal('seq'), S.literal('par'), S.literal('choice_then'), S.literal('choice_else')),
-  durationMs: S.optional(S.number),
+  routing: schema.union(
+    schema.literal('seq'),
+    schema.literal('par'),
+    schema.literal('choice_then'),
+    schema.literal('choice_else'),
+  ),
+  durationMs: schema.optional(schema.number),
 });
-const ProjectionNodeSchema = S.struct({
-  _tag: S.literal('DocGraphProjectionNode'),
-  _version: S.literal(1),
-  family: S.literal('projection'),
+const ProjectionNodeSchema = schema.struct({
+  _tag: schema.literal('DocGraphProjectionNode'),
+  _version: schema.literal(1),
+  family: schema.literal('projection'),
   id: Addr,
   meta: Opaque,
-  target: S.union(
-    S.literal('css'),
-    S.literal('glsl'),
-    S.literal('wgsl'),
-    S.literal('aria'),
-    S.literal('ai'),
-    S.literal('config'),
-    S.literal('svg'),
+  target: schema.union(
+    schema.literal('css'),
+    schema.literal('glsl'),
+    schema.literal('wgsl'),
+    schema.literal('aria'),
+    schema.literal('ai'),
+    schema.literal('config'),
+    schema.literal('svg'),
   ),
   sourceRef: Addr,
   keys: Opaque,
   resultDigest: Opaque,
 });
-const CapTierSchema = S.union(
-  S.literal('static'),
-  S.literal('styled'),
-  S.literal('reactive'),
-  S.literal('animated'),
-  S.literal('gpu'),
+const CapTierSchema = schema.union(
+  schema.literal('static'),
+  schema.literal('styled'),
+  schema.literal('reactive'),
+  schema.literal('animated'),
+  schema.literal('gpu'),
 );
 // grants is a CapSet: a tagged, deduped level ARRAY. Validated (not Opaque) so a corrupted
 // grants — e.g. a Set that JSON-serialized to {} over the mutation channel — is REJECTED by
@@ -145,13 +150,13 @@ const CapTierSchema = S.union(
 // Levels must be CANONICAL (deduped, ladder-ascending), not merely an array of valid tiers —
 // else an untrusted policy patch could seal a non-canonical CapSet that content-addresses
 // DIFFERENTLY from the same logical set built via Cap.from, breaking the identity law at the wire.
-// The kernel has no `check`/filter node, so the canonical law rides a `S.brand` smart
+// The kernel has no `check`/filter node, so the canonical law rides a `schema.brand` smart
 // constructor: it decodes the struct, then throws a ValidationError (folded into a
 // `schema/brand` decode issue) when the levels are not canonical.
-const CapSetSchema = S.brand(
-  S.struct({
-    _tag: S.literal('CapSet'),
-    levels: S.array(CapTierSchema),
+const CapSetSchema = schema.brand(
+  schema.struct({
+    _tag: schema.literal('CapSet'),
+    levels: schema.array(CapTierSchema),
   }),
   (cs) => {
     if (!isCanonicalCapSet(cs)) {
@@ -164,34 +169,36 @@ const CapSetSchema = S.brand(
   },
   'CapSet',
 );
-const PolicyNodeSchema = S.struct({
-  _tag: S.literal('DocGraphPolicyNode'),
-  _version: S.literal(1),
-  family: S.literal('policy'),
+const PolicyNodeSchema = schema.struct({
+  _tag: schema.literal('DocGraphPolicyNode'),
+  _version: schema.literal(1),
+  family: schema.literal('policy'),
   id: Addr,
   meta: Opaque,
-  appliesTo: S.array(Addr),
+  appliesTo: schema.array(Addr),
   requires: CapTierSchema,
   grants: CapSetSchema,
-  sites: S.array(S.union(S.literal('node'), S.literal('browser'), S.literal('worker'), S.literal('edge'))),
-  budgets: S.optional(Opaque),
+  sites: schema.array(
+    schema.union(schema.literal('node'), schema.literal('browser'), schema.literal('worker'), schema.literal('edge')),
+  ),
+  budgets: schema.optional(Opaque),
 });
-const ExportNodeSchema = S.struct({
-  _tag: S.literal('DocGraphExportNode'),
-  _version: S.literal(1),
-  family: S.literal('export'),
+const ExportNodeSchema = schema.struct({
+  _tag: schema.literal('DocGraphExportNode'),
+  _version: schema.literal(1),
+  family: schema.literal('export'),
   id: Addr,
   meta: Opaque,
-  carrier: S.union(
-    S.literal('astro-page'),
-    S.literal('video'),
-    S.literal('svg'),
-    S.literal('ship-capsule'),
-    S.literal('receipt'),
+  carrier: schema.union(
+    schema.literal('astro-page'),
+    schema.literal('video'),
+    schema.literal('svg'),
+    schema.literal('ship-capsule'),
+    schema.literal('receipt'),
   ),
-  sourceRefs: S.array(Addr),
+  sourceRefs: schema.array(Addr),
   artifactDigest: Opaque,
-  receiptHash: S.optional(S.string),
+  receiptHash: schema.optional(schema.string),
 });
 
 /** Per-family schemas, keyed by family. */
@@ -213,7 +220,7 @@ const _familyExhaustiveness: Record<NodeFamily, unknown> = NODE_FAMILY_SCHEMAS;
 void _familyExhaustiveness;
 
 /** The union over all eight families — the single source of truth for a well-formed node. */
-const DocumentGraphNodeUnion = S.union(
+const DocumentGraphNodeUnion = schema.union(
   SignalNodeSchema,
   EntityNodeSchema,
   ComponentNodeSchema,

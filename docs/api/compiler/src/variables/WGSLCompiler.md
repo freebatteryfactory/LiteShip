@@ -54,10 +54,10 @@ A [WGSLCompileResult](../interfaces/WGSLCompileResult.md) with structs, bindings
 #### Example
 
 ```ts
-import { Boundary } from '@liteship/core';
+import { defineBoundary } from '@liteship/core';
 import { WGSLCompiler } from '@liteship/compiler';
 
-const boundary = Boundary.make({
+const boundary = defineBoundary({
   input: 'viewport',
   at: [[0, 'mobile'], [768, 'desktop']],
 });
@@ -103,10 +103,10 @@ const wgsl = WGSLCompiler.serialize(result);
 ## Example
 
 ```ts
-import { Boundary } from '@liteship/core';
+import { defineBoundary } from '@liteship/core';
 import { WGSLCompiler } from '@liteship/compiler';
 
-const boundary = Boundary.make({
+const boundary = defineBoundary({
   input: 'viewport',
   at: [[0, 'sm'], [768, 'lg']],
 });

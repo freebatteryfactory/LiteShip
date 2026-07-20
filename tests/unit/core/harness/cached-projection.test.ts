@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { defineCapsule, S } from '@liteship/core';
+import { defineCapsule, schema } from '@liteship/core';
 import { resetCapsuleCatalog } from '@liteship/core/testing';
 import * as Harness from '@liteship/core/harness';
 
@@ -7,8 +7,8 @@ const audioDecode = (name = 'demo.audioDecode', budgets: { p95Ms?: number } = { 
   defineCapsule({
     _kind: 'cachedProjection',
     name,
-    input: S.unknown,
-    output: S.unknown,
+    input: schema.unknown,
+    output: schema.unknown,
     capabilities: { reads: ['fs.read'], writes: [] },
     invariants: [],
     budgets,
@@ -66,8 +66,8 @@ describe('generateCachedProjection (compile-time-resolved)', () => {
     const cap = defineCapsule({
       _kind: 'cachedProjection',
       name: 'intro-bed',
-      input: S.unknown,
-      output: S.unknown,
+      input: schema.unknown,
+      output: schema.unknown,
       capabilities: { reads: ['fs.read'], writes: [] },
       invariants: [{ name: 'positive duration', check: () => true, message: 'durations must be > 0' }],
       budgets: { p95Ms: 50 },

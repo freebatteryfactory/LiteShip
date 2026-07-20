@@ -8,8 +8,14 @@
 
 import { describe, expect, test } from 'vitest';
 import fc from 'fast-check';
-import { Boundary, type OutputsFor, type StateUnion } from '@liteship/core';
-import { Q, type OutputTarget, type QuantizerConfig, type QuantizerOutputs } from '@liteship/quantizer';
+import { Boundary, type OutputsFor, type StateUnion, defineBoundary } from '@liteship/core';
+import {
+  defineQuantizer,
+  createQuantizer,
+  type OutputTarget,
+  type QuantizerConfig,
+  type QuantizerOutputs,
+} from '@liteship/quantizer';
 
 const outputTargets = ['css', 'glsl', 'wgsl', 'aria', 'ai'] as const satisfies readonly OutputTarget[];
 
@@ -17,7 +23,7 @@ type ShaderBoundary = ReturnType<typeof shaderBoundary>;
 type ShaderState = StateUnion<ShaderBoundary>;
 
 function shaderBoundary() {
-  return Boundary.make({
+  return defineBoundary({
     input: 'viewport.width',
     at: [
       [0, 'compact'],
@@ -37,7 +43,7 @@ function emittedAfterCrossing<B extends Boundary, O extends QuantizerOutputs<B>>
   config: QuantizerConfig<B, O>,
   value: number,
 ): Partial<{ [K in OutputTarget]: Record<string, unknown> }> {
-  const { quantizer: live, lifetime } = config.create();
+  const { quantizer: live, lifetime } = createQuantizer(config);
   // outputChanges is a replay-1 kernel: subscribe replays the current outputs
   // (events[0]), evaluate() publishes the post-crossing outputs (events[1]) —
   // both synchronous (was `Stream.take(live.outputChanges, 2)` forked in a scope).
@@ -74,7 +80,7 @@ describe('quantizer outputChanges target dispatch properties', () => {
               expanded: { u_scale: wgslScale },
             } satisfies OutputsFor<ShaderBoundary, Record<string, number>>,
           };
-          const config = Q.from(boundary).outputs(outputs);
+          const config = defineQuantizer(boundary, { outputs });
           const crossingValue = 1024;
           const crossingState = Boundary.evaluateResult(boundary, crossingValue).state as ShaderState;
 

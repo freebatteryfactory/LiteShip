@@ -15,9 +15,9 @@ pnpm add @liteship/core
 ## 30 seconds
 
 ```ts
-import { Boundary } from '@liteship/core';
+import { Boundary, defineBoundary } from '@liteship/core';
 
-const viewport = Boundary.make({
+const viewport = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'mobile'],

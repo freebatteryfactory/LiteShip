@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from 'vitest';
-import { Boundary, Diagnostics } from '@liteship/core';
+import { Diagnostics, defineBoundary } from '@liteship/core';
 import { createBoundaryCache, EdgeTier, type KVNamespace } from '@liteship/edge';
 import {
   astroPathTag,
@@ -41,7 +41,7 @@ function makeKV(): { store: Map<string, string>; kv: KVNamespace } {
   };
 }
 
-const boundary = Boundary.make({ input: 'viewport.width', at: [[0, 'compact']] });
+const boundary = defineBoundary({ input: 'viewport.width', at: [[0, 'compact']] });
 const tier = EdgeTier.detectTier(new Headers({ 'sec-ch-viewport-width': '1280' }));
 const outputs = { css: '.x{}', propertyRegistrations: '', containerQueries: '' };
 

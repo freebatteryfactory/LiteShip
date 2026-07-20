@@ -65,10 +65,10 @@ A [CSSCompileResult](../interfaces/CSSCompileResult.md) with structured rules an
 #### Example
 
 ```ts
-import { Boundary } from '@liteship/core';
+import { defineBoundary } from '@liteship/core';
 import { CSSCompiler } from '@liteship/compiler';
 
-const boundary = Boundary.make({
+const boundary = defineBoundary({
   input: 'width',
   at: [[0, 'sm'], [768, 'lg']],
 });
@@ -159,10 +159,10 @@ document.head.appendChild(
 ## Example
 
 ```ts
-import { Boundary } from '@liteship/core';
+import { defineBoundary } from '@liteship/core';
 import { CSSCompiler } from '@liteship/compiler';
 
-const boundary = Boundary.make({
+const boundary = defineBoundary({
   input: 'width',
   at: [[0, 'sm'], [768, 'lg']],
 });

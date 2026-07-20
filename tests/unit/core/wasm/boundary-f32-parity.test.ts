@@ -11,7 +11,7 @@
  * @module
  */
 import { describe, it, expect } from 'vitest';
-import { Boundary } from '@liteship/core';
+import { Boundary, defineBoundary } from '@liteship/core';
 import { fallbackKernels } from '../../../../packages/core/src/wasm/wasm-fallback.js';
 
 /** Faithful simulation of the deployed WASM: dispatch down-casts to f32 (Float32Array),
@@ -35,7 +35,7 @@ function rawF64Index(thresholds: readonly number[], value: number): number {
 
 function makeBoundary(thresholds: readonly number[]) {
   const at = thresholds.map((t, i) => [t, `s${i}`] as const);
-  return Boundary.make({ input: 'viewport.width', at: at as never });
+  return defineBoundary({ input: 'viewport.width', at: at as never });
 }
 
 function scalarIndex(thresholds: readonly number[], value: number): number {

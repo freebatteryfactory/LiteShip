@@ -17,7 +17,7 @@
  * @module
  */
 
-import { defineCapsule, S } from '@liteship/core';
+import { defineCapsule, schema } from '@liteship/core';
 import type { BeatComponent as _BeatComponent, BeatSpawn as _BeatSpawn } from '@liteship/_spine';
 
 /**
@@ -32,22 +32,22 @@ export type BeatComponent = _BeatComponent;
 /** Spawn descriptor returned by the binding — the runtime spawns these into the world. */
 export type BeatSpawn = _BeatSpawn;
 
-const BeatComponentSchema = S.struct({
-  _tag: S.literal('beat'),
-  timeMs: S.number,
-  strength: S.number,
-  anchorTrackId: S.optional(S.string),
+const BeatComponentSchema = schema.struct({
+  _tag: schema.literal('beat'),
+  timeMs: schema.number,
+  strength: schema.number,
+  anchorTrackId: schema.optional(schema.string),
 });
 
-const BindingInputSchema = S.struct({
+const BindingInputSchema = schema.struct({
   // The beat array as already resolved by BeatMarkerProjection (or
   // declared directly on a CompiledScene). This capsule is a pure
   // transform from BeatComponent[] into BeatSpawn[].
-  beats: S.array(BeatComponentSchema),
+  beats: schema.array(BeatComponentSchema),
 });
 
-const BindingOutputSchema = S.struct({
-  spawns: S.array(S.struct({ components: BeatComponentSchema })),
+const BindingOutputSchema = schema.struct({
+  spawns: schema.array(schema.struct({ components: BeatComponentSchema })),
 });
 
 /**

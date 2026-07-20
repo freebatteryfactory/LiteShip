@@ -17,15 +17,15 @@ import { describe, it, expect, afterEach } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import fc from 'fast-check';
-import { Boundary, rawIndexF32, WASMDispatch, WASM_BATCH_MAX } from '@liteship/core';
+import { Boundary, rawIndexF32, WASMDispatch, WASM_BATCH_MAX, defineBoundary } from '@liteship/core';
 import { wasmAbsent } from '../helpers/capabilities.js';
 
 function makeBoundary(thresholds: readonly number[]) {
   const at = thresholds.map((t, i) => [t, `s${i}`] as const);
-  return Boundary.make({ input: 'viewport.width', at: at as never });
+  return defineBoundary({ input: 'viewport.width', at: at as never });
 }
 
-/** Strictly-ascending, deduped thresholds (the Boundary.make contract). */
+/** Strictly-ascending, deduped thresholds (the defineBoundary contract). */
 const ascendingThresholds = fc
   .array(fc.double({ min: -1e6, max: 1e6, noNaN: true }), { minLength: 1, maxLength: 12 })
   .map((xs) => [...new Set(xs)].sort((a, b) => a - b));

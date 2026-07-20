@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test } from 'vitest';
 import { Diagnostics } from '@liteship/core';
-import { Boundary } from '@liteship/core';
+import { defineBoundary } from '@liteship/core';
 import { dedupeOutputsByTier, enumerateTierKeys } from '@liteship/edge';
 import type { BoundaryManifest, BoundaryManifestFile } from '@liteship/edge';
 import * as frontDoor from '@liteship/cloudflare';
@@ -10,7 +10,7 @@ import { getDefaultWorkersEnv, resetWorkersEnvForTesting, setWorkersEnvForTestin
 
 /** Mint a real boundary so test ids honor the ADR-0003 identity law. */
 function makeBoundary() {
-  return Boundary.make({
+  return defineBoundary({
     input: 'viewport.width',
     at: [
       [0, 'compact'],
@@ -412,14 +412,14 @@ describe('cloudflareMiddleware', () => {
    * addresses) and distinct CSS -- the cross-poisoning fixture.
    */
   function makeMultiManifest(): BoundaryManifest {
-    const viewport = Boundary.make({
+    const viewport = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'compact'],
         [768, 'wide'],
       ],
     });
-    const sidebar = Boundary.make({
+    const sidebar = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'collapsed'],

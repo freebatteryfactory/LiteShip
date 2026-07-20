@@ -8,7 +8,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { Scheduler, VideoRenderer, Signal, Compositor, Boundary, Timeline, Easing, Millis } from '@liteship/core';
+import { Scheduler, VideoRenderer, Signal, Compositor, Easing, Millis, defineBoundary, createTimeline } from '@liteship/core';
 
 // ---------------------------------------------------------------------------
 // § 1. FrameScheduler
@@ -209,7 +209,7 @@ describe('VideoRenderer', () => {
 // ---------------------------------------------------------------------------
 
 describe('Timeline with FixedStepScheduler', () => {
-  const boundary = Boundary.make({
+  const boundary = defineBoundary({
     input: 'time',
     at: [
       [0, 'intro'],
@@ -220,7 +220,7 @@ describe('Timeline with FixedStepScheduler', () => {
 
   it('produces deterministic state transitions', () => {
     const sched = Scheduler.fixedStep(60);
-    const tl = Timeline.from(boundary, { duration: Millis(1200), scheduler: sched });
+    const tl = createTimeline(boundary, { duration: Millis(1200), scheduler: sched });
     tl.play();
 
     // Advance enough frames to cross 500ms threshold.
@@ -232,7 +232,7 @@ describe('Timeline with FixedStepScheduler', () => {
 
   it('seek produces correct state without stepping', () => {
     const sched = Scheduler.fixedStep(30);
-    const tl = Timeline.from(boundary, { duration: Millis(1200), scheduler: sched });
+    const tl = createTimeline(boundary, { duration: Millis(1200), scheduler: sched });
 
     tl.seek(Millis(1050));
     expect(tl.state()).toBe('outro');
@@ -240,7 +240,7 @@ describe('Timeline with FixedStepScheduler', () => {
 
   it('scrub to 0.5 lands in middle state', () => {
     const sched = Scheduler.fixedStep(30);
-    const tl = Timeline.from(boundary, { duration: Millis(1200), scheduler: sched });
+    const tl = createTimeline(boundary, { duration: Millis(1200), scheduler: sched });
 
     tl.scrub(0.5); // 0.5 * 1200 = 600ms -> middle
     expect(tl.state()).toBe('middle');
@@ -248,7 +248,7 @@ describe('Timeline with FixedStepScheduler', () => {
 
   it('reverse changes playback direction', () => {
     const sched = Scheduler.fixedStep(60);
-    const tl = Timeline.from(boundary, { duration: Millis(1200), scheduler: sched });
+    const tl = createTimeline(boundary, { duration: Millis(1200), scheduler: sched });
 
     // Seek to middle, then play in reverse.
     tl.seek(Millis(800));
@@ -360,7 +360,7 @@ describe('VideoRenderer edge cases', () => {
 // ---------------------------------------------------------------------------
 
 describe('Timeline loop and pause', () => {
-  const boundary = Boundary.make({
+  const boundary = defineBoundary({
     input: 'time',
     at: [
       [0, 'intro'],
@@ -371,7 +371,7 @@ describe('Timeline loop and pause', () => {
 
   it('pause stops time advancement', () => {
     const sched = Scheduler.fixedStep(60);
-    const tl = Timeline.from(boundary, { duration: Millis(1200), scheduler: sched });
+    const tl = createTimeline(boundary, { duration: Millis(1200), scheduler: sched });
     tl.play();
 
     // Advance a few frames.
@@ -390,7 +390,7 @@ describe('Timeline loop and pause', () => {
 
   it('loop wraps time back to start', () => {
     const sched = Scheduler.fixedStep(60);
-    const tl = Timeline.from(boundary, { duration: Millis(1200), loop: true, scheduler: sched });
+    const tl = createTimeline(boundary, { duration: Millis(1200), loop: true, scheduler: sched });
     tl.play();
 
     // At 60fps, 1200ms = 72 frames for one loop.
@@ -404,7 +404,7 @@ describe('Timeline loop and pause', () => {
 
   it('progress reads correctly', () => {
     const sched = Scheduler.fixedStep(60);
-    const tl = Timeline.from(boundary, { duration: Millis(1200), scheduler: sched });
+    const tl = createTimeline(boundary, { duration: Millis(1200), scheduler: sched });
 
     tl.seek(Millis(600));
     expect(tl.progress()).toBeCloseTo(0.5, 5);

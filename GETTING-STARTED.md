@@ -1,6 +1,6 @@
 # Getting started with LiteShip
 
-From `pnpm add` in your Astro project to a boundary changing state as you drag the window edge, in about five minutes. Two concepts get you there: `Boundary.make` and `satelliteAttrs`. Everything else (tokens, styles, casting to CSS) is layered behind links.
+From `pnpm add` in your Astro project to a boundary changing state as you drag the window edge, in about five minutes. Two concepts get you there: `defineBoundary` and `satelliteAttrs`. Everything else (tokens, styles, casting to CSS) is layered behind links.
 
 LiteShip / `@liteship/*` naming: [GLOSSARY.md](./GLOSSARY.md). For Cloudflare Workers hosting, see [HOSTING.md](./HOSTING.md#cloudflare-workers) and [examples/cloudflare-astro/](./examples/cloudflare-astro/). Contributing to LiteShip itself (cloning the monorepo, building, running the gauntlet) is a different path: [CONTRIBUTING.md](./CONTRIBUTING.md).
 
@@ -24,9 +24,9 @@ A boundary is a continuous-to-discrete signal mapping: here, viewport width → 
 
 ```ts
 // src/boundaries.ts
-import { Boundary } from '@liteship/core';
+import { defineBoundary } from '@liteship/core';
 
-export const viewport = Boundary.make({
+export const viewport = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'mobile'],
@@ -134,7 +134,7 @@ Rendered output carries `data-liteship-genui-render-hash` for cache/replay; clic
 
 ## Dev inspector (astro dev only)
 
-While running `pnpm dev`, open the liteship boundary inspector from the Astro dev-toolbar (click the liteship toolbar icon) — a panel that lists every `[data-liteship-boundary]` element, live signal values, draggable threshold notches, and a **Copy Boundary.make** button for paste-back into source. DOM edits are session-only (source files are untouched). Opt out with `integration({ inspector: false })` in `astro.config.mjs`.
+While running `pnpm dev`, open the liteship boundary inspector from the Astro dev-toolbar (click the liteship toolbar icon) — a panel that lists every `[data-liteship-boundary]` element, live signal values, draggable threshold notches, and a **Copy defineBoundary** button for paste-back into source. DOM edits are session-only (source files are untouched). Opt out with `integration({ inspector: false })` in `astro.config.mjs`.
 
 <!-- gif: inspector dev-toolbar app tuning thresholds and copying snippet -->
 
@@ -254,7 +254,7 @@ pnpm verify   # first-run aggregate: doctor → build → test
 
 ### First-boundary authoring
 
-**The same value evaluates to different states each call.** You probably reused a state name across the threshold list. `Boundary.make` requires unique state names; passing `[[0, 'small'], [768, 'small']]` throws at construction with a `LiteshipValidationError`. If the error fires at runtime in a hot path, the boundary was constructed lazily inside a render function — hoist it out.
+**The same value evaluates to different states each call.** You probably reused a state name across the threshold list. `defineBoundary` requires unique state names; passing `[[0, 'small'], [768, 'small']]` throws at construction with a `LiteshipValidationError`. If the error fires at runtime in a hot path, the boundary was constructed lazily inside a render function — hoist it out.
 
 **The CSS doesn't update when the window resizes.** Two usual suspects: the element never got a directive marker (the boot scanner activates `data-liteship-directive="satellite"` — emitted automatically by `Satellite` / `satelliteAttrs()` when a boundary is present; Astro's own `client:visible` / `client:idle` won't wire the boundary evaluator), or the CSS was generated against a stale boundary id (rebuild after editing the boundary; content addresses change with the definition, so old emitted CSS keys won't match the new id).
 

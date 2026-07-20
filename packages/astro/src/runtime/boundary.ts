@@ -17,6 +17,7 @@ import {
   inputToSource,
   wallClock,
   type Clock,
+  defineBoundary,
 } from '@liteship/core';
 import { dispatchLiteshipEvent, type LiteshipEventName } from '@liteship/web';
 import { readAudioSignal, attachAudioObserver } from './audio-signal.js';
@@ -44,7 +45,7 @@ export interface SerializedBoundary {
   readonly states: readonly [string, ...string[]];
   /** Optional hysteresis band applied during evaluation. */
   readonly hysteresis?: number;
-  /** Optional activation filter (JSON-serializable subset of {@link Boundary.Spec}). */
+  /** Optional activation filter (JSON-serializable subset of {@link BoundarySpec}). */
   readonly spec?: {
     readonly timeRange?: { readonly from?: number; readonly until?: number };
     readonly experimentId?: string;
@@ -174,7 +175,7 @@ export function boundaryParseFailureMessage(boundaryJson: string | null): string
   ) {
     return (
       `data-liteship-boundary JSON is missing required fields (input, thresholds, states) — ` +
-      `the satellite runtime will stay inert. Fix: export a Boundary.make({ input, at }) value via satelliteAttrs().`
+      `the satellite runtime will stay inert. Fix: export a defineBoundary({ input, at }) value via satelliteAttrs().`
     );
   }
 
@@ -232,7 +233,7 @@ export function parseBoundary(boundaryJson: string | null): RuntimeBoundary | nu
   return {
     name: parsed.id ?? 'default',
     input: parsed.input,
-    boundary: Boundary.make({
+    boundary: defineBoundary({
       input: parsed.input,
       at,
       ...(typeof parsed.hysteresis === 'number' ? { hysteresis: parsed.hysteresis } : {}),

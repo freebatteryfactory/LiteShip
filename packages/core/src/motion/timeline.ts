@@ -65,132 +65,124 @@ interface TimelineShape<B extends Boundary = Boundary> {
   readonly lifetime: Lifetime;
 }
 
-interface TimelineFactory {
-  from<B extends Boundary>(
-    boundary: B,
-    config?: { duration?: Millis; loop?: boolean; scheduler?: Scheduler },
-  ): TimelineShape<B>;
-}
-
 /**
- * Timeline — scheduler-driven advancement over a {@link Boundary}.
- * Produces a plain reactive timeline that seeks or plays between boundary states;
- * pluggable clock via {@link Scheduler}, teardown via {@link Lifetime}.
+ * Create a {@link Timeline} — scheduler-driven advancement over a
+ * {@link Boundary}. Produces a plain reactive timeline that seeks or plays
+ * between boundary states; pluggable clock via {@link Scheduler}, teardown via
+ * {@link Lifetime}.
  */
-export const Timeline: TimelineFactory = {
-  from<B extends Boundary>(
-    boundary: B,
-    config?: { duration?: Millis; loop?: boolean; scheduler?: Scheduler },
-  ): TimelineShape<B> {
-    const duration =
-      config?.duration ??
-      (boundary.thresholds.length > 0 ? boundary.thresholds[boundary.thresholds.length - 1]! * 1.2 : 1000);
-    const loop = config?.loop ?? false;
+export function createTimeline<B extends Boundary>(
+  boundary: B,
+  config?: { duration?: Millis; loop?: boolean; scheduler?: Scheduler },
+): TimelineShape<B> {
+  const duration =
+    config?.duration ??
+    (boundary.thresholds.length > 0 ? boundary.thresholds[boundary.thresholds.length - 1]! * 1.2 : 1000);
+  const loop = config?.loop ?? false;
 
-    const initialState: StateUnion<B> = Boundary.evaluate(boundary, 0);
-    // The state channel: {distinct} — the hand-rolled `newState !== oldState`
-    // reference-dedup is the product law (LOCKED ruling S6.F.1). Boundary states
-    // are strings, so Object.is is value-equality (exactly the old `!==`).
-    const stateKernel = CellKernel.replay1<StateUnion<B>>(initialState, {
-      kind: 'distinct',
-      equals: (a, b) => Object.is(a, b),
-    });
-    // Seed lastEmitted = initialState (publish to zero subscribers): the old guard
-    // compared newState against the current slot (which started at initialState),
-    // so a first publish of the initial state must be suppressed. This makes the
-    // {distinct} transport swap byte-faithful to that slot-compare guard.
-    stateKernel.publish(initialState);
+  const initialState: StateUnion<B> = Boundary.evaluate(boundary, 0);
+  // The state channel: {distinct} — the hand-rolled `newState !== oldState`
+  // reference-dedup is the product law (LOCKED ruling S6.F.1). Boundary states
+  // are strings, so Object.is is value-equality (exactly the old `!==`).
+  const stateKernel = CellKernel.replay1<StateUnion<B>>(initialState, {
+    kind: 'distinct',
+    equals: (a, b) => Object.is(a, b),
+  });
+  // Seed lastEmitted = initialState (publish to zero subscribers): the old guard
+  // compared newState against the current slot (which started at initialState),
+  // so a first publish of the initial state must be suppressed. This makes the
+  // {distinct} transport swap byte-faithful to that slot-compare guard.
+  stateKernel.publish(initialState);
 
-    const sched =
-      config?.scheduler ?? (typeof requestAnimationFrame !== 'undefined' ? SchedulerImpl.raf() : SchedulerImpl.noop());
+  const sched =
+    config?.scheduler ?? (typeof requestAnimationFrame !== 'undefined' ? SchedulerImpl.raf() : SchedulerImpl.noop());
 
-    let lastTime: number | null = null;
-    let playing = false;
-    let direction: 1 | -1 = 1;
-    let currentElapsed = 0;
+  let lastTime: number | null = null;
+  let playing = false;
+  let direction: 1 | -1 = 1;
+  let currentElapsed = 0;
 
-    // Publish the state for an elapsed value; the {distinct} kernel suppresses a
-    // consecutive-equal state (the former `if (newState !== oldState)` guard).
-    const setState = (elapsed: number): void => {
-      stateKernel.publish(Boundary.evaluate(boundary, elapsed));
-    };
+  // Publish the state for an elapsed value; the {distinct} kernel suppresses a
+  // consecutive-equal state (the former `if (newState !== oldState)` guard).
+  const setState = (elapsed: number): void => {
+    stateKernel.publish(Boundary.evaluate(boundary, elapsed));
+  };
 
-    let disposed = false;
-    const step = (now: number): void => {
-      try {
-        if (lastTime !== null && playing) {
-          const dt = (now - lastTime) * direction;
-          let next = currentElapsed + dt;
-          if (loop) {
-            next = ((next % duration) + duration) % duration;
-          } else {
-            next = Math.max(0, Math.min(duration, next));
-          }
-          currentElapsed = next;
-          setState(next);
+  let disposed = false;
+  const step = (now: number): void => {
+    try {
+      if (lastTime !== null && playing) {
+        const dt = (now - lastTime) * direction;
+        let next = currentElapsed + dt;
+        if (loop) {
+          next = ((next % duration) + duration) % duration;
+        } else {
+          next = Math.max(0, Math.min(duration, next));
         }
-      } finally {
-        // The tick OCCURRED (elapsed already advanced), so `lastTime` must advance and the
-        // next tick must be armed even if a state subscriber THREW from `setState` — otherwise
-        // one listener fault wedges the timeline forever (it stays `playing` but never ticks
-        // again, and a huge `dt` would accrue if lastTime lagged). Running the bookkeeping in a
-        // `finally` re-arms the scheduler while the listener error still propagates out of the
-        // scheduler callback (surfaced to the host), it just no longer strands the clock.
-        lastTime = now;
-        // DISPOSAL-SAFE self-reschedule. A state subscriber may call
-        // `timeline.lifetime.dispose()` from WITHIN `setState`; the finalizer then cancels the
-        // schedId of the tick already executing (a no-op), and without this guard `step` would
-        // install a fresh callback AFTER disposal — a loop that ticks forever past teardown.
-        // `disposed` is monotonic, so once teardown has begun the reschedule stays blocked.
-        if (!disposed) schedId = sched.schedule(step);
+        currentElapsed = next;
+        setState(next);
       }
-    };
-    let schedId = sched.schedule(step);
+    } finally {
+      // The tick OCCURRED (elapsed already advanced), so `lastTime` must advance and the
+      // next tick must be armed even if a state subscriber THREW from `setState` — otherwise
+      // one listener fault wedges the timeline forever (it stays `playing` but never ticks
+      // again, and a huge `dt` would accrue if lastTime lagged). Running the bookkeeping in a
+      // `finally` re-arms the scheduler while the listener error still propagates out of the
+      // scheduler callback (surfaced to the host), it just no longer strands the clock.
+      lastTime = now;
+      // DISPOSAL-SAFE self-reschedule. A state subscriber may call
+      // `timeline.lifetime.dispose()` from WITHIN `setState`; the finalizer then cancels the
+      // schedId of the tick already executing (a no-op), and without this guard `step` would
+      // install a fresh callback AFTER disposal — a loop that ticks forever past teardown.
+      // `disposed` is monotonic, so once teardown has begun the reschedule stays blocked.
+      if (!disposed) schedId = sched.schedule(step);
+    }
+  };
+  let schedId = sched.schedule(step);
 
-    const lifetime = Lifetime.make();
-    // LIFO: cancel the scheduler first (stop future ticks), then close the state
-    // kernel (complete subscribers). schedId is read at dispose time — it tracks
-    // the latest reschedule, matching the old scope-bound `sched.cancel(schedId)`.
-    lifetime.add(() => stateKernel.close());
-    lifetime.add(() => {
-      disposed = true;
-      sched.cancel(schedId);
-    });
+  const lifetime = Lifetime.make();
+  // LIFO: cancel the scheduler first (stop future ticks), then close the state
+  // kernel (complete subscribers). schedId is read at dispose time — it tracks
+  // the latest reschedule, matching the old scope-bound `sched.cancel(schedId)`.
+  lifetime.add(() => stateKernel.close());
+  lifetime.add(() => {
+    disposed = true;
+    sched.cancel(schedId);
+  });
 
-    return {
-      boundary,
-      state: () => stateKernel.read(),
-      progress: () => Math.max(0, Math.min(currentElapsed / duration, 1)),
-      elapsed: () => mkMillis(currentElapsed),
-      subscribe: (subscriber) => stateKernel.subscribe(subscriber),
-      play: () => {
-        playing = true;
-      },
-      pause: () => {
-        playing = false;
-      },
-      reverse: () => {
-        direction = direction === 1 ? -1 : 1;
-      },
-      seek: (ms: Millis) => {
-        // Disposed → the state kernel is closed and `setState` is inert; advancing
-        // `currentElapsed` here would move `elapsed()`/`progress()` while `state()` stays
-        // frozen — a post-teardown divergence. Keep seek/scrub inert once disposed.
-        if (disposed) return;
-        const clamped = Math.max(0, Math.min(duration, ms));
-        currentElapsed = clamped;
-        setState(clamped);
-      },
-      scrub: (progress: number) => {
-        if (disposed) return;
-        const val = clamp01(progress) * duration;
-        currentElapsed = val;
-        setState(val);
-      },
-      lifetime,
-    };
-  },
-};
+  return {
+    boundary,
+    state: () => stateKernel.read(),
+    progress: () => Math.max(0, Math.min(currentElapsed / duration, 1)),
+    elapsed: () => mkMillis(currentElapsed),
+    subscribe: (subscriber) => stateKernel.subscribe(subscriber),
+    play: () => {
+      playing = true;
+    },
+    pause: () => {
+      playing = false;
+    },
+    reverse: () => {
+      direction = direction === 1 ? -1 : 1;
+    },
+    seek: (ms: Millis) => {
+      // Disposed → the state kernel is closed and `setState` is inert; advancing
+      // `currentElapsed` here would move `elapsed()`/`progress()` while `state()` stays
+      // frozen — a post-teardown divergence. Keep seek/scrub inert once disposed.
+      if (disposed) return;
+      const clamped = Math.max(0, Math.min(duration, ms));
+      currentElapsed = clamped;
+      setState(clamped);
+    },
+    scrub: (progress: number) => {
+      if (disposed) return;
+      const val = clamp01(progress) * duration;
+      currentElapsed = val;
+      setState(val);
+    },
+    lifetime,
+  };
+}
 
 /** Public structural type for `Timeline`. */
 export type Timeline<B extends Boundary = Boundary> = TimelineShape<B>;

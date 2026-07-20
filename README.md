@@ -69,7 +69,7 @@ For a standalone app — one you can drop into StackBlitz or CodeSandbox — sca
 
 ## Quick start
 
-Two concepts get you to a working page: `Boundary.make` (define the states) and `satelliteAttrs` (put them on an element). In an Astro project:
+Two concepts get you to a working page: `defineBoundary` (define the states) and `satelliteAttrs` (put them on an element). In an Astro project:
 
 ```bash
 pnpm add @liteship/core @liteship/astro
@@ -83,9 +83,9 @@ Define a boundary — a mapping from a continuous signal to named states:
 
 ```ts
 // src/boundaries.ts
-import { Boundary } from '@liteship/core';
+import { defineBoundary } from '@liteship/core';
 
-export const viewport = Boundary.make({
+export const viewport = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'mobile'],

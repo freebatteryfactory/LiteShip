@@ -16,7 +16,8 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Cell, Derived, CellKernel } from '@liteship/core';
+import type { Cell} from '@liteship/core';
+import { Derived, CellKernel, createCell, computed } from '@liteship/core';
 
 /** Subscribe a named collector to a derived; return the live delivery array. */
 const collect = <T>(derived: Derived<T>): { readonly values: T[]; readonly dispose: () => void } => {
@@ -26,19 +27,19 @@ const collect = <T>(derived: Derived<T>): { readonly values: T[]; readonly dispo
 };
 
 // ---------------------------------------------------------------------------
-// Derived.make
+// computed
 // ---------------------------------------------------------------------------
 
-describe('Derived.make', () => {
+describe('computed', () => {
   test('computes the initial value and carries _tag Derived', () => {
-    const d = Derived.make(() => 42);
+    const d = computed(() => 42);
     expect(d._tag).toBe('Derived');
     expect(d.read()).toBe(42);
   });
 
   test('a static derived (no sources) replays once and never changes', () => {
     let counter = 0;
-    const d = Derived.make(() => ++counter);
+    const d = computed(() => ++counter);
     // Initial computation happens once (during construction).
     expect(d.read()).toBe(1);
     const { values } = collect(d);
@@ -48,8 +49,8 @@ describe('Derived.make', () => {
   });
 
   test('recomputes when a source cell emits', () => {
-    const cell = Cell.make(10);
-    const d = Derived.make(() => cell.read(), [cell]);
+    const cell = createCell(10);
+    const d = computed(() => cell.read(), [cell]);
     const { values } = collect(d);
     // 10 (replay) + 10 (source-wiring republish) — the leading duplicate.
     expect(values).toEqual([10, 10]);
@@ -65,7 +66,7 @@ describe('Derived.make', () => {
 
 describe('Derived.combine — captured derived.json parity', () => {
   const build = (): { base: Cell<number>; derived: Derived<number> } => {
-    const base = Cell.make(0);
+    const base = createCell(0);
     const derived = Derived.combine([base] as const, (x: number): number => x + 100);
     return { base, derived };
   };
@@ -130,7 +131,7 @@ describe('Derived.combine — captured derived.json parity', () => {
     // subscribes must not leave read() frozen at the construction-time value. An
     // UNWIRED source-backed read recomputes from the live sources (pull), WITHOUT
     // wiring — so the eventual first subscribe still gets its leading republish.
-    const source = Cell.make(1);
+    const source = createCell(1);
     const derived = Derived.combine([source] as const, (value: number) => value * 2);
     source.set(2); // no subscriber exists yet
     expect(derived.read()).toBe(4); // pull recompute: 2 * 2, not the stale 1 * 2 = 2
@@ -151,7 +152,7 @@ describe('Derived.combine — captured derived.json parity', () => {
     // honor the teardown contract: read() stops reflecting source mutations. Without
     // the `lifetime.disposed` guard the unwired pull branch would keep recomputing
     // from the live source, so a post-dispose set() would still move the value.
-    const source = Cell.make(1);
+    const source = createCell(1);
     const derived = Derived.combine([source] as const, (value: number) => value * 2);
     source.set(3);
     expect(derived.read()).toBe(6); // pull recompute while alive + unwired
@@ -165,7 +166,7 @@ describe('Derived.combine — captured derived.json parity', () => {
     // Stricter than the above: the source changes AFTER the final read() but BEFORE
     // dispose. A teardown-time recompute would capture the never-observed value (12);
     // the contract freezes the LAST value read() actually returned (4).
-    const source = Cell.make(2);
+    const source = createCell(2);
     const derived = Derived.combine([source] as const, (value: number) => value * 2);
     expect(derived.read()).toBe(4); // last observed pull value
 
@@ -179,7 +180,7 @@ describe('Derived.combine — captured derived.json parity', () => {
     // that throws must not turn teardown into a throw. Freezing the cached pull value
     // sidesteps the combiner entirely once disposed.
     let calls = 0;
-    const source = Cell.make(1);
+    const source = createCell(1);
     const derived = Derived.combine([source] as const, (value: number) => {
       calls += 1;
       if (calls > 2) throw new Error('combiner must not run at teardown');
@@ -195,7 +196,7 @@ describe('Derived.combine — captured derived.json parity', () => {
     // subscribe delivers nothing), and each source.subscribe would replay synchronously →
     // recompute after teardown → throw out of subscribe() if the combiner throws.
     let calls = 0;
-    const source = Cell.make(1);
+    const source = createCell(1);
     const derived = Derived.combine([source] as const, (value: number) => {
       calls += 1;
       if (calls > 1) throw new Error('combiner must not run after disposal');
@@ -215,15 +216,15 @@ describe('Derived.combine — captured derived.json parity', () => {
 
 describe('Derived.combine — multi-source', () => {
   test('combines current values through the combiner', () => {
-    const a = Cell.make(3);
-    const b = Cell.make(7);
+    const a = createCell(3);
+    const b = createCell(7);
     const sum = Derived.combine([a, b] as const, (x: number, y: number) => x + y);
     expect(sum.read()).toBe(10);
   });
 
   test('recomputes when any input changes', () => {
-    const a = Cell.make(1);
-    const b = Cell.make(2);
+    const a = createCell(1);
+    const b = createCell(2);
     const product = Derived.combine([a, b] as const, (x: number, y: number) => x * y);
     const { values } = collect(product);
     a.set(5);
@@ -232,8 +233,8 @@ describe('Derived.combine — multi-source', () => {
   });
 
   test('produces consistent snapshots (no torn reads): every recompute reads a fresh snapshot', () => {
-    const a = Cell.make(0);
-    const b = Cell.make(0);
+    const a = createCell(0);
+    const b = createCell(0);
     const derived = Derived.combine([a, b] as const, (x: number, y: number) => ({ x, y, consistent: x === y }));
     // A live subscriber activates recompute-on-change (a Derived is lazy — it only
     // recomputes once it has been subscribed).

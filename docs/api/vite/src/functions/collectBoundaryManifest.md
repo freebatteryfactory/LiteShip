@@ -48,6 +48,6 @@ import { collectBoundaryManifest } from '@liteship/vite';
 import { resolveOutputsByTier } from '@liteship/edge';
 
 const manifest = await collectBoundaryManifest('/path/to/app');
-// manifest.viewport.id === 'fnv1a:…' (Boundary.make's address)
+// manifest.viewport.id === 'fnv1a:…' (defineBoundary's address)
 // resolveOutputsByTier(manifest.viewport)['transitions:standard'].css
 ```

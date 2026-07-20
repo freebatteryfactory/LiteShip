@@ -52,7 +52,14 @@ interface CellShape<T> {
   readonly lifetime: Lifetime;
 }
 
-const _make = <T>(initial: T): CellShape<T> => {
+/**
+ * Create a mutable reactive {@link Cell} backed by {@link CellKernel}, owned by a
+ * fresh {@link Lifetime}. `read` for a snapshot, `set`/`update` to push,
+ * `subscribe` for the replay-1 stream of values (current replayed on attach).
+ * Effect-free — the transport swap that lets consumers coordinate ordinary state
+ * with no `effect` import (#153).
+ */
+export const createCell = <T>(initial: T): CellShape<T> => {
   // Replay-1 kernel under the captured product law: {all} (no dedup) +
   // 'deferred' (async-append nested writes). See the module doc + scar S6.F.2.
   const kernel = CellKernel.replay1<T>(initial, { kind: 'all' }, 'deferred');
@@ -67,17 +74,6 @@ const _make = <T>(initial: T): CellShape<T> => {
     subscribe: (subscriber) => kernel.subscribe(subscriber),
     lifetime,
   };
-};
-
-/**
- * Cell — mutable reactive primitive backed by {@link CellKernel}. `read` for a
- * snapshot, `set`/`update` to push, `subscribe` for the replay-1 stream of
- * values (current replayed on attach). Effect-free — the transport swap that lets
- * consumers coordinate ordinary state with no `effect` import (#153).
- */
-export const Cell = {
-  /** Build a cell with an initial value, owned by a fresh {@link Lifetime}. */
-  make: _make,
 };
 
 /** Public structural type for `Cell`. */

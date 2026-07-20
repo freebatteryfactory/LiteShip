@@ -40,7 +40,7 @@ export interface CloudflareMiddlewareConfig {
   readonly boundary?: string | readonly string[];
   /**
    * Escape hatch for custom hosts without a manifest: the boundary's
-   * content address. Must be a real minted id (`Boundary.make(...).id`,
+   * content address. Must be a real minted id (`defineBoundary(...).id`,
    * `fnv1a:xxxxxxxx`) -- the KV keyspace is content-addressed, so a
    * fabricated id breaks content-addressing (the cache could then serve a
    * different boundary's compiled CSS).
@@ -177,7 +177,7 @@ function resolveCacheSource(config: CloudflareMiddlewareConfig):
         'cloudflare.middleware',
         'cloudflareMiddleware received an empty boundary manifest, so there is no boundary to cache. ' +
           'Why: the build found no boundaries.ts / *.boundaries.ts exports in the project. ' +
-          'Fix: add `export const myBoundary = Boundary.make({ ... })` to a boundary module (plus a @quantize CSS block ' +
+          'Fix: add `export const myBoundary = defineBoundary({ ... })` to a boundary module (plus a @quantize CSS block ' +
           'for precompiled outputs), or fall back to the `boundaryId` + `compile` escape hatch.',
       );
     }
@@ -222,7 +222,7 @@ function resolveCacheSource(config: CloudflareMiddlewareConfig):
   throw ValidationError(
     'cloudflare.middleware',
     'cloudflareMiddleware needs either a build-derived `manifest` (import { boundaries } from "virtual:liteship/boundaries") ' +
-      'or the hand-built escape hatch (`boundaryId` from Boundary.make plus a `compile` callback). ' +
+      'or the hand-built escape hatch (`boundaryId` from defineBoundary plus a `compile` callback). ' +
       'Neither was provided completely. Fix: pass `manifest: boundaries` -- the build derives the id and outputs for you.',
   );
 }

@@ -22,9 +22,9 @@ import { integration as liteship } from '@liteship/astro';
 export default defineConfig({ integrations: [liteship()] });
 
 // src/boundaries.ts — a boundary names where one state becomes the next
-import { Boundary } from '@liteship/core';
+import { defineBoundary } from '@liteship/core';
 
-export const viewport = Boundary.make({
+export const viewport = defineBoundary({
   input: 'viewport.width',
   at: [[0, 'stacked'], [768, 'split']],
   hysteresis: 20, // 20px of grace so the state doesn't flicker

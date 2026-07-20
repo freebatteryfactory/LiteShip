@@ -8,7 +8,7 @@
 
 > **Theme**\<`V`\> = `ThemeDef`\<`V`\>
 
-Defined in: [core/src/authoring/theme.ts:99](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/theme.ts#L99)
+Defined in: [core/src/authoring/theme.ts:142](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/theme.ts#L142)
 
 Public structural type for `Theme`.
 

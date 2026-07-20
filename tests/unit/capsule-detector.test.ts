@@ -19,7 +19,7 @@ import {
   FACTORY_HINTS,
   FACTORY_NAMING,
 } from '../../scripts/lib/capsule-detector.js';
-import { Config } from '@liteship/core';
+import { Config, defineConfig } from '@liteship/core';
 
 const CANONICAL_CBOR = resolve('packages/core/src/authoring/capsules/canonical-cbor.ts');
 const ASSETS_SCENE = resolve('examples/scenes/assets.ts');
@@ -118,7 +118,7 @@ describe(
 
 describe('capsule detector workspace aliases', () => {
   it('WORKSPACE_ALIASES is in sync with Config.toTestAliases (no drift)', () => {
-    const canonical = Object.keys(Config.toTestAliases(Config.make({}), process.cwd()));
+    const canonical = Object.keys(Config.toTestAliases(defineConfig({}), process.cwd()));
     const detector = Object.keys(WORKSPACE_ALIASES);
     expect(new Set(detector)).toEqual(new Set(canonical));
   });

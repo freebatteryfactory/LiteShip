@@ -16,7 +16,7 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Boundary, ResponsiveMedia, buildResponsiveImageSet, selectCandidates } from '@liteship/core';
+import { ResponsiveMedia, buildResponsiveImageSet, selectCandidates, defineBoundary } from '@liteship/core';
 import type { ResponsiveMediaIntent, ResponsiveMediaPictureProjection } from '@liteship/core';
 import { liteshipMiddleware } from '@liteship/astro';
 import { cloudflareMiddleware } from '@liteship/cloudflare';
@@ -174,7 +174,7 @@ describe('Astro host path: liteshipMiddleware responsive-media projection (#140)
 
 describe('Cloudflare host path: cloudflareMiddleware responsive-media projection (#140)', () => {
   function makeCfMiddleware() {
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'compact'],

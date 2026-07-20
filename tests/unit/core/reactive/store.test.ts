@@ -17,7 +17,8 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Store } from '@liteship/core';
+import type { Store} from '@liteship/core';
+import { createStore } from '@liteship/core';
 
 type CountMsg = { type: 'increment' } | { type: 'decrement' } | { type: 'set'; value: number };
 
@@ -33,21 +34,21 @@ const countReducer = (state: number, msg: CountMsg): number => {
 };
 
 /** A replace-reducer store over numbers — mirrors the capture's `(_state, msg) => msg`. */
-const replaceStore = (initial = 0): Store<number, number> => Store.make<number, number>(initial, (_s, m) => m);
+const replaceStore = (initial = 0): Store<number, number> => createStore<number, number>(initial, (_s, m) => m);
 
 // ---------------------------------------------------------------------------
-// Store.make — reducer basics
+// createStore — reducer basics
 // ---------------------------------------------------------------------------
 
-describe('Store.make — reducer basics', () => {
+describe('createStore — reducer basics', () => {
   test('_tag is Store and initial state is readable', () => {
-    const store = Store.make(42, countReducer);
+    const store = createStore(42, countReducer);
     expect(store._tag).toBe('Store');
     expect(store.read()).toBe(42);
   });
 
   test('dispatch runs the reducer (increment / decrement / set)', () => {
-    const store = Store.make(0, countReducer);
+    const store = createStore(0, countReducer);
     store.dispatch({ type: 'increment' });
     expect(store.read()).toBe(1);
     store.dispatch({ type: 'increment' });
@@ -62,7 +63,7 @@ describe('Store.make — reducer basics', () => {
     type AppMsg = { type: 'rename'; label: string } | { type: 'bump' };
     const reducer = (s: AppState, m: AppMsg): AppState =>
       m.type === 'rename' ? { ...s, label: m.label } : { ...s, count: s.count + 1 };
-    const store = Store.make({ count: 0, label: 'hello' }, reducer);
+    const store = createStore({ count: 0, label: 'hello' }, reducer);
     store.dispatch({ type: 'bump' });
     store.dispatch({ type: 'rename', label: 'world' });
     expect(store.read()).toEqual({ count: 1, label: 'world' });
@@ -70,10 +71,10 @@ describe('Store.make — reducer basics', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Store.make — captured store.json law table
+// createStore — captured store.json law table
 // ---------------------------------------------------------------------------
 
-describe('Store.make — captured store.json parity', () => {
+describe('createStore — captured store.json parity', () => {
   test('initial-replay: a fresh subscriber replays the current state [0]', () => {
     const store = replaceStore(0);
     const a: number[] = [];

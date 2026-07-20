@@ -1,5 +1,5 @@
 /**
- * Dev inspector pure helpers — threshold rewrite and Boundary.make snippets.
+ * Dev inspector pure helpers — threshold rewrite and defineBoundary snippets.
  */
 
 import { describe, expect, test } from 'vitest';
@@ -34,13 +34,13 @@ describe('rewriteBoundaryThreshold', () => {
 });
 
 describe('formatBoundaryMakeSnippet', () => {
-  test('formats a paste-ready Boundary.make call', () => {
+  test('formats a paste-ready defineBoundary call', () => {
     const snippet = formatBoundaryMakeSnippet(boundaryJson);
     expect(snippet).toContain("input: 'viewport.width'");
     expect(snippet).toContain("[0, 'compact']");
     expect(snippet).toContain("[768, 'wide']");
     expect(snippet).toContain('hysteresis: 20');
-    expect(snippet.startsWith('Boundary.make({')).toBe(true);
+    expect(snippet.startsWith('defineBoundary({')).toBe(true);
   });
 });
 

@@ -228,10 +228,6 @@
           "kind": "interface"
         },
         {
-          "name": "Cell",
-          "kind": "namespace"
-        },
-        {
           "name": "CellEnvelope",
           "kind": "interface"
         },
@@ -376,8 +372,8 @@
           "kind": "interface"
         },
         {
-          "name": "Config",
-          "kind": "namespace"
+          "name": "ConfigInput",
+          "kind": "interface"
         },
         {
           "name": "ConfigTemplateResult",
@@ -402,6 +398,10 @@
         {
           "name": "DefKind",
           "kind": "type"
+        },
+        {
+          "name": "DefineQuantizerOptions",
+          "kind": "interface"
         },
         {
           "name": "DenseStore",
@@ -840,20 +840,12 @@
           "kind": "interface"
         },
         {
-          "name": "QuantizerBuilder",
-          "kind": "interface"
-        },
-        {
           "name": "QuantizerConfig",
           "kind": "interface"
         },
         {
           "name": "QuantizerCrossings",
           "kind": "type"
-        },
-        {
-          "name": "QuantizerFromOptions",
-          "kind": "interface"
         },
         {
           "name": "QuantizerOutputs",
@@ -1048,10 +1040,6 @@
           "kind": "interface"
         },
         {
-          "name": "Store",
-          "kind": "namespace"
-        },
-        {
           "name": "Style",
           "kind": "interface"
         },
@@ -1110,10 +1098,6 @@
         {
           "name": "Timeline",
           "kind": "interface"
-        },
-        {
-          "name": "Timeline",
-          "kind": "namespace"
         },
         {
           "name": "ToWorkerMessage",
@@ -2244,10 +2228,6 @@
         },
         {
           "name": "Boundary",
-          "kind": "namespace"
-        },
-        {
-          "name": "Boundary",
           "kind": "type"
         },
         {
@@ -2451,8 +2431,8 @@
           "kind": "interface"
         },
         {
-          "name": "Config",
-          "kind": "namespace"
+          "name": "ConfigInput",
+          "kind": "type"
         },
         {
           "name": "ContentAddress",
@@ -4407,6 +4387,10 @@
           "kind": "type"
         },
         {
+          "name": "DefineQuantizerOptions",
+          "kind": "type"
+        },
+        {
           "name": "EvaluateResult",
           "kind": "type"
         },
@@ -4431,15 +4415,7 @@
           "kind": "type"
         },
         {
-          "name": "QuantizerBuilder",
-          "kind": "type"
-        },
-        {
           "name": "QuantizerConfig",
-          "kind": "type"
-        },
-        {
-          "name": "QuantizerFromOptions",
           "kind": "type"
         },
         {

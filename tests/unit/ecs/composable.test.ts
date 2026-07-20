@@ -6,10 +6,10 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Boundary, Composable, ComposableWorld, Part, S, Style, Token, World } from '@liteship/core';
+import { Composable, ComposableWorld, Part, World, defineBoundary, defineToken, defineStyle, schema } from '@liteship/core';
 import { hasTag } from '@liteship/error';
 
-const boundary = Boundary.make({
+const boundary = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'mobile'],
@@ -18,7 +18,7 @@ const boundary = Boundary.make({
   ],
 });
 
-const token = Token.make({
+const token = defineToken({
   name: 'primary',
   category: 'color',
   axes: ['themeLevel'] as const,
@@ -35,7 +35,7 @@ type TestSchema = {
   style?: typeof style;
 };
 
-const style = Style.make({
+const style = defineStyle({
   boundary,
   base: {
     properties: {
@@ -59,7 +59,7 @@ const style = Style.make({
 
 const scorePart = {
   name: 'score',
-  schema: S.number,
+  schema: schema.number,
 };
 
 describe('ECS Composable Infrastructure', () => {

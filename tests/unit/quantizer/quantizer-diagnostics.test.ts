@@ -8,10 +8,10 @@
  */
 
 import { describe, test, expect, beforeEach } from 'vitest';
-import { Boundary, Diagnostics, CellKernel } from '@liteship/core';
+import { Diagnostics, CellKernel, defineBoundary } from '@liteship/core';
 import type { MotionTier, ReactiveQuantizer } from '@liteship/core';
 import { hasTag } from '@liteship/error';
-import { AnimatedQuantizer, Q, evaluate } from '@liteship/quantizer';
+import { AnimatedQuantizer, defineQuantizer, evaluate } from '@liteship/quantizer';
 import { captureDiagnostics } from '../../helpers/diagnostics.js';
 
 // ---------------------------------------------------------------------------
@@ -19,7 +19,7 @@ import { captureDiagnostics } from '../../helpers/diagnostics.js';
 // ---------------------------------------------------------------------------
 
 function viewport() {
-  return Boundary.make({
+  return defineBoundary({
     input: 'viewport-width',
     at: [
       [0, 'compact'],
@@ -46,20 +46,20 @@ beforeEach(() => {
 // Item 38: invalid tier throws instead of failing open
 // ---------------------------------------------------------------------------
 
-describe('Q.from tier validation', () => {
+describe('defineQuantizer tier validation', () => {
   test('an unknown MotionTier throws a ValidationError naming the valid tiers', () => {
-    expect(() => Q.from(viewport(), { tier: 'fancy' as MotionTier })).toThrowError(
-      "Q.from: unknown MotionTier 'fancy'. Valid tiers: none, transitions, animations, physics, compute. Omit `tier` to allow all targets.",
+    expect(() => defineQuantizer(viewport(), { outputs: {}, tier: 'fancy' as MotionTier })).toThrowError(
+      "defineQuantizer: unknown MotionTier 'fancy'. Valid tiers: none, transitions, animations, physics, compute. Omit `tier` to allow all targets.",
     );
     try {
-      Q.from(viewport(), { tier: 'fancy' as MotionTier });
+      defineQuantizer(viewport(), { outputs: {}, tier: 'fancy' as MotionTier });
     } catch (error) {
       expect(hasTag(error, 'ValidationError')).toBe(true);
     }
   });
 
-  test('valid tiers still construct builders', () => {
-    expect(() => Q.from(viewport(), { tier: 'physics' })).not.toThrow();
+  test('valid tiers still define configs', () => {
+    expect(() => defineQuantizer(viewport(), { outputs: {}, tier: 'physics' })).not.toThrow();
   });
 });
 
@@ -68,11 +68,14 @@ describe('Q.from tier validation', () => {
 // ---------------------------------------------------------------------------
 
 describe('tier-gated output diagnostics', () => {
-  test('outputs defined for a gated target warn once with the force()/tier remedy', () => {
+  test('outputs defined for a gated target warn once with the force/tier remedy', () => {
     captureDiagnostics(({ events }) => {
-      Q.from(viewport(), { tier: 'transitions' }).outputs({
-        css: uniqueCss(),
-        glsl: { compact: { u: 0 }, expanded: { u: 1 } },
+      defineQuantizer(viewport(), {
+        tier: 'transitions',
+        outputs: {
+          css: uniqueCss(),
+          glsl: { compact: { u: 0 }, expanded: { u: 1 } },
+        },
       });
 
       expect(events).toEqual([
@@ -81,7 +84,7 @@ describe('tier-gated output diagnostics', () => {
           code: 'tier-gated-output-dropped',
           message:
             "you defined `glsl` outputs but tier 'transitions' only emits css+aria, so they will never fire. " +
-            "Pass a tier that includes glsl to Q.from(boundary, { tier }), or chain .force('glsl').",
+            "Pass a tier that includes glsl to defineQuantizer(boundary, { tier }), or add 'glsl' to the `force` option.",
         }),
       ]);
     });
@@ -89,12 +92,14 @@ describe('tier-gated output diagnostics', () => {
 
   test('forced targets do not warn', () => {
     captureDiagnostics(({ events }) => {
-      Q.from(viewport(), { tier: 'transitions' })
-        .force('glsl')
-        .outputs({
+      defineQuantizer(viewport(), {
+        tier: 'transitions',
+        force: ['glsl'],
+        outputs: {
           css: uniqueCss(),
           glsl: { compact: { u: 2 }, expanded: { u: 3 } },
-        });
+        },
+      });
 
       expect(events).toEqual([]);
     });
@@ -102,8 +107,10 @@ describe('tier-gated output diagnostics', () => {
 
   test('no tier means no gating and no warning', () => {
     captureDiagnostics(({ events }) => {
-      Q.from(viewport()).outputs({
-        glsl: { compact: { u: 4 }, expanded: { u: 5 } },
+      defineQuantizer(viewport(), {
+        outputs: {
+          glsl: { compact: { u: 4 }, expanded: { u: 5 } },
+        },
       });
 
       expect(events).toEqual([]);
@@ -117,7 +124,7 @@ describe('tier-gated output diagnostics', () => {
 
 describe('evaluate() unknown previousState', () => {
   test('warns once with the boundary input and valid states', () => {
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'width',
       at: [
         [0, 'sm'],
@@ -150,7 +157,7 @@ describe('evaluate() unknown previousState', () => {
   });
 
   test('a known previousState emits nothing', () => {
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'width',
       at: [
         [0, 'sm'],

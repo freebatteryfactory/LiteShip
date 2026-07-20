@@ -469,7 +469,7 @@ describe('loadGraphRuntime — lower a graph onto the live cast pipeline', () =>
   });
 
   // FINDING 3 [P2]: a component whose thresholds are NOT strictly ascending makes
-  // Boundary.make throw; that throw must NOT escape loadGraphRuntime. The bad
+  // defineBoundary throw; that throw must NOT escape loadGraphRuntime. The bad
   // entity is omitted (lowering stays total), the loader returns a handle, and the
   // good entity still casts.
   test('omits a non-ascending-threshold component without throwing', () => {

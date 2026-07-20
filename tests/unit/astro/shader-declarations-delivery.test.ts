@@ -14,7 +14,7 @@
  * @module
  */
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { Boundary, glslIdent } from '@liteship/core';
+import { glslIdent, defineBoundary } from '@liteship/core';
 import { GLSLCompiler, WGSLCompiler } from '@liteship/compiler';
 import { satelliteAttrs } from '@liteship/astro';
 import {
@@ -24,7 +24,7 @@ import {
 import { prependWgslDeclarations } from '../../../packages/astro/src/runtime/wgpu.js';
 import { createStubRegistry } from '../../helpers/define-property-stub.js';
 
-const boundary = Boundary.make({
+const boundary = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'collapsed'],

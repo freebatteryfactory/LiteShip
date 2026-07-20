@@ -5,13 +5,18 @@
  * @module
  */
 
-import { defineCapsule, S } from '@liteship/core';
+import { defineCapsule, schema } from '@liteship/core';
 
-const ClientHintsInputSchema = S.record(S.string);
+const ClientHintsInputSchema = schema.record(schema.string);
 
-const BoundaryResolutionSchema = S.struct({
-  cacheStatus: S.union(S.literal('disabled'), S.literal('precompiled'), S.literal('hit'), S.literal('miss')),
-  htmlAttributes: S.string,
+const BoundaryResolutionSchema = schema.struct({
+  cacheStatus: schema.union(
+    schema.literal('disabled'),
+    schema.literal('precompiled'),
+    schema.literal('hit'),
+    schema.literal('miss'),
+  ),
+  htmlAttributes: schema.string,
 });
 
 /**

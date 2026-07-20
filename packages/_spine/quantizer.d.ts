@@ -24,7 +24,7 @@ import type {
 export type { MotionTier };
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// § 1. QUANTIZER BUILDER (Q.from(boundary).outputs({...}))
+// § 1. QUANTIZER API (defineQuantizer(boundary, { outputs }) → createQuantizer(config))
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export type OutputTarget = 'css' | 'glsl' | 'wgsl' | 'aria' | 'ai';
@@ -35,16 +35,18 @@ export interface SpringConfig {
   readonly mass?: number;
 }
 
-export interface QuantizerFromOptions {
+export interface DefineQuantizerOptions<B extends Boundary, O extends QuantizerOutputs<B> = QuantizerOutputs<B>> {
+  readonly outputs: O;
   readonly tier?: MotionTier;
   readonly spring?: SpringConfig;
+  readonly force?: readonly OutputTarget[];
 }
 
 /**
- * Per-instantiation runtime injection for {@link QuantizerConfig.create}: the
- * wall-clock boundary advancing this instance's monotonic crossing HLC (defaults
- * to `wallClock`) and the HLC node id. Injected at instantiation, never part of
- * the cached config's content-addressed identity.
+ * Per-instantiation runtime injection for {@link createQuantizer}: the wall-clock
+ * boundary advancing this instance's monotonic crossing HLC (defaults to
+ * `wallClock`) and the HLC node id. Injected at instantiation, never part of the
+ * cached config's content-addressed identity.
  */
 export interface QuantizerRuntime {
   readonly clock?: Clock;
@@ -61,26 +63,21 @@ export interface QuantizerOutputs<B extends Boundary> {
   readonly ai?: OutputsFor<B, Record<string, unknown>>;
 }
 
-export interface QuantizerBuilder<B extends Boundary> {
-  outputs<O extends QuantizerOutputs<B>>(outputs: O): QuantizerConfig<B, O>;
-  force(...targets: OutputTarget[]): QuantizerBuilder<B>;
-}
-
 /** The resolved per-target output record a {@link LiveQuantizer} dispatches. */
 type OutputRecord = Partial<{ [K in OutputTarget]: Record<string, unknown> }>;
 
+/**
+ * Immutable, content-addressed quantizer definition (authored intent). Pass it to
+ * {@link createQuantizer} to materialize a live {@link LiveQuantizer} paired with
+ * the {@link Lifetime} that owns its teardown.
+ */
 export interface QuantizerConfig<B extends Boundary, O extends QuantizerOutputs<B> = QuantizerOutputs<B>> {
   readonly boundary: B;
   readonly outputs: O;
   readonly id: ContentAddress;
   readonly tier?: MotionTier;
   readonly spring?: SpringConfig;
-  /**
-   * Materialize a reactive {@link LiveQuantizer} paired with the {@link Lifetime}
-   * that owns its teardown (was `Effect.Effect<LiveQuantizer, never, Scope.Scope>`);
-   * disposing the lifetime closes the state / outputs / crossings kernels.
-   */
-  create(runtime?: QuantizerRuntime): LiveQuantizerHandle<B, O>;
+  readonly force?: readonly OutputTarget[];
 }
 
 export interface LiveQuantizer<
@@ -95,8 +92,8 @@ export interface LiveQuantizer<
 }
 
 /**
- * The pair {@link QuantizerConfig.create} returns: the live reactive quantizer
- * plus the {@link Lifetime} that owns its teardown (replaces the former
+ * The pair {@link createQuantizer} returns: the live reactive quantizer plus the
+ * {@link Lifetime} that owns its teardown (replaces the former
  * `Effect<..., Scope.Scope>` scope).
  */
 export interface LiveQuantizerHandle<B extends Boundary, O extends QuantizerOutputs<B> = QuantizerOutputs<B>> {
@@ -104,9 +101,15 @@ export interface LiveQuantizerHandle<B extends Boundary, O extends QuantizerOutp
   readonly lifetime: Lifetime;
 }
 
-export declare const Q: {
-  from<B extends Boundary>(boundary: B, options?: QuantizerFromOptions): QuantizerBuilder<B>;
-};
+export declare function defineQuantizer<B extends Boundary, O extends QuantizerOutputs<B>>(
+  boundary: B,
+  options: DefineQuantizerOptions<B, O>,
+): QuantizerConfig<B, O>;
+
+export declare function createQuantizer<B extends Boundary, O extends QuantizerOutputs<B>>(
+  definition: QuantizerConfig<B, O>,
+  runtime?: QuantizerRuntime,
+): LiveQuantizerHandle<B, O>;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 2. EVALUATE (boundary detection + hysteresis)

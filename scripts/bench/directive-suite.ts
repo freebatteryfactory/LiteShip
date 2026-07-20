@@ -1,6 +1,6 @@
 import { Bench, type FnOptions } from 'tinybench';
 import { LLM_STEADY_DIRECTIVE_P99_MAX_NS, LLM_STEADY_REPLICATE_EXCEEDANCE_MAX } from './flex-policy.js';
-import { Boundary, GenFrame, TokenBuffer, UIQuality, RuntimeCoordinator, type CompositeState } from '@liteship/core';
+import { Boundary, GenFrame, TokenBuffer, UIQuality, RuntimeCoordinator, type CompositeState, defineBoundary } from '@liteship/core';
 import { ClientHints, compileTheme, createEdgeHostAdapter, EdgeTier } from '@liteship/edge';
 import { LLMChunkNormalization, SSE, type LLMChunk } from '@liteship/web';
 import { WorkerHost } from '@liteship/worker';
@@ -168,7 +168,7 @@ const DIAGNOSTIC_WATCH_HEADROOM_PCT = 5;
 const DIAGNOSTIC_WATCH_EXCEEDANCES = 2;
 const HARD_GATE_MARGIN_NOTE_PCT = 3;
 
-const perfBoundary = Boundary.make({
+const perfBoundary = defineBoundary({
   input: 'ops-per-sec',
   at: [
     [0, 'extreme'],
@@ -186,7 +186,7 @@ const satelliteBoundary = {
   hysteresis: 40,
 } as const;
 
-const canonicalSatelliteBoundary = Boundary.make({
+const canonicalSatelliteBoundary = defineBoundary({
   input: satelliteBoundary.input,
   at: [
     [0, 'mobile'],

@@ -34,10 +34,10 @@ A [CompileResult](../type-aliases/CompileResult.md) tagged by target
 ## Example
 
 ```ts
-import { Boundary } from '@liteship/core';
+import { defineBoundary } from '@liteship/core';
 import { dispatch } from '@liteship/compiler';
 
-const boundary = Boundary.make({
+const boundary = defineBoundary({
   input: 'width',
   at: [[0, 'sm'], [768, 'lg']],
 });

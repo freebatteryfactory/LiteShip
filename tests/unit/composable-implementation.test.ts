@@ -6,10 +6,10 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Boundary, Token, Composable, ComposableWorld, World } from '@liteship/core';
+import { Boundary, Composable, ComposableWorld, World, defineBoundary, defineToken } from '@liteship/core';
 
 describe('ECS Composable Implementation', () => {
-  const boundary = Boundary.make({
+  const boundary = defineBoundary({
     input: 'viewport.width',
     at: [
       [0, 'mobile'],
@@ -18,7 +18,7 @@ describe('ECS Composable Implementation', () => {
     ],
   });
 
-  const token = Token.make({
+  const token = defineToken({
     name: 'primary',
     category: 'color',
     axes: ['theme'],

@@ -8,7 +8,7 @@
 
 Defined in: [core/src/authoring/style.ts:20](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/style.ts#L20)
 
-Single `box-shadow` layer — compiled into a space-separated CSS value by [Style.tap](../variables/Style.md).
+Single `box-shadow` layer — compiled into a space-separated CSS value by [Style.tap](../variables/Style.md#tap).
 
 ## Properties
 

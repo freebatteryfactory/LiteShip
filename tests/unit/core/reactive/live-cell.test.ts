@@ -11,7 +11,7 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { LiveCell, HLC, StateName, Boundary, fixedClock, manualClock } from '@liteship/core';
+import { LiveCell, HLC, StateName, fixedClock, manualClock, defineBoundary } from '@liteship/core';
 import type { CellKind, BoundaryCrossing } from '@liteship/core';
 
 const collectCrossings = (cell: {
@@ -268,7 +268,7 @@ describe('LiveCell', () => {
 // ---------------------------------------------------------------------------
 
 describe('LiveCell.makeBoundary', () => {
-  const viewport = Boundary.make({
+  const viewport = defineBoundary({
     input: 'viewport.width',
     at: [
       [0, 'mobile'],
@@ -436,7 +436,7 @@ describe('LiveCell.makeBoundary', () => {
 // ---------------------------------------------------------------------------
 
 describe('LiveCell — S2.3 kernel preservation + atomic set-and-record', () => {
-  const captureBoundary = Boundary.make({
+  const captureBoundary = defineBoundary({
     input: 'viewport.width',
     at: [
       [0, 'idle'],
@@ -500,7 +500,7 @@ describe('LiveCell — S2.3 kernel preservation + atomic set-and-record', () => 
 // ---------------------------------------------------------------------------
 
 describe('LiveCell — injected clock determinism', () => {
-  const viewport = Boundary.make({
+  const viewport = defineBoundary({
     input: 'viewport.width',
     at: [
       [0, 'mobile'],

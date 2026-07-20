@@ -92,17 +92,17 @@ An [AnimatedQuantizerHandle](../interfaces/AnimatedQuantizerHandle.md) — the i
 #### Example
 
 ```ts
-import { Boundary, Millis } from '@liteship/core';
-import { Q, AnimatedQuantizer } from '@liteship/quantizer';
+import { defineBoundary, Millis } from '@liteship/core';
+import { defineQuantizer, createQuantizer, AnimatedQuantizer } from '@liteship/quantizer';
 
-const boundary = Boundary.make({
+const boundary = defineBoundary({
   input: 'scroll',
   at: [[0, 'top'], [500, 'bottom']],
 });
-const config = Q.from(boundary).outputs({
-  css: { top: { opacity: '1' }, bottom: { opacity: '0.5' } },
+const config = defineQuantizer(boundary, {
+  outputs: { css: { top: { opacity: '1' }, bottom: { opacity: '0.5' } } },
 });
-const { quantizer: live } = config.create();
+const { quantizer: live } = createQuantizer(config);
 // outputs omitted: derived from the LiveQuantizer's css output tables
 const { animated, lifetime } = AnimatedQuantizer.make(live, { '*': { duration: Millis(300) } });
 const dispose = animated.interpolated.subscribe((frame) => { ... });
@@ -112,15 +112,15 @@ live.evaluate(600); // triggers interpolation
 ## Example
 
 ```ts
-import { Boundary, Millis } from '@liteship/core';
-import { Q, AnimatedQuantizer } from '@liteship/quantizer';
+import { defineBoundary, Millis } from '@liteship/core';
+import { defineQuantizer, createQuantizer, AnimatedQuantizer } from '@liteship/quantizer';
 
-const boundary = Boundary.make({
+const boundary = defineBoundary({
   input: 'scroll',
   at: [[0, 'top'], [500, 'bottom']],
 });
-const config = Q.from(boundary).outputs({});
-const { quantizer: live } = config.create();
+const config = defineQuantizer(boundary, { outputs: {} });
+const { quantizer: live } = createQuantizer(config);
 const { animated, lifetime } = AnimatedQuantizer.make(live, { '*': { duration: Millis(200) } });
 animated.transition; // TransitionResolver
 await lifetime.dispose();

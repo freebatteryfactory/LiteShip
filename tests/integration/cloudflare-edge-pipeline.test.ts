@@ -14,7 +14,7 @@ import { afterEach, describe, expect, test } from 'vitest';
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { Boundary } from '@liteship/core';
+import { defineBoundary } from '@liteship/core';
 import { collectBoundaryManifest } from '@liteship/vite';
 import { cloudflareMiddleware } from '@liteship/cloudflare';
 import { setWorkersEnvForTesting, resetWorkersEnvForTesting } from '@liteship/cloudflare/testing';
@@ -35,7 +35,7 @@ afterEach(() => {
 });
 
 /** Same definition the fixture module exports -- the identity oracle. */
-const referenceBoundary = Boundary.make({
+const referenceBoundary = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'compact'],

@@ -8,7 +8,7 @@
  * @module
  */
 
-import { defineCapsule, S } from '@liteship/core';
+import { defineCapsule, schema } from '@liteship/core';
 import type { CapsuleDef } from '@liteship/core';
 import { AssetBytes, type AssetRegistry } from '../contract.js';
 import { audioDecoder } from '../decoders/audio.js';
@@ -73,9 +73,9 @@ function envelopeMax(env: Float32Array): number {
   return m;
 }
 
-const BeatMarkerSetSchema = S.struct({
-  bpm: S.number,
-  beats: S.array(S.number),
+const BeatMarkerSetSchema = schema.struct({
+  bpm: schema.number,
+  beats: schema.array(schema.number),
 });
 
 /**

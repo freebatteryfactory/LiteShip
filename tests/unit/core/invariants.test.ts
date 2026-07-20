@@ -21,8 +21,7 @@ import {
   SpeculativeEvaluator,
   TokenBuffer,
   Millis,
-  Compositor,
-} from '@liteship/core';
+  Compositor, defineBoundary } from '@liteship/core';
 import { hasTag } from '@liteship/error';
 
 // --- Quantizer imports ---
@@ -60,7 +59,7 @@ const arbBoundaryDef = fc.integer({ min: 2, max: 6 }).chain((stateCount) =>
 /** Build a real Boundary from generated params */
 function makeBoundary(params: { thresholds: number[]; states: string[]; hysteresis: number | undefined }): Boundary {
   const at = params.thresholds.map((t, i) => [t, params.states[i]!] as const);
-  return Boundary.make({
+  return defineBoundary({
     input: 'test.signal',
     at: at as any,
     ...(params.hysteresis !== undefined ? { hysteresis: params.hysteresis } : {}),
@@ -203,7 +202,7 @@ describe('Invariant 2: evaluateWithHysteresis ≡ quantizer.evaluate (with hyste
 // ===========================================================================
 
 describe('Invariant 3: ContentAddress determinism', () => {
-  test('Boundary.make with same config produces same id', () => {
+  test('defineBoundary with same config produces same id', () => {
     fc.assert(
       fc.property(arbBoundaryDef, (params) => {
         const b1 = makeBoundary(params);
@@ -472,7 +471,7 @@ describe('Invariant 7: evaluate.crossed accuracy', () => {
 describe('Invariant 8: Hysteresis prevents jitter', () => {
   test('oscillating value within dead zone does not cause state transitions', () => {
     // Create a boundary with known threshold and hysteresis
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'test.width',
       at: [
         [0, 'small'],
@@ -501,7 +500,7 @@ describe('Invariant 8: Hysteresis prevents jitter', () => {
   });
 
   test('value clearly past dead zone triggers transition', () => {
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'test.width',
       at: [
         [0, 'small'],

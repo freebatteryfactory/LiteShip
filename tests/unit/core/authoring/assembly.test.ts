@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { defineCapsule, getCapsuleCatalog, S } from '@liteship/core';
+import { defineCapsule, getCapsuleCatalog, schema } from '@liteship/core';
 import { resetCapsuleCatalog } from '@liteship/core/testing';
 
 describe('defineCapsule', () => {
@@ -9,8 +9,8 @@ describe('defineCapsule', () => {
     const cap = defineCapsule({
       _kind: 'pureTransform',
       name: 'demo.square',
-      input: S.number,
-      output: S.number,
+      input: schema.number,
+      output: schema.number,
       capabilities: { reads: [], writes: [] },
       invariants: [],
       budgets: { p95Ms: 1 },
@@ -32,8 +32,8 @@ describe('defineCapsule', () => {
     const cap = defineCapsule({
       _kind: 'pureTransform',
       name: 'demo.lengths',
-      input: S.struct({ items: S.array(S.string) }),
-      output: S.struct({ count: S.number }),
+      input: schema.struct({ items: schema.array(schema.string) }),
+      output: schema.struct({ count: schema.number }),
       capabilities: { reads: [], writes: [] },
       invariants: [
         {
@@ -57,8 +57,8 @@ describe('defineCapsule', () => {
     defineCapsule({
       _kind: 'pureTransform',
       name: 'demo.square',
-      input: S.number,
-      output: S.number,
+      input: schema.number,
+      output: schema.number,
       capabilities: { reads: [], writes: [] },
       invariants: [],
       budgets: { p95Ms: 1 },
@@ -72,8 +72,8 @@ describe('defineCapsule', () => {
     defineCapsule({
       _kind: 'pureTransform',
       name: 'demo.a',
-      input: S.number,
-      output: S.number,
+      input: schema.number,
+      output: schema.number,
       capabilities: { reads: [], writes: [] },
       invariants: [],
       budgets: { p95Ms: 1 },

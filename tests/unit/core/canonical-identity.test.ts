@@ -12,7 +12,7 @@
  * again minted through cborg / `TypedRef.canonicalize` / raw `JSON.stringify`,
  * and (3) proves the seam is key-order-deterministic.
  *
- * CUT B5a extends the cage to `packages/core/src/authoring/config.ts` — `Config.make` was
+ * CUT B5a extends the cage to `packages/core/src/authoring/config.ts` — `defineConfig` was
  * the LAST internal `fnv1a:` minter still on the off-doctrine path (top-level-only
  * key sort + `JSON.stringify`), so it is now folded into IDENTITY_FILES. The one
  * deliberate exception — `mcp-server` `canonicalJson` behind `resultId` — is a
@@ -60,7 +60,7 @@ describe('B1 — identity is minted only through CanonicalCbor (source guard, th
     'packages/core/src/evidence/content-address.ts', // P2 — the extracted shared mint kernel (contentAddressOf)
     'packages/core/src/authoring/composable.ts',
     'packages/core/src/ecs.ts',
-    'packages/core/src/authoring/config.ts', // CUT B5a — Config.make folded into the cage
+    'packages/core/src/authoring/config.ts', // CUT B5a — defineConfig folded into the cage
     'packages/core/src/reactive/live-cell.ts', // CUT live-cell — envelope id is fnv1a identity, not a sha256 receipt
   ];
 

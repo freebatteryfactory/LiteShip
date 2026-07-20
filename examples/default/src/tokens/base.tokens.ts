@@ -1,42 +1,42 @@
-import { Token } from '@liteship/core';
+import { defineToken } from '@liteship/core';
 
-export const fontSizeSm = Token.make({
+export const fontSizeSm = defineToken({
   name: 'font-size-sm',
   category: 'typography',
   value: '0.875rem',
 });
 
-export const fontSizeMd = Token.make({
+export const fontSizeMd = defineToken({
   name: 'font-size-md',
   category: 'typography',
   value: '1rem',
 });
 
-export const fontSizeLg = Token.make({
+export const fontSizeLg = defineToken({
   name: 'font-size-lg',
   category: 'typography',
   value: '1.25rem',
 });
 
-export const spacingSm = Token.make({
+export const spacingSm = defineToken({
   name: 'spacing-sm',
   category: 'spacing',
   value: '0.5rem',
 });
 
-export const spacingMd = Token.make({
+export const spacingMd = defineToken({
   name: 'spacing-md',
   category: 'spacing',
   value: '1rem',
 });
 
-export const spacingLg = Token.make({
+export const spacingLg = defineToken({
   name: 'spacing-lg',
   category: 'spacing',
   value: '2rem',
 });
 
-export const colorText = Token.make({
+export const colorText = defineToken({
   name: 'color-text',
   category: 'color',
   axes: ['theme'],
@@ -44,7 +44,7 @@ export const colorText = Token.make({
   fallback: '#1a1a2e',
 });
 
-export const colorSurface = Token.make({
+export const colorSurface = defineToken({
   name: 'color-surface',
   category: 'color',
   axes: ['theme'],

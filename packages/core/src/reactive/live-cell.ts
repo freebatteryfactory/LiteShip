@@ -42,7 +42,8 @@
  * @module
  */
 
-import { Cell } from './cell.js';
+import type { Cell } from './cell.js';
+import { createCell } from './cell.js';
 import { CellKernel } from './cell-kernel.js';
 import { Lifetime } from './lifetime.js';
 import type { CellKind, CellMeta, CellEnvelope } from '../schema/protocol.js';
@@ -76,7 +77,7 @@ interface LiveCellShape<K extends CellKind, T> extends Omit<Cell<T>, '_tag'> {
  * value out (the S2.3 gap closure).
  */
 function makeCore<K extends CellKind, T>(kind: K, initial: T, nodeId: string, clock: Clock) {
-  const cell = Cell.make(initial);
+  const cell = createCell(initial);
   const crossings = CellKernel.fanout<BoundaryCrossing<string>>();
 
   // Managed HLC over the INJECTED core Clock (the clock.ts cake-and-eat-it law):

@@ -6,11 +6,11 @@
 
 # Interface: LiveQuantizerHandle\<B, O\>
 
-Defined in: [quantizer/src/quantizer.ts:289](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L289)
+Defined in: [quantizer/src/quantizer.ts:290](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L290)
 
-The pair [QuantizerConfig.create](QuantizerConfig.md#create) returns: the live reactive quantizer
-plus the [Lifetime](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts) that owns its teardown. Dispose the lifetime to close
-the state / outputs / crossings kernels (completing subscribers, making publish
+The pair [createQuantizer](../functions/createQuantizer.md) returns: the live reactive quantizer plus the
+[Lifetime](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts) that owns its teardown. Dispose the lifetime to close the
+state / outputs / crossings kernels (completing subscribers, making publish
 inert).
 
 ## Type Parameters
@@ -29,7 +29,7 @@ inert).
 
 > `readonly` **lifetime**: `LifetimeShape`
 
-Defined in: [quantizer/src/quantizer.ts:291](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L291)
+Defined in: [quantizer/src/quantizer.ts:292](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L292)
 
 ***
 
@@ -37,4 +37,4 @@ Defined in: [quantizer/src/quantizer.ts:291](https://github.com/freebatteryfacto
 
 > `readonly` **quantizer**: [`LiveQuantizer`](LiveQuantizer.md)\<`B`, `O`\>
 
-Defined in: [quantizer/src/quantizer.ts:290](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L290)
+Defined in: [quantizer/src/quantizer.ts:291](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L291)

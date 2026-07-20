@@ -8,7 +8,7 @@
  * so they participate in the cascade naturally.
  *
  * In this tutorial you will:
- *   1. See how Token.make() creates a content-addressed token definition
+ *   1. See how defineToken() creates a content-addressed token definition
  *   2. Understand axes and how they control token resolution
  *   3. Learn about the @token CSS block (compiled by @liteship/vite)
  *   4. See tokens rendered as CSS custom properties in a live demo
@@ -64,9 +64,9 @@ import { gapSm, gapMd, gapLg } from '../tokens/spacing.tokens.js';
 
   <h2>Defining Tokens</h2>
 
-  <pre><code>import {'{'} Token {'}'} from '@liteship/core';
+  <pre><code>import {'{'} defineToken {'}'} from '@liteship/core';
 
-export const gapSm = Token.make({'{'}&br;
+export const gapSm = defineToken({'{'}&br;
   name: 'gap-sm',
   category: 'spacing',
   axes: ['density'],
@@ -77,7 +77,7 @@ export const gapSm = Token.make({'{'}&br;
   fallback: '0.5rem',
 {'}'});
 
-export const gapMd = Token.make({'{'}&br;
+export const gapMd = defineToken({'{'}&br;
   name: 'gap-md',
   category: 'spacing',
   axes: ['density'],
@@ -88,7 +88,7 @@ export const gapMd = Token.make({'{'}&br;
   fallback: '1rem',
 {'}'});
 
-export const gapLg = Token.make({'{'}&br;
+export const gapLg = defineToken({'{'}&br;
   name: 'gap-lg',
   category: 'spacing',
   axes: ['density'],
@@ -248,7 +248,7 @@ export const gapLg = Token.make({'{'}&br;
   <h2>Multi-Axis Tokens</h2>
 
   <pre><code>// A token that varies by BOTH theme and contrast:
-const textColor = Token.make({'{'}&br;
+const textColor = defineToken({'{'}&br;
   name: 'text-primary',
   category: 'color',
   axes: ['theme', 'contrast'],
@@ -274,7 +274,7 @@ const textColor = Token.make({'{'}&br;
   <h2>What You Learned</h2>
 
   <ul>
-    <li><code>Token.make()</code> creates a content-addressed token definition.</li>
+    <li><code>defineToken()</code> creates a content-addressed token definition.</li>
     <li>Tokens vary across axes (theme, density, contrast, etc.).</li>
     <li>liteship compiles tokens to CSS custom properties via <code>@token</code> blocks.</li>
     <li>Content addressing means automatic cache invalidation on change.</li>

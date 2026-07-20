@@ -227,17 +227,15 @@ export interface Boundary<
   readonly spec?: BoundarySpec;
 }
 
+/** Define a content-addressed {@link Boundary} from an ascending threshold table. */
+export declare function defineBoundary<I extends string, const S extends readonly [string, ...string[]]>(config: {
+  readonly input: I;
+  readonly at: { readonly [K in keyof S]: readonly [number, S[K]] };
+  readonly hysteresis?: number;
+  readonly spec?: BoundarySpec;
+}): Boundary<I, S>;
+
 export declare namespace Boundary {
-  /** Alias for {@link BoundarySpec}. */
-  export type Spec = BoundarySpec;
-
-  export function make<I extends string, const S extends readonly [string, ...string[]]>(config: {
-    readonly input: I;
-    readonly at: { readonly [K in keyof S]: readonly [number, S[K]] };
-    readonly hysteresis?: number;
-    readonly spec?: BoundarySpec;
-  }): Boundary<I, S>;
-
   export function evaluate<B extends Boundary>(boundary: B, value: number): StateUnion<B>;
 
   export function evaluateWithHysteresis<B extends Boundary>(
@@ -373,12 +371,11 @@ export interface Timeline<B extends Boundary = Boundary> {
   readonly lifetime: Lifetime;
 }
 
-export declare namespace Timeline {
-  export function from<B extends Boundary>(
-    boundary: B,
-    config?: { duration?: Millis; loop?: boolean; scheduler?: Scheduler },
-  ): Timeline<B>;
-}
+/** Create a scheduler-driven {@link Timeline} over a {@link Boundary}. */
+export declare function createTimeline<B extends Boundary>(
+  boundary: B,
+  config?: { duration?: Millis; loop?: boolean; scheduler?: Scheduler },
+): Timeline<B>;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 7. COMPOSITOR
@@ -601,9 +598,8 @@ export interface Cell<T> {
   readonly lifetime: Lifetime;
 }
 
-export declare namespace Cell {
-  export function make<T>(initial: T): Cell<T>;
-}
+/** Create a mutable reactive {@link Cell} with an initial value. */
+export declare function createCell<T>(initial: T): Cell<T>;
 
 /** Read-only derived computation over CellKernel.replay1 (Effect-free, Wave 6) */
 export interface Derived<T> {
@@ -613,13 +609,15 @@ export interface Derived<T> {
   readonly lifetime: Lifetime;
 }
 
+/** Compute a {@link Derived} value from a factory and the sources that recompute it. */
+export declare function computed<T>(compute: () => T, sources?: ReadonlyArray<Derived.Trigger>): Derived<T>;
+
 export declare namespace Derived {
   /** The readable + subscribable source `combine` recomputes from. */
   export type Source<T> = Pick<CellKernel.Replay<T>, 'read' | 'subscribe'>;
-  /** A recompute trigger for `make` — the subscribe half of a source. */
+  /** A recompute trigger for `computed` — the subscribe half of a source. */
   export type Trigger = Pick<CellKernel.Replay<unknown>, 'subscribe'>;
 
-  export function make<T>(compute: () => T, sources?: ReadonlyArray<Trigger>): Derived<T>;
   export function combine<T extends readonly unknown[], U>(
     sources: { readonly [K in keyof T]: Source<T[K]> },
     combiner: (...args: T) => U,
@@ -676,9 +674,8 @@ export interface Store<S, Msg> {
   readonly lifetime: Lifetime;
 }
 
-export declare namespace Store {
-  export function make<S, Msg>(initial: S, reducer: (state: S, msg: Msg) => S): Store<S, Msg>;
-}
+/** Create a TEA-style reducer {@link Store} from an initial state and a pure reducer. */
+export declare function createStore<S, Msg>(initial: S, reducer: (state: S, msg: Msg) => S): Store<S, Msg>;
 
 /** Discriminated union of all primitives */
 export type Primitive<T> = Cell<T> | Derived<T> | Zap<T>;

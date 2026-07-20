@@ -18,7 +18,7 @@ import {
   compileQuantizeBlock,
   viewportContainmentRule,
 } from '@liteship/vite';
-import { Boundary } from '@liteship/core';
+import { defineBoundary } from '@liteship/core';
 import { blankCssCommentsAndStrings, cssPrologueEnd } from '../../../packages/vite/src/css-scan.js';
 import { TokenCSSCompiler } from '../../../packages/compiler/src/token-css.js';
 import { StyleCSSCompiler } from '../../../packages/compiler/src/style-css.js';
@@ -36,10 +36,10 @@ afterEach(() => {
 
 /**
  * Build a minimal Boundary for compiler tests.
- * Uses Boundary.make which produces a fully valid, content-addressed shape.
+ * Uses defineBoundary which produces a fully valid, content-addressed shape.
  */
 function makeBoundary(input: string, pairs: readonly (readonly [number, string])[], hysteresis?: number) {
-  return Boundary.make({
+  return defineBoundary({
     input,
     at: pairs as readonly (readonly [number, string])[] & { readonly [K: number]: readonly [number, string] },
     ...(hysteresis !== undefined ? { hysteresis } : {}),
@@ -1607,7 +1607,7 @@ describe('CSS override flow-through', () => {
       [768, 'large'],
     ]);
 
-    // The compileTokenBlock requires a Token. Since Token.make may need
+    // The compileTokenBlock requires a Token. Since defineToken may need
     // complex setup, we test the override logic by checking the block's
     // declarations are non-empty and would produce output.
     expect(Object.keys(block.declarations)).toHaveLength(2);

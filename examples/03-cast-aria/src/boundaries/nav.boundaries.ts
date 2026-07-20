@@ -1,4 +1,4 @@
-import { Boundary } from '@liteship/core';
+import { defineBoundary } from '@liteship/core';
 
 /**
  * One boundary, cast to two targets. `nav` quantizes viewport width into
@@ -6,7 +6,7 @@ import { Boundary } from '@liteship/core';
  * same states to BOTH CSS (layout) and `@aria` (accessibility) — defined once, so
  * they can never drift.
  */
-export const nav = Boundary.make({
+export const nav = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'compact'],

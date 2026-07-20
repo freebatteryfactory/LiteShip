@@ -50,20 +50,11 @@ interface StyleDef<B extends Boundary = Boundary> {
   };
 }
 
-/** `Style.make` transition input — plain `number` durations are branded with {@link Millis} internally. */
+/** `defineStyle` transition input — plain `number` durations are branded with {@link Millis} internally. */
 interface TransitionConfig {
   readonly duration: number;
   readonly easing?: string;
   readonly properties?: readonly string[];
-}
-
-interface StyleFactory {
-  make<B extends Boundary>(config: {
-    readonly boundary?: B;
-    readonly base: StyleLayer;
-    readonly states?: { readonly [S in StateUnion<B> & string]?: StyleLayer };
-    readonly transition?: TransitionConfig;
-  }): StyleDef<B>;
 }
 
 function deterministicId<B extends Boundary>(
@@ -130,7 +121,7 @@ function _mergeLayers(base: StyleLayer, override: StyleLayer): StyleLayer {
  *
  * @example
  * ```ts
- * const style = Style.make({
+ * const style = defineStyle({
  *   base: { properties: { color: 'black' } },
  *   states: { dark: { properties: { color: 'white' } } },
  * });
@@ -201,8 +192,8 @@ function _tap(style: StyleDef, state?: string): Record<string, string> {
  * ```ts
  * import { Boundary, Style } from '@liteship/core';
  *
- * const bp = Boundary.make({ input: 'viewport.width', at: [[0, 'sm'], [768, 'lg']] });
- * const style = Style.make({
+ * const bp = defineBoundary({ input: 'viewport.width', at: [[0, 'sm'], [768, 'lg']] });
+ * const style = defineStyle({
  *   boundary: bp,
  *   base: { properties: { 'font-size': '14px' } },
  *   states: { lg: { properties: { 'font-size': '18px' } } },
@@ -212,63 +203,68 @@ function _tap(style: StyleDef, state?: string): Record<string, string> {
  * // resolved === { 'font-size': '18px' }
  * ```
  */
-export const Style: StyleFactory & {
-  tap: typeof _tap;
-  mergeLayers: typeof _mergeLayers;
-} = {
-  /**
-   * Create a new StyleDef from a configuration object.
-   *
-   * Validates that state keys match the boundary's states (if a boundary is
-   * provided). The resulting object is frozen and content-addressed.
-   *
-   * @example
-   * ```ts
-   * const style = Style.make({
-   *   base: { properties: { display: 'flex', gap: '8px' } },
-   * });
-   * // style._tag === 'StyleDef'
-   * // style.id === 'fnv1a:...'
-   * ```
-   */
-  make<B extends Boundary>(config: {
-    readonly boundary?: B;
-    readonly base: StyleLayer;
-    readonly states?: { readonly [S in StateUnion<B> & string]?: StyleLayer };
-    readonly transition?: TransitionConfig;
-  }): StyleDef<B> {
-    if (config.boundary && config.states) {
-      const boundaryStates = config.boundary.states as readonly string[];
-      const stateKeys = Object.keys(config.states);
-      for (const key of stateKeys) {
-        if (!boundaryStates.includes(key)) {
-          throw ValidationError(
-            'Style.make',
-            `state "${key}" does not match boundary states [${boundaryStates.join(', ')}]`,
-          );
-        }
+/**
+ * Define an adaptive style — binds a base style layer to optional boundary
+ * states with per-state overrides and CSS transitions.
+ *
+ * Validates that state keys match the boundary's states (if a boundary is
+ * provided). The resulting object is frozen and content-addressed via FNV-1a.
+ *
+ * @example
+ * ```ts
+ * const style = defineStyle({
+ *   base: { properties: { display: 'flex', gap: '8px' } },
+ * });
+ * // style._tag === 'StyleDef'
+ * // style.id === 'fnv1a:...'
+ * ```
+ */
+export function defineStyle<B extends Boundary>(config: {
+  readonly boundary?: B;
+  readonly base: StyleLayer;
+  readonly states?: { readonly [S in StateUnion<B> & string]?: StyleLayer };
+  readonly transition?: TransitionConfig;
+}): StyleDef<B> {
+  if (config.boundary && config.states) {
+    const boundaryStates = config.boundary.states as readonly string[];
+    const stateKeys = Object.keys(config.states);
+    for (const key of stateKeys) {
+      if (!boundaryStates.includes(key)) {
+        throw ValidationError(
+          'defineStyle',
+          `state "${key}" does not match boundary states [${boundaryStates.join(', ')}]`,
+        );
       }
     }
+  }
 
-    // Brand the duration internally (Millis is a type-level brand; the hash input is unchanged).
-    const transition: StyleDef['transition'] =
-      config.transition === undefined
-        ? undefined
-        : { ...config.transition, duration: Millis(config.transition.duration) };
+  // Brand the duration internally (Millis is a type-level brand; the hash input is unchanged).
+  const transition: StyleDef['transition'] =
+    config.transition === undefined
+      ? undefined
+      : { ...config.transition, duration: Millis(config.transition.duration) };
 
-    const id = deterministicId<B>(config.boundary, config.base, config.states, transition);
+  const id = deterministicId<B>(config.boundary, config.base, config.states, transition);
 
-    const def: StyleDef<B> = {
-      _tag: 'StyleDef',
-      _version: 1,
-      id,
-      ...(config.boundary !== undefined ? { boundary: config.boundary } : {}),
-      base: config.base,
-      ...(config.states !== undefined ? { states: config.states } : {}),
-      ...(transition !== undefined ? { transition } : {}),
-    };
-    return Object.freeze(def);
-  },
+  const def: StyleDef<B> = {
+    _tag: 'StyleDef',
+    _version: 1,
+    id,
+    ...(config.boundary !== undefined ? { boundary: config.boundary } : {}),
+    base: config.base,
+    ...(config.states !== undefined ? { states: config.states } : {}),
+    ...(transition !== undefined ? { transition } : {}),
+  };
+  return Object.freeze(def);
+}
+
+/**
+ * Style — the resolution namespace for a {@link Style} definition. Construction
+ * lives in the standalone {@link defineStyle}; this object carries
+ * {@link Style.tap} (resolve a style to a flat property map for a state) and
+ * {@link Style.mergeLayers} (deep-merge two style layers).
+ */
+export const Style = {
   tap: _tap,
   mergeLayers: _mergeLayers,
 };

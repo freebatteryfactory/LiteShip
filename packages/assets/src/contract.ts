@@ -19,7 +19,7 @@
  */
 
 import { NotFoundError, ValidationError } from '@liteship/error';
-import { closestMatch, defineCapsule, S } from '@liteship/core';
+import { closestMatch, defineCapsule, schema } from '@liteship/core';
 import type { AttributionDecl, Invariant, CapsuleDef, Site } from '@liteship/core';
 import { mkAssetRefId, type AssetRefId } from './brands.js';
 import { audioDecoder, type DecodedAudio } from './decoders/audio.js';
@@ -165,7 +165,7 @@ export function builtinDecoderSiteFor(kind: AssetKind): readonly Site[] {
  * `Schema<ArrayBuffer>` is structurally the `SchemaPort<ArrayBuffer>` the slot
  * declares — no `asDeclaration` bridge and no double-cast through `unknown`).
  */
-export const AssetBytes = S.bytes(ArrayBuffer);
+export const AssetBytes = schema.bytes(ArrayBuffer);
 
 /**
  * Effective site for a declaration: the explicit `decl.site` override when
@@ -227,8 +227,8 @@ export function defineAsset<K extends AssetKind>(
   const capsule = defineCapsule({
     _kind: 'cachedProjection',
     name: decl.id,
-    input: decode !== undefined ? AssetBytes : S.unknown,
-    output: S.unknown,
+    input: decode !== undefined ? AssetBytes : schema.unknown,
+    output: schema.unknown,
     capabilities: { reads: ['fs.read'], writes: [] },
     invariants: decl.invariants ?? [],
     budgets: { p95Ms: decodeP95Ms, memoryMb: decl.budgets?.memoryMb },

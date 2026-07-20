@@ -25,7 +25,7 @@ export default defineConfig({
 ```
 
 ```css
-/* hero.css — heroLayout is a Boundary.make() export the plugin finds by convention */
+/* hero.css — heroLayout is a defineBoundary() export the plugin finds by convention */
 @quantize heroLayout {
   stacked { gap: 1rem; }
   cinematic { gap: 3rem; }
@@ -40,7 +40,7 @@ A build-time adapter — it hooks Vite's transform and HMR phases so stylesheets
 
 ## If it does nothing
 
-Browsers discard unknown at-rules, so a `@quantize` block whose name matches no `Boundary.make()` export ships zero CSS — silently in the browser. The plugin prints a terminal warning naming every file it searched; the fix is `export const <name> = Boundary.make({ ... })` in one of those files, or a `dirs` override pointing at your definitions.
+Browsers discard unknown at-rules, so a `@quantize` block whose name matches no `defineBoundary()` export ships zero CSS — silently in the browser. The plugin prints a terminal warning naming every file it searched; the fix is `export const <name> = defineBoundary({ ... })` in one of those files, or a `dirs` override pointing at your definitions.
 
 ## Docs
 

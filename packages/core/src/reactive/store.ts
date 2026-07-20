@@ -49,7 +49,14 @@ interface StoreShape<S, Msg> {
   readonly lifetime: Lifetime;
 }
 
-const _make = <S, Msg>(initial: S, reducer: (state: S, msg: Msg) => S): StoreShape<S, Msg> => {
+/**
+ * Create a {@link Store} — a TEA-style state container over
+ * {@link CellKernel.replay1}. Build with an initial state and a pure
+ * `reducer(state, msg) => state`, then dispatch messages; the store publishes
+ * each resulting state through `subscribe`, and `lifetime.dispose()` tears it
+ * down.
+ */
+export const createStore = <S, Msg>(initial: S, reducer: (state: S, msg: Msg) => S): StoreShape<S, Msg> => {
   // {all}: emit every dispatch (no dedup — the captured law). 'deferred': a
   // dispatch from within a delivery handler async-appends (glitch-free — S6.F.2).
   const kernel = CellKernel.replay1<S>(initial, { kind: 'all' }, 'deferred');
@@ -63,17 +70,6 @@ const _make = <S, Msg>(initial: S, reducer: (state: S, msg: Msg) => S): StoreSha
     dispatch: (msg) => kernel.publish(reducer(kernel.read(), msg)),
     lifetime,
   };
-};
-
-/**
- * Store — TEA-style state container over {@link CellKernel.replay1}. Build with an
- * initial state and a pure `reducer(state, msg) => state`, then dispatch messages;
- * the store publishes each resulting state through `subscribe`, and
- * `lifetime.dispose()` tears it down.
- */
-export const Store = {
-  /** Synchronous reducer store. */
-  make: _make,
 };
 
 /** Public structural type for `Store`. */

@@ -2,16 +2,16 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / S
+[LiteShip](../../../modules.md) / [core/src](../README.md) / schema
 
-# Variable: S
+# Variable: schema
 
-> `const` **S**: `object`
+> `const` **schema**: `object`
 
-Defined in: [core/src/schema/constructors.ts:209](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/constructors.ts#L209)
+Defined in: [core/src/schema/constructors.ts:207](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/constructors.ts#L207)
 
 The schema-kernel constructor namespace. Scalars are singleton VALUES
-(`S.string`); composites are constructor FUNCTIONS (`S.struct({ … })`).
+(`schema.string`); composites are constructor FUNCTIONS (`schema.struct({ … })`).
 
 ## Type Declaration
 
@@ -161,9 +161,9 @@ A single-value literal pinned to one JSON primitive.
 
 ### optional
 
-> **optional**: \<`S2`\>(`schema`) => `OptionalSchema`\<[`Infer`](../type-aliases/Infer.md)\<`S2`\>, [`InferEncoded`](../type-aliases/InferEncoded.md)\<`S2`\>\>
+> **optional**: \<`S2`\>(`inner`) => `OptionalSchema`\<[`Infer`](../type-aliases/Infer.md)\<`S2`\>, [`InferEncoded`](../type-aliases/InferEncoded.md)\<`S2`\>\>
 
-Mark a schema as an OPTIONAL struct field (a no-op outside `S.struct`).
+Mark a schema as an OPTIONAL struct field (a no-op outside `schema.struct`).
 
 #### Type Parameters
 
@@ -173,7 +173,7 @@ Mark a schema as an OPTIONAL struct field (a no-op outside `S.struct`).
 
 #### Parameters
 
-##### schema
+##### inner
 
 `S2`
 

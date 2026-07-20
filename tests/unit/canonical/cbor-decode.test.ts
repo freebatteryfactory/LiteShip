@@ -174,8 +174,8 @@ describe('decode — strict rejection of non-canonical input', () => {
 });
 
 describe('canonicalCborDecodeCapsule input schema', () => {
-  // The input is a kernel `S.bytes(Uint8Array)` DECLARATION wrapped in an
-  // `S.brand` DECODE-TIME refinement (and carrying a `withArbitrary` thunk).
+  // The input is a kernel `schema.bytes(Uint8Array)` DECLARATION wrapped in an
+  // `schema.brand` DECODE-TIME refinement (and carrying a `withArbitrary` thunk).
   // Strict kernel decode first checks the `Uint8Array` carrier, THEN runs the
   // canonical-CBOR refinement — so non-canonical bytes are rejected at decode,
   // not merely at the decoder's own run-time `decode()`. The canonical-CBOR

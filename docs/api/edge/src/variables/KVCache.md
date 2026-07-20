@@ -53,12 +53,12 @@ A [BoundaryCache](../interfaces/BoundaryCache.md) instance
 
 ```ts
 import { KVCache, EdgeTier } from '@liteship/edge';
-import { Boundary } from '@liteship/core';
+import { defineBoundary } from '@liteship/core';
 
 const kv = { get: async (k: string) => null, put: async (k: string, v: string) => {} };
 const cache = KVCache.createBoundaryCache(kv, { ttl: 3600, prefix: 'myapp' });
 
-const myBoundary = Boundary.make({
+const myBoundary = defineBoundary({
   input: 'viewport.width',
   at: [[0, 'compact'], [768, 'wide']],
 });

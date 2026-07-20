@@ -23,7 +23,7 @@
  */
 import { describe, it, test, expect } from 'vitest';
 import fc from 'fast-check';
-import { Boundary, rawIndexF32, EVALUATE_THRESHOLDS_SOURCE } from '@liteship/core';
+import { Boundary, rawIndexF32, EVALUATE_THRESHOLDS_SOURCE, defineBoundary } from '@liteship/core';
 import { evaluate as quantizerEvaluate } from '@liteship/quantizer';
 import { fallbackKernels } from '../../packages/core/src/wasm/wasm-fallback.js';
 import { evaluateRegistrationState } from '../../packages/worker/src/compositor-startup.js';
@@ -48,7 +48,7 @@ const evalInline = new Function(
 
 function makeBoundary(thresholds: readonly number[]) {
   const at = thresholds.map((t, i) => [t, `s${i}`] as const);
-  return Boundary.make({ input: 'viewport.width', at: at as never });
+  return defineBoundary({ input: 'viewport.width', at: at as never });
 }
 
 /** Map a state literal `s<N>` back to its index `N`. */

@@ -211,7 +211,7 @@ For agents and grep-first humans, here is where the canonical answer lives:
 | How do I force the GPU shader below the tier gate? | `client:gpu={{ force: true }}` or `data-liteship-gpu-force` (ASTRO-RUNTIME-MODEL.md § `gpu`; `packages/astro/src/runtime/gpu.ts`) |
 | When does capability detection finish? | the `liteship:detect-ready` event on `document` (ASTRO-RUNTIME-MODEL.md § "Capability detection"; `packages/astro/src/detect-upgrade.ts`) |
 | How do I read the resolved GPU tier client-side? | the `liteship:detect-ready` detail or `window.__LITESHIP_DETECT__` — `gpuTier`/`webgpu` are not `<html>` attributes (as of 0.3.0) |
-| How do I drive a boundary from live audio? | `driveAudioFromAnalyser(analyser)` from `@liteship/astro/runtime`, then `Boundary.make({ input: 'audio.amplitude' or 'audio.beat', ... })` (`packages/astro/src/runtime/audio-signal.ts`) |
+| How do I drive a boundary from live audio? | `driveAudioFromAnalyser(analyser)` from `@liteship/astro/runtime`, then `defineBoundary({ input: 'audio.amplitude' or 'audio.beat', ... })` (`packages/astro/src/runtime/audio-signal.ts`) |
 | Where is the canonical signal-input vocabulary? | `SignalSource` + `sourceToInput`/`inputToSource` in `packages/core/src/signal-input.ts` (source of truth for `viewport.width`, `scroll.progress`, `audio.amplitude`, ...) |
 | How do I open the dev boundary inspector? | the Astro dev-toolbar (liteship toolbar icon) in `astro dev`; opt out with `liteship({ inspector: false })` |
 | How do I skip the manual `src/middleware.ts`? | `liteship({ middleware: true })` auto-wires detection (`@liteship/astro/middleware-entry`); typed `Astro.locals.liteship.tiers` |

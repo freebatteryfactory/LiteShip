@@ -17,13 +17,13 @@ worker that evaluates quantizer boundaries and emits
 ## Example
 
 ```ts
-import { Boundary } from '@liteship/core';
+import { defineBoundary } from '@liteship/core';
 import { CompositorWorker } from '@liteship/worker';
 
 const compositor = CompositorWorker.create({ poolCapacity: 64 });
-// Boundary.make computes the content-addressed id; the quantizer
+// defineBoundary computes the content-addressed id; the quantizer
 // name defaults to the boundary's input name ('brightness').
-const brightness = Boundary.make({
+const brightness = defineBoundary({
   input: 'brightness',
   // at[i] is [lower bound, state]: 'dim' from 0, 'bright' from 0.5.
   at: [[0, 'dim'], [0.5, 'bright']],

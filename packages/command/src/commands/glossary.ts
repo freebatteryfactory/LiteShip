@@ -5,7 +5,7 @@
  *
  * @module
  */
-import { S, type CapsuleCommandResult, type CommandJsonSchema } from '@liteship/core';
+import { type CapsuleCommandResult, type CommandJsonSchema, schema } from '@liteship/core';
 import { defineCommand, failed, ok } from '../registry.js';
 
 /** One ontology term. Mirrors a row in GLOSSARY.md. */
@@ -251,7 +251,7 @@ export const glossaryCommand = defineCommand({
     outputSchema: GlossaryPayloadSchema,
     annotations: { readOnly: true, group: 'castoff' },
   },
-  argsSchema: S.struct({ term: S.optional(S.string) }),
+  argsSchema: schema.struct({ term: schema.optional(schema.string) }),
   handler: async (invocation): Promise<CapsuleCommandResult<GlossaryPayload>> => {
     // `term` arrives already decoded (string | undefined) from the argsSchema.
     const raw = invocation.args.term;

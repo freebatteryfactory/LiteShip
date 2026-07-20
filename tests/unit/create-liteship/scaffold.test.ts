@@ -90,8 +90,8 @@ describe('create-liteship scaffold', () => {
     expect(index).toContain('satelliteAttrs({ boundary: layout');
     expect(index).toContain('@quantize layout {');
     const boundary = readFileSync(join(result.projectDir, 'src/boundaries/layout.boundaries.ts'), 'utf8');
-    expect(boundary).toContain('Boundary.make(');
-    expect(boundary).toContain("import { Boundary } from '@liteship/core'");
+    expect(boundary).toContain('defineBoundary(');
+    expect(boundary).toContain("import { defineBoundary } from '@liteship/core'");
     const config = readFileSync(join(result.projectDir, 'astro.config.ts'), 'utf8');
     expect(config).toContain("import { integration } from '@liteship/astro'");
     expect(index).toContain('@liteship/genui');

@@ -211,11 +211,11 @@ When you fix a bug, the regression test goes in `tests/regression/`. Name the fi
 
 ```ts
 import { describe, test, expect } from 'vitest';
-import { Boundary } from '@liteship/core';
+import { Boundary, defineBoundary } from '@liteship/core';
 
 describe('Boundary.evaluate threshold edge', () => {
   test('exact threshold value resolves to the upper state', () => {
-    const b = Boundary.make({
+    const b = defineBoundary({
       input: 'viewport.width',
       at: [[0, 'mobile'], [768, 'tablet']] as const,
     });
@@ -241,7 +241,7 @@ test('evaluate never returns a state name outside the boundary definition', () =
       (rawThresholds, value) => {
         const sorted = rawThresholds.sort((a, b) => a - b);
         const pairs = sorted.map((t, i) => [t, `s${i}`] as const);
-        const b = Boundary.make({ input: 'x', at: pairs as never });
+        const b = defineBoundary({ input: 'x', at: pairs as never });
         const validStates = pairs.map(([, name]) => name);
         return validStates.includes(Boundary.evaluate(b, value) as (typeof validStates)[number]);
       },
@@ -260,10 +260,10 @@ fast-check runs 100 trials by default and shrinks failing inputs automatically. 
 
 ```ts
 import { describe, test, expect } from 'vitest';
-import { Boundary } from '@liteship/core';
+import { Boundary, defineBoundary } from '@liteship/core';
 
 describe('regression: Boundary.evaluate exact-threshold resolution', () => {
-  const b = Boundary.make({
+  const b = defineBoundary({
     input: 'viewport.width',
     at: [[0, 'mobile'], [768, 'tablet'], [1280, 'desktop']] as const,
   });

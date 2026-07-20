@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "distributions": [
     {
-      "name": "Boundary.make() -- 3 thresholds",
+      "name": "defineBoundary() -- 3 thresholds",
       "file": "tests/bench/core.bench.ts",
       "inputSize": 3,
       "shape": "boundary-thresholds",
@@ -37,7 +37,7 @@
       "replicates": 1
     },
     {
-      "name": "Token.make() + FNV-1a",
+      "name": "defineToken() + FNV-1a",
       "file": "tests/bench/core.bench.ts",
       "inputSize": 1,
       "shape": "single-call",
@@ -72,14 +72,14 @@
       "replicates": 1
     },
     {
-      "name": "Config.make() -- empty config",
+      "name": "defineConfig() -- empty config",
       "file": "tests/bench/core.bench.ts",
       "inputSize": 1,
       "shape": "single-call",
       "replicates": 1
     },
     {
-      "name": "Config.make() -- with boundaries",
+      "name": "defineConfig() -- with boundaries",
       "file": "tests/bench/core.bench.ts",
       "inputSize": 1,
       "shape": "single-call",

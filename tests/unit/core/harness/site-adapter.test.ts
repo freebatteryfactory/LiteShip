@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { defineCapsule, S } from '@liteship/core';
+import { defineCapsule, schema } from '@liteship/core';
 import { resetCapsuleCatalog } from '@liteship/core/testing';
 import * as Harness from '@liteship/core/harness';
 
@@ -22,8 +22,8 @@ describe('generateSiteAdapter (lane-aware, declared-integration)', () => {
     defineCapsule({
       _kind: 'siteAdapter',
       name,
-      input: S.unknown,
-      output: S.unknown,
+      input: schema.unknown,
+      output: schema.unknown,
       capabilities: { reads: [], writes: [] },
       invariants: [],
       budgets: { p95Ms: 1 },

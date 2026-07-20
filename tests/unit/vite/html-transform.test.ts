@@ -138,7 +138,7 @@ describe('transformHTML', () => {
       expect(result).toBe(source);
       expect(boundaryWarnings).toHaveLength(1);
       expect(boundaryWarnings[0]?.message).toContain('Could not resolve boundary "hero"');
-      expect(boundaryWarnings[0]?.message).toContain('Boundary.make');
+      expect(boundaryWarnings[0]?.message).toContain('defineBoundary');
       expect(boundaryWarnings[0]?.detail).toEqual(
         expect.objectContaining({ fromFile: '/test/page.astro', line: 1, boundaryName: 'hero' }),
       );

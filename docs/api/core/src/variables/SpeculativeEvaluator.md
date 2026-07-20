@@ -46,7 +46,7 @@ when the signal value is near a threshold and moving toward it.
 #### Example
 
 ```ts
-const boundary = Boundary.make({
+const boundary = defineBoundary({
   thresholds: [768, 1024],
   states: ['mobile', 'tablet', 'desktop'] as const,
   hysteresis: 20,
@@ -61,7 +61,7 @@ result.confidence;  // 0.0-1.0 likelihood of crossing
 ## Example
 
 ```ts
-const boundary = Boundary.make({
+const boundary = defineBoundary({
   thresholds: [600],
   states: ['small', 'large'] as const,
 });

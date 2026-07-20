@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import { Boundary } from '@liteship/core';
+import { defineBoundary } from '@liteship/core';
 import { createEdgeHostAdapter, ClientHints, enumerateTierKeys } from '@liteship/edge';
 import * as ThemeCompiler from '../../../packages/edge/src/theme-compiler.js';
 import { captureDiagnosticsAsync } from '../../helpers/diagnostics.js';
@@ -17,7 +17,7 @@ function makeHeaders(overrides: Record<string, string> = {}): Headers {
 }
 
 /** Real minted address -- the KV keyspace is content-addressed (ADR-0003). */
-const testBoundary = Boundary.make({
+const testBoundary = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'compact'],
@@ -184,7 +184,7 @@ describe('createEdgeHostAdapter', () => {
 
   test('serves precompiled manifest outputs without touching KV', async () => {
     const { kv, store } = makeKV();
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'compact'],
@@ -236,7 +236,7 @@ describe('createEdgeHostAdapter', () => {
 
   test('falls back to compile (and KV write-back) when the manifest does not cover the tier', async () => {
     const { kv, store } = makeKV();
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'compact'],
@@ -268,7 +268,7 @@ describe('createEdgeHostAdapter', () => {
 
   test('compile fallback writes configured invalidation tags into the KV index', async () => {
     const { kv, store } = makeKV();
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'compact'],
@@ -317,7 +317,7 @@ describe('createEdgeHostAdapter', () => {
 
   test('manifest tier gap without a compile fallback warns once and yields no outputs', async () => {
     const { kv } = makeKV();
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'compact'],
@@ -345,7 +345,7 @@ describe('createEdgeHostAdapter', () => {
 
   test('cache config with neither precompiled nor compile fails fast with a teaching error', () => {
     const { kv } = makeKV();
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'compact'],
@@ -363,14 +363,14 @@ describe('createEdgeHostAdapter', () => {
 
 describe('createEdgeHostAdapter (multi-boundary)', () => {
   /** Distinct content -> distinct content addresses (ADR-0003). */
-  const heroBoundary = Boundary.make({
+  const heroBoundary = defineBoundary({
     input: 'viewport.width',
     at: [
       [0, 'compact'],
       [768, 'wide'],
     ],
   });
-  const sidebarBoundary = Boundary.make({
+  const sidebarBoundary = defineBoundary({
     input: 'viewport.width',
     at: [
       [0, 'collapsed'],
@@ -442,7 +442,7 @@ describe('createEdgeHostAdapter (multi-boundary)', () => {
   });
 
   test('two names sharing one ContentAddress cache separately -- same definition, different CSS (Codex P1)', async () => {
-    // The id comes from Boundary.make's content address; two NAMES can
+    // The id comes from defineBoundary's content address; two NAMES can
     // reference the same definition while their @quantize CSS differs.
     // id+tier-only keys would let hero's compile result serve sidebar.
     const { kv, store } = makeKV();

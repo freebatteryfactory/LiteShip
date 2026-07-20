@@ -11,7 +11,7 @@
 import { describe, it, expect } from 'vitest';
 import { CommandRegistry, CommandDispatcher, defineCommand, ok } from '@liteship/command';
 import type { RegisteredCommand, CommandJsonSchema } from '@liteship/command';
-import { S } from '@liteship/core';
+import { schema } from '@liteship/core';
 
 const SCENE_INPUT: CommandJsonSchema = {
   type: 'object',
@@ -24,7 +24,7 @@ describe('dispatcher decodes args against the declared argsSchema', () => {
     const seen: unknown[] = [];
     const probe = defineCommand({
       descriptor: { name: 'scene.probe', summary: 'probe', inputSchema: SCENE_INPUT },
-      argsSchema: S.struct({ scene: S.string }),
+      argsSchema: schema.struct({ scene: schema.string }),
       handler: async (invocation) => {
         seen.push(invocation.args);
         // COMPILE-TIME PROOF: `invocation.args.scene` is a `string` (decoded via
@@ -45,7 +45,7 @@ describe('dispatcher decodes args against the declared argsSchema', () => {
     const calls: number[] = [];
     const probe = defineCommand({
       descriptor: { name: 'scene.probe', summary: 'probe', inputSchema: SCENE_INPUT },
-      argsSchema: S.struct({ scene: S.string }),
+      argsSchema: schema.struct({ scene: schema.string }),
       handler: async (invocation) => {
         calls.push(1);
         return ok('scene.probe', { scene: invocation.args.scene });
@@ -77,7 +77,7 @@ describe('dispatcher decodes args against the declared argsSchema', () => {
   it('a missing required arg is caught with a schema/missing issue at its path', async () => {
     const probe = defineCommand({
       descriptor: { name: 'scene.probe', summary: 'probe', inputSchema: SCENE_INPUT },
-      argsSchema: S.struct({ scene: S.string }),
+      argsSchema: schema.struct({ scene: schema.string }),
       handler: async (invocation) => ok('scene.probe', { scene: invocation.args.scene }),
     });
     const dispatcher = CommandDispatcher.make(CommandRegistry.make([probe]));

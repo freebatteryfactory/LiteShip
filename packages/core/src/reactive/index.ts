@@ -54,13 +54,17 @@ export { SpeculativeEvaluator } from './speculative.js';
 
 export { DirtyFlags } from './dirty.js';
 
-export { Cell } from './cell.js';
+export { createCell } from './cell.js';
 
-export { Derived } from './derived.js';
+export type { Cell } from './cell.js';
+
+export { Derived, computed } from './derived.js';
 
 export { Zap } from './zap.js';
 
-export { Store } from './store.js';
+export { createStore } from './store.js';
+
+export type { Store } from './store.js';
 
 export { RuntimeCoordinator } from './runtime-coordinator.js';
 

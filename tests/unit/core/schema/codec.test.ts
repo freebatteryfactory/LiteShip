@@ -9,11 +9,11 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { S, Codec } from '@liteship/core';
+import { Codec, schema } from '@liteship/core';
 
 describe('Codec', () => {
   describe('roundtrip with a struct schema', () => {
-    const PersonSchema = S.struct({ name: S.string, age: S.number });
+    const PersonSchema = schema.struct({ name: schema.string, age: schema.number });
     const personCodec = Codec.make(PersonSchema);
 
     test('decode then encode recovers a structurally-equal value', () => {
@@ -37,7 +37,7 @@ describe('Codec', () => {
   });
 
   describe('error handling — tagged results, never a throw', () => {
-    const StrictSchema = S.struct({ id: S.number, label: S.string });
+    const StrictSchema = schema.struct({ id: schema.number, label: schema.string });
     const strictCodec = Codec.make(StrictSchema);
 
     test('decode with a wrong field type returns a ParseError result', () => {
@@ -62,7 +62,7 @@ describe('Codec', () => {
 
   describe('schema property', () => {
     test('codec exposes the underlying kernel schema', () => {
-      const codec = Codec.make(S.struct({ value: S.boolean }));
+      const codec = Codec.make(schema.struct({ value: schema.boolean }));
       expect(codec.schema).toBeDefined();
     });
   });

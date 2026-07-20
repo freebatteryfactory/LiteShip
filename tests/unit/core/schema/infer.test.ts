@@ -9,7 +9,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { S } from '../../../../packages/core/src/schema/constructors.js';
+import { schema } from '../../../../packages/core/src/schema/constructors.js';
 import { isSchema } from '../../../../packages/core/src/schema/ast.js';
 import type { Infer, InferEncoded } from '../../../../packages/core/src/schema/infer.js';
 import type { IsOptional } from '../../../../packages/core/src/schema/ast.js';
@@ -25,24 +25,24 @@ type Assert<T extends true> = T;
 type Not<T extends false> = T;
 
 // Sample schemas — values so `typeof` recovers each schema's stamped generics.
-const litGo = S.literal('go');
-const uAB = S.union(S.literal('a'), S.literal('b'));
-const point = S.struct({ x: S.number, label: S.optional(S.string) });
-const addr = S.brand(S.string, ContentAddress);
-const u8 = S.bytes(Uint8Array);
-const ab = S.bytes(ArrayBuffer);
-const hole = S.hole<{ readonly shape: string }>('todo');
-const strArr = S.array(S.string);
-const numRec = S.record(S.number);
-const optStr = S.optional(S.string);
-const pair = S.tuple(S.number, S.string);
+const litGo = schema.literal('go');
+const uAB = schema.union(schema.literal('a'), schema.literal('b'));
+const point = schema.struct({ x: schema.number, label: schema.optional(schema.string) });
+const addr = schema.brand(schema.string, ContentAddress);
+const u8 = schema.bytes(Uint8Array);
+const ab = schema.bytes(ArrayBuffer);
+const hole = schema.hole<{ readonly shape: string }>('todo');
+const strArr = schema.array(schema.string);
+const numRec = schema.record(schema.number);
+const optStr = schema.optional(schema.string);
+const pair = schema.tuple(schema.number, schema.string);
 
 function __typeContract(): void {
   // Scalars.
-  const _s: Assert<IsEqual<Infer<typeof S.string>, string>> = true;
-  const _n: Assert<IsEqual<Infer<typeof S.number>, number>> = true;
-  const _b: Assert<IsEqual<Infer<typeof S.boolean>, boolean>> = true;
-  const _unk: Assert<IsEqual<Infer<typeof S.unknown>, unknown>> = true;
+  const _s: Assert<IsEqual<Infer<typeof schema.string>, string>> = true;
+  const _n: Assert<IsEqual<Infer<typeof schema.number>, number>> = true;
+  const _b: Assert<IsEqual<Infer<typeof schema.boolean>, boolean>> = true;
+  const _unk: Assert<IsEqual<Infer<typeof schema.unknown>, unknown>> = true;
 
   // Literal + union.
   const _lit: Assert<IsEqual<Infer<typeof litGo>, 'go'>> = true;
@@ -51,7 +51,7 @@ function __typeContract(): void {
   // Optional-key remapping: `label` becomes an OPTIONAL key, `x` stays required.
   const _struct: Assert<IsEqual<Infer<typeof point>, { readonly x: number; readonly label?: string }>> = true;
   const _optTrue: Assert<IsEqual<IsOptional<typeof optStr>, true>> = true;
-  const _optFalse: Assert<IsEqual<IsOptional<typeof S.string>, false>> = true;
+  const _optFalse: Assert<IsEqual<IsOptional<typeof schema.string>, false>> = true;
 
   // Brand nominality: Type is the branded output, Encoded is the unbranded base;
   // the branded type is NOT structurally the base string.
@@ -78,13 +78,13 @@ function __typeContract(): void {
   const _tupleNotArray: Not<IsEqual<Infer<typeof pair>, readonly (number | string)[]>> = false;
 
   // Structural SchemaPort conformance — a kernel schema IS a `{ Type; Encoded }`.
-  const _port: { readonly Type: number; readonly Encoded: number } = S.number;
+  const _port: { readonly Type: number; readonly Encoded: number } = schema.number;
 }
 void __typeContract;
 
 describe('Infer — runtime smoke', () => {
   it('every S constructor mints a branded schema value', () => {
-    expect(isSchema(S.string)).toBe(true);
+    expect(isSchema(schema.string)).toBe(true);
     expect(isSchema(point)).toBe(true);
     expect(isSchema(addr)).toBe(true);
     expect(isSchema({ ast: { kind: 'string' } })).toBe(false);

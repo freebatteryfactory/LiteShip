@@ -19,7 +19,7 @@ import {
   integration,
 } from '@liteship/astro';
 import type { SatelliteProps } from '@liteship/astro';
-import { Boundary, Diagnostics } from '@liteship/core';
+import { Diagnostics, defineBoundary } from '@liteship/core';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -29,7 +29,7 @@ import { Boundary, Diagnostics } from '@liteship/core';
  * Build a minimal Boundary for test fixtures.
  */
 function makeBoundary(input: string, pairs: readonly (readonly [number, string])[], hysteresis?: number) {
-  return Boundary.make({
+  return defineBoundary({
     input,
     at: pairs as readonly (readonly [number, string])[] & { readonly [K: number]: readonly [number, string] },
     ...(hysteresis !== undefined ? { hysteresis } : {}),
@@ -871,7 +871,7 @@ describe('integration', () => {
     mkdirSync(join(root, 'src'), { recursive: true });
     mkdirSync(outDir, { recursive: true });
 
-    const reference = Boundary.make({
+    const reference = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'compact'],

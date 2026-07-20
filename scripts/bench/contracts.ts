@@ -161,10 +161,10 @@ const BENCH_REGISTRATION =
 
 /**
  * Extract the registered bench-task names from ONE bench file's text. The caller
- * passes COMMENT-AND-STRING-SAFE text — a `// bench.add('Config.make…')` comment
+ * passes COMMENT-AND-STRING-SAFE text — a `// bench.add('defineConfig…')` comment
  * or a string literal that mentions a bench name must NOT be extracted (it is not
  * a real registration). The gate strips comments (via `codeOnly`) before calling
- * this, so a commented-out bench (the `Config.make()` TODO in `core.bench.ts`) is
+ * this, so a commented-out bench (the `defineConfig()` TODO in `core.bench.ts`) is
  * correctly absent.
  *
  * Pure: a fold over the text, no I/O, no clock.

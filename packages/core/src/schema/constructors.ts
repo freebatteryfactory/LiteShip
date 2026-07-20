@@ -1,5 +1,5 @@
 /**
- * `S.*` — the smart constructors over the kernel AST.
+ * `schema.*` — the smart constructors over the kernel AST.
  *
  * Each constructor validates its SHAPE eagerly (parse-don't-validate for schema
  * authors: a malformed schema throws a tagged `ValidationError` at build time,
@@ -44,14 +44,14 @@ const anySchema = makeSchema<unknown, unknown>(Object.freeze({ kind: 'any' }));
 /** A single-value literal pinned to one JSON primitive. */
 function literal<const V extends LiteralValue>(value: V): Schema<V, V> {
   if (!(typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean' || value === null)) {
-    throw ValidationError('S.literal', 'a literal must be a string, number, boolean, or null');
+    throw ValidationError('schema.literal', 'a literal must be a string, number, boolean, or null');
   }
-  // Reject non-finite numeric literals: `S.literal(NaN)` can never decode (literal
+  // Reject non-finite numeric literals: `schema.literal(NaN)` can never decode (literal
   // matching is `===`, and `NaN !== NaN`), and `±Infinity` is silently rewritten to
   // `null` when the node is serialized to JSON Schema for CLI/MCP descriptors —
   // either way the constraint the caller wrote is not the one that ships.
   if (typeof value === 'number' && !Number.isFinite(value)) {
-    throw ValidationError('S.literal', `a numeric literal must be finite — got ${String(value)}`);
+    throw ValidationError('schema.literal', `a numeric literal must be finite — got ${String(value)}`);
   }
   return makeSchema<V, V>(Object.freeze({ kind: 'literal', value }));
 }
@@ -60,9 +60,9 @@ function literal<const V extends LiteralValue>(value: V): Schema<V, V> {
 function union<const M extends readonly Schema<unknown, unknown>[]>(
   ...members: M
 ): Schema<Infer<M[number]>, InferEncoded<M[number]>> {
-  if (members.length === 0) throw ValidationError('S.union', 'a union needs at least one member');
+  if (members.length === 0) throw ValidationError('schema.union', 'a union needs at least one member');
   for (const member of members) {
-    if (!isSchema(member)) throw ValidationError('S.union', 'every union member must be a kernel schema');
+    if (!isSchema(member)) throw ValidationError('schema.union', 'every union member must be a kernel schema');
   }
   const node: UnionNode = { kind: 'union', members: Object.freeze(members.map((member) => member.ast)) };
   return makeSchema<Infer<M[number]>, InferEncoded<M[number]>>(Object.freeze(node));
@@ -71,16 +71,16 @@ function union<const M extends readonly Schema<unknown, unknown>[]>(
 /** A fixed-key object; a field wrapped by {@link optional} becomes an optional key. */
 function struct<const F extends SchemaFields>(fields: F): Schema<StructType<F>, StructEncoded<F>> {
   if (typeof fields !== 'object' || fields === null) {
-    throw ValidationError('S.struct', 'fields must be an object of schemas');
+    throw ValidationError('schema.struct', 'fields must be an object of schemas');
   }
   const entries: StructField[] = [];
   for (const key of Object.keys(fields)) {
     if (key === '__proto__') {
-      throw ValidationError('S.struct', 'a struct field cannot be named "__proto__"');
+      throw ValidationError('schema.struct', 'a struct field cannot be named "__proto__"');
     }
     const child = fields[key];
     if (!isSchema(child)) {
-      throw ValidationError('S.struct', `field "${key}" must be a kernel schema`);
+      throw ValidationError('schema.struct', `field "${key}" must be a kernel schema`);
     }
     entries.push(Object.freeze({ key, node: child.ast, optional: Object.hasOwn(child, OptionalId) }));
   }
@@ -92,7 +92,7 @@ function struct<const F extends SchemaFields>(fields: F): Schema<StructType<F>, 
 function array<const E extends Schema<unknown, unknown>>(
   element: E,
 ): Schema<readonly Infer<E>[], readonly InferEncoded<E>[]> {
-  if (!isSchema(element)) throw ValidationError('S.array', 'the element must be a kernel schema');
+  if (!isSchema(element)) throw ValidationError('schema.array', 'the element must be a kernel schema');
   const node: ArrayNode = { kind: 'array', element: element.ast };
   return makeSchema<readonly Infer<E>[], readonly InferEncoded<E>[]>(Object.freeze(node));
 }
@@ -107,7 +107,7 @@ function tuple<const E extends readonly Schema<unknown, unknown>[]>(
   ...elements: E
 ): Schema<TupleType<E>, TupleEncoded<E>> {
   for (const element of elements) {
-    if (!isSchema(element)) throw ValidationError('S.tuple', 'every tuple element must be a kernel schema');
+    if (!isSchema(element)) throw ValidationError('schema.tuple', 'every tuple element must be a kernel schema');
   }
   const node: TupleNode = { kind: 'tuple', elements: Object.freeze(elements.map((element) => element.ast)) };
   return makeSchema<TupleType<E>, TupleEncoded<E>>(Object.freeze(node));
@@ -117,7 +117,7 @@ function tuple<const E extends readonly Schema<unknown, unknown>[]>(
 function record<const V extends Schema<unknown, unknown>>(
   value: V,
 ): Schema<{ readonly [k: string]: Infer<V> }, { readonly [k: string]: InferEncoded<V> }> {
-  if (!isSchema(value)) throw ValidationError('S.record', 'the value schema must be a kernel schema');
+  if (!isSchema(value)) throw ValidationError('schema.record', 'the value schema must be a kernel schema');
   const node: RecordNode = { kind: 'record', value: value.ast };
   return makeSchema<{ readonly [k: string]: Infer<V> }, { readonly [k: string]: InferEncoded<V> }>(Object.freeze(node));
 }
@@ -128,7 +128,7 @@ function record<const V extends Schema<unknown, unknown>>(
  * {@link withArbitrary} thunk to sample a narrow valid subset).
  */
 function bytes<const C extends BytesCtor>(ctor: C, name?: string): Schema<CarrierInstance<C>, CarrierInstance<C>> {
-  if (typeof ctor !== 'function') throw ValidationError('S.bytes', 'the carrier must be a constructor');
+  if (typeof ctor !== 'function') throw ValidationError('schema.bytes', 'the carrier must be a constructor');
   const node: BytesNode = { kind: 'bytes', ctor, name: name ?? ctor.name };
   return makeSchema<CarrierInstance<C>, CarrierInstance<C>>(Object.freeze(node));
 }
@@ -143,8 +143,9 @@ function brand<B extends Schema<unknown, unknown>, Out>(
   refine: (value: Infer<B>) => Out,
   name?: string,
 ): Schema<Out, InferEncoded<B>> {
-  if (!isSchema(base)) throw ValidationError('S.brand', 'the base must be a kernel schema');
-  if (typeof refine !== 'function') throw ValidationError('S.brand', 'refine must be a smart-constructor function');
+  if (!isSchema(base)) throw ValidationError('schema.brand', 'the base must be a kernel schema');
+  if (typeof refine !== 'function')
+    throw ValidationError('schema.brand', 'refine must be a smart-constructor function');
   const node: BrandNode = {
     kind: 'brand',
     base: base.ast,
@@ -161,16 +162,16 @@ function brand<B extends Schema<unknown, unknown>, Out>(
  */
 function hole<A = unknown>(name: string): Schema<A, A> {
   if (typeof name !== 'string' || name.length === 0) {
-    throw ValidationError('S.hole', 'a hole needs a non-empty name');
+    throw ValidationError('schema.hole', 'a hole needs a non-empty name');
   }
   const node: HoleNode = { kind: 'hole', name };
   return makeSchema<A, A>(Object.freeze(node));
 }
 
-/** Mark a schema as an OPTIONAL struct field (a no-op outside `S.struct`). */
-function optional<S2 extends Schema<unknown, unknown>>(schema: S2): OptionalSchema<Infer<S2>, InferEncoded<S2>> {
-  if (!isSchema(schema)) throw ValidationError('S.optional', 'optional wraps a kernel schema');
-  return makeSchema<Infer<S2>, InferEncoded<S2>>(schema.ast, true) as OptionalSchema<Infer<S2>, InferEncoded<S2>>;
+/** Mark a schema as an OPTIONAL struct field (a no-op outside `schema.struct`). */
+function optional<S2 extends Schema<unknown, unknown>>(inner: S2): OptionalSchema<Infer<S2>, InferEncoded<S2>> {
+  if (!isSchema(inner)) throw ValidationError('schema.optional', 'optional wraps a kernel schema');
+  return makeSchema<Infer<S2>, InferEncoded<S2>>(inner.ast, true) as OptionalSchema<Infer<S2>, InferEncoded<S2>>;
 }
 
 /**
@@ -187,26 +188,23 @@ function optional<S2 extends Schema<unknown, unknown>>(schema: S2): OptionalSche
  * `fast-check` module inside the thunk) so no `fast-check` type reaches the
  * public surface.
  */
-export function withArbitrary<S2 extends Schema<unknown, unknown>>(
-  schema: S2,
-  arbitrary: (fc: unknown) => unknown,
-): S2 {
-  if (!isSchema(schema)) throw ValidationError('S.withArbitrary', 'the first argument must be a kernel schema');
-  if (typeof arbitrary !== 'function') throw ValidationError('S.withArbitrary', 'the arbitrary must be a thunk');
-  const node = schema.ast;
+export function withArbitrary<S2 extends Schema<unknown, unknown>>(inner: S2, arbitrary: (fc: unknown) => unknown): S2 {
+  if (!isSchema(inner)) throw ValidationError('schema.withArbitrary', 'the first argument must be a kernel schema');
+  if (typeof arbitrary !== 'function') throw ValidationError('schema.withArbitrary', 'the arbitrary must be a thunk');
+  const node = inner.ast;
   const annotations: SchemaAnnotations = Object.freeze({
     ...(node.annotations ?? {}),
     [ArbitraryAnnotationId]: arbitrary,
   });
   const nextNode = Object.freeze({ ...node, annotations }) as SchemaNode;
-  return makeSchema(nextNode, Object.hasOwn(schema, OptionalId)) as S2;
+  return makeSchema(nextNode, Object.hasOwn(inner, OptionalId)) as S2;
 }
 
 /**
  * The schema-kernel constructor namespace. Scalars are singleton VALUES
- * (`S.string`); composites are constructor FUNCTIONS (`S.struct({ … })`).
+ * (`schema.string`); composites are constructor FUNCTIONS (`schema.struct({ … })`).
  */
-export const S = {
+export const schema = {
   string: stringSchema,
   number: numberSchema,
   boolean: booleanSchema,

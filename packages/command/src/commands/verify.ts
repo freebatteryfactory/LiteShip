@@ -7,7 +7,7 @@
  *
  * @module
  */
-import { S, type CapsuleCommandResult, type CommandJsonSchema, type ContentAddress } from '@liteship/core';
+import { type CapsuleCommandResult, type CommandJsonSchema, type ContentAddress, schema } from '@liteship/core';
 import { defineCommand, failed, ok } from '../registry.js';
 
 type Verdict = 'Verified' | 'Mismatch' | 'Incomplete' | 'Unknown';
@@ -89,7 +89,7 @@ export const verifyCommand = defineCommand({
   // BOTH args decode as OPTIONAL even though the inputSchema documents `tarball`
   // as required: ADR-0011 makes an absent tarball an honest `Unknown` verdict at
   // the handler, not a hard `invalid_args` reject — the handler owns that decision.
-  argsSchema: S.struct({ tarball: S.optional(S.string), capsule: S.optional(S.string) }),
+  argsSchema: schema.struct({ tarball: schema.optional(schema.string), capsule: schema.optional(schema.string) }),
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
     const tarball = invocation.args.tarball;
     let capsule = invocation.args.capsule;

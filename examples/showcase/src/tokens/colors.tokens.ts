@@ -1,6 +1,6 @@
-import { Token } from '@liteship/core';
+import { defineToken } from '@liteship/core';
 
-export const primary = Token.make({
+export const primary = defineToken({
   name: 'primary',
   category: 'color',
   axes: ['theme'],
@@ -8,7 +8,7 @@ export const primary = Token.make({
   fallback: '#4f46e5',
 });
 
-export const secondary = Token.make({
+export const secondary = defineToken({
   name: 'secondary',
   category: 'color',
   axes: ['theme'],
@@ -16,7 +16,7 @@ export const secondary = Token.make({
   fallback: '#0d9488',
 });
 
-export const surface = Token.make({
+export const surface = defineToken({
   name: 'surface',
   category: 'color',
   axes: ['theme'],
@@ -24,7 +24,7 @@ export const surface = Token.make({
   fallback: '#ffffff',
 });
 
-export const text = Token.make({
+export const text = defineToken({
   name: 'text',
   category: 'color',
   axes: ['theme'],
@@ -32,7 +32,7 @@ export const text = Token.make({
   fallback: '#1e293b',
 });
 
-export const muted = Token.make({
+export const muted = defineToken({
   name: 'muted',
   category: 'color',
   axes: ['theme'],
@@ -40,7 +40,7 @@ export const muted = Token.make({
   fallback: '#64748b',
 });
 
-export const border = Token.make({
+export const border = defineToken({
   name: 'border',
   category: 'color',
   axes: ['theme'],

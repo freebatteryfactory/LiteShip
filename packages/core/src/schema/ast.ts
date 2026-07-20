@@ -50,7 +50,7 @@ export type SchemaAnnotations = Readonly<Record<symbol, unknown>>;
  */
 export const ArbitraryAnnotationId: unique symbol = Symbol.for('@liteship/core/schema/arbitrary');
 
-/** The runtime brand marking a schema as a struct-field optional (see `S.optional`). */
+/** The runtime brand marking a schema as a struct-field optional (see `schema.optional`). */
 export const OptionalId: unique symbol = Symbol('@liteship/core/schema/optional');
 
 // ---------------------------------------------------------------------------
@@ -210,10 +210,10 @@ export interface Schema<out A, out I = A> {
   readonly Encoded: I;
 }
 
-/** A struct-field schema marked optional by `S.optional`; carries the {@link OptionalId} brand. */
+/** A struct-field schema marked optional by `schema.optional`; carries the {@link OptionalId} brand. */
 export type OptionalSchema<A, I> = Schema<A, I> & { readonly [OptionalId]: true };
 
-/** True iff `S` is an `OptionalSchema` — the presence law `S.struct` reads per field. */
+/** True iff `S` is an `OptionalSchema` — the presence law `schema.struct` reads per field. */
 export type IsOptional<S> = S extends { readonly [OptionalId]: true } ? true : false;
 
 // ---------------------------------------------------------------------------

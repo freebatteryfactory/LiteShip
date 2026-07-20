@@ -1,7 +1,7 @@
 /**
  * Defaults on the worker host surfaces:
  *
- * - CompositorWorker.addQuantizer accepts a Boundary.make result directly,
+ * - CompositorWorker.addQuantizer accepts a defineBoundary result directly,
  *   deriving the registration (name defaults to boundary.input) instead of
  *   demanding a hand-assembled { id, states, thresholds } with a hand-typed
  *   ContentAddress.
@@ -11,7 +11,7 @@
  */
 
 import { describe, test, expect, beforeEach, afterEach } from 'vitest';
-import { Boundary } from '@liteship/core';
+import { defineBoundary } from '@liteship/core';
 import { CompositorWorker, WorkerHost } from '@liteship/worker';
 import { MockWorker } from '../../helpers/mock-worker.js';
 import { mockCanvas } from '../../helpers/mock-dom.js';
@@ -44,7 +44,7 @@ afterEach(() => {
 describe('CompositorWorker.addQuantizer boundary-first form', () => {
   test('registers under boundary.input with derived states', () => {
     const cw = CompositorWorker.create();
-    const brightness = Boundary.make({
+    const brightness = defineBoundary({
       input: 'brightness',
       at: [
         [0, 'dim'],
@@ -60,7 +60,7 @@ describe('CompositorWorker.addQuantizer boundary-first form', () => {
 
   test('explicit-name form still registers under the given name', () => {
     const cw = CompositorWorker.create();
-    const brightness = Boundary.make({
+    const brightness = defineBoundary({
       input: 'brightness',
       at: [
         [0, 'dim'],

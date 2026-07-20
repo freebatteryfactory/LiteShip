@@ -12,29 +12,27 @@ export interface Config {
   readonly tokens: Record<string, Token>;
   readonly themes: Record<string, Theme>;
   readonly styles: Record<string, Style>;
-  readonly vite?: Config.Input['vite'];
-  readonly astro?: Config.Input['astro'];
+  readonly vite?: ConfigInput['vite'];
+  readonly astro?: ConfigInput['astro'];
 }
 
-export declare namespace Config {
-  /** User-facing input — no id, no _tag */
-  export interface Input {
-    readonly boundaries?: Record<string, Boundary>;
-    readonly tokens?: Record<string, Token>;
-    readonly themes?: Record<string, Theme>;
-    readonly styles?: Record<string, Style>;
-    readonly vite?: {
-      readonly dirs?: Partial<Record<'boundary' | 'token' | 'theme' | 'style', string>>;
-      readonly hmr?: boolean;
-      readonly environments?: readonly ('browser' | 'server' | 'shader')[];
-      readonly wasm?: boolean | { readonly enabled?: boolean; readonly path?: string };
-    };
-    readonly astro?: {
-      readonly satellite?: boolean;
-      readonly edgeRuntime?: boolean;
-    };
-  }
+/** User-facing input — no id, no _tag */
+export interface ConfigInput {
+  readonly boundaries?: Record<string, Boundary>;
+  readonly tokens?: Record<string, Token>;
+  readonly themes?: Record<string, Theme>;
+  readonly styles?: Record<string, Style>;
+  readonly vite?: {
+    readonly dirs?: Partial<Record<'boundary' | 'token' | 'theme' | 'style', string>>;
+    readonly hmr?: boolean;
+    readonly environments?: readonly ('browser' | 'server' | 'shader')[];
+    readonly wasm?: boolean | { readonly enabled?: boolean; readonly path?: string };
+  };
+  readonly astro?: {
+    readonly satellite?: boolean;
+    readonly edgeRuntime?: boolean;
+  };
 }
 
 /** Ergonomic alias for liteship.config.ts usage at the workspace root */
-export declare function defineConfig(input: Config.Input): Config;
+export declare function defineConfig(input: ConfigInput): Config;

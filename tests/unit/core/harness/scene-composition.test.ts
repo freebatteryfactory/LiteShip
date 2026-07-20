@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { defineCapsule, S } from '@liteship/core';
+import { defineCapsule, schema } from '@liteship/core';
 import { resetCapsuleCatalog } from '@liteship/core/testing';
 import * as Harness from '@liteship/core/harness';
 
@@ -25,8 +25,8 @@ describe('generateSceneComposition (lane-aware)', () => {
     defineCapsule({
       _kind: 'sceneComposition',
       name,
-      input: S.unknown,
-      output: S.unknown,
+      input: schema.unknown,
+      output: schema.unknown,
       capabilities: { reads: [], writes: [] },
       invariants: [],
       budgets,

@@ -18,19 +18,19 @@ export type {
   WallClockTimestamp,
 } from './command.js';
 
-export { Boundary, BoundarySpec } from './boundary.js';
+export { Boundary, defineBoundary, BoundarySpec } from './boundary.js';
 
 export { BoundaryAttribute } from './boundary-attribute.js';
 
-export { Token } from './token.js';
+export { Token, defineToken } from './token.js';
 
 export type { TokenCategory } from './token.js';
 
-export { Style } from './style.js';
+export { Style, defineStyle } from './style.js';
 
 export type { StyleLayer, ShadowLayer } from './style.js';
 
-export { Theme } from './theme.js';
+export { Theme, defineTheme } from './theme.js';
 
 export { Component } from './component.js';
 
@@ -81,7 +81,12 @@ export { ShipCapsule } from './ship-capsule.js';
 
 export { Config, defineConfig } from './config.js';
 
-export type { PrimitiveKind, PluginConfig as CorePluginConfig, AstroConfig as CoreAstroConfig } from './config.js';
+export type {
+  PrimitiveKind,
+  PluginConfig as CorePluginConfig,
+  AstroConfig as CoreAstroConfig,
+  ConfigInput,
+} from './config.js';
 
 export type {
   AssemblyKind,

@@ -14,7 +14,7 @@
 import { describe, expect, it } from 'vitest';
 import * as fc from 'fast-check';
 import { hasTag, ValidationError } from '@liteship/error';
-import { S, decode } from '../../packages/core/src/schema/index.js';
+import { decode, schema } from '../../packages/core/src/schema/index.js';
 import type { Schema } from '../../packages/core/src/schema/index.js';
 import {
   schemaToArbitrary,
@@ -26,41 +26,41 @@ import {
 const SEED = 0x5eed;
 
 /** Drive an arbitrary into the kernel STRICT decoder; assert every sample decodes ok. */
-function expectAllDecode<A, I>(schema: Schema<A, I>, arb: fc.Arbitrary<A>, numRuns = 50): void {
+function expectAllDecode<A, I>(sch: Schema<A, I>, arb: fc.Arbitrary<A>, numRuns = 50): void {
   fc.assert(
-    fc.property(arb, (sample) => decode(schema, sample as unknown).ok),
+    fc.property(arb, (sample) => decode(sch, sample as unknown).ok),
     { numRuns, seed: SEED },
   );
 }
 
 describe('schemaToArbitrary — round-trip over the kernel AST', () => {
-  it('handles S.string', () => {
-    const schema = S.string;
-    expectAllDecode(schema, schemaToArbitrary(schema));
+  it('handles schema.string', () => {
+    const sch = schema.string;
+    expectAllDecode(sch, schemaToArbitrary(sch));
   });
 
-  it('handles S.number (as integer)', () => {
-    const schema = S.number;
-    expectAllDecode(schema, schemaToArbitrary(schema));
+  it('handles schema.number (as integer)', () => {
+    const sch = schema.number;
+    expectAllDecode(sch, schemaToArbitrary(sch));
   });
 
-  it('handles S.boolean', () => {
-    const schema = S.boolean;
-    expectAllDecode(schema, schemaToArbitrary(schema));
+  it('handles schema.boolean', () => {
+    const sch = schema.boolean;
+    expectAllDecode(sch, schemaToArbitrary(sch));
   });
 
-  it('handles S.literal', () => {
-    const schema = S.literal('active');
-    const arb = schemaToArbitrary(schema);
+  it('handles schema.literal', () => {
+    const sch = schema.literal('active');
+    const arb = schemaToArbitrary(sch);
     fc.assert(
       fc.property(arb, (v) => v === 'active'),
       { numRuns: 20, seed: SEED },
     );
   });
 
-  it('handles S.literal(null)', () => {
-    const schema = S.literal(null);
-    const arb = schemaToArbitrary(schema);
+  it('handles schema.literal(null)', () => {
+    const sch = schema.literal(null);
+    const arb = schemaToArbitrary(sch);
     fc.assert(
       fc.property(arb, (v) => v === null),
       { numRuns: 5, seed: SEED },
@@ -68,44 +68,44 @@ describe('schemaToArbitrary — round-trip over the kernel AST', () => {
   });
 
   it('handles a union of literals', () => {
-    const schema = S.union(S.literal('a'), S.literal('b'), S.literal('c'));
-    const arb = schemaToArbitrary(schema);
+    const sch = schema.union(schema.literal('a'), schema.literal('b'), schema.literal('c'));
+    const arb = schemaToArbitrary(sch);
     fc.assert(
       fc.property(arb, (v) => v === 'a' || v === 'b' || v === 'c'),
       { numRuns: 50, seed: SEED },
     );
     // And every sample still decodes cleanly through the union.
-    expectAllDecode(schema, arb);
+    expectAllDecode(sch, arb);
   });
 
   it('handles a struct with required fields', () => {
-    const schema = S.struct({
-      name: S.string,
-      age: S.number,
-      active: S.boolean,
+    const sch = schema.struct({
+      name: schema.string,
+      age: schema.number,
+      active: schema.boolean,
     });
-    expectAllDecode(schema, schemaToArbitrary(schema));
+    expectAllDecode(sch, schemaToArbitrary(sch));
   });
 
-  it('handles S.array(T)', () => {
-    const schema = S.array(S.string);
-    expectAllDecode(schema, schemaToArbitrary(schema));
+  it('handles schema.array(T)', () => {
+    const sch = schema.array(schema.string);
+    expectAllDecode(sch, schemaToArbitrary(sch));
   });
 
-  it('handles S.tuple (fixed arity, per-position types)', () => {
-    const schema = S.tuple(S.number, S.string);
-    const arb = schemaToArbitrary(schema);
+  it('handles schema.tuple (fixed arity, per-position types)', () => {
+    const sch = schema.tuple(schema.number, schema.string);
+    const arb = schemaToArbitrary(sch);
     // Every sample is exactly a 2-tuple [number, string] AND strict-decodes cleanly
     // (a wrong-arity sample would fail the tuple decoder).
     fc.assert(
-      fc.property(arb, (v) => Array.isArray(v) && v.length === 2 && decode(schema, v as unknown).ok),
+      fc.property(arb, (v) => Array.isArray(v) && v.length === 2 && decode(sch, v as unknown).ok),
       { numRuns: 50, seed: SEED },
     );
   });
 
-  it('handles S.record(V) with poison-safe keys', () => {
-    const schema = S.record(S.number);
-    const arb = schemaToArbitrary(schema);
+  it('handles schema.record(V) with poison-safe keys', () => {
+    const sch = schema.record(schema.number);
+    const arb = schemaToArbitrary(sch);
     // Every sample decodes AND never carries a prototype-poisoning key (which the
     // strict decoder would reject with schema/poison-key).
     fc.assert(
@@ -114,37 +114,37 @@ describe('schemaToArbitrary — round-trip over the kernel AST', () => {
         for (const key of Object.keys(rec)) {
           if (key === '__proto__' || key === 'constructor' || key === 'prototype') return false;
         }
-        return decode(schema, rec as unknown).ok;
+        return decode(sch, rec as unknown).ok;
       }),
       { numRuns: 50, seed: SEED },
     );
   });
 
-  it('handles S.unknown (accepts everything)', () => {
-    const schema = S.unknown;
-    expectAllDecode(schema, schemaToArbitrary(schema));
+  it('handles schema.unknown (accepts everything)', () => {
+    const sch = schema.unknown;
+    expectAllDecode(sch, schemaToArbitrary(sch));
   });
 
-  it('handles S.any (accepts everything)', () => {
-    const schema = S.any;
-    expectAllDecode(schema, schemaToArbitrary(schema));
+  it('handles schema.any (accepts everything)', () => {
+    const sch = schema.any;
+    expectAllDecode(sch, schemaToArbitrary(sch));
   });
 
   it('handles a tagged union of structs (TokenEvent shape)', () => {
-    const schema = S.union(
-      S.struct({ _tag: S.literal('push'), token: S.string }),
-      S.struct({ _tag: S.literal('flush') }),
-      S.struct({ _tag: S.literal('reset') }),
+    const sch = schema.union(
+      schema.struct({ _tag: schema.literal('push'), token: schema.string }),
+      schema.struct({ _tag: schema.literal('flush') }),
+      schema.struct({ _tag: schema.literal('reset') }),
     );
-    expectAllDecode(schema, schemaToArbitrary(schema));
+    expectAllDecode(sch, schemaToArbitrary(sch));
   });
 
   it('handles a struct with an optional field (present and absent both decode)', () => {
-    const schema = S.struct({
-      name: S.string,
-      age: S.optional(S.number),
+    const sch = schema.struct({
+      name: schema.string,
+      age: schema.optional(schema.number),
     });
-    const arb = schemaToArbitrary(schema);
+    const arb = schemaToArbitrary(sch);
     let sawWith = false;
     let sawWithout = false;
     fc.assert(
@@ -153,7 +153,7 @@ describe('schemaToArbitrary — round-trip over the kernel AST', () => {
         const r = rec as Record<string, unknown>;
         if ('age' in r) sawWith = true;
         else sawWithout = true;
-        return decode(schema, rec as unknown).ok;
+        return decode(sch, rec as unknown).ok;
       }),
       { numRuns: 100, seed: SEED },
     );
@@ -163,70 +163,70 @@ describe('schemaToArbitrary — round-trip over the kernel AST', () => {
   });
 
   it('handles a nested struct + array', () => {
-    const schema = S.struct({
-      id: S.string,
-      tags: S.array(S.string),
-      meta: S.struct({ count: S.number, live: S.boolean }),
+    const sch = schema.struct({
+      id: schema.string,
+      tags: schema.array(schema.string),
+      meta: schema.struct({ count: schema.number, live: schema.boolean }),
     });
-    expectAllDecode(schema, schemaToArbitrary(schema));
+    expectAllDecode(sch, schemaToArbitrary(sch));
   });
 });
 
 describe('schemaToArbitrary — withArbitrary override (opaque + narrow domains)', () => {
   it('honours the annotated thunk on a bytes carrier, ahead of structural refusal', () => {
-    // `S.bytes(Uint8Array)` alone is REFUSED structurally (see below); the
+    // `schema.bytes(Uint8Array)` alone is REFUSED structurally (see below); the
     // annotation supplies the generator, and the walker honours it.
     const sentinel = new Uint8Array([1, 2, 3]);
-    const schema = withArbitrary(S.bytes(Uint8Array), () => fc.constant(sentinel));
-    const arb = schemaToArbitrary(schema);
+    const sch = withArbitrary(schema.bytes(Uint8Array), () => fc.constant(sentinel));
+    const arb = schemaToArbitrary(sch);
     for (const s of fc.sample(arb, { numRuns: 20, seed: SEED })) expect(s).toBe(sentinel);
     // And the sampled bytes still strict-decode through the carrier.
-    expectAllDecode(schema, arb, 20);
+    expectAllDecode(sch, arb, 20);
   });
 
   it('honours the annotated thunk on a brand — the narrow-valid-subset case', () => {
     // A brand narrows to a valid SUBSET (positive integers); sampling the wider
     // base would be silent widening, so the author attaches a generator.
-    const PositiveInt = S.brand(
-      S.number,
+    const PositiveInt = schema.brand(
+      schema.number,
       (n) => {
         if (n <= 0) throw ValidationError('PositiveInt', 'must be positive');
         return n;
       },
       'PositiveInt',
     );
-    const schema = withArbitrary(PositiveInt, () => fc.integer({ min: 1, max: 1_000 }));
-    const arb = schemaToArbitrary(schema);
+    const sch = withArbitrary(PositiveInt, () => fc.integer({ min: 1, max: 1_000 }));
+    const arb = schemaToArbitrary(sch);
     fc.assert(
-      fc.property(arb, (v) => typeof v === 'number' && v > 0 && decode(schema, v as unknown).ok),
+      fc.property(arb, (v) => typeof v === 'number' && v > 0 && decode(sch, v as unknown).ok),
       { numRuns: 50, seed: SEED },
     );
   });
 
   it('builds the arbitrary lazily — the thunk runs at walk time, not at annotate time', () => {
     let built = 0;
-    const schema = withArbitrary(S.string, () => {
+    const sch = withArbitrary(schema.string, () => {
       built++;
       return fc.constant('x');
     });
     // Annotating must NOT have invoked the thunk yet.
     expect(built).toBe(0);
-    schemaToArbitrary(schema);
+    schemaToArbitrary(sch);
     expect(built).toBe(1);
   });
 
   it('surfaces the annotation under ArbitraryAnnotationId on the AST node', () => {
-    const schema = withArbitrary(S.number, () => fc.constant(7));
-    const annotations = schema.ast.annotations;
+    const sch = withArbitrary(schema.number, () => fc.constant(7));
+    const annotations = sch.ast.annotations;
     expect(annotations).toBeDefined();
     expect(typeof annotations?.[ArbitraryAnnotationId]).toBe('function');
   });
 
   it('throws UnsupportedError when the thunk does not return a fast-check arbitrary', () => {
-    const schema = withArbitrary(S.string, () => 'not-an-arbitrary');
+    const sch = withArbitrary(schema.string, () => 'not-an-arbitrary');
     let caught: unknown;
     try {
-      schemaToArbitrary(schema);
+      schemaToArbitrary(sch);
     } catch (err) {
       caught = err;
     }
@@ -236,10 +236,10 @@ describe('schemaToArbitrary — withArbitrary override (opaque + narrow domains)
 
 describe('schemaToArbitrary — UnsupportedError refusals (honest skips)', () => {
   it('refuses an un-annotated bytes carrier, naming subject "bytes"', () => {
-    const schema = S.bytes(Uint8Array);
+    const sch = schema.bytes(Uint8Array);
     let caught: unknown;
     try {
-      schemaToArbitrary(schema);
+      schemaToArbitrary(sch);
     } catch (err) {
       caught = err;
     }
@@ -248,10 +248,10 @@ describe('schemaToArbitrary — UnsupportedError refusals (honest skips)', () =>
   });
 
   it('refuses an un-annotated brand, naming subject "brand"', () => {
-    const schema = S.brand(S.string, (s) => s, 'Tag');
+    const sch = schema.brand(schema.string, (s) => s, 'Tag');
     let caught: unknown;
     try {
-      schemaToArbitrary(schema);
+      schemaToArbitrary(sch);
     } catch (err) {
       caught = err;
     }
@@ -260,10 +260,10 @@ describe('schemaToArbitrary — UnsupportedError refusals (honest skips)', () =>
   });
 
   it('refuses a typed hole, naming subject "hole"', () => {
-    const schema = S.hole('unfinished');
+    const sch = schema.hole('unfinished');
     let caught: unknown;
     try {
-      schemaToArbitrary(schema);
+      schemaToArbitrary(sch);
     } catch (err) {
       caught = err;
     }
@@ -272,10 +272,10 @@ describe('schemaToArbitrary — UnsupportedError refusals (honest skips)', () =>
   });
 
   it('propagates the refusal out of a nested struct (a bytes field refuses the whole schema)', () => {
-    const schema = S.struct({ id: S.string, payload: S.bytes(Uint8Array) });
+    const sch = schema.struct({ id: schema.string, payload: schema.bytes(Uint8Array) });
     let caught: unknown;
     try {
-      schemaToArbitrary(schema);
+      schemaToArbitrary(sch);
     } catch (err) {
       caught = err;
     }

@@ -1,4 +1,4 @@
-import { Theme } from '@liteship/core';
+import { defineTheme } from '@liteship/core';
 
 /**
  * Dark theme definition.
@@ -7,7 +7,7 @@ import { Theme } from '@liteship/core';
  * The meta labels allow UI chrome (theme toggle, settings) to
  * present human-readable names and infer light/dark semantics.
  */
-export const dark = Theme.make({
+export const dark = defineTheme({
   name: 'brand',
   variants: ['light', 'dark'],
   tokens: {

@@ -1093,7 +1093,7 @@
         {
           "name": "Boundary",
           "kind": "namespace",
-          "signature": "evaluate:function,evaluateBatch:function,evaluateResult:function,evaluateWithHysteresis:function,isActive:function,make:function"
+          "signature": "evaluate:function,evaluateBatch:function,evaluateResult:function,evaluateWithHysteresis:function,isActive:function"
         },
         {
           "name": "BoundaryAttribute",
@@ -1130,11 +1130,6 @@
           "name": "Cap",
           "kind": "namespace",
           "signature": "atLeast:function,empty:function,from:function,grant:function,has:function,intersection:function,ordinal:function,revoke:function,superset:function,union:function"
-        },
-        {
-          "name": "Cell",
-          "kind": "namespace",
-          "signature": "make:function"
         },
         {
           "name": "CellKernel",
@@ -1174,7 +1169,7 @@
         {
           "name": "Config",
           "kind": "namespace",
-          "signature": "make:function,toAstroConfig:function,toTestAliases:function,toViteConfig:function"
+          "signature": "toAstroConfig:function,toTestAliases:function,toViteConfig:function"
         },
         {
           "name": "ContentAddress",
@@ -1201,7 +1196,7 @@
         {
           "name": "Derived",
           "kind": "namespace",
-          "signature": "combine:function,make:function"
+          "signature": "combine:function"
         },
         {
           "name": "Diagnostics",
@@ -1331,11 +1326,6 @@
           "signature": "create:function"
         },
         {
-          "name": "S",
-          "kind": "namespace",
-          "signature": "any:const,array:function,boolean:const,brand:function,bytes:function,hole:function,literal:function,number:const,optional:function,record:function,string:const,struct:function,tuple:function,union:function,unknown:const"
-        },
-        {
           "name": "SSE_BUFFER_SIZE",
           "kind": "const"
         },
@@ -1402,14 +1392,9 @@
           "signature": "(1)"
         },
         {
-          "name": "Store",
-          "kind": "namespace",
-          "signature": "make:function"
-        },
-        {
           "name": "Style",
           "kind": "namespace",
-          "signature": "make:function,mergeLayers:function,tap:function"
+          "signature": "mergeLayers:function,tap:function"
         },
         {
           "name": "THEME_TRANSITION_DURATION_MS",
@@ -1422,7 +1407,7 @@
         {
           "name": "Theme",
           "kind": "namespace",
-          "signature": "make:function,tap:function"
+          "signature": "tap:function"
         },
         {
           "name": "ThresholdValue",
@@ -1430,14 +1415,9 @@
           "signature": "(1)"
         },
         {
-          "name": "Timeline",
-          "kind": "namespace",
-          "signature": "from:function"
-        },
-        {
           "name": "Token",
           "kind": "namespace",
-          "signature": "cssVar:function,make:function,tap:function"
+          "signature": "cssVar:function,tap:function"
         },
         {
           "name": "TokenBuffer",
@@ -1587,7 +1567,17 @@
           "signature": "(3)"
         },
         {
+          "name": "computed",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "contentAddressOf",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "createCell",
           "kind": "function",
           "signature": "(1)"
         },
@@ -1598,6 +1588,16 @@
         },
         {
           "name": "createGraphQueryRefreshBase",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "createStore",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "createTimeline",
           "kind": "function",
           "signature": "(2)"
         },
@@ -1622,12 +1622,32 @@
           "signature": "(2)"
         },
         {
+          "name": "defineBoundary",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "defineCapsule",
           "kind": "function",
           "signature": "(1)"
         },
         {
           "name": "defineConfig",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "defineStyle",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "defineTheme",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "defineToken",
           "kind": "function",
           "signature": "(1)"
         },
@@ -1950,6 +1970,11 @@
           "name": "sampleRuntimeEasing",
           "kind": "function",
           "signature": "(1)"
+        },
+        {
+          "name": "schema",
+          "kind": "namespace",
+          "signature": "any:const,array:function,boolean:const,brand:function,bytes:function,hole:function,literal:function,number:const,optional:function,record:function,string:const,struct:function,tuple:function,union:function,unknown:const"
         },
         {
           "name": "sealGraph",
@@ -3329,14 +3354,19 @@
           "signature": "evaluate:function"
         },
         {
-          "name": "Q",
-          "kind": "namespace",
-          "signature": "from:function"
-        },
-        {
           "name": "Transition",
           "kind": "namespace",
           "signature": "for:function"
+        },
+        {
+          "name": "createQuantizer",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "defineQuantizer",
+          "kind": "function",
+          "signature": "(2)"
         },
         {
           "name": "evaluate",

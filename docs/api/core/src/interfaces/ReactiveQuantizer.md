@@ -6,7 +6,7 @@
 
 # Interface: ReactiveQuantizer\<B\>
 
-Defined in: [core/src/schema/quantizer-types.ts:70](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/quantizer-types.ts#L70)
+Defined in: [core/src/schema/quantizer-types.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/quantizer-types.ts#L71)
 
 Reactive quantizer — the [Quantizer](Quantizer.md) base plus its reactive substrate: a
 replay-1 current-state read and a no-replay crossing subscription, both on the
@@ -29,7 +29,7 @@ evaluator produces; a purely-synchronous quantizer omits this extension.
 
 > `readonly` **\_tag**: `"Quantizer"`
 
-Defined in: [core/src/schema/quantizer-types.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/quantizer-types.ts#L35)
+Defined in: [core/src/schema/quantizer-types.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/quantizer-types.ts#L36)
 
 #### Inherited from
 
@@ -41,7 +41,7 @@ Defined in: [core/src/schema/quantizer-types.ts:35](https://github.com/freebatte
 
 > `readonly` **boundary**: `B`
 
-Defined in: [core/src/schema/quantizer-types.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/quantizer-types.ts#L36)
+Defined in: [core/src/schema/quantizer-types.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/quantizer-types.ts#L37)
 
 #### Inherited from
 
@@ -53,7 +53,7 @@ Defined in: [core/src/schema/quantizer-types.ts:36](https://github.com/freebatte
 
 > `readonly` **changes**: [`QuantizerCrossings`](../type-aliases/QuantizerCrossings.md)\<`B`\>
 
-Defined in: [core/src/schema/quantizer-types.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/quantizer-types.ts#L74)
+Defined in: [core/src/schema/quantizer-types.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/quantizer-types.ts#L75)
 
 No-replay crossing subscription (was `Stream.Stream<BoundaryCrossing<StateUnion<B> & string>>`).
 
@@ -63,7 +63,7 @@ No-replay crossing subscription (was `Stream.Stream<BoundaryCrossing<StateUnion<
 
 > `readonly` **state**: [`QuantizerState`](../type-aliases/QuantizerState.md)\<`B`\>
 
-Defined in: [core/src/schema/quantizer-types.ts:72](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/quantizer-types.ts#L72)
+Defined in: [core/src/schema/quantizer-types.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/quantizer-types.ts#L73)
 
 Replay-1 current-state read (was `Effect.Effect<StateUnion<B>>`).
 
@@ -73,7 +73,7 @@ Replay-1 current-state read (was `Effect.Effect<StateUnion<B>>`).
 
 > `readonly` `optional` **stateSync?**: () => [`StateUnion`](../type-aliases/StateUnion.md)\<`B`\>
 
-Defined in: [core/src/schema/quantizer-types.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/quantizer-types.ts#L38)
+Defined in: [core/src/schema/quantizer-types.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/quantizer-types.ts#L39)
 
 Synchronous state accessor for hot paths (avoids reactive read overhead).
 
@@ -91,7 +91,7 @@ Synchronous state accessor for hot paths (avoids reactive read overhead).
 
 > **evaluate**(`value`): [`StateUnion`](../type-aliases/StateUnion.md)\<`B`\>
 
-Defined in: [core/src/schema/quantizer-types.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/quantizer-types.ts#L39)
+Defined in: [core/src/schema/quantizer-types.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/quantizer-types.ts#L40)
 
 #### Parameters
 

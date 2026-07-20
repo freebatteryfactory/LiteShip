@@ -8,11 +8,11 @@
 import { describe, test, expect } from 'vitest';
 // Wave 6: the whole reactive surface is Effect-free — Cell/Store/… on CellKernel,
 // HLC.makeClock returns a plain handle, Compositor.create is sync.
-import { Boundary, Compositor, ContentAddress, Cell, VectorClock, HLC, Plan, Millis } from '@liteship/core';
+import { Boundary, Compositor, ContentAddress, VectorClock, HLC, Plan, Millis, defineBoundary, createCell } from '@liteship/core';
 
 describe('core smoke', () => {
-  test('Boundary.make + evaluate', () => {
-    const b = Boundary.make({
+  test('defineBoundary + evaluate', () => {
+    const b = defineBoundary({
       input: 'x',
       at: [
         [0, 'low'],
@@ -34,8 +34,8 @@ describe('core smoke', () => {
     expect(compositor).toBeDefined();
   });
 
-  test('Cell.make and read', () => {
-    const cell = Cell.make(42);
+  test('createCell and read', () => {
+    const cell = createCell(42);
     expect(cell.read()).toBe(42);
   });
 

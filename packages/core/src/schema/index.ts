@@ -1,7 +1,7 @@
 /**
  * The schema-kernel barrel — the transport-agnostic successor to the now-deleted
  * Effect-AST deriver. It gathers the one surface schema
- * consumers reach for: the `S.*` constructors, type-level `Infer`, the strict
+ * consumers reach for: the `schema.*` constructors, type-level `Infer`, the strict
  * and lenient `decode` contracts with their `DecodeIssue` algebra, the
  * `toJsonSchema` deriver, and the `~standard` (Standard Schema V1) bridge — all
  * over the frozen plain-data AST (`./ast.ts`).
@@ -14,7 +14,7 @@
  */
 
 // ── Constructors + the branded schema value ─────────────────────────────────
-export { S, withArbitrary } from './constructors.js';
+export { schema, withArbitrary } from './constructors.js';
 export { isSchema, annotatedArbitrary } from './ast.js';
 export type {
   Schema,

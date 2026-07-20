@@ -95,12 +95,12 @@ export function primitiveSearchPatterns(
   ]);
 }
 
-/** Factory namespace users type to produce each primitive kind. */
+/** Factory function users call to produce each primitive kind. */
 const KIND_FACTORY: Record<PrimitiveKind, string> = {
-  boundary: 'Boundary',
-  token: 'Token',
-  theme: 'Theme',
-  style: 'Style',
+  boundary: 'defineBoundary',
+  token: 'defineToken',
+  theme: 'defineTheme',
+  style: 'defineStyle',
 };
 
 /**
@@ -126,7 +126,7 @@ export function unresolvedPrimitiveWarning(
   return (
     `Could not resolve ${kind} "${name}" referenced in ${id}:${line}. ` +
     `Searched for an export named "${name}" in: ${searched} (none matched). ` +
-    `Fix: add \`export const ${name} = ${KIND_FACTORY[kind]}.make({ ... })\` to one of those files, ` +
+    `Fix: add \`export const ${name} = ${KIND_FACTORY[kind]}({ ... })\` to one of those files, ` +
     `or point the plugin at your ${kind} definitions: liteship({ dirs: { ${kind}: './path/to/dir' } }).`
   );
 }

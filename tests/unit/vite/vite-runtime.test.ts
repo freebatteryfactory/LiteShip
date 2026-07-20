@@ -8,7 +8,7 @@ vi.mock('../../../packages/vite/src/wasm-package-resolve.js', () => ({ resolvePa
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { Boundary, Diagnostics, Style, Theme, Token } from '@liteship/core';
+import { Diagnostics, defineBoundary, defineToken, defineTheme, defineStyle } from '@liteship/core';
 import { compileQuantizeBlock, parseQuantizeBlocks } from '../../../packages/vite/src/css-quantize.js';
 import * as CSSQuantizeModule from '../../../packages/vite/src/css-quantize.js';
 import { buildEnvironments, getEnvironmentConfig } from '../../../packages/vite/src/environments.js';
@@ -61,24 +61,24 @@ describe('@liteship/vite resolvers', () => {
     const srcDir = join(root, 'src');
     mkdirSync(srcDir, { recursive: true });
 
-    const token = Token.make({
+    const token = defineToken({
       name: 'accent',
       category: 'color',
       axes: ['theme'] as const,
       values: { light: '#ffffff' },
       fallback: '#ffffff',
     });
-    const theme = Theme.make({
+    const theme = defineTheme({
       name: 'brand',
       variants: ['light'] as const,
       tokens: { accent: { light: '#ffffff' } },
       meta: { light: { label: 'Light', mode: 'light' } },
     });
-    const style = Style.make({
+    const style = defineStyle({
       base: { properties: { color: 'var(--liteship-accent)' } },
       states: { compact: { properties: { display: 'block' } } },
     });
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'compact'],
@@ -129,7 +129,7 @@ describe('@liteship/vite resolvers', () => {
     const srcDir = join(root, 'src');
     mkdirSync(srcDir, { recursive: true });
 
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'compact'],
@@ -155,7 +155,7 @@ describe('@liteship/vite resolvers', () => {
 
 describe('@liteship/vite quantize parser', () => {
   test('parses multiline declarations, ignores invalid declarations, and compiles to container queries', () => {
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'mobile'],
@@ -477,24 +477,24 @@ describe('@liteship/vite plugin', () => {
     const srcDir = join(root, 'src');
     mkdirSync(srcDir, { recursive: true });
 
-    const token = Token.make({
+    const token = defineToken({
       name: 'accent',
       category: 'color',
       axes: ['theme'] as const,
       values: { light: '#ffffff' },
       fallback: '#ffffff',
     });
-    const theme = Theme.make({
+    const theme = defineTheme({
       name: 'brand',
       variants: ['light'] as const,
       tokens: { accent: { light: '#ffffff' } },
       meta: { light: { label: 'Light', mode: 'light' } },
     });
-    const style = Style.make({
+    const style = defineStyle({
       base: { properties: { color: 'var(--liteship-accent)' } },
       states: { compact: { properties: { display: 'block' } } },
     });
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'compact'],
@@ -554,7 +554,7 @@ describe('@liteship/vite plugin', () => {
     const cssFile = join(root, 'src', 'broken-quantize.css');
     mkdirSync(join(root, 'src'), { recursive: true });
 
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [[0, 'compact']] as const,
     });
@@ -643,7 +643,7 @@ describe('@liteship/vite plugin', () => {
     const cssDir = join(root, 'src');
     mkdirSync(cssDir, { recursive: true });
 
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'mobile'],
@@ -700,21 +700,21 @@ describe('@liteship/vite plugin', () => {
     const cssDir = join(root, 'src');
     mkdirSync(cssDir, { recursive: true });
 
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'mobile'],
         [768, 'desktop'],
       ] as const,
     });
-    const token = Token.make({
+    const token = defineToken({
       name: 'accent',
       category: 'color',
       axes: ['theme'] as const,
       values: { light: '#ffffff', dark: '#000000' },
       fallback: '#ffffff',
     });
-    const theme = Theme.make({
+    const theme = defineTheme({
       name: 'brand',
       variants: ['light', 'dark'] as const,
       tokens: {
@@ -725,7 +725,7 @@ describe('@liteship/vite plugin', () => {
         dark: { label: 'Dark', mode: 'dark' },
       },
     });
-    const style = Style.make({
+    const style = defineStyle({
       boundary,
       base: {
         properties: {
@@ -800,14 +800,14 @@ describe('@liteship/vite plugin', () => {
     const cssDir = join(root, 'src');
     mkdirSync(cssDir, { recursive: true });
 
-    const widthBoundary = Boundary.make({
+    const widthBoundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'narrow'],
         [768, 'wide'],
       ] as const,
     });
-    const bareBoundary = Boundary.make({
+    const bareBoundary = defineBoundary({
       input: 'viewport',
       at: [
         [0, 'short'],
@@ -876,7 +876,7 @@ describe('@liteship/vite plugin', () => {
     const cssDir = join(root, 'src');
     mkdirSync(cssDir, { recursive: true });
 
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'narrow'],
@@ -927,7 +927,7 @@ describe('@liteship/vite plugin', () => {
     const cssDir = join(root, 'src');
     mkdirSync(cssDir, { recursive: true });
 
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'narrow'],
@@ -972,7 +972,7 @@ describe('@liteship/vite plugin', () => {
     const cssDir = join(root, 'src');
     mkdirSync(cssDir, { recursive: true });
 
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'narrow'],
@@ -1022,7 +1022,7 @@ describe('@liteship/vite plugin', () => {
     const cssDir = join(root, 'src');
     mkdirSync(cssDir, { recursive: true });
 
-    const token = Token.make({
+    const token = defineToken({
       name: 'accent',
       category: 'color',
       axes: ['theme'] as const,
@@ -1090,20 +1090,20 @@ describe('@liteship/vite plugin', () => {
     const cssFile = join(root, 'src', 'unmatched.css');
     mkdirSync(join(root, 'src'), { recursive: true });
 
-    const token = Token.make({
+    const token = defineToken({
       name: 'accent',
       category: 'color',
       axes: ['theme'] as const,
       values: { light: '#ffffff' },
       fallback: '#ffffff',
     });
-    const theme = Theme.make({
+    const theme = defineTheme({
       name: 'brand',
       variants: ['light'] as const,
       tokens: { accent: { light: '#ffffff' } },
       meta: { light: { label: 'Light', mode: 'light' } },
     });
-    const style = Style.make({
+    const style = defineStyle({
       base: { properties: { color: 'var(--liteship-accent)' } },
       states: { compact: { properties: { display: 'block' } } },
     });
@@ -1144,21 +1144,21 @@ describe('@liteship/vite plugin', () => {
     const cssDir = join(root, 'src');
     mkdirSync(cssDir, { recursive: true });
 
-    const token = Token.make({
+    const token = defineToken({
       name: 'accent',
       category: 'color',
       axes: ['theme'] as const,
       values: { light: '#ffffff' },
       fallback: '#ffffff',
     });
-    const tokenExtra = Token.make({
+    const tokenExtra = defineToken({
       name: 'accentx',
       category: 'color',
       axes: ['theme'] as const,
       values: { light: '#ff00ff' },
       fallback: '#ff00ff',
     });
-    const style = Style.make({
+    const style = defineStyle({
       base: {
         properties: {
           color: 'var(--liteship-accent)',
@@ -1223,7 +1223,7 @@ describe('@liteship/vite plugin', () => {
     const cssDir = join(root, 'src');
     mkdirSync(cssDir, { recursive: true });
 
-    const style = Style.make({
+    const style = defineStyle({
       base: { properties: { color: 'black' } },
       states: { compact: { properties: { background: 'black' } } },
     });
@@ -1249,7 +1249,7 @@ describe('@liteship/vite plugin', () => {
     const cssDir = join(root, 'src');
     mkdirSync(cssDir, { recursive: true });
 
-    const style = Style.make({
+    const style = defineStyle({
       base: {
         properties: {
           color: 'var(--liteship-accent)',
@@ -1263,7 +1263,7 @@ describe('@liteship/vite plugin', () => {
         },
       },
     });
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [[0, 'compact']] as const,
     });
@@ -1394,7 +1394,7 @@ describe('@liteship/vite plugin', () => {
         ].join('\n\n'),
         cssFile,
       ),
-    ).rejects.toThrow('boundary "missingBoundary" referenced in @quantize not found (declare it with Boundary.make)');
+    ).rejects.toThrow('boundary "missingBoundary" referenced in @quantize not found (declare it with defineBoundary)');
 
     expect(warnings).toEqual([
       expect.stringContaining('Could not resolve theme "missingTheme"'),
@@ -1408,7 +1408,7 @@ describe('@liteship/vite plugin', () => {
     const boundaryDir = join(srcDir, 'lib');
     mkdirSync(boundaryDir, { recursive: true });
 
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'compact'],
@@ -1448,21 +1448,21 @@ describe('@liteship/vite plugin', () => {
     const cssDir = join(root, 'src');
     mkdirSync(cssDir, { recursive: true });
 
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'mobile'],
         [768, 'desktop'],
       ] as const,
     });
-    const token = Token.make({
+    const token = defineToken({
       name: 'accent',
       category: 'color',
       axes: ['theme'] as const,
       values: { light: '#ffffff' },
       fallback: '#ffffff',
     });
-    const theme = Theme.make({
+    const theme = defineTheme({
       name: 'brand',
       variants: ['light'] as const,
       tokens: {
@@ -1472,7 +1472,7 @@ describe('@liteship/vite plugin', () => {
         light: { label: 'Light', mode: 'light' },
       },
     });
-    const style = Style.make({
+    const style = defineStyle({
       base: {
         properties: {
           color: 'var(--liteship-accent)',
@@ -1551,14 +1551,14 @@ describe('@liteship/vite plugin', () => {
     const cssDir = join(root, 'src');
     mkdirSync(cssDir, { recursive: true });
 
-    const token = Token.make({
+    const token = defineToken({
       name: 'accent',
       category: 'color',
       axes: ['theme'] as const,
       values: { light: '#ffffff' },
       fallback: '#ffffff',
     });
-    const theme = Theme.make({
+    const theme = defineTheme({
       name: 'brand',
       variants: ['light'] as const,
       tokens: {
@@ -1669,21 +1669,21 @@ describe('@liteship/vite plugin', () => {
     const cssDir = join(root, 'src');
     mkdirSync(cssDir, { recursive: true });
 
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'mobile'],
         [768, 'desktop'],
       ] as const,
     });
-    const token = Token.make({
+    const token = defineToken({
       name: 'accent',
       category: 'color',
       axes: ['theme'] as const,
       values: { light: '#ffffff' },
       fallback: '#ffffff',
     });
-    const style = Style.make({
+    const style = defineStyle({
       base: { properties: { color: 'var(--liteship-accent)' } },
       states: {
         compact: {
@@ -1736,7 +1736,7 @@ describe('@liteship/vite plugin', () => {
     const cssDir = join(root, 'src');
     mkdirSync(cssDir, { recursive: true });
 
-    const token = Token.make({
+    const token = defineToken({
       name: 'accent',
       category: 'color',
       axes: ['theme'] as const,

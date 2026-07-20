@@ -8,14 +8,14 @@
 
 > **OutputTarget** = [`QualityTierTarget`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/QualityTierTarget.md)
 
-Defined in: [quantizer/src/quantizer.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L67)
+Defined in: [quantizer/src/quantizer.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L68)
 
 Compilation target for quantizer per-state outputs.
 
 `css` emits style declarations, `glsl`/`wgsl` emit shader uniforms,
 `aria` emits accessibility attributes, `ai` emits model-facing signals.
 MotionTier gates which targets a device is permitted to receive; see
-[QuantizerFromOptions.tier](../interfaces/QuantizerFromOptions.md#tier) for the tier → targets table.
+[DefineQuantizerOptions.tier](../interfaces/DefineQuantizerOptions.md#tier) for the tier → targets table.
 
 Aliases `@liteship/core`'s [QualityTierTarget](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/QualityTierTarget.md) — the shared codomain of the
 capability-admissibility quality-tier scale both this gate and the core escalation

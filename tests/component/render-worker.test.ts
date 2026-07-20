@@ -6,7 +6,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { Boundary, Diagnostics } from '@liteship/core';
+import { Boundary, Diagnostics, defineBoundary } from '@liteship/core';
 import { RenderWorker } from '@liteship/worker';
 import { MockWorker } from '../helpers/mock-worker.js';
 
@@ -204,7 +204,7 @@ describe('evaluateThresholds (render-worker inline logic)', () => {
   });
 
   test('agrees with Boundary.evaluate across a range of values', () => {
-    const bp = Boundary.make({
+    const bp = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'mobile'] as const,

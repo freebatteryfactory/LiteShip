@@ -18,7 +18,7 @@
  *
  * @module
  */
-import { S, type CapsuleCommandResult, type CommandJsonSchema } from '@liteship/core';
+import { type CapsuleCommandResult, type CommandJsonSchema, schema } from '@liteship/core';
 import type { Finding } from '@liteship/gauntlet';
 import { capabilityUnavailable, defineCommand, failed, ok, type CommandCapability } from '../registry.js';
 
@@ -103,7 +103,7 @@ export const checkCommand = defineCommand({
     outputSchema: CheckPayloadSchema,
     annotations: { readOnly: true, mcpExposed: true, group: 'castoff' },
   },
-  argsSchema: S.struct({ globs: S.optional(S.array(S.string)) }),
+  argsSchema: schema.struct({ globs: schema.optional(schema.array(schema.string)) }),
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
     // Direct-invocation guard; the dispatcher already enforces `requires`.
     if (!context.runGauntlet) return capabilityUnavailable('check', ['runGauntlet']);

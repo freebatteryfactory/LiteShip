@@ -324,7 +324,7 @@ export interface ResolvedStateAckPayload {
 
 /**
  * The boundary surface addQuantizer derives a registration from —
- * structurally satisfied by a `Boundary.make` result from @liteship/core.
+ * structurally satisfied by a `defineBoundary` result from @liteship/core.
  */
 export interface QuantizerBoundarySource {
   readonly id: ContentAddress;
@@ -339,7 +339,7 @@ export interface CompositorWorkerShape {
   readonly worker: Worker;
   /** Runtime coordination surface (internal shape, see @liteship/core RuntimeCoordinator). */
   readonly runtime: unknown;
-  /** Register a quantizer from a Boundary.make result; name defaults to boundary.input. */
+  /** Register a quantizer from a defineBoundary result; name defaults to boundary.input. */
   addQuantizer(boundary: QuantizerBoundarySource): void;
   addQuantizer(
     name: string,

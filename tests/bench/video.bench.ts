@@ -7,7 +7,7 @@ import { Bench } from 'tinybench';
 // (the compositor's preferred hot-path accessor) and `evaluate`; the reactive
 // CellKernel `state` lives on ReactiveQuantizer, which this fixture doesn't need.
 // Compositor.create/add/compute went synchronous in the core-seams wave.
-import { Scheduler, VideoRenderer, Compositor, Boundary, Millis } from '@liteship/core';
+import { Scheduler, VideoRenderer, Compositor, Boundary, Millis, defineBoundary } from '@liteship/core';
 
 const bench = new Bench({ warmupIterations: 50 });
 
@@ -15,7 +15,7 @@ const bench = new Bench({ warmupIterations: 50 });
 // Fixtures
 // ---------------------------------------------------------------------------
 
-const widthBoundary = Boundary.make({
+const widthBoundary = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'mobile'],

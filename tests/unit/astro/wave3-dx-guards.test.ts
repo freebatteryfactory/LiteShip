@@ -28,7 +28,7 @@
  */
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 import * as fc from 'fast-check';
-import { Boundary, Diagnostics } from '@liteship/core';
+import { Diagnostics, defineBoundary } from '@liteship/core';
 import {
   satelliteAttrs,
   resolveInitialState,
@@ -68,7 +68,7 @@ const arbBoundary = fc.uniqueArray(stateLabel, { minLength: 1, maxLength: 5 }).c
       const thresholds = [...rawThresholds].sort((a, b) => a - b);
       thresholds[0] = 0; // pin the floor so states[0] is the absolute fallback
       const at = states.map((s, i) => [thresholds[i]!, s] as const);
-      return Boundary.make({
+      return defineBoundary({
         input: 'viewport.width',
         at: at as never,
       });
@@ -139,7 +139,7 @@ describe('LESSON (#91): resolveInitialState degrades gracefully on absent contex
   });
 
   test('empty-context resolution agrees with the tier-default branch', () => {
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'compact'],

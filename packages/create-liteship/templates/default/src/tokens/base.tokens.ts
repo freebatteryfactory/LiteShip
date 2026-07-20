@@ -1,6 +1,6 @@
-import { Token } from '@liteship/core';
+import { defineToken } from '@liteship/core';
 
-export const fontSizeSm = Token.make({
+export const fontSizeSm = defineToken({
   name: 'font-size-sm',
   category: 'typography',
   axes: ['theme'] as const,
@@ -8,7 +8,7 @@ export const fontSizeSm = Token.make({
   fallback: '0.875rem',
 });
 
-export const fontSizeMd = Token.make({
+export const fontSizeMd = defineToken({
   name: 'font-size-md',
   category: 'typography',
   axes: ['theme'] as const,
@@ -16,7 +16,7 @@ export const fontSizeMd = Token.make({
   fallback: '1rem',
 });
 
-export const fontSizeLg = Token.make({
+export const fontSizeLg = defineToken({
   name: 'font-size-lg',
   category: 'typography',
   axes: ['theme'] as const,
@@ -24,7 +24,7 @@ export const fontSizeLg = Token.make({
   fallback: '1.25rem',
 });
 
-export const spacingSm = Token.make({
+export const spacingSm = defineToken({
   name: 'spacing-sm',
   category: 'spacing',
   axes: ['theme'] as const,
@@ -32,7 +32,7 @@ export const spacingSm = Token.make({
   fallback: '0.5rem',
 });
 
-export const spacingMd = Token.make({
+export const spacingMd = defineToken({
   name: 'spacing-md',
   category: 'spacing',
   axes: ['theme'] as const,
@@ -40,7 +40,7 @@ export const spacingMd = Token.make({
   fallback: '1rem',
 });
 
-export const spacingLg = Token.make({
+export const spacingLg = defineToken({
   name: 'spacing-lg',
   category: 'spacing',
   axes: ['theme'] as const,
@@ -48,7 +48,7 @@ export const spacingLg = Token.make({
   fallback: '2rem',
 });
 
-export const colorText = Token.make({
+export const colorText = defineToken({
   name: 'color-text',
   category: 'color',
   axes: ['theme'] as const,
@@ -56,7 +56,7 @@ export const colorText = Token.make({
   fallback: '#1a1a2e',
 });
 
-export const colorSurface = Token.make({
+export const colorSurface = defineToken({
   name: 'color-surface',
   category: 'color',
   axes: ['theme'] as const,

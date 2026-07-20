@@ -1,14 +1,14 @@
 /** Fixture: exports a sceneComposition capsule + contract, but the
  * compileScene function throws — exercises scene-compile's try/catch
  * fallback path. */
-import { defineCapsule, S } from '@liteship/core';
+import { defineCapsule, schema } from '@liteship/core';
 import type { SceneContract } from '@liteship/scene';
 
 export const broken = defineCapsule({
   _kind: 'sceneComposition',
   name: 'fixture.broken',
-  input: S.unknown,
-  output: S.unknown,
+  input: schema.unknown,
+  output: schema.unknown,
   capabilities: { reads: [], writes: [] },
   invariants: [],
   budgets: { p95Ms: 1 },

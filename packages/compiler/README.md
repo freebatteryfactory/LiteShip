@@ -17,10 +17,10 @@ pnpm add @liteship/compiler @liteship/core
 ## 30 seconds
 
 ```ts
-import { Boundary } from '@liteship/core';
+import { defineBoundary } from '@liteship/core';
 import { CSSCompiler } from '@liteship/compiler';
 
-const width = Boundary.make({
+const width = defineBoundary({
   input: 'width',
   at: [[0, 'sm'], [768, 'lg']],
 });

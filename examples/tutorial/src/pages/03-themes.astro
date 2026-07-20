@@ -7,7 +7,7 @@
  * variant and all tokens update together.
  *
  * In this tutorial you will:
- *   1. Define a theme with light and dark variants using Theme.make()
+ *   1. Define a theme with light and dark variants using defineTheme()
  *   2. See how themes map to the data-theme attribute on <html>
  *   3. Build a theme toggle button
  *   4. Learn about @theme CSS blocks compiled by @liteship/vite
@@ -15,12 +15,12 @@
  */
 
 import Base from '../layouts/Base.astro';
-import { Theme } from '@liteship/core';
+import { Theme, defineTheme } from '@liteship/core';
 
 // Define a simple theme with light and dark variants.
 // Each key in `tokens` is a token name; each value is a map of
 // variant name to design value.
-const brandTheme = Theme.make({
+const brandTheme = defineTheme({
   name: 'brand',
   variants: ['light', 'dark'],
   tokens: {
@@ -70,7 +70,7 @@ const darkTokens = Theme.tap(brandTheme, 'dark');
   <p>
     A <strong>theme</strong> groups tokens into coherent variants. Switch
     one attribute and every color, spacing, and shadow value updates
-    together. Themes use <code>Theme.make()</code> from <code>@liteship/core</code>.
+    together. Themes use <code>defineTheme()</code> from <code>@liteship/core</code>.
   </p>
 
   <div class="note">
@@ -83,7 +83,7 @@ const darkTokens = Theme.tap(brandTheme, 'dark');
   <!-- ============================================================
        STEP 2: Defining a Theme
 
-       Theme.make() takes:
+       defineTheme() takes:
          - name:     identifier for the theme
          - variants: the named modes (light, dark, etc.)
          - tokens:   a map of token names to variant-keyed values
@@ -95,9 +95,9 @@ const darkTokens = Theme.tap(brandTheme, 'dark');
 
   <h2>The Definition</h2>
 
-  <pre><code>import {'{'} Theme {'}'} from '@liteship/core';
+  <pre><code>import {'{'} Theme, defineTheme {'}'} from '@liteship/core';
 
-const brandTheme = Theme.make({'{'}&br;
+const brandTheme = defineTheme({'{'}&br;
   name: 'brand',
   variants: ['light', 'dark'],
   tokens: {'{'}&br;
@@ -306,7 +306,7 @@ const brandTheme = Theme.make({'{'}&br;
   <h2>What You Learned</h2>
 
   <ul>
-    <li><code>Theme.make()</code> groups tokens into named variants.</li>
+    <li><code>defineTheme()</code> groups tokens into named variants.</li>
     <li><code>Theme.tap(theme, variant)</code> resolves all tokens for a variant.</li>
     <li><code>data-theme</code> attribute controls the active variant via CSS cascade.</li>
     <li><code>@theme</code> CSS blocks compile to <code>[data-theme]</code> selectors.</li>

@@ -4,9 +4,9 @@
  * Define boundaries, tokens, themes, and styles here.
  * This config is picked up by @liteship/vite and @liteship/astro automatically.
  */
-import { defineConfig, Boundary } from '@liteship/core';
+import { defineConfig, defineBoundary } from '@liteship/core';
 
-const viewport = Boundary.make({
+const viewport = defineBoundary({
   input: 'viewport.width',
   at: [
     [0,    'mobile'],

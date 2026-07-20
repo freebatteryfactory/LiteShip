@@ -16,7 +16,7 @@ Zero runtime deps — it pulls in nothing. Each variant is a plain `_tag` record
 import { ValidationError, ParseError, hasTag, matchTag } from '@liteship/error';
 
 // A variant is a VALUE and a TYPE. Throw it — it's a real Error:
-throw ValidationError('Boundary.make', 'width must be > 0');
+throw ValidationError('defineBoundary', 'width must be > 0');
 
 // Branch on the tag, not `instanceof`. `hasTag` narrows:
 if (hasTag(caught, 'ParseError')) report(caught.source, caught.offset);

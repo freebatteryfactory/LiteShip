@@ -8,7 +8,7 @@
 
 > **Timeline**\<`B`\> = `TimelineShape`\<`B`\>
 
-Defined in: [core/src/motion/timeline.ts:80](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/timeline.ts#L80)
+Defined in: [core/src/motion/timeline.ts:188](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/timeline.ts#L188)
 
 Public structural type for `Timeline`.
 

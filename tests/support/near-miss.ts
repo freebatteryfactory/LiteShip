@@ -1,7 +1,7 @@
 /**
  * near-miss — auto-derived strictness mutators for the schema kernel (scar S1.1).
  *
- * The EdgeSeed scar: an arity-2 tuple silently widened to `S.array(S.number)`
+ * The EdgeSeed scar: an arity-2 tuple silently widened to `schema.array(schema.number)`
  * during the Wave-0 migration (the kernel had no tuple node), and EVERY existing
  * test stayed green because tests feed VALID values — a happy-path blind spot. The
  * disposition (master plan Methodology §7 / scar-ledger S1.1) is to derive

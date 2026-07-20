@@ -146,10 +146,10 @@ function toStructName(input: string): string {
  *
  * @example
  * ```ts
- * import { Boundary } from '@liteship/core';
+ * import { defineBoundary } from '@liteship/core';
  * import { WGSLCompiler } from '@liteship/compiler';
  *
- * const boundary = Boundary.make({
+ * const boundary = defineBoundary({
  *   input: 'viewport',
  *   at: [[0, 'mobile'], [768, 'desktop']],
  * });
@@ -274,10 +274,10 @@ function serialize(result: WGSLCompileResult): string {
  *
  * @example
  * ```ts
- * import { Boundary } from '@liteship/core';
+ * import { defineBoundary } from '@liteship/core';
  * import { WGSLCompiler } from '@liteship/compiler';
  *
- * const boundary = Boundary.make({
+ * const boundary = defineBoundary({
  *   input: 'viewport',
  *   at: [[0, 'sm'], [768, 'lg']],
  * });

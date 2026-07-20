@@ -15,7 +15,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import { Boundary, Theme, Token } from '@liteship/core';
+import { defineBoundary, defineToken, defineTheme } from '@liteship/core';
 import { transformCss, type TransformCssContext } from '../../../packages/vite/src/transform-css.js';
 import {
   createPrimitiveResolutionCache,
@@ -84,20 +84,20 @@ describe('transformCss (standalone, no plugin lifecycle)', () => {
     const srcDir = join(root, 'src');
     mkdirSync(srcDir, { recursive: true });
 
-    const token = Token.make({
+    const token = defineToken({
       name: 'accent',
       category: 'color',
       axes: ['theme'] as const,
       values: { light: '#ffffff', dark: '#000000' },
       fallback: '#ffffff',
     });
-    const theme = Theme.make({
+    const theme = defineTheme({
       name: 'brand',
       variants: ['light', 'dark'] as const,
       tokens: { accent: { light: '#ffffff', dark: '#000000' } },
       meta: { light: { label: 'Light', mode: 'light' }, dark: { label: 'Dark', mode: 'dark' } },
     });
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'mobile'],
@@ -137,7 +137,7 @@ describe('transformCss (standalone, no plugin lifecycle)', () => {
     const srcDir = join(root, 'src');
     mkdirSync(srcDir, { recursive: true });
 
-    const token = Token.make({
+    const token = defineToken({
       name: 'accent',
       category: 'color',
       axes: ['theme'] as const,
@@ -183,14 +183,14 @@ describe('transformCss (standalone, no plugin lifecycle)', () => {
     const srcDir = join(root, 'src');
     mkdirSync(srcDir, { recursive: true });
 
-    const widthBoundary = Boundary.make({
+    const widthBoundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'narrow'],
         [768, 'wide'],
       ] as const,
     });
-    const bareBoundary = Boundary.make({
+    const bareBoundary = defineBoundary({
       input: 'viewport',
       at: [
         [0, 'short'],
@@ -227,7 +227,7 @@ describe('transformCss (standalone, no plugin lifecycle)', () => {
     const srcDir = join(root, 'src');
     mkdirSync(srcDir, { recursive: true });
 
-    const token = Token.make({
+    const token = defineToken({
       name: 'accent',
       category: 'color',
       axes: ['theme'] as const,

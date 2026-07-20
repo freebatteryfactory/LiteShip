@@ -3,7 +3,7 @@ import { build, type RollupOutput } from 'vite';
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { Boundary } from '@liteship/core';
+import { defineBoundary } from '@liteship/core';
 import { plugin } from '@liteship/vite';
 import type { BoundaryManifestFile } from '@liteship/edge';
 
@@ -13,7 +13,7 @@ describe('emitBoundaryAssets', () => {
     try {
       const src = join(dir, 'src');
       mkdirSync(src, { recursive: true });
-      const boundary = Boundary.make({
+      const boundary = defineBoundary({
         input: 'viewport.width',
         at: [
           [0, 'compact'],

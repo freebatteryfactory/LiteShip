@@ -17,7 +17,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { Boundary, BoundaryAttribute } from '@liteship/core';
+import { BoundaryAttribute, defineBoundary } from '@liteship/core';
 import { ARIACompiler } from '@liteship/compiler';
 import { normalizeBoundaryState } from '../../packages/astro/src/runtime/boundary.js';
 
@@ -28,7 +28,7 @@ const attrs = Object.fromEntries(KEYS.map((k) => [k, 'x']));
 
 describe('A4 — compiler + astro share the core BoundaryAttribute predicate', () => {
   it('ARIACompiler keeps exactly the keys core allows', () => {
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'a'],

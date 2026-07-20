@@ -130,10 +130,10 @@ function appendComment(line: string, comment: string): string {
  *
  * @example
  * ```ts
- * import { Boundary } from '@liteship/core';
+ * import { defineBoundary } from '@liteship/core';
  * import { GLSLCompiler } from '@liteship/compiler';
  *
- * const boundary = Boundary.make({
+ * const boundary = defineBoundary({
  *   input: 'width',
  *   at: [[0, 'mobile'], [768, 'desktop']],
  * });
@@ -297,10 +297,10 @@ function serialize(result: GLSLCompileResult): string {
  *
  * @example
  * ```ts
- * import { Boundary } from '@liteship/core';
+ * import { defineBoundary } from '@liteship/core';
  * import { GLSLCompiler } from '@liteship/compiler';
  *
- * const boundary = Boundary.make({
+ * const boundary = defineBoundary({
  *   input: 'width',
  *   at: [[0, 'sm'], [768, 'lg']],
  * });

@@ -157,7 +157,7 @@ Astro 7 may also emit `dist/server/wrangler.json` on build; keep your source `wr
 
 ### Middleware (KV wiring)
 
-The boundary cache config is **derived at build time**. The `@liteship/vite` plugin scans your boundary modules (`boundaries.ts` / `*.boundaries.ts`) and `@quantize` CSS blocks, then serves the result as the `virtual:liteship/boundaries` manifest: each entry carries the boundary's minted content address (`Boundary.make`'s `id`, `fnv1a:xxxxxxxx`) plus precompiled outputs for every (motion x design) tier. Hand the manifest to the middleware — never hand-type a boundary id:
+The boundary cache config is **derived at build time**. The `@liteship/vite` plugin scans your boundary modules (`boundaries.ts` / `*.boundaries.ts`) and `@quantize` CSS blocks, then serves the result as the `virtual:liteship/boundaries` manifest: each entry carries the boundary's minted content address (`defineBoundary`'s `id`, `fnv1a:xxxxxxxx`) plus precompiled outputs for every (motion x design) tier. Hand the manifest to the middleware — never hand-type a boundary id:
 
 ```typescript
 // src/middleware.ts
@@ -180,7 +180,7 @@ For editor types on the virtual module, add to `src/env.d.ts`:
 
 The build also emits `liteship-boundary-manifest.json` into the output directory (via the `@liteship/astro` integration's `astro:build:done` hook) for hosts that read the manifest from disk instead of importing the virtual module.
 
-**Escape hatch:** custom hosts can still pass `boundaryId` + `compile` directly. `boundaryId` must be a real minted address (`Boundary.make(...).id`) — the KV keyspace is content-addressed, so a fabricated id breaks content-addressing (the cache could then serve another boundary's CSS). A `compile` callback may also be combined with `manifest` as a fallback for tiers the manifest does not cover.
+**Escape hatch:** custom hosts can still pass `boundaryId` + `compile` directly. `boundaryId` must be a real minted address (`defineBoundary(...).id`) — the KV keyspace is content-addressed, so a fabricated id breaks content-addressing (the cache could then serve another boundary's CSS). A `compile` callback may also be combined with `manifest` as a fallback for tiers the manifest does not cover.
 
 Bindings are read from the `cloudflare:workers` `env` at request time.
 
@@ -232,7 +232,7 @@ export default defineConfig({
       binding: 'LITESHIP_BOUNDARY_CACHE',
       prefix: 'my-deploy',
       // Optional exact route path -> boundary id map for native path invalidation.
-      pathBoundaries: { '/products': '<Boundary.make(...).id>' },
+      pathBoundaries: { '/products': '<defineBoundary(...).id>' },
     }),
   },
   routeRules: {
@@ -266,7 +266,7 @@ Same browser CSP as [Required CSP directives](#required-csp-directives) above. I
 
 ### KV trust boundary
 
-Treat KV as a host-controlled cache — not a secrets store. A KV entry is keyed by the boundary's content address (`Boundary.make`'s FNV-1a address per ADR-0003), the device tier, the boundary name, and a fingerprint of the resolved theme — so an entry only serves a request whose inputs match. `ttl` and `prefix` are configurable on `cloudflareMiddleware`; `prefix` doubles as a per-deploy content version, which a bundled `compile()` whose output depends on build-time content the boundary id doesn't cover must bump. Deploys that change boundary content mint new content addresses, stranding the old keys (never re-read) — Workers KV never evicts and bills storage, so set `ttl` (e.g. `2592000` = 30 days) to reclaim them. Requests whose tier is covered by the manifest are served from the bundle without touching KV at all (`cacheStatus: 'precompiled'`); KV only backs the `compile` fallback path.
+Treat KV as a host-controlled cache — not a secrets store. A KV entry is keyed by the boundary's content address (`defineBoundary`'s FNV-1a address per ADR-0003), the device tier, the boundary name, and a fingerprint of the resolved theme — so an entry only serves a request whose inputs match. `ttl` and `prefix` are configurable on `cloudflareMiddleware`; `prefix` doubles as a per-deploy content version, which a bundled `compile()` whose output depends on build-time content the boundary id doesn't cover must bump. Deploys that change boundary content mint new content addresses, stranding the old keys (never re-read) — Workers KV never evicts and bills storage, so set `ttl` (e.g. `2592000` = 30 days) to reclaim them. Requests whose tier is covered by the manifest are served from the bundle without touching KV at all (`cacheStatus: 'precompiled'`); KV only backs the `compile` fallback path.
 
 ## Responsive media under Save-Data (Astro + Cloudflare)
 

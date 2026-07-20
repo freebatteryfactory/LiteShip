@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import { Boundary, Millis, Scheduler, Timeline } from '@liteship/core';
+import { Millis, Scheduler, defineBoundary, createTimeline } from '@liteship/core';
 
 /**
  * Timeline<B> — Wave 6 plain CellKernel transport (Effect-free). RED-FIRST law
- * table for the swap onto {@link CellKernel.replay1}: plain `Timeline.from` +
+ * table for the swap onto {@link CellKernel.replay1}: plain `createTimeline` +
  * injected `Scheduler`; `state`/`progress`/`elapsed` sync reads; play/pause/
  * seek/scrub/reverse sync; the state channel dedups (EmissionPolicy {distinct} —
  * the hand-rolled `newState !== oldState` guard is the product law); disposal via
@@ -13,7 +13,7 @@ import { Boundary, Millis, Scheduler, Timeline } from '@liteship/core';
  */
 
 const makeBoundary = () =>
-  Boundary.make({
+  defineBoundary({
     input: 'time.elapsed',
     at: [
       [0, 'idle'],
@@ -30,7 +30,7 @@ describe('Timeline runtime behavior', () => {
 
   test('loops forward and backward with a fixed-step scheduler', () => {
     const scheduler = Scheduler.fixedStep(10);
-    const timeline = Timeline.from(makeBoundary(), {
+    const timeline = createTimeline(makeBoundary(), {
       duration: Millis(200),
       loop: true,
       scheduler,
@@ -76,7 +76,7 @@ describe('Timeline runtime behavior', () => {
       cb?.(now);
     };
 
-    const timeline = Timeline.from(makeBoundary(), { duration: Millis(200), scheduler });
+    const timeline = createTimeline(makeBoundary(), { duration: Millis(200), scheduler });
     timeline.subscribe((s) => {
       // Throw when the idle→active edge is delivered.
       if (s === 'active') throw new Error('state subscriber boom');
@@ -101,7 +101,7 @@ describe('Timeline runtime behavior', () => {
     // scheduler ticks before play(). fixedStep(10) feeds now = 0,100,200; without
     // play() every tick is a no-op, so elapsed/state stay at their initial values.
     const scheduler = Scheduler.fixedStep(10);
-    const timeline = Timeline.from(makeBoundary(), { duration: Millis(200), scheduler });
+    const timeline = createTimeline(makeBoundary(), { duration: Millis(200), scheduler });
 
     scheduler.step();
     scheduler.step();
@@ -118,7 +118,7 @@ describe('Timeline runtime behavior', () => {
     // `now + lastTime` (=300) diverge — pinning the subtraction. Duration is large
     // so no clamp masks the delta.
     const scheduler = Scheduler.fixedStep(10);
-    const timeline = Timeline.from(makeBoundary(), { duration: Millis(10_000), scheduler });
+    const timeline = createTimeline(makeBoundary(), { duration: Millis(10_000), scheduler });
 
     timeline.play();
     scheduler.step(); // now=0   → lastTime=0 (no advance)
@@ -145,7 +145,7 @@ describe('Timeline runtime behavior', () => {
     });
     vi.stubGlobal('cancelAnimationFrame', cancelAnimationFrameSpy);
 
-    const timeline = Timeline.from(makeBoundary(), { duration: Millis(250) });
+    const timeline = createTimeline(makeBoundary(), { duration: Millis(250) });
 
     callbacks.get(1)?.(0);
     timeline.play();
@@ -164,12 +164,12 @@ describe('Timeline runtime behavior', () => {
     vi.stubGlobal('cancelAnimationFrame', undefined);
 
     // A degenerate boundary with NO thresholds exercises the `duration = 1000`
-    // fallback + the noop scheduler. `Boundary.make` always yields a non-empty
+    // fallback + the noop scheduler. `defineBoundary` always yields a non-empty
     // threshold list, so override an existing (fully-branded) boundary's
     // thresholds to empty — evaluate then returns states[0] ('idle') for any value.
     const boundary: ReturnType<typeof makeBoundary> = { ...makeBoundary(), thresholds: [] };
 
-    const timeline = Timeline.from(boundary);
+    const timeline = createTimeline(boundary);
 
     timeline.seek(Millis(1_500));
     timeline.scrub(2);
@@ -182,7 +182,7 @@ describe('Timeline runtime behavior', () => {
   });
 
   test('derives the default duration from the final threshold when none is provided', () => {
-    const timeline = Timeline.from(makeBoundary());
+    const timeline = createTimeline(makeBoundary());
 
     timeline.seek(Millis(400));
 
@@ -195,7 +195,7 @@ describe('Timeline runtime behavior', () => {
 
   test('clamps seek and scrub operations while only updating state when it changes', () => {
     const scheduler = Scheduler.fixedStep(60);
-    const timeline = Timeline.from(makeBoundary(), {
+    const timeline = createTimeline(makeBoundary(), {
       duration: Millis(200),
       scheduler,
     });
@@ -219,14 +219,14 @@ describe('Timeline runtime behavior', () => {
 
 describe('Timeline — state channel subscribe + {distinct} dedup', () => {
   test('subscribe replays the current state synchronously', () => {
-    const timeline = Timeline.from(makeBoundary(), { duration: Millis(200) });
+    const timeline = createTimeline(makeBoundary(), { duration: Millis(200) });
     const got: string[] = [];
     timeline.subscribe((s) => got.push(s));
     expect(got).toEqual(['idle']);
   });
 
   test('a seek into the SAME state is NOT re-published (distinct); a state change is', () => {
-    const timeline = Timeline.from(makeBoundary(), { duration: Millis(200) });
+    const timeline = createTimeline(makeBoundary(), { duration: Millis(200) });
     const got: string[] = [];
     timeline.subscribe((s) => got.push(s));
     timeline.seek(Millis(150)); // idle -> active (published)
@@ -237,7 +237,7 @@ describe('Timeline — state channel subscribe + {distinct} dedup', () => {
   });
 
   test('the FIRST publish of the initial state is suppressed (seeded {distinct})', () => {
-    const timeline = Timeline.from(makeBoundary(), { duration: Millis(200) });
+    const timeline = createTimeline(makeBoundary(), { duration: Millis(200) });
     const got: string[] = [];
     timeline.subscribe((s) => got.push(s));
     timeline.seek(Millis(30)); // still 'idle' — must NOT re-deliver (matches the old slot-compare guard)
@@ -253,7 +253,7 @@ describe('Timeline — state channel subscribe + {distinct} dedup', () => {
 describe('Timeline — disposal via Lifetime', () => {
   test('disposing cancels the scheduler so a later tick does not advance', () => {
     const scheduler = Scheduler.fixedStep(10);
-    const timeline = Timeline.from(makeBoundary(), { duration: Millis(200), scheduler });
+    const timeline = createTimeline(makeBoundary(), { duration: Millis(200), scheduler });
 
     timeline.play();
     scheduler.step(); // first tick primes lastTime (no advance)
@@ -266,7 +266,7 @@ describe('Timeline — disposal via Lifetime', () => {
   });
 
   test('disposing completes state subscribers once and stops delivery', async () => {
-    const timeline = Timeline.from(makeBoundary(), { duration: Millis(200), scheduler: Scheduler.fixedStep(10) });
+    const timeline = createTimeline(makeBoundary(), { duration: Millis(200), scheduler: Scheduler.fixedStep(10) });
     const got: string[] = [];
     let completed = 0;
     timeline.subscribe({ next: (s) => got.push(s), complete: () => (completed += 1) });
@@ -302,7 +302,7 @@ describe('Timeline — disposal via Lifetime', () => {
       cb?.(now);
     };
 
-    const timeline = Timeline.from(makeBoundary(), { duration: Millis(200), scheduler });
+    const timeline = createTimeline(makeBoundary(), { duration: Millis(200), scheduler });
     expect(scheduleCount).toBe(1); // construction armed the first callback
 
     // Dispose the instant the state actually CHANGES (idle -> active); {distinct}

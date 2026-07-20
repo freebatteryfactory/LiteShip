@@ -50,7 +50,7 @@ manifest export name). Exclusive with the top-level
 
 Defined in: [edge/src/host-adapter.ts:113](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L113)
 
-Content address of the boundary being compiled (`Boundary.make`'s
+Content address of the boundary being compiled (`defineBoundary`'s
 `id`). Single-boundary form; exclusive with `boundaries`.
 
 ***

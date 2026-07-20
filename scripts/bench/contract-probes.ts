@@ -30,11 +30,11 @@
  * @module
  */
 
-import { Boundary, contentAddressOf } from '@liteship/core';
+import { Boundary, contentAddressOf, defineBoundary } from '@liteship/core';
 import type { ComplexityProbe } from './contracts.ts';
 
 /** A fixed 3-threshold boundary the batch probe evaluates many values against. */
-const PROBE_BOUNDARY = Boundary.make({
+const PROBE_BOUNDARY = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'mobile'],

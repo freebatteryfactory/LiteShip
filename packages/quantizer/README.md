@@ -13,19 +13,19 @@ pnpm add @liteship/quantizer
 ## 30 seconds
 
 ```ts
-import { Boundary } from '@liteship/core';
-import { Q } from '@liteship/quantizer';
+import { defineBoundary } from '@liteship/core';
+import { defineQuantizer, createQuantizer } from '@liteship/quantizer';
 
-const width = Boundary.make({
+const width = defineBoundary({
   input: 'width',
   at: [[0, 'sm'], [768, 'lg']],
 });
 
-const config = Q.from(width).outputs({
-  css: { sm: { display: 'block' }, lg: { display: 'grid' } },
+const config = defineQuantizer(width, {
+  outputs: { css: { sm: { display: 'block' }, lg: { display: 'grid' } } },
 });
 
-const { quantizer: live, lifetime } = config.create();
+const { quantizer: live, lifetime } = createQuantizer(config);
 live.evaluate(1024);
 const outputs = live.currentOutputs.read();
 console.log(outputs.css); // { display: 'grid' }
@@ -42,7 +42,7 @@ for the full layout.
 
 ## If it does nothing
 
-If you pass `tier` to `Q.from(boundary, { tier })`, outputs for targets outside that motion tier are silently dropped — `tier: 'none'` permits only ARIA, so CSS outputs never emit and nothing warns you. Omit `tier` to allow all targets, or call `.force('css')` on the builder to override the gate per target.
+If you pass `tier` to `defineQuantizer(boundary, { outputs, tier })`, outputs for targets outside that motion tier are silently dropped — `tier: 'none'` permits only ARIA, so CSS outputs never emit and nothing warns you. Omit `tier` to allow all targets, or add the target to the `force` option (e.g. `force: ['css']`) to override the gate per target.
 
 ## Docs
 

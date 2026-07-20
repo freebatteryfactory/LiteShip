@@ -1,14 +1,14 @@
 import { cpus, loadavg } from 'node:os';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { Config } from './packages/core/src/authoring/config.js';
+import { Config, defineConfig } from './packages/core/src/authoring/config.js';
 
 const rootDir = fileURLToPath(new URL('.', import.meta.url));
 
 export const repoRoot = resolve(rootDir);
 
 export const alias: Record<string, string> = {
-  ...Config.toTestAliases(Config.make({}), repoRoot),
+  ...Config.toTestAliases(defineConfig({}), repoRoot),
   '@liteship/_spine': resolve(repoRoot, 'packages/_spine/index.d.ts'),
   // @liteship/error is the zero-dep root error algebra — outside the design-layer
   // alias set, so map it to source explicitly (every package imports it).

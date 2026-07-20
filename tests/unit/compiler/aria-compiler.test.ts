@@ -7,7 +7,7 @@
 
 import { describe, test, expect } from 'vitest';
 import fc from 'fast-check';
-import { Boundary } from '@liteship/core';
+import { defineBoundary } from '@liteship/core';
 import { ARIACompiler } from '@liteship/compiler';
 import { captureDiagnostics } from '../../helpers/diagnostics.js';
 
@@ -15,7 +15,7 @@ import { captureDiagnostics } from '../../helpers/diagnostics.js';
 // Fixtures
 // ---------------------------------------------------------------------------
 
-const navBoundary = Boundary.make({
+const navBoundary = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'collapsed'],

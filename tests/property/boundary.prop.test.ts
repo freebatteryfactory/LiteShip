@@ -4,7 +4,7 @@
 
 import { describe, test } from 'vitest';
 import fc from 'fast-check';
-import { Boundary } from '@liteship/core';
+import { Boundary, defineBoundary } from '@liteship/core';
 
 // ---------------------------------------------------------------------------
 // Arbitrary: sorted threshold-state pairs
@@ -18,7 +18,7 @@ describe('Boundary properties', () => {
   test('evaluate is monotonic: increasing value → non-decreasing state index', () => {
     fc.assert(
       fc.property(arbThresholdPairs, fc.float({ min: 0, max: 10000 }), (pairs, value) => {
-        const boundary = Boundary.make({ input: 'x', at: pairs as any });
+        const boundary = defineBoundary({ input: 'x', at: pairs as any });
         const states = boundary.states as readonly string[];
 
         const stateA = Boundary.evaluate(boundary, value) as string;
@@ -35,7 +35,7 @@ describe('Boundary properties', () => {
   test('evaluate returns a valid state for any value', () => {
     fc.assert(
       fc.property(arbThresholdPairs, fc.float({ min: -1000, max: 20000 }), (pairs, value) => {
-        const boundary = Boundary.make({ input: 'x', at: pairs as any });
+        const boundary = defineBoundary({ input: 'x', at: pairs as any });
         const states = boundary.states as readonly string[];
         const result = Boundary.evaluate(boundary, value) as string;
         return states.includes(result);
@@ -46,7 +46,7 @@ describe('Boundary properties', () => {
   test('thresholds are stored sorted ascending', () => {
     fc.assert(
       fc.property(arbThresholdPairs, (pairs) => {
-        const boundary = Boundary.make({ input: 'x', at: pairs as any });
+        const boundary = defineBoundary({ input: 'x', at: pairs as any });
         const thresholds = boundary.thresholds;
         for (let i = 1; i < thresholds.length; i++) {
           if (thresholds[i] <= thresholds[i - 1]) return false;
@@ -59,7 +59,7 @@ describe('Boundary properties', () => {
   test('value below all thresholds → first state', () => {
     fc.assert(
       fc.property(arbThresholdPairs, (pairs) => {
-        const boundary = Boundary.make({ input: 'x', at: pairs as any });
+        const boundary = defineBoundary({ input: 'x', at: pairs as any });
         const minThreshold = boundary.thresholds[0] as number;
         const result = Boundary.evaluate(boundary, minThreshold - 1);
         return result === boundary.states[0];
@@ -70,7 +70,7 @@ describe('Boundary properties', () => {
   test('value at or above highest threshold → last state', () => {
     fc.assert(
       fc.property(arbThresholdPairs, (pairs) => {
-        const boundary = Boundary.make({ input: 'x', at: pairs as any });
+        const boundary = defineBoundary({ input: 'x', at: pairs as any });
         const maxThreshold = boundary.thresholds[boundary.thresholds.length - 1] as number;
         const result = Boundary.evaluate(boundary, maxThreshold + 1000);
         return result === boundary.states[boundary.states.length - 1];
@@ -81,7 +81,7 @@ describe('Boundary properties', () => {
   test('hysteresis: crossing up requires exceeding threshold + half', () => {
     fc.assert(
       fc.property(fc.integer({ min: 100, max: 1000 }), fc.integer({ min: 10, max: 50 }), (threshold, hysteresis) => {
-        const boundary = Boundary.make({
+        const boundary = defineBoundary({
           input: 'x',
           at: [
             [0, 'low'],
@@ -105,8 +105,8 @@ describe('Boundary properties', () => {
   test('content address is deterministic', () => {
     fc.assert(
       fc.property(arbThresholdPairs, (pairs) => {
-        const b1 = Boundary.make({ input: 'x', at: pairs as any });
-        const b2 = Boundary.make({ input: 'x', at: pairs as any });
+        const b1 = defineBoundary({ input: 'x', at: pairs as any });
+        const b2 = defineBoundary({ input: 'x', at: pairs as any });
         return b1.id === b2.id;
       }),
     );
@@ -115,7 +115,7 @@ describe('Boundary properties', () => {
   test('content address format matches fnv1a:XXXXXXXX', () => {
     fc.assert(
       fc.property(arbThresholdPairs, (pairs) => {
-        const boundary = Boundary.make({ input: 'x', at: pairs as any });
+        const boundary = defineBoundary({ input: 'x', at: pairs as any });
         return /^fnv1a:[0-9a-f]{8}$/.test(boundary.id);
       }),
     );

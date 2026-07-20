@@ -66,9 +66,9 @@ export interface TransformCssContext {
 
 /** Supported authoring grammar per at-rule, quoted verbatim in parse-miss warnings. */
 const SUPPORTED_GRAMMAR: Record<'@token' | '@quantize', string> = {
-  '@token': '`@token <name> { /* optional overrides: prop: value; */ }` where <name> matches a Token.make() export',
+  '@token': '`@token <name> { /* optional overrides: prop: value; */ }` where <name> matches a defineToken() export',
   '@quantize':
-    '`@quantize <boundaryName> { <stateName> { prop: value; <selector> { prop: value; } } }` where <boundaryName> matches a Boundary.make() export and each <stateName> is one of its states',
+    '`@quantize <boundaryName> { <stateName> { prop: value; <selector> { prop: value; } } }` where <boundaryName> matches a defineBoundary() export and each <stateName> is one of its states',
 };
 
 /**
@@ -310,9 +310,9 @@ export async function transformCss(code: string, id: string, ctx: TransformCssCo
       if (ctx.boundaryDefinitions && !discovered) {
         throw ValidationError(
           'vite-plugin',
-          `boundary "${block.boundaryName}" referenced in @quantize not found (declare it with Boundary.make). ` +
+          `boundary "${block.boundaryName}" referenced in @quantize not found (declare it with defineBoundary). ` +
             `Source: ${id}:${block.line}. ` +
-            `Fix: export \`const ${block.boundaryName} = Boundary.make({ ... })\` from a boundary module in this project.`,
+            `Fix: export \`const ${block.boundaryName} = defineBoundary({ ... })\` from a boundary module in this project.`,
         );
       }
       let boundary: Boundary | null | undefined = cache.boundary.get(cacheKey);

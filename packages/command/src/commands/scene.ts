@@ -7,7 +7,7 @@
  *
  * @module
  */
-import { S, systemClock, type CapsuleCommandResult, type CommandJsonSchema } from '@liteship/core';
+import { systemClock, type CapsuleCommandResult, type CommandJsonSchema, schema } from '@liteship/core';
 import { capabilityUnavailable, defineCommand, failed, ok, type CommandCapability } from '../registry.js';
 import { loadManifest, manifestUnavailable } from './manifest.js';
 
@@ -19,7 +19,7 @@ const SceneArgsSchema = {
 } as const satisfies CommandJsonSchema;
 
 /** Kernel argsSchema for the `<verb> <scene.ts>` verbs — decodes `scene` to a string. */
-const SceneVerbArgs = S.struct({ scene: S.string });
+const SceneVerbArgs = schema.struct({ scene: schema.string });
 
 /** scene.verify output — the scene id + count of generated tests run. */
 const SceneVerifyPayloadSchema = {
@@ -198,7 +198,11 @@ export const sceneRenderCommand = defineCommand({
     outputSchema: SceneRenderPayloadSchema,
     annotations: { mcpExposed: true, group: 'compose' },
   },
-  argsSchema: S.struct({ scene: S.string, output: S.optional(S.string), force: S.optional(S.boolean) }),
+  argsSchema: schema.struct({
+    scene: schema.string,
+    output: schema.optional(schema.string),
+    force: schema.optional(schema.boolean),
+  }),
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
     const scenePath = invocation.args.scene;
     // Omitted output derives <sceneBasename>.mp4 beside the scene file here

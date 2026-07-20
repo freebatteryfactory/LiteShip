@@ -22,7 +22,7 @@
  * @module
  */
 import { describe, test, expect } from 'vitest';
-import { Boundary, Compositor, Cap, sealNode, projectionKeys, wgslIdent, PROJECTION_KEYS_SOURCE } from '@liteship/core';
+import { Boundary, Compositor, Cap, sealNode, projectionKeys, wgslIdent, PROJECTION_KEYS_SOURCE, defineBoundary } from '@liteship/core';
 import type { PolicyNode, RuntimeSite, CapTier, CapSet, CellMeta, ContentAddress } from '@liteship/core';
 import { satelliteAttrs } from '@liteship/astro';
 import { applyBoundaryState, parseBoundary } from '../../packages/astro/src/runtime/boundary.js';
@@ -31,7 +31,7 @@ import { applyBoundaryState, parseBoundary } from '../../packages/astro/src/runt
 // Shared fixtures
 // ---------------------------------------------------------------------------
 
-const widthBoundary = Boundary.make({
+const widthBoundary = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'mobile'],

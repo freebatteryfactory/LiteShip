@@ -49,7 +49,7 @@ import { Lifetime } from './lifetime.js';
 export type DerivedSource<T> = Pick<CellKernel.Replay<T>, 'read' | 'subscribe'>;
 
 /**
- * A recompute trigger for {@link Derived.make} — only the subscribe half is
+ * A recompute trigger for {@link computed} — only the subscribe half is
  * needed (the factory reads whatever it wants; the trigger merely says WHEN to
  * recompute).
  */
@@ -152,10 +152,10 @@ function buildDerived<T>(recompute: () => T, triggers: ReadonlyArray<DerivedTrig
 }
 
 /**
- * Build a derived value from a `compute` factory and the sources whose emissions
- * recompute it. With no sources it is static (never recomputes).
+ * Compute a derived value from a `compute` factory and the sources whose
+ * emissions recompute it. With no sources it is static (never recomputes).
  */
-const _make = <T>(compute: () => T, sources: ReadonlyArray<DerivedTrigger> = []): DerivedShape<T> =>
+export const computed = <T>(compute: () => T, sources: ReadonlyArray<DerivedTrigger> = []): DerivedShape<T> =>
   buildDerived(compute, sources);
 
 /**
@@ -181,12 +181,10 @@ const _combine = <T extends readonly unknown[], U>(
 /**
  * Derived — read-only reactive view computed from upstream sources, on
  * {@link CellKernel.replay1}. Recomputes lazily on any source change and
- * republishes to its own subscribers; compose via `make` (factory + triggers) or
- * `combine` (tuple of readable sources).
+ * republishes to its own subscribers; compose via the standalone {@link computed}
+ * (factory + triggers) or {@link Derived.combine} (tuple of readable sources).
  */
 export const Derived = {
-  /** Build a derived value from a factory and the sources that recompute it. */
-  make: _make,
   /** Combine readable sources into a single derived value of their combiner. */
   combine: _combine,
 };

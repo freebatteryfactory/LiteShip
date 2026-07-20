@@ -8,21 +8,21 @@
  */
 
 import { describe, test, expect, afterEach } from 'vitest';
-import { Boundary, Diagnostics } from '@liteship/core';
+import { Diagnostics, defineBoundary } from '@liteship/core';
 import { createBoundaryCache, EdgeTier, type KVNamespace } from '@liteship/edge';
 
 afterEach(() => {
   Diagnostics.reset();
 });
 
-const boundary = Boundary.make({
+const boundary = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'compact'],
     [768, 'wide'],
   ],
 });
-const siblingBoundary = Boundary.make({
+const siblingBoundary = defineBoundary({
   input: 'scroll.progress',
   at: [
     [0, 'intro'],

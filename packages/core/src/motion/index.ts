@@ -87,7 +87,9 @@ export type {
   LoweredScrollTimeline,
 } from './scroll-timeline.js';
 
-export { Timeline } from './timeline.js';
+export { createTimeline } from './timeline.js';
+
+export type { Timeline } from './timeline.js';
 
 export { BlendTree } from './blend.js';
 

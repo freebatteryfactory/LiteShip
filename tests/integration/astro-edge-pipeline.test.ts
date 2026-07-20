@@ -1,13 +1,13 @@
 import { describe, expect, test } from 'vitest';
-import { Boundary } from '@liteship/core';
+import { defineBoundary } from '@liteship/core';
 import { liteshipMiddleware } from '@liteship/astro';
 
 describe('Astro edge host pipeline integration', () => {
   test('resolves hints, tier, theme, and cached outputs through the middleware host path', async () => {
     const cacheStore = new Map<string, string>();
     // Real minted address -- the KV keyspace is content-addressed (ADR-0003),
-    // so tests use Boundary.make ids rather than fabricated strings.
-    const boundary = Boundary.make({
+    // so tests use defineBoundary ids rather than fabricated strings.
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'compact'],

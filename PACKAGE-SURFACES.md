@@ -203,7 +203,8 @@ Reach for it when you need:
 
 Main surfaces:
 
-- `Q`
+- `defineQuantizer`
+- `createQuantizer`
 - `evaluate`
 - `Transition`
 - `AnimatedQuantizer`

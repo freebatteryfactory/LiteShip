@@ -10,10 +10,10 @@
  *
  * @example
  * ```ts
- * import { Boundary } from '@liteship/core';
+ * import { defineBoundary } from '@liteship/core';
  * import { evaluate } from '@liteship/quantizer';
  *
- * const boundary = Boundary.make({
+ * const boundary = defineBoundary({
  *   input: 'width',
  *   at: [[0, 'sm'], [640, 'md'], [1024, 'lg']],
  *   hysteresis: 20,

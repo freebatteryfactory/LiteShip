@@ -3,7 +3,7 @@
  * ACCEPTANCE: a `audio.amplitude` boundary carves named states through the
  * EXISTING source-agnostic carve-path when fed live amplitude values.
  *
- *   Boundary.make({ input: 'audio.amplitude', at: [[0,'quiet'],[0.6,'loud']] })
+ *   defineBoundary({ input: 'audio.amplitude', at: [[0,'quiet'],[0.6,'loud']] })
  *     → readSignalValue('audio.amplitude')   (reads the producer's published RMS)
  *     → evaluateBoundary                       (axis-agnostic evaluator)
  *     → applyBoundaryState                     (sets data-liteship-state + CSS)
@@ -12,7 +12,7 @@
  * viewport/scroll families use — no audio-specific evaluator was added.
  */
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
-import { Boundary } from '@liteship/core';
+import { defineBoundary } from '@liteship/core';
 import {
   parseBoundary,
   readSignalValue,
@@ -22,7 +22,7 @@ import {
 import { __resetAudioSignalForTest, __setAudioSignalForTest } from '../../../packages/astro/src/runtime/audio-signal.js';
 
 function serialize(input: string, at: readonly (readonly [number, string])[]): string {
-  const b = Boundary.make({ input, at: at as never });
+  const b = defineBoundary({ input, at: at as never });
   return JSON.stringify({ input, thresholds: [...b.thresholds], states: [...b.states] });
 }
 

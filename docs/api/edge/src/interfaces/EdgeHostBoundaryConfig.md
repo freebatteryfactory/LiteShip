@@ -34,7 +34,7 @@ the cache key or lookup order.
 
 Defined in: [edge/src/host-adapter.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L71)
 
-Content address of the boundary being compiled (`Boundary.make`'s `id`).
+Content address of the boundary being compiled (`defineBoundary`'s `id`).
 
 ***
 

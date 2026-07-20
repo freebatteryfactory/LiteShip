@@ -2,7 +2,7 @@ import { cloudflareMiddleware } from '@liteship/cloudflare';
 import { boundaries } from 'virtual:liteship/boundaries';
 
 // `boundaries` is the build-derived manifest: each entry carries the
-// boundary's minted content address (Boundary.make's `id`) plus the
+// boundary's minted content address (defineBoundary's `id`) plus the
 // precompiled per-tier outputs from the @quantize CSS block -- nothing
 // here is hand-typed, and the worker bundle stays compiler-free.
 export const onRequest = cloudflareMiddleware({

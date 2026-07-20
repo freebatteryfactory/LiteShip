@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { S } from '@liteship/core';
+import { schema } from '@liteship/core';
 import type { CapsuleContract, AssemblyKind } from '@liteship/core';
 
 describe('CapsuleContract', () => {
@@ -8,8 +8,8 @@ describe('CapsuleContract', () => {
       _kind: 'pureTransform' as const,
       id: 'fnv1a:test001' as const,
       name: 'test-transform',
-      input: S.number,
-      output: S.string,
+      input: schema.number,
+      output: schema.string,
       capabilities: { reads: [], writes: [] },
       invariants: [],
       budgets: { p95Ms: 1 },

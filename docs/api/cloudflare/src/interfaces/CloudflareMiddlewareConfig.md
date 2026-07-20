@@ -40,7 +40,7 @@ boundaries on the same page cannot poison each other's cached CSS.
 Defined in: [cloudflare/src/middleware.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L48)
 
 Escape hatch for custom hosts without a manifest: the boundary's
-content address. Must be a real minted id (`Boundary.make(...).id`,
+content address. Must be a real minted id (`defineBoundary(...).id`,
 `fnv1a:xxxxxxxx`) -- the KV keyspace is content-addressed, so a
 fabricated id breaks content-addressing (the cache could then serve a
 different boundary's compiled CSS).

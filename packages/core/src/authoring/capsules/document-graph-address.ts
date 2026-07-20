@@ -25,7 +25,7 @@
 
 import type { ContentAddress } from '../../schema/brands.js';
 import { defineCapsule } from '../assembly.js';
-import { S } from '../../schema/constructors.js';
+import { schema } from '../../schema/constructors.js';
 import type { Infer } from '../../schema/infer.js';
 import { sealGraph, sealNode } from '../../graph/document-graph-address.js';
 import type { DocumentGraph, DocumentGraphEdge, DocumentGraphNode, SignalNode } from '../../graph/document-graph.js';
@@ -33,21 +33,21 @@ import type { CellMeta } from '../../schema/protocol.js';
 
 /**
  * An acyclic edge index pair — the fixed-arity `[i, j]` tuple over the sealed node
- * list. `S.tuple(S.number, S.number)` decode-enforces exactly two numeric elements,
+ * list. `schema.tuple(schema.number, schema.number)` decode-enforces exactly two numeric elements,
  * so `run` reads both positions directly (no shorter-array skip needed).
  */
-const EdgeSeed = S.tuple(S.number, S.number);
+const EdgeSeed = schema.tuple(schema.number, schema.number);
 
 /**
  * Seed material the schema-arbitrary CAN produce (String/Array/Number are
  * fully-supported AST nodes): a graph described by its signal-axis name list plus
  * acyclic edge index pairs. `run` seals this into a real graph.
  */
-const GraphAddressSeed = S.struct({
+const GraphAddressSeed = schema.struct({
   /** Signal-axis names → one sealed `SignalNode` per DISTINCT name. */
-  inputs: S.array(S.string),
+  inputs: schema.array(schema.string),
   /** `[i, j]` index pairs → a `from`→`to` edge between sealed nodes (normalized acyclic). */
-  edges: S.array(EdgeSeed),
+  edges: schema.array(EdgeSeed),
 });
 
 type GraphAddressSeedValue = Infer<typeof GraphAddressSeed>;
@@ -90,7 +90,7 @@ function buildGraph(seed: GraphAddressSeedValue): DocumentGraph {
   const edgeKeys = new Set<string>();
   if (nodes.length >= 2) {
     for (const pair of seed.edges) {
-      // An edge seed is an `S.tuple(S.number, S.number)`: decode enforces arity 2,
+      // An edge seed is an `schema.tuple(schema.number, schema.number)`: decode enforces arity 2,
       // so both `[i, j]` positions are present numbers.
       const [rawI, rawJ] = pair;
       const i = Math.abs(Math.trunc(rawI)) % nodes.length;
@@ -154,7 +154,7 @@ export const documentGraphAddressCapsule = defineCapsule({
   _kind: 'pureTransform',
   name: 'core.document-graph.address',
   input: GraphAddressSeed,
-  output: S.unknown,
+  output: schema.unknown,
   capabilities: { reads: [], writes: [] },
   invariants: [
     {

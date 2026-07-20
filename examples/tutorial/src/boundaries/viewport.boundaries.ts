@@ -15,9 +15,9 @@
  * may define 3-5 states with hysteresis to prevent jitter.
  */
 
-import { Boundary } from '@liteship/core';
+import { defineBoundary } from '@liteship/core';
 
-export const viewport = Boundary.make({
+export const viewport = defineBoundary({
   // The signal this boundary listens to. "viewport.width" is a built-in
   // signal that the satellite directive reads from window.innerWidth.
   input: 'viewport.width',

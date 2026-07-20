@@ -29,7 +29,7 @@ export function toBoundaryF32(value: number): number {
  * Returns the index of the state a `value` falls into: the largest `i` where
  * `thresholds[i] <= value` (in f32), or `0` when the value is below every
  * threshold. Thresholds are assumed strictly ascending (guaranteed by
- * `Boundary.make`). Uses an unrolled fast path for small arrays (≤4) and binary
+ * `defineBoundary`). Uses an unrolled fast path for small arrays (≤4) and binary
  * search beyond — both equivalent to a linear reverse-scan for sorted input, so
  * `EVALUATE_THRESHOLDS_SOURCE` (the worker blob twin, a linear reverse-scan) and
  * `fallbackKernels.batchBoundaryEval` agree with this on every input.

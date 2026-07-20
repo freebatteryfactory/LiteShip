@@ -10,13 +10,13 @@
  */
 
 import { describe, test, expect, vi } from 'vitest';
-import { Boundary, Compositor, CompositorStatePool, FrameBudget } from '@liteship/core';
+import { Boundary, Compositor, CompositorStatePool, FrameBudget, defineBoundary } from '@liteship/core';
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-const widthBoundary = Boundary.make({
+const widthBoundary = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'mobile'],
@@ -25,7 +25,7 @@ const widthBoundary = Boundary.make({
   ] as const,
 });
 
-const colorBoundary = Boundary.make({
+const colorBoundary = defineBoundary({
   input: 'prefers-color-scheme',
   at: [
     [0, 'light'],
@@ -135,7 +135,7 @@ describe('Compositor pipeline integration', () => {
     const layout = makeSpiedQuantizer(widthBoundary, 'mobile');
     const theme = makeSpiedQuantizer(colorBoundary, 'light');
     const density = makeSpiedQuantizer(
-      Boundary.make({
+      defineBoundary({
         input: 'dpr',
         at: [
           [0, '1x'],
