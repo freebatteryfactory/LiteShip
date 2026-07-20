@@ -6,7 +6,7 @@
 
 # Interface: AnimatedQuantizerShape\<B\>
 
-Defined in: [quantizer/src/animated-quantizer.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L43)
+Defined in: [quantizer/src/animated-quantizer.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L52)
 
 Quantizer augmented with transition-aware output interpolation.
 
@@ -70,7 +70,7 @@ No-replay crossing subscription (was `Stream.Stream<BoundaryCrossing<StateUnion<
 
 > `readonly` **interpolated**: `Pick`\<`CellKernel.Fanout`\<[`InterpolatedFrame`](InterpolatedFrame.md)\<`B`\>\>, `"subscribe"` \| `"closed"` \| `"size"`\>
 
-Defined in: [quantizer/src/animated-quantizer.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L47)
+Defined in: [quantizer/src/animated-quantizer.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L56)
 
 No-replay subscription of interpolated animation frames during crossings.
 
@@ -112,7 +112,7 @@ Synchronous state accessor for hot paths (avoids reactive read overhead).
 
 > `readonly` **transition**: [`Transition`](Transition.md)\<`B`\>
 
-Defined in: [quantizer/src/animated-quantizer.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L45)
+Defined in: [quantizer/src/animated-quantizer.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L54)
 
 Resolver that maps `from -> to` crossings to [TransitionConfig](TransitionConfig.md).
 

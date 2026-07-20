@@ -150,7 +150,7 @@ describe('Part.dense -- DenseStore', () => {
 
 describe('World.tick() -- dense systems', () => {
   test('dense system iterates Float64Array in tick', () => {
-    const { world } = World.make();
+    const world = World.make();
     const velocityStore = Part.dense('velocity', 64);
 
     world.addDenseStore(velocityStore);
@@ -185,7 +185,7 @@ describe('World.tick() -- dense systems', () => {
   });
 
   test('dense system mutates data in-place via view', () => {
-    const { world } = World.make();
+    const world = World.make();
     const posStore = Part.dense('posX', 64);
 
     world.addDenseStore(posStore);
@@ -222,7 +222,7 @@ describe('World.tick() -- dense systems', () => {
   });
 
   test('dense system skipped when queried store is missing', () => {
-    const { world } = World.make();
+    const world = World.make();
     let called = false;
 
     world.addSystem({
@@ -247,7 +247,7 @@ describe('World.tick() -- mixed dense + regular systems', () => {
   test('both system types run in a single tick', () => {
     const results: string[] = [];
 
-    const { world } = World.make();
+    const world = World.make();
     const speedStore = Part.dense('speed', 32);
     world.addDenseStore(speedStore);
 
@@ -286,7 +286,7 @@ describe('World.tick() -- mixed dense + regular systems', () => {
   });
 
   test('despawn cleans up dense stores', () => {
-    const { world } = World.make();
+    const world = World.make();
     const store = Part.dense('hp', 16);
     world.addDenseStore(store);
 
@@ -313,7 +313,7 @@ describe('World.tick() -- mixed dense + regular systems', () => {
 
 describe('World.tick() -- within-tick read-current law', () => {
   test('a later system observes setComponent writes made by an earlier system the same tick', () => {
-    const { world } = World.make();
+    const world = World.make();
     world.spawn({ marker: true });
 
     let observed: unknown = 'unwritten';
@@ -344,7 +344,7 @@ describe('World.tick() -- within-tick read-current law', () => {
   });
 
   test('registration order decides visibility: a reader before the writer sees nothing this tick', () => {
-    const { world } = World.make();
+    const world = World.make();
     world.spawn({ marker: true });
 
     const readsPerTick: (unknown)[] = [];
@@ -384,7 +384,7 @@ describe('World.tick() -- within-tick read-current law', () => {
 
 describe('Dense system -- multi-store query', () => {
   test('system receives multiple dense stores', () => {
-    const { world } = World.make();
+    const world = World.make();
     const posX = Part.dense('posX', 32);
     const velX = Part.dense('velX', 32);
 
@@ -431,7 +431,7 @@ describe('Dense system -- multi-store query', () => {
 
 describe('World.spawn -- entity ID uniqueness', () => {
   test('spawn without components produces unique EntityIds', () => {
-    const { world } = World.make();
+    const world = World.make();
     const id1 = world.spawn();
     const id2 = world.spawn();
     const id3 = world.spawn();
@@ -442,7 +442,7 @@ describe('World.spawn -- entity ID uniqueness', () => {
   });
 
   test('spawn with identical components produces unique EntityIds', () => {
-    const { world } = World.make();
+    const world = World.make();
     const id1 = world.spawn({ type: 'bullet' });
     const id2 = world.spawn({ type: 'bullet' });
 

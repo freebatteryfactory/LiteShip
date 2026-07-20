@@ -166,7 +166,7 @@ export interface SceneRuntimeHandle {
 /**
  * Build a live SceneRuntime handle from a {@link CompiledScene}.
  *
- * Holds the world's {@link WorldNS.Handle} lifetime so the caller
+ * Holds the world (which owns its own teardown) so the caller
  * controls when finalizers run. Systems are registered in the
  * canonical topological order — this matches ADR-0009's
  * ECS-as-scene-substrate discipline.
@@ -193,9 +193,9 @@ async function build(compiled: CompiledScene, opts: SceneRuntimeOptions = {}): P
   // advance each tick.
   const ctx = { frameIndex: 0, timeMs: 0 };
 
-  // Build the world paired with the Lifetime that owns its teardown —
-  // the long-lived owner of the world (and any future resources).
-  const { world, lifetime } = World.make();
+  // Build the world — the long-lived owner of its own teardown (and any
+  // future resources threaded through `world.lifetime`).
+  const world = World.make();
 
   // Spawn one entity per compiled track.
   let entitySpawnCount = 0;
@@ -270,7 +270,7 @@ async function build(compiled: CompiledScene, opts: SceneRuntimeOptions = {}): P
     release: async () => {
       if (released) return;
       released = true;
-      await lifetime.dispose();
+      await world.dispose();
     },
   };
 

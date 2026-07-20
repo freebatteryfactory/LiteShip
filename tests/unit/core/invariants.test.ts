@@ -758,16 +758,16 @@ describe('Invariant 14: production source is Effect-free', () => {
 // ===========================================================================
 // INVARIANT 15: Compositor lifecycle contract
 //
-// Compositor.create() returns a { compositor, lifetime } handle synchronously.
-// compute() is a synchronous pure fold over the current quantizer set and may be
-// invoked any number of times; the Lifetime owns teardown of the reactive
+// Compositor.create() returns a compositor that owns its own teardown (dispose())
+// synchronously. compute() is a synchronous pure fold over the current quantizer
+// set and may be invoked any number of times; dispose() tears down the reactive
 // `changes` kernel. This documents that compute() yields a valid CompositeState
 // and stays stable across repeated calls.
 // ===========================================================================
 
 describe('Invariant 15: Compositor lifecycle', () => {
   test('compute() succeeds on a freshly created compositor', () => {
-    const { compositor } = Compositor.create();
+    const compositor = Compositor.create();
     const result = compositor.compute();
     expect(result).toBeDefined();
     expect(result.discrete).toBeDefined();
@@ -778,7 +778,7 @@ describe('Invariant 15: Compositor lifecycle', () => {
 
   test('a compositor keeps working across multiple compute calls', () => {
     // Multiple sequential computes must all succeed and return stable shapes.
-    const { compositor } = Compositor.create();
+    const compositor = Compositor.create();
     const r1 = compositor.compute();
     const r2 = compositor.compute();
     const r3 = compositor.compute();

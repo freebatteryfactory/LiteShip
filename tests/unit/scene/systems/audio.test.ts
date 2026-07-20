@@ -4,7 +4,7 @@ import { AudioSystem } from '@liteship/scene';
 
 describe('AudioSystem', () => {
   it('produces frame-sample mapping for audio entities in range', () => {
-    const { world } = World.make();
+    const world = World.make();
     world.spawn({
       AudioSource: 'bed', FrameRange: { from: 0, to: 120 }, Volume: -6, Pan: 0,
     });
@@ -16,7 +16,7 @@ describe('AudioSystem', () => {
   });
 
   it('emits zero phase for out-of-range entities', () => {
-    const { world } = World.make();
+    const world = World.make();
     world.spawn({ AudioSource: 'bed', FrameRange: { from: 60, to: 120 }, Volume: 0, Pan: 0 });
     world.addSystem(AudioSystem(0, 60, 48000));
     world.tick();
@@ -26,7 +26,7 @@ describe('AudioSystem', () => {
   });
 
   it('writes _gain = 1 for in-range entities without an Envelope', () => {
-    const { world } = World.make();
+    const world = World.make();
     world.spawn({ AudioSource: 'bed', FrameRange: { from: 0, to: 120 }, Volume: -6, Pan: 0 });
     world.addSystem(AudioSystem(30, 60, 48000));
     world.tick();
@@ -36,7 +36,7 @@ describe('AudioSystem', () => {
 
   it('modulates _gain by a linear-out Envelope component (fade ramps 1 -> 0 at range end)', () => {
     const gainAt = (frameIndex: number): number => {
-      const { world } = World.make();
+      const world = World.make();
       world.spawn({
         AudioSource: 'bed',
         FrameRange: { from: 0, to: 120 },
@@ -56,7 +56,7 @@ describe('AudioSystem', () => {
   });
 
   it('writes _gain = 0 for out-of-range entities', () => {
-    const { world } = World.make();
+    const world = World.make();
     world.spawn({
       AudioSource: 'bed',
       FrameRange: { from: 60, to: 120 },

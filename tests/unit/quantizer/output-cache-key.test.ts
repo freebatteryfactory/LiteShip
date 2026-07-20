@@ -70,7 +70,7 @@ describe('quantizer output cache key law', () => {
       },
     });
     expect(config.id).toMatch(FNV1A_RE);
-    const { quantizer: lq } = createQuantizer(config);
+    const lq = createQuantizer(config);
     const outputs = lq.currentOutputs.read();
     expect(outputs.css).toBeDefined();
   });

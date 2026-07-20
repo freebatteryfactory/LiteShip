@@ -24,7 +24,7 @@ declare global {
 }
 
 async function run() {
-  const { compositor } = Compositor.create();
+  const compositor = Compositor.create();
   const renderer = VideoRenderer.make({ fps: 10, width: 640, height: 480, durationMs: Millis(500) }, compositor);
 
   const capture = WebCodecsCapture.make({

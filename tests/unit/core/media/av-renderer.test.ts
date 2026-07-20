@@ -6,10 +6,10 @@ import { describe, test, expect, vi } from 'vitest';
 import { AVRenderer, AVBridge, Compositor, Millis } from '@liteship/core';
 
 // Compositor.create() is synchronous as of the core-seams wave: it returns a
-// { compositor, lifetime } handle. AVRenderer.make consumes the compositor
-// instance directly — no Effect scope to run.
+// compositor that owns its own teardown via dispose(). AVRenderer.make consumes
+// the compositor instance directly — no Effect scope to run.
 function makeCompositor(): Compositor {
-  return Compositor.create().compositor;
+  return Compositor.create();
 }
 
 describe('AVRenderer frame generation', () => {

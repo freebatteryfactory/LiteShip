@@ -16,14 +16,14 @@ export { Transition } from './transition.js';
 export type { TransitionConfig, TransitionMap, Transition as TransitionType } from './transition.js';
 
 export { AnimatedQuantizer } from './animated-quantizer.js';
-export type { AnimatedQuantizerShape, AnimatedQuantizerHandle, InterpolatedFrame } from './animated-quantizer.js';
+export type { AnimatedQuantizerShape, OwnedAnimatedQuantizer, InterpolatedFrame } from './animated-quantizer.js';
 
 export type {
   MotionTier,
   SpringConfig,
   DefineQuantizerOptions,
   QuantizerRuntime,
-  LiveQuantizerHandle,
+  OwnedQuantizer,
 } from './quantizer.js';
 // `MemoCache` and `TIER_TARGETS` ship via `@liteship/quantizer/testing` —
 // implementation primitives that power the public `defineQuantizer` / `createQuantizer`

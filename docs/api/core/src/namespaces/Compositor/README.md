@@ -19,15 +19,14 @@ outputs all flow through the zero-allocation hot path backed by
 ```ts
 import { Compositor } from '@liteship/core';
 
-const { compositor, lifetime } = Compositor.create({ poolCapacity: 64, speculative: true });
+const compositor = Compositor.create({ poolCapacity: 64, speculative: true });
 compositor.add('viewport', viewportQuantizer);
 const state = compositor.compute();
 // state.discrete.viewport === 'tablet'
 // state.outputs.css['--liteship-viewport'] === 'tablet'
-await lifetime.dispose();
+await compositor.dispose();
 ```
 
 ## Type Aliases
 
 - [Config](type-aliases/Config.md)
-- [Handle](type-aliases/Handle.md)

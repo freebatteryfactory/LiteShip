@@ -25,11 +25,11 @@ const config = defineQuantizer(width, {
   outputs: { css: { sm: { display: 'block' }, lg: { display: 'grid' } } },
 });
 
-const { quantizer: live, lifetime } = createQuantizer(config);
+await using live = createQuantizer(config);
 live.evaluate(1024);
 const outputs = live.currentOutputs.read();
 console.log(outputs.css); // { display: 'grid' }
-await lifetime.dispose();
+// `live` owns its teardown: `await live.dispose()`, or `await using` as above.
 ```
 
 Logs `{ display: 'grid' }` — the CSS output for the `lg` state that 1024 falls into. For a one-off lookup, the synchronous `evaluate(boundary, value)` export returns `{ state, index, value, crossed }` directly.

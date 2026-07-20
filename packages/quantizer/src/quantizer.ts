@@ -1,8 +1,8 @@
 /**
  * Two-step quantizer API: {@link defineQuantizer} authors the immutable,
  * content-addressed {@link QuantizerConfig}; {@link createQuantizer} allocates the
- * live {@link LiveQuantizer} (paired with its {@link Lifetime}) with reactive
- * output streams.
+ * live {@link LiveQuantizer} — an {@link OwnedQuantizer} that owns its own teardown
+ * via `dispose()` — with reactive output streams.
  *
  * Wired: MotionTier-gated output routing, springToLinearCSS auto-generation,
  * content-address memoization via {@link MemoCache}.
@@ -20,8 +20,8 @@ import type {
   HLCBrand,
   Clock,
 } from '@liteship/core';
-import { HLC, CellKernel, Lifetime } from '@liteship/core';
-import type { MotionTier, QualityTierTarget } from '@liteship/core';
+import { HLC, CellKernel, Lifetime, attachLifetime } from '@liteship/core';
+import type { MotionTier, QualityTierTarget, AsyncOwnedResource } from '@liteship/core';
 import {
   StateName as mkStateName,
   CanonicalCbor,
@@ -219,7 +219,7 @@ export interface QuantizerRuntime {
  * forced targets, so two configs with identical definitions share the same
  * address and are deduplicated by the internal memo cache. This is a PURE data
  * definition — pass it to {@link createQuantizer} to materialize a fresh
- * {@link LiveQuantizer} paired with its owning {@link Lifetime}.
+ * {@link LiveQuantizer} that owns its own teardown via `dispose()`.
  */
 export interface QuantizerConfig<B extends Boundary, O extends QuantizerOutputs<B> = QuantizerOutputs<B>> {
   /** Boundary this config quantizes against. */
@@ -264,9 +264,9 @@ type OutputRecord = Partial<{ [K in OutputTarget]: Record<string, unknown> }>;
  * const config = defineQuantizer(b, {
  *   outputs: { css: { sm: { fontSize: '14px' }, lg: { fontSize: '18px' } } },
  * });
- * const { quantizer: live, lifetime } = createQuantizer(config);
+ * const live = createQuantizer(config);
  * live.evaluate(900); // triggers crossing; outputs kernel publishes CSS
- * await lifetime.dispose();
+ * await live.dispose();
  * ```
  */
 export interface LiveQuantizer<
@@ -282,15 +282,17 @@ export interface LiveQuantizer<
 }
 
 /**
- * The pair {@link createQuantizer} returns: the live reactive quantizer plus the
- * {@link Lifetime} that owns its teardown. Dispose the lifetime to close the
- * state / outputs / crossings kernels (completing subscribers, making publish
- * inert).
+ * A live reactive quantizer that owns its teardown directly
+ * ({@link AsyncOwnedResource}): `await quantizer.dispose()` closes the state /
+ * outputs / crossings kernels (completing subscribers, making publish inert). The
+ * owning {@link Lifetime} stays reachable as `quantizer.lifetime` for advanced
+ * composition (e.g. threading it into an {@link AnimatedQuantizer}).
  */
-export interface LiveQuantizerHandle<B extends Boundary, O extends QuantizerOutputs<B> = QuantizerOutputs<B>> {
-  readonly quantizer: LiveQuantizer<B, O>;
-  readonly lifetime: Lifetime;
-}
+export type OwnedQuantizer<B extends Boundary, O extends QuantizerOutputs<B> = QuantizerOutputs<B>> = LiveQuantizer<
+  B,
+  O
+> &
+  AsyncOwnedResource;
 
 type CachedQuantizerConfig = QuantizerConfig<Boundary, QuantizerOutputs<Boundary>>;
 
@@ -448,9 +450,9 @@ function getSpringCSS(spring: SpringConfig): string {
  * const config = defineQuantizer(boundary, {
  *   outputs: { css: { sm: { fontSize: '14px' }, md: { fontSize: '16px' }, lg: { fontSize: '18px' } } },
  * });
- * const { quantizer: live, lifetime } = createQuantizer(config);
+ * const live = createQuantizer(config);
  * const result = live.evaluate(800); // 'md'
- * await lifetime.dispose();
+ * await live.dispose();
  * ```
  *
  * @param boundary - The boundary definition to quantize against
@@ -536,21 +538,21 @@ export function defineQuantizer<B extends Boundary, O extends QuantizerOutputs<B
  * const config = defineQuantizer(boundary, {
  *   outputs: { css: { sm: { display: 'block' }, lg: { display: 'grid' } } },
  * });
- * const { quantizer: live, lifetime } = createQuantizer(config);
+ * const live = createQuantizer(config);
  * live.evaluate(1024);
  * const result = live.currentOutputs.read();
  * // result.css => { display: 'grid' }
- * await lifetime.dispose();
+ * await live.dispose();
  * ```
  *
  * @param definition - The immutable config authored by {@link defineQuantizer}
  * @param runtime    - Optional per-instantiation clock / HLC node injection
- * @returns A {@link LiveQuantizerHandle} — the live instance plus its {@link Lifetime}
+ * @returns An {@link OwnedQuantizer} — the live instance that owns its own teardown via `dispose()`
  */
 export function createQuantizer<B extends Boundary, O extends QuantizerOutputs<B>>(
   definition: QuantizerConfig<B, O>,
   runtime?: QuantizerRuntime,
-): LiveQuantizerHandle<B, O> {
+): OwnedQuantizer<B, O> {
   const { boundary, outputs, id, tier, spring, force } = definition;
   const allowedTargets = tier ? TIER_TARGETS[tier] : null;
   const forcedTargets: ReadonlySet<OutputTarget> | null = force ? new Set(force) : null;
@@ -666,5 +668,5 @@ export function createQuantizer<B extends Boundary, O extends QuantizerOutputs<B
     outputChanges: outputCell,
   };
 
-  return { quantizer, lifetime };
+  return attachLifetime(quantizer, lifetime);
 }

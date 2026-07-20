@@ -8,7 +8,7 @@
 
 > `const` **AnimatedQuantizer**: `object`
 
-Defined in: [quantizer/src/animated-quantizer.ts:469](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L469)
+Defined in: [quantizer/src/animated-quantizer.ts:477](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L477)
 
 Animated quantizer namespace.
 
@@ -22,7 +22,7 @@ the current interpolated output record.
 
 ### make
 
-> `readonly` **make**: \<`B`\>(`quantizer`, `transitions`, `outputs?`, `options?`) => [`AnimatedQuantizerHandle`](../interfaces/AnimatedQuantizerHandle.md)\<`B`\> = `makeAnimatedQuantizer`
+> `readonly` **make**: \<`B`\>(`quantizer`, `transitions`, `outputs?`, `options?`) => [`OwnedAnimatedQuantizer`](../type-aliases/OwnedAnimatedQuantizer.md)\<`B`\> = `makeAnimatedQuantizer`
 
 Wrap a quantizer with transition-aware output interpolation.
 
@@ -85,9 +85,9 @@ Optional injection bag. `options.scheduler` supplies a
 
 #### Returns
 
-[`AnimatedQuantizerHandle`](../interfaces/AnimatedQuantizerHandle.md)\<`B`\>
+[`OwnedAnimatedQuantizer`](../type-aliases/OwnedAnimatedQuantizer.md)\<`B`\>
 
-An [AnimatedQuantizerHandle](../interfaces/AnimatedQuantizerHandle.md) — the instance plus its [Lifetime](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts)
+An [OwnedAnimatedQuantizer](../type-aliases/OwnedAnimatedQuantizer.md) — the instance that owns its own teardown via `dispose()`
 
 #### Example
 
@@ -102,10 +102,10 @@ const boundary = defineBoundary({
 const config = defineQuantizer(boundary, {
   outputs: { css: { top: { opacity: '1' }, bottom: { opacity: '0.5' } } },
 });
-const { quantizer: live } = createQuantizer(config);
+const live = createQuantizer(config);
 // outputs omitted: derived from the LiveQuantizer's css output tables
-const { animated, lifetime } = AnimatedQuantizer.make(live, { '*': { duration: Millis(300) } });
-const dispose = animated.interpolated.subscribe((frame) => { ... });
+const animated = AnimatedQuantizer.make(live, { '*': { duration: Millis(300) } });
+const unsubscribe = animated.interpolated.subscribe((frame) => { ... });
 live.evaluate(600); // triggers interpolation
 ```
 
@@ -120,8 +120,8 @@ const boundary = defineBoundary({
   at: [[0, 'top'], [500, 'bottom']],
 });
 const config = defineQuantizer(boundary, { outputs: {} });
-const { quantizer: live } = createQuantizer(config);
-const { animated, lifetime } = AnimatedQuantizer.make(live, { '*': { duration: Millis(200) } });
+const live = createQuantizer(config);
+const animated = AnimatedQuantizer.make(live, { '*': { duration: Millis(200) } });
 animated.transition; // TransitionResolver
-await lifetime.dispose();
+await animated.dispose();
 ```

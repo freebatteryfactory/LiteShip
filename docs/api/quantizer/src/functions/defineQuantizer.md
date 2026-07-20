@@ -8,7 +8,7 @@
 
 > **defineQuantizer**\<`B`, `O`\>(`boundary`, `options`): [`QuantizerConfig`](../interfaces/QuantizerConfig.md)\<`B`, `O`\>
 
-Defined in: [quantizer/src/quantizer.ts:460](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L460)
+Defined in: [quantizer/src/quantizer.ts:462](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L462)
 
 Author a content-addressed [QuantizerConfig](../interfaces/QuantizerConfig.md) from a boundary definition
 and its per-target outputs — the PURE, immutable definition (authored intent).
@@ -61,7 +61,7 @@ const boundary = defineBoundary({
 const config = defineQuantizer(boundary, {
   outputs: { css: { sm: { fontSize: '14px' }, md: { fontSize: '16px' }, lg: { fontSize: '18px' } } },
 });
-const { quantizer: live, lifetime } = createQuantizer(config);
+const live = createQuantizer(config);
 const result = live.evaluate(800); // 'md'
-await lifetime.dispose();
+await live.dispose();
 ```

@@ -81,6 +81,9 @@
       "DocumentGraph": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts",
       "CompositeState": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/compositor-pool.ts",
       "Lifetime": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts",
+      "OwnedResource": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/OwnedResource.md",
+      "AsyncOwnedResource": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/AsyncOwnedResource.md",
+      "attachLifetime": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/functions/attachLifetime.md",
       "CellKernel": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/cell-kernel.ts",
       "Disposer": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/cell-kernel.ts",
       "EmissionPolicy": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/cell-kernel.ts",
@@ -89,7 +92,6 @@
       "makeClock": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/clock/hlc.ts",
       "ReactiveQuantizer": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/quantizer-types.ts",
       "CompositorFactory.create": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/compositor.ts",
-      "World.Handle": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts",
       "WorldShape.query": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts",
       "__type.run": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/animation.ts"
     },

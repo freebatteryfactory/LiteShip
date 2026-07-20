@@ -5,7 +5,7 @@ import { PassThroughMixer } from '@liteship/scene';
 describe('PassThroughMixer', () => {
   it('emits a receipt entry per audio entity per tick', () => {
     const receipts: unknown[] = [];
-    const { world } = World.make();
+    const world = World.make();
     const e = world.spawn({ AudioSource: 'bed', Volume: -6, Pan: 0.2 });
     world.addSystem(PassThroughMixer(30, (r) => { receipts.push(r); }));
     world.tick();
@@ -15,7 +15,7 @@ describe('PassThroughMixer', () => {
 
   it('forwards Volume/Pan verbatim without DSP', () => {
     let receipt: { volume: number; pan: number } | undefined;
-    const { world } = World.make();
+    const world = World.make();
     world.spawn({ AudioSource: 'x', Volume: -12, Pan: -1 });
     world.addSystem(PassThroughMixer(0, (r) => { receipt = r as { volume: number; pan: number }; }));
     world.tick();

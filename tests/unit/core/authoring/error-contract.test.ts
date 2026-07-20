@@ -71,9 +71,9 @@ describe('Composable.merge error contract', () => {
 
 describe('ComposableWorld dense store error contract', () => {
   test('store() before create() names the module and the call to make first', () => {
-    // World.make() is synchronous now ({ world, lifetime }); dense.store() throws
+    // World.make() is synchronous now (owns its own dispose()); dense.store() throws
     // a ValidationError synchronously when no dense store has been created yet.
-    const { world } = World.make();
+    const world = World.make();
     const dense = ComposableWorld.dense(world);
     const entity = Composable.make({ value: 1 });
 

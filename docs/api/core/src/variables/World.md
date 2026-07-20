@@ -8,7 +8,7 @@
 
 > `const` **World**: `object`
 
-Defined in: [core/src/ecs.ts:349](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L349)
+Defined in: [core/src/ecs.ts:347](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L347)
 
 World namespace — construct the ECS world that ticks systems over entities.
 
@@ -16,10 +16,10 @@ World namespace — construct the ECS world that ticks systems over entities.
 
 ### make
 
-> **make**: () => `WorldHandle` = `_makeWorld`
+> **make**: () => `OwnedWorld` = `_makeWorld`
 
-Build a fresh ECS World paired with its owning [Lifetime](Lifetime.md).
+Build a fresh ECS World; the returned instance owns its own teardown.
 
 #### Returns
 
-`WorldHandle`
+`OwnedWorld`

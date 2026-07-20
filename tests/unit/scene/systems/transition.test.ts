@@ -5,7 +5,7 @@ import type { EaseTag } from '@liteship/scene';
 
 describe('TransitionSystem', () => {
   it('emits linear blend between transition.from and transition.to', () => {
-    const { world } = World.make();
+    const world = World.make();
     world.spawn({
       TransitionKind: 'crossfade', FrameRange: { from: 0, to: 10 }, Between: ['a', 'b'],
     });
@@ -18,7 +18,7 @@ describe('TransitionSystem', () => {
 
   it('shapes the blend through each catalog easing when an Ease component is present', () => {
     const blendWith = (easeTag: EaseTag): number => {
-      const { world } = World.make();
+      const world = World.make();
       world.spawn({
         TransitionKind: 'crossfade',
         FrameRange: { from: 0, to: 10 },

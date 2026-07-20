@@ -35,7 +35,7 @@ interface Entry {
 
 /** Build a tree, add entries in the given order, and compute the blend. */
 function blendInOrder(entries: readonly Entry[]): Vec {
-  const { tree } = BlendTree.make<Vec>();
+  const tree = BlendTree.make<Vec>();
   for (const e of entries) tree.add(e.name, e.value, e.weight);
   return tree.compute();
 }

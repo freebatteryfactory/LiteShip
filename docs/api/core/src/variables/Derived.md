@@ -8,7 +8,7 @@
 
 > `const` **Derived**: `object`
 
-Defined in: [core/src/reactive/derived.ts:187](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/derived.ts#L187)
+Defined in: [core/src/reactive/derived.ts:195](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/derived.ts#L195)
 
 Derived — read-only reactive view computed from upstream sources, on
 [CellKernel.replay1](CellKernel.md#replay1). Recomputes lazily on any source change and
@@ -19,7 +19,7 @@ republishes to its own subscribers; compose via the standalone [computed](../fun
 
 ### combine
 
-> **combine**: \<`T`, `U`\>(`sources`, `combiner`) => `DerivedShape`\<`U`\> = `_combine`
+> **combine**: \<`T`, `U`\>(`sources`, `combiner`) => `DerivedShape`\<`U`\> & [`AsyncOwnedResource`](../interfaces/AsyncOwnedResource.md) = `_combine`
 
 Combine readable sources into a single derived value of their combiner.
 
@@ -49,4 +49,4 @@ reads): the recompute reads all current source values at that instant.
 
 #### Returns
 
-`DerivedShape`\<`U`\>
+`DerivedShape`\<`U`\> & [`AsyncOwnedResource`](../interfaces/AsyncOwnedResource.md)

@@ -130,9 +130,9 @@ describe('defineQuantizer() config creation', () => {
     });
     // The config is a PURE definition — no `create` method hangs off it.
     expect((config as { create?: unknown }).create).toBeUndefined();
-    const { quantizer, lifetime } = createQuantizer(config);
+    const quantizer = createQuantizer(config);
     expect(quantizer._tag).toBe('Quantizer');
-    expect(typeof lifetime.dispose).toBe('function');
+    expect(typeof quantizer.dispose).toBe('function');
   });
 
   test('config stores tier when provided', () => {
@@ -200,7 +200,7 @@ describe('MotionTier gating', () => {
     const b = viewport();
     const config = defineQuantizer(b, { tier: 'none', outputs: simpleOutputs(b) });
 
-    const lq = createQuantizer(config).quantizer;
+    const lq = createQuantizer(config);
     const outputs = lq.currentOutputs.read();
 
     // Only aria should be present
@@ -213,7 +213,7 @@ describe('MotionTier gating', () => {
     const b = viewport();
     const config = defineQuantizer(b, { tier: 'transitions', outputs: simpleOutputs(b) });
 
-    const lq = createQuantizer(config).quantizer;
+    const lq = createQuantizer(config);
     const outputs = lq.currentOutputs.read();
 
     expect(outputs.css).toBeDefined();
@@ -225,7 +225,7 @@ describe('MotionTier gating', () => {
     const b = viewport();
     const config = defineQuantizer(b, { tier: 'physics', outputs: simpleOutputs(b) });
 
-    const lq = createQuantizer(config).quantizer;
+    const lq = createQuantizer(config);
     const outputs = lq.currentOutputs.read();
 
     expect(outputs.css).toBeDefined();
@@ -237,7 +237,7 @@ describe('MotionTier gating', () => {
     const b = viewport();
     const config = defineQuantizer(b, { outputs: simpleOutputs(b) });
 
-    const lq = createQuantizer(config).quantizer;
+    const lq = createQuantizer(config);
     const outputs = lq.currentOutputs.read();
 
     expect(outputs.css).toBeDefined();
@@ -284,9 +284,9 @@ describe('config identity includes tier/spring/force', () => {
     expect(transitions.id).not.toBe(physics.id);
     expect(physics.id).not.toBe(ungated.id);
 
-    const lqTransitions = createQuantizer(transitions).quantizer;
-    const lqPhysics = createQuantizer(physics).quantizer;
-    const lqUngated = createQuantizer(ungated).quantizer;
+    const lqTransitions = createQuantizer(transitions);
+    const lqPhysics = createQuantizer(physics);
+    const lqUngated = createQuantizer(ungated);
 
     expect(lqTransitions.currentOutputs.read().glsl).toBeUndefined();
     expect(lqPhysics.currentOutputs.read().glsl).toBeDefined();
@@ -307,8 +307,8 @@ describe('config identity includes tier/spring/force', () => {
 
     expect(stiff.id).not.toBe(soft.id);
 
-    const lqStiff = createQuantizer(stiff).quantizer;
-    const lqSoft = createQuantizer(soft).quantizer;
+    const lqStiff = createQuantizer(stiff);
+    const lqSoft = createQuantizer(soft);
     const stiffCss = lqStiff.currentOutputs.read().css ?? {};
     const softCss = lqSoft.currentOutputs.read().css ?? {};
 
@@ -324,8 +324,8 @@ describe('config identity includes tier/spring/force', () => {
 
     expect(plain.id).not.toBe(forced.id);
 
-    const lqPlain = createQuantizer(plain).quantizer;
-    const lqForced = createQuantizer(forced).quantizer;
+    const lqPlain = createQuantizer(plain);
+    const lqForced = createQuantizer(forced);
 
     expect(lqPlain.currentOutputs.read().glsl).toBeUndefined();
     expect(lqForced.currentOutputs.read().glsl).toBeDefined();
@@ -342,7 +342,7 @@ describe('force option escape hatch', () => {
     // tier: none normally blocks everything except aria
     const config = defineQuantizer(b, { tier: 'none', force: ['css', 'glsl'], outputs: simpleOutputs(b) });
 
-    const lq = createQuantizer(config).quantizer;
+    const lq = createQuantizer(config);
     const outputs = lq.currentOutputs.read();
 
     expect(outputs.css).toBeDefined();
@@ -376,7 +376,7 @@ describe('springToLinearCSS auto-generation', () => {
       },
     });
 
-    const lq = createQuantizer(config).quantizer;
+    const lq = createQuantizer(config);
     const outputs = lq.currentOutputs.read();
 
     expect(outputs.css).toBeDefined();
@@ -399,7 +399,7 @@ describe('springToLinearCSS auto-generation', () => {
       },
     });
 
-    const lq = createQuantizer(config).quantizer;
+    const lq = createQuantizer(config);
     const outputs = lq.currentOutputs.read();
 
     expect(outputs.css).toBeDefined();
@@ -421,8 +421,8 @@ describe('springToLinearCSS auto-generation', () => {
       outputs: { css: { compact: { [`--${t2}`]: '1' }, medium: { [`--${t2}`]: '2' }, expanded: { [`--${t2}`]: '3' } } },
     });
 
-    const lq1 = createQuantizer(config1).quantizer;
-    const lq2 = createQuantizer(config2).quantizer;
+    const lq1 = createQuantizer(config1);
+    const lq2 = createQuantizer(config2);
     const o1 = lq1.currentOutputs.read();
     const o2 = lq2.currentOutputs.read();
 
@@ -481,7 +481,7 @@ describe('LiveQuantizer', () => {
     const { css } = uniqueCss();
     const config = defineQuantizer(b, { outputs: { css } });
 
-    const lq = createQuantizer(config).quantizer;
+    const lq = createQuantizer(config);
     const state = lq.state.read();
     expect(state).toBe('compact');
   });
@@ -491,7 +491,7 @@ describe('LiveQuantizer', () => {
     const { css } = uniqueCss();
     const config = defineQuantizer(b, { outputs: { css } });
 
-    const lq = createQuantizer(config).quantizer;
+    const lq = createQuantizer(config);
     const result = lq.evaluate(500);
     expect(result).toBe('compact');
   });
@@ -501,7 +501,7 @@ describe('LiveQuantizer', () => {
     const { css } = uniqueCss();
     const config = defineQuantizer(b, { outputs: { css } });
 
-    const lq = createQuantizer(config).quantizer;
+    const lq = createQuantizer(config);
 
     expect(lq.evaluate(500)).toBe('compact');
     expect(lq.evaluate(800)).toBe('medium');
@@ -513,7 +513,7 @@ describe('LiveQuantizer', () => {
     const { css, _key } = uniqueCss();
     const config = defineQuantizer(b, { outputs: { css } });
 
-    const lq = createQuantizer(config).quantizer;
+    const lq = createQuantizer(config);
 
     let outputs = lq.currentOutputs.read();
     expect(outputs.css![_key]).toBe('0.5rem');
@@ -532,7 +532,7 @@ describe('LiveQuantizer', () => {
     const { css, _key } = uniqueCss();
     const config = defineQuantizer(b, { outputs: { css } });
 
-    const lq = createQuantizer(config).quantizer;
+    const lq = createQuantizer(config);
 
     expect(lq.evaluate(100)).toBe('compact');
     expect(lq.evaluate(200)).toBe('compact');
@@ -547,7 +547,7 @@ describe('LiveQuantizer', () => {
     const { css } = uniqueCss();
     const config = defineQuantizer(b, { outputs: { css } });
 
-    const lq = createQuantizer(config).quantizer;
+    const lq = createQuantizer(config);
     expect(lq.config).toBe(config);
   });
 
@@ -556,7 +556,7 @@ describe('LiveQuantizer', () => {
     const { css } = uniqueCss();
     const config = defineQuantizer(b, { outputs: { css } });
 
-    const lq = createQuantizer(config).quantizer;
+    const lq = createQuantizer(config);
     expect(lq._tag).toBe('Quantizer');
     expect(lq.boundary).toBe(b);
   });
@@ -566,7 +566,7 @@ describe('LiveQuantizer', () => {
     const { css } = uniqueCss();
     const config = defineQuantizer(b, { outputs: { css } });
 
-    const lq = createQuantizer(config).quantizer;
+    const lq = createQuantizer(config);
     expect((lq as LiveQuantizer<typeof b> & { stateSync(): string }).stateSync()).toBe('compact');
     lq.evaluate(800);
     expect((lq as LiveQuantizer<typeof b> & { stateSync(): string }).stateSync()).toBe('medium');
@@ -587,7 +587,7 @@ describe('LiveQuantizer', () => {
       },
     });
 
-    const lq = createQuantizer(config).quantizer;
+    const lq = createQuantizer(config);
     expect(lq.currentOutputs.read()).toEqual({
       css: { '--gap': '4px' },
     });
@@ -604,7 +604,7 @@ describe('LiveQuantizer', () => {
     const { css } = uniqueCss();
     const config = defineQuantizer(b, { outputs: { css } });
 
-    const lq = createQuantizer(config).quantizer;
+    const lq = createQuantizer(config);
     const initialOutputs = lq.currentOutputs.read();
 
     lq.evaluate(800);
@@ -629,7 +629,7 @@ describe('LiveQuantizer', () => {
   test('changes subscriptions clean up cleanly when the lifetime disposes after a crossing', async () => {
     const b = viewport();
     const { css } = uniqueCss();
-    const { quantizer: lq, lifetime } = createQuantizer(defineQuantizer(b, { outputs: { css } }));
+    const lq = createQuantizer(defineQuantizer(b, { outputs: { css } }));
 
     // The crossing fan-out publishes synchronously on evaluate(); collect via the
     // kernel's subscribe (was `Stream.take(lq.changes, 1)` forked in a scope).
@@ -639,9 +639,9 @@ describe('LiveQuantizer', () => {
     });
     lq.evaluate(900); // compact -> medium crossing
     dispose();
-    // Disposing the lifetime closes the crossing kernel (completes subscribers,
+    // Disposing the quantizer closes the crossing kernel (completes subscribers,
     // makes publish inert) — the clean-up the old scope close covered.
-    await lifetime.dispose();
+    await lq.dispose();
 
     expect(events).toEqual([{ from: 'compact', to: 'medium' }]);
   });
@@ -668,7 +668,7 @@ describe('tier gating output correctness', () => {
       },
     });
 
-    const lq = createQuantizer(config).quantizer;
+    const lq = createQuantizer(config);
     const outputs = lq.currentOutputs.read();
 
     expect(outputs.aria).toEqual({ 'aria-label': `c-${t}` });
@@ -692,7 +692,7 @@ describe('tier gating output correctness', () => {
       },
     });
 
-    const lq = createQuantizer(config).quantizer;
+    const lq = createQuantizer(config);
     lq.evaluate(800);
     const outputs = lq.currentOutputs.read();
 
@@ -716,7 +716,7 @@ describe('injected-HLC determinism (A-1)', () => {
     node?: string,
   ): { wall_ms: number; counter: number; node_id: string } {
     const { css } = uniqueCssForGuard();
-    const { quantizer: lq } = createQuantizer(defineQuantizer(b, { outputs: { css } }), { clock, node });
+    const lq = createQuantizer(defineQuantizer(b, { outputs: { css } }), { clock, node });
     let stamp: { wall_ms: number; counter: number; node_id: string } | undefined;
     const dispose = lq.changes.subscribe((crossing) => {
       // crossing.timestamp is the branded HLC — structurally { wall_ms, counter, node_id }.
@@ -761,8 +761,8 @@ describe('injected-HLC determinism (A-1)', () => {
     const clockB = manualClock(2_000);
     const { css } = uniqueCssForGuard();
     const config = defineQuantizer(b, { outputs: { css } });
-    const { quantizer: lqA } = createQuantizer(config, { clock: clockA, node: 'A' });
-    const { quantizer: lqB } = createQuantizer(config, { clock: clockB, node: 'B' });
+    const lqA = createQuantizer(config, { clock: clockA, node: 'A' });
+    const lqB = createQuantizer(config, { clock: clockB, node: 'B' });
 
     let ca: { wall_ms: number; node_id: string } | undefined;
     let cb: { wall_ms: number; node_id: string } | undefined;
@@ -800,7 +800,7 @@ describe('injected-HLC determinism (A-1)', () => {
 describe('createQuantizer live handle — disposal closes every channel despite a throwing complete', () => {
   test('a throwing state-complete does not strand the output/crossing channels open', async () => {
     const b = viewport();
-    const { quantizer, lifetime } = createQuantizer(defineQuantizer(b, { outputs: simpleOutputs(b) }));
+    const quantizer = createQuantizer(defineQuantizer(b, { outputs: simpleOutputs(b) }));
 
     // A state subscriber whose `complete` throws during teardown. `CellKernel.close`
     // rethrows the first fault (the sink-error law), so the finalizer's `stateCell.close()`
@@ -818,7 +818,7 @@ describe('createQuantizer live handle — disposal closes every channel despite 
     // still publish into subscribers that were never completed. The fault folds into a
     // LifetimeDisposeError (aggregate-failure law), which we swallow here.
     try {
-      await lifetime.dispose();
+      await quantizer.dispose();
     } catch {
       /* expected: the folded fault still surfaces */
     }
@@ -837,7 +837,7 @@ describe('createQuantizer live handle — disposal closes every channel despite 
 describe('createQuantizer live handle — evaluate advances every channel despite a throwing subscriber', () => {
   test('a throwing state subscriber does not strand the outputs/crossing channels', () => {
     const b = viewport();
-    const { quantizer } = createQuantizer(defineQuantizer(b, { outputs: simpleOutputs(b) }));
+    const quantizer = createQuantizer(defineQuantizer(b, { outputs: simpleOutputs(b) }));
 
     // A state subscriber that throws on the CROSSING delivery (its initial replay of
     // the current state does not cross, so the throw fires only on the evaluate below).
@@ -865,11 +865,11 @@ describe('createQuantizer live handle — evaluate advances every channel despit
 describe('LiveQuantizer.evaluate — post-dispose inertness', () => {
   test('a post-dispose evaluate() freezes the discrete state (stateSync + state.read do not advance)', async () => {
     const b = viewport();
-    const { quantizer, lifetime } = createQuantizer(defineQuantizer(b, { outputs: simpleOutputs(b) }), {
+    const quantizer = createQuantizer(defineQuantizer(b, { outputs: simpleOutputs(b) }), {
       clock: manualClock(1000),
     });
     expect(quantizer.evaluate(50)).toBe('compact'); // committed 'compact'
-    await lifetime.dispose();
+    await quantizer.dispose();
     // After dispose the state/outputs/crossing kernels are closed; evaluate must freeze
     // rather than advance previousState/HLC while the reactive channels stay put — else a
     // disposed-but-referenced quantizer reports a discrete state its own channel never emits.

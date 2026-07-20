@@ -72,13 +72,13 @@ bench.add('Composable.merge -- three entities', () => {
 });
 
 bench.add('ComposableWorld.spawn -- single entity', () => {
-  const { world: scopedWorld } = World.make();
+  const scopedWorld = World.make();
   const scopedComposableWorld = ComposableWorld.make<TestSchema>(scopedWorld);
   scopedComposableWorld.spawn({ boundary, token, style });
 });
 
 bench.add('ComposableWorld.evaluate -- boundary + token + style', () => {
-  const { world: scopedWorld } = World.make();
+  const scopedWorld = World.make();
   const scopedComposableWorld = ComposableWorld.make<TestSchema>(scopedWorld);
   const entity = scopedComposableWorld.spawn({ boundary, token, style });
   scopedComposableWorld.evaluate(entity, { 'viewport.width': 800, themeLevel: 1 });
@@ -103,7 +103,7 @@ bench.add('DenseStore delete + reinsert', () => {
 });
 
 bench.add('World.tick -- regular system', () => {
-  const { world: scopedWorld } = World.make();
+  const scopedWorld = World.make();
   scopedWorld.spawn({ boundary });
   scopedWorld.addSystem({
     name: 'reader',
@@ -114,7 +114,7 @@ bench.add('World.tick -- regular system', () => {
 });
 
 bench.add('World.tick -- dense system', () => {
-  const { world: scopedWorld } = World.make();
+  const scopedWorld = World.make();
   const posX = Part.dense('posX', 8);
   const posY = Part.dense('posY', 8);
   scopedWorld.addDenseStore(posX);
@@ -139,7 +139,7 @@ bench.add('World.tick -- dense system', () => {
 });
 
 bench.add('ComposableWorld.query -- existing world', () => {
-  const { world: scopedWorld } = World.make();
+  const scopedWorld = World.make();
   const scopedComposableWorld = ComposableWorld.make<TestSchema>(scopedWorld);
   scopedComposableWorld.spawn({ boundary });
   scopedComposableWorld.spawn({ boundary, token });

@@ -8,7 +8,7 @@
 
 > **Derived**\<`T`\> = `DerivedShape`\<`T`\>
 
-Defined in: [core/src/reactive/derived.ts:187](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/derived.ts#L187)
+Defined in: [core/src/reactive/derived.ts:195](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/derived.ts#L195)
 
 Public structural type for `Derived`.
 

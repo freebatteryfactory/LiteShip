@@ -8,18 +8,21 @@
  * before it attached (the no-replay law), and `close` completes every
  * subscriber without blocking.
  *
- * Every factory returns a {@link ZapHandle} — the channel plus the
- * {@link Lifetime} that owns its teardown (the fan-out `close`, plus any source
- * subscription, DOM listener, or pending timer the derived channel holds). This
- * replaces the former `Effect`/`Scope`/`PubSub` triad: `PubSub.unbounded` →
- * listener set, `Stream.fromPubSub` → subscribe surface, `emit` → sync publish,
- * `addFinalizer` → `Lifetime`.
+ * Every factory returns the channel augmented with its own `dispose()`
+ * ({@link AsyncOwnedResource}) — the zap IS the disposable. Disposal tears down
+ * the fan-out `close`, plus any source subscription, DOM listener, or pending
+ * timer the derived channel holds; the owning {@link Lifetime} stays reachable as
+ * `zap.lifetime` for advanced composition. This replaces the former
+ * `Effect`/`Scope`/`PubSub` triad: `PubSub.unbounded` → listener set,
+ * `Stream.fromPubSub` → subscribe surface, `emit` → sync publish, `addFinalizer`
+ * → `Lifetime`.
  *
  * @module
  */
 
 import { CellKernel } from './cell-kernel.js';
-import { Lifetime } from './lifetime.js';
+import { Lifetime, attachLifetime } from './lifetime.js';
+import type { AsyncOwnedResource } from './lifetime.js';
 import { type Clock, systemClock } from '../clock/clock.js';
 import type { Millis } from '../schema/brands.js';
 
@@ -38,16 +41,8 @@ interface ZapShape<T> {
   emit(value: T): void;
 }
 
-/**
- * The pair every `Zap.*` factory returns: the live channel plus the
- * {@link Lifetime} that owns its teardown. Dispose the lifetime to close the
- * channel (completing subscribers, making `emit` inert) and release any source
- * subscription / DOM listener / timer the channel holds.
- */
-interface ZapHandle<T> {
-  readonly zap: ZapShape<T>;
-  readonly lifetime: Lifetime;
-}
+/** A live {@link Zap} channel that owns its teardown directly (see {@link AsyncOwnedResource}). */
+type OwnedZap<T> = ZapShape<T> & AsyncOwnedResource;
 
 /**
  * Build a fresh no-replay channel and the Lifetime that closes it. The close
@@ -71,14 +66,15 @@ function makeChannel<T>(): { channel: CellKernel.Fanout<T>; zap: ZapShape<T>; li
  *
  * @example
  * ```ts
- * const { zap } = Zap.make<number>();
+ * const zap = Zap.make<number>();
  * zap.stream.subscribe((n) => received.push(n));
  * zap.emit(42); // subscribers receive 42
+ * await zap.dispose();
  * ```
  */
-const _make = <T>(): ZapHandle<T> => {
+const _make = <T>(): OwnedZap<T> => {
   const { zap, lifetime } = makeChannel<T>();
-  return { zap, lifetime };
+  return attachLifetime(zap, lifetime);
 };
 
 /**
@@ -88,21 +84,21 @@ const _make = <T>(): ZapHandle<T> => {
  * @example
  * ```ts
  * const btn = document.getElementById('btn')!;
- * const { zap, lifetime } = Zap.fromDOMEvent(btn, 'click');
- * // zap.stream emits MouseEvents; await lifetime.dispose() removes the listener
+ * const clicks = Zap.fromDOMEvent(btn, 'click');
+ * // clicks.stream emits MouseEvents; await clicks.dispose() removes the listener
  * ```
  */
 const _fromDOMEvent = <K extends keyof HTMLElementEventMap>(
   element: HTMLElement,
   event: K,
-): ZapHandle<HTMLElementEventMap[K]> => {
+): OwnedZap<HTMLElementEventMap[K]> => {
   const { channel, zap, lifetime } = makeChannel<HTMLElementEventMap[K]>();
   const listener = (e: HTMLElementEventMap[K]): void => {
     channel.publish(e);
   };
   element.addEventListener(event, listener);
   lifetime.add(() => element.removeEventListener(event, listener));
-  return { zap, lifetime };
+  return attachLifetime(zap, lifetime);
 };
 
 /**
@@ -110,16 +106,16 @@ const _fromDOMEvent = <K extends keyof HTMLElementEventMap>(
  *
  * @example
  * ```ts
- * const { zap: merged } = Zap.merge([a.zap, b.zap]);
+ * const merged = Zap.merge([a, b]);
  * // merged.stream receives events from both a and b
  * ```
  */
-const _merge = <T>(events: ReadonlyArray<ZapShape<T>>): ZapHandle<T> => {
+const _merge = <T>(events: ReadonlyArray<ZapShape<T>>): OwnedZap<T> => {
   const { channel, zap, lifetime } = makeChannel<T>();
   for (const event of events) {
     lifetime.add(event.stream.subscribe((value) => channel.publish(value)));
   }
-  return { zap, lifetime };
+  return attachLifetime(zap, lifetime);
 };
 
 /**
@@ -127,14 +123,14 @@ const _merge = <T>(events: ReadonlyArray<ZapShape<T>>): ZapHandle<T> => {
  *
  * @example
  * ```ts
- * const { zap: strs } = Zap.map(nums.zap, (n) => `value: ${n}`);
+ * const strs = Zap.map(nums, (n) => `value: ${n}`);
  * // strs.stream emits transformed strings
  * ```
  */
-const _map = <A, B>(event: ZapShape<A>, f: (a: A) => B): ZapHandle<B> => {
+const _map = <A, B>(event: ZapShape<A>, f: (a: A) => B): OwnedZap<B> => {
   const { channel, zap, lifetime } = makeChannel<B>();
   lifetime.add(event.stream.subscribe((value) => channel.publish(f(value))));
-  return { zap, lifetime };
+  return attachLifetime(zap, lifetime);
 };
 
 /**
@@ -142,18 +138,18 @@ const _map = <A, B>(event: ZapShape<A>, f: (a: A) => B): ZapHandle<B> => {
  *
  * @example
  * ```ts
- * const { zap: evens } = Zap.filter(nums.zap, (n) => n % 2 === 0);
+ * const evens = Zap.filter(nums, (n) => n % 2 === 0);
  * // evens.stream only receives even numbers
  * ```
  */
-const _filter = <T>(event: ZapShape<T>, predicate: (value: T) => boolean): ZapHandle<T> => {
+const _filter = <T>(event: ZapShape<T>, predicate: (value: T) => boolean): OwnedZap<T> => {
   const { channel, zap, lifetime } = makeChannel<T>();
   lifetime.add(
     event.stream.subscribe((value) => {
       if (predicate(value)) channel.publish(value);
     }),
   );
-  return { zap, lifetime };
+  return attachLifetime(zap, lifetime);
 };
 
 /**
@@ -165,11 +161,11 @@ const _filter = <T>(event: ZapShape<T>, predicate: (value: T) => boolean): ZapHa
  *
  * @example
  * ```ts
- * const { zap: debounced } = Zap.debounce(input.zap, Millis(300));
+ * const debounced = Zap.debounce(input, Millis(300));
  * // debounced.stream emits only after a 300ms pause in input
  * ```
  */
-const _debounce = <T>(event: ZapShape<T>, ms: Millis): ZapHandle<T> => {
+const _debounce = <T>(event: ZapShape<T>, ms: Millis): OwnedZap<T> => {
   const { channel, zap, lifetime } = makeChannel<T>();
   let timer: ReturnType<typeof setTimeout> | null = null;
   // Registered above the source subscription so LIFO clears a pending timer
@@ -186,7 +182,7 @@ const _debounce = <T>(event: ZapShape<T>, ms: Millis): ZapHandle<T> => {
       }, ms);
     }),
   );
-  return { zap, lifetime };
+  return attachLifetime(zap, lifetime);
 };
 
 /**
@@ -197,11 +193,11 @@ const _debounce = <T>(event: ZapShape<T>, ms: Millis): ZapHandle<T> => {
  *
  * @example
  * ```ts
- * const { zap: throttled } = Zap.throttle(scroll.zap, Millis(16));
+ * const throttled = Zap.throttle(scroll, Millis(16));
  * // throttled.stream emits at most once every 16ms (~60fps)
  * ```
  */
-const _throttle = <T>(event: ZapShape<T>, ms: Millis, clock: Clock = systemClock): ZapHandle<T> => {
+const _throttle = <T>(event: ZapShape<T>, ms: Millis, clock: Clock = systemClock): OwnedZap<T> => {
   const { channel, zap, lifetime } = makeChannel<T>();
   // Negative infinity so the first value always clears the window.
   let lastEmit = Number.NEGATIVE_INFINITY;
@@ -214,20 +210,23 @@ const _throttle = <T>(event: ZapShape<T>, ms: Millis, clock: Clock = systemClock
       }
     }),
   );
-  return { zap, lifetime };
+  return attachLifetime(zap, lifetime);
 };
 
 /**
  * Zap — push-based event channel over {@link CellKernel.fanout}. No-replay
  * fan-out with `map`, `filter`, `merge`, `debounce`, and `throttle`
- * combinators; every factory returns a `{ zap, lifetime }` handle.
+ * combinators; every factory returns the channel augmented with its own
+ * `dispose()` ({@link AsyncOwnedResource}).
  *
  * @example
  * ```ts
- * const { zap } = Zap.make<number>();
- * const { zap: doubled } = Zap.map(zap, (n) => n * 2);
+ * const zap = Zap.make<number>();
+ * const doubled = Zap.map(zap, (n) => n * 2);
  * doubled.stream.subscribe((n) => received.push(n));
  * zap.emit(5); // doubled subscribers receive 10
+ * await doubled.dispose();
+ * await zap.dispose();
  * ```
  */
 export const Zap = {
@@ -242,8 +241,3 @@ export const Zap = {
 
 /** Public structural type for `Zap`. */
 export type Zap<T> = ZapShape<T>;
-
-export declare namespace Zap {
-  /** The `{ zap, lifetime }` pair every `Zap.*` factory returns. */
-  export type Handle<T> = ZapHandle<T>;
-}

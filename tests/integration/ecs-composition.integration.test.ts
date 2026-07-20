@@ -54,7 +54,7 @@ type TestSchema = {
 
 describe('ECS Composition Integration', () => {
   test('full lifecycle: spawn, query, evaluate, add system, and tick', () => {
-    const { world } = World.make();
+    const world = World.make();
     const composableWorld = ComposableWorld.make<TestSchema>(world);
     const entityA = composableWorld.spawn({ boundary, token, style });
     const entityB = composableWorld.spawn({ boundary });
@@ -94,7 +94,7 @@ describe('ECS Composition Integration', () => {
   });
 
   test('dense store lifecycle integrates with world tick and retrieval', () => {
-    const { world } = World.make();
+    const world = World.make();
     const dense = ComposableWorld.dense(world);
     const metrics = dense.create('metrics', 8);
     const entity = Composable.make<TestSchema>({ boundary, token });
@@ -125,7 +125,7 @@ describe('ECS Composition Integration', () => {
   });
 
   test('entity despawn removes entities from queries and dense stores', () => {
-    const { world } = World.make();
+    const world = World.make();
     const denseStore = Part.dense('hp', 16);
     world.addDenseStore(denseStore);
     const id = world.spawn({ boundary, role: 'hero' });
@@ -165,7 +165,7 @@ describe('ECS Composition Integration', () => {
   });
 
   test('multiple systems execute in registration order', () => {
-    const { world } = World.make();
+    const world = World.make();
     world.spawn({ boundary });
     const calls: string[] = [];
 

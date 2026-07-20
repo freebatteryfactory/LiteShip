@@ -7,8 +7,9 @@
  * pure combiner/factory (byte-identical to the pre-migration logic); only the
  * reactive carrier changed (`SubscriptionRef.make`+`changes`+`get` → the replay-1
  * kernel; `Stream.mergeAll`+`runForEach` → kernel `subscribe`; `Scope` →
- * {@link Lifetime}). Every factory returns a `{ derived, lifetime }` handle, the
- * shipped Zap/Compositor precedent.
+ * {@link Lifetime}). Every factory returns the derived value augmented with its
+ * own `dispose()` ({@link AsyncOwnedResource}) — the derived IS the disposable,
+ * with the owning `lifetime` still reachable for advanced composition.
  *
  * EMISSION POLICY `{all}` (S6.F.1). The kernel does NOT dedup — every source change
  * republishes even when the recomputed value is unchanged (`duplicate-source`
@@ -37,7 +38,8 @@
 
 import { CellKernel } from './cell-kernel.js';
 import type { CellSubscriber, Disposer } from './cell-kernel.js';
-import { Lifetime } from './lifetime.js';
+import { Lifetime, attachLifetime } from './lifetime.js';
+import type { AsyncOwnedResource } from './lifetime.js';
 
 /**
  * The minimal readable + subscribable source a {@link Derived} recomputes from —
@@ -69,8 +71,8 @@ interface DerivedShape<T> {
    * Owns the derived's teardown. Its finalizers unsubscribe from the sources
    * (stop recomputing) then close the kernel (complete subscribers) — so a
    * post-dispose source change no longer recomputes and `read()` freezes at the
-   * last value. Mirrors {@link Cell}'s `lifetime` member so consumers thread
-   * lifecycle through one uniform `dispose()`.
+   * last value. Mirrors {@link Cell}'s `lifetime` member — reachable for advanced
+   * composition; day-to-day teardown goes through the derived's own `dispose()`.
    */
   readonly lifetime: Lifetime;
 }
@@ -85,7 +87,10 @@ interface DerivedShape<T> {
  * `close` finalizer is registered FIRST, so LIFO runs it LAST — after the source
  * subscriptions are torn down.
  */
-function buildDerived<T>(recompute: () => T, triggers: ReadonlyArray<DerivedTrigger>): DerivedShape<T> {
+function buildDerived<T>(
+  recompute: () => T,
+  triggers: ReadonlyArray<DerivedTrigger>,
+): DerivedShape<T> & AsyncOwnedResource {
   const kernel = CellKernel.replay1<T>(recompute());
   const lifetime = Lifetime.make();
   lifetime.add(() => kernel.close());
@@ -110,7 +115,7 @@ function buildDerived<T>(recompute: () => T, triggers: ReadonlyArray<DerivedTrig
     }
   };
 
-  return {
+  const derived: DerivedShape<T> = {
     _tag: 'Derived',
     // PULL-ONLY FRESHNESS (S6 divergence closure). Sources are wired LAZILY on the
     // first subscribe (to reproduce the leading republish), so a pull-only reader —
@@ -149,14 +154,17 @@ function buildDerived<T>(recompute: () => T, triggers: ReadonlyArray<DerivedTrig
     },
     lifetime,
   };
+  return attachLifetime(derived, lifetime);
 }
 
 /**
  * Compute a derived value from a `compute` factory and the sources whose
  * emissions recompute it. With no sources it is static (never recomputes).
  */
-export const computed = <T>(compute: () => T, sources: ReadonlyArray<DerivedTrigger> = []): DerivedShape<T> =>
-  buildDerived(compute, sources);
+export const computed = <T>(
+  compute: () => T,
+  sources: ReadonlyArray<DerivedTrigger> = [],
+): DerivedShape<T> & AsyncOwnedResource => buildDerived(compute, sources);
 
 /**
  * Combine multiple sources into a single derived value of `combiner(...values)`.
@@ -166,7 +174,7 @@ export const computed = <T>(compute: () => T, sources: ReadonlyArray<DerivedTrig
 const _combine = <T extends readonly unknown[], U>(
   sources: { readonly [K in keyof T]: DerivedSource<T[K]> },
   combiner: (...args: T) => U,
-): DerivedShape<U> => {
+): DerivedShape<U> & AsyncOwnedResource => {
   // Read every source's current value, preserving tuple arity/order. `.map` over a
   // tuple erases element types to `readonly unknown[]`; the single `as T` re-narrows
   // it — provably safe because `.map` is total and order-preserving over the tuple.

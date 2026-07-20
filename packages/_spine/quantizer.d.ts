@@ -14,7 +14,7 @@ import type {
   MotionTier,
   Scheduler,
   CellKernel,
-  Lifetime,
+  AsyncOwnedResource,
   Clock,
 } from './core.d.ts';
 
@@ -92,14 +92,15 @@ export interface LiveQuantizer<
 }
 
 /**
- * The pair {@link createQuantizer} returns: the live reactive quantizer plus the
- * {@link Lifetime} that owns its teardown (replaces the former
- * `Effect<..., Scope.Scope>` scope).
+ * A live reactive quantizer that owns its teardown directly
+ * ({@link AsyncOwnedResource}): `await quantizer.dispose()` closes the state /
+ * outputs / crossings kernels. The value IS the disposable — no pair to
+ * destructure — with the owning `lifetime` still reachable.
  */
-export interface LiveQuantizerHandle<B extends Boundary, O extends QuantizerOutputs<B> = QuantizerOutputs<B>> {
-  readonly quantizer: LiveQuantizer<B, O>;
-  readonly lifetime: Lifetime;
-}
+export type OwnedQuantizer<
+  B extends Boundary,
+  O extends QuantizerOutputs<B> = QuantizerOutputs<B>,
+> = LiveQuantizer<B, O> & AsyncOwnedResource;
 
 export declare function defineQuantizer<B extends Boundary, O extends QuantizerOutputs<B>>(
   boundary: B,
@@ -109,7 +110,7 @@ export declare function defineQuantizer<B extends Boundary, O extends QuantizerO
 export declare function createQuantizer<B extends Boundary, O extends QuantizerOutputs<B>>(
   definition: QuantizerConfig<B, O>,
   runtime?: QuantizerRuntime,
-): LiveQuantizerHandle<B, O>;
+): OwnedQuantizer<B, O>;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 2. EVALUATE (boundary detection + hysteresis)
@@ -176,14 +177,12 @@ export interface AnimatedQuantizerShape<B extends Boundary> extends ReactiveQuan
 }
 
 /**
- * The pair {@link AnimatedQuantizer.make} returns: the live animated quantizer
- * plus the {@link Lifetime} that owns its teardown (replaces the former
- * `Effect<..., Scope.Scope>` scope).
+ * A live animated quantizer that owns its teardown directly
+ * ({@link AsyncOwnedResource}): `await animated.dispose()` stops observing the
+ * wrapped quantizer's crossings, aborts any in-flight animation, and closes the
+ * `interpolated` fan-out. The value IS the disposable — no pair to destructure.
  */
-export interface AnimatedQuantizerHandle<B extends Boundary> {
-  readonly animated: AnimatedQuantizerShape<B>;
-  readonly lifetime: Lifetime;
-}
+export type OwnedAnimatedQuantizer<B extends Boundary> = AnimatedQuantizerShape<B> & AsyncOwnedResource;
 
 export declare const AnimatedQuantizer: {
   make<B extends Boundary>(
@@ -193,5 +192,5 @@ export declare const AnimatedQuantizer: {
     outputs?: Record<string, Record<string, number | string>>,
     /** Optional frame-clock injection; omitted, drives an internal ~60fps 16ms loop. */
     options?: { readonly scheduler?: Scheduler },
-  ): AnimatedQuantizerHandle<B>;
+  ): OwnedAnimatedQuantizer<B>;
 };

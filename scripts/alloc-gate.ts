@@ -414,7 +414,7 @@ function tokenBufferOp(): () => void {
 /** Build the compositor compose op closure — the per-frame zero-alloc hot path. */
 function compositorOp(): () => void {
   // Compositor.create/add/compute are synchronous as of the core-seams wave.
-  const { compositor } = Compositor.create({ poolCapacity: 8 });
+  const compositor = Compositor.create({ poolCapacity: 8 });
   const names = ['viewport', 'theme', 'density'] as const;
   const states = ['mobile', 'tablet', 'desktop'] as const;
   for (let i = 0; i < names.length; i++) {

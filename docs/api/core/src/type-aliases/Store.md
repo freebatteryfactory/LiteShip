@@ -8,7 +8,7 @@
 
 > **Store**\<`S`, `Msg`\> = `StoreShape`\<`S`, `Msg`\>
 
-Defined in: [core/src/reactive/store.ts:76](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/store.ts#L76)
+Defined in: [core/src/reactive/store.ts:82](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/store.ts#L82)
 
 Public structural type for `Store`.
 

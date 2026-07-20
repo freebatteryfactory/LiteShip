@@ -56,10 +56,6 @@
           "kind": "interface"
         },
         {
-          "name": "AnimatedQuantizerHandle",
-          "kind": "interface"
-        },
-        {
           "name": "AnimatedQuantizerShape",
           "kind": "interface"
         },
@@ -69,6 +65,10 @@
         },
         {
           "name": "AstroLoggerLike",
+          "kind": "interface"
+        },
+        {
+          "name": "AsyncOwnedResource",
           "kind": "interface"
         },
         {
@@ -680,10 +680,6 @@
           "kind": "interface"
         },
         {
-          "name": "LiveQuantizerHandle",
-          "kind": "interface"
-        },
-        {
           "name": "MatchPriority",
           "kind": "type"
         },
@@ -742,6 +738,18 @@
         {
           "name": "OverflowPolicy",
           "kind": "type"
+        },
+        {
+          "name": "OwnedAnimatedQuantizer",
+          "kind": "type"
+        },
+        {
+          "name": "OwnedQuantizer",
+          "kind": "type"
+        },
+        {
+          "name": "OwnedResource",
+          "kind": "interface"
         },
         {
           "name": "Part",
@@ -2215,6 +2223,10 @@
           "kind": "type"
         },
         {
+          "name": "AsyncOwnedResource",
+          "kind": "type"
+        },
+        {
           "name": "AttributionDecl",
           "kind": "type"
         },
@@ -2823,6 +2835,10 @@
           "kind": "type"
         },
         {
+          "name": "OwnedResource",
+          "kind": "type"
+        },
+        {
           "name": "Part",
           "kind": "namespace"
         },
@@ -3380,15 +3396,7 @@
         },
         {
           "name": "World",
-          "kind": "namespace"
-        },
-        {
-          "name": "World",
           "kind": "type"
-        },
-        {
-          "name": "Zap",
-          "kind": "namespace"
         },
         {
           "name": "Zap",
@@ -4379,10 +4387,6 @@
           "kind": "type"
         },
         {
-          "name": "AnimatedQuantizerHandle",
-          "kind": "type"
-        },
-        {
           "name": "AnimatedQuantizerShape",
           "kind": "type"
         },
@@ -4403,15 +4407,19 @@
           "kind": "type"
         },
         {
-          "name": "LiveQuantizerHandle",
-          "kind": "type"
-        },
-        {
           "name": "MotionTier",
           "kind": "type"
         },
         {
           "name": "OutputTarget",
+          "kind": "type"
+        },
+        {
+          "name": "OwnedAnimatedQuantizer",
+          "kind": "type"
+        },
+        {
+          "name": "OwnedQuantizer",
           "kind": "type"
         },
         {

@@ -124,7 +124,7 @@ describe('@liteship/remotion hooks', () => {
 
 describe('@liteship/remotion precomputeFrames', () => {
   test('collects frames from a renderer', async () => {
-    const compositor = Compositor.create().compositor;
+    const compositor = Compositor.create();
     const renderer = VideoRenderer.make({ fps: 10, width: 640, height: 480, durationMs: 500 }, compositor);
 
     const frames = await precomputeFrames(renderer);
@@ -134,7 +134,7 @@ describe('@liteship/remotion precomputeFrames', () => {
   });
 
   test('returns an empty array for zero-duration renders', async () => {
-    const compositor = Compositor.create().compositor;
+    const compositor = Compositor.create();
     const renderer = VideoRenderer.make({ fps: 30, width: 640, height: 480, durationMs: 0 }, compositor);
 
     await expect(precomputeFrames(renderer)).resolves.toEqual([]);
@@ -143,7 +143,7 @@ describe('@liteship/remotion precomputeFrames', () => {
 
 describe('@liteship/remotion rendererFromRemotionConfig', () => {
   test('derives VideoConfig from Remotion timing so frame counts cannot drift', async () => {
-    const compositor = Compositor.create().compositor;
+    const compositor = Compositor.create();
     const renderer = rendererFromRemotionConfig(
       { fps: 30, width: 640, height: 480, durationInFrames: 90 },
       compositor,
@@ -160,7 +160,7 @@ describe('@liteship/remotion rendererFromRemotionConfig', () => {
   test('frame counts round-trip exactly at non-representable rates (Codex P2, PR #34)', () => {
     // (frames / fps) * 1000 is not exactly representable for these pairs —
     // an unguarded ceil round trip adds a phantom frame (1000 @ 30 -> 1001).
-    const compositor = Compositor.create().compositor;
+    const compositor = Compositor.create();
     for (const [durationInFrames, fps] of [
       [1000, 30],
       [900, 29.97],
@@ -172,7 +172,7 @@ describe('@liteship/remotion rendererFromRemotionConfig', () => {
   });
 
   test('accepts the full useVideoConfig shape (extra fields ignored)', () => {
-    const compositor = Compositor.create().compositor;
+    const compositor = Compositor.create();
     const remotionConfig = { fps: 24, width: 1920, height: 1080, durationInFrames: 48, id: 'main' };
     const renderer = rendererFromRemotionConfig(remotionConfig, compositor);
 

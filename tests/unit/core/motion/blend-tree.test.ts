@@ -1,8 +1,8 @@
 /**
  * BlendTree -- weighted multi-state blending.
  *
- * `BlendTree.make` is now a synchronous, Effect-free factory returning a
- * `{ tree, lifetime }` handle; `tree.changes` is a no-replay
+ * `BlendTree.make` is now a synchronous, Effect-free factory returning a tree
+ * that owns its own teardown via `dispose()`; `tree.changes` is a no-replay
  * {@link CellKernel.fanout} subscribe surface. The pure blend kernel
  * (`computeBlend`) is unchanged — these properties pin it byte-identically:
  *   - compute() with all equal weights = arithmetic mean.
@@ -21,7 +21,7 @@ import { BlendTree } from '@liteship/core';
 
 describe('BlendTree', () => {
   test('make creates a blend tree', () => {
-    const { tree } = BlendTree.make<{ x: number }>();
+    const tree = BlendTree.make<{ x: number }>();
     expect(tree).toBeDefined();
     expect(tree.compute).toBeDefined();
     expect(tree.add).toBeDefined();
@@ -30,25 +30,25 @@ describe('BlendTree', () => {
   });
 
   test('compute on empty tree returns empty object', () => {
-    const { tree } = BlendTree.make<{ x: number }>();
+    const tree = BlendTree.make<{ x: number }>();
     expect(tree.compute()).toEqual({});
   });
 
   test('single node returns exact values', () => {
-    const { tree } = BlendTree.make<{ x: number; y: number }>();
+    const tree = BlendTree.make<{ x: number; y: number }>();
     tree.add('a', { x: 10, y: 20 }, 1);
     expect(tree.compute()).toEqual({ x: 10, y: 20 });
   });
 
   test('two equal-weight nodes return averages', () => {
-    const { tree } = BlendTree.make<{ x: number }>();
+    const tree = BlendTree.make<{ x: number }>();
     tree.add('a', { x: 0 }, 1);
     tree.add('b', { x: 100 }, 1);
     expect(tree.compute().x).toBeCloseTo(50, 5);
   });
 
   test('weighted blend respects weights', () => {
-    const { tree } = BlendTree.make<{ x: number }>();
+    const tree = BlendTree.make<{ x: number }>();
     tree.add('a', { x: 0 }, 1);
     tree.add('b', { x: 100 }, 3);
     // Expected: (0*0.25 + 100*0.75) = 75
@@ -56,7 +56,7 @@ describe('BlendTree', () => {
   });
 
   test('remove eliminates node from blend', () => {
-    const { tree } = BlendTree.make<{ x: number }>();
+    const tree = BlendTree.make<{ x: number }>();
     tree.add('a', { x: 10 }, 1);
     tree.add('b', { x: 90 }, 1);
     tree.remove('a');
@@ -64,7 +64,7 @@ describe('BlendTree', () => {
   });
 
   test('setWeight updates node weight', () => {
-    const { tree } = BlendTree.make<{ x: number }>();
+    const tree = BlendTree.make<{ x: number }>();
     tree.add('a', { x: 0 }, 1);
     tree.add('b', { x: 100 }, 1);
     tree.setWeight('a', 0);
@@ -73,28 +73,28 @@ describe('BlendTree', () => {
   });
 
   test('setWeight on non-existent node is no-op', () => {
-    const { tree } = BlendTree.make<{ x: number }>();
+    const tree = BlendTree.make<{ x: number }>();
     tree.add('a', { x: 10 }, 1);
     tree.setWeight('nonexistent', 5);
     expect(tree.compute()).toEqual({ x: 10 });
   });
 
   test('all zero-weight nodes return empty object', () => {
-    const { tree } = BlendTree.make<{ x: number }>();
+    const tree = BlendTree.make<{ x: number }>();
     tree.add('a', { x: 10 }, 0);
     tree.add('b', { x: 20 }, 0);
     expect(tree.compute()).toEqual({});
   });
 
   test('add overwrites existing node', () => {
-    const { tree } = BlendTree.make<{ x: number }>();
+    const tree = BlendTree.make<{ x: number }>();
     tree.add('a', { x: 10 }, 1);
     tree.add('a', { x: 99 }, 1);
     expect(tree.compute()).toEqual({ x: 99 });
   });
 
   test('multi-key blending', () => {
-    const { tree } = BlendTree.make<{ x: number; y: number; z: number }>();
+    const tree = BlendTree.make<{ x: number; y: number; z: number }>();
     tree.add('a', { x: 0, y: 0, z: 0 }, 1);
     tree.add('b', { x: 100, y: 200, z: 300 }, 1);
     const result = tree.compute();
@@ -104,7 +104,7 @@ describe('BlendTree', () => {
   });
 
   test('ignores inherited numeric properties when computing blends', () => {
-    const { tree } = BlendTree.make<{ own: number }>();
+    const tree = BlendTree.make<{ own: number }>();
     const proto = { inherited: 999 };
     const value = Object.assign(Object.create(proto), { own: 12 }) as { own: number };
 
@@ -120,7 +120,7 @@ describe('BlendTree', () => {
 
 describe('BlendTree.changes', () => {
   test('fires the freshly computed blend on every mutation', () => {
-    const { tree } = BlendTree.make<{ x: number }>();
+    const tree = BlendTree.make<{ x: number }>();
     const seen: Array<{ x: number }> = [];
     tree.changes.subscribe((blend) => seen.push(blend));
 
@@ -133,7 +133,7 @@ describe('BlendTree.changes', () => {
   });
 
   test('NO REPLAY: a late subscriber misses blends published before it attached', () => {
-    const { tree } = BlendTree.make<{ x: number }>();
+    const tree = BlendTree.make<{ x: number }>();
     tree.add('a', { x: 10 }, 1); // published with no subscriber — dropped
 
     const seen: Array<{ x: number }> = [];
@@ -146,7 +146,7 @@ describe('BlendTree.changes', () => {
   });
 
   test('remove and setWeight also publish to changes', () => {
-    const { tree } = BlendTree.make<{ x: number }>();
+    const tree = BlendTree.make<{ x: number }>();
     tree.add('a', { x: 10 }, 1);
     tree.add('b', { x: 90 }, 1);
 
@@ -161,13 +161,13 @@ describe('BlendTree.changes', () => {
     expect(seen[1]).toEqual({});
   });
 
-  test('lifetime dispose closes the changes channel', async () => {
-    const { tree, lifetime } = BlendTree.make<{ x: number }>();
+  test('dispose closes the changes channel', async () => {
+    const tree = BlendTree.make<{ x: number }>();
     const seen: Array<{ x: number }> = [];
     tree.changes.subscribe((blend) => seen.push(blend));
 
     tree.add('a', { x: 5 }, 1);
-    await lifetime.dispose();
+    await tree.dispose();
     tree.add('b', { x: 100 }, 1); // channel closed — no further publishes
 
     expect(seen).toHaveLength(1);
@@ -189,7 +189,7 @@ describe('BlendTree properties', () => {
         }),
         fc.double({ min: 0.001, max: 100, noNaN: true }),
         (value, weight) => {
-          const { tree } = BlendTree.make<{ x: number; y: number }>();
+          const tree = BlendTree.make<{ x: number; y: number }>();
           tree.add('only', value, weight);
           const result = tree.compute();
           expect(result.x).toBeCloseTo(value.x, 5);
@@ -205,7 +205,7 @@ describe('BlendTree properties', () => {
         fc.double({ noNaN: true, min: -1000, max: 1000 }),
         fc.double({ noNaN: true, min: -1000, max: 1000 }),
         (a, b) => {
-          const { tree } = BlendTree.make<{ v: number }>();
+          const tree = BlendTree.make<{ v: number }>();
           tree.add('a', { v: a }, 1);
           tree.add('b', { v: b }, 1);
           expect(tree.compute().v).toBeCloseTo((a + b) / 2, 5);

@@ -6,9 +6,9 @@
  * @module
  */
 
-export { Lifetime } from './lifetime.js';
+export { Lifetime, attachLifetime } from './lifetime.js';
 
-export type { LifetimeShape, LifetimeDisposeError, Finalizer } from './lifetime.js';
+export type { LifetimeShape, LifetimeDisposeError, Finalizer, OwnedResource, AsyncOwnedResource } from './lifetime.js';
 
 export { CellKernel } from './cell-kernel.js';
 

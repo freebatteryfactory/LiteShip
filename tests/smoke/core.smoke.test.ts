@@ -30,7 +30,7 @@ describe('core smoke', () => {
   });
 
   test('Compositor.create resolves', () => {
-    const { compositor } = Compositor.create();
+    const compositor = Compositor.create();
     expect(compositor).toBeDefined();
   });
 

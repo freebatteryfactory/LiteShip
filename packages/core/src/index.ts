@@ -87,8 +87,14 @@ export type { SchemaPort, DeclarationSchema } from './schema/index.js';
 // Scope/ManagedRuntime at seams; `CellKernel` is the replay-current / no-replay
 // fan-out kernel extracted from the compositor's listener-Set. The reactive
 // primitives (Cell/Derived/Store/Signal/Zap) rebuild on these in later waves.
-export { Lifetime } from './reactive/index.js';
-export type { LifetimeShape, LifetimeDisposeError, Finalizer } from './reactive/index.js';
+export { Lifetime, attachLifetime } from './reactive/index.js';
+export type {
+  LifetimeShape,
+  LifetimeDisposeError,
+  Finalizer,
+  OwnedResource,
+  AsyncOwnedResource,
+} from './reactive/index.js';
 export { CellKernel } from './reactive/index.js';
 export type { Disposer, CellSink, CellSubscriber, CellReplayShape, CellFanoutShape } from './reactive/index.js';
 

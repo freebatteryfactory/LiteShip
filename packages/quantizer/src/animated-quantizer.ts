@@ -13,7 +13,16 @@ import type {
   Easing,
   Scheduler,
 } from '@liteship/core';
-import { Diagnostics, systemClock, Animation, Millis as mkMillis, CellKernel, Lifetime } from '@liteship/core';
+import {
+  Diagnostics,
+  systemClock,
+  Animation,
+  Millis as mkMillis,
+  CellKernel,
+  Lifetime,
+  attachLifetime,
+} from '@liteship/core';
+import type { AsyncOwnedResource } from '@liteship/core';
 import type { Transition, TransitionMap } from './transition.js';
 import { Transition as TransitionFactory } from './transition.js';
 
@@ -48,15 +57,14 @@ export interface AnimatedQuantizerShape<B extends Boundary> extends ReactiveQuan
 }
 
 /**
- * The pair {@link AnimatedQuantizer.make} returns: the live animated quantizer
- * plus the {@link Lifetime} that owns its teardown. Dispose the lifetime to stop
- * observing the wrapped quantizer's crossings, abort any in-flight animation, and
- * close the `interpolated` fan-out (completing subscribers, making publish inert).
+ * A live animated quantizer that owns its teardown directly
+ * ({@link AsyncOwnedResource}): `await animated.dispose()` stops observing the
+ * wrapped quantizer's crossings, aborts any in-flight animation, and closes the
+ * `interpolated` fan-out (completing subscribers, making publish inert). The
+ * owning {@link Lifetime} stays reachable as `animated.lifetime` for advanced
+ * composition.
  */
-export interface AnimatedQuantizerHandle<B extends Boundary> {
-  readonly animated: AnimatedQuantizerShape<B>;
-  readonly lifetime: Lifetime;
-}
+export type OwnedAnimatedQuantizer<B extends Boundary> = AnimatedQuantizerShape<B> & AsyncOwnedResource;
 
 // ---------------------------------------------------------------------------
 // Linear easing fallback
@@ -242,10 +250,10 @@ function abortAwareScheduler(base: Scheduler, signal: AbortSignal): Scheduler {
  * const config = defineQuantizer(boundary, {
  *   outputs: { css: { top: { opacity: '1' }, bottom: { opacity: '0.5' } } },
  * });
- * const { quantizer: live } = createQuantizer(config);
+ * const live = createQuantizer(config);
  * // outputs omitted: derived from the LiveQuantizer's css output tables
- * const { animated, lifetime } = AnimatedQuantizer.make(live, { '*': { duration: Millis(300) } });
- * const dispose = animated.interpolated.subscribe((frame) => { ... });
+ * const animated = AnimatedQuantizer.make(live, { '*': { duration: Millis(300) } });
+ * const unsubscribe = animated.interpolated.subscribe((frame) => { ... });
  * live.evaluate(600); // triggers interpolation
  * ```
  *
@@ -261,14 +269,14 @@ function abortAwareScheduler(base: Scheduler, signal: AbortSignal): Scheduler {
  *                      for deterministic rendering/tests). Omitted, the animation
  *                      drives its own internal ~60fps loop via a fixed 16ms sleep
  *                      (the historical default — existing callers are unchanged).
- * @returns An {@link AnimatedQuantizerHandle} — the instance plus its {@link Lifetime}
+ * @returns An {@link OwnedAnimatedQuantizer} — the instance that owns its own teardown via `dispose()`
  */
 function makeAnimatedQuantizer<B extends Boundary>(
   quantizer: ReactiveQuantizer<B>,
   transitions: TransitionMap<StateUnion<B> & string>,
   outputs?: Record<string, Record<string, number | string>>,
   options?: { readonly scheduler?: Scheduler },
-): AnimatedQuantizerHandle<B> {
+): OwnedAnimatedQuantizer<B> {
   const boundary = quantizer.boundary;
   const scheduler = options?.scheduler;
   const transitionResolver = TransitionFactory.for(quantizer, transitions);
@@ -434,7 +442,7 @@ function makeAnimatedQuantizer<B extends Boundary>(
     interpolated: frames,
   };
 
-  return { animated, lifetime };
+  return attachLifetime(animated, lifetime);
 }
 
 // ---------------------------------------------------------------------------
@@ -460,10 +468,10 @@ function makeAnimatedQuantizer<B extends Boundary>(
  *   at: [[0, 'top'], [500, 'bottom']],
  * });
  * const config = defineQuantizer(boundary, { outputs: {} });
- * const { quantizer: live } = createQuantizer(config);
- * const { animated, lifetime } = AnimatedQuantizer.make(live, { '*': { duration: Millis(200) } });
+ * const live = createQuantizer(config);
+ * const animated = AnimatedQuantizer.make(live, { '*': { duration: Millis(200) } });
  * animated.transition; // TransitionResolver
- * await lifetime.dispose();
+ * await animated.dispose();
  * ```
  */
 export const AnimatedQuantizer = {

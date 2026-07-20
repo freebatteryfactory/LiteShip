@@ -7,7 +7,8 @@
  * @module
  */
 
-import { Lifetime } from './reactive/lifetime.js';
+import { Lifetime, attachLifetime } from './reactive/lifetime.js';
+import type { AsyncOwnedResource } from './reactive/lifetime.js';
 import type { SchemaPort } from './schema/schema-port.js';
 
 /** Nominal-typed identifier for an ECS entity — a branded string minted via the {@link EntityId} helper. */
@@ -191,19 +192,16 @@ interface WorldShape {
 }
 
 /**
- * The pair returned by {@link World.make}: the live world instance plus the
- * {@link Lifetime} that owns its teardown. The ECS world registers zero
- * finalizers (its state is plain in-memory Maps that GC reclaims), so the
- * Lifetime is a formal disposal handle for consumers (e.g. the scene runtime)
- * that thread world lifecycle through one uniform release — not a carrier of
- * any actual finalizer.
+ * A live ECS world that owns its teardown directly ({@link AsyncOwnedResource}).
+ * The world registers zero finalizers (its state is plain in-memory Maps that GC
+ * reclaims), so `world.dispose()` is a formal, exactly-once release handle for
+ * consumers (e.g. the scene runtime) that thread world lifecycle uniformly — not
+ * a carrier of any actual finalizer. The owning {@link Lifetime} stays reachable
+ * as `world.lifetime` for advanced composition.
  */
-interface WorldHandle {
-  readonly world: WorldShape;
-  readonly lifetime: Lifetime;
-}
+type OwnedWorld = WorldShape & AsyncOwnedResource;
 
-function _makeWorld(): WorldHandle {
+function _makeWorld(): OwnedWorld {
   const entities = new Map<EntityId, Map<string, unknown>>();
   const systems: AnySystemShape[] = [];
   const denseStores = new Map<string, DenseStoreShape>();
@@ -318,7 +316,7 @@ function _makeWorld(): WorldHandle {
     },
   };
 
-  return { world, lifetime: Lifetime.make() };
+  return attachLifetime(world, Lifetime.make());
 }
 
 function isDenseSystem(system: AnySystemShape): system is DenseSystemShape {
@@ -347,7 +345,7 @@ export const Part = {
 
 /** World namespace — construct the ECS world that ticks systems over entities. */
 export const World = {
-  /** Build a fresh ECS {@link World} paired with its owning {@link Lifetime}. */
+  /** Build a fresh ECS {@link World}; the returned instance owns its own teardown. */
   make: _makeWorld,
 };
 
@@ -361,11 +359,6 @@ export declare namespace Part {
 
 /** Public structural type for `World`. */
 export type World = WorldShape;
-
-export declare namespace World {
-  /** The `{ world, lifetime }` pair returned by {@link World.make}. */
-  export type Handle = WorldHandle;
-}
 
 export type {
   EntityShape as Entity,

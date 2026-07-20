@@ -12,13 +12,11 @@ the working line.
 
 ## Interfaces
 
-- [AnimatedQuantizerHandle](interfaces/AnimatedQuantizerHandle.md)
 - [AnimatedQuantizerShape](interfaces/AnimatedQuantizerShape.md)
 - [DefineQuantizerOptions](interfaces/DefineQuantizerOptions.md)
 - [EvaluateResult](interfaces/EvaluateResult.md)
 - [InterpolatedFrame](interfaces/InterpolatedFrame.md)
 - [LiveQuantizer](interfaces/LiveQuantizer.md)
-- [LiveQuantizerHandle](interfaces/LiveQuantizerHandle.md)
 - [QuantizerConfig](interfaces/QuantizerConfig.md)
 - [QuantizerOutputs](interfaces/QuantizerOutputs.md)
 - [QuantizerRuntime](interfaces/QuantizerRuntime.md)
@@ -31,6 +29,8 @@ the working line.
 - [AnimatedQuantizer](type-aliases/AnimatedQuantizer.md)
 - [MotionTier](type-aliases/MotionTier.md)
 - [OutputTarget](type-aliases/OutputTarget.md)
+- [OwnedAnimatedQuantizer](type-aliases/OwnedAnimatedQuantizer.md)
+- [OwnedQuantizer](type-aliases/OwnedQuantizer.md)
 - [TransitionMap](type-aliases/TransitionMap.md)
 
 ## Variables

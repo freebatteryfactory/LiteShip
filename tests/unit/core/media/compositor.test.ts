@@ -4,7 +4,8 @@
  * Wave 2 / SEAM 4: the compositor's reactive seam was swapped from Effect
  * (`Compositor.create` → scoped Effect, `add`/`remove`/`compute`/`setBlendWeights`
  * → Effect, `changes` → `Stream`) onto the extracted replay-1 `CellKernel`:
- * `create` now returns `{ compositor, lifetime }` synchronously, the mutators are
+ * `create` now returns a compositor that owns its own teardown (`dispose()`)
+ * synchronously, the mutators are
  * plain sync, and `changes` is the kernel's read-only replay-1 subscription
  * surface (`subscribe(sink) → disposer`, replaying the current live state on
  * attach). The pure compose kernel (`computeStateSync`) is byte-identical — only
@@ -42,25 +43,25 @@ function makeQuantizer(boundary: Boundary, initialState?: string) {
 
 describe('Compositor', () => {
   describe('basic operations', () => {
-    test('create returns a compositor paired with its Lifetime', () => {
-      const { compositor, lifetime } = Compositor.create();
+    test('create returns a compositor that owns its own teardown', () => {
+      const compositor = Compositor.create();
       expect(compositor).toBeDefined();
       expect(compositor.add).toBeDefined();
       expect(compositor.remove).toBeDefined();
       expect(compositor.compute).toBeDefined();
-      expect(lifetime).toBeDefined();
-      expect(lifetime._tag).toBe('Lifetime');
+      expect(compositor.dispose).toBeDefined();
+      expect(compositor.lifetime._tag).toBe('Lifetime');
     });
 
     test('compute on empty compositor returns empty state', () => {
-      const { compositor } = Compositor.create();
+      const compositor = Compositor.create();
       const state = compositor.compute();
       expect(state.discrete).toEqual({});
       expect(state.outputs.css).toEqual({});
     });
 
     test('add quantizer and compute produces output', () => {
-      const { compositor } = Compositor.create();
+      const compositor = Compositor.create();
       const q = makeQuantizer(widthBoundary, 'mobile');
 
       compositor.add('layout', q);
@@ -73,7 +74,7 @@ describe('Compositor', () => {
     });
 
     test('remove quantizer clears its output', () => {
-      const { compositor } = Compositor.create();
+      const compositor = Compositor.create();
       const q = makeQuantizer(widthBoundary, 'tablet');
 
       compositor.add('layout', q);
@@ -86,7 +87,7 @@ describe('Compositor', () => {
 
   describe('DirtyFlags integration', () => {
     test('only dirty quantizers recompute', () => {
-      const { compositor } = Compositor.create();
+      const compositor = Compositor.create();
       const q1 = makeQuantizer(widthBoundary, 'mobile');
       const q2 = makeQuantizer(widthBoundary, 'tablet');
 
@@ -111,7 +112,7 @@ describe('Compositor', () => {
 
   describe('blend weights', () => {
     test('setBlendWeights overrides auto-computed weights', () => {
-      const { compositor } = Compositor.create();
+      const compositor = Compositor.create();
       const q = makeQuantizer(widthBoundary, 'mobile');
 
       compositor.add('layout', q);
@@ -124,20 +125,20 @@ describe('Compositor', () => {
 
   describe('pool integration', () => {
     test('custom pool capacity is accepted', () => {
-      const { compositor } = Compositor.create({ poolCapacity: 4 });
+      const compositor = Compositor.create({ poolCapacity: 4 });
       expect(compositor).toBeDefined();
     });
   });
 
   describe('scheduleBatch', () => {
     test('scheduleBatch is callable', () => {
-      const { compositor } = Compositor.create();
+      const compositor = Compositor.create();
       // Should not throw
       compositor.scheduleBatch();
     });
 
     test('scheduleBatch coalesces duplicate calls in the same microtask turn', async () => {
-      const { compositor } = Compositor.create();
+      const compositor = Compositor.create();
       const q = makeQuantizer(widthBoundary, 'mobile');
 
       compositor.add('layout', q);
@@ -152,7 +153,7 @@ describe('Compositor', () => {
 
   describe('runtime hot-path branches', () => {
     test('respects frame-budget gating for glsl and aria emission', () => {
-      const { compositor } = Compositor.create({
+      const compositor = Compositor.create({
         frameBudget: {
           canRun(priority: string) {
             return priority === 'medium';
@@ -170,7 +171,7 @@ describe('Compositor', () => {
     });
 
     test('uses speculative prefetched states and clears them when confidence drops', () => {
-      const { compositor } = Compositor.create({ speculative: true });
+      const compositor = Compositor.create({ speculative: true });
       const q = makeQuantizer(widthBoundary, 'mobile');
 
       compositor.add('layout', q);
@@ -187,7 +188,7 @@ describe('Compositor', () => {
     });
 
     test('prefers stateSync and tolerates undefined discrete states on the emit path', () => {
-      const { compositor } = Compositor.create();
+      const compositor = Compositor.create();
       const q = {
         ...makeQuantizer(widthBoundary, 'mobile'),
         stateSync: () => undefined,
@@ -204,7 +205,7 @@ describe('Compositor', () => {
     });
 
     test('recompute-all mode stays stable after exceeding the dirty-flag capacity', () => {
-      const { compositor } = Compositor.create({ speculative: true });
+      const compositor = Compositor.create({ speculative: true });
 
       for (let index = 0; index <= DIRTY_FLAGS_MAX; index++) {
         compositor.add(`q${index}`, makeQuantizer(widthBoundary, 'mobile'));
@@ -218,7 +219,7 @@ describe('Compositor', () => {
     });
 
     test('duplicate adds preserve runtime state both before and after dirty flags fall back to recompute-all mode', () => {
-      const { compositor } = Compositor.create();
+      const compositor = Compositor.create();
       const first = makeQuantizer(widthBoundary, 'mobile');
       const second = makeQuantizer(widthBoundary, 'tablet');
 
@@ -229,7 +230,7 @@ describe('Compositor', () => {
       expect(state.discrete['layout']).toBe('tablet');
       expect(state.blend['layout']).toEqual({ tablet: 1, mobile: 0, desktop: 0 });
 
-      const { compositor: recomputeAll } = Compositor.create();
+      const recomputeAll = Compositor.create();
       for (let index = 0; index <= DIRTY_FLAGS_MAX; index++) {
         recomputeAll.add(`q${index}`, makeQuantizer(widthBoundary, 'mobile'));
       }
@@ -244,7 +245,7 @@ describe('Compositor', () => {
 
   describe('multiple quantizers', () => {
     test('handles multiple quantizers correctly', () => {
-      const { compositor } = Compositor.create();
+      const compositor = Compositor.create();
 
       const colorBoundary = defineBoundary({
         input: 'prefers-color-scheme',
@@ -285,7 +286,7 @@ describe('Compositor', () => {
     // scope).
 
     test('subscribe replays the current live state synchronously on attach (replay-1)', () => {
-      const { compositor } = Compositor.create();
+      const compositor = Compositor.create();
       compositor.add('layout', makeQuantizer(widthBoundary, 'tablet'));
       // `add` composed once; the current live state is now published to the kernel.
 
@@ -307,7 +308,7 @@ describe('Compositor', () => {
     });
 
     test('a subscriber replays the current state on attach, then receives each subsequent compose', () => {
-      const { compositor } = Compositor.create();
+      const compositor = Compositor.create();
       compositor.add('layout', makeQuantizer(widthBoundary, 'mobile'));
 
       const collected: CompositeState[] = [];
@@ -339,7 +340,7 @@ describe('Compositor', () => {
     });
 
     test('two subscribers each receive the replay and every subsequent compose (fan-out)', () => {
-      const { compositor } = Compositor.create();
+      const compositor = Compositor.create();
       compositor.add('layout', makeQuantizer(widthBoundary, 'mobile'));
 
       const a: CompositeState[] = [];
@@ -363,8 +364,8 @@ describe('Compositor', () => {
       }
     });
 
-    test('disposing the lifetime closes the changes kernel: subscribers complete, publish goes inert', async () => {
-      const { compositor, lifetime } = Compositor.create();
+    test('disposing the compositor closes the changes kernel: subscribers complete, publish goes inert', async () => {
+      const compositor = Compositor.create();
       compositor.add('layout', makeQuantizer(widthBoundary, 'mobile'));
 
       const seen: CompositeState[] = [];
@@ -378,7 +379,7 @@ describe('Compositor', () => {
       const countAtDispose = seen.length; // replay (1)
       expect(countAtDispose).toBe(1);
 
-      await lifetime.dispose();
+      await compositor.dispose();
       expect(completed).toBe(1);
       expect(compositor.changes.closed).toBe(true);
 

@@ -61,7 +61,7 @@ async function castIndices(
   value: number,
 ): Promise<{ css: number; glsl: number; wgsl: number; oracle: number }> {
   const boundary = makeBoundary(thresholds);
-  const compositor = Compositor.create({ runtimeSite: 'node' }).compositor;
+  const compositor = Compositor.create({ runtimeSite: 'node' });
   const q = liveQuantizer(boundary);
   compositor.add('layout', q);
   // Drive evaluate then mark dirty — the live evaluate→markDirty contract every

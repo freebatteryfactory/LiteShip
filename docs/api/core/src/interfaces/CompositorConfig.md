@@ -6,7 +6,7 @@
 
 # Interface: CompositorConfig
 
-Defined in: [core/src/media/compositor.ts:94](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/compositor.ts#L94)
+Defined in: [core/src/media/compositor.ts:95](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/compositor.ts#L95)
 
 Options accepted by `Compositor.create`: pool capacity, optional
 frame-budget gating, whether to enable speculative pre-evaluation, and an
@@ -18,7 +18,7 @@ optional escalation gate ([getPolicy](#getpolicy) + [runtimeSite](#runtimesite))
 
 > `readonly` `optional` **frameBudget?**: `FrameBudgetShape`
 
-Defined in: [core/src/media/compositor.ts:96](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/compositor.ts#L96)
+Defined in: [core/src/media/compositor.ts:97](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/compositor.ts#L97)
 
 ***
 
@@ -26,7 +26,7 @@ Defined in: [core/src/media/compositor.ts:96](https://github.com/freebatteryfact
 
 > `readonly` `optional` **getPolicy?**: (`projectionName`) => [`PolicyNode`](PolicyNode.md) \| `undefined`
 
-Defined in: [core/src/media/compositor.ts:110](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/compositor.ts#L110)
+Defined in: [core/src/media/compositor.ts:111](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/compositor.ts#L111)
 
 Escalation gate: resolve the [PolicyNode](PolicyNode.md) (if any) that governs a
 projection, keyed by the quantizer's compositor registry name (the same
@@ -55,7 +55,7 @@ that cannot be satisfied must not silently emit at full capability.
 
 > `readonly` `optional` **poolCapacity?**: `number`
 
-Defined in: [core/src/media/compositor.ts:95](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/compositor.ts#L95)
+Defined in: [core/src/media/compositor.ts:96](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/compositor.ts#L96)
 
 ***
 
@@ -63,7 +63,7 @@ Defined in: [core/src/media/compositor.ts:95](https://github.com/freebatteryfact
 
 > `readonly` `optional` **runtimeSite?**: [`RuntimeSite`](../type-aliases/RuntimeSite.md)
 
-Defined in: [core/src/media/compositor.ts:116](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/compositor.ts#L116)
+Defined in: [core/src/media/compositor.ts:117](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/compositor.ts#L117)
 
 The runtime site the escalation gate evaluates policies against. Defaults to
 an environment hint: `'browser'` when a `window` global is present, else
@@ -75,4 +75,4 @@ an environment hint: `'browser'` when a `window` global is present, else
 
 > `readonly` `optional` **speculative?**: `boolean`
 
-Defined in: [core/src/media/compositor.ts:97](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/compositor.ts#L97)
+Defined in: [core/src/media/compositor.ts:98](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/compositor.ts#L98)

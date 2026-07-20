@@ -6,8 +6,9 @@
  * `SubscriptionRef`/`Semaphore` — the reducer is the pure kernel (byte-identical
  * to the pre-migration logic); only the reactive carrier changed
  * (`SubscriptionRef.get`/`changes` → kernel `read`/`subscribe`; `dispatch`
- * synchronous). Every factory returns a `{ store, lifetime }` handle, the shipped
- * Zap/Compositor precedent.
+ * synchronous). The factory returns the store augmented with its own `dispose()`
+ * ({@link AsyncOwnedResource}) — the store IS the disposable, with the owning
+ * `lifetime` still reachable for advanced composition.
  *
  * EMISSION POLICY `{all}` (S6.F.1). Every dispatch publishes — equal-consecutive
  * states are NOT suppressed (`duplicate-consecutive` fixture: `[0,7,7,7]`),
@@ -31,7 +32,8 @@
 
 import { CellKernel } from './cell-kernel.js';
 import type { CellSubscriber, Disposer } from './cell-kernel.js';
-import { Lifetime } from './lifetime.js';
+import { Lifetime, attachLifetime } from './lifetime.js';
+import type { AsyncOwnedResource } from './lifetime.js';
 
 interface StoreShape<S, Msg> {
   readonly _tag: 'Store';
@@ -44,7 +46,8 @@ interface StoreShape<S, Msg> {
   /**
    * Owns the store's teardown — its sole finalizer closes the kernel (completing
    * subscribers, making `dispatch` inert). Mirrors {@link Cell}'s `lifetime`
-   * member so consumers thread lifecycle through one uniform `dispose()`.
+   * member — reachable for advanced composition; day-to-day teardown goes
+   * through the store's own `dispose()`.
    */
   readonly lifetime: Lifetime;
 }
@@ -53,23 +56,26 @@ interface StoreShape<S, Msg> {
  * Create a {@link Store} — a TEA-style state container over
  * {@link CellKernel.replay1}. Build with an initial state and a pure
  * `reducer(state, msg) => state`, then dispatch messages; the store publishes
- * each resulting state through `subscribe`, and `lifetime.dispose()` tears it
- * down.
+ * each resulting state through `subscribe`, and `store.dispose()` tears it down.
  */
-export const createStore = <S, Msg>(initial: S, reducer: (state: S, msg: Msg) => S): StoreShape<S, Msg> => {
+export const createStore = <S, Msg>(
+  initial: S,
+  reducer: (state: S, msg: Msg) => S,
+): StoreShape<S, Msg> & AsyncOwnedResource => {
   // {all}: emit every dispatch (no dedup — the captured law). 'deferred': a
   // dispatch from within a delivery handler async-appends (glitch-free — S6.F.2).
   const kernel = CellKernel.replay1<S>(initial, { kind: 'all' }, 'deferred');
   const lifetime = Lifetime.make();
   lifetime.add(() => kernel.close());
 
-  return {
+  const store: StoreShape<S, Msg> = {
     _tag: 'Store',
     read: () => kernel.read(),
     subscribe: (subscriber) => kernel.subscribe(subscriber),
     dispatch: (msg) => kernel.publish(reducer(kernel.read(), msg)),
     lifetime,
   };
+  return attachLifetime(store, lifetime);
 };
 
 /** Public structural type for `Store`. */

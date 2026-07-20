@@ -8,7 +8,7 @@
 
 > **Zap**\<`T`\> = `ZapShape`\<`T`\>
 
-Defined in: [core/src/reactive/zap.ts:233](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/zap.ts#L233)
+Defined in: [core/src/reactive/zap.ts:232](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/zap.ts#L232)
 
 Public structural type for `Zap`.
 

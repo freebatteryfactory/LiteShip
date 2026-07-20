@@ -29,9 +29,9 @@ const b = defineBoundary({
 const config = defineQuantizer(b, {
   outputs: { css: { sm: { fontSize: '14px' }, lg: { fontSize: '18px' } } },
 });
-const { quantizer: live, lifetime } = createQuantizer(config);
+const live = createQuantizer(config);
 live.evaluate(900); // triggers crossing; outputs kernel publishes CSS
-await lifetime.dispose();
+await live.dispose();
 ```
 
 ## Extends

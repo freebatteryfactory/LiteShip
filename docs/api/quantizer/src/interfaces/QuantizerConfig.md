@@ -14,7 +14,7 @@ The `id` is an FNV-1a hash over the boundary id, outputs, tier, spring, and
 forced targets, so two configs with identical definitions share the same
 address and are deduplicated by the internal memo cache. This is a PURE data
 definition — pass it to [createQuantizer](../functions/createQuantizer.md) to materialize a fresh
-[LiveQuantizer](LiveQuantizer.md) paired with its owning [Lifetime](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts).
+[LiveQuantizer](LiveQuantizer.md) that owns its own teardown via `dispose()`.
 
 ## Type Parameters
 

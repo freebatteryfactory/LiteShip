@@ -244,7 +244,7 @@ describe('Composable.merge -- reduces correctly', () => {
 
 describe('ComposableWorld.evaluate -- Boundary', () => {
   test('evaluates boundary against input value and returns correct state', () => {
-    const { world } = World.make();
+    const world = World.make();
     const cw = ComposableWorld.make(world);
     const entity = cw.spawn({ boundary: widthBoundary });
     const result = cw.evaluate(entity, { 'viewport.width': 800 });
@@ -260,7 +260,7 @@ describe('ComposableWorld.evaluate -- Boundary', () => {
         [768, 'md'],
       ] as const,
     });
-    const { world } = World.make();
+    const world = World.make();
     const cw = ComposableWorld.make(world);
     const entity = cw.spawn({ boundary: bp });
     const result = cw.evaluate(entity, { 'viewport.width': 100 });
@@ -283,7 +283,7 @@ describe('ComposableWorld.evaluate -- Token', () => {
       fallback: '#ccc',
     });
 
-    const { world } = World.make();
+    const world = World.make();
     const cw = ComposableWorld.make(world);
     // Token.tap expects string axis values; evaluate converts numeric inputs
     // For token evaluation, use a numeric key matching the axis name
@@ -295,7 +295,7 @@ describe('ComposableWorld.evaluate -- Token', () => {
   });
 
   test('token falls back when no axis matches', () => {
-    const { world } = World.make();
+    const world = World.make();
     const cw = ComposableWorld.make(world);
     const entity = cw.spawn({ token: colorToken });
     const result = cw.evaluate(entity, { unrelated: 42 });
@@ -315,7 +315,7 @@ describe('ComposableWorld.evaluate -- Token', () => {
       fallback: '#cccccc',
     });
 
-    const { world } = World.make();
+    const world = World.make();
     const cw = ComposableWorld.make(world);
     const entity = cw.spawn({ token });
     const result = cw.evaluate(entity, { theme: 2 });
@@ -330,7 +330,7 @@ describe('ComposableWorld.evaluate -- Token', () => {
 
 describe('ComposableWorld.evaluate -- Style', () => {
   test('given boundary state, returns correct style properties', () => {
-    const { world } = World.make();
+    const world = World.make();
     const cw = ComposableWorld.make(world);
     const entity = cw.spawn({
       boundary: widthBoundary,
@@ -350,7 +350,7 @@ describe('ComposableWorld.evaluate -- Style', () => {
       base: { properties: { display: 'flex', gap: '8px' } },
     });
 
-    const { world } = World.make();
+    const world = World.make();
     const cw = ComposableWorld.make(world);
     const entity = cw.spawn({ style: styleNoBoundary });
     const result = cw.evaluate(entity, {});
@@ -360,7 +360,7 @@ describe('ComposableWorld.evaluate -- Style', () => {
   });
 
   test('evaluate returns an empty object when no supported components are present', () => {
-    const { world } = World.make();
+    const world = World.make();
     const cw = ComposableWorld.make(world);
     const entity = cw.spawn({ custom: 'value' });
     const result = cw.evaluate(entity, {});
@@ -375,7 +375,7 @@ describe('ComposableWorld.evaluate -- Style', () => {
 
 describe('ComposableWorld.query -- round-trip identity', () => {
   test('make entity -> spawn into world -> query back -> same components', () => {
-    const { world } = World.make();
+    const world = World.make();
     const cw = ComposableWorld.make(world);
 
     const original = cw.spawn({
@@ -393,7 +393,7 @@ describe('ComposableWorld.query -- round-trip identity', () => {
   });
 
   test('query filters by component type names', () => {
-    const { world } = World.make();
+    const world = World.make();
     const cw = ComposableWorld.make(world);
 
     cw.spawn({ boundary: widthBoundary });
@@ -413,7 +413,7 @@ describe('ComposableWorld.query -- round-trip identity', () => {
   });
 
   test('query over absent component names returns an empty list', () => {
-    const { world } = World.make();
+    const world = World.make();
     const cw = ComposableWorld.make(world);
     cw.spawn({ boundary: widthBoundary });
     const result = cw.query('style');
@@ -422,7 +422,7 @@ describe('ComposableWorld.query -- round-trip identity', () => {
   });
 
   test('spawnWith preserves identity and makes entities queryable', () => {
-    const { world } = World.make();
+    const world = World.make();
     const cw = ComposableWorld.make(world);
     const entity = Composable.make({ boundary: widthBoundary, token: colorToken });
     const spawned = cw.spawnWith(entity);
@@ -441,7 +441,7 @@ describe('ComposableWorld.query -- round-trip identity', () => {
 
 describe('ComposableWorld.dense -- store/retrieve', () => {
   test('store and retrieve round-trip', () => {
-    const { world } = World.make();
+    const world = World.make();
     const dense = ComposableWorld.dense(world);
     dense.create('velocity', 16);
 
@@ -453,7 +453,7 @@ describe('ComposableWorld.dense -- store/retrieve', () => {
   });
 
   test('retrieve returns undefined for unknown entity', () => {
-    const { world } = World.make();
+    const world = World.make();
     const dense = ComposableWorld.dense(world);
     dense.create('hp', 8);
 
@@ -464,7 +464,7 @@ describe('ComposableWorld.dense -- store/retrieve', () => {
   });
 
   test('retrieve returns undefined before a dense store is created', () => {
-    const { world } = World.make();
+    const world = World.make();
     const dense = ComposableWorld.dense(world);
     const entity = Composable.make({ boundary: widthBoundary });
     const result = dense.retrieve(entity);
@@ -474,7 +474,7 @@ describe('ComposableWorld.dense -- store/retrieve', () => {
 
   test('store rejects writes before create() is called', () => {
     expect(() => {
-      const { world } = World.make();
+      const world = World.make();
       const dense = ComposableWorld.dense(world);
       const entity = Composable.make({ boundary: widthBoundary });
       dense.store(entity, 1);
@@ -482,7 +482,7 @@ describe('ComposableWorld.dense -- store/retrieve', () => {
   });
 
   test('store overwrites previous value', () => {
-    const { world } = World.make();
+    const world = World.make();
     const dense = ComposableWorld.dense(world);
     dense.create('hp', 8);
 
@@ -495,7 +495,7 @@ describe('ComposableWorld.dense -- store/retrieve', () => {
   });
 
   test('same-component ComposableEntities share ContentAddress in dense store', () => {
-    const { world } = World.make();
+    const world = World.make();
     const dense = ComposableWorld.dense(world);
     dense.create('speed', 16);
 
@@ -531,7 +531,7 @@ interface NarrowSchema extends EntityComponents {
 
 describe('TypedComposableWorld -- compile-time type safety', () => {
   test('typed world spawn constrains components to the schema', () => {
-    const { world } = World.make();
+    const world = World.make();
     const cw: ComposableWorld<NarrowSchema> = ComposableWorld.make<NarrowSchema>(world);
 
     // This compiles because boundary and token are in NarrowSchema
@@ -543,7 +543,7 @@ describe('TypedComposableWorld -- compile-time type safety', () => {
   });
 
   test('typed query returns correctly narrowed component types', () => {
-    const { world } = World.make();
+    const world = World.make();
     const cw: ComposableWorld<NarrowSchema> = ComposableWorld.make<NarrowSchema>(world);
 
     cw.spawn({ boundary: widthBoundary });
@@ -563,7 +563,7 @@ describe('TypedComposableWorld -- compile-time type safety', () => {
   });
 
   test('unparameterized ComposableWorld.make still works (backward compat)', () => {
-    const { world } = World.make();
+    const world = World.make();
     // No type parameter -- defaults to EntityComponents (accepts anything)
     const cw = ComposableWorld.make(world);
     const entity = cw.spawn({

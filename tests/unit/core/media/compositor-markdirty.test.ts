@@ -59,7 +59,7 @@ describe('Compositor evaluate→markDirty contract', () => {
     // compute() being a pure function of (dirty set, current states). Drive the
     // quantizer's state out-of-band and prove the discrete/cast outputs freeze
     // until the dirty signal arrives — then snap to the new band.
-    const { compositor } = Compositor.create({ runtimeSite: 'node' });
+    const compositor = Compositor.create({ runtimeSite: 'node' });
     const q = liveQuantizer(widthBoundary);
     compositor.add('layout', q);
 
@@ -95,7 +95,7 @@ describe('Compositor evaluate→markDirty contract', () => {
     // WHY: this is the dual-export loop in miniature — sweep the input across the
     // threshold span, evaluate + markDirty each step, and assert the composite
     // advances monotonically through every band instead of freezing after frame 0.
-    const { compositor } = Compositor.create({ runtimeSite: 'node' });
+    const compositor = Compositor.create({ runtimeSite: 'node' });
     const q = liveQuantizer(widthBoundary);
     compositor.add('layout', q);
 

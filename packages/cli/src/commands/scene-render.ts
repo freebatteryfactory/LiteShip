@@ -36,15 +36,15 @@ function renderContext(opts: { readonly cwd?: string }): CommandContext {
       (await import(/* @vite-ignore */ pathToFileURL(resolve(scenePath)).href)) as Record<string, unknown>,
     renderScene: async ({ fps, durationMs, output, width = DEFAULT_WIDTH, height = DEFAULT_HEIGHT }) => {
       // Compositor.create is sync-first (Wave 2): it returns the live instance
-      // plus the Lifetime that owns its teardown. The render collapses to a
-      // plain await; the scope's sole finalizer (closing the reactive `changes`
-      // kernel) runs on the way out, preserving the old `Effect.scoped` cleanup.
-      const { compositor, lifetime } = Compositor.create();
+      // that owns its own teardown. The render collapses to a plain await; the
+      // compositor's sole finalizer (closing the reactive `changes` kernel) runs
+      // on the way out, preserving the old `Effect.scoped` cleanup.
+      const compositor = Compositor.create();
       try {
         const renderer = VideoRenderer.make({ fps, width, height, durationMs: durationMs as Millis }, compositor);
         return await renderWithFfmpeg(renderer.frames(), { output, width, height, fps });
       } finally {
-        await lifetime.dispose();
+        await compositor.dispose();
       }
     },
   };

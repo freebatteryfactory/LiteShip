@@ -154,6 +154,39 @@ export declare namespace Lifetime {
 }
 
 /**
+ * A resource that owns its teardown SYNCHRONOUSLY. `dispose()` runs the owning
+ * {@link Lifetime}'s finalizers and returns `void`; `[Symbol.dispose]` makes it
+ * usable with a `using` declaration. `lifetime` stays reachable for advanced
+ * composition. Prefer {@link AsyncOwnedResource} (Lifetime.dispose is async).
+ */
+export interface OwnedResource {
+  readonly lifetime: Lifetime;
+  dispose(): void;
+  [Symbol.dispose](): void;
+}
+
+/**
+ * A resource that owns its teardown ASYNCHRONOUSLY — the default, since
+ * {@link Lifetime}.`dispose` is async. `dispose()` delegates to the owning
+ * Lifetime; `[Symbol.asyncDispose]` makes it usable with `await using`. The value
+ * IS the disposable — there is no `{ value, lifetime }` pair to destructure —
+ * with the owning `lifetime` still reachable for advanced composition.
+ */
+export interface AsyncOwnedResource {
+  readonly lifetime: Lifetime;
+  dispose(): Promise<void>;
+  [Symbol.asyncDispose](): Promise<void>;
+}
+
+/**
+ * Wire a {@link Lifetime}'s single lifecycle directly onto `target`, collapsing
+ * the former `{ value, lifetime }` pair-return into ONE owned resource. Adds
+ * `dispose()` + `[Symbol.asyncDispose]()` (both delegate to `lifetime.dispose()`)
+ * and keeps the handle reachable as `target.lifetime`.
+ */
+export declare function attachLifetime<T extends object>(target: T, lifetime: Lifetime): T & AsyncOwnedResource;
+
+/**
  * CellKernel — the shared replay-current / fan-out reactive substrate extracted
  * from the compositor's notification seam. `replay1` replays the current value on
  * subscribe (Compositor.changes / Cell); `fanout` is the strictly-simpler no-replay
@@ -406,13 +439,8 @@ export interface Compositor {
 }
 
 export declare namespace Compositor {
-  /** The `{ compositor, lifetime }` pair returned by {@link Compositor.create}. */
-  export interface Handle {
-    readonly compositor: Compositor;
-    readonly lifetime: Lifetime;
-  }
-
-  export function create(): Handle;
+  /** Build a compositor that owns its own teardown via `dispose()`. */
+  export function create(): Compositor & AsyncOwnedResource;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -434,12 +462,8 @@ export interface BlendTree<T extends Record<string, number>> {
 }
 
 export declare namespace BlendTree {
-  /** The `{ tree, lifetime }` pair {@link BlendTree.make} returns. */
-  export interface Handle<T extends Record<string, number>> {
-    readonly tree: BlendTree<T>;
-    readonly lifetime: Lifetime;
-  }
-  export function make<T extends Record<string, number>>(): Handle<T>;
+  /** Build a blend tree that owns its own teardown via `dispose()`. */
+  export function make<T extends Record<string, number>>(): BlendTree<T> & AsyncOwnedResource;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -546,15 +570,12 @@ export interface World {
 
 export declare namespace World {
   /**
-   * The `{ world, lifetime }` pair returned by {@link World.make}. The ECS world
-   * registers zero finalizers (plain in-memory Maps), so the {@link Lifetime} is a
-   * formal disposal handle threaded by consumers, not a carrier of real finalizers.
+   * Build an ECS world that owns its own teardown via `dispose()`. The world
+   * registers zero finalizers (plain in-memory Maps), so `dispose()` is a formal,
+   * exactly-once release handle threaded by consumers, not a carrier of real
+   * finalizers.
    */
-  export interface Handle {
-    readonly world: World;
-    readonly lifetime: Lifetime;
-  }
-  export function make(): Handle;
+  export function make(): World & AsyncOwnedResource;
 }
 
 /**
@@ -598,8 +619,8 @@ export interface Cell<T> {
   readonly lifetime: Lifetime;
 }
 
-/** Create a mutable reactive {@link Cell} with an initial value. */
-export declare function createCell<T>(initial: T): Cell<T>;
+/** Create a mutable reactive {@link Cell} with an initial value. The cell owns its own teardown via `dispose()`. */
+export declare function createCell<T>(initial: T): Cell<T> & AsyncOwnedResource;
 
 /** Read-only derived computation over CellKernel.replay1 (Effect-free, Wave 6) */
 export interface Derived<T> {
@@ -609,8 +630,11 @@ export interface Derived<T> {
   readonly lifetime: Lifetime;
 }
 
-/** Compute a {@link Derived} value from a factory and the sources that recompute it. */
-export declare function computed<T>(compute: () => T, sources?: ReadonlyArray<Derived.Trigger>): Derived<T>;
+/** Compute a {@link Derived} value from a factory and the sources that recompute it. Owns its own teardown via `dispose()`. */
+export declare function computed<T>(
+  compute: () => T,
+  sources?: ReadonlyArray<Derived.Trigger>,
+): Derived<T> & AsyncOwnedResource;
 
 export declare namespace Derived {
   /** The readable + subscribable source `combine` recomputes from. */
@@ -621,7 +645,7 @@ export declare namespace Derived {
   export function combine<T extends readonly unknown[], U>(
     sources: { readonly [K in keyof T]: Source<T[K]> },
     combiner: (...args: T) => U,
-  ): Derived<U>;
+  ): Derived<U> & AsyncOwnedResource;
 }
 
 /**
@@ -647,22 +671,18 @@ export interface Zap<T> {
 }
 
 export declare namespace Zap {
-  /** The `{ zap, lifetime }` pair every `Zap.*` factory returns. */
-  export interface Handle<T> {
-    readonly zap: Zap<T>;
-    readonly lifetime: Lifetime;
-  }
-
-  export function make<T>(): Handle<T>;
+  // Every `Zap.*` factory returns the channel augmented with its own `dispose()`
+  // ({@link AsyncOwnedResource}) — the zap IS the disposable, no pair to destructure.
+  export function make<T>(): Zap<T> & AsyncOwnedResource;
   export function fromDOMEvent<K extends keyof HTMLElementEventMap>(
     element: HTMLElement,
     event: K,
-  ): Handle<HTMLElementEventMap[K]>;
-  export function merge<T>(events: ReadonlyArray<Zap<T>>): Handle<T>;
-  export function map<A, B>(event: Zap<A>, f: (a: A) => B): Handle<B>;
-  export function filter<T>(event: Zap<T>, predicate: (value: T) => boolean): Handle<T>;
-  export function debounce<T>(event: Zap<T>, ms: Millis): Handle<T>;
-  export function throttle<T>(event: Zap<T>, ms: Millis, clock?: Clock): Handle<T>;
+  ): Zap<HTMLElementEventMap[K]> & AsyncOwnedResource;
+  export function merge<T>(events: ReadonlyArray<Zap<T>>): Zap<T> & AsyncOwnedResource;
+  export function map<A, B>(event: Zap<A>, f: (a: A) => B): Zap<B> & AsyncOwnedResource;
+  export function filter<T>(event: Zap<T>, predicate: (value: T) => boolean): Zap<T> & AsyncOwnedResource;
+  export function debounce<T>(event: Zap<T>, ms: Millis): Zap<T> & AsyncOwnedResource;
+  export function throttle<T>(event: Zap<T>, ms: Millis, clock?: Clock): Zap<T> & AsyncOwnedResource;
 }
 
 /** TEA-style reducer store over CellKernel.replay1 (Effect-free, Wave 6) */
@@ -674,8 +694,11 @@ export interface Store<S, Msg> {
   readonly lifetime: Lifetime;
 }
 
-/** Create a TEA-style reducer {@link Store} from an initial state and a pure reducer. */
-export declare function createStore<S, Msg>(initial: S, reducer: (state: S, msg: Msg) => S): Store<S, Msg>;
+/** Create a TEA-style reducer {@link Store} from an initial state and a pure reducer. Owns its own teardown via `dispose()`. */
+export declare function createStore<S, Msg>(
+  initial: S,
+  reducer: (state: S, msg: Msg) => S,
+): Store<S, Msg> & AsyncOwnedResource;
 
 /** Discriminated union of all primitives */
 export type Primitive<T> = Cell<T> | Derived<T> | Zap<T>;

@@ -67,7 +67,7 @@ function makeSpiedQuantizer(boundary: Boundary, initialState?: string) {
 
 describe('Compositor pipeline integration', () => {
   test('dirty flags prevent recomputation of clean quantizers', async () => {
-    const compositor = Compositor.create().compositor;
+    const compositor = Compositor.create();
     const q1 = makeSpiedQuantizer(widthBoundary, 'mobile');
     const q2 = makeSpiedQuantizer(colorBoundary, 'light');
 
@@ -113,7 +113,7 @@ describe('Compositor pipeline integration', () => {
 
     // We can't inject a pool directly, but we CAN verify the pool contract
     // by checking that state objects are recycled (same shape, different identity)
-    const compositor = Compositor.create({ poolCapacity: 4 }).compositor;
+    const compositor = Compositor.create({ poolCapacity: 4 });
     const q = makeSpiedQuantizer(widthBoundary, 'mobile');
     compositor.add('layout', q);
 
@@ -131,7 +131,7 @@ describe('Compositor pipeline integration', () => {
   });
 
   test('full pipeline: signal change → dirty → selective recompute → output', async () => {
-    const compositor = Compositor.create().compositor;
+    const compositor = Compositor.create();
     const layout = makeSpiedQuantizer(widthBoundary, 'mobile');
     const theme = makeSpiedQuantizer(colorBoundary, 'light');
     const density = makeSpiedQuantizer(
@@ -198,7 +198,7 @@ describe('Compositor pipeline integration', () => {
   });
 
   test('speculative: evaluateSpeculative prefetches state near threshold', async () => {
-    const compositor = Compositor.create({ speculative: true }).compositor;
+    const compositor = Compositor.create({ speculative: true });
     const q = makeSpiedQuantizer(widthBoundary, 'mobile');
     compositor.add('layout', q);
 
@@ -214,7 +214,7 @@ describe('Compositor pipeline integration', () => {
   });
 
   test('speculative: evaluateSpeculative is no-op without speculative config', async () => {
-    const compositor = Compositor.create().compositor;
+    const compositor = Compositor.create();
     const q = makeSpiedQuantizer(widthBoundary, 'mobile');
     compositor.add('layout', q);
 
@@ -226,7 +226,7 @@ describe('Compositor pipeline integration', () => {
   });
 
   test('31+ quantizers fall back to recompute-all (DirtyFlags limit)', async () => {
-    const compositor = Compositor.create().compositor;
+    const compositor = Compositor.create();
     const spies: ReturnType<typeof makeSpiedQuantizer>[] = [];
 
     for (let i = 0; i < 33; i++) {

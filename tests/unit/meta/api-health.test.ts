@@ -267,6 +267,11 @@ const STANDALONE_FUNCTIONS = [
   'computed',
   'createStore',
   'createTimeline',
+  // The ownership-contract wiring (P7 lifetime-pair collapse): folds a Lifetime's
+  // single lifecycle directly onto a resource as `dispose()` + `[Symbol.asyncDispose]`,
+  // so every public factory returns the value augmented with disposal instead of a
+  // `{ value, lifetime }` pair. See packages/core/src/reactive/lifetime.ts.
+  'attachLifetime',
   'tupleMap',
   // The single f32-canonical boundary state-index kernel (Phase-0 evaluator
   // consolidation). Public so @liteship/worker's host startup path delegates to it.

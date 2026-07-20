@@ -6,9 +6,9 @@
 
 # Function: createQuantizer()
 
-> **createQuantizer**\<`B`, `O`\>(`definition`, `runtime?`): [`LiveQuantizerHandle`](../interfaces/LiveQuantizerHandle.md)\<`B`, `O`\>
+> **createQuantizer**\<`B`, `O`\>(`definition`, `runtime?`): [`OwnedQuantizer`](../type-aliases/OwnedQuantizer.md)\<`B`, `O`\>
 
-Defined in: [quantizer/src/quantizer.ts:550](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L550)
+Defined in: [quantizer/src/quantizer.ts:552](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L552)
 
 Allocate a live [LiveQuantizer](../interfaces/LiveQuantizer.md) from an immutable [QuantizerConfig](../interfaces/QuantizerConfig.md)
 definition, paired with the [Lifetime](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts) that owns its teardown.
@@ -50,9 +50,9 @@ Optional per-instantiation clock / HLC node injection
 
 ## Returns
 
-[`LiveQuantizerHandle`](../interfaces/LiveQuantizerHandle.md)\<`B`, `O`\>
+[`OwnedQuantizer`](../type-aliases/OwnedQuantizer.md)\<`B`, `O`\>
 
-A [LiveQuantizerHandle](../interfaces/LiveQuantizerHandle.md) — the live instance plus its [Lifetime](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts)
+An [OwnedQuantizer](../type-aliases/OwnedQuantizer.md) — the live instance that owns its own teardown via `dispose()`
 
 ## Example
 
@@ -67,9 +67,9 @@ const boundary = defineBoundary({
 const config = defineQuantizer(boundary, {
   outputs: { css: { sm: { display: 'block' }, lg: { display: 'grid' } } },
 });
-const { quantizer: live, lifetime } = createQuantizer(config);
+const live = createQuantizer(config);
 live.evaluate(1024);
 const result = live.currentOutputs.read();
 // result.css => { display: 'grid' }
-await lifetime.dispose();
+await live.dispose();
 ```

@@ -5,8 +5,8 @@ import { AVBridge, Signal, manualClock, fixedClock } from '@liteship/core';
 /**
  * Signal — Wave 6 plain CellKernel transport (Effect-free). RED-FIRST law table
  * for the swap onto {@link CellKernel.replay1}: plain factories (`Signal.make`/
- * `controllable`/`audio`) returning a `{ read, subscribe, lifetime }` handle;
- * `current` (Effect) → sync `read()`; `changes` (Stream) → `subscribe(sink)`;
+ * `controllable`/`audio`) returning a signal object with `read` / `subscribe` /
+ * `lifetime` members; `current` (Effect) → sync `read()`; `changes` (Stream) → `subscribe(sink)`;
  * `seek`/`pause`/`resume`/`poll` sync; DOM/rAF/interval listeners publish directly
  * and their teardown is owned by the `Lifetime` (asserted via `lifetime.dispose()`).
  * `Signal.audio`'s eager-throw is preserved. Value behavior matches the Wave 5.5

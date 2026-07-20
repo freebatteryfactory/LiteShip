@@ -127,7 +127,7 @@ describe('FrameCapture contract', () => {
 
 describe('Capture with VideoRenderer', () => {
   it('captures all frames from a VideoRenderer', async () => {
-    const compositor = Compositor.create().compositor;
+    const compositor = Compositor.create();
     const renderer = VideoRenderer.make({ fps: 10, width: 640, height: 480, durationMs: 500 }, compositor);
 
     const capture = createMockCapture();
@@ -151,7 +151,7 @@ describe('Capture with VideoRenderer', () => {
   });
 
   it('captured frame timestamps match renderer timestamps', async () => {
-    const compositor = Compositor.create().compositor;
+    const compositor = Compositor.create();
     const renderer = VideoRenderer.make({ fps: 30, width: 1920, height: 1080, durationMs: 200 }, compositor);
 
     const capture = createMockCapture();

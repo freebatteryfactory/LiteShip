@@ -4,7 +4,7 @@ import { EffectSystem } from '@liteship/scene';
 
 describe('EffectSystem', () => {
   it('produces intensity for effect entities in range', () => {
-    const { world } = World.make();
+    const world = World.make();
     world.spawn({
       EffectKind: 'pulse', TargetEntity: 'hero', FrameRange: { from: 0, to: 60 },
     });
@@ -18,7 +18,7 @@ describe('EffectSystem', () => {
 
   it('multiplies the linear ramp by a pulse Envelope component (overdrive at period start)', () => {
     const intensityAt = (frameIndex: number): number => {
-      const { world } = World.make();
+      const world = World.make();
       world.spawn({
         EffectKind: 'pulse',
         TargetEntity: 'hero',
@@ -37,7 +37,7 @@ describe('EffectSystem', () => {
   });
 
   it('emits zero intensity for out-of-range effects', () => {
-    const { world } = World.make();
+    const world = World.make();
     world.spawn({ EffectKind: 'pulse', TargetEntity: 'hero', FrameRange: { from: 60, to: 120 } });
     world.addSystem(EffectSystem(0));
     world.tick();

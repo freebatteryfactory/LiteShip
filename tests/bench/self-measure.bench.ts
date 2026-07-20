@@ -110,7 +110,7 @@ bench.add('[OVERHEAD] SpeculativeEvaluator.evaluate -- far from threshold', () =
 // Compositor empty vs with quantizers
 // ---------------------------------------------------------------------------
 
-const { compositor: emptyCompositor } = Compositor.create();
+const emptyCompositor = Compositor.create();
 
 bench.add('[SCALE] Compositor.compute -- empty', () => {
   emptyCompositor.compute();

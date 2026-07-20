@@ -285,11 +285,11 @@ type VideoFrame = { readonly composite: CompositeState; readonly posed: Record<s
  */
 function produceVideoFrames(graph: DocumentGraph): VideoFrame[] {
   const projections = cssProjections(graph);
-  // Compositor.create is now sync-first: it returns the live instance plus the
-  // Lifetime that owns its teardown (was `yield* Compositor.create()` in an
-  // Effect scope). `add`/`compute` are plain sync calls; the loop body was
-  // already fully synchronous, so the whole cast collapses to straight-line JS.
-  const { compositor, lifetime } = Compositor.create();
+  // Compositor.create is now sync-first: it returns the live instance that owns
+  // its own teardown (was `yield* Compositor.create()` in an Effect scope).
+  // `add`/`compute` are plain sync calls; the loop body was already fully
+  // synchronous, so the whole cast collapses to straight-line JS.
+  const compositor = Compositor.create();
   try {
     const posed = poses(graph);
     // Keep each added quantizer + its boundary so the per-frame schedule can
@@ -343,7 +343,7 @@ function produceVideoFrames(graph: DocumentGraph): VideoFrame[] {
   } finally {
     // The compositor's one disposable resource is its reactive `changes` kernel;
     // dispose closes it synchronously (its finalizer is sync) once the cast ends.
-    void lifetime.dispose();
+    void compositor.dispose();
   }
 }
 

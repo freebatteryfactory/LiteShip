@@ -43,7 +43,7 @@ function emittedAfterCrossing<B extends Boundary, O extends QuantizerOutputs<B>>
   config: QuantizerConfig<B, O>,
   value: number,
 ): Partial<{ [K in OutputTarget]: Record<string, unknown> }> {
-  const { quantizer: live, lifetime } = createQuantizer(config);
+  const live = createQuantizer(config);
   // outputChanges is a replay-1 kernel: subscribe replays the current outputs
   // (events[0]), evaluate() publishes the post-crossing outputs (events[1]) —
   // both synchronous (was `Stream.take(live.outputChanges, 2)` forked in a scope).
@@ -51,7 +51,7 @@ function emittedAfterCrossing<B extends Boundary, O extends QuantizerOutputs<B>>
   const dispose = live.outputChanges.subscribe((record) => events.push(record));
   live.evaluate(value);
   dispose();
-  void lifetime.dispose();
+  void live.dispose();
   return events[1] ?? {};
 }
 

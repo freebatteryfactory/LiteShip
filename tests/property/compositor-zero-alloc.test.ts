@@ -101,7 +101,7 @@ describe('Compositor.add — CompositorQuantizer accepted-type contract (compile
     // type prevents — so the assertion lives in a closure that is only typechecked, not
     // run. If the `@ts-expect-error` stops biting, the tightening regressed to the cast.
     const _rejectsBaseOnly = (
-      compositor: ReturnType<typeof Compositor.create>['compositor'],
+      compositor: ReturnType<typeof Compositor.create>,
       baseOnly: Quantizer<B>,
     ): void => {
       // @ts-expect-error — Quantizer<B> carries no required stateSync and no reactive state.
@@ -111,7 +111,7 @@ describe('Compositor.add — CompositorQuantizer accepted-type contract (compile
   });
 
   it('ACCEPTS a synchronous (required-stateSync) quantizer — no cast needed', () => {
-    const { compositor } = Compositor.create();
+    const compositor = Compositor.create();
     const sync: CompositorQuantizer<B> = {
       _tag: 'Quantizer',
       boundary,

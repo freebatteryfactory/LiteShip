@@ -39,13 +39,12 @@ plan graph, ECS, capsule factory).
 - [TokenBuffer](namespaces/TokenBuffer/README.md)
 - [TypeValidator](namespaces/TypeValidator/README.md)
 - [UIQuality](namespaces/UIQuality/README.md)
-- [World](namespaces/World/README.md)
-- [Zap](namespaces/Zap/README.md)
 
 ## Interfaces
 
 - [AIContext](interfaces/AIContext.md)
 - [ApplyToken](interfaces/ApplyToken.md)
+- [AsyncOwnedResource](interfaces/AsyncOwnedResource.md)
 - [AttributionDecl](interfaces/AttributionDecl.md)
 - [BoundarySpec](interfaces/BoundarySpec.md)
 - [BranchGuard](interfaces/BranchGuard.md)
@@ -123,6 +122,7 @@ plan graph, ECS, capsule factory).
 - [MergeResult](interfaces/MergeResult.md)
 - [MotionPropertyTween](interfaces/MotionPropertyTween.md)
 - [NodePatchOp](interfaces/NodePatchOp.md)
+- [OwnedResource](interfaces/OwnedResource.md)
 - [PatchReceiptEntry](interfaces/PatchReceiptEntry.md)
 - [PolicyNode](interfaces/PolicyNode.md)
 - [PoseNode](interfaces/PoseNode.md)
@@ -436,6 +436,7 @@ plan graph, ECS, capsule factory).
 - [asDeclaration](functions/asDeclaration.md)
 - [asReplayableRecoveryCell](functions/asReplayableRecoveryCell.md)
 - [assertTokenBinds](functions/assertTokenBinds.md)
+- [attachLifetime](functions/attachLifetime.md)
 - [buildResponsiveImageSet](functions/buildResponsiveImageSet.md)
 - [buildResponsiveSrcset](functions/buildResponsiveSrcset.md)
 - [canonicalAddressBytes](functions/canonicalAddressBytes.md)

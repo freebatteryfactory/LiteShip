@@ -15,7 +15,8 @@
  */
 
 import { CellKernel } from '../reactive/cell-kernel.js';
-import { Lifetime } from '../reactive/lifetime.js';
+import { Lifetime, attachLifetime } from '../reactive/lifetime.js';
+import type { AsyncOwnedResource } from '../reactive/lifetime.js';
 
 interface BlendNodeShape<T> {
   readonly value: T;
@@ -34,27 +35,26 @@ interface BlendTreeShape<T extends Record<string, number>> {
 }
 
 /**
- * The pair {@link BlendTree.make} returns: the live tree plus the
- * {@link Lifetime} that owns its teardown. Dispose the lifetime to close the
- * reactive `changes` channel (completing subscribers, making publish inert).
+ * A live blend tree that owns its teardown directly ({@link AsyncOwnedResource}):
+ * `await tree.dispose()` closes the reactive `changes` channel (completing
+ * subscribers, making publish inert). The owning {@link Lifetime} stays reachable
+ * as `tree.lifetime` for advanced composition.
  */
-interface BlendTreeHandle<T extends Record<string, number>> {
-  readonly tree: BlendTreeShape<T>;
-  readonly lifetime: Lifetime;
-}
+type OwnedBlendTree<T extends Record<string, number>> = BlendTreeShape<T> & AsyncOwnedResource;
 
 /**
  * Creates a new BlendTree for weighted multi-state blending of numeric records.
  *
  * @example
  * ```ts
- * const { tree } = BlendTree.make<{ x: number; y: number }>();
+ * const tree = BlendTree.make<{ x: number; y: number }>();
  * tree.add('idle', { x: 0, y: 0 }, 0.3);
  * tree.add('active', { x: 100, y: 50 }, 0.7);
  * const blended = tree.compute(); // { x: 70, y: 35 }
+ * await tree.dispose();
  * ```
  */
-function _make<T extends Record<string, number>>(): BlendTreeHandle<T> {
+function _make<T extends Record<string, number>>(): OwnedBlendTree<T> {
   const nodes = new Map<string, BlendNodeShape<T>>();
   const channel = CellKernel.fanout<T>();
   const lifetime = Lifetime.make();
@@ -125,20 +125,21 @@ function _make<T extends Record<string, number>>(): BlendTreeHandle<T> {
     changes: channel,
   };
 
-  return { tree, lifetime };
+  return attachLifetime(tree, lifetime);
 }
 
 /**
  * BlendTree -- weighted multi-state blending for numeric records.
  * Add named nodes with values and weights, then compute the weighted average.
- * `make` returns a `{ tree, lifetime }` handle.
+ * `make` returns the tree augmented with its own `dispose()`.
  *
  * @example
  * ```ts
- * const { tree } = BlendTree.make<{ opacity: number }>();
+ * const tree = BlendTree.make<{ opacity: number }>();
  * tree.add('fadeIn', { opacity: 1 }, 0.8);
  * tree.add('fadeOut', { opacity: 0 }, 0.2);
  * const result = tree.compute(); // { opacity: 0.8 }
+ * await tree.dispose();
  * ```
  */
 export const BlendTree = { make: _make };
@@ -149,6 +150,4 @@ export type BlendTree<T extends Record<string, number>> = BlendTreeShape<T>;
 export declare namespace BlendTree {
   /** Individual leaf/intermediate node in a blend tree. */
   export type Node<T> = BlendNodeShape<T>;
-  /** The `{ tree, lifetime }` pair {@link BlendTree.make} returns. */
-  export type Handle<T extends Record<string, number>> = BlendTreeHandle<T>;
 }

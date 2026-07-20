@@ -8,7 +8,7 @@
 
 > **Node**\<`T`\> = `BlendNodeShape`\<`T`\>
 
-Defined in: [core/src/motion/blend.ts:151](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/blend.ts#L151)
+Defined in: [core/src/motion/blend.ts:152](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/blend.ts#L152)
 
 Individual leaf/intermediate node in a blend tree.
 

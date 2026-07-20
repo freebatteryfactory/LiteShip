@@ -6,15 +6,14 @@
 
 # Function: createStore()
 
-> **createStore**\<`S`, `Msg`\>(`initial`, `reducer`): `StoreShape`\<`S`, `Msg`\>
+> **createStore**\<`S`, `Msg`\>(`initial`, `reducer`): `StoreShape`\<`S`, `Msg`\> & [`AsyncOwnedResource`](../interfaces/AsyncOwnedResource.md)
 
-Defined in: [core/src/reactive/store.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/store.ts#L59)
+Defined in: [core/src/reactive/store.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/store.ts#L61)
 
 Create a [Store](../type-aliases/Store.md) — a TEA-style state container over
 [CellKernel.replay1](../variables/CellKernel.md#replay1). Build with an initial state and a pure
 `reducer(state, msg) => state`, then dispatch messages; the store publishes
-each resulting state through `subscribe`, and `lifetime.dispose()` tears it
-down.
+each resulting state through `subscribe`, and `store.dispose()` tears it down.
 
 ## Type Parameters
 
@@ -38,4 +37,4 @@ down.
 
 ## Returns
 
-`StoreShape`\<`S`, `Msg`\>
+`StoreShape`\<`S`, `Msg`\> & [`AsyncOwnedResource`](../interfaces/AsyncOwnedResource.md)

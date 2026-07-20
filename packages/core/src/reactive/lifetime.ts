@@ -233,3 +233,68 @@ export declare namespace Lifetime {
   /** A registered teardown function — see {@link Finalizer}. */
   export type Finalizer = () => void | Promise<void>;
 }
+
+// ---------------------------------------------------------------------------
+// Ownership contract — ONE lifecycle, exposed directly as dispose()
+// ---------------------------------------------------------------------------
+
+/**
+ * A resource that owns its teardown SYNCHRONOUSLY. `dispose()` runs the owning
+ * {@link Lifetime}'s finalizers (all synchronous) to completion and returns
+ * `void`; the `[Symbol.dispose]` well-known method makes it usable with a
+ * `using` declaration. `lifetime` stays reachable for advanced/debug
+ * composition — registering extra finalizers, threading the handle into a child
+ * scope — but the value IS the disposable; there is no pair to destructure.
+ *
+ * Prefer {@link AsyncOwnedResource}: {@link LifetimeShape.dispose} is async, so
+ * this synchronous form is only correct for a resource whose teardown is
+ * genuinely synchronous (every finalizer settles inside the `dispose()` call).
+ */
+export interface OwnedResource {
+  /** The owning disposal handle — for advanced/debug composition only. */
+  readonly lifetime: Lifetime;
+  /** Tear down exactly once (synchronously). Idempotent — inherited from {@link Lifetime}. */
+  dispose(): void;
+  /** Well-known disposer so the resource works with a `using` declaration. */
+  [Symbol.dispose](): void;
+}
+
+/**
+ * A resource that owns its teardown ASYNCHRONOUSLY — the default, because
+ * {@link LifetimeShape.dispose} returns a promise that settles once every async
+ * finalizer settles. `dispose()` delegates to the owning Lifetime; the
+ * `[Symbol.asyncDispose]` well-known method makes it usable with an
+ * `await using` declaration. `lifetime` stays reachable for advanced/debug
+ * composition, but the value IS the disposable — there is no pair to
+ * destructure and separately own.
+ */
+export interface AsyncOwnedResource {
+  /** The owning disposal handle — for advanced/debug composition only. */
+  readonly lifetime: Lifetime;
+  /** Tear down exactly once; the returned promise settles when async finalizers settle. Idempotent. */
+  dispose(): Promise<void>;
+  /** Well-known disposer so the resource works with an `await using` declaration. */
+  [Symbol.asyncDispose](): Promise<void>;
+}
+
+/**
+ * Wire a {@link Lifetime}'s single lifecycle directly onto `target`, collapsing
+ * the former `{ value, lifetime }` pair-return into ONE owned resource: the
+ * value IS the disposable. Adds `dispose()` and `[Symbol.asyncDispose]()` (both
+ * delegate to `lifetime.dispose()`) and keeps the handle reachable as
+ * `target.lifetime` for advanced/debug composition. Idempotent / exactly-once
+ * disposal is inherited from the Lifetime.
+ *
+ * Async is the default because `Lifetime.dispose` is async; only expose a
+ * synchronous {@link OwnedResource} for a resource whose teardown is genuinely
+ * synchronous.
+ */
+export function attachLifetime<T extends object>(target: T, lifetime: Lifetime): T & AsyncOwnedResource {
+  const dispose = (): Promise<void> => lifetime.dispose();
+  Object.defineProperties(target, {
+    lifetime: { value: lifetime, enumerable: true, writable: false, configurable: true },
+    dispose: { value: dispose, enumerable: false, writable: false, configurable: true },
+    [Symbol.asyncDispose]: { value: dispose, enumerable: false, writable: false, configurable: true },
+  });
+  return target as T & AsyncOwnedResource;
+}

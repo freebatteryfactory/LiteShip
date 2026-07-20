@@ -52,7 +52,8 @@
 
 import type { Boundary } from '../authoring/boundary.js';
 import { CellKernel } from '../reactive/cell-kernel.js';
-import { Lifetime } from '../reactive/lifetime.js';
+import { Lifetime, attachLifetime } from '../reactive/lifetime.js';
+import type { AsyncOwnedResource } from '../reactive/lifetime.js';
 import { COMPOSITOR_POOL_CAP, DIRTY_FLAGS_MAX } from '../authoring/defaults.js';
 import { CompositorStatePool, accessCompositeState } from './compositor-pool.js';
 import { DirtyFlags } from '../reactive/dirty.js';
@@ -169,19 +170,16 @@ interface CompositorShape {
 }
 
 /**
- * The pair returned by {@link Compositor.create}: the live compositor instance
- * plus the {@link Lifetime} that owns its teardown. The Lifetime's sole finalizer
- * closes the reactive `changes` kernel — completing every subscriber and making
- * publish inert — so consumers thread compositor lifecycle through one uniform
- * `dispose()`.
+ * A live compositor that owns its teardown directly ({@link AsyncOwnedResource}):
+ * `await compositor.dispose()` closes the reactive `changes` kernel exactly once —
+ * completing every subscriber and making publish inert. The owning
+ * {@link Lifetime} stays reachable as `compositor.lifetime` for advanced
+ * composition.
  */
-interface CompositorHandle {
-  readonly compositor: CompositorShape;
-  readonly lifetime: Lifetime;
-}
+type OwnedCompositor = CompositorShape & AsyncOwnedResource;
 
 interface CompositorFactory {
-  create(config?: CompositorConfig): CompositorHandle;
+  create(config?: CompositorConfig): OwnedCompositor;
 }
 
 interface QuantizerMeta {
@@ -230,17 +228,17 @@ function admits(meta: QuantizerMeta, target: string): boolean {
  * ```ts
  * import { Compositor } from '@liteship/core';
  *
- * const { compositor, lifetime } = Compositor.create({ poolCapacity: 64, speculative: true });
+ * const compositor = Compositor.create({ poolCapacity: 64, speculative: true });
  * compositor.add('viewport', viewportQuantizer);
  * const state = compositor.compute();
  * // state.discrete.viewport === 'tablet'
  * // state.outputs.css['--liteship-viewport'] === 'tablet'
- * await lifetime.dispose();
+ * await compositor.dispose();
  * ```
  */
 export const Compositor: CompositorFactory = {
-  /** Build a compositor bound to a fresh {@link RuntimeCoordinator}, paired with its owning {@link Lifetime}. */
-  create(config?: CompositorConfig): CompositorHandle {
+  /** Build a compositor bound to a fresh {@link RuntimeCoordinator}; the returned instance owns its own teardown. */
+  create(config?: CompositorConfig): OwnedCompositor {
     // Reactive notification seam — the extracted replay-1 {@link CellKernel}
     // (`CellKernel.replay1`). Its current-value slot + synchronous generation-
     // bounded fan-out ARE the code this compositor formerly inlined as
@@ -665,7 +663,7 @@ export const Compositor: CompositorFactory = {
       cell.close();
     });
 
-    return { compositor, lifetime };
+    return attachLifetime(compositor, lifetime);
   },
 };
 
@@ -675,6 +673,4 @@ export type Compositor = CompositorShape;
 export declare namespace Compositor {
   /** Alias for {@link CompositorConfig}. */
   export type Config = CompositorConfig;
-  /** The `{ compositor, lifetime }` pair returned by {@link Compositor.create}. */
-  export type Handle = CompositorHandle;
 }

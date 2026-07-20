@@ -80,7 +80,7 @@ function siteOnlyPolicy(sites: readonly RuntimeSite[]): PolicyNode {
  * that projection's css survived — i.e. whether the detected realm === admitSite.
  */
 function detectedSiteAdmits(admitSite: RuntimeSite): boolean {
-  const { compositor } = Compositor.create({
+  const compositor = Compositor.create({
     // runtimeSite intentionally omitted → defaultRuntimeSite() runs.
     getPolicy: () => siteOnlyPolicy([admitSite]),
   });

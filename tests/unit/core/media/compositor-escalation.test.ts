@@ -72,7 +72,7 @@ function policy(opts: {
 describe('Compositor escalation gate (E)', () => {
   test('permissive policy (gpu, ample budget) admits all targets', () => {
     const p = policy({ requires: 'animated', grants: grantUpTo('animated'), sites: ['node'] });
-    const { compositor } = Compositor.create({
+    const compositor = Compositor.create({
       runtimeSite: 'node',
       getPolicy: () => p,
     });
@@ -94,7 +94,7 @@ describe('Compositor escalation gate (E)', () => {
       sites: ['node'],
       budgets: { p95Ms: 5 },
     });
-    const { compositor } = Compositor.create({
+    const compositor = Compositor.create({
       runtimeSite: 'node',
       getPolicy: () => p,
     });
@@ -108,7 +108,7 @@ describe('Compositor escalation gate (E)', () => {
   });
 
   test('no matching policy is pass-through (all targets emit)', () => {
-    const { compositor } = Compositor.create({
+    const compositor = Compositor.create({
       runtimeSite: 'node',
       // getPolicy present but returns no policy for this projection.
       getPolicy: () => undefined,
@@ -125,7 +125,7 @@ describe('Compositor escalation gate (E)', () => {
     // Policy admits only 'browser'; the compositor evaluates against 'node' →
     // chooseTier returns { error } → deny-all for that projection.
     const p = policy({ requires: 'animated', grants: grantUpTo('animated'), sites: ['browser'] });
-    const { compositor } = Compositor.create({
+    const compositor = Compositor.create({
       runtimeSite: 'node',
       getPolicy: () => p,
     });
@@ -146,7 +146,7 @@ describe('Compositor escalation gate (E)', () => {
       sites: ['node'],
       budgets: { p95Ms: 5 },
     });
-    const { compositor } = Compositor.create({
+    const compositor = Compositor.create({
       runtimeSite: 'node',
       getPolicy: (id: ContentAddress) => (id === ('gated' as ContentAddress) ? constrained : undefined),
     });
@@ -172,7 +172,7 @@ describe('Compositor escalation gate (E)', () => {
     // ever passed a content address instead, every name-keyed `getPolicy` lookup
     // would silently miss and fall through to pass-through — disabling escalation.
     const seen: string[] = [];
-    const { compositor } = Compositor.create({
+    const compositor = Compositor.create({
       runtimeSite: 'node',
       getPolicy: (name) => {
         seen.push(name);

@@ -62,7 +62,7 @@ describe('ECS Composable Properties', () => {
       fc.property(
         fc.array(fc.option(arbEntityRecord, { nil: undefined }), { minLength: 2, maxLength: 15 }),
         (componentsList) => {
-          const { world } = World.make();
+          const world = World.make();
           const ids: string[] = [];
           for (const components of componentsList) {
             ids.push(world.spawn(components ?? undefined));
@@ -76,7 +76,7 @@ describe('ECS Composable Properties', () => {
   test('World.spawn sequence is strictly increasing', () => {
     fc.assert(
       fc.property(fc.array(arbEntityRecord, { minLength: 2, maxLength: 8 }), (componentsList) => {
-        const { world } = World.make();
+        const world = World.make();
         const ids: string[] = [];
         for (const components of componentsList) {
           ids.push(world.spawn(components));
@@ -125,7 +125,7 @@ describe('ECS Composable Properties', () => {
     fc.assert(
       fc.property(arbBoundary, fc.integer({ min: 0, max: 9999 }), (boundary, value) => {
         const states = boundary.states as readonly string[];
-        const { world } = World.make();
+        const world = World.make();
         const composableWorld = ComposableWorld.make<NumericThemeSchema>(world);
         const entity = composableWorld.spawn({ boundary });
         const a = composableWorld.evaluate(entity, { 'viewport.width': value });
@@ -140,7 +140,7 @@ describe('ECS Composable Properties', () => {
   test('ComposableWorld query is sound and complete for a required component', () => {
     fc.assert(
       fc.property(fc.array(fc.boolean(), { minLength: 1, maxLength: 10 }), (flags) => {
-        const { world } = World.make();
+        const world = World.make();
         const composableWorld = ComposableWorld.make<NumericThemeSchema>(world);
         for (const hasBoundary of flags) {
           if (hasBoundary) {
@@ -186,7 +186,7 @@ describe('ECS Composable Properties', () => {
           ) as never,
         });
 
-        const { world } = World.make();
+        const world = World.make();
         const composableWorld = ComposableWorld.make<NumericThemeSchema>(world);
         const entity = composableWorld.spawn({ boundary, style });
         const resolved = composableWorld.evaluate(entity, { 'viewport.width': value });
@@ -211,7 +211,7 @@ describe('ECS Composable Properties', () => {
             fallback: dark,
           });
 
-          const { world } = World.make();
+          const world = World.make();
           const composableWorld = ComposableWorld.make<NumericThemeSchema>(world);
           const entity = composableWorld.spawn({ token });
           const a = composableWorld.evaluate(entity, { themeLevel: 1 });
@@ -228,7 +228,7 @@ describe('ECS Composable Properties', () => {
   test('EntityId format invariant remains entity-seq:fnv1a:hash', () => {
     fc.assert(
       fc.property(arbEntityRecord, (components) => {
-        const { world } = World.make();
+        const world = World.make();
         const id = world.spawn(components);
         return /^entity-\d+:fnv1a:[a-f0-9]{8}$/.test(id);
       }),

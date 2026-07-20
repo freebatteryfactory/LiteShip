@@ -114,7 +114,7 @@ describe('wgslKey — bare snake_case, no u_ prefix (matches the WGSL compiler t
 
 describe('compositor emit-wgsl: live WGSL channel, escalation-gated at the gpu rung', () => {
   test('pass-through (no policy): outputs.wgsl carries the live state index under the fixed state_index field', async () => {
-    const compositor = Compositor.create({ runtimeSite: 'browser' }).compositor;
+    const compositor = Compositor.create({ runtimeSite: 'browser' });
     compositor.add('blurRadius', makeQuantizer(widthBoundary, 'tablet'));
     const state = compositor.compute();
 
@@ -127,7 +127,7 @@ describe('compositor emit-wgsl: live WGSL channel, escalation-gated at the gpu r
 
   test('gpu-rung policy admits wgsl (the heaviest target)', async () => {
     const p = policy({ requires: 'gpu', grants: grantUpTo('gpu'), sites: ['browser'] });
-    const compositor = Compositor.create({ runtimeSite: 'browser', getPolicy: () => p }).compositor;
+    const compositor = Compositor.create({ runtimeSite: 'browser', getPolicy: () => p });
     compositor.add('layout', makeQuantizer(widthBoundary, 'desktop'));
     const state = compositor.compute();
 
@@ -146,7 +146,7 @@ describe('compositor emit-wgsl: live WGSL channel, escalation-gated at the gpu r
       sites: ['browser'],
       budgets: { p95Ms: 12 },
     });
-    const compositor = Compositor.create({ runtimeSite: 'browser', getPolicy: () => p }).compositor;
+    const compositor = Compositor.create({ runtimeSite: 'browser', getPolicy: () => p });
     compositor.add('layout', makeQuantizer(widthBoundary, 'mobile'));
     const state = compositor.compute();
 
@@ -159,7 +159,7 @@ describe('compositor emit-wgsl: live WGSL channel, escalation-gated at the gpu r
   test('unsatisfiable policy ({error} branch) denies wgsl along with every target', async () => {
     // Policy admits only 'node'; compositor runs at 'browser' → chooseTier errors → deny-all.
     const p = policy({ requires: 'gpu', grants: grantUpTo('gpu'), sites: ['node'] });
-    const compositor = Compositor.create({ runtimeSite: 'browser', getPolicy: () => p }).compositor;
+    const compositor = Compositor.create({ runtimeSite: 'browser', getPolicy: () => p });
     compositor.add('layout', makeQuantizer(widthBoundary, 'desktop'));
     const state = compositor.compute();
 

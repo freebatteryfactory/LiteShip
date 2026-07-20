@@ -54,13 +54,13 @@ const scaleQuantizerConfig = defineQuantizer(scaleBoundary, {
 // ---------------------------------------------------------------------------
 
 export async function buildFrames(): Promise<ReadonlyArray<VideoFrameOutput>> {
-  // Sync-first (Wave 2): create returns the live instance paired with the
-  // Lifetime that owns its teardown; the reactive kernels aren't needed for the
-  // pure per-frame compute path here, so we drive the instances directly.
-  const { compositor } = Compositor.create();
+  // Sync-first (Wave 2): create returns the live instance that owns its own
+  // teardown via dispose(); the reactive kernels aren't needed for the pure
+  // per-frame compute path here, so we drive the instances directly.
+  const compositor = Compositor.create();
 
   // Materialize the live quantizer from its content-addressed config.
-  const { quantizer } = createQuantizer(scaleQuantizerConfig);
+  const quantizer = createQuantizer(scaleQuantizerConfig);
 
   // Add quantizer to compositor under the name "scale"
   compositor.add('scale', quantizer);

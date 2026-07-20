@@ -29,7 +29,8 @@
 
 import { CellKernel } from './cell-kernel.js';
 import type { Disposer } from './cell-kernel.js';
-import { Lifetime } from './lifetime.js';
+import { Lifetime, attachLifetime } from './lifetime.js';
+import type { AsyncOwnedResource } from './lifetime.js';
 
 interface CellShape<T> {
   readonly _tag: 'Cell';
@@ -46,8 +47,9 @@ interface CellShape<T> {
   subscribe(subscriber: CellKernel.Subscriber<T>): Disposer;
   /**
    * Owns the cell's teardown. Its sole finalizer closes the reactive kernel —
-   * completing every subscriber and making publish inert — so consumers thread
-   * cell lifecycle through one uniform `dispose()`.
+   * completing every subscriber and making publish inert. Reachable for
+   * advanced/debug composition; day-to-day teardown goes through the cell's own
+   * `dispose()` (see {@link AsyncOwnedResource}).
    */
   readonly lifetime: Lifetime;
 }
@@ -58,15 +60,18 @@ interface CellShape<T> {
  * `subscribe` for the replay-1 stream of values (current replayed on attach).
  * Effect-free — the transport swap that lets consumers coordinate ordinary state
  * with no `effect` import (#153).
+ *
+ * The cell IS its own disposable ({@link AsyncOwnedResource}): `await cell.dispose()`
+ * (or `await using cell = createCell(0)`) closes the kernel exactly once.
  */
-export const createCell = <T>(initial: T): CellShape<T> => {
+export const createCell = <T>(initial: T): CellShape<T> & AsyncOwnedResource => {
   // Replay-1 kernel under the captured product law: {all} (no dedup) +
   // 'deferred' (async-append nested writes). See the module doc + scar S6.F.2.
   const kernel = CellKernel.replay1<T>(initial, { kind: 'all' }, 'deferred');
   const lifetime = Lifetime.make();
   lifetime.add(() => kernel.close());
 
-  return {
+  const cell: CellShape<T> = {
     _tag: 'Cell',
     read: () => kernel.read(),
     set: (value: T) => kernel.publish(value),
@@ -74,6 +79,7 @@ export const createCell = <T>(initial: T): CellShape<T> => {
     subscribe: (subscriber) => kernel.subscribe(subscriber),
     lifetime,
   };
+  return attachLifetime(cell, lifetime);
 };
 
 /** Public structural type for `Cell`. */

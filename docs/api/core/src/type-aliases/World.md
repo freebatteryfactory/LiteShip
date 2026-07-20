@@ -8,6 +8,6 @@
 
 > **World** = `WorldShape`
 
-Defined in: [core/src/ecs.ts:349](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L349)
+Defined in: [core/src/ecs.ts:347](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L347)
 
 Public structural type for `World`.

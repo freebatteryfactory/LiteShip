@@ -56,7 +56,7 @@ bench.add('FixedStepScheduler -- 1000 steps @ 60fps', () => {
 });
 
 bench.add('VideoRenderer -- 30 frames @ 30fps', async () => {
-  const compositor = Compositor.create().compositor;
+  const compositor = Compositor.create();
   const renderer = VideoRenderer.make({ fps: 30, width: 1920, height: 1080, durationMs: Millis(1000) }, compositor);
   for await (const _ of renderer.frames()) {
     /* consume */
@@ -64,7 +64,7 @@ bench.add('VideoRenderer -- 30 frames @ 30fps', async () => {
 });
 
 bench.add('VideoRenderer -- 300 frames @ 60fps', async () => {
-  const compositor = Compositor.create().compositor;
+  const compositor = Compositor.create();
   const renderer = VideoRenderer.make({ fps: 60, width: 1920, height: 1080, durationMs: Millis(5000) }, compositor);
   for await (const _ of renderer.frames()) {
     /* consume */
@@ -72,7 +72,7 @@ bench.add('VideoRenderer -- 300 frames @ 60fps', async () => {
 });
 
 const blendTreeCompositor = (() => {
-  const c = Compositor.create().compositor;
+  const c = Compositor.create();
   c.add('viewport', makeQuantizer(widthBoundary));
   c.add('layout', makeQuantizer(widthBoundary));
   c.add('theme', makeQuantizer(widthBoundary));
@@ -86,7 +86,7 @@ bench.add('Compositor.compute() -- hot loop with 3-quantizer blend tree (100 cal
 });
 
 bench.add('Compositor.compute() -- hot loop (100 calls)', () => {
-  const c = Compositor.create().compositor;
+  const c = Compositor.create();
   for (let i = 0; i < 100; i++) {
     c.compute();
   }

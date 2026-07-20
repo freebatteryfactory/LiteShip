@@ -99,7 +99,7 @@ bench.add('defineToken() + FNV-1a', () => {
 });
 
 bench.add('BlendTree.compute() -- 4 nodes', () => {
-  const { tree } = BlendTree.make<{ x: number; y: number }>();
+  const tree = BlendTree.make<{ x: number; y: number }>();
   tree.add('a', { x: 0, y: 0 }, 1);
   tree.add('b', { x: 100, y: 100 }, 1);
   tree.add('c', { x: 50, y: 50 }, 0.5);
@@ -108,13 +108,13 @@ bench.add('BlendTree.compute() -- 4 nodes', () => {
 });
 
 bench.add('Compositor.compute() -- empty', () => {
-  const compositor = Compositor.create().compositor;
+  const compositor = Compositor.create();
   compositor.compute();
 });
 
 // ECS World tick -- setup extracted so only tick() is measured per iteration
 {
-  const world100 = World.make().world;
+  const world100 = World.make();
   for (let i = 0; i < 100; i++) {
     world100.spawn({ position: { x: i, y: i * 2 } });
   }
@@ -130,7 +130,7 @@ bench.add('Compositor.compute() -- empty', () => {
 }
 
 {
-  const world100Dense = World.make().world;
+  const world100Dense = World.make();
   const posX = Part.dense('posX', 128);
   const posY = Part.dense('posY', 128);
 

@@ -13,10 +13,10 @@ import {
 
 describe('runtime hotspot coverage', () => {
   test('World regular systems handle empty queries, component add/remove, and missing dense stores', () => {
-    // World is a synchronous API as of the core-seams wave: make() returns
-    // { world, lifetime }, every method returns directly, and System.execute
-    // returns void (no Effect wrapper).
-    const { world } = World.make();
+    // World is a synchronous API as of the core-seams wave: make() returns a
+    // world that owns its own dispose(), every method returns directly, and
+    // System.execute returns void (no Effect wrapper).
+    const world = World.make();
     const hpPart = { name: 'hp', schema: schema.number };
     const labelPart = { name: 'label', schema: schema.string };
     const presentStore = Part.dense('present', 8);

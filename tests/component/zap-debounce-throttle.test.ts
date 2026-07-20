@@ -25,15 +25,15 @@ function delay(ms: number): Promise<void> {
 
 describe('Zap.throttle', () => {
   test('creates a throttled Zap with correct tag', () => {
-    const { zap: source } = Zap.make<number>();
-    const { zap: throttled } = Zap.throttle(source, Millis(100));
+    const source = Zap.make<number>();
+    const throttled = Zap.throttle(source, Millis(100));
     expect(throttled._tag).toBe('Zap');
   });
 
   test('first emission passes through, subsequent within window are dropped', () => {
     const collected: number[] = [];
-    const { zap: source } = Zap.make<number>();
-    const { zap: throttled } = Zap.throttle(source, Millis(500));
+    const source = Zap.make<number>();
+    const throttled = Zap.throttle(source, Millis(500));
     throttled.stream.subscribe((v) => collected.push(v));
 
     // Emit three values rapidly — only the first passes (500ms window).
@@ -51,15 +51,15 @@ describe('Zap.throttle', () => {
 
 describe('Zap.debounce', () => {
   test('creates a debounced Zap with correct tag', () => {
-    const { zap: source } = Zap.make<number>();
-    const { zap: debounced } = Zap.debounce(source, Millis(10));
+    const source = Zap.make<number>();
+    const debounced = Zap.debounce(source, Millis(10));
     expect(debounced._tag).toBe('Zap');
   });
 
   test('emits last value after delay', async () => {
     const collected: number[] = [];
-    const { zap: source } = Zap.make<number>();
-    const { zap: debounced } = Zap.debounce(source, Millis(30));
+    const source = Zap.make<number>();
+    const debounced = Zap.debounce(source, Millis(30));
     debounced.stream.subscribe((v) => collected.push(v));
 
     source.emit(99);
@@ -71,8 +71,8 @@ describe('Zap.debounce', () => {
 
   test('cancels the pending timer on rapid re-emission', async () => {
     const collected: number[] = [];
-    const { zap: source } = Zap.make<number>();
-    const { zap: debounced } = Zap.debounce(source, Millis(50));
+    const source = Zap.make<number>();
+    const debounced = Zap.debounce(source, Millis(50));
     debounced.stream.subscribe((v) => collected.push(v));
 
     source.emit(1);
@@ -85,12 +85,12 @@ describe('Zap.debounce', () => {
 
   test('a fired timer after dispose does not publish (AbortSignal gate)', async () => {
     const collected: number[] = [];
-    const { zap: source } = Zap.make<number>();
-    const { zap: debounced, lifetime } = Zap.debounce(source, Millis(20));
+    const source = Zap.make<number>();
+    const debounced = Zap.debounce(source, Millis(20));
     debounced.stream.subscribe((v) => collected.push(v));
 
     source.emit(1);
-    await lifetime.dispose(); // aborts before the window elapses
+    await debounced.dispose(); // aborts before the window elapses
     await delay(40);
 
     expect(collected).toEqual([]);
