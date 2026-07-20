@@ -13,11 +13,9 @@ type its result carries. `dispatch<N extends keyof CommandMap>` reads this to
 type its return as `CapsuleCommandResult<CommandMap[N]>`, so a caller of
 `dispatch('glossary', …)` gets a compile-time `GlossaryPayload` with no cast.
 
-Assembled from the `*Payload` types each command module already exports.
-Commands whose payload type has not yet been extracted (the scene/capsule/
-asset.verify shrinks land in the consumer-phase [SCH]/[CER] slices) map to
-`unknown` until their module exports a named payload type — refining an entry
-here is a pure type-level tightening those slices perform.
+Assembled from the `*Payload` types each command module exports — every
+handler-backed command maps to its own named payload type (no `unknown`), so a
+`dispatch('capsule.inspect', …)` caller reads a precise `CapsuleInspectPayload`.
 
 ## Properties
 
@@ -31,7 +29,7 @@ Defined in: [command/src/catalog.ts:59](https://github.com/freebatteryfactory/Li
 
 ### asset.verify
 
-> `readonly` **asset.verify**: `unknown`
+> `readonly` **asset.verify**: [`AssetVerifyPayload`](../type-aliases/AssetVerifyPayload.md)
 
 Defined in: [command/src/catalog.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L60)
 
@@ -63,7 +61,7 @@ Defined in: [command/src/catalog.ts:70](https://github.com/freebatteryfactory/Li
 
 ### capsule.inspect
 
-> `readonly` **capsule.inspect**: `unknown`
+> `readonly` **capsule.inspect**: [`CapsuleInspectPayload`](../type-aliases/CapsuleInspectPayload.md)
 
 Defined in: [command/src/catalog.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L56)
 
@@ -71,7 +69,7 @@ Defined in: [command/src/catalog.ts:56](https://github.com/freebatteryfactory/Li
 
 ### capsule.list
 
-> `readonly` **capsule.list**: `unknown`
+> `readonly` **capsule.list**: [`CapsuleListPayload`](../type-aliases/CapsuleListPayload.md)
 
 Defined in: [command/src/catalog.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L57)
 
@@ -79,7 +77,7 @@ Defined in: [command/src/catalog.ts:57](https://github.com/freebatteryfactory/Li
 
 ### capsule.verify
 
-> `readonly` **capsule.verify**: `unknown`
+> `readonly` **capsule.verify**: [`CapsuleVerifyResultPayload`](../type-aliases/CapsuleVerifyResultPayload.md)
 
 Defined in: [command/src/catalog.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L58)
 
@@ -127,7 +125,7 @@ Defined in: [command/src/catalog.ts:67](https://github.com/freebatteryfactory/Li
 
 ### scene.compile
 
-> `readonly` **scene.compile**: `unknown`
+> `readonly` **scene.compile**: [`SceneCompilePayload`](../type-aliases/SceneCompilePayload.md)
 
 Defined in: [command/src/catalog.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L62)
 
@@ -135,7 +133,7 @@ Defined in: [command/src/catalog.ts:62](https://github.com/freebatteryfactory/Li
 
 ### scene.render
 
-> `readonly` **scene.render**: `unknown`
+> `readonly` **scene.render**: [`SceneRenderPayload`](../type-aliases/SceneRenderPayload.md)
 
 Defined in: [command/src/catalog.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L63)
 
@@ -143,7 +141,7 @@ Defined in: [command/src/catalog.ts:63](https://github.com/freebatteryfactory/Li
 
 ### scene.verify
 
-> `readonly` **scene.verify**: `unknown`
+> `readonly` **scene.verify**: [`SceneVerifyPayload`](../type-aliases/SceneVerifyPayload.md)
 
 Defined in: [command/src/catalog.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L61)
 

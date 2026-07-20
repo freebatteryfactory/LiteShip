@@ -1779,6 +1779,10 @@
           "kind": "type"
         },
         {
+          "name": "AssetVerifyPayload",
+          "kind": "type"
+        },
+        {
           "name": "AuditEngineSummary",
           "kind": "type"
         },
@@ -1819,6 +1823,14 @@
           "kind": "type"
         },
         {
+          "name": "CapsuleInspectPayload",
+          "kind": "type"
+        },
+        {
+          "name": "CapsuleListPayload",
+          "kind": "type"
+        },
+        {
           "name": "CapsuleManifest",
           "kind": "type"
         },
@@ -1828,6 +1840,10 @@
         },
         {
           "name": "CapsuleVerifyPayload",
+          "kind": "type"
+        },
+        {
+          "name": "CapsuleVerifyResultPayload",
           "kind": "type"
         },
         {
@@ -1844,6 +1860,10 @@
         },
         {
           "name": "CheckPayload",
+          "kind": "type"
+        },
+        {
+          "name": "CliOwnedName",
           "kind": "type"
         },
         {
@@ -1936,6 +1956,18 @@
         },
         {
           "name": "RegisteredCommand",
+          "kind": "type"
+        },
+        {
+          "name": "SceneCompilePayload",
+          "kind": "type"
+        },
+        {
+          "name": "SceneRenderPayload",
+          "kind": "type"
+        },
+        {
+          "name": "SceneVerifyPayload",
           "kind": "type"
         },
         {

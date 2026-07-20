@@ -38,7 +38,7 @@ export { CommandDispatcher } from './dispatcher.js';
 
 // The canonical command catalog — the single source CLI/MCP surfaces project from.
 export { commandRegistry, COMMAND_CATALOG, mcpExposedDescriptors } from './catalog.js';
-export type { CommandMap } from './catalog.js';
+export type { CommandMap, CliOwnedName } from './catalog.js';
 
 // Migrated commands (CUT A1, checkpoint 2+).
 export { glossaryCommand, GLOSSARY_ENTRIES, matchGlossaryEntries, GlossaryPayloadSchema } from './commands/glossary.js';
@@ -47,9 +47,11 @@ export { versionCommand, VersionPayloadSchema } from './commands/version.js';
 export type { VersionPayload } from './commands/version.js';
 export { capsuleInspectCommand, capsuleListCommand, capsuleVerifyCommand } from './commands/capsule.js';
 export type { CapsuleManifest, CapsuleManifestEntry } from './commands/manifest.js';
+export type { CapsuleInspectPayload, CapsuleListPayload, CapsuleVerifyResultPayload } from './commands/capsule.js';
 export { assetAnalyzeCommand, assetVerifyCommand, AssetAnalyzePayloadSchema } from './commands/asset.js';
-export type { AssetAnalyzePayload } from './commands/asset.js';
+export type { AssetAnalyzePayload, AssetVerifyPayload } from './commands/asset.js';
 export { sceneVerifyCommand, sceneCompileCommand, sceneRenderCommand } from './commands/scene.js';
+export type { SceneVerifyPayload, SceneCompilePayload, SceneRenderPayload } from './commands/scene.js';
 export { verifyCommand, VerifyPayloadSchema } from './commands/verify.js';
 export type { VerifyPayload } from './commands/verify.js';
 export { auditCommand, AuditPayloadSchema } from './commands/audit.js';

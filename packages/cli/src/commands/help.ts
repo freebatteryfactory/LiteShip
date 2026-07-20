@@ -13,7 +13,7 @@ import type { CapsuleCommandDescriptor } from '@liteship/core';
 
 /** Presentation: group key → human label + chart order. */
 const GROUP_CHART: ReadonlyArray<{ readonly key: string; readonly label: string }> = [
-  { key: 'castoff', label: 'Cast off (dev experience)' },
+  { key: 'setup', label: 'Setup (dev experience)' },
   { key: 'compose', label: 'Compose + render (scene + asset)' },
   { key: 'manifest', label: 'Manifest (capsule)' },
   { key: 'ship', label: 'Ship out (quay-side, release)' },

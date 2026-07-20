@@ -8,7 +8,7 @@
 
 > **mcpExposedDescriptors**(): readonly `CapsuleCommandDescriptor`[]
 
-Defined in: [command/src/catalog.ts:230](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L230)
+Defined in: [command/src/catalog.ts:269](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L269)
 
 The MCP-exposed subset of the catalog (explicit opt-in via `annotations.mcpExposed`).
 

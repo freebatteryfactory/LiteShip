@@ -71,7 +71,7 @@ export const packageSmokeCommand: HandledCommand = {
     // NOT mcpExposed: the engine is a CLI-injected subprocess orchestrator
     // (runPackageSmoke spawns pnpm pack/install/tar/node, mutating a scratch tree);
     // terminal-streaming, like gauntlet/ship, so cli-only by design.
-    annotations: { readOnly: true, cliOnly: true, group: 'castoff' },
+    annotations: { readOnly: true, cliOnly: true, group: 'setup' },
   },
   handler: async (_invocation, context: CommandContext): Promise<CapsuleCommandResult> => {
     // Direct-invocation guard; the dispatcher already enforces `requires`.

@@ -80,7 +80,7 @@ export const capsuleVerifyGateCommand: HandledCommand = {
     // (runCapsuleGate spawns `capsule:compile` to confirm freshness and `vitest
     // run` over tests/generated/, mutating a scratch tree); terminal-streaming,
     // like package-smoke/gauntlet/ship, so cli-only by design.
-    annotations: { readOnly: true, cliOnly: true, group: 'castoff' },
+    annotations: { readOnly: true, cliOnly: true, group: 'setup' },
   },
   handler: async (_invocation, context: CommandContext): Promise<CapsuleCommandResult> => {
     // Direct-invocation guard; the dispatcher already enforces `requires`.

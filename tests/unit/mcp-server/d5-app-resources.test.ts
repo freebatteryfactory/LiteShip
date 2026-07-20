@@ -68,7 +68,14 @@ describe('D5 — D4 static surface stays frozen', () => {
     // Re-pinned again when the glossary shake-down/first-run entries were
     // reworded for the `pnpm verify` rename (shakedown script retired).
     // Re-pinned for the LiteShip brand consolidation (engine-name glossary entry removed; catalog content changed).
-    expect(pin).toBe('fnv1a:6cf1e938');
+    // Re-pinned again when the standard dev-experience verbs (`dev`, `build`, `info`,
+    // `add`) joined COMMAND_CATALOG as CLI-owned commands — the registry/commands UI
+    // body grew by four entries.
+    // P10 nautical CLI-string sweep: the `doctor` descriptor summary was de-nauticalized
+    // ("Preflight rig-check:" -> "Preflight environment check:"); the registry/commands UI
+    // body embeds command summaries, so its digest shifted. (The castoff -> setup group
+    // rename is NOT rendered into the UI body and does not affect this pin.)
+    expect(pin).toBe('fnv1a:df51e901');
   });
 });
 

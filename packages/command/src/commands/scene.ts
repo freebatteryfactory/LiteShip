@@ -53,6 +53,34 @@ const SceneRenderPayloadSchema = {
   required: ['sceneId', 'output', 'frameCount', 'elapsedMs'],
 } as const satisfies CommandJsonSchema;
 
+/** Structured payload returned by `scene.verify` — the scene id + count of generated tests run. */
+export type SceneVerifyPayload = {
+  readonly sceneId: string;
+  readonly generatedTests: number;
+};
+
+/** Structured payload returned by `scene.compile` — the scene id, track count, and elapsed compile duration. */
+export type SceneCompilePayload = {
+  readonly sceneId: string;
+  readonly trackCount: number;
+  readonly durationMs: number;
+};
+
+/**
+ * Structured payload returned by `scene.render` — mirrors SceneRenderPayloadSchema:
+ * the rendered scene id, output path, frame count, and elapsed render duration,
+ * plus the optional `fps`/`cached` echoes (pre-fps replayed receipts lack `fps`;
+ * `cached` rides the live/replay split).
+ */
+export type SceneRenderPayload = {
+  readonly sceneId: string;
+  readonly output: string;
+  readonly frameCount: number;
+  readonly elapsedMs: number;
+  readonly fps?: number;
+  readonly cached?: boolean;
+};
+
 /** A domain failure whose payload is a single teaching `error` string. */
 function fail(command: string, error: string, exitCode: number): CapsuleCommandResult {
   return failed(command, { error }, exitCode);

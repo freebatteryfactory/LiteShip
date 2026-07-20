@@ -47,7 +47,7 @@ export const versionCommand: HandledCommand = {
     summary: 'Report liteship, Node, and pnpm versions.',
     inputSchema: { type: 'object', properties: {} } as const satisfies CommandJsonSchema,
     outputSchema: VersionPayloadSchema,
-    annotations: { readOnly: true, group: 'castoff' },
+    annotations: { readOnly: true, group: 'setup' },
   },
   handler: async (_invocation, context): Promise<CapsuleCommandResult<VersionPayload>> =>
     ok('version', {

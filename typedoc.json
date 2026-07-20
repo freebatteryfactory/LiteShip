@@ -120,7 +120,8 @@
       "CapabilityLinkFacts": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/capability-link-facts.ts"
     },
     "@liteship/command": {
-      "AuditEngineFinding": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts"
+      "AuditEngineFinding": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts",
+      "CLI_OWNED_DESCRIPTORS": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts"
     },
     "@liteship/_spine": {
       "GeneratedUINode": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/genui.d.ts",

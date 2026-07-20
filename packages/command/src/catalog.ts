@@ -28,7 +28,9 @@ import { capsuleVerifyGateCommand } from './commands/capsule-verify.js';
 import { checkCommand } from './commands/check.js';
 import type { GlossaryPayload } from './commands/glossary.js';
 import type { VersionPayload } from './commands/version.js';
-import type { AssetAnalyzePayload } from './commands/asset.js';
+import type { CapsuleInspectPayload, CapsuleListPayload, CapsuleVerifyResultPayload } from './commands/capsule.js';
+import type { AssetAnalyzePayload, AssetVerifyPayload } from './commands/asset.js';
+import type { SceneVerifyPayload, SceneCompilePayload, SceneRenderPayload } from './commands/scene.js';
 import type { VerifyPayload } from './commands/verify.js';
 import type { AuditPayload } from './commands/audit.js';
 import type { AuditFloorPayload } from './commands/audit-floor.js';
@@ -44,23 +46,21 @@ import type { CheckPayload } from './commands/check.js';
  * type its return as `CapsuleCommandResult<CommandMap[N]>`, so a caller of
  * `dispatch('glossary', …)` gets a compile-time `GlossaryPayload` with no cast.
  *
- * Assembled from the `*Payload` types each command module already exports.
- * Commands whose payload type has not yet been extracted (the scene/capsule/
- * asset.verify shrinks land in the consumer-phase [SCH]/[CER] slices) map to
- * `unknown` until their module exports a named payload type — refining an entry
- * here is a pure type-level tightening those slices perform.
+ * Assembled from the `*Payload` types each command module exports — every
+ * handler-backed command maps to its own named payload type (no `unknown`), so a
+ * `dispatch('capsule.inspect', …)` caller reads a precise `CapsuleInspectPayload`.
  */
 export interface CommandMap {
   readonly glossary: GlossaryPayload;
   readonly version: VersionPayload;
-  readonly 'capsule.inspect': unknown;
-  readonly 'capsule.list': unknown;
-  readonly 'capsule.verify': unknown;
+  readonly 'capsule.inspect': CapsuleInspectPayload;
+  readonly 'capsule.list': CapsuleListPayload;
+  readonly 'capsule.verify': CapsuleVerifyResultPayload;
   readonly 'asset.analyze': AssetAnalyzePayload;
-  readonly 'asset.verify': unknown;
-  readonly 'scene.verify': unknown;
-  readonly 'scene.compile': unknown;
-  readonly 'scene.render': unknown;
+  readonly 'asset.verify': AssetVerifyPayload;
+  readonly 'scene.verify': SceneVerifyPayload;
+  readonly 'scene.compile': SceneCompilePayload;
+  readonly 'scene.render': SceneRenderPayload;
   readonly verify: VerifyPayload;
   readonly audit: AuditPayload;
   readonly 'audit-floor': AuditFloorPayload;
@@ -80,10 +80,10 @@ export interface CommandMap {
  * CLI-owned entry can never silently look like a finite command that lost its
  * handler.
  */
-const CLI_OWNED_DESCRIPTORS: readonly CapsuleCommandDescriptor[] = [
+const CLI_OWNED_DESCRIPTORS = [
   {
     name: 'doctor',
-    summary: 'Preflight rig-check: Node, pnpm, workspace, build artifacts, git hooks.',
+    summary: 'Preflight environment check: Node, pnpm, workspace, build artifacts, git hooks.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -93,7 +93,7 @@ const CLI_OWNED_DESCRIPTORS: readonly CapsuleCommandDescriptor[] = [
         target: { type: 'string', enum: ['cloudflare', 'astro'] },
       },
     },
-    annotations: { group: 'castoff' },
+    annotations: { group: 'setup' },
   },
   {
     name: 'describe',
@@ -101,13 +101,13 @@ const CLI_OWNED_DESCRIPTORS: readonly CapsuleCommandDescriptor[] = [
     inputSchema: { type: 'object', properties: { format: { type: 'string', enum: ['json', 'mcp'] } } },
     // NOT mcpExposed: describe is a catalog projection — MCP already serves that
     // via tools/list, so exposing it as a callable tool is duplicate ontology.
-    annotations: { readOnly: true, group: 'castoff' },
+    annotations: { readOnly: true, group: 'setup' },
   },
   {
     name: 'help',
     summary: 'Print the CLI usage chart (verb table grouped by phase).',
     inputSchema: { type: 'object', properties: {} },
-    annotations: { cliOnly: true, group: 'castoff' },
+    annotations: { cliOnly: true, group: 'setup' },
   },
   {
     name: 'completion',
@@ -117,7 +117,7 @@ const CLI_OWNED_DESCRIPTORS: readonly CapsuleCommandDescriptor[] = [
       required: ['shell'],
       properties: { shell: { type: 'string', enum: ['bash', 'zsh', 'fish'] } },
     },
-    annotations: { cliOnly: true, group: 'castoff' },
+    annotations: { cliOnly: true, group: 'setup' },
   },
   {
     name: 'scene.dev',
@@ -179,7 +179,46 @@ const CLI_OWNED_DESCRIPTORS: readonly CapsuleCommandDescriptor[] = [
     inputSchema: { type: 'object', properties: { ir: { type: 'boolean' } } },
     annotations: { longRunning: true, cliOnly: true, group: 'servers' },
   },
-];
+  {
+    name: 'dev',
+    summary: 'Launch a dev host — an example app dev server (default examples/showcase; --example/--tutorial).',
+    inputSchema: {
+      type: 'object',
+      properties: { example: { type: 'string' }, tutorial: { type: 'boolean' } },
+    },
+    annotations: { longRunning: true, group: 'setup' },
+  },
+  {
+    name: 'build',
+    summary: 'Build a LiteShip consumer app (detects liteship.config.ts, runs the astro/vite host build).',
+    inputSchema: { type: 'object', properties: {} },
+    annotations: { group: 'setup' },
+  },
+  {
+    name: 'info',
+    summary: 'Report the host environment, the @liteship/* roster, catalog + capability summary (--json).',
+    inputSchema: { type: 'object', properties: { json: { type: 'boolean' } } },
+    annotations: { readOnly: true, group: 'setup' },
+  },
+  {
+    name: 'add',
+    summary: 'Copy a scaffold fragment (example/template) into the working directory; list them with no args.',
+    inputSchema: {
+      type: 'object',
+      properties: { kind: { type: 'string' }, name: { type: 'string' } },
+    },
+    annotations: { group: 'setup' },
+  },
+] as const satisfies readonly CapsuleCommandDescriptor[];
+
+/**
+ * The closed union of CLI-owned command names, DERIVED from
+ * {@link CLI_OWNED_DESCRIPTORS} (`as const`). The CLI's dispatch keys its
+ * `CLI_EXECUTORS` record by this type, so a CLI-owned command declared here
+ * without an executor is a COMPILE error and a stray executor is dead-code
+ * flagged — the projection cannot silently drift from the catalog.
+ */
+export type CliOwnedName = (typeof CLI_OWNED_DESCRIPTORS)[number]['name'];
 
 /** Finite, structured, handler-backed commands. Each is tagged `executionKind: 'handler'`. */
 const HANDLER_COMMANDS: readonly RegisteredCommand[] = [

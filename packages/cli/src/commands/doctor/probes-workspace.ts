@@ -110,7 +110,7 @@ export function probeWorkspaceInstalled(cwd: string): DoctorCheck {
       label: 'workspace install',
       status: 'fail',
       detail: 'node_modules missing or stale',
-      hint: 'Cast off: pnpm install',
+      hint: 'Set up: pnpm install',
     };
   }
   return { id: 'workspace.installed', label: 'workspace install', status: 'ok', detail: 'node_modules present' };
@@ -140,7 +140,7 @@ export function probeConsumerInstalled(cwd: string): DoctorCheck {
     label: 'workspace install',
     status: 'fail',
     detail: 'node_modules missing or stale',
-    hint: 'Cast off: pnpm install',
+    hint: 'Set up: pnpm install',
   };
 }
 
@@ -151,12 +151,12 @@ export function probeBuilt(cwd: string, pkg: string, label: string): DoctorCheck
       id: `${pkg}.built`,
       label,
       status: 'warn',
-      detail: 'dist/ not laid',
-      hint: 'Lay the keel with: pnpm run build',
+      detail: 'dist/ not built',
+      hint: 'Build with: pnpm run build',
       fixable: true,
     };
   }
-  return { id: `${pkg}.built`, label, status: 'ok', detail: 'dist/ laid' };
+  return { id: `${pkg}.built`, label, status: 'ok', detail: 'dist/ built' };
 }
 
 /**

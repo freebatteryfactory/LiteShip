@@ -101,7 +101,7 @@ export const checkCommand = defineCommand({
       properties: { globs: { type: 'array', items: { type: 'string' } } },
     } as const satisfies CommandJsonSchema,
     outputSchema: CheckPayloadSchema,
-    annotations: { readOnly: true, mcpExposed: true, group: 'castoff' },
+    annotations: { readOnly: true, mcpExposed: true, group: 'setup' },
   },
   argsSchema: schema.struct({ globs: schema.optional(schema.array(schema.string)) }),
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {

@@ -3,14 +3,18 @@ import { commandRegistry, COMMAND_CATALOG, mcpExposedDescriptors } from '@litesh
 
 /** Commands whose execution is CLI-owned (executionKind 'cli-orchestration', no handler). */
 const CLI_ORCHESTRATION = [
+  'add',
   'astro.dev',
   'astro.status',
   'astro.stop',
+  'build',
   'completion',
   'describe',
+  'dev',
   'doctor',
   'gauntlet',
   'help',
+  'info',
   'lsp',
   'mcp',
   'sbom',
@@ -20,6 +24,7 @@ const CLI_ORCHESTRATION = [
 
 /** Every command liteship currently routes — the single canonical catalog. */
 const EXPECTED_NAMES = [
+  'add',
   'asset.analyze',
   'asset.verify',
   'astro.dev',
@@ -27,6 +32,7 @@ const EXPECTED_NAMES = [
   'astro.stop',
   'audit',
   'audit-floor',
+  'build',
   'capsule-verify',
   'capsule.inspect',
   'capsule.list',
@@ -35,10 +41,12 @@ const EXPECTED_NAMES = [
   'check-invariants',
   'completion',
   'describe',
+  'dev',
   'doctor',
   'gauntlet',
   'glossary',
   'help',
+  'info',
   'lsp',
   'mcp',
   'package-smoke',

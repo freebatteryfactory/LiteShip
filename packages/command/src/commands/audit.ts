@@ -114,7 +114,7 @@ export const auditCommand = defineCommand({
     } as const satisfies CommandJsonSchema,
     outputSchema: AuditPayloadSchema,
     // NOT mcpExposed: the engine is CLI-injected (runAudit); cli-only by design.
-    annotations: { readOnly: true, cliOnly: true, group: 'castoff' },
+    annotations: { readOnly: true, cliOnly: true, group: 'setup' },
   },
   argsSchema: schema.struct({
     profile: schema.optional(schema.string),

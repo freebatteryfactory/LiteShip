@@ -249,7 +249,7 @@ export const glossaryCommand = defineCommand({
       properties: { term: { type: 'string' } },
     } as const satisfies CommandJsonSchema,
     outputSchema: GlossaryPayloadSchema,
-    annotations: { readOnly: true, group: 'castoff' },
+    annotations: { readOnly: true, group: 'setup' },
   },
   argsSchema: schema.struct({ term: schema.optional(schema.string) }),
   handler: async (invocation): Promise<CapsuleCommandResult<GlossaryPayload>> => {

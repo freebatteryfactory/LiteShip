@@ -80,7 +80,7 @@ export const plumbCommand: HandledCommand = {
     requires: ['runPlumb'] satisfies readonly CommandCapability[],
     inputSchema: { type: 'object', properties: {} } as const satisfies CommandJsonSchema,
     outputSchema: PlumbPayloadSchema,
-    annotations: { readOnly: true, mcpExposed: true, group: 'castoff' },
+    annotations: { readOnly: true, mcpExposed: true, group: 'setup' },
   },
   handler: async (_invocation, context: CommandContext): Promise<CapsuleCommandResult> => {
     // Direct-invocation guard; the dispatcher already enforces `requires`.

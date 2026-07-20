@@ -8,7 +8,7 @@
 
 > **run**(`argv`, `deps?`): `Promise`\<`number`\>
 
-Defined in: [cli/src/dispatch.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cli/src/dispatch.ts#L55)
+Defined in: [cli/src/dispatch.ts:514](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cli/src/dispatch.ts#L514)
 
 Run the CLI with the given argv slice. Returns a process exit code.
 

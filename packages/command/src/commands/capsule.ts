@@ -8,7 +8,7 @@
  */
 import { type CapsuleCommandResult, type CommandJsonSchema, schema } from '@liteship/core';
 import { capabilityUnavailable, defineCommand, failed, ok, type CommandCapability } from '../registry.js';
-import { loadManifest, manifestUnavailable } from './manifest.js';
+import { loadManifest, manifestUnavailable, type CapsuleManifestEntry } from './manifest.js';
 
 /** A domain failure whose payload is a single teaching `error` string. */
 function fail(command: string, error: string, exitCode: number): CapsuleCommandResult {
@@ -50,6 +50,31 @@ const CapsuleVerifyPayloadSchema = {
   properties: { capsuleId: { type: 'string' } },
   required: ['capsuleId'],
 } as const satisfies CommandJsonSchema;
+
+/**
+ * Structured payload returned by `capsule.inspect` — a single manifest entry.
+ * The descriptor's outputSchema keeps the entry opaque (decision #2, no drift
+ * with the manifest); this TS mirror is the precise real shape, a
+ * CapsuleManifestEntry.
+ */
+export type CapsuleInspectPayload = {
+  readonly capsule: CapsuleManifestEntry;
+};
+
+/** Structured payload returned by `capsule.list` — the (optionally filtered) entries + the nullable `kind` echo. */
+export type CapsuleListPayload = {
+  readonly capsules: readonly CapsuleManifestEntry[];
+  readonly kind: string | null;
+};
+
+/**
+ * Structured payload returned by the manifest-tier `capsule.verify` verb — the
+ * verified capsule's id. Named distinctly from the `capsule-verify` GATE's
+ * CapsuleVerifyPayload (a different command with a different shape).
+ */
+export type CapsuleVerifyResultPayload = {
+  readonly capsuleId: string;
+};
 
 /** `capsule inspect <id>` — return a single manifest entry. */
 export const capsuleInspectCommand = defineCommand({

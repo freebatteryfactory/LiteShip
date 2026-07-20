@@ -60,7 +60,7 @@ const builtWarn = (id: 'core.built' | 'cli.built'): DoctorCheck => ({
   id,
   label: id,
   status: 'warn',
-  detail: 'dist/ not laid',
+  detail: 'dist/ not built',
   fixable: true,
 });
 const hookWarn = (): DoctorCheck => ({

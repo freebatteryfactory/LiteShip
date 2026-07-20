@@ -76,7 +76,7 @@ export const auditFloorCommand: HandledCommand = {
     inputSchema: { type: 'object', properties: {} } as const satisfies CommandJsonSchema,
     outputSchema: AuditFloorPayloadSchema,
     // NOT mcpExposed: the engine is the heavy CLI-injected `@liteship/audit` (runAuditFloor); cli-only by design.
-    annotations: { readOnly: true, cliOnly: true, group: 'castoff' },
+    annotations: { readOnly: true, cliOnly: true, group: 'setup' },
   },
   handler: async (_invocation, context: CommandContext): Promise<CapsuleCommandResult> => {
     // Direct-invocation guard; the dispatcher already enforces `requires`.

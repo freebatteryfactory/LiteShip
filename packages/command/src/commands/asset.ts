@@ -52,6 +52,12 @@ const AssetVerifyPayloadSchema = {
   required: ['assetId', 'invariantsChecked'],
 } as const satisfies CommandJsonSchema;
 
+/** Structured payload returned by `asset.verify` — the asset id + count of invariants checked. */
+export type AssetVerifyPayload = {
+  readonly assetId: string;
+  readonly invariantsChecked: number;
+};
+
 /** A domain failure whose payload is a single teaching `error` string. */
 function fail(command: string, error: string, exitCode: number): CapsuleCommandResult {
   return failed(command, { error }, exitCode);

@@ -89,7 +89,7 @@ export const checkInvariantsCommand: HandledCommand = {
     outputSchema: CheckInvariantsPayloadSchema,
     // NOT mcpExposed: the scan needs @liteship/audit's normalizeRepoPath (B5b cage),
     // so it is CLI-only by design — only @liteship/cli injects runCheckInvariants.
-    annotations: { readOnly: true, cliOnly: true, group: 'castoff' },
+    annotations: { readOnly: true, cliOnly: true, group: 'setup' },
   },
   handler: async (_invocation, context: CommandContext): Promise<CapsuleCommandResult> => {
     // Direct-invocation guard; the dispatcher already enforces `requires`.
