@@ -27,15 +27,35 @@ import { assetVerify } from './commands/asset-verify.js';
 import { astroDev } from './commands/astro-dev.js';
 import { capsuleInspect, capsuleList, capsuleVerify } from './commands/capsule.js';
 import { gauntlet } from './commands/gauntlet.js';
-import { lsp } from './commands/lsp.js';
+import { lsp, type ImportMcpServer } from './commands/lsp.js';
 import { ship } from './commands/ship.js';
 import { verify } from './commands/ship-verify.js';
 import { sbom } from './commands/sbom.js';
 import { readCliVersion, version } from './commands/version.js';
+import { runGauntletWithRepoIR } from './lib/repo-ir-gauntlet.js';
 import { emitError } from './receipts.js';
 
+/**
+ * Injectable command/engine seam for {@link run}. Every field defaults to the
+ * real module, so production dispatch is byte-identical; tests substitute a fake
+ * command (`doctor`) or a scripted engine (`runGauntletWithRepoIR`) to pin the
+ * argv→options plumbing without running the heavy real path. Kept unexported and
+ * off the public barrel so the api-surface snapshot is unchanged.
+ */
+interface RunDeps {
+  readonly doctor?: typeof doctor;
+  readonly runGauntletWithRepoIR?: typeof runGauntletWithRepoIR;
+  /** The lean `@liteship/command` check handler, threaded into `check`'s default (lean) path. */
+  readonly checkHandler?: NonNullable<Parameters<typeof check>[1]>['checkHandler'];
+  /** The optional-sibling `@liteship/mcp-server` importer, threaded into the `mcp` + `lsp` skins. */
+  readonly importMcpServer?: ImportMcpServer;
+}
+
 /** Run the CLI with the given argv slice. Returns a process exit code. */
-export async function run(argv: readonly string[]): Promise<number> {
+export async function run(argv: readonly string[], deps: RunDeps = {}): Promise<number> {
+  const doctorImpl = deps.doctor ?? doctor;
+  const runGauntlet = deps.runGauntletWithRepoIR ?? runGauntletWithRepoIR;
+  const importMcpServer = deps.importMcpServer ?? (() => import('@liteship/mcp-server'));
   const [rawCmd, ...rest] = argv;
   const cmd = normalizeTopLevel(rawCmd);
 
@@ -60,7 +80,7 @@ export async function run(argv: readonly string[]): Promise<number> {
         emitError('doctor', 'usage: liteship doctor --deployed <url>');
         return 1;
       }
-      return doctor({
+      return doctorImpl({
         fix: rest.includes('--fix'),
         ci: rest.includes('--ci'),
         preflight: rest.includes('--preflight'),
@@ -277,20 +297,26 @@ export async function run(argv: readonly string[]): Promise<number> {
       // `--taint` / `--proof` / `--composition` / `--capability-gate` / `--spine-relation` are
       // only meaningful on the IR path (the lean path has no cache + no IR). A bare flag there
       // is a no-op, never a silent wrong run.
-      return check({
-        ...(ir ? { ir } : {}),
-        ...(noCache ? { noCache } : {}),
-        ...(symbols ? { symbols } : {}),
-        ...(supplyChain ? { supplyChain } : {}),
-        ...(mutate ? { mutate } : {}),
-        ...(mcdc ? { mcdc } : {}),
-        ...(simulate ? { simulate } : {}),
-        ...(taint ? { taint } : {}),
-        ...(proof ? { proof } : {}),
-        ...(composition ? { composition } : {}),
-        ...(capabilityGate ? { capabilityGate } : {}),
-        ...(spineRelation ? { spineRelation } : {}),
-      });
+      return check(
+        {
+          ...(ir ? { ir } : {}),
+          ...(noCache ? { noCache } : {}),
+          ...(symbols ? { symbols } : {}),
+          ...(supplyChain ? { supplyChain } : {}),
+          ...(mutate ? { mutate } : {}),
+          ...(mcdc ? { mcdc } : {}),
+          ...(simulate ? { simulate } : {}),
+          ...(taint ? { taint } : {}),
+          ...(proof ? { proof } : {}),
+          ...(composition ? { composition } : {}),
+          ...(capabilityGate ? { capabilityGate } : {}),
+          ...(spineRelation ? { spineRelation } : {}),
+        },
+        {
+          runGauntletWithRepoIR: runGauntlet,
+          ...(deps.checkHandler ? { checkHandler: deps.checkHandler } : {}),
+        },
+      );
     }
     case 'check-invariants': {
       return checkInvariants();
@@ -319,7 +345,7 @@ export async function run(argv: readonly string[]): Promise<number> {
       // contract with a raw ERR_MODULE_NOT_FOUND stack trace.
       let mcpServer: { start: (opts: { readonly http?: string }) => Promise<void> };
       try {
-        mcpServer = await import('@liteship/mcp-server');
+        mcpServer = await importMcpServer();
       } catch (err) {
         // Node puts ERR_MODULE_NOT_FOUND on err.code; wrapping loaders
         // (custom ESM hooks, test harnesses) carry the original on cause.
@@ -345,7 +371,7 @@ export async function run(argv: readonly string[]): Promise<number> {
       // (the editor spawns `liteship lsp` as its language server). The runner is built
       // in the CLI host and injected, so @liteship/mcp-server stays lean — see
       // commands/lsp.ts. `--ir` selects the IR-enriched fold.
-      return lsp({ ir: rest.includes('--ir') });
+      return lsp({ ir: rest.includes('--ir') }, { runGauntletWithRepoIR: runGauntlet, importMcpServer });
     }
     default: {
       // No command + no flags: friendly help on stdout, exit 0.

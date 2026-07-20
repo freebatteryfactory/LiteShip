@@ -49,8 +49,19 @@ export function probeNode(minima: EngineMinima): DoctorCheck {
   return { id: 'node.version', label: 'Node.js', status: 'ok', detail: version };
 }
 
-export async function probePnpm(minima: EngineMinima): Promise<DoctorCheck> {
-  const r = await spawnArgvCapture('pnpm', ['--version'], { timeoutMs: DOCTOR_PROBE_TIMEOUT_MS }).catch(() => null);
+/**
+ * The subprocess-capture capability the spawn-bearing probes shell out through.
+ * Injectable (defaulting to the real {@link spawnArgvCapture}) so tests script the
+ * boundary deterministically — no PATH, git, cargo, or pnpm touched — while
+ * production call sites stay byte-identical.
+ */
+export type SpawnArgvCapture = typeof spawnArgvCapture;
+
+export async function probePnpm(
+  minima: EngineMinima,
+  spawn: SpawnArgvCapture = spawnArgvCapture,
+): Promise<DoctorCheck> {
+  const r = await spawn('pnpm', ['--version'], { timeoutMs: DOCTOR_PROBE_TIMEOUT_MS }).catch(() => null);
   if (r?.timedOut) {
     return {
       id: 'pnpm.version',
@@ -209,17 +220,17 @@ export function probeGitHooks(cwd: string): DoctorCheck {
   return { id: 'git.hooks', label: 'git hooks', status: 'ok', detail: 'pre-commit rigged' };
 }
 
-export function probeFfmpegRenderCheck(): DoctorCheck {
-  const probe = probeFfmpegRender();
-  if (probe.ok) {
-    return { id: 'ffmpeg.libx264', label: 'ffmpeg (libx264)', status: 'ok', detail: probe.detail };
+export function probeFfmpegRenderCheck(probe: typeof probeFfmpegRender = probeFfmpegRender): DoctorCheck {
+  const result = probe();
+  if (result.ok) {
+    return { id: 'ffmpeg.libx264', label: 'ffmpeg (libx264)', status: 'ok', detail: result.detail };
   }
   return {
     id: 'ffmpeg.libx264',
     label: 'ffmpeg (libx264)',
     status: 'warn',
-    detail: probe.detail,
-    hint: probe.hint,
+    detail: result.detail,
+    hint: result.hint,
   };
 }
 
@@ -279,18 +290,14 @@ export function probePlaywright(cwd: string): DoctorCheck {
   return { id: 'playwright.installed', label: 'Playwright', status: 'ok', detail: 'package + chromium present' };
 }
 
-export async function probeGitConfig(cwd: string): Promise<DoctorCheck> {
+export async function probeGitConfig(cwd: string, spawn: SpawnArgvCapture = spawnArgvCapture): Promise<DoctorCheck> {
   const gitDir = resolve(cwd, '.git');
   if (!existsSync(gitDir)) {
     return { id: 'git.config', label: 'git config', status: 'ok', detail: 'no .git (not a worktree)' };
   }
   const [email, name] = await Promise.all([
-    spawnArgvCapture('git', ['config', '--get', 'user.email'], { cwd, timeoutMs: DOCTOR_PROBE_TIMEOUT_MS }).catch(
-      () => null,
-    ),
-    spawnArgvCapture('git', ['config', '--get', 'user.name'], { cwd, timeoutMs: DOCTOR_PROBE_TIMEOUT_MS }).catch(
-      () => null,
-    ),
+    spawn('git', ['config', '--get', 'user.email'], { cwd, timeoutMs: DOCTOR_PROBE_TIMEOUT_MS }).catch(() => null),
+    spawn('git', ['config', '--get', 'user.name'], { cwd, timeoutMs: DOCTOR_PROBE_TIMEOUT_MS }).catch(() => null),
   ]);
   if (email?.timedOut || name?.timedOut) {
     return {
@@ -321,10 +328,13 @@ export async function probeGitConfig(cwd: string): Promise<DoctorCheck> {
  * `crates/` directory. On Rust-free clones returns null so the probe is
  * skipped entirely (no false-positive warnings on docs-only branches).
  */
-export async function probeWasmToolchain(cwd: string): Promise<DoctorCheck | null> {
+export async function probeWasmToolchain(
+  cwd: string,
+  spawn: SpawnArgvCapture = spawnArgvCapture,
+): Promise<DoctorCheck | null> {
   const cratesDir = resolve(cwd, 'crates');
   if (!existsSync(cratesDir)) return null;
-  const r = await spawnArgvCapture('cargo', ['--version'], { timeoutMs: DOCTOR_PROBE_TIMEOUT_MS }).catch(() => null);
+  const r = await spawn('cargo', ['--version'], { timeoutMs: DOCTOR_PROBE_TIMEOUT_MS }).catch(() => null);
   if (r?.timedOut) {
     return {
       id: 'wasm.toolchain',

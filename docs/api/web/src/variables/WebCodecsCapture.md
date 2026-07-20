@@ -8,7 +8,7 @@
 
 > `const` **WebCodecsCapture**: `object`
 
-Defined in: [web/src/capture/webcodecs.ts:252](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/capture/webcodecs.ts#L252)
+Defined in: [web/src/capture/webcodecs.ts:277](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/capture/webcodecs.ts#L277)
 
 WebCodecsCapture -- module object + namespace for browser-native video capture.
 
@@ -16,13 +16,17 @@ WebCodecsCapture -- module object + namespace for browser-native video capture.
 
 ### make
 
-> **make**: (`options?`) => `FrameCapture`
+> **make**: (`options?`, `mediabunny`) => `FrameCapture`
 
 #### Parameters
 
 ##### options?
 
 [`WebCodecsCaptureOptions`](../interfaces/WebCodecsCaptureOptions.md)
+
+##### mediabunny?
+
+`MediabunnyCodecs` = `REAL_MEDIABUNNY`
 
 #### Returns
 

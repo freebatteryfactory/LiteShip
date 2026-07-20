@@ -66,9 +66,18 @@ const DIRECTIVE_NAMES: readonly DirectiveName[] = [
   'svg',
 ];
 
+/**
+ * The dynamic-import map the scanner boots each directive through — each thunk
+ * resolves to a client-directive module's `{ default }` entry. Unexported: a
+ * `Partial` of it is the injectable seam on {@link scanAndBootDirectives}, so a
+ * test scripts a specific directive (a throwing entry, a no-op) without
+ * interaction-mocking the `../client-directives/*.js` modules.
+ */
+type DirectiveLoaders = Record<DirectiveName, () => Promise<{ readonly default: DirectiveEntry }>>;
+
 // Static thunk map so the bundler code-splits each directive into the
 // same chunk Astro's island path would load.
-const LOADERS: Record<DirectiveName, () => Promise<{ readonly default: DirectiveEntry }>> = {
+const LOADERS: DirectiveLoaders = {
   adaptive: () => import('../client-directives/adaptive.js'),
   stream: () => import('../client-directives/stream.js'),
   llm: () => import('../client-directives/llm.js'),
@@ -161,11 +170,19 @@ function warnExplicitOnlyDirectiveAttributes(root: ParentNode): void {
  * every runtime init does its real work synchronously off the element's
  * `data-liteship-*` attributes and only calls `load()` for parity with
  * Astro's directive contract.
+ *
+ * `loaders` overrides specific directive entries (merged over the real
+ * code-split {@link LOADERS}); it defaults to `{}`, so production boots the
+ * real client-directive modules unchanged. Tests pass scripted entries to
+ * exercise the scanner's collision / transient-failure handling without
+ * interaction-mocking the client-directive modules.
  */
 export async function scanAndBootDirectives(
   enabled: readonly DirectiveName[],
   root: ParentNode = document,
+  loaders: Partial<DirectiveLoaders> = {},
 ): Promise<void> {
+  const activeLoaders: DirectiveLoaders = { ...LOADERS, ...loaders };
   warnExplicitOnlyDirectiveAttributes(root);
 
   const enabledSet = new Set(enabled.filter(isDirectiveName));
@@ -214,7 +231,7 @@ export async function scanAndBootDirectives(
       // failed activation unmarks below so a later re-scan (astro:after-swap) can
       // retry after a transient chunk-load error.
       activations.push(
-        LOADERS[name]()
+        activeLoaders[name]()
           .then((mod) => {
             mod.default(() => Promise.resolve(), {}, element);
           })

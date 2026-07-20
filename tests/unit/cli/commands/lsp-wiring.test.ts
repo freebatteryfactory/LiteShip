@@ -7,30 +7,40 @@
  * stay out of the lean server). The default path builds the runner over the LEAN
  * `litelaunchGauntlet`; `--ir` builds it over `runGauntletWithRepoIR`.
  *
- * Both the engine fold and the sibling server are mocked so the assertions pin
- * the SEAM (which runner the LSP receives, which path it runs) without a real
- * `ts.Program` build or a real stdio loop.
+ * The engine folds are INJECTED as scripted spies (the LSP deps seam) and only the
+ * sibling server is mocked, so the assertions pin the SEAM (which runner the LSP
+ * receives, which fold it runs) without a real `ts.Program` build or a stdio loop.
  *
  * @module
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { finding, type GauntletResult } from '@liteship/gauntlet';
 
-const { runLspStdioMock } = vi.hoisted(() => ({ runLspStdioMock: vi.fn() }));
-vi.mock('@liteship/mcp-server', () => ({ runLspStdio: runLspStdioMock }));
+const runLspStdioMock = vi.fn();
 
-const { litelaunchGauntletMock } = vi.hoisted(() => ({ litelaunchGauntletMock: vi.fn() }));
-vi.mock('@liteship/gauntlet', async (importOriginal) => {
-  const orig = await importOriginal<Record<string, unknown>>();
-  return { ...orig, litelaunchGauntlet: litelaunchGauntletMock };
-});
+// The two engine folds are scripted spies injected through the LSP deps seam, and
+// the optional @liteship/mcp-server sibling is INJECTED through the `importMcpServer`
+// seam — NO @liteship/gauntlet or @liteship/mcp-server module mock — so nothing
+// sweeps the real repo, builds a ts.Program, or dynamic-imports the real server.
+const litelaunchGauntletMock = vi.fn();
+const runGauntletWithRepoIRMock = vi.fn();
 
-const { runGauntletWithRepoIRMock } = vi.hoisted(() => ({ runGauntletWithRepoIRMock: vi.fn() }));
-vi.mock('../../../../packages/cli/src/lib/repo-ir-gauntlet.js', () => ({
+import { run as runDispatch } from '../../../../packages/cli/src/dispatch.js';
+import { lsp } from '../../../../packages/cli/src/commands/lsp.js';
+
+/** The injected optional-sibling importer resolving to the LSP stdio driver spy. */
+const importMcpServer = () => Promise.resolve({ runLspStdio: runLspStdioMock, start: async (): Promise<void> => {} });
+
+/** Dispatch `liteship <argv>` with the IR fold + sibling importer scripted — case 1 pins dispatch→server routing. */
+const run = (argv: readonly string[]): Promise<number> =>
+  runDispatch(argv, { runGauntletWithRepoIR: runGauntletWithRepoIRMock, importMcpServer });
+
+/** The scripted-fold + importer deps the injected LSP runner is built over (lean + IR). */
+const lspDeps = {
   runGauntletWithRepoIR: runGauntletWithRepoIRMock,
-}));
-
-import { run } from '../../../../packages/cli/src/dispatch.js';
+  litelaunchGauntlet: litelaunchGauntletMock,
+  importMcpServer,
+};
 
 const leanResult: GauntletResult = {
   findings: [finding({ ruleId: 'lean/r', severity: 'advisory', level: 'L1', title: 'lean', detail: 'd' })],
@@ -63,7 +73,7 @@ describe('liteship lsp — launch wiring', () => {
   });
 
   it('the default (no --ir) injected runner runs the LEAN litelaunchGauntlet, never the IR builder', async () => {
-    await run(['lsp']);
+    await lsp({}, lspDeps);
     const runner = runLspStdioMock.mock.calls[0]![0] as Runner;
     const result = await runner();
     expect(litelaunchGauntletMock).toHaveBeenCalledTimes(1);
@@ -73,7 +83,7 @@ describe('liteship lsp — launch wiring', () => {
   });
 
   it('the --ir injected runner runs runGauntletWithRepoIR (the triangulated cross-check)', async () => {
-    await run(['lsp', '--ir']);
+    await lsp({ ir: true }, lspDeps);
     const runner = runLspStdioMock.mock.calls[0]![0] as Runner;
     const result = await runner();
     expect(runGauntletWithRepoIRMock).toHaveBeenCalledTimes(1);
@@ -83,7 +93,7 @@ describe('liteship lsp — launch wiring', () => {
   });
 
   it('the injected runner forwards an optional globs scope to the engine fold', async () => {
-    await run(['lsp']);
+    await lsp({}, lspDeps);
     const runner = runLspStdioMock.mock.calls[0]![0] as Runner;
     await runner(['packages/x/**']);
     // litelaunchGauntlet(cwd, now, globs) — the third arg is the forwarded scope.

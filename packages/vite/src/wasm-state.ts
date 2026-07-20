@@ -23,6 +23,7 @@
  */
 
 import { resolveWASM } from './wasm-resolve.js';
+import { resolvePackagedWasm } from './wasm-package-resolve.js';
 
 /** A resolved WASM binary, or `null` when none was found / WASM is off. */
 export type WasmResolution = ReturnType<typeof resolveWASM>;
@@ -44,6 +45,13 @@ export interface WasmConfig {
  */
 export interface WasmState {
   readonly config: WasmConfig;
+  /**
+   * The packaged-`@liteship/core` binary resolver threaded into every re-resolve,
+   * defaulting to the real {@link resolvePackagedWasm}. Carried on the state so
+   * the transitions stay 2-arg while a test can still force the `'package'`
+   * source absent by constructing the state with a stub.
+   */
+  readonly resolvePackaged: () => string | null;
   readonly resolution: {
     /** Last resolved binary (re-resolved once the real root is known). */
     resolved: WasmResolution;
@@ -88,10 +96,15 @@ function computeEnabled(mode: WasmConfig['mode'], resolved: WasmResolution): boo
  * `configResolved` transition re-resolves with the real project root);
  * `off` never touches the filesystem.
  */
-export function createWasmState(config: WasmConfig, initialRoot: string): WasmState {
-  const resolved = config.mode === 'off' ? null : resolveWASM(initialRoot, config.path);
+export function createWasmState(
+  config: WasmConfig,
+  initialRoot: string,
+  resolvePackaged: () => string | null = resolvePackagedWasm,
+): WasmState {
+  const resolved = config.mode === 'off' ? null : resolveWASM(initialRoot, config.path, resolvePackaged);
   return {
     config,
+    resolvePackaged,
     resolution: {
       resolved,
       enabled: computeEnabled(config.mode, resolved),
@@ -105,7 +118,8 @@ export function createWasmState(config: WasmConfig, initialRoot: string): WasmSt
  * `off` stays `null`/disabled without touching the filesystem.
  */
 export function resolveWasmForRoot(state: WasmState, projectRoot: string): void {
-  const resolved = state.config.mode === 'off' ? null : resolveWASM(projectRoot, state.config.path);
+  const resolved =
+    state.config.mode === 'off' ? null : resolveWASM(projectRoot, state.config.path, state.resolvePackaged);
   state.resolution.resolved = resolved;
   state.resolution.enabled = computeEnabled(state.config.mode, resolved);
 }
@@ -118,7 +132,7 @@ export function resolveWasmForRoot(state: WasmState, projectRoot: string): void 
  */
 export function refreshWasmAtBuildStart(state: WasmState, projectRoot: string): WasmResolution {
   if (state.config.mode === 'off') return null;
-  const resolved = resolveWASM(projectRoot, state.config.path);
+  const resolved = resolveWASM(projectRoot, state.config.path, state.resolvePackaged);
   state.resolution.resolved = resolved;
   state.resolution.enabled = state.config.mode === 'on' || resolved !== null;
   return resolved;

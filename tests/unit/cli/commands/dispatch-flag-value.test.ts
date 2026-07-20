@@ -6,20 +6,19 @@
  * parser, `liteship doctor --deployed --fix` read deployed='--fix' and probed the
  * literal string "--fix" as a URL; `--target --fix` reported "got: --fix".
  *
- * The `doctor` command is mocked so these assert PURELY the argv→options parsing
+ * The `doctor` command is passed through dispatch's injectable `deps` seam (the
+ * defaulted second arg on `run`) so these assert PURELY the argv→options parsing
  * (no network probe runs): the refusal cases never reach it, and the accept cases
  * forward exactly the parsed value.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { doctorMock } = vi.hoisted(() => ({ doctorMock: vi.fn(async () => 0) }));
+const doctorMock = vi.fn(async () => 0);
 
-vi.mock('../../../../packages/cli/src/commands/doctor.js', () => ({
-  doctor: doctorMock,
-  findWorkspaceRoot: () => '/',
-}));
+import { run as runDispatch } from '../../../../packages/cli/src/dispatch.js';
 
-import { run } from '../../../../packages/cli/src/dispatch.js';
+/** Dispatch with the `doctor` command scripted so no real probe run happens. */
+const run = (argv: readonly string[]): Promise<number> => runDispatch(argv, { doctor: doctorMock });
 
 interface CaptureResult {
   exit: number;
@@ -29,10 +28,10 @@ interface CaptureResult {
 async function capture(fn: () => Promise<number>): Promise<CaptureResult> {
   let stderr = '';
   const origE = process.stderr.write.bind(process.stderr);
-  (process.stderr as unknown as { write: unknown }).write = ((c: string | Uint8Array) => {
+  (process.stderr as unknown as { write: unknown }).write = (c: string | Uint8Array) => {
     stderr += typeof c === 'string' ? c : Buffer.from(c).toString();
     return true;
-  });
+  };
   try {
     const exit = await fn();
     return { exit, stderr };
@@ -42,7 +41,10 @@ async function capture(fn: () => Promise<number>): Promise<CaptureResult> {
 }
 
 const lastStderrReceipt = (stderr: string): { command: string; error: string } => {
-  const lines = stderr.trim().split('\n').filter((l) => l.startsWith('{'));
+  const lines = stderr
+    .trim()
+    .split('\n')
+    .filter((l) => l.startsWith('{'));
   expect(lines.length).toBeGreaterThan(0);
   return JSON.parse(lines[lines.length - 1]!) as { command: string; error: string };
 };

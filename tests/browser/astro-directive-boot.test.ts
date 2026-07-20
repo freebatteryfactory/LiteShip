@@ -16,19 +16,23 @@ import { Diagnostics } from '@liteship/core';
 import { bootstrapDirectives, scanAndBootDirectives } from '../../packages/astro/src/runtime/directive-boot.js';
 import { installSwapPipeline } from '../../packages/astro/src/runtime/swap-pipeline.js';
 
-// Failure-path stand-in: the llm directive throws on init so the scanner's
-// transient-failure handling (unmark + diagnostic) is testable.
-vi.mock('../../packages/astro/src/client-directives/llm.js', () => ({
-  default: () => {
-    throw new Error('simulated chunk init failure');
-  },
-}));
+// Failure-path stand-in: an llm directive entry that throws on init, injected
+// through the scanner's `loaders` seam so the transient-failure handling
+// (unmark + diagnostic) is testable without mocking the client-directive module.
+const throwingLlmLoaders = {
+  llm: () =>
+    Promise.resolve({
+      default: () => {
+        throw new Error('simulated chunk init failure');
+      },
+    }),
+};
 
 // No-op stand-in: isolates the directive-COLLISION test from real WebGL/WebGPU
 // init so it exercises only the scanner's double-claim detection.
-vi.mock('../../packages/astro/src/client-directives/gpu.js', () => ({
-  default: () => {},
-}));
+const noopGpuLoaders = {
+  gpu: () => Promise.resolve({ default: () => {} }),
+};
 
 const boundary = JSON.stringify({
   id: 'hero',
@@ -113,7 +117,7 @@ describe('directive boot scanner', () => {
       'client:gpu': '',
     });
 
-    await scanAndBootDirectives(['adaptive', 'gpu']);
+    await scanAndBootDirectives(['adaptive', 'gpu'], undefined, noopGpuLoaders);
 
     // adaptive (scanned first) claims the element; gpu then sees it already
     // bound and warns instead of silently fighting over the node.
@@ -145,12 +149,12 @@ describe('directive boot scanner', () => {
 
   test('a failed activation unmarks the element so a later re-scan retries', async () => {
     vi.stubGlobal('innerWidth', 500);
-    // The llm directive module is mocked (top of file) to throw on init —
-    // the transient-failure path. The element must NOT stay branded as
-    // bound, or astro:after-swap re-scans could never retry it.
+    // The injected llm directive entry throws on init (the transient-failure
+    // path). The element must NOT stay branded as bound, or astro:after-swap
+    // re-scans could never retry it.
     const el = makeMarkedElement({ 'data-liteship-boundary': boundary, 'data-liteship-directive': 'llm' });
 
-    await scanAndBootDirectives(['llm']);
+    await scanAndBootDirectives(['llm'], undefined, throwingLlmLoaders);
 
     expect(el.hasAttribute('data-liteship-directive-bound')).toBe(false);
     expect(el.getAttribute('data-liteship-state')).toBeNull();

@@ -21,14 +21,27 @@ export interface PlumbReceipt extends PlumbPayload {
   readonly timestamp: WallClockTimestamp;
 }
 
+/**
+ * Injectable scan seam for {@link plumb}. `runPlumbScan` DEFAULTS (via the
+ * null-coalesce at its call site) to the real `@liteship/command/host` scan, so
+ * production `liteship plumb` is byte-identical; tests pass a scripted scan to pin
+ * the CLI adapter's receipt + work-list projection without walking a real
+ * `tests/generated/` tree. Unexported + off the public barrel, so the api-surface
+ * snapshot is unchanged.
+ */
+interface PlumbDeps {
+  readonly runPlumbScan?: typeof runPlumbScan;
+}
+
 /** Execute `liteship plumb` — scan tests/generated/ + the published-package set; emit a verdict. */
-export async function plumb(opts: { cwd?: string; pretty?: boolean } = {}): Promise<number> {
+export async function plumb(opts: { cwd?: string; pretty?: boolean } = {}, deps: PlumbDeps = {}): Promise<number> {
   const cwd = opts.cwd ?? process.cwd();
 
   // Inject the SOUND AST skip detector (the CLI host deps `@liteship/audit`) so a generated multi-line /
   // ASI / inner-describe skip the token scanner would miss is caught in the plumb scan too. The lean
   // `@liteship/command/host` keeps the dependency-free token `detectSkips` as its fallback.
-  const context: CommandContext = { cwd, runPlumb: async () => runPlumbScan(cwd, detectSkipsAST) };
+  const scan = deps.runPlumbScan ?? runPlumbScan;
+  const context: CommandContext = { cwd, runPlumb: async () => scan(cwd, detectSkipsAST) };
 
   const result = await plumbCommand.handler({ name: 'plumb', args: {} }, context);
   const payload = result.payload as PlumbPayload;

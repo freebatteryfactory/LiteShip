@@ -8,7 +8,7 @@
 
 > `const` **CommandRegistry**: `object`
 
-Defined in: [command/src/registry.ts:593](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L593)
+Defined in: [command/src/registry.ts:620](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L620)
 
 ## Type Declaration
 

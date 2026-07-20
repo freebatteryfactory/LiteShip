@@ -23,6 +23,18 @@ export interface AuditReceipt extends AuditPayload {
 /** Exit code when the engine/profile load fails before producing a summary. */
 const LOAD_FAILURE_EXIT = 1;
 
+/**
+ * Injectable handler seam for {@link audit}. `auditHandler` DEFAULTS (via the
+ * null-coalesce at its call site) to the real `@liteship/command` audit handler, so
+ * production `liteship audit` is byte-identical; tests pass a scripted handler to
+ * pin the CLI adapter's degraded-shape branches (a non-Error throw, a payload-less
+ * structured failure, the exit-code defaulting) without running the real engine.
+ * Unexported + off the public barrel, so the api-surface snapshot is unchanged.
+ */
+interface AuditDeps {
+  readonly auditHandler?: typeof auditCommand.handler;
+}
+
 /** Execute `liteship audit [--profile <path>] [--consumer] [--consumer-app] [--findings]`. */
 export async function audit(
   opts: {
@@ -33,6 +45,7 @@ export async function audit(
     pretty?: boolean;
     cwd?: string;
   } = {},
+  deps: AuditDeps = {},
 ): Promise<number> {
   const cwd = opts.cwd ?? process.cwd();
 
@@ -100,7 +113,7 @@ export async function audit(
 
   let result;
   try {
-    result = await auditCommand.handler(
+    result = await (deps.auditHandler ?? auditCommand.handler)(
       {
         name: 'audit',
         args: {

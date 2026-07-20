@@ -7,26 +7,28 @@
  * WITHOUT `--ir` the LEAN, IR-free path runs UNCHANGED (it never builds an IR —
  * the established lean-engine boundary the MCP server depends on).
  *
- * `runGauntletWithRepoIR` is mocked so the assertions pin the FLAG PLUMBING + the
+ * `runGauntletWithRepoIR` is passed through dispatch's injectable engine seam (the
+ * defaulted `deps` arg on `run`) so the assertions pin the FLAG PLUMBING + the
  * receipt shape without paying for a real full-repo `ts.Program` build (proven
  * end-to-end separately in the audit cross-check suite). The lean path's handler is
- * likewise mocked so we can assert the IR builder is NEVER touched on that path.
+ * injected (through the same dispatch deps seam) so we can assert the IR builder is
+ * NEVER touched on that path.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { finding, type GauntletResult } from '@liteship/gauntlet';
 
-const { runGauntletWithRepoIRMock } = vi.hoisted(() => ({ runGauntletWithRepoIRMock: vi.fn() }));
-vi.mock('../../../../packages/cli/src/lib/repo-ir-gauntlet.js', () => ({
-  runGauntletWithRepoIR: runGauntletWithRepoIRMock,
-}));
+const runGauntletWithRepoIRMock = vi.fn();
 
-const { handlerMock } = vi.hoisted(() => ({ handlerMock: vi.fn() }));
-vi.mock('@liteship/command', async (importOriginal) => {
-  const orig = await importOriginal<Record<string, unknown>>();
-  return { ...orig, checkCommand: { handler: handlerMock } };
-});
+// The lean handler is INJECTED through dispatch's `deps.checkHandler` seam (NOT a
+// @liteship/command module mock), threaded through `run` → `check` → the lean path,
+// so we can assert the IR builder is NEVER touched on that path.
+const handlerMock = vi.fn();
 
-import { run } from '../../../../packages/cli/src/dispatch.js';
+import { run as runDispatch } from '../../../../packages/cli/src/dispatch.js';
+
+/** Dispatch with the IR engine + lean handler seams scripted — no real ts.Program build runs. */
+const run = (argv: readonly string[]): Promise<number> =>
+  runDispatch(argv, { runGauntletWithRepoIR: runGauntletWithRepoIRMock, checkHandler: handlerMock });
 
 function captureStdout<T>(fn: () => Promise<T>): Promise<{ result: T; stdout: string }> {
   let stdout = '';

@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 1,
-  "address": "fnv1a:b41eeda3",
+  "address": "fnv1a:04e73157",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -892,7 +892,7 @@
     },
     {
       "_tag": "waiver",
-      "key": "gauntlet/no-silent-catch|packages/cli/src/commands/doctor/probes-workspace.ts|250",
+      "key": "gauntlet/no-silent-catch|packages/cli/src/commands/doctor/probes-workspace.ts|261",
       "ruleId": "gauntlet/no-silent-catch",
       "expiry": "2027-06-20"
     },

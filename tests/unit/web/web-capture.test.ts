@@ -1,6 +1,14 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-const mediabunnyState = vi.hoisted(() => ({
+import { renderToCanvas } from '../../../packages/web/src/capture/render.js';
+import * as MediabunnyBridge from '../../../packages/web/src/capture/mediabunny.js';
+import { WebCodecsCapture } from '../../../packages/web/src/capture/webcodecs.js';
+
+// The `./mediabunny.js` shim re-exports the third-party mediabunny muxer classes.
+// Rather than interaction-mock our own wrapper, we script the muxer boundary with
+// fake classes and inject them through WebCodecsCapture.make's encoder seam
+// (its optional second parameter, which defaults to the real mediabunny classes).
+const mediabunnyState = {
   codecNames: [] as string[],
   packets: [] as Array<{ packet: unknown; metadata?: unknown }>,
   tracks: [] as Array<{ source: unknown; options: Record<string, unknown> }>,
@@ -9,66 +17,61 @@ const mediabunnyState = vi.hoisted(() => ({
   startCalls: 0,
   finalizeCalls: 0,
   buffer: new Uint8Array([1, 2, 3, 4]) as Uint8Array | null,
-}));
+};
 
-vi.mock('../../../packages/web/src/capture/mediabunny.js', () => {
-  class BufferTarget {
-    get buffer(): Uint8Array | null {
-      return mediabunnyState.buffer;
-    }
+class BufferTargetFake {
+  get buffer(): Uint8Array | null {
+    return mediabunnyState.buffer;
+  }
+}
+
+class EncodedVideoPacketSourceFake {
+  constructor(codec: string) {
+    mediabunnyState.codecNames.push(codec);
   }
 
-  class EncodedVideoPacketSource {
-    constructor(codec: string) {
-      mediabunnyState.codecNames.push(codec);
-    }
+  async add(packet: unknown, metadata?: unknown): Promise<void> {
+    mediabunnyState.packets.push({ packet, metadata });
+  }
+}
 
-    async add(packet: unknown, metadata?: unknown): Promise<void> {
-      mediabunnyState.packets.push({ packet, metadata });
-    }
+class OutputFake {
+  constructor(_config: Record<string, unknown>) {}
+
+  addVideoTrack(source: unknown, options: Record<string, unknown>): void {
+    mediabunnyState.tracks.push({ source, options });
   }
 
-  class Output {
-    constructor(_config: Record<string, unknown>) {}
-
-    addVideoTrack(source: unknown, options: Record<string, unknown>): void {
-      mediabunnyState.tracks.push({ source, options });
-    }
-
-    async start(): Promise<void> {
-      mediabunnyState.startCalls++;
-    }
-
-    async finalize(): Promise<void> {
-      mediabunnyState.finalizeCalls++;
-    }
+  async start(): Promise<void> {
+    mediabunnyState.startCalls++;
   }
 
-  class Mp4OutputFormat {
-    constructor(options: Record<string, unknown>) {
-      mediabunnyState.formatOptions.push(options);
-    }
+  async finalize(): Promise<void> {
+    mediabunnyState.finalizeCalls++;
   }
+}
 
-  const EncodedPacket = {
-    fromEncodedChunk(chunk: unknown) {
-      mediabunnyState.packetInputs.push(chunk);
-      return { chunk };
-    },
-  };
+class Mp4OutputFormatFake {
+  constructor(options: Record<string, unknown>) {
+    mediabunnyState.formatOptions.push(options);
+  }
+}
 
-  return {
-    BufferTarget,
-    EncodedPacket,
-    EncodedVideoPacketSource,
-    Mp4OutputFormat,
-    Output,
-  };
-});
+const EncodedPacketFake = {
+  fromEncodedChunk(chunk: unknown) {
+    mediabunnyState.packetInputs.push(chunk);
+    return { chunk };
+  },
+};
 
-import { renderToCanvas } from '../../../packages/web/src/capture/render.js';
-import * as MediabunnyBridge from '../../../packages/web/src/capture/mediabunny.js';
-import { WebCodecsCapture } from '../../../packages/web/src/capture/webcodecs.js';
+/** The scripted mediabunny encoder bundle injected into `WebCodecsCapture.make`. */
+const mediabunny = {
+  BufferTarget: BufferTargetFake,
+  EncodedPacket: EncodedPacketFake,
+  EncodedVideoPacketSource: EncodedVideoPacketSourceFake,
+  Mp4OutputFormat: Mp4OutputFormatFake,
+  Output: OutputFake,
+} as unknown as Parameters<typeof WebCodecsCapture.make>[1];
 
 type VideoEncoderInit = {
   output: (chunk: unknown, metadata?: unknown) => void;
@@ -289,7 +292,7 @@ describe('web capture runtime', () => {
   });
 
   test('covers support probing, timestamp normalization, packet draining, and codec mapping', async () => {
-    const avcCapture = WebCodecsCapture.make();
+    const avcCapture = WebCodecsCapture.make(undefined, mediabunny);
     await expect(
       avcCapture.init({
         width: 641,
@@ -297,13 +300,18 @@ describe('web capture runtime', () => {
         fps: 30,
       } as never),
       // Teaching contract: codec family, the offending size, and both ways out.
-    ).rejects.toThrow(/\(H\.264\/HEVC\) requires even width and height\. Got 641x480 — round to 640x480, or use a VP9\/AV1 codec string/);
+    ).rejects.toThrow(
+      /\(H\.264\/HEVC\) requires even width and height\. Got 641x480 — round to 640x480, or use a VP9\/AV1 codec string/,
+    );
 
-    const capture = WebCodecsCapture.make({
-      codec: 'vp09.00.10.08',
-      bitrate: 2_000_000,
-      keyframeInterval: 2,
-    });
+    const capture = WebCodecsCapture.make(
+      {
+        codec: 'vp09.00.10.08',
+        bitrate: 2_000_000,
+        keyframeInterval: 2,
+      },
+      mediabunny,
+    );
 
     await capture.init({
       width: 641,
@@ -367,9 +375,12 @@ describe('web capture runtime', () => {
   });
 
   test('rejects unsupported codec mappings and support probe failures', async () => {
-    const unsupportedCapture = WebCodecsCapture.make({
-      codec: 'weird-codec',
-    });
+    const unsupportedCapture = WebCodecsCapture.make(
+      {
+        codec: 'weird-codec',
+      },
+      mediabunny,
+    );
     await expect(
       unsupportedCapture.init({
         width: 640,
@@ -379,7 +390,7 @@ describe('web capture runtime', () => {
     ).rejects.toThrow('Unsupported WebCodecs codec');
 
     encoderState.supportResult = false;
-    const unsupportedConfigCapture = WebCodecsCapture.make();
+    const unsupportedConfigCapture = WebCodecsCapture.make(undefined, mediabunny);
     await expect(
       unsupportedConfigCapture.init({
         width: 640,
@@ -390,7 +401,7 @@ describe('web capture runtime', () => {
 
     encoderState.supportResult = true;
     encoderState.supportError = new Error('probe boom');
-    const probeErrorCapture = WebCodecsCapture.make();
+    const probeErrorCapture = WebCodecsCapture.make(undefined, mediabunny);
     await expect(
       probeErrorCapture.init({
         width: 640,
@@ -402,9 +413,12 @@ describe('web capture runtime', () => {
 
   test('maps HEVC and AV1 codec aliases and stringifies non-Error support probe failures', async () => {
     encoderState.supportError = 'probe string boom' as never;
-    const stringProbeCapture = WebCodecsCapture.make({
-      codec: 'hev1.1.6.L93.B0',
-    });
+    const stringProbeCapture = WebCodecsCapture.make(
+      {
+        codec: 'hev1.1.6.L93.B0',
+      },
+      mediabunny,
+    );
     await expect(
       stringProbeCapture.init({
         width: 640,
@@ -415,9 +429,12 @@ describe('web capture runtime', () => {
 
     encoderState.supportError = null;
 
-    const hevcCapture = WebCodecsCapture.make({
-      codec: 'hvc1.1.6.L93.B0',
-    });
+    const hevcCapture = WebCodecsCapture.make(
+      {
+        codec: 'hvc1.1.6.L93.B0',
+      },
+      mediabunny,
+    );
     await hevcCapture.init({
       width: 640,
       height: 480,
@@ -426,9 +443,12 @@ describe('web capture runtime', () => {
     await hevcCapture.capture({ bitmap: { close() {} }, timestamp: 0 } as never);
     await hevcCapture.finalize();
 
-    const av1Capture = WebCodecsCapture.make({
-      codec: 'av1',
-    });
+    const av1Capture = WebCodecsCapture.make(
+      {
+        codec: 'av1',
+      },
+      mediabunny,
+    );
     await av1Capture.init({
       width: 641,
       height: 481,
@@ -444,7 +464,7 @@ describe('web capture runtime', () => {
     const originalVideoEncoder = VideoEncoderMock as unknown as typeof VideoEncoder;
     vi.stubGlobal('VideoEncoder', undefined);
 
-    const unavailableCapture = WebCodecsCapture.make();
+    const unavailableCapture = WebCodecsCapture.make(undefined, mediabunny);
     await expect(
       unavailableCapture.init({
         width: 640,
@@ -462,9 +482,12 @@ describe('web capture runtime', () => {
         value: undefined,
       });
 
-      const capture = WebCodecsCapture.make({
-        codec: 'vp09.00.10.08',
-      });
+      const capture = WebCodecsCapture.make(
+        {
+          codec: 'vp09.00.10.08',
+        },
+        mediabunny,
+      );
       await capture.init({
         width: 641,
         height: 481,
@@ -488,7 +511,7 @@ describe('web capture runtime', () => {
   });
 
   test('surfaces encoder errors, missing packets, and empty muxer output deterministically', async () => {
-    const errorCapture = WebCodecsCapture.make();
+    const errorCapture = WebCodecsCapture.make(undefined, mediabunny);
     await errorCapture.init({
       width: 640,
       height: 480,
@@ -505,7 +528,7 @@ describe('web capture runtime', () => {
 
     encoderState.pendingError = null;
     encoderState.emitChunks = false;
-    const noPacketsCapture = WebCodecsCapture.make();
+    const noPacketsCapture = WebCodecsCapture.make(undefined, mediabunny);
     await noPacketsCapture.init({
       width: 640,
       height: 480,
@@ -520,7 +543,7 @@ describe('web capture runtime', () => {
 
     encoderState.emitChunks = true;
     mediabunnyState.buffer = null;
-    const noOutputCapture = WebCodecsCapture.make();
+    const noOutputCapture = WebCodecsCapture.make(undefined, mediabunny);
     await noOutputCapture.init({
       width: 640,
       height: 480,
@@ -535,9 +558,12 @@ describe('web capture runtime', () => {
   });
 
   test('rejects capture and finalize before initialization and rejects empty finalize runs', async () => {
-    const capture = WebCodecsCapture.make({
-      codec: 'vp09.00.10.08',
-    });
+    const capture = WebCodecsCapture.make(
+      {
+        codec: 'vp09.00.10.08',
+      },
+      mediabunny,
+    );
 
     await expect(
       capture.capture({
@@ -783,12 +809,9 @@ describe('captureVideo pipeline', () => {
       })),
     };
 
-    vi.stubGlobal(
-      'document',
-      {
-        createElement: vi.fn(() => mockCanvas),
-      } as unknown as Document,
-    );
+    vi.stubGlobal('document', {
+      createElement: vi.fn(() => mockCanvas),
+    } as unknown as Document);
     delete (globalThis as Record<string, unknown>).OffscreenCanvas;
     delete (globalThis as Record<string, unknown>).createImageBitmap;
 

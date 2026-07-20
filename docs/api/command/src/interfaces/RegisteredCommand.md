@@ -6,7 +6,7 @@
 
 # Interface: RegisteredCommand
 
-Defined in: [command/src/registry.ts:511](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L511)
+Defined in: [command/src/registry.ts:538](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L538)
 
 A descriptor paired with its handler — the unit the registry indexes. The
 handler is optional: a descriptor-only entry declares a command's identity in
@@ -23,7 +23,7 @@ CLI's own dispatch) and pending migration into this package.
 
 > `readonly` `optional` **argsSchema?**: `Schema`\<`Readonly`\<`Record`\<`string`, `unknown`\>\>, `Readonly`\<`Record`\<`string`, `unknown`\>\>\>
 
-Defined in: [command/src/registry.ts:522](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L522)
+Defined in: [command/src/registry.ts:549](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L549)
 
 The declared kernel schema for the command's args. When present, the
 dispatcher decodes `invocation.args` against it BEFORE invoking the handler
@@ -38,7 +38,7 @@ step is then a no-op passthrough).
 
 > `readonly` **descriptor**: `CapsuleCommandDescriptor`
 
-Defined in: [command/src/registry.ts:512](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L512)
+Defined in: [command/src/registry.ts:539](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L539)
 
 ***
 
@@ -46,4 +46,4 @@ Defined in: [command/src/registry.ts:512](https://github.com/freebatteryfactory/
 
 > `readonly` `optional` **handler?**: [`CapsuleCommandHandler`](CapsuleCommandHandler.md)\<`Readonly`\<`Record`\<`string`, `unknown`\>\>, `unknown`\>
 
-Defined in: [command/src/registry.ts:513](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L513)
+Defined in: [command/src/registry.ts:540](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L540)

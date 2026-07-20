@@ -41,6 +41,21 @@ export interface CheckReceipt extends CheckPayload {
   readonly timestamp: WallClockTimestamp;
 }
 
+/**
+ * Injectable engine/handler seam for {@link check}. Each field DEFAULTS (via the
+ * null-coalesce at its call site) to the real dependency, so production
+ * `liteship check` is byte-identical: `runGauntletWithRepoIR` is the real
+ * IR-enriched builder (the `--ir` path), `checkHandler` is the real lean
+ * `@liteship/command` handler (the default path). Tests pass a scripted runner /
+ * handler to pin the flag plumbing + receipt projection without paying for a real
+ * full-repo `ts.Program` build or a real six-regex gate fold. Unexported + off the
+ * public barrel, so the api-surface snapshot is unchanged.
+ */
+interface CheckDeps {
+  readonly runGauntletWithRepoIR?: typeof runGauntletWithRepoIR;
+  readonly checkHandler?: typeof checkCommand.handler;
+}
+
 /** Options for {@link check}. `ir` selects the CLI-only IR-enriched path; `noCache` bypasses the B2 verdict cache. */
 export interface CheckOptions {
   readonly cwd?: string;
@@ -155,7 +170,7 @@ export interface CheckOptions {
 }
 
 /** Execute `liteship check` — run the gauntlet gate fold in-process; emit the verdict + Finding[]. */
-export async function check(opts: CheckOptions = {}): Promise<number> {
+export async function check(opts: CheckOptions = {}, deps: CheckDeps = {}): Promise<number> {
   const cwd = opts.cwd ?? process.cwd();
 
   const payload =
@@ -173,8 +188,9 @@ export async function check(opts: CheckOptions = {}): Promise<number> {
           opts.composition === true,
           opts.capabilityGate === true,
           opts.spineRelation === true,
+          deps.runGauntletWithRepoIR ?? runGauntletWithRepoIR,
         )
-      : await runLeanPath(cwd);
+      : await runLeanPath(cwd, deps.checkHandler ?? checkCommand.handler);
 
   const receipt: CheckReceipt = {
     status: payload.blocked ? 'failed' : 'ok',
@@ -205,7 +221,7 @@ export async function check(opts: CheckOptions = {}): Promise<number> {
  * `@liteship/command`'s `check` handler. UNCHANGED behaviour: `@liteship/command` and
  * `@liteship/mcp-server` never see the IR. Projects the handler's `CheckPayload`.
  */
-async function runLeanPath(cwd: string): Promise<CheckPayload> {
+async function runLeanPath(cwd: string, handler: typeof checkCommand.handler): Promise<CheckPayload> {
   // Inject the host-built SOUND AST detectors — the CLI deps `@liteship/audit`, so even the
   // lean (`@liteship/command`) check path gains parser-backed skip and early-return detection.
   // The MCP adapter builds the context WITHOUT them → the lean fallbacks; this keeps
@@ -215,7 +231,7 @@ async function runLeanPath(cwd: string): Promise<CheckPayload> {
     skipDetector: detectSkipsAST,
     earlyReturnDetector: detectEarlyReturnBeforeExpectAST,
   });
-  const result = await checkCommand.handler({ name: 'check', args: {} }, context);
+  const result = await handler({ name: 'check', args: {} }, context);
   return result.payload as CheckPayload;
 }
 
@@ -249,9 +265,10 @@ async function runIrPath(
   composition: boolean,
   capabilityGate: boolean,
   spineRelation: boolean,
+  runGauntlet: typeof runGauntletWithRepoIR,
 ): Promise<CheckPayload> {
   const now = new Date(wallClock.now());
-  const result = await runGauntletWithRepoIR(cwd, now, undefined, {
+  const result = await runGauntlet(cwd, now, undefined, {
     noCache,
     withSymbolReferences: symbols,
     withSupplyChain: supplyChain,

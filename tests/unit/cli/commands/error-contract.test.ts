@@ -6,25 +6,29 @@
  *    one-JSON-line-on-stderr envelope instead of a raw ERR_MODULE_NOT_FOUND
  *    stack trace.
  */
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { emitError } from '../../../../packages/cli/src/receipts.js';
 import { readCliVersion } from '../../../../packages/cli/src/commands/version.js';
 
-vi.mock('@liteship/mcp-server', () => {
+// The optional @liteship/mcp-server sibling is INJECTED as a throwing importer
+// carrying ERR_MODULE_NOT_FOUND (the exact shape the runtime dynamic import raises
+// when the sibling isn't installed) — NOT a module mock — so `liteship mcp` takes
+// the structured-install-hint guard instead of a raw module-not-found stack.
+const importMcpServerMissing = () => {
   const err = new Error("Cannot find package '@liteship/mcp-server'");
   (err as Error & { code: string }).code = 'ERR_MODULE_NOT_FOUND';
   throw err;
-});
+};
 
 import { run } from '../../../../packages/cli/src/dispatch.js';
 
 async function captureStderr<T>(fn: () => Promise<T> | T): Promise<{ result: T; stderr: string }> {
   let stderr = '';
   const orig = process.stderr.write.bind(process.stderr);
-  (process.stderr as unknown as { write: unknown }).write = ((c: string | Uint8Array) => {
+  (process.stderr as unknown as { write: unknown }).write = (c: string | Uint8Array) => {
     stderr += typeof c === 'string' ? c : Buffer.from(c).toString();
     return true;
-  });
+  };
   try {
     const result = await fn();
     return { result, stderr };
@@ -55,9 +59,12 @@ describe('emitError hint field', () => {
 
 describe('liteship mcp without @liteship/mcp-server installed', () => {
   it('emits a structured install-teaching error instead of a raw module-not-found stack', async () => {
-    const { result, stderr } = await captureStderr(() => run(['mcp']));
+    const { result, stderr } = await captureStderr(() => run(['mcp'], { importMcpServer: importMcpServerMissing }));
     expect(result).toBe(1);
-    const lines = stderr.trim().split('\n').filter((l) => l.startsWith('{'));
+    const lines = stderr
+      .trim()
+      .split('\n')
+      .filter((l) => l.startsWith('{'));
     expect(lines.length).toBeGreaterThan(0);
     const receipt = JSON.parse(lines[lines.length - 1]!);
     expect(receipt.status).toBe('failed');

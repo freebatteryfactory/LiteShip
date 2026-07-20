@@ -13,14 +13,7 @@
  * itself (createServer, listen, SIGINT) is exercised by the integration
  * test (Task 8); the inner handler now has direct in-process coverage.
  */
-import { describe, it, expect, vi } from 'vitest';
-
-vi.mock('@liteship/cli', () => ({
-  run: vi.fn(async (argv: string[]) => {
-    process.stdout.write(JSON.stringify({ ok: true, argv }) + '\n');
-    return 0;
-  }),
-}));
+import { describe, it, expect } from 'vitest';
 
 import { handleRequest, respond } from '../../../packages/mcp-server/src/http.js';
 import { JsonRpcServer } from '../../../packages/mcp-server/src/jsonrpc.js';
@@ -58,21 +51,25 @@ describe('handleRequest — JSON-RPC 2.0 wire conformance', () => {
   });
 
   it('returns null body for a notification (no id) — §4.1', async () => {
-    const r = await handleRequest(JSON.stringify({
-      jsonrpc: '2.0',
-      method: 'tools/list',
-      params: {},
-    }));
+    const r = await handleRequest(
+      JSON.stringify({
+        jsonrpc: '2.0',
+        method: 'tools/list',
+        params: {},
+      }),
+    );
     expect(r).toBeNull();
   });
 
   it('returns success envelope for a tools/list request', async () => {
-    const r = await handleRequest(JSON.stringify({
-      jsonrpc: '2.0',
-      id: 'abc',
-      method: 'tools/list',
-      params: {},
-    }));
+    const r = await handleRequest(
+      JSON.stringify({
+        jsonrpc: '2.0',
+        id: 'abc',
+        method: 'tools/list',
+        params: {},
+      }),
+    );
     expect(r).not.toBeNull();
     const env = r as { id: string; result: { tools: unknown[] } };
     expect(env.id).toBe('abc');
@@ -80,11 +77,13 @@ describe('handleRequest — JSON-RPC 2.0 wire conformance', () => {
   });
 
   it('returns -32601 for unknown methods in a request', async () => {
-    const r = await handleRequest(JSON.stringify({
-      jsonrpc: '2.0',
-      id: 1,
-      method: 'unknown/x',
-    }));
+    const r = await handleRequest(
+      JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'unknown/x',
+      }),
+    );
     expect(r).not.toBeNull();
     const env = r as { error: { code: number } };
     expect(env.error.code).toBe(-32601);
@@ -129,9 +128,13 @@ describe('respond — direct ParseOutcome dispatch', () => {
   });
 
   it('forwards request kind to dispatch', async () => {
-    const outcome = JsonRpcServer.parse(JSON.stringify({
-      jsonrpc: '2.0', id: 1, method: 'tools/list',
-    }));
+    const outcome = JsonRpcServer.parse(
+      JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'tools/list',
+      }),
+    );
     const r = await respond(outcome);
     expect(r).not.toBeNull();
     expect((r as { id: number }).id).toBe(1);

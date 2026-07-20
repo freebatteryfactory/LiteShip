@@ -43,6 +43,14 @@ export interface CheckInvariantsReceipt extends CheckInvariantsPayload {
   readonly timestamp: WallClockTimestamp;
 }
 
+/**
+ * The subprocess-capture capability the `git ls-files --eol` line-ending probe
+ * shells out through. Injectable (defaulting to the real {@link spawnArgvCapture})
+ * so tests script the probe deterministically — no real `git` — while production
+ * call sites stay byte-identical.
+ */
+type SpawnArgvCapture = typeof spawnArgvCapture;
+
 interface LineEndingRule {
   readonly pattern: string;
   readonly eol: 'lf' | 'crlf' | 'binary';
@@ -143,14 +151,17 @@ export function expectedLineEnding(
 }
 
 /** Files whose committed line endings violate the `.gitattributes` eol policy under `root`. */
-export async function findLineEndingViolations(root: string): Promise<readonly string[]> {
+export async function findLineEndingViolations(
+  root: string,
+  spawn: SpawnArgvCapture = spawnArgvCapture,
+): Promise<readonly string[]> {
   const rules = parseLineEndingRules(readFileSync(resolve(root, '.gitattributes'), 'utf8'));
   const violations: string[] = [];
 
   // Route the `git ls-files --eol` probe through the canonical spawn helper (the
   // host bans raw node:child_process). captureBytes is bumped well past the 1 MiB
   // default — the per-file eol report scales with the whole tracked tree.
-  const probe = await spawnArgvCapture('git', ['ls-files', '--eol'], {
+  const probe = await spawn('git', ['ls-files', '--eol'], {
     cwd: root,
     captureBytes: 64 * 1024 * 1024,
   });
@@ -218,7 +229,10 @@ export async function findLineEndingViolations(root: string): Promise<readonly s
  * text file matches the `.gitattributes` eol policy. Returns a structured verdict
  * — no process.exit, no stdout.
  */
-export async function runCheckInvariantsScan(root: string): Promise<CheckInvariantsSummary> {
+export async function runCheckInvariantsScan(
+  root: string,
+  spawn: SpawnArgvCapture = spawnArgvCapture,
+): Promise<CheckInvariantsSummary> {
   const groups: InvariantViolationGroup[] = [];
   for (const invariant of INVARIANTS) {
     const violations = findViolations(invariant, root);
@@ -226,7 +240,7 @@ export async function runCheckInvariantsScan(root: string): Promise<CheckInvaria
     groups.push({ name: invariant.name, message: invariant.message, violations });
   }
 
-  const lineEndings = await findLineEndingViolations(root);
+  const lineEndings = await findLineEndingViolations(root, spawn);
 
   return {
     ok: groups.length === 0 && lineEndings.length === 0,
@@ -235,13 +249,27 @@ export async function runCheckInvariantsScan(root: string): Promise<CheckInvaria
   };
 }
 
+/**
+ * Injectable scan seam for {@link checkInvariants}. `spawn` DEFAULTS (via the
+ * null-coalesce at its call site) to the real {@link spawnArgvCapture}, so
+ * production `liteship check-invariants` is byte-identical; tests pass a scripted
+ * spawn to pin the adapter's receipt + work-list projection without a real
+ * `git ls-files --eol` probe. Unexported + off the public barrel.
+ */
+interface CheckInvariantsDeps {
+  readonly spawn?: SpawnArgvCapture;
+}
+
 /** Execute `liteship check-invariants` — scan source for banned patterns + line-ending policy; emit a verdict. */
-export async function checkInvariants(opts: { cwd?: string; pretty?: boolean } = {}): Promise<number> {
+export async function checkInvariants(
+  opts: { cwd?: string; pretty?: boolean } = {},
+  deps: CheckInvariantsDeps = {},
+): Promise<number> {
   const cwd = opts.cwd ?? process.cwd();
 
   const context: CommandContext = {
     cwd,
-    runCheckInvariants: async () => runCheckInvariantsScan(cwd),
+    runCheckInvariants: async () => runCheckInvariantsScan(cwd, deps.spawn ?? spawnArgvCapture),
   };
 
   const result = await checkInvariantsCommand.handler({ name: 'check-invariants', args: {} }, context);

@@ -9,23 +9,24 @@
  * sides of the human findings-summary writer (blocked banner vs advisory banner,
  * the per-finding location formatting, and the `pretty:false` suppression).
  *
- * Both engine paths are mocked so no real `ts.Program` / regex fold runs (TWO-CLOCK:
- * the receipt timestamp is a wallClock ISO boundary, asserted by shape not value).
+ * The IR engine is passed through `check`'s injectable `deps` seam and the lean
+ * handler is mocked, so no real `ts.Program` / regex fold runs (TWO-CLOCK: the
+ * receipt timestamp is a wallClock ISO boundary, asserted by shape not value).
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { finding, type GauntletResult } from '@liteship/gauntlet';
 import { captureCli } from '../../../integration/cli/capture.js';
 
-const { runGauntletWithRepoIRMock } = vi.hoisted(() => ({ runGauntletWithRepoIRMock: vi.fn() }));
-vi.mock('../../../../packages/cli/src/lib/repo-ir-gauntlet.js', () => ({
-  runGauntletWithRepoIR: runGauntletWithRepoIRMock,
-}));
+const runGauntletWithRepoIRMock = vi.fn();
+/** The scripted IR engine seam injected into `check` for the `--ir` cases. */
+const irDeps = { runGauntletWithRepoIR: runGauntletWithRepoIRMock };
 
-const { handlerMock } = vi.hoisted(() => ({ handlerMock: vi.fn() }));
-vi.mock('@liteship/command', async (importOriginal) => {
-  const orig = await importOriginal<Record<string, unknown>>();
-  return { ...orig, checkCommand: { handler: handlerMock } };
-});
+// The lean `@liteship/command` handler is INJECTED through `check`'s defaulted
+// `deps.checkHandler` seam (NOT a @liteship/command module mock), so the lean-path
+// projection is pinned over a scripted handler while the real gate fold stays inert.
+const handlerMock = vi.fn();
+/** The scripted lean-handler seam injected into `check` for the default (no --ir) cases. */
+const leanDeps = { checkHandler: handlerMock };
 
 import { check } from '../../../../packages/cli/src/commands/check.js';
 
@@ -46,7 +47,7 @@ function lastReceipt(stdout: string): Record<string, unknown> {
 describe('liteship check (lean) — receipt projection', () => {
   it('projects the lean handler CheckPayload into a CheckReceipt (status ok, ISO timestamp)', async () => {
     handlerMock.mockResolvedValue(leanPayload({ ok: true, blocked: false, findingCount: 0, findings: [] }));
-    const { exit, stdout } = await captureCli(() => check());
+    const { exit, stdout } = await captureCli(() => check({}, leanDeps));
     expect(exit).toBe(0);
     const receipt = lastReceipt(stdout);
     expect(receipt).toMatchObject({ command: 'check', status: 'ok', ok: true, blocked: false, findingCount: 0 });
@@ -64,7 +65,7 @@ describe('liteship check (lean) — receipt projection', () => {
         findings: [finding({ ruleId: 'r/x', severity: 'error', level: 'L2', title: 'boom', detail: 'd' })],
       }),
     );
-    const { exit, stdout } = await captureCli(() => check({ pretty: false }));
+    const { exit, stdout } = await captureCli(() => check({ pretty: false }, leanDeps));
     expect(exit).toBe(1);
     expect(lastReceipt(stdout)['status']).toBe('failed');
   });
@@ -86,7 +87,7 @@ describe('liteship check — the human findings-summary writer (pretty)', () => 
       outcomes: [],
       blocked: true,
     } satisfies GauntletResult);
-    const { exit, stderr } = await captureCli(() => check({ ir: true, pretty: true }));
+    const { exit, stderr } = await captureCli(() => check({ ir: true, pretty: true }, irDeps));
     expect(exit).toBe(1);
     expect(stderr).toContain('CHECK BLOCKED');
     expect(stderr).toContain('(IR-enriched)');
@@ -102,7 +103,7 @@ describe('liteship check — the human findings-summary writer (pretty)', () => 
       outcomes: [],
       blocked: false,
     } satisfies GauntletResult);
-    const { exit, stderr } = await captureCli(() => check({ ir: true, pretty: true }));
+    const { exit, stderr } = await captureCli(() => check({ ir: true, pretty: true }, irDeps));
     expect(exit).toBe(0);
     expect(stderr).toContain('CHECK (advisory)');
     expect(stderr).toContain('[advisory] r/adv: fyi');
@@ -125,7 +126,7 @@ describe('liteship check — the human findings-summary writer (pretty)', () => 
       outcomes: [],
       blocked: true,
     } satisfies GauntletResult);
-    const { stderr } = await captureCli(() => check({ ir: true, pretty: true }));
+    const { stderr } = await captureCli(() => check({ ir: true, pretty: true }, irDeps));
     expect(stderr).toContain('[error] r/fileonly: t (packages/y/b.ts)');
     expect(stderr).not.toContain('packages/y/b.ts:');
   });
@@ -136,7 +137,7 @@ describe('liteship check — the human findings-summary writer (pretty)', () => 
       outcomes: [],
       blocked: true,
     } satisfies GauntletResult);
-    const { exit, stderr } = await captureCli(() => check({ ir: true, pretty: false }));
+    const { exit, stderr } = await captureCli(() => check({ ir: true, pretty: false }, irDeps));
     expect(exit).toBe(1);
     expect(stderr).toBe('');
   });

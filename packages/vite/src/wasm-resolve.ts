@@ -33,8 +33,17 @@ export interface WASMResolution {
 
 /**
  * Render the conventional WASM search locations for diagnostics.
+ *
+ * `resolvePackaged` is the packaged-`@liteship/core` binary resolver, defaulting
+ * to the real {@link resolvePackagedWasm}; injectable so a test simulating a
+ * consumer with no shipped binary can force that source absent (a synthetic temp
+ * root cannot model the module-graph resolution the real resolver performs).
  */
-export function formatWasmSearchPaths(projectRoot: string, configPath?: string): string {
+export function formatWasmSearchPaths(
+  projectRoot: string,
+  configPath?: string,
+  resolvePackaged: () => string | null = resolvePackagedWasm,
+): string {
   const paths: string[] = [];
   if (configPath) {
     const resolved = path.isAbsolute(configPath) ? configPath : path.join(projectRoot, configPath);
@@ -43,7 +52,7 @@ export function formatWasmSearchPaths(projectRoot: string, configPath?: string):
   paths.push(
     path.join(projectRoot, 'crates/liteship-compute/target/wasm32-unknown-unknown/release/liteship_compute.wasm'),
   );
-  paths.push(resolvePackagedWasm() ?? '@liteship/core/dist/liteship-compute.wasm (resolved via @liteship/vite)');
+  paths.push(resolvePackaged() ?? '@liteship/core/dist/liteship-compute.wasm (resolved via @liteship/vite)');
   paths.push(path.join(projectRoot, 'public/liteship-compute.wasm'));
   return paths
     .map((candidate) => {
@@ -56,8 +65,17 @@ export function formatWasmSearchPaths(projectRoot: string, configPath?: string):
 
 /**
  * Resolve the liteship-compute WASM binary path.
+ *
+ * `resolvePackaged` is the packaged-`@liteship/core` binary resolver, defaulting
+ * to the real {@link resolvePackagedWasm}; injectable so a test simulating a
+ * consumer with no shipped binary can force the `'package'` source absent and
+ * drive the config/crate/public ordering deterministically off a temp root.
  */
-export function resolveWASM(projectRoot: string, configPath?: string): WASMResolution | null {
+export function resolveWASM(
+  projectRoot: string,
+  configPath?: string,
+  resolvePackaged: () => string | null = resolvePackagedWasm,
+): WASMResolution | null {
   // 1. Configured path
   if (configPath) {
     const resolved = path.isAbsolute(configPath) ? configPath : path.join(projectRoot, configPath);
@@ -77,7 +95,7 @@ export function resolveWASM(projectRoot: string, configPath?: string): WASMResol
 
   // 3. The artifact shipped inside @liteship/core — the installed-consumer default,
   //    resolved through the module graph (pnpm-nesting-safe).
-  const packaged = resolvePackagedWasm();
+  const packaged = resolvePackaged();
   if (packaged !== null) {
     return { filePath: packaged, source: 'package' };
   }

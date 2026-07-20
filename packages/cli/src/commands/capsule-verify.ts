@@ -64,6 +64,19 @@ interface CapsuleManifestShape {
 const NO_BENCHES: CapsuleBenchClassification = { total: 0, real: 0, placeholder: [] };
 
 /**
+ * Injectable content-hash provenance seam for the capsule gate. Each digest
+ * DEFAULTS (via the null-coalesce at its call site) to the real
+ * `@liteship/command/host` digest, so production `liteship capsule-verify` is
+ * byte-identical; tests pass scripted digests to drive the fresh/stale/generator-
+ * drift branches over a synthetic manifest without hashing real source. Unexported
+ * + off the public barrel, so the api-surface snapshot is unchanged.
+ */
+interface CapsuleProvenanceDeps {
+  readonly sourceProvenanceDigest?: typeof sourceProvenanceDigest;
+  readonly generatorVersionDigest?: typeof generatorVersionDigest;
+}
+
+/**
  * Confirm content-hash-suspect capsules by regeneration: compile into a temp
  * generated dir + temp manifest (the shared tests/generated is NEVER
  * written — parent vitest runs may be executing it, CUT T1), then
@@ -155,7 +168,9 @@ function confirmStaleByRegeneration(
  * `process.exit`. Status: `ok` when fresh + honest + green; `stale` on a
  * missing/stale/dishonest artifact; `failed` when the generated suite ran red.
  */
-export async function runCapsuleGateScan(root: string): Promise<CapsuleGateSummary> {
+export async function runCapsuleGateScan(root: string, deps: CapsuleProvenanceDeps = {}): Promise<CapsuleGateSummary> {
+  const srcDigest = deps.sourceProvenanceDigest ?? sourceProvenanceDigest;
+  const genDigest = deps.generatorVersionDigest ?? generatorVersionDigest;
   const errors: string[] = [];
   const manifestPath = getCapsuleManifestPath(root);
 
@@ -186,7 +201,7 @@ export async function runCapsuleGateScan(root: string): Promise<CapsuleGateSumma
   // the WHOLE corpus is suspect — even when every capsule source is byte-identical
   // (the toolchain-digest analogue). A manifest predating provenance (no recorded
   // generatorVersion) is treated as generator-stale so it can't pass un-reverified.
-  const liveGeneratorVersion = generatorVersionDigest(root);
+  const liveGeneratorVersion = genDigest(root);
   const generatorStale = manifest.generatorVersion !== liveGeneratorVersion;
 
   for (const cap of manifest.capsules) {
@@ -213,7 +228,7 @@ export async function runCapsuleGateScan(root: string): Promise<CapsuleGateSumma
       // the recorded one. A mismatch (or a missing recorded digest, or a
       // generator-version change) makes this capsule a suspect — confirmed below
       // by regeneration byte-compare (suspicion is fast; regeneration is proof).
-      const liveSourceDigest = sourceProvenanceDigest(root, cap.source);
+      const liveSourceDigest = srcDigest(root, cap.source);
       const recordedSourceDigest = cap.provenance?.sourceDigest;
       if (generatorStale || recordedSourceDigest !== liveSourceDigest) {
         digestSuspects.push(cap);
@@ -265,10 +280,13 @@ export async function runCapsuleGateScan(root: string): Promise<CapsuleGateSumma
 }
 
 /** Execute `liteship capsule-verify` — gate the committed capsule corpus; emit a verdict. */
-export async function capsuleVerify(opts: { cwd?: string; pretty?: boolean } = {}): Promise<number> {
+export async function capsuleVerify(
+  opts: { cwd?: string; pretty?: boolean } = {},
+  deps: CapsuleProvenanceDeps = {},
+): Promise<number> {
   const cwd = opts.cwd ?? process.cwd();
 
-  const context: CommandContext = { cwd, runCapsuleGate: async () => runCapsuleGateScan(cwd) };
+  const context: CommandContext = { cwd, runCapsuleGate: async () => runCapsuleGateScan(cwd, deps) };
 
   const result = await capsuleVerifyGateCommand.handler({ name: 'capsule-verify', args: {} }, context);
   const payload = result.payload as CapsuleVerifyPayload;

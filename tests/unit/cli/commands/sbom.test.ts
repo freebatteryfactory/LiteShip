@@ -3,40 +3,32 @@
  * analyzer into a deterministic, content-addressed SBOM receipt.
  *
  * The heavy analyzer (`analyzeLockfile` / `buildSbom` / `checkSbomCompleteness`)
- * and the workspace reader are mocked so these assertions pin the ADAPTER's
- * in-process logic — the workspace guard, the missing-lockfile guard, the
- * lockfile-parse fail-closed path, the receipt projection (status / content
- * address / counts / violation flattening), and the exit-code mapping — without
- * paying for a real pnpm-lock.yaml parse or writing a real artifact. The artifact
- * write is intercepted so no file lands in the repo (TWO-CLOCK: the receipt's
- * timestamp is a wallClock boundary, asserted ISO-shaped, never compared by value).
+ * and the workspace reader are passed through `sbom`'s injectable `deps` seam so
+ * these assertions pin the ADAPTER's in-process logic — the workspace guard, the
+ * missing-lockfile guard, the lockfile-parse fail-closed path, the receipt
+ * projection (status / content address / counts / violation flattening), and the
+ * exit-code mapping — without paying for a real pnpm-lock.yaml parse or writing a
+ * real artifact. The artifact write is intercepted at the `node:fs` boundary so no
+ * file lands in the repo (TWO-CLOCK: the receipt's timestamp is a wallClock
+ * boundary, asserted ISO-shaped, never compared by value).
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { captureCli } from '../../../integration/cli/capture.js';
 
-const { isLiteShipWorkspaceMock, readWorkspacePackagesMock } = vi.hoisted(() => ({
-  isLiteShipWorkspaceMock: vi.fn(),
-  readWorkspacePackagesMock: vi.fn(),
-}));
-vi.mock('../../../../packages/cli/src/lib/workspace.js', async (importOriginal) => {
-  const orig = await importOriginal<Record<string, unknown>>();
-  return { ...orig, isLiteShipWorkspace: isLiteShipWorkspaceMock, readWorkspacePackages: readWorkspacePackagesMock };
-});
+const isLiteShipWorkspaceMock = vi.fn();
+const readWorkspacePackagesMock = vi.fn();
+const analyzeLockfileMock = vi.fn();
+const buildSbomMock = vi.fn();
+const checkSbomCompletenessMock = vi.fn();
 
-const { analyzeLockfileMock, buildSbomMock, checkSbomCompletenessMock } = vi.hoisted(() => ({
-  analyzeLockfileMock: vi.fn(),
-  buildSbomMock: vi.fn(),
-  checkSbomCompletenessMock: vi.fn(),
-}));
-vi.mock('../../../../packages/cli/src/lib/supply-chain.js', async (importOriginal) => {
-  const orig = await importOriginal<Record<string, unknown>>();
-  return {
-    ...orig,
-    analyzeLockfile: analyzeLockfileMock,
-    buildSbom: buildSbomMock,
-    checkSbomCompleteness: checkSbomCompletenessMock,
-  };
-});
+/** The workspace-reader + supply-chain-analyzer seam injected into every `sbom` call. */
+const sbomDeps = {
+  isLiteShipWorkspace: isLiteShipWorkspaceMock,
+  readWorkspacePackages: readWorkspacePackagesMock,
+  analyzeLockfile: analyzeLockfileMock,
+  buildSbom: buildSbomMock,
+  checkSbomCompleteness: checkSbomCompletenessMock,
+};
 
 const { existsSyncMock, readFileSyncMock, writeFileSyncMock, mkdirSyncMock } = vi.hoisted(() => ({
   existsSyncMock: vi.fn(),
@@ -93,7 +85,7 @@ function lastReceipt(stdout: string): Record<string, unknown> {
 describe('liteship sbom — workspace + lockfile guards (exit 1, emitError, no artifact write)', () => {
   it('refuses a non-LiteShip workspace before reading anything', async () => {
     isLiteShipWorkspaceMock.mockReturnValue(false);
-    const { exit, stderr } = await captureCli(async () => sbom([]));
+    const { exit, stderr } = await captureCli(async () => sbom([], sbomDeps));
     expect(exit).toBe(1);
     const event = JSON.parse(stderr.trim().split('\n').pop()!) as { command: string; error: string };
     expect(event.command).toBe('sbom');
@@ -105,7 +97,7 @@ describe('liteship sbom — workspace + lockfile guards (exit 1, emitError, no a
 
   it('refuses a missing pnpm-lock.yaml (exit 1) and names the absent path', async () => {
     existsSyncMock.mockReturnValue(false);
-    const { exit, stderr } = await captureCli(async () => sbom([]));
+    const { exit, stderr } = await captureCli(async () => sbom([], sbomDeps));
     expect(exit).toBe(1);
     const event = JSON.parse(stderr.trim().split('\n').pop()!) as { error: string };
     expect(event.error).toContain('pnpm-lock.yaml not found');
@@ -119,7 +111,7 @@ describe('liteship sbom — lockfile parse fails LOUD (no partial SBOM over a ha
     analyzeLockfileMock.mockImplementation(() => {
       throw parseError;
     });
-    const { exit, stderr } = await captureCli(async () => sbom([]));
+    const { exit, stderr } = await captureCli(async () => sbom([], sbomDeps));
     expect(exit).toBe(1);
     const event = JSON.parse(stderr.trim().split('\n').pop()!) as { error: string };
     expect(event.error).toBe('unreadable lockfile shape at line 3');
@@ -132,7 +124,7 @@ describe('liteship sbom — lockfile parse fails LOUD (no partial SBOM over a ha
     analyzeLockfileMock.mockImplementation(() => {
       throw new Error('boom');
     });
-    const { exit, stderr } = await captureCli(async () => sbom([]));
+    const { exit, stderr } = await captureCli(async () => sbom([], sbomDeps));
     expect(exit).toBe(1);
     const event = JSON.parse(stderr.trim().split('\n').pop()!) as { error: string };
     expect(event.error).toContain('lockfile parse failed');
@@ -142,7 +134,7 @@ describe('liteship sbom — lockfile parse fails LOUD (no partial SBOM over a ha
 
 describe('liteship sbom — clean run emits a deterministic, content-addressed receipt (exit 0)', () => {
   it('writes the reviewable artifact and projects the SBOM receipt shape', async () => {
-    const { exit, stdout } = await captureCli(async () => sbom([]));
+    const { exit, stdout } = await captureCli(async () => sbom([], sbomDeps));
     expect(exit).toBe(0);
 
     // The serialized SBOM was written to the canonical artifact path.
@@ -168,8 +160,8 @@ describe('liteship sbom — clean run emits a deterministic, content-addressed r
   });
 
   it('is deterministic: two runs over the same lockfile emit the same content address + component count', async () => {
-    const first = await captureCli(async () => sbom([]));
-    const second = await captureCli(async () => sbom([]));
+    const first = await captureCli(async () => sbom([], sbomDeps));
+    const second = await captureCli(async () => sbom([], sbomDeps));
     const a = lastReceipt(first.stdout);
     const b = lastReceipt(second.stdout);
     expect(a['content_address']).toEqual(b['content_address']);
@@ -180,13 +172,11 @@ describe('liteship sbom — clean run emits a deterministic, content-addressed r
 
 describe('liteship sbom — a non-hermetic supply chain fails (exit 1) with flattened violations', () => {
   it('merges lockfile-policy + SBOM-completeness violations into {code,subject} and exits 1', async () => {
-    analyzeLockfileMock.mockImplementation(() =>
-      lockfileFacts([{ code: 'unpinned-dependency', subject: 'left-pad' }]),
-    );
+    analyzeLockfileMock.mockImplementation(() => lockfileFacts([{ code: 'unpinned-dependency', subject: 'left-pad' }]));
     checkSbomCompletenessMock.mockReturnValue({
       violations: [{ code: 'incomplete-sbom', subject: '@liteship/web', detail: 'ignored field' }],
     });
-    const { exit, stdout } = await captureCli(async () => sbom([]));
+    const { exit, stdout } = await captureCli(async () => sbom([], sbomDeps));
     expect(exit).toBe(1);
     const receipt = lastReceipt(stdout);
     expect(receipt['status']).toBe('failed');

@@ -35,6 +35,7 @@ import { collectTokenManifest, collectThemeManifest } from './token-manifest.js'
 import { resolveVirtualId, loadVirtualModule, type BoundaryAssetUrlMap } from './virtual-modules.js';
 import { buildEnvironments, type LiteshipEnvironmentName } from './environments.js';
 import { formatWasmSearchPaths } from './wasm-resolve.js';
+import { resolvePackagedWasm } from './wasm-package-resolve.js';
 import { transformHTML } from './html-transform.js';
 import { transformCss } from './transform-css.js';
 import {
@@ -178,8 +179,13 @@ function attachAssetUrls(
  * import { liteship } from '@liteship/vite';
  * const config = { plugins: [liteship()] };
  * ```
+ *
+ * `resolvePackaged` is an internal seam: the packaged-`@liteship/core` binary
+ * resolver, defaulting to the real {@link resolvePackagedWasm}. Production leaves
+ * it defaulted (call sites are `plugin(config)`, byte-identical); a test injects a
+ * stub to force the `'package'` WASM source absent against a synthetic project root.
  */
-export function plugin(config?: PluginConfig): Plugin {
+export function plugin(config?: PluginConfig, resolvePackaged: () => string | null = resolvePackagedWasm): Plugin {
   const hmrEnabled = config?.hmr !== false;
   const emitBoundaryAssets = config?.emitBoundaryAssets === true;
 
@@ -187,7 +193,7 @@ export function plugin(config?: PluginConfig): Plugin {
   //  - `cache`     : resolution + watch caches shared across transform/HMR.
   //  - `wasmState` : the compute-binary state machine (resolve/enable/emit).
   const cache = createPrimitiveResolutionCache();
-  const wasmState = createWasmState(normalizeWasmConfig(config?.wasm), process.cwd());
+  const wasmState = createWasmState(normalizeWasmConfig(config?.wasm), process.cwd(), resolvePackaged);
 
   let projectRoot = process.cwd();
   let isBuild = false;
@@ -280,7 +286,7 @@ export function plugin(config?: PluginConfig): Plugin {
       boundaryAssetState = null;
       const resolved = refreshWasmAtBuildStart(wasmState, projectRoot);
       if (wasmState.config.mode !== 'off' && !resolved && wasmState.config.mode === 'on') {
-        const searched = formatWasmSearchPaths(projectRoot, wasmState.config.path);
+        const searched = formatWasmSearchPaths(projectRoot, wasmState.config.path, resolvePackaged);
         this.warn(
           `WASM support was enabled, but no liteship-compute binary could be resolved. Searched: ${searched}. ` +
             'Fix: the binary ships inside @liteship/core (>=0.2.1) — ensure it is installed so it resolves from ' +

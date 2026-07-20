@@ -13,16 +13,23 @@
  *   - types-file-purity          (d) no value declarations in a types.ts
  *   - no-shape-namespace-type    (e) the retired ADR-0001 `.Shape` convention stays dead (ADR-0046)
  *
+ * The same harness also proves the testing-hygiene backstop from the runtime-seams
+ * hotspot:
+ *   - no-internal-vi-mock        (f) no `vi.mock` of an internal @liteship/* package
+ *                                    or a relative reach; node builtins + third-party
+ *                                    specifiers stay legal (scope: `tests/**`)
+ *
  * Every other sgrule is backstopped by a vitest meta-test that pins the SCARS
  * (float-determinism.test.ts, a1-seam-integrity.test.ts). Those rules ported an
  * existing hand-rolled guard, so their meta-test asserts the byte-level budget
- * and leaves the AST match to `lint:structural`. These five rules are NEW law
+ * and leaves the AST match to `lint:structural`. These rules are NEW law
  * with no prior regex guard, so this harness proves the rules themselves fire:
  * for each rule it runs the REAL rule file (via ast-grep `scan --rule`) against a
  * RED fixture (must fire) and a GREEN fixture (must pass), plus a scope fixture
  * where scoping matters. Fixtures live under a temp tree whose paths mirror the
  * rule `files:` globs — ast-grep applies a rule only to paths its glob matches,
- * so the fixtures sit at `.../packages/<pkg>/src/<domain>/<file>` to be in scope.
+ * so the fixtures sit at `.../packages/<pkg>/src/<domain>/<file>` (or, for the
+ * vi.mock ban, `.../tests/<...>.test.ts`) to be in scope.
  *
  * @module
  */
@@ -82,6 +89,7 @@ describe('source-grammar rules are registered with ast-grep', () => {
       'no-utils-file.yml',
       'types-file-purity.yml',
       'no-shape-namespace-type.yml',
+      'no-internal-vi-mock.yml',
     ]) {
       expect(existsSync(resolve(SGRULES, r)), r).toBe(true);
     }
@@ -250,9 +258,70 @@ describe('no-shape-namespace-type (e) — the ADR-0001 .Shape convention stays d
   });
 
   it('GREEN: a top-level interface incidentally named Shape (outside any namespace) is not the retired pattern', async () => {
+    const f = fixture('packages/faux/src/domain/geometry.ts', 'export interface Shape { readonly sides: number }\n');
+    expect((await scan(RULE, f)).length).toBe(0);
+  });
+});
+
+describe('no-internal-vi-mock (f) — vi.mock of an internal module is banned (tests-scoped)', () => {
+  const RULE = 'no-internal-vi-mock.yml';
+
+  // Assemble each `vi.mock(...)` fixture LINE by interpolating the specifier, so the
+  // banned call+specifier pair (the mock verb immediately followed by a quoted
+  // `@liteship/…` or a `../…` reach) never appears CONTIGUOUSLY in this meta-test's
+  // own source — otherwise the fixture text would itself trip the reconcile grep
+  // (and the very rule) it exists to prove. ast-grep still parses the WRITTEN
+  // fixture file as a real `vi.mock` call.
+  const q = "'";
+  const mock = (spec: string, factory?: string): string =>
+    factory === undefined ? `vi.mock(${q}${spec}${q});` : `vi.mock(${q}${spec}${q}, ${factory});`;
+
+  it('RED: vi.mock of a @liteship/* package and a relative reach both fire (1-arg + factory forms)', async () => {
     const f = fixture(
-      'packages/faux/src/domain/geometry.ts',
-      'export interface Shape { readonly sides: number }\n',
+      'tests/unit/faux/internal-mock.test.ts',
+      [
+        "import { vi } from 'vitest';",
+        // A first-party package, auto-mock (1-arg) form.
+        mock('@liteship/core'),
+        // A relative reach into another module's src, factory (2-arg) form.
+        mock('../../packages/x/src/y.js', '() => ({ y: 1 })'),
+        // A scoped subpath + importOriginal factory (multiline 2-arg) — still internal.
+        `vi.mock(${q}@liteship/command/host${q}, async (importOriginal) => {`,
+        '  const orig = await importOriginal();',
+        '  return { ...orig };',
+        '});',
+        // A `./` relative reach.
+        mock('./local.js', '() => ({})'),
+        '',
+      ].join('\n'),
+    );
+    // @liteship/core + ../../packages/x + @liteship/command/host + ./local = 4.
+    expect((await scan(RULE, f)).length).toBe(4);
+  });
+
+  it('GREEN: vi.mock of a node builtin and a third-party specifier pass (the only legal externals)', async () => {
+    const f = fixture(
+      'tests/unit/faux/external-mock.test.ts',
+      [
+        "import { vi } from 'vitest';",
+        "vi.mock('node:fs');",
+        "vi.mock('vite');",
+        // A node builtin with an importOriginal factory is legal too.
+        "vi.mock('node:child_process', async (importOriginal) => {",
+        '  const orig = await importOriginal();',
+        '  return { ...orig };',
+        '});',
+        "vi.mock('node:dns/promises', () => ({}));",
+        '',
+      ].join('\n'),
+    );
+    expect((await scan(RULE, f)).length).toBe(0);
+  });
+
+  it('SCOPE: an internal vi.mock OUTSIDE tests/ (e.g. under a package src) is out of scope', async () => {
+    const f = fixture(
+      'packages/faux/src/domain/not-a-test.ts',
+      ["import { vi } from 'vitest';", mock('@liteship/core'), ''].join('\n'),
     );
     expect((await scan(RULE, f)).length).toBe(0);
   });

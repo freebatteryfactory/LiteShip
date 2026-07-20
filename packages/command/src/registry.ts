@@ -433,6 +433,33 @@ export interface CommandCache {
 export type CommandCapability = Exclude<keyof CommandContext, 'cwd'>;
 
 /**
+ * The receipt-timestamp clock — a MODULE-BOUNDARY injection point (the two-clock
+ * law), not a per-call `context.clock`: every `ok`/`failed` envelope reads the
+ * SAME source, so the receipt shape lives in one place. Defaults to {@link
+ * wallClock} (real epoch ms), so production stamps are byte-identical to a bare
+ * `new Date(wallClock.now())`. A determinism test installs a `fixedClock` through
+ * {@link _setReceiptClock} to make the full receipt reproducible run-to-run, then
+ * {@link _resetReceiptClock} restores the default — the injection the two-clock law
+ * buys, without an internal-module mock.
+ */
+let receiptClock: Clock = wallClock;
+
+/**
+ * Install the receipt-timestamp clock (testing seam). Underscore-prefixed and NOT
+ * re-exported from the package barrel, so it stays off the public api surface;
+ * a test imports it from `registry.js` directly. Pair every call with {@link
+ * _resetReceiptClock} so the fixed clock never leaks past the test.
+ */
+export function _setReceiptClock(clock: Clock): void {
+  receiptClock = clock;
+}
+
+/** Restore the default {@link wallClock} receipt-timestamp source (testing seam). */
+export function _resetReceiptClock(): void {
+  receiptClock = wallClock;
+}
+
+/**
  * Stamp a SUCCESS envelope: `status: 'ok'` + the volatile wall-clock timestamp +
  * the typed payload, no `exitCode` (ok maps to 0 at the adapter). The command
  * name is threaded ONCE here instead of repeated on every return path in a
@@ -443,7 +470,7 @@ export function ok<P>(command: string, payload: P): CapsuleCommandResult<P> {
   return {
     status: 'ok',
     command,
-    timestamp: new Date(wallClock.now()).toISOString(),
+    timestamp: new Date(receiptClock.now()).toISOString(),
     payload,
   };
 }
@@ -459,7 +486,7 @@ export function failed<P>(command: string, payload: P, exitCode = 1): CapsuleCom
   return {
     status: 'failed',
     command,
-    timestamp: new Date(wallClock.now()).toISOString(),
+    timestamp: new Date(receiptClock.now()).toISOString(),
     exitCode,
     payload,
   };

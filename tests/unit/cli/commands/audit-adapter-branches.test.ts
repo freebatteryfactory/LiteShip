@@ -2,7 +2,7 @@
  * Branch coverage for the `liteship audit` CLI adapter's defensive seams
  * (runtime-seams hotspot). The devops suite drives the REAL engine; these
  * arms only fire when the handler misbehaves or returns degraded shapes —
- * so the handler is mocked here, never the engine:
+ * so the handler is injected here, never the engine:
  *   - a non-Error throw from the handler/profile loader
  *   - structured failure with no audit payload (capability unavailable)
  *   - failed-with-payload receipts and exitCode defaulting
@@ -11,13 +11,12 @@
  * @module
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import type * as LiteshipCommand from '@liteship/command';
 
-const { handlerMock } = vi.hoisted(() => ({ handlerMock: vi.fn() }));
-vi.mock('@liteship/command', async (importOriginal) => {
-  const actual = await importOriginal<typeof LiteshipCommand>();
-  return { ...actual, auditCommand: { ...actual.auditCommand, handler: handlerMock } };
-});
+// The audit handler is INJECTED through `audit`'s defaulted `deps.auditHandler`
+// seam (NOT a @liteship/command module mock), so these arms drive the CLI adapter's
+// degraded-shape branches over a scripted handler while the real engine stays inert.
+const handlerMock = vi.fn();
+const auditDeps = { auditHandler: handlerMock };
 
 import { audit } from '../../../../packages/cli/src/commands/audit.js';
 
@@ -61,7 +60,7 @@ afterEach(() => {
 describe('audit CLI adapter — degraded handler shapes', () => {
   it('a non-Error throw is stringified into the failure receipt', async () => {
     handlerMock.mockRejectedValue('plain string failure');
-    const { result, stderr } = await captureStdio(() => audit({ pretty: false }));
+    const { result, stderr } = await captureStdio(() => audit({ pretty: false }, auditDeps));
     expect(result).toBe(1);
     const receipt = JSON.parse(stderr.trim().split('\n')[0]!);
     expect(receipt.status).toBe('failed');
@@ -75,7 +74,7 @@ describe('audit CLI adapter — degraded handler shapes', () => {
       exitCode: 3,
       timestamp: '2026-06-10T00:00:00.000Z',
     });
-    const { result, stderr } = await captureStdio(() => audit({ pretty: false }));
+    const { result, stderr } = await captureStdio(() => audit({ pretty: false }, auditDeps));
     expect(result).toBe(3);
     expect(JSON.parse(stderr.trim().split('\n')[0]!).error).toBe('capability unavailable');
   });
@@ -86,7 +85,7 @@ describe('audit CLI adapter — degraded handler shapes', () => {
       payload: {},
       timestamp: '2026-06-10T00:00:00.000Z',
     });
-    const { result, stderr } = await captureStdio(() => audit({ pretty: false }));
+    const { result, stderr } = await captureStdio(() => audit({ pretty: false }, auditDeps));
     expect(result).toBe(1);
     expect(JSON.parse(stderr.trim().split('\n')[0]!).error).toBe('audit failed');
   });
@@ -98,7 +97,7 @@ describe('audit CLI adapter — degraded handler shapes', () => {
       exitCode: 2,
       timestamp: '2026-06-10T00:00:00.000Z',
     });
-    const { result, stdout } = await captureStdio(() => audit({ pretty: false }));
+    const { result, stdout } = await captureStdio(() => audit({ pretty: false }, auditDeps));
     expect(result).toBe(2);
     const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
     expect(receipt.status).toBe('failed');
@@ -114,7 +113,7 @@ describe('audit CLI adapter — pretty and exit defaulting', () => {
       timestamp: '2026-06-10T00:00:00.000Z',
     });
     // pretty omitted: in the captured (non-TTY) environment the summary line stays off.
-    const { result, stderr } = await captureStdio(() => audit({}));
+    const { result, stderr } = await captureStdio(() => audit({}, auditDeps));
     expect(result).toBe(0);
     expect(stderr).toBe('');
   });
@@ -126,7 +125,7 @@ describe('audit CLI adapter — pretty and exit defaulting', () => {
       exitCode: 0,
       timestamp: '2026-06-10T00:00:00.000Z',
     });
-    const { stderr } = await captureStdio(() => audit({ pretty: true }));
+    const { stderr } = await captureStdio(() => audit({ pretty: true }, auditDeps));
     expect(stderr).toMatch(/audit: 0 error\(s\)/);
     expect(stderr.trim().split('\n')).toHaveLength(1);
   });
@@ -145,7 +144,7 @@ describe('audit CLI adapter — pretty and exit defaulting', () => {
       exitCode: 0,
       timestamp: '2026-06-10T00:00:00.000Z',
     });
-    const { stderr } = await captureStdio(() => audit({ pretty: true }));
+    const { stderr } = await captureStdio(() => audit({ pretty: true }, auditDeps));
     expect(stderr).toContain('  [info] no-location — finding without location');
     expect(stderr).toContain('  [info] a.ts file-only — file only');
     expect(stderr).toContain('  [info] a.ts:3 file-line — no column');

@@ -1,0 +1,33 @@
+# Locks in the internal-vi.mock elimination (runtime-seams hotspot).
+#
+# An `vi.mock(...)` of an INTERNAL module — a first-party `@liteship/*` package or a
+# relative reach (`./x`, `../y`) into another module's src — replaces a real unit
+# with an interaction double, so the test stops proving the seam and starts
+# asserting a mock's script. Every such site was retired in favor of a NARROW,
+# defaulted dependency seam (an options/deps param that defaults to the real
+# singleton), so production call sites stay byte-identical while tests inject a
+# scripted double through the seam. `vi.mock` stays LEGAL only for true externals:
+# node builtins (`node:fs`, `node:child_process`, `node:dns/promises`) and
+# third-party bare specifiers (`vite`) — a mock is the only seam those offer.
+#
+# This rule flags any `vi.mock` call whose FIRST string argument starts with
+# `@liteship/` (an internal package) or `./` / `../` (a relative reach), across
+# `tests/**`, at error severity. A `node:*` builtin or a bare third-party specifier
+# does NOT match. Matching the call SIGNATURE (not a line-anchored regex) means a
+# multiline `vi.mock(\n  '@liteship/x',\n  ...)` can never slip past, and prose that
+# merely names a mocked module in a comment/string can never trip it. Passes clean
+# on the current tree (every internal site is eliminated).
+id: no-internal-vi-mock
+language: typescript
+severity: error
+message: 'vi.mock of an internal module (@liteship/* or a relative reach) is banned — inject a narrow, defaulted dependency seam instead. vi.mock stays legal only for node builtins (node:*) and third-party specifiers.'
+files:
+  - '**/tests/**/*.ts'
+rule:
+  any:
+    - pattern: vi.mock($SRC)
+    - pattern: vi.mock($SRC, $$$REST)
+constraints:
+  SRC:
+    kind: string
+    regex: "^['\"](@liteship/|\\.\\.?/)"

@@ -21,13 +21,11 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { captureCli } from '../../../integration/cli/capture.js';
 
-const { runCheckInvariantsScanMock } = vi.hoisted(() => ({ runCheckInvariantsScanMock: vi.fn() }));
-// The adapter calls runCheckInvariantsScan(cwd) THROUGH the injected context; we
-// mock the host's spawn capability so the real scan never spawns `git ls-files`.
-vi.mock('@liteship/command/host', async (importOriginal) => {
-  const orig = await importOriginal<Record<string, unknown>>();
-  return { ...orig, spawnArgvCapture: runCheckInvariantsScanMock };
-});
+// The adapter folds the scan through its injected `spawn` seam (a defaulted param
+// on `checkInvariants` → `runCheckInvariantsScan` → `findLineEndingViolations`), so
+// the `git ls-files --eol` probe is scripted straight into the adapter — NO
+// @liteship/command/host module mock — and the real scan never spawns `git`.
+const spawnMock = vi.fn();
 
 import {
   checkInvariants,
@@ -119,7 +117,7 @@ describe('liteship check-invariants — adapter projection (scan via injected ca
   beforeEach(() => {
     root = mkdtempSync(join(tmpdir(), 'liteship-inv-adapter-'));
     // A clean `git ls-files --eol` probe → no line-ending violations by default.
-    runCheckInvariantsScanMock.mockReset().mockResolvedValue({ exitCode: 0, stdout: '' });
+    spawnMock.mockReset().mockResolvedValue({ exitCode: 0, stdout: '' });
   });
   afterEach(() => rmSync(root, { recursive: true, force: true }));
 
@@ -132,7 +130,9 @@ describe('liteship check-invariants — adapter projection (scan via injected ca
   it('a clean fixture root passes the gate (exit 0, ok receipt, no work-list)', async () => {
     write('.gitattributes', '* text=auto eol=lf\n');
     write('packages/x/src/ok.ts', 'export const ok = 1;\n');
-    const { exit, stdout, stderr } = await captureCli(() => checkInvariants({ cwd: root, pretty: true }));
+    const { exit, stdout, stderr } = await captureCli(() =>
+      checkInvariants({ cwd: root, pretty: true }, { spawn: spawnMock }),
+    );
     expect(exit).toBe(0);
     const receipt = lastReceipt(stdout);
     expect(receipt).toMatchObject({ command: 'check-invariants', status: 'ok', ok: true });
@@ -145,7 +145,9 @@ describe('liteship check-invariants — adapter projection (scan via injected ca
     write('.gitattributes', '* text=auto eol=lf\n');
     // `require(` trips the NO_REQUIRE invariant over the `packages` dir.
     write('packages/x/src/bad.ts', 'const dep = require("x");\n');
-    const { exit, stdout, stderr } = await captureCli(() => checkInvariants({ cwd: root, pretty: true }));
+    const { exit, stdout, stderr } = await captureCli(() =>
+      checkInvariants({ cwd: root, pretty: true }, { spawn: spawnMock }),
+    );
     expect(exit).toBe(1);
     const receipt = lastReceipt(stdout);
     expect(receipt['status']).toBe('failed');
@@ -160,11 +162,13 @@ describe('liteship check-invariants — adapter projection (scan via injected ca
     write('.gitattributes', '* text=auto eol=lf\n');
     write('packages/x/src/ok.ts', 'export const ok = 1;\n');
     // `git ls-files --eol` reports a CRLF-in-index file under an eol=lf policy.
-    runCheckInvariantsScanMock.mockResolvedValue({
+    spawnMock.mockResolvedValue({
       exitCode: 0,
       stdout: 'i/crlf  w/crlf  attr/text=auto \tpackages/x/src/ok.ts\n',
     });
-    const { exit, stdout, stderr } = await captureCli(() => checkInvariants({ cwd: root, pretty: true }));
+    const { exit, stdout, stderr } = await captureCli(() =>
+      checkInvariants({ cwd: root, pretty: true }, { spawn: spawnMock }),
+    );
     expect(exit).toBe(1);
     const receipt = lastReceipt(stdout);
     expect(receipt['status']).toBe('failed');
@@ -175,7 +179,9 @@ describe('liteship check-invariants — adapter projection (scan via injected ca
   it('stays SILENT on stderr when pretty is off (failed receipt still exits 1)', async () => {
     write('.gitattributes', '* text=auto eol=lf\n');
     write('packages/x/src/bad.ts', 'const dep = require("x");\n');
-    const { exit, stderr } = await captureCli(() => checkInvariants({ cwd: root, pretty: false }));
+    const { exit, stderr } = await captureCli(() =>
+      checkInvariants({ cwd: root, pretty: false }, { spawn: spawnMock }),
+    );
     expect(exit).toBe(1);
     expect(stderr).toBe('');
   });

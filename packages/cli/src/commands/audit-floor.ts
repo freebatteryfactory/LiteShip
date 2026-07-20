@@ -24,13 +24,33 @@ export interface AuditFloorReceipt extends AuditFloorPayload {
 }
 
 /**
+ * Injectable three-pass engine seam for the CLI-only warning-floor scan. Every
+ * field defaults (via {@link defaultAuditFloorDeps}) to the real `@liteship/audit`
+ * pass, so production `liteship audit-floor` runs the real repo-wide audit
+ * unchanged; tests pass scripted passes to pin the adapter's warning
+ * filter/sort/diff + receipt projection over synthetic findings without
+ * re-running the heavy engine. Kept unexported so the api-surface is unchanged.
+ */
+interface AuditFloorDeps {
+  readonly runStructureAudit: typeof runStructureAudit;
+  readonly runIntegrityAudit: typeof runIntegrityAudit;
+  readonly runSurfaceAudit: typeof runSurfaceAudit;
+}
+
+const defaultAuditFloorDeps: AuditFloorDeps = { runStructureAudit, runIntegrityAudit, runSurfaceAudit };
+
+/**
  * Collect the sorted `rule@file` warning inventory from the artifact-independent
  * three-pass `@liteship/audit` engine (the heavy half of the deleted
  * `scripts/lib/audit-floor.ts`). Exported so meta-tests can assert the live repo
  * inventory matches the pinned floor without re-running the whole gate.
  */
-export function collectWarningInventory(): readonly string[] {
-  const all = [...runStructureAudit().findings, ...runIntegrityAudit().findings, ...runSurfaceAudit().findings];
+export function collectWarningInventory(deps: AuditFloorDeps = defaultAuditFloorDeps): readonly string[] {
+  const all = [
+    ...deps.runStructureAudit().findings,
+    ...deps.runIntegrityAudit().findings,
+    ...deps.runSurfaceAudit().findings,
+  ];
   return all
     .filter((f) => f.severity === 'warning')
     .map((f) => `${f.rule}@${f.location?.file ?? 'unknown'}`)
@@ -42,10 +62,10 @@ export function collectWarningInventory(): readonly string[] {
  * count from the three-pass engine and diff against the pinned floor. Ported
  * verbatim from the deleted `scripts/audit-floor.ts` + `scripts/lib/audit-floor.ts`.
  */
-function runAuditFloorScan(): AuditFloorSummary {
-  const structure = runStructureAudit();
-  const integrity = runIntegrityAudit();
-  const surface = runSurfaceAudit();
+function runAuditFloorScan(deps: AuditFloorDeps = defaultAuditFloorDeps): AuditFloorSummary {
+  const structure = deps.runStructureAudit();
+  const integrity = deps.runIntegrityAudit();
+  const surface = deps.runSurfaceAudit();
   const all = [...structure.findings, ...integrity.findings, ...surface.findings];
   const inventory = all
     .filter((f) => f.severity === 'warning')
@@ -67,10 +87,13 @@ function runAuditFloorScan(): AuditFloorSummary {
 }
 
 /** Execute `liteship audit-floor` — run the three-pass engine, diff the warning inventory; emit a verdict. */
-export async function auditFloor(opts: { cwd?: string; pretty?: boolean } = {}): Promise<number> {
+export async function auditFloor(
+  opts: { cwd?: string; pretty?: boolean } = {},
+  deps: AuditFloorDeps = defaultAuditFloorDeps,
+): Promise<number> {
   const cwd = opts.cwd ?? process.cwd();
 
-  const context: CommandContext = { cwd, runAuditFloor: async () => runAuditFloorScan() };
+  const context: CommandContext = { cwd, runAuditFloor: async () => runAuditFloorScan(deps) };
 
   const result = await auditFloorCommand.handler({ name: 'audit-floor', args: {} }, context);
   const payload = result.payload as AuditFloorPayload;

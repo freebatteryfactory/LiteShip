@@ -33,8 +33,31 @@ function toAnalyzerPkg(p: WorkspacePackageIdentity): WorkspacePkg {
   return { name: p.name, version: p.version, private: p.private, importerPath: p.importerPath };
 }
 
+/**
+ * Injectable seam for {@link sbom}'s workspace reader + supply-chain analyzer.
+ * Defaults to the real lib functions so production `liteship sbom` is unchanged;
+ * tests pass doubles to pin the adapter's in-process logic (guards, fail-closed
+ * parse path, receipt projection) without a real pnpm-lock.yaml parse.
+ */
+interface SbomDeps {
+  readonly isLiteShipWorkspace: typeof isLiteShipWorkspace;
+  readonly readWorkspacePackages: typeof readWorkspacePackages;
+  readonly analyzeLockfile: typeof analyzeLockfile;
+  readonly buildSbom: typeof buildSbom;
+  readonly checkSbomCompleteness: typeof checkSbomCompleteness;
+}
+
+const defaultSbomDeps: SbomDeps = {
+  isLiteShipWorkspace,
+  readWorkspacePackages,
+  analyzeLockfile,
+  buildSbom,
+  checkSbomCompleteness,
+};
+
 /** Execute `liteship sbom`. */
-export function sbom(_args: readonly string[]): number {
+export function sbom(_args: readonly string[], deps: SbomDeps = defaultSbomDeps): number {
+  const { isLiteShipWorkspace, readWorkspacePackages, analyzeLockfile, buildSbom, checkSbomCompleteness } = deps;
   const cwd = process.cwd();
   if (!isLiteShipWorkspace(cwd)) {
     emitError('sbom', 'not a LiteShip workspace (root package.json is not "liteship")');

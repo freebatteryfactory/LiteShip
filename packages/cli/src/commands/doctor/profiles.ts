@@ -33,6 +33,7 @@ import {
   probePnpm,
   probeWasmToolchain,
   probeWorkspaceInstalled,
+  type SpawnArgvCapture,
 } from './probes-workspace.js';
 import { probeAstroDevStatus } from './probes-astro.js';
 import { probeWorkersModuleScopeDate } from './probes-workers-date.js';
@@ -40,6 +41,13 @@ import type { DoctorCheck, DoctorTarget } from './types.js';
 
 interface RunProbesOptions {
   readonly target?: DoctorTarget;
+  /**
+   * The subprocess-capture capability the maintainer profile's spawn-bearing
+   * probes (pnpm / git config / cargo) shell out through. Injected by
+   * {@link doctor} so tests can force the timeout/reject paths; `undefined`
+   * falls back to each probe's real {@link spawnArgvCapture} default.
+   */
+  readonly spawn?: SpawnArgvCapture;
 }
 
 /**
@@ -136,7 +144,11 @@ export async function runAllProbes(cwd: string, opts: RunProbesOptions = {}): Pr
   // concurrently so the wall time is the slowest single probe, not the serial
   // sum of cargo + pnpm + git (CUT test-flake). Sync probes stay sync. Receipt
   // order below is preserved regardless of completion order.
-  const [wasm, pnpm, gitConfig] = await Promise.all([probeWasmToolchain(cwd), probePnpm(minima), probeGitConfig(cwd)]);
+  const [wasm, pnpm, gitConfig] = await Promise.all([
+    probeWasmToolchain(cwd, opts.spawn),
+    probePnpm(minima, opts.spawn),
+    probeGitConfig(cwd, opts.spawn),
+  ]);
   return [
     probeNode(minima),
     pnpm,

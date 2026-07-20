@@ -22,16 +22,14 @@ import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
-import type * as CommandHost from '@liteship/command/host';
 
-const spawnMock = vi.hoisted(() => ({ spawnArgvCapture: vi.fn() }));
-const ffmpegMock = vi.hoisted(() => ({ probeFfmpegRender: vi.fn() }));
-
-vi.mock('../../../../../packages/cli/src/lib/spawn.js', () => spawnMock);
-vi.mock('@liteship/command/host', async (importOriginal) => {
-  const actual = await importOriginal<typeof CommandHost>();
-  return { ...actual, probeFfmpegRender: ffmpegMock.probeFfmpegRender };
-});
+// Both outbound boundaries are injected straight into their probes — no module
+// mock: the subprocess-capture spawn through each spawn-bearing probe's defaulted
+// `spawn` param, and the ffmpeg render probe through `probeFfmpegRenderCheck`'s
+// defaulted `probe` param — so the suite scripts pnpm/git/cargo/ffmpeg
+// deterministically without touching the real PATH.
+const spawnMock = { spawnArgvCapture: vi.fn() };
+const ffmpegMock = { probeFfmpegRender: vi.fn() };
 
 import {
   probeBuilt,
@@ -84,40 +82,40 @@ describe('doctor/probes-workspace — probeNode()', () => {
 describe('doctor/probes-workspace — probePnpm()', () => {
   it('warn on a timeout', async () => {
     spawnMock.spawnArgvCapture.mockResolvedValue(captured({ exitCode: 124, timedOut: true }));
-    const r = await probePnpm(MINIMA);
+    const r = await probePnpm(MINIMA, spawnMock.spawnArgvCapture);
     expect(r.status).toBe('warn');
     expect(r.detail).toMatch(/no response within/);
   });
 
   it('fail when pnpm is not on PATH (spawn rejects)', async () => {
     spawnMock.spawnArgvCapture.mockRejectedValue(new Error('ENOENT'));
-    const r = await probePnpm(MINIMA);
+    const r = await probePnpm(MINIMA, spawnMock.spawnArgvCapture);
     expect(r.status).toBe('fail');
     expect(r.detail).toMatch(/not on PATH/);
   });
 
   it('fail when pnpm exits nonzero', async () => {
     spawnMock.spawnArgvCapture.mockResolvedValue(captured({ exitCode: 1 }));
-    expect((await probePnpm(MINIMA)).status).toBe('fail');
+    expect((await probePnpm(MINIMA, spawnMock.spawnArgvCapture)).status).toBe('fail');
   });
 
   it('warn on an unrecognized version string', async () => {
     spawnMock.spawnArgvCapture.mockResolvedValue(captured({ exitCode: 0, stdout: 'garbage\n' }));
-    const r = await probePnpm(MINIMA);
+    const r = await probePnpm(MINIMA, spawnMock.spawnArgvCapture);
     expect(r.status).toBe('warn');
     expect(r.detail).toMatch(/unrecognized version/);
   });
 
   it('fail when the version is below the minimum', async () => {
     spawnMock.spawnArgvCapture.mockResolvedValue(captured({ exitCode: 0, stdout: '8.0.0\n' }));
-    const r = await probePnpm(MINIMA);
+    const r = await probePnpm(MINIMA, spawnMock.spawnArgvCapture);
     expect(r.status).toBe('fail');
     expect(r.detail).toContain('need >= 10');
   });
 
   it('ok when the version meets the minimum', async () => {
     spawnMock.spawnArgvCapture.mockResolvedValue(captured({ exitCode: 0, stdout: '10.4.0\n' }));
-    expect(await probePnpm(MINIMA)).toMatchObject({ status: 'ok', detail: '10.4.0' });
+    expect(await probePnpm(MINIMA, spawnMock.spawnArgvCapture)).toMatchObject({ status: 'ok', detail: '10.4.0' });
   });
 });
 
@@ -236,7 +234,10 @@ describe('doctor/probes-workspace — probeGitHooks()', () => {
 
 describe('doctor/probes-workspace — probeGitConfig()', () => {
   it('ok when there is no .git (not a worktree)', async () => {
-    expect(await probeGitConfig(mkTmp())).toMatchObject({ status: 'ok', detail: 'no .git (not a worktree)' });
+    expect(await probeGitConfig(mkTmp(), spawnMock.spawnArgvCapture)).toMatchObject({
+      status: 'ok',
+      detail: 'no .git (not a worktree)',
+    });
   });
 
   it('ok when both user.name and user.email are set', async () => {
@@ -245,7 +246,7 @@ describe('doctor/probes-workspace — probeGitConfig()', () => {
     spawnMock.spawnArgvCapture.mockImplementation(async (_cmd: string, args: readonly string[]) =>
       captured({ exitCode: 0, stdout: args.includes('user.email') ? 'me@x.dev\n' : 'Me\n' }),
     );
-    expect(await probeGitConfig(dir)).toMatchObject({ status: 'ok' });
+    expect(await probeGitConfig(dir, spawnMock.spawnArgvCapture)).toMatchObject({ status: 'ok' });
   });
 
   it('warn listing the unset keys', async () => {
@@ -254,7 +255,7 @@ describe('doctor/probes-workspace — probeGitConfig()', () => {
     spawnMock.spawnArgvCapture.mockImplementation(async (_cmd: string, args: readonly string[]) =>
       captured({ exitCode: args.includes('user.email') ? 1 : 0, stdout: args.includes('user.email') ? '' : 'Me\n' }),
     );
-    const r = await probeGitConfig(dir);
+    const r = await probeGitConfig(dir, spawnMock.spawnArgvCapture);
     expect(r.status).toBe('warn');
     expect(r.detail).toContain('user.email');
     expect(r.detail).not.toContain('user.name');
@@ -264,7 +265,7 @@ describe('doctor/probes-workspace — probeGitConfig()', () => {
     const dir = mkTmp();
     mkdirSync(resolve(dir, '.git'), { recursive: true });
     spawnMock.spawnArgvCapture.mockResolvedValue(captured({ exitCode: 124, timedOut: true }));
-    const r = await probeGitConfig(dir);
+    const r = await probeGitConfig(dir, spawnMock.spawnArgvCapture);
     expect(r.status).toBe('warn');
     expect(r.detail).toMatch(/did not respond within/);
   });
@@ -273,12 +274,12 @@ describe('doctor/probes-workspace — probeGitConfig()', () => {
 describe('doctor/probes-workspace — probeFfmpegRenderCheck()', () => {
   it('ok when the underlying ffmpeg probe is ok', () => {
     ffmpegMock.probeFfmpegRender.mockReturnValue({ ok: true, detail: 'libx264 encode probe ok' });
-    expect(probeFfmpegRenderCheck()).toMatchObject({ id: 'ffmpeg.libx264', status: 'ok' });
+    expect(probeFfmpegRenderCheck(ffmpegMock.probeFfmpegRender)).toMatchObject({ id: 'ffmpeg.libx264', status: 'ok' });
   });
 
   it('warn carrying the probe detail + hint when ffmpeg is not capable', () => {
     ffmpegMock.probeFfmpegRender.mockReturnValue({ ok: false, detail: 'ffmpeg not on PATH', hint: 'install ffmpeg' });
-    const r = probeFfmpegRenderCheck();
+    const r = probeFfmpegRenderCheck(ffmpegMock.probeFfmpegRender);
     expect(r.status).toBe('warn');
     expect(r.detail).toBe('ffmpeg not on PATH');
     expect(r.hint).toBe('install ffmpeg');
@@ -328,14 +329,14 @@ describe('doctor/probes-workspace — probePlaywright()', () => {
 
 describe('doctor/probes-workspace — probeWasmToolchain()', () => {
   it('returns null (probe skipped) when there is no crates/ dir', async () => {
-    expect(await probeWasmToolchain(mkTmp())).toBeNull();
+    expect(await probeWasmToolchain(mkTmp(), spawnMock.spawnArgvCapture)).toBeNull();
   });
 
   it('warn on a cargo timeout', async () => {
     const dir = mkTmp();
     mkdirSync(resolve(dir, 'crates'), { recursive: true });
     spawnMock.spawnArgvCapture.mockResolvedValue(captured({ exitCode: 124, timedOut: true }));
-    const r = await probeWasmToolchain(dir);
+    const r = await probeWasmToolchain(dir, spawnMock.spawnArgvCapture);
     expect(r?.status).toBe('warn');
     expect(r?.detail).toMatch(/did not respond within/);
   });
@@ -344,7 +345,7 @@ describe('doctor/probes-workspace — probeWasmToolchain()', () => {
     const dir = mkTmp();
     mkdirSync(resolve(dir, 'crates'), { recursive: true });
     spawnMock.spawnArgvCapture.mockRejectedValue(new Error('ENOENT'));
-    const r = await probeWasmToolchain(dir);
+    const r = await probeWasmToolchain(dir, spawnMock.spawnArgvCapture);
     expect(r?.status).toBe('warn');
     expect(r?.detail).toMatch(/cargo not on PATH/);
   });
@@ -353,7 +354,7 @@ describe('doctor/probes-workspace — probeWasmToolchain()', () => {
     const dir = mkTmp();
     mkdirSync(resolve(dir, 'crates'), { recursive: true });
     spawnMock.spawnArgvCapture.mockResolvedValue(captured({ exitCode: 0, stdout: 'cargo 1.80.0\n' }));
-    const r = await probeWasmToolchain(dir);
+    const r = await probeWasmToolchain(dir, spawnMock.spawnArgvCapture);
     expect(r).toMatchObject({ status: 'ok', detail: 'cargo 1.80.0' });
   });
 });

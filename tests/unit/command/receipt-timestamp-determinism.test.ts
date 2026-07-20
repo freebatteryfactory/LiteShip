@@ -1,49 +1,49 @@
 /**
  * Determinism win for the command-receipt `timestamp` field.
  *
- * Every command result carries `timestamp: new Date(wallClock.now()).toISOString()`
- * — routed through @liteship/core's single sanctioned EPOCH boundary (`wallClock`),
- * never a raw argless `new Date()`. The two-clock law ([clock-substrate]) makes
- * the timestamp injectable at the module boundary: pin `wallClock.now()` to a
- * fixed epoch and the FULL receipt becomes byte-reproducible run-to-run.
+ * Every command result carries `timestamp: new Date(receiptClock.now()).toISOString()`
+ * — routed through the registry's single MODULE-BOUNDARY clock (`receiptClock`,
+ * defaulting to @liteship/core's `wallClock`), never a raw argless `new Date()`.
+ * The two-clock law ([clock-substrate]) makes the timestamp injectable at that
+ * boundary: pin the clock to a fixed epoch and the FULL receipt becomes
+ * byte-reproducible run-to-run.
  *
- * This guards the cure that routed the receipt timestamps through `wallClock`
- * (the no-nondeterminism finding sweep): it proves the routing actually reads
- * the injected clock, so a divergence back to an ambient `Date.now()` would
- * flip the asserted timestamp and fail here — not just go quiet.
+ * This guards the cure that routed the receipt timestamps through the injected
+ * clock (the no-nondeterminism finding sweep): it proves the routing actually
+ * reads the installed clock, so a divergence back to an ambient `Date.now()`
+ * would flip the asserted timestamp and fail here — not just go quiet.
  *
  * The dispatcher's unknown-command path is the exercised site because it emits a
- * real `new Date(wallClock.now()).toISOString()` with no handler indirection, so
- * the assertion pins the source-of-truth routing directly.
+ * real `failed(...)` receipt with no handler indirection, so the assertion pins
+ * the source-of-truth routing directly.
+ *
+ * The clock is installed through the registry's own `_setReceiptClock` seam (an
+ * underscore-prefixed testing export, off the public api surface) rather than a
+ * module mock — the sanctioned module-boundary injection the two-clock law buys.
  *
  * @module
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import type * as LiteshipCore from '@liteship/core';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { fixedClock } from '@liteship/core';
+import { CommandRegistry, CommandDispatcher } from '@liteship/command';
+import { _setReceiptClock, _resetReceiptClock } from '../../../packages/command/src/registry.js';
 
 // A frozen epoch — the receipt timestamp must equal its ISO form exactly.
 const FIXED_EPOCH_MS = 1_716_508_800_000; // 2024-05-24T00:00:00.000Z
 const FIXED_ISO = new Date(FIXED_EPOCH_MS).toISOString();
 
-// Stub ONLY `wallClock` on @liteship/core; every other export passes through, so the
-// dispatcher, registry, and result types behave exactly as in production. This
-// is the module-boundary injection the two-clock law buys (timestamps route
-// through the wallClock export, not a per-call `context.clock`, by design).
-vi.mock('@liteship/core', async (importOriginal) => {
-  const actual = await importOriginal<typeof LiteshipCore>();
-  return { ...actual, wallClock: { now: (): number => FIXED_EPOCH_MS } };
-});
-
-describe('command receipt timestamp is byte-reproducible under a fixed wallClock', () => {
+describe('command receipt timestamp is byte-reproducible under a fixed clock', () => {
   beforeEach(() => {
-    vi.resetModules();
+    // Install a frozen clock at the registry's module boundary. Every `ok`/`failed`
+    // receipt now stamps this epoch, so the whole receipt is reproducible.
+    _setReceiptClock(fixedClock(FIXED_EPOCH_MS));
   });
   afterEach(() => {
-    vi.restoreAllMocks();
+    // Restore the real wallClock so the fixed epoch never leaks to another test.
+    _resetReceiptClock();
   });
 
   it('the dispatcher unknown-command receipt stamps the injected epoch, not the ambient wall clock', async () => {
-    const { CommandRegistry, CommandDispatcher } = await import('@liteship/command');
     const dispatcher = CommandDispatcher.make(CommandRegistry.make([]));
 
     const first = await dispatcher.dispatch({ name: 'no.such.command', args: {} }, {});

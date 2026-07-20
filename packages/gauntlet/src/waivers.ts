@@ -118,10 +118,10 @@ export const LITESHIP_WAIVERS: readonly Waiver[] = [
   {
     ruleId: 'gauntlet/no-silent-catch',
     file: 'packages/cli/src/commands/doctor/probes-workspace.ts',
-    line: 250,
+    line: 261,
     owner: 'heyoub',
     reason:
-      'Best-effort capability probe in the doctor diagnostic: an unreadable playwright-browsers cache dir is treated as "no chromium installed" — the conservative, non-corrupting interpretation, and the doctor then reports chromium as missing (so the failure IS surfaced to the user, just as the normal doctor output). Documented, not empty. (Relocated from doctor.ts:390 by the doctor god-file split into doctor/probes-workspace.ts.)',
+      'Best-effort capability probe in the doctor diagnostic: an unreadable playwright-browsers cache dir is treated as "no chromium installed" — the conservative, non-corrupting interpretation, and the doctor then reports chromium as missing (so the failure IS surfaced to the user, just as the normal doctor output). Documented, not empty. (Relocated from doctor.ts:390 by the doctor god-file split into doctor/probes-workspace.ts; shifted 250→261 when the spawn-capture seam added the injectable SpawnArgvCapture params above hasChromiumBuild.)',
     expires: BOUNDARY_REVIEW,
     blastRadius:
       'A transiently-unreadable cache dir would make doctor under-report an installed chromium — a false "missing", which is the safe direction (prompts a reinstall, never hides a real break).',

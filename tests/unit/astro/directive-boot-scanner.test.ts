@@ -21,8 +21,6 @@ afterEach(() => {
   vi.doUnmock('../../../packages/astro/src/runtime/stream.js');
   vi.doUnmock('../../../packages/astro/src/runtime/wasm.js');
   vi.doUnmock('../../../packages/astro/src/runtime/motion.js');
-  vi.doUnmock('../../../packages/astro/src/client-directives/adaptive.js');
-  vi.doUnmock('../../../packages/astro/src/client-directives/gpu.js');
 });
 
 describe('Astro directive boot scanner', () => {
@@ -141,7 +139,9 @@ describe('Astro directive boot scanner', () => {
     await scanAndBootDirectives([]);
     await scanAndBootDirectives([]);
 
-    const warnings = events.filter((event) => event.code === 'directive-attribute-requires-marker:data-liteship-boundary');
+    const warnings = events.filter(
+      (event) => event.code === 'directive-attribute-requires-marker:data-liteship-boundary',
+    );
     expect(warnings).toHaveLength(1);
     expect(warnings[0]).toMatchObject({
       source: 'liteship/astro.directive-boot',
@@ -158,7 +158,9 @@ describe('Astro directive boot scanner', () => {
     events.length = 0;
     await scanAndBootDirectives([]);
 
-    expect(events.some((event) => event.code === 'directive-attribute-requires-marker:data-liteship-boundary')).toBe(false);
+    expect(events.some((event) => event.code === 'directive-attribute-requires-marker:data-liteship-boundary')).toBe(
+      false,
+    );
   });
 
   test('warns for a bare boundary payload even beside a non-consuming implicit peer (gpu)', async () => {
@@ -179,7 +181,9 @@ describe('Astro directive boot scanner', () => {
 
     await scanAndBootDirectives([]);
 
-    const warnings = events.filter((event) => event.code === 'directive-attribute-requires-marker:data-liteship-boundary');
+    const warnings = events.filter(
+      (event) => event.code === 'directive-attribute-requires-marker:data-liteship-boundary',
+    );
     expect(warnings).toHaveLength(1);
   });
 
@@ -205,10 +209,14 @@ describe('Astro directive boot scanner', () => {
 
   test('scanAndBootDirectives warns once when one element carries two enabled directive markers', async () => {
     // Collision is marker-based and detected at scan time, so it fires even for a
-    // directive whose own tier gate would no-op it before boot. Mock the entrypoints
-    // so the warning is isolated from real directive side effects.
-    vi.doMock('../../../packages/astro/src/client-directives/adaptive.js', () => ({ default: vi.fn() }));
-    vi.doMock('../../../packages/astro/src/client-directives/gpu.js', () => ({ default: vi.fn() }));
+    // directive whose own tier gate would no-op it before boot. Inject no-op
+    // directive entries through the scanner's `loaders` seam so the warning is
+    // isolated from real directive side effects — no client-directive module mocking.
+    const noop = (): void => {};
+    const loaders = {
+      adaptive: () => Promise.resolve({ default: noop }),
+      gpu: () => Promise.resolve({ default: noop }),
+    };
 
     const { Diagnostics } = await import('@liteship/core');
     const { sink, events } = Diagnostics.createBufferSink();
@@ -221,7 +229,7 @@ describe('Astro directive boot scanner', () => {
     el.setAttribute('data-liteship-directive', 'adaptive gpu');
     document.body.appendChild(el);
 
-    await scanAndBootDirectives(['adaptive', 'gpu']);
+    await scanAndBootDirectives(['adaptive', 'gpu'], document, loaders);
 
     const collisions = events.filter((event) => event.code === 'directive-collision:adaptive+gpu');
     expect(collisions).toHaveLength(1);

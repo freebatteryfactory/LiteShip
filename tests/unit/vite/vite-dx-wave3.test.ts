@@ -15,16 +15,17 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { Diagnostics, defineBoundary } from '@liteship/core';
 
-// These tests simulate consumer projects via temp roots. The packaged-wasm
-// source resolves @liteship/core through the module graph (which vitest would always
-// resolve to the workspace), so force it absent — the "no binary" / public-only
-// scenarios below are then driven entirely by the temp-root fixtures.
-vi.mock('../../../packages/vite/src/wasm-package-resolve.js', () => ({ resolvePackagedWasm: () => null }));
-
 import { plugin } from '../../../packages/vite/src/plugin.js';
 import * as IndexModule from '../../../packages/vite/src/index.js';
 import { resolvePrimitive } from '../../../packages/vite/src/primitive-resolve.js';
 import { transformHTML } from '../../../packages/vite/src/html-transform.js';
+
+// These tests simulate consumer projects via temp roots. The packaged-`@liteship/core`
+// binary resolves through the module graph (which vitest resolves to the workspace),
+// which a temp root cannot model. `plugin`'s second parameter is that resolver's
+// injection seam; this stub forces the `'package'` source absent so the "no binary" /
+// public-only scenarios are driven entirely by the temp-root fixtures — no mocking.
+const noPackagedWasm = (): string | null => null;
 
 const tempDirs: string[] = [];
 
@@ -73,7 +74,7 @@ describe('LESSON (#80): WASM auto-enables when a binary is present — no double
     const root = makeTempDir();
     writePublicWasm(root);
 
-    const vitePlugin = plugin(); // no wasm option at all
+    const vitePlugin = plugin(undefined, noPackagedWasm); // no wasm option at all
     vitePlugin.configResolved?.({ root, command: 'serve' } as never);
 
     expect(vitePlugin.load?.('\0virtual:liteship/wasm-url')).toContain('/liteship-compute.wasm');
@@ -84,7 +85,7 @@ describe('LESSON (#80): WASM auto-enables when a binary is present — no double
     // mode must neither warn nor wire anything up (back-compat with the old
     // "off unless asked" behaviour for projects without the crate built).
     const root = makeTempDir();
-    const vitePlugin = plugin();
+    const vitePlugin = plugin(undefined, noPackagedWasm);
     const warn = vi.fn();
 
     vitePlugin.configResolved?.({ root, command: 'serve' } as never);
@@ -101,7 +102,7 @@ describe('LESSON (#80): WASM auto-enables when a binary is present — no double
     writePublicWasm(root);
 
     for (const off of [false, { enabled: false } as const]) {
-      const vitePlugin = plugin({ wasm: off });
+      const vitePlugin = plugin({ wasm: off }, noPackagedWasm);
       vitePlugin.configResolved?.({ root, command: 'serve' } as never);
       expect(vitePlugin.load?.('\0virtual:liteship/wasm-url')).toContain('export const wasmUrl = null');
     }
@@ -111,7 +112,7 @@ describe('LESSON (#80): WASM auto-enables when a binary is present — no double
     // LAW: explicit `on` keeps its error-contract — a required-but-missing
     // binary is loud, unlike the silent auto path.
     const root = makeTempDir();
-    const vitePlugin = plugin({ wasm: true });
+    const vitePlugin = plugin({ wasm: true }, noPackagedWasm);
     const warn = vi.fn();
 
     vitePlugin.configResolved?.({ root, command: 'serve' } as never);
@@ -126,7 +127,7 @@ describe('LESSON (#80): WASM auto-enables when a binary is present — no double
     // LAW (#86): the warning states what happened, where it searched, and the
     // literal next steps (build the crate / copy to public / set wasm.path).
     const root = makeTempDir();
-    const vitePlugin = plugin({ wasm: true });
+    const vitePlugin = plugin({ wasm: true }, noPackagedWasm);
     const warn = vi.fn();
 
     vitePlugin.configResolved?.({ root, command: 'serve' } as never);

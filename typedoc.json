@@ -131,7 +131,8 @@
       "_makeRing": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/spsc-ring.ts"
     },
     "@liteship/vite": {
-      "CAST_TARGETS": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/boundary-manifest.ts"
+      "CAST_TARGETS": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/boundary-manifest.ts",
+      "resolvePackagedWasm": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/wasm-package-resolve.ts"
     },
     "@liteship/detect": {
       "ExtendedDeviceCapabilities": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md",

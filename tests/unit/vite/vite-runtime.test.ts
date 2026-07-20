@@ -1,10 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-// The packaged-wasm source resolves @liteship/core through the module graph (always
-// present in the workspace under vitest); force it absent so the temp-root
-// "no binary" / public-fixture scenarios are deterministic.
-vi.mock('../../../packages/vite/src/wasm-package-resolve.js', () => ({ resolvePackagedWasm: () => null }));
-
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -20,6 +15,13 @@ import * as TokenTransformModule from '../../../packages/vite/src/token-transfor
 import { resolvePrimitive } from '../../../packages/vite/src/primitive-resolve.js';
 import * as PrimitiveResolveModule from '../../../packages/vite/src/primitive-resolve.js';
 import { isVirtualId, loadVirtualModule, resolveVirtualId } from '../../../packages/vite/src/virtual-modules.js';
+
+// The packaged-`@liteship/core` binary resolves through the module graph (always
+// present under vitest), which a synthetic temp root cannot model. `plugin`'s
+// second parameter is that resolver's injection seam; passing this stub forces the
+// `'package'` WASM source absent so the temp-root "no binary" / public-fixture
+// scenarios are deterministic — no module mocking.
+const noPackagedWasm = (): string | null => null;
 
 const tempDirs: string[] = [];
 
@@ -368,7 +370,7 @@ describe('@liteship/vite plugin', () => {
     // AUTO-DETECTS a built crate (wave-3 DX), so `wasmUrl` would be a real path on a
     // machine where liteship-compute is built and null elsewhere. This test pins the hook
     // wiring + the explicit-off case; the live-URL case is covered by the next test.
-    const vitePlugin = plugin({ wasm: false });
+    const vitePlugin = plugin({ wasm: false }, noPackagedWasm);
     const resolved = vitePlugin.resolveId?.('virtual:liteship/tokens');
     const wasmResolved = vitePlugin.resolveId?.('virtual:liteship/wasm-url');
 
@@ -389,7 +391,7 @@ describe('@liteship/vite plugin', () => {
     mkdirSync(publicDir, { recursive: true });
     writeFileSync(join(publicDir, 'liteship-compute.wasm'), Buffer.from([0x00, 0x61, 0x73, 0x6d]));
 
-    const vitePlugin = plugin({ wasm: { enabled: true } });
+    const vitePlugin = plugin({ wasm: { enabled: true } }, noPackagedWasm);
     vitePlugin.configResolved?.({ root, command: 'serve' } as never);
     const wasmModule = vitePlugin.load?.('\0virtual:liteship/wasm-url');
 
@@ -398,7 +400,7 @@ describe('@liteship/vite plugin', () => {
 
   test('warns when wasm is enabled without a resolvable binary and emits rollup urls for build output', () => {
     const missingRoot = makeTempDir();
-    const missingPlugin = plugin({ wasm: { enabled: true } });
+    const missingPlugin = plugin({ wasm: { enabled: true } }, noPackagedWasm);
     const warn = vi.fn();
     missingPlugin.configResolved?.({ root: missingRoot, command: 'serve' } as never);
     missingPlugin.buildStart?.call({ warn, emitFile: vi.fn() } as never);
@@ -415,7 +417,7 @@ describe('@liteship/vite plugin', () => {
     const buildWasmPath = join(distDir, 'liteship-compute.wasm');
     writeFileSync(buildWasmPath, Buffer.from([0x00, 0x61, 0x73, 0x6d]));
 
-    const buildPlugin = plugin({ wasm: { enabled: true, path: buildWasmPath } });
+    const buildPlugin = plugin({ wasm: { enabled: true, path: buildWasmPath } }, noPackagedWasm);
     const emitFile = vi.fn(() => 'asset-123');
     buildPlugin.configResolved?.({ root: buildRoot, command: 'build' } as never);
     buildPlugin.buildStart?.call({ warn: vi.fn(), emitFile } as never);
@@ -430,7 +432,7 @@ describe('@liteship/vite plugin', () => {
     mkdirSync(publicDir, { recursive: true });
     writeFileSync(join(publicDir, 'liteship-compute.wasm'), Buffer.from([0x00, 0x61, 0x73, 0x6d]));
 
-    const vitePlugin = plugin({ wasm: { enabled: true } });
+    const vitePlugin = plugin({ wasm: { enabled: true } }, noPackagedWasm);
     const emitFile = vi.fn();
 
     vitePlugin.configResolved?.({ root, command: 'serve' } as never);
@@ -458,7 +460,7 @@ describe('@liteship/vite plugin', () => {
     const wasmPath = join(distDir, 'liteship-compute.wasm');
     writeFileSync(wasmPath, Buffer.from([0x00, 0x61, 0x73, 0x6d]));
 
-    const vitePlugin = plugin({ wasm: { enabled: true, path: wasmPath } });
+    const vitePlugin = plugin({ wasm: { enabled: true, path: wasmPath } }, noPackagedWasm);
     vitePlugin.configResolved?.({ root, command: 'serve' } as never);
     expect(vitePlugin.load?.('\0virtual:liteship/wasm-url')).toContain(wasmPath.replace(/\\/g, '/'));
 

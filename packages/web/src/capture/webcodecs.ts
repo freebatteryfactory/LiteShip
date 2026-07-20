@@ -29,6 +29,31 @@ export interface WebCodecsCaptureOptions {
   readonly keyframeInterval?: number;
 }
 
+/**
+ * The mediabunny muxer classes {@link make} encodes through — the third-party
+ * video-encode boundary. Injectable (defaulting to {@link REAL_MEDIABUNNY}) so a
+ * test can script the muxer without reaching into the `./mediabunny.js` re-export
+ * shim: the shim wraps a true external, so the seam injects that external rather
+ * than mocking our wrapper. Unexported — a structural object satisfies it, and it
+ * must not enter the package's public surface.
+ */
+interface MediabunnyCodecs {
+  readonly BufferTarget: typeof BufferTarget;
+  readonly EncodedPacket: typeof EncodedPacket;
+  readonly EncodedVideoPacketSource: typeof EncodedVideoPacketSource;
+  readonly Mp4OutputFormat: typeof Mp4OutputFormat;
+  readonly Output: typeof Output;
+}
+
+/** The production mediabunny classes — the default {@link make} muxes through. */
+const REAL_MEDIABUNNY: MediabunnyCodecs = {
+  BufferTarget,
+  EncodedPacket,
+  EncodedVideoPacketSource,
+  Mp4OutputFormat,
+  Output,
+};
+
 // ---------------------------------------------------------------------------
 // Codec mapping: WebCodecs string -> mediabunny short name
 // ---------------------------------------------------------------------------
@@ -69,7 +94,7 @@ function supportErrorMessage(err: unknown): string {
 // Factory
 // ---------------------------------------------------------------------------
 
-function make(options?: WebCodecsCaptureOptions): FrameCapture {
+function make(options?: WebCodecsCaptureOptions, mediabunny: MediabunnyCodecs = REAL_MEDIABUNNY): FrameCapture {
   const codec = options?.codec ?? 'avc1.42001E';
   const bitrate = options?.bitrate ?? 4_000_000;
   const keyframeInterval = options?.keyframeInterval ?? CAPTURE_KEYFRAME_INTERVAL;
@@ -153,10 +178,10 @@ function make(options?: WebCodecsCaptureOptions): FrameCapture {
       pendingError = null;
       lastTimestampUs = -1;
 
-      videoSource = new EncodedVideoPacketSource(toMediabunnyCodec(codec));
-      target = new BufferTarget();
-      output = new Output({
-        format: new Mp4OutputFormat({ fastStart: 'in-memory' }),
+      videoSource = new mediabunny.EncodedVideoPacketSource(toMediabunnyCodec(codec));
+      target = new mediabunny.BufferTarget();
+      output = new mediabunny.Output({
+        format: new mediabunny.Mp4OutputFormat({ fastStart: 'in-memory' }),
         target,
       });
       output.addVideoTrack(videoSource, { frameRate: captureConfig.fps });
@@ -164,7 +189,7 @@ function make(options?: WebCodecsCaptureOptions): FrameCapture {
 
       encoder = new VideoEncoder({
         output(chunk: EncodedVideoChunk, metadata?: EncodedVideoChunkMetadata) {
-          packetQueue.push({ packet: EncodedPacket.fromEncodedChunk(chunk), metadata });
+          packetQueue.push({ packet: mediabunny.EncodedPacket.fromEncodedChunk(chunk), metadata });
         },
         error(err: DOMException) {
           pendingError = IoError('webcodecs.encode', `VideoEncoder error: ${err.message}`, { cause: err });

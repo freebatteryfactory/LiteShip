@@ -15,11 +15,24 @@
 import { wallClock } from '@liteship/core';
 import { color, colorEnabled } from '../../lib/ansi.js';
 import { emit, emitError } from '../../receipts.js';
+import { spawnArgvCapture } from '../../lib/spawn.js';
 import { findWorkspaceRoot } from './manifest.js';
 import { applyFixes } from './fix.js';
 import { runAllProbes } from './profiles.js';
 import { aggregate, prettySummary } from './summary.js';
 import type { DoctorFix, DoctorReceipt, DoctorTarget } from './types.js';
+
+/**
+ * The outbound subprocess capability {@link doctor} threads down into the
+ * spawn-bearing probes. Defaults to the real {@link spawnArgvCapture} so
+ * production `liteship doctor` is unchanged; tests inject a scripted spawn to
+ * force the timeout / not-on-PATH paths without touching the real toolchain.
+ */
+interface DoctorDeps {
+  readonly spawn: typeof spawnArgvCapture;
+}
+
+const defaultDoctorDeps: DoctorDeps = { spawn: spawnArgvCapture };
 
 /**
  * Run all probes, emit a JSON receipt, optionally print a TTY summary.
@@ -44,6 +57,7 @@ export async function doctor(
     deployed?: string;
     cwd?: string;
   } = {},
+  deps: DoctorDeps = defaultDoctorDeps,
 ): Promise<number> {
   // Explicit cwd from tests/MCP is used verbatim (predictable fixtures).
   // Default behavior anchors probes to the workspace root so `liteship doctor`
@@ -58,7 +72,7 @@ export async function doctor(
 
   let checks;
   try {
-    checks = await withDeployed(await runAllProbes(cwd, { target: opts.target }));
+    checks = await withDeployed(await runAllProbes(cwd, { target: opts.target, spawn: deps.spawn }));
   } catch (error) {
     emitError('doctor', error instanceof Error ? error.message : String(error));
     return 1;
@@ -71,7 +85,7 @@ export async function doctor(
       try {
         // Re-append deployed probes after --fix re-run — otherwise
         // `doctor --fix --deployed` can pass CI without header checks.
-        checks = await withDeployed(await runAllProbes(cwd, { target: opts.target }));
+        checks = await withDeployed(await runAllProbes(cwd, { target: opts.target, spawn: deps.spawn }));
       } catch (error) {
         emitError('doctor', error instanceof Error ? error.message : String(error));
         return 1;

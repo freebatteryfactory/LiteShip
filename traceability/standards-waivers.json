@@ -212,6 +212,13 @@
       "expiry": "2027-06-20"
     },
     {
+      "elementKey": "waiver::gauntlet/no-silent-catch|packages/cli/src/commands/doctor/probes-workspace.ts|261",
+      "weakening": "waiver-added",
+      "owner": "heyoub",
+      "justification": "Same gauntlet/no-silent-catch benign-catch waiver (the best-effort playwright-browsers cache probe in hasChromiumBuild — an unreadable browsers-cache dir reads as \"no chromium installed\", the conservative non-corrupting interpretation the doctor surfaces to the user exactly like its normal output), RELOCATED (250→261) by the P9 doctor spawn-capture seam adding the injectable SpawnArgvCapture params above hasChromiumBuild — NOT a new deferral. The waiver key embeds the line number, so the shift surfaces as remove(line 250)+add(line 261); the corresponding removal is a strengthen. No additional code is waived (identical to the ship.ts:169→131 and version.ts:47→46 relocation precedents). Surfaces as a weakening vs origin/main now that the base ref carries the snapshot (the gate moved from birth-baseline to origin/main baseline).",
+      "expiry": "2027-06-20"
+    },
+    {
       "elementKey": "waiver::gauntlet/no-nondeterminism|packages/core/src/internal/rng.ts|39",
       "weakening": "waiver-added",
       "owner": "heyoub",

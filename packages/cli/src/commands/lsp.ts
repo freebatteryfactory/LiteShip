@@ -45,6 +45,28 @@ type RunnerResult = {
   readonly blocked: boolean;
 };
 
+/**
+ * The `@liteship/mcp-server` subset the CLI consumes across its two dynamic-import
+ * skins: the LSP stdio driver (`liteship lsp`, here) and the MCP server `start`
+ * (`liteship mcp`, in dispatch). Both fields are present so ONE injectable importer
+ * ({@link ImportMcpServer}) serves both call sites — a test that only exercises one
+ * skin stubs the other. Exported for the dispatch seam ONLY; the CLI barrel
+ * re-exports only `run`, so this type never reaches the public type-export surface.
+ */
+export type McpServerModule = {
+  readonly start: (opts: { readonly http?: string }) => Promise<void>;
+  readonly runLspStdio: (runner: (globs?: readonly string[]) => Promise<RunnerResult>) => Promise<void>;
+};
+
+/**
+ * Injectable importer for the optional `@liteship/mcp-server` sibling. Defaults to
+ * the real `() => import('@liteship/mcp-server')`, so production launch is
+ * byte-identical; tests inject a resolver (the "installed" branch) or a throwing
+ * factory carrying `ERR_MODULE_NOT_FOUND` (the "not installed" guard) WITHOUT a
+ * `vi.mock` of the internal sibling module.
+ */
+export type ImportMcpServer = () => Promise<McpServerModule>;
+
 /** Options for {@link lsp}. `ir` selects the CLI-only IR-enriched fold. */
 export interface LspOptions {
   readonly cwd?: string;
@@ -53,14 +75,30 @@ export interface LspOptions {
 }
 
 /**
+ * Injectable engine seam for {@link lsp}'s two folds. `runGauntletWithRepoIR`
+ * defaults to the real IR-enriched builder so production `liteship lsp --ir` is
+ * unchanged; `litelaunchGauntlet` defaults (via the null-coalesce at the call
+ * site) to the real LEAN fold so the default `liteship lsp` is unchanged. Tests
+ * pass scripted folds to pin WHICH fold the injected LSP runner drives (lean vs
+ * IR) and which globs it forwards, without a real `ts.Program` build or repo sweep.
+ */
+interface LspDeps {
+  readonly runGauntletWithRepoIR?: typeof runGauntletWithRepoIR;
+  readonly litelaunchGauntlet?: typeof litelaunchGauntlet;
+  /** The optional-sibling importer; defaults to the real dynamic import at the call site. */
+  readonly importMcpServer?: ImportMcpServer;
+}
+
+/**
  * Launch `liteship lsp`. Builds the injected gauntlet runner (lean or IR-enriched),
  * then hands stdio to the `@liteship/mcp-server` LSP driver. Returns when the editor
  * closes the connection (`exit` / stream end). Exit code 0 on a clean shutdown;
  * 1 when the sibling server is not installed.
  */
-export async function lsp(opts: LspOptions = {}): Promise<number> {
+export async function lsp(opts: LspOptions = {}, deps: LspDeps = {}): Promise<number> {
   const cwd = opts.cwd ?? process.cwd();
   const useIr = opts.ir === true;
+  const runGauntletIR = deps.runGauntletWithRepoIR ?? runGauntletWithRepoIR;
 
   // The injected runner — built in the CLI host so the engine + @liteship/audit stay
   // OUT of @liteship/mcp-server. Each call re-runs the fold over a fresh wall-clock
@@ -69,18 +107,20 @@ export async function lsp(opts: LspOptions = {}): Promise<number> {
   const runGauntlet = async (globs?: readonly string[]): Promise<RunnerResult> => {
     const now = new Date(wallClock.now());
     if (useIr) {
-      const result = await runGauntletWithRepoIR(cwd, now, globs, { noCache: false, withSymbolReferences: false });
+      const result = await runGauntletIR(cwd, now, globs, { noCache: false, withSymbolReferences: false });
       return { findings: result.findings, blocked: result.blocked };
     }
     // Inject the host-built SOUND AST detectors (the CLI deps `@liteship/audit`) so the LEAN LSP
     // path matches the no-skip/no-early-return rigor of `liteship check`.
-    const result = litelaunchGauntlet(cwd, now, globs, undefined, detectSkipsAST, detectEarlyReturnBeforeExpectAST);
+    const runLean = deps.litelaunchGauntlet ?? litelaunchGauntlet;
+    const result = runLean(cwd, now, globs, undefined, detectSkipsAST, detectEarlyReturnBeforeExpectAST);
     return { findings: result.findings, blocked: result.blocked };
   };
 
-  let mcpServer: { runLspStdio: (runner: typeof runGauntlet) => Promise<void> };
+  const importMcpServer = deps.importMcpServer ?? (() => import('@liteship/mcp-server'));
+  let mcpServer: McpServerModule;
   try {
-    mcpServer = await import('@liteship/mcp-server');
+    mcpServer = await importMcpServer();
   } catch (err) {
     const code = (err as { code?: string }).code ?? (err as { cause?: { code?: string } }).cause?.code;
     if (code !== 'ERR_MODULE_NOT_FOUND') throw err;

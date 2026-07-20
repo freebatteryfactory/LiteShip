@@ -8,8 +8,8 @@
  * the bench classification (`real` vs placeholder), the bench-honesty fold, and the
  * content-hash staleness suspicion. THOSE are what these tests pin — driven over a
  * real temp manifest (via the `LITESHIP_CAPSULE_MANIFEST` host override) with the
- * harness + digest helpers mocked so no `capsule:compile` / `vitest` ever spawns
- * (a capsule that produces errors short-circuits BEFORE the vitest spawn).
+ * digest helpers injected + `execSync` mocked so no `capsule:compile` / `vitest`
+ * ever spawns (a capsule that produces errors short-circuits BEFORE the vitest spawn).
  *
  * The handler/projection contract (status mirror, exit-code, payload shape) is also
  * tested at the @liteship/command layer (tests/unit/command/capsule-verify-gate.test.ts);
@@ -21,33 +21,25 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { captureCli } from '../../../integration/cli/capture.js';
 
-const { classifyBenchSourceMock, benchHonestyErrorMock } = vi.hoisted(() => ({
-  classifyBenchSourceMock: vi.fn(),
-  benchHonestyErrorMock: vi.fn(),
-}));
-vi.mock('@liteship/core/harness', async (importOriginal) => {
-  const orig = await importOriginal<Record<string, unknown>>();
-  return { ...orig, classifyBenchSource: classifyBenchSourceMock, benchHonestyError: benchHonestyErrorMock };
-});
-
+// classifyBenchSource / benchHonestyError are pure string classifiers, so they run
+// for REAL here (no @liteship/core/harness module mock): each capsule writes bench
+// SOURCE that genuinely classifies real/placeholder + honest/dishonest, and the
+// adapter's count split + honesty-error surfacing is pinned over that real verdict.
 const { execSyncMock } = vi.hoisted(() => ({ execSyncMock: vi.fn() }));
 vi.mock('node:child_process', async (importOriginal) => {
   const orig = await importOriginal<Record<string, unknown>>();
   return { ...orig, execSync: execSyncMock };
 });
 
-const { sourceProvenanceDigestMock, generatorVersionDigestMock } = vi.hoisted(() => ({
-  sourceProvenanceDigestMock: vi.fn(),
-  generatorVersionDigestMock: vi.fn(),
-}));
-vi.mock('@liteship/command/host', async (importOriginal) => {
-  const orig = await importOriginal<Record<string, unknown>>();
-  return {
-    ...orig,
-    sourceProvenanceDigest: sourceProvenanceDigestMock,
-    generatorVersionDigest: generatorVersionDigestMock,
-  };
-});
+// The two content-hash digests are INJECTED through the gate's defaulted deps seam
+// (NOT a @liteship/command/host module mock), so the fresh/stale/generator-drift
+// branches are driven over a synthetic manifest without hashing real source.
+const sourceProvenanceDigestMock = vi.fn();
+const generatorVersionDigestMock = vi.fn();
+const digestDeps = {
+  sourceProvenanceDigest: sourceProvenanceDigestMock,
+  generatorVersionDigest: generatorVersionDigestMock,
+};
 
 import { capsuleVerify, runCapsuleGateScan } from '../../../../packages/cli/src/commands/capsule-verify.js';
 
@@ -56,8 +48,6 @@ const ORIG_MANIFEST_ENV = process.env.LITESHIP_CAPSULE_MANIFEST;
 
 beforeEach(() => {
   root = mkdtempSync(join(tmpdir(), 'liteship-capsule-verify-'));
-  classifyBenchSourceMock.mockReset().mockReturnValue('real');
-  benchHonestyErrorMock.mockReset().mockReturnValue(null);
   // Default: the live digests MATCH the recorded ones ⇒ no staleness suspects ⇒
   // no regeneration spawn. Each test that wants a suspect overrides these.
   generatorVersionDigestMock.mockReset().mockReturnValue('gen-v1');
@@ -87,11 +77,13 @@ function writeArtifact(rel: string, content: string): void {
   writeFileSync(abs, content);
 }
 
-/** A capsule whose source/test/bench all exist and whose digests are fresh. */
+/** A capsule whose source/test/bench all exist and whose digests are fresh. The
+ * bench has a REAL (non-empty) closure body so `classifyBenchSource` reads 'real'
+ * and `benchHonestyError` reads honest (null) — the fresh+honest default. */
 function freshCapsule(name: string) {
   writeArtifact(`src/${name}.ts`, 'export const x = 1;\n');
   writeArtifact(`tests/generated/${name}.test.ts`, 'it("x", () => {});\n');
-  writeArtifact(`tests/generated/${name}.bench.ts`, 'bench("x", () => {});\n');
+  writeArtifact(`tests/generated/${name}.bench.ts`, 'bench("x", () => { doWork(); });\n');
   return {
     name,
     source: `src/${name}.ts`,
@@ -103,7 +95,7 @@ function freshCapsule(name: string) {
 describe('runCapsuleGateScan — in-process branches (no spawn)', () => {
   it('manifest missing ⇒ stale with a compile hint and zero capsules', async () => {
     process.env.LITESHIP_CAPSULE_MANIFEST = join(root, 'reports', 'capsule-manifest.json');
-    const summary = await runCapsuleGateScan(root);
+    const summary = await runCapsuleGateScan(root, digestDeps);
     expect(summary.status).toBe('stale');
     expect(summary.errors).toEqual(['manifest missing; run capsule:compile first']);
     expect(summary.capsuleCount).toBe(0);
@@ -112,7 +104,7 @@ describe('runCapsuleGateScan — in-process branches (no spawn)', () => {
 
   it('an empty-capsules manifest is ok (no artifacts, no vitest spawn)', async () => {
     writeManifest({ generatorVersion: 'gen-v1', capsules: [] });
-    const summary = await runCapsuleGateScan(root);
+    const summary = await runCapsuleGateScan(root, digestDeps);
     expect(summary.status).toBe('ok');
     expect(summary.errors).toEqual([]);
     expect(summary.capsuleCount).toBe(0);
@@ -130,7 +122,7 @@ describe('runCapsuleGateScan — in-process branches (no spawn)', () => {
         },
       ],
     });
-    const summary = await runCapsuleGateScan(root);
+    const summary = await runCapsuleGateScan(root, digestDeps);
     expect(summary.status).toBe('stale');
     expect(summary.errors.some((e) => e.includes('generated test missing for ghost'))).toBe(true);
     expect(summary.errors.some((e) => e.includes('generated bench missing for ghost'))).toBe(true);
@@ -138,12 +130,12 @@ describe('runCapsuleGateScan — in-process branches (no spawn)', () => {
 
   it('classifies a placeholder bench (count split: total/real/placeholder)', async () => {
     const cap = freshCapsule('plc');
+    // An empty-body bench: `classifyBenchSource` reads 'placeholder' for real.
+    writeArtifact('tests/generated/plc.bench.ts', 'bench("x", () => {});\n');
     writeManifest({ generatorVersion: 'gen-v1', capsules: [cap] });
-    classifyBenchSourceMock.mockReturnValue('placeholder');
-    const summary = await runCapsuleGateScan(root);
-    // No errors (honesty mock returns null), so the suite would run — but with a
-    // placeholder classification recorded. Force a regeneration-free path: digests
-    // match ⇒ no suspects. The bench count reflects the placeholder split.
+    const summary = await runCapsuleGateScan(root, digestDeps);
+    // A real placeholder is also a real honesty error ("measures nothing"), so the
+    // status is stale — but these assertions pin the ADAPTER's bench COUNT split.
     expect(summary.benches.total).toBe(1);
     expect(summary.benches.real).toBe(0);
     expect(summary.benches.placeholder).toEqual(['plc']);
@@ -151,23 +143,28 @@ describe('runCapsuleGateScan — in-process branches (no spawn)', () => {
 
   it('a bench-honesty error is surfaced as a stale error (marker↔manifest drift)', async () => {
     const cap = freshCapsule('dishonest');
+    // A real-bodied bench carrying a BENCH-NOT-APPLICABLE marker but NO manifest
+    // benchExemption is genuine marker↔manifest drift — `benchHonestyError` flags it.
+    const drifted = '// BENCH-NOT-APPLICABLE: not measurable\nbench("x", () => { doWork(); });\n';
+    writeArtifact('tests/generated/dishonest.bench.ts', drifted);
     writeManifest({ generatorVersion: 'gen-v1', capsules: [cap] });
-    benchHonestyErrorMock.mockReturnValue('dishonest: bench marker drift');
-    const summary = await runCapsuleGateScan(root);
+    const summary = await runCapsuleGateScan(root, digestDeps);
     expect(summary.status).toBe('stale');
-    expect(summary.errors).toContain('dishonest: bench marker drift');
+    expect(summary.errors.some((e) => e.includes('BENCH-NOT-APPLICABLE marker but no manifest benchExemption'))).toBe(
+      true,
+    );
   });
 
   it('does not spawn vitest for classified-real bench files (bench execution is meta-tested)', async () => {
+    // freshCapsule's bench has a real body ⇒ `classifyBenchSource` reads 'real' for real.
     const cap = freshCapsule('bench-exec');
     writeManifest({ generatorVersion: 'gen-v1', capsules: [cap] });
-    classifyBenchSourceMock.mockReturnValue('real');
     const vitestCalls: string[] = [];
     execSyncMock.mockImplementation((cmd: string) => {
       if (cmd.includes('vitest')) vitestCalls.push(cmd);
       return '';
     });
-    const summary = await runCapsuleGateScan(root);
+    const summary = await runCapsuleGateScan(root, digestDeps);
     expect(summary.status).toBe('ok');
     expect(vitestCalls.length).toBe(1);
     expect(vitestCalls[0]).not.toContain('.bench.ts');
@@ -205,7 +202,7 @@ describe('runCapsuleGateScan — content-hash suspects confirmed by regeneration
     generatorVersionDigestMock.mockReturnValue('gen-v2');
     // Regeneration produces the SAME capsule set + byte-identical files ⇒ not stale.
     wireExecSync({ regenManifest: { capsules: [cap] } });
-    const summary = await runCapsuleGateScan(root);
+    const summary = await runCapsuleGateScan(root, digestDeps);
     expect(summary.status).toBe('ok');
     expect(summary.errors).toEqual([]);
   });
@@ -230,7 +227,7 @@ describe('runCapsuleGateScan — content-hash suspects confirmed by regeneration
     writeArtifact('tests/generated/drifted.fresh.test.ts', 'it("DIFFERENT", () => {});\n');
     writeArtifact('tests/generated/drifted.fresh.bench.ts', 'bench("DIFFERENT", () => {});\n');
     wireExecSync({ regenManifest: regen });
-    const summary = await runCapsuleGateScan(root);
+    const summary = await runCapsuleGateScan(root, digestDeps);
     expect(summary.status).toBe('stale');
     expect(summary.errors.some((e) => e.includes('drifted') && e.includes('regeneration differs'))).toBe(true);
   });
@@ -240,7 +237,7 @@ describe('runCapsuleGateScan — content-hash suspects confirmed by regeneration
     writeManifest({ generatorVersion: 'gen-v1', capsules: [cap] });
     sourceProvenanceDigestMock.mockReturnValue('src-v2');
     wireExecSync({ regenManifest: { capsules: [cap, { ...cap, name: 'newcomer' }] } });
-    const summary = await runCapsuleGateScan(root);
+    const summary = await runCapsuleGateScan(root, digestDeps);
     expect(summary.status).toBe('stale');
     expect(summary.errors.some((e) => e.includes('newcomer') && e.includes('not in the committed manifest'))).toBe(
       true,
@@ -252,7 +249,7 @@ describe('runCapsuleGateScan — content-hash suspects confirmed by regeneration
     writeManifest({ generatorVersion: 'gen-v1', capsules: [cap] });
     sourceProvenanceDigestMock.mockReturnValue('src-v2');
     wireExecSync({ regenManifest: null });
-    const summary = await runCapsuleGateScan(root);
+    const summary = await runCapsuleGateScan(root, digestDeps);
     expect(summary.status).toBe('stale');
     expect(summary.errors.some((e) => e.includes('regeneration compile failed'))).toBe(true);
   });
@@ -262,7 +259,7 @@ describe('runCapsuleGateScan — content-hash suspects confirmed by regeneration
     writeManifest({ generatorVersion: 'gen-v1', capsules: [cap] });
     // Digests match ⇒ no suspects ⇒ straight to the vitest run, which fails here.
     wireExecSync({ regenManifest: { capsules: [cap] }, vitestFails: true });
-    const summary = await runCapsuleGateScan(root);
+    const summary = await runCapsuleGateScan(root, digestDeps);
     expect(summary.status).toBe('failed');
     expect(summary.errors.some((e) => e.includes('generated tests failed'))).toBe(true);
   });
@@ -275,7 +272,7 @@ function lastReceipt(stdout: string): Record<string, unknown> {
 describe('liteship capsule-verify — adapter projection (receipt + pretty-print)', () => {
   it('an empty-capsules manifest passes the gate (exit 0, ok receipt)', async () => {
     writeManifest({ generatorVersion: 'gen-v1', capsules: [] });
-    const { exit, stdout, stderr } = await captureCli(() => capsuleVerify({ cwd: root, pretty: true }));
+    const { exit, stdout, stderr } = await captureCli(() => capsuleVerify({ cwd: root, pretty: true }, digestDeps));
     expect(exit).toBe(0);
     const receipt = lastReceipt(stdout);
     expect(receipt).toMatchObject({ command: 'capsule-verify', status: 'ok', capsuleCount: 0 });
@@ -284,7 +281,7 @@ describe('liteship capsule-verify — adapter projection (receipt + pretty-print
 
   it('a missing manifest fails the gate (exit 1) and prints the stale work-list (pretty)', async () => {
     process.env.LITESHIP_CAPSULE_MANIFEST = join(root, 'reports', 'capsule-manifest.json');
-    const { exit, stdout, stderr } = await captureCli(() => capsuleVerify({ cwd: root, pretty: true }));
+    const { exit, stdout, stderr } = await captureCli(() => capsuleVerify({ cwd: root, pretty: true }, digestDeps));
     expect(exit).toBe(1);
     const receipt = lastReceipt(stdout);
     expect(receipt['status']).toBe('stale');
@@ -294,7 +291,7 @@ describe('liteship capsule-verify — adapter projection (receipt + pretty-print
 
   it('a failed gate stays SILENT on stderr when pretty is off (still exits 1)', async () => {
     process.env.LITESHIP_CAPSULE_MANIFEST = join(root, 'reports', 'capsule-manifest.json');
-    const { exit, stderr } = await captureCli(() => capsuleVerify({ cwd: root, pretty: false }));
+    const { exit, stderr } = await captureCli(() => capsuleVerify({ cwd: root, pretty: false }, digestDeps));
     expect(exit).toBe(1);
     expect(stderr).toBe('');
   });

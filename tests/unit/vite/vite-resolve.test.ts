@@ -1,12 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-// The `'package'` source resolves @liteship/core through the module graph, which a
-// synthetic temp root cannot model (and vitest's aliases would always resolve
-// the workspace @liteship/core). Force it absent so the config/crate/public/null
-// ordering is exercised cleanly; the real resolver is covered in
-// tests/unit/core/wasm-shipping.test.ts.
-vi.mock('../../../packages/vite/src/wasm-package-resolve.js', () => ({ resolvePackagedWasm: () => null }));
-
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -121,7 +114,11 @@ describe('@liteship/vite resolvers', () => {
     mkdirSync(sourceDir, { recursive: true });
 
     writeModule(sourceDir, 'themes.ts', `export const other = { _tag: 'ThemeDef', id: 'theme', name: 'other' };`);
-    writeModule(sourceDir, 'feature.themes.ts', `export const brand = { _tag: 'ThemeDef', id: 'theme', name: 'brand' };`);
+    writeModule(
+      sourceDir,
+      'feature.themes.ts',
+      `export const brand = { _tag: 'ThemeDef', id: 'theme', name: 'brand' };`,
+    );
 
     expect((await resolvePrimitive('theme', 'brand', fromFile, root))?.source).toContain('feature.themes.ts');
   });
@@ -144,7 +141,11 @@ describe('@liteship/vite resolvers', () => {
     const fromFile = join(sourceDir, 'panel.css');
     mkdirSync(sourceDir, { recursive: true });
 
-    writeModule(sourceDir, 'feature.themes.ts', `export const local = { _tag: 'ThemeDef', id: 'theme', name: 'local' };`);
+    writeModule(
+      sourceDir,
+      'feature.themes.ts',
+      `export const local = { _tag: 'ThemeDef', id: 'theme', name: 'local' };`,
+    );
     writeModule(root, 'brand.themes.ts', `export const remote = { _tag: 'ThemeDef', id: 'theme', name: 'remote' };`);
 
     expect((await resolvePrimitive('theme', 'local', fromFile, root))?.source).toContain('feature.themes.ts');
@@ -374,7 +375,7 @@ describe('@liteship/vite resolveWASM', () => {
     mkdirSync(join(root, 'bin'), { recursive: true });
     writeFileSync(configured, 'wasm');
 
-    expect(resolveWASM(root, 'bin/custom.wasm')).toEqual({
+    expect(resolveWASM(root, 'bin/custom.wasm', () => null)).toEqual({
       filePath: configured,
       source: 'config',
     });
@@ -386,22 +387,22 @@ describe('@liteship/vite resolveWASM', () => {
     mkdirSync(cratePath, { recursive: true });
     writeFileSync(join(cratePath, 'liteship_compute.wasm'), 'crate');
 
-    expect(resolveWASM(root)?.source).toBe('crate');
+    expect(resolveWASM(root, undefined, () => null)?.source).toBe('crate');
 
     rmSync(join(cratePath, 'liteship_compute.wasm'));
     const publicDir = join(root, 'public');
     mkdirSync(publicDir, { recursive: true });
     writeFileSync(join(publicDir, 'liteship-compute.wasm'), 'public');
 
-    expect(resolveWASM(root)?.source).toBe('public');
+    expect(resolveWASM(root, undefined, () => null)?.source).toBe('public');
   });
 
   // The `'package'` (node_modules) source is resolved through the module graph
   // (@liteship/vite → @liteship/core), which a synthetic temp root can't model; its
   // behavior — real resolution + hermeticity — is covered in
-  // tests/unit/core/wasm-shipping.test.ts (resolvePackagedWASM). A temp root has
-  // no @liteship/vite, so the package branch is null here and the config/crate/public
-  // ordering below is exercised cleanly.
+  // tests/unit/core/wasm-shipping.test.ts (resolvePackagedWASM). These cases inject
+  // a `() => null` packaged-resolver seam to force that source absent, so the
+  // config/crate/public ordering is exercised cleanly off the temp root.
 
   test('falls back from a missing configured wasm path to the crate output', () => {
     const root = makeTempDir();
@@ -409,14 +410,14 @@ describe('@liteship/vite resolveWASM', () => {
     mkdirSync(cratePath, { recursive: true });
     writeFileSync(join(cratePath, 'liteship_compute.wasm'), 'crate');
 
-    expect(resolveWASM(root, 'missing/custom.wasm')).toEqual({
+    expect(resolveWASM(root, 'missing/custom.wasm', () => null)).toEqual({
       filePath: join(cratePath, 'liteship_compute.wasm'),
       source: 'crate',
     });
   });
 
   test('returns null when no wasm binary is available', () => {
-    expect(resolveWASM(makeTempDir())).toBeNull();
+    expect(resolveWASM(makeTempDir(), undefined, () => null)).toBeNull();
   });
 
   test('surfaces unexpected filesystem failures through diagnostics instead of collapsing to a miss', () => {
@@ -494,7 +495,12 @@ describe('resolvePrimitive() — generic resolver', () => {
       mkdirSync(sourceDir, { recursive: true });
 
       const tagMap = { boundary: 'BoundaryDef', token: 'TokenDef', theme: 'ThemeDef', style: 'StyleDef' } as const;
-      const fileMap = { boundary: 'boundaries.ts', token: 'tokens.ts', theme: 'themes.ts', style: 'styles.ts' } as const;
+      const fileMap = {
+        boundary: 'boundaries.ts',
+        token: 'tokens.ts',
+        theme: 'themes.ts',
+        style: 'styles.ts',
+      } as const;
       const tag = tagMap[kind];
       const file = fileMap[kind];
 
