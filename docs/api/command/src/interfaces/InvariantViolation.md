@@ -6,7 +6,7 @@
 
 # Interface: InvariantViolation
 
-Defined in: [command/src/registry.ts:392](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L392)
+Defined in: [command/src/registry.ts:433](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L433)
 
 One banned-pattern hit: a repo-relative `file`, 1-based `line`, and the trimmed
 source `content`. A structural mirror of the host scan's result item, declared
@@ -19,7 +19,7 @@ without a host import.
 
 > `readonly` **content**: `string`
 
-Defined in: [command/src/registry.ts:395](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L395)
+Defined in: [command/src/registry.ts:436](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L436)
 
 ***
 
@@ -27,7 +27,7 @@ Defined in: [command/src/registry.ts:395](https://github.com/freebatteryfactory/
 
 > `readonly` **file**: `string`
 
-Defined in: [command/src/registry.ts:393](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L393)
+Defined in: [command/src/registry.ts:434](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L434)
 
 ***
 
@@ -35,4 +35,4 @@ Defined in: [command/src/registry.ts:393](https://github.com/freebatteryfactory/
 
 > `readonly` **line**: `number`
 
-Defined in: [command/src/registry.ts:394](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L394)
+Defined in: [command/src/registry.ts:435](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L435)

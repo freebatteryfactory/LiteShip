@@ -41,7 +41,7 @@ describe('the lean LITESHIP_GATES default is IR-free', () => {
     }
   });
 
-  it('has exactly the seven regex gates plus the three check-governance meta-gates', () => {
+  it('has exactly the seven regex gates plus the three check-governance meta-gates and the diagnostic-code registry guard', () => {
     expect(ids(LITESHIP_GATES)).toEqual([
       'gauntlet/no-bare-throw',
       'gauntlet/no-ts-ignore',
@@ -57,6 +57,9 @@ describe('the lean LITESHIP_GATES default is IR-free', () => {
       'gauntlet/check-registry-complete',
       'gauntlet/check-negative-control',
       'gauntlet/check-waiver-freshness',
+      // The DIAGNOSTIC-CODE REGISTRY guard — a lean source-scanner (no IR, no facts) proving
+      // every emitted gauntlet ruleId + check id is enrolled in @liteship/error's registry.
+      'gauntlet/diagnostic-code-registered',
     ]);
   });
 });

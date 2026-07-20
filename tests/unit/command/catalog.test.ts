@@ -40,9 +40,11 @@ const EXPECTED_NAMES = [
   'check',
   'check-invariants',
   'completion',
+  'context',
   'describe',
   'dev',
   'doctor',
+  'explain',
   'gauntlet',
   'glossary',
   'help',
@@ -62,8 +64,8 @@ const EXPECTED_NAMES = [
 ] as const;
 
 /**
- * The MCP-exposed subset: the 10 finite, handler-backed compute/verify/gate
- * commands. describe (catalog projection — tools/list already serves it) and
+ * The MCP-exposed subset: the 12 finite, handler-backed compute/verify/gate and
+ * reference (explain / context) commands. describe (catalog projection — tools/list already serves it) and
  * gauntlet (terminal-streaming orchestration) are CLI-owned orchestration, never
  * MCP tools. `plumb` IS exposed: it returns a structured skip work-list — an ideal
  * agent tool. `check` IS exposed: it runs the PURE gauntlet gate fold in-process
@@ -83,6 +85,8 @@ const EXPECTED_MCP_NAMES = [
   'capsule.list',
   'capsule.verify',
   'check',
+  'context',
+  'explain',
   'plumb',
   'scene.compile',
   'scene.render',

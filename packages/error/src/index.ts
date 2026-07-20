@@ -64,3 +64,12 @@ export type { LiteShipError, LiteShipErrorTag } from './variants.js';
 // `ok`/`err`/`isOk`/`isErr` in value position.
 export { ok, err, isOk, isErr } from './result.js';
 export type { Result, Ok, Err } from './result.js';
+
+// The DIAGNOSTIC-CODE REGISTRY — the one catalogue of every stable diagnostic code
+// LiteShip emits (gauntlet gate ruleIds, P11 `check/<slug>` ids, `@liteship/core`
+// runtime diagnostics), each enrolled with a title/explanation/remediation. It lives
+// here because a diagnostic code is a FAILURE identity and `@liteship/error` is the
+// leaf every other package imports; the gauntlet reads it (gauntlet imports error,
+// never the reverse) to prove every emitted code is enrolled.
+export { DIAGNOSTIC_REGISTRY, explainDiagnostic } from './codes.js';
+export type { DiagnosticCode, DiagnosticArea, DiagnosticEntry } from './codes.js';

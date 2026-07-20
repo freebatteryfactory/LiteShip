@@ -6,7 +6,7 @@
 
 # Interface: CapsuleBenchClassification
 
-Defined in: [command/src/registry.ts:320](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L320)
+Defined in: [command/src/registry.ts:361](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L361)
 
 Bench-honesty classification across a capsule corpus — a structural mirror of
 the gate engine's result, declared here so the `capsule-verify` command's
@@ -21,7 +21,7 @@ analogue of `it.skip` — green but covering nothing).
 
 > `readonly` **placeholder**: readonly `string`[]
 
-Defined in: [command/src/registry.ts:326](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L326)
+Defined in: [command/src/registry.ts:367](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L367)
 
 Capsule names whose bench closure is empty/comment-only (no measurement).
 
@@ -31,7 +31,7 @@ Capsule names whose bench closure is empty/comment-only (no measurement).
 
 > `readonly` **real**: `number`
 
-Defined in: [command/src/registry.ts:324](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L324)
+Defined in: [command/src/registry.ts:365](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L365)
 
 Benches with executable closure bodies — actually measuring something.
 
@@ -41,6 +41,6 @@ Benches with executable closure bodies — actually measuring something.
 
 > `readonly` **total**: `number`
 
-Defined in: [command/src/registry.ts:322](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L322)
+Defined in: [command/src/registry.ts:363](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L363)
 
 Number of generated bench files found.

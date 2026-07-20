@@ -25,6 +25,8 @@ import { completion } from './commands/completion.js';
 import { describe as describeCmd } from './commands/describe.js';
 import { doctor } from './commands/doctor.js';
 import { glossary } from './commands/glossary.js';
+import { explain } from './commands/explain.js';
+import { context } from './commands/context.js';
 import { help } from './commands/help.js';
 import { color, colorEnabled } from './lib/ansi.js';
 import { sceneCompile } from './commands/scene-compile.js';
@@ -446,6 +448,8 @@ const GROUPED_EXECUTORS: Record<string, Executor> = {
 /** Flat handler-backed verbs — each routes to its thin CLI adapter (receipt shape preserved). */
 const HANDLER_EXECUTORS: Record<string, Executor> = {
   glossary: (rest) => glossary(rest[0] && !rest[0].startsWith('-') ? rest[0] : null),
+  explain: (rest) => explain(positional(rest) ?? null, { json: rest.includes('--json') }),
+  context: (rest) => context(takeFlagValue(rest, '--task').value ?? null, { json: rest.includes('--json') }),
   version: () => version(),
   audit: (rest) => execAudit(rest),
   'audit-floor': () => auditFloor(),

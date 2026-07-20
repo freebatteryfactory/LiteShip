@@ -736,6 +736,14 @@
           "kind": "const"
         },
         {
+          "name": "CONTEXT_MAP",
+          "kind": "const"
+        },
+        {
+          "name": "CONTEXT_TASK_IDS",
+          "kind": "const"
+        },
+        {
           "name": "CapsuleVerifyPayloadSchema",
           "kind": "const"
         },
@@ -756,6 +764,14 @@
           "name": "CommandRegistry",
           "kind": "namespace",
           "signature": "make:function"
+        },
+        {
+          "name": "ContextPayloadSchema",
+          "kind": "const"
+        },
+        {
+          "name": "ExplainPayloadSchema",
+          "kind": "const"
         },
         {
           "name": "GLOSSARY_ENTRIES",
@@ -862,6 +878,11 @@
           "signature": "get:function,list:function"
         },
         {
+          "name": "contextCommand",
+          "kind": "namespace",
+          "signature": "argsSchema:const,descriptor:const,handler:function"
+        },
+        {
           "name": "defineCommand",
           "kind": "function",
           "signature": "(1)"
@@ -875,6 +896,11 @@
           "name": "diffInventories",
           "kind": "function",
           "signature": "(2)"
+        },
+        {
+          "name": "explainCommand",
+          "kind": "namespace",
+          "signature": "argsSchema:const,descriptor:const,handler:function"
         },
         {
           "name": "failed",
@@ -2326,6 +2352,10 @@
       "version": "0.18.0",
       "exports": [
         {
+          "name": "DIAGNOSTIC_REGISTRY",
+          "kind": "const"
+        },
+        {
           "name": "HostCapabilityError",
           "kind": "function",
           "signature": "(2)"
@@ -2376,6 +2406,11 @@
         },
         {
           "name": "err",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "explainDiagnostic",
           "kind": "function",
           "signature": "(1)"
         },
@@ -2731,6 +2766,11 @@
           "name": "detectSkips",
           "kind": "function",
           "signature": "(1)"
+        },
+        {
+          "name": "diagnosticCodeRegisteredGate",
+          "kind": "namespace",
+          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
         },
         {
           "name": "diffStandardsSurface",

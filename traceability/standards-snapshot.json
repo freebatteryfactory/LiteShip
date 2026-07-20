@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 1,
-  "address": "fnv1a:7e0dc301",
+  "address": "fnv1a:3d963f18",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -382,6 +382,15 @@
     },
     {
       "_tag": "gate",
+      "ruleId": "gauntlet/diagnostic-code-registered",
+      "set": "LITESHIP_GATES",
+      "level": "L2",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
       "ruleId": "gauntlet/no-bare-throw",
       "set": "LITESHIP_GATES",
       "level": "L1",
@@ -466,6 +475,15 @@
       "ruleId": "gauntlet/crdt-laws-pinned",
       "set": "LITESHIP_IR_GATES",
       "level": "L4",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
+      "ruleId": "gauntlet/diagnostic-code-registered",
+      "set": "LITESHIP_IR_GATES",
+      "level": "L2",
       "redFixtureCount": 1,
       "greenFixtureCount": 1,
       "mutationFixtureCount": 1

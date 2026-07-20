@@ -8,7 +8,7 @@
 
 > **litelaunchGauntletWithIR**(`repoRoot`, `now`, `ir`, `globs?`, `cacheOpts?`): [`GauntletResult`](../interfaces/GauntletResult.md)
 
-Defined in: [gauntlet/src/runner.ts:457](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L457)
+Defined in: [gauntlet/src/runner.ts:467](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L467)
 
 The HOST gauntlet run (Slice B, B1, step 3) — the IR-INJECTED composition the
 CLI calls once it has built the repo-IR via `@liteship/audit`. Binds

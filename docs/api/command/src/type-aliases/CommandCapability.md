@@ -8,6 +8,6 @@
 
 > **CommandCapability** = `Exclude`\<keyof [`CommandContext`](../interfaces/CommandContext.md), `"cwd"`\>
 
-Defined in: [command/src/registry.ts:433](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L433)
+Defined in: [command/src/registry.ts:474](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L474)
 
 Name of an injectable [CommandContext](../interfaces/CommandContext.md) capability (everything but `cwd`).

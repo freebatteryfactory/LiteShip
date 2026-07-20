@@ -10,6 +10,34 @@ import type { GauntletResult } from '@liteship/gauntlet';
 import { ValidationError } from '@liteship/error';
 
 /**
+ * The owning-package resolution for one exported symbol — what the injected
+ * {@link CommandContext.resolveApiSymbol} capability returns, and what the
+ * `explain` command projects into its `symbol` arm. `package` is the owning
+ * publishable scope (a `PACKAGE_METADATA_CATALOG` key); `file` is the
+ * repo-relative source file the symbol is DECLARED in;
+ * `summary` is the first paragraph of that declaration's leading TSDoc. Declared
+ * here so the contract lives in `@liteship/command` without an import of the
+ * CLI-side api-index that produces it (the CLI injects it; over MCP the capability
+ * is absent and a symbol lookup degrades to `unresolved`).
+ */
+export interface ApiSymbolResolution {
+  /** The exported symbol name that was resolved. */
+  readonly symbol: string;
+  /** The owning publishable scope (a `PACKAGE_METADATA_CATALOG` key). */
+  readonly package: string;
+  /** The public import subpath the symbol is reachable from (`.` for the main barrel). */
+  readonly subpath: string;
+  /** Repo-relative source file the symbol is declared in. */
+  readonly file: string;
+  /** The declaration kind (`function` / `const` / `class` / `interface` / `type` / `enum`). */
+  readonly kind: string;
+  /** The first paragraph of the declaration's leading TSDoc (empty when it carries none). */
+  readonly summary: string;
+  /** The owning package's answer-first `description` from `PACKAGE_METADATA_CATALOG`. */
+  readonly packageDescription: string;
+}
+
+/**
  * Injected I/O surface for command handlers. Handlers receive their Node-coupled
  * dependencies here rather than reaching for globals, so the registry/handler
  * boundary stays declarative. Extended as handlers migrate into this package.
@@ -220,6 +248,19 @@ export interface CommandContext {
       }
     | { readonly ok: false; readonly error: string }
   >;
+  /**
+   * Resolve an exported symbol → its owning package + source file + one-paragraph
+   * TSDoc summary — the CLI-side api-index the `explain` command uses for its
+   * SYMBOL arm. Adapter-backed by `@liteship/cli`'s `buildApiSymbolResolver`
+   * (a source scan over `packages/*​/src`, cross-referenced against
+   * `PACKAGE_METADATA_CATALOG`), INJECTED here so `@liteship/command` — and
+   * therefore `@liteship/mcp-server` — never takes a build edge on the CLI's
+   * repo-scanning index. Only `@liteship/cli` provides it; over MCP the capability
+   * is absent and `explain <symbol>` degrades to an `unresolved` result (the
+   * DIAGNOSTIC-CODE arm is data-only and works everywhere). Returns `null` when the
+   * symbol is declared in no scanned package source.
+   */
+  readonly resolveApiSymbol?: (symbol: string) => ApiSymbolResolution | null;
   /** Recompute a tarball's manifest address (adapter runs the Effect). */
   readonly recomputeTarballAddress?: (
     bytes: Uint8Array,

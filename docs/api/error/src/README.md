@@ -34,6 +34,7 @@ helper unchanged — zero rebuild, zero fork.
 
 ## Interfaces
 
+- [DiagnosticEntry](interfaces/DiagnosticEntry.md)
 - [Err](interfaces/Err.md)
 - [HostCapabilityError](interfaces/HostCapabilityError.md)
 - [IntegrityError](interfaces/IntegrityError.md)
@@ -48,6 +49,8 @@ helper unchanged — zero rebuild, zero fork.
 
 ## Type Aliases
 
+- [DiagnosticArea](type-aliases/DiagnosticArea.md)
+- [DiagnosticCode](type-aliases/DiagnosticCode.md)
 - [LiteShipError](type-aliases/LiteShipError.md)
 - [LiteShipErrorTag](type-aliases/LiteShipErrorTag.md)
 - [Result](type-aliases/Result.md)
@@ -55,6 +58,7 @@ helper unchanged — zero rebuild, zero fork.
 
 ## Variables
 
+- [DIAGNOSTIC\_REGISTRY](variables/DIAGNOSTIC_REGISTRY.md)
 - [HostCapabilityError](variables/HostCapabilityError.md)
 - [IntegrityError](variables/IntegrityError.md)
 - [InvariantViolationError](variables/InvariantViolationError.md)
@@ -69,6 +73,7 @@ helper unchanged — zero rebuild, zero fork.
 
 - [assertNever](functions/assertNever.md)
 - [err](functions/err.md)
+- [explainDiagnostic](functions/explainDiagnostic.md)
 - [getTag](functions/getTag.md)
 - [hasTag](functions/hasTag.md)
 - [isErr](functions/isErr.md)

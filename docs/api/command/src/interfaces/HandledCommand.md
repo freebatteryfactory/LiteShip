@@ -6,7 +6,7 @@
 
 # Interface: HandledCommand
 
-Defined in: [command/src/registry.ts:557](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L557)
+Defined in: [command/src/registry.ts:598](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L598)
 
 A fully-migrated command: descriptor + a guaranteed handler. Migrated command
 modules type their export as this so adapters can invoke `.handler` directly
@@ -22,7 +22,7 @@ without a presence check. Assignable to [RegisteredCommand](RegisteredCommand.md
 
 > `readonly` `optional` **argsSchema?**: `Schema`\<`Readonly`\<`Record`\<`string`, `unknown`\>\>, `Readonly`\<`Record`\<`string`, `unknown`\>\>\>
 
-Defined in: [command/src/registry.ts:549](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L549)
+Defined in: [command/src/registry.ts:590](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L590)
 
 The declared kernel schema for the command's args. When present, the
 dispatcher decodes `invocation.args` against it BEFORE invoking the handler
@@ -41,7 +41,7 @@ step is then a no-op passthrough).
 
 > `readonly` **descriptor**: `CapsuleCommandDescriptor`
 
-Defined in: [command/src/registry.ts:539](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L539)
+Defined in: [command/src/registry.ts:580](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L580)
 
 #### Inherited from
 
@@ -53,7 +53,7 @@ Defined in: [command/src/registry.ts:539](https://github.com/freebatteryfactory/
 
 > `readonly` **handler**: [`CapsuleCommandHandler`](CapsuleCommandHandler.md)
 
-Defined in: [command/src/registry.ts:558](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L558)
+Defined in: [command/src/registry.ts:599](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L599)
 
 #### Overrides
 

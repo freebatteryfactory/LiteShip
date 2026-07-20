@@ -8,7 +8,7 @@
 
 > `const` **LITESHIP\_IR\_GATES**: readonly [`Gate`](../interfaces/Gate.md)[]
 
-Defined in: [gauntlet/src/runner.ts:114](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L114)
+Defined in: [gauntlet/src/runner.ts:120](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L120)
 
 The HOST gate set — what the CLI runs WHEN it has built + injected the repo-IR
 (Slice B, B1, step 3). It is [LITESHIP\_GATES](LITESHIP_GATES.md) with the regex

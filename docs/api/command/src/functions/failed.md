@@ -8,7 +8,7 @@
 
 > **failed**\<`P`\>(`command`, `payload`, `exitCode?`): [`CapsuleCommandResult`](../type-aliases/CapsuleCommandResult.md)\<`P`\>
 
-Defined in: [command/src/registry.ts:485](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L485)
+Defined in: [command/src/registry.ts:526](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L526)
 
 Stamp a FAILURE envelope: `status: 'failed'` + the wall-clock timestamp + the
 `exitCode` (default 1) + the typed payload. The dispatcher builds its own

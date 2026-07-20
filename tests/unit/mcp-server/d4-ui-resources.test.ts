@@ -190,6 +190,9 @@ describe('D4 — projection drift pin', () => {
     // ("Preflight rig-check:" -> "Preflight environment check:"); the registry/commands UI
     // body embeds command summaries, so its digest shifted. (The castoff -> setup group
     // rename is NOT rendered into the UI body and does not affect this pin.)
-    expect(address).toBe('fnv1a:df51e901');
+    // Re-pinned again when the `explain` and `context` reference commands joined
+    // COMMAND_CATALOG as handler-backed, MCP-exposed commands — the registry/commands
+    // UI body grew by two entries.
+    expect(address).toBe('fnv1a:8d4994a4');
   });
 });

@@ -75,7 +75,10 @@ describe('D5 — D4 static surface stays frozen', () => {
     // ("Preflight rig-check:" -> "Preflight environment check:"); the registry/commands UI
     // body embeds command summaries, so its digest shifted. (The castoff -> setup group
     // rename is NOT rendered into the UI body and does not affect this pin.)
-    expect(pin).toBe('fnv1a:df51e901');
+    // Re-pinned again when the `explain` (diagnostic-code / symbol lookup) and `context`
+    // (task-oriented pointer map) reference commands joined COMMAND_CATALOG as
+    // handler-backed, MCP-exposed commands — the registry/commands UI body grew by two.
+    expect(pin).toBe('fnv1a:8d4994a4');
   });
 });
 
@@ -183,9 +186,9 @@ describe('D5 — D1/D2 non-regression', () => {
     expect(r._meta?.['liteship/result']).toBeDefined();
   });
 
-  it('D2: tools/list still emits 10 tools each with an object outputSchema', () => {
+  it('D2: tools/list still emits 12 tools each with an object outputSchema', () => {
     const tools = listTools();
-    expect(tools.length).toBe(10);
+    expect(tools.length).toBe(12);
     for (const t of tools) expect((t.outputSchema as { type?: string }).type).toBe('object');
   });
 });

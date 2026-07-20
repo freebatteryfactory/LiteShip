@@ -73,6 +73,11 @@ export { capsuleVerifyGateCommand, CapsuleVerifyPayloadSchema } from './commands
 export type { CapsuleVerifyPayload } from './commands/capsule-verify.js';
 export { checkCommand, CheckPayloadSchema } from './commands/check.js';
 export type { CheckPayload } from './commands/check.js';
+export { explainCommand, ExplainPayloadSchema } from './commands/explain.js';
+export type { ExplainPayload, ExplainDiagnostic, ExplainEmitter, ExplainSymbol } from './commands/explain.js';
+export { contextCommand, ContextPayloadSchema, CONTEXT_MAP, CONTEXT_TASK_IDS } from './commands/context.js';
+export type { ContextPayload, ContextPointer, ContextPointerKind, ContextTask } from './commands/context.js';
+export type { ApiSymbolResolution } from './registry.js';
 
 // The check registry (data) + the pure profile planner — the source a profile
 // sweep projects from (CHECK_REGISTRY / SCRIPT_EXEMPTIONS partition the root scripts).

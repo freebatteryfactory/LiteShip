@@ -237,14 +237,15 @@ describe('D3 non-regression — D1 envelope + D2 outputSchema law untouched', ()
     expect(receipt.resultId).toMatch(/^fnv1a:[0-9a-f]{8}$/);
   });
 
-  it('D2: tools/list still emits 10 tools each with an object outputSchema; 18 handlers total', () => {
+  it('D2: tools/list still emits 12 tools each with an object outputSchema; 20 handlers total', () => {
     const tools = listTools();
-    expect(tools.length).toBe(10);
+    expect(tools.length).toBe(12);
     for (const t of tools) expect((t.outputSchema as { type?: string }).type).toBe('object');
-    // 18 handlers: the `check` command (the PURE gauntlet gate fold,
-    // litelaunchGauntlet) joined the registry as a handler-backed, MCP-exposed
-    // command — so both the tools count (9 → 10) and the handler count grew by one.
-    expect(commandRegistry.list().filter((d) => d.executionKind === 'handler').length).toBe(18);
+    // 20 handlers: the `explain` (diagnostic-code / symbol lookup) and `context`
+    // (task-oriented pointer map) reference commands joined the registry as
+    // handler-backed, MCP-exposed commands — so both the tools count (10 → 12) and
+    // the handler count (18 → 20) grew by two.
+    expect(commandRegistry.list().filter((d) => d.executionKind === 'handler').length).toBe(20);
   });
 });
 

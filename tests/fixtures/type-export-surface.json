@@ -1775,6 +1775,10 @@
     "@liteship/command": {
       "typeExports": [
         {
+          "name": "ApiSymbolResolution",
+          "kind": "type"
+        },
+        {
           "name": "AssetAnalyzePayload",
           "kind": "type"
         },
@@ -1932,6 +1936,38 @@
         },
         {
           "name": "CommandRegistry",
+          "kind": "type"
+        },
+        {
+          "name": "ContextPayload",
+          "kind": "type"
+        },
+        {
+          "name": "ContextPointer",
+          "kind": "type"
+        },
+        {
+          "name": "ContextPointerKind",
+          "kind": "type"
+        },
+        {
+          "name": "ContextTask",
+          "kind": "type"
+        },
+        {
+          "name": "ExplainDiagnostic",
+          "kind": "type"
+        },
+        {
+          "name": "ExplainEmitter",
+          "kind": "type"
+        },
+        {
+          "name": "ExplainPayload",
+          "kind": "type"
+        },
+        {
+          "name": "ExplainSymbol",
           "kind": "type"
         },
         {
@@ -3642,6 +3678,18 @@
     },
     "@liteship/error": {
       "typeExports": [
+        {
+          "name": "DiagnosticArea",
+          "kind": "type"
+        },
+        {
+          "name": "DiagnosticCode",
+          "kind": "type"
+        },
+        {
+          "name": "DiagnosticEntry",
+          "kind": "type"
+        },
         {
           "name": "Err",
           "kind": "type"

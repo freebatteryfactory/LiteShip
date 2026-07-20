@@ -43,6 +43,8 @@ const MCP_DISPATCH_ARGS: Record<string, Record<string, unknown>> = {
   'capsule.list': {},
   'capsule.verify': { id: '__mcp-dispatch-probe__' },
   check: {},
+  context: { task: 'add-boundary' },
+  explain: { query: 'gauntlet/no-bare-throw' },
   plumb: {},
   'scene.compile': { scene: '__mcp-dispatch-probe__.ts' },
   'scene.render': { scene: '__mcp-dispatch-probe__.ts' },
@@ -137,7 +139,7 @@ describe('dispatchToolCall — all mcpExposed tools (catalog-driven matrix)', ()
   const descriptors = mcpExposedDescriptors();
 
   it('test count matches mcpExposedDescriptors().length', () => {
-    expect(descriptors.length).toBe(10);
+    expect(descriptors.length).toBe(12);
     expect(Object.keys(MCP_DISPATCH_ARGS).sort()).toEqual(descriptors.map((d) => d.name).sort());
   });
 
@@ -164,7 +166,7 @@ describe('dispatchToolCall — all mcpExposed tools (catalog-driven matrix)', ()
 });
 
 describe('listTools — registry-projected catalog', () => {
-  it('lists exactly the 10 handler-backed compute/verify/gate tools, each with an inputSchema', () => {
+  it('lists exactly the 12 handler-backed compute/verify/gate/reference tools, each with an inputSchema', () => {
     const names = listTools().map((t) => t.name).sort();
     expect(names).toEqual([
       'asset.analyze',
@@ -173,6 +175,8 @@ describe('listTools — registry-projected catalog', () => {
       'capsule.list',
       'capsule.verify',
       'check',
+      'context',
+      'explain',
       'plumb',
       'scene.compile',
       'scene.render',

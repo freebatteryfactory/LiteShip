@@ -368,6 +368,12 @@ export {
 } from './facts/check-governance-facts.js';
 export { crdtLawsGate } from './gates/crdt-laws.js';
 
+// The DIAGNOSTIC-CODE REGISTRY guard — statically scans packages/gauntlet/src for every
+// emitted `gauntlet/…` ruleId and the check registry for every `check/<slug>` id, and reds
+// on any not enrolled in @liteship/error's DIAGNOSTIC_REGISTRY. A lean source-fold (no IR,
+// no facts); it rides BOTH LITESHIP_GATES and LITESHIP_IR_GATES.
+export { diagnosticCodeRegisteredGate } from './gates/diagnostic-code-registered.js';
+
 // The avionics-tier (Slice C) performance-contracts gate — a LEAN, deterministic
 // fold over the committed `benchmarks/` artifacts (declared-distribution registry +
 // complexity-class map). It does NOT requireIR, but it ships in LITESHIP_IR_GATES

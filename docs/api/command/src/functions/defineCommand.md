@@ -8,7 +8,7 @@
 
 > **defineCommand**\<`R`, `Args`, `Payload`\>(`spec`): [`HandledCommand`](../interfaces/HandledCommand.md)
 
-Defined in: [command/src/registry.ts:572](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L572)
+Defined in: [command/src/registry.ts:613](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L613)
 
 Register a finite command with COMPILE-TIME capability narrowing (T053). The
 `requires` tuple is captured as a `const` type parameter `R`, so the handler's

@@ -26,6 +26,8 @@ import { packageSmokeCommand } from './commands/package-smoke.js';
 import { checkInvariantsCommand } from './commands/check-invariants.js';
 import { capsuleVerifyGateCommand } from './commands/capsule-verify.js';
 import { checkCommand } from './commands/check.js';
+import { explainCommand } from './commands/explain.js';
+import { contextCommand } from './commands/context.js';
 import type { GlossaryPayload } from './commands/glossary.js';
 import type { VersionPayload } from './commands/version.js';
 import type { CapsuleInspectPayload, CapsuleListPayload, CapsuleVerifyResultPayload } from './commands/capsule.js';
@@ -39,6 +41,8 @@ import type { PackageSmokePayload } from './commands/package-smoke.js';
 import type { CheckInvariantsPayload } from './commands/check-invariants.js';
 import type { CapsuleVerifyPayload } from './commands/capsule-verify.js';
 import type { CheckPayload } from './commands/check.js';
+import type { ExplainPayload } from './commands/explain.js';
+import type { ContextPayload } from './commands/context.js';
 
 /**
  * The name-keyed payload contract: for each handler-backed command, the `payload`
@@ -69,6 +73,8 @@ export interface CommandMap {
   readonly 'check-invariants': CheckInvariantsPayload;
   readonly 'capsule-verify': CapsuleVerifyPayload;
   readonly check: CheckPayload;
+  readonly explain: ExplainPayload;
+  readonly context: ContextPayload;
 }
 
 /**
@@ -240,6 +246,8 @@ const HANDLER_COMMANDS: readonly RegisteredCommand[] = [
   checkInvariantsCommand,
   capsuleVerifyGateCommand,
   checkCommand,
+  explainCommand,
+  contextCommand,
 ];
 
 /**

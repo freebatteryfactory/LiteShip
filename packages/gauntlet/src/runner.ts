@@ -61,6 +61,7 @@ import { activeModeledSurfaceReaderGate } from './gates/active-modeled-surface-r
 import { checkRegistryCompleteGate } from './gates/check-registry-complete.js';
 import { checkNegativeControlGate } from './gates/check-negative-control.js';
 import { checkWaiverFreshnessGate } from './gates/check-waiver-freshness.js';
+import { diagnosticCodeRegisteredGate } from './gates/diagnostic-code-registered.js';
 
 /**
  * LiteShip's built-in gate set — the gates the repo runs against itself. The three
@@ -90,6 +91,11 @@ export const LITESHIP_GATES: readonly Gate[] = [
   checkRegistryCompleteGate,
   checkNegativeControlGate,
   checkWaiverFreshnessGate,
+  // The DIAGNOSTIC-CODE REGISTRY guard — a lean source-scanner (no IR, no facts) that proves
+  // every emitted gauntlet ruleId + every check/<slug> id is enrolled in @liteship/error's
+  // DIAGNOSTIC_REGISTRY. It rides the lean set AND the IR-host set (it needs neither), so it
+  // runs on both the `liteship check` lean path and the IR-injected `check:gates` composition.
+  diagnosticCodeRegisteredGate,
 ];
 
 /**
@@ -140,6 +146,10 @@ export const LITESHIP_IR_GATES: readonly Gate[] = [
   // perf-claim gate (no IR); rides the IR-host set alongside it, never the lean cut.
   claimPropertyGate,
   activeModeledSurfaceReaderGate,
+  // The DIAGNOSTIC-CODE REGISTRY guard also rides the IR-host set (it needs no IR): this is
+  // the composition `liteship check` / `check:gates` runs, so the registry-enrolment proof
+  // fires there over the real repo. It appears once in each set (no duplicate ruleId).
+  diagnosticCodeRegisteredGate,
 ];
 
 /** Options for {@link runGauntletOnRepo}. */

@@ -30,11 +30,11 @@ describe('json-schema parity fixture', () => {
     expect(buildParityFixtureContent()).toBe(buildParityFixtureContent());
   });
 
-  it('covers every handler-backed descriptor slot (18 handlers → inputSchema + outputSchema)', () => {
+  it('covers every handler-backed descriptor slot (20 handlers → inputSchema + outputSchema)', () => {
     const keys = Object.keys(buildParityMap());
-    expect(keys.filter((k) => k.endsWith('#inputSchema')).length).toBe(18);
-    expect(keys.filter((k) => k.endsWith('#outputSchema')).length).toBe(18);
-    expect(keys.length).toBe(36);
+    expect(keys.filter((k) => k.endsWith('#inputSchema')).length).toBe(20);
+    expect(keys.filter((k) => k.endsWith('#outputSchema')).length).toBe(20);
+    expect(keys.length).toBe(40);
   });
 
   it('every captured value is the stableSerialize canonical form (key-sorted object, "type" after "properties")', () => {

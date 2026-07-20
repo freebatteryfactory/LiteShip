@@ -43,6 +43,10 @@ function cliArgvForTool(name: string): string[] {
       return ['capsule', 'verify', 'alpha'];
     case 'check':
       return ['check'];
+    case 'context':
+      return ['context', '--task', 'add-boundary'];
+    case 'explain':
+      return ['explain', 'gauntlet/no-bare-throw'];
     case 'plumb':
       return ['plumb'];
     case 'scene.compile':
@@ -62,6 +66,10 @@ function mcpArgsForTool(name: string): Record<string, unknown> {
     case 'check':
     case 'plumb':
       return {};
+    case 'context':
+      return { task: 'add-boundary' };
+    case 'explain':
+      return { query: 'gauntlet/no-bare-throw' };
     case 'capsule.inspect':
       return { id: 'alpha' };
     case 'capsule.verify':
@@ -121,13 +129,13 @@ describe('A1-T5 — CLI and MCP converge on shared handler commands', () => {
     rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  it('catalog pin: shared handler set is exactly the 10 mcpExposed tools', () => {
+  it('catalog pin: shared handler set is exactly the 12 mcpExposed tools', () => {
     expect(SHARED_HANDLER_COMMANDS.map((d) => d.name).sort()).toEqual(
       mcpExposedDescriptors()
         .map((d) => d.name)
         .sort(),
     );
-    expect(SHARED_HANDLER_COMMANDS.length).toBe(10);
+    expect(SHARED_HANDLER_COMMANDS.length).toBe(12);
   });
 
   for (const descriptor of SHARED_HANDLER_COMMANDS) {
