@@ -73,6 +73,22 @@ export { capsuleVerifyGateCommand, CapsuleVerifyPayloadSchema } from './commands
 export type { CapsuleVerifyPayload } from './commands/capsule-verify.js';
 export { checkCommand, CheckPayloadSchema } from './commands/check.js';
 export type { CheckPayload } from './commands/check.js';
+
+// The check registry (data) + the pure profile planner — the source a profile
+// sweep projects from (CHECK_REGISTRY / SCRIPT_EXEMPTIONS partition the root scripts).
+export { CHECK_REGISTRY } from './checks/registry.js';
+export { SCRIPT_EXEMPTIONS } from './checks/script-exemptions.js';
+export type { ScriptExemption } from './checks/script-exemptions.js';
+export type { CheckDefinition, CheckProfile, CheckPlatform, CheckCache, CheckAuthority } from './checks/definition.js';
+export { planChecks, formatCheckPlan, CHECK_PROFILES, CHECK_PLATFORMS } from './checks/plan.js';
+export type {
+  CheckPlan,
+  PlannedCheck,
+  SkippedCheck,
+  CheckReport,
+  CheckRunResult,
+  CheckVerdict,
+} from './checks/plan.js';
 export { INVARIANTS } from './commands/check-invariants-registry.js';
 export type { CheckInvariantEntry } from './commands/check-invariants-registry.js';
 export {

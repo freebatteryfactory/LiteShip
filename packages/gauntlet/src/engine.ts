@@ -287,6 +287,13 @@ export function scopeContextByLevel(
     // pass-throughs above fix.
     ...(context.skipSites !== undefined ? { skipSites: context.skipSites } : {}),
     ...(context.activeSurfaceFacts !== undefined ? { activeSurfaceFacts: context.activeSurfaceFacts } : {}),
+    // Likewise the injected check-governance FactPack (the three meta-gates): it describes
+    // the root-script partition / negative-controls / waiver freshness (repo-wide facts, not
+    // per-src-file), so file-scoping never narrows it — it passes through unchanged. Omit the
+    // key when absent. WITHOUT this pass-through a level-scoped meta-gate would fold an empty
+    // verdict even though a host injected the facts — the same scoped-context drop the
+    // pass-throughs above fix.
+    ...(context.checkGovernance !== undefined ? { checkGovernance: context.checkGovernance } : {}),
   };
 }
 

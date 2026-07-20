@@ -58,6 +58,9 @@ import { performanceContractsGate } from './gates/performance-contracts.js';
 import { perfClaimBenchGate } from './gates/perf-claim-bench.js';
 import { claimPropertyGate } from './gates/claim-property.js';
 import { activeModeledSurfaceReaderGate } from './gates/active-modeled-surface-reader.js';
+import { checkRegistryCompleteGate } from './gates/check-registry-complete.js';
+import { checkNegativeControlGate } from './gates/check-negative-control.js';
+import { checkWaiverFreshnessGate } from './gates/check-waiver-freshness.js';
 
 /**
  * LiteShip's built-in gate set — the gates the repo runs against itself. The three
@@ -75,6 +78,18 @@ export const LITESHIP_GATES: readonly Gate[] = [
   noSkippedTestGate,
   noPlaceholderGate,
   noEarlyReturnTestGate,
+  // The three check-governance META-GATES — they guard the check registry itself: the
+  // root-script partition (registered XOR exempt, all resolving), the negative-control
+  // existence, and waiver freshness across both stores. As FactGates they read ONLY the
+  // injected CheckGovernanceFacts (a host folds `@liteship/command`'s CHECK_REGISTRY /
+  // SCRIPT_EXEMPTIONS / package.json / fs / LITESHIP_WAIVERS / the ledger vs a wall-clock
+  // date), so on the lean production path — where no host injects them — they fold an
+  // EMPTY verdict (inert, MCP-safe). Each self-proves via its red/green/mutation fixtures,
+  // so it EARNS blocking authority; the real repo-wide enforcement lives in the
+  // `tests/unit/devops` meta-test that builds the facts and runs these same gates.
+  checkRegistryCompleteGate,
+  checkNegativeControlGate,
+  checkWaiverFreshnessGate,
 ];
 
 /**

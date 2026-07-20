@@ -351,6 +351,21 @@ export {
   type ActiveSurfaceEntry,
   type ActiveSurfacePromotion,
 } from './facts/active-surface-facts.js';
+
+// The three check-governance META-GATES + their decision kernels + the FactPack shape.
+// FactGates over the injected CheckGovernanceFacts (a host folds @liteship/command's
+// CHECK_REGISTRY / SCRIPT_EXEMPTIONS / package.json / fs / LITESHIP_WAIVERS / the ledger);
+// they ride in LITESHIP_GATES and fold empty when the facts are absent (lean production).
+export { checkRegistryCompleteGate, decideCheckRegistryComplete } from './gates/check-registry-complete.js';
+export { checkNegativeControlGate, decideCheckNegativeControl } from './gates/check-negative-control.js';
+export { checkWaiverFreshnessGate, decideCheckWaiverFreshness } from './gates/check-waiver-freshness.js';
+export {
+  type CheckGovernanceFacts,
+  type CheckPartitionFacts,
+  type RegisteredCheckFact,
+  type NegativeControlFact,
+  type WaiverFreshnessFact,
+} from './facts/check-governance-facts.js';
 export { crdtLawsGate } from './gates/crdt-laws.js';
 
 // The avionics-tier (Slice C) performance-contracts gate — a LEAN, deterministic

@@ -720,6 +720,18 @@
           "kind": "const"
         },
         {
+          "name": "CHECK_PLATFORMS",
+          "kind": "const"
+        },
+        {
+          "name": "CHECK_PROFILES",
+          "kind": "const"
+        },
+        {
+          "name": "CHECK_REGISTRY",
+          "kind": "const"
+        },
+        {
           "name": "COMMAND_CATALOG",
           "kind": "const"
         },
@@ -775,6 +787,10 @@
         },
         {
           "name": "PlumbPayloadSchema",
+          "kind": "const"
+        },
+        {
+          "name": "SCRIPT_EXEMPTIONS",
           "kind": "const"
         },
         {
@@ -866,6 +882,11 @@
           "signature": "(2)"
         },
         {
+          "name": "formatCheckPlan",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "glossaryCommand",
           "kind": "namespace",
           "signature": "argsSchema:const,descriptor:const,handler:function"
@@ -899,6 +920,11 @@
           "name": "packageSmokeCommand",
           "kind": "namespace",
           "signature": "descriptor:const,handler:function"
+        },
+        {
+          "name": "planChecks",
+          "kind": "function",
+          "signature": "(2)"
         },
         {
           "name": "plumbCommand",
@@ -2592,6 +2618,21 @@
           "signature": "describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
         },
         {
+          "name": "checkNegativeControlGate",
+          "kind": "namespace",
+          "signature": "decide:function,describe:const,evidenceDigest:function,fixtures:const,form:const,id:const,level:const,requires:const,run:function"
+        },
+        {
+          "name": "checkRegistryCompleteGate",
+          "kind": "namespace",
+          "signature": "decide:function,describe:const,evidenceDigest:function,fixtures:const,form:const,id:const,level:const,requires:const,run:function"
+        },
+        {
+          "name": "checkWaiverFreshnessGate",
+          "kind": "namespace",
+          "signature": "decide:function,describe:const,evidenceDigest:function,fixtures:const,form:const,id:const,level:const,requires:const,run:function"
+        },
+        {
           "name": "claimPropertyGate",
           "kind": "namespace",
           "signature": "describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
@@ -2638,6 +2679,21 @@
         },
         {
           "name": "decideActiveSurfaceReaders",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "decideCheckNegativeControl",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "decideCheckRegistryComplete",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "decideCheckWaiverFreshness",
           "kind": "function",
           "signature": "(1)"
         },

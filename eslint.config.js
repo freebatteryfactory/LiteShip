@@ -236,6 +236,7 @@ export default tseslint.config(
       'packages/command/src/host/ffmpeg-probe.ts', // reason: spawnSync libx264 availability probe — sync, shared by doctor + tests
       'packages/stage/src/ffmpeg-encoder.ts', // reason: spawn('ffmpeg') raw stdin frame-pipe + spawnSync libx264 probe — the headless byte-encode backend of the stage FrameEncoder seam (B); same raw-stdio case as command/host/ffmpeg.ts, kept off @liteship/command to respect stage's topology allowlist
       'packages/cli/src/commands/gauntlet.ts', // reason: spawnSync('pnpm run gauntlet:full', { shell: true }) — needs shell
+      'packages/cli/src/commands/check.ts', // reason: spawnSync(check.command, { shell: true }) — the `liteship check --profile` sweep spawns each registry check's full shell-line `command` (e.g. `pnpm run typecheck`, env-prefixed lines like `BENCH_TREND_STRICT=1 pnpm run bench:trend`), which needs shell + the raw command string the argv-array helper can't express. Sync, and the children run root gate scripts (not this process's code under test), so coverage inheritance is moot — the same case as gauntlet.ts
       // (3) Sync ffmpeg/ffprobe probes in smoke tests.
       'tests/smoke/intro-render.test.ts', // reason: spawnSync for ffmpeg/ffprobe binary availability probes
       'tests/unit/stage/ffmpeg-encoder.test.ts', // reason: execFileSync('ffprobe') validates the encoded MP4 byte stream (sync, no code under test)

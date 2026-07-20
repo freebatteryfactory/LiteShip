@@ -1847,6 +1847,18 @@
           "kind": "type"
         },
         {
+          "name": "CheckAuthority",
+          "kind": "type"
+        },
+        {
+          "name": "CheckCache",
+          "kind": "type"
+        },
+        {
+          "name": "CheckDefinition",
+          "kind": "type"
+        },
+        {
           "name": "CheckInvariantEntry",
           "kind": "type"
         },
@@ -1860,6 +1872,30 @@
         },
         {
           "name": "CheckPayload",
+          "kind": "type"
+        },
+        {
+          "name": "CheckPlan",
+          "kind": "type"
+        },
+        {
+          "name": "CheckPlatform",
+          "kind": "type"
+        },
+        {
+          "name": "CheckProfile",
+          "kind": "type"
+        },
+        {
+          "name": "CheckReport",
+          "kind": "type"
+        },
+        {
+          "name": "CheckRunResult",
+          "kind": "type"
+        },
+        {
+          "name": "CheckVerdict",
           "kind": "type"
         },
         {
@@ -1943,6 +1979,10 @@
           "kind": "type"
         },
         {
+          "name": "PlannedCheck",
+          "kind": "type"
+        },
+        {
           "name": "PlumbGateSummary",
           "kind": "type"
         },
@@ -1968,6 +2008,14 @@
         },
         {
           "name": "SceneVerifyPayload",
+          "kind": "type"
+        },
+        {
+          "name": "ScriptExemption",
+          "kind": "type"
+        },
+        {
+          "name": "SkippedCheck",
           "kind": "type"
         },
         {
@@ -3715,6 +3763,14 @@
           "kind": "type"
         },
         {
+          "name": "CheckGovernanceFacts",
+          "kind": "type"
+        },
+        {
+          "name": "CheckPartitionFacts",
+          "kind": "type"
+        },
+        {
           "name": "CiAuthorityFacts",
           "kind": "type"
         },
@@ -3979,6 +4035,10 @@
           "kind": "type"
         },
         {
+          "name": "NegativeControlFact",
+          "kind": "type"
+        },
+        {
           "name": "OracleDivergenceSpec",
           "kind": "type"
         },
@@ -4004,6 +4064,10 @@
         },
         {
           "name": "RefSite",
+          "kind": "type"
+        },
+        {
+          "name": "RegisteredCheckFact",
           "kind": "type"
         },
         {
@@ -4196,6 +4260,10 @@
         },
         {
           "name": "WaiverApplication",
+          "kind": "type"
+        },
+        {
+          "name": "WaiverFreshnessFact",
           "kind": "type"
         },
         {

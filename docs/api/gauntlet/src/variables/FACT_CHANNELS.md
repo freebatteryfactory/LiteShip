@@ -6,7 +6,7 @@
 
 # Variable: FACT\_CHANNELS
 
-> `const` **FACT\_CHANNELS**: readonly \[`"supplyChain"`, `"mutation"`, `"transition"`, `"spineRelation"`, `"mcdc"`, `"simulation"`, `"traceability"`, `"standards"`, `"declaredFix"`, `"taint"`, `"capabilityLink"`, `"fuzzCorpus"`, `"proof"`, `"composition"`, `"skipSites"`, `"activeSurfaceFacts"`\]
+> `const` **FACT\_CHANNELS**: readonly \[`"supplyChain"`, `"mutation"`, `"transition"`, `"spineRelation"`, `"mcdc"`, `"simulation"`, `"traceability"`, `"standards"`, `"declaredFix"`, `"taint"`, `"capabilityLink"`, `"fuzzCorpus"`, `"proof"`, `"composition"`, `"skipSites"`, `"activeSurfaceFacts"`, `"checkGovernance"`\]
 
 Defined in: [gauntlet/src/evidence-recorder.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/evidence-recorder.ts#L58)
 

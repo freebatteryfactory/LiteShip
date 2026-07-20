@@ -1,11 +1,29 @@
 import { ValidationError } from '@liteship/error';
+import { CHECK_REGISTRY, type CheckDefinition } from '@liteship/command';
 
 /**
- * Canonical gauntlet phase profile (CUT D8) — the ONE source of truth for the
- * release-grade gauntlet sequence. Every projection derives from this list:
+ * Canonical gauntlet phase profile (CUT D8) — the release-grade gauntlet sequence.
+ * It is no longer a hand-transcribed literal: `gauntletPhases` is a PROJECTION of
+ * `@liteship/command`'s {@link CHECK_REGISTRY} (the single source of truth for what a
+ * root-script check ASSERTS and the exact command that asserts it), filtered to the
+ * checks whose `profiles` include `"release"` and ordered by the companion
+ * {@link RELEASE_GAUNTLET_PROJECTION} spec. Every projection still derives from ONE
+ * place:
  *   - the executor `scripts/gauntlet.ts` (imports + loops these serially);
  *   - the CLI dry-run (`liteship gauntlet --dry-run` projects `label`s);
  *   - the meta tests.
+ *
+ * The COMMAND of every check-backed phase is pulled from the registry entry
+ * (`CheckDefinition.command`) — never restated here — so a command change in the
+ * registry flows through to the gauntlet automatically. The projection spec supplies
+ * only the gauntlet `label` (the executor's banner/timings identity, which differs
+ * from the registry `id`) plus the executor-only phases the registry does NOT model:
+ * `build` / `capsule:compile` / `invariants` and the `coverage:*` plumbing (the
+ * coverage FLOOR is `check/coverage`, but the gauntlet runs the split node/browser/
+ * merge sub-phases). `check/format`, `check/devx`, `check/bench-alloc`, and
+ * `check/coverage` are release checks that are NOT gauntlet phases (the gauntlet runs
+ * the coverage plumbing sub-phases instead, and format/devx/bench-alloc ride the
+ * profile lanes but not the serial executor), so the projection omits them.
  *
  * It lives in the CLI package because the CLI is a composite project (`rootDir:
  * ./src`) that cannot import out to `scripts/`; the proven direction is the
@@ -13,7 +31,6 @@ import { ValidationError } from '@liteship/error';
  * `scripts/lib/spawn.ts → @liteship/cli`). It is the published command surface owning
  * the phase vocabulary it exposes, not "the CLI owning devops".
  *
- * Order + commands are transcribed verbatim from the executor's real run-order.
  * The type is intentionally minimal — only what the executor consumes per phase
  * (everything else: env, cwd, watchdog defaults, timings, exit handling, is global
  * in the executor).
@@ -33,63 +50,90 @@ export interface GauntletPhase {
   readonly gracePeriodMs?: number;
 }
 
-/** The canonical gauntlet sequence, in execution order (length = gauntletPhases.length). */
-export const gauntletPhases: readonly GauntletPhase[] = [
+/**
+ * One entry of the ordered release-gauntlet projection spec. EITHER a reference to a
+ * {@link CHECK_REGISTRY} entry (surfaced under a gauntlet `label`, its `command`
+ * pulled from the registry) OR a LITERAL executor-only phase the registry does not
+ * model (`build` / `capsule:compile` / `invariants` / the `coverage:*` plumbing).
+ */
+type PhaseProjection =
+  | {
+      /** The registry check whose `command` this phase runs. */
+      readonly checkId: string;
+      /** The gauntlet banner/timings label (differs from the registry `id`). */
+      readonly label: string;
+    }
+  | {
+      /** A literal executor-only phase the registry does not model. */
+      readonly phase: GauntletPhase;
+    };
+
+/**
+ * The ORDERED projection spec — the companion id-list that preserves the executor's
+ * exact serial run-order. Check references resolve their `command` from
+ * {@link CHECK_REGISTRY} (a release-profile assertion); literals are the executor-only
+ * phases (`build` / `capsule:compile` / `invariants` / `coverage:*` plumbing) that
+ * carry no registry check. Editing the order or a label here — or a `command` in the
+ * registry — is the ONLY way to change the sequence; the meta test pins it byte-for-byte.
+ */
+const RELEASE_GAUNTLET_PROJECTION: readonly PhaseProjection[] = [
   // ── Phase 0: Rig-check (env preflight) ─────────────────────────────
-  { label: 'rig-check', command: 'pnpm run doctor -- --preflight --ci' },
+  { checkId: 'check/doctor', label: 'rig-check' },
 
   // ── Phase 1: Build + validate ──────────────────────────────────────
-  { label: 'build', command: 'pnpm run build' },
-  { label: 'capsule:compile', command: 'pnpm run capsule:compile' },
-  { label: 'typecheck', command: 'pnpm run typecheck' },
-  { label: 'lint', command: 'pnpm run lint' },
-  { label: 'lint:structural', command: 'pnpm run lint:structural' },
-  { label: 'docs:check', command: 'pnpm run docs:check' },
-  { label: 'invariants', command: 'pnpm exec tsx packages/cli/src/bin.ts check-invariants' },
-  { label: 'check:gates', command: 'pnpm run check:gates' },
-  { label: 'audit:floor', command: 'pnpm run audit:floor' },
+  { phase: { label: 'build', command: 'pnpm run build' } },
+  { phase: { label: 'capsule:compile', command: 'pnpm run capsule:compile' } },
+  { checkId: 'check/typecheck', label: 'typecheck' },
+  { checkId: 'check/lint', label: 'lint' },
+  { checkId: 'check/lint-structural', label: 'lint:structural' },
+  { checkId: 'check/docs', label: 'docs:check' },
+  { phase: { label: 'invariants', command: 'pnpm exec tsx packages/cli/src/bin.ts check-invariants' } },
+  { checkId: 'check/gates', label: 'check:gates' },
+  { checkId: 'check/audit-floor', label: 'audit:floor' },
 
   // ── Phase 2: Unit tests ────────────────────────────────────────────
-  { label: 'test (unit + component + property + integration)', command: 'pnpm test' },
+  { checkId: 'check/test', label: 'test (unit + component + property + integration)' },
 
   // ── Phase 4: Integration, e2e, stress, bench ───────────────────────
-  { label: 'test:vite', command: 'pnpm run test:vite' },
-  { label: 'test:astro', command: 'pnpm run test:astro' },
-  { label: 'test:cloudflare', command: 'pnpm run test:cloudflare' },
-  { label: 'test:cloudflare-dev', command: 'pnpm run test:cloudflare-dev' },
-  { label: 'test:tailwind', command: 'pnpm run test:tailwind' },
-  { label: 'test:e2e', command: 'pnpm run test:e2e' },
-  { label: 'test:e2e:stress', command: 'pnpm run test:e2e:stress' },
-  { label: 'test:e2e:stream-stress', command: 'pnpm run test:e2e:stream-stress' },
-  { label: 'test:flake', command: 'pnpm run test:flake' },
-  { label: 'test:redteam', command: 'pnpm run test:redteam' },
-  { label: 'bench', command: 'pnpm run bench' },
-  { label: 'bench:gate', command: 'pnpm run bench:gate' },
-  { label: 'bench:trend', command: 'BENCH_TREND_STRICT=1 pnpm run bench:trend' },
-  { label: 'bench:reality', command: 'pnpm run bench:reality' },
-  { label: 'package:smoke', command: 'pnpm run package:smoke' },
+  { checkId: 'check/test-vite', label: 'test:vite' },
+  { checkId: 'check/test-astro', label: 'test:astro' },
+  { checkId: 'check/test-cloudflare', label: 'test:cloudflare' },
+  { checkId: 'check/test-cloudflare-dev', label: 'test:cloudflare-dev' },
+  { checkId: 'check/test-tailwind', label: 'test:tailwind' },
+  { checkId: 'check/test-e2e', label: 'test:e2e' },
+  { checkId: 'check/test-e2e-stress', label: 'test:e2e:stress' },
+  { checkId: 'check/test-e2e-stream-stress', label: 'test:e2e:stream-stress' },
+  { checkId: 'check/test-flake', label: 'test:flake' },
+  { checkId: 'check/test-redteam', label: 'test:redteam' },
+  { checkId: 'check/bench', label: 'bench' },
+  { checkId: 'check/bench-gate', label: 'bench:gate' },
+  { checkId: 'check/bench-trend', label: 'bench:trend' },
+  { checkId: 'check/bench-reality', label: 'bench:reality' },
+  { checkId: 'check/package-smoke', label: 'package:smoke' },
 
   // ── Phase 5: Coverage (sequential) + merge ─────────────────────────
-  { label: 'coverage:wipe-subprocess', command: 'rimraf coverage/subprocess-raw' },
-  { label: 'coverage:node:tracked', command: 'pnpm run coverage:node:tracked' },
+  { phase: { label: 'coverage:wipe-subprocess', command: 'rimraf coverage/subprocess-raw' } },
+  { phase: { label: 'coverage:node:tracked', command: 'pnpm run coverage:node:tracked' } },
   // Browser coverage on Windows can hang during Chromium teardown after the v8
   // report is already emitted; the doneMarker + 90s grace lets the table finish,
   // then the executor tree-kills any orphan Chromium so the gauntlet advances.
   {
-    label: 'coverage:browser',
-    command: 'pnpm run coverage:browser',
-    doneMarker: /Coverage report from v8/,
-    gracePeriodMs: 90_000,
+    phase: {
+      label: 'coverage:browser',
+      command: 'pnpm run coverage:browser',
+      doneMarker: /Coverage report from v8/,
+      gracePeriodMs: 90_000,
+    },
   },
-  { label: 'merge-subprocess-v8', command: 'tsx scripts/merge-subprocess-v8.ts' },
-  { label: 'coverage:merge', command: 'tsx scripts/merge-coverage.ts' },
+  { phase: { label: 'merge-subprocess-v8', command: 'tsx scripts/merge-subprocess-v8.ts' } },
+  { phase: { label: 'coverage:merge', command: 'tsx scripts/merge-coverage.ts' } },
 
   // ── Phase 6: Reports + gates ───────────────────────────────────────
-  { label: 'report:runtime-seams', command: 'pnpm run report:runtime-seams' },
-  { label: 'audit', command: 'pnpm run audit' },
-  { label: 'report:adaptive-scan', command: 'pnpm run report:adaptive-scan' },
-  { label: 'feedback:verify', command: 'pnpm run feedback:verify' },
-  { label: 'runtime:gate', command: 'pnpm run runtime:gate' },
+  { checkId: 'check/report-runtime-seams', label: 'report:runtime-seams' },
+  { checkId: 'check/audit', label: 'audit' },
+  { checkId: 'check/report-adaptive-scan', label: 'report:adaptive-scan' },
+  { checkId: 'check/feedback-verify', label: 'feedback:verify' },
+  { checkId: 'check/runtime-gate', label: 'runtime:gate' },
   // The raccoon-rule backstop run OVER THE REAL REPO (the agent-safety meta-gauntlet):
   // diffs the LIVE standards surface against the snapshot AS COMMITTED ON THE BASE REF
   // (via a REAL `git show`, not an injected hermetic reader) and reds on any UNSIGNED
@@ -97,19 +141,19 @@ export const gauntletPhases: readonly GauntletPhase[] = [
   // absent baseline snapshot THROWS (the gate refuses, never silently passes). CI sets
   // `LITESHIP_STANDARDS_BASE_REF` to a ref that has the snapshot + fetches its history
   // (see .github/workflows/ci.yml); a local run defaults to `main`.
-  { label: 'standards:gate', command: 'pnpm run standards:gate' },
+  { checkId: 'check/standards-gate', label: 'standards:gate' },
   // The capability-link proof (codex round-8 #1b) — the sanctioned-skip INTEGRITY family, beside
   // standards:gate/plumb:gate: every sanctioned capability-gated skip's guard must DERIVE FROM its
   // declared capability's probe (a ts.Program over the sanctioned files + the canonical capability
   // modules), or the cut reds. Opt-in `liteship check --ir --capability-gate` runs the same proof.
-  { label: 'capability:gate', command: 'pnpm run capability:gate' },
+  { checkId: 'check/capability-gate', label: 'capability:gate' },
   // The two-axis spine-relation proof (Wave 8.5, #156) — the CONSTITUTION / public-surface
   // INTEGRITY family, beside standards:gate/capability:gate: every admitted @liteship/_spine mirror
   // type's OBSERVED bidirectional-assignability relation must still satisfy its ADMITTED (frozen)
   // relation (a ts.Program probe over the spine + runtime surface), or the cut reds. A SECOND
   // ts.Program build (~3.25s) too heavy for the default `liteship check --ir`, so it runs HERE as its
   // own phase; the equivalent opt-in path is `liteship check --ir --spine-relation`.
-  { label: 'spine-relation:gate', command: 'pnpm run spine-relation:gate' },
+  { checkId: 'check/spine-relation-gate', label: 'spine-relation:gate' },
   // The reactive BISIMULATION proof (Wave 5.5, the transition cage) — the CONSTITUTION /
   // conformance INTEGRITY family, beside spine-relation:gate/capability:gate: every pinned
   // op history that bisimulates the CURRENT declared reactive model must still bisimulate on
@@ -117,11 +161,41 @@ export const gauntletPhases: readonly GauntletPhase[] = [
   // reference model + native-transport oracle are LiteShip-local (tests/support), so — per
   // ADR-0012/0023 — the gate is HOSTED here as a repo-local phase rather than the shipped CLI,
   // guaranteeing the L4 conformance proof runs on every PR (reachable, never fixture-only).
-  { label: 'transition:gate', command: 'pnpm run transition:gate' },
-  { label: 'plumb:gate', command: 'pnpm run plumb:gate' },
-  { label: 'capsule:verify', command: 'pnpm run capsule:verify' },
-  { label: 'flex:verify', command: 'pnpm run flex:verify' },
+  { checkId: 'check/transition-gate', label: 'transition:gate' },
+  { checkId: 'check/plumb-gate', label: 'plumb:gate' },
+  { checkId: 'check/capsule-verify', label: 'capsule:verify' },
+  { checkId: 'check/flex-verify', label: 'flex:verify' },
 ];
+
+/**
+ * Project {@link CHECK_REGISTRY} into the ordered gauntlet phase list. For every
+ * check reference in {@link RELEASE_GAUNTLET_PROJECTION}, resolve the registry entry
+ * by id, ASSERT it is a release-profile check (the "filtered to profiles.includes
+ * ('release')" contract — a projection reference to a non-release or unknown check is
+ * a wiring bug that throws at module load, never a silent drift), and surface it as a
+ * {@link GauntletPhase} whose `command` is the registry entry's command under the
+ * gauntlet `label`. Literal executor-only phases pass through verbatim. PURE + total.
+ */
+export function projectGauntletPhases(registry: readonly CheckDefinition[]): readonly GauntletPhase[] {
+  const byId = new Map(registry.map((check) => [check.id, check] as const));
+  return RELEASE_GAUNTLET_PROJECTION.map((entry): GauntletPhase => {
+    if ('phase' in entry) return entry.phase;
+    const check = byId.get(entry.checkId);
+    if (check === undefined) {
+      throw ValidationError('gauntlet-phases', `projection references unknown check id "${entry.checkId}"`);
+    }
+    if (!check.profiles.includes('release')) {
+      throw ValidationError(
+        'gauntlet-phases',
+        `projection references check "${entry.checkId}", which is not a release-profile check (profiles: ${check.profiles.join(', ')})`,
+      );
+    }
+    return { label: entry.label, command: check.command };
+  });
+}
+
+/** The canonical gauntlet sequence, in execution order — the release-filtered projection of CHECK_REGISTRY. */
+export const gauntletPhases: readonly GauntletPhase[] = projectGauntletPhases(CHECK_REGISTRY);
 
 /** The phase labels, in order — the projection the CLI dry-run emits. */
 export function gauntletPhaseLabels(): readonly string[] {

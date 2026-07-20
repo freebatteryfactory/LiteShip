@@ -25,11 +25,32 @@
  *   never pushed into the lean engine. Both paths emit the SAME `CheckPayload`
  *   shape (ok/blocked/findingCount/findings) so the receipt is consistent.
  *
+ * A THIRD surface, orthogonal to those two: `--profile <p>` (WITHOUT `--plan`) is the
+ * profile-driven SWEEP. It projects `@liteship/command`'s `CHECK_REGISTRY` into the
+ * ordered plan for the profile (via `planChecks`) and runs it through the CLI SPAWN
+ * LAYER — each registry check's `command` becomes a subprocess, its exit status the
+ * per-check verdict — emitting a `CheckReport` (the executed DUAL of the `--plan`
+ * `CheckPlan`), NOT the gauntlet-fold `CheckReceipt`. `--json` selects the machine
+ * report. This is how `liteship check --profile quick` runs the registry's checks,
+ * distinct from the bare-`check` in-process gate fold that `check:gates` invokes.
+ *
  * @module
  */
-import { checkCommand, type CheckPayload } from '@liteship/command';
+import { spawnSync } from 'node:child_process';
+import {
+  checkCommand,
+  formatCheckPlan,
+  planChecks,
+  type CheckPayload,
+  type CheckPlan,
+  type CheckPlatform,
+  type CheckProfile,
+  type CheckReport,
+  type CheckRunResult,
+  type CheckVerdict,
+} from '@liteship/command';
 import { createNodeCommandContext } from '@liteship/command/host';
-import { wallClock } from '@liteship/core';
+import { systemClock, wallClock } from '@liteship/core';
 import { detectEarlyReturnBeforeExpectAST, detectSkipsAST } from '@liteship/audit';
 import { emit, type WallClockTimestamp } from '../receipts.js';
 import { runGauntletWithRepoIR } from '../lib/repo-ir-gauntlet.js';
@@ -54,12 +75,43 @@ export interface CheckReceipt extends CheckPayload {
 interface CheckDeps {
   readonly runGauntletWithRepoIR?: typeof runGauntletWithRepoIR;
   readonly checkHandler?: typeof checkCommand.handler;
+  /**
+   * The profile-sweep executor (the `--profile` path). DEFAULTS to
+   * {@link runCheckPlanBySpawn} (the real CLI spawn layer), so production is
+   * byte-identical; tests inject a scripted runner to pin the report projection +
+   * exit-code fold without spawning the registry's real (heavy) check commands.
+   */
+  readonly runCheckPlan?: CheckPlanRunner;
 }
+
+/** Runs an ordered {@link CheckPlan} to completion, folding the executed {@link CheckReport}. */
+type CheckPlanRunner = (plan: CheckPlan, cwd: string) => CheckReport;
 
 /** Options for {@link check}. `ir` selects the CLI-only IR-enriched path; `noCache` bypasses the B2 verdict cache. */
 export interface CheckOptions {
   readonly cwd?: string;
   readonly pretty?: boolean;
+  /**
+   * `--plan`: PURE projection — print the ordered check plan for {@link profile} on the
+   * current platform and run NOTHING (no gauntlet fold, no IR build, no receipt). The
+   * `check/<slug>` plan is the projection of `@liteship/command`'s `CHECK_REGISTRY`.
+   */
+  readonly plan?: boolean;
+  /**
+   * `--profile <p>`: the profile the {@link plan} projects AND the profile-driven sweep runs
+   * — one of quick | full | release | consumer | environment. With `--plan`, defaults to
+   * `quick` (the plan projection). WITHOUT `--plan`, PRESENCE selects the profile SWEEP: the
+   * registry is projected into the ordered plan and RUN through the CLI spawn layer, emitting
+   * a `CheckReport` (see {@link check}). Absent (and no `--plan`), `check` stays the bare
+   * in-process gauntlet gate fold that emits a `CheckReceipt`.
+   */
+  readonly profile?: CheckProfile;
+  /**
+   * `--json`: machine output. With `--plan`, emit the `CheckPlan` as JSON (instead of text);
+   * with `--profile` (the sweep), emit the `CheckReport` as JSON (instead of text); with
+   * neither, suppress the pretty stderr summary (the receipt is already JSON on stdout).
+   */
+  readonly json?: boolean;
   /** `--ir`: run the IR-enriched triangulated cross-check (CLI-only) instead of the lean six-regex path. */
   readonly ir?: boolean;
   /** `--no-cache`: bypass the B2 verdict cache (only meaningful with `--ir`). */
@@ -169,9 +221,37 @@ export interface CheckOptions {
   readonly spineRelation?: boolean;
 }
 
-/** Execute `liteship check` — run the gauntlet gate fold in-process; emit the verdict + Finding[]. */
+/**
+ * Execute `liteship check`. Three surfaces: `--plan` prints the pure plan projection;
+ * `--profile <p>` (without `--plan`) runs the profile SWEEP through the CLI spawn layer
+ * and emits a `CheckReport`; bare `check` runs the in-process gauntlet gate fold and
+ * emits a `CheckReceipt` (the verdict + Finding[]).
+ */
 export async function check(opts: CheckOptions = {}, deps: CheckDeps = {}): Promise<number> {
   const cwd = opts.cwd ?? process.cwd();
+
+  // `--plan`: PURE — project the registry into the ordered plan and print it. Runs
+  // nothing (no gauntlet fold, no IR build, no receipt), so it returns before any
+  // execution path. `--json` selects the structured plan; otherwise human text.
+  if (opts.plan === true) {
+    const plan = planChecks(opts.profile ?? 'quick', currentCheckPlatform());
+    process.stdout.write((opts.json === true ? JSON.stringify(plan) : formatCheckPlan(plan)) + '\n');
+    return 0;
+  }
+
+  // `--profile <p>` (WITHOUT `--plan`): the profile-driven SWEEP. Project the registry
+  // into the ordered plan for `profile` on the current platform, then RUN it through the
+  // CLI spawn layer (each check's `command` → a subprocess; its exit status → the per-check
+  // verdict). Emit the `CheckReport` (the executed DUAL of the `--plan` `CheckPlan`) — NOT
+  // the gauntlet-fold `CheckReceipt`. `--json` selects the machine report; otherwise a human
+  // summary. Exit 1 iff a BLOCKING check failed. Bare `check` (no `--profile`) falls through
+  // to the gauntlet gate fold below, so `check:gates` (`liteship check`) is unchanged.
+  if (opts.profile !== undefined) {
+    const plan = planChecks(opts.profile, currentCheckPlatform());
+    const report = (deps.runCheckPlan ?? runCheckPlanBySpawn)(plan, cwd);
+    process.stdout.write((opts.json === true ? JSON.stringify(report) : formatCheckReport(report)) + '\n');
+    return report.blocked ? 1 : 0;
+  }
 
   const payload =
     opts.ir === true
@@ -200,8 +280,10 @@ export async function check(opts: CheckOptions = {}, deps: CheckDeps = {}): Prom
   };
   emit(receipt);
 
-  // Human findings summary on stderr — the work-list a developer reads.
-  const wantPretty = opts.pretty ?? Boolean(process.stderr.isTTY);
+  // Human findings summary on stderr — the work-list a developer reads. `--json`
+  // forces machine mode: the receipt is already JSON on stdout, so the pretty
+  // stderr summary is suppressed.
+  const wantPretty = opts.json === true ? false : (opts.pretty ?? Boolean(process.stderr.isTTY));
   if (wantPretty && payload.findingCount > 0) {
     const banner = `${payload.blocked ? 'CHECK BLOCKED' : 'CHECK (advisory)'} — ${payload.findingCount} finding(s) from the gauntlet gate fold${opts.ir === true ? ' (IR-enriched)' : ''}:\n`;
     process.stderr.write(banner);
@@ -214,6 +296,72 @@ export async function check(opts: CheckOptions = {}, deps: CheckDeps = {}): Prom
   }
 
   return payload.blocked ? 1 : 0;
+}
+
+/**
+ * Map the host's `process.platform` to a {@link CheckPlatform}. The registry declares
+ * platform support over the three LiteShip-supported targets; any other `process.platform`
+ * (an unsupported host) folds to `linux` so a plan still projects rather than emptying —
+ * every current check supports all three, so the fold is behaviourally inert today.
+ */
+function currentCheckPlatform(): CheckPlatform {
+  const platform = process.platform;
+  if (platform === 'darwin' || platform === 'win32') return platform;
+  return 'linux';
+}
+
+/**
+ * The default {@link CheckPlanRunner} — the CLI SPAWN LAYER for the `--profile` sweep.
+ * Runs each planned check by spawning its `command` (the exact root-script shell line
+ * the registry declares) as a subprocess in `cwd`, mapping the exit status to a per-check
+ * verdict (0 → pass; non-zero, a timeout, or a signal → fail) and the measured MONOTONIC
+ * elapsed time to `durationMs` (two-clock law: a `systemClock` delta, never a wall-clock
+ * timestamp). A failed BLOCKING check blocks the aggregate verdict; an advisory failure
+ * surfaces (as a finding line) but never blocks. Child stdout/stderr is DISCARDED so the
+ * emitted `CheckReport` is the only thing on the CLI's stdout. `cacheHit` is always false —
+ * this layer re-runs every planned check (the content-addressed verdict cache the registry
+ * annotates via `cacheable` is a later increment); `timeoutMs` is enforced as the spawn
+ * ceiling. `skipped` platform drops live in the plan, not the report, so every row here is
+ * an executed check.
+ */
+function runCheckPlanBySpawn(plan: CheckPlan, cwd: string): CheckReport {
+  const results: CheckRunResult[] = [];
+  let blocked = false;
+  for (const check of plan.checks) {
+    const start = systemClock.now();
+    const r = spawnSync(check.command, { shell: true, cwd, stdio: 'ignore', timeout: check.timeoutMs });
+    const durationMs = systemClock.now() - start;
+    const passed = r.status === 0;
+    if (!passed && check.authority === 'blocking') blocked = true;
+    const verdict: CheckVerdict = passed ? 'pass' : 'fail';
+    const findings = passed
+      ? []
+      : [
+          r.signal
+            ? `${check.command} terminated by signal ${r.signal} (ceiling ${check.timeoutMs}ms)`
+            : `${check.command} exited with status ${r.status ?? 'unknown'}`,
+        ];
+    results.push({ id: check.id, verdict, durationMs, cacheHit: false, findings });
+  }
+  return { profile: plan.profile, platform: plan.platform, ok: !blocked, blocked, results };
+}
+
+/**
+ * Render a {@link CheckReport} as human text — the default (non-`--json`) `--profile` sweep
+ * output: a header, one line per executed check (verdict + measured duration, plus any
+ * finding lines), and the aggregate verdict footer. PURE: a total function of the report.
+ */
+function formatCheckReport(report: CheckReport): string {
+  const lines: string[] = [`check report — profile "${report.profile}" on ${report.platform}`];
+  const idWidth = report.results.reduce((max, r) => Math.max(max, r.id.length), 0);
+  for (const r of report.results) {
+    const mark = r.verdict === 'pass' ? 'PASS' : r.verdict === 'fail' ? 'FAIL' : 'SKIP';
+    lines.push(`  ${mark}  ${r.id.padEnd(idWidth, ' ')}  ${r.durationMs}ms${r.cacheHit ? ' (cached)' : ''}`);
+    for (const f of r.findings) lines.push(`        ${f}`);
+  }
+  lines.push('');
+  lines.push(report.blocked ? 'CHECK BLOCKED — a blocking check failed.' : 'CHECK OK — no blocking check failed.');
+  return lines.join('\n');
 }
 
 /**

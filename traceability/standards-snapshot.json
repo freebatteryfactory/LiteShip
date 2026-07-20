@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 1,
-  "address": "fnv1a:04e73157",
+  "address": "fnv1a:7e0dc301",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -349,6 +349,33 @@
       "ruleId": "gauntlet/traceability",
       "set": "HOST_GATES",
       "level": "L4",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
+      "ruleId": "gauntlet/check-negative-control",
+      "set": "LITESHIP_GATES",
+      "level": "L2",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
+      "ruleId": "gauntlet/check-registry-complete",
+      "set": "LITESHIP_GATES",
+      "level": "L2",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
+      "ruleId": "gauntlet/check-waiver-freshness",
+      "set": "LITESHIP_GATES",
+      "level": "L2",
       "redFixtureCount": 1,
       "greenFixtureCount": 1,
       "mutationFixtureCount": 1

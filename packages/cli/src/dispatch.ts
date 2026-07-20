@@ -19,7 +19,7 @@
  * @module
  */
 
-import { COMMAND_CATALOG, type CliOwnedName } from '@liteship/command';
+import { COMMAND_CATALOG, CHECK_PROFILES, type CheckProfile, type CliOwnedName } from '@liteship/command';
 import { InvariantViolationError } from '@liteship/error';
 import { completion } from './commands/completion.js';
 import { describe as describeCmd } from './commands/describe.js';
@@ -314,8 +314,23 @@ function execAudit(rest: readonly string[]): Promise<number> {
   });
 }
 
-/** `check [--ir] [gate flags]` — handler-backed; threads the injectable check/gauntlet seam. */
+/** `check [--plan] [--profile <p>] [--json] [--ir] [gate flags]` — handler-backed; threads the injectable check/gauntlet seam. */
 function execCheck(rest: readonly string[], deps: ResolvedDeps): Promise<number> {
+  // `--plan` is the PURE projection surface: print the ordered check plan for
+  // `--profile` and run nothing. `--json` selects machine output (a JSON plan under
+  // `--plan`; a receipt-only, no-pretty-summary run otherwise). `--profile <p>` picks
+  // the profile the plan projects (default quick), validated against the closed set.
+  const plan = rest.includes('--plan');
+  const json = rest.includes('--json');
+  const profileFlag = takeFlagValue(rest, '--profile');
+  if (
+    profileFlag.present &&
+    (profileFlag.value === undefined || !CHECK_PROFILES.includes(profileFlag.value as CheckProfile))
+  ) {
+    emitError('check', `expected profile: ${CHECK_PROFILES.join(' | ')} (got: ${profileFlag.value ?? '<missing>'})`);
+    return Promise.resolve(1);
+  }
+  const profile = profileFlag.value as CheckProfile | undefined;
   // `--ir` opts into the CLI-ONLY IR-enriched path (the triangulated
   // oracle-divergence cross-check + the B2 verdict cache via @liteship/audit);
   // `--no-cache` bypasses that cache. WITHOUT `--ir`, `liteship check` stays the
@@ -397,6 +412,9 @@ function execCheck(rest: readonly string[], deps: ResolvedDeps): Promise<number>
   // is a no-op, never a silent wrong run.
   return check(
     {
+      ...(plan ? { plan } : {}),
+      ...(json ? { json } : {}),
+      ...(profile ? { profile } : {}),
       ...(ir ? { ir } : {}),
       ...(noCache ? { noCache } : {}),
       ...(symbols ? { symbols } : {}),

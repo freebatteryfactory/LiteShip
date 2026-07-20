@@ -6,7 +6,7 @@
 
 # Interface: GateContext
 
-Defined in: [gauntlet/src/gate.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L47)
+Defined in: [gauntlet/src/gate.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L48)
 
 What a gate runs against. Slice A keeps it minimal + extensible; Slice B
 widens it with the triangulated repo-IR (LanguageService + AST + module graph
@@ -19,7 +19,7 @@ runs against the real repo and against an in-memory fixture unchanged.
 
 > `readonly` `optional` **activeSurfaceFacts?**: [`ActiveSurfaceFacts`](ActiveSurfaceFacts.md)
 
-Defined in: [gauntlet/src/gate.ts:362](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L362)
+Defined in: [gauntlet/src/gate.ts:363](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L363)
 
 Pre-computed ACTIVE-SURFACE field-read evidence — an INJECTED FactPack (#132).
 The HOST (`@liteship/audit`'s `buildActiveSurfaceFacts`) scans reader paths with
@@ -33,7 +33,7 @@ folds an empty verdict. See [ActiveSurfaceFacts](ActiveSurfaceFacts.md).
 
 > `readonly` `optional` **capabilityLink?**: [`CapabilityLinkFacts`](CapabilityLinkFacts.md)
 
-Defined in: [gauntlet/src/gate.ts:285](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L285)
+Defined in: [gauntlet/src/gate.ts:286](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L286)
 
 The host-supplied [CapabilityLinkFacts](CapabilityLinkFacts.md) (codex round-8, #1b) — the dataflow proof that every
 sanctioned capability-gated skip's GUARD DERIVES FROM its declared capability's probe. The heavy
@@ -46,11 +46,29 @@ NO capability probe (`if (Math.random())`) — or the WRONG one (a mislabel) —
 
 ***
 
+### checkGovernance?
+
+> `readonly` `optional` **checkGovernance?**: [`CheckGovernanceFacts`](CheckGovernanceFacts.md)
+
+Defined in: [gauntlet/src/gate.ts:375](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L375)
+
+Pre-computed CHECK-GOVERNANCE evidence — an INJECTED FactPack the three
+check-governance meta-gates (`check-registry-complete` / `check-negative-control` /
+`check-waiver-freshness`) decide over. The HOST (the `tests/unit/devops` meta-test,
+or a future CLI host) reads `@liteship/command`'s `CHECK_REGISTRY` / `SCRIPT_EXEMPTIONS`
+/ `package.json` / the filesystem / `LITESHIP_WAIVERS` / the traceability ledger
+against an injected wall-clock date and folds the decided [CheckGovernanceFacts](CheckGovernanceFacts.md)
+— the gauntlet never imports `@liteship/command` (the dependency arrow points the other
+way) nor reads a clock. When ABSENT (the lean production path) every meta-gate folds an
+empty verdict. See [CheckGovernanceFacts](CheckGovernanceFacts.md).
+
+***
+
 ### codeOnly?
 
 > `readonly` `optional` **codeOnly?**: (`source`) => `string`
 
-Defined in: [gauntlet/src/gate.ts:101](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L101)
+Defined in: [gauntlet/src/gate.ts:102](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L102)
 
 The sound, parser-backed `codeOnly` floor — an INJECTED capability, the same shape as
 [skipDetector](#skipdetector). The lean char-state-machine `codeOnly` (gates/code-only.ts) is the
@@ -76,7 +94,7 @@ differential test (tests/unit/audit/code-ranges.test.ts), so the fallback stays 
 
 > `readonly` `optional` **composition?**: [`CompositionFacts`](CompositionFacts.md)
 
-Defined in: [gauntlet/src/gate.ts:339](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L339)
+Defined in: [gauntlet/src/gate.ts:340](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L340)
 
 Pre-computed COMPOSITION-COVERAGE evidence — an INJECTED capability (the
 LOCAL-VS-GLOBAL correctness family — "locally green, globally untested
@@ -99,7 +117,7 @@ edge folds to a Finding at the edge's (propagated) level. See
 
 > `readonly` `optional` **declaredFix?**: [`DeclaredFixFacts`](DeclaredFixFacts.md)
 
-Defined in: [gauntlet/src/gate.ts:255](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L255)
+Defined in: [gauntlet/src/gate.ts:256](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L256)
 
 Pre-computed DECLARED-FIX evidence — an INJECTED capability (the AGENT-SAFETY
 META-GAUNTLET, the "raccoon rule", phases B+C — the agent-fix admission control),
@@ -125,7 +143,7 @@ here at the commit gate (phase C) — one engine. See [DeclaredFixFacts](Declare
 
 > `readonly` `optional` **earlyReturnDetector?**: (`source`) => readonly [`EarlyReturnMatch`](EarlyReturnMatch.md)[]
 
-Defined in: [gauntlet/src/gate.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L91)
+Defined in: [gauntlet/src/gate.ts:92](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L92)
 
 The SOUND early-return detector — an INJECTED capability. `@liteship/gauntlet` carries NO
 `typescript` dep; the token `detectEarlyReturnBeforeExpect` is its fallback. The host injects
@@ -148,7 +166,7 @@ readonly [`EarlyReturnMatch`](EarlyReturnMatch.md)[]
 
 > `readonly` `optional` **fuzzCorpus?**: [`FuzzCorpusFacts`](FuzzCorpusFacts.md)
 
-Defined in: [gauntlet/src/gate.ts:305](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L305)
+Defined in: [gauntlet/src/gate.ts:306](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L306)
 
 Pre-computed DECODE-FUZZ evidence — an INJECTED capability (the
 UNTRUSTED-BYTE DECODE-SURFACE hardening), the same lean-engine pattern as
@@ -174,7 +192,7 @@ the decode crash/pollution it folds replays byte-for-byte. See
 
 > `readonly` `optional` **ir?**: [`RepoIR`](RepoIR.md)
 
-Defined in: [gauntlet/src/gate.ts:112](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L112)
+Defined in: [gauntlet/src/gate.ts:113](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L113)
 
 The triangulated repo-IR — an INJECTED capability (Slice B). OPTIONAL by
 design: `@liteship/gauntlet` is the lean engine and the IR is built+injected by
@@ -191,7 +209,7 @@ until a host supplies one. See [RepoIR](RepoIR.md).
 
 > `readonly` `optional` **mcdc?**: [`McdcFacts`](McdcFacts.md)
 
-Defined in: [gauntlet/src/gate.ts:185](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L185)
+Defined in: [gauntlet/src/gate.ts:186](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L186)
 
 Pre-computed MC/DC (Modified Condition/Decision Coverage) evidence — an INJECTED
 capability (the avionics tier — DO-178B Level A's coverage requirement, realized as
@@ -212,7 +230,7 @@ cost and no noise on a default run. See [McdcFacts](McdcFacts.md).
 
 > `readonly` `optional` **mutation?**: [`MutationFacts`](MutationFacts.md)
 
-Defined in: [gauntlet/src/gate.ts:138](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L138)
+Defined in: [gauntlet/src/gate.ts:139](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L139)
 
 Pre-computed mutation evidence — an INJECTED capability (Slice C, the avionics
 tier — mutation-as-divergence), the same lean-engine pattern as [ir](#ir) and
@@ -232,7 +250,7 @@ there is no per-mutant cost and no noise on a default run. See
 
 > `readonly` `optional` **proof?**: [`ProofFacts`](ProofFacts.md)
 
-Defined in: [gauntlet/src/gate.ts:322](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L322)
+Defined in: [gauntlet/src/gate.ts:323](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L323)
 
 Pre-computed PROOF-STRENGTH evidence — an INJECTED capability (the
 LOCAL-VS-GLOBAL correctness family — the lax-functor: local proof ≤ weakest
@@ -255,7 +273,7 @@ to a Finding naming the weak-link path. See [ProofFacts](ProofFacts.md).
 
 > `readonly` **repoRoot**: `string`
 
-Defined in: [gauntlet/src/gate.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L49)
+Defined in: [gauntlet/src/gate.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L50)
 
 Absolute root the gate's paths resolve against.
 
@@ -265,7 +283,7 @@ Absolute root the gate's paths resolve against.
 
 > `readonly` `optional` **simulation?**: [`SimulationFacts`](SimulationFacts.md)
 
-Defined in: [gauntlet/src/gate.ts:201](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L201)
+Defined in: [gauntlet/src/gate.ts:202](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L202)
 
 Pre-computed DETERMINISTIC-SIMULATION (DST) evidence — an INJECTED capability
 (Slice C, the avionics tier), the same lean-engine pattern as [ir](#ir),
@@ -287,7 +305,7 @@ byte-for-byte. See [SimulationFacts](SimulationFacts.md).
 
 > `readonly` `optional` **skipDetector?**: (`source`) => readonly [`SkipMatch`](SkipMatch.md)[]
 
-Defined in: [gauntlet/src/gate.ts:84](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L84)
+Defined in: [gauntlet/src/gate.ts:85](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L85)
 
 The SOUND skip detector — an INJECTED capability (the AST detector, the cure that ends the
 token-scanner whack-a-mole). OPTIONAL by design, the SAME lean-engine pattern as [ir](#ir):
@@ -316,7 +334,7 @@ readonly [`SkipMatch`](SkipMatch.md)[]
 
 > `readonly` `optional` **skipSites?**: [`SkipSiteFacts`](SkipSiteFacts.md)
 
-Defined in: [gauntlet/src/gate.ts:354](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L354)
+Defined in: [gauntlet/src/gate.ts:355](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L355)
 
 Pre-computed SKIP-SITE evidence — an INJECTED FactPack (the FactGate PoC, the
 "gate-as-data" ratchet). The PRODUCER (the O(n) repo scan: enumerate the governed
@@ -337,7 +355,7 @@ the original closure gate is unaffected. See [SkipSiteFacts](SkipSiteFacts.md).
 
 > `readonly` `optional` **spineRelation?**: [`SpineRelationFacts`](SpineRelationFacts.md)
 
-Defined in: [gauntlet/src/gate.ts:170](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L170)
+Defined in: [gauntlet/src/gate.ts:171](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L171)
 
 Pre-computed TWO-AXIS spine-relation classification — an INJECTED capability (the
 constitution's static-projection half, Wave 8.5), the same lean-engine pattern as
@@ -354,7 +372,7 @@ See [SpineRelationFacts](SpineRelationFacts.md).
 
 > `readonly` `optional` **standards?**: [`StandardsIntegrityFacts`](StandardsIntegrityFacts.md)
 
-Defined in: [gauntlet/src/gate.ts:235](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L235)
+Defined in: [gauntlet/src/gate.ts:236](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L236)
 
 Pre-computed STANDARDS-INTEGRITY evidence — an INJECTED capability (the
 AGENT-SAFETY META-GAUNTLET, the "raccoon rule"), the same lean-engine pattern as
@@ -378,7 +396,7 @@ raccoon caught. See [StandardsIntegrityFacts](StandardsIntegrityFacts.md).
 
 > `readonly` `optional` **supplyChain?**: [`SupplyChainFacts`](SupplyChainFacts.md)
 
-Defined in: [gauntlet/src/gate.ts:124](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L124)
+Defined in: [gauntlet/src/gate.ts:125](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L125)
 
 Pre-computed supply-chain evidence — an INJECTED capability (Slice C, the
 avionics tier), the same lean-engine pattern as [ir](#ir). OPTIONAL: the
@@ -396,7 +414,7 @@ green. See [SupplyChainFacts](SupplyChainFacts.md).
 
 > `readonly` `optional` **taint?**: [`TaintFacts`](TaintFacts.md)
 
-Defined in: [gauntlet/src/gate.ts:274](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L274)
+Defined in: [gauntlet/src/gate.ts:275](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L275)
 
 Pre-computed TAINT-DATAFLOW evidence — an INJECTED capability (the
 TAINT-ANALYSIS family), the same lean-engine pattern as [ir](#ir),
@@ -421,7 +439,7 @@ trust-spine sink. See [TaintFacts](TaintFacts.md).
 
 > `readonly` `optional` **traceability?**: [`TraceabilityFacts`](TraceabilityFacts.md)
 
-Defined in: [gauntlet/src/gate.ts:217](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L217)
+Defined in: [gauntlet/src/gate.ts:218](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L218)
 
 Pre-computed REQUIREMENTS-TRACEABILITY evidence — an INJECTED capability (the
 avionics-tier ledger, DO-178B-style), the same lean-engine pattern as [ir](#ir),
@@ -443,7 +461,7 @@ self-explaining Finding at the invariant's level. See [TraceabilityFacts](Tracea
 
 > `readonly` `optional` **transition?**: [`TransitionFacts`](TransitionFacts.md)
 
-Defined in: [gauntlet/src/gate.ts:159](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L159)
+Defined in: [gauntlet/src/gate.ts:160](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L160)
 
 Pre-computed TRANSITION-CONFORMANCE (bisimulation) evidence — an INJECTED
 capability (Wave 5.5, the transition cage — the DYNAMIC-SUBJECT half of the
@@ -470,7 +488,7 @@ byte-for-byte. See [TransitionFacts](TransitionFacts.md).
 
 > `optional` **allFiles**(): readonly `string`[]
 
-Defined in: [gauntlet/src/gate.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L71)
+Defined in: [gauntlet/src/gate.ts:72](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L72)
 
 The UNSCOPED repo-relative file list — every path the context globs, BEFORE
 level-scoping narrows [files](#files) to a gate's band. OPTIONAL (a context that
@@ -498,7 +516,7 @@ readonly `string`[]
 
 > **files**(): readonly `string`[]
 
-Defined in: [gauntlet/src/gate.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L53)
+Defined in: [gauntlet/src/gate.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L54)
 
 Repo-relative paths the gate may consider (already filtered to its scope).
 
@@ -512,7 +530,7 @@ readonly `string`[]
 
 > **readFile**(`relativePath`): `string` \| `undefined`
 
-Defined in: [gauntlet/src/gate.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L51)
+Defined in: [gauntlet/src/gate.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L52)
 
 Read a repo-relative file's text, or `undefined` if absent.
 

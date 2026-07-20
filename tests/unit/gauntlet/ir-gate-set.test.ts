@@ -41,7 +41,7 @@ describe('the lean LITESHIP_GATES default is IR-free', () => {
     }
   });
 
-  it('has exactly the seven regex gates', () => {
+  it('has exactly the seven regex gates plus the three check-governance meta-gates', () => {
     expect(ids(LITESHIP_GATES)).toEqual([
       'gauntlet/no-bare-throw',
       'gauntlet/no-ts-ignore',
@@ -50,6 +50,13 @@ describe('the lean LITESHIP_GATES default is IR-free', () => {
       'gauntlet/no-skipped-test',
       'gauntlet/no-placeholder',
       'gauntlet/no-early-return-test',
+      // The three check-governance FactGates — they ride in the lean set but read ONLY the
+      // injected CheckGovernanceFacts (a host folds the registry/scripts/fs/waivers/ledger),
+      // so with no facts injected they fold an EMPTY verdict (the lean path is IR-free AND
+      // fact-free unaffected). Each self-proves via its red/green/mutation fixtures.
+      'gauntlet/check-registry-complete',
+      'gauntlet/check-negative-control',
+      'gauntlet/check-waiver-freshness',
     ]);
   });
 });

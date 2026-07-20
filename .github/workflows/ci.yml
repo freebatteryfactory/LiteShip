@@ -33,6 +33,39 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm run format:check
 
+  # Registry-projected CI plan. The parallel merge gate is the RELEASE gauntlet fanned
+  # out, so scripts/ci-plan.ts (a PURE projection of @liteship/command's CHECK_REGISTRY —
+  # the same source the serial gauntlet phase list projects) partitions the registry into
+  # the named parallel lanes and emits them as this job's `matrix` output. Each gauntlet
+  # lane then consumes `fromJSON(needs.plan.outputs.matrix)` to confirm — at CI runtime —
+  # that its hand-written lane command still matches the projection (the offline meta test
+  # tests/unit/meta/ci-registry-parity.test.ts proves byte-identity at merge time).
+  # Dist-free + <1min: ci-plan reads only the self-contained check-registry source, so it
+  # runs right after install with no workspace build.
+  plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - id: plan
+        name: Emit the registry-projected lane matrix
+        run: |
+          {
+            echo "matrix<<PLAN_EOF"
+            pnpm exec tsx scripts/ci-plan.ts
+            echo "PLAN_EOF"
+          } >> "$GITHUB_OUTPUT"
+
   # Serial full gauntlet — nightly / manual only after Phase B cutover (parallel lane is merge gate).
   truth-linux:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
@@ -161,7 +194,9 @@ jobs:
   truth-linux-parallel-preflight:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    needs: truth-linux-parallel-setup
+    needs:
+      - truth-linux-parallel-setup
+      - plan
     steps:
       - uses: actions/checkout@v6
         with:
@@ -180,6 +215,10 @@ jobs:
         run: |
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
+      - name: Confirm lane matches the registry-projected plan
+        env:
+          PLANNED_PROFILE: ${{ fromJSON(needs.plan.outputs.matrix).lanes.preflight.profile }}
+        run: test "$PLANNED_PROFILE" = "ci-parallel-preflight"
       - run: pnpm run gauntlet:full -- --profile ci-parallel-preflight --skip-build
         env:
           CI: true
@@ -187,7 +226,9 @@ jobs:
   truth-linux-parallel-test:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    needs: truth-linux-parallel-setup
+    needs:
+      - truth-linux-parallel-setup
+      - plan
     strategy:
       fail-fast: false
       matrix:
@@ -206,6 +247,10 @@ jobs:
         with:
           name: dist-packages
           path: .
+      - name: Confirm lane matches the registry-projected plan
+        env:
+          PLANNED_COMMAND: ${{ fromJSON(needs.plan.outputs.matrix).lanes.shardedTest.command }}
+        run: test "$PLANNED_COMMAND" = "pnpm run test:shard"
       - run: pnpm run test:shard
         env:
           CI: true
@@ -233,7 +278,9 @@ jobs:
   truth-linux-parallel-bench:
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    needs: truth-linux-parallel-setup
+    needs:
+      - truth-linux-parallel-setup
+      - plan
     steps:
       - uses: actions/checkout@v6
         with:
@@ -257,6 +304,10 @@ jobs:
       - run: pnpm exec playwright install --with-deps chromium chromium-headless-shell
       - run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - run: pnpm run build:wasm
+      - name: Confirm lane matches the registry-projected plan
+        env:
+          PLANNED_PROFILE: ${{ fromJSON(needs.plan.outputs.matrix).lanes.bench.profile }}
+        run: test "$PLANNED_PROFILE" = "ci-parallel-bench"
       - run: pnpm run gauntlet:full -- --profile ci-parallel-bench --skip-build
         env:
           CI: true
@@ -270,7 +321,9 @@ jobs:
   truth-linux-parallel-mutating:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    needs: truth-linux-parallel-setup
+    needs:
+      - truth-linux-parallel-setup
+      - plan
     steps:
       - uses: actions/checkout@v6
         with:
@@ -285,6 +338,10 @@ jobs:
         with:
           name: dist-packages
           path: .
+      - name: Confirm lane matches the registry-projected plan
+        env:
+          PLANNED_PROFILE: ${{ fromJSON(needs.plan.outputs.matrix).lanes.mutating.profile }}
+        run: test "$PLANNED_PROFILE" = "ci-parallel-mutating"
       - run: pnpm run gauntlet:full -- --profile ci-parallel-mutating --skip-build
         env:
           CI: true
@@ -292,7 +349,9 @@ jobs:
   truth-linux-parallel-integration:
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    needs: truth-linux-parallel-setup
+    needs:
+      - truth-linux-parallel-setup
+      - plan
     steps:
       - uses: actions/checkout@v6
         with:
@@ -309,6 +368,10 @@ jobs:
           path: .
       - run: pnpm exec playwright install --with-deps chromium chromium-headless-shell
       - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - name: Confirm lane matches the registry-projected plan
+        env:
+          PLANNED_PROFILE: ${{ fromJSON(needs.plan.outputs.matrix).lanes.integration.profile }}
+        run: test "$PLANNED_PROFILE" = "ci-parallel-integration"
       - run: pnpm run gauntlet:full -- --profile ci-parallel-integration --skip-build
         env:
           CI: true
@@ -316,7 +379,9 @@ jobs:
   truth-linux-parallel-mid:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    needs: truth-linux-parallel-setup
+    needs:
+      - truth-linux-parallel-setup
+      - plan
     steps:
       - uses: actions/checkout@v6
         with:
@@ -331,6 +396,10 @@ jobs:
         with:
           name: dist-packages
           path: .
+      - name: Confirm lane matches the registry-projected plan
+        env:
+          PLANNED_PROFILE: ${{ fromJSON(needs.plan.outputs.matrix).lanes.mid.profile }}
+        run: test "$PLANNED_PROFILE" = "ci-parallel-mid"
       - run: pnpm run gauntlet:full -- --profile ci-parallel-mid --skip-build
         env:
           CI: true
@@ -338,7 +407,9 @@ jobs:
   truth-linux-parallel-coverage-browser:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    needs: truth-linux-parallel-setup
+    needs:
+      - truth-linux-parallel-setup
+      - plan
     steps:
       - uses: actions/checkout@v6
         with:
@@ -355,6 +426,10 @@ jobs:
           path: .
       - run: pnpm exec playwright install --with-deps chromium chromium-headless-shell
       - run: pnpm exec rimraf coverage/subprocess-raw
+      - name: Confirm lane matches the registry-projected plan
+        env:
+          PLANNED_COMMAND: ${{ fromJSON(needs.plan.outputs.matrix).lanes.coverage.command }}
+        run: test "$PLANNED_COMMAND" = "pnpm run coverage:browser"
       - run: pnpm run coverage:browser
         env:
           CI: true
@@ -411,6 +486,7 @@ jobs:
       - truth-linux-parallel-integration
       - truth-linux-parallel-mid
       - truth-linux-parallel-merge-coverage
+      - plan
     steps:
       - uses: actions/checkout@v6
         with:
@@ -471,6 +547,10 @@ jobs:
       - run: pnpm run coverage:merge-shards
         env:
           CI: true
+      - name: Confirm lane matches the registry-projected plan
+        env:
+          PLANNED_PROFILE: ${{ fromJSON(needs.plan.outputs.matrix).lanes.final.profile }}
+        run: test "$PLANNED_PROFILE" = "ci-parallel-final"
       - run: pnpm run gauntlet:full -- --profile ci-parallel-final --skip-build
         env:
           CI: true

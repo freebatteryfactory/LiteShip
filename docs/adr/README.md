@@ -56,6 +56,7 @@ Prose vocabulary: [../GLOSSARY.md](../../GLOSSARY.md).
 | [0044](./0044-liteship-brand-consolidation.md)         | LiteShip brand consolidation (one brand, `@czap` retired)                  | Accepted |
 | [0045](./0045-source-grammar.md)                       | Source grammar: package boundary, domain directory, and the facade law      | Accepted |
 | [0046](./0046-direct-generic-types.md)                 | Direct generic types: the `.Shape` convention retired                       | Accepted |
+| [0047](./0047-check-registry.md)                       | Data-driven check registry: gauntlet and CI as projections                  | Accepted |
 
 ## Template
 

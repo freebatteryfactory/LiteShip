@@ -36,6 +36,7 @@ import type { CompositionFacts } from './facts/composition-facts.js';
 import type { SkipMatch } from './gates/skip-detect.js';
 import type { SkipSiteFacts } from './facts/skip-site-facts.js';
 import type { ActiveSurfaceFacts } from './facts/active-surface-facts.js';
+import type { CheckGovernanceFacts, WaiverFreshnessFact } from './facts/check-governance-facts.js';
 import { factAccessEvidenceDigest, stableEvidenceDigest } from './verdict-cache.js';
 
 /**
@@ -360,6 +361,18 @@ export interface GateContext {
    * folds an empty verdict. See {@link ActiveSurfaceFacts}.
    */
   readonly activeSurfaceFacts?: ActiveSurfaceFacts;
+  /**
+   * Pre-computed CHECK-GOVERNANCE evidence — an INJECTED FactPack the three
+   * check-governance meta-gates (`check-registry-complete` / `check-negative-control` /
+   * `check-waiver-freshness`) decide over. The HOST (the `tests/unit/devops` meta-test,
+   * or a future CLI host) reads `@liteship/command`'s `CHECK_REGISTRY` / `SCRIPT_EXEMPTIONS`
+   * / `package.json` / the filesystem / `LITESHIP_WAIVERS` / the traceability ledger
+   * against an injected wall-clock date and folds the decided {@link CheckGovernanceFacts}
+   * — the gauntlet never imports `@liteship/command` (the dependency arrow points the other
+   * way) nor reads a clock. When ABSENT (the lean production path) every meta-gate folds an
+   * empty verdict. See {@link CheckGovernanceFacts}.
+   */
+  readonly checkGovernance?: CheckGovernanceFacts;
 }
 
 /**
@@ -489,7 +502,7 @@ export interface Gate {
  * host-produced FactPack channel — a field on {@link FactBundle} and an optional key on
  * {@link GateContext}.
  */
-export const FACT_KINDS = ['skipSites', 'activeSurfaceFacts'] as const;
+export const FACT_KINDS = ['skipSites', 'activeSurfaceFacts', 'checkGovernance'] as const;
 
 /** One FactKind — derived from {@link FACT_KINDS}, never re-typed. */
 export type FactKind = (typeof FACT_KINDS)[number];
@@ -502,6 +515,7 @@ export type FactKind = (typeof FACT_KINDS)[number];
 export interface FactBundle {
   readonly skipSites?: SkipSiteFacts;
   readonly activeSurfaceFacts?: ActiveSurfaceFacts;
+  readonly checkGovernance?: CheckGovernanceFacts;
 }
 
 const SKIP_SITE_FORMS = new Set(['call', 'conditional', 'alias', 'computed', 'aliased']);
@@ -612,6 +626,87 @@ function normalizeActiveSurfaceFacts(value: ActiveSurfaceFacts | undefined): Act
   return Object.freeze({ surfaces: Object.freeze(normalized) });
 }
 
+const WAIVER_STORES = new Set(['gauntlet', 'ledger']);
+
+function normalizeStringArray(value: unknown, label: string): readonly string[] {
+  if (!Array.isArray(value) || !value.every((s) => typeof s === 'string')) {
+    throw ValidationError('FactGate', `${label} must be an array of strings`);
+  }
+  return Object.freeze([...(value as string[])]);
+}
+
+function normalizeCheckGovernanceFacts(value: CheckGovernanceFacts | undefined): CheckGovernanceFacts | undefined {
+  if (value === undefined) return undefined;
+  assertPlainFactRecord(value, 'checkGovernance');
+  const partition = ownDataField(value, 'partition');
+  const negativeControls = ownDataField(value, 'negativeControls');
+  const waivers = ownDataField(value, 'waivers');
+  assertPlainFactRecord(partition, 'checkGovernance.partition');
+  const registeredRaw = ownDataField(partition, 'registered');
+  if (!Array.isArray(registeredRaw)) {
+    throw ValidationError('FactGate', 'checkGovernance.partition.registered must be an array');
+  }
+  const registered = registeredRaw.map((entry, index) => {
+    assertPlainFactRecord(entry, `checkGovernance.partition.registered[${index}]`);
+    const id = ownDataField(entry, 'id');
+    const script = ownDataField(entry, 'script');
+    const scriptExists = ownDataField(entry, 'scriptExists');
+    if (typeof id !== 'string' || typeof script !== 'string' || typeof scriptExists !== 'boolean') {
+      throw ValidationError('FactGate', `checkGovernance.partition.registered[${index}] is malformed`);
+    }
+    return Object.freeze({ id, script, scriptExists });
+  });
+  const normalizedPartition = Object.freeze({
+    scripts: normalizeStringArray(ownDataField(partition, 'scripts'), 'checkGovernance.partition.scripts'),
+    registered: Object.freeze(registered),
+    exempted: normalizeStringArray(ownDataField(partition, 'exempted'), 'checkGovernance.partition.exempted'),
+  });
+  if (!Array.isArray(negativeControls)) {
+    throw ValidationError('FactGate', 'checkGovernance.negativeControls must be an array');
+  }
+  const normalizedControls = negativeControls.map((entry, index) => {
+    assertPlainFactRecord(entry, `checkGovernance.negativeControls[${index}]`);
+    const id = ownDataField(entry, 'id');
+    const blocking = ownDataField(entry, 'blocking');
+    const negativeControl = ownDataField(entry, 'negativeControl');
+    const exists = ownDataField(entry, 'exists');
+    if (
+      typeof id !== 'string' ||
+      typeof blocking !== 'boolean' ||
+      !(negativeControl === null || typeof negativeControl === 'string') ||
+      typeof exists !== 'boolean'
+    ) {
+      throw ValidationError('FactGate', `checkGovernance.negativeControls[${index}] is malformed`);
+    }
+    return Object.freeze({ id, blocking, negativeControl, exists });
+  });
+  if (!Array.isArray(waivers)) {
+    throw ValidationError('FactGate', 'checkGovernance.waivers must be an array');
+  }
+  const normalizedWaivers = waivers.map((entry, index) => {
+    assertPlainFactRecord(entry, `checkGovernance.waivers[${index}]`);
+    const store = ownDataField(entry, 'store');
+    const id = ownDataField(entry, 'id');
+    const expires = ownDataField(entry, 'expires');
+    const expired = ownDataField(entry, 'expired');
+    if (
+      typeof store !== 'string' ||
+      !WAIVER_STORES.has(store) ||
+      typeof id !== 'string' ||
+      typeof expires !== 'string' ||
+      typeof expired !== 'boolean'
+    ) {
+      throw ValidationError('FactGate', `checkGovernance.waivers[${index}] is malformed`);
+    }
+    return Object.freeze({ store: store as WaiverFreshnessFact['store'], id, expires, expired });
+  });
+  return Object.freeze({
+    partition: normalizedPartition,
+    negativeControls: Object.freeze(normalizedControls),
+    waivers: Object.freeze(normalizedWaivers),
+  });
+}
+
 /**
  * A FACT GATE — the "gate-as-data" variant (the FactGate PoC). It replaces the arbitrary
  * {@link Gate.run} closure with two data-shaped halves: a DECLARATION of which host-produced
@@ -696,7 +791,11 @@ export interface FactGateSpec {
  * boundary: `decide` sees this bundle, never the context.
  */
 export function pickFacts(context: GateContext, requires: readonly FactKind[]): FactBundle {
-  const bundle: { skipSites?: SkipSiteFacts; activeSurfaceFacts?: ActiveSurfaceFacts } = {};
+  const bundle: {
+    skipSites?: SkipSiteFacts;
+    activeSurfaceFacts?: ActiveSurfaceFacts;
+    checkGovernance?: CheckGovernanceFacts;
+  } = {};
   for (const kind of requires) {
     switch (kind) {
       case 'skipSites':
@@ -704,6 +803,9 @@ export function pickFacts(context: GateContext, requires: readonly FactKind[]): 
         break;
       case 'activeSurfaceFacts':
         bundle.activeSurfaceFacts = normalizeActiveSurfaceFacts(context.activeSurfaceFacts);
+        break;
+      case 'checkGovernance':
+        bundle.checkGovernance = normalizeCheckGovernanceFacts(context.checkGovernance);
         break;
       default: {
         // Exhaustiveness: adding a FactKind without teaching this pick fails to compile here
@@ -734,6 +836,11 @@ export function factBundleDigest(context: GateContext, requires: readonly FactKi
         // Raw fold for cache soundness — normalization strips unknown keys (e.g. the
         // evidence-law perturbation salt) that must still flip the digest.
         fact = context.activeSurfaceFacts;
+        break;
+      case 'checkGovernance':
+        // Raw fold (same rationale as activeSurfaceFacts) — the perturbation salt must
+        // flip the digest even though normalization would strip it from the decision.
+        fact = context.checkGovernance;
         break;
       default: {
         // Exhaustiveness: a new FactKind must be folded here, or the build fails — never a

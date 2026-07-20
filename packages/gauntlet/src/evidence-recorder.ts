@@ -72,6 +72,7 @@ export const FACT_CHANNELS = [
   'composition',
   'skipSites',
   'activeSurfaceFacts',
+  'checkGovernance',
 ] as const;
 
 /** One injected-fact channel name — derived from {@link FACT_CHANNELS}, never re-typed. */
