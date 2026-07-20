@@ -1,6 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
-import { satelliteAttrs } from '@liteship/astro';
+import { adaptiveAttrs } from '@liteship/astro';
 import { layout } from '../boundaries/layout.boundaries.ts';
 ---
 
@@ -19,7 +19,7 @@ import { layout } from '../boundaries/layout.boundaries.ts';
          the resolved boundary state on data-liteship-state. Resize the window and watch
          it flip off the main thread. (The directive publishes no other DOM telemetry;
          this panel deliberately displays only what is real.) -->
-    <div {...satelliteAttrs({ boundary: layout, directive: 'worker', class: 'worker-container' })}>
+    <div {...adaptiveAttrs({ boundary: layout, directive: 'worker', class: 'worker-container' })}>
       <div class="worker-panel">
         <h2>Worker State</h2>
         <div class="worker-status">

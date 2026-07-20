@@ -190,8 +190,8 @@ For agents and grep-first humans, here is where the canonical answer lives:
 | Where is the HTML sanitizer? | `packages/web/src/security/html-trust.ts` |
 | Where is the SSRF / private-IP guard? | `packages/web/src/security/runtime-url.ts` |
 | Where is the runtime policy global written? | `packages/astro/src/runtime/policy.ts`, via `globals.ts` |
-| Where does `client:satellite` register? | `packages/astro/src/integration.ts` |
-| Where is the `Satellite` Astro component? | `packages/astro/src/Satellite.astro` (default export from `@liteship/astro/Satellite`) |
+| Where does `client:adaptive` register? | `packages/astro/src/integration.ts` |
+| Where is the `Adaptive` Astro component? | `packages/astro/src/Adaptive.astro` (default export from `@liteship/astro/Adaptive`) |
 | Where is the document graph IR? | `packages/core/src/document-graph.ts` + `document-graph-address.ts` (`sealNode`/`sealGraph`; ADR-0015) |
 | How do I mutate a graph? | `packages/core/src/graph-patch.ts` (`GraphPatch.diff`/`apply`/`validate`; apply re-seals) |
 | Where is the AI cast / how is a model proposal validated? | `packages/core/src/ai-cast.ts` (`castContext` → `validateGraphPatchProposal` → `applyValidatedPatch`); envelope in `validated-output.ts` (ADR-0015) |

@@ -27,16 +27,16 @@
  * sends it (Chromium does, and `Critical-CH` makes it resend before first render,
  * so the SSR'd `aria-hidden` matches the container-query CSS at byte one); a
  * `User-Agent` estimate when it doesn't (Firefox/Safari send no viewport hint —
- * no server can know their exact width); and the satellite runtime reconciles
+ * no server can know their exact width); and the adaptive runtime reconciles
  * whatever the server couldn't nail, on load. The common path is drift-free at
  * first paint; the rest degrade to a device-class estimate + a client reconcile,
  * never a permanent disagreement.
  *
- * <Satellite> carries the boundary and joins the authored @aria from the build
- * manifest by content address; bare `satelliteAttrs()` would only serialize ARIA
+ * <Adaptive> carries the boundary and joins the authored @aria from the build
+ * manifest by content address; bare `adaptiveAttrs()` would only serialize ARIA
  * you pass by hand.
  */
-import Satellite from '@liteship/astro/Satellite';
+import Adaptive from '@liteship/astro/Adaptive';
 import { resolveInitialState } from '@liteship/astro';
 import { nav } from '../boundaries/nav.boundaries.ts';
 
@@ -67,7 +67,7 @@ const initialState = resolveInitialState(nav, {
         <strong>same</strong> definition. When your browser sends the
         <code>Sec-CH-Viewport-Width</code> hint (Chromium does, before first paint), the
         accessibility state is already right at byte one; otherwise the server estimates
-        from the <code>User-Agent</code> and the satellite reconciles on load. Inspect the
+        from the <code>User-Agent</code> and the adaptive reconciles on load. Inspect the
         <code>.extra</code> element and watch <code>aria-hidden</code> track the breakpoint.
       </p>
 
@@ -76,7 +76,7 @@ const initialState = resolveInitialState(nav, {
         <a href="#">Examples</a>
         <a href="#">Reference</a>
         <a href="#">Blog</a>
-        <Satellite boundary={nav} initialState={initialState} class="extra">Signals in, named states out.</Satellite>
+        <Adaptive boundary={nav} initialState={initialState} class="extra">Signals in, named states out.</Adaptive>
       </nav>
     </main>
 

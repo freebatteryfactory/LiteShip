@@ -26,7 +26,7 @@ export interface DirectiveRootAttribute {
  * scanner derives its implicit plain-element selectors from the same data.
  */
 export const DIRECTIVE_ATTRIBUTE_REGISTRY = {
-  satellite: [{ attribute: 'data-liteship-boundary', implicitBoot: false }],
+  adaptive: [{ attribute: 'data-liteship-boundary', implicitBoot: false }],
   stream: [{ attribute: 'data-liteship-stream-url', implicitBoot: true }],
   llm: [{ attribute: 'data-liteship-llm-url', implicitBoot: true }],
   worker: [{ attribute: 'data-liteship-boundary', implicitBoot: false }],

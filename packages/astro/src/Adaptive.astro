@@ -1,6 +1,6 @@
 ---
 /**
- * Satellite -- the canonical adaptive shell for an Astro page.
+ * Adaptive -- the canonical adaptive shell for an Astro page.
  *
  * Wraps a `<div>` with `data-liteship-*` attributes derived from a Boundary
  * (and optionally a Component or initial state). The integration's
@@ -13,32 +13,32 @@
  * @example
  * ```astro
  * ---
- * import Satellite from '@liteship/astro/Satellite';
+ * import Adaptive from '@liteship/astro/Adaptive';
  * import { heroLayout } from '../boundaries.js';
  * ---
  *
- * <Satellite boundary={heroLayout}>
+ * <Adaptive boundary={heroLayout}>
  *   <section class="hero">...</section>
- * </Satellite>
+ * </Adaptive>
  * ```
  *
- * Composition note: this component is a thin shell over `satelliteAttrs()`
- * (`packages/astro/src/Satellite.ts`). When you need to attach satellite
+ * Composition note: this component is a thin shell over `adaptiveAttrs()`
+ * (`packages/astro/src/Adaptive.ts`). When you need to attach adaptive
  * attributes to an element other than a `<div>` (e.g. a `<section>` or
- * `<main>`), import `satelliteAttrs` directly and spread it onto your
+ * `<main>`), import `adaptiveAttrs` directly and spread it onto your
  * element of choice.
  */
 
-import { satelliteAttrs, type SatelliteProps } from './Satellite.js';
+import { adaptiveAttrs, type AdaptiveProps } from './Adaptive.js';
 import type { WgslUniformValue } from './runtime/boundary.js';
 
-export interface Props extends SatelliteProps {}
+export interface Props extends AdaptiveProps {}
 
 // Have-cake join: authored `@aria` lives in CSS and is compiled into the build
-// manifest keyed by the boundary's content address. The satellite shares that
+// manifest keyed by the boundary's content address. The adaptive shares that
 // address, so we resolve the boundary's authored ARIA here — zero extra
 // authoring. Guarded: outside the integration (no virtual module), or when the
-// caller already passed `aria`, this is a no-op and `satelliteAttrs` still works.
+// caller already passed `aria`, this is a no-op and `adaptiveAttrs` still works.
 let resolvedAria = Astro.props.aria;
 // Authored `@glsl`/`@wgsl` per-state values ride the same content-addressed join
 // as `@aria` — the manifest's `outputs[].glsl.stateUniforms` /
@@ -85,7 +85,7 @@ if (
   }
 }
 
-const attrs = satelliteAttrs({
+const attrs = adaptiveAttrs({
   ...Astro.props,
   ...(resolvedAria ? { aria: resolvedAria } : {}),
   ...(resolvedGlsl ? { glsl: resolvedGlsl } : {}),

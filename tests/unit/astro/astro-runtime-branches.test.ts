@@ -83,7 +83,7 @@ describe('astro runtime slot edge branches', () => {
 
     expect(() => getSlotRegistry()).not.toThrow();
     expect(() => bootstrapSlots()).not.toThrow();
-    expect(() => installSwapPipeline(['satellite'])).not.toThrow();
+    expect(() => installSwapPipeline(['adaptive'])).not.toThrow();
     expect(() => rescanSlots(document.createDocumentFragment())).not.toThrow();
   });
 });

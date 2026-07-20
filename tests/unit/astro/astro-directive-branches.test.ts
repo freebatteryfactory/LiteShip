@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { Diagnostics, GenFrame } from '@liteship/core';
 import { WorkerHost } from '@liteship/worker';
 import { Resumption } from '@liteship/web';
-import satelliteDirective from '../../../packages/astro/src/client-directives/satellite.js';
+import adaptiveDirective from '../../../packages/astro/src/client-directives/adaptive.js';
 import llmDirective from '../../../packages/astro/src/client-directives/llm.js';
 import gpuDirective from '../../../packages/astro/src/client-directives/gpu.js';
 import streamDirective from '../../../packages/astro/src/client-directives/stream.js';
@@ -58,10 +58,10 @@ describe('astro directive branch coverage', () => {
     _resetRuntimePolicyForTests();
   });
 
-  test('satellite ignores invalid boundaries, unsupported inputs, and invalid reinit payloads gracefully', () => {
+  test('adaptive ignores invalid boundaries, unsupported inputs, and invalid reinit payloads gracefully', () => {
     const load = vi.fn(async () => {});
     const invalid = makeEl('div', { 'data-liteship-boundary': '{not-json' });
-    satelliteDirective(load, {}, invalid);
+    adaptiveDirective(load, {}, invalid);
     expect(load).not.toHaveBeenCalled();
     expect(invalid.getAttribute('data-liteship-state')).toBeNull();
 
@@ -73,7 +73,7 @@ describe('astro directive branch coverage', () => {
       }),
       'data-liteship-state': 'near',
     });
-    satelliteDirective(load, {}, unsupported);
+    adaptiveDirective(load, {}, unsupported);
     expect(load).toHaveBeenCalledOnce();
     expect(unsupported.getAttribute('data-liteship-state')).toBe('near');
 

@@ -28,19 +28,19 @@ interface StrikeBoardEntry {
   readonly evidence: readonly string[];
 }
 
-interface SatelliteScanIntegrityCheck {
+interface AdaptiveScanIntegrityCheck {
   readonly code: string;
   readonly passed: boolean;
   readonly severity: 'error';
   readonly summary: string;
 }
 
-interface SatelliteScanVerification {
+interface AdaptiveScanVerification {
   readonly passed: boolean;
-  readonly checks: readonly SatelliteScanIntegrityCheck[];
+  readonly checks: readonly AdaptiveScanIntegrityCheck[];
 }
 
-export interface SatelliteScanReport {
+export interface AdaptiveScanReport {
   readonly schemaVersion: 6;
   readonly generatedAt: WallClockTimestamp;
   readonly gauntletRunId: string;
@@ -74,7 +74,7 @@ export interface SatelliteScanReport {
   readonly strikeBoard: readonly StrikeBoardEntry[];
   readonly integrity: {
     readonly passed: boolean;
-    readonly checks: readonly SatelliteScanIntegrityCheck[];
+    readonly checks: readonly AdaptiveScanIntegrityCheck[];
   };
 }
 
@@ -86,7 +86,7 @@ function compareJson(left: unknown, right: unknown): boolean {
   return JSON.stringify(left) === JSON.stringify(right);
 }
 
-function buildCheck(code: string, passed: boolean, summary: string): SatelliteScanIntegrityCheck {
+function buildCheck(code: string, passed: boolean, summary: string): AdaptiveScanIntegrityCheck {
   return { code, passed, severity: 'error', summary };
 }
 
@@ -251,11 +251,11 @@ function buildStrikeBoard(runtimeSeams: RuntimeSeamsReportArtifact): readonly St
   return entries.sort((left, right) => right.score - left.score);
 }
 
-export function verifySatelliteScanReport(
-  report: SatelliteScanReport,
+export function verifyAdaptiveScanReport(
+  report: AdaptiveScanReport,
   root = repoRoot,
-): SatelliteScanVerification {
-  const checks: SatelliteScanIntegrityCheck[] = [];
+): AdaptiveScanVerification {
+  const checks: AdaptiveScanIntegrityCheck[] = [];
   const currentContext = buildCurrentArtifactContext(root);
   const runtimeSeamsPath = resolve(root, 'reports', 'runtime-seams.json');
   const auditPath = resolve(root, 'reports', 'codebase-audit.json');
@@ -266,9 +266,9 @@ export function verifySatelliteScanReport(
       passed: false,
       checks: [
         buildCheck(
-          'satellite-scan-inputs',
+          'adaptive-scan-inputs',
           false,
-          'Satellite scan verification requires runtime seams, audit, and startup reality artifacts to exist.',
+          'Adaptive scan verification requires runtime seams, audit, and startup reality artifacts to exist.',
         ),
       ],
     };
@@ -288,52 +288,52 @@ export function verifySatelliteScanReport(
   const expectedBlindSpots = auditCountsValid ? buildBlindSpots(startupReality, audit, runtimeSeams) : [];
   const expectedStrikeBoard = buildStrikeBoard(runtimeSeams);
 
-  checks.push(buildCheck('satellite-scan-schema-version', report.schemaVersion === 6, report.schemaVersion === 6 ? 'Satellite scan schema version is current.' : 'Satellite scan schema version is missing or unsupported.'));
-  checks.push(buildCheck('satellite-scan-runtime-seams-integrity', runtimeSeamsVerification.passed, runtimeSeamsVerification.passed ? 'Runtime seams integrity passed before satellite scan verification.' : 'Runtime seams integrity failed underneath the satellite scan.'));
+  checks.push(buildCheck('adaptive-scan-schema-version', report.schemaVersion === 6, report.schemaVersion === 6 ? 'Adaptive scan schema version is current.' : 'Adaptive scan schema version is missing or unsupported.'));
+  checks.push(buildCheck('adaptive-scan-runtime-seams-integrity', runtimeSeamsVerification.passed, runtimeSeamsVerification.passed ? 'Runtime seams integrity passed before adaptive scan verification.' : 'Runtime seams integrity failed underneath the adaptive scan.'));
   checks.push(
     buildCheck(
-      'satellite-scan-audit-schema-version',
+      'adaptive-scan-audit-schema-version',
       hasCurrentCodebaseAuditSchema(audit),
       hasCurrentCodebaseAuditSchema(audit)
-        ? `Audit schema version ${CODEBASE_AUDIT_SCHEMA_VERSION} is current beneath the satellite scan.`
-        : 'Audit schema version is missing or unsupported beneath the satellite scan.',
+        ? `Audit schema version ${CODEBASE_AUDIT_SCHEMA_VERSION} is current beneath the adaptive scan.`
+        : 'Audit schema version is missing or unsupported beneath the adaptive scan.',
     ),
   );
   checks.push(
     buildCheck(
-      'satellite-scan-audit-counts',
+      'adaptive-scan-audit-counts',
       auditCountsValid,
       auditCountsValid
-        ? 'Audit counts block is present beneath the satellite scan.'
-        : 'Audit counts block is missing or malformed beneath the satellite scan.',
+        ? 'Audit counts block is present beneath the adaptive scan.'
+        : 'Audit counts block is missing or malformed beneath the adaptive scan.',
     ),
   );
   checks.push(
     buildCheck(
-      'satellite-scan-audit-runtime-seams-status',
+      'adaptive-scan-audit-runtime-seams-status',
       auditRuntimeSeamsStatus !== null,
       auditRuntimeSeamsStatus !== null
-        ? 'Audit runtime-seams support status is present beneath the satellite scan.'
-        : 'Audit runtime-seams support status is missing or malformed beneath the satellite scan.',
+        ? 'Audit runtime-seams support status is present beneath the adaptive scan.'
+        : 'Audit runtime-seams support status is missing or malformed beneath the adaptive scan.',
     ),
   );
-  checks.push(buildCheck('satellite-scan-startup-reality-schema-version', startupReality.schemaVersion === 4, startupReality.schemaVersion === 4 ? 'Startup reality schema version is current beneath the satellite scan.' : 'Startup reality schema version is missing or unsupported beneath the satellite scan.'));
-  checks.push(buildCheck('satellite-scan-source-fingerprint', report.sourceFingerprint === currentContext.sourceFingerprint, report.sourceFingerprint === currentContext.sourceFingerprint ? 'Satellite scan source fingerprint matches the current source tree.' : 'Satellite scan source fingerprint does not match the current source tree.'));
-  checks.push(buildCheck('satellite-scan-environment-fingerprint', report.environmentFingerprint === currentContext.environmentFingerprint, report.environmentFingerprint === currentContext.environmentFingerprint ? 'Satellite scan environment fingerprint matches the current environment profile.' : 'Satellite scan environment fingerprint does not match the current environment profile.'));
-  checks.push(buildCheck('satellite-scan-expected-counts', compareJson(report.expectedCounts, currentContext.expectedCounts), compareJson(report.expectedCounts, currentContext.expectedCounts) ? 'Satellite scan expected suite counts match the current repo layout.' : 'Satellite scan expected suite counts do not match the current repo layout.'));
-  checks.push(buildCheck('satellite-scan-run-coherence', report.gauntletRunId === runtimeSeams.gauntletRunId && report.gauntletRunId === audit.gauntletRunId && report.gauntletRunId === startupReality.gauntletRunId, report.gauntletRunId === runtimeSeams.gauntletRunId && report.gauntletRunId === audit.gauntletRunId && report.gauntletRunId === startupReality.gauntletRunId ? 'Satellite scan, runtime seams, audit, and startup reality share the same gauntlet run id.' : 'Satellite scan run id does not match one or more upstream artifacts.'));
+  checks.push(buildCheck('adaptive-scan-startup-reality-schema-version', startupReality.schemaVersion === 4, startupReality.schemaVersion === 4 ? 'Startup reality schema version is current beneath the adaptive scan.' : 'Startup reality schema version is missing or unsupported beneath the adaptive scan.'));
+  checks.push(buildCheck('adaptive-scan-source-fingerprint', report.sourceFingerprint === currentContext.sourceFingerprint, report.sourceFingerprint === currentContext.sourceFingerprint ? 'Adaptive scan source fingerprint matches the current source tree.' : 'Adaptive scan source fingerprint does not match the current source tree.'));
+  checks.push(buildCheck('adaptive-scan-environment-fingerprint', report.environmentFingerprint === currentContext.environmentFingerprint, report.environmentFingerprint === currentContext.environmentFingerprint ? 'Adaptive scan environment fingerprint matches the current environment profile.' : 'Adaptive scan environment fingerprint does not match the current environment profile.'));
+  checks.push(buildCheck('adaptive-scan-expected-counts', compareJson(report.expectedCounts, currentContext.expectedCounts), compareJson(report.expectedCounts, currentContext.expectedCounts) ? 'Adaptive scan expected suite counts match the current repo layout.' : 'Adaptive scan expected suite counts do not match the current repo layout.'));
+  checks.push(buildCheck('adaptive-scan-run-coherence', report.gauntletRunId === runtimeSeams.gauntletRunId && report.gauntletRunId === audit.gauntletRunId && report.gauntletRunId === startupReality.gauntletRunId, report.gauntletRunId === runtimeSeams.gauntletRunId && report.gauntletRunId === audit.gauntletRunId && report.gauntletRunId === startupReality.gauntletRunId ? 'Adaptive scan, runtime seams, audit, and startup reality share the same gauntlet run id.' : 'Adaptive scan run id does not match one or more upstream artifacts.'));
   // CUT generated-time-ordering: the wall-clock `generatedAt` vs file-mtime ordering gate
-  // was REMOVED — `satellite-scan-run-coherence` (gauntletRunId equality, above) is the
+  // was REMOVED — `adaptive-scan-run-coherence` (gauntletRunId equality, above) is the
   // authoritative same-run signal. `generatedAt` stays WallClockTimestamp provenance only.
-  checks.push(buildCheck('satellite-scan-runtime-seams-source', report.sourceArtifacts.runtimeSeams.fingerprint === runtimeSeamsArtifact.fingerprint, report.sourceArtifacts.runtimeSeams.fingerprint === runtimeSeamsArtifact.fingerprint ? 'Satellite scan runtime seams fingerprint matches the current runtime seams report.' : 'Satellite scan runtime seams fingerprint does not match the current runtime seams report.'));
-  checks.push(buildCheck('satellite-scan-audit-source', report.sourceArtifacts.audit.fingerprint === auditArtifact.fingerprint, report.sourceArtifacts.audit.fingerprint === auditArtifact.fingerprint ? 'Satellite scan audit fingerprint matches the current audit report.' : 'Satellite scan audit fingerprint does not match the current audit report.'));
-  checks.push(buildCheck('satellite-scan-startup-reality-source', report.sourceArtifacts.startupReality.fingerprint === startupRealityArtifact.fingerprint, report.sourceArtifacts.startupReality.fingerprint === startupRealityArtifact.fingerprint ? 'Satellite scan startup reality fingerprint matches the current startup reality artifact.' : 'Satellite scan startup reality fingerprint does not match the current startup reality artifact.'));
-  checks.push(buildCheck('satellite-scan-runtime-warnings', compareJson(report.summary.runtimeWarnings, expectedRuntimeWarnings), compareJson(report.summary.runtimeWarnings, expectedRuntimeWarnings) ? 'Satellite scan runtime warning summary matches paired-truth gate failures.' : 'Satellite scan runtime warning summary does not match paired-truth gate failures.'));
-  checks.push(buildCheck('satellite-scan-branch-hotspots', compareJson(report.summary.branchHotspots, expectedBranchHotspots), compareJson(report.summary.branchHotspots, expectedBranchHotspots) ? 'Satellite scan branch hotspots match runtime seams.' : 'Satellite scan branch hotspots do not match runtime seams.'));
-  checks.push(buildCheck('satellite-scan-blind-spots', auditCountsValid && compareJson(report.summary.blindSpots, expectedBlindSpots), auditCountsValid && compareJson(report.summary.blindSpots, expectedBlindSpots) ? 'Satellite scan blind spots match the current audit, startup reality, and runtime seams inputs.' : auditCountsValid ? 'Satellite scan blind spots do not match the current audit, startup reality, and runtime seams inputs.' : 'Satellite scan blind spots cannot be verified because the audit counts block is missing or malformed.'));
-  checks.push(buildCheck('satellite-scan-paired-truth', compareJson(report.pairedTruth, runtimeSeams.pairedTruth ?? []), compareJson(report.pairedTruth, runtimeSeams.pairedTruth ?? []) ? 'Satellite scan paired-truth metrics match runtime seams.' : 'Satellite scan paired-truth metrics do not match runtime seams.'));
-  checks.push(buildCheck('satellite-scan-fidelity', (report.pairedTruth ?? []).every((entry) => entry.fidelity !== undefined), (report.pairedTruth ?? []).every((entry) => entry.fidelity !== undefined) ? 'Satellite scan preserves paired-truth fidelity metadata.' : 'Satellite scan is missing paired-truth fidelity metadata.'));
-  checks.push(buildCheck('satellite-scan-strike-board', compareJson(report.strikeBoard, expectedStrikeBoard), compareJson(report.strikeBoard, expectedStrikeBoard) ? 'Satellite scan strike board matches the current runtime seams inputs.' : 'Satellite scan strike board does not match the current runtime seams inputs.'));
+  checks.push(buildCheck('adaptive-scan-runtime-seams-source', report.sourceArtifacts.runtimeSeams.fingerprint === runtimeSeamsArtifact.fingerprint, report.sourceArtifacts.runtimeSeams.fingerprint === runtimeSeamsArtifact.fingerprint ? 'Adaptive scan runtime seams fingerprint matches the current runtime seams report.' : 'Adaptive scan runtime seams fingerprint does not match the current runtime seams report.'));
+  checks.push(buildCheck('adaptive-scan-audit-source', report.sourceArtifacts.audit.fingerprint === auditArtifact.fingerprint, report.sourceArtifacts.audit.fingerprint === auditArtifact.fingerprint ? 'Adaptive scan audit fingerprint matches the current audit report.' : 'Adaptive scan audit fingerprint does not match the current audit report.'));
+  checks.push(buildCheck('adaptive-scan-startup-reality-source', report.sourceArtifacts.startupReality.fingerprint === startupRealityArtifact.fingerprint, report.sourceArtifacts.startupReality.fingerprint === startupRealityArtifact.fingerprint ? 'Adaptive scan startup reality fingerprint matches the current startup reality artifact.' : 'Adaptive scan startup reality fingerprint does not match the current startup reality artifact.'));
+  checks.push(buildCheck('adaptive-scan-runtime-warnings', compareJson(report.summary.runtimeWarnings, expectedRuntimeWarnings), compareJson(report.summary.runtimeWarnings, expectedRuntimeWarnings) ? 'Adaptive scan runtime warning summary matches paired-truth gate failures.' : 'Adaptive scan runtime warning summary does not match paired-truth gate failures.'));
+  checks.push(buildCheck('adaptive-scan-branch-hotspots', compareJson(report.summary.branchHotspots, expectedBranchHotspots), compareJson(report.summary.branchHotspots, expectedBranchHotspots) ? 'Adaptive scan branch hotspots match runtime seams.' : 'Adaptive scan branch hotspots do not match runtime seams.'));
+  checks.push(buildCheck('adaptive-scan-blind-spots', auditCountsValid && compareJson(report.summary.blindSpots, expectedBlindSpots), auditCountsValid && compareJson(report.summary.blindSpots, expectedBlindSpots) ? 'Adaptive scan blind spots match the current audit, startup reality, and runtime seams inputs.' : auditCountsValid ? 'Adaptive scan blind spots do not match the current audit, startup reality, and runtime seams inputs.' : 'Adaptive scan blind spots cannot be verified because the audit counts block is missing or malformed.'));
+  checks.push(buildCheck('adaptive-scan-paired-truth', compareJson(report.pairedTruth, runtimeSeams.pairedTruth ?? []), compareJson(report.pairedTruth, runtimeSeams.pairedTruth ?? []) ? 'Adaptive scan paired-truth metrics match runtime seams.' : 'Adaptive scan paired-truth metrics do not match runtime seams.'));
+  checks.push(buildCheck('adaptive-scan-fidelity', (report.pairedTruth ?? []).every((entry) => entry.fidelity !== undefined), (report.pairedTruth ?? []).every((entry) => entry.fidelity !== undefined) ? 'Adaptive scan preserves paired-truth fidelity metadata.' : 'Adaptive scan is missing paired-truth fidelity metadata.'));
+  checks.push(buildCheck('adaptive-scan-strike-board', compareJson(report.strikeBoard, expectedStrikeBoard), compareJson(report.strikeBoard, expectedStrikeBoard) ? 'Adaptive scan strike board matches the current runtime seams inputs.' : 'Adaptive scan strike board does not match the current runtime seams inputs.'));
 
   return {
     passed: checks.every((check) => check.passed),
@@ -341,7 +341,7 @@ export function verifySatelliteScanReport(
   };
 }
 
-export function buildSatelliteScanReport(root = repoRoot, generatedAt = new Date().toISOString()): SatelliteScanReport {
+export function buildAdaptiveScanReport(root = repoRoot, generatedAt = new Date().toISOString()): AdaptiveScanReport {
   const context = ensureArtifactContext(root);
   const runtimeSeamsPath = resolve(root, 'reports', 'runtime-seams.json');
   const auditPath = resolve(root, 'reports', 'codebase-audit.json');
@@ -360,23 +360,23 @@ export function buildSatelliteScanReport(root = repoRoot, generatedAt = new Date
   const runtimeSeams = readJson<RuntimeSeamsReportArtifact>(runtimeSeamsPath);
   const runtimeSeamsIntegrity = verifyRuntimeSeamsReport(runtimeSeams, root);
   if (!runtimeSeamsIntegrity.passed) {
-    throw new Error('Runtime seams integrity failed. Refresh coverage, bench, startup-reality, and runtime-seams before building the satellite scan.');
+    throw new Error('Runtime seams integrity failed. Refresh coverage, bench, startup-reality, and runtime-seams before building the adaptive scan.');
   }
 
   const audit = readJson<CodebaseAuditArtifactEnvelope>(auditPath);
   const startupReality = readJson<StartupRealityArtifact>(startupRealityPath);
   if (!hasCurrentCodebaseAuditSchema(audit)) {
     throw new Error(
-      `Audit schema version is missing or unsupported beneath the satellite scan. Expected ${CODEBASE_AUDIT_SCHEMA_VERSION}.`,
+      `Audit schema version is missing or unsupported beneath the adaptive scan. Expected ${CODEBASE_AUDIT_SCHEMA_VERSION}.`,
     );
   }
   if (!hasCodebaseAuditCounts(audit)) {
-    throw new Error('Audit counts block is missing or malformed beneath the satellite scan.');
+    throw new Error('Audit counts block is missing or malformed beneath the adaptive scan.');
   }
   if (getCodebaseAuditRuntimeSeamsStatus(audit) === null) {
-    throw new Error('Audit runtime-seams support status is missing or malformed beneath the satellite scan.');
+    throw new Error('Audit runtime-seams support status is missing or malformed beneath the adaptive scan.');
   }
-  const draftReport: SatelliteScanReport = {
+  const draftReport: AdaptiveScanReport = {
     schemaVersion: 6,
     generatedAt,
     gauntletRunId: context.gauntletRunId,
@@ -414,10 +414,10 @@ export function buildSatelliteScanReport(root = repoRoot, generatedAt = new Date
     },
   };
 
-  const integrity = verifySatelliteScanReport(draftReport, root);
+  const integrity = verifyAdaptiveScanReport(draftReport, root);
   if (!integrity.passed) {
     const summaries = integrity.checks.filter((check) => !check.passed).map((check) => `- ${check.summary}`);
-    throw new Error(`Satellite scan integrity failed:\n${summaries.join('\n')}`);
+    throw new Error(`Adaptive scan integrity failed:\n${summaries.join('\n')}`);
   }
 
   return {
@@ -426,9 +426,9 @@ export function buildSatelliteScanReport(root = repoRoot, generatedAt = new Date
   };
 }
 
-export function renderSatelliteScanMarkdown(report: SatelliteScanReport): string {
+export function renderAdaptiveScanMarkdown(report: AdaptiveScanReport): string {
   return [
-    '# Satellite Scan',
+    '# Adaptive Scan',
     '',
     `Generated: ${report.generatedAt}`,
     `Run: ${report.gauntletRunId}`,
@@ -486,12 +486,12 @@ export function renderSatelliteScanMarkdown(report: SatelliteScanReport): string
 }
 
 function main(): void {
-  const report = buildSatelliteScanReport(repoRoot);
+  const report = buildAdaptiveScanReport(repoRoot);
   const reportsDir = resolve(repoRoot, 'reports');
-  const jsonPath = resolve(reportsDir, 'satellite-scan.json');
-  const mdPath = resolve(reportsDir, 'satellite-scan.md');
+  const jsonPath = resolve(reportsDir, 'adaptive-scan.json');
+  const mdPath = resolve(reportsDir, 'adaptive-scan.md');
   writeTextFile(jsonPath, JSON.stringify(report, null, 2));
-  writeTextFile(mdPath, renderSatelliteScanMarkdown(report));
+  writeTextFile(mdPath, renderAdaptiveScanMarkdown(report));
   console.log(`Wrote ${jsonPath}`);
   console.log(`Wrote ${mdPath}`);
 }

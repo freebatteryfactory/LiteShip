@@ -53,7 +53,7 @@ function astroPackageJson(): string {
       type: 'module',
       exports: {
         '.': { development: './src/index.ts' },
-        './client-directives/satellite': { development: './src/client-directives/satellite.ts' },
+        './client-directives/adaptive': { development: './src/client-directives/adaptive.ts' },
         './client-directives/stream': { development: './src/client-directives/stream.ts' },
         './client-directives/llm': { development: './src/client-directives/llm.ts' },
         './client-directives/worker': { development: './src/client-directives/worker.ts' },
@@ -133,7 +133,7 @@ export function loadVirtualModule(id: string): string | undefined {
     'packages/astro/src/middleware.ts': 'export const onRequest = () => null;\n',
     'packages/astro/src/runtime/index.ts':
       'export { bootstrapSlots } from "./slots.js";\nexport { loadWasmRuntime } from "./wasm.js";\n',
-    'packages/astro/src/runtime/satellite.ts': 'export const satelliteRuntime = true;\n',
+    'packages/astro/src/runtime/adaptive.ts': 'export const adaptiveRuntime = true;\n',
     'packages/astro/src/runtime/stream.ts': 'export const streamRuntime = true;\n',
     'packages/astro/src/runtime/llm.ts': 'export const llmRuntime = true;\n',
     'packages/astro/src/runtime/worker.ts': 'export const workerRuntime = true;\n',
@@ -142,8 +142,8 @@ export function loadVirtualModule(id: string): string | undefined {
     'packages/astro/src/runtime/boundary.ts': 'export const boundaryRuntime = true;\n',
     'packages/astro/src/runtime/slots.ts': 'export const bootstrapSlots = () => true;\n',
     'packages/astro/src/runtime/directive-boot.ts': 'export const bootstrapDirectives = () => true;\n',
-    'packages/astro/src/client-directives/satellite.ts':
-      'import { initSatelliteDirective } from "../runtime/satellite.js";\nexport default (load: () => Promise<unknown>, _opts: Record<string, unknown>, el: HTMLElement) => {\n  initSatelliteDirective(load, el);\n};\n',
+    'packages/astro/src/client-directives/adaptive.ts':
+      'import { initAdaptiveDirective } from "../runtime/adaptive.js";\nexport default (load: () => Promise<unknown>, _opts: Record<string, unknown>, el: HTMLElement) => {\n  initAdaptiveDirective(load, el);\n};\n',
     'packages/astro/src/client-directives/stream.ts':
       'import { initStreamDirective } from "../runtime/stream.js";\nexport default (load: () => Promise<unknown>, _opts: Record<string, unknown>, el: HTMLElement) => {\n  initStreamDirective(load, el);\n};\n',
     'packages/astro/src/client-directives/llm.ts':
@@ -331,7 +331,7 @@ function writeSupportArtifacts(root: string): void {
               },
             ],
             pairs: [
-              { label: 'satellite', overhead: 0.05 },
+              { label: 'adaptive', overhead: 0.05 },
               { label: 'llm-startup-shared', overhead: 1.205 },
               { label: 'llm-promoted-startup-shared', overhead: 1.55 },
               { label: 'worker-runtime-startup', overhead: 2.01 },
@@ -341,7 +341,7 @@ function writeSupportArtifacts(root: string): void {
         ],
         pairs: [
           {
-            label: 'satellite',
+            label: 'adaptive',
             gate: true,
             pass: true,
             runtimeClass: 'hot-path',
@@ -593,7 +593,7 @@ describe('codebase audit loop', () => {
 
   test('real Astro directive wrappers stay import-and-export shells', () => {
     const wrappers = [
-      ['packages/astro/src/client-directives/satellite.ts', '../runtime/satellite.js'],
+      ['packages/astro/src/client-directives/adaptive.ts', '../runtime/adaptive.js'],
       ['packages/astro/src/client-directives/stream.ts', '../runtime/stream.js'],
       ['packages/astro/src/client-directives/llm.ts', '../runtime/llm.js'],
       ['packages/astro/src/client-directives/worker.ts', '../runtime/worker.js'],

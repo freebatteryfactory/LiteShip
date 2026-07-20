@@ -88,7 +88,7 @@ export const CATEGORIES: readonly CategorySpec[] = [
     description: 'Verification + reporting scripts.',
     scripts: [
       'report:runtime-seams',
-      'report:satellite-scan',
+      'report:adaptive-scan',
       'report:semantic-convergence',
       'feedback:verify',
       'runtime:gate',

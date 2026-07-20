@@ -122,7 +122,7 @@ describe('directive benchmark suite', () => {
   test('declares the expected benchmark tasks and pairs', () => {
     const taskNames = DIRECTIVE_BENCH_TASKS.map((task) => task.name);
 
-    expect(taskNames).toContain('[DIRECTIVE] satellite -- evaluate + state string (hot path)');
+    expect(taskNames).toContain('[DIRECTIVE] adaptive -- evaluate + state string (hot path)');
     expect(taskNames).toContain('[MANUAL] stream -- direct JSON.parse');
     expect(taskNames).toContain('[DIRECTIVE] llm -- parse tool delta');
     expect(taskNames).toContain('[DIRECTIVE] worker -- shared evaluate + composite build');
@@ -171,7 +171,7 @@ describe('directive benchmark suite', () => {
     const results = collectBenchResults({
       tasks: [
         {
-          name: '[DIRECTIVE] satellite -- evaluate + state string (hot path)',
+          name: '[DIRECTIVE] adaptive -- evaluate + state string (hot path)',
           result: {
             latency: { mean: 0.0002, p75: 0.0003, p99: 0.0004 },
             throughput: { mean: 2_000_000 },
@@ -182,7 +182,7 @@ describe('directive benchmark suite', () => {
 
     expect(results).toEqual([
       {
-        name: '[DIRECTIVE] satellite -- evaluate + state string (hot path)',
+        name: '[DIRECTIVE] adaptive -- evaluate + state string (hot path)',
         opsPerSec: 2_000_000,
         meanNs: 200,
         p75Ns: 300,
@@ -193,12 +193,12 @@ describe('directive benchmark suite', () => {
   });
 
   test('flags stable hard-gate regressions and leaves diagnostic-only pairs non-blocking', () => {
-    const satellitePair = DIRECTIVE_BENCH_PAIRS.find((pair) => pair.label === 'satellite')!;
+    const adaptivePair = DIRECTIVE_BENCH_PAIRS.find((pair) => pair.label === 'adaptive')!;
     const workerPair = DIRECTIVE_BENCH_PAIRS.find((pair) => pair.label === 'worker')!;
     const workerEnvelopePair = DIRECTIVE_BENCH_PAIRS.find((pair) => pair.label === 'worker-envelope')!;
-    const [satellite] = evaluateBenchPairsAcrossReplicates(
-      makeReplicates(satellitePair, [0.18, 0.19, 0.17, 0.2, 0.12]),
-      [satellitePair],
+    const [adaptive] = evaluateBenchPairsAcrossReplicates(
+      makeReplicates(adaptivePair, [0.18, 0.19, 0.17, 0.2, 0.12]),
+      [adaptivePair],
     );
     const [worker] = evaluateBenchPairsAcrossReplicates(makeReplicates(workerPair, [0.3, 0.28, 0.27, 0.31, 0.29]), [
       workerPair,
@@ -208,10 +208,10 @@ describe('directive benchmark suite', () => {
       [workerEnvelopePair],
     );
 
-    expect(satellite.threshold).toBe(HARD_GATE_OVERHEAD_THRESHOLD);
-    expect(satellite.pass).toBe(false);
-    expect(satellite.gate).toBe(true);
-    expect(satellite.exceedances).toBe(4);
+    expect(adaptive.threshold).toBe(HARD_GATE_OVERHEAD_THRESHOLD);
+    expect(adaptive.pass).toBe(false);
+    expect(adaptive.gate).toBe(true);
+    expect(adaptive.exceedances).toBe(4);
     expect(worker.threshold).toBe(HARD_GATE_OVERHEAD_THRESHOLD);
     expect(worker.pass).toBe(false);
     expect(worker.gate).toBe(true);
@@ -223,15 +223,15 @@ describe('directive benchmark suite', () => {
   });
 
   test('does not fail a hard gate on a noisy minority of regressions', () => {
-    const satellitePair = DIRECTIVE_BENCH_PAIRS.find((pair) => pair.label === 'satellite')!;
-    const [satellite] = evaluateBenchPairsAcrossReplicates(makeReplicates(satellitePair, [0.2, 0.2, 0.2, 0.05, 0.05]), [
-      satellitePair,
+    const adaptivePair = DIRECTIVE_BENCH_PAIRS.find((pair) => pair.label === 'adaptive')!;
+    const [adaptive] = evaluateBenchPairsAcrossReplicates(makeReplicates(adaptivePair, [0.2, 0.2, 0.2, 0.05, 0.05]), [
+      adaptivePair,
     ]);
 
-    expect(satellite.medianOverhead).toBe(0.2);
-    expect(satellite.exceedances).toBe(3);
-    expect(satellite.requiredExceedances).toBe(4);
-    expect(satellite.pass).toBe(true);
+    expect(adaptive.medianOverhead).toBe(0.2);
+    expect(adaptive.exceedances).toBe(3);
+    expect(adaptive.requiredExceedances).toBe(4);
+    expect(adaptive.pass).toBe(true);
   });
 
   test('fails closed when a required pair is missing in any replicate', () => {
@@ -297,13 +297,13 @@ describe('directive benchmark suite', () => {
   });
 
   test('adds a margin note for hard-gated pairs that are close to threshold', () => {
-    const satellitePair = DIRECTIVE_BENCH_PAIRS.find((pair) => pair.label === 'satellite')!;
-    const [satellite] = evaluateBenchPairsAcrossReplicates(
-      makeReplicates(satellitePair, [0.129, 0.131, 0.13, 0.128, 0.127]),
-      [satellitePair],
+    const adaptivePair = DIRECTIVE_BENCH_PAIRS.find((pair) => pair.label === 'adaptive')!;
+    const [adaptive] = evaluateBenchPairsAcrossReplicates(
+      makeReplicates(adaptivePair, [0.129, 0.131, 0.13, 0.128, 0.127]),
+      [adaptivePair],
     );
 
-    const lines = formatPairReport(satellite);
+    const lines = formatPairReport(adaptive);
 
     expect(lines).toEqual(expect.arrayContaining([expect.stringContaining('margin to threshold')]));
   });
@@ -405,21 +405,21 @@ describe('interleaved paired measurement — window-invariant hot-path ratio (CI
   test(
     'applyInterleavedGateOverrides re-measures an interleaved pair, leaves a non-interleaved one untouched',
     () => {
-      // Use ONE light interleaved pair (satellite) + one non-interleaved pair — measuring all four real
+      // Use ONE light interleaved pair (adaptive) + one non-interleaved pair — measuring all four real
       // pairs (stream runs 5000 inner iters/call) would blow the test timeout for no extra coverage.
-      const satellite = DIRECTIVE_BENCH_PAIRS.find((pair) => pair.label === 'satellite')!;
+      const adaptive = DIRECTIVE_BENCH_PAIRS.find((pair) => pair.label === 'adaptive')!;
       const nonInterleaved = DIRECTIVE_BENCH_PAIRS.find(
-        (pair) => !['satellite', 'stream', 'llm', 'worker'].includes(pair.label),
+        (pair) => !['adaptive', 'stream', 'llm', 'worker'].includes(pair.label),
       )!;
       const sentinelOverhead = Number.POSITIVE_INFINITY;
       const inputs = [
-        makePairEvaluation(satellite, sentinelOverhead),
+        makePairEvaluation(adaptive, sentinelOverhead),
         makePairEvaluation(nonInterleaved, sentinelOverhead),
       ];
-      const [satelliteOut, otherOut] = applyInterleavedGateOverrides(inputs);
+      const [adaptiveOut, otherOut] = applyInterleavedGateOverrides(inputs);
       // The interleaved pair is re-measured live (sentinel replaced by a real, finite paired ratio).
-      expect(satelliteOut!.overhead).not.toBe(sentinelOverhead);
-      expect(Number.isFinite(satelliteOut!.overhead)).toBe(true);
+      expect(adaptiveOut!.overhead).not.toBe(sentinelOverhead);
+      expect(Number.isFinite(adaptiveOut!.overhead)).toBe(true);
       // The non-interleaved pair is returned untouched — same reference, sentinel intact.
       expect(otherOut).toBe(inputs[1]);
       expect(otherOut!.overhead).toBe(sentinelOverhead);
@@ -428,8 +428,8 @@ describe('interleaved paired measurement — window-invariant hot-path ratio (CI
   );
 
   test('a MISSING interleaved pair stays missing — fail-closed, never re-measured into a false pass', () => {
-    const satellite = DIRECTIVE_BENCH_PAIRS.find((pair) => pair.label === 'satellite')!;
-    const missingPair = makePairEvaluation(satellite, null); // directiveResult/baselineResult undefined, missing: true
+    const adaptive = DIRECTIVE_BENCH_PAIRS.find((pair) => pair.label === 'adaptive')!;
+    const missingPair = makePairEvaluation(adaptive, null); // directiveResult/baselineResult undefined, missing: true
     const [out] = applyInterleavedGateOverrides([missingPair]);
     expect(out!.missing).toBe(true); // NOT flipped to false
     expect(out).toBe(missingPair); // returned untouched — no deref of the absent results

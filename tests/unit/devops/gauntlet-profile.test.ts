@@ -60,7 +60,7 @@ const EXPECTED: ReadonlyArray<{ label: string; command: string }> = [
   { label: 'coverage:merge', command: 'tsx scripts/merge-coverage.ts' },
   { label: 'report:runtime-seams', command: 'pnpm run report:runtime-seams' },
   { label: 'audit', command: 'pnpm run audit' },
-  { label: 'report:satellite-scan', command: 'pnpm run report:satellite-scan' },
+  { label: 'report:adaptive-scan', command: 'pnpm run report:adaptive-scan' },
   { label: 'feedback:verify', command: 'pnpm run feedback:verify' },
   { label: 'runtime:gate', command: 'pnpm run runtime:gate' },
   { label: 'standards:gate', command: 'pnpm run standards:gate' },

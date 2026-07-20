@@ -34,12 +34,12 @@ export const viewport = defineBoundary({
 ```astro
 ---
 // src/pages/index.astro
-import Satellite from '@liteship/astro/Satellite';
+import Adaptive from '@liteship/astro/Adaptive';
 import { viewport } from '../boundaries.js';
 ---
-<Satellite boundary={viewport}>
+<Adaptive boundary={viewport}>
   <section>Resize the window.</section>
-</Satellite>
+</Adaptive>
 ```
 
 Drag the window edge across 768px: the wrapper's `data-liteship-state` attribute flips between `stacked` and `split` for your CSS to key on. No `client:*` attribute needed — the integration's injected boot script activates the evaluator.
@@ -58,7 +58,7 @@ for the full layout.
 
 ## If it does nothing
 
-If `data-liteship-state` never changes on resize, the boot script was never injected — confirm `liteship()` is in `integrations` in `astro.config.mjs`. Astro's own `client:visible` / `client:idle` directives do not wire the evaluator; `Satellite` (or `satelliteAttrs(...)` spread onto any element) emits the `data-liteship-directive="satellite"` marker the boot scanner looks for.
+If `data-liteship-state` never changes on resize, the boot script was never injected — confirm `liteship()` is in `integrations` in `astro.config.mjs`. Astro's own `client:visible` / `client:idle` directives do not wire the evaluator; `Adaptive` (or `adaptiveAttrs(...)` spread onto any element) emits the `data-liteship-directive="adaptive"` marker the boot scanner looks for.
 
 ## Docs
 

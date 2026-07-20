@@ -423,7 +423,7 @@ describe('compiler branch coverage', () => {
     expect(CSSCompiler.generatePropertyRegistrations({ compact: { color: 'red', display: 'block' } })).toBe('');
   });
 
-  test('ComponentCSSCompiler appends slot and satellite rules to the layered output', () => {
+  test('ComponentCSSCompiler appends slot and adaptive rules to the layered output', () => {
     const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
@@ -463,7 +463,7 @@ describe('compiler branch coverage', () => {
 
     const compiled = ComponentCSSCompiler.compile(component);
     expect(compiled.scoped).toContain('[data-liteship-slot] { display: contents; }');
-    expect(compiled.layers).toContain('[data-liteship-satellite="hero-card"] { container-type: inline-size; }');
+    expect(compiled.layers).toContain('[data-liteship-adaptive="hero-card"] { container-type: inline-size; }');
     expect(compiled.layers).toContain('@container viewport-width');
   });
 
@@ -483,7 +483,7 @@ describe('compiler branch coverage', () => {
 
     expect(compiled.layers).toContain('@layer liteship.components');
     expect(compiled.layers).toContain('[data-liteship-slot] { display: contents; }');
-    expect(compiled.layers).toContain('[data-liteship-satellite="plain-card"] { container-type: inline-size; }');
+    expect(compiled.layers).toContain('[data-liteship-adaptive="plain-card"] { container-type: inline-size; }');
   });
 
   test('TokenJSCompiler reuses category buckets and serializes numeric fallbacks', () => {

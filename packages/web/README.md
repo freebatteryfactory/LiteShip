@@ -63,7 +63,7 @@ Single source: `packages/web/src/wire/liteship-events.ts`. Dispatch through `dis
 | `liteship:mutation` | Graph mutation channel response after form submit. |
 | `liteship:reinit` | Directive re-read after a view-transition swap (not final teardown). |
 | `liteship:request-snapshot` | Recovery fetch requested after morph rejection. |
-| `liteship:satellite-state` | Satellite boundary state crossing. |
+| `liteship:adaptive-state` | Adaptive boundary state crossing. |
 | `liteship:signal` | SSE `signal` message payload from the stream directive. |
 | `liteship:slot-mounted` | Slot registry registered a `data-liteship-slot` element. |
 | `liteship:slot-unmounted` | Slot registry removed a slot path. |

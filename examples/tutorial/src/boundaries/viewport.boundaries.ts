@@ -19,7 +19,7 @@ import { defineBoundary } from '@liteship/core';
 
 export const viewport = defineBoundary({
   // The signal this boundary listens to. "viewport.width" is a built-in
-  // signal that the satellite directive reads from window.innerWidth.
+  // signal that the adaptive directive reads from window.innerWidth.
   input: 'viewport.width',
 
   // Threshold/state pairs, sorted ascending by threshold value.

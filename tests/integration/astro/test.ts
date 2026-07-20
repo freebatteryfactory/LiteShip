@@ -106,7 +106,7 @@ async function main(): Promise<void> {
 
   const html = readFileSync(indexHtml!, 'utf-8');
   assert(html.includes('__LITESHIP_DETECT__'), 'detect script injected (contains __LITESHIP_DETECT__)');
-  assert(html.includes('data-liteship-boundary'), 'satellite boundary element preserved');
+  assert(html.includes('data-liteship-boundary'), 'adaptive boundary element preserved');
   assert(html.includes('liteship integration test'), 'page content rendered');
 
   // Verify the view-transition reinit script was injected.
@@ -116,10 +116,10 @@ async function main(): Promise<void> {
   const reinitInJs = anyFileContains(DIST_DIR, '.js', 'liteship:reinit');
   assert(reinitInHtml || reinitInJs, 'view-transition reinit script emitted (liteship:reinit in HTML or JS)');
 
-  // Verify Satellite.astro emitted the canonical directive marker and the
+  // Verify Adaptive.astro emitted the canonical directive marker and the
   // injected bootstrap carries the boot scanner. Function names get
   // minified, so probe for the scanner's window-global string literal.
-  assert(html.includes('data-liteship-directive="satellite"'), 'Satellite shell emits data-liteship-directive marker');
+  assert(html.includes('data-liteship-directive="adaptive"'), 'Adaptive shell emits data-liteship-directive marker');
   const bootInHtml = html.includes('__LITESHIP_DIRECTIVE_BOOTSTRAPPED__');
   const bootInJs = anyFileContains(DIST_DIR, '.js', '__LITESHIP_DIRECTIVE_BOOTSTRAPPED__');
   assert(bootInHtml || bootInJs, 'directive boot scanner emitted (__LITESHIP_DIRECTIVE_BOOTSTRAPPED__ in HTML or JS)');

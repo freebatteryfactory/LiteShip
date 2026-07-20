@@ -6,15 +6,15 @@
  * directives on framework-component islands; on plain elements the
  * attribute serializes verbatim into the HTML and nothing runs, and on
  * `.astro` components it vanishes entirely. liteship's island primitive is
- * a plain annotated div (see `Satellite.astro`), so the integration
+ * a plain annotated div (see `Adaptive.astro`), so the integration
  * injects this scanner on every page to activate directive markers the
  * Astro runtime never sees.
  *
  * Two marker forms are scanned (both first-class per ADR-0028):
  *
- * - `data-liteship-directive="satellite"` -- explicit marker, emitted by
- *   `satelliteAttrs()`; space-separated tokens allowed.
- * - literal `client:satellite`-style attributes -- compiled to runtime
+ * - `data-liteship-directive="adaptive"` -- explicit marker, emitted by
+ *   `adaptiveAttrs()`; space-separated tokens allowed.
+ * - literal `client:adaptive`-style attributes -- compiled to runtime
  *   `data-liteship-*` roots and booted on plain elements. Astro strips
  *   `client:*` from real framework islands at render time, so the
  *   scanner cannot double-activate an island.
@@ -55,7 +55,7 @@ function directiveEnableFix(name: DirectiveName): string {
 }
 
 const DIRECTIVE_NAMES: readonly DirectiveName[] = [
-  'satellite',
+  'adaptive',
   'stream',
   'llm',
   'worker',
@@ -69,7 +69,7 @@ const DIRECTIVE_NAMES: readonly DirectiveName[] = [
 // Static thunk map so the bundler code-splits each directive into the
 // same chunk Astro's island path would load.
 const LOADERS: Record<DirectiveName, () => Promise<{ readonly default: DirectiveEntry }>> = {
-  satellite: () => import('../client-directives/satellite.js'),
+  adaptive: () => import('../client-directives/adaptive.js'),
   stream: () => import('../client-directives/stream.js'),
   llm: () => import('../client-directives/llm.js'),
   worker: () => import('../client-directives/worker.js'),
@@ -134,7 +134,7 @@ function warnExplicitOnlyDirectiveAttributes(root: ParentNode): void {
     for (const element of collectElements(root, `[${attribute}]`)) {
       // Suppress ONLY when an explicit directive marker is present. An implicit peer
       // attribute (e.g. `data-liteship-shader-src` for gpu) does NOT consume the boundary
-      // payload -- only satellite/worker evaluate it -- so a bare boundary sitting next
+      // payload -- only adaptive/worker evaluate it -- so a bare boundary sitting next
       // to a gpu shader still needs its marker warning, not silence.
       if (hasDirectiveMarker(element)) {
         continue;
@@ -144,7 +144,7 @@ function warnExplicitOnlyDirectiveAttributes(root: ParentNode): void {
         code: `directive-attribute-requires-marker:${attribute}`,
         message:
           `Found ${attribute} without a liteship directive marker, so the runtime will not infer which directive to boot. ` +
-          `Fix: spread satelliteAttrs({ boundary }) / <Satellite>, or add data-liteship-directive="satellite" or "worker".`,
+          `Fix: spread adaptiveAttrs({ boundary }) / <Adaptive>, or add data-liteship-directive="adaptive" or "worker".`,
         detail: { attribute },
       });
     }
@@ -205,7 +205,7 @@ export async function scanAndBootDirectives(
           message:
             `Element carries conflicting liteship directives (${conflicting.join(', ')}) -- ` +
             `each directive takes over the element, so they collide and one silently loses ` +
-            `(e.g. a satellite consumes the node a GPU shader needs). ` +
+            `(e.g. an adaptive consumes the node a GPU shader needs). ` +
             `Fix: put each directive on its own element.`,
         });
       }

@@ -710,7 +710,7 @@ describe('StyleCSSCompiler', () => {
 // ===========================================================================
 
 describe('ComponentCSSCompiler', () => {
-  test('compile() emits satellite container and slot styling', () => {
+  test('compile() emits adaptive container and slot styling', () => {
     const result = ComponentCSSCompiler.compile(cardComponent);
     expect(result.layers).toContain('@layer liteship.components');
     expect(result.scoped).toContain('data-liteship-slot');

@@ -4,9 +4,9 @@
  * "defaults-pass" + "error-contract" sweep so a benign refactor can't
  * silently revert the ergonomics:
  *
- *  - #90 satelliteAttrs defaults `data-liteship-state` to the first state when
+ *  - #90 adaptiveAttrs defaults `data-liteship-state` to the first state when
  *    `initialState` is omitted but a boundary is present (no flash of
- *    unstated content). LAW: a boundary-bearing satellite is NEVER shipped
+ *    unstated content). LAW: a boundary-bearing adaptive is NEVER shipped
  *    without a server state.
  *  - #91 resolveInitialState's ServerIslandContext is fully optional —
  *    callable with no context / partial context — and still resolves a
@@ -30,7 +30,7 @@ import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 import * as fc from 'fast-check';
 import { Diagnostics, defineBoundary } from '@liteship/core';
 import {
-  satelliteAttrs,
+  adaptiveAttrs,
   resolveInitialState,
   resolveInitialStateFallback,
   integration,
@@ -76,14 +76,14 @@ const arbBoundary = fc.uniqueArray(stateLabel, { minLength: 1, maxLength: 5 }).c
 );
 
 // ---------------------------------------------------------------------------
-// #90 — satelliteAttrs default-state law
+// #90 — adaptiveAttrs default-state law
 // ---------------------------------------------------------------------------
 
-describe('LESSON (#90): a boundary-bearing satellite always ships a server state', () => {
+describe('LESSON (#90): a boundary-bearing adaptive always ships a server state', () => {
   test('PROPERTY: omitting initialState defaults data-liteship-state to states[0]', () => {
     fc.assert(
       fc.property(arbBoundary, (boundary) => {
-        const attrs = satelliteAttrs({ boundary });
+        const attrs = adaptiveAttrs({ boundary });
         // The state attribute is present (never undefined → CSS keyed on
         // [data-liteship-state] matches at first paint, no flash-of-unstated).
         expect(attrs['data-liteship-state']).toBeDefined();
@@ -98,7 +98,7 @@ describe('LESSON (#90): a boundary-bearing satellite always ships a server state
     fc.assert(
       fc.property(arbBoundary, (boundary) => {
         const chosen = boundary.states[boundary.states.length - 1]!;
-        const attrs = satelliteAttrs({ boundary, initialState: chosen });
+        const attrs = adaptiveAttrs({ boundary, initialState: chosen });
         expect(attrs['data-liteship-state']).toBe(chosen);
       }),
     );
@@ -226,19 +226,19 @@ describe('LESSON (#93): `liteship` is the same factory as `integration` (no rena
 // ---------------------------------------------------------------------------
 
 describe('LESSON (#95): boundary parse failure names the fix, not just the symptom', () => {
-  test('malformed JSON → actionable satelliteAttrs() guidance', () => {
+  test('malformed JSON → actionable adaptiveAttrs() guidance', () => {
     const message = boundaryParseFailureMessage('{not valid json');
     expect(message).toBeTruthy();
     // Pin the CONTRACT (tells you the symptom + the fix), not the exact prose.
     expect(message).toMatch(/inert/i);
-    expect(message).toMatch(/satelliteAttrs|JSON\.stringify/);
+    expect(message).toMatch(/adaptiveAttrs|JSON\.stringify/);
   });
 
   test('structurally-invalid payload → names the missing fields + the fix', () => {
     const message = boundaryParseFailureMessage(JSON.stringify({ input: 'viewport.width' }));
     expect(message).toBeTruthy();
     expect(message).toMatch(/thresholds|states/);
-    expect(message).toMatch(/Boundary\.make|satelliteAttrs/);
+    expect(message).toMatch(/Boundary\.make|adaptiveAttrs/);
   });
 
   test('parseBoundary emits a warnOnce diagnostic (not silence) on bad payloads', async () => {
@@ -249,13 +249,13 @@ describe('LESSON (#95): boundary parse failure names the fix, not just the sympt
     });
     const boundaryWarn = events.find((e) => e.source === 'liteship/astro.boundary');
     expect(boundaryWarn).toBeDefined();
-    expect(boundaryWarn?.message).toMatch(/satelliteAttrs|JSON/);
+    expect(boundaryWarn?.message).toMatch(/adaptiveAttrs|JSON/);
   });
 
-  test('PROPERTY: a well-formed satelliteAttrs payload NEVER produces a parse-failure message', () => {
+  test('PROPERTY: a well-formed adaptiveAttrs payload NEVER produces a parse-failure message', () => {
     fc.assert(
       fc.property(arbBoundary, (boundary) => {
-        const json = satelliteAttrs({ boundary })['data-liteship-boundary']!;
+        const json = adaptiveAttrs({ boundary })['data-liteship-boundary']!;
         expect(boundaryParseFailureMessage(json)).toBeNull();
         expect(parseBoundary(json)).not.toBeNull();
       }),

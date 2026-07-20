@@ -5,7 +5,7 @@
  * This is a runtime PRIMITIVE (a loader), NOT an editor. The producer that
  * SERIALIZES a {@link DocumentGraph} is downstream / out of scope; this module
  * only consumes one and drives the boundary runtime that
- * `client:satellite` already uses.
+ * `client:adaptive` already uses.
  *
  * THE FLOW ({@link loadGraphRuntime}):
  *   parse JSON (if a string)
@@ -55,7 +55,7 @@ import {
 } from './boundary.js';
 import { lowerGraph, type LoweredBinding } from './graph-lower.js';
 
-/** Default custom-event name the seeded/recomputed state dispatches on (mirrors the satellite directive). */
+/** Default custom-event name the seeded/recomputed state dispatches on (mirrors the adaptive directive). */
 const DEFAULT_EVENT_NAME: BoundaryStateEventName = 'liteship:graph-state';
 const EDGE_TYPES = new Set(['seq', 'par', 'choice_then', 'choice_else']);
 

@@ -69,7 +69,7 @@ For a standalone app — one you can drop into StackBlitz or CodeSandbox — sca
 
 ## Quick start
 
-Two concepts get you to a working page: `defineBoundary` (define the states) and `satelliteAttrs` (put them on an element). In an Astro project:
+Two concepts get you to a working page: `defineBoundary` (define the states) and `adaptiveAttrs` (put them on an element). In an Astro project:
 
 ```bash
 pnpm add @liteship/core @liteship/astro
@@ -108,11 +108,11 @@ export default defineConfig({ integrations: [integration()] });
 
 ```astro
 ---
-import { satelliteAttrs } from '@liteship/astro';
+import { adaptiveAttrs } from '@liteship/astro';
 import { viewport } from '../boundaries.js';
 ---
 
-<div {...satelliteAttrs({ boundary: viewport })}>
+<div {...adaptiveAttrs({ boundary: viewport })}>
   Resize the window: this element's data-liteship-state flips
   mobile → tablet → desktop, and your CSS keys off it.
 </div>
@@ -138,7 +138,7 @@ This is not a replacement for media queries (use them where they're enough), CSS
 
 ## Frameworks and stacks
 
-LiteShip's primary host integration is Astro 7 (`@liteship/astro`). The core authoring layer (`@liteship/core`, `@liteship/quantizer`, `@liteship/compiler`) is framework-portable: it produces CSS strings, GLSL preambles, ARIA records, and TypeScript unions from boundary definitions, and any framework can spread those onto its own elements. `@liteship/vite` plugs the same `@token` / `@theme` / `@style` / `@quantize` CSS transforms into any Vite-based stack (React, Solid, Svelte, Vue, vanilla). The Astro-specific surfaces (the `Satellite` component, `client:satellite` directive, `liteshipMiddleware`) are additive — you don't need them to use the authoring + casting layer.
+LiteShip's primary host integration is Astro 7 (`@liteship/astro`). The core authoring layer (`@liteship/core`, `@liteship/quantizer`, `@liteship/compiler`) is framework-portable: it produces CSS strings, GLSL preambles, ARIA records, and TypeScript unions from boundary definitions, and any framework can spread those onto its own elements. `@liteship/vite` plugs the same `@token` / `@theme` / `@style` / `@quantize` CSS transforms into any Vite-based stack (React, Solid, Svelte, Vue, vanilla). The Astro-specific surfaces (the `Adaptive` component, `client:adaptive` directive, `liteshipMiddleware`) are additive — you don't need them to use the authoring + casting layer.
 
 Mobile and PWA: viewport, motion-preference, GPU tier, and network-condition signals all flow through the same boundary primitive. The framework is presentation-focused and doesn't ship offline-first / service-worker / manifest tooling; pair LiteShip with whatever PWA stack your host already uses.
 
@@ -228,7 +228,7 @@ pnpm run gauntlet:full    # full release-grade gate (~22min)
 
 Dev-loop ergonomics: `pnpm dev` (showcase example dev server), `pnpm test:watch` (vitest watch), `pnpm run clean` (dry-dock), `pnpm scripts` (categorized script index), `pnpm run glossary <term>` (CLI lookup into the ontology), `pnpm fix` (prettier + eslint --fix). The CLI mirrors the same surface: `liteship doctor`, `liteship help`, `liteship version`, `liteship glossary cast`.
 
-Other lanes (`test:vite`, `test:astro`, `test:tailwind`, `test:e2e`, `test:e2e:stress`, `test:e2e:stream-stress`, `test:redteam`, `package:smoke`, `bench`, `bench:gate`, `bench:reality`, `coverage:merge`, `report:runtime-seams`, `audit`, `report:satellite-scan`, `feedback:verify`) are documented in [CONTRIBUTING.md](./CONTRIBUTING.md).
+Other lanes (`test:vite`, `test:astro`, `test:tailwind`, `test:e2e`, `test:e2e:stress`, `test:e2e:stream-stress`, `test:redteam`, `package:smoke`, `bench`, `bench:gate`, `bench:reality`, `coverage:merge`, `report:runtime-seams`, `audit`, `report:adaptive-scan`, `feedback:verify`) are documented in [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 `pnpm run gauntlet:full` is the full shake-down cruise before a release. Thirty-nine phases (see `STATUS.md` for the full ordered list), starting with an enforced `rig-check` env preflight, fifteen to forty-five minutes end-to-end depending on cold caches, CI load, and machine speed. It ends with `flex:verify PASSED — project is 10/10 by every rating dimension`, or it fails and the vessel returns to dry-dock.
 
@@ -243,7 +243,7 @@ Pulled from the `truth-artifacts-linux` artifact of [CI run 28506238242](https:/
 
 | Hard-gated pair | Median directive | Median baseline | Median overhead | Threshold |
 | --- | ---: | ---: | ---: | ---: |
-| `satellite` hot path | 2,699ns | 2,612ns | 3.33% | 15% |
+| `adaptive` hot path | 2,699ns | 2,612ns | 3.33% | 15% |
 | `stream` parse + patch | 776,063ns | 788,187ns | -1.54% | 15% |
 | `llm` text chunk parse | 823,421ns | 775,031ns | 6.20% | 15% |
 | `worker` fallback eval | 2,982ns | 2,832ns | 5.33% | 15% |

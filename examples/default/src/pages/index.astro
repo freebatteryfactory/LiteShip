@@ -1,8 +1,8 @@
 ---
 import Base from '../layouts/Base.astro';
-import { satelliteAttrs } from '@liteship/astro';
+import { adaptiveAttrs } from '@liteship/astro';
 // The shared layout boundary (mobile / tablet / desktop) drives both
-// halves of the adaptive story: satelliteAttrs() serializes it for the
+// halves of the adaptive story: adaptiveAttrs() serializes it for the
 // client runtime (data-liteship-state updates), and the @quantize block in
 // the <style> below resolves the same export to compile static
 // @container queries.
@@ -15,7 +15,7 @@ import { layout } from '../boundaries/layout.boundaries.js';
     <p>Constraint-based adaptive rendering</p>
   </header>
 
-  <main {...satelliteAttrs({ boundary: layout, class: 'grid' })}>
+  <main {...adaptiveAttrs({ boundary: layout, class: 'grid' })}>
     <article class="card">
       <h2>Boundaries</h2>
       <p>Define quantization points where your layout adapts.</p>

@@ -36,7 +36,7 @@ const VOLATILE_TYPE_FILES = [
   'scripts/audit/types.ts',
   'scripts/audit/report.ts',
   'scripts/report-runtime-seams.ts',
-  'scripts/report-satellite-scan.ts',
+  'scripts/report-adaptive-scan.ts',
 ];
 
 describe('generated-time — the causal clock (generated_at) stays HLC + identity-bearing', () => {
@@ -96,9 +96,9 @@ describe('generated-time — gauntletRunId is the coherence signal; wall-clock o
     expect(src).not.toMatch(/'runtime-seams-ordering'/);
   });
 
-  it('report-satellite-scan proves coherence via gauntletRunId, with no wall-clock ordering gate', () => {
-    const src = read('scripts/report-satellite-scan.ts');
-    expect(src).toMatch(/satellite-scan-run-coherence/); // gauntletRunId equality stays
-    expect(src).not.toMatch(/'satellite-scan-ordering'/); // the wall-clock gate is gone
+  it('report-adaptive-scan proves coherence via gauntletRunId, with no wall-clock ordering gate', () => {
+    const src = read('scripts/report-adaptive-scan.ts');
+    expect(src).toMatch(/adaptive-scan-run-coherence/); // gauntletRunId equality stays
+    expect(src).not.toMatch(/'adaptive-scan-ordering'/); // the wall-clock gate is gone
   });
 });

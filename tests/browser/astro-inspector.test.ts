@@ -63,7 +63,7 @@ describe('astro dev inspector', () => {
         glslStateUniforms: { compact: { u_blur: 1 }, wide: { u_blur: 4 } },
       }),
     );
-    el.setAttribute('data-liteship-directive', 'satellite');
+    el.setAttribute('data-liteship-directive', 'adaptive');
     el.setAttribute('data-liteship-shader-type', 'glsl');
     el.setAttribute('data-liteship-state', 'compact');
     document.body.appendChild(el);
@@ -112,7 +112,7 @@ describe('astro dev inspector', () => {
       'data-liteship-boundary',
       JSON.stringify({ id: 'b', input: 'viewport.width', thresholds: [0, 600], states: ['s', 'l'] }),
     );
-    el.setAttribute('data-liteship-directive', 'satellite');
+    el.setAttribute('data-liteship-directive', 'adaptive');
     document.body.appendChild(el);
 
     const { shadow: shadow2 } = makeShadowRoot();

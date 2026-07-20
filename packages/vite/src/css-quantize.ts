@@ -620,7 +620,7 @@ function containmentRule(block: QuantizeBlock, boundary: Boundary, sheet?: Quant
         `viewport.height compile to (width ...) / (height ...) conditions, so no container was ` +
         `auto-declared and the compiled rules will match nothing. ` +
         `Fix: re-author the boundary on viewport.width or viewport.height, or use the runtime ` +
-        `satellite path (satelliteAttrs({ boundary }) + [data-liteship-state="..."] selectors).`,
+        `adaptive path (adaptiveAttrs({ boundary }) + [data-liteship-state="..."] selectors).`,
       detail: { sourceFile: block.sourceFile, line: block.line, input: boundary.input },
     });
     return null;

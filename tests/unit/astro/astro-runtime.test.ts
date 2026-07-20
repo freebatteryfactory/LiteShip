@@ -103,7 +103,7 @@ describe('astro shared runtime adapters', () => {
     });
 
     // The single ordered swap pipeline: rescan slots → boot directives → reinit.
-    installSwapPipeline(['satellite']);
+    installSwapPipeline(['adaptive']);
 
     const nextSlot = document.createElement('section');
     nextSlot.setAttribute('data-liteship-slot', '/next');
@@ -133,8 +133,8 @@ describe('astro shared runtime adapters', () => {
     expect(Object.prototype.propertyIsEnumerable.call(runtimeWindow, '__LITESHIP_SLOTS__')).toBe(false);
 
     const addEventListenerSpy = vi.spyOn(document, 'addEventListener');
-    installSwapPipeline(['satellite']);
-    installSwapPipeline(['satellite']);
+    installSwapPipeline(['adaptive']);
+    installSwapPipeline(['adaptive']);
 
     expect(addEventListenerSpy.mock.calls.filter(([type]) => type === 'astro:after-swap')).toHaveLength(1);
     expect(runtimeWindow.__LITESHIP_SWAP_PIPELINE__).toBe(true);

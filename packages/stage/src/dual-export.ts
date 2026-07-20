@@ -6,7 +6,7 @@
  * every content address is minted through `CanonicalCbor.encode` →
  * `AddressedDigest.of` (the `@liteship/core` kernel, ADR-0003/0011), and every
  * caster it drives already EXISTS — `CSSCompiler.compile` (`@liteship/compiler`),
- * `resolveInitialState`/`satelliteAttrs` (`@liteship/astro`), `VideoRenderer.make`
+ * `resolveInitialState`/`adaptiveAttrs` (`@liteship/astro`), `VideoRenderer.make`
  * over a `Compositor` (`@liteship/core`). Stage reinvents none of them; it only
  * walks the graph and binds the casters' outputs back to the graph's source.
  *
@@ -49,7 +49,7 @@ import {
 } from '@liteship/core';
 import { ValidationError } from '@liteship/error';
 import { CSSCompiler } from '@liteship/compiler';
-import { resolveInitialState, satelliteAttrs } from '@liteship/astro';
+import { resolveInitialState, adaptiveAttrs } from '@liteship/astro';
 // `captureVideo` is the real WebCodecs/Canvas egress for the video carrier. It
 // requires OffscreenCanvas / createImageBitmap, which are not present in a
 // headless Node test env (see packages/web/src/capture/pipeline.ts). We import
@@ -161,8 +161,8 @@ function boundaryOf(component: ComponentNode): Boundary {
  *
  * Walks each `css` {@link ProjectionNode} → its source {@link ComponentNode} →
  * `CSSCompiler.compile` (the existing compiler) for the `<style>` block, then
- * `resolveInitialState` + `satelliteAttrs` (the existing astro helpers) for the
- * satellite shell. The page bytes are content-addressed via
+ * `resolveInitialState` + `adaptiveAttrs` (the existing astro helpers) for the
+ * adaptive shell. The page bytes are content-addressed via
  * `AddressedDigest.of(CanonicalCbor.encode(...))` — the core kernel, never
  * JSON/cborg — and returned as a sealed `ExportNode{carrier:'astro-page'}`
  * whose `sourceRefs` are exactly the projection ids it consumed.
@@ -195,7 +195,7 @@ export function exportAstroPage(graph: DocumentGraph): ExportNode {
     styleBlocks.push(compiled.raw);
 
     const initialState = resolveInitialState(boundary);
-    const attrs = satelliteAttrs({ boundary, initialState, directive: false });
+    const attrs = adaptiveAttrs({ boundary, initialState, directive: false });
     const attrStr = Object.entries(attrs)
       .map(([k, v]) => `${k}="${escapeHtml(String(v))}"`)
       .join(' ');

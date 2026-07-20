@@ -92,7 +92,7 @@ describe('levelOf — first matching rule wins, default L1', () => {
     // L0/L1 — COSMETIC tooling only, where ambient nondeterminism is legit
     ['packages/mcp-server/src/server-info.ts', 'L1'], // version helper
     ['packages/cli/src/lib/ansi.ts', 'L1'], // formatting
-    ['scripts/report-satellite-scan.ts', 'L1'], // a report
+    ['scripts/report-adaptive-scan.ts', 'L1'], // a report
     ['scripts/anything.mjs', 'L1'],
     // default
     ['packages/core/src/evidence/diagnostics.ts', 'L1'],

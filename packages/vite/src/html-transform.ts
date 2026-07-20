@@ -64,8 +64,8 @@ export async function transformHTML(
       hysteresis: boundary.hysteresis,
     });
 
-    // Replace data-liteship="name" with data-liteship-boundary='...' and activate the satellite directive.
-    const replacement = `data-liteship-boundary='${serialized.replace(/'/g, '&#39;')}' data-liteship-directive="satellite"`;
+    // Replace data-liteship="name" with data-liteship-boundary='...' and activate the adaptive directive.
+    const replacement = `data-liteship-boundary='${serialized.replace(/'/g, '&#39;')}' data-liteship-directive="adaptive"`;
     const index = match.index ?? 0;
     result = result.slice(0, index) + replacement + result.slice(index + fullMatch.length);
   }

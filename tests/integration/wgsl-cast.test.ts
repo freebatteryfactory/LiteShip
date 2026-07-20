@@ -8,7 +8,7 @@
  *    and is escalation-gated: `wgsl` is admitted only at the `gpu` rung, so a
  *    policy that affords only the `animated` rung drops `wgsl` (and `glsl`),
  *    while an absent policy is pass-through.
- * 2. **Boundary payload → `detail.wgsl`** — `satelliteAttrs` folds authored
+ * 2. **Boundary payload → `detail.wgsl`** — `adaptiveAttrs` folds authored
  *    per-state `@wgsl` binding values onto the boundary payload (`stateWgsl`);
  *    `parseBoundary` reads them back; `applyBoundaryState` resolves
  *    `stateWgsl[currentState]` into the `liteship:uniform-update` event's
@@ -24,7 +24,7 @@
 import { describe, test, expect } from 'vitest';
 import { Boundary, Compositor, Cap, sealNode, projectionKeys, wgslIdent, PROJECTION_KEYS_SOURCE, defineBoundary } from '@liteship/core';
 import type { PolicyNode, RuntimeSite, CapTier, CapSet, CellMeta, ContentAddress } from '@liteship/core';
-import { satelliteAttrs } from '@liteship/astro';
+import { adaptiveAttrs } from '@liteship/astro';
 import { applyBoundaryState, parseBoundary } from '../../packages/astro/src/runtime/boundary.js';
 
 // ---------------------------------------------------------------------------
@@ -180,20 +180,20 @@ const authoredWgsl = {
 } as const;
 
 describe('authored @wgsl: serialize → parse → apply (live uniform binding)', () => {
-  test('satelliteAttrs folds stateWgsl onto the boundary payload', () => {
-    const attrs = satelliteAttrs({ boundary: widthBoundary, wgsl: authoredWgsl });
+  test('adaptiveAttrs folds stateWgsl onto the boundary payload', () => {
+    const attrs = adaptiveAttrs({ boundary: widthBoundary, wgsl: authoredWgsl });
     const payload = JSON.parse(attrs['data-liteship-boundary']!) as { stateWgsl?: unknown };
     expect(payload.stateWgsl).toEqual(authoredWgsl);
   });
 
   test('parseBoundary reads stateWgsl back into the RuntimeBoundary', () => {
-    const attrs = satelliteAttrs({ boundary: widthBoundary, wgsl: authoredWgsl });
+    const attrs = adaptiveAttrs({ boundary: widthBoundary, wgsl: authoredWgsl });
     const runtime = parseBoundary(attrs['data-liteship-boundary']!);
     expect(runtime?.stateWgsl).toEqual(authoredWgsl);
   });
 
   test('applyBoundaryState resolves stateWgsl[currentState] into detail.wgsl on every crossing', () => {
-    const attrs = satelliteAttrs({ boundary: widthBoundary, wgsl: authoredWgsl });
+    const attrs = adaptiveAttrs({ boundary: widthBoundary, wgsl: authoredWgsl });
     const runtime = parseBoundary(attrs['data-liteship-boundary']!)!;
     const el = document.createElement('div');
     const seen: Array<Record<string, number>> = [];
@@ -214,7 +214,7 @@ describe('authored @wgsl: serialize → parse → apply (live uniform binding)',
       tablet: { uv: [0.75, 1] },
       desktop: { uv: [1.25, 1.5] },
     } as const;
-    const attrs = satelliteAttrs({ boundary: widthBoundary, wgsl: authored });
+    const attrs = adaptiveAttrs({ boundary: widthBoundary, wgsl: authored });
     const runtime = parseBoundary(attrs['data-liteship-boundary']!)!;
     const el = document.createElement('div');
     const seen: unknown[] = [];
@@ -231,7 +231,7 @@ describe('authored @wgsl: serialize → parse → apply (live uniform binding)',
     // The other half: a live compositor `outputs.wgsl` map (state index) reaches
     // the event detail unchanged, so a runtime with no authored values still
     // gets the per-quantizer numeric channel.
-    const runtime = parseBoundary(satelliteAttrs({ boundary: widthBoundary })['data-liteship-boundary']!)!;
+    const runtime = parseBoundary(adaptiveAttrs({ boundary: widthBoundary })['data-liteship-boundary']!)!;
     const el = document.createElement('div');
     let seen: Record<string, number> | undefined;
     el.addEventListener('liteship:uniform-update', (e) => {
@@ -248,7 +248,7 @@ describe('authored @wgsl: serialize → parse → apply (live uniform binding)',
   });
 
   test('a boundary with no authored @wgsl is unaffected (no stateWgsl, empty detail.wgsl)', () => {
-    const attrs = satelliteAttrs({ boundary: widthBoundary });
+    const attrs = adaptiveAttrs({ boundary: widthBoundary });
     const payload = JSON.parse(attrs['data-liteship-boundary']!) as { stateWgsl?: unknown };
     expect(payload.stateWgsl).toBeUndefined();
     const runtime = parseBoundary(attrs['data-liteship-boundary']!)!;

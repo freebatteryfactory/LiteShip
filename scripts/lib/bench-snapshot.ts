@@ -22,7 +22,7 @@ interface Snapshot {
 
 /** README-friendly display name for each hard-gated bench pair. */
 const PAIR_DISPLAY: Record<string, string> = {
-  satellite: '`satellite` hot path',
+  adaptive: '`adaptive` hot path',
   stream: '`stream` parse + patch',
   llm: '`llm` text chunk parse',
   worker: '`worker` fallback eval',

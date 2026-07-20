@@ -16,7 +16,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { glslIdent, defineBoundary } from '@liteship/core';
 import { GLSLCompiler, WGSLCompiler } from '@liteship/compiler';
-import { satelliteAttrs } from '@liteship/astro';
+import { adaptiveAttrs } from '@liteship/astro';
 import {
   initGPUDirective,
   prependGlslDeclarations,
@@ -203,9 +203,9 @@ precision mediump float;
 out vec4 fragColor;
 void main() { fragColor = vec4(u_blur_radius, u_brightness, float(u_state), 1.0); }`;
 
-    // The boundary payload `<Satellite>` would emit, carrying the compiler's own
+    // The boundary payload `<Adaptive>` would emit, carrying the compiler's own
     // declarations + per-state values (computed, never hand-typed).
-    const attrs = satelliteAttrs({
+    const attrs = adaptiveAttrs({
       boundary,
       glsl: compiled.stateUniforms,
       glslDeclarations: compiled.declarations,
@@ -361,7 +361,7 @@ void main() { fragColor = vec4(u_blur_radius, u_brightness, float(u_state), 1.0)
     );
 
     const compiled = GLSLCompiler.compile(boundary, authoredStates);
-    const attrs = satelliteAttrs({
+    const attrs = adaptiveAttrs({
       boundary,
       glsl: compiled.stateUniforms,
       glslDeclarations: compiled.declarations,

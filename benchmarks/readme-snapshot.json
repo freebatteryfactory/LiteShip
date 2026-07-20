@@ -19,7 +19,7 @@
   },
   "hardGatedPairs": [
     {
-      "label": "satellite",
+      "label": "adaptive",
       "medianDirectiveNs": 2699,
       "medianBaselineNs": 2612,
       "medianOverheadPct": 3.33,

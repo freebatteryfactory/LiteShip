@@ -84,10 +84,10 @@ describe('create-liteship scaffold', () => {
     }
   });
 
-  it('scaffolds the working first-5-minutes idioms (boundary + satellite + @quantize)', () => {
+  it('scaffolds the working first-5-minutes idioms (boundary + adaptive + @quantize)', () => {
     const result = scaffold(join(workDir, 'idioms'));
     const index = readFileSync(join(result.projectDir, 'src/pages/index.astro'), 'utf8');
-    expect(index).toContain('satelliteAttrs({ boundary: layout');
+    expect(index).toContain('adaptiveAttrs({ boundary: layout');
     expect(index).toContain('@quantize layout {');
     const boundary = readFileSync(join(result.projectDir, 'src/boundaries/layout.boundaries.ts'), 'utf8');
     expect(boundary).toContain('defineBoundary(');

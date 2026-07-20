@@ -41,7 +41,7 @@ async function makeReceiptEnvelope(step: number): Promise<Receipt.Envelope> {
   );
 }
 
-describe('satellite directive', () => {
+describe('adaptive directive', () => {
   beforeEach(() => {
     document.body.innerHTML = '';
     vi.stubGlobal(
@@ -65,7 +65,7 @@ describe('satellite directive', () => {
     vi.stubGlobal('innerWidth', 1024);
     const el = makeEl('div', { 'data-liteship-boundary': BOUNDARY });
 
-    const mod = await import('../../../packages/astro/src/client-directives/satellite.js');
+    const mod = await import('../../../packages/astro/src/client-directives/adaptive.js');
     mod.default(noop, {}, el);
 
     expect(el.getAttribute('data-liteship-state')).toBe('tablet');
@@ -75,7 +75,7 @@ describe('satellite directive', () => {
     vi.stubGlobal('innerWidth', 400);
     const el = makeEl('div', { 'data-liteship-boundary': BOUNDARY });
 
-    const mod = await import('../../../packages/astro/src/client-directives/satellite.js');
+    const mod = await import('../../../packages/astro/src/client-directives/adaptive.js');
     mod.default(noop, {}, el);
     expect(el.getAttribute('data-liteship-state')).toBe('mobile');
 
@@ -84,15 +84,15 @@ describe('satellite directive', () => {
     expect(el.getAttribute('data-liteship-state')).toBe('desktop');
   });
 
-  test('skips duplicate satellite state emissions and exits early for invalid boundaries', async () => {
+  test('skips duplicate adaptive state emissions and exits early for invalid boundaries', async () => {
     vi.stubGlobal('innerWidth', 1024);
     const valid = makeEl('div', { 'data-liteship-boundary': BOUNDARY });
     let eventCount = 0;
-    valid.addEventListener('liteship:satellite-state', () => {
+    valid.addEventListener('liteship:adaptive-state', () => {
       eventCount += 1;
     });
 
-    const mod = await import('../../../packages/astro/src/client-directives/satellite.js');
+    const mod = await import('../../../packages/astro/src/client-directives/adaptive.js');
     mod.default(noop, {}, valid);
     expect(eventCount).toBe(1);
 
@@ -105,11 +105,11 @@ describe('satellite directive', () => {
     expect(load).not.toHaveBeenCalled();
   });
 
-  test('satellite reinit falls back to an empty previous state when no data-liteship-state attribute is present', async () => {
+  test('adaptive reinit falls back to an empty previous state when no data-liteship-state attribute is present', async () => {
     vi.stubGlobal('innerWidth', 1024);
     const el = makeEl('div', { 'data-liteship-boundary': BOUNDARY });
 
-    const mod = await import('../../../packages/astro/src/client-directives/satellite.js');
+    const mod = await import('../../../packages/astro/src/client-directives/adaptive.js');
     mod.default(noop, {}, el);
     expect(el.getAttribute('data-liteship-state')).toBe('tablet');
 

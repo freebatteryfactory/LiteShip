@@ -16,7 +16,7 @@ falls back to conservative defaults when APIs are unavailable.
 
 You usually never call this yourself: in an Astro project the `@liteship/astro`
 boundary runs detection after DOMContentLoaded and publishes the result as
-`window.__LITESHIP_DETECT__`, so satellites and the directive runtime read it
+`window.__LITESHIP_DETECT__`, so adaptives and the directive runtime read it
 for free.
 
 Advanced — direct invocation (all probes are synchronous):

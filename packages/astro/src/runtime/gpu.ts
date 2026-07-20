@@ -34,8 +34,8 @@ void main() {
 const FULLSCREEN_QUAD = new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]);
 
 /**
- * Read the compiler's emitted shader preamble off the satellite's
- * `data-liteship-boundary` payload. `<Satellite>`/`satelliteAttrs` ride
+ * Read the compiler's emitted shader preamble off the adaptive's
+ * `data-liteship-boundary` payload. `<Adaptive>`/`adaptiveAttrs` ride
  * `glslDeclarations`/`wgslDeclarations` (joined from the build manifest by
  * content address) so the runtime never hand-types the uniform vocabulary.
  * Returns `''` when absent or the payload doesn't parse — the directive then
@@ -56,7 +56,7 @@ function readShaderDeclarations(boundaryJson: string | null, key: 'glslDeclarati
       code: 'shader-declarations-parse-failed',
       message:
         `Failed to parse boundary JSON while reading ${key} (${String(err)}). ` +
-        `Keeping the built-in fallback shader. Fix: re-serialize with satelliteAttrs({ boundary }) from @liteship/astro.`,
+        `Keeping the built-in fallback shader. Fix: re-serialize with adaptiveAttrs({ boundary }) from @liteship/astro.`,
     });
     return '';
   }
@@ -139,7 +139,7 @@ function elementGpuLabel(element: HTMLElement): string {
   return (
     element.id ||
     element.getAttribute('data-liteship-id') ||
-    element.getAttribute('data-liteship-satellite') ||
+    element.getAttribute('data-liteship-adaptive') ||
     'gpu-element'
   );
 }
@@ -199,7 +199,7 @@ function createProgram(
 
 /**
  * Entry point used by the `client:gpu` directive to wire a
- * satellite element to a WebGL shader.
+ * adaptive element to a WebGL shader.
  *
  * Reads `data-liteship-shader-type` / `data-liteship-shader-src` off the
  * element, fetches and compiles the program, then subscribes to
@@ -208,7 +208,7 @@ function createProgram(
  *
  * @param load - Dynamic-import factory the directive passes in (kept
  *   async so the expensive GPU module is code-split).
- * @param el - Satellite element carrying the shader attributes.
+ * @param el - Adaptive element carrying the shader attributes.
  * @param opts - Directive value. `{ force: true }` (or a
  *   `data-liteship-gpu-force` attribute) boots the shader even when the resolved
  *   perf-tier is below the GPU tier — the escape hatch for headless/CI
@@ -329,7 +329,7 @@ export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement, 
     el.addEventListener('liteship:reinit', onWgslReinit);
 
     void (async () => {
-      // Pass `el` (the satellite) so the runtime subscribes to its
+      // Pass `el` (the adaptive) so the runtime subscribes to its
       // `liteship:uniform-update` and binds `detail.wgsl` into the uniform buffer
       // live on every crossing.
       const dispose = await initWGSLRuntime(canvas, shaderSrc ?? '', el, shaderDeclarations, shaderIntegrity);
@@ -601,7 +601,7 @@ void main() {
             code: 'uniform-update-parse-failed',
             message:
               `Failed to parse boundary JSON during uniform update (${boundaryJson.slice(0, 120)}). ` +
-              `Fix: re-serialize the boundary with satelliteAttrs({ boundary }) from @liteship/astro.`,
+              `Fix: re-serialize the boundary with adaptiveAttrs({ boundary }) from @liteship/astro.`,
           });
         }
       }

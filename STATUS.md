@@ -103,7 +103,7 @@ Current browser-security posture:
 | `pnpm run report:runtime-seams` | green, writes local `reports/runtime-seams.json` + `.md`  | any          |
 | `pnpm run feedback:verify`  | green, fail-closed provenance and contradiction check   | any                |
 | `pnpm run audit`            | green, advisory-first audit backed by verified artifacts | any               |
-| `pnpm run report:satellite-scan` | green, writes local `reports/satellite-scan.json` + `.md` | any         |
+| `pnpm run report:adaptive-scan` | green, writes local `reports/adaptive-scan.json` + `.md` | any         |
 | `pnpm run runtime:gate`     | green, final fail-closed telemetry enforcement            | any                |
 | `pnpm run gauntlet:full`    | canonical full sequential gauntlet                      | any                |
 | `pnpm run capsule:compile`  | green, emits reports/capsule-manifest.json + tests/generated/* harness files | any |
@@ -162,7 +162,7 @@ eliminated. When the cache is honored, the `[bench-gate]` log line records
 records the drift that triggered a fresh run.
 
 `pnpm run feedback:verify` is the anti-lie step. It independently re-derives
-coverage, bench, startup reality, runtime-seams, satellite-scan, and audit
+coverage, bench, startup reality, runtime-seams, adaptive-scan, and audit
 truths, then hard-fails on stale fingerprints, impossible ordering, or
 contradictory summaries. A report file existing is no longer enough to count
 as truth.
@@ -174,7 +174,7 @@ by itself. Startup truth now comes from the verified synthesis in
 `reports/runtime-seams.json`, which combines replicated shared-pair parity from
 `bench:gate` with browser reality context from `bench:reality`.
 
-`pnpm run report:satellite-scan` is the operator north-star report. It fuses
+`pnpm run report:adaptive-scan` is the operator north-star report. It fuses
 runtime-seams, audit, startup-reality, and coverage steering into one ranked
 strike board. It is self-checking and is now validated by `feedback:verify` as
 part of the fail-closed artifact chain.
@@ -192,7 +192,7 @@ Startup steering now follows a generic `paired-truth` model:
 
 - `llm-runtime-steady` remains the main warm steady-state watch lane; it is diagnostic-only and should keep trending away from threshold flirtation.
 - `worker-envelope` remains a transport watch lane; it is healthier than the broader worker startup seam, but still worth watching for avoidable wrapper tax.
-- satellite hard-gate margin is a watch item when the pass is close enough to threshold that future runtime churn could erase headroom.
+- adaptive hard-gate margin is a watch item when the pass is close enough to threshold that future runtime churn could erase headroom.
 - `worker-runtime-startup` remains the loudest honest residual seam; it is diagnostic-only because shared startup parity is the gateable truth.
 - raw bench formatter tone is an operator-experience watch item; the output should stay honest without implying release danger where the verified gate posture is green.
 - partial pasted transcripts are not authoritative; fresh shell output plus verified artifacts are the source of truth.
@@ -244,7 +244,7 @@ Captured 2026-05-10 on Linux x64, 8 vCPU (Node 22). Phases 1–11 are measured w
 | 25 | coverage:merge | `tsx scripts/merge-coverage.ts` | ~40s + browser pass | "coverage:merge wall time is dominated by coverage:node (~40s) plus the coverage:browser pass" |
 | 26 | report:runtime-seams | `pnpm run report:runtime-seams` | see artifact | derived from coverage + bench |
 | 27 | audit | `pnpm run audit` | see artifact | structural + integrity + surface |
-| 28 | report:satellite-scan | `pnpm run report:satellite-scan` | see artifact | derived synthesis |
+| 28 | report:adaptive-scan | `pnpm run report:adaptive-scan` | see artifact | derived synthesis |
 | 29 | feedback:verify | `pnpm run feedback:verify` | see artifact | provenance / contradiction check |
 | 30 | runtime:gate | `pnpm run runtime:gate` | see artifact | final fail-closed enforcement |
 | 31 | capsule:verify | `pnpm run capsule:verify` | see artifact | runs all generated tests + benches |
@@ -278,7 +278,7 @@ logic.
 
 | Classification | Package / Surface | Current status |
 | -------------- | ----------------- | -------------- |
-| `host-wired` | `@liteship/astro` shared runtime adapters | `satellite`, `stream`, `llm`, `worker`, and `wasm` all route through `packages/astro/src/runtime/*` |
+| `host-wired` | `@liteship/astro` shared runtime adapters | `adaptive`, `stream`, `llm`, `worker`, and `wasm` all route through `packages/astro/src/runtime/*` |
 | `host-wired` | `@liteship/web` DOM runtime | Astro stream + LLM paths use shared `SSE`, `Resumption`, `Morph`, `SlotRegistry`, and `LLMAdapter` |
 | `host-wired` | `@liteship/worker` | Astro worker directive now uses `WorkerHost` rather than inline Blob worker protocol |
 | `host-wired` | `@liteship/core` runtime coordination + WASM / GenUI surfaces | Compositor and worker host paths now expose shared `RuntimeCoordinator` state; Astro wasm uses `WASMDispatch`; Astro llm uses `TokenBuffer`, `UIQuality`, `GenFrame`, `Receipt`, and `DAG`-ordered replay plumbing |
@@ -304,7 +304,7 @@ It summarizes the real next work instead of relying on memory or stale notes.
 The seams report is now a derived report backed by provenance checks against
 coverage + bench artifacts, not a standalone truth source.
 
-Use `pnpm run report:satellite-scan` when the question is bigger than one seam.
+Use `pnpm run report:adaptive-scan` when the question is bigger than one seam.
 The scan now ranks strikes by startup impact, browser-vs-proxy divergence,
 branch-hotspot overlap, and feedback confidence instead of just raw overhead.
 
@@ -312,8 +312,8 @@ Current steering artifacts:
 
 - local `reports/runtime-seams.json`
 - local `reports/runtime-seams.md`
-- local `reports/satellite-scan.json`
-- local `reports/satellite-scan.md`
+- local `reports/adaptive-scan.json`
+- local `reports/adaptive-scan.md`
 - `coverage/coverage-meta.json`
 - `benchmarks/startup-reality.json`
 
@@ -327,7 +327,7 @@ hardcoded ledger in this file. After a clean sequential gauntlet:
 
 - read `reports/codebase-audit.json` for the current advisory counts and aggregate score
 - read `reports/runtime-seams.json` for the current paired-truth statuses and startup seam story
-- read `reports/satellite-scan.json` for the current runtime warning summary and ranked strike board
+- read `reports/adaptive-scan.json` for the current runtime warning summary and ranked strike board
 - `reports/` is git-ignored local telemetry, so a fresh gauntlet should not
   leave tracked report churn behind
 
@@ -365,13 +365,13 @@ Current LLM steady-state steering from fresh local runtime seams:
 Current advisory audit headline:
 
 - read fresh local `reports/codebase-audit.json` for the current errors / warnings / info / suppressed counts
-- runtime seams, audit, satellite scan, feedback verification, and `runtime:gate` should agree on the current source fingerprint and gauntlet run id
+- runtime seams, audit, adaptive scan, feedback verification, and `runtime:gate` should agree on the current source fingerprint and gauntlet run id
 
 The advisory audit is also now a derived report, not an oracle. If runtime-seams
 provenance fails, the audit is expected to accuse the telemetry chain first and
 mark the supporting artifact as failed instead of quietly treating it as present.
 
-Current satellite scan blind spots:
+Current adaptive scan blind spots:
 
 - worker browser startup tail remains a watch item, but the current fresh p99
   should be read from local `benchmarks/startup-reality.json` rather than
@@ -390,7 +390,7 @@ Current satellite scan blind spots:
 - audit warnings cleared; remaining blind spots are telemetry watch notes, not
   active audit findings
 - the exact ranked hotspot list should be read from fresh local
-  `reports/satellite-scan.md` and `reports/satellite-scan.json` outputs
+  `reports/adaptive-scan.md` and `reports/adaptive-scan.json` outputs
 
 Worker startup early-warning trigger:
 
@@ -398,7 +398,7 @@ Worker startup early-warning trigger:
 - if `worker-runtime-startup-seam.absoluteMeanNs > 10000` and
   `messageReceiptSharePct >= 60` for two consecutive verified runs, open a
   separate transport architecture evaluation
-- use fresh `reports/runtime-seams.*` and `reports/satellite-scan.*` outputs
+- use fresh `reports/runtime-seams.*` and `reports/adaptive-scan.*` outputs
   for the current evidence trail instead of hardcoding a verdict here
 
 Explicit runtime coverage exclusions now live in `vitest.shared.ts` and are
@@ -425,7 +425,7 @@ Merged thresholds currently enforced:
   duplicate logic.
 - The `stream` directive benchmark reuses `@liteship/web` `SSE.parseMessage()`
   instead of a local parser copy.
-- Hard-gated pairs: `satellite`, `stream`, `llm`, `worker`,
+- Hard-gated pairs: `adaptive`, `stream`, `llm`, `worker`,
   `llm-startup-shared`, `llm-promoted-startup-shared`,
   `worker-runtime-startup-shared`
 - Diagnostic-only pairs: `worker-envelope`, `llm-runtime-steady`,
@@ -599,7 +599,7 @@ Firefox, and WebKit.
 
 Remaining browser-level gaps still exist in:
 
-- deeper `satellite.ts` timing / attribute-mutation edges
+- deeper `adaptive.ts` timing / attribute-mutation edges
 - deeper morph / semantic remap edge cases beyond the current reorder / swap / retarget coverage
 
 The host seams that used to be directive-local are now shared-runtime seams,

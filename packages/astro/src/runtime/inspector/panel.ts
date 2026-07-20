@@ -81,7 +81,7 @@ function renderBoundaryPanel(element: HTMLElement, container: HTMLElement): Pane
   head.className = 'boundary-head';
   const title = document.createElement('div');
   title.className = 'boundary-title';
-  title.textContent = runtimeBoundary?.name ?? element.getAttribute('data-liteship-satellite') ?? 'boundary';
+  title.textContent = runtimeBoundary?.name ?? element.getAttribute('data-liteship-adaptive') ?? 'boundary';
   const badges = document.createElement('div');
   badges.className = 'badges';
 
@@ -90,7 +90,7 @@ function renderBoundaryPanel(element: HTMLElement, container: HTMLElement): Pane
     inert.className = 'badge badge-inert';
     inert.textContent = 'INERT';
     inert.title =
-      'This element has data-liteship-boundary but no data-liteship-directive marker — the runtime will not evaluate it. Fix: spread satelliteAttrs({ boundary }) or add data-liteship-directive="satellite".';
+      'This element has data-liteship-boundary but no data-liteship-directive marker — the runtime will not evaluate it. Fix: spread adaptiveAttrs({ boundary }) or add data-liteship-directive="adaptive".';
     badges.appendChild(inert);
   }
 

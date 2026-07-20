@@ -26,10 +26,10 @@ describe('gauntlet ordering', () => {
     expect(packageJson.scripts['flex:verify']).toBe('pnpm exec tsx scripts/flex-verify.ts');
   });
 
-  test('flake, reality, and satellite scan lanes are available as root scripts', () => {
+  test('flake, reality, and adaptive scan lanes are available as root scripts', () => {
     expect(packageJson.scripts['test:flake']).toBe('pnpm exec tsx scripts/test-flake.ts');
     expect(packageJson.scripts['bench:reality']).toBe('pnpm run build && tsx scripts/bench-reality.ts');
-    expect(packageJson.scripts['report:satellite-scan']).toBe('pnpm exec tsx scripts/report-satellite-scan.ts');
+    expect(packageJson.scripts['report:adaptive-scan']).toBe('pnpm exec tsx scripts/report-adaptive-scan.ts');
   });
 
   // ── The raccoon-rule backstop must actually RUN in CI over the real repo ──────

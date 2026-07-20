@@ -89,7 +89,7 @@ export async function run(argv: readonly string[], io: RunIo = defaultIo): Promi
         `  pnpm install   (or npm install)\n` +
         `  pnpm dev       (or npm run dev)\n\n` +
         `Then edit src/pages/index.astro — the @quantize block and the\n` +
-        `satelliteAttrs() element share one boundary (src/boundaries/).\n`,
+        `adaptiveAttrs() element share one boundary (src/boundaries/).\n`,
     );
     return 0;
   } catch (error) {

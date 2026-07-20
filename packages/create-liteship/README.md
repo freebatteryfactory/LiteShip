@@ -27,10 +27,10 @@ my-liteship-app/
     ├── boundaries/layout.boundaries.ts # ONE Boundary: viewport.width → mobile/tablet/desktop
     ├── tokens/base.tokens.ts           # design tokens (compiled to --liteship-* custom properties)
     ├── layouts/Base.astro              # @token blocks resolve against the token defs
-    └── pages/index.astro               # ONE Satellite element + ONE @quantize block
+    └── pages/index.astro               # ONE Adaptive element + ONE @quantize block
 ```
 
-The page's `satelliteAttrs({ boundary: layout })` element and its `@quantize layout { ... }` style block share the **same** boundary export: the `@quantize` block compiles to static `@container` queries at build time, and the satellite runtime drives `data-liteship-state` updates on the client. Resize across 768px / 1280px and watch both halves agree.
+The page's `adaptiveAttrs({ boundary: layout })` element and its `@quantize layout { ... }` style block share the **same** boundary export: the `@quantize` block compiles to static `@container` queries at build time, and the adaptive runtime drives `data-liteship-state` updates on the client. Resize across 768px / 1280px and watch both halves agree.
 
 ## Next steps (printed after scaffolding)
 

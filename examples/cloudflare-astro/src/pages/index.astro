@@ -1,6 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
-import { satelliteAttrs } from '@liteship/astro';
+import { adaptiveAttrs } from '@liteship/astro';
 import { ResponsiveMedia } from '@liteship/core';
 import { viewport } from '../boundaries';
 import '../styles.css';
@@ -31,7 +31,7 @@ const media = liteship?.responsiveMedia(hero);
 ---
 <Base title="LiteShip Cloudflare Workers" boundaryCssHref={boundaryCssHref} boundaryCss={boundaryCss}>
   <Fragment slot="head" set:html={media?.preload ?? ''} />
-  <main {...satelliteAttrs({ boundary: viewport })}>
+  <main {...adaptiveAttrs({ boundary: viewport })}>
     <h1>LiteShip on Cloudflare Workers</h1>
     <p>Edge tier: {liteship?.tiers.tier ?? 'detecting…'}</p>
     <p>Boundary id: {viewport.id}</p>

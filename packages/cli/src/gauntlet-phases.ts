@@ -87,7 +87,7 @@ export const gauntletPhases: readonly GauntletPhase[] = [
   // ── Phase 6: Reports + gates ───────────────────────────────────────
   { label: 'report:runtime-seams', command: 'pnpm run report:runtime-seams' },
   { label: 'audit', command: 'pnpm run audit' },
-  { label: 'report:satellite-scan', command: 'pnpm run report:satellite-scan' },
+  { label: 'report:adaptive-scan', command: 'pnpm run report:adaptive-scan' },
   { label: 'feedback:verify', command: 'pnpm run feedback:verify' },
   { label: 'runtime:gate', command: 'pnpm run runtime:gate' },
   // The raccoon-rule backstop run OVER THE REAL REPO (the agent-safety meta-gauntlet):
@@ -148,7 +148,7 @@ export const CI_PARALLEL_COVERAGE_LABELS: readonly string[] = [
 export const CI_PARALLEL_FINAL_LABELS: readonly string[] = [
   'report:runtime-seams',
   'audit',
-  'report:satellite-scan',
+  'report:adaptive-scan',
   'feedback:verify',
   'runtime:gate',
   'standards:gate',

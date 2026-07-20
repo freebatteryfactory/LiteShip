@@ -53,7 +53,7 @@ describe('audio.amplitude boundary carve-path', () => {
       const value = readSignalValue(rb!.input);
       expect(value).not.toBeUndefined();
       const state = evaluateBoundary(rb!, value!);
-      applyBoundaryState(el, rb!, { discrete: { [rb!.name]: state } }, 'liteship:satellite-state');
+      applyBoundaryState(el, rb!, { discrete: { [rb!.name]: state } }, 'liteship:adaptive-state');
       return state;
     };
 

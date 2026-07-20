@@ -2,10 +2,10 @@
 /**
  * Minimal page to validate @liteship/astro integration builds without errors.
  * The detect script should be injected into <head> by the integration,
- * and the Satellite shell should serialize its boundary + directive
+ * and the Adaptive shell should serialize its boundary + directive
  * marker for the injected boot scanner.
  */
-import Satellite from '@liteship/astro/Satellite';
+import Adaptive from '@liteship/astro/Adaptive';
 import { defineBoundary } from '@liteship/core';
 
 const layout = defineBoundary({
@@ -25,9 +25,9 @@ const layout = defineBoundary({
   </head>
   <body>
     <h1>liteship integration test</h1>
-    <Satellite boundary={layout}>
-      <p>Satellite boundary test element</p>
-    </Satellite>
+    <Adaptive boundary={layout}>
+      <p>Adaptive boundary test element</p>
+    </Adaptive>
     <div data-liteship-boundary='{"id":"test","input":"viewport.width","thresholds":[0,768,1280],"states":["compact","medium","full"]}'>
       <p>Plain boundary test element</p>
     </div>

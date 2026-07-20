@@ -68,7 +68,7 @@ export function wgslIdent(name: string): string {
   return snakeFold(name);
 }
 
-/** Derive the {@link ProjectionKeys} for a quantizer/satellite name. */
+/** Derive the {@link ProjectionKeys} for a quantizer/adaptive name. */
 export function projectionKeys(name: string): ProjectionKeys {
   return {
     cssKey: `--liteship-${name}`,

@@ -10,7 +10,7 @@
  * evidence record. It RE-RUNS NOTHING — running a gate here would violate LS-001 /
  * the recompute Law (the report cites evidence, it does not regenerate it). A
  * required artifact that is MISSING is an evidence gap: the report throws rather than
- * emit a green it cannot substantiate (the report-satellite-scan discipline —
+ * emit a green it cannot substantiate (the report-adaptive-scan discipline —
  * index what exists, never guess).
  *
  * Output (committed): `reports/semantic-convergence.json` (machine) +

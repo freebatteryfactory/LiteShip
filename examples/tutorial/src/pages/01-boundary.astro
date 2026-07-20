@@ -8,19 +8,19 @@
  *
  *   - Media queries are CSS-only and can't be shared with JS or the server.
  *   - Boundaries are data. They can be evaluated on the server (edge),
- *     the client (satellite directive), or in tests (pure function).
+ *     the client (adaptive directive), or in tests (pure function).
  *   - Boundaries are content-addressed: change the definition and the
  *     hash changes, automatically invalidating caches.
  *
  * In this tutorial you will:
  *   1. Import a boundary definition (viewport.boundaries.ts)
  *   2. Label the element with data-liteship="viewport" for the Vite macro
- *   3. Spread satelliteAttrs() to wire boundary JSON + the satellite directive
+ *   3. Spread adaptiveAttrs() to wire boundary JSON + the adaptive directive
  *   4. Write CSS that targets data-liteship-state="compact|wide"
  */
 
 import Base from '../layouts/Base.astro';
-import { satelliteAttrs } from '@liteship/astro';
+import { adaptiveAttrs } from '@liteship/astro';
 import { viewport } from '../boundaries/viewport.boundaries.js';
 ---
 
@@ -85,12 +85,12 @@ export const viewport = defineBoundary({'{'}&br;
   <!-- ============================================================
        STEP 3: Wiring It Up
 
-       Spread {@link satelliteAttrs} from @liteship/astro — it serializes the
-       boundary, sets data-liteship-directive="satellite", and optional
+       Spread {@link adaptiveAttrs} from @liteship/astro — it serializes the
+       boundary, sets data-liteship-directive="adaptive", and optional
        data-liteship-state for SSR. Pair it with data-liteship="viewport" so the
        Vite plugin resolves the named export at build time.
 
-       Under the hood, satelliteAttrs emits the same attributes you could
+       Under the hood, adaptiveAttrs emits the same attributes you could
        hand-roll: data-liteship-boundary='{...}', data-liteship-directive, and
        data-liteship-state. Manual wiring is fine for debugging; prefer the
        helper in app code.
@@ -99,18 +99,18 @@ export const viewport = defineBoundary({'{'}&br;
   <h2>Wiring It Up</h2>
 
   <p>
-    Import the boundary and spread <code>satelliteAttrs</code> onto your
+    Import the boundary and spread <code>adaptiveAttrs</code> onto your
     container — that alone serializes the boundary onto the element. (The
     <code>data-liteship="viewport"</code> macro is the <em>no-import</em>
     alternative that resolves a named boundary at build time; you don't
-    need both, and the scaffold uses <code>satelliteAttrs</code> only.)
+    need both, and the scaffold uses <code>adaptiveAttrs</code> only.)
   </p>
 
-  <pre><code>import {'{'} satelliteAttrs {'}'} from '@liteship/astro';
+  <pre><code>import {'{'} adaptiveAttrs {'}'} from '@liteship/astro';
 import {'{'} viewport {'}'} from '../boundaries/viewport.boundaries.js';
 
 &lt;div
-  {'{'}...satelliteAttrs({'{'} boundary: viewport, initialState: 'compact' {'}'}){'}'}
+  {'{'}...adaptiveAttrs({'{'} boundary: viewport, initialState: 'compact' {'}'}){'}'}
 &gt;
   ...content that adapts...
 &lt;/div&gt;</code></pre>
@@ -125,7 +125,7 @@ import {'{'} viewport {'}'} from '../boundaries/viewport.boundaries.js';
          [data-liteship-state="compact"] .demo-card  --> stacked layout
          [data-liteship-state="wide"] .demo-card     --> side-by-side layout
 
-       No media queries. The satellite directive manages the state
+       No media queries. The adaptive directive manages the state
        attribute; CSS just reacts to it.
   -->
 
@@ -137,12 +137,12 @@ import {'{'} viewport {'}'} from '../boundaries/viewport.boundaries.js';
   </p>
 
   <div
-    {...satelliteAttrs({ boundary: viewport, initialState: 'compact', class: 'boundary-demo' })}
+    {...adaptiveAttrs({ boundary: viewport, initialState: 'compact', class: 'boundary-demo' })}
   >
     <!-- --------------------------------------------------------
          These cards are the content that adapts. In compact state
          they stack vertically. In wide state they sit side by side.
-         The transition is CSS-only -- the satellite directive just
+         The transition is CSS-only -- the adaptive directive just
          flips the data-liteship-state attribute.
     -------------------------------------------------------- -->
 
@@ -202,7 +202,7 @@ import {'{'} viewport {'}'} from '../boundaries/viewport.boundaries.js';
     <li><code>defineBoundary()</code> creates a content-addressed boundary definition.</li>
     <li><code>data-liteship-boundary</code> serializes the boundary for the client.</li>
     <li><code>data-liteship-state</code> holds the current evaluated state.</li>
-    <li><code>client:satellite</code> hydrates the boundary with live signal evaluation.</li>
+    <li><code>client:adaptive</code> hydrates the boundary with live signal evaluation.</li>
     <li>CSS attribute selectors target each state -- no JavaScript layout logic.</li>
   </ul>
 
@@ -218,7 +218,7 @@ import {'{'} viewport {'}'} from '../boundaries/viewport.boundaries.js';
 
      The key pattern: use [data-liteship-state="..."] attribute selectors
      to apply different visual treatments per boundary state. The
-     satellite directive keeps data-liteship-state in sync with the
+     adaptive directive keeps data-liteship-state in sync with the
      actual viewport width.
 ================================================================ -->
 

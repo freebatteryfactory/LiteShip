@@ -106,7 +106,7 @@ in CI with `CI=1` (already standard) or `LITESHIP_QUIET_INSTALL=1`.
 - benchmarks + bench gate + rolling-median trend gate + bench reality
 - per-package publish smoke
 - node + browser coverage + cross-runtime merge with statementMap dedup
-- runtime-seams report, codebase audit, satellite scan
+- runtime-seams report, codebase audit, adaptive scan
 - feedback integrity verification (artifact fingerprint chain)
 - runtime gate, plumb gate (every published package classified runtime/tooling/deferred in `scripts/plumb-registry.ts` + no new unwired capsule — a built-not-plumbed primitive fails here), capsule verify
 - `flex:verify` 10/10 acceptance across 7 rating dimensions

@@ -3,8 +3,8 @@
  * projection hosted as islands and directives.
  *
  * Provides the Astro `Integration` that registers `@liteship/vite`,
- * injects client tier detection, **rigs** the `client:satellite` directive,
- * and exposes `Satellite` for shells with server-resolved bearings.
+ * injects client tier detection, **rigs** the `client:adaptive` directive,
+ * and exposes `Adaptive` for shells with server-resolved bearings.
  *
  * @example
  * ```ts
@@ -25,8 +25,8 @@ export { integration } from './integration.js';
 export { integration as liteship } from './integration.js';
 export type { ServerIslandContext, QuantizeProps, ResolvedInitialState } from './quantize.js';
 export { resolveInitialState, resolveInitialStateWithReceipt } from './quantize.js';
-export { satelliteAttrs, resolveInitialStateFallback } from './Satellite.js';
-export type { SatelliteProps } from './Satellite.js';
+export { adaptiveAttrs, resolveInitialStateFallback } from './Adaptive.js';
+export type { AdaptiveProps } from './Adaptive.js';
 export { liteshipMiddleware } from './middleware.js';
 export type { LiteshipLocals, LiteshipMiddlewareConfig } from './middleware.js';
 // Responsive-media host projection (#140): the production wiring of the edge

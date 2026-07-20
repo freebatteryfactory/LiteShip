@@ -36,7 +36,7 @@ The important exports are:
 
 - `integration`
 - `resolveInitialState`
-- `satelliteAttrs`
+- `adaptiveAttrs`
 - `resolveInitialStateFallback`
 - `liteshipMiddleware`
 - `liteshipFetchLayer`
@@ -114,9 +114,9 @@ This is one of the strongest reasons to pair LiteShip with Astro. Initial state 
 
 ---
 
-## Satellite attributes
+## Adaptive attributes
 
-`satelliteAttrs()` expresses the shell contract that client directives and runtime code understand.
+`adaptiveAttrs()` expresses the shell contract that client directives and runtime code understand.
 
 This matters because LiteShip runtime behavior is DOM-and-attribute based. The shell is not a virtual tree abstraction. It is real HTML with semantic `data-liteship-*` meaning attached.
 
@@ -132,7 +132,7 @@ That keeps Astro in its strongest mode:
 
 The Astro client-directive layer currently includes important runtime surfaces:
 
-- `satellite`
+- `adaptive`
 - `stream`
 - `llm`
 - `gpu`
@@ -141,28 +141,28 @@ The Astro client-directive layer currently includes important runtime surfaces:
 
 These are not interchangeable. They represent different escalation levels.
 
-### `satellite`
+### `adaptive`
 
 Use when a surface needs adaptive state tracking tied to authored boundaries.
 
-The shape of an authored Astro page using LiteShip is small. Boundaries are imported as plain TypeScript values; the `Satellite` shell wraps the markup the boundary should drive and serializes a `data-liteship-directive` marker that the integration's injected boot scanner activates on the client. Static HTML and compiled CSS carry the rest.
+The shape of an authored Astro page using LiteShip is small. Boundaries are imported as plain TypeScript values; the `Adaptive` shell wraps the markup the boundary should drive and serializes a `data-liteship-directive` marker that the integration's injected boot scanner activates on the client. Static HTML and compiled CSS carry the rest.
 
 ```astro
 ---
 // src/pages/index.astro
-import Satellite from '@liteship/astro/Satellite';
+import Adaptive from '@liteship/astro/Adaptive';
 import { heroLayout } from '../boundaries.js';
 ---
 
-<Satellite boundary={heroLayout}>
+<Adaptive boundary={heroLayout}>
   <section class="hero">
     <h1>The hull is in the water.</h1>
     <p>Drag the window edge; the layout re-trims at the named bearings.</p>
   </section>
-</Satellite>
+</Adaptive>
 ```
 
-How activation works: Astro fires custom `client:*` directives only on framework-component islands, never on plain elements or `.astro` components — liteship's island primitive is a plain annotated div. So the integration injects a per-page boot scanner that activates `data-liteship-directive="<name>"` markers (and, for back-compat, literal `client:satellite`-style attributes on plain elements), loading the same code-split directive chunk Astro's island path would. On framework components, the registered `client:*` directives still apply natively.
+How activation works: Astro fires custom `client:*` directives only on framework-component islands, never on plain elements or `.astro` components — liteship's island primitive is a plain annotated div. So the integration injects a per-page boot scanner that activates `data-liteship-directive="<name>"` markers (and, for back-compat, literal `client:adaptive`-style attributes on plain elements), loading the same code-split directive chunk Astro's island path would. On framework components, the registered `client:*` directives still apply natively.
 
 The corresponding `boundaries.js` is plain TypeScript:
 
@@ -200,7 +200,7 @@ And the compiled CSS the Vite plugin emits for `.hero` (from a paired `defineSty
 }
 ```
 
-The directive's only runtime job is to evaluate `heroLayout` against the live viewport and write the resolved state to the satellite's `data-liteship-state` attribute; the CSS attribute selectors do the visible work without round-tripping through JavaScript.
+The directive's only runtime job is to evaluate `heroLayout` against the live viewport and write the resolved state to the adaptive's `data-liteship-state` attribute; the CSS attribute selectors do the visible work without round-tripping through JavaScript.
 
 For request-time SSR you can resolve an initial state on the server so first paint already reflects the right bearing:
 
@@ -261,11 +261,11 @@ the discrete-state evaluator; the continuous signal driver remains a leaf write.
 
 ### `wasm`
 
-Use when compute cost meaningfully exceeds what the normal runtime should carry. The `liteship-compute` kernel ships inside `@liteship/core` (0.2.1+) and `@liteship/vite` resolves it from `node_modules`, so enabling `wasm` needs no hand-built artifact (monorepo dev: `pnpm run build:wasm`). `liteship({ wasm: { enabled: true } })` auto-loads the kernel at the document level (0.2.2+) and fires `liteship:wasm-ready` — no per-element `client:wasm` directive required (that directive still works for element-scoped loads). Worth noting: every directive past `satellite` is additive. The surface should still be coherent if `wasm` doesn't load and the worker falls back to TypeScript kernels (`packages/core/src/wasm-fallback.ts`). The escalation path is a budget, not a dependency.
+Use when compute cost meaningfully exceeds what the normal runtime should carry. The `liteship-compute` kernel ships inside `@liteship/core` (0.2.1+) and `@liteship/vite` resolves it from `node_modules`, so enabling `wasm` needs no hand-built artifact (monorepo dev: `pnpm run build:wasm`). `liteship({ wasm: { enabled: true } })` auto-loads the kernel at the document level (0.2.2+) and fires `liteship:wasm-ready` — no per-element `client:wasm` directive required (that directive still works for element-scoped loads). Worth noting: every directive past `adaptive` is additive. The surface should still be coherent if `wasm` doesn't load and the worker falls back to TypeScript kernels (`packages/core/src/wasm-fallback.ts`). The escalation path is a budget, not a dependency.
 
 ### `graph`
 
-Use when the adaptive surface is authored as a serialized `DocumentGraph` rather than inline `@boundary` annotations — a host hands the runtime a sealed graph and it lowers onto the **same** live cast pipeline the satellite path uses. `loadGraphRuntime(serialized, resolve)` re-seals the graph (never trusting a supplied id), projects each entity/component into a `RuntimeBoundary` (the one evaluator + CSS/ARIA/GPU casts), and wires the signal observers. The `client:graph` directive (or a `data-liteship-directive="graph"` marker) on the element boots the loader, and its `data-liteship-graph` attribute carries the payload — the marker is what activates it, the same as every other directive. A mutation rides a `GraphPatch` through `castGraphDelta` — only the changed cells re-lower, so untouched observers survive (no full re-seed flash). The loader is the seam an authoring producer feeds; the producer that serializes/authors the graph is a downstream concern, never named here. Two companions ride the same runtime: `bridgeSceneToGraph(scene, handle, …)` drives the graph from a signal-indexed `@liteship/scene` (a discrete state crossing emits a `GraphPatch` → re-cast; the continuous tween writes a leaf CSS var / GPU uniform each frame and **never** patches the graph), and the AI-apply seam (`castGraphContext` casts the live graph OUT to a model-facing context; `admitGraphPatchProposal` admits a candidate IN through the un-bypassable validate→apply token chain, then re-casts the delta).
+Use when the adaptive surface is authored as a serialized `DocumentGraph` rather than inline `@boundary` annotations — a host hands the runtime a sealed graph and it lowers onto the **same** live cast pipeline the adaptive path uses. `loadGraphRuntime(serialized, resolve)` re-seals the graph (never trusting a supplied id), projects each entity/component into a `RuntimeBoundary` (the one evaluator + CSS/ARIA/GPU casts), and wires the signal observers. The `client:graph` directive (or a `data-liteship-directive="graph"` marker) on the element boots the loader, and its `data-liteship-graph` attribute carries the payload — the marker is what activates it, the same as every other directive. A mutation rides a `GraphPatch` through `castGraphDelta` — only the changed cells re-lower, so untouched observers survive (no full re-seed flash). The loader is the seam an authoring producer feeds; the producer that serializes/authors the graph is a downstream concern, never named here. Two companions ride the same runtime: `bridgeSceneToGraph(scene, handle, …)` drives the graph from a signal-indexed `@liteship/scene` (a discrete state crossing emits a `GraphPatch` → re-cast; the continuous tween writes a leaf CSS var / GPU uniform each frame and **never** patches the graph), and the AI-apply seam (`castGraphContext` casts the live graph OUT to a model-facing context; `admitGraphPatchProposal` admits a candidate IN through the un-bypassable validate→apply token chain, then re-casts the delta).
 
 ### `motion`
 

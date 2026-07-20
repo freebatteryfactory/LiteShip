@@ -90,7 +90,7 @@ export interface CompiledGLSLOutput {
   readonly uniformValues: Readonly<Record<string, number>>;
   /**
    * Per-state authored uniform values keyed by state name then `u_*` identifier.
-   * Rides the satellite payload so the live runtime resolves
+   * Rides the adaptive payload so the live runtime resolves
    * `stateUniforms[currentState]` and updates uniforms on each boundary crossing
    * — the GLSL analog of `CompiledOutputs.aria`. Absent when the boundary's
    * `@glsl` blocks authored no per-state values.
@@ -117,7 +117,7 @@ export interface CompiledWGSLOutput {
   readonly bindingValues: Readonly<Record<string, WGSLUniformValue>>;
   /**
    * Per-state authored binding values keyed by state name then field name — the
-   * WGSL analog of {@link CompiledGLSLOutput.stateUniforms}. Rides the satellite
+   * WGSL analog of {@link CompiledGLSLOutput.stateUniforms}. Rides the adaptive
    * payload so the runtime resolves `stateBindings[currentState]` and updates
    * struct fields on each crossing. Absent when no per-state values were authored.
    */

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { WASMDispatch } from '@liteship/core';
-import satelliteDirective from '../../packages/astro/src/client-directives/satellite.js';
+import adaptiveDirective from '../../packages/astro/src/client-directives/adaptive.js';
 import workerDirective from '../../packages/astro/src/client-directives/worker.js';
 import wasmDirective from '../../packages/astro/src/client-directives/wasm.js';
 import gpuDirective from '../../packages/astro/src/client-directives/gpu.js';
@@ -33,7 +33,7 @@ describe('browser astro directive coverage', () => {
     document.body.innerHTML = '';
   });
 
-  test('satellite directive handles resize hysteresis, reinit, and dispose in the browser lane', async () => {
+  test('adaptive directive handles resize hysteresis, reinit, and dispose in the browser lane', async () => {
     let resizeCallback: ResizeObserverCallback | null = null;
     const disconnect = vi.fn();
     vi.stubGlobal('innerWidth', 760);
@@ -55,7 +55,7 @@ describe('browser astro directive coverage', () => {
     el.setAttribute('data-liteship-boundary', boundary);
     document.body.appendChild(el);
 
-    satelliteDirective(noop, {}, el);
+    adaptiveDirective(noop, {}, el);
     expect(el.getAttribute('data-liteship-state')).toBe('compact');
 
     vi.stubGlobal('innerWidth', 790);

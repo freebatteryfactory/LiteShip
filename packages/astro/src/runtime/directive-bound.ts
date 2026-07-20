@@ -13,7 +13,7 @@
  */
 
 /** Directive names the integration can register, in escalation order. */
-export type DirectiveName = 'satellite' | 'stream' | 'llm' | 'worker' | 'gpu' | 'wasm' | 'graph' | 'motion' | 'svg';
+export type DirectiveName = 'adaptive' | 'stream' | 'llm' | 'worker' | 'gpu' | 'wasm' | 'graph' | 'motion' | 'svg';
 
 /** A client-directive default export: `(load, opts, el)`. */
 export type DirectiveEntry = (load: () => Promise<unknown>, opts: Record<string, unknown>, el: HTMLElement) => void;

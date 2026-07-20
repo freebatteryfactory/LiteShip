@@ -1,8 +1,8 @@
 /**
- * Astro integration tests -- satellite attributes, initial state resolution,
+ * Astro integration tests -- adaptive attributes, initial state resolution,
  * and integration hook configuration.
  *
- * Tests the @liteship/astro public API: satelliteAttrs, resolveInitialState,
+ * Tests the @liteship/astro public API: adaptiveAttrs, resolveInitialState,
  * resolveInitialStateFallback, and integration factory configuration.
  */
 
@@ -12,13 +12,13 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import {
-  satelliteAttrs,
+  adaptiveAttrs,
   resolveInitialStateFallback,
   resolveInitialState,
   resolveInitialStateWithReceipt,
   integration,
 } from '@liteship/astro';
-import type { SatelliteProps } from '@liteship/astro';
+import type { AdaptiveProps } from '@liteship/astro';
 import { Diagnostics, defineBoundary } from '@liteship/core';
 
 // ---------------------------------------------------------------------------
@@ -37,7 +37,7 @@ function makeBoundary(input: string, pairs: readonly (readonly [number, string])
 }
 
 /**
- * Build a minimal Component-like object for satellite attribute tests.
+ * Build a minimal Component-like object for adaptive attribute tests.
  * We avoid importing Component.make since it requires Style which adds
  * unnecessary complexity for attribute generation tests.
  */
@@ -46,28 +46,28 @@ function makeComponentStub(name: string) {
 }
 
 // ---------------------------------------------------------------------------
-// satelliteAttrs -- data-liteship-* attribute generation
+// adaptiveAttrs -- data-liteship-* attribute generation
 // ---------------------------------------------------------------------------
 
-describe('satelliteAttrs', () => {
-  test('generates base liteship-satellite class with no props', () => {
-    const attrs = satelliteAttrs({});
+describe('adaptiveAttrs', () => {
+  test('generates base liteship-adaptive class with no props', () => {
+    const attrs = adaptiveAttrs({});
 
-    expect(attrs['class']).toBe('liteship-satellite');
+    expect(attrs['class']).toBe('liteship-adaptive');
   });
 
-  test('merges custom class with liteship-satellite', () => {
-    const attrs = satelliteAttrs({ class: 'my-widget' });
+  test('merges custom class with liteship-adaptive', () => {
+    const attrs = adaptiveAttrs({ class: 'my-widget' });
 
-    expect(attrs['class']).toBe('liteship-satellite my-widget');
+    expect(attrs['class']).toBe('liteship-adaptive my-widget');
   });
 
-  test('sets data-liteship-satellite from component name', () => {
-    const attrs = satelliteAttrs({
-      component: makeComponentStub('HeroCard') as SatelliteProps['component'],
+  test('sets data-liteship-adaptive from component name', () => {
+    const attrs = adaptiveAttrs({
+      component: makeComponentStub('HeroCard') as AdaptiveProps['component'],
     });
 
-    expect(attrs['data-liteship-satellite']).toBe('HeroCard');
+    expect(attrs['data-liteship-adaptive']).toBe('HeroCard');
   });
 
   test('sets data-liteship-boundary as serialized JSON from boundary shape', () => {
@@ -76,7 +76,7 @@ describe('satelliteAttrs', () => {
       [768, 'wide'],
     ]);
 
-    const attrs = satelliteAttrs({ boundary });
+    const attrs = adaptiveAttrs({ boundary });
 
     expect(attrs['data-liteship-boundary']).toBeDefined();
     const parsed = JSON.parse(attrs['data-liteship-boundary']!);
@@ -92,12 +92,12 @@ describe('satelliteAttrs', () => {
       [768, 'wide'],
     ]);
 
-    expect(satelliteAttrs({ boundary })['data-liteship-directive']).toBe('satellite');
-    expect(satelliteAttrs({ boundary, directive: 'worker' })['data-liteship-directive']).toBe('worker');
+    expect(adaptiveAttrs({ boundary })['data-liteship-directive']).toBe('adaptive');
+    expect(adaptiveAttrs({ boundary, directive: 'worker' })['data-liteship-directive']).toBe('worker');
     // CSS-only shells opt out of any client runtime.
-    expect(satelliteAttrs({ boundary, directive: false })['data-liteship-directive']).toBeUndefined();
+    expect(adaptiveAttrs({ boundary, directive: false })['data-liteship-directive']).toBeUndefined();
     // No boundary -> nothing for a directive to evaluate -> no marker.
-    expect(satelliteAttrs({})['data-liteship-directive']).toBeUndefined();
+    expect(adaptiveAttrs({})['data-liteship-directive']).toBeUndefined();
   });
 
   test('serializes hysteresis in data-liteship-boundary when present', () => {
@@ -110,32 +110,32 @@ describe('satelliteAttrs', () => {
       50,
     );
 
-    const attrs = satelliteAttrs({ boundary });
+    const attrs = adaptiveAttrs({ boundary });
 
     const parsed = JSON.parse(attrs['data-liteship-boundary']!);
     expect(parsed.hysteresis).toBe(50);
   });
 
   test('sets data-liteship-state from initialState', () => {
-    const attrs = satelliteAttrs({ initialState: 'compact' });
+    const attrs = adaptiveAttrs({ initialState: 'compact' });
 
     expect(attrs['data-liteship-state']).toBe('compact');
   });
 
-  test('omits data-liteship-satellite when no component provided', () => {
-    const attrs = satelliteAttrs({});
+  test('omits data-liteship-adaptive when no component provided', () => {
+    const attrs = adaptiveAttrs({});
 
-    expect(attrs['data-liteship-satellite']).toBeUndefined();
+    expect(attrs['data-liteship-adaptive']).toBeUndefined();
   });
 
   test('omits data-liteship-boundary when no boundary provided', () => {
-    const attrs = satelliteAttrs({});
+    const attrs = adaptiveAttrs({});
 
     expect(attrs['data-liteship-boundary']).toBeUndefined();
   });
 
   test('omits data-liteship-state when no initialState provided', () => {
-    const attrs = satelliteAttrs({});
+    const attrs = adaptiveAttrs({});
 
     expect(attrs['data-liteship-state']).toBeUndefined();
   });
@@ -146,15 +146,15 @@ describe('satelliteAttrs', () => {
       [768, 'desktop'],
     ]);
 
-    const attrs = satelliteAttrs({
+    const attrs = adaptiveAttrs({
       boundary,
-      component: makeComponentStub('DashGrid') as SatelliteProps['component'],
+      component: makeComponentStub('DashGrid') as AdaptiveProps['component'],
       class: 'main-grid',
       initialState: 'mobile',
     });
 
-    expect(attrs['class']).toBe('liteship-satellite main-grid');
-    expect(attrs['data-liteship-satellite']).toBe('DashGrid');
+    expect(attrs['class']).toBe('liteship-adaptive main-grid');
+    expect(attrs['data-liteship-adaptive']).toBe('DashGrid');
     expect(attrs['data-liteship-state']).toBe('mobile');
     expect(attrs['data-liteship-boundary']).toBeDefined();
   });
@@ -507,7 +507,7 @@ describe('integration', () => {
     } as never);
 
     expect(directives.map((directive) => directive.name)).toEqual([
-      'satellite',
+      'adaptive',
       'graph',
       'stream',
       'llm',
@@ -692,7 +692,7 @@ describe('integration', () => {
       logger: { info() {} },
     } as never);
 
-    expect(directives.map((directive) => directive.name)).toEqual(['satellite', 'graph', 'worker', 'wasm', 'svg']);
+    expect(directives.map((directive) => directive.name)).toEqual(['adaptive', 'graph', 'worker', 'wasm', 'svg']);
     // serverIslands must NOT produce any experimental config bridge anymore.
     expect(updates.some((config) => 'experimental' in config)).toBe(false);
     expect(scripts.some((script) => script.includes('__LITESHIP_DETECT__'))).toBe(false);

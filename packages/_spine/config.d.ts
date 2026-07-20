@@ -29,7 +29,7 @@ export interface ConfigInput {
     readonly wasm?: boolean | { readonly enabled?: boolean; readonly path?: string };
   };
   readonly astro?: {
-    readonly satellite?: boolean;
+    readonly adaptive?: boolean;
     readonly edgeRuntime?: boolean;
   };
 }

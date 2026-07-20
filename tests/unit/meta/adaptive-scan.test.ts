@@ -14,10 +14,10 @@ import { liteshipDevopsProfile, withRepoRoot } from '@liteship/audit';
 import { buildDirectiveBenchConfig } from '../../../scripts/bench/directive-suite.js';
 import { buildStartupRealityArtifact } from '../../../scripts/bench-reality.js';
 import {
-  buildSatelliteScanReport,
-  renderSatelliteScanMarkdown,
-  verifySatelliteScanReport,
-} from '../../../scripts/report-satellite-scan.js';
+  buildAdaptiveScanReport,
+  renderAdaptiveScanMarkdown,
+  verifyAdaptiveScanReport,
+} from '../../../scripts/report-adaptive-scan.js';
 import { buildRuntimeSeamsReport } from '../../../scripts/report-runtime-seams.js';
 
 const tempRoots: string[] = [];
@@ -152,7 +152,7 @@ function writeBenchArtifact(root: string, generatedAt = '2026-03-28T05:31:00.000
     ],
     pairs: [
       {
-        label: 'satellite',
+        label: 'adaptive',
         gate: true,
         pass: true,
         runtimeClass: 'hot-path',
@@ -392,7 +392,7 @@ function writeRuntimeSeamsArtifact(root: string): void {
   writeFileSync(join(root, 'reports/runtime-seams.json'), JSON.stringify(report, null, 2));
 }
 
-describe('satellite scan', () => {
+describe('adaptive scan', () => {
   test('startup reality artifact captures node proxy medians and browser divergence', () => {
     const root = createRepo(baseRepoFiles());
     writeCoverageArtifacts(root);
@@ -411,7 +411,7 @@ describe('satellite scan', () => {
     expect(artifact.divergence.llmRuntimePromotedStartupPct).toBeCloseTo(115.5, 1);
   });
 
-  test('builds an integrity-checked satellite scan from verified artifacts', () => {
+  test('builds an integrity-checked adaptive scan from verified artifacts', () => {
     const root = createRepo(baseRepoFiles());
     const context = ensureArtifactContext(root);
     writeCoverageArtifacts(root);
@@ -420,7 +420,7 @@ describe('satellite scan', () => {
     writeRuntimeSeamsArtifact(root);
     writeAuditArtifact(root);
 
-    const report = buildSatelliteScanReport(root, '2099-01-01T00:02:00.000Z');
+    const report = buildAdaptiveScanReport(root, '2099-01-01T00:02:00.000Z');
 
     expect(report.integrity.passed).toBe(true);
     expect(report.gauntletRunId).toBe(context.gauntletRunId);
@@ -429,10 +429,10 @@ describe('satellite scan', () => {
     expect(report.summary.runtimeWarnings).toEqual([]);
     expect(report.pairedTruth.find((entry) => entry.id === 'worker-startup')?.primaryLane.summary?.p99).toBe(0.54);
     expect(report.pairedTruth.find((entry) => entry.id === 'llm-promoted-startup')?.primaryLane.summary?.p99).toBe(0.15);
-    expect(renderSatelliteScanMarkdown(report)).toContain('## Feedback Integrity');
+    expect(renderAdaptiveScanMarkdown(report)).toContain('## Feedback Integrity');
   });
 
-  test('verification catches satellite scan contradictions', () => {
+  test('verification catches adaptive scan contradictions', () => {
     const root = createRepo(baseRepoFiles());
     writeCoverageArtifacts(root);
     writeBenchArtifact(root);
@@ -440,8 +440,8 @@ describe('satellite scan', () => {
     writeRuntimeSeamsArtifact(root);
     writeAuditArtifact(root);
 
-    const report = buildSatelliteScanReport(root, '2099-01-01T00:02:00.000Z');
-    const verification = verifySatelliteScanReport(
+    const report = buildAdaptiveScanReport(root, '2099-01-01T00:02:00.000Z');
+    const verification = verifyAdaptiveScanReport(
       {
         ...report,
         summary: {
@@ -453,10 +453,10 @@ describe('satellite scan', () => {
     );
 
     expect(verification.passed).toBe(false);
-    expect(verification.checks.find((check) => check.code === 'satellite-scan-runtime-warnings')?.passed).toBe(false);
+    expect(verification.checks.find((check) => check.code === 'adaptive-scan-runtime-warnings')?.passed).toBe(false);
   });
 
-  test('build rejects malformed audit evidence beneath the satellite scan', () => {
+  test('build rejects malformed audit evidence beneath the adaptive scan', () => {
     const root = createRepo(baseRepoFiles());
     writeCoverageArtifacts(root);
     writeBenchArtifact(root);
@@ -476,8 +476,8 @@ describe('satellite scan', () => {
       ),
     );
 
-    expect(() => buildSatelliteScanReport(root, '2099-01-01T00:02:00.000Z')).toThrow(
-      'Audit counts block is missing or malformed beneath the satellite scan.',
+    expect(() => buildAdaptiveScanReport(root, '2099-01-01T00:02:00.000Z')).toThrow(
+      'Audit counts block is missing or malformed beneath the adaptive scan.',
     );
   });
 });

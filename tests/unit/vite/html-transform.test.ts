@@ -62,7 +62,7 @@ describe('transformHTML', () => {
     expect(result).toContain(commentLine);
     expect(result).toContain(codeSample);
     expect(result).toContain('data-liteship-boundary=');
-    expect(result).toContain('data-liteship-directive="satellite"');
+    expect(result).toContain('data-liteship-directive="adaptive"');
     expect(result.match(/data-liteship-boundary=/g)).toHaveLength(1);
   });
 
@@ -90,7 +90,7 @@ describe('transformHTML', () => {
 
     expect(result).toContain("data-liteship-boundary='");
     expect(result).toContain('"id":"hero"');
-    expect(result).toContain('data-liteship-directive="satellite"');
+    expect(result).toContain('data-liteship-directive="adaptive"');
     expect(result).not.toContain('data-liteship="hero"');
   });
 

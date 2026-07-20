@@ -251,14 +251,14 @@ const checks: Check[] = [
       // - worker-runtime-startup-shared: transport overhead includes non-shared
       //   seams (state-delivery:message-receipt) that vary per-replicate by
       //   design; see ADR-0002 worker transport cost floor.
-      // - satellite: 2μs hot-path measurement; OS-level timer jitter (~0.5μs on
+      // - adaptive: 2μs hot-path measurement; OS-level timer jitter (~0.5μs on
       //   Node+Windows) produces 15-30% replicate-spread swings on each of two
       //   independent 2μs measurements (directive vs manual). Verified across
       //   3 consecutive gauntlet runs on unchanged code: spreads of 5.5%,
       //   49.7%, 25.7% with median always under the 15% hard-gate threshold
       //   (8.9%, 14.4%, 10.4%). The hard gate is the actual regression signal.
       // - worker: 3μs hot-path measurement of normalized worker fallback evaluation
-      //   vs canonical Boundary.evaluate. Same shape as satellite — sub-5μs
+      //   vs canonical Boundary.evaluate. Same shape as adaptive — sub-5μs
       //   measurement on Windows produces the occasional one-replicate outlier
       //   (e.g. 4/5 reps within ±6%, one rep at 18%) that crosses the
       //   threshold-based bucket detector even though the median overhead is

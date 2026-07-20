@@ -66,7 +66,7 @@ export function findViolations(invariant: CheckInvariantEntry, root: string): In
     // `.ts`); a `.d.ts` is filtered here since `suffixes: ['.ts']` also matches it.
     // An invariant scoped to a subtree that doesn't exist in the scanned root
     // contributes zero violations -- walkFiles tolerates a missing dir (returns
-    // []), so a nested-`dirs` invariant whose subtree is absent in the satellite
+    // []), so a nested-`dirs` invariant whose subtree is absent in the adaptive
     // fixture root is empty, not a crash.
     for (const file of walkFiles(resolve(root, dir), { skipDirs: ['dist', 'node_modules'], suffixes: ['.ts'] })) {
       if (file.endsWith('.d.ts')) continue;

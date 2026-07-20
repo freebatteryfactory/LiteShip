@@ -66,7 +66,7 @@ export interface LiteshipEventDetailMap {
      */
     readonly domStale?: boolean;
   };
-  'liteship:satellite-state': LiteshipUniformUpdateDetail;
+  'liteship:adaptive-state': LiteshipUniformUpdateDetail;
   'liteship:signal': unknown;
   'liteship:slot-mounted': { readonly path: SlotPath; readonly mode: IslandMode };
   'liteship:slot-unmounted': { readonly path: SlotPath; readonly mode?: IslandMode };
@@ -99,7 +99,7 @@ export const LITESHIP_EVENT_NAMES = [
   'liteship:mutation',
   'liteship:reinit',
   'liteship:request-snapshot',
-  'liteship:satellite-state',
+  'liteship:adaptive-state',
   'liteship:signal',
   'liteship:slot-mounted',
   'liteship:slot-unmounted',
@@ -135,7 +135,7 @@ export const LITESHIP_EVENT_DOCS: Record<LiteshipEventName, string> = {
   'liteship:mutation': 'Graph mutation channel response after form submit.',
   'liteship:reinit': 'Directive re-read after a view-transition swap (not final teardown).',
   'liteship:request-snapshot': 'Recovery fetch requested after morph rejection.',
-  'liteship:satellite-state': 'Satellite boundary state crossing.',
+  'liteship:adaptive-state': 'Adaptive boundary state crossing.',
   'liteship:signal': 'SSE `signal` message payload from the stream directive.',
   'liteship:slot-mounted': 'Slot registry registered a `data-liteship-slot` element.',
   'liteship:slot-unmounted': 'Slot registry removed a slot path.',

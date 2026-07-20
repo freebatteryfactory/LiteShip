@@ -25,7 +25,7 @@ Defined in: [audit/src/policy.ts:27](https://github.com/freebatteryfactory/LiteS
 Defined in: [audit/src/policy.ts:26](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L26)
 
 npm package name owning the allowlisted file. When set, `filePrefix` is
-PACKAGE-RELATIVE (e.g. `src/client-directives/satellite.ts`) and matching
+PACKAGE-RELATIVE (e.g. `src/client-directives/adaptive.ts`) and matching
 resolves the finding's file through the profile's discovered package
 roots — so the same entry suppresses in the monorepo
 (`packages/astro/...`) and in a consumer install

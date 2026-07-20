@@ -517,6 +517,6 @@ export interface FeedbackVerification {
   readonly passed: boolean;
   readonly runtimeSeams: RuntimeSeamsVerification;
   readonly auditChecks: readonly RuntimeSeamsIntegrityCheck[];
-  readonly satelliteScanChecks: readonly RuntimeSeamsIntegrityCheck[];
+  readonly adaptiveScanChecks: readonly RuntimeSeamsIntegrityCheck[];
   readonly checks: readonly RuntimeSeamsIntegrityCheck[];
 }

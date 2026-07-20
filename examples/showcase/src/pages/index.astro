@@ -1,22 +1,22 @@
 ---
 import Base from '../layouts/Base.astro';
-import { satelliteAttrs } from '@liteship/astro';
+import { adaptiveAttrs } from '@liteship/astro';
 import { layout } from '../boundaries/layout.boundaries.ts';
 ---
 
 <Base title="liteship showcase -- adaptive layout">
-  <section class="hero" {...satelliteAttrs({ boundary: layout })}>
+  <section class="hero" {...adaptiveAttrs({ boundary: layout })}>
     <h1 class="hero__title">Constraint-Based Adaptive Rendering</h1>
     <p class="hero__subtitle">
       Quantize continuous signals into discrete states.
       Resize your browser to see boundaries in action.
     </p>
-    <!-- The .hero section is the live satellite; the directive keeps its
+    <!-- The .hero section is the live adaptive; the directive keeps its
          data-liteship-state current and this badge mirrors it via CSS. -->
     <span class="hero__state-badge"></span>
   </section>
 
-  <section class="cards" {...satelliteAttrs({ boundary: layout })}>
+  <section class="cards" {...adaptiveAttrs({ boundary: layout })}>
     <article class="card">
       <h2>Boundaries</h2>
       <p>Define quantization thresholds with hysteresis to prevent jitter at breakpoints.</p>
@@ -78,7 +78,7 @@ import { layout } from '../boundaries/layout.boundaries.ts';
     color: #ffffff;
   }
 
-  /* Mirror the live boundary state the satellite directive writes onto the
+  /* Mirror the live boundary state the adaptive directive writes onto the
      .hero wrapper, so the badge shows the current tier instead of staying blank. */
   .hero { --liteship-state: 'detecting…'; }
   .hero[data-liteship-state='mobile'] { --liteship-state: 'mobile'; }

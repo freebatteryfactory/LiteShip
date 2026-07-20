@@ -135,7 +135,7 @@ const PACKAGE_METADATA: Readonly<Record<string, PackageMetadata>> = {
   },
   '@liteship/astro': {
     description:
-      'The Astro integration for LiteShip: render adaptive UI as islands with the `client:satellite` directive and ' +
+      'The Astro integration for LiteShip: render adaptive UI as islands with the `client:adaptive` directive and ' +
       'resolve device tiers on the server for first paint.',
     keywords: ['liteship', 'astro', 'integration', 'islands', 'typescript'],
   },

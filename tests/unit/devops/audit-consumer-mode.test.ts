@@ -257,7 +257,7 @@ describe('consumer mode — discovery walks node_modules to a fixpoint', () => {
       ...acmeBase(),
       surfacePolicy: {
         astroPackage: '@acme/astro',
-        astroClientDirectives: ['satellite'],
+        astroClientDirectives: ['adaptive'],
         astroRuntimeFiles: ['src/runtime/boundary.ts'],
         viteVirtualModules: ['virtual:acme/tokens'],
         vitePackage: '@acme/vite',
@@ -294,14 +294,14 @@ describe('consumer mode — surface checks resolve through discovered package ro
         '@acme/astro',
         {},
         {
-          './client-directives/satellite': { development: './src/client-directives/satellite.ts' },
+          './client-directives/adaptive': { development: './src/client-directives/adaptive.ts' },
         },
       ),
       'node_modules/@acme/astro/src/index.ts': 'export const astroReady = true;\n',
       ...(opts.deleteDirective
         ? {}
         : {
-            'node_modules/@acme/astro/src/client-directives/satellite.ts':
+            'node_modules/@acme/astro/src/client-directives/adaptive.ts':
               'export default (load: () => Promise<unknown>, _o: Record<string, unknown>, el: HTMLElement) => {\n  void load;\n  void el;\n};\n',
           }),
       'node_modules/@acme/astro/src/runtime/boundary.ts': 'export const boundaryRuntime = true;\n',
@@ -314,7 +314,7 @@ describe('consumer mode — surface checks resolve through discovered package ro
       packageTopology: { '@acme/astro': { allowedInternalImports: [], kind: 'host' } },
       surfacePolicy: {
         astroPackage: '@acme/astro',
-        astroClientDirectives: ['satellite'],
+        astroClientDirectives: ['adaptive'],
         astroRuntimeFiles: ['src/runtime/boundary.ts'],
         viteVirtualModules: [],
         knownCapabilityNotes: [],
@@ -335,7 +335,7 @@ describe('consumer mode — surface checks resolve through discovered package ro
     const root = astroHostFixture({ deleteDirective: true });
     const profile = consumerDevopsProfile(root, astroHostProfile(root));
     const result = runSurfaceAudit(profile);
-    const finding = result.findings.find((f) => f.id === 'surface/astro-file/satellite');
+    const finding = result.findings.find((f) => f.id === 'surface/astro-file/adaptive');
     expect(finding).toBeDefined();
     expect(finding?.location?.file).toContain('node_modules/@acme/astro');
   });
@@ -443,14 +443,14 @@ describe('consumer mode — allowlist entries follow the package, not the monore
       'package.json': JSON.stringify({ name: 'consumer-site', private: true, type: 'module' }),
       'node_modules/@liteship/astro/package.json': PKG('@liteship/astro'),
       'node_modules/@liteship/astro/src/index.ts': 'export const astroReady = true;\n',
-      'node_modules/@liteship/astro/src/client-directives/satellite.ts':
+      'node_modules/@liteship/astro/src/client-directives/adaptive.ts':
         'export default (load: () => Promise<unknown>, _opts: Record<string, unknown>, el: HTMLElement) => {\n  void load;\n  void el;\n};\n',
     });
     const result = runStructureAudit(consumerDevopsProfile(root, liteshipBase({ '@liteship/astro': STANDALONE })));
     expect(result.findings.filter((f) => f.rule === 'default-export')).toHaveLength(0);
     const suppressed = result.suppressed.filter((s) => s.rule === 'default-export');
     expect(suppressed).toHaveLength(1);
-    expect(suppressed[0]!.finding.location?.file).toContain('node_modules/@liteship/astro/src/client-directives/satellite.ts');
+    expect(suppressed[0]!.finding.location?.file).toContain('node_modules/@liteship/astro/src/client-directives/adaptive.ts');
   });
 
   it('does NOT flag the audit policy prose self-mention in an installed @liteship/audit — precise detector, no allowlist entry needed (report finding 2)', () => {

@@ -2,7 +2,7 @@
  * Directive boot scanner — the regression lane for the inert-directive bug.
  *
  * Astro only fires custom client directives on framework-component
- * islands; a plain `<div client:satellite>` (or a `Satellite.astro`
+ * islands; a plain `<div client:adaptive>` (or a `Adaptive.astro`
  * shell) previously shipped the attribute verbatim and no runtime ever
  * ran. These tests exercise the injected scanner end-to-end in a real
  * browser: legacy `client:*` markers, the canonical
@@ -72,21 +72,21 @@ describe('directive boot scanner', () => {
     document.body.innerHTML = '';
   });
 
-  test('legacy client:satellite marker on a plain element activates (the 0.1.4 inert case)', async () => {
+  test('legacy client:adaptive marker on a plain element activates (the 0.1.4 inert case)', async () => {
     vi.stubGlobal('innerWidth', 500);
-    const el = makeMarkedElement({ 'data-liteship-boundary': boundary, 'client:satellite': '' });
+    const el = makeMarkedElement({ 'data-liteship-boundary': boundary, 'client:adaptive': '' });
 
-    await scanAndBootDirectives(['satellite']);
+    await scanAndBootDirectives(['adaptive']);
 
     expect(el.getAttribute('data-liteship-state')).toBe('compact');
-    expect(el.getAttribute('data-liteship-directive-bound')).toBe('satellite');
+    expect(el.getAttribute('data-liteship-directive-bound')).toBe('adaptive');
   });
 
   test('canonical data-liteship-directive marker activates identically', async () => {
     vi.stubGlobal('innerWidth', 900);
-    const el = makeMarkedElement({ 'data-liteship-boundary': boundary, 'data-liteship-directive': 'satellite' });
+    const el = makeMarkedElement({ 'data-liteship-boundary': boundary, 'data-liteship-directive': 'adaptive' });
 
-    await scanAndBootDirectives(['satellite']);
+    await scanAndBootDirectives(['adaptive']);
 
     expect(el.getAttribute('data-liteship-state')).toBe('expanded');
   });
@@ -95,50 +95,50 @@ describe('directive boot scanner', () => {
     vi.stubGlobal('innerWidth', 500);
     const el = makeMarkedElement({ 'data-liteship-boundary': boundary, 'data-liteship-directive': 'worker' });
 
-    await scanAndBootDirectives(['satellite']);
+    await scanAndBootDirectives(['adaptive']);
 
     expect(el.getAttribute('data-liteship-state')).toBeNull();
     expect(el.hasAttribute('data-liteship-directive-bound')).toBe(false);
   });
 
-  test('two liteship directives on one element warn about the collision (the client:gpu + satellite trap)', async () => {
+  test('two liteship directives on one element warn about the collision (the client:gpu + adaptive trap)', async () => {
     vi.stubGlobal('innerWidth', 500);
     const warnSpy = vi.spyOn(Diagnostics, 'warnOnce');
-    // One element carrying BOTH a satellite marker and a legacy client:gpu
-    // attribute -- exactly the canvas that booted a satellite and never started
+    // One element carrying BOTH an adaptive marker and a legacy client:gpu
+    // attribute -- exactly the canvas that booted an adaptive and never started
     // its GPU shader, with no warning.
     const el = makeMarkedElement({
       'data-liteship-boundary': boundary,
-      'data-liteship-directive': 'satellite',
+      'data-liteship-directive': 'adaptive',
       'client:gpu': '',
     });
 
-    await scanAndBootDirectives(['satellite', 'gpu']);
+    await scanAndBootDirectives(['adaptive', 'gpu']);
 
-    // satellite (scanned first) claims the element; gpu then sees it already
+    // adaptive (scanned first) claims the element; gpu then sees it already
     // bound and warns instead of silently fighting over the node.
-    expect(warnSpy).toHaveBeenCalledWith(expect.objectContaining({ code: 'directive-collision:gpu+satellite' }));
-    expect(el.getAttribute('data-liteship-directive-bound')).toContain('satellite');
+    expect(warnSpy).toHaveBeenCalledWith(expect.objectContaining({ code: 'directive-collision:adaptive+gpu' }));
+    expect(el.getAttribute('data-liteship-directive-bound')).toContain('adaptive');
   });
 
   test('re-scanning is idempotent per element', async () => {
     vi.stubGlobal('innerWidth', 500);
-    const el = makeMarkedElement({ 'data-liteship-boundary': boundary, 'data-liteship-directive': 'satellite' });
+    const el = makeMarkedElement({ 'data-liteship-boundary': boundary, 'data-liteship-directive': 'adaptive' });
 
-    await scanAndBootDirectives(['satellite']);
+    await scanAndBootDirectives(['adaptive']);
     el.setAttribute('data-liteship-state', 'sentinel');
-    await scanAndBootDirectives(['satellite']);
+    await scanAndBootDirectives(['adaptive']);
 
     // A second init would re-evaluate and overwrite the sentinel.
     expect(el.getAttribute('data-liteship-state')).toBe('sentinel');
-    expect(el.getAttribute('data-liteship-directive-bound')).toBe('satellite');
+    expect(el.getAttribute('data-liteship-directive-bound')).toBe('adaptive');
   });
 
   test('a marked element passed AS the scan root activates (not only descendants)', async () => {
     vi.stubGlobal('innerWidth', 500);
-    const el = makeMarkedElement({ 'data-liteship-boundary': boundary, 'data-liteship-directive': 'satellite' });
+    const el = makeMarkedElement({ 'data-liteship-boundary': boundary, 'data-liteship-directive': 'adaptive' });
 
-    await scanAndBootDirectives(['satellite'], el);
+    await scanAndBootDirectives(['adaptive'], el);
 
     expect(el.getAttribute('data-liteship-state')).toBe('compact');
   });
@@ -163,14 +163,14 @@ describe('directive boot scanner', () => {
     // (installSwapPipeline). The post-swap re-scan is step 2 of that pipeline
     // (rescanSlots → bootDirectives → reinitDirectives), NOT a listener that
     // bootstrapDirectives registers itself. Mirror the real wiring here.
-    bootstrapDirectives(['satellite']);
-    installSwapPipeline(['satellite']);
+    bootstrapDirectives(['adaptive']);
+    installSwapPipeline(['adaptive']);
 
     // Fresh server HTML arrives via View Transitions: no bound attribute. Astro
     // does NOT re-execute page scripts on a swap, so the pipeline's after-swap
     // listener is the only thing that boots these freshly swapped-in directives.
     document.body.innerHTML = '';
-    const swapped = makeMarkedElement({ 'data-liteship-boundary': boundary, 'data-liteship-directive': 'satellite' });
+    const swapped = makeMarkedElement({ 'data-liteship-boundary': boundary, 'data-liteship-directive': 'adaptive' });
     document.dispatchEvent(new Event('astro:after-swap'));
 
     await vi.waitFor(() => {
@@ -187,10 +187,10 @@ describe('directive boot scanner', () => {
         thresholds: [0, 400],
         states: ['top', 'deep'],
       }),
-      'data-liteship-directive': 'satellite',
+      'data-liteship-directive': 'adaptive',
     });
 
-    await scanAndBootDirectives(['satellite']);
+    await scanAndBootDirectives(['adaptive']);
     expect(el.getAttribute('data-liteship-state')).toBe('top');
 
     vi.stubGlobal('scrollY', 900);

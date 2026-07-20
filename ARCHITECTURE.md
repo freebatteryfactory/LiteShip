@@ -107,7 +107,7 @@ Add a host integration when you wire LiteShip into a build pipeline:
 | Package | Description |
 | --- | --- |
 | [`@liteship/vite`](./packages/vite) | The Vite plugin for LiteShip: compile `@token`, `@theme`, `@style`, and `@quantize` blocks into native CSS and hot-reload boundary definitions as you edit. |
-| [`@liteship/astro`](./packages/astro) | The Astro integration for LiteShip: render adaptive UI as islands with the `client:satellite` directive and resolve device tiers on the server for first paint. |
+| [`@liteship/astro`](./packages/astro) | The Astro integration for LiteShip: render adaptive UI as islands with the `client:adaptive` directive and resolve device tiers on the server for first paint. |
 | [`@liteship/edge`](./packages/edge) | Choose the right UI state at the CDN edge for LiteShip: read Client Hints into a device tier, serve a content-addressed boundary cache, and compile the theme for first paint. |
 | [`@liteship/cloudflare`](./packages/cloudflare) | Run LiteShip on Cloudflare Workers: a site adapter with a KV-backed edge cache and the Astro middleware glue that caches boundaries at the edge. |
 

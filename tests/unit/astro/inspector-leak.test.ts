@@ -26,7 +26,7 @@ function addBoundary(id: string): HTMLElement {
     'data-liteship-boundary',
     JSON.stringify({ id, input: 'viewport.width', thresholds: [0, 600], states: ['s', 'l'] }),
   );
-  el.setAttribute('data-liteship-directive', 'satellite');
+  el.setAttribute('data-liteship-directive', 'adaptive');
   document.body.appendChild(el);
   return el;
 }

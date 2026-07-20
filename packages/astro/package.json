@@ -1,7 +1,7 @@
 {
   "name": "@liteship/astro",
   "version": "0.18.0",
-  "description": "The Astro integration for LiteShip: render adaptive UI as islands with the `client:satellite` directive and resolve device tiers on the server for first paint.",
+  "description": "The Astro integration for LiteShip: render adaptive UI as islands with the `client:adaptive` directive and resolve device tiers on the server for first paint.",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",
   "repository": {
@@ -28,10 +28,10 @@
       "import": "./dist/index.js",
       "development": "./src/index.ts"
     },
-    "./client-directives/satellite": {
-      "types": "./dist/client-directives/satellite.d.ts",
-      "import": "./dist/client-directives/satellite.js",
-      "development": "./src/client-directives/satellite.ts"
+    "./client-directives/adaptive": {
+      "types": "./dist/client-directives/adaptive.d.ts",
+      "import": "./dist/client-directives/adaptive.js",
+      "development": "./src/client-directives/adaptive.ts"
     },
     "./client-directives/stream": {
       "types": "./dist/client-directives/stream.d.ts",
@@ -98,8 +98,8 @@
       "import": "./dist/runtime/inspector-toolbar-app.js",
       "development": "./src/runtime/inspector-toolbar-app.ts"
     },
-    "./Satellite": "./src/Satellite.astro",
-    "./Satellite.astro": "./src/Satellite.astro"
+    "./Adaptive": "./src/Adaptive.astro",
+    "./Adaptive.astro": "./src/Adaptive.astro"
   },
   "files": [
     "dist",

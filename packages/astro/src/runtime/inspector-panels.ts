@@ -164,7 +164,7 @@ export function deriveActiveTargets(snapshot: ElementCastSnapshot): readonly Act
     });
   }
 
-  // SVG — the satellite carries no SVG cast attribute today; an explicit
+  // SVG — the adaptive carries no SVG cast attribute today; an explicit
   // data-liteship-shader-type="svg" is the only honest on-page evidence.
   if (snapshot.shaderType === 'svg') {
     out.push({ target: 'svg', evidence: 'data-liteship-shader-type="svg"' });

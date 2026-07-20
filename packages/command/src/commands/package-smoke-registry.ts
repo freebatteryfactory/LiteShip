@@ -77,7 +77,7 @@ export const PACKAGES: readonly PackageSmokeSpec[] = [
     name: '@liteship/astro',
     imports: [
       '@liteship/astro',
-      '@liteship/astro/client-directives/satellite',
+      '@liteship/astro/client-directives/adaptive',
       '@liteship/astro/client-directives/stream',
       '@liteship/astro/client-directives/llm',
       '@liteship/astro/client-directives/worker',

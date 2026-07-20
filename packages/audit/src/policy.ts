@@ -16,7 +16,7 @@ export interface AuditAllowlistEntry {
   readonly rule: string;
   /**
    * npm package name owning the allowlisted file. When set, `filePrefix` is
-   * PACKAGE-RELATIVE (e.g. `src/client-directives/satellite.ts`) and matching
+   * PACKAGE-RELATIVE (e.g. `src/client-directives/adaptive.ts`) and matching
    * resolves the finding's file through the profile's discovered package
    * roots — so the same entry suppresses in the monorepo
    * (`packages/astro/...`) and in a consumer install
@@ -155,7 +155,7 @@ export const packageTopology: Record<string, PackagePolicy> = {
   '@liteship/stage': {
     // The verb / orchestration layer (P4). Casts ONE DocumentGraph to many
     // carriers by reusing the existing casters: core (graph kernel + Compositor
-    // + VideoRenderer), compiler (CSSCompiler), astro (satellite SSR helpers),
+    // + VideoRenderer), compiler (CSSCompiler), astro (adaptive SSR helpers),
     // and web (the captureVideo codec seam). It mints no identity kernel of its
     // own — every address routes through @liteship/core's CanonicalCbor/AddressedDigest.
     allowedInternalImports: ['@liteship/core', '@liteship/compiler', '@liteship/astro', '@liteship/web'],
@@ -315,13 +315,13 @@ export const dynamicImportExemptions: ReadonlySet<string> = new Set([
 
 export const surfacePolicy: SurfacePolicyShape = {
   astroPackage: '@liteship/astro',
-  astroClientDirectives: ['satellite', 'stream', 'llm', 'worker', 'gpu', 'wasm'],
+  astroClientDirectives: ['adaptive', 'stream', 'llm', 'worker', 'gpu', 'wasm'],
   // Astro-package-relative (consumer-mode seam): resolved against wherever
   // @liteship/astro actually lives — `packages/astro` in the monorepo, a
   // node_modules install downstream. Legacy `packages/`-prefixed entries in
   // external profiles still resolve repo-root-relative.
   astroRuntimeFiles: [
-    'src/runtime/satellite.ts',
+    'src/runtime/adaptive.ts',
     'src/runtime/stream.ts',
     'src/runtime/llm.ts',
     'src/runtime/worker.ts',
@@ -359,7 +359,7 @@ export const auditAllowlist: readonly AuditAllowlistEntry[] = [
   {
     rule: 'default-export',
     package: '@liteship/astro',
-    filePrefix: 'src/client-directives/satellite.ts',
+    filePrefix: 'src/client-directives/adaptive.ts',
     reason: 'Astro client directives require default exports and this file is an intentionally tiny wrapper.',
   },
   {

@@ -2,7 +2,7 @@
  * Astro 7 `AstroIntegration` for liteship.
  *
  * Registers the `@liteship/vite` plugin, injects the detect/boot scripts,
- * registers every client directive (`client:satellite`,
+ * registers every client directive (`client:adaptive`,
  * `client:stream`, `client:llm`, `client:worker`, `client:gpu`,
  * `client:wasm`, `client:motion`) that the host opts into, and (in `astro dev`) registers
  * the boundary inspector as a dev-toolbar app.
@@ -273,8 +273,8 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
   // Mirrors the addClientDirective registrations below exactly; the boot
   // scanner activates the same set on plain elements / .astro output.
   const enabledDirectives: readonly DirectiveName[] = [
-    'satellite',
-    // `graph` is the DocumentGraph-loader counterpart of `satellite`: an
+    'adaptive',
+    // `graph` is the DocumentGraph-loader counterpart of `adaptive`: an
     // always-on runtime primitive (no escalation tier / config gate), so it
     // activates wherever a `data-liteship-graph` payload is present.
     'graph',
@@ -349,12 +349,12 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
 
         // Register client directives
         addClientDirective({
-          name: 'satellite',
-          entrypoint: '@liteship/astro/client-directives/satellite',
+          name: 'adaptive',
+          entrypoint: '@liteship/astro/client-directives/adaptive',
         });
-        logger.info('Registered satellite client directive');
+        logger.info('Registered adaptive client directive');
 
-        // `graph` — the DocumentGraph-loader primitive, always-on like satellite.
+        // `graph` — the DocumentGraph-loader primitive, always-on like adaptive.
         addClientDirective({
           name: 'graph',
           entrypoint: '@liteship/astro/client-directives/graph',
@@ -409,7 +409,7 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
           logger.info('Registered motion client directive');
         }
 
-        // SVG last-mile: always-on (parity with satellite) — a pure DOM
+        // SVG last-mile: always-on (parity with adaptive) — a pure DOM
         // applicator with no capability gate, so the SVG cast arm reaches the
         // live DOM wherever a `[data-liteship-entity]` SVG element is authored.
         addClientDirective({

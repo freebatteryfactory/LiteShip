@@ -60,7 +60,7 @@ describe('WGSLCompiler.compile', () => {
     // The compiler must expose per-state binding values, not just the merged
     // last-state default, so a crossing resolves stateBindings[currentState] — the
     // WGSL analog of GLSL's stateUniforms, carried end-to-end by manifest +
-    // kv-cache + Satellite + applyBoundaryState. Before this the manifest dropped
+    // kv-cache + Adaptive + applyBoundaryState. Before this the manifest dropped
     // per-state, so authored @wgsl field values couldn't update on crossings.
     const result = WGSLCompiler.compile(simpleBoundary, {
       dark: { blur: 1 },

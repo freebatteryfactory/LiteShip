@@ -85,10 +85,10 @@ describe('Config.toViteConfig()', () => {
 });
 
 describe('Config.toAstroConfig()', () => {
-  test('maps satellite field', () => {
-    const cfg = defineConfig({ astro: { satellite: true } });
+  test('maps adaptive field', () => {
+    const cfg = defineConfig({ astro: { adaptive: true } });
     const astro = Config.toAstroConfig(cfg);
-    expect(astro.satellite).toBe(true);
+    expect(astro.adaptive).toBe(true);
   });
 
   test('maps edgeRuntime when present', () => {
@@ -97,7 +97,7 @@ describe('Config.toAstroConfig()', () => {
   });
 
   test('omits undefined astro fields', () => {
-    const cfg = defineConfig({ astro: { satellite: false } });
+    const cfg = defineConfig({ astro: { adaptive: false } });
     expect(Config.toAstroConfig(cfg).edgeRuntime).toBeUndefined();
   });
 });

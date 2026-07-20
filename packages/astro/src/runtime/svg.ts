@@ -9,19 +9,19 @@
  * CLI / test callers drove `applySvgAttrs`; the browser had no path that
  * resolved page SVG elements and pumped a frame's attrs onto them.
  *
- * This is that path. It mirrors the satellite runtime's signal-clock shape:
+ * This is that path. It mirrors the adaptive runtime's signal-clock shape:
  *
  *  - Discovery — scan a root for `[data-liteship-entity]` SVG elements and build
  *    an {@link SvgElementResolver} (`entityId → SVGElement`) the egress
  *    applicator consumes verbatim.
  *  - Source — the first cut reads per-state authored attrs off the element's
- *    own `data-liteship-svg` JSON (keyed `state → { attr: value }`, the satellite
+ *    own `data-liteship-svg` JSON (keyed `state → { attr: value }`, the adaptive
  *    `stateAttributes` shape) and resolves the active state from a serialized
  *    boundary on `data-liteship-boundary`. No scene runtime needed (that is item
  *    C); the point is the LIVE DOM applicator path exists and is wired to a
  *    directive.
  *  - Clock — {@link attachSignalObserver} (viewport / scroll / audio), the
- *    same frame/signal source the satellite directive uses. On every signal
+ *    same frame/signal source the adaptive directive uses. On every signal
  *    crossing the active state's attrs are composed into an
  *    {@link SvgAttrsFrame} and pushed through `applySvgAttrs`, so the live
  *    SVGElement's `transform` / `opacity` / `mix-blend-mode` / `clip-path`
@@ -172,7 +172,7 @@ function discoverSvgEntities(root: ParentNode): SvgEntity[] {
  * For each discovered entity the active state is computed by evaluating the
  * boundary against {@link readSignalValue}, and only a *changed* state pushes
  * a frame — a crossing that lands on the same state is a no-op, matching the
- * satellite directive's previous-state guard.
+ * adaptive directive's previous-state guard.
  *
  * SSR-safe: with no `window` the runtime never queries the DOM and returns a
  * no-op cleanup. Returns a cleanup that detaches every attached signal
@@ -202,7 +202,7 @@ export function attachSvgRuntime(
       const state = evaluateBoundary(entity.boundary, value, previousState || undefined);
       if (state === previousState) return;
       previousState = state;
-      // Reflect the live state onto the element (parity with the satellite
+      // Reflect the live state onto the element (parity with the adaptive
       // directive's data-liteship-state write) before applying its authored attrs.
       const target = resolver(entity.entityId);
       if (target instanceof SVGElement && target.getAttribute('data-liteship-state') !== state) {

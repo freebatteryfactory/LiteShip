@@ -1,6 +1,6 @@
 # Getting started with LiteShip
 
-From `pnpm add` in your Astro project to a boundary changing state as you drag the window edge, in about five minutes. Two concepts get you there: `defineBoundary` and `satelliteAttrs`. Everything else (tokens, styles, casting to CSS) is layered behind links.
+From `pnpm add` in your Astro project to a boundary changing state as you drag the window edge, in about five minutes. Two concepts get you there: `defineBoundary` and `adaptiveAttrs`. Everything else (tokens, styles, casting to CSS) is layered behind links.
 
 LiteShip / `@liteship/*` naming: [GLOSSARY.md](./GLOSSARY.md). For Cloudflare Workers hosting, see [HOSTING.md](./HOSTING.md#cloudflare-workers) and [examples/cloudflare-astro/](./examples/cloudflare-astro/). Contributing to LiteShip itself (cloning the monorepo, building, running the gauntlet) is a different path: [CONTRIBUTING.md](./CONTRIBUTING.md).
 
@@ -53,15 +53,15 @@ export default defineConfig({
 });
 ```
 
-Then spread `satelliteAttrs` onto any element in a `.astro` page:
+Then spread `adaptiveAttrs` onto any element in a `.astro` page:
 
 ```astro
 ---
-import { satelliteAttrs } from '@liteship/astro';
+import { adaptiveAttrs } from '@liteship/astro';
 import { viewport } from '../boundaries.js';
 ---
 
-<div {...satelliteAttrs({ boundary: viewport })} class="card">
+<div {...adaptiveAttrs({ boundary: viewport })} class="card">
   Resize the window to see the boundary state change.
 </div>
 ```
@@ -77,9 +77,9 @@ Run `pnpm dev`, open the page, and drag the window edge: the element's `data-lit
 }
 ```
 
-`satelliteAttrs` serializes the boundary plus a `data-liteship-directive="satellite"` marker; the integration's injected boot scanner activates the boundary evaluator on the client (only the evaluator — not a whole framework tree). The `Satellite` component (`import Satellite from '@liteship/astro/Satellite'`) wraps the same attributes around a div for you. Always go through `satelliteAttrs` or `Satellite` — the `data-liteship-*` attributes are an internal serialization contract, not a hand-authoring surface; writing them by hand drifts the moment that contract changes.
+`adaptiveAttrs` serializes the boundary plus a `data-liteship-directive="adaptive"` marker; the integration's injected boot scanner activates the boundary evaluator on the client (only the evaluator — not a whole framework tree). The `Adaptive` component (`import Adaptive from '@liteship/astro/Adaptive'`) wraps the same attributes around a div for you. Always go through `adaptiveAttrs` or `Adaptive` — the `data-liteship-*` attributes are an internal serialization contract, not a hand-authoring surface; writing them by hand drifts the moment that contract changes.
 
-Plain elements, not just islands. `client:stream` / `client:llm` / `client:gpu` / `client:wasm` / `client:graph` now boot on any plain element, not only framework islands — the integration scans for the directive's runtime attribute and activates it. `data-liteship-boundary` is the exception: it's also a worker/GPU payload, so it stays explicit (`data-liteship-directive` / `Satellite`), and you'll get a one-time console warning if you leave one bare.
+Plain elements, not just islands. `client:stream` / `client:llm` / `client:gpu` / `client:wasm` / `client:graph` now boot on any plain element, not only framework islands — the integration scans for the directive's runtime attribute and activates it. `data-liteship-boundary` is the exception: it's also a worker/GPU payload, so it stays explicit (`data-liteship-directive` / `Adaptive`), and you'll get a one-time console warning if you leave one bare.
 
 That's the whole layer-1 loop: define states, attach them to an element, let CSS respond.
 
@@ -256,9 +256,9 @@ pnpm verify   # first-run aggregate: doctor → build → test
 
 **The same value evaluates to different states each call.** You probably reused a state name across the threshold list. `defineBoundary` requires unique state names; passing `[[0, 'small'], [768, 'small']]` throws at construction with a `LiteshipValidationError`. If the error fires at runtime in a hot path, the boundary was constructed lazily inside a render function — hoist it out.
 
-**The CSS doesn't update when the window resizes.** Two usual suspects: the element never got a directive marker (the boot scanner activates `data-liteship-directive="satellite"` — emitted automatically by `Satellite` / `satelliteAttrs()` when a boundary is present; Astro's own `client:visible` / `client:idle` won't wire the boundary evaluator), or the CSS was generated against a stale boundary id (rebuild after editing the boundary; content addresses change with the definition, so old emitted CSS keys won't match the new id).
+**The CSS doesn't update when the window resizes.** Two usual suspects: the element never got a directive marker (the boot scanner activates `data-liteship-directive="adaptive"` — emitted automatically by `Adaptive` / `adaptiveAttrs()` when a boundary is present; Astro's own `client:visible` / `client:idle` won't wire the boundary evaluator), or the CSS was generated against a stale boundary id (rebuild after editing the boundary; content addresses change with the definition, so old emitted CSS keys won't match the new id).
 
-**A GPU shader (or other directive) never starts on an element that also carries `satelliteAttrs`.** Two liteship directives on one element collide — each takes over the node, so `satelliteAttrs()` (which stamps `data-liteship-directive="satellite"`) and a `client:gpu` on the same canvas silently fight, and one loses (usually the shader). The console warns once (`directive-collision:…`) naming both. Put each directive on its own element.
+**A GPU shader (or other directive) never starts on an element that also carries `adaptiveAttrs`.** Two liteship directives on one element collide — each takes over the node, so `adaptiveAttrs()` (which stamps `data-liteship-directive="adaptive"`) and a `client:gpu` on the same canvas silently fight, and one loses (usually the shader). The console warns once (`directive-collision:…`) naming both. Put each directive on its own element.
 
 **The boundary state flickers when dragging the window edge near a threshold.** Add or increase `hysteresis`. The field is optional and the default is zero (no dead-zone). A value of 16–24 px is enough to absorb display jitter on most setups; the algorithm is a half-width dead-zone, so `hysteresis: 20` requires the signal to move 10px past the threshold before committing the transition.
 

@@ -15,7 +15,7 @@
  *     On a crossing we build a MINIMAL {@link GraphPatch} that re-points the
  *     owning entity's pose to the new state and feed it to the live graph
  *     handle's `recast`, so the cast pipeline flips `data-liteship-state` through the
- *     exact same delta seam `client:satellite` already drives. The graph is
+ *     exact same delta seam `client:adaptive` already drives. The graph is
  *     re-sealed ONLY on a crossing — cheap, because crossings are rare.
  *
  *   - CONTINUOUS — the in-between TWEEN value (`_blend`, eased). This moves EVERY

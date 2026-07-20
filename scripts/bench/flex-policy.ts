@@ -24,7 +24,7 @@ export const ACCEPTED_BENCH_STABILITY_NOISY_LABELS = [
   'worker-runtime-startup-shared',
   'llm-startup-shared',
   'llm-promoted-startup-shared',
-  'satellite',
+  'adaptive',
   'worker',
   'llm-runtime-steady',
 ] as const;

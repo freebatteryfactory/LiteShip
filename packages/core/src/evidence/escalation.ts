@@ -10,7 +10,7 @@
  * Determinism: minimal-tier by `Cap.ordinal` ascending; ties (which the total
  * `CapTier` order makes impossible, but we keep the rule explicit so the
  * contract survives future lattice changes) break by the Astro directive
- * escalation order `satellite < stream < llm < worker < gpu < wasm`. `@liteship/core`
+ * escalation order `adaptive < stream < llm < worker < gpu < wasm`. `@liteship/core`
  * cannot import `@liteship/astro`, so that order is encoded locally below.
  *
  * Cycle discipline: the CapTier-to-target admissibility table PROJECTS from the
@@ -64,9 +64,9 @@ export function tierTargets(tier: CapTier): ReadonlySet<ProjectionTarget> {
  * Each `CapTier` is mapped to the directive whose capability ceiling it
  * matches, so the tiebreak stays a single total order.
  */
-const DIRECTIVE_ORDER: readonly string[] = ['satellite', 'stream', 'llm', 'worker', 'gpu', 'wasm'];
+const DIRECTIVE_ORDER: readonly string[] = ['adaptive', 'stream', 'llm', 'worker', 'gpu', 'wasm'];
 const TIER_DIRECTIVE: Record<CapTier, string> = {
-  static: 'satellite',
+  static: 'adaptive',
   styled: 'stream',
   reactive: 'llm',
   animated: 'worker',

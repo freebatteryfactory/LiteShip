@@ -34,7 +34,7 @@ export interface PluginConfig {
 
 /** Astro-integration slice of a liteship {@link Config}. */
 export interface AstroConfig {
-  readonly satellite?: boolean;
+  readonly adaptive?: boolean;
   readonly edgeRuntime?: boolean;
 }
 
@@ -63,7 +63,7 @@ export const Config = {
   /** Project the Astro-integration slice of a config for `@liteship/astro`. */
   toAstroConfig(cfg: Config): AstroConfig {
     return {
-      ...(cfg.astro?.satellite !== undefined && { satellite: cfg.astro.satellite }),
+      ...(cfg.astro?.adaptive !== undefined && { adaptive: cfg.astro.adaptive }),
       ...(cfg.astro?.edgeRuntime !== undefined && { edgeRuntime: cfg.astro.edgeRuntime }),
     };
   },

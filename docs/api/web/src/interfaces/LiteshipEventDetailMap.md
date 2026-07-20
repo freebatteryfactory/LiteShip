@@ -13,6 +13,14 @@ Events with `undefined` detail omit `detail` on dispatch.
 
 ## Properties
 
+### liteship:adaptive-state
+
+> **liteship:adaptive-state**: [`LiteshipUniformUpdateDetail`](LiteshipUniformUpdateDetail.md)
+
+Defined in: [web/src/wire/liteship-events.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/wire/liteship-events.ts#L69)
+
+***
+
 ### liteship:gpu-ready
 
 > **liteship:gpu-ready**: `undefined`
@@ -169,14 +177,6 @@ replace fresh DOM).
 #### reason
 
 > `readonly` **reason**: `string`
-
-***
-
-### liteship:satellite-state
-
-> **liteship:satellite-state**: [`LiteshipUniformUpdateDetail`](LiteshipUniformUpdateDetail.md)
-
-Defined in: [web/src/wire/liteship-events.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/wire/liteship-events.ts#L69)
 
 ***
 

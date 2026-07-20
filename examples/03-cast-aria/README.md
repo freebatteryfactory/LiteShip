@@ -47,7 +47,7 @@ ladder `resolveInitialState` uses everywhere:
 
 ```ts
 const initialState = resolveInitialState(nav, { clientHints, userAgent });
-<Satellite boundary={nav} initialState={initialState} class="extra"> … </Satellite>
+<Adaptive boundary={nav} initialState={initialState} class="extra"> … </Adaptive>
 ```
 
 1. **The exact `Sec-CH-Viewport-Width` client hint** when the browser sends it. Chromium
@@ -56,7 +56,7 @@ const initialState = resolveInitialState(nav, { clientHints, userAgent });
    matches the container-query CSS at byte one, cold visits included.
 2. **A `User-Agent` estimate** when it doesn't — Firefox and Safari send no viewport hint,
    and no server can know their exact width. This nails the device class, not the window.
-3. **The satellite runtime reconciles** whatever the server couldn't nail, on load.
+3. **The adaptive runtime reconciles** whatever the server couldn't nail, on load.
 
 The common path — a hint-sending browser — is drift-free at first paint. The rest degrade
 to a device-class estimate and a client reconcile, never a permanent disagreement. That
@@ -72,4 +72,4 @@ pnpm --filter @liteship/example-cast-aria dev
 
 Resize the window and inspect the `.extra` element — `aria-hidden` flips with the
 breakpoint, driven by the same boundary as the CSS. On a hint-sending browser it's already
-right on the very first paint; elsewhere the satellite makes it right on load.
+right on the very first paint; elsewhere the adaptive makes it right on load.

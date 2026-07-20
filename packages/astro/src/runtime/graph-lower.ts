@@ -6,7 +6,7 @@
  * mints signal→component→projection nodes for display, this module READS an
  * authored graph and reconstitutes each boundary as a {@link RuntimeBoundary}
  * the EXISTING `boundary.ts` runtime can evaluate and apply — no new evaluation
- * machinery, just a re-projection of the IR onto the seam the satellite
+ * machinery, just a re-projection of the IR onto the seam the adaptive
  * directive already drives.
  *
  * Pure and SSR-safe: `lowerGraph` reads only the graph value (no DOM, no
@@ -92,7 +92,7 @@ function isGlslUniformKey(key: string): boolean {
  *
  * `applyBoundaryState` then composes the live state's slice of each map onto the
  * element on every crossing — exactly the path the build-manifest-joined
- * satellite uses, so a graph-lowered boundary and an authored one apply
+ * adaptive uses, so a graph-lowered boundary and an authored one apply
  * identically.
  */
 function poseBindingsToChannels(poses: readonly PoseNode[]): {

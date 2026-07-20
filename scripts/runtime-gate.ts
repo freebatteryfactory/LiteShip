@@ -4,13 +4,13 @@ import { repoRoot } from '../vitest.shared.js';
 import { verifyFeedbackArtifacts, type RuntimeSeamsReportArtifact } from './artifact-integrity.js';
 import { isDirectExecution } from './audit/shared.js';
 
-interface SatelliteScanSummary {
+interface AdaptiveScanSummary {
   readonly runtimeWarnings?: readonly string[];
 }
 
-interface SatelliteScanArtifact {
+interface AdaptiveScanArtifact {
   readonly schemaVersion?: number;
-  readonly summary?: SatelliteScanSummary;
+  readonly summary?: AdaptiveScanSummary;
 }
 
 function readJson<T>(path: string): T {
@@ -20,7 +20,7 @@ function readJson<T>(path: string): T {
 export function runRuntimeGate(root = repoRoot): void {
   const verification = verifyFeedbackArtifacts(root);
   const runtimeSeams = readJson<RuntimeSeamsReportArtifact>(resolve(root, 'reports', 'runtime-seams.json'));
-  const satelliteScan = readJson<SatelliteScanArtifact>(resolve(root, 'reports', 'satellite-scan.json'));
+  const adaptiveScan = readJson<AdaptiveScanArtifact>(resolve(root, 'reports', 'adaptive-scan.json'));
 
   const failures: string[] = [];
 
@@ -39,17 +39,17 @@ export function runRuntimeGate(root = repoRoot): void {
     );
   }
 
-  const runtimeWarnings = satelliteScan.summary?.runtimeWarnings ?? [];
+  const runtimeWarnings = adaptiveScan.summary?.runtimeWarnings ?? [];
   if (runtimeWarnings.length > 0) {
-    failures.push(`satellite scan still reports runtime warnings: ${runtimeWarnings.join(', ')}`);
+    failures.push(`adaptive scan still reports runtime warnings: ${runtimeWarnings.join(', ')}`);
   }
 
   if (runtimeSeams.schemaVersion !== 7) {
     failures.push(`runtime seams schema version ${runtimeSeams.schemaVersion ?? 'missing'} is not current`);
   }
 
-  if (satelliteScan.schemaVersion !== 6) {
-    failures.push(`satellite scan schema version ${satelliteScan.schemaVersion ?? 'missing'} is not current`);
+  if (adaptiveScan.schemaVersion !== 6) {
+    failures.push(`adaptive scan schema version ${adaptiveScan.schemaVersion ?? 'missing'} is not current`);
   }
 
   if (failures.length > 0) {

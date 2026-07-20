@@ -159,7 +159,7 @@ describe('loadGraphRuntime — lower a graph onto the live cast pipeline', () =>
   let elB: HTMLElement;
   // jsdom has no real ResizeObserver wiring; capture the boundary runtime's
   // viewport-observer callback so the test can fire it after changing innerWidth
-  // (the existing satellite/worker runtime tests use this same mock).
+  // (the existing adaptive/worker runtime tests use this same mock).
   let fireResize: (() => void) | null;
 
   beforeEach(() => {

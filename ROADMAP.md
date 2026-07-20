@@ -205,7 +205,7 @@ validation and three parked items, recorded here so they are not lost:
 Second batch (2026-07-05, production site live on 0.8.0 — scroll-choreography
 work; every claim below re-verified against source before recording):
 
-- **Validation — the satellite/SSR resolution chain works as designed:** the
+- **Validation — the adaptive/SSR resolution chain works as designed:** the
   site fixed a mobile hero-fade bug by keying its tuck animation off the
   boundary's `data-liteship-state` attribute and switching SSR to the
   request-aware `resolveInitialState` (UA + Client Hints + edge tier) — regime

@@ -99,7 +99,7 @@ describe('surface pass — host/virtual-module errors name the profile field and
       'packages/core/src/index.ts': 'export const coreThing = 1;\n',
     });
     const result = runSurfaceAudit(
-      acmeProfile(root, { surfacePolicy: { astroPackage: '@acme/astro', astroClientDirectives: ['satellite'] } }),
+      acmeProfile(root, { surfacePolicy: { astroPackage: '@acme/astro', astroClientDirectives: ['adaptive'] } }),
     );
     const finding = result.findings.find((f) => f.id === 'surface/astro-package-missing');
     expect(finding).toBeDefined();

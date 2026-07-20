@@ -368,7 +368,7 @@ Main surfaces:
 
 - `integration`
 - `resolveInitialState`
-- `satelliteAttrs`
+- `adaptiveAttrs`
 - `resolveInitialStateFallback`
 - `liteshipMiddleware`
 - `LiteshipMiddlewareConfig`
@@ -391,7 +391,7 @@ Host-owned shared runtime surfaces:
 - `@liteship/astro/runtime` continuous-motion FLOOR (`writeContinuousMap`, `initMotionDirective`, `client:motion`) — now production-driven: the `client:motion` directive reads an SSR-inlined lowered program off `data-liteship-motion-program` and, when native `animation-timeline` is unavailable, scrubs the signal through `writeContinuousMap` every frame — sampling the SAME curve the native CSS `linear()` compiled from (one kernel, Law 4). The easing descriptor spans the whole `Easing` catalog: `linear`/`ease`/`spring` sample analytically, and any other catalog curve rides a serialized `points` list emitted ONCE by `Easing.easingToLinearCSS` (ADR-0041) that both floors read. The continuous tween never patches the graph, and reduced-motion `settle` pins the final pose with no tween (opt in with `motion: { enabled: true }`)
 - `@liteship/astro/runtime` AI-apply seam (`castGraphContext`, `admitGraphPatchProposal`, `adoptAppliedGraph`) — cast the live graph OUT to a model-facing `AIContext`, admit a VALIDATED `GraphPatch` proposal IN through the un-bypassable validate→apply token chain, or adopt a server-applied graph after `verifyAppliedGraph`; re-cast the delta; the model producer is downstream (`adoptAppliedGraph` added 0.8.0, original seam 0.4.0)
 - `@liteship/astro/runtime` SVG last-mile (`attachSvgRuntime`, `client:svg`) — resolve `data-liteship-entity → SVGElement` and apply `@liteship/scene`'s `applySvgAttrs` to the live DOM each frame (0.4.0)
-- internal runtime adapters for `satellite`, `stream`, `llm`, `worker`, `wasm`, `graph`, `motion`, and `svg`
+- internal runtime adapters for `adaptive`, `stream`, `llm`, `worker`, `wasm`, `graph`, `motion`, and `svg`
 
 ---
 

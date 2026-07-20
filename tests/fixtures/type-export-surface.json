@@ -1360,6 +1360,10 @@
     "@liteship/astro": {
       "typeExports": [
         {
+          "name": "AdaptiveProps",
+          "kind": "type"
+        },
+        {
           "name": "AstroLoggerLike",
           "kind": "type"
         },
@@ -1413,10 +1417,6 @@
         },
         {
           "name": "ResponsiveMediaHostProjection",
-          "kind": "type"
-        },
-        {
-          "name": "SatelliteProps",
           "kind": "type"
         },
         {

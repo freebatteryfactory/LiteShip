@@ -3,19 +3,19 @@
  * Authored GLSL cast reader chain (D1-GLSL): serialize → parse → apply LIVE.
  *
  * Proves the "authored GLSL → live uniform update on crossing" data path end to
- * end — `satelliteAttrs` folds authored per-state `glslStateUniforms` onto the
+ * end — `adaptiveAttrs` folds authored per-state `glslStateUniforms` onto the
  * boundary payload; `parseBoundary` reads them back; `applyBoundaryState`
  * resolves `glslStateUniforms[currentState]` into `detail.glsl` and dispatches
  * `liteship:uniform-update` so the GPU runtime updates `u_*` uniforms on every
  * crossing (NOT frozen at the SSR'd initial state).
  *
- * The GLSL analog of `satellite-aria.test.ts`.
+ * The GLSL analog of `adaptive-aria.test.ts`.
  *
  * @module
  */
 import { describe, test, expect } from 'vitest';
 import { defineBoundary } from '@liteship/core';
-import { satelliteAttrs } from '@liteship/astro';
+import { adaptiveAttrs } from '@liteship/astro';
 import { applyBoundaryState, parseBoundary } from '../../../packages/astro/src/runtime/boundary.js';
 
 const boundary = defineBoundary({
@@ -35,20 +35,20 @@ const glsl = {
 } as const;
 
 describe('authored GLSL: serialize → parse → apply', () => {
-  test('satelliteAttrs serializes glslStateUniforms onto the boundary payload', () => {
-    const attrs = satelliteAttrs({ boundary, glsl });
+  test('adaptiveAttrs serializes glslStateUniforms onto the boundary payload', () => {
+    const attrs = adaptiveAttrs({ boundary, glsl });
     const payload = JSON.parse(attrs['data-liteship-boundary']!) as { glslStateUniforms?: unknown };
     expect(payload.glslStateUniforms).toEqual(glsl);
   });
 
   test('parseBoundary reads glslStateUniforms back into the RuntimeBoundary', () => {
-    const attrs = satelliteAttrs({ boundary, glsl });
+    const attrs = adaptiveAttrs({ boundary, glsl });
     const runtime = parseBoundary(attrs['data-liteship-boundary']!);
     expect(runtime?.glslStateUniforms).toEqual(glsl);
   });
 
   test('applyBoundaryState resolves authored GLSL for the LIVE state into detail.glsl', () => {
-    const attrs = satelliteAttrs({ boundary, glsl });
+    const attrs = adaptiveAttrs({ boundary, glsl });
     const runtime = parseBoundary(attrs['data-liteship-boundary']!)!;
     const el = document.createElement('div');
 
@@ -67,7 +67,7 @@ describe('authored GLSL: serialize → parse → apply', () => {
   });
 
   test('authored GLSL composes over the compositor live u_state index', () => {
-    const attrs = satelliteAttrs({ boundary, glsl });
+    const attrs = adaptiveAttrs({ boundary, glsl });
     const runtime = parseBoundary(attrs['data-liteship-boundary']!)!;
     const el = document.createElement('div');
     let detailGlsl: Record<string, number> | undefined;
@@ -88,7 +88,7 @@ describe('authored GLSL: serialize → parse → apply', () => {
   });
 
   test('a boundary with no authored GLSL is unaffected (no glslStateUniforms)', () => {
-    const attrs = satelliteAttrs({ boundary });
+    const attrs = adaptiveAttrs({ boundary });
     const payload = JSON.parse(attrs['data-liteship-boundary']!) as { glslStateUniforms?: unknown };
     expect(payload.glslStateUniforms).toBeUndefined();
     const runtime = parseBoundary(attrs['data-liteship-boundary']!)!;

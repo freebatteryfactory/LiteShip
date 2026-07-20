@@ -2,7 +2,7 @@
 /**
  * Authored ARIA reader chain (P1 Layer 2): serialize → parse → apply LIVE.
  *
- * Proves the "have-cake" data path end to end — `satelliteAttrs` folds authored
+ * Proves the "have-cake" data path end to end — `adaptiveAttrs` folds authored
  * `stateAttributes` onto the boundary payload and SSRs the initial state's
  * attrs; `parseBoundary` reads them back; `applyBoundaryState` composes
  * `stateAttributes[currentState]` over the reflected aria so `aria-expanded`
@@ -12,7 +12,7 @@
  */
 import { describe, test, expect } from 'vitest';
 import { defineBoundary } from '@liteship/core';
-import { satelliteAttrs } from '@liteship/astro';
+import { adaptiveAttrs } from '@liteship/astro';
 import { applyBoundaryState, parseBoundary } from '../../../packages/astro/src/runtime/boundary.js';
 
 const boundary = defineBoundary({
@@ -29,8 +29,8 @@ const aria = {
 } as const;
 
 describe('authored ARIA: serialize → parse → apply', () => {
-  test('satelliteAttrs serializes stateAttributes and SSRs the initial state attrs', () => {
-    const attrs = satelliteAttrs({ boundary, aria });
+  test('adaptiveAttrs serializes stateAttributes and SSRs the initial state attrs', () => {
+    const attrs = adaptiveAttrs({ boundary, aria });
     const payload = JSON.parse(attrs['data-liteship-boundary']!) as { stateAttributes?: unknown };
     expect(payload.stateAttributes).toEqual(aria);
     // initial state = collapsed → its authored attr is on the element at SSR
@@ -39,13 +39,13 @@ describe('authored ARIA: serialize → parse → apply', () => {
   });
 
   test('parseBoundary reads stateAttributes back into the RuntimeBoundary', () => {
-    const attrs = satelliteAttrs({ boundary, aria });
+    const attrs = adaptiveAttrs({ boundary, aria });
     const runtime = parseBoundary(attrs['data-liteship-boundary']!);
     expect(runtime?.stateAttributes).toEqual(aria);
   });
 
   test('applyBoundaryState composes authored aria for the LIVE state (updates on crossing)', () => {
-    const attrs = satelliteAttrs({ boundary, aria });
+    const attrs = adaptiveAttrs({ boundary, aria });
     const runtime = parseBoundary(attrs['data-liteship-boundary']!)!;
     const el = document.createElement('div');
 
@@ -57,7 +57,7 @@ describe('authored ARIA: serialize → parse → apply', () => {
   });
 
   test('the dispatched liteship:state detail carries the composed authored aria', () => {
-    const attrs = satelliteAttrs({ boundary, aria });
+    const attrs = adaptiveAttrs({ boundary, aria });
     const runtime = parseBoundary(attrs['data-liteship-boundary']!)!;
     const el = document.createElement('div');
     let seen: Record<string, string> | undefined;
@@ -69,7 +69,7 @@ describe('authored ARIA: serialize → parse → apply', () => {
   });
 
   test('a boundary with no authored aria is unaffected (no stateAttributes, no attrs)', () => {
-    const attrs = satelliteAttrs({ boundary });
+    const attrs = adaptiveAttrs({ boundary });
     const payload = JSON.parse(attrs['data-liteship-boundary']!) as { stateAttributes?: unknown };
     expect(payload.stateAttributes).toBeUndefined();
     expect(attrs['aria-expanded']).toBeUndefined();

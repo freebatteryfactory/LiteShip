@@ -2,9 +2,9 @@
  * Client-runtime helpers for parsing serialized boundaries out of
  * `data-liteship-boundary` attributes, attaching signal observers
  * (viewport, scroll), evaluating boundaries live, and applying the
- * resulting state to a satellite element.
+ * resulting state to an adaptive element.
  *
- * Consumed by the Astro `client:satellite` / `client:worker` directives
+ * Consumed by the Astro `client:adaptive` / `client:worker` directives
  * when they hydrate a server-rendered `<div data-liteship-boundary="...">`.
  *
  * @module
@@ -30,7 +30,7 @@ export type WgslUniformVector =
 export type WgslUniformValue = number | WgslUniformVector;
 
 /**
- * JSON shape produced on the server by `satelliteAttrs()` and read back
+ * JSON shape produced on the server by `adaptiveAttrs()` and read back
  * on the client via {@link parseBoundary}. Every field corresponds
  * directly to a {@link Boundary} input.
  */
@@ -52,28 +52,28 @@ export interface SerializedBoundary {
   };
   /**
    * Optional authored per-state ARIA/data attributes (`@aria` blocks), keyed by
-   * state then attribute. Joined onto the satellite from the build manifest by
+   * state then attribute. Joined onto the adaptive from the build manifest by
    * content address. Absent for boundaries with no `@aria` — the common case,
    * so the field is optional and needs no `_version` bump for old payloads.
    */
   readonly stateAttributes?: Readonly<Record<string, Readonly<Record<string, string>>>>;
   /**
    * Optional authored per-state GLSL uniform values (`@glsl` blocks), keyed by
-   * state then `u_*` uniform name. Joined onto the satellite from the build
+   * state then `u_*` uniform name. Joined onto the adaptive from the build
    * manifest by content address — the GLSL analog of {@link stateAttributes}.
    * Absent for boundaries with no `@glsl`; optional so old payloads parse.
    */
   readonly glslStateUniforms?: Readonly<Record<string, Readonly<Record<string, number>>>>;
   /**
    * Optional authored per-state WGSL uniform binding values (`@wgsl` blocks),
-   * keyed by state then bare snake_case field name. Joined onto the satellite
+   * keyed by state then bare snake_case field name. Joined onto the adaptive
    * from the build manifest by content address. Absent for boundaries with no
    * `@wgsl` — optional, so old payloads need no `_version` bump.
    */
   readonly stateWgsl?: Readonly<Record<string, Readonly<Record<string, WgslUniformValue>>>>;
   /**
    * Optional emitted GLSL preamble (`GLSLCompileResult.declarations`: state
-   * `#define`s + `uniform <type> u_*;` lines). Joined onto the satellite from the
+   * `#define`s + `uniform <type> u_*;` lines). Joined onto the adaptive from the
    * build manifest's `outputs[].glsl.declarations` — the compiler's OWN uniform
    * vocabulary, which the `client:gpu` GLSL runtime prepends to the fragment
    * source before compile. The uniform names the runtime binds and the names the
@@ -143,7 +143,7 @@ export interface BoundaryStateDetail {
 /** Boundary state events that share {@link BoundaryStateDetail} / uniform payloads. */
 export type BoundaryStateEventName = Extract<
   LiteshipEventName,
-  'liteship:state' | 'liteship:satellite-state' | 'liteship:graph-state' | 'liteship:worker-state'
+  'liteship:state' | 'liteship:adaptive-state' | 'liteship:graph-state' | 'liteship:worker-state'
 >;
 
 function isAllowedBoundaryCssProperty(property: string): boolean {
@@ -159,8 +159,8 @@ export function boundaryParseFailureMessage(boundaryJson: string | null): string
   const parsed = parseBoundaryPayload(boundaryJson);
   if (!parsed) {
     return (
-      `data-liteship-boundary on this element is not valid JSON — the satellite runtime will stay inert. ` +
-      `Fix: spread satelliteAttrs({ boundary }) from @liteship/astro or re-serialize with JSON.stringify.`
+      `data-liteship-boundary on this element is not valid JSON — the adaptive runtime will stay inert. ` +
+      `Fix: spread adaptiveAttrs({ boundary }) from @liteship/astro or re-serialize with JSON.stringify.`
     );
   }
 
@@ -175,7 +175,7 @@ export function boundaryParseFailureMessage(boundaryJson: string | null): string
   ) {
     return (
       `data-liteship-boundary JSON is missing required fields (input, thresholds, states) — ` +
-      `the satellite runtime will stay inert. Fix: export a defineBoundary({ input, at }) value via satelliteAttrs().`
+      `the adaptive runtime will stay inert. Fix: export a defineBoundary({ input, at }) value via adaptiveAttrs().`
     );
   }
 
@@ -201,7 +201,7 @@ function parseBoundaryPayload(boundaryJson: string): Partial<SerializedBoundary>
 
 /**
  * Parse a JSON-serialised boundary (as produced by
- * `satelliteAttrs()`) into a {@link RuntimeBoundary}. Returns `null`
+ * `adaptiveAttrs()`) into a {@link RuntimeBoundary}. Returns `null`
  * for malformed or structurally invalid payloads so callers can fall
  * back cleanly rather than throwing mid-hydration.
  */
@@ -537,7 +537,7 @@ export function normalizeBoundaryState(state: {
 }
 
 /**
- * Apply a normalised state to a satellite element: sets
+ * Apply a normalised state to an adaptive element: sets
  * `data-liteship-state`, writes whitelisted CSS variables and ARIA
  * attributes, and dispatches `eventName` + `liteship:uniform-update`
  * custom events for downstream listeners (GPU/WASM runtimes).
@@ -565,7 +565,7 @@ export function applyBoundaryState(
 
   // Compose authored per-state ARIA (`@aria`) over the reflected aria so
   // `aria-expanded`/`role` track the live state, not the SSR'd initial state.
-  // `stateAttributes` rides the satellite from the build manifest by content
+  // `stateAttributes` rides the adaptive from the build manifest by content
   // address; absent for boundaries with no `@aria`, where this is a no-op.
   const authored = stateName ? boundary.stateAttributes?.[stateName] : undefined;
   // Authored per-state GPU uniforms for the LIVE state, composed over the

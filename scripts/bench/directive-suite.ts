@@ -179,36 +179,36 @@ const perfBoundary = defineBoundary({
   ] as const,
 });
 
-const satelliteBoundary = {
+const adaptiveBoundary = {
   input: 'viewport.width',
   thresholds: [0, 768, 1280],
   states: ['mobile', 'tablet', 'desktop'],
   hysteresis: 40,
 } as const;
 
-const canonicalSatelliteBoundary = defineBoundary({
-  input: satelliteBoundary.input,
+const canonicalAdaptiveBoundary = defineBoundary({
+  input: adaptiveBoundary.input,
   at: [
     [0, 'mobile'],
     [768, 'tablet'],
     [1280, 'desktop'],
   ] as const,
-  hysteresis: satelliteBoundary.hysteresis,
+  hysteresis: adaptiveBoundary.hysteresis,
 });
-const sharedSatelliteBoundary = parseBoundary(
+const sharedAdaptiveBoundary = parseBoundary(
   JSON.stringify({
     id: 'layout',
-    input: satelliteBoundary.input,
-    thresholds: satelliteBoundary.thresholds,
-    states: satelliteBoundary.states,
-    hysteresis: satelliteBoundary.hysteresis,
+    input: adaptiveBoundary.input,
+    thresholds: adaptiveBoundary.thresholds,
+    states: adaptiveBoundary.states,
+    hysteresis: adaptiveBoundary.hysteresis,
   }),
 );
 const boundaryJSON = JSON.stringify({
-  input: satelliteBoundary.input,
-  thresholds: satelliteBoundary.thresholds,
-  states: satelliteBoundary.states,
-  hysteresis: satelliteBoundary.hysteresis,
+  input: adaptiveBoundary.input,
+  thresholds: adaptiveBoundary.thresholds,
+  states: adaptiveBoundary.states,
+  hysteresis: adaptiveBoundary.hysteresis,
 });
 
 const patchMessage = JSON.stringify({ type: 'patch', data: '<p>Updated</p>' });
@@ -248,8 +248,8 @@ const edgeHeaders = new Headers({
   'sec-ch-dpr': '2',
 });
 /**
- * Prior-frame state for the satellite/worker hot-path pairs. Production
- * `client:satellite` (packages/astro/src/runtime/satellite.ts:39) and the
+ * Prior-frame state for the adaptive/worker hot-path pairs. Production
+ * `client:adaptive` (packages/astro/src/runtime/adaptive.ts:39) and the
  * worker fallback/host steady-state update (packages/astro/src/runtime/worker.ts:253)
  * BOTH call `evaluateBoundary(boundary, value, previousState || undefined)` —
  * i.e. they carry the prior frame's state into every re-evaluation, taking the
@@ -264,8 +264,8 @@ const edgeHeaders = new Headers({
  * hysteresis exists for, exercised on BOTH the directive and the hand-written
  * baseline so the comparison is work-equivalent, not work-advantaged.
  */
-const SATELLITE_PREVIOUS_STATE = 'tablet';
-const SATELLITE_HOT_VALUE = 1290;
+const ADAPTIVE_PREVIOUS_STATE = 'tablet';
+const ADAPTIVE_HOT_VALUE = 1290;
 const HOT_LOOP_REPEAT = 250;
 const STREAM_HOT_LOOP_REPEAT = 5000;
 const LLM_HOT_LOOP_REPEAT = 5000;
@@ -294,7 +294,7 @@ export function buildDirectiveBenchConfig(replicates = DEFAULT_GATE_REPLICATES):
 function buildCompositeState(state: string): void {
   const discrete: Record<string, string> = { layout: state };
   const css: Record<string, string> = { '--liteship-layout': state };
-  const glsl: Record<string, number> = { u_layout: satelliteBoundary.states.indexOf(state) };
+  const glsl: Record<string, number> = { u_layout: adaptiveBoundary.states.indexOf(state) };
   const aria: Record<string, string> = { 'data-liteship-layout': state };
   void discrete;
   void css;
@@ -311,18 +311,18 @@ function buildCompositePayload(state: string): {
   return {
     discrete: { layout: state },
     css: { '--liteship-layout': state },
-    glsl: { u_layout: satelliteBoundary.states.indexOf(state) },
+    glsl: { u_layout: adaptiveBoundary.states.indexOf(state) },
     aria: { 'data-liteship-layout': state },
   };
 }
 
 function buildWorkerCompositeState(name: string, state: string): CompositeState {
-  const stateIndex = satelliteBoundary.states.indexOf(state);
+  const stateIndex = adaptiveBoundary.states.indexOf(state);
 
   return {
     discrete: { [name]: state },
     blend: {
-      [name]: Object.fromEntries(satelliteBoundary.states.map((candidate) => [candidate, candidate === state ? 1 : 0])),
+      [name]: Object.fromEntries(adaptiveBoundary.states.map((candidate) => [candidate, candidate === state ? 1 : 0])),
     },
     outputs: {
       css: { [`--liteship-${name}`]: state },
@@ -335,7 +335,7 @@ function buildWorkerCompositeState(name: string, state: string): CompositeState 
 function buildResolvedStatePayload(state: string): readonly BenchResolvedState[] {
   return Array.from({ length: 16 }, (_, index) => ({
     name: `layout-${index}`,
-    state: satelliteBoundary.states[index % satelliteBoundary.states.length] ?? state,
+    state: adaptiveBoundary.states[index % adaptiveBoundary.states.length] ?? state,
     generation: index + 1,
   }));
 }
@@ -444,7 +444,7 @@ class BenchWorker {
 
         const [name, state] = this.states.entries().next().value ?? [
           'layout',
-          { currentState: satelliteBoundary.states[0], initialState: satelliteBoundary.states[0] },
+          { currentState: adaptiveBoundary.states[0], initialState: adaptiveBoundary.states[0] },
         ];
         this.dispatchMessageAsync(
           {
@@ -508,7 +508,7 @@ class BenchWorker {
       case 'compute': {
         const [name, state] = this.states.entries().next().value ?? [
           'layout',
-          { currentState: satelliteBoundary.states[0], initialState: satelliteBoundary.states[0] },
+          { currentState: adaptiveBoundary.states[0], initialState: adaptiveBoundary.states[0] },
         ];
         this.dispatchMessageAsync(
           {
@@ -545,7 +545,7 @@ class BenchWorker {
           const existing = this.states.get(update.name);
           this.states.set(update.name, {
             currentState: boundaryStateFromValue(update.value),
-            initialState: existing?.initialState ?? satelliteBoundary.states[0],
+            initialState: existing?.initialState ?? adaptiveBoundary.states[0],
           });
         }
         break;
@@ -682,28 +682,28 @@ function quantile(values: readonly number[], percentile: number): number {
   return sorted[index] ?? 0;
 }
 
-function requireSharedSatelliteBoundary(): typeof sharedSatelliteBoundary & object {
-  if (!sharedSatelliteBoundary) {
-    throw new Error('Shared satellite boundary benchmark fixture failed to parse.');
+function requireSharedAdaptiveBoundary(): typeof sharedAdaptiveBoundary & object {
+  if (!sharedAdaptiveBoundary) {
+    throw new Error('Shared adaptive boundary benchmark fixture failed to parse.');
   }
 
-  return sharedSatelliteBoundary;
+  return sharedAdaptiveBoundary;
 }
 
 /**
- * The EXACT production hot-path shape. `client:satellite`
- * (satellite.ts:39) and the worker steady-state update (worker.ts:253) call
+ * The EXACT production hot-path shape. `client:adaptive`
+ * (adaptive.ts:39) and the worker steady-state update (worker.ts:253) call
  * `evaluateBoundary(boundary, value, previousState || undefined)` — the
  * directive-abstraction call under measurement. With a hysteresis boundary and
  * a real `previousState`, this routes through `Boundary.evaluateWithHysteresis`
  * inside `evaluateBoundary`, including the dead-zone scan on a crossing.
  */
-function evaluateSatelliteDirectiveState(value: number): string {
-  return evaluateBoundary(requireSharedSatelliteBoundary(), value, SATELLITE_PREVIOUS_STATE);
+function evaluateAdaptiveDirectiveState(value: number): string {
+  return evaluateBoundary(requireSharedAdaptiveBoundary(), value, ADAPTIVE_PREVIOUS_STATE);
 }
 
 /**
- * The hand-written equivalent of {@link evaluateSatelliteDirectiveState}'s
+ * The hand-written equivalent of {@link evaluateAdaptiveDirectiveState}'s
  * observable work: the canonical hysteresis primitive `evaluateBoundary` itself
  * delegates to, called directly with the same value + previousState. Because
  * the boundary has hysteresis and `previousState` crosses a threshold, this runs
@@ -711,8 +711,8 @@ function evaluateSatelliteDirectiveState(value: number): string {
  * directive-abstraction frame (the `evaluateBoundary` spec-gate + branch), which
  * is precisely the tax this pair is meant to isolate.
  */
-function evaluateSatelliteBaselineState(value: number): string {
-  return Boundary.evaluateWithHysteresis(canonicalSatelliteBoundary, value, SATELLITE_PREVIOUS_STATE) as string;
+function evaluateAdaptiveBaselineState(value: number): string {
+  return Boundary.evaluateWithHysteresis(canonicalAdaptiveBoundary, value, ADAPTIVE_PREVIOUS_STATE) as string;
 }
 
 /**
@@ -723,7 +723,7 @@ function evaluateSatelliteBaselineState(value: number): string {
  * raw evaluate — keeping their setup cheap without affecting the gated pair.
  */
 function boundaryStateFromValue(value: number): string {
-  return Boundary.evaluate(canonicalSatelliteBoundary, value) as string;
+  return Boundary.evaluate(canonicalAdaptiveBoundary, value) as string;
 }
 
 function createBenchLLMRuntimeSession() {
@@ -1091,7 +1091,7 @@ async function runWorkerRuntimeStartupParityBaseline(): Promise<void> {
 }
 
 const sharedWorkerRuntimeCoordinator = RuntimeCoordinator.create({ capacity: 8, name: 'bench-worker-runtime-steady' });
-sharedWorkerRuntimeCoordinator.registerQuantizer('layout', satelliteBoundary.states);
+sharedWorkerRuntimeCoordinator.registerQuantizer('layout', adaptiveBoundary.states);
 const workerResolvedStatePayload = buildResolvedStatePayload(boundaryStateFromValue(800));
 const workerResolvedStateEnvelope = makeResolvedStateEnvelope('apply-resolved-state', workerResolvedStatePayload, true);
 
@@ -1109,8 +1109,8 @@ function runWorkerRuntimeCoordinatorSteady(): void {
 function registerBenchWorkerQuantizer(host: WorkerHost): void {
   host.compositor.addQuantizer('layout', {
     id: 'layout',
-    states: satelliteBoundary.states,
-    thresholds: satelliteBoundary.thresholds,
+    states: adaptiveBoundary.states,
+    thresholds: adaptiveBoundary.thresholds,
   });
 }
 
@@ -1241,14 +1241,14 @@ function spread(values: readonly number[]): number | null {
 
 export const DIRECTIVE_BENCH_PAIRS: readonly BenchPair[] = [
   {
-    label: 'satellite',
-    directive: '[DIRECTIVE] satellite -- evaluate + state string (hot path)',
-    baseline: '[MANUAL] satellite -- Boundary.evaluateWithHysteresis + state string',
+    label: 'adaptive',
+    directive: '[DIRECTIVE] adaptive -- evaluate + state string (hot path)',
+    baseline: '[MANUAL] adaptive -- Boundary.evaluateWithHysteresis + state string',
     threshold: HARD_GATE_OVERHEAD_THRESHOLD,
     gate: true,
     runtimeClass: 'hot-path',
     rationale:
-      'Production client:satellite (satellite.ts:39) evaluates WITH previousState — the hysteresis branch — so the directive measures evaluateBoundary(boundary, value, previousState) against the canonical evaluateWithHysteresis it delegates to. Both run the identical dead-zone scan; the ratio is the pure directive-abstraction tax.',
+      'Production client:adaptive (adaptive.ts:39) evaluates WITH previousState — the hysteresis branch — so the directive measures evaluateBoundary(boundary, value, previousState) against the canonical evaluateWithHysteresis it delegates to. Both run the identical dead-zone scan; the ratio is the pure directive-abstraction tax.',
   },
   {
     label: 'stream',
@@ -1383,27 +1383,27 @@ const asyncBenchTaskOptions = { async: true } satisfies FnOptions;
 
 export const DIRECTIVE_BENCH_TASKS: readonly DirectiveBenchTaskDefinition[] = [
   {
-    name: '[DIRECTIVE] satellite -- evaluate + state string (hot path)',
+    name: '[DIRECTIVE] adaptive -- evaluate + state string (hot path)',
     fn: () => {
       repeatHotPath(() => {
-        const state = evaluateSatelliteDirectiveState(SATELLITE_HOT_VALUE);
+        const state = evaluateAdaptiveDirectiveState(ADAPTIVE_HOT_VALUE);
         void `data-liteship-state=${state}`;
       });
     },
     options: syncBenchTaskOptions,
   },
   {
-    name: '[MANUAL] satellite -- Boundary.evaluateWithHysteresis + state string',
+    name: '[MANUAL] adaptive -- Boundary.evaluateWithHysteresis + state string',
     fn: () => {
       repeatHotPath(() => {
-        const state = evaluateSatelliteBaselineState(SATELLITE_HOT_VALUE);
+        const state = evaluateAdaptiveBaselineState(ADAPTIVE_HOT_VALUE);
         void `data-liteship-state=${state}`;
       });
     },
     options: syncBenchTaskOptions,
   },
   {
-    name: '[OVERHEAD] satellite -- JSON.parse boundary (hydration)',
+    name: '[OVERHEAD] adaptive -- JSON.parse boundary (hydration)',
     fn: () => {
       repeatHotPath(() => {
         void JSON.parse(boundaryJSON);
@@ -1495,9 +1495,9 @@ export const DIRECTIVE_BENCH_TASKS: readonly DirectiveBenchTaskDefinition[] = [
       repeatHotPath(() => {
         // Production worker steady-state update (worker.ts:253) calls
         // `evaluateBoundary(boundary, value, previousState || undefined)` — the
-        // SAME hysteresis-branch directive call satellite makes — then builds a
+        // SAME hysteresis-branch directive call adaptive makes — then builds a
         // composite. Measure that exact shape, not the no-previousState path.
-        const state = evaluateSatelliteDirectiveState(SATELLITE_HOT_VALUE);
+        const state = evaluateAdaptiveDirectiveState(ADAPTIVE_HOT_VALUE);
         buildCompositeState(state);
       });
     },
@@ -1510,7 +1510,7 @@ export const DIRECTIVE_BENCH_TASKS: readonly DirectiveBenchTaskDefinition[] = [
         // Hand-written equivalent: the canonical hysteresis primitive directly,
         // then the identical composite build. Work-equivalent to the directive
         // closure save for the directive-abstraction frame.
-        const state = evaluateSatelliteBaselineState(SATELLITE_HOT_VALUE);
+        const state = evaluateAdaptiveBaselineState(ADAPTIVE_HOT_VALUE);
         buildCompositeState(state);
       });
     },
@@ -1838,7 +1838,7 @@ export function evaluateBenchPairs(
 
 /**
  * INTERLEAVED PAIRED MEASUREMENT — the window-invariant overhead method for the hot-path ratio gate
- * pairs (`satellite`, `stream`, `llm`, `worker`). Each compares two near-equal ~6µs operations. The
+ * pairs (`adaptive`, `stream`, `llm`, `worker`). Each compares two near-equal ~6µs operations. The
  * per-task pass measures the directive and the baseline as SEPARATE tinybench tasks — each in its own
  * time window — so the RATIO is sensitive to time-varying CI runner contention: a runner that inflates
  * the directive window but not the baseline window swings the overhead 4% → 40% even though NEITHER
@@ -1852,7 +1852,7 @@ export function evaluateBenchPairs(
  * (pinned by the regression test in tests/unit/meta/bench-gate.test.ts), so this removes the
  * measurement-window FALSE POSITIVE without going blind to a real one.
  */
-const INTERLEAVED_GATE_PAIR_LABELS: ReadonlySet<string> = new Set(['satellite', 'stream', 'llm', 'worker']);
+const INTERLEAVED_GATE_PAIR_LABELS: ReadonlySet<string> = new Set(['adaptive', 'stream', 'llm', 'worker']);
 
 /**
  * A LARGER sample than the per-task pass — the second axis of the hardening (more samples → stabler
@@ -2388,24 +2388,24 @@ export interface DirectiveProductionPin {
 
 export const DIRECTIVE_PRODUCTION_PINS: readonly DirectiveProductionPin[] = [
   {
-    label: 'satellite',
-    productionFile: 'packages/astro/src/runtime/satellite.ts',
+    label: 'adaptive',
+    productionFile: 'packages/astro/src/runtime/adaptive.ts',
     productionCall: 'evaluateBoundary(runtimeBoundary, value, previousState || undefined)',
-    value: SATELLITE_HOT_VALUE,
-    previousState: SATELLITE_PREVIOUS_STATE,
-    directiveState: evaluateSatelliteDirectiveState,
-    hysteresisState: (value, previousState) => evaluateBoundary(requireSharedSatelliteBoundary(), value, previousState),
-    rawState: (value) => evaluateBoundary(requireSharedSatelliteBoundary(), value),
+    value: ADAPTIVE_HOT_VALUE,
+    previousState: ADAPTIVE_PREVIOUS_STATE,
+    directiveState: evaluateAdaptiveDirectiveState,
+    hysteresisState: (value, previousState) => evaluateBoundary(requireSharedAdaptiveBoundary(), value, previousState),
+    rawState: (value) => evaluateBoundary(requireSharedAdaptiveBoundary(), value),
   },
   {
     label: 'worker',
     productionFile: 'packages/astro/src/runtime/worker.ts',
     productionCall: 'evaluateBoundary(boundary, value, previousState || undefined)',
-    value: SATELLITE_HOT_VALUE,
-    previousState: SATELLITE_PREVIOUS_STATE,
-    // The worker directive closure routes the SAME hysteresis call as satellite.
-    directiveState: evaluateSatelliteDirectiveState,
-    hysteresisState: (value, previousState) => evaluateBoundary(requireSharedSatelliteBoundary(), value, previousState),
-    rawState: (value) => evaluateBoundary(requireSharedSatelliteBoundary(), value),
+    value: ADAPTIVE_HOT_VALUE,
+    previousState: ADAPTIVE_PREVIOUS_STATE,
+    // The worker directive closure routes the SAME hysteresis call as adaptive.
+    directiveState: evaluateAdaptiveDirectiveState,
+    hysteresisState: (value, previousState) => evaluateBoundary(requireSharedAdaptiveBoundary(), value, previousState),
+    rawState: (value) => evaluateBoundary(requireSharedAdaptiveBoundary(), value),
   },
 ] as const;

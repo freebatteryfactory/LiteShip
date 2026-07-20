@@ -21,7 +21,7 @@ afterEach(() => {
   vi.doUnmock('../../../packages/astro/src/runtime/stream.js');
   vi.doUnmock('../../../packages/astro/src/runtime/wasm.js');
   vi.doUnmock('../../../packages/astro/src/runtime/motion.js');
-  vi.doUnmock('../../../packages/astro/src/client-directives/satellite.js');
+  vi.doUnmock('../../../packages/astro/src/client-directives/adaptive.js');
   vi.doUnmock('../../../packages/astro/src/client-directives/gpu.js');
 });
 
@@ -151,7 +151,7 @@ describe('Astro directive boot scanner', () => {
 
     const marked = document.createElement('div');
     marked.setAttribute('data-liteship-boundary', '{}');
-    marked.setAttribute('data-liteship-directive', 'satellite');
+    marked.setAttribute('data-liteship-directive', 'adaptive');
     document.body.replaceChildren(marked);
 
     Diagnostics.clearOnce();
@@ -169,8 +169,8 @@ describe('Astro directive boot scanner', () => {
 
     const { scanAndBootDirectives } = await import('../../../packages/astro/src/runtime/directive-boot.js');
 
-    // data-liteship-boundary (a satellite/worker payload) beside a gpu shader attr, but NO
-    // satellite/worker marker. gpu does not evaluate the boundary, so it stays inert --
+    // data-liteship-boundary (an adaptive/worker payload) beside a gpu shader attr, but NO
+    // adaptive/worker marker. gpu does not evaluate the boundary, so it stays inert --
     // the marker warning must still fire, not be suppressed by the non-consuming peer.
     const el = document.createElement('div');
     el.setAttribute('data-liteship-boundary', '{}');
@@ -207,7 +207,7 @@ describe('Astro directive boot scanner', () => {
     // Collision is marker-based and detected at scan time, so it fires even for a
     // directive whose own tier gate would no-op it before boot. Mock the entrypoints
     // so the warning is isolated from real directive side effects.
-    vi.doMock('../../../packages/astro/src/client-directives/satellite.js', () => ({ default: vi.fn() }));
+    vi.doMock('../../../packages/astro/src/client-directives/adaptive.js', () => ({ default: vi.fn() }));
     vi.doMock('../../../packages/astro/src/client-directives/gpu.js', () => ({ default: vi.fn() }));
 
     const { Diagnostics } = await import('@liteship/core');
@@ -218,12 +218,12 @@ describe('Astro directive boot scanner', () => {
     const { scanAndBootDirectives } = await import('../../../packages/astro/src/runtime/directive-boot.js');
 
     const el = document.createElement('div');
-    el.setAttribute('data-liteship-directive', 'satellite gpu');
+    el.setAttribute('data-liteship-directive', 'adaptive gpu');
     document.body.appendChild(el);
 
-    await scanAndBootDirectives(['satellite', 'gpu']);
+    await scanAndBootDirectives(['adaptive', 'gpu']);
 
-    const collisions = events.filter((event) => event.code === 'directive-collision:gpu+satellite');
+    const collisions = events.filter((event) => event.code === 'directive-collision:adaptive+gpu');
     expect(collisions).toHaveLength(1);
     expect(collisions[0]?.message).toContain('Fix:');
   });

@@ -159,13 +159,13 @@ The important shift is:
 
 That produces a more deliberate visual system.
 
-### 6. Satellites
+### 6. Adaptives
 
-A satellite is the shell that binds authored definitions to real DOM.
+An adaptive is the shell that binds authored definitions to real DOM.
 
 For Astro, this matters a lot. Astro wants HTML first. LiteShip fits that posture because the shell is fundamentally DOM-and-attribute based, not virtual-DOM dependent.
 
-Satellites are the bridge between:
+Adaptives are the bridge between:
 
 - authored boundaries, tokens, themes, and styles
 - runtime detection and hydration
@@ -377,4 +377,4 @@ If the agents start from React habits, they will ask the wrong questions. If the
 
 For visually rich Astro sites, LiteShip is best understood as:
 
-> a signal-aware authored state system that casts named-state outputs onto whichever rung of the runtime escalation ladder (CSS → satellite → stream → worker → wasm → gpu) actually carries the surface meaning.
+> a signal-aware authored state system that casts named-state outputs onto whichever rung of the runtime escalation ladder (CSS → adaptive → stream → worker → wasm → gpu) actually carries the surface meaning.

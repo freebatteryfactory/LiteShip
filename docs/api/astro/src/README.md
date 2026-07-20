@@ -10,8 +10,8 @@
 projection hosted as islands and directives.
 
 Provides the Astro `Integration` that registers `@liteship/vite`,
-injects client tier detection, **rigs** the `client:satellite` directive,
-and exposes `Satellite` for shells with server-resolved bearings.
+injects client tier detection, **rigs** the `client:adaptive` directive,
+and exposes `Adaptive` for shells with server-resolved bearings.
 
 ## Example
 
@@ -27,6 +27,7 @@ const config = defineConfig({
 
 ## Interfaces
 
+- [AdaptiveProps](interfaces/AdaptiveProps.md)
 - [AstroLoggerLike](interfaces/AstroLoggerLike.md)
 - [DocsBundleManifest](interfaces/DocsBundleManifest.md)
 - [DocsMcpBundle](interfaces/DocsMcpBundle.md)
@@ -37,7 +38,6 @@ const config = defineConfig({
 - [QuantizeProps](interfaces/QuantizeProps.md)
 - [ResolvedInitialState](interfaces/ResolvedInitialState.md)
 - [ResponsiveMediaHostProjection](interfaces/ResponsiveMediaHostProjection.md)
-- [SatelliteProps](interfaces/SatelliteProps.md)
 - [ServerIslandContext](interfaces/ServerIslandContext.md)
 
 ## Type Aliases
@@ -53,6 +53,7 @@ const config = defineConfig({
 
 ## Functions
 
+- [adaptiveAttrs](functions/adaptiveAttrs.md)
 - [applyResponsiveMediaVary](functions/applyResponsiveMediaVary.md)
 - [bridgeDiagnosticsToAstroLogger](functions/bridgeDiagnosticsToAstroLogger.md)
 - [docsMcpRoute](functions/docsMcpRoute.md)
@@ -67,7 +68,6 @@ const config = defineConfig({
 - [resolveInitialState](functions/resolveInitialState.md)
 - [resolveInitialStateFallback](functions/resolveInitialStateFallback.md)
 - [resolveInitialStateWithReceipt](functions/resolveInitialStateWithReceipt.md)
-- [satelliteAttrs](functions/satelliteAttrs.md)
 - [serializeBoundaryCss](functions/serializeBoundaryCss.md)
 
 ## References

@@ -54,7 +54,7 @@ describe('swap pipeline', () => {
       order.push(`reinit:slotKnown=${getSlotRegistry().get('/next' as never) !== undefined}`);
     });
 
-    runSwapPipeline(['satellite']);
+    runSwapPipeline(['adaptive']);
 
     // By the time reinit fired, the slot rescan had already registered /next — i.e.
     // step 1 ran strictly before step 3.
@@ -66,8 +66,8 @@ describe('swap pipeline', () => {
     document.body.innerHTML = `<div id="widget" data-liteship-boundary='{"id":"h","input":"viewport.width","thresholds":[0],"states":["c"]}'></div>`;
     const addSpy = vi.spyOn(document, 'addEventListener');
 
-    installSwapPipeline(['satellite']);
-    installSwapPipeline(['satellite']); // idempotent — no second listener
+    installSwapPipeline(['adaptive']);
+    installSwapPipeline(['adaptive']); // idempotent — no second listener
 
     expect(addSpy.mock.calls.filter(([type]) => type === 'astro:after-swap')).toHaveLength(1);
 
