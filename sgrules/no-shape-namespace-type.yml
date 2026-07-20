@@ -1,0 +1,38 @@
+# Locks in the P5 .Shape removal (ADR-0046, superseding ADR-0001).
+#
+# The namespace type-member convention `X.Shape<T>` was retired repo-wide:
+# every public type now shares its value's name directly via declaration-space
+# merging (`interface Boundary` + `const Boundary`), so signatures read
+# `Cell<T>`, never `Cell.Shape<T>`. This rule flags (a) any namespace member
+# type/interface literally named `Shape`, and (b) any qualified type reference
+# ending in `.Shape` — the two spellings of the dead convention.
+#
+# Namespaces that merge with a same-name exported VALUE may still carry other
+# aux type members (e.g. `Boundary.Spec`, `Lifetime.Finalizer`) — those are
+# retired alongside their value consts in the P6 verb-grammar phase, not here.
+# Passes clean on the post-P5 tree.
+id: no-shape-namespace-type
+language: typescript
+severity: error
+message: "Retired ADR-0001 .Shape convention — use the direct exported generic that shares the value's name (ADR-0046)."
+files:
+  - "**/packages/*/src/**"
+  - "**/packages/_spine/*.d.ts"
+rule:
+  any:
+    - kind: type_alias_declaration
+      has:
+        field: name
+        regex: "^Shape$"
+      inside:
+        kind: internal_module
+        stopBy: end
+    - kind: interface_declaration
+      has:
+        field: name
+        regex: "^Shape$"
+      inside:
+        kind: internal_module
+        stopBy: end
+    - kind: nested_type_identifier
+      regex: "\\.Shape$"

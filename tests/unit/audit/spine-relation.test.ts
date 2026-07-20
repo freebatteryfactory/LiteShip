@@ -102,14 +102,17 @@ describe('spine-relation gate — REDS on the three historical drift fixtures (t
       // same direction as the deliberately-wider `schema`. Decomposing Codec into field
       // admissions closes it — encode is pinned `exact`, so a transport widening reds.
       const { facts } = driftedFacts((c) =>
-        c.replace('encode(value: A): Result<I, ParseError>;', 'encode(value: A): Result<I, ParseError> | Promise<I>;'),
+        c.replace(
+          'encode(value: A): Codec.Result<I, Codec.ParseError>;',
+          'encode(value: A): Codec.Result<I, Codec.ParseError> | Promise<I>;',
+        ),
       );
-      const encode = facts.observations.find((o) => o.typeName === "Codec.Shape['encode']")!;
+      const encode = facts.observations.find((o) => o.typeName === "Codec['encode']")!;
       expect(encode.observedRelation).toBe('public-wider'); // widened past exact
-      const decode = facts.observations.find((o) => o.typeName === "Codec.Shape['decode']")!;
+      const decode = facts.observations.find((o) => o.typeName === "Codec['decode']")!;
       expect(decode.observedRelation).toBe('exact'); // decode untouched — the drift is localized
       const findings = gateFindings(facts);
-      expect(findings.some((f) => f.title.includes("Codec.Shape['encode']"))).toBe(true);
+      expect(findings.some((f) => f.title.includes("Codec['encode']"))).toBe(true);
     },
   );
 

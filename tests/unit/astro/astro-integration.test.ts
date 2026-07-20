@@ -11,7 +11,13 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { satelliteAttrs, resolveInitialStateFallback, resolveInitialState, resolveInitialStateWithReceipt, integration } from '@liteship/astro';
+import {
+  satelliteAttrs,
+  resolveInitialStateFallback,
+  resolveInitialState,
+  resolveInitialStateWithReceipt,
+  integration,
+} from '@liteship/astro';
 import type { SatelliteProps } from '@liteship/astro';
 import { Boundary, Diagnostics } from '@liteship/core';
 
@@ -20,7 +26,7 @@ import { Boundary, Diagnostics } from '@liteship/core';
 // ---------------------------------------------------------------------------
 
 /**
- * Build a minimal Boundary.Shape for test fixtures.
+ * Build a minimal Boundary for test fixtures.
  */
 function makeBoundary(input: string, pairs: readonly (readonly [number, string])[], hysteresis?: number) {
   return Boundary.make({
@@ -31,8 +37,8 @@ function makeBoundary(input: string, pairs: readonly (readonly [number, string])
 }
 
 /**
- * Build a minimal Component.Shape-like object for satellite attribute tests.
- * We avoid importing Component.make since it requires Style.Shape which adds
+ * Build a minimal Component-like object for satellite attribute tests.
+ * We avoid importing Component.make since it requires Style which adds
  * unnecessary complexity for attribute generation tests.
  */
 function makeComponentStub(name: string) {
@@ -354,9 +360,9 @@ describe('resolveInitialState', () => {
       states: [],
       thresholds: [],
     };
-    expect(resolveInitialState(emptyBoundary as never, { userAgent: '', clientHints: {}, detectedCapTier: 'gpu' })).toBe(
-      '',
-    );
+    expect(
+      resolveInitialState(emptyBoundary as never, { userAgent: '', clientHints: {}, detectedCapTier: 'gpu' }),
+    ).toBe('');
   });
 });
 
@@ -559,7 +565,13 @@ describe('integration', () => {
       updateConfig: () => undefined,
       addClientDirective: () => undefined,
       injectScript: () => undefined,
-      logger: { info() {}, warn(message: string) { warns.push(message); }, error() {} },
+      logger: {
+        info() {},
+        warn(message: string) {
+          warns.push(message);
+        },
+        error() {},
+      },
     } as never);
 
     Diagnostics.warn({ source: 'liteship/test', code: 'before', message: 'before teardown' });
@@ -680,13 +692,7 @@ describe('integration', () => {
       logger: { info() {} },
     } as never);
 
-    expect(directives.map((directive) => directive.name)).toEqual([
-      'satellite',
-      'graph',
-      'worker',
-      'wasm',
-      'svg',
-    ]);
+    expect(directives.map((directive) => directive.name)).toEqual(['satellite', 'graph', 'worker', 'wasm', 'svg']);
     // serverIslands must NOT produce any experimental config bridge anymore.
     expect(updates.some((config) => 'experimental' in config)).toBe(false);
     expect(scripts.some((script) => script.includes('__LITESHIP_DETECT__'))).toBe(false);
@@ -715,9 +721,9 @@ describe('integration', () => {
       logger: { info() {} },
     } as never);
 
-    expect(scripts.some((script) => script.stage === 'head-inline' && script.content.includes('__LITESHIP_DETECT__'))).toBe(
-      true,
-    );
+    expect(
+      scripts.some((script) => script.stage === 'head-inline' && script.content.includes('__LITESHIP_DETECT__')),
+    ).toBe(true);
     expect(scripts.some((script) => script.content.includes('navigator.gpu'))).toBe(false);
   });
 

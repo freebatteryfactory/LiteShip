@@ -23,4 +23,4 @@ in the accepted type turns that into a compile-time error instead (the base
 
 ### B
 
-`B` *extends* [`Shape`](../namespaces/Boundary/type-aliases/Shape.md) = [`Shape`](../namespaces/Boundary/type-aliases/Shape.md)
+`B` *extends* [`Boundary`](Boundary.md) = [`Boundary`](Boundary.md)

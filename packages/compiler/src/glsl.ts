@@ -153,7 +153,7 @@ function appendComment(line: string, comment: string): string {
  * @param states   - Per-state numeric value maps
  * @returns A {@link GLSLCompileResult} with defines, uniforms, and helper code
  */
-function compile<B extends Boundary.Shape>(
+function compile<B extends Boundary>(
   boundary: B,
   states: { [S in StateUnion<B> & string]: Record<string, number> },
 ): GLSLCompileResult {

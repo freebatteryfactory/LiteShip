@@ -279,8 +279,9 @@ export declare const SPSCRing: {
   attachConsumer(sab: SharedArrayBuffer, slotCount?: number, slotSize?: number): SPSCRingBufferShape;
 };
 
+export interface SPSCRing extends SPSCRingBufferShape {}
+
 export declare namespace SPSCRing {
-  export type Shape = SPSCRingBufferShape;
   export type Pair = SPSCRingPair;
 }
 
@@ -288,10 +289,7 @@ export declare namespace SPSCRing {
 // § 3. COMPOSITOR WORKER
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export type CompositorWorkerStartupStage =
-  | 'claim-or-create'
-  | 'coordinator-reset-or-create'
-  | 'listener-bind';
+export type CompositorWorkerStartupStage = 'claim-or-create' | 'coordinator-reset-or-create' | 'listener-bind';
 
 export interface CompositorWorkerStartupTelemetry {
   recordStage(stage: CompositorWorkerStartupStage, durationNs: number): void;
@@ -377,8 +375,9 @@ export declare const CompositorWorker: {
   create(config?: WorkerConfig, startupTelemetry?: CompositorWorkerStartupTelemetry): CompositorWorkerShape;
 };
 
+export interface CompositorWorker extends CompositorWorkerShape {}
+
 export declare namespace CompositorWorker {
-  export type Shape = CompositorWorkerShape;
   export type State = CompositorWorkerState;
   export type Metrics = WorkerMetrics;
   export type BoundarySource = QuantizerBoundarySource;
@@ -405,9 +404,7 @@ export declare const RenderWorker: {
   create(config?: WorkerConfig): RenderWorkerShape;
 };
 
-export declare namespace RenderWorker {
-  export type Shape = RenderWorkerShape;
-}
+export type RenderWorker = RenderWorkerShape;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 5. WORKER HOST
@@ -445,7 +442,8 @@ export declare const WorkerHost: {
   create(config?: WorkerConfig, startupTelemetry?: CompositorWorkerStartupTelemetry): WorkerHostShape;
 };
 
+export interface WorkerHost extends WorkerHostShape {}
+
 export declare namespace WorkerHost {
-  export type Shape = WorkerHostShape;
   export type StartupTelemetry = CompositorWorkerStartupTelemetry;
 }

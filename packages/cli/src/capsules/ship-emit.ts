@@ -13,7 +13,7 @@
  *    is derivable PURELY from inputs, so idempotency + audit-receipt +
  *    fault-injection are real tests.
  *  - the EFFECT ({@link ShipEmit.run}): canonicalizes the fully-assembled
- *    {@link ShipCapsule.Shape} and writes `<pkg>-<version>.shipcapsule.cbor`
+ *    {@link ShipCapsule} and writes `<pkg>-<version>.shipcapsule.cbor`
  *    next to a freshly-produced npm tarball. The publish itself is downstream.
  *
  * Re-uses the seven-arm closure (ADR-0008): emission is a
@@ -60,7 +60,7 @@ type ShipEmitDecodedInput = Infer<typeof ShipEmitInput>;
 type ShipEmitDecodedOutput = Infer<typeof ShipEmitOutput>;
 
 interface ShipEmitRunInput {
-  readonly capsule: ShipCapsule.Shape;
+  readonly capsule: ShipCapsule;
   readonly capsule_path: string;
 }
 

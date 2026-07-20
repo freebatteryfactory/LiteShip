@@ -515,7 +515,7 @@ export interface QuantizeSheetContext {
 }
 
 /** Sanitize a boundary input identifier into its CSS container name. */
-function containerNameOf(boundary: Boundary.Shape): string {
+function containerNameOf(boundary: Boundary): string {
   return boundary.input.replace(/[^a-zA-Z0-9_-]/g, '-');
 }
 
@@ -593,7 +593,7 @@ export function viewportContainmentRule(names: Iterable<string>, selector: strin
  * container, so a {@link Diagnostics.warn} teaches the literal
  * declaration to add.
  */
-function containmentRule(block: QuantizeBlock, boundary: Boundary.Shape, sheet?: QuantizeSheetContext): string | null {
+function containmentRule(block: QuantizeBlock, boundary: Boundary, sheet?: QuantizeSheetContext): string | null {
   const containerName = containerNameOf(boundary);
 
   if (viewportQueryAxis(boundary.input) !== null) {
@@ -648,7 +648,7 @@ function containmentRule(block: QuantizeBlock, boundary: Boundary.Shape, sheet?:
 
 /**
  * Compile a parsed {@link QuantizeBlock} plus its resolved
- * {@link Boundary.Shape} into CSS `@container` query rules. Delegates
+ * {@link Boundary} into CSS `@container` query rules. Delegates
  * to the canonical `CSSCompiler` to avoid duplicating threshold-to-query
  * logic.
  *
@@ -666,11 +666,7 @@ function containmentRule(block: QuantizeBlock, boundary: Boundary.Shape, sheet?:
  * emit a `container-not-declared` diagnostic naming the declaration to
  * add.
  */
-export function compileQuantizeBlock(
-  block: QuantizeBlock,
-  boundary: Boundary.Shape,
-  sheet?: QuantizeSheetContext,
-): string {
+export function compileQuantizeBlock(block: QuantizeBlock, boundary: Boundary, sheet?: QuantizeSheetContext): string {
   const mapAtRuleGroup = (group: QuantizeAtRuleGroup): CSSAtRuleGroup => ({
     prelude: group.prelude,
     bareProps: group.bareProps,

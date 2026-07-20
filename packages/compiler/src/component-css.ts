@@ -17,10 +17,10 @@ import { StyleCSSCompiler } from './style-css.js';
 // ---------------------------------------------------------------------------
 
 /**
- * Compile a {@link Component.Shape} into scoped CSS with slot and satellite
+ * Compile a {@link Component} into scoped CSS with slot and satellite
  * markers appended inside the component's `@layer` block.
  */
-function compile(component: Component.Shape): StyleCSSResult {
+function compile(component: Component): StyleCSSResult {
   const base = StyleCSSCompiler.compile(component.styles, component.name);
 
   // Slot marker: children of [data-liteship-slot] use display: contents to avoid

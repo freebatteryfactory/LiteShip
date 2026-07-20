@@ -23,7 +23,7 @@ theme-to-CSS logic.
 
 ### theme
 
-[`Shape`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Theme/type-aliases/Shape.md)
+[`Theme`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/Theme.md)
 
 ## Returns
 

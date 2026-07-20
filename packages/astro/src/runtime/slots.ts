@@ -3,10 +3,10 @@ import type { DirectiveName } from './directive-boot.js';
 import { readRuntimeGlobal, writeRuntimeGlobal } from './globals.js';
 
 interface RuntimeWindow extends Window {
-  __LITESHIP_SLOT_REGISTRY__?: SlotRegistry.Shape;
+  __LITESHIP_SLOT_REGISTRY__?: SlotRegistry;
   __LITESHIP_SLOT_BOOTSTRAPPED__?: boolean;
   __LITESHIP_SLOTS__?: {
-    readonly registry: SlotRegistry.Shape;
+    readonly registry: SlotRegistry;
     readonly entries: Record<string, { path: string; mode: string }>;
   };
 }
@@ -60,7 +60,7 @@ export function implicitDirectiveSelectors(name: DirectiveName): readonly string
 
 const REINIT_SELECTOR = [...uniqueDirectiveAttributes(), DIRECTIVE_MARKER_ATTRIBUTE].map(attributeSelector).join(',');
 
-function isSlotRegistryShape(value: unknown): value is SlotRegistry.Shape {
+function isSlotRegistryShape(value: unknown): value is SlotRegistry {
   if (typeof value !== 'object' || value === null) return false;
   if (!('get' in value) || !('register' in value) || !('entries' in value)) return false;
   return typeof value.get === 'function' && typeof value.register === 'function' && typeof value.entries === 'function';
@@ -75,11 +75,11 @@ function runtimeWindow(): RuntimeWindow | null {
 }
 
 /**
- * Return the document-scoped {@link SlotRegistry.Shape}, creating and
+ * Return the document-scoped {@link SlotRegistry}, creating and
  * persisting one on `window.__LITESHIP_SLOT_REGISTRY__` the first time
  * it's requested. Returns a detached registry under SSR.
  */
-export function getSlotRegistry(): SlotRegistry.Shape {
+export function getSlotRegistry(): SlotRegistry {
   const win = runtimeWindow();
   if (!win) {
     return SlotRegistry.create();
@@ -98,7 +98,7 @@ export function getSlotRegistry(): SlotRegistry.Shape {
  * `data-liteship-slot` elements. Also writes a serialised
  * `__LITESHIP_SLOTS__` snapshot for devtools / diagnostics consumers.
  */
-export function rescanSlots(root: ParentNode = document): SlotRegistry.Shape {
+export function rescanSlots(root: ParentNode = document): SlotRegistry {
   const registry = getSlotRegistry();
   const existingPaths = Array.from(registry.entries().keys());
   for (const path of existingPaths) {
@@ -131,7 +131,7 @@ export function rescanSlots(root: ParentNode = document): SlotRegistry.Shape {
  * directive-boot, and reinit run in a guaranteed order rather than racing on
  * listener-registration luck.
  */
-export function bootstrapSlots(): SlotRegistry.Shape {
+export function bootstrapSlots(): SlotRegistry {
   const win = runtimeWindow();
   if (!win) {
     return SlotRegistry.create();

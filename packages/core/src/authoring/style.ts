@@ -36,7 +36,7 @@ export interface StyleLayer {
   readonly boxShadow?: readonly ShadowLayer[];
 }
 
-interface StyleDef<B extends Boundary.Shape = Boundary.Shape> {
+interface StyleDef<B extends Boundary = Boundary> {
   readonly _tag: 'StyleDef';
   readonly _version: 1;
   readonly id: ContentAddress;
@@ -58,7 +58,7 @@ interface TransitionConfig {
 }
 
 interface StyleFactory {
-  make<B extends Boundary.Shape>(config: {
+  make<B extends Boundary>(config: {
     readonly boundary?: B;
     readonly base: StyleLayer;
     readonly states?: { readonly [S in StateUnion<B> & string]?: StyleLayer };
@@ -66,7 +66,7 @@ interface StyleFactory {
   }): StyleDef<B>;
 }
 
-function deterministicId<B extends Boundary.Shape>(
+function deterministicId<B extends Boundary>(
   boundary: B | undefined,
   base: StyleLayer,
   states: StyleDef<B>['states'],
@@ -231,7 +231,7 @@ export const Style: StyleFactory & {
    * // style.id === 'fnv1a:...'
    * ```
    */
-  make<B extends Boundary.Shape>(config: {
+  make<B extends Boundary>(config: {
     readonly boundary?: B;
     readonly base: StyleLayer;
     readonly states?: { readonly [S in StateUnion<B> & string]?: StyleLayer };
@@ -273,7 +273,5 @@ export const Style: StyleFactory & {
   mergeLayers: _mergeLayers,
 };
 
-export declare namespace Style {
-  /** Structural shape of a style definition parameterized by its governing {@link Boundary}. */
-  export type Shape<B extends Boundary.Shape = Boundary.Shape> = StyleDef<B>;
-}
+/** Public structural type for `Style`. */
+export type Style<B extends Boundary = Boundary> = StyleDef<B>;

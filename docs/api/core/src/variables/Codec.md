@@ -20,7 +20,7 @@ kernel `decode` directly.
 
 > **make**: \<`A`\>(`schema`) => `CodecShape`\<`A`, `A`\> = `_make`
 
-Wrap an identity kernel schema in the [Codec.Shape](../namespaces/Codec/type-aliases/Shape.md) facade.
+Wrap an identity kernel schema in the Codec facade.
 
 #### Type Parameters
 

@@ -60,7 +60,7 @@ describe('Timeline runtime behavior', () => {
     // via `schedule`. `scheduleCount` observes that the clock stays armed across a throwing tick.
     let pending: ((now: number) => void) | null = null;
     let scheduleCount = 0;
-    const scheduler: Scheduler.Shape = {
+    const scheduler: Scheduler = {
       _tag: 'FrameScheduler',
       schedule: (cb: (now: number) => void) => {
         pending = cb;
@@ -285,7 +285,7 @@ describe('Timeline — disposal via Lifetime', () => {
     let scheduleCount = 0;
     let pending: ((now: number) => void) | null = null;
     let nextId = 1;
-    const scheduler: Scheduler.Shape = {
+    const scheduler: Scheduler = {
       _tag: 'FrameScheduler',
       schedule: (cb) => {
         scheduleCount += 1;

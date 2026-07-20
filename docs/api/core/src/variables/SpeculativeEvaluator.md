@@ -27,7 +27,7 @@ when the signal value is near a threshold and moving toward it.
 
 ##### B
 
-`B` *extends* [`Shape`](../namespaces/Boundary/type-aliases/Shape.md)\<`string`, readonly \[`string`, `string`\]\>
+`B` *extends* [`Boundary`](../type-aliases/Boundary.md)
 
 #### Parameters
 

@@ -34,7 +34,7 @@ const colorBoundary = Boundary.make({
 });
 
 /** Quantizer with a spy on state reads to count recomputations. */
-function makeSpiedQuantizer(boundary: Boundary.Shape, initialState?: string) {
+function makeSpiedQuantizer(boundary: Boundary, initialState?: string) {
   let currentState = initialState ?? (boundary.states[0] as string);
   let readCount = 0;
 

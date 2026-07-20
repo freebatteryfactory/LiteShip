@@ -24,8 +24,8 @@ export type MotionTier = _MotionTier;
  */
 export type UIQualityTier = 'skeleton' | 'text-only' | 'styled' | 'interactive' | 'rich';
 
-/** {@link Boundary.Shape} instantiation used by {@link UIQuality} — input = `buffer-occupancy`, states = the {@link UIQualityTier} ladder. */
-export type UIQualityBoundary = Boundary.Shape<
+/** {@link Boundary} instantiation used by {@link UIQuality} — input = `buffer-occupancy`, states = the {@link UIQualityTier} ladder. */
+export type UIQualityBoundary = Boundary<
   'buffer-occupancy',
   readonly ['skeleton', 'text-only', 'styled', 'interactive', 'rich']
 >;
@@ -97,9 +97,10 @@ export const UIQuality = {
   boundary: uiQualityBoundary,
 };
 
+/** Public structural type for `UIQuality`. */
+export type UIQuality = UIQualityEvaluatorShape;
+
 export declare namespace UIQuality {
-  /** Structural shape of a UIQuality evaluator. */
-  export type Shape = UIQualityEvaluatorShape;
   /** Alias for {@link UIQualityTier}. */
   export type Tier = UIQualityTier;
 }

@@ -11,12 +11,12 @@ that keep the main thread trim while boundaries and media stay live.
 
 This package ships:
 
-- [SPSCRing](namespaces/SPSCRing/README.md): lock-free single-producer/single-consumer ring
+- [SPSCRing](type-aliases/SPSCRing.md): lock-free single-producer/single-consumer ring
   backed by `SharedArrayBuffer`, used for real-time state streaming
   from a worker to the main thread.
 - [CompositorWorker](namespaces/CompositorWorker/README.md): a factory that spins up a worker which
   evaluates quantizer boundaries and emits `CompositeState`.
-- [RenderWorker](namespaces/RenderWorker/README.md): a factory for a worker that renders
+- [RenderWorker](type-aliases/RenderWorker.md): a factory for a worker that renders
   `VideoFrameOutput` into an `OffscreenCanvas`.
 - [WorkerHost](namespaces/WorkerHost/README.md): a thin lifecycle wrapper around `Worker` with
   typed message helpers.
@@ -36,8 +36,6 @@ separate worker entry files or bundler configuration.
 
 - [CompositorWorker](namespaces/CompositorWorker/README.md)
 - [Messages](namespaces/Messages/README.md)
-- [RenderWorker](namespaces/RenderWorker/README.md)
-- [SPSCRing](namespaces/SPSCRing/README.md)
 - [WorkerHost](namespaces/WorkerHost/README.md)
 
 ## Interfaces
@@ -57,9 +55,13 @@ separate worker entry files or bundler configuration.
 
 ## Type Aliases
 
+- [CompositorWorker](type-aliases/CompositorWorker.md)
 - [CompositorWorkerState](type-aliases/CompositorWorkerState.md)
 - [FromWorkerMessage](type-aliases/FromWorkerMessage.md)
+- [RenderWorker](type-aliases/RenderWorker.md)
+- [SPSCRing](type-aliases/SPSCRing.md)
 - [ToWorkerMessage](type-aliases/ToWorkerMessage.md)
+- [WorkerHost](type-aliases/WorkerHost.md)
 - [WorkerMetrics](type-aliases/WorkerMetrics.md)
 
 ## Variables

@@ -46,7 +46,7 @@ interface ZapShape<T> {
  */
 interface ZapHandle<T> {
   readonly zap: ZapShape<T>;
-  readonly lifetime: Lifetime.Shape;
+  readonly lifetime: Lifetime;
 }
 
 /**
@@ -54,7 +54,7 @@ interface ZapHandle<T> {
  * finalizer is registered FIRST, so it runs LAST (LIFO) — after any source
  * subscription / timer a derived channel adds on top.
  */
-function makeChannel<T>(): { channel: CellKernel.Fanout<T>; zap: ZapShape<T>; lifetime: Lifetime.Shape } {
+function makeChannel<T>(): { channel: CellKernel.Fanout<T>; zap: ZapShape<T>; lifetime: Lifetime } {
   const channel = CellKernel.fanout<T>();
   const lifetime = Lifetime.make();
   lifetime.add(() => channel.close());
@@ -240,9 +240,10 @@ export const Zap = {
   throttle: _throttle,
 };
 
+/** Public structural type for `Zap`. */
+export type Zap<T> = ZapShape<T>;
+
 export declare namespace Zap {
-  /** Structural shape of a {@link Zap}: `_tag`, a no-replay `stream`, sync `emit`. */
-  export type Shape<T> = ZapShape<T>;
   /** The `{ zap, lifetime }` pair every `Zap.*` factory returns. */
   export type Handle<T> = ZapHandle<T>;
 }

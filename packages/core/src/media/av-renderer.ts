@@ -33,7 +33,7 @@ interface AVFrameOutput {
 
 interface AVRendererShape {
   readonly config: AVRenderConfig;
-  readonly bridge: AVBridge.Shape;
+  readonly bridge: AVBridge;
   readonly totalFrames: number;
   frames(options?: {
     onAudioFrame?: (sample: number, sampleCount: number) => void;
@@ -45,7 +45,7 @@ interface AVRendererShape {
 // Factory
 // ---------------------------------------------------------------------------
 
-function _make(config: AVRenderConfig, compositor: Compositor.Shape, existingBridge?: AVBridge.Shape): AVRendererShape {
+function _make(config: AVRenderConfig, compositor: Compositor, existingBridge?: AVBridge): AVRendererShape {
   const { sampleRate, fps, durationMs } = config;
   const totalFrames = Math.ceil((durationMs / 1000) * fps);
   const samplesPerFrame = Math.round(sampleRate / fps);
@@ -107,9 +107,10 @@ export const AVRenderer = {
   make: _make,
 };
 
+/** Public structural type for `AVRenderer`. */
+export type AVRenderer = AVRendererShape;
+
 export declare namespace AVRenderer {
-  /** Structural shape of a renderer instance returned by {@link AVRenderer.make}. */
-  export type Shape = AVRendererShape;
   /** Configuration accepted by {@link AVRenderer.make}. */
   export type Config = AVRenderConfig;
   /** Per-frame output yielded by the async iterator. */

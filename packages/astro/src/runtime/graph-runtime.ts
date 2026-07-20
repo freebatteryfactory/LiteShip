@@ -291,7 +291,7 @@ function bindingGroupsEqual(a: readonly LoweredBinding[], b: readonly LoweredBin
 function bindingsEqual(a: LoweredBinding, b: LoweredBinding): boolean {
   // The boundary's identity is its serialized shape + the per-state channel maps;
   // JSON over the comparable parts is a faithful, allocation-cheap structural key
-  // (the Boundary.Shape is a plain value; the channel maps are plain records).
+  // (the Boundary is a plain value; the channel maps are plain records).
   const key = (binding: LoweredBinding): string =>
     JSON.stringify({
       input: binding.boundary.input,

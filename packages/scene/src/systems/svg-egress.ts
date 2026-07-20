@@ -45,7 +45,7 @@ export type SvgAttrsFrame = ReadonlyMap<string, SvgAttrs>;
  * the result is keyed identically to the entities SVGSystem walked and only
  * contains entities the system has actually composed attrs for.
  */
-export function collectSvgAttrs(world: World.Shape): SvgAttrsFrame {
+export function collectSvgAttrs(world: World): SvgAttrsFrame {
   const frame = new Map<string, SvgAttrs>();
   const entities = world.query('VideoSource', '_svgAttrs');
   for (const e of entities) {

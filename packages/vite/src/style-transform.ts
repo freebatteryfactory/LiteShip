@@ -143,7 +143,7 @@ export function parseStyleBlocks(css: string, sourceFile: string): readonly Styl
  * Delegates to the canonical `StyleCSSCompiler` to avoid duplicating
  * style-to-CSS logic.
  */
-export function compileStyleBlock(block: StyleBlock, style: Style.Shape): string {
+export function compileStyleBlock(block: StyleBlock, style: Style): string {
   const result = StyleCSSCompiler.compile(style, block.styleName);
   const parts = [result.layers, result.startingStyle].filter((part): part is string => part.length > 0);
 

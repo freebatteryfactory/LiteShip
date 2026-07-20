@@ -38,7 +38,7 @@ function makeBoundary(thresholds: readonly number[]) {
 }
 
 /** A live quantizer whose `evaluate(v)` re-derives state from the same boundary. */
-function liveQuantizer(boundary: Boundary.Shape) {
+function liveQuantizer(boundary: Boundary) {
   let current = boundary.states[0] as string;
   return {
     _tag: 'Quantizer' as const,

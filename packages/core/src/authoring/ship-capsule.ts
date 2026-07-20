@@ -215,9 +215,10 @@ const decode = (bytes: Uint8Array): Result<ShipCapsuleShape, ShipCapsuleDecodeEr
  */
 export const ShipCapsule = { make, canonicalize, decode, computeId };
 
+/** Public structural type for `ShipCapsule`. */
+export type ShipCapsule = ShipCapsuleShape;
+
 export declare namespace ShipCapsule {
-  /** Decoded capsule shape returned by {@link ShipCapsule.make} and {@link ShipCapsule.decode}. */
-  export type Shape = ShipCapsuleShape;
   /** Constructor input accepted by {@link ShipCapsule.make} (capsule without `id` / `integrity`). */
   export type Input = ShipCapsuleInput;
   /** Tagged failure variants {@link ShipCapsule.decode} can produce. */

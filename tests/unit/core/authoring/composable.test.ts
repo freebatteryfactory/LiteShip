@@ -6,14 +6,7 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import {
-  Composable,
-  ComposableWorld,
-  Boundary,
-  Token,
-  Style,
-  World,
-} from '@liteship/core';
+import { Composable, ComposableWorld, Boundary, Token, Style, World } from '@liteship/core';
 import type { ComposableEntity, EntityComponents } from '@liteship/core';
 
 // ---------------------------------------------------------------------------
@@ -22,7 +15,11 @@ import type { ComposableEntity, EntityComponents } from '@liteship/core';
 
 const widthBoundary = Boundary.make({
   input: 'viewport.width',
-  at: [[0, 'sm'], [768, 'md'], [1024, 'lg']] as const,
+  at: [
+    [0, 'sm'],
+    [768, 'md'],
+    [1024, 'lg'],
+  ] as const,
 });
 
 const colorToken = Token.make({
@@ -147,7 +144,11 @@ describe('Composable.compose -- precedence', () => {
     // Use same boundary shape but different thresholds
     const altBoundary = Boundary.make({
       input: 'viewport.width',
-      at: [[0, 'sm'], [768, 'md'], [1024, 'lg']] as const,
+      at: [
+        [0, 'sm'],
+        [768, 'md'],
+        [1024, 'lg'],
+      ] as const,
     });
 
     const e1 = Composable.make({ boundary: widthBoundary, token: colorToken });
@@ -193,13 +194,15 @@ describe('Composable.compose -- precedence', () => {
 describe('Composable.merge -- reduces correctly', () => {
   test('merging 3 entities folds left with later overriding earlier', () => {
     const tokenA = Token.make({
-      name: 'a', category: 'spacing',
+      name: 'a',
+      category: 'spacing',
       axes: ['density'] as const,
       values: { compact: '4px' },
       fallback: '8px',
     });
     const tokenB = Token.make({
-      name: 'b', category: 'spacing',
+      name: 'b',
+      category: 'spacing',
       axes: ['density'] as const,
       values: { compact: '2px' },
       fallback: '6px',
@@ -252,7 +255,10 @@ describe('ComposableWorld.evaluate -- Boundary', () => {
   test('boundary defaults to first state for value below all thresholds', () => {
     const bp = Boundary.make({
       input: 'viewport.width',
-      at: [[320, 'sm'], [768, 'md']] as const,
+      at: [
+        [320, 'sm'],
+        [768, 'md'],
+      ] as const,
     });
     const { world } = World.make();
     const cw = ComposableWorld.make(world);
@@ -519,14 +525,14 @@ describe('ComposableWorld.dense -- store/retrieve', () => {
  * constrained to these component types at compile time.
  */
 interface NarrowSchema extends EntityComponents {
-  readonly boundary?: Boundary.Shape;
-  readonly token?: Token.Shape;
+  readonly boundary?: Boundary;
+  readonly token?: Token;
 }
 
 describe('TypedComposableWorld -- compile-time type safety', () => {
   test('typed world spawn constrains components to the schema', () => {
     const { world } = World.make();
-    const cw: ComposableWorld.Shape<NarrowSchema> = ComposableWorld.make<NarrowSchema>(world);
+    const cw: ComposableWorld<NarrowSchema> = ComposableWorld.make<NarrowSchema>(world);
 
     // This compiles because boundary and token are in NarrowSchema
     const entity = cw.spawn({ boundary: widthBoundary, token: colorToken });
@@ -538,7 +544,7 @@ describe('TypedComposableWorld -- compile-time type safety', () => {
 
   test('typed query returns correctly narrowed component types', () => {
     const { world } = World.make();
-    const cw: ComposableWorld.Shape<NarrowSchema> = ComposableWorld.make<NarrowSchema>(world);
+    const cw: ComposableWorld<NarrowSchema> = ComposableWorld.make<NarrowSchema>(world);
 
     cw.spawn({ boundary: widthBoundary });
     cw.spawn({ token: colorToken });

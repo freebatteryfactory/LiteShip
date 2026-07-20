@@ -193,7 +193,7 @@ export interface CrossingObservation {
 }
 
 /**
- * The HLC byte-law fields — a STRUCTURAL mirror of `HLC.Shape` so this trace-type
+ * The HLC byte-law fields — a STRUCTURAL mirror of `HLC` so this trace-type
  * module imports nothing from `@liteship/core` (see the module header).
  */
 export interface HlcObservation {

@@ -16,7 +16,7 @@ import type { TransitionMap } from '@liteship/quantizer';
  * is a replay-1 slot advanced by `evaluate`, `changes` a no-replay fan-out the
  * test drives via `pushCrossing`; `shutdown` closes it.
  */
-function makeMockQuantizer(boundary: Boundary.Shape, initialState: string) {
+function makeMockQuantizer(boundary: Boundary, initialState: string) {
   const changes = CellKernel.fanout<BoundaryCrossing<string>>();
   const stateCell = CellKernel.replay1<string>(initialState);
   return {
@@ -31,7 +31,7 @@ function makeMockQuantizer(boundary: Boundary.Shape, initialState: string) {
     },
     pushCrossing: (c: BoundaryCrossing<string>) => changes.publish(c),
     shutdown: () => changes.close(),
-  } satisfies ReactiveQuantizer<Boundary.Shape> & {
+  } satisfies ReactiveQuantizer<Boundary> & {
     pushCrossing: (c: BoundaryCrossing<string>) => void;
     shutdown: () => void;
   };

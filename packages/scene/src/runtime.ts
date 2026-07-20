@@ -123,10 +123,10 @@ export interface SceneRuntimeOptions {
 /** Live runtime handle returned by {@link SceneRuntime.build}. */
 export interface SceneRuntimeHandle {
   /** The underlying ECS world — exposed for query-based assertions. */
-  readonly world: WorldNS.Shape;
+  readonly world: WorldNS;
   /**
    * Query entities carrying ALL named components, resolved through a Promise.
-   * Wraps the now-synchronous {@link WorldNS.Shape.query} so the astro scene
+   * Wraps the now-synchronous {@link WorldNS.query} so the astro scene
    * bridge can `await` the result without importing Effect (gate 24's
    * Promise-facade decision) — the same entity shape `world.query` returns.
    */

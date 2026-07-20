@@ -105,7 +105,5 @@ export const VectorClock = {
   size: _size,
 };
 
-export declare namespace VectorClock {
-  /** Structural shape of a vector clock: a `Map<peer, counter>` wrapper. */
-  export type Shape = VectorClockShape;
-}
+/** Public structural type for `VectorClock`. */
+export type VectorClock = VectorClockShape;

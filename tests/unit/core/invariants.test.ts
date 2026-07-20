@@ -44,7 +44,7 @@ const arbStateNames = (count: number) => {
   return fc.constant(names.slice(0, count));
 };
 
-/** Generate a valid Boundary.Shape with 2-6 states */
+/** Generate a valid Boundary with 2-6 states */
 const arbBoundaryDef = fc.integer({ min: 2, max: 6 }).chain((stateCount) =>
   arbThresholds(stateCount, stateCount).chain((thresholds) =>
     arbStateNames(stateCount).chain((states) =>
@@ -57,12 +57,8 @@ const arbBoundaryDef = fc.integer({ min: 2, max: 6 }).chain((stateCount) =>
   ),
 );
 
-/** Build a real Boundary.Shape from generated params */
-function makeBoundary(params: {
-  thresholds: number[];
-  states: string[];
-  hysteresis: number | undefined;
-}): Boundary.Shape {
+/** Build a real Boundary from generated params */
+function makeBoundary(params: { thresholds: number[]; states: string[]; hysteresis: number | undefined }): Boundary {
   const at = params.thresholds.map((t, i) => [t, params.states[i]!] as const);
   return Boundary.make({
     input: 'test.signal',

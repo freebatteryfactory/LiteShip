@@ -32,7 +32,7 @@ export interface ServerIslandContext {
  * Props accepted by the `Quantize` Astro component and by
  * {@link resolveInitialState}.
  */
-export interface QuantizeProps<B extends Boundary.Shape = Boundary.Shape> {
+export interface QuantizeProps<B extends Boundary = Boundary> {
   /** Boundary to quantize. */
   readonly boundary: B;
   /** Optional explicit quantizer definition. */
@@ -159,7 +159,7 @@ function warnRawRequestContext(value: unknown): void {
  *
  * Evaluates the boundary thresholds to find the matching state.
  */
-export function resolveInitialState<B extends Boundary.Shape>(boundary: B, context: ServerIslandContext = {}): string {
+export function resolveInitialState<B extends Boundary>(boundary: B, context: ServerIslandContext = {}): string {
   return resolveInitialStateWithReceipt(boundary, context).state;
 }
 
@@ -168,7 +168,7 @@ export function resolveInitialState<B extends Boundary.Shape>(boundary: B, conte
  * (`@liteship/core`) naming which signal drove SSR — client hints, UA estimate,
  * cap-tier synthetic, or policy (reduced-motion bias).
  */
-export function resolveInitialStateWithReceipt<B extends Boundary.Shape>(
+export function resolveInitialStateWithReceipt<B extends Boundary>(
   boundary: B,
   context: ServerIslandContext = {},
 ): ResolvedInitialState {

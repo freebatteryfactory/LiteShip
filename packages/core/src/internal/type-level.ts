@@ -13,11 +13,11 @@ import type { StateName, HLC } from '../schema/brands.js';
 /** Flatten branded intersections for clean IDE hints */
 export type Prettify<T> = { [K in keyof T]: T[K] } & {};
 
-/** Extract literal union of state names from a Boundary.Shape */
-export type StateUnion<B extends Boundary.Shape> = B['states'][number];
+/** Extract literal union of state names from a Boundary */
+export type StateUnion<B extends Boundary> = B['states'][number];
 
 /** Generate valid output shapes per state */
-export type OutputsFor<B extends Boundary.Shape, T> = {
+export type OutputsFor<B extends Boundary, T> = {
   readonly [S in StateUnion<B>]: T;
 };
 

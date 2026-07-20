@@ -179,9 +179,10 @@ function _collect(config: {
  */
 export const LLMAdapter = { create: _create, collect: _collect };
 
+/** Public structural type for `LLMAdapter`. */
+export type LLMAdapter = LLMAdapterShape;
+
 export declare namespace LLMAdapter {
-  /** Public adapter surface (`chunks` + `textTokens`). */
-  export type Shape = LLMAdapterShape;
   /** Adapter config type alias. */
   export type Config = LLMStreamConfig;
   /** Normalized LLM chunk type alias. */

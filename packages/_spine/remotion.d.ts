@@ -46,7 +46,7 @@ export interface RemotionVideoConfig {
  */
 export declare function rendererFromRemotionConfig(
   config: RemotionVideoConfig,
-  compositor: Compositor.Shape,
+  compositor: Compositor,
   signal?: ControllableSignal<number>,
 ): VideoRenderer;
 

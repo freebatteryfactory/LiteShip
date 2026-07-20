@@ -22,7 +22,7 @@ import { Transition as TransitionFactory } from './transition.js';
 // ---------------------------------------------------------------------------
 
 /** An interpolated animation frame emitted during a crossing. */
-export interface InterpolatedFrame<B extends Boundary.Shape> {
+export interface InterpolatedFrame<B extends Boundary> {
   /** Target state of the in-flight transition. */
   readonly state: StateUnion<B>;
   /** Progress in `[0, 1]`, where `1` means the animation has landed. */
@@ -40,7 +40,7 @@ export interface InterpolatedFrame<B extends Boundary.Shape> {
  * Subscribe via `interpolated.subscribe(sink)`; a late subscriber never sees a
  * frame published before it attached.
  */
-export interface AnimatedQuantizerShape<B extends Boundary.Shape> extends ReactiveQuantizer<B> {
+export interface AnimatedQuantizerShape<B extends Boundary> extends ReactiveQuantizer<B> {
   /** Resolver that maps `from -> to` crossings to {@link TransitionConfig}. */
   readonly transition: Transition<B>;
   /** No-replay subscription of interpolated animation frames during crossings. */
@@ -53,9 +53,9 @@ export interface AnimatedQuantizerShape<B extends Boundary.Shape> extends Reacti
  * observing the wrapped quantizer's crossings, abort any in-flight animation, and
  * close the `interpolated` fan-out (completing subscribers, making publish inert).
  */
-export interface AnimatedQuantizerHandle<B extends Boundary.Shape> {
+export interface AnimatedQuantizerHandle<B extends Boundary> {
   readonly animated: AnimatedQuantizerShape<B>;
-  readonly lifetime: Lifetime.Shape;
+  readonly lifetime: Lifetime;
 }
 
 // ---------------------------------------------------------------------------
@@ -106,7 +106,7 @@ function nowMs(): number {
  * a restated copy. Finite-numeric strings (`'1'`, `'0.5'`) are coerced via
  * `Number()` so they lerp; other strings pass through and snap at 50%.
  */
-function deriveInterpolationOutputs<B extends Boundary.Shape>(
+function deriveInterpolationOutputs<B extends Boundary>(
   quantizer: Quantizer<B>,
 ): Record<string, Record<string, number | string>> | undefined {
   if (!('config' in quantizer)) return undefined;
@@ -175,7 +175,7 @@ function sleep(ms: number, signal: AbortSignal): Promise<void> {
  * the abort-woken frame carries a placeholder timestamp but is always discarded
  * by the loop body's `signal.aborted` return before it is read.
  */
-function abortAwareScheduler(base: Scheduler.Shape, signal: AbortSignal): Scheduler.Shape {
+function abortAwareScheduler(base: Scheduler, signal: AbortSignal): Scheduler {
   // At most one tick is outstanding (Animation.run is a single-consumer pull
   // clock), so a single-slot listener handle tracks the live tick's abort wake.
   let currentOnAbort: (() => void) | null = null;
@@ -256,18 +256,18 @@ function abortAwareScheduler(base: Scheduler.Shape, signal: AbortSignal): Schedu
  *                      `config.outputs.css` tables (finite-numeric strings are
  *                      coerced to numbers so they lerp)
  * @param options     - Optional injection bag. `options.scheduler` supplies a
- *                      `Scheduler.Shape` frame clock (e.g. `Scheduler.raf()`
+ *                      `Scheduler` frame clock (e.g. `Scheduler.raf()`
  *                      to align frames to the display, or `Scheduler.fixedStep(fps)`
  *                      for deterministic rendering/tests). Omitted, the animation
  *                      drives its own internal ~60fps loop via a fixed 16ms sleep
  *                      (the historical default — existing callers are unchanged).
  * @returns An {@link AnimatedQuantizerHandle} — the instance plus its {@link Lifetime}
  */
-function makeAnimatedQuantizer<B extends Boundary.Shape>(
+function makeAnimatedQuantizer<B extends Boundary>(
   quantizer: ReactiveQuantizer<B>,
   transitions: TransitionMap<StateUnion<B> & string>,
   outputs?: Record<string, Record<string, number | string>>,
-  options?: { readonly scheduler?: Scheduler.Shape },
+  options?: { readonly scheduler?: Scheduler },
 ): AnimatedQuantizerHandle<B> {
   const boundary = quantizer.boundary;
   const scheduler = options?.scheduler;
@@ -471,7 +471,5 @@ export const AnimatedQuantizer = {
   make: makeAnimatedQuantizer,
 } as const;
 
-export declare namespace AnimatedQuantizer {
-  /** Shape of an animated quantizer parameterized by boundary `B`. */
-  export type Shape<B extends Boundary.Shape> = AnimatedQuantizerShape<B>;
-}
+/** Public structural type for `AnimatedQuantizer`. */
+export type AnimatedQuantizer<B extends Boundary> = AnimatedQuantizerShape<B>;

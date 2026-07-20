@@ -55,7 +55,7 @@ export function MotionSampleSystem(plan: RuntimeWritePlan, frameIndex: number, t
   return {
     name: 'MotionSampleSystem',
     query: ['MotionProgram'],
-    execute: (entities, world?: World.Shape) => {
+    execute: (entities, world?: World) => {
       for (const e of entities) {
         for (const [cssVar, value] of sampled) {
           const name = motionComponentName(cssVar);

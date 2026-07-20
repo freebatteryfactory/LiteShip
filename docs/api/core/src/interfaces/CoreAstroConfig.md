@@ -8,7 +8,7 @@
 
 Defined in: [core/src/authoring/config.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L36)
 
-Astro-integration slice of a liteship [Config.Shape](../namespaces/Config/interfaces/Shape.md).
+Astro-integration slice of a liteship [Config](../variables/Config.md).
 
 ## Properties
 

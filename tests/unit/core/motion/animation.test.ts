@@ -36,7 +36,7 @@ async function settle(): Promise<void> {
  * observable. Deterministic: no real timers, no Date.
  */
 function manualClock(timestamps: readonly number[]): {
-  scheduler: Scheduler.Shape;
+  scheduler: Scheduler;
   cancel: ReturnType<typeof vi.fn>;
 } {
   let index = 0;
@@ -45,7 +45,7 @@ function manualClock(timestamps: readonly number[]): {
   const cancel = vi.fn((id: number) => {
     cancelled.add(id);
   });
-  const scheduler: Scheduler.Shape = {
+  const scheduler: Scheduler = {
     _tag: 'FrameScheduler',
     schedule: (callback: (now: number) => void) => {
       const id = nextId++;

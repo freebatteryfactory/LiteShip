@@ -18,4 +18,3 @@ fnv1a label over the canonicalized payload (sync).
 - [BuildEnv](type-aliases/BuildEnv.md)
 - [DecodeError](type-aliases/DecodeError.md)
 - [Input](type-aliases/Input.md)
-- [Shape](type-aliases/Shape.md)

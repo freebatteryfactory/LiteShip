@@ -45,7 +45,7 @@ import { typeDirectedCompilerOptions } from './ts-program.js';
 /**
  * One admitted mirror type — the host-supplied seed row (frozen from the current
  * spine-conformance pins). `spineExpr` is the type expression under the `@liteship/_spine`
- * namespace (e.g. `CompositeState`, `Codec.Shape<{ readonly a: 1 }, { readonly a: 1 }>`,
+ * namespace (e.g. `CompositeState`, `Codec<{ readonly a: 1 }, { readonly a: 1 }>`,
  * `Millis`); `runtimeExpr` the expression under the runtime module's namespace;
  * `runtimeModule` the repo-relative `.ts` source path of the runtime producer.
  */

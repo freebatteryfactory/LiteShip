@@ -43,7 +43,7 @@ interface FrameBudgetShape {
    * Owns the rAF loop teardown. Its sole finalizer cancels the animation frame,
    * so `dispose()` stops the frame-pacing loop.
    */
-  readonly lifetime: Lifetime.Shape;
+  readonly lifetime: Lifetime;
 }
 
 /**
@@ -146,7 +146,5 @@ function _make(config?: { targetFps?: number; clock?: Clock }): FrameBudgetShape
  */
 export const FrameBudget = { make: _make };
 
-export declare namespace FrameBudget {
-  /** Structural shape of a {@link FrameBudget} instance — `canRun`, `scheduleSync`, `remaining`, `fpsSync`, `lifetime`. */
-  export type Shape = FrameBudgetShape;
-}
+/** Public structural type for `FrameBudget`. */
+export type FrameBudget = FrameBudgetShape;

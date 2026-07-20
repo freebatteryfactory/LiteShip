@@ -45,7 +45,7 @@ crossing subscription, abort the in-flight animation, and close the fan-out.
 
 ##### B
 
-`B` *extends* [`Shape`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)\<`string`, readonly \[`string`, `string`\]\>
+`B` *extends* [`Boundary`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Boundary.md)
 
 #### Parameters
 
@@ -73,7 +73,7 @@ Per-state numeric output maps for interpolation; omitted,
 ##### options?
 
 Optional injection bag. `options.scheduler` supplies a
-                     `Scheduler.Shape` frame clock (e.g. `Scheduler.raf()`
+                     `Scheduler` frame clock (e.g. `Scheduler.raf()`
                      to align frames to the display, or `Scheduler.fixedStep(fps)`
                      for deterministic rendering/tests). Omitted, the animation
                      drives its own internal ~60fps loop via a fixed 16ms sleep

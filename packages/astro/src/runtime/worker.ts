@@ -98,7 +98,7 @@ function canUseWorkerRuntime(): boolean {
  * Entry point used by the `client:worker` directive.
  *
  * Parses the serialised boundary off `element`, spins up (or reuses)
- * a {@link WorkerHost.Shape} from `@liteship/worker`, bootstraps the
+ * a {@link WorkerHost} from `@liteship/worker`, bootstraps the
  * boundary in the worker, and streams resolved state back into DOM
  * via {@link applyBoundaryState}. Falls back to an inline evaluation
  * when `SharedArrayBuffer` / cross-origin isolation is unavailable.
@@ -110,7 +110,7 @@ export function initWorkerDirective(load: () => Promise<unknown>, element: HTMLE
   }
 
   let cleanupObserver: (() => void) | null = null;
-  let host: WorkerHost.Shape | null = null;
+  let host: WorkerHost | null = null;
   let unsubscribe: (() => void) | null = null;
   let ackUnsubscribe: (() => void) | null = null;
   let workerMessageHandler: ((event: MessageEvent<{ type?: string }>) => void) | null = null;

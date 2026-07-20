@@ -46,10 +46,10 @@ function fxProp(tokenName: string): string {
 // ---------------------------------------------------------------------------
 
 /**
- * Compile a {@link Theme.Shape} into per-variant selector blocks and optional
+ * Compile a {@link Theme} into per-variant selector blocks and optional
  * root transitions.
  */
-function compile(theme: Theme.Shape): ThemeCSSResult {
+function compile(theme: Theme): ThemeCSSResult {
   const selectorBlocks: string[] = [];
   const transitionProps = new Set<string>();
 
@@ -91,7 +91,7 @@ function compile(theme: Theme.Shape): ThemeCSSResult {
 /**
  * Theme CSS compiler namespace.
  *
- * Serializes a {@link Theme.Shape} into `html[data-theme="…"]` selector
+ * Serializes a {@link Theme} into `html[data-theme="…"]` selector
  * overrides of `--liteship-*` custom properties and, when theme metadata
  * requests it, a `:root` transition block that animates all theme
  * property changes.

@@ -8,7 +8,7 @@
 
 > **Finalizer** = () => `void` \| `Promise`\<`void`\>
 
-Defined in: [core/src/reactive/lifetime.ts:233](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts#L233)
+Defined in: [core/src/reactive/lifetime.ts:234](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts#L234)
 
 A registered teardown function — see Finalizer.
 

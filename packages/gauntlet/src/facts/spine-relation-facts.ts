@@ -71,7 +71,7 @@ export type SurfaceRelation =
  * structural drift the gate always reports.
  */
 export interface SpineRelationObservation {
-  /** The mirror type being classified (e.g. `CompositeState`, `Codec.Shape`, `Millis`). */
+  /** The mirror type being classified (e.g. `CompositeState`, `Codec`, `Millis`). */
   readonly typeName: string;
   /** Axis 1 — who owns the type (recorded for the two-axis report + convergence evidence). */
   readonly authority: SpineAuthority;

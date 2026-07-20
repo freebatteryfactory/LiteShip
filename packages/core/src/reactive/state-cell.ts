@@ -369,8 +369,6 @@ export const StateCellStore = {
 };
 
 export declare namespace StateCell {
-  /** Structural shape of a {@link StateCell}. */
-  export type Shape<S extends string = string> = StateCell<S>;
   /** Alias for {@link StateAuthority}. */
   export type Authority = StateAuthority;
   /** Alias for {@link StateCellKind}. */
@@ -378,13 +376,9 @@ export declare namespace StateCell {
 }
 
 export declare namespace ProjectionState {
-  /** Structural shape of a {@link ProjectionState}. */
-  export type Shape<S extends string = string> = ProjectionState<S>;
   /** Alias for {@link StateResolutionReceipt}. */
   export type ResolutionReceipt = StateResolutionReceipt;
 }
 
-export declare namespace StateCellStore {
-  /** Structural shape of a {@link StateCellStore}. */
-  export type Shape = StateCellStoreShape;
-}
+/** Public structural type for `StateCellStore`. */
+export type StateCellStore = StateCellStoreShape;

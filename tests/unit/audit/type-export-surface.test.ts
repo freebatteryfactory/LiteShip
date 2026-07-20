@@ -130,7 +130,7 @@ describe('type-export enumerator — precision (pure synthetic walk)', () => {
     const files = {
       '/p/index.ts': [
         `export { Brand, mkBrand } from './brand.js';`, // Brand = dual (type half kept); mkBrand = value (skip)
-        `export { Shape } from './shape.js';`, // interface re-export
+        `export { Widget } from './widget.js';`, // interface re-export
         `export { Brand as AliasedBrand } from './brand.js';`, // aliased: type half under the new name
       ].join('\n'),
       // `Brand` is a value+type dual — a branded type alias AND a same-named constructor.
@@ -139,13 +139,13 @@ describe('type-export enumerator — precision (pure synthetic walk)', () => {
         `export const Brand = (s: string): Brand => s as Brand;`,
         `export const mkBrand = Brand;`,
       ].join('\n'),
-      '/p/shape.ts': `export interface Shape { readonly n: number }`,
+      '/p/widget.ts': `export interface Widget { readonly n: number }`,
     } as const;
     const got = enumeratePackageTypeExports('/p/index.ts', virtualReader(files));
     const byName = Object.fromEntries(got.map((d) => [d.name, d.kind]));
     expect(byName.Brand).toBe('type'); // the dual's TYPE half — previously LOST
     expect(byName.AliasedBrand).toBe('type'); // recorded under the re-export alias
-    expect(byName.Shape).toBe('interface');
+    expect(byName.Widget).toBe('interface');
     expect(byName).not.toHaveProperty('mkBrand'); // a pure value never enters the type plane
   });
 

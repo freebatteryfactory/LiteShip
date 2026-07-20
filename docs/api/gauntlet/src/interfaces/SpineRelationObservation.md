@@ -94,4 +94,4 @@ Did BOTH sides import + typecheck-resolve? A false here is a hard structural dri
 
 Defined in: [gauntlet/src/facts/spine-relation-facts.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/spine-relation-facts.ts#L75)
 
-The mirror type being classified (e.g. `CompositeState`, `Codec.Shape`, `Millis`).
+The mirror type being classified (e.g. `CompositeState`, `Codec`, `Millis`).

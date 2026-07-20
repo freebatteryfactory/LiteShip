@@ -5,17 +5,18 @@
  * carry its specification: package boundary vs domain directory, the facade law
  * (a barrel is a pure named-re-export surface — no behavior, no wildcards),
  * types.ts purity (type-space only, erasable), and the grab-bag-filename ban.
- * Four ast-grep rules in sgrules/ enforce it in the gauntlet `lint:structural`
+ * Five ast-grep rules in sgrules/ enforce it in the gauntlet `lint:structural`
  * phase:
  *   - facade-only-reexports      (a) facades hold only re-exports/imports/comments
  *   - no-wildcard-facade-export  (b) no `export * from` in a facade
  *   - no-utils-file              (c) no utils.ts / helpers.ts / *-utils / *-helpers
  *   - types-file-purity          (d) no value declarations in a types.ts
+ *   - no-shape-namespace-type    (e) the retired ADR-0001 `.Shape` convention stays dead (ADR-0046)
  *
  * Every other sgrule is backstopped by a vitest meta-test that pins the SCARS
  * (float-determinism.test.ts, a1-seam-integrity.test.ts). Those rules ported an
  * existing hand-rolled guard, so their meta-test asserts the byte-level budget
- * and leaves the AST match to `lint:structural`. These four rules are NEW law
+ * and leaves the AST match to `lint:structural`. These five rules are NEW law
  * with no prior regex guard, so this harness proves the rules themselves fire:
  * for each rule it runs the REAL rule file (via ast-grep `scan --rule`) against a
  * RED fixture (must fire) and a GREEN fixture (must pass), plus a scope fixture
@@ -80,6 +81,7 @@ describe('source-grammar rules are registered with ast-grep', () => {
       'no-wildcard-facade-export.yml',
       'no-utils-file.yml',
       'types-file-purity.yml',
+      'no-shape-namespace-type.yml',
     ]) {
       expect(existsSync(resolve(SGRULES, r)), r).toBe(true);
     }
@@ -208,6 +210,50 @@ describe('types-file-purity (d) — a types.ts is type-space only (core-scoped g
 
   it('SCOPE: a value-bearing types.ts in a NON-core package is out of scope', async () => {
     const f = fixture('packages/mcp-server/src/lsp/types.ts', 'export const SEVERITY = { Error: 1 } as const;\n');
+    expect((await scan(RULE, f)).length).toBe(0);
+  });
+});
+
+describe('no-shape-namespace-type (e) — the ADR-0001 .Shape convention stays dead (ADR-0046)', () => {
+  const RULE = 'no-shape-namespace-type.yml';
+
+  it('RED: a namespace Shape member plus two qualified .Shape references fire on each', async () => {
+    const f = fixture(
+      'packages/faux/src/domain/boundary.ts',
+      [
+        'export declare namespace Faux {',
+        '  export type Shape<T> = { readonly x: T };',
+        '  export type Spec = string;',
+        '}',
+        'export function use(v: Faux.Shape<number>): void { void v; }',
+        'type Alias = Faux.Shape;',
+        '',
+      ].join('\n'),
+    );
+    // namespace member `Shape` + 2 qualified `Faux.Shape` references = 3.
+    expect((await scan(RULE, f)).length).toBe(3);
+  });
+
+  it('GREEN: a value-merged namespace carrying only non-Shape aux type members passes', async () => {
+    const f = fixture(
+      'packages/faux/src/domain/lifetime.ts',
+      [
+        'export const Lifetime = { make: () => ({}) };',
+        'export declare namespace Lifetime {',
+        '  export type Finalizer = () => void;',
+        '}',
+        'export interface LifetimeState { open: boolean }',
+        '',
+      ].join('\n'),
+    );
+    expect((await scan(RULE, f)).length).toBe(0);
+  });
+
+  it('GREEN: a top-level interface incidentally named Shape (outside any namespace) is not the retired pattern', async () => {
+    const f = fixture(
+      'packages/faux/src/domain/geometry.ts',
+      'export interface Shape { readonly sides: number }\n',
+    );
     expect((await scan(RULE, f)).length).toBe(0);
   });
 });

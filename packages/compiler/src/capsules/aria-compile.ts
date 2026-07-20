@@ -60,17 +60,17 @@ interface ARIACompileOutput {
 }
 
 /** Build a valid Boundary from a recorded (deduped) state-name list. */
-function makeBoundary(stateNames: readonly string[]): Boundary.Shape {
+function makeBoundary(stateNames: readonly string[]): Boundary {
   const at = stateNames.map((name, i) => [i, name] as const);
   return Boundary.make({
     input: 'seed.signal',
     at: at as unknown as readonly [readonly [number, string]],
-  }) as unknown as Boundary.Shape;
+  }) as unknown as Boundary;
 }
 
 /** Normalize a seed into a real Boundary + per-state attribute maps + currentState. */
 function buildInputs(seed: ARIACompileSeedValue): {
-  boundary: Boundary.Shape;
+  boundary: Boundary;
   authored: StateAttrs;
   stateNames: string[];
   currentState: string;
@@ -106,7 +106,7 @@ function buildInputs(seed: ARIACompileSeedValue): {
  * buffer (suppressing console noise from dropped-key warnings), then restore the
  * default sink. Pure from the caller's view.
  */
-function compileQuietly(boundary: Boundary.Shape, authored: StateAttrs, currentState: string): ARIACompileResult {
+function compileQuietly(boundary: Boundary, authored: StateAttrs, currentState: string): ARIACompileResult {
   const { sink } = Diagnostics.createBufferSink();
   // Restore the PREVIOUSLY-active sink (not the default) so a host that installed
   // a custom sink keeps capturing diagnostics after this capsule runs — the

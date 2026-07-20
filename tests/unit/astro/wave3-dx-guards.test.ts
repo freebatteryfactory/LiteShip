@@ -54,7 +54,7 @@ import { captureDiagnosticsAsync } from '../../helpers/diagnostics.js';
 const stateLabel = fc.stringMatching(/^[a-z][a-z0-9_]{0,7}$/);
 
 /**
- * Generate a structurally-valid Boundary.Shape with >= 1 ascending,
+ * Generate a structurally-valid Boundary with >= 1 ascending,
  * distinct thresholds and distinct state labels. `at[0]` is pinned to a
  * sentinel low threshold so the first state is always the resolution floor.
  */

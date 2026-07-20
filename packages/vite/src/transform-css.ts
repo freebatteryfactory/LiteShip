@@ -188,7 +188,7 @@ export async function transformCss(code: string, id: string, ctx: TransformCssCo
 
     for (const block of tokenBlocks) {
       const cacheKey = `${block.tokenName}:${id}`;
-      let token: Token.Shape | null | undefined = cache.token.get(cacheKey);
+      let token: Token | null | undefined = cache.token.get(cacheKey);
 
       if (token === undefined) {
         const resolution = await resolvePrimitive('token', block.tokenName, id, projectRoot, dirs?.token);
@@ -218,7 +218,7 @@ export async function transformCss(code: string, id: string, ctx: TransformCssCo
 
     for (const block of themeBlocks) {
       const cacheKey = `${block.themeName}:${id}`;
-      let theme: Theme.Shape | null | undefined = cache.theme.get(cacheKey);
+      let theme: Theme | null | undefined = cache.theme.get(cacheKey);
 
       if (theme === undefined) {
         const resolution = await resolvePrimitive('theme', block.themeName, id, projectRoot, dirs?.theme);
@@ -248,7 +248,7 @@ export async function transformCss(code: string, id: string, ctx: TransformCssCo
 
     for (const block of styleBlocks) {
       const cacheKey = `${block.styleName}:${id}`;
-      let style: Style.Shape | null | undefined = cache.style.get(cacheKey);
+      let style: Style | null | undefined = cache.style.get(cacheKey);
 
       if (style === undefined) {
         const resolution = await resolvePrimitive('style', block.styleName, id, projectRoot, dirs?.style);
@@ -315,7 +315,7 @@ export async function transformCss(code: string, id: string, ctx: TransformCssCo
             `Fix: export \`const ${block.boundaryName} = Boundary.make({ ... })\` from a boundary module in this project.`,
         );
       }
-      let boundary: Boundary.Shape | null | undefined = cache.boundary.get(cacheKey);
+      let boundary: Boundary | null | undefined = cache.boundary.get(cacheKey);
 
       if (boundary === undefined) {
         const resolution =

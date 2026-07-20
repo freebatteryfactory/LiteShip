@@ -51,10 +51,10 @@ function serializeJSValue(value: unknown): string {
 // ---------------------------------------------------------------------------
 
 /**
- * Compile a list of {@link Token.Shape} into a JS object + companion type
+ * Compile a list of {@link Token} into a JS object + companion type
  * declaration, grouped by category.
  */
-function compile(tokens: readonly Token.Shape[]): TokenJSResult {
+function compile(tokens: readonly Token[]): TokenJSResult {
   // Group tokens by category
   const grouped = groupTokensByCategory(tokens);
 

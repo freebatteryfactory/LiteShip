@@ -40,7 +40,7 @@ interface BlendTreeShape<T extends Record<string, number>> {
  */
 interface BlendTreeHandle<T extends Record<string, number>> {
   readonly tree: BlendTreeShape<T>;
-  readonly lifetime: Lifetime.Shape;
+  readonly lifetime: Lifetime;
 }
 
 /**
@@ -143,9 +143,10 @@ function _make<T extends Record<string, number>>(): BlendTreeHandle<T> {
  */
 export const BlendTree = { make: _make };
 
+/** Public structural type for `BlendTree`. */
+export type BlendTree<T extends Record<string, number>> = BlendTreeShape<T>;
+
 export declare namespace BlendTree {
-  /** Structural shape of a blend-tree instance: `sample(weights)` over a `Record<string, number>` space. */
-  export type Shape<T extends Record<string, number>> = BlendTreeShape<T>;
   /** Individual leaf/intermediate node in a blend tree. */
   export type Node<T> = BlendNodeShape<T>;
   /** The `{ tree, lifetime }` pair {@link BlendTree.make} returns. */

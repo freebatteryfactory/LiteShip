@@ -116,7 +116,5 @@ export const Cap = {
   ordinal: _ordinal,
 };
 
-export declare namespace Cap {
-  /** Alias for {@link CapSet}. */
-  export type Shape = CapSet;
-}
+/** Public structural type for `Cap`. */
+export type Cap = CapSet;

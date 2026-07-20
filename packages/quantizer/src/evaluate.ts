@@ -35,11 +35,11 @@ export type { EvaluateResult } from '@liteship/core';
  * optional hysteresis and crossing detection. Delegates to
  * {@link Boundary.evaluateResult} in `@liteship/core`.
  *
- * The explicit signature (over the public `Boundary.Shape`/`StateUnion` types,
+ * The explicit signature (over the public `Boundary`/`StateUnion` types,
  * not core's internal `BoundaryDef`) keeps the emitted `.d.ts` nameable across
  * the package boundary while the implementation is a thin delegate.
  */
-export function evaluate<B extends Boundary.Shape>(
+export function evaluate<B extends Boundary>(
   boundary: B,
   value: number,
   previousState?: StateUnion<B>,

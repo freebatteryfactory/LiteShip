@@ -96,7 +96,5 @@ function _make<K extends string>(keys: readonly K[]): DirtyFlagsShape<K> {
  */
 export const DirtyFlags = { make: _make };
 
-export declare namespace DirtyFlags {
-  /** Structural shape of a {@link DirtyFlags} instance keyed by flag name `K`. */
-  export type Shape<K extends string = string> = DirtyFlagsShape<K>;
-}
+/** Public structural type for `DirtyFlags`. */
+export type DirtyFlags<K extends string = string> = DirtyFlagsShape<K>;

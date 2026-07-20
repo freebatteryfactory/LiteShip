@@ -31,4 +31,3 @@ await lifetime.dispose();
 
 - [Config](type-aliases/Config.md)
 - [Handle](type-aliases/Handle.md)
-- [Shape](type-aliases/Shape.md)

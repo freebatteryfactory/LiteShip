@@ -159,7 +159,5 @@ function _make(capacity = COMPOSITOR_POOL_CAP): CompositorStatePoolShape {
  */
 export const CompositorStatePool = { make: _make };
 
-export declare namespace CompositorStatePool {
-  /** Structural shape of a pool instance: `acquire`, `release`, `size`, `available`. */
-  export type Shape = CompositorStatePoolShape;
-}
+/** Public structural type for `CompositorStatePool`. */
+export type CompositorStatePool = CompositorStatePoolShape;

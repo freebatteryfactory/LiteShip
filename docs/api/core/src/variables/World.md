@@ -18,7 +18,7 @@ World namespace — construct the ECS world that ticks systems over entities.
 
 > **make**: () => `WorldHandle` = `_makeWorld`
 
-Build a fresh ECS [World.Shape](../namespaces/World/type-aliases/Shape.md) paired with its owning [Lifetime](Lifetime.md).
+Build a fresh ECS World paired with its owning [Lifetime](Lifetime.md).
 
 #### Returns
 

@@ -24,7 +24,7 @@ import { stateAtFrame } from './hooks.js';
  * re-invoking the renderer. The returned array's length is the renderer's
  * total frame count.
  *
- * @param renderer - A `VideoRenderer.Shape` produced by `@liteship/core`.
+ * @param renderer - A `VideoRenderer` produced by `@liteship/core`.
  * @returns Frames in timeline order.
  *
  * @example
@@ -32,7 +32,7 @@ import { stateAtFrame } from './hooks.js';
  * const frames = await precomputeFrames(renderer);
  * ```
  */
-export async function precomputeFrames(renderer: VideoRenderer.Shape): Promise<ReadonlyArray<VideoFrameOutput>> {
+export async function precomputeFrames(renderer: VideoRenderer): Promise<ReadonlyArray<VideoFrameOutput>> {
   const frames: VideoFrameOutput[] = [];
   for await (const frame of renderer.frames()) {
     frames.push(frame);
@@ -64,7 +64,7 @@ export interface RemotionVideoConfig {
  *   `calculateMetadata` output).
  * @param compositor - The `Compositor` driving the liteship state pipeline.
  * @param signal - Optional controllable time signal, seeked per frame.
- * @returns A `VideoRenderer.Shape` ready for {@link precomputeFrames}.
+ * @returns A `VideoRenderer` ready for {@link precomputeFrames}.
  *
  * @example
  * ```ts
@@ -74,9 +74,9 @@ export interface RemotionVideoConfig {
  */
 export function rendererFromRemotionConfig(
   config: RemotionVideoConfig,
-  compositor: Compositor.Shape,
+  compositor: Compositor,
   signal?: Signal.Controllable<number>,
-): VideoRenderer.Shape {
+): VideoRenderer {
   // frames -> ms -> frames must round-trip EXACTLY: the renderer derives its
   // frame count as ceil(durationMs / 1000 * fps), and a float remainder one
   // ULP above the true product adds a phantom frame (1000 @ 30fps -> 1001).

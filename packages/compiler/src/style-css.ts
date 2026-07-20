@@ -89,9 +89,9 @@ function emitStyleLayerBlock(layer: StyleLayer, selector: string, indent: string
 }
 
 /**
- * Build the transition shorthand from Style.Shape.transition config.
+ * Build the transition shorthand from Style.transition config.
  */
-function buildTransition(style: Style.Shape): Record<string, string> {
+function buildTransition(style: Style): Record<string, string> {
   if (!style.transition) return {};
   const { duration, easing = 'ease', properties } = style.transition;
   const propList = properties && properties.length > 0 ? properties.join(', ') : 'all';
@@ -116,7 +116,7 @@ function emitStartingStyle(layer: StyleLayer, selector: string): string {
 /**
  * Emit `@container` rules for boundary states by delegating to {@link CSSCompiler}.
  */
-function emitBoundaryStates(style: Style.Shape, selector: string): string {
+function emitBoundaryStates(style: Style, selector: string): string {
   if (!style.boundary || !style.states) return '';
 
   const stateMap: Record<string, Record<string, string>> = {};
@@ -141,14 +141,14 @@ function emitBoundaryStates(style: Style.Shape, selector: string): string {
 // ---------------------------------------------------------------------------
 
 /**
- * Compile a {@link Style.Shape} into layered, scoped CSS.
+ * Compile a {@link Style} into layered, scoped CSS.
  *
  * When `componentName` is supplied the output is wrapped in an `@scope`
  * block targeting `.liteship-<name>` and bounded at `[data-liteship-slot]`
  * children. Boundary states are compiled into nested `@container` rules
  * via the core {@link CSSCompiler}.
  */
-function compile(style: Style.Shape, componentName?: string): StyleCSSResult {
+function compile(style: Style, componentName?: string): StyleCSSResult {
   const selector = componentName ? `.liteship-${componentName}` : ':where(.liteship-styled)';
   const scopeEnd = componentName ? ' to ([data-liteship-slot])' : '';
 
@@ -195,7 +195,7 @@ function compile(style: Style.Shape, componentName?: string): StyleCSSResult {
 /**
  * Style CSS compiler namespace.
  *
- * Compiles a {@link Style.Shape} into cascade-layered, scoped CSS using
+ * Compiles a {@link Style} into cascade-layered, scoped CSS using
  * `@layer`, `@scope`, `@starting-style`, and `@container` — the modern CSS
  * features that let liteship deliver component isolation and state-driven
  * restyling without runtime class toggling.

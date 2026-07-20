@@ -34,7 +34,7 @@ export interface ReceiptEnvelope {
    */
   readonly timestamp: HLC;
   readonly subject: ReceiptSubject;
-  readonly payload: TypedRef.Shape;
+  readonly payload: TypedRef;
   readonly hash: string;
   readonly previous: string | readonly string[];
   readonly signature?: string;
@@ -143,7 +143,7 @@ export const hashEnvelope = (envelope: ReceiptEnvelope): Promise<string> => {
 export const createEnvelope = async (
   kind: string,
   subject: ReceiptSubject,
-  payload: TypedRef.Shape,
+  payload: TypedRef,
   timestamp: HLC,
   previousHash: string | readonly string[],
 ): Promise<ReceiptEnvelope> => {
@@ -175,7 +175,7 @@ export const buildChain = async (
   entries: ReadonlyArray<{
     kind: string;
     subject: ReceiptSubject;
-    payload: TypedRef.Shape;
+    payload: TypedRef;
     timestamp: HLC;
   }>,
 ): Promise<ReceiptEnvelope[]> => {
@@ -484,7 +484,7 @@ export const tail = (chain: ReadonlyArray<ReceiptEnvelope>): ReceiptEnvelope | u
  */
 export const append = async (
   chain: ReadonlyArray<ReceiptEnvelope>,
-  entry: { kind: string; subject: ReceiptSubject; payload: TypedRef.Shape; timestamp: HLC },
+  entry: { kind: string; subject: ReceiptSubject; payload: TypedRef; timestamp: HLC },
   previousHashes?: readonly string[],
 ): Promise<ReceiptEnvelope[]> => {
   const previousHash: string | readonly string[] = previousHashes

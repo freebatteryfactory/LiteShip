@@ -155,9 +155,10 @@ function _make(config: AVBridgeConfig): AVBridgeShape {
  */
 export const AVBridge = { make: _make };
 
+/** Public structural type for `AVBridge`. */
+export type AVBridge = AVBridgeShape;
+
 export declare namespace AVBridge {
-  /** Structural shape of an AVBridge instance — sample counters, time conversions, reset. */
-  export type Shape = AVBridgeShape;
   /** Configuration accepted by {@link AVBridge.make}: sample rate and fps. */
   export type Config = AVBridgeConfig;
 }

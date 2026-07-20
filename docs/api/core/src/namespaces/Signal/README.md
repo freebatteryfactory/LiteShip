@@ -28,4 +28,3 @@ ctrl.seek(500);
 
 - [Audio](type-aliases/Audio.md)
 - [Controllable](type-aliases/Controllable.md)
-- [Shape](type-aliases/Shape.md)

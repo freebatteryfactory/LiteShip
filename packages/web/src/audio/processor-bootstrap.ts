@@ -67,7 +67,7 @@ registerProcessor('av-sync-processor', AVSyncProcessor);
  * @param bridge - Shared AV bridge the worklet will mutate 128 samples
  *   at a time.
  */
-export async function createAudioProcessor(context: AudioContext, bridge: AVBridge.Shape): Promise<AudioProcessor> {
+export async function createAudioProcessor(context: AudioContext, bridge: AVBridge): Promise<AudioProcessor> {
   const blob = new Blob([PROCESSOR_SOURCE], { type: 'application/javascript' });
   const url = URL.createObjectURL(blob);
 

@@ -14,7 +14,7 @@ Transition resolver namespace.
 
 `Transition.for(quantizer, map)` (or `Transition.for(boundary, map)`)
 produces a Transition that looks up animation parameters by
-`from->to` state pairs. Consumed by [AnimatedQuantizer](../namespaces/AnimatedQuantizer/README.md) for
+`from->to` state pairs. Consumed by [AnimatedQuantizer](../type-aliases/AnimatedQuantizer.md) for
 interpolation setup.
 
 ## Type Declaration
@@ -41,7 +41,7 @@ Resolution order:
 
 ###### B
 
-`B` *extends* [`Shape`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)\<`string`, readonly \[`string`, `string`\]\>
+`B` *extends* [`Boundary`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Boundary.md)
 
 ##### Parameters
 
@@ -73,7 +73,7 @@ Resolution order:
 
 ###### B
 
-`B` *extends* [`Shape`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)\<`string`, readonly \[`string`, `string`\]\>
+`B` *extends* [`Boundary`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Boundary.md)
 
 ##### Parameters
 

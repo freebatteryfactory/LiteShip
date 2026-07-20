@@ -19,7 +19,7 @@ primitives plus arbitrary user-defined keys.
 
 ### boundary?
 
-> `readonly` `optional` **boundary?**: [`Shape`](../namespaces/Boundary/type-aliases/Shape.md)\<`string`, readonly \[`string`, `string`\]\>
+> `readonly` `optional` **boundary?**: [`Boundary`](../type-aliases/Boundary.md)
 
 Defined in: [core/src/authoring/composable.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/composable.ts#L31)
 
@@ -27,7 +27,7 @@ Defined in: [core/src/authoring/composable.ts:31](https://github.com/freebattery
 
 ### style?
 
-> `readonly` `optional` **style?**: [`Shape`](../namespaces/Style/type-aliases/Shape.md)\<[`Shape`](../namespaces/Boundary/type-aliases/Shape.md)\<`string`, readonly \[`string`, `string`\]\>\>
+> `readonly` `optional` **style?**: [`Style`](../type-aliases/Style.md)
 
 Defined in: [core/src/authoring/composable.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/composable.ts#L33)
 
@@ -35,6 +35,6 @@ Defined in: [core/src/authoring/composable.ts:33](https://github.com/freebattery
 
 ### token?
 
-> `readonly` `optional` **token?**: [`Shape`](../namespaces/Token/type-aliases/Shape.md)\<`string`, readonly `string`[]\>
+> `readonly` `optional` **token?**: [`Token`](../type-aliases/Token.md)
 
 Defined in: [core/src/authoring/composable.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/composable.ts#L32)

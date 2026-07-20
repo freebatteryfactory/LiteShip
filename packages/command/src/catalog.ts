@@ -221,7 +221,7 @@ const ALL_COMMANDS: readonly RegisteredCommand[] = [
 ];
 
 /** The single canonical registry instance. CLI and MCP both project from this. */
-export const commandRegistry: CommandRegistry.Shape = CommandRegistry.make(ALL_COMMANDS);
+export const commandRegistry: CommandRegistry = CommandRegistry.make(ALL_COMMANDS);
 
 /** The full catalog of descriptors, sorted by name. Mirrors {@link commandRegistry}.list(). */
 export const COMMAND_CATALOG: readonly CapsuleCommandDescriptor[] = commandRegistry.list();

@@ -93,7 +93,7 @@ export interface CompositeState {
  */
 export interface CompositorConfig {
   readonly poolCapacity?: number;
-  readonly frameBudget?: FrameBudget.Shape;
+  readonly frameBudget?: FrameBudget;
   readonly speculative?: boolean;
   /**
    * Escalation gate: resolve the {@link PolicyNode} (if any) that governs a
@@ -138,12 +138,12 @@ function defaultRuntimeSite(): RuntimeSite {
 }
 
 /**
- * Widen a CompositorQuantizer's boundary parameter to Boundary.Shape for storage
+ * Widen a CompositorQuantizer's boundary parameter to Boundary for storage
  * in a heterogeneous registry. Safe because the quantizer is covariant in B
  * (B only appears in return positions).
  */
-function widenQuantizer<B extends Boundary.Shape>(q: CompositorQuantizer<B>): CompositorQuantizer<Boundary.Shape> {
-  return q as unknown as CompositorQuantizer<Boundary.Shape>;
+function widenQuantizer<B extends Boundary>(q: CompositorQuantizer<B>): CompositorQuantizer<Boundary> {
+  return q as unknown as CompositorQuantizer<Boundary>;
 }
 
 /**
@@ -158,14 +158,14 @@ function widenQuantizer<B extends Boundary.Shape>(q: CompositorQuantizer<B>): Co
 type CompositorChanges = Pick<CellKernel.Replay<CompositeState>, 'subscribe' | 'read' | 'closed' | 'size'>;
 
 interface CompositorShape {
-  add<B extends Boundary.Shape>(name: string, quantizer: CompositorQuantizer<B>): void;
+  add<B extends Boundary>(name: string, quantizer: CompositorQuantizer<B>): void;
   remove(name: string): void;
   compute(): CompositeState;
   setBlendWeights(name: string, weights: Record<string, number>): void;
   evaluateSpeculative(name: string, value: number, velocity?: number): void;
   scheduleBatch(): void;
   readonly changes: CompositorChanges;
-  readonly runtime: RuntimeCoordinator.Shape;
+  readonly runtime: RuntimeCoordinator;
 }
 
 /**
@@ -177,7 +177,7 @@ interface CompositorShape {
  */
 interface CompositorHandle {
   readonly compositor: CompositorShape;
-  readonly lifetime: Lifetime.Shape;
+  readonly lifetime: Lifetime;
 }
 
 interface CompositorFactory {
@@ -271,7 +271,7 @@ export const Compositor: CompositorFactory = {
       cell.publish(state);
     }
 
-    const qMap = new Map<string, CompositorQuantizer<Boundary.Shape>>();
+    const qMap = new Map<string, CompositorQuantizer<Boundary>>();
     const metaMap = new Map<string, QuantizerMeta>();
     const overrides = new Map<string, Record<string, number>>();
 
@@ -299,11 +299,11 @@ export const Compositor: CompositorFactory = {
       name: 'liteship-compositor-runtime',
     });
 
-    const speculativeEvaluators = new Map<string, SpeculativeEvaluator.Shape<Boundary.Shape>>();
+    const speculativeEvaluators = new Map<string, SpeculativeEvaluator<Boundary>>();
     const prefetchedStates = new Map<string, string>();
 
     let nameList: string[] = [];
-    let dirty: DirtyFlags.Shape<string> | null = null;
+    let dirty: DirtyFlags<string> | null = null;
     let recomputeAll = false;
     let previousState: CompositeState = emptyCompositeState();
     let priorPreviousState: CompositeState | null = null;
@@ -333,7 +333,7 @@ export const Compositor: CompositorFactory = {
      * marked names. Writes in place and sets {@link dirtyCount}; allocates nothing
      * once the scratch has reached its high-water size.
      */
-    function refillDirtyNames(recomputeEverything: boolean, flags: DirtyFlags.Shape<string> | null): void {
+    function refillDirtyNames(recomputeEverything: boolean, flags: DirtyFlags<string> | null): void {
       dirtyCount = 0;
       for (const name of qMap.keys()) {
         if (recomputeEverything || flags === null || flags.isDirty(name)) {
@@ -550,9 +550,9 @@ export const Compositor: CompositorFactory = {
     }
 
     const compositor: CompositorShape = {
-      add: <B extends Boundary.Shape>(name: string, quantizer: CompositorQuantizer<B>): void => {
+      add: <B extends Boundary>(name: string, quantizer: CompositorQuantizer<B>): void => {
         // Quantizer<B> is covariant in B (B only appears in return types), so widening
-        // to Quantizer<Boundary.Shape> is sound; wrap in a named helper to document.
+        // to Quantizer<Boundary> is sound; wrap in a named helper to document.
         qMap.set(name, widenQuantizer(quantizer));
         metaMap.set(name, {
           ...projectionKeys(name),
@@ -669,9 +669,10 @@ export const Compositor: CompositorFactory = {
   },
 };
 
+/** Public structural type for `Compositor`. */
+export type Compositor = CompositorShape;
+
 export declare namespace Compositor {
-  /** Structural shape of a live compositor instance. */
-  export type Shape = CompositorShape;
   /** Alias for {@link CompositorConfig}. */
   export type Config = CompositorConfig;
   /** The `{ compositor, lifetime }` pair returned by {@link Compositor.create}. */

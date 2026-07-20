@@ -29,7 +29,7 @@ attributes are SSR'd onto the element; the client updates them live.
 
 ### boundary?
 
-> `readonly` `optional` **boundary?**: [`Shape`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)\<`string`, readonly \[`string`, `string`\]\>
+> `readonly` `optional` **boundary?**: [`Boundary`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Boundary.md)
 
 Defined in: [astro/src/Satellite.ts:26](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Satellite.ts#L26)
 
@@ -49,7 +49,7 @@ Extra CSS class names to merge with `liteship-satellite`.
 
 ### component?
 
-> `readonly` `optional` **component?**: [`Shape`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Component/type-aliases/Shape.md)\<[`Shape`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)\<`string`, readonly \[`string`, `string`\]\>, readonly `string`[]\>
+> `readonly` `optional` **component?**: [`Component`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/Component.md)
 
 Defined in: [astro/src/Satellite.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Satellite.ts#L28)
 

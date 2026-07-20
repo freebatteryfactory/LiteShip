@@ -8,6 +8,6 @@
 
 > **Handle** = `WorldHandle`
 
-Defined in: [core/src/ecs.ts:365](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L365)
+Defined in: [core/src/ecs.ts:367](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L367)
 
 The `{ world, lifetime }` pair returned by [World.make](../../../variables/World.md#make).

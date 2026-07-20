@@ -265,7 +265,7 @@ function isStateBody(input: CSSStateInput): input is CSSStateBody {
  * @param selector - Optional CSS selector for bare properties (defaults to `.liteship-boundary`)
  * @returns A {@link CSSCompileResult} with structured rules and raw CSS text
  */
-function compile<B extends Boundary.Shape>(
+function compile<B extends Boundary>(
   boundary: B,
   states: { readonly [S in StateUnion<B> & string]?: CSSStateInput },
   selector?: string,

@@ -53,21 +53,21 @@ describe('HLC', () => {
     });
 
     test('same wall_ms, higher counter compares greater', () => {
-      const a: HLC.Shape = { wall_ms: 1000, counter: 3, node_id: 'node-a' };
-      const b: HLC.Shape = { wall_ms: 1000, counter: 1, node_id: 'node-a' };
+      const a: HLC = { wall_ms: 1000, counter: 3, node_id: 'node-a' };
+      const b: HLC = { wall_ms: 1000, counter: 1, node_id: 'node-a' };
       expect(HLC.compare(a, b)).toBe(1);
     });
 
     test('same wall_ms and counter, node_id breaks tie', () => {
-      const a: HLC.Shape = { wall_ms: 1000, counter: 0, node_id: 'aaa' };
-      const b: HLC.Shape = { wall_ms: 1000, counter: 0, node_id: 'zzz' };
+      const a: HLC = { wall_ms: 1000, counter: 0, node_id: 'aaa' };
+      const b: HLC = { wall_ms: 1000, counter: 0, node_id: 'zzz' };
       expect(HLC.compare(a, b)).toBe(-1);
       expect(HLC.compare(b, a)).toBe(1);
     });
 
     test('identical HLCs compare equal', () => {
-      const a: HLC.Shape = { wall_ms: 1000, counter: 5, node_id: 'node-a' };
-      const b: HLC.Shape = { wall_ms: 1000, counter: 5, node_id: 'node-a' };
+      const a: HLC = { wall_ms: 1000, counter: 5, node_id: 'node-a' };
+      const b: HLC = { wall_ms: 1000, counter: 5, node_id: 'node-a' };
       expect(HLC.compare(a, b)).toBe(0);
     });
   });
@@ -109,15 +109,15 @@ describe('HLC', () => {
 
   describe('merge', () => {
     test('merge takes max of wall_ms values', () => {
-      const local: HLC.Shape = { wall_ms: 1000, counter: 3, node_id: 'node-a' };
-      const remote: HLC.Shape = { wall_ms: 2000, counter: 5, node_id: 'node-b' };
+      const local: HLC = { wall_ms: 1000, counter: 3, node_id: 'node-a' };
+      const remote: HLC = { wall_ms: 2000, counter: 5, node_id: 'node-b' };
       const merged = HLC.merge(local, remote, 500);
       expect(merged.wall_ms).toBe(2000);
     });
 
     test('merge with same wall_ms takes max counter + 1', () => {
-      const local: HLC.Shape = { wall_ms: 1000, counter: 3, node_id: 'node-a' };
-      const remote: HLC.Shape = { wall_ms: 1000, counter: 7, node_id: 'node-b' };
+      const local: HLC = { wall_ms: 1000, counter: 3, node_id: 'node-a' };
+      const remote: HLC = { wall_ms: 1000, counter: 7, node_id: 'node-b' };
       const merged = HLC.merge(local, remote, 1000);
       expect(merged.wall_ms).toBe(1000);
       expect(merged.counter).toBe(8);
@@ -125,30 +125,30 @@ describe('HLC', () => {
 
     test('merge preserves local node_id', () => {
       const local = HLC.create('node-a');
-      const remote: HLC.Shape = { wall_ms: 5000, counter: 0, node_id: 'node-b' };
+      const remote: HLC = { wall_ms: 5000, counter: 0, node_id: 'node-b' };
       const merged = HLC.merge(local, remote, 3000);
       expect(merged.node_id).toBe('node-a');
     });
 
     test('merge with now > both resets counter', () => {
-      const local: HLC.Shape = { wall_ms: 1000, counter: 5, node_id: 'node-a' };
-      const remote: HLC.Shape = { wall_ms: 2000, counter: 3, node_id: 'node-b' };
+      const local: HLC = { wall_ms: 1000, counter: 5, node_id: 'node-a' };
+      const remote: HLC = { wall_ms: 2000, counter: 3, node_id: 'node-b' };
       const merged = HLC.merge(local, remote, 5000);
       expect(merged.wall_ms).toBe(5000);
       expect(merged.counter).toBe(0);
     });
 
     test('merge where local wall_ms wins increments local counter', () => {
-      const local: HLC.Shape = { wall_ms: 3000, counter: 5, node_id: 'node-a' };
-      const remote: HLC.Shape = { wall_ms: 1000, counter: 10, node_id: 'node-b' };
+      const local: HLC = { wall_ms: 3000, counter: 5, node_id: 'node-a' };
+      const remote: HLC = { wall_ms: 1000, counter: 10, node_id: 'node-b' };
       const merged = HLC.merge(local, remote, 2000);
       expect(merged.wall_ms).toBe(3000);
       expect(merged.counter).toBe(6);
     });
 
     test('merge where remote wall_ms wins increments remote counter', () => {
-      const local: HLC.Shape = { wall_ms: 1000, counter: 2, node_id: 'node-a' };
-      const remote: HLC.Shape = { wall_ms: 3000, counter: 7, node_id: 'node-b' };
+      const local: HLC = { wall_ms: 1000, counter: 2, node_id: 'node-a' };
+      const remote: HLC = { wall_ms: 3000, counter: 7, node_id: 'node-b' };
       const merged = HLC.merge(local, remote, 2000);
       expect(merged.wall_ms).toBe(3000);
       expect(merged.counter).toBe(8);
@@ -158,18 +158,18 @@ describe('HLC', () => {
 
   describe('counter overflow', () => {
     test('increment throws at 0xFFFF overflow', () => {
-      const hlc: HLC.Shape = { wall_ms: 1000, counter: 0xffff, node_id: 'node-a' };
+      const hlc: HLC = { wall_ms: 1000, counter: 0xffff, node_id: 'node-a' };
       expect(() => HLC.increment(hlc, 1000)).toThrow('counter overflow');
     });
 
     test('merge throws at 0xFFFF overflow', () => {
-      const local: HLC.Shape = { wall_ms: 1000, counter: 0xffff, node_id: 'node-a' };
-      const remote: HLC.Shape = { wall_ms: 1000, counter: 0xffff, node_id: 'node-b' };
+      const local: HLC = { wall_ms: 1000, counter: 0xffff, node_id: 'node-a' };
+      const remote: HLC = { wall_ms: 1000, counter: 0xffff, node_id: 'node-b' };
       expect(() => HLC.merge(local, remote, 1000)).toThrow('counter overflow');
     });
 
     test('increment past overflow wall_ms resets counter to 0', () => {
-      const hlc: HLC.Shape = { wall_ms: 1000, counter: 0xffff, node_id: 'node-a' };
+      const hlc: HLC = { wall_ms: 1000, counter: 0xffff, node_id: 'node-a' };
       const next = HLC.increment(hlc, 2000);
       expect(next.wall_ms).toBe(2000);
       expect(next.counter).toBe(0);
@@ -178,14 +178,14 @@ describe('HLC', () => {
 
   describe('encode / decode', () => {
     test('roundtrip preserves all fields', () => {
-      const original: HLC.Shape = { wall_ms: 123456789, counter: 42, node_id: 'node-xyz' };
+      const original: HLC = { wall_ms: 123456789, counter: 42, node_id: 'node-xyz' };
       const encoded = HLC.encode(original);
       const decoded = HLC.decode(encoded);
       expect(decoded).toEqual(original);
     });
 
     test('encode produces colon-separated hex string', () => {
-      const hlc: HLC.Shape = { wall_ms: 255, counter: 1, node_id: 'n' };
+      const hlc: HLC = { wall_ms: 255, counter: 1, node_id: 'n' };
       const encoded = HLC.encode(hlc);
       expect(encoded).toContain(':');
       const parts = encoded.split(':');
@@ -216,7 +216,7 @@ describe('HLC', () => {
     });
 
     test('node_id with colons roundtrips correctly', () => {
-      const original: HLC.Shape = { wall_ms: 1000, counter: 0, node_id: 'host:port:id' };
+      const original: HLC = { wall_ms: 1000, counter: 0, node_id: 'host:port:id' };
       const decoded = HLC.decode(HLC.encode(original));
       expect(decoded.node_id).toBe('host:port:id');
     });

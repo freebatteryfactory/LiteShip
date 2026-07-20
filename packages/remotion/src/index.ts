@@ -6,7 +6,7 @@
  * `CompositeState` from `@liteship/core`'s `VideoRenderer` in Remotion projects.
  *
  * Typical flow:
- * 1. Build a {@link VideoRenderer.Shape} on the server — usually via
+ * 1. Build a {@link VideoRenderer} on the server — usually via
  *    {@link rendererFromRemotionConfig}, so fps/duration are declared once,
  *    in Remotion.
  * 2. Call {@link precomputeFrames} once before Remotion renders.
@@ -19,7 +19,7 @@
  */
 
 // Bring the `VideoRenderer` symbol into scope for TSDoc link resolution
-// (typedoc resolves {@link VideoRenderer.Shape} against this type-only import).
+// (typedoc resolves {@link VideoRenderer} against this type-only import).
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import type { VideoRenderer } from '@liteship/core';
 

@@ -6,9 +6,9 @@
 
 # Function: isCell()
 
-> **isCell**\<`T`\>(`p`): `p is Shape<T>`
+> **isCell**\<`T`\>(`p`): `p is Cell<T>`
 
-Defined in: core/src/reactive/primitive.ts:20
+Defined in: [core/src/reactive/primitive.ts:20](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/primitive.ts#L20)
 
 Narrow a [Primitive](../type-aliases/Primitive.md) to a [Cell](../variables/Cell.md).
 
@@ -26,4 +26,4 @@ Narrow a [Primitive](../type-aliases/Primitive.md) to a [Cell](../variables/Cell
 
 ## Returns
 
-`p is Shape<T>`
+`p is Cell<T>`

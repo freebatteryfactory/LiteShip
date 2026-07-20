@@ -22,7 +22,7 @@ CSS custom property declarations. Delegates to the canonical
 
 ### token
 
-[`Shape`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Token/type-aliases/Shape.md)
+[`Token`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/Token.md)
 
 ## Returns
 

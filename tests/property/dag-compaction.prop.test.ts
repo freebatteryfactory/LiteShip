@@ -29,7 +29,7 @@ const buildLinearChain = (n: number, nodeId = 'node-a'): Promise<Receipt.Envelop
       kind: `step-${i}`,
       subject: { type: 'effect' as const, id: nodeId },
       payload,
-      timestamp: { wall_ms: 1000 + i, counter: 0, node_id: nodeId } as HLC.Shape,
+      timestamp: { wall_ms: 1000 + i, counter: 0, node_id: nodeId } as HLC,
     })),
   );
 
@@ -197,7 +197,7 @@ describe('DAG.checkpoint — boundary validation (A)', () => {
         kind: 'checkpoint',
         subject: { type: 'run' as const, id: `liteship/checkpoint:${truncateAt}` },
         payload: { schema_hash: 'liteship/checkpoint-summary/v1', content_hash: 'fabricated' },
-        timestamp: { wall_ms: 1, counter: 0, node_id: 'attacker' } as HLC.Shape,
+        timestamp: { wall_ms: 1, counter: 0, node_id: 'attacker' } as HLC,
       },
     ]);
 
@@ -304,28 +304,28 @@ describe('DAG.checkpoint — structural invariance above W (D)', () => {
       'a1',
       { type: 'effect', id: 'a' },
       payload,
-      { wall_ms: 2000, counter: 0, node_id: 'a' } as HLC.Shape,
+      { wall_ms: 2000, counter: 0, node_id: 'a' } as HLC,
       watermark,
     );
     const a2 = await Receipt.createEnvelope(
       'a2',
       { type: 'effect', id: 'a' },
       payload,
-      { wall_ms: 2001, counter: 0, node_id: 'a' } as HLC.Shape,
+      { wall_ms: 2001, counter: 0, node_id: 'a' } as HLC,
       a1.hash,
     );
     const b1 = await Receipt.createEnvelope(
       'b1',
       { type: 'effect', id: 'b' },
       payload,
-      { wall_ms: 2000, counter: 0, node_id: 'b' } as HLC.Shape,
+      { wall_ms: 2000, counter: 0, node_id: 'b' } as HLC,
       watermark,
     );
     const b2 = await Receipt.createEnvelope(
       'b2',
       { type: 'effect', id: 'b' },
       payload,
-      { wall_ms: 2001, counter: 0, node_id: 'b' } as HLC.Shape,
+      { wall_ms: 2001, counter: 0, node_id: 'b' } as HLC,
       b1.hash,
     );
     const branch = { a1, a2, b1, b2 };
@@ -405,7 +405,7 @@ describe('DAG.checkpoint — preconditions (F)', () => {
       'y',
       { type: 'effect', id: 'y' },
       payload,
-      { wall_ms: 1500, counter: 0, node_id: 'y' } as HLC.Shape,
+      { wall_ms: 1500, counter: 0, node_id: 'y' } as HLC,
       genesisHash,
     );
     const dag = DAG.fromReceipts([...trunk, stray]);
@@ -461,7 +461,7 @@ describe('DAG.checkpoint — anti-fork survives compaction (H)', () => {
         wall_ms: 3000,
         counter: 0,
         node_id: 'a',
-      } as HLC.Shape,
+      } as HLC,
       watermark,
     );
     const dag = DAG.fromReceipts([...trunk, c1]);
@@ -475,7 +475,7 @@ describe('DAG.checkpoint — anti-fork survives compaction (H)', () => {
         wall_ms: 3001,
         counter: 0,
         node_id: 'a',
-      } as HLC.Shape,
+      } as HLC,
       watermark,
     );
     expect(DAG.checkForkRule(dag, c2)).not.toBeNull();

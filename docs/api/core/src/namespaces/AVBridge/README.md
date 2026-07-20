@@ -23,4 +23,3 @@ bridge.timeToSample(0.5);   // 22050
 ## Type Aliases
 
 - [Config](type-aliases/Config.md)
-- [Shape](type-aliases/Shape.md)

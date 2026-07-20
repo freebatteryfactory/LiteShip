@@ -23,9 +23,9 @@ import type { WgslUniformValue } from './runtime/boundary.js';
  */
 export interface SatelliteProps {
   /** Boundary whose state the satellite tracks. */
-  readonly boundary?: Boundary.Shape;
+  readonly boundary?: Boundary;
   /** Component definition used to identify the satellite on the client. */
-  readonly component?: Component.Shape;
+  readonly component?: Component;
   /** Extra CSS class names to merge with `liteship-satellite`. */
   readonly class?: string;
   /** Server-side initial state (serialised into `data-liteship-state`). */
@@ -164,7 +164,7 @@ export function satelliteAttrs(props: SatelliteProps): Record<string, string> {
  * For smarter resolution with client hints and user agent parsing, use
  * `resolveInitialState` from `./quantize.js` instead.
  */
-export function resolveInitialStateFallback(boundary: Boundary.Shape): string {
-  // Boundary.make() guarantees at least one state for every Boundary.Shape.
+export function resolveInitialStateFallback(boundary: Boundary): string {
+  // Boundary.make() guarantees at least one state for every Boundary.
   return boundary.states[0]!;
 }

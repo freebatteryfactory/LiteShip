@@ -8,7 +8,7 @@
 
 > `const` **VideoRenderer**: `object`
 
-Defined in: [core/src/media/video.ts:171](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/video.ts#L171)
+Defined in: [core/src/media/video.ts:167](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/video.ts#L167)
 
 VideoRenderer — fixed-step frame generator for deterministic offline rendering.
 Drives a [Compositor](Compositor.md) at the configured fps and optionally seeks a

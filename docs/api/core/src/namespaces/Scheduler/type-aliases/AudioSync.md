@@ -8,6 +8,6 @@
 
 > **AudioSync** = `AudioSyncShape`
 
-Defined in: [core/src/reactive/scheduler.ts:160](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/scheduler.ts#L160)
+Defined in: [core/src/reactive/scheduler.ts:161](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/scheduler.ts#L161)
 
 Audio-synchronized scheduler bound to an [AVBridge](../../../variables/AVBridge.md).

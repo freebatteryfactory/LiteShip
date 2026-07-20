@@ -13,4 +13,3 @@ cancellation through `signal`.
 ## Type Aliases
 
 - [Finalizer](type-aliases/Finalizer.md)
-- [Shape](type-aliases/Shape.md)

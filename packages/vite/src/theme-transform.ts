@@ -87,7 +87,7 @@ export function parseThemeBlocks(css: string, sourceFile: string): readonly Them
  * Delegates to the canonical `ThemeCSSCompiler` to avoid duplicating
  * theme-to-CSS logic.
  */
-export function compileThemeBlock(block: ThemeBlock, theme: Theme.Shape): string {
+export function compileThemeBlock(block: ThemeBlock, theme: Theme): string {
   const result = ThemeCSSCompiler.compile(theme);
   const parts: string[] = [];
 

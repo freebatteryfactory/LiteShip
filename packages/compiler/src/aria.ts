@@ -90,7 +90,7 @@ function validateAttributes(attrs: Record<string, string>, stateName: string): R
  * @param currentState - The currently active state
  * @returns An {@link ARIACompileResult} with validated state attributes
  */
-function compile<B extends Boundary.Shape>(
+function compile<B extends Boundary>(
   boundary: B,
   states: { [S in StateUnion<B> & string]: Record<string, string> },
   currentState: StateUnion<B>,
@@ -106,7 +106,7 @@ function compile<B extends Boundary.Shape>(
     stateAttributes[stateName] = raw ? validateAttributes(raw, stateName) : {};
   }
 
-  // StateUnion<B> already extends string via Boundary.Shape's non-empty-tuple S constraint.
+  // StateUnion<B> already extends string via Boundary's non-empty-tuple S constraint.
   // Via dispatch, currentState is plain string — a typo would silently emit no ARIA at all.
   const current = stateAttributes[currentState];
   if (current === undefined) {

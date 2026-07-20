@@ -38,10 +38,10 @@ export interface TokenCSSResult {
 // COLOR_RE, NUMBER_RE, CSSSyntax, inferSyntax, and stringifyCSSValue are imported from ./css-utils.js
 
 /**
- * Derive the CSS custom property name from a `Token.Shape`.
+ * Derive the CSS custom property name from a `Token`.
  * Uses the token's `cssProperty` if set, otherwise generates `--liteship-<name>`.
  */
-function propName(token: Token.Shape): string {
+function propName(token: Token): string {
   return token.cssProperty ?? `--liteship-${token.name}`;
 }
 
@@ -49,7 +49,7 @@ function propName(token: Token.Shape): string {
  * Generate a single `@property` registration block for a token if its
  * fallback value can be parsed as a typed CSS value.
  */
-function emitPropertyRegistration(token: Token.Shape): string | null {
+function emitPropertyRegistration(token: Token): string | null {
   const fallbackStr = stringifyCSSValue(token.fallback);
   const syntax = inferSyntax(fallbackStr);
   if (!syntax) return null;
@@ -68,18 +68,18 @@ function emitPropertyRegistration(token: Token.Shape): string | null {
 /**
  * Generate the `:root` block declaration with the token's fallback value.
  */
-function emitRootDeclaration(token: Token.Shape): string {
+function emitRootDeclaration(token: Token): string {
   const prop = propName(token);
   const fallbackStr = stringifyCSSValue(token.fallback);
   return `  ${prop}: ${fallbackStr};`;
 }
 
 /**
- * Generate themed override selectors for a token against a `Theme.Shape`.
+ * Generate themed override selectors for a token against a `Theme`.
  * For each variant in the theme that has a value for this token name,
  * emits an `html[data-theme="variant"]` block.
  */
-function emitThemedOverrides(token: Token.Shape, theme: Theme.Shape): string {
+function emitThemedOverrides(token: Token, theme: Theme): string {
   const tokenValues = theme.tokens[token.name];
   if (!tokenValues) return '';
 
@@ -101,12 +101,12 @@ function emitThemedOverrides(token: Token.Shape, theme: Theme.Shape): string {
 // ---------------------------------------------------------------------------
 
 /**
- * Compile a single {@link Token.Shape} into CSS custom property definitions.
+ * Compile a single {@link Token} into CSS custom property definitions.
  *
  * Emits any applicable `@property` registration, the `:root` fallback, and
  * (when a `theme` is supplied) per-variant override selectors.
  */
-function compile(token: Token.Shape, theme?: Theme.Shape): TokenCSSResult {
+function compile(token: Token, theme?: Theme): TokenCSSResult {
   const prop = propName(token);
 
   // @property registrations
@@ -130,7 +130,7 @@ function compile(token: Token.Shape, theme?: Theme.Shape): TokenCSSResult {
 /**
  * Token CSS compiler namespace.
  *
- * Compiles a single {@link Token.Shape} into its CSS custom property
+ * Compiles a single {@link Token} into its CSS custom property
  * definitions (with optional `@property` registration for animatable
  * values) and, when a theme is supplied, the per-variant override blocks.
  */

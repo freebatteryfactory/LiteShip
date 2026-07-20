@@ -26,7 +26,7 @@ const SKIP_DIRS = new Set(['node_modules', 'dist', 'coverage', '.git', '.astro',
 
 /** Serializable token entry exported from `virtual:liteship/tokens`. */
 export type TokenManifestEntry = Pick<
-  Token.Shape,
+  Token,
   'id' | 'name' | 'category' | 'axes' | 'values' | 'fallback' | 'cssProperty'
 > & {
   readonly _tag: 'TokenDef';
@@ -37,7 +37,7 @@ export type TokenManifestEntry = Pick<
 export type TokenManifest = Readonly<Record<string, TokenManifestEntry>>;
 
 /** Serializable theme entry exported from `virtual:liteship/themes`. */
-export type ThemeManifestEntry = Pick<Theme.Shape, 'id' | 'name' | 'variants' | 'tokens' | 'meta'> & {
+export type ThemeManifestEntry = Pick<Theme, 'id' | 'name' | 'variants' | 'tokens' | 'meta'> & {
   readonly _tag: 'ThemeDef';
   readonly _version: 1;
 };
@@ -173,7 +173,7 @@ function addConventionFiles(
   }
 }
 
-function serializeToken(token: Token.Shape): TokenManifestEntry {
+function serializeToken(token: Token): TokenManifestEntry {
   return {
     _tag: 'TokenDef',
     _version: 1,
@@ -187,7 +187,7 @@ function serializeToken(token: Token.Shape): TokenManifestEntry {
   };
 }
 
-function serializeTheme(theme: Theme.Shape): ThemeManifestEntry {
+function serializeTheme(theme: Theme): ThemeManifestEntry {
   return {
     _tag: 'ThemeDef',
     _version: 1,
@@ -213,13 +213,9 @@ export async function collectTokenManifest(
   const tokenFiles = new Set<string>(scan.tokenFiles);
   addConventionFiles(tokenFiles, projectRoot, options?.tokenDir, 'tokens.ts', '.tokens.ts');
 
-  const tokensByName = new Map<string, Token.Shape>();
+  const tokensByName = new Map<string, Token>();
   for (const file of tokenFiles) {
-    mergeWithDuplicateWarnings(
-      tokensByName,
-      await importTaggedExports<Token.Shape>(file, 'TokenDef', 'token'),
-      'token',
-    );
+    mergeWithDuplicateWarnings(tokensByName, await importTaggedExports<Token>(file, 'TokenDef', 'token'), 'token');
   }
 
   const manifest: Record<string, TokenManifestEntry> = {};
@@ -243,13 +239,9 @@ export async function collectThemeManifest(
   const themeFiles = new Set<string>(scan.themeFiles);
   addConventionFiles(themeFiles, projectRoot, options?.themeDir, 'themes.ts', '.themes.ts');
 
-  const themesByName = new Map<string, Theme.Shape>();
+  const themesByName = new Map<string, Theme>();
   for (const file of themeFiles) {
-    mergeWithDuplicateWarnings(
-      themesByName,
-      await importTaggedExports<Theme.Shape>(file, 'ThemeDef', 'theme'),
-      'theme',
-    );
+    mergeWithDuplicateWarnings(themesByName, await importTaggedExports<Theme>(file, 'ThemeDef', 'theme'), 'theme');
   }
 
   const manifest: Record<string, ThemeManifestEntry> = {};
@@ -271,7 +263,7 @@ export function compileCollectedTokensCss(tokens: TokenManifest): string {
   const rootDecls: string[] = [];
 
   for (const token of tokenList) {
-    const { customProperties } = TokenCSSCompiler.compile(token as Token.Shape);
+    const { customProperties } = TokenCSSCompiler.compile(token as Token);
     const rootIdx = customProperties.indexOf(':root {');
     if (rootIdx === -1) continue;
 

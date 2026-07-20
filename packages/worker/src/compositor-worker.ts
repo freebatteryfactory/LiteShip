@@ -100,7 +100,7 @@ function _createCompositorWorker(
       return worker;
     },
 
-    get runtime(): RuntimeCoordinator.Shape {
+    get runtime(): RuntimeCoordinator {
       return runtime;
     },
 
@@ -213,9 +213,10 @@ export const CompositorWorker = {
   create: _createCompositorWorker,
 } as const;
 
+/** Public structural type for `CompositorWorker`. */
+export type CompositorWorker = CompositorWorkerShape;
+
 export declare namespace CompositorWorker {
-  /** Public host-side surface returned by {@link CompositorWorker.create}. */
-  export type Shape = CompositorWorkerShape;
   /** Named startup stage reported to telemetry sinks. */
   export type StartupStage = CompositorWorkerStartupStage;
   /** Telemetry sink accepted by {@link CompositorWorker.create}. */

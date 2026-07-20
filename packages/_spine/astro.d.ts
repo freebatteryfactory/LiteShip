@@ -36,7 +36,7 @@ export declare function liteship(config?: IntegrationConfig): import('astro').As
 // § 2. QUANTIZE COMPONENT PROPS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export interface QuantizeProps<B extends Boundary.Shape = Boundary.Shape> {
+export interface QuantizeProps<B extends Boundary = Boundary> {
   readonly boundary: B;
   readonly quantizer?: Quantizer<B>;
   readonly initialState?: string;
@@ -54,10 +54,7 @@ export interface ServerIslandContext {
   readonly detectedCapTier?: CapTier;
 }
 
-export declare function resolveInitialState<B extends Boundary.Shape>(
-  boundary: B,
-  context?: ServerIslandContext,
-): string;
+export declare function resolveInitialState<B extends Boundary>(boundary: B, context?: ServerIslandContext): string;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 4. MIDDLEWARE / FETCH LAYER / DIAGNOSTICS

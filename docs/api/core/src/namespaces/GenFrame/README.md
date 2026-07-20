@@ -16,4 +16,3 @@ chain or transport resumption.
 
 - [Config](type-aliases/Config.md)
 - [Frame](type-aliases/Frame.md)
-- [Shape](type-aliases/Shape.md)

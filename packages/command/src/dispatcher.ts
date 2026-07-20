@@ -32,7 +32,7 @@ interface CommandDispatcherShape {
 }
 
 /** Nearest registered command name, when plausibly a typo (distance ≤ 3). */
-function nearestCommand(name: string, registry: CommandRegistry.Shape): string | undefined {
+function nearestCommand(name: string, registry: CommandRegistry): string | undefined {
   return closestMatch(
     name,
     registry.list().map((descriptor) => descriptor.name),
@@ -40,7 +40,7 @@ function nearestCommand(name: string, registry: CommandRegistry.Shape): string |
   );
 }
 
-function make(registry: CommandRegistry.Shape): CommandDispatcherShape {
+function make(registry: CommandRegistry): CommandDispatcherShape {
   async function dispatch(
     invocation: CapsuleCommandInvocation,
     context: CommandContext,
@@ -114,6 +114,4 @@ function make(registry: CommandRegistry.Shape): CommandDispatcherShape {
 }
 
 export const CommandDispatcher = { make };
-export declare namespace CommandDispatcher {
-  export type Shape = CommandDispatcherShape;
-}
+export type CommandDispatcher = CommandDispatcherShape;

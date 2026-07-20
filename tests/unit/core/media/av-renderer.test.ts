@@ -8,7 +8,7 @@ import { AVRenderer, AVBridge, Compositor, Millis } from '@liteship/core';
 // Compositor.create() is synchronous as of the core-seams wave: it returns a
 // { compositor, lifetime } handle. AVRenderer.make consumes the compositor
 // instance directly — no Effect scope to run.
-function makeCompositor(): Compositor.Shape {
+function makeCompositor(): Compositor {
   return Compositor.create().compositor;
 }
 
@@ -134,11 +134,7 @@ describe('AVRenderer CompositeState', () => {
 describe('AVRenderer with external bridge', () => {
   test('accepts and uses an existing bridge', async () => {
     const bridge = AVBridge.make({ sampleRate: 48000, fps: 30 });
-    const renderer = AVRenderer.make(
-      { sampleRate: 48000, fps: 30, durationMs: Millis(100) },
-      makeCompositor(),
-      bridge,
-    );
+    const renderer = AVRenderer.make({ sampleRate: 48000, fps: 30, durationMs: Millis(100) }, makeCompositor(), bridge);
 
     expect(renderer.bridge).toBe(bridge);
     for await (const _ of renderer.frames()) {
@@ -151,13 +147,9 @@ describe('AVRenderer with external bridge', () => {
       reset: vi.fn(),
       getCurrentSample: vi.fn(() => 9_999),
       advanceSamples: vi.fn(),
-    } as unknown as AVBridge.Shape;
+    } as unknown as AVBridge;
 
-    const renderer = AVRenderer.make(
-      { sampleRate: 48_000, fps: 30, durationMs: Millis(10) },
-      makeCompositor(),
-      bridge,
-    );
+    const renderer = AVRenderer.make({ sampleRate: 48_000, fps: 30, durationMs: Millis(10) }, makeCompositor(), bridge);
 
     const frames: number[] = [];
     for await (const frame of renderer.frames()) {

@@ -91,7 +91,7 @@ interface SignalShape<T> {
    * the reactive kernel — so consumers thread the signal lifecycle through one
    * uniform `dispose()` (replacing the `Scope`-bound listener cleanup).
    */
-  readonly lifetime: Lifetime.Shape;
+  readonly lifetime: Lifetime;
 }
 
 interface ControllableSignalShape<T> extends SignalShape<T> {
@@ -144,7 +144,7 @@ function initialValueForSource(source: SignalSource, clock: Clock): number {
 function setupListener(
   source: SignalSource,
   kernel: CellKernel.Replay<number>,
-  lifetime: Lifetime.Shape,
+  lifetime: Lifetime,
   clock: Clock,
 ): void {
   switch (source.type) {
@@ -361,7 +361,7 @@ interface AudioSignalShape extends SignalShape<number> {
  * ```
  */
 function _audio(
-  bridge: AVBridge.Shape,
+  bridge: AVBridge,
   mode: 'sample' | 'normalized' = 'sample',
   totalDurationSec?: number,
 ): AudioSignalShape {
@@ -417,9 +417,10 @@ function _audio(
  */
 export const Signal = { make: _make, controllable: _controllable, audio: _audio };
 
+/** Public structural type for `Signal`. */
+export type Signal<T> = SignalShape<T>;
+
 export declare namespace Signal {
-  /** Structural shape of a passive {@link Signal}: `source` + `read` + `subscribe` + `lifetime`. */
-  export type Shape<T> = SignalShape<T>;
   /** Structural shape of a seekable, pausable signal — e.g. driven by Remotion or a scrub UI. */
   export type Controllable<T> = ControllableSignalShape<T>;
   /** Structural shape of an audio-sourced signal backed by an {@link AVBridge}. */

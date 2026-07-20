@@ -28,7 +28,7 @@ const makeEntries = (count: number) => {
     kind: string;
     subject: ReceiptSubject;
     payload: ReturnType<typeof makePayload>;
-    timestamp: HLC.Shape;
+    timestamp: HLC;
   }> = [];
   let hlc = HLC.create('node-a');
   for (let i = 0; i < count; i++) {
@@ -176,13 +176,10 @@ describe('Receipt', () => {
 
     test('validateChain and validateChainDetailed accept genesis arrays as valid roots', async () => {
       const hlc = HLC.increment(HLC.create('node-a'), 1000);
-      const envelope = await Receipt.createEnvelope(
-        'merge-root',
-        subject('actor-1'),
-        makePayload(),
-        hlc,
-        ['branch-a', Receipt.GENESIS],
-      );
+      const envelope = await Receipt.createEnvelope('merge-root', subject('actor-1'), makePayload(), hlc, [
+        'branch-a',
+        Receipt.GENESIS,
+      ]);
 
       await expect(Receipt.validateChain([envelope])).resolves.toBe(true);
       await expect(Receipt.validateChainDetailed([envelope])).resolves.toBe(true);
@@ -365,13 +362,10 @@ describe('Receipt', () => {
       const chain2 = await Receipt.buildChain(chain2entries);
 
       const mergeTs = HLC.increment(HLC.create('node-a'), 5000);
-      const mergeEnvelope = await Receipt.createEnvelope(
-        'merge',
-        subject('actor-1'),
-        makePayload(),
-        mergeTs,
-        [chain1[1]!.hash, chain2[1]!.hash],
-      );
+      const mergeEnvelope = await Receipt.createEnvelope('merge', subject('actor-1'), makePayload(), mergeTs, [
+        chain1[1]!.hash,
+        chain2[1]!.hash,
+      ]);
 
       expect(Array.isArray(mergeEnvelope.previous)).toBe(true);
       const parents = mergeEnvelope.previous as readonly string[];
@@ -403,13 +397,10 @@ describe('Receipt', () => {
     test('hashEnvelope normalizes merge parent ordering and genesis arrays are recognized', async () => {
       const chain = await Receipt.buildChain(makeEntries(1));
       const mergeTs = HLC.increment(HLC.create('node-a'), 6000);
-      const unsorted = await Receipt.createEnvelope(
-        'merge',
-        subject('actor-1'),
-        makePayload(),
-        mergeTs,
-        ['z-parent', chain[0]!.hash],
-      );
+      const unsorted = await Receipt.createEnvelope('merge', subject('actor-1'), makePayload(), mergeTs, [
+        'z-parent',
+        chain[0]!.hash,
+      ]);
       const sorted = {
         ...unsorted,
         previous: [chain[0]!.hash, 'z-parent'] as const,

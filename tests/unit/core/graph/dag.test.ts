@@ -14,7 +14,7 @@ const makeChain = async (actorId: string, nodeId: string, count: number, baseTim
     kind: string;
     subject: ReceiptSubject;
     payload: ReturnType<typeof payload>;
-    timestamp: HLC.Shape;
+    timestamp: HLC;
   }> = [];
   let hlc = HLC.create(nodeId);
   for (let i = 0; i < count; i++) {
@@ -78,7 +78,10 @@ describe('DAG', () => {
       expect(dag.heads).toHaveLength(2);
 
       const mergeTs = HLC.increment(HLC.create('node-a'), 5000);
-      const mergeEnvelope = await Receipt.createEnvelope('merge', subject('actor-1'), payload(), mergeTs, [chain1[1]!.hash, chain2[1]!.hash]);
+      const mergeEnvelope = await Receipt.createEnvelope('merge', subject('actor-1'), payload(), mergeTs, [
+        chain1[1]!.hash,
+        chain2[1]!.hash,
+      ]);
 
       dag = DAG.ingest(dag, mergeEnvelope);
       expect(DAG.isFork(dag)).toBe(false);
@@ -109,7 +112,10 @@ describe('DAG', () => {
 
     test('merge-style genesis arrays still mark the ingested envelope as genesis', async () => {
       const mergeTs = HLC.increment(HLC.create('node-a'), 1000);
-      const envelope = await Receipt.createEnvelope('merge', subject('actor-1'), payload(), mergeTs, [Receipt.GENESIS, 'remote-head']);
+      const envelope = await Receipt.createEnvelope('merge', subject('actor-1'), payload(), mergeTs, [
+        Receipt.GENESIS,
+        'remote-head',
+      ]);
 
       const dag = DAG.ingest(DAG.empty(), envelope);
 
@@ -150,7 +156,9 @@ describe('DAG', () => {
       const chain = await makeChain('actor-1', 'node-a', 3, 1000);
       const dag = DAG.fromReceipts(chain);
 
-      expect(DAG.linearizeFrom(dag, 'missing-hash').map((entry) => entry.hash)).toEqual(chain.map((entry) => entry.hash));
+      expect(DAG.linearizeFrom(dag, 'missing-hash').map((entry) => entry.hash)).toEqual(
+        chain.map((entry) => entry.hash),
+      );
     });
 
     test('pruneToBound retains the tail and caps node count', async () => {
@@ -175,7 +183,10 @@ describe('DAG', () => {
 
     test('linearize ignores missing parent references when the referenced node is absent', async () => {
       const timestamp = HLC.increment(HLC.create('node-a'), 1000);
-      const envelope = await Receipt.createEnvelope('merge', subject('actor-1'), payload(), timestamp, ['missing-parent', Receipt.GENESIS]);
+      const envelope = await Receipt.createEnvelope('merge', subject('actor-1'), payload(), timestamp, [
+        'missing-parent',
+        Receipt.GENESIS,
+      ]);
       const dag = DAG.ingest(DAG.empty(), envelope);
 
       expect(DAG.linearize(dag).map((entry) => entry.hash)).toEqual([envelope.hash]);
@@ -195,8 +206,20 @@ describe('DAG', () => {
       const actorA = await Receipt.createEnvelope('op', subject('actor-a'), payload(), sharedTs, Receipt.GENESIS);
       const actorB = await Receipt.createEnvelope('op', subject('actor-b'), payload(), sharedTs, Receipt.GENESIS);
 
-      const sameActorFirst = await Receipt.createEnvelope('op', subject('actor-a'), { ...payload(), content_hash: 'sha256:a' }, sharedTs, Receipt.GENESIS);
-      const sameActorSecond = await Receipt.createEnvelope('op', subject('actor-a'), { ...payload(), content_hash: 'sha256:b' }, sharedTs, Receipt.GENESIS);
+      const sameActorFirst = await Receipt.createEnvelope(
+        'op',
+        subject('actor-a'),
+        { ...payload(), content_hash: 'sha256:a' },
+        sharedTs,
+        Receipt.GENESIS,
+      );
+      const sameActorSecond = await Receipt.createEnvelope(
+        'op',
+        subject('actor-a'),
+        { ...payload(), content_hash: 'sha256:b' },
+        sharedTs,
+        Receipt.GENESIS,
+      );
 
       const dag = DAG.fromReceipts([actorB, sameActorSecond, sameActorFirst, actorA]);
       const ordered = DAG.linearize(dag).map((entry) => entry.hash);
@@ -231,8 +254,20 @@ describe('DAG', () => {
       const sharedTs = HLC.increment(HLC.create('same-node'), 3000);
       const actorZ = await Receipt.createEnvelope('op', subject('actor-z'), payload(), sharedTs, Receipt.GENESIS);
       const actorA = await Receipt.createEnvelope('op', subject('actor-a'), payload(), sharedTs, Receipt.GENESIS);
-      const hashHigh = await Receipt.createEnvelope('op', subject('actor-same'), { ...payload(), content_hash: 'sha256:z' }, sharedTs, Receipt.GENESIS);
-      const hashLow = await Receipt.createEnvelope('op', subject('actor-same'), { ...payload(), content_hash: 'sha256:a' }, sharedTs, Receipt.GENESIS);
+      const hashHigh = await Receipt.createEnvelope(
+        'op',
+        subject('actor-same'),
+        { ...payload(), content_hash: 'sha256:z' },
+        sharedTs,
+        Receipt.GENESIS,
+      );
+      const hashLow = await Receipt.createEnvelope(
+        'op',
+        subject('actor-same'),
+        { ...payload(), content_hash: 'sha256:a' },
+        sharedTs,
+        Receipt.GENESIS,
+      );
 
       const ordered = DAG.linearize(DAG.fromReceipts([actorZ, actorA, hashHigh, hashLow])).map((entry) => entry.hash);
 
@@ -242,8 +277,20 @@ describe('DAG', () => {
 
     test('linearize compares higher hashes after lower hashes for identical actor and timestamp peers', async () => {
       const sharedTs = HLC.increment(HLC.create('same-node'), 3500);
-      const first = await Receipt.createEnvelope('op', subject('actor-same'), { ...payload(), content_hash: 'sha256:z' }, sharedTs, Receipt.GENESIS);
-      const second = await Receipt.createEnvelope('op', subject('actor-same'), { ...payload(), content_hash: 'sha256:a' }, sharedTs, Receipt.GENESIS);
+      const first = await Receipt.createEnvelope(
+        'op',
+        subject('actor-same'),
+        { ...payload(), content_hash: 'sha256:z' },
+        sharedTs,
+        Receipt.GENESIS,
+      );
+      const second = await Receipt.createEnvelope(
+        'op',
+        subject('actor-same'),
+        { ...payload(), content_hash: 'sha256:a' },
+        sharedTs,
+        Receipt.GENESIS,
+      );
       const [higherHash, lowerHash] = first.hash > second.hash ? [first, second] : [second, first];
 
       const ordered = DAG.linearize(DAG.fromReceipts([higherHash, lowerHash])).map((entry) => entry.hash);
@@ -255,7 +302,10 @@ describe('DAG', () => {
       const left = await makeChain('actor-1', 'node-a', 2, 1000);
       const right = await makeChain('actor-2', 'node-b', 2, 2000);
       const mergeTs = HLC.increment(HLC.create('node-merge'), 5000);
-      const mergeEnvelope = await Receipt.createEnvelope('merge', subject('actor-3'), payload(), mergeTs, [left[1]!.hash, right[1]!.hash]);
+      const mergeEnvelope = await Receipt.createEnvelope('merge', subject('actor-3'), payload(), mergeTs, [
+        left[1]!.hash,
+        right[1]!.hash,
+      ]);
 
       const merged = DAG.ingest(DAG.ingestAll(DAG.fromReceipts(left), right), mergeEnvelope);
       const ordered = DAG.linearize(merged).map((entry) => entry.hash);
@@ -403,7 +453,10 @@ describe('DAG', () => {
     test('commonAncestor prefers the latest common node when multiple ancestors are shared', async () => {
       const chain = await makeChain('actor-1', 'node-a', 4, 1000);
       const mergeTs = HLC.increment(HLC.create('node-branch'), 5000);
-      const branch = await Receipt.createEnvelope('merge', subject('actor-2'), payload(), mergeTs, [chain[1]!.hash, chain[2]!.hash]);
+      const branch = await Receipt.createEnvelope('merge', subject('actor-2'), payload(), mergeTs, [
+        chain[1]!.hash,
+        chain[2]!.hash,
+      ]);
       const dag = DAG.ingest(DAG.fromReceipts(chain), branch);
 
       expect(DAG.commonAncestor(dag, chain[3]!.hash, branch.hash)).toBe(chain[2]!.hash);
@@ -412,8 +465,20 @@ describe('DAG', () => {
     test('commonAncestor keeps deterministic hash ordering when timestamps and actors tie', async () => {
       const base = await makeChain('actor-1', 'node-a', 1, 1000);
       const sharedTs = HLC.increment(HLC.create('node-a'), 2000);
-      const higherHash = await Receipt.createEnvelope('frame', subject('actor-1'), { payload: 'z' }, sharedTs, base[0]!.hash);
-      const lowerHash = await Receipt.createEnvelope('frame', subject('actor-1'), { payload: 'a' }, sharedTs, base[0]!.hash);
+      const higherHash = await Receipt.createEnvelope(
+        'frame',
+        subject('actor-1'),
+        { payload: 'z' },
+        sharedTs,
+        base[0]!.hash,
+      );
+      const lowerHash = await Receipt.createEnvelope(
+        'frame',
+        subject('actor-1'),
+        { payload: 'a' },
+        sharedTs,
+        base[0]!.hash,
+      );
 
       const dag = DAG.ingestAll(DAG.fromReceipts(base), [higherHash, lowerHash]);
 
@@ -527,8 +592,17 @@ describe('DAG', () => {
       const chain = await makeChain('actor-1', 'node-a', 2, 1000);
       const dag = DAG.fromReceipts(chain);
       const mergeTs = HLC.increment(HLC.create('node-a'), 4000);
-      const mergeEnvelope = await Receipt.createEnvelope('merge', subject('actor-1'), payload(), mergeTs, [chain[1]!.hash, 'missing-parent']);
-      const missingParentEnvelope = await Receipt.createEnvelope('op', subject('actor-1'), payload(), mergeTs, 'missing-parent');
+      const mergeEnvelope = await Receipt.createEnvelope('merge', subject('actor-1'), payload(), mergeTs, [
+        chain[1]!.hash,
+        'missing-parent',
+      ]);
+      const missingParentEnvelope = await Receipt.createEnvelope(
+        'op',
+        subject('actor-1'),
+        payload(),
+        mergeTs,
+        'missing-parent',
+      );
 
       expect(DAG.checkForkRule(dag, mergeEnvelope)).toBeNull();
       expect(DAG.checkForkRule(dag, missingParentEnvelope)).toBeNull();
@@ -538,7 +612,10 @@ describe('DAG', () => {
       const chain = await makeChain('actor-1', 'node-a', 2, 1000);
       const dag = DAG.fromReceipts(chain);
       const mergeTs = HLC.increment(HLC.create('node-a'), 5000);
-      const mergeEnvelope = await Receipt.createEnvelope('merge', subject('actor-1'), payload(), mergeTs, [Receipt.GENESIS, chain[1]!.hash]);
+      const mergeEnvelope = await Receipt.createEnvelope('merge', subject('actor-1'), payload(), mergeTs, [
+        Receipt.GENESIS,
+        chain[1]!.hash,
+      ]);
 
       expect(DAG.checkForkRule(dag, mergeEnvelope)).toBeNull();
     });

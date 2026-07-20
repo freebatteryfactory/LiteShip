@@ -26,15 +26,15 @@ export type { PrimitiveKind };
 
 /**
  * Map a {@link PrimitiveKind} to the structural type of the primitive
- * it resolves (`Boundary.Shape`, `Token.Shape`, ...).
+ * it resolves (`Boundary`, `Token`, ...).
  */
 export type PrimitiveShape<K extends PrimitiveKind> = K extends 'boundary'
-  ? Boundary.Shape
+  ? Boundary
   : K extends 'token'
-    ? Token.Shape
+    ? Token
     : K extends 'theme'
-      ? Theme.Shape
-      : Style.Shape;
+      ? Theme
+      : Style;
 
 /**
  * A successful primitive resolution: the loaded primitive plus the

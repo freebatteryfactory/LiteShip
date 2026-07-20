@@ -95,7 +95,7 @@ import { applyTransform, op } from './reactive-trace.js';
 interface MetaSnapshot {
   readonly version: number;
   readonly id: string;
-  readonly hlc: HLC.Shape;
+  readonly hlc: HLC;
 }
 
 /** A no-replay crossings channel folded to {@link CrossingObservation}. */
@@ -171,7 +171,7 @@ interface SubState {
   completed: boolean;
 }
 
-const hlcMonotonic = (trail: readonly HLC.Shape[]): boolean => {
+const hlcMonotonic = (trail: readonly HLC[]): boolean => {
   for (let i = 1; i < trail.length; i++) {
     if (HLC.compare(trail[i - 1]!, trail[i]!) > 0) return false;
   }
@@ -199,7 +199,7 @@ const runCapture = (adapter: PrimitiveAdapter, history: OpHistory): Observation 
   const reads: ReadObservation[] = [];
   const crossings: CrossingObservation[] = [];
   const metaTrail: MetaObservation[] = [];
-  const hlcTrail: HLC.Shape[] = [];
+  const hlcTrail: HLC[] = [];
   let historyDisposed = false;
   let lifetimeDisposed = false;
 
@@ -359,7 +359,7 @@ export const captureHistory = (adapter: PrimitiveAdapter, history: OpHistory): P
 // Adapters
 // ---------------------------------------------------------------------------
 
-const captureBoundary = (): Boundary.Shape =>
+const captureBoundary = (): Boundary =>
   Boundary.make({
     input: 'viewport.width',
     at: [

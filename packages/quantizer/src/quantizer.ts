@@ -44,7 +44,7 @@ import { MemoCache } from './memo-cache.js';
  * the states tuple is non-empty, so `states[0]` is always defined; this contains
  * the one unavoidable cast where a generic index access meets noUncheckedIndexedAccess.
  */
-function firstState<B extends Boundary.Shape>(boundary: B): StateUnion<B> {
+function firstState<B extends Boundary>(boundary: B): StateUnion<B> {
   return boundary.states[0] as StateUnion<B>;
 }
 
@@ -103,7 +103,7 @@ export const TIER_TARGETS: Record<MotionTier, ReadonlySet<OutputTarget>> = proje
  * only, ARIA is string only, AI is unconstrained. Missing fields simply
  * skip that target during dispatch.
  */
-export interface QuantizerOutputs<B extends Boundary.Shape> {
+export interface QuantizerOutputs<B extends Boundary> {
   /** CSS property map per state (values are raw CSS, e.g. `'16px'` or `1`). */
   readonly css?: OutputsFor<B, Record<string, string | number>>;
   /** GLSL uniform values per state (numeric only). */
@@ -211,7 +211,7 @@ export interface QuantizerRuntime {
  * deduplicated by the internal memo cache. `create()` materializes a
  * fresh {@link LiveQuantizer} paired with its owning {@link Lifetime}.
  */
-export interface QuantizerConfig<B extends Boundary.Shape, O extends QuantizerOutputs<B> = QuantizerOutputs<B>> {
+export interface QuantizerConfig<B extends Boundary, O extends QuantizerOutputs<B> = QuantizerOutputs<B>> {
   /** Boundary this config quantizes against. */
   readonly boundary: B;
   /** Per-target output tables keyed by state. */
@@ -269,7 +269,7 @@ type OutputRecord = Partial<{ [K in OutputTarget]: Record<string, unknown> }>;
  * ```
  */
 export interface LiveQuantizer<
-  B extends Boundary.Shape,
+  B extends Boundary,
   O extends QuantizerOutputs<B> = QuantizerOutputs<B>,
 > extends ReactiveQuantizer<B> {
   /** The config this quantizer was created from. */
@@ -286,9 +286,9 @@ export interface LiveQuantizer<
  * the state / outputs / crossings kernels (completing subscribers, making publish
  * inert).
  */
-export interface LiveQuantizerHandle<B extends Boundary.Shape, O extends QuantizerOutputs<B> = QuantizerOutputs<B>> {
+export interface LiveQuantizerHandle<B extends Boundary, O extends QuantizerOutputs<B> = QuantizerOutputs<B>> {
   readonly quantizer: LiveQuantizer<B, O>;
-  readonly lifetime: Lifetime.Shape;
+  readonly lifetime: Lifetime;
 }
 
 // ---------------------------------------------------------------------------
@@ -303,14 +303,14 @@ export interface LiveQuantizerHandle<B extends Boundary.Shape, O extends Quantiz
  * override MotionTier gating for specific targets (e.g., enabling AI
  * signals at the `none` tier for testing).
  */
-export interface QuantizerBuilder<B extends Boundary.Shape> {
+export interface QuantizerBuilder<B extends Boundary> {
   /** Attach per-target output tables and produce a {@link QuantizerConfig}. */
   outputs<O extends QuantizerOutputs<B>>(outputs: O): QuantizerConfig<B, O>;
   /** Force-enable specific targets regardless of the current tier's gating set. */
   force(...targets: OutputTarget[]): QuantizerBuilder<B>;
 }
 
-type CachedQuantizerConfig = QuantizerConfig<Boundary.Shape, QuantizerOutputs<Boundary.Shape>>;
+type CachedQuantizerConfig = QuantizerConfig<Boundary, QuantizerOutputs<Boundary>>;
 
 // ---------------------------------------------------------------------------
 // Content-address via the ONE canonical encoder (CUT B1): CanonicalCbor (RFC
@@ -327,7 +327,7 @@ type CachedQuantizerConfig = QuantizerConfig<Boundary.Shape, QuantizerOutputs<Bo
  * options — the same outputs at `tier: 'physics'` would silently reuse a
  * `tier: 'transitions'` config and never emit glsl.
  */
-function contentAddress<B extends Boundary.Shape, O extends QuantizerOutputs<B>>(
+function contentAddress<B extends Boundary, O extends QuantizerOutputs<B>>(
   boundary: B,
   outputs: O,
   tier: MotionTier | undefined,
@@ -378,7 +378,7 @@ const springCSSCache = new Map<string, string>();
  * produces a wide union that TS cannot collapse. This helper performs
  * the one bridging cast so callers stay type-clean.
  */
-function readTargetState<B extends Boundary.Shape, O extends QuantizerOutputs<B>>(
+function readTargetState<B extends Boundary, O extends QuantizerOutputs<B>>(
   outputs: O,
   target: OutputTarget,
   state: StateUnion<B>,
@@ -387,7 +387,7 @@ function readTargetState<B extends Boundary.Shape, O extends QuantizerOutputs<B>
   return table?.[state as string];
 }
 
-function resolveOutputs<B extends Boundary.Shape, O extends QuantizerOutputs<B>>(
+function resolveOutputs<B extends Boundary, O extends QuantizerOutputs<B>>(
   outputs: O,
   state: StateUnion<B>,
   allowedTargets: ReadonlySet<OutputTarget> | null,
@@ -473,7 +473,7 @@ function getSpringCSS(spring: SpringConfig): string {
  * @param options  - Optional motion tier and spring configuration
  * @returns A {@link QuantizerBuilder} for chaining `.outputs()` and `.force()`
  */
-function fromBoundary<B extends Boundary.Shape>(boundary: B, options?: QuantizerFromOptions): QuantizerBuilder<B> {
+function fromBoundary<B extends Boundary>(boundary: B, options?: QuantizerFromOptions): QuantizerBuilder<B> {
   const tier = options?.tier;
   // Failing open on an invalid tier would disable gating entirely and allow
   // every target (including ai/wgsl) — the inverse of what gating is for.

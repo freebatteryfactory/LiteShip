@@ -26,14 +26,14 @@ function shaderBoundary() {
   });
 }
 
-function targetsForState<B extends Boundary.Shape>(outputs: QuantizerOutputs<B>, state: StateUnion<B>): OutputTarget[] {
+function targetsForState<B extends Boundary>(outputs: QuantizerOutputs<B>, state: StateUnion<B>): OutputTarget[] {
   return outputTargets.filter((target) => {
     const table = outputs[target] as Record<string, Record<string, unknown>> | undefined;
     return table?.[state as string] !== undefined;
   });
 }
 
-function emittedAfterCrossing<B extends Boundary.Shape, O extends QuantizerOutputs<B>>(
+function emittedAfterCrossing<B extends Boundary, O extends QuantizerOutputs<B>>(
   config: QuantizerConfig<B, O>,
   value: number,
 ): Partial<{ [K in OutputTarget]: Record<string, unknown> }> {

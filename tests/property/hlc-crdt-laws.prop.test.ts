@@ -71,7 +71,7 @@ const arbNow = fc.integer({ min: 0, max: 1000 });
  * so the commutativity/dominance laws are stated on the projection, with the
  * node_id contract pinned separately.
  */
-function projCompare(a: HLC.Shape, b: HLC.Shape): -1 | 0 | 1 {
+function projCompare(a: HLC, b: HLC): -1 | 0 | 1 {
   if (a.wall_ms < b.wall_ms) return -1;
   if (a.wall_ms > b.wall_ms) return 1;
   if (a.counter < b.counter) return -1;
@@ -85,7 +85,7 @@ function projCompare(a: HLC.Shape, b: HLC.Shape): -1 | 0 | 1 {
  * semilattice operator; `HLC.merge` = this join (over local/remote/now) plus a
  * strict counter tick. Stated via `HLC.compare` only (no re-derivation of order).
  */
-function join(a: HLC.Shape, b: HLC.Shape): HLC.Shape {
+function join(a: HLC, b: HLC): HLC {
   return HLC.compare(a, b) >= 0 ? a : b;
 }
 
@@ -243,7 +243,7 @@ describe('HLC.merge — the clock-advance contract (LUB + strict increment, NOT 
     );
   });
 
-  test('COMMUTATIVITY (the ACTUAL contract): merge(a,b,now) and merge(b,a,now) agree on (wall, counter); node_id is the LOCAL arg\'s', () => {
+  test("COMMUTATIVITY (the ACTUAL contract): merge(a,b,now) and merge(b,a,now) agree on (wall, counter); node_id is the LOCAL arg's", () => {
     // The literal `compare(merge(a,b), merge(b,a)) === 0` is FALSE whenever a.node_id ≠
     // b.node_id, because merge preserves the LOCAL node_id (so merge(a,b) carries a's,
     // merge(b,a) carries b's — they tie-break apart). That is the documented contract,

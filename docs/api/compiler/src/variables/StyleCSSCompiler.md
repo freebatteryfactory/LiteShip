@@ -12,7 +12,7 @@ Defined in: [compiler/src/style-css.ts:203](https://github.com/freebatteryfactor
 
 Style CSS compiler namespace.
 
-Compiles a [Style.Shape](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Style/type-aliases/Shape.md) into cascade-layered, scoped CSS using
+Compiles a [Style](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/Style.md) into cascade-layered, scoped CSS using
 `@layer`, `@scope`, `@starting-style`, and `@container` — the modern CSS
 features that let liteship deliver component isolation and state-driven
 restyling without runtime class toggling.
@@ -25,7 +25,7 @@ restyling without runtime class toggling.
 
 Compile a style definition into scoped, layered CSS.
 
-Compile a [Style.Shape](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Style/type-aliases/Shape.md) into layered, scoped CSS.
+Compile a [Style](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/Style.md) into layered, scoped CSS.
 
 When `componentName` is supplied the output is wrapped in an `@scope`
 block targeting `.liteship-<name>` and bounded at `[data-liteship-slot]`
@@ -36,7 +36,7 @@ via the core [CSSCompiler](CSSCompiler.md).
 
 ##### style
 
-[`Shape`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Style/type-aliases/Shape.md)
+[`Style`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/Style.md)
 
 ##### componentName?
 

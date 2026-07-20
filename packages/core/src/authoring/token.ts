@@ -277,7 +277,5 @@ export const Token: TokenFactory & {
   cssVar: _cssVar,
 };
 
-export declare namespace Token {
-  /** Structural shape of a token definition parameterized by its name `N` and axis tuple `Axes`. */
-  export type Shape<N extends string = string, Axes extends readonly string[] = readonly string[]> = TokenDef<N, Axes>;
-}
+/** Public structural type for `Token`. */
+export type Token<N extends string = string, Axes extends readonly string[] = readonly string[]> = TokenDef<N, Axes>;

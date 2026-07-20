@@ -16,13 +16,13 @@ import { type Clock, systemClock } from '../clock/clock.js';
 
 // Speculative pre-computation: when signal velocity indicates an imminent threshold crossing, pre-evaluate the predicted next state.
 
-interface SpeculativeResult<B extends Boundary.Shape> {
+interface SpeculativeResult<B extends Boundary> {
   readonly current: StateUnion<B>;
   readonly prefetched?: StateUnion<B>;
   readonly confidence: number;
 }
 
-interface SpeculativeEvaluatorShape<B extends Boundary.Shape> {
+interface SpeculativeEvaluatorShape<B extends Boundary> {
   evaluate(value: number, velocity?: number): SpeculativeResult<B>;
 }
 
@@ -44,7 +44,7 @@ interface SpeculativeEvaluatorShape<B extends Boundary.Shape> {
  * result.confidence;  // 0.0-1.0 likelihood of crossing
  * ```
  */
-function _make<B extends Boundary.Shape>(boundary: B, clock: Clock = systemClock): SpeculativeEvaluatorShape<B> {
+function _make<B extends Boundary>(boundary: B, clock: Clock = systemClock): SpeculativeEvaluatorShape<B> {
   const thresholds = boundary.thresholds as readonly number[];
   const hysteresis = boundary.hysteresis ?? 0;
   const prefetchWindow = Math.max(hysteresis, 1); // Use hysteresis as window, min 1
@@ -179,9 +179,10 @@ function _make<B extends Boundary.Shape>(boundary: B, clock: Clock = systemClock
  */
 export const SpeculativeEvaluator = { make: _make };
 
+/** Public structural type for `SpeculativeEvaluator`. */
+export type SpeculativeEvaluator<B extends Boundary> = SpeculativeEvaluatorShape<B>;
+
 export declare namespace SpeculativeEvaluator {
-  /** Structural shape of an evaluator bound to a specific {@link Boundary}. */
-  export type Shape<B extends Boundary.Shape> = SpeculativeEvaluatorShape<B>;
   /** Prediction result from `evaluate()` — current state, optional prefetched next state, and confidence. */
-  export type Result<B extends Boundary.Shape> = SpeculativeResult<B>;
+  export type Result<B extends Boundary> = SpeculativeResult<B>;
 }

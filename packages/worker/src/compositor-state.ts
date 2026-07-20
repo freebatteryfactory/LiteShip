@@ -73,7 +73,7 @@ interface PreparedRegistration {
 export interface CompositorWorkerRuntimeState {
   // — Worker handles (stable for the lifetime of the state) —
   readonly worker: Worker;
-  readonly runtime: RuntimeCoordinator.Shape;
+  readonly runtime: RuntimeCoordinator;
   readonly capacity: number;
   readonly startupTelemetry: CompositorWorkerStartupTelemetry | undefined;
 
@@ -107,7 +107,7 @@ export interface CompositorWorkerRuntimeState {
  */
 export function createCompositorWorkerState(params: {
   readonly worker: Worker;
-  readonly runtime: RuntimeCoordinator.Shape;
+  readonly runtime: RuntimeCoordinator;
   readonly capacity: number;
   readonly bootstrapSnapshot: readonly BootstrapQuantizerRegistration[];
   readonly startupTelemetry: CompositorWorkerStartupTelemetry | undefined;

@@ -150,7 +150,7 @@ const SHA1_RE = /^[0-9a-f]{40}$/;
  * kernel `liteship ship`'s `lockfileAddress` uses, so a match is a real byte-identity
  * proof, never a re-implemented mirror.
  */
-export function validateProvenance(capsule: ShipCapsule.Shape, liveLockfileBytes: Uint8Array): ProvenanceFacts {
+export function validateProvenance(capsule: ShipCapsule, liveLockfileBytes: Uint8Array): ProvenanceFacts {
   const violations: SupplyChainViolation[] = [];
 
   const liveLockfileAddress: AddressedDigestType = AddressedDigest.of(liveLockfileBytes);
@@ -188,9 +188,7 @@ export function validateProvenance(capsule: ShipCapsule.Shape, liveLockfileBytes
 }
 
 /** Decode a ShipCapsule from its CBOR bytes (native `Result` → tagged result). */
-export function decodeCapsule(
-  bytes: Uint8Array,
-): { ok: true; capsule: ShipCapsule.Shape } | { ok: false; error: string } {
+export function decodeCapsule(bytes: Uint8Array): { ok: true; capsule: ShipCapsule } | { ok: false; error: string } {
   const r = ShipCapsule.decode(bytes);
   if (!r.ok) return { ok: false, error: `ShipCapsule.decode failed: ${r.error}` };
   return { ok: true, capsule: r.value };
@@ -284,7 +282,7 @@ export interface AnalyzeInput {
   readonly liveLockfileBytes: Uint8Array;
   readonly workspace: readonly WorkspacePkg[];
   /** A decoded ShipCapsule to validate provenance against, when one is available. */
-  readonly capsule?: ShipCapsule.Shape;
+  readonly capsule?: ShipCapsule;
   readonly policy?: LockfilePolicy;
 }
 

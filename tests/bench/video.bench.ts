@@ -24,7 +24,7 @@ const widthBoundary = Boundary.make({
   ] as const,
 });
 
-function makeQuantizer(boundary: Boundary.Shape) {
+function makeQuantizer(boundary: Boundary) {
   let currentState = boundary.states[0] as string;
   return {
     boundary,

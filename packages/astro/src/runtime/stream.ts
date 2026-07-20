@@ -355,7 +355,7 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
   // source null + queue shutdown) is registered as a synchronous finalizer on it.
   // Teardown disposes the Lifetime, which runs that finalizer synchronously so a
   // straggler frame from a dead generation cannot morph the fresh one on reinit.
-  let lifetime: Lifetime.Shape | null = null;
+  let lifetime: Lifetime | null = null;
   let client: SSEClient | null = null;
   // Cursor carried ACROSS connections (reinit / VT-swap). `SSE.create` tracks
   // `lastEventId` per-connection, so a fresh connection opened on reinit must be

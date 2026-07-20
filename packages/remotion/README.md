@@ -19,7 +19,7 @@ import { precomputeFrames, useCompositeState, cssVarsFromState } from '@liteship
 import type { VideoRenderer, VideoFrameOutput } from '@liteship/core';
 
 // Once, before Remotion renders (server side or in calculateMetadata):
-export async function loadFrames(renderer: VideoRenderer.Shape) {
+export async function loadFrames(renderer: VideoRenderer) {
   return precomputeFrames(renderer); // walks every frame into memory
 }
 

@@ -31,7 +31,7 @@ import type { StateUnion, BoundaryCrossing } from '../internal/type-level.js';
  * `Q.from()` builder (a {@link ReactiveQuantizer}); consumers interact only via
  * these structural interfaces.
  */
-export interface Quantizer<B extends Boundary.Shape = Boundary.Shape> {
+export interface Quantizer<B extends Boundary = Boundary> {
   readonly _tag: 'Quantizer';
   readonly boundary: B;
   /** Synchronous state accessor for hot paths (avoids reactive read overhead). */
@@ -45,7 +45,7 @@ export interface Quantizer<B extends Boundary.Shape = Boundary.Shape> {
  * current value on attach (the replay-1 contract). Replaces the former
  * `Effect.Effect<StateUnion<B>>` state accessor.
  */
-export type QuantizerState<B extends Boundary.Shape = Boundary.Shape> = Pick<
+export type QuantizerState<B extends Boundary = Boundary> = Pick<
   CellKernel.Replay<StateUnion<B>>,
   'read' | 'subscribe' | 'closed' | 'size'
 >;
@@ -56,7 +56,7 @@ export type QuantizerState<B extends Boundary.Shape = Boundary.Shape> = Pick<
  * late subscriber never sees a prior crossing. Replaces the former
  * `Stream.Stream<BoundaryCrossing<StateUnion<B> & string>>` changes.
  */
-export type QuantizerCrossings<B extends Boundary.Shape = Boundary.Shape> = Pick<
+export type QuantizerCrossings<B extends Boundary = Boundary> = Pick<
   CellKernel.Fanout<BoundaryCrossing<StateUnion<B> & string>>,
   'subscribe' | 'closed' | 'size'
 >;
@@ -67,7 +67,7 @@ export type QuantizerCrossings<B extends Boundary.Shape = Boundary.Shape> = Pick
  * extracted {@link CellKernel}. This is the shape `@liteship/quantizer`'s live
  * evaluator produces; a purely-synchronous quantizer omits this extension.
  */
-export interface ReactiveQuantizer<B extends Boundary.Shape = Boundary.Shape> extends Quantizer<B> {
+export interface ReactiveQuantizer<B extends Boundary = Boundary> extends Quantizer<B> {
   /** Replay-1 current-state read (was `Effect.Effect<StateUnion<B>>`). */
   readonly state: QuantizerState<B>;
   /** No-replay crossing subscription (was `Stream.Stream<BoundaryCrossing<StateUnion<B> & string>>`). */
@@ -84,5 +84,5 @@ export interface ReactiveQuantizer<B extends Boundary.Shape = Boundary.Shape> ex
  * in the accepted type turns that into a compile-time error instead (the base
  * `Quantizer` contract is public, so a consumer could otherwise satisfy it and fail).
  */
-export type CompositorQuantizer<B extends Boundary.Shape = Boundary.Shape> =
+export type CompositorQuantizer<B extends Boundary = Boundary> =
   (Quantizer<B> & { readonly stateSync: () => StateUnion<B> }) | ReactiveQuantizer<B>;

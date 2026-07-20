@@ -22,4 +22,3 @@ zap.emit(5); // doubled subscribers receive 10
 ## Type Aliases
 
 - [Handle](type-aliases/Handle.md)
-- [Shape](type-aliases/Shape.md)

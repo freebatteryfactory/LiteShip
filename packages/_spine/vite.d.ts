@@ -13,12 +13,12 @@ import type { BoundaryManifest, CompiledOutputs } from './edge.d.ts';
 export type PrimitiveKind = 'boundary' | 'token' | 'theme' | 'style';
 
 export type PrimitiveShape<K extends PrimitiveKind> = K extends 'boundary'
-  ? Boundary.Shape
+  ? Boundary
   : K extends 'token'
-    ? Token.Shape
+    ? Token
     : K extends 'theme'
-      ? Theme.Shape
-      : Style.Shape;
+      ? Theme
+      : Style;
 
 export interface PrimitiveResolution<K extends PrimitiveKind> {
   readonly primitive: PrimitiveShape<K>;
@@ -79,7 +79,7 @@ export interface QuantizeSheetContext {
 
 export declare function compileQuantizeBlock(
   block: QuantizeBlock,
-  boundary: Boundary.Shape,
+  boundary: Boundary,
   sheet?: QuantizeSheetContext,
 ): string;
 
@@ -98,7 +98,7 @@ export interface TokenBlock {
 
 export declare function parseTokenBlocks(css: string, sourceFile: string): readonly TokenBlock[];
 
-export declare function compileTokenBlock(block: TokenBlock, token: Token.Shape): string;
+export declare function compileTokenBlock(block: TokenBlock, token: Token): string;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 5. @theme CSS TRANSFORM
@@ -113,7 +113,7 @@ export interface ThemeBlock {
 
 export declare function parseThemeBlocks(css: string, sourceFile: string): readonly ThemeBlock[];
 
-export declare function compileThemeBlock(block: ThemeBlock, theme: Theme.Shape): string;
+export declare function compileThemeBlock(block: ThemeBlock, theme: Theme): string;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 6. @style CSS TRANSFORM
@@ -128,7 +128,7 @@ export interface StyleBlock {
 
 export declare function parseStyleBlocks(css: string, sourceFile: string): readonly StyleBlock[];
 
-export declare function compileStyleBlock(block: StyleBlock, style: Style.Shape): string;
+export declare function compileStyleBlock(block: StyleBlock, style: Style): string;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 7. PRIMITIVE RESOLUTION (generic)

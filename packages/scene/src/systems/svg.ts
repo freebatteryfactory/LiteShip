@@ -61,7 +61,7 @@ export function SVGSystem(frameIndex: number): System {
   return {
     name: 'SVGSystem',
     query: ['VideoSource', 'FrameRange'],
-    execute: (entities, world?: World.Shape) => {
+    execute: (entities, world?: World) => {
       for (const e of entities) {
         // READ the outputs prior systems already populated this tick —
         // do NOT recompute them. VideoSystem persisted `_opacity`;

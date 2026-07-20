@@ -108,7 +108,5 @@ export const TypedRef = {
   hash,
 };
 
-export declare namespace TypedRef {
-  /** Structural shape of a typed reference: schema hash + content hash. */
-  export type Shape = TypedRefShape;
-}
+/** Public structural type for `TypedRef`. */
+export type TypedRef = TypedRefShape;

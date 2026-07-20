@@ -593,7 +593,7 @@ describe('TokenCSSCompiler', () => {
       tokens: {
         primary: { a: '#f00' } as Record<'a' | 'b', string | undefined>,
       },
-    } as Theme.Shape;
+    } as Theme;
 
     const token = Token.make({
       name: 'primary',
@@ -741,10 +741,7 @@ describe('generatePropertyRegistrations', () => {
   });
 
   test('accepts per-property initial-value overrides (#104)', () => {
-    const result = generatePropertyRegistrations(
-      { idle: { '--mood-orb': '0.5' } },
-      { '--mood-orb': '1' },
-    );
+    const result = generatePropertyRegistrations({ idle: { '--mood-orb': '0.5' } }, { '--mood-orb': '1' });
     expect(result).toContain('initial-value: 1');
     expect(result).not.toMatch(/initial-value:\s*0\b/);
   });

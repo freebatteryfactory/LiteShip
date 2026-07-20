@@ -38,4 +38,3 @@ for await (const token of adapter.textTokens) process.stdout.write(token);
 - [Chunk](type-aliases/Chunk.md)
 - [Config](type-aliases/Config.md)
 - [Parser](type-aliases/Parser.md)
-- [Shape](type-aliases/Shape.md)

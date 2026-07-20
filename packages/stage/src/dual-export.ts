@@ -133,7 +133,7 @@ function poses(graph: DocumentGraph): readonly PoseNode[] {
  * the existing casters need: both `CSSCompiler.compile` and `Compositor` take a
  * boundary, and the graph node is the authoritative source for it.
  */
-function boundaryOf(component: ComponentNode): Boundary.Shape {
+function boundaryOf(component: ComponentNode): Boundary {
   const states = (component.states ?? []) as readonly string[];
   const thresholds = (component.thresholds ?? []) as readonly number[];
   const at = states.map((state, i) => [thresholds[i] ?? 0, state] as const);
@@ -148,7 +148,7 @@ function boundaryOf(component: ComponentNode): Boundary.Shape {
   return Boundary.make({
     input: component.name,
     at: at as unknown as readonly [readonly [number, string], ...(readonly [number, string])[]],
-  }) as Boundary.Shape;
+  }) as Boundary;
 }
 
 // ---------------------------------------------------------------------------
@@ -245,7 +245,7 @@ export function exportAstroPage(graph: DocumentGraph): ExportNode {
  * them). The `CompositorQuantizer` return type is what `Compositor.add` requires —
  * the required `stateSync` proves at compile time this quantizer can produce a state.
  */
-function poseQuantizer(boundary: Boundary.Shape, initialState: string): CompositorQuantizer<Boundary.Shape> {
+function poseQuantizer(boundary: Boundary, initialState: string): CompositorQuantizer<Boundary> {
   let current = initialState;
   return {
     _tag: 'Quantizer',
@@ -301,7 +301,7 @@ function produceVideoFrames(graph: DocumentGraph): VideoFrame[] {
     // `lo`/`hi` span the boundary's threshold range. `boundaryOf` guarantees
     // a non-empty thresholds tuple (it throws otherwise), so the endpoints
     // are always present — no defensive fallback branch to leave uncovered.
-    const driven: { key: string; quantizer: Quantizer<Boundary.Shape>; lo: number; hi: number }[] = [];
+    const driven: { key: string; quantizer: Quantizer<Boundary>; lo: number; hi: number }[] = [];
     for (const projection of projections) {
       const component = componentFor(graph, projection.sourceRef);
       if (!component) continue;
@@ -491,7 +491,7 @@ async function childReceipt(
   // TypedRef.create / Receipt.createEnvelope are now Promise-first (throwing
   // tagged @liteship/error), so this is a plain async function — the Effect.gen +
   // yield* harness is gone, the receipt kernel identical.
-  const payload: TypedRef.Shape = await TypedRef.create(`liteship/stage.export.${carrier}`, {
+  const payload: TypedRef = await TypedRef.create(`liteship/stage.export.${carrier}`, {
     carrier,
     exportId: exportNode.id,
     artifactDigest: exportNode.artifactDigest.display_id,
@@ -541,7 +541,7 @@ export async function dualExport(graph: DocumentGraph): Promise<DualExportResult
   const astroReceipt = await childReceipt('astro-page', astro, graph);
   const videoReceipt = await childReceipt('video', video, graph);
 
-  const mergePayload: TypedRef.Shape = await TypedRef.create('liteship/stage.dual-export.merge', {
+  const mergePayload: TypedRef = await TypedRef.create('liteship/stage.dual-export.merge', {
     sharedSourceDigest: sharedSourceDigest.display_id,
     sharedSourceIntegrity: sharedSourceDigest.integrity_digest,
     graphId: graph.id,

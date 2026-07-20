@@ -15,4 +15,3 @@ numeric state; sparse/object-valued parts are registered ad-hoc via
 ## Type Aliases
 
 - [Dense](type-aliases/Dense.md)
-- [Shape](type-aliases/Shape.md)

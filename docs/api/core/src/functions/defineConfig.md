@@ -6,7 +6,7 @@
 
 # Function: defineConfig()
 
-> **defineConfig**(`input`): [`Shape`](../namespaces/Config/interfaces/Shape.md)
+> **defineConfig**(`input`): [`Config`](../interfaces/Config.md)
 
 Defined in: [core/src/authoring/config.ts:167](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L167)
 
@@ -20,4 +20,4 @@ Thin alias for [Config.make](../variables/Config.md#make) — matches the `defin
 
 ## Returns
 
-[`Shape`](../namespaces/Config/interfaces/Shape.md)
+[`Config`](../interfaces/Config.md)

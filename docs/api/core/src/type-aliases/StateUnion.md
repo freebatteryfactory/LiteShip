@@ -10,10 +10,10 @@
 
 Defined in: [core/src/internal/type-level.ts:17](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/internal/type-level.ts#L17)
 
-Extract literal union of state names from a Boundary.Shape
+Extract literal union of state names from a Boundary
 
 ## Type Parameters
 
 ### B
 
-`B` *extends* [`Shape`](../namespaces/Boundary/type-aliases/Shape.md)
+`B` *extends* [`Boundary`](Boundary.md)

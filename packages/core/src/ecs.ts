@@ -200,7 +200,7 @@ interface WorldShape {
  */
 interface WorldHandle {
   readonly world: WorldShape;
-  readonly lifetime: Lifetime.Shape;
+  readonly lifetime: Lifetime;
 }
 
 function _makeWorld(): WorldHandle {
@@ -347,20 +347,22 @@ export const Part = {
 
 /** World namespace — construct the ECS world that ticks systems over entities. */
 export const World = {
-  /** Build a fresh ECS {@link World.Shape} paired with its owning {@link Lifetime}. */
+  /** Build a fresh ECS {@link World} paired with its owning {@link Lifetime}. */
   make: _makeWorld,
 };
 
+/** Public structural type for `Part`. */
+export type Part<T = unknown> = PartShape<T>;
+
 export declare namespace Part {
-  /** Structural shape of a typed component definition (`name` + schema). */
-  export type Shape<T = unknown> = PartShape<T>;
   /** Alias for the dense `Float64Array`-backed store. */
   export type Dense = DenseStoreShape;
 }
 
+/** Public structural type for `World`. */
+export type World = WorldShape;
+
 export declare namespace World {
-  /** Structural shape of an ECS world: spawn/despawn, components, queries, systems, tick. */
-  export type Shape = WorldShape;
   /** The `{ world, lifetime }` pair returned by {@link World.make}. */
   export type Handle = WorldHandle;
 }

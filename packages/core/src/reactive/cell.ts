@@ -49,7 +49,7 @@ interface CellShape<T> {
    * completing every subscriber and making publish inert — so consumers thread
    * cell lifecycle through one uniform `dispose()`.
    */
-  readonly lifetime: Lifetime.Shape;
+  readonly lifetime: Lifetime;
 }
 
 const _make = <T>(initial: T): CellShape<T> => {
@@ -80,7 +80,5 @@ export const Cell = {
   make: _make,
 };
 
-export declare namespace Cell {
-  /** Structural shape of a {@link Cell}: `_tag`, `read`, `set`, `update`, `subscribe`, `lifetime`. */
-  export type Shape<T> = CellShape<T>;
-}
+/** Public structural type for `Cell`. */
+export type Cell<T> = CellShape<T>;

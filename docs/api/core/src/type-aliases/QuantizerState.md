@@ -19,4 +19,4 @@ current value on attach (the replay-1 contract). Replaces the former
 
 ### B
 
-`B` *extends* [`Shape`](../namespaces/Boundary/type-aliases/Shape.md) = [`Shape`](../namespaces/Boundary/type-aliases/Shape.md)
+`B` *extends* [`Boundary`](Boundary.md) = [`Boundary`](Boundary.md)

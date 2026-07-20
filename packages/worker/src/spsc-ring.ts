@@ -407,7 +407,5 @@ export const SPSCRing = {
   attachConsumer: _attachConsumer,
 } as const;
 
-export declare namespace SPSCRing {
-  /** Producer- or consumer-facing view of a SPSC ring buffer. */
-  export type Shape = SPSCRingBufferShape;
-}
+/** Public structural type for `SPSCRing`. */
+export type SPSCRing = SPSCRingBufferShape;

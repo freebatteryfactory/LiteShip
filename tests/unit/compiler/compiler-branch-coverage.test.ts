@@ -87,25 +87,23 @@ describe('compiler branch coverage', () => {
   });
 
   test('ThemeCSSCompiler skips missing variant values and emits transitions only when meta is present', () => {
-    const themed = ThemeCSSCompiler.compile(
-      {
-        _tag: 'ThemeDef',
-        id: 'fnv1a:theme0001' as never,
-        name: 'brand',
-        variants: ['light', 'dark', 'contrast'],
-        tokens: {
-          accent: {
-            light: '#ffffff',
-            dark: '#111111',
-          },
+    const themed = ThemeCSSCompiler.compile({
+      _tag: 'ThemeDef',
+      id: 'fnv1a:theme0001' as never,
+      name: 'brand',
+      variants: ['light', 'dark', 'contrast'],
+      tokens: {
+        accent: {
+          light: '#ffffff',
+          dark: '#111111',
         },
-        meta: {
-          light: { label: 'Light', mode: 'light' },
-          dark: { label: 'Dark', mode: 'dark' },
-          contrast: { label: 'Contrast', mode: 'light' },
-        },
-      } as Theme.Shape,
-    );
+      },
+      meta: {
+        light: { label: 'Light', mode: 'light' },
+        dark: { label: 'Dark', mode: 'dark' },
+        contrast: { label: 'Contrast', mode: 'light' },
+      },
+    } as Theme);
 
     expect(themed.selectors).toContain('html[data-theme="light"]');
     expect(themed.selectors).toContain('html[data-theme="dark"]');
@@ -478,7 +476,7 @@ describe('compiler branch coverage', () => {
     const component = {
       name: 'plain-card',
       styles: {} as never,
-    } as Component.Shape;
+    } as Component;
 
     const compiled = ComponentCSSCompiler.compile(component);
 
@@ -575,9 +573,7 @@ describe('compiler branch coverage', () => {
           properties: {
             gap: '24px',
           },
-          boxShadow: [
-            { x: 0, y: 2, blur: 8, spread: 1, color: '#00000033', inset: true },
-          ],
+          boxShadow: [{ x: 0, y: 2, blur: 8, spread: 1, color: '#00000033', inset: true }],
         },
       },
     });
@@ -671,7 +667,7 @@ describe('compiler branch coverage', () => {
           dark: true,
         },
       },
-    } as Theme.Shape);
+    } as Theme);
 
     expect(compiled.selectors).toContain('--liteship-radius: 12;');
     expect(compiled.selectors).toContain('--liteship-radius: 16;');
@@ -784,8 +780,7 @@ describe('CSSCompiler unknown state keys', () => {
         expect.objectContaining({
           source: 'liteship/compiler.css',
           code: 'unknown-state-key',
-          message:
-            'State "Sm" is not one of boundary "width" states [sm, lg]; its CSS was skipped. Did you mean "sm"?',
+          message: 'State "Sm" is not one of boundary "width" states [sm, lg]; its CSS was skipped. Did you mean "sm"?',
         }),
       ]);
     });

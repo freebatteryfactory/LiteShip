@@ -14,5 +14,4 @@ with hysteresis to a [UIQualityTier](../../type-aliases/UIQualityTier.md).
 
 ## Type Aliases
 
-- [Shape](type-aliases/Shape.md)
 - [Tier](type-aliases/Tier.md)

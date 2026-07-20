@@ -10,10 +10,6 @@
 live state, animated transitions between bearings, and motion-tier gating on
 the working line.
 
-## Namespaces
-
-- [AnimatedQuantizer](namespaces/AnimatedQuantizer/README.md)
-
 ## Interfaces
 
 - [AnimatedQuantizerHandle](interfaces/AnimatedQuantizerHandle.md)
@@ -33,6 +29,7 @@ the working line.
 
 ## Type Aliases
 
+- [AnimatedQuantizer](type-aliases/AnimatedQuantizer.md)
 - [MotionTier](type-aliases/MotionTier.md)
 - [OutputTarget](type-aliases/OutputTarget.md)
 - [TransitionMap](type-aliases/TransitionMap.md)

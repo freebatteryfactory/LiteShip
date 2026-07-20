@@ -5,7 +5,7 @@
 import type { Boundary, StateUnion, ContentAddress } from './core.d.ts';
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// § 1. CSS COMPILER (Boundary.Shape -> @container rules via lightningcss)
+// § 1. CSS COMPILER (Boundary -> @container rules via lightningcss)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export interface CSSContainerRule {
@@ -32,7 +32,7 @@ export interface CSSCompileResult {
 }
 
 export declare const CSSCompiler: {
-  compile<B extends Boundary.Shape>(
+  compile<B extends Boundary>(
     boundary: B,
     states: { [S in StateUnion<B> & string]: CSSStateInput },
     selector?: string,
@@ -83,7 +83,7 @@ export interface GLSLCompileResult {
 }
 
 export declare const GLSLCompiler: {
-  compile<B extends Boundary.Shape>(
+  compile<B extends Boundary>(
     boundary: B,
     states: { [S in StateUnion<B> & string]: Record<string, number> },
   ): GLSLCompileResult;
@@ -136,7 +136,7 @@ export interface WGSLCompileResult {
 }
 
 export declare const WGSLCompiler: {
-  compile<B extends Boundary.Shape>(
+  compile<B extends Boundary>(
     boundary: B,
     states: { [S in StateUnion<B> & string]: Record<string, WGSLUniformValue> },
   ): WGSLCompileResult;
@@ -154,7 +154,7 @@ export interface ARIACompileResult<S extends string = string> {
 }
 
 export declare const ARIACompiler: {
-  compile<B extends Boundary.Shape>(
+  compile<B extends Boundary>(
     boundary: B,
     states: { [S in StateUnion<B> & string]: Record<string, string> },
     currentState: StateUnion<B>,
@@ -280,15 +280,15 @@ export interface ConfigTemplateResult {
 export type CompilerDef =
   | {
       readonly _tag: 'CSSCompiler';
-      readonly boundary: Boundary.Shape;
+      readonly boundary: Boundary;
       readonly states: CSSStates;
       readonly selector?: string;
     }
-  | { readonly _tag: 'GLSLCompiler'; readonly boundary: Boundary.Shape; readonly states: GLSLStates }
-  | { readonly _tag: 'WGSLCompiler'; readonly boundary: Boundary.Shape; readonly states: WGSLStates }
-  | { readonly _tag: 'ARIACompiler'; readonly boundary: Boundary.Shape; readonly states: ARIAStates }
+  | { readonly _tag: 'GLSLCompiler'; readonly boundary: Boundary; readonly states: GLSLStates }
+  | { readonly _tag: 'WGSLCompiler'; readonly boundary: Boundary; readonly states: WGSLStates }
+  | { readonly _tag: 'ARIACompiler'; readonly boundary: Boundary; readonly states: ARIAStates }
   | { readonly _tag: 'AICompiler'; readonly manifest: AIManifestInput }
-  | { readonly _tag: 'ConfigCompiler'; readonly config: Config.Shape };
+  | { readonly _tag: 'ConfigCompiler'; readonly config: Config };
 
 export type CompileResult =
   | { readonly target: 'css'; readonly result: CSSCompileResult }
@@ -335,25 +335,25 @@ export interface StyleCSSResult {
 }
 
 export declare const TokenCSSCompiler: {
-  compile(token: Token.Shape, theme?: Theme.Shape): TokenCSSResult;
+  compile(token: Token, theme?: Theme): TokenCSSResult;
 };
 
 export declare const TokenTailwindCompiler: {
-  compile(tokens: readonly Token.Shape[]): TokenTailwindResult;
+  compile(tokens: readonly Token[]): TokenTailwindResult;
 };
 
 export declare const TokenJSCompiler: {
-  compile(tokens: readonly Token.Shape[]): TokenJSResult;
+  compile(tokens: readonly Token[]): TokenJSResult;
 };
 
 export declare const ThemeCSSCompiler: {
-  compile(theme: Theme.Shape): ThemeCSSResult;
+  compile(theme: Theme): ThemeCSSResult;
 };
 
 export declare const StyleCSSCompiler: {
-  compile(style: Style.Shape, componentName?: string): StyleCSSResult;
+  compile(style: Style, componentName?: string): StyleCSSResult;
 };
 
 export declare const ComponentCSSCompiler: {
-  compile(component: Component.Shape): StyleCSSResult;
+  compile(component: Component): StyleCSSResult;
 };

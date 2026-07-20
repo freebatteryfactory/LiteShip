@@ -14,4 +14,3 @@ Reports stall via `isStalled` and rate via an internal EMA.
 ## Type Aliases
 
 - [Config](type-aliases/Config.md)
-- [Shape](type-aliases/Shape.md)

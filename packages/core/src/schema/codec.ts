@@ -44,11 +44,9 @@ function _make<A>(schema: Schema<A, A>): CodecShape<A, A> {
  * kernel `decode` directly.
  */
 export const Codec = {
-  /** Wrap an identity kernel schema in the {@link Codec.Shape} facade. */
+  /** Wrap an identity kernel schema in the {@link Codec} facade. */
   make: _make,
 };
 
-export declare namespace Codec {
-  /** Structural shape of a codec: underlying schema plus sync `encode` / `decode`. */
-  export type Shape<A, I = A> = CodecShape<A, I>;
-}
+/** Public structural type for `Codec`. */
+export type Codec<A, I = A> = CodecShape<A, I>;

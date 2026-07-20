@@ -41,6 +41,5 @@ compositor.dispose();
 
 ## Type Aliases
 
-- [Shape](type-aliases/Shape.md)
 - [StartupStage](type-aliases/StartupStage.md)
 - [StartupTelemetry](type-aliases/StartupTelemetry.md)

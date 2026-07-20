@@ -28,5 +28,4 @@ Boundary.evaluate(viewport, 800); // 'tablet'
 
 ## Type Aliases
 
-- [Shape](type-aliases/Shape.md)
 - [Spec](type-aliases/Spec.md)

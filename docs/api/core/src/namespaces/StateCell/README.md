@@ -12,4 +12,3 @@ StateCell — frozen authority snapshot helpers.
 
 - [Authority](type-aliases/Authority.md)
 - [Kind](type-aliases/Kind.md)
-- [Shape](type-aliases/Shape.md)

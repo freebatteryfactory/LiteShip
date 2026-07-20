@@ -34,7 +34,7 @@ export interface AudioProcessor {
   /** The underlying `AudioWorkletNode`. Connect into the graph directly. */
   readonly node: AudioWorkletNode;
   /** Shared AV bridge advanced 128 samples per worklet render quantum. */
-  readonly bridge: AVBridge.Shape;
+  readonly bridge: AVBridge;
   /** Begin advancing the bridge's sample counter. */
   start(): void;
   /** Pause advancement without tearing down the node. */

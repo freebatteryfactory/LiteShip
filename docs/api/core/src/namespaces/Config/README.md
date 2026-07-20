@@ -8,10 +8,9 @@
 
 Config namespace — the single hub that every liteship adapter (Vite, Astro, test
 runners, edge runtime) projects from. [Config.make](../../variables/Config.md#make) produces a frozen,
-FNV-1a content-addressed [Config.Shape](interfaces/Shape.md); every projection function
+FNV-1a content-addressed [Config](../../variables/Config.md); every projection function
 (`toViteConfig`, `toAstroConfig`, `toTestAliases`) is pure.
 
 ## Interfaces
 
 - [Input](interfaces/Input.md)
-- [Shape](interfaces/Shape.md)

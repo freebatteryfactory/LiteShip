@@ -12,16 +12,16 @@ Defined in: [core/src/authoring/config.ts:51](https://github.com/freebatteryfact
 
 Config namespace — the single hub that every liteship adapter (Vite, Astro, test
 runners, edge runtime) projects from. [Config.make](#make) produces a frozen,
-FNV-1a content-addressed [Config.Shape](../namespaces/Config/interfaces/Shape.md); every projection function
+FNV-1a content-addressed Config; every projection function
 (`toViteConfig`, `toAstroConfig`, `toTestAliases`) is pure.
 
 ## Type Declaration
 
 ### make()
 
-> **make**(`input`): [`Shape`](../namespaces/Config/interfaces/Shape.md)
+> **make**(`input`): [`Config`](../interfaces/Config.md)
 
-Build a frozen, content-addressed [Config.Shape](../namespaces/Config/interfaces/Shape.md) from raw input.
+Build a frozen, content-addressed Config from raw input.
 
 #### Parameters
 
@@ -31,7 +31,7 @@ Build a frozen, content-addressed [Config.Shape](../namespaces/Config/interfaces
 
 #### Returns
 
-[`Shape`](../namespaces/Config/interfaces/Shape.md)
+[`Config`](../interfaces/Config.md)
 
 ### toAstroConfig()
 
@@ -43,7 +43,7 @@ Project the Astro-integration slice of a config for `@liteship/astro`.
 
 ##### cfg
 
-[`Shape`](../namespaces/Config/interfaces/Shape.md)
+[`Config`](../interfaces/Config.md)
 
 #### Returns
 
@@ -59,7 +59,7 @@ Materialize the `@liteship/*` → source-path alias map used by the vitest runne
 
 ##### cfg
 
-[`Shape`](../namespaces/Config/interfaces/Shape.md)
+[`Config`](../interfaces/Config.md)
 
 ##### repoRoot
 
@@ -79,7 +79,7 @@ Project the Vite-plugin slice of a config for `@liteship/vite`.
 
 ##### cfg
 
-[`Shape`](../namespaces/Config/interfaces/Shape.md)
+[`Config`](../interfaces/Config.md)
 
 #### Returns
 

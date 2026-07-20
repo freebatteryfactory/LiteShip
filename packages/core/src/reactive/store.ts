@@ -46,7 +46,7 @@ interface StoreShape<S, Msg> {
    * subscribers, making `dispatch` inert). Mirrors {@link Cell}'s `lifetime`
    * member so consumers thread lifecycle through one uniform `dispose()`.
    */
-  readonly lifetime: Lifetime.Shape;
+  readonly lifetime: Lifetime;
 }
 
 const _make = <S, Msg>(initial: S, reducer: (state: S, msg: Msg) => S): StoreShape<S, Msg> => {
@@ -76,7 +76,5 @@ export const Store = {
   make: _make,
 };
 
-export declare namespace Store {
-  /** Structural shape of a synchronous store: `_tag`, sync `read`, `subscribe`, `dispatch`, `lifetime`. */
-  export type Shape<S, Msg> = StoreShape<S, Msg>;
-}
+/** Public structural type for `Store`. */
+export type Store<S, Msg> = StoreShape<S, Msg>;

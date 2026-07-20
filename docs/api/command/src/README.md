@@ -12,11 +12,6 @@ One canonical command language (re-anchored from @liteship/_spine via @liteship/
 one registry, one dispatcher. `@liteship/cli` and `@liteship/mcp-server` are thin
 projection adapters over this package; neither imports the other.
 
-## Namespaces
-
-- [CommandDispatcher](namespaces/CommandDispatcher/README.md)
-- [CommandRegistry](namespaces/CommandRegistry/README.md)
-
 ## Interfaces
 
 - [AuditEngineSummary](interfaces/AuditEngineSummary.md)
@@ -55,8 +50,10 @@ projection adapters over this package; neither imports the other.
 - [CheckPayload](type-aliases/CheckPayload.md)
 - [CommandAnnotations](type-aliases/CommandAnnotations.md)
 - [CommandCapability](type-aliases/CommandCapability.md)
+- [CommandDispatcher](type-aliases/CommandDispatcher.md)
 - [CommandExecutionKind](type-aliases/CommandExecutionKind.md)
 - [CommandJsonSchema](type-aliases/CommandJsonSchema.md)
+- [CommandRegistry](type-aliases/CommandRegistry.md)
 - [GlossaryEntry](type-aliases/GlossaryEntry.md)
 - [GlossaryPayload](type-aliases/GlossaryPayload.md)
 - [PackagePlumbStatus](type-aliases/PackagePlumbStatus.md)

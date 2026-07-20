@@ -23,4 +23,3 @@ const result = tree.compute(); // { opacity: 0.8 }
 
 - [Handle](type-aliases/Handle.md)
 - [Node](type-aliases/Node.md)
-- [Shape](type-aliases/Shape.md)

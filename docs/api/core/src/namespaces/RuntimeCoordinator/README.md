@@ -13,4 +13,3 @@ Runtime coordinator namespace — single entry point for building the shared
 
 - [Config](type-aliases/Config.md)
 - [Phase](type-aliases/Phase.md)
-- [Shape](type-aliases/Shape.md)

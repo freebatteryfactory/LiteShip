@@ -39,7 +39,7 @@ const widthBoundary = Boundary.make({
  * `state`/`stateSync` track whatever the last `evaluate(v)` resolved, so the
  * compositor reads the genuinely-current band when (and only when) it recomputes.
  */
-function liveQuantizer(boundary: Boundary.Shape) {
+function liveQuantizer(boundary: Boundary) {
   let current = boundary.states[0] as string;
   return {
     _tag: 'Quantizer' as const,

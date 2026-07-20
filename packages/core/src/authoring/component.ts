@@ -20,25 +20,22 @@ export interface SlotConfig {
   readonly description?: string;
 }
 
-interface ComponentDef<
-  B extends Boundary.Shape = Boundary.Shape,
-  SlotNames extends readonly string[] = readonly string[],
-> {
+interface ComponentDef<B extends Boundary = Boundary, SlotNames extends readonly string[] = readonly string[]> {
   readonly _tag: 'ComponentDef';
   readonly _version: 1;
   readonly id: ContentAddress;
   readonly name: string;
   readonly boundary?: B;
-  readonly styles: Style.Shape<B>;
+  readonly styles: Style<B>;
   readonly slots: { readonly [K in SlotNames[number]]: SlotConfig };
   readonly defaultSlot?: SlotNames[number];
 }
 
 interface ComponentFactory {
-  make<B extends Boundary.Shape, const SN extends readonly [string, ...string[]] = readonly ['children']>(config: {
+  make<B extends Boundary, const SN extends readonly [string, ...string[]] = readonly ['children']>(config: {
     readonly name: string;
     readonly boundary?: B;
-    readonly styles: Style.Shape<B>;
+    readonly styles: Style<B>;
     /** Default: an implied single 'children' slot with defaultSlot 'children'. */
     readonly slots?: { readonly [K in SN[number]]: SlotConfig };
     readonly defaultSlot?: SN[number];
@@ -72,10 +69,10 @@ function deterministicId<SlotNames extends readonly string[]>(
  * the consumer-facing API.
  */
 export const Component: ComponentFactory = {
-  make<B extends Boundary.Shape, const SN extends readonly [string, ...string[]] = readonly ['children']>(config: {
+  make<B extends Boundary, const SN extends readonly [string, ...string[]] = readonly ['children']>(config: {
     readonly name: string;
     readonly boundary?: B;
-    readonly styles: Style.Shape<B>;
+    readonly styles: Style<B>;
     readonly slots?: { readonly [K in SN[number]]: SlotConfig };
     readonly defaultSlot?: SN[number];
   }): ComponentDef<B, SN> {
@@ -108,10 +105,8 @@ export const Component: ComponentFactory = {
   },
 };
 
-export declare namespace Component {
-  /** Structural shape of a component definition, parameterized by its boundary and slot names. */
-  export type Shape<
-    B extends Boundary.Shape = Boundary.Shape,
-    SN extends readonly string[] = readonly string[],
-  > = ComponentDef<B, SN>;
-}
+/** Public structural type for `Component`. */
+export type Component<B extends Boundary = Boundary, SN extends readonly string[] = readonly string[]> = ComponentDef<
+  B,
+  SN
+>;

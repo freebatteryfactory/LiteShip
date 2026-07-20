@@ -1,6 +1,6 @@
 /**
  * Property Tests: ECS Composable Composition
- * 
+ *
  * Mathematical property verification for ECS composition over existing primitives.
  * Following the same pattern as boundary.prop.test.ts for consistency.
  */
@@ -16,7 +16,7 @@ const arbThresholdPairs = fc
 const arbBoundary = arbThresholdPairs.map((pairs) =>
   Boundary.make({
     input: 'viewport.width',
-    at: pairs as unknown as readonly [readonly [number, string], ...readonly [number, string][]],
+    at: pairs as unknown as readonly [readonly [number, string], ...(readonly [number, string][])],
   }),
 );
 
@@ -26,9 +26,9 @@ const arbEntityRecord = fc.dictionary(
 );
 
 type NumericThemeSchema = {
-  boundary?: Boundary.Shape;
-  token?: Token.Shape;
-  style?: Style.Shape;
+  boundary?: Boundary;
+  token?: Token;
+  style?: Style;
 };
 
 describe('ECS Composable Properties', () => {
@@ -58,14 +58,17 @@ describe('ECS Composable Properties', () => {
 
   test('World.spawn always produces unique ids', () => {
     fc.assert(
-      fc.property(fc.array(fc.option(arbEntityRecord, { nil: undefined }), { minLength: 2, maxLength: 15 }), (componentsList) => {
-        const { world } = World.make();
-        const ids: string[] = [];
-        for (const components of componentsList) {
-          ids.push(world.spawn(components ?? undefined));
-        }
-        return new Set(ids).size === ids.length;
-      }),
+      fc.property(
+        fc.array(fc.option(arbEntityRecord, { nil: undefined }), { minLength: 2, maxLength: 15 }),
+        (componentsList) => {
+          const { world } = World.make();
+          const ids: string[] = [];
+          for (const components of componentsList) {
+            ids.push(world.spawn(components ?? undefined));
+          }
+          return new Set(ids).size === ids.length;
+        },
+      ),
     );
   });
 
@@ -140,13 +143,31 @@ describe('ECS Composable Properties', () => {
         const composableWorld = ComposableWorld.make<NumericThemeSchema>(world);
         for (const hasBoundary of flags) {
           if (hasBoundary) {
-            composableWorld.spawn({ boundary: Boundary.make({ input: 'viewport.width', at: [[0, 'a'], [10, 'b']] }) });
+            composableWorld.spawn({
+              boundary: Boundary.make({
+                input: 'viewport.width',
+                at: [
+                  [0, 'a'],
+                  [10, 'b'],
+                ],
+              }),
+            });
           } else {
-            composableWorld.spawn({ token: Token.make({ name: 'x', category: 'color', axes: ['themeLevel'] as const, values: { '1': '#0', '2': '#1' }, fallback: '#0' }) });
+            composableWorld.spawn({
+              token: Token.make({
+                name: 'x',
+                category: 'color',
+                axes: ['themeLevel'] as const,
+                values: { '1': '#0', '2': '#1' },
+                fallback: '#0',
+              }),
+            });
           }
         }
         const matched = composableWorld.query('boundary');
-        return matched.length === flags.filter(Boolean).length && matched.every((entity) => 'boundary' in entity.components);
+        return (
+          matched.length === flags.filter(Boolean).length && matched.every((entity) => 'boundary' in entity.components)
+        );
       }),
     );
   });
@@ -159,7 +180,9 @@ describe('ECS Composable Properties', () => {
         const style = Style.make({
           boundary,
           base: { properties: { padding: '0px' } },
-          states: Object.fromEntries(boundary.states.map((state, index) => [state, { properties: { padding: `${index}px` } }])) as never,
+          states: Object.fromEntries(
+            boundary.states.map((state, index) => [state, { properties: { padding: `${index}px` } }]),
+          ) as never,
         });
 
         const { world } = World.make();
@@ -175,25 +198,29 @@ describe('ECS Composable Properties', () => {
 
   test('Token resolution through ComposableWorld.evaluate respects fallback and axes', () => {
     fc.assert(
-      fc.property(fc.string({ minLength: 1, maxLength: 8 }), fc.string({ minLength: 1, maxLength: 8 }), (dark, light) => {
-        const token = Token.make({
-          name: 'primary',
-          category: 'color',
-          axes: ['themeLevel'] as const,
-          values: { '1': dark, '2': light },
-          fallback: dark,
-        });
+      fc.property(
+        fc.string({ minLength: 1, maxLength: 8 }),
+        fc.string({ minLength: 1, maxLength: 8 }),
+        (dark, light) => {
+          const token = Token.make({
+            name: 'primary',
+            category: 'color',
+            axes: ['themeLevel'] as const,
+            values: { '1': dark, '2': light },
+            fallback: dark,
+          });
 
-        const { world } = World.make();
-        const composableWorld = ComposableWorld.make<NumericThemeSchema>(world);
-        const entity = composableWorld.spawn({ token });
-        const a = composableWorld.evaluate(entity, { themeLevel: 1 });
-        const b = composableWorld.evaluate(entity, {});
-        const resolvedDark = a.primary;
-        const resolvedFallback = b.primary;
+          const { world } = World.make();
+          const composableWorld = ComposableWorld.make<NumericThemeSchema>(world);
+          const entity = composableWorld.spawn({ token });
+          const a = composableWorld.evaluate(entity, { themeLevel: 1 });
+          const b = composableWorld.evaluate(entity, {});
+          const resolvedDark = a.primary;
+          const resolvedFallback = b.primary;
 
-        return resolvedDark === dark && resolvedFallback === dark;
-      }),
+          return resolvedDark === dark && resolvedFallback === dark;
+        },
+      ),
     );
   });
 
@@ -215,5 +242,4 @@ describe('ECS Composable Properties', () => {
       }),
     );
   });
-
 });

@@ -1,7 +1,7 @@
 /**
  * Config -- unified project configuration hub.
  *
- * Config.make() produces a frozen, FNV-1a content-addressed Config.Shape.
+ * Config.make() produces a frozen, FNV-1a content-addressed Config.
  * Projection functions are pure — no side effects, no I/O.
  */
 
@@ -22,7 +22,7 @@ import { normalizeRepoPath } from '../internal/path-normalize.js';
 export type PrimitiveKind = 'boundary' | 'token' | 'theme' | 'style';
 
 /**
- * Vite-plugin slice of a liteship {@link Config.Shape}: source directories per
+ * Vite-plugin slice of a liteship {@link Config}: source directories per
  * primitive kind, HMR opt-in, environment targeting, and optional WASM hints.
  */
 export interface PluginConfig {
@@ -32,7 +32,7 @@ export interface PluginConfig {
   readonly wasm?: boolean | { readonly enabled?: boolean; readonly path?: string };
 }
 
-/** Astro-integration slice of a liteship {@link Config.Shape}. */
+/** Astro-integration slice of a liteship {@link Config}. */
 export interface AstroConfig {
   readonly satellite?: boolean;
   readonly edgeRuntime?: boolean;
@@ -45,12 +45,12 @@ export interface AstroConfig {
 /**
  * Config namespace — the single hub that every liteship adapter (Vite, Astro, test
  * runners, edge runtime) projects from. {@link Config.make} produces a frozen,
- * FNV-1a content-addressed {@link Config.Shape}; every projection function
+ * FNV-1a content-addressed {@link Config}; every projection function
  * (`toViteConfig`, `toAstroConfig`, `toTestAliases`) is pure.
  */
 export const Config = {
-  /** Build a frozen, content-addressed {@link Config.Shape} from raw input. */
-  make(input: Config.Input): Config.Shape {
+  /** Build a frozen, content-addressed {@link Config} from raw input. */
+  make(input: Config.Input): Config {
     // CUT B5a — mint the internal identity through the CanonicalCbor doctrine
     // (RFC 8949 §4.2.1, recursive key sort, always-float64), the same path as
     // every other `fnv1a:` content address. This replaces the old top-level-only
@@ -79,7 +79,7 @@ export const Config = {
   },
 
   /** Project the Vite-plugin slice of a config for `@liteship/vite`. */
-  toViteConfig(cfg: Config.Shape): PluginConfig {
+  toViteConfig(cfg: Config): PluginConfig {
     return {
       ...(cfg.vite?.dirs !== undefined && { dirs: cfg.vite.dirs }),
       ...(cfg.vite?.hmr !== undefined && { hmr: cfg.vite.hmr }),
@@ -89,7 +89,7 @@ export const Config = {
   },
 
   /** Project the Astro-integration slice of a config for `@liteship/astro`. */
-  toAstroConfig(cfg: Config.Shape): AstroConfig {
+  toAstroConfig(cfg: Config): AstroConfig {
     return {
       ...(cfg.astro?.satellite !== undefined && { satellite: cfg.astro.satellite }),
       ...(cfg.astro?.edgeRuntime !== undefined && { edgeRuntime: cfg.astro.edgeRuntime }),
@@ -97,7 +97,7 @@ export const Config = {
   },
 
   /** Materialize the `@liteship/*` → source-path alias map used by the vitest runner. */
-  toTestAliases(cfg: Config.Shape, repoRoot: string): Record<string, string> {
+  toTestAliases(cfg: Config, repoRoot: string): Record<string, string> {
     void cfg; // cfg reserved for future per-project customisation
     const r = (sub: string) => `${normalizeRepoPath(repoRoot)}/${sub}`;
     // NOTE: longer prefixes MUST come before shorter ones — vitest's alias
@@ -139,31 +139,31 @@ export const Config = {
   },
 };
 
+/** Frozen, content-addressed result of {@link Config.make}. */
+export interface Config {
+  readonly _tag: 'ConfigDef';
+  readonly id: ContentAddress;
+  readonly boundaries: Record<string, Boundary>;
+  readonly tokens: Record<string, Token>;
+  readonly themes: Record<string, Theme>;
+  readonly styles: Record<string, Style>;
+  readonly vite?: Partial<PluginConfig>;
+  readonly astro?: Partial<AstroConfig>;
+}
+
 export declare namespace Config {
   /** Raw user-facing input to {@link Config.make} — every field is optional. */
   interface Input {
-    readonly boundaries?: Record<string, Boundary.Shape>;
-    readonly tokens?: Record<string, Token.Shape>;
-    readonly themes?: Record<string, Theme.Shape>;
-    readonly styles?: Record<string, Style.Shape>;
-    readonly vite?: Partial<PluginConfig>;
-    readonly astro?: Partial<AstroConfig>;
-  }
-
-  /** Frozen, content-addressed result of {@link Config.make}. */
-  interface Shape {
-    readonly _tag: 'ConfigDef';
-    readonly id: ContentAddress;
-    readonly boundaries: Record<string, Boundary.Shape>;
-    readonly tokens: Record<string, Token.Shape>;
-    readonly themes: Record<string, Theme.Shape>;
-    readonly styles: Record<string, Style.Shape>;
+    readonly boundaries?: Record<string, Boundary>;
+    readonly tokens?: Record<string, Token>;
+    readonly themes?: Record<string, Theme>;
+    readonly styles?: Record<string, Style>;
     readonly vite?: Partial<PluginConfig>;
     readonly astro?: Partial<AstroConfig>;
   }
 }
 
 /** Thin alias for {@link Config.make} — matches the `defineConfig(...)` ergonomics other tools use. */
-export function defineConfig(input: Config.Input): Config.Shape {
+export function defineConfig(input: Config.Input): Config {
   return Config.make(input);
 }

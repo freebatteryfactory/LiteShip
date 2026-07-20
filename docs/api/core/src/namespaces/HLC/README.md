@@ -31,4 +31,3 @@ const ts = clock.tick();
 ## Type Aliases
 
 - [Clock](type-aliases/Clock.md)
-- [Shape](type-aliases/Shape.md)

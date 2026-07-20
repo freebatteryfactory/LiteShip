@@ -10,7 +10,7 @@ Defined in: [quantizer/src/transition.ts:21](https://github.com/freebatteryfacto
 
 Per-transition animation parameters.
 
-Used by [AnimatedQuantizer](../namespaces/AnimatedQuantizer/README.md) to drive interpolation between two
+Used by [AnimatedQuantizer](../type-aliases/AnimatedQuantizer.md) to drive interpolation between two
 state output records. `duration` of `0` produces an instantaneous snap.
 
 Plain `number` literals are accepted alongside branded [Millis](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/Millis.md);

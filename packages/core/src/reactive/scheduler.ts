@@ -95,10 +95,10 @@ function _fixedStep(fps: number): FixedStepShape {
 interface AudioSyncShape extends SchedulerShape {
   poll(): void;
   readonly frame: number;
-  readonly bridge: AVBridge.Shape;
+  readonly bridge: AVBridge;
 }
 
-function _audioSync(bridge: AVBridge.Shape): AudioSyncShape {
+function _audioSync(bridge: AVBridge): AudioSyncShape {
   let lastFrame = -1;
   let pendingCallback: ((now: number) => void) | null = null;
 
@@ -151,9 +151,10 @@ export const Scheduler = {
   audioSync: _audioSync,
 };
 
+/** Public structural type for `Scheduler`. */
+export type Scheduler = SchedulerShape;
+
 export declare namespace Scheduler {
-  /** Common structural shape every scheduler variant satisfies. */
-  export type Shape = SchedulerShape;
   /** Fixed-step scheduler with manual `step()` advancement. */
   export type FixedStep = FixedStepShape;
   /** Audio-synchronized scheduler bound to an {@link AVBridge}. */

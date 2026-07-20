@@ -77,7 +77,7 @@ export interface CompositorWorkerShape {
   /** The underlying Worker instance. */
   readonly worker: Worker;
   /** Shared runtime coordination surface reflecting host-side worker state. */
-  readonly runtime: RuntimeCoordinator.Shape;
+  readonly runtime: RuntimeCoordinator;
 
   /**
    * Register a quantizer from a `Boundary.make` result — id, states, and
@@ -183,7 +183,7 @@ export interface StandbyCompositorLease {
   /** The warm Worker instance. */
   readonly worker: Worker;
   /** Shared runtime coordinator already attached to the worker. */
-  readonly runtime: RuntimeCoordinator.Shape;
+  readonly runtime: RuntimeCoordinator;
   /** Pooled pool capacity advertised by the lease. */
   readonly capacity: number;
   /** Worker constructor used to mint peers. */

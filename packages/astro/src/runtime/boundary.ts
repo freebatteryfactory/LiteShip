@@ -31,7 +31,7 @@ export type WgslUniformValue = number | WgslUniformVector;
 /**
  * JSON shape produced on the server by `satelliteAttrs()` and read back
  * on the client via {@link parseBoundary}. Every field corresponds
- * directly to a {@link Boundary.Shape} input.
+ * directly to a {@link Boundary} input.
  */
 export interface SerializedBoundary {
   /** Optional stable boundary id (becomes the runtime `name`). */
@@ -97,8 +97,8 @@ export interface RuntimeBoundary {
   readonly name: string;
   /** Signal key this boundary consumes. */
   readonly input: string;
-  /** Fully-constructed `Boundary.Shape` ready for evaluation. */
-  readonly boundary: Boundary.Shape<string, readonly [string, ...string[]]>;
+  /** Fully-constructed `Boundary` ready for evaluation. */
+  readonly boundary: Boundary<string, readonly [string, ...string[]]>;
   /**
    * Authored per-state ARIA attributes resolved at parse time. `applyBoundaryState`
    * composes `stateAttributes[currentState]` over the reflected aria so authored

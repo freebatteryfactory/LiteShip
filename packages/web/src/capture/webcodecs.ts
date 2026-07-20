@@ -251,7 +251,5 @@ function make(options?: WebCodecsCaptureOptions): FrameCapture {
  */
 export const WebCodecsCapture = { make } as const;
 
-export declare namespace WebCodecsCapture {
-  /** Structural type of a frame-capture surface. */
-  export type Shape = FrameCapture;
-}
+/** Public structural type for `WebCodecsCapture`. */
+export type WebCodecsCapture = FrameCapture;

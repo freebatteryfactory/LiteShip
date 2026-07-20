@@ -17,7 +17,7 @@ type DeviceTier = 'none' | 'transitions' | 'animations' | 'physics' | 'compute';
  */
 export interface LLMRenderRuntime {
   /** Ring of incoming text fragments feeding the scheduler. */
-  readonly tokenBuffer: TokenBuffer.Shape<string>;
+  readonly tokenBuffer: TokenBuffer<string>;
   /** Adaptive quality controller. Reassigned on each reset. */
   quality: ReturnType<typeof UIQuality.make>;
   /** Frame scheduler bound to `tokenBuffer` + `quality`. */

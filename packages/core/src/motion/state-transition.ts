@@ -87,7 +87,7 @@ export function discreteTransitionSubjectId(transition: Pick<DiscreteStateTransi
  * value, so a self-consistent receipt cannot be re-paired with a DIFFERENT `next`/
  * `generation`/`resultId` on the same subject.
  */
-export function discreteTransitionPayload(transition: DiscreteStateTransition): Promise<TypedRef.Shape> {
+export function discreteTransitionPayload(transition: DiscreteStateTransition): Promise<TypedRef> {
   return TypedRef.create('DiscreteStateTransition@1', {
     cell: transition.cell,
     previous: transition.previous,

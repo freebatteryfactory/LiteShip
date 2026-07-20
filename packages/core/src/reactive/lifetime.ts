@@ -226,9 +226,10 @@ export const Lifetime = {
   make,
 } as const;
 
+/** Public structural type for `Lifetime`. */
+export type Lifetime = LifetimeShape;
+
 export declare namespace Lifetime {
-  /** Live runtime handle — see {@link LifetimeShape}. */
-  export type Shape = LifetimeShape;
   /** A registered teardown function — see {@link Finalizer}. */
   export type Finalizer = () => void | Promise<void>;
 }

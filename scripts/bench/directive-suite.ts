@@ -1106,7 +1106,7 @@ function runWorkerRuntimeCoordinatorSteady(): void {
   }
 }
 
-function registerBenchWorkerQuantizer(host: WorkerHost.Shape): void {
+function registerBenchWorkerQuantizer(host: WorkerHost): void {
   host.compositor.addQuantizer('layout', {
     id: 'layout',
     states: satelliteBoundary.states,

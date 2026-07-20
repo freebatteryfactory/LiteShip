@@ -15,7 +15,7 @@ import { LiveCell, HLC, StateName, Boundary, fixedClock, manualClock } from '@li
 import type { CellKind, BoundaryCrossing } from '@liteship/core';
 
 const collectCrossings = (cell: {
-  crossings: LiveCell.Shape<CellKind, unknown>['crossings'];
+  crossings: LiveCell<CellKind, unknown>['crossings'];
 }): BoundaryCrossing<string>[] => {
   const out: BoundaryCrossing<string>[] = [];
   cell.crossings.subscribe((c) => out.push(c));
@@ -511,14 +511,14 @@ describe('LiveCell — injected clock determinism', () => {
 
   test('identical op-sequences under the same manualClock produce byte-identical envelopes + crossing timestamps', () => {
     const run = (): {
-      envelopes: { version: number; id: string; updated: HLC.Shape; created: HLC.Shape }[];
+      envelopes: { version: number; id: string; updated: HLC; created: HLC }[];
       crossings: BoundaryCrossing<string>[];
     } => {
       // A fresh manual clock advanced by the SAME deterministic schedule each run.
       const clock = manualClock(1_000);
       const cell = LiveCell.makeBoundary(viewport, 400, clock); // mobile
       const crossings = collectCrossings(cell);
-      const envelopes: { version: number; id: string; updated: HLC.Shape; created: HLC.Shape }[] = [];
+      const envelopes: { version: number; id: string; updated: HLC; created: HLC }[] = [];
       const snap = (): void => {
         const e = cell.envelope();
         envelopes.push({ version: e.meta.version, id: String(e.id), updated: e.meta.updated, created: e.meta.created });
@@ -537,7 +537,7 @@ describe('LiveCell — injected clock determinism', () => {
     expect(a.envelopes).toEqual(b.envelopes);
     expect(a.crossings).toEqual(b.crossings);
     // And the timestamps are the injected clock's, not the ambient wall clock.
-    expect(a.crossings.map((c) => (c.timestamp as HLC.Shape).wall_ms)).toEqual([1005, 1012]);
+    expect(a.crossings.map((c) => (c.timestamp as HLC).wall_ms)).toEqual([1005, 1012]);
     expect(a.envelopes.map((e) => e.updated.wall_ms)).toEqual([1005, 1012]);
   });
 

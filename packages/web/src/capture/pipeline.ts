@@ -56,7 +56,7 @@ async function toCaptureBitmap(canvas: Canvas2DTarget): Promise<ImageBitmap | Of
  * @returns The finalized CaptureResult with the encoded video blob
  */
 export async function captureVideo(
-  renderer: VideoRenderer.Shape,
+  renderer: VideoRenderer,
   capture: FrameCapture,
   renderFn?: RenderFn,
 ): Promise<CaptureResult> {

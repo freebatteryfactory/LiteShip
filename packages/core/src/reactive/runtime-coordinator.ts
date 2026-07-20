@@ -222,9 +222,10 @@ export const RuntimeCoordinator = {
   create: createRuntimeCoordinator,
 } as const;
 
+/** Public structural type for `RuntimeCoordinator`. */
+export type RuntimeCoordinator = RuntimeCoordinatorShape;
+
 export declare namespace RuntimeCoordinator {
-  /** Alias for `RuntimeCoordinatorShape`. */
-  export type Shape = RuntimeCoordinatorShape;
   /** Alias for `RuntimeCoordinatorConfig`. */
   export type Config = RuntimeCoordinatorConfig;
   /** Alias for `RuntimePhase`. */

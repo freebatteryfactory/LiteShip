@@ -109,6 +109,10 @@
         },
         {
           "name": "Boundary",
+          "kind": "interface"
+        },
+        {
+          "name": "Boundary",
           "kind": "namespace"
         },
         {
@@ -221,6 +225,10 @@
         },
         {
           "name": "Cell",
+          "kind": "interface"
+        },
+        {
+          "name": "Cell",
           "kind": "namespace"
         },
         {
@@ -265,6 +273,10 @@
         },
         {
           "name": "Codec",
+          "kind": "interface"
+        },
+        {
+          "name": "Codec",
           "kind": "namespace"
         },
         {
@@ -305,6 +317,10 @@
         },
         {
           "name": "Component",
+          "kind": "interface"
+        },
+        {
+          "name": "Component",
           "kind": "namespace"
         },
         {
@@ -325,7 +341,15 @@
         },
         {
           "name": "Compositor",
+          "kind": "interface"
+        },
+        {
+          "name": "Compositor",
           "kind": "namespace"
+        },
+        {
+          "name": "CompositorWorker",
+          "kind": "interface"
         },
         {
           "name": "CompositorWorker",
@@ -346,6 +370,10 @@
         {
           "name": "CompositorWorkerState",
           "kind": "type"
+        },
+        {
+          "name": "Config",
+          "kind": "interface"
         },
         {
           "name": "Config",
@@ -385,6 +413,10 @@
         },
         {
           "name": "DenseSystem",
+          "kind": "interface"
+        },
+        {
+          "name": "Derived",
           "kind": "interface"
         },
         {
@@ -613,6 +645,10 @@
         },
         {
           "name": "Lifetime",
+          "kind": "interface"
+        },
+        {
+          "name": "Lifetime",
           "kind": "namespace"
         },
         {
@@ -709,7 +745,7 @@
         },
         {
           "name": "Part",
-          "kind": "namespace"
+          "kind": "interface"
         },
         {
           "name": "PhysicalState",
@@ -861,7 +897,7 @@
         },
         {
           "name": "RenderWorker",
-          "kind": "namespace"
+          "kind": "type"
         },
         {
           "name": "RenderWorkerShape",
@@ -893,6 +929,10 @@
         },
         {
           "name": "SPSCRing",
+          "kind": "interface"
+        },
+        {
+          "name": "SPSCRing",
           "kind": "namespace"
         },
         {
@@ -918,6 +958,10 @@
         {
           "name": "SSEState",
           "kind": "type"
+        },
+        {
+          "name": "Scheduler",
+          "kind": "interface"
         },
         {
           "name": "Scheduler",
@@ -1001,7 +1045,15 @@
         },
         {
           "name": "Store",
+          "kind": "interface"
+        },
+        {
+          "name": "Store",
           "kind": "namespace"
+        },
+        {
+          "name": "Style",
+          "kind": "interface"
         },
         {
           "name": "Style",
@@ -1021,6 +1073,10 @@
         },
         {
           "name": "System",
+          "kind": "interface"
+        },
+        {
+          "name": "Theme",
           "kind": "interface"
         },
         {
@@ -1053,11 +1109,19 @@
         },
         {
           "name": "Timeline",
+          "kind": "interface"
+        },
+        {
+          "name": "Timeline",
           "kind": "namespace"
         },
         {
           "name": "ToWorkerMessage",
           "kind": "type"
+        },
+        {
+          "name": "Token",
+          "kind": "interface"
         },
         {
           "name": "Token",
@@ -1114,6 +1178,10 @@
         {
           "name": "TransitionMap",
           "kind": "type"
+        },
+        {
+          "name": "TypedRef",
+          "kind": "interface"
         },
         {
           "name": "TypedRef",
@@ -1197,6 +1265,10 @@
         },
         {
           "name": "WorkerHost",
+          "kind": "interface"
+        },
+        {
+          "name": "WorkerHost",
           "kind": "namespace"
         },
         {
@@ -1222,6 +1294,10 @@
         {
           "name": "World",
           "kind": "namespace"
+        },
+        {
+          "name": "Zap",
+          "kind": "interface"
         },
         {
           "name": "Zap",
@@ -1792,7 +1868,7 @@
         },
         {
           "name": "CommandDispatcher",
-          "kind": "namespace"
+          "kind": "type"
         },
         {
           "name": "CommandExecutionKind",
@@ -1808,7 +1884,7 @@
         },
         {
           "name": "CommandRegistry",
-          "kind": "namespace"
+          "kind": "type"
         },
         {
           "name": "GlossaryEntry",
@@ -2123,8 +2199,16 @@
           "kind": "namespace"
         },
         {
+          "name": "AVBridge",
+          "kind": "type"
+        },
+        {
           "name": "AVRenderer",
           "kind": "namespace"
+        },
+        {
+          "name": "AVRenderer",
+          "kind": "type"
         },
         {
           "name": "AddressedDigest",
@@ -2155,8 +2239,16 @@
           "kind": "namespace"
         },
         {
+          "name": "BlendTree",
+          "kind": "type"
+        },
+        {
           "name": "Boundary",
           "kind": "namespace"
+        },
+        {
+          "name": "Boundary",
+          "kind": "type"
         },
         {
           "name": "BoundaryCrossing",
@@ -2180,7 +2272,7 @@
         },
         {
           "name": "Cap",
-          "kind": "namespace"
+          "kind": "type"
         },
         {
           "name": "CapSet",
@@ -2240,7 +2332,7 @@
         },
         {
           "name": "Cell",
-          "kind": "namespace"
+          "kind": "type"
         },
         {
           "name": "CellEnvelope",
@@ -2292,7 +2384,7 @@
         },
         {
           "name": "Codec",
-          "kind": "namespace"
+          "kind": "type"
         },
         {
           "name": "ColorSpace",
@@ -2312,7 +2404,7 @@
         },
         {
           "name": "Component",
-          "kind": "namespace"
+          "kind": "type"
         },
         {
           "name": "ComponentNode",
@@ -2324,7 +2416,7 @@
         },
         {
           "name": "ComposableWorld",
-          "kind": "namespace"
+          "kind": "type"
         },
         {
           "name": "ComposableWorldShape",
@@ -2339,6 +2431,10 @@
           "kind": "namespace"
         },
         {
+          "name": "Compositor",
+          "kind": "type"
+        },
+        {
           "name": "CompositorConfig",
           "kind": "type"
         },
@@ -2348,7 +2444,11 @@
         },
         {
           "name": "CompositorStatePool",
-          "kind": "namespace"
+          "kind": "type"
+        },
+        {
+          "name": "Config",
+          "kind": "interface"
         },
         {
           "name": "Config",
@@ -2424,7 +2524,7 @@
         },
         {
           "name": "Derived",
-          "kind": "namespace"
+          "kind": "type"
         },
         {
           "name": "DiagnosticEvent",
@@ -2448,7 +2548,7 @@
         },
         {
           "name": "DirtyFlags",
-          "kind": "namespace"
+          "kind": "type"
         },
         {
           "name": "DiscreteStateTransition",
@@ -2524,7 +2624,7 @@
         },
         {
           "name": "FrameBudget",
-          "kind": "namespace"
+          "kind": "type"
         },
         {
           "name": "FrameCapture",
@@ -2541,6 +2641,10 @@
         {
           "name": "GenFrame",
           "kind": "namespace"
+        },
+        {
+          "name": "GenFrame",
+          "kind": "type"
         },
         {
           "name": "GeneratedUIValidator",
@@ -2607,6 +2711,10 @@
           "kind": "namespace"
         },
         {
+          "name": "HLC",
+          "kind": "type"
+        },
+        {
           "name": "HLCBrand",
           "kind": "type"
         },
@@ -2643,6 +2751,10 @@
           "kind": "namespace"
         },
         {
+          "name": "Lifetime",
+          "kind": "type"
+        },
+        {
           "name": "LifetimeDisposeError",
           "kind": "type"
         },
@@ -2656,7 +2768,7 @@
         },
         {
           "name": "LiveCell",
-          "kind": "namespace"
+          "kind": "type"
         },
         {
           "name": "LoweredMotionPlan",
@@ -2733,6 +2845,10 @@
         {
           "name": "Part",
           "kind": "namespace"
+        },
+        {
+          "name": "Part",
+          "kind": "type"
         },
         {
           "name": "PatchOp",
@@ -2971,6 +3087,10 @@
           "kind": "namespace"
         },
         {
+          "name": "RuntimeCoordinator",
+          "kind": "type"
+        },
+        {
           "name": "RuntimeCoordinatorConfig",
           "kind": "type"
         },
@@ -3001,6 +3121,10 @@
         {
           "name": "Scheduler",
           "kind": "namespace"
+        },
+        {
+          "name": "Scheduler",
+          "kind": "type"
         },
         {
           "name": "Schema",
@@ -3039,8 +3163,16 @@
           "kind": "namespace"
         },
         {
+          "name": "ShipCapsule",
+          "kind": "type"
+        },
+        {
           "name": "Signal",
           "kind": "namespace"
+        },
+        {
+          "name": "Signal",
+          "kind": "type"
         },
         {
           "name": "SignalInput",
@@ -3069,6 +3201,10 @@
         {
           "name": "SpeculativeEvaluator",
           "kind": "namespace"
+        },
+        {
+          "name": "SpeculativeEvaluator",
+          "kind": "type"
         },
         {
           "name": "StaggerChild",
@@ -3108,7 +3244,7 @@
         },
         {
           "name": "StateCellStore",
-          "kind": "namespace"
+          "kind": "type"
         },
         {
           "name": "StateCellStoreShape",
@@ -3128,7 +3264,7 @@
         },
         {
           "name": "Store",
-          "kind": "namespace"
+          "kind": "type"
         },
         {
           "name": "StructEncoded",
@@ -3140,7 +3276,7 @@
         },
         {
           "name": "Style",
-          "kind": "namespace"
+          "kind": "type"
         },
         {
           "name": "StyleLayer",
@@ -3152,7 +3288,7 @@
         },
         {
           "name": "Theme",
-          "kind": "namespace"
+          "kind": "type"
         },
         {
           "name": "ThresholdValue",
@@ -3164,15 +3300,19 @@
         },
         {
           "name": "Timeline",
-          "kind": "namespace"
+          "kind": "type"
         },
         {
           "name": "Token",
-          "kind": "namespace"
+          "kind": "type"
         },
         {
           "name": "TokenBuffer",
           "kind": "namespace"
+        },
+        {
+          "name": "TokenBuffer",
+          "kind": "type"
         },
         {
           "name": "TokenCategory",
@@ -3204,7 +3344,7 @@
         },
         {
           "name": "TypedRef",
-          "kind": "namespace"
+          "kind": "type"
         },
         {
           "name": "TypedValue",
@@ -3219,6 +3359,10 @@
           "kind": "namespace"
         },
         {
+          "name": "UIQuality",
+          "kind": "type"
+        },
+        {
           "name": "UIQualityTier",
           "kind": "type"
         },
@@ -3228,7 +3372,7 @@
         },
         {
           "name": "VectorClock",
-          "kind": "namespace"
+          "kind": "type"
         },
         {
           "name": "VideoConfig",
@@ -3240,7 +3384,7 @@
         },
         {
           "name": "VideoRenderer",
-          "kind": "namespace"
+          "kind": "type"
         },
         {
           "name": "WASMDispatchAPI",
@@ -3259,8 +3403,16 @@
           "kind": "namespace"
         },
         {
+          "name": "World",
+          "kind": "type"
+        },
+        {
           "name": "Zap",
           "kind": "namespace"
+        },
+        {
+          "name": "Zap",
+          "kind": "type"
         }
       ]
     },
@@ -4244,7 +4396,7 @@
       "typeExports": [
         {
           "name": "AnimatedQuantizer",
-          "kind": "namespace"
+          "kind": "type"
         },
         {
           "name": "AnimatedQuantizerHandle",
@@ -4675,6 +4827,10 @@
           "kind": "namespace"
         },
         {
+          "name": "LLMAdapter",
+          "kind": "type"
+        },
+        {
           "name": "LLMAdapterShape",
           "kind": "type"
         },
@@ -4840,7 +4996,7 @@
         },
         {
           "name": "SlotRegistry",
-          "kind": "namespace"
+          "kind": "type"
         },
         {
           "name": "SlotRegistryShape",
@@ -4888,7 +5044,7 @@
         },
         {
           "name": "WebCodecsCapture",
-          "kind": "namespace"
+          "kind": "type"
         },
         {
           "name": "WebCodecsCaptureOptions",
@@ -4901,6 +5057,10 @@
         {
           "name": "CompositorWorker",
           "kind": "namespace"
+        },
+        {
+          "name": "CompositorWorker",
+          "kind": "type"
         },
         {
           "name": "CompositorWorkerShape",
@@ -4932,7 +5092,7 @@
         },
         {
           "name": "RenderWorker",
-          "kind": "namespace"
+          "kind": "type"
         },
         {
           "name": "RenderWorkerShape",
@@ -4940,7 +5100,7 @@
         },
         {
           "name": "SPSCRing",
-          "kind": "namespace"
+          "kind": "type"
         },
         {
           "name": "SPSCRingBufferShape",
@@ -4965,6 +5125,10 @@
         {
           "name": "WorkerHost",
           "kind": "namespace"
+        },
+        {
+          "name": "WorkerHost",
+          "kind": "type"
         },
         {
           "name": "WorkerHostRenderConfig",

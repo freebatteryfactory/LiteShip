@@ -19,7 +19,7 @@ export function VideoSystem(frameIndex: number): System {
   return {
     name: 'VideoSystem',
     query: ['VideoSource', 'FrameRange'],
-    execute: (entities, world?: World.Shape) => {
+    execute: (entities, world?: World) => {
       for (const e of entities) {
         const range = e.components.get('FrameRange') as { from: number; to: number };
         const inRange = frameIndex >= range.from && frameIndex < range.to;

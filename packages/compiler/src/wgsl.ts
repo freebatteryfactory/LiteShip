@@ -166,7 +166,7 @@ function toStructName(input: string): string {
  * @param states   - Per-state scalar/vector value maps
  * @returns A {@link WGSLCompileResult} with structs, bindings, and declarations
  */
-function compile<B extends Boundary.Shape>(
+function compile<B extends Boundary>(
   boundary: B,
   states: { [S in StateUnion<B> & string]: Record<string, WGSLUniformValue> },
 ): WGSLCompileResult {

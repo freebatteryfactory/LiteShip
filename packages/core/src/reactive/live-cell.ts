@@ -58,7 +58,7 @@ import { wallClock, type Clock } from '../clock/clock.js';
 /** The no-replay crossings channel — a late subscriber misses prior crossings. */
 type CrossingsChannel = Pick<CellKernel.Fanout<BoundaryCrossing<string>>, 'subscribe'>;
 
-interface LiveCellShape<K extends CellKind, T> extends Omit<Cell.Shape<T>, '_tag'> {
+interface LiveCellShape<K extends CellKind, T> extends Omit<Cell<T>, '_tag'> {
   readonly _tag: 'LiveCell';
   /** The current protocol envelope — a synchronous snapshot (was the Effect `envelope`). */
   envelope(): CellEnvelope<K, T>;
@@ -85,8 +85,8 @@ function makeCore<K extends CellKind, T>(kind: K, initial: T, nodeId: string, cl
   // makes the envelope + crossing timestamps a pure function of the op-sequence
   // (deterministic replay); the default wallClock preserves the epoch-ms `wall_ms`.
   const hlcClock = HLC.makeClock(nodeId, clock);
-  const created: HLC.Shape = hlcClock.tick();
-  let updated: HLC.Shape = created;
+  const created: HLC = hlcClock.tick();
+  let updated: HLC = created;
   let version = 1;
 
   // CUT live-cell — the envelope id is a content-address IDENTITY (auto-invalidates
@@ -96,10 +96,10 @@ function makeCore<K extends CellKind, T>(kind: K, initial: T, nodeId: string, cl
   const computeId = (value: T): ContentAddress => fnv1aBytes(CanonicalCbor.encode({ kind, value }));
   let id: ContentAddress = computeId(initial);
 
-  const tick = (): HLC.Shape => hlcClock.tick();
+  const tick = (): HLC => hlcClock.tick();
 
   /** Advance version + HLC + id (the envelope) — called BEFORE the value fan-out. */
-  const recordMutation = (value: T): HLC.Shape => {
+  const recordMutation = (value: T): HLC => {
     const stamp = tick();
     updated = stamp;
     version += 1;
@@ -196,7 +196,7 @@ function _make<K extends CellKind, T>(kind: K, initial: T, clock: Clock = wallCl
  * numeric value transitions between boundary states.
  */
 function _makeBoundary<I extends string, S extends readonly [string, ...string[]]>(
-  boundary: Boundary.Shape<I, S>,
+  boundary: Boundary<I, S>,
   initial: number,
   clock: Clock = wallClock,
 ): LiveCellShape<'boundary', number> {
@@ -282,7 +282,5 @@ export const LiveCell = {
   makeBoundary: _makeBoundary,
 };
 
-export declare namespace LiveCell {
-  /** Structural shape of a {@link LiveCell} parameterized by cell kind `K` and value type `T`. */
-  export type Shape<K extends CellKind, T> = LiveCellShape<K, T>;
-}
+/** Public structural type for `LiveCell`. */
+export type LiveCell<K extends CellKind, T> = LiveCellShape<K, T>;

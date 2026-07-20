@@ -125,11 +125,7 @@ export function compositeStateToRgba(state: CompositeState, width: number, heigh
  * the compositor evaluates, so quantizers that read from that signal advance
  * deterministically with the render clock.
  */
-function _make(
-  config: VideoConfig,
-  compositor: Compositor.Shape,
-  signal?: Signal.Controllable<number>,
-): VideoRendererShape {
+function _make(config: VideoConfig, compositor: Compositor, signal?: Signal.Controllable<number>): VideoRendererShape {
   const totalFrames = Math.ceil((config.durationMs / 1000) * config.fps);
   const scheduler = SchedulerImpl.fixedStep(config.fps);
 
@@ -173,7 +169,5 @@ export const VideoRenderer = {
   make: _make,
 };
 
-export declare namespace VideoRenderer {
-  /** Structural shape of a renderer instance returned by {@link VideoRenderer.make}. */
-  export type Shape = VideoRendererShape;
-}
+/** Public structural type for `VideoRenderer`. */
+export type VideoRenderer = VideoRendererShape;

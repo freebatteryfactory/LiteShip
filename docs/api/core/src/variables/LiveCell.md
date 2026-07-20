@@ -78,7 +78,7 @@ numeric value transitions between boundary states.
 
 ##### boundary
 
-[`Shape`](../namespaces/Boundary/type-aliases/Shape.md)\<`I`, `S`\>
+[`Boundary`](../type-aliases/Boundary.md)\<`I`, `S`\>
 
 ##### initial
 

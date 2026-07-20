@@ -53,7 +53,7 @@ function sampleFrame(elapsed: number, duration: number, easing: Easing.Fn, times
 async function* _run(config: {
   duration: Millis;
   easing?: Easing.Fn;
-  scheduler?: Scheduler.Shape;
+  scheduler?: Scheduler;
   signal?: AbortSignal;
 }): AsyncGenerator<AnimationFrameShape, void, void> {
   const { duration, easing = EasingImpl.linear, signal } = config;

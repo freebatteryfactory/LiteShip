@@ -72,7 +72,7 @@ interface DerivedShape<T> {
    * last value. Mirrors {@link Cell}'s `lifetime` member so consumers thread
    * lifecycle through one uniform `dispose()`.
    */
-  readonly lifetime: Lifetime.Shape;
+  readonly lifetime: Lifetime;
 }
 
 /**
@@ -191,7 +191,5 @@ export const Derived = {
   combine: _combine,
 };
 
-export declare namespace Derived {
-  /** Structural shape of a {@link Derived}: `_tag`, sync `read`, `subscribe`, `lifetime`. */
-  export type Shape<T> = DerivedShape<T>;
-}
+/** Public structural type for `Derived`. */
+export type Derived<T> = DerivedShape<T>;

@@ -16,7 +16,7 @@ Generate valid output shapes per state
 
 ### B
 
-`B` *extends* [`Shape`](../namespaces/Boundary/type-aliases/Shape.md)
+`B` *extends* [`Boundary`](Boundary.md)
 
 ### T
 

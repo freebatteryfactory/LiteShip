@@ -13,7 +13,7 @@ Provides React hooks and composition helpers to consume
 `CompositeState` from `@liteship/core`'s `VideoRenderer` in Remotion projects.
 
 Typical flow:
-1. Build a [VideoRenderer.Shape](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/VideoRenderer/type-aliases/Shape.md) on the server — usually via
+1. Build a [VideoRenderer](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/VideoRenderer.md) on the server — usually via
    [rendererFromRemotionConfig](functions/rendererFromRemotionConfig.md), so fps/duration are declared once,
    in Remotion.
 2. Call [precomputeFrames](functions/precomputeFrames.md) once before Remotion renders.

@@ -1,17 +1,28 @@
 /**
- * @liteship config type spine -- Config.Shape and defineConfig() contract.
+ * @liteship config type spine -- Config and defineConfig() contract.
  */
 
 import type { ContentAddress, Boundary } from './core.d.ts';
 import type { Token, Theme, Style } from './design.d.ts';
 
+export interface Config {
+  readonly _tag: 'ConfigDef';
+  readonly id: ContentAddress;
+  readonly boundaries: Record<string, Boundary>;
+  readonly tokens: Record<string, Token>;
+  readonly themes: Record<string, Theme>;
+  readonly styles: Record<string, Style>;
+  readonly vite?: Config.Input['vite'];
+  readonly astro?: Config.Input['astro'];
+}
+
 export declare namespace Config {
   /** User-facing input — no id, no _tag */
   export interface Input {
-    readonly boundaries?: Record<string, Boundary.Shape>;
-    readonly tokens?: Record<string, Token.Shape>;
-    readonly themes?: Record<string, Theme.Shape>;
-    readonly styles?: Record<string, Style.Shape>;
+    readonly boundaries?: Record<string, Boundary>;
+    readonly tokens?: Record<string, Token>;
+    readonly themes?: Record<string, Theme>;
+    readonly styles?: Record<string, Style>;
     readonly vite?: {
       readonly dirs?: Partial<Record<'boundary' | 'token' | 'theme' | 'style', string>>;
       readonly hmr?: boolean;
@@ -23,19 +34,7 @@ export declare namespace Config {
       readonly edgeRuntime?: boolean;
     };
   }
-
-  /** Frozen, content-addressed config artifact */
-  export interface Shape {
-    readonly _tag: 'ConfigDef';
-    readonly id: ContentAddress;
-    readonly boundaries: Record<string, Boundary.Shape>;
-    readonly tokens: Record<string, Token.Shape>;
-    readonly themes: Record<string, Theme.Shape>;
-    readonly styles: Record<string, Style.Shape>;
-    readonly vite?: Input['vite'];
-    readonly astro?: Input['astro'];
-  }
 }
 
 /** Ergonomic alias for liteship.config.ts usage at the workspace root */
-export declare function defineConfig(input: Config.Input): Config.Shape;
+export declare function defineConfig(input: Config.Input): Config;

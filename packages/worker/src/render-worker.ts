@@ -503,7 +503,5 @@ export const RenderWorker = {
   create: _createRenderWorker,
 } as const;
 
-export declare namespace RenderWorker {
-  /** Public host-side surface returned by {@link RenderWorker.create}. */
-  export type Shape = RenderWorkerShape;
-}
+/** Public structural type for `RenderWorker`. */
+export type RenderWorker = RenderWorkerShape;

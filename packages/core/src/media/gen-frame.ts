@@ -104,7 +104,7 @@ function resolveGap(
 
 interface GenFrameConfig {
   readonly fps?: number;
-  readonly tokenBuffer: TokenBuffer.Shape<string>;
+  readonly tokenBuffer: TokenBuffer<string>;
   readonly getQualityTier: () => UIQualityTier;
   /**
    * Injected time source for the frame's `timestamp` metadata (NOT a content-
@@ -238,9 +238,10 @@ export const GenFrame = {
   resolveGap,
 };
 
+/** Public structural type for `GenFrame`. */
+export type GenFrame = GenFrameSchedulerShape;
+
 export declare namespace GenFrame {
-  /** Structural shape of a scheduler instance returned by {@link GenFrame.make}. */
-  export type Shape = GenFrameSchedulerShape;
   /** Configuration accepted by {@link GenFrame.make}. */
   export type Config = GenFrameConfig;
   /** Alias for {@link UIFrame}. */

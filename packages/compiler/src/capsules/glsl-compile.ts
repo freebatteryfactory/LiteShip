@@ -67,12 +67,12 @@ interface GLSLCompileOutput {
 }
 
 /** Build a valid Boundary from a recorded (deduped) state-name list. */
-function makeBoundary(stateNames: readonly string[]): Boundary.Shape {
+function makeBoundary(stateNames: readonly string[]): Boundary {
   const at = stateNames.map((name, i) => [i, name] as const);
   return Boundary.make({
     input: 'seed.signal',
     at: at as unknown as readonly [readonly [number, string]],
-  }) as unknown as Boundary.Shape;
+  }) as unknown as Boundary;
 }
 
 /**
@@ -84,7 +84,7 @@ function makeBoundary(stateNames: readonly string[]): Boundary.Shape {
  * guards.
  */
 function buildInputs(seed: GLSLCompileSeedValue): {
-  boundary: Boundary.Shape;
+  boundary: Boundary;
   states: StateMaps;
   stateNames: string[];
   fieldNames: string[];

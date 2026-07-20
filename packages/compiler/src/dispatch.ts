@@ -62,7 +62,7 @@ export interface ConfigTemplateResult {
 }
 
 const ConfigTemplateCompiler = {
-  compile(config: Config.Shape): ConfigTemplateResult {
+  compile(config: Config): ConfigTemplateResult {
     return { json: JSON.stringify(config, null, 2) };
   },
 };
@@ -85,22 +85,22 @@ const ConfigTemplateCompiler = {
  * - `WGSLCompiler`   — boundary + per-state scalar/vector uniforms → WGSL bindings.
  * - `ARIACompiler`   — boundary + per-state attribute maps + active state → ARIA attributes.
  * - `AICompiler`     — an {@link AIManifestInput} → tool-call-ready manifest JSON.
- * - `ConfigCompiler` — a `Config.Shape` → pretty-printed JSON template.
+ * - `ConfigCompiler` — a `Config` → pretty-printed JSON template.
  * - `MotionCompiler`  — a `CssMotionPlan` → `@property` / `@keyframes` / transitions.
  */
 export type CompilerDef =
   | {
       readonly _tag: 'CSSCompiler';
-      readonly boundary: Boundary.Shape;
+      readonly boundary: Boundary;
       readonly states: CSSStates;
       /** CSS selector for bare properties; defaults to `.liteship-boundary`. */
       readonly selector?: string;
     }
-  | { readonly _tag: 'GLSLCompiler'; readonly boundary: Boundary.Shape; readonly states: GLSLStates }
-  | { readonly _tag: 'WGSLCompiler'; readonly boundary: Boundary.Shape; readonly states: WGSLStates }
-  | { readonly _tag: 'ARIACompiler'; readonly boundary: Boundary.Shape; readonly states: ARIAStates }
+  | { readonly _tag: 'GLSLCompiler'; readonly boundary: Boundary; readonly states: GLSLStates }
+  | { readonly _tag: 'WGSLCompiler'; readonly boundary: Boundary; readonly states: WGSLStates }
+  | { readonly _tag: 'ARIACompiler'; readonly boundary: Boundary; readonly states: ARIAStates }
   | { readonly _tag: 'AICompiler'; readonly manifest: AIManifestInput }
-  | { readonly _tag: 'ConfigCompiler'; readonly config: Config.Shape }
+  | { readonly _tag: 'ConfigCompiler'; readonly config: Config }
   | { readonly _tag: 'MotionCompiler'; readonly input: MotionCompileInput };
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -25,4 +25,3 @@ const { current, prefetched, confidence } = spec.evaluate(595, 1.5);
 ## Type Aliases
 
 - [Result](type-aliases/Result.md)
-- [Shape](type-aliases/Shape.md)

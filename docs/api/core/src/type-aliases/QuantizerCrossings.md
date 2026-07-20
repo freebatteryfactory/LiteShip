@@ -19,4 +19,4 @@ late subscriber never sees a prior crossing. Replaces the former
 
 ### B
 
-`B` *extends* [`Shape`](../namespaces/Boundary/type-aliases/Shape.md) = [`Shape`](../namespaces/Boundary/type-aliases/Shape.md)
+`B` *extends* [`Boundary`](Boundary.md) = [`Boundary`](Boundary.md)

@@ -227,7 +227,7 @@ export function lowerGraph(graph: DocumentGraph): readonly LoweredBinding[] {
     }
     if (targets.length === 0) continue; // no live channel to cast onto — skip.
 
-    // Build the Boundary.Shape by zipping thresholds↔states (the parseBoundary recipe).
+    // Build the Boundary by zipping thresholds↔states (the parseBoundary recipe).
     const first = [thresholds[0] as number, String(states[0])] as const;
     const rest = states.slice(1).map((state, i) => [thresholds[i + 1] as number, String(state)] as const);
     const at = [first, ...rest] as const;
@@ -237,7 +237,7 @@ export function lowerGraph(graph: DocumentGraph): readonly LoweredBinding[] {
     // contract is to return cleanly, never throw mid-hydration), so a component
     // that can't form a boundary is SKIPPED — the result simply carries fewer
     // bindings, exactly like a component with no signal or no thresholds.
-    let shape: Boundary.Shape;
+    let shape: Boundary;
     try {
       shape = Boundary.make({ input: signal.input, at });
     } catch {

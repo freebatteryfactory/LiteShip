@@ -109,11 +109,11 @@ export declare function brand<T, B extends symbol>(value: T): T & { readonly [K 
 /** Flatten branded intersections for clean IDE hints */
 export type Prettify<T> = { [K in keyof T]: T[K] } & {};
 
-/** Extract literal union of state names from a Boundary.Shape */
-export type StateUnion<B extends Boundary.Shape> = B['states'][number];
+/** Extract literal union of state names from a Boundary */
+export type StateUnion<B extends Boundary> = B['states'][number];
 
 /** Generate valid output shapes per state */
-export type OutputsFor<B extends Boundary.Shape, T> = {
+export type OutputsFor<B extends Boundary, T> = {
   readonly [S in StateUnion<B>]: T;
 };
 
@@ -134,23 +134,23 @@ export type BoundaryCrossing<S extends string = string> = {
  * shed seams. Owns a LIFO finalizer stack disposed exactly once; `signal` projects
  * cancellation, and `dispose()` settles once every async finalizer settles.
  */
+export interface Lifetime {
+  readonly _tag: 'Lifetime';
+  /** True once `dispose()` has been initiated (flips synchronously). */
+  readonly disposed: boolean;
+  /** An `AbortSignal` that aborts synchronously when `dispose()` begins. */
+  readonly signal: AbortSignal;
+  /** Register a finalizer (LIFO); returns an unregister handle. Runs now if already disposed. */
+  readonly add: (finalizer: () => void | Promise<void>) => () => void;
+  /** Run every finalizer once in LIFO order; the returned promise settles once async finalizers settle. */
+  readonly dispose: () => Promise<void>;
+}
+
 export declare namespace Lifetime {
-  /** Live disposal handle — the owner of an ordered finalizer stack. */
-  export interface Shape {
-    readonly _tag: 'Lifetime';
-    /** True once `dispose()` has been initiated (flips synchronously). */
-    readonly disposed: boolean;
-    /** An `AbortSignal` that aborts synchronously when `dispose()` begins. */
-    readonly signal: AbortSignal;
-    /** Register a finalizer (LIFO); returns an unregister handle. Runs now if already disposed. */
-    readonly add: (finalizer: () => void | Promise<void>) => () => void;
-    /** Run every finalizer once in LIFO order; the returned promise settles once async finalizers settle. */
-    readonly dispose: () => Promise<void>;
-  }
   /** A registered teardown function; the sync arm runs synchronously inside `dispose()`. */
   export type Finalizer = () => void | Promise<void>;
   /** Build a fresh, undisposed Lifetime. */
-  export function make(): Shape;
+  export function make(): Lifetime;
 }
 
 /**
@@ -213,28 +213,21 @@ export interface BoundarySpec {
   readonly experimentId?: string;
 }
 
-export declare namespace Boundary {
-  /**
-   * The core primitive. Source of truth for quantization boundaries.
-   *
-   * `S` is a non-empty state tuple (`readonly [string, ...string[]]`) — a
-   * boundary always names at least one state. `_version` pins the structural
-   * schema generation; `spec` is the optional activation filter.
-   */
-  export interface Shape<
-    I extends string = string,
-    S extends readonly [string, ...string[]] = readonly [string, ...string[]],
-  > {
-    readonly _tag: 'BoundaryDef';
-    readonly _version: 1;
-    readonly id: ContentAddress;
-    readonly input: SignalInput<I>;
-    readonly thresholds: readonly ThresholdValue[];
-    readonly states: S;
-    readonly hysteresis?: number;
-    readonly spec?: BoundarySpec;
-  }
+export interface Boundary<
+  I extends string = string,
+  S extends readonly [string, ...string[]] = readonly [string, ...string[]],
+> {
+  readonly _tag: 'BoundaryDef';
+  readonly _version: 1;
+  readonly id: ContentAddress;
+  readonly input: SignalInput<I>;
+  readonly thresholds: readonly ThresholdValue[];
+  readonly states: S;
+  readonly hysteresis?: number;
+  readonly spec?: BoundarySpec;
+}
 
+export declare namespace Boundary {
   /** Alias for {@link BoundarySpec}. */
   export type Spec = BoundarySpec;
 
@@ -243,11 +236,11 @@ export declare namespace Boundary {
     readonly at: { readonly [K in keyof S]: readonly [number, S[K]] };
     readonly hysteresis?: number;
     readonly spec?: BoundarySpec;
-  }): Shape<I, S>;
+  }): Boundary<I, S>;
 
-  export function evaluate<B extends Shape>(boundary: B, value: number): StateUnion<B>;
+  export function evaluate<B extends Boundary>(boundary: B, value: number): StateUnion<B>;
 
-  export function evaluateWithHysteresis<B extends Shape>(
+  export function evaluateWithHysteresis<B extends Boundary>(
     boundary: B,
     value: number,
     previousState: StateUnion<B>,
@@ -284,7 +277,7 @@ export interface Signal<T> {
   readonly source: SignalSource;
   read(): T;
   subscribe(subscriber: CellKernel.Subscriber<T>): CellKernel.Disposer;
-  readonly lifetime: Lifetime.Shape;
+  readonly lifetime: Lifetime;
 }
 
 export interface ControllableSignal<T> extends Signal<T> {
@@ -294,8 +287,6 @@ export interface ControllableSignal<T> extends Signal<T> {
 }
 
 export declare namespace Signal {
-  /** Structural shape of a passive signal (`Signal.Shape<T>` in `@liteship/core`). */
-  export type Shape<T> = Signal<T>;
   /** Structural shape of a seekable, pausable signal (forwarded by video/remotion). */
   export type Controllable<T> = ControllableSignal<T>;
   export function make(source: SignalSource): Signal<number>;
@@ -358,11 +349,7 @@ export declare namespace Animation {
     readonly timestamp: number;
   }
 
-  export function run(config: {
-    duration: Millis;
-    easing?: Easing.Fn;
-    scheduler?: Scheduler.Shape;
-  }): AsyncIterable<Frame>;
+  export function run(config: { duration: Millis; easing?: Easing.Fn; scheduler?: Scheduler }): AsyncIterable<Frame>;
 
   export function interpolate<T extends Record<string, number>>(from: T, to: T, eased: number): T;
 }
@@ -372,25 +359,25 @@ export declare namespace Animation {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /** Quantizer over time on CellKernel.replay1 ({distinct} state channel, Effect-free, Wave 6) */
-export declare namespace Timeline {
-  export interface Shape<B extends Boundary.Shape = Boundary.Shape> {
-    readonly boundary: B;
-    state(): StateUnion<B>;
-    progress(): number;
-    elapsed(): Millis;
-    subscribe(subscriber: CellKernel.Subscriber<StateUnion<B>>): CellKernel.Disposer;
-    play(): void;
-    pause(): void;
-    reverse(): void;
-    seek(ms: Millis): void;
-    scrub(progress: number): void;
-    readonly lifetime: Lifetime.Shape;
-  }
+export interface Timeline<B extends Boundary = Boundary> {
+  readonly boundary: B;
+  state(): StateUnion<B>;
+  progress(): number;
+  elapsed(): Millis;
+  subscribe(subscriber: CellKernel.Subscriber<StateUnion<B>>): CellKernel.Disposer;
+  play(): void;
+  pause(): void;
+  reverse(): void;
+  seek(ms: Millis): void;
+  scrub(progress: number): void;
+  readonly lifetime: Lifetime;
+}
 
-  export function from<B extends Boundary.Shape>(
+export declare namespace Timeline {
+  export function from<B extends Boundary>(
     boundary: B,
-    config?: { duration?: Millis; loop?: boolean; scheduler?: Scheduler.Shape },
-  ): Shape<B>;
+    config?: { duration?: Millis; loop?: boolean; scheduler?: Scheduler },
+  ): Timeline<B>;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -408,24 +395,24 @@ export interface CompositeState {
   };
 }
 
-export declare namespace Compositor {
-  export interface Shape {
-    add<B extends Boundary.Shape>(name: string, quantizer: Quantizer<B>): void;
-    remove(name: string): void;
-    compute(): CompositeState;
-    /**
-     * Replay-1 subscription surface of the compositor's extracted {@link CellKernel}:
-     * `subscribe` replays the current live state on attach and returns a disposer;
-     * `read` returns the current state. `publish`/`close` are intentionally excluded —
-     * the compositor is the sole writer and its {@link Lifetime} closes the kernel.
-     */
-    readonly changes: Pick<CellKernel.Replay<CompositeState>, 'subscribe' | 'read' | 'closed' | 'size'>;
-  }
+export interface Compositor {
+  add<B extends Boundary>(name: string, quantizer: Quantizer<B>): void;
+  remove(name: string): void;
+  compute(): CompositeState;
+  /**
+   * Replay-1 subscription surface of the compositor's extracted {@link CellKernel}:
+   * `subscribe` replays the current live state on attach and returns a disposer;
+   * `read` returns the current state. `publish`/`close` are intentionally excluded —
+   * the compositor is the sole writer and its {@link Lifetime} closes the kernel.
+   */
+  readonly changes: Pick<CellKernel.Replay<CompositeState>, 'subscribe' | 'read' | 'closed' | 'size'>;
+}
 
+export declare namespace Compositor {
   /** The `{ compositor, lifetime }` pair returned by {@link Compositor.create}. */
   export interface Handle {
-    readonly compositor: Shape;
-    readonly lifetime: Lifetime.Shape;
+    readonly compositor: Compositor;
+    readonly lifetime: Lifetime;
   }
 
   export function create(): Handle;
@@ -453,7 +440,7 @@ export declare namespace BlendTree {
   /** The `{ tree, lifetime }` pair {@link BlendTree.make} returns. */
   export interface Handle<T extends Record<string, number>> {
     readonly tree: BlendTree<T>;
-    readonly lifetime: Lifetime.Shape;
+    readonly lifetime: Lifetime;
   }
   export function make<T extends Record<string, number>>(): Handle<T>;
 }
@@ -469,7 +456,7 @@ export interface FrameBudget {
   canRun(priority: Priority): boolean;
   scheduleSync<A>(priority: Priority, task: () => A): A | null;
   readonly fpsSync: number;
-  readonly lifetime: Lifetime.Shape;
+  readonly lifetime: Lifetime;
 }
 
 export declare namespace FrameBudget {
@@ -536,12 +523,9 @@ export interface Entity {
   readonly components: ReadonlyMap<string, unknown>;
 }
 
-export declare namespace Part {
-  /** ECS component shape */
-  export interface Shape<T = unknown> {
-    readonly name: string;
-    readonly schema: SchemaPort<T>;
-  }
+export interface Part<T = unknown> {
+  readonly name: string;
+  readonly schema: SchemaPort<T>;
 }
 
 export interface System {
@@ -554,7 +538,7 @@ export interface System {
 export interface World {
   spawn(components?: Record<string, unknown>): EntityId;
   despawn(id: EntityId): void;
-  addComponent<T>(id: EntityId, component: Part.Shape<T>, value: T): void;
+  addComponent<T>(id: EntityId, component: Part<T>, value: T): void;
   /** Schema-free component write — used by systems to persist computed output values. */
   setComponent(id: EntityId, name: string, value: unknown): void;
   removeComponent(id: EntityId, name: string): void;
@@ -571,7 +555,7 @@ export declare namespace World {
    */
   export interface Handle {
     readonly world: World;
-    readonly lifetime: Lifetime.Shape;
+    readonly lifetime: Lifetime;
   }
   export function make(): Handle;
 }
@@ -608,37 +592,38 @@ export declare function addDenseStore<T>(world: World, store: DenseStore<T>): vo
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /** Reactive state container over CellKernel.replay1 (Effect-free, Wave 6) */
-export declare namespace Cell {
-  export interface Shape<T> {
-    readonly _tag: 'Cell';
-    read(): T;
-    set(value: T): void;
-    update(f: (current: T) => T): void;
-    subscribe(subscriber: CellKernel.Subscriber<T>): CellKernel.Disposer;
-    readonly lifetime: Lifetime.Shape;
-  }
+export interface Cell<T> {
+  readonly _tag: 'Cell';
+  read(): T;
+  set(value: T): void;
+  update(f: (current: T) => T): void;
+  subscribe(subscriber: CellKernel.Subscriber<T>): CellKernel.Disposer;
+  readonly lifetime: Lifetime;
+}
 
-  export function make<T>(initial: T): Shape<T>;
+export declare namespace Cell {
+  export function make<T>(initial: T): Cell<T>;
 }
 
 /** Read-only derived computation over CellKernel.replay1 (Effect-free, Wave 6) */
+export interface Derived<T> {
+  readonly _tag: 'Derived';
+  read(): T;
+  subscribe(subscriber: CellKernel.Subscriber<T>): CellKernel.Disposer;
+  readonly lifetime: Lifetime;
+}
+
 export declare namespace Derived {
-  export interface Shape<T> {
-    readonly _tag: 'Derived';
-    read(): T;
-    subscribe(subscriber: CellKernel.Subscriber<T>): CellKernel.Disposer;
-    readonly lifetime: Lifetime.Shape;
-  }
   /** The readable + subscribable source `combine` recomputes from. */
   export type Source<T> = Pick<CellKernel.Replay<T>, 'read' | 'subscribe'>;
   /** A recompute trigger for `make` — the subscribe half of a source. */
   export type Trigger = Pick<CellKernel.Replay<unknown>, 'subscribe'>;
 
-  export function make<T>(compute: () => T, sources?: ReadonlyArray<Trigger>): Shape<T>;
+  export function make<T>(compute: () => T, sources?: ReadonlyArray<Trigger>): Derived<T>;
   export function combine<T extends readonly unknown[], U>(
     sources: { readonly [K in keyof T]: Source<T[K]> },
     combiner: (...args: T) => U,
-  ): Shape<U>;
+  ): Derived<U>;
 }
 
 /**
@@ -655,19 +640,19 @@ export interface Clock {
 }
 
 /** Push-based event channel over a no-replay {@link CellKernel} fan-out */
-export declare namespace Zap {
-  export interface Shape<T> {
-    readonly _tag: 'Zap';
-    /** The no-replay subscribe surface — `subscribe(sink)` returns a disposer. */
-    readonly stream: Pick<CellKernel.Fanout<T>, 'subscribe' | 'closed' | 'size'>;
-    /** Fan `value` out to every current subscriber, synchronously. Inert after close. */
-    emit(value: T): void;
-  }
+export interface Zap<T> {
+  readonly _tag: 'Zap';
+  /** The no-replay subscribe surface — `subscribe(sink)` returns a disposer. */
+  readonly stream: Pick<CellKernel.Fanout<T>, 'subscribe' | 'closed' | 'size'>;
+  /** Fan `value` out to every current subscriber, synchronously. Inert after close. */
+  emit(value: T): void;
+}
 
+export declare namespace Zap {
   /** The `{ zap, lifetime }` pair every `Zap.*` factory returns. */
   export interface Handle<T> {
-    readonly zap: Shape<T>;
-    readonly lifetime: Lifetime.Shape;
+    readonly zap: Zap<T>;
+    readonly lifetime: Lifetime;
   }
 
   export function make<T>(): Handle<T>;
@@ -675,39 +660,39 @@ export declare namespace Zap {
     element: HTMLElement,
     event: K,
   ): Handle<HTMLElementEventMap[K]>;
-  export function merge<T>(events: ReadonlyArray<Shape<T>>): Handle<T>;
-  export function map<A, B>(event: Shape<A>, f: (a: A) => B): Handle<B>;
-  export function filter<T>(event: Shape<T>, predicate: (value: T) => boolean): Handle<T>;
-  export function debounce<T>(event: Shape<T>, ms: Millis): Handle<T>;
-  export function throttle<T>(event: Shape<T>, ms: Millis, clock?: Clock): Handle<T>;
+  export function merge<T>(events: ReadonlyArray<Zap<T>>): Handle<T>;
+  export function map<A, B>(event: Zap<A>, f: (a: A) => B): Handle<B>;
+  export function filter<T>(event: Zap<T>, predicate: (value: T) => boolean): Handle<T>;
+  export function debounce<T>(event: Zap<T>, ms: Millis): Handle<T>;
+  export function throttle<T>(event: Zap<T>, ms: Millis, clock?: Clock): Handle<T>;
 }
 
 /** TEA-style reducer store over CellKernel.replay1 (Effect-free, Wave 6) */
-export declare namespace Store {
-  export interface Shape<S, Msg> {
-    readonly _tag: 'Store';
-    read(): S;
-    subscribe(subscriber: CellKernel.Subscriber<S>): CellKernel.Disposer;
-    dispatch(msg: Msg): void;
-    readonly lifetime: Lifetime.Shape;
-  }
+export interface Store<S, Msg> {
+  readonly _tag: 'Store';
+  read(): S;
+  subscribe(subscriber: CellKernel.Subscriber<S>): CellKernel.Disposer;
+  dispatch(msg: Msg): void;
+  readonly lifetime: Lifetime;
+}
 
-  export function make<S, Msg>(initial: S, reducer: (state: S, msg: Msg) => S): Shape<S, Msg>;
+export declare namespace Store {
+  export function make<S, Msg>(initial: S, reducer: (state: S, msg: Msg) => S): Store<S, Msg>;
 }
 
 /** Discriminated union of all primitives */
-export type Primitive<T> = Cell.Shape<T> | Derived.Shape<T> | Zap.Shape<T>;
+export type Primitive<T> = Cell<T> | Derived<T> | Zap<T>;
 
 /** Type guards */
-export declare function isCell<T>(p: Primitive<T>): p is Cell.Shape<T>;
-export declare function isDerived<T>(p: Primitive<T>): p is Derived.Shape<T>;
-export declare function isZap<T>(p: Primitive<T>): p is Zap.Shape<T>;
+export declare function isCell<T>(p: Primitive<T>): p is Cell<T>;
+export declare function isDerived<T>(p: Primitive<T>): p is Derived<T>;
+export declare function isZap<T>(p: Primitive<T>): p is Zap<T>;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 14. QUANTIZER (forward declaration -- full types in quantizer.d.ts)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export interface Quantizer<B extends Boundary.Shape = Boundary.Shape> {
+export interface Quantizer<B extends Boundary = Boundary> {
   readonly _tag: 'Quantizer';
   readonly boundary: B;
   /** Synchronous state accessor for hot paths (avoids reactive read overhead). */
@@ -720,7 +705,7 @@ export interface Quantizer<B extends Boundary.Shape = Boundary.Shape> {
  * returns the current discrete state; a subscriber is replayed the current value
  * on attach.
  */
-export type QuantizerState<B extends Boundary.Shape = Boundary.Shape> = Pick<
+export type QuantizerState<B extends Boundary = Boundary> = Pick<
   CellKernel.Replay<StateUnion<B>>,
   'read' | 'subscribe' | 'closed' | 'size'
 >;
@@ -730,7 +715,7 @@ export type QuantizerState<B extends Boundary.Shape = Boundary.Shape> = Pick<
  * `Stream.Stream<BoundaryCrossing<StateUnion<B> & string>>`): a late subscriber
  * never sees a prior crossing.
  */
-export type QuantizerCrossings<B extends Boundary.Shape = Boundary.Shape> = Pick<
+export type QuantizerCrossings<B extends Boundary = Boundary> = Pick<
   CellKernel.Fanout<BoundaryCrossing<StateUnion<B> & string>>,
   'subscribe' | 'closed' | 'size'
 >;
@@ -740,7 +725,7 @@ export type QuantizerCrossings<B extends Boundary.Shape = Boundary.Shape> = Pick
  * the extracted {@link CellKernel}. This is the shape `@liteship/quantizer`'s live
  * evaluator produces; a purely-synchronous quantizer omits this extension.
  */
-export interface ReactiveQuantizer<B extends Boundary.Shape = Boundary.Shape> extends Quantizer<B> {
+export interface ReactiveQuantizer<B extends Boundary = Boundary> extends Quantizer<B> {
   readonly state: QuantizerState<B>;
   readonly changes: QuantizerCrossings<B>;
 }
@@ -756,7 +741,7 @@ export interface ReactiveQuantizer<B extends Boundary.Shape = Boundary.Shape> ex
 // mutation (version + HLC + fnv1a id + boundary state) BEFORE the value fans out,
 // so there is no observable interleave window.
 
-export interface LiveCell<K extends CellKind, T> extends Omit<Cell.Shape<T>, '_tag'> {
+export interface LiveCell<K extends CellKind, T> extends Omit<Cell<T>, '_tag'> {
   readonly _tag: 'LiveCell';
   envelope(): CellEnvelope<K, T>;
   readonly crossings: Pick<CellKernel.Fanout<BoundaryCrossing<string>>, 'subscribe'>;
@@ -767,7 +752,7 @@ export interface LiveCell<K extends CellKind, T> extends Omit<Cell.Shape<T>, '_t
 export declare namespace LiveCell {
   export function make<K extends CellKind, T>(kind: K, initial: T): LiveCell<K, T>;
   export function makeBoundary<I extends string, S extends readonly [string, ...string[]]>(
-    boundary: Boundary.Shape<I, S>,
+    boundary: Boundary<I, S>,
     initial: number,
   ): LiveCell<'boundary', number>;
 }
@@ -800,14 +785,14 @@ export declare const Cap: {
 // § 17. TYPED REF (content addressing)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export declare namespace TypedRef {
-  export interface Shape {
-    readonly schema_hash: string;
-    readonly content_hash: string;
-  }
+export interface TypedRef {
+  readonly schema_hash: string;
+  readonly content_hash: string;
+}
 
-  export function create(schemaHash: string, payload: unknown): Promise<Shape>;
-  export function equals(a: Shape, b: Shape): boolean;
+export declare namespace TypedRef {
+  export function create(schemaHash: string, payload: unknown): Promise<TypedRef>;
+  export function equals(a: TypedRef, b: TypedRef): boolean;
   export function canonicalize(value: unknown): Uint8Array;
   export function hash(data: string | Uint8Array): Promise<string>;
 }
@@ -875,7 +860,7 @@ export interface ReceiptEnvelope {
   readonly kind: string;
   readonly timestamp: HLC;
   readonly subject: ReceiptSubject;
-  readonly payload: TypedRef.Shape;
+  readonly payload: TypedRef;
   readonly hash: string;
   readonly previous: string | readonly string[];
   readonly signature?: string;
@@ -906,12 +891,12 @@ export declare const Receipt: {
   createEnvelope(
     kind: string,
     subject: ReceiptSubject,
-    payload: TypedRef.Shape,
+    payload: TypedRef,
     timestamp: HLC,
     previousHash: string | readonly string[],
   ): Promise<ReceiptEnvelope>;
   buildChain(
-    entries: ReadonlyArray<{ kind: string; subject: ReceiptSubject; payload: TypedRef.Shape; timestamp: HLC }>,
+    entries: ReadonlyArray<{ kind: string; subject: ReceiptSubject; payload: TypedRef; timestamp: HLC }>,
   ): Promise<ReceiptEnvelope[]>;
   /**
    * Ergonomic everyday chain check: resolves only to `true`; every
@@ -933,7 +918,7 @@ export declare const Receipt: {
   tail(chain: ReadonlyArray<ReceiptEnvelope>): ReceiptEnvelope | undefined;
   append(
     chain: ReadonlyArray<ReceiptEnvelope>,
-    entry: { kind: string; subject: ReceiptSubject; payload: TypedRef.Shape; timestamp: HLC },
+    entry: { kind: string; subject: ReceiptSubject; payload: TypedRef; timestamp: HLC },
     previousHashes?: readonly string[],
   ): Promise<ReceiptEnvelope[]>;
   findByHash(chain: ReadonlyArray<ReceiptEnvelope>, hash: string): ReceiptEnvelope | undefined;
@@ -1075,6 +1060,14 @@ export type SchemaPort<A, I = A> = {
   readonly Encoded: I;
 };
 
+export interface Codec<A, I = A> {
+  readonly schema: SchemaPort<A, I>;
+  /** Validate a domain value into its wire form. Sync `Result` — never an Effect (Wave 8). */
+  encode(value: A): Codec.Result<I, Codec.ParseError>;
+  /** Validate untrusted input into the typed value. Sync `Result` — never an Effect (Wave 8). */
+  decode(input: unknown): Codec.Result<A, Codec.ParseError>;
+}
+
 export declare namespace Codec {
   /**
    * The sync tagged result a codec method returns — structurally `@liteship/error`'s
@@ -1100,36 +1093,28 @@ export declare namespace Codec {
     readonly offset?: number;
   }
 
-  export interface Shape<A, I = A> {
-    readonly schema: SchemaPort<A, I>;
-    /** Validate a domain value into its wire form. Sync `Result` — never an Effect (Wave 8). */
-    encode(value: A): Result<I, ParseError>;
-    /** Validate untrusted input into the typed value. Sync `Result` — never an Effect (Wave 8). */
-    decode(input: unknown): Result<A, ParseError>;
-  }
-
-  /** Wrap an identity kernel schema (`SchemaPort<A, A>`) in the {@link Shape} facade. */
-  export function make<A>(schema: SchemaPort<A, A>): Shape<A, A>;
+  /** Wrap an identity kernel schema (`SchemaPort<A, A>`) in the {@link Codec} facade. */
+  export function make<A>(schema: SchemaPort<A, A>): Codec<A, A>;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 24. FRAME SCHEDULER
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export declare namespace Scheduler {
-  export interface Shape {
-    readonly _tag: 'FrameScheduler';
-    schedule(callback: (now: number) => void): number;
-    cancel(id: number): void;
-  }
+export interface Scheduler {
+  readonly _tag: 'FrameScheduler';
+  schedule(callback: (now: number) => void): number;
+  cancel(id: number): void;
+}
 
-  export interface FixedStep extends Shape {
+export declare namespace Scheduler {
+  export interface FixedStep extends Scheduler {
     step(): void;
     readonly frame: number;
   }
 
-  export function raf(): Shape;
-  export function noop(): Shape;
+  export function raf(): Scheduler;
+  export function noop(): Scheduler;
   export function fixedStep(fps: number): FixedStep;
 }
 
@@ -1159,7 +1144,7 @@ export interface VideoRenderer {
 }
 
 export declare namespace VideoRenderer {
-  export function make(config: VideoConfig, compositor: Compositor.Shape): VideoRenderer;
+  export function make(config: VideoConfig, compositor: Compositor): VideoRenderer;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

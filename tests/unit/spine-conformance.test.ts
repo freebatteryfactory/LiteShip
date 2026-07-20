@@ -4,7 +4,7 @@
  *
  * WAVE 8.5 — THE PINS WERE ABSORBED. The type-by-type bidirectional `IsEqual` /
  * assignability MIRROR pins that used to live here (CompositeState, VideoConfig,
- * CaptureResult, CapSet, Codec.Shape, Config.Shape, Token/Theme/Style.Shape, and the
+ * CaptureResult, CapSet, Codec, Config, Token/Theme/Style, and the
  * ~23 edge host types) are GONE — they are now derived MECHANICALLY over the complete
  * admitted set by the two-axis spine relation gate:
  *   - the gate + facts: `packages/gauntlet/src/gates/spine-relation.ts`
@@ -22,7 +22,7 @@
  *  1. Type-UTILITY / error-PORT asserts that are not a mirror↔runtime relation: the
  *     `Prettify` utility (no runtime twin) and the in-`Codec` `Result` / `ParseError`
  *     structural ports pinned against `@liteship/error` (the relation gate classifies the
- *     whole `Codec.Shape`, but these pin the exact error-port parity explicitly).
+ *     whole `Codec`, but these pin the exact error-port parity explicitly).
  *  2. Runtime-EXISTENCE checks — a relation gate over TYPES cannot prove a VALUE export
  *     EXISTS and is callable (`Config.make`, `Boundary`, `resolvePrimitive`,
  *     `dispatch`), so those `describe` blocks are KEPT PERMANENTLY.
@@ -36,7 +36,7 @@ import * as CompilerImpl from '@liteship/compiler';
 
 // Runtime truth for the @liteship/core Codec error PORTS. The spine's structural
 // `Codec.Result` / `Codec.ParseError` ports mirror `@liteship/error`'s `Result` /
-// `ParseError` EXACTLY; the relation gate classifies the whole `Codec.Shape`, but this
+// `ParseError` EXACTLY; the relation gate classifies the whole `Codec`, but this
 // pins the error-port parity explicitly (a distinct concern from the mirror shape).
 import type { Result as RtResult, ParseError as RtParseError } from '@liteship/error';
 
@@ -67,8 +67,8 @@ void (0 as unknown as _codecParseErrorParity);
 // Factory runtime values satisfy the spine (a VALUE-satisfies-spine check via the
 // package index — the relation gate classifies TYPES, not that a factory's OUTPUT is
 // assignable to the spine surface): `Config.make` / `defineConfig` outputs are
-// assignable to the spine `Config.Shape`.
-const _coreConfig: SpineCore.Config.Shape = CoreImpl.Config.make({});
+// assignable to the spine `Config`.
+const _coreConfig: SpineCore.Config = CoreImpl.Config.make({});
 const _plugin: ReturnType<typeof CoreImpl.defineConfig> = CoreImpl.defineConfig({});
 void _coreConfig;
 void _plugin;

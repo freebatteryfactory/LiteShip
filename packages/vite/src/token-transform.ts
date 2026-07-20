@@ -83,7 +83,7 @@ export function parseTokenBlocks(css: string, sourceFile: string): readonly Toke
  * CSS custom property declarations. Delegates to the canonical
  * `TokenCSSCompiler` to avoid duplicating token-to-CSS logic.
  */
-export function compileTokenBlock(block: TokenBlock, token: Token.Shape): string {
+export function compileTokenBlock(block: TokenBlock, token: Token): string {
   const result = TokenCSSCompiler.compile(token);
   const parts: string[] = [];
 

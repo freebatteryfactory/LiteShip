@@ -29,7 +29,7 @@ function viewport() {
 // Counter to make outputs unique per call (avoids content-address cache collisions)
 let outputCounter = 0;
 
-function simpleOutputs<B extends Boundary.Shape>(_b: B) {
+function simpleOutputs<B extends Boundary>(_b: B) {
   const tag = `t${++outputCounter}`;
   return {
     css: {
@@ -666,7 +666,7 @@ describe('tier gating output correctness', () => {
 
 describe('injected-HLC determinism (A-1)', () => {
   /** Drive `lq` to its first crossing and return the crossing's HLC timestamp. */
-  function firstCrossingHlc<B extends Boundary.Shape>(
+  function firstCrossingHlc<B extends Boundary>(
     b: B,
     clock: Clock,
     node?: string,

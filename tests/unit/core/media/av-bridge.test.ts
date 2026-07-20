@@ -32,7 +32,7 @@ describe('AVBridge construction', () => {
 });
 
 describe('AVBridge sample counter', () => {
-  let bridge: AVBridge.Shape;
+  let bridge: AVBridge;
 
   beforeEach(() => {
     bridge = AVBridge.make({ sampleRate: 48000, fps: 30 });

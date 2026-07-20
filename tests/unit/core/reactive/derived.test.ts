@@ -19,7 +19,7 @@ import { describe, test, expect } from 'vitest';
 import { Cell, Derived, CellKernel } from '@liteship/core';
 
 /** Subscribe a named collector to a derived; return the live delivery array. */
-const collect = <T>(derived: Derived.Shape<T>): { readonly values: T[]; readonly dispose: () => void } => {
+const collect = <T>(derived: Derived<T>): { readonly values: T[]; readonly dispose: () => void } => {
   const values: T[] = [];
   const dispose = derived.subscribe((v) => values.push(v));
   return { values, dispose };
@@ -64,7 +64,7 @@ describe('Derived.make', () => {
 // ---------------------------------------------------------------------------
 
 describe('Derived.combine — captured derived.json parity', () => {
-  const build = (): { base: Cell.Shape<number>; derived: Derived.Shape<number> } => {
+  const build = (): { base: Cell<number>; derived: Derived<number> } => {
     const base = Cell.make(0);
     const derived = Derived.combine([base] as const, (x: number): number => x + 100);
     return { base, derived };

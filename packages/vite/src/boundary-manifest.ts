@@ -63,10 +63,7 @@ export interface ProjectScan {
 }
 
 /** Project-wide boundary definitions keyed by export name, including their source module path. */
-export type BoundaryDefinitionMap = ReadonlyMap<
-  string,
-  { readonly primitive: Boundary.Shape; readonly source: string }
->;
+export type BoundaryDefinitionMap = ReadonlyMap<string, { readonly primitive: Boundary; readonly source: string }>;
 
 function isBoundaryModuleFile(fileName: string): boolean {
   return fileName === 'boundaries.ts' || fileName.endsWith('.boundaries.ts');
@@ -108,8 +105,8 @@ export function scanProject(projectRoot: string): ProjectScan {
  * `BoundaryDef`, keyed by export name. Import failures degrade to an
  * empty result with a diagnostic (same policy as `resolvePrimitive`).
  */
-async function importBoundaryExports(modulePath: string): Promise<ReadonlyMap<string, Boundary.Shape>> {
-  const found = new Map<string, Boundary.Shape>();
+async function importBoundaryExports(modulePath: string): Promise<ReadonlyMap<string, Boundary>> {
+  const found = new Map<string, Boundary>();
   let imported: Record<string, unknown> | null = null;
   try {
     // Native ESM caches dynamic imports by URL — after a dev-server edit
@@ -134,7 +131,7 @@ async function importBoundaryExports(modulePath: string): Promise<ReadonlyMap<st
     if (value && typeof value === 'object' && '_tag' in value && value._tag === 'BoundaryDef') {
       // Runtime `_tag` guard validates the shape; same containment cast as
       // the resolver import boundary in resolve-utils.ts.
-      found.set(exportName, value as Boundary.Shape);
+      found.set(exportName, value as Boundary);
     }
   }
   return found;
@@ -148,7 +145,7 @@ export async function collectBoundaryDefinitionsFromScan(
   projectRoot: string,
   scan: ProjectScan,
   options?: Pick<CollectBoundaryManifestOptions, 'boundaryDir'>,
-): Promise<Map<string, { readonly primitive: Boundary.Shape; readonly source: string }>> {
+): Promise<Map<string, { readonly primitive: Boundary; readonly source: string }>> {
   const boundaryFiles = new Set<string>(scan.boundaryFiles);
   if (options?.boundaryDir) {
     const dir = path.resolve(projectRoot, options.boundaryDir);
@@ -160,7 +157,7 @@ export async function collectBoundaryDefinitionsFromScan(
   }
 
   // Resolve every exported boundary definition, keyed by export name.
-  const boundariesByName = new Map<string, { readonly primitive: Boundary.Shape; readonly source: string }>();
+  const boundariesByName = new Map<string, { readonly primitive: Boundary; readonly source: string }>();
   for (const file of boundaryFiles) {
     for (const [exportName, boundary] of await importBoundaryExports(file)) {
       const existing = boundariesByName.get(exportName);
@@ -297,7 +294,7 @@ interface CastDescriptor {
    * authored this cast (so the field stays absent — the `aria` policy).
    */
   readonly compile: (
-    boundary: Boundary.Shape,
+    boundary: Boundary,
     perState: Readonly<Record<string, Record<string, string>>>,
   ) => CastOutputs[CastTarget];
 }
@@ -373,7 +370,7 @@ const NON_CSS_CASTS: readonly CastDescriptor[] = [
  * the CSS cast stays inline above (it owns the tier grid + containment), while
  * every other target is one {@link NON_CSS_CASTS} descriptor.
  */
-function compileNonCssCasts(boundary: Boundary.Shape, states: Record<string, QuantizeStateBody>): Partial<CastOutputs> {
+function compileNonCssCasts(boundary: Boundary, states: Record<string, QuantizeStateBody>): Partial<CastOutputs> {
   const casts: Partial<Record<CastTarget, CastOutputs[CastTarget]>> = {};
   for (const descriptor of NON_CSS_CASTS) {
     // Per-state authored attribute maps for this target, dropping states that
@@ -404,7 +401,7 @@ function compileNonCssCasts(boundary: Boundary.Shape, states: Record<string, Qua
  * serializing the same CSS bytes per cell.
  */
 function compileOutputsByTier(
-  boundary: Boundary.Shape,
+  boundary: Boundary,
   states: Record<string, QuantizeStateBody>,
   container?: string,
 ): Pick<BoundaryManifestEntry, 'outputs' | 'outputsByTier'> {

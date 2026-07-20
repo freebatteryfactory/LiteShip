@@ -234,9 +234,10 @@ export const HLC = {
   makeClock,
 };
 
+/** Public structural type for `HLC`. */
+export type HLC = HLCShape;
+
 export declare namespace HLC {
-  /** Structural shape of a hybrid logical clock timestamp: `{ wall_ms, counter, node_id }`. */
-  export type Shape = HLCShape;
   /** A managed HLC clock handle (`tick`/`receive`/`current`) — see {@link HLCClock}. */
   export type Clock = HLCClock;
 }

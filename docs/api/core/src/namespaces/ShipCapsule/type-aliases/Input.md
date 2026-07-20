@@ -8,6 +8,6 @@
 
 > **Input** = `ShipCapsuleInput`
 
-Defined in: [core/src/authoring/ship-capsule.ts:222](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/ship-capsule.ts#L222)
+Defined in: [core/src/authoring/ship-capsule.ts:223](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/ship-capsule.ts#L223)
 
 Constructor input accepted by [ShipCapsule.make](../../../variables/ShipCapsule.md#make) (capsule without `id` / `integrity`).

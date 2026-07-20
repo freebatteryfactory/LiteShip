@@ -35,7 +35,7 @@ afterEach(() => {
 });
 
 /**
- * Build a minimal Boundary.Shape for compiler tests.
+ * Build a minimal Boundary for compiler tests.
  * Uses Boundary.make which produces a fully valid, content-addressed shape.
  */
 function makeBoundary(input: string, pairs: readonly (readonly [number, string])[], hysteresis?: number) {
@@ -942,7 +942,8 @@ describe('compiler-re-serialized single-line CSS', () => {
   });
 
   test('parses a mid-line single-line @theme block', () => {
-    const css = 'html{line-height:1.6}@theme dark{--liteship-primary: #818cf8;--liteship-surface: #0f172a}body{margin:0}';
+    const css =
+      'html{line-height:1.6}@theme dark{--liteship-primary: #818cf8;--liteship-surface: #0f172a}body{margin:0}';
 
     const blocks = parseThemeBlocks(css, FILE);
 
@@ -1598,7 +1599,7 @@ describe('CSS override flow-through', () => {
     const blocks = parseTokenBlocks(css, FILE);
     const block = blocks[0]!;
 
-    // Use a minimal mock token shape -- the compiler needs a valid Token.Shape
+    // Use a minimal mock token shape -- the compiler needs a valid Token
     // but we only care about the override declarations flowing through.
     // We construct a boundary for the token to reference.
     const boundary = makeBoundary('viewport', [
@@ -1606,7 +1607,7 @@ describe('CSS override flow-through', () => {
       [768, 'large'],
     ]);
 
-    // The compileTokenBlock requires a Token.Shape. Since Token.make may need
+    // The compileTokenBlock requires a Token. Since Token.make may need
     // complex setup, we test the override logic by checking the block's
     // declarations are non-empty and would produce output.
     expect(Object.keys(block.declarations)).toHaveLength(2);

@@ -33,7 +33,7 @@ const countReducer = (state: number, msg: CountMsg): number => {
 };
 
 /** A replace-reducer store over numbers — mirrors the capture's `(_state, msg) => msg`. */
-const replaceStore = (initial = 0): Store.Shape<number, number> => Store.make<number, number>(initial, (_s, m) => m);
+const replaceStore = (initial = 0): Store<number, number> => Store.make<number, number>(initial, (_s, m) => m);
 
 // ---------------------------------------------------------------------------
 // Store.make — reducer basics

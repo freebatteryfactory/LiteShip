@@ -7,8 +7,8 @@
 # WorkerHost
 
 `WorkerHost` -- main-thread lifecycle wrapper that owns a
-[CompositorWorker.Shape](../CompositorWorker/type-aliases/Shape.md) and (optionally) a
-[RenderWorker.Shape](../RenderWorker/type-aliases/Shape.md), exposing a single unified surface for DOM
+[CompositorWorker](../../variables/CompositorWorker.md) and (optionally) a
+[RenderWorker](../../variables/RenderWorker.md), exposing a single unified surface for DOM
 integration.
 
 Typical flow:
@@ -38,5 +38,4 @@ host.dispose();
 
 ## Type Aliases
 
-- [Shape](type-aliases/Shape.md)
 - [StartupTelemetry](type-aliases/StartupTelemetry.md)

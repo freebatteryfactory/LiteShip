@@ -43,7 +43,7 @@ Optional controllable time signal, seeked per frame.
 
 `VideoRendererShape`
 
-A `VideoRenderer.Shape` ready for [precomputeFrames](precomputeFrames.md).
+A `VideoRenderer` ready for [precomputeFrames](precomputeFrames.md).
 
 ## Example
 

@@ -52,10 +52,10 @@ export interface TokenThemeManifest {
  * standalone functions reassign them without losing the by-reference handle.
  */
 export interface PrimitiveResolutionCache {
-  readonly boundary: Map<string, Boundary.Shape | null>;
-  readonly token: Map<string, Token.Shape | null>;
-  readonly theme: Map<string, Theme.Shape | null>;
-  readonly style: Map<string, Style.Shape | null>;
+  readonly boundary: Map<string, Boundary | null>;
+  readonly token: Map<string, Token | null>;
+  readonly theme: Map<string, Theme | null>;
+  readonly style: Map<string, Style | null>;
   /** Resolved convention-file path per cache key (`${name}:${id}`). */
   readonly source: Map<string, string>;
   /** Lazily-collected boundary manifest backing `virtual:liteship/boundaries`. */

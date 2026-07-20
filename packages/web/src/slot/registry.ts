@@ -358,7 +358,5 @@ export const SlotRegistry = {
   getPath,
 } as const;
 
-export declare namespace SlotRegistry {
-  /** Structural type of a slot registry instance. */
-  export type Shape = SlotRegistryShape;
-}
+/** Public structural type for `SlotRegistry`. */
+export type SlotRegistry = SlotRegistryShape;

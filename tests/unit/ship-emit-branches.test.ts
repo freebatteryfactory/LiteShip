@@ -5,7 +5,7 @@
  * `commands/ship.ts` is excluded from coverage matching the existing
  * `bin.ts` / `http-server.ts` pattern, so the only way to hit the
  * branches in `capsules/ship-emit.ts` is to construct a valid
- * {@link ShipCapsule.Shape} and call into the capsule's surface
+ * {@link ShipCapsule} and call into the capsule's surface
  * directly. This file covers:
  *
  *   - `ShipEmit.run` write-path success (the fs-write EFFECT) and
@@ -65,7 +65,7 @@ const sampleInput = (): ShipCapsule.Input => ({
 });
 
 let workDir: string;
-let capsule: ShipCapsule.Shape;
+let capsule: ShipCapsule;
 
 beforeAll(() => {
   workDir = mkdtempSync(join(tmpdir(), 'litesip-ship-emit-'));

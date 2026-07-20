@@ -59,7 +59,7 @@ export const LITESHIP_SPINE_ADMISSIONS: readonly SpineTypeAdmission[] = [
   runtimeMirror('VideoConfig', `${CORE}/media/video.ts`), // Millis-brand-loss drift class
   runtimeMirror('CaptureResult', `${CORE}/evidence/capture.ts`), // Millis-brand-loss drift class
   runtimeMirror('CapSet', `${CORE}/evidence/caps.ts`), // Set→array drift class
-  // Codec.Shape, decomposed into FIELDS. A whole-shape `public-wider` verdict is a WEAK
+  // Codec, decomposed into FIELDS. A whole-shape `public-wider` verdict is a WEAK
   // pin: the `schema` field alone produces (s2r=false, r2s=true), so a SECOND field
   // (encode/decode) widening in the SAME direction is absorbed and never surfaces
   // (adversarial QA Finding 1 — an `encode(): Result | Promise` drift passed the
@@ -68,29 +68,29 @@ export const LITESHIP_SPINE_ADMISSIONS: readonly SpineTypeAdmission[] = [
   // are `exact` (a transport drift reds them), `schema` is the one deliberately wider
   // field (kernel Schema ⊂ SchemaPort). This is the drift that motivated the whole gate.
   runtimeMirror(
-    "Codec.Shape['encode']",
+    "Codec['encode']",
     `${CORE}/schema/codec.ts`,
     'exact',
-    "Codec.Shape<{ readonly a: 1 }, { readonly a: 1 }>['encode']",
+    "Codec<{ readonly a: 1 }, { readonly a: 1 }>['encode']",
   ),
   runtimeMirror(
-    "Codec.Shape['decode']",
+    "Codec['decode']",
     `${CORE}/schema/codec.ts`,
     'exact',
-    "Codec.Shape<{ readonly a: 1 }, { readonly a: 1 }>['decode']",
+    "Codec<{ readonly a: 1 }, { readonly a: 1 }>['decode']",
   ),
   runtimeMirror(
-    "Codec.Shape['schema']",
+    "Codec['schema']",
     `${CORE}/schema/codec.ts`,
     'public-wider',
-    "Codec.Shape<{ readonly a: 1 }, { readonly a: 1 }>['schema']",
+    "Codec<{ readonly a: 1 }, { readonly a: 1 }>['schema']",
   ),
-  runtimeMirror('Config.Shape', `${CORE}/authoring/config.ts`, 'exact', 'Config.Shape'),
+  runtimeMirror('Config', `${CORE}/authoring/config.ts`, 'exact', 'Config'),
 
   // ── @liteship/design shapes (re-exported as Token/Theme/Style namespaces from core) ──
-  runtimeMirror('Token.Shape', `${CORE}/authoring/token.ts`, 'exact', 'Token.Shape'),
-  runtimeMirror('Theme.Shape', `${CORE}/authoring/theme.ts`, 'exact', 'Theme.Shape'),
-  runtimeMirror('Style.Shape', `${CORE}/authoring/style.ts`, 'exact', 'Style.Shape'),
+  runtimeMirror('Token', `${CORE}/authoring/token.ts`, 'exact', 'Token'),
+  runtimeMirror('Theme', `${CORE}/authoring/theme.ts`, 'exact', 'Theme'),
+  runtimeMirror('Style', `${CORE}/authoring/style.ts`, 'exact', 'Style'),
 
   // ── @liteship/edge KV-cache + manifest shapes (producing modules) ──
   runtimeMirror('KVNamespace', `${EDGE}/kv-cache.ts`),

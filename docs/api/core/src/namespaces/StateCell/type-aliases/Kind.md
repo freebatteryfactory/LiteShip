@@ -8,6 +8,6 @@
 
 > **Kind** = [`StateCellKind`](../../../type-aliases/StateCellKind.md)
 
-Defined in: [core/src/reactive/state-cell.ts:377](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/state-cell.ts#L377)
+Defined in: [core/src/reactive/state-cell.ts:375](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/state-cell.ts#L375)
 
 Alias for [StateCellKind](../../../type-aliases/StateCellKind.md).

@@ -591,6 +591,4 @@ function make(commands: readonly RegisteredCommand[]): CommandRegistryShape {
 }
 
 export const CommandRegistry = { make };
-export declare namespace CommandRegistry {
-  export type Shape = CommandRegistryShape;
-}
+export type CommandRegistry = CommandRegistryShape;

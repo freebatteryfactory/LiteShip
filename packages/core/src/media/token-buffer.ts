@@ -203,9 +203,10 @@ export const TokenBuffer = {
   make: _make,
 };
 
+/** Public structural type for `TokenBuffer`. */
+export type TokenBuffer<T = string> = TokenBufferShape<T>;
+
 export declare namespace TokenBuffer {
-  /** Structural shape of a token buffer: `push`, `drain`, `reset`, stall/rate accessors. */
-  export type Shape<T = string> = TokenBufferShape<T>;
   /** Configuration accepted by {@link TokenBuffer.make}. */
   export type Config = TokenBufferConfig;
 }

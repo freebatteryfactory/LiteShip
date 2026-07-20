@@ -56,7 +56,7 @@ export function SyncSystem(frameIndex: number, fps: number = 60): System {
   return {
     name: 'SyncSystem',
     query: ['SyncAnchor'],
-    execute: (entities, world?: World.Shape) => {
+    execute: (entities, world?: World) => {
       // Pull beat entities from the world. SyncSystem's contract is
       // "react to beats in the world" — when no world is supplied
       // (legacy callers, isolated unit tests) we degrade gracefully

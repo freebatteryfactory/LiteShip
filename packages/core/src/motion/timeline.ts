@@ -32,7 +32,7 @@ import type { Disposer } from '../reactive/cell-kernel.js';
 import { Lifetime } from '../reactive/lifetime.js';
 import { clamp01 } from '../internal/numeric.js';
 
-interface TimelineShape<B extends Boundary.Shape = Boundary.Shape> {
+interface TimelineShape<B extends Boundary = Boundary> {
   readonly boundary: B;
   /** Current boundary state (sync; was `state: Effect.Effect<StateUnion<B>>`). */
   state(): StateUnion<B>;
@@ -62,13 +62,13 @@ interface TimelineShape<B extends Boundary.Shape = Boundary.Shape> {
    * lifecycle through one uniform `dispose()` (replacing the `Scope`-bound
    * `addFinalizer(sched.cancel)`).
    */
-  readonly lifetime: Lifetime.Shape;
+  readonly lifetime: Lifetime;
 }
 
 interface TimelineFactory {
-  from<B extends Boundary.Shape>(
+  from<B extends Boundary>(
     boundary: B,
-    config?: { duration?: Millis; loop?: boolean; scheduler?: Scheduler.Shape },
+    config?: { duration?: Millis; loop?: boolean; scheduler?: Scheduler },
   ): TimelineShape<B>;
 }
 
@@ -78,9 +78,9 @@ interface TimelineFactory {
  * pluggable clock via {@link Scheduler}, teardown via {@link Lifetime}.
  */
 export const Timeline: TimelineFactory = {
-  from<B extends Boundary.Shape>(
+  from<B extends Boundary>(
     boundary: B,
-    config?: { duration?: Millis; loop?: boolean; scheduler?: Scheduler.Shape },
+    config?: { duration?: Millis; loop?: boolean; scheduler?: Scheduler },
   ): TimelineShape<B> {
     const duration =
       config?.duration ??
@@ -192,7 +192,5 @@ export const Timeline: TimelineFactory = {
   },
 };
 
-export declare namespace Timeline {
-  /** Structural shape of a timeline instance for a given {@link Boundary}. */
-  export type Shape<B extends Boundary.Shape = Boundary.Shape> = TimelineShape<B>;
-}
+/** Public structural type for `Timeline`. */
+export type Timeline<B extends Boundary = Boundary> = TimelineShape<B>;

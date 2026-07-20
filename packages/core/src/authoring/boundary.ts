@@ -441,12 +441,13 @@ export const BoundarySpec = {
   isActive: _isSpecActive,
 };
 
+/** Public structural type for `Boundary`. */
+export type Boundary<
+  I extends string = string,
+  S extends readonly [string, ...string[]] = readonly [string, ...string[]],
+> = BoundaryDef<I, S>;
+
 export declare namespace Boundary {
-  /** Structural shape of a boundary definition parameterized by input name `I` and state tuple `S`. */
-  export type Shape<
-    I extends string = string,
-    S extends readonly [string, ...string[]] = readonly [string, ...string[]],
-  > = BoundaryDef<I, S>;
   /** Alias for {@link BoundarySpec}. */
   export type Spec = BoundarySpec;
 }

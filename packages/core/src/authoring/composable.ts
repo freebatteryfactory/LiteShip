@@ -28,9 +28,9 @@ import { ValidationError } from '@liteship/error';
  * primitives plus arbitrary user-defined keys.
  */
 export interface EntityComponents {
-  readonly boundary?: Boundary.Shape;
-  readonly token?: Token.Shape;
-  readonly style?: Style.Shape;
+  readonly boundary?: Boundary;
+  readonly token?: Token;
+  readonly style?: Style;
   readonly [key: string]: unknown;
 }
 
@@ -121,7 +121,7 @@ interface TypedComposableWorld<Schema extends EntityComponents = EntityComponent
 }
 
 function makeComposableWorld<Schema extends EntityComponents = EntityComponents>(
-  world: World.Shape,
+  world: World,
 ): TypedComposableWorld<Schema> {
   // Mapping from ContentAddress to ECS EntityId for query reconstruction
   const addressToEntityId = new Map<ContentAddress, EntityId>();
@@ -208,7 +208,7 @@ interface ComposableDenseStore {
   retrieve<T extends EntityComponents>(entity: ComposableEntity<T>): number | undefined;
 }
 
-function makeComposableDenseStore(world: World.Shape): ComposableDenseStore {
+function makeComposableDenseStore(world: World): ComposableDenseStore {
   // Maintain a mapping from ContentAddress to ECS EntityId for dense store ops
   const addressToEntityId = new Map<ContentAddress, EntityId>();
   let denseStore: Part.Dense | undefined;
@@ -282,10 +282,8 @@ export const ComposableWorld = {
   dense: makeComposableDenseStore,
 };
 
-export declare namespace ComposableWorld {
-  /** Structural shape of the typed world returned by {@link ComposableWorld.make}. */
-  export type Shape<Schema extends EntityComponents = EntityComponents> = TypedComposableWorld<Schema>;
-}
+/** Public structural type for `ComposableWorld`. */
+export type ComposableWorld<Schema extends EntityComponents = EntityComponents> = TypedComposableWorld<Schema>;
 
 // Type exports -- keep legacy alias for backward compatibility
 export type { TypedComposableWorld as ComposableWorldShape };

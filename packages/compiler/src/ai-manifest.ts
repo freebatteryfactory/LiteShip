@@ -83,7 +83,7 @@ export interface AIParamSchema {
  * Cross-cutting invariant declared alongside the manifest.
  *
  * `condition` is opaque at the type level — hosts evaluate it in their own
- * constraint engine (e.g. a `Plan.Shape` predicate). `message` is what the
+ * constraint engine (e.g. a `Plan` predicate). `message` is what the
  * LLM sees when the constraint is reported as violated.
  */
 export interface AIConstraint {

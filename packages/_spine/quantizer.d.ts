@@ -53,7 +53,7 @@ export interface QuantizerRuntime {
 
 export declare const TIER_TARGETS: Record<MotionTier, ReadonlySet<OutputTarget>>;
 
-export interface QuantizerOutputs<B extends Boundary.Shape> {
+export interface QuantizerOutputs<B extends Boundary> {
   readonly css?: OutputsFor<B, Record<string, string | number>>;
   readonly glsl?: OutputsFor<B, Record<string, number>>;
   readonly wgsl?: OutputsFor<B, Record<string, number>>;
@@ -61,7 +61,7 @@ export interface QuantizerOutputs<B extends Boundary.Shape> {
   readonly ai?: OutputsFor<B, Record<string, unknown>>;
 }
 
-export interface QuantizerBuilder<B extends Boundary.Shape> {
+export interface QuantizerBuilder<B extends Boundary> {
   outputs<O extends QuantizerOutputs<B>>(outputs: O): QuantizerConfig<B, O>;
   force(...targets: OutputTarget[]): QuantizerBuilder<B>;
 }
@@ -69,7 +69,7 @@ export interface QuantizerBuilder<B extends Boundary.Shape> {
 /** The resolved per-target output record a {@link LiveQuantizer} dispatches. */
 type OutputRecord = Partial<{ [K in OutputTarget]: Record<string, unknown> }>;
 
-export interface QuantizerConfig<B extends Boundary.Shape, O extends QuantizerOutputs<B> = QuantizerOutputs<B>> {
+export interface QuantizerConfig<B extends Boundary, O extends QuantizerOutputs<B> = QuantizerOutputs<B>> {
   readonly boundary: B;
   readonly outputs: O;
   readonly id: ContentAddress;
@@ -84,7 +84,7 @@ export interface QuantizerConfig<B extends Boundary.Shape, O extends QuantizerOu
 }
 
 export interface LiveQuantizer<
-  B extends Boundary.Shape,
+  B extends Boundary,
   O extends QuantizerOutputs<B> = QuantizerOutputs<B>,
 > extends ReactiveQuantizer<B> {
   readonly config: QuantizerConfig<B, O>;
@@ -99,16 +99,13 @@ export interface LiveQuantizer<
  * plus the {@link Lifetime} that owns its teardown (replaces the former
  * `Effect<..., Scope.Scope>` scope).
  */
-export interface LiveQuantizerHandle<
-  B extends Boundary.Shape,
-  O extends QuantizerOutputs<B> = QuantizerOutputs<B>,
-> {
+export interface LiveQuantizerHandle<B extends Boundary, O extends QuantizerOutputs<B> = QuantizerOutputs<B>> {
   readonly quantizer: LiveQuantizer<B, O>;
-  readonly lifetime: Lifetime.Shape;
+  readonly lifetime: Lifetime;
 }
 
 export declare const Q: {
-  from<B extends Boundary.Shape>(boundary: B, options?: QuantizerFromOptions): QuantizerBuilder<B>;
+  from<B extends Boundary>(boundary: B, options?: QuantizerFromOptions): QuantizerBuilder<B>;
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -122,7 +119,7 @@ export interface EvaluateResult<S extends string = string> {
   readonly crossed: boolean;
 }
 
-export declare function evaluate<B extends Boundary.Shape>(
+export declare function evaluate<B extends Boundary>(
   boundary: B,
   value: number,
   previousState?: StateUnion<B>,
@@ -144,14 +141,14 @@ export type TransitionMap<S extends string = string> = {
   readonly [K in `${S}->${S}`]?: TransitionConfig;
 };
 
-export interface Transition<B extends Boundary.Shape> {
+export interface Transition<B extends Boundary> {
   readonly config: TransitionMap<StateUnion<B> & string>;
   getTransition(from: StateUnion<B>, to: StateUnion<B>): TransitionConfig;
 }
 
 export declare const Transition: {
-  for<B extends Boundary.Shape>(quantizer: Quantizer<B>, config: TransitionMap<StateUnion<B> & string>): Transition<B>;
-  for<B extends Boundary.Shape>(boundary: B, config: TransitionMap<StateUnion<B> & string>): Transition<B>;
+  for<B extends Boundary>(quantizer: Quantizer<B>, config: TransitionMap<StateUnion<B> & string>): Transition<B>;
+  for<B extends Boundary>(boundary: B, config: TransitionMap<StateUnion<B> & string>): Transition<B>;
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -159,13 +156,13 @@ export declare const Transition: {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /** An interpolated animation frame emitted during a crossing. */
-export interface InterpolatedFrame<B extends Boundary.Shape> {
+export interface InterpolatedFrame<B extends Boundary> {
   readonly state: StateUnion<B>;
   readonly progress: number;
   readonly outputs: Record<string, number | string>;
 }
 
-export interface AnimatedQuantizerShape<B extends Boundary.Shape> extends ReactiveQuantizer<B> {
+export interface AnimatedQuantizerShape<B extends Boundary> extends ReactiveQuantizer<B> {
   readonly transition: Transition<B>;
   /**
    * No-replay subscription of interpolated animation frames during crossings (was
@@ -180,18 +177,18 @@ export interface AnimatedQuantizerShape<B extends Boundary.Shape> extends Reacti
  * plus the {@link Lifetime} that owns its teardown (replaces the former
  * `Effect<..., Scope.Scope>` scope).
  */
-export interface AnimatedQuantizerHandle<B extends Boundary.Shape> {
+export interface AnimatedQuantizerHandle<B extends Boundary> {
   readonly animated: AnimatedQuantizerShape<B>;
-  readonly lifetime: Lifetime.Shape;
+  readonly lifetime: Lifetime;
 }
 
 export declare const AnimatedQuantizer: {
-  make<B extends Boundary.Shape>(
+  make<B extends Boundary>(
     quantizer: ReactiveQuantizer<B>,
     transitions: TransitionMap<StateUnion<B> & string>,
     /** Omitted: derived from a LiveQuantizer's `config.outputs.css` tables. */
     outputs?: Record<string, Record<string, number | string>>,
     /** Optional frame-clock injection; omitted, drives an internal ~60fps 16ms loop. */
-    options?: { readonly scheduler?: Scheduler.Shape },
+    options?: { readonly scheduler?: Scheduler },
   ): AnimatedQuantizerHandle<B>;
 };

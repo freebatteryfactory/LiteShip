@@ -21,7 +21,7 @@ evaluator produces; a purely-synchronous quantizer omits this extension.
 
 ### B
 
-`B` *extends* [`Shape`](../namespaces/Boundary/type-aliases/Shape.md) = [`Shape`](../namespaces/Boundary/type-aliases/Shape.md)
+`B` *extends* [`Boundary`](../type-aliases/Boundary.md) = [`Boundary`](../type-aliases/Boundary.md)
 
 ## Properties
 

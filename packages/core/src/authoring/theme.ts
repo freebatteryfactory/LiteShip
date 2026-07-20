@@ -147,7 +147,5 @@ export const Theme: ThemeFactory & {
   tap: _tap,
 };
 
-export declare namespace Theme {
-  /** Structural shape of a {@link Theme} definition, parameterized by its variant tuple `V`. */
-  export type Shape<V extends readonly string[] = readonly string[]> = ThemeDef<V>;
-}
+/** Public structural type for `Theme`. */
+export type Theme<V extends readonly string[] = readonly string[]> = ThemeDef<V>;

@@ -13,7 +13,7 @@ It ships:
 
 - [Morph](variables/Morph.md): idiomorph-style DOM diffing that preserves focus,
   scroll, and form state across re-renders.
-- [SlotRegistry](namespaces/SlotRegistry/README.md) / [SlotAddressing](variables/SlotAddressing.md): stable addressing
+- [SlotRegistry](type-aliases/SlotRegistry.md) / [SlotAddressing](variables/SlotAddressing.md): stable addressing
   for server-rendered slots in streaming HTML.
 - [SSE](variables/SSE.md) / [Resumption](variables/Resumption.md): an Effect-scoped Server-Sent
   Events client with reconnect and cross-tab resumption.
@@ -26,8 +26,6 @@ It ships:
 ## Namespaces
 
 - [LLMAdapter](namespaces/LLMAdapter/README.md)
-- [SlotRegistry](namespaces/SlotRegistry/README.md)
-- [WebCodecsCapture](namespaces/WebCodecsCapture/README.md)
 
 ## Interfaces
 
@@ -84,6 +82,7 @@ It ships:
 - [IslandMode](type-aliases/IslandMode.md)
 - [LiteshipEventDisposer](type-aliases/LiteshipEventDisposer.md)
 - [LiteshipEventName](type-aliases/LiteshipEventName.md)
+- [LLMAdapter](type-aliases/LLMAdapter.md)
 - [LLMChunkType](type-aliases/LLMChunkType.md)
 - [MatchPriority](type-aliases/MatchPriority.md)
 - [MorphResult](type-aliases/MorphResult.md)
@@ -96,6 +95,7 @@ It ships:
 - [ShaderIntegrityMode](type-aliases/ShaderIntegrityMode.md)
 - [SlotPath](type-aliases/SlotPath.md)
 - [SlotPath](type-aliases/SlotPath-1.md)
+- [SlotRegistry](type-aliases/SlotRegistry.md)
 - [SSEMessage](type-aliases/SSEMessage.md)
 - [SSEState](type-aliases/SSEState.md)
 - [StreamRecoveryMutationClient](type-aliases/StreamRecoveryMutationClient.md)
@@ -103,6 +103,7 @@ It ships:
 - [StreamWireAttrKey](type-aliases/StreamWireAttrKey.md)
 - [ToolCallAccumulator](type-aliases/ToolCallAccumulator.md)
 - [VerifiablePatchVerification](type-aliases/VerifiablePatchVerification.md)
+- [WebCodecsCapture](type-aliases/WebCodecsCapture.md)
 
 ## Variables
 
