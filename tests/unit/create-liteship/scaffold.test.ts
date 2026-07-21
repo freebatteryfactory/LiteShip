@@ -29,6 +29,7 @@ const EXPECTED_TREE = [
   '.gitignore',
   'README.md',
   'astro.config.ts',
+  'liteship.config.ts',
   'package.json',
   'src/boundaries/layout.boundaries.ts',
   'src/layouts/Base.astro',
@@ -79,9 +80,7 @@ describe('create-liteship scaffold', () => {
     // import path) plus its `astro` host peer — never `@liteship/core` / `@liteship/astro`
     // directly. Every dependency must be a plain published range — workspace:/file:/link:
     // specs cannot install outside this monorepo.
-    expect(Object.keys(manifest.dependencies)).toEqual(
-      expect.arrayContaining(['astro', 'liteship', 'typescript']),
-    );
+    expect(Object.keys(manifest.dependencies)).toEqual(expect.arrayContaining(['astro', 'liteship', 'typescript']));
     // The individual scopes must NOT leak back into the scaffold — the whole point of
     // the facade is that app authors meet ONE package, not the 23-package fleet.
     expect(Object.keys(manifest.dependencies).some((dep) => dep.startsWith('@liteship/'))).toBe(false);
@@ -113,7 +112,7 @@ describe('create-liteship scaffold', () => {
     // The README teaches the author model (define -> apply -> inspect) and the verify hint.
     const readme = readFileSync(join(result.projectDir, 'README.md'), 'utf8');
     expect(readme).toContain('define → apply → inspect');
-    expect(readme).toContain('liteship check --profile quick');
+    expect(readme).toContain('liteship check --profile consumer');
   });
 
   it('accepts an existing but empty directory', () => {
@@ -236,8 +235,10 @@ describe('create-liteship run (CLI surface)', () => {
     expect(text).toContain('pnpm install');
     expect(text).toContain('pnpm dev');
     expect(text).toContain('cd ');
-    // The post-install verify hint teaches the "inspect" leg of the journey.
-    expect(text).toContain('liteship check --profile quick');
+    // The post-install verify hint teaches the "inspect" leg of the journey — and
+    // recommends the `consumer` profile, the one that actually runs in a scaffolded
+    // app (quick/full project monorepo-root checks the generated app does not have).
+    expect(text).toContain('liteship check --profile consumer');
   });
 
   it('prompts when no dir is given and uses the answer', async () => {
