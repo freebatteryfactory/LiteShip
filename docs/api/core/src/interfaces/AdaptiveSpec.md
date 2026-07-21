@@ -6,7 +6,7 @@
 
 # Interface: AdaptiveSpec
 
-Defined in: [core/src/authoring/adaptive.ts:94](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L94)
+Defined in: [core/src/authoring/adaptive.ts:102](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L102)
 
 The authored intent of an adaptive: exactly the five sibling constructor
 configs, one field each. `defineAdaptive` feeds each field to its constructor
@@ -22,7 +22,7 @@ pure delegation.
 
 > `readonly` **boundary**: `object`
 
-Defined in: [core/src/authoring/adaptive.ts:96](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L96)
+Defined in: [core/src/authoring/adaptive.ts:104](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L104)
 
 [defineBoundary](../functions/defineBoundary.md) config — the constraint the adaptive tracks.
 
@@ -48,7 +48,7 @@ Defined in: [core/src/authoring/adaptive.ts:96](https://github.com/freebatteryfa
 
 > `readonly` `optional` **quantize?**: `AdaptiveQuantizeOptions`
 
-Defined in: [core/src/authoring/adaptive.ts:100](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L100)
+Defined in: [core/src/authoring/adaptive.ts:108](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L108)
 
 Optional `defineQuantizer` options (`outputs` + optional `tier`/`spring`/`force`).
 
@@ -58,7 +58,7 @@ Optional `defineQuantizer` options (`outputs` + optional `tier`/`spring`/`force`
 
 > `readonly` **style**: `Omit`\<`Parameters`\<*typeof* [`defineStyle`](../functions/defineStyle.md)\>\[`0`\], `"boundary"`\>
 
-Defined in: [core/src/authoring/adaptive.ts:98](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L98)
+Defined in: [core/src/authoring/adaptive.ts:106](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L106)
 
 [defineStyle](../functions/defineStyle.md) config WITHOUT `boundary` (the boundary is spliced in by the lowering).
 
@@ -68,7 +68,7 @@ Defined in: [core/src/authoring/adaptive.ts:98](https://github.com/freebatteryfa
 
 > `readonly` `optional` **theme?**: `object`
 
-Defined in: [core/src/authoring/adaptive.ts:104](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L104)
+Defined in: [core/src/authoring/adaptive.ts:112](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L112)
 
 Optional [defineTheme](../functions/defineTheme.md) config.
 
@@ -94,7 +94,7 @@ Optional [defineTheme](../functions/defineTheme.md) config.
 
 > `readonly` `optional` **tier?**: [`CapTier`](../type-aliases/CapTier.md)
 
-Defined in: [core/src/authoring/adaptive.ts:106](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L106)
+Defined in: [core/src/authoring/adaptive.ts:114](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L114)
 
 Capability tier [Adaptive.explain](Adaptive.md#explain) reports; defaults to `'styled'`.
 
@@ -104,6 +104,6 @@ Capability tier [Adaptive.explain](Adaptive.md#explain) reports; defaults to `'s
 
 > `readonly` `optional` **tokens?**: readonly `object`[]
 
-Defined in: [core/src/authoring/adaptive.ts:102](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L102)
+Defined in: [core/src/authoring/adaptive.ts:110](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L110)
 
 Optional design tokens, each a [defineToken](../functions/defineToken.md) config.

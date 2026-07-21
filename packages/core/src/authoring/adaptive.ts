@@ -28,6 +28,7 @@ import type { Theme } from './theme.js';
 import type { CapTier } from '../evidence/caps.js';
 import { tierTargets } from '../evidence/escalation.js';
 import type { TierChoice } from '../evidence/escalation.js';
+import type { QualityTierTarget } from '../evidence/quality-tiers.js';
 import { HostCapabilityError } from '@liteship/error';
 // `@liteship/core` takes NO import — not even type-only — on `@liteship/quantizer`
 // or `@liteship/compiler`. Both DEPEND ON core, so a back-import (even a type one,
@@ -51,8 +52,15 @@ import { HostCapabilityError } from '@liteship/error';
 // the real, memoized `QuantizerConfig` object (referential identity holds);
 // statically it is typed against this twin.
 
-/** Per-target output tables keyed by state (`{ css: { sm: {...}, md: {...} } }`). */
-type AdaptiveQuantizerOutputs = Readonly<Record<string, Readonly<Record<string, unknown>>>>;
+/**
+ * Per-target output tables keyed by state (`{ css: { sm: {...}, md: {...} } }`).
+ * The OUTER keys are CLOSED to the real quantizer target set ({@link QualityTierTarget}
+ * = the `@liteship/quantizer` `OutputTarget`: css/glsl/wgsl/aria/ai) — the runtime
+ * `resolveOutputs` resolves ONLY those targets, so an unrestricted `Record<string, …>`
+ * would let a consumer write a phantom target (`{ cs: {...} }`) that typechecks,
+ * survives into `Adaptive.explain()`, yet is silently dropped at runtime.
+ */
+type AdaptiveQuantizerOutputs = Readonly<Partial<Record<QualityTierTarget, Readonly<Record<string, unknown>>>>>;
 
 /** Structural twin of `@liteship/quantizer`'s `DefineQuantizerOptions`. */
 export interface AdaptiveQuantizeOptions {

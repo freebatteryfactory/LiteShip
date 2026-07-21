@@ -55,6 +55,25 @@ describe('defineAdaptive — pure lowering', () => {
     expect(adaptive.style).toEqual(hs);
   });
 
+  test('rejects a phantom output target at the type level (closed to css/glsl/wgsl/aria/ai)', () => {
+    // The quantizer runtime resolves ONLY css/glsl/wgsl/aria/ai; a phantom target
+    // (here `cs`, a typo for `css`) is silently dropped at runtime, so the type
+    // forbids it — this is the compile-time proof that `explain()` can never report
+    // a target the runtime won't produce.
+    const adaptive = defineAdaptive({
+      boundary: boundarySpec,
+      style: styleSpec,
+      quantize: {
+        outputs: {
+          css: { sm: { fontSize: '14px' }, md: { fontSize: '16px' }, lg: { fontSize: '18px' } },
+          // @ts-expect-error `cs` is not a real quantizer target (css/glsl/wgsl/aria/ai only).
+          cs: { sm: { fontSize: '14px' } },
+        },
+      },
+    });
+    expect(adaptive.id).toMatch(/^fnv1a:/);
+  });
+
   test('the quantizer member is REFERENTIALLY the hand-lowered defineQuantizer (configCache)', () => {
     const adaptive = defineAdaptive({ boundary: boundarySpec, style: styleSpec, quantize: quantizeSpec });
     const hb = defineBoundary(boundarySpec);

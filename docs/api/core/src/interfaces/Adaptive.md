@@ -6,7 +6,7 @@
 
 # Interface: Adaptive
 
-Defined in: [core/src/authoring/adaptive.ts:184](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L184)
+Defined in: [core/src/authoring/adaptive.ts:192](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L192)
 
 A lowered adaptive: the five constructor outputs plus their aggregate content
 address and three pure projections (`attrs`, `explain`, `plan`). Each member
@@ -19,7 +19,7 @@ quantizer the SAME object the configCache returns.
 
 > `readonly` **boundary**: [`Boundary`](../type-aliases/Boundary.md)
 
-Defined in: [core/src/authoring/adaptive.ts:186](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L186)
+Defined in: [core/src/authoring/adaptive.ts:194](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L194)
 
 `defineBoundary(spec.boundary)`.
 
@@ -29,7 +29,7 @@ Defined in: [core/src/authoring/adaptive.ts:186](https://github.com/freebatteryf
 
 > `readonly` **id**: `ContentAddress`
 
-Defined in: [core/src/authoring/adaptive.ts:196](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L196)
+Defined in: [core/src/authoring/adaptive.ts:204](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L204)
 
 FNV-1a content address of `{ boundary, style, quantizer, tokens, theme }` ids.
 
@@ -39,7 +39,7 @@ FNV-1a content address of `{ boundary, style, quantizer, tokens, theme }` ids.
 
 > `readonly` `optional` **quantizer?**: `AdaptiveQuantizerConfig`\<[`Boundary`](../type-aliases/Boundary.md)\>
 
-Defined in: [core/src/authoring/adaptive.ts:190](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L190)
+Defined in: [core/src/authoring/adaptive.ts:198](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L198)
 
 `defineQuantizer(boundary, spec.quantize)` — undefined when `spec.quantize` is omitted.
 
@@ -49,7 +49,7 @@ Defined in: [core/src/authoring/adaptive.ts:190](https://github.com/freebatteryf
 
 > `readonly` **style**: [`Style`](../type-aliases/Style.md)
 
-Defined in: [core/src/authoring/adaptive.ts:188](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L188)
+Defined in: [core/src/authoring/adaptive.ts:196](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L196)
 
 `defineStyle({ boundary, ...spec.style })`.
 
@@ -59,7 +59,7 @@ Defined in: [core/src/authoring/adaptive.ts:188](https://github.com/freebatteryf
 
 > `readonly` `optional` **theme?**: [`Theme`](../type-aliases/Theme.md)
 
-Defined in: [core/src/authoring/adaptive.ts:194](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L194)
+Defined in: [core/src/authoring/adaptive.ts:202](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L202)
 
 `defineTheme(spec.theme)` — undefined when `spec.theme` is omitted.
 
@@ -69,7 +69,7 @@ Defined in: [core/src/authoring/adaptive.ts:194](https://github.com/freebatteryf
 
 > `readonly` `optional` **tokens?**: readonly [`Token`](../type-aliases/Token.md)[]
 
-Defined in: [core/src/authoring/adaptive.ts:192](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L192)
+Defined in: [core/src/authoring/adaptive.ts:200](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L200)
 
 `spec.tokens.map(defineToken)` — undefined when `spec.tokens` is omitted.
 
@@ -79,7 +79,7 @@ Defined in: [core/src/authoring/adaptive.ts:192](https://github.com/freebatteryf
 
 > **attrs**(): `Record`\<`string`, `string`\>
 
-Defined in: [core/src/authoring/adaptive.ts:198](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L198)
+Defined in: [core/src/authoring/adaptive.ts:206](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L206)
 
 The headless DOM attr set a boundary-aware consumer needs.
 
@@ -93,7 +93,7 @@ The headless DOM attr set a boundary-aware consumer needs.
 
 > **explain**(`value`): [`AdaptiveExplanation`](AdaptiveExplanation.md)
 
-Defined in: [core/src/authoring/adaptive.ts:200](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L200)
+Defined in: [core/src/authoring/adaptive.ts:208](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L208)
 
 Explain the adaptive at one input value (state, matched thresholds, quantized, style, tier).
 
@@ -113,7 +113,7 @@ Explain the adaptive at one input value (state, matched thresholds, quantized, s
 
 > **plan**(): [`AdaptivePlan`](AdaptivePlan.md)
 
-Defined in: [core/src/authoring/adaptive.ts:202](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L202)
+Defined in: [core/src/authoring/adaptive.ts:210](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L210)
 
 The build-time plan (member ids, compiled CSS, attrs).
 

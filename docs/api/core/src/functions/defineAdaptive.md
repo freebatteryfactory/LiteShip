@@ -8,7 +8,7 @@
 
 > **defineAdaptive**(`spec`): [`Adaptive`](../interfaces/Adaptive.md)
 
-Defined in: [core/src/authoring/adaptive.ts:344](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L344)
+Defined in: [core/src/authoring/adaptive.ts:352](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L352)
 
 Lower a single [AdaptiveSpec](../interfaces/AdaptiveSpec.md) into an [Adaptive](../interfaces/Adaptive.md) by CALLING the
 five sibling constructors — never reimplementing them.

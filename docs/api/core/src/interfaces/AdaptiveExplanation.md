@@ -6,7 +6,7 @@
 
 # Interface: AdaptiveExplanation
 
-Defined in: [core/src/authoring/adaptive.ts:136](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L136)
+Defined in: [core/src/authoring/adaptive.ts:144](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L144)
 
 The full explanation of an adaptive at one input value — what state the
 boundary resolves to, which thresholds are satisfied, the quantizer's per-
@@ -19,7 +19,7 @@ tier. Pure projection of the members; never recomputes their identity.
 
 > `readonly` **boundary**: `object`
 
-Defined in: [core/src/authoring/adaptive.ts:141](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L141)
+Defined in: [core/src/authoring/adaptive.ts:149](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L149)
 
 #### id
 
@@ -45,7 +45,7 @@ The resolved state at `value` (via `Boundary.evaluateResult`).
 
 > `readonly` **contentAddress**: `ContentAddress`
 
-Defined in: [core/src/authoring/adaptive.ts:156](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L156)
+Defined in: [core/src/authoring/adaptive.ts:164](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L164)
 
 The adaptive's aggregate content address (`adaptive.id`).
 
@@ -55,7 +55,7 @@ The adaptive's aggregate content address (`adaptive.id`).
 
 > `readonly` **input**: `string`
 
-Defined in: [core/src/authoring/adaptive.ts:138](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L138)
+Defined in: [core/src/authoring/adaptive.ts:146](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L146)
 
 The boundary's signal input name.
 
@@ -65,7 +65,7 @@ The boundary's signal input name.
 
 > `readonly` `optional` **quantized?**: `Readonly`\<`Record`\<`string`, \{ `state`: `string`; `value`: `unknown`; \}\>\>
 
-Defined in: [core/src/authoring/adaptive.ts:150](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L150)
+Defined in: [core/src/authoring/adaptive.ts:158](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L158)
 
 Per-target quantizer output for the resolved state, keyed by output target.
 
@@ -75,7 +75,7 @@ Per-target quantizer output for the resolved state, keyed by output target.
 
 > `readonly` **style**: `Readonly`\<`Record`\<`string`, \{ `source`: `"base"` \| `"state"`; `value`: `string`; \}\>\>
 
-Defined in: [core/src/authoring/adaptive.ts:152](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L152)
+Defined in: [core/src/authoring/adaptive.ts:160](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L160)
 
 The resolved style properties at the state, each tagged with its source layer.
 
@@ -85,7 +85,7 @@ The resolved style properties at the state, each tagged with its source layer.
 
 > `readonly` **tier**: [`TierChoice`](TierChoice.md)
 
-Defined in: [core/src/authoring/adaptive.ts:154](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L154)
+Defined in: [core/src/authoring/adaptive.ts:162](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L162)
 
 The capability tier and the projection targets it admits.
 
@@ -95,6 +95,6 @@ The capability tier and the projection targets it admits.
 
 > `readonly` **value**: `number`
 
-Defined in: [core/src/authoring/adaptive.ts:140](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L140)
+Defined in: [core/src/authoring/adaptive.ts:148](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L148)
 
 The evaluated value.
