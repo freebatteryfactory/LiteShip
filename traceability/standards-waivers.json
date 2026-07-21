@@ -1,5 +1,5 @@
 {
-  "$comment": "Owner sign-offs for the AGENT-SAFETY META-GAUNTLET (the raccoon rule). A weakening of the gauntlet's own rigor standards is permitted ONLY via an explicit, owner-signed entry here. Each sign-off names the EXACT element being weakened (elementKey), the weakening CLASS it authorizes, the owner, a justification, and an expiry (ISO yyyy-mm-dd; past the run date re-reds). An always-blocking weakening (the placeholder/skip floor) can NEVER be signed (void), and a skip-allowlist-add whose SITE carries a placeholder marker (TODO/FIXME/not implemented/stub/...) is non-signable (it is unfinished work, not a capability gate). The 29 entries below include the branch-local weakenings vs the snapshot's birth commit (d0c214b7) plus Tier 0.2 skipIf conversions (offscreen-canvas, webcodecs, gpu-absent, eacces-untestable-as-root, symlink-unprivileged, fixture-absent, capsule-manifest-absent) plus two line-relocations of existing benign waivers (clock.ts no-nondeterminism 60/77; version.ts no-silent-catch 47→46 from the Wave 5 runCliCommand migration). Derived from the live-vs-birth diff, not hand-guessed.",
+  "$comment": "Owner sign-offs for the AGENT-SAFETY META-GAUNTLET (the raccoon rule). A weakening of the gauntlet's own rigor standards is permitted ONLY via an explicit, owner-signed entry here. Each sign-off names the EXACT element being weakened (elementKey), the weakening CLASS it authorizes, the owner, a justification, and an expiry (ISO yyyy-mm-dd; past the run date re-reds). An always-blocking weakening (the placeholder/skip floor) can NEVER be signed (void), and a skip-allowlist-add whose SITE carries a placeholder marker (TODO/FIXME/not implemented/stub/...) is non-signable (it is unfinished work, not a capability gate). The entries below include the branch-local weakenings vs the snapshot's birth commit (d0c214b7) plus Tier 0.2 skipIf conversions (offscreen-canvas, webcodecs, gpu-absent, eacces-untestable-as-root, symlink-unprivileged, fixture-absent, capsule-manifest-absent) plus the clock.ts no-nondeterminism 60/77 line-relocations. The former no-silent-catch benign-catch sign-offs (version.ts/ship.ts/doctor-probes-workspace.ts) were retired when those catches were CURED (given explicit, non-swallowing fallback bodies) and their waivers removed from LITESHIP_WAIVERS — a cure, not a renewed suppression. Derived from the live-vs-birth diff, not hand-guessed.",
   "signoffs": [
     {
       "elementKey": "skip-allowlist::tests/browser/spsc-ring-browser.test.ts::describe.skipIf(!canUseSAB)('browser SPSCRing with real SharedArrayBuffer and Atomics', () => {",
@@ -195,27 +195,6 @@
       "weakening": "waiver-added",
       "owner": "heyoub",
       "justification": "Same gauntlet/no-nondeterminism boundary waiver (a sanctioned Date.now() entropy boundary at line 77), RELOCATED by the P4 core-domain migration that moved packages/core/src/clock.ts into packages/core/src/clock/clock.ts — NOT a new deferral. The waiver key embeds the file path, so the pure rename surfaces as remove(old path)+add(new path); the corresponding removal of the packages/core/src/clock.ts|77 waiver is a paired strengthen. No additional code is waived; the same line-77 entropy boundary is waived, only its home moved. Signed vs the base-ref baseline (the P4 restructure window).",
-      "expiry": "2027-06-20"
-    },
-    {
-      "elementKey": "waiver::gauntlet/no-silent-catch|packages/cli/src/commands/version.ts|46",
-      "weakening": "waiver-added",
-      "owner": "heyoub",
-      "justification": "Same gauntlet/no-silent-catch benign-catch waiver (readCliVersion's best-effort import.meta.url fall-through in packages/cli/src/commands/version.ts, non-corrupting: a real version is still resolved from the workspace), RELOCATED one line (47→46) by the Wave 5 runCliCommand migration dropping the spawn imports above it — NOT a new deferral. The waiver key embeds the line number, so a one-line shift surfaces as remove(line 47)+add(line 46); the corresponding removal is a strengthen. No additional code is waived (identical to the clock.ts:60/77 relocation precedent). Signed vs the snapshot's birth baseline (the bootstrap window).",
-      "expiry": "2027-06-20"
-    },
-    {
-      "elementKey": "waiver::gauntlet/no-silent-catch|packages/cli/src/commands/ship.ts|131",
-      "weakening": "waiver-added",
-      "owner": "heyoub",
-      "justification": "Same gauntlet/no-silent-catch benign-catch waiver (the best-effort workspace-glob enumeration in packages/cli/src/commands/ship.ts — an entry that cannot be statSync-d is skipped during package discovery, non-corrupting and conservative: a genuinely unreadable directory entry is not a publishable package), RELOCATED (169→131) by the Wave 8 effect-shed removing the runEffect adapters above resolveGlob — NOT a new deferral. The waiver key embeds the line number, so the shift surfaces as remove(line 169)+add(line 131); the corresponding removal is a strengthen. No additional code is waived (identical to the version.ts:47→46 and clock.ts:60/77 relocation precedents). Surfaces as a weakening vs origin/main now that the base ref carries the snapshot (the gate moved from birth-baseline to origin/main baseline).",
-      "expiry": "2027-06-20"
-    },
-    {
-      "elementKey": "waiver::gauntlet/no-silent-catch|packages/cli/src/commands/doctor/probes-workspace.ts|261",
-      "weakening": "waiver-added",
-      "owner": "heyoub",
-      "justification": "Same gauntlet/no-silent-catch benign-catch waiver (the best-effort playwright-browsers cache probe in hasChromiumBuild — an unreadable browsers-cache dir reads as \"no chromium installed\", the conservative non-corrupting interpretation the doctor surfaces to the user exactly like its normal output), RELOCATED (250→261) by the P9 doctor spawn-capture seam adding the injectable SpawnArgvCapture params above hasChromiumBuild — NOT a new deferral. The waiver key embeds the line number, so the shift surfaces as remove(line 250)+add(line 261); the corresponding removal is a strengthen. No additional code is waived (identical to the ship.ts:169→131 and version.ts:47→46 relocation precedents). Surfaces as a weakening vs origin/main now that the base ref carries the snapshot (the gate moved from birth-baseline to origin/main baseline).",
       "expiry": "2027-06-20"
     },
     {

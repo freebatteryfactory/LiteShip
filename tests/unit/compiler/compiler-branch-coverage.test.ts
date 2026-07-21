@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { ARIACompiler } from '../../../packages/compiler/src/aria.js';
 import { NUMBER_RE, inferSyntax } from '../../../packages/compiler/src/css-utils.js';
-import type { Theme} from '@liteship/core';
-import { Component, defineBoundary, defineToken, defineTheme, defineStyle } from '@liteship/core';
+import type { Theme } from '@liteship/core';
+import { defineBoundary, defineToken, defineTheme, defineStyle, createComponent } from '@liteship/core';
 import { CSSCompiler } from '../../../packages/compiler/src/css.js';
 import { ThemeCSSCompiler } from '../../../packages/compiler/src/theme-css.js';
 import { TokenJSCompiler } from '../../../packages/compiler/src/token-js.js';
@@ -453,7 +453,7 @@ describe('compiler branch coverage', () => {
       },
     });
 
-    const component = Component.make({
+    const component = createComponent({
       name: 'hero-card',
       styles,
       slots: {

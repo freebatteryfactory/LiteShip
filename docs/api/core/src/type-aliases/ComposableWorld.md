@@ -8,7 +8,7 @@
 
 > **ComposableWorld**\<`Schema`\> = [`ComposableWorldShape`](../interfaces/ComposableWorldShape.md)\<`Schema`\>
 
-Defined in: [core/src/authoring/composable.ts:278](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/composable.ts#L278)
+Defined in: [core/src/authoring/composable.ts:281](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/composable.ts#L281)
 
 Public structural type for `ComposableWorld`.
 

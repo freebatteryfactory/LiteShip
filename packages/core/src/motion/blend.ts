@@ -47,14 +47,14 @@ type OwnedBlendTree<T extends Record<string, number>> = BlendTreeShape<T> & Asyn
  *
  * @example
  * ```ts
- * const tree = BlendTree.make<{ x: number; y: number }>();
+ * const tree = createBlendTree<{ x: number; y: number }>();
  * tree.add('idle', { x: 0, y: 0 }, 0.3);
  * tree.add('active', { x: 100, y: 50 }, 0.7);
  * const blended = tree.compute(); // { x: 70, y: 35 }
  * await tree.dispose();
  * ```
  */
-function _make<T extends Record<string, number>>(): OwnedBlendTree<T> {
+export function createBlendTree<T extends Record<string, number>>(): OwnedBlendTree<T> {
   const nodes = new Map<string, BlendNodeShape<T>>();
   const channel = CellKernel.fanout<T>();
   const lifetime = Lifetime.make();
@@ -129,22 +129,21 @@ function _make<T extends Record<string, number>>(): OwnedBlendTree<T> {
 }
 
 /**
- * BlendTree -- weighted multi-state blending for numeric records.
- * Add named nodes with values and weights, then compute the weighted average.
- * `make` returns the tree augmented with its own `dispose()`.
+ * Public structural type for `BlendTree` -- weighted multi-state blending for
+ * numeric records. Add named nodes with values and weights, then compute the
+ * weighted average. Construct one with the standalone {@link createBlendTree}
+ * (verb grammar, ADR-0046), which returns the tree augmented with its own
+ * `dispose()`.
  *
  * @example
  * ```ts
- * const tree = BlendTree.make<{ opacity: number }>();
+ * const tree = createBlendTree<{ opacity: number }>();
  * tree.add('fadeIn', { opacity: 1 }, 0.8);
  * tree.add('fadeOut', { opacity: 0 }, 0.2);
  * const result = tree.compute(); // { opacity: 0.8 }
  * await tree.dispose();
  * ```
  */
-export const BlendTree = { make: _make };
-
-/** Public structural type for `BlendTree`. */
 export type BlendTree<T extends Record<string, number>> = BlendTreeShape<T>;
 
 export declare namespace BlendTree {

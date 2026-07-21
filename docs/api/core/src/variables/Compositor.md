@@ -16,7 +16,7 @@ Compositor — the live merge point for every attached [Quantizer](../interfaces
 [RuntimeCoordinator](RuntimeCoordinator.md), paired with the [Lifetime](Lifetime.md) that owns its
 teardown. Adding quantizers, marking dirty flags, and emitting CSS/GLSL/ARIA
 outputs all flow through the zero-allocation hot path backed by
-[CompositorStatePool](CompositorStatePool.md).
+[CompositorStatePool](../type-aliases/CompositorStatePool.md).
 
 ## Example
 

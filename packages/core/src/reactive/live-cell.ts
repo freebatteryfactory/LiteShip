@@ -45,7 +45,8 @@
 import type { Cell } from './cell.js';
 import { createCell } from './cell.js';
 import { CellKernel } from './cell-kernel.js';
-import { Lifetime } from './lifetime.js';
+import { Lifetime, attachLifetime } from './lifetime.js';
+import type { AsyncOwnedResource } from './lifetime.js';
 import type { CellKind, CellMeta, CellEnvelope } from '../schema/protocol.js';
 import type { ContentAddress } from '../schema/brands.js';
 import { StateName as mkStateName } from '../schema/brands.js';
@@ -110,7 +111,7 @@ function makeCore<K extends CellKind, T>(kind: K, initial: T, nodeId: string, cl
 
   const lifetime = Lifetime.make();
   lifetime.add(() => crossings.close());
-  lifetime.add(() => cell.lifetime.dispose());
+  lifetime.add(() => cell.dispose());
 
   const envelope = (): CellEnvelope<K, T> => {
     const meta: CellMeta = { created, updated, version };
@@ -163,7 +164,18 @@ function serializedCommit<T>(run: (op: (current: T) => T) => void): (op: (curren
   };
 }
 
-function _make<K extends CellKind, T>(kind: K, initial: T, clock: Clock = wallClock): LiveCellShape<K, T> {
+/**
+ * Wrap an arbitrary value in a {@link LiveCell} with freshly minted identity + HLC.
+ * The live cell IS its own disposable ({@link AsyncOwnedResource}) — awaiting
+ * `lc.dispose()` closes the value kernel + crossings channel exactly once. `clock`
+ * (default {@link wallClock}) is the injected time source for the envelope HLC —
+ * pass a `manualClock`/`fixedClock` for deterministic replay.
+ */
+export function createLiveCell<K extends CellKind, T>(
+  kind: K,
+  initial: T,
+  clock: Clock = wallClock,
+): LiveCellShape<K, T> & AsyncOwnedResource {
   const core = makeCore(kind, initial, `live-cell-${kind}`, clock);
   const { cell, crossings, recordMutation, envelope, lifetime } = core;
 
@@ -178,7 +190,7 @@ function _make<K extends CellKind, T>(kind: K, initial: T, clock: Clock = wallCl
     cell.set(value);
   });
 
-  return {
+  const liveCell: LiveCellShape<K, T> = {
     _tag: 'LiveCell',
     read: () => cell.read(),
     set: (value: T) => commit(() => value),
@@ -190,17 +202,21 @@ function _make<K extends CellKind, T>(kind: K, initial: T, clock: Clock = wallCl
     publishCrossing: (crossing: BoundaryCrossing<string>) => crossings.publish(crossing),
     envelope,
   };
+  return attachLifetime(liveCell, lifetime);
 }
 
 /**
  * Create a boundary-kind LiveCell that automatically publishes crossings when the
- * numeric value transitions between boundary states.
+ * numeric value transitions between boundary states. The live cell IS its own
+ * disposable ({@link AsyncOwnedResource}). `clock` (default {@link wallClock}) is
+ * the injected time source for the envelope HLC and crossing timestamps — pass a
+ * manual/fixed clock for determinism.
  */
-function _makeBoundary<I extends string, S extends readonly [string, ...string[]]>(
+export function createLiveCellBoundary<I extends string, S extends readonly [string, ...string[]]>(
   boundary: Boundary<I, S>,
   initial: number,
   clock: Clock = wallClock,
-): LiveCellShape<'boundary', number> {
+): LiveCellShape<'boundary', number> & AsyncOwnedResource {
   const kind = 'boundary' as const;
   const core = makeCore(kind, initial, 'live-cell-boundary', clock);
   const { cell, crossings, recordMutation, envelope, lifetime } = core;
@@ -248,7 +264,7 @@ function _makeBoundary<I extends string, S extends readonly [string, ...string[]
     if (fault !== undefined) throw fault.error;
   });
 
-  return {
+  const liveCell: LiveCellShape<'boundary', number> = {
     _tag: 'LiveCell',
     read: () => cell.read(),
     set: (value: number) => commit(() => value),
@@ -260,28 +276,15 @@ function _makeBoundary<I extends string, S extends readonly [string, ...string[]
     publishCrossing: (crossing: BoundaryCrossing<string>) => crossings.publish(crossing),
     envelope,
   };
+  return attachLifetime(liveCell, lifetime);
 }
 
 /**
- * LiveCell — bridge between the {@link Cell} reactive graph and the wire
- * protocol. A `LiveCell` wraps a `Cell` with a typed {@link CellEnvelope} — kind,
- * content address, HLC, boundary crossings — so primitives can travel between
- * peers as self-describing messages.
+ * Public structural type for `LiveCell` — the bridge between the {@link Cell}
+ * reactive graph and the wire protocol. A `LiveCell` wraps a `Cell` with a typed
+ * {@link CellEnvelope} — kind, content address, HLC, boundary crossings — so
+ * primitives can travel between peers as self-describing messages. Construct one
+ * with the standalone {@link createLiveCell} / {@link createLiveCellBoundary}
+ * (verb grammar, ADR-0046 — `create` allocates a runtime resource).
  */
-export const LiveCell = {
-  /**
-   * Wrap an arbitrary value in a {@link LiveCell} with freshly minted identity + HLC.
-   * `clock` (default {@link wallClock}) is the injected time source for the envelope
-   * HLC — pass a `manualClock`/`fixedClock` for deterministic replay.
-   */
-  make: _make,
-  /**
-   * Specialized factory for boundary crossings so the envelope captures crossing
-   * metadata. `clock` (default {@link wallClock}) is the injected time source for the
-   * envelope HLC and crossing timestamps — pass a manual/fixed clock for determinism.
-   */
-  makeBoundary: _makeBoundary,
-};
-
-/** Public structural type for `LiveCell`. */
 export type LiveCell<K extends CellKind, T> = LiveCellShape<K, T>;

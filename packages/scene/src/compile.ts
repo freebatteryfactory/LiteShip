@@ -15,7 +15,7 @@
  *
  * World construction is intentionally deferred to {@link SceneRuntime}
  * (see `./runtime.ts`). Previously this function wrapped a
- * `World.make()` in `Effect.scoped(...)` and returned the world AFTER
+ * `createWorld()` in `Effect.scoped(...)` and returned the world AFTER
  * the scope closed — i.e. a dead world — and attached a
  * `registeredSystems: string[]` metadata field via an `as unknown`
  * cast WITHOUT ever calling `world.addSystem`. That theatre is gone:

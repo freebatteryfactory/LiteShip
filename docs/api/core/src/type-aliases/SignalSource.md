@@ -8,7 +8,7 @@
 
 > **SignalSource** = \{ `axis?`: `"width"` \| `"height"`; `type`: `"viewport"`; \} \| \{ `mode?`: `"elapsed"` \| `"absolute"` \| `"scheduled"`; `type`: `"time"`; \} \| \{ `axis?`: `"x"` \| `"y"` \| `"pressure"`; `type`: `"pointer"`; \} \| \{ `axis?`: `"x"` \| `"y"` \| `"progress"`; `type`: `"scroll"`; \} \| \{ `query`: `string`; `type`: `"media"`; \} \| \{ `id`: `string`; `type`: `"custom"`; \} \| \{ `mode?`: `"sample"` \| `"normalized"` \| `"amplitude"` \| `"beat"`; `type`: `"audio"`; \}
 
-Defined in: [core/src/reactive/signal.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/signal.ts#L51)
+Defined in: [core/src/reactive/signal.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/signal.ts#L52)
 
 Configuration describing what a [Signal](../variables/Signal.md) reads from: viewport axis,
 time mode, pointer axis, scroll axis, media query, custom push source,
@@ -16,7 +16,7 @@ or audio sample/normalized mode.
 
 Discriminant payloads default to the common case when omitted:
 viewport `axis: 'width'`, time `mode: 'elapsed'`, pointer `axis: 'x'`,
-scroll `axis: 'y'`, audio `mode: 'sample'`. [Signal.make](../variables/Signal.md#make) normalizes
+scroll `axis: 'y'`, audio `mode: 'sample'`. [createSignal](../functions/createSignal.md) normalizes
 the source, so the returned signal's `source` always carries explicit values.
 
 Audio modes:

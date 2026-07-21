@@ -8,18 +8,23 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 import {
   AVBridge,
-  Composable,
   ComposableWorld,
   Diagnostics,
-  DirtyFlags,
   Easing,
-  FrameBudget,
   HLC,
   Part,
   Receipt,
   Style,
   Token,
-  World, defineBoundary, defineToken, defineStyle } from '@liteship/core';
+  defineBoundary,
+  defineToken,
+  defineStyle,
+  createWorld,
+  Composable,
+  createComposable,
+  createDirtyFlags,
+  createFrameBudget,
+} from '@liteship/core';
 import { hasTag } from '@liteship/error';
 import type { EntityId } from '@liteship/core';
 
@@ -71,11 +76,11 @@ describe('Composable.merge error contract', () => {
 
 describe('ComposableWorld dense store error contract', () => {
   test('store() before create() names the module and the call to make first', () => {
-    // World.make() is synchronous now (owns its own dispose()); dense.store() throws
+    // createWorld() is synchronous now (owns its own dispose()); dense.store() throws
     // a ValidationError synchronously when no dense store has been created yet.
-    const world = World.make();
+    const world = createWorld();
     const dense = ComposableWorld.dense(world);
-    const entity = Composable.make({ value: 1 });
+    const entity = createComposable({ value: 1 });
 
     expect(() => dense.store(entity, 42)).toThrow(/ComposableWorld\.store/);
     expect(() => dense.store(entity, 42)).toThrow(/world\.create\(name, capacity\)/);
@@ -145,7 +150,7 @@ describe('factory validation taxonomy', () => {
     const throwers = [
       () => AVBridge.make({ sampleRate: 0, fps: 60 }),
       () => Easing.spring({ stiffness: -1 }),
-      () => DirtyFlags.make(Array.from({ length: 32 }, (_, i) => `k${i}`)),
+      () => createDirtyFlags(Array.from({ length: 32 }, (_, i) => `k${i}`)),
     ];
     for (const thrower of throwers) {
       try {
@@ -155,7 +160,7 @@ describe('factory validation taxonomy', () => {
         expect(hasTag(error, 'ValidationError')).toBe(true);
       }
     }
-    expect(() => FrameBudget.make({ targetFps: 0 })).toThrow(/FrameBudget\.make/);
+    expect(() => createFrameBudget({ targetFps: 0 })).toThrow(/createFrameBudget/);
   });
 });
 
@@ -199,7 +204,13 @@ describe('tap-miss diagnostics', () => {
   });
 
   test('Style.tap warns when the state is outside the boundary state set', () => {
-    const boundary = defineBoundary({ input: 'viewport.width', at: [[0, 'sm'], [768, 'lg']] });
+    const boundary = defineBoundary({
+      input: 'viewport.width',
+      at: [
+        [0, 'sm'],
+        [768, 'lg'],
+      ],
+    });
     const style = defineStyle({
       boundary,
       base: { properties: { color: 'black' } },

@@ -16,16 +16,16 @@ const GROUP_CHART: ReadonlyArray<{ readonly key: string; readonly label: string 
   { key: 'setup', label: 'Setup (dev experience)' },
   { key: 'compose', label: 'Compose + render (scene + asset)' },
   { key: 'manifest', label: 'Manifest (capsule)' },
-  { key: 'ship', label: 'Ship out (quay-side, release)' },
+  { key: 'ship', label: 'Publish (release)' },
   { key: 'servers', label: 'Servers' },
 ];
 
 const HINTS = `Hints (a working deck):
-  - First time? Run \`pnpm shakedown\` for the full first-run aggregate.
+  - First time? Run \`pnpm verify\` for the full first-run aggregate.
   - Stuck? \`liteship doctor\` triages your environment; \`liteship doctor --fix\` repairs.
   - All commands emit JSON receipts on stdout; pretty output is on stderr.
   - Suppress color: NO_COLOR=1.  Force color in CI logs: FORCE_COLOR=1.
-  - Releasing? \`liteship ship\` ties packages up at the quay; \`liteship verify\` checks the receipt before they sail.
+  - Releasing? \`liteship ship\` packs and publishes the workspace packages; \`liteship verify\` checks the receipt before publishing.
 
 Docs:
   https://github.com/freebatteryfactory/LiteShip

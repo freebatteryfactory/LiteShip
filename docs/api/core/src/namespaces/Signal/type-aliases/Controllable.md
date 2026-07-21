@@ -8,7 +8,7 @@
 
 > **Controllable**\<`T`\> = `ControllableSignalShape`\<`T`\>
 
-Defined in: [core/src/reactive/signal.ts:425](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/signal.ts#L425)
+Defined in: [core/src/reactive/signal.ts:437](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/signal.ts#L437)
 
 Structural shape of a seekable, pausable signal — e.g. driven by Remotion or a scrub UI.
 

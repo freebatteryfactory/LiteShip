@@ -6,8 +6,16 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Composable, ComposableWorld, World, defineBoundary, defineToken, defineStyle } from '@liteship/core';
-import type { ComposableEntity, EntityComponents , Boundary, Token} from '@liteship/core';
+import {
+  ComposableWorld,
+  defineBoundary,
+  defineToken,
+  defineStyle,
+  createWorld,
+  Composable,
+  createComposable,
+} from '@liteship/core';
+import type { ComposableEntity, EntityComponents, Boundary, Token } from '@liteship/core';
 
 // ---------------------------------------------------------------------------
 // Shared fixtures
@@ -44,13 +52,13 @@ const baseStyle = defineStyle({
 
 describe('Composable.make -- determinism', () => {
   test('same components produce the same entity ID', () => {
-    const a = Composable.make({ boundary: widthBoundary });
-    const b = Composable.make({ boundary: widthBoundary });
+    const a = createComposable({ boundary: widthBoundary });
+    const b = createComposable({ boundary: widthBoundary });
     expect(a.id).toBe(b.id);
   });
 
   test('same semantic nested payload with different key order produces the same entity ID', () => {
-    const a = Composable.make({
+    const a = createComposable({
       config: {
         nested: {
           second: 2,
@@ -59,7 +67,7 @@ describe('Composable.make -- determinism', () => {
         list: [{ beta: 2, alpha: 1 }],
       },
     });
-    const b = Composable.make({
+    const b = createComposable({
       config: {
         list: [{ alpha: 1, beta: 2 }],
         nested: {
@@ -73,13 +81,13 @@ describe('Composable.make -- determinism', () => {
   });
 
   test('undefined object fields are omitted from the content address', () => {
-    const a = Composable.make({
+    const a = createComposable({
       config: {
         present: 'value',
         omitted: undefined,
       },
     });
-    const b = Composable.make({
+    const b = createComposable({
       config: {
         present: 'value',
       },
@@ -89,14 +97,14 @@ describe('Composable.make -- determinism', () => {
   });
 
   test('array ordering stays stable while undefined entries canonicalize to null', () => {
-    const a = Composable.make({
+    const a = createComposable({
       config: {
         list: [1, undefined, { beta: 2, alpha: 1 }],
         enabled: true,
         nested: null,
       },
     });
-    const b = Composable.make({
+    const b = createComposable({
       config: {
         list: [1, null, { alpha: 1, beta: 2 }],
         enabled: true,
@@ -108,29 +116,29 @@ describe('Composable.make -- determinism', () => {
   });
 
   test('non-object fallback values use stable stringification in the content address', () => {
-    const a = Composable.make({ custom: Symbol.for('shared-address') });
-    const b = Composable.make({ custom: Symbol.for('shared-address') });
-    const c = Composable.make({ custom: Symbol.for('different-address') });
+    const a = createComposable({ custom: Symbol.for('shared-address') });
+    const b = createComposable({ custom: Symbol.for('shared-address') });
+    const c = createComposable({ custom: Symbol.for('different-address') });
 
     expect(a.id).toBe(b.id);
     expect(a.id).not.toBe(c.id);
   });
 
   test('different components produce different entity IDs', () => {
-    const a = Composable.make({ boundary: widthBoundary });
-    const b = Composable.make({ token: colorToken });
+    const a = createComposable({ boundary: widthBoundary });
+    const b = createComposable({ token: colorToken });
     expect(a.id).not.toBe(b.id);
   });
 
   test('different nested payloads produce different entity IDs', () => {
-    const a = Composable.make({ config: { nested: { alpha: 1 } } });
-    const b = Composable.make({ config: { nested: { alpha: 2 } } });
+    const a = createComposable({ config: { nested: { alpha: 1 } } });
+    const b = createComposable({ config: { nested: { alpha: 2 } } });
 
     expect(a.id).not.toBe(b.id);
   });
 
   test('entity has correct _tag', () => {
-    const entity = Composable.make({ boundary: widthBoundary });
+    const entity = createComposable({ boundary: widthBoundary });
     expect(entity._tag).toBe('ComposableEntity');
   });
 });
@@ -151,8 +159,8 @@ describe('Composable.compose -- precedence', () => {
       ] as const,
     });
 
-    const e1 = Composable.make({ boundary: widthBoundary, token: colorToken });
-    const e2 = Composable.make({ boundary: altBoundary, token: colorToken });
+    const e1 = createComposable({ boundary: widthBoundary, token: colorToken });
+    const e2 = createComposable({ boundary: altBoundary, token: colorToken });
     const composed = Composable.compose(e1, e2);
 
     // boundary should come from e2
@@ -162,7 +170,7 @@ describe('Composable.compose -- precedence', () => {
   });
 
   test('merge precedence stays stable for nested plain-object components', () => {
-    const e1 = Composable.make({
+    const e1 = createComposable({
       config: {
         panel: {
           gap: '8px',
@@ -170,7 +178,7 @@ describe('Composable.compose -- precedence', () => {
         },
       },
     });
-    const e2 = Composable.make({
+    const e2 = createComposable({
       config: {
         panel: {
           gap: '16px',
@@ -209,9 +217,9 @@ describe('Composable.merge -- reduces correctly', () => {
     });
 
     // All entities must have same component shape for merge
-    const e1 = Composable.make({ boundary: widthBoundary, token: tokenA, style: baseStyle });
-    const e2 = Composable.make({ boundary: widthBoundary, token: tokenA, style: baseStyle });
-    const e3 = Composable.make({ boundary: widthBoundary, token: tokenA, style: baseStyle });
+    const e1 = createComposable({ boundary: widthBoundary, token: tokenA, style: baseStyle });
+    const e2 = createComposable({ boundary: widthBoundary, token: tokenA, style: baseStyle });
+    const e3 = createComposable({ boundary: widthBoundary, token: tokenA, style: baseStyle });
 
     const merged = Composable.merge(e1, e2, e3);
 
@@ -223,7 +231,7 @@ describe('Composable.merge -- reduces correctly', () => {
   });
 
   test('merge of single entity returns equivalent entity', () => {
-    const e = Composable.make({ boundary: widthBoundary });
+    const e = createComposable({ boundary: widthBoundary });
     const merged = Composable.merge(e);
     expect(merged.id).toBe(e.id);
     expect(merged.components).toEqual(e.components);
@@ -244,7 +252,7 @@ describe('Composable.merge -- reduces correctly', () => {
 
 describe('ComposableWorld.evaluate -- Boundary', () => {
   test('evaluates boundary against input value and returns correct state', () => {
-    const world = World.make();
+    const world = createWorld();
     const cw = ComposableWorld.make(world);
     const entity = cw.spawn({ boundary: widthBoundary });
     const result = cw.evaluate(entity, { 'viewport.width': 800 });
@@ -260,7 +268,7 @@ describe('ComposableWorld.evaluate -- Boundary', () => {
         [768, 'md'],
       ] as const,
     });
-    const world = World.make();
+    const world = createWorld();
     const cw = ComposableWorld.make(world);
     const entity = cw.spawn({ boundary: bp });
     const result = cw.evaluate(entity, { 'viewport.width': 100 });
@@ -283,7 +291,7 @@ describe('ComposableWorld.evaluate -- Token', () => {
       fallback: '#ccc',
     });
 
-    const world = World.make();
+    const world = createWorld();
     const cw = ComposableWorld.make(world);
     // Token.tap expects string axis values; evaluate converts numeric inputs
     // For token evaluation, use a numeric key matching the axis name
@@ -295,7 +303,7 @@ describe('ComposableWorld.evaluate -- Token', () => {
   });
 
   test('token falls back when no axis matches', () => {
-    const world = World.make();
+    const world = createWorld();
     const cw = ComposableWorld.make(world);
     const entity = cw.spawn({ token: colorToken });
     const result = cw.evaluate(entity, { unrelated: 42 });
@@ -315,7 +323,7 @@ describe('ComposableWorld.evaluate -- Token', () => {
       fallback: '#cccccc',
     });
 
-    const world = World.make();
+    const world = createWorld();
     const cw = ComposableWorld.make(world);
     const entity = cw.spawn({ token });
     const result = cw.evaluate(entity, { theme: 2 });
@@ -330,7 +338,7 @@ describe('ComposableWorld.evaluate -- Token', () => {
 
 describe('ComposableWorld.evaluate -- Style', () => {
   test('given boundary state, returns correct style properties', () => {
-    const world = World.make();
+    const world = createWorld();
     const cw = ComposableWorld.make(world);
     const entity = cw.spawn({
       boundary: widthBoundary,
@@ -350,7 +358,7 @@ describe('ComposableWorld.evaluate -- Style', () => {
       base: { properties: { display: 'flex', gap: '8px' } },
     });
 
-    const world = World.make();
+    const world = createWorld();
     const cw = ComposableWorld.make(world);
     const entity = cw.spawn({ style: styleNoBoundary });
     const result = cw.evaluate(entity, {});
@@ -360,7 +368,7 @@ describe('ComposableWorld.evaluate -- Style', () => {
   });
 
   test('evaluate returns an empty object when no supported components are present', () => {
-    const world = World.make();
+    const world = createWorld();
     const cw = ComposableWorld.make(world);
     const entity = cw.spawn({ custom: 'value' });
     const result = cw.evaluate(entity, {});
@@ -375,7 +383,7 @@ describe('ComposableWorld.evaluate -- Style', () => {
 
 describe('ComposableWorld.query -- round-trip identity', () => {
   test('make entity -> spawn into world -> query back -> same components', () => {
-    const world = World.make();
+    const world = createWorld();
     const cw = ComposableWorld.make(world);
 
     const original = cw.spawn({
@@ -393,7 +401,7 @@ describe('ComposableWorld.query -- round-trip identity', () => {
   });
 
   test('query filters by component type names', () => {
-    const world = World.make();
+    const world = createWorld();
     const cw = ComposableWorld.make(world);
 
     cw.spawn({ boundary: widthBoundary });
@@ -413,7 +421,7 @@ describe('ComposableWorld.query -- round-trip identity', () => {
   });
 
   test('query over absent component names returns an empty list', () => {
-    const world = World.make();
+    const world = createWorld();
     const cw = ComposableWorld.make(world);
     cw.spawn({ boundary: widthBoundary });
     const result = cw.query('style');
@@ -422,9 +430,9 @@ describe('ComposableWorld.query -- round-trip identity', () => {
   });
 
   test('spawnWith preserves identity and makes entities queryable', () => {
-    const world = World.make();
+    const world = createWorld();
     const cw = ComposableWorld.make(world);
-    const entity = Composable.make({ boundary: widthBoundary, token: colorToken });
+    const entity = createComposable({ boundary: widthBoundary, token: colorToken });
     const spawned = cw.spawnWith(entity);
     const queriedA = cw.query('token', 'boundary');
     const queriedB = cw.query('boundary', 'token');
@@ -441,11 +449,11 @@ describe('ComposableWorld.query -- round-trip identity', () => {
 
 describe('ComposableWorld.dense -- store/retrieve', () => {
   test('store and retrieve round-trip', () => {
-    const world = World.make();
+    const world = createWorld();
     const dense = ComposableWorld.dense(world);
     dense.create('velocity', 16);
 
-    const entity = Composable.make({ boundary: widthBoundary });
+    const entity = createComposable({ boundary: widthBoundary });
     dense.store(entity, 42.5);
     const result = dense.retrieve(entity);
 
@@ -453,20 +461,20 @@ describe('ComposableWorld.dense -- store/retrieve', () => {
   });
 
   test('retrieve returns undefined for unknown entity', () => {
-    const world = World.make();
+    const world = createWorld();
     const dense = ComposableWorld.dense(world);
     dense.create('hp', 8);
 
-    const entity = Composable.make({ token: colorToken });
+    const entity = createComposable({ token: colorToken });
     const result = dense.retrieve(entity);
 
     expect(result).toBeUndefined();
   });
 
   test('retrieve returns undefined before a dense store is created', () => {
-    const world = World.make();
+    const world = createWorld();
     const dense = ComposableWorld.dense(world);
-    const entity = Composable.make({ boundary: widthBoundary });
+    const entity = createComposable({ boundary: widthBoundary });
     const result = dense.retrieve(entity);
 
     expect(result).toBeUndefined();
@@ -474,19 +482,19 @@ describe('ComposableWorld.dense -- store/retrieve', () => {
 
   test('store rejects writes before create() is called', () => {
     expect(() => {
-      const world = World.make();
+      const world = createWorld();
       const dense = ComposableWorld.dense(world);
-      const entity = Composable.make({ boundary: widthBoundary });
+      const entity = createComposable({ boundary: widthBoundary });
       dense.store(entity, 1);
     }).toThrow('no dense store exists — call world.create(name, capacity)');
   });
 
   test('store overwrites previous value', () => {
-    const world = World.make();
+    const world = createWorld();
     const dense = ComposableWorld.dense(world);
     dense.create('hp', 8);
 
-    const entity = Composable.make({ boundary: widthBoundary });
+    const entity = createComposable({ boundary: widthBoundary });
     dense.store(entity, 10);
     dense.store(entity, 99);
     const result = dense.retrieve(entity);
@@ -495,12 +503,12 @@ describe('ComposableWorld.dense -- store/retrieve', () => {
   });
 
   test('same-component ComposableEntities share ContentAddress in dense store', () => {
-    const world = World.make();
+    const world = createWorld();
     const dense = ComposableWorld.dense(world);
     dense.create('speed', 16);
 
-    const e1 = Composable.make({ boundary: widthBoundary });
-    const e2 = Composable.make({ boundary: widthBoundary });
+    const e1 = createComposable({ boundary: widthBoundary });
+    const e2 = createComposable({ boundary: widthBoundary });
 
     // Same components → same ContentAddress (by design)
     expect(e1.id).toBe(e2.id);
@@ -531,7 +539,7 @@ interface NarrowSchema extends EntityComponents {
 
 describe('TypedComposableWorld -- compile-time type safety', () => {
   test('typed world spawn constrains components to the schema', () => {
-    const world = World.make();
+    const world = createWorld();
     const cw: ComposableWorld<NarrowSchema> = ComposableWorld.make<NarrowSchema>(world);
 
     // This compiles because boundary and token are in NarrowSchema
@@ -543,7 +551,7 @@ describe('TypedComposableWorld -- compile-time type safety', () => {
   });
 
   test('typed query returns correctly narrowed component types', () => {
-    const world = World.make();
+    const world = createWorld();
     const cw: ComposableWorld<NarrowSchema> = ComposableWorld.make<NarrowSchema>(world);
 
     cw.spawn({ boundary: widthBoundary });
@@ -563,7 +571,7 @@ describe('TypedComposableWorld -- compile-time type safety', () => {
   });
 
   test('unparameterized ComposableWorld.make still works (backward compat)', () => {
-    const world = World.make();
+    const world = createWorld();
     // No type parameter -- defaults to EntityComponents (accepts anything)
     const cw = ComposableWorld.make(world);
     const entity = cw.spawn({

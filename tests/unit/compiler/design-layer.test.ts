@@ -9,7 +9,19 @@ import { describe, test, expect } from 'vitest';
 import fc from 'fast-check';
 
 // --- Core design primitives ---
-import { Token, Style, Theme, Component, TokenRef, Easing, Millis, defineBoundary, defineToken, defineTheme, defineStyle } from '@liteship/core';
+import {
+  Token,
+  Style,
+  Theme,
+  TokenRef,
+  Easing,
+  Millis,
+  defineBoundary,
+  defineToken,
+  defineTheme,
+  defineStyle,
+  createComponent,
+} from '@liteship/core';
 import type { StyleLayer } from '@liteship/core';
 
 // --- Compilers ---
@@ -82,7 +94,7 @@ const cardStyle = defineStyle({
   transition: { duration: Millis(200), easing: 'ease-out', properties: ['padding', 'font-size'] },
 });
 
-const cardComponent = Component.make({
+const cardComponent = createComponent({
   name: 'card',
   boundary: viewport,
   styles: cardStyle,
@@ -433,7 +445,7 @@ describe('Component', () => {
   });
 
   test('ComponentDef id is deterministic across identical authored definitions', () => {
-    const comp2 = Component.make({
+    const comp2 = createComponent({
       name: 'card',
       boundary: viewport,
       styles: cardStyle,
@@ -447,7 +459,7 @@ describe('Component', () => {
   });
 
   test('ComponentDef id changes when slot config changes', () => {
-    const comp = Component.make({
+    const comp = createComponent({
       name: 'card',
       boundary: viewport,
       styles: cardStyle,
@@ -458,7 +470,7 @@ describe('Component', () => {
   });
 
   test('ComponentDef id changes when default slot changes', () => {
-    const comp = Component.make({
+    const comp = createComponent({
       name: 'card',
       boundary: viewport,
       styles: cardStyle,

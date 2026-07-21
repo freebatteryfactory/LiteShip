@@ -4,15 +4,17 @@
  *
  * It is a pure fold over two files read through the {@link GateContext}:
  *  1. `packages/liteship/src/export-budget.ts` — the reviewed ALLOWLIST as DATA:
- *     the `ROOT_VALUE_BUDGET` / `ROOT_TYPE_BUDGET` string arrays (a SUPERSET that
- *     carries a few reserved-but-absent slots).
+ *     the `ROOT_VALUE_BUDGET` / `ROOT_TYPE_BUDGET` string arrays (the EXACT set,
+ *     post-ADR-0051: no reserved-but-absent slots remain).
  *  2. `packages/liteship/dist/index.d.ts` — the BUILT root declaration surface,
  *     whose value + type exports are the reality being judged.
  *
- * The gate asserts the SUBSET law (per kind): every VALUE export the root ships is
- * listed in `ROOT_VALUE_BUDGET`, every TYPE export in `ROOT_TYPE_BUDGET` — so a
- * reserved-but-absent slot is legal (a listed symbol need not be exported) but an
- * UNLISTED export reds. It also asserts the two hard CAPS ({@link VALUE_CAP} /
+ * The gate asserts the EXACT-MATCH law (per kind), BOTH DIRECTIONS: every VALUE
+ * export the root ships is listed in `ROOT_VALUE_BUDGET` AND every listed value is
+ * actually exported; likewise for `ROOT_TYPE_BUDGET`. So an UNLISTED export reds
+ * (the surface sprouted a symbol) AND a DROPPED export reds (the surface lost a
+ * reviewed symbol — a silent public-contract regression the old SUBSET direction
+ * was blind to). It also asserts the two hard CAPS ({@link VALUE_CAP} /
  * {@link TYPE_CAP}): at most 30 value exports and 30 type exports, so the curated
  * surface cannot sprawl even while staying nominally "listed".
  *
@@ -183,6 +185,26 @@ function unlistedFinding(kind: 'value' | 'type', name: string): Finding {
   });
 }
 
+function missingFinding(kind: 'value' | 'type', name: string): Finding {
+  const budgetConst = kind === 'value' ? 'ROOT_VALUE_BUDGET' : 'ROOT_TYPE_BUDGET';
+  return finding({
+    ruleId: RULE_ID,
+    severity: 'error',
+    level: 'L2',
+    title: 'Reviewed root export dropped from the facade',
+    detail: `${BUDGET_FILE}'s ${budgetConst} lists the ${kind} \`${name}\`, but the \`liteship\` root ("." entry) no longer exports it. The budget is an EXACT allowlist — a listed symbol MUST be exported — so a silently DROPPED public export (a broken downstream contract) reds here, the class of slip the old SUBSET direction was blind to.`,
+    location: { file: ROOT_DTS_FILE, line: 1 },
+    remediation: {
+      kind: 'instruction',
+      description: `Either restore the \`${name}\` export on the root facade, or (if it was deliberately removed) drop it from ${budgetConst} in ${BUDGET_FILE} as a reviewed budget edit.`,
+      steps: [
+        `If \`${name}\` was dropped by accident, re-add its re-export to packages/liteship/src/index.ts.`,
+        `If \`${name}\` was deliberately retired from the curated root, remove it from ${budgetConst} in ${BUDGET_FILE} — a reviewed budget edit, not an accidental one.`,
+      ],
+    },
+  });
+}
+
 function overCapFinding(kind: 'value' | 'type', count: number, cap: number): Finding {
   return finding({
     ruleId: RULE_ID,
@@ -203,8 +225,9 @@ function overCapFinding(kind: 'value' | 'type', count: number, cap: number): Fin
 
 /**
  * The fold: read the allowlist + the built root surface, then assert the per-kind
- * SUBSET law and the two caps. Absent evidence (an unbuilt `dist` or a missing
- * budget file) folds EMPTY — the gate cannot judge a surface it cannot read.
+ * EXACT-MATCH law (BOTH directions) and the two caps. Absent evidence (an unbuilt
+ * `dist` or a missing budget file) folds EMPTY — the gate cannot judge a surface it
+ * cannot read.
  */
 function scan(context: GateContext): readonly Finding[] {
   const budgetSource = context.readFile(BUDGET_FILE);
@@ -217,13 +240,23 @@ function scan(context: GateContext): readonly Finding[] {
   if (budget.values.size === 0 && budget.types.size === 0) return [];
 
   const surface = parseRootSurface(dts);
+  const surfaceValues = new Set(surface.values);
+  const surfaceTypes = new Set(surface.types);
   const findings: Finding[] = [];
 
+  // Direction 1 — every EXPORTED symbol must be listed (the surface cannot sprawl).
   for (const name of surface.values) {
     if (!budget.values.has(name)) findings.push(unlistedFinding('value', name));
   }
   for (const name of surface.types) {
     if (!budget.types.has(name)) findings.push(unlistedFinding('type', name));
+  }
+  // Direction 2 — every LISTED symbol must be exported (a dropped export reds).
+  for (const name of budget.values) {
+    if (!surfaceValues.has(name)) findings.push(missingFinding('value', name));
+  }
+  for (const name of budget.types) {
+    if (!surfaceTypes.has(name)) findings.push(missingFinding('type', name));
   }
   if (surface.values.length > VALUE_CAP) findings.push(overCapFinding('value', surface.values.length, VALUE_CAP));
   if (surface.types.length > TYPE_CAP) findings.push(overCapFinding('type', surface.types.length, TYPE_CAP));
@@ -238,42 +271,49 @@ const FIXTURE_BUDGET =
   "export const ROOT_VALUE_BUDGET = [\n  'alpha',\n  'beta',\n] as const;\n" +
   "export const ROOT_TYPE_BUDGET = [\n  'Gamma',\n  'Delta',\n] as const;\n";
 
-/** A GREEN world: every root export is a listed allowlist entry, both under cap. */
+/** A GREEN world: the root exports EXACTLY the allowlist (both directions), under cap. */
 const GREEN_CONTEXT = memoryContext({
   [BUDGET_FILE]: FIXTURE_BUDGET,
   [ROOT_DTS_FILE]:
-    "export { alpha } from '@liteship/core';\nexport type { Gamma } from '@liteship/core';\nexport declare const beta: number;\n",
+    "export { alpha } from '@liteship/core';\nexport type { Gamma, Delta } from '@liteship/core';\nexport declare const beta: number;\n",
 });
 
-/** A RED world: the root exports an UNLISTED value (`zeta` is in neither budget list). */
+/**
+ * A RED world exercising BOTH exact-match directions at once: the root exports an
+ * UNLISTED value (`zeta`, in neither budget list) AND has DROPPED the listed value
+ * `beta`. Under the exact-match law both red — the sprawl direction and the
+ * regression direction the old SUBSET gate was blind to.
+ */
 const RED_CONTEXT = memoryContext({
   [BUDGET_FILE]: FIXTURE_BUDGET,
-  [ROOT_DTS_FILE]: "export { alpha, zeta } from '@liteship/core';\nexport type { Gamma } from '@liteship/core';\n",
+  [ROOT_DTS_FILE]:
+    "export { alpha, zeta } from '@liteship/core';\nexport type { Gamma, Delta } from '@liteship/core';\n",
 });
 
 /**
  * The facade-export-budget gate — the curated-root guardrail. Self-proves via a
- * synthetic allowlist + built surface (an unlisted export reds; a fully-listed
- * surface under cap passes).
+ * synthetic allowlist + built surface: an unlisted export OR a dropped export reds
+ * (the exact-match law, both directions); a surface that matches the allowlist
+ * exactly and under cap passes.
  */
 export const facadeExportBudgetGate: Gate = defineGate({
   id: RULE_ID,
   level: 'L2',
   describe:
-    "Reads packages/liteship/dist/index.d.ts and asserts every root value/type export is listed in packages/liteship/src/export-budget.ts's ROOT_VALUE_BUDGET / ROOT_TYPE_BUDGET (the SUBSET law) and that neither kind exceeds 30 — the curated-facade guardrail that keeps the liteship root from sprawling back into a whole-fleet re-export.",
+    "Reads packages/liteship/dist/index.d.ts and asserts the root value/type export set EXACTLY equals packages/liteship/src/export-budget.ts's ROOT_VALUE_BUDGET / ROOT_TYPE_BUDGET (both directions — an unlisted export AND a dropped listed export both red) and that neither kind exceeds 30 — the curated-facade guardrail that keeps the liteship root from sprawling back into a whole-fleet re-export or silently regressing a reviewed export.",
   run: scan,
   fixtures: {
     red: {
-      name: "the root d.ts exports the unlisted value 'zeta' (in neither budget list)",
+      name: "the root d.ts exports the unlisted value 'zeta' AND has dropped the listed value 'beta'",
       context: RED_CONTEXT,
     },
     green: {
-      name: 'every root value/type export is a listed allowlist entry, both kinds under the cap',
+      name: 'the root value/type export set equals the allowlist exactly, both kinds under the cap',
       context: GREEN_CONTEXT,
     },
     mutation: {
       describe:
-        'A mutant that flags nothing (folds an empty finding list) leaves the red fixture’s unlisted `zeta` unflagged — the mutant must then fail the red.',
+        'A mutant that flags nothing (folds an empty finding list) leaves the red fixture’s unlisted `zeta` and dropped `beta` unflagged — the mutant must then fail the red.',
       mutate: (gate: Gate): Gate => ({
         ...gate,
         run: (): readonly Finding[] => [],

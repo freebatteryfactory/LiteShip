@@ -12,13 +12,14 @@
  * `explainDiagnostic`) plus the nouns as TYPES — and the budget is what keeps it
  * from silently sprawling back into the umbrella's whole-fleet re-export.
  *
- * The lists are a SUPERSET of what the root currently exports: they carry a few
- * RESERVED-but-absent slots (`defineAdaptive` / `Adaptive` arrive in P15; the
- * `create*` / `tierTargets` / `inspectReceipt` grammar slots are reserved for the
- * verb vocabulary as the backing surfaces expose them). The gate's SUBSET
- * direction makes a reserved-but-absent slot legal — a listed symbol need not be
- * exported, but every exported symbol MUST be listed. `adaptiveAttrs` is
- * DELIBERATELY absent here: it rides `liteship/astro`, never the root.
+ * The lists are an EXACT allowlist: after verb-grammar-sweep-2 (ADR-0051) the
+ * reactive `create*` slots (`createSignal` / `createLifetime`), the escalation
+ * `tierTargets` reader, and the `inspectReceipt` debug facade are all BACKED by
+ * real `@liteship/core` exports, so no phantom (reserved-but-absent) slot remains.
+ * The gate enforces the allowlist BOTH DIRECTIONS — every exported symbol must be
+ * listed AND every listed symbol must be exported — so a DROPPED root export reds
+ * just as an unlisted one does. `adaptiveAttrs` is DELIBERATELY absent here: it
+ * rides `liteship/astro`, never the root.
  *
  * Format note: each entry is a bare string literal on its own line so the gate's
  * source reader can extract the allowlist without a TypeScript parse.
@@ -66,7 +67,6 @@ export const ROOT_TYPE_BUDGET = [
   'Style',
   'Config',
   'Cell',
-  'Computed',
   'Store',
   'Timeline',
   'Lifetime',

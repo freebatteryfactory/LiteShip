@@ -153,6 +153,9 @@ export declare namespace Lifetime {
   export function make(): Lifetime;
 }
 
+/** Standalone verb-grammar constructor for a {@link Lifetime} (ADR-0046/0051). */
+export declare function createLifetime(): Lifetime;
+
 /**
  * A resource that owns its teardown SYNCHRONOUSLY. `dispose()` runs the owning
  * {@link Lifetime}'s finalizers and returns `void`; `[Symbol.dispose]` makes it
@@ -287,7 +290,7 @@ export type SignalSourceType = 'viewport' | 'time' | 'pointer' | 'scroll' | 'med
 /**
  * Discriminant payloads default to the common case when omitted:
  * viewport `axis: 'width'`, time `mode: 'elapsed'`, pointer `axis: 'x'`,
- * scroll `axis: 'y'`, audio `mode: 'sample'`. `Signal.make` normalizes the
+ * scroll `axis: 'y'`, audio `mode: 'sample'`. `createSignal` normalizes the
  * source, so the returned signal's `source` always carries explicit values.
  *
  * Audio modes: `sample`/`normalized` are offline/scrub reads; `amplitude`
@@ -320,9 +323,16 @@ export interface ControllableSignal<T> extends Signal<T> {
 export declare namespace Signal {
   /** Structural shape of a seekable, pausable signal (forwarded by video/remotion). */
   export type Controllable<T> = ControllableSignal<T>;
-  export function make(source: SignalSource): Signal<number>;
-  export function controllable(): ControllableSignal<number>;
+  /** Seekable/pausable time signal (verb grammar — a specialized constructor kept on the namespace). */
+  export function controllable(): ControllableSignal<number> & AsyncOwnedResource;
 }
+
+/**
+ * Standalone verb-grammar constructor for a browser-environment {@link Signal}
+ * (ADR-0046/0051 — `create` allocates a runtime resource). The signal IS its own
+ * disposable ({@link AsyncOwnedResource}); the owning `lifetime` stays reachable.
+ */
+export declare function createSignal(source: SignalSource): Signal<number> & AsyncOwnedResource;
 
 /**
  * The sanctioned bidirectional bridge between {@link SignalSource} (the typed
@@ -461,10 +471,11 @@ export interface BlendTree<T extends Record<string, number>> {
   readonly changes: Pick<CellKernel.Fanout<T>, 'subscribe' | 'closed' | 'size'>;
 }
 
-export declare namespace BlendTree {
-  /** Build a blend tree that owns its own teardown via `dispose()`. */
-  export function make<T extends Record<string, number>>(): BlendTree<T> & AsyncOwnedResource;
-}
+/**
+ * Build a blend tree that owns its own teardown via `dispose()` — the standalone
+ * verb-grammar constructor (ADR-0046/0051).
+ */
+export declare function createBlendTree<T extends Record<string, number>>(): BlendTree<T> & AsyncOwnedResource;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 9. FRAME BUDGET
@@ -480,9 +491,11 @@ export interface FrameBudget {
   readonly lifetime: Lifetime;
 }
 
-export declare namespace FrameBudget {
-  export function make(config?: { targetFps?: number }): FrameBudget;
-}
+/**
+ * Build a rAF frame-budget tracker — the standalone verb-grammar constructor
+ * (ADR-0046/0051). The budget IS its own disposable ({@link AsyncOwnedResource}).
+ */
+export declare function createFrameBudget(config?: { targetFps?: number }): FrameBudget & AsyncOwnedResource;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 10. DIRTY TRACKING
@@ -497,9 +510,8 @@ export interface DirtyFlags<K extends string = string> {
   readonly mask: number;
 }
 
-export declare namespace DirtyFlags {
-  export function make<K extends string>(keys: readonly K[]): DirtyFlags<K>;
-}
+/** Build a bitmask dirty tracker — the standalone verb-grammar constructor (ADR-0046/0051). */
+export declare function createDirtyFlags<K extends string>(keys: readonly K[]): DirtyFlags<K>;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 11. PROTOCOL TYPES (from typesp)
@@ -568,15 +580,13 @@ export interface World {
   tick(): void;
 }
 
-export declare namespace World {
-  /**
-   * Build an ECS world that owns its own teardown via `dispose()`. The world
-   * registers zero finalizers (plain in-memory Maps), so `dispose()` is a formal,
-   * exactly-once release handle threaded by consumers, not a carrier of real
-   * finalizers.
-   */
-  export function make(): World & AsyncOwnedResource;
-}
+/**
+ * Build an ECS world that owns its own teardown via `dispose()` — the standalone
+ * verb-grammar constructor (ADR-0046/0051). The world registers zero finalizers
+ * (plain in-memory Maps), so `dispose()` is a formal, exactly-once release handle
+ * threaded by consumers, not a carrier of real finalizers.
+ */
+export declare function createWorld(): World & AsyncOwnedResource;
 
 /**
  * Dense packed component storage for hot ECS paths.
@@ -769,13 +779,15 @@ export interface LiveCell<K extends CellKind, T> extends Omit<Cell<T>, '_tag'> {
   publishCrossing(crossing: BoundaryCrossing<string>): void;
 }
 
-export declare namespace LiveCell {
-  export function make<K extends CellKind, T>(kind: K, initial: T): LiveCell<K, T>;
-  export function makeBoundary<I extends string, S extends readonly [string, ...string[]]>(
-    boundary: Boundary<I, S>,
-    initial: number,
-  ): LiveCell<'boundary', number>;
-}
+/**
+ * Standalone verb-grammar constructors for a {@link LiveCell} (ADR-0046/0051). Each
+ * live cell IS its own disposable ({@link AsyncOwnedResource}).
+ */
+export declare function createLiveCell<K extends CellKind, T>(kind: K, initial: T): LiveCell<K, T> & AsyncOwnedResource;
+export declare function createLiveCellBoundary<I extends string, S extends readonly [string, ...string[]]>(
+  boundary: Boundary<I, S>,
+  initial: number,
+): LiveCell<'boundary', number> & AsyncOwnedResource;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 16. CAPABILITY LATTICE (re-parameterized from @kit: pure<read<...<system -> static<styled<...<gpu)

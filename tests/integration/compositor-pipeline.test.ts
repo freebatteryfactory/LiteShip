@@ -10,7 +10,7 @@
  */
 
 import { describe, test, expect, vi } from 'vitest';
-import { Boundary, Compositor, CompositorStatePool, FrameBudget, defineBoundary } from '@liteship/core';
+import { Boundary, Compositor, FrameBudget, defineBoundary, createCompositorStatePool } from '@liteship/core';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -103,7 +103,7 @@ describe('Compositor pipeline integration', () => {
 
   test('pool acquire is called in compute hot path', async () => {
     // Create a pool and spy on acquire
-    const pool = CompositorStatePool.make(4);
+    const pool = createCompositorStatePool(4);
     const originalAcquire = pool.acquire.bind(pool);
     let acquireCount = 0;
     pool.acquire = () => {

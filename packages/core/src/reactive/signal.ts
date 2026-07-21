@@ -24,7 +24,8 @@ import { wallClock, type Clock } from '../clock/clock.js';
 import { ValidationError } from '@liteship/error';
 import { CellKernel } from './cell-kernel.js';
 import type { Disposer } from './cell-kernel.js';
-import { Lifetime } from './lifetime.js';
+import { Lifetime, attachLifetime } from './lifetime.js';
+import type { AsyncOwnedResource } from './lifetime.js';
 
 /** Tag of a {@link SignalSource} — the family of live data feed a signal binds to. */
 export type SignalSourceType = 'viewport' | 'time' | 'pointer' | 'scroll' | 'media' | 'custom' | 'audio';
@@ -36,7 +37,7 @@ export type SignalSourceType = 'viewport' | 'time' | 'pointer' | 'scroll' | 'med
  *
  * Discriminant payloads default to the common case when omitted:
  * viewport `axis: 'width'`, time `mode: 'elapsed'`, pointer `axis: 'x'`,
- * scroll `axis: 'y'`, audio `mode: 'sample'`. {@link Signal.make} normalizes
+ * scroll `axis: 'y'`, audio `mode: 'sample'`. {@link createSignal} normalizes
  * the source, so the returned signal's `source` always carries explicit values.
  *
  * Audio modes:
@@ -138,8 +139,8 @@ function initialValueForSource(source: SignalSource, clock: Clock): number {
 /**
  * Attach the source's browser/rAF/interval listeners, publishing directly into
  * `kernel` and registering their teardown on `lifetime`. Synchronous — the
- * listeners are live the moment {@link _make} returns (no forked setup fiber);
- * `lifetime.dispose()` removes every listener and cancels every loop.
+ * listeners are live the moment {@link createSignal} returns (no forked setup
+ * fiber); `lifetime.dispose()` removes every listener and cancels every loop.
  */
 function setupListener(
   source: SignalSource,
@@ -249,10 +250,12 @@ function setupListener(
 /**
  * Create a reactive signal from a browser environment source.
  *
- * Returns a plain signal owned by a {@link Lifetime}: it sets up event listeners
- * (resize, scroll, pointermove, etc.) immediately and removes them on
- * `signal.lifetime.dispose()`. The signal exposes `.read()` (latest value) and
- * `.subscribe(sink)` (replay-1 stream of updates, returning a {@link Disposer}).
+ * Returns a signal that IS its own disposable ({@link AsyncOwnedResource}): it sets
+ * up event listeners (resize, scroll, pointermove, etc.) immediately and removes
+ * them on `signal.dispose()` (or `await using signal = createSignal(...)`). The
+ * signal exposes `.read()` (latest value) and `.subscribe(sink)` (replay-1 stream
+ * of updates, returning a {@link Disposer}); the owning {@link Lifetime} stays
+ * reachable as `signal.lifetime` for advanced composition.
  *
  * `clock` (default {@link wallClock}) is the injected time source for the `time`
  * source family (elapsed/absolute) — pass a `manualClock`/`fixedClock` to drive an
@@ -260,17 +263,20 @@ function setupListener(
  *
  * @example
  * ```ts
- * import { Signal } from '@liteship/core';
+ * import { createSignal } from '@liteship/core';
  *
- * const sig = Signal.make({ type: 'viewport', axis: 'width' });
+ * const sig = createSignal({ type: 'viewport', axis: 'width' });
  * const width = sig.read(); // current window.innerWidth
  * const off = sig.subscribe((w) => console.log(w));
  * // ...
  * off();
- * await sig.lifetime.dispose();
+ * await sig.dispose();
  * ```
  */
-function _make(rawSource: SignalSource, clock: Clock = wallClock): SignalShape<number> {
+export function createSignal(
+  rawSource: SignalSource,
+  clock: Clock = wallClock,
+): SignalShape<number> & AsyncOwnedResource {
   const source = normalizeSource(rawSource);
   const initial = initialValueForSource(source, clock);
   // Cell channel: {all} (emit every update) + 'deferred' (glitch-free async-append
@@ -283,12 +289,13 @@ function _make(rawSource: SignalSource, clock: Clock = wallClock): SignalShape<n
   // completes its subscribers, so a straggler event cannot publish post-close.
   lifetime.add(() => kernel.close());
 
-  return {
+  const signal: SignalShape<number> = {
     source,
     read: () => kernel.read(),
     subscribe: (subscriber) => kernel.subscribe(subscriber),
     lifetime,
   };
+  return attachLifetime(signal, lifetime);
 }
 
 /**
@@ -296,7 +303,8 @@ function _make(rawSource: SignalSource, clock: Clock = wallClock): SignalShape<n
  *
  * External code drives the signal value via `seek()`; no automatic ticking.
  * `pause()`/`resume()` gate seek updates. Effect-free — `seek`/`pause`/`resume`
- * are synchronous.
+ * are synchronous. The controllable signal IS its own disposable
+ * ({@link AsyncOwnedResource}): `await ctrl.dispose()` closes the kernel.
  *
  * @example
  * ```ts
@@ -309,14 +317,14 @@ function _make(rawSource: SignalSource, clock: Clock = wallClock): SignalShape<n
  * ctrl.seek(2000); // ignored while paused
  * ```
  */
-function _controllable(): ControllableSignalShape<number> {
+function _controllable(): ControllableSignalShape<number> & AsyncOwnedResource {
   const kernel = CellKernel.replay1<number>(0, { kind: 'all' }, 'deferred');
   const lifetime = Lifetime.make();
   lifetime.add(() => kernel.close());
   // Closure paused-flag (was `Ref.make(false)`).
   let paused = false;
 
-  return {
+  const signal: ControllableSignalShape<number> = {
     source: { type: 'time' as const, mode: 'scheduled' as const },
     read: () => kernel.read(),
     subscribe: (subscriber) => kernel.subscribe(subscriber),
@@ -331,6 +339,7 @@ function _controllable(): ControllableSignalShape<number> {
     },
     lifetime,
   };
+  return attachLifetime(signal, lifetime);
 }
 
 // ---------------------------------------------------------------------------
@@ -364,7 +373,7 @@ function _audio(
   bridge: AVBridge,
   mode: 'sample' | 'normalized' = 'sample',
   totalDurationSec?: number,
-): AudioSignalShape {
+): AudioSignalShape & AsyncOwnedResource {
   if (mode === 'normalized' && !(totalDurationSec !== undefined && totalDurationSec > 0)) {
     throw ValidationError(
       'Signal.audio',
@@ -388,34 +397,37 @@ function _audio(
     return value;
   };
 
-  return {
+  const signal: AudioSignalShape = {
     source: { type: 'audio' as const, mode } as const,
     read: () => kernel.read(),
     subscribe: (subscriber) => kernel.subscribe(subscriber),
     poll,
     lifetime,
   };
+  return attachLifetime(signal, lifetime);
 }
 
 /**
- * Signal namespace -- live data feeds from the browser environment.
+ * Signal namespace -- the alternate live-feed constructors.
  *
- * Create reactive signals from viewport, scroll, pointer, time, media query,
- * audio, or custom sources. Each signal provides `.read()` and `.subscribe(sink)`
- * backed by {@link CellKernel.replay1}, plus a {@link Lifetime} for listener
- * cleanup. Effect-free — consumers coordinate live state with no `effect` import.
+ * The primary environment-source constructor is the standalone {@link createSignal}
+ * (verb grammar, ADR-0046 — `create` allocates a runtime resource). This namespace
+ * carries the two SPECIALIZED constructors: `controllable` (a seekable/pausable
+ * time signal driven externally) and `audio` (an {@link AVBridge}-backed sample/
+ * normalized feed). Each signal provides `.read()` and `.subscribe(sink)` backed by
+ * {@link CellKernel.replay1}, and IS its own disposable ({@link AsyncOwnedResource}).
  *
  * @example
  * ```ts
- * import { Signal } from '@liteship/core';
+ * import { createSignal, Signal } from '@liteship/core';
  *
- * const viewport = Signal.make({ type: 'viewport', axis: 'width' });
+ * const viewport = createSignal({ type: 'viewport', axis: 'width' });
  * const width = viewport.read();
  * const ctrl = Signal.controllable();
  * ctrl.seek(500);
  * ```
  */
-export const Signal = { make: _make, controllable: _controllable, audio: _audio };
+export const Signal = { controllable: _controllable, audio: _audio };
 
 /** Public structural type for `Signal`. */
 export type Signal<T> = SignalShape<T>;

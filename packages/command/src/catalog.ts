@@ -96,7 +96,7 @@ const CLI_OWNED_DESCRIPTORS = [
         fix: { type: 'boolean' },
         ci: { type: 'boolean' },
         preflight: { type: 'boolean' },
-        target: { type: 'string', enum: ['cloudflare', 'astro'] },
+        target: { type: 'string', enum: ['cloudflare', 'astro', 'consumer-app'] },
       },
     },
     annotations: { group: 'setup' },

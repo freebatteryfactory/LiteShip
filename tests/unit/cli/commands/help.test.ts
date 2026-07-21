@@ -15,15 +15,26 @@ describe('help command', () => {
   });
 
   it('mentions the core verbs so newcomers can grep for them', () => {
-    for (const verb of ['doctor', 'describe', 'glossary', 'version', 'scene', 'asset', 'capsule', 'ship', 'gauntlet', 'mcp']) {
+    for (const verb of [
+      'doctor',
+      'describe',
+      'glossary',
+      'version',
+      'scene',
+      'asset',
+      'capsule',
+      'ship',
+      'gauntlet',
+      'mcp',
+    ]) {
       expect(HELP_TEXT).toContain(verb);
     }
   });
 
-  it('points the human at `pnpm shakedown` and `liteship doctor` for triage', () => {
-    // `pnpm shakedown` (renamed from `pnpm setup` to avoid collision with
-    // pnpm's built-in `pnpm setup` installer command) — PR #3 P1 fix.
-    expect(HELP_TEXT).toContain('pnpm shakedown');
+  it('points the human at `pnpm verify` and `liteship doctor` for triage', () => {
+    // `pnpm verify` is the first-run aggregate entry point; the `shakedown`
+    // script was retired, so the CLI must not point at a dead script.
+    expect(HELP_TEXT).toContain('pnpm verify');
     expect(HELP_TEXT).toContain('liteship doctor');
   });
 });

@@ -38,6 +38,7 @@ import { resolve, join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ROOT_VALUE_BUDGET, ROOT_TYPE_BUDGET } from '../../../packages/liteship/src/export-budget.js';
 import * as Root from '../../../packages/liteship/src/index.js';
+import { facadeExportBudgetGate, verifyGate, memoryContext } from '../../../packages/gauntlet/src/index.js';
 import { scaledTimeout } from '../../../vitest.shared.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -115,7 +116,10 @@ beforeAll(() => {
   sandbox = mkdtempSync(join(tmpdir(), 'liteship-facade-'));
   // An ESM project (`type: module`) so node16 resolution treats the consumer files as
   // ESM — matching how a real downstream `liteship` app is authored.
-  writeFileSync(join(sandbox, 'package.json'), `${JSON.stringify({ name: 'facade-consumer', type: 'module' }, null, 2)}\n`);
+  writeFileSync(
+    join(sandbox, 'package.json'),
+    `${JSON.stringify({ name: 'facade-consumer', type: 'module' }, null, 2)}\n`,
+  );
   const nm = join(sandbox, 'node_modules');
   mkdirSync(nm, { recursive: true });
   // The load-bearing setup: `liteship` is resolved as a real installed dep through its
@@ -199,11 +203,22 @@ describe('liteship facade — consumer type-checks (node16 + bundler)', () => {
   }
 });
 
-describe('liteship facade — root export budget (subset + caps)', () => {
+describe('liteship facade — root export budget (exact match + caps)', () => {
   it('every runtime value the root exports is listed in ROOT_VALUE_BUDGET', () => {
     const budget = new Set<string>(ROOT_VALUE_BUDGET);
     const unlisted = Object.keys(Root).filter((name) => !budget.has(name));
     expect(unlisted, `root value exports outside the budget allowlist: [${unlisted.join(', ')}]`).toEqual([]);
+  });
+
+  it('every listed VALUE in ROOT_VALUE_BUDGET is actually exported at runtime (exact match, no phantom slot)', () => {
+    // The exact-match law's second direction (ADR-0051): a listed value MUST be a
+    // real runtime export — no reserved-but-absent slot survives. Type-only budget
+    // entries are excluded here (they have no runtime footprint; the built-d.ts gate
+    // proves the TYPE direction).
+    const runtime = new Set<string>(Object.keys(Root));
+    const typeOnly = new Set<string>(ROOT_TYPE_BUDGET);
+    const phantom = ROOT_VALUE_BUDGET.filter((name) => !runtime.has(name) && !typeOnly.has(name));
+    expect(phantom, `budget lists values with no backing runtime export: [${phantom.join(', ')}]`).toEqual([]);
   });
 
   it('neither budget kind exceeds its 30-symbol cap', () => {
@@ -214,6 +229,48 @@ describe('liteship facade — root export budget (subset + caps)', () => {
   it('the budget allowlists carry no duplicate entries', () => {
     expect(new Set(ROOT_VALUE_BUDGET).size).toBe(ROOT_VALUE_BUDGET.length);
     expect(new Set(ROOT_TYPE_BUDGET).size).toBe(ROOT_TYPE_BUDGET.length);
+  });
+});
+
+describe('gauntlet/facade-export-budget — exact-match gate (both directions)', () => {
+  const BUDGET_FILE = 'packages/liteship/src/export-budget.ts';
+  const ROOT_DTS_FILE = 'packages/liteship/dist/index.d.ts';
+  const FIXTURE_BUDGET =
+    "export const ROOT_VALUE_BUDGET = [\n  'alpha',\n  'beta',\n] as const;\n" +
+    "export const ROOT_TYPE_BUDGET = [\n  'Gamma',\n  'Delta',\n] as const;\n";
+
+  it('self-proves (red caught, green clean, mutation killed)', () => {
+    const proof = verifyGate(facadeExportBudgetGate);
+    expect(proof.selfProven, `facade-export-budget did not self-prove: ${JSON.stringify(proof)}`).toBe(true);
+  });
+
+  it('an EXACT surface (both directions, under cap) passes clean', () => {
+    const ctx = memoryContext({
+      [BUDGET_FILE]: FIXTURE_BUDGET,
+      [ROOT_DTS_FILE]:
+        "export { alpha } from '@liteship/core';\nexport type { Gamma, Delta } from '@liteship/core';\nexport declare const beta: number;\n",
+    });
+    expect(facadeExportBudgetGate.run(ctx)).toEqual([]);
+  });
+
+  it('an UNLISTED export reds (the sprawl direction)', () => {
+    const ctx = memoryContext({
+      [BUDGET_FILE]: FIXTURE_BUDGET,
+      [ROOT_DTS_FILE]:
+        "export { alpha, zeta } from '@liteship/core';\nexport type { Gamma, Delta } from '@liteship/core';\nexport declare const beta: number;\n",
+    });
+    const findings = facadeExportBudgetGate.run(ctx);
+    expect(findings.some((f) => f.detail.includes('zeta') && f.title.includes('outside the facade budget'))).toBe(true);
+  });
+
+  it('a DROPPED listed export reds (the regression direction the old SUBSET gate was blind to)', () => {
+    const ctx = memoryContext({
+      [BUDGET_FILE]: FIXTURE_BUDGET,
+      // `beta` is listed in the budget but NOT exported by the surface.
+      [ROOT_DTS_FILE]: "export { alpha } from '@liteship/core';\nexport type { Gamma, Delta } from '@liteship/core';\n",
+    });
+    const findings = facadeExportBudgetGate.run(ctx);
+    expect(findings.some((f) => f.detail.includes('beta') && f.title.includes('dropped'))).toBe(true);
   });
 });
 
@@ -232,7 +289,10 @@ describe('liteship facade — the root is host-free', () => {
     // astro-free property cannot be defeated by a NEW host dep the deny-list forgot.
     const allowed = new Set<string>(ROOT_RUNTIME_SCOPES);
     const rogue = [...scopes].filter((s) => !allowed.has(s));
-    expect(rogue, `root evaluates unexpected scopes (only ${ROOT_RUNTIME_SCOPES.join(', ')} allowed): [${rogue.join(', ')}]`).toEqual([]);
+    expect(
+      rogue,
+      `root evaluates unexpected scopes (only ${ROOT_RUNTIME_SCOPES.join(', ')} allowed): [${rogue.join(', ')}]`,
+    ).toEqual([]);
   });
 
   it('the root d.ts type-only host re-exports are erased from the runtime graph', () => {

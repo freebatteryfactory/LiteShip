@@ -6,7 +6,7 @@
  * @module
  */
 
-export { Lifetime, attachLifetime } from './lifetime.js';
+export { Lifetime, attachLifetime, createLifetime } from './lifetime.js';
 
 export type { LifetimeShape, LifetimeDisposeError, Finalizer, OwnedResource, AsyncOwnedResource } from './lifetime.js';
 
@@ -14,7 +14,7 @@ export { CellKernel } from './cell-kernel.js';
 
 export type { Disposer, CellSink, CellSubscriber, CellReplayShape, CellFanoutShape } from './cell-kernel.js';
 
-export { Signal } from './signal.js';
+export { Signal, createSignal } from './signal.js';
 
 export type { SignalSourceType, SignalSource } from './signal.js';
 
@@ -52,7 +52,9 @@ export type { RafDebouncedTrigger } from './scheduler.js';
 
 export { SpeculativeEvaluator } from './speculative.js';
 
-export { DirtyFlags } from './dirty.js';
+export { createDirtyFlags } from './dirty.js';
+
+export type { DirtyFlags } from './dirty.js';
 
 export { createCell } from './cell.js';
 
@@ -70,7 +72,9 @@ export { RuntimeCoordinator } from './runtime-coordinator.js';
 
 export type { RuntimePhase, RuntimeCoordinatorConfig } from './runtime-coordinator.js';
 
-export { LiveCell } from './live-cell.js';
+export { createLiveCell, createLiveCellBoundary } from './live-cell.js';
+
+export type { LiveCell } from './live-cell.js';
 
 export { isCell, isDerived, isZap } from './primitive.js';
 

@@ -7,7 +7,7 @@
  * @module
  */
 
-export { Lifetime, attachLifetime } from '@liteship/core/reactive';
+export { Lifetime, attachLifetime, createLifetime } from '@liteship/core/reactive';
 export type {
   LifetimeShape,
   LifetimeDisposeError,
@@ -19,7 +19,7 @@ export type {
 export { CellKernel } from '@liteship/core/reactive';
 export type { Disposer, CellSink, CellSubscriber, CellReplayShape, CellFanoutShape } from '@liteship/core/reactive';
 
-export { Signal } from '@liteship/core/reactive';
+export { Signal, createSignal } from '@liteship/core/reactive';
 export type { SignalSourceType, SignalSource } from '@liteship/core/reactive';
 
 export { sourceToInput, inputToSource, inputSourceType } from '@liteship/core/reactive';
@@ -53,7 +53,8 @@ export type { RafDebouncedTrigger } from '@liteship/core/reactive';
 
 export { SpeculativeEvaluator } from '@liteship/core/reactive';
 
-export { DirtyFlags } from '@liteship/core/reactive';
+export { createDirtyFlags } from '@liteship/core/reactive';
+export type { DirtyFlags } from '@liteship/core/reactive';
 
 export { createCell } from '@liteship/core/reactive';
 export type { Cell } from '@liteship/core/reactive';
@@ -68,7 +69,8 @@ export type { Store } from '@liteship/core/reactive';
 export { RuntimeCoordinator } from '@liteship/core/reactive';
 export type { RuntimePhase, RuntimeCoordinatorConfig } from '@liteship/core/reactive';
 
-export { LiveCell } from '@liteship/core/reactive';
+export { createLiveCell, createLiveCellBoundary } from '@liteship/core/reactive';
+export type { LiveCell } from '@liteship/core/reactive';
 
 export { isCell, isDerived, isZap } from '@liteship/core/reactive';
 export type { Primitive } from '@liteship/core/reactive';

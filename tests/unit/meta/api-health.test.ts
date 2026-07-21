@@ -28,11 +28,14 @@ const API_REGISTRY: Record<string, { methods: string[]; values?: string[] }> = {
   BoundarySpec: { methods: ['isActive'] },
   BoundaryAttribute: { methods: ['isAllowedKey'] },
   Token: { methods: ['tap', 'cssVar'] },
-  TokenBuffer: { methods: ['make'] },
+  // `TokenBuffer` is now type-only; construction is the standalone `createTokenBuffer`
+  // (verb grammar, ADR-0051 — the reactive-substrate sweep).
   Style: { methods: ['tap', 'mergeLayers'] },
   Theme: { methods: ['tap'] },
-  Component: { methods: ['make'] },
-  Signal: { methods: ['make', 'controllable', 'audio'] },
+  // `Component` is now type-only; construction is the standalone `createComponent` (ADR-0051).
+  // `Signal` construction moved to the standalone `createSignal` (ADR-0051); the namespace
+  // object keeps its specialized `controllable` / `audio` constructors.
+  Signal: { methods: ['controllable', 'audio'] },
   Easing: {
     methods: [
       'linear',
@@ -59,14 +62,14 @@ const API_REGISTRY: Record<string, { methods: string[]; values?: string[] }> = {
 
   // ── Compositor / ECS / scheduling ─────────────────────────────────
   Compositor: { methods: ['create'] },
-  CompositorStatePool: { methods: ['make'] },
-  BlendTree: { methods: ['make'] },
-  DirtyFlags: { methods: ['make'] },
-  FrameBudget: { methods: ['make'] },
+  // `CompositorStatePool` / `BlendTree` / `DirtyFlags` / `FrameBudget` / `World` are now
+  // type-only; construction is the standalone `createCompositorStatePool` / `createBlendTree`
+  // / `createDirtyFlags` / `createFrameBudget` / `createWorld` (verb grammar, ADR-0051).
   Scheduler: { methods: ['raf', 'noop', 'fixedStep', 'audioSync'] },
   Part: { methods: ['dense'] },
-  World: { methods: ['make'] },
-  Composable: { methods: ['make', 'compose', 'merge'] },
+  // `Composable` construction moved to the standalone `createComposable` (ADR-0051); the
+  // namespace object keeps its `compose` / `merge` combinators.
+  Composable: { methods: ['compose', 'merge'] },
   ComposableWorld: { methods: ['make', 'dense'] },
 
   // `Op` (the Effect.Effect wrapper facade) was DELETED this wave — a pure
@@ -82,7 +85,8 @@ const API_REGISTRY: Record<string, { methods: string[]; values?: string[] }> = {
   // `Wire` (the fluent Effect-Stream wrapper) was DELETED this wave — 100%
   // transport, zero runtime consumers (the web/astro `wire` is the unrelated
   // liteship:* event registry). `isWire` + the Wire arm of `Primitive` left with it.
-  LiveCell: { methods: ['make', 'makeBoundary'] },
+  // `LiveCell` is now type-only; construction is the standalone `createLiveCell` /
+  // `createLiveCellBoundary` (verb grammar, ADR-0051 — the reactive-substrate sweep).
 
   // ── Schema kernel + disposal/reactive substrate (Wave 0 foundations) ──
   // The effect-free schema substrate: `schema.*` constructors over a frozen
@@ -268,6 +272,25 @@ const STANDALONE_FUNCTIONS = [
   'computed',
   'createStore',
   'createTimeline',
+  // Verb-grammar sweep 2 (ADR-0051): the reactive-substrate factories collapsed onto
+  // standalone `create*` functions (the old `.make` / `.makeBoundary` namespace spellings
+  // died). Plus `createLifetime` (the Lifetime factory as a curated verb), `inspectReceipt`
+  // (the `inspect`-verb debug facade over the Receipt namespace), and the `tierTargets`
+  // escalation reader wired through to the barrel.
+  'createSignal',
+  'createWorld',
+  'createBlendTree',
+  'createTokenBuffer',
+  'createComponent',
+  'createComposable',
+  'createDirtyFlags',
+  'createFrameBudget',
+  'createCompositorStatePool',
+  'createLiveCell',
+  'createLiveCellBoundary',
+  'createLifetime',
+  'inspectReceipt',
+  'tierTargets',
   // The ownership-contract wiring (P7 lifetime-pair collapse): folds a Lifetime's
   // single lifecycle directly onto a resource as `dispose()` + `[Symbol.asyncDispose]`,
   // so every public factory returns the value augmented with disposal instead of a

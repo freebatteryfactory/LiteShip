@@ -255,11 +255,14 @@ function playwrightBrowsersDir(): string | null {
 function hasChromiumBuild(): boolean {
   const dir = playwrightBrowsersDir();
   if (!dir || !existsSync(dir)) return false;
-  let found = false;
+  let found: boolean;
   try {
     found = readdirSync(dir).some((entry) => entry.startsWith('chromium'));
   } catch {
-    /* unreadable cache dir — treat as no chromium */
+    // An unreadable browsers-cache dir reads as "no chromium installed" — record the
+    // conservative, non-corrupting fallback the doctor already surfaces to the user
+    // (a false "missing" prompts a reinstall, never hides a real break).
+    found = false;
   }
   return found;
 }

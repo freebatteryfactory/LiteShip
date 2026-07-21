@@ -1,5 +1,5 @@
 /**
- * doctor — preflight rig-check entrypoint. Casts environment signals (Node,
+ * doctor — preflight environment check entrypoint. Casts environment signals (Node,
  * pnpm, workspace state, build artifacts, git hooks, Playwright browsers)
  * into three named bearings — `ok` / `warn` / `fail` — and resolves to one
  * verdict — `ready` / `caution` / `blocked`. Emits a JSON receipt to

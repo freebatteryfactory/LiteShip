@@ -6,15 +6,17 @@
  *
  * All methods (remaining, canRun, scheduleSync) are plain synchronous JS. The rAF
  * loop's teardown is owned by a {@link Lifetime} (the disposal primitive that
- * replaces Effect's `Scope` at the shed seams): `budget.lifetime.dispose()`
- * cancels the animation frame — no Effect, no microtask.
+ * replaces Effect's `Scope` at the shed seams): the budget IS its own disposable
+ * ({@link AsyncOwnedResource}), so `budget.dispose()` cancels the animation frame —
+ * no Effect, no microtask.
  *
  * @module
  */
 
 import { DEFAULT_TARGET_FPS, MS_PER_SEC } from '../authoring/defaults.js';
 import { type Clock, systemClock } from '../clock/clock.js';
-import { Lifetime } from '../reactive/lifetime.js';
+import { Lifetime, attachLifetime } from '../reactive/lifetime.js';
+import type { AsyncOwnedResource } from '../reactive/lifetime.js';
 import { ValidationError } from '@liteship/error';
 
 /**
@@ -41,7 +43,8 @@ interface FrameBudgetShape {
   readonly fpsSync: number;
   /**
    * Owns the rAF loop teardown. Its sole finalizer cancels the animation frame,
-   * so `dispose()` stops the frame-pacing loop.
+   * so `dispose()` stops the frame-pacing loop. Reachable for advanced composition;
+   * day-to-day teardown goes through the budget's own `dispose()`.
    */
   readonly lifetime: Lifetime;
 }
@@ -49,21 +52,26 @@ interface FrameBudgetShape {
 /**
  * Creates a FrameBudget tracker tied to rAF, with priority-based scheduling.
  * Critical tasks always run; lower priorities are deferred if budget is exhausted.
+ * The budget IS its own disposable ({@link AsyncOwnedResource}) — awaiting
+ * `budget.dispose()` cancels the rAF loop (verb grammar, ADR-0046).
  *
  * @example
  * ```ts
- * const budget = FrameBudget.make({ targetFps: 60 });
+ * const budget = createFrameBudget({ targetFps: 60 });
  * const remaining = budget.remaining(); // ms left in this frame
  * const canAnimate = budget.canRun('high'); // true if enough budget
  * const result = budget.scheduleSync('low', () => 'done');
  * // result is 'done' if budget permits, null otherwise
- * budget.lifetime.dispose(); // later: cancels the rAF loop
+ * await budget.dispose(); // later: cancels the rAF loop
  * ```
  */
-function _make(config?: { targetFps?: number; clock?: Clock }): FrameBudgetShape {
+export function createFrameBudget(config?: {
+  targetFps?: number;
+  clock?: Clock;
+}): FrameBudgetShape & AsyncOwnedResource {
   const targetFps = config?.targetFps ?? DEFAULT_TARGET_FPS;
   if (targetFps <= 0 || !Number.isFinite(targetFps)) {
-    throw ValidationError('FrameBudget.make', `targetFps must be a positive finite number, got ${targetFps}`);
+    throw ValidationError('createFrameBudget', `targetFps must be a positive finite number, got ${targetFps}`);
   }
   const frameBudgetMs = MS_PER_SEC / targetFps;
   // Monotonic DURATION clock for the rAF hot path (frame pacing / remaining-budget
@@ -127,24 +135,22 @@ function _make(config?: { targetFps?: number; clock?: Clock }): FrameBudgetShape
     lifetime,
   };
 
-  return budget;
+  return attachLifetime(budget, lifetime);
 }
 
 /**
- * FrameBudget -- rAF-based frame budget manager with priority lanes.
- * Tracks remaining time per animation frame and gates work by priority:
- * `critical` (always runs) `> high > low > idle`.
+ * Public structural type for `FrameBudget` -- rAF-based frame budget manager with
+ * priority lanes. Tracks remaining time per animation frame and gates work by
+ * priority: `critical` (always runs) `> high > low > idle`. Construct one with the
+ * standalone {@link createFrameBudget}.
  *
  * @example
  * ```ts
- * const budget = FrameBudget.make({ targetFps: 60 });
+ * const budget = createFrameBudget({ targetFps: 60 });
  * if (budget.canRun('high')) {
  *   budget.scheduleSync('high', () => render());
  * }
  * const fps = budget.fpsSync; // current measured FPS
  * ```
  */
-export const FrameBudget = { make: _make };
-
-/** Public structural type for `FrameBudget`. */
 export type FrameBudget = FrameBudgetShape;

@@ -8,4 +8,4 @@
 
 > `const` **LITESHIP\_WAIVERS**: readonly [`Waiver`](../interfaces/Waiver.md)[]
 
-Defined in: [gauntlet/src/waivers.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/waivers.ts#L37)
+Defined in: [gauntlet/src/waivers.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/waivers.ts#L38)

@@ -1,16 +1,30 @@
 /**
  * Integration Tests: ECS Composable Composition
- * 
+ *
  * End-to-end integration tests for ECS composition over existing primitives.
  * These tests verify the complete composition pipeline works together.
  */
 
 import { describe, test, expect } from 'vitest';
-import { Composable, ComposableWorld, Part, RuntimeCoordinator, World, defineBoundary, defineToken, defineStyle } from '@liteship/core';
+import {
+  ComposableWorld,
+  Part,
+  RuntimeCoordinator,
+  defineBoundary,
+  defineToken,
+  defineStyle,
+  createWorld,
+  Composable,
+  createComposable,
+} from '@liteship/core';
 
 const boundary = defineBoundary({
   input: 'viewport.width',
-  at: [[0, 'mobile'], [768, 'tablet'], [1024, 'desktop']],
+  at: [
+    [0, 'mobile'],
+    [768, 'tablet'],
+    [1024, 'desktop'],
+  ],
 });
 
 const token = defineToken({
@@ -54,7 +68,7 @@ type TestSchema = {
 
 describe('ECS Composition Integration', () => {
   test('full lifecycle: spawn, query, evaluate, add system, and tick', () => {
-    const world = World.make();
+    const world = createWorld();
     const composableWorld = ComposableWorld.make<TestSchema>(world);
     const entityA = composableWorld.spawn({ boundary, token, style });
     const entityB = composableWorld.spawn({ boundary });
@@ -94,10 +108,10 @@ describe('ECS Composition Integration', () => {
   });
 
   test('dense store lifecycle integrates with world tick and retrieval', () => {
-    const world = World.make();
+    const world = createWorld();
     const dense = ComposableWorld.dense(world);
     const metrics = dense.create('metrics', 8);
-    const entity = Composable.make<TestSchema>({ boundary, token });
+    const entity = createComposable<TestSchema>({ boundary, token });
     dense.store(entity, 5);
 
     let seenMetric = 0;
@@ -125,7 +139,7 @@ describe('ECS Composition Integration', () => {
   });
 
   test('entity despawn removes entities from queries and dense stores', () => {
-    const world = World.make();
+    const world = createWorld();
     const denseStore = Part.dense('hp', 16);
     world.addDenseStore(denseStore);
     const id = world.spawn({ boundary, role: 'hero' });
@@ -149,15 +163,15 @@ describe('ECS Composition Integration', () => {
   });
 
   test('Composable composition pipeline stays content-address stable across creation paths', () => {
-    const direct = Composable.make<TestSchema>({ boundary, token, style });
+    const direct = createComposable<TestSchema>({ boundary, token, style });
     const composed = Composable.compose(
-      Composable.make<TestSchema>({ boundary }),
-      Composable.make<TestSchema>({ token, style }),
+      createComposable<TestSchema>({ boundary }),
+      createComposable<TestSchema>({ token, style }),
     );
     const merged = Composable.merge(
-      Composable.make<TestSchema>({ boundary }),
-      Composable.make<TestSchema>({ token }),
-      Composable.make<TestSchema>({ style }),
+      createComposable<TestSchema>({ boundary }),
+      createComposable<TestSchema>({ token }),
+      createComposable<TestSchema>({ style }),
     );
 
     expect(direct.id).toBe(composed.id);
@@ -165,7 +179,7 @@ describe('ECS Composition Integration', () => {
   });
 
   test('multiple systems execute in registration order', () => {
-    const world = World.make();
+    const world = createWorld();
     world.spawn({ boundary });
     const calls: string[] = [];
 
@@ -213,7 +227,10 @@ describe('ECS Composition Integration', () => {
     expect(() =>
       defineBoundary({
         input: 'viewport.width',
-        at: [[768, 'tablet'], [0, 'mobile']],
+        at: [
+          [768, 'tablet'],
+          [0, 'mobile'],
+        ],
       }),
     ).toThrow();
 

@@ -104,10 +104,6 @@
           "kind": "interface"
         },
         {
-          "name": "BlendTree",
-          "kind": "namespace"
-        },
-        {
           "name": "Boundary",
           "kind": "interface"
         },
@@ -440,10 +436,6 @@
           "kind": "interface"
         },
         {
-          "name": "DirtyFlags",
-          "kind": "namespace"
-        },
-        {
           "name": "Disposer",
           "kind": "type"
         },
@@ -556,10 +548,6 @@
           "kind": "interface"
         },
         {
-          "name": "FrameBudget",
-          "kind": "namespace"
-        },
-        {
           "name": "FrameCapture",
           "kind": "interface"
         },
@@ -670,10 +658,6 @@
         {
           "name": "LiveCell",
           "kind": "interface"
-        },
-        {
-          "name": "LiveCell",
-          "kind": "namespace"
         },
         {
           "name": "LiveQuantizer",
@@ -1282,10 +1266,6 @@
         {
           "name": "World",
           "kind": "interface"
-        },
-        {
-          "name": "World",
-          "kind": "namespace"
         },
         {
           "name": "Zap",
@@ -2364,10 +2344,6 @@
         },
         {
           "name": "BlendTree",
-          "kind": "namespace"
-        },
-        {
-          "name": "BlendTree",
           "kind": "type"
         },
         {
@@ -3119,6 +3095,10 @@
           "kind": "type"
         },
         {
+          "name": "ReceiptInspection",
+          "kind": "type"
+        },
+        {
           "name": "ReceiptSubject",
           "kind": "type"
         },
@@ -3437,10 +3417,6 @@
         {
           "name": "Token",
           "kind": "type"
-        },
-        {
-          "name": "TokenBuffer",
-          "kind": "namespace"
         },
         {
           "name": "TokenBuffer",

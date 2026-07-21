@@ -201,7 +201,13 @@ interface WorldShape {
  */
 type OwnedWorld = WorldShape & AsyncOwnedResource;
 
-function _makeWorld(): OwnedWorld {
+/**
+ * Build a fresh ECS {@link World} — the entity/system container that ticks systems
+ * over entities. The world IS its own disposable ({@link AsyncOwnedResource}); the
+ * owning {@link Lifetime} stays reachable as `world.lifetime` for advanced
+ * composition (verb grammar, ADR-0046 — `create` allocates a runtime resource).
+ */
+export function createWorld(): OwnedWorld {
   const entities = new Map<EntityId, Map<string, unknown>>();
   const systems: AnySystemShape[] = [];
   const denseStores = new Map<string, DenseStoreShape>();
@@ -343,12 +349,6 @@ export const Part = {
   dense: _makeDensePart,
 } as { dense: (name: string, capacity: number) => DenseStoreShape } & Record<string, never>;
 
-/** World namespace — construct the ECS world that ticks systems over entities. */
-export const World = {
-  /** Build a fresh ECS {@link World}; the returned instance owns its own teardown. */
-  make: _makeWorld,
-};
-
 /** Public structural type for `Part`. */
 export type Part<T = unknown> = PartShape<T>;
 
@@ -357,7 +357,10 @@ export declare namespace Part {
   export type Dense = DenseStoreShape;
 }
 
-/** Public structural type for `World`. */
+/**
+ * Public structural type for `World` — the ECS world that ticks systems over
+ * entities. Construct one with the standalone {@link createWorld}.
+ */
 export type World = WorldShape;
 
 export type {

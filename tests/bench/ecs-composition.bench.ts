@@ -6,13 +6,27 @@
  */
 
 import { Bench } from 'tinybench';
-import { Boundary, Composable, ComposableWorld, Part, World, defineBoundary, defineToken, defineStyle } from '@liteship/core';
+import {
+  Boundary,
+  ComposableWorld,
+  Part,
+  defineBoundary,
+  defineToken,
+  defineStyle,
+  createWorld,
+  Composable,
+  createComposable,
+} from '@liteship/core';
 
 const bench = new Bench({ warmupIterations: 50 });
 
 const boundary = defineBoundary({
   input: 'viewport.width',
-  at: [[0, 'mobile'], [768, 'tablet'], [1024, 'desktop']],
+  at: [
+    [0, 'mobile'],
+    [768, 'tablet'],
+    [1024, 'desktop'],
+  ],
 });
 
 const token = defineToken({
@@ -39,7 +53,10 @@ type TestSchema = {
 };
 
 const denseStore = Part.dense('hp', 2048);
-const denseEntityIds = Array.from({ length: 256 }, (_, index) => `entity-${index}:fnv1a:${index.toString(16).padStart(8, '0')}` as never);
+const denseEntityIds = Array.from(
+  { length: 256 },
+  (_, index) => `entity-${index}:fnv1a:${index.toString(16).padStart(8, '0')}` as never,
+);
 for (const [index, entityId] of denseEntityIds.entries()) {
   denseStore.set(entityId, index);
 }
@@ -49,36 +66,33 @@ bench.add('direct boundary evaluation', () => {
 });
 
 bench.add('Composable.make -- boundary only', () => {
-  Composable.make<TestSchema>({ boundary });
+  createComposable<TestSchema>({ boundary });
 });
 
 bench.add('Composable.make -- boundary + token + style', () => {
-  Composable.make<TestSchema>({ boundary, token, style });
+  createComposable<TestSchema>({ boundary, token, style });
 });
 
 bench.add('Composable.compose -- two entities', () => {
-  Composable.compose(
-    Composable.make<TestSchema>({ boundary }),
-    Composable.make<TestSchema>({ token, style }),
-  );
+  Composable.compose(createComposable<TestSchema>({ boundary }), createComposable<TestSchema>({ token, style }));
 });
 
 bench.add('Composable.merge -- three entities', () => {
   Composable.merge(
-    Composable.make<TestSchema>({ boundary }),
-    Composable.make<TestSchema>({ token }),
-    Composable.make<TestSchema>({ style }),
+    createComposable<TestSchema>({ boundary }),
+    createComposable<TestSchema>({ token }),
+    createComposable<TestSchema>({ style }),
   );
 });
 
 bench.add('ComposableWorld.spawn -- single entity', () => {
-  const scopedWorld = World.make();
+  const scopedWorld = createWorld();
   const scopedComposableWorld = ComposableWorld.make<TestSchema>(scopedWorld);
   scopedComposableWorld.spawn({ boundary, token, style });
 });
 
 bench.add('ComposableWorld.evaluate -- boundary + token + style', () => {
-  const scopedWorld = World.make();
+  const scopedWorld = createWorld();
   const scopedComposableWorld = ComposableWorld.make<TestSchema>(scopedWorld);
   const entity = scopedComposableWorld.spawn({ boundary, token, style });
   scopedComposableWorld.evaluate(entity, { 'viewport.width': 800, themeLevel: 1 });
@@ -103,7 +117,7 @@ bench.add('DenseStore delete + reinsert', () => {
 });
 
 bench.add('World.tick -- regular system', () => {
-  const scopedWorld = World.make();
+  const scopedWorld = createWorld();
   scopedWorld.spawn({ boundary });
   scopedWorld.addSystem({
     name: 'reader',
@@ -114,7 +128,7 @@ bench.add('World.tick -- regular system', () => {
 });
 
 bench.add('World.tick -- dense system', () => {
-  const scopedWorld = World.make();
+  const scopedWorld = createWorld();
   const posX = Part.dense('posX', 8);
   const posY = Part.dense('posY', 8);
   scopedWorld.addDenseStore(posX);
@@ -139,7 +153,7 @@ bench.add('World.tick -- dense system', () => {
 });
 
 bench.add('ComposableWorld.query -- existing world', () => {
-  const scopedWorld = World.make();
+  const scopedWorld = createWorld();
   const scopedComposableWorld = ComposableWorld.make<TestSchema>(scopedWorld);
   scopedComposableWorld.spawn({ boundary });
   scopedComposableWorld.spawn({ boundary, token });

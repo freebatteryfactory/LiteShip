@@ -151,7 +151,7 @@ export const GLOSSARY_ENTRIES: readonly GlossaryEntry[] = [
     term: 'gauntlet',
     category: 'primitive',
     definition:
-      'The full release-grade test gate (`pnpm run gauntlet:full`). Thirty-five phases starting with `rig-check`, ending in `flex:verify PASSED — project is 10/10`.',
+      'The full release-grade test gate (`pnpm run gauntlet:full`). Runs the ordered phase sequence from the initial environment check through to `flex:verify PASSED — project is 10/10`.',
   },
   {
     term: 'shake-down',

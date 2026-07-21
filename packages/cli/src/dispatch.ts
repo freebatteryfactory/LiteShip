@@ -552,7 +552,7 @@ export async function run(argv: readonly string[], deps: RunDeps = {}): Promise<
     // consumers can read it as the trailing line of stderr.
     const on = colorEnabled();
     process.stderr.write(
-      `${color('red', 'No such bearing:', on)} \`${rawCmd}\`.\nTry \`${color('cyan', 'liteship help', on)}\` for the chart.\n`,
+      `${color('red', 'Unknown command:', on)} \`${rawCmd}\`.\nTry \`${color('cyan', 'liteship help', on)}\` for the chart.\n`,
     );
     process.stderr.write(JSON.stringify({ error: 'unknown_command', command: rawCmd }) + '\n');
     return 1;

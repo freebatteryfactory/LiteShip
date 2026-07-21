@@ -55,7 +55,7 @@ export const CONTEXT_MAP: Readonly<Record<string, ContextTask>> = {
   'add-boundary': {
     title: 'Add or extend a boundary primitive',
     summary:
-      'A boundary partitions a continuous signal into named bearings. Author it in @liteship/core, evaluate it in @liteship/quantizer, and prove it with a boundary test.',
+      'A boundary partitions a continuous signal into named inputs. Author it in @liteship/core, evaluate it in @liteship/quantizer, and prove it with a boundary test.',
     pointers: [
       file(
         'owner-file',
@@ -78,7 +78,7 @@ export const CONTEXT_MAP: Readonly<Record<string, ContextTask>> = {
         'packages/command/src/checks/registry.ts',
         'The fast unit lane that runs your new boundary test.',
       ),
-      file('doc', 'GLOSSARY.md', 'The prose register for boundary / bearing / rig vocabulary.'),
+      file('doc', 'GLOSSARY.md', 'The prose register for the boundary / bearing vocabulary.'),
     ],
   },
   'add-motion': {

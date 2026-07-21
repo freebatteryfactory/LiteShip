@@ -10,7 +10,7 @@ Part namespace — factories for ECS component stores.
 
 Currently exposes the dense `Float64Array`-backed store used for hot-path
 numeric state; sparse/object-valued parts are registered ad-hoc via
-[World](../../variables/World.md).`addComponent`.
+[World](../../type-aliases/World.md).`addComponent`.
 
 ## Type Aliases
 

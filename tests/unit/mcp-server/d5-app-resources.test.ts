@@ -39,7 +39,10 @@ describe('D5 — D4 static surface stays frozen', () => {
       'ui://liteship/glossary',
     ]);
     const pin = fnv1a(
-      JSON.stringify({ list: listUiResources(), bodies: listUiResources().map((r) => readUiResource(r.uri).contents[0]!.text) }),
+      JSON.stringify({
+        list: listUiResources(),
+        bodies: listUiResources().map((r) => readUiResource(r.uri).contents[0]!.text),
+      }),
     );
     // CUT D9b-2: `audit` joined COMMAND_CATALOG → the registry/commands UI body changed.
     // Gauntlet hardening: the `gauntlet` glossary definition moved 32 -> 34 phases
@@ -78,7 +81,10 @@ describe('D5 — D4 static surface stays frozen', () => {
     // Re-pinned again when the `explain` (diagnostic-code / symbol lookup) and `context`
     // (task-oriented pointer map) reference commands joined COMMAND_CATALOG as
     // handler-backed, MCP-exposed commands — the registry/commands UI body grew by two.
-    expect(pin).toBe('fnv1a:8d4994a4');
+    // De-nauticalization sweep: the `gauntlet` glossary entry was reworded to drop the
+    // stale spelled-out phase count ("Thirty-five phases…") and the `rig-check` literal.
+    // renderGlossary embeds each entry's definition, so the glossary UI body shifted.
+    expect(pin).toBe('fnv1a:7e6abea2');
   });
 });
 
@@ -141,7 +147,16 @@ describe('D5 — the app resource is genuinely interactive + safe', () => {
 
   it('the app body uses ONLY the bridge — no network/eval/inline-handlers/remote sinks', () => {
     const html = readAppResource(APP_URI).contents[0]!.text;
-    for (const banned of ['fetch(', 'XMLHttpRequest', 'eval(', 'new Function', 'http://', 'https://', 'src="', 'href="']) {
+    for (const banned of [
+      'fetch(',
+      'XMLHttpRequest',
+      'eval(',
+      'new Function',
+      'http://',
+      'https://',
+      'src="',
+      'href="',
+    ]) {
       expect(html, `app body must not contain '${banned}'`).not.toContain(banned);
     }
     expect(/\son[a-z]+\s*=/i.test(html), 'app body must have no inline event-handler attributes').toBe(false);
@@ -167,7 +182,9 @@ describe('D5 — server honesty (no faked push channel)', () => {
   });
 
   it('D10 declares ui.callServerTool capability honestly', async () => {
-    const caps = (await result<{ capabilities: Record<string, unknown> }>('initialize', { protocolVersion: '2025-11-25' })).capabilities;
+    const caps = (
+      await result<{ capabilities: Record<string, unknown> }>('initialize', { protocolVersion: '2025-11-25' })
+    ).capabilities;
     expect(caps).toEqual({
       tools: { listChanged: false },
       resources: { listChanged: false },

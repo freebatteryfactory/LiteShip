@@ -547,6 +547,21 @@ export const DIAGNOSTIC_REGISTRY: Readonly<Record<DiagnosticCode, DiagnosticEntr
     'The host toolchain (node / pnpm / platform deps) satisfies the preflight requirements.',
     'install / update the toolchain dependency the doctor flagged.',
   ),
+  'check/journey': check(
+    'Consumer journey flows',
+    'Every consumer journey (scaffold, build, diagnostic, upgrade, package-author, cold-agent context) stays green from packed tarballs.',
+    'fix the consumer flow the journey test exercised (scaffold, build, diagnostic, upgrade, or context).',
+  ),
+  'check/hermetic': check(
+    'Hermetic release build + closure',
+    'The packed release rebuilds with the network disabled, every public subpath import-resolves, and the build reproduces.',
+    'fix the offline rebuild or the public-subpath export that failed to resolve in the hermetic closure.',
+  ),
+  'check/devcontainer-pins': check(
+    'Devcontainer pin parity',
+    'The committed .devcontainer pins (node, pnpm, rust) equal the repo source-of-truth versions.',
+    'realign the .devcontainer pin with package.json engines/packageManager, .nvmrc, or the CI toolchain pin.',
+  ),
 
   // ── core: @liteship/core runtime diagnostics (Diagnostics.warn/error codes) ──
   'core/document-graph/not_an_object': core(

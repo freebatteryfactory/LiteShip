@@ -129,7 +129,10 @@ const resolveGlob = (cwd: string, pattern: string): string[] => {
           out.push(`${parentRel}/${entry}`);
         }
       } catch {
-        /* unreadable entry — skip */
+        // An entry that cannot be statSync-d (permission / race) is not a publishable
+        // package — skip it and continue discovery. Conservative + non-corrupting: a
+        // genuinely unreadable directory entry is never a package we could ship.
+        continue;
       }
     }
     return out;

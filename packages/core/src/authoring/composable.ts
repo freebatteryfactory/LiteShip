@@ -49,7 +49,6 @@ export interface ComposableEntity<T extends EntityComponents = EntityComponents>
 // ---------------------------------------------------------------------------
 
 interface ComposableFactory {
-  make<T extends EntityComponents>(components: T): ComposableEntity<T>;
   compose<T extends EntityComponents>(entity1: ComposableEntity<T>, entity2: ComposableEntity<T>): ComposableEntity<T>;
   merge<T extends EntityComponents>(...entities: ComposableEntity<T>[]): ComposableEntity<T>;
 }
@@ -61,7 +60,12 @@ function makeEntityId(components: EntityComponents): ContentAddress {
   return contentAddressOf(components);
 }
 
-function _make<T extends EntityComponents>(components: T): ComposableEntity<T> {
+/**
+ * Content-address a component bag into a {@link ComposableEntity}. Two entities
+ * with structurally-equal components share the same content address (verb grammar,
+ * ADR-0046 — `create` allocates a content-addressed unit).
+ */
+export function createComposable<T extends EntityComponents>(components: T): ComposableEntity<T> {
   const id = makeEntityId(components);
 
   return {
@@ -77,7 +81,7 @@ function _compose<T extends EntityComponents>(
 ): ComposableEntity<T> {
   // Merge components with entity2 taking precedence
   const merged = { ...entity1.components, ...entity2.components };
-  return _make(merged);
+  return createComposable(merged);
 }
 
 function _merge<T extends EntityComponents>(...entities: ComposableEntity<T>[]): ComposableEntity<T> {
@@ -128,7 +132,7 @@ function makeComposableWorld<Schema extends EntityComponents = EntityComponents>
 
   return {
     spawn<T extends Schema>(components: T): ComposableEntity<T> {
-      const entity = _make(components);
+      const entity = createComposable(components);
       const ecsId = world.spawn(components);
       addressToEntityId.set(entity.id, ecsId);
       return entity;
@@ -151,7 +155,7 @@ function makeComposableWorld<Schema extends EntityComponents = EntityComponents>
           // Pick<Schema, K> via a single contained cast (runtime shape is validated by
           // the ECS query filter).
           const components = entriesToPick<Schema, K>(entityShape.components);
-          return _make(components);
+          return createComposable(components);
         });
     },
 
@@ -258,13 +262,12 @@ function makeComposableDenseStore(world: World): ComposableDenseStore {
 /**
  * Composable — content-addressed entity algebra over liteship primitives.
  *
- * Build entities from a bag of components (boundaries, tokens, styles, …),
- * merge them associatively via `Composable.compose` / `Composable.merge`, and
- * rely on the content address to deduplicate structurally-equal entities.
+ * Build entities from a bag of components with the standalone {@link createComposable}
+ * (verb grammar, ADR-0046), then merge them associatively via `Composable.compose` /
+ * `Composable.merge`, relying on the content address to deduplicate
+ * structurally-equal entities.
  */
 export const Composable: ComposableFactory = {
-  /** Content-address a component bag into a {@link ComposableEntity}. */
-  make: _make,
   /** Pairwise merge — right-biased; produces a new entity with a fresh content address. */
   compose: _compose,
   /** Variadic `Composable.compose`. Throws if called with zero entities. */

@@ -23,10 +23,11 @@
  * @module
  */
 
-// ── Curated root VALUES — the authoring verbs (P6 grammar) ───────────────────
+// ── Curated root VALUES — the authoring verbs (P6/P7 + verb-grammar-sweep-2) ──
 // The `define*` declaration constructors + `schema`, the reactive `create*` /
-// `computed` builders, and the `chooseTier` escalation reader, re-anchored from
-// `@liteship/core`; the quantizer verbs from `@liteship/quantizer`.
+// `computed` builders, the `chooseTier` / `tierTargets` escalation readers, and
+// the `inspectReceipt` debug facade, re-anchored from `@liteship/core`; the
+// quantizer verbs from `@liteship/quantizer`.
 export {
   defineConfig,
   defineBoundary,
@@ -38,8 +39,12 @@ export {
   createCell,
   computed,
   createStore,
+  createSignal,
   createTimeline,
+  createLifetime,
   chooseTier,
+  tierTargets,
+  inspectReceipt,
 } from '@liteship/core';
 export { defineQuantizer, createQuantizer } from '@liteship/quantizer';
 // The diagnostic explainer — the one reader that turns any emitted LiteShip

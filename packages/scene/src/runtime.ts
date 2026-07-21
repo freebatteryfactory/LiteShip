@@ -24,7 +24,7 @@
  */
 
 import type { System, World as WorldNS, Entity } from '@liteship/core';
-import { defineCapsule, World, schema } from '@liteship/core';
+import { defineCapsule, createWorld, schema } from '@liteship/core';
 import { InvariantViolationError } from '@liteship/error';
 import type { CompiledScene } from './compile.js';
 import { BeatBinding } from './capsules/beat-binding.js';
@@ -195,7 +195,7 @@ async function build(compiled: CompiledScene, opts: SceneRuntimeOptions = {}): P
 
   // Build the world — the long-lived owner of its own teardown (and any
   // future resources threaded through `world.lifetime`).
-  const world = World.make();
+  const world = createWorld();
 
   // Spawn one entity per compiled track.
   let entitySpawnCount = 0;

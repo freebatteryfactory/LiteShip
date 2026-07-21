@@ -8,9 +8,10 @@
  * assertions:
  *
  *  1. With `now` BEFORE the boundary-review date, the three substrate-boundary
- *     no-nondeterminism findings (clock×2 + rng) and the four declared-benign
- *     no-silent-catch findings are WAIVED — suppressed, not kept — and NO waiver
- *     goes stale (every committed waiver matches a real finding in scope).
+ *     no-nondeterminism findings (clock×2 + rng) are WAIVED — suppressed, not kept —
+ *     and NO waiver goes stale (every committed waiver matches a real finding in
+ *     scope). (The former no-silent-catch waivers were retired when their catches
+ *     were CURED, so no-silent-catch is at a zero floor with nothing to waive.)
  *
  *  2. With `now` AFTER the boundary-review date, those SAME waivers EXPIRE: each
  *     re-reds (its underlying finding returns to `kept`) AND adds a blocking
@@ -56,77 +57,89 @@ describe('litelaunchGauntlet — the committed waivers govern the REAL repo', ()
     expect(LITESHIP_ASSURANCE_MAP.length).toBeGreaterThan(0);
   });
 
-  it('BEFORE the review date: every committed waiver suppresses a REAL finding (teeth, no stale)', () => {
-    const result = litelaunchGauntlet(REPO_ROOT, BEFORE_REVIEW);
+  it(
+    'BEFORE the review date: every committed waiver suppresses a REAL finding (teeth, no stale)',
+    () => {
+      const result = litelaunchGauntlet(REPO_ROOT, BEFORE_REVIEW);
 
-    // Each gate whose rule has a committed waiver must show that waiver WORKING:
-    // ≥1 finding waived, and ZERO waiver-findings (no stale/expired/forbidden noise).
-    for (const ruleId of WAIVED_RULE_IDS) {
-      const outcome = result.outcomes.find((o) => o.gateId === ruleId);
-      expect(outcome, `gate ${ruleId} must run`).toBeDefined();
-      expect(
-        outcome!.waived.length,
-        `gate ${ruleId}: at least one committed waiver must suppress a REAL finding on the repo`,
-      ).toBeGreaterThan(0);
-      expect(
-        outcome!.waiverFindings,
-        `gate ${ruleId}: a committed waiver must NOT go stale/expired before the review date`,
-      ).toEqual([]);
-    }
+      // Each gate whose rule has a committed waiver must show that waiver WORKING:
+      // ≥1 finding waived, and ZERO waiver-findings (no stale/expired/forbidden noise).
+      for (const ruleId of WAIVED_RULE_IDS) {
+        const outcome = result.outcomes.find((o) => o.gateId === ruleId);
+        expect(outcome, `gate ${ruleId} must run`).toBeDefined();
+        expect(
+          outcome!.waived.length,
+          `gate ${ruleId}: at least one committed waiver must suppress a REAL finding on the repo`,
+        ).toBeGreaterThan(0);
+        expect(
+          outcome!.waiverFindings,
+          `gate ${ruleId}: a committed waiver must NOT go stale/expired before the review date`,
+        ).toEqual([]);
+      }
 
-    // The whole waiver count is accounted for: total waived findings ≥ waiver count
-    // (each committed waiver matched at least one finding).
-    const totalWaived = result.outcomes.reduce((n, o) => n + o.waived.length, 0);
-    expect(totalWaived).toBeGreaterThanOrEqual(LITESHIP_WAIVERS.length);
+      // The whole waiver count is accounted for: total waived findings ≥ waiver count
+      // (each committed waiver matched at least one finding).
+      const totalWaived = result.outcomes.reduce((n, o) => n + o.waived.length, 0);
+      expect(totalWaived).toBeGreaterThanOrEqual(LITESHIP_WAIVERS.length);
 
-    // No committed waiver is stale/expired/forbidden anywhere in the run.
-    const waiverFindings = result.outcomes.flatMap((o) => o.waiverFindings);
-    expect(waiverFindings).toEqual([]);
-    // litelaunchGauntlet scans the whole repo (one ts.Program build) — generous,
-    // CI-scaled headroom so a slow runner is never read as a failure (raw numeric
-    // literals are rejected by the timeout policy; scaledTimeout is the seam).
-  }, scaledTimeout(60000));
+      // No committed waiver is stale/expired/forbidden anywhere in the run.
+      const waiverFindings = result.outcomes.flatMap((o) => o.waiverFindings);
+      expect(waiverFindings).toEqual([]);
+      // litelaunchGauntlet scans the whole repo (one ts.Program build) — generous,
+      // CI-scaled headroom so a slow runner is never read as a failure (raw numeric
+      // literals are rejected by the timeout policy; scaledTimeout is the seam).
+    },
+    scaledTimeout(60000),
+  );
 
-  it('AFTER the review date: the SAME waivers EXPIRE — re-red + block (the recurring audit fires)', () => {
-    const before = litelaunchGauntlet(REPO_ROOT, BEFORE_REVIEW);
-    const after = litelaunchGauntlet(REPO_ROOT, AFTER_REVIEW);
+  it(
+    'AFTER the review date: the SAME waivers EXPIRE — re-red + block (the recurring audit fires)',
+    () => {
+      const before = litelaunchGauntlet(REPO_ROOT, BEFORE_REVIEW);
+      const after = litelaunchGauntlet(REPO_ROOT, AFTER_REVIEW);
 
-    // Every committed waiver expired → one waiver-expired error each, and nothing
-    // is waived any more (the suppression lapsed).
-    const expiredFindings = after.outcomes.flatMap((o) =>
-      o.waiverFindings.filter((f) => f.ruleId === 'gauntlet/waiver-expired'),
-    );
-    expect(expiredFindings.length).toBe(LITESHIP_WAIVERS.length);
-    for (const f of expiredFindings) expect(f.severity).toBe('error');
+      // Every committed waiver expired → one waiver-expired error each, and nothing
+      // is waived any more (the suppression lapsed).
+      const expiredFindings = after.outcomes.flatMap((o) =>
+        o.waiverFindings.filter((f) => f.ruleId === 'gauntlet/waiver-expired'),
+      );
+      expect(expiredFindings.length).toBe(LITESHIP_WAIVERS.length);
+      for (const f of expiredFindings) expect(f.severity).toBe('error');
 
-    const totalWaivedAfter = after.outcomes.reduce((n, o) => n + o.waived.length, 0);
-    expect(totalWaivedAfter, 'an expired waiver suppresses nothing').toBe(0);
+      const totalWaivedAfter = after.outcomes.reduce((n, o) => n + o.waived.length, 0);
+      expect(totalWaivedAfter, 'an expired waiver suppresses nothing').toBe(0);
 
-    // The findings the waivers HAD covered are now kept again (the debt is live).
-    // Count the boundary findings that moved from `waived` (before) to `findings`
-    // (after) for each waived rule.
-    for (const ruleId of WAIVED_RULE_IDS) {
-      const b = before.outcomes.find((o) => o.gateId === ruleId)!;
-      const a = after.outcomes.find((o) => o.gateId === ruleId)!;
-      const reReddened = a.findings.filter((f) => f.ruleId === ruleId);
-      expect(reReddened.length, `${ruleId}: expired waiver re-reds its finding`).toBe(b.waived.length);
-    }
+      // The findings the waivers HAD covered are now kept again (the debt is live).
+      // Count the boundary findings that moved from `waived` (before) to `findings`
+      // (after) for each waived rule.
+      for (const ruleId of WAIVED_RULE_IDS) {
+        const b = before.outcomes.find((o) => o.gateId === ruleId)!;
+        const a = after.outcomes.find((o) => o.gateId === ruleId)!;
+        const reReddened = a.findings.filter((f) => f.ruleId === ruleId);
+        expect(reReddened.length, `${ruleId}: expired waiver re-reds its finding`).toBe(b.waived.length);
+      }
 
-    // An expired waiver blocks unconditionally (waiver teeth, regardless of the
-    // gate's earned authority).
-    expect(after.blocked).toBe(true);
-    // Two full-repo scans (before + after) — the slow-runner timeout that bit windows.
-  }, scaledTimeout(60000));
+      // An expired waiver blocks unconditionally (waiver teeth, regardless of the
+      // gate's earned authority).
+      expect(after.blocked).toBe(true);
+      // Two full-repo scans (before + after) — the slow-runner timeout that bit windows.
+    },
+    scaledTimeout(60000),
+  );
 
-  it('is deterministic — same repo + same injected now → identical blocking verdict', () => {
-    const a = litelaunchGauntlet(REPO_ROOT, BEFORE_REVIEW);
-    const b = litelaunchGauntlet(REPO_ROOT, BEFORE_REVIEW);
-    expect(a.blocked).toBe(b.blocked);
-    expect(a.outcomes.map((o) => [o.gateId, o.findings.length, o.waived.length])).toEqual(
-      b.outcomes.map((o) => [o.gateId, o.findings.length, o.waived.length]),
-    );
-    // Two full-repo scans (a + b) for the determinism check — same scaled headroom.
-  }, scaledTimeout(60000));
+  it(
+    'is deterministic — same repo + same injected now → identical blocking verdict',
+    () => {
+      const a = litelaunchGauntlet(REPO_ROOT, BEFORE_REVIEW);
+      const b = litelaunchGauntlet(REPO_ROOT, BEFORE_REVIEW);
+      expect(a.blocked).toBe(b.blocked);
+      expect(a.outcomes.map((o) => [o.gateId, o.findings.length, o.waived.length])).toEqual(
+        b.outcomes.map((o) => [o.gateId, o.findings.length, o.waived.length]),
+      );
+      // Two full-repo scans (a + b) for the determinism check — same scaled headroom.
+    },
+    scaledTimeout(60000),
+  );
 });
 
 describe('the always-blocking rules are emitted by REAL gates (the forbidden floor is not inert)', () => {

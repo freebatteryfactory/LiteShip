@@ -9,7 +9,7 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { TokenBuffer, UIQuality, GenFrame } from '@liteship/core';
+import { UIQuality, GenFrame, createTokenBuffer } from '@liteship/core';
 import type { UIQualityTier, UIFrame, ContentAddress } from '@liteship/core';
 import { LLMAdapter } from '@liteship/web';
 import type { LLMChunk } from '@liteship/web';
@@ -28,7 +28,7 @@ function makeSSEMessage(data: string) {
 
 describe('GenUI pipeline integration', () => {
   test('tokens through buffer → ABR tier shift → frame type change', () => {
-    const buf = TokenBuffer.make<string>({ capacity: 64 });
+    const buf = createTokenBuffer<string>({ capacity: 64 });
 
     // Track tier changes
     let currentTier: UIQualityTier = 'skeleton';
@@ -86,7 +86,7 @@ describe('GenUI pipeline integration', () => {
   });
 
   test('receipt chain produces replay-able sequence on simulated disconnect', () => {
-    const buf = TokenBuffer.make<string>({ capacity: 64 });
+    const buf = createTokenBuffer<string>({ capacity: 64 });
     const tier: UIQualityTier = 'styled';
     const scheduler = GenFrame.make({
       tokenBuffer: buf,
@@ -217,7 +217,7 @@ describe('GenUI pipeline integration', () => {
     });
 
     // Pipe text tokens into a real TokenBuffer
-    const buf = TokenBuffer.make<string>({ capacity: 64 });
+    const buf = createTokenBuffer<string>({ capacity: 64 });
     for await (const token of adapter.textTokens) {
       buf.push(token);
     }
@@ -249,7 +249,7 @@ describe('GenUI pipeline integration', () => {
     });
 
     // Wire: adapter → token buffer
-    const buf = TokenBuffer.make<string>({ capacity: 64 });
+    const buf = createTokenBuffer<string>({ capacity: 64 });
     for await (const token of adapter.textTokens) {
       buf.push(token);
     }

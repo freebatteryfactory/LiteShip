@@ -91,7 +91,9 @@ export { createTimeline } from './timeline.js';
 
 export type { Timeline } from './timeline.js';
 
-export { BlendTree } from './blend.js';
+export { createBlendTree } from './blend.js';
+
+export type { BlendTree } from './blend.js';
 
 export {
   transitionReceipt,

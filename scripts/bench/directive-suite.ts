@@ -1,6 +1,14 @@
 import { Bench, type FnOptions } from 'tinybench';
 import { LLM_STEADY_DIRECTIVE_P99_MAX_NS, LLM_STEADY_REPLICATE_EXCEEDANCE_MAX } from './flex-policy.js';
-import { Boundary, GenFrame, TokenBuffer, UIQuality, RuntimeCoordinator, type CompositeState, defineBoundary } from '@liteship/core';
+import {
+  Boundary,
+  GenFrame,
+  UIQuality,
+  RuntimeCoordinator,
+  type CompositeState,
+  defineBoundary,
+  createTokenBuffer,
+} from '@liteship/core';
 import { ClientHints, compileTheme, createEdgeHostAdapter, EdgeTier } from '@liteship/edge';
 import { LLMChunkNormalization, SSE, type LLMChunk } from '@liteship/web';
 import { WorkerHost } from '@liteship/worker';
@@ -727,7 +735,7 @@ function boundaryStateFromValue(value: number): string {
 }
 
 function createBenchLLMRuntimeSession() {
-  const tokenBuffer = TokenBuffer.make<string>({ capacity: 64 });
+  const tokenBuffer = createTokenBuffer<string>({ capacity: 64 });
   const quality = UIQuality.make({ deviceTier: 'animations' });
   const scheduler = GenFrame.make({
     tokenBuffer,

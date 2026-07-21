@@ -25,7 +25,7 @@ interface DirtyFlagsShape<K extends string = string> {
  *
  * @example
  * ```ts
- * const flags = DirtyFlags.make(['position', 'color', 'opacity'] as const);
+ * const flags = createDirtyFlags(['position', 'color', 'opacity'] as const);
  * flags.mark('position');
  * flags.mark('color');
  * flags.isDirty('position'); // true
@@ -35,9 +35,9 @@ interface DirtyFlagsShape<K extends string = string> {
  * flags.mask;                // 0
  * ```
  */
-function _make<K extends string>(keys: readonly K[]): DirtyFlagsShape<K> {
+export function createDirtyFlags<K extends string>(keys: readonly K[]): DirtyFlagsShape<K> {
   if (keys.length > DIRTY_FLAGS_MAX) {
-    throw ValidationError('DirtyFlags.make', `supports at most ${DIRTY_FLAGS_MAX} keys, got ${keys.length}`);
+    throw ValidationError('createDirtyFlags', `supports at most ${DIRTY_FLAGS_MAX} keys, got ${keys.length}`);
   }
 
   const bitMap = new Map<K, number>();
@@ -82,19 +82,17 @@ function _make<K extends string>(keys: readonly K[]): DirtyFlagsShape<K> {
 }
 
 /**
- * DirtyFlags -- bitmask-based dirty tracking for up to 31 named keys.
- * O(1) mark/clear/check operations using bitwise integer operations.
+ * Public structural type for `DirtyFlags` -- bitmask-based dirty tracking for up to
+ * 31 named keys. O(1) mark/clear/check operations using bitwise integer operations.
+ * Construct one with the standalone {@link createDirtyFlags} (verb grammar, ADR-0046).
  *
  * @example
  * ```ts
- * const flags = DirtyFlags.make(['transform', 'style'] as const);
+ * const flags = createDirtyFlags(['transform', 'style'] as const);
  * flags.mark('transform');
  * flags.isDirty('transform'); // true
  * flags.clear('transform');
  * flags.isDirty('transform'); // false
  * ```
  */
-export const DirtyFlags = { make: _make };
-
-/** Public structural type for `DirtyFlags`. */
 export type DirtyFlags<K extends string = string> = DirtyFlagsShape<K>;

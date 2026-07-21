@@ -121,10 +121,10 @@ describe('liteship dispatch — dev-experience verbs', () => {
     expect(stderr).toContain('expected shell');
   });
 
-  it('unknown command prints a friendly hint (in-register) and exits 1', async () => {
+  it('unknown command prints a friendly hint and exits 1', async () => {
     const { exit, stderr } = await captureCli(() => run(['nonsense-verb']));
     expect(exit).toBe(1);
-    expect(stderr).toContain('No such bearing');
+    expect(stderr).toContain('Unknown command');
     expect(stderr).toContain('liteship help');
   });
 });
@@ -149,7 +149,10 @@ describe('liteship dispatch — verb-routing coverage', () => {
     // 'scene', not 'scene.compile').
     const { exit, stderr } = await captureCli(() => run(['scene', 'compile', '/__liteship-nonexistent__.ts']));
     expect(exit).toBe(1);
-    const lines = stderr.trim().split('\n').filter((l) => l.startsWith('{'));
+    const lines = stderr
+      .trim()
+      .split('\n')
+      .filter((l) => l.startsWith('{'));
     const err = JSON.parse(lines[lines.length - 1]!);
     expect(err.command).toBe('scene.compile');
     expect(err.error).toMatch(/scene file not found/);
@@ -158,7 +161,10 @@ describe('liteship dispatch — verb-routing coverage', () => {
   it('`liteship scene verify <bad-path>` routes to sceneVerify, which emits a scene.verify error receipt', async () => {
     const { exit, stderr } = await captureCli(() => run(['scene', 'verify', '/__liteship-nonexistent__.ts']));
     expect(exit).toBe(1);
-    const lines = stderr.trim().split('\n').filter((l) => l.startsWith('{'));
+    const lines = stderr
+      .trim()
+      .split('\n')
+      .filter((l) => l.startsWith('{'));
     const err = JSON.parse(lines[lines.length - 1]!);
     expect(err.command).toBe('scene.verify');
     expect(err.error).toMatch(/scene not found/);
@@ -167,7 +173,10 @@ describe('liteship dispatch — verb-routing coverage', () => {
   it('`liteship scene unknown-sub` emits an emitError shape', async () => {
     const { exit, stderr } = await captureCli(() => run(['scene', 'totally-fake-sub']));
     expect(exit).toBe(1);
-    const lines = stderr.trim().split('\n').filter((l) => l.startsWith('{'));
+    const lines = stderr
+      .trim()
+      .split('\n')
+      .filter((l) => l.startsWith('{'));
     const err = JSON.parse(lines[lines.length - 1]!);
     expect(err.command).toBe('scene');
     expect(err.error).toContain('unknown subcommand');
@@ -176,7 +185,10 @@ describe('liteship dispatch — verb-routing coverage', () => {
   it('`liteship scene` with no subcommand emits an emitError with <missing>', async () => {
     const { exit, stderr } = await captureCli(() => run(['scene']));
     expect(exit).toBe(1);
-    const lines = stderr.trim().split('\n').filter((l) => l.startsWith('{'));
+    const lines = stderr
+      .trim()
+      .split('\n')
+      .filter((l) => l.startsWith('{'));
     const err = JSON.parse(lines[lines.length - 1]!);
     expect(err.error).toContain('<missing>');
   });
@@ -196,7 +208,10 @@ describe('liteship dispatch — verb-routing coverage', () => {
   it('`liteship asset unknown-sub` emits an emitError shape', async () => {
     const { exit, stderr } = await captureCli(() => run(['asset', 'totally-fake-sub']));
     expect(exit).toBe(1);
-    const lines = stderr.trim().split('\n').filter((l) => l.startsWith('{'));
+    const lines = stderr
+      .trim()
+      .split('\n')
+      .filter((l) => l.startsWith('{'));
     const err = JSON.parse(lines[lines.length - 1]!);
     expect(err.command).toBe('asset');
     expect(err.error).toContain('unknown subcommand');
@@ -205,7 +220,10 @@ describe('liteship dispatch — verb-routing coverage', () => {
   it('`liteship asset` with no subcommand emits an emitError with <missing>', async () => {
     const { exit, stderr } = await captureCli(() => run(['asset']));
     expect(exit).toBe(1);
-    const lines = stderr.trim().split('\n').filter((l) => l.startsWith('{'));
+    const lines = stderr
+      .trim()
+      .split('\n')
+      .filter((l) => l.startsWith('{'));
     const err = JSON.parse(lines[lines.length - 1]!);
     expect(err.error).toContain('<missing>');
   });
@@ -223,7 +241,10 @@ describe('liteship dispatch — verb-routing coverage', () => {
   it('`liteship capsule unknown-sub` emits an emitError shape', async () => {
     const { exit, stderr } = await captureCli(() => run(['capsule', 'totally-fake-sub']));
     expect(exit).toBe(1);
-    const lines = stderr.trim().split('\n').filter((l) => l.startsWith('{'));
+    const lines = stderr
+      .trim()
+      .split('\n')
+      .filter((l) => l.startsWith('{'));
     const err = JSON.parse(lines[lines.length - 1]!);
     expect(err.command).toBe('capsule');
     expect(err.error).toContain('unknown subcommand');
@@ -232,7 +253,10 @@ describe('liteship dispatch — verb-routing coverage', () => {
   it('`liteship verify` (no args) routes to verify and returns the Unknown verdict (exit 4)', async () => {
     const { exit, stdout } = await captureCli(() => run(['verify']));
     expect(exit).toBe(4);
-    const lines = stdout.trim().split('\n').filter((l) => l.startsWith('{'));
+    const lines = stdout
+      .trim()
+      .split('\n')
+      .filter((l) => l.startsWith('{'));
     const receipt = JSON.parse(lines[lines.length - 1]!);
     expect(receipt.command).toBe('verify');
     expect(receipt.verdict).toBe('Unknown');

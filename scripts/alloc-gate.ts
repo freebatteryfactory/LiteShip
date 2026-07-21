@@ -45,7 +45,7 @@
  * @module
  */
 
-import { CellKernel, Compositor, TokenBuffer, defineBoundary } from '@liteship/core';
+import { CellKernel, Compositor, defineBoundary, createTokenBuffer } from '@liteship/core';
 import type { CompositeState } from '@liteship/core';
 import type { CompositorQuantizer } from '@liteship/core';
 import { InvariantViolationError } from '@liteship/error';
@@ -400,7 +400,7 @@ function fixedQuantizer(state: AllocState): CompositorQuantizer<typeof ALLOC_BOU
 
 /** Build the token-buffer push/drainInto op closure — the zero-alloc hot path. */
 function tokenBufferOp(): () => void {
-  const tb = TokenBuffer.make<number>({ capacity: 256 });
+  const tb = createTokenBuffer<number>({ capacity: 256 });
   // Caller-owned scratch sink — reused across drains (the zero-alloc contract).
   const sink: number[] = new Array<number>(64);
   let n = 0;

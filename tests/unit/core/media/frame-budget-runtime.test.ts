@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import { FrameBudget, manualClock } from '@liteship/core';
+import { manualClock, createFrameBudget } from '@liteship/core';
 
 describe('FrameBudget runtime behavior', () => {
   afterEach(() => {
@@ -12,7 +12,7 @@ describe('FrameBudget runtime behavior', () => {
     vi.stubGlobal('cancelAnimationFrame', undefined as never);
     vi.spyOn(performance, 'now').mockReturnValueOnce(0).mockReturnValue(100);
 
-    const budget = FrameBudget.make({ targetFps: 60 });
+    const budget = createFrameBudget({ targetFps: 60 });
 
     expect(budget.scheduleSync('idle', () => 'skipped')).toBeNull();
     expect(budget.scheduleSync('critical', () => 'ran')).toBe('ran');
@@ -27,7 +27,7 @@ describe('FrameBudget runtime behavior', () => {
 
     const clock = manualClock(1_000);
     // 60fps → a 16.666ms frame budget. Construction reads now() at t=1000 (frameStart).
-    const budget = FrameBudget.make({ targetFps: 60, clock });
+    const budget = createFrameBudget({ targetFps: 60, clock });
 
     // No time elapsed yet → full budget.
     expect(budget.remaining()).toBeCloseTo(1000 / 60, 3);
@@ -50,7 +50,7 @@ describe('FrameBudget runtime behavior', () => {
     vi.stubGlobal('requestAnimationFrame', undefined as never);
     vi.stubGlobal('cancelAnimationFrame', undefined as never);
 
-    const budget = FrameBudget.make({ targetFps: 30 });
+    const budget = createFrameBudget({ targetFps: 30 });
 
     expect(budget.fpsSync).toBe(30);
   });
@@ -74,7 +74,7 @@ describe('FrameBudget runtime behavior', () => {
     });
     vi.stubGlobal('cancelAnimationFrame', cancelAnimationFrameSpy);
 
-    const budget = FrameBudget.make({ targetFps: 60 });
+    const budget = createFrameBudget({ targetFps: 60 });
 
     callbacks.get(1)?.(0);
     callbacks.get(2)?.(500);
@@ -87,7 +87,7 @@ describe('FrameBudget runtime behavior', () => {
     expect(budget.scheduleSync('high', () => 'rendered')).toBe('rendered');
 
     // Disposing the Lifetime cancels the latest scheduled frame (id 4 — make + 3 ticks).
-    await budget.lifetime.dispose();
+    await budget.dispose();
     expect(cancelAnimationFrameSpy).toHaveBeenCalledWith(4);
   });
 
@@ -96,7 +96,7 @@ describe('FrameBudget runtime behavior', () => {
     vi.stubGlobal('cancelAnimationFrame', undefined as never);
     vi.stubGlobal('performance', undefined as never);
 
-    const budget = FrameBudget.make({ targetFps: 50 });
+    const budget = createFrameBudget({ targetFps: 50 });
 
     expect(budget.remaining()).toBeCloseTo(20);
     expect(budget.canRun('idle')).toBe(true);
@@ -107,7 +107,7 @@ describe('FrameBudget runtime behavior', () => {
     vi.stubGlobal('cancelAnimationFrame', undefined as never);
     vi.spyOn(performance, 'now').mockReturnValueOnce(0).mockReturnValue(100);
 
-    const budget = FrameBudget.make({ targetFps: 60 });
+    const budget = createFrameBudget({ targetFps: 60 });
 
     expect({
       low: budget.scheduleSync('low', () => 'skipped'),
@@ -120,7 +120,7 @@ describe('FrameBudget runtime behavior', () => {
     vi.stubGlobal('cancelAnimationFrame', undefined as never);
     vi.spyOn(performance, 'now').mockReturnValueOnce(0).mockReturnValue(100);
 
-    const budget = FrameBudget.make({ targetFps: 60 });
+    const budget = createFrameBudget({ targetFps: 60 });
     expect(budget.scheduleSync('critical', () => 'ran-critical')).toBe('ran-critical');
   });
 });

@@ -25,6 +25,28 @@ export interface VersionReceipt {
 }
 
 /**
+ * The module-relative `packages/cli/package.json` candidate, or `undefined` when
+ * `import.meta.url` is unavailable in an odd bundling/loader context. Isolating the
+ * best-effort resolution here lets the caught failure record an explicit "no
+ * module-relative candidate" fallback instead of swallowing the error silently —
+ * non-corrupting, because `readCliVersion` still resolves a real version from the
+ * cwd-relative candidates below.
+ */
+function moduleRelativePackageJson(): string | undefined {
+  let candidate: string | undefined;
+  try {
+    const moduleDir = dirname(fileURLToPath(import.meta.url));
+    candidate = resolve(moduleDir, '../../package.json');
+  } catch {
+    // import.meta.url unavailable (odd bundling/loader context) — record `undefined`
+    // (no module-relative candidate) so the caller falls through to the cwd-relative
+    // paths. Non-corrupting: a real version is still resolved from the workspace.
+    candidate = undefined;
+  }
+  return candidate;
+}
+
+/**
  * Read the @liteship/cli package version off disk. This is `liteship version`'s own
  * logic (not doctoring), so it lives here beside its primary caller.
  *
@@ -40,12 +62,8 @@ export interface VersionReceipt {
  */
 export function readCliVersion(cwd?: string): string {
   const candidates: string[] = [];
-  try {
-    const moduleDir = dirname(fileURLToPath(import.meta.url));
-    candidates.push(resolve(moduleDir, '../../package.json'));
-  } catch {
-    // import.meta.url may be unavailable in odd contexts; fall through.
-  }
+  const moduleRelative = moduleRelativePackageJson();
+  if (moduleRelative !== undefined) candidates.push(moduleRelative);
   const root = cwd ?? process.cwd();
   candidates.push(resolve(root, 'packages/cli/package.json'));
   candidates.push(resolve(root, 'package.json'));

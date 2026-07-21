@@ -14,13 +14,20 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { LiveCell, Millis, manualClock, defineBoundary, createTimeline } from '@liteship/core';
+import {
+  Millis,
+  manualClock,
+  defineBoundary,
+  createTimeline,
+  createLiveCell,
+  createLiveCellBoundary,
+} from '@liteship/core';
 
 describe('LiveCell._make — a post-dispose set() is fully inert (no envelope/value divergence)', () => {
   test('scalar LiveCell: value frozen, version + content-address id do not drift', async () => {
-    const lc = LiveCell.make('signal', 10, manualClock(1000));
+    const lc = createLiveCell('signal', 10, manualClock(1000));
     const before = lc.envelope();
-    await lc.lifetime.dispose();
+    await lc.dispose();
     lc.set(999);
     lc.set(1000); // a second post-dispose write must not drift the version either
     const after = lc.envelope();
@@ -39,9 +46,9 @@ describe('LiveCell._makeBoundary — a post-dispose set() is fully inert', () =>
         [100, 'hi'],
       ] as const,
     });
-    const lc = LiveCell.makeBoundary(boundary, 0, manualClock(1000));
+    const lc = createLiveCellBoundary(boundary, 0, manualClock(1000));
     const before = lc.envelope();
-    await lc.lifetime.dispose();
+    await lc.dispose();
     lc.set(150); // crosses lo→hi — must NOT advance the envelope or prevState
     const after = lc.envelope();
     expect(lc.read()).toBe(0);

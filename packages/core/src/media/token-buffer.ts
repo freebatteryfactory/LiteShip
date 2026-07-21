@@ -65,7 +65,12 @@ interface TokenBufferConfig {
   readonly clock?: Clock;
 }
 
-function _make<T = string>(config?: TokenBufferConfig): TokenBufferShape<T> {
+/**
+ * Create a {@link TokenBuffer} — a ring buffer that absorbs bursty LLM token
+ * arrival and hands tokens out at a smooth cadence. Pass a capacity or reuse the
+ * defaults (verb grammar, ADR-0046 — `create` allocates a runtime resource).
+ */
+export function createTokenBuffer<T = string>(config?: TokenBufferConfig): TokenBufferShape<T> {
   const capacity = config?.capacity ?? 256;
   const alpha = config?.emaAlpha ?? 0.1;
   const clock = config?.clock ?? systemClock;
@@ -193,20 +198,15 @@ function _make<T = string>(config?: TokenBufferConfig): TokenBufferShape<T> {
 }
 
 /**
- * TokenBuffer — ring buffer that absorbs bursty LLM token arrival and hands
- * tokens out at a smooth cadence. The `push` + `drainInto` path is genuinely
- * zero-allocation (measured, pinned); `drain` is the allocating convenience.
- * Reports stall via `isStalled` and rate via an internal EMA.
+ * Public structural type for `TokenBuffer` — a ring buffer that absorbs bursty LLM
+ * token arrival and hands tokens out at a smooth cadence. The `push` + `drainInto`
+ * path is genuinely zero-allocation (measured, pinned); `drain` is the allocating
+ * convenience. Reports stall via `isStalled` and rate via an internal EMA.
+ * Construct one with the standalone {@link createTokenBuffer}.
  */
-export const TokenBuffer = {
-  /** Build a new buffer — pass capacity or reuse defaults. */
-  make: _make,
-};
-
-/** Public structural type for `TokenBuffer`. */
 export type TokenBuffer<T = string> = TokenBufferShape<T>;
 
 export declare namespace TokenBuffer {
-  /** Configuration accepted by {@link TokenBuffer.make}. */
+  /** Configuration accepted by {@link createTokenBuffer}. */
   export type Config = TokenBufferConfig;
 }

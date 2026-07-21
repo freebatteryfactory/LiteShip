@@ -97,6 +97,12 @@ traces:
     tests:
       - 'tests/unit/audit/mutation-facts-build.test.ts::is deterministic — same source + runner → byte-identical facts'
 
+  # ── Transition cage — tests/unit/audit/transition-facts-build.test.ts ───────
+  - id: INV-TRANSITION-FACTS-DETERMINISTIC
+    tests:
+      - 'tests/unit/audit/transition-facts-build.test.ts::is deterministic — same inputs → byte-identical facts (order-independent)'
+      - 'tests/unit/audit/transition-facts-build.test.ts::decides equivalent (digests agree) / divergent (digests differ) / unevidenced (a side missing)'
+
   # ── Verdict cache + repo-IR — the B2 content-addressed-cache soundness spine ─
   - id: INV-VERDICT-CACHE-KEY-DETERMINISTIC
     tests:
@@ -129,6 +135,17 @@ traces:
       - 'tests/unit/astro/shader-integrity-integration.test.ts::a TAMPERED fetched shader is REFUSED — security diagnostic fires, gl.shaderSource never sees the body'
       - 'tests/unit/astro/shader-integrity-integration.test.ts::a TAMPERED fetched WGSL shader is REFUSED — no createShaderModule, security diagnostic fires'
       - 'tests/integration/cli/shader-taint-sanitized-live.test.ts::every fetch→shader-compile-sink flow is broken by verifyShaderIntegrity on the path'
+
+  # ── Security (taint source→sink oracle) — the generic dataflow trace + gate ──
+  # Proven from BOTH ends: the host oracle (repo-ir-taint) traces real tmp corpora,
+  # the lean gate (taint-flow-gate) folds the facts. Both files carry `// PROVES:`.
+  - id: INV-TAINT-SOURCE-SINK
+    tests:
+      - 'tests/unit/audit/repo-ir-taint.test.ts::flags an UNSANITIZED source→sink flow with sanitizedBy null'
+      - 'tests/unit/audit/repo-ir-taint.test.ts::emits a SANITIZED flow (taint broken) when a sanitizer wraps the value'
+      - 'tests/unit/audit/repo-ir-taint.test.ts::is deterministic — tracing twice over unchanged source yields identical flows'
+      - 'tests/unit/gauntlet/taint-flow-gate.test.ts::reds an L4 error finding located at the SINK, naming both endpoints'
+      - 'tests/unit/gauntlet/taint-flow-gate.test.ts::emits NOTHING for a flow broken by a sanitizer (the guarded-seam green)'
 
   # ── Meta (crdt-laws coverage rail) — tests/property/crdt-laws-gate.test.ts ──
   - id: INV-CRDT-LAWS-PINNED

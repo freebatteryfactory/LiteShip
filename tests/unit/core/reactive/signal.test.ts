@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { AVBridge, Signal, manualClock, fixedClock } from '@liteship/core';
+import { AVBridge, manualClock, fixedClock, Signal, createSignal } from '@liteship/core';
 
 /**
  * Signal — Wave 6 plain CellKernel transport (Effect-free). RED-FIRST law table
@@ -29,25 +29,25 @@ describe('Signal.make', () => {
   });
 
   test('tracks viewport width changes', () => {
-    const signal = Signal.make({ type: 'viewport', axis: 'width' });
+    const signal = createSignal({ type: 'viewport', axis: 'width' });
     expect(signal.read()).toBe(800);
   });
 
   test('tracks viewport height resize events and cleans up the listener', async () => {
     const removeListener = vi.spyOn(window, 'removeEventListener');
 
-    const signal = Signal.make({ type: 'viewport', axis: 'height' });
+    const signal = createSignal({ type: 'viewport', axis: 'height' });
     Object.defineProperty(window, 'innerHeight', { value: 720, configurable: true });
     window.dispatchEvent(new Event('resize'));
 
     expect(signal.read()).toBe(720);
 
-    await signal.lifetime.dispose();
+    await signal.dispose();
     expect(removeListener).toHaveBeenCalledWith('resize', expect.any(Function));
   });
 
   test('tracks viewport width resize events through the width branch', () => {
-    const signal = Signal.make({ type: 'viewport', axis: 'width' });
+    const signal = createSignal({ type: 'viewport', axis: 'width' });
     Object.defineProperty(window, 'innerWidth', { value: 1024, configurable: true });
     window.dispatchEvent(new Event('resize'));
 
@@ -59,7 +59,7 @@ describe('Signal.make', () => {
     Object.defineProperty(window, 'innerHeight', { value: 1000, configurable: true });
     Object.defineProperty(window, 'scrollY', { value: 250, configurable: true });
 
-    const signal = Signal.make({ type: 'scroll', axis: 'progress' });
+    const signal = createSignal({ type: 'scroll', axis: 'progress' });
     expect(signal.read()).toBeCloseTo(0.25);
   });
 
@@ -67,9 +67,9 @@ describe('Signal.make', () => {
     Object.defineProperty(document.documentElement, 'scrollHeight', { value: 600, configurable: true });
     Object.defineProperty(window, 'innerHeight', { value: 600, configurable: true });
 
-    const xSignal = Signal.make({ type: 'scroll', axis: 'x' });
-    const ySignal = Signal.make({ type: 'scroll', axis: 'y' });
-    const progressSignal = Signal.make({ type: 'scroll', axis: 'progress' });
+    const xSignal = createSignal({ type: 'scroll', axis: 'x' });
+    const ySignal = createSignal({ type: 'scroll', axis: 'y' });
+    const progressSignal = createSignal({ type: 'scroll', axis: 'progress' });
 
     Object.defineProperty(window, 'scrollX', { value: 120, configurable: true });
     Object.defineProperty(window, 'scrollY', { value: 240, configurable: true });
@@ -86,7 +86,7 @@ describe('Signal.make', () => {
     Object.defineProperty(document.documentElement, 'scrollHeight', { value: 2000, configurable: true });
     Object.defineProperty(window, 'innerHeight', { value: 1000, configurable: true });
 
-    const signal = Signal.make({ type: 'scroll', axis: 'progress' });
+    const signal = createSignal({ type: 'scroll', axis: 'progress' });
     Object.defineProperty(window, 'scrollY', { value: 500, configurable: true });
     window.dispatchEvent(new Event('scroll'));
 
@@ -94,16 +94,16 @@ describe('Signal.make', () => {
   });
 
   test('tracks pointer updates', () => {
-    const signal = Signal.make({ type: 'pointer', axis: 'pressure' });
+    const signal = createSignal({ type: 'pointer', axis: 'pressure' });
     expect(signal.read()).toBe(0);
   });
 
   test('tracks pointer axes and cleans up pointer listeners', async () => {
     const removeListener = vi.spyOn(window, 'removeEventListener');
 
-    const xSignal = Signal.make({ type: 'pointer', axis: 'x' });
-    const ySignal = Signal.make({ type: 'pointer', axis: 'y' });
-    const pressureSignal = Signal.make({ type: 'pointer', axis: 'pressure' });
+    const xSignal = createSignal({ type: 'pointer', axis: 'x' });
+    const ySignal = createSignal({ type: 'pointer', axis: 'y' });
+    const pressureSignal = createSignal({ type: 'pointer', axis: 'pressure' });
 
     const event = new MouseEvent('pointermove', { clientX: 48, clientY: 96 });
     Object.defineProperty(event, 'pressure', { value: 0.75, configurable: true });
@@ -115,7 +115,7 @@ describe('Signal.make', () => {
       pressure: 0.75,
     });
 
-    await xSignal.lifetime.dispose();
+    await xSignal.dispose();
     expect(removeListener).toHaveBeenCalledWith('pointermove', expect.any(Function));
   });
 
@@ -131,7 +131,7 @@ describe('Signal.make', () => {
       value: vi.fn(() => mql),
     });
 
-    const signal = Signal.make({ type: 'media', query: '(prefers-reduced-motion: reduce)' });
+    const signal = createSignal({ type: 'media', query: '(prefers-reduced-motion: reduce)' });
     expect(signal.read()).toBe(0);
   });
 
@@ -150,13 +150,13 @@ describe('Signal.make', () => {
       value: vi.fn(() => mql),
     });
 
-    const signal = Signal.make({ type: 'media', query: '(prefers-color-scheme: dark)' });
+    const signal = createSignal({ type: 'media', query: '(prefers-color-scheme: dark)' });
     changeListener?.({ matches: false } as MediaQueryListEvent);
 
     expect(signal.read()).toBe(0);
     expect(mql.addEventListener).toHaveBeenCalledWith('change', expect.any(Function));
 
-    await signal.lifetime.dispose();
+    await signal.dispose();
     expect(mql.removeEventListener).toHaveBeenCalledWith('change', expect.any(Function));
   });
 
@@ -175,10 +175,10 @@ describe('Signal.make', () => {
       })),
     });
 
-    const viewport = Signal.make({ type: 'viewport', axis: 'height' });
-    const scrollX = Signal.make({ type: 'scroll', axis: 'x' });
-    const scrollY = Signal.make({ type: 'scroll', axis: 'y' });
-    const media = Signal.make({ type: 'media', query: '(prefers-contrast: more)' });
+    const viewport = createSignal({ type: 'viewport', axis: 'height' });
+    const scrollX = createSignal({ type: 'scroll', axis: 'x' });
+    const scrollY = createSignal({ type: 'scroll', axis: 'y' });
+    const media = createSignal({ type: 'media', query: '(prefers-contrast: more)' });
 
     expect({
       viewport: viewport.read(),
@@ -192,7 +192,7 @@ describe('Signal.make', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-01-01T00:00:00Z'));
 
-    const signal = Signal.make({ type: 'time', mode: 'absolute' });
+    const signal = createSignal({ type: 'time', mode: 'absolute' });
     const initial = signal.read();
 
     vi.advanceTimersByTime(1000);
@@ -220,7 +220,7 @@ describe('Signal.make', () => {
     vi.stubGlobal('cancelAnimationFrame', cancelAnimationFrameSpy);
 
     // Listeners attach synchronously in make(): the rAF loop is armed immediately.
-    const signal = Signal.make({ type: 'time', mode: 'elapsed' });
+    const signal = createSignal({ type: 'time', mode: 'elapsed' });
 
     currentTime = 1_000;
     callbacks.get(1)?.(1_000);
@@ -230,7 +230,7 @@ describe('Signal.make', () => {
     expect(signal.read()).toBe(60);
     expect(requestAnimationFrameSpy).toHaveBeenCalledTimes(3);
 
-    await signal.lifetime.dispose();
+    await signal.dispose();
     expect(cancelAnimationFrameSpy).toHaveBeenCalledWith(3);
   });
 
@@ -254,13 +254,13 @@ describe('Signal.make', () => {
     vi.stubGlobal('requestAnimationFrame', rafSpy);
     vi.stubGlobal('cancelAnimationFrame', cafSpy);
 
-    const signal = Signal.make({ type: 'time', mode: 'elapsed' });
+    const signal = createSignal({ type: 'time', mode: 'elapsed' });
     expect(rafSpy).toHaveBeenCalledTimes(1); // frame 1 armed synchronously in make()
 
     // Dispose from within the TICK delivery only (guard on elapsed > 0 so the
     // replay-on-subscribe of the initial 0 does not trip it).
     signal.subscribe((v) => {
-      if (v > 0) void signal.lifetime.dispose();
+      if (v > 0) void signal.dispose();
     });
 
     currentTime = 1_060;
@@ -289,7 +289,7 @@ describe('Signal.make', () => {
     vi.stubGlobal('requestAnimationFrame', rafSpy);
     vi.stubGlobal('cancelAnimationFrame', (id: number) => callbacks.delete(id));
 
-    const signal = Signal.make({ type: 'time', mode: 'elapsed' });
+    const signal = createSignal({ type: 'time', mode: 'elapsed' });
     expect(rafSpy).toHaveBeenCalledTimes(1); // frame 1 armed synchronously in make()
 
     const boom = new Error('subscriber boom');
@@ -315,37 +315,37 @@ describe('Signal.make', () => {
     expect(last).toBe(100);
     expect(rafSpy).toHaveBeenCalledTimes(3);
 
-    void signal.lifetime.dispose();
+    void signal.dispose();
   });
 
   test('leaves elapsed time signals inert when requestAnimationFrame is unavailable', () => {
     vi.stubGlobal('requestAnimationFrame', undefined);
 
-    const signal = Signal.make({ type: 'time', mode: 'elapsed' });
+    const signal = createSignal({ type: 'time', mode: 'elapsed' });
     expect(signal.read()).toBe(0);
   });
 
   test('leaves scheduled time signals under external control', () => {
-    const signal = Signal.make({ type: 'time', mode: 'scheduled' });
+    const signal = createSignal({ type: 'time', mode: 'scheduled' });
     expect(signal.read()).toBe(0);
   });
 
   test('returns the default value for custom signals', () => {
-    const signal = Signal.make({ type: 'custom', id: 'search-query' });
+    const signal = createSignal({ type: 'custom', id: 'search-query' });
     expect(signal.read()).toBe(0);
   });
 
   test('returns the default value for audio source placeholders', () => {
-    const signal = Signal.make({ type: 'audio', mode: 'normalized' });
+    const signal = createSignal({ type: 'audio', mode: 'normalized' });
     expect(signal.read()).toBe(0);
   });
 
   test('runs scheduled, custom, and audio setup paths without attaching browser listeners', () => {
     const addListener = vi.spyOn(window, 'addEventListener');
 
-    const scheduled = Signal.make({ type: 'time', mode: 'scheduled' });
-    const custom = Signal.make({ type: 'custom', id: 'runtime-mode' });
-    const audio = Signal.make({ type: 'audio', mode: 'sample' });
+    const scheduled = createSignal({ type: 'time', mode: 'scheduled' });
+    const custom = createSignal({ type: 'custom', id: 'runtime-mode' });
+    const audio = createSignal({ type: 'audio', mode: 'sample' });
 
     expect({ scheduled: scheduled.read(), custom: custom.read(), audio: audio.read() }).toEqual({
       scheduled: 0,
@@ -365,10 +365,10 @@ describe('Signal.make', () => {
     vi.stubGlobal('document', undefined);
 
     try {
-      const viewport = Signal.make({ type: 'viewport', axis: 'width' });
-      const scroll = Signal.make({ type: 'scroll', axis: 'progress' });
-      const pointer = Signal.make({ type: 'pointer', axis: 'pressure' });
-      const media = Signal.make({ type: 'media', query: '(prefers-color-scheme: dark)' });
+      const viewport = createSignal({ type: 'viewport', axis: 'width' });
+      const scroll = createSignal({ type: 'scroll', axis: 'progress' });
+      const pointer = createSignal({ type: 'pointer', axis: 'pressure' });
+      const media = createSignal({ type: 'media', query: '(prefers-color-scheme: dark)' });
 
       expect({
         viewport: viewport.read(),
@@ -390,10 +390,10 @@ describe('Signal.make', () => {
     vi.stubGlobal('document', undefined);
 
     try {
-      const viewport = Signal.make({ type: 'viewport', axis: 'height' });
-      const scroll = Signal.make({ type: 'scroll', axis: 'x' });
-      const pointer = Signal.make({ type: 'pointer', axis: 'x' });
-      const media = Signal.make({ type: 'media', query: '(prefers-reduced-motion: reduce)' });
+      const viewport = createSignal({ type: 'viewport', axis: 'height' });
+      const scroll = createSignal({ type: 'scroll', axis: 'x' });
+      const pointer = createSignal({ type: 'pointer', axis: 'x' });
+      const media = createSignal({ type: 'media', query: '(prefers-reduced-motion: reduce)' });
 
       expect({
         viewport: viewport.read(),
@@ -420,7 +420,7 @@ describe('Signal.make', () => {
       value: vi.fn(() => mql),
     });
 
-    const signal = Signal.make({ type: 'media', query: '(prefers-contrast: more)' });
+    const signal = createSignal({ type: 'media', query: '(prefers-contrast: more)' });
     changeListener?.({ matches: true } as MediaQueryListEvent);
 
     expect(signal.read()).toBe(1);
@@ -438,12 +438,12 @@ describe('Signal.make time-elapsed', () => {
     const rafSpy = vi.spyOn(globalThis, 'requestAnimationFrame');
     const cafSpy = vi.spyOn(globalThis, 'cancelAnimationFrame');
 
-    const signal = Signal.make({ type: 'time', mode: 'elapsed' });
+    const signal = createSignal({ type: 'time', mode: 'elapsed' });
 
     expect(signal.read()).toBeGreaterThanOrEqual(0);
     expect(rafSpy).toHaveBeenCalled();
 
-    await signal.lifetime.dispose();
+    await signal.dispose();
     expect(cafSpy).toHaveBeenCalled();
   });
 });
@@ -556,7 +556,7 @@ describe('Signal.make — injected clock determinism', () => {
     const dateSpy = vi.spyOn(Date, 'now').mockReturnValue(500_000);
 
     const clock = manualClock(1_000); // start = 1000, independent of Date.now()
-    const signal = Signal.make({ type: 'time', mode: 'elapsed' }, clock);
+    const signal = createSignal({ type: 'time', mode: 'elapsed' }, clock);
     const values: number[] = [];
     signal.subscribe((v) => values.push(v));
 
@@ -570,22 +570,22 @@ describe('Signal.make — injected clock determinism', () => {
     // Date.now() was never the source of the elapsed value.
     expect(dateSpy).not.toHaveBeenCalled();
 
-    void signal.lifetime.dispose();
+    void signal.dispose();
   });
 
   test('absolute time signal seeds its initial value from the injected clock', () => {
-    const signal = Signal.make({ type: 'time', mode: 'absolute' }, fixedClock(1_700_000_000_000));
+    const signal = createSignal({ type: 'time', mode: 'absolute' }, fixedClock(1_700_000_000_000));
     expect(signal.read()).toBe(1_700_000_000_000);
-    void signal.lifetime.dispose();
+    void signal.dispose();
   });
 
   test('the default clock still reads the ambient wall clock for absolute mode', () => {
     const before = Date.now();
-    const signal = Signal.make({ type: 'time', mode: 'absolute' });
+    const signal = createSignal({ type: 'time', mode: 'absolute' });
     const v = signal.read();
     const after = Date.now();
     expect(v).toBeGreaterThanOrEqual(before);
     expect(v).toBeLessThanOrEqual(after);
-    void signal.lifetime.dispose();
+    void signal.dispose();
   });
 });

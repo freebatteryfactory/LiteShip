@@ -3,7 +3,7 @@
  */
 
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import { TokenBuffer } from '@liteship/core';
+import { createTokenBuffer } from '@liteship/core';
 
 describe('TokenBuffer', () => {
   afterEach(() => {
@@ -12,26 +12,26 @@ describe('TokenBuffer', () => {
   });
 
   test('make creates empty buffer with default capacity', () => {
-    const buf = TokenBuffer.make();
+    const buf = createTokenBuffer();
     expect(buf.length).toBe(0);
     expect(buf.capacity).toBe(256);
     expect(buf.occupancy).toBe(0);
   });
 
   test('make creates buffer with custom capacity', () => {
-    const buf = TokenBuffer.make({ capacity: 16 });
+    const buf = createTokenBuffer({ capacity: 16 });
     expect(buf.capacity).toBe(16);
   });
 
   test('push adds tokens', () => {
-    const buf = TokenBuffer.make({ capacity: 8 });
+    const buf = createTokenBuffer({ capacity: 8 });
     buf.push('hello');
     buf.push('world');
     expect(buf.length).toBe(2);
   });
 
   test('drain returns pushed tokens in order', () => {
-    const buf = TokenBuffer.make({ capacity: 8 });
+    const buf = createTokenBuffer({ capacity: 8 });
     buf.push('a');
     buf.push('b');
     buf.push('c');
@@ -41,7 +41,7 @@ describe('TokenBuffer', () => {
   });
 
   test('drain with maxCount limits returned tokens', () => {
-    const buf = TokenBuffer.make({ capacity: 8 });
+    const buf = createTokenBuffer({ capacity: 8 });
     buf.push('a');
     buf.push('b');
     buf.push('c');
@@ -51,13 +51,13 @@ describe('TokenBuffer', () => {
   });
 
   test('drain on empty buffer returns empty array', () => {
-    const buf = TokenBuffer.make({ capacity: 8 });
+    const buf = createTokenBuffer({ capacity: 8 });
     const tokens = buf.drain();
     expect(tokens).toEqual([]);
   });
 
   test('occupancy tracks buffer fullness', () => {
-    const buf = TokenBuffer.make({ capacity: 4 });
+    const buf = createTokenBuffer({ capacity: 4 });
     expect(buf.occupancy).toBe(0);
     buf.push('a');
     expect(buf.occupancy).toBe(0.25);
@@ -69,7 +69,7 @@ describe('TokenBuffer', () => {
   });
 
   test('overflow overwrites oldest tokens', () => {
-    const buf = TokenBuffer.make({ capacity: 3 });
+    const buf = createTokenBuffer({ capacity: 3 });
     buf.push('a');
     buf.push('b');
     buf.push('c');
@@ -80,23 +80,23 @@ describe('TokenBuffer', () => {
   });
 
   test('generationRate is initially 0', () => {
-    const buf = TokenBuffer.make();
+    const buf = createTokenBuffer();
     expect(buf.generationRate).toBe(0);
   });
 
   test('consumptionRate is initially 0', () => {
-    const buf = TokenBuffer.make();
+    const buf = createTokenBuffer();
     expect(buf.consumptionRate).toBe(0);
   });
 
   test('isStalled is false when buffer has tokens', () => {
-    const buf = TokenBuffer.make({ capacity: 8 });
+    const buf = createTokenBuffer({ capacity: 8 });
     buf.push('a');
     expect(buf.isStalled).toBe(false);
   });
 
   test('works with non-string types', () => {
-    const buf = TokenBuffer.make<number>({ capacity: 4 });
+    const buf = createTokenBuffer<number>({ capacity: 4 });
     buf.push(1);
     buf.push(2);
     buf.push(3);
@@ -104,7 +104,7 @@ describe('TokenBuffer', () => {
   });
 
   test('interleaved push and drain works correctly', () => {
-    const buf = TokenBuffer.make({ capacity: 8 });
+    const buf = createTokenBuffer({ capacity: 8 });
     buf.push('a');
     buf.push('b');
     expect(buf.drain(1)).toEqual(['a']);
@@ -118,7 +118,7 @@ describe('TokenBuffer', () => {
     vi.stubGlobal('performance', undefined);
     const nowSpy = vi.spyOn(Date, 'now').mockReturnValue(100);
 
-    const buf = TokenBuffer.make({ capacity: 8 });
+    const buf = createTokenBuffer({ capacity: 8 });
     buf.push('a');
 
     expect(nowSpy).toHaveBeenCalled();
@@ -132,7 +132,7 @@ describe('TokenBuffer', () => {
       .mockReturnValueOnce(200)
       .mockReturnValueOnce(200);
 
-    const buf = TokenBuffer.make({ capacity: 8 });
+    const buf = createTokenBuffer({ capacity: 8 });
     buf.push('a');
     buf.push('b');
     expect(buf.generationRate).toBe(0);

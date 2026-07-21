@@ -10,4 +10,4 @@
 
 Defined in: [core/src/media/token-buffer.ts:211](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/token-buffer.ts#L211)
 
-Configuration accepted by [TokenBuffer.make](../../../variables/TokenBuffer.md#make).
+Configuration accepted by [createTokenBuffer](../../../functions/createTokenBuffer.md).

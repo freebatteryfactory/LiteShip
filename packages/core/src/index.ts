@@ -87,7 +87,7 @@ export type { SchemaPort, DeclarationSchema } from './schema/index.js';
 // Scope/ManagedRuntime at seams; `CellKernel` is the replay-current / no-replay
 // fan-out kernel extracted from the compositor's listener-Set. The reactive
 // primitives (Cell/Derived/Store/Signal/Zap) rebuild on these in later waves.
-export { Lifetime, attachLifetime } from './reactive/index.js';
+export { Lifetime, attachLifetime, createLifetime } from './reactive/index.js';
 export type {
   LifetimeShape,
   LifetimeDisposeError,
@@ -169,11 +169,11 @@ export { defineAdaptive } from './authoring/index.js';
 export type { Adaptive, AdaptiveSpec, AdaptiveExplanation, AdaptivePlan, ConstraintTrace } from './authoring/index.js';
 
 // Component
-export { Component } from './authoring/index.js';
-export type { SlotConfig } from './authoring/index.js';
+export { createComponent } from './authoring/index.js';
+export type { Component, SlotConfig } from './authoring/index.js';
 
 // Signal
-export { Signal } from './reactive/index.js';
+export { Signal, createSignal } from './reactive/index.js';
 export type { SignalSourceType, SignalSource } from './reactive/index.js';
 // The sanctioned SignalSource <-> SignalInput bridge (source of truth for the
 // input vocabulary; replaces every hand-rolled `input.startsWith(...)` fork).
@@ -337,13 +337,15 @@ export { Compositor } from './media/index.js';
 export type { CompositeState, CompositorConfig } from './media/index.js';
 
 // Compositor State Pool
-export { CompositorStatePool } from './media/index.js';
+export { createCompositorStatePool } from './media/index.js';
+export type { CompositorStatePool } from './media/index.js';
 
 // Speculative Evaluation
 export { SpeculativeEvaluator } from './reactive/index.js';
 
 // Token Buffer
-export { TokenBuffer } from './media/index.js';
+export { createTokenBuffer } from './media/index.js';
+export type { TokenBuffer } from './media/index.js';
 
 // UI Quality
 export { UIQuality } from './evidence/index.js';
@@ -361,24 +363,26 @@ export type { VideoConfig, VideoFrameOutput } from './media/index.js';
 export type { CaptureConfig, CaptureFrame, FrameCapture, CaptureResult } from './evidence/index.js';
 
 // Blend
-export { BlendTree } from './motion/index.js';
+export { createBlendTree } from './motion/index.js';
+export type { BlendTree } from './motion/index.js';
 
 // Frame budget
-export { FrameBudget } from './media/index.js';
-export type { Priority } from './media/index.js';
+export { createFrameBudget } from './media/index.js';
+export type { FrameBudget, Priority } from './media/index.js';
 
 // Dirty tracking
-export { DirtyFlags } from './reactive/index.js';
+export { createDirtyFlags } from './reactive/index.js';
+export type { DirtyFlags } from './reactive/index.js';
 
 // Protocol
 export type { CellKind, CellMeta, CellEnvelope } from './schema/index.js';
 
 // ECS
-export type { Entity, System, DenseSystem, DenseStore } from './ecs.js';
-export { Part, World, EntityId } from './ecs.js';
+export type { Entity, System, DenseSystem, DenseStore, World } from './ecs.js';
+export { Part, EntityId, createWorld } from './ecs.js';
 
 // Composable
-export { Composable, ComposableWorld } from './authoring/index.js';
+export { Composable, ComposableWorld, createComposable } from './authoring/index.js';
 export type { EntityComponents, ComposableEntity, ComposableWorldShape } from './authoring/index.js';
 
 // Cell
@@ -410,7 +414,7 @@ export type { QualityTierTarget } from './evidence/index.js';
 // and the CapTier↔target admissibility table projected from the shared
 // `quality-tiers.ts` scale (no quantizer import — that would close a
 // core→quantizer cycle; both project the same scale instead).
-export { chooseTier } from './evidence/index.js';
+export { chooseTier, tierTargets } from './evidence/index.js';
 export type { TierChoice, EscalationResult } from './evidence/index.js';
 
 // HLC
@@ -428,8 +432,9 @@ export type {
   ReceiptEnvelope,
   ChainValidationError,
   ChainValidationOptions,
+  ReceiptInspection,
 } from './evidence/index.js';
-export { Receipt } from './evidence/index.js';
+export { Receipt, inspectReceipt } from './evidence/index.js';
 
 // DAG
 export type { DAGNode, ReceiptDAG, MergeResult, ForkViolation, CheckpointResult } from './graph/index.js';
@@ -592,7 +597,8 @@ export { Codec } from './schema/index.js';
 // who need them should import directly from `effect/Schema`.
 
 // LiveCell
-export { LiveCell } from './reactive/index.js';
+export { createLiveCell, createLiveCellBoundary } from './reactive/index.js';
+export type { LiveCell } from './reactive/index.js';
 
 // WASM Dispatch
 export { WASMDispatch } from './wasm/index.js';

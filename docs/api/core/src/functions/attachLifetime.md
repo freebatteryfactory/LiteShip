@@ -8,7 +8,7 @@
 
 > **attachLifetime**\<`T`\>(`target`, `lifetime`): `T` & [`AsyncOwnedResource`](../interfaces/AsyncOwnedResource.md)
 
-Defined in: [core/src/reactive/lifetime.ts:292](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts#L292)
+Defined in: [core/src/reactive/lifetime.ts:302](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts#L302)
 
 Wire a [Lifetime](../variables/Lifetime.md)'s single lifecycle directly onto `target`, collapsing
 the former `{ value, lifetime }` pair-return into ONE owned resource: the

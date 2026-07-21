@@ -119,7 +119,9 @@ describe('@liteship/command canonical catalog', () => {
       const handled = typeof command.handler === 'function';
       const isHandlerKind = descriptor.executionKind === 'handler';
       // A finite command missing its handler is a bug; a cli-orchestration one is by design.
-      expect(handled, `${descriptor.name}: handler=${handled} but executionKind=${descriptor.executionKind}`).toBe(isHandlerKind);
+      expect(handled, `${descriptor.name}: handler=${handled} but executionKind=${descriptor.executionKind}`).toBe(
+        isHandlerKind,
+      );
     }
   });
 
@@ -182,7 +184,7 @@ describe('@liteship/command canonical catalog', () => {
         fix: { type: 'boolean' },
         ci: { type: 'boolean' },
         preflight: { type: 'boolean' },
-        target: { type: 'string', enum: ['cloudflare', 'astro'] },
+        target: { type: 'string', enum: ['cloudflare', 'astro', 'consumer-app'] },
       },
     });
   });

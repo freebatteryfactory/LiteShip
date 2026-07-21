@@ -90,7 +90,8 @@ export type {
 export { createTimeline } from '@liteship/core/motion';
 export type { Timeline } from '@liteship/core/motion';
 
-export { BlendTree } from '@liteship/core/motion';
+export { createBlendTree } from '@liteship/core/motion';
+export type { BlendTree } from '@liteship/core/motion';
 
 export {
   transitionReceipt,

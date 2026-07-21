@@ -10,7 +10,14 @@
  */
 
 import { Bench } from 'tinybench';
-import { Boundary, Compositor, TokenBuffer, SpeculativeEvaluator, defineBoundary } from '@liteship/core';
+import {
+  Boundary,
+  Compositor,
+  SpeculativeEvaluator,
+  defineBoundary,
+  type TokenBuffer,
+  createTokenBuffer,
+} from '@liteship/core';
 import { evaluate } from '@liteship/quantizer';
 import { SPSCRing } from '@liteship/worker';
 import { classifyThroughputTier, throughputTierBadge } from '../../scripts/bench-format.ts';
@@ -79,7 +86,7 @@ bench.add('[COMPETE] quantizer evaluate() -- 5 thresholds', () => {
 // Competing implementations: TokenBuffer vs SPSCRing (push throughput)
 // ---------------------------------------------------------------------------
 
-const tokenBuf = TokenBuffer.make<number>({ capacity: 256 });
+const tokenBuf = createTokenBuffer<number>({ capacity: 256 });
 const { producer, consumer } = SPSCRing.createPair(256, 1);
 
 bench.add('[COMPETE] TokenBuffer.push -- single token', () => {

@@ -22,7 +22,7 @@ chain or transport resumption.
 
 > **make**: (`config`) => `GenFrameSchedulerShape` = `_make`
 
-Create a new fixed-step scheduler bound to a [TokenBuffer](TokenBuffer.md) and quality-tier probe.
+Create a new fixed-step scheduler bound to a [TokenBuffer](../type-aliases/TokenBuffer.md) and quality-tier probe.
 
 #### Parameters
 

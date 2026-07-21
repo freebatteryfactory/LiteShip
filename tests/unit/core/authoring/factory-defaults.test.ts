@@ -9,7 +9,16 @@
  */
 
 import { describe, expect, test } from 'vitest';
-import { AVBridge, Component, Easing, Signal, Token, defineToken, defineStyle } from '@liteship/core';
+import {
+  AVBridge,
+  Easing,
+  Token,
+  defineToken,
+  defineStyle,
+  Signal,
+  createSignal,
+  createComponent,
+} from '@liteship/core';
 import { hasTag } from '@liteship/error';
 
 // ---------------------------------------------------------------------------
@@ -100,22 +109,22 @@ describe('Component.make defaults', () => {
   const styles = defineStyle({ base: { properties: { display: 'flex' } } });
 
   test('slots default to an implied children slot with defaultSlot "children"', () => {
-    const component = Component.make({ name: 'button', styles });
+    const component = createComponent({ name: 'button', styles });
 
     expect(component.slots).toEqual({ children: { required: false } });
     expect(component.defaultSlot).toBe('children');
   });
 
   test('omitted `required` normalizes to false and hashes like an explicit false', () => {
-    const implicit = Component.make({ name: 'card', styles, slots: { media: {} } });
-    const explicit = Component.make({ name: 'card', styles, slots: { media: { required: false } } });
+    const implicit = createComponent({ name: 'card', styles, slots: { media: {} } });
+    const explicit = createComponent({ name: 'card', styles, slots: { media: { required: false } } });
 
     expect(implicit.slots.media).toEqual({ required: false });
     expect(implicit.id).toBe(explicit.id);
   });
 
   test('explicit slots keep defaultSlot unset unless provided', () => {
-    const component = Component.make({ name: 'panel', styles, slots: { header: { required: true } } });
+    const component = createComponent({ name: 'panel', styles, slots: { header: { required: true } } });
 
     expect(component.slots.header).toEqual({ required: true });
     expect(component.defaultSlot).toBeUndefined();
@@ -157,24 +166,24 @@ describe('Easing.spring defaults', () => {
 
 describe('Signal.make source defaults', () => {
   test('viewport defaults to axis "width"', () => {
-    const signal = Signal.make({ type: 'viewport' });
+    const signal = createSignal({ type: 'viewport' });
     expect(signal.source).toEqual({ type: 'viewport', axis: 'width' });
-    void signal.lifetime.dispose();
+    void signal.dispose();
   });
 
   test('scroll defaults to axis "y", pointer to "x", time to mode "elapsed"', () => {
-    const scroll = Signal.make({ type: 'scroll' });
-    const pointer = Signal.make({ type: 'pointer' });
-    const time = Signal.make({ type: 'time' });
+    const scroll = createSignal({ type: 'scroll' });
+    const pointer = createSignal({ type: 'pointer' });
+    const time = createSignal({ type: 'time' });
 
     expect(scroll.source).toEqual({ type: 'scroll', axis: 'y' });
     expect(pointer.source).toEqual({ type: 'pointer', axis: 'x' });
     expect(time.source).toEqual({ type: 'time', mode: 'elapsed' });
 
     // Release listeners / the elapsed rAF loop (the old scope-close, now Lifetime).
-    void scroll.lifetime.dispose();
-    void pointer.lifetime.dispose();
-    void time.lifetime.dispose();
+    void scroll.dispose();
+    void pointer.dispose();
+    void time.dispose();
   });
 });
 

@@ -30,9 +30,13 @@ export { Compositor } from './compositor.js';
 
 export type { CompositeState, CompositorConfig } from './compositor.js';
 
-export { CompositorStatePool } from './compositor-pool.js';
+export { createCompositorStatePool } from './compositor-pool.js';
 
-export { TokenBuffer } from './token-buffer.js';
+export type { CompositorStatePool } from './compositor-pool.js';
+
+export { createTokenBuffer } from './token-buffer.js';
+
+export type { TokenBuffer } from './token-buffer.js';
 
 export { GenFrame } from './gen-frame.js';
 
@@ -42,9 +46,9 @@ export { VideoRenderer, compositeStateToRgba } from './video.js';
 
 export type { VideoConfig, VideoFrameOutput } from './video.js';
 
-export { FrameBudget } from './frame-budget.js';
+export { createFrameBudget } from './frame-budget.js';
 
-export type { Priority } from './frame-budget.js';
+export type { FrameBudget, Priority } from './frame-budget.js';
 
 export { AVBridge } from './av-bridge.js';
 

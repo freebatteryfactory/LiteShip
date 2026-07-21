@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'vitest';
-import { DirtyFlags } from '@liteship/core';
+import { createDirtyFlags } from '@liteship/core';
 
 describe('DirtyFlags runtime edge cases', () => {
   test('ignores unknown keys when marking, clearing, and checking dirtiness', () => {
-    const flags = DirtyFlags.make(['position', 'opacity'] as const);
+    const flags = createDirtyFlags(['position', 'opacity'] as const);
 
     flags.mark('position');
     flags.mark('missing' as never);
@@ -15,7 +15,7 @@ describe('DirtyFlags runtime edge cases', () => {
   });
 
   test('clearAll resets the mask and dirty key list', () => {
-    const flags = DirtyFlags.make(['position', 'opacity'] as const);
+    const flags = createDirtyFlags(['position', 'opacity'] as const);
 
     flags.mark('position');
     flags.mark('opacity');
@@ -29,6 +29,6 @@ describe('DirtyFlags runtime edge cases', () => {
 
   test('throws when more than the supported number of keys is provided', () => {
     const keys = Array.from({ length: 32 }, (_, index) => `k${index}` as const);
-    expect(() => DirtyFlags.make(keys)).toThrow(/supports at most/);
+    expect(() => createDirtyFlags(keys)).toThrow(/supports at most/);
   });
 });

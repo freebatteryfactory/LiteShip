@@ -8,20 +8,22 @@
 
 > `const` **Signal**: `object`
 
-Defined in: [core/src/reactive/signal.ts:418](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/signal.ts#L418)
+Defined in: [core/src/reactive/signal.ts:430](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/signal.ts#L430)
 
-Signal namespace -- live data feeds from the browser environment.
+Signal namespace -- the alternate live-feed constructors.
 
-Create reactive signals from viewport, scroll, pointer, time, media query,
-audio, or custom sources. Each signal provides `.read()` and `.subscribe(sink)`
-backed by [CellKernel.replay1](CellKernel.md#replay1), plus a [Lifetime](Lifetime.md) for listener
-cleanup. Effect-free — consumers coordinate live state with no `effect` import.
+The primary environment-source constructor is the standalone [createSignal](../functions/createSignal.md)
+(verb grammar, ADR-0046 — `create` allocates a runtime resource). This namespace
+carries the two SPECIALIZED constructors: `controllable` (a seekable/pausable
+time signal driven externally) and `audio` (an [AVBridge](AVBridge.md)-backed sample/
+normalized feed). Each signal provides `.read()` and `.subscribe(sink)` backed by
+[CellKernel.replay1](CellKernel.md#replay1), and IS its own disposable ([AsyncOwnedResource](../interfaces/AsyncOwnedResource.md)).
 
 ## Type Declaration
 
 ### audio
 
-> **audio**: (`bridge`, `mode`, `totalDurationSec?`) => `AudioSignalShape` = `_audio`
+> **audio**: (`bridge`, `mode`, `totalDurationSec?`) => `AudioSignalShape` & [`AsyncOwnedResource`](../interfaces/AsyncOwnedResource.md) = `_audio`
 
 Create an audio signal backed by an AVBridge.
 
@@ -48,7 +50,7 @@ the bridge and update the signal.
 
 #### Returns
 
-`AudioSignalShape`
+`AudioSignalShape` & [`AsyncOwnedResource`](../interfaces/AsyncOwnedResource.md)
 
 #### Example
 
@@ -61,17 +63,18 @@ const progress = audioSig.poll(); // 0..1
 
 ### controllable
 
-> **controllable**: () => `ControllableSignalShape`\<`number`\> = `_controllable`
+> **controllable**: () => `ControllableSignalShape`\<`number`\> & [`AsyncOwnedResource`](../interfaces/AsyncOwnedResource.md) = `_controllable`
 
 Create a controllable time signal for video rendering / scrubbing.
 
 External code drives the signal value via `seek()`; no automatic ticking.
 `pause()`/`resume()` gate seek updates. Effect-free — `seek`/`pause`/`resume`
-are synchronous.
+are synchronous. The controllable signal IS its own disposable
+([AsyncOwnedResource](../interfaces/AsyncOwnedResource.md)): `await ctrl.dispose()` closes the kernel.
 
 #### Returns
 
-`ControllableSignalShape`\<`number`\>
+`ControllableSignalShape`\<`number`\> & [`AsyncOwnedResource`](../interfaces/AsyncOwnedResource.md)
 
 #### Example
 
@@ -85,54 +88,12 @@ ctrl.pause();
 ctrl.seek(2000); // ignored while paused
 ```
 
-### make
-
-> **make**: (`rawSource`, `clock`) => `SignalShape`\<`number`\> = `_make`
-
-Create a reactive signal from a browser environment source.
-
-Returns a plain signal owned by a [Lifetime](Lifetime.md): it sets up event listeners
-(resize, scroll, pointermove, etc.) immediately and removes them on
-`signal.lifetime.dispose()`. The signal exposes `.read()` (latest value) and
-`.subscribe(sink)` (replay-1 stream of updates, returning a [Disposer](../type-aliases/Disposer.md)).
-
-`clock` (default [wallClock](wallClock.md)) is the injected time source for the `time`
-source family (elapsed/absolute) — pass a `manualClock`/`fixedClock` to drive an
-elapsed/absolute signal deterministically without touching the ambient clock.
-
-#### Parameters
-
-##### rawSource
-
-[`SignalSource`](../type-aliases/SignalSource.md)
-
-##### clock?
-
-[`Clock`](../interfaces/Clock.md) = `wallClock`
-
-#### Returns
-
-`SignalShape`\<`number`\>
-
-#### Example
-
-```ts
-import { Signal } from '@liteship/core';
-
-const sig = Signal.make({ type: 'viewport', axis: 'width' });
-const width = sig.read(); // current window.innerWidth
-const off = sig.subscribe((w) => console.log(w));
-// ...
-off();
-await sig.lifetime.dispose();
-```
-
 ## Example
 
 ```ts
-import { Signal } from '@liteship/core';
+import { createSignal, Signal } from '@liteship/core';
 
-const viewport = Signal.make({ type: 'viewport', axis: 'width' });
+const viewport = createSignal({ type: 'viewport', axis: 'width' });
 const width = viewport.read();
 const ctrl = Signal.controllable();
 ctrl.seek(500);

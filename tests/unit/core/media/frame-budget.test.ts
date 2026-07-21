@@ -9,7 +9,7 @@
  */
 
 import { describe, test, expect, vi } from 'vitest';
-import { FrameBudget } from '@liteship/core';
+import { type FrameBudget, createFrameBudget } from '@liteship/core';
 import { hasTag } from '@liteship/error';
 
 // ---------------------------------------------------------------------------
@@ -18,7 +18,7 @@ import { hasTag } from '@liteship/error';
 
 describe('FrameBudget', () => {
   test('make creates a frame budget', () => {
-    const budget = FrameBudget.make();
+    const budget = createFrameBudget();
     expect(budget).toBeDefined();
     expect(budget.remaining).toBeDefined();
     expect(budget.canRun).toBeDefined();
@@ -26,29 +26,29 @@ describe('FrameBudget', () => {
   });
 
   test('remaining() returns non-negative value', () => {
-    const budget = FrameBudget.make();
+    const budget = createFrameBudget();
     expect(budget.remaining()).toBeGreaterThanOrEqual(0);
   });
 
   test('default targetFps is 60 (~16.67ms budget)', () => {
-    const budget = FrameBudget.make();
+    const budget = createFrameBudget();
     // remaining() at start should be close to 16.67ms
     expect(budget.remaining()).toBeLessThanOrEqual(16.67);
   });
 
   test('custom targetFps adjusts budget', () => {
-    const budget = FrameBudget.make({ targetFps: 30 });
+    const budget = createFrameBudget({ targetFps: 30 });
     // 1000/30 = ~33.33ms budget
     expect(budget.remaining()).toBeLessThanOrEqual(33.34);
   });
 
   test('canRun(critical) always true', () => {
-    const budget = FrameBudget.make();
+    const budget = createFrameBudget();
     expect(budget.canRun('critical')).toBe(true);
   });
 
   test('scheduleSync runs critical task even with no budget', () => {
-    const budget = FrameBudget.make();
+    const budget = createFrameBudget();
     const result = budget.scheduleSync('critical', () => 42);
     expect(result).toBe(42);
   });
@@ -56,7 +56,7 @@ describe('FrameBudget', () => {
   test('scheduleSync returns null for low-priority task with no budget', () => {
     // This is hard to guarantee deterministically without controlling time,
     // but with a tiny fps (e.g. 100000) the budget is ~0.01ms which may already be spent
-    const budget = FrameBudget.make({ targetFps: 100000 });
+    const budget = createFrameBudget({ targetFps: 100000 });
 
     // Burn CPU to exhaust the budget
     const start = performance.now();
@@ -72,7 +72,7 @@ describe('FrameBudget', () => {
   });
 
   test('fpsSync returns a positive number', () => {
-    const budget = FrameBudget.make();
+    const budget = createFrameBudget();
     expect(typeof budget.fpsSync).toBe('number');
     expect(budget.fpsSync).toBeGreaterThan(0);
   });
@@ -91,9 +91,9 @@ describe('FrameBudget', () => {
     g.requestAnimationFrame = raf as unknown as typeof requestAnimationFrame;
     g.cancelAnimationFrame = caf as unknown as typeof cancelAnimationFrame;
     try {
-      const budget = FrameBudget.make();
+      const budget = createFrameBudget();
       expect(raf).toHaveBeenCalledTimes(1);
-      await budget.lifetime.dispose();
+      await budget.dispose();
       expect(caf).toHaveBeenCalledWith(123);
     } finally {
       g.requestAnimationFrame = origRaf;
@@ -108,20 +108,20 @@ describe('FrameBudget', () => {
 
 describe('FrameBudget priority thresholds', () => {
   test('high needs >= 2ms remaining', () => {
-    const budget = FrameBudget.make({ targetFps: 60 });
+    const budget = createFrameBudget({ targetFps: 60 });
     // At frame start the full 16.67ms budget should be available
     expect(budget.remaining()).toBeGreaterThanOrEqual(2);
     expect(budget.canRun('high')).toBe(true);
   });
 
   test('low needs >= 6ms remaining', () => {
-    const budget = FrameBudget.make({ targetFps: 60 });
+    const budget = createFrameBudget({ targetFps: 60 });
     expect(budget.remaining()).toBeGreaterThanOrEqual(6);
     expect(budget.canRun('low')).toBe(true);
   });
 
   test('idle needs >= 12ms remaining', () => {
-    const budget = FrameBudget.make({ targetFps: 60 });
+    const budget = createFrameBudget({ targetFps: 60 });
     expect(budget.remaining()).toBeGreaterThanOrEqual(12);
     expect(budget.canRun('idle')).toBe(true);
   });
@@ -136,14 +136,14 @@ describe('FrameBudget priority thresholds', () => {
   }
 
   test('rejects targetFps of zero', () => {
-    expectValidationError(() => FrameBudget.make({ targetFps: 0 }));
+    expectValidationError(() => createFrameBudget({ targetFps: 0 }));
   });
 
   test('rejects negative targetFps', () => {
-    expectValidationError(() => FrameBudget.make({ targetFps: -1 }));
+    expectValidationError(() => createFrameBudget({ targetFps: -1 }));
   });
 
   test('rejects Infinity targetFps', () => {
-    expectValidationError(() => FrameBudget.make({ targetFps: Infinity }));
+    expectValidationError(() => createFrameBudget({ targetFps: Infinity }));
   });
 });

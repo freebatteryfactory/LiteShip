@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 1,
-  "address": "fnv1a:c6017d25",
+  "address": "fnv1a:19a8e4dc",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -766,6 +766,12 @@
     },
     {
       "_tag": "invariant",
+      "id": "INV-TAINT-SOURCE-SINK",
+      "level": "L4",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
       "id": "INV-TOKEN-BUFFER-ZERO-ALLOC",
       "level": "L3",
       "proofKind": "proof"
@@ -773,6 +779,12 @@
     {
       "_tag": "invariant",
       "id": "INV-TOOLCHAIN-DIGEST-INVALIDATES",
+      "level": "L4",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
+      "id": "INV-TRANSITION-FACTS-DETERMINISTIC",
       "level": "L4",
       "proofKind": "proof"
     },
@@ -960,30 +972,6 @@
       "_tag": "waiver",
       "key": "gauntlet/no-nondeterminism|packages/core/src/internal/rng.ts|39",
       "ruleId": "gauntlet/no-nondeterminism",
-      "expiry": "2027-06-20"
-    },
-    {
-      "_tag": "waiver",
-      "key": "gauntlet/no-silent-catch|packages/cli/src/commands/doctor/probes-workspace.ts|261",
-      "ruleId": "gauntlet/no-silent-catch",
-      "expiry": "2027-06-20"
-    },
-    {
-      "_tag": "waiver",
-      "key": "gauntlet/no-silent-catch|packages/cli/src/commands/ship.ts|131",
-      "ruleId": "gauntlet/no-silent-catch",
-      "expiry": "2027-06-20"
-    },
-    {
-      "_tag": "waiver",
-      "key": "gauntlet/no-silent-catch|packages/cli/src/commands/version.ts|46",
-      "ruleId": "gauntlet/no-silent-catch",
-      "expiry": "2027-06-20"
-    },
-    {
-      "_tag": "waiver",
-      "key": "gauntlet/no-silent-catch|packages/web/src/stream/resumption-pure.ts|29",
-      "ruleId": "gauntlet/no-silent-catch",
       "expiry": "2027-06-20"
     }
   ]

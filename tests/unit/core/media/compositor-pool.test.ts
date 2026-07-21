@@ -3,23 +3,23 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { CompositorStatePool } from '@liteship/core';
+import { createCompositorStatePool } from '@liteship/core';
 
 describe('CompositorStatePool', () => {
   test('make creates pool with default capacity', () => {
-    const pool = CompositorStatePool.make();
+    const pool = createCompositorStatePool();
     expect(pool.size).toBe(8);
     expect(pool.available).toBe(8);
   });
 
   test('make creates pool with custom capacity', () => {
-    const pool = CompositorStatePool.make(4);
+    const pool = createCompositorStatePool(4);
     expect(pool.size).toBe(4);
     expect(pool.available).toBe(4);
   });
 
   test('acquire returns a CompositeState with empty fields', () => {
-    const pool = CompositorStatePool.make(2);
+    const pool = createCompositorStatePool(2);
     const state = pool.acquire();
     expect(state).toBeDefined();
     expect(state.discrete).toEqual({});
@@ -30,7 +30,7 @@ describe('CompositorStatePool', () => {
   });
 
   test('acquire decrements available count', () => {
-    const pool = CompositorStatePool.make(4);
+    const pool = createCompositorStatePool(4);
     expect(pool.available).toBe(4);
     pool.acquire();
     expect(pool.available).toBe(3);
@@ -39,7 +39,7 @@ describe('CompositorStatePool', () => {
   });
 
   test('release returns state to pool and resets fields', () => {
-    const pool = CompositorStatePool.make(2);
+    const pool = createCompositorStatePool(2);
     const state = pool.acquire();
     expect(pool.available).toBe(1);
 
@@ -62,7 +62,7 @@ describe('CompositorStatePool', () => {
   });
 
   test('released state can be re-acquired', () => {
-    const pool = CompositorStatePool.make(1);
+    const pool = createCompositorStatePool(1);
     const state1 = pool.acquire();
     expect(pool.available).toBe(0);
 
@@ -74,7 +74,7 @@ describe('CompositorStatePool', () => {
   });
 
   test('overflow allocation when all slots in use', () => {
-    const pool = CompositorStatePool.make(2);
+    const pool = createCompositorStatePool(2);
     pool.acquire();
     pool.acquire();
     expect(pool.available).toBe(0);
@@ -86,7 +86,7 @@ describe('CompositorStatePool', () => {
   });
 
   test('release of unknown state is no-op', () => {
-    const pool = CompositorStatePool.make(2);
+    const pool = createCompositorStatePool(2);
     const foreign = {
       discrete: {},
       blend: {},
@@ -98,7 +98,7 @@ describe('CompositorStatePool', () => {
   });
 
   test('acquire pointer wraps to the first released slot after later slots were allocated', () => {
-    const pool = CompositorStatePool.make(3);
+    const pool = createCompositorStatePool(3);
     const first = pool.acquire();
     const second = pool.acquire();
     const third = pool.acquire();
@@ -114,7 +114,7 @@ describe('CompositorStatePool', () => {
   });
 
   test('overflow state release resets fields even when reacquisition stays on the cold path', () => {
-    const pool = CompositorStatePool.make(1);
+    const pool = createCompositorStatePool(1);
     const pooled = pool.acquire();
     const overflow = pool.acquire();
 
@@ -129,7 +129,7 @@ describe('CompositorStatePool', () => {
   });
 
   test('double release is benign and does not inflate available capacity', () => {
-    const pool = CompositorStatePool.make(2);
+    const pool = createCompositorStatePool(2);
     const state = pool.acquire();
 
     pool.release(state);
@@ -140,7 +140,7 @@ describe('CompositorStatePool', () => {
   });
 
   test('mixed pooled and overflow reuse reports stable size and available counts', () => {
-    const pool = CompositorStatePool.make(2);
+    const pool = createCompositorStatePool(2);
     const first = pool.acquire();
     const second = pool.acquire();
     const overflow = pool.acquire();

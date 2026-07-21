@@ -587,6 +587,60 @@ export const verifyMAC = async (envelope: ReceiptEnvelope, key: CryptoKey): Prom
 };
 
 /**
+ * A structured, human-debuggable view of one {@link ReceiptEnvelope} — the shape
+ * {@link inspectReceipt} returns. Purely derived (no hashing, no I/O): the causal
+ * facts a caller reads when tracing a chain link.
+ */
+export interface ReceiptInspection {
+  /** The envelope's semantic kind (e.g. `'state-change'`, `'checkpoint'`). */
+  readonly kind: string;
+  /** The logical entity the receipt describes. */
+  readonly subject: ReceiptSubject;
+  /** The envelope's content hash (SHA-256 hex). */
+  readonly hash: string;
+  /** The predecessor link(s), always normalized to an array (single or merge). */
+  readonly previous: readonly string[];
+  /** True when this is a genesis (root) envelope — `previous` includes the `GENESIS` sentinel. */
+  readonly isGenesis: boolean;
+  /** True when this is a merge envelope — it names more than one predecessor. */
+  readonly isMerge: boolean;
+  /** True when the envelope carries a MAC `signature`. */
+  readonly signed: boolean;
+  /** The causal clock stamped on the envelope. */
+  readonly timestamp: HLC;
+}
+
+/**
+ * Return a structured, human-debuggable view of a receipt envelope (verb grammar,
+ * ADR-0046 — `inspect` returns structured debug information). A thin, synchronous
+ * facade over the existing {@link Receipt} namespace: it derives the causal facts
+ * (genesis/merge/signed classification, normalized predecessor links) a caller
+ * reads when tracing a chain link, WITHOUT recomputing the hash or touching I/O.
+ *
+ * @example
+ * ```ts
+ * import { inspectReceipt } from '@liteship/core';
+ *
+ * const view = inspectReceipt(chain[0]);
+ * // { kind, subject, hash, previous, isGenesis: true, isMerge: false, signed, timestamp }
+ * ```
+ */
+export const inspectReceipt = (envelope: ReceiptEnvelope): ReceiptInspection => {
+  const raw = envelope.previous;
+  const previous: readonly string[] = typeof raw === 'string' ? [raw] : raw;
+  return {
+    kind: envelope.kind,
+    subject: envelope.subject,
+    hash: envelope.hash,
+    previous,
+    isGenesis: isGenesis(envelope),
+    isMerge: Array.isArray(envelope.previous),
+    signed: envelope.signature !== undefined,
+    timestamp: envelope.timestamp,
+  };
+};
+
+/**
  * Receipt namespace -- chain validation and envelope construction.
  *
  * Build, validate, append, query, and sign linear receipt chains.

@@ -10,7 +10,7 @@ import { assertNever } from '@liteship/error';
 import { defineCapsule } from '../assembly.js';
 import { schema } from '../../schema/constructors.js';
 import type { Infer } from '../../schema/infer.js';
-import { TokenBuffer } from '../../media/token-buffer.js';
+import { createTokenBuffer } from '../../media/token-buffer.js';
 
 const TokenEventSchema = schema.union(
   schema.struct({ _tag: schema.literal('push'), token: schema.string }),
@@ -49,7 +49,7 @@ function byteLength(token: string): number {
  * harness probes (Codex P2, PR #15).
  */
 function stepTokenBuffer(state: BufferState, event: TokenEvent): BufferState {
-  const buffer = TokenBuffer.make<string>();
+  const buffer = createTokenBuffer<string>();
   for (const token of state.tokens) buffer.push(token);
 
   switch (event._tag) {

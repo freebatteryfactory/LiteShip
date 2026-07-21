@@ -59,7 +59,6 @@
 import {
   Derived,
   Signal,
-  LiveCell,
   Scheduler,
   HLC,
   Millis,
@@ -69,6 +68,7 @@ import {
   createCell,
   createStore,
   createTimeline,
+  createLiveCellBoundary,
 } from '@liteship/core';
 import type { BoundaryCrossing, Boundary } from '@liteship/core';
 import type { Disposer } from '@liteship/core';
@@ -501,7 +501,7 @@ export const liveCellAdapter: PrimitiveAdapter = {
     // Drive the envelope HLC with a fixed clock so `wall_ms`/`counter` are a pure
     // function of the op-sequence — the raw bytes are pinned in the golden (no
     // ambient Date.now(), no monotonicity-boolean workaround).
-    const cell = LiveCell.makeBoundary(captureBoundary(), 0, fixedClock(0));
+    const cell = createLiveCellBoundary(captureBoundary(), 0, fixedClock(0));
     const syntheticStamp = HLC.increment(HLC.create('capture'), 0);
     return {
       read: (): TraceValue => cell.read(),

@@ -21,13 +21,19 @@ export { QUALITY_TIER_TARGETS, QUALITY_TIER_COUNT, projectQualityTiers } from '.
 
 export type { QualityTierTarget } from './quality-tiers.js';
 
-export { chooseTier } from './escalation.js';
+export { chooseTier, tierTargets } from './escalation.js';
 
 export type { TierChoice, EscalationResult } from './escalation.js';
 
-export type { ReceiptSubject, ReceiptEnvelope, ChainValidationError, ChainValidationOptions } from './receipt.js';
+export type {
+  ReceiptSubject,
+  ReceiptEnvelope,
+  ChainValidationError,
+  ChainValidationOptions,
+  ReceiptInspection,
+} from './receipt.js';
 
-export { Receipt } from './receipt.js';
+export { Receipt, inspectReceipt } from './receipt.js';
 
 export { contentAddressOf, canonicalAddressBytes } from './content-address.js';
 

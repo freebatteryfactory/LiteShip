@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import { Diagnostics, GenFrame, HLC, Receipt, TokenBuffer, TypedRef, WASMDispatch } from '@liteship/core';
+import { Diagnostics, GenFrame, HLC, Receipt, TypedRef, WASMDispatch } from '@liteship/core';
+import * as LiteshipCore from '@liteship/core';
 import type { UIFrame } from '@liteship/core';
 import {
   bootstrapSlots,
@@ -95,7 +96,9 @@ describe('astro shared runtime adapters', () => {
     document.dispatchEvent(new Event('DOMContentLoaded'));
 
     expect(registry.get('/hero' as never)?.mode).toBe('replace');
-    expect(getSlotRegistry().get('/hero' as never)?.element).toBe(document.querySelector('[data-liteship-slot="/hero"]'));
+    expect(getSlotRegistry().get('/hero' as never)?.element).toBe(
+      document.querySelector('[data-liteship-slot="/hero"]'),
+    );
 
     let reinitCount = 0;
     document.getElementById('widget')?.addEventListener('liteship:reinit', () => {
@@ -840,7 +843,8 @@ describe('astro shared runtime adapters', () => {
     document.body.appendChild(host);
 
     const toolEnds: unknown[] = [];
-    host.addEventListener('liteship:llm-tool-end', ((event: CustomEvent) => toolEnds.push(event.detail)) as EventListener);
+    host.addEventListener('liteship:llm-tool-end', ((event: CustomEvent) =>
+      toolEnds.push(event.detail)) as EventListener);
 
     const session = createLLMSession({
       element: host,
@@ -910,7 +914,9 @@ describe('astro shared runtime adapters', () => {
     expect(session.ingest({ type: 'text', partial: false, content: 'Hello ' })).toBe('continue');
     expect(session.ingest({ type: 'text', partial: false, content: 'world' })).toBe('continue');
     expect(session.ingest({ type: 'tool-call-start', partial: false, toolName: 'search' })).toBe('continue');
-    expect(session.ingest({ type: 'tool-call-delta', partial: false, content: '{"query":"liteship"}' })).toBe('continue');
+    expect(session.ingest({ type: 'tool-call-delta', partial: false, content: '{"query":"liteship"}' })).toBe(
+      'continue',
+    );
     expect(session.ingest({ type: 'tool-call-end', partial: false, toolName: 'search' })).toBe('continue');
     expect(session.ingest({ type: 'done', partial: false })).toBe('done');
 
@@ -947,10 +953,12 @@ describe('astro shared runtime adapters', () => {
     const schedulerResets: number[] = [];
     const tokenBufferResets: number[] = [];
 
-    const originalTokenBufferMake = TokenBuffer.make;
+    const originalTokenBufferMake = LiteshipCore.createTokenBuffer;
     const originalGenFrameMake = GenFrame.make;
 
-    vi.spyOn(TokenBuffer, 'make').mockImplementation(((...args: Parameters<typeof TokenBuffer.make>) => {
+    vi.spyOn(LiteshipCore, 'createTokenBuffer').mockImplementation(((
+      ...args: Parameters<typeof LiteshipCore.createTokenBuffer>
+    ) => {
       tokenBufferCreates.push(tokenBufferCreates.length);
       const buffer = originalTokenBufferMake(...args);
       const originalReset = buffer.reset.bind(buffer);
@@ -959,7 +967,7 @@ describe('astro shared runtime adapters', () => {
         originalReset();
       };
       return buffer;
-    }) as typeof TokenBuffer.make);
+    }) as typeof LiteshipCore.createTokenBuffer);
     vi.spyOn(GenFrame, 'make').mockImplementation(((...args: Parameters<typeof GenFrame.make>) => {
       schedulerCreates.push(schedulerCreates.length);
       const scheduler = originalGenFrameMake(...args);
@@ -1065,7 +1073,9 @@ describe('astro shared runtime adapters', () => {
 
     expect(session.ingest({ type: 'text', partial: false, content: 'Hello' })).toBe('continue');
     expect(session.ingest({ type: 'tool-call-start', partial: false, toolName: 'search' })).toBe('continue');
-    expect(session.ingest({ type: 'tool-call-delta', partial: false, content: '{"query":"liteship"}' })).toBe('continue');
+    expect(session.ingest({ type: 'tool-call-delta', partial: false, content: '{"query":"liteship"}' })).toBe(
+      'continue',
+    );
     expect(session.ingest({ type: 'tool-call-end', partial: false, toolName: 'search' })).toBe('continue');
     expect(session.ingest({ type: 'done', partial: false })).toBe('done');
 
@@ -1302,7 +1312,7 @@ describe('astro shared runtime adapters', () => {
     host.appendChild(target);
     document.body.appendChild(host);
 
-    const tokenBufferSpy = vi.spyOn(TokenBuffer, 'make');
+    const tokenBufferSpy = vi.spyOn(LiteshipCore, 'createTokenBuffer');
     const frameSpy = vi.spyOn(GenFrame, 'make');
 
     const session = createLLMSession({
@@ -1365,7 +1375,7 @@ describe('astro shared runtime adapters', () => {
     host.appendChild(target);
     document.body.appendChild(host);
 
-    const tokenBufferSpy = vi.spyOn(TokenBuffer, 'make');
+    const tokenBufferSpy = vi.spyOn(LiteshipCore, 'createTokenBuffer');
     const frameSpy = vi.spyOn(GenFrame, 'make');
     const session = createLLMSession({
       element: host,
@@ -1397,7 +1407,7 @@ describe('astro shared runtime adapters', () => {
     host.append(firstTarget, secondTarget);
     document.body.appendChild(host);
 
-    const tokenBufferSpy = vi.spyOn(TokenBuffer, 'make');
+    const tokenBufferSpy = vi.spyOn(LiteshipCore, 'createTokenBuffer');
     const frameSpy = vi.spyOn(GenFrame, 'make');
 
     const session = createLLMSession({
@@ -1445,7 +1455,7 @@ describe('astro shared runtime adapters', () => {
       emitDone: () => undefined,
     };
 
-    const tokenBufferSpy = vi.spyOn(TokenBuffer, 'make');
+    const tokenBufferSpy = vi.spyOn(LiteshipCore, 'createTokenBuffer');
     const frameSpy = vi.spyOn(GenFrame, 'make');
 
     const session = createLLMSessionWithHost(
@@ -1504,7 +1514,7 @@ describe('astro shared runtime adapters', () => {
     secondHost.appendChild(secondTarget);
     document.body.appendChild(secondHost);
 
-    const tokenBufferSpy = vi.spyOn(TokenBuffer, 'make');
+    const tokenBufferSpy = vi.spyOn(LiteshipCore, 'createTokenBuffer');
     const frameSpy = vi.spyOn(GenFrame, 'make');
 
     const firstSession = createLLMSession({
@@ -1570,7 +1580,8 @@ describe('astro shared runtime adapters', () => {
     document.body.appendChild(host);
 
     const doneEvents: unknown[] = [];
-    host.addEventListener('liteship:llm-done', ((event: CustomEvent) => doneEvents.push(event.detail)) as EventListener);
+    host.addEventListener('liteship:llm-done', ((event: CustomEvent) =>
+      doneEvents.push(event.detail)) as EventListener);
 
     const session = createLLMSession({
       element: host,
@@ -1590,7 +1601,7 @@ describe('astro shared runtime adapters', () => {
     const host = document.createElement('section');
     document.body.appendChild(host);
 
-    const tokenBufferSpy = vi.spyOn(TokenBuffer, 'make');
+    const tokenBufferSpy = vi.spyOn(LiteshipCore, 'createTokenBuffer');
     const frameSpy = vi.spyOn(GenFrame, 'make');
 
     const session = createLLMSession({

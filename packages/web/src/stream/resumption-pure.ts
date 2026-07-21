@@ -9,6 +9,34 @@
 import { HLC } from '@liteship/core';
 
 /**
+ * Decode a colon-containing id as canonical HLC wire format, or `undefined` when it
+ * is not canonical HLC. `HLC.decode` throwing is a FORMAT-DETECTION signal (the id is
+ * a legacy shape), not an error to surface — returning `undefined` lets the caller
+ * fall through to the legacy parsers, which is the expected legacy-id path. Isolating
+ * the decode here turns the caught format-mismatch into an explicit "not canonical"
+ * return instead of a silently-swallowed error.
+ */
+function decodeCanonicalHlc(
+  eventId: string,
+): { raw: string; sequence: number; timestamp?: number; nodeId?: string } | undefined {
+  let parsed: { raw: string; sequence: number; timestamp?: number; nodeId?: string } | undefined;
+  try {
+    const decoded = HLC.decode(eventId);
+    parsed = {
+      raw: eventId,
+      sequence: decoded.counter,
+      timestamp: decoded.wall_ms,
+      nodeId: decoded.node_id,
+    };
+  } catch {
+    // Not canonical HLC — the id is a legacy shape; record `undefined` (undecodable)
+    // so the caller falls through to the legacy parsers (the expected legacy-id path).
+    parsed = undefined;
+  }
+  return parsed;
+}
+
+/**
  * Parse an event ID to extract sequence number and other components.
  *
  * Primary: canonical HLC wire format (`HLC.encode` — colon-separated hex).
@@ -18,17 +46,8 @@ export const parseEventId = (
   eventId: string,
 ): { raw: string; sequence: number; timestamp?: number; nodeId?: string } => {
   if (eventId.includes(':')) {
-    try {
-      const decoded = HLC.decode(eventId);
-      return {
-        raw: eventId,
-        sequence: decoded.counter,
-        timestamp: decoded.wall_ms,
-        nodeId: decoded.node_id,
-      };
-    } catch {
-      // Not canonical HLC — fall through to legacy parsers.
-    }
+    const canonical = decodeCanonicalHlc(eventId);
+    if (canonical !== undefined) return canonical;
   }
 
   const numericMatch = eventId.match(/^(\d+)$/);

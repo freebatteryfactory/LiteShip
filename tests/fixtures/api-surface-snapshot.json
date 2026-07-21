@@ -1138,11 +1138,6 @@
           "signature": "interpolate:function,run:function"
         },
         {
-          "name": "BlendTree",
-          "kind": "namespace",
-          "signature": "make:function"
-        },
-        {
           "name": "Boundary",
           "kind": "namespace",
           "signature": "evaluate:function,evaluateBatch:function,evaluateResult:function,evaluateWithHysteresis:function,isActive:function"
@@ -1194,14 +1189,9 @@
           "signature": "make:function"
         },
         {
-          "name": "Component",
-          "kind": "namespace",
-          "signature": "make:function"
-        },
-        {
           "name": "Composable",
           "kind": "namespace",
-          "signature": "compose:function,make:function,merge:function"
+          "signature": "compose:function,merge:function"
         },
         {
           "name": "ComposableWorld",
@@ -1212,11 +1202,6 @@
           "name": "Compositor",
           "kind": "namespace",
           "signature": "create:function"
-        },
-        {
-          "name": "CompositorStatePool",
-          "kind": "namespace",
-          "signature": "make:function"
         },
         {
           "name": "Config",
@@ -1256,11 +1241,6 @@
           "signature": "clearOnce:function,createBufferSink:function,error:function,reset:function,resetClock:function,resetSink:function,setClock:function,setSink:function,warn:function,warnOnce:function"
         },
         {
-          "name": "DirtyFlags",
-          "kind": "namespace",
-          "signature": "make:function"
-        },
-        {
           "name": "DocumentGraphNodeSchema",
           "kind": "const"
         },
@@ -1281,11 +1261,6 @@
           "name": "EntityId",
           "kind": "function",
           "signature": "(1)"
-        },
-        {
-          "name": "FrameBudget",
-          "kind": "namespace",
-          "signature": "make:function"
         },
         {
           "name": "GRAPH_QUERY_FALLBACK_HEADER",
@@ -1315,11 +1290,6 @@
           "name": "Lifetime",
           "kind": "namespace",
           "signature": "make:function"
-        },
-        {
-          "name": "LiveCell",
-          "kind": "namespace",
-          "signature": "make:function,makeBoundary:function"
         },
         {
           "name": "MS_PER_SEC",
@@ -1411,7 +1381,7 @@
         {
           "name": "Signal",
           "kind": "namespace",
-          "signature": "audio:function,controllable:function,make:function"
+          "signature": "audio:function,controllable:function"
         },
         {
           "name": "SignalInput",
@@ -1472,11 +1442,6 @@
           "signature": "cssVar:function,tap:function"
         },
         {
-          "name": "TokenBuffer",
-          "kind": "namespace",
-          "signature": "make:function"
-        },
-        {
           "name": "TokenRef",
           "kind": "function",
           "signature": "(1)"
@@ -1522,11 +1487,6 @@
         {
           "name": "WASM_SCRATCH_BASE",
           "kind": "const"
-        },
-        {
-          "name": "World",
-          "kind": "namespace",
-          "signature": "make:function"
         },
         {
           "name": "Zap",
@@ -1634,7 +1594,37 @@
           "signature": "(1)"
         },
         {
+          "name": "createBlendTree",
+          "kind": "function",
+          "signature": "(0)"
+        },
+        {
           "name": "createCell",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "createComponent",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "createComposable",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "createCompositorStatePool",
+          "kind": "function",
+          "signature": "(0)"
+        },
+        {
+          "name": "createDirtyFlags",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "createFrameBudget",
           "kind": "function",
           "signature": "(1)"
         },
@@ -1649,6 +1639,26 @@
           "signature": "(2)"
         },
         {
+          "name": "createLifetime",
+          "kind": "function",
+          "signature": "(0)"
+        },
+        {
+          "name": "createLiveCell",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "createLiveCellBoundary",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "createSignal",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "createStore",
           "kind": "function",
           "signature": "(2)"
@@ -1657,6 +1667,16 @@
           "name": "createTimeline",
           "kind": "function",
           "signature": "(2)"
+        },
+        {
+          "name": "createTokenBuffer",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "createWorld",
+          "kind": "function",
+          "signature": "(0)"
         },
         {
           "name": "decode",
@@ -1810,6 +1830,11 @@
         },
         {
           "name": "inputToSource",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "inspectReceipt",
           "kind": "function",
           "signature": "(1)"
         },
@@ -2112,6 +2137,11 @@
           "name": "systemRng",
           "kind": "namespace",
           "signature": "next:function"
+        },
+        {
+          "name": "tierTargets",
+          "kind": "function",
+          "signature": "(1)"
         },
         {
           "name": "toJsonSchema",

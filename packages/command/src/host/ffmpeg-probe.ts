@@ -70,11 +70,14 @@ export function probeFfmpegRender(): FfmpegRenderProbe {
 
 function readOsRelease(): string {
   if (!existsSync('/etc/os-release')) return '';
-  let contents = '';
+  let contents: string;
   try {
     contents = readFileSync('/etc/os-release', 'utf8');
   } catch {
-    // /etc/os-release unreadable (permissions, non-Linux) — fall back to generic hint.
+    // /etc/os-release unreadable (permissions, non-Linux) — record the empty-string
+    // "unknown distro" fallback so the caller emits the generic install hint.
+    // Non-corrupting: an absent os-release is never a real fault to surface.
+    contents = '';
   }
   return contents;
 }

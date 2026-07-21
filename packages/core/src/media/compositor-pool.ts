@@ -87,7 +87,7 @@ function resetState(state: CompositeState): void {
  *
  * @example
  * ```ts
- * const pool = CompositorStatePool.make(4);
+ * const pool = createCompositorStatePool(4);
  * const state = pool.acquire();
  * state.discrete['theme'] = 'dark';
  * state.outputs.css['--bg'] = '#000';
@@ -95,7 +95,7 @@ function resetState(state: CompositeState): void {
  * pool.available; // 4
  * ```
  */
-function _make(capacity = COMPOSITOR_POOL_CAP): CompositorStatePoolShape {
+export function createCompositorStatePool(capacity = COMPOSITOR_POOL_CAP): CompositorStatePoolShape {
   const buffer: CompositeState[] = [];
   for (let i = 0; i < capacity; i++) {
     buffer.push(createMutableState());
@@ -145,19 +145,18 @@ function _make(capacity = COMPOSITOR_POOL_CAP): CompositorStatePoolShape {
 }
 
 /**
- * CompositorStatePool -- ring buffer of pre-allocated CompositeState objects.
- * Zero-allocation hot path: acquire a state, write into it, render, then release.
+ * Public structural type for `CompositorStatePool` -- ring buffer of pre-allocated
+ * CompositeState objects. Zero-allocation hot path: acquire a state, write into it,
+ * render, then release. Construct one with the standalone
+ * {@link createCompositorStatePool} (verb grammar, ADR-0046).
  *
  * @example
  * ```ts
- * const pool = CompositorStatePool.make(8);
+ * const pool = createCompositorStatePool(8);
  * const state = pool.acquire();
  * // Write compositor output into state.discrete, state.blend, state.outputs
  * pool.release(state); // resets and returns to pool
  * console.log(pool.size, pool.available); // 8, 8
  * ```
  */
-export const CompositorStatePool = { make: _make };
-
-/** Public structural type for `CompositorStatePool`. */
 export type CompositorStatePool = CompositorStatePoolShape;

@@ -29,9 +29,11 @@ export type {
 export { Compositor } from '@liteship/core/media';
 export type { CompositeState, CompositorConfig } from '@liteship/core/media';
 
-export { CompositorStatePool } from '@liteship/core/media';
+export { createCompositorStatePool } from '@liteship/core/media';
+export type { CompositorStatePool } from '@liteship/core/media';
 
-export { TokenBuffer } from '@liteship/core/media';
+export { createTokenBuffer } from '@liteship/core/media';
+export type { TokenBuffer } from '@liteship/core/media';
 
 export { GenFrame } from '@liteship/core/media';
 export type { UIFrame, FrameType, MorphStrategy, GapStrategy } from '@liteship/core/media';
@@ -39,8 +41,8 @@ export type { UIFrame, FrameType, MorphStrategy, GapStrategy } from '@liteship/c
 export { VideoRenderer, compositeStateToRgba } from '@liteship/core/media';
 export type { VideoConfig, VideoFrameOutput } from '@liteship/core/media';
 
-export { FrameBudget } from '@liteship/core/media';
-export type { Priority } from '@liteship/core/media';
+export { createFrameBudget } from '@liteship/core/media';
+export type { FrameBudget, Priority } from '@liteship/core/media';
 
 export { AVBridge } from '@liteship/core/media';
 

@@ -8,7 +8,7 @@
 
 > **Component**\<`B`, `SN`\> = `ComponentDef`\<`B`, `SN`\>
 
-Defined in: [core/src/authoring/component.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/component.ts#L71)
+Defined in: [core/src/authoring/component.ts:101](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/component.ts#L101)
 
 Public structural type for `Component`.
 

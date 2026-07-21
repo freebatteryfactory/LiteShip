@@ -15,8 +15,8 @@ if (!existsSync(distEntry)) {
   process.stderr.write(
     'liteship: Hull not yet laid (packages/cli/dist/ is missing).\n' +
       '  Lay the keel with: pnpm run build\n' +
-      '  Or, for a one-shot rig-check without building: pnpm run doctor\n' +
-      '  Or, for the full shakedown:                    pnpm shakedown\n',
+      '  Or, for a one-shot environment check without building: pnpm run doctor\n' +
+      '  Or, for the full verify:                               pnpm verify\n',
   );
   process.exit(127);
 }

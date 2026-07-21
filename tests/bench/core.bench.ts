@@ -3,7 +3,17 @@
  */
 
 import { Bench } from 'tinybench';
-import { Boundary, Compositor, BlendTree, World, Part, Config, defineBoundary, defineToken, defineConfig } from '@liteship/core';
+import {
+  Boundary,
+  Compositor,
+  Part,
+  Config,
+  defineBoundary,
+  defineToken,
+  defineConfig,
+  createWorld,
+  createBlendTree,
+} from '@liteship/core';
 
 const bench = new Bench({ warmupIterations: 100 });
 
@@ -99,7 +109,7 @@ bench.add('defineToken() + FNV-1a', () => {
 });
 
 bench.add('BlendTree.compute() -- 4 nodes', () => {
-  const tree = BlendTree.make<{ x: number; y: number }>();
+  const tree = createBlendTree<{ x: number; y: number }>();
   tree.add('a', { x: 0, y: 0 }, 1);
   tree.add('b', { x: 100, y: 100 }, 1);
   tree.add('c', { x: 50, y: 50 }, 0.5);
@@ -114,7 +124,7 @@ bench.add('Compositor.compute() -- empty', () => {
 
 // ECS World tick -- setup extracted so only tick() is measured per iteration
 {
-  const world100 = World.make();
+  const world100 = createWorld();
   for (let i = 0; i < 100; i++) {
     world100.spawn({ position: { x: i, y: i * 2 } });
   }
@@ -130,7 +140,7 @@ bench.add('Compositor.compute() -- empty', () => {
 }
 
 {
-  const world100Dense = World.make();
+  const world100Dense = createWorld();
   const posX = Part.dense('posX', 128);
   const posY = Part.dense('posY', 128);
 

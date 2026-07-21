@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { World } from '@liteship/core';
+import { createWorld } from '@liteship/core';
 import { SyncSystem } from '@liteship/scene';
 
 /**
@@ -12,7 +12,7 @@ import { SyncSystem } from '@liteship/scene';
  */
 describe('SyncSystem (world-query path)', () => {
   it('pulses intensity to ~1 on the frame of a beat', () => {
-    const world = World.make();
+    const world = createWorld();
     // SyncAnchor entity that the system writes _intensity onto.
     world.spawn({
       SyncAnchor: { anchor: 'bed', mode: 'beat' },
@@ -32,7 +32,7 @@ describe('SyncSystem (world-query path)', () => {
   });
 
   it('emits lower intensity mid-beat with exponential decay', () => {
-    const world = World.make();
+    const world = createWorld();
     world.spawn({
       SyncAnchor: { anchor: 'bed', mode: 'beat' },
       TargetEntity: 'hero',
@@ -51,7 +51,7 @@ describe('SyncSystem (world-query path)', () => {
   });
 
   it('writes intensity = 0 when no beats have occurred yet (lastBeat = -Infinity → exp(-Inf) = 0)', () => {
-    const world = World.make();
+    const world = createWorld();
     world.spawn({ SyncAnchor: { anchor: 'bed', mode: 'beat' } });
     // Future beat only — current frame is before it.
     world.spawn({ Beat: { _tag: 'beat', timeMs: 5000, strength: 1 } });
@@ -68,7 +68,7 @@ describe('SyncSystem (world-query path)', () => {
   // clobbering the envelope with the bare decay — sync sets the base,
   // the envelope multiplies it (Spec 1 §5.4).
   it('multiplies beat decay by a pulse envelope when the SyncAnchor entity also carries Envelope + FrameRange', () => {
-    const world = World.make();
+    const world = createWorld();
     world.spawn({
       SyncAnchor: { anchor: 'bed', mode: 'beat' },
       // periodFrames 30 → at frame 30 the pulse is at its peak (local
@@ -88,7 +88,7 @@ describe('SyncSystem (world-query path)', () => {
   });
 
   it('gates beat decay through a fade envelope (decay < 1 composes too)', () => {
-    const world = World.make();
+    const world = createWorld();
     world.spawn({
       SyncAnchor: { anchor: 'bed', mode: 'beat' },
       // linear-in over 60 frames → at frame 30 the factor is 0.5.
@@ -106,7 +106,7 @@ describe('SyncSystem (world-query path)', () => {
   });
 
   it('falls back to plain decay when an Envelope is present but FrameRange is missing', () => {
-    const world = World.make();
+    const world = createWorld();
     world.spawn({
       SyncAnchor: { anchor: 'bed', mode: 'beat' },
       Envelope: { curve: 'pulse', periodFrames: 30, amplitude: 0.5 },
@@ -130,7 +130,7 @@ describe('SyncSystem (world-query path)', () => {
      * 500 ms (= frame 30 @ 60fps → decay = exp(0) = 1), tick SyncSystem
      * at frame 30, and return the written intensity. */
     const intensityAtFrame30 = (range: { from: number; to: number }): number => {
-      const world = World.make();
+      const world = createWorld();
       world.spawn({
         SyncAnchor: { anchor: 'bed', mode: 'beat' },
         // periodFrames 30 → at any multiple-of-30 offset from
@@ -174,7 +174,7 @@ describe('SyncSystem (world-query path)', () => {
     // an unrelated component shape, plus another with a non-numeric
     // timeMs, must not contaminate the time-line. The system should
     // still produce the correct decay against the one valid beat.
-    const world = World.make();
+    const world = createWorld();
     world.spawn({ SyncAnchor: { anchor: 'bed', mode: 'beat' } });
     // Entity spawned via the queryable id 'Beat' but with no Beat field.
     world.spawn({ Beat: undefined as unknown as Record<string, unknown> });

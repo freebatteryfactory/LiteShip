@@ -8,7 +8,7 @@
 
 > **Part**\<`T`\> = `PartShape`\<`T`\>
 
-Defined in: [core/src/ecs.ts:341](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L341)
+Defined in: [core/src/ecs.ts:347](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L347)
 
 Public structural type for `Part`.
 

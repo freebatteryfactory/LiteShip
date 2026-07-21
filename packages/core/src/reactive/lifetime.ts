@@ -226,6 +226,16 @@ export const Lifetime = {
   make,
 } as const;
 
+/**
+ * Build a fresh, undisposed {@link Lifetime} — the standalone verb-grammar
+ * constructor (ADR-0046 — `create` allocates a runtime resource). Equivalent to
+ * `Lifetime.make()`; `Lifetime` stays as the composition-primitive namespace, and
+ * this is the curated authoring-surface spelling the `liteship` root re-exports.
+ */
+export function createLifetime(): Lifetime {
+  return make();
+}
+
 /** Public structural type for `Lifetime`. */
 export type Lifetime = LifetimeShape;
 

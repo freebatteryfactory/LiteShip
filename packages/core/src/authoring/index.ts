@@ -44,11 +44,11 @@ export type { AdaptiveQuantizeOptions, AdaptiveQuantizerConfig, AdaptiveQuantize
 
 export type { Adaptive, AdaptiveSpec, AdaptiveExplanation, AdaptivePlan, ConstraintTrace } from './adaptive.js';
 
-export { Component } from './component.js';
+export { createComponent } from './component.js';
 
-export type { SlotConfig } from './component.js';
+export type { Component, SlotConfig } from './component.js';
 
-export { Composable, ComposableWorld } from './composable.js';
+export { Composable, ComposableWorld, createComposable } from './composable.js';
 
 export type { EntityComponents, ComposableEntity, ComposableWorldShape } from './composable.js';
 

@@ -117,6 +117,12 @@ invariants:
     level: L4
     category: mutation
 
+  # ── Transition cage — the transition-conformance second-oracle determinism ──
+  - id: INV-TRANSITION-FACTS-DETERMINISTIC
+    law: 'buildTransitionFacts is deterministic: the same runs + options yield BYTE-IDENTICAL TransitionFacts regardless of input order (cases sorted by (seed, traceDigest); observations SHA-256 content-addressed by the builder, never a hash-equality shortcut), so an equivalent/divergent bisimulation verdict is reproducible.'
+    level: L4
+    category: determinism
+
   # ── Verdict cache + repo-IR — the B2 content-addressed-cache soundness spine ─
   - id: INV-VERDICT-CACHE-KEY-DETERMINISTIC
     law: 'gateVerdictKey is a PURE function of its four soundness inputs: the same parts (env maps differing only in insertion order included) mint a BYTE-IDENTICAL key, and coverageDigestOf is an order/multiplicity-independent set fold — so a verdict cached one run is found the next, never a different slot.'
@@ -144,6 +150,10 @@ invariants:
   # ── Security — defense-in-depth content guards on the untrusted seams ───────
   - id: INV-SHADER-CONTENT-INTEGRITY
     law: "A fetched (external) GPU shader's BYTES are verified against an author-pinned SRI sha256 hash BEFORE they reach a compile sink (gl.shaderSource / device.createShaderModule): a matching hash compiles, a tampered byte is REFUSED (mismatch), and an external fetch with NO pin is REFUSED (secure-by-default). The verifier (verifyShaderIntegrity) sits ON the fetch→compile data path, so the taint oracle classifies the shader-content flows as genuinely SANITIZED."
+    level: L4
+    category: security
+  - id: INV-TAINT-SOURCE-SINK
+    law: 'The taint oracle (buildRepoIRTaint) + the lean taintFlowGate soundly trace a value from a SOURCE call to a SINK, observing the SANITIZER on the path (bounded interprocedural depth): an UNSANITIZED source→sink flow is emitted with sanitizedBy=null and reds an L4 error at the SINK naming both endpoints; a SANITIZED flow (taint broken on the path) is emitted CLEAN (sanitizedBy set) and the gate stays silent; and the trace is deterministic over unchanged source.'
     level: L4
     category: security
 

@@ -22,7 +22,7 @@
  */
 import { describe, test, expect } from 'vitest';
 import fc from 'fast-check';
-import { BlendTree } from '@liteship/core';
+import { createBlendTree } from '@liteship/core';
 
 type Vec = { x: number; y: number; z: number };
 
@@ -35,7 +35,7 @@ interface Entry {
 
 /** Build a tree, add entries in the given order, and compute the blend. */
 function blendInOrder(entries: readonly Entry[]): Vec {
-  const tree = BlendTree.make<Vec>();
+  const tree = createBlendTree<Vec>();
   for (const e of entries) tree.add(e.name, e.value, e.weight);
   return tree.compute();
 }

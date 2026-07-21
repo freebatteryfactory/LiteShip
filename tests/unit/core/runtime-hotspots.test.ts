@@ -1,7 +1,16 @@
 // @vitest-environment jsdom
 
 import { describe, expect, test } from 'vitest';
-import { Millis, Part, SpeculativeEvaluator, Style, World, defineBoundary, defineStyle, schema } from '@liteship/core';
+import {
+  Millis,
+  Part,
+  SpeculativeEvaluator,
+  Style,
+  defineBoundary,
+  defineStyle,
+  schema,
+  createWorld,
+} from '@liteship/core';
 import { evaluate as evaluateQuantizer } from '@liteship/quantizer';
 import { GLSLCompiler } from '@liteship/compiler';
 import { captureSelection, findScrollable } from '../../../packages/web/src/physical/capture.js';
@@ -16,7 +25,7 @@ describe('runtime hotspot coverage', () => {
     // World is a synchronous API as of the core-seams wave: make() returns a
     // world that owns its own dispose(), every method returns directly, and
     // System.execute returns void (no Effect wrapper).
-    const world = World.make();
+    const world = createWorld();
     const hpPart = { name: 'hp', schema: schema.number };
     const labelPart = { name: 'label', schema: schema.string };
     const presentStore = Part.dense('present', 8);

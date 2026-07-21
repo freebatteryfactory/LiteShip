@@ -8,7 +8,7 @@
 
 > **Signal**\<`T`\> = `SignalShape`\<`T`\>
 
-Defined in: [core/src/reactive/signal.ts:418](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/signal.ts#L418)
+Defined in: [core/src/reactive/signal.ts:430](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/signal.ts#L430)
 
 Public structural type for `Signal`.
 

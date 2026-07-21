@@ -3,12 +3,12 @@
  */
 
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import { GenFrame, TokenBuffer } from '@liteship/core';
+import { GenFrame, createTokenBuffer } from '@liteship/core';
 import type { UIQualityTier } from '@liteship/core';
 
 function makeScheduler(initialTier: UIQualityTier = 'styled') {
   let tier: UIQualityTier = initialTier;
-  const buf = TokenBuffer.make<string>({ capacity: 64 });
+  const buf = createTokenBuffer<string>({ capacity: 64 });
 
   const scheduler = GenFrame.make({
     tokenBuffer: buf,

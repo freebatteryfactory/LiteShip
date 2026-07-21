@@ -18,6 +18,8 @@
  *   - no-internal-vi-mock        (f) no `vi.mock` of an internal @liteship/* package
  *                                    or a relative reach; node builtins + third-party
  *                                    specifiers stay legal (scope: `tests/**`)
+ *   - no-reactive-make-factory   (g) the retired reactive `.make` factory spellings
+ *                                    stay dead — the create* verb sweep (ADR-0051)
  *
  * Every other sgrule is backstopped by a vitest meta-test that pins the SCARS
  * (float-determinism.test.ts, a1-seam-integrity.test.ts). Those rules ported an
@@ -90,9 +92,59 @@ describe('source-grammar rules are registered with ast-grep', () => {
       'types-file-purity.yml',
       'no-shape-namespace-type.yml',
       'no-internal-vi-mock.yml',
+      'no-reactive-make-factory.yml',
     ]) {
       expect(existsSync(resolve(SGRULES, r)), r).toBe(true);
     }
+  });
+});
+
+describe('no-reactive-make-factory (g) — the retired reactive `.make` spellings stay dead (ADR-0051)', () => {
+  const RULE = 'no-reactive-make-factory.yml';
+
+  it('RED: each retired reactive `.make` / `.makeBoundary` factory spelling fires (incl. generic-parameterized)', async () => {
+    const f = fixture(
+      'packages/faux/src/reactive/regress.ts',
+      [
+        'const a = Signal.make({ type: "viewport" });',
+        'const b = LiveCell.make("state", 0);',
+        'const c = LiveCell.makeBoundary(bnd, 0);',
+        'const d = World.make();',
+        'const e = BlendTree.make<{ x: number }>();',
+        'const g = TokenBuffer.make<string>();',
+        'const h = Component.make({ name: "x", styles: s });',
+        'const i = Composable.make<Bag>({ a });',
+        'const j = DirtyFlags.make(["x"]);',
+        'const k = FrameBudget.make({ targetFps: 60 });',
+        'const l = CompositorStatePool.make(4);',
+        '',
+      ].join('\n'),
+    );
+    // 11 retired spellings, one per line.
+    expect((await scan(RULE, f)).length).toBe(11);
+  });
+
+  it('GREEN: the standalone `create*` verbs AND honest surviving `.make` factories pass', async () => {
+    const f = fixture(
+      'packages/faux/src/reactive/ok.ts',
+      [
+        'const a = createSignal({ type: "viewport" });',
+        'const b = createLiveCell("state", 0);',
+        'const c = createLiveCellBoundary(bnd, 0);',
+        'const d = createWorld();',
+        'const e = createBlendTree<{ x: number }>();',
+        // Kept namespace members + honest surviving `.make` factories elsewhere in the fleet.
+        'const s = Signal.controllable();',
+        'const au = Signal.audio(bridge);',
+        'const cmp = Composable.compose(x, y);',
+        'const z = Zap.make<number>();',
+        'const p = Plan.make("pipeline");',
+        'const hlc = HLC.makeClock("node");',
+        'const cw = ComposableWorld.make(w);',
+        '',
+      ].join('\n'),
+    );
+    expect((await scan(RULE, f)).length).toBe(0);
   });
 });
 

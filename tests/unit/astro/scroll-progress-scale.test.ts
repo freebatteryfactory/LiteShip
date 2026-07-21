@@ -13,14 +13,14 @@
  *     the same scrollY (computed from the source of truth, not hardcoded).
  */
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { Signal } from '@liteship/core';
+import { createSignal } from '@liteship/core';
 import { readSignalValue } from '../../../packages/astro/src/runtime/boundary.js';
 
 /** Read `scroll.progress` from the Signal source of truth (Wave 6: plain, sync). */
 function signalScrollProgress(): number {
-  const sig = Signal.make({ type: 'scroll', axis: 'progress' });
+  const sig = createSignal({ type: 'scroll', axis: 'progress' });
   const value = sig.read();
-  void sig.lifetime.dispose();
+  void sig.dispose();
   return value;
 }
 

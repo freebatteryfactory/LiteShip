@@ -14,12 +14,13 @@
  * targeting them is void). Each entry says exactly why the site is sanctioned.
  *
  * This registry is the committed list `litelaunchGauntlet` applies over the
- * production scan scope (`packages/&#42;/src`). It holds the declared entropy
+ * production scan scope (`packages/&#42;/src`). It holds ONLY the declared entropy
  * boundaries the determinism cure deliberately leaves — the single `systemClock` /
- * `systemRng` reads that ALL other runtime time/randomness funnels through — plus
- * a handful of proven-benign best-effort catches in that scope (each suppressing a
- * REAL finding the run surfaces, so each waiver actually has teeth). Everything
- * else the gauntlet surfaces is CURED, not waived.
+ * `systemRng` reads that ALL other runtime time/randomness funnels through (each
+ * suppressing a REAL finding the run surfaces, so each waiver actually has teeth).
+ * The former best-effort silent-catch waivers were retired when those catches were
+ * CURED (given explicit, non-swallowing fallback bodies). Everything else the
+ * gauntlet surfaces is CURED, not waived.
  *
  * @module
  */
@@ -77,66 +78,16 @@ export const LITESHIP_WAIVERS: readonly Waiver[] = [
     debtScore: 1,
   },
 
-  // ── Proven-benign best-effort silent catches in packages/*/src (the scan scope) ─
-  // Owner-sanctioned per the redline: a catch is waiveable "only if ... proven
-  // best-effort cleanup where failure is non-observable and non-corrupting." Each
-  // entry below targets a file the production run (litelaunchGauntlet, scoped to
-  // packages/*/src) actually scans, so the waiver has teeth: it suppresses a REAL
-  // finding the run surfaces. (The gauntlet's own scripts/* teardown catches are a
-  // scripts-scoped concern, not part of this packages/*/src registry — a waiver for
-  // an unscanned file is itself stale weight the mechanism would flag.)
-  // (No waiver for packages/astro/src/runtime/wgpu.ts: the WGSL fetch-fallback
-  // catch was DISCRIMINATED when the shader content-integrity feature landed — it
-  // now binds the caught network error and emits its own `wgsl-fetch-fallback-builtin`
-  // warnOnce before keeping the built-in shader, so the gate no longer flags it. A
-  // waiver for a site that is no longer silent would be STALE weight the mechanism
-  // flags — discriminating the catch is the cure, not a renewed suppression.)
-  {
-    ruleId: 'gauntlet/no-silent-catch',
-    file: 'packages/web/src/stream/resumption-pure.ts',
-    line: 29,
-    owner: 'heyoub',
-    reason:
-      'Format-detection fallthrough, not an error swallow: HLC.decode throwing means the eventId is simply not canonical HLC, which is the NORMAL legacy-id path — the code falls through to the legacy parsers. The "failure" is non-observable (a legacy id is expected input) and non-corrupting (a parsed result is still returned). Emitting a diagnostic here would fire on every legacy id (noise).',
-    expires: BOUNDARY_REVIEW,
-    blastRadius:
-      'If a malformed-but-colon-containing id silently mis-parses to a legacy shape, resumption could resume from a wrong sequence — but isResumptionState validates the loaded shape on the read path.',
-    debtScore: 1,
-  },
-  {
-    ruleId: 'gauntlet/no-silent-catch',
-    file: 'packages/cli/src/commands/ship.ts',
-    line: 131,
-    owner: 'heyoub',
-    reason:
-      'Best-effort workspace-glob enumeration: an entry that cannot be statSync-d (permission/race) is skipped during package discovery. Non-corrupting (a genuinely unreadable directory entry is not a publishable package) and conservative (skip rather than crash the whole ship). Documented, not empty. (Wave 8: relocated 169→131 by the effect-shed removing the runEffect adapters above resolveGlob.)',
-    expires: BOUNDARY_REVIEW,
-    blastRadius:
-      'A package made unreadable at the wrong moment would be silently omitted from a ship — but a publish of a known package set surfaces the omission downstream (the missing package).',
-    debtScore: 1,
-  },
-  {
-    ruleId: 'gauntlet/no-silent-catch',
-    file: 'packages/cli/src/commands/doctor/probes-workspace.ts',
-    line: 261,
-    owner: 'heyoub',
-    reason:
-      'Best-effort capability probe in the doctor diagnostic: an unreadable playwright-browsers cache dir is treated as "no chromium installed" — the conservative, non-corrupting interpretation, and the doctor then reports chromium as missing (so the failure IS surfaced to the user, just as the normal doctor output). Documented, not empty. (Relocated from doctor.ts:390 by the doctor god-file split into doctor/probes-workspace.ts; shifted 250→261 when the spawn-capture seam added the injectable SpawnArgvCapture params above hasChromiumBuild.)',
-    expires: BOUNDARY_REVIEW,
-    blastRadius:
-      'A transiently-unreadable cache dir would make doctor under-report an installed chromium — a false "missing", which is the safe direction (prompts a reinstall, never hides a real break).',
-    debtScore: 1,
-  },
-  {
-    ruleId: 'gauntlet/no-silent-catch',
-    file: 'packages/cli/src/commands/version.ts',
-    line: 46,
-    owner: 'heyoub',
-    reason:
-      'Best-effort CLI-version resolution: import.meta.url may be unavailable in odd bundling/loader contexts, so readCliVersion skips the module-relative package.json candidate and falls through to the cwd-relative one. Non-corrupting (a real version is still resolved from the workspace) and conservative. Documented, not empty. (Surfaced into its own file when readCliVersion was relocated out of doctor.ts by the split; shifted 47→46 when the Wave 5 runCliCommand migration dropped the spawn imports above it.)',
-    expires: BOUNDARY_REVIEW,
-    blastRadius:
-      'With no import.meta.url, the version read falls back to the cwd package.json — at worst a wrong version string when run from an unrelated cwd, never a crash or corrupted state.',
-    debtScore: 1,
-  },
+  // ── Silent catches in packages/*/src: CURED, not waived ─────────────────────
+  // There are NO no-silent-catch waivers. Every best-effort catch the production
+  // run (litelaunchGauntlet, scoped to packages/*/src) once suppressed here has been
+  // DISCRIMINATED — the cure, not a renewed suppression — exactly the pattern the
+  // WGSL fetch-fallback set (packages/astro/src/runtime/wgpu.ts binds the network
+  // error + emits its own `wgsl-fetch-fallback-builtin` warnOnce). The four former
+  // benign-catch waivers (resumption-pure.ts, ship.ts, doctor/probes-workspace.ts,
+  // version.ts) were retired when their catches were given explicit, non-swallowing
+  // fallback bodies (an explicit `return`/`continue` of the conservative,
+  // non-corrupting value the site already meant). A waiver for a site that is no
+  // longer silent would be STALE weight the mechanism flags — so the L3-scoped
+  // no-silent-catch backlog is now EMPTY, the honest floor.
 ];

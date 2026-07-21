@@ -55,8 +55,8 @@ import { CellKernel } from '../reactive/cell-kernel.js';
 import { Lifetime, attachLifetime } from '../reactive/lifetime.js';
 import type { AsyncOwnedResource } from '../reactive/lifetime.js';
 import { COMPOSITOR_POOL_CAP, DIRTY_FLAGS_MAX } from '../authoring/defaults.js';
-import { CompositorStatePool, accessCompositeState } from './compositor-pool.js';
-import { DirtyFlags } from '../reactive/dirty.js';
+import { createCompositorStatePool, accessCompositeState } from './compositor-pool.js';
+import { createDirtyFlags, type DirtyFlags } from '../reactive/dirty.js';
 import type { PolicyNode, RuntimeSite } from '../graph/document-graph.js';
 import { chooseTier } from '../evidence/escalation.js';
 import type { FrameBudget } from './frame-budget.js';
@@ -273,7 +273,7 @@ export const Compositor: CompositorFactory = {
     const metaMap = new Map<string, QuantizerMeta>();
     const overrides = new Map<string, Record<string, number>>();
 
-    const pool = CompositorStatePool.make(config?.poolCapacity ?? COMPOSITOR_POOL_CAP);
+    const pool = createCompositorStatePool(config?.poolCapacity ?? COMPOSITOR_POOL_CAP);
     const frameBudget = config?.frameBudget;
     const useSpeculative = config?.speculative ?? false;
     const getPolicy = config?.getPolicy;
@@ -358,7 +358,7 @@ export const Compositor: CompositorFactory = {
         return;
       }
 
-      dirty = DirtyFlags.make(nameList);
+      dirty = createDirtyFlags(nameList);
       recomputeAll = false;
       for (const name of nameList) {
         dirty.mark(name);

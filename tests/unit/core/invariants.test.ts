@@ -17,11 +17,15 @@ import {
   ContentAddress,
   Easing,
   Animation,
-  DirtyFlags,
   SpeculativeEvaluator,
-  TokenBuffer,
   Millis,
-  Compositor, defineBoundary } from '@liteship/core';
+  Compositor,
+  defineBoundary,
+  createDirtyFlags,
+  type TokenBuffer,
+  createTokenBuffer,
+  type DirtyFlags,
+} from '@liteship/core';
 import { hasTag } from '@liteship/error';
 
 // --- Quantizer imports ---
@@ -388,7 +392,7 @@ describe('Invariant 6: DirtyFlags bitmask correctness', () => {
     fc.assert(
       fc.property(fc.integer({ min: 1, max: 31 }), (count) => {
         const keys = Array.from({ length: count }, (_, i) => `k${i}`);
-        const flags = DirtyFlags.make(keys);
+        const flags = createDirtyFlags(keys);
 
         // Mark all, check all
         for (const key of keys) {
@@ -411,7 +415,7 @@ describe('Invariant 6: DirtyFlags bitmask correctness', () => {
 
   test('each key has a unique bitmask (no collisions)', () => {
     const keys = Array.from({ length: 31 }, (_, i) => `k${i}`);
-    const flags = DirtyFlags.make(keys);
+    const flags = createDirtyFlags(keys);
 
     for (let i = 0; i < 31; i++) {
       flags.clearAll();
@@ -426,7 +430,7 @@ describe('Invariant 6: DirtyFlags bitmask correctness', () => {
   test('throws on > 31 keys', () => {
     const keys = Array.from({ length: 32 }, (_, i) => `k${i}`);
     try {
-      DirtyFlags.make(keys);
+      createDirtyFlags(keys);
       expect.unreachable('expected DirtyFlags.make to throw');
     } catch (error) {
       expect(hasTag(error, 'ValidationError')).toBe(true);
@@ -618,7 +622,7 @@ describe('Invariant 12: TokenBuffer conserves tokens', () => {
   test('push N tokens then drain N returns all tokens in order', () => {
     fc.assert(
       fc.property(fc.array(fc.string(), { minLength: 1, maxLength: 100 }), (tokens) => {
-        const buf = TokenBuffer.make<string>({ capacity: 256 });
+        const buf = createTokenBuffer<string>({ capacity: 256 });
         for (const t of tokens) buf.push(t);
         const drained = buf.drain(tokens.length);
         expect(drained).toEqual(tokens);
@@ -630,7 +634,7 @@ describe('Invariant 12: TokenBuffer conserves tokens', () => {
   test('occupancy is consistent: push increases, drain decreases', () => {
     fc.assert(
       fc.property(fc.integer({ min: 1, max: 50 }), (count) => {
-        const buf = TokenBuffer.make<number>({ capacity: 256 });
+        const buf = createTokenBuffer<number>({ capacity: 256 });
         for (let i = 0; i < count; i++) buf.push(i);
         const afterPush = buf.occupancy;
         expect(afterPush).toBeGreaterThan(0);
@@ -656,7 +660,7 @@ describe('Invariant 13: DirtyFlags mark/getDirty round-trip', () => {
 
     fc.assert(
       fc.property(fc.subarray(allKeys, { minLength: 0 }), (markedKeys) => {
-        const flags = DirtyFlags.make(allKeys);
+        const flags = createDirtyFlags(allKeys);
         for (const k of markedKeys) flags.mark(k);
 
         const dirty = flags.getDirty();
