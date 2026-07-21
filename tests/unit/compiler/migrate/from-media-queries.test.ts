@@ -141,6 +141,22 @@ describe('fromMediaQueries — decomposition branches', () => {
     expect(t.tokens.accent).toEqual({ light: '#f90', dark: '#f90' });
   });
 
+  it('harvests only :root custom properties as theme tokens (scoped selectors stay scoped)', () => {
+    const result = fromMediaQueries(`
+      :root { --bg: #fff; }
+      .card { --accent: red; }
+      @media (prefers-color-scheme: dark) {
+        :root { --bg: #111; }
+        .card { --accent: darkred; }
+      }
+    `);
+    const t = result.themes[0]!;
+    // Only :root's --bg is a theme token; .card's scoped --accent is excluded
+    // from BOTH the light defaults and the dark variant (no scope widening).
+    expect(t.tokens).toEqual({ bg: { light: '#fff', dark: '#111' } });
+    expect(Object.keys(t.tokens)).not.toContain('accent');
+  });
+
   it('keeps a recognized discrete feature as a media: boundary and flags it unmappable', () => {
     const result = fromMediaQueries(`
       @media (prefers-reduced-motion: reduce) { .x { animation: none; } }
@@ -199,6 +215,38 @@ describe('fromMediaQueries — every diagnostic code has teeth', () => {
   it('emits unsupported-at-rule for a bare media-type query', () => {
     const { diagnostics } = fromMediaQueries(`@media print { .x { color: black; } }`);
     expect(diagnostics.some((d) => d.code === MIGRATE_CODES.unsupportedAtRule)).toBe(true);
+  });
+});
+
+describe('fromMediaQueries — boolean logic (not/or/comma) is rejected, never inverted', () => {
+  it('rejects a `not (...)` prelude instead of silently inverting the theme', () => {
+    const result = fromMediaQueries(`
+      :root { --bg: white; }
+      @media not (prefers-color-scheme: dark) { :root { --bg: black; } }
+    `);
+    // The negated block is dropped with a diagnostic, NOT harvested as `dark`.
+    const d = result.diagnostics.find((x) => x.code === MIGRATE_CODES.unsupportedAtRule);
+    expect(d).toBeDefined();
+    expect(d!.severity).toBe('error');
+    expect(d!.message).toContain('boolean logic');
+    // No positive color-scheme block survived, so no dark theme was fabricated.
+    expect(result.themes).toEqual([]);
+  });
+
+  it('rejects `or`-combined and comma query-list preludes (no boundary fold)', () => {
+    const orResult = fromMediaQueries(`@media (min-width: 400px) or (min-width: 800px) { .x { a: b; } }`);
+    expect(orResult.diagnostics.some((d) => d.code === MIGRATE_CODES.unsupportedAtRule)).toBe(true);
+    expect(orResult.boundaries).toEqual([]);
+
+    const commaResult = fromMediaQueries(`@media (min-width: 400px), print { .x { a: b; } }`);
+    expect(commaResult.diagnostics.some((d) => d.code === MIGRATE_CODES.unsupportedAtRule)).toBe(true);
+    expect(commaResult.boundaries).toEqual([]);
+  });
+
+  it('still lowers a `screen and (min-width)` prelude (media type + and are not boolean logic)', () => {
+    const result = fromMediaQueries(`@media screen and (min-width: 768px) { .x { a: b; } }`);
+    expect([...result.boundaries[0]!.thresholds]).toEqual([0, 768]);
+    expect(result.diagnostics).toEqual([]);
   });
 });
 

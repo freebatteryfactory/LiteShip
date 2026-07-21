@@ -137,27 +137,70 @@ function matchBrace(blanked: string, openIdx: number): number {
 }
 
 /**
- * Collect every custom-property declaration (`--name: value`) inside a source
- * range by walking each nested rule block with the shared
- * {@link parseFlatDeclarations} scanner. Names are returned WITHOUT the leading
- * `--`. Used to read the `:root { … }` overrides inside a
- * `prefers-color-scheme` media block.
+ * Whether a selector list targets `:root` — one of its comma-separated
+ * components, with block braces stripped, is exactly `:root`. A custom property
+ * is a theme-wide token ONLY when declared on `:root`; a scoped selector's custom
+ * property stays scoped, so harvesting it would silently widen its scope to the
+ * whole migrated theme.
  */
-function collectCustomProps(css: string, start: number, end: number): Record<string, string> {
+function selectorTargetsRoot(selector: string): boolean {
+  return selector
+    .replace(/[{}]/g, ' ')
+    .split(',')
+    .some((part) => part.trim().toLowerCase() === ':root');
+}
+
+/**
+ * Collect the `:root` custom-property declarations (`--name: value`) inside a
+ * source range, walking each nested rule block with the shared
+ * {@link parseFlatDeclarations} scanner. Names are returned WITHOUT the leading
+ * `--`. Only `:root` blocks contribute — a scoped selector inside the range
+ * (`.card { --accent }`) is skipped, so a block's custom properties never
+ * silently become theme-wide values. Used to read the `:root { … }` overrides
+ * inside a `prefers-color-scheme` media block.
+ */
+function collectRootCustomProps(css: string, start: number, end: number): Record<string, string> {
   const out: Record<string, string> = {};
   let i = start;
+  let selStart = start;
   while (i < end) {
     if (css[i] === '{') {
+      const selector = css.slice(selStart, i);
       const { props, end: blockEnd } = parseFlatDeclarations(css, i + 1);
-      for (const [k, v] of Object.entries(props)) {
-        if (k.startsWith('--')) out[k.slice(2)] = v;
+      if (selectorTargetsRoot(selector)) {
+        for (const [k, v] of Object.entries(props)) {
+          if (k.startsWith('--')) out[k.slice(2)] = v;
+        }
       }
       i = blockEnd > i ? blockEnd : i + 1;
+      selStart = i;
     } else {
       i++;
     }
   }
   return out;
+}
+
+/**
+ * The prelude text OUTSIDE every parenthesized feature group, lowercased — the
+ * media combinators. `not` / `or` / a comma query-list separator change the
+ * query's boolean meaning in a way a flat positive feature list cannot preserve
+ * (`not (prefers-color-scheme: dark)` is the NEGATION), so their presence marks
+ * the whole `@media` block unrepresentable.
+ */
+function preludeConnective(prelude: string): string {
+  let out = '';
+  let depth = 0;
+  for (let i = 0; i < prelude.length; i++) {
+    const c = prelude[i]!;
+    if (c === '(') depth++;
+    else if (c === ')') {
+      if (depth > 0) depth--;
+    } else if (depth === 0) {
+      out += c;
+    }
+  }
+  return out.toLowerCase();
 }
 
 // ---------------------------------------------------------------------------
@@ -266,6 +309,22 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
   };
 
   const processMedia = (prelude: string, bodyStart: number, bodyEnd: number): void => {
+    // not / or / a comma query-list separator change the query's boolean meaning
+    // (`not (prefers-color-scheme: dark)` is the NEGATION). A flat positive
+    // feature fold cannot preserve that, so reject the whole block rather than
+    // silently inverting its semantics or over-collecting its overrides.
+    const connective = preludeConnective(prelude);
+    if (/\bnot\b/.test(connective) || /\bor\b/.test(connective) || connective.includes(',')) {
+      diagnostics.push(
+        makeMigrationDiagnostic(
+          MIGRATE_CODES.unsupportedAtRule,
+          `@media "${prelude.trim()}" uses boolean logic (not/or/comma) that a positive feature lowering cannot preserve; skipped rather than silently inverted.`,
+          { path: ['@media', prelude.trim()], severity: 'error' },
+        ),
+      );
+      return;
+    }
+
     const feats = parseFeatures(prelude);
     if (feats.length === 0) {
       // Bare media-type query (`@media screen`, `@media print`) — no condition
@@ -304,7 +363,7 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
           continue;
         }
         sawColorScheme = true;
-        const props = collectCustomProps(css, bodyStart, bodyEnd);
+        const props = collectRootCustomProps(css, bodyStart, bodyEnd);
         schemeVariants[variant] = { ...(schemeVariants[variant] ?? {}), ...props };
       } else {
         addDiscrete(feat);
@@ -364,7 +423,8 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
     }
 
     // Top-level selector rule — harvest custom properties as the shared light
-    // defaults for a potential prefers-color-scheme theme.
+    // defaults for a potential prefers-color-scheme theme, but ONLY from :root
+    // (a scoped selector's custom props stay scoped, never theme-wide).
     let k = i;
     while (k < len && blanked[k] !== '{' && blanked[k] !== '}' && blanked[k] !== ';') k++;
     if (k >= len) break;
@@ -372,11 +432,14 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
       i = k + 1;
       continue;
     }
+    const selector = css.slice(i, k);
     const bodyStart = k + 1;
     const bodyEnd = matchBrace(blanked, k);
-    const { props } = parseFlatDeclarations(css, bodyStart);
-    for (const [p, v] of Object.entries(props)) {
-      if (p.startsWith('--')) baseTokens[p.slice(2)] = v;
+    if (selectorTargetsRoot(selector)) {
+      const { props } = parseFlatDeclarations(css, bodyStart);
+      for (const [p, v] of Object.entries(props)) {
+        if (p.startsWith('--')) baseTokens[p.slice(2)] = v;
+      }
     }
     i = bodyEnd + 1;
   }
