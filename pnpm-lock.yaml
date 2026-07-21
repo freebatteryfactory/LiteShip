@@ -670,6 +670,12 @@ importers:
       '@liteship/worker':
         specifier: workspace:*
         version: link:../worker
+      astro:
+        specifier: '>=7.0.0 <8'
+        version: 7.0.3(@astrojs/markdown-remark@7.2.0)(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(@types/node@24.13.2)(jiti@2.6.1)(rollup@4.59.0)(terser@5.46.1)(tsx@4.22.4)(yaml@2.8.3)
+      vite:
+        specifier: '>=8.0.16 <9'
+        version: 8.1.0(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.6.1)(terser@5.46.1)(tsx@4.22.4)(yaml@2.8.3)
 
   packages/mcp-server:
     dependencies:
@@ -3855,10 +3861,6 @@ packages:
 
   longest-streak@3.1.0:
     resolution: {integrity: sha512-9Ri+o0JYgehTaVBBDoMqIl8GXtbWg711O3srftcHhZ0dqnETqLaoIK0x17fUw9rFSlK/0NlsKe0Ahhyl5pXE2g==}
-
-  lru-cache@11.2.7:
-    resolution: {integrity: sha512-aY/R+aEsRelme17KGQa/1ZSIpLpNYYrhcrepKTZgE+W3WM16YMCaPwOHLHsmopZHELU0Ojin1lPVxKR0MihncA==}
-    engines: {node: 20 || >=22}
 
   lru-cache@11.5.1:
     resolution: {integrity: sha512-RPimw/7aMdv2oqRrxKwvZXcPfwBrn/JZ2xYcY9Hus/6LaS3VOAKVWKWgNLCFSiOm1ESXinjsDlidVU7JlnCN2A==}
@@ -7074,7 +7076,7 @@ snapshots:
       unstorage: 1.17.5
       vfile: 6.0.3
       vite: 8.1.0(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.6.1)(terser@5.46.1)(tsx@4.22.4)(yaml@2.8.3)
-      vitefu: 1.1.2(vite@8.1.0(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.6.1)(terser@5.46.1)(tsx@4.22.4)(yaml@2.8.3))
+      vitefu: 1.1.2(vite@8.1.0(@types/node@22.20.0)(esbuild@0.28.1)(jiti@2.6.1)(terser@5.46.1)(tsx@4.22.4)(yaml@2.8.3))
       xxhash-wasm: 1.1.0
       yargs-parser: 22.0.0
       zod: 4.3.6
@@ -8006,8 +8008,6 @@ snapshots:
   longest-streak@3.1.0:
     optional: true
 
-  lru-cache@11.2.7: {}
-
   lru-cache@11.5.1: {}
 
   lru-cache@6.0.0:
@@ -8640,7 +8640,7 @@ snapshots:
 
   path-scurry@2.0.2:
     dependencies:
-      lru-cache: 11.2.7
+      lru-cache: 11.5.1
       minipass: 7.1.3
 
   path-to-regexp@6.3.0: {}
@@ -9452,9 +9452,9 @@ snapshots:
       tsx: 4.22.4
       yaml: 2.8.3
 
-  vitefu@1.1.2(vite@8.1.0(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.6.1)(terser@5.46.1)(tsx@4.22.4)(yaml@2.8.3)):
+  vitefu@1.1.2(vite@8.1.0(@types/node@22.20.0)(esbuild@0.28.1)(jiti@2.6.1)(terser@5.46.1)(tsx@4.22.4)(yaml@2.8.3)):
     optionalDependencies:
-      vite: 8.1.0(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.6.1)(terser@5.46.1)(tsx@4.22.4)(yaml@2.8.3)
+      vite: 8.1.0(@types/node@22.20.0)(esbuild@0.28.1)(jiti@2.6.1)(terser@5.46.1)(tsx@4.22.4)(yaml@2.8.3)
 
   vitest@4.1.9(@types/node@22.20.0)(@vitest/browser-playwright@4.1.9(playwright@1.61.1)(vite@8.1.0(@types/node@22.20.0)(esbuild@0.28.1)(jiti@2.6.1)(terser@5.46.1)(tsx@4.22.4)(yaml@2.8.3))(vitest@4.1.9))(@vitest/browser-preview@4.1.9)(@vitest/coverage-v8@4.1.9(@vitest/browser@4.1.9)(vitest@4.1.9))(jsdom@29.1.1(@noble/hashes@1.8.0))(vite@8.1.0(@types/node@22.20.0)(esbuild@0.28.1)(jiti@2.6.1)(terser@5.46.1)(tsx@4.22.4)(yaml@2.8.3)):
     dependencies:
