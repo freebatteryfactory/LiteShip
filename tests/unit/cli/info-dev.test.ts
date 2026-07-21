@@ -3,18 +3,20 @@
  *
  * `info` is a pure projection over the roster / catalog / doctor probes — fully
  * exercised here (JSON receipt + the pretty stderr digest). `dev` spawns an
- * example app's interactive dev server on its happy path (not unit-testable), so
- * these cover the testable surface: example-name resolution (default / --tutorial
- * / --example) and the missing-app guard that fails 1 with a structured error
- * before any spawn.
+ * interactive dev server on its happy path (not unit-testable), so these cover
+ * the testable surface: `detectHost` (astro / vite / none); the consumer-app
+ * route's receipt (`mode: 'host'` + detected host) emitted BEFORE the spawn; and
+ * the examples route's name resolution (default / --tutorial / --example) plus
+ * the missing-app guard that fails 1 with a structured error before any spawn.
  */
 import { describe, it, expect } from 'vitest';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { info } from '../../../packages/cli/src/commands/info.js';
 import { dev } from '../../../packages/cli/src/commands/dev.js';
+import { detectHost } from '../../../packages/cli/src/lib/host-detect.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(HERE, '../../..');
@@ -114,6 +116,60 @@ describe('liteship dev — example resolution + missing-app guard', () => {
       expect(err.error).toContain('examples/no-such-example');
     } finally {
       rmSync(empty, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('detectHost — consumer-app host recognition', () => {
+  it('detects astro from astro.config.ts', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'liteship-host-'));
+    try {
+      writeFileSync(join(dir, 'astro.config.ts'), '');
+      expect(detectHost(dir)).toBe('astro');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('detects vite from vite.config.ts', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'liteship-host-'));
+    try {
+      writeFileSync(join(dir, 'vite.config.ts'), '');
+      expect(detectHost(dir)).toBe('vite');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('returns null when no host config is present', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'liteship-host-'));
+    try {
+      expect(detectHost(dir)).toBeNull();
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('liteship dev — consumer-app host route', () => {
+  it('delegates to the host dev server and emits a { mode: host } receipt before spawning', async () => {
+    // A LiteShip app: liteship.config.ts beside a recognizable host config. No
+    // example/tutorial selector → the consumer-app route. The receipt is emitted
+    // to stdout BEFORE the spawn, so we can assert it independently of whether the
+    // `pnpm exec astro dev` child succeeds (it fails fast here: astro is not
+    // installed in this bare tmp dir), which is what keeps this assertion stable.
+    const app = mkdtempSync(join(tmpdir(), 'liteship-dev-host-'));
+    try {
+      writeFileSync(join(app, 'liteship.config.ts'), '');
+      writeFileSync(join(app, 'astro.config.ts'), '');
+      const r = await capture(() => dev({ cwd: app }));
+      const receipt = JSON.parse(r.stdout.trim().split('\n').pop()!);
+      expect(receipt.status).toBe('ok');
+      expect(receipt.command).toBe('dev');
+      expect(receipt.mode).toBe('host');
+      expect(receipt.host).toBe('astro');
+    } finally {
+      rmSync(app, { recursive: true, force: true });
     }
   });
 });

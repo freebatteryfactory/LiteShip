@@ -16,11 +16,9 @@
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { wallClock } from '@liteship/core';
+import { detectHost, type BuildHost } from '../lib/host-detect.js';
 import { spawnArgvVisible } from '../lib/spawn.js';
 import { emit, emitError, type WallClockTimestamp } from '../receipts.js';
-
-/** The recognized consumer-app host build backends. */
-export type BuildHost = 'astro' | 'vite';
 
 /** Receipt emitted by `liteship build`. */
 export interface BuildReceipt {
@@ -29,20 +27,6 @@ export interface BuildReceipt {
   readonly timestamp: WallClockTimestamp;
   readonly host: BuildHost;
   readonly exitCode: number;
-}
-
-/** Config-file basenames that identify each host, in detection order. */
-const HOST_CONFIGS: ReadonlyArray<{ readonly host: BuildHost; readonly bases: readonly string[] }> = [
-  { host: 'astro', bases: ['astro.config.ts', 'astro.config.mts', 'astro.config.mjs', 'astro.config.js'] },
-  { host: 'vite', bases: ['vite.config.ts', 'vite.config.mts', 'vite.config.mjs', 'vite.config.js'] },
-];
-
-/** Detect the consumer app's host build backend from the config files beside `liteship.config.ts`. */
-function detectHost(cwd: string): BuildHost | null {
-  for (const { host, bases } of HOST_CONFIGS) {
-    if (bases.some((base) => existsSync(resolve(cwd, base)))) return host;
-  }
-  return null;
 }
 
 /**

@@ -22,7 +22,7 @@
  */
 
 import { existsSync, readFileSync, readdirSync, type Dirent } from 'node:fs';
-import { join, relative } from 'node:path';
+import { dirname, join, relative } from 'node:path';
 import type { ApiSymbolResolution } from '@liteship/command';
 import { PACKAGE_METADATA_CATALOG } from './package-metadata-catalog.js';
 
@@ -43,6 +43,24 @@ function collectSourceFiles(dir: string, out: string[]): void {
     if (entry.isDirectory()) {
       collectSourceFiles(full, out);
     } else if (entry.isFile() && entry.name.endsWith('.ts') && !entry.name.endsWith('.d.ts')) {
+      out.push(full);
+    }
+  }
+}
+
+/**
+ * Recursively collect every `.d.ts` DECLARATION file under a directory — the sibling
+ * of {@link collectSourceFiles} (which SKIPS `.d.ts`) for the INSTALLED-package
+ * fallback, where a published `dist` carries only emitted declarations + TSDoc.
+ */
+function collectDeclarationFiles(dir: string, out: string[]): void {
+  if (!existsSync(dir)) return; // absent dist tree — nothing to collect (no laundering catch)
+  const entries: readonly Dirent[] = readdirSync(dir, { withFileTypes: true });
+  for (const entry of entries) {
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      collectDeclarationFiles(full, out);
+    } else if (entry.isFile() && entry.name.endsWith('.d.ts')) {
       out.push(full);
     }
   }
@@ -122,6 +140,40 @@ function indexedPackages(repoRoot: string): readonly IndexedPackage[] {
 }
 
 /**
+ * Enumerate the INSTALLED publishable packages by walking up from `fromDir` to the
+ * nearest `node_modules/@liteship` directory — the CONSUMER-APP layout, where there is
+ * no `packages/*​/src` checkout to scan. Each subdir's `package.json` name is kept
+ * only when it is a {@link PACKAGE_METADATA_CATALOG} key (a real publishable scope),
+ * and its `srcRoot` is set to the package's built `dist` dir (the published `.d.ts`
+ * live there). Sorted by scope name for determinism. Returns `[]` when no
+ * `node_modules/@liteship` is found on the way up (guarded, not caught).
+ */
+function installedPackages(fromDir: string): readonly IndexedPackage[] {
+  let dir = fromDir;
+  // Bound the walk by the filesystem root (dirname(dir) === dir at the root); the
+  // starting `fromDir` is checked first, so a consumer app's own node_modules wins.
+  while (dirname(dir) !== dir) {
+    const scopeDir = join(dir, 'node_modules', '@liteship');
+    if (existsSync(scopeDir)) {
+      const dirs: readonly Dirent[] = readdirSync(scopeDir, { withFileTypes: true });
+      const result: IndexedPackage[] = [];
+      for (const entry of dirs) {
+        if (!entry.isDirectory()) continue;
+        const packageDir = join(scopeDir, entry.name);
+        const name = readPackageName(packageDir);
+        // Only publishable scopes count (the fallback is anchored to the same catalog).
+        if (name === null || PACKAGE_METADATA_CATALOG[name] === undefined) continue;
+        result.push({ name, srcRoot: join(packageDir, 'dist') });
+      }
+      result.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+      return result;
+    }
+    dir = dirname(dir);
+  }
+  return []; // no installed @liteship scope on the path up — nothing to fall back to
+}
+
+/**
  * Resolve one exported `symbol` to its declaration, or `null` when no scanned
  * publishable package declares it. Deterministic: packages are visited in sorted
  * scope order and files in sorted path order, so the first declaration wins stably.
@@ -137,6 +189,18 @@ export function resolveApiSymbol(symbol: string, repoRoot: string): ApiSymbolRes
   );
   const bare = new RegExp(`export\\s+(?:declare\\s+)?(?:abstract\\s+)?(${DECLARATION_KINDS})\\s+${escaped}\\b`);
 
+  /** Match the symbol's declaration in one file's text, lifting its kind + first-paragraph summary. */
+  const matchDeclaration = (text: string): { readonly kind: string; readonly summary: string } | null => {
+    const docMatch = withDoc.exec(text);
+    const match = docMatch ?? bare.exec(text);
+    if (match === null) return null;
+    const kind = docMatch ? (docMatch[2] as string) : (match[1] as string);
+    const summary = docMatch ? firstTsdocParagraph(docMatch[1] as string) : '';
+    return { kind, summary };
+  };
+
+  // SOURCE SCAN FIRST — in a real monorepo checkout the `packages/*​/src` declaration
+  // is the definition site and wins (its `file` is repo-relative).
   for (const pkg of indexedPackages(repoRoot)) {
     const files: string[] = [];
     collectSourceFiles(pkg.srcRoot, files);
@@ -144,19 +208,37 @@ export function resolveApiSymbol(symbol: string, repoRoot: string): ApiSymbolRes
     for (const file of files) {
       // `files` came from a directory listing this same call produced; a read that
       // now fails is a genuine fault, surfaced rather than laundered into a skip.
-      const text = readFileSync(file, 'utf8');
-      const docMatch = withDoc.exec(text);
-      const match = docMatch ?? bare.exec(text);
-      if (match === null) continue;
-      const kind = docMatch ? (docMatch[2] as string) : (match[1] as string);
-      const summary = docMatch ? firstTsdocParagraph(docMatch[1] as string) : '';
+      const decl = matchDeclaration(readFileSync(file, 'utf8'));
+      if (decl === null) continue;
       return {
         symbol,
         package: pkg.name,
         subpath: '.',
         file: relative(repoRoot, file).split('\\').join('/'),
-        kind,
-        summary,
+        kind: decl.kind,
+        summary: decl.summary,
+        packageDescription: PACKAGE_METADATA_CATALOG[pkg.name]?.description ?? '',
+      };
+    }
+  }
+
+  // INSTALLED FALLBACK — only when the source scan found nothing (a consumer app with
+  // no checkout). Scan each installed package's published `.d.ts`; the same regex
+  // matches `export declare const NAME`, and `file` is package-relative (`dist/…`).
+  for (const pkg of installedPackages(repoRoot)) {
+    const files: string[] = [];
+    collectDeclarationFiles(pkg.srcRoot, files);
+    files.sort();
+    for (const file of files) {
+      const decl = matchDeclaration(readFileSync(file, 'utf8'));
+      if (decl === null) continue;
+      return {
+        symbol,
+        package: pkg.name,
+        subpath: '.',
+        file: relative(dirname(pkg.srcRoot), file).split('\\').join('/'),
+        kind: decl.kind,
+        summary: decl.summary,
         packageDescription: PACKAGE_METADATA_CATALOG[pkg.name]?.description ?? '',
       };
     }
