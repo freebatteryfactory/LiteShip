@@ -51,6 +51,8 @@ export const CATEGORIES: readonly CategorySpec[] = [
       'test:cloudflare',
       'test:cloudflare-dev',
       'test:tailwind',
+      'test:journey',
+      'test:devcontainer',
     ],
   },
   {
@@ -110,7 +112,7 @@ export const CATEGORIES: readonly CategorySpec[] = [
   {
     name: 'release',
     description: 'Ship + verify:receipts + gauntlet (the full release-grade gate).',
-    scripts: ['ship', 'verify:receipts', 'gauntlet:full', 'package:smoke', 'release:notes'],
+    scripts: ['ship', 'verify:receipts', 'gauntlet:full', 'package:smoke', 'package:smoke:hermetic', 'release:notes'],
   },
   {
     name: 'docs',

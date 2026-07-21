@@ -456,7 +456,7 @@ const HANDLER_EXECUTORS: Record<string, Executor> = {
   plumb: () => plumb(),
   check: execCheck,
   'check-invariants': () => checkInvariants(),
-  'package-smoke': () => packageSmoke(),
+  'package-smoke': (rest) => packageSmoke({ hermetic: rest.includes('--hermetic') }),
   'capsule-verify': () => capsuleVerifyGate(),
   verify: (rest) => verify(rest),
 };

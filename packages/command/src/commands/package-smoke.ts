@@ -46,6 +46,47 @@ export const PackageSmokePayloadSchema = {
     failedStep: { type: ['string', 'null'] },
     /** The failure message of the first failure, or null on success. */
     failure: { type: ['string', 'null'] },
+    /**
+     * The three release-hermeticity sub-results — present ONLY under `--hermetic`
+     * (absent on a plain package-smoke run, so the default receipt is unchanged).
+     * `hermetic-build` (offline reinstall) and `packed-consumer-closure` are
+     * blocking (either failing forces `ok:false`); `double-build-repro` is advisory
+     * (a per-file-hash "semantic" verdict + a byte-identical "artifact" verdict —
+     * artifact drift is reported, never fails the gate).
+     */
+    hermetic: {
+      type: ['object', 'null'],
+      properties: {
+        hermeticBuild: {
+          type: 'object',
+          properties: {
+            ok: { type: 'boolean' },
+            skipped: { type: 'boolean' },
+            reason: { type: ['string', 'null'] },
+          },
+          required: ['ok', 'skipped', 'reason'],
+        },
+        packedConsumerClosure: {
+          type: 'object',
+          properties: {
+            ok: { type: 'boolean' },
+            subpathCount: { type: 'number' },
+            failure: { type: ['string', 'null'] },
+          },
+          required: ['ok', 'subpathCount', 'failure'],
+        },
+        doubleBuildRepro: {
+          type: 'object',
+          properties: {
+            semanticRepro: { type: 'boolean' },
+            artifactRepro: { type: 'boolean' },
+            reportPath: { type: 'string' },
+          },
+          required: ['semanticRepro', 'artifactRepro', 'reportPath'],
+        },
+      },
+      required: ['hermeticBuild', 'packedConsumerClosure', 'doubleBuildRepro'],
+    },
   },
   required: ['ok', 'packagesPacked', 'importsSmoked', 'failedStep', 'failure'],
 } as const satisfies CommandJsonSchema;
@@ -57,6 +98,33 @@ export type PackageSmokePayload = {
   readonly importsSmoked: number;
   readonly failedStep: string | null;
   readonly failure: string | null;
+  /**
+   * The three `--hermetic` sub-results — absent unless the run was `--hermetic`.
+   * `hermeticBuild` proves the packed consumer reinstalls with the CHILD install's
+   * network disabled (warm store + `file://` tarballs); `packedConsumerClosure`
+   * import-smokes EVERY public subpath enumerated from the packages' `exports` maps
+   * (a superset of the hand-listed import roster); `doubleBuildRepro` packs twice
+   * and compares the tarball closures (per-file-hash semantic + byte-identical
+   * artifact — advisory). Inlined (not a separate named export) so the command
+   * package's public type surface is unchanged.
+   */
+  readonly hermetic?: {
+    readonly hermeticBuild: {
+      readonly ok: boolean;
+      readonly skipped: boolean;
+      readonly reason: string | null;
+    };
+    readonly packedConsumerClosure: {
+      readonly ok: boolean;
+      readonly subpathCount: number;
+      readonly failure: string | null;
+    };
+    readonly doubleBuildRepro: {
+      readonly semanticRepro: boolean;
+      readonly artifactRepro: boolean;
+      readonly reportPath: string;
+    };
+  } | null;
 };
 
 /** `package-smoke` — pack/install/import-smoke every publishable scope; emit a structured pass/fail verdict. */
@@ -79,12 +147,19 @@ export const packageSmokeCommand: HandledCommand = {
 
     const summary = await context.runPackageSmoke();
 
+    // The injected `runPackageSmoke` capability is typed `PackageSmokeSummary`
+    // (the base verdict). Under `--hermetic` the CLI engine returns a widened
+    // result carrying `hermetic`; read it structurally and only carry it onto the
+    // payload when present, so a plain (non-hermetic) run's receipt is unchanged.
+    const hermetic = (summary as { readonly hermetic?: PackageSmokePayload['hermetic'] }).hermetic;
+
     const payload = {
       ok: summary.ok,
       packagesPacked: summary.packagesPacked,
       importsSmoked: summary.importsSmoked,
       failedStep: summary.failedStep,
       failure: summary.failure,
+      ...(hermetic ? { hermetic } : {}),
     } satisfies PackageSmokePayload;
     return summary.ok ? ok('package-smoke', payload) : failed('package-smoke', payload, 1);
   },

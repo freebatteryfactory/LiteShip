@@ -8,7 +8,7 @@
 
 > **PackageSmokePayload** = `object`
 
-Defined in: [command/src/commands/package-smoke.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/package-smoke.ts#L54)
+Defined in: [command/src/commands/package-smoke.ts:95](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/package-smoke.ts#L95)
 
 Structured payload returned by `package-smoke`.
 
@@ -18,7 +18,7 @@ Structured payload returned by `package-smoke`.
 
 > `readonly` **failedStep**: `string` \| `null`
 
-Defined in: [command/src/commands/package-smoke.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/package-smoke.ts#L58)
+Defined in: [command/src/commands/package-smoke.ts:99](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/package-smoke.ts#L99)
 
 ***
 
@@ -26,7 +26,24 @@ Defined in: [command/src/commands/package-smoke.ts:58](https://github.com/freeba
 
 > `readonly` **failure**: `string` \| `null`
 
-Defined in: [command/src/commands/package-smoke.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/package-smoke.ts#L59)
+Defined in: [command/src/commands/package-smoke.ts:100](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/package-smoke.ts#L100)
+
+***
+
+### hermetic?
+
+> `readonly` `optional` **hermetic?**: \{ `doubleBuildRepro`: \{ `artifactRepro`: `boolean`; `reportPath`: `string`; `semanticRepro`: `boolean`; \}; `hermeticBuild`: \{ `ok`: `boolean`; `reason`: `string` \| `null`; `skipped`: `boolean`; \}; `packedConsumerClosure`: \{ `failure`: `string` \| `null`; `ok`: `boolean`; `subpathCount`: `number`; \}; \} \| `null`
+
+Defined in: [command/src/commands/package-smoke.ts:111](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/package-smoke.ts#L111)
+
+The three `--hermetic` sub-results — absent unless the run was `--hermetic`.
+`hermeticBuild` proves the packed consumer reinstalls with the CHILD install's
+network disabled (warm store + `file://` tarballs); `packedConsumerClosure`
+import-smokes EVERY public subpath enumerated from the packages' `exports` maps
+(a superset of the hand-listed import roster); `doubleBuildRepro` packs twice
+and compares the tarball closures (per-file-hash semantic + byte-identical
+artifact — advisory). Inlined (not a separate named export) so the command
+package's public type surface is unchanged.
 
 ***
 
@@ -34,7 +51,7 @@ Defined in: [command/src/commands/package-smoke.ts:59](https://github.com/freeba
 
 > `readonly` **importsSmoked**: `number`
 
-Defined in: [command/src/commands/package-smoke.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/package-smoke.ts#L57)
+Defined in: [command/src/commands/package-smoke.ts:98](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/package-smoke.ts#L98)
 
 ***
 
@@ -42,7 +59,7 @@ Defined in: [command/src/commands/package-smoke.ts:57](https://github.com/freeba
 
 > `readonly` **ok**: `boolean`
 
-Defined in: [command/src/commands/package-smoke.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/package-smoke.ts#L55)
+Defined in: [command/src/commands/package-smoke.ts:96](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/package-smoke.ts#L96)
 
 ***
 
@@ -50,4 +67,4 @@ Defined in: [command/src/commands/package-smoke.ts:55](https://github.com/freeba
 
 > `readonly` **packagesPacked**: `number`
 
-Defined in: [command/src/commands/package-smoke.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/package-smoke.ts#L56)
+Defined in: [command/src/commands/package-smoke.ts:97](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/package-smoke.ts#L97)

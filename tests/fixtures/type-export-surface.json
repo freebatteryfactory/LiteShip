@@ -2319,6 +2319,22 @@
           "kind": "type"
         },
         {
+          "name": "Adaptive",
+          "kind": "type"
+        },
+        {
+          "name": "AdaptiveExplanation",
+          "kind": "type"
+        },
+        {
+          "name": "AdaptivePlan",
+          "kind": "type"
+        },
+        {
+          "name": "AdaptiveSpec",
+          "kind": "type"
+        },
+        {
           "name": "AddressedDigest",
           "kind": "type"
         },
@@ -2560,6 +2576,10 @@
         },
         {
           "name": "ConfigInput",
+          "kind": "type"
+        },
+        {
+          "name": "ConstraintTrace",
           "kind": "type"
         },
         {

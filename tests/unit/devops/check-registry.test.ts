@@ -128,10 +128,10 @@ describe('the check-registry PARTITION is total + disjoint against the root scri
     expect(unresolved.map((entry) => `${entry.id}→${entry.script}`)).toEqual([]);
   });
 
-  it('the partition covers the root scripts EXACTLY (40 checks + 46 exemptions = 86 scripts)', () => {
-    expect(CHECK_REGISTRY.length).toBe(40);
+  it('the partition covers the root scripts EXACTLY (43 checks + 46 exemptions = 89 scripts)', () => {
+    expect(CHECK_REGISTRY.length).toBe(43);
     expect(SCRIPT_EXEMPTIONS.length).toBe(46);
-    expect(scripts.length).toBe(86);
+    expect(scripts.length).toBe(89);
     expect(new Set([...registeredScripts, ...exempted]).size).toBe(scripts.length);
   });
 });
