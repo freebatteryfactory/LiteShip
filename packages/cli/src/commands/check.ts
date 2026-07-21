@@ -37,6 +37,8 @@
  * @module
  */
 import { spawnSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import {
   checkCommand,
   formatCheckPlan,
@@ -311,6 +313,38 @@ function currentCheckPlatform(): CheckPlatform {
 }
 
 /**
+ * The single npm-script a registry check's `command` invokes, or `null` when the
+ * command names no single script whose presence we could test for. Matches
+ * `pnpm run <script>` (the registry's canonical form) and the `pnpm test`
+ * builtin shorthand. Used by the sweep to SKIP — rather than fail — a check whose
+ * script the invocation cwd's `package.json` does not define (the consumer-app
+ * case, where the monorepo-root scripts are simply absent).
+ */
+export function invokedScriptName(command: string): string | null {
+  const run = /^pnpm run (\S+)/.exec(command);
+  if (run) return run[1]!;
+  if (/^pnpm test(\s|$)/.test(command)) return 'test';
+  return null;
+}
+
+/**
+ * The npm-script names defined in `<cwd>/package.json`, or `null` when there is no
+ * readable/parseable package.json — in which case the sweep cannot distinguish a
+ * missing script from a present one and runs every check as-is (an unreadable
+ * manifest is not evidence a script is absent).
+ */
+export function readDefinedScripts(cwd: string): ReadonlySet<string> | null {
+  try {
+    const parsed = JSON.parse(readFileSync(resolve(cwd, 'package.json'), 'utf8')) as {
+      scripts?: Record<string, unknown>;
+    };
+    return new Set(Object.keys(parsed.scripts ?? {}));
+  } catch {
+    return null;
+  }
+}
+
+/**
  * The default {@link CheckPlanRunner} — the CLI SPAWN LAYER for the `--profile` sweep.
  * Runs each planned check by spawning its `command` (the exact root-script shell line
  * the registry declares) as a subprocess in `cwd`, mapping the exit status to a per-check
@@ -321,13 +355,33 @@ function currentCheckPlatform(): CheckPlatform {
  * emitted `CheckReport` is the only thing on the CLI's stdout. `cacheHit` is always false —
  * this layer re-runs every planned check (the content-addressed verdict cache the registry
  * annotates via `cacheable` is a later increment); `timeoutMs` is enforced as the spawn
- * ceiling. `skipped` platform drops live in the plan, not the report, so every row here is
- * an executed check.
+ * ceiling. `skipped` platform drops live in the plan; ONE other row can be `skipped` here —
+ * a check whose `pnpm run <script>` names a script the invocation cwd's `package.json` does
+ * not define (see {@link invokedScriptName}). That is the CONSUMER-APP case: a scaffolded
+ * LiteShip app has none of the monorepo-root scripts (`package:smoke`, `test:journey`, …),
+ * so those checks are honestly SKIPPED rather than spawned into a guaranteed
+ * `ERR_PNPM_NO_SCRIPT` failure. In the monorepo every script exists, so nothing skips and
+ * the gauntlet projection is byte-for-byte unaffected.
  */
 function runCheckPlanBySpawn(plan: CheckPlan, cwd: string): CheckReport {
   const results: CheckRunResult[] = [];
+  const definedScripts = readDefinedScripts(cwd);
   let blocked = false;
   for (const check of plan.checks) {
+    // Consumer-honesty SKIP: a check whose `pnpm run <script>` names a script this
+    // package.json does not define asserts something about a repo that is not here.
+    // Skip it (non-blocking) rather than spawning a guaranteed no-script failure.
+    const script = invokedScriptName(check.command);
+    if (script !== null && definedScripts !== null && !definedScripts.has(script)) {
+      results.push({
+        id: check.id,
+        verdict: 'skipped',
+        durationMs: 0,
+        cacheHit: false,
+        findings: [`${check.command} — no "${script}" script in this package.json; skipped (not a consumer-app check)`],
+      });
+      continue;
+    }
     const start = systemClock.now();
     const r = spawnSync(check.command, { shell: true, cwd, stdio: 'ignore', timeout: check.timeoutMs });
     const durationMs = systemClock.now() - start;

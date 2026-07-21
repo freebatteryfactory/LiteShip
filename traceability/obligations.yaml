@@ -50,6 +50,14 @@ obligations:
     pointer: 'devops: the P16 build-twice artifact-reproduction phase (advisory)'
     note: "P16's byte-identical artifact reproduction (build the shipped artifacts twice and assert the two builds are byte-equal) currently runs as an ADVISORY double-build, not a blocking gate. Promoting it to a hard hermeticity gate is a whole-area devops deferral — a pointer-only obligation, no in-source marker."
 
+  # ── deferred-feature — a genuine IN-APP consumer check (not just skip-the-absent) ─
+  - id: OBL-CHECK-CONSUMER-DEPTH
+    class: deferred-feature
+    owner: heyoub
+    review-by: '2027-03-01'
+    pointer: 'devops: packages/command/src/checks/registry.ts (the `consumer` profile) + packages/cli/src/commands/check.ts (runCheckPlanBySpawn skip)'
+    note: "`liteship check --profile consumer` in a scaffolded app is HONEST but shallow: the consumer profile projects only monorepo-root scripts (`package:smoke`, `test:journey`), which a consumer app lacks, so the sweep SKIPS them (non-blocking) rather than failing. A genuine in-app consumer check — one that asserts something about the CONSUMER's own build/config (e.g. runs the app's own `build`, validates its liteship.config) — is deferred: the registry partition is one-CheckDefinition-per-monorepo-root-script (gauntlet/check-registry-complete), so an in-app check that runs the CONSUMER's scripts needs that partition re-architected. Pointer-only area deferral, no in-source marker."
+
   # ── test-note — the ffmpeg/libx264-gated render test skips ────────────────────
   - id: OBL-TEST-FFMPEG-CODEC
     class: test-note

@@ -13,9 +13,12 @@
  * runner is NEVER touched (bare `check` stays the lean gate fold).
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import type { CheckPlan, CheckReport } from '@liteship/command';
 import { captureCli } from '../../../integration/cli/capture.js';
-import { check } from '../../../../packages/cli/src/commands/check.js';
+import { check, invokedScriptName, readDefinedScripts } from '../../../../packages/cli/src/commands/check.js';
 
 /** A scripted profile-sweep runner: records the plan/cwd it was handed, returns a fixed report. */
 const runCheckPlanMock = vi.fn<(plan: CheckPlan, cwd: string) => CheckReport>();
@@ -151,5 +154,70 @@ describe('liteship check --profile — the profile sweep emits a CheckReport', (
     expect(runCheckPlanMock).not.toHaveBeenCalled();
     // The bare-check path ran the lean handler, not the profile sweep.
     expect(handlerMock).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('liteship check --profile consumer — consumer-app honesty (REAL spawn layer)', () => {
+  // These exercise the DEFAULT runCheckPlanBySpawn (no injected runner seam). The
+  // consumer profile projects only monorepo-root scripts (`package:smoke`,
+  // `test:journey`); a scaffolded LiteShip app defines none of them. The sweep must
+  // therefore SKIP those checks (honest, non-blocking) rather than spawn a guaranteed
+  // ERR_PNPM_NO_SCRIPT failure. Because every consumer check skips, NOTHING is spawned
+  // here — the assertion is fast and non-flaky.
+  it('skips (does not fail/block) every check whose script is absent in a scaffold-shaped package.json', async () => {
+    const app = mkdtempSync(join(tmpdir(), 'liteship-consumer-'));
+    try {
+      // A scaffold-shaped app: dev/build/preview only — none of the monorepo-root checks.
+      writeFileSync(
+        join(app, 'package.json'),
+        JSON.stringify({ name: 'liteship-app', scripts: { dev: 'astro dev', build: 'astro build' } }),
+      );
+      const { exit, stdout } = await captureCli(() => check({ profile: 'consumer', json: true, cwd: app }));
+      expect(exit).toBe(0);
+      const report = JSON.parse(stdout.trim()) as CheckReport;
+      expect(report.profile).toBe('consumer');
+      expect(report.ok).toBe(true);
+      expect(report.blocked).toBe(false);
+      expect(report.results.length).toBeGreaterThan(0);
+      // Every projected consumer check skipped (its script is not in this package.json).
+      for (const r of report.results) {
+        expect(r.verdict).toBe('skipped');
+        expect(r.durationMs).toBe(0);
+        expect(r.findings.join(' ')).toContain('script in this package.json');
+      }
+    } finally {
+      rmSync(app, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('check-sweep skip predicate — invokedScriptName / readDefinedScripts (pure)', () => {
+  it('invokedScriptName extracts the script from `pnpm run <script>` and the `pnpm test` shorthand', () => {
+    expect(invokedScriptName('pnpm run package:smoke')).toBe('package:smoke');
+    expect(invokedScriptName('pnpm run test:journey')).toBe('test:journey');
+    expect(invokedScriptName('pnpm run lint')).toBe('lint');
+    expect(invokedScriptName('pnpm test')).toBe('test');
+    expect(invokedScriptName('pnpm test -- --filter x')).toBe('test');
+    // A command that names no single script → null (the sweep runs it as-is, never skips).
+    expect(invokedScriptName('node scripts/thing.mjs')).toBeNull();
+    expect(invokedScriptName('pnpm exec astro build')).toBeNull();
+  });
+
+  it('readDefinedScripts returns the script name set, or null for an unreadable/absent manifest', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'liteship-scripts-'));
+    try {
+      // No package.json yet → null (cannot prove a script is absent, so the sweep must NOT skip).
+      expect(readDefinedScripts(dir)).toBeNull();
+      writeFileSync(join(dir, 'package.json'), JSON.stringify({ scripts: { dev: 'x', build: 'y' } }));
+      const scripts = readDefinedScripts(dir);
+      expect(scripts).not.toBeNull();
+      expect([...scripts!].sort()).toEqual(['build', 'dev']);
+      expect(scripts!.has('package:smoke')).toBe(false);
+      // A malformed manifest is also null (not evidence a script is absent).
+      writeFileSync(join(dir, 'package.json'), '{ not json');
+      expect(readDefinedScripts(dir)).toBeNull();
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });
