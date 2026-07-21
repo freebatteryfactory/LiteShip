@@ -532,7 +532,7 @@ export const CHECK_REGISTRY: readonly CheckDefinition[] = [
     title: 'Benchmark trend gate',
     claim: 'The benchmark trend has not drifted outside its strict envelope.',
     owner: 'scripts/bench-trend.ts',
-    command: 'BENCH_TREND_STRICT=1 pnpm run bench:trend',
+    command: 'pnpm run bench:trend -- --strict',
     inputs: [SRC_GLOB, 'tests/bench/**/*.ts', 'scripts/bench-trend.ts'],
     profiles: ['release'],
     platforms: ['linux', 'darwin', 'win32'],

@@ -50,7 +50,7 @@ const EXPECTED: ReadonlyArray<{ label: string; command: string }> = [
   { label: 'test:redteam', command: 'pnpm run test:redteam' },
   { label: 'bench', command: 'pnpm run bench' },
   { label: 'bench:gate', command: 'pnpm run bench:gate' },
-  { label: 'bench:trend', command: 'BENCH_TREND_STRICT=1 pnpm run bench:trend' },
+  { label: 'bench:trend', command: 'pnpm run bench:trend -- --strict' },
   { label: 'bench:reality', command: 'pnpm run bench:reality' },
   { label: 'package:smoke', command: 'pnpm run package:smoke' },
   { label: 'coverage:wipe-subprocess', command: 'rimraf coverage/subprocess-raw' },
