@@ -167,6 +167,43 @@ describe('fromDesignTokens — decomposition branches', () => {
     expect(result.diagnostics).toEqual([]);
   });
 
+  it('serializes structured scalar MODE values to CSS strings (never [object Object])', () => {
+    const result = fromDesignTokens({
+      space: {
+        gap: { $type: 'dimension', $value: { light: { value: 8, unit: 'px' }, dark: { value: 16, unit: 'px' } } },
+      },
+    });
+    expect(result.themes).toHaveLength(1);
+    const t = result.themes[0]!;
+    // Each mode's { value, unit } is serialized, so the Theme CSS compiler emits
+    // `8px`/`16px`, not `[object Object]`.
+    expect(t.tokens['space.gap']).toEqual({ light: '8px', dark: '16px' });
+    // A cleanly-serialized scalar is lossless — no lossy/composite flag.
+    expect(result.diagnostics).toEqual([]);
+  });
+
+  it('cross-fills a structured scalar mode value and serializes the fabricated variant', () => {
+    const result = fromDesignTokens({
+      space: { gap: { $type: 'dimension', $value: { light: { value: 4, unit: 'px' } } } },
+    });
+    const t = result.themes[0]!;
+    // The missing dark variant reuses the serialized light value (not the raw object).
+    expect(t.tokens['space.gap']).toEqual({ light: '4px', dark: '4px' });
+    expect(result.diagnostics.some((d) => d.code === MIGRATE_CODES.incompleteThemeVariant)).toBe(true);
+  });
+
+  it('flags a composite MODE value (kept structurally) rather than [object Object]', () => {
+    const shadow = { color: '#000', offsetX: '0', offsetY: '2px', blur: '4px' };
+    const result = fromDesignTokens({
+      elevation: { low: { $type: 'shadow', $value: { light: shadow, dark: shadow } } },
+    });
+    // The composite has no single CSS form, so it is kept structurally...
+    const t = result.themes[0]!;
+    expect(t.tokens['elevation.low']).toEqual({ light: shadow, dark: shadow });
+    // ...but the un-renderable composite is surfaced, mirroring the plain-token path.
+    expect(result.diagnostics.some((d) => d.code === MIGRATE_CODES.lossyTokenConversion)).toBe(true);
+  });
+
   it('uses an explicit hex on a DTCG color object', () => {
     const result = fromDesignTokens({
       brand: { $type: 'color', $value: { colorSpace: 'srgb', components: [1, 0, 0], hex: '#ff0000' } },

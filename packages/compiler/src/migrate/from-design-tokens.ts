@@ -264,6 +264,29 @@ export function fromDesignTokens(json: unknown, options?: FromDesignTokensOption
     return 'effect';
   };
 
+  /**
+   * Convert one MODE value exactly as the plain-token structured branch in
+   * {@link processToken} does: a scalar DTCG structured value (`{value,unit}` /
+   * `{hex}`) serializes to its canonical CSS string; a composite object has no
+   * single CSS custom-property form, so it is kept structurally and flagged
+   * `lossy-token-conversion`; a non-object scalar passes through unchanged.
+   * Without this a structured mode value reaches the Theme CSS compiler as an
+   * object and renders `[object Object]`.
+   */
+  const toModeCssValue = (value: unknown, name: string, valuePath: readonly string[]): unknown => {
+    if (!isPlainObject(value)) return value;
+    const scalar = scalarDtcgCssValue(value);
+    if (scalar !== null) return scalar;
+    diagnostics.push(
+      makeMigrationDiagnostic(
+        MIGRATE_CODES.lossyTokenConversion,
+        `Token "${name}" is a composite DTCG value (${JSON.stringify(value)}) with no single CSS custom-property form; kept structurally (it will not render as a scalar CSS value).`,
+        { path: valuePath },
+      ),
+    );
+    return value;
+  };
+
   /** A mode token → one theme entry, cross-filled to completeness across `modeSet`. */
   const processModeToken = (value: Record<string, unknown>, name: string, path: readonly string[]): void => {
     // Collect the modes actually present (own key, non-null value).
@@ -287,12 +310,21 @@ export function fromDesignTokens(json: unknown, options?: FromDesignTokensOption
       return;
     }
 
-    const fallback = present[presentModes[0]!];
+    // Serialize each present mode value the SAME way the plain-token path does
+    // (scalar structured → CSS string; composite → kept + lossy flag) and flag
+    // alias/calc verbatim values, BEFORE cross-filling — otherwise a structured
+    // scalar mode value ({value,unit}) would reach the compiler as `[object Object]`.
+    const converted: Record<string, unknown> = {};
+    for (const mode of presentModes) {
+      flagLossy(present[mode], [...path, mode]);
+      converted[mode] = toModeCssValue(present[mode], name, [...path, mode]);
+    }
+
+    const fallback = converted[presentModes[0]!];
     const perVariant: Record<string, unknown> = {};
     for (const mode of modeSet) {
-      if (mode in present) {
-        perVariant[mode] = present[mode];
-        flagLossy(present[mode], [...path, mode]);
+      if (mode in converted) {
+        perVariant[mode] = converted[mode];
       } else {
         perVariant[mode] = fallback;
         diagnostics.push(

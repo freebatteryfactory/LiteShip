@@ -54,12 +54,18 @@ describe('fromMediaQueries — clean lossless case', () => {
 });
 
 describe('fromMediaQueries — decomposition branches', () => {
-  it('max-width folds to the strict threshold T+1 (inclusive → exclusive)', () => {
+  it('max-width folds to the strict threshold T+1 (inclusive → exclusive) and flags the lossy approximation', () => {
     const result = fromMediaQueries(`@media (max-width: 767px) { .x { a: b; } }`);
     const b = result.boundaries[0]!;
     expect(b.input).toBe('viewport.width');
     expect([...b.thresholds]).toEqual([0, 768]);
-    expect(result.diagnostics).toEqual([]);
+    // The threshold is still folded, but the inclusive→exclusive +1 integer
+    // approximation is lossy against continuous widths, so it is surfaced.
+    const lossy = result.diagnostics.filter((d) => d.code === MIGRATE_CODES.lossyTokenConversion);
+    expect(lossy).toHaveLength(1);
+    expect(lossy[0]!.severity).toBe('warning');
+    expect(lossy[0]!.path).toEqual(['max-width']);
+    expect(lossy[0]!.message).toContain('inclusive');
   });
 
   it('resolves rem breakpoints against the 16px root', () => {
@@ -182,6 +188,94 @@ describe('fromMediaQueries — decomposition branches', () => {
     `);
     const motionBoundaries = result.boundaries.filter((b) => b.input.startsWith('media:'));
     expect(motionBoundaries).toHaveLength(1);
+  });
+});
+
+describe('fromMediaQueries — no-silent-drift review findings', () => {
+  // FINDING A — a custom property present under only ONE color scheme has its
+  // other variant fabricated from the sibling; keep the cross-fill, but flag it.
+  it('flags a lone-scheme custom property whose sibling variant is fabricated (scope widened)', () => {
+    const result = fromMediaQueries(`
+      @media (prefers-color-scheme: dark) { :root { --accent: #f90; } }
+    `);
+    const t = result.themes[0]!;
+    // Cross-fill is kept (defineTheme requires completeness)...
+    expect(t.tokens.accent).toEqual({ light: '#f90', dark: '#f90' });
+    // ...but the fabricated light variant is surfaced.
+    const d = result.diagnostics.find((x) => x.code === MIGRATE_CODES.incompleteThemeVariant);
+    expect(d).toBeDefined();
+    expect(d!.severity).toBe('warning');
+    expect(d!.path).toEqual(['accent']);
+    expect(d!.message).toContain('only under the "dark" color scheme');
+    expect(d!.message).toContain('"light" variant');
+  });
+
+  it('flags a light-only custom property symmetrically (dark fabricated)', () => {
+    const result = fromMediaQueries(`
+      @media (prefers-color-scheme: light) { :root { --accent: #06c; } }
+    `);
+    const d = result.diagnostics.find((x) => x.code === MIGRATE_CODES.incompleteThemeVariant);
+    expect(d).toBeDefined();
+    expect(d!.message).toContain('only under the "light" color scheme');
+    expect(d!.message).toContain('"dark" variant');
+  });
+
+  it('does NOT flag a :root-based token present under both schemes', () => {
+    const result = fromMediaQueries(`
+      :root { --bg: #fff; }
+      @media (prefers-color-scheme: dark) { :root { --bg: #111; } }
+    `);
+    expect(result.diagnostics.some((d) => d.code === MIGRATE_CODES.incompleteThemeVariant)).toBe(false);
+  });
+
+  // FINDING B — dimensional threshold fidelity.
+  it('flags an exact width query as a lossy unbounded >= lowering', () => {
+    const result = fromMediaQueries(`@media (width: 768px) { .x { a: b; } }`);
+    const b = result.boundaries[0]!;
+    expect([...b.thresholds]).toEqual([0, 768]); // threshold still folded
+    const d = result.diagnostics.find((x) => x.code === MIGRATE_CODES.lossyTokenConversion);
+    expect(d).toBeDefined();
+    expect(d!.severity).toBe('warning');
+    expect(d!.path).toEqual(['width']);
+    expect(d!.message).toContain('point match');
+  });
+
+  it('does NOT flag a faithful plain min-width lowering', () => {
+    const result = fromMediaQueries(`@media (min-width: 768px) { .x { a: b; } }`);
+    expect(result.diagnostics.some((d) => d.code === MIGRATE_CODES.lossyTokenConversion)).toBe(false);
+    expect(result.diagnostics).toEqual([]);
+  });
+
+  // FINDING C — an `and` conjoining features that lower to DISTINCT targets.
+  it('flags an `and` conjoining a width boundary and a discrete feature', () => {
+    const result = fromMediaQueries(`
+      @media (min-width: 768px) and (prefers-reduced-motion: reduce) { .x { a: b; } }
+    `);
+    const d = result.diagnostics.find(
+      (x) => x.code === MIGRATE_CODES.unsupportedAtRule && x.message.includes('conjoins'),
+    );
+    expect(d).toBeDefined();
+    expect(d!.severity).toBe('warning');
+    expect(d!.path).toEqual(['@media', '(min-width: 768px) and (prefers-reduced-motion: reduce)']);
+    expect(d!.message).toContain('conjunction is not preserved');
+  });
+
+  it('flags an `and` conjoining the width and height axes', () => {
+    const result = fromMediaQueries(`@media (min-width: 768px) and (min-height: 400px) { .x { a: b; } }`);
+    const d = result.diagnostics.find(
+      (x) => x.code === MIGRATE_CODES.unsupportedAtRule && x.message.includes('conjoins'),
+    );
+    expect(d).toBeDefined();
+  });
+
+  it('does NOT flag an `and` whose features fold into the SAME single width target', () => {
+    const result = fromMediaQueries(`@media (min-width: 768px) and (max-width: 1200px) { .x { a: b; } }`);
+    // Two width-axis features → ONE width boundary → no conjunction diagnostic.
+    expect(result.diagnostics.some((d) => d.message.includes('conjoins'))).toBe(false);
+    const b = result.boundaries[0]!;
+    expect(b.input).toBe('viewport.width');
+    // (max-width still contributes its own lossy flag, but no conjunction flag.)
+    expect(result.diagnostics.some((d) => d.code === MIGRATE_CODES.lossyTokenConversion)).toBe(true);
   });
 });
 

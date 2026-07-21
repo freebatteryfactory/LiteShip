@@ -339,6 +339,10 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
       return;
     }
 
+    // Distinct lowering targets in THIS block. An `and` conjoining features that
+    // lower to DIFFERENT targets loses the "only together" semantics — each
+    // target becomes an independent definition matched on its own.
+    const targets = new Set<string>();
     for (const feat of feats) {
       const f = feat.feature;
       if (WIDTH_FEATURES.has(f) || HEIGHT_FEATURES.has(f)) {
@@ -353,21 +357,65 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
           );
           continue;
         }
+        // A `max-*` query is inclusive (`<= T`) and an EXACT `width`/`height` query
+        // is a point match, but the only lowering available is a `>= threshold`
+        // lower bound. Viewport/container widths are continuous, so both foldings
+        // are lossy — surface each (a faithful `min-*` lower bound is NOT flagged).
+        if (f.startsWith('max-')) {
+          diagnostics.push(
+            makeMigrationDiagnostic(
+              MIGRATE_CODES.lossyTokenConversion,
+              `"${f}: ${feat.value ?? ''}" is inclusive (<= ${px}px); migrated as a >= ${
+                px + 1
+              } threshold — a 1px integer approximation that is lossy at fractional widths.`,
+              { path: [f] },
+            ),
+          );
+        } else if (f === 'width' || f === 'height') {
+          diagnostics.push(
+            makeMigrationDiagnostic(
+              MIGRATE_CODES.lossyTokenConversion,
+              `Exact "${f}: ${feat.value ?? ''}" is a point match; migrated as an unbounded >= ${px} threshold (the state persists above ${px}) — no faithful discrete-threshold lowering exists.`,
+              { path: [f] },
+            ),
+          );
+        }
         // max-* is inclusive (`<= T`); the strict boundary threshold is `T + 1`.
         const threshold = f.startsWith('max-') ? px + 1 : px;
         (WIDTH_FEATURES.has(f) ? widthValues : heightValues).push(threshold);
+        targets.add(WIDTH_FEATURES.has(f) ? 'width-axis' : 'height-axis');
       } else if (f === 'prefers-color-scheme') {
         const variant = (feat.value ?? '').toLowerCase();
         if (variant !== 'light' && variant !== 'dark') {
           addDiscrete(feat);
+          targets.add(feat.value !== null ? `(${f}: ${feat.value})` : `(${f})`);
           continue;
         }
         sawColorScheme = true;
         const props = collectRootCustomProps(css, bodyStart, bodyEnd);
         schemeVariants[variant] = { ...(schemeVariants[variant] ?? {}), ...props };
+        targets.add('color-scheme');
       } else {
         addDiscrete(feat);
+        targets.add(feat.value !== null ? `(${f}: ${feat.value})` : `(${f})`);
       }
+    }
+
+    // Multiple features folding into the SAME single target (e.g. two width
+    // breakpoints → one width boundary) preserve their meaning. But an `and`
+    // across DISTINCT targets (a width boundary AND a discrete feature, or the
+    // width AND height axes) cannot be represented — each lowers independently and
+    // is matched separately, so the "only together" conjunction is silently lost.
+    if (targets.size > 1) {
+      diagnostics.push(
+        makeMigrationDiagnostic(
+          MIGRATE_CODES.unsupportedAtRule,
+          `@media "${prelude.trim()}" conjoins ${targets.size} independent targets with "and" (${[...targets].join(
+            ', ',
+          )}); the conjunction is not preserved — each lowers to an independent definition matched separately.`,
+          { path: ['@media', prelude.trim()] },
+        ),
+      );
     }
   };
 
@@ -531,6 +579,21 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
       for (const name of names) {
         // Cross-fill so the theme is complete (defineTheme validates every
         // variant is present); a variant-only token reuses its sibling value.
+        // A property present under only ONE color scheme has its OTHER variant
+        // fabricated from the sibling — silently widening its scope — so flag it.
+        const lightMissing = lightMap[name] === undefined;
+        const darkMissing = darkMap[name] === undefined;
+        if (lightMissing || darkMissing) {
+          const present = lightMissing ? 'dark' : 'light';
+          const absent = lightMissing ? 'light' : 'dark';
+          diagnostics.push(
+            makeMigrationDiagnostic(
+              MIGRATE_CODES.incompleteThemeVariant,
+              `Custom property "--${name}" is defined only under the "${present}" color scheme; its "${absent}" variant is filled from the sibling value (scope widened).`,
+              { path: [name] },
+            ),
+          );
+        }
         tokens[name] = {
           light: lightMap[name] ?? darkMap[name],
           dark: darkMap[name] ?? lightMap[name],
