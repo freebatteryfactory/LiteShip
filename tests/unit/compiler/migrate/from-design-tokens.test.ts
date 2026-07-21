@@ -154,6 +154,34 @@ describe('fromDesignTokens — decomposition branches', () => {
     expect(result.tokens[0]!.category).toBe('shadow');
     expect(result.tokens[0]!.fallback).toEqual(shadow);
   });
+
+  it('serializes a scalar DTCG dimension object {value,unit} to a CSS length (never [object Object])', () => {
+    const result = fromDesignTokens({ space: { sm: { $type: 'dimension', $value: { value: 8, unit: 'px' } } } });
+    expect(result.tokens).toHaveLength(1);
+    const t = result.tokens[0]!;
+    expect(t.name).toBe('space.sm');
+    expect(t.category).toBe('spacing');
+    // Serialized to a CSS string, so the Token CSS compiler emits `8px`, not `[object Object]`.
+    expect(t.fallback).toBe('8px');
+    // A cleanly-serialized scalar is lossless — no lossy/composite flag.
+    expect(result.diagnostics).toEqual([]);
+  });
+
+  it('uses an explicit hex on a DTCG color object', () => {
+    const result = fromDesignTokens({
+      brand: { $type: 'color', $value: { colorSpace: 'srgb', components: [1, 0, 0], hex: '#ff0000' } },
+    });
+    expect(result.tokens[0]!.fallback).toBe('#ff0000');
+  });
+
+  it('flags a composite DTCG value (kept structurally) rather than silently rendering [object Object]', () => {
+    const shadow = { color: '#000', offsetX: '0', offsetY: '2px', blur: '4px' };
+    const result = fromDesignTokens({ elevation: { low: { $type: 'shadow', $value: shadow } } });
+    // Still stored structurally (the deliberate composite behavior)...
+    expect(result.tokens[0]!.fallback).toEqual(shadow);
+    // ...but the un-renderable composite is surfaced now, not silent.
+    expect(result.diagnostics.some((d) => d.code === MIGRATE_CODES.lossyTokenConversion)).toBe(true);
+  });
 });
 
 describe('fromDesignTokens — every diagnostic code has teeth', () => {

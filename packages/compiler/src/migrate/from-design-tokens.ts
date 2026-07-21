@@ -162,6 +162,25 @@ function labelOf(variant: string): string {
   return variant.length === 0 ? variant : variant[0]!.toUpperCase() + variant.slice(1);
 }
 
+/**
+ * The CSS-string form of a SCALAR DTCG structured value, or `null` for a composite.
+ *
+ * DTCG's scalar `dimension` is `{ value: number, unit: string }` (`{value:8,unit:'px'}`
+ * → `8px`); a color object carrying an explicit `hex` uses that hex. Composites
+ * (shadow/typography/gradient/…) have no single-token CSS form and return `null` — the
+ * caller keeps them structurally. Without this, a structured `$value` reaches the
+ * Token CSS compiler as an object and `String(value)` renders `[object Object]`.
+ */
+function scalarDtcgCssValue(value: Record<string, unknown>): string | null {
+  if (typeof value['value'] === 'number' && typeof value['unit'] === 'string') {
+    return `${value['value']}${value['unit']}`;
+  }
+  if (typeof value['hex'] === 'string') {
+    return value['hex'];
+  }
+  return null;
+}
+
 // ---------------------------------------------------------------------------
 // Adapter
 // ---------------------------------------------------------------------------
@@ -342,6 +361,24 @@ export function fromDesignTokens(json: unknown, options?: FromDesignTokensOption
         processModeToken(value, name, path);
         return;
       }
+      // A DTCG SCALAR structured value — dimension `{value,unit}` or a color object
+      // with an explicit `hex` — has a single canonical CSS string. Serialize it, or
+      // it reaches the Token CSS compiler as an object and renders `[object Object]`.
+      const scalar = scalarDtcgCssValue(value);
+      if (scalar !== null) {
+        processPlainToken(scalar, type, name, path);
+        return;
+      }
+      // A composite (shadow/typography/gradient/…) has no single CSS custom-property
+      // form; it is kept structurally by design, but flag it so the un-renderable
+      // value is surfaced rather than silently reaching `[object Object]`.
+      diagnostics.push(
+        makeMigrationDiagnostic(
+          MIGRATE_CODES.lossyTokenConversion,
+          `Token "${name}" is a composite DTCG value (${JSON.stringify(value)}) with no single CSS custom-property form; kept structurally (it will not render as a scalar CSS value).`,
+          { path },
+        ),
+      );
     }
     processPlainToken(value, type, name, path);
   };
