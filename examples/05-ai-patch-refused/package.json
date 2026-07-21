@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@czap/core": "workspace:*",
-    "astro": "^7.0.0",
+    "astro": "^7.1.0",
     "typescript": "^5.7.0"
   }
 }

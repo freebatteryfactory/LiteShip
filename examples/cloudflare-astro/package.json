@@ -14,7 +14,7 @@
     "@czap/core": "workspace:*",
     "@czap/edge": "workspace:*",
     "@czap/vite": "workspace:*",
-    "astro": "^7.0.0"
+    "astro": "^7.1.0"
   },
   "devDependencies": {
     "typescript": "^5.9.0",
