@@ -112,9 +112,7 @@ describe('fromCSSCustomProperties — selector reader (NEW)', () => {
   });
 
   it('accepts a plain --name custom property (bare inversion) and single-quoted data-theme', () => {
-    const result = fromCSSCustomProperties(
-      `:root { --brand: #123456; } html[data-theme='sea'] { --brand: #654321; }`,
-    );
+    const result = fromCSSCustomProperties(`:root { --brand: #123456; } html[data-theme='sea'] { --brand: #654321; }`);
     expect(result.themes).toHaveLength(1);
     expect([...result.themes[0]!.variants]).toEqual(['default', 'sea']);
     expect(result.themes[0]!.tokens).toEqual({ brand: { default: '#123456', sea: '#654321' } });
@@ -137,6 +135,25 @@ describe('fromCSSCustomProperties — variant grouping + single/multi switch (NE
     expect(result.tokens).toHaveLength(1);
     expect(result.tokens[0]!.name).toBe('a');
     expect(result.tokens[0]!.fallback).toBe('#111');
+  });
+
+  it('flags the lost data-theme scope when a lone non-default variant collapses to global tokens', () => {
+    const result = fromCSSCustomProperties(`html[data-theme="dark"] { --liteship-bg: #111; }`);
+    // Behavior is unchanged (single variant -> tokens is the deliberate design)...
+    expect(result.themes).toEqual([]);
+    expect(result.tokens).toHaveLength(1);
+    expect(result.tokens[0]!.fallback).toBe('#111');
+    // ...but the scope collapse (dark-only -> global) is now surfaced, not silent.
+    const d = result.diagnostics.find((x) => x.code === MIGRATE_CODES.lossyTokenConversion);
+    expect(d).toBeDefined();
+    expect(d!.message).toContain('dark');
+    expect(d!.message).toContain('scope is not preserved');
+  });
+
+  it('does NOT flag a lone :root sheet (global tokens are correct there)', () => {
+    const result = fromCSSCustomProperties(`:root { --liteship-bg: #111; }`);
+    expect(result.tokens).toHaveLength(1);
+    expect(result.diagnostics).toEqual([]);
   });
 });
 

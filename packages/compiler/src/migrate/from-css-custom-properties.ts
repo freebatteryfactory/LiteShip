@@ -283,6 +283,21 @@ export function fromCSSCustomProperties(css: string, options?: FromCSSCustomProp
   // -------------------------------------------------------------------------
   if (variants.length === 1) {
     const only = variants[0]!;
+    if (only !== DEFAULT_VARIANT) {
+      // A lone `[data-theme="X"]` sheet with no `:root` base: the values migrate to
+      // GLOBAL tokens (a single variant carries no theme variance to encode), which
+      // does NOT preserve the `data-theme` scope. Single variant -> tokens is the
+      // deliberate design (see the "produces defineTokens (not a theme)" test), so the
+      // fix is not to change the shape but to surface the scope collapse rather than
+      // let it happen silently.
+      diagnostics.push(
+        makeMigrationDiagnostic(
+          MIGRATE_CODES.lossyTokenConversion,
+          `Only the "[data-theme=\\"${only}\\"]" variant is present (no :root base); its custom properties migrate to GLOBAL tokens — the theme (data-theme) scope is not preserved.`,
+          { path: [only] },
+        ),
+      );
+    }
     for (const name of tokenOrder) {
       const value = byToken.get(name)!.get(only)!;
       const { category, code } = classifyValue(value);
