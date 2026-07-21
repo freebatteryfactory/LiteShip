@@ -85,7 +85,9 @@ function buildGovernanceFacts(now: Date): CheckGovernanceFacts {
   }));
 
   const ledgerText = readFileSync(resolve(REPO, 'traceability/testing-ledger.yaml'), 'utf8');
-  const ledgerWaivers = [...ledgerText.matchAll(/^\s*expiry:\s*"?(\d{4}-\d{2}-\d{2})"?/gm)].map((match, index) => ({
+  // YAML permits either quote style (or none) around a scalar — accept `"…"`, `'…'`, or bare
+  // so a ledger re-serialization that flips the quote style can't silently drop the waiver.
+  const ledgerWaivers = [...ledgerText.matchAll(/^\s*expiry:\s*['"]?(\d{4}-\d{2}-\d{2})['"]?/gm)].map((match, index) => ({
     store: 'ledger' as const,
     id: `ledger-waiver-${index}`,
     expires: match[1]!,
