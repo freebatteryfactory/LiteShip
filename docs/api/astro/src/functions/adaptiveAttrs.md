@@ -8,7 +8,7 @@
 
 > **adaptiveAttrs**(`props`): `Record`\<`string`, `string`\>
 
-Defined in: [astro/src/Adaptive.ts:103](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Adaptive.ts#L103)
+Defined in: [astro/src/Adaptive.ts:104](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Adaptive.ts#L104)
 
 Generate the HTML attributes for an adaptive container div.
 Used by framework integrations (Astro, etc.) to render the adaptive wrapper.

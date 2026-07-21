@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 1,
-  "address": "fnv1a:f94db235",
+  "address": "fnv1a:c6017d25",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -613,6 +613,24 @@
       "redFixtureCount": 1,
       "greenFixtureCount": 1,
       "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "invariant",
+      "id": "INV-ADAPTIVE-CSS-BYTE-EQUAL",
+      "level": "L4",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
+      "id": "INV-ADAPTIVE-LOWERING-PURE",
+      "level": "L4",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
+      "id": "INV-ADAPTIVE-TRACE-EQUAL",
+      "level": "L4",
+      "proofKind": "proof"
     },
     {
       "_tag": "invariant",

@@ -1,0 +1,150 @@
+# ADR-0050 — defineAdaptive: a pure-lowering facade with proven equivalence
+
+**Status:** Accepted
+**Date:** 2026-07-21
+
+## Context
+
+Authoring a constraint-driven adaptive today means calling five constructors by
+hand and threading one through the next: `defineBoundary` produces the boundary,
+`defineStyle` needs that boundary spliced in, `defineQuantizer` needs it too, and
+`defineToken` / `defineTheme` sit alongside. The wiring is mechanical, easy to get
+subtly wrong (a boundary constructed twice with drifting config), and there was no
+single authored noun that carried "this adaptive, as one addressable thing".
+
+The obvious way to add that noun is dangerous: a `defineAdaptive` that
+re-implements any part of boundary/style/quantizer construction would become a
+second source of truth that drifts from the constructors it shadows. The P8
+`Adaptive` ASTRO component already owns a `data-liteship-boundary` serializer
+(`adaptiveAttrs`), so a headless core attr path risked a THIRD copy of the same
+boundary-identity JSON.
+
+The `Adaptive`/`defineAdaptive` budget slots were reserved in P13
+(`export-budget.ts`), so the surface was pre-committed; what remained was to add
+the value WITHOUT adding a parallel implementation.
+
+## Decision
+
+`defineAdaptive(spec)` is a **pure lowering facade**. It CALLS the five sibling
+constructors and returns their outputs verbatim — it reimplements nothing:
+
+- `boundary = defineBoundary(spec.boundary)`
+- `style = defineStyle({ boundary, ...spec.style })`
+- `quantizer = spec.quantize ? defineQuantizer(boundary, spec.quantize) : undefined`
+- `tokens = spec.tokens?.map(defineToken)`, `theme = spec.theme && defineTheme(spec.theme)`
+- `id = fnv1aBytes(CanonicalCbor.encode({ _tag: 'AdaptiveDef', _version: 1, boundary: boundary.id, style: style.id, quantizer: quantizer?.id ?? null, tokens: …, theme: … }))`
+
+**The referential-identity thesis.** The aggregate `id` addresses the MEMBER IDS,
+not the member data — the same shape every sibling constructor uses. And because
+`@liteship/quantizer`'s `defineQuantizer` memoizes on content address
+(`configCache`), an adaptive's `quantizer` member is not merely equal to the
+hand-lowered `defineQuantizer(boundary, options)` call — it is the SAME OBJECT
+INSTANCE. Referential `===` is the strongest possible statement that the facade
+lowers through the real constructor rather than shadowing it.
+
+**The attrs hoist (core→astro layering).** The boundary-identity object serialized
+into `data-liteship-boundary` — `{ id, input, thresholds, states, hysteresis? }`
+in exactly that key order — is hoisted into ONE core function
+(`boundaryAttrIdentity` / `serializeBoundaryAttrValue` in `authoring/adaptive.ts`).
+Core's headless `Adaptive.attrs()` stringifies it directly; `@liteship/astro`'s
+`adaptiveAttrs` spreads the same core object and appends its component extras. One
+serializer, no drift, and the astro byte-identical pin (`tests/unit/astro`) still
+holds. This resolves the layering the right direction: the shared identity lives
+in core (which astro already depends on), never duplicated upward.
+
+**The cycle seam.** `@liteship/quantizer` and `@liteship/compiler` both DEPEND ON
+core, so core cannot import them back (a runtime edge closes a `tsc --build`
+project-reference cycle and crashes core's module init). Each package instead
+REGISTERS its constructor with core at load
+(`_registerAdaptiveQuantizerLowering`, `_registerAdaptiveStyleLayerCompiler`) —
+the same module instance a consumer imports, so the configCache is shared and
+referential identity survives with zero new core→(quantizer|compiler) edges. Core
+types the injected constructors against structural twins
+(`AdaptiveQuantizerConfig`), the same discipline `schema/quantizer-types.ts` uses.
+
+**New types.** `ConstraintTrace` is introduced — the per-threshold row of
+`explain()` (`{ index, threshold, state, satisfied }`, where `state` is
+`boundary.states[index]` and `satisfied` is `value >= threshold`). `tier` is a
+**spec-level, width-independent** `TierChoice` (`{ tier, admittedTargets:
+tierTargets(tier) }`, default `'styled'`) — it reports the authored capability
+tier and its admitted projection targets; it is NOT a runtime `chooseTier` over an
+observed value.
+
+**Three equivalence proofs.** `tests/property/adaptive-lowering-equivalence.prop.test.ts`
+proves the facade is pure lowering over a seeded fast-check space, each proof
+computing its reference path INDEPENDENTLY from the spec configs (never read back
+off the adaptive's members — non-tautological):
+
+- `INV-ADAPTIVE-LOWERING-PURE` — member ids equal, member defs deep-equal, and the
+  quantizer member is referentially the memoized `defineQuantizer` object.
+- `INV-ADAPTIVE-CSS-BYTE-EQUAL` — `StyleCSSCompiler.compile(style).layers` and the
+  `CSSCompiler.compile(boundary, states).raw` container path are byte-equal
+  (`Buffer.compare === 0`).
+- `INV-ADAPTIVE-TRACE-EQUAL` — `Boundary.evaluateBatch` over a below/at/above
+  sweep agrees index-for-index, and the content-addressed `traceDigest` of the
+  `evaluateResult` sweep is identical.
+
+## Consequences
+
+- There is ONE authored noun for an adaptive, content-addressed by what it lowers
+  to. Two identical specs mint the same aggregate `id`; changing any member
+  changes it.
+- No parallel implementation exists to drift. The proofs are the enforcement: any
+  future edit that makes `defineAdaptive` diverge from the hand-lowered path (a
+  reshaped config, a recomputed id, an extra CSS byte) reds an L4 property gate.
+- The boundary-attr serializer is single-sourced; the astro component and the
+  headless core path can never disagree on `data-liteship-boundary`.
+- `defineAdaptive` with a `quantize` field REQUIRES `@liteship/quantizer` loaded
+  (and `plan()` requires `@liteship/compiler`) so the seam is populated. This is a
+  deliberate load-order contract with a clear throw, not a silent fallback — the
+  alternative (a core-local quantizer) is exactly the parallel impl this ADR
+  forbids.
+- The core `.` and `liteship` `.` barrels GAIN `defineAdaptive` (value) and
+  `Adaptive` (type-only). Additive, minor-compatible; the api-surface snapshot was
+  regenerated, no semver bump.
+
+## Evidence
+
+- `packages/core/src/authoring/adaptive.ts` — the facade, the aggregate-id kernel
+  (`fnv1aBytes(CanonicalCbor.encode(...))`), the boundary-attr serializer, and the
+  registration seams.
+- `packages/quantizer/src/adaptive-lowering.ts`,
+  `packages/compiler/src/adaptive-lowering.ts` — the load-time registrations that
+  keep the configCache/compiler identity shared with zero back-imports.
+- `tests/property/adaptive-lowering-equivalence.prop.test.ts` — the three proofs,
+  200 runs each at seed `0xada9741e`.
+- `tests/unit/core/authoring/adaptive.test.ts` — the unit pin, including the
+  `adaptive.quantizer === hq` referential assertion.
+- `traceability/invariants.yaml` / `traceability/testing-ledger.yaml` — the three
+  L4 laws enrolled and traced (bridge green).
+
+## Rejected alternatives
+
+- **A `defineAdaptive` that reimplements any construction step** — creates a
+  second source of truth that drifts from the constructors; the entire ADR exists
+  to forbid this.
+- **Address the adaptive by its member DATA rather than member IDS** — would
+  duplicate the sub-addressing the constructors already do and diverge from the
+  house content-address shape (id-of-ids).
+- **A core-local quantizer/compiler to avoid the load-order contract** — a
+  parallel impl by another name; loses the referential-identity thesis.
+- **Duplicate the boundary-attr JSON in a headless core path** — a third copy of
+  the astro serializer; hoisting to one core function is the whole point of the
+  layering decision.
+- **A runtime `chooseTier(value)` tier** — `tier` is authored, width-independent
+  metadata for `explain()`; a value-driven tier would conflate authoring with
+  evaluation.
+
+## References
+
+- `packages/core/src/authoring/adaptive.ts` — `defineAdaptive`, `Adaptive`,
+  `AdaptiveSpec`, `AdaptiveExplanation`, `AdaptivePlan`, `ConstraintTrace`,
+  `serializeBoundaryAttrValue`
+- `packages/core/src/authoring/boundary.ts:287` — `defineBoundary`
+- `packages/core/src/authoring/style.ts:222` — `defineStyle`
+- `packages/quantizer/src/quantizer.ts:462` — `defineQuantizer` (configCache)
+- `packages/compiler/src/style-css.ts:151`, `packages/compiler/src/css.ts` —
+  `StyleCSSCompiler.compile`, `CSSCompiler.compile`
+- `packages/core/src/simulation/trace.ts:84` — `traceDigest`
+- `packages/astro/src/Adaptive.ts` — `adaptiveAttrs` (the byte-identical pin)
+- ADR-0044 (brand consolidation), ADR-0045 (source grammar), ADR-0048 (export budget)

@@ -6,6 +6,11 @@
  * @module
  */
 
+// Side-effect import: registers this package's memoized `defineQuantizer` with
+// `@liteship/core`'s adaptive lowering seam (see `./adaptive-lowering.ts`). Kept
+// in the `sideEffects` allowlist so bundlers never tree-shake the registration.
+import './adaptive-lowering.js';
+
 export { evaluate, Evaluate } from './evaluate.js';
 export type { EvaluateResult } from './evaluate.js';
 

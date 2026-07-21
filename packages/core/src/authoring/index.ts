@@ -32,6 +32,18 @@ export type { StyleLayer, ShadowLayer } from './style.js';
 
 export { Theme, defineTheme } from './theme.js';
 
+export { defineAdaptive, serializeBoundaryAttrValue, boundaryAttrIdentity } from './adaptive.js';
+
+// Internal lowering seam (`_`-prefixed): `@liteship/quantizer` and
+// `@liteship/compiler` inject their memoized constructors here on load so
+// `defineAdaptive` lowers through the real (identity-preserving) primitives
+// without core taking a build/init-cycling runtime edge on the layers above it.
+export { _registerAdaptiveQuantizerLowering, _registerAdaptiveStyleLayerCompiler } from './adaptive.js';
+
+export type { AdaptiveQuantizeOptions, AdaptiveQuantizerConfig, AdaptiveQuantizerLowering } from './adaptive.js';
+
+export type { Adaptive, AdaptiveSpec, AdaptiveExplanation, AdaptivePlan, ConstraintTrace } from './adaptive.js';
+
 export { Component } from './component.js';
 
 export type { SlotConfig } from './component.js';

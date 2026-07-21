@@ -160,6 +160,14 @@ export type { StyleLayer, ShadowLayer } from './authoring/index.js';
 // Theme
 export { Theme, defineTheme } from './authoring/index.js';
 
+// Adaptive — the pure-lowering facade over boundary/style/quantizer/token/theme.
+// `defineAdaptive` is the value; `Adaptive` + the explanation/plan/trace shapes
+// are TYPE-ONLY on the root. The boundary-attr serializer stays on the
+// `./authoring` subpath (its one consumer is `@liteship/astro`), off the curated
+// root surface.
+export { defineAdaptive } from './authoring/index.js';
+export type { Adaptive, AdaptiveSpec, AdaptiveExplanation, AdaptivePlan, ConstraintTrace } from './authoring/index.js';
+
 // Component
 export { Component } from './authoring/index.js';
 export type { SlotConfig } from './authoring/index.js';

@@ -9,6 +9,7 @@
  */
 
 import { Diagnostics } from '@liteship/core';
+import { boundaryAttrIdentity } from '@liteship/core/authoring';
 import { blankHtmlCommentsAndCodeBlocks, lineOfOffset } from './html-scan.js';
 import { resolvePrimitive, unresolvedPrimitiveWarning } from './primitive-resolve.js';
 
@@ -56,13 +57,10 @@ export async function transformHTML(
     }
 
     const boundary = resolution.primitive;
-    const serialized = JSON.stringify({
-      id: boundary.id,
-      input: boundary.input,
-      thresholds: boundary.thresholds,
-      states: boundary.states,
-      hysteresis: boundary.hysteresis,
-    });
+    // Delegate to the ONE core boundary-attr serializer (shared with astro's
+    // adaptiveAttrs and core's Adaptive.attrs) so the data-liteship-boundary
+    // payload can never drift across producers.
+    const serialized = JSON.stringify(boundaryAttrIdentity(boundary));
 
     // Replace data-liteship="name" with data-liteship-boundary='...' and activate the adaptive directive.
     const replacement = `data-liteship-boundary='${serialized.replace(/'/g, '&#39;')}' data-liteship-directive="adaptive"`;

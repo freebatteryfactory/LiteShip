@@ -10,6 +10,7 @@
  */
 
 import type { Boundary, Component } from '@liteship/core';
+import { boundaryAttrIdentity } from '@liteship/core/authoring';
 import type { DirectiveName } from './runtime/directive-boot.js';
 import type { WgslUniformValue } from './runtime/boundary.js';
 
@@ -111,11 +112,12 @@ export function adaptiveAttrs(props: AdaptiveProps): Record<string, string> {
 
   if (props.boundary) {
     attrs['data-liteship-boundary'] = JSON.stringify({
-      id: props.boundary.id,
-      input: props.boundary.input,
-      thresholds: props.boundary.thresholds,
-      states: props.boundary.states,
-      hysteresis: props.boundary.hysteresis,
+      // The boundary-identity prefix (`id, input, thresholds, states,
+      // hysteresis?`) comes from the ONE core serializer so this value and the
+      // headless `Adaptive.attrs()` in core can never drift on key order; the
+      // component-specific extras below are appended after it, byte-for-byte as
+      // the prior inline object literal produced them.
+      ...boundaryAttrIdentity(props.boundary),
       // Authored ARIA rides the boundary payload so the client reader resolves
       // it live (the same content-addressed projection the manifest holds).
       ...(props.aria ? { stateAttributes: props.aria } : {}),

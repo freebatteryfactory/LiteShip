@@ -5,6 +5,11 @@
  * @module
  */
 
+// Side-effect import: registers `StyleCSSCompiler.compile(style).layers` with
+// `@liteship/core`'s adaptive lowering seam (see `./adaptive-lowering.ts`). Kept
+// in the `sideEffects` allowlist so bundlers never tree-shake the registration.
+import './adaptive-lowering.js';
+
 export { CSSCompiler, generatePropertyRegistrations } from './css.js';
 export type {
   CSSRule,

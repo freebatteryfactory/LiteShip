@@ -6,7 +6,7 @@
 
 # Interface: AdaptiveProps
 
-Defined in: [astro/src/Adaptive.ts:24](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Adaptive.ts#L24)
+Defined in: [astro/src/Adaptive.ts:25](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Adaptive.ts#L25)
 
 Server-render props for an adaptive container. Astro components
 typically destructure these and pass them to [adaptiveAttrs](../functions/adaptiveAttrs.md).
@@ -17,7 +17,7 @@ typically destructure these and pass them to [adaptiveAttrs](../functions/adapti
 
 > `readonly` `optional` **aria?**: `Readonly`\<`Record`\<`string`, `Readonly`\<`Record`\<`string`, `string`\>\>\>\>
 
-Defined in: [astro/src/Adaptive.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Adaptive.ts#L48)
+Defined in: [astro/src/Adaptive.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Adaptive.ts#L49)
 
 Authored per-state ARIA/data attributes (`@aria` blocks) for this boundary,
 keyed by state then attribute. The `<Adaptive>` component supplies this
@@ -31,7 +31,7 @@ attributes are SSR'd onto the element; the client updates them live.
 
 > `readonly` `optional` **boundary?**: [`Boundary`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Boundary.md)
 
-Defined in: [astro/src/Adaptive.ts:26](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Adaptive.ts#L26)
+Defined in: [astro/src/Adaptive.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Adaptive.ts#L27)
 
 Boundary whose state the adaptive tracks.
 
@@ -41,7 +41,7 @@ Boundary whose state the adaptive tracks.
 
 > `readonly` `optional` **class?**: `string`
 
-Defined in: [astro/src/Adaptive.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Adaptive.ts#L30)
+Defined in: [astro/src/Adaptive.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Adaptive.ts#L31)
 
 Extra CSS class names to merge with `liteship-adaptive`.
 
@@ -51,7 +51,7 @@ Extra CSS class names to merge with `liteship-adaptive`.
 
 > `readonly` `optional` **component?**: [`Component`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/Component.md)
 
-Defined in: [astro/src/Adaptive.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Adaptive.ts#L28)
+Defined in: [astro/src/Adaptive.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Adaptive.ts#L29)
 
 Component definition used to identify the adaptive on the client.
 
@@ -61,7 +61,7 @@ Component definition used to identify the adaptive on the client.
 
 > `readonly` `optional` **directive?**: `false` \| `DirectiveName`
 
-Defined in: [astro/src/Adaptive.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Adaptive.ts#L40)
+Defined in: [astro/src/Adaptive.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Adaptive.ts#L41)
 
 Which client directive the boot scanner should activate for this
 adaptive (serialised into `data-liteship-directive`). Defaults to
@@ -75,7 +75,7 @@ for a CSS-only shell that ships zero runtime.
 
 > `readonly` `optional` **glsl?**: `Readonly`\<`Record`\<`string`, `Readonly`\<`Record`\<`string`, `number`\>\>\>\>
 
-Defined in: [astro/src/Adaptive.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Adaptive.ts#L57)
+Defined in: [astro/src/Adaptive.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Adaptive.ts#L58)
 
 Authored per-state GLSL uniform values (`@glsl` blocks) for this boundary,
 keyed by state then `u_*` uniform name. The `<Adaptive>` component supplies
@@ -90,7 +90,7 @@ updates uniforms live on every crossing — the GLSL analog of `aria`.
 
 > `readonly` `optional` **glslDeclarations?**: `string`
 
-Defined in: [astro/src/Adaptive.ts:80](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Adaptive.ts#L80)
+Defined in: [astro/src/Adaptive.ts:81](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Adaptive.ts#L81)
 
 Emitted GLSL preamble (`GLSLCompileResult.declarations`: `#define STATE_*` +
 `uniform <type> u_*;` lines) for this boundary's `@glsl` cast. The
@@ -109,7 +109,7 @@ truth (the compiler) produces both the declarations and the per-state values.
 
 > `readonly` `optional` **initialState?**: `string`
 
-Defined in: [astro/src/Adaptive.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Adaptive.ts#L32)
+Defined in: [astro/src/Adaptive.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Adaptive.ts#L33)
 
 Server-side initial state (serialised into `data-liteship-state`).
 
@@ -119,7 +119,7 @@ Server-side initial state (serialised into `data-liteship-state`).
 
 > `readonly` `optional` **wgsl?**: `Readonly`\<`Record`\<`string`, `Readonly`\<`Record`\<`string`, `WgslUniformValue`\>\>\>\>
 
-Defined in: [astro/src/Adaptive.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Adaptive.ts#L67)
+Defined in: [astro/src/Adaptive.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Adaptive.ts#L68)
 
 Authored per-state WGSL uniform binding values (`@wgsl` blocks) for this
 boundary, keyed by state then bare snake_case field name (e.g.
@@ -135,7 +135,7 @@ SSR-frozen.
 
 > `readonly` `optional` **wgslDeclarations?**: `string`
 
-Defined in: [astro/src/Adaptive.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Adaptive.ts#L89)
+Defined in: [astro/src/Adaptive.ts:90](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Adaptive.ts#L90)
 
 Emitted WGSL preamble (`WGSLCompileResult.declarations`: state consts + the
 uniform struct + `@group(0) @binding(0)`) for this boundary's `@wgsl` cast.

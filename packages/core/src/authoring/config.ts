@@ -82,6 +82,7 @@ export const Config = {
       '@liteship/core/harness': r('packages/core/src/harness/index.ts'),
       '@liteship/core/simulation': r('packages/core/src/simulation/index.ts'),
       '@liteship/core/fs-walk': r('packages/core/src/fs-walk.ts'),
+      '@liteship/core/authoring': r('packages/core/src/authoring/index.ts'),
       '@liteship/core': r('packages/core/src/index.ts'),
       '@liteship/quantizer/testing': r('packages/quantizer/src/testing.ts'),
       '@liteship/quantizer': r('packages/quantizer/src/index.ts'),

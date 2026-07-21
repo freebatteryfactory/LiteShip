@@ -263,6 +263,7 @@ const STANDALONE_FUNCTIONS = [
   'defineToken',
   'defineTheme',
   'defineStyle',
+  'defineAdaptive',
   'createCell',
   'computed',
   'createStore',

@@ -19,53 +19,67 @@
 invariants:
   # ── HLC (hybrid logical clock) — the causal trust spine ─────────────────────
   - id: INV-HLC-JOIN-IDEMPOTENT
-    law: "HLC join (compare-max LUB, no clock tick) is idempotent: join(a, a) === a."
+    law: 'HLC join (compare-max LUB, no clock tick) is idempotent: join(a, a) === a.'
     level: L4
     category: crdt
   - id: INV-HLC-JOIN-COMMUTATIVE
-    law: "HLC join is commutative: join(a, b) === join(b, a)."
+    law: 'HLC join is commutative: join(a, b) === join(b, a).'
     level: L4
     category: crdt
   - id: INV-HLC-JOIN-ASSOCIATIVE
-    law: "HLC join is associative: join(join(a, b), c) === join(a, join(b, c))."
+    law: 'HLC join is associative: join(join(a, b), c) === join(a, join(b, c)).'
     level: L4
     category: crdt
   - id: INV-HLC-ORDER-TRANSITIVE
-    law: "HLC.compare induces a transitive happens-before: a<b && b<c ⟹ a<c."
+    law: 'HLC.compare induces a transitive happens-before: a<b && b<c ⟹ a<c.'
     level: L4
     category: crdt
   - id: INV-HLC-ORDER-TOTAL
-    law: "HLC.compare is a total order: exactly one of <, ===, > holds for every pair."
+    law: 'HLC.compare is a total order: exactly one of <, ===, > holds for every pair.'
     level: L4
     category: crdt
   - id: INV-HLC-MERGE-DOMINANCE
-    law: "HLC.merge is a monotone clock-advance: merge(local, remote, now) ≥ both inputs on (wall, counter)."
+    law: 'HLC.merge is a monotone clock-advance: merge(local, remote, now) ≥ both inputs on (wall, counter).'
     level: L4
     category: crdt
 
   # ── GraphPatch (document-graph CRDT) — the other half of the spine ──────────
   - id: INV-GRAPHPATCH-IDEMPOTENT
-    law: "GraphPatch.apply is idempotent on the content-address id: re-applying a patch to the same base converges to one id."
+    law: 'GraphPatch.apply is idempotent on the content-address id: re-applying a patch to the same base converges to one id.'
     level: L4
     category: crdt
   - id: INV-GRAPHPATCH-COMMUTATIVE
-    law: "GraphPatch non-conflicting (disjoint-cell) patches commute: apply orderings reach the same content-address id."
+    law: 'GraphPatch non-conflicting (disjoint-cell) patches commute: apply orderings reach the same content-address id.'
     level: L4
     category: crdt
   - id: INV-GRAPHPATCH-CONVERGENCE
-    law: "GraphPatch satisfies strong eventual consistency: all orderings of concurrent non-conflicting patches converge to one id."
+    law: 'GraphPatch satisfies strong eventual consistency: all orderings of concurrent non-conflicting patches converge to one id.'
     level: L4
     category: crdt
   - id: INV-GRAPHPATCH-CONFLICT-BOUNDARY
-    law: "GraphPatch.apply is LWW at the structural-delta layer; fork detection of concurrent writers lives on the receipt DAG (forkOf → DAG.isFork)."
+    law: 'GraphPatch.apply is LWW at the structural-delta layer; fork detection of concurrent writers lives on the receipt DAG (forkOf → DAG.isFork).'
     level: L4
     category: crdt
 
   # ── Content-address identity — the one identity kernel ──────────────────────
   - id: INV-CONTENT-ADDRESS-DETERMINISTIC
-    law: "Content addressing is deterministic: the same payload mints the same content address, distinct payloads mint distinct addresses (fnv1a over canonical CBOR)."
+    law: 'Content addressing is deterministic: the same payload mints the same content address, distinct payloads mint distinct addresses (fnv1a over canonical CBOR).'
     level: L4
     category: content-address
+
+  # ── Adaptive lowering — defineAdaptive is a pure facade, not a parallel impl ─
+  - id: INV-ADAPTIVE-LOWERING-PURE
+    law: 'defineAdaptive is a pure lowering: every member equals the independently hand-lowered constructor output — boundary/style ids and defs match, and the quantizer member is REFERENTIALLY the memoized defineQuantizer object (configCache identity).'
+    level: L4
+    category: content-address
+  - id: INV-ADAPTIVE-CSS-BYTE-EQUAL
+    law: "An adaptive's style/boundary compile to BYTE-IDENTICAL CSS as the hand-lowered ones: StyleCSSCompiler.compile(style).layers and CSSCompiler.compile(boundary, states).raw are byte-equal (Buffer.compare === 0) — the facade adds no CSS of its own."
+    level: L4
+    category: content-address
+  - id: INV-ADAPTIVE-TRACE-EQUAL
+    law: "An adaptive's boundary is the SAME observable machine as the hand-lowered boundary: Boundary.evaluateBatch agrees index-for-index over a below/at/above sweep, and the content-addressed traceDigest of the evaluateResult sweep is identical."
+    level: L4
+    category: determinism
 
   # ── Assurance propagation — AUTHORITY decides assurance, not folder names ───
   - id: INV-ASSURANCE-PROPAGATION-MONOTONIC
@@ -73,39 +87,39 @@ invariants:
     level: L4
     category: assurance
   - id: INV-ASSURANCE-PROPAGATION-DETERMINISTIC
-    law: "Assurance-level propagation is deterministic: computing the effective-level map twice over the same IR yields an identical map."
+    law: 'Assurance-level propagation is deterministic: computing the effective-level map twice over the same IR yields an identical map.'
     level: L4
     category: assurance
 
   # ── Deterministic simulation (DST) — the determinism spine substrate ────────
   - id: INV-DST-TRACE-CONTENT-ADDRESSED
-    law: "The DST trace digest is minted through the ONE content-address kernel (contentAddressOf), never a forked encoder — so a byte-exact replay comparison is sound."
+    law: 'The DST trace digest is minted through the ONE content-address kernel (contentAddressOf), never a forked encoder — so a byte-exact replay comparison is sound.'
     level: L4
     category: determinism
   - id: INV-DST-NO-AMBIENT-ENTROPY
-    law: "The DST harness reads time/randomness ONLY from the injected @liteship/core substrate (manualClock / seededRng) — no ambient Date.now / performance.now / Math.random in its code."
+    law: 'The DST harness reads time/randomness ONLY from the injected @liteship/core substrate (manualClock / seededRng) — no ambient Date.now / performance.now / Math.random in its code.'
     level: L4
     category: determinism
 
   # ── Supply-chain hermeticity — runtime determinism needs a hermetic build ───
   - id: INV-SUPPLY-CHAIN-HERMETIC
-    law: "The supply-chain gate reds on a non-hermetic lockfile (git/URL dep, floating resolution) or an incomplete/drifted SBOM/ShipCapsule — the build is reproducible from the committed lockfile."
+    law: 'The supply-chain gate reds on a non-hermetic lockfile (git/URL dep, floating resolution) or an incomplete/drifted SBOM/ShipCapsule — the build is reproducible from the committed lockfile.'
     level: L4
     category: hermeticity
   - id: INV-SUPPLY-CHAIN-NO-AMBIENT-CI
-    law: "No long-lived publish secret (NPM_TOKEN, …) grants ambient CI authority: publish authority is the short-lived OIDC id-token only."
+    law: 'No long-lived publish secret (NPM_TOKEN, …) grants ambient CI authority: publish authority is the short-lived OIDC id-token only.'
     level: L4
     category: hermeticity
 
   # ── Mutation engine — the second-oracle determinism ─────────────────────────
   - id: INV-MUTATION-FACTS-DETERMINISTIC
-    law: "Mutation-fact construction is deterministic: the same source + runner yields byte-identical MutationFacts (so a survivor verdict is reproducible)."
+    law: 'Mutation-fact construction is deterministic: the same source + runner yields byte-identical MutationFacts (so a survivor verdict is reproducible).'
     level: L4
     category: mutation
 
   # ── Verdict cache + repo-IR — the B2 content-addressed-cache soundness spine ─
   - id: INV-VERDICT-CACHE-KEY-DETERMINISTIC
-    law: "gateVerdictKey is a PURE function of its four soundness inputs: the same parts (env maps differing only in insertion order included) mint a BYTE-IDENTICAL key, and coverageDigestOf is an order/multiplicity-independent set fold — so a verdict cached one run is found the next, never a different slot."
+    law: 'gateVerdictKey is a PURE function of its four soundness inputs: the same parts (env maps differing only in insertion order included) mint a BYTE-IDENTICAL key, and coverageDigestOf is an order/multiplicity-independent set fold — so a verdict cached one run is found the next, never a different slot.'
     level: L4
     category: determinism
   - id: INV-TOOLCHAIN-DIGEST-INVALIDATES
@@ -123,7 +137,7 @@ invariants:
     level: L3
     category: determinism
   - id: INV-TOKEN-BUFFER-ZERO-ALLOC
-    law: "The TokenBuffer push + drainInto hot path is genuinely zero-allocation: its LIVE per-op heap growth (surviving a forced GC, measured by the allocation gate) stays at or below the proven near-zero budget — drainInto writes into a caller-owned sink, allocating nothing."
+    law: 'The TokenBuffer push + drainInto hot path is genuinely zero-allocation: its LIVE per-op heap growth (surviving a forced GC, measured by the allocation gate) stays at or below the proven near-zero budget — drainInto writes into a caller-owned sink, allocating nothing.'
     level: L3
     category: determinism
 
@@ -135,7 +149,7 @@ invariants:
 
   # ── Meta — the coverage rail that keeps the spine from rotting ──────────────
   - id: INV-CRDT-LAWS-PINNED
-    law: "The crdt-laws coverage gate self-proves it FLAGS a repo missing a required CRDT law family and passes a fully-pinned one (the L4 law-coverage rail has teeth)."
+    law: 'The crdt-laws coverage gate self-proves it FLAGS a repo missing a required CRDT law family and passes a fully-pinned one (the L4 law-coverage rail has teeth).'
     level: L4
     category: meta
 
@@ -146,6 +160,6 @@ invariants:
   # proving test lands, move it to testing-ledger.yaml's `tests:` form and delete the
   # waiver. (Never fake a PROVES header to clear it — that would be laundering.)
   - id: INV-VECTOR-CLOCK-MONOTONIC
-    law: "A vector clock increment is strictly monotone per node and merge takes the component-wise max (the pre-HLC causal substrate); pending a dedicated property-test enrollment."
+    law: 'A vector clock increment is strictly monotone per node and merge takes the component-wise max (the pre-HLC causal substrate); pending a dedicated property-test enrollment.'
     level: L4
     category: crdt

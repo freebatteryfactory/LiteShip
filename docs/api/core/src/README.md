@@ -42,6 +42,10 @@ plan graph, ECS, capsule factory).
 
 ## Interfaces
 
+- [Adaptive](interfaces/Adaptive.md)
+- [AdaptiveExplanation](interfaces/AdaptiveExplanation.md)
+- [AdaptivePlan](interfaces/AdaptivePlan.md)
+- [AdaptiveSpec](interfaces/AdaptiveSpec.md)
 - [AIContext](interfaces/AIContext.md)
 - [ApplyToken](interfaces/ApplyToken.md)
 - [AsyncOwnedResource](interfaces/AsyncOwnedResource.md)
@@ -72,6 +76,7 @@ plan graph, ECS, capsule factory).
 - [CompositorConfig](interfaces/CompositorConfig.md)
 - [Config](interfaces/Config.md)
 - [ConfigInput](interfaces/ConfigInput.md)
+- [ConstraintTrace](interfaces/ConstraintTrace.md)
 - [CoreAstroConfig](interfaces/CoreAstroConfig.md)
 - [CorePluginConfig](interfaces/CorePluginConfig.md)
 - [CssKeyframeStep](interfaces/CssKeyframeStep.md)
@@ -456,6 +461,7 @@ plan graph, ECS, capsule factory).
 - [decodeDiscreteStateTransition](functions/decodeDiscreteStateTransition.md)
 - [decodeDocumentGraph](functions/decodeDocumentGraph.md)
 - [decodeLenient](functions/decodeLenient.md)
+- [defineAdaptive](functions/defineAdaptive.md)
 - [defineBoundary](functions/defineBoundary.md)
 - [defineCapsule](functions/defineCapsule.md)
 - [defineConfig](functions/defineConfig.md)
