@@ -20,12 +20,16 @@
 import type { Boundary, Token, Theme, Style } from '@liteship/core';
 import { ValidationError } from '@liteship/error';
 import { parseQuantizeBlocks, compileQuantizeBlock, viewportContainmentRule } from './css-quantize.js';
-import { blankCssCommentsAndStrings, braceDepthDelta, cssPrologueEnd } from './css-scan.js';
+import {
+  blankCssCommentsAndStrings,
+  braceDepthDelta,
+  cssPrologueEnd,
+  normalizeCssLineEndings,
+} from '@liteship/compiler/parse';
 import { resolvePrimitive, unresolvedPrimitiveWarning } from './primitive-resolve.js';
 import { parseTokenBlocks, compileTokenBlock } from './token-transform.js';
 import { parseThemeBlocks, compileThemeBlock } from './theme-transform.js';
 import { parseStyleBlocks, compileStyleBlock } from './style-transform.js';
-import { normalizeCssLineEndings } from './normalize-css-eol.js';
 import type { PrimitiveResolutionCache } from './primitive-resolution-cache.js';
 import type { BoundaryDefinitionMap } from './boundary-manifest.js';
 

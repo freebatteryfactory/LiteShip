@@ -85,6 +85,8 @@ export const Config = {
       '@liteship/core': r('packages/core/src/index.ts'),
       '@liteship/quantizer/testing': r('packages/quantizer/src/testing.ts'),
       '@liteship/quantizer': r('packages/quantizer/src/index.ts'),
+      '@liteship/compiler/parse': r('packages/compiler/src/parse/index.ts'),
+      '@liteship/compiler/migrate': r('packages/compiler/src/migrate/index.ts'),
       '@liteship/compiler': r('packages/compiler/src/index.ts'),
       '@liteship/web/lite': r('packages/web/src/lite.ts'),
       '@liteship/web': r('packages/web/src/index.ts'),

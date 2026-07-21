@@ -8,7 +8,7 @@
 
 > `const` **DIAGNOSTIC\_REGISTRY**: `Readonly`\<`Record`\<[`DiagnosticCode`](../type-aliases/DiagnosticCode.md), [`DiagnosticEntry`](../interfaces/DiagnosticEntry.md)\>\>
 
-Defined in: [error/src/codes.ts:87](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/codes.ts#L87)
+Defined in: [error/src/codes.ts:92](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/codes.ts#L92)
 
 THE REGISTRY — one entry per stable diagnostic code. Frozen; the keys are the
 codes VERBATIM as their emitters produce them (a gauntlet ruleId literal, a

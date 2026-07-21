@@ -10,8 +10,12 @@
 
 import type { Token } from '@liteship/core';
 import { TokenCSSCompiler } from '@liteship/compiler';
-import { normalizeCssLineEndings } from './normalize-css-eol.js';
-import { blankCssCommentsAndStrings, lineOfOffset, parseFlatDeclarations } from './css-scan.js';
+import {
+  normalizeCssLineEndings,
+  blankCssCommentsAndStrings,
+  lineOfOffset,
+  parseFlatDeclarations,
+} from '@liteship/compiler/parse';
 
 // ---------------------------------------------------------------------------
 // Types

@@ -3,7 +3,7 @@
  * The `liteship` curated-facade RESOLUTION + TYPE-CHECK gate (P13).
  *
  * The umbrella became a REAL curated facade: a budgeted root `.` authoring surface
- * plus eleven domain SUBPATHS (`liteship/schema`, `liteship/reactive`, …), each a
+ * plus twelve domain SUBPATHS (`liteship/schema`, `liteship/reactive`, …), each a
  * `src/<name>.ts` file of explicit named re-exports. This gate proves the promise a
  * consumer actually depends on:
  *
@@ -58,7 +58,7 @@ interface FacadeEntry {
   readonly symbol: string;
 }
 
-/** The twelve declared facade entries — the root plus the eleven domain subpaths. */
+/** The thirteen declared facade entries — the root plus the twelve domain subpaths. */
 const FACADE: readonly FacadeEntry[] = [
   { subpath: '.', specifier: 'liteship', dist: 'index.d.ts', symbol: 'defineBoundary' },
   { subpath: './schema', specifier: 'liteship/schema', dist: 'schema.d.ts', symbol: 'schema' },
@@ -72,6 +72,7 @@ const FACADE: readonly FacadeEntry[] = [
   { subpath: './astro', specifier: 'liteship/astro', dist: 'astro.d.ts', symbol: 'adaptiveAttrs' },
   { subpath: './vite', specifier: 'liteship/vite', dist: 'vite.d.ts', symbol: 'plugin' },
   { subpath: './testing', specifier: 'liteship/testing', dist: 'testing.d.ts', symbol: 'resetCapsuleCatalog' },
+  { subpath: './migrate', specifier: 'liteship/migrate', dist: 'migrate.d.ts', symbol: 'fromMediaQueries' },
 ];
 
 /** Host-integration scopes the root `.` must NEVER pull into its module graph. */

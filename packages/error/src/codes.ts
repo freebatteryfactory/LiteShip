@@ -77,6 +77,11 @@ function core(title: string, explanation: string, remediation: string): Diagnost
   return { title, explanation, remediation, area: 'core' };
 }
 
+/** Build one migration-adapter entry (area `migrate`). */
+function migrate(title: string, explanation: string, remediation: string): DiagnosticEntry {
+  return { title, explanation, remediation, area: 'migrate' };
+}
+
 /**
  * THE REGISTRY — one entry per stable diagnostic code. Frozen; the keys are the
  * codes VERBATIM as their emitters produce them (a gauntlet ruleId literal, a
@@ -658,6 +663,48 @@ export const DIAGNOSTIC_REGISTRY: Readonly<Record<DiagnosticCode, DiagnosticEntr
     'interpretProgram: transition step did not lower',
     'A transition step did not lower to a motion plan — the step could not be resolved into a concrete animation.',
     'Ensure the transition step resolves to a valid motion plan.',
+  ),
+
+  // ── migrate: the P14 migration-adapter diagnostics (migrate/<slug>) ──────────
+  'migrate/unmappable-media-feature': migrate(
+    'Media/container feature has no signal-input lowering',
+    'A migration adapter met a media/container feature (e.g. `hover`, `orientation`, a vendor feature) with no `viewport.*` / signal-input equivalent, so it cannot become a boundary threshold — it is preserved as a raw `media:` input or dropped.',
+    'Map the feature to a signal input the boundary vocabulary supports, or accept the `media:` passthrough / drop.',
+  ),
+  'migrate/non-ascending-thresholds': migrate(
+    'Parsed thresholds are not strictly ascending',
+    'The thresholds parsed from the source (min-/max-width breakpoints, container ranges) were not strictly ascending, which `defineBoundary` requires; the adapter sorted and deduped them before constructing the boundary.',
+    'Reorder the source breakpoints into strictly ascending thresholds, or accept the adapter-sorted result.',
+  ),
+  'migrate/ambiguous-breakpoint': migrate(
+    'Overlapping or duplicate breakpoints collapsed',
+    'Two or more source breakpoints resolved to the same or overlapping threshold, so the boundary state at that width was ambiguous; the adapter collapsed them to a single state to keep the boundary well-formed.',
+    'Disambiguate the source breakpoints so each maps to a distinct threshold, or accept the collapsed state.',
+  ),
+  'migrate/unsupported-at-rule': migrate(
+    'At-rule or nested condition not representable as a boundary',
+    'A migration adapter met an at-rule or nested condition (e.g. `@supports`, a compound/non-range media condition, deep nesting) that has no boundary representation, so it was skipped.',
+    'Rewrite the source using a supported range condition, or handle the unsupported at-rule outside migration.',
+  ),
+  'migrate/lossy-token-conversion': migrate(
+    'Token value could not be represented losslessly',
+    'A token value (an alias/reference, a `calc()` expression, or a composite value) could not be lowered to a `defineToken` value without loss, so the adapter emitted its best-effort approximation.',
+    'Resolve the alias/calc to a concrete value in the source, or accept the approximated token value.',
+  ),
+  'migrate/unknown-token-category': migrate(
+    "Token value's CSS syntax could not be classified into a TokenCategory",
+    "A value's CSS syntax did not match any known `TokenCategory` (color / spacing / typography / shadow / radius / animation / effect), so the adapter could not assign the token a category.",
+    'Give the token an explicit `$type` / category, or express the value in a syntax the classifier recognizes.',
+  ),
+  'migrate/incomplete-theme-variant': migrate(
+    'Token missing a value for some mode/variant',
+    'A theme mode-set was missing a value for one of its variants, so `defineTheme` cross-variant completeness could not be satisfied for that token.',
+    'Supply the missing per-variant value in the source, or drop the token from the incomplete theme.',
+  ),
+  'migrate/malformed-input': migrate(
+    'Input JSON/CSS failed schema decode',
+    'The migration input failed to decode against the adapter schema (malformed DTCG JSON, unparseable CSS); when fatal the accumulated `DecodeIssue[]` are folded into a `ParseError`.',
+    'Fix the malformed input so it decodes against the adapter schema, then re-run the migration.',
   ),
 } as Readonly<Record<DiagnosticCode, DiagnosticEntry>>);
 

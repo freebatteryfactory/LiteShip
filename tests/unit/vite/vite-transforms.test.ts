@@ -19,7 +19,7 @@ import {
   viewportContainmentRule,
 } from '@liteship/vite';
 import { defineBoundary } from '@liteship/core';
-import { blankCssCommentsAndStrings, cssPrologueEnd } from '../../../packages/vite/src/css-scan.js';
+import { blankCssCommentsAndStrings, cssPrologueEnd } from '@liteship/compiler/parse';
 import { TokenCSSCompiler } from '../../../packages/compiler/src/token-css.js';
 import { StyleCSSCompiler } from '../../../packages/compiler/src/style-css.js';
 import { captureDiagnostics } from '../../helpers/diagnostics.js';

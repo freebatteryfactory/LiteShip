@@ -10,15 +10,15 @@
 
 import { Diagnostics, inputToSource, type Boundary } from '@liteship/core';
 import { CSSCompiler, type CSSAtRuleGroup, type CSSRule, type CSSStateInput } from '@liteship/compiler';
-import { normalizeCssLineEndings } from './normalize-css-eol.js';
 import {
+  normalizeCssLineEndings,
   blankCssCommentsAndStrings,
   braceDepthDelta,
   lineOfOffset,
   parseFlatDeclarations,
   skipSegment,
   skipWsAndComments,
-} from './css-scan.js';
+} from '@liteship/compiler/parse';
 
 // ---------------------------------------------------------------------------
 // Types

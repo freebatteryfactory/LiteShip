@@ -28,6 +28,16 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "development": "./src/index.ts"
+    },
+    "./parse": {
+      "types": "./dist/parse/index.d.ts",
+      "import": "./dist/parse/index.js",
+      "development": "./src/parse/index.ts"
+    },
+    "./migrate": {
+      "types": "./dist/migrate/index.d.ts",
+      "import": "./dist/migrate/index.js",
+      "development": "./src/migrate/index.ts"
     }
   },
   "files": [

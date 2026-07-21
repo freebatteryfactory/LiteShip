@@ -10,8 +10,12 @@
 
 import type { Theme } from '@liteship/core';
 import { ThemeCSSCompiler } from '@liteship/compiler';
-import { normalizeCssLineEndings } from './normalize-css-eol.js';
-import { blankCssCommentsAndStrings, lineOfOffset, parseFlatDeclarations } from './css-scan.js';
+import {
+  normalizeCssLineEndings,
+  blankCssCommentsAndStrings,
+  lineOfOffset,
+  parseFlatDeclarations,
+} from '@liteship/compiler/parse';
 
 // ---------------------------------------------------------------------------
 // Types
