@@ -8,13 +8,13 @@
 
 Your UI only needs a few states out: mobile/tablet/desktop, light/dark, reduced/full-motion. But the world feeds it continuous signals — viewport width slides as the user drags, network latency wobbles, the dark-mode toggle fires at 11pm whether the user clicks it or the OS does it for them. LiteShip turns those continuous signals into a small set of named states, and projects each state to whatever surface the host runs.
 
-*LiteShip — distributed as `@liteship/*` packages on npm.* The nautical vocabulary the deeper docs use (rig, signal, bearing, cast, surface) lives in [GLOSSARY.md](./GLOSSARY.md) — you don't need it for the quick start.
+*LiteShip — distributed as `@liteship/*` packages on npm, installed through the one `liteship` facade.* The naming and prose register the deeper docs use (signal, boundary, cast, surface) lives in [GLOSSARY.md](./GLOSSARY.md) — you don't need it for the quick start.
 
 **Compared to hand-rolled responsive CSS or a component library:** LiteShip owns the *adaptive state machine* and proves projections from one content-addressed definition — you do not re-sync breakpoints across CSS, GPU, and ARIA by hand. **Compared to general UI frameworks:** it is not a widget zoo; the host owns markup, LiteShip owns quantization and multi-surface cast.
 
-This is a real pre-1.0 hull being hardened on dogfooded sites and a CRM UI.
+This is a real pre-1.0 framework being hardened on dogfooded sites and a CRM UI.
 
-**pnpm:** `pnpm add @liteship/core` (definitions) or `pnpm create liteship` (starter). Package docs: [`packages/core/README.md`](./packages/core/README.md) · onboarding: [GETTING-STARTED.md](./GETTING-STARTED.md).
+**pnpm:** `pnpm add liteship` (the one-dependency facade) or `pnpm create liteship` (starter). Package docs: [`packages/core/README.md`](./packages/core/README.md) · onboarding: [GETTING-STARTED.md](./GETTING-STARTED.md).
 
 ## The shape
 
@@ -65,25 +65,23 @@ The [`examples/`](./examples) directory has a runnable app per surface. They're 
 
 `examples/scenes/` is a shared fixture directory (test assets like `intro-bed.wav`), not a runnable workspace.
 
-For a standalone app — one you can drop into StackBlitz or CodeSandbox — scaffold with `npm create liteship` (also `pnpm create liteship`). Unlike the workspace examples, the scaffold pins published `@liteship/*` ranges, so it installs anywhere from npm. In `astro dev`, open the boundary inspector from the Astro dev-toolbar (the liteship toolbar icon).
+For a standalone app — one you can drop into StackBlitz or CodeSandbox — scaffold with `npm create liteship` (also `pnpm create liteship`). Unlike the workspace examples, the scaffold pins the published `liteship` facade, so it installs anywhere from npm. In `astro dev`, open the boundary inspector from the Astro dev-toolbar (the liteship toolbar icon).
 
 ## Quick start
 
 Two concepts get you to a working page: `defineBoundary` (define the states) and `adaptiveAttrs` (put them on an element). In an Astro project:
 
 ```bash
-pnpm add @liteship/core @liteship/astro
+pnpm add liteship
 ```
 
-That's the whole install for the snippets below — `@liteship/core` and `@liteship/astro` carry **no third-party runtime peer dependencies** to pin (LiteShip runs on its own native substrate; the `effect` peer was shed in v0.18). Further packages arrive when you first import them.
-
-Prefer the whole stack in a single version-locked dependency? `npm install liteship` — the umbrella that pins **every** `@liteship/*` package to one matched version. It's heavier (it pulls the tooling scopes too — CLI, audit, gauntlet), so most apps want just the two above; reach for it when you'd rather lock the fleet together than add packages as you import them.
+`liteship` is the one-dependency facade over the whole stack: the authoring verbs import from the `liteship` root, and host surfaces ride domain subpaths like `liteship/astro` — one package to install, one import path to learn. The API is synchronous (`.read()` / `.subscribe()` / plain function calls) and carries **no third-party runtime peer dependencies** to pin: LiteShip runs on its own native substrate (the `effect` peer was shed in v0.18). `pnpm create liteship` scaffolds a starter already wired this way.
 
 Define a boundary — a mapping from a continuous signal to named states:
 
 ```ts
 // src/boundaries.ts
-import { defineBoundary } from '@liteship/core';
+import { defineBoundary } from 'liteship';
 
 export const viewport = defineBoundary({
   input: 'viewport.width',
@@ -101,14 +99,14 @@ Register the integration and spread the boundary onto any element:
 ```js
 // astro.config.mjs
 import { defineConfig } from 'astro/config';
-import { integration } from '@liteship/astro';
+import { integration } from 'liteship/astro';
 
 export default defineConfig({ integrations: [integration()] });
 ```
 
 ```astro
 ---
-import { adaptiveAttrs } from '@liteship/astro';
+import { adaptiveAttrs } from 'liteship/astro';
 import { viewport } from '../boundaries.js';
 ---
 
@@ -134,7 +132,7 @@ The pattern LiteShip absorbs is the one most projects re-implement, in pieces, b
 
 Hand-rolled, those drift the moment one of them falls behind. Authored as a single boundary, they emit from one definition every time. The boundary is content-addressed (FNV-1a + canonical CBOR per [ADR-0003](./docs/adr/0003-content-addressing.md)); change the definition, every output recomputes against the same hash.
 
-This is not a replacement for media queries (use them where they're enough), CSS custom properties (use them where you control the keyspace), or design-token systems (LiteShip *is* one, and also the projection layer above them). It's the rig that ties them together so they stay in agreement.
+This is not a replacement for media queries (use them where they're enough), CSS custom properties (use them where you control the keyspace), or design-token systems (LiteShip *is* one, and also the projection layer above them). It's the layer that ties them together so they stay in agreement.
 
 ## Frameworks and stacks
 
@@ -208,7 +206,7 @@ LiteShip is intentionally not, in the current wave:
 - a backend / router stack
 - a stateful edge AI runtime substrate
 
-Pre-1.0 break policy is aggressive on purpose. If an API or internal contract is going to be painful later, the preference is to break it now while the hull is still in greenfield fit-out.
+Pre-1.0 break policy is aggressive on purpose. If an API or internal contract is going to be painful later, the preference is to break it now while the framework is still in greenfield fit-out.
 
 ## Working in this repo
 
@@ -219,18 +217,18 @@ ffmpeg (libx264) + Playwright stack CI uses on `ubuntu-latest`.
 pnpm install
 pnpm verify            # first-run aggregate: doctor → install → build → test
 # ...or step through it yourself:
-pnpm run doctor           # preflight rig-check (Node, pnpm, build, hooks)
+pnpm run doctor           # preflight environment check (Node, pnpm, build, hooks)
 pnpm run build
 pnpm run typecheck
 pnpm test                 # unit + component + property + integration (~75s)
 pnpm run gauntlet:full    # full release-grade gate (~22min)
 ```
 
-Dev-loop ergonomics: `pnpm dev` (showcase example dev server), `pnpm test:watch` (vitest watch), `pnpm run clean` (dry-dock), `pnpm scripts` (categorized script index), `pnpm run glossary <term>` (CLI lookup into the ontology), `pnpm fix` (prettier + eslint --fix). The CLI mirrors the same surface: `liteship doctor`, `liteship help`, `liteship version`, `liteship glossary cast`.
+Dev-loop ergonomics: `pnpm dev` (showcase example dev server), `pnpm test:watch` (vitest watch), `pnpm run clean` (wipe build/test artifacts), `pnpm scripts` (categorized script index), `pnpm run glossary <term>` (CLI lookup into the ontology), `pnpm fix` (prettier + eslint --fix). The CLI mirrors the same surface: `liteship doctor`, `liteship help`, `liteship version`, `liteship glossary cast`.
 
 Other lanes (`test:vite`, `test:astro`, `test:tailwind`, `test:e2e`, `test:e2e:stress`, `test:e2e:stream-stress`, `test:redteam`, `package:smoke`, `bench`, `bench:gate`, `bench:reality`, `coverage:merge`, `report:runtime-seams`, `audit`, `report:adaptive-scan`, `feedback:verify`) are documented in [CONTRIBUTING.md](./CONTRIBUTING.md).
 
-`pnpm run gauntlet:full` is the full shake-down cruise before a release. Thirty-nine phases (see `STATUS.md` for the full ordered list), starting with an enforced `rig-check` env preflight, fifteen to forty-five minutes end-to-end depending on cold caches, CI load, and machine speed. It ends with `flex:verify PASSED — project is 10/10 by every rating dimension`, or it fails and the vessel returns to dry-dock.
+`pnpm run gauntlet:full` is the full release-grade gate. It runs the complete ordered phase sequence (see `STATUS.md` for the list), starting with an enforced environment preflight, fifteen to forty-five minutes end-to-end depending on cold caches, CI load, and machine speed. It ends with `flex:verify PASSED — project is 10/10 by every rating dimension`, or it fails closed.
 
 ## Latest gauntlet benchmark snapshot
 

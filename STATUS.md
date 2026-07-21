@@ -380,7 +380,7 @@ Current adaptive scan blind spots:
   `reports/runtime-seams.md`: shared bootstrap drift vs off-thread handoff
   pressure vs host callback congestion
 - current local merged hotspot cluster is `packages/vite/src/style-transform.ts`,
-  `packages/core/src/signal.ts`, `packages/quantizer/src/animated-quantizer.ts`,
+  `packages/core/src/reactive/signal.ts`, `packages/quantizer/src/animated-quantizer.ts`,
   `packages/vite/src/plugin.ts`, `packages/compiler/src/ai-manifest.ts`,
   `packages/worker/src/compositor-worker.ts`, `packages/astro/src/runtime/worker.ts`,
   `packages/astro/src/runtime/stream.ts`, `packages/astro/src/headers.ts`,
@@ -404,10 +404,10 @@ Worker startup early-warning trigger:
 Explicit runtime coverage exclusions now live in `vitest.shared.ts` and are
 limited to barrels plus runtime-unexecutable/type-only files:
 
-- `packages/core/src/capture.ts`
-- `packages/core/src/protocol.ts`
-- `packages/core/src/quantizer-types.ts`
-- `packages/core/src/type-utils.ts`
+- `packages/core/src/evidence/capture.ts`
+- `packages/core/src/schema/protocol.ts`
+- `packages/core/src/schema/quantizer-types.ts`
+- `packages/core/src/internal/type-level.ts`
 - `packages/web/src/lite.ts`
 - `packages/web/src/types.ts`
 
@@ -613,7 +613,7 @@ less margin than the rest of the repo and are the right place to buy future
 stability:
 
 - `packages/vite/src/style-transform.ts`
-- `packages/core/src/signal.ts`
+- `packages/core/src/reactive/signal.ts`
 - `packages/quantizer/src/animated-quantizer.ts`
 - `packages/vite/src/plugin.ts`
 - `packages/compiler/src/ai-manifest.ts`

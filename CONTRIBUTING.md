@@ -23,7 +23,7 @@ git clone https://github.com/freebatteryfactory/LiteShip.git
 cd LiteShip
 pnpm install
 
-# First-run shake-down: rig-check + build + test
+# First-run aggregate: environment check + build + test
 pnpm verify
 
 # Or step through it manually (one command per line — see Shell paste traps below):
@@ -31,7 +31,7 @@ pnpm run doctor
 pnpm run build
 pnpm test
 
-# Full release-grade gate (~22min) — rig-check is enforced at entry
+# Full release-grade gate (~22min) — the environment check is enforced at entry
 pnpm run gauntlet:full
 ```
 
@@ -68,11 +68,11 @@ mid-run.
 Discoverable verbs at the workspace root:
 
 ```bash
-pnpm verify        # rig-check + build + test (first-run aggregate)
-pnpm run doctor       # preflight rig-check, emits JSON receipt + TTY summary
+pnpm verify        # environment check + build + test (first-run aggregate)
+pnpm run doctor       # preflight environment check, emits JSON receipt + TTY summary
 pnpm dev              # launch the showcase example dev server
 pnpm test:watch       # vitest in watch mode (the inner loop)
-pnpm run clean        # dry-dock: wipe dist/, coverage/, reports/, .tsbuildinfo
+pnpm run clean        # wipe dist/, coverage/, reports/, .tsbuildinfo
 pnpm scripts          # categorized index of every dev script
 pnpm run glossary     # look up a LiteShip term (e.g. `pnpm run glossary boundary`)
 pnpm fix              # prettier --write + eslint --fix
@@ -82,7 +82,7 @@ The CLI mirrors the same surface once built:
 
 ```bash
 liteship help             # usage
-liteship doctor           # preflight rig-check
+liteship doctor           # preflight environment check
 liteship version          # liteship + Node + pnpm versions
 liteship glossary cast    # ontology lookup
 liteship describe         # AI-facing schema (also: --format=mcp)
@@ -95,9 +95,9 @@ in CI with `CI=1` (already standard) or `LITESHIP_QUIET_INSTALL=1`.
 
 **0.9 tier / PR accept bar:** `pnpm run gauntlet:full -- --profile local-safe` runs build → capsule:compile → typecheck → lint → lint:structural → invariants → check:gates → audit:floor → full unit test → standards:gate → capability:gate (see `LOCAL_SAFE_LABELS` in `packages/cli/src/gauntlet-phases.ts`). Run `pnpm run docs:check` separately when API docs inputs change — TypeDoc is memory-hungry (SKILL.md).
 
-`pnpm run gauntlet:full` is the contract: the full shake-down cruise. It runs the full 39-phase sequence (the canonical ordered list + count is `packages/cli/src/gauntlet-phases.ts`, pinned by `tests/unit/devops/gauntlet-profile.test.ts` — never hand-counted):
+`pnpm run gauntlet:full` is the contract: the full release-grade gate. It runs the complete ordered phase sequence (the canonical ordered list + count is `packages/cli/src/gauntlet-phases.ts`, pinned by `tests/unit/devops/gauntlet-profile.test.ts` — never hand-counted):
 
-- rig-check (`doctor --preflight --ci` — env probes hard-fail before build)
+- the environment preflight (`doctor --preflight --ci` — env probes hard-fail before build)
 - build, capsule:compile, typecheck, lint, docs:check, invariants, audit:floor
 - the full vitest test surface (unit + component + property + integration)
 - Vite, Astro, Tailwind integration smokes
@@ -162,12 +162,18 @@ parity gate (`cargo test` + property suite against the fresh artifact).
   per Node ESM rules)
 - No default exports; named exports only
 - Branded types via a local nominal-brand helper — `brand<T, B extends symbol>()` over unique symbols, with validating smart constructors (see `packages/core/src/brands.ts`)
-- Namespace-object pattern for module facades:
+- Direct generic types for module facades (ADR-0046, superseding the retired `.Shape` namespace convention): a public instance type shares its value's name directly through declaration merging, so consumers annotate against the bare generic — `Cell<number>`, `Boundary<Input, State>`, `Lifetime` — never `Cell.Shape<number>`. Construction goes through the verb grammar (`defineBoundary`, `createCell`, …), not a namespace factory like `Boundary.make`. `sgrules/no-shape-namespace-type.yml` fails any `.Shape` type reference under `packages/*/src` or the spine.
 
   ```ts
-  export const Boundary = { make: _make, evaluate: _evaluate };
-  export declare namespace Boundary {
-    export type Shape = BoundaryShape;
+  // The instance type and its value share one name (declaration merging).
+  export interface Boundary<Input, State> {
+    /* … */
+  }
+  export function defineBoundary<Input, State>(spec: BoundarySpec<Input, State>): Boundary<Input, State>;
+
+  // A consumer annotates against the bare generic — no `.Shape` indirection.
+  function statesOf<S extends string>(b: Boundary<'viewport.width', S>): readonly S[] {
+    /* … */
   }
   ```
 
@@ -286,7 +292,7 @@ The test now lives permanently in `tests/regression/` and runs on every `pnpm te
 
 ### Gauntlet integration
 
-Worth noting: `pnpm test` is phase 9 of `pnpm run gauntlet:full` (after rig-check, build, validate, and audit:floor) and covers the full vitest surface including `tests/regression/`; see [STATUS.md](./STATUS.md) for the complete phase list.
+Worth noting: `pnpm test` is phase 9 of `pnpm run gauntlet:full` (after the environment preflight, build, validate, and audit:floor) and covers the full vitest surface including `tests/regression/`; see [STATUS.md](./STATUS.md) for the complete phase list.
 
 ## Architecture changes
 

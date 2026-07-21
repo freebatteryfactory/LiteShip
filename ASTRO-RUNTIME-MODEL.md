@@ -156,8 +156,8 @@ import { heroLayout } from '../boundaries.js';
 
 <Adaptive boundary={heroLayout}>
   <section class="hero">
-    <h1>The hull is in the water.</h1>
-    <p>Drag the window edge; the layout re-trims at the named bearings.</p>
+    <h1>Adaptive layout, one definition.</h1>
+    <p>Drag the window edge; the layout restyles at each named state.</p>
   </section>
 </Adaptive>
 ```

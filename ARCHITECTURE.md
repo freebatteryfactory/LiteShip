@@ -25,7 +25,7 @@ That "same content-addressed definition" is one data structure: the **document g
 
 ## AI cast
 
-The same graph casts _out_ to a model. `AICast.castContext` turns a sealed graph into a token-budgeted `AIContext` (a deterministic summary plus a tool schema); a model's reply returns as a `GraphPatch` proposal that must clear `validateGraphPatchProposal` before `applyValidatedPatch` will touch the graph. Validation mints a `ValidatedProposal` carrying an unforgeable `ApplyToken` — there is no path from raw model output to a graph mutation that skips it (`mintValidated` is denied at the package subpath; see `packages/core/package.json` `"./validated-output": null`). The primitive is pure: zero network, zero provider imports. The framework owns the envelope; the host owns the model call and the authority to apply. See [ADR-0015](./docs/adr/0015-document-graph-ir.md) and `packages/core/src/ai-cast.ts`.
+The same graph casts _out_ to a model. `AICast.castContext` turns a sealed graph into a token-budgeted `AIContext` (a deterministic summary plus a tool schema); a model's reply returns as a `GraphPatch` proposal that must clear `validateGraphPatchProposal` before `applyValidatedPatch` will touch the graph. Validation mints a `ValidatedProposal` carrying an unforgeable `ApplyToken` — there is no path from raw model output to a graph mutation that skips it (`mintValidated` is denied at the package subpath; see `packages/core/package.json` `"./validated-output": null`). The primitive is pure: zero network, zero provider imports. The framework owns the envelope; the host owns the model call and the authority to apply. See [ADR-0015](./docs/adr/0015-document-graph-ir.md) and `packages/core/src/authoring/ai-cast.ts`.
 
 ## The mutation channel
 
@@ -137,7 +137,7 @@ You don't install these directly — they back the CLI, the MCP server, and the 
 
 ## Graceful degradation
 
-Fast paths fall back honestly past their regime — `DirtyFlags` past 31 keys (`packages/core/src/dirty.ts`), `Boundary.evaluate` past 4 thresholds (`packages/core/src/boundary-f32.ts:51`).
+Fast paths fall back honestly past their regime — `DirtyFlags` past 31 keys (`packages/core/src/reactive/dirty.ts`), `Boundary.evaluate` past 4 thresholds (`packages/core/src/wasm/boundary-f32.ts:51`).
 
 ## Architectural decisions
 

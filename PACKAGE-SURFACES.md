@@ -128,7 +128,7 @@ Main surfaces:
 - `DocumentGraph`
 - `GraphPatch`
 - `AICast`
-- `chooseRung`
+- `chooseTier`
 - `WASMDispatch`
 
 ### Document graph (the IR)
@@ -184,7 +184,7 @@ The Rust `liteship-compute` kernel (spring / boundary / blend) ships inside `@li
 - batch boundary evaluation — `Boundary.evaluateBatch(boundary, values)`: many values against one boundary, into state indices, routed through `WASMDispatch.kernels()`
 - the kernel handle directly — `WASMDispatch.load` / `kernels` / `isLoaded`
 
-Main surfaces: `WASMDispatch`, `Boundary.evaluateBatch`. The WASM path is a throughput upgrade, never a behavior change: every kernel is output-identical to its TypeScript fallback (`packages/core/src/wasm-fallback.ts`), locked by the wasm-parity property suite. A boundary that can't load WASM selects the same indices in JS.
+Main surfaces: `WASMDispatch`, `Boundary.evaluateBatch`. The WASM path is a throughput upgrade, never a behavior change: every kernel is output-identical to its TypeScript fallback (`packages/core/src/wasm/wasm-fallback.ts`), locked by the wasm-parity property suite. A boundary that can't load WASM selects the same indices in JS.
 
 ---
 
@@ -199,7 +199,7 @@ Reach for it when you need:
 - boundary evaluation
 - output-target routing
 - motion-tier filtering
-- animated transitions between named states, optionally on an injected frame clock (`AnimatedQuantizer.make(…, { scheduler })` takes a `@liteship/core` `Scheduler.Shape` — `raf` / `fixedStep` / `audioSync`; default is an internal 16ms loop)
+- animated transitions between named states, optionally on an injected frame clock (`AnimatedQuantizer.make(…, { scheduler })` takes a `@liteship/core` `Scheduler` — `raf` / `fixedStep` / `audioSync`; default is an internal 16ms loop)
 
 Main surfaces:
 

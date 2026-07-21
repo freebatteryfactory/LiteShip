@@ -154,44 +154,10 @@ export const GLOSSARY_ENTRIES: readonly GlossaryEntry[] = [
       'The full release-grade test gate (`pnpm run gauntlet:full`). Runs the ordered phase sequence from the initial environment check through to `flex:verify PASSED — project is 10/10`.',
   },
   {
-    term: 'shake-down',
-    category: 'translator-note',
-    definition:
-      'The first-run aggregate (`pnpm verify`). Run on a new hull before sailing — install, build, smoke test.',
-  },
-  {
     term: 'dry-dock',
     category: 'translator-note',
     definition:
       'Clean state. `pnpm clean` wipes dist/, coverage/, reports/, .tsbuildinfo so the next build starts from a known empty deck.',
-  },
-  {
-    term: 'hull',
-    category: 'translator-note',
-    definition:
-      'The built `dist/` artifact of a package. "Hull not yet laid" = no dist/ on disk; "Hull check" = the rolled-up status emitted by `liteship doctor`.',
-    seeAlso: ['keel', 'shake-down'],
-  },
-  {
-    term: 'keel',
-    category: 'translator-note',
-    definition:
-      '`tsc --build` output. "Lay the keel" = run `pnpm run build`. The first thing you put down before anything else floats.',
-    seeAlso: ['hull'],
-  },
-  {
-    term: 'cast off',
-    category: 'translator-note',
-    definition:
-      'Begin the run: leave the dock. Used for first actions after install ("Cast off with: pnpm verify") and for non-blocking states ("you can cast off") in `liteship doctor`.',
-    seeAlso: ['moored'],
-  },
-  {
-    term: 'moored',
-    category: 'translator-note',
-    definition:
-      'Installed but not yet underway. The state immediately after `pnpm install` — node_modules present, but build/test not run. Postinstall says "LiteShip — moored."',
-    seeAlso: ['cast off', 'shake-down'],
   },
   {
     term: 'deck plan',
@@ -205,13 +171,6 @@ export const GLOSSARY_ENTRIES: readonly GlossaryEntry[] = [
     category: 'translator-note',
     definition: 'The verb table (`liteship help`). The map of CLI bearings — what verb does what, grouped by phase.',
     seeAlso: ['deck plan'],
-  },
-  {
-    term: 'quay',
-    category: 'translator-note',
-    definition:
-      'The release surface. Where a package ties up before being shipped to npm. "Tied up at the quay" = the package is packed and the capsule is written, awaiting `npm publish`. Used in `liteship help` "Ship out (quay-side, release)" and in the release-flow hint.',
-    seeAlso: ['gauntlet'],
   },
   {
     term: 'rig (verb)',

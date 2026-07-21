@@ -16,9 +16,9 @@ export function aggregate(checks: readonly DoctorCheck[]): DoctorVerdict {
 }
 
 const VERDICT_SENTENCE: Record<DoctorVerdict, string> = {
-  ready: 'Environment check: ready to sail.',
+  ready: 'Environment check: ready — you can proceed.',
   caution: 'Environment check: caution — non-blocking warnings, but you can proceed.',
-  blocked: 'Environment check: blocked — fix the failures before sailing.',
+  blocked: 'Environment check: blocked — fix the failures before proceeding.',
 };
 
 const VERDICT_COLOR: Record<DoctorVerdict, 'green' | 'yellow' | 'red'> = {

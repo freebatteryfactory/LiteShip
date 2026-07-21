@@ -39,12 +39,15 @@ describe('doctor/summary — aggregate()', () => {
 
   it('fail dominates warn dominates ok, for any multiset of bearings', () => {
     fc.assert(
-      fc.property(fc.array(fc.constantFrom('ok', 'warn', 'fail') as fc.Arbitrary<DoctorCheck['status']>), (statuses) => {
-        const verdict = aggregate(statuses.map((status) => check({ status })));
-        if (statuses.includes('fail')) expect(verdict).toBe('blocked');
-        else if (statuses.includes('warn')) expect(verdict).toBe('caution');
-        else expect(verdict).toBe('ready');
-      }),
+      fc.property(
+        fc.array(fc.constantFrom('ok', 'warn', 'fail') as fc.Arbitrary<DoctorCheck['status']>),
+        (statuses) => {
+          const verdict = aggregate(statuses.map((status) => check({ status })));
+          if (statuses.includes('fail')) expect(verdict).toBe('blocked');
+          else if (statuses.includes('warn')) expect(verdict).toBe('caution');
+          else expect(verdict).toBe('ready');
+        },
+      ),
     );
   });
 });
@@ -72,7 +75,7 @@ describe('doctor/summary — prettySummary()', () => {
     expect(out).toContain('Node.js');
     expect(out).toContain('v22.4.0');
     expect(out).toContain('pnpm');
-    expect(out).toContain('ready to sail');
+    expect(out).toContain('Environment check: ready');
     expect(out.endsWith('\n')).toBe(true);
   });
 

@@ -1,8 +1,59 @@
 # Changelog
 
-All notable changes to czap. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+All notable changes to LiteShip. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Pre-1.0
 break policy is intentionally aggressive — minor version bumps may carry breaking changes.
+
+## [0.19.0] (unreleased)
+
+The **framework overhaul** wave: one brand, one grammar, one import path. This is a
+broad rename-and-consolidate pass across the whole stack — the public value surface
+is provably preserved where the changes are type- or naming-only, and every rename
+ships its enforcing gate.
+
+### Changed
+
+- **One brand — LiteShip (ADR-0044).** The original `@czap` npm scope, the `data-czap-*`
+  DOM wire prefix, the `CZAP_*`/`Czap*` identifiers, the `czap` CLI/config, and the
+  engine name were retired wholesale in favor of the single **LiteShip** brand:
+  `@liteship/*` packages, `data-liteship-*` attributes, `liteship:*` events,
+  `--liteship-*` CSS custom properties, the `liteship` bin, and `liteship.config.ts`.
+  The permanent brand-residue gate reds on any reintroduction.
+- **One verb grammar (ADR-0046 / ADR-0051).** Every operation class now has one enforced
+  verb: **define** for immutable authored intent (`defineBoundary` / `defineToken` /
+  `defineTheme` / `defineStyle` / `defineConfig` / `defineQuantizer`), **create** for
+  runtime allocation (`createSignal` / `createCell` / `createLiveCell` / `createStore` /
+  `createTimeline` / `createQuantizer` / `createLifetime`), and **computed** for derived
+  reactive values. The namespace-object factories (`Boundary.make`, `Cell.make`, …) were
+  replaced by these verbs.
+- **Direct generic types (ADR-0046).** The `.Shape` namespace-type convention was retired:
+  every public instance type now shares its value's name directly through declaration
+  merging (`Boundary<Input, State>`, `Cell<number>`, `Lifetime`) — no more `Cell.Shape<T>`.
+  Disposal is a direct `dispose()` / `Symbol.dispose`, not `.lifetime.dispose()`.
+  `sgrules/no-shape-namespace-type.yml` fails any surviving `.Shape` reference.
+- **Source grammar (ADR-0045).** The repository's source layout and naming conventions were
+  regularized into one closed grammar, enforced structurally.
+
+### Added
+
+- **The `liteship` facade (ADR-0048).** One curated meta-package is the single import path
+  over the whole stack: authoring verbs from the `liteship` root, and deeper surfaces on
+  budgeted domain subpaths — `liteship/schema`, `liteship/reactive`, `liteship/motion`,
+  `liteship/graph`, `liteship/media`, `liteship/evidence`, `liteship/compiler`,
+  `liteship/runtime`, `liteship/astro`, `liteship/vite`, `liteship/testing`, and
+  `liteship/migrate`. The root is host-free; the `astro` / `vite` subpaths carry their
+  optional host peers behind independent module graphs. The scaffold and the docs now
+  teach this one import story.
+- **`defineAdaptive` (ADR-0050).** A first-class authored primitive for an adaptive surface,
+  re-exported from the `liteship` root alongside the other `define*` verbs.
+- **Migration adapters (ADR-0049).** `liteship/migrate` re-exports the compiler's migration
+  adapters for moving existing definitions onto the current authoring grammar.
+- **Developer-experience wave.** Guided example **journeys**, a **hermetic** test/build path,
+  and a **devcontainer** matching the CI stack (Node 22 + pnpm 10 + ffmpeg/libx264 +
+  Playwright).
+- **Registry-backed CLI surfaces.** The gauntlet **check** fold, the **diagnostic** code
+  catalog (`explainDiagnostic`), and the **obligation** set are exposed as canonical
+  registries the CLI and MCP server project from, rather than hand-maintained parallel lists.
 
 ## [0.17.0] - 2026-07-18
 

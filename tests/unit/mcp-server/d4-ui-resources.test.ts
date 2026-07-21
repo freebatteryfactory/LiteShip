@@ -214,6 +214,9 @@ describe('D4 — projection drift pin', () => {
     // De-nauticalization sweep: the `gauntlet` glossary entry was reworded to drop the
     // stale spelled-out phase count ("Thirty-five phases…") and the `rig-check` literal.
     // renderGlossary embeds each entry's definition, so the glossary UI body shifted.
-    expect(address).toBe('fnv1a:7e6abea2');
+    // P17 nautical glossary trim: the retired maritime entries (hull, keel, cast off,
+    // moored, shake-down, quay) were dropped from GLOSSARY_ENTRIES — the catalog now keeps
+    // only terms still used in CLI source — so the glossary UI body digest shifted again.
+    expect(address).toBe('fnv1a:2bf3e2ab');
   });
 });

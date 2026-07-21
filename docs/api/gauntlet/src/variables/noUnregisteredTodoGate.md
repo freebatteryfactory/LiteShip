@@ -8,6 +8,6 @@
 
 > `const` **noUnregisteredTodoGate**: [`Gate`](../interfaces/Gate.md)
 
-Defined in: gauntlet/src/gates/no-unregistered-todo.ts:117
+Defined in: [gauntlet/src/gates/no-unregistered-todo.ts:117](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/no-unregistered-todo.ts#L117)
 
 The qualified gate — fixtures included, so it self-proves via the ratchet.

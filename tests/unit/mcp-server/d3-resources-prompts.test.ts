@@ -222,7 +222,10 @@ describe('D3 stability — projection drift tripwire', () => {
     const address = fnv1a(JSON.stringify({ resources: listResources(), prompts: listPrompts() }));
     // 0.2.0 framework primitives: added liteship://registry/components JSON resource.
     // Re-pinned for the LiteShip brand consolidation (engine-name glossary entry removed; catalog content changed).
-    expect(address).toBe('fnv1a:eddcf488');
+    // P17 nautical glossary trim: the retired maritime entries (hull, keel, cast off, moored,
+    // shake-down, quay) were dropped from GLOSSARY_ENTRIES — the JSON glossary resource embeds
+    // the catalog, so the {resources, prompts} projection digest shifted.
+    expect(address).toBe('fnv1a:81fb9604');
   });
 });
 

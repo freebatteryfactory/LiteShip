@@ -2,7 +2,7 @@
 
 ## Purpose
 
-How to author with LiteShip: LiteShip's rigging surface, shipped as `@liteship/*` packages.
+How to author with LiteShip: LiteShip's authoring surface, shipped as `@liteship/*` packages and installed through the one `liteship` facade — the authoring verbs import from the `liteship` root, host surfaces from domain subpaths like `liteship/astro`.
 
 Naming: [GLOSSARY.md](./GLOSSARY.md).
 
@@ -210,7 +210,7 @@ Avoid IDs that merely restate the primitive type:
 ### Boundary
 
 ```ts
-import { defineBoundary } from '@liteship/core';
+import { defineBoundary } from 'liteship';
 
 export const heroLayout = defineBoundary({
   input: 'viewport.width',
@@ -226,7 +226,7 @@ export const heroLayout = defineBoundary({
 ### Token
 
 ```ts
-import { defineToken } from '@liteship/core';
+import { defineToken } from 'liteship';
 
 export const accent = defineToken({
   name: 'accent',
@@ -243,7 +243,7 @@ export const accent = defineToken({
 ### Theme
 
 ```ts
-import { defineTheme } from '@liteship/core';
+import { defineTheme } from 'liteship';
 
 export const brandTheme = defineTheme({
   name: 'brand',
@@ -264,7 +264,7 @@ export const brandTheme = defineTheme({
 ### Style
 
 ```ts
-import { defineStyle } from '@liteship/core';
+import { defineStyle } from 'liteship';
 import { heroLayout } from './boundaries.js';
 
 export const heroShell = defineStyle({
@@ -426,7 +426,7 @@ Two concrete patterns:
 ```ts
 // A disclosure surface: states correspond to expanded/collapsed; aria-expanded
 // flips with the layout.
-import { ARIACompiler } from '@liteship/compiler';
+import { ARIACompiler } from 'liteship/compiler';
 import { disclosureBoundary } from './boundaries.js';
 
 const aria = ARIACompiler.compile(disclosureBoundary, {
@@ -439,7 +439,7 @@ const aria = ARIACompiler.compile(disclosureBoundary, {
 // A reduced-motion-aware surface: when motionTier is 'none', the boundary
 // pins to a still state and the live-region announces transitions instead of
 // animating them.
-import { defineBoundary } from '@liteship/core';
+import { defineBoundary } from 'liteship';
 import { motionTierFromCapabilities } from '@liteship/detect';
 
 export const heroMotion = defineBoundary({

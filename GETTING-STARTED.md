@@ -15,8 +15,10 @@ LiteShip / `@liteship/*` naming: [GLOSSARY.md](./GLOSSARY.md). For Cloudflare Wo
 In your Astro project:
 
 ```bash
-pnpm add @liteship/core @liteship/astro
+pnpm add liteship
 ```
+
+`liteship` is the one-dependency facade over the whole stack: authoring verbs import from the `liteship` root, and host surfaces ride domain subpaths like `liteship/astro`. One package, one import path — the same wiring `pnpm create liteship` scaffolds.
 
 ## 2. Your first boundary
 
@@ -24,7 +26,7 @@ A boundary is a continuous-to-discrete signal mapping: here, viewport width → 
 
 ```ts
 // src/boundaries.ts
-import { defineBoundary } from '@liteship/core';
+import { defineBoundary } from 'liteship';
 
 export const viewport = defineBoundary({
   input: 'viewport.width',
@@ -46,7 +48,7 @@ Register the integration (it injects the client boot scanner that activates boun
 ```js
 // astro.config.mjs
 import { defineConfig } from 'astro/config';
-import { integration } from '@liteship/astro';
+import { integration } from 'liteship/astro';
 
 export default defineConfig({
   integrations: [integration()],
@@ -57,7 +59,7 @@ Then spread `adaptiveAttrs` onto any element in a `.astro` page:
 
 ```astro
 ---
-import { adaptiveAttrs } from '@liteship/astro';
+import { adaptiveAttrs } from 'liteship/astro';
 import { viewport } from '../boundaries.js';
 ---
 
@@ -87,11 +89,7 @@ That's the whole layer-1 loop: define states, attach them to an element, let CSS
 
 For `client:llm` streaming, LiteShip can render **structured UI trees** instead of model-emitted HTML. You define which components exist; the model references them by name. LiteShip validates props and renders through a trusted catalog — interactions surface as DOM events for your app to handle.
 
-```bash
-pnpm add @liteship/genui
-```
-
-Register a catalog (component names, prop schemas, allowed children):
+The generated-UI surface ships in `@liteship/genui` (already installed with `liteship`; it doesn't yet ride a `liteship/*` subpath, so import it directly). Register a catalog (component names, prop schemas, allowed children):
 
 ```ts
 // src/genui-catalog.ts
@@ -140,16 +138,12 @@ While running `pnpm dev`, open the liteship boundary inspector from the Astro de
 
 ## 4. Cast to CSS (the compiler path)
 
-Hand-written `[data-liteship-state]` selectors work, but the same boundary can also emit its CSS. Add the compiler:
-
-```bash
-pnpm add @liteship/compiler
-```
+Hand-written `[data-liteship-state]` selectors work, but the same boundary can also emit its CSS. The compilers ride the `liteship/compiler` subpath — already installed with `liteship`, nothing new to add.
 
 `compile()` takes the boundary, a per-state property map, and an optional selector:
 
 ```ts
-import { CSSCompiler } from '@liteship/compiler';
+import { CSSCompiler } from 'liteship/compiler';
 import { viewport } from './boundaries.js';
 
 const result = CSSCompiler.compile(
@@ -198,7 +192,7 @@ Server side is one route; you own the endpoint and the store:
 ```ts
 // src/pages/api/graph.ts
 import type { APIRoute } from 'astro';
-import { graphMutationRoute } from '@liteship/astro';
+import { graphMutationRoute } from 'liteship/astro';
 import { store } from '../../server/graph-store'; // your GraphStore: loadGraph + compare-and-swap saveGraph
 
 export const prerender = false;
@@ -206,12 +200,12 @@ export const POST: APIRoute = ({ request }) => graphMutationRoute(store)(request
 ```
 
 Client side, `createGraphMutationClient` tracks the current base and serializes
-submits, and `bindGraphForm` (from `@liteship/web`) turns a form submit into a
+submits, and `bindGraphForm` (from `liteship/runtime`) turns a form submit into a
 validated patch:
 
 ```ts
-import { createGraphMutationClient } from '@liteship/core';
-import { bindGraphForm } from '@liteship/web';
+import { createGraphMutationClient } from 'liteship/graph';
+import { bindGraphForm } from 'liteship/runtime';
 
 const client = createGraphMutationClient({ url: '/api/graph', base, refreshBase });
 bindGraphForm(form, { client, toOps: (data, base) => [/* your sealed ops */] });
@@ -248,7 +242,7 @@ pnpm install
 pnpm verify   # first-run aggregate: doctor → build → test
 ```
 
-`pnpm scripts` prints the categorized index of all dev scripts; `pnpm run doctor` is the on-demand preflight rig-check.
+`pnpm scripts` prints the categorized index of all dev scripts; `pnpm run doctor` is the on-demand preflight environment check.
 
 ## Troubleshooting
 
