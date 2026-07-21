@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 1,
-  "address": "fnv1a:3d963f18",
+  "address": "fnv1a:f94db235",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -383,6 +383,15 @@
     {
       "_tag": "gate",
       "ruleId": "gauntlet/diagnostic-code-registered",
+      "set": "LITESHIP_GATES",
+      "level": "L2",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
+      "ruleId": "gauntlet/facade-export-budget",
       "set": "LITESHIP_GATES",
       "level": "L2",
       "redFixtureCount": 1,

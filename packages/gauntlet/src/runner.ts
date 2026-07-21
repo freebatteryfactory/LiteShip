@@ -62,6 +62,7 @@ import { checkRegistryCompleteGate } from './gates/check-registry-complete.js';
 import { checkNegativeControlGate } from './gates/check-negative-control.js';
 import { checkWaiverFreshnessGate } from './gates/check-waiver-freshness.js';
 import { diagnosticCodeRegisteredGate } from './gates/diagnostic-code-registered.js';
+import { facadeExportBudgetGate } from './gates/facade-export-budget.js';
 
 /**
  * LiteShip's built-in gate set — the gates the repo runs against itself. The three
@@ -96,6 +97,14 @@ export const LITESHIP_GATES: readonly Gate[] = [
   // DIAGNOSTIC_REGISTRY. It rides the lean set AND the IR-host set (it needs neither), so it
   // runs on both the `liteship check` lean path and the IR-injected `check:gates` composition.
   diagnosticCodeRegisteredGate,
+  // The FACADE-EXPORT-BUDGET guard (P13) — a lean fold over the BUILT `liteship`
+  // root `dist/index.d.ts` + the reviewed allowlist DATA in
+  // `packages/liteship/src/export-budget.ts`: every root value/type export must be a
+  // listed budget entry (the SUBSET law) and neither kind may exceed 30. It rides
+  // the lean set ONLY (its dist read is out-of-IR, but the lean path is cache-free —
+  // no stale-verdict hazard, so no evidenceDigest obligation). Absent `dist` folds
+  // empty. Self-proves via its red/green/mutation fixtures.
+  facadeExportBudgetGate,
 ];
 
 /**

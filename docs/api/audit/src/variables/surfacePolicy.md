@@ -8,4 +8,4 @@
 
 > `const` **surfacePolicy**: [`SurfacePolicyShape`](../interfaces/SurfacePolicyShape.md)
 
-Defined in: [audit/src/policy.ts:316](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L316)
+Defined in: [audit/src/policy.ts:332](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L332)

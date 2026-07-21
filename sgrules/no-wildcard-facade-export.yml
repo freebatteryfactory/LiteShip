@@ -26,6 +26,11 @@ message: "Wildcard facade re-export `export * from ...` is forbidden (ADR-0045) 
 files:
   - "**/packages/*/src/*/index.ts"
   - "**/packages/core/src/index.ts"
+  # The `liteship` curated facade (P13) — the root index.ts + the eleven domain
+  # subpaths. No wildcard clause is exempted here (unlike facade-only, which
+  # excludes the two DATA files): a `export * from` must be forbidden on EVERY
+  # liteship src file, the data files included, so the surface stays enumerated.
+  - "**/packages/liteship/src/*.ts"
 rule:
   kind: export_statement
   regex: "^export\\s+\\*"

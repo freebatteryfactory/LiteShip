@@ -88,8 +88,10 @@ export async function run(argv: readonly string[], io: RunIo = defaultIo): Promi
         `  cd ${cdPath}\n` +
         `  pnpm install   (or npm install)\n` +
         `  pnpm dev       (or npm run dev)\n\n` +
-        `Then edit src/pages/index.astro — the @quantize block and the\n` +
-        `adaptiveAttrs() element share one boundary (src/boundaries/).\n`,
+        `Verify the project any time with:\n` +
+        `  liteship check --profile quick\n\n` +
+        `Then edit src/pages/index.astro — defineBoundary, defineStyle, and\n` +
+        `adaptiveAttrs() all share one boundary (src/boundaries/).\n`,
     );
     return 0;
   } catch (error) {

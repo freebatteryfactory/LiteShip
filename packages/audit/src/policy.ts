@@ -231,12 +231,28 @@ export const packageTopology: Record<string, PackagePolicy> = {
     kind: 'standalone',
   },
   liteship: {
-    // The umbrella package: manifest-level dependencies on every publishable
-    // @liteship/* scope, ZERO source imports (a barrel over the host integrations
-    // would force their peer expectations on every consumer). Its index ships
-    // only the installed-package manifest const.
-    allowedInternalImports: [],
-    kind: 'standalone',
+    // The curated public facade (P13, ADR-0048). It keeps its umbrella dependency
+    // on every publishable @liteship/* scope, but the source is no longer inert: the
+    // root `.` re-exports the host-free authoring verbs from @liteship/core and
+    // @liteship/quantizer (plus the @liteship/error algebra — foundational, so
+    // auto-blessed and not listed — and the @liteship/gauntlet `Finding` type), and
+    // the eleven domain subpaths (src/<name>.ts) each re-export their backing scope:
+    // @liteship/compiler (./compiler), @liteship/web (./runtime), @liteship/astro
+    // (./astro), @liteship/vite (./vite), and @liteship/core domains for the rest.
+    // liteship is a SINK — nothing imports it — so every edge is acyclic. The host
+    // integrations ride their own subpaths whose module graphs are independent of the
+    // root's, so importing `.` evaluates none of them
+    // (tests/unit/liteship/facade-subpaths.test.ts proves it).
+    allowedInternalImports: [
+      '@liteship/core',
+      '@liteship/quantizer',
+      '@liteship/gauntlet',
+      '@liteship/compiler',
+      '@liteship/web',
+      '@liteship/astro',
+      '@liteship/vite',
+    ],
+    kind: 'host-adjacent',
   },
   '@liteship/command': {
     // CUT A1: shared command registry/dispatcher + the @liteship/command/host Node

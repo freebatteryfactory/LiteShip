@@ -2783,6 +2783,11 @@
           "signature": "(1)"
         },
         {
+          "name": "facadeExportBudgetGate",
+          "kind": "namespace",
+          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+        },
+        {
           "name": "factAccessEvidenceDigest",
           "kind": "function",
           "signature": "(2)"

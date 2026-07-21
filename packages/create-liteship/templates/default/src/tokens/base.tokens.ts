@@ -1,4 +1,4 @@
-import { defineToken } from '@liteship/core';
+import { defineToken } from 'liteship';
 
 export const fontSizeSm = defineToken({
   name: 'font-size-sm',

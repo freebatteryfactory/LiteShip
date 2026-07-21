@@ -335,6 +335,11 @@ export const DIAGNOSTIC_REGISTRY: Readonly<Record<DiagnosticCode, DiagnosticEntr
     'A gauntlet gate emits a `ruleId` (or the check registry declares a `check/<slug>` id) that has no entry in the DIAGNOSTIC_REGISTRY. Every emitted diagnostic code must be enrolled so it can be explained by `explainDiagnostic`.',
     'Enroll the emitted code in packages/error/src/codes.ts DIAGNOSTIC_REGISTRY with a title, explanation, and remediation.',
   ),
+  'gauntlet/facade-export-budget': gauntlet(
+    'Root export outside the facade budget',
+    'The `liteship` package root ("." entry) ships a value or type export that is not listed in packages/liteship/src/export-budget.ts (ROOT_VALUE_BUDGET / ROOT_TYPE_BUDGET), or exceeds the 30-symbol-per-kind cap. The curated root is a reviewed authoring surface — every symbol must be an allowlisted entry so the umbrella cannot silently sprawl back into a whole-fleet re-export.',
+    'Drop the export from packages/liteship/src/index.ts (or move it onto a liteship/<domain> subpath), or add it to the appropriate budget list in packages/liteship/src/export-budget.ts as a reviewed entry.',
+  ),
 
   // ── check: the P11 check registry (check/<slug>) ─────────────────────────────
   'check/format': check(

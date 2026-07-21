@@ -41,7 +41,7 @@ describe('the lean LITESHIP_GATES default is IR-free', () => {
     }
   });
 
-  it('has exactly the seven regex gates plus the three check-governance meta-gates and the diagnostic-code registry guard', () => {
+  it('has exactly the seven regex gates plus the three check-governance meta-gates, the diagnostic-code registry guard, and the facade-export-budget guard', () => {
     expect(ids(LITESHIP_GATES)).toEqual([
       'gauntlet/no-bare-throw',
       'gauntlet/no-ts-ignore',
@@ -60,6 +60,10 @@ describe('the lean LITESHIP_GATES default is IR-free', () => {
       // The DIAGNOSTIC-CODE REGISTRY guard — a lean source-scanner (no IR, no facts) proving
       // every emitted gauntlet ruleId + check id is enrolled in @liteship/error's registry.
       'gauntlet/diagnostic-code-registered',
+      // The FACADE-EXPORT-BUDGET guard (P13) — a lean fold over the built `liteship` root
+      // dist/index.d.ts + the reviewed export-budget.ts allowlist. Lean-only (its dist read
+      // is out-of-IR but the lean path is cache-free); folds empty on an unbuilt tree.
+      'gauntlet/facade-export-budget',
     ]);
   });
 });

@@ -195,6 +195,7 @@ change underneath them.
 - [DEFAULT\_GAUNTLET\_GLOBS](variables/DEFAULT_GAUNTLET_GLOBS.md)
 - [diagnosticCodeRegisteredGate](variables/diagnosticCodeRegisteredGate.md)
 - [DIVERGENCE\_SEVERITY\_BY\_LEVEL](variables/DIVERGENCE_SEVERITY_BY_LEVEL.md)
+- [facadeExportBudgetGate](variables/facadeExportBudgetGate.md)
 - [FACT\_CHANNELS](variables/FACT_CHANNELS.md)
 - [FACT\_KINDS](variables/FACT_KINDS.md)
 - [fuzzCorpusGate](variables/fuzzCorpusGate.md)

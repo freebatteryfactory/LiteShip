@@ -8,7 +8,7 @@
 
 > `const` **dynamicImportExemptions**: `ReadonlySet`\<`string`\>
 
-Defined in: [audit/src/policy.ts:308](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L308)
+Defined in: [audit/src/policy.ts:324](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L324)
 
 Dynamic package imports — `import('@liteship/...')` — that are deliberately
 allowed despite the importer not declaring the target in its package.json.

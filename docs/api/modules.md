@@ -21,7 +21,6 @@
 - [error/src](error/src/README.md)
 - [gauntlet/src](gauntlet/src/README.md)
 - [genui/src](genui/src/README.md)
-- [liteship/src](liteship/src/README.md)
 - [mcp-server/src](mcp-server/src/README.md)
 - [quantizer/src](quantizer/src/README.md)
 - [remotion/src](remotion/src/README.md)

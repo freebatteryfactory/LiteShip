@@ -39,6 +39,17 @@ message: "Facade files (packages/*/src/*/index.ts and packages/core/src/index.ts
 files:
   - "**/packages/*/src/*/index.ts"
   - "**/packages/core/src/index.ts"
+  # The `liteship` curated facade (P13): every top-level src/*.ts is a facade
+  # ENTRY — the root index.ts and the eleven domain subpaths (schema/reactive/
+  # motion/graph/media/evidence/compiler/runtime/astro/vite/testing) — governed
+  # as pure re-export surfaces. Two files under this glob are DATA, not facades,
+  # and are excluded below: the root index.ts (it keeps the gen-roster
+  # `LITESHIP_PACKAGES` const + the `LiteshipPackageName` type) and
+  # export-budget.ts (the allowlist DATA the facade-export-budget gate reads).
+  - "**/packages/liteship/src/*.ts"
+ignores:
+  - "**/packages/liteship/src/index.ts"
+  - "**/packages/liteship/src/export-budget.ts"
 rule:
   any:
     - kind: function_declaration

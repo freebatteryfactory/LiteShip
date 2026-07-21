@@ -24,7 +24,6 @@
     "packages/command/src/index.ts",
     "packages/cli/src/index.ts",
     "packages/mcp-server/src/index.ts",
-    "packages/liteship/src/index.ts",
     "packages/_spine/typedoc-entry.ts"
   ],
   "entryPointStrategy": "expand",

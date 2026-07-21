@@ -1,17 +1,71 @@
 /**
- * `liteship` — the umbrella package for the LiteShip stack.
+ * `liteship` — the curated facade for the LiteShip stack.
  *
- * Installing `liteship` brings every publishable `@liteship/*` package into
- * your node_modules in one dependency; you still import from the
- * individual scopes (`@liteship/core`, `@liteship/quantizer`, `@liteship/astro`, …)
- * exactly as the docs show. This module deliberately re-exports NOTHING:
- * the host integrations (`@liteship/astro`, `@liteship/vite`, `@liteship/cloudflare`)
- * carry host-specific peer expectations, and a barrel that imported them
- * would force every consumer to satisfy all of them at once. Pick your
- * entry points; this package just makes sure they're installed.
+ * Installing `liteship` still brings every publishable `@liteship/*` package into
+ * your node_modules in one dependency (the umbrella role is unchanged). What is new
+ * is the CURATED FACADE: this root `.` entry exposes a small, budgeted authoring
+ * surface — the verbs (`defineConfig` / `defineBoundary` / `defineQuantizer` /
+ * `defineToken` / `defineTheme` / `defineStyle` / `schema` / `createCell` /
+ * `computed` / `createStore` / `createTimeline` / `chooseTier`) plus the domain
+ * nouns as TYPES — and the deeper domain surfaces ride explicit SUBPATHS
+ * (`liteship/schema`, `liteship/reactive`, `liteship/motion`, `liteship/graph`,
+ * `liteship/media`, `liteship/evidence`, `liteship/compiler`, `liteship/runtime`,
+ * `liteship/astro`, `liteship/vite`, `liteship/testing`).
+ *
+ * The root is DELIBERATELY minimal and host-free: importing `.` evaluates NOTHING
+ * from the host integrations (`@liteship/astro`, `@liteship/vite`) — those carry
+ * host-specific (optional) peer expectations and live behind their own subpaths,
+ * whose module graphs are independent of this one. The permitted root surface is
+ * pinned as DATA in `export-budget.ts` and enforced by the
+ * `gauntlet/facade-export-budget` gate. You can still import from the individual
+ * scopes (`@liteship/core`, `@liteship/quantizer`, …) exactly as the docs show.
  *
  * @module
  */
+
+// ── Curated root VALUES — the authoring verbs (P6 grammar) ───────────────────
+// The `define*` declaration constructors + `schema`, the reactive `create*` /
+// `computed` builders, and the `chooseTier` escalation reader, re-anchored from
+// `@liteship/core`; the quantizer verbs from `@liteship/quantizer`.
+export {
+  defineConfig,
+  defineBoundary,
+  defineToken,
+  defineTheme,
+  defineStyle,
+  schema,
+  createCell,
+  computed,
+  createStore,
+  createTimeline,
+  chooseTier,
+} from '@liteship/core';
+export { defineQuantizer, createQuantizer } from '@liteship/quantizer';
+// The diagnostic explainer — the one reader that turns any emitted LiteShip
+// diagnostic code into its title/explanation/remediation.
+export { explainDiagnostic } from '@liteship/error';
+
+// ── Curated root TYPES — the domain nouns as types (no value namespace on root) ─
+// Each is re-exported TYPE-ONLY: the root hands you the SHAPE to annotate against,
+// while the value namespace-objects (`Boundary`, `Token`, …) stay on their domain
+// subpaths. `Config`/`Boundary`/`Token`/`Theme`/`Style`/`Lifetime` are value+type
+// pairs in core; `export type` narrows the root re-export to the type meaning.
+export type {
+  Boundary,
+  Quantizer,
+  Token,
+  Theme,
+  Style,
+  Config,
+  Cell,
+  Store,
+  Timeline,
+  Lifetime,
+  TierChoice,
+  CapTier,
+} from '@liteship/core';
+export type { Finding } from '@liteship/gauntlet';
+export type { DiagnosticCode } from '@liteship/error';
 
 /**
  * Every `@liteship/*` package this umbrella installs, in dependency order.

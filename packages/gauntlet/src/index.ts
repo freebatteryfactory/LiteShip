@@ -373,6 +373,7 @@ export { crdtLawsGate } from './gates/crdt-laws.js';
 // on any not enrolled in @liteship/error's DIAGNOSTIC_REGISTRY. A lean source-fold (no IR,
 // no facts); it rides BOTH LITESHIP_GATES and LITESHIP_IR_GATES.
 export { diagnosticCodeRegisteredGate } from './gates/diagnostic-code-registered.js';
+export { facadeExportBudgetGate } from './gates/facade-export-budget.js';
 
 // The avionics-tier (Slice C) performance-contracts gate — a LEAN, deterministic
 // fold over the committed `benchmarks/` artifacts (declared-distribution registry +

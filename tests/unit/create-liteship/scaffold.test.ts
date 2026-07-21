@@ -33,6 +33,7 @@ const EXPECTED_TREE = [
   'src/boundaries/layout.boundaries.ts',
   'src/layouts/Base.astro',
   'src/pages/index.astro',
+  'src/styles/card.styles.ts',
   'src/tokens/base.tokens.ts',
   'tsconfig.json',
 ];
@@ -74,28 +75,45 @@ describe('create-liteship scaffold', () => {
     expect(manifest.type).toBe('module');
     expect(manifest.scripts['dev']).toBe('astro dev');
     expect(manifest.scripts['build']).toBe('astro build');
-    // Every dependency must be a plain published range — workspace:/file:/link:
+    // The curated facade (P13): the scaffold depends on `liteship` (one package, one
+    // import path) plus its `astro` host peer — never `@liteship/core` / `@liteship/astro`
+    // directly. Every dependency must be a plain published range — workspace:/file:/link:
     // specs cannot install outside this monorepo.
     expect(Object.keys(manifest.dependencies)).toEqual(
-      expect.arrayContaining(['@liteship/astro', '@liteship/core', 'astro', 'typescript']),
+      expect.arrayContaining(['astro', 'liteship', 'typescript']),
     );
+    // The individual scopes must NOT leak back into the scaffold — the whole point of
+    // the facade is that app authors meet ONE package, not the 23-package fleet.
+    expect(Object.keys(manifest.dependencies).some((dep) => dep.startsWith('@liteship/'))).toBe(false);
     for (const [dep, spec] of Object.entries(manifest.dependencies)) {
       expect(spec, dep).toMatch(/^\^\d+\.\d+\.\d+/);
     }
   });
 
-  it('scaffolds the working first-5-minutes idioms (boundary + adaptive + @quantize)', () => {
+  it('scaffolds the working define -> apply idioms from the facade (defineBoundary + defineStyle + adaptiveAttrs)', () => {
     const result = scaffold(join(workDir, 'idioms'));
+    // The page APPLIES the boundary via adaptiveAttrs (from the liteship/astro subpath)
+    // and compiles both mechanisms — @quantize for the grid, @style for the card style.
     const index = readFileSync(join(result.projectDir, 'src/pages/index.astro'), 'utf8');
     expect(index).toContain('adaptiveAttrs({ boundary: layout');
     expect(index).toContain('@quantize layout {');
+    expect(index).toContain('@style card {}');
+    expect(index).toContain("import { adaptiveAttrs } from 'liteship/astro'");
+    // The DEFINE half: defineBoundary (input -> states) and defineStyle (states -> outputs),
+    // both imported from the `liteship` root facade, never `@liteship/core`.
     const boundary = readFileSync(join(result.projectDir, 'src/boundaries/layout.boundaries.ts'), 'utf8');
     expect(boundary).toContain('defineBoundary(');
-    expect(boundary).toContain("import { defineBoundary } from '@liteship/core'");
+    expect(boundary).toContain("import { defineBoundary } from 'liteship'");
+    const style = readFileSync(join(result.projectDir, 'src/styles/card.styles.ts'), 'utf8');
+    expect(style).toContain('defineStyle(');
+    expect(style).toContain("import { defineStyle } from 'liteship'");
+    // The astro.config wires the integration from the liteship/astro subpath.
     const config = readFileSync(join(result.projectDir, 'astro.config.ts'), 'utf8');
-    expect(config).toContain("import { integration } from '@liteship/astro'");
-    expect(index).toContain('@liteship/genui');
-    expect(readFileSync(join(result.projectDir, 'README.md'), 'utf8')).toContain('@liteship/genui');
+    expect(config).toContain("import { integration } from 'liteship/astro'");
+    // The README teaches the author model (define -> apply -> inspect) and the verify hint.
+    const readme = readFileSync(join(result.projectDir, 'README.md'), 'utf8');
+    expect(readme).toContain('define → apply → inspect');
+    expect(readme).toContain('liteship check --profile quick');
   });
 
   it('accepts an existing but empty directory', () => {
@@ -145,18 +163,23 @@ describe('create-liteship scaffold', () => {
 
   // Drift guard: a scaffolded app must pull the SAME release line the workspace
   // is publishing, not a stale one. `^0.1.5` once survived into a 0.2.0 cut
-  // because nothing pinned the template's @liteship/* ranges to the release version
+  // because nothing pinned the template's liteship range to the release version
   // — `npm create liteship@latest` would then hand users a previous-minor app.
   // Pin the LAW (major.minor must match the workspace version), not the exact
-  // patch, so caret-compatible patch releases need no template churn.
-  it('template @liteship/* ranges track the workspace release line (no stale-minor drift)', () => {
+  // patch, so caret-compatible patch releases need no template churn. Post-P13 the
+  // template depends on the `liteship` facade (the umbrella tracks the workspace
+  // version like every other publishable package), so the guard covers the bare
+  // `liteship` package plus any `@liteship/*` should one ever return.
+  it('the template liteship range tracks the workspace release line (no stale-minor drift)', () => {
     const rootVersion = workspaceVersion();
     const [rootMajor, rootMinor] = rootVersion.split('.');
     const manifest = JSON.parse(readFileSync(join(defaultTemplateDir(), 'package.json'), 'utf8')) as {
       dependencies: Record<string, string>;
     };
-    const liteshipDeps = Object.entries(manifest.dependencies).filter(([dep]) => dep.startsWith('@liteship/'));
-    expect(liteshipDeps.length, 'template should depend on at least one @liteship/* package').toBeGreaterThan(0);
+    const liteshipDeps = Object.entries(manifest.dependencies).filter(
+      ([dep]) => dep === 'liteship' || dep.startsWith('@liteship/'),
+    );
+    expect(liteshipDeps.length, 'template should depend on the liteship facade').toBeGreaterThan(0);
     for (const [dep, spec] of liteshipDeps) {
       const match = spec.match(/^\^(\d+)\.(\d+)\.\d+/);
       expect(match, `${dep} spec ${spec} should be a caret range`).not.toBeNull();
@@ -213,6 +236,8 @@ describe('create-liteship run (CLI surface)', () => {
     expect(text).toContain('pnpm install');
     expect(text).toContain('pnpm dev');
     expect(text).toContain('cd ');
+    // The post-install verify hint teaches the "inspect" leg of the journey.
+    expect(text).toContain('liteship check --profile quick');
   });
 
   it('prompts when no dir is given and uses the answer', async () => {

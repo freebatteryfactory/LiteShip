@@ -1,15 +1,14 @@
 ---
 import Base from '../layouts/Base.astro';
-import { adaptiveAttrs } from '@liteship/astro';
-// Optional LLM catalog path: `pnpm add @liteship/genui`, register a catalog with
-// defineComponentCatalog, wire `genuiCatalog` on client:llm / createLLMSession.
-// Structured chunks use `{ "_genui": true, "name": "...", "props": { ... } }`.
-// The shared layout boundary (mobile / tablet / desktop) drives both
-// halves of the adaptive story: adaptiveAttrs() serializes it for the
-// client runtime (data-liteship-state updates), and the @quantize block in
-// the <style> below resolves the same export to compile static
-// @container queries.
+// One import path: the client-facing Astro helper rides the `liteship/astro` subpath.
+import { adaptiveAttrs } from 'liteship/astro';
 import { layout } from '../boundaries/layout.boundaries.js';
+// Three verbs, one boundary — the define -> apply journey:
+//   • defineBoundary (src/boundaries) maps viewport width -> mobile/tablet/desktop
+//   • defineStyle    (src/styles)     maps those states -> the card's CSS outputs,
+//                                     compiled by the `@style card {}` block below
+//   • adaptiveAttrs  (here)           applies the boundary to a DOM element: it gets
+//                                     data-liteship-state, updated live on the client
 ---
 
 <Base>
@@ -19,17 +18,17 @@ import { layout } from '../boundaries/layout.boundaries.js';
   </header>
 
   <main {...adaptiveAttrs({ boundary: layout, class: 'grid' })}>
-    <article class="card">
-      <h2>Boundaries</h2>
-      <p>Define quantization points where your layout adapts.</p>
+    <article class="liteship-card">
+      <h2>Define</h2>
+      <p>A boundary turns an input into a few named states.</p>
     </article>
-    <article class="card">
-      <h2>Tokens</h2>
-      <p>Design values that vary across themes, density, and contrast.</p>
+    <article class="liteship-card">
+      <h2>Apply</h2>
+      <p>adaptiveAttrs wires the boundary onto this element.</p>
     </article>
-    <article class="card">
-      <h2>Compile</h2>
-      <p>Output to CSS, GLSL, WGSL, ARIA, or AI targets.</p>
+    <article class="liteship-card">
+      <h2>Inspect</h2>
+      <p>Run <code>liteship check --profile quick</code> to verify.</p>
     </article>
   </main>
 </Base>
@@ -50,22 +49,21 @@ import { layout } from '../boundaries/layout.boundaries.js';
     opacity: 0.7;
   }
 
-  .card {
-    padding: var(--liteship-spacing-md);
-    border: 1px solid currentColor;
-    border-radius: 0.5rem;
+  .liteship-card {
     opacity: 0.85;
   }
 
-  .card h2 {
+  .liteship-card h2 {
     font-size: var(--liteship-font-size-md);
     margin-bottom: var(--liteship-spacing-sm);
   }
 
-  .card p {
+  .liteship-card p {
     font-size: var(--liteship-font-size-sm);
   }
 
+  /* Grid columns adapt across the layout boundary. `@quantize` compiles the
+     boundary to self-contained @container CSS (and sets up the page container). */
   @quantize layout {
     mobile {
       .grid {
@@ -91,4 +89,9 @@ import { layout } from '../boundaries/layout.boundaries.js';
       }
     }
   }
+
+  /* The card's box + per-state padding come from the `card` style
+     (src/styles/card.styles.ts): defineStyle's base + states, compiled to
+     `.liteship-card` CSS. This block references it by name — nothing to author here. */
+  @style card {}
 </style>

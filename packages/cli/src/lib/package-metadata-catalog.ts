@@ -195,8 +195,8 @@ const PACKAGE_METADATA: Readonly<Record<string, PackageMetadata>> = {
   },
   liteship: {
     description:
-      'The LiteShip umbrella package: one dependency that installs the whole `@liteship/*` adaptive rendering stack — ' +
-      'you still import from the individual scopes.',
+      'The curated public facade for LiteShip: one dependency and one import path over the whole `@liteship/*` ' +
+      'adaptive rendering stack, with domain subpaths like `liteship/astro` for deeper surfaces.',
     keywords: ['liteship', 'adaptive-rendering', 'framework', 'meta-package', 'typescript'],
   },
 };
