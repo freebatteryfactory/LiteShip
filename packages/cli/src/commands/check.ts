@@ -37,7 +37,7 @@
  * @module
  */
 import { spawnSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
   checkCommand,
@@ -334,12 +334,20 @@ export function invokedScriptName(command: string): string | null {
  * manifest is not evidence a script is absent).
  */
 export function readDefinedScripts(cwd: string): ReadonlySet<string> | null {
+  const manifestPath = resolve(cwd, 'package.json');
+  // No manifest at all → null (the common consumer case: cwd is not a package
+  // root). An ABSENT file is not an error, so this needs no catch.
+  if (!existsSync(manifestPath)) return null;
   try {
-    const parsed = JSON.parse(readFileSync(resolve(cwd, 'package.json'), 'utf8')) as {
-      scripts?: Record<string, unknown>;
-    };
+    const parsed = JSON.parse(readFileSync(manifestPath, 'utf8')) as { scripts?: Record<string, unknown> };
     return new Set(Object.keys(parsed.scripts ?? {}));
-  } catch {
+  } catch (e) {
+    // A PRESENT-but-unreadable/malformed manifest is a real environment problem,
+    // not a missing one — surface it (never launder the failure to a silent null)
+    // before falling back to the run-every-check behaviour.
+    process.stderr.write(
+      `liteship check: could not read ${manifestPath}: ${e instanceof Error ? e.message : String(e)}\n`,
+    );
     return null;
   }
 }
