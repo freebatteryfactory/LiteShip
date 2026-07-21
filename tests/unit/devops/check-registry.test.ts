@@ -14,8 +14,15 @@
  * (a synthetic violation is caught) and self-prove (blocking authority), and PINS the
  * gauntlet-phases projection to the exact pre-change 43-label order.
  *
+ * It ENFORCES the negative-control PARTITION (INV-CHECK-NEGATIVE-CONTROL): over the
+ * blocking checks, every one is classified EXACTLY once — it declares a `negativeControl`
+ * whose path EXISTS, or is a documented `NEGATIVE_CONTROL_EXEMPT` entry — a total, disjoint
+ * split with teeth (a synthetic unclassified / double-classified check reds the gate), plus
+ * the DATA integrity of the exempt ledger (real ids, disjoint, non-empty reasons).
+ *
  * @module
  */
+// PROVES: INV-CHECK-NEGATIVE-CONTROL
 
 import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
@@ -34,6 +41,7 @@ import {
   type Gate,
 } from '@liteship/gauntlet';
 import { gauntletPhaseLabels } from '../../../packages/cli/src/gauntlet-phases.js';
+import { NEGATIVE_CONTROL_EXEMPT } from '../../../packages/command/src/checks/negative-control-exempt.js';
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
 
@@ -69,11 +77,14 @@ function buildGovernanceFacts(now: Date): CheckGovernanceFacts {
 
   const negativeControls = CHECK_REGISTRY.filter((check) => check.authority === 'blocking').map((check) => {
     const negativeControl = check.negativeControl ?? null;
+    const exemptReason = NEGATIVE_CONTROL_EXEMPT[check.id] ?? null;
     return {
       id: check.id,
       blocking: true,
       negativeControl,
       exists: negativeControl !== null && existsSync(resolve(REPO, negativeControl)),
+      exempt: exemptReason !== null,
+      exemptReason,
     };
   });
 
@@ -87,12 +98,14 @@ function buildGovernanceFacts(now: Date): CheckGovernanceFacts {
   const ledgerText = readFileSync(resolve(REPO, 'traceability/testing-ledger.yaml'), 'utf8');
   // YAML permits either quote style (or none) around a scalar — accept `"…"`, `'…'`, or bare
   // so a ledger re-serialization that flips the quote style can't silently drop the waiver.
-  const ledgerWaivers = [...ledgerText.matchAll(/^\s*expiry:\s*['"]?(\d{4}-\d{2}-\d{2})['"]?/gm)].map((match, index) => ({
-    store: 'ledger' as const,
-    id: `ledger-waiver-${index}`,
-    expires: match[1]!,
-    expired: new Date(match[1]!).getTime() < now.getTime(),
-  }));
+  const ledgerWaivers = [...ledgerText.matchAll(/^\s*expiry:\s*['"]?(\d{4}-\d{2}-\d{2})['"]?/gm)].map(
+    (match, index) => ({
+      store: 'ledger' as const,
+      id: `ledger-waiver-${index}`,
+      expires: match[1]!,
+      expired: new Date(match[1]!).getTime() < now.getTime(),
+    }),
+  );
 
   return {
     partition: { scripts, registered, exempted },
@@ -161,6 +174,102 @@ describe('the check-governance meta-gates are GREEN over the real repo', () => {
   });
 });
 
+describe('the negative-control PARTITION is total + disjoint over the blocking checks', () => {
+  const blocking = CHECK_REGISTRY.filter((check) => check.authority === 'blocking');
+
+  it('every blocking check is classified EXACTLY once — declares an existing negative control XOR is exempt (the partition is total + disjoint)', () => {
+    const unclassified: string[] = [];
+    const conflicting: string[] = [];
+    const dangling: string[] = [];
+    for (const check of blocking) {
+      const declares = check.negativeControl !== undefined;
+      const exempt = check.id in NEGATIVE_CONTROL_EXEMPT;
+      if (declares && exempt) conflicting.push(check.id);
+      if (!declares && !exempt) unclassified.push(check.id);
+      if (declares && !existsSync(resolve(REPO, check.negativeControl!))) dangling.push(check.id);
+    }
+    expect(
+      unclassified,
+      `blocking checks with NEITHER a negative control nor an exemption: ${unclassified.join(', ')}`,
+    ).toEqual([]);
+    expect(
+      conflicting,
+      `blocking checks that are BOTH exempt and declare a control: ${conflicting.join(', ')}`,
+    ).toEqual([]);
+    expect(
+      dangling,
+      `blocking checks whose declared negativeControl path does not exist: ${dangling.join(', ')}`,
+    ).toEqual([]);
+  });
+
+  it('the gate agrees the real-repo partition is clean (zero findings)', () => {
+    expect(checkNegativeControlGate.run(factContext(FACTS))).toEqual([]);
+  });
+
+  it('the totality has TEETH — the gate reds on a synthetic unclassified blocking check', () => {
+    const withHole: CheckGovernanceFacts = {
+      ...FACTS,
+      negativeControls: [
+        ...FACTS.negativeControls,
+        {
+          id: 'check/__unclassified__',
+          blocking: true,
+          negativeControl: null,
+          exists: false,
+          exempt: false,
+          exemptReason: null,
+        },
+      ],
+    };
+    const found = checkNegativeControlGate.run(factContext(withHole));
+    expect(found.length).toBeGreaterThan(0);
+    expect(found.some((f) => f.title.includes('neither a negative control nor an exemption'))).toBe(true);
+  });
+
+  it('the disjointness has TEETH — the gate reds on a check that is BOTH exempt and declares a control', () => {
+    const withConflict: CheckGovernanceFacts = {
+      ...FACTS,
+      negativeControls: [
+        ...FACTS.negativeControls,
+        {
+          id: 'check/__conflict__',
+          blocking: true,
+          negativeControl: 'packages/gauntlet/src/gates/standards-integrity.ts',
+          exists: true,
+          exempt: true,
+          exemptReason: 'synthetic conflict',
+        },
+      ],
+    };
+    const found = checkNegativeControlGate.run(factContext(withConflict));
+    expect(found.some((f) => f.title.includes('BOTH exempt and declares'))).toBe(true);
+  });
+
+  it('NEGATIVE_CONTROL_EXEMPT is well-formed DATA — every key is a real blocking check, disjoint from declared controls, with a non-empty reason', () => {
+    const blockingIds = new Set(blocking.map((check) => check.id));
+    const declaresControl = new Set(
+      blocking.filter((check) => check.negativeControl !== undefined).map((check) => check.id),
+    );
+    const staleKeys = Object.keys(NEGATIVE_CONTROL_EXEMPT).filter((id) => !blockingIds.has(id));
+    const overlap = Object.keys(NEGATIVE_CONTROL_EXEMPT).filter((id) => declaresControl.has(id));
+    const emptyReasons = Object.entries(NEGATIVE_CONTROL_EXEMPT)
+      .filter(([, reason]) => reason.trim() === '')
+      .map(([id]) => id);
+    expect(staleKeys, `exempt ids that are not real blocking checks: ${staleKeys.join(', ')}`).toEqual([]);
+    expect(overlap, `exempt ids that also declare a negativeControl: ${overlap.join(', ')}`).toEqual([]);
+    expect(emptyReasons, `exempt ids with an empty reason: ${emptyReasons.join(', ')}`).toEqual([]);
+  });
+
+  it('the partition is a MEANINGFUL split of all 38 blocking checks (15 declared negative controls + 23 exemptions), not vacuously all-exempt', () => {
+    const declared = blocking.filter((check) => check.negativeControl !== undefined);
+    const exempt = blocking.filter((check) => check.id in NEGATIVE_CONTROL_EXEMPT);
+    expect(blocking.length).toBe(38);
+    expect(declared.length).toBe(15);
+    expect(exempt.length).toBe(23);
+    expect(declared.length + exempt.length).toBe(blocking.length);
+  });
+});
+
 describe('the check-governance meta-gates have TEETH over injected facts', () => {
   it('check-registry-complete flags a synthetic uncovered root script', () => {
     const withOrphan: CheckGovernanceFacts = {
@@ -175,7 +284,14 @@ describe('the check-governance meta-gates have TEETH over injected facts', () =>
       ...FACTS,
       negativeControls: [
         ...FACTS.negativeControls,
-        { id: 'check/__synthetic__', blocking: true, negativeControl: 'packages/gauntlet/src/gates/__missing__.ts', exists: false },
+        {
+          id: 'check/__synthetic__',
+          blocking: true,
+          negativeControl: 'packages/gauntlet/src/gates/__missing__.ts',
+          exists: false,
+          exempt: false,
+          exemptReason: null,
+        },
       ],
     };
     expect(checkNegativeControlGate.run(factContext(withDangling)).length).toBeGreaterThan(0);

@@ -1,0 +1,59 @@
+# The OBLIGATIONS LEDGER — every DEFERRED OBLIGATION (a signed, time-boxed promise of
+# work not yet done) the repo carries, as a taxonomy. This is the honest home for
+# intent-debt: instead of a bare `// TODO` / `// FIXME` / `// HACK` rotting in shipped
+# source (a lie that reads as done while doing nothing — always-blocked by the
+# `gauntlet/no-placeholder` + `gauntlet/no-unregistered-todo` gates), a genuine deferral
+# is REGISTERED here and referenced in source by a `// OBLIGATION: OBL-<AREA>-<slug>`
+# marker. The host reconciler (packages/cli/src/lib/traceability.ts) scans packages/*/src
+# for those markers and REQUIRES each to name an obligation declared below — a marker
+# naming an unregistered OBL is a divergence (the same head-probe LAW the `// PROVES:`
+# invariant trace upholds).
+#
+# NOT every obligation needs an in-source marker: an obligation whose deferral is a
+# whole-AREA capability (a devops phase, a test-note over the skip-allowlist) carries a
+# `pointer` to the area and no marker. The reconciler only reds an UNREGISTERED marker,
+# never a marker-less-but-pointed obligation.
+#
+# Schema (per entry, all six fields REQUIRED):
+#   id:        stable OBL-<AREA>-<slug> identifier (the key a `// OBLIGATION:` marker names)
+#   class:     deferred-feature | debt | test-note (the taxonomy bucket)
+#     -- deferred-feature: a capability intentionally not built yet (the SUBSET ships)
+#     -- debt:             a real code deferral scheduled to be paid down (a sweep remainder)
+#     -- test-note:        a capability-gated test skip, tracked as an obligation not a lie
+#   owner:     the person accountable for closing (or re-confirming) the obligation
+#   review-by: an ISO yyyy-mm-dd re-confirmation date (a clock on the deferral — like a waiver)
+#   pointer:   the file OR area the obligation lives at (where the marker is, or the area it covers)
+#   note:      the one-line WHY — enough to act on without re-deriving the deferral
+
+obligations:
+  # ── deferred-feature — `liteship add` ships the SUBSET fragment copier ────────
+  - id: OBL-FEATURE-ADD
+    class: deferred-feature
+    owner: heyoub
+    review-by: '2027-01-15'
+    pointer: packages/cli/src/commands/add.ts
+    note: 'The `liteship add` command ships the minimal-real fragment copier (example/template verbatim copy) ON PURPOSE; the richer scaffold generators (whole-project + per-component with token substitution) are a marked, registered deferral, not a bare TODO. The `// OBLIGATION: OBL-FEATURE-ADD` marker sits at the richer-generators site.'
+
+  # ── debt — the reactive verb-sweep remainder (verb-sweep-2 still flags .make) ─
+  - id: OBL-REACTIVE-SWEEP-3
+    class: debt
+    owner: heyoub
+    review-by: '2027-03-01'
+    pointer: packages/core/src/reactive/zap.ts, packages/core/src/authoring/composable.ts
+    note: 'The reactive-authoring factories still ship a `.make` verb — `Zap.make` and `ComposableWorld.make` — which the verb-sweep-2 pass flags for a follow-on rename to the closed constructor vocabulary. The two live sites carry an `// OBLIGATION: OBL-REACTIVE-SWEEP-3` marker; the sweep-3 rename pass will retire it.'
+
+  # ── deferred-feature — byte-identical artifact reproduction (P16 double-build) ─
+  - id: OBL-DEVOPS-ARTIFACT-REPRO
+    class: deferred-feature
+    owner: heyoub
+    review-by: '2027-02-01'
+    pointer: 'devops: the P16 build-twice artifact-reproduction phase (advisory)'
+    note: "P16's byte-identical artifact reproduction (build the shipped artifacts twice and assert the two builds are byte-equal) currently runs as an ADVISORY double-build, not a blocking gate. Promoting it to a hard hermeticity gate is a whole-area devops deferral — a pointer-only obligation, no in-source marker."
+
+  # ── test-note — the ffmpeg/libx264-gated render test skips ────────────────────
+  - id: OBL-TEST-FFMPEG-CODEC
+    class: test-note
+    owner: heyoub
+    review-by: '2027-06-01'
+    pointer: 'tests/integration/cli/scene-render.test.ts, tests/integration/cli/idempotency.test.ts, tests/smoke/intro-render.test.ts, tests/unit/stage/ffmpeg-encoder.test.ts (the ffmpeg-absent skip-allowlist)'
+    note: 'The render/encode tests skip when ffmpeg + the libx264 codec are not on PATH — a sanctioned capability-gated skip in the `ffmpeg-absent` allowlist. Tracked here as a test-note obligation (not intent-debt): the coverage is real when the codec is present, and the deferral is the CI-without-ffmpeg gap, re-confirmed at review-by.'

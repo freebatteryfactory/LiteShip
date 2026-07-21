@@ -17,6 +17,7 @@
  *
  * @module
  */
+// PROVES: INV-ROSTER-SINGLE-SOURCE
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';

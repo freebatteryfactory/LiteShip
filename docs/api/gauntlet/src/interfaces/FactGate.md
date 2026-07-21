@@ -6,7 +6,7 @@
 
 # Interface: FactGate
 
-Defined in: [gauntlet/src/gate.ts:719](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L719)
+Defined in: [gauntlet/src/gate.ts:723](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L723)
 
 A FACT GATE — the "gate-as-data" variant (the FactGate PoC). It replaces the arbitrary
 [Gate.run](Gate.md#run) closure with two data-shaped halves: a DECLARATION of which host-produced
@@ -65,7 +65,7 @@ readonly `string`[]
 
 > `readonly` **decide**: (`facts`) => readonly [`Finding`](Finding.md)[]
 
-Defined in: [gauntlet/src/gate.ts:722](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L722)
+Defined in: [gauntlet/src/gate.ts:726](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L726)
 
 (FactGate only) The bounded, DATA-ONLY decision: maps the declared FactPack to
 findings with NO [GateContext](GateContext.md) access. Set by [defineFactGate](../functions/defineFactGate.md); the
@@ -171,7 +171,7 @@ The self-proof evidence — required, by construction.
 
 > `readonly` **form**: `"fact"`
 
-Defined in: [gauntlet/src/gate.ts:720](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L720)
+Defined in: [gauntlet/src/gate.ts:724](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L724)
 
 The gate's EXECUTION FORM — the discriminant of the FactGate variant. Absent
 (or `'hosted'`) is the default closure gate: an arbitrary [run](Gate.md#run) body that may
@@ -217,7 +217,7 @@ The assurance level this gate operates at — aims its rigor.
 
 > `readonly` **requires**: readonly (`"skipSites"` \| `"activeSurfaceFacts"` \| `"checkGovernance"`)[]
 
-Defined in: [gauntlet/src/gate.ts:721](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L721)
+Defined in: [gauntlet/src/gate.ts:725](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L725)
 
 (FactGate only) The fact channels this gate's decision DECLARES it consumes — the
 data analogue of "what evidence does this gate read". The engine folds exactly these

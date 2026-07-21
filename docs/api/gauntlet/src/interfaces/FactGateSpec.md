@@ -6,7 +6,7 @@
 
 # Interface: FactGateSpec
 
-Defined in: [gauntlet/src/gate.ts:774](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L774)
+Defined in: [gauntlet/src/gate.ts:778](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L778)
 
 The author surface of a [FactGate](FactGate.md) — context-free by construction (no `run`).
 
@@ -16,7 +16,7 @@ The author surface of a [FactGate](FactGate.md) — context-free by construction
 
 > `readonly` `optional` **coverage?**: (`ir`) => readonly `string`[]
 
-Defined in: [gauntlet/src/gate.ts:778](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L778)
+Defined in: [gauntlet/src/gate.ts:782](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L782)
 
 #### Parameters
 
@@ -34,7 +34,7 @@ readonly `string`[]
 
 > `readonly` **decide**: (`facts`) => readonly [`Finding`](Finding.md)[]
 
-Defined in: [gauntlet/src/gate.ts:782](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L782)
+Defined in: [gauntlet/src/gate.ts:786](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L786)
 
 The bounded, data-only decision — no [GateContext](GateContext.md) parameter, by design.
 
@@ -54,7 +54,7 @@ readonly [`Finding`](Finding.md)[]
 
 > `readonly` **describe**: `string`
 
-Defined in: [gauntlet/src/gate.ts:777](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L777)
+Defined in: [gauntlet/src/gate.ts:781](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L781)
 
 ***
 
@@ -62,7 +62,7 @@ Defined in: [gauntlet/src/gate.ts:777](https://github.com/freebatteryfactory/Lit
 
 > `readonly` **fixtures**: [`GateFixtures`](GateFixtures.md)
 
-Defined in: [gauntlet/src/gate.ts:783](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L783)
+Defined in: [gauntlet/src/gate.ts:787](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L787)
 
 ***
 
@@ -70,7 +70,7 @@ Defined in: [gauntlet/src/gate.ts:783](https://github.com/freebatteryfactory/Lit
 
 > `readonly` **id**: `string`
 
-Defined in: [gauntlet/src/gate.ts:775](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L775)
+Defined in: [gauntlet/src/gate.ts:779](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L779)
 
 ***
 
@@ -78,7 +78,7 @@ Defined in: [gauntlet/src/gate.ts:775](https://github.com/freebatteryfactory/Lit
 
 > `readonly` **level**: [`AssuranceLevel`](../type-aliases/AssuranceLevel.md)
 
-Defined in: [gauntlet/src/gate.ts:776](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L776)
+Defined in: [gauntlet/src/gate.ts:780](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L780)
 
 ***
 
@@ -86,6 +86,6 @@ Defined in: [gauntlet/src/gate.ts:776](https://github.com/freebatteryfactory/Lit
 
 > `readonly` **requires**: readonly (`"skipSites"` \| `"activeSurfaceFacts"` \| `"checkGovernance"`)[]
 
-Defined in: [gauntlet/src/gate.ts:780](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L780)
+Defined in: [gauntlet/src/gate.ts:784](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L784)
 
 The fact channels the decision consumes (≥1). Folded into the cache key.

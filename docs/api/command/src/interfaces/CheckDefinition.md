@@ -78,9 +78,14 @@ Globs of the bytes whose change invalidates a content-addressed verdict (the cac
 
 > `readonly` `optional` **negativeControl?**: `string`
 
-Defined in: [command/src/checks/definition.ts:82](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/definition.ts#L82)
+Defined in: [command/src/checks/definition.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/definition.ts#L89)
 
-Optional fixture path proving the check CAN fail (a negative control / red fixture).
+Optional path proving the check CAN fail (a negative control): a red fixture,
+regression-guard test, or self-proving gate that plants a regression THIS check
+catches. Every BLOCKING check EITHER declares this OR is a key of
+`NEGATIVE_CONTROL_EXEMPT` (a documented, reasoned exemption) — the partition is
+total + disjoint, enforced by the `check-negative-control` gate. Prefer pointing
+at a real red-fixture / regression test over a gate's own source.
 
 ***
 
@@ -118,7 +123,7 @@ The profiles this check is a member of — a projection runs it iff its profile 
 
 > `readonly` **remediation**: `string`
 
-Defined in: [command/src/checks/definition.ts:84](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/definition.ts#L84)
+Defined in: [command/src/checks/definition.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/definition.ts#L91)
 
 The one-line remediation printed when this check reds — the fix, one copy away.
 

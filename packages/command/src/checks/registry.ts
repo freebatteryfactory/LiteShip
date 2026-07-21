@@ -128,6 +128,7 @@ export const CHECK_REGISTRY: readonly CheckDefinition[] = [
     timeoutMs: 180_000,
     cache: 'content-addressed',
     authority: 'blocking',
+    negativeControl: 'tests/unit/gauntlet/gates-dogfood.test.ts',
     remediation: 'resolve the blocking gate findings, or file a signed waiver.',
   },
   {
@@ -142,6 +143,7 @@ export const CHECK_REGISTRY: readonly CheckDefinition[] = [
     timeoutMs: 120_000,
     cache: 'content-addressed',
     authority: 'blocking',
+    negativeControl: 'tests/unit/cli/commands/audit-floor.test.ts',
     remediation: 'clear the new audit warning(s), or update the floor with justification.',
   },
   {
@@ -259,6 +261,7 @@ export const CHECK_REGISTRY: readonly CheckDefinition[] = [
     timeoutMs: 180_000,
     cache: 'content-addressed',
     authority: 'blocking',
+    negativeControl: 'tests/unit/devops/plumb-gate.test.ts',
     remediation: 'plumb the missing export, or update the plumb registry.',
   },
   {
@@ -273,6 +276,7 @@ export const CHECK_REGISTRY: readonly CheckDefinition[] = [
     timeoutMs: 120_000,
     cache: 'content-addressed',
     authority: 'blocking',
+    negativeControl: 'tests/unit/meta/feedback-integrity.test.ts',
     remediation: 'reconcile the feedback artifact with the current surface.',
   },
   {
@@ -315,6 +319,7 @@ export const CHECK_REGISTRY: readonly CheckDefinition[] = [
     timeoutMs: 180_000,
     cache: 'content-addressed',
     authority: 'blocking',
+    negativeControl: 'tests/integration/capsule-verify.test.ts',
     remediation: 'recompile the capsule (pnpm run capsule:compile) and re-verify.',
   },
 
@@ -519,6 +524,7 @@ export const CHECK_REGISTRY: readonly CheckDefinition[] = [
     timeoutMs: 600_000,
     cache: 'none',
     authority: 'blocking',
+    negativeControl: 'tests/unit/meta/bench-gate.test.ts',
     remediation: 'recover the regressed benchmark, or re-baseline with justification.',
   },
   {
@@ -547,6 +553,7 @@ export const CHECK_REGISTRY: readonly CheckDefinition[] = [
     timeoutMs: 300_000,
     cache: 'none',
     authority: 'blocking',
+    negativeControl: 'tests/unit/meta/bench-reality.test.ts',
     remediation: 'restore a real measured workload for the vacuous benchmark the gate flagged.',
   },
   {
@@ -591,6 +598,7 @@ export const CHECK_REGISTRY: readonly CheckDefinition[] = [
     timeoutMs: 300_000,
     cache: 'content-addressed',
     authority: 'blocking',
+    negativeControl: 'tests/unit/devops/package-smoke-roster.test.ts',
     remediation: 'fix the packed-package export/peer that failed to resolve in the consumer smoke.',
   },
   {
@@ -620,6 +628,7 @@ export const CHECK_REGISTRY: readonly CheckDefinition[] = [
     timeoutMs: 600_000,
     cache: 'none',
     authority: 'blocking',
+    negativeControl: 'tests/journey/journey-debug-diagnostic.ts',
     remediation: 'fix the consumer flow the journey test exercised (scaffold, build, diagnostic, upgrade, or context).',
   },
   {
@@ -635,6 +644,7 @@ export const CHECK_REGISTRY: readonly CheckDefinition[] = [
     timeoutMs: 420_000,
     cache: 'none',
     authority: 'blocking',
+    negativeControl: 'tests/unit/liteship/facade-subpaths.test.ts',
     remediation: 'fix the offline rebuild or the public-subpath export that failed to resolve in the hermetic closure.',
   },
   {

@@ -278,6 +278,7 @@ export const Composable: ComposableFactory = {
  * Bridge between a raw ECS {@link World} and typed {@link ComposableEntity}
  * operations (`spawn`, `query`, `evaluate`) plus a thin dense-store integration.
  */
+// OBLIGATION: OBL-REACTIVE-SWEEP-3
 export const ComposableWorld = {
   /** Wrap a {@link World} with the typed composable-entity API. */
   make: makeComposableWorld,

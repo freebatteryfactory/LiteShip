@@ -2998,6 +2998,11 @@
           "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
         },
         {
+          "name": "noUnregisteredTodoGate",
+          "kind": "namespace",
+          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+        },
+        {
           "name": "noVarDivergenceGate",
           "kind": "namespace",
           "signature": "describe:const,fixtures:const,id:const,level:const,run:function"

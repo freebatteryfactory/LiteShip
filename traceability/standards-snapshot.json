@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 1,
-  "address": "fnv1a:19a8e4dc",
+  "address": "fnv1a:cc448971",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -463,6 +463,15 @@
     },
     {
       "_tag": "gate",
+      "ruleId": "gauntlet/no-unregistered-todo",
+      "set": "LITESHIP_GATES",
+      "level": "L1",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
       "ruleId": "gauntlet/active-modeled-surface-reader",
       "set": "LITESHIP_IR_GATES",
       "level": "L2",
@@ -646,8 +655,26 @@
     },
     {
       "_tag": "invariant",
+      "id": "INV-BRAND-RESIDUE-ZERO",
+      "level": "L3",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
+      "id": "INV-CHECK-NEGATIVE-CONTROL",
+      "level": "L4",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
       "id": "INV-COMPOSITOR-ZERO-ALLOC",
       "level": "L3",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
+      "id": "INV-CONSUMER-SUBPATH-CLOSURE",
+      "level": "L4",
       "proofKind": "proof"
     },
     {
@@ -664,6 +691,12 @@
     },
     {
       "_tag": "invariant",
+      "id": "INV-DIAGNOSTIC-CODE-CLOSED",
+      "level": "L3",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
       "id": "INV-DST-NO-AMBIENT-ENTROPY",
       "level": "L4",
       "proofKind": "proof"
@@ -671,6 +704,12 @@
     {
       "_tag": "invariant",
       "id": "INV-DST-TRACE-CONTENT-ADDRESSED",
+      "level": "L4",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
+      "id": "INV-FACADE-EXPORT-BUDGET",
       "level": "L4",
       "proofKind": "proof"
     },
@@ -744,6 +783,12 @@
       "_tag": "invariant",
       "id": "INV-REPO-IR-DETERMINISTIC",
       "level": "L4",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
+      "id": "INV-ROSTER-SINGLE-SOURCE",
+      "level": "L3",
       "proofKind": "proof"
     },
     {

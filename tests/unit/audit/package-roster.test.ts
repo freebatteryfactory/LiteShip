@@ -13,6 +13,7 @@
  *
  * @module
  */
+// PROVES: INV-ROSTER-SINGLE-SOURCE
 import { describe, it, expect } from 'vitest';
 import { LITESHIP_PACKAGE_ROSTER } from '@liteship/audit';
 import { CANONICAL_ROSTER } from '../../../scripts/gen-roster.js';

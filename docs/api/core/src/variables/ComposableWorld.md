@@ -8,7 +8,7 @@
 
 > `const` **ComposableWorld**: `object`
 
-Defined in: [core/src/authoring/composable.ts:281](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/composable.ts#L281)
+Defined in: [core/src/authoring/composable.ts:282](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/composable.ts#L282)
 
 Bridge between a raw ECS [World](../type-aliases/World.md) and typed [ComposableEntity](../interfaces/ComposableEntity.md)
 operations (`spawn`, `query`, `evaluate`) plus a thin dense-store integration.

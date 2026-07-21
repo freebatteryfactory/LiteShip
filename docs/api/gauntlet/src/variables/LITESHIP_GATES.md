@@ -8,7 +8,7 @@
 
 > `const` **LITESHIP\_GATES**: readonly [`Gate`](../interfaces/Gate.md)[]
 
-Defined in: [gauntlet/src/runner.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L75)
+Defined in: [gauntlet/src/runner.ts:76](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L76)
 
 LiteShip's built-in gate set — the gates the repo runs against itself. The three
 always-blocking gates ([noSkippedTestGate](noSkippedTestGate.md) / [noPlaceholderGate](noPlaceholderGate.md) /

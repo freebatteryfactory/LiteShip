@@ -670,15 +670,19 @@ function normalizeCheckGovernanceFacts(value: CheckGovernanceFacts | undefined):
     const blocking = ownDataField(entry, 'blocking');
     const negativeControl = ownDataField(entry, 'negativeControl');
     const exists = ownDataField(entry, 'exists');
+    const exempt = ownDataField(entry, 'exempt');
+    const exemptReason = ownDataField(entry, 'exemptReason');
     if (
       typeof id !== 'string' ||
       typeof blocking !== 'boolean' ||
       !(negativeControl === null || typeof negativeControl === 'string') ||
-      typeof exists !== 'boolean'
+      typeof exists !== 'boolean' ||
+      typeof exempt !== 'boolean' ||
+      !(exemptReason === null || typeof exemptReason === 'string')
     ) {
       throw ValidationError('FactGate', `checkGovernance.negativeControls[${index}] is malformed`);
     }
-    return Object.freeze({ id, blocking, negativeControl, exists });
+    return Object.freeze({ id, blocking, negativeControl, exists, exempt, exemptReason });
   });
   if (!Array.isArray(waivers)) {
     throw ValidationError('FactGate', 'checkGovernance.waivers must be an array');

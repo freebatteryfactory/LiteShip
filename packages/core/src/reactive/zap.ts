@@ -229,6 +229,7 @@ const _throttle = <T>(event: ZapShape<T>, ms: Millis, clock: Clock = systemClock
  * await zap.dispose();
  * ```
  */
+// OBLIGATION: OBL-REACTIVE-SWEEP-3
 export const Zap = {
   make: _make,
   fromDOMEvent: _fromDOMEvent,

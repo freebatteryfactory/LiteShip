@@ -13,6 +13,7 @@
  *
  * @module
  */
+// PROVES: INV-DIAGNOSTIC-CODE-CLOSED
 
 import { describe, it, expect } from 'vitest';
 import { resolve } from 'node:path';
@@ -41,7 +42,7 @@ describe('the lean LITESHIP_GATES default is IR-free', () => {
     }
   });
 
-  it('has exactly the seven regex gates plus the three check-governance meta-gates, the diagnostic-code registry guard, and the facade-export-budget guard', () => {
+  it('has exactly the seven regex gates plus the three check-governance meta-gates, the diagnostic-code registry guard, the facade-export-budget guard, and the obligations-ledger guard', () => {
     expect(ids(LITESHIP_GATES)).toEqual([
       'gauntlet/no-bare-throw',
       'gauntlet/no-ts-ignore',
@@ -64,6 +65,10 @@ describe('the lean LITESHIP_GATES default is IR-free', () => {
       // dist/index.d.ts + the reviewed export-budget.ts allowlist. Lean-only (its dist read
       // is out-of-IR but the lean path is cache-free); folds empty on an unbuilt tree.
       'gauntlet/facade-export-budget',
+      // The P17 OBLIGATIONS-LEDGER guard — a lean source-scanner reding a bare intent-debt
+      // directive (TODO / FIXME / HACK) in packages/*/src that cites no registered
+      // OBL-<AREA>-<slug> obligation. Strings-blanked (guardrail literals never trip it).
+      'gauntlet/no-unregistered-todo',
     ]);
   });
 });
@@ -93,7 +98,14 @@ function ir(): RepoIR {
     facts: [
       { file, line: 2, property: 'bare-throw', value: true, oracleId: 'ts-ast', coverageClass: 'file-proxy-only' },
       // regex-only is-default-export → a divergence the gate must report.
-      { file, line: 9, property: 'is-default-export', value: true, oracleId: 'invariant-regex', coverageClass: 'text-only' },
+      {
+        file,
+        line: 9,
+        property: 'is-default-export',
+        value: true,
+        oracleId: 'invariant-regex',
+        coverageClass: 'text-only',
+      },
     ],
   });
 }

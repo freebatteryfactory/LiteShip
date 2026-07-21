@@ -163,6 +163,40 @@ invariants:
     level: L4
     category: meta
 
+  # ── Meta — the package roster has ONE producer; every copy is a drift-guarded projection ─
+  - id: INV-ROSTER-SINGLE-SOURCE
+    law: 'The package roster has ONE producer (scripts/gen-roster.ts CANONICAL_ROSTER); every copy — the @liteship/audit LITESHIP_PACKAGE_ROSTER anchor and the release.yml publish job — is a drift-guarded projection equal to it (and to the on-disk publishable fleet), never a hand-maintained literal list.'
+    level: L3
+    category: meta
+
+  # ── Meta — exactly one brand survives (the retired pre-v0.19 scope is gone) ──
+  - id: INV-BRAND-RESIDUE-ZERO
+    law: 'Exactly one brand survives: zero retired pre-v0.19 brand-scope residue exists in any tracked text file outside the single sanctioned ARCHITECTURE sentence and the frozen historical allowlist (ADR-0044).'
+    level: L3
+    category: meta
+
+  # ── Assurance — every blocking check carries a negative control (or a reason) ─
+  - id: INV-CHECK-NEGATIVE-CONTROL
+    law: "Every BLOCKING check in CHECK_REGISTRY is classified EXACTLY once for negative-control coverage: it EITHER declares a `negativeControl` whose path EXISTS (a real red-fixture / regression-guard / self-proving gate that plants a regression it catches) OR is a documented `NEGATIVE_CONTROL_EXEMPT` entry (a reasoned decision that a planted-regression fixture is vacuous — the tool/harness/measurement IS the oracle). The check-negative-control gate reds on any dangling, unclassified, or double-classified blocking check — the partition is total and disjoint, so the criterion 'every blocking check has a negative control' is honest and enforced."
+    level: L4
+    category: assurance
+
+  # ── Assurance — the liteship curated facade is a closed public surface (P13/P17) ─
+  - id: INV-FACADE-EXPORT-BUDGET
+    law: 'The liteship root export surface is a budgeted, EXACT-match allowlist: every runtime/type export is listed in ROOT_VALUE_BUDGET/ROOT_TYPE_BUDGET and every listed symbol is really exported (no sprawl, no phantom slot), each budget under its 30-symbol cap — the facade-export-budget gate reds an over-budget export AND a dropped listed export.'
+    level: L4
+    category: assurance
+  - id: INV-CONSUMER-SUBPATH-CLOSURE
+    law: 'Every public liteship subpath (the root plus the twelve domain facades) import-resolves through the package exports map to its built dist/*.d.ts from a packed consumer under BOTH node16 and bundler module resolution — no declared subpath is unresolvable downstream.'
+    level: L4
+    category: assurance
+
+  # ── Assurance — every emitted diagnostic code is enrolled + explainable ─────
+  - id: INV-DIAGNOSTIC-CODE-CLOSED
+    law: 'Every emitted diagnostic code — every gauntlet/* gate ruleId and every check/* id — is enrolled in @liteship/error DIAGNOSTIC_REGISTRY so explainDiagnostic(code) always resolves; the diagnostic-code-registered guard rides in the enforced lean gate set, keeping the registry closed over the emitted codes.'
+    level: L3
+    category: assurance
+
   # ── A DECLARED-but-not-yet-traced invariant, covered by an owner waiver ──────
   # This is a REAL future law with NO proving test yet. It is enrolled to keep the
   # waiver path honest on the real repo: the state machine resolves it to WAIVED

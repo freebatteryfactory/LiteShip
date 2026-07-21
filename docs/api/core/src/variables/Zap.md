@@ -8,7 +8,7 @@
 
 > `const` **Zap**: `object`
 
-Defined in: [core/src/reactive/zap.ts:232](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/zap.ts#L232)
+Defined in: [core/src/reactive/zap.ts:233](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/zap.ts#L233)
 
 Zap — push-based event channel over [CellKernel.fanout](CellKernel.md#fanout). No-replay
 fan-out with `map`, `filter`, `merge`, `debounce`, and `throttle`

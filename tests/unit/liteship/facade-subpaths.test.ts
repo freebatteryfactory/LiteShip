@@ -30,6 +30,7 @@
  *
  * @module
  */
+// PROVES: INV-FACADE-EXPORT-BUDGET, INV-CONSUMER-SUBPATH-CLOSURE
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import ts from 'typescript';
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync, symlinkSync, existsSync, readFileSync } from 'node:fs';

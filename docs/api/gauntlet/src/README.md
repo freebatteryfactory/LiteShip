@@ -223,6 +223,7 @@ change underneath them.
 - [noSkippedTestFactGate](variables/noSkippedTestFactGate.md)
 - [noSkippedTestGate](variables/noSkippedTestGate.md)
 - [noTsIgnoreGate](variables/noTsIgnoreGate.md)
+- [noUnregisteredTodoGate](variables/noUnregisteredTodoGate.md)
 - [noVarDivergenceGate](variables/noVarDivergenceGate.md)
 - [PERF\_CLAIM\_BENCH\_RULE\_ID](variables/PERF_CLAIM_BENCH_RULE_ID.md)
 - [perfClaimBenchGate](variables/perfClaimBenchGate.md)

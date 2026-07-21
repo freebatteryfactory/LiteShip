@@ -126,6 +126,11 @@ export const DIAGNOSTIC_REGISTRY: Readonly<Record<DiagnosticCode, DiagnosticEntr
     'A bare `return;` in a test body before the first `expect(...)` is a silent pass disguised as coverage — the test exits green having asserted nothing.',
     'Replace the silent early return with an honest capability skip or real assertions.',
   ),
+  'gauntlet/no-unregistered-todo': gauntlet(
+    'Unregistered intent-debt marker (TODO / FIXME / HACK)',
+    'A bare intent-debt directive comment (TODO / FIXME / HACK) in packages/*/src that names no registered obligation is a signed promise of unfinished work left in shipped source — it reads as done while doing nothing. A genuine deferral belongs in the P17 OBLIGATIONS LEDGER (traceability/obligations.yaml), cited on the line by its OBL-<AREA>-<slug> id.',
+    'Register the deferral in traceability/obligations.yaml and cite it with `// OBLIGATION: OBL-<AREA>-<slug>` (or `// TODO(OBL-<AREA>-<slug>): …`), or finish the work and remove the marker.',
+  ),
 
   // ── gauntlet: the waiver-lifecycle rules (waiver.ts) ─────────────────────────
   'gauntlet/waiver-forbidden': gauntlet(
@@ -200,9 +205,9 @@ export const DIAGNOSTIC_REGISTRY: Readonly<Record<DiagnosticCode, DiagnosticEntr
     'Register the script as a check or add a SCRIPT_EXEMPTIONS entry — keep the check registry and the root scripts in exact partition.',
   ),
   'gauntlet/check-negative-control': gauntlet(
-    'Blocking check declares a missing negative control',
-    'A blocking check whose declared `negativeControl` path does not exist is a dangling red-fixture proof — the check claims it can fail, but the fixture proving it is gone.',
-    'A declared negative control must point at a real red-fixture path — restore it or fix the declaration.',
+    'Blocking check breaks the negative-control partition',
+    'Every blocking check must be classified EXACTLY once: either declare a `negativeControl` whose path EXISTS (a real red-fixture proof it can fail) or be a documented `NEGATIVE_CONTROL_EXEMPT` entry. A dangling declared path, an unclassified check (neither control nor exemption), or a double-classified check (both) breaks the total, disjoint partition.',
+    'Classify the check: point negativeControl at a real red-fixture path, OR add a reasoned NEGATIVE_CONTROL_EXEMPT entry — never both, never neither.',
   ),
   'gauntlet/check-waiver-freshness': gauntlet(
     'Expired waiver across a governed store',

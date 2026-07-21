@@ -6,7 +6,7 @@
 
 # Interface: WaiverFreshnessFact
 
-Defined in: [gauntlet/src/facts/check-governance-facts.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/check-governance-facts.ts#L55)
+Defined in: [gauntlet/src/facts/check-governance-facts.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/check-governance-facts.ts#L68)
 
 One waiver's freshness verdict for `check-waiver-freshness`, decided vs the injected wall-clock date.
 
@@ -16,7 +16,7 @@ One waiver's freshness verdict for `check-waiver-freshness`, decided vs the inje
 
 > `readonly` **expired**: `boolean`
 
-Defined in: [gauntlet/src/facts/check-governance-facts.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/check-governance-facts.ts#L63)
+Defined in: [gauntlet/src/facts/check-governance-facts.ts:76](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/check-governance-facts.ts#L76)
 
 Whether the waiver's expiry is strictly before the injected wall-clock date (the debt came due).
 
@@ -26,7 +26,7 @@ Whether the waiver's expiry is strictly before the injected wall-clock date (the
 
 > `readonly` **expires**: `string`
 
-Defined in: [gauntlet/src/facts/check-governance-facts.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/check-governance-facts.ts#L61)
+Defined in: [gauntlet/src/facts/check-governance-facts.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/check-governance-facts.ts#L74)
 
 The waiver's ISO `yyyy-mm-dd` expiry.
 
@@ -36,7 +36,7 @@ The waiver's ISO `yyyy-mm-dd` expiry.
 
 > `readonly` **id**: `string`
 
-Defined in: [gauntlet/src/facts/check-governance-facts.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/check-governance-facts.ts#L59)
+Defined in: [gauntlet/src/facts/check-governance-facts.ts:72](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/check-governance-facts.ts#L72)
 
 A human identity for the waiver (ruleId@file:line for gauntlet; the invariant id / expiry for the ledger).
 
@@ -46,6 +46,6 @@ A human identity for the waiver (ruleId@file:line for gauntlet; the invariant id
 
 > `readonly` **store**: `"gauntlet"` \| `"ledger"`
 
-Defined in: [gauntlet/src/facts/check-governance-facts.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/check-governance-facts.ts#L57)
+Defined in: [gauntlet/src/facts/check-governance-facts.ts:70](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/check-governance-facts.ts#L70)
 
 Which store the waiver lives in — the gauntlet `waivers.ts` registry or the traceability ledger.

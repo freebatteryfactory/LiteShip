@@ -153,6 +153,40 @@ traces:
       - 'tests/property/crdt-laws-gate.test.ts::FLAGS a repo whose law file pins only SOME of the required laws (the red fixture world)'
       - 'tests/property/crdt-laws-gate.test.ts::passes its OWN green fixture clean (no false positive on a fully-pinned repo)'
 
+  # ── Assurance (negative-control partition) — tests/unit/devops/check-registry.test.ts ─
+  - id: INV-CHECK-NEGATIVE-CONTROL
+    tests:
+      - 'tests/unit/devops/check-registry.test.ts::every blocking check is classified EXACTLY once — declares an existing negative control XOR is exempt (the partition is total + disjoint)'
+
+  # ── Meta (single-source roster) — audit anchor == gen-roster producer; release.yml is a projection ─
+  - id: INV-ROSTER-SINGLE-SOURCE
+    tests:
+      - 'tests/unit/audit/package-roster.test.ts::equals gen-roster CANONICAL_ROSTER in dependency order (authored order agrees)'
+      - 'tests/unit/meta/release-roster-projection.test.ts::carries no @liteship/* package literals in its run blocks'
+
+  # ── Meta (single brand) — tests/unit/meta/brand-residue.test.ts (this ledger file is allowlisted there) ─
+  - id: INV-BRAND-RESIDUE-ZERO
+    tests:
+      - 'tests/unit/meta/brand-residue.test.ts::no `czap` residue outside the sanctioned ARCHITECTURE sentence and the frozen allowlist'
+
+  # ── Assurance (facade export budget — exact-match, both directions) — tests/unit/liteship/facade-subpaths.test.ts ─
+  - id: INV-FACADE-EXPORT-BUDGET
+    tests:
+      - 'tests/unit/liteship/facade-subpaths.test.ts::self-proves (red caught, green clean, mutation killed)'
+      - 'tests/unit/liteship/facade-subpaths.test.ts::an UNLISTED export reds (the sprawl direction)'
+      - 'tests/unit/liteship/facade-subpaths.test.ts::a DROPPED listed export reds (the regression direction the old SUBSET gate was blind to)'
+
+  # ── Assurance (public subpath closure — node16 + bundler) — tests/unit/liteship/facade-subpaths.test.ts ─
+  - id: INV-CONSUMER-SUBPATH-CLOSURE
+    tests:
+      - 'tests/unit/liteship/facade-subpaths.test.ts::resolves every subpath to its built dist/*.d.ts under node16'
+      - 'tests/unit/liteship/facade-subpaths.test.ts::resolves every subpath to its built dist/*.d.ts under bundler'
+
+  # ── Assurance (diagnostic-code closure) — the enrolled guard rides the enforced lean gate set ─
+  - id: INV-DIAGNOSTIC-CODE-CLOSED
+    tests:
+      - 'tests/unit/gauntlet/ir-gate-set.test.ts::has exactly the seven regex gates plus the three check-governance meta-gates, the diagnostic-code registry guard, the facade-export-budget guard, and the obligations-ledger guard'
+
   # ── The owner-signed deferral (a real future law, no proving test YET) ──────
   # WAIVED, not UNTRACED — the waiver keeps the path honest. When the expiry passes
   # the state machine flips it to EXPIRED and the bridge gate reds. Replace with a

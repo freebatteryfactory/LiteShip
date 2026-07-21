@@ -305,6 +305,7 @@ export { noNondeterminismGate } from './gates/no-nondeterminism.js';
 export { noSilentCatchGate } from './gates/no-silent-catch.js';
 export { noSkippedTestGate } from './gates/no-skipped-test.js';
 export { noPlaceholderGate } from './gates/no-placeholder.js';
+export { noUnregisteredTodoGate } from './gates/no-unregistered-todo.js';
 export { noEarlyReturnTestGate } from './gates/no-early-return-test.js';
 export { detectEarlyReturnBeforeExpect, type EarlyReturnMatch } from './gates/early-return-detect.js';
 

@@ -31,6 +31,7 @@ const FRAGMENT_ROOTS: Record<FragmentKind, string> = {
 };
 
 /** The forthcoming-richer-generators pointer carried on every `add` response. */
+// OBLIGATION: OBL-FEATURE-ADD
 export const RICHER_GENERATORS_NOTE =
   'This is the minimal fragment copier; richer scaffold generators (whole-project + per-component) are forthcoming (OBL-FEATURE-ADD).';
 

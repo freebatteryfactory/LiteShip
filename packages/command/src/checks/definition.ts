@@ -78,7 +78,14 @@ export interface CheckDefinition {
   readonly cache: CheckCache;
   /** The authority this check holds over the aggregate verdict (see {@link CheckAuthority}). */
   readonly authority: CheckAuthority;
-  /** Optional fixture path proving the check CAN fail (a negative control / red fixture). */
+  /**
+   * Optional path proving the check CAN fail (a negative control): a red fixture,
+   * regression-guard test, or self-proving gate that plants a regression THIS check
+   * catches. Every BLOCKING check EITHER declares this OR is a key of
+   * `NEGATIVE_CONTROL_EXEMPT` (a documented, reasoned exemption) — the partition is
+   * total + disjoint, enforced by the `check-negative-control` gate. Prefer pointing
+   * at a real red-fixture / regression test over a gate's own source.
+   */
   readonly negativeControl?: string;
   /** The one-line remediation printed when this check reds — the fix, one copy away. */
   readonly remediation: string;

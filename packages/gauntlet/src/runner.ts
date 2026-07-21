@@ -63,6 +63,7 @@ import { checkNegativeControlGate } from './gates/check-negative-control.js';
 import { checkWaiverFreshnessGate } from './gates/check-waiver-freshness.js';
 import { diagnosticCodeRegisteredGate } from './gates/diagnostic-code-registered.js';
 import { facadeExportBudgetGate } from './gates/facade-export-budget.js';
+import { noUnregisteredTodoGate } from './gates/no-unregistered-todo.js';
 
 /**
  * LiteShip's built-in gate set — the gates the repo runs against itself. The three
@@ -105,6 +106,14 @@ export const LITESHIP_GATES: readonly Gate[] = [
   // no stale-verdict hazard, so no evidenceDigest obligation). Absent `dist` folds
   // empty. Self-proves via its red/green/mutation fixtures.
   facadeExportBudgetGate,
+  // The P17 OBLIGATIONS-LEDGER enforcement teeth — a lean source-scanner (no IR, no
+  // facts) that reds a bare intent-debt directive (TODO / FIXME / HACK) in
+  // `packages/*/src` that cites no registered `OBL-<AREA>-<slug>` obligation. It scans
+  // strings-blanked text (the guardrail-scanner code that carries the keyword as a
+  // STRING/REGEX literal — no-placeholder.ts, skip-allowlist.ts, codes.ts — is not
+  // tripped) and every path it reads is package source (no evidenceDigest obligation).
+  // Self-proves via its red/green/mutation fixtures.
+  noUnregisteredTodoGate,
 ];
 
 /**

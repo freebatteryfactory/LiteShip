@@ -14,6 +14,11 @@
  *   - `docs/plan/**`                          — historical planning records, likewise.
  *   - `CHANGELOG.md`                          — released history is not rewritten.
  *   - `traceability/effect-shed-receipt.json` — a frozen, content-addressed receipt.
+ *   - `traceability/testing-ledger.yaml`      — structural: the requirements trace names THIS
+ *                                               test's `it()` title verbatim, and that title
+ *                                               embeds the search token — so the ledger cannot
+ *                                               be scanned without a false hit (same reason this
+ *                                               file allowlists itself).
  *   - `ARCHITECTURE.md`                       — allowed ONE sanctioned sentence only (below);
  *                                               any other `czap` there is a violation, and
  *                                               a duplicate of the sentence anywhere reds.
@@ -23,6 +28,7 @@
  * `pnpm-lock.yaml` is intentionally NOT allowlisted — it was verified to carry zero
  * `czap` residue after the `@liteship/*` regeneration, and staying scanned keeps it honest.
  */
+// PROVES: INV-BRAND-RESIDUE-ZERO
 import { describe, it, expect, beforeAll } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -53,6 +59,10 @@ const ALLOWLIST = new Set([
   'CHANGELOG.md',
   'traceability/effect-shed-receipt.json',
   'tests/unit/meta/brand-residue.test.ts',
+  // The requirements trace maps INV-BRAND-RESIDUE-ZERO to this test's `it()` title verbatim,
+  // and that title embeds the search token — so the ledger structurally cannot be scanned
+  // without a false hit (the same structural reason this test file allowlists itself).
+  'traceability/testing-ledger.yaml',
 ]);
 
 /** Allowlisted path prefixes (whole subtrees of immutable history). */
@@ -60,9 +70,31 @@ const ALLOWLIST_PREFIXES = ['docs/adr/', 'docs/plan/'];
 
 /** Binary extensions we do not read as text. */
 const BINARY_EXT = new Set([
-  '.png', '.jpg', '.jpeg', '.gif', '.webp', '.avif', '.ico', '.icns', '.wasm',
-  '.woff', '.woff2', '.ttf', '.otf', '.eot', '.mp4', '.webm', '.mov', '.mp3',
-  '.wav', '.ogg', '.pdf', '.zip', '.gz', '.br', '.node',
+  '.png',
+  '.jpg',
+  '.jpeg',
+  '.gif',
+  '.webp',
+  '.avif',
+  '.ico',
+  '.icns',
+  '.wasm',
+  '.woff',
+  '.woff2',
+  '.ttf',
+  '.otf',
+  '.eot',
+  '.mp4',
+  '.webm',
+  '.mov',
+  '.mp3',
+  '.wav',
+  '.ogg',
+  '.pdf',
+  '.zip',
+  '.gz',
+  '.br',
+  '.node',
 ]);
 
 function isAllowlisted(rel: string): boolean {
