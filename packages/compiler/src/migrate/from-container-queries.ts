@@ -398,6 +398,28 @@ export function fromContainerQueries(css: string, options?: FromMediaQueriesOpti
       );
     }
 
+    // A finite upper bound (`hi`) is only represented when some block STARTS at it
+    // (its `lo` becomes that threshold). In a complete partition every finite `hi`
+    // coincides with the next block's `lo`, so nothing is lost; but a block whose
+    // finite `hi` is not the lower bound of any block in this group has its cutoff
+    // silently dropped by the lower-bounds-only reconstruction. Surface it rather
+    // than lose it (the adapter's no-silent-drift contract).
+    const loSet = new Set(sourceLos);
+    const uncoveredHis = [
+      ...new Set(bucket.filter((b) => Number.isFinite(b.hi) && !loSet.has(b.hi)).map((b) => b.hi)),
+    ].sort((a, b) => a - b);
+    if (uncoveredHis.length > 0) {
+      diagnostics.push(
+        makeMigrationDiagnostic(
+          MIGRATE_CODES.unsupportedAtRule,
+          `@container blocks for "${first.name || '(anonymous)'}" (${axis}) declared finite upper bound(s) [${uncoveredHis.join(
+            ', ',
+          )}] with no block starting there; the cutoff is not representable as a boundary threshold and was dropped.`,
+          { path },
+        ),
+      );
+    }
+
     // Sort + dedupe the lower bounds into the ascending threshold list.
     const thresholds = [...new Set(sourceLos)].sort((a, b) => a - b);
     const at = thresholds.map((t) => [t, `${prefix}-${Math.round(t)}`] as const);

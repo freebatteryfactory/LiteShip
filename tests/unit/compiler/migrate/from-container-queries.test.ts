@@ -187,6 +187,33 @@ describe('fromContainerQueries — diagnostic teeth (every code is reachable)', 
     expect(boundaries).toEqual([]);
     expect(diagnostics.some((d) => d.code === MIGRATE_CODES.unsupportedAtRule)).toBe(true);
   });
+
+  it('surfaces a lone finite upper bound (`width < 768px`) as a dropped-cutoff diagnostic', () => {
+    // A single `(width < 768px)` block has finite hi=768 that no block starts at,
+    // so the 768 cutoff cannot become a threshold — the boundary is `[0]` alone.
+    // The dropped upper bound must be surfaced, not silently lost.
+    const css = `@container (width < 768px) { .card { display: block; } }`;
+    const { boundaries, diagnostics } = fromContainerQueries(css);
+
+    // The lower-bound boundary is still produced...
+    expect(boundaries).toHaveLength(1);
+    expect([...boundaries[0]!.thresholds]).toEqual([0]);
+    // ...and the dropped 768 cutoff is reported (naming the value).
+    const d = diagnostics.find((x) => x.code === MIGRATE_CODES.unsupportedAtRule);
+    expect(d).toBeDefined();
+    expect(d!.message).toContain('768');
+  });
+
+  it('does NOT flag a finite upper bound that a sibling block starts at (complete partition)', () => {
+    // hi=768 (block 1) coincides with lo=768 (block 2), so the cutoff is
+    // represented — no dropped-cutoff diagnostic for a clean partition.
+    const css = `
+      @container (width < 768px) { .x {} }
+      @container (width >= 768px) { .x {} }
+    `;
+    const { diagnostics } = fromContainerQueries(css);
+    expect(diagnostics).toEqual([]);
+  });
 });
 
 describe('fromContainerQueries — define* throw is caught, never escapes', () => {

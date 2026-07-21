@@ -339,11 +339,23 @@ export function fromTailwindTheme(css: string, options?: FromTailwindThemeOption
   }
 
   if (screenEntries.length > 0) {
-    // Parse each screen to px in source order; skip non-lengths.
+    // Parse each screen to px in source order. A value that is not a supported
+    // length (`40vw`, `100%`, a malformed number) cannot become a threshold — it
+    // is DROPPED, so surface it as a diagnostic rather than silently losing the
+    // breakpoint (the adapter's no-silent-drift contract).
     const parsed: Array<{ name: string; px: number }> = [];
     for (const { name, raw } of screenEntries) {
       const px = parseLength(raw);
-      if (px === null) continue;
+      if (px === null) {
+        diagnostics.push(
+          makeMigrationDiagnostic(
+            MIGRATE_CODES.unsupportedAtRule,
+            `Tailwind screen "${name}" value "${raw}" is not a supported length (px/rem/em); dropped from the viewport.width boundary.`,
+            { path: [name] },
+          ),
+        );
+        continue;
+      }
       parsed.push({ name, px });
     }
 

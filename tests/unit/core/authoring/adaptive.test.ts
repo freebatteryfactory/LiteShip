@@ -165,6 +165,26 @@ describe('defineAdaptive.explain', () => {
     const gpu = defineAdaptive({ boundary: boundarySpec, style: styleSpec, tier: 'gpu' });
     expect(gpu.explain(800).tier.tier).toBe('gpu');
   });
+
+  test('provenance is by DECLARATION: a same-value state override reads as `state`, not `base`', () => {
+    // The 'lg' state re-declares `color` with the SAME string as base. Declaration
+    // (not value equality) decides provenance: `color` is the state layer's winning
+    // declaration → `state`; `font-size` (declared only in base) → `base`.
+    const sameValueOverride = {
+      base: { properties: { color: 'black', 'font-size': '14px' } },
+      states: { lg: { properties: { color: 'black' } } },
+    } as const;
+    const adaptive = defineAdaptive({ boundary: boundarySpec, style: sameValueOverride });
+
+    const lg = adaptive.explain(1400);
+    expect(lg.boundary.state).toBe('lg');
+    expect(lg.style['color']).toEqual({ value: 'black', source: 'state' });
+    expect(lg.style['font-size']).toEqual({ value: '14px', source: 'base' });
+
+    // A state that declares nothing (e.g. 'sm') leaves every property `base`-sourced.
+    const sm = adaptive.explain(400);
+    expect(sm.style['color']).toEqual({ value: 'black', source: 'base' });
+  });
 });
 
 describe('defineAdaptive.attrs / plan', () => {

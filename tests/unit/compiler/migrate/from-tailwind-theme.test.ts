@@ -165,6 +165,24 @@ describe('fromTailwindTheme — every diagnostic code has teeth', () => {
     expect(result.diagnostics.find((d) => d.code === MIGRATE_CODES.lossyTokenConversion)!.severity).toBe('warning');
   });
 
+  it('emits unsupported-at-rule for a screen value that is not a supported length', () => {
+    // `40vw` (and any non px/rem/em value) cannot become a threshold; the screen
+    // is dropped, and per the no-silent-drift contract that drop is surfaced.
+    const result = fromTailwindTheme(`@theme { --breakpoint-sm: 640px; --breakpoint-wide: 40vw; }`);
+    const d = result.diagnostics.find((x) => x.code === MIGRATE_CODES.unsupportedAtRule);
+    expect(d).toBeDefined();
+    expect(d!.message).toContain('wide');
+    expect(d!.message).toContain('40vw');
+    // The parseable screen still folds into the boundary; only `wide` was dropped.
+    expect([...result.boundaries[0]!.thresholds]).toEqual([0, 640]);
+    expect([...result.boundaries[0]!.states]).toEqual(['base', 'sm']);
+  });
+
+  it('also diagnoses an unsupported value supplied through the screens option', () => {
+    const result = fromTailwindTheme(`@theme { --color-x: red; }`, { screens: { huge: '100%' } });
+    expect(result.diagnostics.some((d) => d.code === MIGRATE_CODES.unsupportedAtRule)).toBe(true);
+  });
+
   it('emits non-ascending-thresholds when screens are out of source order', () => {
     const result = fromTailwindTheme(`
       @theme {

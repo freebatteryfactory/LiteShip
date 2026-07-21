@@ -253,7 +253,7 @@ function requireStyleLayerCompiler(): StyleLayerCompiler {
   if (injectedStyleLayerCompiler === undefined) {
     throw HostCapabilityError(
       '@liteship/compiler',
-      'defineAdaptive: `plan()` compiles CSS through `@liteship/compiler` `StyleCSSCompiler`. Import from `@liteship/compiler` (or use `liteship`) in the same process before calling `plan()`.',
+      'defineAdaptive: `plan()` compiles CSS through `@liteship/compiler` `StyleCSSCompiler`, which the host-free `liteship` root deliberately does not load. Import `@liteship/compiler` (or the `liteship/compiler` subpath) in the same process before calling `plan()`.',
     );
   }
   return injectedStyleLayerCompiler;
@@ -388,15 +388,19 @@ export function defineAdaptive(spec: AdaptiveSpec): Adaptive {
       }
     }
 
-    // Source detection: a property whose resolved value equals the base-only
-    // resolution (and is present there) came from `base`; anything the state
-    // layer introduced or overrode reads as `state`.
-    const baseResolved = Style.tap(style);
+    // Source detection by DECLARATION, not value equality: a property is
+    // `state`-sourced iff the resolved state's OWN layer declares it. A state that
+    // re-declares a property with the SAME string as base is still a state
+    // override — value equality would misattribute the winning declaration to
+    // `base`. Properties the state layer does not declare fall through to `base`.
     const stateResolved = Style.tap(style, result.state);
+    const statesByName = (style.states ?? {}) as Readonly<
+      Record<string, { readonly properties?: Readonly<Record<string, string>> } | undefined>
+    >;
+    const stateDeclared = statesByName[result.state]?.properties ?? {};
     const styleRecord: Record<string, { readonly value: string; readonly source: 'base' | 'state' }> = {};
     for (const [property, propValue] of Object.entries(stateResolved)) {
-      const source: 'base' | 'state' =
-        property in baseResolved && baseResolved[property] === propValue ? 'base' : 'state';
+      const source: 'base' | 'state' = property in stateDeclared ? 'state' : 'base';
       styleRecord[property] = { value: propValue, source };
     }
 
