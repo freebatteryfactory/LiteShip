@@ -38,7 +38,7 @@ export async function sceneCompile(scenePath: string): Promise<number> {
     compileContext(),
   );
   if (result.status === 'failed') {
-    emitError('scene.compile', (result.payload as { error: string }).error);
+    emitError('scene.compile', 'cli/command-failed', (result.payload as { error: string }).error);
     return result.exitCode ?? 1;
   }
   const payload = result.payload as { sceneId: string; trackCount: number; durationMs: number };

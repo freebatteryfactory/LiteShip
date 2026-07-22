@@ -6,7 +6,7 @@
 
 # Interface: CssMotionPlan
 
-Defined in: [core/src/motion/interpret-transition.ts:83](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpret-transition.ts#L83)
+Defined in: [core/src/motion/interpret-transition.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpret-transition.ts#L89)
 
 CSS projection plan — keyframes / transition keyed on discrete state.
 
@@ -16,7 +16,7 @@ CSS projection plan — keyframes / transition keyed on discrete state.
 
 > `readonly` **durationMs**: `number`
 
-Defined in: [core/src/motion/interpret-transition.ts:88](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpret-transition.ts#L88)
+Defined in: [core/src/motion/interpret-transition.ts:94](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpret-transition.ts#L94)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [core/src/motion/interpret-transition.ts:88](https://github.com/free
 
 > `readonly` **fromState**: [`StateName`](../type-aliases/StateName.md)
 
-Defined in: [core/src/motion/interpret-transition.ts:85](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpret-transition.ts#L85)
+Defined in: [core/src/motion/interpret-transition.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpret-transition.ts#L91)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [core/src/motion/interpret-transition.ts:85](https://github.com/free
 
 > `readonly` **keyframes**: readonly [`CssKeyframeStep`](CssKeyframeStep.md)[]
 
-Defined in: [core/src/motion/interpret-transition.ts:90](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpret-transition.ts#L90)
+Defined in: [core/src/motion/interpret-transition.ts:96](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpret-transition.ts#L96)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [core/src/motion/interpret-transition.ts:90](https://github.com/free
 
 > `readonly` **nativeTimeline**: [`NativeTimelineEligibility`](../type-aliases/NativeTimelineEligibility.md)
 
-Defined in: [core/src/motion/interpret-transition.ts:99](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpret-transition.ts#L99)
+Defined in: [core/src/motion/interpret-transition.ts:105](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpret-transition.ts#L105)
 
 Whether this plan may own a native `animation-timeline`. `interpretTransition` always
 mints the eligible verdict (a single transition is uniform by construction);
@@ -54,7 +54,7 @@ reads this to decide whether to emit the native ownership block.
 
 > `readonly` **properties**: readonly [`MotionPropertyTween`](MotionPropertyTween.md)[]
 
-Defined in: [core/src/motion/interpret-transition.ts:87](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpret-transition.ts#L87)
+Defined in: [core/src/motion/interpret-transition.ts:93](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpret-transition.ts#L93)
 
 ***
 
@@ -62,7 +62,7 @@ Defined in: [core/src/motion/interpret-transition.ts:87](https://github.com/free
 
 > `readonly` **routing**: [`EdgeType`](../type-aliases/EdgeType.md)
 
-Defined in: [core/src/motion/interpret-transition.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpret-transition.ts#L89)
+Defined in: [core/src/motion/interpret-transition.ts:95](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpret-transition.ts#L95)
 
 ***
 
@@ -70,7 +70,7 @@ Defined in: [core/src/motion/interpret-transition.ts:89](https://github.com/free
 
 > `readonly` **selector**: `string`
 
-Defined in: [core/src/motion/interpret-transition.ts:84](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpret-transition.ts#L84)
+Defined in: [core/src/motion/interpret-transition.ts:90](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpret-transition.ts#L90)
 
 ***
 
@@ -78,7 +78,7 @@ Defined in: [core/src/motion/interpret-transition.ts:84](https://github.com/free
 
 > `readonly` **toState**: [`StateName`](../type-aliases/StateName.md)
 
-Defined in: [core/src/motion/interpret-transition.ts:86](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpret-transition.ts#L86)
+Defined in: [core/src/motion/interpret-transition.ts:92](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpret-transition.ts#L92)
 
 ***
 
@@ -86,4 +86,4 @@ Defined in: [core/src/motion/interpret-transition.ts:86](https://github.com/free
 
 > `readonly` **transitionProperty**: `string`
 
-Defined in: [core/src/motion/interpret-transition.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpret-transition.ts#L91)
+Defined in: [core/src/motion/interpret-transition.ts:97](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpret-transition.ts#L97)

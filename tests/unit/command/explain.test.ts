@@ -57,13 +57,42 @@ describe('@liteship/command explain command — diagnostic-code arm', () => {
     expect(d.emitter.provenByCheck).toBe('check/standards-gate');
   });
 
-  it('explains a core runtime diagnostic (no gate/check emitter)', async () => {
+  it('explains a core domain diagnostic with its real owner', async () => {
     const { payload } = await explain('core/document-graph/wrong_tag');
     const d = payload.diagnostic!;
     expect(d.area).toBe('core');
-    expect(d.emitter.kind).toBe('core-runtime');
-    expect(d.emitter.id).toBeNull();
+    expect(d.emitter.kind).toBe('domain');
+    expect(d.emitter.id).toBe('core/document-graph/wrong_tag');
+    expect(d.emitter.owner).toBe('@liteship/core');
     expect(d.emitter.negativeControl).toBeNull();
+  });
+
+  it.each([
+    ['schema/type', 'schema', '@liteship/core/schema'],
+    ['compiler/css/unknown-state-key', 'compiler', '@liteship/compiler'],
+    ['astro/wgpu/webgpu-unavailable', 'astro', '@liteship/astro'],
+    ['cli/usage', 'cli', '@liteship/cli'],
+    ['migrate/malformed-input', 'migrate', '@liteship/compiler/migrate'],
+  ] as const)('explains %s with area %s and owner %s', async (code, area, owner) => {
+    const { result, payload } = await explain(code);
+    expect(result.status).toBe('ok');
+    const diagnostic = payload.diagnostic!;
+    expect(diagnostic.area).toBe(area);
+    expect(diagnostic.title.length).toBeGreaterThan(0);
+    expect(diagnostic.explanation.length).toBeGreaterThan(0);
+    expect(diagnostic.remediation.length).toBeGreaterThan(0);
+    expect(diagnostic.emitter).toMatchObject({ kind: 'domain', id: code, owner });
+  });
+
+  it('links a glob-owned gauntlet gate to the check that proves it', async () => {
+    const { payload } = await explain('gauntlet/no-bare-throw');
+    expect(payload.diagnostic!.emitter).toMatchObject({
+      kind: 'gate',
+      id: 'gauntlet/no-bare-throw',
+      provenByCheck: 'check/gates',
+    });
+    expect(payload.diagnostic!.emitter.negativeControl).toBeTruthy();
+    expect(payload.diagnostic!.emitter.owner).toBe('@liteship/gauntlet');
   });
 
   it('a code always resolves data-only — no resolveApiSymbol capability needed', async () => {

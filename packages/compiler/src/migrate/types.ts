@@ -11,7 +11,7 @@
  * @module
  */
 
-import type { DiagnosticCode } from '@liteship/error';
+import type { DiagnosticCodeFor } from '@liteship/error';
 import type { Boundary, Token, Theme } from '@liteship/core';
 
 /**
@@ -23,7 +23,7 @@ import type { Boundary, Token, Theme } from '@liteship/core';
  */
 export interface MigrationDiagnostic {
   /** A `migrate/…` code enrolled in the `@liteship/error` DIAGNOSTIC_REGISTRY. */
-  readonly code: DiagnosticCode;
+  readonly code: DiagnosticCodeFor<'migrate'>;
   /** Human/agent-readable summary of what happened at this source location. */
   readonly message: string;
   /** Source location — a selector chain, token path, or feature name. */

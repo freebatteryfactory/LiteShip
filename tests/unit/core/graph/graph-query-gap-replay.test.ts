@@ -5,9 +5,10 @@
  * `discreteSignalPayloadsFromPatch` (which derived a state value from a
  * SignalNode content-address) is gone. Value arrives typed in the receipt.
  */
-import { describe, test, expect } from 'vitest';
+import { afterEach, describe, test, expect } from 'vitest';
 import {
   GraphPatch,
+  Diagnostics,
   HLC,
   StateCellStore,
   StateName,
@@ -21,6 +22,8 @@ import {
   type PatchReceiptEntry,
 } from '../../../../packages/core/src/index.js';
 import { graph, node } from '../../../helpers/graph-fixtures.js';
+
+afterEach(() => Diagnostics.reset());
 
 type Ids = ReturnType<typeof graph>['id'];
 
@@ -409,6 +412,8 @@ describe('graph-query gap replay — HOSTILE fixtures (Law 15)', () => {
   });
 
   test('wrong subject: a receipt whose subject names another cell is refused', async () => {
+    const captured = Diagnostics.createBufferSink();
+    Diagnostics.setSink(captured.sink);
     const { base, mid, server } = await scenario();
     const store = freshStore();
     // Two transitions that FORM a valid graph branch, but the first receipt is
@@ -428,9 +433,15 @@ describe('graph-query gap replay — HOSTILE fixtures (Law 15)', () => {
     });
     expect(transitions).toEqual([]);
     expect(store.snapshot('state')!.state).toBe('a');
+    expect(captured.events.map((event) => event.code)).toContain(
+      'core/gap-replay/discrete-transition-subject-mismatch',
+    );
+    Diagnostics.reset();
   });
 
   test('reordered / broken chain: HLC + previous continuity floor refuses replay', async () => {
+    const captured = Diagnostics.createBufferSink();
+    Diagnostics.setSink(captured.sink);
     const { base, mid, server } = await scenario();
     const store = freshStore();
     const t1 = mkTransition(base.id, mid.id, 'state', 'alpha', 1);
@@ -446,9 +457,13 @@ describe('graph-query gap replay — HOSTILE fixtures (Law 15)', () => {
     });
     expect(transitions).toEqual([]);
     expect(store.snapshot('state')!.state).toBe('a');
+    expect(captured.events.map((event) => event.code)).toContain('core/gap-replay/discrete-transition-chain-invalid');
+    Diagnostics.reset();
   });
 
   test('unknown cell: a transition naming an unregistered cell is a loud no-op, not a throw', async () => {
+    const captured = Diagnostics.createBufferSink();
+    Diagnostics.setSink(captured.sink);
     const { base, server } = await scenario();
     // Store WITHOUT the 'state' cell registered → applyTransition throws inside,
     // caught + diagnosed; the replay never throws through.
@@ -464,5 +479,7 @@ describe('graph-query gap replay — HOSTILE fixtures (Law 15)', () => {
     });
     expect(replayedCells).toEqual([]);
     expect(transitions).toEqual([]);
+    expect(captured.events.map((event) => event.code)).toContain('core/gap-replay/discrete-transition-unknown-cell');
+    Diagnostics.reset();
   });
 });

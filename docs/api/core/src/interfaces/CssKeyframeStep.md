@@ -6,7 +6,7 @@
 
 # Interface: CssKeyframeStep
 
-Defined in: [core/src/motion/interpret-transition.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpret-transition.ts#L37)
+Defined in: [core/src/motion/interpret-transition.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpret-transition.ts#L43)
 
 A single CSS keyframe step for sequential routing.
 
@@ -16,7 +16,7 @@ A single CSS keyframe step for sequential routing.
 
 > `readonly` `optional` **easing?**: [`RuntimeEasing`](RuntimeEasing.md)
 
-Defined in: [core/src/motion/interpret-transition.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpret-transition.ts#L58)
+Defined in: [core/src/motion/interpret-transition.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpret-transition.ts#L64)
 
 The easing curve governing the SEGMENT that starts at this stop (until the next
 stop), emitted as a per-keyframe `animation-timing-function`. Present on a composed
@@ -41,7 +41,7 @@ function — the SAME stop list the JS floor lerps (Law 4, the byte-law).
 
 > `readonly` **offset**: `number`
 
-Defined in: [core/src/motion/interpret-transition.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpret-transition.ts#L38)
+Defined in: [core/src/motion/interpret-transition.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpret-transition.ts#L44)
 
 ***
 
@@ -49,4 +49,4 @@ Defined in: [core/src/motion/interpret-transition.ts:38](https://github.com/free
 
 > `readonly` **properties**: `Readonly`\<`Record`\<`string`, `string`\>\>
 
-Defined in: [core/src/motion/interpret-transition.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpret-transition.ts#L39)
+Defined in: [core/src/motion/interpret-transition.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpret-transition.ts#L45)

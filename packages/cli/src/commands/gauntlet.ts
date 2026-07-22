@@ -42,7 +42,7 @@ export async function gauntlet(rest: readonly string[], opts: { readonly cwd?: s
   const { dryRun, unexpected } = parseGauntletArgv(rest);
   if (unexpected.length > 0) {
     process.stderr.write(formatUnexpectedArgvReceipt(unexpected));
-    emitError('gauntlet', `unexpected_argv: ${unexpected.join(' ')}`);
+    emitError('gauntlet', 'cli/invalid-argument', `unexpected_argv: ${unexpected.join(' ')}`);
     return 1;
   }
   if (dryRun) {
@@ -61,7 +61,11 @@ export async function gauntlet(rest: readonly string[], opts: { readonly cwd?: s
   // this repo would execute a stranger's same-named script (or die with
   // pnpm's raw missing-script error).
   if (!isLiteShipWorkspace(cwd)) {
-    emitError('gauntlet', 'gauntlet is a LiteShip-workspace verb; run it from the liteship repo root');
+    emitError(
+      'gauntlet',
+      'cli/workspace-required',
+      'gauntlet is a LiteShip-workspace verb; run it from the liteship repo root',
+    );
     return 1;
   }
   // Monotonic — this is an elapsed-time delta, not a timestamp.
@@ -72,6 +76,7 @@ export async function gauntlet(rest: readonly string[], opts: { readonly cwd?: s
     const failedPhase = readFailedPhase(cwd);
     emitError(
       'gauntlet',
+      'cli/command-failed',
       failedPhase
         ? `gauntlet failed in phase ${failedPhase} (exit ${r.status ?? 'signal'})`
         : `gauntlet exited with status ${r.status ?? 'signal'}`,

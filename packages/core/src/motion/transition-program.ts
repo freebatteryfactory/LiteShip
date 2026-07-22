@@ -27,7 +27,6 @@
 
 import type { ContentAddress, SignalInput, StateName } from '../schema/brands.js';
 import type { DocumentGraph } from '../graph/document-graph.js';
-import type { DiagnosticPayload } from '../evidence/diagnostics.js';
 import type { RuntimeEasing } from './easing.js';
 import { sampleRuntimeEasing } from './easing.js';
 import { clamp01 } from './clamp.js';
@@ -40,6 +39,7 @@ import {
   type NativeTimelineEligibility,
   type LoweredMotionPlan,
   type MotionPropertyTween,
+  type MotionDiagnosticPayload,
   type RuntimeWriteProperty,
   type RuntimeWritePlan,
   type RuntimeWriteWindow,
@@ -109,7 +109,7 @@ export interface LoweredProgramTimeline {
   readonly entries: readonly ProgramTimelineEntry[];
   /** The `branchId` of every executed `choice` arm, in traversal order (auditable). */
   readonly selectedBranchIds: readonly string[];
-  readonly diagnostics: readonly DiagnosticPayload[];
+  readonly diagnostics: readonly MotionDiagnosticPayload[];
 }
 
 /** Per-transition lowering pulled once from {@link interpretTransition} and reused. */
@@ -142,14 +142,14 @@ interface LayoutResult {
 function stepInfo(
   graph: DocumentGraph,
   transitionId: ContentAddress,
-  diagnostics: DiagnosticPayload[],
+  diagnostics: MotionDiagnosticPayload[],
 ): StepInfo | undefined {
   const plan = interpretTransition(graph, transitionId);
   if (!plan.css || !plan.runtime) {
     for (const d of plan.diagnostics) diagnostics.push(d);
     diagnostics.push({
       source: 'interpretProgram',
-      code: 'step-unresolved',
+      code: 'core/transition-program/step-unresolved',
       message: `transition step ${transitionId} did not lower to a motion plan`,
     });
     return undefined;
@@ -210,7 +210,7 @@ interface SelectedBranch {
 function selectBranch(
   program: Extract<TransitionProgram, { kind: 'choice' }>,
   env: ProgramEnv,
-  diagnostics: DiagnosticPayload[],
+  diagnostics: MotionDiagnosticPayload[],
 ): SelectedBranch | undefined {
   for (let i = 0; i < program.branches.length; i++) {
     const branch = program.branches[i]!;
@@ -224,7 +224,7 @@ function selectBranch(
   }
   diagnostics.push({
     source: 'interpretProgram',
-    code: 'choice-unmatched',
+    code: 'core/transition-program/choice-unmatched',
     message: 'no choice branch matched the signal environment and no otherwise arm was provided',
     detail: { sources: program.branches.map((b) => b.source) },
   });
@@ -235,7 +235,7 @@ function layout(
   graph: DocumentGraph,
   program: TransitionProgram,
   env: ProgramEnv,
-  diagnostics: DiagnosticPayload[],
+  diagnostics: MotionDiagnosticPayload[],
 ): LayoutResult {
   switch (program.kind) {
     case 'step': {
@@ -280,7 +280,7 @@ function layout(
       const child = layout(graph, sel.body, env, diagnostics);
       diagnostics.push({
         source: 'interpretProgram',
-        code: 'choice-selected',
+        code: 'core/transition-program/choice-selected',
         message: `choice executed exactly one branch: ${sel.guard.branchId}`,
         detail: { branchId: sel.guard.branchId, source: sel.guard.source },
       });
@@ -313,7 +313,7 @@ export function lowerTransitionProgram(
   program: TransitionProgram,
   env: ProgramEnv = { signals: {} },
 ): LoweredProgramTimeline {
-  const diagnostics: DiagnosticPayload[] = [];
+  const diagnostics: MotionDiagnosticPayload[] = [];
   const result = layout(graph, program, env, diagnostics);
   const entries: ProgramTimelineEntry[] = result.windows.map((w) => ({
     transitionId: w.step.transitionId,
@@ -491,7 +491,7 @@ function hasMixedEasingOverlap(windows: readonly AbsWindow[], totalMs: number): 
   return false;
 }
 
-function emptyProgramPlan(graphId: ContentAddress, diagnostics: readonly DiagnosticPayload[]): LoweredMotionPlan {
+function emptyProgramPlan(graphId: ContentAddress, diagnostics: readonly MotionDiagnosticPayload[]): LoweredMotionPlan {
   return Object.freeze({
     graphId,
     target: '',
@@ -516,13 +516,13 @@ export function interpretProgram(
   program: TransitionProgram,
   env: ProgramEnv = { signals: {} },
 ): LoweredMotionPlan {
-  const diagnostics: DiagnosticPayload[] = [];
+  const diagnostics: MotionDiagnosticPayload[] = [];
   const result = layout(graph, program, env, diagnostics);
 
   if (result.totalMs <= 0 || result.windows.length === 0) {
     diagnostics.push({
       source: 'interpretProgram',
-      code: 'empty-program',
+      code: 'core/transition-program/empty-program',
       message: 'the transition program lowered to no windows (empty composition or unmatched choice)',
     });
     return emptyProgramPlan(graph.id, diagnostics);
@@ -538,7 +538,7 @@ export function interpretProgram(
   if (targets.size > 1) {
     diagnostics.push({
       source: 'interpretProgram',
-      code: 'multi-target-program',
+      code: 'core/transition-program/multi-target-program',
       message:
         `a composed TransitionProgram spans ${targets.size} boundaries (${[...targets].join(', ')}), but one ` +
         'LoweredMotionPlan drives ONE host element. Multi-target motion (e.g. a stagger over distinct children) ' +

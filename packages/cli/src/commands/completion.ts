@@ -122,7 +122,7 @@ function fishScript(): string {
 /** Execute the completion command. Returns a process exit code. */
 export function completion(shell: string | undefined): number {
   if (!isShell(shell)) {
-    emitError('completion', `expected shell: bash | zsh | fish (got: ${shell ?? '<missing>'})`);
+    emitError('completion', 'cli/invalid-argument', `expected shell: bash | zsh | fish (got: ${shell ?? '<missing>'})`);
     return 1;
   }
   if (shell === 'bash') process.stdout.write(bashScript());

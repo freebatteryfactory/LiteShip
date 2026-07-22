@@ -3687,6 +3687,10 @@
           "kind": "type"
         },
         {
+          "name": "DiagnosticCodeFor",
+          "kind": "type"
+        },
+        {
           "name": "DiagnosticEntry",
           "kind": "type"
         },

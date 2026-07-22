@@ -72,13 +72,19 @@ describe.sequential('liteship add packaged fragments', () => {
     const cwd = consumerDir();
     const missing = await captureCli(() => add({ kind: 'template', name: 'missing', cwd }));
     expect(missing.exit).toBe(1);
-    expect(missing.stderr).toContain('no template fragment named');
+    expect(JSON.parse(missing.stderr)).toMatchObject({
+      code: 'cli/not-found',
+      error: expect.stringContaining('no template fragment named'),
+    });
 
     const destination = join(cwd, 'default');
     writeFileSync(destination, 'owned by consumer');
     const existing = await captureCli(() => add({ kind: 'template', name: 'default', cwd }));
     expect(existing.exit).toBe(1);
-    expect(existing.stderr).toContain('destination already exists');
+    expect(JSON.parse(existing.stderr)).toMatchObject({
+      code: 'cli/conflict',
+      error: expect.stringContaining('destination already exists'),
+    });
     expect(readFileSync(destination, 'utf8')).toBe('owned by consumer');
   });
 });

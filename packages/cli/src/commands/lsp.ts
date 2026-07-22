@@ -127,6 +127,7 @@ export async function lsp(opts: LspOptions = {}, deps: LspDeps = {}): Promise<nu
     const [major, minor] = readCliVersion().split('.');
     emitError(
       'lsp',
+      'cli/not-found',
       '@liteship/mcp-server is not installed',
       `Install it next to @liteship/cli on the same version line: pnpm add @liteship/mcp-server@${major}.${minor}.x`,
     );

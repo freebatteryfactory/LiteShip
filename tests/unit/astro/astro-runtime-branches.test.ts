@@ -155,7 +155,7 @@ describe('astro worker directive edge branches', () => {
         expect.objectContaining({
           level: 'warn',
           source: 'liteship/astro.worker',
-          code: 'worker-host-fallback',
+          code: 'astro/worker/worker-host-fallback',
           detail: 'boom',
         }),
       );
@@ -194,7 +194,7 @@ describe('astro worker directive edge branches', () => {
         expect.objectContaining({
           level: 'warn',
           source: 'liteship/astro.worker',
-          code: 'worker-host-fallback',
+          code: 'astro/worker/worker-host-fallback',
           detail: 'worker boom',
         }),
       );

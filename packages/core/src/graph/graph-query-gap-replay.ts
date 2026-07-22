@@ -255,9 +255,9 @@ export async function replayDiscreteFromPatchReceipts(options: ReplayDiscreteFro
       receipt.subject.type !== 'effect' ||
       receipt.subject.id !== discreteTransitionSubjectId(transition)
     ) {
-      Diagnostics.warnOnce({
+      Diagnostics.warnOnceRegistered({
         source: 'liteship/core.gap-replay',
-        code: 'discrete-transition-subject-mismatch',
+        code: 'core/gap-replay/discrete-transition-subject-mismatch',
         message:
           `graph-native gap replay refused a transition for cell "${transition.cell}": its receipt subject ` +
           'does not match the `${base}#${cell}` subject law (a receipt for one cell cannot replay against ' +
@@ -285,9 +285,9 @@ export async function replayDiscreteFromPatchReceipts(options: ReplayDiscreteFro
     validated = { ok: false, error: error as ChainValidationError };
   }
   if (!validated.ok) {
-    Diagnostics.warnOnce({
+    Diagnostics.warnOnceRegistered({
       source: 'liteship/core.gap-replay',
-      code: 'discrete-transition-chain-invalid',
+      code: 'core/gap-replay/discrete-transition-chain-invalid',
       message:
         'graph-native gap replay refused a transition chain that failed the structural floor ' +
         `(${validated.error.type}) — the graph was still adopted, but no discrete crossing was replayed.`,
@@ -320,9 +320,9 @@ export async function replayDiscreteFromPatchReceipts(options: ReplayDiscreteFro
       // Unregistered cell names are skipped — the host owns the registry. Loud,
       // not silent (Law 1): a transition naming a cell the store never registered
       // is a wiring gap, not a condition to launder.
-      Diagnostics.warnOnce({
+      Diagnostics.warnOnceRegistered({
         source: 'liteship/core.gap-replay',
-        code: 'discrete-transition-unknown-cell',
+        code: 'core/gap-replay/discrete-transition-unknown-cell',
         message:
           `graph-native gap replay skipped a transition for cell "${transition.cell}": the StateCell store ` +
           'has no such registered cell. Register the cell on the host, or drop the transition from the stream.',

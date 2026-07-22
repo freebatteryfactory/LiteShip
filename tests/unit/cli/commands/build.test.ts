@@ -49,6 +49,7 @@ describe('liteship build', () => {
     expect(JSON.parse(result.stderr.trim())).toMatchObject({
       status: 'failed',
       command: 'build',
+      code: 'cli/config-invalid',
       error: expect.stringContaining('no liteship.config.ts'),
       hint: expect.stringContaining('npm create liteship'),
     });
@@ -66,6 +67,7 @@ describe('liteship build', () => {
     expect(JSON.parse(result.stderr.trim())).toMatchObject({
       status: 'failed',
       command: 'build',
+      code: 'cli/config-invalid',
       error: expect.stringContaining('no host build config'),
       hint: expect.stringContaining('re-run `liteship build`'),
     });

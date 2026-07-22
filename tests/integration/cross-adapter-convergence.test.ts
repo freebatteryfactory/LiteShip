@@ -43,6 +43,8 @@ function cliArgvForTool(name: string): string[] {
       return ['capsule', 'verify', 'alpha'];
     case 'check':
       return ['check'];
+    case 'check.gates':
+      return ['check', 'gates'];
     case 'context':
       return ['context', '--task', 'add-boundary'];
     case 'explain':
@@ -64,6 +66,7 @@ function mcpArgsForTool(name: string): Record<string, unknown> {
   switch (name) {
     case 'capsule.list':
     case 'check':
+    case 'check.gates':
     case 'plumb':
       return {};
     case 'context':

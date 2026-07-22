@@ -46,9 +46,9 @@ function validateAttributes(attrs: Record<string, string>, stateName: string): R
     if (BoundaryAttribute.isAllowedKey(key)) {
       result[key] = value;
     } else {
-      Diagnostics.warn({
+      Diagnostics.warnRegistered({
         source: 'liteship/compiler.aria',
-        code: 'invalid-aria-key',
+        code: 'compiler/aria/invalid-aria-key',
         message: `Attribute "${key}" in state "${stateName}" is not a valid ARIA key and was dropped. Use an aria-* attribute or "role" — e.g. 'aria-expanded': 'false'.`,
       });
     }
@@ -110,9 +110,9 @@ function compile<B extends Boundary>(
   // Via dispatch, currentState is plain string — a typo would silently emit no ARIA at all.
   const current = stateAttributes[currentState];
   if (current === undefined) {
-    Diagnostics.warn({
+    Diagnostics.warnRegistered({
       source: 'liteship/compiler.aria',
-      code: 'unknown-current-state',
+      code: 'compiler/aria/unknown-current-state',
       message: `currentState "${String(currentState)}" is not one of [${stateNames.join(', ')}]; emitting no attributes. Pass one of the boundary's state names.`,
     });
   }

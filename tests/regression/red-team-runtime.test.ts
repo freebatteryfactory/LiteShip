@@ -33,12 +33,20 @@ describe('red-team runtime regressions', () => {
 
   test('rejects cross-origin runtime URLs by default', () => {
     captureDiagnostics(({ events }) => {
-      expect(allowSameOriginRuntimeUrl('https://attacker.example/stream', 'test', 'cross-origin')).toBeNull();
-      expect(allowSameOriginRuntimeUrl('/stream', 'test', 'same-origin')).toBe('/stream');
+      expect(
+        allowSameOriginRuntimeUrl(
+          'https://attacker.example/stream',
+          'test',
+          'astro/url-policy/cross-origin-url-rejected',
+        ),
+      ).toBeNull();
+      expect(allowSameOriginRuntimeUrl('/stream', 'test', 'astro/url-policy/cross-origin-url-rejected')).toBe(
+        '/stream',
+      );
       expect(events).toEqual([
         expect.objectContaining({
           source: 'test',
-          code: 'cross-origin',
+          code: 'astro/url-policy/cross-origin-url-rejected',
         }),
       ]);
     });

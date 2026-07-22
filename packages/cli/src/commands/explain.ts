@@ -18,8 +18,8 @@ function prettyDiagnostic(payload: ExplainPayload, on: boolean): string {
   const d = payload.diagnostic!;
   const head = `${color('cyan', d.code, on)}  ${color('dim', `(${d.area})`, on)}`;
   const emitterLine =
-    d.emitter.kind === 'core-runtime'
-      ? `  ${color('dim', 'emitter:', on)} @liteship runtime diagnostic`
+    d.emitter.kind === 'domain'
+      ? `  ${color('dim', 'emitter:', on)} ${d.emitter.owner ?? 'domain diagnostic'}`
       : `  ${color('dim', 'emitter:', on)} ${d.emitter.kind} ${color('cyan', d.emitter.id ?? '', on)}` +
         (d.emitter.negativeControl ? `\n  ${color('dim', 'negative control:', on)} ${d.emitter.negativeControl}` : '');
   return `${head}\n  ${d.title}\n\n  ${d.explanation}\n\n  ${color('dim', 'fix:', on)} ${d.remediation}\n${emitterLine}\n`;
@@ -42,6 +42,7 @@ export async function explain(
   if (query === null || query.length === 0) {
     emitError(
       'explain',
+      'cli/usage',
       'usage: liteship explain <diagnostic-code | exported-symbol>',
       'e.g. liteship explain gauntlet/no-bare-throw',
     );
@@ -56,6 +57,7 @@ export async function explain(
   if (result.status === 'failed') {
     emitError(
       'explain',
+      'cli/not-found',
       `no diagnostic code or exported symbol matches: ${query}`,
       'try a code like gauntlet/no-bare-throw, or an exported symbol like explainDiagnostic',
     );

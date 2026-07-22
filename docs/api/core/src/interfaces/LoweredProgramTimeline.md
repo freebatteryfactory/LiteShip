@@ -14,7 +14,7 @@ Result of [lowerTransitionProgram](../functions/lowerTransitionProgram.md): the 
 
 ### diagnostics
 
-> `readonly` **diagnostics**: readonly [`DiagnosticPayload`](DiagnosticPayload.md)[]
+> `readonly` **diagnostics**: readonly `MotionDiagnosticPayload`[]
 
 Defined in: [core/src/motion/transition-program.ts:112](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/transition-program.ts#L112)
 

@@ -344,9 +344,9 @@ export function initWorkerDirectiveWithDependencies(
       warnIfSignalUnserved(runtimeBoundary.input, { source: 'liteship/astro.worker', what: 'boundary signal' });
     }
     if (!canUseWorkerRuntime()) {
-      Diagnostics.warnOnce({
+      Diagnostics.warnOnceRegistered({
         source: 'liteship/astro.worker',
-        code: 'worker-runtime-unavailable',
+        code: 'astro/worker/worker-runtime-unavailable',
         message:
           `Worker runtime unavailable (crossOriginIsolated=${String(globalThis.crossOriginIsolated)}, ` +
           `SharedArrayBuffer=${typeof SharedArrayBuffer !== 'undefined'}). ` +
@@ -360,9 +360,9 @@ export function initWorkerDirectiveWithDependencies(
       initWorkerHost();
       return;
     } catch (error) {
-      Diagnostics.warn({
+      Diagnostics.warnRegistered({
         source: 'liteship/astro.worker',
-        code: 'worker-host-fallback',
+        code: 'astro/worker/worker-host-fallback',
         message: 'WorkerHost could not initialize, falling back to main-thread evaluation.',
         detail: error instanceof Error ? error.message : String(error),
       });

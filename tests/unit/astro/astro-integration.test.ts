@@ -200,7 +200,7 @@ describe('resolveInitialState', () => {
       Diagnostics.clearOnce();
       const fakeRequest = { headers: { get: () => null } } as unknown as Request;
       resolveInitialState(boundary, fakeRequest as never);
-      expect(events.some((e) => e.code === 'resolve-initial-state-raw-request')).toBe(true);
+      expect(events.some((e) => e.code === 'astro/quantize/resolve-initial-state-raw-request')).toBe(true);
     } finally {
       Diagnostics.setSink(prev);
       Diagnostics.clearOnce();
@@ -506,14 +506,7 @@ describe('integration', () => {
       },
     } as never);
 
-    expect(directives.map((directive) => directive.name)).toEqual([
-      'adaptive',
-      'graph',
-      'stream',
-      'llm',
-      'gpu',
-      'svg',
-    ]);
+    expect(directives.map((directive) => directive.name)).toEqual(['adaptive', 'graph', 'stream', 'llm', 'gpu', 'svg']);
     expect(updates[0]).toMatchObject({
       vite: {
         plugins: [expect.objectContaining({ name: '@liteship/vite' })],

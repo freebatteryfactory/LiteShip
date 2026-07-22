@@ -26,10 +26,10 @@ afterEach(() => {
 async function captureStdout<T>(fn: () => Promise<T>): Promise<{ result: T; stdout: string }> {
   let stdout = '';
   const orig = process.stdout.write.bind(process.stdout);
-  (process.stdout as unknown as { write: unknown }).write = ((c: string | Uint8Array) => {
+  (process.stdout as unknown as { write: unknown }).write = (c: string | Uint8Array) => {
     stdout += typeof c === 'string' ? c : Buffer.from(c).toString();
     return true;
-  });
+  };
   try {
     const result = await fn();
     return { result, stdout };
@@ -41,10 +41,10 @@ async function captureStdout<T>(fn: () => Promise<T>): Promise<{ result: T; stdo
 async function captureStderr<T>(fn: () => Promise<T>): Promise<{ result: T; stderr: string }> {
   let stderr = '';
   const orig = process.stderr.write.bind(process.stderr);
-  (process.stderr as unknown as { write: unknown }).write = ((c: string | Uint8Array) => {
+  (process.stderr as unknown as { write: unknown }).write = (c: string | Uint8Array) => {
     stderr += typeof c === 'string' ? c : Buffer.from(c).toString();
     return true;
-  });
+  };
   try {
     const result = await fn();
     return { result, stderr };
@@ -81,6 +81,7 @@ describe('gauntlet command (unit)', () => {
     const receipt = JSON.parse(stderr.trim().split('\n')[0]!);
     expect(receipt.status).toBe('failed');
     expect(receipt.command).toBe('gauntlet');
+    expect(receipt.code).toBe('cli/invalid-argument');
     expect(receipt.error).toBe('unexpected_argv');
     expect(receipt.argv).toEqual(['foo']);
   });
@@ -104,6 +105,7 @@ describe('gauntlet command (unit)', () => {
       expect(spawnSyncMock).not.toHaveBeenCalled();
       const receipt = JSON.parse(stderr.trim().split('\n')[0]!);
       expect(receipt.status).toBe('failed');
+      expect(receipt.code).toBe('cli/workspace-required');
       expect(receipt.error).toMatch(/LiteShip-workspace verb/);
     } finally {
       rmSync(tmp, { recursive: true, force: true });
@@ -142,6 +144,7 @@ describe('gauntlet command (unit)', () => {
       expect(result).toBe(7);
       const receipt = JSON.parse(stderr.trim().split('\n')[0]!);
       expect(receipt.status).toBe('failed');
+      expect(receipt.code).toBe('cli/command-failed');
       expect(receipt.error).toBe('gauntlet exited with status 7');
       expect(receipt.hint).toBe('List phases: liteship gauntlet --dry-run');
     } finally {

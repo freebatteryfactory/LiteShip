@@ -143,7 +143,7 @@ describe('evaluate() unknown previousState', () => {
       expect(events).toEqual([
         expect.objectContaining({
           source: 'liteship/core',
-          code: 'unknown-previous-state',
+          code: 'core/boundary/unknown-previous-state',
           message:
             'evaluateResult(): previousState "medium" is not a state of boundary "width" (states: sm, md, lg); ' +
             'treating as a crossing. Check that the state came from this boundary.',

@@ -191,7 +191,7 @@ describe('initWGSLRuntime — shader source arms', () => {
     const dispose = await initWGSLRuntime(canvas, '/shaders/main.wgsl');
     expect(dispose).toBeNull();
     expect(harness.calls.shaderCodes.length).toBe(0);
-    expect(events).toContainEqual(expect.objectContaining({ code: 'wgsl-integrity-absent' }));
+    expect(events).toContainEqual(expect.objectContaining({ code: 'astro/wgpu/wgsl-integrity-absent' }));
   });
 
   it('REFUSES a tampered external fetch whose bytes do not match the pin', async () => {
@@ -212,7 +212,7 @@ describe('initWGSLRuntime — shader source arms', () => {
     const dispose = await initWGSLRuntime(canvas, '/shaders/main.wgsl', undefined, undefined, integrity);
     expect(dispose).toBeNull();
     expect(harness.calls.shaderCodes.length).toBe(0);
-    expect(events).toContainEqual(expect.objectContaining({ code: 'wgsl-integrity-mismatch' }));
+    expect(events).toContainEqual(expect.objectContaining({ code: 'astro/wgpu/wgsl-integrity-mismatch' }));
   });
 
   it('falls back to the built-in fullscreen shader when the fetch responds non-ok', async () => {
@@ -230,7 +230,7 @@ describe('initWGSLRuntime — shader source arms', () => {
     const dispose = await initWGSLRuntime(canvas, 'http://example.test/shader.wgsl');
     expect(dispose).not.toBeNull();
     expect(harness.calls.shaderCodes[0]).toContain('vs_main');
-    expect(events).toContainEqual(expect.objectContaining({ code: 'wgsl-fetch-failed' }));
+    expect(events).toContainEqual(expect.objectContaining({ code: 'astro/wgpu/wgsl-fetch-failed' }));
     dispose!();
   });
 
@@ -251,7 +251,7 @@ describe('initWGSLRuntime — shader source arms', () => {
     const dispose = await initWGSLRuntime(canvas, '/shaders/missing.wgsl');
     expect(dispose).not.toBeNull();
     expect(harness.calls.shaderCodes[0]).toContain('vs_main');
-    expect(events).toContainEqual(expect.objectContaining({ code: 'wgsl-fetch-threw' }));
+    expect(events).toContainEqual(expect.objectContaining({ code: 'astro/wgpu/wgsl-fetch-threw' }));
     dispose!();
   });
 });
@@ -408,7 +408,7 @@ describe('initWGSLRuntime — liteship:uniform-update → uniform buffer (D1-WGS
     // and is dropped with a warnOnce at binding setup (layout-derived from the
     // declared struct, not from event payload order).
     const dispose = await initWGSLRuntime(canvas, OVERFLOW_SHADER, el);
-    expect(events).toContainEqual(expect.objectContaining({ code: 'wgsl-uniform-buffer-full' }));
+    expect(events).toContainEqual(expect.objectContaining({ code: 'astro/wgpu/wgsl-uniform-buffer-full' }));
     dispose!();
   });
 
@@ -571,15 +571,15 @@ describe('initWGSLRuntime — liteship:uniform-update → uniform buffer (D1-WGS
   it.skipIf(gpuAbsent)(
     'GUARD: a real WebGPU device drives the buffer; absent, it logs a skip (never faked)',
     async () => {
-    /* v8 ignore start — only runs where a real WebGPU device exists (not the CI harness). */
-    const { canvas } = makeCanvas(true);
-    const el = document.createElement('div');
-    const dispose = await initWGSLRuntime(canvas, 'inline', el);
-    expect(dispose).not.toBeNull();
-    el.dispatchEvent(new CustomEvent('liteship:uniform-update', { detail: { wgsl: { state_index: 1 } } }));
-    dispose?.();
-    /* v8 ignore stop */
-  },
+      /* v8 ignore start — only runs where a real WebGPU device exists (not the CI harness). */
+      const { canvas } = makeCanvas(true);
+      const el = document.createElement('div');
+      const dispose = await initWGSLRuntime(canvas, 'inline', el);
+      expect(dispose).not.toBeNull();
+      el.dispatchEvent(new CustomEvent('liteship:uniform-update', { detail: { wgsl: { state_index: 1 } } }));
+      dispose?.();
+      /* v8 ignore stop */
+    },
   );
 });
 
@@ -588,6 +588,6 @@ describe('warnWebGpuUnavailable', () => {
     const { sink, events } = Diagnostics.createBufferSink();
     Diagnostics.setSink(sink);
     warnWebGpuUnavailable();
-    expect(events).toContainEqual(expect.objectContaining({ code: 'webgpu-unavailable' }));
+    expect(events).toContainEqual(expect.objectContaining({ code: 'astro/wgpu/webgpu-unavailable' }));
   });
 });

@@ -198,7 +198,7 @@ describe('interpretTransition', () => {
   test('returns diagnostics when transition id is missing', () => {
     const { graph: g } = revealFixture();
     const plan = interpretTransition(g, 'fnv1a:deadbeef' as ContentAddress);
-    expect(plan.diagnostics.length).toBeGreaterThan(0);
+    expect(plan.diagnostics.map((diagnostic) => diagnostic.code)).toContain('core/interpret-transition/not-found');
     expect(plan.css).toBeUndefined();
     expect(plan.graphId).toBe(g.id);
   });

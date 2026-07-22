@@ -163,7 +163,7 @@ describe('artifact migration — DocumentGraph (_version)', () => {
     expect(hasTag(thrown, 'ParseError')).toBe(true);
     expect(getTag(thrown)).toBe('ParseError');
     expect((thrown as { source: string }).source).toBe('DocumentGraph');
-    expect((thrown as { code?: string }).code).toBe('unsupported_version');
+    expect((thrown as { code?: string }).code).toBe('core/document-graph/unsupported_version');
     // The error is a REAL Error (stack + instanceof), per the @liteship/error algebra.
     expect(thrown).toBeInstanceOf(Error);
   });
@@ -177,7 +177,31 @@ describe('artifact migration — DocumentGraph (_version)', () => {
       thrown = e;
     }
     expect(hasTag(thrown, 'ParseError')).toBe(true);
-    expect((thrown as { code?: string }).code).toBe('wrong_tag');
+    expect((thrown as { code?: string }).code).toBe('core/document-graph/wrong_tag');
+  });
+
+  test('registered top-level shape failures carry their full diagnostic identities', () => {
+    let nonObject: unknown;
+    try {
+      decodeDocumentGraph(null);
+    } catch (error) {
+      nonObject = error;
+    }
+    expect((nonObject as { code?: string }).code).toBe('core/document-graph/not_an_object');
+
+    const current = JSON.parse(JSON.stringify(graph([node('a')], []))) as Record<string, unknown>;
+    for (const [field, code] of [
+      ['nodes', 'core/document-graph/malformed_nodes'],
+      ['edges', 'core/document-graph/malformed_edges'],
+    ] as const) {
+      let thrown: unknown;
+      try {
+        decodeDocumentGraph({ ...current, [field]: null });
+      } catch (error) {
+        thrown = error;
+      }
+      expect((thrown as { code?: string }).code).toBe(code);
+    }
   });
 
   test('a malformed node (fails the well-formedness gate) is rejected, not coerced', () => {
@@ -222,7 +246,7 @@ describe('artifact migration — GraphPatch (_version)', () => {
     expect(thrown).toBeDefined();
     expect(hasTag(thrown, 'ParseError')).toBe(true);
     expect((thrown as { source: string }).source).toBe('GraphPatch');
-    expect((thrown as { code?: string }).code).toBe('unsupported_version');
+    expect((thrown as { code?: string }).code).toBe('core/graph-patch/unsupported_version');
     expect(thrown).toBeInstanceOf(Error);
   });
 
@@ -235,7 +259,7 @@ describe('artifact migration — GraphPatch (_version)', () => {
       thrown = e;
     }
     expect(hasTag(thrown, 'ParseError')).toBe(true);
-    expect((thrown as { code?: string }).code).toBe('wrong_tag');
+    expect((thrown as { code?: string }).code).toBe('core/graph-patch/wrong_tag');
   });
 
   test('a non-object value is rejected (null/array/string never decode as a patch)', () => {
@@ -247,6 +271,7 @@ describe('artifact migration — GraphPatch (_version)', () => {
         thrown = e;
       }
       expect(hasTag(thrown, 'ParseError')).toBe(true);
+      expect((thrown as { code?: string }).code).toBe('core/graph-patch/not_an_object');
     }
   });
 });

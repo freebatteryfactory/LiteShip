@@ -92,10 +92,10 @@ describe('WGSL honesty — #106 unfed uniform diagnostic', () => {
 
     const dispose = await initWGSLRuntime(makeCanvas(), MISNAMED_TIME_SHADER);
     expect(dispose).not.toBeNull();
-    expect(events.filter((e) => e.code === 'wgsl-uniform-unfed')).toHaveLength(1);
+    expect(events.filter((e) => e.code === 'astro/wgpu/wgsl-uniform-unfed')).toHaveLength(1);
     expect(events).toContainEqual(
       expect.objectContaining({
-        code: 'wgsl-uniform-unfed',
+        code: 'astro/wgpu/wgsl-uniform-unfed',
         message: expect.stringContaining('"time"'),
       }),
     );
@@ -120,7 +120,7 @@ describe('WGSL honesty — #106 unfed uniform diagnostic', () => {
 
     const dispose = await initWGSLRuntime(canvas, STANDARD_SHADER);
     expect(dispose).not.toBeNull();
-    expect(events.filter((e) => e.code === 'wgsl-uniform-unfed')).toHaveLength(0);
+    expect(events.filter((e) => e.code === 'astro/wgpu/wgsl-uniform-unfed')).toHaveLength(0);
     dispose!();
   });
 
@@ -139,10 +139,10 @@ describe('WGSL honesty — #106 unfed uniform diagnostic', () => {
       '@fragment fn fs_main() -> @location(0) vec4<f32> { return vec4<f32>(s.glow); }';
 
     const dispose = await initWGSLRuntime(canvas, CUSTOM_FIELD_SHADER, el);
-    expect(events.filter((e) => e.code === 'wgsl-uniform-unfed')).toHaveLength(1);
+    expect(events.filter((e) => e.code === 'astro/wgpu/wgsl-uniform-unfed')).toHaveLength(1);
 
     el.dispatchEvent(new CustomEvent('liteship:uniform-update', { detail: { wgsl: { glow: 0.75 } } }));
-    expect(events.filter((e) => e.code === 'wgsl-uniform-unfed')).toHaveLength(1);
+    expect(events.filter((e) => e.code === 'astro/wgpu/wgsl-uniform-unfed')).toHaveLength(1);
     dispose!();
   });
 });
@@ -160,8 +160,7 @@ describe('WGSL honesty — #107 integer vector layout + write', () => {
       '@vertex fn vs_main() -> @builtin(position) vec4<f32> { return vec4<f32>(0.0); }\n' +
       '@fragment fn fs_main() -> @location(0) vec4<f32> { return vec4<f32>(f32(s.offset.x), f32(s.offset.y), 0.0, 1.0); }';
 
-    const declarations =
-      'struct S { state_index: u32, offset: vec2i }\n@group(0) @binding(0) var<uniform> s: S;';
+    const declarations = 'struct S { state_index: u32, offset: vec2i }\n@group(0) @binding(0) var<uniform> s: S;';
 
     const dispose = await initWGSLRuntime(makeCanvas(), VEC2I_SHADER, el, declarations);
     expect(dispose).not.toBeNull();
@@ -198,7 +197,7 @@ describe('WGSL honesty — #107 integer vector layout + write', () => {
       'struct S { state_index: u32, enabled: bool, strength: f32 }\n@group(0) @binding(0) var<uniform> s: S;';
 
     const dispose = await initWGSLRuntime(makeCanvas(), BOOL_SHADER, el, declarations);
-    expect(events).toContainEqual(expect.objectContaining({ code: 'wgsl-uniform-bool-unsupported' }));
+    expect(events).toContainEqual(expect.objectContaining({ code: 'astro/wgpu/wgsl-uniform-bool-unsupported' }));
 
     el.dispatchEvent(
       new CustomEvent('liteship:uniform-update', {
@@ -223,7 +222,7 @@ describe('WGSL honesty — #107 integer vector layout + write', () => {
       '@fragment fn fs_main() -> @location(0) vec4<f32> { return vec4<f32>(0.0); }';
 
     const dispose = await initWGSLRuntime(makeCanvas(), UNKNOWN_SHADER);
-    expect(events).toContainEqual(expect.objectContaining({ code: 'wgsl-uniform-type-unrecognized' }));
+    expect(events).toContainEqual(expect.objectContaining({ code: 'astro/wgpu/wgsl-uniform-type-unrecognized' }));
     dispose!();
   });
 

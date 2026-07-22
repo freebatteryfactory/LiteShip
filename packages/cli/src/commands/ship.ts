@@ -245,6 +245,7 @@ export async function ship(args: readonly string[]): Promise<number> {
   if (opts.unknownFlags.length > 0) {
     emitError(
       'ship',
+      'cli/invalid-argument',
       `unrecognized flag(s): ${opts.unknownFlags.join(', ')}`,
       'Run `liteship ship --help`. Ship refuses to run with unknown flags so a typo cannot trigger a publish.',
     );
@@ -254,13 +255,13 @@ export async function ship(args: readonly string[]): Promise<number> {
   // Git state — never blocks, only records.
   const headRes = await spawnArgvCapture('git', ['rev-parse', 'HEAD'], { cwd });
   if (headRes.exitCode !== 0) {
-    emitError('ship', `git rev-parse HEAD failed: ${headRes.stderr.trim()}`);
+    emitError('ship', 'cli/command-failed', `git rev-parse HEAD failed: ${headRes.stderr.trim()}`);
     return 1;
   }
   const sourceCommit = headRes.stdout.trim();
   const statusRes = await spawnArgvCapture('git', ['status', '--porcelain'], { cwd });
   if (statusRes.exitCode !== 0) {
-    emitError('ship', `git status --porcelain failed: ${statusRes.stderr.trim()}`);
+    emitError('ship', 'cli/command-failed', `git status --porcelain failed: ${statusRes.stderr.trim()}`);
     return 1;
   }
   const sourceDirty = statusRes.stdout.trim().length > 0;
@@ -268,13 +269,17 @@ export async function ship(args: readonly string[]): Promise<number> {
   // Lockfile + workspace manifest (computed once; shared across packages).
   const lockfilePath = join(cwd, 'pnpm-lock.yaml');
   if (!existsSync(lockfilePath)) {
-    emitError('ship', `pnpm-lock.yaml not found at ${lockfilePath}`);
+    emitError('ship', 'cli/workspace-required', `pnpm-lock.yaml not found at ${lockfilePath}`);
     return 1;
   }
   const lockBytes = new Uint8Array(readFileSync(lockfilePath));
   const workspace = loadWorkspace(cwd);
   if (workspace.length === 0) {
-    emitError('ship', 'no workspace packages discovered (pnpm-workspace.yaml empty or missing)');
+    emitError(
+      'ship',
+      'cli/workspace-required',
+      'no workspace packages discovered (pnpm-workspace.yaml empty or missing)',
+    );
     return 1;
   }
   const workspaceInput = workspace.map((p) => ({
@@ -293,7 +298,7 @@ export async function ship(args: readonly string[]): Promise<number> {
   try {
     buildEnv = deriveBuildEnv({ os: process.platform, arch: process.arch, nodeVersion: process.version, pmVersion });
   } catch (e) {
-    emitError('ship', e instanceof Error ? e.message : String(e));
+    emitError('ship', 'cli/config-invalid', e instanceof Error ? e.message : String(e));
     return 1;
   }
 
@@ -302,7 +307,11 @@ export async function ship(args: readonly string[]): Promise<number> {
   // invocation) — matters for a local no-filter ship of the whole workspace.
   const targets = topoSortByDependencies(selectTargets(workspace, opts.filter));
   if (targets.length === 0) {
-    emitError('ship', `no packages matched${opts.filter !== undefined ? ` --filter ${opts.filter}` : ''}`);
+    emitError(
+      'ship',
+      'cli/not-found',
+      `no packages matched${opts.filter !== undefined ? ` --filter ${opts.filter}` : ''}`,
+    );
     return 1;
   }
 
@@ -322,7 +331,7 @@ export async function ship(args: readonly string[]): Promise<number> {
     const name = pkg.packageJson.name;
     const version = pkg.packageJson.version;
     if (typeof name !== 'string' || typeof version !== 'string') {
-      emitError('ship', `${pkg.relativePath}: package.json missing name or version`);
+      emitError('ship', 'cli/config-invalid', `${pkg.relativePath}: package.json missing name or version`);
       return 1;
     }
 
@@ -332,7 +341,7 @@ export async function ship(args: readonly string[]): Promise<number> {
     // the package dir, then sanity-check existence.
     const packRes = await spawnArgvCapture('pnpm', ['pack'], { cwd: pkg.absolutePath });
     if (packRes.exitCode !== 0) {
-      emitError('ship', `pnpm pack failed in ${pkg.relativePath}: ${packRes.stderr.trim()}`);
+      emitError('ship', 'cli/command-failed', `pnpm pack failed in ${pkg.relativePath}: ${packRes.stderr.trim()}`);
       return 1;
     }
     const slug = packageSlug(name);
@@ -345,11 +354,12 @@ export async function ship(args: readonly string[]): Promise<number> {
       if (printed.length > 0 && existsSync(candidate)) {
         emitError(
           'ship',
+          'cli/integrity-failed',
           `tarball slug mismatch: expected ${tarballPath} but pnpm wrote ${candidate}. ` +
             `Refusing to ship a mislabeled artifact.`,
         );
       } else {
-        emitError('ship', `pnpm pack did not produce ${tarballName} in ${pkg.relativePath}`);
+        emitError('ship', 'cli/no-output', `pnpm pack did not produce ${tarballName} in ${pkg.relativePath}`);
       }
       return 1;
     }
@@ -366,6 +376,7 @@ export async function ship(args: readonly string[]): Promise<number> {
     } catch (e) {
       emitError(
         'ship',
+        'cli/integrity-failed',
         `could not read package/package.json from ${tarballPath}: ${e instanceof Error ? e.message : String(e)} — ` +
           `the tarball is malformed; re-pack with \`pnpm pack\` from the workspace root.`,
       );
@@ -374,6 +385,7 @@ export async function ship(args: readonly string[]): Promise<number> {
     if (workspaceLeaks.length > 0) {
       emitError(
         'ship',
+        'cli/integrity-failed',
         `${name} packed with unresolved workspace: specs (${workspaceLeaks.join('; ')}) — npm consumers cannot ` +
           `install these. This usually means the tarball was packed outside pnpm's workspace context. ` +
           `Fix: re-pack via \`pnpm pack\` (or publish through \`liteship ship\` from the workspace root) so pnpm ` +
@@ -388,6 +400,7 @@ export async function ship(args: readonly string[]): Promise<number> {
     } catch (e) {
       emitError(
         'ship',
+        'cli/integrity-failed',
         `tarballManifestAddress failed for ${pkg.relativePath}: ${e instanceof Error ? e.message : String(e)}`,
       );
       return 1;
@@ -421,6 +434,7 @@ export async function ship(args: readonly string[]): Promise<number> {
       }
       emitError(
         'ship',
+        'cli/command-failed',
         `pnpm publish --dry-run failed in ${pkg.relativePath}: ${dryRes.stderr.trim() || dryRes.stdout.trim()}`,
       );
       return 1;
@@ -459,6 +473,7 @@ export async function ship(args: readonly string[]): Promise<number> {
     } catch (e) {
       emitError(
         'ship',
+        'cli/integrity-failed',
         `ship-emit capsule failed for ${pkg.relativePath}: ${e instanceof Error ? e.message : String(e)}`,
       );
       return 1;
@@ -489,7 +504,7 @@ export async function ship(args: readonly string[]): Promise<number> {
       // a fully idempotent re-run succeeds with the skip receipts above.
       return 0;
     }
-    emitError('ship', 'no packages were minted; nothing to publish');
+    emitError('ship', 'cli/no-output', 'no packages were minted; nothing to publish');
     return 1;
   }
 
@@ -510,7 +525,11 @@ export async function ship(args: readonly string[]): Promise<number> {
     if (publishRes.exitCode !== 0) {
       const tail = publishRes.stderrTail?.trim() ?? '';
       if (isAlreadyPublishedFailure(tail)) continue;
-      emitError('ship', `npm publish exited ${publishRes.exitCode} for ${mintedNames[i]}${tail ? `: ${tail}` : ''}`);
+      emitError(
+        'ship',
+        'cli/command-failed',
+        `npm publish exited ${publishRes.exitCode} for ${mintedNames[i]}${tail ? `: ${tail}` : ''}`,
+      );
       return 2;
     }
   }

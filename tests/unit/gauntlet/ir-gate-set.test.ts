@@ -13,8 +13,6 @@
  *
  * @module
  */
-// PROVES: INV-DIAGNOSTIC-CODE-CLOSED
-
 import { describe, it, expect } from 'vitest';
 import { resolve } from 'node:path';
 import {

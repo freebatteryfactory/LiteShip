@@ -51,6 +51,7 @@ helper unchanged — zero rebuild, zero fork.
 
 - [DiagnosticArea](type-aliases/DiagnosticArea.md)
 - [DiagnosticCode](type-aliases/DiagnosticCode.md)
+- [DiagnosticCodeFor](type-aliases/DiagnosticCodeFor.md)
 - [LiteShipError](type-aliases/LiteShipError.md)
 - [LiteShipErrorTag](type-aliases/LiteShipErrorTag.md)
 - [Result](type-aliases/Result.md)
@@ -58,6 +59,7 @@ helper unchanged — zero rebuild, zero fork.
 
 ## Variables
 
+- [DIAGNOSTIC\_AREAS](variables/DIAGNOSTIC_AREAS.md)
 - [DIAGNOSTIC\_REGISTRY](variables/DIAGNOSTIC_REGISTRY.md)
 - [HostCapabilityError](variables/HostCapabilityError.md)
 - [IntegrityError](variables/IntegrityError.md)

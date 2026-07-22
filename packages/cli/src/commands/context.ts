@@ -15,7 +15,12 @@ import { emit, emitError } from '../receipts.js';
 /** Execute the context command (CLI adapter over the shared registry command). */
 export async function context(task: string | null, opts: { json?: boolean; pretty?: boolean } = {}): Promise<number> {
   if (task === null || task.length === 0) {
-    emitError('context', 'usage: liteship context --task <id>', `valid tasks: ${CONTEXT_TASK_IDS.join(', ')}`);
+    emitError(
+      'context',
+      'cli/usage',
+      'usage: liteship context --task <id>',
+      `valid tasks: ${CONTEXT_TASK_IDS.join(', ')}`,
+    );
     return 1;
   }
 
@@ -23,7 +28,7 @@ export async function context(task: string | null, opts: { json?: boolean; prett
   const payload = result.payload as ContextPayload;
 
   if (result.status === 'failed') {
-    emitError('context', `unknown task: ${task}`, `valid tasks: ${CONTEXT_TASK_IDS.join(', ')}`);
+    emitError('context', 'cli/not-found', `unknown task: ${task}`, `valid tasks: ${CONTEXT_TASK_IDS.join(', ')}`);
     return result.exitCode ?? 1;
   }
 

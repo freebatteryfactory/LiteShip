@@ -157,12 +157,14 @@ const _encode = (hlc: HLCShape): string => {
 const _decode = (s: string): HLCShape => {
   const parts = s.split(':');
   if (parts.length < 3)
-    throw ParseError('hlc', `expected at least 3 colon-separated parts, got "${s}"`, { code: 'malformed' });
+    throw ParseError('hlc', `expected at least 3 colon-separated parts, got "${s}"`, {
+      code: 'core/hlc/malformed',
+    });
   const wall_ms = parseInt(parts[0]!, 16);
   const counter = parseInt(parts[1]!, 16);
   const node_id = parts.slice(2).join(':');
-  if (isNaN(wall_ms)) throw ParseError('hlc', `wall_ms is not valid hex in "${s}"`, { code: 'malformed' });
-  if (isNaN(counter)) throw ParseError('hlc', `counter is not valid hex in "${s}"`, { code: 'malformed' });
+  if (isNaN(wall_ms)) throw ParseError('hlc', `wall_ms is not valid hex in "${s}"`, { code: 'core/hlc/malformed' });
+  if (isNaN(counter)) throw ParseError('hlc', `counter is not valid hex in "${s}"`, { code: 'core/hlc/malformed' });
   return { wall_ms, counter, node_id };
 };
 

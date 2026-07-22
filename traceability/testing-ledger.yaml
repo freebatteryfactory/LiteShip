@@ -184,10 +184,13 @@ traces:
       - 'tests/unit/liteship/facade-subpaths.test.ts::resolves every subpath to its built dist/*.d.ts under node16'
       - 'tests/unit/liteship/facade-subpaths.test.ts::resolves every subpath to its built dist/*.d.ts under bundler'
 
-  # ── Assurance (diagnostic-code closure) — the enrolled guard rides the enforced lean gate set ─
+  # ── Assurance (diagnostic-code closure) — exact types + independent source backstop ─
   - id: INV-DIAGNOSTIC-CODE-CLOSED
     tests:
-      - 'tests/unit/gauntlet/ir-gate-set.test.ts::has exactly the seven regex gates plus the three check-governance meta-gates, the diagnostic-code registry guard, the facade-export-budget guard, and the obligations-ledger guard'
+      - 'tests/unit/error/diagnostic-registry-closure.test.ts::every key agrees with its area and carries complete explanation plus owner metadata'
+      - 'tests/unit/error/diagnostic-registry-closure.test.ts::the exact union rejects invented registry and runtime identities at compile time'
+      - 'tests/unit/command/explain.test.ts::explains schema/type with area schema and owner @liteship/core/schema'
+      - 'tests/unit/gauntlet/gates-dogfood.test.ts::each gate self-proves (red caught, green clean, mutation killed)'
 
   # ── The owner-signed deferral (a real future law, no proving test YET) ──────
   # WAIVED, not UNTRACED — the waiver keeps the path honest. When the expiry passes

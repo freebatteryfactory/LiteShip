@@ -354,9 +354,9 @@ function parseAndSealGraph(serialized: string | DocumentGraph): DocumentGraph | 
     try {
       raw = JSON.parse(serialized);
     } catch (err) {
-      Diagnostics.warnOnce({
+      Diagnostics.warnOnceRegistered({
         source: 'liteship/astro.graph',
-        code: 'graph-parse-failed',
+        code: 'astro/graph-runtime/graph-parse-failed',
         message:
           `Failed to parse the serialized DocumentGraph as JSON (${String(err)}). ` +
           `The graph runtime stays inert. Fix: pass a valid serialized DocumentGraph.`,
@@ -410,9 +410,9 @@ function parseAndSealGraph(serialized: string | DocumentGraph): DocumentGraph | 
       resealed.push(sealedNode);
     }
   } catch (err) {
-    Diagnostics.warnOnce({
+    Diagnostics.warnOnceRegistered({
       source: 'liteship/astro.graph',
-      code: 'graph-reseal-failed',
+      code: 'astro/graph-runtime/graph-reseal-failed',
       message:
         `Failed to re-seal a DocumentGraph node (${String(err)}). The graph runtime stays inert. ` +
         `Fix: ensure each node payload is well-formed before serializing.`,
@@ -449,9 +449,9 @@ function parseAndSealGraph(serialized: string | DocumentGraph): DocumentGraph | 
   try {
     return sealGraph(resealedGraph);
   } catch (err) {
-    Diagnostics.warnOnce({
+    Diagnostics.warnOnceRegistered({
       source: 'liteship/astro.graph',
-      code: 'graph-seal-failed',
+      code: 'astro/graph-runtime/graph-seal-failed',
       message:
         `Failed to seal the DocumentGraph (${String(err)}). The graph runtime stays inert. ` +
         `Fix: ensure the graph's nodes/edges are well-formed before serializing.`,

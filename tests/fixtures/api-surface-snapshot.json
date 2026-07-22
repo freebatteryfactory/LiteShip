@@ -1242,7 +1242,7 @@
         {
           "name": "Diagnostics",
           "kind": "namespace",
-          "signature": "clearOnce:function,createBufferSink:function,error:function,reset:function,resetClock:function,resetSink:function,setClock:function,setSink:function,warn:function,warnOnce:function"
+          "signature": "clearOnce:function,createBufferSink:function,error:function,errorRegistered:function,reset:function,resetClock:function,resetSink:function,setClock:function,setSink:function,warn:function,warnOnce:function,warnOnceRegistered:function,warnRegistered:function"
         },
         {
           "name": "DocumentGraphNodeSchema",
@@ -2390,6 +2390,10 @@
     "@liteship/error": {
       "version": "0.18.0",
       "exports": [
+        {
+          "name": "DIAGNOSTIC_AREAS",
+          "kind": "const"
+        },
         {
           "name": "DIAGNOSTIC_REGISTRY",
           "kind": "const"

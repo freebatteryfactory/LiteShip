@@ -83,9 +83,9 @@ export function parseSvgStateAttrs(json: string | null): SvgStateAttrs | null {
   try {
     parsed = JSON.parse(json);
   } catch (err) {
-    Diagnostics.warnOnce({
+    Diagnostics.warnOnceRegistered({
       source: 'liteship/astro.svg',
-      code: 'svg-attrs-parse-failed',
+      code: 'astro/svg/svg-attrs-parse-failed',
       message:
         `Failed to parse the data-liteship-svg per-state attrs as JSON (${String(err)}). ` +
         `The entity carries no authored SVG attrs. Fix: emit valid JSON for data-liteship-svg.`,

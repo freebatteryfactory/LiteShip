@@ -62,7 +62,7 @@ export async function sceneRender(
     renderContext(opts),
   );
   if (result.status === 'failed') {
-    emitError('scene.render', (result.payload as { error: string }).error);
+    emitError('scene.render', 'cli/command-failed', (result.payload as { error: string }).error);
     return result.exitCode ?? 1;
   }
   const payload = result.payload as Omit<

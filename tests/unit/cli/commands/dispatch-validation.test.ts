@@ -19,14 +19,14 @@ async function capture(fn: () => Promise<number>): Promise<CaptureResult> {
   let stderr = '';
   const origO = process.stdout.write.bind(process.stdout);
   const origE = process.stderr.write.bind(process.stderr);
-  (process.stdout as unknown as { write: unknown }).write = ((c: string | Uint8Array) => {
+  (process.stdout as unknown as { write: unknown }).write = (c: string | Uint8Array) => {
     stdout += typeof c === 'string' ? c : Buffer.from(c).toString();
     return true;
-  });
-  (process.stderr as unknown as { write: unknown }).write = ((c: string | Uint8Array) => {
+  };
+  (process.stderr as unknown as { write: unknown }).write = (c: string | Uint8Array) => {
     stderr += typeof c === 'string' ? c : Buffer.from(c).toString();
     return true;
-  });
+  };
   try {
     const exit = await fn();
     return { exit, stdout, stderr };
@@ -36,10 +36,13 @@ async function capture(fn: () => Promise<number>): Promise<CaptureResult> {
   }
 }
 
-const lastStderrReceipt = (stderr: string): { command: string; error: string } => {
-  const lines = stderr.trim().split('\n').filter((l) => l.startsWith('{'));
+const lastStderrReceipt = (stderr: string): { command: string; code: string; error: string } => {
+  const lines = stderr
+    .trim()
+    .split('\n')
+    .filter((l) => l.startsWith('{'));
   expect(lines.length).toBeGreaterThan(0);
-  return JSON.parse(lines[lines.length - 1]!) as { command: string; error: string };
+  return JSON.parse(lines[lines.length - 1]!) as { command: string; code: string; error: string };
 };
 
 describe('dispatch — closed-set flag validation', () => {
@@ -48,6 +51,7 @@ describe('dispatch — closed-set flag validation', () => {
     expect(r.exit).toBe(1);
     const err = lastStderrReceipt(r.stderr);
     expect(err.command).toBe('doctor');
+    expect(err.code).toBe('cli/invalid-argument');
     expect(err.error).toBe('expected target: cloudflare | astro | consumer-app (got: cloudfare)');
   });
 
@@ -60,7 +64,9 @@ describe('dispatch — closed-set flag validation', () => {
   it('doctor --target with no value names the gap', async () => {
     const r = await capture(() => run(['doctor', '--target']));
     expect(r.exit).toBe(1);
-    expect(lastStderrReceipt(r.stderr).error).toBe('expected target: cloudflare | astro | consumer-app (got: <missing>)');
+    expect(lastStderrReceipt(r.stderr).error).toBe(
+      'expected target: cloudflare | astro | consumer-app (got: <missing>)',
+    );
   });
 
   it('describe --format with an unknown value fails instead of falling through to JSON', async () => {
@@ -68,6 +74,7 @@ describe('dispatch — closed-set flag validation', () => {
     expect(r.exit).toBe(1);
     const err = lastStderrReceipt(r.stderr);
     expect(err.command).toBe('describe');
+    expect(err.code).toBe('cli/invalid-argument');
     expect(err.error).toBe('expected format: json | mcp (got: yaml)');
   });
 
@@ -81,6 +88,7 @@ describe('dispatch — closed-set flag validation', () => {
     const r = await capture(() => run(['asset', 'analyze', 'kick-loop']));
     expect(r.exit).toBe(1);
     const err = lastStderrReceipt(r.stderr);
+    expect(err.code).toBe('cli/usage');
     expect(err.error).toMatch(/missing --projection/);
     expect(err.error).toMatch(/beat \| onset \| waveform/);
     expect(err.error).toMatch(/Example: liteship asset analyze/);
@@ -93,6 +101,7 @@ describe('dispatch — missing positionals emit a usage line (no blank-path forw
     expect(r.exit).toBe(1);
     const err = lastStderrReceipt(r.stderr);
     expect(err.command).toBe(`scene.${sub}`);
+    expect(err.code).toBe('cli/usage');
     expect(err.error).toMatch(new RegExp(`usage: liteship scene ${sub} <path-to-scene\\.ts>`));
   });
 
@@ -115,7 +124,9 @@ describe('dispatch — missing positionals emit a usage line (no blank-path forw
   it('asset analyze without an asset id', async () => {
     const r = await capture(() => run(['asset', 'analyze']));
     expect(r.exit).toBe(1);
-    expect(lastStderrReceipt(r.stderr).error).toBe('usage: liteship asset analyze <asset-id> --projection=<beat|onset|waveform>');
+    expect(lastStderrReceipt(r.stderr).error).toBe(
+      'usage: liteship asset analyze <asset-id> --projection=<beat|onset|waveform>',
+    );
   });
 
   it('asset verify without an asset id', async () => {

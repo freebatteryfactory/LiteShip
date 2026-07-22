@@ -284,6 +284,7 @@ describe('Receipt', () => {
       const err = await rejection<Error>(Receipt.verifyMAC(envelope, key));
       expect(err).toBeInstanceOf(Error);
       expect(err.message).toContain('expected even-length hex string');
+      expect((err as Error & { code?: string }).code).toBe('core/receipt/malformed');
     });
 
     test('verifyMAC with odd-length hex fails', async () => {
@@ -293,6 +294,7 @@ describe('Receipt', () => {
       const err = await rejection<Error>(Receipt.verifyMAC(envelope, key));
       expect(err).toBeInstanceOf(Error);
       expect(err.message).toContain('expected even-length hex string');
+      expect((err as Error & { code?: string }).code).toBe('core/receipt/malformed');
     });
 
     test('verifyMAC with valid hex proceeds normally', async () => {

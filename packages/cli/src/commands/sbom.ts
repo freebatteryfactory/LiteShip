@@ -60,13 +60,13 @@ export function sbom(_args: readonly string[], deps: SbomDeps = defaultSbomDeps)
   const { isLiteShipWorkspace, readWorkspacePackages, analyzeLockfile, buildSbom, checkSbomCompleteness } = deps;
   const cwd = process.cwd();
   if (!isLiteShipWorkspace(cwd)) {
-    emitError('sbom', 'not a LiteShip workspace (root package.json is not "liteship")');
+    emitError('sbom', 'cli/workspace-required', 'not a LiteShip workspace (root package.json is not "liteship")');
     return 1;
   }
 
   const lockfilePath = join(cwd, 'pnpm-lock.yaml');
   if (!existsSync(lockfilePath)) {
-    emitError('sbom', `pnpm-lock.yaml not found at ${lockfilePath}`);
+    emitError('sbom', 'cli/workspace-required', `pnpm-lock.yaml not found at ${lockfilePath}`);
     return 1;
   }
   const lockfileText = readFileSync(lockfilePath, 'utf8');
@@ -81,7 +81,11 @@ export function sbom(_args: readonly string[], deps: SbomDeps = defaultSbomDeps)
   } catch (e) {
     // The lockfile parser fails LOUD with a tagged ParseError on a shape it
     // cannot read — surface it, never emit a partial SBOM over a half-parsed lock.
-    emitError('sbom', hasTag(e, 'ParseError') ? e.message : `lockfile parse failed: ${String(e)}`);
+    emitError(
+      'sbom',
+      'cli/config-invalid',
+      hasTag(e, 'ParseError') ? e.message : `lockfile parse failed: ${String(e)}`,
+    );
     return 1;
   }
 

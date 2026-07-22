@@ -236,10 +236,10 @@ export function initLLMDirective(load: () => Promise<unknown>, element: HTMLElem
     'llm',
     'liteship/astro.llm',
     {
-      crossOriginRejected: 'llm-cross-origin-url-rejected',
-      malformedUrl: 'llm-malformed-url-rejected',
-      originNotAllowed: 'llm-origin-not-allowed',
-      endpointKindNotPermitted: 'llm-endpoint-kind-not-permitted',
+      crossOriginRejected: 'astro/llm/llm-cross-origin-url-rejected',
+      malformedUrl: 'astro/llm/llm-malformed-url-rejected',
+      originNotAllowed: 'astro/llm/llm-origin-not-allowed',
+      endpointKindNotPermitted: 'astro/llm/llm-endpoint-kind-not-permitted',
     },
     endpointPolicy,
   );
@@ -361,9 +361,9 @@ export function initLLMDirective(load: () => Promise<unknown>, element: HTMLElem
   try {
     connect();
   } catch (error) {
-    Diagnostics.error({
+    Diagnostics.errorRegistered({
       source: 'liteship/astro.llm',
-      code: 'llm-runtime-init-failed',
+      code: 'astro/llm/llm-runtime-init-failed',
       message: 'The shared LLM runtime could not initialize.',
       detail: error instanceof Error ? error.message : String(error),
     });

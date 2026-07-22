@@ -34,7 +34,7 @@
 import { defineToken, defineTheme } from '@liteship/core';
 import type { Boundary, Token, Theme, TokenCategory } from '@liteship/core';
 import { hasTag } from '@liteship/error';
-import type { DiagnosticCode } from '@liteship/error';
+import type { DiagnosticCodeFor } from '@liteship/error';
 import {
   blankCssCommentsAndStrings,
   parseFlatDeclarations,
@@ -170,7 +170,10 @@ function tokenNameOf(prop: string): string | null {
  * losslessly (`lossyTokenConversion`); a value whose syntax does not classify into
  * a category is kept under the catch-all `effect` category (`unknownTokenCategory`).
  */
-function classifyValue(value: string): { readonly category: TokenCategory; readonly code?: DiagnosticCode } {
+function classifyValue(value: string): {
+  readonly category: TokenCategory;
+  readonly code?: DiagnosticCodeFor<'migrate'>;
+} {
   if (/var\(|calc\(/.test(value)) return { category: 'effect', code: MIGRATE_CODES.lossyTokenConversion };
   switch (inferSyntax(value)) {
     case '<color>':

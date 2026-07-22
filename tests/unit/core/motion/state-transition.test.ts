@@ -54,6 +54,17 @@ const graph = (nodes: DocumentGraphNode[]): DocumentGraph =>
 
 const baseId = () => graph([node('a')]).id;
 
+function decodeErrorCode(value: unknown): string | undefined {
+  try {
+    decodeDiscreteStateTransition(value);
+    return undefined;
+  } catch (error) {
+    return typeof error === 'object' && error !== null && 'code' in error
+      ? String((error as { readonly code?: unknown }).code)
+      : undefined;
+  }
+}
+
 const mkTransition = (over: Partial<DiscreteStateTransition> = {}): DiscreteStateTransition => ({
   _tag: 'DiscreteStateTransition',
   _version: 1,
@@ -137,7 +148,15 @@ describe('decodeDiscreteStateTransition is fail-closed', () => {
   });
 
   test('rejects a kind other than "discrete" (continuous cannot decode into a transition)', () => {
-    expect(() => decodeDiscreteStateTransition({ ...mkTransition(), kind: 'continuous' })).toThrow(/kind/i);
+    const invalid = { ...mkTransition(), kind: 'continuous' };
+    expect(() => decodeDiscreteStateTransition(invalid)).toThrow(/kind/i);
+    expect(decodeErrorCode(invalid)).toBe('core/state-transition/wrong_kind');
+  });
+
+  test('rejects missing required fields with the registered malformed identity', () => {
+    const invalid = { ...mkTransition(), cell: undefined };
+    expect(() => decodeDiscreteStateTransition(invalid)).toThrow(/missing required/i);
+    expect(decodeErrorCode(invalid)).toBe('core/state-transition/malformed');
   });
 });
 

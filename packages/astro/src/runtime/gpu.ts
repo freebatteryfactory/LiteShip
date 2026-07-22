@@ -51,9 +51,9 @@ function readShaderDeclarations(boundaryJson: string | null, key: 'glslDeclarati
     // Malformed payload: surface it (init-time) instead of laundering the parse
     // error into a silent ''. The directive then keeps its built-in fallback
     // shader (no preamble) — a deliberate degradation, not a swallowed failure.
-    Diagnostics.warnOnce({
+    Diagnostics.warnOnceRegistered({
       source: 'liteship/astro.gpu',
-      code: 'shader-declarations-parse-failed',
+      code: 'astro/gpu/shader-declarations-parse-failed',
       message:
         `Failed to parse boundary JSON while reading ${key} (${String(err)}). ` +
         `Keeping the built-in fallback shader. Fix: re-serialize with adaptiveAttrs({ boundary }) from @liteship/astro.`,
@@ -73,9 +73,9 @@ function readShaderDeclarations(boundaryJson: string | null, key: 'glslDeclarati
  */
 function warnIfHostUnsized(host: HTMLElement): void {
   if (host.clientWidth !== 0 && host.clientHeight !== 0) return;
-  Diagnostics.warnOnce({
+  Diagnostics.warnOnceRegistered({
     source: 'liteship/astro.gpu',
-    code: 'canvas-default-size',
+    code: 'astro/gpu/canvas-default-size',
     message:
       `client:gpu host had no layout at boot (clientWidth/clientHeight = 0); the canvas falls back to ` +
       `${CANVAS_FALLBACK_WIDTH}x${CANVAS_FALLBACK_HEIGHT} (the HTML default), so the shader renders at a tiny ` +
@@ -155,9 +155,9 @@ function compileShader(
   gl.shaderSource(shader, source);
   gl.compileShader(shader);
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    Diagnostics.warn({
+    Diagnostics.warnRegistered({
       source: 'liteship/astro.gpu',
-      code: 'shader-compile-failed',
+      code: 'astro/gpu/shader-compile-failed',
       message: `Shader compilation failed for element "${elementLabel}".`,
       detail: gl.getShaderInfoLog(shader),
     });
@@ -184,9 +184,9 @@ function createProgram(
   gl.linkProgram(program);
 
   if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-    Diagnostics.warn({
+    Diagnostics.warnRegistered({
       source: 'liteship/astro.gpu',
-      code: 'program-link-failed',
+      code: 'astro/gpu/program-link-failed',
       message: 'Shader program linking failed.',
       detail: gl.getProgramInfoLog(program),
     });
@@ -234,10 +234,10 @@ export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement, 
     'gpu-shader',
     'liteship/astro.gpu',
     {
-      crossOriginRejected: 'shader-cross-origin-url-rejected',
-      malformedUrl: 'shader-malformed-url-rejected',
-      originNotAllowed: 'shader-origin-not-allowed',
-      endpointKindNotPermitted: 'shader-endpoint-kind-not-permitted',
+      crossOriginRejected: 'astro/gpu/shader-cross-origin-url-rejected',
+      malformedUrl: 'astro/gpu/shader-malformed-url-rejected',
+      originNotAllowed: 'astro/gpu/shader-origin-not-allowed',
+      endpointKindNotPermitted: 'astro/gpu/shader-endpoint-kind-not-permitted',
     },
     readRuntimeEndpointPolicy(),
   );
@@ -337,9 +337,9 @@ export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement, 
         warnWebGpuUnavailable();
         const gl = canvas.getContext('webgl2');
         if (gl) {
-          Diagnostics.warnOnce({
+          Diagnostics.warnOnceRegistered({
             source: 'liteship/astro.gpu',
-            code: 'wgsl-fallback-webgl2',
+            code: 'astro/gpu/wgsl-fallback-webgl2',
             message: 'WebGPU unavailable; WGSL directive fell back to WebGL2 default shader.',
           });
         }
@@ -371,9 +371,9 @@ export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement, 
 
   const gl = canvas.getContext('webgl2');
   if (!gl) {
-    Diagnostics.warnOnce({
+    Diagnostics.warnOnceRegistered({
       source: 'liteship/astro.gpu',
-      code: 'webgl2-unavailable',
+      code: 'astro/gpu/webgl2-unavailable',
       message: 'WebGL2 is unavailable; falling back to CSS rendering.',
     });
     load();
@@ -407,9 +407,9 @@ export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement, 
       try {
         const response = await fetch(shaderSrc);
         if (!response.ok) {
-          Diagnostics.warn({
+          Diagnostics.warnRegistered({
             source: 'liteship/astro.gpu',
-            code: 'shader-fetch-failed',
+            code: 'astro/gpu/shader-fetch-failed',
             message: 'Failed to fetch shader source.',
             detail: response.statusText,
           });
@@ -417,9 +417,9 @@ export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement, 
         }
         fetchedSource = await response.text();
       } catch (err) {
-        Diagnostics.warn({
+        Diagnostics.warnRegistered({
           source: 'liteship/astro.gpu',
-          code: 'shader-fetch-threw',
+          code: 'astro/gpu/shader-fetch-threw',
           message: 'Fetching shader source threw an error.',
           cause: err,
         });
@@ -442,18 +442,18 @@ export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement, 
       // provably passed the integrity sanitizer.
       if (!decideShaderIntegrity(verification, DEFAULT_SHADER_INTEGRITY_MODE).proceed) {
         if (verification._tag === 'mismatch') {
-          Diagnostics.error({
+          Diagnostics.errorRegistered({
             source: 'liteship/astro.gpu',
-            code: 'shader-integrity-mismatch',
+            code: 'astro/gpu/shader-integrity-mismatch',
             message:
               `Shader content integrity check FAILED for "${shaderSrc}" — the fetched bytes do not match the ` +
               `author-pinned hash (a tampered or compromised shader). Refusing to compile. ` +
               `expected sha256 ${verification.expectedHex}, got ${verification.actualHex}.`,
           });
         } else {
-          Diagnostics.error({
+          Diagnostics.errorRegistered({
             source: 'liteship/astro.gpu',
-            code: 'shader-integrity-absent',
+            code: 'astro/gpu/shader-integrity-absent',
             message:
               `External shader "${shaderSrc}" was fetched with NO integrity hash. An unverified external ` +
               `shader cannot be loaded (secure-by-default). Refusing to compile. ` +
@@ -596,9 +596,9 @@ void main() {
             }
           }
         } catch {
-          Diagnostics.warnOnce({
+          Diagnostics.warnOnceRegistered({
             source: 'liteship/astro.gpu',
-            code: 'uniform-update-parse-failed',
+            code: 'astro/gpu/uniform-update-parse-failed',
             message:
               `Failed to parse boundary JSON during uniform update (${boundaryJson.slice(0, 120)}). ` +
               `Fix: re-serialize the boundary with adaptiveAttrs({ boundary }) from @liteship/astro.`,

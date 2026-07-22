@@ -83,6 +83,7 @@ export async function dev(opts: { example?: string; tutorial?: boolean; cwd?: st
   if (!existsSync(resolve(exampleDir, 'package.json'))) {
     emitError(
       'dev',
+      'cli/not-found',
       `no example app at ${exampleRel} (expected ${exampleRel}/package.json) — run inside a LiteShip app (liteship.config.ts + astro/vite config), or from a dir with ${exampleRel}`,
       'List the available examples: ls examples/',
     );

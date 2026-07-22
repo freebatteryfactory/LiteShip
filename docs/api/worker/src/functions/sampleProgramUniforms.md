@@ -8,7 +8,7 @@
 
 > **sampleProgramUniforms**(`plan`, `t`): [`ProgramUniforms`](../interfaces/ProgramUniforms.md)
 
-Defined in: core/dist/motion/transition-program.d.ts:185
+Defined in: core/dist/motion/transition-program.d.ts:184
 
 Project a `sampleProgram` sample into the `liteship:uniform-update` payload — the ONE
 uniform-building path shared by the `client:motion` floor (`writeContinuousMap`, which

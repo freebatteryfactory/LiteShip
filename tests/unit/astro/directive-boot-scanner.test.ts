@@ -121,7 +121,7 @@ describe('Astro directive boot scanner', () => {
     await scanAndBootDirectives([]);
 
     const warnings = events.filter(
-      (event) => event.code === 'directive-attribute-requires-marker:data-liteship-boundary',
+      (event) => event.code === 'astro/directive-boot/directive-attribute-requires-marker',
     );
     expect(warnings).toHaveLength(1);
     expect(warnings[0]).toMatchObject({
@@ -139,7 +139,7 @@ describe('Astro directive boot scanner', () => {
     events.length = 0;
     await scanAndBootDirectives([]);
 
-    expect(events.some((event) => event.code === 'directive-attribute-requires-marker:data-liteship-boundary')).toBe(
+    expect(events.some((event) => event.code === 'astro/directive-boot/directive-attribute-requires-marker')).toBe(
       false,
     );
   });
@@ -163,9 +163,10 @@ describe('Astro directive boot scanner', () => {
     await scanAndBootDirectives([]);
 
     const warnings = events.filter(
-      (event) => event.code === 'directive-attribute-requires-marker:data-liteship-boundary',
+      (event) => event.code === 'astro/directive-boot/directive-attribute-requires-marker',
     );
     expect(warnings).toHaveLength(1);
+    expect(warnings[0]?.detail).toEqual({ attribute: 'data-liteship-boundary' });
   });
 
   test('bootDirectiveEntry initializes once; a second call for the same directive is a no-op', async () => {
@@ -212,8 +213,9 @@ describe('Astro directive boot scanner', () => {
 
     await scanAndBootDirectives(['adaptive', 'gpu'], document, loaders);
 
-    const collisions = events.filter((event) => event.code === 'directive-collision:adaptive+gpu');
+    const collisions = events.filter((event) => event.code === 'astro/directive-boot/directive-collision');
     expect(collisions).toHaveLength(1);
+    expect(collisions[0]?.detail).toEqual({ conflicting: ['adaptive', 'gpu'] });
     expect(collisions[0]?.message).toContain('Fix:');
   });
 });

@@ -575,7 +575,7 @@ export const verifyMAC = async (envelope: ReceiptEnvelope, key: CryptoKey): Prom
   if (!envelope.signature) return false;
   const signatureHex = envelope.signature;
   if (!/^[0-9a-fA-F]+$/.test(signatureHex) || signatureHex.length % 2 !== 0) {
-    throw ParseError('signature-hex', 'expected even-length hex string', { code: 'malformed' });
+    throw ParseError('signature-hex', 'expected even-length hex string', { code: 'core/receipt/malformed' });
   }
   const signatureArray = new Uint8Array(signatureHex.match(/.{1,2}/g)!.map((byte) => parseInt(byte, 16)));
   const data = new TextEncoder().encode(envelope.hash);

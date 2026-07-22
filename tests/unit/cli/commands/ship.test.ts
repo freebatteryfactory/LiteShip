@@ -37,9 +37,16 @@ describe('ship command (smoke)', () => {
     const { exit, stderr } = await captureCli(() => ship(['--filter', 'no-such-package-xyz']));
     expect(exit).toBe(1);
     const line = stderr.trim().split('\n').pop()!;
-    const event = JSON.parse(line) as { status: string; command: string; error: string; timestamp: string };
+    const event = JSON.parse(line) as {
+      status: string;
+      command: string;
+      code: string;
+      error: string;
+      timestamp: string;
+    };
     expect(event.status).toBe('failed');
     expect(event.command).toBe('ship');
+    expect(event.code).toBe('cli/not-found');
     expect(typeof event.error).toBe('string');
     expect(event.error.length).toBeGreaterThan(0);
     expect(typeof event.timestamp).toBe('string');
@@ -75,9 +82,15 @@ describe('ship arg safety (fail-closed: no flag typo can trigger a publish)', ()
   it('refuses an unrecognized flag (exit 1, emitError) instead of shipping', async () => {
     const { exit, stderr } = await captureCli(() => ship(['--hepl']));
     expect(exit).toBe(1);
-    const event = JSON.parse(stderr.trim().split('\n').pop()!) as { status: string; command: string; error: string };
+    const event = JSON.parse(stderr.trim().split('\n').pop()!) as {
+      status: string;
+      command: string;
+      code: string;
+      error: string;
+    };
     expect(event.status).toBe('failed');
     expect(event.command).toBe('ship');
+    expect(event.code).toBe('cli/invalid-argument');
     expect(event.error).toContain('--hepl');
   });
 

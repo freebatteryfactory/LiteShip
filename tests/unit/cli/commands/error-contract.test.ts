@@ -1,7 +1,8 @@
 /**
  * CLI error-contract upgrades:
- *  - emitError carries an optional `hint` field (the literal next thing to
- *    type — the doctor-check convention generalized into the envelope).
+ *  - emitError carries a required stable `cli/*` code and an optional `hint`
+ *    field (the literal next thing to type — the doctor-check convention
+ *    generalized into the envelope).
  *  - `liteship mcp` without @liteship/mcp-server installed emits the structured
  *    one-JSON-line-on-stderr envelope instead of a raw ERR_MODULE_NOT_FOUND
  *    stack trace.
@@ -37,13 +38,16 @@ async function captureStderr<T>(fn: () => Promise<T> | T): Promise<{ result: T; 
   }
 }
 
-describe('emitError hint field', () => {
-  it('includes hint in the stderr JSON envelope when supplied', async () => {
-    const { stderr } = await captureStderr(() => emitError('demo', 'something broke', 'Type this: liteship doctor'));
+describe('emitError diagnostic envelope', () => {
+  it('includes the stable code and hint when supplied', async () => {
+    const { stderr } = await captureStderr(() =>
+      emitError('demo', 'cli/command-failed', 'something broke', 'Type this: liteship doctor'),
+    );
     const receipt = JSON.parse(stderr.trim());
     expect(receipt).toMatchObject({
       status: 'failed',
       command: 'demo',
+      code: 'cli/command-failed',
       error: 'something broke',
       hint: 'Type this: liteship doctor',
     });
@@ -51,7 +55,7 @@ describe('emitError hint field', () => {
   });
 
   it('omits the hint key entirely when not supplied', async () => {
-    const { stderr } = await captureStderr(() => emitError('demo', 'something broke'));
+    const { stderr } = await captureStderr(() => emitError('demo', 'cli/command-failed', 'something broke'));
     const receipt = JSON.parse(stderr.trim());
     expect('hint' in receipt).toBe(false);
   });
@@ -69,6 +73,7 @@ describe('liteship mcp without @liteship/mcp-server installed', () => {
     const receipt = JSON.parse(lines[lines.length - 1]!);
     expect(receipt.status).toBe('failed');
     expect(receipt.command).toBe('mcp');
+    expect(receipt.code).toBe('cli/not-found');
     expect(receipt.error).toBe('@liteship/mcp-server is not installed');
     // Pin the LAW, not the literal: the hint pins the sibling MCP server to the
     // CLI's OWN minor line, so it tracks every release bump (a hard-coded `0.1.x`

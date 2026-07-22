@@ -242,9 +242,9 @@ function _createStore(runtime?: RuntimeCoordinatorShape): StateCellStoreShape {
       // duplicate replay (no-op, quiet). Genesis (both 0) still installs the
       // initial state, so bootstrap hydration is unaffected.
       if (generation < entry.generation) {
-        Diagnostics.warnOnce({
+        Diagnostics.warnOnceRegistered({
           source: 'liteship/core.state-cell',
-          code: 'discrete-generation-rollback',
+          code: 'core/state-cell/discrete-generation-rollback',
           message:
             `hydrateDiscrete("${name}", "${state}", generation ${generation}) refused: it would roll the cell ` +
             `back from generation ${entry.generation} to ${generation} (stale/duplicate transition receipt). ` +

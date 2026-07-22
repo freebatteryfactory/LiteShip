@@ -12,6 +12,7 @@
  */
 
 import type { ContentAddress, SignalInput, StateName } from '../schema/brands.js';
+import type { DiagnosticCodeFor } from '@liteship/error';
 import type {
   ComponentNode,
   DocumentGraph,
@@ -25,6 +26,11 @@ import type { DiagnosticPayload } from '../evidence/diagnostics.js';
 import type { EdgeType } from '../authoring/plan.js';
 import type { RuntimeEasing } from './easing.js';
 import { formatTypedValue, parseTypedBinding, type TypedValue } from './interpolate.js';
+
+/** A returned motion-lowering diagnostic whose public identity is registry-enrolled. */
+export interface MotionDiagnosticPayload extends Omit<DiagnosticPayload, 'code'> {
+  readonly code: DiagnosticCodeFor<'core'>;
+}
 
 /** One property tween with typed endpoints. */
 export interface MotionPropertyTween {
@@ -151,7 +157,7 @@ export interface LoweredMotionPlan {
   readonly signals: readonly SignalInput[];
   readonly css?: CssMotionPlan;
   readonly runtime?: RuntimeWritePlan;
-  readonly diagnostics: readonly DiagnosticPayload[];
+  readonly diagnostics: readonly MotionDiagnosticPayload[];
 }
 
 const DEFAULT_DURATION_MS = 300;
@@ -237,7 +243,7 @@ function runtimeProperties(properties: readonly MotionPropertyTween[]): RuntimeW
   }));
 }
 
-function emptyPlan(graphId: ContentAddress, diagnostics: DiagnosticPayload[]): LoweredMotionPlan {
+function emptyPlan(graphId: ContentAddress, diagnostics: MotionDiagnosticPayload[]): LoweredMotionPlan {
   return Object.freeze({
     graphId,
     target: '',
@@ -255,12 +261,12 @@ function emptyPlan(graphId: ContentAddress, diagnostics: DiagnosticPayload[]): L
 export function interpretTransition(graph: DocumentGraph, transitionId: ContentAddress): LoweredMotionPlan {
   const byId = nodeById(graph);
   const node = byId.get(transitionId);
-  const diagnostics: DiagnosticPayload[] = [];
+  const diagnostics: MotionDiagnosticPayload[] = [];
 
   if (!node || node.family !== 'transition') {
     diagnostics.push({
       source: 'interpretTransition',
-      code: 'not-found',
+      code: 'core/interpret-transition/not-found',
       message: `transition node not found: ${transitionId}`,
     });
     return emptyPlan(graph.id, diagnostics);
@@ -273,7 +279,7 @@ export function interpretTransition(graph: DocumentGraph, transitionId: ContentA
   if (!fromPoseNode || fromPoseNode.family !== 'pose') {
     diagnostics.push({
       source: 'interpretTransition',
-      code: 'missing-from-pose',
+      code: 'core/interpret-transition/missing-from-pose',
       message: `fromPose not found or not a pose: ${transition.fromPose}`,
     });
     return emptyPlan(graph.id, diagnostics);
@@ -281,7 +287,7 @@ export function interpretTransition(graph: DocumentGraph, transitionId: ContentA
   if (!toPoseNode || toPoseNode.family !== 'pose') {
     diagnostics.push({
       source: 'interpretTransition',
-      code: 'missing-to-pose',
+      code: 'core/interpret-transition/missing-to-pose',
       message: `toPose not found or not a pose: ${transition.toPose}`,
     });
     return emptyPlan(graph.id, diagnostics);
@@ -293,7 +299,7 @@ export function interpretTransition(graph: DocumentGraph, transitionId: ContentA
   if (fromPose.entityRef !== toPose.entityRef) {
     diagnostics.push({
       source: 'interpretTransition',
-      code: 'entity-mismatch',
+      code: 'core/interpret-transition/entity-mismatch',
       message: 'fromPose and toPose must reference the same entity',
       detail: { fromEntity: fromPose.entityRef, toEntity: toPose.entityRef },
     });
@@ -304,7 +310,7 @@ export function interpretTransition(graph: DocumentGraph, transitionId: ContentA
   if (!entityNode || entityNode.family !== 'entity') {
     diagnostics.push({
       source: 'interpretTransition',
-      code: 'missing-entity',
+      code: 'core/interpret-transition/missing-entity',
       message: `entity not found: ${fromPose.entityRef}`,
     });
     return emptyPlan(graph.id, diagnostics);
@@ -315,7 +321,7 @@ export function interpretTransition(graph: DocumentGraph, transitionId: ContentA
   if (!component) {
     diagnostics.push({
       source: 'interpretTransition',
-      code: 'missing-component',
+      code: 'core/interpret-transition/missing-component',
       message: `no component found for entity ${entity.id}`,
     });
     return emptyPlan(graph.id, diagnostics);

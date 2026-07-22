@@ -9,6 +9,7 @@
  */
 
 import { type Clock, wallClock } from '../clock/clock.js';
+import type { DiagnosticCode } from '@liteship/error';
 
 /** Severity level for a {@link DiagnosticEvent}. */
 export type DiagnosticLevel = 'warn' | 'error';
@@ -20,10 +21,16 @@ export type DiagnosticLevel = 'warn' | 'error';
  */
 export interface DiagnosticPayload {
   readonly source: string;
+  /** Local operator code. Stable public identities use the registered-only methods below. */
   readonly code: string;
   readonly message: string;
   readonly cause?: unknown;
   readonly detail?: unknown;
+}
+
+/** A diagnostic whose code is a stable identity enrolled in DIAGNOSTIC_REGISTRY. */
+export interface RegisteredDiagnosticPayload extends Omit<DiagnosticPayload, 'code'> {
+  readonly code: DiagnosticCode;
 }
 
 /** A {@link DiagnosticPayload} enriched with severity and an emission timestamp. */
@@ -133,6 +140,18 @@ function warnOnce(payload: DiagnosticPayload): DiagnosticEvent | null {
   return warn(payload);
 }
 
+function warnRegistered(payload: RegisteredDiagnosticPayload): DiagnosticEvent {
+  return warn(payload);
+}
+
+function errorRegistered(payload: RegisteredDiagnosticPayload): DiagnosticEvent {
+  return error(payload);
+}
+
+function warnOnceRegistered(payload: RegisteredDiagnosticPayload): DiagnosticEvent | null {
+  return warnOnce(payload);
+}
+
 function setSink(sink: DiagnosticsSink): DiagnosticsSink {
   const previous = currentSink;
   currentSink = sink;
@@ -186,6 +205,12 @@ export const Diagnostics = {
   error,
   /** {@link Diagnostics.warn}, but deduplicated by `source:code:message`. */
   warnOnce,
+  /** Emit a warning whose stable code must be enrolled in DIAGNOSTIC_REGISTRY. */
+  warnRegistered,
+  /** Emit an error whose stable code must be enrolled in DIAGNOSTIC_REGISTRY. */
+  errorRegistered,
+  /** Deduplicated registered warning. */
+  warnOnceRegistered,
   /** Replace the active sink (e.g. for tests or hosted environments). */
   setSink,
   /** Restore the default sink that writes through `console`. */
@@ -209,6 +234,8 @@ export const Diagnostics = {
 export declare namespace Diagnostics {
   /** Alias for {@link DiagnosticPayload}. */
   export type Payload = DiagnosticPayload;
+  /** Payload accepted by the registered-only diagnostic emitters. */
+  export type RegisteredPayload = RegisteredDiagnosticPayload;
   /** Alias for {@link DiagnosticEvent}. */
   export type Event = DiagnosticEvent;
   /** Alias for {@link DiagnosticLevel}. */

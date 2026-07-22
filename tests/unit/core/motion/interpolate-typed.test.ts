@@ -29,7 +29,7 @@ describe('parseTypedBinding', () => {
     Diagnostics.setSink(sink.sink);
     const parsed = parseTypedBinding('--liteship-hero-y', 'not-a-value');
     expect(parsed).toEqual({ k: 'number', v: 0 });
-    expect(sink.events.some((e) => e.code === 'unparseable-binding')).toBe(true);
+    expect(sink.events.some((e) => e.code === 'core/interpolate/unparseable-binding')).toBe(true);
     Diagnostics.reset();
   });
 
@@ -38,7 +38,7 @@ describe('parseTypedBinding', () => {
     Diagnostics.setSink(sink.sink);
     const parsed = parseTypedBinding('translateY', '(24px)');
     expect(parsed.k).not.toBe('transform');
-    expect(sink.events.some((e) => e.code === 'unparseable-binding')).toBe(true);
+    expect(sink.events.some((e) => e.code === 'core/interpolate/unparseable-binding')).toBe(true);
     Diagnostics.reset();
   });
 });
@@ -70,7 +70,7 @@ describe('interpolateTyped', () => {
     const from: TypedValue = { k: 'number', v: 0 };
     const to: TypedValue = { k: 'length', v: 24, unit: 'px' };
     expect(interpolateTyped(from, to, 0.5)).toEqual(to);
-    expect(sink.events.some((e) => e.code === 'cross-kind')).toBe(true);
+    expect(sink.events.some((e) => e.code === 'core/interpolate/cross-kind')).toBe(true);
   });
 
   test('refuses length unit mismatch loudly — holds `to`', () => {
@@ -79,7 +79,22 @@ describe('interpolateTyped', () => {
     const from: TypedValue = { k: 'length', v: 0, unit: 'px' };
     const to: TypedValue = { k: 'length', v: 1, unit: 'rem' };
     expect(interpolateTyped(from, to, 0.5)).toEqual(to);
-    expect(sink.events.some((e) => e.code === 'unit-mismatch')).toBe(true);
+    expect(sink.events.some((e) => e.code === 'core/interpolate/unit-mismatch')).toBe(true);
+  });
+
+  test('refuses transform-function mismatch loudly — holds the target part', () => {
+    const sink = Diagnostics.createBufferSink();
+    Diagnostics.setSink(sink.sink);
+    const from: TypedValue = {
+      k: 'transform',
+      parts: [{ fn: 'translateX', args: [{ k: 'length', v: 0, unit: 'px' }] }],
+    };
+    const to: TypedValue = {
+      k: 'transform',
+      parts: [{ fn: 'translateY', args: [{ k: 'length', v: 20, unit: 'px' }] }],
+    };
+    expect(interpolateTyped(from, to, 0.5)).toEqual(to);
+    expect(sink.events.some((event) => event.code === 'core/interpolate/transform-fn-mismatch')).toBe(true);
   });
 
   test('formatTypedValue round-trips length', () => {
@@ -151,7 +166,7 @@ describe('color TypedValue (F-MOT-3)', () => {
     const from: TypedValue = { k: 'color', space: 'srgb', components: [255, 0, 0] };
     const to: TypedValue = { k: 'color', space: 'oklch', components: [0.7, 0.15, 30] };
     expect(interpolateTyped(from, to, 0.5)).toEqual(to);
-    expect(sink.events.some((e) => e.code === 'color-space-mismatch')).toBe(true);
+    expect(sink.events.some((e) => e.code === 'core/interpolate/color-space-mismatch')).toBe(true);
   });
 });
 

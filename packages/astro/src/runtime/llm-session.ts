@@ -223,9 +223,9 @@ export function createDOMLLMSessionHost(
         // channel instead of dropping a bare boolean (genui itself stays
         // @liteship/core-free; the astro layer does the emission). The host contract
         // stays boolean.
-        Diagnostics.warnOnce({
+        Diagnostics.warnOnceRegistered({
           source: 'liteship/astro.llm-session',
-          code: 'genui-render-rejected',
+          code: 'astro/llm-session/genui-render-rejected',
           message: `Generated UI tree rejected before render: ${result.error.message}`,
           detail: { code: result.error.code, path: result.error.path, renderId: String(renderId) },
         });

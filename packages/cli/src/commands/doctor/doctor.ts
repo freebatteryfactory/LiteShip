@@ -74,7 +74,7 @@ export async function doctor(
   try {
     checks = await withDeployed(await runAllProbes(cwd, { target: opts.target, spawn: deps.spawn }));
   } catch (error) {
-    emitError('doctor', error instanceof Error ? error.message : String(error));
+    emitError('doctor', 'cli/command-failed', error instanceof Error ? error.message : String(error));
     return 1;
   }
 
@@ -87,7 +87,7 @@ export async function doctor(
         // `doctor --fix --deployed` can pass CI without header checks.
         checks = await withDeployed(await runAllProbes(cwd, { target: opts.target, spawn: deps.spawn }));
       } catch (error) {
-        emitError('doctor', error instanceof Error ? error.message : String(error));
+        emitError('doctor', 'cli/command-failed', error instanceof Error ? error.message : String(error));
         return 1;
       }
     }

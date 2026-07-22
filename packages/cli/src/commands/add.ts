@@ -104,6 +104,7 @@ export async function add(opts: { kind?: string; name?: string; cwd?: string } =
   if (!isFragmentKind(opts.kind)) {
     emitError(
       'add',
+      'cli/invalid-argument',
       `unknown fragment kind: ${opts.kind}`,
       `Available kinds: ${Object.keys(FRAGMENT_ROOTS).join(', ')}`,
     );
@@ -113,18 +114,23 @@ export async function add(opts: { kind?: string; name?: string; cwd?: string } =
   const names = available[opts.kind];
   const availableHint = `Available ${opts.kind}s: ${names.join(', ') || '(none)'}`;
   if (opts.name === undefined) {
-    emitError('add', `usage: liteship add ${opts.kind} <name>`, availableHint);
+    emitError('add', 'cli/usage', `usage: liteship add ${opts.kind} <name>`, availableHint);
     return 1;
   }
   if (!names.includes(opts.name)) {
-    emitError('add', `no ${opts.kind} fragment named "${opts.name}"`, availableHint);
+    emitError('add', 'cli/not-found', `no ${opts.kind} fragment named "${opts.name}"`, availableHint);
     return 1;
   }
 
   const source = resolve(PACKAGED_FRAGMENT_ROOT, FRAGMENT_ROOTS[opts.kind], opts.name);
   const destination = resolve(cwd, opts.name);
   if (existsSync(destination)) {
-    emitError('add', `destination already exists: ${destination}`, 'Choose an empty target path or remove it first');
+    emitError(
+      'add',
+      'cli/conflict',
+      `destination already exists: ${destination}`,
+      'Choose an empty target path or remove it first',
+    );
     return 1;
   }
 

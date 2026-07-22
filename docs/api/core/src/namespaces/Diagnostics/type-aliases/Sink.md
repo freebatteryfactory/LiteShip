@@ -8,6 +8,6 @@
 
 > **Sink** = [`DiagnosticsSink`](../../../interfaces/DiagnosticsSink.md)
 
-Defined in: [core/src/evidence/diagnostics.ts:217](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/diagnostics.ts#L217)
+Defined in: [core/src/evidence/diagnostics.ts:244](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/diagnostics.ts#L244)
 
 Alias for [DiagnosticsSink](../../../interfaces/DiagnosticsSink.md).

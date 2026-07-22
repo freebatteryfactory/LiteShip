@@ -76,9 +76,7 @@ describe('docsMcpRoute (#113)', () => {
     await emitDocsBundle({ outDir: dir, sources: ['GLOSSARY.md'], version: 'test' });
     const route = docsMcpRoute(loadDocsMcpBundle(dir));
 
-    const res = await route(
-      new Request('http://localhost/mcp', { method: 'POST', body: '{ not: valid json' }),
-    );
+    const res = await route(new Request('http://localhost/mcp', { method: 'POST', body: '{ not: valid json' }));
     expect(res.status).toBe(200); // JSON-RPC-over-HTTP: transport OK, the RPC failed
     const json = (await res.json()) as JsonRpcResponse;
     expectErrorXorResult(json);
@@ -153,7 +151,7 @@ describe('docsMcpRoute (#113)', () => {
       expect(json.result).toBeUndefined();
       return [...events];
     });
-    expect(events.map((event) => event.code)).toContain('docs-bundle-corruption');
+    expect(events.map((event) => event.code)).toContain('astro/docs-mcp-route/docs-bundle-corruption');
   });
 
   test('manifest-listed doc whose BYTES drifted after docs:bundle throws (content-addressed seal)', async () => {

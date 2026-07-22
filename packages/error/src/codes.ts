@@ -37,14 +37,16 @@
  * - `cli`       — a CLI-surface diagnostic.
  * - `migrate`   — a migration/codemod diagnostic.
  */
-export type DiagnosticArea = 'gauntlet' | 'check' | 'core' | 'schema' | 'compiler' | 'astro' | 'cli' | 'migrate';
+export const DIAGNOSTIC_AREAS = ['gauntlet', 'check', 'core', 'schema', 'compiler', 'astro', 'cli', 'migrate'] as const;
+
+export type DiagnosticArea = (typeof DIAGNOSTIC_AREAS)[number];
 
 /**
  * A stable diagnostic code — `${DiagnosticArea}/${string}`. The area is the first
  * segment; the remainder is the emitter's own slug kept VERBATIM (it may contain
  * further `/` for sub-codes, e.g. `gauntlet/traceability/untraced`).
  */
-export type DiagnosticCode = `${DiagnosticArea}/${string}`;
+type DiagnosticCodeFormat = `${DiagnosticArea}/${string}`;
 
 /**
  * What every enrolled {@link DiagnosticCode} carries — the human/agent-readable
@@ -60,26 +62,91 @@ export interface DiagnosticEntry {
   readonly remediation: string;
   /** The subsystem that owns the code — the first segment of the {@link DiagnosticCode}. */
   readonly area: DiagnosticArea;
+  /** The package/domain that actually emits this identity. */
+  readonly owner: string;
 }
 
-/** Build one gauntlet entry (area `gauntlet`), trimming the title/explanation/remediation triple. */
+/** Build one registry entry with an explicit owning package/domain. */
+function entry(
+  area: DiagnosticArea,
+  owner: string,
+  title: string,
+  explanation: string,
+  remediation: string,
+): DiagnosticEntry {
+  return { title, explanation, remediation, area, owner };
+}
+
+/** Build one gauntlet entry (area `gauntlet`). */
 function gauntlet(title: string, explanation: string, remediation: string): DiagnosticEntry {
-  return { title, explanation, remediation, area: 'gauntlet' };
+  return entry('gauntlet', '@liteship/gauntlet', title, explanation, remediation);
 }
 
 /** Build one check entry (area `check`). */
 function check(title: string, explanation: string, remediation: string): DiagnosticEntry {
-  return { title, explanation, remediation, area: 'check' };
+  return entry('check', '@liteship/command/checks', title, explanation, remediation);
 }
 
 /** Build one core-runtime entry (area `core`). */
 function core(title: string, explanation: string, remediation: string): DiagnosticEntry {
-  return { title, explanation, remediation, area: 'core' };
+  return entry('core', '@liteship/core', title, explanation, remediation);
+}
+
+/** Build one schema-kernel entry (area `schema`). */
+function schema(title: string, explanation: string, remediation: string): DiagnosticEntry {
+  return entry('schema', '@liteship/core/schema', title, explanation, remediation);
+}
+
+/** Build one compiler entry (area `compiler`). */
+function compiler(title: string, explanation: string, remediation: string): DiagnosticEntry {
+  return entry('compiler', '@liteship/compiler', title, explanation, remediation);
+}
+
+/** Build one Astro runtime/integration entry (area `astro`). */
+function astro(title: string, explanation: string, remediation: string): DiagnosticEntry {
+  return entry('astro', '@liteship/astro', title, explanation, remediation);
+}
+
+type EndpointRejection = 'malformed' | 'cross-origin' | 'origin-not-allowed' | 'kind-not-permitted';
+
+/** Build one endpoint-policy diagnostic while keeping the endpoint family visible. */
+function astroEndpoint(endpoint: string, rejection: EndpointRejection): DiagnosticEntry {
+  switch (rejection) {
+    case 'malformed':
+      return astro(
+        `${endpoint} URL is malformed`,
+        `The ${endpoint} endpoint value is not a valid URL and was refused.`,
+        `Supply a valid ${endpoint} endpoint URL.`,
+      );
+    case 'cross-origin':
+      return astro(
+        `${endpoint} cross-origin URL rejected`,
+        `The default same-origin policy rejected the ${endpoint} endpoint URL.`,
+        'Use a same-origin URL or deliberately configure an allowlisted origin.',
+      );
+    case 'origin-not-allowed':
+      return astro(
+        `${endpoint} origin is not allowlisted`,
+        `The ${endpoint} endpoint origin is absent from the configured cross-origin allowlist.`,
+        'Add the trusted origin to endpointPolicy.allowOrigins or keep the endpoint same-origin.',
+      );
+    case 'kind-not-permitted':
+      return astro(
+        `${endpoint} endpoint kind is not permitted`,
+        `The endpoint policy does not allow this ${endpoint} endpoint class to cross the origin boundary.`,
+        'Use an allowed endpoint kind or keep the endpoint same-origin.',
+      );
+  }
+}
+
+/** Build one CLI envelope entry (area `cli`). */
+function cli(title: string, explanation: string, remediation: string): DiagnosticEntry {
+  return entry('cli', '@liteship/cli', title, explanation, remediation);
 }
 
 /** Build one migration-adapter entry (area `migrate`). */
 function migrate(title: string, explanation: string, remediation: string): DiagnosticEntry {
-  return { title, explanation, remediation, area: 'migrate' };
+  return entry('migrate', '@liteship/compiler/migrate', title, explanation, remediation);
 }
 
 /**
@@ -89,7 +156,7 @@ function migrate(title: string, explanation: string, remediation: string): Diagn
  * `check/*` keys are the ones the `gauntlet/diagnostic-code-registered` gate
  * statically proves are enrolled.
  */
-export const DIAGNOSTIC_REGISTRY: Readonly<Record<DiagnosticCode, DiagnosticEntry>> = Object.freeze({
+export const DIAGNOSTIC_REGISTRY = Object.freeze({
   // ── gauntlet: the seven always-on hygiene / determinism gates ────────────────
   'gauntlet/no-bare-throw': gauntlet(
     'Bare throw instead of a tagged @liteship/error variant',
@@ -568,6 +635,407 @@ export const DIAGNOSTIC_REGISTRY: Readonly<Record<DiagnosticCode, DiagnosticEntr
     'realign the .devcontainer pin with package.json engines/packageManager, .nvmrc, or the CI toolchain pin.',
   ),
 
+  // ── schema: strict decoder issues ───────────────────────────────────────────
+  'schema/type': schema(
+    'Schema value has the wrong type',
+    'Strict schema decoding received a value whose runtime type does not match the schema node at the reported path.',
+    'Supply a value of the type required by the schema at the reported path.',
+  ),
+  'schema/literal': schema(
+    'Schema literal did not match',
+    'Strict schema decoding received a value that does not equal the literal required at the reported path.',
+    'Supply the exact literal required by the schema.',
+  ),
+  'schema/missing': schema(
+    'Required schema field is missing',
+    'Strict schema decoding could not find an own data property required by the struct schema.',
+    'Add the required field as an own data property.',
+  ),
+  'schema/union': schema(
+    'No schema union member matched',
+    'Strict schema decoding tried every member of a union and none accepted the input.',
+    'Change the value to satisfy one declared union member.',
+  ),
+  'schema/brand': schema(
+    'Schema brand validation failed',
+    'The base schema decoded successfully, but the brand constructor rejected the decoded value.',
+    'Satisfy the brand invariant reported by the folded validation cause.',
+  ),
+  'schema/hole': schema(
+    'Schema hole cannot decode',
+    'A schema hole is deliberately unresolved authored intent and therefore cannot accept runtime input.',
+    'Replace the schema hole with a concrete schema before decoding.',
+  ),
+  'schema/poison-key': schema(
+    'Prototype-poison key refused',
+    'Strict schema decoding encountered __proto__, constructor, or prototype where materializing the key could pollute an object prototype.',
+    'Remove or rename the poison key; it is never materialized by the decoder.',
+  ),
+
+  // ── compiler: projection diagnostics ────────────────────────────────────────
+  'compiler/aria/invalid-aria-key': compiler(
+    'Invalid ARIA attribute key',
+    'The ARIA compiler received a state attribute key that is not an aria-* attribute and refused to emit it.',
+    'Use a valid aria-* attribute key in the state output.',
+  ),
+  'compiler/aria/unknown-current-state': compiler(
+    'ARIA projection requested an unknown state',
+    'The requested current state is not present in the boundary state set, so the ARIA projection cannot select a matching output.',
+    'Pass a current state declared by the boundary.',
+  ),
+  'compiler/css/unknown-state-key': compiler(
+    'CSS output supplied an unknown state key',
+    'A CSS state-output key is not present in the boundary state set and was skipped rather than silently compiled.',
+    'Rename the output key to a boundary state or add the intended state to the boundary.',
+  ),
+
+  // ── astro: integration and browser-runtime diagnostics ─────────────────────
+  'astro/docs-mcp-route/docs-bundle-corruption': astro(
+    'Generated docs bundle is corrupt',
+    'The Astro docs MCP route could not decode the generated documentation bundle it was asked to serve.',
+    'Regenerate the docs bundle from source and redeploy the Astro application.',
+  ),
+  'astro/quantize/resolve-initial-state-raw-request': astro(
+    'Initial state requested the raw quantizer path',
+    'Astro initial-state resolution received a raw request that cannot be resolved to a named adaptive state.',
+    'Provide a named state or a resolvable initial signal value.',
+  ),
+  'astro/boundary/boundary-json-invalid': astro(
+    'Serialized boundary JSON is invalid',
+    'The browser runtime could not parse the serialized boundary payload as JSON.',
+    'Generate the boundary attributes with adaptiveAttrs instead of hand-authoring the payload.',
+  ),
+  'astro/boundary/boundary-json-shape-invalid': astro(
+    'Serialized boundary shape is invalid',
+    'The boundary payload parsed as JSON but does not satisfy the runtime boundary contract.',
+    'Regenerate the attributes with adaptiveAttrs and keep the payload unmodified.',
+  ),
+  'astro/boundary/signal-input-unknown': astro(
+    'Boundary signal input is unknown',
+    'A directive references a signal name outside LiteShip’s signal-input vocabulary and therefore cannot receive updates.',
+    'Correct the signal-input spelling using the documented vocabulary.',
+  ),
+  'astro/boundary/signal-input-unserved-here': astro(
+    'Boundary signal has no producer on this directive',
+    'The signal name is recognized, but this directive has no live producer for it and would otherwise freeze silently.',
+    'Use a signal served by this directive or attach the boundary to an adapter that produces it.',
+  ),
+  'astro/directive-boot/directive-attribute-requires-marker': astro(
+    'Directive attribute has no directive marker',
+    'A LiteShip directive attribute is present without the marker that identifies which runtime should consume it.',
+    'Apply adaptiveAttrs/Adaptive or add the matching data-liteship-directive marker.',
+  ),
+  'astro/directive-boot/directive-not-enabled': astro(
+    'Marked directive is not enabled',
+    'The page contains a directive marker whose integration feature is disabled.',
+    'Enable the named directive in the LiteShip Astro integration or remove its marker.',
+  ),
+  'astro/directive-boot/directive-collision': astro(
+    'Multiple directives collide on one element',
+    'Two enabled directives both claim the same host element and would race to control it.',
+    'Put each directive on its own element.',
+  ),
+  'astro/directive-boot/directive-activation-failed': astro(
+    'Directive activation failed',
+    'A marked and enabled directive failed while loading or initializing its runtime.',
+    'Inspect the attached failure detail, repair the directive/runtime dependency, and retry.',
+  ),
+  'astro/gpu/shader-declarations-parse-failed': astro(
+    'Shader declarations payload could not be parsed',
+    'GPU setup could not parse the boundary JSON that carries generated shader declarations.',
+    'Regenerate the payload with adaptiveAttrs and keep the serialized JSON intact.',
+  ),
+  'astro/gpu/canvas-default-size': astro(
+    'GPU canvas host has no layout size',
+    'The GPU host measured zero width and height, forcing the canvas to use its tiny HTML default backing size.',
+    'Give the host or canvas an explicit layout size before the directive mounts.',
+  ),
+  'astro/gpu/shader-compile-failed': astro(
+    'WebGL shader compilation failed',
+    'The browser WebGL compiler rejected the authored shader source.',
+    'Fix the shader using the attached compiler log.',
+  ),
+  'astro/gpu/program-link-failed': astro(
+    'WebGL program linking failed',
+    'Compiled shader stages could not be linked into a WebGL program.',
+    'Align shader stage inputs/outputs using the attached linker log.',
+  ),
+  'astro/gpu/wgsl-fallback-webgl2': astro(
+    'WGSL path fell back to WebGL2',
+    'The requested WGSL/WebGPU path was unavailable and LiteShip selected the declared WebGL2 fallback.',
+    'Provide WebGPU support or an intentional WebGL2 fallback shader.',
+  ),
+  'astro/gpu/webgl2-unavailable': astro(
+    'WebGL2 is unavailable',
+    'The browser did not provide a WebGL2 rendering context for the GPU directive.',
+    'Use a WebGL2-capable browser/device or supply a non-GPU fallback.',
+  ),
+  'astro/gpu/shader-fetch-failed': astro(
+    'Shader request returned a failure response',
+    'The external shader URL responded, but not with a successful HTTP status.',
+    'Fix the shader URL/server response or inline the shader.',
+  ),
+  'astro/gpu/shader-fetch-threw': astro(
+    'Shader request failed',
+    'Fetching the external shader threw before a usable response was received.',
+    'Repair network/CORS access to the shader or inline it.',
+  ),
+  'astro/gpu/shader-integrity-mismatch': astro(
+    'Shader integrity digest mismatch',
+    'Fetched shader bytes do not match the required integrity digest and were refused.',
+    'Publish the expected shader bytes or update the trusted digest deliberately.',
+  ),
+  'astro/gpu/shader-integrity-absent': astro(
+    'External shader has no integrity digest',
+    'The runtime was asked to execute external shader bytes without a required integrity witness.',
+    'Supply the shader integrity digest before enabling external execution.',
+  ),
+  'astro/gpu/uniform-update-parse-failed': astro(
+    'GPU uniform update payload is malformed',
+    'A runtime uniform-update payload could not be decoded into the expected values.',
+    'Emit uniform updates using the generated runtime contract.',
+  ),
+  'astro/graph-runtime/graph-parse-failed': astro(
+    'Adaptive graph payload could not be parsed',
+    'The Astro graph runtime could not decode the serialized document graph.',
+    'Regenerate the graph payload from the canonical graph serializer.',
+  ),
+  'astro/graph-runtime/graph-reseal-failed': astro(
+    'Adaptive graph could not be resealed',
+    'A runtime graph update produced a graph that could not be resealed to a valid content identity.',
+    'Repair the graph update so the resulting graph satisfies sealing invariants.',
+  ),
+  'astro/graph-runtime/graph-seal-failed': astro(
+    'Adaptive graph could not be sealed',
+    'The initial runtime graph failed the document-graph sealing invariants.',
+    'Regenerate the graph from valid nodes and edges before hydration.',
+  ),
+  'astro/llm-session/genui-render-rejected': astro(
+    'Generated UI render was rejected',
+    'The GenUI renderer refused the proposed generated output instead of applying unvalidated UI.',
+    'Inspect the rejection detail and produce output that satisfies the registered catalog/schema.',
+  ),
+  'astro/llm/llm-runtime-init-failed': astro(
+    'LLM runtime initialization failed',
+    'The browser LLM directive could not initialize its selected runtime or model.',
+    'Repair the runtime/model configuration or provide the declared fallback.',
+  ),
+  'astro/motion/motion-program-malformed': astro(
+    'Motion program payload is malformed',
+    'The serialized transition program could not be parsed by the browser runtime.',
+    'Compile and serialize the motion program through LiteShip’s motion compiler.',
+  ),
+  'astro/motion/motion-program-shape-invalid': astro(
+    'Motion program shape is invalid',
+    'The motion payload parsed but does not satisfy the transition-program runtime shape.',
+    'Regenerate the program with the LiteShip compiler.',
+  ),
+  'astro/motion/motion-program-missing': astro(
+    'Required motion program is missing',
+    'A motion directive was activated without the serialized program it needs to sample.',
+    'Attach the compiled motion-program attribute before activating the directive.',
+  ),
+  'astro/receipt-chain/receipt-signature-unverified': astro(
+    'Receipt signature could not be verified',
+    'The browser received a signed receipt without sufficient trusted material to verify its signature.',
+    'Provide the trusted verification key/material or reject the unverified receipt.',
+  ),
+  'astro/stream/stream-graph-base-malformed': astro(
+    'Stream graph base is malformed',
+    'The streaming runtime could not decode the graph base included in the stream payload.',
+    'Regenerate the stream from a valid sealed graph base.',
+  ),
+  'astro/stream/stream-graph-cells-malformed': astro(
+    'Stream graph cell payload is malformed',
+    'One or more streamed graph cells do not satisfy the runtime cell shape.',
+    'Emit cells through the LiteShip stream serializer.',
+  ),
+  'astro/stream/stream-graph-without-artifact': astro(
+    'Stream graph arrived without its artifact',
+    'The stream references a graph artifact that was not supplied to the runtime.',
+    'Serve the referenced artifact before or with the stream graph.',
+  ),
+  'astro/stream/stream-graph-substrate-incomplete': astro(
+    'Stream graph substrate is incomplete',
+    'The streamed graph is missing substrate data required to apply its updates deterministically.',
+    'Include the complete graph base/cell substrate in the stream response.',
+  ),
+  'astro/svg/svg-attrs-parse-failed': astro(
+    'SVG attribute payload could not be parsed',
+    'The SVG directive could not decode its serialized attribute projection.',
+    'Regenerate the SVG attributes through LiteShip’s projection helper.',
+  ),
+  'astro/url-policy/malformed-url-rejected': astro(
+    'Malformed runtime URL rejected',
+    'A runtime endpoint value is not a valid URL and was refused.',
+    'Supply a valid endpoint URL.',
+  ),
+  'astro/url-policy/cross-origin-url-rejected': astro(
+    'Cross-origin runtime URL rejected',
+    'The default same-origin endpoint policy rejected a cross-origin URL.',
+    'Use a same-origin URL or deliberately configure an allowlisted origin.',
+  ),
+  'astro/url-policy/origin-not-allowed': astro(
+    'Runtime URL origin is not allowlisted',
+    'The endpoint origin is absent from the configured cross-origin allowlist.',
+    'Add the trusted origin to endpointPolicy.allowOrigins or use a same-origin endpoint.',
+  ),
+  'astro/url-policy/endpoint-kind-not-permitted': astro(
+    'Endpoint kind is not permitted cross-origin',
+    'The policy does not permit this class of endpoint to cross the origin boundary.',
+    'Use an allowed endpoint kind or keep the endpoint same-origin.',
+  ),
+  'astro/url-policy/private-ip-rejected': astro(
+    'Private or reserved endpoint address rejected',
+    'The runtime URL resolves to a private or reserved address that the endpoint policy refuses.',
+    'Use an allowed public/same-origin endpoint or change policy only after a security review.',
+  ),
+  'astro/gpu/shader-malformed-url-rejected': astroEndpoint('shader', 'malformed'),
+  'astro/gpu/shader-cross-origin-url-rejected': astroEndpoint('shader', 'cross-origin'),
+  'astro/gpu/shader-origin-not-allowed': astroEndpoint('shader', 'origin-not-allowed'),
+  'astro/gpu/shader-endpoint-kind-not-permitted': astroEndpoint('shader', 'kind-not-permitted'),
+  'astro/llm/llm-malformed-url-rejected': astroEndpoint('LLM', 'malformed'),
+  'astro/llm/llm-cross-origin-url-rejected': astroEndpoint('LLM', 'cross-origin'),
+  'astro/llm/llm-origin-not-allowed': astroEndpoint('LLM', 'origin-not-allowed'),
+  'astro/llm/llm-endpoint-kind-not-permitted': astroEndpoint('LLM', 'kind-not-permitted'),
+  'astro/stream/stream-malformed-url-rejected': astroEndpoint('stream', 'malformed'),
+  'astro/stream/stream-cross-origin-url-rejected': astroEndpoint('stream', 'cross-origin'),
+  'astro/stream/stream-origin-not-allowed': astroEndpoint('stream', 'origin-not-allowed'),
+  'astro/stream/stream-endpoint-kind-not-permitted': astroEndpoint('stream', 'kind-not-permitted'),
+  'astro/stream/replay-malformed-url-rejected': astroEndpoint('replay', 'malformed'),
+  'astro/stream/replay-cross-origin-url-rejected': astroEndpoint('replay', 'cross-origin'),
+  'astro/stream/replay-origin-not-allowed': astroEndpoint('replay', 'origin-not-allowed'),
+  'astro/stream/replay-endpoint-kind-not-permitted': astroEndpoint('replay', 'kind-not-permitted'),
+  'astro/stream/snapshot-malformed-url-rejected': astroEndpoint('snapshot', 'malformed'),
+  'astro/stream/snapshot-cross-origin-url-rejected': astroEndpoint('snapshot', 'cross-origin'),
+  'astro/stream/snapshot-origin-not-allowed': astroEndpoint('snapshot', 'origin-not-allowed'),
+  'astro/stream/snapshot-endpoint-kind-not-permitted': astroEndpoint('snapshot', 'kind-not-permitted'),
+  'astro/stream/stream-graph-malformed-url-rejected': astroEndpoint('stream graph', 'malformed'),
+  'astro/stream/stream-graph-cross-origin-url-rejected': astroEndpoint('stream graph', 'cross-origin'),
+  'astro/stream/stream-graph-origin-not-allowed': astroEndpoint('stream graph', 'origin-not-allowed'),
+  'astro/stream/stream-graph-endpoint-kind-not-permitted': astroEndpoint('stream graph', 'kind-not-permitted'),
+  'astro/wasm/wasm-malformed-url-rejected': astroEndpoint('WASM', 'malformed'),
+  'astro/wasm/wasm-cross-origin-url-rejected': astroEndpoint('WASM', 'cross-origin'),
+  'astro/wasm/wasm-origin-not-allowed': astroEndpoint('WASM', 'origin-not-allowed'),
+  'astro/wasm/wasm-endpoint-kind-not-permitted': astroEndpoint('WASM', 'kind-not-permitted'),
+  'astro/wasm/wasm-load-failed': astro(
+    'WASM runtime failed to load',
+    'The Astro WASM directive could not fetch, instantiate, or initialize its module.',
+    'Repair the module URL/bytes/exports or provide the declared JavaScript fallback.',
+  ),
+  'astro/wgpu/wgsl-fetch-failed': astro(
+    'WGSL request returned a failure response',
+    'The external WGSL URL responded without a successful HTTP status.',
+    'Fix the WGSL URL/server response or use the built-in shader.',
+  ),
+  'astro/wgpu/wgsl-fetch-threw': astro(
+    'WGSL request failed',
+    'Fetching the external WGSL source threw before a usable response arrived.',
+    'Repair network/CORS access or use the built-in shader.',
+  ),
+  'astro/wgpu/wgsl-uniform-bool-unsupported': astro(
+    'WGSL boolean uniform is unsupported',
+    'The current uniform-buffer lowering cannot represent a WGSL boolean safely.',
+    'Represent the value with a supported numeric uniform type.',
+  ),
+  'astro/wgpu/wgsl-uniform-type-unrecognized': astro(
+    'WGSL uniform type is unrecognized',
+    'The reflected WGSL uniform type is outside the runtime’s supported type vocabulary.',
+    'Use a supported uniform type or extend the compiler/runtime together.',
+  ),
+  'astro/wgpu/wgsl-uniform-unfed': astro(
+    'WGSL uniform has no supplied value',
+    'A declared WGSL uniform was not fed by the current adaptive state/output data.',
+    'Supply the uniform value for every state that can reach this shader.',
+  ),
+  'astro/wgpu/wgsl-uniform-buffer-full': astro(
+    'WGSL uniform buffer capacity exceeded',
+    'The reflected uniform layout exceeds the bounded buffer capacity allocated by the runtime.',
+    'Reduce/split the uniform set or increase the declared bounded capacity deliberately.',
+  ),
+  'astro/wgpu/wgsl-fetch-fallback-builtin': astro(
+    'WGSL fetch fell back to the built-in shader',
+    'External WGSL could not be used and the runtime selected its declared built-in fallback.',
+    'Repair the external shader path or accept the built-in fallback intentionally.',
+  ),
+  'astro/wgpu/wgsl-integrity-mismatch': astro(
+    'WGSL integrity digest mismatch',
+    'Fetched WGSL bytes do not match the required integrity digest and were refused.',
+    'Publish the expected WGSL bytes or update the trusted digest deliberately.',
+  ),
+  'astro/wgpu/wgsl-integrity-absent': astro(
+    'External WGSL has no integrity digest',
+    'The runtime was asked to execute external WGSL without a required integrity witness.',
+    'Supply the WGSL integrity digest before enabling external execution.',
+  ),
+  'astro/wgpu/wgsl-uniform-bindgroup-invalid': astro(
+    'WGSL uniform bind group is invalid',
+    'The runtime could not create a valid bind group for the reflected uniform layout.',
+    'Align the shader bindings and generated uniform layout.',
+  ),
+  'astro/wgpu/webgpu-unavailable': astro(
+    'WebGPU is unavailable',
+    'The browser/device did not expose a usable WebGPU adapter or device.',
+    'Use a WebGPU-capable environment or provide the declared fallback.',
+  ),
+  'astro/worker/worker-runtime-unavailable': astro(
+    'Worker runtime is unavailable',
+    'The host environment cannot create the worker runtime requested by the directive.',
+    'Use a worker-capable environment or provide an explicit main-thread fallback.',
+  ),
+  'astro/worker/worker-host-fallback': astro(
+    'Worker directive fell back to the host thread',
+    'Worker initialization failed or was unavailable, so the declared host fallback is being used.',
+    'Repair worker availability or accept the explicit fallback intentionally.',
+  ),
+
+  // ── cli: structured command-error envelopes ────────────────────────────────
+  'cli/usage': cli(
+    'Command usage is incomplete',
+    'A required command argument or subcommand was omitted, so the requested operation could not be selected.',
+    'Run the command using the usage form in the accompanying message or hint.',
+  ),
+  'cli/invalid-argument': cli(
+    'Command argument is invalid',
+    'A supplied flag, enum value, or argument is outside the command vocabulary.',
+    'Replace the invalid argument with one of the accepted values listed in the message.',
+  ),
+  'cli/not-found': cli(
+    'Requested command resource was not found',
+    'The command could not locate the named fragment, file, scene, asset, or other requested resource.',
+    'Correct the path/name or create the missing resource, then rerun the command.',
+  ),
+  'cli/conflict': cli(
+    'Command target conflicts with existing state',
+    'The operation would overwrite or collide with an existing target and was refused.',
+    'Choose a non-conflicting target or deliberately remove the existing target first.',
+  ),
+  'cli/workspace-required': cli(
+    'Command requires a LiteShip workspace',
+    'This repository-maintenance command was invoked outside the LiteShip workspace it is authoritative over.',
+    'Run the command from the LiteShip repository root.',
+  ),
+  'cli/command-failed': cli(
+    'Command execution failed',
+    'The selected command or a delegated child process returned a failure result.',
+    'Inspect the accompanying error and child output, repair the reported cause, and rerun.',
+  ),
+  'cli/integrity-failed': cli(
+    'Artifact or release integrity check failed',
+    'A package, lockfile, receipt, or release artifact did not match the integrity contract required by the command.',
+    'Repair or regenerate the mismatching artifact from its authoritative source before retrying.',
+  ),
+  'cli/no-output': cli(
+    'Command produced no result payload',
+    'A command completed without the structured payload its CLI projection requires, so success could not be established.',
+    'Repair the command handler so it returns its declared payload on every successful path.',
+  ),
+  'cli/config-invalid': cli(
+    'LiteShip configuration is invalid',
+    'The command found configuration data or host configuration that is malformed, unsupported, or incomplete.',
+    'Correct the configuration using the fields and host setup named in the message.',
+  ),
+
   // ── core: @liteship/core runtime diagnostics (Diagnostics.warn/error codes) ──
   'core/document-graph/not_an_object': core(
     'DocumentGraph decode: value is not an object',
@@ -664,6 +1132,16 @@ export const DIAGNOSTIC_REGISTRY: Readonly<Record<DiagnosticCode, DiagnosticEntr
     'evaluateResult received a `previousState` that is not a state of the given boundary; it is treated as a crossing. Check that the state came from this boundary.',
     'Pass a previousState that belongs to this boundary.',
   ),
+  'core/boundary/scroll-progress-threshold-scale': core(
+    'Scroll-progress thresholds use the wrong scale',
+    'A scroll.progress boundary uses thresholds outside the normalized 0..1 signal range, so the authored states cannot be selected as intended.',
+    'Express scroll.progress thresholds in the normalized 0..1 range.',
+  ),
+  'core/boundary/audio-threshold-scale': core(
+    'Audio thresholds use the wrong scale',
+    'An audio amplitude/beat boundary uses thresholds outside the normalized 0..1 signal range.',
+    'Express audio amplitude/beat thresholds in the normalized 0..1 range.',
+  ),
   'core/token/token-tap-miss': core(
     'Token.tap: no value for key',
     'Token.tap was called with a key that has no value in the token; the fallback is returned.',
@@ -674,6 +1152,56 @@ export const DIAGNOSTIC_REGISTRY: Readonly<Record<DiagnosticCode, DiagnosticEntr
     'interpretTransition was given a transition id that resolves to no transition node.',
     'Reference an existing transition node id.',
   ),
+  'core/interpret-transition/missing-from-pose': core(
+    'Transition source pose is missing',
+    'The transition references a source pose that is absent from the document graph.',
+    'Add the referenced source pose before interpreting the transition.',
+  ),
+  'core/interpret-transition/missing-to-pose': core(
+    'Transition target pose is missing',
+    'The transition references a target pose that is absent from the document graph.',
+    'Add the referenced target pose before interpreting the transition.',
+  ),
+  'core/interpret-transition/entity-mismatch': core(
+    'Transition poses target different entities',
+    'The source and target poses belong to different entities and cannot form one entity transition.',
+    'Use source and target poses that belong to the same entity.',
+  ),
+  'core/interpret-transition/missing-entity': core(
+    'Transition entity is missing',
+    'The document graph does not contain the entity referenced by the transition poses.',
+    'Add the referenced entity before interpreting the transition.',
+  ),
+  'core/interpret-transition/missing-component': core(
+    'Transition component is missing',
+    'A component referenced by the transition pose cannot be resolved on the target entity.',
+    'Add the referenced component or remove it from the transition pose.',
+  ),
+  'core/interpolate/unparseable-binding': core(
+    'Typed interpolation binding could not be parsed',
+    'An authored binding value could not be parsed into one of the typed interpolation value kinds.',
+    'Use a supported numeric, opacity, length, angle, color, or transform binding value.',
+  ),
+  'core/interpolate/cross-kind': core(
+    'Cross-kind interpolation refused',
+    'The interpolation endpoints have different typed-value kinds, so interpolating them would require an implicit lossy coercion.',
+    'Use endpoints of the same typed-value kind.',
+  ),
+  'core/interpolate/unit-mismatch': core(
+    'Interpolation unit mismatch refused',
+    'Length or angle endpoints use different units and LiteShip will not silently coerce between them.',
+    'Convert both endpoints to the same unit before interpolation.',
+  ),
+  'core/interpolate/color-space-mismatch': core(
+    'Cross-color-space interpolation refused',
+    'Color endpoints use different color spaces and LiteShip will not silently reinterpret their channels.',
+    'Convert both colors to the same color space before interpolation.',
+  ),
+  'core/interpolate/transform-fn-mismatch': core(
+    'Transform-function interpolation mismatch refused',
+    'The transform lists contain different function names or shapes at the same position.',
+    'Align the transform function lists before interpolation.',
+  ),
   'core/transition-program/empty-program': core(
     'interpretProgram: empty program',
     'A transition program lowered to no windows (an empty composition or an unmatched choice) — nothing to animate.',
@@ -683,6 +1211,21 @@ export const DIAGNOSTIC_REGISTRY: Readonly<Record<DiagnosticCode, DiagnosticEntr
     'interpretProgram: transition step did not lower',
     'A transition step did not lower to a motion plan — the step could not be resolved into a concrete animation.',
     'Ensure the transition step resolves to a valid motion plan.',
+  ),
+  'core/transition-program/choice-unmatched': core(
+    'Transition-program choice has no matching arm',
+    'No choice arm matched the current environment and no otherwise arm supplied a fallback.',
+    'Add a matching condition or an otherwise arm.',
+  ),
+  'core/transition-program/choice-selected': core(
+    'Transition-program choice selected an arm',
+    'The transition program selected one conditional arm and records that decision for explanation/replay.',
+    'No repair is required; inspect the recorded choice when debugging program selection.',
+  ),
+  'core/transition-program/multi-target-program': core(
+    'Transition program targets multiple entities',
+    'The lowered transition program contains windows for more than one target entity and cannot be collapsed to a single-target plan.',
+    'Use the multi-target program result or split the authored program by target.',
   ),
 
   // ── migrate: the P14 migration-adapter diagnostics (migrate/<slug>) ──────────
@@ -726,7 +1269,13 @@ export const DIAGNOSTIC_REGISTRY: Readonly<Record<DiagnosticCode, DiagnosticEntr
     'The migration input failed to decode against the adapter schema (malformed DTCG JSON, unparseable CSS); when fatal the accumulated `DecodeIssue[]` are folded into a `ParseError`.',
     'Fix the malformed input so it decodes against the adapter schema, then re-run the migration.',
   ),
-} as Readonly<Record<DiagnosticCode, DiagnosticEntry>>);
+} as const satisfies Readonly<Record<DiagnosticCodeFormat, DiagnosticEntry>>);
+
+/** The exact closed union of enrolled stable diagnostic identities. */
+export type DiagnosticCode = keyof typeof DIAGNOSTIC_REGISTRY;
+
+/** The enrolled codes belonging to one diagnostic area. */
+export type DiagnosticCodeFor<A extends DiagnosticArea> = Extract<DiagnosticCode, `${A}/${string}`>;
 
 /**
  * Look up a diagnostic code's {@link DiagnosticEntry}, or `undefined` when the code

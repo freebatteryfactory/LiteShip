@@ -30,7 +30,7 @@ export async function glossary(term: string | null, opts: { pretty?: boolean } =
   const payload = result.payload as GlossaryPayload;
 
   if (result.status === 'failed') {
-    emitError('glossary', `no entry for: ${term ?? '<missing>'}`);
+    emitError('glossary', 'cli/not-found', `no entry for: ${term ?? '<missing>'}`);
     process.stderr.write(
       `Try one of: ${GLOSSARY_ENTRIES.map((e) => e.term)
         .slice(0, 8)

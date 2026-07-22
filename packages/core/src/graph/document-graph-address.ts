@@ -169,26 +169,30 @@ export function linearizeGraph(graph: {
 export function decodeDocumentGraph(value: unknown): DocGraph {
   if (!isRecord(value)) {
     throw ParseError('DocumentGraph', `expected an object, got ${value === null ? 'null' : typeof value}`, {
-      code: 'not_an_object',
+      code: 'core/document-graph/not_an_object',
     });
   }
   if (value._tag !== 'DocumentGraph') {
     throw ParseError('DocumentGraph', `expected _tag "DocumentGraph", got ${JSON.stringify(value._tag)}`, {
-      code: 'wrong_tag',
+      code: 'core/document-graph/wrong_tag',
     });
   }
   if (value._version !== SUPPORTED_GRAPH_VERSION) {
     throw ParseError(
       'DocumentGraph',
       `unsupported _version ${JSON.stringify(value._version)} — this build understands _version ${SUPPORTED_GRAPH_VERSION} only`,
-      { code: 'unsupported_version' },
+      { code: 'core/document-graph/unsupported_version' },
     );
   }
   if (!Array.isArray(value.nodes)) {
-    throw ParseError('DocumentGraph', 'expected `nodes` to be an array', { code: 'malformed_nodes' });
+    throw ParseError('DocumentGraph', 'expected `nodes` to be an array', {
+      code: 'core/document-graph/malformed_nodes',
+    });
   }
   if (!Array.isArray(value.edges)) {
-    throw ParseError('DocumentGraph', 'expected `edges` to be an array', { code: 'malformed_edges' });
+    throw ParseError('DocumentGraph', 'expected `edges` to be an array', {
+      code: 'core/document-graph/malformed_edges',
+    });
   }
   // Collect the nodes THROUGH the well-formedness gate so each is narrowed to
   // DocumentGraphNode by `isWellFormedNode` — no laundering double-cast.

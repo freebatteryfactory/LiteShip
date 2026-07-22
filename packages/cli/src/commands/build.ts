@@ -50,6 +50,7 @@ export function createBuildCommand(spawn: BuildSpawn = spawnArgvVisible): BuildC
     if (!existsSync(resolve(cwd, 'liteship.config.ts'))) {
       emitError(
         'build',
+        'cli/config-invalid',
         'no liteship.config.ts in the current directory — `liteship build` runs a consumer app build',
         'Run it from a LiteShip app directory, or scaffold one: npm create liteship',
       );
@@ -60,6 +61,7 @@ export function createBuildCommand(spawn: BuildSpawn = spawnArgvVisible): BuildC
     if (host === null) {
       emitError(
         'build',
+        'cli/config-invalid',
         'found liteship.config.ts but no host build config (astro.config.* / vite.config.*) beside it',
         'Add your host framework config, then re-run `liteship build`',
       );

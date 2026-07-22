@@ -35,6 +35,7 @@ describe('projectCliResult', () => {
     const err = JSON.parse(stderr.trim());
     expect(err.status).toBe('failed');
     expect(err.command).toBe('asset.verify');
+    expect(err.code).toBe('cli/command-failed');
     expect(err.error).toBe('boom');
     expect(err.hint).toBe('try that');
   });
@@ -81,16 +82,13 @@ describe('projectCliResult', () => {
   it('surfaces an ok result that carries no payload as a structured failure (exit 1)', async () => {
     const projectOk = vi.fn(() => 0);
     const { exit, stderr } = await captureCli(async () =>
-      projectCliResult(
-        'asset.verify',
-        { status: 'ok', command: 'asset.verify', timestamp: 'T' },
-        projectOk,
-      ),
+      projectCliResult('asset.verify', { status: 'ok', command: 'asset.verify', timestamp: 'T' }, projectOk),
     );
     expect(exit).toBe(1);
     expect(projectOk).not.toHaveBeenCalled();
     const err = JSON.parse(stderr.trim());
     expect(err.status).toBe('failed');
+    expect(err.code).toBe('cli/no-output');
     expect(err.error).toContain('no payload');
   });
 });

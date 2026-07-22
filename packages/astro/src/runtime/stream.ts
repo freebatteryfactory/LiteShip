@@ -238,9 +238,9 @@ function decodeStreamGraphBase(raw: string): DocumentGraph | null {
   try {
     return sealGraph(decodeDocumentGraph(JSON.parse(raw) as unknown));
   } catch (cause) {
-    Diagnostics.warnOnce({
+    Diagnostics.warnOnceRegistered({
       source: 'liteship/astro.stream',
-      code: 'stream-graph-base-malformed',
+      code: 'astro/stream/stream-graph-base-malformed',
       message:
         `The ${STREAM_GRAPH_BASE_ATTR} inlined base graph did not decode as a well-formed DocumentGraph — ` +
         'graph-native recovery is NOT armed for this stream; recovery falls back to the snapshot floor. ' +
@@ -257,18 +257,18 @@ function parseStreamCellRegistrations(raw: string): readonly StreamCellRegistrat
   try {
     parsed = JSON.parse(raw);
   } catch (cause) {
-    Diagnostics.warnOnce({
+    Diagnostics.warnOnceRegistered({
       source: 'liteship/astro.stream',
-      code: 'stream-graph-cells-malformed',
+      code: 'astro/stream/stream-graph-cells-malformed',
       message: `The ${STREAM_GRAPH_CELLS_ATTR} inlined cell registrations were not valid JSON — graph-native recovery is NOT armed.`,
       cause,
     });
     return null;
   }
   if (!Array.isArray(parsed) || parsed.length === 0 || !parsed.every(isStreamCellRegistration)) {
-    Diagnostics.warnOnce({
+    Diagnostics.warnOnceRegistered({
       source: 'liteship/astro.stream',
-      code: 'stream-graph-cells-malformed',
+      code: 'astro/stream/stream-graph-cells-malformed',
       message:
         `The ${STREAM_GRAPH_CELLS_ATTR} inlined cell registrations must be a non-empty array of ` +
         '`{ name: string, states: string[], kind?, authority? }` — graph-native recovery is NOT armed.',
@@ -302,10 +302,10 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
     'stream',
     'liteship/astro.stream',
     {
-      crossOriginRejected: 'stream-cross-origin-url-rejected',
-      malformedUrl: 'stream-malformed-url-rejected',
-      originNotAllowed: 'stream-origin-not-allowed',
-      endpointKindNotPermitted: 'stream-endpoint-kind-not-permitted',
+      crossOriginRejected: 'astro/stream/stream-cross-origin-url-rejected',
+      malformedUrl: 'astro/stream/stream-malformed-url-rejected',
+      originNotAllowed: 'astro/stream/stream-origin-not-allowed',
+      endpointKindNotPermitted: 'astro/stream/stream-endpoint-kind-not-permitted',
     },
     endpointPolicy,
   );
@@ -321,10 +321,10 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
       'snapshot',
       'liteship/astro.stream',
       {
-        crossOriginRejected: 'snapshot-cross-origin-url-rejected',
-        malformedUrl: 'snapshot-malformed-url-rejected',
-        originNotAllowed: 'snapshot-origin-not-allowed',
-        endpointKindNotPermitted: 'snapshot-endpoint-kind-not-permitted',
+        crossOriginRejected: 'astro/stream/snapshot-cross-origin-url-rejected',
+        malformedUrl: 'astro/stream/snapshot-malformed-url-rejected',
+        originNotAllowed: 'astro/stream/snapshot-origin-not-allowed',
+        endpointKindNotPermitted: 'astro/stream/snapshot-endpoint-kind-not-permitted',
       },
       endpointPolicy,
     ) ?? undefined;
@@ -334,10 +334,10 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
       'replay',
       'liteship/astro.stream',
       {
-        crossOriginRejected: 'replay-cross-origin-url-rejected',
-        malformedUrl: 'replay-malformed-url-rejected',
-        originNotAllowed: 'replay-origin-not-allowed',
-        endpointKindNotPermitted: 'replay-endpoint-kind-not-permitted',
+        crossOriginRejected: 'astro/stream/replay-cross-origin-url-rejected',
+        malformedUrl: 'astro/stream/replay-malformed-url-rejected',
+        originNotAllowed: 'astro/stream/replay-origin-not-allowed',
+        endpointKindNotPermitted: 'astro/stream/replay-endpoint-kind-not-permitted',
       },
       endpointPolicy,
     ) ?? undefined;
@@ -684,9 +684,9 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
       return;
     }
     if (artifactId === undefined) {
-      Diagnostics.warnOnce({
+      Diagnostics.warnOnceRegistered({
         source: 'liteship/astro.stream',
-        code: 'stream-graph-without-artifact',
+        code: 'astro/stream/stream-graph-without-artifact',
         message:
           `${STREAM_GRAPH_QUERY_ATTR} requires ${streamWireAttr('artifact')} — graph-native recovery is keyed by ` +
           'artifact id. Add the artifact attribute or drop the graph attribute; recovery keeps the snapshot floor.',
@@ -697,10 +697,10 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
     // The graph endpoint is a same-origin recovery read leg by default — resolve it
     // under the runtime endpoint policy (reusing the `snapshot` recovery kind).
     const graphQueryUrl = allowRuntimeEndpointUrl(rawGraphUrl, 'snapshot', 'liteship/astro.stream', {
-      crossOriginRejected: 'stream-graph-cross-origin-url-rejected',
-      malformedUrl: 'stream-graph-malformed-url-rejected',
-      originNotAllowed: 'stream-graph-origin-not-allowed',
-      endpointKindNotPermitted: 'stream-graph-endpoint-kind-not-permitted',
+      crossOriginRejected: 'astro/stream/stream-graph-cross-origin-url-rejected',
+      malformedUrl: 'astro/stream/stream-graph-malformed-url-rejected',
+      originNotAllowed: 'astro/stream/stream-graph-origin-not-allowed',
+      endpointKindNotPermitted: 'astro/stream/stream-graph-endpoint-kind-not-permitted',
     });
     if (!graphQueryUrl) {
       return;
@@ -709,9 +709,9 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
     const rawBase = target.getAttribute(STREAM_GRAPH_BASE_ATTR);
     const rawCells = target.getAttribute(STREAM_GRAPH_CELLS_ATTR);
     if (rawBase === null || rawCells === null) {
-      Diagnostics.warnOnce({
+      Diagnostics.warnOnceRegistered({
         source: 'liteship/astro.stream',
-        code: 'stream-graph-substrate-incomplete',
+        code: 'astro/stream/stream-graph-substrate-incomplete',
         message:
           `${STREAM_GRAPH_QUERY_ATTR} is set but ${STREAM_GRAPH_BASE_ATTR} and/or ${STREAM_GRAPH_CELLS_ATTR} are missing — ` +
           'graph-native recovery needs the SSR-inlined base graph and cell registrations. Recovery keeps the snapshot floor.',

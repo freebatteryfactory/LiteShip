@@ -14,7 +14,7 @@ The resolved meaning of a diagnostic code — the `DiagnosticEntry` fields plus 
 
 ### area
 
-> `readonly` **area**: `DiagnosticArea`
+> `readonly` **area**: `"gauntlet"` \| `"check"` \| `"core"` \| `"schema"` \| `"compiler"` \| `"astro"` \| `"cli"` \| `"migrate"`
 
 Defined in: [command/src/commands/explain.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/explain.ts#L69)
 

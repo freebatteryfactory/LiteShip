@@ -196,15 +196,15 @@ describe('HLC', () => {
       expect(() => HLC.decode('invalid')).toThrow(/colon-separated parts/);
     });
 
-    test('decode on a too-short input throws a ParseError with code "malformed"', () => {
+    test('decode on a too-short input throws a ParseError with the registered HLC diagnostic code', () => {
       // The too-short (< 3 colon-separated parts) decode path throws
-      // `ParseError('hlc', ..., { code: 'malformed' })`. Asserting the CODE (not just
+      // `ParseError('hlc', ..., { code: 'core/hlc/malformed' })`. Asserting the CODE (not just
       // that it throws) is the kill for the `code: 'malformed'` → `code: ''` mutant:
       // the message-only `toThrow` above passes on the mutant, but the machine code
-      // changes from 'malformed' to '' — a real, branch-distinguishing contract.
-      expect(parseErrorCode(() => HLC.decode('only-one-part'))).toBe('malformed');
+      // changes from the stable identity to '' — a real, branch-distinguishing contract.
+      expect(parseErrorCode(() => HLC.decode('only-one-part'))).toBe('core/hlc/malformed');
       // The two-part case is also too short (< 3) — same malformed code.
-      expect(parseErrorCode(() => HLC.decode('aa:bb'))).toBe('malformed');
+      expect(parseErrorCode(() => HLC.decode('aa:bb'))).toBe('core/hlc/malformed');
     });
 
     test('decode throws on invalid wall_ms hex', () => {

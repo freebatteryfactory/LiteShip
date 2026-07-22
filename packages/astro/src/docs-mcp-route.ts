@@ -125,9 +125,9 @@ export function docsMcpRoute(bundle: DocsMcpBundle): (request: Request) => Promi
         // LOUD — a diagnostic names the real failure — but the route boundary
         // answers with a structured JSON-RPC internal error instead of letting
         // the raw throw escape as a framework 500 (with a stack) to the client.
-        Diagnostics.warn({
+        Diagnostics.warnRegistered({
           source: 'liteship/astro.docs-mcp-route',
-          code: 'docs-bundle-corruption',
+          code: 'astro/docs-mcp-route/docs-bundle-corruption',
           message:
             `docs/get "${path}" failed reading the sealed bundle: ` +
             `${error instanceof Error ? error.message : String(error)}. ` +

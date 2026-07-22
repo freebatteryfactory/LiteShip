@@ -21,8 +21,8 @@ import {
 } from '../../../packages/astro/src/runtime/boundary.js';
 import { driveUniformFromSignal } from '../../../packages/astro/src/runtime/uniform-signal.js';
 
-const UNKNOWN_CODE = 'signal-input-unknown';
-const UNSERVED_CODE = 'signal-input-unserved-here';
+const UNKNOWN_CODE = 'astro/boundary/signal-input-unknown';
+const UNSERVED_CODE = 'astro/boundary/signal-input-unserved-here';
 
 // served: live producer on every surface; frozen: recognized but no producer
 // (freezes); typos: outside the SignalSource vocabulary entirely.

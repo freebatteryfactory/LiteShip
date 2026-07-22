@@ -216,7 +216,7 @@ describe('astro directive branch coverage', () => {
       expect.objectContaining({
         level: 'error',
         source: 'liteship/astro.llm',
-        code: 'llm-runtime-init-failed',
+        code: 'astro/llm/llm-runtime-init-failed',
         detail: 'init boom',
       }),
     );
@@ -296,14 +296,14 @@ describe('astro directive branch coverage', () => {
       expect.objectContaining({
         level: 'warn',
         source: 'liteship/astro.llm',
-        code: 'llm-cross-origin-url-rejected',
+        code: 'astro/llm/llm-cross-origin-url-rejected',
       }),
     );
     expect(events).toContainEqual(
       expect.objectContaining({
         level: 'warn',
         source: 'liteship/astro.stream',
-        code: 'stream-cross-origin-url-rejected',
+        code: 'astro/stream/stream-cross-origin-url-rejected',
       }),
     );
   });
@@ -433,7 +433,7 @@ describe('astro directive branch coverage', () => {
       expect.objectContaining({
         level: 'error',
         source: 'liteship/astro.llm',
-        code: 'llm-runtime-init-failed',
+        code: 'astro/llm/llm-runtime-init-failed',
         detail: 'string boom',
       }),
     );
@@ -462,7 +462,7 @@ describe('astro directive branch coverage', () => {
       expect.objectContaining({
         level: 'warn',
         source: 'liteship/astro.gpu',
-        code: 'webgl2-unavailable',
+        code: 'astro/gpu/webgl2-unavailable',
         message: 'WebGL2 is unavailable; falling back to CSS rendering.',
       }),
     );
@@ -522,7 +522,7 @@ describe('astro directive branch coverage', () => {
       expect.objectContaining({
         level: 'warn',
         source: 'liteship/astro.gpu',
-        code: 'shader-fetch-failed',
+        code: 'astro/gpu/shader-fetch-failed',
         message: 'Failed to fetch shader source.',
         detail: 'Not Found',
       }),
@@ -548,7 +548,7 @@ describe('astro directive branch coverage', () => {
       expect.objectContaining({
         level: 'warn',
         source: 'liteship/astro.gpu',
-        code: 'shader-fetch-threw',
+        code: 'astro/gpu/shader-fetch-threw',
         message: 'Fetching shader source threw an error.',
         cause: expect.any(Error),
       }),
@@ -769,7 +769,7 @@ describe('astro directive branch coverage', () => {
       expect.objectContaining({
         level: 'warn',
         source: 'liteship/astro.gpu',
-        code: 'shader-compile-failed',
+        code: 'astro/gpu/shader-compile-failed',
         message: expect.stringContaining('Shader compilation failed for element'),
       }),
     );
@@ -791,7 +791,7 @@ describe('astro directive branch coverage', () => {
       expect.objectContaining({
         level: 'warn',
         source: 'liteship/astro.gpu',
-        code: 'program-link-failed',
+        code: 'astro/gpu/program-link-failed',
         message: 'Shader program linking failed.',
         detail: 'link failed',
       }),
@@ -839,7 +839,7 @@ describe('astro directive branch coverage', () => {
     await Promise.resolve();
 
     expect(load).toHaveBeenCalledTimes(3);
-    expect(events.filter((event) => event.code === 'webgpu-unavailable')).toHaveLength(1);
+    expect(events.filter((event) => event.code === 'astro/wgpu/webgpu-unavailable')).toHaveLength(1);
   });
 
   test('gpu directive ignores malformed boundary payloads and non-numeric css uniform updates', async () => {
@@ -918,7 +918,7 @@ describe('astro directive branch coverage', () => {
         expect.objectContaining({
           level: 'warn',
           source: 'liteship/astro.gpu',
-          code: 'uniform-update-parse-failed',
+          code: 'astro/gpu/uniform-update-parse-failed',
         }),
       );
     });
@@ -1157,7 +1157,7 @@ describe('astro directive branch coverage', () => {
       expect.objectContaining({
         level: 'warn',
         source: 'liteship/astro.gpu',
-        code: 'shader-cross-origin-url-rejected',
+        code: 'astro/gpu/shader-cross-origin-url-rejected',
       }),
     );
   });
@@ -1332,7 +1332,8 @@ describe('astro directive branch coverage', () => {
       const signals: unknown[] = [];
       const errors: unknown[] = [];
       el.addEventListener('liteship:signal', ((event: CustomEvent) => signals.push(event.detail)) as EventListener);
-      el.addEventListener('liteship:stream-error', ((event: CustomEvent) => errors.push(event.detail)) as EventListener);
+      el.addEventListener('liteship:stream-error', ((event: CustomEvent) =>
+        errors.push(event.detail)) as EventListener);
 
       streamDirective(async () => {}, {}, el);
 
@@ -1717,7 +1718,8 @@ describe('astro directive branch coverage', () => {
       const addSpy = vi.spyOn(host, 'addEventListener');
       const removeSpy = vi.spyOn(host, 'removeEventListener');
       const errors: unknown[] = [];
-      host.addEventListener('liteship:stream-error', ((event: CustomEvent) => errors.push(event.detail)) as EventListener);
+      host.addEventListener('liteship:stream-error', ((event: CustomEvent) =>
+        errors.push(event.detail)) as EventListener);
 
       streamDirective(async () => {}, {}, host);
 
@@ -2095,7 +2097,7 @@ describe('astro directive branch coverage', () => {
       expect.objectContaining({
         level: 'warn',
         source: 'liteship/astro.worker',
-        code: 'worker-host-fallback',
+        code: 'astro/worker/worker-host-fallback',
         detail: 'worker boom',
       }),
     );

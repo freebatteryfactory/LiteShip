@@ -193,7 +193,7 @@ invariants:
 
   # ── Assurance — every emitted diagnostic code is enrolled + explainable ─────
   - id: INV-DIAGNOSTIC-CODE-CLOSED
-    law: 'Every emitted diagnostic code — every gauntlet/* gate ruleId and every check/* id — is enrolled in @liteship/error DIAGNOSTIC_REGISTRY so explainDiagnostic(code) always resolves; the diagnostic-code-registered guard rides in the enforced lean gate set, keeping the registry closed over the emitted codes.'
+    law: 'Every stable diagnostic emitted by the gauntlet, check registry, core runtime, schema decoder, compiler, Astro runtime, CLI envelope, or migration adapters is an exact @liteship/error DIAGNOSTIC_REGISTRY key with meaning, remediation, and owner metadata; typed emitter boundaries reject invented codes, explainDiagnostic resolves every enrolled identity, and the independently self-proven diagnostic-code-registered gate scans package source as a backstop.'
     level: L3
     category: assurance
 

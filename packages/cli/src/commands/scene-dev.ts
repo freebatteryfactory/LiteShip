@@ -49,7 +49,7 @@ export async function sceneDevSetup(
 ): Promise<{ kind: 'ok'; handle: { url: string; close(): Promise<void> } } | { kind: 'error'; exit: number }> {
   const abs = resolve(scenePath);
   if (!existsSync(abs)) {
-    emitError('scene.dev', `scene not found: ${scenePath}`);
+    emitError('scene.dev', 'cli/not-found', `scene not found: ${scenePath}`);
     return { kind: 'error', exit: 1 };
   }
   const startDevServer = await loadStartDevServer();

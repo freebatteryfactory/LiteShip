@@ -101,7 +101,7 @@ const CLI_EXECUTORS: Record<CliOwnedName, Executor> = {
     const format = formatRaw === 'json' || formatRaw === 'mcp' ? formatRaw : undefined;
     // An unknown format must not silently fall through to JSON mode.
     if (formatRaw !== undefined && format === undefined) {
-      emitError('describe', `expected format: json | mcp (got: ${formatRaw})`);
+      emitError('describe', 'cli/invalid-argument', `expected format: json | mcp (got: ${formatRaw})`);
       return 1;
     }
     process.stdout.write(JSON.stringify(describeCmd({ format })) + '\n');
@@ -118,11 +118,15 @@ const CLI_EXECUTORS: Record<CliOwnedName, Executor> = {
     const deployed = takeFlagValue(rest, '--deployed');
     const targetRaw = target.value;
     if (target.present && targetRaw !== 'cloudflare' && targetRaw !== 'astro' && targetRaw !== 'consumer-app') {
-      emitError('doctor', `expected target: cloudflare | astro | consumer-app (got: ${targetRaw ?? '<missing>'})`);
+      emitError(
+        'doctor',
+        'cli/invalid-argument',
+        `expected target: cloudflare | astro | consumer-app (got: ${targetRaw ?? '<missing>'})`,
+      );
       return 1;
     }
     if (deployed.present && !deployed.value) {
-      emitError('doctor', 'usage: liteship doctor --deployed <url>');
+      emitError('doctor', 'cli/usage', 'usage: liteship doctor --deployed <url>');
       return 1;
     }
     return deps.doctor({
@@ -156,6 +160,7 @@ const CLI_EXECUTORS: Record<CliOwnedName, Executor> = {
       const [major, minor] = readCliVersion().split('.');
       emitError(
         'mcp',
+        'cli/not-found',
         '@liteship/mcp-server is not installed',
         `Install it next to @liteship/cli on the same version line: pnpm add @liteship/mcp-server@${major}.${minor}.x`,
       );
@@ -179,7 +184,7 @@ const CLI_EXECUTORS: Record<CliOwnedName, Executor> = {
     // blank-subject error like "scene not found: ").
     const scene = positional(subRest);
     if (scene === undefined) {
-      emitError('scene.dev', 'usage: liteship scene dev <path-to-scene.ts>');
+      emitError('scene.dev', 'cli/usage', 'usage: liteship scene dev <path-to-scene.ts>');
       return 1;
     }
     return sceneDev(scene);
@@ -218,6 +223,7 @@ function execScene(rest: readonly string[], deps: ResolvedDeps): number | Promis
     if (scene === undefined) {
       emitError(
         `scene.${sub}`,
+        'cli/usage',
         `usage: liteship scene ${sub} <path-to-scene.ts>${sub === 'render' ? ' [-o <output.mp4>]' : ''}`,
       );
       return 1;
@@ -231,7 +237,7 @@ function execScene(rest: readonly string[], deps: ResolvedDeps): number | Promis
     // of silently discarding the user's path (with output now DERIVED when empty).
     const output = takeFlagValue(subRest, ['-o', '--output']);
     if (output.present && output.value === undefined) {
-      emitError('scene.render', 'usage: liteship scene render <path-to-scene.ts> -o <output.mp4>');
+      emitError('scene.render', 'cli/usage', 'usage: liteship scene render <path-to-scene.ts> -o <output.mp4>');
       return 1;
     }
     const force = subRest.includes('--force');
@@ -239,7 +245,7 @@ function execScene(rest: readonly string[], deps: ResolvedDeps): number | Promis
     return sceneRender(scene ?? '', output.value ?? '', force);
   }
   if (sub === 'verify') return sceneVerify(scene ?? '');
-  emitError('scene', `unknown subcommand: ${sub ?? '<missing>'}`);
+  emitError('scene', 'cli/invalid-argument', `unknown subcommand: ${sub ?? '<missing>'}`);
   return 1;
 }
 
@@ -249,7 +255,7 @@ function execAstro(rest: readonly string[], deps: ResolvedDeps): number | Promis
   if (sub === 'dev' || sub === 'status' || sub === 'stop') {
     return CLI_EXECUTORS[`astro.${sub}`](rest, deps);
   }
-  emitError('astro', `unknown subcommand: ${sub ?? '<missing>'}`);
+  emitError('astro', 'cli/invalid-argument', `unknown subcommand: ${sub ?? '<missing>'}`);
   return 1;
 }
 
@@ -259,19 +265,28 @@ function execAsset(rest: readonly string[]): number | Promise<number> {
   const id = positional(subRest);
   if (sub === 'analyze') {
     if (id === undefined) {
-      emitError('asset.analyze', 'usage: liteship asset analyze <asset-id> --projection=<beat|onset|waveform>');
+      emitError(
+        'asset.analyze',
+        'cli/usage',
+        'usage: liteship asset analyze <asset-id> --projection=<beat|onset|waveform>',
+      );
       return 1;
     }
     const projectionRaw = parseFlag(subRest, '--projection');
     if (projectionRaw === undefined) {
       emitError(
         'asset.analyze',
+        'cli/usage',
         'missing --projection. Choose one: --projection=beat | onset | waveform. Example: liteship asset analyze kick-loop --projection=beat',
       );
       return 1;
     }
     if (projectionRaw !== 'beat' && projectionRaw !== 'onset' && projectionRaw !== 'waveform') {
-      emitError('asset.analyze', `expected projection: beat | onset | waveform (got: ${projectionRaw})`);
+      emitError(
+        'asset.analyze',
+        'cli/invalid-argument',
+        `expected projection: beat | onset | waveform (got: ${projectionRaw})`,
+      );
       return 1;
     }
     const force = subRest.includes('--force');
@@ -279,12 +294,12 @@ function execAsset(rest: readonly string[]): number | Promise<number> {
   }
   if (sub === 'verify') {
     if (id === undefined) {
-      emitError('asset.verify', 'usage: liteship asset verify <asset-id>');
+      emitError('asset.verify', 'cli/usage', 'usage: liteship asset verify <asset-id>');
       return 1;
     }
     return assetVerify(id);
   }
-  emitError('asset', `unknown subcommand: ${sub ?? '<missing>'}`);
+  emitError('asset', 'cli/invalid-argument', `unknown subcommand: ${sub ?? '<missing>'}`);
   return 1;
 }
 
@@ -294,13 +309,13 @@ function execCapsule(rest: readonly string[]): number | Promise<number> {
   const name = positional(subRest);
   if (sub === 'inspect' || sub === 'verify') {
     if (name === undefined) {
-      emitError(`capsule.${sub}`, `usage: liteship capsule ${sub} <capsule-name>`);
+      emitError(`capsule.${sub}`, 'cli/usage', `usage: liteship capsule ${sub} <capsule-name>`);
       return 1;
     }
     return sub === 'inspect' ? capsuleInspect(name) : capsuleVerify(name);
   }
   if (sub === 'list') return capsuleList(parseFlag(subRest, '--kind'));
-  emitError('capsule', `unknown subcommand: ${sub ?? '<missing>'}`);
+  emitError('capsule', 'cli/invalid-argument', `unknown subcommand: ${sub ?? '<missing>'}`);
   return 1;
 }
 
@@ -324,7 +339,7 @@ function execAudit(rest: readonly string[]): Promise<number> {
 function execCheck(rest: readonly string[], deps: ResolvedDeps): Promise<number> {
   const subcommand = positional(rest);
   if (subcommand !== undefined && subcommand !== 'gates') {
-    emitError('check', `expected subcommand: gates (got: ${subcommand})`);
+    emitError('check', 'cli/invalid-argument', `expected subcommand: gates (got: ${subcommand})`);
     return Promise.resolve(1);
   }
   const gates = subcommand === 'gates';
@@ -339,7 +354,11 @@ function execCheck(rest: readonly string[], deps: ResolvedDeps): Promise<number>
     profileFlag.present &&
     (profileFlag.value === undefined || !CHECK_PROFILES.includes(profileFlag.value as CheckProfile))
   ) {
-    emitError('check', `expected profile: ${CHECK_PROFILES.join(' | ')} (got: ${profileFlag.value ?? '<missing>'})`);
+    emitError(
+      'check',
+      'cli/invalid-argument',
+      `expected profile: ${CHECK_PROFILES.join(' | ')} (got: ${profileFlag.value ?? '<missing>'})`,
+    );
     return Promise.resolve(1);
   }
   const profile = profileFlag.value as CheckProfile | undefined;
@@ -431,11 +450,11 @@ function execCheck(rest: readonly string[], deps: ResolvedDeps): Promise<number>
     capabilityGate ||
     spineRelation;
   if (hasGateFlag && !gates) {
-    emitError('check', 'gate-only flags require the explicit `check gates` subcommand');
+    emitError('check', 'cli/invalid-argument', 'gate-only flags require the explicit `check gates` subcommand');
     return Promise.resolve(1);
   }
   if ((gates || hasGateFlag) && (plan || profile !== undefined)) {
-    emitError('check', 'gate mode cannot be combined with --plan or --profile');
+    emitError('check', 'cli/conflict', 'gate mode cannot be combined with --plan or --profile');
     return Promise.resolve(1);
   }
   // `--no-cache` / `--symbols` / `--supply-chain` / `--mutate` / `--simulate` /

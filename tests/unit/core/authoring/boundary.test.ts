@@ -91,7 +91,7 @@ describe('defineBoundary', () => {
         ] as const,
       }),
     ).toThrow(
-      'defineBoundary: duplicate state name "small" (used by two thresholds). Each threshold needs its own state — rename one, e.g. at: [[0, \'small\'], [768, \'medium\']]. If this throws mid-render, the boundary was constructed inside a render function; hoist it to module scope.',
+      "defineBoundary: duplicate state name \"small\" (used by two thresholds). Each threshold needs its own state — rename one, e.g. at: [[0, 'small'], [768, 'medium']]. If this throws mid-render, the boundary was constructed inside a render function; hoist it to module scope.",
     );
   });
 
@@ -106,9 +106,28 @@ describe('defineBoundary', () => {
           [1.2, 'b'],
         ] as const,
       });
-      const warns = events.filter((e) => e.code === 'scroll-progress-threshold-scale');
+      const warns = events.filter((e) => e.code === 'core/boundary/scroll-progress-threshold-scale');
       expect(warns).toHaveLength(1);
       expect(warns[0]?.message).toMatch(/0\.\.1/);
+    } finally {
+      Diagnostics.reset();
+    }
+  });
+
+  test('warnOnce when audio thresholds exceed the normalized 0..1 domain', () => {
+    const { sink, events } = Diagnostics.createBufferSink();
+    Diagnostics.setSink(sink);
+    try {
+      defineBoundary({
+        input: 'audio.amplitude',
+        at: [
+          [0, 'quiet'],
+          [2, 'loud'],
+        ] as const,
+      });
+      const warns = events.filter((event) => event.code === 'core/boundary/audio-threshold-scale');
+      expect(warns).toHaveLength(1);
+      expect(warns[0]?.message).toMatch(/normalize to 0\.\.1/);
     } finally {
       Diagnostics.reset();
     }

@@ -1,9 +1,12 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { defineCapsule, getCapsuleCatalog, schema } from '@liteship/core';
+import { Diagnostics, defineCapsule, getCapsuleCatalog, schema } from '@liteship/core';
 import { resetCapsuleCatalog } from '@liteship/core/testing';
 
 describe('defineCapsule', () => {
-  beforeEach(() => resetCapsuleCatalog());
+  beforeEach(() => {
+    resetCapsuleCatalog();
+    Diagnostics.reset();
+  });
 
   it('registers a pureTransform capsule and computes a content address', () => {
     const cap = defineCapsule({
@@ -19,6 +22,22 @@ describe('defineCapsule', () => {
     expect(cap._kind).toBe('pureTransform');
     expect(cap.id).toMatch(/^fnv1a:[0-9a-f]+$/);
     expect(cap.name).toBe('demo.square');
+  });
+
+  it('emits the registered diagnostic when invariants have no runtime transform', () => {
+    const captured = Diagnostics.createBufferSink();
+    Diagnostics.setSink(captured.sink);
+    defineCapsule({
+      _kind: 'pureTransform',
+      name: 'demo.unbacked-invariant',
+      input: schema.number,
+      output: schema.number,
+      capabilities: { reads: [], writes: [] },
+      invariants: [{ name: 'identity', check: (input, output) => input === output, message: 'identity' }],
+      budgets: { p95Ms: 1 },
+      site: ['node'],
+    });
+    expect(captured.events.map((event) => event.code)).toContain('core/assembly/pure_transform_missing_run');
   });
 
   it('derives In/Out from the schema VALUES so handlers are contextually typed (no `o as T`)', () => {

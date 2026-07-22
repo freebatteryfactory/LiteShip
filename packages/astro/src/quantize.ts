@@ -140,9 +140,9 @@ function isRequestLike(value: unknown): value is Request {
 
 function warnRawRequestContext(value: unknown): void {
   if (!isRequestLike(value)) return;
-  Diagnostics.warnOnce({
+  Diagnostics.warnOnceRegistered({
     source: 'liteship/astro.quantize',
-    code: 'resolve-initial-state-raw-request',
+    code: 'astro/quantize/resolve-initial-state-raw-request',
     message:
       'resolveInitialState received a raw Request object — every ServerIslandContext field reads undefined and SSR falls back to synthetic 960px (reactive tier). ' +
       'Build a ServerIslandContext from the request instead: { userAgent: request.headers.get("user-agent") ?? "", clientHints: …, detectedCapTier: … }.',

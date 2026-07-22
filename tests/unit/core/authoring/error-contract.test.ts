@@ -193,14 +193,14 @@ describe('tap-miss diagnostics', () => {
     expect(Token.tap(token, { theme: 'drak' })).toBe('#ccc');
     expect(Token.tap(token, { theme: 'drak' })).toBe('#ccc');
 
-    const misses = captured.events.filter((event) => event.code === 'token-tap-miss');
+    const misses = captured.events.filter((event) => event.code === 'core/token/token-tap-miss');
     expect(misses).toHaveLength(1);
     expect(misses[0]!.message).toMatch(/Token "bg": no value for key "drak"/);
     expect(misses[0]!.message).toMatch(/known keys: \[light, dark\]/);
 
     // A hit emits nothing.
     expect(Token.tap(token, { theme: 'dark' })).toBe('#111');
-    expect(captured.events.filter((event) => event.code === 'token-tap-miss')).toHaveLength(1);
+    expect(captured.events.filter((event) => event.code === 'core/token/token-tap-miss')).toHaveLength(1);
   });
 
   test('Style.tap warns when the state is outside the boundary state set', () => {
@@ -219,11 +219,11 @@ describe('tap-miss diagnostics', () => {
 
     // Valid non-overridden state: base applies, no warn.
     expect(Style.tap(style, 'sm')).toEqual({ color: 'black' });
-    expect(captured.events.filter((event) => event.code === 'style-unknown-state')).toHaveLength(0);
+    expect(captured.events.filter((event) => event.code === 'core/style/style-unknown-state')).toHaveLength(0);
 
     // Typo'd state: base applies AND the miss is observable.
     Style.tap(style, 'gl' as never);
-    const warns = captured.events.filter((event) => event.code === 'style-unknown-state');
+    const warns = captured.events.filter((event) => event.code === 'core/style/style-unknown-state');
     expect(warns).toHaveLength(1);
     expect(warns[0]!.message).toMatch(/state "gl"/);
     expect(warns[0]!.message).toMatch(/\[sm, lg\]/);

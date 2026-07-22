@@ -6,10 +6,8 @@
 
 # Type Alias: DiagnosticCode
 
-> **DiagnosticCode** = `` `${DiagnosticArea}/${string}` ``
+> **DiagnosticCode** = keyof *typeof* [`DIAGNOSTIC_REGISTRY`](../variables/DIAGNOSTIC_REGISTRY.md)
 
-Defined in: [error/src/codes.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/codes.ts#L47)
+Defined in: [error/src/codes.ts:1275](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/codes.ts#L1275)
 
-A stable diagnostic code — `${DiagnosticArea}/${string}`. The area is the first
-segment; the remainder is the emitter's own slug kept VERBATIM (it may contain
-further `/` for sub-codes, e.g. `gauntlet/traceability/untraced`).
+The exact closed union of enrolled stable diagnostic identities.

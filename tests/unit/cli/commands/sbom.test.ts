@@ -87,8 +87,9 @@ describe('liteship sbom — workspace + lockfile guards (exit 1, emitError, no a
     isLiteShipWorkspaceMock.mockReturnValue(false);
     const { exit, stderr } = await captureCli(async () => sbom([], sbomDeps));
     expect(exit).toBe(1);
-    const event = JSON.parse(stderr.trim().split('\n').pop()!) as { command: string; error: string };
+    const event = JSON.parse(stderr.trim().split('\n').pop()!) as { command: string; code: string; error: string };
     expect(event.command).toBe('sbom');
+    expect(event.code).toBe('cli/workspace-required');
     expect(event.error).toContain('not a LiteShip workspace');
     // Guard returned before any lockfile read or artifact write.
     expect(readFileSyncMock).not.toHaveBeenCalled();
@@ -99,7 +100,8 @@ describe('liteship sbom — workspace + lockfile guards (exit 1, emitError, no a
     existsSyncMock.mockReturnValue(false);
     const { exit, stderr } = await captureCli(async () => sbom([], sbomDeps));
     expect(exit).toBe(1);
-    const event = JSON.parse(stderr.trim().split('\n').pop()!) as { error: string };
+    const event = JSON.parse(stderr.trim().split('\n').pop()!) as { code: string; error: string };
+    expect(event.code).toBe('cli/workspace-required');
     expect(event.error).toContain('pnpm-lock.yaml not found');
     expect(writeFileSyncMock).not.toHaveBeenCalled();
   });
@@ -113,7 +115,8 @@ describe('liteship sbom — lockfile parse fails LOUD (no partial SBOM over a ha
     });
     const { exit, stderr } = await captureCli(async () => sbom([], sbomDeps));
     expect(exit).toBe(1);
-    const event = JSON.parse(stderr.trim().split('\n').pop()!) as { error: string };
+    const event = JSON.parse(stderr.trim().split('\n').pop()!) as { code: string; error: string };
+    expect(event.code).toBe('cli/config-invalid');
     expect(event.error).toBe('unreadable lockfile shape at line 3');
     // A parse fault must NEVER write a partial SBOM artifact.
     expect(buildSbomMock).not.toHaveBeenCalled();

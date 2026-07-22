@@ -326,9 +326,9 @@ function compile<B extends Boundary>(
   for (const supplied of Object.keys(states)) {
     if (knownStates.has(supplied)) continue;
     const match = stateNames.find((s) => s.toLowerCase() === supplied.toLowerCase());
-    Diagnostics.warn({
+    Diagnostics.warnRegistered({
       source: 'liteship/compiler.css',
-      code: 'unknown-state-key',
+      code: 'compiler/css/unknown-state-key',
       message: `State "${supplied}" is not one of boundary "${boundary.input}" states [${stateNames.join(', ')}]; its CSS was skipped.${match ? ` Did you mean "${match}"?` : ''}`,
     });
   }

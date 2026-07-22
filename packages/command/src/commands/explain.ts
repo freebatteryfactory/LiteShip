@@ -27,7 +27,7 @@
  * @module
  */
 
-import { explainDiagnostic, type DiagnosticArea } from '@liteship/error';
+import { explainDiagnostic, type DiagnosticArea, type DiagnosticEntry } from '@liteship/error';
 import { type CapsuleCommandResult, type CommandJsonSchema, schema } from '@liteship/core';
 import { defineCommand, failed, ok, type ApiSymbolResolution } from '../registry.js';
 import { CHECK_REGISTRY } from '../checks/registry.js';
@@ -44,12 +44,12 @@ const GATE_SOURCE_PREFIX = 'packages/gauntlet/src/gates/';
  *   a blocking check proves that gate its `negativeControl` + `provenByCheck` are set.
  * - `kind: 'check'` — a P11 `check/<slug>`; `id`/`owner`/`command`/`authority`/
  *   `negativeControl` come from the {@link CheckDefinition}.
- * - `kind: 'core-runtime'` — a runtime diagnostic emitted by its owning package's
- *   `Diagnostics`; there is no gate/check emitter, so the pointers are null.
+ * - `kind: 'domain'` — a runtime/domain diagnostic; `id` is the stable code and
+ *   `owner` comes from the diagnostic registry.
  */
 export interface ExplainEmitter {
-  readonly kind: 'gate' | 'check' | 'core-runtime';
-  /** The emitting gate id / check id, or null for a core-runtime diagnostic. */
+  readonly kind: 'gate' | 'check' | 'domain';
+  /** The emitting gate id, check id, or stable domain diagnostic code. */
   readonly id: string | null;
   /** The red-fixture / negative-control file that proves the emitter can fail, or null. */
   readonly negativeControl: string | null;
@@ -97,7 +97,7 @@ export const ExplainPayloadSchema = {
         emitter: {
           type: 'object',
           properties: {
-            kind: { enum: ['gate', 'check', 'core-runtime'] },
+            kind: { enum: ['gate', 'check', 'domain'] },
             id: { type: ['string', 'null'] },
             negativeControl: { type: ['string', 'null'] },
             provenByCheck: { type: ['string', 'null'] },
@@ -150,11 +150,30 @@ function checkProvingGate(gateId: string): CheckDefinition | undefined {
   const slug = gateId.split('/')[1];
   if (slug === undefined || slug === '') return undefined;
   const source = `${GATE_SOURCE_PREFIX}${slug}.ts`;
-  return CHECK_REGISTRY.find((definition) => definition.inputs.includes(source));
+  const globCovers = (pattern: string): boolean => {
+    let expression = '^';
+    for (let index = 0; index < pattern.length; index += 1) {
+      const char = pattern[index]!;
+      if (char === '*' && pattern[index + 1] === '*') {
+        expression += '.*';
+        index += 1;
+      } else if (char === '*') {
+        expression += '[^/]*';
+      } else {
+        expression += /[.+?^${}()|[\]\\]/.test(char) ? `\\${char}` : char;
+      }
+    }
+    return new RegExp(`${expression}$`).test(source);
+  };
+  const specificity = (pattern: string): number => pattern.replaceAll('*', '').length;
+  return CHECK_REGISTRY.flatMap((definition) =>
+    definition.inputs.filter(globCovers).map((pattern) => ({ definition, specificity: specificity(pattern) })),
+  ).sort((left, right) => right.specificity - left.specificity)[0]?.definition;
 }
 
 /** Build the {@link ExplainEmitter} for a code, keyed by its {@link DiagnosticArea}. */
-function buildEmitter(code: string, area: DiagnosticArea): ExplainEmitter {
+function buildEmitter(code: string, entry: DiagnosticEntry): ExplainEmitter {
+  const { area } = entry;
   if (area === 'check') {
     const definition = CHECK_REGISTRY.find((entry) => entry.id === code);
     return {
@@ -175,19 +194,19 @@ function buildEmitter(code: string, area: DiagnosticArea): ExplainEmitter {
       id: gateId,
       negativeControl: proving?.negativeControl ?? null,
       provenByCheck: proving?.id ?? null,
-      owner: null,
+      owner: entry.owner,
       command: null,
       authority: null,
     };
   }
-  // core / schema / compiler / astro / cli / migrate — a runtime `Diagnostics` code
-  // emitted by its owning package; there is no gate/check emitter to point at.
+  // core / schema / compiler / astro / cli / migrate — a domain diagnostic
+  // emitted by the registry-declared owner; there is no check/gate proof pointer.
   return {
-    kind: 'core-runtime',
-    id: null,
+    kind: 'domain',
+    id: code,
     negativeControl: null,
     provenByCheck: null,
-    owner: null,
+    owner: entry.owner,
     command: null,
     authority: null,
   };
@@ -203,7 +222,7 @@ function explainDiagnosticPayload(code: string): ExplainDiagnostic | null {
     title: entry.title,
     explanation: entry.explanation,
     remediation: entry.remediation,
-    emitter: buildEmitter(code, entry.area),
+    emitter: buildEmitter(code, entry),
   };
 }
 

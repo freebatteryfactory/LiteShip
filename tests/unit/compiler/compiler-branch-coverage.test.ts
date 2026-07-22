@@ -749,7 +749,7 @@ describe('compiler branch coverage', () => {
       expect(compiled.stateAttributes.wide).toEqual({});
       expect(compiled.currentAttributes).toEqual({});
       expect(events).toHaveLength(2);
-      expect(events.every((event) => event.code === 'invalid-aria-key')).toBe(true);
+      expect(events.every((event) => event.code === 'compiler/aria/invalid-aria-key')).toBe(true);
     });
   });
 });
@@ -780,7 +780,7 @@ describe('CSSCompiler unknown state keys', () => {
       expect(events).toEqual([
         expect.objectContaining({
           source: 'liteship/compiler.css',
-          code: 'unknown-state-key',
+          code: 'compiler/css/unknown-state-key',
           message: 'State "Sm" is not one of boundary "width" states [sm, lg]; its CSS was skipped. Did you mean "sm"?',
         }),
       ]);
@@ -804,7 +804,7 @@ describe('CSSCompiler unknown state keys', () => {
 
       expect(events).toEqual([
         expect.objectContaining({
-          code: 'unknown-state-key',
+          code: 'compiler/css/unknown-state-key',
           message: 'State "huge" is not one of boundary "width" states [sm, lg]; its CSS was skipped.',
         }),
       ]);

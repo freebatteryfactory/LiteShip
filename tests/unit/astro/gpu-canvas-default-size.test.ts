@@ -74,7 +74,10 @@ describe('client:gpu unsized-canvas warn (B-gpu)', () => {
     document.documentElement.setAttribute('data-liteship-tier', 'gpu');
     _resetRuntimePolicyForTests();
     configureRuntimePolicy();
-    vi.stubGlobal('requestAnimationFrame', vi.fn(() => 1));
+    vi.stubGlobal(
+      'requestAnimationFrame',
+      vi.fn(() => 1),
+    );
     vi.stubGlobal('cancelAnimationFrame', vi.fn());
     const gl = makeGlMock();
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation((kind: string) =>
@@ -96,7 +99,7 @@ describe('client:gpu unsized-canvas warn (B-gpu)', () => {
   });
 
   const sizeWarns = (): { detail?: Record<string, unknown> }[] =>
-    events.filter((e) => e.code === 'canvas-default-size') as { detail?: Record<string, unknown> }[];
+    events.filter((e) => e.code === 'astro/gpu/canvas-default-size') as { detail?: Record<string, unknown> }[];
 
   // The warn reads the HOST's clientWidth at boot — the stable signal. (We don't
   // assert the canvas backing store: the GLSL render loop overwrites canvas.width

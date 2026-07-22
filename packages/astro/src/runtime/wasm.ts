@@ -47,10 +47,10 @@ export async function loadWasmRuntime(element: HTMLElement): Promise<void> {
     'wasm',
     'liteship/astro.wasm',
     {
-      crossOriginRejected: 'wasm-cross-origin-url-rejected',
-      malformedUrl: 'wasm-malformed-url-rejected',
-      originNotAllowed: 'wasm-origin-not-allowed',
-      endpointKindNotPermitted: 'wasm-endpoint-kind-not-permitted',
+      crossOriginRejected: 'astro/wasm/wasm-cross-origin-url-rejected',
+      malformedUrl: 'astro/wasm/wasm-malformed-url-rejected',
+      originNotAllowed: 'astro/wasm/wasm-origin-not-allowed',
+      endpointKindNotPermitted: 'astro/wasm/wasm-endpoint-kind-not-permitted',
     },
     readRuntimeEndpointPolicy(),
   );
@@ -64,9 +64,9 @@ export async function loadWasmRuntime(element: HTMLElement): Promise<void> {
 
     dispatchLiteshipEvent(document, 'liteship:wasm-ready', { url: wasmUrl });
   } catch (error) {
-    Diagnostics.warn({
+    Diagnostics.warnRegistered({
       source: 'liteship/astro.wasm',
-      code: 'wasm-load-failed',
+      code: 'astro/wasm/wasm-load-failed',
       message:
         `WASM runtime failed to load from "${wasmUrl}". ` +
         `Fix: set liteship({ wasm: { enabled: true, path: './public/liteship-compute.wasm' } }) and verify Content-Type: application/wasm.`,

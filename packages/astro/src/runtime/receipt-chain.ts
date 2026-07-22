@@ -56,9 +56,9 @@ export function createReceiptChain(): ReceiptChainShape {
 
     ingestEnvelope(envelope) {
       if (envelope.signature) {
-        Diagnostics.warnOnce({
+        Diagnostics.warnOnceRegistered({
           source: 'liteship/astro.receipt-chain',
-          code: 'receipt-signature-unverified',
+          code: 'astro/receipt-chain/receipt-signature-unverified',
           message:
             'Receipt signatures are present but runtime ingestion treats them as advisory metadata until verification is configured.',
         });

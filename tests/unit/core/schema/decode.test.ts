@@ -15,7 +15,7 @@ import fc from 'fast-check';
 import { hasTag } from '@liteship/error';
 import { schema } from '../../../../packages/core/src/schema/constructors.js';
 import { decode, decodeLenient, parseErrorFromIssues } from '../../../../packages/core/src/schema/decode.js';
-import type { DecodeIssue, DecodeResult } from '../../../../packages/core/src/schema/decode.js';
+import type { DecodeIssue, DecodeIssueCode, DecodeResult } from '../../../../packages/core/src/schema/decode.js';
 import { ContentAddress } from '../../../../packages/core/src/schema/brands.js';
 
 function issuesOf(result: DecodeResult<unknown>): readonly DecodeIssue[] {
@@ -26,6 +26,26 @@ function valueOf<A>(result: DecodeResult<A>): A {
   if (!result.ok) throw new Error(`expected ok, got ${JSON.stringify(result.error)}`);
   return result.value;
 }
+
+const SCHEMA_ISSUE_CODES = [
+  'schema/type',
+  'schema/literal',
+  'schema/missing',
+  'schema/union',
+  'schema/brand',
+  'schema/hole',
+  'schema/poison-key',
+] as const satisfies readonly DecodeIssueCode[];
+
+type MissingSchemaIssueCode = Exclude<DecodeIssueCode, (typeof SCHEMA_ISSUE_CODES)[number]>;
+const SCHEMA_ISSUE_CODES_ARE_EXHAUSTIVE: MissingSchemaIssueCode extends never ? true : false = true;
+
+describe('schema diagnostic identities', () => {
+  it('stays the exact seven-code registry-derived issue family', () => {
+    expect(SCHEMA_ISSUE_CODES_ARE_EXHAUSTIVE).toBe(true);
+    expect(SCHEMA_ISSUE_CODES).toHaveLength(7);
+  });
+});
 
 describe('literal construction — non-finite numbers rejected', () => {
   it('schema.literal(NaN) throws at construction (=== matching can never decode NaN)', () => {
@@ -365,7 +385,11 @@ describe('determinism', () => {
   });
 
   it('round-trips generated valid struct values (seeded)', () => {
-    const sch = schema.struct({ a: schema.string, b: schema.optional(schema.number), tags: schema.array(schema.string) });
+    const sch = schema.struct({
+      a: schema.string,
+      b: schema.optional(schema.number),
+      tags: schema.array(schema.string),
+    });
     const arb = fc.record(
       { a: fc.string(), b: fc.option(fc.integer(), { nil: undefined }), tags: fc.array(fc.string()) },
       { requiredKeys: ['a', 'tags'] },

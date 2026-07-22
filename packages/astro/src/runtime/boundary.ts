@@ -212,8 +212,10 @@ export function parseBoundary(boundaryJson: string | null): RuntimeBoundary | nu
 
   const failureMessage = boundaryParseFailureMessage(boundaryJson);
   if (failureMessage) {
-    const code = failureMessage.includes('not valid JSON') ? 'boundary-json-invalid' : 'boundary-json-shape-invalid';
-    Diagnostics.warnOnce({
+    const code = failureMessage.includes('not valid JSON')
+      ? 'astro/boundary/boundary-json-invalid'
+      : 'astro/boundary/boundary-json-shape-invalid';
+    Diagnostics.warnOnceRegistered({
       source: 'liteship/astro.boundary',
       code,
       message: failureMessage,
@@ -439,7 +441,7 @@ export function classifySignalServing(
 }
 
 /**
- * Warn ONCE (deduped across reinit by {@link Diagnostics.warnOnce}) when a
+ * Warn ONCE (deduped across reinit by {@link Diagnostics.warnOnceRegistered}) when a
  * directive is wired to a signal `input` that will never update: either a typo
  * outside the vocabulary, or a recognized signal with no live producer on this
  * surface (the silent-freeze Wave-2 only half-caught — it MISLABELED recognized
@@ -456,17 +458,19 @@ export function warnIfSignalUnserved(
   const serving = classifySignalServing(input, isServedLive);
   if (serving === 'served') return;
   if (serving === 'unknown-typo') {
-    Diagnostics.warnOnce({
+    Diagnostics.warnOnceRegistered({
       source: ctx.source,
-      code: 'signal-input-unknown',
+      code: 'astro/boundary/signal-input-unknown',
       message: `${ctx.what} "${input}" is not in the SignalSource vocabulary (likely a typo; see signal-input.ts) — no updates will be emitted.`,
+      detail: { input, what: ctx.what },
     });
     return;
   }
-  Diagnostics.warnOnce({
+  Diagnostics.warnOnceRegistered({
     source: ctx.source,
-    code: 'signal-input-unserved-here',
+    code: 'astro/boundary/signal-input-unserved-here',
     message: `${ctx.what} "${input}" is a recognized signal but has no live producer on this directive — it will freeze. Drive it with a served input (viewport.width/height, scroll.x/y/progress, audio.amplitude/beat).`,
+    detail: { input, what: ctx.what },
   });
 }
 

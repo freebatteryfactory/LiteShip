@@ -82,7 +82,7 @@ in the structural subset (nullable objects via `type: ['object','null']`).
 
 #### properties.diagnostic.properties.emitter.properties.kind.enum
 
-> `readonly` **enum**: readonly \[`"gate"`, `"check"`, `"core-runtime"`\]
+> `readonly` **enum**: readonly \[`"gate"`, `"check"`, `"domain"`\]
 
 #### properties.diagnostic.properties.emitter.properties.negativeControl
 

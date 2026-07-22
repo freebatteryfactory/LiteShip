@@ -71,5 +71,5 @@ export type { Result, Ok, Err } from './result.js';
 // here because a diagnostic code is a FAILURE identity and `@liteship/error` is the
 // leaf every other package imports; the gauntlet reads it (gauntlet imports error,
 // never the reverse) to prove every emitted code is enrolled.
-export { DIAGNOSTIC_REGISTRY, explainDiagnostic } from './codes.js';
-export type { DiagnosticCode, DiagnosticArea, DiagnosticEntry } from './codes.js';
+export { DIAGNOSTIC_AREAS, DIAGNOSTIC_REGISTRY, explainDiagnostic } from './codes.js';
+export type { DiagnosticCode, DiagnosticCodeFor, DiagnosticArea, DiagnosticEntry } from './codes.js';

@@ -139,9 +139,9 @@ export function defineCapsule<
   // test — never an `it.skip` (no-skip discipline) — so warn here, otherwise a
   // contributor could assume the invariants are enforced when they aren't.
   if (decl._kind === 'pureTransform' && decl.invariants.length > 0 && decl.run === undefined) {
-    Diagnostics.warn({
+    Diagnostics.warnRegistered({
       source: 'defineCapsule',
-      code: 'pure_transform_missing_run',
+      code: 'core/assembly/pure_transform_missing_run',
       message:
         `pureTransform capsule "${decl.name}" declares ${decl.invariants.length} invariant(s) but no ` +
         '`run` function — invariants are type-only without one. Add `run: (input) => ...` to enable runtime validation against your invariants.',

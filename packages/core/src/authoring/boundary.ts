@@ -153,9 +153,9 @@ function _evaluateResult<B extends BoundaryDef>(
   if (prevIndex === -1) {
     // A foreign previousState is almost always a stale or typo'd value from
     // another boundary; warnOnce keeps this hot path cheap after first emit.
-    Diagnostics.warnOnce({
+    Diagnostics.warnOnceRegistered({
       source: 'liteship/core',
-      code: 'unknown-previous-state',
+      code: 'core/boundary/unknown-previous-state',
       message: `evaluateResult(): previousState "${String(previousState)}" is not a state of boundary "${boundary.input}" (states: ${(states as readonly string[]).join(', ')}); treating as a crossing. Check that the state came from this boundary.`,
     });
     return { state, index: rawIndex, value, crossed: true };
@@ -322,9 +322,9 @@ export function defineBoundary<I extends string, const S extends readonly [strin
   if (source?.type === 'scroll' && source.axis === 'progress') {
     const maxThreshold = Math.max(...pairs.map(([t]) => t));
     if (maxThreshold > 1) {
-      Diagnostics.warnOnce({
+      Diagnostics.warnOnceRegistered({
         source: 'liteship/core.boundary',
-        code: 'scroll-progress-threshold-scale',
+        code: 'core/boundary/scroll-progress-threshold-scale',
         message:
           `Boundary "${config.input}" uses thresholds with max ${maxThreshold}, but scroll.progress is canonical 0..1 — ` +
           'thresholds above 1 pin the boundary at the lowest state on every built-in consumer path. ' +
@@ -334,9 +334,9 @@ export function defineBoundary<I extends string, const S extends readonly [strin
   } else if (source?.type === 'audio') {
     const maxThreshold = Math.max(...pairs.map(([t]) => t));
     if (maxThreshold > 1) {
-      Diagnostics.warnOnce({
+      Diagnostics.warnOnceRegistered({
         source: 'liteship/core.boundary',
-        code: 'audio-threshold-scale',
+        code: 'core/boundary/audio-threshold-scale',
         message:
           `Boundary "${config.input}" uses thresholds with max ${maxThreshold}, but audio.* signals normalize to 0..1 — ` +
           'thresholds above 1 will never cross on the built-in runtime path.',

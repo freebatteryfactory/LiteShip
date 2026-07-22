@@ -7,6 +7,7 @@
  */
 
 import { wallClock, type ContentAddress, type WallClockTimestamp } from '@liteship/core';
+import type { DiagnosticCodeFor } from '@liteship/error';
 
 /** Re-exported so CLI receipt structs share one wall-clock-timestamp vocabulary (CUT B2). */
 export type { WallClockTimestamp } from '@liteship/core';
@@ -117,15 +118,17 @@ export function emit(receipt: unknown): void {
 }
 
 /**
- * Emit a structured error event to stderr as a single JSON line. `hint`
- * carries the literal next thing to type (the doctor-check convention,
- * generalized) — present in the envelope only when supplied.
+ * Emit a structured error event to stderr as a single JSON line. `code` is a
+ * closed, explainable CLI diagnostic identity; dynamic command/path data stays
+ * in `message`. `hint` carries the literal next thing to type (the doctor-check
+ * convention, generalized) — present in the envelope only when supplied.
  */
-export function emitError(command: string, message: string, hint?: string): void {
+export function emitError(command: string, code: DiagnosticCodeFor<'cli'>, message: string, hint?: string): void {
   process.stderr.write(
     JSON.stringify({
       status: 'failed',
       command,
+      code,
       error: message,
       ...(hint !== undefined ? { hint } : {}),
       timestamp: new Date(wallClock.now()).toISOString(),

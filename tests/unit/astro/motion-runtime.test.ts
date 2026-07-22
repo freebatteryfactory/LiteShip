@@ -601,7 +601,7 @@ describe('parseMotionProgram — widened easing descriptor validation (#CSS)', (
     for (const kind of ['points', 'bounce', 'elastic', 'back', 'cubicBezier'] as const) {
       expect(parseMotionProgram(programJson({ kind })), `${kind} without points must reject`).toBeNull();
     }
-    expect(sink.events.some((e) => e.code === 'motion-program-shape-invalid')).toBe(true);
+    expect(sink.events.some((e) => e.code === 'astro/motion/motion-program-shape-invalid')).toBe(true);
   });
 
   test('accepts the `points` kind WITH a valid arm (the analytic kinds need none — covered above)', () => {
@@ -614,12 +614,12 @@ describe('parseMotionProgram — widened easing descriptor validation (#CSS)', (
 
   test('rejects an easing with no kind LOUDLY (null + diagnostic)', () => {
     expect(parseMotionProgram(programJson({ points: [0, 1] }))).toBeNull();
-    expect(sink.events.some((e) => e.code === 'motion-program-shape-invalid')).toBe(true);
+    expect(sink.events.some((e) => e.code === 'astro/motion/motion-program-shape-invalid')).toBe(true);
   });
 
   test('rejects an unknown easing kind LOUDLY', () => {
     expect(parseMotionProgram(programJson({ kind: 'wobble' }))).toBeNull();
-    expect(sink.events.some((e) => e.code === 'motion-program-shape-invalid')).toBe(true);
+    expect(sink.events.some((e) => e.code === 'astro/motion/motion-program-shape-invalid')).toBe(true);
   });
 
   test('rejects a malformed points arm (degenerate length or non-finite members)', () => {
@@ -627,12 +627,12 @@ describe('parseMotionProgram — widened easing descriptor validation (#CSS)', (
     expect(parseMotionProgram(programJson({ kind: 'bounce', points: 'nope' }))).toBeNull();
     expect(parseMotionProgram(programJson({ kind: 'bounce', points: [0, 'x', 1] }))).toBeNull();
     expect(parseMotionProgram(programJson({ kind: 'bounce', points: [0, Number.NaN, 1] }))).toBeNull();
-    expect(sink.events.some((e) => e.code === 'motion-program-shape-invalid')).toBe(true);
+    expect(sink.events.some((e) => e.code === 'astro/motion/motion-program-shape-invalid')).toBe(true);
   });
 
   test('rejects a missing easing entirely LOUDLY', () => {
     expect(parseMotionProgram(programJson(undefined))).toBeNull();
-    expect(sink.events.some((e) => e.code === 'motion-program-shape-invalid')).toBe(true);
+    expect(sink.events.some((e) => e.code === 'astro/motion/motion-program-shape-invalid')).toBe(true);
   });
 
   // The floor dereferences leaf entries (`p.cssVar`, `p.from`/`p.to`, and each
@@ -653,7 +653,7 @@ describe('parseMotionProgram — widened easing descriptor validation (#CSS)', (
       windows: [{}], // no properties/easing → sampleProgram's `w.properties.map(...)` would throw
     });
     expect(parseMotionProgram(withBadWindow)).toBeNull();
-    expect(sink.events.some((e) => e.code === 'motion-program-shape-invalid')).toBe(true);
+    expect(sink.events.some((e) => e.code === 'astro/motion/motion-program-shape-invalid')).toBe(true);
   });
 
   test('rejects a malformed properties entry ({}), and still ACCEPTS a well-formed windowed plan', () => {

@@ -58,7 +58,7 @@ export async function audit(
     try {
       findings = scanConsumerAppSource(cwd);
     } catch (error) {
-      emitError('audit', error instanceof Error ? error.message : String(error));
+      emitError('audit', 'cli/command-failed', error instanceof Error ? error.message : String(error));
       return LOAD_FAILURE_EXIT;
     }
     const receipt = {
@@ -125,13 +125,13 @@ export async function audit(
       { cwd, runAudit },
     );
   } catch (error) {
-    emitError('audit', error instanceof Error ? error.message : String(error));
+    emitError('audit', 'cli/command-failed', error instanceof Error ? error.message : String(error));
     return LOAD_FAILURE_EXIT;
   }
 
   if (result.status === 'failed' && !('errorCount' in (result.payload as Record<string, unknown>))) {
     // A structured failure with no audit payload (e.g. capability unavailable).
-    emitError('audit', String((result.payload as { error?: unknown }).error ?? 'audit failed'));
+    emitError('audit', 'cli/command-failed', String((result.payload as { error?: unknown }).error ?? 'audit failed'));
     return typeof result.exitCode === 'number' ? result.exitCode : 1;
   }
 

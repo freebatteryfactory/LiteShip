@@ -148,9 +148,9 @@ function warnExplicitOnlyDirectiveAttributes(root: ParentNode): void {
       if (hasDirectiveMarker(element)) {
         continue;
       }
-      Diagnostics.warnOnce({
+      Diagnostics.warnOnceRegistered({
         source: 'liteship/astro.directive-boot',
-        code: `directive-attribute-requires-marker:${attribute}`,
+        code: 'astro/directive-boot/directive-attribute-requires-marker',
         message:
           `Found ${attribute} without a liteship directive marker, so the runtime will not infer which directive to boot. ` +
           `Fix: spread adaptiveAttrs({ boundary }) / <Adaptive>, or add data-liteship-directive="adaptive" or "worker".`,
@@ -196,10 +196,11 @@ export async function scanAndBootDirectives(
     }
 
     if (!enabledSet.has(name)) {
-      Diagnostics.warnOnce({
+      Diagnostics.warnOnceRegistered({
         source: 'liteship/astro.directive-boot',
-        code: `directive-not-enabled:${name}`,
+        code: 'astro/directive-boot/directive-not-enabled',
         message: `Found ${name} directive markers but the ${name} directive is not enabled in the liteship integration config. ${directiveEnableFix(name)}`,
+        detail: { name },
       });
       continue;
     }
@@ -214,16 +215,17 @@ export async function scanAndBootDirectives(
       // over the host, so two on one element silently fight and one loses.
       const colliding = [...enabledSet].filter((other) => other !== name && element.matches(directiveSelector(other)));
       if (colliding.length > 0) {
-        // Sort the conflicting names ONCE so the dedup `code` is order-independent.
+        // Sort the conflicting names ONCE so the diagnostic detail and message are deterministic.
         const conflicting = [...colliding, name].sort();
-        Diagnostics.warnOnce({
+        Diagnostics.warnOnceRegistered({
           source: 'liteship/astro.directive-boot',
-          code: `directive-collision:${conflicting.join('+')}`,
+          code: 'astro/directive-boot/directive-collision',
           message:
             `Element carries conflicting liteship directives (${conflicting.join(', ')}) -- ` +
             `each directive takes over the element, so they collide and one silently loses ` +
             `(e.g. an adaptive consumes the node a GPU shader needs). ` +
             `Fix: put each directive on its own element.`,
+          detail: { conflicting },
         });
       }
       // Boot through the shared directive entry, which owns the idempotence guard
@@ -237,11 +239,11 @@ export async function scanAndBootDirectives(
           })
           .catch((error: unknown) => {
             unmarkBound(element, name);
-            Diagnostics.warn({
+            Diagnostics.warnRegistered({
               source: 'liteship/astro.directive-boot',
-              code: 'directive-activation-failed',
+              code: 'astro/directive-boot/directive-activation-failed',
               message: `Failed to activate ${name} directive.`,
-              detail: error instanceof Error ? error.message : String(error),
+              detail: { name, cause: error instanceof Error ? error.message : String(error) },
             });
           }),
       );

@@ -8,6 +8,6 @@
 
 > `const` **explainCommand**: [`HandledCommand`](../interfaces/HandledCommand.md)
 
-Defined in: [command/src/commands/explain.ts:211](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/explain.ts#L211)
+Defined in: [command/src/commands/explain.ts:230](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/explain.ts#L230)
 
 The explain command: descriptor + handler returning a structured result.

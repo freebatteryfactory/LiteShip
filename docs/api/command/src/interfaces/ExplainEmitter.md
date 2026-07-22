@@ -15,8 +15,8 @@ against the structural [ExplainPayloadSchema](../variables/ExplainPayloadSchema.
   a blocking check proves that gate its `negativeControl` + `provenByCheck` are set.
 - `kind: 'check'` — a P11 `check/<slug>`; `id`/`owner`/`command`/`authority`/
   `negativeControl` come from the [CheckDefinition](../type-aliases/CheckDefinition.md).
-- `kind: 'core-runtime'` — a runtime diagnostic emitted by its owning package's
-  `Diagnostics`; there is no gate/check emitter, so the pointers are null.
+- `kind: 'domain'` — a runtime/domain diagnostic; `id` is the stable code and
+  `owner` comes from the diagnostic registry.
 
 ## Properties
 
@@ -46,13 +46,13 @@ The check's root-script command line, or null.
 
 Defined in: [command/src/commands/explain.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/explain.ts#L53)
 
-The emitting gate id / check id, or null for a core-runtime diagnostic.
+The emitting gate id, check id, or stable domain diagnostic code.
 
 ***
 
 ### kind
 
-> `readonly` **kind**: `"gate"` \| `"check"` \| `"core-runtime"`
+> `readonly` **kind**: `"gate"` \| `"check"` \| `"domain"`
 
 Defined in: [command/src/commands/explain.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/explain.ts#L51)
 

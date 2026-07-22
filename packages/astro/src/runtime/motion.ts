@@ -205,9 +205,9 @@ export function parseMotionProgram(raw: string): SerializedMotionProgram | null 
   try {
     parsed = JSON.parse(raw);
   } catch (cause) {
-    Diagnostics.warnOnce({
+    Diagnostics.warnOnceRegistered({
       source: 'liteship/astro.motion',
-      code: 'motion-program-malformed',
+      code: 'astro/motion/motion-program-malformed',
       message: `${MOTION_PROGRAM_ATTR} was not valid JSON — the client:motion floor stays inert; native CSS still applies. Serialize with JSON.stringify(a lowered motion program).`,
       cause,
     });
@@ -223,9 +223,9 @@ export function parseMotionProgram(raw: string): SerializedMotionProgram | null 
     typeof program.intent !== 'object' ||
     !Array.isArray(program.signals)
   ) {
-    Diagnostics.warnOnce({
+    Diagnostics.warnOnceRegistered({
       source: 'liteship/astro.motion',
-      code: 'motion-program-shape-invalid',
+      code: 'astro/motion/motion-program-shape-invalid',
       message: `${MOTION_PROGRAM_ATTR} is missing required fields ({ intent, runtime, signals }) — the client:motion floor stays inert; native CSS still applies.`,
     });
     return null;
@@ -367,9 +367,9 @@ export function initMotionDirective(load: () => Promise<unknown>, element: HTMLE
 
     const raw = element.getAttribute(MOTION_PROGRAM_ATTR);
     if (raw === null) {
-      Diagnostics.warnOnce({
+      Diagnostics.warnOnceRegistered({
         source: 'liteship/astro.motion',
-        code: 'motion-program-missing',
+        code: 'astro/motion/motion-program-missing',
         message: `A client:motion host carries no ${MOTION_PROGRAM_ATTR} — nothing to drive; the directive no-ops. Inline the lowered program (JSON.stringify) on the element.`,
       });
       return;

@@ -293,7 +293,7 @@ describe('TransitionProgram — algebra LAWS', () => {
     const bare: TransitionProgram = { kind: 'choice', branches: choiceProg.branches };
     const none = lowerTransitionProgram(graph, bare, { signals: {} });
     expect(none.entries).toHaveLength(0);
-    expect(none.diagnostics.some((d) => d.code === 'choice-unmatched')).toBe(true);
+    expect(none.diagnostics.some((d) => d.code === 'core/transition-program/choice-unmatched')).toBe(true);
   });
 
   test('choice: interpretProgram records the selected branch as an auditable receipt', () => {
@@ -309,7 +309,7 @@ describe('TransitionProgram — algebra LAWS', () => {
       otherwise: { kind: 'step', transitionId: stepB.transitionId },
     };
     const plan = interpretProgram(graph, choiceProg, { signals: { 'viewport.width': 1024 } });
-    const receipt = plan.diagnostics.find((d) => d.code === 'choice-selected');
+    const receipt = plan.diagnostics.find((d) => d.code === 'core/transition-program/choice-selected');
     expect(receipt).toBeDefined();
     expect((receipt!.detail as { branchId: string }).branchId).toBe('branch-0');
   });
@@ -587,7 +587,7 @@ describe('TransitionProgram — authoring sugar (Reveal.chain / staggerProgram)'
     // No runtime/css plan (nothing collapsed onto boundary `a`); a loud diagnostic instead.
     expect(plan.runtime).toBeUndefined();
     expect(plan.css).toBeUndefined();
-    expect(plan.diagnostics.some((d) => d.code === 'multi-target-program')).toBe(true);
+    expect(plan.diagnostics.some((d) => d.code === 'core/transition-program/multi-target-program')).toBe(true);
   });
 
   test('interpretProgram accepts a SINGLE-target program (the reveal chain) unchanged', () => {
@@ -603,6 +603,6 @@ describe('TransitionProgram — authoring sugar (Reveal.chain / staggerProgram)'
     });
     const plan = interpretProgram(chain.graph, chain.program);
     expect(plan.runtime).toBeDefined();
-    expect(plan.diagnostics.some((d) => d.code === 'multi-target-program')).toBe(false);
+    expect(plan.diagnostics.some((d) => d.code === 'core/transition-program/multi-target-program')).toBe(false);
   });
 });

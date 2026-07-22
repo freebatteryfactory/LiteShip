@@ -33,10 +33,12 @@ describe('liteship lsp — @liteship/mcp-server not installed (ERR_MODULE_NOT_FO
     expect(exit).toBe(1);
     const event = JSON.parse(stderr.trim().split('\n').pop()!) as {
       command: string;
+      code: string;
       error: string;
       hint?: string;
     };
     expect(event.command).toBe('lsp');
+    expect(event.code).toBe('cli/not-found');
     expect(event.error).toContain('@liteship/mcp-server is not installed');
     // The hint pins the install to the CLI's own major.minor line (x patch).
     expect(event.hint).toMatch(/pnpm add @liteship\/mcp-server@\d+\.\d+\.x/);

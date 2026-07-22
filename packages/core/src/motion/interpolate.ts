@@ -8,6 +8,7 @@
  */
 
 import { Diagnostics } from '../evidence/diagnostics.js';
+import type { DiagnosticCodeFor } from '@liteship/error';
 
 /** A single transform function part (e.g. `translateY(24px)`). */
 export interface TransformPart {
@@ -36,8 +37,8 @@ function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t;
 }
 
-function warnInterpolate(code: string, message: string, detail?: unknown): void {
-  Diagnostics.warnOnce({
+function warnInterpolate(code: DiagnosticCodeFor<'core'>, message: string, detail?: unknown): void {
+  Diagnostics.warnOnceRegistered({
     source: 'interpolateTyped',
     code,
     message,
@@ -153,7 +154,7 @@ export function parseTypedBinding(key: string, value: number | string): TypedVal
     return { k: 'number', v: asNumber };
   }
 
-  warnInterpolate('unparseable-binding', `could not parse binding value: "${value}"`, { key, value });
+  warnInterpolate('core/interpolate/unparseable-binding', `could not parse binding value: "${value}"`, { key, value });
   return { k: 'number', v: 0 };
 }
 
@@ -222,7 +223,10 @@ function interpolateTransformPart(from: TransformPart, to: TransformPart, eased:
  */
 export function interpolateTyped(from: TypedValue, to: TypedValue, eased: number): TypedValue {
   if (from.k !== to.k) {
-    warnInterpolate('cross-kind', `refusing cross-kind interpolation: ${from.k} → ${to.k}`, { from, to });
+    warnInterpolate('core/interpolate/cross-kind', `refusing cross-kind interpolation: ${from.k} → ${to.k}`, {
+      from,
+      to,
+    });
     return to;
   }
 
@@ -234,7 +238,7 @@ export function interpolateTyped(from: TypedValue, to: TypedValue, eased: number
       const toLength = to as Extract<TypedValue, { k: 'length' }>;
       if (from.unit !== toLength.unit) {
         warnInterpolate(
-          'unit-mismatch',
+          'core/interpolate/unit-mismatch',
           `refusing length interpolation across units: ${from.unit} → ${toLength.unit}`,
           { from, to },
         );
@@ -245,10 +249,14 @@ export function interpolateTyped(from: TypedValue, to: TypedValue, eased: number
     case 'angle': {
       const toAngle = to as Extract<TypedValue, { k: 'angle' }>;
       if (from.unit !== toAngle.unit) {
-        warnInterpolate('unit-mismatch', `refusing angle interpolation across units: ${from.unit} → ${toAngle.unit}`, {
-          from,
-          to,
-        });
+        warnInterpolate(
+          'core/interpolate/unit-mismatch',
+          `refusing angle interpolation across units: ${from.unit} → ${toAngle.unit}`,
+          {
+            from,
+            to,
+          },
+        );
         return to;
       }
       return { k: 'angle', v: lerp(from.v, toAngle.v, eased), unit: from.unit };
@@ -260,7 +268,7 @@ export function interpolateTyped(from: TypedValue, to: TypedValue, eased: number
       // mirroring the unit-mismatch arm. No silent lerp across color models.
       if (from.space !== toColor.space) {
         warnInterpolate(
-          'color-space-mismatch',
+          'core/interpolate/color-space-mismatch',
           `refusing color interpolation across spaces: ${from.space} → ${toColor.space}`,
           {
             from,
@@ -287,10 +295,14 @@ export function interpolateTyped(from: TypedValue, to: TypedValue, eased: number
         const b = toTransform.parts[i];
         if (a && b) {
           if (a.fn !== b.fn) {
-            warnInterpolate('transform-fn-mismatch', `refusing transform fn mismatch: ${a.fn} → ${b.fn}`, {
-              from: a,
-              to: b,
-            });
+            warnInterpolate(
+              'core/interpolate/transform-fn-mismatch',
+              `refusing transform fn mismatch: ${a.fn} → ${b.fn}`,
+              {
+                from: a,
+                to: b,
+              },
+            );
             parts.push(b);
           } else {
             parts.push(interpolateTransformPart(a, b, eased));

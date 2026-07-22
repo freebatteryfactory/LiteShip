@@ -305,20 +305,20 @@ export const SUPPORTED_PATCH_VERSION = 1 as const;
 export function decode(value: unknown): GraphPatch {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
     throw ParseError('GraphPatch', `expected an object, got ${value === null ? 'null' : typeof value}`, {
-      code: 'not_an_object',
+      code: 'core/graph-patch/not_an_object',
     });
   }
   const record = value as Record<string, unknown>;
   if (record._tag !== 'GraphPatch') {
     throw ParseError('GraphPatch', `expected _tag "GraphPatch", got ${JSON.stringify(record._tag)}`, {
-      code: 'wrong_tag',
+      code: 'core/graph-patch/wrong_tag',
     });
   }
   if (record._version !== SUPPORTED_PATCH_VERSION) {
     throw ParseError(
       'GraphPatch',
       `unsupported _version ${JSON.stringify(record._version)} — this build understands _version ${SUPPORTED_PATCH_VERSION} only`,
-      { code: 'unsupported_version' },
+      { code: 'core/graph-patch/unsupported_version' },
     );
   }
   return value as GraphPatch;

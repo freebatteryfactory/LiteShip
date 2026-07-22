@@ -96,7 +96,7 @@ export async function verify(args: readonly string[]): Promise<number> {
   // A verdict-bearing result emits a ShipVerifyReceipt; a plain failure (bad
   // input) goes to stderr as a structured error event.
   if (result.verdict === undefined) {
-    emitError('verify', (result.payload as { error: string }).error);
+    emitError('verify', 'cli/command-failed', (result.payload as { error: string }).error);
     return result.exitCode ?? 1;
   }
   const payload = result.payload as VerifyPayload;

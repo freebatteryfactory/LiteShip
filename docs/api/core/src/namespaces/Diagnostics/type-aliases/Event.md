@@ -8,6 +8,6 @@
 
 > **Event** = [`DiagnosticEvent`](../../../interfaces/DiagnosticEvent.md)
 
-Defined in: [core/src/evidence/diagnostics.ts:213](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/diagnostics.ts#L213)
+Defined in: [core/src/evidence/diagnostics.ts:240](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/diagnostics.ts#L240)
 
 Alias for [DiagnosticEvent](../../../interfaces/DiagnosticEvent.md).

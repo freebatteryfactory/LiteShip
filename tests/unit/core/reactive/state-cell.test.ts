@@ -4,8 +4,10 @@
  * @module
  */
 
-import { describe, test, expect } from 'vitest';
-import { StateCell, ProjectionState, StateCellStore, StateName, RuntimeCoordinator } from '@liteship/core';
+import { afterEach, describe, test, expect } from 'vitest';
+import { Diagnostics, StateCell, ProjectionState, StateCellStore, StateName, RuntimeCoordinator } from '@liteship/core';
+
+afterEach(() => Diagnostics.reset());
 
 describe('StateCell authority model', () => {
   test('discrete cells are replayable; continuous cells are not', () => {
@@ -97,6 +99,8 @@ describe('StateCellStore', () => {
   });
 
   test('hydrateDiscrete REFUSES a generation rollback — the cell stays byte-identical (#133)', () => {
+    const captured = Diagnostics.createBufferSink();
+    Diagnostics.setSink(captured.sink);
     const store = StateCellStore.create();
     store.register('layout', ['mobile', 'tablet', 'desktop']);
 
@@ -105,10 +109,12 @@ describe('StateCellStore', () => {
     const rolled = store.hydrateDiscrete('layout', 'tablet', 4, 'graph');
     expect(rolled.state).toBe('desktop');
     expect(rolled.generation).toBe(5);
+    expect(captured.events.map((event) => event.code)).toContain('core/state-cell/discrete-generation-rollback');
     // A newer generation still advances it.
     const advanced = store.hydrateDiscrete('layout', 'mobile', 6, 'graph');
     expect(advanced.state).toBe('mobile');
     expect(advanced.generation).toBe(6);
+    Diagnostics.reset();
   });
 
   test('hydrateDiscrete is IDEMPOTENT on a duplicate generation (no rollback, no double-apply)', () => {

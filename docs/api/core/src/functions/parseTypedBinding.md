@@ -8,7 +8,7 @@
 
 > **parseTypedBinding**(`key`, `value`): [`TypedValue`](../type-aliases/TypedValue.md)
 
-Defined in: [core/src/motion/interpolate.ts:104](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpolate.ts#L104)
+Defined in: [core/src/motion/interpolate.ts:105](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpolate.ts#L105)
 
 Parse a pose binding value into a [TypedValue](../type-aliases/TypedValue.md). Property name informs
 opacity/transform heuristics when the value alone is ambiguous.

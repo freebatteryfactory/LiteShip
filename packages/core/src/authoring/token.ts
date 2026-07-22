@@ -80,9 +80,9 @@ function _tap<T = unknown>(token: TokenDef, axisValues: Record<string, string>):
     .join(':');
   if (!(key in token.values)) {
     // Falling back is the designed behavior; the warn makes a typo'd axis value observable.
-    Diagnostics.warnOnce({
+    Diagnostics.warnOnceRegistered({
       source: 'liteship/core.Token',
-      code: 'token-tap-miss',
+      code: 'core/token/token-tap-miss',
       message: `Token "${token.name}": no value for key "${key}" — known keys: [${Object.keys(token.values).join(', ')}]; returning fallback.`,
     });
   }

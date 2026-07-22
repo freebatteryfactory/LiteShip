@@ -311,7 +311,7 @@ describe('astro shared runtime adapters', () => {
       expect.objectContaining({
         level: 'warn',
         source: 'liteship/astro.receipt-chain',
-        code: 'receipt-signature-unverified',
+        code: 'astro/receipt-chain/receipt-signature-unverified',
       }),
     );
   });

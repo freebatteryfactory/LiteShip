@@ -4,19 +4,13 @@
  * Every stable diagnostic code LiteShip emits must be enrolled in the ONE catalogue
  * ({@link DIAGNOSTIC_REGISTRY} in `@liteship/error`), so a human or an agent can
  * `explainDiagnostic(code)` and get the code's title / explanation / remediation. This
- * gate PROVES that enrolment by STATICALLY SCANNING the gauntlet's own source for the
- * codes it emits and the check registry for the `check/<slug>` ids it declares, then
- * asserting each is a key in the registry:
- *
- *  - every `ruleId: 'gauntlet/…'` literal (and every gate-id / `RULE_NS` / `RULE_ID` /
- *    `GATE_ID` root, which are all single-quoted `'gauntlet/…'` literals) in
- *    `packages/gauntlet/src/**` must be a registry key; AND
- *  - every `check/<slug>` id declared in `@liteship/command`'s check registry
- *    (`packages/command/src/checks/registry.ts`) must be a registry key.
+ * gate is the INDEPENDENT source backstop for the exact TypeScript unions at each
+ * emitter boundary: every static `area/slug` identity in package source must resolve
+ * through the registry. It scans all eight declared areas and all quote styles.
  *
  * LEAF-LEGAL BY CONSTRUCTION: the gate reads the registry from `@liteship/error` (the
  * leaf every package imports — gauntlet imports error, never the reverse) and reads the
- * check ids by SCANNING `@liteship/command`'s registry source text, so it never imports
+ * package emitters by SCANNING source text, so it never imports
  * `@liteship/command` (the dependency arrow points the other way: command deps gauntlet).
  * It is a pure fold over the {@link GateContext}'s source bytes (no IR, no facts, no
  * clock) — the same lean shape as the no-placeholder scanner. It earns blocking authority
@@ -34,11 +28,9 @@ import { commentsBlanked } from './code-only.js';
 /** The gate id — namespaces every {@link Finding} it emits. */
 const RULE_ID = 'gauntlet/diagnostic-code-registered';
 
-/** The gauntlet source tree this gate scans for emitted `gauntlet/…` ruleId codes. */
-const GAUNTLET_SRC_PREFIX = 'packages/gauntlet/src/';
-
-/** The check registry source — the ONE file declaring the `check/<slug>` ids (scanned, not imported). */
-const CHECK_REGISTRY_FILE = 'packages/command/src/checks/registry.ts';
+/** Package source is the governed emitter corpus; error/codes.ts is the registry, not an emitter. */
+const PACKAGE_SRC = /^packages\/[^/]+\/src\//;
+const REGISTRY_FILE = 'packages/error/src/codes.ts';
 
 /**
  * This gate's OWN source file — SELF-EXCLUDED from the scan. It legitimately carries
@@ -49,18 +41,11 @@ const CHECK_REGISTRY_FILE = 'packages/command/src/checks/registry.ts';
 const SELF_FILE_SUFFIX = '/gates/diagnostic-code-registered.ts';
 
 /**
- * Every single-quoted `'gauntlet/<slug>'` literal — the emitted-code roots. In gauntlet
- * source these are exactly the ruleId literals, the gate-id `id:`/`gateId:` values, and
- * the `RULE_ID`/`RULE_NS`/`GATE_ID` constant roots (sub-codes are built with backtick
- * templates, so they are not single-quoted and are not matched here — the base namespace
- * they extend IS matched, and that is what must be enrolled). A `gauntlet/…` slug is a
- * single path segment (`[a-z0-9-]`); a package path (`packages/gauntlet/…`) starts with
- * `packages/`, so it never matches.
+ * Every static stable-code string literal in one of the eight declared areas. The
+ * emitter types reject dynamic/invented runtime identities; this regex is deliberately
+ * independent and catches single, double, and no-substitution template literals.
  */
-const GAUNTLET_CODE = /'(gauntlet\/[a-zA-Z0-9_-]+)'/g;
-
-/** Every single-quoted `'check/<slug>'` literal — the P11 check ids declared in the registry. */
-const CHECK_CODE = /'(check\/[a-zA-Z0-9_-]+)'/g;
+const STABLE_CODE = /(['"`])((?:gauntlet|check|core|schema|compiler|astro|cli|migrate)\/[a-zA-Z0-9_/-]+)\1/g;
 
 /** All the codes a single source file emits (comments stripped so a doc mention never counts). */
 function codesIn(text: string, pattern: RegExp): readonly string[] {
@@ -69,7 +54,7 @@ function codesIn(text: string, pattern: RegExp): readonly string[] {
   const code = commentsBlanked(text);
   const out: string[] = [];
   for (const match of code.matchAll(pattern)) {
-    const captured = match[1];
+    const captured = match[2];
     if (captured !== undefined) out.push(captured);
   }
   return out;
@@ -114,24 +99,19 @@ function scan(context: GateContext): readonly Finding[] {
   };
   for (const file of [...files].sort()) {
     if (file.endsWith(SELF_FILE_SUFFIX)) continue; // self-exclude (carries example fixture ids)
-    if (file.startsWith(GAUNTLET_SRC_PREFIX)) {
-      const text = context.readFile(file);
-      if (text !== undefined) for (const code of codesIn(text, GAUNTLET_CODE)) record(code, file);
-    }
-    if (file === CHECK_REGISTRY_FILE) {
-      const text = context.readFile(file);
-      if (text !== undefined) for (const code of codesIn(text, CHECK_CODE)) record(code, file);
-    }
+    if (!PACKAGE_SRC.test(file) || file === REGISTRY_FILE) continue;
+    const text = context.readFile(file);
+    if (text !== undefined) for (const code of codesIn(text, STABLE_CODE)) record(code, file);
   }
   return findings;
 }
 
-// ── Fixtures (synthetic gauntlet/command source — a registered green, an unregistered red) ──
+// ── Fixtures (synthetic package emitters — registered green, unregistered red) ──
 
 /** A red world: a gauntlet gate source that emits a `gauntlet/…` ruleId no registry enrolls. */
 const RED_CONTEXT = memoryContext({
-  'packages/gauntlet/src/gates/__unregistered_fixture__.ts':
-    "import { finding } from '../finding.js';\nexport const g = () => finding({ ruleId: 'gauntlet/__unregistered_fixture_code__', severity: 'error', level: 'L1', title: 'x', detail: 'x' });\n",
+  'packages/astro/src/__unregistered_fixture__.ts':
+    'export const payload = { code: "astro/__unregistered_fixture_code__", message: "x" };\n',
 });
 
 /** A green world: a gauntlet gate source + a check registry that emit only ENROLLED codes. */
@@ -140,6 +120,14 @@ const GREEN_CONTEXT = memoryContext({
     "import { finding } from '../finding.js';\nexport const g = () => finding({ ruleId: 'gauntlet/no-placeholder', severity: 'error', level: 'L1', title: 'x', detail: 'x' });\n",
   'packages/command/src/checks/registry.ts':
     "export const CHECK_REGISTRY = [{ id: 'check/format' }, { id: 'check/typecheck' }] as const;\n",
+  'packages/core/src/schema/__registered_fixture__.ts': 'export const issue = { code: `schema/type`, message: "x" };\n',
+  'packages/compiler/src/__registered_fixture__.ts':
+    "export const warning = { code: 'compiler/css/unknown-state-key', message: 'x' };\n",
+  'packages/astro/src/__registered_fixture__.ts':
+    'export const warning = { code: "astro/wgpu/webgpu-unavailable", message: "x" };\n',
+  'packages/cli/src/__registered_fixture__.ts': "export const failure = { code: 'cli/usage', message: 'x' };\n",
+  'packages/compiler/src/migrate/__registered_fixture__.ts':
+    "export const warning = { code: 'migrate/malformed-input', message: 'x' };\n",
 });
 
 /**
@@ -150,20 +138,20 @@ export const diagnosticCodeRegisteredGate: Gate = defineGate({
   id: RULE_ID,
   level: 'L2',
   describe:
-    "Statically scans packages/gauntlet/src for every emitted gauntlet/… ruleId literal and the check registry for every check/<slug> id, and reports any that is not a key in @liteship/error's DIAGNOSTIC_REGISTRY — the guard that keeps every emitted diagnostic code explainable via explainDiagnostic.",
+    "Statically scans package source for every stable gauntlet/check/core/schema/compiler/astro/cli/migrate identity and reports any that is not a key in @liteship/error's DIAGNOSTIC_REGISTRY — the independent backstop that keeps every emitted diagnostic code explainable.",
   run: scan,
   fixtures: {
     red: {
-      name: "a gauntlet gate source emitting the unregistered ruleId 'gauntlet/__unregistered_fixture_code__'",
+      name: 'an Astro emitter carrying an unregistered stable diagnostic identity',
       context: RED_CONTEXT,
     },
     green: {
-      name: 'gauntlet + check-registry source emitting only enrolled codes (gauntlet/no-placeholder, check/format, check/typecheck)',
+      name: 'one enrolled code from each currently emitting diagnostic area',
       context: GREEN_CONTEXT,
     },
     mutation: {
       describe:
-        "A mutant that treats every scanned code as registered (folds nothing) leaves the red fixture's unregistered ruleId unflagged — the mutant must then fail the red.",
+        "A mutant that treats every scanned code as registered (folds nothing) leaves the red fixture's unregistered Astro identity unflagged — the mutant must then fail the red.",
       mutate: (gate: Gate): Gate => ({
         ...gate,
         // Mutant: never flag anything (the toothless variant that lets an unregistered code

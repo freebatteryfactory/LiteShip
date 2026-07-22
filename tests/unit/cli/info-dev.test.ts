@@ -87,6 +87,7 @@ describe('liteship dev — example resolution + missing-app guard', () => {
       const err = JSON.parse(r.stderr.trim().split('\n').pop()!);
       expect(err.status).toBe('failed');
       expect(err.command).toBe('dev');
+      expect(err.code).toBe('cli/not-found');
       // Default host is examples/showcase.
       expect(err.error).toContain('examples/showcase');
       expect(err.hint).toBeDefined();

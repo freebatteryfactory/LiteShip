@@ -9,10 +9,10 @@
  *   • a fetched GLSL shader whose bytes MATCH the author-pinned `data-liteship-shader-
  *     integrity` hash COMPILES — `gl.shaderSource` receives the verified source;
  *   • a fetched GLSL shader whose bytes do NOT match the pin is REFUSED — a
- *     `shader-integrity-mismatch` security diagnostic fires and `gl.shaderSource`
+ *     `astro/gpu/shader-integrity-mismatch` security diagnostic fires and `gl.shaderSource`
  *     is NEVER called with the fetched body (the tampered shader never reaches GL);
  *   • an EXTERNAL fetch with NO pin is REFUSED (secure-by-default) — a
- *     `shader-integrity-absent` diagnostic fires, no compile;
+ *     `astro/gpu/shader-integrity-absent` diagnostic fires, no compile;
  *   • the WGSL path mirrors it: a tampered fetched WGSL shader is REFUSED before
  *     `device.createShaderModule`.
  *
@@ -183,7 +183,7 @@ describe('GLSL shader content integrity — verify-before-compile, refuse-on-mis
     await flush();
 
     // REFUSED: a security diagnostic fired and the tampered body NEVER reached GL.
-    const mismatch = events.find((e) => e.code === 'shader-integrity-mismatch');
+    const mismatch = events.find((e) => e.code === 'astro/gpu/shader-integrity-mismatch');
     expect(mismatch).toBeDefined();
     expect(mismatch!.level).toBe('error');
     expect(shaderSources.some((s) => s.includes('vec4(v_uv, 0.0, 1.0)'))).toBe(false);
@@ -261,7 +261,7 @@ describe('GLSL shader content integrity — verify-before-compile, refuse-on-mis
     initGPUDirective(async () => {}, canvas, { force: true });
     await flush();
 
-    const absent = events.find((e) => e.code === 'shader-integrity-absent');
+    const absent = events.find((e) => e.code === 'astro/gpu/shader-integrity-absent');
     expect(absent).toBeDefined();
     expect(absent!.level).toBe('error');
     // The unverified space-path shader never reached GL as source, literal or fetched.
@@ -288,7 +288,7 @@ describe('GLSL shader content integrity — verify-before-compile, refuse-on-mis
     initGPUDirective(async () => {}, canvas, { force: true });
     await flush();
 
-    const absent = events.find((e) => e.code === 'shader-integrity-absent');
+    const absent = events.find((e) => e.code === 'astro/gpu/shader-integrity-absent');
     expect(absent).toBeDefined();
     expect(absent!.level).toBe('error');
     // The unverified path-relative shader never reached GL as source, literal or fetched.
@@ -313,7 +313,7 @@ describe('GLSL shader content integrity — verify-before-compile, refuse-on-mis
     initGPUDirective(async () => {}, canvas, { force: true });
     await flush();
 
-    const absent = events.find((e) => e.code === 'shader-integrity-absent');
+    const absent = events.find((e) => e.code === 'astro/gpu/shader-integrity-absent');
     expect(absent).toBeDefined();
     expect(absent!.level).toBe('error');
     // The unverified external shader never reached GL.
@@ -393,7 +393,7 @@ describe('WGSL shader content integrity — refuse-on-mismatch before createShad
     expect(env.device.createShaderModule).not.toHaveBeenCalled();
     expect(moduleCodes).toHaveLength(0);
     expect(dispose).toBeNull();
-    const mismatch = events.find((e) => e.code === 'wgsl-integrity-mismatch');
+    const mismatch = events.find((e) => e.code === 'astro/wgpu/wgsl-integrity-mismatch');
     expect(mismatch).toBeDefined();
     expect(mismatch!.level).toBe('error');
   });
@@ -447,7 +447,7 @@ describe('WGSL shader content integrity — refuse-on-mismatch before createShad
     expect(env.device.createShaderModule).not.toHaveBeenCalled();
     expect(moduleCodes).toHaveLength(0);
     expect(dispose).toBeNull();
-    const absent = events.find((e) => e.code === 'wgsl-integrity-absent');
+    const absent = events.find((e) => e.code === 'astro/wgpu/wgsl-integrity-absent');
     expect(absent).toBeDefined();
     expect(absent!.level).toBe('error');
   });

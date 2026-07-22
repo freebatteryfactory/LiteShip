@@ -6,7 +6,7 @@
 
 # Interface: DecodeIssue
 
-Defined in: [core/src/schema/decode.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/decode.ts#L42)
+Defined in: [core/src/schema/decode.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/decode.ts#L35)
 
 One strict-decode failure, tagged by the [DecodePath](../type-aliases/DecodePath.md) it occurred at.
 
@@ -16,7 +16,7 @@ One strict-decode failure, tagged by the [DecodePath](../type-aliases/DecodePath
 
 > `readonly` `optional` **cause?**: `unknown`
 
-Defined in: [core/src/schema/decode.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/decode.ts#L47)
+Defined in: [core/src/schema/decode.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/decode.ts#L40)
 
 The folded upstream cause (e.g. a brand's `ValidationError`), when present.
 
@@ -26,7 +26,7 @@ The folded upstream cause (e.g. a brand's `ValidationError`), when present.
 
 > `readonly` **code**: [`DecodeIssueCode`](../type-aliases/DecodeIssueCode.md)
 
-Defined in: [core/src/schema/decode.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/decode.ts#L44)
+Defined in: [core/src/schema/decode.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/decode.ts#L37)
 
 ***
 
@@ -34,7 +34,7 @@ Defined in: [core/src/schema/decode.ts:44](https://github.com/freebatteryfactory
 
 > `readonly` **message**: `string`
 
-Defined in: [core/src/schema/decode.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/decode.ts#L45)
+Defined in: [core/src/schema/decode.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/decode.ts#L38)
 
 ***
 
@@ -42,4 +42,4 @@ Defined in: [core/src/schema/decode.ts:45](https://github.com/freebatteryfactory
 
 > `readonly` **path**: [`DecodePath`](../type-aliases/DecodePath.md)
 
-Defined in: [core/src/schema/decode.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/decode.ts#L43)
+Defined in: [core/src/schema/decode.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/decode.ts#L36)

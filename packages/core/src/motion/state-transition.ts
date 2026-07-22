@@ -196,12 +196,12 @@ export function decodeDiscreteStateTransition(value: unknown): DiscreteStateTran
   }
   if (record.kind !== 'discrete') {
     throw ParseError('DiscreteStateTransition', `expected kind "discrete", got ${JSON.stringify(record.kind)}`, {
-      code: 'wrong_kind',
+      code: 'core/state-transition/wrong_kind',
     });
   }
   if (typeof record.cell !== 'string' || typeof record.next !== 'string' || typeof record.generation !== 'number') {
     throw ParseError('DiscreteStateTransition', 'missing required cell/next/generation fields', {
-      code: 'malformed',
+      code: 'core/state-transition/malformed',
     });
   }
   return value as DiscreteStateTransition;

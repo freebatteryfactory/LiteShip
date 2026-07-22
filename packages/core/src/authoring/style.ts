@@ -141,9 +141,9 @@ function _tap(style: StyleDef, state?: string): Record<string, string> {
     // set, a valid non-overridden state is indistinguishable from a typo.
     const knownStates = style.boundary.states as readonly string[];
     if (!knownStates.includes(state)) {
-      Diagnostics.warnOnce({
+      Diagnostics.warnOnceRegistered({
         source: 'liteship/core.Style',
-        code: 'style-unknown-state',
+        code: 'core/style/style-unknown-state',
         message: `Style.tap: state "${state}" is not a state of the style's boundary [${knownStates.join(', ')}]; returning base styles.`,
       });
     }

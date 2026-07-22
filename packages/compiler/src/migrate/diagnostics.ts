@@ -9,7 +9,7 @@
  * @module
  */
 
-import type { DiagnosticCode } from '@liteship/error';
+import type { DiagnosticCodeFor } from '@liteship/error';
 import type { MigrationDiagnostic } from './types.js';
 
 /**
@@ -34,7 +34,7 @@ export const MIGRATE_CODES = Object.freeze({
   incompleteThemeVariant: 'migrate/incomplete-theme-variant',
   /** Input JSON/CSS failed schema decode; folds `DecodeIssue[]` → `ParseError` when fatal. */
   malformedInput: 'migrate/malformed-input',
-} as const satisfies Readonly<Record<string, DiagnosticCode>>);
+} as const satisfies Readonly<Record<string, DiagnosticCodeFor<'migrate'>>>);
 
 /** Options for {@link makeMigrationDiagnostic} — everything on the record except `code` and `message`. */
 export interface MakeMigrationDiagnosticOptions {
@@ -52,7 +52,7 @@ export interface MakeMigrationDiagnosticOptions {
  * `path`/`cause` when provided, so the record stays minimal.
  */
 export function makeMigrationDiagnostic(
-  code: DiagnosticCode,
+  code: DiagnosticCodeFor<'migrate'>,
   message: string,
   opts?: MakeMigrationDiagnosticOptions,
 ): MigrationDiagnostic {
