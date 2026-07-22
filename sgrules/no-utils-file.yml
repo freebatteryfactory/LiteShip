@@ -3,8 +3,9 @@
 # found: it becomes an unbounded dumping ground with no single responsibility and
 # no re-export discipline. Every function has a real domain; name the file after
 # that domain. The P4 core migration renamed the two core offenders —
-# `math-utils.ts` → `internal/numeric.ts` and `type-utils.ts` →
-# `internal/type-level.ts` — so packages/core/src carries ZERO such files today,
+# `math-utils.ts` → `motion/clamp.ts` and `type-utils.ts` → domain-owned
+# `authoring/types.ts`, `reactive/types.ts`, and `schema/types.ts` — so
+# packages/core/src carries ZERO such files today,
 # and this rule keeps it that way.
 #
 # The rule fires on the mere EXISTENCE of a matching file: it matches the

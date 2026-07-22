@@ -34,7 +34,7 @@ import { sealGraph, validateGraph } from './document-graph-address.js';
 import type { DocumentGraph, DocumentGraphNode, DocumentGraphEdge, NodeFamily } from './document-graph.js';
 import type { PlanValidationError } from '../authoring/plan.js';
 import { Receipt, type ReceiptEnvelope } from '../evidence/receipt.js';
-import { TypedRef } from '../internal/typed-ref.js';
+import { TypedRef } from '../evidence/typed-ref.js';
 import { HLC as HLCOps } from '../clock/hlc.js';
 import { DAG, type MergeResult } from './dag.js';
 

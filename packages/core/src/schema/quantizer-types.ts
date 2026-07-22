@@ -19,7 +19,8 @@
 
 import type { CellKernel } from '../reactive/cell-kernel.js';
 import type { Boundary } from '../authoring/boundary.js';
-import type { StateUnion, BoundaryCrossing } from '../internal/type-level.js';
+import type { StateUnion } from '../authoring/types.js';
+import type { BoundaryCrossing } from '../reactive/types.js';
 
 /**
  * Quantizer contract — the SYNCHRONOUS base: a {@link Boundary} definition, its

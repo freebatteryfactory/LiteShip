@@ -79,3 +79,5 @@ export type { LiveCell } from './live-cell.js';
 export { isCell, isDerived, isZap } from './primitive.js';
 
 export type { Primitive } from './primitive.js';
+
+export type { BoundaryCrossing } from './types.js';

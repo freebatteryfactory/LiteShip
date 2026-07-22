@@ -26,7 +26,7 @@
 import { ParseError } from '@liteship/error';
 import type { ContentAddress, HLC, StateName } from '../schema/brands.js';
 import { Receipt, type ReceiptEnvelope } from '../evidence/receipt.js';
-import { TypedRef } from '../internal/typed-ref.js';
+import { TypedRef } from '../evidence/typed-ref.js';
 import { HLC as HLCOps } from '../clock/hlc.js';
 import type { StateAuthority, StateCell, StateCellStoreShape } from '../reactive/state-cell.js';
 

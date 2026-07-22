@@ -15,9 +15,10 @@
  *
  * The same harness also proves the testing-hygiene backstop from the runtime-seams
  * hotspot:
- *   - no-internal-vi-mock        (f) no `vi.mock` of an internal @liteship/* package
- *                                    or a relative reach; node builtins + third-party
- *                                    specifiers stay legal (scope: `tests/**`)
+ *   - no-internal-vi-mock        (f) no direct `vi.mock` / `vi.doMock` of an internal
+ *                                    @liteship/* package or relative reach; no alias,
+ *                                    destructure, or computed-call bypass; node builtins
+ *                                    + third-party specifiers stay legal (scope: `tests/**`)
  *   - no-reactive-make-factory   (g) the retired reactive `.make` factory spellings
  *                                    stay dead — the create* verb sweep (ADR-0051)
  *
@@ -37,9 +38,11 @@
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { spawnArgvCapture } from '@liteship/command/host';
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync, existsSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync, existsSync, readdirSync } from 'node:fs';
 import { resolve, join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
+import ts from 'typescript';
+import { scaledTimeout } from '../../../vitest.shared.js';
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
 const SGRULES = resolve(REPO, 'sgrules');
@@ -69,6 +72,89 @@ function fixture(relPath: string, source: string): string {
   return full;
 }
 
+const TEST_TS_EXTENSION = /\.(?:ts|tsx|mts|cts)$/;
+const VITEST_MODULE_METHODS = new Set(['mock', 'doMock']);
+// A deliberately broad, one-token prefilter: only files with no `vi` token can
+// skip parsing. Narrowing this to one currently-known bypass spelling would make
+// the prefilter itself a new bypass surface.
+const POSSIBLE_VITEST_MOCK_INDIRECTION = /\bvi\b/;
+
+function propertyText(name: ts.PropertyName | ts.BindingName | undefined): string | undefined {
+  if (!name) return undefined;
+  if (ts.isIdentifier(name) || ts.isStringLiteral(name) || ts.isNumericLiteral(name)) return name.text;
+  return undefined;
+}
+
+function isViIdentifier(node: ts.Node | undefined): node is ts.Identifier {
+  return node !== undefined && ts.isIdentifier(node) && node.text === 'vi';
+}
+
+function viModuleMethod(expression: ts.Expression): string | undefined {
+  if (ts.isPropertyAccessExpression(expression) && isViIdentifier(expression.expression)) {
+    return VITEST_MODULE_METHODS.has(expression.name.text) ? expression.name.text : undefined;
+  }
+  if (ts.isElementAccessExpression(expression) && isViIdentifier(expression.expression)) {
+    const method = expression.argumentExpression;
+    return ts.isStringLiteral(method) && VITEST_MODULE_METHODS.has(method.text) ? method.text : undefined;
+  }
+  return undefined;
+}
+
+/**
+ * Find syntax that hides Vitest's module-mock authority from the direct
+ * ast-grep rule. These spellings are banned regardless of target: external
+ * capabilities remain mockable through the explicit `vi.mock` / `vi.doMock`
+ * forms, while aliases cannot launder an internal module reach.
+ */
+function vitestMockIndirections(source: string, fileName = 'fixture.test.ts'): readonly string[] {
+  const scriptKind = fileName.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS;
+  const tree = ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, true, scriptKind);
+  const findings: string[] = [];
+
+  function visit(node: ts.Node): void {
+    if (
+      ts.isImportSpecifier(node) &&
+      node.propertyName?.text === 'vi' &&
+      node.name.text !== 'vi' &&
+      ts.isImportDeclaration(node.parent.parent.parent) &&
+      ts.isStringLiteral(node.parent.parent.parent.moduleSpecifier) &&
+      node.parent.parent.parent.moduleSpecifier.text === 'vitest'
+    ) {
+      findings.push(`aliased vi import:${node.getStart(tree)}`);
+    }
+
+    if (ts.isVariableDeclaration(node) && node.initializer) {
+      if (ts.isIdentifier(node.name) && isViIdentifier(node.initializer)) {
+        findings.push(`aliased vi object:${node.getStart(tree)}`);
+      } else if (ts.isIdentifier(node.name) && viModuleMethod(node.initializer)) {
+        findings.push(`aliased vi module method:${node.getStart(tree)}`);
+      } else if (ts.isObjectBindingPattern(node.name) && isViIdentifier(node.initializer)) {
+        const extractsModuleMethod = node.name.elements.some((element) => {
+          const importedName = propertyText(element.propertyName) ?? propertyText(element.name);
+          return importedName !== undefined && VITEST_MODULE_METHODS.has(importedName);
+        });
+        if (extractsModuleMethod) findings.push(`destructured vi module method:${node.getStart(tree)}`);
+      }
+    }
+
+    if (ts.isCallExpression(node) && ts.isElementAccessExpression(node.expression) && viModuleMethod(node.expression)) {
+      findings.push(`computed vi module call:${node.getStart(tree)}`);
+    }
+
+    ts.forEachChild(node, visit);
+  }
+
+  visit(tree);
+  return findings;
+}
+
+function repositoryTestTypeScriptFiles(): readonly string[] {
+  const root = resolve(REPO, 'tests');
+  return (readdirSync(root, { recursive: true }) as string[])
+    .filter((relative) => TEST_TS_EXTENSION.test(relative))
+    .map((relative) => join(root, relative));
+}
+
 beforeAll(() => {
   ROOT = mkdtempSync(join(tmpdir(), 'sgrules-fixtures-'));
 });
@@ -92,6 +178,7 @@ describe('source-grammar rules are registered with ast-grep', () => {
       'types-file-purity.yml',
       'no-shape-namespace-type.yml',
       'no-internal-vi-mock.yml',
+      'no-internal-vi-mock-tsx.yml',
       'no-reactive-make-factory.yml',
     ]) {
       expect(existsSync(resolve(SGRULES, r)), r).toBe(true);
@@ -225,7 +312,7 @@ describe('no-utils-file (c) — no grab-bag filenames (core-scoped ratchet)', ()
   });
 
   it('GREEN: a domain-named file under core passes', async () => {
-    const f = fixture('packages/core/src/internal/numeric.ts', 'export const clamp = (n: number) => n;\n');
+    const f = fixture('packages/core/src/motion/clamp.ts', 'export const clamp = (n: number) => n;\n');
     expect((await scan(RULE, f)).length).toBe(0);
   });
 
@@ -315,7 +402,7 @@ describe('no-shape-namespace-type (e) — the ADR-0001 .Shape convention stays d
   });
 });
 
-describe('no-internal-vi-mock (f) — vi.mock of an internal module is banned (tests-scoped)', () => {
+describe('no-internal-vi-mock (f) — internal module mocks are banned (tests-scoped)', () => {
   const RULE = 'no-internal-vi-mock.yml';
 
   // Assemble each `vi.mock(...)` fixture LINE by interpolating the specifier, so the
@@ -325,25 +412,25 @@ describe('no-internal-vi-mock (f) — vi.mock of an internal module is banned (t
   // (and the very rule) it exists to prove. ast-grep still parses the WRITTEN
   // fixture file as a real `vi.mock` call.
   const q = "'";
-  const mock = (spec: string, factory?: string): string =>
-    factory === undefined ? `vi.mock(${q}${spec}${q});` : `vi.mock(${q}${spec}${q}, ${factory});`;
+  const mockCall = (method: 'mock' | 'doMock', spec: string, factory?: string): string =>
+    factory === undefined ? `vi.${method}(${q}${spec}${q});` : `vi.${method}(${q}${spec}${q}, ${factory});`;
 
-  it('RED: vi.mock of a @liteship/* package and a relative reach both fire (1-arg + factory forms)', async () => {
+  it('RED: direct vi.mock and vi.doMock catch internal packages and relative reaches', async () => {
     const f = fixture(
       'tests/unit/faux/internal-mock.test.ts',
       [
         "import { vi } from 'vitest';",
         // A first-party package, auto-mock (1-arg) form.
-        mock('@liteship/core'),
+        mockCall('mock', '@liteship/core'),
         // A relative reach into another module's src, factory (2-arg) form.
-        mock('../../packages/x/src/y.js', '() => ({ y: 1 })'),
+        mockCall('doMock', '../../packages/x/src/y.js', '() => ({ y: 1 })'),
         // A scoped subpath + importOriginal factory (multiline 2-arg) — still internal.
         `vi.mock(${q}@liteship/command/host${q}, async (importOriginal) => {`,
         '  const orig = await importOriginal();',
         '  return { ...orig };',
         '});',
         // A `./` relative reach.
-        mock('./local.js', '() => ({})'),
+        mockCall('doMock', './local.js', '() => ({})'),
         '',
       ].join('\n'),
     );
@@ -351,13 +438,24 @@ describe('no-internal-vi-mock (f) — vi.mock of an internal module is banned (t
     expect((await scan(RULE, f)).length).toBe(4);
   });
 
-  it('GREEN: vi.mock of a node builtin and a third-party specifier pass (the only legal externals)', async () => {
+  it('SCOPE: all supported TypeScript test extensions are governed', async () => {
+    for (const extension of ['ts', 'tsx', 'mts', 'cts'] as const) {
+      const f = fixture(
+        `tests/unit/faux/internal-mock-${extension}.test.${extension}`,
+        ["import { vi } from 'vitest';", mockCall('doMock', '@liteship/core'), ''].join('\n'),
+      );
+      const rule = extension === 'tsx' ? 'no-internal-vi-mock-tsx.yml' : RULE;
+      expect((await scan(rule, f)).length, extension).toBe(1);
+    }
+  });
+
+  it('GREEN: direct module mocks of node builtins and third-party capabilities pass', async () => {
     const f = fixture(
       'tests/unit/faux/external-mock.test.ts',
       [
         "import { vi } from 'vitest';",
         "vi.mock('node:fs');",
-        "vi.mock('vite');",
+        "vi.doMock('vite');",
         // A node builtin with an importOriginal factory is legal too.
         "vi.mock('node:child_process', async (importOriginal) => {",
         '  const orig = await importOriginal();',
@@ -373,8 +471,48 @@ describe('no-internal-vi-mock (f) — vi.mock of an internal module is banned (t
   it('SCOPE: an internal vi.mock OUTSIDE tests/ (e.g. under a package src) is out of scope', async () => {
     const f = fixture(
       'packages/faux/src/domain/not-a-test.ts',
-      ["import { vi } from 'vitest';", mock('@liteship/core'), ''].join('\n'),
+      ["import { vi } from 'vitest';", mockCall('mock', '@liteship/core'), ''].join('\n'),
     );
     expect((await scan(RULE, f)).length).toBe(0);
   });
+
+  it('AST RED: alias, destructure, and computed-call spellings cannot bypass the direct rule', () => {
+    const source = [
+      "import { vi as mockAuthority } from 'vitest';",
+      'const mockFacade = vi;',
+      'const moduleMock = vi.mock;',
+      'const { doMock: deferredModuleMock } = vi;',
+      "vi['doMock']('@liteship/core');",
+      '',
+    ].join('\n');
+
+    expect(vitestMockIndirections(source)).toHaveLength(5);
+  });
+
+  it('AST GREEN: explicit external capability mocks and unrelated Vitest APIs remain legal', () => {
+    const source = [
+      "import { vi } from 'vitest';",
+      "vi.mock('node:fs');",
+      "vi.doMock('vite');",
+      'vi.spyOn(console, "warn");',
+      'vi.useFakeTimers();',
+      '',
+    ].join('\n');
+
+    expect(vitestMockIndirections(source)).toEqual([]);
+  });
+
+  it(
+    'AST REPOSITORY GUARD: test sources contain no hidden Vitest module-mock authority',
+    () => {
+      const findings = repositoryTestTypeScriptFiles().flatMap((file) => {
+        const source = readFileSync(file, 'utf8');
+        if (!POSSIBLE_VITEST_MOCK_INDIRECTION.test(source)) return [];
+        return vitestMockIndirections(source, file).map((finding) => `${file.slice(REPO.length + 1)}:${finding}`);
+      });
+
+      expect(findings).toEqual([]);
+    },
+    scaledTimeout(30_000),
+  );
 });

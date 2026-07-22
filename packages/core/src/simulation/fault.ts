@@ -22,7 +22,7 @@
  * @module
  */
 
-import type { Rng } from '../internal/rng.js';
+import type { Rng } from '../clock/rng.js';
 
 /**
  * The four fault kinds, each a deterministic perturbation of a step's behavior:

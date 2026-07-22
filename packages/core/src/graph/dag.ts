@@ -8,7 +8,7 @@
 
 import { InvariantViolationError } from '@liteship/error';
 import { compare as hlcCompare, HLC } from '../clock/hlc.js';
-import { TypedRef } from '../internal/typed-ref.js';
+import { TypedRef } from '../evidence/typed-ref.js';
 import type { ReceiptEnvelope } from '../evidence/receipt.js';
 import { GENESIS, createEnvelope, CHECKPOINT_ATTESTATION_SCHEMA } from '../evidence/receipt.js';
 

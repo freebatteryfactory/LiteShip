@@ -18,7 +18,7 @@
 import { ParseError } from '@liteship/error';
 import type { ContentAddress, AddressedDigest } from '../schema/brands.js';
 import { IntegrityDigest } from '../schema/brands.js';
-import { fnv1aBytes } from '../internal/fnv.js';
+import { fnv1aBytes } from '../evidence/fnv.js';
 import { canonicalAddressBytes, contentAddressOf } from '../evidence/content-address.js';
 import { AddressedDigest as AddressedDigestNS } from '../evidence/addressed-digest.js';
 import { Plan } from '../authoring/plan.js';

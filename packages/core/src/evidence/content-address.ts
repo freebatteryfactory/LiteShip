@@ -12,7 +12,7 @@
 
 import type { ContentAddress } from '../schema/brands.js';
 import { CanonicalCbor } from '../schema/cbor.js';
-import { fnv1aBytes } from '../internal/fnv.js';
+import { fnv1aBytes } from './fnv.js';
 
 /**
  * Recursively normalize a value for content addressing: drop `undefined` object

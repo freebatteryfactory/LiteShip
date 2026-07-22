@@ -14,6 +14,36 @@ import {
 } from './boundary.js';
 import { bootDirectiveEntry } from './directive-bound.js';
 
+type WorkerDirectiveCompositor = Pick<
+  WorkerHost['compositor'],
+  'addQuantizer' | 'bootstrapResolvedState' | 'applyResolvedState' | 'onResolvedStateAck'
+> & {
+  readonly worker: Pick<Worker, 'addEventListener'> & Partial<Pick<Worker, 'removeEventListener'>>;
+};
+
+interface WorkerDirectiveHost {
+  readonly compositor: WorkerDirectiveCompositor;
+  readonly onState: WorkerHost['onState'];
+  readonly dispose: WorkerHost['dispose'];
+}
+
+/**
+ * The two domain-owned operations the worker directive executes through.
+ *
+ * This is an internal, defaulted seam: production always uses the real
+ * `WorkerHost` and boundary normalizer, while branch tests can script those
+ * capabilities directly instead of replacing either semantic module.
+ */
+interface WorkerRuntimeDependencies {
+  readonly createWorkerHost: () => WorkerDirectiveHost;
+  readonly normalizeBoundaryState: typeof normalizeBoundaryState;
+}
+
+const DEFAULT_WORKER_RUNTIME_DEPENDENCIES: WorkerRuntimeDependencies = {
+  createWorkerHost: () => WorkerHost.create(),
+  normalizeBoundaryState,
+};
+
 function sameStringRecord(left: Record<string, string>, right: Record<string, string>): boolean {
   const leftKeys = Object.keys(left);
   const rightKeys = Object.keys(right);
@@ -104,17 +134,26 @@ function canUseWorkerRuntime(): boolean {
  * when `SharedArrayBuffer` / cross-origin isolation is unavailable.
  */
 export function initWorkerDirective(load: () => Promise<unknown>, element: HTMLElement): void {
+  initWorkerDirectiveWithDependencies(load, element, DEFAULT_WORKER_RUNTIME_DEPENDENCIES);
+}
+
+/** Source-private dependency seam; not projected from any package entrypoint. */
+export function initWorkerDirectiveWithDependencies(
+  load: () => Promise<unknown>,
+  element: HTMLElement,
+  dependencies: WorkerRuntimeDependencies,
+): void {
   let runtimeBoundary = parseBoundary(element.getAttribute('data-liteship-boundary'));
   if (!runtimeBoundary) {
     return;
   }
 
   let cleanupObserver: (() => void) | null = null;
-  let host: WorkerHost | null = null;
+  let host: WorkerDirectiveHost | null = null;
   let unsubscribe: (() => void) | null = null;
   let ackUnsubscribe: (() => void) | null = null;
   let workerMessageHandler: ((event: MessageEvent<{ type?: string }>) => void) | null = null;
-  let workerRef: Worker | null = null;
+  let workerRef: WorkerDirectiveCompositor['worker'] | null = null;
   let previousState = element.getAttribute('data-liteship-state') ?? '';
   let lastAppliedDetail: BoundaryStateDetail | null = null;
   let seededGeneration = 0;
@@ -128,7 +167,7 @@ export function initWorkerDirective(load: () => Promise<unknown>, element: HTMLE
     unsubscribe = null;
     ackUnsubscribe?.();
     ackUnsubscribe = null;
-    if (workerMessageHandler && workerRef && typeof workerRef.removeEventListener === 'function') {
+    if (workerMessageHandler && workerRef?.removeEventListener) {
       workerRef.removeEventListener('message', workerMessageHandler);
     }
     workerMessageHandler = null;
@@ -181,7 +220,7 @@ export function initWorkerDirective(load: () => Promise<unknown>, element: HTMLE
       return;
     }
     const boundary = runtimeBoundary;
-    const workerHost = WorkerHost.create();
+    const workerHost = dependencies.createWorkerHost();
     host = workerHost;
 
     const syncResolvedState = (stateName: string, generation: number, bootstrap = false): void => {
@@ -209,7 +248,7 @@ export function initWorkerDirective(load: () => Promise<unknown>, element: HTMLE
       };
       applyBoundaryState(element, boundary, payload, 'liteship:worker-state');
       previousState = stateName;
-      lastAppliedDetail = normalizeBoundaryState(payload);
+      lastAppliedDetail = dependencies.normalizeBoundaryState(payload);
       lastAppliedGeneration = generation;
     };
 
@@ -251,7 +290,7 @@ export function initWorkerDirective(load: () => Promise<unknown>, element: HTMLE
         previousState = currentState;
       }
 
-      const normalized = normalizeBoundaryState(state);
+      const normalized = dependencies.normalizeBoundaryState(state);
       const workerGeneration = state.resolvedStateGenerations?.[boundary.name];
       if (
         pendingWorkerSeedAgreement &&

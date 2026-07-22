@@ -79,7 +79,7 @@ describe('B5b — the two D9b-partitioned slash-normalize homes (the cage)', () 
   // are not repo-path normalization.
   const ALLOWLIST = new Set([
     'packages/audit/src/policy.ts', // the LEAN-AUDIT normalizeRepoPath home (D9b: audit can't import @liteship/core)
-    'packages/core/src/internal/path-normalize.ts', // the BROWSER-CORE normalizeRepoPath home (parity twin; browser consumers import this)
+    'packages/core/src/repository-path.ts', // the BROWSER-CORE normalizeRepoPath home (parity twin; browser consumers import this)
     'packages/core/src/authoring/config.ts', // toTestAliases: vitest-alias URL join (NOT repo-path normalization; @liteship/core must not import @liteship/audit)
     'packages/vite/src/plugin.ts', // /@fs/ browser URL construction (a URL segment, not a filesystem path)
   ]);
@@ -97,7 +97,7 @@ describe('B5b — the two D9b-partitioned slash-normalize homes (the cage)', () 
     const definers = walkTs(resolve(REPO, 'packages')).filter((f) =>
       /function\s+normalizeRepoPath\b/.test(readFileSync(f, 'utf8')),
     );
-    expect(definers.map(rel).sort()).toEqual(['packages/audit/src/policy.ts', 'packages/core/src/internal/path-normalize.ts']);
+    expect(definers.map(rel).sort()).toEqual(['packages/audit/src/policy.ts', 'packages/core/src/repository-path.ts']);
   });
 
   it('the two homes are byte-identical (parity drift-guard — S7.1)', () => {

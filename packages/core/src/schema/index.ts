@@ -85,3 +85,5 @@ export type {
 export type { CellKind, CellMeta, CellEnvelope } from './protocol.js';
 
 export { Codec } from './codec.js';
+
+export type { Prettify, RequireAtLeastOne, DeepReadonly } from './types.js';

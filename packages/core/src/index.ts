@@ -37,7 +37,7 @@ export type {
 } from './authoring/index.js';
 
 // FNV-1a hash utility
-export { fnv1a, fnv1aBytes } from './internal/fnv.js';
+export { fnv1a, fnv1aBytes } from './evidence/index.js';
 
 // Canonical CBOR encoder (RFC 8949 §4.2.1) — content-address kernel
 export { CanonicalCbor } from './schema/index.js';
@@ -99,18 +99,12 @@ export { CellKernel } from './reactive/index.js';
 export type { Disposer, CellSink, CellSubscriber, CellReplayShape, CellFanoutShape } from './reactive/index.js';
 
 // Type utilities
-export type {
-  Prettify,
-  StateUnion,
-  OutputsFor,
-  BoundaryCrossing,
-  EvaluateResult,
-  RequireAtLeastOne,
-  DeepReadonly,
-} from './internal/type-level.js';
+export type { StateUnion, OutputsFor, EvaluateResult } from './authoring/index.js';
+export type { BoundaryCrossing } from './reactive/index.js';
+export type { Prettify, RequireAtLeastOne, DeepReadonly } from './schema/index.js';
 
 // Tuple utilities
-export { tupleMap } from './internal/tuple.js';
+export { tupleMap } from './authoring/index.js';
 
 // ── Shared leaf utilities — the browser-safe [DUP] owners ────────────────────
 // The single home for primitives the repo had inlined in many copies: the
@@ -118,9 +112,9 @@ export { tupleMap } from './internal/tuple.js';
 // caller-supplied, so one table subsumes the assets/scene/command policies), and
 // the backslash→slash repo-path normalizer (audit's B5b one-normalizer cage). The
 // Node-only `walkFiles` sibling stays OUT of this index — it rides `@liteship/core/fs-walk`.
-export { clamp01 } from './internal/numeric.js';
-export { editDistance, closestMatch } from './internal/string-distance.js';
-export { normalizeRepoPath } from './internal/path-normalize.js';
+export { clamp01 } from './motion/index.js';
+export { editDistance, closestMatch } from './evidence/index.js';
+export { normalizeRepoPath } from './repository-path.js';
 
 // Boundary. `BoundarySpec` is exported as a value+type pair (see the
 // namespace-object pattern in ADR-0001); consumers who want only the type
@@ -132,7 +126,7 @@ export { Boundary, defineBoundary, BoundarySpec } from './authoring/index.js';
 // in `systemClock` / `systemRng` (the single declared entropy boundary). Every
 // other runtime path threads an injected clock/rng defaulting to the system one.
 export { type Clock, type ManualClock, systemClock, wallClock, fixedClock, manualClock } from './clock/index.js';
-export { type Rng, systemRng, seededRng } from './internal/rng.js';
+export { type Rng, systemRng, seededRng } from './clock/index.js';
 
 // The single f32-canonical state-index kernel and its worker-blob twin string.
 // `rawIndexF32` is THE numeric semantics for boundary evaluation; the host
@@ -424,7 +418,7 @@ export { HLC } from './clock/index.js';
 export { VectorClock } from './clock/index.js';
 
 // TypedRef
-export { TypedRef } from './internal/typed-ref.js';
+export { TypedRef } from './evidence/index.js';
 
 // Receipt
 export type {

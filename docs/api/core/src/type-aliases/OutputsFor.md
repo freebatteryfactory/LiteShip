@@ -8,9 +8,9 @@
 
 > **OutputsFor**\<`B`, `T`\> = `{ readonly [S in StateUnion<B>]: T }`
 
-Defined in: [core/src/internal/type-level.ts:20](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/internal/type-level.ts#L20)
+Defined in: [core/src/authoring/types.ts:9](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/types.ts#L9)
 
-Generate valid output shapes per state
+Generate a complete output table keyed by the states in a boundary.
 
 ## Type Parameters
 

@@ -44,6 +44,10 @@ export type { AdaptiveQuantizeOptions, AdaptiveQuantizerConfig, AdaptiveQuantize
 
 export type { Adaptive, AdaptiveSpec, AdaptiveExplanation, AdaptivePlan, ConstraintTrace } from './adaptive.js';
 
+export type { StateUnion, OutputsFor, EvaluateResult } from './types.js';
+
+export { tupleMap } from './tuple-map.js';
+
 export { createComponent } from './component.js';
 
 export type { Component, SlotConfig } from './component.js';

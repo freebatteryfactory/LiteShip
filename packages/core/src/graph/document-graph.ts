@@ -25,7 +25,7 @@ import type { CellMeta } from '../schema/protocol.js';
 import type { RuntimeEasing } from '../motion/easing.js';
 import type { EdgeType } from '../authoring/plan.js';
 import type { ProjectionKeys } from './projection.js';
-import type { EvaluateResult } from '../internal/type-level.js';
+import type { EvaluateResult } from '../authoring/types.js';
 import type { CapTier, CapSet } from '../evidence/caps.js';
 
 /** The runtime sites a node may be admitted on (distinct from the CapTier lattice). */

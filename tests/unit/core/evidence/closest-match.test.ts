@@ -1,5 +1,5 @@
 /**
- * string-distance owner pins — the Levenshtein table + nearest-match picker the
+ * closest-match owner pins — the Levenshtein table + nearest-match picker the
  * assets / scene / command "did you mean?" copies relied on ([DUP] Wave 7). The
  * three former policies diverged ONLY in the acceptance threshold; the
  * parameterized cases below prove each is preserved by a caller-supplied threshold.

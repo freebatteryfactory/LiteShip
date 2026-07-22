@@ -24,13 +24,13 @@
 import type { Millis } from '../schema/brands.js';
 import { Millis as mkMillis } from '../schema/brands.js';
 import { Boundary } from '../authoring/boundary.js';
-import type { StateUnion } from '../internal/type-level.js';
+import type { StateUnion } from '../authoring/types.js';
 import type { Scheduler } from '../reactive/scheduler.js';
 import { Scheduler as SchedulerImpl } from '../reactive/scheduler.js';
 import { CellKernel } from '../reactive/cell-kernel.js';
 import type { Disposer } from '../reactive/cell-kernel.js';
 import { Lifetime } from '../reactive/lifetime.js';
-import { clamp01 } from '../internal/numeric.js';
+import { clamp01 } from './clamp.js';
 
 interface TimelineShape<B extends Boundary = Boundary> {
   readonly boundary: B;

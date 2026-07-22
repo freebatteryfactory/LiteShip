@@ -10,10 +10,10 @@
 import type { ContentAddress } from '../schema/brands.js';
 import { Millis } from '../schema/brands.js';
 import type { Boundary } from './boundary.js';
-import type { StateUnion } from '../internal/type-level.js';
+import type { StateUnion } from './types.js';
 import { CanonicalCbor } from '../schema/cbor.js';
 import { Diagnostics } from '../evidence/diagnostics.js';
-import { fnv1aBytes } from '../internal/fnv.js';
+import { fnv1aBytes } from '../evidence/fnv.js';
 import { ValidationError } from '@liteship/error';
 
 /** Single `box-shadow` layer — compiled into a space-separated CSS value by {@link Style.tap}. */

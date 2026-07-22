@@ -13,14 +13,7 @@ function markBound(element: HTMLElement, name: string): void {
 
 afterEach(() => {
   document.body.innerHTML = '';
-  vi.resetModules();
   vi.restoreAllMocks();
-  vi.doUnmock('../../../packages/astro/src/runtime/graph-directive.js');
-  vi.doUnmock('../../../packages/astro/src/runtime/gpu.js');
-  vi.doUnmock('../../../packages/astro/src/runtime/llm.js');
-  vi.doUnmock('../../../packages/astro/src/runtime/stream.js');
-  vi.doUnmock('../../../packages/astro/src/runtime/wasm.js');
-  vi.doUnmock('../../../packages/astro/src/runtime/motion.js');
 });
 
 describe('Astro directive boot scanner', () => {
@@ -30,10 +23,10 @@ describe('Astro directive boot scanner', () => {
       markBound(el, 'stream');
       initStreamDirective(load, el);
     });
-    vi.doMock('../../../packages/astro/src/runtime/stream.js', () => ({ initStreamDirective, streamDirective }));
+    const loaders = {
+      stream: () => Promise.resolve({ default: streamDirective }),
+    };
 
-    const { default: exportedStreamDirective } =
-      await import('../../../packages/astro/src/client-directives/stream.js');
     const { scanAndBootDirectives } = await import('../../../packages/astro/src/runtime/directive-boot.js');
 
     document.body.innerHTML = `
@@ -44,16 +37,16 @@ describe('Astro directive boot scanner', () => {
     const plain = document.getElementById('plain')!;
     const island = document.getElementById('island')!;
 
-    exportedStreamDirective(() => Promise.resolve(), {}, island);
+    streamDirective(() => Promise.resolve(), {}, island);
     expect(island.getAttribute('data-liteship-directive-bound')).toBe('stream');
 
-    await scanAndBootDirectives(['stream']);
+    await scanAndBootDirectives(['stream'], document, loaders);
 
     expect(initStreamDirective).toHaveBeenCalledTimes(2);
     expect(initStreamDirective.mock.calls.map(([, element]) => element)).toEqual([island, plain]);
     expect(plain.getAttribute('data-liteship-directive-bound')).toBe('stream');
 
-    await scanAndBootDirectives(['stream']);
+    await scanAndBootDirectives(['stream'], document, loaders);
     expect(initStreamDirective).toHaveBeenCalledTimes(2);
   });
 
@@ -71,30 +64,14 @@ describe('Astro directive boot scanner', () => {
         markBound(el, name);
         calls[name](load, opts, el);
       });
-    vi.doMock('../../../packages/astro/src/runtime/stream.js', () => ({
-      initStreamDirective: calls.stream,
-      streamDirective: entry('stream'),
-    }));
-    vi.doMock('../../../packages/astro/src/runtime/llm.js', () => ({
-      initLLMDirective: calls.llm,
-      llmDirective: entry('llm'),
-    }));
-    vi.doMock('../../../packages/astro/src/runtime/gpu.js', () => ({
-      initGPUDirective: calls.gpu,
-      gpuDirective: entry('gpu'),
-    }));
-    vi.doMock('../../../packages/astro/src/runtime/wasm.js', () => ({
-      loadWasmRuntime: calls.wasm,
-      wasmDirective: entry('wasm'),
-    }));
-    vi.doMock('../../../packages/astro/src/runtime/graph-directive.js', () => ({
-      initGraphDirective: calls.graph,
-      graphDirective: entry('graph'),
-    }));
-    vi.doMock('../../../packages/astro/src/runtime/motion.js', () => ({
-      initMotionDirective: calls.motion,
-      motionDirective: entry('motion'),
-    }));
+    const loaders = {
+      stream: () => Promise.resolve({ default: entry('stream') }),
+      llm: () => Promise.resolve({ default: entry('llm') }),
+      gpu: () => Promise.resolve({ default: entry('gpu') }),
+      wasm: () => Promise.resolve({ default: entry('wasm') }),
+      graph: () => Promise.resolve({ default: entry('graph') }),
+      motion: () => Promise.resolve({ default: entry('motion') }),
+    };
 
     const { scanAndBootDirectives } = await import('../../../packages/astro/src/runtime/directive-boot.js');
     const implicitEntries = Object.entries(DIRECTIVE_ATTRIBUTE_REGISTRY).flatMap(([name, entries]) =>
@@ -112,7 +89,11 @@ describe('Astro directive boot scanner', () => {
       document.body.appendChild(element);
     }
 
-    await scanAndBootDirectives(implicitEntries.map((entry) => entry.name));
+    await scanAndBootDirectives(
+      implicitEntries.map((entry) => entry.name),
+      document,
+      loaders,
+    );
 
     for (const { name } of implicitEntries) {
       const call = calls[name as keyof typeof calls];

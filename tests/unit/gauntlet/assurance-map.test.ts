@@ -73,7 +73,7 @@ describe('levelOf — first matching rule wins, default L1', () => {
     ['packages/core/src/media/token-buffer.ts', 'L3'],
     ['packages/core/src/authoring/boundary.ts', 'L3'],
     ['packages/core/src/clock/clock.ts', 'L3'], // the determinism substrate, visible to the gate
-    ['packages/core/src/internal/rng.ts', 'L3'],
+    ['packages/core/src/clock/rng.ts', 'L3'],
     ['packages/core/src/authoring/ai-cast.ts', 'L3'], // moved L4→L3: deterministic proposer, not a trusted-artifact emitter
     ['packages/quantizer/src/quantizer.ts', 'L3'],
     ['packages/web/src/capture/probe.ts', 'L3'],

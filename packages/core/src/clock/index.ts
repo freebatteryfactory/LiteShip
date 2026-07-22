@@ -10,3 +10,5 @@ export { type Clock, type ManualClock, systemClock, wallClock, fixedClock, manua
 export { HLC } from './hlc.js';
 
 export { VectorClock } from './vector-clock.js';
+
+export { type Rng, systemRng, seededRng } from './rng.js';

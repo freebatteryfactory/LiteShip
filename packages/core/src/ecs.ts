@@ -17,7 +17,7 @@ export type EntityId = string & { readonly _brand: 'EntityId' };
 /** Brand an arbitrary string as an `EntityId`. Sanctioned single-site cast. */
 export const EntityId = (value: string): EntityId => value as EntityId;
 
-import { fnv1aBytes } from './internal/fnv.js';
+import { fnv1aBytes } from './evidence/fnv.js';
 import { CanonicalCbor } from './schema/cbor.js';
 import { ValidationError } from '@liteship/error';
 

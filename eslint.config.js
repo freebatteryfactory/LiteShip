@@ -153,7 +153,7 @@ export default tseslint.config(
       'packages/web/src/types.ts',
 
       // Tuple + generic-preservation helpers
-      'packages/core/src/internal/tuple.ts',
+      'packages/core/src/authoring/tuple-map.ts',
       'packages/core/src/reactive/cell.ts',
       'packages/core/src/authoring/boundary.ts',
       'packages/core/src/authoring/composable.ts',
@@ -167,7 +167,7 @@ export default tseslint.config(
       'packages/quantizer/src/evaluate.ts',
 
       // FFI / hash primitives
-      'packages/core/src/internal/typed-ref.ts',
+      'packages/core/src/evidence/typed-ref.ts',
       'packages/core/src/wasm/wasm-dispatch.ts',
 
       // Environment / runtime introspection helpers

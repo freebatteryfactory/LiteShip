@@ -182,7 +182,7 @@ For agents and grep-first humans, here is where the canonical answer lives:
 | Where is `Style` defined? | `packages/core/src/authoring/style.ts` |
 | Where is `Theme` defined? | `packages/core/src/authoring/theme.ts` |
 | Where does the canonical CBOR encoder live? | `packages/canonical/src/cbor.ts` (`@liteship/canonical`; re-exported from `packages/core/src/schema/cbor.ts`) |
-| Where is the FNV-1a hash? | `packages/canonical/src/fnv.ts` (re-exported from `packages/core/src/internal/fnv.ts`) |
+| Where is the FNV-1a hash? | `packages/canonical/src/fnv.ts` (re-anchored to core brands by `packages/core/src/evidence/fnv.ts`) |
 | Where is the generated UI catalog renderer? | `packages/genui/src/` (`defineComponentCatalog`, `renderFromCatalog`; ADR-0014) |
 | Where is the SPSC ring buffer? | `packages/worker/src/spsc-ring.ts` |
 | Where is the compositor pool? | `packages/core/src/media/compositor-pool.ts` |

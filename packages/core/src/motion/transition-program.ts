@@ -30,7 +30,7 @@ import type { DocumentGraph } from '../graph/document-graph.js';
 import type { DiagnosticPayload } from '../evidence/diagnostics.js';
 import type { RuntimeEasing } from './easing.js';
 import { sampleRuntimeEasing } from './easing.js';
-import { clamp01 } from '../internal/numeric.js';
+import { clamp01 } from './clamp.js';
 import { formatTypedValue, interpolateTyped, type TypedValue } from './interpolate.js';
 import { Plan } from '../authoring/plan.js';
 import {

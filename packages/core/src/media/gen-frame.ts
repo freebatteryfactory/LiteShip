@@ -14,7 +14,7 @@
 import type { ContentAddress } from '../schema/brands.js';
 import type { TokenBuffer } from './token-buffer.js';
 import { CanonicalCbor } from '../schema/cbor.js';
-import { fnv1aBytes } from '../internal/fnv.js';
+import { fnv1aBytes } from '../evidence/fnv.js';
 import type { UIQualityTier } from '../evidence/ui-quality.js';
 import { type Clock, systemClock } from '../clock/clock.js';
 

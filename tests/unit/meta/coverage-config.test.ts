@@ -50,7 +50,10 @@ describe('coverage config drift guard', () => {
     // EXTRACTED to cli/src/lib/package-smoke-helpers.ts and unit-tested directly
     // (tests/unit/cli/commands/package-smoke-helpers.test.ts), so only the thin
     // spawn wrapper is excluded — logic extracted + tested first, never to dodge work.
-    expect(coverageExclude).toHaveLength(23);
+    // + 3 core domain type modules replace the former single internal/type-level.ts
+    // exclusion. The exported declarations are now owned by authoring, reactive,
+    // and schema, but remain erased by TypeScript and therefore uninstrumentable.
+    expect(coverageExclude).toHaveLength(25);
   });
 
   it('merge-coverage.ts PACKAGE_THRESHOLD_OVERRIDES are pinned', () => {

@@ -1,5 +1,5 @@
 /**
- * math-utils owner pins — the unit-interval clamp + the endpoint-inclusive
+ * clamp owner pins — the unit-interval clamp + the endpoint-inclusive
  * frame→t law the ~8 former inline copies relied on ([DUP] Wave 7).
  *
  * @module

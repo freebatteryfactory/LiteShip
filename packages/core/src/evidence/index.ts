@@ -46,3 +46,9 @@ export { Diagnostics } from './diagnostics.js';
 export type { DiagnosticEvent, DiagnosticLevel, DiagnosticPayload, DiagnosticsSink } from './diagnostics.js';
 
 export { AddressedDigest } from './addressed-digest.js';
+
+export { fnv1a, fnv1aBytes } from './fnv.js';
+
+export { editDistance, closestMatch } from './closest-match.js';
+
+export { TypedRef } from './typed-ref.js';

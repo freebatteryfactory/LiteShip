@@ -8,9 +8,9 @@
 
 > **DeepReadonly**\<`T`\> = `T` *extends* infer U[] ? `ReadonlyArray`\<`DeepReadonly`\<`U`\>\> : `T` *extends* `Record`\<`string`, `unknown`\> ? `{ readonly [K in keyof T]: DeepReadonly<T[K]> }` : `T`
 
-Defined in: [core/src/internal/type-level.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/internal/type-level.ts#L56)
+Defined in: [core/src/schema/types.ts:11](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/types.ts#L11)
 
-Deep readonly
+Recursively make arrays and object properties readonly.
 
 ## Type Parameters
 

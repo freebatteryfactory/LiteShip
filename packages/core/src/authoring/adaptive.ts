@@ -16,7 +16,7 @@
 
 import type { ContentAddress } from '../schema/brands.js';
 import { CanonicalCbor } from '../schema/cbor.js';
-import { fnv1aBytes } from '../internal/fnv.js';
+import { fnv1aBytes } from '../evidence/fnv.js';
 import { defineBoundary, Boundary } from './boundary.js';
 import type { Boundary as BoundaryType } from './boundary.js';
 import { defineStyle, Style } from './style.js';

@@ -32,7 +32,7 @@ frame published before it attached.
 
 > `readonly` **\_tag**: `"Quantizer"`
 
-Defined in: core/dist/schema/quantizer-types.d.ts:34
+Defined in: core/dist/schema/quantizer-types.d.ts:35
 
 #### Inherited from
 
@@ -44,7 +44,7 @@ Defined in: core/dist/schema/quantizer-types.d.ts:34
 
 > `readonly` **boundary**: `B`
 
-Defined in: core/dist/schema/quantizer-types.d.ts:35
+Defined in: core/dist/schema/quantizer-types.d.ts:36
 
 #### Inherited from
 
@@ -56,7 +56,7 @@ Defined in: core/dist/schema/quantizer-types.d.ts:35
 
 > `readonly` **changes**: [`QuantizerCrossings`](../../../core/src/type-aliases/QuantizerCrossings.md)\<`B`\>
 
-Defined in: core/dist/schema/quantizer-types.d.ts:64
+Defined in: core/dist/schema/quantizer-types.d.ts:65
 
 No-replay crossing subscription (was `Stream.Stream<BoundaryCrossing<StateUnion<B> & string>>`).
 
@@ -80,7 +80,7 @@ No-replay subscription of interpolated animation frames during crossings.
 
 > `readonly` **state**: `QuantizerState`\<`B`\>
 
-Defined in: core/dist/schema/quantizer-types.d.ts:62
+Defined in: core/dist/schema/quantizer-types.d.ts:63
 
 Replay-1 current-state read (was `Effect.Effect<StateUnion<B>>`).
 
@@ -94,7 +94,7 @@ Replay-1 current-state read (was `Effect.Effect<StateUnion<B>>`).
 
 > `readonly` `optional` **stateSync?**: () => `StateUnion`\<`B`\>
 
-Defined in: core/dist/schema/quantizer-types.d.ts:37
+Defined in: core/dist/schema/quantizer-types.d.ts:38
 
 Synchronous state accessor for hot paths (avoids reactive read overhead).
 
@@ -122,7 +122,7 @@ Resolver that maps `from -> to` crossings to [TransitionConfig](TransitionConfig
 
 > **evaluate**(`value`): `StateUnion`\<`B`\>
 
-Defined in: core/dist/schema/quantizer-types.d.ts:38
+Defined in: core/dist/schema/quantizer-types.d.ts:39
 
 #### Parameters
 

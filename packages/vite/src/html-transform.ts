@@ -8,13 +8,8 @@
  * @module
  */
 
-import { Diagnostics } from '@liteship/core';
-import { boundaryAttrIdentity } from '@liteship/core/authoring';
-import { blankHtmlCommentsAndCodeBlocks, lineOfOffset } from './html-scan.js';
-import { resolvePrimitive, unresolvedPrimitiveWarning } from './primitive-resolve.js';
-
-// Match data-liteship="boundaryName" (not data-liteship-* which are other attrs)
-const DATA_LITESHIP_PATTERN = /data-liteship="([^"]+)"/g;
+import { resolvePrimitive } from './primitive-resolve.js';
+import { transformHTMLWithResolver } from './html-transform-engine.js';
 
 /**
  * Transform HTML source, replacing `data-liteship="name"` with resolved boundary JSON.
@@ -31,42 +26,5 @@ export async function transformHTML(
   projectRoot: string,
   boundaryDir?: string,
 ): Promise<string> {
-  const scan = blankHtmlCommentsAndCodeBlocks(source);
-  const matches = [...scan.matchAll(DATA_LITESHIP_PATTERN)];
-  if (matches.length === 0) return source;
-
-  let result = source;
-
-  for (const match of matches) {
-    const fullMatch = match[0]!;
-    const boundaryName = match[1]!;
-    const line = lineOfOffset(source, match.index ?? 0);
-
-    const resolution = await resolvePrimitive('boundary', boundaryName, fromFile, projectRoot, boundaryDir);
-    if (!resolution) {
-      Diagnostics.warn({
-        source: 'liteship/vite.html-transform',
-        code: 'boundary-not-found',
-        message:
-          unresolvedPrimitiveWarning('boundary', boundaryName, fromFile, line, projectRoot, boundaryDir) +
-          ` Consequence: the \`data-liteship="${boundaryName}"\` attribute is left untransformed, ` +
-          `so this element renders with no reactivity (no boundary state is wired up).`,
-        detail: { fromFile, line, boundaryName },
-      });
-      continue;
-    }
-
-    const boundary = resolution.primitive;
-    // Delegate to the ONE core boundary-attr serializer (shared with astro's
-    // adaptiveAttrs and core's Adaptive.attrs) so the data-liteship-boundary
-    // payload can never drift across producers.
-    const serialized = JSON.stringify(boundaryAttrIdentity(boundary));
-
-    // Replace data-liteship="name" with data-liteship-boundary='...' and activate the adaptive directive.
-    const replacement = `data-liteship-boundary='${serialized.replace(/'/g, '&#39;')}' data-liteship-directive="adaptive"`;
-    const index = match.index ?? 0;
-    result = result.slice(0, index) + replacement + result.slice(index + fullMatch.length);
-  }
-
-  return result;
+  return transformHTMLWithResolver(source, fromFile, projectRoot, boundaryDir, resolvePrimitive);
 }

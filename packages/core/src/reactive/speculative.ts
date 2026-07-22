@@ -11,7 +11,7 @@
  */
 
 import { Boundary } from '../authoring/boundary.js';
-import type { StateUnion } from '../internal/type-level.js';
+import type { StateUnion } from '../authoring/types.js';
 import { type Clock, systemClock } from '../clock/clock.js';
 
 // Speculative pre-computation: when signal velocity indicates an imminent threshold crossing, pre-evaluate the predicted next state.

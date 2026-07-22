@@ -9,7 +9,7 @@
 import { IntegrityError, ParseError } from '@liteship/error';
 import { bytesToHex } from '@liteship/canonical';
 import type { HLC } from '../schema/brands.js';
-import { TypedRef as TypedRefModule, type TypedRef } from '../internal/typed-ref.js';
+import { TypedRef as TypedRefModule, type TypedRef } from './typed-ref.js';
 import { HLC as HLCOps } from '../clock/hlc.js';
 
 /** The logical entity a receipt describes: an effect, a run, an artifact, or an intent. */

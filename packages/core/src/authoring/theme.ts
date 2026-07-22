@@ -9,7 +9,7 @@
 
 import type { ContentAddress } from '../schema/brands.js';
 import { CanonicalCbor } from '../schema/cbor.js';
-import { fnv1aBytes } from '../internal/fnv.js';
+import { fnv1aBytes } from '../evidence/fnv.js';
 import { ValidationError } from '@liteship/error';
 
 interface ThemeDef<V extends readonly string[] = readonly string[]> {

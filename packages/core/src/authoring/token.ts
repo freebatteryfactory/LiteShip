@@ -10,7 +10,7 @@
 import type { ContentAddress } from '../schema/brands.js';
 import { CanonicalCbor } from '../schema/cbor.js';
 import { Diagnostics } from '../evidence/diagnostics.js';
-import { fnv1aBytes } from '../internal/fnv.js';
+import { fnv1aBytes } from '../evidence/fnv.js';
 import { ValidationError } from '@liteship/error';
 
 /** Design-system category of a {@link Token} — governs compilation strategy and CSS property prefix. */

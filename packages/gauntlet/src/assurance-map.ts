@@ -121,7 +121,7 @@ export const LITESHIP_ASSURANCE_MAP: readonly LevelRule[] = [
   { glob: 'packages/core/src/media/{gen-frame,token-buffer}.ts', level: 'L3' },
   { glob: 'packages/core/src/motion/{blend,animation}.ts', level: 'L3' },
   { glob: 'packages/core/src/clock/clock.ts', level: 'L3' },
-  { glob: 'packages/core/src/internal/rng.ts', level: 'L3' },
+  { glob: 'packages/core/src/clock/rng.ts', level: 'L3' },
   { glob: 'packages/quantizer/src/**', level: 'L3' },
   { glob: 'packages/web/src/capture/**', level: 'L3' },
   { glob: 'packages/web/src/stream/**', level: 'L3' },

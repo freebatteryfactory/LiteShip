@@ -10,14 +10,14 @@
 import type { SignalInput, ThresholdValue, ContentAddress } from '../schema/brands.js';
 import { SignalInput as mkSignalInput, ThresholdValue as mkThresholdValue } from '../schema/brands.js';
 import { CanonicalCbor } from '../schema/cbor.js';
-import { fnv1aBytes } from '../internal/fnv.js';
+import { fnv1aBytes } from '../evidence/fnv.js';
 import { rawIndexF32 } from '../wasm/boundary-f32.js';
 import { WASMDispatch } from '../wasm/wasm-dispatch.js';
 import { WASM_BATCH_MAX } from './defaults.js';
 import { Diagnostics } from '../evidence/diagnostics.js';
 import { inputToSource } from '../reactive/signal-input.js';
 import { wallClock } from '../clock/clock.js';
-import type { EvaluateResult } from '../internal/type-level.js';
+import type { EvaluateResult } from './types.js';
 import { ValidationError } from '@liteship/error';
 
 /** The core primitive. Source of truth for quantization boundaries. */

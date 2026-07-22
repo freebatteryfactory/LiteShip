@@ -11,7 +11,7 @@ import type { CapsuleContract, AssemblyKind } from './capsule.js';
 import type { ContentAddress } from '../schema/brands.js';
 import type { SchemaPort } from '../schema/schema-port.js';
 import type { Infer } from '../schema/infer.js';
-import { fnv1aBytes } from '../internal/fnv.js';
+import { fnv1aBytes } from '../evidence/fnv.js';
 import { CanonicalCbor } from '../schema/cbor.js';
 import { Diagnostics } from '../evidence/diagnostics.js';
 

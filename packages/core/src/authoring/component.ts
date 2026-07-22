@@ -11,7 +11,7 @@ import type { ContentAddress } from '../schema/brands.js';
 import type { Boundary } from './boundary.js';
 import type { Style } from './style.js';
 import { CanonicalCbor } from '../schema/cbor.js';
-import { fnv1aBytes } from '../internal/fnv.js';
+import { fnv1aBytes } from '../evidence/fnv.js';
 
 /** Per-slot configuration on a component — whether the slot must be provided, plus optional description. */
 export interface SlotConfig {

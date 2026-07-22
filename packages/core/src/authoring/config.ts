@@ -10,9 +10,9 @@ import type { Boundary } from './boundary.js';
 import type { Token } from './token.js';
 import type { Theme } from './theme.js';
 import type { Style } from './style.js';
-import { fnv1aBytes } from '../internal/fnv.js';
+import { fnv1aBytes } from '../evidence/fnv.js';
 import { CanonicalCbor } from '../schema/cbor.js';
-import { normalizeRepoPath } from '../internal/path-normalize.js';
+import { normalizeRepoPath } from '../repository-path.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public types

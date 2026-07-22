@@ -63,7 +63,7 @@ function packageSources(): string[] {
 
 describe('typed-ref — the receipt byte law is cborg-backed (intentional)', () => {
   it('TypedRef.canonicalize encodes via cborg', () => {
-    const src = read('packages/core/src/internal/typed-ref.ts');
+    const src = read('packages/core/src/evidence/typed-ref.ts');
     expect(src).toMatch(/import\s*\{\s*encode\s*\}\s*from\s*'cborg'/);
     expect(src).toMatch(/canonicalize\s*=\s*\(value:\s*unknown\):\s*Uint8Array\s*=>\s*encode\(value\)/);
   });
@@ -71,7 +71,7 @@ describe('typed-ref — the receipt byte law is cborg-backed (intentional)', () 
   it('canonicalize feeds SHA-256 (the only hashing primitive in typed-ref)', () => {
     // The only hashing primitive here is SHA-256; there is no fnv1a *call* in this
     // module (the repo-wide cage below proves no fnv1a minter consumes canonicalize).
-    const src = read('packages/core/src/internal/typed-ref.ts');
+    const src = read('packages/core/src/evidence/typed-ref.ts');
     expect(src).toMatch(/crypto\.subtle\.digest\(\s*'SHA-256'/);
     expect(src).toMatch(/return\s*`sha256:/);
     expect(src).not.toMatch(/fnv1a(Bytes)?\(/); // no fnv1a hashing call — sha256 only
@@ -79,7 +79,7 @@ describe('typed-ref — the receipt byte law is cborg-backed (intentional)', () 
 });
 
 describe('typed-ref — the docs NAME the receipt byte law (no more lying comments)', () => {
-  const src = read('packages/core/src/internal/typed-ref.ts');
+  const src = read('packages/core/src/evidence/typed-ref.ts');
 
   it('drops the false "→ FNV-1a hash" claim (this module produces sha256)', () => {
     expect(src).not.toMatch(/FNV-1a hash/);

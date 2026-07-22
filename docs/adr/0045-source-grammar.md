@@ -13,7 +13,7 @@ drifted whenever a module gained an export.
 
 The P4 core migration (this branch) sorted those modules into **domain
 directories** — `authoring/`, `clock/`, `evidence/`, `graph/`, `harness/`,
-`internal/`, `media/`, `motion/`, `reactive/`, `schema/`, `simulation/`,
+`media/`, `motion/`, `reactive/`, `schema/`, `simulation/`,
 `wasm/` — each fronted by an `index.ts` facade, plus a package root facade at
 `packages/core/src/index.ts`. That layout only holds if the rules that produced
 it are **enforced**, not just followed once. Structure has to carry the
@@ -59,18 +59,21 @@ bundler dropping type-only imports, leaves zero runtime bytes. A value
 declaration (function/class/const/let/var/enum) in a `types.ts` turns it into a
 hidden runtime module and is forbidden.
 
-**4. `internal/` is private — never re-exported across the package boundary.**
-`packages/<name>/src/internal/` holds package-private helpers (in core:
-`fnv`, `numeric`, `path-normalize`, `rng`, `string-distance`, `tuple`,
-`type-level`, `typed-ref`). No package root facade re-exports from `internal/`.
-Consumers that genuinely need one import the deep path and document the use site;
-the package surface stays free of incidental helpers.
+**4. Public ownership is semantic — `internal/` is never a public domain.**
+A symbol exported across a package boundary is owned by the semantic domain that
+defines its law, even when its implementation is small. Core's public helpers
+therefore live under `authoring/`, `clock/`, `evidence/`, `motion/`, `reactive/`,
+or `schema/`, and reach consumers only through those curated facades. A future
+`internal/` directory may hold package-private implementation details, but no
+package facade may re-export from it and consumers may not deep-import it.
 
 **5. No grab-bag filenames.**
 `utils.ts`, `helpers.ts`, `*-utils.ts`, `*-helpers.ts` are banned: a util bucket
 is a naming admission that a home was never found. Every function has a domain;
 name the file after it. The two core offenders were renamed in P4 —
-`math-utils.ts` → `internal/numeric.ts`, `type-utils.ts` → `internal/type-level.ts`.
+`math-utils.ts` → `motion/clamp.ts`, while the public type utilities were split
+among the domain-owned `authoring/types.ts`, `reactive/types.ts`, and
+`schema/types.ts` modules.
 
 **6. File-graduation criteria — top-level file vs domain directory.**
 A module stays a **top-level file** under `src/` (not inside a domain directory)
@@ -128,7 +131,7 @@ These six clauses are enforced structurally by four ast-grep rules under
 - **Gate:** `pnpm lint:structural` runs all four rules across `packages`, `tests`,
   `scripts`. They pass clean on the migrated tree.
 - **Layout:** `packages/core/src/` — domain directories `authoring/ clock/
-  evidence/ graph/ harness/ internal/ media/ motion/ reactive/ schema/
+  evidence/ graph/ harness/ media/ motion/ reactive/ schema/
   simulation/ wasm/`, top-level files `ecs.ts fs-walk.ts index.ts testing.ts`.
 - **Ratchet offenders (as of 2026-07-19).** Grab-bag filenames outside core:
   `packages/cli/src/spawn-helpers.ts`, `packages/cli/src/lib/package-smoke-helpers.ts`,

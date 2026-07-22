@@ -4,12 +4,37 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import { Diagnostics } from '@liteship/core';
 import { bootstrapSlots, getSlotRegistry, rescanSlots } from '../../../packages/astro/src/runtime/slots.js';
 import { installSwapPipeline } from '../../../packages/astro/src/runtime/swap-pipeline.js';
+import { normalizeBoundaryState } from '../../../packages/astro/src/runtime/boundary.js';
+import {
+  initWorkerDirective as initWorkerDirectiveProduction,
+  initWorkerDirectiveWithDependencies,
+} from '../../../packages/astro/src/runtime/worker.js';
 import { createStubRegistry } from '../../helpers/define-property-stub.js';
 import { stubWorkerEnvironment } from '../../helpers/mock-worker.js';
 import { captureDiagnosticsAsync } from '../../helpers/diagnostics.js';
-import type * as RuntimeBoundary from '../../../packages/astro/src/runtime/boundary.js';
 
 const stubs = createStubRegistry();
+
+type WorkerRuntimeDependencies = Parameters<typeof initWorkerDirectiveWithDependencies>[2];
+
+const initWorkerDirective = (
+  load: Parameters<typeof initWorkerDirectiveProduction>[0],
+  element: Parameters<typeof initWorkerDirectiveProduction>[1],
+  dependencies?: WorkerRuntimeDependencies,
+): void => {
+  if (dependencies) {
+    initWorkerDirectiveWithDependencies(load, element, dependencies);
+    return;
+  }
+  initWorkerDirectiveProduction(load, element);
+};
+
+function workerRuntimeDependencies(
+  createWorkerHost: WorkerRuntimeDependencies['createWorkerHost'],
+  normalize: WorkerRuntimeDependencies['normalizeBoundaryState'] = normalizeBoundaryState,
+): WorkerRuntimeDependencies {
+  return { createWorkerHost, normalizeBoundaryState: normalize };
+}
 
 type RuntimeWindow = Window & {
   __LITESHIP_SLOT_REGISTRY__?: unknown;
@@ -90,11 +115,6 @@ describe('astro runtime slot edge branches', () => {
 
 describe('astro worker directive edge branches', () => {
   test('returns early without loading when no runtime boundary can be parsed', async () => {
-    vi.doMock('@liteship/worker', () => ({
-      WorkerHost: { create: vi.fn() },
-    }));
-
-    const { initWorkerDirective } = await import('../../../packages/astro/src/runtime/worker.js');
     const load = vi.fn(async () => undefined);
     const element = document.createElement('div');
 
@@ -106,16 +126,11 @@ describe('astro worker directive edge branches', () => {
   test('falls back to main-thread evaluation when WorkerHost initialization throws', async () => {
     stubWorkerEnvironment(stubs, vi);
 
-    vi.doMock('@liteship/worker', () => ({
-      WorkerHost: {
-        create: vi.fn(() => {
-          throw new Error('boom');
-        }),
-      },
-    }));
+    const createHost = vi.fn(() => {
+      throw new Error('boom');
+    });
 
     await captureDiagnosticsAsync(async ({ events }) => {
-      const { initWorkerDirective } = await import('../../../packages/astro/src/runtime/worker.js');
       const load = vi.fn(async () => undefined);
       const element = document.createElement('div');
       element.setAttribute(
@@ -132,7 +147,7 @@ describe('astro worker directive edge branches', () => {
         value: 820,
       });
 
-      initWorkerDirective(load, element);
+      initWorkerDirective(load, element, workerRuntimeDependencies(createHost));
 
       expect(load).toHaveBeenCalledTimes(1);
       expect(element.getAttribute('data-liteship-state')).toBe('wide');
@@ -150,16 +165,11 @@ describe('astro worker directive edge branches', () => {
   test('surfaces non-Error worker initialization failures through diagnostics detail', async () => {
     stubWorkerEnvironment(stubs, vi);
 
-    vi.doMock('@liteship/worker', () => ({
-      WorkerHost: {
-        create: vi.fn(() => {
-          throw 'worker boom';
-        }),
-      },
-    }));
+    const createHost = vi.fn(() => {
+      throw 'worker boom';
+    });
 
     await captureDiagnosticsAsync(async ({ events }) => {
-      const { initWorkerDirective } = await import('../../../packages/astro/src/runtime/worker.js');
       const load = vi.fn(async () => undefined);
       const element = document.createElement('div');
       element.setAttribute(
@@ -176,7 +186,7 @@ describe('astro worker directive edge branches', () => {
         value: 820,
       });
 
-      initWorkerDirective(load, element);
+      initWorkerDirective(load, element, workerRuntimeDependencies(createHost));
 
       expect(load).toHaveBeenCalledTimes(1);
       expect(element.getAttribute('data-liteship-state')).toBe('wide');
@@ -213,7 +223,6 @@ describe('astro worker directive edge branches', () => {
       value: false,
     });
 
-    const { initWorkerDirective } = await import('../../../packages/astro/src/runtime/worker.js');
     const load = vi.fn(async () => undefined);
     const element = document.createElement('div');
     element.setAttribute(
@@ -266,7 +275,6 @@ describe('astro worker directive edge branches', () => {
       value: false,
     });
 
-    const { initWorkerDirective } = await import('../../../packages/astro/src/runtime/worker.js');
     const load = vi.fn(async () => undefined);
     const element = document.createElement('div');
     element.setAttribute(
@@ -326,13 +334,6 @@ describe('astro worker directive edge branches', () => {
       value: true,
     });
 
-    vi.doMock('@liteship/worker', () => ({
-      WorkerHost: {
-        create: createHost,
-      },
-    }));
-
-    const { initWorkerDirective } = await import('../../../packages/astro/src/runtime/worker.js');
     const load = vi.fn(async () => undefined);
     const element = document.createElement('div');
     element.setAttribute(
@@ -353,7 +354,7 @@ describe('astro worker directive edge branches', () => {
       readyCount += 1;
     });
 
-    initWorkerDirective(load, element);
+    initWorkerDirective(load, element, workerRuntimeDependencies(createHost));
 
     expect(load).toHaveBeenCalledTimes(1);
     expect(createHost).toHaveBeenCalledTimes(1);
@@ -363,8 +364,7 @@ describe('astro worker directive edge branches', () => {
     expect(observe).toHaveBeenCalledWith(document.documentElement);
 
     const readyListener = addEventListener.mock.calls.find(([type]) => type === 'message')?.[1] as
-      | ((event: MessageEvent<{ type?: string }>) => void)
-      | undefined;
+      ((event: MessageEvent<{ type?: string }>) => void) | undefined;
     readyListener?.({ data: { type: 'ready' } } as MessageEvent<{ type?: string }>);
     expect(readyCount).toBe(1);
 
@@ -427,13 +427,6 @@ describe('astro worker directive edge branches', () => {
       value: true,
     });
 
-    vi.doMock('@liteship/worker', () => ({
-      WorkerHost: {
-        create: createHost,
-      },
-    }));
-
-    const { initWorkerDirective } = await import('../../../packages/astro/src/runtime/worker.js');
     const load = vi.fn(async () => undefined);
     const element = document.createElement('div');
     element.setAttribute(
@@ -450,7 +443,7 @@ describe('astro worker directive edge branches', () => {
       value: 820,
     });
 
-    initWorkerDirective(load, element);
+    initWorkerDirective(load, element, workerRuntimeDependencies(createHost));
     readyListener?.({ data: { type: 'ready' } } as MessageEvent<{ type?: string }>);
 
     element.setAttribute('data-liteship-boundary', '{broken');
@@ -487,7 +480,6 @@ describe('astro worker directive edge branches', () => {
       value: false,
     });
 
-    const { initWorkerDirective } = await import('../../../packages/astro/src/runtime/worker.js');
     const element = document.createElement('div');
     element.setAttribute(
       'data-liteship-boundary',
@@ -548,13 +540,6 @@ describe('astro worker directive edge branches', () => {
       value: true,
     });
 
-    vi.doMock('@liteship/worker', () => ({
-      WorkerHost: {
-        create: createHost,
-      },
-    }));
-
-    const { initWorkerDirective } = await import('../../../packages/astro/src/runtime/worker.js');
     const element = document.createElement('div');
     element.setAttribute(
       'data-liteship-boundary',
@@ -570,7 +555,7 @@ describe('astro worker directive edge branches', () => {
       value: 820,
     });
 
-    initWorkerDirective(async () => undefined, element);
+    initWorkerDirective(async () => undefined, element, workerRuntimeDependencies(createHost));
     expect(bootstrapResolvedState).toHaveBeenCalledTimes(1);
     expect(applyResolvedState).not.toHaveBeenCalled();
 
@@ -617,13 +602,6 @@ describe('astro worker directive edge branches', () => {
       value: true,
     });
 
-    vi.doMock('@liteship/worker', () => ({
-      WorkerHost: {
-        create: createHost,
-      },
-    }));
-
-    const { initWorkerDirective } = await import('../../../packages/astro/src/runtime/worker.js');
     const load = vi.fn(async () => undefined);
     const element = document.createElement('div');
     element.setAttribute(
@@ -636,7 +614,7 @@ describe('astro worker directive edge branches', () => {
       }),
     );
 
-    initWorkerDirective(load, element);
+    initWorkerDirective(load, element, workerRuntimeDependencies(createHost));
 
     expect(load).toHaveBeenCalledTimes(1);
     expect(createHost).toHaveBeenCalledTimes(1);
@@ -649,15 +627,17 @@ describe('astro worker directive edge branches', () => {
   test('suppresses duplicate worker agreement when the mirrored generation matches host-applied detail', async () => {
     const bootstrapResolvedState = vi.fn();
     const applyResolvedState = vi.fn();
-    let onStateCallback: ((state: {
-      discrete?: Record<string, string>;
-      outputs?: {
-        css?: Record<string, string | number>;
-        glsl?: Record<string, number>;
-        aria?: Record<string, string>;
-      };
-      resolvedStateGenerations?: Record<string, number>;
-    }) => void) | null = null;
+    let onStateCallback:
+      | ((state: {
+          discrete?: Record<string, string>;
+          outputs?: {
+            css?: Record<string, string | number>;
+            glsl?: Record<string, number>;
+            aria?: Record<string, string>;
+          };
+          resolvedStateGenerations?: Record<string, number>;
+        }) => void)
+      | null = null;
 
     const createHost = vi.fn(() => ({
       compositor: {
@@ -692,13 +672,6 @@ describe('astro worker directive edge branches', () => {
       value: true,
     });
 
-    vi.doMock('@liteship/worker', () => ({
-      WorkerHost: {
-        create: createHost,
-      },
-    }));
-
-    const { initWorkerDirective } = await import('../../../packages/astro/src/runtime/worker.js');
     const element = document.createElement('div');
     element.setAttribute(
       'data-liteship-boundary',
@@ -716,10 +689,12 @@ describe('astro worker directive edge branches', () => {
 
     const workerStates: unknown[] = [];
     const uniformStates: unknown[] = [];
-    element.addEventListener('liteship:worker-state', ((event: CustomEvent) => workerStates.push(event.detail)) as EventListener);
-    element.addEventListener('liteship:uniform-update', ((event: CustomEvent) => uniformStates.push(event.detail)) as EventListener);
+    element.addEventListener('liteship:worker-state', ((event: CustomEvent) =>
+      workerStates.push(event.detail)) as EventListener);
+    element.addEventListener('liteship:uniform-update', ((event: CustomEvent) =>
+      uniformStates.push(event.detail)) as EventListener);
 
-    initWorkerDirective(async () => undefined, element);
+    initWorkerDirective(async () => undefined, element, workerRuntimeDependencies(createHost));
 
     expect(workerStates).toHaveLength(1);
     expect(uniformStates).toHaveLength(1);
@@ -744,17 +719,19 @@ describe('astro worker directive edge branches', () => {
   test('keeps pending agreement through unrelated ack entries and applies divergent mirrored payloads', async () => {
     const bootstrapResolvedState = vi.fn();
     const applyResolvedState = vi.fn();
-    let onStateCallback: ((state: {
-      discrete?: Record<string, string>;
-      css?: Record<string, string | number>;
-      aria?: Record<string, string>;
-      outputs?: {
-        css?: Record<string, string | number>;
-        glsl?: Record<string, number>;
-        aria?: Record<string, string>;
-      };
-      resolvedStateGenerations?: Record<string, number>;
-    }) => void) | null = null;
+    let onStateCallback:
+      | ((state: {
+          discrete?: Record<string, string>;
+          css?: Record<string, string | number>;
+          aria?: Record<string, string>;
+          outputs?: {
+            css?: Record<string, string | number>;
+            glsl?: Record<string, number>;
+            aria?: Record<string, string>;
+          };
+          resolvedStateGenerations?: Record<string, number>;
+        }) => void)
+      | null = null;
     let ackCallback:
       | ((ack: {
           readonly generation: number;
@@ -799,13 +776,6 @@ describe('astro worker directive edge branches', () => {
       value: true,
     });
 
-    vi.doMock('@liteship/worker', () => ({
-      WorkerHost: {
-        create: createHost,
-      },
-    }));
-
-    const { initWorkerDirective } = await import('../../../packages/astro/src/runtime/worker.js');
     const element = document.createElement('div');
     element.setAttribute(
       'data-liteship-boundary',
@@ -822,12 +792,10 @@ describe('astro worker directive edge branches', () => {
     });
 
     const workerStates: Array<Record<string, unknown>> = [];
-    element.addEventListener(
-      'liteship:worker-state',
-      ((event: CustomEvent<Record<string, unknown>>) => workerStates.push(event.detail)) as EventListener,
-    );
+    element.addEventListener('liteship:worker-state', ((event: CustomEvent<Record<string, unknown>>) =>
+      workerStates.push(event.detail)) as EventListener);
 
-    initWorkerDirective(async () => undefined, element);
+    initWorkerDirective(async () => undefined, element, workerRuntimeDependencies(createHost));
 
     ackCallback?.({
       generation: 1,
@@ -864,69 +832,45 @@ describe('astro worker directive edge branches', () => {
       },
     );
 
-    vi.doMock('../../../packages/astro/src/runtime/boundary.js', async () => {
-      const actual = await vi.importActual<typeof RuntimeBoundary>(
-        '../../../packages/astro/src/runtime/boundary.js',
-      );
-
-      return {
-        ...actual,
-        normalizeBoundaryState(state: {
-          readonly discrete?: Record<string, string>;
-          readonly css?: Record<string, string | number>;
-          readonly glsl?: Record<string, number>;
-          readonly aria?: Record<string, string>;
-          readonly outputs?: {
-            readonly css?: Record<string, string | number>;
-            readonly glsl?: Record<string, number>;
-            readonly aria?: Record<string, string>;
-          };
-        }) {
-          return {
-            discrete: {
-              hero: state.discrete?.hero ?? '',
-              mirror: state.discrete?.mirror ?? 'seed',
-            },
-            css: {},
-            glsl: {},
-            aria: {},
-          };
-        },
-      };
+    const normalizeSeededState: WorkerRuntimeDependencies['normalizeBoundaryState'] = (state) => ({
+      discrete: {
+        hero: state.discrete?.hero ?? '',
+        mirror: state.discrete?.mirror ?? 'seed',
+      },
+      css: {},
+      glsl: {},
+      wgsl: {},
+      aria: {},
     });
 
-    let onStateCallback: ((state: {
-      discrete?: Record<string, string>;
-      outputs?: {
-        css?: Record<string, string | number>;
-        glsl?: Record<string, number>;
-        aria?: Record<string, string>;
-      };
-      resolvedStateGenerations?: Record<string, number>;
-    }) => void) | null = null;
+    let onStateCallback:
+      | ((state: {
+          discrete?: Record<string, string>;
+          outputs?: {
+            css?: Record<string, string | number>;
+            glsl?: Record<string, number>;
+            aria?: Record<string, string>;
+          };
+          resolvedStateGenerations?: Record<string, number>;
+        }) => void)
+      | null = null;
 
-    vi.doMock('@liteship/worker', () => ({
-      WorkerHost: {
-        create: vi.fn(() => ({
-          compositor: {
-            addQuantizer: vi.fn(),
-            bootstrapResolvedState: vi.fn(),
-            applyResolvedState: vi.fn(),
-            onResolvedStateAck: vi.fn(() => vi.fn()),
-            worker: {
-              addEventListener: vi.fn(),
-            },
-          },
-          onState: vi.fn((callback) => {
-            onStateCallback = callback;
-            return vi.fn();
-          }),
-          dispose: vi.fn(),
-        })),
+    const createHost = vi.fn(() => ({
+      compositor: {
+        addQuantizer: vi.fn(),
+        bootstrapResolvedState: vi.fn(),
+        applyResolvedState: vi.fn(),
+        onResolvedStateAck: vi.fn(() => vi.fn()),
+        worker: {
+          addEventListener: vi.fn(),
+        },
       },
+      onState: vi.fn((callback) => {
+        onStateCallback = callback;
+        return vi.fn();
+      }),
+      dispose: vi.fn(),
     }));
-
-    const { initWorkerDirective } = await import('../../../packages/astro/src/runtime/worker.js');
     const element = document.createElement('div');
     element.setAttribute(
       'data-liteship-boundary',
@@ -943,12 +887,10 @@ describe('astro worker directive edge branches', () => {
     });
 
     const workerStates: Array<Record<string, unknown>> = [];
-    element.addEventListener(
-      'liteship:worker-state',
-      ((event: CustomEvent<Record<string, unknown>>) => workerStates.push(event.detail)) as EventListener,
-    );
+    element.addEventListener('liteship:worker-state', ((event: CustomEvent<Record<string, unknown>>) =>
+      workerStates.push(event.detail)) as EventListener);
 
-    initWorkerDirective(async () => undefined, element);
+    initWorkerDirective(async () => undefined, element, workerRuntimeDependencies(createHost, normalizeSeededState));
     expect(workerStates).toHaveLength(1);
 
     onStateCallback?.({
@@ -980,66 +922,42 @@ describe('astro worker directive edge branches', () => {
       },
     );
 
-    vi.doMock('../../../packages/astro/src/runtime/boundary.js', async () => {
-      const actual = await vi.importActual<typeof RuntimeBoundary>(
-        '../../../packages/astro/src/runtime/boundary.js',
-      );
-
-      return {
-        ...actual,
-        normalizeBoundaryState(state: {
-          readonly discrete?: Record<string, string>;
-          readonly css?: Record<string, string | number>;
-          readonly glsl?: Record<string, number>;
-          readonly aria?: Record<string, string>;
-          readonly outputs?: {
-            readonly css?: Record<string, string | number>;
-            readonly glsl?: Record<string, number>;
-            readonly aria?: Record<string, string>;
-          };
-        }) {
-          return {
-            discrete: { ...(state.discrete ?? {}) },
-            css: {},
-            glsl: state.outputs?.glsl ?? { u_seed: 1, u_value: 1 },
-            aria: {},
-          };
-        },
-      };
+    const normalizeSeededState: WorkerRuntimeDependencies['normalizeBoundaryState'] = (state) => ({
+      discrete: { ...(state.discrete ?? {}) },
+      css: {},
+      glsl: state.outputs?.glsl ?? { u_seed: 1, u_value: 1 },
+      wgsl: {},
+      aria: {},
     });
 
-    let onStateCallback: ((state: {
-      discrete?: Record<string, string>;
-      outputs?: {
-        css?: Record<string, string | number>;
-        glsl?: Record<string, number>;
-        aria?: Record<string, string>;
-      };
-      resolvedStateGenerations?: Record<string, number>;
-    }) => void) | null = null;
+    let onStateCallback:
+      | ((state: {
+          discrete?: Record<string, string>;
+          outputs?: {
+            css?: Record<string, string | number>;
+            glsl?: Record<string, number>;
+            aria?: Record<string, string>;
+          };
+          resolvedStateGenerations?: Record<string, number>;
+        }) => void)
+      | null = null;
 
-    vi.doMock('@liteship/worker', () => ({
-      WorkerHost: {
-        create: vi.fn(() => ({
-          compositor: {
-            addQuantizer: vi.fn(),
-            bootstrapResolvedState: vi.fn(),
-            applyResolvedState: vi.fn(),
-            onResolvedStateAck: vi.fn(() => vi.fn()),
-            worker: {
-              addEventListener: vi.fn(),
-            },
-          },
-          onState: vi.fn((callback) => {
-            onStateCallback = callback;
-            return vi.fn();
-          }),
-          dispose: vi.fn(),
-        })),
+    const createHost = vi.fn(() => ({
+      compositor: {
+        addQuantizer: vi.fn(),
+        bootstrapResolvedState: vi.fn(),
+        applyResolvedState: vi.fn(),
+        onResolvedStateAck: vi.fn(() => vi.fn()),
+        worker: {
+          addEventListener: vi.fn(),
+        },
       },
+      onState: vi.fn((callback) => {
+        onStateCallback = callback;
+        return vi.fn();
+      }),
+      dispose: vi.fn(),
     }));
-
-    const { initWorkerDirective } = await import('../../../packages/astro/src/runtime/worker.js');
     const element = document.createElement('div');
     element.setAttribute(
       'data-liteship-boundary',
@@ -1056,12 +974,10 @@ describe('astro worker directive edge branches', () => {
     });
 
     const workerStates: Array<Record<string, unknown>> = [];
-    element.addEventListener(
-      'liteship:worker-state',
-      ((event: CustomEvent<Record<string, unknown>>) => workerStates.push(event.detail)) as EventListener,
-    );
+    element.addEventListener('liteship:worker-state', ((event: CustomEvent<Record<string, unknown>>) =>
+      workerStates.push(event.detail)) as EventListener);
 
-    initWorkerDirective(async () => undefined, element);
+    initWorkerDirective(async () => undefined, element, workerRuntimeDependencies(createHost, normalizeSeededState));
     expect(workerStates).toHaveLength(1);
 
     onStateCallback?.({
@@ -1093,66 +1009,42 @@ describe('astro worker directive edge branches', () => {
       },
     );
 
-    vi.doMock('../../../packages/astro/src/runtime/boundary.js', async () => {
-      const actual = await vi.importActual<typeof RuntimeBoundary>(
-        '../../../packages/astro/src/runtime/boundary.js',
-      );
-
-      return {
-        ...actual,
-        normalizeBoundaryState(state: {
-          readonly discrete?: Record<string, string>;
-          readonly css?: Record<string, string | number>;
-          readonly glsl?: Record<string, number>;
-          readonly aria?: Record<string, string>;
-          readonly outputs?: {
-            readonly css?: Record<string, string | number>;
-            readonly glsl?: Record<string, number>;
-            readonly aria?: Record<string, string>;
-          };
-        }) {
-          return {
-            discrete: { ...(state.discrete ?? {}) },
-            css: {},
-            glsl: state.outputs?.glsl ?? { u_seed: 1, u_value: 1 },
-            aria: {},
-          };
-        },
-      };
+    const normalizeSeededState: WorkerRuntimeDependencies['normalizeBoundaryState'] = (state) => ({
+      discrete: { ...(state.discrete ?? {}) },
+      css: {},
+      glsl: state.outputs?.glsl ?? { u_seed: 1, u_value: 1 },
+      wgsl: {},
+      aria: {},
     });
 
-    let onStateCallback: ((state: {
-      discrete?: Record<string, string>;
-      outputs?: {
-        css?: Record<string, string | number>;
-        glsl?: Record<string, number>;
-        aria?: Record<string, string>;
-      };
-      resolvedStateGenerations?: Record<string, number>;
-    }) => void) | null = null;
+    let onStateCallback:
+      | ((state: {
+          discrete?: Record<string, string>;
+          outputs?: {
+            css?: Record<string, string | number>;
+            glsl?: Record<string, number>;
+            aria?: Record<string, string>;
+          };
+          resolvedStateGenerations?: Record<string, number>;
+        }) => void)
+      | null = null;
 
-    vi.doMock('@liteship/worker', () => ({
-      WorkerHost: {
-        create: vi.fn(() => ({
-          compositor: {
-            addQuantizer: vi.fn(),
-            bootstrapResolvedState: vi.fn(),
-            applyResolvedState: vi.fn(),
-            onResolvedStateAck: vi.fn(() => vi.fn()),
-            worker: {
-              addEventListener: vi.fn(),
-            },
-          },
-          onState: vi.fn((callback) => {
-            onStateCallback = callback;
-            return vi.fn();
-          }),
-          dispose: vi.fn(),
-        })),
+    const createHost = vi.fn(() => ({
+      compositor: {
+        addQuantizer: vi.fn(),
+        bootstrapResolvedState: vi.fn(),
+        applyResolvedState: vi.fn(),
+        onResolvedStateAck: vi.fn(() => vi.fn()),
+        worker: {
+          addEventListener: vi.fn(),
+        },
       },
+      onState: vi.fn((callback) => {
+        onStateCallback = callback;
+        return vi.fn();
+      }),
+      dispose: vi.fn(),
     }));
-
-    const { initWorkerDirective } = await import('../../../packages/astro/src/runtime/worker.js');
     const element = document.createElement('div');
     element.setAttribute(
       'data-liteship-boundary',
@@ -1169,12 +1061,10 @@ describe('astro worker directive edge branches', () => {
     });
 
     const workerStates: Array<Record<string, unknown>> = [];
-    element.addEventListener(
-      'liteship:worker-state',
-      ((event: CustomEvent<Record<string, unknown>>) => workerStates.push(event.detail)) as EventListener,
-    );
+    element.addEventListener('liteship:worker-state', ((event: CustomEvent<Record<string, unknown>>) =>
+      workerStates.push(event.detail)) as EventListener);
 
-    initWorkerDirective(async () => undefined, element);
+    initWorkerDirective(async () => undefined, element, workerRuntimeDependencies(createHost, normalizeSeededState));
     expect(workerStates).toHaveLength(1);
 
     onStateCallback?.({
@@ -1195,15 +1085,17 @@ describe('astro worker directive edge branches', () => {
 
   test('applies mirrored payloads when the seeded generation matches but normalized detail still differs', async () => {
     const bootstrapResolvedState = vi.fn();
-    let onStateCallback: ((state: {
-      discrete?: Record<string, string>;
-      outputs?: {
-        css?: Record<string, string | number>;
-        glsl?: Record<string, number>;
-        aria?: Record<string, string>;
-      };
-      resolvedStateGenerations?: Record<string, number>;
-    }) => void) | null = null;
+    let onStateCallback:
+      | ((state: {
+          discrete?: Record<string, string>;
+          outputs?: {
+            css?: Record<string, string | number>;
+            glsl?: Record<string, number>;
+            aria?: Record<string, string>;
+          };
+          resolvedStateGenerations?: Record<string, number>;
+        }) => void)
+      | null = null;
 
     const createHost = vi.fn(() => ({
       compositor: {
@@ -1238,13 +1130,6 @@ describe('astro worker directive edge branches', () => {
       value: true,
     });
 
-    vi.doMock('@liteship/worker', () => ({
-      WorkerHost: {
-        create: createHost,
-      },
-    }));
-
-    const { initWorkerDirective } = await import('../../../packages/astro/src/runtime/worker.js');
     const element = document.createElement('div');
     element.setAttribute(
       'data-liteship-boundary',
@@ -1261,12 +1146,10 @@ describe('astro worker directive edge branches', () => {
     });
 
     const workerStates: Array<Record<string, unknown>> = [];
-    element.addEventListener(
-      'liteship:worker-state',
-      ((event: CustomEvent<Record<string, unknown>>) => workerStates.push(event.detail)) as EventListener,
-    );
+    element.addEventListener('liteship:worker-state', ((event: CustomEvent<Record<string, unknown>>) =>
+      workerStates.push(event.detail)) as EventListener);
 
-    initWorkerDirective(async () => undefined, element);
+    initWorkerDirective(async () => undefined, element, workerRuntimeDependencies(createHost));
     expect(workerStates).toHaveLength(1);
 
     onStateCallback?.({
@@ -1308,29 +1191,23 @@ describe('astro worker directive edge branches', () => {
       },
     );
 
-    vi.doMock('@liteship/worker', () => ({
-      WorkerHost: {
-        create: vi.fn(() => ({
-          compositor: {
-            addQuantizer: vi.fn(),
-            bootstrapResolvedState: vi.fn(),
-            applyResolvedState: vi.fn(),
-            onResolvedStateAck: vi.fn((callback) => {
-              ackCallbacks.push(callback);
-              return vi.fn();
-            }),
-            worker: {
-              addEventListener: vi.fn(),
-              removeEventListener: vi.fn(),
-            },
-          },
-          onState: vi.fn(() => vi.fn()),
-          dispose: vi.fn(),
-        })),
+    const createHost = vi.fn(() => ({
+      compositor: {
+        addQuantizer: vi.fn(),
+        bootstrapResolvedState: vi.fn(),
+        applyResolvedState: vi.fn(),
+        onResolvedStateAck: vi.fn((callback) => {
+          ackCallbacks.push(callback);
+          return vi.fn();
+        }),
+        worker: {
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+        },
       },
+      onState: vi.fn(() => vi.fn()),
+      dispose: vi.fn(),
     }));
-
-    const { initWorkerDirective } = await import('../../../packages/astro/src/runtime/worker.js');
     const element = document.createElement('div');
     element.setAttribute(
       'data-liteship-boundary',
@@ -1346,7 +1223,7 @@ describe('astro worker directive edge branches', () => {
       value: 820,
     });
 
-    initWorkerDirective(async () => undefined, element);
+    initWorkerDirective(async () => undefined, element, workerRuntimeDependencies(createHost));
     expect(ackCallbacks).toHaveLength(1);
 
     element.dispatchEvent(new CustomEvent('liteship:reinit'));
@@ -1399,13 +1276,6 @@ describe('astro worker directive edge branches', () => {
       value: true,
     });
 
-    vi.doMock('@liteship/worker', () => ({
-      WorkerHost: {
-        create: createHost,
-      },
-    }));
-
-    const { initWorkerDirective } = await import('../../../packages/astro/src/runtime/worker.js');
     const element = document.createElement('div');
     element.setAttribute(
       'data-liteship-boundary',
@@ -1422,7 +1292,7 @@ describe('astro worker directive edge branches', () => {
       writable: true,
     });
 
-    initWorkerDirective(async () => undefined, element);
+    initWorkerDirective(async () => undefined, element, workerRuntimeDependencies(createHost));
 
     expect(bootstrapResolvedState).toHaveBeenCalledTimes(1);
     expect(applyResolvedState).not.toHaveBeenCalled();
@@ -1478,13 +1348,6 @@ describe('astro worker directive edge branches', () => {
       value: true,
     });
 
-    vi.doMock('@liteship/worker', () => ({
-      WorkerHost: {
-        create: createHost,
-      },
-    }));
-
-    const { initWorkerDirective } = await import('../../../packages/astro/src/runtime/worker.js');
     const element = document.createElement('div');
     element.setAttribute(
       'data-liteship-boundary',
@@ -1502,7 +1365,7 @@ describe('astro worker directive edge branches', () => {
       writable: true,
     });
 
-    initWorkerDirective(async () => undefined, element);
+    initWorkerDirective(async () => undefined, element, workerRuntimeDependencies(createHost));
 
     expect(bootstrapResolvedState).not.toHaveBeenCalled();
     expect(element.getAttribute('data-liteship-state')).toBeNull();
@@ -1564,13 +1427,6 @@ describe('astro worker directive edge branches', () => {
       value: true,
     });
 
-    vi.doMock('@liteship/worker', () => ({
-      WorkerHost: {
-        create: createHost,
-      },
-    }));
-
-    const { initWorkerDirective } = await import('../../../packages/astro/src/runtime/worker.js');
     const element = document.createElement('div');
     element.setAttribute(
       'data-liteship-boundary',
@@ -1587,12 +1443,10 @@ describe('astro worker directive edge branches', () => {
     });
 
     const workerStates: Array<Record<string, unknown>> = [];
-    element.addEventListener(
-      'liteship:worker-state',
-      ((event: CustomEvent<Record<string, unknown>>) => workerStates.push(event.detail)) as EventListener,
-    );
+    element.addEventListener('liteship:worker-state', ((event: CustomEvent<Record<string, unknown>>) =>
+      workerStates.push(event.detail)) as EventListener);
 
-    initWorkerDirective(async () => undefined, element);
+    initWorkerDirective(async () => undefined, element, workerRuntimeDependencies(createHost));
     expect(workerStates).toHaveLength(1);
 
     onStateCallback?.({
@@ -1648,13 +1502,6 @@ describe('astro worker directive edge branches', () => {
       value: true,
     });
 
-    vi.doMock('@liteship/worker', () => ({
-      WorkerHost: {
-        create: createHost,
-      },
-    }));
-
-    const { initWorkerDirective } = await import('../../../packages/astro/src/runtime/worker.js');
     const element = document.createElement('div');
     element.setAttribute(
       'data-liteship-boundary',
@@ -1671,7 +1518,7 @@ describe('astro worker directive edge branches', () => {
       value: 820,
     });
 
-    initWorkerDirective(async () => undefined, element);
+    initWorkerDirective(async () => undefined, element, workerRuntimeDependencies(createHost));
     expect(bootstrapResolvedState).toHaveBeenNthCalledWith(1, [{ name: 'hero', state: 'wide', generation: 1 }]);
 
     element.removeAttribute('data-liteship-state');
@@ -1723,13 +1570,6 @@ describe('astro worker directive edge branches', () => {
       value: true,
     });
 
-    vi.doMock('@liteship/worker', () => ({
-      WorkerHost: {
-        create: createHost,
-      },
-    }));
-
-    const { initWorkerDirective } = await import('../../../packages/astro/src/runtime/worker.js');
     const element = document.createElement('div');
     element.setAttribute(
       'data-liteship-boundary',
@@ -1746,7 +1586,7 @@ describe('astro worker directive edge branches', () => {
       writable: true,
     });
 
-    initWorkerDirective(async () => undefined, element);
+    initWorkerDirective(async () => undefined, element, workerRuntimeDependencies(createHost));
     expect(resizeCallbacks).toHaveLength(1);
 
     element.setAttribute(

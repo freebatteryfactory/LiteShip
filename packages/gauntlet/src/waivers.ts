@@ -67,7 +67,7 @@ export const LITESHIP_WAIVERS: readonly Waiver[] = [
   },
   {
     ruleId: 'gauntlet/no-nondeterminism',
-    file: 'packages/core/src/internal/rng.ts',
+    file: 'packages/core/src/clock/rng.ts',
     line: 39,
     owner: 'heyoub',
     reason:

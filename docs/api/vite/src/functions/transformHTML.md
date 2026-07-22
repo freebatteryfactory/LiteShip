@@ -8,7 +8,7 @@
 
 > **transformHTML**(`source`, `fromFile`, `projectRoot`, `boundaryDir?`): `Promise`\<`string`\>
 
-Defined in: [vite/src/html-transform.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/html-transform.ts#L28)
+Defined in: [vite/src/html-transform.ts:23](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/html-transform.ts#L23)
 
 Transform HTML source, replacing `data-liteship="name"` with resolved boundary JSON.
 

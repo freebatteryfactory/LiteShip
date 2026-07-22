@@ -407,7 +407,9 @@ limited to barrels plus runtime-unexecutable/type-only files:
 - `packages/core/src/evidence/capture.ts`
 - `packages/core/src/schema/protocol.ts`
 - `packages/core/src/schema/quantizer-types.ts`
-- `packages/core/src/internal/type-level.ts`
+- `packages/core/src/authoring/types.ts`
+- `packages/core/src/reactive/types.ts`
+- `packages/core/src/schema/types.ts`
 - `packages/web/src/lite.ts`
 - `packages/web/src/types.ts`
 

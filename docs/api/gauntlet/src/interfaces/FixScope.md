@@ -22,7 +22,7 @@ lists are explicit allow-lists: empty = the fix may touch NOTHING of that kind.
 
 Defined in: [gauntlet/src/declared-fix.ts:129](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/declared-fix.ts#L129)
 
-The repo-relative file globs the fix may edit (e.g. `packages/core/src/internal/fnv.ts`,
+The repo-relative file globs the fix may edit (e.g. `packages/core/src/evidence/fnv.ts`,
 `packages/astro/src/**`). A `*` matches within a path segment; `**` matches across
 segments (the same minimal glob shape the assurance map uses). An actually-changed
 file matching NONE of these is scope creep.
