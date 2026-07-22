@@ -151,12 +151,25 @@ export function quoteWindowsArg(arg: string): string {
  * enable shell interpretation but still finds .cmd / .bat shims on Windows.
  * On POSIX this is identity.
  */
-function resolveLauncher(command: string, args: readonly string[]): { command: string; args: readonly string[] } {
+interface Launcher {
+  readonly command: string;
+  readonly args: readonly string[];
+  readonly windowsVerbatimArguments: boolean;
+}
+
+function resolveLauncher(command: string, args: readonly string[]): Launcher {
   if (process.platform !== 'win32') {
-    return { command, args };
+    return { command, args, windowsVerbatimArguments: false };
+  }
+  // Native executables do not need cmd.exe for resolution. Launching them
+  // directly also preserves absolute paths containing spaces (for example
+  // `C:\Program Files\nodejs\node.exe`), which cmd's `/s /c` quote stripping
+  // otherwise truncates to `C:\Program`.
+  if (/\.(?:exe|com)$/i.test(command)) {
+    return { command, args, windowsVerbatimArguments: false };
   }
   const commandLine = [command, ...args].map(quoteWindowsArg).join(' ');
-  return { command: 'cmd.exe', args: ['/d', '/s', '/c', commandLine] };
+  return { command: 'cmd.exe', args: ['/d', '/s', '/c', commandLine], windowsVerbatimArguments: true };
 }
 
 /**
@@ -176,7 +189,7 @@ export function spawnArgv(command: string, args: readonly string[], opts: SpawnA
       cwd: opts.cwd,
       // On Windows the cmd.exe launcher needs verbatim args so Node doesn't
       // re-escape the command tail and break exit-code propagation.
-      windowsVerbatimArguments: process.platform === 'win32',
+      windowsVerbatimArguments: launcher.windowsVerbatimArguments,
       // CRITICAL: do not set `env` — children must inherit NODE_V8_COVERAGE.
     });
     const stderrChunks: Buffer[] = [];
@@ -217,7 +230,7 @@ export function spawnArgvVisible(
       stdio: ['ignore', 'pipe', 'inherit'],
       shell: false,
       cwd: opts.cwd,
-      windowsVerbatimArguments: process.platform === 'win32',
+      windowsVerbatimArguments: launcher.windowsVerbatimArguments,
     });
     proc.stdout?.pipe(process.stderr, { end: false });
     proc.on('error', rejectPromise);
@@ -246,7 +259,7 @@ export function spawnArgvCapture(
       stdio: ['ignore', 'pipe', 'pipe'],
       shell: false,
       cwd: opts.cwd,
-      windowsVerbatimArguments: process.platform === 'win32',
+      windowsVerbatimArguments: launcher.windowsVerbatimArguments,
       // CRITICAL: do not set `env` — children must inherit NODE_V8_COVERAGE.
     });
     const stdoutChunks: Buffer[] = [];
@@ -358,7 +371,7 @@ function startSpawn(command: string, args: readonly string[], opts: SpawnArgvOpt
     shell: false,
     detached: process.platform !== 'win32',
     // On Windows the cmd.exe launcher needs verbatim args; see spawnArgv.
-    windowsVerbatimArguments: process.platform === 'win32',
+    windowsVerbatimArguments: launcher.windowsVerbatimArguments,
     // CRITICAL: do not set `env` — see comment in spawnArgv.
   });
   const stderrChunks: Buffer[] = [];

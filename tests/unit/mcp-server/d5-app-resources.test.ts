@@ -87,7 +87,9 @@ describe('D5 — D4 static surface stays frozen', () => {
     // P17 nautical glossary trim: the retired maritime entries (hull, keel, cast off,
     // moored, shake-down, quay) were dropped from GLOSSARY_ENTRIES — the catalog now keeps
     // only terms still used in CLI source — so the glossary UI body digest shifted again.
-    expect(pin).toBe('fnv1a:2bf3e2ab');
+    // P11 check contract completion: profile execution owns `check`; the pure fold is
+    // the distinct handler/MCP command `check.gates`, changing the commands projection.
+    expect(pin).toBe('fnv1a:26ecfa3a');
   });
 });
 

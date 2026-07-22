@@ -720,6 +720,10 @@
           "kind": "const"
         },
         {
+          "name": "CHECK_CONTEXTS",
+          "kind": "const"
+        },
+        {
           "name": "CHECK_PLATFORMS",
           "kind": "const"
         },
@@ -863,7 +867,7 @@
           "signature": "descriptor:const,handler:function"
         },
         {
-          "name": "checkCommand",
+          "name": "checkGatesCommand",
           "kind": "namespace",
           "signature": "argsSchema:const,descriptor:const,handler:function"
         },

@@ -16,10 +16,10 @@ import type { JsonRpcRequest, JsonRpcNotification } from '../../../packages/mcp-
 import { validateStructural, type StructuralSchema } from '../../support/structural-schema.js';
 import { scaledTimeout } from '../../../vitest.shared.js';
 
-/** `check` runs the in-process gauntlet fold — same budget as cross-adapter convergence. */
+/** `check.gates` runs the in-process gauntlet fold — same budget as cross-adapter convergence. */
 // Per-tool timeout budgets for the catalog-driven dispatch matrix (#145). A
 // lookup table so a per-tool budget is trivial to scan/extend; values are wrapped
-// in `scaledTimeout` at lookup time (per test-timeout-policy). Only `check` needs
+// in `scaledTimeout` at lookup time (per test-timeout-policy). Only `check.gates` needs
 // an elevated budget: with empty args it runs the in-process gauntlet fold — the
 // same 60s `tests/integration/cross-adapter-convergence.test.ts` gives it. Every
 // other tool (including `capsule.verify` / `scene.render`) dispatches with a
@@ -27,7 +27,7 @@ import { scaledTimeout } from '../../../vitest.shared.js';
 // fails fast, so the default vitest budget is ample — the old 120s here was
 // over-conservative parity with the convergence suite, which uses REAL fixtures.
 const MCP_DISPATCH_TIMEOUT_MS: Readonly<Record<string, number>> = {
-  check: 60_000,
+  'check.gates': 60_000,
 };
 
 function mcpDispatchMatrixTimeout(name: string): number | undefined {
@@ -42,7 +42,7 @@ const MCP_DISPATCH_ARGS: Record<string, Record<string, unknown>> = {
   'capsule.inspect': { id: '__mcp-dispatch-probe__' },
   'capsule.list': {},
   'capsule.verify': { id: '__mcp-dispatch-probe__' },
-  check: {},
+  'check.gates': {},
   context: { task: 'add-boundary' },
   explain: { query: 'gauntlet/no-bare-throw' },
   plumb: {},
@@ -58,7 +58,9 @@ function makeRequest(method: string, params?: unknown, id: string | number = 1):
 }
 
 function makeNotification(method: string, params?: unknown): JsonRpcNotification {
-  return params === undefined ? { jsonrpc: '2.0', method } : { jsonrpc: '2.0', method, params: params as Record<string, unknown> };
+  return params === undefined
+    ? { jsonrpc: '2.0', method }
+    : { jsonrpc: '2.0', method, params: params as Record<string, unknown> };
 }
 
 describe('dispatch — JSON-RPC method routing', () => {
@@ -167,14 +169,16 @@ describe('dispatchToolCall — all mcpExposed tools (catalog-driven matrix)', ()
 
 describe('listTools — registry-projected catalog', () => {
   it('lists exactly the 12 handler-backed compute/verify/gate/reference tools, each with an inputSchema', () => {
-    const names = listTools().map((t) => t.name).sort();
+    const names = listTools()
+      .map((t) => t.name)
+      .sort();
     expect(names).toEqual([
       'asset.analyze',
       'asset.verify',
       'capsule.inspect',
       'capsule.list',
       'capsule.verify',
-      'check',
+      'check.gates',
       'context',
       'explain',
       'plumb',

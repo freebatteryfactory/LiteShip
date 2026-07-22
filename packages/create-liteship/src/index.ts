@@ -89,7 +89,7 @@ export async function run(argv: readonly string[], io: RunIo = defaultIo): Promi
         `  pnpm install   (or npm install)\n` +
         `  pnpm dev       (or npm run dev)\n\n` +
         `Verify the project any time with:\n` +
-        `  liteship check --profile consumer\n\n` +
+        `  liteship check --profile quick\n\n` +
         `Then edit src/pages/index.astro — defineBoundary, defineStyle, and\n` +
         `adaptiveAttrs() all share one boundary (src/boundaries/).\n`,
     );

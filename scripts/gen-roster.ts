@@ -341,7 +341,12 @@ export function findAuthoredFleetLists(sources: readonly CatalogSource[]): reado
 }
 
 function trackedCatalogSources(): readonly CatalogSource[] {
-  const paths = walkTrackedFiles(REPO_ROOT).filter((path) => /\.(?:[cm]?[jt]sx?|json|ya?ml|md)$/u.test(path));
+  // `git ls-files` still reports an unstaged deletion from the index. Filter
+  // against the live tree so a generated API page that was legitimately
+  // replaced/renamed can be checked before the commit is staged.
+  const paths = walkTrackedFiles(REPO_ROOT).filter(
+    (path) => /\.(?:[cm]?[jt]sx?|json|ya?ml|md)$/u.test(path) && existsSync(resolve(REPO_ROOT, path)),
+  );
   return paths.map((path) => ({ path, text: readFileSync(resolve(REPO_ROOT, path), 'utf8') }));
 }
 

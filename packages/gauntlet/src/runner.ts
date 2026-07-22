@@ -96,7 +96,7 @@ export const LITESHIP_GATES: readonly Gate[] = [
   // The DIAGNOSTIC-CODE REGISTRY guard — a lean source-scanner (no IR, no facts) that proves
   // every emitted gauntlet ruleId + every check/<slug> id is enrolled in @liteship/error's
   // DIAGNOSTIC_REGISTRY. It rides the lean set AND the IR-host set (it needs neither), so it
-  // runs on both the `liteship check` lean path and the IR-injected `check:gates` composition.
+  // runs on both the `liteship check gates` lean path and its IR-enriched composition.
   diagnosticCodeRegisteredGate,
   // The FACADE-EXPORT-BUDGET guard (P13) — a lean fold over the BUILT `liteship`
   // root `dist/index.d.ts` + the reviewed allowlist DATA in
@@ -132,7 +132,7 @@ export const LITESHIP_GATES: readonly Gate[] = [
  *
  * These IR-fold gates {@link requireIR}, so they CANNOT run on the lean
  * MCP/command path (no IR) — they appear ONLY here, the IR-present composition. The
- * lean {@link LITESHIP_GATES} default is unchanged: `liteship check` / MCP still runs
+ * lean {@link LITESHIP_GATES} default is unchanged: `liteship check gates` / MCP still runs
  * the seven regex gates IR-free.
  */
 export const LITESHIP_IR_GATES: readonly Gate[] = [
@@ -235,7 +235,7 @@ export interface RunGauntletOnRepoOptions {
   readonly mcdc?: McdcFacts;
   /**
    * The INJECTED DST (deterministic-simulation) facts (the avionics tier — the
-   * determinism spine) — OPTIONAL. A host (the CLI's `liteship check --ir --simulate`
+   * determinism spine) — OPTIONAL. A host (the CLI's `liteship check gates --ir --simulate`
    * path) drives the scenario corpus through the `@liteship/core/simulation` harness
    * (replaying each seed twice, content-addressing the two byte-exact traces) and
    * threads the decided {@link SimulationFacts} here, where they land on the
@@ -268,7 +268,7 @@ export interface RunGauntletOnRepoOptions {
   readonly standards?: StandardsIntegrityFacts;
   /**
    * The INJECTED taint-flow facts (the TAINT-ANALYSIS family) — OPTIONAL. A host (the
-   * CLI's `liteship check --ir --taint` path) traces the source→sink dataflow via
+   * CLI's `liteship check gates --ir --taint` path) traces the source→sink dataflow via
    * `@liteship/audit`'s GENERIC taint oracle (classified by the host-injected LiteShip
    * source/sink/sanitizer registry) and threads the decided {@link TaintFacts} here,
    * where they land on the {@link GateContext} for `taintFlowGate` to fold. Omit them
@@ -278,7 +278,7 @@ export interface RunGauntletOnRepoOptions {
   readonly taint?: TaintFacts;
   /**
    * The INJECTED capability-link facts (codex round-8, #1b) — OPTIONAL. A host (the CLI's
-   * `liteship check --ir --capability-gate` path) resolves each sanctioned skip's guard against the
+   * `liteship check gates --ir --capability-gate` path) resolves each sanctioned skip's guard against the
    * canonical capability symbol table via `@liteship/audit`'s capability-link oracle and threads the
    * decided {@link CapabilityLinkFacts} here for `capabilityGateLinkGate` to fold. Omit them ⇒ the
    * gate is not in the set.
@@ -296,7 +296,7 @@ export interface RunGauntletOnRepoOptions {
   readonly fuzzCorpus?: FuzzCorpusFacts;
   /**
    * The INJECTED proof-strength facts (the LOCAL-VS-GLOBAL correctness family — the
-   * lax-functor) — OPTIONAL. A host (the CLI's `liteship check --ir --proof` path) reads
+   * lax-functor) — OPTIONAL. A host (the CLI's `liteship check gates --ir --proof` path) reads
    * the proof signals (mutation score / coverage / property tests / enrolled
    * invariants), blends them into per-module scalars, and threads the decided
    * {@link ProofFacts} here, where they land on the {@link GateContext} for
@@ -307,7 +307,7 @@ export interface RunGauntletOnRepoOptions {
   /**
    * The INJECTED composition-coverage facts (the LOCAL-VS-GLOBAL correctness family —
    * "locally green, globally untested interaction") — OPTIONAL. A host (the CLI's
-   * `liteship check --ir --composition` path) derives the interaction edges from the IR
+   * `liteship check gates --ir --composition` path) derives the interaction edges from the IR
    * call graph and classifies each integration-covered/uncovered, then threads the
    * decided {@link CompositionFacts} here, where they land on the {@link GateContext}
    * for `compositionCoverageGate` to fold. Omit them (the default `--ir` run) and the
@@ -316,7 +316,7 @@ export interface RunGauntletOnRepoOptions {
   readonly composition?: CompositionFacts;
   /**
    * The INJECTED two-axis spine-relation facts (Wave 8.5, the public constitution's
-   * STATIC-projection half) — OPTIONAL. A host (the CLI's `liteship check --ir
+   * STATIC-projection half) — OPTIONAL. A host (the CLI's `liteship check gates --ir
    * --spine-relation` path) probes each admitted `@liteship/_spine` mirror type's bidirectional
    * assignability against its runtime source, then threads the decided
    * {@link SpineRelationFacts} here, where they land on the {@link GateContext} for
@@ -608,7 +608,7 @@ export interface LitelaunchCacheOptions {
   /**
    * OPTIONAL host-computed mutation facts (Slice C — mutation-as-divergence) threaded
    * onto the {@link GateContext} for `mutationDivergenceGate` to fold. Supplied ONLY
-   * on the `liteship check --ir --mutate` run, alongside a `gates` override that includes
+   * on the `liteship check gates --ir --mutate` run, alongside a `gates` override that includes
    * the gate. The cache key is namespaced by the mutation mode (a mutation-run
    * verdict can never be served to a non-mutation run, or vice versa).
    */
@@ -616,7 +616,7 @@ export interface LitelaunchCacheOptions {
   /**
    * OPTIONAL host-computed MC/DC facts (the avionics tier — DO-178B Level A coverage via
    * condition-level mutation) threaded onto the {@link GateContext} for
-   * `mcdcCoverageGate` to fold. Supplied ONLY on the `liteship check --ir --mcdc` run,
+   * `mcdcCoverageGate` to fold. Supplied ONLY on the `liteship check gates --ir --mcdc` run,
    * alongside a `gates` override that includes the gate. The cache key is namespaced by
    * the MC/DC mode (an MC/DC verdict can never be served to a non-MC/DC run, or vice
    * versa) — exactly the `--mutate` cache-soundness lesson.
@@ -625,7 +625,7 @@ export interface LitelaunchCacheOptions {
   /**
    * OPTIONAL host-computed DST (deterministic-simulation) facts (the determinism
    * spine) threaded onto the {@link GateContext} for `simulationDeterminismGate` to
-   * fold. Supplied ONLY on the `liteship check --ir --simulate` run, alongside a `gates`
+   * fold. Supplied ONLY on the `liteship check gates --ir --simulate` run, alongside a `gates`
    * override that includes the gate. The cache key is namespaced by the simulation
    * mode (a simulation-run verdict can never be served to a non-simulation run, or
    * vice versa).
@@ -634,7 +634,7 @@ export interface LitelaunchCacheOptions {
   /**
    * OPTIONAL host-computed taint-flow facts (the TAINT-ANALYSIS family) threaded onto
    * the {@link GateContext} for `taintFlowGate` to fold. Supplied ONLY on the
-   * `liteship check --ir --taint` run, alongside a `gates` override that includes the gate.
+   * `liteship check gates --ir --taint` run, alongside a `gates` override that includes the gate.
    * The cache key is namespaced by the taint mode (a taint-run verdict can never be
    * served to a non-taint run, or vice versa) — exactly the `--mutate` cache-soundness
    * lesson.
@@ -643,7 +643,7 @@ export interface LitelaunchCacheOptions {
   /**
    * OPTIONAL host-computed capability-link facts (codex round-8, #1b) threaded onto the
    * {@link GateContext} for `capabilityGateLinkGate` to fold. Supplied ONLY on the
-   * `liteship check --ir --capability-gate` run, alongside a `gates` override that includes the gate. The
+   * `liteship check gates --ir --capability-gate` run, alongside a `gates` override that includes the gate. The
    * cache key is namespaced by the capability-gate mode (a capability-gate verdict never serves a
    * non-capability-gate run).
    */
@@ -670,7 +670,7 @@ export interface LitelaunchCacheOptions {
   /**
    * OPTIONAL host-computed proof-strength facts (the LOCAL-VS-GLOBAL correctness family
    * — the lax-functor) threaded onto the {@link GateContext} for `proofPropagationGate`
-   * to propagate along the dep DAG. Supplied ONLY on the `liteship check --ir --proof` run,
+   * to propagate along the dep DAG. Supplied ONLY on the `liteship check gates --ir --proof` run,
    * alongside a `gates` override that includes the gate. The proof MODE namespaces the
    * verdict cache key (a proof-run verdict can never be served to a non-proof run, or
    * vice versa) — the same `--mutate` cache-soundness lesson.
@@ -680,14 +680,14 @@ export interface LitelaunchCacheOptions {
    * OPTIONAL host-computed composition-coverage facts (the LOCAL-VS-GLOBAL correctness
    * family — "locally green, globally untested interaction") threaded onto the
    * {@link GateContext} for `compositionCoverageGate` to fold. Supplied ONLY on the
-   * `liteship check --ir --composition` run, alongside a `gates` override that includes the
+   * `liteship check gates --ir --composition` run, alongside a `gates` override that includes the
    * gate. The composition MODE namespaces the verdict cache key.
    */
   readonly composition?: CompositionFacts;
   /**
    * OPTIONAL host-computed two-axis spine-relation facts (Wave 8.5, the public
    * constitution's STATIC-projection half) threaded onto the {@link GateContext} for
-   * `spineRelationGate` to fold. Supplied ONLY on the `liteship check --ir --spine-relation`
+   * `spineRelationGate` to fold. Supplied ONLY on the `liteship check gates --ir --spine-relation`
    * run, alongside a `gates` override that includes the gate. The spine-relation MODE
    * namespaces the verdict cache key (a spine-relation verdict never serves a
    * non-spine-relation run).

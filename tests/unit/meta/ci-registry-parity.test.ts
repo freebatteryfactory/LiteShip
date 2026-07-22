@@ -31,13 +31,13 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { CHECK_REGISTRY, SCRIPT_EXEMPTIONS } from '@liteship/command';
 import { gauntletPhases, gauntletPhaseProfiles } from '../../../packages/cli/src/gauntlet-phases.js';
-import { buildCiPlan } from '../../../scripts/ci-plan.js';
+import { assertBlockingReleasePartition, buildCiPlan, CI_SPECIALIZED_CHECK_SPECS } from '../../../scripts/ci-plan.js';
 
 const ROOT = resolve(import.meta.dirname, '../../..');
 const CI_YML = readFileSync(resolve(ROOT, '.github/workflows/ci.yml'), 'utf8');
-const FIXTURE = JSON.parse(
-  readFileSync(resolve(ROOT, 'tests/fixtures/ci-parallel-lane-commands.json'), 'utf8'),
-) as { lanes: Record<string, string[]> };
+const FIXTURE = JSON.parse(readFileSync(resolve(ROOT, 'tests/fixtures/ci-parallel-lane-commands.json'), 'utf8')) as {
+  lanes: Record<string, string[]>;
+};
 
 // ── ci.yml structural reader (dependency-free) ──────────────────────────────
 
@@ -119,6 +119,69 @@ const SPECIALIZED_JOBS = [
   'macos-smoke',
 ] as const;
 
+// ── Release-partition authority ─────────────────────────────────────────────
+
+describe('blocking release checks have one real CI owner', () => {
+  const blockingReleaseIds = CHECK_REGISTRY.filter(
+    (check) =>
+      check.authority === 'blocking' && check.profiles.includes('release') && check.platforms.includes('linux'),
+  ).map((check) => check.id);
+  const assignments = [
+    ...Object.entries(PLAN.lanes).flatMap(([key, lane]) =>
+      lane.checkIds.map((checkId) => ({ checkId, owner: `lane:${key}` })),
+    ),
+    ...Object.entries(PLAN.specializedChecks).map(([key, check]) => ({
+      checkId: check.checkId,
+      owner: `specialized:${key}`,
+    })),
+  ];
+
+  it('the live plan covers the complete release projection with no unfanned check', () => {
+    expect(() => assertBlockingReleasePartition(blockingReleaseIds, assignments)).not.toThrow();
+    expect(PLAN.unfannedReleaseChecks).toEqual([]);
+  });
+
+  it('fails closed when one live blocking release check loses its owner', () => {
+    const withoutHermetic = Object.fromEntries(
+      Object.entries(CI_SPECIALIZED_CHECK_SPECS).filter(([key]) => key !== 'hermetic'),
+    );
+    expect(() => buildCiPlan({ specializedCheckSpecs: withoutHermetic })).toThrow(
+      /unassigned blocking release checks: check\/hermetic/,
+    );
+  });
+
+  it('fails closed when one live check is claimed twice', () => {
+    const withDuplicate = {
+      ...CI_SPECIALIZED_CHECK_SPECS,
+      duplicateRedFixture: { checkId: 'check/format', job: 'format' },
+    };
+    expect(() => buildCiPlan({ specializedCheckSpecs: withDuplicate })).toThrow(
+      /check id "check\/format" is claimed more than once/,
+    );
+  });
+
+  it.each(Object.entries(PLAN.specializedChecks))(
+    'specialized check %s derives its command from the registry and executes in its named job',
+    (key, specialized) => {
+      const registryCheck = CHECK_REGISTRY.find((check) => check.id === specialized.checkId);
+      expect(registryCheck).toBeDefined();
+      expect(registryCheck!.authority).toBe('blocking');
+      expect(registryCheck!.profiles).toContain('release');
+      expect(specialized.command).toBe(registryCheck!.command);
+
+      const jobBlock = JOB_BLOCKS.get(specialized.job);
+      expect(jobBlock, `ci.yml has no specialized owner job "${specialized.job}"`).toBeDefined();
+      const projectedInvocation = '${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.' + key + '.command }}';
+      expect(runCommandsIn(jobBlock!)).toContain(projectedInvocation);
+      expect(jobBlock).not.toContain(specialized.command);
+    },
+  );
+
+  it('the merge-gate final waits for the fail-closed packed-consumer owner', () => {
+    expect(JOB_BLOCKS.get('truth-linux-parallel-final')).toContain('- truth-linux-parallel-consumer');
+  });
+});
+
 // ── (a) gauntlet-lane commands map to a registry-projected profile ──────────
 
 describe('(a) every gauntlet-lane command is a registry-projected profile invocation', () => {
@@ -146,9 +209,9 @@ describe('(a) every gauntlet-lane command is a registry-projected profile invoca
       expect(lane!.command).toBe(expectedCommand);
 
       // The registry-backed checks the profile actually runs equal the lane's checkIds.
-      const projectedIds = gauntletPhaseProfiles[profile]!
-        .map((label) => LABEL_TO_ID.get(label) ?? null)
-        .filter((id): id is string => id !== null);
+      const projectedIds = gauntletPhaseProfiles[profile]!.map((label) => LABEL_TO_ID.get(label) ?? null).filter(
+        (id): id is string => id !== null,
+      );
       expect(new Set(lane!.checkIds)).toEqual(new Set(projectedIds));
 
       // Every projected id is a genuine registry check id.

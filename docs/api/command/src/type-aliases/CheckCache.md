@@ -8,10 +8,10 @@
 
 > **CheckCache** = `"content-addressed"` \| `"none"`
 
-Defined in: [command/src/checks/definition.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/definition.ts#L44)
+Defined in: [command/src/checks/definition.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/definition.ts#L47)
 
 The cache discipline for a check's verdict.
-- `content-addressed` — the verdict is a pure function of the declared [CheckDefinition.inputs](../interfaces/CheckDefinition.md#inputs);
+- `content-addressed` — the verdict is a pure function of the check definition's declared `inputs`;
   a warm run may SKIP it when no covered byte changed (reusing the verdict-cache
   pattern of `@liteship/gauntlet`'s `verdict-cache.ts`). SOUND only when `inputs`
   captures everything that affects the verdict.

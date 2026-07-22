@@ -45,14 +45,22 @@ describe('D3 capabilities — declared because implemented, minimal honest flags
 
   it('server/info resource and initialize share ONE capabilities source (cannot drift)', async () => {
     const init = await result<{ capabilities: unknown }>('initialize', { protocolVersion: '2025-11-25' });
-    const read = await result<{ contents: Array<{ text: string }> }>('resources/read', { uri: 'liteship://server/info' });
+    const read = await result<{ contents: Array<{ text: string }> }>('resources/read', {
+      uri: 'liteship://server/info',
+    });
     const info = JSON.parse(read.contents[0]!.text) as { capabilities: unknown };
     expect(info.capabilities).toEqual(init.capabilities);
   });
 
   it('honesty invariant: every declared capability has a working *_list method (not -32601)', async () => {
-    const caps = (await result<{ capabilities: Record<string, unknown> }>('initialize', { protocolVersion: '2025-11-25' })).capabilities;
-    const listMethod: Record<string, string> = { tools: 'tools/list', resources: 'resources/list', prompts: 'prompts/list' };
+    const caps = (
+      await result<{ capabilities: Record<string, unknown> }>('initialize', { protocolVersion: '2025-11-25' })
+    ).capabilities;
+    const listMethod: Record<string, string> = {
+      tools: 'tools/list',
+      resources: 'resources/list',
+      prompts: 'prompts/list',
+    };
     for (const cap of Object.keys(caps)) {
       if (cap === 'ui') continue; // D10: ui.callServerTool is a host-bridge flag, not a *_list surface.
       const method = listMethod[cap];
@@ -97,8 +105,10 @@ describe('D3 resources/list — projection of the registry + glossary', () => {
 });
 
 describe('D3 resources/read — real projected JSON', () => {
-  it('liteship://registry/commands is the full COMMAND_CATALOG (24-descriptor superset of tools/list)', async () => {
-    const r = await result<{ contents: Array<{ uri: string; mimeType: string; text: string }> }>('resources/read', { uri: 'liteship://registry/commands' });
+  it('liteship://registry/commands is the full COMMAND_CATALOG superset of tools/list', async () => {
+    const r = await result<{ contents: Array<{ uri: string; mimeType: string; text: string }> }>('resources/read', {
+      uri: 'liteship://registry/commands',
+    });
     expect(r.contents[0]!.mimeType).toBe('application/json');
     expect(JSON.parse(r.contents[0]!.text)).toEqual(COMMAND_CATALOG);
   });
@@ -150,7 +160,10 @@ describe('D3 resources/read — real projected JSON', () => {
 
 describe('D3 prompts/list — exactly the two registry-backed prompts', () => {
   it('returns liteship.command.inspect + liteship.tool.use, in stable order, with required args', async () => {
-    const r = await result<{ prompts: Array<{ name: string; arguments: Array<{ name: string; required: boolean }> }> }>('prompts/list', {});
+    const r = await result<{ prompts: Array<{ name: string; arguments: Array<{ name: string; required: boolean }> }> }>(
+      'prompts/list',
+      {},
+    );
     expect(r.prompts.map((p) => p.name)).toEqual(['liteship.command.inspect', 'liteship.tool.use']);
     for (const p of r.prompts) expect(p.arguments.some((a) => a.required)).toBe(true);
   });
@@ -163,7 +176,10 @@ describe('D3 prompts/list — exactly the two registry-backed prompts', () => {
 
 describe('D3 prompts/get — deterministic, registry-backed messages', () => {
   it('command.inspect explains a handler-backed command from its descriptor', async () => {
-    const r = await result<{ messages: Array<{ role: string; content: { type: string; text: string } }> }>('prompts/get', { name: 'liteship.command.inspect', arguments: { command: 'glossary' } });
+    const r = await result<{ messages: Array<{ role: string; content: { type: string; text: string } }> }>(
+      'prompts/get',
+      { name: 'liteship.command.inspect', arguments: { command: 'glossary' } },
+    );
     expect(r.messages[0]!.role).toBe('user');
     expect(r.messages[0]!.content.type).toBe('text');
     expect(r.messages[0]!.content.text).toContain('Command: glossary');
@@ -171,12 +187,18 @@ describe('D3 prompts/get — deterministic, registry-backed messages', () => {
   });
 
   it('command.inspect explains a CLI-owned command (executionKind reported honestly)', async () => {
-    const r = await result<{ messages: Array<{ content: { text: string } }> }>('prompts/get', { name: 'liteship.command.inspect', arguments: { command: 'gauntlet' } });
+    const r = await result<{ messages: Array<{ content: { text: string } }> }>('prompts/get', {
+      name: 'liteship.command.inspect',
+      arguments: { command: 'gauntlet' },
+    });
     expect(r.messages[0]!.content.text).toContain('cli-orchestration');
   });
 
   it('tool.use explains an MCP-exposed tool and references the D1/D2 envelope', async () => {
-    const r = await result<{ messages: Array<{ content: { text: string } }> }>('prompts/get', { name: 'liteship.tool.use', arguments: { tool: 'asset.analyze' } });
+    const r = await result<{ messages: Array<{ content: { text: string } }> }>('prompts/get', {
+      name: 'liteship.tool.use',
+      arguments: { tool: 'asset.analyze' },
+    });
     const text = r.messages[0]!.content.text;
     expect(text).toContain('asset.analyze');
     expect(text).toContain('structuredContent');
@@ -189,7 +211,9 @@ describe('D3 prompts/get — deterministic, registry-backed messages', () => {
 
   it('command.inspect missing required arg → -32602; unknown command → -32602', async () => {
     expect(await errCode('prompts/get', { name: 'liteship.command.inspect', arguments: {} })).toBe(-32602);
-    expect(await errCode('prompts/get', { name: 'liteship.command.inspect', arguments: { command: '__nope__' } })).toBe(-32602);
+    expect(await errCode('prompts/get', { name: 'liteship.command.inspect', arguments: { command: '__nope__' } })).toBe(
+      -32602,
+    );
   });
 
   it('unknown prompt name → -32602; missing name → -32602', async () => {
@@ -254,7 +278,17 @@ describe('D3 non-regression — D1 envelope + D2 outputSchema law untouched', ()
 
 describe('D3 namespace law — protocol surfaces stay product-owned', () => {
   it('no maintainer identity (heyoub) and the liteship:// scheme in the D3 protocol-surface source', () => {
-    for (const file of ['resources.ts', 'prompts.ts', 'capabilities.ts', 'dispatch.ts', 'ui-resources.ts', 'ui-render.ts', 'app-resources.ts', 'app-render.ts', 'manifest-resource.ts']) {
+    for (const file of [
+      'resources.ts',
+      'prompts.ts',
+      'capabilities.ts',
+      'dispatch.ts',
+      'ui-resources.ts',
+      'ui-render.ts',
+      'app-resources.ts',
+      'app-render.ts',
+      'manifest-resource.ts',
+    ]) {
       const src = readFileSync(resolve(SRC, file), 'utf8');
       expect(src, `${file} must not embed maintainer identity`).not.toContain('heyoub');
     }

@@ -15,10 +15,8 @@
  * gauntlet-phases projection to the exact pre-change 43-label order.
  *
  * It ENFORCES the negative-control PARTITION (INV-CHECK-NEGATIVE-CONTROL): over the
- * blocking checks, every one is classified EXACTLY once — it declares a `negativeControl`
- * whose path EXISTS, or is a documented `NEGATIVE_CONTROL_EXEMPT` entry — a total, disjoint
- * split with teeth (a synthetic unclassified / double-classified check reds the gate), plus
- * the DATA integrity of the exempt ledger (real ids, disjoint, non-empty reasons).
+ * blocking checks, every one declares a `negativeControl` whose path EXISTS. There
+ * is no blocker-exemption ledger: a synthetic missing or dangling control reds.
  *
  * @module
  */
@@ -41,7 +39,6 @@ import {
   type Gate,
 } from '@liteship/gauntlet';
 import { gauntletPhaseLabels } from '../../../packages/cli/src/gauntlet-phases.js';
-import { NEGATIVE_CONTROL_EXEMPT } from '../../../packages/command/src/checks/negative-control-exempt.js';
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
 
@@ -69,7 +66,7 @@ function rootScripts(): readonly string[] {
 function buildGovernanceFacts(now: Date): CheckGovernanceFacts {
   const scripts = rootScripts();
   const scriptSet = new Set(scripts);
-  const registered = CHECK_REGISTRY.map((check) => {
+  const registered = CHECK_REGISTRY.filter((check) => check.contexts.includes('repository')).map((check) => {
     const script = scriptOf(check.command);
     return { id: check.id, script, scriptExists: scriptSet.has(script) };
   });
@@ -77,14 +74,11 @@ function buildGovernanceFacts(now: Date): CheckGovernanceFacts {
 
   const negativeControls = CHECK_REGISTRY.filter((check) => check.authority === 'blocking').map((check) => {
     const negativeControl = check.negativeControl ?? null;
-    const exemptReason = NEGATIVE_CONTROL_EXEMPT[check.id] ?? null;
     return {
       id: check.id,
       blocking: true,
       negativeControl,
       exists: negativeControl !== null && existsSync(resolve(REPO, negativeControl)),
-      exempt: exemptReason !== null,
-      exemptReason,
     };
   });
 
@@ -141,9 +135,10 @@ describe('the check-registry PARTITION is total + disjoint against the root scri
     expect(unresolved.map((entry) => `${entry.id}→${entry.script}`)).toEqual([]);
   });
 
-  it('the partition covers the root scripts EXACTLY (43 checks + 46 exemptions = 89 scripts)', () => {
+  it('the partition covers the root scripts EXACTLY (42 repository checks + 47 exemptions = 89 scripts)', () => {
     expect(CHECK_REGISTRY.length).toBe(43);
-    expect(SCRIPT_EXEMPTIONS.length).toBe(46);
+    expect(FACTS.partition.registered).toHaveLength(42);
+    expect(SCRIPT_EXEMPTIONS.length).toBe(47);
     expect(scripts.length).toBe(89);
     expect(new Set([...registeredScripts, ...exempted]).size).toBe(scripts.length);
   });
@@ -174,28 +169,18 @@ describe('the check-governance meta-gates are GREEN over the real repo', () => {
   });
 });
 
-describe('the negative-control PARTITION is total + disjoint over the blocking checks', () => {
+describe('negative controls are total over the blocking checks', () => {
   const blocking = CHECK_REGISTRY.filter((check) => check.authority === 'blocking');
 
-  it('every blocking check is classified EXACTLY once — declares an existing negative control XOR is exempt (the partition is total + disjoint)', () => {
-    const unclassified: string[] = [];
-    const conflicting: string[] = [];
+  it('every blocking check declares an existing negative control', () => {
+    const missing: string[] = [];
     const dangling: string[] = [];
     for (const check of blocking) {
       const declares = check.negativeControl !== undefined;
-      const exempt = check.id in NEGATIVE_CONTROL_EXEMPT;
-      if (declares && exempt) conflicting.push(check.id);
-      if (!declares && !exempt) unclassified.push(check.id);
+      if (!declares) missing.push(check.id);
       if (declares && !existsSync(resolve(REPO, check.negativeControl!))) dangling.push(check.id);
     }
-    expect(
-      unclassified,
-      `blocking checks with NEITHER a negative control nor an exemption: ${unclassified.join(', ')}`,
-    ).toEqual([]);
-    expect(
-      conflicting,
-      `blocking checks that are BOTH exempt and declare a control: ${conflicting.join(', ')}`,
-    ).toEqual([]);
+    expect(missing, `blocking checks without a negative control: ${missing.join(', ')}`).toEqual([]);
     expect(
       dangling,
       `blocking checks whose declared negativeControl path does not exist: ${dangling.join(', ')}`,
@@ -216,57 +201,17 @@ describe('the negative-control PARTITION is total + disjoint over the blocking c
           blocking: true,
           negativeControl: null,
           exists: false,
-          exempt: false,
-          exemptReason: null,
         },
       ],
     };
     const found = checkNegativeControlGate.run(factContext(withHole));
     expect(found.length).toBeGreaterThan(0);
-    expect(found.some((f) => f.title.includes('neither a negative control nor an exemption'))).toBe(true);
+    expect(found.some((f) => f.title.includes('no negative control'))).toBe(true);
   });
 
-  it('the disjointness has TEETH — the gate reds on a check that is BOTH exempt and declares a control', () => {
-    const withConflict: CheckGovernanceFacts = {
-      ...FACTS,
-      negativeControls: [
-        ...FACTS.negativeControls,
-        {
-          id: 'check/__conflict__',
-          blocking: true,
-          negativeControl: 'packages/gauntlet/src/gates/standards-integrity.ts',
-          exists: true,
-          exempt: true,
-          exemptReason: 'synthetic conflict',
-        },
-      ],
-    };
-    const found = checkNegativeControlGate.run(factContext(withConflict));
-    expect(found.some((f) => f.title.includes('BOTH exempt and declares'))).toBe(true);
-  });
-
-  it('NEGATIVE_CONTROL_EXEMPT is well-formed DATA — every key is a real blocking check, disjoint from declared controls, with a non-empty reason', () => {
-    const blockingIds = new Set(blocking.map((check) => check.id));
-    const declaresControl = new Set(
-      blocking.filter((check) => check.negativeControl !== undefined).map((check) => check.id),
-    );
-    const staleKeys = Object.keys(NEGATIVE_CONTROL_EXEMPT).filter((id) => !blockingIds.has(id));
-    const overlap = Object.keys(NEGATIVE_CONTROL_EXEMPT).filter((id) => declaresControl.has(id));
-    const emptyReasons = Object.entries(NEGATIVE_CONTROL_EXEMPT)
-      .filter(([, reason]) => reason.trim() === '')
-      .map(([id]) => id);
-    expect(staleKeys, `exempt ids that are not real blocking checks: ${staleKeys.join(', ')}`).toEqual([]);
-    expect(overlap, `exempt ids that also declare a negativeControl: ${overlap.join(', ')}`).toEqual([]);
-    expect(emptyReasons, `exempt ids with an empty reason: ${emptyReasons.join(', ')}`).toEqual([]);
-  });
-
-  it('the partition is a MEANINGFUL split of all 38 blocking checks (15 declared negative controls + 23 exemptions), not vacuously all-exempt', () => {
-    const declared = blocking.filter((check) => check.negativeControl !== undefined);
-    const exempt = blocking.filter((check) => check.id in NEGATIVE_CONTROL_EXEMPT);
-    expect(blocking.length).toBe(38);
-    expect(declared.length).toBe(15);
-    expect(exempt.length).toBe(23);
-    expect(declared.length + exempt.length).toBe(blocking.length);
+  it('all 38 blocking checks carry controls (including application build)', () => {
+    expect(blocking).toHaveLength(38);
+    expect(blocking.every((check) => check.negativeControl.length > 0)).toBe(true);
   });
 });
 
@@ -289,8 +234,6 @@ describe('the check-governance meta-gates have TEETH over injected facts', () =>
           blocking: true,
           negativeControl: 'packages/gauntlet/src/gates/__missing__.ts',
           exists: false,
-          exempt: false,
-          exemptReason: null,
         },
       ],
     };

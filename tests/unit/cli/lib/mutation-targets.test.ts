@@ -1,6 +1,6 @@
 /**
  * The L4-SEAM TARGETING + the SOUND covering-tests map proof (Slice C, the avionics
- * tier — the host half of `liteship check --ir --mutate`). Both computations under test are
+ * tier — the host half of `liteship check gates --ir --mutate`). Both computations under test are
  * PURE + DETERMINISTIC over the repo bytes (no clock, no rng, no network), so this proof
  * pins the LAWS, never implementation churn, with an in-memory IR + a throwaway repo dir.
  *

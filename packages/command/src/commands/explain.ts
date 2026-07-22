@@ -33,7 +33,7 @@ import { defineCommand, failed, ok, type ApiSymbolResolution } from '../registry
 import { CHECK_REGISTRY } from '../checks/registry.js';
 import type { CheckDefinition } from '../checks/definition.js';
 
-/** The gauntlet gate source tree — a check whose `negativeControl` points here proves that gate. */
+/** The gauntlet gate source tree — registered check inputs identify the emitting gate owner. */
 const GATE_SOURCE_PREFIX = 'packages/gauntlet/src/gates/';
 
 /**
@@ -145,12 +145,12 @@ function gateIdOf(code: string): string {
   return parts.length >= 2 ? `${parts[0]}/${parts[1]}` : code;
 }
 
-/** The check (if any) whose negative control is the source file of the given gauntlet gate. */
+/** The check (if any) whose declared inputs include the source of the given gauntlet gate. */
 function checkProvingGate(gateId: string): CheckDefinition | undefined {
   const slug = gateId.split('/')[1];
   if (slug === undefined || slug === '') return undefined;
   const source = `${GATE_SOURCE_PREFIX}${slug}.ts`;
-  return CHECK_REGISTRY.find((definition) => definition.negativeControl === source);
+  return CHECK_REGISTRY.find((definition) => definition.inputs.includes(source));
 }
 
 /** Build the {@link ExplainEmitter} for a code, keyed by its {@link DiagnosticArea}. */

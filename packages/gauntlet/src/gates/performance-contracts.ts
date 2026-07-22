@@ -29,7 +29,7 @@
  * It is LEAN (no `typescript`, no IR requirement — a pure fold over GateContext
  * bytes) and ships red/green/mutation fixtures, so it self-proves via the ratchet.
  * It does NOT {@link requireIR}, but it ships in `LITESHIP_IR_GATES` (the IR-host
- * composition the CLI runs on `liteship check --ir`) alongside the other Slice B/C
+ * composition the CLI runs on `liteship check gates --ir`) alongside the other Slice B/C
  * gates — NOT the lean cut `LITESHIP_GATES` the MCP/command path runs.
  *
  * @module

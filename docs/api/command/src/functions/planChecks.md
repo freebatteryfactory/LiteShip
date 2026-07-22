@@ -6,9 +6,9 @@
 
 # Function: planChecks()
 
-> **planChecks**(`profile`, `platform`): [`CheckPlan`](../interfaces/CheckPlan.md)
+> **planChecks**(`profile`, `platform`, `context?`): [`CheckPlan`](../interfaces/CheckPlan.md)
 
-Defined in: [command/src/checks/plan.ts:123](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L123)
+Defined in: [command/src/checks/plan.ts:133](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L133)
 
 Project [CHECK\_REGISTRY](../variables/CHECK_REGISTRY.md) into the ordered, cache-annotated plan for
 `profile` on `platform`. PURE + TOTAL: filter by profile membership, preserve
@@ -24,6 +24,10 @@ registry order, keep the platform-supported checks in `checks` and the rest in
 ### platform
 
 [`CheckPlatform`](../type-aliases/CheckPlatform.md)
+
+### context?
+
+[`CheckContext`](../type-aliases/CheckContext.md) = `'repository'`
 
 ## Returns
 

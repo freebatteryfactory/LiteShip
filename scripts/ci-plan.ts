@@ -56,7 +56,7 @@ function gauntletLaneCommand(profile: string): string {
 }
 
 /** One lane of the CI parallel merge gate — the projection SPEC (checks + how the lane is invoked). */
-interface LaneSpec {
+export interface LaneSpec {
   /** The ci.yml job that owns this lane. */
   readonly job: string;
   /**
@@ -76,13 +76,21 @@ interface LaneSpec {
   readonly commands?: readonly string[];
 }
 
+/** A release check executed by a named CI job outside the gauntlet lane profiles. */
+export interface SpecializedCheckSpec {
+  /** The registry check this job executes. */
+  readonly checkId: string;
+  /** The ci.yml job that owns the check. */
+  readonly job: string;
+}
+
 /**
  * The lane projection spec — every CI parallel lane, keyed by a GHA-property-safe
  * name (no hyphens, so `fromJSON(...).lanes.<key>` dot-access works). The `checkIds`
  * are the lane's slice of the release check partition; the meta test binds them to
  * the gauntlet phase profiles (`gauntletPhaseProfiles`) so a lane/profile drift reds.
  */
-const LANE_SPECS: Readonly<Record<string, LaneSpec>> = {
+export const CI_LANE_SPECS: Readonly<Record<string, LaneSpec>> = {
   preflight: {
     job: 'truth-linux-parallel-preflight',
     kind: 'gauntlet',
@@ -163,6 +171,39 @@ const LANE_SPECS: Readonly<Record<string, LaneSpec>> = {
   },
 };
 
+/**
+ * Blocking release checks whose execution has a real, named CI owner outside
+ * the gauntlet profile lanes. Commands are deliberately absent here: they are
+ * projected from CHECK_REGISTRY in {@link buildCiPlan}, so this table can assign
+ * ownership but cannot invent a second command truth.
+ */
+export const CI_SPECIALIZED_CHECK_SPECS: Readonly<Record<string, SpecializedCheckSpec>> = {
+  format: {
+    checkId: 'check/format',
+    job: 'format',
+  },
+  doctor: {
+    checkId: 'check/doctor',
+    job: 'truth-linux-parallel-preflight',
+  },
+  benchAlloc: {
+    checkId: 'check/bench-alloc',
+    job: 'truth-linux-parallel-bench',
+  },
+  journey: {
+    checkId: 'check/journey',
+    job: 'truth-linux-parallel-consumer',
+  },
+  hermetic: {
+    checkId: 'check/hermetic',
+    job: 'truth-linux-parallel-consumer',
+  },
+  devx: {
+    checkId: 'check/devx',
+    job: 'truth-linux-parallel-final',
+  },
+};
+
 /** One projected lane in the emitted matrix — the lane spec resolved to its run command(s). */
 export interface CiPlanLane {
   /** The ci.yml job that owns this lane. */
@@ -183,6 +224,32 @@ export interface CiPlanLane {
   readonly shardCount?: number;
 }
 
+/** One registry-derived check executed by a named specialized CI job. */
+export interface CiPlanSpecializedCheck {
+  /** The registry check id. */
+  readonly checkId: string;
+  /** The ci.yml job that owns the check. */
+  readonly job: string;
+  /** The exact command projected from CHECK_REGISTRY. */
+  readonly command: string;
+}
+
+/** One ownership claim used by the release-partition validator. */
+export interface CiCheckAssignment {
+  /** The registry check id being claimed. */
+  readonly checkId: string;
+  /** The projection key that claims it (lane or specialized-check key). */
+  readonly owner: string;
+}
+
+/** Injectable ownership specs used by the red fixtures for plan construction. */
+export interface CiPlanBuildOptions {
+  /** Named gauntlet/shard/coverage lane ownership. */
+  readonly laneSpecs?: Readonly<Record<string, LaneSpec>>;
+  /** Named specialized-job ownership. */
+  readonly specializedCheckSpecs?: Readonly<Record<string, SpecializedCheckSpec>>;
+}
+
 /** The full CI plan matrix — the projection the `plan` job publishes as its `matrix` output. */
 export interface CiPlan {
   /** Schema tag for the emitted artifact. */
@@ -195,7 +262,9 @@ export interface CiPlan {
   readonly shardCount: number;
   /** Every CI parallel lane, keyed by a GHA-property-safe name. */
   readonly lanes: Readonly<Record<string, CiPlanLane>>;
-  /** Release checks that are NOT fanned into a parallel lane (run elsewhere), with where each runs. */
+  /** Named checks executed by specialized jobs outside the gauntlet profile lanes. */
+  readonly specializedChecks: Readonly<Record<string, CiPlanSpecializedCheck>>;
+  /** Release checks with no projected lane or specialized owner (must be empty for blocking checks). */
   readonly unfannedReleaseChecks: readonly string[];
   /** A summary of the source `planChecks(sourceProfile, platform)` projection. */
   readonly plan: {
@@ -204,6 +273,34 @@ export interface CiPlan {
     readonly checkCount: number;
     readonly estimatedMs: number;
   };
+}
+
+/**
+ * Assert that every blocking release check has exactly one CI owner. Kept as a
+ * small pure function so red fixtures can prove both missing and duplicate
+ * ownership fail without mutating the production registry.
+ */
+export function assertBlockingReleasePartition(
+  blockingReleaseCheckIds: readonly string[],
+  assignments: readonly CiCheckAssignment[],
+): void {
+  const claims = new Map<string, string[]>();
+  for (const assignment of assignments) {
+    const owners = claims.get(assignment.checkId) ?? [];
+    owners.push(assignment.owner);
+    claims.set(assignment.checkId, owners);
+  }
+
+  const duplicate = [...claims.entries()].find(([, owners]) => owners.length > 1);
+  if (duplicate !== undefined) {
+    const [checkId, owners] = duplicate;
+    throw new Error(`ci-plan check id "${checkId}" is claimed more than once (${owners.join(', ')})`);
+  }
+
+  const missing = blockingReleaseCheckIds.filter((id) => !claims.has(id));
+  if (missing.length > 0) {
+    throw new Error(`ci-plan has unassigned blocking release checks: ${missing.join(', ')}`);
+  }
 }
 
 /** Resolve a lane spec to its emitted lane (command derivation + shard/coverage details). */
@@ -240,30 +337,57 @@ function resolveLane(spec: LaneSpec): CiPlanLane {
  * partition the release set DISJOINTLY — a drift (a renamed/removed check, a
  * lane double-claiming a check) throws here rather than emitting a silent matrix.
  */
-export function buildCiPlan(): CiPlan {
+export function buildCiPlan(options: CiPlanBuildOptions = {}): CiPlan {
   const releasePlan = planChecks(SOURCE_PROFILE, PLATFORM);
   const releaseIds = new Set(releasePlan.checks.map((check) => check.id));
-  const registryIds = new Set(CHECK_REGISTRY.map((check) => check.id));
+  const registryById = new Map(CHECK_REGISTRY.map((check) => [check.id, check] as const));
+  const registryIds = new Set(registryById.keys());
+  const laneSpecs = options.laneSpecs ?? CI_LANE_SPECS;
+  const specializedCheckSpecs = options.specializedCheckSpecs ?? CI_SPECIALIZED_CHECK_SPECS;
 
   const lanes: Record<string, CiPlanLane> = {};
-  const seen = new Set<string>();
-  for (const [key, spec] of Object.entries(LANE_SPECS)) {
+  const assignments: CiCheckAssignment[] = [];
+  for (const [key, spec] of Object.entries(laneSpecs)) {
     for (const id of spec.checkIds) {
       if (!registryIds.has(id)) {
         throw new Error(`ci-plan lane "${key}" references unknown check id "${id}"`);
       }
       if (!releaseIds.has(id)) {
-        throw new Error(`ci-plan lane "${key}" references non-release check id "${id}" (lanes fan out the release gauntlet)`);
+        throw new Error(
+          `ci-plan lane "${key}" references non-release check id "${id}" (lanes fan out the release gauntlet)`,
+        );
       }
-      if (seen.has(id)) {
-        throw new Error(`ci-plan check id "${id}" is claimed by more than one lane (partition must be disjoint)`);
-      }
-      seen.add(id);
+      assignments.push({ checkId: id, owner: `lane:${key}` });
     }
     lanes[key] = resolveLane(spec);
   }
 
-  const unfannedReleaseChecks = releasePlan.checks.map((check) => check.id).filter((id) => !seen.has(id));
+  const specializedChecks: Record<string, CiPlanSpecializedCheck> = {};
+  for (const [key, spec] of Object.entries(specializedCheckSpecs)) {
+    const check = registryById.get(spec.checkId);
+    if (check === undefined) {
+      throw new Error(`ci-plan specialized check "${key}" references unknown check id "${spec.checkId}"`);
+    }
+    if (!releaseIds.has(spec.checkId)) {
+      throw new Error(
+        `ci-plan specialized check "${key}" references non-release check id "${spec.checkId}" (the merge gate projects release)`,
+      );
+    }
+    assignments.push({ checkId: spec.checkId, owner: `specialized:${key}` });
+    specializedChecks[key] = {
+      checkId: spec.checkId,
+      job: spec.job,
+      command: check.command,
+    };
+  }
+
+  const blockingReleaseIds = releasePlan.checks
+    .filter((check) => check.authority === 'blocking')
+    .map((check) => check.id);
+  assertBlockingReleasePartition(blockingReleaseIds, assignments);
+
+  const assignedIds = new Set(assignments.map((assignment) => assignment.checkId));
+  const unfannedReleaseChecks = releasePlan.checks.map((check) => check.id).filter((id) => !assignedIds.has(id));
 
   return {
     schema: 'liteship/ci-plan@1',
@@ -271,6 +395,7 @@ export function buildCiPlan(): CiPlan {
     platform: PLATFORM,
     shardCount: SHARD_COUNT,
     lanes,
+    specializedChecks,
     unfannedReleaseChecks,
     plan: {
       profile: releasePlan.profile,

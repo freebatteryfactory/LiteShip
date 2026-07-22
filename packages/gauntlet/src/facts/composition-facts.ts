@@ -7,7 +7,7 @@
  * This module defines the {@link CompositionFacts} INTERFACE and nothing else.
  * Like {@link RepoIR} and {@link MutationFacts}, it carries NO heavy dependency:
  * `@liteship/gauntlet` stays the lean engine, so it never builds a call graph, scans the
- * test corpus, or runs a coverage probe. A HOST (the CLI's `liteship check --ir
+ * test corpus, or runs a coverage probe. A HOST (the CLI's `liteship check gates --ir
  * --composition` path) derives the interaction edges from the IR call/import graph,
  * decides which units are individually tested, and decides which edges an
  * integration test exercises TOGETHER, then hands the engine these flat,

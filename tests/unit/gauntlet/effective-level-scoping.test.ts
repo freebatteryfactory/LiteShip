@@ -66,7 +66,7 @@ describe('scopeContextByLevel — effective levels override the glob for scoping
     // REGRESSION GUARD: scoping narrows files(), NEVER the injected facts. An L4 gate
     // is ALWAYS scoped, so if scopeContextByLevel dropped `mutation` the
     // mutationDivergenceGate would throw `mutation-facts unavailable` on the real
-    // `liteship check --ir --mutate` path even though the host injected the facts. The
+    // `liteship check gates --ir --mutate` path even though the host injected the facts. The
     // facts carry each mutant's own `file`; the gate scopes itself, so the context
     // must hand the WHOLE facts set to every scope (exactly like `ir` / `supplyChain`).
     const withFacts: GateContext = {
@@ -95,7 +95,7 @@ describe('scopeContextByLevel — effective levels override the glob for scoping
     // REGRESSION GUARD (codex round-8, #1b): scopeContextByLevel HAND-LISTS the fact channels it
     // carries forward, and that list can DRIFT from FACT_CHANNELS. It did: `capabilityLink` was added
     // to GateContext + FACT_CHANNELS but NOT to the scoping carry-list, so the L4 capabilityGateLinkGate
-    // (always scoped) saw NO facts and threw on the real `liteship check --ir --capability-gate` path —
+    // (always scoped) saw NO facts and threw on the real `liteship check gates --ir --capability-gate` path —
     // invisible to the unit gate tests, which inject facts into an UNSCOPED context. Pin the whole
     // class: a sentinel on EVERY channel must survive L4 scoping, so adding a channel to FACT_CHANNELS
     // without teaching the scoper reds HERE, not in a far-downstream `--ir` run.

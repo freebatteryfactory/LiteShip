@@ -155,7 +155,7 @@ describe('D2 — payload conformance + validator teeth', () => {
       capsuleCount: 42,
       benches: { total: 41, real: 30, placeholder: ['core.x'] },
     },
-    check: {
+    'check.gates': {
       ok: false,
       blocked: true,
       findingCount: 1,
@@ -196,7 +196,12 @@ describe('D2 — payload conformance + validator teeth', () => {
       title: 'Add or extend a boundary primitive',
       summary: 'author it in @liteship/core, evaluate it in @liteship/quantizer',
       pointers: [
-        { kind: 'owner-file', path: 'packages/core/src/authoring/boundary.ts', note: 'the boundary primitive', checkId: null },
+        {
+          kind: 'owner-file',
+          path: 'packages/core/src/authoring/boundary.ts',
+          note: 'the boundary primitive',
+          checkId: null,
+        },
       ],
     },
   };
@@ -236,7 +241,7 @@ describe('D2 — payload conformance + validator teeth', () => {
     'package-smoke': PackageSmokePayloadSchema,
     'check-invariants': CheckInvariantsPayloadSchema,
     'capsule-verify': CapsuleVerifyPayloadSchema,
-    check: CheckPayloadSchema,
+    'check.gates': CheckPayloadSchema,
     explain: ExplainPayloadSchema,
     context: ContextPayloadSchema,
   } as const;

@@ -17,7 +17,7 @@ You author in terms of **inputs → states → outputs** — never the engine's 
   (`src/pages/index.astro`); the element carries `data-liteship-state`, updated on the
   client as the input crosses a threshold. The `@token` / `@style` / `@quantize`
   blocks compile your definitions to CSS at build time.
-- **Inspect.** `liteship check --profile consumer` verifies the project.
+- **Inspect.** `liteship check --profile quick` verifies the project.
 
 Everything comes from `liteship`: the authoring verbs from the root
 (`import { defineBoundary, defineStyle, defineToken } from 'liteship'`) and the Astro
@@ -33,7 +33,7 @@ pnpm dev
 Then verify the project at any time:
 
 ```sh
-liteship check --profile consumer
+liteship check --profile quick
 ```
 
 Open the page and drag the window edge — the layout's state flips

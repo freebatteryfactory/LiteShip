@@ -1,82 +1,65 @@
 /**
- * check (CLI adapter) — thin projection over `@liteship/command`'s check command
- * (the PURE gauntlet engine fold). The pass/fail decision lives in
- * `@liteship/command`; this adapter provisions the `runGauntlet` capability via the
- * shared host context (which runs `litelaunchGauntlet` in-process with a
- * WALL-CLOCK `now` for waiver expiry), emits the structured receipt, and prints
- * a concise findings summary to stderr. Exit 0 ok, 1 blocked.
+ * check (CLI adapter) — one public profile command with an explicit gate subcommand.
  *
- * This is NOT `liteship gauntlet` — that command spawns the full `gauntlet:full`
- * orchestrator and streams it to the terminal. `liteship check` is the in-process,
- * fixture-qualified gate fold that returns a Finding[] work-list.
+ * - `liteship check` projects and executes the quick profile from the canonical
+ *   check registry. `--profile`, `--plan`, `--json`, and `--no-cache` refine that
+ *   profile execution without changing its identity.
+ * - `liteship check gates` runs the IR-free, MCP-safe pure gauntlet fold exposed as
+ *   the handler command `check.gates`.
+ * - `liteship check gates --ir` runs the CLI-only repository-IR fold and its
+ *   opt-in evidence modes. The IR never crosses into `@liteship/command` or MCP.
  *
- * TWO PATHS, ONE RECEIPT SHAPE:
- * - The LEAN path (default, no `--ir`): the IR-free, cache-free, MCP-safe six
- *   regex gates via `@liteship/command`'s `check` handler. UNCHANGED — `@liteship/command`
- *   and `@liteship/mcp-server` never see the IR or `@liteship/audit`. This is the path the
- *   MCP server exposes (the established lean-engine boundary: MCP runs ONLY the
- *   lean handler — `--ir` is CLI-only).
- * - The IR-ENRICHED path (`--ir`, CLI-ONLY): builds the repo-IR via `@liteship/audit`
- *   and runs the triangulated cross-check (the B1 oracle-divergence) + the B2
- *   verdict cache via `runGauntletWithRepoIR`. `--no-cache` bypasses the cache;
- *   `--supply-chain` composes the avionics-tier supplyChainGate on + injects the
- *   host-computed supply-chain facts (lockfile/SBOM/CI), namespacing the cache mode.
- *   This path lives ENTIRELY in the CLI host (which already deps `@liteship/audit`) —
- *   never pushed into the lean engine. Both paths emit the SAME `CheckPayload`
- *   shape (ok/blocked/findingCount/findings) so the receipt is consistent.
- *
- * A THIRD surface, orthogonal to those two: `--profile <p>` (WITHOUT `--plan`) is the
- * profile-driven SWEEP. It projects `@liteship/command`'s `CHECK_REGISTRY` into the
- * ordered plan for the profile (via `planChecks`) and runs it through the CLI SPAWN
- * LAYER — each registry check's `command` becomes a subprocess, its exit status the
- * per-check verdict — emitting a `CheckReport` (the executed DUAL of the `--plan`
- * `CheckPlan`), NOT the gauntlet-fold `CheckReceipt`. `--json` selects the machine
- * report. This is how `liteship check --profile quick` runs the registry's checks,
- * distinct from the bare-`check` in-process gate fold that `check:gates` invokes.
+ * Profile execution emits a {@link CheckReport}; gate execution emits a
+ * {@link CheckReceipt}. `liteship gauntlet` remains the separate terminal-streaming
+ * full orchestrator.
  *
  * @module
  */
 import { spawnSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
+import { dirname, relative, resolve } from 'node:path';
+import { CanonicalCbor, normalizeRepoPath, systemClock, wallClock } from '@liteship/core';
+import { walkFiles } from '@liteship/core/fs-walk';
+import { sha256Hex } from '@liteship/canonical';
+import { IoError, ParseError } from '@liteship/error';
 import {
-  checkCommand,
+  checkGatesCommand,
   formatCheckPlan,
   planChecks,
   type CheckPayload,
   type CheckPlan,
+  type CheckContext,
   type CheckPlatform,
   type CheckProfile,
   type CheckReport,
   type CheckRunResult,
   type CheckVerdict,
 } from '@liteship/command';
-import { createNodeCommandContext } from '@liteship/command/host';
-import { systemClock, wallClock } from '@liteship/core';
+import { createNodeCommandContext, currentEnvFingerprint } from '@liteship/command/host';
 import { detectEarlyReturnBeforeExpectAST, detectSkipsAST } from '@liteship/audit';
 import { emit, type WallClockTimestamp } from '../receipts.js';
 import { runGauntletWithRepoIR } from '../lib/repo-ir-gauntlet.js';
 
-/** Receipt emitted by `liteship check`. */
+/** Receipt emitted by `liteship check gates`. */
 export interface CheckReceipt extends CheckPayload {
   readonly status: 'ok' | 'failed';
-  readonly command: 'check';
+  readonly command: 'check.gates';
   readonly timestamp: WallClockTimestamp;
 }
 
 /**
  * Injectable engine/handler seam for {@link check}. Each field DEFAULTS (via the
  * null-coalesce at its call site) to the real dependency, so production
- * `liteship check` is byte-identical: `runGauntletWithRepoIR` is the real
- * IR-enriched builder (the `--ir` path), `checkHandler` is the real lean
- * `@liteship/command` handler (the default path). Tests pass a scripted runner /
+ * `liteship check gates` is byte-identical: `runGauntletWithRepoIR` is the real
+ * IR-enriched builder (the `gates --ir` path), `checkHandler` is the real lean
+ * `@liteship/command` handler. Tests pass a scripted runner /
  * handler to pin the flag plumbing + receipt projection without paying for a real
  * full-repo `ts.Program` build or a real six-regex gate fold. Unexported + off the
  * public barrel, so the api-surface snapshot is unchanged.
  */
 interface CheckDeps {
   readonly runGauntletWithRepoIR?: typeof runGauntletWithRepoIR;
-  readonly checkHandler?: typeof checkCommand.handler;
+  readonly checkHandler?: typeof checkGatesCommand.handler;
   /**
    * The profile-sweep executor (the `--profile` path). DEFAULTS to
    * {@link runCheckPlanBySpawn} (the real CLI spawn layer), so production is
@@ -87,7 +70,13 @@ interface CheckDeps {
 }
 
 /** Runs an ordered {@link CheckPlan} to completion, folding the executed {@link CheckReport}. */
-type CheckPlanRunner = (plan: CheckPlan, cwd: string) => CheckReport;
+export type CheckPlanRunner = (plan: CheckPlan, cwd: string, options?: CheckPlanRunOptions) => CheckReport;
+
+/** Runtime controls for a profile sweep. */
+export interface CheckPlanRunOptions {
+  /** Bypass content-addressed verdict reads while still refreshing successful writes. */
+  readonly noCache?: boolean;
+}
 
 /** Options for {@link check}. `ir` selects the CLI-only IR-enriched path; `noCache` bypasses the B2 verdict cache. */
 export interface CheckOptions {
@@ -100,23 +89,22 @@ export interface CheckOptions {
    */
   readonly plan?: boolean;
   /**
-   * `--profile <p>`: the profile the {@link plan} projects AND the profile-driven sweep runs
-   * — one of quick | full | release | consumer | environment. With `--plan`, defaults to
-   * `quick` (the plan projection). WITHOUT `--plan`, PRESENCE selects the profile SWEEP: the
-   * registry is projected into the ordered plan and RUN through the CLI spawn layer, emitting
-   * a `CheckReport` (see {@link check}). Absent (and no `--plan`), `check` stays the bare
-   * in-process gauntlet gate fold that emits a `CheckReceipt`.
+   * `--profile <p>`: the profile the {@link plan} projects and the profile-driven sweep runs
+   * — one of quick | full | release | consumer | environment. It defaults to `quick` both
+   * with and without `--plan`.
    */
   readonly profile?: CheckProfile;
   /**
    * `--json`: machine output. With `--plan`, emit the `CheckPlan` as JSON (instead of text);
-   * with `--profile` (the sweep), emit the `CheckReport` as JSON (instead of text); with
-   * neither, suppress the pretty stderr summary (the receipt is already JSON on stdout).
+   * for profile execution, emit the `CheckReport` as JSON (instead of text); with
+   * `gates`, suppress the pretty stderr summary (the receipt is already JSON on stdout).
    */
   readonly json?: boolean;
-  /** `--ir`: run the IR-enriched triangulated cross-check (CLI-only) instead of the lean six-regex path. */
+  /** Run the explicit in-process gate fold instead of the default quick profile. */
+  readonly gates?: boolean;
+  /** `--ir`: under `check gates`, run the CLI-only IR-enriched cross-check instead of the lean fold. */
   readonly ir?: boolean;
-  /** `--no-cache`: bypass the B2 verdict cache (only meaningful with `--ir`). */
+  /** `--no-cache`: bypass profile result reuse, or the IR verdict cache under `check gates --ir`. */
   readonly noCache?: boolean;
   /**
    * `--symbols`: also run the heavy symbol-evidenced LanguageService oracle (B3.3)
@@ -224,10 +212,10 @@ export interface CheckOptions {
 }
 
 /**
- * Execute `liteship check`. Three surfaces: `--plan` prints the pure plan projection;
- * `--profile <p>` (without `--plan`) runs the profile SWEEP through the CLI spawn layer
- * and emits a `CheckReport`; bare `check` runs the in-process gauntlet gate fold and
- * emits a `CheckReceipt` (the verdict + Finding[]).
+ * Execute `liteship check`. Bare `check` and `--profile quick` are the same profile
+ * sweep. `--plan` prints that profile's pure projection. The old in-process fold is
+ * retained under the explicit `check gates` route. Gate-only flags are rejected
+ * unless that subcommand is present, so the two contracts cannot be confused.
  */
 export async function check(opts: CheckOptions = {}, deps: CheckDeps = {}): Promise<number> {
   const cwd = opts.cwd ?? process.cwd();
@@ -236,23 +224,37 @@ export async function check(opts: CheckOptions = {}, deps: CheckDeps = {}): Prom
   // nothing (no gauntlet fold, no IR build, no receipt), so it returns before any
   // execution path. `--json` selects the structured plan; otherwise human text.
   if (opts.plan === true) {
-    const plan = planChecks(opts.profile ?? 'quick', currentCheckPlatform());
+    const plan = planChecks(opts.profile ?? 'quick', currentCheckPlatform(), detectCheckContext(cwd));
     process.stdout.write((opts.json === true ? JSON.stringify(plan) : formatCheckPlan(plan)) + '\n');
     return 0;
   }
 
-  // `--profile <p>` (WITHOUT `--plan`): the profile-driven SWEEP. Project the registry
-  // into the ordered plan for `profile` on the current platform, then RUN it through the
-  // CLI spawn layer (each check's `command` → a subprocess; its exit status → the per-check
-  // verdict). Emit the `CheckReport` (the executed DUAL of the `--plan` `CheckPlan`) — NOT
-  // the gauntlet-fold `CheckReceipt`. `--json` selects the machine report; otherwise a human
-  // summary. Exit 1 iff a BLOCKING check failed. Bare `check` (no `--profile`) falls through
-  // to the gauntlet gate fold below, so `check:gates` (`liteship check`) is unchanged.
-  if (opts.profile !== undefined) {
-    const plan = planChecks(opts.profile, currentCheckPlatform());
-    const report = (deps.runCheckPlan ?? runCheckPlanBySpawn)(plan, cwd);
+  const gateFlagRequested =
+    opts.ir === true ||
+    opts.symbols === true ||
+    opts.supplyChain === true ||
+    opts.mutate === true ||
+    opts.mcdc === true ||
+    opts.simulate === true ||
+    opts.taint === true ||
+    opts.proof === true ||
+    opts.composition === true ||
+    opts.capabilityGate === true ||
+    opts.spineRelation === true;
+  if (gateFlagRequested && opts.gates !== true) {
+    process.stderr.write('liteship check: gate-only flags require the explicit `check gates` subcommand.\n');
+    return 1;
+  }
+  const gateMode = opts.gates === true;
+
+  // The public default: a bare `liteship check` is exactly the quick registry
+  // profile. Gate folding is a separate explicit surface (`check gates`).
+  if (!gateMode) {
+    const profile = opts.profile ?? 'quick';
+    const plan = planChecks(profile, currentCheckPlatform(), detectCheckContext(cwd));
+    const report = (deps.runCheckPlan ?? defaultCheckPlanRunner)(plan, cwd, { noCache: opts.noCache === true });
     process.stdout.write((opts.json === true ? JSON.stringify(report) : formatCheckReport(report)) + '\n');
-    return report.blocked ? 1 : 0;
+    return report.ok ? 0 : 1;
   }
 
   const payload =
@@ -272,11 +274,11 @@ export async function check(opts: CheckOptions = {}, deps: CheckDeps = {}): Prom
           opts.spineRelation === true,
           deps.runGauntletWithRepoIR ?? runGauntletWithRepoIR,
         )
-      : await runLeanPath(cwd, deps.checkHandler ?? checkCommand.handler);
+      : await runLeanPath(cwd, deps.checkHandler ?? checkGatesCommand.handler);
 
   const receipt: CheckReceipt = {
     status: payload.blocked ? 'failed' : 'ok',
-    command: 'check',
+    command: 'check.gates',
     timestamp: new Date(wallClock.now()).toISOString() as WallClockTimestamp,
     ...payload,
   };
@@ -312,6 +314,14 @@ function currentCheckPlatform(): CheckPlatform {
   return 'linux';
 }
 
+/** Only the LiteShip source tree is repository context; every other cwd is an application. */
+export function detectCheckContext(cwd: string): CheckContext {
+  const isLiteShipRepository =
+    existsSync(resolve(cwd, 'scripts', 'package-catalog.ts')) &&
+    existsSync(resolve(cwd, 'packages', 'command', 'src', 'checks', 'registry.ts'));
+  return isLiteShipRepository ? 'repository' : 'application';
+}
+
 /**
  * The single npm-script a registry check's `command` invokes, or `null` when the
  * command names no single script whose presence we could test for. Matches
@@ -328,84 +338,364 @@ export function invokedScriptName(command: string): string | null {
 }
 
 /**
- * The npm-script names defined in `<cwd>/package.json`, or `null` when there is no
- * readable/parseable package.json — in which case the sweep cannot distinguish a
- * missing script from a present one and runs every check as-is (an unreadable
- * manifest is not evidence a script is absent).
+ * The npm-script names defined in `<cwd>/package.json`, or `null` when no manifest
+ * exists. A present but unreadable/malformed manifest throws: uncertainty cannot
+ * become a green or skipped report.
  */
 export function readDefinedScripts(cwd: string): ReadonlySet<string> | null {
   const manifestPath = resolve(cwd, 'package.json');
   // No manifest at all → null (the common consumer case: cwd is not a package
   // root). An ABSENT file is not an error, so this needs no catch.
   if (!existsSync(manifestPath)) return null;
+  let source: string;
   try {
-    const parsed = JSON.parse(readFileSync(manifestPath, 'utf8')) as { scripts?: Record<string, unknown> };
+    source = readFileSync(manifestPath, 'utf8');
+  } catch (error) {
+    throw IoError('check.read-manifest', error instanceof Error ? error.message : String(error), {
+      path: manifestPath,
+      cause: error,
+    });
+  }
+  try {
+    const parsed = JSON.parse(source) as { scripts?: Record<string, unknown> };
     return new Set(Object.keys(parsed.scripts ?? {}));
-  } catch (e) {
-    // A PRESENT-but-unreadable/malformed manifest is a real environment problem,
-    // not a missing one — surface it (never launder the failure to a silent null)
-    // before falling back to the run-every-check behaviour.
-    process.stderr.write(
-      `liteship check: could not read ${manifestPath}: ${e instanceof Error ? e.message : String(e)}\n`,
-    );
-    return null;
+  } catch (error) {
+    // A PRESENT-but-malformed manifest is a real environment problem. ParseError
+    // keeps it structured; null is reserved for an absent manifest.
+    throw ParseError(manifestPath, error instanceof Error ? error.message : String(error));
   }
 }
 
+const CHECK_CACHE_SCHEMA = 1 as const;
+const CHECK_OUTPUT_LIMIT = 32 * 1024;
+const CHECK_SPAWN_BUFFER = 4 * 1024 * 1024;
+
+interface CheckCacheEntry {
+  readonly schema: typeof CHECK_CACHE_SCHEMA;
+  readonly key: string;
+  readonly id: string;
+  readonly verdict: 'pass';
+  readonly findings: readonly string[];
+}
+
+interface SpawnedCheck {
+  readonly status: number | null;
+  readonly signal: NodeJS.Signals | null;
+  readonly stdout?: string | Buffer;
+  readonly stderr?: string | Buffer;
+  readonly error?: Error;
+}
+
+interface CheckRunnerDeps {
+  readonly spawn?: (command: string, cwd: string, timeoutMs: number) => SpawnedCheck;
+  readonly now?: () => number;
+  readonly env?: Readonly<Record<string, string>>;
+}
+
+/** Create the production profile runner, with narrow clock/spawn seams for executable tests. */
+export function createCheckPlanRunner(deps: CheckRunnerDeps = {}): CheckPlanRunner {
+  const spawn = deps.spawn ?? spawnCheck;
+  const now = deps.now ?? systemClock.now;
+  const env = deps.env ?? currentEnvFingerprint();
+
+  return (plan, cwd, options = {}) => executeCheckPlan(plan, cwd, options, spawn, now, env);
+}
+
+const defaultCheckPlanRunner: CheckPlanRunner = createCheckPlanRunner();
+
+/** Execute a command with bounded buffering; only the parent report reaches stdout. */
+function spawnCheck(command: string, cwd: string, timeoutMs: number): SpawnedCheck {
+  return spawnSync(command, {
+    shell: true,
+    cwd,
+    encoding: 'utf8',
+    timeout: timeoutMs,
+    maxBuffer: CHECK_SPAWN_BUFFER,
+    stdio: 'pipe',
+  });
+}
+
 /**
- * The default {@link CheckPlanRunner} — the CLI SPAWN LAYER for the `--profile` sweep.
- * Runs each planned check by spawning its `command` (the exact root-script shell line
- * the registry declares) as a subprocess in `cwd`, mapping the exit status to a per-check
- * verdict (0 → pass; non-zero, a timeout, or a signal → fail) and the measured MONOTONIC
- * elapsed time to `durationMs` (two-clock law: a `systemClock` delta, never a wall-clock
- * timestamp). A failed BLOCKING check blocks the aggregate verdict; an advisory failure
- * surfaces (as a finding line) but never blocks. Child stdout/stderr is DISCARDED so the
- * emitted `CheckReport` is the only thing on the CLI's stdout. `cacheHit` is always false —
- * this layer re-runs every planned check (the content-addressed verdict cache the registry
- * annotates via `cacheable` is a later increment); `timeoutMs` is enforced as the spawn
- * ceiling. `skipped` platform drops live in the plan; ONE other row can be `skipped` here —
- * a check whose `pnpm run <script>` names a script the invocation cwd's `package.json` does
- * not define (see {@link invokedScriptName}). That is the CONSUMER-APP case: a scaffolded
- * LiteShip app has none of the monorepo-root scripts (`package:smoke`, `test:journey`, …),
- * so those checks are honestly SKIPPED rather than spawned into a guaranteed
- * `ERR_PNPM_NO_SCRIPT` failure. In the monorepo every script exists, so nothing skips and
- * the gauntlet projection is byte-for-byte unaffected.
+ * The real CLI SPAWN LAYER. Content-addressed checks reuse a verdict only when
+ * command, declared input bytes, platform/toolchain, and cache schema all match.
+ * Missing scripts are explicit skips; an entirely skipped sweep is non-green.
  */
-function runCheckPlanBySpawn(plan: CheckPlan, cwd: string): CheckReport {
-  const results: CheckRunResult[] = [];
-  const definedScripts = readDefinedScripts(cwd);
-  let blocked = false;
-  for (const check of plan.checks) {
-    // Consumer-honesty SKIP: a check whose `pnpm run <script>` names a script this
-    // package.json does not define asserts something about a repo that is not here.
-    // Skip it (non-blocking) rather than spawning a guaranteed no-script failure.
-    const script = invokedScriptName(check.command);
-    if (script !== null && definedScripts !== null && !definedScripts.has(script)) {
-      results.push({
+function executeCheckPlan(
+  plan: CheckPlan,
+  cwd: string,
+  options: CheckPlanRunOptions,
+  spawn: NonNullable<CheckRunnerDeps['spawn']>,
+  now: NonNullable<CheckRunnerDeps['now']>,
+  env: Readonly<Record<string, string>>,
+): CheckReport {
+  const results: CheckRunResult[] = plan.skipped.map((skip) => ({
+    id: skip.id,
+    verdict: 'skipped',
+    durationMs: 0,
+    cacheHit: false,
+    findings: [skip.reason],
+  }));
+  let definedScripts: ReadonlySet<string> | null;
+  try {
+    definedScripts = readDefinedScripts(cwd);
+  } catch (error) {
+    const finding = error instanceof Error ? error.message : String(error);
+    return {
+      profile: plan.profile,
+      platform: plan.platform,
+      context: plan.context,
+      ok: false,
+      blocked: true,
+      results: plan.checks.map((check) => ({
         id: check.id,
-        verdict: 'skipped',
+        verdict: 'fail',
         durationMs: 0,
         cacheHit: false,
-        findings: [`${check.command} — no "${script}" script in this package.json; skipped (not a consumer-app check)`],
+        findings: [finding],
+      })),
+    };
+  }
+
+  const inputCorpus = createInputCorpus(cwd);
+  let blocked = false;
+  for (const check of plan.checks) {
+    // Applicability was decided by planChecks before execution. Once a check is in
+    // the plan, a missing declared script is a broken authority, never a skip.
+    const script = invokedScriptName(check.command);
+    if (script !== null && definedScripts !== null && !definedScripts.has(script)) {
+      if (check.authority === 'blocking') blocked = true;
+      results.push({
+        id: check.id,
+        verdict: 'fail',
+        durationMs: 0,
+        cacheHit: false,
+        findings: [`${check.command} — planned authority is missing the "${script}" package.json script`],
       });
       continue;
     }
-    const start = systemClock.now();
-    const r = spawnSync(check.command, { shell: true, cwd, stdio: 'ignore', timeout: check.timeoutMs });
-    const durationMs = systemClock.now() - start;
+
+    let cacheKey: string | null = null;
+    if (check.cacheable) {
+      cacheKey = checkCacheKey(check, plan, inputCorpus, env);
+      if (options.noCache !== true) {
+        const cached = readCheckCache(cacheKey, cwd, check.id);
+        if (cached !== null) {
+          const cacheResult: CheckRunResult = {
+            id: check.id,
+            verdict: cached.verdict,
+            durationMs: 0,
+            cacheHit: true,
+            findings: cached.findings,
+          };
+          results.push(cacheResult);
+          continue;
+        }
+      }
+    }
+
+    const start = now();
+    const r = spawn(check.command, cwd, check.timeoutMs);
+    const durationMs = Math.max(0, now() - start);
     const passed = r.status === 0;
     if (!passed && check.authority === 'blocking') blocked = true;
     const verdict: CheckVerdict = passed ? 'pass' : 'fail';
-    const findings = passed
-      ? []
-      : [
-          r.signal
-            ? `${check.command} terminated by signal ${r.signal} (ceiling ${check.timeoutMs}ms)`
-            : `${check.command} exited with status ${r.status ?? 'unknown'}`,
-        ];
-    results.push({ id: check.id, verdict, durationMs, cacheHit: false, findings });
+    const findings = passed ? [] : checkFailureFindings(check.command, check.timeoutMs, r);
+    const result: CheckRunResult = { id: check.id, verdict, durationMs, cacheHit: false, findings };
+    results.push(result);
+
+    // Cache only a successful deterministic verdict. A timeout, signal, spawn
+    // fault, or transient tool failure is not reusable evidence.
+    if (cacheKey !== null && verdict === 'pass') {
+      writeCheckCache(cacheKey, cwd, {
+        schema: CHECK_CACHE_SCHEMA,
+        key: cacheKey,
+        id: check.id,
+        verdict,
+        findings,
+      });
+    }
   }
-  return { profile: plan.profile, platform: plan.platform, ok: !blocked, blocked, results };
+
+  const executed = results.some((result) => result.verdict !== 'skipped');
+  return {
+    profile: plan.profile,
+    platform: plan.platform,
+    context: plan.context,
+    ok: executed && !blocked,
+    blocked,
+    results,
+  };
+}
+
+interface InputCorpus {
+  readonly files: readonly string[];
+  readonly digestOf: (relativePath: string) => string;
+}
+
+/** Walk once per profile run and digest matched files lazily across all checks. */
+function createInputCorpus(cwd: string): InputCorpus {
+  const absoluteByRelative = new Map<string, string>();
+  for (const absolute of walkFiles(cwd, {
+    skipDirs: ['.git', '.liteship', 'node_modules', 'dist', 'coverage'],
+  })) {
+    const rel = normalizeRepoPath(relative(cwd, absolute));
+    absoluteByRelative.set(rel, absolute);
+  }
+  const files = [...absoluteByRelative.keys()].sort((a, b) => a.localeCompare(b));
+  const digests = new Map<string, string>();
+  return {
+    files,
+    digestOf(relativePath: string): string {
+      const existing = digests.get(relativePath);
+      if (existing !== undefined) return existing;
+      const absolute = absoluteByRelative.get(relativePath);
+      if (absolute === undefined) {
+        throw IoError('check.cache-input', 'declared input disappeared while its cache identity was being built', {
+          path: relativePath,
+        });
+      }
+      const digest = sha256Hex(readFileSync(absolute));
+      digests.set(relativePath, digest);
+      return digest;
+    },
+  };
+}
+
+/** Canonical SHA-256 identity of one check's declared input bytes and toolchain. */
+function checkCacheKey(
+  check: CheckPlan['checks'][number],
+  plan: CheckPlan,
+  corpus: InputCorpus,
+  env: Readonly<Record<string, string>>,
+): string {
+  const declaredPatterns =
+    plan.context === 'repository'
+      ? [
+          ...check.inputs,
+          'package.json',
+          'pnpm-lock.yaml',
+          'packages/cli/src/commands/check.ts',
+          'packages/command/src/checks/**/*.ts',
+        ]
+      : [...check.inputs];
+  const inputs = [...new Set(declaredPatterns)].map((pattern) => {
+    const matcher = globToRegExp(normalizeRepoPath(pattern));
+    const matches = corpus.files
+      .filter((path) => matcher.test(path))
+      .map((path) => ({ path, digest: corpus.digestOf(path) }));
+    return { pattern: normalizeRepoPath(pattern), matches };
+  });
+  const bytes = CanonicalCbor.encode({
+    schema: CHECK_CACHE_SCHEMA,
+    id: check.id,
+    command: check.command,
+    profile: plan.profile,
+    platform: plan.platform,
+    env,
+    inputs,
+  });
+  return `check-sha256:${sha256Hex(bytes)}`;
+}
+
+function checkCachePath(key: string, cwd: string): string {
+  return resolve(cwd, '.liteship', 'cache', 'checks', `${sha256Hex(key).slice(0, 32)}.json`);
+}
+
+/** Corrupt/old cache data is a miss; uncertain I/O never becomes a served verdict. */
+function readCheckCache(key: string, cwd: string, id: string): CheckCacheEntry | null {
+  const path = checkCachePath(key, cwd);
+  if (!existsSync(path)) return null;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(readFileSync(path, 'utf8')) as unknown;
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException).code;
+    if (
+      error instanceof SyntaxError ||
+      code === 'ENOENT' ||
+      code === 'EACCES' ||
+      code === 'EISDIR' ||
+      code === 'EPERM'
+    ) {
+      return null;
+    }
+    throw error;
+  }
+  if (typeof parsed !== 'object' || parsed === null) return null;
+  const candidate = parsed as Partial<CheckCacheEntry>;
+  if (
+    candidate.schema !== CHECK_CACHE_SCHEMA ||
+    candidate.key !== key ||
+    candidate.id !== id ||
+    candidate.verdict !== 'pass' ||
+    !Array.isArray(candidate.findings) ||
+    !candidate.findings.every((finding) => typeof finding === 'string')
+  ) {
+    return null;
+  }
+  return candidate as CheckCacheEntry;
+}
+
+/** Atomic cache write: a reader observes the old entry or the complete new one. */
+function writeCheckCache(key: string, cwd: string, entry: CheckCacheEntry): void {
+  const path = checkCachePath(key, cwd);
+  mkdirSync(dirname(path), { recursive: true });
+  const temp = `${path}.${process.pid}.${sha256Hex(`${key}:${wallClock.now()}`).slice(0, 8)}.tmp`;
+  writeFileSync(temp, JSON.stringify(entry), 'utf8');
+  renameSync(temp, path);
+}
+
+function checkFailureFindings(command: string, timeoutMs: number, result: SpawnedCheck): string[] {
+  const headline = result.error
+    ? `${command} could not complete: ${result.error.message}`
+    : result.signal
+      ? `${command} terminated by signal ${result.signal} (ceiling ${timeoutMs}ms)`
+      : `${command} exited with status ${result.status ?? 'unknown'}`;
+  const diagnostics = boundedDiagnostics(result.stderr, result.stdout);
+  return diagnostics === '' ? [headline] : [headline, diagnostics];
+}
+
+function boundedDiagnostics(stderr: string | Buffer | undefined, stdout: string | Buffer | undefined): string {
+  const sections: string[] = [];
+  const stderrText = outputText(stderr).trim();
+  const stdoutText = outputText(stdout).trim();
+  if (stderrText !== '') sections.push(`stderr:\n${stderrText}`);
+  if (stdoutText !== '') sections.push(`stdout:\n${stdoutText}`);
+  const combined = sections.join('\n');
+  if (combined.length <= CHECK_OUTPUT_LIMIT) return combined;
+  const omitted = combined.length - CHECK_OUTPUT_LIMIT;
+  return `[output truncated: ${omitted} character(s) omitted]\n${combined.slice(-CHECK_OUTPUT_LIMIT)}`;
+}
+
+function outputText(value: string | Buffer | undefined): string {
+  if (value === undefined) return '';
+  return typeof value === 'string' ? value : value.toString('utf8');
+}
+
+/** Minimal glob dialect needed by CheckDefinition.inputs (`*`, `**`, `?`). */
+function globToRegExp(glob: string): RegExp {
+  let source = '^';
+  for (let index = 0; index < glob.length; index += 1) {
+    const char = glob[index]!;
+    if (char === '*') {
+      if (glob[index + 1] === '*') {
+        index += 1;
+        if (glob[index + 1] === '/') {
+          index += 1;
+          source += '(?:.*/)?';
+        } else {
+          source += '.*';
+        }
+      } else {
+        source += '[^/]*';
+      }
+    } else if (char === '?') {
+      source += '[^/]';
+    } else {
+      source += /[\\^$+.()|[\]{}]/.test(char) ? `\\${char}` : char;
+    }
+  }
+  return new RegExp(`${source}$`);
 }
 
 /**
@@ -422,7 +712,13 @@ function formatCheckReport(report: CheckReport): string {
     for (const f of r.findings) lines.push(`        ${f}`);
   }
   lines.push('');
-  lines.push(report.blocked ? 'CHECK BLOCKED — a blocking check failed.' : 'CHECK OK — no blocking check failed.');
+  lines.push(
+    report.blocked
+      ? 'CHECK BLOCKED — a blocking check failed.'
+      : report.ok
+        ? 'CHECK OK — authoritative checks executed and passed.'
+        : 'CHECK UNVERIFIED — no authoritative check executed.',
+  );
   return lines.join('\n');
 }
 
@@ -431,7 +727,7 @@ function formatCheckReport(report: CheckReport): string {
  * `@liteship/command`'s `check` handler. UNCHANGED behaviour: `@liteship/command` and
  * `@liteship/mcp-server` never see the IR. Projects the handler's `CheckPayload`.
  */
-async function runLeanPath(cwd: string, handler: typeof checkCommand.handler): Promise<CheckPayload> {
+async function runLeanPath(cwd: string, handler: typeof checkGatesCommand.handler): Promise<CheckPayload> {
   // Inject the host-built SOUND AST detectors — the CLI deps `@liteship/audit`, so even the
   // lean (`@liteship/command`) check path gains parser-backed skip and early-return detection.
   // The MCP adapter builds the context WITHOUT them → the lean fallbacks; this keeps
@@ -441,7 +737,7 @@ async function runLeanPath(cwd: string, handler: typeof checkCommand.handler): P
     skipDetector: detectSkipsAST,
     earlyReturnDetector: detectEarlyReturnBeforeExpectAST,
   });
-  const result = await handler({ name: 'check', args: {} }, context);
+  const result = await handler({ name: 'check.gates', args: {} }, context);
   return result.payload as CheckPayload;
 }
 

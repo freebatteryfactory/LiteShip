@@ -1,6 +1,6 @@
 /**
  * The EXECUTION-COVERAGE map proof (Slice C, the avionics tier — the barrel-problem
- * fix for `liteship check --ir --mutate`). The execution filter prunes the ~220 `@liteship/core`
+ * fix for `liteship check gates --ir --mutate`). The execution filter prunes the ~220 `@liteship/core`
  * barrel importers of a broad L4 seam to the handful that actually EXECUTE a function
  * of the seam, making the broad seams tractable WITHOUT under-mapping (an under-mapped
  * seam mints a false survivor — the worst error). This suite proves the two
@@ -19,7 +19,7 @@
  *     a BYTE-IDENTICAL covering set on every run.
  *
  * The probe is INJECTED, so this proof is hermetic. The integration with the real
- * scoped-v8-coverage probe is proven by the live `liteship check --ir --mutate` run.
+ * scoped-v8-coverage probe is proven by the live `liteship check gates --ir --mutate` run.
  *
  * @module
  */

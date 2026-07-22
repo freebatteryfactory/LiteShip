@@ -74,7 +74,7 @@ const CONFIRMER_CORPUS_GLOBS: readonly string[] = ['tests/**/*.ts'];
  *
  * The optional `simulation` is the INJECTED DST (deterministic-simulation) facts
  * capability (the avionics tier — the determinism spine): a host (the CLI's
- * `liteship check --ir --simulate` path) drives the scenario corpus through the
+ * `liteship check gates --ir --simulate` path) drives the scenario corpus through the
  * `@liteship/core/simulation` harness (replaying each seed twice, content-addressing the
  * two byte-exact traces) and folds the verdicts into {@link SimulationFacts}, then
  * threads them through so the `simulationDeterminismGate` can fold them. Same

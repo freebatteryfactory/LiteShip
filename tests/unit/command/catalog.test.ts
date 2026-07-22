@@ -8,6 +8,7 @@ const CLI_ORCHESTRATION = [
   'astro.status',
   'astro.stop',
   'build',
+  'check',
   'completion',
   'describe',
   'dev',
@@ -39,6 +40,7 @@ const EXPECTED_NAMES = [
   'capsule.verify',
   'check',
   'check-invariants',
+  'check.gates',
   'completion',
   'context',
   'describe',
@@ -68,7 +70,7 @@ const EXPECTED_NAMES = [
  * reference (explain / context) commands. describe (catalog projection — tools/list already serves it) and
  * gauntlet (terminal-streaming orchestration) are CLI-owned orchestration, never
  * MCP tools. `plumb` IS exposed: it returns a structured skip work-list — an ideal
- * agent tool. `check` IS exposed: it runs the PURE gauntlet gate fold in-process
+ * agent tool. `check.gates` IS exposed: it runs the PURE gauntlet gate fold in-process
  * (`litelaunchGauntlet`) and returns the Finding[] work-list — the tasks-vs-gates
  * weld, an ideal agent tool (distinct from the CLI-owned `gauntlet` orchestrator).
  * `check-invariants` is NOT exposed: its scan needs `@liteship/audit`'s
@@ -84,7 +86,7 @@ const EXPECTED_MCP_NAMES = [
   'capsule.inspect',
   'capsule.list',
   'capsule.verify',
-  'check',
+  'check.gates',
   'context',
   'explain',
   'plumb',

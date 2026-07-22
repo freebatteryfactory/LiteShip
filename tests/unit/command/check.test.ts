@@ -15,7 +15,7 @@
  * @module
  */
 import { describe, it, expect } from 'vitest';
-import { checkCommand, commandRegistry, mcpExposedDescriptors } from '@liteship/command';
+import { checkGatesCommand, commandRegistry, mcpExposedDescriptors } from '@liteship/command';
 import type { CheckPayload, CommandContext } from '@liteship/command';
 import type { Finding, GauntletResult } from '@liteship/gauntlet';
 
@@ -88,7 +88,7 @@ describe('check command — handler contract', () => {
       ],
       blocked: true,
     };
-    const out = await checkCommand.handler({ name: 'check', args: {} }, ctxWith(result));
+    const out = await checkGatesCommand.handler({ name: 'check.gates', args: {} }, ctxWith(result));
     expect(out.status).toBe('failed');
     expect(out.exitCode).toBe(1);
 
@@ -104,7 +104,7 @@ describe('check command — handler contract', () => {
 
   it('projects an UNBLOCKED (clean) gauntlet result to status ok / exit 0 with an empty work-list', async () => {
     const result: GauntletResult = { findings: [], outcomes: [], blocked: false };
-    const out = await checkCommand.handler({ name: 'check', args: {} }, ctxWith(result));
+    const out = await checkGatesCommand.handler({ name: 'check.gates', args: {} }, ctxWith(result));
     expect(out.status).toBe('ok');
     // ok() stamps no exitCode — success maps to 0 at the adapter (see registry.ok).
     expect(out.exitCode).toBeUndefined();
@@ -140,7 +140,7 @@ describe('check command — handler contract', () => {
       ],
       blocked: false,
     };
-    const out = await checkCommand.handler({ name: 'check', args: {} }, ctxWith(result));
+    const out = await checkGatesCommand.handler({ name: 'check.gates', args: {} }, ctxWith(result));
     // Findings present, but not blocking → ok (adapter maps to exit 0).
     expect(out.status).toBe('ok');
     // ok() stamps no exitCode — success maps to 0 at the adapter (see registry.ok).
@@ -151,7 +151,7 @@ describe('check command — handler contract', () => {
   });
 
   it('without the injected runGauntlet capability → ONE structured capability_unavailable failure, exit 2', async () => {
-    const out = await checkCommand.handler({ name: 'check', args: {} }, { cwd: '/repo' });
+    const out = await checkGatesCommand.handler({ name: 'check.gates', args: {} }, { cwd: '/repo' });
     expect(out.status).toBe('failed');
     expect(out.exitCode).toBe(2);
     const payload = out.payload as { error: string; missing: string[] };
@@ -168,23 +168,23 @@ describe('check command — handler contract', () => {
         return { findings: [], outcomes: [], blocked: false };
       },
     };
-    await checkCommand.handler({ name: 'check', args: { globs: ['packages/core/src/**/*.ts'] } }, ctx);
+    await checkGatesCommand.handler({ name: 'check.gates', args: { globs: ['packages/core/src/**/*.ts'] } }, ctx);
     // A non-array / non-string-array value falls through to the engine default (undefined).
-    await checkCommand.handler({ name: 'check', args: { globs: 'not-an-array' } }, ctx);
-    await checkCommand.handler({ name: 'check', args: {} }, ctx);
+    await checkGatesCommand.handler({ name: 'check.gates', args: { globs: 'not-an-array' } }, ctx);
+    await checkGatesCommand.handler({ name: 'check.gates', args: {} }, ctx);
     expect(seen).toEqual([['packages/core/src/**/*.ts'], undefined, undefined]);
   });
 });
 
 describe('check command — descriptor + catalog registration', () => {
   it('declares runGauntlet as its unconditional requirement and is a read-only, MCP-exposed handler', () => {
-    expect(checkCommand.descriptor.name).toBe('check');
-    expect(checkCommand.descriptor.requires).toEqual(['runGauntlet']);
-    expect(checkCommand.descriptor.annotations?.readOnly).toBe(true);
-    expect(checkCommand.descriptor.annotations?.mcpExposed).toBe(true);
+    expect(checkGatesCommand.descriptor.name).toBe('check.gates');
+    expect(checkGatesCommand.descriptor.requires).toEqual(['runGauntlet']);
+    expect(checkGatesCommand.descriptor.annotations?.readOnly).toBe(true);
+    expect(checkGatesCommand.descriptor.annotations?.mcpExposed).toBe(true);
     // outputSchema declares the WELD-2 payload shape.
-    expect(checkCommand.descriptor.outputSchema?.type).toBe('object');
-    expect(Object.keys(checkCommand.descriptor.outputSchema?.properties ?? {})).toEqual([
+    expect(checkGatesCommand.descriptor.outputSchema?.type).toBe('object');
+    expect(Object.keys(checkGatesCommand.descriptor.outputSchema?.properties ?? {})).toEqual([
       'ok',
       'blocked',
       'findingCount',
@@ -192,10 +192,15 @@ describe('check command — descriptor + catalog registration', () => {
     ]);
   });
 
-  it('is registered in the canonical catalog as a handler-backed, MCP-exposed command', () => {
-    const registered = commandRegistry.get('check');
-    expect(registered?.handler).toBeTypeOf('function');
-    expect(registered?.descriptor.executionKind).toBe('handler');
-    expect(mcpExposedDescriptors().map((d) => d.name)).toContain('check');
+  it('registers profiles as CLI orchestration and the gate fold as a handler-backed MCP command', () => {
+    const profiles = commandRegistry.get('check');
+    expect(profiles?.handler).toBeUndefined();
+    expect(profiles?.descriptor.executionKind).toBe('cli-orchestration');
+
+    const gates = commandRegistry.get('check.gates');
+    expect(gates?.handler).toBeTypeOf('function');
+    expect(gates?.descriptor.executionKind).toBe('handler');
+    expect(mcpExposedDescriptors().map((d) => d.name)).toContain('check.gates');
+    expect(mcpExposedDescriptors().map((d) => d.name)).not.toContain('check');
   });
 });

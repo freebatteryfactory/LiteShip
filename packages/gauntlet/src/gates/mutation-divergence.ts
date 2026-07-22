@@ -41,7 +41,7 @@
  * the file.
  *
  * It {@link requireMutation} (and reads the IR for level propagation), so it runs
- * ONLY on the opt-in host path (`liteship check --ir --mutate` — the CLI generates +
+ * ONLY on the opt-in host path (`liteship check gates --ir --mutate` — the CLI generates +
  * runs + injects the facts); the lean MCP/command path does not run it. Composition
  * over inheritance: a `_tag` fold + standalone functions, no class.
  *

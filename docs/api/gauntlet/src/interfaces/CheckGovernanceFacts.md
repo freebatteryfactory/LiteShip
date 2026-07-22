@@ -6,7 +6,7 @@
 
 # Interface: CheckGovernanceFacts
 
-Defined in: [gauntlet/src/facts/check-governance-facts.ts:87](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/check-governance-facts.ts#L87)
+Defined in: [gauntlet/src/facts/check-governance-facts.ts:80](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/check-governance-facts.ts#L80)
 
 The injected FactPack the three check-governance meta-gates consume. Each gate reads
 exactly one slice: `check-registry-complete` reads [CheckGovernanceFacts.partition](#partition),
@@ -21,7 +21,7 @@ verdict — the real enforcement over the repo lives in the `tests/unit/devops` 
 
 > `readonly` **negativeControls**: readonly [`NegativeControlFact`](NegativeControlFact.md)[]
 
-Defined in: [gauntlet/src/facts/check-governance-facts.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/check-governance-facts.ts#L91)
+Defined in: [gauntlet/src/facts/check-governance-facts.ts:84](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/check-governance-facts.ts#L84)
 
 The per-blocking-check negative-control evidence (for `check-negative-control`).
 
@@ -31,7 +31,7 @@ The per-blocking-check negative-control evidence (for `check-negative-control`).
 
 > `readonly` **partition**: [`CheckPartitionFacts`](CheckPartitionFacts.md)
 
-Defined in: [gauntlet/src/facts/check-governance-facts.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/check-governance-facts.ts#L89)
+Defined in: [gauntlet/src/facts/check-governance-facts.ts:82](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/check-governance-facts.ts#L82)
 
 The root-script partition evidence (for `check-registry-complete`).
 
@@ -41,6 +41,6 @@ The root-script partition evidence (for `check-registry-complete`).
 
 > `readonly` **waivers**: readonly [`WaiverFreshnessFact`](WaiverFreshnessFact.md)[]
 
-Defined in: [gauntlet/src/facts/check-governance-facts.ts:93](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/check-governance-facts.ts#L93)
+Defined in: [gauntlet/src/facts/check-governance-facts.ts:86](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/check-governance-facts.ts#L86)
 
 The per-waiver freshness evidence across both stores (for `check-waiver-freshness`).

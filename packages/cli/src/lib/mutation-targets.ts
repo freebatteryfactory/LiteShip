@@ -1,6 +1,6 @@
 /**
  * The L4-SEAM TARGETING + the SOUND covering-tests map (Slice C, the avionics tier
- * — the host half of `liteship check --ir --mutate`).
+ * — the host half of `liteship check gates --ir --mutate`).
  *
  * Two host-only computations the mutation run needs, both PURE + deterministic over
  * the repo bytes:

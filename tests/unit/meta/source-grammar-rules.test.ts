@@ -38,7 +38,7 @@
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { spawnArgvCapture } from '@liteship/command/host';
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync, existsSync, readdirSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync, existsSync } from 'node:fs';
 import { resolve, join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
 import ts from 'typescript';
@@ -74,10 +74,14 @@ function fixture(relPath: string, source: string): string {
 
 const TEST_TS_EXTENSION = /\.(?:ts|tsx|mts|cts)$/;
 const VITEST_MODULE_METHODS = new Set(['mock', 'doMock']);
-// A deliberately broad, one-token prefilter: only files with no `vi` token can
-// skip parsing. Narrowing this to one currently-known bypass spelling would make
-// the prefilter itself a new bypass surface.
-const POSSIBLE_VITEST_MOCK_INDIRECTION = /\bvi\b/;
+// Exact lexical families recognized by `vitestMockIndirections`: import alias,
+// variable/destructuring assignment of `vi` or its module-mock methods, and a
+// computed `vi[...]` call. Direct `vi.mock(...)` / `vi.doMock(...)` calls belong
+// to ast-grep. Keeping this prefilter aligned with the AST detector avoids parsing
+// every ordinary `vi.fn`/`vi.spyOn` test while preserving the full hidden-authority
+// guard.
+const POSSIBLE_VITEST_MOCK_INDIRECTION =
+  /\bvi\s+as\b|=\s*vi\s*(?:[;,\)\r\n]|\.\s*(?:mock|doMock)\b)|\bvi\s*\[/;
 
 function propertyText(name: ts.PropertyName | ts.BindingName | undefined): string | undefined {
   if (!name) return undefined;
@@ -108,19 +112,25 @@ function viModuleMethod(expression: ts.Expression): string | undefined {
  */
 function vitestMockIndirections(source: string, fileName = 'fixture.test.ts'): readonly string[] {
   const scriptKind = fileName.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS;
-  const tree = ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, true, scriptKind);
+  // Parent links are unnecessary when import aliases are inspected at the
+  // ImportDeclaration owner below. Avoiding them keeps the repository-wide guard
+  // cheap enough to run inside the concurrent unit lane without weakening it.
+  const tree = ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, false, scriptKind);
   const findings: string[] = [];
 
   function visit(node: ts.Node): void {
     if (
-      ts.isImportSpecifier(node) &&
-      node.propertyName?.text === 'vi' &&
-      node.name.text !== 'vi' &&
-      ts.isImportDeclaration(node.parent.parent.parent) &&
-      ts.isStringLiteral(node.parent.parent.parent.moduleSpecifier) &&
-      node.parent.parent.parent.moduleSpecifier.text === 'vitest'
+      ts.isImportDeclaration(node) &&
+      ts.isStringLiteral(node.moduleSpecifier) &&
+      node.moduleSpecifier.text === 'vitest' &&
+      node.importClause?.namedBindings !== undefined &&
+      ts.isNamedImports(node.importClause.namedBindings)
     ) {
-      findings.push(`aliased vi import:${node.getStart(tree)}`);
+      for (const specifier of node.importClause.namedBindings.elements) {
+        if (specifier.propertyName?.text === 'vi' && specifier.name.text !== 'vi') {
+          findings.push(`aliased vi import:${specifier.getStart(tree)}`);
+        }
+      }
     }
 
     if (ts.isVariableDeclaration(node) && node.initializer) {
@@ -148,11 +158,32 @@ function vitestMockIndirections(source: string, fileName = 'fixture.test.ts'): r
   return findings;
 }
 
-function repositoryTestTypeScriptFiles(): readonly string[] {
-  const root = resolve(REPO, 'tests');
-  return (readdirSync(root, { recursive: true }) as string[])
-    .filter((relative) => TEST_TS_EXTENSION.test(relative))
-    .map((relative) => join(root, relative));
+async function repositoryTestTypeScriptFiles(): Promise<readonly string[]> {
+  const tracked = await spawnArgvCapture('git', ['grep', '-l', '-E', '\\bvi\\b', '--', 'tests'], {
+    cwd: REPO,
+    captureBytes: 1024 * 1024,
+  });
+  if (tracked.exitCode !== 0 && tracked.exitCode !== 1) {
+    throw new Error(`git grep failed while enumerating Vitest-mock candidates: ${tracked.stderr}`);
+  }
+  const untracked = await spawnArgvCapture('git', ['ls-files', '--others', '--exclude-standard', '--', 'tests'], {
+    cwd: REPO,
+    captureBytes: 1024 * 1024,
+  });
+  if (untracked.exitCode !== 0) {
+    throw new Error(`git ls-files failed while enumerating untracked test candidates: ${untracked.stderr}`);
+  }
+
+  const candidates = new Set(
+    tracked.stdout
+      .split(/\r?\n/)
+      .filter((relative) => TEST_TS_EXTENSION.test(relative)),
+  );
+  for (const relative of untracked.stdout.split(/\r?\n/).filter((path) => TEST_TS_EXTENSION.test(path))) {
+    const source = readFileSync(resolve(REPO, relative), 'utf8');
+    if (/\bvi\b/.test(source)) candidates.add(relative);
+  }
+  return [...candidates].map((relative) => resolve(REPO, relative));
 }
 
 beforeAll(() => {
@@ -486,6 +517,7 @@ describe('no-internal-vi-mock (f) — internal module mocks are banned (tests-sc
       '',
     ].join('\n');
 
+    expect(POSSIBLE_VITEST_MOCK_INDIRECTION.test(source)).toBe(true);
     expect(vitestMockIndirections(source)).toHaveLength(5);
   });
 
@@ -504,8 +536,8 @@ describe('no-internal-vi-mock (f) — internal module mocks are banned (tests-sc
 
   it(
     'AST REPOSITORY GUARD: test sources contain no hidden Vitest module-mock authority',
-    () => {
-      const findings = repositoryTestTypeScriptFiles().flatMap((file) => {
+    async () => {
+      const findings = (await repositoryTestTypeScriptFiles()).flatMap((file) => {
         const source = readFileSync(file, 'utf8');
         if (!POSSIBLE_VITEST_MOCK_INDIRECTION.test(source)) return [];
         return vitestMockIndirections(source, file).map((finding) => `${file.slice(REPO.length + 1)}:${finding}`);

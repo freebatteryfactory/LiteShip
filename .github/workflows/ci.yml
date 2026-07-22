@@ -21,6 +21,7 @@ jobs:
   format:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    needs: plan
     steps:
       - uses: actions/checkout@v6
         with:
@@ -31,7 +32,8 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm run format:check
+      - name: Run registry-projected format check
+        run: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.format.command }}
 
   # Registry-projected CI plan. The parallel merge gate is the RELEASE gauntlet fanned
   # out, so scripts/ci-plan.ts (a PURE projection of @liteship/command's CHECK_REGISTRY —
@@ -215,6 +217,8 @@ jobs:
         run: |
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
+      - name: Run registry-projected environment doctor
+        run: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.doctor.command }}
       - name: Confirm lane matches the registry-projected plan
         env:
           PLANNED_PROFILE: ${{ fromJSON(needs.plan.outputs.matrix).lanes.preflight.profile }}
@@ -311,6 +315,8 @@ jobs:
       - run: pnpm run gauntlet:full -- --profile ci-parallel-bench --skip-build
         env:
           CI: true
+      - name: Run registry-projected allocation gate
+        run: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.benchAlloc.command }}
       - uses: actions/upload-artifact@v7
         if: always()
         with:
@@ -404,6 +410,38 @@ jobs:
         env:
           CI: true
 
+  # Packed-consumer release authority. These checks are registry-projected
+  # specialized checks rather than a fabricated gauntlet profile: each runs its
+  # exact CHECK_REGISTRY command against the build artifact from setup.
+  truth-linux-parallel-consumer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    needs:
+      - truth-linux-parallel-setup
+      - plan
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@v7
+        with:
+          name: dist-packages
+          path: .
+      - name: Run registry-projected consumer journeys
+        run: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.journey.command }}
+        env:
+          CI: true
+      - name: Run registry-projected hermetic closure
+        run: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.hermetic.command }}
+        env:
+          CI: true
+
   truth-linux-parallel-coverage-browser:
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -485,6 +523,7 @@ jobs:
       - truth-linux-parallel-mutating
       - truth-linux-parallel-integration
       - truth-linux-parallel-mid
+      - truth-linux-parallel-consumer
       - truth-linux-parallel-merge-coverage
       - plan
     steps:
@@ -547,6 +586,8 @@ jobs:
       - run: pnpm run coverage:merge-shards
         env:
           CI: true
+      - name: Run registry-projected DevX policy check
+        run: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.devx.command }}
       - name: Confirm lane matches the registry-projected plan
         env:
           PLANNED_PROFILE: ${{ fromJSON(needs.plan.outputs.matrix).lanes.final.profile }}

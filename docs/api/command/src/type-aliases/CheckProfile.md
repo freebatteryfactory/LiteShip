@@ -12,7 +12,7 @@ Defined in: [command/src/checks/definition.ts:30](https://github.com/freebattery
 
 The profile a check belongs to — the named sweep a projection runs. A check
 declares its membership set; [planChecks](../functions/planChecks.md) filters the registry by it.
-- `quick`     — the fast pre-commit lane (lint / typecheck / format / structural / fast unit).
+- `quick`     — the fast pre-commit lane (lint / typecheck / format / structural).
 - `full`      — quick + all tests + the blocking gate family + docs + audit floor.
 - `release`   — everything, including bench gates, coverage floor, e2e, and package smoke.
 - `consumer`  — the packed-tarball consumer smoke (package:smoke + packed subpath resolution).

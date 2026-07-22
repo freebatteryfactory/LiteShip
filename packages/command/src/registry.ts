@@ -171,13 +171,13 @@ export interface CommandContext {
    * LiteShip gates, the committed assurance map, and the committed waivers, runs
    * the authority ratchet, and returns the structured {@link GauntletResult}
    * (findings + per-gate outcomes + a single blocking verdict). This is the
-   * tasks-vs-gates distinction made real: `check` is the fixture-qualified gate
+   * tasks-vs-gates distinction made real: `check.gates` is the fixture-qualified gate
    * FOLD, whereas the CLI-owned `gauntlet` command spawns the full
    * `gauntlet:full` orchestrator. Backed by `@liteship/gauntlet`'s `node:fs` glob,
    * so — like `runPlumb` / `runCheckInvariants`, and unlike the heavy `@liteship/audit`
    * engine — it is provisioned in the shared host factory
    * (`createNodeCommandContext`) and is therefore available to BOTH the CLI and
-   * the MCP host: an agent can call `check` over MCP and read the Finding[] work-list.
+   * the MCP host: an agent can call `check.gates` over MCP and read the Finding[] work-list.
    *
    * `globs` scopes the file set (defaults to every package's source). The
    * adapter owns the waiver-expiry `now` — a WALL-CLOCK epoch Date, never a

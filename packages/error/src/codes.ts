@@ -206,8 +206,8 @@ export const DIAGNOSTIC_REGISTRY: Readonly<Record<DiagnosticCode, DiagnosticEntr
   ),
   'gauntlet/check-negative-control': gauntlet(
     'Blocking check breaks the negative-control partition',
-    'Every blocking check must be classified EXACTLY once: either declare a `negativeControl` whose path EXISTS (a real red-fixture proof it can fail) or be a documented `NEGATIVE_CONTROL_EXEMPT` entry. A dangling declared path, an unclassified check (neither control nor exemption), or a double-classified check (both) breaks the total, disjoint partition.',
-    'Classify the check: point negativeControl at a real red-fixture path, OR add a reasoned NEGATIVE_CONTROL_EXEMPT entry — never both, never neither.',
+    'Every blocking check must declare a `negativeControl` whose path exists and whose test executes that authority on deterministic bad input. Missing and dangling controls are proof gaps; blocking exemptions do not exist.',
+    'Point negativeControl at a real falsifying fixture/test and make that proof execute in the authoritative test lane.',
   ),
   'gauntlet/check-waiver-freshness': gauntlet(
     'Expired waiver across a governed store',

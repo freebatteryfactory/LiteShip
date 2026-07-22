@@ -1,6 +1,6 @@
 /**
  * The DETERMINISTIC per-mutant runner safety proof (Slice C, the avionics tier —
- * `liteship check --ir --mutate`). Two keystones:
+ * `liteship check gates --ir --mutate`). Two keystones:
  *
  * THE RESTORE KEYSTONE — the runner mutates REAL trust-spine source files in place, so
  * a crash, a test failure, or an infra fault must NEVER leave a mutated source on disk.

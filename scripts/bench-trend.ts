@@ -111,7 +111,8 @@ function ceremonialSkip(message: string): void {
 
 function main(): void {
   const strict = process.argv.includes('--strict') || process.env.BENCH_TREND_STRICT === '1';
-  const historyPath = resolve(repoRoot, 'benchmarks', 'history.jsonl');
+  const historyPath =
+    process.env['LITESHIP_BENCH_TREND_HISTORY_PATH'] ?? resolve(repoRoot, 'benchmarks', 'history.jsonl');
   const all = readHistory(historyPath);
   if (all.length === 0) {
     ceremonialSkip('no history yet (benchmarks/history.jsonl missing or empty). Skipping.');

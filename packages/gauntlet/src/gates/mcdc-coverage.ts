@@ -34,7 +34,7 @@
  * hardcoded level beside the file.
  *
  * It {@link requireMcdc} (and reads the IR for level propagation), so it runs ONLY on the
- * opt-in host path (`liteship check --ir --mcdc` — the CLI generates the condition-mutants +
+ * opt-in host path (`liteship check gates --ir --mcdc` — the CLI generates the condition-mutants +
  * runs the per-pin suites + injects the facts); the lean MCP/command path does not run
  * it. Composition over inheritance: a `_tag`-free fold over the folded outcomes +
  * standalone functions, no class.
@@ -155,7 +155,7 @@ function uncoveredFinding(outcome: McdcConditionOutcome, level: AssuranceLevel):
         noCoverage
           ? `This decision has NO covering test — write one that exercises it (the worst signal: nothing observes the branch).`
           : `Add a test pair that holds the other conditions fixed and flips ONLY \`${outcome.condition}\`, asserting the decision's outcome flips with it (so pinning it to ${gaps} would make a test fail).`,
-        `Re-run \`liteship check --ir --mcdc\`: both the force-true and force-false pins of \`${outcome.condition}\` must be killed for the condition to be MC/DC-covered.`,
+        `Re-run \`liteship check gates --ir --mcdc\`: both the force-true and force-false pins of \`${outcome.condition}\` must be killed for the condition to be MC/DC-covered.`,
       ],
     },
   });

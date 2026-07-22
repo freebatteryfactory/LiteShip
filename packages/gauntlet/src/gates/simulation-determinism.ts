@@ -66,7 +66,7 @@ function divergenceFinding(run: ScenarioReplayFact): Finding {
       steps: [
         `Reproduce: run \`replay(${run.seed}, "${run.scenarioId}")\` twice via @liteship/core/simulation; the trace digests must match.`,
         `Find the leak: at trace point ${where === null ? '(length/shape divergence)' : `\`${where}\``}, the SUT read an ambient source — replace every raw wall-clock read (Date-dot-now / argless new-Date) with the world's clock (world.clock / world.wallClock) and every raw random read (Math-dot-random) with the world's rng (world.rng).`,
-        `Re-run the corpus through the host (\`liteship check --ir --simulate\`); the divergence must clear — it is a real nondeterminism bug, never waivable.`,
+        `Re-run the corpus through the host (\`liteship check gates --ir --simulate\`); the divergence must clear — it is a real nondeterminism bug, never waivable.`,
       ],
     },
   });
@@ -81,7 +81,7 @@ function notEvidencedFinding(): Finding {
     title: 'Simulation determinism not evidenced',
     detail:
       'No simulation (DST) facts were injected on the GateContext, so the gate cannot attest replay-determinism. ' +
-      'This is honest under-coverage (advisory), never a silent pass — a host (the CLI `liteship check --ir --simulate` path) ' +
+      'This is honest under-coverage (advisory), never a silent pass — a host (the CLI `liteship check gates --ir --simulate` path) ' +
       'must run the scenario corpus through the @liteship/core/simulation harness and inject the verdicts via context.simulation.',
     remediation: {
       kind: 'instruction',

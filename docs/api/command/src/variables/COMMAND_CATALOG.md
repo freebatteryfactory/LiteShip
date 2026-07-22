@@ -8,6 +8,6 @@
 
 > `const` **COMMAND\_CATALOG**: readonly [`CapsuleCommandDescriptor`](../type-aliases/CapsuleCommandDescriptor.md)[]
 
-Defined in: [command/src/catalog.ts:274](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L274)
+Defined in: [command/src/catalog.ts:289](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L289)
 
 The full catalog of descriptors, sorted by name. Mirrors [commandRegistry](commandRegistry.md).list().

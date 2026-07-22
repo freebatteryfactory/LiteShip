@@ -569,10 +569,10 @@ function buildRepoMutationFacts(repoRoot: string, ir: RepoIR, toolchainDigest: s
   // a candidate the live map no longer rates L4, or whose bytes vanished, is drift the
   // owner must see (never a quiet hole in the trust-spine coverage).
   for (const f of skippedNotL4) {
-    process.stderr.write(`liteship check --mutate: seam candidate "${f}" is no longer effective-L4 (skipped)\n`);
+    process.stderr.write(`liteship check gates --mutate: seam candidate "${f}" is no longer effective-L4 (skipped)\n`);
   }
   for (const f of unreadable) {
-    process.stderr.write(`liteship check --mutate: seam candidate "${f}" could not be read (skipped)\n`);
+    process.stderr.write(`liteship check gates --mutate: seam candidate "${f}" could not be read (skipped)\n`);
   }
 
   // EXECUTION-based coverage (the barrel-problem fix): each barrel-importer of a broad
@@ -646,10 +646,10 @@ function buildRepoMcdcFacts(repoRoot: string, ir: RepoIR, toolchainDigest: strin
   const { targets, skippedNotL4, unreadable } = l4SeamTargets(ir, repoRoot);
   // Surface a vanished/demoted seam LOUDLY (stderr), never a quiet hole in the coverage.
   for (const f of skippedNotL4) {
-    process.stderr.write(`liteship check --mcdc: seam candidate "${f}" is no longer effective-L4 (skipped)\n`);
+    process.stderr.write(`liteship check gates --mcdc: seam candidate "${f}" is no longer effective-L4 (skipped)\n`);
   }
   for (const f of unreadable) {
-    process.stderr.write(`liteship check --mcdc: seam candidate "${f}" could not be read (skipped)\n`);
+    process.stderr.write(`liteship check gates --mcdc: seam candidate "${f}" could not be read (skipped)\n`);
   }
 
   // The SAME execution-filtered coverage map the mutation run uses (the barrel-problem
@@ -789,7 +789,7 @@ export interface RepoIRGauntletCacheOptions {
   readonly withSymbolReferences?: boolean;
   /**
    * Compose the avionics-tier `supplyChainGate` (L4) onto the run and inject the
-   * host-computed {@link SupplyChainFacts} (`liteship check --ir --supply-chain`). It
+   * host-computed {@link SupplyChainFacts} (`liteship check gates --ir --supply-chain`). It
    * changes BOTH which gates run AND the injected facts, so the verdict cache is
    * NAMESPACED by this mode (see {@link resolveVerdictCache}): a supply-chain
    * verdict can never be served to a non-supply-chain run, or vice versa — exactly
@@ -798,7 +798,7 @@ export interface RepoIRGauntletCacheOptions {
   readonly withSupplyChain?: boolean;
   /**
    * Compose the avionics-tier `mutationDivergenceGate` (L4) onto the run and inject
-   * the host-computed {@link MutationFacts} (`liteship check --ir --mutate`). The host
+   * the host-computed {@link MutationFacts} (`liteship check gates --ir --mutate`). The host
    * generates the deterministic mutants over the live effective-L4 seams, runs the
    * per-mutant vitest runner, and folds the verdicts. It changes BOTH which gates run
    * AND the injected facts, so the verdict cache is NAMESPACED by this mode (see
@@ -809,7 +809,7 @@ export interface RepoIRGauntletCacheOptions {
   readonly withMutate?: boolean;
   /**
    * Compose the avionics-tier `mcdcCoverageGate` (L4) onto the run and inject the
-   * host-computed {@link McdcFacts} (`liteship check --ir --mcdc`). The host decomposes each
+   * host-computed {@link McdcFacts} (`liteship check gates --ir --mcdc`). The host decomposes each
    * effective-L4 decision into its atomic conditions, mints the force-true/force-false
    * pin per condition, runs each pin via the per-mutant vitest runner, and folds the two
    * pins per condition (a condition is MC/DC-covered iff BOTH pins are killed). It changes
@@ -822,7 +822,7 @@ export interface RepoIRGauntletCacheOptions {
   /**
    * Compose the avionics-tier `simulationDeterminismGate` (L4 — the determinism
    * spine) onto the run and inject the host-computed {@link SimulationFacts}
-   * (`liteship check --ir --simulate`). The host drives the committed scenario corpus
+   * (`liteship check gates --ir --simulate`). The host drives the committed scenario corpus
    * (real L4 trust-spine SUTs) through the `@liteship/core/simulation` seeded world,
    * replaying each seed twice and folding the byte-exact-replay verdicts. It changes
    * BOTH which gates run AND the injected facts, so the verdict cache is NAMESPACED
@@ -835,7 +835,7 @@ export interface RepoIRGauntletCacheOptions {
   readonly withSimulate?: boolean;
   /**
    * Compose the `taintFlowGate` (the TAINT-ANALYSIS family, L4) onto the run and
-   * inject the host-computed {@link TaintFacts} (`liteship check --ir --taint`). The host
+   * inject the host-computed {@link TaintFacts} (`liteship check gates --ir --taint`). The host
    * traces the source→sink dataflow via @liteship/audit's GENERIC taint oracle, classified
    * by the LiteShip-LOCAL `LITESHIP_TAINT_REGISTRY` injected from the CLI host (the
    * ADR-0012 / D7b boundary). It changes BOTH which gates run AND the injected facts,
@@ -848,7 +848,7 @@ export interface RepoIRGauntletCacheOptions {
   readonly withTaint?: boolean;
   /**
    * Compose the `capabilityGateLinkGate` (codex round-8, #1b — the capability-link dataflow proof, L4)
-   * onto the run and inject the host-computed {@link CapabilityLinkFacts} (`liteship check --ir
+   * onto the run and inject the host-computed {@link CapabilityLinkFacts} (`liteship check gates --ir
    * --capability-gate`). The host resolves each sanctioned skip's guard against the canonical
    * capability symbol table (the LiteShip-LOCAL module SET + ids injected — the audit oracle names no
    * capability) and proves it DERIVES FROM its declared capability's probe; an unrelated/mislabeled
@@ -860,7 +860,7 @@ export interface RepoIRGauntletCacheOptions {
   /**
    * Compose the `proofPropagationGate` (the LOCAL-VS-GLOBAL correctness family — the
    * lax-functor, L4) onto the run and inject the host-computed {@link ProofFacts}
-   * (`liteship check --ir --proof`). The host reads the proof signals (mutation score /
+   * (`liteship check gates --ir --proof`). The host reads the proof signals (mutation score /
    * coverage / property tests / enrolled invariants) and blends them into a per-module
    * scalar; the gate propagates it along the dep DAG (the `min`-fixpoint) and reports
    * each trust-spine module whose global proof drops below its floor via a weak
@@ -873,7 +873,7 @@ export interface RepoIRGauntletCacheOptions {
   /**
    * Compose the `compositionCoverageGate` (the LOCAL-VS-GLOBAL correctness family —
    * "locally green, globally untested interaction", L4) onto the run and inject the
-   * host-computed {@link CompositionFacts} (`liteship check --ir --composition`). The host
+   * host-computed {@link CompositionFacts} (`liteship check gates --ir --composition`). The host
    * derives the interaction edges from the IR call graph (both endpoints individually
    * tested) and classifies each integration-covered/uncovered (the sound
    * static-reference proxy); the gate reports each uncovered edge at its propagated
@@ -885,7 +885,7 @@ export interface RepoIRGauntletCacheOptions {
   /**
    * Compose the `spineRelationGate` (Wave 8.5, the public constitution's STATIC-projection
    * half, L4) onto the run and inject the host-computed {@link SpineRelationFacts} (`liteship
-   * check --ir --spine-relation`). The host probes each admitted `@liteship/_spine` mirror type's
+   * check gates --ir --spine-relation`). The host probes each admitted `@liteship/_spine` mirror type's
    * bidirectional assignability against its runtime source (a ts.Program probe over the spine
    * + runtime surface, classified against the LiteShip-LOCAL {@link LITESHIP_SPINE_ADMISSIONS}
    * injected from the CLI host — the ADR-0012 boundary); a mirror whose observed relation no
@@ -899,7 +899,7 @@ export interface RepoIRGauntletCacheOptions {
   /**
    * Test/CI seam for the spine-relation probe ({@link SpineRelationBuildOptions}) — the
    * in-memory `overlay` that injects a DRIFTED spine (e.g. a Millis-brand loss) without
-   * touching disk, so an integration test can prove `liteship check --ir --spine-relation` BLOCKS
+   * touching disk, so an integration test can prove `liteship check gates --ir --spine-relation` BLOCKS
    * on a planted drift. Only consulted when {@link withSpineRelation} is set.
    */
   readonly spineRelation?: SpineRelationBuildOptions;

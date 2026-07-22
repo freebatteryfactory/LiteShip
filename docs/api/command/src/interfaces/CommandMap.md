@@ -83,19 +83,19 @@ Defined in: [command/src/catalog.ts:62](https://github.com/freebatteryfactory/Li
 
 ***
 
-### check
-
-> `readonly` **check**: [`CheckPayload`](../type-aliases/CheckPayload.md)
-
-Defined in: [command/src/catalog.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L75)
-
-***
-
 ### check-invariants
 
 > `readonly` **check-invariants**: [`CheckInvariantsPayload`](../type-aliases/CheckInvariantsPayload.md)
 
 Defined in: [command/src/catalog.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L73)
+
+***
+
+### check.gates
+
+> `readonly` **check.gates**: [`CheckPayload`](../type-aliases/CheckPayload.md)
+
+Defined in: [command/src/catalog.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L75)
 
 ***
 

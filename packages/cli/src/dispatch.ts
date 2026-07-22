@@ -69,6 +69,8 @@ interface RunDeps {
   readonly runGauntletWithRepoIR?: typeof runGauntletWithRepoIR;
   /** The lean `@liteship/command` check handler, threaded into `check`'s default (lean) path. */
   readonly checkHandler?: NonNullable<Parameters<typeof check>[1]>['checkHandler'];
+  /** The profile executor seam used by dispatch tests; production uses the real cached spawn runner. */
+  readonly runCheckPlan?: NonNullable<Parameters<typeof check>[1]>['runCheckPlan'];
   /** The optional-sibling `@liteship/mcp-server` importer, threaded into the `mcp` + `lsp` skins. */
   readonly importMcpServer?: ImportMcpServer;
 }
@@ -78,6 +80,7 @@ interface ResolvedDeps {
   readonly doctor: typeof doctor;
   readonly runGauntletWithRepoIR: typeof runGauntletWithRepoIR;
   readonly checkHandler?: NonNullable<Parameters<typeof check>[1]>['checkHandler'];
+  readonly runCheckPlan?: NonNullable<Parameters<typeof check>[1]>['runCheckPlan'];
   readonly importMcpServer: ImportMcpServer;
 }
 
@@ -105,6 +108,7 @@ const CLI_EXECUTORS: Record<CliOwnedName, Executor> = {
     return 0;
   },
   completion: (rest) => completion(rest[0]),
+  check: execCheck,
   doctor: (rest, deps) => {
     // `--target` / `--deployed` are value-taking: neither may swallow a following
     // token that begins with `-` (that token is the NEXT flag). Before, `doctor
@@ -316,8 +320,14 @@ function execAudit(rest: readonly string[]): Promise<number> {
   });
 }
 
-/** `check [--plan] [--profile <p>] [--json] [--ir] [gate flags]` — handler-backed; threads the injectable check/gauntlet seam. */
+/** `check [gates] [--plan] [--profile <p>] [--json] [--ir] [gate flags]`. */
 function execCheck(rest: readonly string[], deps: ResolvedDeps): Promise<number> {
+  const subcommand = positional(rest);
+  if (subcommand !== undefined && subcommand !== 'gates') {
+    emitError('check', `expected subcommand: gates (got: ${subcommand})`);
+    return Promise.resolve(1);
+  }
+  const gates = subcommand === 'gates';
   // `--plan` is the PURE projection surface: print the ordered check plan for
   // `--profile` and run nothing. `--json` selects machine output (a JSON plan under
   // `--plan`; a receipt-only, no-pretty-summary run otherwise). `--profile <p>` picks
@@ -333,10 +343,10 @@ function execCheck(rest: readonly string[], deps: ResolvedDeps): Promise<number>
     return Promise.resolve(1);
   }
   const profile = profileFlag.value as CheckProfile | undefined;
-  // `--ir` opts into the CLI-ONLY IR-enriched path (the triangulated
+  // `check gates --ir` opts into the CLI-ONLY IR-enriched path (the triangulated
   // oracle-divergence cross-check + the B2 verdict cache via @liteship/audit);
-  // `--no-cache` bypasses that cache. WITHOUT `--ir`, `liteship check` stays the
-  // lean, IR-free, MCP-safe six-regex fold (the MCP server exposes only that
+  // `--no-cache` bypasses that cache. WITHOUT `--ir`, `liteship check gates` stays
+  // the lean, IR-free, MCP-safe fold (the MCP server exposes only that
   // lean handler — `--ir` never crosses into @liteship/command / @liteship/mcp-server).
   const ir = rest.includes('--ir');
   const noCache = rest.includes('--no-cache');
@@ -408,6 +418,26 @@ function execCheck(rest: readonly string[], deps: ResolvedDeps): Promise<number>
   // Only meaningful with `--ir`; opt-in (a second ts.Program build, ~3.25s, is HEAVY) but
   // REQUIRED in the release/CI profile; the cache key is namespaced by this mode.
   const spineRelation = rest.includes('--spine-relation');
+  const hasGateFlag =
+    ir ||
+    symbols ||
+    supplyChain ||
+    mutate ||
+    mcdc ||
+    simulate ||
+    taint ||
+    proof ||
+    composition ||
+    capabilityGate ||
+    spineRelation;
+  if (hasGateFlag && !gates) {
+    emitError('check', 'gate-only flags require the explicit `check gates` subcommand');
+    return Promise.resolve(1);
+  }
+  if ((gates || hasGateFlag) && (plan || profile !== undefined)) {
+    emitError('check', 'gate mode cannot be combined with --plan or --profile');
+    return Promise.resolve(1);
+  }
   // `--no-cache` / `--symbols` / `--supply-chain` / `--mutate` / `--simulate` /
   // `--taint` / `--proof` / `--composition` / `--capability-gate` / `--spine-relation` are
   // only meaningful on the IR path (the lean path has no cache + no IR). A bare flag there
@@ -417,6 +447,7 @@ function execCheck(rest: readonly string[], deps: ResolvedDeps): Promise<number>
       ...(plan ? { plan } : {}),
       ...(json ? { json } : {}),
       ...(profile ? { profile } : {}),
+      ...(gates ? { gates } : {}),
       ...(ir ? { ir } : {}),
       ...(noCache ? { noCache } : {}),
       ...(symbols ? { symbols } : {}),
@@ -433,6 +464,7 @@ function execCheck(rest: readonly string[], deps: ResolvedDeps): Promise<number>
     {
       runGauntletWithRepoIR: deps.runGauntletWithRepoIR,
       ...(deps.checkHandler ? { checkHandler: deps.checkHandler } : {}),
+      ...(deps.runCheckPlan ? { runCheckPlan: deps.runCheckPlan } : {}),
     },
   );
 }
@@ -454,7 +486,6 @@ const HANDLER_EXECUTORS: Record<string, Executor> = {
   audit: (rest) => execAudit(rest),
   'audit-floor': () => auditFloor(),
   plumb: () => plumb(),
-  check: execCheck,
   'check-invariants': () => checkInvariants(),
   'package-smoke': (rest) => packageSmoke({ hermetic: rest.includes('--hermetic') }),
   'capsule-verify': () => capsuleVerifyGate(),
@@ -539,6 +570,7 @@ export async function run(argv: readonly string[], deps: RunDeps = {}): Promise<
     runGauntletWithRepoIR: deps.runGauntletWithRepoIR ?? runGauntletWithRepoIR,
     importMcpServer: deps.importMcpServer ?? (() => import('@liteship/mcp-server')),
     ...(deps.checkHandler ? { checkHandler: deps.checkHandler } : {}),
+    ...(deps.runCheckPlan ? { runCheckPlan: deps.runCheckPlan } : {}),
   };
   const [rawCmd, ...rest] = argv;
   const cmd = normalizeTopLevel(rawCmd);

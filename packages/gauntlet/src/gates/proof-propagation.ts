@@ -243,11 +243,11 @@ function notEvidencedFinding(): Finding {
     level: 'L4',
     title: 'Proof-propagation not evidenced',
     detail:
-      'No proof facts were injected, so the lax-functor proof-propagation could not run — the gate reports this honestly rather than passing silently. A host (the CLI `liteship check --ir --proof` path) reads the proof signals (mutation score, coverage, property tests, enrolled invariants), blends them into per-module scalars, and injects ProofFacts for this gate to propagate along the dep DAG.',
+      'No proof facts were injected, so the lax-functor proof-propagation could not run — the gate reports this honestly rather than passing silently. A host (the CLI `liteship check gates --ir --proof` path) reads the proof signals (mutation score, coverage, property tests, enrolled invariants), blends them into per-module scalars, and injects ProofFacts for this gate to propagate along the dep DAG.',
     remediation: {
       kind: 'instruction',
       description: 'Run the proof-propagation analysis so the global-proof composition is evidenced.',
-      steps: ['Run `liteship check --ir --proof` so the host builds + injects ProofFacts.'],
+      steps: ['Run `liteship check gates --ir --proof` so the host builds + injects ProofFacts.'],
     },
   });
 }

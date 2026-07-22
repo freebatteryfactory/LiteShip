@@ -6,12 +6,13 @@
 
 # Interface: CheckReport
 
-Defined in: [command/src/checks/plan.ts:98](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L98)
+Defined in: [command/src/checks/plan.ts:103](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L103)
 
 The report an executed sweep emits — the `--json` output contract. Planning
 produces the plan; the execution host (the CLI spawn layer / the existing
 `runGauntlet` context) runs the plan and fills `results`. `blocked` is true iff
-any BLOCKING check failed; `ok` is its negation.
+any BLOCKING check failed; `ok` additionally requires at least one check to
+have executed, so an all-skipped plan is explicitly unverified rather than green.
 
 ## Properties
 
@@ -19,9 +20,19 @@ any BLOCKING check failed; `ok` is its negation.
 
 > `readonly` **blocked**: `boolean`
 
-Defined in: [command/src/checks/plan.ts:106](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L106)
+Defined in: [command/src/checks/plan.ts:113](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L113)
 
 True iff ≥1 blocking check failed.
+
+***
+
+### context
+
+> `readonly` **context**: [`CheckContext`](../type-aliases/CheckContext.md)
+
+Defined in: [command/src/checks/plan.ts:109](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L109)
+
+The repository/application fact domain this report actually evaluated.
 
 ***
 
@@ -29,9 +40,9 @@ True iff ≥1 blocking check failed.
 
 > `readonly` **ok**: `boolean`
 
-Defined in: [command/src/checks/plan.ts:104](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L104)
+Defined in: [command/src/checks/plan.ts:111](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L111)
 
-True iff no blocking check failed.
+True iff at least one check executed and no blocking check failed.
 
 ***
 
@@ -39,7 +50,7 @@ True iff no blocking check failed.
 
 > `readonly` **platform**: [`CheckPlatform`](../type-aliases/CheckPlatform.md)
 
-Defined in: [command/src/checks/plan.ts:102](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L102)
+Defined in: [command/src/checks/plan.ts:107](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L107)
 
 The platform the sweep ran on.
 
@@ -49,7 +60,7 @@ The platform the sweep ran on.
 
 > `readonly` **profile**: [`CheckProfile`](../type-aliases/CheckProfile.md)
 
-Defined in: [command/src/checks/plan.ts:100](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L100)
+Defined in: [command/src/checks/plan.ts:105](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L105)
 
 The profile the sweep ran.
 
@@ -59,6 +70,6 @@ The profile the sweep ran.
 
 > `readonly` **results**: readonly [`CheckRunResult`](CheckRunResult.md)[]
 
-Defined in: [command/src/checks/plan.ts:108](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L108)
+Defined in: [command/src/checks/plan.ts:115](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L115)
 
 The per-check results, in plan order.

@@ -8,8 +8,4 @@
 
 > `const` **checkNegativeControlGate**: [`FactGate`](../interfaces/FactGate.md)
 
-Defined in: [gauntlet/src/gates/check-negative-control.ts:206](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/check-negative-control.ts#L206)
-
-The check-negative-control gate — the negative-control PARTITION backstop. Self-proves
-via synthetic rows (each partition break red, a fully-classified green); a host injects
-each blocking check's declared path + on-disk existence + exemption membership.
+Defined in: [gauntlet/src/gates/check-negative-control.ts:114](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/check-negative-control.ts#L114)

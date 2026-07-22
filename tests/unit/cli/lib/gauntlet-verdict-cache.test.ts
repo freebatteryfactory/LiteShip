@@ -125,14 +125,21 @@ describe('gauntletToolchainDigest — deterministic + dist-sensitive (the anti-l
   });
 
   it('folds the env fingerprint order-INDEPENDENTLY (sorted keys → same digest)', () => {
+    const distDir = join(dir, 'env-order-dist');
+    mkdirSync(distDir, { recursive: true });
+    writeFileSync(join(distDir, 'oracle.js'), 'export const oracle = true;\n', 'utf8');
+    const segments: readonly ToolchainPackageSegment[] = [
+      { label: '@liteship/test-oracle', distDir, version: '1.0.0' },
+    ];
+
     fc.assert(
       fc.property(
         fc.string({ minLength: 1, maxLength: 6 }),
         fc.string({ minLength: 1, maxLength: 6 }),
         (a, b) => {
           // Two structurally-equal env maps with different insertion order key identically.
-          const forward = gauntletToolchainDigest({ node: a, platform: b, arch: 'x64', pm: '' });
-          const reordered = gauntletToolchainDigest({ pm: '', arch: 'x64', platform: b, node: a });
+          const forward = toolchainDigestOf(segments, { node: a, platform: b, arch: 'x64', pm: '' });
+          const reordered = toolchainDigestOf(segments, { pm: '', arch: 'x64', platform: b, node: a });
           expect(forward).toBe(reordered);
         },
       ),

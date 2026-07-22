@@ -6,19 +6,19 @@
  * and `plumb:gate`: the CONSTITUTION / public-surface INTEGRITY family. The `spineRelationGate`
  * fold is exercised in unit tests with INJECTED facts (`tests/unit/audit/spine-relation.test.ts`)
  * — that proves the fold; but a gate nothing runs over the real repo is a hole. This script
- * closes it: it builds the SAME {@link SpineRelationFacts} the production `liteship check --ir
+ * closes it: it builds the SAME {@link SpineRelationFacts} the production `liteship check gates --ir
  * --spine-relation` path builds (the host probes each admitted `@liteship/_spine` mirror type's
  * bidirectional assignability against its runtime source via a `ts.Program`/checker, classified
  * against the LiteShip-LOCAL {@link LITESHIP_SPINE_ADMISSIONS}) and reds on any mirror whose
  * OBSERVED relation no longer satisfies its ADMITTED (frozen) relation — or no longer resolves.
  *
- * Why a standalone phase (not folded into `gauntlet:full`'s default `liteship check --ir`): the
+ * Why a standalone phase (not folded into `gauntlet:full`'s default `liteship check gates --ir`): the
  * avionics IR gates (taint/mutate/…) are opt-in and NOT CI-wired, and the spine probe is a
  * SECOND `ts.Program` build (~3.25s) too heavy for the default `--ir` run — but it belongs to
  * the constitution-integrity family (`standards:gate` / `capability:gate`) that IS CI-gating,
  * so it runs HERE, next to them, as its own `ts.Program` phase, guaranteeing the L4 public-
  * contract check runs on every PR (reachable, never fixture-only). The equivalent opt-in path
- * is `liteship check --ir --spine-relation`.
+ * is `liteship check gates --ir --spine-relation`.
  *
  * FAIL-CLOSED: an UNRESOLVED admitted mirror (a renamed/removed type) is a failing result, never
  * a silent drop, so the gate proves the WHOLE admission table or reds.

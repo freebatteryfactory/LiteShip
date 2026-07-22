@@ -10,7 +10,7 @@
 
 Defined in: [command/src/commands/check.ts:83](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/check.ts#L83)
 
-Structured payload returned by `check`. Mirrors `CheckPayloadSchema` for every
+Structured payload returned by `check.gates`. Mirrors `CheckPayloadSchema` for every
 field EXCEPT `findings`, which keeps the canonical `@liteship/gauntlet` `Finding`
 type (so `remediation` — undescribable in the outputSchema's dialect — stays in
 the type and is never narrowed away from a consumer). The type is a faithful

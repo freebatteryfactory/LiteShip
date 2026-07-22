@@ -41,7 +41,7 @@ sanctioned capability-gated skip's GUARD DERIVES FROM its declared capability's 
 canonical capability-module SET + the sanctioned sites the `@liteship/cli` host injects — the audit
 engine names no LiteShip capability, ADR-0012/D7b). The [capabilityGateLinkGate](../variables/capabilityGateLinkGate.md) reads ONLY
 through this; fixtures supply a literal facts record. When ABSENT the gate is not in the set
-(capability-link is opt-in: `liteship check --ir --capability-gate`). A skip whose guard derives from
+(capability-link is opt-in: `liteship check gates --ir --capability-gate`). A skip whose guard derives from
 NO capability probe (`if (Math.random())`) — or the WRONG one (a mislabel) — folds to an L4 finding.
 
 ***
@@ -102,7 +102,7 @@ interaction"), the same lean-engine pattern as [ir](#ir) and [proof](#proof).
 OPTIONAL: the heavy work (deriving the interaction edges from the IR call graph,
 deciding which units are individually tested, and deciding which edges an
 integration test exercises TOGETHER — by a per-test execution-coverage probe or
-the sound static-reference proxy) lives in a HOST (the CLI's `liteship check --ir
+the sound static-reference proxy) lives in a HOST (the CLI's `liteship check gates --ir
 --composition` path), which folds the classified edges into flat
 [CompositionFacts](CompositionFacts.md) and lands them here. The [compositionCoverageGate](../variables/compositionCoverageGate.md)
 reads ONLY through this; in-memory fixtures supply a literal facts record (no
@@ -221,7 +221,7 @@ per-mutant vitest runner), which folds the two pins per condition into flat
 [McdcFacts](McdcFacts.md) (each condition MC/DC-covered iff BOTH pins were KILLED) and lands
 them here. The [mcdcCoverageGate](../variables/mcdcCoverageGate.md) reads ONLY through this; in-memory fixtures
 supply a literal facts record (no parse, no test run). When ABSENT the gate is simply
-not in the set (MC/DC is opt-in: `liteship check --ir --mcdc`), so there is no per-pin
+not in the set (MC/DC is opt-in: `liteship check gates --ir --mcdc`), so there is no per-pin
 cost and no noise on a default run. See [McdcFacts](McdcFacts.md).
 
 ***
@@ -240,7 +240,7 @@ runner), which folds them into flat [MutationFacts](MutationFacts.md) (every mut
 kill/survive verdict + the committed score baseline) and lands them here. The
 [mutationDivergenceGate](../variables/mutationDivergenceGate.md) reads ONLY through this; in-memory fixtures
 supply a literal facts record (no parse, no test run). When ABSENT the gate is
-simply not in the set (mutation is opt-in: `liteship check --ir --mutate`), so
+simply not in the set (mutation is opt-in: `liteship check gates --ir --mutate`), so
 there is no per-mutant cost and no noise on a default run. See
 [MutationFacts](MutationFacts.md).
 
@@ -258,7 +258,7 @@ dependency), the same lean-engine pattern as [ir](#ir), [mutation](#mutation), a
 [simulation](#simulation). OPTIONAL: the heavy work (reading the proof signals —
 mutation-score baseline, coverage report, property-test presence, the enrolled
 invariants ledger — and blending them into a per-module proof scalar) lives in a
-HOST (the CLI's `liteship check --ir --proof` path), which folds them into flat
+HOST (the CLI's `liteship check gates --ir --proof` path), which folds them into flat
 [ProofFacts](ProofFacts.md) and lands them here. The [proofPropagationGate](../variables/proofPropagationGate.md)
 PROPAGATES the scalar along the IR's dep DAG (the `min`-fixpoint dual of
 assurance propagation) and reads ONLY through this; in-memory fixtures supply a
@@ -290,7 +290,7 @@ Pre-computed DETERMINISTIC-SIMULATION (DST) evidence — an INJECTED capability
 [supplyChain](#supplychain), and [mutation](#mutation). OPTIONAL: the heavy work (minting a
 seeded world, running the scenario corpus, replaying each seed twice, and
 content-addressing the byte-exact traces) all lives in a HOST (the CLI's
-`liteship check --ir --simulate` path, driving the `@liteship/core/simulation`
+`liteship check gates --ir --simulate` path, driving the `@liteship/core/simulation`
 harness), which folds the verdicts into flat [SimulationFacts](SimulationFacts.md) (every
 scenario's two replay digests + any divergence) and lands them here. The
 [simulationDeterminismGate](../variables/simulationDeterminismGate.md) reads ONLY through this; in-memory fixtures
@@ -429,7 +429,7 @@ flat [TaintFacts](TaintFacts.md) (every source→sink flow + its sanitizer, if a
 honest interprocedural depth the trace covered) and lands them here. The
 [taintFlowGate](../variables/taintFlowGate.md) reads ONLY through this; in-memory fixtures supply a
 literal facts record (no program, no checker). When ABSENT the gate is simply
-not in the set (taint is opt-in: `liteship check --ir --taint`). An UNSANITIZED
+not in the set (taint is opt-in: `liteship check gates --ir --taint`). An UNSANITIZED
 source→sink flow folds to a Finding at the sink's (propagated) level — L4 for a
 trust-spine sink. See [TaintFacts](TaintFacts.md).
 

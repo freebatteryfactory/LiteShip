@@ -71,7 +71,7 @@ export { checkInvariantsCommand, CheckInvariantsPayloadSchema } from './commands
 export type { CheckInvariantsPayload } from './commands/check-invariants.js';
 export { capsuleVerifyGateCommand, CapsuleVerifyPayloadSchema } from './commands/capsule-verify.js';
 export type { CapsuleVerifyPayload } from './commands/capsule-verify.js';
-export { checkCommand, CheckPayloadSchema } from './commands/check.js';
+export { checkGatesCommand, CheckPayloadSchema } from './commands/check.js';
 export type { CheckPayload } from './commands/check.js';
 export { explainCommand, ExplainPayloadSchema } from './commands/explain.js';
 export type { ExplainPayload, ExplainDiagnostic, ExplainEmitter, ExplainSymbol } from './commands/explain.js';
@@ -84,8 +84,15 @@ export type { ApiSymbolResolution } from './registry.js';
 export { CHECK_REGISTRY } from './checks/registry.js';
 export { SCRIPT_EXEMPTIONS } from './checks/script-exemptions.js';
 export type { ScriptExemption } from './checks/script-exemptions.js';
-export type { CheckDefinition, CheckProfile, CheckPlatform, CheckCache, CheckAuthority } from './checks/definition.js';
-export { planChecks, formatCheckPlan, CHECK_PROFILES, CHECK_PLATFORMS } from './checks/plan.js';
+export type {
+  CheckDefinition,
+  CheckProfile,
+  CheckContext,
+  CheckPlatform,
+  CheckCache,
+  CheckAuthority,
+} from './checks/definition.js';
+export { planChecks, formatCheckPlan, CHECK_PROFILES, CHECK_CONTEXTS, CHECK_PLATFORMS } from './checks/plan.js';
 export type {
   CheckPlan,
   PlannedCheck,

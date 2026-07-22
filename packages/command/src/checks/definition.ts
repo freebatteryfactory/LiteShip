@@ -21,7 +21,7 @@
 /**
  * The profile a check belongs to — the named sweep a projection runs. A check
  * declares its membership set; {@link planChecks} filters the registry by it.
- * - `quick`     — the fast pre-commit lane (lint / typecheck / format / structural / fast unit).
+ * - `quick`     — the fast pre-commit lane (lint / typecheck / format / structural).
  * - `full`      — quick + all tests + the blocking gate family + docs + audit floor.
  * - `release`   — everything, including bench gates, coverage floor, e2e, and package smoke.
  * - `consumer`  — the packed-tarball consumer smoke (package:smoke + packed subpath resolution).
@@ -29,12 +29,15 @@
  */
 export type CheckProfile = 'quick' | 'full' | 'release' | 'consumer' | 'environment';
 
+/** The execution context whose facts a check is authoritative over. */
+export type CheckContext = 'repository' | 'application';
+
 /** A platform a check supports. A check that declares a subset is SKIPPED (with a reason) elsewhere. */
 export type CheckPlatform = 'linux' | 'darwin' | 'win32';
 
 /**
  * The cache discipline for a check's verdict.
- * - `content-addressed` — the verdict is a pure function of the declared {@link CheckDefinition.inputs};
+ * - `content-addressed` — the verdict is a pure function of the check definition's declared `inputs`;
  *   a warm run may SKIP it when no covered byte changed (reusing the verdict-cache
  *   pattern of `@liteship/gauntlet`'s `verdict-cache.ts`). SOUND only when `inputs`
  *   captures everything that affects the verdict.
@@ -55,7 +58,7 @@ export type CheckAuthority = 'blocking' | 'advisory';
  * (never reimplemented). The `id` is `check/<slug>` (the stable identity a plan and a
  * report key by); `command` is the exact root-script shell line to spawn.
  */
-export interface CheckDefinition {
+interface CheckDefinitionBase {
   /** Stable identity, `check/<slug>` (the slug is the kebab form of the root script name). */
   readonly id: string;
   /** Human title for the plan / report line. */
@@ -70,6 +73,8 @@ export interface CheckDefinition {
   readonly inputs: readonly string[];
   /** The profiles this check is a member of — a projection runs it iff its profile is listed. */
   readonly profiles: readonly CheckProfile[];
+  /** The context(s) in which this check's claim is applicable and authoritative. */
+  readonly contexts: readonly CheckContext[];
   /** The platforms this check runs on — a plan on an unlisted platform SKIPS it (with a reason). */
   readonly platforms: readonly CheckPlatform[];
   /** The wall-clock ceiling (ms) after which the host aborts the check. */
@@ -78,15 +83,22 @@ export interface CheckDefinition {
   readonly cache: CheckCache;
   /** The authority this check holds over the aggregate verdict (see {@link CheckAuthority}). */
   readonly authority: CheckAuthority;
-  /**
-   * Optional path proving the check CAN fail (a negative control): a red fixture,
-   * regression-guard test, or self-proving gate that plants a regression THIS check
-   * catches. Every BLOCKING check EITHER declares this OR is a key of
-   * `NEGATIVE_CONTROL_EXEMPT` (a documented, reasoned exemption) — the partition is
-   * total + disjoint, enforced by the `check-negative-control` gate. Prefer pointing
-   * at a real red-fixture / regression test over a gate's own source.
-   */
-  readonly negativeControl?: string;
   /** The one-line remediation printed when this check reds — the fix, one copy away. */
   readonly remediation: string;
 }
+
+/** A blocking check is unrepresentable without a real falsifying control. */
+export interface BlockingCheckDefinition extends CheckDefinitionBase {
+  readonly authority: 'blocking';
+  /** Path to a test/fixture that executes this authority on bad input and asserts a red/non-zero result. */
+  readonly negativeControl: string;
+}
+
+/** Advisory checks report evidence but do not need to prove a blocking transition. */
+export interface AdvisoryCheckDefinition extends CheckDefinitionBase {
+  readonly authority: 'advisory';
+  readonly negativeControl?: never;
+}
+
+/** One declared check. Blocking rows require a falsifying control at compile time. */
+export type CheckDefinition = BlockingCheckDefinition | AdvisoryCheckDefinition;

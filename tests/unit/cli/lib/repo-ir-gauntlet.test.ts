@@ -584,7 +584,7 @@ describe('runGauntletWithRepoIR — the --spine-relation host path blocks on a p
   const realSnapshotBase: GitShowReader = (r) => readFileSync(join(r, STANDARDS_SNAPSHOT_PATH), 'utf8');
 
   it(
-    'a planted Millis-brand-loss drift reds the spine-relation gate → `liteship check --ir --spine-relation` BLOCKS',
+    'a planted Millis-brand-loss drift reds the spine-relation gate → `liteship check gates --ir --spine-relation` BLOCKS',
     async () => {
       const drifted = readFileSync(CORE_DTS, 'utf8').replace(
         'readonly durationMs: Millis;',

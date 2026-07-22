@@ -54,6 +54,11 @@ export interface JourneyResult {
   readonly notes: readonly string[];
 }
 
+/** Authoritative journey verdict: unexecuted (`gated`) is never green evidence. */
+export function journeysPassed(results: readonly JourneyResult[]): boolean {
+  return results.length > 0 && results.every((result) => result.status === 'pass');
+}
+
 /** The packed-workspace context the tarball-consuming journeys (1, 2, 4) share. */
 export interface PackedWorkspace {
   /** The scratch directory holding every `.tgz`. */

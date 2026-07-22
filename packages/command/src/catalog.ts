@@ -25,7 +25,7 @@ import { plumbCommand } from './commands/plumb.js';
 import { packageSmokeCommand } from './commands/package-smoke.js';
 import { checkInvariantsCommand } from './commands/check-invariants.js';
 import { capsuleVerifyGateCommand } from './commands/capsule-verify.js';
-import { checkCommand } from './commands/check.js';
+import { checkGatesCommand } from './commands/check.js';
 import { explainCommand } from './commands/explain.js';
 import { contextCommand } from './commands/context.js';
 import type { GlossaryPayload } from './commands/glossary.js';
@@ -72,7 +72,7 @@ export interface CommandMap {
   readonly 'package-smoke': PackageSmokePayload;
   readonly 'check-invariants': CheckInvariantsPayload;
   readonly 'capsule-verify': CapsuleVerifyPayload;
-  readonly check: CheckPayload;
+  readonly 'check.gates': CheckPayload;
   readonly explain: ExplainPayload;
   readonly context: ContextPayload;
 }
@@ -87,6 +87,21 @@ export interface CommandMap {
  * handler.
  */
 const CLI_OWNED_DESCRIPTORS = [
+  {
+    name: 'check',
+    summary:
+      'Run the quick check profile by default; select quick/full/release/consumer/environment or print the execution plan.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        profile: { type: 'string', enum: ['quick', 'full', 'release', 'consumer', 'environment'] },
+        plan: { type: 'boolean' },
+        json: { type: 'boolean' },
+        'no-cache': { type: 'boolean' },
+      },
+    },
+    annotations: { readOnly: true, group: 'setup' },
+  },
   {
     name: 'doctor',
     summary: 'Preflight environment check: Node, pnpm, workspace, build artifacts, git hooks.',
@@ -245,7 +260,7 @@ const HANDLER_COMMANDS: readonly RegisteredCommand[] = [
   packageSmokeCommand,
   checkInvariantsCommand,
   capsuleVerifyGateCommand,
-  checkCommand,
+  checkGatesCommand,
   explainCommand,
   contextCommand,
 ];

@@ -14,21 +14,87 @@
  * @module
  */
 
-import type { CheckDefinition } from './definition.js';
+import type { CheckAuthority, CheckDefinition, CheckProfile, CheckPlatform } from './definition.js';
+import { InvariantViolationError } from '@liteship/error';
 
 /** Package TypeScript source — the covered bytes of every source-reading check. */
 const SRC_GLOB = 'packages/*/src/**/*.ts';
-/** Test source — the covered bytes of every check that runs the vitest corpus. */
-const TESTS_GLOB = 'tests/**/*.ts';
+/** Every package-owned TypeScript file, including templates, fragments, and declaration surfaces. */
+const PACKAGE_TS_GLOB = 'packages/**/*.ts';
+/** Test source and fixtures — every byte that can affect a test-runner verdict. */
+const TESTS_GLOB = 'tests/**';
 /** Repo scripts — the covered bytes of the script-owned gates. */
 const SCRIPTS_GLOB = 'scripts/**/*.ts';
+
+/** A repository row before the one shared repository context is projected onto it. */
+interface RepositoryCheckRow {
+  readonly id: string;
+  readonly title: string;
+  readonly claim: string;
+  readonly owner: string;
+  readonly command: string;
+  readonly inputs: readonly string[];
+  readonly profiles: readonly CheckProfile[];
+  readonly platforms: readonly CheckPlatform[];
+  readonly timeoutMs: number;
+  readonly cache: 'content-addressed' | 'none';
+  readonly authority: CheckAuthority;
+  readonly negativeControl?: string;
+  readonly remediation: string;
+}
+
+/**
+ * Formerly-exempt blockers now share one executable proof harness. The harness
+ * drives the real tool/runner/decision authority on deterministic bad input and
+ * asserts a non-zero/red result for every id listed here.
+ */
+const EXECUTED_CONTROL = 'tests/unit/devops/blocking-check-negative-controls.test.ts';
+const EXECUTED_CONTROL_IDS = new Set<string>([
+  'check/format',
+  'check/lint-structural',
+  'check/lint',
+  'check/docs',
+  'check/test',
+  'check/test-redteam',
+  'check/runtime-gate',
+  'check/flex-verify',
+  'check/devx',
+  'check/test-vite',
+  'check/test-astro',
+  'check/test-cloudflare',
+  'check/test-cloudflare-dev',
+  'check/test-tailwind',
+  'check/test-e2e',
+  'check/test-e2e-stress',
+  'check/test-e2e-stream-stress',
+  'check/bench-trend',
+  'check/bench-reality',
+  'check/bench-alloc',
+  'check/coverage',
+  'check/package-smoke',
+  'check/journey',
+  'check/hermetic',
+] as const);
+
+/** Add the explicit repository context and close any former control hole. */
+function materializeRepositoryCheck(row: RepositoryCheckRow): CheckDefinition {
+  if (row.authority === 'blocking') {
+    const negativeControl = row.negativeControl ?? (EXECUTED_CONTROL_IDS.has(row.id) ? EXECUTED_CONTROL : undefined);
+    if (negativeControl === undefined) {
+      throw InvariantViolationError('check-negative-control', `Blocking check ${row.id} has no negative control`);
+    }
+    return { ...row, contexts: ['repository'], authority: 'blocking', negativeControl };
+  }
+  const { negativeControl: _unused, ...advisory } = row;
+  return { ...advisory, contexts: ['repository'], authority: 'advisory' };
+}
 
 /**
  * The canonical check set, in declared plan order. Each `command` is the exact
  * root `package.json` script line; each `id` is `check/<slug>`. See
  * {@link CheckDefinition} for the field contract.
  */
-export const CHECK_REGISTRY: readonly CheckDefinition[] = [
+const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
   // ── The quick fast-lane (the preflight subset) ─────────────────────────────
   {
     id: 'check/format',
@@ -50,7 +116,16 @@ export const CHECK_REGISTRY: readonly CheckDefinition[] = [
     claim: 'No banned structural pattern (sgconfig.yml rules) appears in the tree.',
     owner: 'sgconfig.yml',
     command: 'pnpm run lint:structural',
-    inputs: [SRC_GLOB, TESTS_GLOB, SCRIPTS_GLOB, 'sgconfig.yml', 'rules/**/*.yml'],
+    inputs: [
+      PACKAGE_TS_GLOB,
+      TESTS_GLOB,
+      SCRIPTS_GLOB,
+      'sgconfig.yml',
+      'sgrules/**/*.yml',
+      'vitest.config.ts',
+      'vitest.browser.config.ts',
+      'vitest.shared.ts',
+    ],
     profiles: ['quick', 'full', 'release'],
     platforms: ['linux', 'darwin', 'win32'],
     timeoutMs: 90_000,
@@ -78,29 +153,24 @@ export const CHECK_REGISTRY: readonly CheckDefinition[] = [
     claim: 'The package, scripts, and tests projects all typecheck (tsc --build + scripts + tests).',
     owner: 'tsconfig.json',
     command: 'pnpm run typecheck',
-    inputs: [SRC_GLOB, TESTS_GLOB, SCRIPTS_GLOB, 'tsconfig*.json', 'packages/*/tsconfig.json'],
+    inputs: [
+      SRC_GLOB,
+      TESTS_GLOB,
+      SCRIPTS_GLOB,
+      'package.json',
+      'packages/*/package.json',
+      'packages/_spine/**/*.d.ts',
+      'tsconfig*.json',
+      'packages/*/tsconfig.json',
+    ],
     profiles: ['quick', 'full', 'release'],
     platforms: ['linux', 'darwin', 'win32'],
     timeoutMs: 240_000,
     cache: 'content-addressed',
     authority: 'blocking',
+    negativeControl: 'tests/unit/devops/gate-canaries.test.ts',
     remediation: 'fix the type errors (tsc --build + scripts + tests projects).',
   },
-  {
-    id: 'check/test-unit',
-    title: 'Unit tests (fast lane)',
-    claim: 'The fast unit suite is green — the quick-lane behavioural floor.',
-    owner: 'vitest.config.ts',
-    command: 'pnpm run test:unit',
-    inputs: [SRC_GLOB, 'tests/unit/**/*.ts', 'vitest.config.ts', 'vitest.shared.ts'],
-    profiles: ['quick'],
-    platforms: ['linux', 'darwin', 'win32'],
-    timeoutMs: 180_000,
-    cache: 'content-addressed',
-    authority: 'blocking',
-    remediation: 'make the failing unit assertions pass.',
-  },
-
   // ── The full lane (aggregate tests + the blocking gate family) ─────────────
   {
     id: 'check/docs',
@@ -112,7 +182,7 @@ export const CHECK_REGISTRY: readonly CheckDefinition[] = [
     profiles: ['full', 'release'],
     platforms: ['linux', 'darwin', 'win32'],
     timeoutMs: 240_000,
-    cache: 'content-addressed',
+    cache: 'none',
     authority: 'blocking',
     remediation: "run 'pnpm run docs:build' and commit docs/api/ if you touched a public TSDoc surface.",
   },
@@ -126,7 +196,7 @@ export const CHECK_REGISTRY: readonly CheckDefinition[] = [
     profiles: ['full', 'release'],
     platforms: ['linux', 'darwin', 'win32'],
     timeoutMs: 180_000,
-    cache: 'content-addressed',
+    cache: 'none',
     authority: 'blocking',
     negativeControl: 'tests/unit/gauntlet/gates-dogfood.test.ts',
     remediation: 'resolve the blocking gate findings, or file a signed waiver.',
@@ -141,7 +211,7 @@ export const CHECK_REGISTRY: readonly CheckDefinition[] = [
     profiles: ['full', 'release'],
     platforms: ['linux', 'darwin', 'win32'],
     timeoutMs: 120_000,
-    cache: 'content-addressed',
+    cache: 'none',
     authority: 'blocking',
     negativeControl: 'tests/unit/cli/commands/audit-floor.test.ts',
     remediation: 'clear the new audit warning(s), or update the floor with justification.',
@@ -156,7 +226,7 @@ export const CHECK_REGISTRY: readonly CheckDefinition[] = [
     profiles: ['full', 'release'],
     platforms: ['linux', 'darwin', 'win32'],
     timeoutMs: 600_000,
-    cache: 'content-addressed',
+    cache: 'none',
     authority: 'blocking',
     remediation: 'make the failing assertions pass.',
   },
@@ -170,9 +240,8 @@ export const CHECK_REGISTRY: readonly CheckDefinition[] = [
     profiles: ['full', 'release'],
     platforms: ['linux', 'darwin', 'win32'],
     timeoutMs: 240_000,
-    cache: 'content-addressed',
+    cache: 'none',
     authority: 'blocking',
-    negativeControl: 'tests/regression/red-team-runtime.test.ts',
     remediation: 'fix the runtime safety regression the red-team assertion caught.',
   },
   {
@@ -185,7 +254,7 @@ export const CHECK_REGISTRY: readonly CheckDefinition[] = [
     profiles: ['full', 'release'],
     platforms: ['linux', 'darwin', 'win32'],
     timeoutMs: 180_000,
-    cache: 'content-addressed',
+    cache: 'none',
     authority: 'blocking',
     remediation: 'restore the runtime seam the gate flagged (inject the dependency, do not hard-couple).',
   },
@@ -199,9 +268,9 @@ export const CHECK_REGISTRY: readonly CheckDefinition[] = [
     profiles: ['full', 'release'],
     platforms: ['linux', 'darwin', 'win32'],
     timeoutMs: 180_000,
-    cache: 'content-addressed',
+    cache: 'none',
     authority: 'blocking',
-    negativeControl: 'packages/gauntlet/src/gates/standards-integrity.ts',
+    negativeControl: 'tests/unit/gauntlet/gates-dogfood.test.ts',
     remediation: 'sign the standards change, or restore the weakened rigor.',
   },
   {
@@ -214,9 +283,9 @@ export const CHECK_REGISTRY: readonly CheckDefinition[] = [
     profiles: ['full', 'release'],
     platforms: ['linux', 'darwin', 'win32'],
     timeoutMs: 240_000,
-    cache: 'content-addressed',
+    cache: 'none',
     authority: 'blocking',
-    negativeControl: 'packages/gauntlet/src/gates/capability-gate-link.ts',
+    negativeControl: 'tests/unit/gauntlet/gates-dogfood.test.ts',
     remediation: 'link the skip guard to its capability probe, or remove the mislabeled skip.',
   },
   {
@@ -229,9 +298,9 @@ export const CHECK_REGISTRY: readonly CheckDefinition[] = [
     profiles: ['full', 'release'],
     platforms: ['linux', 'darwin', 'win32'],
     timeoutMs: 300_000,
-    cache: 'content-addressed',
+    cache: 'none',
     authority: 'blocking',
-    negativeControl: 'packages/gauntlet/src/gates/spine-relation.ts',
+    negativeControl: 'tests/unit/gauntlet/gates-dogfood.test.ts',
     remediation: 'reconcile the mirror type with its runtime source, or re-admit the new relation.',
   },
   {
@@ -244,9 +313,9 @@ export const CHECK_REGISTRY: readonly CheckDefinition[] = [
     profiles: ['full', 'release'],
     platforms: ['linux', 'darwin', 'win32'],
     timeoutMs: 240_000,
-    cache: 'content-addressed',
+    cache: 'none',
     authority: 'blocking',
-    negativeControl: 'packages/gauntlet/src/gates/transition-conformance.ts',
+    negativeControl: 'tests/unit/gauntlet/gates-dogfood.test.ts',
     remediation: 'restore bisimulation with the declared reactive model (fix the transport or the model).',
   },
   {
@@ -259,7 +328,7 @@ export const CHECK_REGISTRY: readonly CheckDefinition[] = [
     profiles: ['full', 'release'],
     platforms: ['linux', 'darwin', 'win32'],
     timeoutMs: 180_000,
-    cache: 'content-addressed',
+    cache: 'none',
     authority: 'blocking',
     negativeControl: 'tests/unit/devops/plumb-gate.test.ts',
     remediation: 'plumb the missing export, or update the plumb registry.',
@@ -274,7 +343,7 @@ export const CHECK_REGISTRY: readonly CheckDefinition[] = [
     profiles: ['full', 'release'],
     platforms: ['linux', 'darwin', 'win32'],
     timeoutMs: 120_000,
-    cache: 'content-addressed',
+    cache: 'none',
     authority: 'blocking',
     negativeControl: 'tests/unit/meta/feedback-integrity.test.ts',
     remediation: 'reconcile the feedback artifact with the current surface.',
@@ -289,7 +358,7 @@ export const CHECK_REGISTRY: readonly CheckDefinition[] = [
     profiles: ['full', 'release'],
     platforms: ['linux', 'darwin', 'win32'],
     timeoutMs: 120_000,
-    cache: 'content-addressed',
+    cache: 'none',
     authority: 'blocking',
     remediation: 'fix the flex-policy inconsistency the verifier reported.',
   },
@@ -303,7 +372,7 @@ export const CHECK_REGISTRY: readonly CheckDefinition[] = [
     profiles: ['full', 'release'],
     platforms: ['linux', 'darwin', 'win32'],
     timeoutMs: 60_000,
-    cache: 'content-addressed',
+    cache: 'none',
     authority: 'blocking',
     remediation: 'restore the devx policy invariant the check reported.',
   },
@@ -317,7 +386,7 @@ export const CHECK_REGISTRY: readonly CheckDefinition[] = [
     profiles: ['full', 'release'],
     platforms: ['linux', 'darwin', 'win32'],
     timeoutMs: 180_000,
-    cache: 'content-addressed',
+    cache: 'none',
     authority: 'blocking',
     negativeControl: 'tests/integration/capsule-verify.test.ts',
     remediation: 'recompile the capsule (pnpm run capsule:compile) and re-verify.',
@@ -334,7 +403,7 @@ export const CHECK_REGISTRY: readonly CheckDefinition[] = [
     profiles: ['full', 'release'],
     platforms: ['linux', 'darwin', 'win32'],
     timeoutMs: 180_000,
-    cache: 'content-addressed',
+    cache: 'none',
     authority: 'advisory',
     remediation: 'review the audit report; escalations are enforced by check/audit-floor.',
   },
@@ -378,7 +447,7 @@ export const CHECK_REGISTRY: readonly CheckDefinition[] = [
     profiles: ['release'],
     platforms: ['linux', 'darwin', 'win32'],
     timeoutMs: 300_000,
-    cache: 'content-addressed',
+    cache: 'none',
     authority: 'blocking',
     remediation: 'fix the Vite integration failure the harness reported.',
   },
@@ -392,7 +461,7 @@ export const CHECK_REGISTRY: readonly CheckDefinition[] = [
     profiles: ['release'],
     platforms: ['linux', 'darwin', 'win32'],
     timeoutMs: 300_000,
-    cache: 'content-addressed',
+    cache: 'none',
     authority: 'blocking',
     remediation: 'fix the Astro integration failure the harness reported.',
   },
@@ -406,7 +475,7 @@ export const CHECK_REGISTRY: readonly CheckDefinition[] = [
     profiles: ['release'],
     platforms: ['linux', 'darwin', 'win32'],
     timeoutMs: 300_000,
-    cache: 'content-addressed',
+    cache: 'none',
     authority: 'blocking',
     remediation: 'fix the Cloudflare/Astro integration failure the harness reported.',
   },
@@ -420,7 +489,7 @@ export const CHECK_REGISTRY: readonly CheckDefinition[] = [
     profiles: ['release'],
     platforms: ['linux', 'darwin', 'win32'],
     timeoutMs: 300_000,
-    cache: 'content-addressed',
+    cache: 'none',
     authority: 'blocking',
     remediation: 'fix the Cloudflare dev-server integration failure the harness reported.',
   },
@@ -434,7 +503,7 @@ export const CHECK_REGISTRY: readonly CheckDefinition[] = [
     profiles: ['release'],
     platforms: ['linux', 'darwin', 'win32'],
     timeoutMs: 300_000,
-    cache: 'content-addressed',
+    cache: 'none',
     authority: 'blocking',
     remediation: 'fix the Tailwind integration failure the harness reported.',
   },
@@ -553,7 +622,6 @@ export const CHECK_REGISTRY: readonly CheckDefinition[] = [
     timeoutMs: 300_000,
     cache: 'none',
     authority: 'blocking',
-    negativeControl: 'tests/unit/meta/bench-reality.test.ts',
     remediation: 'restore a real measured workload for the vacuous benchmark the gate flagged.',
   },
   {
@@ -582,7 +650,7 @@ export const CHECK_REGISTRY: readonly CheckDefinition[] = [
     profiles: ['release'],
     platforms: ['linux', 'darwin', 'win32'],
     timeoutMs: 900_000,
-    cache: 'content-addressed',
+    cache: 'none',
     authority: 'blocking',
     remediation: 'add tests to lift the under-covered file back over the floor.',
   },
@@ -596,9 +664,8 @@ export const CHECK_REGISTRY: readonly CheckDefinition[] = [
     profiles: ['release', 'consumer'],
     platforms: ['linux', 'darwin', 'win32'],
     timeoutMs: 300_000,
-    cache: 'content-addressed',
+    cache: 'none',
     authority: 'blocking',
-    negativeControl: 'tests/unit/devops/package-smoke-roster.test.ts',
     remediation: 'fix the packed-package export/peer that failed to resolve in the consumer smoke.',
   },
   {
@@ -613,6 +680,7 @@ export const CHECK_REGISTRY: readonly CheckDefinition[] = [
     timeoutMs: 60_000,
     cache: 'none',
     authority: 'blocking',
+    negativeControl: 'tests/unit/cli/commands/doctor.test.ts',
     remediation: 'install / update the toolchain dependency the doctor flagged.',
   },
   {
@@ -628,7 +696,6 @@ export const CHECK_REGISTRY: readonly CheckDefinition[] = [
     timeoutMs: 600_000,
     cache: 'none',
     authority: 'blocking',
-    negativeControl: 'tests/journey/journey-debug-diagnostic.ts',
     remediation: 'fix the consumer flow the journey test exercised (scaffold, build, diagnostic, upgrade, or context).',
   },
   {
@@ -644,7 +711,6 @@ export const CHECK_REGISTRY: readonly CheckDefinition[] = [
     timeoutMs: 420_000,
     cache: 'none',
     authority: 'blocking',
-    negativeControl: 'tests/unit/liteship/facade-subpaths.test.ts',
     remediation: 'fix the offline rebuild or the public-subpath export that failed to resolve in the hermetic closure.',
   },
   {
@@ -657,9 +723,34 @@ export const CHECK_REGISTRY: readonly CheckDefinition[] = [
     profiles: ['environment'],
     platforms: ['linux', 'darwin', 'win32'],
     timeoutMs: 60_000,
-    cache: 'content-addressed',
+    cache: 'none',
     authority: 'blocking',
+    negativeControl: 'tests/unit/meta/devcontainer-pins.test.ts',
     remediation:
       'realign the .devcontainer pin with package.json engines/packageManager, .nvmrc, or the CI toolchain pin.',
   },
 ] as const;
+
+/** Application-local quick authority: a real host build, never cache-served. */
+const APP_BUILD_CHECK: CheckDefinition = {
+  id: 'check/app-build',
+  title: 'LiteShip application build',
+  claim: 'The current LiteShip application config is recognized and its host build completes.',
+  owner: 'packages/cli/src/commands/build.ts',
+  command: 'pnpm exec liteship build',
+  inputs: ['package.json', 'liteship.config.ts', 'astro.config.*', 'vite.config.*', 'src/**'],
+  profiles: ['quick'],
+  contexts: ['application'],
+  platforms: ['linux', 'darwin', 'win32'],
+  timeoutMs: 300_000,
+  cache: 'none',
+  authority: 'blocking',
+  negativeControl: 'tests/unit/cli/commands/build.test.ts',
+  remediation: 'fix the LiteShip config or host build failure reported by `liteship build`.',
+};
+
+/** The complete repository + application check catalog. */
+export const CHECK_REGISTRY: readonly CheckDefinition[] = Object.freeze([
+  ...REPOSITORY_CHECKS.map(materializeRepositoryCheck),
+  APP_BUILD_CHECK,
+]);

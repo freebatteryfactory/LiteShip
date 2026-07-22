@@ -51,8 +51,9 @@ describe('@liteship/command explain command — diagnostic-code arm', () => {
     expect(d.emitter.kind).toBe('gate');
     // the gate id is the first two segments — the sub-code appends a third
     expect(d.emitter.id).toBe('gauntlet/standards-integrity');
-    // a blocking check whose negativeControl is this gate's source proves it
-    expect(d.emitter.negativeControl).toBe('packages/gauntlet/src/gates/standards-integrity.ts');
+    // The standards check owns the gate source and points at the dogfood test that
+    // executes the gate's embedded red fixture through the authority ratchet.
+    expect(d.emitter.negativeControl).toBe('tests/unit/gauntlet/gates-dogfood.test.ts');
     expect(d.emitter.provenByCheck).toBe('check/standards-gate');
   });
 

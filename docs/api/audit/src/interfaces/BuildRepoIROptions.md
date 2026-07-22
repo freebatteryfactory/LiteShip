@@ -34,6 +34,6 @@ Run the SYMBOL-EVIDENCED LanguageService oracle (B3.3) — true cross-file
 symbol references via a `ts.LanguageService`, cross-checked against the
 file-proxy-only `refs` graph by the symbol-orphan divergence gate. OFF by
 default: it is the heaviest oracle in the set (a whole-repo LanguageService +
-a reference query per exported symbol), so it is opt-in (`liteship check --ir
+a reference query per exported symbol), so it is opt-in (`liteship check gates --ir
 --symbols`) and amortized by the B2 verdict cache. Without it, the gate finds
 nothing (no symbol-evidenced facts) — harmless.

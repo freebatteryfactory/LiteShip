@@ -144,11 +144,11 @@ function notEvidencedFinding(): Finding {
     level: 'L4',
     title: 'Composition-coverage not evidenced',
     detail:
-      'No composition facts were injected, so the untested-interaction analysis could not run — the gate reports this honestly rather than passing silently. A host (the CLI `liteship check --ir --composition` path) derives the interaction edges from the IR call graph, decides which units are individually tested, decides which edges an integration test covers together, and injects CompositionFacts for this gate to fold.',
+      'No composition facts were injected, so the untested-interaction analysis could not run — the gate reports this honestly rather than passing silently. A host (the CLI `liteship check gates --ir --composition` path) derives the interaction edges from the IR call graph, decides which units are individually tested, decides which edges an integration test covers together, and injects CompositionFacts for this gate to fold.',
     remediation: {
       kind: 'instruction',
       description: 'Run the composition-coverage analysis so the untested interactions are evidenced.',
-      steps: ['Run `liteship check --ir --composition` so the host builds + injects CompositionFacts.'],
+      steps: ['Run `liteship check gates --ir --composition` so the host builds + injects CompositionFacts.'],
     },
   });
 }

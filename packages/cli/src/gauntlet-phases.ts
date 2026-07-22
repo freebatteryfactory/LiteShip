@@ -145,14 +145,14 @@ const RELEASE_GAUNTLET_PROJECTION: readonly PhaseProjection[] = [
   // The capability-link proof (codex round-8 #1b) — the sanctioned-skip INTEGRITY family, beside
   // standards:gate/plumb:gate: every sanctioned capability-gated skip's guard must DERIVE FROM its
   // declared capability's probe (a ts.Program over the sanctioned files + the canonical capability
-  // modules), or the cut reds. Opt-in `liteship check --ir --capability-gate` runs the same proof.
+  // modules), or the cut reds. Opt-in `liteship check gates --ir --capability-gate` runs the same proof.
   { checkId: 'check/capability-gate', label: 'capability:gate' },
   // The two-axis spine-relation proof (Wave 8.5, #156) — the CONSTITUTION / public-surface
   // INTEGRITY family, beside standards:gate/capability:gate: every admitted @liteship/_spine mirror
   // type's OBSERVED bidirectional-assignability relation must still satisfy its ADMITTED (frozen)
   // relation (a ts.Program probe over the spine + runtime surface), or the cut reds. A SECOND
-  // ts.Program build (~3.25s) too heavy for the default `liteship check --ir`, so it runs HERE as its
-  // own phase; the equivalent opt-in path is `liteship check --ir --spine-relation`.
+  // ts.Program build (~3.25s) too heavy for the default `liteship check gates --ir`, so it runs HERE as its
+  // own phase; the equivalent opt-in path is `liteship check gates --ir --spine-relation`.
   { checkId: 'check/spine-relation-gate', label: 'spine-relation:gate' },
   // The reactive BISIMULATION proof (Wave 5.5, the transition cage) — the CONSTITUTION /
   // conformance INTEGRITY family, beside spine-relation:gate/capability:gate: every pinned

@@ -112,7 +112,7 @@ describe('create-liteship scaffold', () => {
     // The README teaches the author model (define -> apply -> inspect) and the verify hint.
     const readme = readFileSync(join(result.projectDir, 'README.md'), 'utf8');
     expect(readme).toContain('define → apply → inspect');
-    expect(readme).toContain('liteship check --profile consumer');
+    expect(readme).toContain('liteship check --profile quick');
   });
 
   it('accepts an existing but empty directory', () => {
@@ -238,7 +238,7 @@ describe('create-liteship run (CLI surface)', () => {
     // The post-install verify hint teaches the "inspect" leg of the journey — and
     // recommends the `consumer` profile, the one that actually runs in a scaffolded
     // app (quick/full project monorepo-root checks the generated app does not have).
-    expect(text).toContain('liteship check --profile consumer');
+    expect(text).toContain('liteship check --profile quick');
   });
 
   it('prompts when no dir is given and uses the answer', async () => {

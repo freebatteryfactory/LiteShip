@@ -5,7 +5,7 @@
  * access") is exercised in unit tests with a hermetic, INJECTED `gitShow`
  * (`tests/unit/cli/lib/repo-ir-gauntlet.test.ts`). That proves the FOLD logic — but
  * a correct gate that nothing runs over the real repo is still a hole. This script
- * closes it: it runs the SAME host extractor the production `liteship check --ir` path
+ * closes it: it runs the SAME host extractor the production `liteship check gates --ir` path
  * runs ({@link buildStandardsIntegrityFacts}) over the LIVE repo, through the REAL
  * base-ref path:
  *
@@ -159,7 +159,7 @@ export function main(root = repoRoot): void {
       `FAIL standards-integrity: ${outcome.unsignedWeakenings} unsigned weakening(s), ${outcome.forbiddenSignoffs} forbidden sign-off(s), ${outcome.expiredSignoffs} expired sign-off(s) vs the base ref "${outcome.baseRef}".`,
     );
     throw new Error(
-      `Standards-integrity gate failed — ${blocking} blocking standards-integrity finding(s). The raccoon-rule backstop refuses: the gauntlet's own rigor was eroded versus the base without a valid owner sign-off. Run \`liteship check --ir\` for the per-finding detail.`,
+      `Standards-integrity gate failed — ${blocking} blocking standards-integrity finding(s). The raccoon-rule backstop refuses: the gauntlet's own rigor was eroded versus the base without a valid owner sign-off. Run \`liteship check gates --ir\` for the per-finding detail.`,
     );
   }
 

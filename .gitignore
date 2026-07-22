@@ -41,7 +41,7 @@ benchmarks/*
 !benchmarks/distributions.json
 !benchmarks/complexity-map.json
 # …and the mutation-score baseline (the avionics mutation-as-divergence ratchet
-# floor — `liteship check --ir --mutate`'s committed per-file kill-score; the
+# floor — `liteship check gates --ir --mutate`'s committed per-file kill-score; the
 # mutationDivergenceGate folds it to flag a regression). A committed contract, not
 # a regenerated artifact — tracked so the ratchet can only ever rise.
 !benchmarks/mutation-score.json

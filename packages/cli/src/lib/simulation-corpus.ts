@@ -1,6 +1,6 @@
 /**
  * THE DST SCENARIO CORPUS — the committed, content-addressed set of deterministic
- * scenarios the host (`liteship check --ir --simulate`) drives the REAL L4 TRUST-SPINE
+ * scenarios the host (`liteship check gates --ir --simulate`) drives the REAL L4 TRUST-SPINE
  * code through, certifying byte-exact replay (FoundationDB property).
  *
  * Each {@link SimScenario} here drives ONE production L4 system-under-test — the

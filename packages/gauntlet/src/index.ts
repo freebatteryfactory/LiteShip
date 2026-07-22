@@ -436,7 +436,7 @@ export { supplyChainGate } from './gates/supply-chain.js';
 // and a per-file score drop is a ratchet regression. The heavy AST mutation + the
 // per-mutant vitest runs live in @liteship/audit + the @liteship/cli host. Exported but
 // DELIBERATELY NOT in LITESHIP_GATES / LITESHIP_IR_GATES: mutation is OPT-IN
-// (`liteship check --ir --mutate`) — running a suite per mutant is too heavy for a
+// (`liteship check gates --ir --mutate`) — running a suite per mutant is too heavy for a
 // default run. The integrator composes it on like supplyChainGate (a ~3-line
 // wiring). See the SURVIVOR_SEVERITY_BY_LEVEL / KILL_FLOOR_BY_LEVEL redlinable data.
 export {
@@ -464,7 +464,7 @@ export {
   TRANSITION_FAMILY_LEVEL,
 } from './gates/transition-conformance.js';
 // The Wave-8.5 two-axis spine-relation gate. Exported but DELIBERATELY NOT in
-// LITESHIP_GATES / LITESHIP_IR_GATES: it is OPT-IN (`liteship check --ir --spine-relation`)
+// LITESHIP_GATES / LITESHIP_IR_GATES: it is OPT-IN (`liteship check gates --ir --spine-relation`)
 // — a ts.Program probe over the spine + runtime surface is too heavy for a default
 // run. The integrator composes it on like transitionConformanceGate (a ~3-line
 // wiring); @liteship/audit's buildSpineRelationFacts builds the injected facts.
@@ -478,7 +478,7 @@ export { spineRelationGate } from './gates/spine-relation.js';
 // assurance level, the MC/DC floor by level deciding blocking (L4 requires FULL MC/DC).
 // The heavy condition-mutant AST work + the per-pin vitest runs live in @liteship/audit + the
 // @liteship/cli host. Exported but DELIBERATELY NOT in LITESHIP_GATES / LITESHIP_IR_GATES:
-// MC/DC is OPT-IN (`liteship check --ir --mcdc`) — running a suite per pin (two per condition)
+// MC/DC is OPT-IN (`liteship check gates --ir --mcdc`) — running a suite per pin (two per condition)
 // is too heavy for a default run. The integrator composes it on like mutationDivergenceGate
 // (a ~3-line wiring). See the MCDC_SEVERITY_BY_LEVEL / MCDC_FLOOR_BY_LEVEL redlinable data.
 export { mcdcCoverageGate, MCDC_SEVERITY_BY_LEVEL, MCDC_FLOOR_BY_LEVEL } from './gates/mcdc-coverage.js';
@@ -488,7 +488,7 @@ export { mcdcCoverageGate, MCDC_SEVERITY_BY_LEVEL, MCDC_FLOOR_BY_LEVEL } from '.
 // produce different byte-exact trace digests) is a self-explaining L4 Finding
 // carrying the seed. The heavy work (minting a seeded world, running the scenario
 // corpus, replaying, content-addressing traces) lives in @liteship/core/simulation,
-// driven by the @liteship/cli host (`liteship check --ir --simulate`). Exported but
+// driven by the @liteship/cli host (`liteship check gates --ir --simulate`). Exported but
 // DELIBERATELY NOT in LITESHIP_GATES / LITESHIP_IR_GATES: it runs on the
 // facts-injected, opt-in `--simulate` host path only (a ~3-line wiring like
 // supplyChainGate — the integrator composes it on, the gate ships qualified).
@@ -517,7 +517,7 @@ export { fuzzCorpusGate } from './gates/fuzz-corpus.js';
 // classified by the LiteShip-LOCAL source/sink/sanitizer registry the @liteship/cli
 // host injects (the audit engine references NO LiteShip policy — ADR-0012/D7b).
 // Exported but DELIBERATELY NOT in LITESHIP_GATES / LITESHIP_IR_GATES: taint is
-// OPT-IN (`liteship check --ir --taint`) — a whole-corpus trace is too heavy for a
+// OPT-IN (`liteship check gates --ir --taint`) — a whole-corpus trace is too heavy for a
 // default run. The integrator composes it on like supplyChainGate (a ~3-line
 // wiring).
 export { taintFlowGate } from './gates/taint-flow.js';
@@ -566,7 +566,7 @@ export { declaredFixProtocolGate } from './gates/declared-fix-protocol.js';
 // weak dependency is a self-explaining Finding naming the weak-link path. The heavy work
 // (reading the proof signals — mutation score / coverage / property tests / enrolled
 // invariants — and blending the per-module scalar) lives in the @liteship/cli host (`liteship
-// check --ir --proof`). Exported but DELIBERATELY NOT in LITESHIP_GATES /
+// check gates --ir --proof`). Exported but DELIBERATELY NOT in LITESHIP_GATES /
 // LITESHIP_IR_GATES: it runs on the facts-injected, opt-in `--proof` host path only (a
 // ~3-line wiring like supplyChainGate — push the gate + inject ProofFacts). When the
 // facts are absent it advisories "not-evidenced" rather than passing silent. See the
@@ -586,7 +586,7 @@ export {
 // self-explaining Finding at the edge's propagated level, honestly stating which
 // evidence class decided it (a structural over-approximation of integration coverage).
 // The heavy work (deriving the call-graph edges + the individually-tested set + the
-// integration-coverage probe) lives in the @liteship/cli host (`liteship check --ir
+// integration-coverage probe) lives in the @liteship/cli host (`liteship check gates --ir
 // --composition`). Exported but DELIBERATELY NOT in LITESHIP_GATES / LITESHIP_IR_GATES:
 // it runs on the facts-injected, opt-in `--composition` host path only (a ~3-line wiring
 // like supplyChainGate). When the facts are absent it advisories "not-evidenced". See the

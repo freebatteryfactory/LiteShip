@@ -31,7 +31,13 @@ import { journeyUpgrade } from '../tests/journey/journey-upgrade.js';
 import { journeyPackageAuthor } from '../tests/journey/journey-package-author.js';
 import { journeyColdAgentContext } from '../tests/journey/journey-cold-agent-context.js';
 import { journeyInstalledAdd } from '../tests/journey/journey-installed-add.js';
-import { packWorkspace, removeDir, type JourneyResult, type PackedWorkspace } from '../tests/journey/harness.js';
+import {
+  journeysPassed,
+  packWorkspace,
+  removeDir,
+  type JourneyResult,
+  type PackedWorkspace,
+} from '../tests/journey/harness.js';
 
 /** Print a single aligned result line: `PASS  journey-name  — detail`. */
 function printResult(result: JourneyResult): void {
@@ -93,7 +99,7 @@ async function main(): Promise<void> {
 
   const failed = results.filter((r) => r.status === 'fail');
   const gated = results.filter((r) => r.status === 'gated');
-  if (failed.length > 0 || gated.length > 0) {
+  if (!journeysPassed(results)) {
     console.log(
       `=== JOURNEY FAILED — ${failed.length} failed, ${gated.length} unverified of ${results.length} journeys ===\n`,
     );

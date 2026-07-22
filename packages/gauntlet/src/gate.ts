@@ -132,7 +132,7 @@ export interface GateContext {
    * kill/survive verdict + the committed score baseline) and lands them here. The
    * {@link mutationDivergenceGate} reads ONLY through this; in-memory fixtures
    * supply a literal facts record (no parse, no test run). When ABSENT the gate is
-   * simply not in the set (mutation is opt-in: `liteship check --ir --mutate`), so
+   * simply not in the set (mutation is opt-in: `liteship check gates --ir --mutate`), so
    * there is no per-mutant cost and no noise on a default run. See
    * {@link MutationFacts}.
    */
@@ -180,7 +180,7 @@ export interface GateContext {
    * {@link McdcFacts} (each condition MC/DC-covered iff BOTH pins were KILLED) and lands
    * them here. The {@link mcdcCoverageGate} reads ONLY through this; in-memory fixtures
    * supply a literal facts record (no parse, no test run). When ABSENT the gate is simply
-   * not in the set (MC/DC is opt-in: `liteship check --ir --mcdc`), so there is no per-pin
+   * not in the set (MC/DC is opt-in: `liteship check gates --ir --mcdc`), so there is no per-pin
    * cost and no noise on a default run. See {@link McdcFacts}.
    */
   readonly mcdc?: McdcFacts;
@@ -190,7 +190,7 @@ export interface GateContext {
    * {@link supplyChain}, and {@link mutation}. OPTIONAL: the heavy work (minting a
    * seeded world, running the scenario corpus, replaying each seed twice, and
    * content-addressing the byte-exact traces) all lives in a HOST (the CLI's
-   * `liteship check --ir --simulate` path, driving the `@liteship/core/simulation`
+   * `liteship check gates --ir --simulate` path, driving the `@liteship/core/simulation`
    * harness), which folds the verdicts into flat {@link SimulationFacts} (every
    * scenario's two replay digests + any divergence) and lands them here. The
    * {@link simulationDeterminismGate} reads ONLY through this; in-memory fixtures
@@ -268,7 +268,7 @@ export interface GateContext {
    * honest interprocedural depth the trace covered) and lands them here. The
    * {@link taintFlowGate} reads ONLY through this; in-memory fixtures supply a
    * literal facts record (no program, no checker). When ABSENT the gate is simply
-   * not in the set (taint is opt-in: `liteship check --ir --taint`). An UNSANITIZED
+   * not in the set (taint is opt-in: `liteship check gates --ir --taint`). An UNSANITIZED
    * source→sink flow folds to a Finding at the sink's (propagated) level — L4 for a
    * trust-spine sink. See {@link TaintFacts}.
    */
@@ -280,7 +280,7 @@ export interface GateContext {
    * canonical capability-module SET + the sanctioned sites the `@liteship/cli` host injects — the audit
    * engine names no LiteShip capability, ADR-0012/D7b). The {@link capabilityGateLinkGate} reads ONLY
    * through this; fixtures supply a literal facts record. When ABSENT the gate is not in the set
-   * (capability-link is opt-in: `liteship check --ir --capability-gate`). A skip whose guard derives from
+   * (capability-link is opt-in: `liteship check gates --ir --capability-gate`). A skip whose guard derives from
    * NO capability probe (`if (Math.random())`) — or the WRONG one (a mislabel) — folds to an L4 finding.
    */
   readonly capabilityLink?: CapabilityLinkFacts;
@@ -311,7 +311,7 @@ export interface GateContext {
    * {@link simulation}. OPTIONAL: the heavy work (reading the proof signals —
    * mutation-score baseline, coverage report, property-test presence, the enrolled
    * invariants ledger — and blending them into a per-module proof scalar) lives in a
-   * HOST (the CLI's `liteship check --ir --proof` path), which folds them into flat
+   * HOST (the CLI's `liteship check gates --ir --proof` path), which folds them into flat
    * {@link ProofFacts} and lands them here. The {@link proofPropagationGate}
    * PROPAGATES the scalar along the IR's dep DAG (the `min`-fixpoint dual of
    * assurance propagation) and reads ONLY through this; in-memory fixtures supply a
@@ -328,7 +328,7 @@ export interface GateContext {
    * OPTIONAL: the heavy work (deriving the interaction edges from the IR call graph,
    * deciding which units are individually tested, and deciding which edges an
    * integration test exercises TOGETHER — by a per-test execution-coverage probe or
-   * the sound static-reference proxy) lives in a HOST (the CLI's `liteship check --ir
+   * the sound static-reference proxy) lives in a HOST (the CLI's `liteship check gates --ir
    * --composition` path), which folds the classified edges into flat
    * {@link CompositionFacts} and lands them here. The {@link compositionCoverageGate}
    * reads ONLY through this; in-memory fixtures supply a literal facts record (no
@@ -670,19 +670,15 @@ function normalizeCheckGovernanceFacts(value: CheckGovernanceFacts | undefined):
     const blocking = ownDataField(entry, 'blocking');
     const negativeControl = ownDataField(entry, 'negativeControl');
     const exists = ownDataField(entry, 'exists');
-    const exempt = ownDataField(entry, 'exempt');
-    const exemptReason = ownDataField(entry, 'exemptReason');
     if (
       typeof id !== 'string' ||
       typeof blocking !== 'boolean' ||
       !(negativeControl === null || typeof negativeControl === 'string') ||
-      typeof exists !== 'boolean' ||
-      typeof exempt !== 'boolean' ||
-      !(exemptReason === null || typeof exemptReason === 'string')
+      typeof exists !== 'boolean'
     ) {
       throw ValidationError('FactGate', `checkGovernance.negativeControls[${index}] is malformed`);
     }
-    return Object.freeze({ id, blocking, negativeControl, exists, exempt, exemptReason });
+    return Object.freeze({ id, blocking, negativeControl, exists });
   });
   if (!Array.isArray(waivers)) {
     throw ValidationError('FactGate', 'checkGovernance.waivers must be an array');
@@ -971,7 +967,7 @@ export function requireMutation(context: GateContext, gateId: string): MutationF
   if (context.mutation === undefined) {
     throw HostCapabilityError(
       'mutation-facts',
-      `gate "${gateId}" requires the injected mutation facts, but none were supplied on the GateContext — a host (the CLI) must generate mutants via @liteship/audit's mutation engine, run the covering tests, and inject the decided MutationFacts as context.mutation (the opt-in \`liteship check --ir --mutate\` path)`,
+      `gate "${gateId}" requires the injected mutation facts, but none were supplied on the GateContext — a host (the CLI) must generate mutants via @liteship/audit's mutation engine, run the covering tests, and inject the decided MutationFacts as context.mutation (the opt-in \`liteship check gates --ir --mutate\` path)`,
     );
   }
   return context.mutation;
@@ -1007,7 +1003,7 @@ export function requireSpineRelation(context: GateContext, gateId: string): Spin
   if (context.spineRelation === undefined) {
     throw HostCapabilityError(
       'spine-relation-facts',
-      `gate "${gateId}" requires the injected two-axis spine-relation facts, but none were supplied on the GateContext — a host (the CLI) must probe each admitted mirror type's bidirectional assignability via @liteship/audit's buildSpineRelationFacts and inject the observed SpineRelationFacts as context.spineRelation (the opt-in \`liteship check --ir --spine-relation\` path)`,
+      `gate "${gateId}" requires the injected two-axis spine-relation facts, but none were supplied on the GateContext — a host (the CLI) must probe each admitted mirror type's bidirectional assignability via @liteship/audit's buildSpineRelationFacts and inject the observed SpineRelationFacts as context.spineRelation (the opt-in \`liteship check gates --ir --spine-relation\` path)`,
     );
   }
   return context.spineRelation;
@@ -1024,7 +1020,7 @@ export function requireMcdc(context: GateContext, gateId: string): McdcFacts {
   if (context.mcdc === undefined) {
     throw HostCapabilityError(
       'mcdc-facts',
-      `gate "${gateId}" requires the injected MC/DC facts, but none were supplied on the GateContext — a host (the CLI) must generate the condition-mutants via @liteship/audit's condition-mutation engine, run the covering tests per pin, and inject the decided McdcFacts as context.mcdc (the opt-in \`liteship check --ir --mcdc\` path)`,
+      `gate "${gateId}" requires the injected MC/DC facts, but none were supplied on the GateContext — a host (the CLI) must generate the condition-mutants via @liteship/audit's condition-mutation engine, run the covering tests per pin, and inject the decided McdcFacts as context.mcdc (the opt-in \`liteship check gates --ir --mcdc\` path)`,
     );
   }
   return context.mcdc;
@@ -1042,7 +1038,7 @@ export function requireTaint(context: GateContext, gateId: string): TaintFacts {
   if (context.taint === undefined) {
     throw HostCapabilityError(
       'taint-facts',
-      `gate "${gateId}" requires the injected taint facts, but none were supplied on the GateContext — a host (the CLI) must trace the source→sink dataflow via @liteship/audit's taint oracle (classified by the host-injected LiteShip source/sink/sanitizer registry) and inject the decided TaintFacts as context.taint (the opt-in \`liteship check --ir --taint\` path)`,
+      `gate "${gateId}" requires the injected taint facts, but none were supplied on the GateContext — a host (the CLI) must trace the source→sink dataflow via @liteship/audit's taint oracle (classified by the host-injected LiteShip source/sink/sanitizer registry) and inject the decided TaintFacts as context.taint (the opt-in \`liteship check gates --ir --taint\` path)`,
     );
   }
   return context.taint;
@@ -1057,7 +1053,7 @@ export function requireCapabilityLink(context: GateContext, gateId: string): Cap
   if (context.capabilityLink === undefined) {
     throw HostCapabilityError(
       'capability-link-facts',
-      `gate "${gateId}" requires the injected capability-link facts, but none were supplied on the GateContext — a host (the CLI) must resolve each sanctioned skip's guard against the canonical capability symbol table via @liteship/audit's capability-link oracle and inject the decided CapabilityLinkFacts as context.capabilityLink (the opt-in \`liteship check --ir --capability-gate\` path)`,
+      `gate "${gateId}" requires the injected capability-link facts, but none were supplied on the GateContext — a host (the CLI) must resolve each sanctioned skip's guard against the canonical capability symbol table via @liteship/audit's capability-link oracle and inject the decided CapabilityLinkFacts as context.capabilityLink (the opt-in \`liteship check gates --ir --capability-gate\` path)`,
     );
   }
   return context.capabilityLink;

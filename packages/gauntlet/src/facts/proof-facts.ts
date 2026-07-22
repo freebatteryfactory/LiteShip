@@ -7,7 +7,7 @@
  * {@link RepoIR} and {@link MutationFacts}, it carries NO heavy dependency:
  * `@liteship/gauntlet` stays the lean engine, so it never reads a coverage report, a
  * mutation-score baseline, or the invariants ledger. A HOST (the CLI's
- * `liteship check --ir --proof` path) reads those proof signals, blends them into a
+ * `liteship check gates --ir --proof` path) reads those proof signals, blends them into a
  * per-module proof scalar, and hands the engine these flat, already-decided facts.
  * The gate's only job is to PROPAGATE the scalar along the IR's dep DAG (the
  * `min`-fold mirroring {@link propagateAssuranceLevels}) and FOLD a weak-link finding

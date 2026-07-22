@@ -6,16 +6,13 @@
 
 # Interface: NegativeControlFact
 
-Defined in: [gauntlet/src/facts/check-governance-facts.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/check-governance-facts.ts#L52)
+Defined in: [gauntlet/src/facts/check-governance-facts.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/check-governance-facts.ts#L49)
 
 One blocking (or advisory) check's negative-control verdict for `check-negative-control`.
 
-The gate decides the PARTITION over the blocking checks: each blocking check must
-be classified EXACTLY once — it EITHER declares a `negativeControl` that EXISTS
-(a real red-fixture / regression-guard / self-proving gate) OR is `exempt` (with a
-documented `exemptReason`). A blocking check that is NEITHER is an unclassified
-partition hole; one that is BOTH breaks disjointness. A host folds each check's
-declared path + on-disk existence + its `NEGATIVE_CONTROL_EXEMPT` membership here.
+Every blocking check must declare a `negativeControl` that EXISTS (a real
+red-fixture / regression-guard / self-proving gate). There is no blocker
+exemption path: inability to prove the authority can fail is itself a gap.
 
 ## Properties
 
@@ -23,29 +20,9 @@ declared path + on-disk existence + its `NEGATIVE_CONTROL_EXEMPT` membership her
 
 > `readonly` **blocking**: `boolean`
 
-Defined in: [gauntlet/src/facts/check-governance-facts.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/check-governance-facts.ts#L56)
+Defined in: [gauntlet/src/facts/check-governance-facts.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/check-governance-facts.ts#L53)
 
 Whether this check holds blocking authority (only blocking checks are judged).
-
-***
-
-### exempt
-
-> `readonly` **exempt**: `boolean`
-
-Defined in: [gauntlet/src/facts/check-governance-facts.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/check-governance-facts.ts#L62)
-
-Whether this check is a key of `NEGATIVE_CONTROL_EXEMPT` (a documented planted-regression exemption).
-
-***
-
-### exemptReason
-
-> `readonly` **exemptReason**: `string` \| `null`
-
-Defined in: [gauntlet/src/facts/check-governance-facts.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/check-governance-facts.ts#L64)
-
-The one-line exemption rationale when `exempt`, else `null`.
 
 ***
 
@@ -53,7 +30,7 @@ The one-line exemption rationale when `exempt`, else `null`.
 
 > `readonly` **exists**: `boolean`
 
-Defined in: [gauntlet/src/facts/check-governance-facts.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/check-governance-facts.ts#L60)
+Defined in: [gauntlet/src/facts/check-governance-facts.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/check-governance-facts.ts#L57)
 
 Whether the declared negativeControl path EXISTS on disk (false when `negativeControl` is null).
 
@@ -63,7 +40,7 @@ Whether the declared negativeControl path EXISTS on disk (false when `negativeCo
 
 > `readonly` **id**: `string`
 
-Defined in: [gauntlet/src/facts/check-governance-facts.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/check-governance-facts.ts#L54)
+Defined in: [gauntlet/src/facts/check-governance-facts.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/check-governance-facts.ts#L51)
 
 The check identity, `check/<slug>`.
 
@@ -73,6 +50,6 @@ The check identity, `check/<slug>`.
 
 > `readonly` **negativeControl**: `string` \| `null`
 
-Defined in: [gauntlet/src/facts/check-governance-facts.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/check-governance-facts.ts#L58)
+Defined in: [gauntlet/src/facts/check-governance-facts.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/check-governance-facts.ts#L55)
 
 The declared negativeControl fixture path, or `null` when the check declares none.

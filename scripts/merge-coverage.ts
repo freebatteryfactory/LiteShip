@@ -24,7 +24,7 @@ type MetricSummary = {
 
 type FileSummary = Record<MetricKey, MetricSummary>;
 
-const coverageRoot = resolve(repoRoot, 'coverage');
+const coverageRoot = process.env['LITESHIP_COVERAGE_ROOT'] ?? resolve(repoRoot, 'coverage');
 const nodeCoveragePath = resolve(coverageRoot, 'node', 'coverage-final.json');
 const browserCoveragePath = resolve(coverageRoot, 'browser', 'coverage-final.json');
 const mergedCoveragePath = resolve(coverageRoot, 'coverage-final.json');
@@ -266,9 +266,7 @@ for (const file of coverageMap.files()) {
     for (const key of Object.keys(fileThresholds) as MetricKey[]) {
       const threshold = fileThresholds[key];
       if (threshold !== undefined && fileSummary[key].pct < threshold) {
-        errors.push(
-          `File ${relativePath} ${key} coverage ${fileSummary[key].pct.toFixed(2)}% is below ${threshold}%.`,
-        );
+        errors.push(`File ${relativePath} ${key} coverage ${fileSummary[key].pct.toFixed(2)}% is below ${threshold}%.`);
       }
     }
   }
@@ -276,9 +274,7 @@ for (const file of coverageMap.files()) {
 
 for (const key of Object.keys(TOTAL_THRESHOLDS) as MetricKey[]) {
   if (totalSummary[key].pct < TOTAL_THRESHOLDS[key]) {
-    errors.push(
-      `Merged ${key} coverage ${totalSummary[key].pct.toFixed(2)}% is below ${TOTAL_THRESHOLDS[key]}%.`,
-    );
+    errors.push(`Merged ${key} coverage ${totalSummary[key].pct.toFixed(2)}% is below ${TOTAL_THRESHOLDS[key]}%.`);
   }
 }
 
@@ -286,9 +282,7 @@ for (const [packageName, summary] of [...packageSummaries.entries()].sort(([a], 
   for (const key of Object.keys(PACKAGE_THRESHOLDS) as MetricKey[]) {
     const threshold = PACKAGE_THRESHOLD_OVERRIDES[packageName]?.[key] ?? PACKAGE_THRESHOLDS[key];
     if (summary[key].pct < threshold) {
-      errors.push(
-        `Package ${packageName} ${key} coverage ${summary[key].pct.toFixed(2)}% is below ${threshold}%.`,
-      );
+      errors.push(`Package ${packageName} ${key} coverage ${summary[key].pct.toFixed(2)}% is below ${threshold}%.`);
     }
   }
 }

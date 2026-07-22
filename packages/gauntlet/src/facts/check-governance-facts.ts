@@ -42,12 +42,9 @@ export interface CheckPartitionFacts {
 /**
  * One blocking (or advisory) check's negative-control verdict for `check-negative-control`.
  *
- * The gate decides the PARTITION over the blocking checks: each blocking check must
- * be classified EXACTLY once — it EITHER declares a `negativeControl` that EXISTS
- * (a real red-fixture / regression-guard / self-proving gate) OR is `exempt` (with a
- * documented `exemptReason`). A blocking check that is NEITHER is an unclassified
- * partition hole; one that is BOTH breaks disjointness. A host folds each check's
- * declared path + on-disk existence + its `NEGATIVE_CONTROL_EXEMPT` membership here.
+ * Every blocking check must declare a `negativeControl` that EXISTS (a real
+ * red-fixture / regression-guard / self-proving gate). There is no blocker
+ * exemption path: inability to prove the authority can fail is itself a gap.
  */
 export interface NegativeControlFact {
   /** The check identity, `check/<slug>`. */
@@ -58,10 +55,6 @@ export interface NegativeControlFact {
   readonly negativeControl: string | null;
   /** Whether the declared negativeControl path EXISTS on disk (false when `negativeControl` is null). */
   readonly exists: boolean;
-  /** Whether this check is a key of `NEGATIVE_CONTROL_EXEMPT` (a documented planted-regression exemption). */
-  readonly exempt: boolean;
-  /** The one-line exemption rationale when `exempt`, else `null`. */
-  readonly exemptReason: string | null;
 }
 
 /** One waiver's freshness verdict for `check-waiver-freshness`, decided vs the injected wall-clock date. */

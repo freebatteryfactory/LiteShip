@@ -47,7 +47,7 @@ Defined in: [gauntlet/src/runner.ts:650](https://github.com/freebatteryfactory/L
 
 OPTIONAL host-computed capability-link facts (codex round-8, #1b) threaded onto the
 [GateContext](GateContext.md) for `capabilityGateLinkGate` to fold. Supplied ONLY on the
-`liteship check --ir --capability-gate` run, alongside a `gates` override that includes the gate. The
+`liteship check gates --ir --capability-gate` run, alongside a `gates` override that includes the gate. The
 cache key is namespaced by the capability-gate mode (a capability-gate verdict never serves a
 non-capability-gate run).
 
@@ -84,7 +84,7 @@ Defined in: [gauntlet/src/runner.ts:686](https://github.com/freebatteryfactory/L
 OPTIONAL host-computed composition-coverage facts (the LOCAL-VS-GLOBAL correctness
 family — "locally green, globally untested interaction") threaded onto the
 [GateContext](GateContext.md) for `compositionCoverageGate` to fold. Supplied ONLY on the
-`liteship check --ir --composition` run, alongside a `gates` override that includes the
+`liteship check gates --ir --composition` run, alongside a `gates` override that includes the
 gate. The composition MODE namespaces the verdict cache key.
 
 ***
@@ -141,7 +141,7 @@ Defined in: [gauntlet/src/runner.ts:624](https://github.com/freebatteryfactory/L
 
 OPTIONAL host-computed MC/DC facts (the avionics tier — DO-178B Level A coverage via
 condition-level mutation) threaded onto the [GateContext](GateContext.md) for
-`mcdcCoverageGate` to fold. Supplied ONLY on the `liteship check --ir --mcdc` run,
+`mcdcCoverageGate` to fold. Supplied ONLY on the `liteship check gates --ir --mcdc` run,
 alongside a `gates` override that includes the gate. The cache key is namespaced by
 the MC/DC mode (an MC/DC verdict can never be served to a non-MC/DC run, or vice
 versa) — exactly the `--mutate` cache-soundness lesson.
@@ -156,7 +156,7 @@ Defined in: [gauntlet/src/runner.ts:615](https://github.com/freebatteryfactory/L
 
 OPTIONAL host-computed mutation facts (Slice C — mutation-as-divergence) threaded
 onto the [GateContext](GateContext.md) for `mutationDivergenceGate` to fold. Supplied ONLY
-on the `liteship check --ir --mutate` run, alongside a `gates` override that includes
+on the `liteship check gates --ir --mutate` run, alongside a `gates` override that includes
 the gate. The cache key is namespaced by the mutation mode (a mutation-run
 verdict can never be served to a non-mutation run, or vice versa).
 
@@ -170,7 +170,7 @@ Defined in: [gauntlet/src/runner.ts:678](https://github.com/freebatteryfactory/L
 
 OPTIONAL host-computed proof-strength facts (the LOCAL-VS-GLOBAL correctness family
 — the lax-functor) threaded onto the [GateContext](GateContext.md) for `proofPropagationGate`
-to propagate along the dep DAG. Supplied ONLY on the `liteship check --ir --proof` run,
+to propagate along the dep DAG. Supplied ONLY on the `liteship check gates --ir --proof` run,
 alongside a `gates` override that includes the gate. The proof MODE namespaces the
 verdict cache key (a proof-run verdict can never be served to a non-proof run, or
 vice versa) — the same `--mutate` cache-soundness lesson.
@@ -185,7 +185,7 @@ Defined in: [gauntlet/src/runner.ts:633](https://github.com/freebatteryfactory/L
 
 OPTIONAL host-computed DST (deterministic-simulation) facts (the determinism
 spine) threaded onto the [GateContext](GateContext.md) for `simulationDeterminismGate` to
-fold. Supplied ONLY on the `liteship check --ir --simulate` run, alongside a `gates`
+fold. Supplied ONLY on the `liteship check gates --ir --simulate` run, alongside a `gates`
 override that includes the gate. The cache key is namespaced by the simulation
 mode (a simulation-run verdict can never be served to a non-simulation run, or
 vice versa).
@@ -225,7 +225,7 @@ Defined in: [gauntlet/src/runner.ts:695](https://github.com/freebatteryfactory/L
 
 OPTIONAL host-computed two-axis spine-relation facts (Wave 8.5, the public
 constitution's STATIC-projection half) threaded onto the [GateContext](GateContext.md) for
-`spineRelationGate` to fold. Supplied ONLY on the `liteship check --ir --spine-relation`
+`spineRelationGate` to fold. Supplied ONLY on the `liteship check gates --ir --spine-relation`
 run, alongside a `gates` override that includes the gate. The spine-relation MODE
 namespaces the verdict cache key (a spine-relation verdict never serves a
 non-spine-relation run).
@@ -268,7 +268,7 @@ Defined in: [gauntlet/src/runner.ts:642](https://github.com/freebatteryfactory/L
 
 OPTIONAL host-computed taint-flow facts (the TAINT-ANALYSIS family) threaded onto
 the [GateContext](GateContext.md) for `taintFlowGate` to fold. Supplied ONLY on the
-`liteship check --ir --taint` run, alongside a `gates` override that includes the gate.
+`liteship check gates --ir --taint` run, alongside a `gates` override that includes the gate.
 The cache key is namespaced by the taint mode (a taint-run verdict can never be
 served to a non-taint run, or vice versa) — exactly the `--mutate` cache-soundness
 lesson.

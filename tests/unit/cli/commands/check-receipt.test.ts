@@ -1,5 +1,5 @@
 /**
- * `liteship check` adapter — the receipt projection + the stderr findings-summary
+ * `liteship check gates` adapter — the receipt projection + the stderr findings-summary
  * pretty-print branch, called directly through `check()`.
  *
  * The flag PLUMBING (--ir / --no-cache / the per-gate opt-ins, the lean-vs-IR
@@ -25,13 +25,13 @@ const irDeps = { runGauntletWithRepoIR: runGauntletWithRepoIRMock };
 // `deps.checkHandler` seam (NOT a @liteship/command module mock), so the lean-path
 // projection is pinned over a scripted handler while the real gate fold stays inert.
 const handlerMock = vi.fn();
-/** The scripted lean-handler seam injected into `check` for the default (no --ir) cases. */
+/** The scripted lean-handler seam injected into `check` for explicit `gates` cases. */
 const leanDeps = { checkHandler: handlerMock };
 
 import { check } from '../../../../packages/cli/src/commands/check.js';
 
 function leanPayload(payload: Record<string, unknown>) {
-  return { status: 'ok', command: 'check', timestamp: '2026-01-01T00:00:00.000Z', exitCode: 0, payload };
+  return { status: 'ok', command: 'check.gates', timestamp: '2026-01-01T00:00:00.000Z', exitCode: 0, payload };
 }
 
 beforeEach(() => {
@@ -44,13 +44,13 @@ function lastReceipt(stdout: string): Record<string, unknown> {
   return JSON.parse(stdout.trim().split('\n').pop()!) as Record<string, unknown>;
 }
 
-describe('liteship check (lean) — receipt projection', () => {
+describe('liteship check gates (lean) — receipt projection', () => {
   it('projects the lean handler CheckPayload into a CheckReceipt (status ok, ISO timestamp)', async () => {
     handlerMock.mockResolvedValue(leanPayload({ ok: true, blocked: false, findingCount: 0, findings: [] }));
-    const { exit, stdout } = await captureCli(() => check({}, leanDeps));
+    const { exit, stdout } = await captureCli(() => check({ gates: true }, leanDeps));
     expect(exit).toBe(0);
     const receipt = lastReceipt(stdout);
-    expect(receipt).toMatchObject({ command: 'check', status: 'ok', ok: true, blocked: false, findingCount: 0 });
+    expect(receipt).toMatchObject({ command: 'check.gates', status: 'ok', ok: true, blocked: false, findingCount: 0 });
     expect(receipt['timestamp']).toMatch(/^\d{4}-\d{2}-\d{2}T.*Z$/);
     // The lean path never touches the IR builder.
     expect(runGauntletWithRepoIRMock).not.toHaveBeenCalled();
@@ -65,7 +65,7 @@ describe('liteship check (lean) — receipt projection', () => {
         findings: [finding({ ruleId: 'r/x', severity: 'error', level: 'L2', title: 'boom', detail: 'd' })],
       }),
     );
-    const { exit, stdout } = await captureCli(() => check({ pretty: false }, leanDeps));
+    const { exit, stdout } = await captureCli(() => check({ gates: true, pretty: false }, leanDeps));
     expect(exit).toBe(1);
     expect(lastReceipt(stdout)['status']).toBe('failed');
   });
@@ -87,7 +87,7 @@ describe('liteship check — the human findings-summary writer (pretty)', () => 
       outcomes: [],
       blocked: true,
     } satisfies GauntletResult);
-    const { exit, stderr } = await captureCli(() => check({ ir: true, pretty: true }, irDeps));
+    const { exit, stderr } = await captureCli(() => check({ gates: true, ir: true, pretty: true }, irDeps));
     expect(exit).toBe(1);
     expect(stderr).toContain('CHECK BLOCKED');
     expect(stderr).toContain('(IR-enriched)');
@@ -103,7 +103,7 @@ describe('liteship check — the human findings-summary writer (pretty)', () => 
       outcomes: [],
       blocked: false,
     } satisfies GauntletResult);
-    const { exit, stderr } = await captureCli(() => check({ ir: true, pretty: true }, irDeps));
+    const { exit, stderr } = await captureCli(() => check({ gates: true, ir: true, pretty: true }, irDeps));
     expect(exit).toBe(0);
     expect(stderr).toContain('CHECK (advisory)');
     expect(stderr).toContain('[advisory] r/adv: fyi');
@@ -126,7 +126,7 @@ describe('liteship check — the human findings-summary writer (pretty)', () => 
       outcomes: [],
       blocked: true,
     } satisfies GauntletResult);
-    const { stderr } = await captureCli(() => check({ ir: true, pretty: true }, irDeps));
+    const { stderr } = await captureCli(() => check({ gates: true, ir: true, pretty: true }, irDeps));
     expect(stderr).toContain('[error] r/fileonly: t (packages/y/b.ts)');
     expect(stderr).not.toContain('packages/y/b.ts:');
   });
@@ -137,7 +137,7 @@ describe('liteship check — the human findings-summary writer (pretty)', () => 
       outcomes: [],
       blocked: true,
     } satisfies GauntletResult);
-    const { exit, stderr } = await captureCli(() => check({ ir: true, pretty: false }, irDeps));
+    const { exit, stderr } = await captureCli(() => check({ gates: true, ir: true, pretty: false }, irDeps));
     expect(exit).toBe(1);
     expect(stderr).toBe('');
   });

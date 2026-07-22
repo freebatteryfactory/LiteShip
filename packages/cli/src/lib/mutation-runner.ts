@@ -1,6 +1,6 @@
 /**
  * The DETERMINISTIC, ISOLATED per-mutant test runner (Slice C, the avionics tier
- * — the production half of mutation-as-divergence; `liteship check --ir --mutate`).
+ * — the production half of mutation-as-divergence; `liteship check gates --ir --mutate`).
  *
  * `@liteship/audit`'s {@link evaluateMutant} takes an INJECTED runner
  * `(mutatedSource, coveringTests) → { failed }` and never spawns a test process

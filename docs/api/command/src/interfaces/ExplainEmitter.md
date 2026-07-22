@@ -14,7 +14,7 @@ against the structural [ExplainPayloadSchema](../variables/ExplainPayloadSchema.
 - `kind: 'gate'`  — a gauntlet gate ruleId; `id` is the derived gate id, and when
   a blocking check proves that gate its `negativeControl` + `provenByCheck` are set.
 - `kind: 'check'` — a P11 `check/<slug>`; `id`/`owner`/`command`/`authority`/
-  `negativeControl` come from the [CheckDefinition](CheckDefinition.md).
+  `negativeControl` come from the [CheckDefinition](../type-aliases/CheckDefinition.md).
 - `kind: 'core-runtime'` — a runtime diagnostic emitted by its owning package's
   `Diagnostics`; there is no gate/check emitter, so the pointers are null.
 
@@ -52,7 +52,7 @@ The emitting gate id / check id, or null for a core-runtime diagnostic.
 
 ### kind
 
-> `readonly` **kind**: `"check"` \| `"gate"` \| `"core-runtime"`
+> `readonly` **kind**: `"gate"` \| `"check"` \| `"core-runtime"`
 
 Defined in: [command/src/commands/explain.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/explain.ts#L51)
 

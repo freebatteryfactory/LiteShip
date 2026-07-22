@@ -18,7 +18,7 @@
  *
  * TWO PATHS (mirroring `liteship check`):
  *  - LEAN (default): the IR-free six-regex gate fold via `litelaunchGauntlet` —
- *    fast, the same gates the MCP `check` exposes.
+ *    fast, the same gates the MCP `check.gates` command exposes.
  *  - IR-ENRICHED (`--ir`): builds the repo-IR via `@liteship/audit` and runs the
  *    triangulated cross-check via `runGauntletWithRepoIR`. CLI-only.
  *

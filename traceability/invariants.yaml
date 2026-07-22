@@ -175,9 +175,9 @@ invariants:
     level: L3
     category: meta
 
-  # ── Assurance — every blocking check carries a negative control (or a reason) ─
+  # ── Assurance — every blocking check carries a real negative control ────────
   - id: INV-CHECK-NEGATIVE-CONTROL
-    law: "Every BLOCKING check in CHECK_REGISTRY is classified EXACTLY once for negative-control coverage: it EITHER declares a `negativeControl` whose path EXISTS (a real red-fixture / regression-guard / self-proving gate that plants a regression it catches) OR is a documented `NEGATIVE_CONTROL_EXEMPT` entry (a reasoned decision that a planted-regression fixture is vacuous — the tool/harness/measurement IS the oracle). The check-negative-control gate reds on any dangling, unclassified, or double-classified blocking check — the partition is total and disjoint, so the criterion 'every blocking check has a negative control' is honest and enforced."
+    law: 'Every BLOCKING check in CHECK_REGISTRY declares a `negativeControl` whose path EXISTS and whose executable proof drives the real authority against deterministic bad input to produce a red result. The check-negative-control gate reds on every missing or dangling control; no blocker is exempt from proving it can fail.'
     level: L4
     category: assurance
 

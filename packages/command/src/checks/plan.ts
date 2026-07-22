@@ -19,7 +19,7 @@
  * @module
  */
 
-import type { CheckAuthority, CheckCache, CheckPlatform, CheckProfile } from './definition.js';
+import type { CheckAuthority, CheckCache, CheckContext, CheckPlatform, CheckProfile } from './definition.js';
 import { CHECK_REGISTRY } from './registry.js';
 
 /** One check as scheduled into a plan — the registry entry projected to what a run needs. */
@@ -30,6 +30,8 @@ export interface PlannedCheck {
   readonly title: string;
   /** The single sentence this check proves. */
   readonly claim: string;
+  /** The context in which this check's claim is being scheduled. */
+  readonly context: CheckContext;
   /** The full shell line the host spawns. */
   readonly command: string;
   /** The package or script path that owns the assertion. */
@@ -46,11 +48,11 @@ export interface PlannedCheck {
   readonly inputs: readonly string[];
 }
 
-/** A registry check dropped from a plan, with the reason (today: unsupported platform). */
+/** A registry check dropped from a plan, with the exact applicability reason. */
 export interface SkippedCheck {
   /** The skipped check's identity, `check/<slug>`. */
   readonly id: string;
-  /** Why it was skipped (e.g. "not supported on win32"). */
+  /** Why it was skipped (for example, a context or platform mismatch). */
   readonly reason: string;
 }
 
@@ -60,6 +62,8 @@ export interface CheckPlan {
   readonly profile: CheckProfile;
   /** The platform this plan targets. */
   readonly platform: CheckPlatform;
+  /** The repository/application fact domain this plan is authoritative over. */
+  readonly context: CheckContext;
   /** The checks to run, in declared plan order. */
   readonly checks: readonly PlannedCheck[];
   /**
@@ -93,14 +97,17 @@ export interface CheckRunResult {
  * The report an executed sweep emits — the `--json` output contract. Planning
  * produces the plan; the execution host (the CLI spawn layer / the existing
  * `runGauntlet` context) runs the plan and fills `results`. `blocked` is true iff
- * any BLOCKING check failed; `ok` is its negation.
+ * any BLOCKING check failed; `ok` additionally requires at least one check to
+ * have executed, so an all-skipped plan is explicitly unverified rather than green.
  */
 export interface CheckReport {
   /** The profile the sweep ran. */
   readonly profile: CheckProfile;
   /** The platform the sweep ran on. */
   readonly platform: CheckPlatform;
-  /** True iff no blocking check failed. */
+  /** The repository/application fact domain this report actually evaluated. */
+  readonly context: CheckContext;
+  /** True iff at least one check executed and no blocking check failed. */
   readonly ok: boolean;
   /** True iff ≥1 blocking check failed. */
   readonly blocked: boolean;
@@ -114,22 +121,32 @@ export const CHECK_PROFILES: readonly CheckProfile[] = ['quick', 'full', 'releas
 /** The platforms a plan may target — the closed set of `process.platform` values checks declare. */
 export const CHECK_PLATFORMS: readonly CheckPlatform[] = ['linux', 'darwin', 'win32'];
 
+/** The execution contexts a plan may target. */
+export const CHECK_CONTEXTS: readonly CheckContext[] = ['repository', 'application'];
+
 /**
  * Project {@link CHECK_REGISTRY} into the ordered, cache-annotated plan for
  * `profile` on `platform`. PURE + TOTAL: filter by profile membership, preserve
  * registry order, keep the platform-supported checks in `checks` and the rest in
  * `skipped`. Runs nothing.
  */
-export function planChecks(profile: CheckProfile, platform: CheckPlatform): CheckPlan {
+export function planChecks(
+  profile: CheckProfile,
+  platform: CheckPlatform,
+  context: CheckContext = 'repository',
+): CheckPlan {
   const inProfile = CHECK_REGISTRY.filter((check) => check.profiles.includes(profile));
   const checks: PlannedCheck[] = [];
   const skipped: SkippedCheck[] = [];
   for (const check of inProfile) {
-    if (check.platforms.includes(platform)) {
+    if (!check.contexts.includes(context)) {
+      skipped.push({ id: check.id, reason: `not applicable in ${context} context` });
+    } else if (check.platforms.includes(platform)) {
       checks.push({
         id: check.id,
         title: check.title,
         claim: check.claim,
+        context,
         command: check.command,
         owner: check.owner,
         authority: check.authority,
@@ -143,7 +160,7 @@ export function planChecks(profile: CheckProfile, platform: CheckPlatform): Chec
     }
   }
   const estimatedMs = checks.reduce((sum, check) => sum + check.timeoutMs, 0);
-  return { profile, platform, checks, estimatedMs, skipped };
+  return { profile, platform, context, checks, estimatedMs, skipped };
 }
 
 /**
@@ -152,7 +169,7 @@ export function planChecks(profile: CheckProfile, platform: CheckPlatform): Chec
  */
 export function formatCheckPlan(plan: CheckPlan): string {
   const lines: string[] = [];
-  lines.push(`check plan — profile "${plan.profile}" on ${plan.platform}`);
+  lines.push(`check plan — profile "${plan.profile}" in ${plan.context} context on ${plan.platform}`);
   lines.push(`${plan.checks.length} check(s), est. up to ${formatMs(plan.estimatedMs)} (upper bound)`);
   lines.push('');
   const idWidth = plan.checks.reduce((max, check) => Math.max(max, check.id.length), 0);

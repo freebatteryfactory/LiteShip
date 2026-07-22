@@ -7,7 +7,7 @@
  * Like {@link RepoIR} and {@link SupplyChainFacts}, it carries NO heavy
  * dependency: `@liteship/gauntlet` stays the lean engine, so it never imports the DST
  * harness, mints a world, runs a scenario, or content-addresses a trace. A HOST
- * (the CLI's `liteship check --ir --simulate` path) runs the scenario corpus through
+ * (the CLI's `liteship check gates --ir --simulate` path) runs the scenario corpus through
  * the `@liteship/core/simulation` harness — `replay`/`assertReplayDeterministic` — and
  * hands the engine these flat, already-decided facts. The gate's only job is to
  * FOLD them into Findings at the avionics level (ADR-0012: the lean engine folds

@@ -31,7 +31,7 @@
 /**
  * The host-supplied taint evidence over one run. The taint oracle is HEAVY (a
  * whole-corpus `ts.Program` + a checker walk + reference queries), so production
- * runs it OPT-IN (`liteship check --ir --taint`), cached; when the host did not run
+ * runs it OPT-IN (`liteship check gates --ir --taint`), cached; when the host did not run
  * taint this whole capability is simply ABSENT from the GateContext and the gate
  * is not in the set (no cost, no noise). When present it carries every traced
  * flow plus the depth the trace actually covered — the HONEST under-approximation

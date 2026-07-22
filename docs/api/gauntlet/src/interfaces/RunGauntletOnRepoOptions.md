@@ -19,7 +19,7 @@ Options for [runGauntletOnRepo](../functions/runGauntletOnRepo.md).
 Defined in: [gauntlet/src/runner.ts:286](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L286)
 
 The INJECTED capability-link facts (codex round-8, #1b) — OPTIONAL. A host (the CLI's
-`liteship check --ir --capability-gate` path) resolves each sanctioned skip's guard against the
+`liteship check gates --ir --capability-gate` path) resolves each sanctioned skip's guard against the
 canonical capability symbol table via `@liteship/audit`'s capability-link oracle and threads the
 decided [CapabilityLinkFacts](CapabilityLinkFacts.md) here for `capabilityGateLinkGate` to fold. Omit them ⇒ the
 gate is not in the set.
@@ -56,7 +56,7 @@ Defined in: [gauntlet/src/runner.ts:316](https://github.com/freebatteryfactory/L
 
 The INJECTED composition-coverage facts (the LOCAL-VS-GLOBAL correctness family —
 "locally green, globally untested interaction") — OPTIONAL. A host (the CLI's
-`liteship check --ir --composition` path) derives the interaction edges from the IR
+`liteship check gates --ir --composition` path) derives the interaction edges from the IR
 call graph and classifies each integration-covered/uncovered, then threads the
 decided [CompositionFacts](CompositionFacts.md) here, where they land on the [GateContext](GateContext.md)
 for `compositionCoverageGate` to fold. Omit them (the default `--ir` run) and the
@@ -165,7 +165,7 @@ is simply not in the set — no mutants generated, no suite-runs, no cost.
 Defined in: [gauntlet/src/runner.ts:306](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L306)
 
 The INJECTED proof-strength facts (the LOCAL-VS-GLOBAL correctness family — the
-lax-functor) — OPTIONAL. A host (the CLI's `liteship check --ir --proof` path) reads
+lax-functor) — OPTIONAL. A host (the CLI's `liteship check gates --ir --proof` path) reads
 the proof signals (mutation score / coverage / property tests / enrolled
 invariants), blends them into per-module scalars, and threads the decided
 [ProofFacts](ProofFacts.md) here, where they land on the [GateContext](GateContext.md) for
@@ -191,7 +191,7 @@ Absolute root of the repo to run against.
 Defined in: [gauntlet/src/runner.ts:246](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L246)
 
 The INJECTED DST (deterministic-simulation) facts (the avionics tier — the
-determinism spine) — OPTIONAL. A host (the CLI's `liteship check --ir --simulate`
+determinism spine) — OPTIONAL. A host (the CLI's `liteship check gates --ir --simulate`
 path) drives the scenario corpus through the `@liteship/core/simulation` harness
 (replaying each seed twice, content-addressing the two byte-exact traces) and
 threads the decided [SimulationFacts](SimulationFacts.md) here, where they land on the
@@ -232,7 +232,7 @@ readonly [`SkipMatch`](SkipMatch.md)[]
 Defined in: [gauntlet/src/runner.ts:326](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L326)
 
 The INJECTED two-axis spine-relation facts (Wave 8.5, the public constitution's
-STATIC-projection half) — OPTIONAL. A host (the CLI's `liteship check --ir
+STATIC-projection half) — OPTIONAL. A host (the CLI's `liteship check gates --ir
 --spine-relation` path) probes each admitted `@liteship/_spine` mirror type's bidirectional
 assignability against its runtime source, then threads the decided
 [SpineRelationFacts](SpineRelationFacts.md) here, where they land on the [GateContext](GateContext.md) for
@@ -280,7 +280,7 @@ set — no facts computed, no SBOM cost, no `not-evidenced` noise.
 Defined in: [gauntlet/src/runner.ts:278](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L278)
 
 The INJECTED taint-flow facts (the TAINT-ANALYSIS family) — OPTIONAL. A host (the
-CLI's `liteship check --ir --taint` path) traces the source→sink dataflow via
+CLI's `liteship check gates --ir --taint` path) traces the source→sink dataflow via
 `@liteship/audit`'s GENERIC taint oracle (classified by the host-injected LiteShip
 source/sink/sanitizer registry) and threads the decided [TaintFacts](TaintFacts.md) here,
 where they land on the [GateContext](GateContext.md) for `taintFlowGate` to fold. Omit them

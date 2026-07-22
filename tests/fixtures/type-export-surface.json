@@ -1839,6 +1839,10 @@
           "kind": "type"
         },
         {
+          "name": "CheckContext",
+          "kind": "type"
+        },
+        {
           "name": "CheckDefinition",
           "kind": "type"
         },

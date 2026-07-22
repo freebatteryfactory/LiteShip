@@ -1,6 +1,6 @@
 /**
  * The mutation runner's REPORT-PARSING + RESTORE-FAILURE proof (Slice C, the avionics
- * tier — `liteship check --ir --mutate`). The sibling suite (`mutation-runner.test.ts`) pins
+ * tier — `liteship check gates --ir --mutate`). The sibling suite (`mutation-runner.test.ts`) pins
  * the happy verdict + the headline guards (CACError, false-survivor, disagreement); this
  * one drills the PARSE DISCRIMINATION every infra-fault path keys on, plus the
  * restore-keystone's hardest arm. All driven through the PUBLIC runner with a stubbed

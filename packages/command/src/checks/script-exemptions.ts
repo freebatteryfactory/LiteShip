@@ -47,6 +47,7 @@ export const SCRIPT_EXEMPTIONS: readonly ScriptExemption[] = [
     script: 'typecheck:spine',
     reason: 'Targeted _spine typecheck helper; check/typecheck + check/spine-relation-gate cover the spine.',
   },
+  { script: 'test:unit', reason: 'Component test-family selector; covered by check/test (aggregate).' },
   { script: 'test:smoke', reason: 'Component test-family selector; covered by check/test (aggregate).' },
   { script: 'test:property', reason: 'Component test-family selector; covered by check/test (aggregate).' },
   { script: 'test:component', reason: 'Component test-family selector; covered by check/test (aggregate).' },
@@ -74,7 +75,7 @@ export const SCRIPT_EXEMPTIONS: readonly ScriptExemption[] = [
   { script: 'cover', reason: 'Alias of the `coverage` script; check/coverage is the registered floor.' },
 
   // ── Aliases / convenience aggregates (members registered separately) ───────
-  { script: 'check', reason: 'Convenience aggregate of lint + typecheck; both are registered checks.' },
+  { script: 'check', reason: 'Public quick-profile wrapper; its asserting members are registered checks.' },
   {
     script: 'preflight',
     reason: 'Fast-lane aggregate wrapper; its members (format/lint:structural/lint/typecheck/docs) are registered.',

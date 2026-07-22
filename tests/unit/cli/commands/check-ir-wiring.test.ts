@@ -1,8 +1,8 @@
 /**
- * `liteship check --ir` / `--no-cache` CLI wiring (Slice B, B3 — Deliverable 1).
+ * `liteship check gates --ir` / `--no-cache` CLI wiring (Slice B, B3 — Deliverable 1).
  *
- * Proves the CLI-ONLY IR-enriched path is wired to the production `liteship check`
- * subcommand: `--ir` routes to `runGauntletWithRepoIR` (the triangulated
+ * Proves the CLI-ONLY IR-enriched path is wired to the production
+ * `liteship check gates` subcommand: `--ir` routes to `runGauntletWithRepoIR` (the triangulated
  * cross-check + the B2 verdict cache), `--no-cache` threads the cache bypass, and
  * WITHOUT `--ir` the LEAN, IR-free path runs UNCHANGED (it never builds an IR —
  * the established lean-engine boundary the MCP server depends on).
@@ -56,7 +56,7 @@ beforeEach(() => {
   handlerMock.mockReset();
   handlerMock.mockResolvedValue({
     status: 'ok',
-    command: 'check',
+    command: 'check.gates',
     timestamp: '2026-01-01T00:00:00.000Z',
     exitCode: 0,
     payload: { ok: true, blocked: false, findingCount: 0, findings: [] },
@@ -66,10 +66,10 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe('liteship check --ir — the CLI-only IR-enriched path', () => {
+describe('liteship check gates --ir — the CLI-only IR-enriched path', () => {
   it('routes to runGauntletWithRepoIR with the cache ARMED (no --no-cache)', async () => {
     runGauntletWithRepoIRMock.mockReturnValue(okResult);
-    const { result, stdout } = await captureStdout(() => run(['check', '--ir']));
+    const { result, stdout } = await captureStdout(() => run(['check', 'gates', '--ir']));
     expect(result).toBe(0);
     expect(runGauntletWithRepoIRMock).toHaveBeenCalledTimes(1);
     // (repoRoot, now: Date, globs, { noCache, withSymbolReferences, withSupplyChain })
@@ -93,7 +93,7 @@ describe('liteship check --ir — the CLI-only IR-enriched path', () => {
     // The receipt carries the SAME CheckPayload shape (ok/blocked/findingCount/findings).
     const receipt = JSON.parse(stdout.trim());
     expect(receipt).toMatchObject({
-      command: 'check',
+      command: 'check.gates',
       status: 'ok',
       ok: true,
       blocked: false,
@@ -104,7 +104,7 @@ describe('liteship check --ir — the CLI-only IR-enriched path', () => {
 
   it('--ir --no-cache threads the cache BYPASS through to runGauntletWithRepoIR', async () => {
     runGauntletWithRepoIRMock.mockReturnValue(okResult);
-    const code = await captureStdout(() => run(['check', '--ir', '--no-cache']));
+    const code = await captureStdout(() => run(['check', 'gates', '--ir', '--no-cache']));
     expect(code.result).toBe(0);
     const [, , , cacheOpts] = runGauntletWithRepoIRMock.mock.calls[0]!;
     expect(cacheOpts).toEqual({
@@ -124,7 +124,7 @@ describe('liteship check --ir — the CLI-only IR-enriched path', () => {
 
   it('--ir --symbols threads the symbol-evidenced oracle opt-in through to runGauntletWithRepoIR', async () => {
     runGauntletWithRepoIRMock.mockReturnValue(okResult);
-    const code = await captureStdout(() => run(['check', '--ir', '--symbols']));
+    const code = await captureStdout(() => run(['check', 'gates', '--ir', '--symbols']));
     expect(code.result).toBe(0);
     const [, , , cacheOpts] = runGauntletWithRepoIRMock.mock.calls[0]!;
     expect(cacheOpts).toEqual({
@@ -144,7 +144,7 @@ describe('liteship check --ir — the CLI-only IR-enriched path', () => {
 
   it('--ir --supply-chain threads the avionics supply-chain opt-in through to runGauntletWithRepoIR', async () => {
     runGauntletWithRepoIRMock.mockReturnValue(okResult);
-    const code = await captureStdout(() => run(['check', '--ir', '--supply-chain']));
+    const code = await captureStdout(() => run(['check', 'gates', '--ir', '--supply-chain']));
     expect(code.result).toBe(0);
     const [, , , cacheOpts] = runGauntletWithRepoIRMock.mock.calls[0]!;
     expect(cacheOpts).toEqual({
@@ -164,7 +164,7 @@ describe('liteship check --ir — the CLI-only IR-enriched path', () => {
 
   it('--ir --mutate threads the avionics mutation opt-in through to runGauntletWithRepoIR', async () => {
     runGauntletWithRepoIRMock.mockReturnValue(okResult);
-    const code = await captureStdout(() => run(['check', '--ir', '--mutate']));
+    const code = await captureStdout(() => run(['check', 'gates', '--ir', '--mutate']));
     expect(code.result).toBe(0);
     const [, , , cacheOpts] = runGauntletWithRepoIRMock.mock.calls[0]!;
     expect(cacheOpts).toEqual({
@@ -184,7 +184,7 @@ describe('liteship check --ir — the CLI-only IR-enriched path', () => {
 
   it('--ir --simulate threads the avionics DST (simulation) opt-in through to runGauntletWithRepoIR', async () => {
     runGauntletWithRepoIRMock.mockReturnValue(okResult);
-    const code = await captureStdout(() => run(['check', '--ir', '--simulate']));
+    const code = await captureStdout(() => run(['check', 'gates', '--ir', '--simulate']));
     expect(code.result).toBe(0);
     const [, , , cacheOpts] = runGauntletWithRepoIRMock.mock.calls[0]!;
     expect(cacheOpts).toEqual({
@@ -204,7 +204,7 @@ describe('liteship check --ir — the CLI-only IR-enriched path', () => {
 
   it('--ir --mcdc threads the avionics MC/DC opt-in through to runGauntletWithRepoIR', async () => {
     runGauntletWithRepoIRMock.mockReturnValue(okResult);
-    const code = await captureStdout(() => run(['check', '--ir', '--mcdc']));
+    const code = await captureStdout(() => run(['check', 'gates', '--ir', '--mcdc']));
     expect(code.result).toBe(0);
     const [, , , cacheOpts] = runGauntletWithRepoIRMock.mock.calls[0]!;
     expect(cacheOpts).toEqual({
@@ -224,7 +224,7 @@ describe('liteship check --ir — the CLI-only IR-enriched path', () => {
 
   it('--ir --taint threads the taint-flow opt-in through to runGauntletWithRepoIR', async () => {
     runGauntletWithRepoIRMock.mockReturnValue(okResult);
-    const code = await captureStdout(() => run(['check', '--ir', '--taint']));
+    const code = await captureStdout(() => run(['check', 'gates', '--ir', '--taint']));
     expect(code.result).toBe(0);
     const [, , , cacheOpts] = runGauntletWithRepoIRMock.mock.calls[0]!;
     expect(cacheOpts).toEqual({
@@ -244,7 +244,7 @@ describe('liteship check --ir — the CLI-only IR-enriched path', () => {
 
   it('--ir --proof threads the proof-propagation opt-in through to runGauntletWithRepoIR', async () => {
     runGauntletWithRepoIRMock.mockReturnValue(okResult);
-    const code = await captureStdout(() => run(['check', '--ir', '--proof']));
+    const code = await captureStdout(() => run(['check', 'gates', '--ir', '--proof']));
     expect(code.result).toBe(0);
     const [, , , cacheOpts] = runGauntletWithRepoIRMock.mock.calls[0]!;
     expect(cacheOpts).toEqual({
@@ -264,7 +264,7 @@ describe('liteship check --ir — the CLI-only IR-enriched path', () => {
 
   it('--ir --composition threads the composition-coverage opt-in through to runGauntletWithRepoIR', async () => {
     runGauntletWithRepoIRMock.mockReturnValue(okResult);
-    const code = await captureStdout(() => run(['check', '--ir', '--composition']));
+    const code = await captureStdout(() => run(['check', 'gates', '--ir', '--composition']));
     expect(code.result).toBe(0);
     const [, , , cacheOpts] = runGauntletWithRepoIRMock.mock.calls[0]!;
     expect(cacheOpts).toEqual({
@@ -284,7 +284,7 @@ describe('liteship check --ir — the CLI-only IR-enriched path', () => {
 
   it('--ir --capability-gate threads the capability-link opt-in through to runGauntletWithRepoIR', async () => {
     runGauntletWithRepoIRMock.mockReturnValue(okResult);
-    const code = await captureStdout(() => run(['check', '--ir', '--capability-gate']));
+    const code = await captureStdout(() => run(['check', 'gates', '--ir', '--capability-gate']));
     expect(code.result).toBe(0);
     const [, , , cacheOpts] = runGauntletWithRepoIRMock.mock.calls[0]!;
     expect(cacheOpts).toEqual({
@@ -304,7 +304,7 @@ describe('liteship check --ir — the CLI-only IR-enriched path', () => {
 
   it('--ir --spine-relation threads the spine-relation opt-in through to runGauntletWithRepoIR', async () => {
     runGauntletWithRepoIRMock.mockReturnValue(okResult);
-    const code = await captureStdout(() => run(['check', '--ir', '--spine-relation']));
+    const code = await captureStdout(() => run(['check', 'gates', '--ir', '--spine-relation']));
     expect(code.result).toBe(0);
     const [, , , cacheOpts] = runGauntletWithRepoIRMock.mock.calls[0]!;
     expect(cacheOpts).toEqual({
@@ -323,14 +323,14 @@ describe('liteship check --ir — the CLI-only IR-enriched path', () => {
   });
 
   it('a bare --capability-gate (no --ir) stays on the lean path (no silent IR/Program run)', async () => {
-    const { result } = await captureStdout(() => run(['check', '--capability-gate']));
+    const { result } = await captureStdout(() => run(['check', 'gates', '--capability-gate']));
     expect(result).toBe(0);
     expect(handlerMock).toHaveBeenCalledTimes(1);
     expect(runGauntletWithRepoIRMock).not.toHaveBeenCalled();
   });
 
   it('a bare --spine-relation (no --ir) stays on the lean path (no silent IR/Program run)', async () => {
-    const { result } = await captureStdout(() => run(['check', '--spine-relation']));
+    const { result } = await captureStdout(() => run(['check', 'gates', '--spine-relation']));
     expect(result).toBe(0);
     expect(handlerMock).toHaveBeenCalledTimes(1);
     // The spine probe is a second ts.Program build — a bare --spine-relation must NEVER
@@ -340,7 +340,7 @@ describe('liteship check --ir — the CLI-only IR-enriched path', () => {
 
   it('a blocked IR run exits 1 and the receipt mirrors the engine verdict', async () => {
     runGauntletWithRepoIRMock.mockReturnValue(blockedResult);
-    const { result, stdout } = await captureStdout(() => run(['check', '--ir']));
+    const { result, stdout } = await captureStdout(() => run(['check', 'gates', '--ir']));
     expect(result).toBe(1);
     const receipt = JSON.parse(stdout.trim());
     expect(receipt.status).toBe('failed');
@@ -349,9 +349,9 @@ describe('liteship check --ir — the CLI-only IR-enriched path', () => {
   });
 });
 
-describe('liteship check (lean, no --ir) — UNCHANGED, never builds the IR', () => {
+describe('liteship check gates (lean, no --ir) — explicit, never builds the IR', () => {
   it('runs the lean command handler and NEVER calls runGauntletWithRepoIR', async () => {
-    const { result } = await captureStdout(() => run(['check']));
+    const { result } = await captureStdout(() => run(['check', 'gates']));
     expect(result).toBe(0);
     expect(handlerMock).toHaveBeenCalledTimes(1);
     // The MCP-safe boundary: the lean path never touches the IR builder.
@@ -359,21 +359,21 @@ describe('liteship check (lean, no --ir) — UNCHANGED, never builds the IR', ()
   });
 
   it('a bare --no-cache (no --ir) stays on the lean path (no silent IR run)', async () => {
-    const { result } = await captureStdout(() => run(['check', '--no-cache']));
+    const { result } = await captureStdout(() => run(['check', 'gates', '--no-cache']));
     expect(result).toBe(0);
     expect(handlerMock).toHaveBeenCalledTimes(1);
     expect(runGauntletWithRepoIRMock).not.toHaveBeenCalled();
   });
 
   it('a bare --supply-chain (no --ir) stays on the lean path (no silent IR/SBOM run)', async () => {
-    const { result } = await captureStdout(() => run(['check', '--supply-chain']));
+    const { result } = await captureStdout(() => run(['check', 'gates', '--supply-chain']));
     expect(result).toBe(0);
     expect(handlerMock).toHaveBeenCalledTimes(1);
     expect(runGauntletWithRepoIRMock).not.toHaveBeenCalled();
   });
 
   it('a bare --mutate (no --ir) stays on the lean path (no silent IR/mutation run)', async () => {
-    const { result } = await captureStdout(() => run(['check', '--mutate']));
+    const { result } = await captureStdout(() => run(['check', 'gates', '--mutate']));
     expect(result).toBe(0);
     expect(handlerMock).toHaveBeenCalledTimes(1);
     // The mutation run mutates real source in place — a bare --mutate must NEVER
@@ -382,7 +382,7 @@ describe('liteship check (lean, no --ir) — UNCHANGED, never builds the IR', ()
   });
 
   it('a bare --simulate (no --ir) stays on the lean path (no silent IR/simulation run)', async () => {
-    const { result } = await captureStdout(() => run(['check', '--simulate']));
+    const { result } = await captureStdout(() => run(['check', 'gates', '--simulate']));
     expect(result).toBe(0);
     expect(handlerMock).toHaveBeenCalledTimes(1);
     // The DST corpus only runs on the IR path — a bare --simulate must NEVER silently
