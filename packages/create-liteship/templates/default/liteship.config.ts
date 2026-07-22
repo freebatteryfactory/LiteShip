@@ -6,10 +6,11 @@
  * LiteShip consumer app for `liteship build` and `liteship check`.
  */
 import { defineConfig } from 'liteship';
-import { layout } from './src/boundaries/layout.boundaries.js';
+import { layout } from './src/adaptive.js';
 
 export default defineConfig({
-  boundaries: { layout },
+  boundaries: { layout: layout.boundary },
+  styles: { layout: layout.style },
   vite: {
     hmr: true,
   },

@@ -199,3 +199,6 @@ export const Derived = {
 
 /** Public structural type for `Derived`. */
 export type Derived<T> = DerivedShape<T>;
+
+/** Public structural type matching the root `computed(...)` authoring verb. */
+export type Computed<T> = Derived<T>;

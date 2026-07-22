@@ -67,6 +67,7 @@ export const ROOT_TYPE_BUDGET = [
   'Style',
   'Config',
   'Cell',
+  'Computed',
   'Store',
   'Timeline',
   'Lifetime',

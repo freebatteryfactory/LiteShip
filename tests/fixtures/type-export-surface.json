@@ -2311,6 +2311,10 @@
           "kind": "type"
         },
         {
+          "name": "AdaptiveLowering",
+          "kind": "type"
+        },
+        {
           "name": "AdaptivePlan",
           "kind": "type"
         },
@@ -2548,6 +2552,10 @@
         },
         {
           "name": "CompositorStatePool",
+          "kind": "type"
+        },
+        {
+          "name": "Computed",
           "kind": "type"
         },
         {

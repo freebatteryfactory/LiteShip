@@ -267,7 +267,9 @@ const STANDALONE_FUNCTIONS = [
   'defineToken',
   'defineTheme',
   'defineStyle',
-  'defineAdaptive',
+  // Core owns the explicit-dependency kernel; `liteship` composes and exports
+  // the fully wired defineAdaptive paved road.
+  'lowerAdaptive',
   'createCell',
   'computed',
   'createStore',

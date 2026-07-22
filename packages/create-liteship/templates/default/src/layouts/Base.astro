@@ -13,18 +13,6 @@ const { title = 'liteship starter' } = Astro.props;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <style>
-      /* Each named @token block resolves against an export in
-         src/tokens/base.tokens.ts and compiles to a :root custom
-         property (--liteship-<token-name>) plus an @property registration. */
-      @token fontSizeSm {}
-      @token fontSizeMd {}
-      @token fontSizeLg {}
-      @token spacingSm {}
-      @token spacingMd {}
-      @token spacingLg {}
-      @token colorText {}
-      @token colorSurface {}
-
       *,
       *::before,
       *::after {
@@ -34,14 +22,16 @@ const { title = 'liteship starter' } = Astro.props;
 
       html {
         font-family: system-ui, -apple-system, sans-serif;
-        color: var(--liteship-color-text);
-        background: var(--liteship-color-surface);
+        color: #172033;
+        background: #f7f9fc;
         line-height: 1.6;
       }
 
       body {
         min-height: 100dvh;
-        padding: var(--liteship-spacing-md);
+        padding: 1rem;
+        container-name: viewport-width;
+        container-type: inline-size;
       }
     </style>
   </head>

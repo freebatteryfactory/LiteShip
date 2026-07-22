@@ -2,7 +2,7 @@
  * AdaptiveDef -- the pure-lowering facade over the constraint-rendering
  * constructors.
  *
- * `defineAdaptive` does NOT reimplement boundary/style/quantizer/token/theme
+ * `lowerAdaptive` does NOT reimplement boundary/style/quantizer/token/theme
  * construction: it LOWERS a single spec into the exact hand-lowered constructor
  * outputs. Every member of the returned {@link Adaptive} is referentially /
  * content-address identical to what you would get calling the sibling
@@ -29,7 +29,6 @@ import type { CapTier } from '../evidence/caps.js';
 import { tierTargets } from '../evidence/escalation.js';
 import type { TierChoice } from '../evidence/escalation.js';
 import type { QualityTierTarget } from '../evidence/quality-tiers.js';
-import { HostCapabilityError } from '@liteship/error';
 // `@liteship/core` takes NO import — not even type-only — on `@liteship/quantizer`
 // or `@liteship/compiler`. Both DEPEND ON core, so a back-import (even a type one,
 // whose `.d.ts` resolution loops back to `core/dist`) closes a project-reference
@@ -37,9 +36,10 @@ import { HostCapabilityError } from '@liteship/error';
 // cycle discipline `evidence/escalation.ts` documents and `schema/quantizer-types.ts`
 // follows (core-local structural twins of the quantizer's own types). The authored
 // quantizer config/options below are those structural twins; the REAL, MEMOIZED
-// constructors are injected at load time through the seam, so `defineAdaptive`
-// still LOWERS through the exact configCache-backed `defineQuantizer` (referential
-// identity holds) and the exact `StyleCSSCompiler.compile` — never a reimplementation.
+// constructors are supplied explicitly by the composition root, so adaptive
+// lowering still delegates to the exact configCache-backed `defineQuantizer`
+// (referential identity holds) and the exact `StyleCSSCompiler.compile` — never
+// a reimplementation and never a load-order-dependent ambient registration.
 
 // ---------------------------------------------------------------------------
 // Quantizer config/options — core-local structural twins
@@ -80,7 +80,7 @@ export interface AdaptiveQuantizerConfig<B extends BoundaryType = BoundaryType> 
   readonly force?: readonly string[];
 }
 
-/** The injected `@liteship/quantizer` `defineQuantizer`, typed against the twins. */
+/** The supplied `@liteship/quantizer` `defineQuantizer`, typed against the twins. */
 export type AdaptiveQuantizerLowering = (
   boundary: BoundaryType,
   options: AdaptiveQuantizeOptions,
@@ -92,10 +92,10 @@ export type AdaptiveQuantizerLowering = (
 
 /**
  * The authored intent of an adaptive: exactly the five sibling constructor
- * configs, one field each. `defineAdaptive` feeds each field to its constructor
+ * configs, one field each. `lowerAdaptive` feeds each field to its constructor
  * verbatim — `boundary` to {@link defineBoundary}, `style` to {@link defineStyle}
  * (with the constructed boundary spliced in), `quantize` to `defineQuantizer`
- * (the injected `@liteship/quantizer` seam), each `tokens` entry to {@link defineToken}, and
+ * (the explicitly supplied `@liteship/quantizer` owner), each `tokens` entry to {@link defineToken}, and
  * `theme` to {@link defineTheme}. Nothing here is re-shaped, so the lowering is a
  * pure delegation.
  */
@@ -211,60 +211,25 @@ export interface Adaptive {
 }
 
 // ---------------------------------------------------------------------------
-// Lowering seam — the injected, MEMOIZED constructors from the layers above core
+// Explicit lowering contract — supplied by the composition root above core
 // ---------------------------------------------------------------------------
 //
-// `defineAdaptive` must LOWER through the real `@liteship/quantizer`
+// `lowerAdaptive` must LOWER through the real `@liteship/quantizer`
 // `defineQuantizer` (so the returned quantizer is the SAME configCache object
 // the hand-lowered call returns — the P15 referential-identity thesis) and the
 // real `@liteship/compiler` `StyleCSSCompiler.compile`. Both packages DEPEND ON
 // core, so core cannot import them (a runtime edge closes a build/init cycle).
-// Instead each package REGISTERS its constructor here when it loads — the same
-// module instance a consumer imports, so identity is preserved with zero new
-// core→(quantizer|compiler) edges.
+// Instead the composition root passes both owners explicitly for each lowering.
+// There is no mutable registry, no side-effect import, and no import-order
+// requirement. The function objects come from the same modules a hand-lowered
+// consumer imports, preserving quantizer configCache identity.
 
-/** The injected `@liteship/compiler` style→layers compiler (`StyleCSSCompiler.compile(style).layers`). */
-type StyleLayerCompiler = (style: StyleType) => string;
-
-let injectedDefineQuantizer: AdaptiveQuantizerLowering | undefined;
-let injectedStyleLayerCompiler: StyleLayerCompiler | undefined;
-
-/**
- * Register `@liteship/quantizer`'s `defineQuantizer` as the adaptive quantizer
- * lowering. Called ONCE by `@liteship/quantizer` at load. Internal seam
- * (`_`-prefixed): not part of the public authoring surface.
- */
-export function _registerAdaptiveQuantizerLowering(defineQuantizer: AdaptiveQuantizerLowering): void {
-  injectedDefineQuantizer = defineQuantizer;
-}
-
-/**
- * Register `@liteship/compiler`'s `StyleCSSCompiler.compile(style).layers` as the
- * adaptive style-layer compiler. Called ONCE by `@liteship/compiler` at load.
- * Internal seam (`_`-prefixed): not part of the public authoring surface.
- */
-export function _registerAdaptiveStyleLayerCompiler(compile: StyleLayerCompiler): void {
-  injectedStyleLayerCompiler = compile;
-}
-
-function requireDefineQuantizer(): AdaptiveQuantizerLowering {
-  if (injectedDefineQuantizer === undefined) {
-    throw HostCapabilityError(
-      '@liteship/quantizer',
-      'defineAdaptive: `spec.quantize` requires `@liteship/quantizer` to be loaded so the adaptive can LOWER through its memoized `defineQuantizer`. Import from `@liteship/quantizer` (or use `liteship`) in the same process before defining a quantized adaptive.',
-    );
-  }
-  return injectedDefineQuantizer;
-}
-
-function requireStyleLayerCompiler(): StyleLayerCompiler {
-  if (injectedStyleLayerCompiler === undefined) {
-    throw HostCapabilityError(
-      '@liteship/compiler',
-      'defineAdaptive: `plan()` compiles CSS through `@liteship/compiler` `StyleCSSCompiler`, which the host-free `liteship` root deliberately does not load. Import `@liteship/compiler` (or the `liteship/compiler` subpath) in the same process before calling `plan()`.',
-    );
-  }
-  return injectedStyleLayerCompiler;
+/** The supplied `@liteship/compiler` style→layers compiler (`StyleCSSCompiler.compile(style).layers`). */
+export interface AdaptiveLowering {
+  /** The real memoized `@liteship/quantizer` constructor. */
+  readonly defineQuantizer: AdaptiveQuantizerLowering;
+  /** The real `@liteship/compiler` style-layer projection. */
+  readonly compileStyleLayers: (style: StyleType) => string;
 }
 
 // ---------------------------------------------------------------------------
@@ -301,7 +266,7 @@ export function serializeBoundaryAttrValue(boundary: BoundaryType): string {
 }
 
 // ---------------------------------------------------------------------------
-// defineAdaptive
+// lowerAdaptive
 // ---------------------------------------------------------------------------
 
 /**
@@ -349,10 +314,11 @@ function aggregateId(
  * adaptive.explain(800).boundary.state; // 'md'
  * ```
  */
-export function defineAdaptive(spec: AdaptiveSpec): Adaptive {
+export function lowerAdaptive(spec: AdaptiveSpec, lowering: AdaptiveLowering): Adaptive {
   const boundary = defineBoundary(spec.boundary);
   const style = defineStyle({ boundary, ...spec.style });
-  const quantizer = spec.quantize !== undefined ? requireDefineQuantizer()(boundary, spec.quantize) : undefined;
+  const quantizer =
+    spec.quantize !== undefined ? lowering.defineQuantizer(boundary, spec.quantize) : undefined;
   const tokens = spec.tokens !== undefined ? spec.tokens.map((t) => defineToken(t)) : undefined;
   const theme = spec.theme !== undefined ? defineTheme(spec.theme) : undefined;
 
@@ -367,7 +333,10 @@ export function defineAdaptive(spec: AdaptiveSpec): Adaptive {
   const tier: CapTier = spec.tier ?? 'styled';
 
   const attrs = (): Record<string, string> => ({
-    class: 'liteship-adaptive',
+    // `StyleCSSCompiler`'s unscoped projection targets `.liteship-styled`.
+    // Carry both runtime and style markers so `attrs()` + `plan().css` is a
+    // complete, directly applicable pair.
+    class: 'liteship-adaptive liteship-styled',
     'data-liteship-boundary': serializeBoundaryAttrValue(boundary),
     'data-liteship-state': boundary.states[0]!,
     'data-liteship-directive': 'adaptive',
@@ -427,7 +396,7 @@ export function defineAdaptive(spec: AdaptiveSpec): Adaptive {
     boundaryId: boundary.id,
     styleId: style.id,
     ...(quantizer !== undefined ? { quantizerId: quantizer.id } : {}),
-    css: requireStyleLayerCompiler()(style),
+    css: lowering.compileStyleLayers(style),
     attrs: attrs(),
   });
 

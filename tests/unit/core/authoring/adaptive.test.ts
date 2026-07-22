@@ -7,14 +7,10 @@
  * `explain`/`attrs`/`plan` projections read straight off those members.
  */
 import { describe, expect, test } from 'vitest';
-import { defineAdaptive, defineBoundary, defineStyle, defineToken, defineTheme } from '@liteship/core';
+import { defineBoundary, defineStyle, defineToken, defineTheme } from '@liteship/core';
+import { defineAdaptive } from '../../../../packages/liteship/src/index.js';
 import { serializeBoundaryAttrValue } from '@liteship/core/authoring';
-// Importing these packages populates the core lowering seam: `@liteship/quantizer`
-// registers the memoized `defineQuantizer` (so the adaptive's quantizer member is
-// referentially identical to the hand-lowered call) and `@liteship/compiler`
-// registers the `StyleCSSCompiler` that `plan().css` compiles through.
 import { defineQuantizer } from '@liteship/quantizer';
-import '@liteship/compiler';
 
 const boundarySpec = {
   input: 'viewport.width',
@@ -211,7 +207,7 @@ describe('defineAdaptive.attrs / plan', () => {
 
   test('attrs() is the headless boundary attr set', () => {
     const attrs = adaptive.attrs();
-    expect(attrs['class']).toBe('liteship-adaptive');
+    expect(attrs['class']).toBe('liteship-adaptive liteship-styled');
     expect(attrs['data-liteship-directive']).toBe('adaptive');
     expect(attrs['data-liteship-state']).toBe('sm');
     // The boundary payload comes from the ONE core serializer.

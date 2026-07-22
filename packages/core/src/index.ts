@@ -154,13 +154,18 @@ export type { StyleLayer, ShadowLayer } from './authoring/index.js';
 // Theme
 export { Theme, defineTheme } from './authoring/index.js';
 
-// Adaptive — the pure-lowering facade over boundary/style/quantizer/token/theme.
-// `defineAdaptive` is the value; `Adaptive` + the explanation/plan/trace shapes
-// are TYPE-ONLY on the root. The boundary-attr serializer stays on the
-// `./authoring` subpath (its one consumer is `@liteship/astro`), off the curated
-// root surface.
-export { defineAdaptive } from './authoring/index.js';
-export type { Adaptive, AdaptiveSpec, AdaptiveExplanation, AdaptivePlan, ConstraintTrace } from './authoring/index.js';
+// Adaptive — core owns the pure explicit-dependency lowering kernel and types;
+// the curated `liteship` facade supplies the real quantizer/compiler owners and
+// exports the fully wired `defineAdaptive` paved road.
+export { lowerAdaptive } from './authoring/index.js';
+export type {
+  Adaptive,
+  AdaptiveSpec,
+  AdaptiveLowering,
+  AdaptiveExplanation,
+  AdaptivePlan,
+  ConstraintTrace,
+} from './authoring/index.js';
 
 // Component
 export { createComponent } from './authoring/index.js';
@@ -385,6 +390,7 @@ export type { Cell } from './reactive/index.js';
 
 // Derived
 export { Derived, computed } from './reactive/index.js';
+export type { Derived, Computed } from './reactive/index.js';
 
 // Zap
 export { Zap } from './reactive/index.js';

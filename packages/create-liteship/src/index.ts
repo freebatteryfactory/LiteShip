@@ -90,8 +90,8 @@ export async function run(argv: readonly string[], io: RunIo = defaultIo): Promi
         `  pnpm dev       (or npm run dev)\n\n` +
         `Verify the project any time with:\n` +
         `  liteship check --profile quick\n\n` +
-        `Then edit src/pages/index.astro — defineBoundary, defineStyle, and\n` +
-        `adaptiveAttrs() all share one boundary (src/boundaries/).\n`,
+        `Then edit src/adaptive.ts — one defineAdaptive value owns the\n` +
+        `definition, attrs, explanation, and compiled plan.\n`,
     );
     return 0;
   } catch (error) {

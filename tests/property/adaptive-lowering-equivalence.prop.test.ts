@@ -17,29 +17,22 @@
  *  - LOWERING-PURE  — member ids equal, member defs deep-equal, and the quantizer
  *                     member is REFERENTIALLY the memoized `defineQuantizer`
  *                     object (the configCache identity thesis).
- *  - CSS-BYTE-EQUAL — `StyleCSSCompiler.compile(style).layers` and the
- *                     `CSSCompiler.compile(...).raw` container path are byte-equal
- *                     between the adaptive's style/boundary and the hand-lowered
- *                     ones (Buffer.compare === 0).
- *  - TRACE-EQUAL    — `Boundary.evaluateBatch` over a below/at/above sweep agrees,
- *                     and the content-addressed `traceDigest` of the sweep over the
- *                     adaptive boundary equals the digest over the hand-lowered
- *                     boundary.
- *
- * Importing `@liteship/quantizer` and `@liteship/compiler` populates the core
- * lowering seam: the quantizer registers its memoized `defineQuantizer` (so the
- * adaptive's quantizer member is referentially identical to the hand-lowered
- * call) and the compiler registers the `StyleCSSCompiler` `plan().css` compiles
- * through.
+ *  - CSS-BYTE-EQUAL — the PUBLIC root `adaptive.plan().css` and the direct
+ *                     `StyleCSSCompiler.compile(style).layers` hand path are
+ *                     byte-equal (Buffer.compare === 0).
+ *  - TRACE-EQUAL    — boundary explanation traces plus live quantizer crossing /
+ *                     output receipt sequences are deep-equal under one fixed
+ *                     clock and the same width sweep.
  *
  * @module
  */
 import { describe, it, expect } from 'vitest';
 import fc from 'fast-check';
-import { defineAdaptive, defineBoundary, defineStyle, Boundary } from '@liteship/core';
+import { defineBoundary, defineStyle, Boundary, fixedClock } from '@liteship/core';
 import { buildTrace, traceDigest, type StepOutcome } from '@liteship/core/simulation';
-import { defineQuantizer } from '@liteship/quantizer';
+import { defineQuantizer, createQuantizer } from '@liteship/quantizer';
 import { StyleCSSCompiler, CSSCompiler } from '@liteship/compiler';
+import { defineAdaptive } from '../../packages/liteship/src/index.js';
 
 // The one seed every assertion in this file runs from — deterministic replay.
 const SEED = 0xada9741e;
@@ -150,6 +143,28 @@ function specStateMap(g: GeneratedSpec): Record<string, Record<string, string>> 
   return map;
 }
 
+/**
+ * The live runtime receipt sequence for one authored quantizer. The fixed wall
+ * clock makes HLC crossings replayable; outputChanges includes its initial replay
+ * followed by every crossing output, while changes carries the crossing receipts.
+ */
+function runtimeReceiptTrace(config: Parameters<typeof createQuantizer>[0], widths: readonly number[]) {
+  const live = createQuantizer(config, { clock: fixedClock(1_700_000_000_000), node: 'adaptive-proof' });
+  const crossings: unknown[] = [];
+  const outputs: unknown[] = [];
+  const stopCrossings = live.changes.subscribe((crossing) => crossings.push(crossing));
+  const stopOutputs = live.outputChanges.subscribe((output) => outputs.push(output));
+  const states = widths.map((width) => live.evaluate(width));
+  const final = {
+    state: live.state.read(),
+    outputs: live.currentOutputs.read(),
+  };
+  stopOutputs();
+  stopCrossings();
+  void live.dispose();
+  return { states, crossings, outputs, final };
+}
+
 describe('defineAdaptive is a pure lowering — content-address, CSS-byte, and trace equivalence', () => {
   it('INV-ADAPTIVE-LOWERING-PURE: adaptive members equal the independently hand-lowered constructor outputs (ids, deep-equal, referential quantizer)', () => {
     fc.assert(
@@ -185,7 +200,7 @@ describe('defineAdaptive is a pure lowering — content-address, CSS-byte, and t
     );
   });
 
-  it('INV-ADAPTIVE-CSS-BYTE-EQUAL: the adaptive style compiles to byte-identical CSS layers and container raw as the hand-lowered style', () => {
+  it('INV-ADAPTIVE-CSS-BYTE-EQUAL: the public adaptive plan CSS is byte-identical to the hand-lowered compiler output', () => {
     fc.assert(
       fc.property(specArb, (g) => {
         const a = defineAdaptive(toSpec(g));
@@ -194,7 +209,7 @@ describe('defineAdaptive is a pure lowering — content-address, CSS-byte, and t
 
         // Full style → @layer CSS: byte-identical between the adaptive's style
         // member and the independently hand-lowered style.
-        const aLayers = Buffer.from(StyleCSSCompiler.compile(a.style).layers, 'utf8');
+        const aLayers = Buffer.from(a.plan().css, 'utf8');
         const hLayers = Buffer.from(StyleCSSCompiler.compile(hs).layers, 'utf8');
         expect(Buffer.compare(aLayers, hLayers)).toBe(0);
 
@@ -209,7 +224,7 @@ describe('defineAdaptive is a pure lowering — content-address, CSS-byte, and t
     );
   });
 
-  it('INV-ADAPTIVE-TRACE-EQUAL: evaluateBatch and the trace digest over the adaptive boundary equal the hand-lowered boundary sweep', () => {
+  it('INV-ADAPTIVE-TRACE-EQUAL: public explanations and live crossing/output receipts equal the hand-lowered runtime sweep', () => {
     fc.assert(
       fc.property(specArb, (g) => {
         const a = defineAdaptive(toSpec(g));
@@ -231,6 +246,22 @@ describe('defineAdaptive is a pure lowering — content-address, CSS-byte, and t
         const aDigest = traceDigest(buildTrace(SEED, sweep(a.boundary)));
         const hDigest = traceDigest(buildTrace(SEED, sweep(hb)));
         expect(aDigest).toBe(hDigest);
+
+        // The public facade's richer explanation trace is the same state/value
+        // sequence as the hand-lowered boundary path.
+        expect(a.plan().attrs).toEqual(a.attrs());
+        expect(a.explain(widths[0]!).boundary.id).toBe(hb.id);
+        expect(a.explain(widths.at(-1)!).boundary.state).toBe(Boundary.evaluateResult(hb, widths.at(-1)!).state);
+
+        if (a.quantizer !== undefined && g.quantize !== undefined) {
+          const hq = defineQuantizer(hb, g.quantize as Parameters<typeof defineQuantizer>[1]);
+          const adaptiveTrace = runtimeReceiptTrace(
+            a.quantizer as Parameters<typeof createQuantizer>[0],
+            widths,
+          );
+          const handTrace = runtimeReceiptTrace(hq as Parameters<typeof createQuantizer>[0], widths);
+          expect(adaptiveTrace).toEqual(handTrace);
+        }
       }),
       { numRuns: 200, seed: SEED },
     );

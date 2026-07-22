@@ -31,11 +31,9 @@ const EXPECTED_TREE = [
   'astro.config.ts',
   'liteship.config.ts',
   'package.json',
-  'src/boundaries/layout.boundaries.ts',
+  'src/adaptive.ts',
   'src/layouts/Base.astro',
   'src/pages/index.astro',
-  'src/styles/card.styles.ts',
-  'src/tokens/base.tokens.ts',
   'tsconfig.json',
 ];
 
@@ -89,23 +87,26 @@ describe('create-liteship scaffold', () => {
     }
   });
 
-  it('scaffolds the working define -> apply idioms from the facade (defineBoundary + defineStyle + adaptiveAttrs)', () => {
+  it('scaffolds the paved define -> apply -> inspect route within the authoring budget', () => {
     const result = scaffold(join(workDir, 'idioms'));
-    // The page APPLIES the boundary via adaptiveAttrs (from the liteship/astro subpath)
-    // and compiles both mechanisms — @quantize for the grid, @style for the card style.
+    // One Adaptive owns the definition, compiled plan, attrs, and explanation.
+    const adaptive = readFileSync(join(result.projectDir, 'src/adaptive.ts'), 'utf8');
+    expect(adaptive).toContain("import { defineAdaptive } from 'liteship'");
+    expect(adaptive).toContain('export const layout = defineAdaptive(');
+    const authoredLines = adaptive
+      .split(/\r?\n/)
+      .filter((line) => line.trim() !== '' && !line.trim().startsWith('//')).length;
+    expect(authoredLines, 'first adaptive definition must stay at or below 20 authored lines').toBeLessThanOrEqual(20);
+
     const index = readFileSync(join(result.projectDir, 'src/pages/index.astro'), 'utf8');
-    expect(index).toContain('adaptiveAttrs({ boundary: layout');
-    expect(index).toContain('@quantize layout {');
-    expect(index).toContain('@style card {}');
-    expect(index).toContain("import { adaptiveAttrs } from 'liteship/astro'");
-    // The DEFINE half: defineBoundary (input -> states) and defineStyle (states -> outputs),
-    // both imported from the `liteship` root facade, never `@liteship/core`.
-    const boundary = readFileSync(join(result.projectDir, 'src/boundaries/layout.boundaries.ts'), 'utf8');
-    expect(boundary).toContain('defineBoundary(');
-    expect(boundary).toContain("import { defineBoundary } from 'liteship'");
-    const style = readFileSync(join(result.projectDir, 'src/styles/card.styles.ts'), 'utf8');
-    expect(style).toContain('defineStyle(');
-    expect(style).toContain("import { defineStyle } from 'liteship'");
+    expect(index).toContain('{...layout.attrs()}');
+    expect(index).toContain('const plan = layout.plan()');
+    expect(index).toContain('const preview = layout.explain(940)');
+    expect(index).toContain('set:html={plan.css}');
+    expect(index).not.toContain('@quantize');
+    expect(index).not.toContain('@style');
+    const base = readFileSync(join(result.projectDir, 'src/layouts/Base.astro'), 'utf8');
+    expect(base).toContain('container-name: viewport-width');
     // The astro.config wires the integration from the liteship/astro subpath.
     const config = readFileSync(join(result.projectDir, 'astro.config.ts'), 'utf8');
     expect(config).toContain("import { integration } from 'liteship/astro'");
@@ -113,6 +114,7 @@ describe('create-liteship scaffold', () => {
     const readme = readFileSync(join(result.projectDir, 'README.md'), 'utf8');
     expect(readme).toContain('define → apply → inspect');
     expect(readme).toContain('liteship check --profile quick');
+    expect(readme).toContain('one 14-line definition');
   });
 
   it('accepts an existing but empty directory', () => {

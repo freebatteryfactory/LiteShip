@@ -12,10 +12,11 @@
  * `liteship/media`, `liteship/evidence`, `liteship/compiler`, `liteship/runtime`,
  * `liteship/astro`, `liteship/vite`, `liteship/testing`).
  *
- * The root is DELIBERATELY minimal and host-free: importing `.` evaluates NOTHING
- * from the host integrations (`@liteship/astro`, `@liteship/vite`) — those carry
- * host-specific (optional) peer expectations and live behind their own subpaths,
- * whose module graphs are independent of this one. The permitted root surface is
+ * The root is DELIBERATELY minimal and host-integration-free: importing `.`
+ * evaluates the pure core/quantizer/compiler owners needed to make the flagship
+ * `defineAdaptive(...).plan()` route complete, but NOTHING from host integrations
+ * (`@liteship/astro`, `@liteship/vite`) — those carry host-specific (optional)
+ * peer expectations and live behind independent subpaths. The permitted root surface is
  * pinned as DATA in `export-budget.ts` and enforced by the
  * `gauntlet/facade-export-budget` gate. You can still import from the individual
  * scopes (`@liteship/core`, `@liteship/quantizer`, …) exactly as the docs show.
@@ -34,7 +35,6 @@ export {
   defineToken,
   defineTheme,
   defineStyle,
-  defineAdaptive,
   schema,
   createCell,
   computed,
@@ -46,6 +46,7 @@ export {
   tierTargets,
   inspectReceipt,
 } from '@liteship/core';
+export { defineAdaptive } from './authoring/adaptive.js';
 export { defineQuantizer, createQuantizer } from '@liteship/quantizer';
 // The diagnostic explainer — the one reader that turns any emitted LiteShip
 // diagnostic code into its title/explanation/remediation.
@@ -65,6 +66,7 @@ export type {
   Adaptive,
   Config,
   Cell,
+  Computed,
   Store,
   Timeline,
   Lifetime,

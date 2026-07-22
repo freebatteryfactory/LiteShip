@@ -7,21 +7,15 @@ A minimal adaptive Astro app scaffolded by `create-liteship`. One dependency
 
 You author in terms of **inputs → states → outputs** — never the engine's plumbing:
 
-- **Define an input's states.** `defineBoundary` maps a continuous input (viewport
-  width) to a few named states — `mobile` / `tablet` / `desktop`
-  (`src/boundaries/layout.boundaries.ts`).
-- **Define each state's outputs.** `defineStyle` maps those states to CSS outputs —
-  the card's padding per state (`src/styles/card.styles.ts`). Design values live in
-  `defineToken` (`src/tokens/base.tokens.ts`).
-- **Apply.** `adaptiveAttrs({ boundary })` wires a boundary onto a DOM element
-  (`src/pages/index.astro`); the element carries `data-liteship-state`, updated on the
-  client as the input crosses a threshold. The `@token` / `@style` / `@quantize`
-  blocks compile your definitions to CSS at build time.
-- **Inspect.** `liteship check --profile quick` verifies the project.
+- **Define.** `defineAdaptive` in `src/adaptive.ts` maps viewport width to named
+  states and gives each state its CSS output.
+- **Apply.** `layout.attrs()` wires that definition onto the page; `layout.plan()`
+  provides the byte-stable compiled CSS.
+- **Inspect.** `layout.explain(value)` reports exactly why a state won, and
+  `liteship check --profile quick` verifies the app.
 
-Everything comes from `liteship`: the authoring verbs from the root
-(`import { defineBoundary, defineStyle, defineToken } from 'liteship'`) and the Astro
-helper from a subpath (`import { adaptiveAttrs } from 'liteship/astro'`).
+The first adaptive feature is one 14-line definition imported from `liteship`.
+Advanced packages and projection targets remain available through explicit subpaths.
 
 ## Run
 

@@ -18,10 +18,9 @@
  *  3. BUDGET — the root's runtime value surface is a SUBSET of `ROOT_VALUE_BUDGET`
  *     (the allowlist the `gauntlet/facade-export-budget` gate enforces on the built
  *     d.ts), and neither budget kind exceeds its cap.
- *  4. HOST-FREE ROOT — importing the root `.` pulls NO host integration: the built
- *     `dist/index.js` imports only the host-free runtime scopes (`@liteship/core`,
- *     `@liteship/quantizer`, `@liteship/error`), never `@liteship/astro` /
- *     `@liteship/vite` / `@liteship/web` / `@liteship/compiler`.
+ *  4. HOST-INTEGRATION-FREE ROOT — importing the root `.` pulls NO Astro/Vite/Web
+ *     host integration. It DOES compose the pure compiler projection and quantizer
+ *     owners required by the flagship `defineAdaptive(...).plan()` contract.
  *
  * READS-DIST: the exports map's `types`/`import` conditions point at `dist`, so this
  * gate needs `liteship` (and its `@liteship/*` deps) built. The full-gate flow builds
@@ -78,10 +77,15 @@ const FACADE: readonly FacadeEntry[] = [
 ];
 
 /** Host-integration scopes the root `.` must NEVER pull into its module graph. */
-const HOST_SCOPES = ['@liteship/astro', '@liteship/vite', '@liteship/web', '@liteship/compiler'] as const;
+const HOST_SCOPES = ['@liteship/astro', '@liteship/vite', '@liteship/web'] as const;
 
-/** The host-free runtime scopes the root `.` is allowed to evaluate. */
-const ROOT_RUNTIME_SCOPES = ['@liteship/core', '@liteship/quantizer', '@liteship/error'] as const;
+/** The host-integration-free runtime scopes the root `.` is allowed to evaluate. */
+const ROOT_RUNTIME_SCOPES = [
+  '@liteship/core',
+  '@liteship/quantizer',
+  '@liteship/compiler',
+  '@liteship/error',
+] as const;
 
 /** Shared compiler options; only the module/resolution pair differs per mode. */
 function optionsFor(mode: 'node16' | 'bundler'): ts.CompilerOptions {
@@ -275,8 +279,8 @@ describe('gauntlet/facade-export-budget — exact-match gate (both directions)',
   });
 });
 
-describe('liteship facade — the root is host-free', () => {
-  it('the built dist/index.js pulls no host integration (astro/vite/web/compiler)', () => {
+describe('liteship facade — the root is host-integration-free', () => {
+  it('the built dist/index.js pulls no host integration (astro/vite/web)', () => {
     const js = readFileSync(ROOT_JS, 'utf8');
     // Every `from '@liteship/…'` module specifier the emitted root evaluates.
     const scopes = new Set<string>();
@@ -286,7 +290,7 @@ describe('liteship facade — the root is host-free', () => {
     for (const host of HOST_SCOPES) {
       expect([...scopes], `importing the root must not evaluate ${host}`).not.toContain(host);
     }
-    // And what it DOES evaluate is a subset of the host-free runtime scopes — so the
+    // And what it DOES evaluate is a subset of the host-integration-free scopes — so the
     // astro-free property cannot be defeated by a NEW host dep the deny-list forgot.
     const allowed = new Set<string>(ROOT_RUNTIME_SCOPES);
     const rogue = [...scopes].filter((s) => !allowed.has(s));
