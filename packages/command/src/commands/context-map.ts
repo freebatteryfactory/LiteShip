@@ -70,7 +70,7 @@ export const CONTEXT_MAP: Readonly<Record<string, ContextTask>> = {
       file(
         'owner-file',
         'packages/quantizer/src/evaluate.ts',
-        'Boundary evaluation — how a signal resolves to a bearing.',
+        'Boundary evaluation — how an input resolves to a named state.',
       ),
       file('test', 'tests/integration/boundary-attribute-dedup.test.ts', 'A proving boundary test to mirror.'),
       check(
@@ -78,7 +78,7 @@ export const CONTEXT_MAP: Readonly<Record<string, ContextTask>> = {
         'packages/command/src/checks/registry.ts',
         'The fast unit lane that runs your new boundary test.',
       ),
-      file('doc', 'GLOSSARY.md', 'The prose register for the boundary / bearing vocabulary.'),
+      file('doc', 'GLOSSARY.md', 'The technical vocabulary for boundaries and named states.'),
     ],
   },
   'add-motion': {
@@ -100,7 +100,7 @@ export const CONTEXT_MAP: Readonly<Record<string, ContextTask>> = {
       file(
         'owner-file',
         'packages/quantizer/src/transition.ts',
-        'The quantizer transition path that animates between bearings.',
+        'The quantizer transition path that animates between named states.',
       ),
       file('test', 'tests/unit/quantizer/animated-quantizer.test.ts', 'A proving animated-transition test to mirror.'),
       check(

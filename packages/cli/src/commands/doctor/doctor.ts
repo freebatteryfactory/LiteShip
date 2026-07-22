@@ -1,7 +1,7 @@
 /**
  * doctor — preflight environment check entrypoint. Casts environment signals (Node,
  * pnpm, workspace state, build artifacts, git hooks, Playwright browsers)
- * into three named bearings — `ok` / `warn` / `fail` — and resolves to one
+ * into three statuses — `ok` / `warn` / `fail` — and resolves to one
  * verdict — `ready` / `caution` / `blocked`. Emits a JSON receipt to
  * stdout; pretty TTY summary to stderr when attached to a terminal.
  *

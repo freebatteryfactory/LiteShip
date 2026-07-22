@@ -96,7 +96,7 @@ export async function probePnpm(
       label: 'pnpm',
       status: 'fail',
       detail: `${version} (need >= ${minima.pnpm})`,
-      hint: 'Re-rig pnpm: corepack prepare pnpm@latest --activate',
+      hint: 'Reinstall pnpm: corepack prepare pnpm@latest --activate',
     };
   }
   return { id: 'pnpm.version', label: 'pnpm', status: 'ok', detail: version };
@@ -212,12 +212,12 @@ export function probeGitHooks(cwd: string): DoctorCheck {
       id: 'git.hooks',
       label: 'git hooks',
       status: 'warn',
-      detail: 'pre-commit hook not rigged',
-      hint: 'Rig it: pnpm exec tsx scripts/link-pre-commit.ts',
+      detail: 'pre-commit hook not installed',
+      hint: 'Install it: pnpm exec tsx scripts/link-pre-commit.ts',
       fixable: true,
     };
   }
-  return { id: 'git.hooks', label: 'git hooks', status: 'ok', detail: 'pre-commit rigged' };
+  return { id: 'git.hooks', label: 'git hooks', status: 'ok', detail: 'pre-commit installed' };
 }
 
 export function probeFfmpegRenderCheck(probe: typeof probeFfmpegRender = probeFfmpegRender): DoctorCheck {
@@ -278,7 +278,7 @@ export function probePlaywright(cwd: string): DoctorCheck {
       label: 'Playwright',
       status: 'warn',
       detail: '@playwright/test not in node_modules (e2e tests will not run)',
-      hint: 'Stow the browsers: pnpm install && pnpm exec playwright install chromium',
+      hint: 'Install the browsers: pnpm install && pnpm exec playwright install chromium',
     };
   }
   if (!hasChromiumBuild()) {
@@ -287,7 +287,7 @@ export function probePlaywright(cwd: string): DoctorCheck {
       label: 'Playwright',
       status: 'warn',
       detail: 'package present but no chromium browser binary downloaded (e2e/browser tests will not run)',
-      hint: 'Stow the browsers: pnpm exec playwright install chromium chromium-headless-shell',
+      hint: 'Install the browsers: pnpm exec playwright install chromium chromium-headless-shell',
     };
   }
   return { id: 'playwright.installed', label: 'Playwright', status: 'ok', detail: 'package + chromium present' };
@@ -353,7 +353,7 @@ export async function probeWasmToolchain(
       label: 'WASM toolchain',
       status: 'warn',
       detail: 'cargo not on PATH (crates/ present; WASM build will not run)',
-      hint: 'Stow Rust: https://rustup.rs',
+      hint: 'Install Rust: https://rustup.rs',
     };
   }
   return { id: 'wasm.toolchain', label: 'WASM toolchain', status: 'ok', detail: r.stdout.trim() };

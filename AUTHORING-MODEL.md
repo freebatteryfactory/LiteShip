@@ -2,29 +2,57 @@
 
 ## Purpose
 
-How to author with LiteShip: LiteShip's authoring surface, shipped as `@liteship/*` packages and installed through the one `liteship` facade — the authoring verbs import from the `liteship` root, host surfaces from domain subpaths like `liteship/astro`.
+How to author with LiteShip: install one `liteship` facade, define adaptive behavior from its root, then apply and inspect the resulting definition. Host integrations and lower-level owners remain available through explicit subpaths when the paved road is not enough.
 
 Naming: [GLOSSARY.md](./GLOSSARY.md).
 
-This is about construction, not migration. It assumes the mental model in [ASTRO-STATIC-MENTAL-MODEL.md](./ASTRO-STATIC-MENTAL-MODEL.md).
+This document is about construction. Existing CSS and token sources enter through the explicit adapters on `liteship/migrate`; migration diagnostics never become a second runtime.
 
 ## The shape
 
 <!-- BEGIN DIAGRAM (canonical mental model — keep byte-identical across README / GLOSSARY / AUTHORING-MODEL; pinned by tests/unit/meta/diagram-drift.test.ts) -->
 
 ```text
-signal ─▶ boundary ─▶ graph ─▶ cast ─▶ patch
+defineAdaptive(...) ─▶ attrs() + plan() ─▶ explain(value)
 ```
 
-- **signal** — a continuous input from the world (viewport, scroll, audio…)
-- **boundary** — quantizes it into a few named states
-- **graph** — seals boundaries, tokens, and styles into one content-addressed truth
-- **cast** — projects (verb) that truth to CSS, GPU, ARIA, AI, TypeScript, and video
-- **patch** — the only way to change the truth: a validated mutation
+- **define** — describe the input, named states, and outputs once
+- **apply** — spread `attrs()` onto host markup and use the CSS from `plan()`
+- **inspect** — call `explain(value)` to see the selected state, thresholds, provenance, and identity
 
 <!-- END DIAGRAM -->
 
-## First-time reader vocabulary
+## The paved road
+
+The default authoring unit is one `Adaptive` definition:
+
+```ts
+import { defineAdaptive } from 'liteship';
+
+export const hero = defineAdaptive({
+  boundary: {
+    input: 'viewport.width',
+    at: [[0, 'stacked'], [760, 'split'], [1180, 'cinematic']],
+  },
+  style: {
+    base: { properties: { display: 'grid', gap: '1rem' } },
+    states: {
+      split: { properties: { 'grid-template-columns': '1.1fr 0.9fr' } },
+      cinematic: { properties: { 'grid-template-columns': '1.2fr 0.8fr' } },
+    },
+  },
+});
+```
+
+From that one value:
+
+- `hero.attrs()` returns the host attributes that identify and activate it.
+- `hero.plan()` returns matching compiled CSS plus member identities.
+- `hero.explain(940)` reports the selected state, satisfied thresholds, style provenance, capability tier, and aggregate identity.
+
+These are projections of the real underlying boundary, style, quantizer, token, and theme constructors. The facade does not maintain a parallel semantic model.
+
+## Engine vocabulary after the first feature
 
 For designers, brand directors, and agency PMs reading alongside an engineer. Engineering-fluent readers can skip this section.
 
@@ -41,24 +69,24 @@ For the full prose-register authority across this corpus, see [GLOSSARY.md](./GL
 
 ## What it feels like to author
 
-You start by naming the few states a surface has. *Stacked, split, cinematic.* You don't pick numbers yet; you pick names. Then you write a boundary that says where one becomes the next, with hysteresis where you'd want some grace. Then you write the styles for each named state, and you move on.
+You start by naming the few states a surface has: *stacked, split, cinematic*. Put the input partition and state-specific outputs in one `defineAdaptive` call, spread its attributes, emit its plan, and move on. Reach into the constituent definitions only when you actually need lower-level control.
 
 The CSS variable, the GLSL preamble, and the ARIA attribute all come out of that one boundary without you authoring them three times. The AI manifest is its own structured artifact authored alongside, sharing the same state vocabulary. When you drag the window edge, the CSS re-paints; if you wired a shader in, the uniform changes the same tick; a screen reader sees the same state your styles do.
 
 ---
 
-## The main authoring objects
+## Constituent definitions and escape hatches
 
-> The four things you author: a *boundary* (where state changes), *tokens* (the design materials), *themes* (palettes that swap together), and *styles* (what each state looks like).
+> `defineAdaptive` composes the common path. A *boundary*, *token*, *theme*, or *style* can also be authored directly when a compiler, integration, or reusable design system needs to own that layer.
 
-There are four primary authored definition types:
+The underlying authored definition types remain public:
 
 - `Boundary`
 - `Token`
 - `Theme`
 - `Style`
 
-Everything else composes around them.
+`Adaptive` lowers through these owners and exposes them as `adaptive.boundary`, `adaptive.style`, `adaptive.quantizer`, `adaptive.tokens`, and `adaptive.theme`. Direct construction is an escape hatch, not a prerequisite for the first feature.
 
 ### Boundary
 
@@ -130,17 +158,17 @@ Style guidance:
 
 ## The authoring order
 
-> Pick names before numbers, signals before states, states before styles. The order keeps the authored layer about *what the surface means* rather than *what numbers happened to fall out of CSS*.
+> Define, apply, inspect. Inside the definition, pick names before numbers, signals before states, and states before outputs.
 
 When building a new surface, the clean order is:
 
 1. name the signal
 2. name the states
-3. define the boundary
-4. define the tokens
-5. define the theme space
-6. define the style outputs
-7. decide the cheapest runtime that preserves intent
+3. put the boundary and style outputs in `defineAdaptive`
+4. apply `attrs()` and `plan()`
+5. inspect representative inputs with `explain()`
+6. add tokens, themes, quantized targets, or a lower-level constructor only when the surface needs them
+7. choose the cheapest runtime that preserves intent
 
 This order matters because it keeps authored behavior semantic.
 
@@ -205,7 +233,27 @@ Avoid IDs that merely restate the primitive type:
 
 ## Example shapes
 
-> Working code for each of the four primitives. Skim if you're getting the feel for the shapes; copy when you're authoring a real surface.
+> The first example is the default composition. The remaining examples are the constituent definitions for authors who need direct ownership.
+
+### Adaptive
+
+```ts
+import { defineAdaptive } from 'liteship';
+
+export const hero = defineAdaptive({
+  boundary: {
+    input: 'viewport.width',
+    at: [[0, 'stacked'], [760, 'split'], [1180, 'cinematic']],
+  },
+  style: {
+    base: { properties: { display: 'grid' } },
+    states: {
+      split: { properties: { 'grid-template-columns': '1.1fr 0.9fr' } },
+      cinematic: { properties: { 'grid-template-columns': '1.2fr 0.8fr' } },
+    },
+  },
+});
+```
 
 ### Boundary
 
@@ -300,21 +348,20 @@ export const heroShell = defineStyle({
 
 ## File organization
 
-> One file per primitive type at the surface level: `boundaries.ts`, `tokens.ts`, `themes.ts`, `styles.ts`. The Vite plugin expects this shape; you can deviate, but you'll lose the convention-driven HMR behavior.
+> Start with `adaptive.ts`. Split constituent definitions by semantic owner only when reuse or scale earns the extra files.
 
-The cleanest repo-level shape is convention-driven:
+The default application shape is small:
 
-- `boundaries.ts`
-- `tokens.ts`
-- `themes.ts`
-- `styles.ts`
+- `adaptive.ts`
+- the host page or component that applies it
 
-The Vite plugin already expects this shape, and the resolver pipeline is built around it.
+When several surfaces share lower-level definitions, split them deliberately:
 
 Recommended section-level layout:
 
 ```text
 src/
+  adaptive.ts
   boundaries.ts
   tokens.ts
   themes.ts
@@ -324,7 +371,7 @@ src/
   narrative.css
 ```
 
-This works because authored definitions live in TypeScript, while emitted style consumers can stay in CSS with `@token`, `@theme`, `@style`, and `@quantize` blocks.
+The Vite plugin continues to support the conventional definition files and CSS directives. They are an advanced authoring route, not required ceremony for a single adaptive surface.
 
 ---
 
@@ -511,7 +558,8 @@ The visual effect should justify the runtime.
 
 Authoring in LiteShip means:
 
-- defining semantic partitions of reality
-- naming the states those partitions produce
-- mapping those states to intentional outputs
+- defining adaptive intent once
+- applying its attributes and compiled plan
+- inspecting why a named state and output won
+- dropping to constituent definitions when explicit ownership requires it
 - letting the host and runtime choose the cheapest valid execution path

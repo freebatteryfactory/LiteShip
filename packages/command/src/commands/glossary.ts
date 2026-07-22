@@ -66,9 +66,14 @@ export const GLOSSARY_ENTRIES: readonly GlossaryEntry[] = [
   {
     term: 'boundary',
     category: 'primitive',
-    definition:
-      'Where a continuous signal partitions into named bearings. Verb register: rig, tension, set. Avoid "wire" for boundaries in prose.',
-    seeAlso: ['bearing', 'rig', 'signal'],
+    definition: 'A definition that partitions one continuous input into a small set of named states.',
+    seeAlso: ['state', 'signal'],
+  },
+  {
+    term: 'state',
+    category: 'primitive',
+    definition: 'A named discrete result selected by evaluating a boundary at one input value.',
+    seeAlso: ['boundary', 'style'],
   },
   {
     term: 'token',
@@ -79,13 +84,13 @@ export const GLOSSARY_ENTRIES: readonly GlossaryEntry[] = [
   {
     term: 'style',
     category: 'primitive',
-    definition: "A named-state output: what casts or projects when a boundary's bearing changes.",
+    definition: 'Base and named-state properties owned by one boundary.',
     seeAlso: ['boundary', 'cast', 'theme'],
   },
   {
     term: 'theme',
     category: 'primitive',
-    definition: 'Coordinated variants: how materials re-trim when the presentation mode shifts.',
+    definition: 'Coordinated token-space variants for one presentation mode.',
     seeAlso: ['token', 'style'],
   },
   {
@@ -96,41 +101,21 @@ export const GLOSSARY_ENTRIES: readonly GlossaryEntry[] = [
     seeAlso: ['surface', 'compile path'],
   },
   {
-    term: 'rig',
-    category: 'translator-note',
-    definition:
-      'Both verb ("rig a boundary") and noun ("the rig is in between"). The system that ties continuous signals to named bearings.',
-    seeAlso: ['boundary'],
-  },
-  {
     term: 'surface',
     category: 'translator-note',
     definition: 'Noun — a runtime target the compiler emits to (CSS surface, ARIA surface). Not the verb sense.',
     seeAlso: ['cast', 'compile path'],
   },
   {
-    term: 'bearing',
-    category: 'translator-note',
-    definition: 'Noun — a named discrete state a boundary partitions to (one of mobile/tablet/desktop, etc.).',
-    seeAlso: ['boundary'],
-  },
-  {
-    term: 'trim',
-    category: 'translator-note',
-    definition: 'Runtime-cost language. "Kept the working deck trim" = "kept the runtime cost low".',
-    seeAlso: ['hot path'],
-  },
-  {
     term: 'hot path',
     category: 'primitive',
     definition:
-      'Working deck / working line. Per-tick code that allocates nothing on the steady-state. See ADR-0002 for the pool / dirty-flag / dense-ECS discipline.',
-    seeAlso: ['trim'],
+      'Per-tick runtime code whose steady state avoids allocation. See ADR-0002 for the pool, dirty-flag, and dense-ECS discipline.',
   },
   {
     term: 'compile path',
     category: 'primitive',
-    definition: 'Cast to CSS, project to GLSL / WGSL / ARIA / AI. Prefer a register verb to "compile" in casual prose.',
+    definition: 'Projection of authored intent to CSS, GLSL, WGSL, ARIA, AI, or another target artifact.',
     seeAlso: ['cast', 'surface'],
   },
   {
@@ -153,38 +138,6 @@ export const GLOSSARY_ENTRIES: readonly GlossaryEntry[] = [
     definition:
       'The full release-grade test gate (`pnpm run gauntlet:full`). Runs the ordered phase sequence from the initial environment check through to `flex:verify PASSED — project is 10/10`.',
   },
-  {
-    term: 'dry-dock',
-    category: 'translator-note',
-    definition:
-      'Clean state. `pnpm clean` wipes dist/, coverage/, reports/, .tsbuildinfo so the next build starts from a known empty deck.',
-  },
-  {
-    term: 'deck plan',
-    category: 'translator-note',
-    definition:
-      'The npm-scripts catalogue (`pnpm scripts`). Lists every script grouped by purpose. The chart for inner-loop operations.',
-    seeAlso: ['chart'],
-  },
-  {
-    term: 'chart',
-    category: 'translator-note',
-    definition: 'The verb table (`liteship help`). The map of CLI bearings — what verb does what, grouped by phase.',
-    seeAlso: ['deck plan'],
-  },
-  {
-    term: 'rig (verb)',
-    category: 'translator-note',
-    definition:
-      'Install or wire a piece of infrastructure into place. "Rig the pre-commit hook" = link `.git/hooks/pre-commit`. Distinct from the noun "rig" (the boundary system).',
-    seeAlso: ['rig'],
-  },
-  {
-    term: 'stow',
-    category: 'translator-note',
-    definition:
-      'Pack a downloaded artifact into its expected location. "Stow the browsers" = `pnpm exec playwright install`. "Stow Rust" = install via rustup.',
-  },
 ] as const;
 
 /** Match entries: exact term wins, else substring over term + definition. */
@@ -202,7 +155,7 @@ export function matchGlossaryEntries(query: string | null): readonly GlossaryEnt
 export const glossaryCommand = defineCommand({
   descriptor: {
     name: 'glossary',
-    summary: 'Look up a term in the LiteShip prose register (maritime + product naming).',
+    summary: 'Look up a term in the LiteShip technical and product vocabulary.',
     inputSchema: {
       type: 'object',
       properties: { term: { type: 'string' } },

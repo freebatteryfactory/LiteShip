@@ -1,20 +1,18 @@
 # LiteShip documentation glossary
 
-Vocabulary for prose across this repository. Technical identifiers (`Boundary`, `@liteship/core`, `liteshipMiddleware`, `--liteship-*`, `host-wired`, CLI `liteship`, ...) stay exactly as shipped; this file governs surrounding language only.
+Vocabulary for prose across this repository. The public author model is define, apply, inspect; the deeper engine vocabulary remains available when a reader crosses that abstraction boundary. Technical identifiers (`Boundary`, `@liteship/core`, `liteshipMiddleware`, `--liteship-*`, `host-wired`, CLI `liteship`, ...) stay exactly as shipped.
 
 ## The shape
 
 <!-- BEGIN DIAGRAM (canonical mental model — keep byte-identical across README / GLOSSARY / AUTHORING-MODEL; pinned by tests/unit/meta/diagram-drift.test.ts) -->
 
 ```text
-signal ─▶ boundary ─▶ graph ─▶ cast ─▶ patch
+defineAdaptive(...) ─▶ attrs() + plan() ─▶ explain(value)
 ```
 
-- **signal** — a continuous input from the world (viewport, scroll, audio…)
-- **boundary** — quantizes it into a few named states
-- **graph** — seals boundaries, tokens, and styles into one content-addressed truth
-- **cast** — projects (verb) that truth to CSS, GPU, ARIA, AI, TypeScript, and video
-- **patch** — the only way to change the truth: a validated mutation
+- **define** — describe the input, named states, and outputs once
+- **apply** — spread `attrs()` onto host markup and use the CSS from `plan()`
+- **inspect** — call `explain(value)` to see the selected state, thresholds, provenance, and identity
 
 <!-- END DIAGRAM -->
 
@@ -31,12 +29,21 @@ signal ─▶ boundary ─▶ graph ─▶ cast ─▶ patch
 
 | Term                   | Consistent description                                                                                                       |
 | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| **Boundaries**         | Rig, tension, set. Where continuous signals partition into named bearings. Avoid _wire_ for boundaries in prose.             |
-| **Tokens**             | Materials of the design language: axes, fallbacks, craft vocabulary.                                                         |
-| **Styles**             | Named-state outputs: what casts or projects when a boundary's bearing changes.                                               |
-| **Themes**             | Coordinated variants: how materials re-trim when the presentation mode shifts.                                               |
-| **Compile path**       | Cast to CSS, project to GLSL / WGSL / ARIA / AI. Not "compile" in casual prose if a register verb fits.                      |
-| **Runtime / hot path** | Working deck, working line, thrust / photon language for trim and off-main-thread work; off-deck or engine room for workers. |
+| **Boundaries**         | Definitions that partition continuous inputs into named states.                                                              |
+| **Tokens**             | Named values and axes that belong to the design language.                                                                    |
+| **Styles**             | Base and named-state properties owned by one boundary.                                                                       |
+| **Themes**             | Coordinated token-space variants.                                                                                            |
+| **Compile path**       | Projection of authored intent to CSS, GLSL, WGSL, ARIA, AI, or another target artifact.                                     |
+| **Runtime / hot path** | Live evaluation and application of an authored definition; workers and GPU paths are explicit execution tiers.              |
+
+The beginner-facing terms are deliberately smaller:
+
+| Term | Consistent description |
+| --- | --- |
+| **Adaptive definition** | One `defineAdaptive` value that lowers through the real boundary, style, quantizer, token, theme, and compiler owners. |
+| **Named state** | A discrete result such as `mobile`, `tablet`, or `desktop`, selected by evaluating a boundary at one input value. |
+| **Apply** | Spread `attrs()` onto host markup and emit the matching CSS from `plan()`. |
+| **Inspect** | Call `explain(value)` to retrieve the selected state, threshold trace, output provenance, capability tier, and identity. |
 
 ## Substrate & cast vocabulary (prose register)
 
@@ -77,10 +84,7 @@ _next-generation, leverage, robust, powerful, seamless, blazingly fast, cutting-
 A few terms in this corpus are polysemous; future i18n / machine-translation work should treat them as terms-of-art and pin the meaning rather than translate by surface form:
 
 - **cast** — verb only, "project a definition into a target output surface" (CSS, GLSL, ARIA, etc.). Not the noun (theatrical cast) and not type-coercion (`as` casting). Always carries a target.
-- **rig** — both verb ("rig a boundary") and noun ("the rig is in between"). The system that ties continuous signals to named bearings. Not the unrelated rigging-of-results sense.
 - **surface** — noun, "a runtime target the compiler emits to" (CSS surface, ARIA surface). Not the verb sense (something coming to attention).
-- **bearing** — noun, "a named discrete state a boundary partitions to" (one of `mobile/tablet/desktop`, etc.). Not the mechanical-bearing or the comportment sense.
-- **trim** — runtime-cost language: "kept the working deck trim" = "kept the runtime cost low."
 
 ## Verb grammar (authoring register)
 
@@ -99,19 +103,6 @@ One enforced verb per operation class (ADR-0046 / ADR-0051). The authoring surfa
 | **dispose**  | End owned runtime activity.                                        | direct `dispose()` / `Symbol.dispose` on a `Lifetime`-owning value                                                                |
 
 `define` returns a content-addressed declaration; nothing runs until a host evaluates it. `create` hands back a live object you `.read()`, `.subscribe()` to, and eventually `dispose()`. `computed` is the derived-reactive middle: a `create`-family value whose content is a pure function of its reactive inputs.
-
-## Maritime register (CLI surface)
-
-User-facing CLI strings (`liteship doctor`, `pnpm verify`, clean, dispatch errors) draw from one consistent register. Authors of new CLI output should pull from here rather than invent register on the fly. The lint test `tests/unit/cli/glossary-lint.test.ts` enforces that every term used in CLI source is defined here and in `liteship glossary`, so this table lists only the terms the CLI still uses — retired ones are dropped, not kept as dead vocabulary.
-
-| Term                          | Meaning                                                                                                                                                                                                                                                                                             | Where it appears                                                   |
-| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| **dry-dock**                  | Clean state. `pnpm clean` wipes `dist/`, `coverage/`, `reports/`, `.tsbuildinfo`.                                                                                                                                                                                                                   | `scripts/clean.ts`                                                 |
-| **deck plan**                 | The npm-scripts catalogue (`pnpm scripts`). Grouped by purpose.                                                                                                                                                                                                                                     | `scripts/scripts-index.ts` header                                  |
-| **chart**                     | The CLI verb table (`liteship help`). Map of bearings — what verb does what.                                                                                                                                                                                                                            | `liteship help` header; dispatch unknown-command error                 |
-| **rig** _(verb)_              | Install or wire infrastructure into place. "Rig the pre-commit hook" = link `.git/hooks/pre-commit`. Distinct from the noun "rig" (the boundary system).                                                                                                                                            | `liteship doctor` git-hook hint                                        |
-| **stow**                      | Pack a downloaded artifact into its expected location. "Stow the browsers" = `pnpm exec playwright install`. "Stow Rust" = install via rustup.                                                                                                                                                      | `liteship doctor` Playwright / WASM hints                              |
-| **bearing** _(verdict sense)_ | One of `ok` / `warn` / `fail` for a probe; or `ready` / `caution` / `blocked` for the rolled-up verdict. Same metaphor as the boundary-bearing primitive — a discrete state projected from a continuous signal.                                                                                     | `liteship doctor` receipts                                             |
 
 ## Time semantics (two clocks, one rule)
 

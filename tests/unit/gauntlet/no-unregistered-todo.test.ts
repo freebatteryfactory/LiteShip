@@ -87,10 +87,10 @@ describe('gauntlet/no-unregistered-todo — the OBLIGATIONS-LEDGER enforcement t
 describe('buildObligationLedger — the ledger⇔marker reconciliation', () => {
   it('reconciles the REAL repo clean — every marker names a registered obligation', () => {
     const ledger = buildObligationLedger(REPO_ROOT);
-    // The registered obligations of the ledger (P17 set + the consumer-check-depth deferral).
+    // The complete registered obligation set. Resolved work leaves this list;
+    // only active, owned deferrals remain.
     const ids = ledger.obligations.map((o) => o.id).sort();
     expect(ids).toEqual([
-      'OBL-CHECK-CONSUMER-DEPTH',
       'OBL-DEVOPS-ARTIFACT-REPRO',
       'OBL-FEATURE-ADD',
       'OBL-REACTIVE-SWEEP-3',

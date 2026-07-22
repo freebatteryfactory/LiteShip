@@ -77,8 +77,8 @@ type PhaseProjection =
  * registry — is the ONLY way to change the sequence; the meta test pins it byte-for-byte.
  */
 const RELEASE_GAUNTLET_PROJECTION: readonly PhaseProjection[] = [
-  // ── Phase 0: Rig-check (env preflight) ─────────────────────────────
-  { checkId: 'check/doctor', label: 'rig-check' },
+  // ── Phase 0: Environment check (env preflight) ─────────────────────
+  { checkId: 'check/doctor', label: 'environment-check' },
 
   // ── Phase 1: Build + validate ──────────────────────────────────────
   { phase: { label: 'build', command: 'pnpm run build' } },
@@ -276,7 +276,7 @@ export const CI_PARALLEL_INTEGRATION_LABELS: readonly string[] = [
 ];
 
 const CI_PARALLEL_EXCLUDED_FROM_MID = new Set<string>([
-  'rig-check',
+  'environment-check',
   ...CI_PARALLEL_SETUP_LABELS,
   ...CI_PARALLEL_PREFLIGHT_LABELS,
   CI_PARALLEL_SHARDED_TEST_LABEL,

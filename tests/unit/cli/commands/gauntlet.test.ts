@@ -66,7 +66,7 @@ describe('gauntlet command (unit)', () => {
     expect(receipt.phases.length).toBeGreaterThan(10);
     expect(receipt.phases).toContain('build');
     expect(receipt.phases).toContain('flex:verify');
-    expect(receipt.phases[0]).toBe('rig-check');
+    expect(receipt.phases[0]).toBe('environment-check');
   });
 
   it('dry-run phases are exactly the canonical projection (CUT D8 — no private CLI copy)', async () => {

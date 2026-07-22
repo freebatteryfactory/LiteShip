@@ -1,5 +1,5 @@
 /**
- * Dry-dock — purge build/test artifacts so the next run starts from an
+ * Clean — purge build/test artifacts so the next run starts from an
  * empty deck. Removes:
  *   - packages/<all>/dist
  *   - packages/<all>/*.tsbuildinfo
@@ -88,7 +88,7 @@ cleanRoot();
 const quiet = process.env.LITESHIP_QUIET_INSTALL || process.env.CI;
 if (!quiet) {
   const on = colorEnabled();
-  process.stderr.write(`${header('Dry-dock', on)}: ${color('cyan', String(removed.length), on)} artifact(s) cleared.\n`);
+  process.stderr.write(`${header('Clean', on)}: ${color('cyan', String(removed.length), on)} artifact(s) cleared.\n`);
   for (const r of removed) process.stderr.write(`  ${color('dim', '-', on)} ${r}\n`);
   if (removed.length === 0) {
     process.stderr.write(`  ${color('dim', 'Deck was already clear; nothing to scrape.', on)}\n`);

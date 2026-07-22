@@ -1,6 +1,6 @@
 /**
  * doctor/summary — verdict aggregation + TTY presentation. Pure: folds the
- * per-check bearings into one verdict and renders the summary string. No fs,
+ * per-check statuses into one verdict and renders the summary string. No fs,
  * no spawn, no process I/O. Color is forced OFF (NO_COLOR) so the rendered
  * string is deterministic and assertable byte-for-byte on structure.
  *
@@ -37,7 +37,7 @@ describe('doctor/summary — aggregate()', () => {
     expect(aggregate([])).toBe('ready');
   });
 
-  it('fail dominates warn dominates ok, for any multiset of bearings', () => {
+  it('fail dominates warn dominates ok, for any multiset of statuses', () => {
     fc.assert(
       fc.property(
         fc.array(fc.constantFrom('ok', 'warn', 'fail') as fc.Arbitrary<DoctorCheck['status']>),
@@ -81,11 +81,11 @@ describe('doctor/summary — prettySummary()', () => {
 
   it('renders a hint row for a non-ok check that carries a hint', () => {
     const out = prettySummary(
-      [check({ id: 'git.hooks', label: 'git hooks', status: 'warn', detail: 'not rigged', hint: 'rig it now' })],
+      [check({ id: 'git.hooks', label: 'git hooks', status: 'warn', detail: 'not installed', hint: 'install it now' })],
       'caution',
     );
-    expect(out).toContain('not rigged');
-    expect(out).toContain('rig it now');
+    expect(out).toContain('not installed');
+    expect(out).toContain('install it now');
     expect(out).toContain('caution');
   });
 

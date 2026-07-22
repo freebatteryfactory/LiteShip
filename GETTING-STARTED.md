@@ -1,6 +1,6 @@
 # Getting started with LiteShip
 
-From `pnpm add` in your Astro project to a boundary changing state as you drag the window edge, in about five minutes. Two concepts get you there: `defineBoundary` and `adaptiveAttrs`. Everything else (tokens, styles, casting to CSS) is layered behind links.
+From `pnpm add` to a visible adaptive result in about five minutes. The paved road has three moves: **define** with `defineAdaptive`, **apply** with `attrs()` and `plan()`, and **inspect** with `explain()`. Boundaries, host helpers, and target compilers remain available later as explicit escape hatches.
 
 LiteShip / `@liteship/*` naming: [GLOSSARY.md](./GLOSSARY.md). For Cloudflare Workers hosting, see [HOSTING.md](./HOSTING.md#cloudflare-workers) and [examples/cloudflare-astro/](./examples/cloudflare-astro/). Contributing to LiteShip itself (cloning the monorepo, building, running the gauntlet) is a different path: [CONTRIBUTING.md](./CONTRIBUTING.md).
 
@@ -20,30 +20,34 @@ pnpm add liteship
 
 `liteship` is the one-dependency facade over the whole stack: authoring verbs import from the `liteship` root, and host surfaces ride domain subpaths like `liteship/astro`. One package, one import path — the same wiring `pnpm create liteship` scaffolds.
 
-## 2. Your first boundary
+## 2. Define the adaptive behavior
 
-A boundary is a continuous-to-discrete signal mapping: here, viewport width → `{mobile, tablet, desktop}`. Put it in a module the rest of your project can import:
+One definition owns the input, named states, and style differences. Put it in a module the page can import:
 
 ```ts
-// src/boundaries.ts
-import { defineBoundary } from 'liteship';
+// src/adaptive.ts
+import { defineAdaptive } from 'liteship';
 
-export const viewport = defineBoundary({
-  input: 'viewport.width',
-  at: [
-    [0, 'mobile'],
-    [768, 'tablet'],
-    [1280, 'desktop'],
-  ],
-  hysteresis: 20, // optional — default 0 (no dead-zone); see Troubleshooting
+export const layout = defineAdaptive({
+  boundary: {
+    input: 'viewport.width',
+    at: [[0, 'mobile'], [768, 'tablet'], [1280, 'desktop']],
+  },
+  style: {
+    base: { properties: { display: 'grid', gap: '1rem', 'grid-template-columns': '1fr' } },
+    states: {
+      tablet: { properties: { 'grid-template-columns': 'repeat(2, 1fr)' } },
+      desktop: { properties: { 'grid-template-columns': 'repeat(3, 1fr)' } },
+    },
+  },
 });
 ```
 
-Thresholds are inclusive lower bounds sorted lowest-first, each with a unique state name. The returned definition is content-addressed: change the definition and its `id` changes with it.
+`layout.boundary`, `layout.style`, and their content labels are the same objects the lower-level constructors produce. `defineAdaptive` is composition over those owners, not a second implementation.
 
-## 3. Put it on the page and resize
+## 3. Apply it, then inspect it
 
-Register the integration (it injects the client boot scanner that activates boundaries):
+The official scaffold already registers the Astro integration. In an existing Astro project, add it once:
 
 ```js
 // astro.config.mjs
@@ -55,35 +59,23 @@ export default defineConfig({
 });
 ```
 
-Then spread `adaptiveAttrs` onto any element in a `.astro` page:
+The page uses the definition directly. `attrs()` applies the runtime identity, `plan()` returns matching compiled CSS, and `explain()` makes the decision inspectable:
 
 ```astro
 ---
-import { adaptiveAttrs } from 'liteship/astro';
-import { viewport } from '../boundaries.js';
+import { layout } from '../adaptive.js';
+
+const plan = layout.plan();
+const preview = layout.explain(940);
 ---
 
-<div {...adaptiveAttrs({ boundary: viewport })} class="card">
-  Resize the window to see the boundary state change.
-</div>
+<main {...layout.attrs()}>
+  At 940px the selected state is <strong>{preview.boundary.state}</strong>.
+</main>
+<style is:inline set:html={plan.css}></style>
 ```
 
-Run `pnpm dev`, open the page, and drag the window edge: the element's `data-liteship-state` attribute flips `mobile` → `tablet` → `desktop`. Your CSS can key off it directly:
-
-```css
-.card[data-liteship-state='mobile'] {
-  padding: 0.5rem;
-}
-.card[data-liteship-state='desktop'] {
-  padding: 2rem;
-}
-```
-
-`adaptiveAttrs` serializes the boundary plus a `data-liteship-directive="adaptive"` marker; the integration's injected boot scanner activates the boundary evaluator on the client (only the evaluator — not a whole framework tree). The `Adaptive` component (`import Adaptive from '@liteship/astro/Adaptive'`) wraps the same attributes around a div for you. Always go through `adaptiveAttrs` or `Adaptive` — the `data-liteship-*` attributes are an internal serialization contract, not a hand-authoring surface; writing them by hand drifts the moment that contract changes.
-
-Plain elements, not just islands. `client:stream` / `client:llm` / `client:gpu` / `client:wasm` / `client:graph` now boot on any plain element, not only framework islands — the integration scans for the directive's runtime attribute and activates it. `data-liteship-boundary` is the exception: it's also a worker/GPU payload, so it stays explicit (`data-liteship-directive` / `Adaptive`), and you'll get a one-time console warning if you leave one bare.
-
-That's the whole layer-1 loop: define states, attach them to an element, let CSS respond.
+Run `pnpm dev` and drag the window edge. The state marker changes `mobile` → `tablet` → `desktop`, while the emitted CSS comes from the same definition. Use `layout.explain(currentWidth)` when you need the selected state, satisfied thresholds, style source, admitted targets, and aggregate identity. Do not hand-author `data-liteship-*`; `attrs()` owns that serialization contract.
 
 ## Generated UI with a component catalog
 
@@ -136,9 +128,27 @@ While running `pnpm dev`, open the liteship boundary inspector from the Astro de
 
 <!-- gif: inspector dev-toolbar app tuning thresholds and copying snippet -->
 
-## 4. Cast to CSS (the compiler path)
+## Lower-level boundary and host escape hatches
 
-Hand-written `[data-liteship-state]` selectors work, but the same boundary can also emit its CSS. The compilers ride the `liteship/compiler` subpath — already installed with `liteship`, nothing new to add.
+Use the lower-level route when a host integration needs to own assembly or when you are extending LiteShip itself:
+
+```ts
+import { defineBoundary } from 'liteship';
+import { adaptiveAttrs } from 'liteship/astro';
+
+const viewport = defineBoundary({
+  input: 'viewport.width',
+  at: [[0, 'mobile'], [768, 'tablet'], [1280, 'desktop']],
+});
+
+const attrs = adaptiveAttrs({ boundary: viewport });
+```
+
+`defineBoundary` exposes the continuous-to-named-state contract directly. `adaptiveAttrs` adds Astro-specific serialization and options. They are supported public APIs, but they require the author to assemble style compilation and inspection explicitly; start with `defineAdaptive` unless that control is the reason you are here. The package-owned `Adaptive` component (`import Adaptive from '@liteship/astro/Adaptive'`) wraps the same host attributes.
+
+## 4. Use a target compiler directly
+
+`defineAdaptive(...).plan()` is the default CSS route. Target and integration authors can compile a lower-level boundary directly. The compilers ride the `liteship/compiler` subpath — already installed with `liteship`, nothing new to add.
 
 `compile()` takes the boundary, a per-state property map, and an optional selector:
 
@@ -178,7 +188,7 @@ Give `result.raw` a home in the page — paste it into a `<style is:global>` blo
 </style>
 ```
 
-The compile step and the page must share one definition (that's why step 2 put the boundary in `src/boundaries.ts`): the boundary's content address changes whenever the definition does, and CSS emitted against a stale definition stops matching.
+The compile step and the page must share one definition: the boundary's content address changes whenever the definition does, and CSS emitted against a stale definition stops matching. The paved-road `plan()` method keeps that ownership together automatically.
 
 ## 5. The return leg (accept edits from the client)
 
@@ -231,6 +241,12 @@ the design is [ADR-0031](./docs/adr/0031-form-mutation-binding-primitive.md).
 - [docs/api/](./docs/api): generated API reference for every package (e.g. `Boundary.evaluate` for evaluating a boundary against sample values outside the DOM)
 - [DOCS.md](./DOCS.md): full documentation map
 
+## Migrating existing sources
+
+The `liteship/migrate` subpath provides `fromMediaQueries`, `fromContainerQueries`, `fromDesignTokens`, `fromTailwindTheme`, and `fromCSSCustomProperties`. DTCG input is pinned to the 2025.10 format contract.
+
+Adapters return ordinary LiteShip definitions plus diagnostics. Unsupported or lossy input is reported or refused; it is never silently widened. Migration is a conversion step, not a compatibility runtime, so resolve the diagnostics and commit the resulting LiteShip definitions as application source.
+
 ## Working on LiteShip itself
 
 The contributor path (cloning the monorepo, workspace install, Playwright browsers, `pnpm run build` with composite project references, the test loop and the full gauntlet) lives in [CONTRIBUTING.md](./CONTRIBUTING.md). The short version:
@@ -239,18 +255,18 @@ The contributor path (cloning the monorepo, workspace install, Playwright browse
 git clone https://github.com/freebatteryfactory/LiteShip.git
 cd LiteShip
 pnpm install
-pnpm verify   # first-run aggregate: doctor → build → test
+pnpm verify   # first-run aggregate ending in the quick check profile
 ```
 
 `pnpm scripts` prints the categorized index of all dev scripts; `pnpm run doctor` is the on-demand preflight environment check.
 
 ## Troubleshooting
 
-### First-boundary authoring
+### Adaptive authoring
 
 **The same value evaluates to different states each call.** You probably reused a state name across the threshold list. `defineBoundary` requires unique state names; passing `[[0, 'small'], [768, 'small']]` throws at construction with a `LiteshipValidationError`. If the error fires at runtime in a hot path, the boundary was constructed lazily inside a render function — hoist it out.
 
-**The CSS doesn't update when the window resizes.** Two usual suspects: the element never got a directive marker (the boot scanner activates `data-liteship-directive="adaptive"` — emitted automatically by `Adaptive` / `adaptiveAttrs()` when a boundary is present; Astro's own `client:visible` / `client:idle` won't wire the boundary evaluator), or the CSS was generated against a stale boundary id (rebuild after editing the boundary; content addresses change with the definition, so old emitted CSS keys won't match the new id).
+**The CSS doesn't update when the window resizes.** Confirm the Astro integration is registered, spread `layout.attrs()` without overwriting its `class`, and emit `layout.plan().css`. On the lower-level route, confirm `adaptiveAttrs()` supplied the directive marker and rebuild after changing the boundary.
 
 **A GPU shader (or other directive) never starts on an element that also carries `adaptiveAttrs`.** Two liteship directives on one element collide — each takes over the node, so `adaptiveAttrs()` (which stamps `data-liteship-directive="adaptive"`) and a `client:gpu` on the same canvas silently fight, and one loses (usually the shader). The console warns once (`directive-collision:…`) naming both. Put each directive on its own element.
 

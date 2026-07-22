@@ -73,11 +73,11 @@ invariants:
     level: L4
     category: content-address
   - id: INV-ADAPTIVE-CSS-BYTE-EQUAL
-    law: "An adaptive's style/boundary compile to BYTE-IDENTICAL CSS as the hand-lowered ones: StyleCSSCompiler.compile(style).layers and CSSCompiler.compile(boundary, states).raw are byte-equal (Buffer.compare === 0) — the facade adds no CSS of its own."
+    law: "The public liteship root adaptive plan compiles to BYTE-IDENTICAL CSS as the independently hand-lowered path: adaptive.plan().css equals StyleCSSCompiler.compile(style).layers and the boundary container projection remains byte-equal (Buffer.compare === 0) — the facade adds no CSS semantics of its own."
     level: L4
     category: content-address
   - id: INV-ADAPTIVE-TRACE-EQUAL
-    law: "An adaptive's boundary is the SAME observable machine as the hand-lowered boundary: Boundary.evaluateBatch agrees index-for-index over a below/at/above sweep, and the content-addressed traceDigest of the evaluateResult sweep is identical."
+    law: "A public-root adaptive is the SAME observable machine as the hand-lowered path: boundary/explanation traces agree over a below/at/above sweep, and live quantizer state, crossing receipts, and output delivery sequences are deep-equal under the same fixed clock."
     level: L4
     category: determinism
 

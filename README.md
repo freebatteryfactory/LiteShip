@@ -4,13 +4,13 @@
 [![npm](https://img.shields.io/npm/v/@liteship/core.svg)](https://www.npmjs.com/package/@liteship/core)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**LiteShip is constraint-based adaptive rendering** — a multimedia-native UI compiler/runtime (not a component library). It quantizes continuous signals (viewport, scroll, motion preference, GPU tier, network) into named discrete states (*boundaries*), then **casts** one sealed definition to CSS, GPU shaders, ARIA, TypeScript, AI manifests, and video surfaces at once. Outputs are content-addressed so projections cannot silently drift ([ADR-0003](./docs/adr/0003-content-addressing.md)).
+**LiteShip is constraint-based adaptive rendering** — a multimedia-native UI compiler/runtime, not a component library. Define adaptive behavior once, apply its attributes and compiled plan to host markup, and inspect exactly why a state won. The same lowered definition remains available to CSS, GPU, ARIA, TypeScript, AI, and video projections, so the approachable front door does not create a second semantic system.
 
 Your UI only needs a few states out: mobile/tablet/desktop, light/dark, reduced/full-motion. But the world feeds it continuous signals — viewport width slides as the user drags, network latency wobbles, the dark-mode toggle fires at 11pm whether the user clicks it or the OS does it for them. LiteShip turns those continuous signals into a small set of named states, and projects each state to whatever surface the host runs.
 
 *LiteShip — distributed as `@liteship/*` packages on npm, installed through the one `liteship` facade.* The naming and prose register the deeper docs use (signal, boundary, cast, surface) lives in [GLOSSARY.md](./GLOSSARY.md) — you don't need it for the quick start.
 
-**Compared to hand-rolled responsive CSS or a component library:** LiteShip owns the *adaptive state machine* and proves projections from one content-addressed definition — you do not re-sync breakpoints across CSS, GPU, and ARIA by hand. **Compared to general UI frameworks:** it is not a widget zoo; the host owns markup, LiteShip owns quantization and multi-surface cast.
+**Compared to hand-rolled responsive CSS or a component library:** LiteShip owns the adaptive state machine and proves projections from one content-addressed definition — you do not re-sync breakpoints across CSS, GPU, and ARIA by hand. **Compared to general UI frameworks:** it is not a widget zoo; the host owns markup, LiteShip owns adaptive intent and its projections.
 
 This is a real pre-1.0 framework being hardened on dogfooded sites and a CRM UI.
 
@@ -21,14 +21,12 @@ This is a real pre-1.0 framework being hardened on dogfooded sites and a CRM UI.
 <!-- BEGIN DIAGRAM (canonical mental model — keep byte-identical across README / GLOSSARY / AUTHORING-MODEL; pinned by tests/unit/meta/diagram-drift.test.ts) -->
 
 ```text
-signal ─▶ boundary ─▶ graph ─▶ cast ─▶ patch
+defineAdaptive(...) ─▶ attrs() + plan() ─▶ explain(value)
 ```
 
-- **signal** — a continuous input from the world (viewport, scroll, audio…)
-- **boundary** — quantizes it into a few named states
-- **graph** — seals boundaries, tokens, and styles into one content-addressed truth
-- **cast** — projects (verb) that truth to CSS, GPU, ARIA, AI, TypeScript, and video
-- **patch** — the only way to change the truth: a validated mutation
+- **define** — describe the input, named states, and outputs once
+- **apply** — spread `attrs()` onto host markup and use the CSS from `plan()`
+- **inspect** — call `explain(value)` to see the selected state, thresholds, provenance, and identity
 
 <!-- END DIAGRAM -->
 
@@ -69,7 +67,7 @@ For a standalone app — one you can drop into StackBlitz or CodeSandbox — sca
 
 ## Quick start
 
-Two concepts get you to a working page: `defineBoundary` (define the states) and `adaptiveAttrs` (put them on an element). In an Astro project:
+The paved road has three moves: **define**, **apply**, **inspect**. In an Astro project:
 
 ```bash
 pnpm add liteship
@@ -77,24 +75,28 @@ pnpm add liteship
 
 `liteship` is the one-dependency facade over the whole stack: the authoring verbs import from the `liteship` root, and host surfaces ride domain subpaths like `liteship/astro` — one package to install, one import path to learn. The API is synchronous (`.read()` / `.subscribe()` / plain function calls) and carries **no third-party runtime peer dependencies** to pin: LiteShip runs on its own native substrate (the `effect` peer was shed in v0.18). `pnpm create liteship` scaffolds a starter already wired this way.
 
-Define a boundary — a mapping from a continuous signal to named states:
+Define the adaptive behavior in one root import:
 
 ```ts
-// src/boundaries.ts
-import { defineBoundary } from 'liteship';
+// src/adaptive.ts
+import { defineAdaptive } from 'liteship';
 
-export const viewport = defineBoundary({
-  input: 'viewport.width',
-  at: [
-    [0, 'mobile'],
-    [768, 'tablet'],
-    [1280, 'desktop'],
-  ],
-  hysteresis: 20, // optional — default 0 (no dead-zone)
+export const layout = defineAdaptive({
+  boundary: {
+    input: 'viewport.width',
+    at: [[0, 'mobile'], [768, 'tablet'], [1280, 'desktop']],
+  },
+  style: {
+    base: { properties: { display: 'grid', gap: '1rem' } },
+    states: {
+      tablet: { properties: { 'grid-template-columns': 'repeat(2, 1fr)' } },
+      desktop: { properties: { 'grid-template-columns': 'repeat(3, 1fr)' } },
+    },
+  },
 });
 ```
 
-Register the integration and spread the boundary onto any element:
+Register the Astro integration once (the scaffold already does this), then apply and inspect the definition:
 
 ```js
 // astro.config.mjs
@@ -106,19 +108,19 @@ export default defineConfig({ integrations: [integration()] });
 
 ```astro
 ---
-import { adaptiveAttrs } from 'liteship/astro';
-import { viewport } from '../boundaries.js';
+import { layout } from '../adaptive.js';
+
+const plan = layout.plan();
+const preview = layout.explain(940);
 ---
 
-<div {...adaptiveAttrs({ boundary: viewport })}>
-  Resize the window: this element's data-liteship-state flips
-  mobile → tablet → desktop, and your CSS keys off it.
-</div>
+<main {...layout.attrs()}>
+  At 940px the selected state is {preview.boundary.state}.
+</main>
+<style is:inline set:html={plan.css}></style>
 ```
 
-Resize the window and watch `data-liteship-state` change in devtools. `hysteresis` is optional (default `0`, no dead-zone): a value of `20` is a half-width dead-zone — cross a threshold and you stay across until the signal moves past the next half-tick, so no flicker at 768.0001px when the user is dragging the window edge.
-
-That's layer 1. Tokens, styles, themes, and casting a boundary to compiled CSS / GLSL / ARIA live one layer up: the full walkthrough (install, first boundary, cast to CSS, hydrate through Astro) is [GETTING-STARTED.md](./GETTING-STARTED.md), and the shape of day-to-day authoring (what you actually type, what comes out, how the rest of the pipeline reads it) is [AUTHORING-MODEL.md](./AUTHORING-MODEL.md), which opens with a one-paragraph "what it feels like to author" before the reference.
+Resize the window and watch `data-liteship-state` change. `attrs()` carries the runtime definition, `plan()` returns the compiled CSS and matching attributes, and `explain()` reports why a state won. The lower-level `defineBoundary`, `defineStyle`, compiler, and `adaptiveAttrs` APIs remain available as explicit escape hatches; [GETTING-STARTED.md](./GETTING-STARTED.md) introduces them only after this route works.
 
 ## What you can stop hand-rolling
 
@@ -142,7 +144,7 @@ Mobile and PWA: viewport, motion-preference, GPU tier, and network-condition sig
 
 ## Migration posture
 
-LiteShip is greenfield-first. There is no migration guide for porting an existing React + Tailwind + CSS Modules site, and no automated import path for existing design-token JSON. The right adoption shape is per-surface: pick one section, author it the LiteShip way (signal → boundary → states → styles → compiled output), let media queries and CSS custom properties keep working everywhere else. The framework's "this is not a replacement for media queries" clause means co-existence is the supported model: LiteShip emits `data-liteship-state`-keyed selectors that stack alongside existing rules; conflicts resolve via normal CSS specificity. `TokenTailwindCompiler` produces Tailwind v4 token files from LiteShip definitions (one direction); ingesting an existing Tailwind config back into LiteShip is not currently tooled.
+LiteShip can adopt one surface at a time; existing CSS keeps working beside it. The `liteship/migrate` subpath lowers supported media queries, container queries, W3C DTCG 2025.10 tokens, Tailwind `@theme` blocks, and CSS custom properties into ordinary LiteShip definitions. Each adapter returns diagnostics for unsupported or lossy input rather than silently widening it. Migration is an explicit conversion step, not a compatibility runtime: inspect the result, resolve every diagnostic, then own the emitted LiteShip definitions.
 
 ## Support matrix
 
@@ -230,7 +232,7 @@ Other lanes (`test:vite`, `test:astro`, `test:tailwind`, `test:e2e`, `test:e2e:s
 
 `pnpm run gauntlet:full` is the full release-grade gate. It runs the complete ordered phase sequence (see `STATUS.md` for the list), starting with an enforced environment preflight, fifteen to forty-five minutes end-to-end depending on cold caches, CI load, and machine speed. It ends with `flex:verify PASSED — project is 10/10 by every rating dimension`, or it fails closed.
 
-## Latest gauntlet benchmark snapshot
+## Last generated gauntlet benchmark snapshot
 
 <!-- BEGIN BENCH (generated by scripts/gen-docs.ts from benchmarks/readme-snapshot.json — refresh via scripts/refresh-bench-snapshot.ts against a CI artifact, then `pnpm run docs:gen`) -->
 Pulled from the `truth-artifacts-linux` artifact of [CI run 28506238242](https://github.com/freebatteryfactory/LiteShip/actions/runs/28506238242) (commit `7d45793`) on 2026-07-01 (linux x64, Node 22). Refresh with `pnpm exec tsx scripts/refresh-bench-snapshot.ts` against a newer artifact, then `pnpm run docs:gen`.
@@ -254,7 +256,7 @@ Diagnostic watch, not a release gate: `llm-runtime-steady` runs above its relati
 
 ## Operational telemetry
 
-For run-by-run truth (current test counts, coverage totals, benchmark posture, watch items, artifact policy) read [STATUS.md](./STATUS.md). Generated artifacts in `coverage/`, `benchmarks/`, and `reports/` are the live source of truth when they're fresh and `pnpm run feedback:verify` passes.
+For run-by-run truth, use artifacts produced by the authorities on one frozen source head. [STATUS.md](./STATUS.md) names those authorities and deliberately does not claim that an older artifact proves the current branch. Generated artifacts in `coverage/`, `benchmarks/`, and `reports/` are evidence only when their source SHA matches and the corresponding authority completed.
 
 [`ARCHITECTURE.md`](./ARCHITECTURE.md), the ADRs, and the package surface docs explain shape and intent. They are not run-by-run ledgers.
 

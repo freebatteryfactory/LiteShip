@@ -27,7 +27,7 @@ describe('glossary command', () => {
   });
 
   it('substring-matches when no exact hit', async () => {
-    const { exit, stdout } = await captureCli(() => glossary('rig', { pretty: false }));
+    const { exit, stdout } = await captureCli(() => glossary('projection', { pretty: false }));
     expect(exit).toBe(0);
     const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
     expect(receipt.entries.length).toBeGreaterThan(0);
@@ -41,7 +41,7 @@ describe('glossary command', () => {
 
   it('catalog includes the load-bearing ontology terms', () => {
     const terms = new Set(GLOSSARY_ENTRIES.map((e) => e.term));
-    for (const required of ['LiteShip', '@liteship/*', 'boundary', 'cast', 'rig', 'bearing', 'capsule', 'gauntlet']) {
+    for (const required of ['LiteShip', '@liteship/*', 'boundary', 'state', 'cast', 'capsule', 'gauntlet']) {
       expect(terms).toContain(required);
     }
   });
@@ -62,7 +62,7 @@ describe('glossary command', () => {
     expect(stderr).toContain('boundary');
     expect(stderr).toContain('(primitive)');
     expect(stderr).toContain('see also:');
-    expect(stderr).toContain('bearing');
+    expect(stderr).toContain('state');
   });
 
   it('pretty mode handles an entry without seeAlso (covers the empty-seeAlso arm)', async () => {

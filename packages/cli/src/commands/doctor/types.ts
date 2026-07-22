@@ -1,5 +1,5 @@
 /**
- * doctor — shared vocabulary. The probe-result types (bearing/verdict/check/
+ * doctor — shared vocabulary. The probe-result types (status/verdict/check/
  * fix/receipt/target), the discriminated {@link Readout} for environment
  * file probes, and the version-string parsers every probe leans on.
  *
@@ -11,10 +11,10 @@
 
 import type { WallClockTimestamp } from '../../receipts.js';
 
-/** Bearing for a single probe — quantized from a continuous "is it set up?" signal. */
+/** Status for a single environment probe. */
 export type DoctorBearing = 'ok' | 'warn' | 'fail';
 
-/** Overall sailing readiness. Aggregates the per-check bearings. */
+/** Overall environment readiness. Aggregates the per-check statuses. */
 export type DoctorVerdict = 'ready' | 'caution' | 'blocked';
 
 /** Host deployment target for focused probe profiles. */

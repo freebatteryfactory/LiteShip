@@ -1,5 +1,5 @@
 /**
- * help — friendly usage text for the `liteship` CLI. The verb table ("the chart")
+ * help — friendly usage text for the `liteship` CLI. The command list
  * is PROJECTED from the one canonical command catalog in `@liteship/command`,
  * grouped by each command's `group` (phase) annotation — no hand-maintained
  * command list lives here. Output is human-readable text to stdout (no JSON
@@ -11,7 +11,7 @@
 import { COMMAND_CATALOG } from '@liteship/command';
 import type { CapsuleCommandDescriptor } from '@liteship/core';
 
-/** Presentation: group key → human label + chart order. */
+/** Presentation: group key → human label + display order. */
 const GROUP_CHART: ReadonlyArray<{ readonly key: string; readonly label: string }> = [
   { key: 'setup', label: 'Setup (dev experience)' },
   { key: 'compose', label: 'Compose + render (scene + asset)' },
@@ -20,7 +20,7 @@ const GROUP_CHART: ReadonlyArray<{ readonly key: string; readonly label: string 
   { key: 'servers', label: 'Servers' },
 ];
 
-const HINTS = `Hints (a working deck):
+const HINTS = `Hints:
   - First time? Run \`pnpm verify\` for the full first-run aggregate.
   - Stuck? \`liteship doctor\` triages your environment; \`liteship doctor --fix\` repairs.
   - All commands emit JSON receipts on stdout; pretty output is on stderr.
@@ -31,8 +31,8 @@ Docs:
   https://github.com/freebatteryfactory/LiteShip
 `;
 
-/** Render the grouped verb chart from the catalog. */
-function renderChart(catalog: readonly CapsuleCommandDescriptor[]): string {
+/** Render the grouped command list from the catalog. */
+function renderCommandList(catalog: readonly CapsuleCommandDescriptor[]): string {
   const width = Math.max(...catalog.map((d) => d.name.length)) + 2;
   const seen = new Set<string>();
   const sections: string[] = [];
@@ -48,7 +48,7 @@ function renderChart(catalog: readonly CapsuleCommandDescriptor[]): string {
     for (const d of commands) seen.add(d.name);
     renderGroup(label, commands);
   }
-  // Any command whose group isn't in the chart still gets listed (loud, not lost).
+  // Any command whose group is not in the display order still gets listed.
   const leftover = catalog.filter((d) => !seen.has(d.name));
   renderGroup('Other', leftover);
 
@@ -60,7 +60,7 @@ const USAGE = `liteship — LiteShip CLI
 Usage:
   liteship <command> [args]
 
-${renderChart(COMMAND_CATALOG)}
+${renderCommandList(COMMAND_CATALOG)}
 
 ${HINTS}`;
 

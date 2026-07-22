@@ -61,10 +61,10 @@ traces:
       - 'tests/property/adaptive-lowering-equivalence.prop.test.ts::INV-ADAPTIVE-LOWERING-PURE: adaptive members equal the independently hand-lowered constructor outputs (ids, deep-equal, referential quantizer)'
   - id: INV-ADAPTIVE-CSS-BYTE-EQUAL
     tests:
-      - 'tests/property/adaptive-lowering-equivalence.prop.test.ts::INV-ADAPTIVE-CSS-BYTE-EQUAL: the adaptive style compiles to byte-identical CSS layers and container raw as the hand-lowered style'
+      - 'tests/property/adaptive-lowering-equivalence.prop.test.ts::INV-ADAPTIVE-CSS-BYTE-EQUAL: the public adaptive plan CSS is byte-identical to the hand-lowered compiler output'
   - id: INV-ADAPTIVE-TRACE-EQUAL
     tests:
-      - 'tests/property/adaptive-lowering-equivalence.prop.test.ts::INV-ADAPTIVE-TRACE-EQUAL: evaluateBatch and the trace digest over the adaptive boundary equal the hand-lowered boundary sweep'
+      - 'tests/property/adaptive-lowering-equivalence.prop.test.ts::INV-ADAPTIVE-TRACE-EQUAL: public explanations and live crossing/output receipts equal the hand-lowered runtime sweep'
 
   # ── Assurance propagation — tests/unit/gauntlet/assurance-propagation.test.ts ─
   - id: INV-ASSURANCE-PROPAGATION-MONOTONIC
@@ -156,7 +156,8 @@ traces:
   # ── Assurance (negative-control partition) — tests/unit/devops/check-registry.test.ts ─
   - id: INV-CHECK-NEGATIVE-CONTROL
     tests:
-      - 'tests/unit/devops/check-registry.test.ts::every blocking check is classified EXACTLY once — declares an existing negative control XOR is exempt (the partition is total + disjoint)'
+      - 'tests/unit/devops/check-registry.test.ts::every blocking check declares an existing negative control; no blocking exemption exists'
+      - 'tests/unit/devops/blocking-check-negative-controls.test.ts::every shared authority harness rejects deterministic bad input'
 
   # ── Meta (single-source roster) — one typed catalog; every consumer is a projection ─
   - id: INV-ROSTER-SINGLE-SOURCE

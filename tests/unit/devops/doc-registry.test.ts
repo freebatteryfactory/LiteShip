@@ -24,12 +24,19 @@ import {
 } from '../../../scripts/lib/doc-registry.js';
 import { renderBenchBlock } from '../../../scripts/lib/bench-snapshot.js';
 import { renderWireContractDoc } from '../../../packages/web/src/wire/render-contract-doc.js';
+import {
+  renderCheckProfiles,
+  renderCliCommandCatalog,
+  renderMcpToolCatalog,
+} from '../../../scripts/lib/command-docs.js';
 
 // Normalize CRLF so a Windows checkout (autocrlf) doesn't fail the block match
 // against the `\n`-joined render output.
 const README = readFileSync(resolve(REPO_ROOT, 'README.md'), 'utf8').replace(/\r\n/g, '\n');
 const ARCHITECTURE = readFileSync(resolve(REPO_ROOT, 'ARCHITECTURE.md'), 'utf8').replace(/\r\n/g, '\n');
 const WEB_README = readFileSync(resolve(REPO_ROOT, 'packages/web/README.md'), 'utf8').replace(/\r\n/g, '\n');
+const CLI_README = readFileSync(resolve(REPO_ROOT, 'packages/cli/README.md'), 'utf8').replace(/\r\n/g, '\n');
+const MCP_README = readFileSync(resolve(REPO_ROOT, 'packages/mcp-server/README.md'), 'utf8').replace(/\r\n/g, '\n');
 
 /** Extract the inner content of a `<!-- BEGIN NAME ... --> ... <!-- END NAME -->` block. */
 function blockInner(name: string, source: string = README): string {
@@ -51,6 +58,15 @@ describe('doc-registry — generated blocks match their source of truth', () => 
   });
   it('the WIRE-CONTRACT block (in packages/web/README.md) matches a regenerate (run `pnpm run docs:gen`)', () => {
     expect(blockInner('WIRE-CONTRACT', WEB_README)).toBe(renderWireContractDoc());
+  });
+  it('projects the complete command catalog into the CLI README', () => {
+    expect(blockInner('CLI-COMMAND-CATALOG', CLI_README)).toBe(renderCliCommandCatalog());
+  });
+  it('projects check-profile claims and membership into the CLI README', () => {
+    expect(blockInner('CHECK-PROFILES', CLI_README)).toBe(renderCheckProfiles());
+  });
+  it('projects MCP tools from the catalog exposure annotation', () => {
+    expect(blockInner('MCP-TOOL-CATALOG', MCP_README)).toBe(renderMcpToolCatalog());
   });
 });
 

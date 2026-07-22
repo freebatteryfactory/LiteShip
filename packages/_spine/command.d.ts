@@ -44,8 +44,8 @@ export interface CommandAnnotations {
    */
   readonly mcpExposed?: boolean;
   /**
-   * Presentation phase used to group the command in the CLI help chart
-   * ("the chart: CLI verb table grouped by phase"). Identity, not chrome: the
+   * Presentation phase used to group the command in the CLI help list
+   * ("the command list grouped by phase"). Identity, not presentation: the
    * adapter maps a group key to a human label + order. Surfaces that don't group
    * (MCP, describe) ignore it.
    */

@@ -67,7 +67,7 @@ describe('catalog projection — single source of command identity', () => {
     expect([...TOP_LEVEL_VERBS].sort()).toEqual(derived);
   });
 
-  it('help mentions every catalog command (the chart is projected, not hand-listed)', () => {
+  it('help mentions every catalog command (the command list is projected, not hand-listed)', () => {
     for (const d of COMMAND_CATALOG) {
       expect(HELP_TEXT, `help missing ${d.name}`).toContain(d.name);
     }

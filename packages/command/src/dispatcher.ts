@@ -55,8 +55,8 @@ function make(registry: CommandRegistry): CommandDispatcherShape {
         name: invocation.name,
         ...(didYouMean !== undefined ? { didYouMean } : {}),
         // One dispatcher serves both hosts: name the catalog entry point
-        // for each (CLI verb chart, MCP tool list).
-        hint: 'run `liteship help` for the verb chart; over MCP, tools/list (or liteship://registry/commands) shows the catalog',
+        // for each (CLI command list, MCP tool list).
+        hint: 'run `liteship help` for the command list; over MCP, tools/list (or liteship://registry/commands) shows the catalog',
       });
     }
     if (!command.handler) {

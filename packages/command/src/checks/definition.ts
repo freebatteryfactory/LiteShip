@@ -29,6 +29,30 @@
  */
 export type CheckProfile = 'quick' | 'full' | 'release' | 'consumer' | 'environment';
 
+/** One canonical description for each public check profile, projected into CLI documentation. */
+export const CHECK_PROFILE_METADATA = {
+  quick: {
+    title: 'Quick',
+    claim: 'The current application or changed repository surface is locally coherent.',
+  },
+  full: {
+    title: 'Full',
+    claim: 'The whole repository is globally coherent.',
+  },
+  release: {
+    title: 'Release',
+    claim: 'Every supported package, platform, artifact, and evidence lane is releasable.',
+  },
+  consumer: {
+    title: 'Consumer',
+    claim: 'A fresh external consumer can install, typecheck, import, build, and execute packed artifacts.',
+  },
+  environment: {
+    title: 'Environment',
+    claim: 'The local host and toolchain satisfy LiteShip requirements.',
+  },
+} as const satisfies Record<CheckProfile, { readonly title: string; readonly claim: string }>;
+
 /** The execution context whose facts a check is authoritative over. */
 export type CheckContext = 'repository' | 'application';
 

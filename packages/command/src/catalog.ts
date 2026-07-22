@@ -126,7 +126,7 @@ const CLI_OWNED_DESCRIPTORS = [
   },
   {
     name: 'help',
-    summary: 'Print the CLI usage chart (verb table grouped by phase).',
+    summary: 'Print the CLI command list grouped by phase.',
     inputSchema: { type: 'object', properties: {} },
     annotations: { cliOnly: true, group: 'setup' },
   },

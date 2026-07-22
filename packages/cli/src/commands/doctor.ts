@@ -1,7 +1,7 @@
 /**
  * doctor — preflight environment check. Casts environment signals (Node, pnpm,
  * workspace state, build artifacts, git hooks, Playwright browsers) into
- * three named bearings — `ok` / `warn` / `fail` — and resolves to one
+ * three statuses — `ok` / `warn` / `fail` — and resolves to one
  * verdict — `ready` / `caution` / `blocked`.
  *
  * Barrel: doctor is split across `commands/doctor/` (types, manifest readers,

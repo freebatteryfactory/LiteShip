@@ -27,7 +27,7 @@ const REPO = resolve(import.meta.dirname, '..', '..', '..');
 
 /** The canonical 42 phases, transcribed verbatim from the executor's HEAD run-order. */
 const EXPECTED: ReadonlyArray<{ label: string; command: string }> = [
-  { label: 'rig-check', command: 'pnpm run doctor -- --preflight --ci' },
+  { label: 'environment-check', command: 'pnpm run doctor -- --preflight --ci' },
   { label: 'build', command: 'pnpm run build' },
   { label: 'capsule:compile', command: 'pnpm run capsule:compile' },
   { label: 'typecheck', command: 'pnpm run typecheck' },
@@ -87,8 +87,8 @@ describe('D8 — canonical gauntlet phase profile', () => {
     expect(new Set(labels).size).toBe(labels.length);
   });
 
-  it('rig-check is the entry phase', () => {
-    expect(gauntletPhases[0]!.label).toBe('rig-check');
+  it('environment-check is the entry phase', () => {
+    expect(gauntletPhases[0]!.label).toBe('environment-check');
   });
 
   it('preserves the coverage:browser watchdog options', () => {
@@ -134,7 +134,7 @@ describe('Tier 6 — ci-parallel profile partitioning', () => {
 
   it('ci-parallel-mid does not duplicate preflight, integration, or other dedicated lanes', () => {
     const mid = new Set(gauntletPhaseProfiles['ci-parallel-mid']);
-    expect(mid.has('rig-check'), 'rig-check runs only on serial truth-linux / setup').toBe(false);
+    expect(mid.has('environment-check'), 'environment-check runs only on serial truth-linux / setup').toBe(false);
     for (const labels of dedicatedProfiles) {
       for (const label of labels) {
         expect(mid.has(label), `mid must not re-run dedicated phase ${label}`).toBe(false);

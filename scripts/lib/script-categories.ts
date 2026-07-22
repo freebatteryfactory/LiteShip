@@ -1,6 +1,6 @@
 /**
  * The categorized index of root npm scripts — the single data source for both
- * the human-readable `pnpm scripts` deck plan (scripts/scripts-index.ts) and the
+ * the human-readable `pnpm scripts` catalog (scripts/scripts-index.ts) and the
  * parity gate (tests/unit/devops/scripts-and-build-parity.test.ts) that fails if
  * a script in package.json is left uncategorized.
  *
@@ -14,7 +14,7 @@ export interface CategorySpec {
   readonly scripts: readonly string[];
 }
 
-/** Root scripts that are lifecycle hooks, not part of the human deck plan. */
+/** Root scripts that are lifecycle hooks, not part of the human script catalog. */
 export const LIFECYCLE_SCRIPTS = ['prepare', 'postinstall'] as const;
 
 export const CATEGORIES: readonly CategorySpec[] = [

@@ -272,7 +272,7 @@ describe('the check-governance meta-gates self-prove → blocking authority', ()
  * a divergence here means the projection or the registry drifted the release sequence.
  */
 const PINNED_GAUNTLET_LABELS: readonly string[] = [
-  'rig-check',
+  'environment-check',
   'build',
   'capsule:compile',
   'typecheck',
