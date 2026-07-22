@@ -61,7 +61,7 @@ export { createCell } from './cell.js';
 export type { Cell } from './cell.js';
 
 export { Derived, computed } from './derived.js';
-export type { Derived, Computed } from './derived.js';
+export type { Computed } from './derived.js';
 
 export { Zap } from './zap.js';
 

@@ -390,7 +390,7 @@ export type { Cell } from './reactive/index.js';
 
 // Derived
 export { Derived, computed } from './reactive/index.js';
-export type { Derived, Computed } from './reactive/index.js';
+export type { Computed } from './reactive/index.js';
 
 // Zap
 export { Zap } from './reactive/index.js';
