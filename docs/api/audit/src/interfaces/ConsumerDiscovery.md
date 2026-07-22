@@ -6,7 +6,7 @@
 
 # Interface: ConsumerDiscovery
 
-Defined in: [audit/src/consumer.ts:72](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/consumer.ts#L72)
+Defined in: [audit/src/consumer.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/consumer.ts#L34)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [audit/src/consumer.ts:72](https://github.com/freebatteryfactory/Lit
 
 > `readonly` **missing**: readonly `string`[]
 
-Defined in: [audit/src/consumer.ts:76](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/consumer.ts#L76)
+Defined in: [audit/src/consumer.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/consumer.ts#L38)
 
 Topology packages not installed in this repo — informational, not an error.
 
@@ -24,6 +24,6 @@ Topology packages not installed in this repo — informational, not an error.
 
 > `readonly` **packageRoots**: `Readonly`\<`Record`\<`string`, `string`\>\>
 
-Defined in: [audit/src/consumer.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/consumer.ts#L74)
+Defined in: [audit/src/consumer.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/consumer.ts#L36)
 
 Package name → absolute (realpath'd, normalized) package root.

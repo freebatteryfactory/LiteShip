@@ -163,9 +163,9 @@ invariants:
     level: L4
     category: meta
 
-  # ── Meta — the package roster has ONE producer; every copy is a drift-guarded projection ─
+  # ── Meta — the package catalog has ONE authored owner; consumers are generated projections ─
   - id: INV-ROSTER-SINGLE-SOURCE
-    law: 'The package roster has ONE producer (scripts/gen-roster.ts CANONICAL_ROSTER); every copy — the @liteship/audit LITESHIP_PACKAGE_ROSTER anchor and the release.yml publish job — is a drift-guarded projection equal to it (and to the on-disk publishable fleet), never a hand-maintained literal list.'
+    law: 'Package membership, dependency order, capabilities, public subpaths, and projection metadata have ONE authored owner (scripts/package-catalog.ts); audit, facade, smoke, release, topology, documentation, and agent-context consumers are generated projections, while package manifests remain the independently checked physical packaging oracle.'
     level: L3
     category: meta
 

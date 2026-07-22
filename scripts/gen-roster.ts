@@ -1,318 +1,615 @@
 #!/usr/bin/env tsx
 /**
- * gen-roster — the single owner of the canonical `@liteship/*` fleet roster and the
- * publishable-set projection, plus a byte-compare staleness gate over every
- * hand-maintained roster copy (plan [CER] `scripts/gen-roster.ts`, master-plan
- * line 446).
+ * Project the one authored package catalog into every package/runtime format
+ * that cannot import the repo-local source directly.
  *
- * ## Why this exists
+ * Authored truth: {@link PACKAGE_CATALOG} in `scripts/package-catalog.ts`.
+ * Generated projections:
+ *  - audit's scoped fleet roster
+ *  - liteship's shipped fleet roster
+ *  - command's package-smoke specifications
+ *  - CLI package metadata
+ *  - the release workflow's publish-order JSON
  *
- * Scar S0.4 (docs/plan/scar-ledger.md) — *one truth, many private parsers*: the
- * fleet roster is copied by hand into five places (liteship's
- * `LITESHIP_PACKAGES`, the cli package-metadata catalog, command's package-smoke
- * `PACKAGES`, audit's `WORKSPACE_ALIASES`, and `.github/workflows/release.yml`).
- * Each copy drifts independently when a package is added or removed. This script
- * is the ONE producer of the membership + dependency order those copies must
- * agree on, and its `--check` gate fails loud the moment any copy — or the
- * on-disk package set — drifts from the canonical roster.
- *
- * ## Single source of truth
- *
- * Package *membership* is never authored here: it is derived from
- * `tests/support/repo-truths.ts` (`packageRoster()` / `publishablePackageDirs()`
- * — the repo-truths single-owner accessors, the sanctioned home for reading the
- * `packages/*` manifests). What IS authored here is the one thing bytes cannot
- * derive: the **dependency order** (`CANONICAL_ROSTER`), exactly as ADR-0010's
- * spine-owned brand declarations are authored generator input rather than
- * derived output. The `--check` gate cross-checks the authored order against the
- * derived set, so an on-disk add/remove that the authored order missed fails.
- *
- * ## Modes
- *
- *   - default (emit): print the regenerated roster blocks to stdout for review.
- *   - `--write`: stamp the generated artifacts in place — the
- *     `LITESHIP_PACKAGES` block in `packages/liteship/src/index.ts` (between its
- *     `BEGIN/END gen-roster` markers) and the fully-generated publish roster at
- *     `scripts/ci/publish-roster.json`. Idempotent: re-running with no roster
- *     change leaves both bytes unchanged.
- *   - `--check`: the staleness gate. Assert the authored roster + the shipped
- *     copies match the repo-truths-derived set; non-zero exit on any drift.
+ * The check mode independently reads package manifests and export maps, so a
+ * catalog error cannot bless itself merely by regenerating its projections.
  *
  * @module
  */
 
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { packageRoster, publishablePackageDirs, packageManifests } from '../tests/support/repo-truths.js';
-import { isDirectExecution } from './audit/shared.js';
+import { isDirectExecution, walkTrackedFiles } from './audit/shared.js';
+import { PACKAGE_CATALOG, type PackageCatalogRecord } from './package-catalog.js';
 
 const REPO_ROOT = resolve(fileURLToPath(import.meta.url), '..', '..');
 
-// ---------------------------------------------------------------------------
-// Authored input — the ONE dependency-ordered roster (ADR-0010 model: authored
-// order, derived membership). Kept in the exact order the runtime dependency
-// graph installs; the `--check` gate proves it covers the on-disk set exactly.
-// ---------------------------------------------------------------------------
+export { PACKAGE_CATALOG } from './package-catalog.js';
 
-/**
- * Every non-private `@liteship/*` package, in dependency (install) order. This is
- * the canonical roster the five hand-maintained copies mirror; `--check` proves
- * its membership equals the repo-truths-derived set on disk.
- */
-export const CANONICAL_ROSTER: readonly string[] = [
-  '@liteship/_spine',
-  '@liteship/error',
-  '@liteship/canonical',
-  '@liteship/core',
-  '@liteship/genui',
-  '@liteship/quantizer',
-  '@liteship/compiler',
-  '@liteship/web',
-  '@liteship/detect',
-  '@liteship/edge',
-  '@liteship/vite',
-  '@liteship/worker',
-  '@liteship/remotion',
-  '@liteship/scene',
-  '@liteship/astro',
-  '@liteship/cloudflare',
-  '@liteship/stage',
-  '@liteship/assets',
-  '@liteship/gauntlet',
-  '@liteship/audit',
-  '@liteship/command',
-  '@liteship/cli',
-  '@liteship/mcp-server',
-];
+/** The 23 scoped packages installed by the `liteship` facade. */
+export const CANONICAL_ROSTER: readonly string[] = PACKAGE_CATALOG.filter((record) =>
+  record.name.startsWith('@liteship/'),
+).map((record) => record.name);
 
-/**
- * The two non-`@liteship` publishable umbrellas the release loop also ships. They
- * carry the whole fleet as deps (`liteship`) or scaffold it (`create-liteship`)
- * so they publish last, after every scope they depend on.
- */
-export const PUBLISHABLE_UMBRELLAS: readonly string[] = ['create-liteship', 'liteship'];
+/** The two unscoped packages that publish after the scoped fleet. */
+export const PUBLISHABLE_UMBRELLAS: readonly string[] = PACKAGE_CATALOG.filter(
+  (record) => !record.name.startsWith('@liteship/'),
+).map((record) => record.name);
 
-/** The full publishable set the release workflow iterates: fleet then umbrellas. */
-export const PUBLISHABLE_ROSTER: readonly string[] = [...CANONICAL_ROSTER, ...PUBLISHABLE_UMBRELLAS];
+/** The exact dependency-ordered 25-package publish roster. */
+export const PUBLISHABLE_ROSTER: readonly string[] = PACKAGE_CATALOG.map((record) => record.name);
 
-// ---------------------------------------------------------------------------
-// Derived truths (repo-truths single owner).
-// ---------------------------------------------------------------------------
-
-/** The non-private `@liteship/*` names on disk (repo-truths), sorted. */
-function derivedRosterSet(): readonly string[] {
-  return packageRoster();
-}
-
-/** Every publishable manifest name on disk (repo-truths), sorted. */
-function derivedPublishableNames(): readonly string[] {
-  return packageManifests()
-    .filter((manifest) => manifest.publishConfig != null && manifest.name != null)
-    .map((manifest) => manifest.name as string)
-    .sort();
-}
-
-// ---------------------------------------------------------------------------
-// release.yml — the one YAML copy. YAML cannot import TS, so the publish loop
-// sources its roster from the generated `scripts/ci/publish-roster.json` (read
-// with jq) rather than carrying hand-written package literals. The gate proves
-// that JSON is the current projection and that the publish job stays literal-free.
-// ---------------------------------------------------------------------------
-
-/** Repo-relative path of the generated publish-roster JSON the release loop reads. */
 export const PUBLISH_ROSTER_JSON = 'scripts/ci/publish-roster.json';
+export const AUDIT_ROSTER_TS = 'packages/audit/src/package-catalog.generated.ts';
+export const COMMAND_SMOKE_TS = 'packages/command/src/commands/package-smoke-registry.generated.ts';
+export const CLI_METADATA_TS = 'packages/cli/src/lib/package-metadata-catalog.generated.ts';
+export const AUDIT_TOPOLOGY_TS = 'packages/audit/src/package-topology.generated.ts';
+export const COMMAND_PLUMB_TS = 'packages/command/src/commands/plumb-registry.generated.ts';
+export const DOC_PACKAGE_GROUPS_TS = 'scripts/lib/package-docs.generated.ts';
+export const API_SURFACE_PACKAGES_TS = 'tests/fixtures/api-surface-packages.generated.ts';
+export const ROOT_TSCONFIG_JSON = 'tsconfig.json';
+export const TYPEDOC_JSON = 'typedoc.json';
+const LITESHIP_INDEX_REL = 'packages/liteship/src/index.ts';
 
-function publishRosterJsonPath(): string {
-  return resolve(REPO_ROOT, PUBLISH_ROSTER_JSON);
+export interface CatalogManifest {
+  readonly name?: string;
+  readonly private?: boolean;
+  readonly description?: string;
+  readonly keywords?: readonly string[];
+  readonly publishConfig?: Readonly<Record<string, unknown>>;
+  readonly dependencies?: Readonly<Record<string, string>>;
+  readonly exports?: string | Readonly<Record<string, unknown>>;
+}
+
+export interface CatalogDrift {
+  readonly copy: string;
+  readonly detail: string;
+}
+
+export interface CatalogSource {
+  readonly path: string;
+  readonly text: string;
+}
+
+function generatedHeader(source: string): string {
+  return `/** @generated by ${source}; do not hand-edit. */\n`;
+}
+
+function quote(value: string): string {
+  return JSON.stringify(value);
+}
+
+function renderStringArray(values: readonly string[], indent = '  '): string {
+  if (values.length === 0) return '[]';
+  return `[\n${values.map((value) => `${indent}${quote(value)},`).join('\n')}\n]`;
+}
+
+/** The `LITESHIP_PACKAGES` block shipped by the facade. */
+export function renderLiteshipPackages(): string {
+  const entries = CANONICAL_ROSTER.map((name) => `  ${quote(name)},`).join('\n');
+  return `// prettier-ignore\nexport const LITESHIP_PACKAGES = [\n${entries}\n] as const;`;
+}
+
+export function renderAuditRoster(): string {
+  return (
+    generatedHeader('scripts/gen-roster.ts from scripts/package-catalog.ts') +
+    `// prettier-ignore\nexport const GENERATED_LITESHIP_PACKAGE_ROSTER = ${renderStringArray(CANONICAL_ROSTER)} as const;\n`
+  );
+}
+
+export function renderCommandSmokeRoster(): string {
+  const rows = PACKAGE_CATALOG.map((record) => {
+    const imports = record.smokeImports.map((specifier) => quote(specifier)).join(', ');
+    return `  { dir: ${quote(record.dir)}, name: ${quote(record.name)}, imports: [${imports}] },`;
+  }).join('\n');
+  return (
+    generatedHeader('scripts/gen-roster.ts from scripts/package-catalog.ts') +
+    `// prettier-ignore\nexport const GENERATED_PACKAGE_SMOKE_SPECS = [\n${rows}\n] as const;\n`
+  );
+}
+
+export function renderCliMetadataCatalog(): string {
+  const rows = PACKAGE_CATALOG.map(
+    (record) =>
+      `  ${quote(record.name)}: {\n` +
+      `    description: ${quote(record.description)},\n` +
+      `    keywords: [${record.keywords.map((keyword) => quote(keyword)).join(', ')}],\n` +
+      `  },`,
+  ).join('\n');
+  return (
+    generatedHeader('scripts/gen-roster.ts from scripts/package-catalog.ts') +
+    `// prettier-ignore\nexport const GENERATED_PACKAGE_METADATA = {\n${rows}\n} as const;\n`
+  );
+}
+
+export function renderAuditTopology(): string {
+  const rows = PACKAGE_CATALOG.map((record) => {
+    const imports = record.audit.allowedInternalImports.map((name) => quote(name)).join(', ');
+    const reason = record.audit.reason == null ? '' : `  // ${record.audit.reason}\n`;
+    return `${reason}  ${quote(record.name)}: { kind: ${quote(record.audit.kind)}, allowedInternalImports: [${imports}] },`;
+  }).join('\n');
+  return `${generatedHeader('scripts/gen-roster.ts from scripts/package-catalog.ts')}// prettier-ignore\nexport const GENERATED_PACKAGE_TOPOLOGY = {\n${rows}\n} as const;\n`;
+}
+
+export function renderCommandPlumb(): string {
+  const rows = PACKAGE_CATALOG.map((record) => {
+    const issue = record.plumbIssue == null ? '' : `, issue: ${quote(record.plumbIssue)}`;
+    return `  ${quote(record.name)}: { status: ${quote(record.plumbStatus)}, reason: ${quote(record.plumbReason)}${issue} },`;
+  }).join('\n');
+  return `${generatedHeader('scripts/gen-roster.ts from scripts/package-catalog.ts')}// prettier-ignore\nexport const GENERATED_PACKAGE_PLUMB = {\n${rows}\n} as const;\n`;
+}
+
+export function renderDocPackageGroups(): string {
+  const groups = ['foundations', 'hosts', 'runtime', 'tooling'] as const;
+  const rows = groups
+    .map((group) => {
+      const members = [...PACKAGE_CATALOG.filter((record) => record.docs.group === group)]
+        .sort((left, right) => left.docs.order - right.docs.order)
+        .map((record) => quote(record.name));
+      return `  ${quote(group)}: [${members.join(', ')}],`;
+    })
+    .join('\n');
+  const prose = [...PACKAGE_CATALOG.filter((record) => record.docs.group === 'prose-only')]
+    .sort((left, right) => left.docs.order - right.docs.order)
+    .map((record) => quote(record.name));
+  const noSurface = PACKAGE_CATALOG.filter((record) => !record.docs.surface).map((record) => quote(record.name));
+  return (
+    generatedHeader('scripts/gen-roster.ts from scripts/package-catalog.ts') +
+    `// prettier-ignore\nexport const GENERATED_DOC_PACKAGE_GROUPS = {\n${rows}\n} as const;\n` +
+    `export const GENERATED_PROSE_ONLY = [${prose.join(', ')}] as const;\n` +
+    `export const GENERATED_NO_SURFACE_SECTION = [${noSurface.join(', ')}] as const;\n`
+  );
+}
+
+export function renderApiSurfacePackages(): string {
+  const names = [...PACKAGE_CATALOG.filter((record) => record.apiSurface)]
+    .sort((left, right) => (left.apiSurfaceOrder ?? 0) - (right.apiSurfaceOrder ?? 0))
+    .map((record) => quote(record.name));
+  return `${generatedHeader('scripts/gen-roster.ts from scripts/package-catalog.ts')}// prettier-ignore\nexport const GENERATED_API_SURFACE_PACKAGES = [\n${names.map((name) => `  ${name},`).join('\n')}\n] as const;\n`;
+}
+
+function renderRootTsconfig(): string {
+  const parsed = JSON.parse(readFileSync(resolve(REPO_ROOT, ROOT_TSCONFIG_JSON), 'utf8')) as Record<string, unknown>;
+  parsed.references = PACKAGE_CATALOG.map((record) => ({ path: `./${record.dir}` }));
+  return `${JSON.stringify(parsed, null, 2)}\n`;
+}
+
+function renderTypedocJson(): string {
+  const parsed = JSON.parse(readFileSync(resolve(REPO_ROOT, TYPEDOC_JSON), 'utf8')) as Record<string, unknown>;
+  parsed.entryPoints = [...PACKAGE_CATALOG.filter((record) => record.typedocEntry !== null)]
+    .sort((left, right) => (left.typedocOrder ?? 0) - (right.typedocOrder ?? 0))
+    .map((record) => record.typedocEntry);
+  return `${JSON.stringify(parsed, null, 2)}\n`;
+}
+
+export function renderPublishRosterJson(): string {
+  return `${JSON.stringify(
+    {
+      $generated:
+        'by scripts/gen-roster.ts from scripts/package-catalog.ts — do not hand-edit; regenerate with: pnpm exec tsx scripts/gen-roster.ts --write',
+      expectedPublishable: PUBLISHABLE_ROSTER.length,
+      packages: PUBLISHABLE_ROSTER,
+    },
+    null,
+    2,
+  )}\n`;
 }
 
 function readReleaseYaml(): string {
   return readFileSync(resolve(REPO_ROOT, '.github', 'workflows', 'release.yml'), 'utf8');
 }
 
+function stripGeneratedBlocks(source: string): string {
+  return source
+    .replace(/<!-- BEGIN [A-Z0-9_-]+[^]*?<!-- END [A-Z0-9_-]+ -->/g, '')
+    .replace(/\/\* BEGIN gen-roster:[^]*?\/\* END gen-roster:[^]*?\*\//g, '');
+}
+
+function isSanctionedFleetSource(path: string): boolean {
+  const normalized = path.replaceAll('\\', '/');
+  const exactGenerated = new Set([
+    ...renderGeneratedProjections().map(([relativePath]) => relativePath),
+    'scripts/ci/publish-roster.json',
+    'tests/fixtures/api-surface-snapshot.json',
+    'tests/fixtures/type-export-surface.json',
+  ]);
+  return (
+    normalized === 'scripts/package-catalog.ts' ||
+    normalized === 'pnpm-lock.yaml' ||
+    normalized.endsWith('/package.json') ||
+    exactGenerated.has(normalized) ||
+    normalized.startsWith('tests/fixtures/package-catalog-red/')
+  );
+}
+
 /**
- * The text of the `publish:` job (the file's last job, so from its header to
- * EOF). The gate's literal-free / references-the-JSON assertions scope to this
- * so an `@liteship/` mention elsewhere in the workflow (comments, other jobs) does
- * not false-trip the guard.
+ * Reject a second authored scoped-fleet list. Generated marker blocks, package
+ * manifests, lock data, API snapshots, and deliberate red fixtures are the
+ * only sanctioned places where all 23 scoped names may appear together.
  */
+export function findAuthoredFleetLists(sources: readonly CatalogSource[]): readonly CatalogDrift[] {
+  const drift: CatalogDrift[] = [];
+  for (const source of sources) {
+    if (isSanctionedFleetSource(source.path)) continue;
+    const text = stripGeneratedBlocks(source.text);
+    const present = CANONICAL_ROSTER.filter((name) => text.includes(name));
+    if (present.length === CANONICAL_ROSTER.length) {
+      drift.push({
+        copy: source.path,
+        detail: 'contains a second authored full-fleet package list; project it from scripts/package-catalog.ts',
+      });
+    }
+  }
+  return drift;
+}
+
+function trackedCatalogSources(): readonly CatalogSource[] {
+  const paths = walkTrackedFiles(REPO_ROOT).filter((path) => /\.(?:[cm]?[jt]sx?|json|ya?ml|md)$/u.test(path));
+  return paths.map((path) => ({ path, text: readFileSync(resolve(REPO_ROOT, path), 'utf8') }));
+}
+
+/** The release publish job, isolated for literal-free checks. */
 export function publishJobText(yaml: string): string {
   const index = yaml.indexOf('\n  publish:');
-  if (index === -1) {
-    throw new Error('release.yml: `publish:` job not found');
-  }
+  if (index === -1) throw new Error('release.yml: `publish:` job not found');
   return yaml.slice(index);
 }
 
-// ---------------------------------------------------------------------------
-// Render — the generated artifacts (stamped by --write, verified by --check).
-// ---------------------------------------------------------------------------
-
-/** The `LITESHIP_PACKAGES` const body (dependency order), the tarball-shipped mirror. */
-export function renderLiteshipPackages(): string {
-  const entries = CANONICAL_ROSTER.map((name) => `  '${name}',`).join('\n');
-  return `export const LITESHIP_PACKAGES = [\n${entries}\n] as const;`;
+export function renderGeneratedProjections(): ReadonlyArray<readonly [string, string]> {
+  return [
+    [AUDIT_ROSTER_TS, renderAuditRoster()],
+    [COMMAND_SMOKE_TS, renderCommandSmokeRoster()],
+    [CLI_METADATA_TS, renderCliMetadataCatalog()],
+    [AUDIT_TOPOLOGY_TS, renderAuditTopology()],
+    [COMMAND_PLUMB_TS, renderCommandPlumb()],
+    [DOC_PACKAGE_GROUPS_TS, renderDocPackageGroups()],
+    [API_SURFACE_PACKAGES_TS, renderApiSurfacePackages()],
+    [ROOT_TSCONFIG_JSON, renderRootTsconfig()],
+    [TYPEDOC_JSON, renderTypedocJson()],
+    [PUBLISH_ROSTER_JSON, renderPublishRosterJson()],
+  ];
 }
 
-/**
- * The fully-generated `scripts/ci/publish-roster.json` body: the publishable
- * count + the publish-order roster the release loop reads with jq. 2-space
- * indent, trailing newline, byte-stable so `--check` can compare it exactly.
- */
-export function renderPublishRosterJson(): string {
-  const payload = {
-    $generated:
-      'by scripts/gen-roster.ts — do not hand-edit; regenerate with: pnpm exec tsx scripts/gen-roster.ts --write',
-    expectedPublishable: PUBLISHABLE_ROSTER.length,
-    packages: [...PUBLISHABLE_ROSTER],
-  };
-  return `${JSON.stringify(payload, null, 2)}\n`;
+function renderArchitectureDag(): string {
+  const lines = PACKAGE_CATALOG.flatMap((record) =>
+    record.dependencies.length === 0
+      ? [`${record.name} (dependency root)`]
+      : record.dependencies.map((dependency) => `${dependency} -> ${record.name}`),
+  );
+  return `\`\`\`text\n${lines.join('\n')}\n\`\`\``;
 }
 
-function emit(): void {
-  process.stdout.write('# LITESHIP_PACKAGES (packages/liteship/src/index.ts)\n');
-  process.stdout.write(`${renderLiteshipPackages()}\n\n`);
-  process.stdout.write(`# publish roster (${PUBLISH_ROSTER_JSON})\n`);
-  process.stdout.write(renderPublishRosterJson());
+function renderPackageSurfaceIndex(): string {
+  const rows = PACKAGE_CATALOG.map(
+    (record) =>
+      `| \`${record.name}\` | ${record.layer} | ${record.publicSubpaths.map((path) => `\`${path}\``).join(', ')} | ${record.capabilities.join(', ')} |`,
+  );
+  return ['| Package | Layer | Public subpaths | Capabilities |', '| --- | --- | --- | --- |', ...rows].join('\n');
 }
 
-// ---------------------------------------------------------------------------
-// Write — stamp the generated artifacts in place (idempotent).
-// ---------------------------------------------------------------------------
+function renderAgentPackageContext(): string {
+  const rows = PACKAGE_CATALOG.map(
+    (record) => `| \`${record.name}\` | \`${record.dir}\` | ${record.capabilities.join(', ')} |`,
+  );
+  return [
+    '## Generated package context',
+    '',
+    'Use this index to find the semantic owner; public subpaths and dependency edges are generated in `PACKAGE-SURFACES.md` and `ARCHITECTURE.md`.',
+    '',
+    '| Package | Owner directory | Capabilities |',
+    '| --- | --- | --- |',
+    ...rows,
+  ].join('\n');
+}
 
-const LITESHIP_INDEX_REL = 'packages/liteship/src/index.ts';
+const MARKDOWN_PROJECTIONS = [
+  ['ARCHITECTURE.md', 'PACKAGE-DAG', renderArchitectureDag],
+  ['PACKAGE-SURFACES.md', 'PACKAGE-SURFACE-INDEX', renderPackageSurfaceIndex],
+  ['AGENTS.md', 'AGENT-PACKAGE-CONTEXT', renderAgentPackageContext],
+] as const;
 
-/** The `BEGIN/END gen-roster: LITESHIP_PACKAGES` marker span, keeping the marker lines. */
+function applyMarkdownProjection(source: string, marker: string, rendered: string): string {
+  const expression = new RegExp(`(<!-- BEGIN ${marker}[^]*?-->\\n)[^]*?(\\n<!-- END ${marker} -->)`);
+  if (!expression.test(source)) throw new Error(`gen-roster: missing ${marker} markers`);
+  return source.replace(expression, (_match, begin: string, end: string) => `${begin}${rendered}${end}`);
+}
+
 const LITESHIP_BLOCK =
   /(\/\* BEGIN gen-roster: LITESHIP_PACKAGES[^\n]*\*\/\n)[\s\S]*?(\n\/\* END gen-roster: LITESHIP_PACKAGES \*\/)/;
 
+function writeIfChanged(relativePath: string, expected: string): void {
+  const path = resolve(REPO_ROOT, relativePath);
+  const current = existsSync(path) ? readFileSync(path, 'utf8') : undefined;
+  if (current !== expected) writeFileSync(path, expected);
+}
+
 function write(): number {
+  for (const [relativePath, expected] of renderGeneratedProjections()) writeIfChanged(relativePath, expected);
+
+  for (const [relativePath, marker, render] of MARKDOWN_PROJECTIONS) {
+    const path = resolve(REPO_ROOT, relativePath);
+    const source = readFileSync(path, 'utf8');
+    writeIfChanged(relativePath, applyMarkdownProjection(source, marker, render()));
+  }
+
   const indexPath = resolve(REPO_ROOT, LITESHIP_INDEX_REL);
-  const src = readFileSync(indexPath, 'utf8');
-  if (!LITESHIP_BLOCK.test(src)) {
-    process.stderr.write(
-      `gen-roster --write: BEGIN/END gen-roster: LITESHIP_PACKAGES markers not found in ${LITESHIP_INDEX_REL}\n`,
-    );
+  const source = readFileSync(indexPath, 'utf8');
+  if (!LITESHIP_BLOCK.test(source)) {
+    process.stderr.write(`gen-roster: markers missing from ${LITESHIP_INDEX_REL}\n`);
     return 1;
   }
-  const stamped = src.replace(
+  const stamped = source.replace(
     LITESHIP_BLOCK,
     (_match, begin: string, end: string) => `${begin}${renderLiteshipPackages()}${end}`,
   );
-  if (stamped !== src) writeFileSync(indexPath, stamped);
-  writeFileSync(publishRosterJsonPath(), renderPublishRosterJson());
-  process.stdout.write(`gen-roster --write: stamped ${LITESHIP_INDEX_REL} and ${PUBLISH_ROSTER_JSON}.\n`);
+  writeIfChanged(LITESHIP_INDEX_REL, stamped);
+  process.stdout.write(
+    `gen-roster: generated ${renderGeneratedProjections().length + 1} projections from ${PACKAGE_CATALOG.length} catalog records.\n`,
+  );
   return 0;
 }
 
-// ---------------------------------------------------------------------------
-// Check — the staleness gate.
-// ---------------------------------------------------------------------------
-
-interface Drift {
-  readonly copy: string;
-  readonly detail: string;
+function arrayEqual(left: readonly string[], right: readonly string[]): boolean {
+  return left.length === right.length && left.every((value, index) => value === right[index]);
 }
 
-function setEqual(a: readonly string[], b: readonly string[]): boolean {
-  if (a.length !== b.length) return false;
-  const set = new Set(a);
-  return b.every((value) => set.has(value));
+function setEqual(left: readonly string[], right: readonly string[]): boolean {
+  return left.length === right.length && left.every((value) => right.includes(value));
 }
 
-function symmetricDiff(a: readonly string[], b: readonly string[]): string {
-  const setA = new Set(a);
-  const setB = new Set(b);
-  const onlyA = a.filter((value) => !setB.has(value));
-  const onlyB = b.filter((value) => !setA.has(value));
-  return `+authored:[${onlyA.join(',')}] +derived:[${onlyB.join(',')}]`;
+function manifestExportSubpaths(exportsField: CatalogManifest['exports']): readonly string[] {
+  if (typeof exportsField === 'string') return ['.'];
+  if (exportsField == null) return [];
+  return Object.entries(exportsField)
+    .filter(([, target]) => target !== null)
+    .map(([subpath]) => subpath);
 }
 
-/** Every roster drift between the authored roster / shipped copies and repo-truths. */
-export function collectRosterDrift(): readonly Drift[] {
-  const drift: Drift[] = [];
-  const derivedRoster = derivedRosterSet();
-  const derivedPublishable = derivedPublishableNames();
+function internalDependencies(manifest: CatalogManifest): readonly string[] {
+  return Object.keys(manifest.dependencies ?? {}).filter(
+    (name) => name.startsWith('@liteship/') || name === 'liteship' || name === 'create-liteship',
+  );
+}
 
-  // 1. Authored CANONICAL_ROSTER covers exactly the on-disk @liteship/* set.
-  if (new Set(CANONICAL_ROSTER).size !== CANONICAL_ROSTER.length) {
-    drift.push({ copy: 'CANONICAL_ROSTER', detail: 'contains duplicate entries' });
-  }
-  if (!setEqual(CANONICAL_ROSTER, derivedRoster)) {
-    drift.push({
-      copy: 'CANONICAL_ROSTER',
-      detail: `membership != repo-truths @liteship set — ${symmetricDiff(CANONICAL_ROSTER, derivedRoster)}`,
-    });
-  }
+function manifestFor(record: PackageCatalogRecord): CatalogManifest | undefined {
+  const path = resolve(REPO_ROOT, record.dir, 'package.json');
+  if (!existsSync(path)) return undefined;
+  return JSON.parse(readFileSync(path, 'utf8')) as CatalogManifest;
+}
 
-  // 2. Publishable projection covers exactly the on-disk publishable set.
-  if (!setEqual(PUBLISHABLE_ROSTER, derivedPublishable)) {
-    drift.push({
-      copy: 'PUBLISHABLE_ROSTER',
-      detail: `membership != repo-truths publishable set — ${symmetricDiff(PUBLISHABLE_ROSTER, derivedPublishable)}`,
-    });
+/**
+ * Validate a candidate catalog against an independent manifest/directory view.
+ *
+ * The parameters are explicit so red fixtures can prove every failure mode
+ * without mutating the working tree or teaching the validator about its own
+ * generated output.
+ */
+export function validatePackageCatalog(
+  catalog: readonly PackageCatalogRecord[],
+  manifests: ReadonlyMap<string, CatalogManifest>,
+  publishableDirs: readonly string[],
+): readonly CatalogDrift[] {
+  const drift: CatalogDrift[] = [];
+  const packageNames = catalog.map((record) => record.name);
+  if (catalog.length !== 25) {
+    drift.push({ copy: 'PACKAGE_CATALOG', detail: `expected exactly 25 records, found ${catalog.length}` });
   }
-
-  // 3. The generated publish-roster.json equals the current PUBLISHABLE_ROSTER
-  //    projection byte-for-byte (the release loop reads this file with jq).
-  let jsonOnDisk: string | undefined;
-  try {
-    jsonOnDisk = readFileSync(publishRosterJsonPath(), 'utf8');
-  } catch {
-    drift.push({
-      copy: PUBLISH_ROSTER_JSON,
-      detail: 'missing — run `pnpm exec tsx scripts/gen-roster.ts --write`',
-    });
+  if (new Set(packageNames).size !== packageNames.length) {
+    drift.push({ copy: 'PACKAGE_CATALOG', detail: 'contains duplicate package names' });
   }
-  if (jsonOnDisk != null && jsonOnDisk !== renderPublishRosterJson()) {
-    drift.push({
-      copy: PUBLISH_ROSTER_JSON,
-      detail:
-        'content != PUBLISHABLE_ROSTER projection — regenerate with `pnpm exec tsx scripts/gen-roster.ts --write`',
-    });
+  if (new Set(catalog.map((record) => record.dir)).size !== catalog.length) {
+    drift.push({ copy: 'PACKAGE_CATALOG', detail: 'contains duplicate package directories' });
   }
 
-  // 4. release.yml's publish job sources its roster from the generated JSON and
-  //    carries NO hand-written `@liteship/` package literals of its own.
-  const publishJob = publishJobText(readReleaseYaml());
-  if (publishJob.includes('@liteship/')) {
+  const validateOrders = (label: string, orders: readonly (number | null)[]): void => {
+    if (orders.some((order) => order == null)) {
+      drift.push({ copy: 'PACKAGE_CATALOG', detail: `${label} has a missing order` });
+      return;
+    }
+    const actual = (orders as readonly number[]).toSorted((left, right) => left - right);
+    const expected = Array.from({ length: actual.length }, (_value, index) => index);
+    if (!arrayEqual(actual.map(String), expected.map(String))) {
+      drift.push({ copy: 'PACKAGE_CATALOG', detail: `${label} orders must be unique and contiguous from zero` });
+    }
+  };
+  for (const group of ['foundations', 'hosts', 'runtime', 'tooling', 'prose-only'] as const) {
+    validateOrders(
+      `docs.${group}`,
+      catalog.filter((record) => record.docs.group === group).map((record) => record.docs.order),
+    );
+  }
+  validateOrders(
+    'apiSurface',
+    catalog.filter((record) => record.apiSurface).map((record) => record.apiSurfaceOrder),
+  );
+  validateOrders(
+    'typedoc',
+    catalog.filter((record) => record.typedocEntry !== null).map((record) => record.typedocOrder),
+  );
+
+  const seen = new Set<string>();
+  const knownNames = new Set(packageNames);
+  for (const record of catalog) {
+    if (record.apiSurface !== (record.apiSurfaceOrder !== null)) {
+      drift.push({ copy: `PACKAGE_CATALOG:${record.name}`, detail: 'apiSurface and apiSurfaceOrder disagree' });
+    }
+    if ((record.typedocEntry !== null) !== (record.typedocOrder !== null)) {
+      drift.push({ copy: `PACKAGE_CATALOG:${record.name}`, detail: 'typedocEntry and typedocOrder disagree' });
+    }
+    if (record.plumbStatus === 'deferred' && record.plumbIssue == null) {
+      drift.push({ copy: `PACKAGE_CATALOG:${record.name}`, detail: 'deferred plumb status requires plumbIssue' });
+    }
+    for (const [field, values] of [
+      ['dependencies', record.dependencies],
+      ['capabilities', record.capabilities],
+      ['publicSubpaths', record.publicSubpaths],
+      ['smokeImports', record.smokeImports],
+      ['audit.allowedInternalImports', record.audit.allowedInternalImports],
+    ] as const) {
+      if (new Set(values).size !== values.length) {
+        drift.push({ copy: `PACKAGE_CATALOG:${record.name}`, detail: `${field} contains duplicate entries` });
+      }
+    }
+    const importablePublicSpecifiers = record.publicSubpaths.map((subpath) =>
+      subpath === '.' ? record.name : `${record.name}${subpath.slice(1)}`,
+    );
+    for (const specifier of record.smokeImports) {
+      if (!importablePublicSpecifiers.includes(specifier)) {
+        drift.push({
+          copy: `PACKAGE_CATALOG:${record.name}`,
+          detail: `smoke import ${specifier} is not a positive publicSubpaths export`,
+        });
+      }
+    }
+    for (const dependency of record.dependencies) {
+      if (!knownNames.has(dependency)) {
+        drift.push({
+          copy: `PACKAGE_CATALOG:${record.name}`,
+          detail: `dependency ${dependency} is not a catalog package`,
+        });
+      } else if (!seen.has(dependency)) {
+        drift.push({
+          copy: `PACKAGE_CATALOG:${record.name}`,
+          detail: `dependency ${dependency} does not precede its consumer in publish order`,
+        });
+      }
+    }
+    seen.add(record.name);
+
+    const manifest = manifests.get(record.dir);
+    if (!manifest) {
+      drift.push({ copy: record.name, detail: `missing ${record.dir}/package.json` });
+      continue;
+    }
+    if (manifest.name !== record.name)
+      drift.push({ copy: record.name, detail: `manifest name is ${manifest.name ?? '<missing>'}` });
+    if (manifest.private === true || manifest.publishConfig == null) {
+      drift.push({
+        copy: record.name,
+        detail: 'catalog says publishable but manifest is private or lacks publishConfig',
+      });
+    }
+    const deps = internalDependencies(manifest);
+    if (!setEqual(record.dependencies, deps)) {
+      drift.push({
+        copy: record.name,
+        detail: `dependencies differ: catalog=${record.dependencies.join(',')} manifest=${deps.join(',')}`,
+      });
+    }
+    const subpaths = manifestExportSubpaths(manifest.exports);
+    if (!arrayEqual(record.publicSubpaths, subpaths)) {
+      drift.push({
+        copy: record.name,
+        detail: `publicSubpaths differ: catalog=${record.publicSubpaths.join(',')} manifest=${subpaths.join(',')}`,
+      });
+    }
+    if (manifest.description !== record.description)
+      drift.push({ copy: record.name, detail: 'description differs from catalog' });
+    if (!arrayEqual(manifest.keywords ?? [], record.keywords))
+      drift.push({ copy: record.name, detail: 'keywords differ from catalog' });
+  }
+
+  if (
+    !setEqual(
+      catalog.map((record) => record.dir),
+      publishableDirs,
+    )
+  ) {
     drift.push({
-      copy: 'release.yml publish job',
-      detail: `carries a hand-written \`@liteship/\` package literal — the roster must come from ${PUBLISH_ROSTER_JSON}`,
+      copy: 'PACKAGE_CATALOG',
+      detail: `catalog/disk publishable directories differ: disk=${publishableDirs.join(',')}`,
     });
   }
-  if (!publishJob.includes(PUBLISH_ROSTER_JSON)) {
-    drift.push({
-      copy: 'release.yml publish job',
-      detail: `does not reference ${PUBLISH_ROSTER_JSON} — the publish loop must source its roster from the generated JSON`,
+  return drift;
+}
+
+function catalogDrift(): readonly CatalogDrift[] {
+  const manifests = new Map<string, CatalogManifest>();
+  for (const record of PACKAGE_CATALOG) {
+    const manifest = manifestFor(record);
+    if (manifest) manifests.set(record.dir, manifest);
+  }
+  const dirsOnDisk = readdirSync(resolve(REPO_ROOT, 'packages'), { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => `packages/${entry.name}`)
+    .filter((dir) => {
+      const path = resolve(REPO_ROOT, dir, 'package.json');
+      if (!existsSync(path)) return false;
+      const manifest = JSON.parse(readFileSync(path, 'utf8')) as CatalogManifest;
+      return manifest.private !== true && manifest.publishConfig != null;
     });
+  return validatePackageCatalog(PACKAGE_CATALOG, manifests, dirsOnDisk);
+}
+
+export type ProjectionReader = (relativePath: string) => string | undefined;
+
+function readRepoProjection(relativePath: string): string | undefined {
+  const path = resolve(REPO_ROOT, relativePath);
+  return existsSync(path) ? readFileSync(path, 'utf8') : undefined;
+}
+
+/** Validate every generated projection against arbitrary source bytes. */
+export function collectGeneratedProjectionDrift(
+  readProjection: ProjectionReader = readRepoProjection,
+): readonly CatalogDrift[] {
+  const drift: CatalogDrift[] = [];
+  for (const [relativePath, expected] of renderGeneratedProjections()) {
+    if (readProjection(relativePath) !== expected) {
+      drift.push({ copy: relativePath, detail: 'stale generated projection; run gen-roster --write' });
+    }
+  }
+  for (const [relativePath, marker, render] of MARKDOWN_PROJECTIONS) {
+    const source = readProjection(relativePath);
+    if (source == null || applyMarkdownProjection(source, marker, render()) !== source) {
+      drift.push({ copy: relativePath, detail: `stale generated ${marker} projection` });
+    }
+  }
+
+  const indexSource = readProjection(LITESHIP_INDEX_REL);
+  const match = indexSource == null ? null : LITESHIP_BLOCK.exec(indexSource);
+  if (!match || !match[0].includes(renderLiteshipPackages())) {
+    drift.push({ copy: LITESHIP_INDEX_REL, detail: 'stale generated LITESHIP_PACKAGES block' });
   }
 
   return drift;
 }
 
+/** Every mismatch between the catalog, package manifests, and generated projections. */
+export function collectRosterDrift(): readonly CatalogDrift[] {
+  const drift = [
+    ...catalogDrift(),
+    ...collectGeneratedProjectionDrift(),
+    ...findAuthoredFleetLists(trackedCatalogSources()),
+  ];
+
+  const publishJob = publishJobText(readReleaseYaml());
+  if (publishJob.includes('@liteship/')) {
+    drift.push({ copy: 'release.yml publish job', detail: 'contains an authored @liteship package literal' });
+  }
+  if (!publishJob.includes(PUBLISH_ROSTER_JSON)) {
+    drift.push({ copy: 'release.yml publish job', detail: `does not iterate ${PUBLISH_ROSTER_JSON}` });
+  }
+  return drift;
+}
+
+function emit(): void {
+  for (const [relativePath, expected] of renderGeneratedProjections()) {
+    process.stdout.write(`# ${relativePath}\n${expected}\n`);
+  }
+  process.stdout.write(`# ${LITESHIP_INDEX_REL}\n${renderLiteshipPackages()}\n`);
+}
+
 function check(): number {
   const drift = collectRosterDrift();
   if (drift.length === 0) {
-    process.stdout.write(
-      `gen-roster: roster in sync — ${CANONICAL_ROSTER.length} @liteship packages, ${PUBLISHABLE_ROSTER.length} publishable.\n`,
-    );
+    process.stdout.write(`gen-roster: ${PACKAGE_CATALOG.length} package records and all projections are current.\n`);
     return 0;
   }
-  process.stderr.write('gen-roster: roster drift detected\n');
-  for (const item of drift) {
-    process.stderr.write(`  - ${item.copy}: ${item.detail}\n`);
-  }
-  process.stderr.write(
-    '\nUpdate the canonical roster (scripts/gen-roster.ts CANONICAL_ROSTER) and every shipped copy in the same commit.\n',
-  );
+  process.stderr.write('gen-roster: package catalog drift detected\n');
+  for (const item of drift) process.stderr.write(`  - ${item.copy}: ${item.detail}\n`);
   return 1;
 }
-
-// ---------------------------------------------------------------------------
-// Entry.
-// ---------------------------------------------------------------------------
 
 export function main(argv: readonly string[]): number {
   if (argv.includes('--check')) return check();
@@ -321,6 +618,4 @@ export function main(argv: readonly string[]): number {
   return 0;
 }
 
-if (isDirectExecution(import.meta.url)) {
-  process.exit(main(process.argv.slice(2)));
-}
+if (isDirectExecution(import.meta.url)) process.exit(main(process.argv.slice(2)));

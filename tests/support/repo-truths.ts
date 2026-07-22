@@ -136,14 +136,10 @@ export function publishablePackageDirs(): readonly string[] {
 }
 
 /**
- * The canonical dependency-fleet roster: every non-private `@liteship/*` package on
- * disk, sorted.
- *
- * The plan (T148 / duplication workstream) designates `@liteship/audit`'s exported
- * `LITESHIP_PACKAGE_ROSTER` as the eventual single roster anchor; it does not exist
- * yet (grep of `packages/` finds no such export as of this wave), so the roster
- * is DERIVED here from the publishable set. When audit ships the export, this
- * accessor should delegate to it and the derivation drops out.
+ * The independent physical-packaging oracle: every non-private
+ * `@liteship/*` manifest on disk, sorted. Authored membership and dependency
+ * order live in `scripts/package-catalog.ts`; generator and roster tests compare
+ * that catalog with this disk-derived view so neither source can bless itself.
  */
 export function packageRoster(): readonly string[] {
   return packageManifests()

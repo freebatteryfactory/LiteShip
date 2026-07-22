@@ -13,6 +13,11 @@
  */
 import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
+import {
+  GENERATED_DOC_PACKAGE_GROUPS,
+  GENERATED_NO_SURFACE_SECTION,
+  GENERATED_PROSE_ONLY,
+} from './package-docs.generated.js';
 
 export const REPO_ROOT = resolve(import.meta.dirname, '..', '..');
 
@@ -75,48 +80,22 @@ interface PackageGroup {
  * enforces that every publishable package lands somewhere.
  */
 export const PACKAGE_GROUPS: readonly PackageGroup[] = [
-  {
-    intro: null,
-    members: ['@liteship/core', '@liteship/canonical', '@liteship/error', '@liteship/genui', '@liteship/quantizer', '@liteship/compiler'],
-  },
+  { intro: null, members: GENERATED_DOC_PACKAGE_GROUPS.foundations },
   {
     intro: 'Add a host integration when you wire LiteShip into a build pipeline:',
-    members: ['@liteship/vite', '@liteship/astro', '@liteship/edge', '@liteship/cloudflare'],
+    members: GENERATED_DOC_PACKAGE_GROUPS.hosts,
   },
   {
     intro: 'Reach for the rest only when the surface meaning justifies the runtime escalation:',
-    members: [
-      '@liteship/web',
-      '@liteship/detect',
-      '@liteship/worker',
-      '@liteship/remotion',
-      '@liteship/scene',
-      '@liteship/assets',
-      '@liteship/stage',
-      '@liteship/cli',
-      '@liteship/mcp-server',
-      '@liteship/_spine',
-    ],
+    members: GENERATED_DOC_PACKAGE_GROUPS.runtime,
   },
   {
     intro: "You don't install these directly — they back the CLI, the MCP server, and the release tooling:",
-    members: ['@liteship/command', '@liteship/audit', '@liteship/gauntlet'],
+    members: GENERATED_DOC_PACKAGE_GROUPS.tooling,
   },
 ];
-
-/**
- * Publishable packages intentionally NOT in the README package tables: the
- * umbrella meta-package and the scaffold, which are named in prose
- * (`npm create liteship`) rather than imported.
- */
-export const PROSE_ONLY = ['liteship', 'create-liteship'] as const;
-
-/**
- * Publishable packages with no PACKAGE-SURFACES.md section, by design.
- * `@liteship/_spine` is a type-only declaration spine — you never import from it,
- * so it has no public import surface to map.
- */
-export const NO_SURFACE_SECTION = ['@liteship/_spine'] as const;
+export const PROSE_ONLY = GENERATED_PROSE_ONLY;
+export const NO_SURFACE_SECTION = GENERATED_NO_SURFACE_SECTION;
 
 function tableFor(members: readonly string[], byName: Map<string, PackageManifest>): string {
   const rows = members.map((name) => {
@@ -146,19 +125,26 @@ export function renderExamplesBlock(): string {
     { dir: 'showcase', shows: 'The cast family in one app — CSS/GPU boundaries, workers, streaming + generative-UI' },
     {
       dir: '03-cast-aria',
-      shows: 'One boundary cast to CSS **and** ARIA from a single `@quantize` block — define-once-cast-many, for accessibility',
+      shows:
+        'One boundary cast to CSS **and** ARIA from a single `@quantize` block — define-once-cast-many, for accessibility',
     },
     {
       dir: '05-ai-patch-refused',
-      shows: 'The AI-safety seam made visible — an invalid model `GraphPatch` is refused; only a validated proposal changes the graph',
+      shows:
+        'The AI-safety seam made visible — an invalid model `GraphPatch` is refused; only a validated proposal changes the graph',
     },
     {
       dir: '06-mutation-roundtrip',
-      shows: 'The client→server round-trip via `createGraphMutationClient` + `bindGraphForm` — the server validates + applies (stale-base patches refused with auto-recovery); the return leg of the stream',
+      shows:
+        'The client→server round-trip via `createGraphMutationClient` + `bindGraphForm` — the server validates + applies (stale-base patches refused with auto-recovery); the return leg of the stream',
     },
     { dir: 'default', shows: 'The minimal `npm create liteship` starter' },
     { dir: 'cloudflare-astro', shows: 'Edge KV boundary cache + Astro middleware on Cloudflare' },
-    { dir: 'remotion-demo', shows: 'Headless video export from the same DocumentGraph (standalone: `cd examples/remotion-demo && pnpm install`)' },
+    {
+      dir: 'remotion-demo',
+      shows:
+        'Headless video export from the same DocumentGraph (standalone: `cd examples/remotion-demo && pnpm install`)',
+    },
   ];
   for (const r of rows) {
     if (!byDir.has(r.dir)) throw new Error(`doc-registry: examples table lists missing workspace "examples/${r.dir}"`);

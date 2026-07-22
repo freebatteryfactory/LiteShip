@@ -3,33 +3,88 @@
   "compilerOptions": {
     "exactOptionalPropertyTypes": false
   },
-  "exclude": ["tests", "node_modules", "examples", "scripts"],
+  "exclude": [
+    "tests",
+    "node_modules",
+    "examples",
+    "scripts"
+  ],
   "files": [],
   "references": [
-    { "path": "./packages/error" },
-    { "path": "./packages/gauntlet" },
-    { "path": "./packages/_spine" },
-    { "path": "./packages/canonical" },
-    { "path": "./packages/genui" },
-    { "path": "./packages/core" },
-    { "path": "./packages/quantizer" },
-    { "path": "./packages/compiler" },
-    { "path": "./packages/web" },
-    { "path": "./packages/detect" },
-    { "path": "./packages/edge" },
-    { "path": "./packages/worker" },
-    { "path": "./packages/vite" },
-    { "path": "./packages/astro" },
-    { "path": "./packages/stage" },
-    { "path": "./packages/cloudflare" },
-    { "path": "./packages/remotion" },
-    { "path": "./packages/scene" },
-    { "path": "./packages/assets" },
-    { "path": "./packages/audit" },
-    { "path": "./packages/command" },
-    { "path": "./packages/cli" },
-    { "path": "./packages/mcp-server" },
-    { "path": "./packages/liteship" },
-    { "path": "./packages/create-liteship" }
+    {
+      "path": "./packages/_spine"
+    },
+    {
+      "path": "./packages/error"
+    },
+    {
+      "path": "./packages/canonical"
+    },
+    {
+      "path": "./packages/core"
+    },
+    {
+      "path": "./packages/genui"
+    },
+    {
+      "path": "./packages/quantizer"
+    },
+    {
+      "path": "./packages/compiler"
+    },
+    {
+      "path": "./packages/web"
+    },
+    {
+      "path": "./packages/detect"
+    },
+    {
+      "path": "./packages/edge"
+    },
+    {
+      "path": "./packages/vite"
+    },
+    {
+      "path": "./packages/worker"
+    },
+    {
+      "path": "./packages/remotion"
+    },
+    {
+      "path": "./packages/scene"
+    },
+    {
+      "path": "./packages/astro"
+    },
+    {
+      "path": "./packages/cloudflare"
+    },
+    {
+      "path": "./packages/stage"
+    },
+    {
+      "path": "./packages/assets"
+    },
+    {
+      "path": "./packages/gauntlet"
+    },
+    {
+      "path": "./packages/audit"
+    },
+    {
+      "path": "./packages/command"
+    },
+    {
+      "path": "./packages/cli"
+    },
+    {
+      "path": "./packages/mcp-server"
+    },
+    {
+      "path": "./packages/create-liteship"
+    },
+    {
+      "path": "./packages/liteship"
+    }
   ]
 }

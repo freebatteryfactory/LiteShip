@@ -158,10 +158,12 @@ traces:
     tests:
       - 'tests/unit/devops/check-registry.test.ts::every blocking check is classified EXACTLY once — declares an existing negative control XOR is exempt (the partition is total + disjoint)'
 
-  # ── Meta (single-source roster) — audit anchor == gen-roster producer; release.yml is a projection ─
+  # ── Meta (single-source roster) — one typed catalog; every consumer is a projection ─
   - id: INV-ROSTER-SINGLE-SOURCE
     tests:
-      - 'tests/unit/audit/package-roster.test.ts::equals gen-roster CANONICAL_ROSTER in dependency order (authored order agrees)'
+      - 'tests/unit/devops/package-catalog.test.ts::accepts the exact 25-record catalog against independent manifests'
+      - 'tests/unit/devops/package-catalog.test.ts::rejects a second authored full-fleet list but permits generated and red-fixture sources'
+      - 'tests/unit/audit/package-roster.test.ts::equals the generated canonical roster in dependency order'
       - 'tests/unit/meta/release-roster-projection.test.ts::carries no @liteship/* package literals in its run blocks'
 
   # ── Meta (single brand) — tests/unit/meta/brand-residue.test.ts (this ledger file is allowlisted there) ─

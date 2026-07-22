@@ -1,5 +1,5 @@
 {
-  "$generated": "by scripts/gen-roster.ts — do not hand-edit; regenerate with: pnpm exec tsx scripts/gen-roster.ts --write",
+  "$generated": "by scripts/gen-roster.ts from scripts/package-catalog.ts — do not hand-edit; regenerate with: pnpm exec tsx scripts/gen-roster.ts --write",
   "expectedPublishable": 25,
   "packages": [
     "@liteship/_spine",

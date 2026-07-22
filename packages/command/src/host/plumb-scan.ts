@@ -79,11 +79,10 @@ function collectGeneratedSkips(root: string, detect: PlumbSkipDetector): { skips
 }
 
 /**
- * Every publishable `@liteship/*` name, read DYNAMICALLY from the `packages/*` manifests on
- * disk. The canonical roster of these names is `@liteship/audit`'s `LITESHIP_PACKAGE_ROSTER`
- * (the [DUP] owner); this copy stays a live filesystem re-scan by LAYERING — `@liteship/command`
- * sits below the devops layer and cannot depend on `@liteship/audit` — with drift held by the
- * release/roster guards rather than a shared import.
+ * Every publishable `@liteship/*` name, read dynamically from manifests as the
+ * independent physical-packaging oracle. Authored classification lives in
+ * `scripts/package-catalog.ts` and reaches command through generated
+ * `PACKAGE_PLUMB`; this scan intentionally stays independent so drift is loud.
  */
 function publishedPackages(root: string): string[] {
   const names: string[] = [];

@@ -209,7 +209,7 @@ or read `gauntlet-phases.ts` directly. The per-phase timing table below is a cap
 
 ### Per-phase wall-time ranges
 
-Total across all 40 phases (the count is pinned by `tests/unit/devops/gauntlet-profile.test.ts` against `gauntletPhases.length` — never hand-counted here): roughly 15–22 minutes on a fast 8-vCPU local box, ~40 minutes under CI (cold browser-coverage cache). The README's gauntlet snapshot carries the latest CI datapoint, distilled from the `truth-artifacts-linux` artifact by `scripts/refresh-bench-snapshot.ts`. Phase 0 is `rig-check` (`doctor --preflight --ci`); phase 8 is `audit:floor` (rule-inventory gate before the long test tranche).
+Total across the generated gauntlet phase registry: roughly 15–22 minutes on a fast 8-vCPU local box, ~40 minutes under CI (cold browser-coverage cache). The README's gauntlet snapshot carries the latest CI datapoint, distilled from the `truth-artifacts-linux` artifact by `scripts/refresh-bench-snapshot.ts`. Consult `liteship check --profile release --plan` for the current ordered phase set rather than relying on a hand-maintained count.
 
 `scripts/gauntlet.ts` writes `benchmarks/gauntlet-phase-timings.json` after every run (success or failure), so the live ledger for a 3am operator is the latest artifact, not this static table. Re-run `pnpm run gauntlet:full` and the artifact updates automatically. The numbers below are a captured snapshot from one Linux run, useful as anchors when the artifact isn't fresh.
 
@@ -254,7 +254,7 @@ Phase 23 (`coverage:browser`) is the only phase with a meaningfully bimodal cost
 
 For the canonical, current truth, read `benchmarks/gauntlet-phase-timings.json` after a fresh `pnpm run gauntlet:full`. The snapshot above is a reference anchor, not the live ledger.
 
-**For 3am operators without a local repo:** the `truth-linux` job in `.github/workflows/ci.yml` uploads `benchmarks/` (including `gauntlet-phase-timings.json`) as the `truth-artifacts-linux` artifact on every push to `main` and every pull request. That artifact carries all 40 phases measured under CI conditions and is the single source of truth without needing to re-run anything locally — find the most recent successful CI run on the relevant branch in the GitHub Actions UI, download the artifact, read the JSON. The static table above is for orientation; the artifact is for decisions.
+**For 3am operators without a local repo:** the `truth-linux` job in `.github/workflows/ci.yml` uploads `benchmarks/` (including `gauntlet-phase-timings.json`) as the `truth-artifacts-linux` artifact on every push to `main` and every pull request. That artifact carries the complete generated phase set measured under CI conditions and is the single source of truth without needing to re-run anything locally — find the most recent successful CI run on the relevant branch in the GitHub Actions UI, download the artifact, read the JSON. The static table above is for orientation; the artifact is for decisions.
 
 ---
 
@@ -670,8 +670,9 @@ through `workspace:*` links until each external npm cut.
 - package surfaces, `dist/` outputs, export maps, and type entrypoints must
   stay release-ready
 - `package:smoke` is required proof for every publishable `@liteship/*` scope
-  (including type-only `@liteship/_spine`); the roster is derived from the package
-  manifests and guarded by `tests/unit/devops/package-smoke-roster.test.ts`
+  (including type-only `@liteship/_spine`); its roster is generated from
+  `scripts/package-catalog.ts` and checked against manifests as the independent
+  physical packaging oracle
 - external publishing remains a deliberate release decision, not an accidental
   side effect of package shape
 
@@ -705,7 +706,7 @@ Lens C/E micro-cuts, D10 interactivity, MCP Apps spec-completeness, and Lens W (
 - **`@liteship/core` shim** — re-exports the canonical kernel at its export boundary; byte parity pinned in `tests/unit/canonical/core-shim-conformance.test.ts`.
 - **Golden vectors** — encoder and digest output pinned under `tests/unit/canonical/` (ADR-0013).
 - **GenUI stream discriminator** — catalog trees arrive as `{ "_genui": true, name, props, ... }`; legacy token/text/HTML streaming unchanged when the marker is absent (ADR-0014).
-- **25 publishable packages** — 23 `@liteship/*` scopes plus `create-liteship` and `liteship`; `package:smoke` roster derived from manifests; B6a guard in `tests/unit/devops/package-smoke-roster.test.ts` prevents silent skips.
+- **25 publishable packages** — 23 `@liteship/*` scopes plus `create-liteship` and `liteship`; package-smoke, release, topology, and documentation rosters are generated from `scripts/package-catalog.ts` and checked against manifests to prevent silent skips.
 
 ---
 

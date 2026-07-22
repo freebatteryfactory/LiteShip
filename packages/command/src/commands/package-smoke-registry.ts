@@ -23,94 +23,13 @@ export interface PackageSmokeSpec {
   readonly imports: readonly string[];
 }
 
-/**
- * Mirrors every publishable scope under `packages/*` (see `pnpm-workspace.yaml`).
- *
- * The MEMBERSHIP of this roster (the `name` set) is owned by
- * `scripts/gen-roster.ts` (`PUBLISHABLE_ROSTER` = the `@liteship/*` fleet plus the
- * `create-liteship` / `liteship` umbrellas). This copy stays local — and keeps
- * its hand-authored `imports` / `dir` fields — because `@liteship/command` sits below
- * the devops layer and cannot import the generator; parity with the canonical
- * roster is enforced by the `package-smoke-roster` drift-guard, which asserts
- * these names equal gen-roster's `PUBLISHABLE_ROSTER`.
- *
- * The `@liteship/*` subset of these names (and their dependency ORDER) is likewise the
- * [DUP] province of `@liteship/audit`'s `LITESHIP_PACKAGE_ROSTER`, the canonical owner. This
- * copy stays local by the SAME layering — `@liteship/command` cannot depend on the
- * devops-layer `@liteship/audit` — and its parity is held by the `package-smoke-roster`
- * drift-guard, not a shared import.
- */
-export const PACKAGES: readonly PackageSmokeSpec[] = [
-  // _spine is type-only (no runtime); packed and overridden so consumers
-  // can resolve `@liteship/core`'s and `@liteship/scene`'s declared dep on it
-  // during `pnpm install`. No runtime `import()` smoke needed.
-  { dir: 'packages/_spine', name: '@liteship/_spine', imports: [] },
-  // @liteship/error is the foundational zero-dep error algebra — every package's
-  // runtime dep; packed first so consumers resolve the declared workspace edge.
-  { dir: 'packages/error', name: '@liteship/error', imports: ['@liteship/error'] },
-  { dir: 'packages/gauntlet', name: '@liteship/gauntlet', imports: ['@liteship/gauntlet'] },
-  { dir: 'packages/canonical', name: '@liteship/canonical', imports: ['@liteship/canonical'] },
-  { dir: 'packages/genui', name: '@liteship/genui', imports: ['@liteship/genui'] },
-  {
-    dir: 'packages/core',
-    name: '@liteship/core',
-    imports: ['@liteship/core', '@liteship/core/testing', '@liteship/core/harness'],
-  },
-  {
-    dir: 'packages/quantizer',
-    name: '@liteship/quantizer',
-    imports: ['@liteship/quantizer', '@liteship/quantizer/testing'],
-  },
-  { dir: 'packages/compiler', name: '@liteship/compiler', imports: ['@liteship/compiler'] },
-  { dir: 'packages/web', name: '@liteship/web', imports: ['@liteship/web', '@liteship/web/lite'] },
-  { dir: 'packages/detect', name: '@liteship/detect', imports: ['@liteship/detect'] },
-  { dir: 'packages/edge', name: '@liteship/edge', imports: ['@liteship/edge'] },
-  {
-    dir: 'packages/cloudflare',
-    name: '@liteship/cloudflare',
-    imports: ['@liteship/cloudflare', '@liteship/cloudflare/testing', '@liteship/cloudflare/cache-provider'],
-  },
-  { dir: 'packages/worker', name: '@liteship/worker', imports: ['@liteship/worker'] },
-  { dir: 'packages/vite', name: '@liteship/vite', imports: ['@liteship/vite', '@liteship/vite/html-transform'] },
-  {
-    dir: 'packages/astro',
-    name: '@liteship/astro',
-    imports: [
-      '@liteship/astro',
-      '@liteship/astro/client-directives/adaptive',
-      '@liteship/astro/client-directives/stream',
-      '@liteship/astro/client-directives/llm',
-      '@liteship/astro/client-directives/worker',
-      '@liteship/astro/client-directives/gpu',
-      '@liteship/astro/client-directives/wasm',
-      '@liteship/astro/middleware',
-      '@liteship/astro/fetch-layer',
-      '@liteship/astro/runtime',
-    ],
-  },
-  { dir: 'packages/remotion', name: '@liteship/remotion', imports: ['@liteship/remotion'] },
-  { dir: 'packages/scene', name: '@liteship/scene', imports: ['@liteship/scene', '@liteship/scene/dev'] },
-  // The verb / orchestration layer (P4). `.` is the pure graph-walk core;
-  // `./ffmpeg` is the node-only headless byte-encode backend (child_process).
-  { dir: 'packages/stage', name: '@liteship/stage', imports: ['@liteship/stage', '@liteship/stage/ffmpeg'] },
-  { dir: 'packages/assets', name: '@liteship/assets', imports: ['@liteship/assets'] },
-  { dir: 'packages/audit', name: '@liteship/audit', imports: ['@liteship/audit'] },
-  // Shared command registry (CUT A1) — the dispatch layer @liteship/cli and
-  // @liteship/mcp-server both consume. `./host` carries the Node-only manifest helpers.
-  { dir: 'packages/command', name: '@liteship/command', imports: ['@liteship/command', '@liteship/command/host'] },
-  { dir: 'packages/cli', name: '@liteship/cli', imports: ['@liteship/cli'] },
-  { dir: 'packages/mcp-server', name: '@liteship/mcp-server', imports: ['@liteship/mcp-server'] },
-  // The unscoped scaffolder — consumed via `npm create liteship` (bin), but
-  // its main entry exports the scaffold function; smoke verifies it resolves.
-  { dir: 'packages/create-liteship', name: 'create-liteship', imports: ['create-liteship'] },
-  // The unscoped umbrella — manifest-level deps on every @liteship/* scope,
-  // zero source imports; smoke verifies its own entrypoint resolves.
-  { dir: 'packages/liteship', name: 'liteship', imports: ['liteship'] },
-];
+import { GENERATED_PACKAGE_SMOKE_SPECS } from './package-smoke-registry.generated.js';
+
+/** Generated from the one typed package catalog in `scripts/package-catalog.ts`. */
+export const PACKAGES: readonly PackageSmokeSpec[] = GENERATED_PACKAGE_SMOKE_SPECS;
 
 /** External peer set the consumer fixture installs alongside the packed `@liteship/*` tarballs. */
 export const PEER_INSTALLS: readonly string[] = [
-  'effect@4.0.0-beta.32',
   // vite must be >= 8.1.0: astro@7 depends on esbuild ^0.28, and vite@8.0.0
   // peered esbuild ^0.27.0 only (→ strict-peer install failure in the smoke
   // consumer). vite@8.1.0 widened the peer to `^0.27.0 || ^0.28.0`.

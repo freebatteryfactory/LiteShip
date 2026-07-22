@@ -12,6 +12,8 @@
  * @module
  */
 
+import { GENERATED_API_SURFACE_PACKAGES } from './api-surface-packages.generated.js';
+
 /** The semver-class a single surface change falls into. */
 export type ChangeClass = 'added' | 'removed' | 'signature-changed';
 
@@ -64,29 +66,6 @@ export const isBreakingClass = (changeClass: ChangeClass): boolean =>
  *    primitive surfaces — their drift is caught by their own integration tests.
  */
 export const LITESHIP_API_SURFACE_POLICY: ApiSurfacePolicy = {
-  publicPackages: [
-    '@liteship/error',
-    '@liteship/gauntlet',
-    '@liteship/canonical',
-    '@liteship/genui',
-    '@liteship/core',
-    '@liteship/quantizer',
-    '@liteship/compiler',
-    '@liteship/web',
-    '@liteship/detect',
-    '@liteship/edge',
-    '@liteship/worker',
-    '@liteship/vite',
-    '@liteship/astro',
-    '@liteship/stage',
-    '@liteship/cloudflare',
-    '@liteship/remotion',
-    '@liteship/scene',
-    '@liteship/assets',
-    '@liteship/audit',
-    '@liteship/command',
-    '@liteship/cli',
-    '@liteship/mcp-server',
-  ],
+  publicPackages: GENERATED_API_SURFACE_PACKAGES,
   requiredBumpFor: (changeClass) => (isBreakingClass(changeClass) ? 'minor' : 'minor'),
 };
