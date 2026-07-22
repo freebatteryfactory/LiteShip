@@ -1,105 +1,115 @@
 /**
- * journey-upgrade — a consumer pinned to a PRIOR `liteship` range takes the current
- * packed build and rebuilds green.
+ * journey-upgrade — prove a consumer built from the exact pre-operation
+ * implementation (`2141ec25`) can take the explicit pre-1.0 source migration,
+ * install the current packed fleet, and rebuild green.
  *
- * Phase A stands up a "prior-version fixture consumer": the scaffolded starter with
- * its `liteship` dependency pinned to a PRIOR range (`^0.17.0`) — the manifest an app
- * authored against the last release carries. Phase B performs the upgrade: bump the
- * range to the current `^0.18.0`, reinstall over the existing tree, and rebuild. Both
- * builds must stay green (dist HTML carrying `data-liteship-boundary`).
+ * This is a genuine two-version control. The prior phase is exported from Git,
+ * installed, built, and packed independently; it emits the old `data-czap-*`
+ * wire marker. The migration then applies the current canonical starter source,
+ * replaces the prior tarballs with the current packed fleet, and drives the
+ * installed current `liteship build`, which must emit `data-liteship-*`.
  *
- * ENV-GATE (honest): a genuinely-distinct PRIOR PUBLISHED `liteship@0.17.x` cannot be
- * fetched here — the package is unpublished and the sandbox is offline-first. Both
- * phases therefore resolve, via `pnpm.overrides`, to the CURRENT packed tarballs; the
- * journey proves the manifest-range upgrade + reinstall + rebuild sequence stays
- * green, and records the unfetchable-prior-artifact as a note rather than faking a
- * second version.
+ * There is deliberately no compatibility alias: LiteShip is pre-1.0 and the
+ * ratified policy is explicit source migration rather than an immortal shim.
  *
  * @module
  */
 
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
+  applyCurrentScaffoldMigration,
   astroBuild,
   findFiles,
   installConsumer,
-  isOfflineOrNetworkError,
   journeyAssert,
-  rewriteConsumerToTarballs,
+  packPriorOperationBase,
+  parseReceipt,
+  PRIOR_OPERATION_BASE,
   removeDir,
-  scaffoldConsumer,
+  rewriteConsumerToTarballs,
+  rewritePriorConsumerToTarballs,
+  runInstalledLiteshipCli,
+  scaffoldPriorConsumer,
   type JourneyResult,
   type PackedWorkspace,
+  type PriorPackedWorkspace,
 } from './harness.js';
 
-const PRIOR_RANGE = '^0.17.0';
-const CURRENT_RANGE = '^0.18.0';
-
-/** True iff any built HTML under `appDir/dist` carries the adaptive boundary marker. */
-function builtGreen(appDir: string): boolean {
+/** True iff any built HTML carries `marker`. */
+function builtWithMarker(appDir: string, marker: string): boolean {
   const dist = join(appDir, 'dist');
-  if (!existsSync(dist)) return false;
-  return findFiles(dist, '.html').some((f) => readFileSync(f, 'utf8').includes('data-liteship-boundary'));
+  return existsSync(dist) && findFiles(dist, '.html').some((file) => readFileSync(file, 'utf8').includes(marker));
 }
 
-export async function journeyUpgrade(packed: PackedWorkspace): Promise<JourneyResult> {
+export async function journeyUpgrade(current: PackedWorkspace): Promise<JourneyResult> {
   const name = 'journey-upgrade';
+  let prior: PriorPackedWorkspace | undefined;
   let appDir: string | undefined;
   try {
-    // Phase A — the prior-version fixture consumer (liteship pinned to ^0.17.0).
-    appDir = scaffoldConsumer();
-    rewriteConsumerToTarballs(appDir, packed, { liteshipSpec: PRIOR_RANGE });
+    // Phase A: real historical implementation, not a current-tarball range label.
+    prior = await packPriorOperationBase();
+    appDir = scaffoldPriorConsumer(prior);
+    rewritePriorConsumerToTarballs(appDir, prior);
 
-    const installA = await installConsumer(appDir);
-    if (installA.code !== 0) {
-      const blob = installA.stdout + installA.stderr;
-      if (isOfflineOrNetworkError(blob)) {
-        return {
-          name,
-          status: 'gated',
-          detail: 'prior-version fixture scaffolded; install could not reach a registry for store-missing deps',
-          notes: ['pnpm install --prefer-offline hit a store miss with no reachable registry (offline sandbox)'],
-        };
-      }
-      throw new Error(`prior-version install failed (exit ${installA.code}):\n${blob.slice(-1200)}`);
-    }
-    const buildA = await astroBuild(appDir);
+    const priorInstall = await installConsumer(appDir);
     journeyAssert(
-      buildA.code === 0,
-      `prior-version build failed (exit ${buildA.code}):\n${(buildA.stderr || buildA.stdout).slice(-1000)}`,
+      priorInstall.code === 0,
+      `prior-control consumer install failed (exit ${priorInstall.code}):\n${(
+        priorInstall.stdout + priorInstall.stderr
+      ).slice(-1200)}`,
     );
-    journeyAssert(builtGreen(appDir), 'prior-version build emitted no data-liteship-boundary HTML');
+    const priorBuild = await astroBuild(appDir);
+    journeyAssert(
+      priorBuild.code === 0,
+      `prior-control consumer build failed (exit ${priorBuild.code}):\n${(priorBuild.stderr || priorBuild.stdout).slice(
+        -1200,
+      )}`,
+    );
+    journeyAssert(
+      builtWithMarker(appDir, 'data-czap-boundary'),
+      `consumer built from ${PRIOR_OPERATION_BASE} emitted no data-czap-boundary marker`,
+    );
 
-    // Phase B — the upgrade: bump the range to current, reinstall over the tree, rebuild.
-    const manifestPath = join(appDir, 'package.json');
-    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as { dependencies: Record<string, string> };
-    manifest.dependencies['liteship'] = CURRENT_RANGE;
-    writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+    // Phase B: apply the explicit breaking source migration, then install the
+    // current fleet over the same consumer and drive its installed public CLI.
+    applyCurrentScaffoldMigration(appDir);
+    rewriteConsumerToTarballs(appDir, current);
 
-    const installB = await installConsumer(appDir);
+    const currentInstall = await installConsumer(appDir);
     journeyAssert(
-      installB.code === 0,
-      `upgrade install failed (exit ${installB.code}):\n${(installB.stdout + installB.stderr).slice(-1000)}`,
+      currentInstall.code === 0,
+      `current upgrade install failed (exit ${currentInstall.code}):\n${(
+        currentInstall.stdout + currentInstall.stderr
+      ).slice(-1200)}`,
     );
-    const buildB = await astroBuild(appDir);
+    const currentBuild = await runInstalledLiteshipCli(['build'], appDir);
     journeyAssert(
-      buildB.code === 0,
-      `upgrade build failed (exit ${buildB.code}):\n${(buildB.stderr || buildB.stdout).slice(-1000)}`,
+      currentBuild.code === 0,
+      `installed current liteship build failed (exit ${currentBuild.code}):\n${(
+        currentBuild.stderr || currentBuild.stdout
+      ).slice(-1200)}`,
     );
-    journeyAssert(builtGreen(appDir), 'post-upgrade build emitted no data-liteship-boundary HTML');
+    const receipt = parseReceipt(currentBuild.stdout);
+    journeyAssert(receipt['status'] === 'ok', `current build receipt status was ${String(receipt['status'])}`);
+    journeyAssert(receipt['host'] === 'astro', `current build selected ${String(receipt['host'])}, not astro`);
+    journeyAssert(
+      builtWithMarker(appDir, 'data-liteship-boundary'),
+      'post-migration current build emitted no data-liteship-boundary marker',
+    );
 
     return {
       name,
       status: 'pass',
-      detail: `prior-pinned (${PRIOR_RANGE}) consumer built green → range bumped to ${CURRENT_RANGE} → reinstall + rebuild still green`,
-      notes: [
-        'the real prior-published liteship@0.17.x tarball is unfetchable (unpublished / offline sandbox); both phases resolve to the CURRENT packed tarballs via pnpm.overrides, proving the range-upgrade + reinstall + rebuild sequence stays green',
-      ],
+      detail:
+        `${PRIOR_OPERATION_BASE} source built + packed a real data-czap consumer; explicit pre-1.0 source migration ` +
+        'installed the current packed fleet and rebuilt data-liteship output through the installed CLI',
+      notes: ['no compatibility alias and no current-to-current range substitution'],
     };
   } catch (error) {
     return { name, status: 'fail', detail: error instanceof Error ? error.message : String(error), notes: [] };
   } finally {
     removeDir(appDir === undefined ? undefined : join(appDir, '..'));
+    removeDir(prior?.rootDir);
   }
 }

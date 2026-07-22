@@ -1,6 +1,6 @@
 {
   "name": "LiteShip",
-  "build": { "dockerfile": "Dockerfile" },
+  "build": { "dockerfile": "Dockerfile", "context": ".." },
   "remoteUser": "node",
   "postCreateCommand": "bash .devcontainer/post-create.sh",
   "customizations": {

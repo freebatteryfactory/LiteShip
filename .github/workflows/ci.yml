@@ -299,11 +299,10 @@ jobs:
         with:
           name: dist-packages
           path: .
-      - uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # stable, pinned (2026-03-27)
+      - uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # action implementation pinned
         with:
-          # Pinning to a SHA strips the channel the action otherwise reads from the
-          # ref (`@stable`), so name it explicitly or the action errors.
-          toolchain: stable
+          # Projection of rust-toolchain.toml; check/devcontainer-pins rejects drift.
+          toolchain: 1.85.1
           targets: wasm32-unknown-unknown
       - run: pnpm exec playwright install --with-deps chromium chromium-headless-shell
       - run: sudo apt-get update && sudo apt-get install -y ffmpeg
@@ -422,6 +421,9 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
+          # journey-upgrade exports the frozen pre-operation control 2141ec25.
+          # A depth-1 checkout cannot materialize that genuine prior source.
+          fetch-depth: 0
           persist-credentials: false
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
@@ -665,11 +667,10 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
-      - uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # stable, pinned (2026-03-27)
+      - uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # action implementation pinned
         with:
-          # Pinning to a SHA strips the channel the action otherwise reads from the
-          # ref (`@stable`), so name it explicitly or the action errors.
-          toolchain: stable
+          # Projection of rust-toolchain.toml; check/devcontainer-pins rejects drift.
+          toolchain: 1.85.1
           targets: wasm32-unknown-unknown
       - run: cargo test
         working-directory: crates/liteship-compute

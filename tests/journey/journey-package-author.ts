@@ -1,34 +1,34 @@
 /**
- * journey-package-author — a downstream package author importing `liteship/schema`
- * and `liteship/evidence` type-checks clean under BOTH module resolutions a real
- * project uses: `node16` and `bundler`.
+ * journey-package-author — a downstream author installs the packed `liteship`
+ * facade and proves `liteship/schema` + `liteship/evidence` under Node16 and
+ * bundler resolution.
  *
- * MIRRORS `tests/unit/liteship/facade-subpaths.test.ts`: a temp consumer whose
- * `node_modules/liteship` SYMLINKS the workspace package (so the `exports` map — not
- * a `paths` alias — is what the resolver and checker exercise), then for each of the
- * two subpaths (a) `ts.resolveModuleName` resolves the specifier to its built
- * `dist/<name>.d.ts` under each mode, and (b) a tiny consumer that imports a real
- * symbol from each subpath type-checks with zero diagnostics under each mode.
- *
- * READS-DIST: the `exports` map's `types` condition points at `dist`, so this needs
- * `packages/liteship/dist` built (the full-gate flow builds before tests).
+ * There is no workspace-package link or `paths` alias. The fixture is outside
+ * the repository, installs the same tarballs the release authority packed, then
+ * resolves and checks
+ * real imports through the published exports map.
  *
  * @module
  */
 
 import ts from 'typescript';
-import { existsSync, mkdirSync, mkdtempSync, symlinkSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, realpathSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
-import { journeyAssert, REPO_ROOT, removeDir, type JourneyResult } from './harness.js';
+import { join } from 'node:path';
+import {
+  installConsumer,
+  journeyAssert,
+  removeDir,
+  writePackedAuthorManifest,
+  type JourneyResult,
+  type PackedWorkspace,
+} from './harness.js';
 
-/** The two subpaths this journey proves: the bare specifier, its built d.ts, and a real symbol. */
 const SUBPATHS = [
   { specifier: 'liteship/schema', dist: 'schema.d.ts', symbol: 'schema' },
   { specifier: 'liteship/evidence', dist: 'evidence.d.ts', symbol: 'chooseTier' },
 ] as const;
 
-/** Shared compiler options; only the module/resolution pair differs per mode. */
 function optionsFor(mode: 'node16' | 'bundler'): ts.CompilerOptions {
   const resolution =
     mode === 'node16'
@@ -47,26 +47,23 @@ function optionsFor(mode: 'node16' | 'bundler'): ts.CompilerOptions {
   };
 }
 
-export async function journeyPackageAuthor(): Promise<JourneyResult> {
+export async function journeyPackageAuthor(packed: PackedWorkspace): Promise<JourneyResult> {
   const name = 'journey-package-author';
   let sandbox: string | undefined;
   try {
-    const liteshipPkg = resolve(REPO_ROOT, 'packages', 'liteship');
+    sandbox = mkdtempSync(join(tmpdir(), 'liteship-journey-author-'));
+    writePackedAuthorManifest(sandbox, packed);
+    const install = await installConsumer(sandbox);
     journeyAssert(
-      existsSync(join(liteshipPkg, 'dist', 'schema.d.ts')),
-      'packages/liteship/dist is not built — this journey resolves the exports map’s built types condition (run pnpm build)',
+      install.code === 0,
+      `packed package-author install failed (exit ${install.code}):\n${(install.stdout + install.stderr).slice(-1200)}`,
     );
 
-    sandbox = mkdtempSync(join(tmpdir(), 'liteship-journey-author-'));
-    // An ESM consumer so node16 treats the consumer files as ESM (a real downstream app).
-    writeFileSync(
-      join(sandbox, 'package.json'),
-      `${JSON.stringify({ name: 'journey-author-consumer', type: 'module' }, null, 2)}\n`,
+    const installedRoot = realpathSync(join(sandbox, 'node_modules', 'liteship')).replaceAll('\\', '/');
+    journeyAssert(
+      !installedRoot.includes('/packages/liteship/'),
+      `package-author proof escaped to the workspace package: ${installedRoot}`,
     );
-    const nm = join(sandbox, 'node_modules');
-    mkdirSync(nm, { recursive: true });
-    // Resolve `liteship` as a real installed dep through its exports map (a symlink), not a paths alias.
-    symlinkSync(liteshipPkg, join(nm, 'liteship'), 'dir');
 
     const files: string[] = [];
     for (const entry of SUBPATHS) {
@@ -86,34 +83,40 @@ export async function journeyPackageAuthor(): Promise<JourneyResult> {
     for (const mode of ['node16', 'bundler'] as const) {
       const options = optionsFor(mode);
       const host = ts.createCompilerHost(options);
-
-      // (a) RESOLVES — every subpath resolves to its built dist/*.d.ts.
       for (const entry of SUBPATHS) {
         const resolved = ts.resolveModuleName(entry.specifier, files[0]!, options, host).resolvedModule;
         journeyAssert(resolved !== undefined, `${entry.specifier} did not resolve under ${mode}`);
-        const resolvedFile = resolved!.resolvedFileName.replace(/\\/g, '/');
+        const resolvedFile = resolved!.resolvedFileName.replaceAll('\\', '/');
+        const expected = `/node_modules/liteship/dist/${entry.dist}`;
         journeyAssert(
-          resolvedFile.includes(`/packages/liteship/dist/${entry.dist}`),
-          `${entry.specifier} (${mode}) resolved to ${resolvedFile}, not dist/${entry.dist}`,
+          resolvedFile.includes(expected),
+          `${entry.specifier} (${mode}) resolved to ${resolvedFile}, not the packed ${expected}`,
+        );
+        journeyAssert(
+          !resolvedFile.includes('/packages/liteship/'),
+          `${entry.specifier} (${mode}) escaped to the workspace source: ${resolvedFile}`,
         );
       }
 
-      // (b) TYPE-CHECKS — the consumer importing a real symbol from each subpath is clean.
       const program = ts.createProgram({ rootNames: files, options });
-      const consumerSet = new Set(files.map((f) => f.replace(/\\/g, '/')));
+      const consumerSet = new Set(files.map((file) => file.replaceAll('\\', '/')));
       const diagnostics = ts
         .getPreEmitDiagnostics(program)
-        .filter((d) => d.file !== undefined && consumerSet.has(d.file.fileName.replace(/\\/g, '/')));
-      const report = diagnostics.map((d) => `TS${d.code} ${ts.flattenDiagnosticMessageText(d.messageText, '\n')}`);
-      journeyAssert(report.length === 0, `consumer type-check diagnostics under ${mode}:\n${report.join('\n')}`);
+        .filter((diagnostic) =>
+          diagnostic.file === undefined ? false : consumerSet.has(diagnostic.file.fileName.replaceAll('\\', '/')),
+        );
+      const report = diagnostics.map(
+        (diagnostic) => `TS${diagnostic.code} ${ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n')}`,
+      );
+      journeyAssert(report.length === 0, `packed consumer diagnostics under ${mode}:\n${report.join('\n')}`);
     }
 
     return {
       name,
       status: 'pass',
       detail:
-        'liteship/schema + liteship/evidence resolve to their built dist d.ts AND type-check clean under both node16 and bundler resolution',
-      notes: [],
+        'packed liteship/schema + liteship/evidence resolved from physical node_modules dist declarations and type-checked under node16 + bundler',
+      notes: ['no workspace-package link and no TypeScript paths alias'],
     };
   } catch (error) {
     return { name, status: 'fail', detail: error instanceof Error ? error.message : String(error), notes: [] };

@@ -702,7 +702,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     id: 'check/hermetic',
     title: 'Hermetic release build + closure',
     claim:
-      'The packed release rebuilds with the network disabled, every public subpath import-resolves, and the build reproduces.',
+      'The packed release reinstalls with the network disabled, every public subpath is proved from packed artifacts, and package contents reproduce.',
     owner: 'packages/cli/src/bin.ts (package-smoke --hermetic)',
     command: 'pnpm run package:smoke:hermetic',
     inputs: [SRC_GLOB, 'packages/*/package.json', 'packages/command/src/commands/package-smoke-registry.ts'],
@@ -711,7 +711,8 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     timeoutMs: 420_000,
     cache: 'none',
     authority: 'blocking',
-    remediation: 'fix the offline rebuild or the public-subpath export that failed to resolve in the hermetic closure.',
+    remediation:
+      'fix the offline reinstall, public-subpath proof, or semantic package-content drift reported by the hermetic closure.',
   },
   {
     id: 'check/devcontainer-pins',
@@ -719,7 +720,14 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     claim: 'The committed .devcontainer pins (node, pnpm, rust) equal the repo source-of-truth versions.',
     owner: 'tests/unit/meta/devcontainer-pins.test.ts',
     command: 'pnpm run test:devcontainer',
-    inputs: ['.devcontainer/**', 'package.json', '.nvmrc', '.github/workflows/ci.yml'],
+    inputs: [
+      '.devcontainer/**',
+      'rust-toolchain.toml',
+      'package.json',
+      '.nvmrc',
+      '.github/workflows/ci.yml',
+      '.github/workflows/release.yml',
+    ],
     profiles: ['environment'],
     platforms: ['linux', 'darwin', 'win32'],
     timeoutMs: 60_000,

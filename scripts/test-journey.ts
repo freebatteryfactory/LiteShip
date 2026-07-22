@@ -3,17 +3,16 @@
  * registered check `check/journey`).
  *
  * A thin orchestrator (mirroring `scripts/test-astro.ts`): it packs every publishable
- * scope ONCE, runs the seven end-to-end consumer journeys, prints a clear PASS / FAIL /
- * GATE line per journey, and exits 0 only when every journey passed. A GATE records
- * why a claim could not run, but authoritative consumer evidence is fail-closed:
- * unexecuted is not green.
+ * scope ONCE, runs the seven end-to-end consumer journeys, prints a clear PASS /
+ * FAIL line per journey, and exits 0 only when every journey passed. Unexecuted
+ * authority is a failure, not a third verdict.
  *
  * The journeys prove the real consumer experience against REAL packed artifacts and a
  * REAL headless `astro build` — never mocks:
  *   1. journey-fresh-app          scaffold → packed install → installed CLI build → data-liteship-* HTML
  *   2. journey-add-feature        defineAdaptive hero → rebuild → markup == plan()/explain()
  *   3. journey-debug-diagnostic   plant misconfig → check names a stable code → explain it
- *   4. journey-upgrade            prior-pinned consumer → current packed build → still green
+ *   4. journey-upgrade            exact 2141ec25 build → explicit source migration → current packed build
  *   5. journey-package-author     liteship/schema + /evidence typecheck (node16 + bundler)
  *   6. journey-cold-agent-context context pointers all name real files
  *   7. journey-installed-add      packed installed CLI lists + byte-faithfully copies a fragment
@@ -41,7 +40,7 @@ import {
 
 /** Print a single aligned result line: `PASS  journey-name  — detail`. */
 function printResult(result: JourneyResult): void {
-  const mark = result.status === 'pass' ? 'PASS' : result.status === 'gated' ? 'GATE' : 'FAIL';
+  const mark = result.status === 'pass' ? 'PASS' : 'FAIL';
   console.log(`  ${mark}  ${result.name.padEnd(28, ' ')}  ${result.detail}`);
   for (const note of result.notes) console.log(`        note: ${note}`);
 }
@@ -51,7 +50,7 @@ async function main(): Promise<void> {
 
   const results: JourneyResult[] = [];
 
-  // Pack the workspace ONCE — journeys 1, 2, 4 share the tarballs.
+  // Pack the workspace ONCE — journeys 1, 2, 4, 5, and 7 share the tarballs.
   let packed: PackedWorkspace | undefined;
   let packError: string | undefined;
   console.log('[pack] packing every publishable scope in-workspace (ignore-scripts)...');
@@ -64,7 +63,7 @@ async function main(): Promise<void> {
   }
 
   try {
-    // Tarball-consuming journeys (1, 2, 4, 7). Packing is part of their claim;
+    // Application tarball journeys (1, 2, 4, 7). Packing is part of their claim;
     // unavailable packing is a failure, not green evidence.
     const tarballJourneys = [
       { id: 'journey-fresh-app', run: journeyFreshApp },
@@ -85,9 +84,19 @@ async function main(): Promise<void> {
       }
     }
 
-    // Tarball-free journeys (3, 5, 6).
+    // The diagnostic + context journeys are repo-local. Package-author consumes
+    // the same packed fleet as the application journeys (never a workspace link).
     results.push(await journeyDebugDiagnostic());
-    results.push(await journeyPackageAuthor());
+    if (packed === undefined) {
+      results.push({
+        name: 'journey-package-author',
+        status: 'fail',
+        detail: 'workspace packing unavailable',
+        notes: [`packWorkspace failed: ${packError ?? 'unknown'}`],
+      });
+    } else {
+      results.push(await journeyPackageAuthor(packed));
+    }
     results.push(await journeyColdAgentContext());
   } finally {
     removeDir(packed?.tarballDir);
@@ -98,11 +107,8 @@ async function main(): Promise<void> {
   console.log('');
 
   const failed = results.filter((r) => r.status === 'fail');
-  const gated = results.filter((r) => r.status === 'gated');
   if (!journeysPassed(results)) {
-    console.log(
-      `=== JOURNEY FAILED — ${failed.length} failed, ${gated.length} unverified of ${results.length} journeys ===\n`,
-    );
+    console.log(`=== JOURNEY FAILED — ${failed.length} of ${results.length} journeys failed ===\n`);
     process.exit(1);
   }
   console.log(`=== ALL ${results.length} JOURNEYS GREEN ===\n`);

@@ -185,7 +185,7 @@ describe('blocking check negative controls execute their authorities', () => {
     expect(result.failedStep).not.toBeNull();
   });
 
-  it('journey aggregation refuses failed, gated, and empty evidence', () => {
+  it('journey aggregation refuses failed and unexecuted evidence', () => {
     const result = (status: JourneyResult['status']): JourneyResult => ({
       name: 'planted',
       status,
@@ -193,7 +193,6 @@ describe('blocking check negative controls execute their authorities', () => {
       notes: [],
     });
     expect(journeysPassed([result('fail')])).toBe(false);
-    expect(journeysPassed([result('gated')])).toBe(false);
     expect(journeysPassed([])).toBe(false);
     expect(journeysPassed([result('pass')])).toBe(true);
   });

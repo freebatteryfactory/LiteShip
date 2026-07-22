@@ -11,15 +11,20 @@ RUN corepack enable && corepack prepare pnpm@10.32.1 --activate
 # System deps mirroring CI truth-linux: ffmpeg (with libx264) for the AV pipeline;
 # curl + ca-certificates so rustup can bootstrap below.
 RUN apt-get update \
- && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ffmpeg curl ca-certificates \
+ && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ffmpeg curl ca-certificates sudo \
+ && echo "node ALL=(root) NOPASSWD:ALL" > /etc/sudoers.d/node \
+ && chmod 0440 /etc/sudoers.d/node \
  && rm -rf /var/lib/apt/lists/*
 
-# Rust toolchain for the wasm build (`pnpm run build:wasm`) — mirrors CI's stable pin
-# dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 (toolchain: stable,
-# target wasm32-unknown-unknown). Installed system-wide via rustup.
+# Rust is selected by the repository's actual toolchain source, not by a comment
+# or the floating `stable` channel. The static pin authority parses the same TOML
+# and proves Docker + CI + release use its exact channel and wasm target.
+COPY rust-toolchain.toml /opt/liteship/rust-toolchain.toml
 ENV RUSTUP_HOME=/usr/local/rustup CARGO_HOME=/usr/local/cargo PATH=/usr/local/cargo/bin:$PATH
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
- | sh -s -- -y --profile minimal --default-toolchain stable --target wasm32-unknown-unknown \
+RUN RUST_TOOLCHAIN="$(sed -n 's/^channel = "\([^"]*\)"/\1/p' /opt/liteship/rust-toolchain.toml)" \
+ && test -n "$RUST_TOOLCHAIN" \
+ && curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+ | sh -s -- -y --profile minimal --default-toolchain "$RUST_TOOLCHAIN" --target wasm32-unknown-unknown \
  && chmod -R a+w "$RUSTUP_HOME" "$CARGO_HOME"
 
 # Playwright browsers + system deps are installed by .devcontainer/post-create.sh

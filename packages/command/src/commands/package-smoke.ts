@@ -49,10 +49,9 @@ export const PackageSmokePayloadSchema = {
     /**
      * The three release-hermeticity sub-results — present ONLY under `--hermetic`
      * (absent on a plain package-smoke run, so the default receipt is unchanged).
-     * `hermetic-build` (offline reinstall) and `packed-consumer-closure` are
-     * blocking (either failing forces `ok:false`); `double-build-repro` is advisory
-     * (a per-file-hash "semantic" verdict + a byte-identical "artifact" verdict —
-     * artifact drift is reported, never fails the gate).
+     * `hermetic-build` (offline reinstall), `packed-consumer-closure`, and the
+     * per-file-hash semantic verdict are blocking. The byte-identical artifact
+     * verdict remains advisory because archive-envelope drift is not semantic drift.
      */
     hermetic: {
       type: ['object', 'null'],
@@ -102,11 +101,12 @@ export type PackageSmokePayload = {
    * The three `--hermetic` sub-results — absent unless the run was `--hermetic`.
    * `hermeticBuild` proves the packed consumer reinstalls with the CHILD install's
    * network disabled (warm store + `file://` tarballs); `packedConsumerClosure`
-   * import-smokes EVERY public subpath enumerated from the packages' `exports` maps
-   * (a superset of the hand-listed import roster); `doubleBuildRepro` packs twice
-   * and compares the tarball closures (per-file-hash semantic + byte-identical
-   * artifact — advisory). Inlined (not a separate named export) so the command
-   * package's public type surface is unchanged.
+   * proves EVERY public subpath enumerated from the packages' `exports` maps using
+   * runtime import, TypeScript resolution, or packed host-asset existence;
+   * `doubleBuildRepro` packs twice
+   * and compares the tarball closures (per-file-hash semantic is blocking;
+   * byte-identical artifact is advisory). Inlined (not a separate named export)
+   * so the command package's public type surface is unchanged.
    */
   readonly hermetic?: {
     readonly hermeticBuild: {

@@ -259,34 +259,21 @@ function runOffline(command: string, args: readonly string[], cwd: string): stri
   }).trim();
 }
 
-/**
- * Resolve one `exports` condition-value to the runtime target Node would `import()`.
- * Only the `import` (dist) condition counts — a subpath exposing `types`/
- * `development` but no `import` (e.g. `@liteship/vite/virtual`, the `@liteship/_spine`
- * type-only stub) is NOT runtime-importable and yields `null`, as does an
- * explicitly blocked (`null`) subpath. A string-form export (an `.astro` file
- * subpath) is returned verbatim so the caller can exclude it by extension.
- */
-function resolveImportTarget(condition: unknown): string | null {
-  if (condition === null || condition === undefined) return null;
-  if (typeof condition === 'string') return condition;
-  if (typeof condition === 'object') {
-    const value = (condition as Record<string, unknown>)['import'];
-    return typeof value === 'string' ? value : null;
-  }
-  return null;
+interface PublicSubpath {
+  readonly packageName: string;
+  readonly specifier: string;
+  readonly runtimeTarget: string | null;
+  readonly typesTarget: string | null;
+  readonly assetTarget: string | null;
 }
 
 /**
- * Enumerate EVERY public, ESM-`import()`-able subpath across all {@link PACKAGES},
- * read from each package's `exports` map — the packed-consumer closure the
- * hand-listed `imports` roster only samples. Excludes `.astro` file subpaths (not
- * ESM modules) and type-only / blocked entries (no `import` condition); dedupes.
- * There is no shared enumerator to reuse (the roster is hand-authored data and the
- * facade test's reader is `.` -only), so this is the sole owner.
+ * Enumerate EVERY non-null public subpath across all export maps and classify how
+ * a packed consumer must prove it: runtime import, TypeScript resolution, or
+ * host asset existence (`.astro`). A types-only entry remains part of the closure.
  */
-function enumeratePublicSubpaths(root: string): readonly string[] {
-  const specifiers: string[] = [];
+function enumeratePublicSubpaths(root: string): readonly PublicSubpath[] {
+  const entries: PublicSubpath[] = [];
   for (const pkg of PACKAGES) {
     const manifest = JSON.parse(readFileSync(join(root, pkg.dir, 'package.json'), 'utf8')) as {
       exports?: Record<string, unknown> | string;
@@ -294,16 +281,38 @@ function enumeratePublicSubpaths(root: string): readonly string[] {
     const exportsMap = manifest.exports;
     if (exportsMap === undefined) continue;
     if (typeof exportsMap === 'string') {
-      specifiers.push(pkg.name);
+      entries.push({
+        packageName: pkg.name,
+        specifier: pkg.name,
+        runtimeTarget: exportsMap.endsWith('.astro') ? null : exportsMap,
+        typesTarget: null,
+        assetTarget: exportsMap.endsWith('.astro') ? exportsMap : null,
+      });
       continue;
     }
     for (const [subpath, condition] of Object.entries(exportsMap)) {
-      const target = resolveImportTarget(condition);
-      if (target === null || target.endsWith('.astro')) continue;
-      specifiers.push(subpath === '.' ? pkg.name : `${pkg.name}/${subpath.slice(2)}`);
+      if (condition === null || condition === undefined) continue;
+      const specifier = subpath === '.' ? pkg.name : `${pkg.name}/${subpath.slice(2)}`;
+      const conditions = typeof condition === 'string' ? null : (condition as Record<string, unknown>);
+      const target =
+        typeof condition === 'string'
+          ? condition
+          : typeof conditions?.['import'] === 'string'
+            ? conditions['import']
+            : typeof conditions?.['default'] === 'string'
+              ? conditions['default']
+              : null;
+      const typesTarget = conditions !== null && typeof conditions?.['types'] === 'string' ? conditions['types'] : null;
+      entries.push({
+        packageName: pkg.name,
+        specifier,
+        runtimeTarget: target !== null && !target.endsWith('.astro') ? target : null,
+        typesTarget,
+        assetTarget: target?.endsWith('.astro') === true ? target : null,
+      });
     }
   }
-  return [...new Set(specifiers)];
+  return entries;
 }
 
 /** SHA-256 hex of a file's bytes. */
@@ -351,18 +360,17 @@ type HermeticResult = NonNullable<PackageSmokePayload['hermetic']>;
  * `hermetic-build` — reinstall the packed consumer with the child install's
  * network DISABLED ({@link runOffline}). Must succeed from the warm pnpm store
  * (the online install two steps earlier populated it) + the `file://` tarballs.
- * Blocking WHEN enforced. If offline install is genuinely impossible here and no
- * CI authority (`process.env.CI`) demands enforcement, it degrades to a SKIP with
- * a clear reason rather than a fake pass — CI keeps the teeth, local/sandbox does
- * not block on a store the environment cannot warm. POSIX-only (the Windows smoke
- * path is tar-extract, not `pnpm install`).
+ * Blocking in every authority. An unavailable offline install is absence of the
+ * promised proof, never a green skip. The release/consumer lane runs this on
+ * Linux; an explicit invocation on an unsupported host fails with the reason.
  */
 function runHermeticBuild(scratch: string, tarballByPackage: Map<string, string>): HermeticResult['hermeticBuild'] {
   if (process.platform === 'win32') {
     return {
-      ok: true,
+      ok: false,
       skipped: true,
-      reason: 'hermetic offline reinstall is POSIX-only (the Windows smoke path is tar-extract, not pnpm install)',
+      reason:
+        'hermetic offline reinstall is unavailable on win32; run the release/consumer authority on its supported Linux host',
     };
   }
   const dir = join(scratch, 'consumer-hermetic');
@@ -377,32 +385,41 @@ function runHermeticBuild(scratch: string, tarballByPackage: Map<string, string>
     return { ok: true, skipped: false, reason: null };
   } catch (error) {
     const message = firstLine(error instanceof Error ? error.message : String(error));
-    if (process.env['CI']) {
-      process.stderr.write(`[package:smoke] hermetic-build FAILED (CI-enforced) — ${message}\n`);
-      return { ok: false, skipped: false, reason: message };
-    }
-    const reason =
-      `offline install unavailable in this environment; hermetic-build SKIPPED ` +
-      `(advisory outside CI — set CI=1 to enforce as blocking). Underlying: ${message}`;
-    process.stderr.write(`[package:smoke] ! hermetic-build SKIPPED (non-CI authority) — ${message}\n`);
-    return { ok: true, skipped: true, reason };
+    process.stderr.write(`[package:smoke] hermetic-build FAILED — ${message}\n`);
+    return { ok: false, skipped: false, reason: message };
   }
 }
 
 /**
- * `packed-consumer-closure` — import EVERY public subpath enumerated from the
- * packages' `exports` maps ({@link enumeratePublicSubpaths}) from the already
- * -installed consumer, a strict superset of the hand-listed import roster.
- * Blocking. Runs a generated `closure.mjs` that reports the first failing
- * specifier (over stdout) so the verdict names exactly what did not resolve.
+ * `packed-consumer-closure` — prove EVERY public subpath enumerated from the
+ * packages' exports maps. Runtime/default entries are imported, types entries
+ * resolve through TypeScript's bundler resolver, and host assets exist in the
+ * physical packed package. Blocking; the first failing specifier is named.
  */
 function runPackedConsumerClosure(root: string, consumerDir: string): HermeticResult['packedConsumerClosure'] {
-  const specifiers = enumeratePublicSubpaths(root);
+  const subpaths = enumeratePublicSubpaths(root);
+  const runtimeSpecifiers = subpaths.filter((entry) => entry.runtimeTarget !== null).map((entry) => entry.specifier);
+  const typeSpecifiers = subpaths.filter((entry) => entry.typesTarget !== null).map((entry) => entry.specifier);
   process.stderr.write(
-    `[package:smoke] > packed-consumer-closure: import ${specifiers.length} enumerated public subpaths\n`,
+    `[package:smoke] > packed-consumer-closure: prove ${subpaths.length} enumerated public subpaths ` +
+      `(${runtimeSpecifiers.length} runtime, ${typeSpecifiers.length} typed)\n`,
   );
+
+  for (const entry of subpaths) {
+    if (entry.assetTarget === null) continue;
+    const packageRoot = findConsumerDependencyRoot(consumerDir, entry.packageName);
+    const target = packageRoot === undefined ? null : resolve(packageRoot, entry.assetTarget);
+    if (target === null || !existsSync(target)) {
+      return {
+        ok: false,
+        subpathCount: subpaths.length,
+        failure: `packed host asset missing for ${entry.specifier}: ${entry.assetTarget}`,
+      };
+    }
+  }
+
   const closureModule = `
-const imports = ${JSON.stringify(specifiers, null, 2)};
+const imports = ${JSON.stringify(runtimeSpecifiers, null, 2)};
 for (const specifier of imports) {
   try {
     const mod = await import(specifier);
@@ -424,15 +441,40 @@ process.stdout.write('OK ' + imports.length);
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'inherit'],
     });
-    process.stderr.write(`[package:smoke] ok packed-consumer-closure: all ${specifiers.length} subpaths imported\n`);
-    return { ok: true, subpathCount: specifiers.length, failure: null };
+    const typeClosure = `
+const tsModule = await import('typescript');
+const ts = tsModule.default ?? tsModule;
+const containingFile = new URL('./closure-probe.ts', import.meta.url).pathname;
+const options = {
+  module: ts.ModuleKind.ESNext,
+  moduleResolution: ts.ModuleResolutionKind.Bundler,
+  target: ts.ScriptTarget.ES2022,
+  types: [],
+};
+const host = ts.createCompilerHost(options);
+for (const specifier of ${JSON.stringify(typeSpecifiers, null, 2)}) {
+  const resolved = ts.resolveModuleName(specifier, containingFile, options, host).resolvedModule;
+  if (!resolved) {
+    process.stdout.write(specifier + '\\t' + 'TypeScript could not resolve its public types condition');
+    process.exit(1);
+  }
+}
+`;
+    writeFileSync(join(consumerDir, 'closure-types.mjs'), typeClosure);
+    execFileSync(process.execPath, ['closure-types.mjs'], {
+      cwd: consumerDir,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'inherit'],
+    });
+    process.stderr.write(`[package:smoke] ok packed-consumer-closure: all ${subpaths.length} public subpaths proved\n`);
+    return { ok: true, subpathCount: subpaths.length, failure: null };
   } catch (error) {
     const out = String((error as { stdout?: unknown }).stdout ?? '');
     const [spec, ...rest] = out.split('\t');
     const failure = out
       ? `closure import failed at ${spec}: ${firstLine(rest.join('\t'))}`
       : firstLine(error instanceof Error ? error.message : String(error));
-    return { ok: false, subpathCount: specifiers.length, failure };
+    return { ok: false, subpathCount: subpaths.length, failure };
   }
 }
 
@@ -440,10 +482,11 @@ process.stdout.write('OK ' + imports.length);
  * `double-build-repro` — pack every scope a SECOND time and compare against the
  * first pack. Reports two verdicts to `benchmarks/reproducibility-report.json`:
  * a per-file-hash "semantic" repro (do the packed file CONTENTS match) and a
- * byte-identical "artifact" repro (do the `.tgz` bytes match). ADVISORY: the diff
- * is reported, never fails the gate (gzip envelopes routinely differ). The report
- * file is gitignored — written, never committed. Fully defensive: any failure to
- * re-pack/compare degrades to a non-reproducible advisory, never throws.
+ * byte-identical "artifact" repro (do the `.tgz` bytes match). Semantic drift is
+ * blocking because it means the same source produced different packed contents;
+ * artifact drift remains advisory because gzip envelopes may differ. The report
+ * file is gitignored — written, never committed. Any failure to re-pack or compare
+ * yields a non-reproducible semantic verdict, which the caller treats as blocking.
  */
 async function runDoubleBuildRepro(args: {
   root: string;
@@ -453,7 +496,9 @@ async function runDoubleBuildRepro(args: {
 }): Promise<HermeticResult['doubleBuildRepro']> {
   const { root, scratch, tarballByPackage, generatedAt } = args;
   const reportRelative = 'benchmarks/reproducibility-report.json';
-  process.stderr.write('[package:smoke] > double-build-repro: pack twice and compare tarball closures (advisory)\n');
+  process.stderr.write(
+    '[package:smoke] > double-build-repro: compare semantic package contents (blocking) and tarball bytes (advisory)\n',
+  );
   try {
     const secondDir = join(scratch, 'tarballs-2');
     await mkdir(secondDir, { recursive: true });
@@ -495,12 +540,12 @@ async function runDoubleBuildRepro(args: {
     await mkdir(benchmarksDir, { recursive: true });
     await writeFile(join(benchmarksDir, 'reproducibility-report.json'), `${JSON.stringify(report, null, 2)}\n`);
     process.stderr.write(
-      `[package:smoke] ok double-build-repro (advisory): semantic=${semanticAll} artifact=${artifactAll} -> ${reportRelative}\n`,
+      `[package:smoke] ok double-build-repro: semantic=${semanticAll} (blocking) artifact=${artifactAll} (advisory) -> ${reportRelative}\n`,
     );
     return { semanticRepro: semanticAll, artifactRepro: artifactAll, reportPath: reportRelative };
   } catch (error) {
     process.stderr.write(
-      `[package:smoke] ! double-build-repro could not complete (advisory) — ${firstLine(error instanceof Error ? error.message : String(error))}\n`,
+      `[package:smoke] ! double-build-repro could not establish semantic reproducibility — ${firstLine(error instanceof Error ? error.message : String(error))}\n`,
     );
     return { semanticRepro: false, artifactRepro: false, reportPath: reportRelative };
   }
@@ -509,9 +554,9 @@ async function runDoubleBuildRepro(args: {
 /**
  * Run the three `--hermetic` sub-results over an already-packed, already-installed
  * consumer: the offline reinstall, the enumerated packed-consumer closure, and the
- * advisory double-build reproducibility report. Never throws — each sub-runner
- * captures its own failure — so the caller decides the blocking verdict from the
- * returned sub-results.
+ * double-build reproducibility report. Never throws — each sub-runner captures its
+ * own failure — so the caller can block on semantic reproducibility while retaining
+ * byte-identical artifact reproducibility as advisory evidence.
  */
 async function runHermeticChecks(args: {
   root: string;
@@ -540,9 +585,10 @@ type PackageSmokeScanResult = PackageSmokeSummary & { readonly hermetic?: Hermet
  *
  * Under `opts.hermetic` it appends the three release-hermeticity sub-results
  * ({@link runHermeticChecks}) after the base smoke passes: `hermetic-build` +
- * `packed-consumer-closure` are blocking (either failing forces `ok:false`);
- * `double-build-repro` is advisory. `opts.generatedAt` seeds the repro report's
- * timestamp (a passed-in stamp keeps the receipt's time source at the adapter).
+ * `packed-consumer-closure` and `double-build-repro.semanticRepro` are blocking;
+ * only byte-identical `double-build-repro.artifactRepro` remains advisory.
+ * `opts.generatedAt` seeds the repro report's timestamp (a passed-in stamp keeps
+ * the receipt's time source at the adapter).
  */
 export async function runPackageSmokeScan(
   root: string,
@@ -709,13 +755,16 @@ for (const specifier of imports) {
       });
       const { hermeticBuild, packedConsumerClosure, doubleBuildRepro } = hermetic;
 
-      // Blocking: hermetic-build OR packed-consumer-closure. double-build-repro is
-      // advisory (its verdict rides the receipt but never fails the gate).
-      if (!hermeticBuild.ok || !packedConsumerClosure.ok) {
+      // Offline reinstall, public-subpath closure, and semantic package-content
+      // reproducibility are release authorities. Byte-identical `.tgz` output is
+      // retained as advisory evidence because archive envelopes may vary.
+      if (!hermeticBuild.ok || !packedConsumerClosure.ok || !doubleBuildRepro.semanticRepro) {
         const parts: string[] = [];
         if (!hermeticBuild.ok) parts.push(`hermetic-build: ${hermeticBuild.reason ?? 'failed'}`);
         if (!packedConsumerClosure.ok)
           parts.push(`packed-consumer-closure: ${packedConsumerClosure.failure ?? 'failed'}`);
+        if (!doubleBuildRepro.semanticRepro)
+          parts.push('double-build-repro: semantic package contents were not reproducible');
         const failure = parts.join(' | ');
         process.stderr.write(`[package:smoke] hermetic gate FAILED — ${failure}\n`);
         return { ok: false, packagesPacked, importsSmoked, failedStep: 'hermetic', failure, hermetic };

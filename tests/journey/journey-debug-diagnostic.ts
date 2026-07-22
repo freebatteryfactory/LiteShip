@@ -5,18 +5,14 @@
  *
  * The misconfig is a bare `throw new Error(...)` under a scratch package-source
  * tree — the exact shape the `gauntlet/no-bare-throw` gate governs. Running the
- * IN-PROCESS gauntlet gate fold (`liteship check --json`, `process.cwd()`-scoped to
+ * IN-PROCESS gauntlet gate fold (`liteship check gates --json`, `process.cwd()`-scoped to
  * the scratch tree) surfaces a Finding whose `ruleId` is the stable
  * `gauntlet/no-bare-throw` code; `liteship explain gauntlet/no-bare-throw` then
  * resolves it to a non-empty {@link ExplainDiagnostic.remediation}.
  *
- * DEVIATION (honest, load-bearing): the design named `check --profile quick --json`.
- * That surface is the profile SWEEP — it SPAWNS each registry check's root-script as
- * a subprocess and emits a `CheckReport` of pass/fail verdicts, NOT diagnostic codes
- * an agent can `explain`. The load-bearing assertion ("a STABLE diagnostic code →
- * explain → remediation") is exactly what the lean gauntlet gate FOLD emits, so this
- * journey drives that surface — the one that turns a planted misconfig into a
- * resolvable code — via the same `packages/cli/src/bin.ts` entrypoint.
+ * The profile sweep (`liteship check`) emits registry verdicts; the explicit
+ * `check gates` subcommand emits explainable Findings. Keeping those operations
+ * explicit prevents the default quick command from silently changing meaning.
  *
  * @module
  */
@@ -47,7 +43,7 @@ export async function journeyDebugDiagnostic(): Promise<JourneyResult> {
     writeFileSync(join(srcDir, 'bad.ts'), MISCONFIG_SOURCE);
 
     // Run the in-process gauntlet gate fold, cwd-scoped to the planted tree.
-    const check = await runLiteshipCli(['check', '--json'], scratch);
+    const check = await runLiteshipCli(['check', 'gates', '--json'], scratch);
     journeyAssert(
       check.code === 1,
       `expected a blocked check (exit 1) over the planted misconfig, got exit ${check.code}\n${check.stderr.slice(-600)}`,
@@ -79,9 +75,7 @@ export async function journeyDebugDiagnostic(): Promise<JourneyResult> {
       name,
       status: 'pass',
       detail: `planted misconfig → check surfaced stable code ${EXPECTED_CODE} → explain returned remediation ("${(remediation as string).slice(0, 60)}…")`,
-      notes: [
-        'used the lean gauntlet gate FOLD (`check --json`) — the surface that emits explain-resolvable diagnostic codes — not the `--profile quick` subprocess sweep (which emits pass/fail verdicts, not codes)',
-      ],
+      notes: ['used the explicit `check gates --json` Finding surface, then resolved its stable code'],
     };
   } catch (error) {
     return { name, status: 'fail', detail: error instanceof Error ? error.message : String(error), notes: [] };

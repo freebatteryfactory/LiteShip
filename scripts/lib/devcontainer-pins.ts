@@ -3,10 +3,12 @@ export interface DevcontainerPinInputs {
   readonly packageManager: string;
   readonly nodeEngine: string;
   readonly nvmrc: string;
+  readonly rustToolchain: string;
   readonly dockerfile: string;
   readonly devcontainerJson: string;
   readonly postCreate: string;
   readonly ciWorkflow: string;
+  readonly releaseWorkflow: string;
 }
 
 /** Return every pin-law violation. Empty is the blocking check's green verdict. */
@@ -37,10 +39,37 @@ export function validateDevcontainerPins(input: DevcontainerPinInputs): readonly
     if (!input.postCreate.includes(`pnpm@${pnpmVersion}`))
       failures.push('post-create pnpm pin must match package.json');
   }
-  const rustSha = /dtolnay\/rust-toolchain@([0-9a-f]{40})/.exec(input.ciWorkflow)?.[1];
-  if (!rustSha) failures.push('CI must carry a SHA-pinned Rust toolchain action');
-  if (/rust|rustup|cargo|dtolnay/i.test(input.dockerfile) && rustSha && !input.dockerfile.includes(rustSha)) {
-    failures.push('Rust-installing Dockerfile must reference the repository Rust toolchain pin');
+  const rustChannel = /^channel\s*=\s*"(\d+\.\d+\.\d+)"\s*$/m.exec(input.rustToolchain)?.[1];
+  if (!rustChannel) failures.push('rust-toolchain.toml must pin an exact X.Y.Z channel');
+  if (!/^profile\s*=\s*"minimal"\s*$/m.test(input.rustToolchain)) {
+    failures.push('rust-toolchain.toml must select the minimal profile');
+  }
+  if (!/^targets\s*=\s*\[[^\]]*"wasm32-unknown-unknown"[^\]]*\]\s*$/m.test(input.rustToolchain)) {
+    failures.push('rust-toolchain.toml must own the wasm32-unknown-unknown target');
+  }
+
+  if (!input.dockerfile.includes('COPY rust-toolchain.toml /opt/liteship/rust-toolchain.toml')) {
+    failures.push('Dockerfile must COPY the repository rust-toolchain.toml');
+  }
+  if (
+    !input.dockerfile.includes('RUST_TOOLCHAIN="$(sed') ||
+    !input.dockerfile.includes('--default-toolchain "$RUST_TOOLCHAIN"') ||
+    /--default-toolchain\s+stable\b/.test(input.dockerfile)
+  ) {
+    failures.push('Dockerfile must install the exact channel read from rust-toolchain.toml');
+  }
+
+  for (const [name, workflow] of [
+    ['CI', input.ciWorkflow],
+    ['release', input.releaseWorkflow],
+  ] as const) {
+    if (!/dtolnay\/rust-toolchain@[0-9a-f]{40}/.test(workflow)) {
+      failures.push(`${name} must carry a SHA-pinned Rust toolchain action`);
+    }
+    const declared = [...workflow.matchAll(/^\s*toolchain:\s*([^\s#]+)\s*$/gm)].map((match) => match[1]);
+    if (rustChannel && (declared.length === 0 || declared.some((channel) => channel !== rustChannel))) {
+      failures.push(`${name} Rust action toolchain must equal rust-toolchain.toml (${rustChannel})`);
+    }
   }
   return failures;
 }

@@ -5,12 +5,11 @@
  * artifacts and a REAL headless host build — never a mock. The seven journeys
  * (fresh-app, add-feature, debug-diagnostic, upgrade, package-author,
  * cold-agent-context, installed-add) each return a {@link JourneyResult}; the `scripts/test-journey.ts`
- * orchestrator packs the workspace ONCE, runs them, prints a PASS/FAIL/GATE line
- * per journey, and exits 0 only when every authoritative journey passed. A GATE
- * is explicit evidence that a claim was not executed, so the CI authority treats
- * it as non-green rather than laundering absence into success.
+ * orchestrator packs the workspace ONCE, runs them, prints a PASS/FAIL line per
+ * journey, and exits 0 only when every authoritative journey passed. An
+ * unavailable proof is a failure; this authority has no gated-green state.
  *
- * This module owns the machinery the tarball-consuming journeys (1, 2, 4, 7) share:
+ * This module owns the machinery the tarball-consuming journeys (1, 2, 4, 5, 7) share:
  * packing every publishable scope in-workspace (REUSING `tests/support/pack.ts`),
  * scaffolding the `create-liteship` starter, rewriting its manifest to
  * `file://…tgz` deps + a `pnpm.overrides` map (MIRRORING
@@ -18,14 +17,14 @@
  * headless `astro build` + `data-liteship-*` HTML assertion (the
  * `tests/integration/astro/test.ts` pattern).
  *
- * SANDBOX HONESTY: a sub-step that genuinely cannot run in this sandbox is
- * ENV-GATED with a clear reason, never faked. The authoritative journey runner
- * treats that state as non-green: unavailable proof is not passing proof.
+ * SANDBOX HONESTY: these are cloud release authorities. A sub-step that cannot
+ * run in an environment fails with its exact reason; callers do not relabel the
+ * missing execution as evidence.
  *
  * @module
  */
 
-import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -39,8 +38,11 @@ import { runPnpm, type PnpmRunResult } from '../../scripts/support/pnpm-process.
 /** Absolute repo root (this file lives at `<root>/tests/journey/harness.ts`). */
 export const REPO_ROOT = resolve(fileURLToPath(import.meta.url), '..', '..', '..');
 
-/** The verdict of one journey. `gated` means explicitly unverified and is non-green in CI authority. */
-export type JourneyStatus = 'pass' | 'fail' | 'gated';
+/** Frozen pre-operation control used by the upgrade journey. */
+export const PRIOR_OPERATION_BASE = '2141ec25fdd4c37882d68c8daba5f870499eac36';
+
+/** The fail-closed verdict of one authoritative journey. */
+export type JourneyStatus = 'pass' | 'fail';
 
 /** The structured outcome one journey reports to the orchestrator. */
 export interface JourneyResult {
@@ -48,23 +50,31 @@ export interface JourneyResult {
   readonly name: string;
   /** Its verdict. */
   readonly status: JourneyStatus;
-  /** A one-line human summary of what was proven (or why it failed / gated). */
+  /** A one-line human summary of what was proven or why it failed. */
   readonly detail: string;
-  /** Any env-gate reasons or sub-step notes surfaced alongside the verdict. */
+  /** Sub-step notes surfaced alongside the verdict. */
   readonly notes: readonly string[];
 }
 
-/** Authoritative journey verdict: unexecuted (`gated`) is never green evidence. */
+/** Authoritative journey verdict: every declared journey executed and passed. */
 export function journeysPassed(results: readonly JourneyResult[]): boolean {
   return results.length > 0 && results.every((result) => result.status === 'pass');
 }
 
-/** The packed-workspace context the tarball-consuming journeys (1, 2, 4) share. */
+/** The packed-workspace context the tarball-consuming journeys (1, 2, 4, 5, 7) share. */
 export interface PackedWorkspace {
   /** The scratch directory holding every `.tgz`. */
   readonly tarballDir: string;
   /** Publishable package name → its packed tarball path. */
   readonly tarballByName: ReadonlyMap<string, string>;
+}
+
+/** A genuinely distinct packed workspace exported from {@link PRIOR_OPERATION_BASE}. */
+export interface PriorPackedWorkspace extends PackedWorkspace {
+  /** Scratch root containing the archive and extracted historical checkout. */
+  readonly rootDir: string;
+  /** Extracted historical workspace whose packages produced the tarballs. */
+  readonly workspaceDir: string;
 }
 
 /** A journey throws this to signal a genuine assertion failure (distinct from an env-gate). */
@@ -105,10 +115,107 @@ export async function packWorkspace(): Promise<PackedWorkspace> {
   return { tarballDir, tarballByName };
 }
 
+/**
+ * Export, build, and pack the exact pre-operation control commit.
+ *
+ * The current checkout is never reset or mutated. `git archive` materializes the
+ * historical source in a scratch directory, that source performs its own frozen
+ * install + build, and every publishable package is packed from inside that
+ * historical workspace. This is intentionally expensive and belongs only to the
+ * cloud consumer-journey authority.
+ */
+export async function packPriorOperationBase(): Promise<PriorPackedWorkspace> {
+  const rootDir = mkdtempSync(join(tmpdir(), 'liteship-journey-prior-'));
+  const workspaceDir = join(rootDir, 'workspace');
+  const tarballDir = join(rootDir, 'tarballs');
+  const archivePath = join(rootDir, `${PRIOR_OPERATION_BASE}.tar`);
+  mkdirSync(workspaceDir, { recursive: true });
+  mkdirSync(tarballDir, { recursive: true });
+
+  try {
+    const archive = await spawnArgvCapture(
+      'git',
+      ['archive', '--format=tar', '--output', archivePath, PRIOR_OPERATION_BASE],
+      { cwd: REPO_ROOT },
+    );
+    journeyAssert(
+      archive.exitCode === 0,
+      `git archive ${PRIOR_OPERATION_BASE} failed (exit ${archive.exitCode}): ${archive.stderr.slice(-800)}`,
+    );
+    const extract = await spawnArgvCapture('tar', ['-xf', archivePath, '-C', workspaceDir], { cwd: REPO_ROOT });
+    journeyAssert(
+      extract.exitCode === 0,
+      `extracting ${PRIOR_OPERATION_BASE} failed (exit ${extract.exitCode}): ${extract.stderr.slice(-800)}`,
+    );
+
+    const install = await runPnpm(['install', '--frozen-lockfile', '--prefer-offline'], {
+      cwd: workspaceDir,
+      env: { FORCE_COLOR: '0' },
+    });
+    journeyAssert(
+      install.code === 0,
+      `prior-control install failed (exit ${install.code}):\n${(install.stdout + install.stderr).slice(-1200)}`,
+    );
+    const build = await runPnpm(['run', 'build'], { cwd: workspaceDir, env: { FORCE_COLOR: '0' } });
+    journeyAssert(
+      build.code === 0,
+      `prior-control build failed (exit ${build.code}):\n${(build.stdout + build.stderr).slice(-1200)}`,
+    );
+
+    const tarballByName = new Map<string, string>();
+    for (const pkg of PACKAGES) {
+      const packageDir = resolve(workspaceDir, pkg.dir);
+      const manifest = JSON.parse(readFileSync(join(packageDir, 'package.json'), 'utf8')) as { name?: string };
+      journeyAssert(typeof manifest.name === 'string', `${pkg.dir} at ${PRIOR_OPERATION_BASE} has no package name`);
+      const tgz = await packInWorkspace(packageDir, tarballDir, { ignoreScripts: true });
+      tarballByName.set(manifest.name!, tgz);
+    }
+    journeyAssert(
+      tarballByName.size === PACKAGES.length,
+      `prior-control pack produced ${tarballByName.size} uniquely named tarballs, expected ${PACKAGES.length}`,
+    );
+    return { rootDir, workspaceDir, tarballDir, tarballByName };
+  } catch (error) {
+    removeDir(rootDir);
+    throw error;
+  }
+}
+
 /** Scaffold the `create-liteship` default starter into a fresh scratch app dir; returns its path. */
 export function scaffoldConsumer(): string {
   const scratch = mkdtempSync(join(tmpdir(), 'liteship-journey-app-'));
   return scaffold('app', { cwd: scratch }).projectDir;
+}
+
+/** Copy the exact historical starter from the extracted pre-operation workspace. */
+export function scaffoldPriorConsumer(prior: PriorPackedWorkspace): string {
+  const scratch = mkdtempSync(join(tmpdir(), 'liteship-journey-prior-app-'));
+  const projectDir = join(scratch, 'app');
+  cpSync(resolve(prior.workspaceDir, 'packages', 'create-liteship', 'templates', 'default'), projectDir, {
+    recursive: true,
+  });
+  const authoredGitignore = join(projectDir, 'gitignore');
+  if (existsSync(authoredGitignore)) {
+    writeFileSync(join(projectDir, '.gitignore'), readFileSync(authoredGitignore));
+    rmSync(authoredGitignore);
+  }
+  return projectDir;
+}
+
+/**
+ * Apply the current official scaffold as the explicit pre-1.0 source migration
+ * over an existing prior consumer while preserving its installed dependency tree.
+ */
+export function applyCurrentScaffoldMigration(appDir: string): void {
+  const current = scaffoldConsumer();
+  try {
+    rmSync(join(appDir, 'src'), { recursive: true, force: true });
+    for (const entry of readdirSync(current)) {
+      cpSync(join(current, entry), join(appDir, entry), { recursive: true, force: true });
+    }
+  } finally {
+    removeDir(join(current, '..'));
+  }
 }
 
 /** Options for {@link rewriteConsumerToTarballs}. */
@@ -152,14 +259,58 @@ export function rewriteConsumerToTarballs(appDir: string, packed: PackedWorkspac
   writeFileSync(join(appDir, '.npmrc'), ['node-linker=hoisted', 'public-hoist-pattern[]=*', ''].join('\n'));
 }
 
+/** Wire the historical starter to the genuinely historical `@czap/*` tarballs. */
+export function rewritePriorConsumerToTarballs(appDir: string, prior: PriorPackedWorkspace): void {
+  const overrides = Object.fromEntries([...prior.tarballByName].map(([name, tgz]) => [name, tarballFileUrl(tgz)]));
+  const core = prior.tarballByName.get('@czap/core');
+  const astro = prior.tarballByName.get('@czap/astro');
+  journeyAssert(
+    core !== undefined && astro !== undefined,
+    'prior-control tarballs are missing @czap/core or @czap/astro',
+  );
+
+  const manifestPath = join(appDir, 'package.json');
+  const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as Record<string, unknown>;
+  manifest['dependencies'] = {
+    '@czap/core': tarballFileUrl(core!),
+    '@czap/astro': tarballFileUrl(astro!),
+    astro: peerVersion('astro'),
+    typescript: peerVersion('typescript'),
+  };
+  manifest['pnpm'] = { overrides };
+  writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+  writeFileSync(join(appDir, '.npmrc'), ['node-linker=hoisted', 'public-hoist-pattern[]=*', ''].join('\n'));
+}
+
+/** Write a minimal packed package-author manifest using the current tarballs only. */
+export function writePackedAuthorManifest(appDir: string, packed: PackedWorkspace): void {
+  const overrides = Object.fromEntries([...packed.tarballByName].map(([name, tgz]) => [name, tarballFileUrl(tgz)]));
+  const liteship = packed.tarballByName.get('liteship');
+  journeyAssert(liteship !== undefined, 'packed workspace is missing the liteship facade tarball');
+  writeFileSync(
+    join(appDir, 'package.json'),
+    `${JSON.stringify(
+      {
+        name: 'liteship-package-author-consumer',
+        private: true,
+        type: 'module',
+        dependencies: { liteship: tarballFileUrl(liteship!), typescript: peerVersion('typescript') },
+        pnpm: { overrides },
+      },
+      null,
+      2,
+    )}\n`,
+  );
+  writeFileSync(join(appDir, '.npmrc'), ['node-linker=hoisted', 'public-hoist-pattern[]=*', ''].join('\n'));
+}
+
 /**
  * Install the consumer with `--prefer-offline` — the warm store (seeded by the
  * workspace install) satisfies the bulk; the file:// tarballs need no network; only
  * the handful of transitively-drifted external versions the store lacks are fetched.
  * A pure `--offline` run store-misses on those drifted versions (a fresh consumer
  * re-resolves ranges the workspace lockfile pinned differently), so `--prefer-offline`
- * is the design-sanctioned choice. When even that cannot reach a registry the caller
- * env-gates via {@link isOfflineOrNetworkError}.
+ * is the design-sanctioned install phase. Failure remains a failing journey.
  */
 export async function installConsumer(appDir: string): Promise<PnpmRunResult> {
   return runPnpm(['install', '--prefer-offline'], { cwd: appDir, env: { FORCE_COLOR: '0' } });
@@ -168,13 +319,6 @@ export async function installConsumer(appDir: string): Promise<PnpmRunResult> {
 /** Run a headless `astro build` in the consumer app (the `tests/integration/astro/test.ts` pattern). */
 export async function astroBuild(appDir: string): Promise<PnpmRunResult> {
   return runPnpm(['exec', 'astro', 'build'], { cwd: appDir, env: { FORCE_COLOR: '0' } });
-}
-
-/** True when a pnpm failure is a store-miss with no reachable registry (an env-gate, not a bug). */
-export function isOfflineOrNetworkError(text: string): boolean {
-  return /ERR_PNPM_NO_OFFLINE|ENOTFOUND|ECONNREFUSED|ETIMEDOUT|EAI_AGAIN|registry\.npmjs\.org|network|ERR_PNPM_META_FETCH_FAIL|getaddrinfo/i.test(
-    text,
-  );
 }
 
 /** Recursively collect every file under `dir` whose name ends with `ext`. */
@@ -240,6 +384,15 @@ export async function runInstalledLiteshipCli(
   cwd: string,
 ): Promise<{ readonly code: number; readonly stdout: string; readonly stderr: string }> {
   return runPnpm(['exec', 'liteship', ...args], { cwd, env: { FORCE_COLOR: '0' } });
+}
+
+/** Run Node inside an installed consumer, resolving imports only from that consumer. */
+export async function runInstalledNode(
+  args: readonly string[],
+  cwd: string,
+): Promise<{ readonly code: number; readonly stdout: string; readonly stderr: string }> {
+  const result = await spawnArgvCapture(process.execPath, args, { cwd });
+  return { code: result.exitCode, stdout: result.stdout, stderr: result.stderr };
 }
 
 /** Parse the last JSON object emitted on a CLI receipt stdout stream (tolerant of leading log lines). */
