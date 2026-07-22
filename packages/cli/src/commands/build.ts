@@ -29,6 +29,60 @@ export interface BuildReceipt {
   readonly exitCode: number;
 }
 
+type BuildSpawn = typeof spawnArgvVisible;
+type BuildCommand = (opts?: { readonly cwd?: string }) => Promise<number>;
+
+/**
+ * Bind the one outbound build capability to the command logic.
+ *
+ * This factory is intentionally absent from `@liteship/cli`'s public package
+ * entrypoint. Production binds the canonical visible spawn below; in-process
+ * command tests bind a scripted host boundary so they execute every decision
+ * and receipt branch without mocking an internal module or launching a real
+ * framework build.
+ *
+ * @internal
+ */
+export function createBuildCommand(spawn: BuildSpawn = spawnArgvVisible): BuildCommand {
+  return async (opts = {}) => {
+    const cwd = opts.cwd ?? process.cwd();
+
+    if (!existsSync(resolve(cwd, 'liteship.config.ts'))) {
+      emitError(
+        'build',
+        'no liteship.config.ts in the current directory — `liteship build` runs a consumer app build',
+        'Run it from a LiteShip app directory, or scaffold one: npm create liteship',
+      );
+      return 1;
+    }
+
+    const host = detectHost(cwd);
+    if (host === null) {
+      emitError(
+        'build',
+        'found liteship.config.ts but no host build config (astro.config.* / vite.config.*) beside it',
+        'Add your host framework config, then re-run `liteship build`',
+      );
+      return 1;
+    }
+
+    const buildArgs = host === 'astro' ? ['exec', 'astro', 'build'] : ['exec', 'vite', 'build'];
+    const result = await spawn('pnpm', buildArgs, { cwd });
+
+    const receipt: BuildReceipt = {
+      status: result.exitCode === 0 ? 'ok' : 'failed',
+      command: 'build',
+      timestamp: new Date(wallClock.now()).toISOString(),
+      host,
+      exitCode: result.exitCode,
+    };
+    emit(receipt);
+    return result.exitCode;
+  };
+}
+
+const runBuild = createBuildCommand();
+
 /**
  * Execute `liteship build`. Detects `liteship.config.ts` + the host backend in
  * `cwd`, runs the host build (`astro build` / `vite build`), and emits a JSON
@@ -36,37 +90,5 @@ export interface BuildReceipt {
  * consumer app or no recognizable host; otherwise the build's own nonzero exit.
  */
 export async function build(opts: { cwd?: string } = {}): Promise<number> {
-  const cwd = opts.cwd ?? process.cwd();
-
-  if (!existsSync(resolve(cwd, 'liteship.config.ts'))) {
-    emitError(
-      'build',
-      'no liteship.config.ts in the current directory — `liteship build` runs a consumer app build',
-      'Run it from a LiteShip app directory, or scaffold one: npm create liteship',
-    );
-    return 1;
-  }
-
-  const host = detectHost(cwd);
-  if (host === null) {
-    emitError(
-      'build',
-      'found liteship.config.ts but no host build config (astro.config.* / vite.config.*) beside it',
-      'Add your host framework config, then re-run `liteship build`',
-    );
-    return 1;
-  }
-
-  const buildArgs = host === 'astro' ? ['exec', 'astro', 'build'] : ['exec', 'vite', 'build'];
-  const result = await spawnArgvVisible('pnpm', buildArgs, { cwd });
-
-  const receipt: BuildReceipt = {
-    status: result.exitCode === 0 ? 'ok' : 'failed',
-    command: 'build',
-    timestamp: new Date(wallClock.now()).toISOString(),
-    host,
-    exitCode: result.exitCode,
-  };
-  emit(receipt);
-  return result.exitCode;
+  return runBuild(opts);
 }

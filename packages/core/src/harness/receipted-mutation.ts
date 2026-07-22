@@ -35,7 +35,7 @@
 
 import type { CapsuleDef } from '../authoring/assembly.js';
 import type { HarnessOutput, HarnessContext } from './pure-transform.js';
-import { benchNotApplicableMarker } from './bench-marker.js';
+import { benchNotApplicableMarker } from '../evidence/bench-marker.js';
 
 const DEFAULT_ARBITRARY_IMPORT = '../../packages/core/src/harness/arbitrary-from-schema.js';
 

@@ -99,8 +99,8 @@ export const GENERATOR_SOURCE_FILES: readonly string[] = Object.freeze([
   'packages/core/src/harness/policy-gate.ts',
   'packages/core/src/harness/cached-projection.ts',
   'packages/core/src/harness/scene-composition.ts',
-  'packages/core/src/harness/bench-marker.ts',
-  'packages/core/src/harness/bench-classify.ts',
+  'packages/core/src/evidence/bench-marker.ts',
+  'packages/core/src/evidence/bench-classify.ts',
   'packages/core/src/harness/arbitrary-from-schema.ts',
 ]);
 

@@ -3,18 +3,20 @@
  * registered check `check/journey`).
  *
  * A thin orchestrator (mirroring `scripts/test-astro.ts`): it packs every publishable
- * scope ONCE, runs the six end-to-end consumer journeys, prints a clear PASS / FAIL /
- * GATE line per journey, and exits 0 when all journeys are green (a GATE is a
- * pass-with-note for a sandbox-impossible sub-step) or 1 when any journey FAILS.
+ * scope ONCE, runs the seven end-to-end consumer journeys, prints a clear PASS / FAIL /
+ * GATE line per journey, and exits 0 only when every journey passed. A GATE records
+ * why a claim could not run, but authoritative consumer evidence is fail-closed:
+ * unexecuted is not green.
  *
  * The journeys prove the real consumer experience against REAL packed artifacts and a
  * REAL headless `astro build` — never mocks:
- *   1. journey-fresh-app          scaffold → packed install → build → data-liteship-* HTML
+ *   1. journey-fresh-app          scaffold → packed install → installed CLI build → data-liteship-* HTML
  *   2. journey-add-feature        defineAdaptive hero → rebuild → markup == plan()/explain()
  *   3. journey-debug-diagnostic   plant misconfig → check names a stable code → explain it
  *   4. journey-upgrade            prior-pinned consumer → current packed build → still green
  *   5. journey-package-author     liteship/schema + /evidence typecheck (node16 + bundler)
  *   6. journey-cold-agent-context context pointers all name real files
+ *   7. journey-installed-add      packed installed CLI lists + byte-faithfully copies a fragment
  *
  * This script runs ONLY via `test:journey` — `tests/journey/**` is deliberately kept
  * out of `nodeTestInclude` (vitest.shared.ts), so it never rides `check/test`.
@@ -28,6 +30,7 @@ import { journeyDebugDiagnostic } from '../tests/journey/journey-debug-diagnosti
 import { journeyUpgrade } from '../tests/journey/journey-upgrade.js';
 import { journeyPackageAuthor } from '../tests/journey/journey-package-author.js';
 import { journeyColdAgentContext } from '../tests/journey/journey-cold-agent-context.js';
+import { journeyInstalledAdd } from '../tests/journey/journey-installed-add.js';
 import { packWorkspace, removeDir, type JourneyResult, type PackedWorkspace } from '../tests/journey/harness.js';
 
 /** Print a single aligned result line: `PASS  journey-name  — detail`. */
@@ -55,17 +58,19 @@ async function main(): Promise<void> {
   }
 
   try {
-    // Tarball-consuming journeys (1, 2, 4). If packing failed, gate them with the reason.
+    // Tarball-consuming journeys (1, 2, 4, 7). Packing is part of their claim;
+    // unavailable packing is a failure, not green evidence.
     const tarballJourneys = [
       { id: 'journey-fresh-app', run: journeyFreshApp },
       { id: 'journey-add-feature', run: journeyAddFeature },
       { id: 'journey-upgrade', run: journeyUpgrade },
+      { id: 'journey-installed-add', run: journeyInstalledAdd },
     ] as const;
     for (const { id, run } of tarballJourneys) {
       if (packed === undefined) {
         results.push({
           name: id,
-          status: 'gated',
+          status: 'fail',
           detail: 'workspace packing unavailable',
           notes: [`packWorkspace failed: ${packError ?? 'unknown'}`],
         });
@@ -88,13 +93,13 @@ async function main(): Promise<void> {
 
   const failed = results.filter((r) => r.status === 'fail');
   const gated = results.filter((r) => r.status === 'gated');
-  if (failed.length > 0) {
-    console.log(`=== JOURNEY FAILED — ${failed.length} of ${results.length} journeys red ===\n`);
+  if (failed.length > 0 || gated.length > 0) {
+    console.log(
+      `=== JOURNEY FAILED — ${failed.length} failed, ${gated.length} unverified of ${results.length} journeys ===\n`,
+    );
     process.exit(1);
   }
-  console.log(
-    `=== ALL ${results.length} JOURNEYS GREEN${gated.length > 0 ? ` (${gated.length} env-gated with notes)` : ''} ===\n`,
-  );
+  console.log(`=== ALL ${results.length} JOURNEYS GREEN ===\n`);
 }
 
 main().catch((error) => {

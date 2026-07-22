@@ -19,6 +19,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { INVARIANTS } from '@liteship/command';
 import { captureCli } from '../../../integration/cli/capture.js';
 
 // The adapter folds the scan through its injected `spawn` seam (a defaulted param
@@ -88,6 +89,16 @@ describe('findViolations — banned-pattern scan (real fixture tree)', () => {
       pattern: /bannedToken/,
     };
     expect(findViolations(inv, root)).toEqual([]);
+  });
+
+  it('treats generated CLI fragments as packaged data, while their authored owners remain independently guarded', () => {
+    write(
+      'packages/cli/fragments/template/default/config.ts',
+      'const dep = require("x");\nmodule.exports = dep;\nvar legacy = dep;\nexport default legacy;\n',
+    );
+    for (const invariant of INVARIANTS) {
+      expect(findViolations(invariant, root), invariant.name).toEqual([]);
+    }
   });
 });
 

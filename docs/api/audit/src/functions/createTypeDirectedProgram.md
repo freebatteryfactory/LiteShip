@@ -8,7 +8,7 @@
 
 > **createTypeDirectedProgram**(`files`, `baseUrl?`): [`Program`](https://github.com/microsoft/TypeScript/blob/main/src/compiler/types.ts)
 
-Defined in: [audit/src/ts-program.ts:108](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/ts-program.ts#L108)
+Defined in: [audit/src/ts-program.ts:109](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/ts-program.ts#L109)
 
 Build a type-directed [ts.Program](https://github.com/microsoft/TypeScript/blob/main/src/compiler/types.ts) over `files`, rooted at `baseUrl`
 (default: `process.cwd()`). `createProgram` resolves transitively imported

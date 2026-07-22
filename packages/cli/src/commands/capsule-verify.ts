@@ -5,7 +5,7 @@
  * The pass/fail decision lives in `@liteship/command`; the CLI is the ONLY adapter
  * that wires the heavy `runCapsuleGate` capability: it reads the manifest,
  * existence-checks every generated artifact, classifies bench honesty
- * (via `@liteship/core/harness`), suspects staleness by CONTENT-HASH provenance (the
+ * (via the always-available `@liteship/core/evidence` facade), suspects staleness by CONTENT-HASH provenance (the
  * recorded `sourceDigest`/`generatorVersion` vs the live source/generator digests
  * — deterministic, mtime-independent, replacing the former `sourceAge > testAge`
  * mtime heuristic), confirms suspects are NOT stale by regenerating into a temp
@@ -19,7 +19,7 @@ import { readFileSync, existsSync, mkdtempSync, rmSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { execSync } from 'node:child_process';
-import { classifyBenchSource, benchHonestyError } from '@liteship/core/harness';
+import { classifyBenchSource, benchHonestyError } from '@liteship/core/evidence';
 import {
   capsuleVerifyGateCommand,
   type CapsuleVerifyPayload,

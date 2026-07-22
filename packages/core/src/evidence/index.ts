@@ -52,3 +52,7 @@ export { fnv1a, fnv1aBytes } from './fnv.js';
 export { editDistance, closestMatch } from './closest-match.js';
 
 export { TypedRef } from './typed-ref.js';
+
+export { BENCH_NOT_APPLICABLE_MARKER, BENCH_NOT_APPLICABLE_RE, benchNotApplicableMarker } from './bench-marker.js';
+
+export { classifyBenchSource, benchHonestyError } from './bench-classify.js';

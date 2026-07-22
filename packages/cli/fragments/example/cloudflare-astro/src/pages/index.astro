@@ -1,0 +1,44 @@
+---
+import Base from '../layouts/Base.astro';
+import { adaptiveAttrs } from '@liteship/astro';
+import { ResponsiveMedia } from '@liteship/core';
+import { viewport } from '../boundaries';
+import '../styles.css';
+
+// `Astro.locals.liteship` is typed by the integration (the App.Locals augmentation
+// / injectTypes) — no cast needed; the fields mirror the data-liteship-* attributes.
+const liteship = Astro.locals.liteship;
+const boundaryResolution = liteship?.edge?.boundaries?.viewport;
+const boundaryCssHref = boundaryResolution?.assetUrl ?? liteship?.edge?.assetUrl;
+const boundaryCss = boundaryResolution?.compiledOutputs?.css ?? liteship?.edge?.compiledOutputs?.css;
+
+// Responsive media through the Workers edge host path (#140): `cloudflareMiddleware`
+// wraps `liteshipMiddleware`, so `liteship.responsiveMedia` derives Save-Data / DPR caps from
+// this request's Client Hints and projects through the effective-candidate law — a
+// Save-Data client on the edge is never advertised the heavy hero.
+const hero = ResponsiveMedia.intent({
+  id: 'hero-img',
+  alt: 'Adaptive hero photograph',
+  variants: [
+    { src: '/img/hero-800.svg', width: 800 },
+    { src: '/img/hero-1600.svg', width: 1600 },
+    { src: '/img/hero-2400.svg', width: 2400 },
+  ],
+  saveDataVariant: { src: '/img/hero-lite.svg', width: 400 },
+  sizes: '100vw',
+});
+const media = liteship?.responsiveMedia(hero);
+---
+<Base title="LiteShip Cloudflare Workers" boundaryCssHref={boundaryCssHref} boundaryCss={boundaryCss}>
+  <Fragment slot="head" set:html={media?.preload ?? ''} />
+  <main {...adaptiveAttrs({ boundary: viewport })}>
+    <h1>LiteShip on Cloudflare Workers</h1>
+    <p>Edge tier: {liteship?.tiers.tier ?? 'detecting…'}</p>
+    <p>Boundary id: {viewport.id}</p>
+    <p>KV cache: {liteship?.edge?.cacheStatus ?? 'n/a'}</p>
+    <p>Boundary CSS: {boundaryCssHref ? 'static asset' : 'inline fallback'}</p>
+    <p>Precompiled CSS bytes: {liteship?.edge?.compiledOutputs?.css?.length ?? 0}</p>
+    <p>Responsive src (Save-Data {liteship?.capabilities?.connection?.saveData ? 'ON' : 'off'}): <code>{media?.resolved.src}</code></p>
+    <section set:html={media?.picture ?? ''}></section>
+  </main>
+</Base>

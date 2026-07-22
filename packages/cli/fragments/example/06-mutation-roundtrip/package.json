@@ -1,0 +1,19 @@
+{
+  "name": "@liteship/example-mutation-roundtrip",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@astrojs/node": "^11.0.0",
+    "@liteship/core": "workspace:*",
+    "@liteship/astro": "workspace:*",
+    "@liteship/web": "workspace:*",
+    "astro": "^7.0.0",
+    "typescript": "^5.7.0"
+  }
+}

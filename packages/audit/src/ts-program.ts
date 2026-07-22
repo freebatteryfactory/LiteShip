@@ -37,6 +37,7 @@ export const WORKSPACE_ALIASES: Readonly<Record<string, readonly string[]>> = {
   '@liteship/core/simulation': ['packages/core/src/simulation/index.ts'],
   '@liteship/core/fs-walk': ['packages/core/src/fs-walk.ts'],
   '@liteship/core/authoring': ['packages/core/src/authoring/index.ts'],
+  '@liteship/core/evidence': ['packages/core/src/evidence/index.ts'],
   '@liteship/core': ['packages/core/src/index.ts'],
   '@liteship/quantizer/testing': ['packages/quantizer/src/testing.ts'],
   '@liteship/quantizer': ['packages/quantizer/src/index.ts'],

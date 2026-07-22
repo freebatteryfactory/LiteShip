@@ -35,7 +35,7 @@
 import type { CapsuleDef } from '../authoring/assembly.js';
 import type { HarnessLane } from './scene-composition.js';
 import type { HarnessOutput, HarnessContext } from './pure-transform.js';
-import { benchNotApplicableMarker } from './bench-marker.js';
+import { benchNotApplicableMarker } from '../evidence/bench-marker.js';
 
 /** Inputs presampled from the round-trip arbitrary at module load. */
 const BENCH_SAMPLE_COUNT = 64;

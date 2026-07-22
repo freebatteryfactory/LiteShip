@@ -12,10 +12,10 @@
  *    manifest `benchExemption`) — or a banned lazy placeholder / marker↔manifest
  *    drift?
  *
- * It lives in `@liteship/core/harness` (next to `bench-marker.ts`, whose
- * `BENCH_NOT_APPLICABLE_RE` it consumes) rather than in a loose script, so the
- * capsule-verify gate, its unit test, and its integration test all share one
- * source of "real vs placeholder vs typed-N/A".
+ * Its semantic owner is `@liteship/core/evidence` (next to `bench-marker.ts`,
+ * whose `BENCH_NOT_APPLICABLE_RE` it consumes) rather than the optional
+ * fast-check-backed harness. The harness compatibility facade, capsule-verify
+ * gate, and tests all re-use this one source of "real vs placeholder vs typed-N/A".
  *
  * @module
  */

@@ -1,0 +1,16 @@
+{
+  "name": "@liteship/example-ai-patch-refused",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@liteship/core": "workspace:*",
+    "astro": "^7.0.0",
+    "typescript": "^5.7.0"
+  }
+}

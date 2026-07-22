@@ -1,5 +1,5 @@
 /**
- * bench-marker — the ONE machine-readable convention that distinguishes a
+ * bench-marker — the ONE machine-readable evidence convention that distinguishes a
  * generated bench's disposition, so a gate can tell three states apart WITHOUT
  * guessing from the closure body:
  *

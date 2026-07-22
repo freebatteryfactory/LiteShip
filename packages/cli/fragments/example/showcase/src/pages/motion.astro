@@ -1,0 +1,143 @@
+---
+import Base from '../layouts/Base.astro';
+import { MOTION_PROGRAM, MOTION_CSS, MOTION_SSR_PAINT } from '../server/motion-program';
+
+// Prerender-friendly: the program + native CSS are computed once at build time.
+// The client:motion floor only runs when the browser lacks `animation-timeline`.
+const program = JSON.stringify(MOTION_PROGRAM);
+// First-paint discrete state (reveal starts at `before`; MotionCompiler's base rule
+// paints the offset-0 custom properties so there is no pre-hydration flash).
+const initialState = MOTION_SSR_PAINT.state;
+---
+
+<Base title="liteship showcase -- continuous motion floor">
+  <header class="page-header">
+    <h1>Continuous motion floor</h1>
+    <p>
+      The hero card below is driven by ONE authored <code>Reveal.intent</code>. A modern
+      browser scrubs it with native <code>animation-timeline: scroll()</code> — zero JS.
+      Everywhere that is unsupported, <code>client:motion</code> runs the JS floor,
+      sampling the <strong>same</strong> <code>Easing.spring</code> the CSS
+      <code>linear()</code> compiles from. Scroll to scrub; the crossing at 50% flips the
+      discrete <code>data-liteship-state</code>.
+    </p>
+  </header>
+
+  <section class="motion-stage">
+    <div
+      class="hero-card"
+      data-liteship-boundary="hero"
+      data-liteship-state={initialState}
+      data-liteship-motion-program={program}
+      client:motion
+    >
+      <strong>Reveal</strong>
+      <span>transform + color, scroll-scrubbed</span>
+    </div>
+  </section>
+
+  <section class="explanation">
+    <h2>One intent, two floors</h2>
+    <ol>
+      <li>
+        <strong>Native.</strong> <code>MotionCompiler</code> emits
+        <code>@property</code> + <code>@keyframes</code> + an
+        <code>@supports (animation-timeline: scroll())</code> block. Supported browsers
+        scrub the keyframes off the scroll timeline with no runtime.
+      </li>
+      <li>
+        <strong>Floor.</strong> When <code>animation-timeline</code> is unavailable,
+        <code>client:motion</code> reads the inlined lowered program and writes typed
+        leaf values (<code>--liteship-hero-y</code>, <code>opacity</code>,
+        <code>--liteship-hero-color</code>) every frame — never a graph patch.
+      </li>
+      <li>
+        <strong>One kernel.</strong> Both sample the intent's single spring config, so
+        the two paths render the identical curve (Law 4).
+      </li>
+    </ol>
+    <p class="footnote">
+      Reduced-motion (<code>prefers-reduced-motion</code>) settles straight to the final
+      pose — the final semantic state, no tween.
+    </p>
+  </section>
+</Base>
+
+<!-- Native-CSS motion projection (emitted by MotionCompiler from the SAME intent). -->
+<style set:html={MOTION_CSS}></style>
+
+<style>
+  .page-header { margin-bottom: 2rem; }
+  .page-header h1 {
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--liteship-primary, #4f46e5);
+  }
+  .page-header p {
+    margin-top: 0.5rem;
+    color: var(--liteship-muted, #64748b);
+    max-width: 44rem;
+  }
+  code {
+    background: var(--liteship-border, #e2e8f0);
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.25rem;
+    font-size: 0.85em;
+  }
+  .motion-stage {
+    /* Tall stage so there is real scroll travel to scrub the reveal against. */
+    min-height: 220vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 30vh;
+  }
+  /* The hero composes the animated custom properties into visible transform + color.
+     Both the native keyframes and the JS floor write these SAME properties. */
+  .hero-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 2rem 3rem;
+    border-radius: 1rem;
+    background: var(--liteship-surface, #ffffff);
+    border: 2px solid var(--liteship-border, #e2e8f0);
+    box-shadow: 0 10px 40px color-mix(in srgb, var(--liteship-primary, #4f46e5) 20%, transparent);
+    position: sticky;
+    top: 30vh;
+    /* opacity is a real property — driven inline by the floor / native keyframes.
+       transform + color compose the animated custom properties the reveal writes. */
+    transform: translateY(var(--liteship-hero-y, 0px));
+    color: var(--liteship-hero-color, var(--liteship-text, #1e293b));
+  }
+  .hero-card strong {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: currentColor;
+  }
+  .hero-card span {
+    font-size: 0.875rem;
+    color: var(--liteship-muted, #64748b);
+  }
+  .explanation { margin-top: 3rem; }
+  .explanation h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+  }
+  .explanation ol {
+    padding-left: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    color: var(--liteship-muted, #64748b);
+    font-size: 0.9375rem;
+  }
+  .footnote {
+    margin-top: 1rem;
+    color: var(--liteship-muted, #64748b);
+    font-size: 0.875rem;
+  }
+</style>

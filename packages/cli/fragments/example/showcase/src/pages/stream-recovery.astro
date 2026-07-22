@@ -1,0 +1,123 @@
+---
+import Base from '../layouts/Base.astro';
+import {
+  INITIAL_GRAPH,
+  STREAM_CELL_REGISTRATIONS,
+  STREAM_ARTIFACT_ID,
+} from '../server/stream-graph';
+
+export const prerender = false;
+
+// SSR-inline the client's local base graph and the StateCell registrations. The
+// stream directive reads these off the element (synchronously, no fetch), builds a
+// StateCellStore + mutation client, and registers the host-owned recovery substrate
+// keyed by the artifact id — so a disconnect gap replays through graph-native QUERY
+// + attested transition receipts instead of the snapshot floor.
+const graphBase = JSON.stringify(INITIAL_GRAPH);
+const cells = JSON.stringify(STREAM_CELL_REGISTRATIONS);
+---
+
+<Base title="liteship showcase -- graph-native stream recovery">
+  <header class="page-header">
+    <h1>Graph-native stream recovery</h1>
+    <p>
+      This container streams over SSE like <a href="/stream">/stream</a>, but it is
+      <strong>graph-backed</strong>: the server emits attested
+      <code>DiscreteStateTransition</code> receipts on real crossings, the client
+      attests + buffers them, and a reconnect gap replays them against the QUERY
+      read leg — no lost discrete state.
+    </p>
+  </header>
+
+  <section class="stream-demo">
+    <div
+      class="stream-container"
+      data-liteship-stream-url="/api/graph-feed"
+      data-liteship-stream-artifact={STREAM_ARTIFACT_ID}
+      data-liteship-stream-graph="/api/graph"
+      data-liteship-stream-graph-base={graphBase}
+      data-liteship-stream-cells={cells}
+      client:stream
+    >
+      <p class="stream-placeholder">Waiting for events from the graph-native SSE feed...</p>
+    </div>
+  </section>
+
+  <section class="explanation">
+    <h2>The emit → attest → replay loop</h2>
+    <ol>
+      <li>
+        <strong>Emit.</strong> When the authority crosses a discrete state
+        (<code>StateCellStore.applyDiscrete</code> increments the cell generation), the
+        SSE route mints a receipt with <code>mintTransition(prev, next, &#123; base, resultId &#125;)</code>
+        and emits <code>&#123; type: 'receipt', data: &#123; receipt, transition &#125; &#125;</code>.
+      </li>
+      <li>
+        <strong>Attest.</strong> The client verifies the receipt hash self-consistency and
+        the <code>$&#123;base&#125;#$&#123;cell&#125;</code> subject law before buffering — a forged or
+        mis-subjected frame is refused loudly, never replayed.
+      </li>
+      <li>
+        <strong>Replay.</strong> On a reconnect gap the client QUERYs <code>/api/graph</code>,
+        re-adopts the server graph, and applies the buffered crossing to its StateCell
+        store by generation — the missed discrete state converges without a full snapshot.
+      </li>
+    </ol>
+    <p class="footnote">
+      Plain streams (no <code>data-liteship-stream-graph</code>) keep the HTML snapshot floor
+      unchanged; the graph-native path is strictly opt-in.
+    </p>
+  </section>
+</Base>
+
+<style>
+  .page-header { margin-bottom: 2rem; }
+  .page-header h1 {
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--liteship-primary, #4f46e5);
+  }
+  .page-header p {
+    margin-top: 0.5rem;
+    color: var(--liteship-muted, #64748b);
+    max-width: 44rem;
+  }
+  code {
+    background: var(--liteship-border, #e2e8f0);
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.25rem;
+    font-size: 0.85em;
+  }
+  .stream-demo { margin: 2rem 0; }
+  .stream-container {
+    min-height: 10rem;
+    border: 2px dashed var(--liteship-border, #e2e8f0);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    background: color-mix(in srgb, var(--liteship-surface, #ffffff) 95%, var(--liteship-primary, #4f46e5));
+  }
+  .stream-placeholder {
+    color: var(--liteship-muted, #64748b);
+    font-style: italic;
+  }
+  .explanation { margin-top: 3rem; }
+  .explanation h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+  }
+  .explanation ol {
+    padding-left: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    color: var(--liteship-muted, #64748b);
+    font-size: 0.9375rem;
+  }
+  .footnote {
+    margin-top: 1rem;
+    color: var(--liteship-muted, #64748b);
+    font-size: 0.875rem;
+  }
+</style>

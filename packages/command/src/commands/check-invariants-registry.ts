@@ -39,20 +39,28 @@ const INVARIANT_GATE_FILES: readonly string[] = [
   'packages/command/src/registry.ts',
 ];
 
+/**
+ * Published consumer assets that happen to contain TypeScript, but are not
+ * executable source owned by the package that carries them. The CLI fragment
+ * tree is a byte-for-byte generated projection guarded by `gen-roster`; its
+ * authored owners remain `examples/` and `create-liteship/templates/`.
+ */
+const PACKAGED_ASSET_TREES: readonly string[] = ['packages/create-liteship/templates/', 'packages/cli/fragments/'];
+
 /** The fast-lane invariant rule set (repo-local; imported by the CLI scan + audit report). */
 export const INVARIANTS: readonly CheckInvariantEntry[] = [
   {
     name: 'NO_REQUIRE',
     pattern: /\brequire\s*\(/,
     dirs: ['packages'],
-    exclude: INVARIANT_GATE_FILES,
+    exclude: [...PACKAGED_ASSET_TREES, ...INVARIANT_GATE_FILES],
     message: 'Use ESM imports, not require().',
   },
   {
     name: 'NO_MODULE_EXPORTS',
     pattern: /module\.exports/,
     dirs: ['packages'],
-    exclude: INVARIANT_GATE_FILES,
+    exclude: [...PACKAGED_ASSET_TREES, ...INVARIANT_GATE_FILES],
     message: 'Use ESM exports, not module.exports.',
   },
   {
@@ -68,7 +76,7 @@ export const INVARIANTS: readonly CheckInvariantEntry[] = [
     exclude: [
       'packages/astro/src/client-directives/',
       'packages/astro/src/runtime/inspector-toolbar-app.ts',
-      'packages/create-liteship/templates/',
+      ...PACKAGED_ASSET_TREES,
       ...INVARIANT_GATE_FILES,
     ],
     message: 'Named exports only, except Astro client directives.',
@@ -78,6 +86,7 @@ export const INVARIANTS: readonly CheckInvariantEntry[] = [
     pattern: /\bvar\s+\w/,
     dirs: ['packages'],
     exclude: [
+      ...PACKAGED_ASSET_TREES,
       'packages/astro/src/integration.ts',
       'packages/remotion/src/hooks.ts',
       'packages/astro/src/client-directives/worker.ts',

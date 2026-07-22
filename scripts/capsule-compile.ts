@@ -139,7 +139,7 @@ interface ManifestEntry {
    * path to time (its real behavior is an external effect — a process spawn, a
    * DOM morph — or a not-yet-tickable scene). The generated `.bench.ts` carries
    * the matching `// BENCH-NOT-APPLICABLE: <reason>` marker line (see
-   * `packages/core/src/harness/bench-marker.ts`); recording the same reason here
+   * `packages/core/src/evidence/bench-marker.ts`); recording the same reason here
    * makes the exemption a tracked, machine-readable manifest fact a gate can
    * cross-check against the marker — a real `bench()` body with NO marker AND no
    * `benchExemption` is a real measurement; a comment-only body with neither is a

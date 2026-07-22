@@ -1,0 +1,25 @@
+{
+  "name": "liteship-remotion-demo",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "remotion studio",
+    "build": "tsc -p tsconfig.json",
+    "render": "tsx render.ts"
+  },
+  "dependencies": {
+    "@liteship/core": "workspace:*",
+    "@liteship/quantizer": "workspace:*",
+    "@liteship/remotion": "workspace:*",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "remotion": "^4.0.0",
+    "@remotion/cli": "^4.0.0",
+    "@remotion/bundler": "^4.0.0",
+    "@remotion/renderer": "^4.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0",
+    "@types/react": "^19.0.0"
+  }
+}

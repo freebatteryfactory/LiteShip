@@ -1,0 +1,97 @@
+---
+import Base from '../layouts/Base.astro';
+// One import path: the client-facing Astro helper rides the `liteship/astro` subpath.
+import { adaptiveAttrs } from 'liteship/astro';
+import { layout } from '../boundaries/layout.boundaries.js';
+// Three verbs, one boundary — the define -> apply journey:
+//   • defineBoundary (src/boundaries) maps viewport width -> mobile/tablet/desktop
+//   • defineStyle    (src/styles)     maps those states -> the card's CSS outputs,
+//                                     compiled by the `@style card {}` block below
+//   • adaptiveAttrs  (here)           applies the boundary to a DOM element: it gets
+//                                     data-liteship-state, updated live on the client
+---
+
+<Base>
+  <header class="header">
+    <h1>liteship starter</h1>
+    <p>Constraint-based adaptive rendering</p>
+  </header>
+
+  <main {...adaptiveAttrs({ boundary: layout, class: 'grid' })}>
+    <article class="liteship-card">
+      <h2>Define</h2>
+      <p>A boundary turns an input into a few named states.</p>
+    </article>
+    <article class="liteship-card">
+      <h2>Apply</h2>
+      <p>adaptiveAttrs wires the boundary onto this element.</p>
+    </article>
+    <article class="liteship-card">
+      <h2>Inspect</h2>
+      <p>Run <code>liteship check --profile consumer</code> to verify.</p>
+    </article>
+  </main>
+</Base>
+
+<style>
+  .header {
+    text-align: center;
+    padding: var(--liteship-spacing-lg) 0;
+  }
+
+  .header h1 {
+    font-size: var(--liteship-font-size-lg);
+    font-weight: 700;
+  }
+
+  .header p {
+    font-size: var(--liteship-font-size-md);
+    opacity: 0.7;
+  }
+
+  .liteship-card {
+    opacity: 0.85;
+  }
+
+  .liteship-card h2 {
+    font-size: var(--liteship-font-size-md);
+    margin-bottom: var(--liteship-spacing-sm);
+  }
+
+  .liteship-card p {
+    font-size: var(--liteship-font-size-sm);
+  }
+
+  /* Grid columns adapt across the layout boundary. `@quantize` compiles the
+     boundary to self-contained @container CSS (and sets up the page container). */
+  @quantize layout {
+    mobile {
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: var(--liteship-spacing-sm);
+      }
+    }
+
+    tablet {
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--liteship-spacing-md);
+      }
+    }
+
+    desktop {
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--liteship-spacing-lg);
+      }
+    }
+  }
+
+  /* The card's box + per-state padding come from the `card` style
+     (src/styles/card.styles.ts): defineStyle's base + states, compiled to
+     `.liteship-card` CSS. This block references it by name — nothing to author here. */
+  @style card {}
+</style>

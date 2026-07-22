@@ -1,0 +1,16 @@
+{
+  "name": "liteship-default",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@liteship/core": "workspace:*",
+    "@liteship/astro": "workspace:*",
+    "astro": "^7.0.0",
+    "typescript": "^5.7.0"
+  }
+}

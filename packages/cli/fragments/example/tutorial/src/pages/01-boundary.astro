@@ -1,0 +1,260 @@
+---
+/**
+ * Tutorial 01 -- Your First Boundary
+ *
+ * A "boundary" is the core primitive of liteship. It quantizes a continuous
+ * signal (like viewport width) into discrete, named states (like "compact"
+ * and "wide"). This is fundamentally different from media queries:
+ *
+ *   - Media queries are CSS-only and can't be shared with JS or the server.
+ *   - Boundaries are data. They can be evaluated on the server (edge),
+ *     the client (adaptive directive), or in tests (pure function).
+ *   - Boundaries are content-addressed: change the definition and the
+ *     hash changes, automatically invalidating caches.
+ *
+ * In this tutorial you will:
+ *   1. Import a boundary definition (viewport.boundaries.ts)
+ *   2. Label the element with data-liteship="viewport" for the Vite macro
+ *   3. Spread adaptiveAttrs() to wire boundary JSON + the adaptive directive
+ *   4. Write CSS that targets data-liteship-state="compact|wide"
+ */
+
+import Base from '../layouts/Base.astro';
+import { adaptiveAttrs } from '@liteship/astro';
+import { viewport } from '../boundaries/viewport.boundaries.js';
+---
+
+<Base title="Your First Boundary">
+
+  <!-- ============================================================
+       STEP 1: What is a Boundary?
+       ============================================================
+
+       A boundary is a pure data structure that maps a continuous
+       numeric signal to discrete named states. Think of it as a
+       lookup table:
+
+         viewport.width >= 0   --> "compact"
+         viewport.width >= 768 --> "wide"
+
+       The definition lives in src/boundaries/viewport.boundaries.ts.
+       It's just a call to defineBoundary() from @liteship/core.
+  -->
+
+  <h1>01 -- Your First Boundary</h1>
+
+  <p>
+    A <strong>boundary</strong> is liteship's core primitive. It quantizes a
+    continuous signal (viewport width, device memory, network speed) into
+    discrete named states. Unlike media queries, boundaries are portable
+    data -- they work on the server, the client, and in tests.
+  </p>
+
+  <div class="note">
+    <strong>Key idea:</strong> Boundaries separate the <em>decision</em>
+    (which state are we in?) from the <em>effect</em> (what does that state
+    look like?). The decision is data. The effect is CSS.
+  </div>
+
+  <!-- ============================================================
+       STEP 2: The Boundary Definition
+
+       This code block shows what the boundary looks like in TypeScript.
+       It's imported from src/boundaries/viewport.boundaries.ts.
+  -->
+
+  <h2>The Definition</h2>
+
+  <pre><code>import {'{'} defineBoundary {'}'} from '@liteship/core';
+
+export const viewport = defineBoundary({'{'}&br;
+  input: 'viewport.width',
+  at: [
+    [0, 'compact'],   // 0px and up = compact
+    [768, 'wide'],    // 768px and up = wide
+  ],
+{'}'});</code></pre>
+
+  <p>
+    <code>defineBoundary()</code> returns an immutable, content-addressed
+    object. Its <code>id</code> is an FNV-1a hash of the definition --
+    change anything and the hash changes. This makes cache invalidation
+    automatic.
+  </p>
+
+  <!-- ============================================================
+       STEP 3: Wiring It Up
+
+       Spread {@link adaptiveAttrs} from @liteship/astro — it serializes the
+       boundary, sets data-liteship-directive="adaptive", and optional
+       data-liteship-state for SSR. Pair it with data-liteship="viewport" so the
+       Vite plugin resolves the named export at build time.
+
+       Under the hood, adaptiveAttrs emits the same attributes you could
+       hand-roll: data-liteship-boundary='{...}', data-liteship-directive, and
+       data-liteship-state. Manual wiring is fine for debugging; prefer the
+       helper in app code.
+  -->
+
+  <h2>Wiring It Up</h2>
+
+  <p>
+    Import the boundary and spread <code>adaptiveAttrs</code> onto your
+    container — that alone serializes the boundary onto the element. (The
+    <code>data-liteship="viewport"</code> macro is the <em>no-import</em>
+    alternative that resolves a named boundary at build time; you don't
+    need both, and the scaffold uses <code>adaptiveAttrs</code> only.)
+  </p>
+
+  <pre><code>import {'{'} adaptiveAttrs {'}'} from '@liteship/astro';
+import {'{'} viewport {'}'} from '../boundaries/viewport.boundaries.js';
+
+&lt;div
+  {'{'}...adaptiveAttrs({'{'} boundary: viewport, initialState: 'compact' {'}'}){'}'}
+&gt;
+  ...content that adapts...
+&lt;/div&gt;</code></pre>
+
+  <!-- ============================================================
+       STEP 4: Live Demo
+
+       This is the actual live boundary. Resize your browser window
+       to see data-liteship-state toggle between "compact" and "wide".
+
+       The CSS below targets:
+         [data-liteship-state="compact"] .demo-card  --> stacked layout
+         [data-liteship-state="wide"] .demo-card     --> side-by-side layout
+
+       No media queries. The adaptive directive manages the state
+       attribute; CSS just reacts to it.
+  -->
+
+  <h2>Live Demo</h2>
+
+  <p>
+    Resize your browser window across the 768px threshold. Watch the
+    layout switch between stacked (compact) and side-by-side (wide).
+  </p>
+
+  <div
+    {...adaptiveAttrs({ boundary: viewport, initialState: 'compact', class: 'boundary-demo' })}
+  >
+    <!-- --------------------------------------------------------
+         These cards are the content that adapts. In compact state
+         they stack vertically. In wide state they sit side by side.
+         The transition is CSS-only -- the adaptive directive just
+         flips the data-liteship-state attribute.
+    -------------------------------------------------------- -->
+
+    <div class="demo-card">
+      <h3>Card A</h3>
+      <p>This card adapts to the viewport boundary state.</p>
+    </div>
+    <div class="demo-card">
+      <h3>Card B</h3>
+      <p>No media queries -- just data-liteship-state and CSS.</p>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       STEP 5: Understanding the CSS
+
+       The CSS uses attribute selectors to target boundary states.
+       This is the "effect" side of the boundary/effect split.
+
+       [data-liteship-state="compact"] targets the compact state.
+       [data-liteship-state="wide"] targets the wide state.
+
+       The transition property smooths the layout change -- liteship
+       encourages smooth state transitions rather than hard cuts.
+  -->
+
+  <h2>How the CSS Works</h2>
+
+  <pre><code>/* Compact: single-column stack */
+.boundary-demo[data-liteship-state="compact"] {'{'}&br;
+  flex-direction: column;
+{'}'}
+
+/* Wide: two-column row */
+.boundary-demo[data-liteship-state="wide"] {'{'}&br;
+  flex-direction: row;
+{'}'}</code></pre>
+
+  <div class="note">
+    <strong>Why not media queries?</strong> Media queries work, but they're
+    CSS-only. Boundaries can be evaluated anywhere: on the edge to pick the
+    right HTML variant, in a test to assert behavior, or in a design tool to
+    preview states. The same definition, everywhere.
+  </div>
+
+  <!-- ============================================================
+       STEP 6: What's Next
+
+       Now that you understand boundaries, the next tutorial
+       introduces design tokens -- named values that vary across
+       axes like theme and density.
+  -->
+
+  <h2>What You Learned</h2>
+
+  <ul>
+    <li><code>defineBoundary()</code> creates a content-addressed boundary definition.</li>
+    <li><code>data-liteship-boundary</code> serializes the boundary for the client.</li>
+    <li><code>data-liteship-state</code> holds the current evaluated state.</li>
+    <li><code>client:adaptive</code> hydrates the boundary with live signal evaluation.</li>
+    <li>CSS attribute selectors target each state -- no JavaScript layout logic.</li>
+  </ul>
+
+  <p>
+    <strong>Next:</strong> <a href="/02-tokens">02 -- Design Tokens</a> --
+    learn how liteship tokens become CSS custom properties.
+  </p>
+
+</Base>
+
+<!-- ================================================================
+     Scoped styles for this tutorial page.
+
+     The key pattern: use [data-liteship-state="..."] attribute selectors
+     to apply different visual treatments per boundary state. The
+     adaptive directive keeps data-liteship-state in sync with the
+     actual viewport width.
+================================================================ -->
+
+<style>
+  .boundary-demo {
+    display: flex;
+    gap: 1rem;
+    transition: flex-direction 0.3s ease;
+    margin-bottom: 2rem;
+  }
+
+  /* Compact state: stack vertically */
+  .boundary-demo[data-liteship-state="compact"] {
+    flex-direction: column;
+  }
+
+  /* Wide state: lay out horizontally */
+  .boundary-demo[data-liteship-state="wide"] {
+    flex-direction: row;
+  }
+
+  .demo-card {
+    flex: 1;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 1.5rem;
+    transition: transform 0.2s ease;
+  }
+
+  .demo-card:hover {
+    transform: translateY(-2px);
+  }
+
+  .demo-card h3 {
+    margin-bottom: 0.5rem;
+    color: #4f46e5;
+  }
+</style>

@@ -10,6 +10,7 @@
  *  - command's package-smoke specifications
  *  - CLI package metadata
  *  - the release workflow's publish-order JSON
+ *  - CLI scaffold fragments from create-liteship templates and examples
  *
  * The check mode independently reads package manifests and export maps, so a
  * catalog error cannot bless itself merely by regenerating its projections.
@@ -17,10 +18,10 @@
  * @module
  */
 
-import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { isDirectExecution, walkTrackedFiles } from './audit/shared.js';
+import { isDirectExecution, walkAllFiles, walkTrackedFiles } from './audit/shared.js';
 import { PACKAGE_CATALOG, type PackageCatalogRecord } from './package-catalog.js';
 
 const REPO_ROOT = resolve(fileURLToPath(import.meta.url), '..', '..');
@@ -48,6 +49,7 @@ export const AUDIT_TOPOLOGY_TS = 'packages/audit/src/package-topology.generated.
 export const COMMAND_PLUMB_TS = 'packages/command/src/commands/plumb-registry.generated.ts';
 export const DOC_PACKAGE_GROUPS_TS = 'scripts/lib/package-docs.generated.ts';
 export const API_SURFACE_PACKAGES_TS = 'tests/fixtures/api-surface-packages.generated.ts';
+export const CLI_FRAGMENT_ROOT = 'packages/cli/fragments';
 export const ROOT_TSCONFIG_JSON = 'tsconfig.json';
 export const TYPEDOC_JSON = 'typedoc.json';
 const LITESHIP_INDEX_REL = 'packages/liteship/src/index.ts';
@@ -70,6 +72,40 @@ export interface CatalogDrift {
 export interface CatalogSource {
   readonly path: string;
   readonly text: string;
+}
+
+/** One byte-identical CLI fragment projected from its canonical authored owner. */
+export interface CliFragmentProjection {
+  readonly source: string;
+  readonly destination: string;
+}
+
+/**
+ * Project canonical starter/example assets into the published CLI package.
+ *
+ * `create-liteship/templates` and `examples` remain the only authored copies.
+ * The CLI projection is deliberately derived from git-tracked source files so
+ * ignored build output and dependency directories can never leak into a
+ * release tarball.
+ */
+export function cliFragmentProjections(trackedPaths = walkTrackedFiles(REPO_ROOT)): readonly CliFragmentProjection[] {
+  const projections: CliFragmentProjection[] = [];
+  for (const source of trackedPaths) {
+    if (source.startsWith('packages/create-liteship/templates/')) {
+      const relativePath = source.slice('packages/create-liteship/templates/'.length);
+      if (relativePath.includes('/')) {
+        projections.push({ source, destination: `${CLI_FRAGMENT_ROOT}/template/${relativePath}` });
+      }
+      continue;
+    }
+    if (source.startsWith('examples/')) {
+      const relativePath = source.slice('examples/'.length);
+      if (relativePath.includes('/')) {
+        projections.push({ source, destination: `${CLI_FRAGMENT_ROOT}/example/${relativePath}` });
+      }
+    }
+  }
+  return projections.sort((left, right) => left.destination.localeCompare(right.destination));
 }
 
 function generatedHeader(source: string): string {
@@ -218,9 +254,69 @@ function isSanctionedFleetSource(path: string): boolean {
     normalized === 'scripts/package-catalog.ts' ||
     normalized === 'pnpm-lock.yaml' ||
     normalized.endsWith('/package.json') ||
+    normalized.startsWith(`${CLI_FRAGMENT_ROOT}/`) ||
     exactGenerated.has(normalized) ||
     normalized.startsWith('tests/fixtures/package-catalog-red/')
   );
+}
+
+export type FragmentProjectionReader = (relativePath: string) => Uint8Array | undefined;
+
+function readRepoProjectionBytes(relativePath: string): Uint8Array | undefined {
+  const path = resolve(REPO_ROOT, relativePath);
+  return existsSync(path) ? readFileSync(path) : undefined;
+}
+
+function repoFragmentProjectionPaths(): readonly string[] {
+  const root = resolve(REPO_ROOT, CLI_FRAGMENT_ROOT);
+  if (!existsSync(root)) return [];
+  return walkAllFiles(root).map((path) => `${CLI_FRAGMENT_ROOT}/${path.replaceAll('\\', '/')}`);
+}
+
+/**
+ * Report missing, stale, and extra packaged fragment bytes.
+ *
+ * Reader/path parameters keep the negative-control test pure: it can plant a
+ * stale byte, a missing file, and an orphaned output without mutating the
+ * checkout or teaching the oracle to derive expected bytes from its output.
+ */
+export function collectCliFragmentProjectionDrift(
+  readProjection: FragmentProjectionReader = readRepoProjectionBytes,
+  generatedPaths: readonly string[] = repoFragmentProjectionPaths(),
+  projections: readonly CliFragmentProjection[] = cliFragmentProjections(),
+): readonly CatalogDrift[] {
+  const drift: CatalogDrift[] = [];
+  const expectedPaths = new Set(projections.map((projection) => projection.destination));
+  for (const projection of projections) {
+    const expected = readFileSync(resolve(REPO_ROOT, projection.source));
+    const actual = readProjection(projection.destination);
+    if (actual === undefined) {
+      drift.push({ copy: projection.destination, detail: `missing generated fragment from ${projection.source}` });
+    } else if (!Buffer.from(actual).equals(expected)) {
+      drift.push({ copy: projection.destination, detail: `stale generated fragment from ${projection.source}` });
+    }
+  }
+  for (const path of generatedPaths) {
+    if (!expectedPaths.has(path)) {
+      drift.push({ copy: path, detail: 'orphaned generated fragment with no canonical source' });
+    }
+  }
+  return drift;
+}
+
+function writeCliFragmentProjections(): number {
+  const root = resolve(REPO_ROOT, CLI_FRAGMENT_ROOT);
+  const cliRoot = resolve(REPO_ROOT, 'packages', 'cli');
+  if (!root.startsWith(`${cliRoot}\\`) && !root.startsWith(`${cliRoot}/`)) {
+    throw new Error(`refusing to replace fragment projection outside packages/cli: ${root}`);
+  }
+  rmSync(root, { recursive: true, force: true });
+  for (const projection of cliFragmentProjections()) {
+    const destination = resolve(REPO_ROOT, projection.destination);
+    mkdirSync(dirname(destination), { recursive: true });
+    copyFileSync(resolve(REPO_ROOT, projection.source), destination);
+  }
+  return cliFragmentProjections().length;
 }
 
 /**
@@ -326,6 +422,7 @@ function writeIfChanged(relativePath: string, expected: string): void {
 
 function write(): number {
   for (const [relativePath, expected] of renderGeneratedProjections()) writeIfChanged(relativePath, expected);
+  const fragmentCount = writeCliFragmentProjections();
 
   for (const [relativePath, marker, render] of MARKDOWN_PROJECTIONS) {
     const path = resolve(REPO_ROOT, relativePath);
@@ -345,7 +442,7 @@ function write(): number {
   );
   writeIfChanged(LITESHIP_INDEX_REL, stamped);
   process.stdout.write(
-    `gen-roster: generated ${renderGeneratedProjections().length + 1} projections from ${PACKAGE_CATALOG.length} catalog records.\n`,
+    `gen-roster: generated ${renderGeneratedProjections().length + 1} catalog projections and ${fragmentCount} packaged fragments from ${PACKAGE_CATALOG.length} catalog records.\n`,
   );
   return 0;
 }
@@ -580,6 +677,7 @@ export function collectRosterDrift(): readonly CatalogDrift[] {
   const drift = [
     ...catalogDrift(),
     ...collectGeneratedProjectionDrift(),
+    ...collectCliFragmentProjectionDrift(),
     ...findAuthoredFleetLists(trackedCatalogSources()),
   ];
 

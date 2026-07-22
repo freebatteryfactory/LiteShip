@@ -1,0 +1,23 @@
+{
+  "name": "@liteship/cloudflare-astro-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@astrojs/cloudflare": "^14.0.0",
+    "@liteship/astro": "workspace:*",
+    "@liteship/cloudflare": "workspace:*",
+    "@liteship/core": "workspace:*",
+    "@liteship/edge": "workspace:*",
+    "@liteship/vite": "workspace:*",
+    "astro": "^7.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0",
+    "wrangler": "^4.0.0"
+  }
+}

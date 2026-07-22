@@ -36,11 +36,12 @@
     "dist",
     "src",
     "bin",
+    "fragments",
     "LICENSE"
   ],
   "scripts": {
     "build": "tsc",
-    "prepack": "pnpm run build"
+    "prepack": "pnpm exec tsx ../../scripts/gen-roster.ts --check && pnpm run build"
   },
   "dependencies": {
     "@liteship/core": "workspace:*",

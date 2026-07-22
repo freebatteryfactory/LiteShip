@@ -1,0 +1,158 @@
+---
+interface Props {
+  title?: string;
+}
+const { title = 'liteship showcase' } = Astro.props;
+---
+
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <style>
+      /* ── Token layer ──
+         Each named @token block resolves against an export in
+         src/tokens/colors.tokens.ts and compiles to a :root custom
+         property (--liteship-<token-name>) plus an @property registration. */
+      @token primary {}
+      @token secondary {}
+      @token surface {}
+      @token text {}
+      @token muted {}
+      @token border {}
+
+      /* ── Theme layer ── */
+      @theme dark {
+        --liteship-primary: #818cf8;
+        --liteship-secondary: #2dd4bf;
+        --liteship-surface: #0f172a;
+        --liteship-text: #e2e8f0;
+        --liteship-muted: #94a3b8;
+        --liteship-border: #334155;
+      }
+
+      /* ── Reset + base ── */
+      *, *::before, *::after {
+        box-sizing: border-box;
+        margin: 0;
+      }
+
+      html {
+        font-family: system-ui, -apple-system, sans-serif;
+        line-height: 1.6;
+      }
+
+      body {
+        background: var(--liteship-surface, #ffffff);
+        color: var(--liteship-text, #1e293b);
+        min-height: 100dvh;
+      }
+
+      a {
+        color: var(--liteship-primary, #4f46e5);
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+
+      /* ── Nav ── */
+      .liteship-nav {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        padding: 1rem 2rem;
+        border-bottom: 1px solid var(--liteship-border, #e2e8f0);
+        background: var(--liteship-surface, #ffffff);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+
+      .liteship-nav__brand {
+        font-weight: 700;
+        font-size: 1.25rem;
+        color: var(--liteship-primary, #4f46e5);
+        letter-spacing: -0.02em;
+      }
+
+      .liteship-nav__links {
+        display: flex;
+        gap: 1rem;
+        list-style: none;
+        padding: 0;
+        flex-wrap: wrap;
+      }
+
+      .liteship-nav__links a {
+        font-size: 0.875rem;
+        color: var(--liteship-muted, #64748b);
+        transition: color 0.15s;
+      }
+      .liteship-nav__links a:hover {
+        color: var(--liteship-primary, #4f46e5);
+        text-decoration: none;
+      }
+
+      .liteship-nav__spacer {
+        flex: 1;
+      }
+
+      .liteship-theme-toggle {
+        appearance: none;
+        border: 1px solid var(--liteship-border, #e2e8f0);
+        background: var(--liteship-surface, #ffffff);
+        color: var(--liteship-text, #1e293b);
+        padding: 0.375rem 0.75rem;
+        border-radius: 0.375rem;
+        font-size: 0.8125rem;
+        cursor: pointer;
+        transition: background 0.15s, color 0.15s;
+      }
+      .liteship-theme-toggle:hover {
+        background: var(--liteship-primary, #4f46e5);
+        color: #ffffff;
+      }
+
+      /* ── Main ── */
+      .liteship-main {
+        max-width: 72rem;
+        margin: 0 auto;
+        padding: 2rem;
+      }
+    </style>
+    <slot name="head" />
+  </head>
+  <body>
+    <nav class="liteship-nav">
+      <span class="liteship-nav__brand">liteship</span>
+      <ul class="liteship-nav__links">
+        <li><a href="/">Home</a></li>
+        <li><a href="/stream">Stream</a></li>
+        <li><a href="/stream-recovery">Recovery</a></li>
+        <li><a href="/motion">Motion</a></li>
+        <li><a href="/motion-chain">Chain</a></li>
+        <li><a href="/responsive-media">Media</a></li>
+        <li><a href="/chat">Chat</a></li>
+        <li><a href="/gpu">GPU</a></li>
+        <li><a href="/worker">Worker</a></li>
+      </ul>
+      <div class="liteship-nav__spacer"></div>
+      <button class="liteship-theme-toggle" id="theme-toggle">Toggle theme</button>
+    </nav>
+
+    <main class="liteship-main">
+      <slot />
+    </main>
+
+    <script>
+      const btn = document.getElementById('theme-toggle');
+      btn?.addEventListener('click', () => {
+        const html = document.documentElement;
+        const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        html.setAttribute('data-theme', next);
+      });
+    </script>
+  </body>
+</html>

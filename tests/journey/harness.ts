@@ -2,13 +2,15 @@
  * Shared plumbing for the consumer-JOURNEY family (`pnpm run test:journey`).
  *
  * A journey is an END-TO-END consumer experience proven against REAL packed
- * artifacts and a REAL headless `astro build` — never a mock. The six journeys
+ * artifacts and a REAL headless host build — never a mock. The seven journeys
  * (fresh-app, add-feature, debug-diagnostic, upgrade, package-author,
- * cold-agent-context) each return a {@link JourneyResult}; the `scripts/test-journey.ts`
+ * cold-agent-context, installed-add) each return a {@link JourneyResult}; the `scripts/test-journey.ts`
  * orchestrator packs the workspace ONCE, runs them, prints a PASS/FAIL/GATE line
- * per journey, and exits 0 on all-green / 1 on any-fail.
+ * per journey, and exits 0 only when every authoritative journey passed. A GATE
+ * is explicit evidence that a claim was not executed, so the CI authority treats
+ * it as non-green rather than laundering absence into success.
  *
- * This module owns the machinery the tarball-consuming journeys (1, 2, 4) share:
+ * This module owns the machinery the tarball-consuming journeys (1, 2, 4, 7) share:
  * packing every publishable scope in-workspace (REUSING `tests/support/pack.ts`),
  * scaffolding the `create-liteship` starter, rewriting its manifest to
  * `file://…tgz` deps + a `pnpm.overrides` map (MIRRORING
@@ -16,11 +18,9 @@
  * headless `astro build` + `data-liteship-*` HTML assertion (the
  * `tests/integration/astro/test.ts` pattern).
  *
- * SANDBOX HONESTY: a sub-step that genuinely cannot run in this sandbox (a real
- * network fetch, a real prior-published version) is ENV-GATED — reported as a
- * pass-with-note carrying a clear reason — never faked. The offline-detection
- * helper ({@link isOfflineOrNetworkError}) turns a store-miss with no reachable
- * registry into a gate rather than a spurious failure.
+ * SANDBOX HONESTY: a sub-step that genuinely cannot run in this sandbox is
+ * ENV-GATED with a clear reason, never faked. The authoritative journey runner
+ * treats that state as non-green: unavailable proof is not passing proof.
  *
  * @module
  */
@@ -39,7 +39,7 @@ import { runPnpm, type PnpmRunResult } from '../../scripts/support/pnpm-process.
 /** Absolute repo root (this file lives at `<root>/tests/journey/harness.ts`). */
 export const REPO_ROOT = resolve(fileURLToPath(import.meta.url), '..', '..', '..');
 
-/** The verdict of one journey. `gated` is a pass-with-note (a sandbox-impossible sub-step). */
+/** The verdict of one journey. `gated` means explicitly unverified and is non-green in CI authority. */
 export type JourneyStatus = 'pass' | 'fail' | 'gated';
 
 /** The structured outcome one journey reports to the orchestrator. */
@@ -220,6 +220,21 @@ export async function runLiteshipCli(
   const bin = resolve(REPO_ROOT, 'packages', 'cli', 'src', 'bin.ts');
   const result = await spawnArgvCapture(tsx, [bin, ...args], { cwd });
   return { code: result.exitCode, stdout: result.stdout, stderr: result.stderr };
+}
+
+/**
+ * Run the `liteship` executable installed in a packed consumer app.
+ *
+ * This deliberately goes through that app's package-manager executable lookup.
+ * It never falls back to the workspace TS source or checkout build, so a missing
+ * published bin, broken transitive link, or incomplete tarball is a real journey
+ * failure rather than a conveniently bypassed product defect.
+ */
+export async function runInstalledLiteshipCli(
+  args: readonly string[],
+  cwd: string,
+): Promise<{ readonly code: number; readonly stdout: string; readonly stderr: string }> {
+  return runPnpm(['exec', 'liteship', ...args], { cwd, env: { FORCE_COLOR: '0' } });
 }
 
 /** Parse the last JSON object emitted on a CLI receipt stdout stream (tolerant of leading log lines). */
