@@ -4,7 +4,7 @@
  *
  * Covers: a clean lossless partition round-trip (exact produced boundary
  * fields), each NEW decomposition branch (legacy min/max features, the interval
- * form, height axis, named-container grouping/splitting, the `statePrefix`
+ * form, height axis, named-container refusal, the `statePrefix`
  * option, comment/string blanking), every diagnostic code the adapter can emit
  * (teeth), and a pathological sub-pixel input whose synthesized state names
  * collide — proving the `defineBoundary` `ValidationError` is caught and
@@ -90,18 +90,20 @@ describe('fromContainerQueries — decomposition branches', () => {
     expect([...boundaries[0]!.states]).toEqual(['bp-500']);
   });
 
-  it('merges same-name blocks and splits different names into separate boundaries', () => {
+  it('refuses named containers instead of collapsing their identity into viewport input', () => {
     const css = `
       @container sidebar (width < 400px) { .x {} }
       @container sidebar (width >= 400px) { .x {} }
       @container main (width >= 800px) { .x {} }
     `;
     const { boundaries, diagnostics } = fromContainerQueries(css);
-    expect(diagnostics).toEqual([]);
-    expect(boundaries).toHaveLength(2);
-    // `sidebar` merged to a 2-state boundary; `main` is its own single-state one.
-    expect([...boundaries[0]!.thresholds]).toEqual([0, 400]);
-    expect([...boundaries[1]!.thresholds]).toEqual([800]);
+    expect(boundaries).toEqual([]);
+    expect(diagnostics).toHaveLength(3);
+    expect(diagnostics.every((d) => d.code === MIGRATE_CODES.unsupportedAtRule && d.severity === 'error')).toBe(
+      true,
+    );
+    expect(diagnostics[0]!.message).toContain('Named @container "sidebar"');
+    expect(diagnostics[2]!.message).toContain('Named @container "main"');
   });
 
   it('honours a custom statePrefix', () => {

@@ -337,10 +337,26 @@ describe('fromMediaQueries — boolean logic (not/or/comma) is rejected, never i
     expect(commaResult.boundaries).toEqual([]);
   });
 
-  it('still lowers a `screen and (min-width)` prelude (media type + and are not boolean logic)', () => {
+  it('refuses `screen and (min-width)` because media-type identity would be lost', () => {
     const result = fromMediaQueries(`@media screen and (min-width: 768px) { .x { a: b; } }`);
+    expect(result.boundaries).toEqual([]);
+    const diagnostic = result.diagnostics.find((d) => d.code === MIGRATE_CODES.unsupportedAtRule);
+    expect(diagnostic?.severity).toBe('error');
+    expect(diagnostic?.message).toContain('media type "screen"');
+  });
+
+  it('lowers `all and (min-width)` because `all` is the neutral media type', () => {
+    const result = fromMediaQueries(`@media all and (min-width: 768px) { .x { a: b; } }`);
     expect([...result.boundaries[0]!.thresholds]).toEqual([0, 768]);
     expect(result.diagnostics).toEqual([]);
+  });
+
+  it('refuses `print and (min-width)` rather than widening it to viewport runtime', () => {
+    const result = fromMediaQueries(`@media print and (min-width: 768px) { .x { a: b; } }`);
+    expect(result.boundaries).toEqual([]);
+    const diagnostic = result.diagnostics.find((d) => d.code === MIGRATE_CODES.unsupportedAtRule);
+    expect(diagnostic?.severity).toBe('error');
+    expect(diagnostic?.message).toContain('media type "print"');
   });
 });
 

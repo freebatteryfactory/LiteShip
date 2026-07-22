@@ -70,6 +70,20 @@ stays 25; no `gen-roster` / `release.yml` change.
   `css-utils` (`inferSyntax` / `stringifyCSSValue`), the schema kernel + `decode()`,
   and `sourceToInput`.
 
+- **The design-token contract is pinned to Design Tokens Format 2025.10.**
+  `DTCG_FORMAT_VERSION` exposes the implemented revision. Reserved `$root` group
+  tokens lower as real tokens with `$root` retained in their dotted path.
+  Structured scalar values lower only through explicit CSS serializers; a
+  composite or unsupported structured value is refused with an error diagnostic
+  rather than retained as an object that would render as `[object Object]`.
+
+- **Unsupported source scope is refused, never widened.** An explicit CSS media
+  type such as `print` or `screen` cannot be represented by a LiteShip boundary
+  input, and a named `@container` cannot be represented without a
+  container-qualified runtime signal. Those blocks are skipped with
+  `migrate/unsupported-at-rule` error diagnostics; they are never rewritten as
+  unconditional viewport behavior.
+
 - **`migrate/*` diagnostic codes are enrolled in `DIAGNOSTIC_REGISTRY`.** The eight
   codes (`unmappable-media-feature`, `non-ascending-thresholds`,
   `ambiguous-breakpoint`, `unsupported-at-rule`, `lossy-token-conversion`,

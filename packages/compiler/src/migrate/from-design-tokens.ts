@@ -1,10 +1,14 @@
 /**
- * `migrate/from-design-tokens` — lower a W3C / DTCG design-token document into
- * ordinary `@liteship/core` primitives.
+ * `migrate/from-design-tokens` — lower a Design Tokens Format 2025.10 document
+ * into ordinary `@liteship/core` primitives.
  *
  * The input is a Design Tokens Community Group JSON document: nested GROUPS
  * (plain objects) that bottom out in TOKENS (objects carrying a `$value`, an
  * optional `$type`, and DTCG metadata `$description`/`$extensions`/`$deprecated`).
+ * The 2025.10 `$root` group token is processed as a real token and keeps `$root`
+ * in its dotted path. Structured values are emitted only when the adapter has a
+ * faithful scalar CSS representation; unsupported composites are refused with
+ * an error diagnostic rather than leaking `[object Object]`.
  * A group may declare a `$type` that every descendant token without its own
  * `$type` inherits. There is no CSS to scan here — the source is already
  * structured JSON — so this adapter uses the schema kernel as its trust gate
@@ -17,7 +21,7 @@
  * diagnostic.
  *
  * Two lowering shapes:
- *  - a plain token (`$value` is a scalar / composite) → a single `defineToken`,
+ *  - a plain token (`$value` has a faithful scalar CSS form) → a single `defineToken`,
  *    its `TokenCategory` resolved from `$type` (falling back to `inferSyntax` on
  *    the CSS-stringified value, then to `effect` with an
  *    `unknown-token-category` flag);
@@ -41,6 +45,9 @@ import { ValidationError, hasTag } from '@liteship/error';
 import { inferSyntax, stringifyCSSValue, type CSSSyntax } from '../css-utils.js';
 import type { MigrationDiagnostic, MigrationResult } from './types.js';
 import { makeMigrationDiagnostic, MIGRATE_CODES } from './diagnostics.js';
+
+/** The exact Design Tokens Format revision this adapter implements. */
+export const DTCG_FORMAT_VERSION = '2025.10' as const;
 
 // ---------------------------------------------------------------------------
 // Options
@@ -69,9 +76,11 @@ const DEFAULT_THEME_NAME = 'migrated-theme';
 /**
  * Map a DTCG `$type` to a LiteShip {@link TokenCategory}. The DTCG scalar types
  * (`color`, `dimension`, `fontFamily`/`fontWeight`, `duration`, `cubicBezier`)
- * and the composite types (`typography`, `shadow`, `borderRadius`) fold onto the
- * seven-category LiteShip vocabulary. A `$type` outside this table is treated as
- * absent (best-effort classification via {@link inferSyntax} takes over).
+ * and recognized legacy categories fold onto the seven-category LiteShip
+ * vocabulary when their value has a faithful scalar CSS representation.
+ * Structured composites are still refused before token construction. A `$type`
+ * outside this table is treated as absent (best-effort classification via
+ * {@link inferSyntax} takes over).
  */
 const DTCG_TYPE_TO_CATEGORY: Readonly<Record<string, TokenCategory>> = {
   color: 'color',
@@ -168,15 +177,73 @@ function labelOf(variant: string): string {
  * DTCG's scalar `dimension` is `{ value: number, unit: string }` (`{value:8,unit:'px'}`
  * → `8px`); a color object carrying an explicit `hex` uses that hex. Composites
  * (shadow/typography/gradient/…) have no single-token CSS form and return `null` — the
- * caller keeps them structurally. Without this, a structured `$value` reaches the
- * Token CSS compiler as an object and `String(value)` renders `[object Object]`.
+ * caller refuses them with a diagnostic. Without this, a structured `$value`
+ * reaches the Token CSS compiler as an object and `String(value)` renders
+ * `[object Object]`.
  */
-function scalarDtcgCssValue(value: Record<string, unknown>): string | null {
+function scalarDtcgCssValue(value: unknown, type: string | undefined): string | null {
+  if (type === 'fontFamily' && Array.isArray(value) && value.every((part) => typeof part === 'string')) {
+    const generics = new Set([
+      'serif',
+      'sans-serif',
+      'monospace',
+      'cursive',
+      'fantasy',
+      'system-ui',
+      'ui-serif',
+      'ui-sans-serif',
+      'ui-monospace',
+      'ui-rounded',
+      'emoji',
+      'math',
+      'fangsong',
+    ]);
+    return value
+      .map((part) => (generics.has(part.toLowerCase()) ? part : JSON.stringify(part)))
+      .join(', ');
+  }
+  if (
+    type === 'cubicBezier' &&
+    Array.isArray(value) &&
+    value.length === 4 &&
+    value.every((part) => typeof part === 'number' && Number.isFinite(part))
+  ) {
+    return `cubic-bezier(${value.join(', ')})`;
+  }
+  if (!isPlainObject(value)) return null;
   if (typeof value['value'] === 'number' && typeof value['unit'] === 'string') {
     return `${value['value']}${value['unit']}`;
   }
   if (typeof value['hex'] === 'string') {
     return value['hex'];
+  }
+  if (
+    type === 'color' &&
+    typeof value['colorSpace'] === 'string' &&
+    Array.isArray(value['components']) &&
+    value['components'].length === 3 &&
+    value['components'].every(
+      (component) => (typeof component === 'number' && Number.isFinite(component)) || component === 'none',
+    )
+  ) {
+    const colorFunctionSpaces = new Set([
+      'srgb',
+      'srgb-linear',
+      'display-p3',
+      'a98-rgb',
+      'prophoto-rgb',
+      'rec2020',
+      'xyz-d50',
+      'xyz-d65',
+    ]);
+    const colorSpace = value['colorSpace'].toLowerCase();
+    const alpha = value['alpha'];
+    if (
+      colorFunctionSpaces.has(colorSpace) &&
+      (alpha === undefined || alpha === 'none' || (typeof alpha === 'number' && Number.isFinite(alpha)))
+    ) {
+      return `color(${colorSpace} ${value['components'].join(' ')}${alpha === undefined ? '' : ` / ${alpha}`})`;
+    }
   }
   return null;
 }
@@ -268,27 +335,37 @@ export function fromDesignTokens(json: unknown, options?: FromDesignTokensOption
    * Convert one MODE value exactly as the plain-token structured branch in
    * {@link processToken} does: a scalar DTCG structured value (`{value,unit}` /
    * `{hex}`) serializes to its canonical CSS string; a composite object has no
-   * single CSS custom-property form, so it is kept structurally and flagged
-   * `lossy-token-conversion`; a non-object scalar passes through unchanged.
+   * single CSS custom-property form, so the complete token is refused with an
+   * error `lossy-token-conversion`; a non-object scalar passes through unchanged.
    * Without this a structured mode value reaches the Theme CSS compiler as an
    * object and renders `[object Object]`.
    */
-  const toModeCssValue = (value: unknown, name: string, valuePath: readonly string[]): unknown => {
-    if (!isPlainObject(value)) return value;
-    const scalar = scalarDtcgCssValue(value);
-    if (scalar !== null) return scalar;
+  const toModeCssValue = (
+    value: unknown,
+    type: string | undefined,
+    name: string,
+    valuePath: readonly string[],
+  ): { readonly ok: true; readonly value: unknown } | { readonly ok: false } => {
+    if (!isPlainObject(value) && !Array.isArray(value)) return { ok: true, value };
+    const scalar = scalarDtcgCssValue(value, type);
+    if (scalar !== null) return { ok: true, value: scalar };
     diagnostics.push(
       makeMigrationDiagnostic(
         MIGRATE_CODES.lossyTokenConversion,
-        `Token "${name}" is a composite DTCG value (${JSON.stringify(value)}) with no single CSS custom-property form; kept structurally (it will not render as a scalar CSS value).`,
-        { path: valuePath },
+        `Token "${name}" is a composite or unsupported DTCG ${DTCG_FORMAT_VERSION} value (${JSON.stringify(value)}) with no faithful scalar CSS form; the token was refused rather than emitting "[object Object]" or fabricated CSS.`,
+        { path: valuePath, severity: 'error' },
       ),
     );
-    return value;
+    return { ok: false };
   };
 
   /** A mode token → one theme entry, cross-filled to completeness across `modeSet`. */
-  const processModeToken = (value: Record<string, unknown>, name: string, path: readonly string[]): void => {
+  const processModeToken = (
+    value: Record<string, unknown>,
+    type: string | undefined,
+    name: string,
+    path: readonly string[],
+  ): void => {
     // Collect the modes actually present (own key, non-null value).
     const present: Record<string, unknown> = {};
     for (const mode of modeSet) {
@@ -311,13 +388,15 @@ export function fromDesignTokens(json: unknown, options?: FromDesignTokensOption
     }
 
     // Serialize each present mode value the SAME way the plain-token path does
-    // (scalar structured → CSS string; composite → kept + lossy flag) and flag
+    // (scalar structured → CSS string; composite → refused with an error) and flag
     // alias/calc verbatim values, BEFORE cross-filling — otherwise a structured
     // scalar mode value ({value,unit}) would reach the compiler as `[object Object]`.
     const converted: Record<string, unknown> = {};
     for (const mode of presentModes) {
       flagLossy(present[mode], [...path, mode]);
-      converted[mode] = toModeCssValue(present[mode], name, [...path, mode]);
+      const conversion = toModeCssValue(present[mode], type, name, [...path, mode]);
+      if (!conversion.ok) return;
+      converted[mode] = conversion.value;
     }
 
     const fallback = converted[presentModes[0]!];
@@ -390,27 +469,42 @@ export function fromDesignTokens(json: unknown, options?: FromDesignTokensOption
     if (isPlainObject(value)) {
       const keys = Object.keys(value);
       if (keys.length > 0 && keys.every((k) => modeKeys.has(k))) {
-        processModeToken(value, name, path);
+        processModeToken(value, type, name, path);
         return;
       }
       // A DTCG SCALAR structured value — dimension `{value,unit}` or a color object
       // with an explicit `hex` — has a single canonical CSS string. Serialize it, or
       // it reaches the Token CSS compiler as an object and renders `[object Object]`.
-      const scalar = scalarDtcgCssValue(value);
+      const scalar = scalarDtcgCssValue(value, type);
       if (scalar !== null) {
         processPlainToken(scalar, type, name, path);
         return;
       }
       // A composite (shadow/typography/gradient/…) has no single CSS custom-property
-      // form; it is kept structurally by design, but flag it so the un-renderable
-      // value is surfaced rather than silently reaching `[object Object]`.
+      // form. Refuse it rather than handing an object to the scalar CSS compiler.
       diagnostics.push(
         makeMigrationDiagnostic(
           MIGRATE_CODES.lossyTokenConversion,
-          `Token "${name}" is a composite DTCG value (${JSON.stringify(value)}) with no single CSS custom-property form; kept structurally (it will not render as a scalar CSS value).`,
-          { path },
+          `Token "${name}" is a composite or unsupported DTCG ${DTCG_FORMAT_VERSION} value (${JSON.stringify(value)}) with no faithful scalar CSS form; the token was refused rather than emitting "[object Object]" or fabricated CSS.`,
+          { path, severity: 'error' },
         ),
       );
+      return;
+    }
+    if (Array.isArray(value)) {
+      const scalar = scalarDtcgCssValue(value, type);
+      if (scalar !== null) {
+        processPlainToken(scalar, type, name, path);
+        return;
+      }
+      diagnostics.push(
+        makeMigrationDiagnostic(
+          MIGRATE_CODES.lossyTokenConversion,
+          `Token "${name}" is an unsupported DTCG ${DTCG_FORMAT_VERSION} array value (${JSON.stringify(value)}); the token was refused rather than fabricating CSS.`,
+          { path, severity: 'error' },
+        ),
+      );
+      return;
     }
     processPlainToken(value, type, name, path);
   };
@@ -421,9 +515,25 @@ export function fromDesignTokens(json: unknown, options?: FromDesignTokensOption
   // -------------------------------------------------------------------------
   const walk = (node: Record<string, unknown>, prefix: readonly string[], inheritedType: string | undefined): void => {
     for (const key of Object.keys(node)) {
-      if (key.startsWith('$')) continue; // DTCG metadata ($type/$description/$extensions/…)
       const child = node[key];
       const path = [...prefix, key];
+      // DTCG 2025.10 reserves `$root` as a real token name inside a group. It is
+      // included in the path (`color.accent.$root`) to stay unambiguous.
+      if (key === '$root') {
+        if (isTokenNode(child)) {
+          processToken(child, path, inheritedType);
+        } else {
+          diagnostics.push(
+            makeMigrationDiagnostic(
+              MIGRATE_CODES.malformedInput,
+              `DTCG ${DTCG_FORMAT_VERSION} root token "${path.join('.')}" must be an object with a $value; skipped.`,
+              { path, severity: 'error' },
+            ),
+          );
+        }
+        continue;
+      }
+      if (key.startsWith('$')) continue; // DTCG group metadata ($type/$description/$extensions/…)
       if (isTokenNode(child)) {
         processToken(child, path, inheritedType);
       } else if (isPlainObject(child)) {

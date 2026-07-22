@@ -203,6 +203,20 @@ function preludeConnective(prelude: string): string {
   return out.toLowerCase();
 }
 
+/**
+ * Explicit media types outside parenthesized feature groups. LiteShip's
+ * viewport inputs carry feature values, not the carrier/media-type predicate,
+ * so `print and (...)` / `screen and (...)` cannot be reproduced faithfully.
+ * `all` is the neutral media type and may be discarded without changing the
+ * condition.
+ */
+function restrictedMediaTypes(connective: string): readonly string[] {
+  return connective
+    .split(/\s+/)
+    .map((word) => word.trim())
+    .filter((word) => word !== '' && word !== 'and' && word !== 'only' && word !== 'all');
+}
+
 // ---------------------------------------------------------------------------
 // State-name synthesis
 // ---------------------------------------------------------------------------
@@ -319,6 +333,20 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
         makeMigrationDiagnostic(
           MIGRATE_CODES.unsupportedAtRule,
           `@media "${prelude.trim()}" uses boolean logic (not/or/comma) that a positive feature lowering cannot preserve; skipped rather than silently inverted.`,
+          { path: ['@media', prelude.trim()], severity: 'error' },
+        ),
+      );
+      return;
+    }
+
+    const mediaTypes = restrictedMediaTypes(connective);
+    if (mediaTypes.length > 0) {
+      diagnostics.push(
+        makeMigrationDiagnostic(
+          MIGRATE_CODES.unsupportedAtRule,
+          `@media "${prelude.trim()}" is restricted to media type ${mediaTypes
+            .map((type) => `"${type}"`)
+            .join(', ')}; LiteShip boundaries do not carry media-type identity, so the block was skipped rather than widened to every runtime surface.`,
           { path: ['@media', prelude.trim()], severity: 'error' },
         ),
       );

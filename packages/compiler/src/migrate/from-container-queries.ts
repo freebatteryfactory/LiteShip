@@ -2,11 +2,12 @@
  * `migrate/from-container-queries` — lower native CSS `@container` query blocks
  * into ordinary {@link defineBoundary} definitions.
  *
- * A stylesheet's `@container [<name>] (<condition>) { … }` blocks each declare a
- * single-axis width/height range. This adapter reads every top-level `@container`
- * block, reduces its condition to a `(lo, hi)` range on one axis, then
- * RANGE-MERGES the adjacent blocks that share a container name + axis into a
- * single ascending threshold list — the literal inverse of the compiler's
+ * A stylesheet's anonymous `@container (<condition>) { … }` blocks each declare
+ * a single-axis width/height range. This adapter reads every top-level block,
+ * refuses named containers (their identity has no runtime signal owner), reduces
+ * each anonymous condition to a `(lo, hi)` range on one axis, then RANGE-MERGES
+ * adjacent blocks on that axis into a single ascending threshold list — the
+ * literal inverse of the compiler's
  * `buildContainerQuery` emit (`(width < T)`, `(width >= A) and (width < B)`,
  * `(width >= T)`). The merged thresholds become one `defineBoundary` whose
  * `input` is `viewport.<axis>` (the same input the `@quantize` compiler lowers to
@@ -228,8 +229,9 @@ const CONTAINER_NAME = /^[a-zA-Z_][a-zA-Z0-9_-]*$/;
  * depth is tracked incrementally so only sheet-top-level blocks are read (a
  * nested `@container` refining another is out of scope). Each block's body is
  * skipped — only the prelude condition matters for threshold reconstruction.
- * Returns the reduced blocks in source order plus a diagnostic for every prelude
- * that could not be reduced to a single-axis range.
+ * Named blocks are refused because their container identity cannot be encoded by
+ * the current viewport input vocabulary. Returns the reduced anonymous blocks in
+ * source order plus a diagnostic for every refused/unreducible prelude.
  */
 function readContainerBlocks(css: string): { blocks: ContainerBlock[]; diagnostics: MigrationDiagnostic[] } {
   const normalized = normalizeCssLineEndings(css);
@@ -257,13 +259,27 @@ function readContainerBlocks(css: string): { blocks: ContainerBlock[]; diagnosti
     const nameText = (parenAt === -1 ? prelude : prelude.slice(0, parenAt)).trim();
     const condition = parenAt === -1 ? '' : prelude.slice(parenAt);
 
-    let name = '';
+    const name = '';
     if (nameText !== '') {
       // `not` / `and` / `or` are query keywords, never container names — a
       // leading `not` negates the whole query, which is not a contiguous range.
       const reserved = /^(not|and|or)$/i.test(nameText);
       if (CONTAINER_NAME.test(nameText) && !reserved) {
-        name = nameText;
+        // The current runtime input vocabulary has viewport.width/height but no
+        // container-qualified signal identity. Converting a named container to
+        // viewport input would silently make unrelated containers equivalent,
+        // so refuse the complete block until that capability exists end to end.
+        diagnostics.push(
+          makeMigrationDiagnostic(
+            MIGRATE_CODES.unsupportedAtRule,
+            `Named @container "${nameText}" cannot be represented: LiteShip has no container-qualified input identity; the block was skipped rather than converted to viewport.${condition.toLowerCase().includes('height') ? 'height' : 'width'}.`,
+            { path: [nameText, condition], severity: 'error' },
+          ),
+        );
+        CONTAINER_MARKER.lastIndex = bodyEnd;
+        depthFrom = bodyEnd;
+        depth = 0;
+        continue;
       } else {
         // `not`, a style() query, or other non-name prelude text — unrepresentable.
         diagnostics.push(
@@ -305,7 +321,7 @@ function readContainerBlocks(css: string): { blocks: ContainerBlock[]; diagnosti
 // Adapter
 // ---------------------------------------------------------------------------
 
-/** Group key isolating one container name + axis (anonymous blocks share `''`). */
+/** Group key isolating one anonymous-container axis. */
 function groupKey(block: ContainerBlock): string {
   return `${block.name} ${block.axis}`;
 }
@@ -321,11 +337,13 @@ type AtPairs = readonly [readonly [number, string], ...(readonly [number, string
 /**
  * Lower native CSS `@container` query blocks into `defineBoundary` definitions.
  *
- * Every top-level `@container [<name>] (<condition>) { … }` block is reduced to a
- * single-axis width/height range; blocks sharing a container name + axis
- * range-merge into one boundary whose ascending thresholds are the blocks' lower
- * bounds. State names are synthesized as `<statePrefix>-<threshold>` (default
- * prefix `bp`). Lossy/dropped cases are accumulated as diagnostics; a
+ * Every top-level anonymous `@container (<condition>) { … }` block is reduced to
+ * a single-axis width/height range. Named containers are refused because the
+ * current input vocabulary has no container-qualified identity; converting them
+ * to `viewport.*` would silently widen their scope. Anonymous blocks sharing an
+ * axis range-merge into one boundary whose ascending thresholds are the blocks'
+ * lower bounds. State names are synthesized as `<statePrefix>-<threshold>`
+ * (default prefix `bp`). Lossy/dropped cases are accumulated as diagnostics; a
  * `defineBoundary` `ValidationError` is caught and surfaced as an `error`
  * diagnostic rather than thrown.
  *

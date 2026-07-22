@@ -17,7 +17,7 @@
 
 import { describe, it, expect } from 'vitest';
 import fc from 'fast-check';
-import { fromDesignTokens } from '@liteship/compiler/migrate';
+import { DTCG_FORMAT_VERSION, fromDesignTokens } from '@liteship/compiler/migrate';
 import { MIGRATE_CODES } from '@liteship/compiler/migrate';
 
 describe('fromDesignTokens — clean lossless case', () => {
@@ -75,24 +75,22 @@ describe('fromDesignTokens — clean lossless case', () => {
 });
 
 describe('fromDesignTokens — $type → TokenCategory map', () => {
-  const cases: ReadonlyArray<readonly [string, unknown, string]> = [
-    ['color', '#fff', 'color'],
-    ['dimension', '4px', 'spacing'],
-    ['fontFamily', ['Inter', 'sans-serif'], 'typography'],
-    ['fontWeight', 600, 'typography'],
-    ['typography', { fontFamily: 'Inter', fontSize: '16px' }, 'typography'],
-    ['shadow', { color: '#000', offsetX: '0', offsetY: '2px', blur: '4px' }, 'shadow'],
-    ['borderRadius', '8px', 'radius'],
-    ['duration', '200ms', 'animation'],
-    ['cubicBezier', [0.4, 0, 0.2, 1], 'animation'],
+  const cases: ReadonlyArray<readonly [string, unknown, string, unknown]> = [
+    ['color', '#fff', 'color', '#fff'],
+    ['dimension', '4px', 'spacing', '4px'],
+    ['fontFamily', ['Inter', 'sans-serif'], 'typography', '"Inter", sans-serif'],
+    ['fontWeight', 600, 'typography', 600],
+    ['borderRadius', '8px', 'radius', '8px'],
+    ['duration', '200ms', 'animation', '200ms'],
+    ['cubicBezier', [0.4, 0, 0.2, 1], 'animation', 'cubic-bezier(0.4, 0, 0.2, 1)'],
   ];
 
-  for (const [dtcgType, value, category] of cases) {
+  for (const [dtcgType, value, category, expected] of cases) {
     it(`maps $type "${dtcgType}" → category "${category}"`, () => {
       const result = fromDesignTokens({ tok: { $type: dtcgType, $value: value } });
       expect(result.tokens).toHaveLength(1);
       expect(result.tokens[0]!.category).toBe(category);
-      expect(result.tokens[0]!.fallback).toEqual(value);
+      expect(result.tokens[0]!.fallback).toEqual(expected);
       // A recognized $type never triggers unknown-token-category.
       expect(result.diagnostics.some((d) => d.code === MIGRATE_CODES.unknownTokenCategory)).toBe(false);
     });
@@ -100,6 +98,34 @@ describe('fromDesignTokens — $type → TokenCategory map', () => {
 });
 
 describe('fromDesignTokens — decomposition branches', () => {
+  it('pins the adapter to Design Tokens Format 2025.10', () => {
+    expect(DTCG_FORMAT_VERSION).toBe('2025.10');
+  });
+
+  it('processes a DTCG 2025.10 `$root` group token with `$root` in its path', () => {
+    const result = fromDesignTokens({
+      color: {
+        accent: {
+          $type: 'color',
+          $root: { $value: '#dd0000' },
+          light: { $value: '#ff2222' },
+        },
+      },
+    });
+    expect(result.diagnostics).toEqual([]);
+    expect(result.tokens.map((token) => [token.name, token.fallback])).toEqual([
+      ['color.accent.$root', '#dd0000'],
+      ['color.accent.light', '#ff2222'],
+    ]);
+  });
+
+  it('refuses a malformed DTCG `$root` member that is not a token', () => {
+    const result = fromDesignTokens({ color: { $root: { nested: true } } });
+    expect(result.tokens).toEqual([]);
+    const diagnostic = result.diagnostics.find((d) => d.code === MIGRATE_CODES.malformedInput);
+    expect(diagnostic?.severity).toBe('error');
+    expect(diagnostic?.path).toEqual(['color', '$root']);
+  });
   it('flattens deeply nested groups to dotted names', () => {
     const result = fromDesignTokens({ a: { b: { c: { $type: 'dimension', $value: '4px' } } } });
     expect(result.tokens).toHaveLength(1);
@@ -146,13 +172,14 @@ describe('fromDesignTokens — decomposition branches', () => {
     expect(result.tokens).toEqual([]);
   });
 
-  it('treats a composite object value ($type shadow) as a single token, not a mode map', () => {
+  it('refuses a composite object value ($type shadow) rather than emitting unrenderable CSS', () => {
     const shadow = { color: '#000', offsetX: '0', offsetY: '2px', blur: '4px' };
     const result = fromDesignTokens({ elevation: { low: { $type: 'shadow', $value: shadow } } });
     expect(result.themes).toEqual([]);
-    expect(result.tokens).toHaveLength(1);
-    expect(result.tokens[0]!.category).toBe('shadow');
-    expect(result.tokens[0]!.fallback).toEqual(shadow);
+    expect(result.tokens).toEqual([]);
+    const diagnostic = result.diagnostics.find((d) => d.code === MIGRATE_CODES.lossyTokenConversion);
+    expect(diagnostic?.severity).toBe('error');
+    expect(diagnostic?.message).toContain('refused');
   });
 
   it('serializes a scalar DTCG dimension object {value,unit} to a CSS length (never [object Object])', () => {
@@ -192,16 +219,15 @@ describe('fromDesignTokens — decomposition branches', () => {
     expect(result.diagnostics.some((d) => d.code === MIGRATE_CODES.incompleteThemeVariant)).toBe(true);
   });
 
-  it('flags a composite MODE value (kept structurally) rather than [object Object]', () => {
+  it('refuses a composite MODE value rather than retaining [object Object] input', () => {
     const shadow = { color: '#000', offsetX: '0', offsetY: '2px', blur: '4px' };
     const result = fromDesignTokens({
       elevation: { low: { $type: 'shadow', $value: { light: shadow, dark: shadow } } },
     });
-    // The composite has no single CSS form, so it is kept structurally...
-    const t = result.themes[0]!;
-    expect(t.tokens['elevation.low']).toEqual({ light: shadow, dark: shadow });
-    // ...but the un-renderable composite is surfaced, mirroring the plain-token path.
-    expect(result.diagnostics.some((d) => d.code === MIGRATE_CODES.lossyTokenConversion)).toBe(true);
+    expect(result.themes).toEqual([]);
+    const diagnostic = result.diagnostics.find((d) => d.code === MIGRATE_CODES.lossyTokenConversion);
+    expect(diagnostic?.severity).toBe('error');
+    expect(diagnostic?.message).toContain('refused');
   });
 
   it('uses an explicit hex on a DTCG color object', () => {
@@ -211,13 +237,24 @@ describe('fromDesignTokens — decomposition branches', () => {
     expect(result.tokens[0]!.fallback).toBe('#ff0000');
   });
 
-  it('flags a composite DTCG value (kept structurally) rather than silently rendering [object Object]', () => {
+  it('serializes a standard DTCG 2025.10 sRGB color object without a nonstandard hex field', () => {
+    const result = fromDesignTokens({
+      brand: {
+        $type: 'color',
+        $value: { colorSpace: 'srgb', components: [1, 0.133, 0.133], alpha: 0.8 },
+      },
+    });
+    expect(result.tokens).toHaveLength(1);
+    expect(result.tokens[0]!.fallback).toBe('color(srgb 1 0.133 0.133 / 0.8)');
+    expect(result.diagnostics).toEqual([]);
+  });
+
+  it('refuses a composite DTCG value rather than silently rendering [object Object]', () => {
     const shadow = { color: '#000', offsetX: '0', offsetY: '2px', blur: '4px' };
     const result = fromDesignTokens({ elevation: { low: { $type: 'shadow', $value: shadow } } });
-    // Still stored structurally (the deliberate composite behavior)...
-    expect(result.tokens[0]!.fallback).toEqual(shadow);
-    // ...but the un-renderable composite is surfaced now, not silent.
-    expect(result.diagnostics.some((d) => d.code === MIGRATE_CODES.lossyTokenConversion)).toBe(true);
+    expect(result.tokens).toEqual([]);
+    const diagnostic = result.diagnostics.find((d) => d.code === MIGRATE_CODES.lossyTokenConversion);
+    expect(diagnostic?.severity).toBe('error');
   });
 });
 

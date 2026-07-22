@@ -14,7 +14,7 @@ export { makeMigrationDiagnostic, MIGRATE_CODES } from '@liteship/compiler/migra
 // P14 adapters — the curated surface over `@liteship/compiler/migrate`.
 export { fromMediaQueries } from '@liteship/compiler/migrate';
 export { fromContainerQueries } from '@liteship/compiler/migrate';
-export { fromDesignTokens } from '@liteship/compiler/migrate';
+export { fromDesignTokens, DTCG_FORMAT_VERSION } from '@liteship/compiler/migrate';
 export type { FromDesignTokensOptions } from '@liteship/compiler/migrate';
 export { fromTailwindTheme } from '@liteship/compiler/migrate';
 export type { FromTailwindThemeOptions } from '@liteship/compiler/migrate';
