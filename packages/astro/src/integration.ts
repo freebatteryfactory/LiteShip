@@ -15,6 +15,7 @@ import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { AstroIntegration } from 'astro';
 import type { BoundaryManifestFile } from '@liteship/edge';
+import { InvariantViolationError } from '@liteship/error';
 import { collectBoundaryManifest, loadProjectConfig, plugin, primitiveSearchPatterns } from '@liteship/vite';
 import type { PluginConfig, PrimitiveKind } from '@liteship/vite';
 import type { LoadedProjectConfig, ProjectConfigLoader } from '@liteship/vite';
@@ -42,7 +43,10 @@ function ownedEntrypoint(relativePath: string): string {
   if (existsSync(builtPath)) return builtPath;
   const sourcePath = builtPath.endsWith('.js') ? `${builtPath.slice(0, -3)}.ts` : builtPath;
   if (existsSync(sourcePath)) return sourcePath;
-  throw new Error(`@liteship/astro owns no runtime entrypoint at ${relativePath}`);
+  throw InvariantViolationError(
+    'astro-owned-entrypoint',
+    `@liteship/astro owns no runtime entrypoint at ${relativePath}`,
+  );
 }
 
 const OWNED_ENTRYPOINTS = Object.freeze({
