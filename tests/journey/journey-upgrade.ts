@@ -76,7 +76,10 @@ export async function journeyUpgrade(current: PackedWorkspace): Promise<JourneyR
     applyCurrentScaffoldMigration(appDir);
     rewriteConsumerToTarballs(appDir, current);
 
-    const currentInstall = await installConsumer(appDir);
+    // Replacing the historical tarball overrides is the operation under test;
+    // the current install must therefore update the consumer lockfile rather
+    // than asking CI's frozen-lockfile default to accept stale dependency IDs.
+    const currentInstall = await installConsumer(appDir, 'pnpm', { updateLockfile: true });
     journeyAssert(
       currentInstall.code === 0,
       `current upgrade install failed (exit ${currentInstall.code}):\n${(

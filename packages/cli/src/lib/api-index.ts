@@ -190,7 +190,8 @@ function declarationInFile(text: string, symbol: string, file: string): Declarat
 function resolveRelativeModule(fromFile: string, specifier: string): string | null {
   const raw = resolve(dirname(fromFile), specifier);
   const extension = extname(raw);
-  const stem = extension === '.js' || extension === '.mjs' || extension === '.cjs' ? raw.slice(0, -extension.length) : raw;
+  const stem =
+    extension === '.js' || extension === '.mjs' || extension === '.cjs' ? raw.slice(0, -extension.length) : raw;
   const candidates = [
     raw,
     `${stem}.ts`,
@@ -205,7 +206,10 @@ function resolveRelativeModule(fromFile: string, specifier: string): string | nu
 }
 
 function exportedName(specifier: string): { readonly imported: string; readonly exported: string } | null {
-  const normalized = specifier.replace(/\/\*[\s\S]*?\*\//g, '').trim().replace(/^type\s+/, '');
+  const normalized = specifier
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .trim()
+    .replace(/^type\s+/, '');
   if (normalized === '') return null;
   const parts = normalized.split(/\s+as\s+/);
   const imported = parts[0]?.trim();
@@ -213,11 +217,7 @@ function exportedName(specifier: string): { readonly imported: string; readonly 
   return imported && exported ? { imported, exported } : null;
 }
 
-function findReachableDeclaration(
-  file: string,
-  symbol: string,
-  visited: Set<string>,
-): DeclarationMatch | null {
+function findReachableDeclaration(file: string, symbol: string, visited: Set<string>): DeclarationMatch | null {
   const key = `${file}\0${symbol}`;
   if (visited.has(key)) return null;
   visited.add(key);

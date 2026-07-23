@@ -337,9 +337,12 @@ export function writePackedAuthorManifest(appDir: string, packed: PackedWorkspac
 export async function installConsumer(
   appDir: string,
   packageManager: ConsumerPackageManager = 'pnpm',
+  options: { readonly updateLockfile?: boolean } = {},
 ): Promise<PnpmRunResult> {
   if (packageManager === 'pnpm') {
-    return runPnpm(['install', '--prefer-offline'], { cwd: appDir, env: { FORCE_COLOR: '0' } });
+    const args = ['install', '--prefer-offline'];
+    if (options.updateLockfile === true) args.push('--no-frozen-lockfile');
+    return runPnpm(args, { cwd: appDir, env: { FORCE_COLOR: '0' } });
   }
   const result = await spawnArgvCapture('npm', ['install', '--prefer-offline', '--no-audit', '--no-fund'], {
     cwd: appDir,

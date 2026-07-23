@@ -491,9 +491,7 @@ export function defineQuantizer<B extends Boundary, O extends QuantizerOutputs<B
   // hashed or retained. Caller mutation can therefore never make the stored
   // authored intent disagree with its content address.
   const forceSnapshot =
-    force === undefined
-      ? undefined
-      : (Object.freeze([...new Set(force)].sort()) as readonly OutputTarget[]);
+    force === undefined ? undefined : (Object.freeze([...new Set(force)].sort()) as readonly OutputTarget[]);
   const admittedTargets = resolveQuantizerTargets(tier, forceSnapshot);
 
   if (tier !== undefined) {
