@@ -34,6 +34,24 @@ function viewport() {
   });
 }
 
+function assertQuantizerSnapshotTypesAreReadonly(): void {
+  const config = defineQuantizer(viewport(), {
+    outputs: {
+      css: {
+        compact: { color: 'red' },
+        medium: { color: 'green' },
+        expanded: { color: 'blue' },
+      },
+    },
+    spring: { stiffness: 170, damping: 26 },
+  });
+  // @ts-expect-error Quantizer output snapshots are recursively immutable.
+  config.outputs.css!.compact.color = 'black';
+  // @ts-expect-error Quantizer spring snapshots are immutable.
+  config.spring!.stiffness = 999;
+}
+void assertQuantizerSnapshotTypesAreReadonly;
+
 // Counter to make outputs unique per call (avoids content-address cache collisions)
 let outputCounter = 0;
 

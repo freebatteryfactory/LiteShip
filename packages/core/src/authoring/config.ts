@@ -6,6 +6,7 @@
  */
 
 import type { ContentAddress } from '../schema/brands.js';
+import type { DeepReadonly } from '../schema/types.js';
 import type { Boundary } from './boundary.js';
 import type { Token } from './token.js';
 import type { Theme } from './theme.js';
@@ -120,12 +121,12 @@ export const Config = {
 export interface Config {
   readonly _tag: 'ConfigDef';
   readonly id: ContentAddress;
-  readonly boundaries: Record<string, Boundary>;
-  readonly tokens: Record<string, Token>;
-  readonly themes: Record<string, Theme>;
-  readonly styles: Record<string, Style>;
-  readonly vite?: Partial<PluginConfig>;
-  readonly astro?: Partial<AstroConfig>;
+  readonly boundaries: DeepReadonly<Record<string, Boundary>>;
+  readonly tokens: DeepReadonly<Record<string, Token>>;
+  readonly themes: DeepReadonly<Record<string, Theme>>;
+  readonly styles: DeepReadonly<Record<string, Style>>;
+  readonly vite?: DeepReadonly<Partial<PluginConfig>>;
+  readonly astro?: DeepReadonly<Partial<AstroConfig>>;
 }
 
 /** Raw user-facing input to {@link defineConfig} — every field is optional. */

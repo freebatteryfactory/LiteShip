@@ -14,6 +14,20 @@ const boundary = defineBoundary({
   ] as const,
 });
 
+function assertConfigSnapshotTypesAreReadonly(): void {
+  const cfg = defineConfig({
+    boundaries: { viewport: boundary },
+    vite: { dirs: { boundary: '/src' }, environments: ['browser'] },
+  });
+  // @ts-expect-error Config snapshot maps are immutable after definition.
+  cfg.boundaries.extra = boundary;
+  // @ts-expect-error Nested Config snapshot records are immutable after definition.
+  cfg.vite!.dirs!.boundary = '/other';
+  // @ts-expect-error Nested Config snapshot arrays expose no mutating methods.
+  cfg.vite!.environments!.push('server');
+}
+void assertConfigSnapshotTypesAreReadonly;
+
 describe('defineConfig()', () => {
   test('returns a frozen object with _tag ConfigDef', () => {
     const cfg = defineConfig({ boundaries: { viewport: boundary } });

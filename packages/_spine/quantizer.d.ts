@@ -18,6 +18,14 @@ import type {
   Clock,
 } from './core.d.ts';
 
+type ReadonlyQuantizerValue<T> = T extends (...args: never[]) => unknown
+  ? T
+  : T extends readonly (infer U)[]
+    ? readonly ReadonlyQuantizerValue<U>[]
+    : T extends object
+      ? { readonly [K in keyof T]: ReadonlyQuantizerValue<T[K]> }
+      : T;
+
 // MotionTier canonical declaration lives in core.d.ts; re-exported here so
 // `@liteship/_spine` consumers reading the quantizer surface still see it on
 // this sub-spine without an extra import.
@@ -73,10 +81,10 @@ type OutputRecord = Partial<{ [K in OutputTarget]: Record<string, unknown> }>;
  */
 export interface QuantizerConfig<B extends Boundary, O extends QuantizerOutputs<B> = QuantizerOutputs<B>> {
   readonly boundary: B;
-  readonly outputs: O;
+  readonly outputs: ReadonlyQuantizerValue<O>;
   readonly id: ContentAddress;
   readonly tier?: MotionTier;
-  readonly spring?: SpringConfig;
+  readonly spring?: ReadonlyQuantizerValue<SpringConfig>;
   readonly force?: readonly OutputTarget[];
 }
 

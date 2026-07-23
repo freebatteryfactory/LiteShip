@@ -19,6 +19,7 @@ import type {
   OutputsFor,
   HLCBrand,
   Clock,
+  DeepReadonly,
 } from '@liteship/core';
 import { HLC, CellKernel, Lifetime, attachLifetime } from '@liteship/core';
 import type { MotionTier, QualityTierTarget, AsyncOwnedResource } from '@liteship/core';
@@ -249,13 +250,13 @@ export interface QuantizerConfig<B extends Boundary, O extends QuantizerOutputs<
   /** Boundary this config quantizes against. */
   readonly boundary: B;
   /** Per-target output tables keyed by state. */
-  readonly outputs: O;
+  readonly outputs: DeepReadonly<O>;
   /** Content-addressed identity (FNV-1a of boundary id + outputs + tier + spring + force). */
   readonly id: ContentAddress;
   /** Motion tier gating active targets; see {@link DefineQuantizerOptions.tier} for the tier → targets table. */
   readonly tier?: MotionTier;
   /** Spring config driving CSS easing injection. */
-  readonly spring?: SpringConfig;
+  readonly spring?: DeepReadonly<SpringConfig>;
   /** Targets force-enabled past their tier gate; part of the content address. */
   readonly force?: readonly OutputTarget[];
 }

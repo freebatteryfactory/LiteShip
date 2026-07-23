@@ -7,9 +7,11 @@ export type Prettify<T> = { [K in keyof T]: T[K] } & {};
 export type RequireAtLeastOne<T, Keys extends keyof T = keyof T> = Pick<T, Exclude<keyof T, Keys>> &
   { [K in Keys]-?: Required<Pick<T, K>> & Partial<Pick<T, Exclude<Keys, K>>> }[Keys];
 
-/** Recursively make arrays and object properties readonly. */
-export type DeepReadonly<T> = T extends (infer U)[]
-  ? ReadonlyArray<DeepReadonly<U>>
-  : T extends Record<string, unknown>
-    ? { readonly [K in keyof T]: DeepReadonly<T[K]> }
-    : T;
+/** Recursively make arrays and object properties readonly while preserving callable values. */
+export type DeepReadonly<T> = T extends (...args: never[]) => unknown
+  ? T
+  : T extends readonly (infer U)[]
+    ? readonly DeepReadonly<U>[]
+    : T extends object
+      ? { readonly [K in keyof T]: DeepReadonly<T[K]> }
+      : T;

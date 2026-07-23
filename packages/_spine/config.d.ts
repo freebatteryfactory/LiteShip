@@ -5,15 +5,23 @@
 import type { ContentAddress, Boundary } from './core.d.ts';
 import type { Token, Theme, Style } from './design.d.ts';
 
+type ReadonlyConfigValue<T> = T extends (...args: never[]) => unknown
+  ? T
+  : T extends readonly (infer U)[]
+    ? readonly ReadonlyConfigValue<U>[]
+    : T extends object
+      ? { readonly [K in keyof T]: ReadonlyConfigValue<T[K]> }
+      : T;
+
 export interface Config {
   readonly _tag: 'ConfigDef';
   readonly id: ContentAddress;
-  readonly boundaries: Record<string, Boundary>;
-  readonly tokens: Record<string, Token>;
-  readonly themes: Record<string, Theme>;
-  readonly styles: Record<string, Style>;
-  readonly vite?: ConfigInput['vite'];
-  readonly astro?: ConfigInput['astro'];
+  readonly boundaries: ReadonlyConfigValue<Record<string, Boundary>>;
+  readonly tokens: ReadonlyConfigValue<Record<string, Token>>;
+  readonly themes: ReadonlyConfigValue<Record<string, Theme>>;
+  readonly styles: ReadonlyConfigValue<Record<string, Style>>;
+  readonly vite?: ReadonlyConfigValue<NonNullable<ConfigInput['vite']>>;
+  readonly astro?: ReadonlyConfigValue<NonNullable<ConfigInput['astro']>>;
 }
 
 /** User-facing input — no id, no _tag */
