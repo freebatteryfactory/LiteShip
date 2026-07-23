@@ -23,11 +23,13 @@ import {
   runInstalledLiteshipCli,
   scaffoldConsumer,
   REPO_ROOT,
+  type ConsumerPackageManager,
   type JourneyResult,
   type PackedWorkspace,
 } from './harness.js';
 
 const CANONICAL_TEMPLATE = resolve(REPO_ROOT, 'packages', 'create-liteship', 'templates', 'default');
+const MANAGERS: readonly ConsumerPackageManager[] = ['npm', 'pnpm'];
 
 function relativeFiles(dir: string): readonly string[] {
   return findFiles(dir, '')
@@ -52,54 +54,62 @@ function assertCanonicalCopy(copiedDir: string): number {
 
 export async function journeyInstalledAdd(packed: PackedWorkspace): Promise<JourneyResult> {
   const name = 'journey-installed-add';
-  let appDir: string | undefined;
   try {
-    appDir = scaffoldConsumer();
-    rewriteConsumerToTarballs(appDir, packed);
+    const copiedCounts = new Map<ConsumerPackageManager, number>();
+    for (const manager of MANAGERS) {
+      const appDir = scaffoldConsumer();
+      try {
+        rewriteConsumerToTarballs(appDir, packed, { packageManager: manager });
+        const install = await installConsumer(appDir, manager);
+        if (install.code !== 0) {
+          throw new Error(
+            `${manager} install failed (exit ${install.code}):\n${(install.stdout + install.stderr).slice(-1200)}`,
+          );
+        }
 
-    const install = await installConsumer(appDir);
-    if (install.code !== 0) {
-      throw new Error(`pnpm install failed (exit ${install.code}):\n${(install.stdout + install.stderr).slice(-1200)}`);
+        // Each appDir is an unrelated os.tmpdir consumer. Executable and
+        // fragment resolution therefore come only from its packed install.
+        const listed = await runInstalledLiteshipCli(['add'], appDir, manager);
+        journeyAssert(
+          listed.code === 0,
+          `${manager} installed add list failed (exit ${listed.code}):\n${(listed.stderr || listed.stdout).slice(-1200)}`,
+        );
+        const listReceipt = parseReceipt(listed.stdout);
+        const fragments = listReceipt['fragments'] as { readonly template?: readonly string[] } | undefined;
+        journeyAssert(
+          fragments?.template?.includes('default') === true,
+          `${manager} installed add did not list template/default`,
+        );
+
+        const copied = await runInstalledLiteshipCli(['add', 'template', 'default'], appDir, manager);
+        journeyAssert(
+          copied.code === 0,
+          `${manager} installed add copy failed (exit ${copied.code}):\n${(copied.stderr || copied.stdout).slice(-1200)}`,
+        );
+        const receipt = parseReceipt(copied.stdout);
+        journeyAssert(receipt['status'] === 'ok', `${manager} add receipt status was ${String(receipt['status'])}`);
+        journeyAssert(receipt['command'] === 'add', `${manager} add receipt command was ${String(receipt['command'])}`);
+        journeyAssert(receipt['kind'] === 'template', `${manager} add receipt kind was ${String(receipt['kind'])}`);
+        journeyAssert(receipt['name'] === 'default', `${manager} add receipt name was ${String(receipt['name'])}`);
+        journeyAssert(receipt['dest'] === 'default', `${manager} add receipt dest was ${String(receipt['dest'])}`);
+
+        const fileCount = assertCanonicalCopy(join(appDir, 'default'));
+        journeyAssert(receipt['fileCount'] === fileCount, `${manager} add receipt fileCount was not ${fileCount}`);
+        copiedCounts.set(manager, fileCount);
+      } finally {
+        removeDir(join(appDir, '..'));
+      }
     }
-
-    // `appDir` is a fresh os.tmpdir consumer outside the repository. Executable
-    // and fragment resolution therefore come only from its packed install.
-    const listed = await runInstalledLiteshipCli(['add'], appDir);
-    journeyAssert(
-      listed.code === 0,
-      `installed liteship add list failed (exit ${listed.code}):\n${(listed.stderr || listed.stdout).slice(-1200)}`,
-    );
-    const listReceipt = parseReceipt(listed.stdout);
-    const fragments = listReceipt['fragments'] as { readonly template?: readonly string[] } | undefined;
-    journeyAssert(
-      fragments?.template?.includes('default') === true,
-      'installed liteship add did not list packaged template fragment "default"',
-    );
-
-    const copied = await runInstalledLiteshipCli(['add', 'template', 'default'], appDir);
-    journeyAssert(
-      copied.code === 0,
-      `installed liteship add template default failed (exit ${copied.code}):\n${(copied.stderr || copied.stdout).slice(-1200)}`,
-    );
-    const copyReceipt = parseReceipt(copied.stdout);
-    journeyAssert(copyReceipt['status'] === 'ok', `add receipt status was ${String(copyReceipt['status'])}, not ok`);
-    journeyAssert(copyReceipt['command'] === 'add', `add receipt command was ${String(copyReceipt['command'])}`);
-    journeyAssert(copyReceipt['kind'] === 'template', `add receipt kind was ${String(copyReceipt['kind'])}`);
-    journeyAssert(copyReceipt['name'] === 'default', `add receipt name was ${String(copyReceipt['name'])}`);
-    journeyAssert(copyReceipt['dest'] === 'default', `add receipt dest was ${String(copyReceipt['dest'])}`);
-
-    const fileCount = assertCanonicalCopy(join(appDir, 'default'));
-    journeyAssert(copyReceipt['fileCount'] === fileCount, `add receipt fileCount was not ${fileCount}`);
 
     return {
       name,
       status: 'pass',
-      detail: `packed installed CLI listed and copied template/default; ${fileCount} files byte-match the canonical create-liteship template`,
+      detail:
+        `npm (${copiedCounts.get('npm')} files) + pnpm (${copiedCounts.get('pnpm')} files) installed CLIs listed and ` +
+        'copied template/default byte-identically from the canonical create-liteship source',
       notes: [],
     };
   } catch (error) {
     return { name, status: 'fail', detail: error instanceof Error ? error.message : String(error), notes: [] };
-  } finally {
-    removeDir(appDir === undefined ? undefined : join(appDir, '..'));
   }
 }

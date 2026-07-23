@@ -227,7 +227,12 @@ export interface RewriteOptions {
    * (e.g. a prior range in the upgrade journey). Defaults to the packed tarball URL.
    */
   readonly liteshipSpec?: string;
+  /** Package manager whose real installed CLI/host route the journey exercises. */
+  readonly packageManager?: ConsumerPackageManager;
 }
+
+/** Consumer installation authorities covered by packed journeys. */
+export type ConsumerPackageManager = 'npm' | 'pnpm';
 
 /**
  * Rewrite the scaffolded app's `package.json` so every `@liteship/*` scope (plus
@@ -249,14 +254,31 @@ export function rewriteConsumerToTarballs(appDir: string, packed: PackedWorkspac
 
   const manifestPath = join(appDir, 'package.json');
   const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as Record<string, unknown>;
-  manifest['dependencies'] = {
-    liteship: options.liteshipSpec ?? tarballFileUrl(liteshipTgz!),
-    astro: peerVersion('astro'),
-    typescript: peerVersion('typescript'),
-  };
-  manifest['pnpm'] = { overrides };
+  const packageManager = options.packageManager ?? 'pnpm';
+  if (packageManager === 'pnpm') {
+    manifest['dependencies'] = {
+      liteship: options.liteshipSpec ?? tarballFileUrl(liteshipTgz!),
+      astro: peerVersion('astro'),
+      typescript: peerVersion('typescript'),
+    };
+    manifest['pnpm'] = { overrides };
+  } else {
+    // npm has no pnpm-style root override graph for unpublished same-version
+    // transitive peers. Installing every packed scope as a direct file dependency
+    // gives npm one physical candidate for each exact/ranged fleet edge, while the
+    // app still consumes only the public `liteship` facade in authored source.
+    manifest['dependencies'] = {
+      ...overrides,
+      liteship: options.liteshipSpec ?? tarballFileUrl(liteshipTgz!),
+      astro: peerVersion('astro'),
+      typescript: peerVersion('typescript'),
+    };
+    delete manifest['pnpm'];
+  }
   writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
-  writeFileSync(join(appDir, '.npmrc'), ['node-linker=hoisted', 'public-hoist-pattern[]=*', ''].join('\n'));
+  if (packageManager === 'pnpm') {
+    writeFileSync(join(appDir, '.npmrc'), ['node-linker=hoisted', 'public-hoist-pattern[]=*', ''].join('\n'));
+  }
 }
 
 /** Wire the historical starter to the genuinely historical `@czap/*` tarballs. */
@@ -312,8 +334,17 @@ export function writePackedAuthorManifest(appDir: string, packed: PackedWorkspac
  * re-resolves ranges the workspace lockfile pinned differently), so `--prefer-offline`
  * is the design-sanctioned install phase. Failure remains a failing journey.
  */
-export async function installConsumer(appDir: string): Promise<PnpmRunResult> {
-  return runPnpm(['install', '--prefer-offline'], { cwd: appDir, env: { FORCE_COLOR: '0' } });
+export async function installConsumer(
+  appDir: string,
+  packageManager: ConsumerPackageManager = 'pnpm',
+): Promise<PnpmRunResult> {
+  if (packageManager === 'pnpm') {
+    return runPnpm(['install', '--prefer-offline'], { cwd: appDir, env: { FORCE_COLOR: '0' } });
+  }
+  const result = await spawnArgvCapture('npm', ['install', '--prefer-offline', '--no-audit', '--no-fund'], {
+    cwd: appDir,
+  });
+  return { code: result.exitCode, stdout: result.stdout, stderr: result.stderr };
 }
 
 /** Run a headless `astro build` in the consumer app (the `tests/integration/astro/test.ts` pattern). */
@@ -382,8 +413,15 @@ export async function runLiteshipCli(
 export async function runInstalledLiteshipCli(
   args: readonly string[],
   cwd: string,
+  packageManager: ConsumerPackageManager = 'pnpm',
 ): Promise<{ readonly code: number; readonly stdout: string; readonly stderr: string }> {
-  return runPnpm(['exec', 'liteship', ...args], { cwd, env: { FORCE_COLOR: '0' } });
+  if (packageManager === 'pnpm') {
+    return runPnpm(['exec', 'liteship', ...args], { cwd, env: { FORCE_COLOR: '0' } });
+  }
+  const result = await spawnArgvCapture('npm', ['exec', '--', 'liteship', ...args], {
+    cwd,
+  });
+  return { code: result.exitCode, stdout: result.stdout, stderr: result.stderr };
 }
 
 /** Run Node inside an installed consumer, resolving imports only from that consumer. */

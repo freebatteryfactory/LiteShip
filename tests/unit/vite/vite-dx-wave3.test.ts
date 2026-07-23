@@ -146,35 +146,35 @@ describe('LESSON (#80): WASM auto-enables when a binary is present — no double
 // ---------------------------------------------------------------------------
 
 describe('LESSON (#79): the environments option defaults sensibly and rejects typos loudly', () => {
-  test('omitting environments yields exactly the browser environment', () => {
+  test('omitting environments yields exactly the browser environment', async () => {
     // LAW: the option no longer silently no-ops — omitted means a concrete,
     // documented default of ['browser'].
-    const result = plugin().config?.() as { environments: Record<string, unknown> };
+    const result = (await plugin().config?.()) as { environments: Record<string, unknown> };
     expect(Object.keys(result.environments)).toEqual(['browser']);
   });
 
-  test('every valid environment name is accepted and configured', () => {
+  test('every valid environment name is accepted and configured', async () => {
     // LAW: the three layer-aware names round-trip through config() untouched.
     for (const name of ['browser', 'server', 'shader'] as const) {
-      const result = plugin({ environments: [name] }).config?.() as { environments: Record<string, unknown> };
+      const result = (await plugin({ environments: [name] }).config?.()) as { environments: Record<string, unknown> };
       expect(Object.keys(result.environments)).toEqual([name]);
     }
   });
 
-  test('an unknown environment name throws an early, teaching error (property)', () => {
+  test('an unknown environment name throws an early, teaching error (property)', async () => {
     // LAW: a typo would otherwise produce a silently-empty / wrong env map
     // that no-ops at build time — instead it must throw, naming the bad value
     // and the supported set. Generated over arbitrary non-valid strings.
     const valid = new Set(['browser', 'server', 'shader']);
-    fc.assert(
-      fc.property(
+    await fc.assert(
+      fc.asyncProperty(
         fc.string({ minLength: 1 }).filter((s) => !valid.has(s)),
-        (bad) => {
+        async (bad) => {
           let threw: Error | null = null;
           try {
             // cast: the runtime guard is what we're pinning; TS users get the
             // narrow union, but `as never`-style escapes and JS consumers do not.
-            plugin({ environments: [bad] as never }).config?.();
+            await plugin({ environments: [bad] as never }).config?.();
           } catch (err) {
             threw = err as Error;
           }
@@ -186,9 +186,9 @@ describe('LESSON (#79): the environments option defaults sensibly and rejects ty
     );
   });
 
-  test('an explicit empty list stays a no-op (no environments configured)', () => {
+  test('an explicit empty list stays a no-op (no environments configured)', async () => {
     // LAW: `[]` is a legitimate "configure nothing" stance and must not error.
-    expect(plugin({ environments: [] }).config?.()).toEqual({});
+    expect(await plugin({ environments: [] }).config?.()).toEqual({});
   });
 });
 

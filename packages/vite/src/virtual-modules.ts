@@ -30,6 +30,7 @@
  * @module
  */
 
+import type { Config } from '@liteship/core';
 import type { BoundaryManifest } from '@liteship/edge';
 import { compileCollectedTokensCss, type ThemeManifest, type TokenManifest } from './token-manifest.js';
 
@@ -95,6 +96,8 @@ export interface VirtualModuleData {
   readonly tokens?: TokenManifest;
   /** Theme manifest for `virtual:liteship/themes`. */
   readonly themes?: ThemeManifest;
+  /** Validated root `liteship.config.ts` value, or null when the project has none. */
+  readonly config?: Config | null;
 }
 
 /** Public asset URLs keyed by boundary export name and output-pool index. */
@@ -158,9 +161,8 @@ export function loadVirtualModule(id: string, data?: VirtualModuleData): string 
 
     case 'config':
       return [
-        '/** liteship/config virtual module -- typed stub served by liteship/vite */',
-        '/** Full config is available via liteship.config.ts at the workspace root */',
-        'export const config = null;',
+        '/** Validated projection of the root liteship.config.ts value. */',
+        `export const config = ${data?.config === undefined || data.config === null ? 'null' : JSON.stringify(data.config)};`,
       ].join('\n');
 
     default:

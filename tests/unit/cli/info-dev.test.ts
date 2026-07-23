@@ -9,13 +9,13 @@
  * the examples route's name resolution (default / --tutorial / --example) plus
  * the missing-app guard that fails 1 with a structured error before any spawn.
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { info } from '../../../packages/cli/src/commands/info.js';
-import { dev } from '../../../packages/cli/src/commands/dev.js';
+import { createDevCommand, dev } from '../../../packages/cli/src/commands/dev.js';
 import { detectHost } from '../../../packages/cli/src/lib/host-detect.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -153,22 +153,29 @@ describe('detectHost — consumer-app host recognition', () => {
 });
 
 describe('liteship dev — consumer-app host route', () => {
-  it('delegates to the host dev server and emits a { mode: host } receipt before spawning', async () => {
+  it.each([
+    { manager: 'npm', expectedCommand: 'npm', expectedArgs: ['exec', '--', 'astro', 'dev'] },
+    { manager: 'pnpm', expectedCommand: 'pnpm', expectedArgs: ['exec', 'astro', 'dev'] },
+  ] as const)('delegates through $manager and emits its host receipt before spawning', async (row) => {
     // A LiteShip app: liteship.config.ts beside a recognizable host config. No
     // example/tutorial selector → the consumer-app route. The receipt is emitted
-    // to stdout BEFORE the spawn, so we can assert it independently of whether the
-    // `pnpm exec astro dev` child succeeds (it fails fast here: astro is not
-    // installed in this bare tmp dir), which is what keeps this assertion stable.
+    // to stdout BEFORE the injected process boundary, so this unit proof never
+    // launches a long-running framework server.
     const app = mkdtempSync(join(tmpdir(), 'liteship-dev-host-'));
     try {
       writeFileSync(join(app, 'liteship.config.ts'), '');
       writeFileSync(join(app, 'astro.config.ts'), '');
-      const r = await capture(() => dev({ cwd: app }));
+      writeFileSync(join(app, 'package.json'), JSON.stringify({ packageManager: `${row.manager}@10.0.0` }));
+      const spawn = vi.fn(async () => ({ exitCode: 0, stderrTail: '' }));
+      const run = createDevCommand(spawn);
+      const r = await capture(() => run({ cwd: app }));
       const receipt = JSON.parse(r.stdout.trim().split('\n').pop()!);
       expect(receipt.status).toBe('ok');
       expect(receipt.command).toBe('dev');
       expect(receipt.mode).toBe('host');
       expect(receipt.host).toBe('astro');
+      expect(receipt.packageManager).toBe(row.manager);
+      expect(spawn).toHaveBeenCalledWith(row.expectedCommand, row.expectedArgs, { stdio: 'inherit', cwd: app });
     } finally {
       rmSync(app, { recursive: true, force: true });
     }

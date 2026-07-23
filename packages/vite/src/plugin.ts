@@ -18,7 +18,9 @@
  * @module
  */
 
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import type { Config as LiteshipConfig } from '@liteship/core';
 import type { EnvironmentModuleGraph, EnvironmentModuleNode, Plugin, UserConfig } from 'vite';
 import { ValidationError } from '@liteship/error';
 import { contentAddressOf, normalizeRepoPath } from '@liteship/core';
@@ -50,6 +52,13 @@ import {
   refreshWasmAtBuildStart,
   setEmittedWasmRef,
 } from './wasm-state.js';
+import {
+  loadProjectConfig,
+  mergePluginConfig,
+  PROJECT_CONFIG_FILE,
+  type LoadedProjectConfig,
+  type ProjectConfigLoader,
+} from './project-config.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -185,15 +194,21 @@ function attachAssetUrls(
  * it defaulted (call sites are `plugin(config)`, byte-identical); a test injects a
  * stub to force the `'package'` WASM source absent against a synthetic project root.
  */
-export function plugin(config?: PluginConfig, resolvePackaged: () => string | null = resolvePackagedWasm): Plugin {
-  const hmrEnabled = config?.hmr !== false;
-  const emitBoundaryAssets = config?.emitBoundaryAssets === true;
+export function plugin(
+  config?: PluginConfig,
+  resolvePackaged: () => string | null = resolvePackagedWasm,
+  projectConfigLoader?: ProjectConfigLoader,
+): Plugin {
+  let effectiveConfig = config ?? {};
+  let hmrEnabled = effectiveConfig.hmr !== false;
+  let emitBoundaryAssets = effectiveConfig.emitBoundaryAssets === true;
+  let loadedProjectConfig: LiteshipConfig | null = null;
 
   // Per-instance state, lifted out of the closure into explicit records:
   //  - `cache`     : resolution + watch caches shared across transform/HMR.
   //  - `wasmState` : the compute-binary state machine (resolve/enable/emit).
   const cache = createPrimitiveResolutionCache();
-  const wasmState = createWasmState(normalizeWasmConfig(config?.wasm), process.cwd(), resolvePackaged);
+  let wasmState = createWasmState(normalizeWasmConfig(effectiveConfig.wasm), process.cwd(), resolvePackaged);
 
   let projectRoot = process.cwd();
   let isBuild = false;
@@ -213,8 +228,8 @@ export function plugin(config?: PluginConfig, resolvePackaged: () => string | nu
   function ensureBoundaryManifest(): Promise<BoundaryManifest> {
     if (!cache.boundaryManifest.value) {
       cache.boundaryManifest.value = collectBoundaryManifestFromScan(projectRoot, ensureProjectScan(), {
-        boundaryDir: config?.dirs?.boundary,
-        container: config?.quantize?.container,
+        boundaryDir: effectiveConfig.dirs?.boundary,
+        container: effectiveConfig.quantize?.container,
       });
     }
     return cache.boundaryManifest.value;
@@ -223,7 +238,7 @@ export function plugin(config?: PluginConfig, resolvePackaged: () => string | nu
   function ensureBoundaryDefinitions(): Promise<BoundaryDefinitionMap> {
     if (!boundaryDefinitions) {
       boundaryDefinitions = collectBoundaryDefinitionsFromScan(projectRoot, ensureProjectScan(), {
-        boundaryDir: config?.dirs?.boundary,
+        boundaryDir: effectiveConfig.dirs?.boundary,
       });
     }
     return boundaryDefinitions;
@@ -356,8 +371,8 @@ export function plugin(config?: PluginConfig, resolvePackaged: () => string | nu
       ) {
         if (!cache.tokenThemeManifest.value) {
           cache.tokenThemeManifest.value = Promise.all([
-            collectTokenManifest(projectRoot, { tokenDir: config?.dirs?.token }),
-            collectThemeManifest(projectRoot, { themeDir: config?.dirs?.theme }),
+            collectTokenManifest(projectRoot, { tokenDir: effectiveConfig.dirs?.token }),
+            collectThemeManifest(projectRoot, { themeDir: effectiveConfig.dirs?.theme }),
           ]).then(([tokens, themes]): TokenThemeManifest => ({ tokens, themes }));
         }
         return cache.tokenThemeManifest.value.then(({ tokens, themes }) => loadVirtualModule(id, { tokens, themes }));
@@ -383,6 +398,10 @@ export function plugin(config?: PluginConfig, resolvePackaged: () => string | nu
           resolved.source === 'public' ? '/liteship-compute.wasm' : `/@fs/${normalizeRepoPath(resolved.filePath)}`;
 
         return `export const wasmUrl = ${JSON.stringify(browserUrl)};`;
+      }
+
+      if (id === '\0virtual:liteship/config') {
+        return loadVirtualModule(id, { config: loadedProjectConfig });
       }
 
       return loadVirtualModule(id);
@@ -411,7 +430,7 @@ export function plugin(config?: PluginConfig, resolvePackaged: () => string | nu
 
     async transform(code: string, id: string) {
       if (id.endsWith('.html') || id.endsWith('.astro')) {
-        const transformed = await transformHTML(code, id, projectRoot, config?.dirs?.boundary);
+        const transformed = await transformHTML(code, id, projectRoot, effectiveConfig.dirs?.boundary);
         if (transformed === code) {
           return null;
         }
@@ -431,9 +450,9 @@ export function plugin(config?: PluginConfig, resolvePackaged: () => string | nu
         addWatchFile: typeof this.addWatchFile === 'function' ? (file) => this.addWatchFile(file) : undefined,
         cache,
         projectRoot,
-        dirs: config?.dirs,
+        dirs: effectiveConfig.dirs,
         boundaryDefinitions: discoveredBoundaries,
-        quantizeContainer: config?.quantize?.container,
+        quantizeContainer: effectiveConfig.quantize?.container,
       });
 
       if (transformed === null) return null;
@@ -537,15 +556,29 @@ export function plugin(config?: PluginConfig, resolvePackaged: () => string | nu
       return;
     },
 
-    config(): UserConfig {
-      const envNames = resolveEnvironmentNames(config?.environments);
-      const next: UserConfig = {};
+    config(
+      userConfig: UserConfig = {},
+      env = { command: 'serve' as const, mode: 'development' },
+    ): UserConfig | Promise<UserConfig> {
+      projectRoot = resolve(String(userConfig.root ?? process.cwd()));
+      const project = (loaded: LoadedProjectConfig | null): UserConfig => {
+        loadedProjectConfig = loaded?.config ?? null;
+        effectiveConfig = mergePluginConfig(loaded?.vite, config);
+        hmrEnabled = effectiveConfig.hmr !== false;
+        emitBoundaryAssets = effectiveConfig.emitBoundaryAssets === true;
+        wasmState = createWasmState(normalizeWasmConfig(effectiveConfig.wasm), projectRoot, resolvePackaged);
 
-      if (envNames.length > 0) {
-        next.environments = buildEnvironments(envNames);
-      }
+        const envNames = resolveEnvironmentNames(effectiveConfig.environments);
+        const next: UserConfig = {};
+        if (envNames.length > 0) next.environments = buildEnvironments(envNames);
+        return next;
+      };
 
-      return next;
+      if (!existsSync(resolve(projectRoot, PROJECT_CONFIG_FILE))) return project(null);
+      const pending = projectConfigLoader
+        ? loadProjectConfig(projectRoot, env, projectConfigLoader)
+        : loadProjectConfig(projectRoot, env);
+      return pending.then(project);
     },
   };
 }

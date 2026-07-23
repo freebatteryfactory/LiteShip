@@ -41,6 +41,6 @@ declare module 'virtual:liteship/wasm-url' {
 }
 
 declare module 'virtual:liteship/config' {
-  /** Typed handle for the workspace `liteship.config.ts` hub (stub). */
-  export const config: unknown;
+  /** Validated root `liteship.config.ts` value, or null in convention-only projects. */
+  export const config: import('@liteship/core').Config | null;
 }

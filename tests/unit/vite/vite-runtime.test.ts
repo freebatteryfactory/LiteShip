@@ -352,16 +352,16 @@ describe('@liteship/vite plugin', () => {
     expect(vitePlugin.transformIndexHtml?.()).toEqual([]);
   });
 
-  test('derives browser environment by default and honors explicit overrides', () => {
+  test('derives browser environment by default and honors explicit overrides', async () => {
     const defaultPlugin = plugin();
-    const defaultResult = defaultPlugin.config?.() as { environments: Record<string, unknown> };
+    const defaultResult = (await defaultPlugin.config?.()) as { environments: Record<string, unknown> };
     expect(Object.keys(defaultResult.environments)).toEqual(['browser']);
 
     const emptyPlugin = plugin({ environments: [] });
-    expect(emptyPlugin.config?.()).toEqual({});
+    expect(await emptyPlugin.config?.()).toEqual({});
 
     const envPlugin = plugin({ environments: ['browser', 'server'] });
-    const result = envPlugin.config?.() as { environments: Record<string, unknown> };
+    const result = (await envPlugin.config?.()) as { environments: Record<string, unknown> };
     expect(Object.keys(result.environments)).toEqual(['browser', 'server']);
   });
 

@@ -23,6 +23,12 @@ function fixture(...files: readonly string[]): string {
   return root;
 }
 
+function fixtureWithManager(manager: 'npm' | 'pnpm', ...files: readonly string[]): string {
+  const root = fixture(...files);
+  writeFileSync(join(root, 'package.json'), JSON.stringify({ packageManager: `${manager}@10.0.0` }));
+  return root;
+}
+
 function lastReceipt(stdout: string): BuildReceipt {
   return JSON.parse(stdout.trim().split('\n').pop()!) as BuildReceipt;
 }
@@ -74,26 +80,27 @@ describe('liteship build', () => {
   });
 
   it('runs the Astro build with exact argv/cwd and emits an ok BuildReceipt', async () => {
-    const root = fixture('liteship.config.ts', 'astro.config.ts');
+    const root = fixtureWithManager('npm', 'liteship.config.ts', 'astro.config.ts');
     const spawn = vi.fn(async () => ({ exitCode: 0, stderrTail: '' }));
     const run = createBuildCommand(spawn);
     const result = await captureCli(() => run({ cwd: root }));
 
     expect(result.exit).toBe(0);
     expect(spawn).toHaveBeenCalledOnce();
-    expect(spawn).toHaveBeenCalledWith('pnpm', ['exec', 'astro', 'build'], { cwd: root });
+    expect(spawn).toHaveBeenCalledWith('npm', ['exec', '--', 'astro', 'build'], { cwd: root });
     expect(result.stderr).toBe('');
     expect(lastReceipt(result.stdout)).toMatchObject({
       status: 'ok',
       command: 'build',
       host: 'astro',
+      packageManager: 'npm',
       exitCode: 0,
     });
     expect(Number.isNaN(Date.parse(lastReceipt(result.stdout).timestamp))).toBe(false);
   });
 
   it('runs the Vite build with exact argv/cwd and emits an ok BuildReceipt', async () => {
-    const root = fixture('liteship.config.ts', 'vite.config.mts');
+    const root = fixtureWithManager('pnpm', 'liteship.config.ts', 'vite.config.mts');
     const spawn = vi.fn(async () => ({ exitCode: 0, stderrTail: '' }));
     const run = createBuildCommand(spawn);
     const result = await captureCli(() => run({ cwd: root }));
@@ -106,23 +113,25 @@ describe('liteship build', () => {
       status: 'ok',
       command: 'build',
       host: 'vite',
+      packageManager: 'pnpm',
       exitCode: 0,
     });
   });
 
   it('returns the child nonzero exit and emits a failed BuildReceipt', async () => {
-    const root = fixture('liteship.config.ts', 'astro.config.mjs');
+    const root = fixtureWithManager('npm', 'liteship.config.ts', 'astro.config.mjs');
     const spawn = vi.fn(async () => ({ exitCode: 23, stderrTail: 'host build failed' }));
     const run = createBuildCommand(spawn);
     const result = await captureCli(() => run({ cwd: root }));
 
     expect(result.exit).toBe(23);
-    expect(spawn).toHaveBeenCalledWith('pnpm', ['exec', 'astro', 'build'], { cwd: root });
+    expect(spawn).toHaveBeenCalledWith('npm', ['exec', '--', 'astro', 'build'], { cwd: root });
     expect(result.stderr).toBe('');
     expect(lastReceipt(result.stdout)).toMatchObject({
       status: 'failed',
       command: 'build',
       host: 'astro',
+      packageManager: 'npm',
       exitCode: 23,
     });
   });

@@ -3,9 +3,9 @@
  *
  * A consumer app is recognized by a `liteship.config.ts` in the working
  * directory. The actual build is the host framework's: an Astro app
- * (`astro.config.*`) builds with `pnpm exec astro build`; a Vite app
- * (`vite.config.*`) builds with `pnpm exec vite build`. The host's build output
- * is piped to stderr so this command's stdout stays a single JSON receipt.
+ * (`astro.config.*`) builds with the project's package manager executing Astro;
+ * a Vite app likewise executes Vite. The host's build output is piped to stderr
+ * so this command's stdout stays a single JSON receipt.
  *
  * If there is no `liteship.config.ts`, or no recognizable host config beside it,
  * the command emits a clear diagnostic instead of guessing.
@@ -17,6 +17,11 @@ import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { wallClock } from '@liteship/core';
 import { detectHost, type BuildHost } from '../lib/host-detect.js';
+import {
+  detectProjectPackageManager,
+  projectBinaryInvocation,
+  type ProjectPackageManager,
+} from '../lib/project-package-manager.js';
 import { spawnArgvVisible } from '../lib/spawn.js';
 import { emit, emitError, type WallClockTimestamp } from '../receipts.js';
 
@@ -26,6 +31,7 @@ export interface BuildReceipt {
   readonly command: 'build';
   readonly timestamp: WallClockTimestamp;
   readonly host: BuildHost;
+  readonly packageManager: ProjectPackageManager;
   readonly exitCode: number;
 }
 
@@ -68,14 +74,16 @@ export function createBuildCommand(spawn: BuildSpawn = spawnArgvVisible): BuildC
       return 1;
     }
 
-    const buildArgs = host === 'astro' ? ['exec', 'astro', 'build'] : ['exec', 'vite', 'build'];
-    const result = await spawn('pnpm', buildArgs, { cwd });
+    const packageManager = detectProjectPackageManager(cwd);
+    const invocation = projectBinaryInvocation(packageManager, host, ['build']);
+    const result = await spawn(invocation.command, invocation.args, { cwd });
 
     const receipt: BuildReceipt = {
       status: result.exitCode === 0 ? 'ok' : 'failed',
       command: 'build',
       timestamp: new Date(wallClock.now()).toISOString(),
       host,
+      packageManager,
       exitCode: result.exitCode,
     };
     emit(receipt);
@@ -87,9 +95,10 @@ const runBuild = createBuildCommand();
 
 /**
  * Execute `liteship build`. Detects `liteship.config.ts` + the host backend in
- * `cwd`, runs the host build (`astro build` / `vite build`), and emits a JSON
- * receipt with the host + exit code. Exit 0 on a clean build; 1 when there is no
- * consumer app or no recognizable host; otherwise the build's own nonzero exit.
+ * `cwd`, runs the host build (`astro build` / `vite build`) through that project's
+ * npm or pnpm installation, and emits a JSON receipt with the host, manager, and
+ * exit code. Exit 0 on a clean build; 1 when there is no consumer app or no
+ * recognizable host; otherwise the build's own nonzero exit.
  */
 export async function build(opts: { cwd?: string } = {}): Promise<number> {
   return runBuild(opts);

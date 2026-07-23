@@ -202,7 +202,8 @@ const CLI_OWNED_DESCRIPTORS = [
   },
   {
     name: 'dev',
-    summary: 'Launch a dev host — an example app dev server (default examples/showcase; --example/--tutorial).',
+    summary:
+      'Launch the detected Astro/Vite host in a LiteShip application; repository-only --example/--tutorial selectors remain explicit.',
     inputSchema: {
       type: 'object',
       properties: { example: { type: 'string' }, tutorial: { type: 'boolean' } },
