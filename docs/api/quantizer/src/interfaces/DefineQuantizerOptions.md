@@ -6,7 +6,7 @@
 
 # Interface: DefineQuantizerOptions\<B, O\>
 
-Defined in: [quantizer/src/quantizer.ts:179](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L179)
+Defined in: [quantizer/src/quantizer.ts:180](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L180)
 
 Options accepted by [defineQuantizer](../functions/defineQuantizer.md) — the authored intent of a quantizer.
 
@@ -34,7 +34,7 @@ content-addressed identity.
 
 > `readonly` `optional` **force?**: readonly [`QualityTierTarget`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/QualityTierTarget.md)[]
 
-Defined in: [quantizer/src/quantizer.ts:203](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L203)
+Defined in: [quantizer/src/quantizer.ts:204](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L204)
 
 Targets to force-enable regardless of the current tier's gating set.
 
@@ -44,7 +44,7 @@ Targets to force-enable regardless of the current tier's gating set.
 
 > `readonly` **outputs**: `O`
 
-Defined in: [quantizer/src/quantizer.ts:181](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L181)
+Defined in: [quantizer/src/quantizer.ts:182](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L182)
 
 Per-target output tables keyed by boundary state.
 
@@ -54,7 +54,7 @@ Per-target output tables keyed by boundary state.
 
 > `readonly` `optional` **spring?**: [`SpringConfig`](SpringConfig.md)
 
-Defined in: [quantizer/src/quantizer.ts:201](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L201)
+Defined in: [quantizer/src/quantizer.ts:202](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L202)
 
 Spring config that drives CSS easing generation for CSS outputs.
 
@@ -64,7 +64,7 @@ Spring config that drives CSS easing generation for CSS outputs.
 
 > `readonly` `optional` **tier?**: `MotionTier`
 
-Defined in: [quantizer/src/quantizer.ts:199](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L199)
+Defined in: [quantizer/src/quantizer.ts:200](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L200)
 
 MotionTier for output gating; omit to allow all targets.
 

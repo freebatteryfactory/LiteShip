@@ -6,7 +6,7 @@
 
 # Interface: QuantizerConfig\<B, O\>
 
-Defined in: [quantizer/src/quantizer.ts:248](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L248)
+Defined in: [quantizer/src/quantizer.ts:249](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L249)
 
 Immutable, content-addressed quantizer definition (authored intent).
 
@@ -32,7 +32,7 @@ definition — pass it to [createQuantizer](../functions/createQuantizer.md) to 
 
 > `readonly` **boundary**: `B`
 
-Defined in: [quantizer/src/quantizer.ts:250](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L250)
+Defined in: [quantizer/src/quantizer.ts:251](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L251)
 
 Boundary this config quantizes against.
 
@@ -42,7 +42,7 @@ Boundary this config quantizes against.
 
 > `readonly` `optional` **force?**: readonly [`QualityTierTarget`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/QualityTierTarget.md)[]
 
-Defined in: [quantizer/src/quantizer.ts:260](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L260)
+Defined in: [quantizer/src/quantizer.ts:261](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L261)
 
 Targets force-enabled past their tier gate; part of the content address.
 
@@ -52,7 +52,7 @@ Targets force-enabled past their tier gate; part of the content address.
 
 > `readonly` **id**: `ContentAddress`
 
-Defined in: [quantizer/src/quantizer.ts:254](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L254)
+Defined in: [quantizer/src/quantizer.ts:255](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L255)
 
 Content-addressed identity (FNV-1a of boundary id + outputs + tier + spring + force).
 
@@ -60,9 +60,9 @@ Content-addressed identity (FNV-1a of boundary id + outputs + tier + spring + fo
 
 ### outputs
 
-> `readonly` **outputs**: `O`
+> `readonly` **outputs**: `DeepReadonly`\<`O`\>
 
-Defined in: [quantizer/src/quantizer.ts:252](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L252)
+Defined in: [quantizer/src/quantizer.ts:253](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L253)
 
 Per-target output tables keyed by state.
 
@@ -70,11 +70,29 @@ Per-target output tables keyed by state.
 
 ### spring?
 
-> `readonly` `optional` **spring?**: [`SpringConfig`](SpringConfig.md)
+> `readonly` `optional` **spring?**: `object`
 
-Defined in: [quantizer/src/quantizer.ts:258](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L258)
+Defined in: [quantizer/src/quantizer.ts:259](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L259)
 
 Spring config driving CSS easing injection.
+
+#### damping
+
+> `readonly` **damping**: `number`
+
+Damping coefficient; higher = less oscillation.
+
+#### mass?
+
+> `readonly` `optional` **mass?**: `number`
+
+Mass of the animated body; defaults to `1`.
+
+#### stiffness
+
+> `readonly` **stiffness**: `number`
+
+Spring constant (force per unit displacement); higher = snappier.
 
 ***
 
@@ -82,6 +100,6 @@ Spring config driving CSS easing injection.
 
 > `readonly` `optional` **tier?**: `MotionTier`
 
-Defined in: [quantizer/src/quantizer.ts:256](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L256)
+Defined in: [quantizer/src/quantizer.ts:257](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L257)
 
 Motion tier gating active targets; see [DefineQuantizerOptions.tier](DefineQuantizerOptions.md#tier) for the tier → targets table.

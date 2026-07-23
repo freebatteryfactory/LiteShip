@@ -6,7 +6,7 @@
 
 # Interface: CorePluginConfig
 
-Defined in: [core/src/authoring/config.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L29)
+Defined in: [core/src/authoring/config.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L30)
 
 Vite-plugin slice of a liteship [Config](../variables/Config.md): source directories per
 primitive kind, HMR opt-in, environment targeting, and optional WASM hints.
@@ -17,7 +17,7 @@ primitive kind, HMR opt-in, environment targeting, and optional WASM hints.
 
 > `readonly` `optional` **dirs?**: `Partial`\<`Record`\<[`PrimitiveKind`](../type-aliases/PrimitiveKind.md), `string`\>\>
 
-Defined in: [core/src/authoring/config.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L30)
+Defined in: [core/src/authoring/config.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L31)
 
 ***
 
@@ -25,7 +25,7 @@ Defined in: [core/src/authoring/config.ts:30](https://github.com/freebatteryfact
 
 > `readonly` `optional` **environments?**: readonly (`"browser"` \| `"server"` \| `"shader"`)[]
 
-Defined in: [core/src/authoring/config.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L32)
+Defined in: [core/src/authoring/config.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L33)
 
 ***
 
@@ -33,7 +33,7 @@ Defined in: [core/src/authoring/config.ts:32](https://github.com/freebatteryfact
 
 > `readonly` `optional` **hmr?**: `boolean`
 
-Defined in: [core/src/authoring/config.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L31)
+Defined in: [core/src/authoring/config.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L32)
 
 ***
 
@@ -41,4 +41,4 @@ Defined in: [core/src/authoring/config.ts:31](https://github.com/freebatteryfact
 
 > `readonly` `optional` **wasm?**: `boolean` \| \{ `enabled?`: `boolean`; `path?`: `string`; \}
 
-Defined in: [core/src/authoring/config.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L33)
+Defined in: [core/src/authoring/config.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L34)

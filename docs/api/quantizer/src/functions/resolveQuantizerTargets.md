@@ -8,7 +8,7 @@
 
 > **resolveQuantizerTargets**(`tier`, `force?`): `ReadonlySet`\<[`QualityTierTarget`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/QualityTierTarget.md)\>
 
-Defined in: [quantizer/src/quantizer.ts:103](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L103)
+Defined in: [quantizer/src/quantizer.ts:104](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L104)
 
 Resolve the exact target set a live quantizer admits for a motion tier plus
 explicit force overrides. This is the single target-gating owner used by

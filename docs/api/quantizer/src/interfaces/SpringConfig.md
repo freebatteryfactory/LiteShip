@@ -6,7 +6,7 @@
 
 # Interface: SpringConfig
 
-Defined in: [quantizer/src/quantizer.ts:155](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L155)
+Defined in: [quantizer/src/quantizer.ts:156](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L156)
 
 Spring physics parameters for CSS easing auto-generation.
 
@@ -20,7 +20,7 @@ so native `linear()` timing matches the physical spring response.
 
 > `readonly` **damping**: `number`
 
-Defined in: [quantizer/src/quantizer.ts:159](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L159)
+Defined in: [quantizer/src/quantizer.ts:160](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L160)
 
 Damping coefficient; higher = less oscillation.
 
@@ -30,7 +30,7 @@ Damping coefficient; higher = less oscillation.
 
 > `readonly` `optional` **mass?**: `number`
 
-Defined in: [quantizer/src/quantizer.ts:161](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L161)
+Defined in: [quantizer/src/quantizer.ts:162](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L162)
 
 Mass of the animated body; defaults to `1`.
 
@@ -40,6 +40,6 @@ Mass of the animated body; defaults to `1`.
 
 > `readonly` **stiffness**: `number`
 
-Defined in: [quantizer/src/quantizer.ts:157](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L157)
+Defined in: [quantizer/src/quantizer.ts:158](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L158)
 
 Spring constant (force per unit displacement); higher = snappier.

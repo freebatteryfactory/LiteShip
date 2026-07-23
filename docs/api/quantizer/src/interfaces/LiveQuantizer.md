@@ -6,7 +6,7 @@
 
 # Interface: LiveQuantizer\<B, O\>
 
-Defined in: [quantizer/src/quantizer.ts:296](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L296)
+Defined in: [quantizer/src/quantizer.ts:297](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L297)
 
 Runtime-instantiated quantizer with reactive output dispatch.
 
@@ -92,7 +92,7 @@ No-replay crossing subscription (was `Stream.Stream<BoundaryCrossing<StateUnion<
 
 > `readonly` **config**: [`QuantizerConfig`](QuantizerConfig.md)\<`B`, `O`\>
 
-Defined in: [quantizer/src/quantizer.ts:301](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L301)
+Defined in: [quantizer/src/quantizer.ts:302](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L302)
 
 The config this quantizer was created from.
 
@@ -102,7 +102,7 @@ The config this quantizer was created from.
 
 > `readonly` **currentOutputs**: `Pick`\<`CellKernel.Replay`\<`OutputRecord`\>, `"read"` \| `"subscribe"` \| `"closed"` \| `"size"`\>
 
-Defined in: [quantizer/src/quantizer.ts:303](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L303)
+Defined in: [quantizer/src/quantizer.ts:304](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L304)
 
 Read the currently-active per-target output record (replay-1 read side).
 
@@ -112,7 +112,7 @@ Read the currently-active per-target output record (replay-1 read side).
 
 > `readonly` **outputChanges**: `Pick`\<`CellKernel.Replay`\<`OutputRecord`\>, `"subscribe"` \| `"read"` \| `"closed"` \| `"size"`\>
 
-Defined in: [quantizer/src/quantizer.ts:305](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L305)
+Defined in: [quantizer/src/quantizer.ts:306](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L306)
 
 Per-target output records emitted on each boundary crossing (replay-1 subscribe side).
 
