@@ -23,6 +23,7 @@ type Manager = 'npm' | 'pnpm';
 const ROOT = resolve(import.meta.dirname, '..', '..', '..');
 let scratch: string;
 let facadeTarball: string;
+let noBinFacadeTarball: string;
 let cliTarball: string;
 
 function writeJson(path: string, value: unknown): void {
@@ -54,8 +55,10 @@ beforeAll(async () => {
   const tarballs = join(scratch, 'tarballs');
   const cli = join(packages, 'cli');
   const facade = join(packages, 'liteship');
+  const noBinFacade = join(packages, 'liteship-no-bin');
   mkdirSync(join(facade, 'bin'), { recursive: true });
-  mkdirSync(cli, { recursive: true });
+  mkdirSync(noBinFacade, { recursive: true });
+  mkdirSync(join(cli, 'bin'), { recursive: true });
   mkdirSync(tarballs, { recursive: true });
 
   writeJson(join(cli, 'package.json'), {
@@ -63,10 +66,15 @@ beforeAll(async () => {
     version: '1.0.0',
     type: 'module',
     exports: './index.js',
+    bin: { liteship: './bin/liteship.mjs' },
   });
   writeFileSync(
     join(cli, 'index.js'),
     "export async function run(args) { process.stdout.write(JSON.stringify({ owner: '@liteship/cli', args }) + '\\n'); return 0; }\n",
+  );
+  writeFileSync(
+    join(cli, 'bin/liteship.mjs'),
+    "#!/usr/bin/env node\nimport { run } from '../index.js';\nprocess.exit(await run(process.argv.slice(2)));\n",
   );
   cliTarball = await pack(cli, tarballs);
 
@@ -80,6 +88,14 @@ beforeAll(async () => {
   });
   copyFileSync(resolve(ROOT, 'packages/liteship/bin/liteship.mjs'), join(facade, 'bin/liteship.mjs'));
   facadeTarball = await pack(facade, tarballs);
+
+  writeJson(join(noBinFacade, 'package.json'), {
+    name: 'liteship',
+    version: '1.0.1',
+    type: 'module',
+    dependencies: { '@liteship/cli': '^1.0.0' },
+  });
+  noBinFacadeTarball = await pack(noBinFacade, tarballs);
 });
 
 afterAll(() => {
@@ -135,4 +151,29 @@ describe('liteship facade executable — one direct dependency', () => {
     expect(manifest.bin).toEqual({ liteship: './bin/liteship.mjs' });
     expect(manifest.files).toContain('bin');
   });
+
+  it(
+    'pnpm default isolation does not expose a transitive-only CLI bin at the application root',
+    { timeout: scaledTimeout(45_000) },
+    async () => {
+      const consumer = join(scratch, 'consumer-pnpm-no-facade-bin');
+      mkdirSync(consumer, { recursive: true });
+      writeJson(join(consumer, 'package.json'), {
+        name: 'one-install-negative-control',
+        private: true,
+        dependencies: { liteship: pathToFileURL(noBinFacadeTarball).href },
+        pnpm: { overrides: { '@liteship/cli': pathToFileURL(cliTarball).href } },
+      });
+
+      const install = await runPnpm(['install', '--prefer-offline'], {
+        cwd: consumer,
+        env: { FORCE_COLOR: '0' },
+      });
+      expect(install.code, install.stderr || install.stdout).toBe(0);
+
+      const binDir = join(consumer, 'node_modules', '.bin');
+      expect(existsSync(join(binDir, 'liteship'))).toBe(false);
+      expect(existsSync(join(binDir, 'liteship.cmd'))).toBe(false);
+    },
+  );
 });
