@@ -8,7 +8,7 @@
 
 > **defineQuantizer**\<`B`, `O`\>(`boundary`, `options`): [`QuantizerConfig`](../interfaces/QuantizerConfig.md)\<`B`, `O`\>
 
-Defined in: [quantizer/src/quantizer.ts:462](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L462)
+Defined in: [quantizer/src/quantizer.ts:477](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L477)
 
 Author a content-addressed [QuantizerConfig](../interfaces/QuantizerConfig.md) from a boundary definition
 and its per-target outputs — the PURE, immutable definition (authored intent).

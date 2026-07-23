@@ -6,7 +6,7 @@
 
 # Interface: PluginConfig
 
-Defined in: [vite/src/plugin.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/plugin.ts#L62)
+Defined in: [vite/src/plugin.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/plugin.ts#L71)
 
 Configuration options for the [plugin](../functions/plugin.md) factory. Every field
 is optional; omitted values use convention-based defaults.
@@ -17,7 +17,7 @@ is optional; omitted values use convention-based defaults.
 
 > `readonly` `optional` **dirs?**: `Partial`\<`Record`\<`"boundary"` \| `"style"` \| `"token"` \| `"theme"`, `string`\>\>
 
-Defined in: [vite/src/plugin.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/plugin.ts#L64)
+Defined in: [vite/src/plugin.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/plugin.ts#L73)
 
 Override source directories for each primitive kind.
 
@@ -27,7 +27,7 @@ Override source directories for each primitive kind.
 
 > `readonly` `optional` **emitBoundaryAssets?**: `boolean`
 
-Defined in: [vite/src/plugin.ts:86](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/plugin.ts#L86)
+Defined in: [vite/src/plugin.ts:95](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/plugin.ts#L95)
 
 Emit each deduplicated boundary CSS output as an immutable build asset and
 add `assetUrls` to `virtual:liteship/boundaries`. Default `false`: manifests
@@ -39,7 +39,7 @@ still carry compiled strings only.
 
 > `readonly` `optional` **environments?**: readonly (`"browser"` \| `"server"` \| `"shader"`)[]
 
-Defined in: [vite/src/plugin.ts:80](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/plugin.ts#L80)
+Defined in: [vite/src/plugin.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/plugin.ts#L89)
 
 Named Vite environments to configure (browser / server / shader). Defaults to browser when omitted.
 
@@ -49,7 +49,7 @@ Named Vite environments to configure (browser / server / shader). Defaults to br
 
 > `readonly` `optional` **hmr?**: `boolean`
 
-Defined in: [vite/src/plugin.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/plugin.ts#L66)
+Defined in: [vite/src/plugin.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/plugin.ts#L75)
 
 Toggle surgical HMR emission (default `true`).
 
@@ -59,7 +59,7 @@ Toggle surgical HMR emission (default `true`).
 
 > `readonly` `optional` **quantize?**: `object`
 
-Defined in: [vite/src/plugin.ts:78](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/plugin.ts#L78)
+Defined in: [vite/src/plugin.ts:87](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/plugin.ts#L87)
 
 `@quantize` viewport-containment options.
 
@@ -81,7 +81,7 @@ transform and the emitted boundary assets.
 
 > `readonly` `optional` **wasm?**: `boolean` \| \{ `enabled?`: `boolean`; `path?`: `string`; \}
 
-Defined in: [vite/src/plugin.ts:95](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/plugin.ts#L95)
+Defined in: [vite/src/plugin.ts:104](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/plugin.ts#L104)
 
 WASM runtime configuration. Omitted (the default) **auto-detects**: the
 deterministic 3-step search in [resolveWASM](../functions/resolveWASM.md) runs, and the compute

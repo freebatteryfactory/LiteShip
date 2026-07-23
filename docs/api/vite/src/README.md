@@ -46,6 +46,7 @@ const config = defineConfig({
 - [CollectThemeManifestOptions](interfaces/CollectThemeManifestOptions.md)
 - [CollectTokenManifestOptions](interfaces/CollectTokenManifestOptions.md)
 - [HMRPayload](interfaces/HMRPayload.md)
+- [LoadedProjectConfig](interfaces/LoadedProjectConfig.md)
 - [PluginConfig](interfaces/PluginConfig.md)
 - [PrimitiveResolution](interfaces/PrimitiveResolution.md)
 - [QuantizeAtRuleGroup](interfaces/QuantizeAtRuleGroup.md)
@@ -63,6 +64,7 @@ const config = defineConfig({
 
 - [PrimitiveKind](type-aliases/PrimitiveKind.md)
 - [PrimitiveShape](type-aliases/PrimitiveShape.md)
+- [ProjectConfigLoader](type-aliases/ProjectConfigLoader.md)
 - [ThemeManifest](type-aliases/ThemeManifest.md)
 - [ThemeManifestEntry](type-aliases/ThemeManifestEntry.md)
 - [TokenManifest](type-aliases/TokenManifest.md)
@@ -81,6 +83,7 @@ const config = defineConfig({
 - [compileTokenBlock](functions/compileTokenBlock.md)
 - [handleHMR](functions/handleHMR.md)
 - [isVirtualId](functions/isVirtualId.md)
+- [loadProjectConfig](functions/loadProjectConfig.md)
 - [loadVirtualModule](functions/loadVirtualModule.md)
 - [parseQuantizeBlocks](functions/parseQuantizeBlocks.md)
 - [parseStyleBlocks](functions/parseStyleBlocks.md)

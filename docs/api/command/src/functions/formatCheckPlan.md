@@ -8,7 +8,7 @@
 
 > **formatCheckPlan**(`plan`): `string`
 
-Defined in: [command/src/checks/plan.ts:170](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L170)
+Defined in: [command/src/checks/plan.ts:180](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L180)
 
 Render a [CheckPlan](../interfaces/CheckPlan.md) as human text — the default `--plan` output (one line
 per check, plus a summary footer). PURE: a total function of the plan, no I/O.

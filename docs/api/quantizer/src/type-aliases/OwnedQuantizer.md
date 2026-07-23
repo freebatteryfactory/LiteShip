@@ -8,7 +8,7 @@
 
 > **OwnedQuantizer**\<`B`, `O`\> = [`LiveQuantizer`](../interfaces/LiveQuantizer.md)\<`B`, `O`\> & [`AsyncOwnedResource`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/AsyncOwnedResource.md)
 
-Defined in: [quantizer/src/quantizer.ts:291](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L291)
+Defined in: [quantizer/src/quantizer.ts:315](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L315)
 
 A live reactive quantizer that owns its teardown directly
 ([AsyncOwnedResource](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/AsyncOwnedResource.md)): `await quantizer.dispose()` closes the state /

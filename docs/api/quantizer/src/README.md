@@ -44,6 +44,7 @@ the working line.
 - [createQuantizer](functions/createQuantizer.md)
 - [defineQuantizer](functions/defineQuantizer.md)
 - [evaluate](functions/evaluate.md)
+- [resolveQuantizerTargets](functions/resolveQuantizerTargets.md)
 
 ## References
 

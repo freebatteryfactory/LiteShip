@@ -6,7 +6,7 @@
 
 # Interface: CheckInvariantsSummary
 
-Defined in: [command/src/registry.ts:452](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L452)
+Defined in: [command/src/registry.ts:454](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L454)
 
 Structured verdict returned by the injected [CommandContext.runCheckInvariants](CommandContext.md#runcheckinvariants)
 capability. `ok` ⟺ no banned-pattern violation in any rule AND no line-ending
@@ -19,7 +19,7 @@ carries the `.gitattributes` eol offenders.
 
 > `readonly` **groups**: readonly [`InvariantViolationGroup`](InvariantViolationGroup.md)[]
 
-Defined in: [command/src/registry.ts:455](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L455)
+Defined in: [command/src/registry.ts:457](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L457)
 
 Banned-pattern violations, grouped by the rule that flagged them.
 
@@ -29,7 +29,7 @@ Banned-pattern violations, grouped by the rule that flagged them.
 
 > `readonly` **lineEndings**: readonly `string`[]
 
-Defined in: [command/src/registry.ts:457](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L457)
+Defined in: [command/src/registry.ts:459](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L459)
 
 Committed text files whose line endings violate the `.gitattributes` policy.
 
@@ -39,4 +39,4 @@ Committed text files whose line endings violate the `.gitattributes` policy.
 
 > `readonly` **ok**: `boolean`
 
-Defined in: [command/src/registry.ts:453](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L453)
+Defined in: [command/src/registry.ts:455](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L455)

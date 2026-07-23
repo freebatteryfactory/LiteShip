@@ -6,7 +6,7 @@
 
 # Interface: CheckRunResult
 
-Defined in: [command/src/checks/plan.ts:83](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L83)
+Defined in: [command/src/checks/plan.ts:92](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L92)
 
 One executed check's result — the per-check row of a [CheckReport](CheckReport.md).
 
@@ -16,7 +16,7 @@ One executed check's result — the per-check row of a [CheckReport](CheckReport
 
 > `readonly` **cacheHit**: `boolean`
 
-Defined in: [command/src/checks/plan.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L91)
+Defined in: [command/src/checks/plan.ts:100](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L100)
 
 True iff a content-addressed cache hit served this verdict without re-running.
 
@@ -26,7 +26,7 @@ True iff a content-addressed cache hit served this verdict without re-running.
 
 > `readonly` **durationMs**: `number`
 
-Defined in: [command/src/checks/plan.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L89)
+Defined in: [command/src/checks/plan.ts:98](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L98)
 
 The measured wall-clock (ms) the run took (0 for a cache hit / skip).
 
@@ -36,7 +36,7 @@ The measured wall-clock (ms) the run took (0 for a cache hit / skip).
 
 > `readonly` **findings**: readonly `string`[]
 
-Defined in: [command/src/checks/plan.ts:93](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L93)
+Defined in: [command/src/checks/plan.ts:102](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L102)
 
 The human-readable findings this check surfaced (empty on a clean pass).
 
@@ -46,7 +46,7 @@ The human-readable findings this check surfaced (empty on a clean pass).
 
 > `readonly` **id**: `string`
 
-Defined in: [command/src/checks/plan.ts:85](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L85)
+Defined in: [command/src/checks/plan.ts:94](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L94)
 
 The check identity, `check/<slug>`.
 
@@ -56,6 +56,6 @@ The check identity, `check/<slug>`.
 
 > `readonly` **verdict**: [`CheckVerdict`](../type-aliases/CheckVerdict.md)
 
-Defined in: [command/src/checks/plan.ts:87](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L87)
+Defined in: [command/src/checks/plan.ts:96](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L96)
 
 The verdict this run produced.

@@ -46,10 +46,9 @@ The failure message of the first failure, or null on success.
 
 The three release-hermeticity sub-results — present ONLY under `--hermetic`
 (absent on a plain package-smoke run, so the default receipt is unchanged).
-`hermetic-build` (offline reinstall) and `packed-consumer-closure` are
-blocking (either failing forces `ok:false`); `double-build-repro` is advisory
-(a per-file-hash "semantic" verdict + a byte-identical "artifact" verdict —
-artifact drift is reported, never fails the gate).
+`hermetic-build` (offline reinstall), `packed-consumer-closure`, and the
+per-file-hash semantic verdict are blocking. The byte-identical artifact
+verdict remains advisory because archive-envelope drift is not semantic drift.
 
 #### properties.hermetic.properties
 

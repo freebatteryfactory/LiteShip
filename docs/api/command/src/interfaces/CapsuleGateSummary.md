@@ -6,7 +6,7 @@
 
 # Interface: CapsuleGateSummary
 
-Defined in: [command/src/registry.ts:380](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L380)
+Defined in: [command/src/registry.ts:382](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L382)
 
 Structured verdict returned by the injected [CommandContext.runCapsuleGate](CommandContext.md#runcapsulegate)
 capability — the capsule-corpus freshness + bench-honesty + green-suite gate.
@@ -23,7 +23,7 @@ artifact (run `capsule:compile`); `failed` means the generated tests ran red.
 
 > `readonly` **benches**: [`CapsuleBenchClassification`](CapsuleBenchClassification.md)
 
-Defined in: [command/src/registry.ts:387](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L387)
+Defined in: [command/src/registry.ts:389](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L389)
 
 Per-corpus bench-honesty classification.
 
@@ -33,7 +33,7 @@ Per-corpus bench-honesty classification.
 
 > `readonly` **capsuleCount**: `number`
 
-Defined in: [command/src/registry.ts:385](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L385)
+Defined in: [command/src/registry.ts:387](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L387)
 
 Number of capsules in the manifest the gate read.
 
@@ -43,7 +43,7 @@ Number of capsules in the manifest the gate read.
 
 > `readonly` **errors**: readonly `string`[]
 
-Defined in: [command/src/registry.ts:383](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L383)
+Defined in: [command/src/registry.ts:385](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L385)
 
 Human work-list: each blocking reason (missing/stale/dishonest/red). Empty on `ok`.
 
@@ -53,4 +53,4 @@ Human work-list: each blocking reason (missing/stale/dishonest/red). Empty on `o
 
 > `readonly` **status**: `"ok"` \| `"stale"` \| `"failed"`
 
-Defined in: [command/src/registry.ts:381](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L381)
+Defined in: [command/src/registry.ts:383](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L383)

@@ -6,7 +6,7 @@
 
 # Interface: AdaptivePlan
 
-Defined in: [core/src/authoring/adaptive.ts:172](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L172)
+Defined in: [core/src/authoring/adaptive.ts:202](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L202)
 
 The build-time plan of an adaptive: the member content addresses, the compiled
 CSS (the `@layer`-wrapped boundary + style CSS), and the headless DOM attrs.
@@ -18,7 +18,7 @@ Everything projects from the members — no recomputation of identity.
 
 > `readonly` **attrs**: `Readonly`\<`Record`\<`string`, `string`\>\>
 
-Defined in: [core/src/authoring/adaptive.ts:179](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L179)
+Defined in: [core/src/authoring/adaptive.ts:209](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L209)
 
 The headless boundary attr set (`Adaptive.attrs()`).
 
@@ -28,7 +28,7 @@ The headless boundary attr set (`Adaptive.attrs()`).
 
 > `readonly` **boundaryId**: `ContentAddress`
 
-Defined in: [core/src/authoring/adaptive.ts:173](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L173)
+Defined in: [core/src/authoring/adaptive.ts:203](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L203)
 
 ***
 
@@ -36,7 +36,7 @@ Defined in: [core/src/authoring/adaptive.ts:173](https://github.com/freebatteryf
 
 > `readonly` **css**: `string`
 
-Defined in: [core/src/authoring/adaptive.ts:177](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L177)
+Defined in: [core/src/authoring/adaptive.ts:207](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L207)
 
 `StyleCSSCompiler.compile(style).layers` — the cascade-layered scoped CSS.
 
@@ -46,7 +46,7 @@ Defined in: [core/src/authoring/adaptive.ts:177](https://github.com/freebatteryf
 
 > `readonly` `optional` **quantizerId?**: `ContentAddress`
 
-Defined in: [core/src/authoring/adaptive.ts:175](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L175)
+Defined in: [core/src/authoring/adaptive.ts:205](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L205)
 
 ***
 
@@ -54,4 +54,4 @@ Defined in: [core/src/authoring/adaptive.ts:175](https://github.com/freebatteryf
 
 > `readonly` **styleId**: `ContentAddress`
 
-Defined in: [core/src/authoring/adaptive.ts:174](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L174)
+Defined in: [core/src/authoring/adaptive.ts:204](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L204)

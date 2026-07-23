@@ -6,7 +6,7 @@
 
 # Interface: PlumbSkip
 
-Defined in: [command/src/registry.ts:395](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L395)
+Defined in: [command/src/registry.ts:397](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L397)
 
 One skipped generated test — a placeholder standing in for unwired work. A
 structural mirror of the host scan's result item, declared here so the
@@ -18,7 +18,7 @@ structural mirror of the host scan's result item, declared here so the
 
 > `readonly` **file**: `string`
 
-Defined in: [command/src/registry.ts:396](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L396)
+Defined in: [command/src/registry.ts:398](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L398)
 
 ***
 
@@ -26,7 +26,7 @@ Defined in: [command/src/registry.ts:396](https://github.com/freebatteryfactory/
 
 > `readonly` **kind**: `string`
 
-Defined in: [command/src/registry.ts:405](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L405)
+Defined in: [command/src/registry.ts:407](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L407)
 
 The detected skip TOKEN as it appears in source — the SAME alias-aware detector the
 `no-skipped-test` gate uses (`@liteship/gauntlet`'s `detectSkips`). Covers every form a
@@ -41,4 +41,4 @@ generated test must NEVER skip in ANY form — so all of them are caught here.
 
 > `readonly` **message**: `string`
 
-Defined in: [command/src/registry.ts:406](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L406)
+Defined in: [command/src/registry.ts:408](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L408)

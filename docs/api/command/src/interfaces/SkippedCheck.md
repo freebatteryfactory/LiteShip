@@ -6,7 +6,7 @@
 
 # Interface: SkippedCheck
 
-Defined in: [command/src/checks/plan.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L52)
+Defined in: [command/src/checks/plan.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L61)
 
 A registry check dropped from a plan, with the exact applicability reason.
 
@@ -16,7 +16,7 @@ A registry check dropped from a plan, with the exact applicability reason.
 
 > `readonly` **id**: `string`
 
-Defined in: [command/src/checks/plan.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L54)
+Defined in: [command/src/checks/plan.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L63)
 
 The skipped check's identity, `check/<slug>`.
 
@@ -26,6 +26,6 @@ The skipped check's identity, `check/<slug>`.
 
 > `readonly` **reason**: `string`
 
-Defined in: [command/src/checks/plan.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L56)
+Defined in: [command/src/checks/plan.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L65)
 
 Why it was skipped (for example, a context or platform mismatch).

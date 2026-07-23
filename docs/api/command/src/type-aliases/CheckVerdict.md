@@ -8,6 +8,6 @@
 
 > **CheckVerdict** = `"pass"` \| `"fail"` \| `"skipped"`
 
-Defined in: [command/src/checks/plan.ts:80](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L80)
+Defined in: [command/src/checks/plan.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L89)
 
 The verdict a single executed check produced.

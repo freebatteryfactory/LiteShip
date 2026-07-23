@@ -27,6 +27,7 @@ projection adapters over this package; neither imports the other.
 - [CheckPlan](interfaces/CheckPlan.md)
 - [CheckReport](interfaces/CheckReport.md)
 - [CheckRunResult](interfaces/CheckRunResult.md)
+- [CliCheckExecution](interfaces/CliCheckExecution.md)
 - [CommandContext](interfaces/CommandContext.md)
 - [CommandMap](interfaces/CommandMap.md)
 - [ContextPointer](interfaces/ContextPointer.md)

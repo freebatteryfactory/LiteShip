@@ -8,7 +8,7 @@
 
 > **capabilityUnavailable**(`command`, `missing`): [`CapsuleCommandResult`](../type-aliases/CapsuleCommandResult.md)
 
-Defined in: [command/src/registry.ts:543](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L543)
+Defined in: [command/src/registry.ts:545](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L545)
 
 The ONE structured failure for a missing injected capability. The dispatcher
 emits it for unmet descriptor `requires`; handlers reuse it for capabilities

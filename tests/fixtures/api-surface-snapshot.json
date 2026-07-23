@@ -3862,7 +3862,12 @@
         {
           "name": "liteship",
           "kind": "function",
-          "signature": "(1)"
+          "signature": "(3)"
+        },
+        {
+          "name": "loadProjectConfig",
+          "kind": "function",
+          "signature": "(2)"
         },
         {
           "name": "loadVirtualModule",
@@ -3892,7 +3897,7 @@
         {
           "name": "plugin",
           "kind": "function",
-          "signature": "(1)"
+          "signature": "(3)"
         },
         {
           "name": "primitiveSearchPatterns",

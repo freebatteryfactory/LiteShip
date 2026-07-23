@@ -6,9 +6,9 @@
 
 # Function: plugin()
 
-> **plugin**(`config?`, `resolvePackaged?`): `Plugin`
+> **plugin**(`config?`, `resolvePackaged?`, `projectConfigLoader?`): `Plugin`
 
-Defined in: [vite/src/plugin.ts:188](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/plugin.ts#L188)
+Defined in: [vite/src/plugin.ts:197](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/plugin.ts#L197)
 
 Create the liteship Vite plugin.
 
@@ -28,6 +28,10 @@ uniform updates.
 ### resolvePackaged?
 
 () => `string` \| `null`
+
+### projectConfigLoader?
+
+(`configEnv`, `configFile?`, `configRoot?`, `logLevel?`, `customLogger?`, `configLoader?`) => `Promise`\<\{ \} \| `null`\>
 
 ## Returns
 

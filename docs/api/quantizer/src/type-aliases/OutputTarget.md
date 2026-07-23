@@ -8,7 +8,7 @@
 
 > **OutputTarget** = [`QualityTierTarget`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/QualityTierTarget.md)
 
-Defined in: [quantizer/src/quantizer.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L68)
+Defined in: [quantizer/src/quantizer.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L69)
 
 Compilation target for quantizer per-state outputs.
 

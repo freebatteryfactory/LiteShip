@@ -8,7 +8,7 @@
 
 > **createQuantizer**\<`B`, `O`\>(`definition`, `runtime?`): [`OwnedQuantizer`](../type-aliases/OwnedQuantizer.md)\<`B`, `O`\>
 
-Defined in: [quantizer/src/quantizer.ts:552](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L552)
+Defined in: [quantizer/src/quantizer.ts:573](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L573)
 
 Allocate a live [LiveQuantizer](../interfaces/LiveQuantizer.md) from an immutable [QuantizerConfig](../interfaces/QuantizerConfig.md)
 definition, paired with the [Lifetime](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts) that owns its teardown.
