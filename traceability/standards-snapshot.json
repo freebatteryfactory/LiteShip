@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 1,
-  "address": "fnv1a:cc448971",
+  "address": "fnv1a:92a71fa1",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -96,6 +96,11 @@
     },
     {
       "_tag": "assurance",
+      "glob": "packages/core/src/clock/rng.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance",
       "glob": "packages/core/src/evidence/{receipt,validated-output}.ts",
       "level": "L4"
     },
@@ -103,11 +108,6 @@
       "_tag": "assurance",
       "glob": "packages/core/src/graph/dag.ts",
       "level": "L4"
-    },
-    {
-      "_tag": "assurance",
-      "glob": "packages/core/src/internal/rng.ts",
-      "level": "L3"
     },
     {
       "_tag": "assurance",
@@ -1015,7 +1015,7 @@
     },
     {
       "_tag": "waiver",
-      "key": "gauntlet/no-nondeterminism|packages/core/src/internal/rng.ts|39",
+      "key": "gauntlet/no-nondeterminism|packages/core/src/clock/rng.ts|39",
       "ruleId": "gauntlet/no-nondeterminism",
       "expiry": "2027-06-20"
     }

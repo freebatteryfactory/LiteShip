@@ -198,10 +198,10 @@
       "expiry": "2027-06-20"
     },
     {
-      "elementKey": "waiver::gauntlet/no-nondeterminism|packages/core/src/internal/rng.ts|39",
+      "elementKey": "waiver::gauntlet/no-nondeterminism|packages/core/src/clock/rng.ts|39",
       "weakening": "waiver-added",
       "owner": "heyoub",
-      "justification": "Same gauntlet/no-nondeterminism entropy-boundary waiver (the sanctioned seeded-RNG entropy source at line 39), RELOCATED by the P4 core-domain migration that moved packages/core/src/rng.ts into packages/core/src/internal/rng.ts — NOT a new deferral. The waiver key embeds the file path, so the pure rename surfaces as remove(packages/core/src/rng.ts|39)+add(packages/core/src/internal/rng.ts|39); the removal is a paired strengthen. No additional code is waived; the same line-39 entropy boundary is waived, only its home moved. Signed vs the base-ref baseline (the P4 restructure window).",
+      "justification": "Same gauntlet/no-nondeterminism entropy-boundary waiver (the sanctioned seeded-RNG entropy source at line 39), RELOCATED by the P4 core-domain migration from packages/core/src/rng.ts through packages/core/src/internal/rng.ts to its final owner packages/core/src/clock/rng.ts — NOT a new deferral. The waiver key embeds the file path, so the pure rename surfaces as remove(packages/core/src/internal/rng.ts|39)+add(packages/core/src/clock/rng.ts|39); the removal is a paired strengthen. No additional code is waived and the file remains L3; the same line-39 entropy boundary is waived, only its home moved. Signed vs the base-ref baseline (the P4 restructure window).",
       "expiry": "2027-06-20"
     },
     {
