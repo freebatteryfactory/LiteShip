@@ -178,6 +178,17 @@ describe('fromTailwindTheme — every diagnostic code has teeth', () => {
     expect([...result.boundaries[0]!.states]).toEqual(['base', 'sm']);
   });
 
+  it('refuses a unitless nonzero breakpoint while accepting unitless zero', () => {
+    const refused = fromTailwindTheme(`@theme { --breakpoint-md: 768; }`);
+    expect(refused.boundaries).toEqual([]);
+    expect(refused.diagnostics).toContainEqual(
+      expect.objectContaining({ code: MIGRATE_CODES.unsupportedAtRule, severity: 'warning' }),
+    );
+
+    const zero = fromTailwindTheme(`@theme { --breakpoint-base: 0; }`);
+    expect([...zero.boundaries[0]!.thresholds]).toEqual([0]);
+  });
+
   it('also diagnoses an unsupported value supplied through the screens option', () => {
     const result = fromTailwindTheme(`@theme { --color-x: red; }`, { screens: { huge: '100%' } });
     expect(result.diagnostics.some((d) => d.code === MIGRATE_CODES.unsupportedAtRule)).toBe(true);

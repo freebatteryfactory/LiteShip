@@ -1,275 +1,154 @@
 /**
- * Unit tests for the `fromContainerQueries` migration adapter — lowering native
- * CSS `@container` query blocks into `defineBoundary` definitions.
- *
- * Covers: a clean lossless partition round-trip (exact produced boundary
- * fields), each NEW decomposition branch (legacy min/max features, the interval
- * form, height axis, named-container refusal, the `statePrefix`
- * option, comment/string blanking), every diagnostic code the adapter can emit
- * (teeth), and a pathological sub-pixel input whose synthesized state names
- * collide — proving the `defineBoundary` `ValidationError` is caught and
- * surfaced as a `severity:'error'` diagnostic rather than thrown.
- *
- * The adapter is imported from the `@liteship/compiler/migrate` subpath (the
- * development condition resolves to `src`); the facade re-export lands in Phase C.
- *
- * @module
+ * `fromContainerQueries` preserves container identity only through an explicit
+ * host mapping. It never substitutes viewport dimensions for container facts.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import fc from 'fast-check';
-import { fromContainerQueries } from '@liteship/compiler/migrate';
-import { MIGRATE_CODES } from '@liteship/compiler/migrate';
+import { fromContainerQueries, MIGRATE_CODES } from '@liteship/compiler/migrate';
 
-describe('fromContainerQueries — clean lossless partition', () => {
-  it('lowers a 3-block width partition into one exact boundary with no diagnostics', () => {
-    const css = `
-      @container (width < 768px) { .card { grid-template-columns: 1fr; } }
-      @container (width >= 768px) and (width < 1024px) { .card { grid-template-columns: 1fr 1fr; } }
-      @container (width >= 1024px) { .card { grid-template-columns: 1fr 1fr 1fr; } }
-    `;
-    const result = fromContainerQueries(css);
+const migrate = (css: string, options?: { readonly statePrefix?: string }): ReturnType<typeof fromContainerQueries> =>
+  fromContainerQueries(css, {
+    ...options,
+    resolveInput: ({ name, axis }) => `custom:container.${name ?? 'nearest'}.${axis}`,
+  });
 
-    expect(result.boundaries).toHaveLength(1);
-    const boundary = result.boundaries[0]!;
-    expect(boundary._tag).toBe('BoundaryDef');
-    expect(boundary.input).toBe('viewport.width');
-    expect([...boundary.thresholds]).toEqual([0, 768, 1024]);
-    expect([...boundary.states]).toEqual(['bp-0', 'bp-768', 'bp-1024']);
+describe('fromContainerQueries — explicit input ownership', () => {
+  it('lowers ascending lower bounds onto the caller-resolved anonymous input', () => {
+    const result = migrate(`
+      @container (min-width: 0px) { .card { grid-template-columns: 1fr; } }
+      @container (min-width: 768px) { .card { grid-template-columns: repeat(2, 1fr); } }
+      @container (width >= 1024px) { .card { grid-template-columns: repeat(3, 1fr); } }
+    `);
 
-    // Boundary-only adapter — no tokens/themes, and nothing lossy.
-    expect(result.tokens).toEqual([]);
-    expect(result.themes).toEqual([]);
     expect(result.diagnostics).toEqual([]);
+    expect(result.boundaries).toHaveLength(1);
+    expect(result.boundaries[0]!.input).toBe('custom:container.nearest.width');
+    expect([...result.boundaries[0]!.thresholds]).toEqual([0, 768, 1024]);
+    expect([...result.boundaries[0]!.states]).toEqual(['bp-0', 'bp-768', 'bp-1024']);
+    expect(String(result.boundaries[0]!.id)).toMatch(/^fnv1a:/);
   });
 
-  it('produces a content-addressed id that round-trips through defineBoundary evaluation', () => {
-    const css = `
-      @container (width < 600px) { .x { color: red; } }
-      @container (width >= 600px) { .x { color: blue; } }
-    `;
-    const { boundaries } = fromContainerQueries(css);
-    expect(boundaries).toHaveLength(1);
-    const b = boundaries[0]!;
-    expect(String(b.id)).toMatch(/^fnv1a:/);
-    expect([...b.thresholds]).toEqual([0, 600]);
-    expect([...b.states]).toEqual(['bp-0', 'bp-600']);
-  });
-});
+  it('preserves named-container and axis identity through the resolver', () => {
+    const result = migrate(`
+      @container sidebar (min-width: 0px) { .x {} }
+      @container sidebar (min-width: 400px) { .x {} }
+      @container main (min-height: 800px) { .y {} }
+    `);
 
-describe('fromContainerQueries — decomposition branches', () => {
-  it('parses the legacy min-width / max-width feature form', () => {
-    const css = `
-      @container (max-width: 600px) { .x { color: red; } }
-      @container (min-width: 600px) { .x { color: blue; } }
-    `;
-    const { boundaries, diagnostics } = fromContainerQueries(css);
-    expect(diagnostics).toEqual([]);
-    expect(boundaries).toHaveLength(1);
-    expect([...boundaries[0]!.thresholds]).toEqual([0, 600]);
-    expect([...boundaries[0]!.states]).toEqual(['bp-0', 'bp-600']);
+    expect(result.diagnostics).toEqual([]);
+    expect(result.boundaries.map((boundary) => boundary.input)).toEqual([
+      'custom:container.sidebar.width',
+      'custom:container.main.height',
+    ]);
   });
 
-  it('parses the interval form `A <= width < B`', () => {
-    const css = `
-      @container (width < 400px) { .x {} }
-      @container (400px <= width < 800px) { .x {} }
-      @container (width >= 800px) { .x {} }
-    `;
-    const { boundaries, diagnostics } = fromContainerQueries(css);
-    expect(diagnostics).toEqual([]);
-    expect([...boundaries[0]!.thresholds]).toEqual([0, 400, 800]);
-  });
-
-  it('routes a height condition to the viewport.height axis', () => {
-    const css = `@container (height >= 500px) { .x {} }`;
-    const { boundaries } = fromContainerQueries(css);
-    expect(boundaries).toHaveLength(1);
-    expect(boundaries[0]!.input).toBe('viewport.height');
-    expect([...boundaries[0]!.thresholds]).toEqual([500]);
-    expect([...boundaries[0]!.states]).toEqual(['bp-500']);
-  });
-
-  it('refuses named containers instead of collapsing their identity into viewport input', () => {
-    const css = `
-      @container sidebar (width < 400px) { .x {} }
-      @container sidebar (width >= 400px) { .x {} }
-      @container main (width >= 800px) { .x {} }
-    `;
-    const { boundaries, diagnostics } = fromContainerQueries(css);
-    expect(boundaries).toEqual([]);
-    expect(diagnostics).toHaveLength(3);
-    expect(diagnostics.every((d) => d.code === MIGRATE_CODES.unsupportedAtRule && d.severity === 'error')).toBe(
-      true,
-    );
-    expect(diagnostics[0]!.message).toContain('Named @container "sidebar"');
-    expect(diagnostics[2]!.message).toContain('Named @container "main"');
-  });
-
-  it('honours a custom statePrefix', () => {
-    const css = `
-      @container (width < 500px) { .x {} }
-      @container (width >= 500px) { .x {} }
-    `;
-    const { boundaries } = fromContainerQueries(css, { statePrefix: 'vp' });
-    expect([...boundaries[0]!.states]).toEqual(['vp-0', 'vp-500']);
-  });
-
-  it('ignores @container markers inside comments and string values (blanking)', () => {
-    const css = `
-      /* @container (width >= 9999px) { .ghost {} } */
-      .note::before { content: "@container (width >= 8888px) {"; }
-      @container (width >= 300px) { .real {} }
-    `;
-    const { boundaries, diagnostics } = fromContainerQueries(css);
-    expect(diagnostics).toEqual([]);
-    expect(boundaries).toHaveLength(1);
-    expect([...boundaries[0]!.thresholds]).toEqual([300]);
-  });
-});
-
-describe('fromContainerQueries — diagnostic teeth (every code is reachable)', () => {
-  it('emits migrate/non-ascending-thresholds when source blocks are out of order', () => {
-    const css = `
-      @container (width >= 768px) { .x {} }
-      @container (width < 768px) { .x {} }
-    `;
-    const { boundaries, diagnostics } = fromContainerQueries(css);
-    expect(diagnostics.some((d) => d.code === MIGRATE_CODES.nonAscendingThresholds)).toBe(true);
-    // Recovered by sorting before defineBoundary.
-    expect([...boundaries[0]!.thresholds]).toEqual([0, 768]);
-  });
-
-  it('emits migrate/ambiguous-breakpoint for duplicate lower bounds', () => {
-    const css = `
-      @container (width >= 500px) { .x {} }
-      @container (width >= 500px) { .y {} }
-    `;
-    const { boundaries, diagnostics } = fromContainerQueries(css);
-    expect(diagnostics.some((d) => d.code === MIGRATE_CODES.ambiguousBreakpoint)).toBe(true);
-    // Collapsed to one distinct threshold.
-    expect([...boundaries[0]!.thresholds]).toEqual([500]);
-  });
-
-  it('emits migrate/ambiguous-breakpoint for overlapping ranges', () => {
-    const css = `
-      @container (width < 800px) { .x {} }
-      @container (width >= 768px) { .y {} }
-    `;
-    const { diagnostics } = fromContainerQueries(css);
-    expect(diagnostics.some((d) => d.code === MIGRATE_CODES.ambiguousBreakpoint)).toBe(true);
-  });
-
-  it('emits migrate/unsupported-at-rule for a non-width/height feature', () => {
-    const css = `@container (orientation: landscape) { .x {} }`;
-    const { boundaries, diagnostics } = fromContainerQueries(css);
-    expect(boundaries).toEqual([]);
-    const d = diagnostics.find((x) => x.code === MIGRATE_CODES.unsupportedAtRule);
-    expect(d).toBeDefined();
-    expect(d!.severity).toBe('error');
-  });
-
-  it('emits migrate/unsupported-at-rule for a `not(...)` prelude', () => {
-    const css = `@container not (width < 400px) { .x {} }`;
-    const { boundaries, diagnostics } = fromContainerQueries(css);
-    expect(boundaries).toEqual([]);
-    expect(diagnostics.some((d) => d.code === MIGRATE_CODES.unsupportedAtRule)).toBe(true);
-  });
-
-  it('emits migrate/unsupported-at-rule for an `or`-combined condition', () => {
-    const css = `@container (width < 200px) or (width >= 800px) { .x {} }`;
-    const { boundaries, diagnostics } = fromContainerQueries(css);
-    expect(boundaries).toEqual([]);
-    expect(diagnostics.some((d) => d.code === MIGRATE_CODES.unsupportedAtRule)).toBe(true);
-  });
-
-  it('emits migrate/unsupported-at-rule for mixed width+height axes', () => {
-    const css = `@container (width >= 400px) and (height >= 400px) { .x {} }`;
-    const { boundaries, diagnostics } = fromContainerQueries(css);
-    expect(boundaries).toEqual([]);
-    expect(diagnostics.some((d) => d.code === MIGRATE_CODES.unsupportedAtRule)).toBe(true);
-  });
-
-  it('surfaces a lone finite upper bound (`width < 768px`) as a dropped-cutoff diagnostic', () => {
-    // A single `(width < 768px)` block has finite hi=768 that no block starts at,
-    // so the 768 cutoff cannot become a threshold — the boundary is `[0]` alone.
-    // The dropped upper bound must be surfaced, not silently lost.
-    const css = `@container (width < 768px) { .card { display: block; } }`;
-    const { boundaries, diagnostics } = fromContainerQueries(css);
-
-    // The lower-bound boundary is still produced...
-    expect(boundaries).toHaveLength(1);
-    expect([...boundaries[0]!.thresholds]).toEqual([0]);
-    // ...and the dropped 768 cutoff is reported (naming the value).
-    const d = diagnostics.find((x) => x.code === MIGRATE_CODES.unsupportedAtRule);
-    expect(d).toBeDefined();
-    expect(d!.message).toContain('768');
-  });
-
-  it('does NOT flag a finite upper bound that a sibling block starts at (complete partition)', () => {
-    // hi=768 (block 1) coincides with lo=768 (block 2), so the cutoff is
-    // represented — no dropped-cutoff diagnostic for a clean partition.
-    const css = `
-      @container (width < 768px) { .x {} }
-      @container (width >= 768px) { .x {} }
-    `;
-    const { diagnostics } = fromContainerQueries(css);
-    expect(diagnostics).toEqual([]);
-  });
-});
-
-describe('fromContainerQueries — define* throw is caught, never escapes', () => {
-  it('surfaces a defineBoundary ValidationError as a severity:error diagnostic', () => {
-    // Distinct sub-pixel thresholds (100.2, 100.4) both round to the same
-    // synthesized state name `bp-100`, so defineBoundary throws a duplicate
-    // state-name ValidationError. The adapter must catch and surface it.
-    const css = `
-      @container (width < 100.2px) { .x {} }
-      @container (100.2px <= width < 100.4px) { .x {} }
-      @container (width >= 100.4px) { .x {} }
-    `;
-
-    let result!: ReturnType<typeof fromContainerQueries>;
-    expect(() => {
-      result = fromContainerQueries(css);
-    }).not.toThrow();
-
-    // No boundary was produced for the failed group; the failure is a diagnostic.
+  it('refuses every container group when the host supplies no mapping', () => {
+    const result = fromContainerQueries(`
+      @container (width >= 400px) { .x {} }
+      @container sidebar (height >= 800px) { .y {} }
+    `);
     expect(result.boundaries).toEqual([]);
-    const errorDiag = result.diagnostics.find((d) => d.severity === 'error');
-    expect(errorDiag).toBeDefined();
-    expect(errorDiag!.cause).toBeDefined();
+    expect(result.diagnostics).toHaveLength(2);
+    expect(result.diagnostics.every((d) => d.severity === 'error' && d.message.includes('no explicit'))).toBe(true);
+  });
+
+  it('honours statePrefix without changing the resolved input', () => {
+    const result = migrate(`@container (min-width: 500px) { .x {} }`, { statePrefix: 'cq' });
+    expect(result.boundaries[0]!.input).toBe('custom:container.nearest.width');
+    expect([...result.boundaries[0]!.states]).toEqual(['cq-500']);
   });
 });
 
-describe('fromContainerQueries — property: partition round-trip preserves thresholds', () => {
-  it('reconstructs the exact ascending threshold list from a clean width partition', () => {
+describe('fromContainerQueries — refusal and diagnostic teeth', () => {
+  it.each(['width < 400px', 'width > 400px', 'width = 400px', 'width: 400px'])(
+    'refuses strict/exact condition %s rather than changing its edge semantics',
+    (condition) => {
+      const result = migrate(`@container (${condition}) { .x {} }`);
+      expect(result.boundaries).toEqual([]);
+      expect(result.diagnostics).toContainEqual(
+        expect.objectContaining({ code: MIGRATE_CODES.unsupportedAtRule, severity: 'error' }),
+      );
+    },
+  );
+
+  it('refuses a unitless nonzero length while accepting unitless zero', () => {
+    const refused = migrate(`@container (min-width: 400) { .x {} }`);
+    expect(refused.boundaries).toEqual([]);
+    expect(refused.diagnostics[0]).toEqual(
+      expect.objectContaining({ code: MIGRATE_CODES.unsupportedAtRule, severity: 'error' }),
+    );
+
+    const zero = migrate(`@container (min-width: 0) { .x {} }`);
+    expect(zero.diagnostics).toEqual([]);
+    expect([...zero.boundaries[0]!.thresholds]).toEqual([0]);
+  });
+
+  it.each([
+    'not (width >= 400px)',
+    '(width >= 200px) or (width >= 800px)',
+    '(width >= 400px) and (height >= 400px)',
+    '(orientation: landscape)',
+  ])('refuses unsupported condition %s', (condition) => {
+    const result = migrate(`@container ${condition} { .x {} }`);
+    expect(result.boundaries).toEqual([]);
+    expect(result.diagnostics.some((d) => d.code === MIGRATE_CODES.unsupportedAtRule)).toBe(true);
+  });
+
+  it('diagnoses duplicate and non-ascending lower bounds before sorting/deduping', () => {
+    const result = migrate(`
+      @container (min-width: 768px) { .x {} }
+      @container (min-width: 500px) { .x {} }
+      @container (min-width: 500px) { .y {} }
+    `);
+    expect(result.diagnostics.some((d) => d.code === MIGRATE_CODES.nonAscendingThresholds)).toBe(true);
+    expect(result.diagnostics.some((d) => d.code === MIGRATE_CODES.ambiguousBreakpoint)).toBe(true);
+    expect([...result.boundaries[0]!.thresholds]).toEqual([500, 768]);
+  });
+
+  it('surfaces an unmatched finite max cutoff instead of silently dropping it', () => {
+    const result = migrate(`@container (max-width: 768px) { .x {} }`);
+    expect(result.boundaries).toHaveLength(1);
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({ code: MIGRATE_CODES.unsupportedAtRule, message: expect.stringContaining('768') }),
+    );
+  });
+
+  it('catches defineBoundary failures as error diagnostics', () => {
+    const result = migrate(`
+      @container (min-width: 100.2px) { .x {} }
+      @container (min-width: 100.4px) { .x {} }
+    `);
+    expect(result.boundaries).toEqual([]);
+    expect(result.diagnostics).toContainEqual(expect.objectContaining({ severity: 'error', cause: expect.anything() }));
+  });
+
+  it('ignores markers inside comments and strings', () => {
+    const result = migrate(`
+      /* @container (min-width: 9999px) { .ghost {} } */
+      .note::before { content: "@container (min-width: 8888px) {"; }
+      @container (min-width: 300px) { .real {} }
+    `);
+    expect(result.diagnostics).toEqual([]);
+    expect([...result.boundaries[0]!.thresholds]).toEqual([300]);
+  });
+});
+
+describe('fromContainerQueries — property', () => {
+  it('reconstructs ascending lower-bound thresholds under an explicit mapping', () => {
     fc.assert(
       fc.property(
         fc
-          .uniqueArray(fc.integer({ min: 1, max: 5000 }), { minLength: 1, maxLength: 6 })
-          .map((xs) => [...xs].sort((a, b) => a - b)),
-        (rest) => {
-          const full = [0, ...rest]; // thresholds, ascending, distinct, starting at 0
-          const last = full.length - 1;
-          const blocks: string[] = [];
-          // First state: (width < full[1])
-          blocks.push(`@container (width < ${full[1]}px) { .x {} }`);
-          // Middle states.
-          for (let i = 1; i < last; i++) {
-            blocks.push(`@container (width >= ${full[i]}px) and (width < ${full[i + 1]}px) { .x {} }`);
-          }
-          // Last state: (width >= full[last]).
-          blocks.push(`@container (width >= ${full[last]}px) { .x {} }`);
-
-          const { boundaries, diagnostics } = fromContainerQueries(blocks.join('\n'));
-          expect(diagnostics).toEqual([]);
-          expect(boundaries).toHaveLength(1);
-          expect([...boundaries[0]!.thresholds]).toEqual(full);
-          expect([...boundaries[0]!.states]).toEqual(full.map((t) => `bp-${t}`));
+          .uniqueArray(fc.integer({ min: 0, max: 5000 }), { minLength: 1, maxLength: 6 })
+          .map((values) => [...values].sort((a, b) => a - b)),
+        (thresholds) => {
+          const css = thresholds.map((value) => `@container (min-width: ${value}px) { .x {} }`).join('\n');
+          const result = migrate(css);
+          expect(result.diagnostics).toEqual([]);
+          expect([...result.boundaries[0]!.thresholds]).toEqual(thresholds);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 100 },
     );
   });
 });

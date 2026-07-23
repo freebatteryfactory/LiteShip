@@ -119,6 +119,7 @@ function parseLength(raw: string): number | null {
   if (numStr.trim() === '') return null;
   const n = Number(numStr);
   if (Number.isNaN(n)) return null;
+  if (unit === undefined && n !== 0) return null;
   return unit === 'rem' || unit === 'em' ? n * 16 : n;
 }
 
@@ -346,7 +347,9 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
           MIGRATE_CODES.unsupportedAtRule,
           `@media "${prelude.trim()}" is restricted to media type ${mediaTypes
             .map((type) => `"${type}"`)
-            .join(', ')}; LiteShip boundaries do not carry media-type identity, so the block was skipped rather than widened to every runtime surface.`,
+            .join(
+              ', ',
+            )}; LiteShip boundaries do not carry media-type identity, so the block was skipped rather than widened to every runtime surface.`,
           { path: ['@media', prelude.trim()], severity: 'error' },
         ),
       );
@@ -366,6 +369,20 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
       );
       return;
     }
+
+    // The adapter mutates shared accumulators while lowering one block. Keep a
+    // transaction checkpoint so an unsupported cross-target conjunction can be
+    // refused as a WHOLE rather than returning independently active definitions.
+    const checkpoint = {
+      diagnostics: diagnostics.length,
+      width: widthValues.length,
+      height: heightValues.length,
+      discrete: discreteConfigs.length,
+      discreteInputs: new Set(discreteInputs),
+      sawColorScheme,
+      light: schemeVariants.light ? { ...schemeVariants.light } : undefined,
+      dark: schemeVariants.dark ? { ...schemeVariants.dark } : undefined,
+    };
 
     // Distinct lowering targets in THIS block. An `and` conjoining features that
     // lower to DIFFERENT targets loses the "only together" semantics — each
@@ -435,13 +452,24 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
     // width AND height axes) cannot be represented — each lowers independently and
     // is matched separately, so the "only together" conjunction is silently lost.
     if (targets.size > 1) {
+      widthValues.length = checkpoint.width;
+      heightValues.length = checkpoint.height;
+      discreteConfigs.length = checkpoint.discrete;
+      discreteInputs.clear();
+      for (const input of checkpoint.discreteInputs) discreteInputs.add(input);
+      sawColorScheme = checkpoint.sawColorScheme;
+      if (checkpoint.light) schemeVariants.light = checkpoint.light;
+      else delete schemeVariants.light;
+      if (checkpoint.dark) schemeVariants.dark = checkpoint.dark;
+      else delete schemeVariants.dark;
+      diagnostics.length = checkpoint.diagnostics;
       diagnostics.push(
         makeMigrationDiagnostic(
           MIGRATE_CODES.unsupportedAtRule,
           `@media "${prelude.trim()}" conjoins ${targets.size} independent targets with "and" (${[...targets].join(
             ', ',
-          )}); the conjunction is not preserved — each lowers to an independent definition matched separately.`,
-          { path: ['@media', prelude.trim()] },
+          )}); no independent definitions were emitted because that would lose the conjunction.`,
+          { path: ['@media', prelude.trim()], severity: 'error' },
         ),
       );
     }
@@ -633,10 +661,6 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
             name: 'migrated-color-scheme',
             variants: ['light', 'dark'] as const,
             tokens,
-            meta: {
-              light: { label: 'Light', mode: 'light' },
-              dark: { label: 'Dark', mode: 'dark' },
-            },
           }),
         );
       } catch (e) {

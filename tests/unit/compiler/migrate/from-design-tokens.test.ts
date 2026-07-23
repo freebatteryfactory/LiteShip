@@ -67,10 +67,7 @@ describe('fromDesignTokens — clean lossless case', () => {
       'color.bg': { light: '#ffffff', dark: '#111111' },
       'color.fg': { light: '#000000', dark: '#eeeeee' },
     });
-    expect(t.meta).toEqual({
-      light: { label: 'Light', mode: 'light' },
-      dark: { label: 'Dark', mode: 'dark' },
-    });
+    expect(t.meta).toBeUndefined();
   });
 });
 
@@ -141,15 +138,17 @@ describe('fromDesignTokens — decomposition branches', () => {
     expect(result.diagnostics).toEqual([]);
   });
 
-  it('classifies a typeless value via inferSyntax when no $type is present', () => {
+  it('refuses typeless values rather than guessing their type from syntax', () => {
     const result = fromDesignTokens({
       c: { $value: '#abcdef' }, // color syntax
       n: { $value: '16px' }, // length → spacing
       t: { $value: '250ms' }, // time → animation
     });
-    const byName = Object.fromEntries(result.tokens.map((t) => [t.name, t.category]));
-    expect(byName).toEqual({ c: 'color', n: 'spacing', t: 'animation' });
-    expect(result.diagnostics.some((d) => d.code === MIGRATE_CODES.unknownTokenCategory)).toBe(false);
+    expect(result.tokens).toEqual([]);
+    expect(result.diagnostics).toHaveLength(3);
+    expect(
+      result.diagnostics.every((d) => d.code === MIGRATE_CODES.unknownTokenCategory && d.severity === 'error'),
+    ).toBe(true);
   });
 
   it('cross-fills a mode token that is missing a mode and flags it incomplete', () => {
@@ -162,7 +161,7 @@ describe('fromDesignTokens — decomposition branches', () => {
 
   it('honours custom modes and a custom theme name', () => {
     const result = fromDesignTokens(
-      { c: { x: { $value: { day: '#ffffff', night: '#000000' } } } },
+      { c: { x: { $type: 'color', $value: { day: '#ffffff', night: '#000000' } } } },
       { modes: ['day', 'night'], themeName: 'brand' },
     );
     const t = result.themes[0]!;
@@ -289,15 +288,17 @@ describe('fromDesignTokens — every diagnostic code has teeth', () => {
 
   it('emits unknown-token-category for an unclassifiable typeless value', () => {
     const result = fromDesignTokens({ weird: { $value: 'auto' } });
-    expect(result.diagnostics.some((d) => d.code === MIGRATE_CODES.unknownTokenCategory)).toBe(true);
-    // Still produces a best-effort token under the fallback category.
-    expect(result.tokens).toHaveLength(1);
-    expect(result.tokens[0]!.category).toBe('effect');
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({ code: MIGRATE_CODES.unknownTokenCategory, severity: 'error' }),
+    );
+    expect(result.tokens).toEqual([]);
   });
 
   it('emits lossy-token-conversion for an alias reference', () => {
     const result = fromDesignTokens({ ref: { $type: 'color', $value: '{color.primary}' } });
     expect(result.diagnostics.some((d) => d.code === MIGRATE_CODES.lossyTokenConversion)).toBe(true);
+    expect(result.tokens).toEqual([]);
+    expect(result.diagnostics[0]!.severity).toBe('error');
     // No unknown-token-category — $type carried the category.
     expect(result.diagnostics.some((d) => d.code === MIGRATE_CODES.unknownTokenCategory)).toBe(false);
   });
@@ -305,6 +306,25 @@ describe('fromDesignTokens — every diagnostic code has teeth', () => {
   it('emits lossy-token-conversion for a calc() expression', () => {
     const result = fromDesignTokens({ w: { $type: 'dimension', $value: 'calc(100% - 8px)' } });
     expect(result.diagnostics.some((d) => d.code === MIGRATE_CODES.lossyTokenConversion)).toBe(true);
+    expect(result.tokens).toEqual([]);
+  });
+
+  it('refuses a group using unsupported $extends rather than ignoring inherited semantics', () => {
+    const result = fromDesignTokens({
+      brand: {
+        $extends: '{base}',
+        accent: { $type: 'color', $value: '#f90' },
+      },
+    });
+    expect(result.tokens).toEqual([]);
+    expect(result.themes).toEqual([]);
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: MIGRATE_CODES.unsupportedAtRule,
+        severity: 'error',
+        path: ['brand', '$extends'],
+      }),
+    );
   });
 
   it('emits incomplete-theme-variant', () => {

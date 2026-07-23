@@ -112,6 +112,7 @@ function parseLength(raw: string): number | null {
   if (numStr.trim() === '') return null;
   const n = Number(numStr);
   if (Number.isNaN(n)) return null;
+  if (unit === undefined && n !== 0) return null;
   return unit === 'rem' || unit === 'em' ? n * 16 : n;
 }
 

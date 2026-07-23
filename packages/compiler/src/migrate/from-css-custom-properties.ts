@@ -72,6 +72,21 @@ const DEFAULT_VARIANT = 'default';
  */
 const DATA_THEME_RE = /^(?:html)?\s*\[\s*data-theme\s*=\s*(?:"([^"]*)"|'([^']*)'|([\w-]+))\s*\]$/;
 
+/** Recognized migrated variants carried by one comma-separated selector list. */
+function variantsOfSelector(selector: string): readonly string[] {
+  const variants: string[] = [];
+  for (const member of selector.split(',').map((part) => part.trim())) {
+    if (member === ':root') {
+      if (!variants.includes(DEFAULT_VARIANT)) variants.push(DEFAULT_VARIANT);
+      continue;
+    }
+    const match = DATA_THEME_RE.exec(member);
+    const variant = match?.[1] ?? match?.[2] ?? match?.[3];
+    if (variant !== undefined && !variants.includes(variant)) variants.push(variant);
+  }
+  return variants;
+}
+
 // ---------------------------------------------------------------------------
 // Selector-prelude reader (NEW — `parse` has no rule-selector splitter)
 // ---------------------------------------------------------------------------
@@ -235,16 +250,9 @@ export function fromCSSCustomProperties(css: string, options?: FromCSSCustomProp
   };
 
   for (const rule of readTopLevelRules(css)) {
-    let variant: string | null = null;
-    if (rule.selector === ':root') {
-      variant = DEFAULT_VARIANT;
-    } else {
-      const m = DATA_THEME_RE.exec(rule.selector);
-      if (m) variant = m[1] ?? m[2] ?? m[3] ?? null;
-    }
-    if (variant === null) continue; // selector we do not migrate (skipped silently)
-
-    recordVariant(variant);
+    const ruleVariants = variantsOfSelector(rule.selector);
+    if (ruleVariants.length === 0) continue; // selector we do not migrate
+    for (const variant of ruleVariants) recordVariant(variant);
     const { props } = parseFlatDeclarations(css, rule.bodyStart);
     for (const [prop, value] of Object.entries(props)) {
       const name = tokenNameOf(prop);
@@ -255,7 +263,7 @@ export function fromCSSCustomProperties(css: string, options?: FromCSSCustomProp
         byToken.set(name, vm);
         tokenOrder.push(name);
       }
-      vm.set(variant, value);
+      for (const variant of ruleVariants) vm.set(variant, value);
     }
   }
 
@@ -264,18 +272,6 @@ export function fromCSSCustomProperties(css: string, options?: FromCSSCustomProp
   const variants = variantSeen.has(DEFAULT_VARIANT)
     ? [DEFAULT_VARIANT, ...variantOrder.filter((v) => v !== DEFAULT_VARIANT)]
     : [...variantOrder];
-
-  // Representative value of a token (its base value, else its first present value)
-  // — used for category inference and lossy detection.
-  const representativeValue = (vm: Map<string, string>): string | undefined => {
-    const base = vm.get(DEFAULT_VARIANT);
-    if (base !== undefined) return base;
-    for (const v of variants) {
-      const x = vm.get(v);
-      if (x !== undefined) return x;
-    }
-    return undefined;
-  };
 
   if (variants.length === 0) {
     return { boundaries, tokens, themes, diagnostics };
@@ -381,16 +377,18 @@ export function fromCSSCustomProperties(css: string, options?: FromCSSCustomProp
       continue;
     }
 
-    // Flag a lossy representative value (kept verbatim across the theme).
-    const rep = representativeValue(vm);
-    if (rep !== undefined && /var\(|calc\(/.test(rep)) {
-      diagnostics.push(
-        makeMigrationDiagnostic(
-          MIGRATE_CODES.lossyTokenConversion,
-          `Token "${name}" value "${rep}" references/computes another value; kept verbatim (not resolved).`,
-          { path: [name] },
-        ),
-      );
+    // Inspect EVERY authored variant. A literal base must not hide a lossy
+    // `var()`/`calc()` override from the migration report.
+    for (const [variant, value] of vm) {
+      if (/var\(|calc\(/.test(value)) {
+        diagnostics.push(
+          makeMigrationDiagnostic(
+            MIGRATE_CODES.lossyTokenConversion,
+            `Token "${name}" variant "${variant}" value "${value}" references/computes another value; kept verbatim (not resolved).`,
+            { path: [name, variant] },
+          ),
+        );
+      }
     }
 
     themeTokens[name] = entry;

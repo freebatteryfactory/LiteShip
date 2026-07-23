@@ -2,16 +2,16 @@
  * `migrate/from-container-queries` — lower native CSS `@container` query blocks
  * into ordinary {@link defineBoundary} definitions.
  *
- * A stylesheet's anonymous `@container (<condition>) { … }` blocks each declare
+ * A stylesheet's `@container [name] (<condition>) { … }` blocks each declare
  * a single-axis width/height range. This adapter reads every top-level block,
- * refuses named containers (their identity has no runtime signal owner), reduces
- * each anonymous condition to a `(lo, hi)` range on one axis, then RANGE-MERGES
- * adjacent blocks on that axis into a single ascending threshold list — the
- * literal inverse of the compiler's
- * `buildContainerQuery` emit (`(width < T)`, `(width >= A) and (width < B)`,
- * `(width >= T)`). The merged thresholds become one `defineBoundary` whose
- * `input` is `viewport.<axis>` (the same input the `@quantize` compiler lowers to
- * `@container` queries).
+ * requires the caller to map each source container identity to an explicit
+ * LiteShip input, reduces representable inclusive min/max conditions to a
+ * `(lo, hi)` range on one axis, then range-merges adjacent blocks on that axis
+ * into a single ascending threshold list. Strict and exact comparisons are
+ * refused because a threshold-only boundary cannot preserve them exactly. The
+ * merged thresholds become one `defineBoundary` whose
+ * `input` is the caller's resolved custom/host input. It never substitutes
+ * `viewport.<axis>` because a query container and the viewport are different facts.
  *
  * Lossy / dropped cases are surfaced as {@link MigrationDiagnostic}s rather than
  * thrown: conditions that are not a single-axis width/height range
@@ -32,7 +32,7 @@ import {
   braceDepthDelta,
   skipSegment,
 } from '@liteship/compiler/parse';
-import type { MigrationResult, MigrationDiagnostic, FromMediaQueriesOptions } from './types.js';
+import type { MigrationResult, MigrationDiagnostic, FromContainerQueriesOptions } from './types.js';
 import { makeMigrationDiagnostic, MIGRATE_CODES } from './diagnostics.js';
 
 // ---------------------------------------------------------------------------
@@ -69,7 +69,7 @@ interface AxisBound {
 
 /**
  * Parse a CSS length into a pixel number. Accepts `px`, `rem` (×16), and bare
- * numbers (`0`); every other unit (`em`, `%`, `vw`, …) returns `null`, marking
+ * zero; every other unit (`em`, `%`, `vw`, …) or unitless non-zero value returns `null`, marking
  * the whole condition unsupported.
  */
 function parseLength(raw: string): number | null {
@@ -77,6 +77,7 @@ function parseLength(raw: string): number | null {
   if (!m) return null;
   const n = Number(m[1]);
   if (!Number.isFinite(n)) return null;
+  if (m[2] === undefined && n !== 0) return null;
   return m[2] === 'rem' ? n * 16 : n;
 }
 
@@ -116,13 +117,15 @@ function parseFeature(inner: string): AxisBound | null {
     if (feature === 'max-width' || feature === 'max-inline-size') return { axis: 'width', hi: value };
     if (feature === 'min-height' || feature === 'min-block-size') return { axis: 'height', lo: value };
     if (feature === 'max-height' || feature === 'max-block-size') return { axis: 'height', hi: value };
+    // Exact size queries are point predicates; a threshold state persists above
+    // its lower bound and cannot represent them.
     const exact = axisOfFeature(feature);
-    if (exact) return { axis: exact, lo: value, hi: value };
+    if (exact) return null;
     return null;
   }
 
   // Interval form: `<value> <op> <axis> <op> <value>` — both operators point up.
-  const interval = /^(.+?)\s*(<=|<)\s*([a-z-]+)\s*(<=|<)\s*(.+)$/i.exec(text);
+  const interval = /^(.+?)\s*(<=)\s*([a-z-]+)\s*(<=)\s*(.+)$/i.exec(text);
   if (interval) {
     const axis = axisOfFeature(interval[3]!.toLowerCase());
     const lo = parseLength(interval[1]!);
@@ -132,20 +135,16 @@ function parseFeature(inner: string): AxisBound | null {
   }
 
   // Range form: `<axis> <op> <value>`.
-  const range = /^([a-z-]+)\s*(<=|>=|<|>|=)\s*(.+)$/i.exec(text);
+  const range = /^([a-z-]+)\s*(<=|>=)\s*(.+)$/i.exec(text);
   if (range) {
     const axis = axisOfFeature(range[1]!.toLowerCase());
     const value = parseLength(range[3]!);
     if (!axis || value === null) return null;
     switch (range[2]) {
       case '>=':
-      case '>':
         return { axis, lo: value };
       case '<=':
-      case '<':
         return { axis, hi: value };
-      case '=':
-        return { axis, lo: value, hi: value };
     }
   }
 
@@ -229,8 +228,7 @@ const CONTAINER_NAME = /^[a-zA-Z_][a-zA-Z0-9_-]*$/;
  * depth is tracked incrementally so only sheet-top-level blocks are read (a
  * nested `@container` refining another is out of scope). Each block's body is
  * skipped — only the prelude condition matters for threshold reconstruction.
- * Named blocks are refused because their container identity cannot be encoded by
- * the current viewport input vocabulary. Returns the reduced anonymous blocks in
+ * Container names are retained as identity for the caller's resolver. Returns the reduced blocks in
  * source order plus a diagnostic for every refused/unreducible prelude.
  */
 function readContainerBlocks(css: string): { blocks: ContainerBlock[]; diagnostics: MigrationDiagnostic[] } {
@@ -259,27 +257,13 @@ function readContainerBlocks(css: string): { blocks: ContainerBlock[]; diagnosti
     const nameText = (parenAt === -1 ? prelude : prelude.slice(0, parenAt)).trim();
     const condition = parenAt === -1 ? '' : prelude.slice(parenAt);
 
-    const name = '';
+    let name = '';
     if (nameText !== '') {
       // `not` / `and` / `or` are query keywords, never container names — a
       // leading `not` negates the whole query, which is not a contiguous range.
       const reserved = /^(not|and|or)$/i.test(nameText);
       if (CONTAINER_NAME.test(nameText) && !reserved) {
-        // The current runtime input vocabulary has viewport.width/height but no
-        // container-qualified signal identity. Converting a named container to
-        // viewport input would silently make unrelated containers equivalent,
-        // so refuse the complete block until that capability exists end to end.
-        diagnostics.push(
-          makeMigrationDiagnostic(
-            MIGRATE_CODES.unsupportedAtRule,
-            `Named @container "${nameText}" cannot be represented: LiteShip has no container-qualified input identity; the block was skipped rather than converted to viewport.${condition.toLowerCase().includes('height') ? 'height' : 'width'}.`,
-            { path: [nameText, condition], severity: 'error' },
-          ),
-        );
-        CONTAINER_MARKER.lastIndex = bodyEnd;
-        depthFrom = bodyEnd;
-        depth = 0;
-        continue;
+        name = nameText;
       } else {
         // `not`, a style() query, or other non-name prelude text — unrepresentable.
         diagnostics.push(
@@ -321,7 +305,7 @@ function readContainerBlocks(css: string): { blocks: ContainerBlock[]; diagnosti
 // Adapter
 // ---------------------------------------------------------------------------
 
-/** Group key isolating one anonymous-container axis. */
+/** Group key isolating one source-container identity and axis. */
 function groupKey(block: ContainerBlock): string {
   return `${block.name} ${block.axis}`;
 }
@@ -337,10 +321,9 @@ type AtPairs = readonly [readonly [number, string], ...(readonly [number, string
 /**
  * Lower native CSS `@container` query blocks into `defineBoundary` definitions.
  *
- * Every top-level anonymous `@container (<condition>) { … }` block is reduced to
- * a single-axis width/height range. Named containers are refused because the
- * current input vocabulary has no container-qualified identity; converting them
- * to `viewport.*` would silently widen their scope. Anonymous blocks sharing an
+ * Every top-level `@container [name] (<condition>) { … }` block is reduced to
+ * a single-axis width/height range. The caller must preserve container identity
+ * by resolving each name/axis pair onto an explicit LiteShip input. Blocks sharing an
  * axis range-merge into one boundary whose ascending thresholds are the blocks'
  * lower bounds. State names are synthesized as `<statePrefix>-<threshold>`
  * (default prefix `bp`). Lossy/dropped cases are accumulated as diagnostics; a
@@ -350,16 +333,18 @@ type AtPairs = readonly [readonly [number, string], ...(readonly [number, string
  * @example
  * ```ts
  * const { boundaries } = fromContainerQueries(`
- *   @container (width < 768px) { .card { grid-template-columns: 1fr; } }
- *   @container (width >= 768px) and (width < 1024px) { .card { grid-template-columns: 1fr 1fr; } }
- *   @container (width >= 1024px) { .card { grid-template-columns: 1fr 1fr 1fr; } }
- * `);
- * // boundaries[0].input === 'viewport.width'
+ *   @container card (min-width: 0) { .card { grid-template-columns: 1fr; } }
+ *   @container card (min-width: 768px) { .card { grid-template-columns: 1fr 1fr; } }
+ *   @container card (min-width: 1024px) { .card { grid-template-columns: 1fr 1fr 1fr; } }
+ * `, {
+ *   resolveInput: ({ name, axis }) => `custom:container.${name}.${axis}`,
+ * });
+ * // boundaries[0].input === 'custom:container.card.width'
  * // boundaries[0].thresholds === [0, 768, 1024]
  * // boundaries[0].states === ['bp-0', 'bp-768', 'bp-1024']
  * ```
  */
-export function fromContainerQueries(css: string, options?: FromMediaQueriesOptions): MigrationResult {
+export function fromContainerQueries(css: string, options?: FromContainerQueriesOptions): MigrationResult {
   const prefix = options?.statePrefix ?? 'bp';
   const { blocks, diagnostics: readDiagnostics } = readContainerBlocks(css);
   const diagnostics: MigrationDiagnostic[] = [...readDiagnostics];
@@ -378,6 +363,17 @@ export function fromContainerQueries(css: string, options?: FromMediaQueriesOpti
     const first = bucket[0]!;
     const axis = first.axis;
     const path: (string | number)[] = first.name ? [first.name, axis] : [axis];
+    const input = options?.resolveInput?.({ ...(first.name ? { name: first.name } : {}), axis });
+    if (!input) {
+      diagnostics.push(
+        makeMigrationDiagnostic(
+          MIGRATE_CODES.unsupportedAtRule,
+          `@container "${first.name || '(anonymous)'}" (${axis}) has no explicit LiteShip input mapping; the block was refused rather than measured against viewport.${axis}.`,
+          { path, severity: 'error' },
+        ),
+      );
+      continue;
+    }
 
     // Source-order lower bounds — diagnose non-ascending / duplicate BEFORE sorting.
     const sourceLos = bucket.map((b) => b.lo);
@@ -394,23 +390,18 @@ export function fromContainerQueries(css: string, options?: FromMediaQueriesOpti
         ),
       );
     }
-    // Ambiguous when two blocks share a lower bound OR their ranges overlap
-    // (a block's lower bound falls inside a lower-starting block's `[lo, hi)`),
-    // since either collapses to indistinct thresholds. Overlap is checked on
-    // the lo-sorted ranges so `hi` is the load-bearing signal.
-    const byLo = [...bucket].sort((a, b) => a.lo - b.lo);
-    let overlap = false;
-    for (let i = 1; i < byLo.length; i++) {
-      if (byLo[i]!.lo < byLo[i - 1]!.hi && byLo[i]!.lo !== byLo[i - 1]!.lo) overlap = true;
-    }
+    // Duplicate lower bounds collapse to the same threshold and are ambiguous.
+    // Ordinary ascending `min-*` queries overlap by design: CSS cascade chooses
+    // the later matching rule, exactly as a threshold boundary chooses the
+    // highest admitted state. Do not misdiagnose that faithful overlap.
     const duplicateLo = new Set(sourceLos).size < sourceLos.length;
-    if (duplicateLo || overlap) {
+    if (duplicateLo) {
       diagnostics.push(
         makeMigrationDiagnostic(
           MIGRATE_CODES.ambiguousBreakpoint,
-          `@container blocks for "${first.name || '(anonymous)'}" (${axis}) declared ${
-            duplicateLo ? 'duplicate' : 'overlapping'
-          } breakpoints in [${sourceLos.join(', ')}]; collapsed to distinct thresholds.`,
+          `@container blocks for "${first.name || '(anonymous)'}" (${axis}) declared duplicate breakpoints in [${sourceLos.join(
+            ', ',
+          )}]; collapsed to distinct thresholds.`,
           { path },
         ),
       );
@@ -443,7 +434,7 @@ export function fromContainerQueries(css: string, options?: FromMediaQueriesOpti
     const at = thresholds.map((t) => [t, `${prefix}-${Math.round(t)}`] as const);
 
     try {
-      const boundary = defineBoundary({ input: `viewport.${axis}`, at: at as unknown as AtPairs });
+      const boundary = defineBoundary({ input, at: at as unknown as AtPairs });
       boundaries.push(boundary);
     } catch (error) {
       // The define* constructor is the validation gate. A collision the

@@ -8,7 +8,13 @@
  * @module
  */
 
-export type { MigrationResult, MigrationDiagnostic, FromMediaQueriesOptions } from './types.js';
+export type {
+  MigrationResult,
+  MigrationDiagnostic,
+  FromMediaQueriesOptions,
+  FromContainerQueriesOptions,
+  ContainerInputRequest,
+} from './types.js';
 export { makeMigrationDiagnostic, MIGRATE_CODES } from './diagnostics.js';
 
 // P14 adapters — thin lowering over the core primitives, one `fromX` per source.

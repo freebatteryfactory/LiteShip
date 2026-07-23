@@ -132,10 +132,7 @@ describe('fromMediaQueries — decomposition branches', () => {
       bg: { light: '#ffffff', dark: '#111111' },
       fg: { light: '#000000', dark: '#eeeeee' },
     });
-    expect(t.meta).toEqual({
-      light: { label: 'Light', mode: 'light' },
-      dark: { label: 'Dark', mode: 'dark' },
-    });
+    expect(t.meta).toBeUndefined();
   });
 
   it('cross-fills a dark-only token so the theme stays complete (no throw)', () => {
@@ -255,9 +252,11 @@ describe('fromMediaQueries — no-silent-drift review findings', () => {
       (x) => x.code === MIGRATE_CODES.unsupportedAtRule && x.message.includes('conjoins'),
     );
     expect(d).toBeDefined();
-    expect(d!.severity).toBe('warning');
+    expect(d!.severity).toBe('error');
     expect(d!.path).toEqual(['@media', '(min-width: 768px) and (prefers-reduced-motion: reduce)']);
-    expect(d!.message).toContain('conjunction is not preserved');
+    expect(d!.message).toContain('no independent definitions were emitted');
+    expect(result.boundaries).toEqual([]);
+    expect(result.themes).toEqual([]);
   });
 
   it('flags an `and` conjoining the width and height axes', () => {
@@ -266,6 +265,7 @@ describe('fromMediaQueries — no-silent-drift review findings', () => {
       (x) => x.code === MIGRATE_CODES.unsupportedAtRule && x.message.includes('conjoins'),
     );
     expect(d).toBeDefined();
+    expect(result.boundaries).toEqual([]);
   });
 
   it('does NOT flag an `and` whose features fold into the SAME single width target', () => {
@@ -349,6 +349,15 @@ describe('fromMediaQueries — boolean logic (not/or/comma) is rejected, never i
     const result = fromMediaQueries(`@media all and (min-width: 768px) { .x { a: b; } }`);
     expect([...result.boundaries[0]!.thresholds]).toEqual([0, 768]);
     expect(result.diagnostics).toEqual([]);
+  });
+
+  it('refuses a unitless nonzero media length while accepting unitless zero', () => {
+    const refused = fromMediaQueries(`@media (min-width: 768) { .x { a: b; } }`);
+    expect(refused.boundaries).toEqual([]);
+    expect(refused.diagnostics.some((d) => d.code === MIGRATE_CODES.unmappableMediaFeature)).toBe(true);
+
+    const zero = fromMediaQueries(`@media (min-width: 0) { .x { a: b; } }`);
+    expect([...zero.boundaries[0]!.thresholds]).toEqual([0]);
   });
 
   it('refuses `print and (min-width)` rather than widening it to viewport runtime', () => {

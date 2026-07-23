@@ -56,3 +56,21 @@ export interface FromMediaQueriesOptions {
   /** Prefix for synthesized boundary state names (e.g. `'bp'` → `bp-0`, `bp-768`). */
   readonly statePrefix?: string;
 }
+
+/** One source container dimension that a migration host must bind to a LiteShip input. */
+export interface ContainerInputRequest {
+  /** The authored container name, or `undefined` for the nearest anonymous query container. */
+  readonly name?: string;
+  /** The queried physical/logical axis after normalization. */
+  readonly axis: 'width' | 'height';
+}
+
+/** Options for {@link fromContainerQueries}. */
+export interface FromContainerQueriesOptions extends FromMediaQueriesOptions {
+  /**
+   * Resolve source container identity onto an explicitly host-owned LiteShip input.
+   * Return `undefined` when the host cannot preserve that identity. The adapter never
+   * substitutes a viewport input: container size and viewport size are different facts.
+   */
+  readonly resolveInput?: (request: ContainerInputRequest) => string | undefined;
+}

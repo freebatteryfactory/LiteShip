@@ -1,6 +1,7 @@
 /**
- * `migrate/from-design-tokens` — lower a Design Tokens Format 2025.10 document
- * into ordinary `@liteship/core` primitives.
+ * `migrate/from-design-tokens` — lower the explicitly supported scalar/mode
+ * subset of a Design Tokens Format 2025.10 document into ordinary
+ * `@liteship/core` primitives.
  *
  * The input is a Design Tokens Community Group JSON document: nested GROUPS
  * (plain objects) that bottom out in TOKENS (objects carrying a `$value`, an
@@ -22,14 +23,16 @@
  *
  * Two lowering shapes:
  *  - a plain token (`$value` has a faithful scalar CSS form) → a single `defineToken`,
- *    its `TokenCategory` resolved from `$type` (falling back to `inferSyntax` on
- *    the CSS-stringified value, then to `effect` with an
- *    `unknown-token-category` flag);
+ *    its `TokenCategory` resolved from an explicit or inherited `$type`;
  *  - a MODE token (`$value` is an object whose keys are all in the configured
  *    mode set, default `['light', 'dark']`) → an entry in ONE emitted
  *    `defineTheme`, cross-filled to completeness (a missing mode reuses a sibling
- *    value and is flagged `incomplete-theme-variant`); mode metadata rides
- *    `meta.<variant>.mode`.
+ *    value and is flagged `incomplete-theme-variant`).
+ *
+ * Alias resolution and `$extends` inheritance are deliberately outside this
+ * adapter's supported subset. They are refused with stable error diagnostics;
+ * typeless tokens are also refused because DTCG 2025.10 forbids guessing a type
+ * from value syntax.
  *
  * The `define*` constructors ARE the validation gate: the adapter builds
  * optimistically and lets a pathological token (an empty name from an empty JSON
@@ -42,7 +45,7 @@
 import { defineToken, defineTheme, decode, schema, parseErrorFromIssues } from '@liteship/core';
 import type { Token, Theme, TokenCategory } from '@liteship/core';
 import { ValidationError, hasTag } from '@liteship/error';
-import { inferSyntax, stringifyCSSValue, type CSSSyntax } from '../css-utils.js';
+import { stringifyCSSValue } from '../css-utils.js';
 import type { MigrationDiagnostic, MigrationResult } from './types.js';
 import { makeMigrationDiagnostic, MIGRATE_CODES } from './diagnostics.js';
 
@@ -93,26 +96,6 @@ const DTCG_TYPE_TO_CATEGORY: Readonly<Record<string, TokenCategory>> = {
   duration: 'animation',
   cubicBezier: 'animation',
 };
-
-/**
- * Best-effort {@link TokenCategory} from an inferred CSS syntax. Colors, lengths,
- * and times have a natural category; angles / frequencies do not, so they report
- * `null` (the caller then flags `unknown-token-category`).
- */
-function categoryFromSyntax(syntax: CSSSyntax | null): TokenCategory | null {
-  switch (syntax) {
-    case '<color>':
-      return 'color';
-    case '<length>':
-    case '<number>':
-    case '<percentage>':
-      return 'spacing';
-    case '<time>':
-      return 'animation';
-    default:
-      return null;
-  }
-}
 
 // ---------------------------------------------------------------------------
 // Token schema — the per-leaf trust gate (document-graph-schema pattern)
@@ -166,11 +149,6 @@ function isLossyValue(value: unknown): boolean {
   return /^\{.+\}$/.test(s) || s.includes('calc(');
 }
 
-/** Capitalize a variant label (`dark` → `Dark`). */
-function labelOf(variant: string): string {
-  return variant.length === 0 ? variant : variant[0]!.toUpperCase() + variant.slice(1);
-}
-
 /**
  * The CSS-string form of a SCALAR DTCG structured value, or `null` for a composite.
  *
@@ -198,9 +176,7 @@ function scalarDtcgCssValue(value: unknown, type: string | undefined): string | 
       'math',
       'fangsong',
     ]);
-    return value
-      .map((part) => (generics.has(part.toLowerCase()) ? part : JSON.stringify(part)))
-      .join(', ');
+    return value.map((part) => (generics.has(part.toLowerCase()) ? part : JSON.stringify(part))).join(', ');
   }
   if (
     type === 'cubicBezier' &&
@@ -300,36 +276,22 @@ export function fromDesignTokens(json: unknown, options?: FromDesignTokensOption
   const themeTokens: Record<string, Record<string, unknown>> = {};
   let sawModeToken = false;
 
-  const flagLossy = (value: unknown, path: readonly string[]): void => {
+  const refuseUnresolvedValue = (value: unknown, path: readonly string[]): boolean => {
     if (isLossyValue(value)) {
       diagnostics.push(
         makeMigrationDiagnostic(
           MIGRATE_CODES.lossyTokenConversion,
-          `Token "${path.join('.')}" value ${stringifyCSSValue(value)} is an alias/calc reference kept verbatim (not resolvable at migration time).`,
-          { path },
+          `Token "${path.join('.')}" value ${stringifyCSSValue(value)} is an alias/calc reference that this DTCG ${DTCG_FORMAT_VERSION} migration subset cannot resolve; the token was refused.`,
+          { path, severity: 'error' },
         ),
       );
+      return true;
     }
+    return false;
   };
 
-  /** Classify a plain (non-mode) token's category, flagging `unknown-token-category` when it can't. */
-  const resolveCategory = (type: string | undefined, value: unknown, path: readonly string[]): TokenCategory => {
-    if (type !== undefined && Object.hasOwn(DTCG_TYPE_TO_CATEGORY, type)) {
-      return DTCG_TYPE_TO_CATEGORY[type]!;
-    }
-    const category = categoryFromSyntax(inferSyntax(stringifyCSSValue(value)));
-    if (category !== null) return category;
-    diagnostics.push(
-      makeMigrationDiagnostic(
-        MIGRATE_CODES.unknownTokenCategory,
-        `Token "${path.join('.')}" value ${stringifyCSSValue(value)} has no recognizable CSS syntax and ${
-          type !== undefined ? `$type "${type}" is not a known category` : 'declares no $type'
-        }; defaulting to "effect".`,
-        { path },
-      ),
-    );
-    return 'effect';
-  };
+  /** Resolve the already-validated explicit/inherited DTCG type to its LiteShip category. */
+  const resolveCategory = (type: string): TokenCategory => DTCG_TYPE_TO_CATEGORY[type]!;
 
   /**
    * Convert one MODE value exactly as the plain-token structured branch in
@@ -362,7 +324,7 @@ export function fromDesignTokens(json: unknown, options?: FromDesignTokensOption
   /** A mode token → one theme entry, cross-filled to completeness across `modeSet`. */
   const processModeToken = (
     value: Record<string, unknown>,
-    type: string | undefined,
+    type: string,
     name: string,
     path: readonly string[],
   ): void => {
@@ -393,7 +355,7 @@ export function fromDesignTokens(json: unknown, options?: FromDesignTokensOption
     // scalar mode value ({value,unit}) would reach the compiler as `[object Object]`.
     const converted: Record<string, unknown> = {};
     for (const mode of presentModes) {
-      flagLossy(present[mode], [...path, mode]);
+      if (refuseUnresolvedValue(present[mode], [...path, mode])) return;
       const conversion = toModeCssValue(present[mode], type, name, [...path, mode]);
       if (!conversion.ok) return;
       converted[mode] = conversion.value;
@@ -420,9 +382,9 @@ export function fromDesignTokens(json: unknown, options?: FromDesignTokensOption
   };
 
   /** A plain token → one defineToken (constructor is the validation gate). */
-  const processPlainToken = (value: unknown, type: string | undefined, name: string, path: readonly string[]): void => {
-    const category = resolveCategory(type, value, path);
-    flagLossy(value, path);
+  const processPlainToken = (value: unknown, type: string, name: string, path: readonly string[]): void => {
+    if (refuseUnresolvedValue(value, path)) return;
+    const category = resolveCategory(type);
     try {
       tokens.push(defineToken({ name, category, value }));
     } catch (e) {
@@ -463,6 +425,27 @@ export function fromDesignTokens(json: unknown, options?: FromDesignTokensOption
     const type = tok.$type ?? inheritedType;
     const name = path.join('.');
     const value = tok.$value;
+
+    if (type === undefined) {
+      diagnostics.push(
+        makeMigrationDiagnostic(
+          MIGRATE_CODES.unknownTokenCategory,
+          `Token "${name}" declares no $type and inherits none; DTCG ${DTCG_FORMAT_VERSION} forbids guessing the type from its value, so the token was refused.`,
+          { path, severity: 'error' },
+        ),
+      );
+      return;
+    }
+    if (!Object.hasOwn(DTCG_TYPE_TO_CATEGORY, type)) {
+      diagnostics.push(
+        makeMigrationDiagnostic(
+          MIGRATE_CODES.unknownTokenCategory,
+          `Token "${name}" declares unsupported DTCG ${DTCG_FORMAT_VERSION} $type "${type}"; the token was refused rather than guessed.`,
+          { path, severity: 'error' },
+        ),
+      );
+      return;
+    }
 
     // A mode token: $value is an object whose keys are ALL in the mode set (so a
     // shadow/typography composite — keys `color`/`offsetX`/… — is NOT a mode map).
@@ -514,6 +497,16 @@ export function fromDesignTokens(json: unknown, options?: FromDesignTokensOption
   // is inherited by descendant tokens lacking their own.
   // -------------------------------------------------------------------------
   const walk = (node: Record<string, unknown>, prefix: readonly string[], inheritedType: string | undefined): void => {
+    if (Object.hasOwn(node, '$extends')) {
+      diagnostics.push(
+        makeMigrationDiagnostic(
+          MIGRATE_CODES.unsupportedAtRule,
+          `DTCG ${DTCG_FORMAT_VERSION} group "${prefix.join('.') || '(root)'}" uses $extends, which this migration subset does not resolve; the group was refused.`,
+          { path: [...prefix, '$extends'], severity: 'error' },
+        ),
+      );
+      return;
+    }
     for (const key of Object.keys(node)) {
       const child = node[key];
       const path = [...prefix, key];
@@ -562,20 +555,12 @@ export function fromDesignTokens(json: unknown, options?: FromDesignTokensOption
   // cross-variant completeness; cross-fill above keeps it satisfiable).
   // -------------------------------------------------------------------------
   if (sawModeToken && Object.keys(themeTokens).length > 0) {
-    const meta = Object.fromEntries(
-      modeSet.map((variant) => [
-        variant,
-        { label: labelOf(variant), mode: variant.toLowerCase().includes('dark') ? 'dark' : 'light' },
-      ]),
-    ) as Record<string, { readonly label: string; readonly mode: 'light' | 'dark' }>;
-
     try {
       themes.push(
         defineTheme({
           name: themeName,
           variants: modeSet as unknown as readonly [string, ...string[]],
           tokens: themeTokens as Record<string, Record<string, unknown>>,
-          meta: meta as never,
         }),
       );
     } catch (e) {

@@ -88,6 +88,15 @@ describe('fromCSSCustomProperties — clean lossless cases', () => {
 });
 
 describe('fromCSSCustomProperties — selector reader (NEW)', () => {
+  it('recognizes :root inside a selector list without dropping the base declarations', () => {
+    const result = fromCSSCustomProperties(`
+      :root, :host { --accent: red; }
+      html[data-theme="dark"] { --accent: darkred; }
+    `);
+    expect(result.themes).toHaveLength(1);
+    expect(result.themes[0]!.tokens.accent).toEqual({ default: 'red', dark: 'darkred' });
+  });
+
   it('reads only :root rules, ignoring comments, @import, decoy selectors, and braces inside strings', () => {
     const result = fromCSSCustomProperties(`
       @import "base.css";
@@ -205,6 +214,19 @@ describe('fromCSSCustomProperties — diagnostic teeth (every code the adapter e
     const lossy = result.diagnostics.filter((d) => d.code === MIGRATE_CODES.lossyTokenConversion);
     expect(lossy).toHaveLength(1);
     expect(result.themes[0]!.tokens.a).toEqual({ default: 'calc(1rem + 2px)', dark: '#111' });
+  });
+
+  it('inspects every theme variant so a literal base cannot hide a lossy override', () => {
+    const result = fromCSSCustomProperties(`
+      :root { --liteship-a: #fff; }
+      html[data-theme="dark"] { --liteship-a: var(--dark-a); }
+    `);
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: MIGRATE_CODES.lossyTokenConversion,
+        path: ['a', 'dark'],
+      }),
+    );
   });
 
   it('migrate/incomplete-theme-variant (warning) — a token missing in a variant is filled from base', () => {
