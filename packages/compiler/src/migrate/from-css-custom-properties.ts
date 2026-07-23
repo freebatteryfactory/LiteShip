@@ -38,12 +38,14 @@ import { defineToken, defineTheme } from '@liteship/core';
 import type { Boundary, Token, Theme, TokenCategory } from '@liteship/core';
 import { hasTag } from '@liteship/error';
 import type { DiagnosticCodeFor } from '@liteship/error';
+import { blankCssCommentsAndStrings, skipWsAndComments, skipSegment } from '@liteship/compiler/parse';
 import {
-  blankCssCommentsAndStrings,
-  parseFlatDeclarations,
-  skipWsAndComments,
-  skipSegment,
-} from '@liteship/compiler/parse';
+  serializeCSSDeclarationValue,
+  splitCSSSelectorList,
+  winsCSSCascade,
+  type CSSDeclarationValue,
+} from '../parse/css-cascade.js';
+import { parseFlatDeclarationValues } from '../parse/css-scan.js';
 import { inferSyntax } from '../css-utils.js';
 import type { MigrationDiagnostic, MigrationResult } from './types.js';
 import { makeMigrationDiagnostic, MIGRATE_CODES } from './diagnostics.js';
@@ -80,54 +82,6 @@ function publicVariantName(variant: VariantKey): string {
  */
 const DATA_THEME_RE = /^(?:html)?\s*\[\s*data-theme\s*=\s*(?:"([^"]*)"|'([^']*)'|([\w-]+))\s*\]$/i;
 
-/**
- * Split a selector list without treating commas inside quoted attribute values
- * or functional selectors as list separators. CSS comments are removed while
- * strings are preserved, so selector recognition is structural rather than a
- * raw-text equality check.
- */
-function splitSelectorList(selector: string): readonly string[] {
-  const members: string[] = [];
-  let current = '';
-  let quote: '"' | "'" | null = null;
-  let escaped = false;
-  let bracketDepth = 0;
-  let parenDepth = 0;
-  for (let i = 0; i < selector.length; i++) {
-    const ch = selector[i]!;
-    if (quote !== null) {
-      current += ch;
-      if (escaped) escaped = false;
-      else if (ch === '\\') escaped = true;
-      else if (ch === quote) quote = null;
-      continue;
-    }
-    if (ch === '"' || ch === "'") {
-      quote = ch;
-      current += ch;
-      continue;
-    }
-    if (ch === '/' && selector[i + 1] === '*') {
-      const end = selector.indexOf('*/', i + 2);
-      i = end === -1 ? selector.length : end + 1;
-      current += ' ';
-      continue;
-    }
-    if (ch === '[') bracketDepth++;
-    else if (ch === ']' && bracketDepth > 0) bracketDepth--;
-    else if (ch === '(') parenDepth++;
-    else if (ch === ')' && parenDepth > 0) parenDepth--;
-    if (ch === ',' && bracketDepth === 0 && parenDepth === 0) {
-      members.push(current.trim());
-      current = '';
-    } else {
-      current += ch;
-    }
-  }
-  members.push(current.trim());
-  return members;
-}
-
 interface SupportedSelector {
   readonly variant: VariantKey;
   /** CSS specificity for the supported selector subset, encoded as class * 100 + type. */
@@ -137,7 +91,7 @@ interface SupportedSelector {
 /** Recognized selectors carried by one comma-separated selector list. */
 function supportedSelectorsOf(selector: string): readonly SupportedSelector[] {
   const selectors: SupportedSelector[] = [];
-  for (const member of splitSelectorList(selector)) {
+  for (const member of splitCSSSelectorList(selector)) {
     if (member.toLowerCase() === ':root') {
       selectors.push({ variant: DEFAULT_VARIANT, specificity: 100 });
       continue;
@@ -306,7 +260,7 @@ export function fromCSSCustomProperties(css: string, options?: FromCSSCustomProp
   // -------------------------------------------------------------------------
   interface CascadeCandidate {
     readonly sourceVariant: VariantKey;
-    readonly value: string;
+    readonly declaration: CSSDeclarationValue;
     readonly specificity: number;
     readonly sourceOrder: number;
   }
@@ -327,8 +281,8 @@ export function fromCSSCustomProperties(css: string, options?: FromCSSCustomProp
     const selectors = supportedSelectorsOf(rule.selector);
     if (selectors.length === 0) continue; // selector we do not migrate
     for (const { variant } of selectors) recordVariant(variant);
-    const { props } = parseFlatDeclarations(css, rule.bodyStart);
-    for (const [prop, value] of Object.entries(props)) {
+    const { props } = parseFlatDeclarationValues(css, rule.bodyStart);
+    for (const [prop, declaration] of Object.entries(props)) {
       const name = tokenNameOf(prop);
       if (name === null) continue;
       let candidates = byToken.get(name);
@@ -340,7 +294,7 @@ export function fromCSSCustomProperties(css: string, options?: FromCSSCustomProp
       for (const selector of selectors) {
         candidates.push({
           sourceVariant: selector.variant,
-          value,
+          declaration,
           specificity: selector.specificity,
           sourceOrder,
         });
@@ -373,18 +327,20 @@ export function fromCSSCustomProperties(css: string, options?: FromCSSCustomProp
   const applicableCandidates = (name: string, variant: VariantKey): readonly CascadeCandidate[] =>
     byToken.get(name)!.filter(({ sourceVariant }) => sourceVariant === DEFAULT_VARIANT || sourceVariant === variant);
 
-  const resolveCascade = (name: string, variant: VariantKey): string | undefined => {
+  const resolveCascade = (name: string, variant: VariantKey): CSSDeclarationValue | undefined => {
     let winner: CascadeCandidate | undefined;
     for (const candidate of applicableCandidates(name, variant)) {
       if (
         winner === undefined ||
-        candidate.specificity > winner.specificity ||
-        (candidate.specificity === winner.specificity && candidate.sourceOrder >= winner.sourceOrder)
+        winsCSSCascade(
+          { ...candidate, important: candidate.declaration.important },
+          { ...winner, important: winner.declaration.important },
+        )
       ) {
         winner = candidate;
       }
     }
-    return winner?.value;
+    return winner?.declaration;
   };
 
   const hasAuthoredVariant = (name: string, variant: VariantKey): boolean =>
@@ -408,8 +364,9 @@ export function fromCSSCustomProperties(css: string, options?: FromCSSCustomProp
       return { boundaries, tokens, themes, diagnostics };
     }
     for (const name of tokenOrder) {
-      const value = resolveCascade(name, only)!;
-      const { category, code } = classifyValue(value);
+      const declaration = resolveCascade(name, only)!;
+      const value = serializeCSSDeclarationValue(declaration);
+      const { category, code } = classifyValue(declaration.value);
       if (code === MIGRATE_CODES.lossyTokenConversion) {
         diagnostics.push(
           makeMigrationDiagnostic(
@@ -450,20 +407,21 @@ export function fromCSSCustomProperties(css: string, options?: FromCSSCustomProp
 
   for (const name of tokenOrder) {
     const candidates = byToken.get(name)!;
-    const baseValue = resolveCascade(name, DEFAULT_VARIANT);
+    const baseDeclaration = resolveCascade(name, DEFAULT_VARIANT);
     const entry: Record<string, unknown> = {};
     let dropped = false;
 
     for (const variant of variants) {
-      const val = resolveCascade(name, variant);
+      const declaration = resolveCascade(name, variant);
       const publicVariant = publicVariantName(variant);
-      if (val !== undefined) {
-        entry[publicVariant] = val;
-        if (variant !== DEFAULT_VARIANT && !hasAuthoredVariant(name, variant) && baseValue !== undefined) {
+      if (declaration !== undefined) {
+        const value = serializeCSSDeclarationValue(declaration);
+        entry[publicVariant] = value;
+        if (variant !== DEFAULT_VARIANT && !hasAuthoredVariant(name, variant) && baseDeclaration !== undefined) {
           diagnostics.push(
             makeMigrationDiagnostic(
               MIGRATE_CODES.incompleteThemeVariant,
-              `Token "${name}" has no value for variant "${publicVariant}"; filled from the base (:root) value "${baseValue}".`,
+              `Token "${name}" has no value for variant "${publicVariant}"; filled from the base (:root) value "${serializeCSSDeclarationValue(baseDeclaration)}".`,
               { path: [name, publicVariant] },
             ),
           );
@@ -487,9 +445,10 @@ export function fromCSSCustomProperties(css: string, options?: FromCSSCustomProp
 
     // Inspect EVERY authored variant. A literal base must not hide a lossy
     // `var()`/`calc()` override from the migration report.
-    for (const { sourceVariant, value } of candidates) {
+    for (const { sourceVariant, declaration } of candidates) {
+      const value = serializeCSSDeclarationValue(declaration);
       const publicVariant = publicVariantName(sourceVariant);
-      if (/var\(|calc\(/.test(value)) {
+      if (/var\(|calc\(/.test(declaration.value)) {
         diagnostics.push(
           makeMigrationDiagnostic(
             MIGRATE_CODES.lossyTokenConversion,

@@ -127,6 +127,45 @@ describe('fromMediaQueries — decomposition branches', () => {
     expect(t.meta).toBeUndefined();
   });
 
+  it('treats comments as whitespace in root selector lists', () => {
+    const result = fromMediaQueries(`
+      :root /* base */, html { --bg: #ffffff; }
+      @media (prefers-color-scheme: dark) {
+        :root /* dark */ { --bg: #111111; }
+      }
+    `);
+
+    expect(result.themes[0]!.tokens.bg).toEqual({ light: '#ffffff', dark: '#111111' });
+  });
+
+  it('applies importance before source order across base and scheme declarations', () => {
+    const result = fromMediaQueries(`
+      :root { --bg: #ffffff !important; }
+      @media (prefers-color-scheme: dark) {
+        :root { --bg: #111111; }
+      }
+    `);
+
+    expect(result.themes[0]!.tokens.bg).toEqual({
+      light: '#ffffff !important',
+      dark: '#ffffff !important',
+    });
+  });
+
+  it('uses source order between important base and scheme declarations', () => {
+    const result = fromMediaQueries(`
+      :root { --bg: #ffffff !important; }
+      @media (prefers-color-scheme: dark) {
+        :root { --bg: #111111 ! /* priority */ important; }
+      }
+    `);
+
+    expect(result.themes[0]!.tokens.bg).toEqual({
+      light: '#ffffff !important',
+      dark: '#111111 !important',
+    });
+  });
+
   it('preserves source-order cascade when a later :root overrides an earlier scheme rule', () => {
     const result = fromMediaQueries(`
       @media (prefers-color-scheme: dark) { :root { --bg: #111111; } }

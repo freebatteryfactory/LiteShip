@@ -12,6 +12,8 @@
  * @module
  */
 
+import { parseCSSDeclarationValue, serializeCSSDeclarationValue, type CSSDeclarationValue } from './css-cascade.js';
+
 /**
  * Blank out block comments, quoted-string contents, and unquoted
  * `url(...)` contents while preserving every newline AND every
@@ -210,12 +212,12 @@ const DEFAULT_PROP_PATTERN = /^[a-zA-Z-][a-zA-Z0-9-]*$/;
  * @returns The parsed properties and the position immediately after the
  *          closing `}` of the block.
  */
-export function parseFlatDeclarations(
+export function parseFlatDeclarationValues(
   css: string,
   pos: number,
   propPattern: RegExp = DEFAULT_PROP_PATTERN,
-): { props: Record<string, string>; end: number } {
-  const props: Record<string, string> = {};
+): { props: Record<string, CSSDeclarationValue>; end: number } {
+  const props: Record<string, CSSDeclarationValue> = {};
   let braceDepth = 0;
 
   while (pos < css.length) {
@@ -348,12 +350,37 @@ export function parseFlatDeclarations(
       const propName = decl.slice(0, colonIdx).trim();
       const propValue = decl.slice(colonIdx + 1).trim();
       if (propPattern.test(propName) && propValue.length > 0) {
-        props[propName] = propValue;
+        const candidate = parseCSSDeclarationValue(propValue);
+        const current = props[propName];
+        // Within one declaration block, importance wins before source order.
+        // Equal-priority declarations retain ordinary CSS last-one-wins order.
+        if (current === undefined || candidate.important || !current.important) {
+          props[propName] = candidate;
+        }
       }
     }
   }
 
   return { props, end: pos };
+}
+
+/**
+ * Parse flat declarations and preserve a trailing `!important` marker in the
+ * returned authored value. Call {@link parseFlatDeclarationValues} when the
+ * cascade priority must be compared separately from the value.
+ */
+export function parseFlatDeclarations(
+  css: string,
+  pos: number,
+  propPattern: RegExp = DEFAULT_PROP_PATTERN,
+): { props: Record<string, string>; end: number } {
+  const parsed = parseFlatDeclarationValues(css, pos, propPattern);
+  return {
+    props: Object.fromEntries(
+      Object.entries(parsed.props).map(([name, declaration]) => [name, serializeCSSDeclarationValue(declaration)]),
+    ),
+    end: parsed.end,
+  };
 }
 
 /**

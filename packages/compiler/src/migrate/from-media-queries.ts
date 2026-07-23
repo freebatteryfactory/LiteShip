@@ -33,7 +33,14 @@
 import { defineBoundary, defineTheme, sourceToInput, VIEWPORT } from '@liteship/core';
 import type { Boundary, Token, Theme } from '@liteship/core';
 import { hasTag } from '@liteship/error';
-import { blankCssCommentsAndStrings, parseFlatDeclarations } from '@liteship/compiler/parse';
+import { blankCssCommentsAndStrings } from '@liteship/compiler/parse';
+import {
+  serializeCSSDeclarationValue,
+  splitCSSSelectorList,
+  winsCSSCascade,
+  type CSSDeclarationValue,
+} from '../parse/css-cascade.js';
+import { parseFlatDeclarationValues } from '../parse/css-scan.js';
 import type { MigrationDiagnostic, MigrationResult, FromMediaQueriesOptions } from './types.js';
 import { makeMigrationDiagnostic, MIGRATE_CODES } from './diagnostics.js';
 
@@ -173,33 +180,37 @@ function matchBrace(blanked: string, openIdx: number): number {
  * whole migrated theme.
  */
 function selectorTargetsRoot(selector: string): boolean {
-  return selector
-    .replace(/[{}]/g, ' ')
-    .split(',')
-    .some((part) => part.trim().toLowerCase() === ':root');
+  return splitCSSSelectorList(selector).some((part) => part.toLowerCase() === ':root');
+}
+
+interface RootCustomPropertyRule {
+  readonly props: Readonly<Record<string, CSSDeclarationValue>>;
 }
 
 /**
  * Collect the `:root` custom-property declarations (`--name: value`) inside a
  * source range, walking each nested rule block with the shared
- * {@link parseFlatDeclarations} scanner. Names are returned WITHOUT the leading
- * `--`. Only `:root` blocks contribute — a scoped selector inside the range
+ * declaration scanner. Names are returned WITHOUT the leading `--`. Only
+ * `:root` blocks contribute — a scoped selector inside the range
  * (`.card { --accent }`) is skipped, so a block's custom properties never
  * silently become theme-wide values. Used to read the `:root { … }` overrides
  * inside a `prefers-color-scheme` media block.
  */
-function collectRootCustomProps(css: string, start: number, end: number): Record<string, string> {
-  const out: Record<string, string> = {};
+function collectRootCustomPropertyRules(css: string, start: number, end: number): readonly RootCustomPropertyRule[] {
+  const out: RootCustomPropertyRule[] = [];
+  const structural = blankCssCommentsAndStrings(css);
   let i = start;
   let selStart = start;
   while (i < end) {
-    if (css[i] === '{') {
+    if (structural[i] === '{') {
       const selector = css.slice(selStart, i);
-      const { props, end: blockEnd } = parseFlatDeclarations(css, i + 1);
+      const { props, end: blockEnd } = parseFlatDeclarationValues(css, i + 1);
       if (selectorTargetsRoot(selector)) {
-        for (const [k, v] of Object.entries(props)) {
-          if (k.startsWith('--')) out[k.slice(2)] = v;
-        }
+        out.push({
+          props: Object.fromEntries(
+            Object.entries(props).flatMap(([k, v]) => (k.startsWith('--') ? [[k.slice(2), v]] : [])),
+          ),
+        });
       }
       i = blockEnd > i ? blockEnd : i + 1;
       selStart = i;
@@ -325,11 +336,64 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
   const discreteConfigs: DiscreteConfig[] = [];
   const discreteInputs = new Set<string>();
 
-  // Resolved light/dark values in source order. A top-level :root declaration
-  // applies to both variants at its position; a color-scheme block applies only
-  // to its selected variant. This preserves CSS cascade ordering across the two.
-  const schemeValues: { light: Record<string, string>; dark: Record<string, string> } = { light: {}, dark: {} };
+  interface SchemeCandidate {
+    readonly declaration: CSSDeclarationValue;
+    readonly specificity: 100;
+    readonly sourceOrder: number;
+  }
+  type SchemeVariant = 'light' | 'dark';
+
+  // Cascade candidates retain importance and source order. A top-level :root
+  // declaration participates in both variants; a color-scheme block contributes
+  // only to its selected variant.
+  const schemeCandidates: Record<SchemeVariant, Map<string, SchemeCandidate[]>> = {
+    light: new Map(),
+    dark: new Map(),
+  };
+  let schemeSourceOrder = 0;
   let sawColorScheme = false;
+
+  const cloneSchemeCandidates = (): Record<SchemeVariant, Map<string, SchemeCandidate[]>> => ({
+    light: new Map([...schemeCandidates.light].map(([name, candidates]) => [name, [...candidates]])),
+    dark: new Map([...schemeCandidates.dark].map(([name, candidates]) => [name, [...candidates]])),
+  });
+
+  const restoreSchemeCandidates = (snapshot: Record<SchemeVariant, Map<string, SchemeCandidate[]>>): void => {
+    for (const variant of ['light', 'dark'] as const) {
+      schemeCandidates[variant].clear();
+      for (const [name, candidates] of snapshot[variant]) schemeCandidates[variant].set(name, candidates);
+    }
+  };
+
+  const recordSchemeDeclarations = (
+    variants: readonly SchemeVariant[],
+    props: Readonly<Record<string, CSSDeclarationValue>>,
+  ): void => {
+    const sourceOrder = schemeSourceOrder++;
+    for (const variant of variants) {
+      for (const [name, declaration] of Object.entries(props)) {
+        const candidates = schemeCandidates[variant].get(name) ?? [];
+        candidates.push({ declaration, specificity: 100, sourceOrder });
+        schemeCandidates[variant].set(name, candidates);
+      }
+    }
+  };
+
+  const resolveSchemeValue = (variant: SchemeVariant, name: string): CSSDeclarationValue | undefined => {
+    let winner: SchemeCandidate | undefined;
+    for (const candidate of schemeCandidates[variant].get(name) ?? []) {
+      if (
+        winner === undefined ||
+        winsCSSCascade(
+          { ...candidate, important: candidate.declaration.important },
+          { ...winner, important: winner.declaration.important },
+        )
+      ) {
+        winner = candidate;
+      }
+    }
+    return winner?.declaration;
+  };
 
   const addDiscrete = (feat: ParsedFeature): string => {
     const normalizedValue =
@@ -472,8 +536,7 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
       discrete: discreteConfigs.length,
       discreteInputs: new Set(discreteInputs),
       sawColorScheme,
-      light: { ...schemeValues.light },
-      dark: { ...schemeValues.dark },
+      schemes: cloneSchemeCandidates(),
     };
 
     // Distinct lowering targets in THIS block. An `and` conjoining features that
@@ -492,8 +555,9 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
           continue;
         }
         sawColorScheme = true;
-        const props = collectRootCustomProps(css, bodyStart, bodyEnd);
-        schemeValues[variant] = { ...schemeValues[variant], ...props };
+        for (const rule of collectRootCustomPropertyRules(css, bodyStart, bodyEnd)) {
+          recordSchemeDeclarations([variant], rule.props);
+        }
         targets.add('color-scheme');
       } else {
         targets.add(addDiscrete(feat));
@@ -512,8 +576,7 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
       discreteInputs.clear();
       for (const input of checkpoint.discreteInputs) discreteInputs.add(input);
       sawColorScheme = checkpoint.sawColorScheme;
-      schemeValues.light = checkpoint.light;
-      schemeValues.dark = checkpoint.dark;
+      restoreSchemeCandidates(checkpoint.schemes);
       diagnostics.length = checkpoint.diagnostics;
       diagnostics.push(
         makeMigrationDiagnostic(
@@ -598,14 +661,11 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
     const bodyStart = k + 1;
     const bodyEnd = matchBrace(blanked, k);
     if (selectorTargetsRoot(selector)) {
-      const { props } = parseFlatDeclarations(css, bodyStart);
-      for (const [p, v] of Object.entries(props)) {
-        if (p.startsWith('--')) {
-          const name = p.slice(2);
-          schemeValues.light[name] = v;
-          schemeValues.dark[name] = v;
-        }
-      }
+      const { props } = parseFlatDeclarationValues(css, bodyStart);
+      recordSchemeDeclarations(
+        ['light', 'dark'],
+        Object.fromEntries(Object.entries(props).flatMap(([p, v]) => (p.startsWith('--') ? [[p.slice(2), v]] : []))),
+      );
     }
     i = bodyEnd + 1;
   }
@@ -687,9 +747,7 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
   // prefers-color-scheme → light/dark theme.
   // -------------------------------------------------------------------------
   if (sawColorScheme) {
-    const lightMap = schemeValues.light;
-    const darkMap = schemeValues.dark;
-    const names = [...new Set([...Object.keys(lightMap), ...Object.keys(darkMap)])];
+    const names = [...new Set([...schemeCandidates.light.keys(), ...schemeCandidates.dark.keys()])];
     if (names.length > 0) {
       const tokens: Record<string, Record<'light' | 'dark', unknown>> = {};
       for (const name of names) {
@@ -697,8 +755,10 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
         // variant is present); a variant-only token reuses its sibling value.
         // A property present under only ONE color scheme has its OTHER variant
         // fabricated from the sibling — silently widening its scope — so flag it.
-        const lightMissing = lightMap[name] === undefined;
-        const darkMissing = darkMap[name] === undefined;
+        const lightDeclaration = resolveSchemeValue('light', name);
+        const darkDeclaration = resolveSchemeValue('dark', name);
+        const lightMissing = lightDeclaration === undefined;
+        const darkMissing = darkDeclaration === undefined;
         if (lightMissing || darkMissing) {
           const present = lightMissing ? 'dark' : 'light';
           const absent = lightMissing ? 'light' : 'dark';
@@ -711,8 +771,8 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
           );
         }
         tokens[name] = {
-          light: lightMap[name] ?? darkMap[name],
-          dark: darkMap[name] ?? lightMap[name],
+          light: serializeCSSDeclarationValue(lightDeclaration ?? darkDeclaration!),
+          dark: serializeCSSDeclarationValue(darkDeclaration ?? lightDeclaration!),
         };
       }
       try {

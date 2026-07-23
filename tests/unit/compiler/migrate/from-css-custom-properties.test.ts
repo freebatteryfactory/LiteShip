@@ -17,6 +17,7 @@
 
 import { describe, it, expect } from 'vitest';
 import fc from 'fast-check';
+import { ThemeCSSCompiler } from '@liteship/compiler';
 import { fromCSSCustomProperties } from '@liteship/compiler/migrate';
 import { MIGRATE_CODES } from '@liteship/compiler/migrate';
 
@@ -146,6 +147,68 @@ describe('fromCSSCustomProperties — selector reader (NEW)', () => {
 });
 
 describe('fromCSSCustomProperties — supported selector cascade', () => {
+  it('lets an earlier important base declaration beat a later ordinary declaration', () => {
+    const result = fromCSSCustomProperties(`
+      :root { --accent: red !important; }
+      html[data-theme="dark"] { --accent: blue; }
+    `);
+
+    expect(result.themes[0]!.tokens.accent).toEqual({
+      default: 'red !important',
+      dark: 'red !important',
+    });
+  });
+
+  it('uses source order between important declarations', () => {
+    const result = fromCSSCustomProperties(`
+      :root { --accent: red !important; }
+      [data-theme="dark"] { --accent: blue !IMPORTANT; }
+    `);
+
+    expect(result.themes[0]!.tokens.accent).toEqual({
+      default: 'red !important',
+      dark: 'blue !important',
+    });
+  });
+
+  it('does not let higher specificity ordinary declarations beat important declarations', () => {
+    const result = fromCSSCustomProperties(`
+      :root { --accent: red !important; }
+      html[data-theme="dark"] { --accent: blue; }
+    `);
+
+    expect(result.themes[0]!.tokens.accent.dark).toBe('red !important');
+  });
+
+  it('does not treat important text inside strings or functions as declaration priority', () => {
+    const result = fromCSSCustomProperties(`
+      :root { --message: var(--fallback, "!important"); }
+      :root { --message: ordinary; }
+    `);
+
+    expect(result.tokens[0]!.fallback).toBe('ordinary');
+  });
+
+  it('parses comments and whitespace between the important marker tokens', () => {
+    const result = fromCSSCustomProperties(`
+      :root { --accent: red ! /* priority */ IMPORTANT; }
+      :root { --accent: blue; }
+    `);
+
+    expect(result.tokens[0]!.fallback).toBe('red !important');
+  });
+
+  it('retains important priority in compiled theme CSS', () => {
+    const result = fromCSSCustomProperties(`
+      :root { --accent: red !important; }
+      [data-theme="dark"] { --accent: blue !important; }
+    `);
+    const compiled = ThemeCSSCompiler.compile(result.themes[0]!);
+
+    expect(compiled.selectors).toContain('--liteship-accent: red !important;');
+    expect(compiled.selectors).toContain('--liteship-accent: blue !important;');
+  });
+
   it('lets a later :root declaration beat an earlier bare data-theme declaration at equal specificity', () => {
     const result = fromCSSCustomProperties(`
       [data-theme="dark"] { --accent: darkred; }
