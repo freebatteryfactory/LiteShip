@@ -55,6 +55,34 @@ const RECOGNIZED_DISCRETE_FEATURES: ReadonlySet<string> = new Set([
   'prefers-reduced-transparency',
 ]);
 
+/**
+ * Discrete media features whose valued alternatives are mutually exclusive for
+ * one evaluation. A conjunction that requires two distinct normalized values
+ * of one of these features is unsatisfiable and must not create an always-live
+ * LiteShip definition.
+ *
+ * Deliberately excludes implication-shaped features such as `color-gamut` and
+ * multi-device summaries such as `any-pointer`, where multiple values may match
+ * at once.
+ */
+const MUTUALLY_EXCLUSIVE_DISCRETE_FEATURES: ReadonlySet<string> = new Set([
+  'prefers-color-scheme',
+  'orientation',
+  'prefers-reduced-motion',
+  'prefers-reduced-data',
+  'prefers-reduced-transparency',
+  'prefers-contrast',
+  'forced-colors',
+  'inverted-colors',
+  'pointer',
+  'hover',
+  'update',
+  'overflow-block',
+  'overflow-inline',
+  'scripting',
+  'display-mode',
+]);
+
 /** `viewport.width` breakpoint features and their axis. */
 const WIDTH_FEATURES: ReadonlySet<string> = new Set(['min-width', 'max-width', 'width']);
 const HEIGHT_FEATURES: ReadonlySet<string> = new Set(['min-height', 'max-height', 'height']);
@@ -303,8 +331,12 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
   const schemeValues: { light: Record<string, string>; dark: Record<string, string> } = { light: {}, dark: {} };
   let sawColorScheme = false;
 
-  const addDiscrete = (feat: ParsedFeature): void => {
-    const query = feat.value !== null ? `(${feat.feature}: ${feat.value})` : `(${feat.feature})`;
+  const addDiscrete = (feat: ParsedFeature): string => {
+    const normalizedValue =
+      feat.value !== null && MUTUALLY_EXCLUSIVE_DISCRETE_FEATURES.has(feat.feature)
+        ? feat.value.trim().toLowerCase()
+        : feat.value;
+    const query = normalizedValue !== null ? `(${feat.feature}: ${normalizedValue})` : `(${feat.feature})`;
     const recognized = RECOGNIZED_DISCRETE_FEATURES.has(feat.feature);
     const input = recognized
       ? (sourceToInput({ type: 'media', query }) as string)
@@ -318,9 +350,10 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
         { path: [feat.feature] },
       ),
     );
-    if (discreteInputs.has(input)) return;
+    if (discreteInputs.has(input)) return input;
     discreteInputs.add(input);
     discreteConfigs.push({ input, slug: feat.feature.replace(/[^a-z0-9]+/gi, '-'), feature: feat.feature });
+    return input;
   };
 
   const processMedia = (prelude: string, bodyStart: number, bodyEnd: number): void => {
@@ -365,6 +398,33 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
           MIGRATE_CODES.unsupportedAtRule,
           `@media "${prelude.trim()}" has no lowerable feature condition; skipped.`,
           { path: ['@media', prelude.trim()] },
+        ),
+      );
+      return;
+    }
+
+    // Closed discrete alternatives describe one selected value. Requiring two
+    // distinct values of the same feature in one conjunction is therefore
+    // unsatisfiable. Refuse before touching any boundary/theme accumulator;
+    // lowering the alternatives independently would turn an impossible source
+    // predicate into active runtime definitions.
+    const closedValues = new Map<string, Set<string>>();
+    for (const feat of feats) {
+      if (!MUTUALLY_EXCLUSIVE_DISCRETE_FEATURES.has(feat.feature) || feat.value === null) continue;
+      const values = closedValues.get(feat.feature) ?? new Set<string>();
+      values.add(feat.value.trim().toLowerCase());
+      closedValues.set(feat.feature, values);
+    }
+    const contradiction = [...closedValues].find(([, values]) => values.size > 1);
+    if (contradiction !== undefined) {
+      const [feature, values] = contradiction;
+      diagnostics.push(
+        makeMigrationDiagnostic(
+          MIGRATE_CODES.unsupportedAtRule,
+          `@media "${prelude.trim()}" requires mutually exclusive values of "${feature}" (${[...values].join(
+            ', ',
+          )}); the unsatisfiable block emitted no definitions.`,
+          { path: ['@media', prelude.trim(), feature], severity: 'error' },
         ),
       );
       return;
@@ -428,8 +488,7 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
       } else if (f === 'prefers-color-scheme') {
         const variant = (feat.value ?? '').toLowerCase();
         if (variant !== 'light' && variant !== 'dark') {
-          addDiscrete(feat);
-          targets.add(feat.value !== null ? `(${f}: ${feat.value})` : `(${f})`);
+          targets.add(addDiscrete(feat));
           continue;
         }
         sawColorScheme = true;
@@ -437,8 +496,7 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
         schemeValues[variant] = { ...schemeValues[variant], ...props };
         targets.add('color-scheme');
       } else {
-        addDiscrete(feat);
-        targets.add(feat.value !== null ? `(${f}: ${feat.value})` : `(${f})`);
+        targets.add(addDiscrete(feat));
       }
     }
 

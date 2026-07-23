@@ -5,6 +5,7 @@
 
 import { describe, expect, it } from 'vitest';
 import fc from 'fast-check';
+import { Boundary } from '@liteship/core';
 import { fromContainerQueries, MIGRATE_CODES } from '@liteship/compiler/migrate';
 
 const migrate = (css: string, options?: { readonly statePrefix?: string }): ReturnType<typeof fromContainerQueries> =>
@@ -56,7 +57,35 @@ describe('fromContainerQueries — explicit input ownership', () => {
   it('honours statePrefix without changing the resolved input', () => {
     const result = migrate(`@container (min-width: 500px) { .x {} }`, { statePrefix: 'cq' });
     expect(result.boundaries[0]!.input).toBe('custom:container.nearest.width');
-    expect([...result.boundaries[0]!.states]).toEqual(['cq-500']);
+    expect([...result.boundaries[0]!.states]).toEqual(['cq-inactive', 'cq-500']);
+  });
+
+  it('models the false region below the first positive minimum without shifting active edges', () => {
+    const result = migrate(`
+      @container (min-width: 500px) { .x {} }
+      @container (min-width: 800px) { .x {} }
+    `);
+    const boundary = result.boundaries[0]!;
+
+    expect([...boundary.thresholds]).toEqual([0, 500, 800]);
+    expect([...boundary.states]).toEqual(['bp-inactive', 'bp-500', 'bp-800']);
+    expect(Boundary.evaluate(boundary, 499)).toBe('bp-inactive');
+    expect(Boundary.evaluate(boundary, 500)).toBe('bp-500');
+    expect(Boundary.evaluate(boundary, 799)).toBe('bp-500');
+    expect(Boundary.evaluate(boundary, 800)).toBe('bp-800');
+    expect(Boundary.evaluate(boundary, 5000)).toBe('bp-800');
+  });
+
+  it('does not synthesize an inactive state when the first source threshold is zero', () => {
+    const result = migrate(`
+      @container (min-width: 0px) { .x {} }
+      @container (min-width: 500px) { .x {} }
+    `);
+    const boundary = result.boundaries[0]!;
+
+    expect([...boundary.thresholds]).toEqual([0, 500]);
+    expect([...boundary.states]).toEqual(['bp-0', 'bp-500']);
+    expect(boundary.states).not.toContain('bp-inactive');
   });
 });
 
@@ -172,7 +201,7 @@ describe('fromContainerQueries — refusal and diagnostic teeth', () => {
       @container (min-width: 300px) { .real {} }
     `);
     expect(result.diagnostics).toEqual([]);
-    expect([...result.boundaries[0]!.thresholds]).toEqual([300]);
+    expect([...result.boundaries[0]!.thresholds]).toEqual([0, 300]);
   });
 });
 
@@ -187,7 +216,13 @@ describe('fromContainerQueries — property', () => {
           const css = thresholds.map((value) => `@container (min-width: ${value}px) { .x {} }`).join('\n');
           const result = migrate(css);
           expect(result.diagnostics).toEqual([]);
-          expect([...result.boundaries[0]!.thresholds]).toEqual(thresholds);
+          const expected = thresholds[0] === 0 ? thresholds : [0, ...thresholds];
+          expect([...result.boundaries[0]!.thresholds]).toEqual(expected);
+          const expectedStates =
+            thresholds[0] === 0
+              ? thresholds.map((value) => `bp-${value}`)
+              : ['bp-inactive', ...thresholds.map((value) => `bp-${value}`)];
+          expect([...result.boundaries[0]!.states]).toEqual(expectedStates);
         },
       ),
       { numRuns: 100 },

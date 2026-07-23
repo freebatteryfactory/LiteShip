@@ -410,7 +410,13 @@ export function fromContainerQueries(css: string, options?: FromContainerQueries
       continue;
     }
 
-    const at = sourceLos.map((t, index) => [t, stateNames[index]!] as const);
+    // A lower-bound query is false below its first positive threshold. Boundary
+    // evaluation, however, selects its first state below the first threshold.
+    // Make that region explicit instead of turning the first active query into
+    // the default state. A source threshold at zero already covers the complete
+    // non-negative size domain and therefore needs no synthetic state.
+    const activeAt = sourceLos.map((t, index) => [t, stateNames[index]!] as const);
+    const at = sourceLos[0]! > 0 ? ([[0, `${prefix}-inactive`], ...activeAt] as const) : activeAt;
 
     try {
       const boundary = defineBoundary({ input, at: at as unknown as AtPairs });

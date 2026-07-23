@@ -194,6 +194,61 @@ describe('fromMediaQueries — decomposition branches', () => {
     const motionBoundaries = result.boundaries.filter((b) => b.input.startsWith('media:'));
     expect(motionBoundaries).toHaveLength(1);
   });
+
+  it.each([
+    ['prefers-color-scheme', 'light', 'dark'],
+    ['orientation', 'portrait', 'landscape'],
+    ['prefers-reduced-motion', 'reduce', 'no-preference'],
+    ['pointer', 'fine', 'coarse'],
+    ['hover', 'hover', 'none'],
+    ['prefers-contrast', 'more', 'less'],
+    ['forced-colors', 'active', 'none'],
+  ])('refuses contradictory closed values for %s before emitting any definition', (feature, left, right) => {
+    const result = fromMediaQueries(`
+      @media (${feature}: ${left}) and (${feature}: ${right}) {
+        :root { --accent: red; }
+        .x { display: block; }
+      }
+    `);
+
+    expect(result.boundaries).toEqual([]);
+    expect(result.themes).toEqual([]);
+    expect(result.tokens).toEqual([]);
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: MIGRATE_CODES.unsupportedAtRule,
+        severity: 'error',
+        path: ['@media', `(${feature}: ${left}) and (${feature}: ${right})`, feature],
+      }),
+    );
+    expect(result.diagnostics.some((diagnostic) => diagnostic.message.includes('unsatisfiable block'))).toBe(true);
+  });
+
+  it.each([
+    ['prefers-color-scheme', 'dark'],
+    ['orientation', 'landscape'],
+    ['prefers-reduced-motion', 'reduce'],
+    ['pointer', 'fine'],
+    ['hover', 'hover'],
+  ])('allows repeated identical closed values for %s', (feature, value) => {
+    const body = feature === 'prefers-color-scheme' ? ':root { --accent: red; }' : '.x { display: block; }';
+    const result = fromMediaQueries(`@media (${feature}: ${value}) and (${feature}: ${value}) { ${body} }`);
+
+    expect(result.diagnostics.some((diagnostic) => diagnostic.message.includes('unsatisfiable block'))).toBe(false);
+    if (feature === 'prefers-color-scheme') expect(result.themes).toHaveLength(1);
+    else expect(result.boundaries).toHaveLength(1);
+  });
+
+  it('normalizes closed values before deciding whether repetitions contradict', () => {
+    const result = fromMediaQueries(`
+      @media (prefers-reduced-motion: REDUCE) and (prefers-reduced-motion: reduce) {
+        .x { animation: none; }
+      }
+    `);
+
+    expect(result.diagnostics.some((diagnostic) => diagnostic.message.includes('unsatisfiable block'))).toBe(false);
+    expect(result.boundaries).toHaveLength(1);
+  });
 });
 
 describe('fromMediaQueries — no-silent-drift review findings', () => {
