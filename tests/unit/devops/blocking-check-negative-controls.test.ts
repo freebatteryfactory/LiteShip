@@ -1,3 +1,4 @@
+// PROVES: INV-CHECK-NEGATIVE-CONTROL
 /**
  * Executed negative controls for blocking checks that are backed by external
  * tools or runner families rather than a self-proving LiteShip gate. Each

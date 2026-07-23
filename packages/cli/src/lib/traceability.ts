@@ -354,13 +354,13 @@ interface ProofClaim {
   readonly invariantIds: readonly string[];
 }
 
-/** Recursively collect `.test.ts` files under `root` (repo-relative). Deterministic (sorted). */
+/** Recursively collect unit/property and Playwright test files under `root`. Deterministic (sorted). */
 function collectTestFiles(repoRoot: string, root: string): readonly string[] {
   const abs = join(repoRoot, root);
   if (!existsSync(abs)) return [];
   // The shared `@liteship/core/fs-walk` walker (skips `node_modules`/`dist`, keeps
-  // `.test.ts`); the explicit final sort preserves the original deterministic order.
-  return walkFiles(abs, { skipDirs: ['node_modules', 'dist'], suffixes: ['.test.ts'] })
+  // `.test.ts` / `.e2e.ts`); the explicit final sort preserves deterministic order.
+  return walkFiles(abs, { skipDirs: ['node_modules', 'dist'], suffixes: ['.test.ts', '.e2e.ts'] })
     .map((full) => normalizeRepoPath(relative(repoRoot, full)))
     .sort();
 }

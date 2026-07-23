@@ -1,3 +1,4 @@
+// PROVES: INV-DIAGNOSTIC-CODE-CLOSED
 /**
  * explain command — the diagnostic-code arm (data-only, every surface) and the
  * exported-symbol arm (CLI-injected api-index). Proves both resolutions and the

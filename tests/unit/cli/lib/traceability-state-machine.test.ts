@@ -60,6 +60,21 @@ describe('traceability state machine — the lifecycle fold', () => {
     expect(facts.divergences).toHaveLength(0);
   });
 
+  it('enrolls a Playwright .e2e.ts proof instead of treating it as absent corpus', () => {
+    writeInvariants(
+      `invariants:\n  - id: INV-BROWSER\n    law: "browser law"\n    level: L4\n    category: assurance\n`,
+    );
+    writeLedger(
+      `traces:\n  - id: INV-BROWSER\n    tests:\n      - "tests/e2e/browser.e2e.ts::proves the browser law"\n`,
+    );
+    mkdirSync(join(root, 'tests', 'e2e'), { recursive: true });
+    writeTest('tests/e2e/browser.e2e.ts', 'INV-BROWSER');
+
+    const facts = buildTraceabilityFacts(root, DATE);
+    expect(facts.invariants[0]!.state._tag).toBe('proven');
+    expect(facts.divergences).toHaveLength(0);
+  });
+
   it('resolves WAIVED before expiry and EXPIRED after — the two-clock calendar comparison', () => {
     writeInvariants(`invariants:\n  - id: INV-W\n    law: "a law"\n    level: L4\n    category: crdt\n`);
     writeLedger(

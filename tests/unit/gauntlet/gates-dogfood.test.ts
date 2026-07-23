@@ -1,3 +1,4 @@
+// PROVES: INV-DIAGNOSTIC-CODE-CLOSED
 /**
  * Dogfood — the built-in hygiene gates, run on the REAL repo.
  *

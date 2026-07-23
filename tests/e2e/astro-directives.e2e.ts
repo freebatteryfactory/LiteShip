@@ -1,3 +1,4 @@
+// PROVES: INV-ADAPTIVE-CSS-BYTE-EQUAL
 /**
  * End-to-end proof of the directive boot scanner against the REAL built
  * Astro example. The page uses only public `defineAdaptive().attrs()` plus
