@@ -16,22 +16,23 @@
  */
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { integration } from '@liteship/astro';
+import { runIsolatedAstroConfigSetup } from '../../helpers/astro-config-setup.js';
 
 interface Injected {
   readonly stage: string;
   readonly content: string;
 }
 
-function runSetup(config?: Parameters<typeof integration>[0], command = 'dev'): Injected[] {
+async function runSetup(config?: Parameters<typeof integration>[0], command = 'dev'): Promise<Injected[]> {
   const scripts: Injected[] = [];
-  integration(config).hooks['astro:config:setup']!({
+  await runIsolatedAstroConfigSetup(integration(config), {
     command,
     updateConfig: () => {},
     addClientDirective: () => {},
     addDevToolbarApp: () => {},
     injectScript: (stage: string, content: string) => void scripts.push({ stage, content }),
     logger: { info: () => {} },
-  } as never);
+  });
   return scripts;
 }
 
@@ -49,17 +50,19 @@ describe('liteship({ exclude }) route scope guard', () => {
     (window as unknown as { __LITESHIP_OFF__?: boolean }).__LITESHIP_OFF__ = undefined;
   });
 
-  test('injects the guard FIRST (head-inline, before the detect script)', () => {
-    const scripts = runSetup({ exclude: ['/docs/**'] });
-    const guardIdx = scripts.findIndex((s) => s.stage === 'head-inline' && s.content.includes('window.__LITESHIP_OFF__'));
+  test('injects the guard FIRST (head-inline, before the detect script)', async () => {
+    const scripts = await runSetup({ exclude: ['/docs/**'] });
+    const guardIdx = scripts.findIndex(
+      (s) => s.stage === 'head-inline' && s.content.includes('window.__LITESHIP_OFF__'),
+    );
     const detectIdx = scripts.findIndex((s) => s.stage === 'head-inline' && s.content.includes('__LITESHIP_DETECT__'));
     expect(guardIdx, 'guard must be injected').toBeGreaterThanOrEqual(0);
     expect(detectIdx, 'detect must be injected').toBeGreaterThanOrEqual(0);
     expect(guardIdx, 'guard must come before detect so the flag is set in time').toBeLessThan(detectIdx);
   });
 
-  test('every liteship script short-circuits on the flag', () => {
-    const scripts = runSetup({ exclude: ['/docs/**'], wasm: { enabled: true } }, 'dev');
+  test('every liteship script short-circuits on the flag', async () => {
+    const scripts = await runSetup({ exclude: ['/docs/**'], wasm: { enabled: true } }, 'dev');
     // detect inline + GPU probe early-return; bootstrap/wasm gate their effects.
     // (The inspector is a dev-toolbar app now — registered via addDevToolbarApp,
     // not an injected page script — so it has no __LITESHIP_OFF__ seam to assert.)
@@ -81,15 +84,15 @@ describe('liteship({ exclude }) route scope guard', () => {
     expect(bootstrap?.content).not.toContain('__LITESHIP_OFF__');
   });
 
-  test('NO guard is injected when no routes are excluded (zero overhead default)', () => {
+  test('NO guard is injected when no routes are excluded (zero overhead default)', async () => {
     // Other scripts always READ the flag (harmless `if (window.__LITESHIP_OFF__)`);
     // only the guard ASSIGNS it. With no exclude, the guard isn't injected.
-    const scripts = runSetup();
+    const scripts = await runSetup();
     expect(scripts.some((s) => s.content.includes('window.__LITESHIP_OFF__ = off'))).toBe(false);
   });
 
-  test('the flag is never sticky — re-evaluates on View Transition swaps', () => {
-    const [guard] = runSetup({ exclude: ['/docs/**'] })
+  test('the flag is never sticky — re-evaluates on View Transition swaps', async () => {
+    const [guard] = (await runSetup({ exclude: ['/docs/**'] }))
       .filter((s) => s.stage === 'head-inline' && s.content.includes('window.__LITESHIP_OFF__'))
       .map((s) => s.content);
     expect(guard).toBeDefined();
@@ -105,8 +108,8 @@ describe('liteship({ exclude }) route scope guard', () => {
     expect((window as unknown as { __LITESHIP_OFF__?: boolean }).__LITESHIP_OFF__).toBe(false);
   });
 
-  test('the guard matches excluded paths — and ONLY those', () => {
-    const [guard] = runSetup({ exclude: ['/docs/**', '/blog'] })
+  test('the guard matches excluded paths — and ONLY those', async () => {
+    const [guard] = (await runSetup({ exclude: ['/docs/**', '/blog'] }))
       .filter((s) => s.stage === 'head-inline' && s.content.includes('window.__LITESHIP_OFF__'))
       .map((s) => s.content);
     expect(guard).toBeDefined();
@@ -119,8 +122,8 @@ describe('liteship({ exclude }) route scope guard', () => {
     expect(guardFlagFor(guard!, '/blog/post')).toBe(false); // exact /blog only, not children
   });
 
-  test('only TRAILING `**` is a glob — a mid/leading `**` is treated as an exact path', () => {
-    const [guard] = runSetup({ exclude: ['/a**b', '/docs/**'] })
+  test('only TRAILING `**` is a glob — a mid/leading `**` is treated as an exact path', async () => {
+    const [guard] = (await runSetup({ exclude: ['/a**b', '/docs/**'] }))
       .filter((s) => s.stage === 'head-inline' && s.content.includes('window.__LITESHIP_OFF__'))
       .map((s) => s.content);
     // `/a**b` is NOT a trailing glob → exact match only, so it must NOT broadly

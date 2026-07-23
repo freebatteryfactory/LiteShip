@@ -1887,6 +1887,10 @@
           "kind": "type"
         },
         {
+          "name": "CliCheckExecution",
+          "kind": "type"
+        },
+        {
           "name": "CliOwnedName",
           "kind": "type"
         },
@@ -4827,6 +4831,10 @@
           "kind": "type"
         },
         {
+          "name": "LoadedProjectConfig",
+          "kind": "type"
+        },
+        {
           "name": "PluginConfig",
           "kind": "type"
         },
@@ -4840,6 +4848,10 @@
         },
         {
           "name": "PrimitiveShape",
+          "kind": "type"
+        },
+        {
+          "name": "ProjectConfigLoader",
           "kind": "type"
         },
         {

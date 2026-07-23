@@ -20,6 +20,7 @@ import {
 } from '@liteship/astro';
 import type { AdaptiveProps } from '@liteship/astro';
 import { Diagnostics, defineBoundary } from '@liteship/core';
+import { runIsolatedAstroConfigSetup } from '../../helpers/astro-config-setup.js';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -482,14 +483,14 @@ describe('integration', () => {
     expect(integ).toBeDefined();
   });
 
-  test('config:setup registers directives, scripts, and plugin config', () => {
+  test('config:setup registers directives, scripts, and plugin config', async () => {
     const integ = integration();
     const directives: Array<{ name: string; entrypoint: string }> = [];
     const scripts: Array<{ stage: string; content: string }> = [];
     const updates: unknown[] = [];
     const logs: string[] = [];
 
-    integ.hooks['astro:config:setup']({
+    await runIsolatedAstroConfigSetup(integ, {
       updateConfig: (config: unknown) => {
         updates.push(config);
       },
@@ -504,7 +505,7 @@ describe('integration', () => {
           logs.push(message);
         },
       },
-    } as never);
+    });
 
     expect(directives.map((directive) => directive.name)).toEqual(['adaptive', 'graph', 'stream', 'llm', 'gpu', 'svg']);
     expect(updates[0]).toMatchObject({
@@ -549,12 +550,12 @@ describe('integration', () => {
     expect(logs).toContain('Injected GPU probe upgrade');
   });
 
-  test('diagnostics bridge restores on Astro server teardown', () => {
+  test('diagnostics bridge restores on Astro server teardown', async () => {
     Diagnostics.reset();
     const integ = integration();
     const warns: string[] = [];
 
-    integ.hooks['astro:config:setup']({
+    await runIsolatedAstroConfigSetup(integ, {
       updateConfig: () => undefined,
       addClientDirective: () => undefined,
       injectScript: () => undefined,
@@ -565,7 +566,7 @@ describe('integration', () => {
         },
         error() {},
       },
-    } as never);
+    });
 
     Diagnostics.warn({ source: 'liteship/test', code: 'before', message: 'before teardown' });
     integ.hooks['astro:server:done']?.({ logger: { info() {}, warn() {}, error() {} } } as never);
@@ -576,10 +577,10 @@ describe('integration', () => {
     Diagnostics.reset();
   });
 
-  test('config:setup auto-wires the detection middleware only when middleware: true (opt-in)', () => {
+  test('config:setup auto-wires the detection middleware only when middleware: true (opt-in)', async () => {
     const optedIn = integration({ middleware: true });
     const wired: Array<{ order: string; entrypoint: string }> = [];
-    optedIn.hooks['astro:config:setup']({
+    await runIsolatedAstroConfigSetup(optedIn, {
       updateConfig: () => undefined,
       addClientDirective: () => undefined,
       injectScript: () => undefined,
@@ -587,12 +588,12 @@ describe('integration', () => {
         wired.push(m);
       },
       logger: { info() {} },
-    } as never);
+    });
     expect(wired).toContainEqual({ order: 'pre', entrypoint: '@liteship/astro/middleware-entry' });
 
     // Default (no opt-in): nothing auto-wired.
     let calledByDefault = false;
-    integration().hooks['astro:config:setup']({
+    await runIsolatedAstroConfigSetup(integration(), {
       updateConfig: () => undefined,
       addClientDirective: () => undefined,
       injectScript: () => undefined,
@@ -600,16 +601,16 @@ describe('integration', () => {
         calledByDefault = true;
       },
       logger: { info() {} },
-    } as never);
+    });
     expect(calledByDefault).toBe(false);
   });
 
-  test('config:setup registers the inspector toolbar app only in dev command', () => {
+  test('config:setup registers the inspector toolbar app only in dev command', async () => {
     const integ = integration();
     const devApps: Array<{ id: string; entrypoint: string }> = [];
     const buildApps: Array<{ id: string; entrypoint: string }> = [];
 
-    integ.hooks['astro:config:setup']({
+    await runIsolatedAstroConfigSetup(integ, {
       updateConfig: () => undefined,
       addClientDirective: () => undefined,
       addDevToolbarApp: (app: { id: string; entrypoint: string }) => {
@@ -618,9 +619,9 @@ describe('integration', () => {
       injectScript: () => undefined,
       logger: { info() {} },
       command: 'dev',
-    } as never);
+    });
 
-    integ.hooks['astro:config:setup']({
+    await runIsolatedAstroConfigSetup(integ, {
       updateConfig: () => undefined,
       addClientDirective: () => undefined,
       addDevToolbarApp: (app: { id: string; entrypoint: string }) => {
@@ -629,7 +630,7 @@ describe('integration', () => {
       injectScript: () => undefined,
       logger: { info() {} },
       command: 'build',
-    } as never);
+    });
 
     const inspector = devApps.find((app) => app.id === 'liteship-inspector');
     expect(inspector).toBeDefined();
@@ -637,11 +638,11 @@ describe('integration', () => {
     expect(buildApps.some((app) => app.id === 'liteship-inspector')).toBe(false);
   });
 
-  test('config:setup skips the inspector toolbar app when inspector: false', () => {
+  test('config:setup skips the inspector toolbar app when inspector: false', async () => {
     const integ = integration({ inspector: false });
     const apps: Array<{ id: string }> = [];
 
-    integ.hooks['astro:config:setup']({
+    await runIsolatedAstroConfigSetup(integ, {
       updateConfig: () => undefined,
       addClientDirective: () => undefined,
       addDevToolbarApp: (app: { id: string }) => {
@@ -650,12 +651,12 @@ describe('integration', () => {
       injectScript: () => undefined,
       logger: { info() {} },
       command: 'dev',
-    } as never);
+    });
 
     expect(apps.some((app) => app.id === 'liteship-inspector')).toBe(false);
   });
 
-  test('config:setup honors worker, wasm, and disabled directives; serverIslands is a no-op', () => {
+  test('config:setup honors worker, wasm, and disabled directives; serverIslands is a no-op', async () => {
     const integ = integration({
       detect: false,
       // Server Islands is stable in Astro (since v5); there is no experimental
@@ -672,7 +673,7 @@ describe('integration', () => {
     const scripts: string[] = [];
     const updates: Array<Record<string, unknown>> = [];
 
-    integ.hooks['astro:config:setup']({
+    await runIsolatedAstroConfigSetup(integ, {
       updateConfig: (config: Record<string, unknown>) => {
         updates.push(config);
       },
@@ -683,7 +684,7 @@ describe('integration', () => {
         scripts.push(content);
       },
       logger: { info() {} },
-    } as never);
+    });
 
     expect(directives.map((directive) => directive.name)).toEqual(['adaptive', 'graph', 'worker', 'wasm', 'svg']);
     // serverIslands must NOT produce any experimental config bridge anymore.
@@ -698,21 +699,21 @@ describe('integration', () => {
     expect(wasmBootstrap).toContain('loadWasmRuntime(document.documentElement)');
   });
 
-  test('config:setup still injects detect without the gpu probe upgrade when gpu is disabled', () => {
+  test('config:setup still injects detect without the gpu probe upgrade when gpu is disabled', async () => {
     const integ = integration({
       detect: true,
       gpu: { enabled: false },
     });
     const scripts: Array<{ stage: string; content: string }> = [];
 
-    integ.hooks['astro:config:setup']({
+    await runIsolatedAstroConfigSetup(integ, {
       updateConfig: () => undefined,
       addClientDirective: () => undefined,
       injectScript: (stage: string, content: string) => {
         scripts.push({ stage, content });
       },
       logger: { info() {} },
-    } as never);
+    });
 
     expect(
       scripts.some((script) => script.stage === 'head-inline' && script.content.includes('__LITESHIP_DETECT__')),
@@ -950,7 +951,7 @@ export const viewport = {
     }
   });
 
-  test('config:setup watches the convention primitive files (addWatchFile battery)', () => {
+  test('config:setup watches the convention primitive files (addWatchFile battery)', async () => {
     const root = mkdtempSync(join(tmpdir(), 'liteship-watch-'));
     const src = join(root, 'src');
     mkdirSync(src, { recursive: true });
@@ -960,14 +961,16 @@ export const viewport = {
       writeFileSync(join(src, 'tokens.ts'), 'export const c = 1;\n');
 
       const watched: string[] = [];
-      integration().hooks['astro:config:setup']({
-        updateConfig: () => undefined,
-        addClientDirective: () => undefined,
-        injectScript: () => undefined,
-        addWatchFile: (file: string) => watched.push(file),
-        logger: { info() {} },
-        config: { root: pathToFileURL(root), srcDir: pathToFileURL(src) },
-      } as never);
+      await Promise.resolve(
+        integration().hooks['astro:config:setup']({
+          updateConfig: () => undefined,
+          addClientDirective: () => undefined,
+          injectScript: () => undefined,
+          addWatchFile: (file: string) => watched.push(file),
+          logger: { info() {} },
+          config: { root: pathToFileURL(root), srcDir: pathToFileURL(src) },
+        } as never),
+      );
 
       // The barrel, a per-name convention file, and a different kind's barrel
       // are all watched (resolver convention, not hardcoded names).

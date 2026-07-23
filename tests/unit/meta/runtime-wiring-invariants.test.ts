@@ -5,6 +5,7 @@ import { bootstrapSlots, installSwapPipeline, loadWasmRuntime } from '@liteship/
 import { Compositor, RuntimeCoordinator } from '@liteship/core';
 import { CompositorWorker } from '@liteship/worker';
 import { createEdgeHostAdapter } from '@liteship/edge';
+import { runIsolatedAstroConfigSetup } from '../../helpers/astro-config-setup.js';
 
 describe('cross-package runtime wiring invariants', () => {
   // ---------------------------------------------------------------------------
@@ -16,18 +17,16 @@ describe('cross-package runtime wiring invariants', () => {
   // wires the correct entrypoint by calling the hooks and inspecting the
   // registered directives.
   // ---------------------------------------------------------------------------
-  test('worker directive is registered through the integration entrypoint', () => {
+  test('worker directive is registered through the integration entrypoint', async () => {
     const astroIntegration = integration({ workers: { enabled: true } });
     expect(astroIntegration.name).toBe('@liteship/astro');
 
     const directives: Array<{ name: string; entrypoint: string }> = [];
 
-    const hooks = astroIntegration.hooks as Record<string, (...args: unknown[]) => void>;
-    const setup = hooks['astro:config:setup'];
-    expect(typeof setup).toBe('function');
+    expect(typeof astroIntegration.hooks['astro:config:setup']).toBe('function');
 
-    // Call the setup hook with a minimal stub to capture registered directives
-    setup({
+    // Run the async-capable setup hook against an empty project root and capture directives.
+    await runIsolatedAstroConfigSetup(astroIntegration, {
       updateConfig: () => {},
       addClientDirective: (directive: { name: string; entrypoint: string }) => {
         directives.push(directive);
@@ -47,7 +46,7 @@ describe('cross-package runtime wiring invariants', () => {
   // loadWasmRuntime is the shared runtime entry that delegates to
   // WASMDispatch.load rather than calling WebAssembly.instantiate directly.
   // ---------------------------------------------------------------------------
-  test('wasm directive uses loadWasmRuntime from the shared runtime layer', () => {
+  test('wasm directive uses loadWasmRuntime from the shared runtime layer', async () => {
     expect(loadWasmRuntime).toBeDefined();
     expect(typeof loadWasmRuntime).toBe('function');
 
@@ -55,8 +54,7 @@ describe('cross-package runtime wiring invariants', () => {
     const astroIntegration = integration({ wasm: { enabled: true } });
     const directives: Array<{ name: string; entrypoint: string }> = [];
 
-    const hooks = astroIntegration.hooks as Record<string, (...args: unknown[]) => void>;
-    hooks['astro:config:setup']({
+    await runIsolatedAstroConfigSetup(astroIntegration, {
       updateConfig: () => {},
       addClientDirective: (directive: { name: string; entrypoint: string }) => {
         directives.push(directive);
