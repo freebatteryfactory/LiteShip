@@ -8,7 +8,7 @@
 
 > **LifetimeDisposeError** = (`causes`) => `LifetimeDisposeError`
 
-Defined in: [core/src/reactive/lifetime.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts#L75)
+Defined in: [core/src/reactive/lifetime.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts#L77)
 
 Build a LifetimeDisposeError over the collected finalizer failures.
 

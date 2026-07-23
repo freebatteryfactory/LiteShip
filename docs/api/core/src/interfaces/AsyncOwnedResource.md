@@ -6,7 +6,7 @@
 
 # Interface: AsyncOwnedResource
 
-Defined in: [core/src/reactive/lifetime.ts:281](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts#L281)
+Defined in: [core/src/reactive/lifetime.ts:283](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts#L283)
 
 A resource that owns its teardown ASYNCHRONOUSLY — the default, because
 [LifetimeShape.dispose](LifetimeShape.md#dispose) returns a promise that settles once every async
@@ -22,7 +22,7 @@ destructure and separately own.
 
 > `readonly` **lifetime**: [`LifetimeShape`](LifetimeShape.md)
 
-Defined in: [core/src/reactive/lifetime.ts:283](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts#L283)
+Defined in: [core/src/reactive/lifetime.ts:285](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts#L285)
 
 The owning disposal handle — for advanced/debug composition only.
 
@@ -32,7 +32,7 @@ The owning disposal handle — for advanced/debug composition only.
 
 > **\[asyncDispose\]**(): `Promise`\<`void`\>
 
-Defined in: [core/src/reactive/lifetime.ts:287](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts#L287)
+Defined in: [core/src/reactive/lifetime.ts:289](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts#L289)
 
 Well-known disposer so the resource works with an `await using` declaration.
 
@@ -46,7 +46,7 @@ Well-known disposer so the resource works with an `await using` declaration.
 
 > **dispose**(): `Promise`\<`void`\>
 
-Defined in: [core/src/reactive/lifetime.ts:285](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts#L285)
+Defined in: [core/src/reactive/lifetime.ts:287](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts#L287)
 
 Tear down exactly once; the returned promise settles when async finalizers settle. Idempotent.
 

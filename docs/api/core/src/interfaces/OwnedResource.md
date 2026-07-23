@@ -6,7 +6,7 @@
 
 # Interface: OwnedResource
 
-Defined in: [core/src/reactive/lifetime.ts:263](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts#L263)
+Defined in: [core/src/reactive/lifetime.ts:265](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts#L265)
 
 A resource that owns its teardown SYNCHRONOUSLY. `dispose()` runs the owning
 [Lifetime](../variables/Lifetime.md)'s finalizers (all synchronous) to completion and returns
@@ -25,7 +25,7 @@ genuinely synchronous (every finalizer settles inside the `dispose()` call).
 
 > `readonly` **lifetime**: [`LifetimeShape`](LifetimeShape.md)
 
-Defined in: [core/src/reactive/lifetime.ts:265](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts#L265)
+Defined in: [core/src/reactive/lifetime.ts:267](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts#L267)
 
 The owning disposal handle — for advanced/debug composition only.
 
@@ -35,7 +35,7 @@ The owning disposal handle — for advanced/debug composition only.
 
 > **\[dispose\]**(): `void`
 
-Defined in: [core/src/reactive/lifetime.ts:269](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts#L269)
+Defined in: [core/src/reactive/lifetime.ts:271](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts#L271)
 
 Well-known disposer so the resource works with a `using` declaration.
 
@@ -49,7 +49,7 @@ Well-known disposer so the resource works with a `using` declaration.
 
 > **dispose**(): `void`
 
-Defined in: [core/src/reactive/lifetime.ts:267](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts#L267)
+Defined in: [core/src/reactive/lifetime.ts:269](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts#L269)
 
 Tear down exactly once (synchronously). Idempotent — inherited from [Lifetime](../variables/Lifetime.md).
 

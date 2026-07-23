@@ -8,7 +8,7 @@
 
 > **integration**(`config?`): `AstroIntegration`
 
-Defined in: [astro/src/integration.ts:305](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/integration.ts#L305)
+Defined in: [astro/src/integration.ts:306](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/integration.ts#L306)
 
 Build the liteship `AstroIntegration`.
 

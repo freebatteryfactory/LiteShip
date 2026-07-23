@@ -6,7 +6,7 @@
 
 # Interface: LifetimeShape
 
-Defined in: [core/src/reactive/lifetime.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts#L48)
+Defined in: [core/src/reactive/lifetime.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts#L50)
 
 Live Lifetime handle — the owner of an ordered finalizer stack.
 
@@ -16,7 +16,7 @@ Live Lifetime handle — the owner of an ordered finalizer stack.
 
 > `readonly` **\_tag**: `"Lifetime"`
 
-Defined in: [core/src/reactive/lifetime.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts#L49)
+Defined in: [core/src/reactive/lifetime.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts#L51)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [core/src/reactive/lifetime.ts:49](https://github.com/freebatteryfac
 
 > `readonly` **add**: (`finalizer`) => () => `void`
 
-Defined in: [core/src/reactive/lifetime.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts#L59)
+Defined in: [core/src/reactive/lifetime.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts#L61)
 
 Register `finalizer` to run on dispose (LIFO). Returns a handle that
 unregisters it if called before dispose. If the Lifetime is already
@@ -46,7 +46,7 @@ disposed, `finalizer` runs immediately and the handle is a no-op.
 
 > `readonly` **dispose**: () => `Promise`\<`void`\>
 
-Defined in: [core/src/reactive/lifetime.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts#L67)
+Defined in: [core/src/reactive/lifetime.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts#L69)
 
 Run every finalizer exactly once in LIFO order and abort [signal](#signal).
 Sync finalizers execute synchronously in this call; the returned promise
@@ -64,7 +64,7 @@ finalizer threw or rejected; resolves otherwise.
 
 > `readonly` **disposed**: `boolean`
 
-Defined in: [core/src/reactive/lifetime.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts#L51)
+Defined in: [core/src/reactive/lifetime.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts#L53)
 
 True once `dispose()` has been initiated (flips synchronously).
 
@@ -74,6 +74,6 @@ True once `dispose()` has been initiated (flips synchronously).
 
 > `readonly` **signal**: [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal)
 
-Defined in: [core/src/reactive/lifetime.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts#L53)
+Defined in: [core/src/reactive/lifetime.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts#L55)
 
 An `AbortSignal` that aborts synchronously when `dispose()` begins.

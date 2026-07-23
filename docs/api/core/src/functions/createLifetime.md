@@ -8,7 +8,7 @@
 
 > **createLifetime**(): [`LifetimeShape`](../interfaces/LifetimeShape.md)
 
-Defined in: [core/src/reactive/lifetime.ts:235](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts#L235)
+Defined in: [core/src/reactive/lifetime.ts:237](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts#L237)
 
 Build a fresh, undisposed [Lifetime](../variables/Lifetime.md) — the standalone verb-grammar
 constructor (ADR-0046 — `create` allocates a runtime resource). Equivalent to
