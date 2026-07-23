@@ -14,6 +14,7 @@
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, symlinkSync, writeFileSync } from 'node:fs';
 import { mkdtemp, mkdir, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
+import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -30,6 +31,7 @@ import { wallClock } from '@liteship/core';
 import { IntegrityError, InvariantViolationError } from '@liteship/error';
 import {
   assertConsumerDependencyInstalled,
+  assertPackedTypeClosure,
   diffJsonFields,
   findConsumerDependencyRoot,
   diffSemanticClosures,
@@ -393,15 +395,22 @@ function runHermeticBuild(scratch: string, tarballByPackage: Map<string, string>
  * resolve through TypeScript's bundler resolver, and host assets exist in the
  * physical packed package. Blocking; the first failing specifier is named.
  */
-function runPackedConsumerClosure(root: string, consumerDir: string): HermeticResult['packedConsumerClosure'] {
+async function runPackedConsumerClosure(
+  root: string,
+  consumerDir: string,
+): Promise<HermeticResult['packedConsumerClosure']> {
   const subpaths = enumeratePublicSubpaths(root);
   const runtime = partitionRuntimeClosureSpecifiers(subpaths, PACKAGES);
   const runtimeSpecifiers = runtime.imports;
   const refusalSpecifiers = runtime.refusals;
-  const typeSpecifiers = subpaths.filter((entry) => entry.typesTarget !== null).map((entry) => entry.specifier);
+  const typeEntries = subpaths.flatMap((entry) =>
+    entry.typesTarget === null
+      ? []
+      : [{ packageName: entry.packageName, specifier: entry.specifier, typesTarget: entry.typesTarget }],
+  );
   process.stderr.write(
     `[package:smoke] > packed-consumer-closure: prove ${subpaths.length} enumerated public subpaths ` +
-      `(${runtimeSpecifiers.length} runtime, ${refusalSpecifiers.length} type-only refusal, ${typeSpecifiers.length} typed)\n`,
+      `(${runtimeSpecifiers.length} runtime, ${refusalSpecifiers.length} type-only refusal, ${typeEntries.length} typed)\n`,
   );
 
   for (const entry of subpaths) {
@@ -454,31 +463,8 @@ process.stdout.write('OK ' + imports.length + ' imports + ' + refusals.length + 
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'inherit'],
     });
-    const typeClosure = `
-const tsModule = await import('typescript');
-const ts = tsModule.default ?? tsModule;
-const containingFile = new URL('./closure-probe.ts', import.meta.url).pathname;
-const options = {
-  module: ts.ModuleKind.ESNext,
-  moduleResolution: ts.ModuleResolutionKind.Bundler,
-  target: ts.ScriptTarget.ES2022,
-  types: [],
-};
-const host = ts.createCompilerHost(options);
-for (const specifier of ${JSON.stringify(typeSpecifiers, null, 2)}) {
-  const resolved = ts.resolveModuleName(specifier, containingFile, options, host).resolvedModule;
-  if (!resolved) {
-    process.stdout.write(specifier + '\\t' + 'TypeScript could not resolve its public types condition');
-    process.exit(1);
-  }
-}
-`;
-    writeFileSync(join(consumerDir, 'closure-types.mjs'), typeClosure);
-    execFileSync(process.execPath, ['closure-types.mjs'], {
-      cwd: consumerDir,
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'inherit'],
-    });
+    const ts = createRequire(import.meta.url)('typescript') as typeof import('typescript');
+    assertPackedTypeClosure(ts, consumerDir, typeEntries);
     process.stderr.write(`[package:smoke] ok packed-consumer-closure: all ${subpaths.length} public subpaths proved\n`);
     return { ok: true, subpathCount: subpaths.length, failure: null };
   } catch (error) {
@@ -616,7 +602,7 @@ async function runHermeticChecks(args: {
 }): Promise<HermeticResult> {
   const { root, scratch, consumerDir, tarballByPackage, generatedAt } = args;
   const hermeticBuild = runHermeticBuild(scratch, tarballByPackage);
-  const packedConsumerClosure = runPackedConsumerClosure(root, consumerDir);
+  const packedConsumerClosure = await runPackedConsumerClosure(root, consumerDir);
   const doubleBuildRepro = await runDoubleBuildRepro({ root, scratch, tarballByPackage, generatedAt });
   return { hermeticBuild, packedConsumerClosure, doubleBuildRepro };
 }

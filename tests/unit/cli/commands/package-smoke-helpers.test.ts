@@ -12,11 +12,12 @@
  * globals); `tarballFileUrl` is pinned as a valid `file://` URL round-trip.
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as fc from 'fast-check';
+import ts from 'typescript';
 import { hasTag } from '@liteship/error';
 import {
   resolveExecutable,
@@ -28,6 +29,7 @@ import {
   diffSemanticClosures,
   diffJsonFields,
   semanticClosureFileHash,
+  assertPackedTypeClosure,
 } from '../../../../packages/cli/src/lib/package-smoke-helpers.js';
 
 describe('peerDependenciesOnly — PEER_INSTALLS → {name: version} (split on LAST @)', () => {
@@ -326,5 +328,119 @@ describe('semanticClosureFileHash — JSON manifest semantics', () => {
     expect(semanticClosureFileHash('package/package.json', first)).not.toBe(
       semanticClosureFileHash('package/package.json', second),
     );
+  });
+
+  it.each(['exports', 'imports'] as const)(
+    'preserves %s condition-object order because node/default reversal changes resolution',
+    (field) => {
+      const key = field === 'exports' ? '.' : '#runtime';
+      const first = Buffer.from(
+        JSON.stringify({ name: 'fixture', [field]: { [key]: { node: './node.js', default: './default.js' } } }),
+      );
+      const reversed = Buffer.from(
+        JSON.stringify({ name: 'fixture', [field]: { [key]: { default: './default.js', node: './node.js' } } }),
+      );
+
+      expect(semanticClosureFileHash('package/package.json', first)).not.toBe(
+        semanticClosureFileHash('package/package.json', reversed),
+      );
+    },
+  );
+
+  it('still canonicalizes unordered export subpath maps', () => {
+    const first = Buffer.from(
+      JSON.stringify({ exports: { './b': { default: './b.js' }, './a': { default: './a.js' } } }),
+    );
+    const second = Buffer.from(
+      JSON.stringify({ exports: { './a': { default: './a.js' }, './b': { default: './b.js' } } }),
+    );
+
+    expect(semanticClosureFileHash('package/package.json', first)).toBe(
+      semanticClosureFileHash('package/package.json', second),
+    );
+  });
+
+  it('reports conditional-order drift as a package manifest semantic field diff', () => {
+    const first = { exports: { '.': { node: './node.js', default: './default.js' } } };
+    const reversed = { exports: { '.': { default: './default.js', node: './node.js' } } };
+
+    const diff = diffJsonFields(first, reversed);
+    expect(diff.total).toBe(1);
+    expect(diff.fields[0]?.path).toBe('/exports/.');
+    expect(diff.fields[0]?.first.sha256).not.toBe(diff.fields[0]?.second.sha256);
+  });
+});
+
+describe('assertPackedTypeClosure — exact physical declaration proof', () => {
+  let consumer: string;
+  const entry = { packageName: 'fixture-pkg', specifier: 'fixture-pkg', typesTarget: './dist/index.d.ts' } as const;
+
+  beforeEach(() => {
+    consumer = mkdtempSync(join(tmpdir(), 'liteship-packed-types-'));
+    mkdirSync(join(consumer, 'node_modules'), { recursive: true });
+    writeFileSync(join(consumer, 'package.json'), '{"name":"consumer","private":true,"type":"module"}');
+  });
+  afterEach(() => rmSync(consumer, { recursive: true, force: true }));
+
+  function plantPackage(args: { readonly declaration?: string | null; readonly typesTarget?: string } = {}): string {
+    const packageRoot = join(consumer, 'node_modules', 'fixture-pkg');
+    const dist = join(packageRoot, 'dist');
+    mkdirSync(dist, { recursive: true });
+    const typesTarget = args.typesTarget ?? './dist/index.d.ts';
+    writeFileSync(
+      join(packageRoot, 'package.json'),
+      JSON.stringify({
+        name: 'fixture-pkg',
+        type: 'module',
+        exports: { '.': { types: typesTarget, default: './dist/index.js' } },
+      }),
+    );
+    writeFileSync(join(dist, 'index.js'), 'export const value = true;\n');
+    if (args.declaration !== null) {
+      writeFileSync(join(dist, 'index.d.ts'), args.declaration ?? 'export declare const value: true;\n');
+    }
+    return packageRoot;
+  }
+
+  it('accepts the exact packed declaration with zero diagnostics under Node16 and Bundler', () => {
+    plantPackage();
+    expect(() => assertPackedTypeClosure(ts, consumer, [entry])).not.toThrow();
+  });
+
+  it('rejects a public types condition that resolves to JavaScript', () => {
+    plantPackage({ typesTarget: './dist/index.js' });
+    const jsEntry = { ...entry, typesTarget: './dist/index.js' };
+    expect(() => assertPackedTypeClosure(ts, consumer, [jsEntry], ['bundler'])).toThrow(/not a declaration/);
+  });
+
+  it('rejects a missing declared types target instead of accepting runtime fallback', () => {
+    plantPackage({ declaration: null });
+    expect(() => assertPackedTypeClosure(ts, consumer, [entry], ['bundler'])).toThrow(/declares missing types target/);
+  });
+
+  it('rejects malformed packed declarations through pre-emit diagnostics', () => {
+    plantPackage({ declaration: 'export interface Broken {\n' });
+    expect(() => assertPackedTypeClosure(ts, consumer, [entry], ['bundler'])).toThrow(
+      /failed bundler pre-emit diagnostics/,
+    );
+  });
+
+  it('rejects a package whose physical declaration escapes the packed node_modules tree', () => {
+    const outsidePackage = join(consumer, 'workspace-package');
+    const outsideDist = join(outsidePackage, 'dist');
+    mkdirSync(outsideDist, { recursive: true });
+    writeFileSync(
+      join(outsidePackage, 'package.json'),
+      JSON.stringify({
+        name: 'fixture-pkg',
+        type: 'module',
+        exports: { '.': { types: './dist/index.d.ts', default: './dist/index.js' } },
+      }),
+    );
+    writeFileSync(join(outsideDist, 'index.d.ts'), 'export declare const value: true;\n');
+    writeFileSync(join(outsideDist, 'index.js'), 'export const value = true;\n');
+    symlinkSync(outsidePackage, join(consumer, 'node_modules', 'fixture-pkg'), 'junction');
+
+    expect(() => assertPackedTypeClosure(ts, consumer, [entry], ['bundler'])).toThrow(/escaped packed node_modules/);
   });
 });

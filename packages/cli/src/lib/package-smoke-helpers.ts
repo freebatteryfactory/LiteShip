@@ -19,10 +19,11 @@
  *
  * @module
  */
-import { existsSync, readdirSync, realpathSync } from 'node:fs';
+import { existsSync, readdirSync, realpathSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { join } from 'node:path';
+import { isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import type * as TypeScript from 'typescript';
 import { IntegrityError } from '@liteship/error';
 
 /**
@@ -225,25 +226,44 @@ export interface JsonFieldDiff {
 
 const MISSING_JSON_FIELD = Symbol('missing-json-field');
 
-function stableJson(value: unknown): string {
+/**
+ * Node evaluates conditional exports/imports in insertion order. Ordinary
+ * package-manifest maps are semantic maps and remain key-order independent, but
+ * sorting a condition object would silently change which target wins (for
+ * example `node` before `default`).
+ */
+function isPackageConditionObject(path: readonly string[], record: Readonly<Record<string, unknown>>): boolean {
+  const root = path[0];
+  if (root !== 'exports' && root !== 'imports') return false;
+  if (path.length > 1) return true;
+
+  const subpathPrefix = root === 'exports' ? '.' : '#';
+  const keys = Object.keys(record);
+  return keys.length === 0 || !keys.every((key) => key.startsWith(subpathPrefix));
+}
+
+function stableJson(value: unknown, path: readonly string[] = []): string {
   if (value === null || typeof value !== 'object') {
     return JSON.stringify(value) ?? 'undefined';
   }
   if (Array.isArray(value)) {
-    return `[${value.map((entry) => stableJson(entry)).join(',')}]`;
+    return `[${value.map((entry, index) => stableJson(entry, [...path, String(index)])).join(',')}]`;
   }
   const record = value as Record<string, unknown>;
-  return `{${Object.keys(record)
-    .sort((a, b) => a.localeCompare(b))
-    .map((key) => `${JSON.stringify(key)}:${stableJson(record[key])}`)
+  const keys = Object.keys(record);
+  const canonicalKeys = isPackageConditionObject(path, record) ? keys : keys.sort((a, b) => a.localeCompare(b));
+  return `{${canonicalKeys
+    .map((key) => `${JSON.stringify(key)}:${stableJson(record[key], [...path, key])}`)
     .join(',')}}`;
 }
 
 /**
  * Hash one packed file for the semantic closure. Package manifests are JSON
- * documents, so insignificant formatting and object-key order are normalized;
- * every other packed file remains byte-sensitive. Artifact reproducibility is
- * measured separately from the raw tarball bytes and is intentionally unchanged.
+ * documents, so insignificant formatting and semantically-unordered map order
+ * are normalized. Conditional objects under `exports` / `imports` preserve key
+ * order because Node uses first-match semantics. Every other packed file remains
+ * byte-sensitive. Artifact reproducibility is measured separately from the raw
+ * tarball bytes and is intentionally unchanged.
  */
 export function semanticClosureFileHash(path: string, content: Uint8Array): string {
   const bytes = Buffer.from(content);
@@ -251,11 +271,15 @@ export function semanticClosureFileHash(path: string, content: Uint8Array): stri
   return createHash('sha256').update(semanticBytes).digest('hex');
 }
 
-function jsonValueSnapshot(value: unknown | typeof MISSING_JSON_FIELD, valueLimit: number): JsonFieldValueSnapshot {
+function jsonValueSnapshot(
+  value: unknown | typeof MISSING_JSON_FIELD,
+  valueLimit: number,
+  path: readonly string[] = [],
+): JsonFieldValueSnapshot {
   if (value === MISSING_JSON_FIELD) {
     return { present: false, preview: null, sha256: null, truncated: false };
   }
-  const serialized = stableJson(value);
+  const serialized = stableJson(value, path);
   return {
     present: true,
     preview: serialized.slice(0, valueLimit),
@@ -288,6 +312,7 @@ export function diffJsonFields(first: unknown, second: unknown, fieldLimit = 24,
     left: unknown | typeof MISSING_JSON_FIELD,
     right: unknown | typeof MISSING_JSON_FIELD,
     path: string,
+    segments: readonly string[],
   ): void => {
     if (left !== MISSING_JSON_FIELD && right !== MISSING_JSON_FIELD) {
       if (Array.isArray(left) && Array.isArray(right)) {
@@ -297,35 +322,185 @@ export function diffJsonFields(first: unknown, second: unknown, fieldLimit = 24,
             index < left.length ? left[index] : MISSING_JSON_FIELD,
             index < right.length ? right[index] : MISSING_JSON_FIELD,
             `${path}/${index}`,
+            [...segments, String(index)],
           );
         }
         return;
       }
       if (isJsonRecord(left) && isJsonRecord(right)) {
+        if (isPackageConditionObject(segments, left) || isPackageConditionObject(segments, right)) {
+          const leftOrder = Object.keys(left);
+          const rightOrder = Object.keys(right);
+          if (leftOrder.join('\u0000') !== rightOrder.join('\u0000')) {
+            differing.push({
+              path: path || '/',
+              first: jsonValueSnapshot(left, boundedValueLimit, segments),
+              second: jsonValueSnapshot(right, boundedValueLimit, segments),
+            });
+          }
+        }
         const keys = [...new Set([...Object.keys(left), ...Object.keys(right)])].sort((a, b) => a.localeCompare(b));
         for (const key of keys) {
           visit(
             Object.hasOwn(left, key) ? left[key] : MISSING_JSON_FIELD,
             Object.hasOwn(right, key) ? right[key] : MISSING_JSON_FIELD,
             `${path}/${jsonPointerSegment(key)}`,
+            [...segments, key],
           );
         }
         return;
       }
     }
 
-    const firstSnapshot = jsonValueSnapshot(left, boundedValueLimit);
-    const secondSnapshot = jsonValueSnapshot(right, boundedValueLimit);
+    const firstSnapshot = jsonValueSnapshot(left, boundedValueLimit, segments);
+    const secondSnapshot = jsonValueSnapshot(right, boundedValueLimit, segments);
     if (firstSnapshot.present === secondSnapshot.present && firstSnapshot.sha256 === secondSnapshot.sha256) {
       return;
     }
     differing.push({ path: path || '/', first: firstSnapshot, second: secondSnapshot });
   };
 
-  visit(first, second, '');
+  visit(first, second, '', []);
   return {
     total: differing.length,
     fields: differing.slice(0, boundedFieldLimit),
     truncated: differing.length > boundedFieldLimit,
   };
+}
+
+/** One public type condition that must resolve to its exact packed declaration. */
+export interface PackedTypeClosureEntry {
+  readonly packageName: string;
+  readonly specifier: string;
+  readonly typesTarget: string;
+}
+
+/** TypeScript resolution modes promised by the packed public type closure. */
+export type PackedTypeClosureMode = 'node16' | 'bundler';
+
+function compilerOptionsForTypeClosure(ts: typeof TypeScript, mode: PackedTypeClosureMode): TypeScript.CompilerOptions {
+  const resolution =
+    mode === 'node16'
+      ? { module: ts.ModuleKind.Node16, moduleResolution: ts.ModuleResolutionKind.Node16 }
+      : { module: ts.ModuleKind.ESNext, moduleResolution: ts.ModuleResolutionKind.Bundler };
+  return {
+    ...resolution,
+    target: ts.ScriptTarget.ES2022,
+    lib: ['lib.es2022.d.ts', 'lib.dom.d.ts', 'lib.dom.iterable.d.ts'],
+    strict: true,
+    noEmit: true,
+    types: [],
+  };
+}
+
+function pathIsInside(root: string, candidate: string): boolean {
+  const rel = relative(root, candidate);
+  return rel === '' || (!rel.startsWith(`..${sep}`) && rel !== '..' && !isAbsolute(rel));
+}
+
+function normalizedRealpath(path: string): string {
+  return realpathSync.native(path);
+}
+
+function diagnosticText(ts: typeof TypeScript, diagnostic: TypeScript.Diagnostic): string {
+  const location =
+    diagnostic.file === undefined
+      ? ''
+      : `${diagnostic.file.fileName}${diagnostic.start === undefined ? '' : `:${diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start).line + 1}`} `;
+  return `${location}TS${diagnostic.code} ${ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n')}`;
+}
+
+/**
+ * Prove every public `types` condition against a physical packed consumer tree.
+ * Resolution alone is insufficient: TypeScript may fall back to JavaScript, a
+ * workspace symlink, or a malformed declaration. This assertion requires the
+ * exact declared target, containment beneath the consumer's real node_modules,
+ * and a diagnostic-free pre-emit program under both Node16 and Bundler.
+ */
+export function assertPackedTypeClosure(
+  ts: typeof TypeScript,
+  consumerDir: string,
+  entries: readonly PackedTypeClosureEntry[],
+  modes: readonly PackedTypeClosureMode[] = ['node16', 'bundler'],
+): void {
+  const nodeModulesPath = join(consumerDir, 'node_modules');
+  if (!existsSync(nodeModulesPath)) {
+    throw IntegrityError('package-smoke', `packed type closure has no physical ${nodeModulesPath}`);
+  }
+  const physicalNodeModules = normalizedRealpath(nodeModulesPath);
+
+  for (const mode of modes) {
+    const options = compilerOptionsForTypeClosure(ts, mode);
+    const host = ts.createCompilerHost(options);
+    const probePath = join(consumerDir, `.liteship-type-closure-${mode}.ts`);
+    writeFileSync(
+      probePath,
+      entries
+        .map((entry, index) => `import type * as PublicType${index} from ${JSON.stringify(entry.specifier)};`)
+        .concat(entries.map((_entry, index) => `export type PublicTypeUse${index} = typeof PublicType${index};`), '')
+        .join('\n'),
+    );
+
+    for (const entry of entries) {
+      const packageRoot = findConsumerDependencyRoot(consumerDir, entry.packageName);
+      if (packageRoot === undefined) {
+        throw IntegrityError('package-smoke', `${entry.specifier} (${mode}) has no installed package root`);
+      }
+      const expectedTarget = resolve(packageRoot, entry.typesTarget);
+      if (!existsSync(expectedTarget)) {
+        throw IntegrityError(
+          'package-smoke',
+          `${entry.specifier} (${mode}) declares missing types target ${entry.typesTarget}`,
+        );
+      }
+      const physicalExpected = normalizedRealpath(expectedTarget);
+      if (!/\.d\.(?:ts|mts|cts)$/i.test(physicalExpected)) {
+        throw IntegrityError(
+          'package-smoke',
+          `${entry.specifier} (${mode}) types target is not a declaration: ${entry.typesTarget}`,
+        );
+      }
+      if (!pathIsInside(physicalNodeModules, physicalExpected)) {
+        throw IntegrityError(
+          'package-smoke',
+          `${entry.specifier} (${mode}) types target escaped packed node_modules: ${physicalExpected}`,
+        );
+      }
+
+      const resolved = ts.resolveModuleName(entry.specifier, probePath, options, host).resolvedModule;
+      if (resolved === undefined) {
+        throw IntegrityError('package-smoke', `${entry.specifier} (${mode}) did not resolve its public types condition`);
+      }
+      const physicalResolved = normalizedRealpath(resolved.resolvedFileName);
+      if (!/\.d\.(?:ts|mts|cts)$/i.test(physicalResolved)) {
+        throw IntegrityError(
+          'package-smoke',
+          `${entry.specifier} (${mode}) resolved to JavaScript instead of a declaration: ${physicalResolved}`,
+        );
+      }
+      if (!pathIsInside(physicalNodeModules, physicalResolved)) {
+        throw IntegrityError(
+          'package-smoke',
+          `${entry.specifier} (${mode}) resolved outside packed node_modules: ${physicalResolved}`,
+        );
+      }
+      if (physicalResolved !== physicalExpected) {
+        throw IntegrityError(
+          'package-smoke',
+          `${entry.specifier} (${mode}) resolved ${physicalResolved}, not declared target ${physicalExpected}`,
+        );
+      }
+    }
+
+    const diagnostics = ts.getPreEmitDiagnostics(ts.createProgram({ rootNames: [probePath], options, host }));
+    if (diagnostics.length > 0) {
+      throw IntegrityError(
+        'package-smoke',
+        `packed public declarations failed ${mode} pre-emit diagnostics:\n${diagnostics
+          .slice(0, 12)
+          .map((diagnostic) => diagnosticText(ts, diagnostic))
+          .join('\n')}${diagnostics.length > 12 ? `\n... ${diagnostics.length - 12} more` : ''}`,
+      );
+    }
+  }
 }
