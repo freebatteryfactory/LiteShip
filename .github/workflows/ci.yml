@@ -748,7 +748,18 @@ jobs:
       - run: pnpm run typecheck
       - run: pnpm run lint
       - run: pnpm exec tsx packages/cli/src/bin.ts check-invariants
-      - run: pnpm test
+      - name: Run Node tests with durable results
+        run: >-
+          pnpm exec vitest run --config vitest.config.ts
+          --reporter=default --reporter=junit
+          --outputFile.junit=vitest-results-windows.xml
+      - name: Upload Windows Node test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: vitest-results-windows
+          path: vitest-results-windows.xml
+          if-no-files-found: warn
       - run: pnpm run test:vite
       - run: pnpm run test:astro
       - run: pnpm run test:cloudflare
@@ -782,7 +793,18 @@ jobs:
       - run: pnpm run typecheck
       - run: pnpm run lint
       - run: pnpm exec tsx packages/cli/src/bin.ts check-invariants
-      - run: pnpm test
+      - name: Run Node tests with durable results
+        run: >-
+          pnpm exec vitest run --config vitest.config.ts
+          --reporter=default --reporter=junit
+          --outputFile.junit=vitest-results-macos.xml
+      - name: Upload macOS Node test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: vitest-results-macos
+          path: vitest-results-macos.xml
+          if-no-files-found: warn
       - run: pnpm run test:vite
       - run: pnpm run test:astro
       - run: pnpm run test:cloudflare
