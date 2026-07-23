@@ -55,7 +55,7 @@ export const CONTEXT_MAP: Readonly<Record<string, ContextTask>> = {
   'add-boundary': {
     title: 'Add or extend a boundary primitive',
     summary:
-      'A boundary partitions a continuous signal into named inputs. Author it in @liteship/core, evaluate it in @liteship/quantizer, and prove it with a boundary test.',
+      'A boundary partitions a continuous signal into named states. Author it in @liteship/core, evaluate it in @liteship/quantizer, and prove it with a boundary test.',
     pointers: [
       file(
         'owner-file',
@@ -74,7 +74,7 @@ export const CONTEXT_MAP: Readonly<Record<string, ContextTask>> = {
       ),
       file('test', 'tests/integration/boundary-attribute-dedup.test.ts', 'A proving boundary test to mirror.'),
       check(
-        'check/test-unit',
+        'check/test',
         'packages/command/src/checks/registry.ts',
         'The fast unit lane that runs your new boundary test.',
       ),
@@ -104,7 +104,7 @@ export const CONTEXT_MAP: Readonly<Record<string, ContextTask>> = {
       ),
       file('test', 'tests/unit/quantizer/animated-quantizer.test.ts', 'A proving animated-transition test to mirror.'),
       check(
-        'check/test-unit',
+        'check/test',
         'packages/command/src/checks/registry.ts',
         'The fast unit lane that runs your new motion test.',
       ),
@@ -145,31 +145,39 @@ export const CONTEXT_MAP: Readonly<Record<string, ContextTask>> = {
     ],
   },
   'write-migration-adapter': {
-    title: 'Write a migration / site adapter',
+    title: 'Write a migration adapter',
     summary:
-      'A site adapter maps a host boundary onto a target runtime. Start from the siteAdapter assembly harness, then mirror an existing host adapter (edge / cloudflare).',
+      'A migration adapter translates external source syntax into ordinary LiteShip definitions or emits a stable diagnostic when the source cannot be represented faithfully.',
     pointers: [
       file(
-        'owner-file',
-        'packages/core/src/harness/site-adapter.ts',
-        'The siteAdapter assembly — the declared shape of an adapter.',
-      ),
-      file(
         'entrypoint',
-        'packages/core/src/harness/index.ts',
-        'The assembly-harness barrel the adapter kinds are exported from.',
+        'packages/compiler/src/migrate/index.ts',
+        'The public migration-adapter entrypoint and supported source families.',
       ),
-      file('owner-file', 'packages/edge/src/host-adapter.ts', 'An existing host adapter to mirror (edge).'),
       file(
         'owner-file',
-        'packages/cloudflare/src/capsules/cloudflare-adapter.ts',
-        'A second host adapter to mirror (Cloudflare Workers).',
+        'packages/compiler/src/migrate/types.ts',
+        'The MigrationResult and diagnostic contracts every adapter returns.',
       ),
-      file('test', 'tests/unit/core/harness/site-adapter.test.ts', 'The siteAdapter harness test to mirror.'),
+      file(
+        'owner-file',
+        'packages/compiler/src/migrate/from-media-queries.ts',
+        'A representative adapter that preserves, diagnoses, or refuses source semantics.',
+      ),
+      file(
+        'owner-file',
+        'packages/error/src/codes.ts',
+        'The stable migrate/* diagnostic identities used for lossy or unsupported inputs.',
+      ),
+      file(
+        'test',
+        'tests/unit/compiler/migrate/from-media-queries.test.ts',
+        'A migration adapter test covering faithful conversion and loud refusal.',
+      ),
       check(
         'check/test',
         'packages/command/src/checks/registry.ts',
-        'The aggregate test suite your adapter test joins.',
+        'The aggregate test suite your migration test joins.',
       ),
     ],
   },

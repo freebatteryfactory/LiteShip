@@ -112,10 +112,15 @@ describe('@liteship/command explain command — exported-symbol arm', () => {
     const s = payload.symbol!;
     expect(s.symbol).toBe('explainDiagnostic');
     expect(s.package).toBe('@liteship/error');
+    expect(s.subpath).toBe('.');
     expect(s.file).toBe('packages/error/src/codes.ts');
     expect(s.kind).toBe('function');
     expect(s.summary.length).toBeGreaterThan(0);
     expect(s.packageDescription.length).toBeGreaterThan(0);
+  });
+
+  it('does not expose a declaration that is private to a package implementation', () => {
+    expect(resolver('PACKAGE_METADATA_CATALOG')).toBeNull();
   });
 
   it('a diagnostic code still takes the diagnostic arm even when a resolver is present', async () => {

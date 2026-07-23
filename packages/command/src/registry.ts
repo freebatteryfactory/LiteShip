@@ -13,8 +13,10 @@ import { ValidationError } from '@liteship/error';
  * The owning-package resolution for one exported symbol — what the injected
  * {@link CommandContext.resolveApiSymbol} capability returns, and what the
  * `explain` command projects into its `symbol` arm. `package` is the owning
- * publishable scope (a `PACKAGE_METADATA_CATALOG` key); `file` is the
- * repo-relative source file the symbol is DECLARED in;
+ * publishable scope (a `PACKAGE_METADATA_CATALOG` key); `subpath` is a real
+ * non-null package export through which the symbol is consumer-importable;
+ * `file` is the repo-relative source file the symbol is declared in (or the
+ * published declaration file in an installed package);
  * `summary` is the first paragraph of that declaration's leading TSDoc. Declared
  * here so the contract lives in `@liteship/command` without an import of the
  * CLI-side api-index that produces it (the CLI injects it; over MCP the capability

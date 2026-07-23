@@ -634,6 +634,11 @@ export const DIAGNOSTIC_REGISTRY = Object.freeze({
     'The committed .devcontainer pins (node, pnpm, rust) equal the repo source-of-truth versions.',
     'realign the .devcontainer pin with package.json engines/packageManager, .nvmrc, or the CI toolchain pin.',
   ),
+  'check/app-build': check(
+    'LiteShip application build',
+    'The current LiteShip application config is recognized and its host build completes.',
+    'fix the application config, detected host integration, or host build failure reported by liteship build.',
+  ),
 
   // ── schema: strict decoder issues ───────────────────────────────────────────
   'schema/type': schema(

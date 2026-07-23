@@ -29,7 +29,8 @@ function prettyDiagnostic(payload: ExplainPayload, on: boolean): string {
 function prettySymbol(payload: ExplainPayload, on: boolean): string {
   const s = payload.symbol!;
   const head = `${color('cyan', s.symbol, on)}  ${color('dim', `(${s.kind})`, on)}`;
-  const owner = `  ${color('dim', 'from:', on)} ${color('cyan', s.package, on)}  ${color('dim', s.file, on)}`;
+  const importPath = s.subpath === '.' ? s.package : `${s.package}${s.subpath.slice(1)}`;
+  const owner = `  ${color('dim', 'from:', on)} ${color('cyan', importPath, on)}  ${color('dim', s.file, on)}`;
   const summary = s.summary ? `\n  ${s.summary}` : '';
   return `${head}\n${owner}${summary}\n`;
 }

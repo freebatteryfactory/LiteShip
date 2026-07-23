@@ -1,13 +1,13 @@
 /**
  * api-index — the SYMBOL arm's INSTALLED-package fallback. When there is no
  * `packages/*​/src` checkout (a consumer app), `resolveApiSymbol` walks up to the
- * nearest `node_modules/@liteship` and scans each installed package's published
- * `.d.ts` for the declaration, lifting the same package + kind + first-paragraph
- * TSDoc summary the source scan produces.
+ * nearest `node_modules` and follows each installed package's real exports map.
+ * Private declarations that are not reachable through an export-map entry must
+ * never appear in the index.
  *
  * The fixture is a hermetic tmp dir: a single installed `@liteship/core` package
- * with one `dist/*.d.ts` carrying a TSDoc block + an `export declare const`. No
- * source tree, no network — same bytes → byte-identical resolution.
+ * with root and subpath barrels. No source tree, no network — same bytes produce
+ * the same consumer-importable resolution.
  *
  * @module
  */
@@ -25,8 +25,18 @@ beforeAll(() => {
   mkdirSync(distDir, { recursive: true });
   writeFileSync(
     join(appRoot, 'node_modules', '@liteship', 'core', 'package.json'),
-    JSON.stringify({ name: '@liteship/core', version: '0.0.0' }),
+    JSON.stringify({
+      name: '@liteship/core',
+      version: '0.0.0',
+      exports: {
+        '.': { types: './dist/index.d.ts' },
+        './tools': { types: './dist/tools.d.ts' },
+        './private': null,
+        './pattern/*': './dist/*.d.ts',
+      },
+    }),
   );
+  writeFileSync(join(distDir, 'index.d.ts'), "export { someUniqueSym } from './foo.js';\n");
   writeFileSync(
     join(distDir, 'foo.d.ts'),
     [
@@ -38,6 +48,11 @@ beforeAll(() => {
       'export declare const someUniqueSym: number;',
       '',
     ].join('\n'),
+  );
+  writeFileSync(join(distDir, 'private.d.ts'), 'export declare const privateOnly: number;\n');
+  writeFileSync(
+    join(distDir, 'tools.d.ts'),
+    '/** A public subpath symbol. */\nexport declare function subpathSym(): void;\n',
   );
 });
 
@@ -61,5 +76,19 @@ describe('resolveApiSymbol — installed-package fallback (no source checkout)',
 
   it('returns null for a symbol no installed package declares', () => {
     expect(resolveApiSymbol('noSuchInstalledSymbol', appRoot)).toBeNull();
+  });
+
+  it('never reports a private declaration that is not reachable from package exports', () => {
+    expect(resolveApiSymbol('privateOnly', appRoot)).toBeNull();
+  });
+
+  it('reports the exact consumer-importable subpath', () => {
+    const resolution = resolveApiSymbol('subpathSym', appRoot);
+    expect(resolution).toMatchObject({
+      package: '@liteship/core',
+      subpath: './tools',
+      file: 'dist/tools.d.ts',
+      kind: 'function',
+    });
   });
 });

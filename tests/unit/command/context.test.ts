@@ -9,7 +9,15 @@ import { describe, it, expect } from 'vitest';
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
-import { contextCommand, CONTEXT_MAP, CONTEXT_TASK_IDS, type ContextPayload } from '@liteship/command';
+import {
+  contextCommand,
+  COMMAND_CATALOG,
+  CONTEXT_MAP,
+  CONTEXT_TASK_IDS,
+  CHECK_REGISTRY,
+  type ContextPayload,
+} from '@liteship/command';
+import { DIAGNOSTIC_REGISTRY } from '@liteship/error';
 
 const REPO_ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 
@@ -53,6 +61,38 @@ describe('@liteship/command context command', () => {
       const { payload } = await context(task);
       for (const pointer of payload.pointers) {
         expect(kinds.has(pointer.kind), `${task}: unknown kind ${pointer.kind}`).toBe(true);
+      }
+    }
+  });
+
+  it('every check pointer names a live check and every live check has a diagnostic code', () => {
+    const checkIds = new Set(CHECK_REGISTRY.map((definition) => definition.id));
+    const diagnosticCodes = new Set(Object.keys(DIAGNOSTIC_REGISTRY));
+    for (const [task, contextTask] of Object.entries(CONTEXT_MAP)) {
+      for (const pointer of contextTask.pointers) {
+        if (pointer.kind === 'check') {
+          expect(pointer.checkId, `${task}: check pointer must carry a checkId`).not.toBeNull();
+          expect(checkIds.has(pointer.checkId!), `${task}: unknown checkId ${pointer.checkId}`).toBe(true);
+        } else {
+          expect(pointer.checkId, `${task}: non-check pointer must not carry a checkId`).toBeNull();
+        }
+      }
+    }
+    for (const checkId of checkIds) {
+      expect(diagnosticCodes.has(checkId), `missing diagnostic registry entry for ${checkId}`).toBe(true);
+    }
+  });
+
+  it('every concrete liteship command named by task context exists in COMMAND_CATALOG', () => {
+    const commandNames = new Set(COMMAND_CATALOG.map((descriptor) => descriptor.name));
+    const invocation = /`liteship\s+([a-z][\w.-]*)/gu;
+    for (const [task, contextTask] of Object.entries(CONTEXT_MAP)) {
+      const prose = [contextTask.title, contextTask.summary, ...contextTask.pointers.map((pointer) => pointer.note)].join(
+        '\n',
+      );
+      for (const match of prose.matchAll(invocation)) {
+        const command = match[1] as string;
+        expect(commandNames.has(command), `${task}: unknown liteship command ${command}`).toBe(true);
       }
     }
   });

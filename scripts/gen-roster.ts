@@ -23,6 +23,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isDirectExecution, walkAllFiles, walkTrackedFiles } from './audit/shared.js';
 import { PACKAGE_CATALOG, type PackageCatalogRecord } from './package-catalog.js';
+import { renderAgentRepositoryContext } from './lib/agent-context.js';
 
 const REPO_ROOT = resolve(fileURLToPath(import.meta.url), '..', '..');
 
@@ -389,25 +390,10 @@ function renderPackageSurfaceIndex(): string {
   return ['| Package | Layer | Public subpaths | Capabilities |', '| --- | --- | --- | --- |', ...rows].join('\n');
 }
 
-function renderAgentPackageContext(): string {
-  const rows = PACKAGE_CATALOG.map(
-    (record) => `| \`${record.name}\` | \`${record.dir}\` | ${record.capabilities.join(', ')} |`,
-  );
-  return [
-    '## Generated package context',
-    '',
-    'Use this index to find the semantic owner; public subpaths and dependency edges are generated in `PACKAGE-SURFACES.md` and `ARCHITECTURE.md`.',
-    '',
-    '| Package | Owner directory | Capabilities |',
-    '| --- | --- | --- |',
-    ...rows,
-  ].join('\n');
-}
-
 const MARKDOWN_PROJECTIONS = [
   ['ARCHITECTURE.md', 'PACKAGE-DAG', renderArchitectureDag],
   ['PACKAGE-SURFACES.md', 'PACKAGE-SURFACE-INDEX', renderPackageSurfaceIndex],
-  ['AGENTS.md', 'AGENT-PACKAGE-CONTEXT', renderAgentPackageContext],
+  ['AGENTS.md', 'AGENT-PACKAGE-CONTEXT', renderAgentRepositoryContext],
 ] as const;
 
 function applyMarkdownProjection(source: string, marker: string, rendered: string): string {
