@@ -17,7 +17,7 @@ The local definition label is `fnv1a:XXXXXXXX`: a 32-bit FNV-1a hash of the CBOR
 - **Deterministic and cross-machine stable.** CBOR normalizes key ordering, integer canonicalization, and floating-point representation; two machines produce the same bytes, therefore the same hash.
 - **Cheap to compute.** FNV-1a via `Math.imul` for 32-bit hashing (`packages/core/src/fnv.ts`). Suitable for per-definition use throughout the build pipeline without measurable overhead.
 - **Collision probability at 32 bits is ~1 in 4B.** Acceptable for content-identity within a single app; not cryptographic. SHA-256 via `typed-ref.ts` covers signature-grade needs.
-- **Automatic cache invalidation.** Hash-indexed caches (`quantizer/src/memo-cache.ts`) invalidate correctly on any change to the addressed definition. *(Amended 0.3.0: when a cached VALUE also depends on inputs OUTSIDE the addressed definition — a per-request theme, or a bundled `compile`'s build-time content — those inputs must be folded into the cache key or a per-deploy content-version `prefix`, or the key survives a change to them. The edge boundary cache now folds tier + name + a resolved-theme fingerprint; `prefix` is the content version. See [ADR-0017](./0017-cache-content-version.md) and HOSTING.md §KV trust boundary.)*
+- **Automatic cache invalidation.** Hash-indexed caches (`quantizer/src/memo-cache.ts`) invalidate correctly on any change to the addressed definition. _(Amended 0.3.0: when a cached VALUE also depends on inputs OUTSIDE the addressed definition — a per-request theme, or a bundled `compile`'s build-time content — those inputs must be folded into the cache key or a per-deploy content-version `prefix`, or the key survives a change to them. The edge boundary cache now folds tier + name + a resolved-theme fingerprint; `prefix` is the content version. See [ADR-0017](./0017-cache-content-version.md) and HOSTING.md §KV trust boundary.)_
 - **Reliable non-adversarial projection labels.** The same addressed definition on different machines produces the same label. Edge/CDN trust and external artifact validation additionally require the integrity rules above and the complete cache key described by ADR-0017.
 
 ## Evidence
@@ -90,7 +90,7 @@ interchangeable:
   deterministic-CBOR byte law. `cborg` uses smallest-float canonical
   form; that is acceptable here because a receipt chain only ever
   compares its own `cborg→sha256` bytes against its own — it never
-  cross-compares the two encoders. The encoder is deliberately *not*
+  cross-compares the two encoders. The encoder is deliberately _not_
   migrated to `CanonicalCbor`: doing so would invalidate persisted
   sha256 receipts for no correctness gain, and `cborg` is required for
   decode regardless (`CanonicalCbor` is encode-only).
