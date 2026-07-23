@@ -16,17 +16,13 @@ WebCodecsCapture -- module object + namespace for browser-native video capture.
 
 ### make
 
-> **make**: (`options?`, `mediabunny`) => `FrameCapture`
+> `readonly` **make**: (`options?`) => `FrameCapture`
 
 #### Parameters
 
 ##### options?
 
 [`WebCodecsCaptureOptions`](../interfaces/WebCodecsCaptureOptions.md)
-
-##### mediabunny?
-
-`MediabunnyCodecs` = `REAL_MEDIABUNNY`
 
 #### Returns
 
