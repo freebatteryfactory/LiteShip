@@ -10,8 +10,10 @@ export type RequireAtLeastOne<T, Keys extends keyof T = keyof T> = Pick<T, Exclu
 /** Recursively make arrays and object properties readonly while preserving callable values. */
 export type DeepReadonly<T> = T extends (...args: never[]) => unknown
   ? T
-  : T extends readonly (infer U)[]
-    ? readonly DeepReadonly<U>[]
-    : T extends object
+  : T extends string | number | boolean | bigint | symbol | null | undefined
+    ? T
+    : T extends readonly unknown[]
       ? { readonly [K in keyof T]: DeepReadonly<T[K]> }
-      : T;
+      : T extends object
+        ? { readonly [K in keyof T]: DeepReadonly<T[K]> }
+        : T;

@@ -9,6 +9,7 @@
  */
 
 import { UnsupportedError } from '@liteship/error';
+import type { DeepReadonly } from '../schema/types.js';
 
 function unsupported(path: string, detail: string): never {
   throw UnsupportedError('definition value', `${path} ${detail}`);
@@ -19,7 +20,7 @@ function unsupported(path: string, detail: string): never {
  * Cycles, accessors, functions, symbols, bigint values, and custom prototypes
  * are outside the canonical definition-value subset and are refused loudly.
  */
-export function snapshotDefinitionValue<T>(value: T): T {
+export function snapshotDefinitionValue<T>(value: T): DeepReadonly<T> {
   const ancestors = new WeakSet<object>();
 
   const snapshot = (current: unknown, path: string): unknown => {
@@ -70,5 +71,5 @@ export function snapshotDefinitionValue<T>(value: T): T {
     }
   };
 
-  return snapshot(value, '$') as T;
+  return snapshot(value, '$') as DeepReadonly<T>;
 }

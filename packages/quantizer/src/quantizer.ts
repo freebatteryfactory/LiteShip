@@ -338,9 +338,9 @@ type CachedQuantizerConfig = QuantizerConfig<Boundary, QuantizerOutputs<Boundary
  */
 function contentAddress<B extends Boundary, O extends QuantizerOutputs<B>>(
   boundary: B,
-  outputs: O,
+  outputs: DeepReadonly<O>,
   tier: MotionTier | undefined,
-  spring: SpringConfig | undefined,
+  spring: DeepReadonly<SpringConfig> | undefined,
   force: readonly OutputTarget[] | undefined,
 ): ContentAddress {
   const payload = {
@@ -388,16 +388,16 @@ const springCSSCache = new Map<string, string>();
  * the one bridging cast so callers stay type-clean.
  */
 function readTargetState<B extends Boundary, O extends QuantizerOutputs<B>>(
-  outputs: O,
+  outputs: DeepReadonly<O>,
   target: OutputTarget,
   state: StateUnion<B>,
 ): Record<string, unknown> | undefined {
-  const table = outputs[target] as Record<string, Record<string, unknown>> | undefined;
+  const table = outputs[target] as Readonly<Record<string, Readonly<Record<string, unknown>>>> | undefined;
   return table?.[state as string];
 }
 
 function resolveOutputs<B extends Boundary, O extends QuantizerOutputs<B>>(
-  outputs: O,
+  outputs: DeepReadonly<O>,
   state: StateUnion<B>,
   admittedTargets: ReadonlySet<OutputTarget>,
   configId: ContentAddress,
@@ -431,7 +431,7 @@ function resolveOutputs<B extends Boundary, O extends QuantizerOutputs<B>>(
 // Spring CSS computation with caching
 // ---------------------------------------------------------------------------
 
-function getSpringCSS(spring: SpringConfig): string {
+function getSpringCSS(spring: DeepReadonly<SpringConfig>): string {
   const key = `${spring.stiffness}:${spring.damping}:${spring.mass ?? 1}`;
   let css = springCSSCache.get(key);
   if (!css) {

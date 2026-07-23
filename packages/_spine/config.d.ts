@@ -7,11 +7,13 @@ import type { Token, Theme, Style } from './design.d.ts';
 
 type ReadonlyConfigValue<T> = T extends (...args: never[]) => unknown
   ? T
-  : T extends readonly (infer U)[]
-    ? readonly ReadonlyConfigValue<U>[]
-    : T extends object
+  : T extends string | number | boolean | bigint | symbol | null | undefined
+    ? T
+    : T extends readonly unknown[]
       ? { readonly [K in keyof T]: ReadonlyConfigValue<T[K]> }
-      : T;
+      : T extends object
+        ? { readonly [K in keyof T]: ReadonlyConfigValue<T[K]> }
+        : T;
 
 export interface Config {
   readonly _tag: 'ConfigDef';

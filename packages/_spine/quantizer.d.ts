@@ -20,11 +20,13 @@ import type {
 
 type ReadonlyQuantizerValue<T> = T extends (...args: never[]) => unknown
   ? T
-  : T extends readonly (infer U)[]
-    ? readonly ReadonlyQuantizerValue<U>[]
-    : T extends object
+  : T extends string | number | boolean | bigint | symbol | null | undefined
+    ? T
+    : T extends readonly unknown[]
       ? { readonly [K in keyof T]: ReadonlyQuantizerValue<T[K]> }
-      : T;
+      : T extends object
+        ? { readonly [K in keyof T]: ReadonlyQuantizerValue<T[K]> }
+        : T;
 
 // MotionTier canonical declaration lives in core.d.ts; re-exported here so
 // `@liteship/_spine` consumers reading the quantizer surface still see it on
