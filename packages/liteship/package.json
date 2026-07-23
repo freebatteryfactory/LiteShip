@@ -130,7 +130,7 @@
   },
   "//peer-optional": "OPTIONAL host peers (P13): `liteship/astro` re-exports @liteship/astro (astro peer) and `liteship/vite` re-exports @liteship/vite (vite peer). Declaring astro + vite as OPTIONAL peers here flows their version validation to a consumer that actually imports those subpaths, without emitting an unmet-peer warning for a vite-only (or host-free) app that never touches them. The root `.` entry evaluates neither.",
   "peerDependencies": {
-    "astro": ">=7.0.0 <8",
+    "astro": ">=7.1.0 <8",
     "vite": ">=8.0.0"
   },
   "peerDependenciesMeta": {

@@ -35,14 +35,15 @@ export const PEER_INSTALLS: readonly string[] = [
   // peered esbuild ^0.27.0 only (→ strict-peer install failure in the smoke
   // consumer). vite@8.1.0 widened the peer to `^0.27.0 || ^0.28.0`.
   'vite@8.1.0',
-  // Must satisfy @liteship/astro's `astro >=7.0.0 <8` peer (a stale `astro@6.0.0`
-  // here failed the consumer install under strict-peer once we hard-cut to 7).
-  'astro@7.0.0',
+  // Must satisfy @liteship/astro's security floor (`astro >=7.1.0 <8`) as well
+  // as its major. A stale host pin makes the packed proof certify a consumer
+  // configuration the published facade deliberately refuses.
+  'astro@7.1.0',
   // The packed declaration authority deliberately runs with skipLibCheck=false.
   // Astro exposes this optional peer in its public declaration graph, so the
   // proof fixture must provide the valid typed-host environment it claims to
   // verify even though a runtime-only Astro install may omit Markdown support.
-  '@astrojs/markdown-remark@7.2.0',
+  '@astrojs/markdown-remark@7.2.1',
   'react@19.2.0',
   'react-dom@19.2.0',
   // React ships JavaScript; @liteship/remotion's public declarations name

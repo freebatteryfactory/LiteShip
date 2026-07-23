@@ -123,10 +123,10 @@
     "@liteship/worker": "workspace:*"
   },
   "peerDependencies": {
-    "astro": ">=7.0.0 <8"
+    "astro": ">=7.1.0 <8"
   },
   "devDependencies": {
-    "astro": "^7.0.0"
+    "astro": "^7.1.0"
   },
   "engines": {
     "node": ">=22.13.0"

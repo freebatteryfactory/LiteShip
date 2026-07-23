@@ -13,6 +13,11 @@ ships its enforcing gate.
 
 ### Changed
 
+- **Patched host and test authorities.** The supported Astro 7 floor is now 7.1.0,
+  which includes the upstream View Transition, spread-attribute, and composable-pipeline
+  security fixes. The aligned Vitest browser-provider family is pinned to 4.1.10. The
+  audited transitive floors cover patched `brace-expansion`, `fast-uri`, `js-yaml`,
+  `linkify-it`, `sharp`, and `svgo` releases without forking their upstream owners.
 - **One brand — LiteShip (ADR-0044).** The original `@czap` npm scope, the `data-czap-*`
   DOM wire prefix, the `CZAP_*`/`Czap*` identifiers, the `czap` CLI/config, and the
   engine name were retired wholesale in favor of the single **LiteShip** brand:
@@ -185,8 +190,8 @@ transform, and the differently-eased `par` gets a faithful renderer instead of a
 ## [0.10.0] - 2026-07-13
 
 The **completion cut** — a semantic-truth pass over the 25-package system,
-moving several seams from *structural* completion (a field is read, a fallback exported) to
-*semantic* completion (the correct state / bytes / DOM / cache variant / timeline behaviour
+moving several seams from _structural_ completion (a field is read, a fallback exported) to
+_semantic_ completion (the correct state / bytes / DOM / cache variant / timeline behaviour
 survives end to end). Every change is red-first, root-caused, propagated to examples & docs, and
 independently QA'd; the full node vitest suite is green (7786/7809). Resolves #126, #130, #140,
 #141, #146; tidies #145; parks #129 with a reopen condition; fixes #142's breadcrumb depth.
@@ -215,7 +220,7 @@ independently QA'd; the full node vitest suite is green (7786/7809). Resolves #1
   selector (were silently dropped by the browser).
 - Astro: `Vary` tokens are merged, not clobbered (protects `Cookie`/`Accept-Encoding` cache axes).
 - MCP: the docs route returns JSON-RPC failures as a top-level `error` member (was laundered into a 200 `result`).
-- CLI/doctor: deployed-header checks validate actual COOP/COEP/Client-Hint *values* (not mere presence);
+- CLI/doctor: deployed-header checks validate actual COOP/COEP/Client-Hint _values_ (not mere presence);
   value-taking flags no longer swallow the next flag; the Workers module-scope `Date` scan is AST-based.
 - `#145` MCP dispatch-matrix timeouts refactored to a documented lookup table; `#142` sharded-docs breadcrumb
   depth fixed (sharded builder stays experimental).
@@ -321,7 +326,7 @@ human client's edit is validated exactly like a model's proposal.
 ### Added
 
 - **`@czap/core` — the client→server graph-mutation channel.** `handleGraphMutation(request,
-  { loadGraph, saveGraph })` is the transport-agnostic server core: decode a client-proposed
+{ loadGraph, saveGraph })` is the transport-agnostic server core: decode a client-proposed
   `GraphPatch` → `validateGraphPatchProposal` → compare-and-swap `applyValidatedPatch` →
   persist, returning `applied` (new graph), `refused` (invalid patch — validation or a
   concurrent-write CAS miss), or `error` (a server-side store failure, retryable).
@@ -473,7 +478,7 @@ hardened by an adversarial review pass.
   `DAG.spliceCheckpoint` reclaim a long-lived receipt DAG's dominated prefix into
   a content-addressed checkpoint attestation (drop-only; the spliced DAG equals a
   fresh reload). `Receipt.validateChain` gains `ChainValidationOptions { base,
-  checkpoint }` for cross-boundary validation (a compacted tail is verifiable only
+checkpoint }` for cross-boundary validation (a compacted tail is verifiable only
   against its checkpoint). See ADR-0026.
 - **`@czap/web` — SSE overflow policy.** `SSEConfig.overflow`
   (`drop-newest | drop-oldest | coalesce-by-id`, default `coalesce-by-id`) + an
@@ -600,7 +605,7 @@ dev/status/stop` delegates to Astro background dev-server management, and `czap 
   un-bypassable `validateGraphPatchProposal` → `applyValidatedPatch` token-witness chain,
   then re-cast the delta). LiteShip exposes the seam; the model producer is downstream.
 - `@czap/astro` — **SVG last-mile directive** (`client:svg`): resolves `data-czap-entity →
-  SVGElement` and applies `@czap/scene`'s `applySvgAttrs` to the live DOM each frame.
+SVGElement` and applies `@czap/scene`'s `applySvgAttrs` to the live DOM each frame.
 - `@czap/stage` — **headless node video encode.** `dualExportNode(graph, ffmpegFrameEncoder())`
   runs the graph→page+video dual-export proof in node/CI via an injected ffmpeg/libx264
   `FrameEncoder` (was browser/WebCodecs-gated). The frame-source digest == page digest
@@ -972,7 +977,7 @@ structural-lint guard layer. Pre-1.0 break policy applies — breaking changes a
   height boundaries join the auto-containment path. When a sheet (or a
   manifest entry) collects the `viewport-height` container name, the
   `:root` rule upgrades to `container-type: size` with `block-size:
-  100dvh` pinned (size containment computes the root's height as if
+100dvh` pinned (size containment computes the root's height as if
   empty); width-only sheets keep the `inline-size` rule unchanged. The
   `container-not-declared` diagnostic no longer fires for
   `viewport.height` — it remains for unrecognized `viewport.*` axes and
@@ -1079,7 +1084,7 @@ structural-lint guard layer. Pre-1.0 break policy applies — breaking changes a
   (**breaking** for direct `parseQuantizeBlocks` consumers). For
   `viewport.*` boundaries the compiled output also declares `:root` as
   the named query container (`container-type: inline-size;
-  container-name: <input>`) so the queries actually match; non-viewport
+container-name: <input>`) so the queries actually match; non-viewport
   inputs get a `container-not-declared` diagnostic naming the exact
   declaration to add.
 - `@czap/vite` — single-line `@token name {}` blocks parse (the natural
@@ -1103,7 +1108,7 @@ structural-lint guard layer. Pre-1.0 break policy applies — breaking changes a
   compiled to pre-resolved `Envelope` components that VideoSystem
   (`_opacity`), AudioSystem (new `_gain` write), and EffectSystem
   (`_intensity`) read each tick; transitions accept `ease: 'cubic' |
-  'spring' | 'bounce' | { stepped: n }`, compiled to an `Ease` component
+'spring' | 'bounce' | { stepped: n }`, compiled to an `Ease` component
   TransitionSystem maps through the closed catalog (`easeFnFor`). New
   public helpers: `resolveFrameMark`, `addFrameMarks`, `resolveEnvelope`,
   `envelopeFactor`, `easeFnFor`; canonical types land in
@@ -1179,7 +1184,9 @@ structural-lint guard layer. Pre-1.0 break policy applies — breaking changes a
 - `@czap/worker`: `CompositorWorker.addQuantizer(boundary)` overload accepts a `Boundary.make` result directly — id/states/thresholds derived, quantizer name defaults to `boundary.input` (new `QuantizerBoundarySource` type; explicit two-arg form unchanged).
 - `@czap/worker`: `WorkerHost.startRender({ durationMs })` — width/height default to the attached canvas's dimensions (captured at `attachCanvas` time), fps defaults to 60, and `durationMs` accepts a plain number (branded to `Millis` internally). New `WorkerHostRenderConfig` type; `TransferableCanvas` gains `width`/`height`.
 - `@czap/scene`: `Track.transition` `between`, `Track.effect` `target`, and `syncTo.beat/onset/peak` anchors accept the track object itself (new `TrackRef<K>` type + `trackRefId` helper) — the id is derived and the phantom kind brand preserved.
+
 ### Documentation
+
 - `@czap/worker`: `WorkerConfig.poolCapacity` documents `@defaultValue 64`; SPSC examples drop the slotCount/slotSize postMessage shuttling.
 - `@czap/scene`: `VideoTrack.source` documented as an opaque renderer-owned passthrough (the engine only checks presence).
 - `@czap/mcp-server`: `start({ http })` / `runHttp` accept a plain port number alongside `':PORT'`, `'PORT'`, and `'HOST:PORT'` strings; all accepted bind shapes are documented on `StartOpts`, and `parseHttpBind` is exported for host tooling.
@@ -1194,6 +1201,7 @@ structural-lint guard layer. Pre-1.0 break policy applies — breaking changes a
 - `unknown-current-state` diagnostic: `ARIACompiler.compile` warns and lists the boundary's states before falling back to empty `currentAttributes` (@czap/compiler).
 - `@czap/detect`: `resetDetectionCaches()` clears memoized session-stable probe results (exists for test isolation; production code never needs it). Mirrored in `@czap/_spine`.
 - `@czap/remotion`: `rendererFromRemotionConfig(config, compositor, signal?)` builds a `VideoRenderer` directly from Remotion's `useVideoConfig()`/`calculateMetadata` shape, deriving `durationMs = durationInFrames / fps * 1000` so fps/duration are declared exactly once — in Remotion — and can no longer drift into a video that freezes on the last frame. New `RemotionVideoConfig` type exported; both mirrored in `@czap/_spine`.
+
 ### Changed
 
 - `@czap/vite` — `PluginConfig.environments` now defaults to `['browser']`
@@ -1315,13 +1323,15 @@ structural-lint guard layer. Pre-1.0 break policy applies — breaking changes a
 - `SceneContract` gains optional `width`/`height`; `scene.render` threads them through the `renderScene` capability, and the Node host + CLI render backends fall back to 1280x720 when absent. (@czap/scene, @czap/command, @czap/cli)
 - **BREAKING** `createNodeCommandContext({ cwd })` now resolves `fileExists`/`readFileBytes`/`loadSceneModule`/`loadAssetBytes` against `opts.cwd` (previously only manifest + cache honored it), and `loadAssetBytes` tries the manifest-declared `source` before the `examples/scenes/<id>.wav` convention (candidate order flipped). Asset bytes are now sliced out of Node's Buffer pool instead of returning the shared pool ArrayBuffer. (@czap/command)
 - **BREAKING** Command descriptors declare `requires` (injected `CommandContext` capability names) as data, and `CommandDispatcher.dispatch` enforces presence with one structured failure: `{ error: 'capability_unavailable', missing, hint }`, exit 2. Replaces the per-handler `'vitest runner unavailable'` (exit 2), `'render backend unavailable'` (exit 5), `'audio projection unavailable'` (exit 1), and `'audit engine unavailable'` payloads. New exports: `capabilityUnavailable`, `CommandCapability`. `verify` deliberately declares no requires — capability absence there is its Unknown/Incomplete verdict (ADR-0011). (@czap/command, @czap/_spine)
-- Dispatcher `unknown_command` failures now carry `didYouMean` (nearest registered name, edit distance ≤ 3) and a `run \`czap help\` for the verb chart` hint; `no_registry_handler` keeps its stable code and gains `executionKind` plus a hint naming the literal `czap <name>` invocation for cli-orchestration commands. (@czap/command)
+- Dispatcher `unknown_command` failures now carry `didYouMean` (nearest registered name, edit distance ≤ 3) and a `run \`czap help\` for the verb chart`hint;`no_registry_handler`keeps its stable code and gains`executionKind`plus a hint naming the literal`czap <name>` invocation for cli-orchestration commands. (@czap/command)
 - One capsule-manifest failure wording across `capsule.*`/`asset.*`/`scene.verify` (was three phrasings): names `reports/capsule-manifest.json`, the `CZAP_CAPSULE_MANIFEST` override, and `pnpm run capsule:compile`. (@czap/command)
 - Scene failures name their subject and fix: missing capsule/contract errors include the scene path and `czap glossary capsule`; missing `--output` shows the full `czap scene render <scene.ts> -o out.mp4` example. (@czap/command)
 - Browser-host `scene.render` delegation failures name the MCP server URL, the remote JSON-RPC payload, and the `czap mcp --http=PORT` next step. (@czap/command)
 - Registry duplicate-command-name invariant errors point at `HANDLER_COMMANDS` / `CLI_OWNED_DESCRIPTORS` in catalog.ts. (@czap/command)
+
 ### Fixed
-- A corrupt capsule manifest now returns a structured `capsule manifest is not valid JSON (…) — regenerate it with \`pnpm run capsule:compile\`` failure instead of throwing a raw `SyntaxError` across the dispatcher's never-throw seam. (@czap/command)
+
+- A corrupt capsule manifest now returns a structured `capsule manifest is not valid JSON (…) — regenerate it with \`pnpm run capsule:compile\``failure instead of throwing a raw`SyntaxError` across the dispatcher's never-throw seam. (@czap/command)
 - The ffmpeg EPIPE render failure re-runs `probeFfmpegRender()` and embeds its per-platform diagnosis/install hint instead of the rhetorical "(is libx264 available?)". (@czap/command)
 - **BREAKING** `czap doctor` run outside the LiteShip workspace now auto-selects a consumer probe profile (`node.version`, `pnpm.version`, `workspace.installed`, `ffmpeg.libx264`) instead of the maintainer profile — receipt check ids change for consumers; `--target` remains the explicit override, and `--fix` outside the workspace now attempts nothing at all (the Codex P1 guard is the second layer).
 - `czap scene render` no longer requires `-o/--output`: when omitted, the output derives to `<sceneBasename>.mp4` beside the scene file, resolved in the command layer so the cache key and receipt record the real path; the `scene.render` inputSchema now requires only `scene` (widening).
@@ -1337,7 +1347,7 @@ structural-lint guard layer. Pre-1.0 break policy applies — breaking changes a
 - **BREAKING** (`@czap/worker`): `SPSCRing` ring geometry (slotCount/slotSize) now lives in the SharedArrayBuffer control header — the control region grows from 8 to 16 bytes, moving the data-region offset and buffer `byteLength`. `attachProducer(buffer)` / `attachConsumer(buffer)` need only the buffer; explicitly re-supplied slotCount/slotSize are validated against the header and a mismatch throws instead of silently corrupting data.
 - **BREAKING** (`@czap/scene`): `AudioTrack.mix.volume` is documented as linear gain and the default changed from `0` (silent) to `1` (unity) in `Track.audio` and the compiled `Volume` component — scenes omitting `mix` are now audible by default; `PassThroughMixer` receipts for such scenes report `volume: 1`.
 - `@czap/scene`: `SceneContract.duration`, `.invariants`, `.budgets`, and `.site` are now optional with documented defaults normalized at the top of `compileScene` (`duration` derives from resolved track extents, `invariants` `[]`, `budgets` `{ p95FrameMs: 1000 / fps }`, `site` `['node','browser']`); `ResolvedSceneContract` keeps them required so invariant checks stay total.
-- **BREAKING** (`@czap/scene`): `compileScene` now validates structure after beat-mark resolution — non-positive/non-finite `fps`, reversed ranges (`from > to`), and transition `between` refs naming undeclared video tracks (with a did-you-mean suggestion) are collected together with declared-invariant violations into one `CzapValidationError`; previously-compiling broken scenes now throw. A track extending past an *explicitly declared* `duration` emits a `track-past-duration` Diagnostics warning instead of failing (truncation stays legal; derived durations never warn).
+- **BREAKING** (`@czap/scene`): `compileScene` now validates structure after beat-mark resolution — non-positive/non-finite `fps`, reversed ranges (`from > to`), and transition `between` refs naming undeclared video tracks (with a did-you-mean suggestion) are collected together with declared-invariant violations into one `CzapValidationError`; previously-compiling broken scenes now throw. A track extending past an _explicitly declared_ `duration` emits a `track-past-duration` Diagnostics warning instead of failing (truncation stays legal; derived durations never warn).
 - `@czap/worker`: `SPSCRing.createPair` preflights cross-origin isolation — a non-isolated page now throws a teaching error naming the exact COOP/COEP headers (and that `@czap/astro` sets them) instead of the browser's bare `ReferenceError`/`TypeError`.
 - `@czap/worker`: SPSC `push`/`pop` role errors name which side the handle is and the literal `SPSCRing.attachProducer(buffer)` / `attachConsumer(buffer)` call to make; slot-size mismatches teach scratch-array reuse with the exact `new Float64Array(n)` to allocate once.
 - `@czap/worker`: the worker error envelope (`ErrorMessage`) gains an optional `context` field carrying the inbound message type being handled; the host's `worker-message-error` diagnostic names it plus the most common cause (thresholds[i]/states[i] misalignment), and `worker-unhandled-error` teaches the dominant `worker-src blob:` CSP fix.
@@ -1348,7 +1358,9 @@ structural-lint guard layer. Pre-1.0 break policy applies — breaking changes a
 - **BREAKING** `@czap/command`: the dispatcher's `no_registry_handler` error code is renamed `cli_only_command`, with a hint to run the command as `czap <name>` instead of calling it over MCP.
 - `@czap/mcp-server`: `prompts/get` failures enumerate the available prompts, point unknown commands at the `liteship://registry/commands` resource, and distinguish CLI-owned tools (run `czap <tool>`) from names outside the catalog.
 - `@czap/mcp-server`: `resources/read` `-32002` responses carry `data.hint` pointing at `resources/list` (error code unchanged).
+
 ### Fixed
+
 - `@czap/mcp-server`: an invalid `--http` bind (e.g. `localhost`) now fails with a teaching error enumerating the accepted shapes (`:PORT`, `PORT`, `HOST:PORT`, port 0-65535) instead of leaking Node's raw `ERR_SOCKET_BAD_PORT`.
 - `TransitionConfig.duration`/`delay` accept plain `number` alongside branded `Millis` — `{ duration: 300 }` needs no `Millis` import (@czap/quantizer).
 - **BREAKING**: `AnimatedQuantizer.make` derives interpolation outputs from a wrapped `LiveQuantizer`'s `config.outputs.css` when the third argument is omitted (finite-numeric strings coerce via `Number()` so they lerp; other strings snap at 50%); callers that omitted `outputs` previously animated to empty records and now receive derived values. Explicit `outputs` still override (@czap/quantizer).
@@ -1372,6 +1384,7 @@ structural-lint guard layer. Pre-1.0 break policy applies — breaking changes a
 - **BREAKING** `Token.make` now validates that every `values` key has exactly one `:`-separated segment per declared axis — previously-accepted malformed compound keys (including axis values containing the reserved `:` separator) now throw `CzapValidationError`.
 - **BREAKING** `Signal.audio(bridge, 'normalized')` without a positive `totalDurationSec` now throws `CzapValidationError` instead of silently returning raw sample indices.
 - **BREAKING** One validation taxonomy: `AVBridge.make`, `Easing.spring`/`springNaturalDuration`, `FrameBudget.make`, and `DirtyFlags.make` now throw `CzapValidationError` instead of `RangeError` — consumers branching on `instanceof RangeError` stop matching (use `isValidationError`). Message texts are preserved as `module: detail`.
+
 ### Fixed
 
 - examples/tutorial — `05-llm.astro` failed `astro build` outright: its
@@ -1449,7 +1462,7 @@ structural-lint guard layer. Pre-1.0 break policy applies — breaking changes a
   (`thresholds[i]` is the lower bound of `states[i]`,
   `thresholds.length === states.length`). Following the old doc, the
   flagship `CompositorWorker` example (`states: ['dim','bright'],
-  thresholds: [0.5]`) made `'bright'` unreachable. Docs and example now
+thresholds: [0.5]`) made `'bright'` unreachable. Docs and example now
   match the implementation (`thresholds: [0, 0.5]`).
 - `@czap/web` — SSE/Resumption seam is documented: the SSE client handles
   transport-level reconnect only (backoff + `lastEventId` cursor) and
