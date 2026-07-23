@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document maps the main `@liteship/*` compartments in the repo: the hull sections you import from.
+This document maps the main `@liteship/*` packages and the public entrypoints you import from.
 
 It answers:
 

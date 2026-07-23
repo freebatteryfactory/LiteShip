@@ -63,6 +63,46 @@ describe('liteship.config.ts host composition', () => {
     expect(() => validateProjectConfig({}, 'fixture/liteship.config.ts')).toThrow(/must default-export/);
   });
 
+  it('returns the immutable re-addressed snapshot, never the mutable admitted candidate', async () => {
+    const root = fixture();
+    const authored = defineConfig({
+      vite: { hmr: false, environments: ['server'] },
+      astro: { adaptive: true, edgeRuntime: false },
+    });
+    const mutableVite = { hmr: false, environments: ['server'] };
+    const mutableAstro = { adaptive: true, edgeRuntime: false };
+    const candidate = { ...authored, vite: mutableVite, astro: mutableAstro };
+
+    const accepted = validateProjectConfig(candidate, 'fixture/liteship.config.ts');
+    expect(accepted).not.toBe(candidate);
+    expect(Object.isFrozen(accepted)).toBe(true);
+    expect(Object.isFrozen(accepted.vite)).toBe(true);
+    expect(Object.isFrozen(accepted.astro)).toBe(true);
+
+    const loader = vi.fn(async () => ({ path: join(root, 'liteship.config.ts'), config: candidate, dependencies: [] }));
+    const loaded = await loadProjectConfig(root, ENV, loader);
+    expect(loaded?.config).not.toBe(candidate);
+
+    const vitePlugin = plugin(undefined, () => null, loader);
+    const configHook = vitePlugin.config as (user: { root: string }, env: typeof ENV) => unknown;
+    await configHook({ root }, ENV);
+    const loadHook = vitePlugin.load as (id: string) => unknown;
+    const virtualSource = await loadHook('\0virtual:liteship/config');
+    expect(virtualSource).toContain('"hmr":false');
+    expect(virtualSource).toContain('"adaptive":true');
+
+    mutableVite.hmr = true;
+    mutableVite.environments.push('client');
+    mutableAstro.adaptive = false;
+    mutableAstro.edgeRuntime = true;
+
+    expect(accepted.vite).toEqual({ hmr: false, environments: ['server'] });
+    expect(accepted.astro).toEqual({ adaptive: true, edgeRuntime: false });
+    expect(loaded?.vite).toEqual({ hmr: false, environments: ['server'] });
+    expect(loaded?.astro).toEqual({ adaptive: true, edgeRuntime: false });
+    expect(await loadHook('\0virtual:liteship/config')).toBe(virtualSource);
+  });
+
   it('threads the loaded Config through the Vite plugin and virtual module; explicit host options win', async () => {
     const root = fixture();
     const config = defineConfig({ vite: { hmr: false, environments: ['server'] }, astro: { edgeRuntime: true } });

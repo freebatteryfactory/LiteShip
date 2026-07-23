@@ -437,7 +437,36 @@ describe('fromCSSCustomProperties — diagnostic teeth (every code the adapter e
 
 describe('fromCSSCustomProperties — degenerate inputs', () => {
   it('returns an empty result for CSS with no recognized custom-property rules', () => {
-    const result = fromCSSCustomProperties(`.btn { color: red; } @media (min-width: 1px) { :root { --x: 1; } }`);
+    const result = fromCSSCustomProperties(`.btn { color: red; }`);
+    expect(result).toEqual({ boundaries: [], tokens: [], themes: [], diagnostics: [] });
+  });
+
+  it.each([
+    ['layer', '@layer tokens { :root { --accent: red; } }'],
+    ['supports', '@supports (color: oklch(0 0 0)) { :root { --accent: oklch(.7 .2 20); } }'],
+    ['media', '@media (min-width: 1px) { :root { --accent: red; } }'],
+    ['scope', '@scope (.theme) { :root { --accent: red; } }'],
+    ['nested wrappers', '@layer tokens { @supports (color: red) { :root { --accent: red; } } }'],
+  ])('refuses %s wrappers atomically when they contain custom-property definitions', (_name, css) => {
+    const result = fromCSSCustomProperties(css);
+    expect(result.boundaries).toEqual([]);
+    expect(result.tokens).toEqual([]);
+    expect(result.themes).toEqual([]);
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({ code: MIGRATE_CODES.unsupportedAtRule, severity: 'error' }),
+    ]);
+  });
+
+  it('does not treat comments, strings, or URL payloads as wrapped custom-property definitions', () => {
+    const result = fromCSSCustomProperties(`
+      @layer utilities {
+        /* :root { --comment-token: red; } */
+        .demo {
+          content: "--string-token: blue";
+          background: url(data:text/plain,--url-token:green);
+        }
+      }
+    `);
     expect(result).toEqual({ boundaries: [], tokens: [], themes: [], diagnostics: [] });
   });
 

@@ -37,6 +37,7 @@ import {
   findConsumerDependencyRoot,
   diffSemanticClosures,
   partitionRuntimeClosureSpecifiers,
+  packedLiteshipBin,
   peerDependenciesOnly as peerDependenciesOnlyHelper,
   resolveExecutable,
   semanticClosureFileHash,
@@ -784,8 +785,9 @@ for (const specifier of imports) {
 
     step('liteship describe --format=json (binstub resolution check)');
     if (process.platform === 'win32') {
-      // Tar-extracted @liteship/cli has no node_modules/.bin shim; run the packed bin directly.
-      const liteshipBin = join(consumerDir, 'node_modules', '@liteship', 'cli', 'bin', 'liteship.mjs');
+      // Tar extraction has no node_modules/.bin shim; execute the facade-owned
+      // public binary directly. @liteship/cli is implementation-only and ships no bin.
+      const liteshipBin = packedLiteshipBin(consumerDir);
       run('node', [liteshipBin, 'describe', '--format=json'], consumerDir);
     } else {
       run('pnpm', ['exec', 'liteship', 'describe', '--format=json'], consumerDir);

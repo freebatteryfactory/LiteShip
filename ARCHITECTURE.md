@@ -17,7 +17,7 @@ Prose vocabulary: [GLOSSARY.md](./GLOSSARY.md).
 
 ## System shape
 
-Core grammar: `signal -> boundary -> named state -> target output`. `@liteship/core` owns the language; host packages rig it to browsers, Astro, edge, workers, video, CLI, and AI-tooling surfaces. Worth noting: the grammar holds across all of them. Hosts do not define boundary semantics; every projection target reads the same content-addressed definition. The `signal` end is itself a source of truth: `SignalSource` (`@liteship/core`) is the one signal vocabulary every domain reads — viewport, scroll, pointer, media, and live `audio` (amplitude/beat) — rather than re-parsing input strings per host.
+Core grammar: `signal -> boundary -> named state -> target output`. `@liteship/core` owns the language; host packages connect it to browsers, Astro, edge, workers, video, CLI, and AI-tooling surfaces. Worth noting: the grammar holds across all of them. Hosts do not define boundary semantics; every projection target reads the same content-addressed definition. The `signal` end is itself a source of truth: `SignalSource` (`@liteship/core`) is the one signal vocabulary every domain reads — viewport, scroll, pointer, media, and live `audio` (amplitude/beat) — rather than re-parsing input strings per host.
 
 ## Document graph (the IR)
 

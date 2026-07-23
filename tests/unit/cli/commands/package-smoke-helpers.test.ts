@@ -30,7 +30,16 @@ import {
   diffJsonFields,
   semanticClosureFileHash,
   assertPackedTypeClosure,
+  packedLiteshipBin,
 } from '../../../../packages/cli/src/lib/package-smoke-helpers.js';
+
+describe('packedLiteshipBin — facade owns the public executable', () => {
+  it('never points release smoke at the implementation-only @liteship/cli package', () => {
+    const path = packedLiteshipBin(join('C:', 'consumer')).replaceAll('\\', '/');
+    expect(path).toBe('C:/consumer/node_modules/liteship/bin/liteship.mjs');
+    expect(path).not.toContain('@liteship/cli');
+  });
+});
 
 describe('peerDependenciesOnly — PEER_INSTALLS → {name: version} (split on LAST @)', () => {
   it('keeps the leading scope @ for a scoped specifier', () => {

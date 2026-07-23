@@ -83,7 +83,10 @@ export function validateProjectConfig(value: unknown, source: string): LiteshipC
         'Export defineConfig({ ... }) directly instead of mutating or copying a Config value.',
     );
   }
-  return candidate;
+  // Admission owns the immutable snapshot it validated. Returning `candidate`
+  // would let a caller mutate nested host options after the address check and
+  // change Vite/Astro behavior under an already-accepted Config id.
+  return readdressed;
 }
 
 /**

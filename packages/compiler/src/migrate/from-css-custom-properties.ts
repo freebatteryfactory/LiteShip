@@ -113,6 +113,7 @@ function supportedSelectorsOf(selector: string): readonly SupportedSelector[] {
 interface RawRule {
   readonly selector: string;
   readonly bodyStart: number;
+  readonly bodyEnd: number;
 }
 
 /** Where the current rule's prelude ends, scanning the blanked copy at paren depth 0. */
@@ -151,8 +152,10 @@ function findPreludeEnd(blanked: string, pos: number, len: number): PreludeEnd {
  * balanced block; selector text is sliced from the ORIGINAL source (so real
  * quoted `data-theme` values survive) while structural scanning runs on the
  * blanked copy. At-rule statements (`@import …;`) and stray closes are skipped;
- * nested rules inside an at-rule block (e.g. `@media`) are intentionally NOT
- * descended into — those are other adapters' concern.
+ * nested rules inside an at-rule block are retained as one opaque body range.
+ * The adapter refuses a sheet when that range contains custom-property
+ * declarations, because flattening `@layer`, `@supports`, `@media`, or `@scope`
+ * would discard cascade or conditional semantics.
  */
 function readTopLevelRules(css: string): RawRule[] {
   const blanked = blankCssCommentsAndStrings(css);
@@ -168,10 +171,15 @@ function readTopLevelRules(css: string): RawRule[] {
     const end = findPreludeEnd(blanked, pos, len);
 
     if (end.kind === 'block') {
-      rules.push({ selector: css.slice(start, end.at).trim(), bodyStart: end.at + 1 });
       // Step over the whole balanced block; `skipSegment` at a `{` returns the
       // offset immediately after the matching `}`.
-      pos = skipSegment(css, end.at);
+      const blockEnd = skipSegment(css, end.at);
+      rules.push({
+        selector: css.slice(start, end.at).trim(),
+        bodyStart: end.at + 1,
+        bodyEnd: Math.max(end.at + 1, blockEnd - 1),
+      });
+      pos = blockEnd;
     } else if (end.kind === 'statement' || end.kind === 'close') {
       pos = end.at + 1;
     } else {
@@ -180,6 +188,16 @@ function readTopLevelRules(css: string): RawRule[] {
   }
 
   return rules;
+}
+
+/**
+ * Does an opaque block contain syntax shaped like a custom-property
+ * declaration? The offset-preserving blanked view removes comments, strings,
+ * and URL payloads first, so teaching examples or data strings cannot trigger
+ * a refusal. This intentionally detects declarations at any nested depth.
+ */
+function containsCustomPropertyDeclaration(blanked: string, rule: RawRule): boolean {
+  return /--[a-zA-Z0-9_-]*\s*:/.test(blanked.slice(rule.bodyStart, rule.bodyEnd));
 }
 
 // ---------------------------------------------------------------------------
@@ -251,6 +269,23 @@ export function fromCSSCustomProperties(css: string, options?: FromCSSCustomProp
   const tokens: Token[] = [];
   let themes: readonly Theme[] = [];
   const boundaries: readonly Boundary[] = []; // no boundaries from custom-property rules
+  const blanked = blankCssCommentsAndStrings(css);
+  const topLevelRules = readTopLevelRules(css);
+
+  const wrappedDefinition = topLevelRules.find(
+    (rule) => rule.selector.startsWith('@') && containsCustomPropertyDeclaration(blanked, rule),
+  );
+  if (wrappedDefinition !== undefined) {
+    const wrapper = wrappedDefinition.selector.split(/[\s(]/, 1)[0] ?? wrappedDefinition.selector;
+    diagnostics.push(
+      makeMigrationDiagnostic(
+        MIGRATE_CODES.unsupportedAtRule,
+        `${wrapper} contains custom-property definitions whose wrapper semantics cannot be preserved; the stylesheet was refused.`,
+        { path: [wrapper], severity: 'error' },
+      ),
+    );
+    return { boundaries, tokens, themes, diagnostics };
+  }
 
   // -------------------------------------------------------------------------
   // Read every recognized rule into cascade candidates. A :root declaration
@@ -277,7 +312,7 @@ export function fromCSSCustomProperties(css: string, options?: FromCSSCustomProp
     }
   };
 
-  for (const [sourceOrder, rule] of readTopLevelRules(css).entries()) {
+  for (const [sourceOrder, rule] of topLevelRules.entries()) {
     const selectors = supportedSelectorsOf(rule.selector);
     if (selectors.length === 0) continue; // selector we do not migrate
     for (const { variant } of selectors) recordVariant(variant);

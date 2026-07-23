@@ -4,10 +4,12 @@
  * directly (the ship.ts precedent: a pure-orchestration command earns coverage
  * exclusion ONLY once its composable pure helpers are extracted + tested).
  *
- * These four are the real decision logic the orchestrator composes:
+ * These helpers are the real decision logic the orchestrator composes:
  *  - {@link resolveExecutable} — the platform/npm_execpath executable resolution.
  *  - {@link tarballFileUrl} — the cross-platform `file://` URL for a tarball path
  *    (the Windows 8.3 short-path realpath fix-up).
+ *  - {@link packedLiteshipBin} — the facade-owned executable inside a packed
+ *    consumer tree.
  *  - {@link peerDependenciesOnly} — `PEER_INSTALLS` → a `{name: version}` map,
  *    splitting on the LAST `@` so scoped specifiers (`@scope/pkg@1.0.0`) parse.
  *  - {@link findConsumerDependencyRoot} — the three-strategy pnpm resolution
@@ -62,6 +64,11 @@ export function tarballFileUrl(absolutePath: string): string {
   // `RUNNER~1`; they attempt to open a literal `%7E` path instead. Preserve any
   // remaining unreserved tilde while leaving every reserved character encoded.
   return pathToFileURL(resolved).href.replaceAll(/%7E/gi, '~');
+}
+
+/** Resolve the one public executable owner inside a packed consumer install. */
+export function packedLiteshipBin(consumerDir: string): string {
+  return join(consumerDir, 'node_modules', 'liteship', 'bin', 'liteship.mjs');
 }
 
 /**
