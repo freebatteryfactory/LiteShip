@@ -53,7 +53,7 @@ import { InvariantViolationError, ValidationError } from '@liteship/error';
 // genui types are re-anchored from the shared spine (the same source `@liteship/genui`
 // uses) — TYPES ONLY, no genui runtime import, so the cast stays pure and core
 // gains no edge into genui's renderer.
-import type { ComponentCatalog, GeneratedUINode } from '@liteship/_spine';
+import type { ComponentCatalog, GeneratedUINode } from '@liteship/_spine/genui';
 
 // ---------------------------------------------------------------------------
 // Cast OUT — the model-facing AIContext

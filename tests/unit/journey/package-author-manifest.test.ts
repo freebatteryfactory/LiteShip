@@ -4,7 +4,17 @@ import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'no
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, test } from 'vitest';
-import { writePackedAuthorManifest, type PackedWorkspace } from '../../journey/harness.js';
+import { boundedJourneyOutput, writePackedAuthorManifest, type PackedWorkspace } from '../../journey/harness.js';
+
+describe('bounded journey diagnostics', () => {
+  test('preserves the owning error and the process epilogue when output is long', () => {
+    const output = boundedJourneyOutput('FIRST_ERROR\n', 'x'.repeat(2_000), '\nFINAL_EXIT');
+    expect(output).toContain('FIRST_ERROR');
+    expect(output).toContain('FINAL_EXIT');
+    expect(output).toContain('characters omitted');
+    expect(output.length).toBeLessThanOrEqual(1_300);
+  });
+});
 
 describe('current packed package-author manifest', () => {
   test('uses the facade as its only LiteShip dependency without enabling hoisting', () => {

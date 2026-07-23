@@ -16,6 +16,7 @@ import { existsSync, mkdtempSync, realpathSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
+  boundedJourneyOutput,
   installConsumer,
   journeyAssert,
   removeDir,
@@ -56,7 +57,10 @@ export async function journeyPackageAuthor(packed: PackedWorkspace): Promise<Jou
     const install = await installConsumer(sandbox);
     journeyAssert(
       install.code === 0,
-      `packed package-author install failed (exit ${install.code}):\n${(install.stdout + install.stderr).slice(-1200)}`,
+      `packed package-author install failed (exit ${install.code}):\n${boundedJourneyOutput(
+        install.stdout,
+        install.stderr,
+      )}`,
     );
 
     assertPackedTypeClosure(

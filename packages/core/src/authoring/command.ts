@@ -15,7 +15,7 @@ import type {
   CommandExecutionKind as _CommandExecutionKind,
   CommandJsonSchema as _CommandJsonSchema,
   WallClockTimestamp as _WallClockTimestamp,
-} from '@liteship/_spine';
+} from '@liteship/_spine/command';
 
 /** Minimal JSON-Schema object shape for a command's input/output contract. */
 export type CommandJsonSchema = _CommandJsonSchema;

@@ -83,15 +83,15 @@ export interface CompiledGLSLOutput {
   readonly stateUniforms?: Readonly<Record<string, Readonly<Record<string, number>>>>;
 }
 
-type WGSLUniformVector =
+type EdgeWGSLUniformVector =
   readonly [number, number] | readonly [number, number, number] | readonly [number, number, number, number];
 
-type WGSLUniformValue = number | WGSLUniformVector;
+type EdgeWGSLUniformValue = number | EdgeWGSLUniformVector;
 
 export interface CompiledWGSLOutput {
   readonly declarations: string;
-  readonly bindingValues: Readonly<Record<string, WGSLUniformValue>>;
-  readonly stateBindings?: Readonly<Record<string, Readonly<Record<string, WGSLUniformValue>>>>;
+  readonly bindingValues: Readonly<Record<string, EdgeWGSLUniformValue>>;
+  readonly stateBindings?: Readonly<Record<string, Readonly<Record<string, EdgeWGSLUniformValue>>>>;
 }
 
 export interface BoundaryCache {
@@ -121,7 +121,10 @@ export interface BoundaryCache {
   invalidateByTag(tag: string): Promise<number>;
 }
 
-export declare function createBoundaryCache(kv: KVNamespace, options?: { ttl?: number; prefix?: string }): BoundaryCache;
+export declare function createBoundaryCache(
+  kv: KVNamespace,
+  options?: { ttl?: number; prefix?: string },
+): BoundaryCache;
 
 export declare const KVCache: {
   createBoundaryCache(kv: KVNamespace, options?: { ttl?: number; prefix?: string }): BoundaryCache;
@@ -237,9 +240,7 @@ export interface EdgeHostBoundaryResolution {
 }
 
 export interface EdgeHostAdapterConfig {
-  readonly theme?:
-    | ThemeCompileConfig
-    | ((context: EdgeHostContext) => ThemeCompileConfig | null | undefined);
+  readonly theme?: ThemeCompileConfig | ((context: EdgeHostContext) => ThemeCompileConfig | null | undefined);
   readonly cache?: EdgeHostCacheConfig;
 }
 

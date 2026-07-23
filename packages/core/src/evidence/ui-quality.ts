@@ -7,7 +7,7 @@
  * @module
  */
 
-import type { MotionTier as _MotionTier } from '@liteship/_spine';
+import type { MotionTier as _MotionTier } from '@liteship/_spine/core';
 import { Boundary, defineBoundary } from '../authoring/boundary.js';
 
 /**

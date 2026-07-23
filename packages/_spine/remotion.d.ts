@@ -2,7 +2,7 @@
  * @liteship/remotion type spine -- React adapter for Remotion video rendering.
  */
 
-import type { CompositeState, Compositor, ControllableSignal, VideoFrameOutput, VideoRenderer } from './core';
+import type { CompositeState, Compositor, ControllableSignal, VideoFrameOutput, VideoRenderer } from './core.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 1. CSS VARS

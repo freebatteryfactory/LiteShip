@@ -87,6 +87,22 @@ export function journeyAssert(condition: boolean, message: string): void {
 }
 
 /**
+ * Keep both ends of a failed child process transcript.
+ *
+ * Toolchains normally print the owning error near the beginning and the command
+ * epilogue near the end. A tail-only slice can therefore hide the only useful
+ * line while retaining package-manager noise. This bounded projection is safe
+ * for CI receipts and preserves both pieces of evidence.
+ */
+export function boundedJourneyOutput(...chunks: readonly string[]): string {
+  const output = chunks.join('').trim();
+  const limit = 1_200;
+  if (output.length <= limit) return output;
+  const half = Math.floor((limit - 80) / 2);
+  return `${output.slice(0, half)}\n… ${output.length - half * 2} characters omitted …\n${output.slice(-half)}`;
+}
+
+/**
  * `PEER_INSTALLS` specifier (`name@version`, scope-safe on the LAST `@`) → its exact
  * pinned version. Used to install the consumer's `astro` / `typescript` at the exact
  * versions the warm store already holds, maximizing offline hits.

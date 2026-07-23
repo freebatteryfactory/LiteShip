@@ -20,6 +20,7 @@ import { join } from 'node:path';
 import {
   applyCurrentScaffoldMigration,
   astroBuild,
+  boundedJourneyOutput,
   findFiles,
   installConsumer,
   journeyAssert,
@@ -56,9 +57,10 @@ export async function journeyUpgrade(current: PackedWorkspace): Promise<JourneyR
     const priorInstall = await installConsumer(appDir);
     journeyAssert(
       priorInstall.code === 0,
-      `prior-control consumer install failed (exit ${priorInstall.code}):\n${(
-        priorInstall.stdout + priorInstall.stderr
-      ).slice(-1200)}`,
+      `prior-control consumer install failed (exit ${priorInstall.code}):\n${boundedJourneyOutput(
+        priorInstall.stdout,
+        priorInstall.stderr,
+      )}`,
     );
     const priorBuild = await astroBuild(appDir);
     journeyAssert(
@@ -83,16 +85,17 @@ export async function journeyUpgrade(current: PackedWorkspace): Promise<JourneyR
     const currentInstall = await installConsumer(appDir, 'pnpm', { updateLockfile: true });
     journeyAssert(
       currentInstall.code === 0,
-      `current upgrade install failed (exit ${currentInstall.code}):\n${(
-        currentInstall.stdout + currentInstall.stderr
-      ).slice(-1200)}`,
+      `current upgrade install failed (exit ${currentInstall.code}):\n${boundedJourneyOutput(
+        currentInstall.stdout,
+        currentInstall.stderr,
+      )}`,
     );
     const currentBuild = await runInstalledLiteshipCli(['build'], appDir);
     journeyAssert(
       currentBuild.code === 0,
-      `installed current liteship build failed (exit ${currentBuild.code}):\n${(
-        currentBuild.stderr || currentBuild.stdout
-      ).slice(-1200)}`,
+      `installed current liteship build failed (exit ${currentBuild.code}):\n${boundedJourneyOutput(
+        currentBuild.stderr || currentBuild.stdout,
+      )}`,
     );
     const receipt = parseReceipt(currentBuild.stdout);
     journeyAssert(receipt['status'] === 'ok', `current build receipt status was ${String(receipt['status'])}`);

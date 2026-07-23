@@ -13,6 +13,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
+  boundedJourneyOutput,
   findFiles,
   htmlUnescape,
   installConsumer,
@@ -76,7 +77,7 @@ export async function journeyAddFeature(packed: PackedWorkspace): Promise<Journe
     const install = await installConsumer(appDir);
     journeyAssert(
       install.code === 0,
-      `pnpm install failed (exit ${install.code}):\n${(install.stdout + install.stderr).slice(-1200)}`,
+      `pnpm install failed (exit ${install.code}):\n${boundedJourneyOutput(install.stdout, install.stderr)}`,
     );
 
     const adaptiveDir = join(appDir, 'src', 'adaptive');
@@ -87,13 +88,13 @@ export async function journeyAddFeature(packed: PackedWorkspace): Promise<Journe
     const build = await runInstalledLiteshipCli(['build'], appDir);
     journeyAssert(
       build.code === 0,
-      `installed liteship build failed (exit ${build.code}):\n${(build.stderr || build.stdout).slice(-1200)}`,
+      `installed liteship build failed (exit ${build.code}):\n${boundedJourneyOutput(build.stderr || build.stdout)}`,
     );
 
     const probe = await runInstalledNode(['--input-type=module', '--eval', PROBE_SOURCE], appDir);
     journeyAssert(
       probe.code === 0,
-      `installed defineAdaptive probe failed (exit ${probe.code}):\n${(probe.stderr || probe.stdout).slice(-1200)}`,
+      `installed defineAdaptive probe failed (exit ${probe.code}):\n${boundedJourneyOutput(probe.stderr || probe.stdout)}`,
     );
     const predicted = JSON.parse(probe.stdout) as {
       id: string;

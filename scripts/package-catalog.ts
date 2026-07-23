@@ -67,7 +67,7 @@ export const PACKAGE_CATALOG = [
     typedocOrder: 22,
     dependencies: [],
     capabilities: ['shared-type-declarations'],
-    publicSubpaths: ['.'],
+    publicSubpaths: ['.', './core', './design', './command', './genui'],
     smokeImports: [],
     description:
       'Install-only TypeScript declaration spine for LiteShip: the shared type anchor that `@liteship/core` and `@liteship/scene` reference from their published `.d.ts` — there is nothing to import at runtime.',

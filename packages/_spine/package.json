@@ -24,6 +24,22 @@
     ".": {
       "types": "./index.d.ts",
       "default": "./stub.js"
+    },
+    "./core": {
+      "types": "./core.d.ts",
+      "default": "./stub.js"
+    },
+    "./design": {
+      "types": "./design.d.ts",
+      "default": "./stub.js"
+    },
+    "./command": {
+      "types": "./command.d.ts",
+      "default": "./stub.js"
+    },
+    "./genui": {
+      "types": "./genui.d.ts",
+      "default": "./stub.js"
     }
   },
   "files": [

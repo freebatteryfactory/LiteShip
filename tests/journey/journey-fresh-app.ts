@@ -17,6 +17,7 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { isAbsolute, join } from 'node:path';
 import { spawnArgvCapture } from '../../scripts/lib/spawn.js';
 import {
+  boundedJourneyOutput,
   findFiles,
   installConsumer,
   journeyAssert,
@@ -59,7 +60,7 @@ async function proveOwnedDirectiveEntrypoints(appDir: string, manager: ConsumerP
   const probe = await spawnArgvCapture(process.execPath, [probePath], { cwd: appDir });
   journeyAssert(
     probe.exitCode === 0,
-    `${manager} owned-entrypoint probe failed (exit ${probe.exitCode}):\n${(probe.stderr || probe.stdout).slice(-1200)}`,
+    `${manager} owned-entrypoint probe failed (exit ${probe.exitCode}):\n${boundedJourneyOutput(probe.stderr || probe.stdout)}`,
   );
   const directives = JSON.parse(probe.stdout) as readonly { readonly name: string; readonly entrypoint: string }[];
   for (const name of ['worker', 'wasm'] as const) {
@@ -104,8 +105,9 @@ async function proveManager(manager: ConsumerPackageManager, packed: PackedWorks
 
     const install = await installConsumer(appDir, manager);
     if (install.code !== 0) {
-      const blob = install.stdout + install.stderr;
-      throw new Error(`${manager} install failed (exit ${install.code}):\n${blob.slice(-1200)}`);
+      throw new Error(
+        `${manager} install failed (exit ${install.code}):\n${boundedJourneyOutput(install.stdout, install.stderr)}`,
+      );
     }
 
     const binDir = join(appDir, 'node_modules', '.bin');
@@ -119,13 +121,13 @@ async function proveManager(manager: ConsumerPackageManager, packed: PackedWorks
     const check = await runConsumerScript('check', appDir, manager);
     journeyAssert(
       check.code === 0,
-      `${manager} project-owned check script failed (exit ${check.code}):\n${(check.stderr || check.stdout).slice(-1200)}`,
+      `${manager} project-owned check script failed (exit ${check.code}):\n${boundedJourneyOutput(check.stderr || check.stdout)}`,
     );
 
     const build = await runInstalledLiteshipCli(['build'], appDir, manager);
     journeyAssert(
       build.code === 0,
-      `${manager} installed liteship build failed (exit ${build.code}):\n${(build.stderr || build.stdout).slice(-1200)}`,
+      `${manager} installed liteship build failed (exit ${build.code}):\n${boundedJourneyOutput(build.stderr || build.stdout)}`,
     );
     const receipt = parseReceipt(build.stdout);
     journeyAssert(

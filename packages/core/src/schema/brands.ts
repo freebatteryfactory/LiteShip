@@ -18,9 +18,9 @@ import type {
   ContentAddress as _ContentAddress,
   IntegrityDigest as _IntegrityDigest,
   AddressedDigest as _AddressedDigest,
-  TokenRef as _TokenRef,
   Millis as _Millis,
-} from '@liteship/_spine';
+} from '@liteship/_spine/core';
+import type { TokenRef as _TokenRef } from '@liteship/_spine/design';
 import { ValidationError } from '@liteship/error';
 
 // Re-anchor types from the canonical source (_spine).

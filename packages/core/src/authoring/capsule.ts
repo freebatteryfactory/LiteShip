@@ -8,7 +8,7 @@
 
 import { err } from '@liteship/error';
 import type { ParseError, Result as ErrorResult } from '@liteship/error';
-import type { ContentAddress } from '@liteship/_spine';
+import type { ContentAddress } from '@liteship/_spine/core';
 import type { SchemaPort, DeclarationSchema } from '../schema/schema-port.js';
 import { decode, parseErrorFromIssues } from '../schema/decode.js';
 import type { Schema } from '../schema/ast.js';

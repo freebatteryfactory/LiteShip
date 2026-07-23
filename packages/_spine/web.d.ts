@@ -93,8 +93,7 @@ export interface MorphCallbacks {
 }
 
 export type MorphResult =
-  | { readonly type: 'success' }
-  | { readonly type: 'rejected'; readonly rejection: MorphRejection };
+  { readonly type: 'success' } | { readonly type: 'rejected'; readonly rejection: MorphRejection };
 
 export interface MorphRejection {
   /** Closed union of the rejection kinds the runtime emits. */
@@ -108,12 +107,7 @@ export interface MorphRejection {
 
 export declare const Morph: {
   morph(oldNode: Element, newHTML: string, config?: Partial<MorphConfig>, hints?: MorphHints): void;
-  morphWithState(
-    oldNode: Element,
-    newHTML: string,
-    config?: Partial<MorphConfig>,
-    hints?: MorphHints,
-  ): MorphResult;
+  morphWithState(oldNode: Element, newHTML: string, config?: Partial<MorphConfig>, hints?: MorphHints): MorphResult;
   parseHTML(html: string): DocumentFragment;
   readonly defaultConfig: MorphConfig;
 };
@@ -323,11 +317,7 @@ export declare const Resumption: {
   clearState(artifactId: string): void;
   canResume(lastEventId: string, serverOldestId: string): boolean;
   /** Reconcile the replay gap — Promise-first, rejecting with a tagged `@liteship/error` (was `Effect.Effect<ResumeResponse, Error>`). */
-  resume(
-    artifactId: string,
-    currentEventId: string,
-    config?: Partial<ResumptionConfig>,
-  ): Promise<ResumeResponse>;
+  resume(artifactId: string, currentEventId: string, config?: Partial<ResumptionConfig>): Promise<ResumeResponse>;
   parseEventId(eventId: string): { raw: string; sequence: number; timestamp?: number; nodeId?: string };
 };
 
@@ -346,7 +336,14 @@ export declare const Physical: {
 // § 10. CAPTURE (WebCodecs video encoding)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-import type { FrameCapture, CaptureConfig, CaptureFrame, CaptureResult, CompositeState, VideoRenderer } from './core';
+import type {
+  FrameCapture,
+  CaptureConfig,
+  CaptureFrame,
+  CaptureResult,
+  CompositeState,
+  VideoRenderer,
+} from './core.js';
 
 export interface WebCodecsCaptureOptions {
   readonly codec?: string;
