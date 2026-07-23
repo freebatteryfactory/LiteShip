@@ -322,7 +322,7 @@ export function fromCSSCustomProperties(css: string, options?: FromCSSCustomProp
 
   // Variant ordering: base (:root) first when present, then data-theme variants
   // in first-seen order.
-  const variants = variantSeen.has(DEFAULT_VARIANT)
+  const variants: VariantKey[] = variantSeen.has(DEFAULT_VARIANT)
     ? [DEFAULT_VARIANT, ...variantOrder.filter((v) => v !== DEFAULT_VARIANT)]
     : [...variantOrder];
 
