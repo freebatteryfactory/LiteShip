@@ -176,7 +176,7 @@ function reduceCondition(cond: string): Omit<ContainerBlock, 'name' | 'condition
     if (axis === null) axis = bound.axis;
     else if (axis !== bound.axis) return null; // mixed width/height → not single-axis
     if (bound.unit !== 'zero') {
-      if (unit === null || unit === 'zero') unit = bound.unit;
+      if (unit === null) unit = bound.unit;
       else if (unit !== bound.unit) return null;
     }
     lo = Math.max(lo, bound.lo);

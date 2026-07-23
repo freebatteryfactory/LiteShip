@@ -6,7 +6,7 @@
 
 # Interface: IntegrationConfig
 
-Defined in: [astro/src/integration.ts:82](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/integration.ts#L82)
+Defined in: [astro/src/integration.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/integration.ts#L91)
 
 Options passed to [integration](../functions/integration.md) from `astro.config.mjs`. Every
 field is optional; omitted features fall back to conservative
@@ -19,7 +19,7 @@ opt-in).
 
 > `readonly` `optional` **adaptive?**: `boolean`
 
-Defined in: [astro/src/integration.ts:86](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/integration.ts#L86)
+Defined in: [astro/src/integration.ts:95](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/integration.ts#L95)
 
 Enable the adaptive client directive (default true). Root project config supplies the same field.
 
@@ -29,7 +29,7 @@ Enable the adaptive client directive (default true). Root project config supplie
 
 > `readonly` `optional` **detect?**: `boolean`
 
-Defined in: [astro/src/integration.ts:102](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/integration.ts#L102)
+Defined in: [astro/src/integration.ts:111](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/integration.ts#L111)
 
 Enable the inline detect script (default `true`).
 
@@ -39,7 +39,7 @@ Enable the inline detect script (default `true`).
 
 > `readonly` `optional` **exclude?**: readonly `string`[]
 
-Defined in: [astro/src/integration.ts:100](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/integration.ts#L100)
+Defined in: [astro/src/integration.ts:109](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/integration.ts#L109)
 
 Route globs on which liteship's costly runtime scripts (detect, the GPU probe,
 wasm, the dev inspector) should NOT run. For embedding liteship alongside another
@@ -59,7 +59,7 @@ runs everywhere).
 
 > `readonly` `optional` **gpu?**: `object`
 
-Defined in: [astro/src/integration.ts:114](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/integration.ts#L114)
+Defined in: [astro/src/integration.ts:123](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/integration.ts#L123)
 
 GPU runtime configuration.
 
@@ -77,7 +77,7 @@ GPU runtime configuration.
 
 > `readonly` `optional` **inspector?**: `boolean`
 
-Defined in: [astro/src/integration.ts:138](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/integration.ts#L138)
+Defined in: [astro/src/integration.ts:147](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/integration.ts#L147)
 
 Dev-only boundary inspector (default enabled in `astro dev`). Registered
 as an Astro dev-toolbar app — toggle it from the toolbar icon. Pass
@@ -89,7 +89,7 @@ as an Astro dev-toolbar app — toggle it from the toolbar icon. Pass
 
 > `readonly` `optional` **llm?**: `object`
 
-Defined in: [astro/src/integration.ts:125](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/integration.ts#L125)
+Defined in: [astro/src/integration.ts:134](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/integration.ts#L134)
 
 LLM streaming runtime configuration.
 
@@ -103,7 +103,7 @@ LLM streaming runtime configuration.
 
 > `readonly` `optional` **middleware?**: `boolean`
 
-Defined in: [astro/src/integration.ts:148](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/integration.ts#L148)
+Defined in: [astro/src/integration.ts:157](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/integration.ts#L157)
 
 Opt in (`true`) to auto-register a zero-config capability-detection
 middleware, so a consumer needs no `src/middleware.ts` for the common case;
@@ -119,7 +119,7 @@ refines the same locals. Default off (wire middleware yourself).
 
 > `readonly` `optional` **motion?**: `object`
 
-Defined in: [astro/src/integration.ts:132](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/integration.ts#L132)
+Defined in: [astro/src/integration.ts:141](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/integration.ts#L141)
 
 Continuous-motion runtime (`client:motion`). Opt-in (default off): registers
 the JS motion FLOOR that scrubs `data-liteship-motion-program` when native
@@ -136,7 +136,7 @@ needs no runtime and is unaffected.
 
 > `readonly` `optional` **security?**: `object`
 
-Defined in: [astro/src/integration.ts:150](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/integration.ts#L150)
+Defined in: [astro/src/integration.ts:159](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/integration.ts#L159)
 
 Security policies applied to runtime fetch/HTML boundaries.
 
@@ -154,7 +154,7 @@ Security policies applied to runtime fetch/HTML boundaries.
 
 > `readonly` `optional` **serverIslands?**: `boolean`
 
-Defined in: [astro/src/integration.ts:110](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/integration.ts#L110)
+Defined in: [astro/src/integration.ts:119](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/integration.ts#L119)
 
 #### Deprecated
 
@@ -170,7 +170,7 @@ be removed in a future major.
 
 > `readonly` `optional` **stream?**: `object`
 
-Defined in: [astro/src/integration.ts:123](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/integration.ts#L123)
+Defined in: [astro/src/integration.ts:132](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/integration.ts#L132)
 
 SSE streaming runtime configuration.
 
@@ -184,7 +184,7 @@ SSE streaming runtime configuration.
 
 > `readonly` `optional` **vite?**: `PluginConfig`
 
-Defined in: [astro/src/integration.ts:84](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/integration.ts#L84)
+Defined in: [astro/src/integration.ts:93](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/integration.ts#L93)
 
 Overrides passed through to `@liteship/vite`'s plugin.
 
@@ -194,7 +194,7 @@ Overrides passed through to `@liteship/vite`'s plugin.
 
 > `readonly` `optional` **wasm?**: `object`
 
-Defined in: [astro/src/integration.ts:112](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/integration.ts#L112)
+Defined in: [astro/src/integration.ts:121](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/integration.ts#L121)
 
 WASM runtime configuration.
 
@@ -212,7 +212,7 @@ WASM runtime configuration.
 
 > `readonly` `optional` **workers?**: `object`
 
-Defined in: [astro/src/integration.ts:121](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/integration.ts#L121)
+Defined in: [astro/src/integration.ts:130](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/integration.ts#L130)
 
 Off-thread worker runtime configuration. `coep` selects the
 Cross-Origin-Embedder-Policy value emitted with COOP (default
