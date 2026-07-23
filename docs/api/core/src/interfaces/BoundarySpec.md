@@ -6,7 +6,7 @@
 
 # Interface: BoundarySpec
 
-Defined in: [core/src/authoring/boundary.ts:387](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/boundary.ts#L387)
+Defined in: [core/src/authoring/boundary.ts:390](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/boundary.ts#L390)
 
 BoundarySpec: optional filter that gates whether a boundary is active.
 Enables A/B testing, time-bounded experiments, and device targeting
@@ -23,7 +23,7 @@ state transitions). JSON-serializable fields
 
 > `readonly` `optional` **deviceFilter?**: (`capabilities`) => `boolean`
 
-Defined in: [core/src/authoring/boundary.ts:389](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/boundary.ts#L389)
+Defined in: [core/src/authoring/boundary.ts:392](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/boundary.ts#L392)
 
 Only evaluate this boundary when the device filter returns true.
 
@@ -43,7 +43,7 @@ Only evaluate this boundary when the device filter returns true.
 
 > `readonly` `optional` **experimentId?**: `string`
 
-Defined in: [core/src/authoring/boundary.ts:393](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/boundary.ts#L393)
+Defined in: [core/src/authoring/boundary.ts:396](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/boundary.ts#L396)
 
 Only evaluate this boundary for participants in this experiment.
 
@@ -53,7 +53,7 @@ Only evaluate this boundary for participants in this experiment.
 
 > `readonly` `optional` **timeRange?**: `object`
 
-Defined in: [core/src/authoring/boundary.ts:391](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/boundary.ts#L391)
+Defined in: [core/src/authoring/boundary.ts:394](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/boundary.ts#L394)
 
 Only evaluate this boundary within this time range (epoch ms).
 

@@ -3875,6 +3875,11 @@
           "signature": "(2)"
         },
         {
+          "name": "mergePluginConfig",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
           "name": "parseQuantizeBlocks",
           "kind": "function",
           "signature": "(2)"

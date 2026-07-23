@@ -15,19 +15,19 @@ The local definition label is `fnv1a:XXXXXXXX`: a 32-bit FNV-1a hash of the CBOR
 ## Consequences
 
 - **Deterministic and cross-machine stable.** CBOR normalizes key ordering, integer canonicalization, and floating-point representation; two machines produce the same bytes, therefore the same hash.
-- **Cheap to compute.** FNV-1a via `Math.imul` for 32-bit hashing (`packages/core/src/fnv.ts`). Suitable for per-definition use throughout the build pipeline without measurable overhead.
-- **Collision probability at 32 bits is ~1 in 4B.** Acceptable for content-identity within a single app; not cryptographic. SHA-256 via `typed-ref.ts` covers signature-grade needs.
+- **Cheap to compute.** FNV-1a via `Math.imul` for 32-bit hashing (`packages/canonical/src/fnv.ts`, re-exported through `packages/core/src/evidence/fnv.ts`). Suitable for per-definition use throughout the build pipeline without measurable overhead.
+- **Collision probability at 32 bits is ~1 in 4B.** Acceptable for content-identity within a single app; not cryptographic. SHA-256 via `packages/core/src/evidence/typed-ref.ts` covers signature-grade needs.
 - **Automatic cache invalidation.** Hash-indexed caches (`quantizer/src/memo-cache.ts`) invalidate correctly on any change to the addressed definition. _(Amended 0.3.0: when a cached VALUE also depends on inputs OUTSIDE the addressed definition — a per-request theme, or a bundled `compile`'s build-time content — those inputs must be folded into the cache key or a per-deploy content-version `prefix`, or the key survives a change to them. The edge boundary cache now folds tier + name + a resolved-theme fingerprint; `prefix` is the content version. See [ADR-0017](./0017-cache-content-version.md) and HOSTING.md §KV trust boundary.)_
 - **Reliable non-adversarial projection labels.** The same addressed definition on different machines produces the same label. Edge/CDN trust and external artifact validation additionally require the integrity rules above and the complete cache key described by ADR-0017.
 
 ## Evidence
 
 - `packages/canonical/src/cbor.ts`, `packages/canonical/src/fnv.ts`: FNV-1a and canonical CBOR (implementation kernel).
-- `packages/core/src/cbor.ts`, `packages/core/src/fnv.ts`: re-export shims re-anchored to spine brands.
+- `packages/core/src/schema/cbor.ts`, `packages/core/src/evidence/fnv.ts`: domain-owned re-export shims re-anchored to spine brands.
 - `packages/canonical/src/addressed-digest.ts`: sync SHA-256 / BLAKE3 integrity digests (`@noble/hashes`).
-- `packages/core/src/typed-ref.ts`: SHA-256 content hashing for typed references (receipt law).
+- `packages/core/src/evidence/typed-ref.ts`: SHA-256 content hashing for typed references (receipt law).
 - `packages/quantizer/src/memo-cache.ts`: hash-indexed cache consumer.
-- Used by Boundary, Token, Style, Theme, Receipt, GenFrame (see each module's `make` function).
+- Used by Boundary, Token, Style, Theme, Receipt, and GenFrame (see their domain-owned `define*` constructors and evidence/media owners).
 - `tests/property/content-address.prop.test.ts`: fast-check property test verifying hash stability across structurally-equivalent inputs.
 
 ## Rejected alternatives
@@ -38,10 +38,10 @@ The local definition label is `fnv1a:XXXXXXXX`: a 32-bit FNV-1a hash of the CBOR
 
 ## References
 
-- `packages/core/src/fnv.ts`: hashing
-- `packages/core/src/brands.ts`: `ContentAddress` brand
-- `packages/core/src/typed-ref.ts`: SHA-256 path
-- `packages/core/src/receipt.ts`, `gen-frame.ts`: consumers
+- `packages/core/src/evidence/fnv.ts`: hashing projection
+- `packages/core/src/schema/brands.ts`: `ContentAddress` brand
+- `packages/core/src/evidence/typed-ref.ts`: SHA-256 path
+- `packages/core/src/evidence/receipt.ts`, `packages/core/src/media/gen-frame.ts`: consumers
 - `tests/property/content-address.prop.test.ts`: stability property test
 - ADR-0001: branded types
 
@@ -58,21 +58,21 @@ serialization, which was key-order dependent and platform-quirk
 sensitive. Stabilizing on canonical CBOR closes that drift.
 
 The encoder lives at `packages/canonical/src/cbor.ts` (published as
-`@czap/canonical`) and is re-exported from `packages/core/src/cbor.ts`.
+`@liteship/canonical`) and is re-exported from `packages/core/src/schema/cbor.ts`.
 It is registered as the `core.canonical-cbor` `pureTransform` arm capsule
-(`packages/core/src/capsules/canonical-cbor.ts`). It runs under
+(`packages/core/src/authoring/capsules/canonical-cbor.ts`). It runs under
 property-based tests over RFC 8949 Appendix A vectors plus key-order
 stability and integer-form preference (`tests/unit/canonical/cbor.test.ts`,
 `tests/generated/core-canonical-cbor.test.ts`).
 
-The capsule factory's own `computeId` (`packages/core/src/assembly.ts`
-L22-37) is the canonical example: it CBOR-encodes the contract's
+The capsule factory's own `computeId` (`packages/core/src/authoring/assembly.ts`)
+is the canonical example: it CBOR-encodes the contract's
 identity-bearing fields then hashes with `fnv1aBytes`, so even the
 catalog that defines the 7 arms uses the canonical content-address
 path it advertises.
 
 CLI idempotency (`packages/cli/src/idempotency.ts`) routes through
-the same encoder so `czap` command receipts remain stable across
+the same encoder so `liteship` command receipts remain stable across
 key-order permutations on disk.
 
 ## Two byte laws (2026-05-27, CUT typed-ref)
@@ -85,8 +85,8 @@ interchangeable:
   width) because identity needs **cross-payload agreement** — two
   structurally-equal payloads must mint the same address.
 - **Receipt/mutation (`sha256:`):** the SHA-256 chains
-  (`TypedRef.canonicalize` in `typed-ref.ts`, consumed by
-  `receipt.ts` and `live-cell.ts`) use a separate, `cborg`-backed
+  (`TypedRef.canonicalize` in `packages/core/src/evidence/typed-ref.ts`, consumed by
+  `packages/core/src/evidence/receipt.ts` and `packages/core/src/reactive/live-cell.ts`) use a separate, `cborg`-backed
   deterministic-CBOR byte law. `cborg` uses smallest-float canonical
   form; that is acceptable here because a receipt chain only ever
   compares its own `cborg→sha256` bytes against its own — it never

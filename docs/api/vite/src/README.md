@@ -85,6 +85,7 @@ const config = defineConfig({
 - [isVirtualId](functions/isVirtualId.md)
 - [loadProjectConfig](functions/loadProjectConfig.md)
 - [loadVirtualModule](functions/loadVirtualModule.md)
+- [mergePluginConfig](functions/mergePluginConfig.md)
 - [parseQuantizeBlocks](functions/parseQuantizeBlocks.md)
 - [parseStyleBlocks](functions/parseStyleBlocks.md)
 - [parseThemeBlocks](functions/parseThemeBlocks.md)
