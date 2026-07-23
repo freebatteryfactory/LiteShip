@@ -55,7 +55,10 @@ function deterministicId(
       thresholds,
       states,
       hysteresis: hysteresis ?? null,
-      spec: spec ?? null,
+      // Host-only deviceFilter closures are intentionally outside the portable
+      // content label: functions have no canonical cross-machine byte form.
+      // The JSON-safe activation semantics remain identity-bearing.
+      spec: boundaryWireSpec(spec) ?? null,
     }),
   );
 }
@@ -391,6 +394,29 @@ export interface BoundarySpec {
   readonly timeRange?: { readonly from?: number; readonly until?: number };
   /** Only evaluate this boundary for participants in this experiment. */
   readonly experimentId?: string;
+}
+
+/** The portable BoundarySpec subset shared by addressing and DOM serialization. */
+export interface BoundaryWireSpec {
+  readonly timeRange?: { readonly from?: number; readonly until?: number };
+  readonly experimentId?: string;
+}
+
+/** Project portable activation semantics; host-only deviceFilter never crosses this seam. */
+export function boundaryWireSpec(spec: BoundarySpec | undefined): BoundaryWireSpec | undefined {
+  if (spec === undefined) return undefined;
+  const wire: BoundaryWireSpec = {
+    ...(spec.timeRange !== undefined
+      ? {
+          timeRange: {
+            ...(spec.timeRange.from !== undefined ? { from: spec.timeRange.from } : {}),
+            ...(spec.timeRange.until !== undefined ? { until: spec.timeRange.until } : {}),
+          },
+        }
+      : {}),
+    ...(spec.experimentId !== undefined ? { experimentId: spec.experimentId } : {}),
+  };
+  return Object.keys(wire).length > 0 ? wire : undefined;
 }
 
 /** Check if a BoundarySpec allows evaluation given current context. */

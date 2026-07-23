@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import { Diagnostics, GenFrame, HLC, Receipt, TypedRef, WASMDispatch } from '@liteship/core';
+import { Diagnostics, GenFrame, HLC, Receipt, TypedRef, WASMDispatch, fixedClock } from '@liteship/core';
 import * as LiteshipCore from '@liteship/core';
 import type { UIFrame } from '@liteship/core';
 import {
@@ -721,6 +721,39 @@ describe('astro shared runtime adapters', () => {
         }),
       ),
     ).toBeNull();
+
+    for (const spec of [
+      { timeRange: { from: 'soon' } },
+      { timeRange: { until: null } },
+      { timeRange: { from: 1, foreign: true } },
+      { experimentId: 42 },
+      { experimentId: 'known', deviceFilter: true },
+    ]) {
+      expect(
+        parseBoundary(JSON.stringify({ input: 'viewport.width', thresholds: [0], states: ['compact'], spec })),
+      ).toBeNull();
+    }
+  });
+
+  test('time and experiment activation specs round-trip and fail closed when inactive', () => {
+    const serialized = JSON.stringify({
+      id: 'gated',
+      input: 'viewport.width',
+      thresholds: [0, 768],
+      states: ['compact', 'wide'],
+      spec: { timeRange: { from: 100, until: 200 }, experimentId: 'checkout-v2' },
+    });
+    const parsed = parseBoundary(serialized);
+    expect(parsed?.boundary.spec).toEqual({
+      timeRange: { from: 100, until: 200 },
+      experimentId: 'checkout-v2',
+    });
+
+    document.documentElement.removeAttribute('data-liteship-experiments');
+    expect(evaluateBoundary(parsed!, 900, 'compact', fixedClock(150))).toBe('compact');
+    document.documentElement.setAttribute('data-liteship-experiments', 'checkout-v2');
+    expect(evaluateBoundary(parsed!, 900, 'compact', fixedClock(50))).toBe('compact');
+    expect(evaluateBoundary(parsed!, 900, 'compact', fixedClock(150))).toBe('wide');
   });
 
   test('shared llm parser shim normalizes text, tool deltas, and invalid chunks through the runtime parser', () => {

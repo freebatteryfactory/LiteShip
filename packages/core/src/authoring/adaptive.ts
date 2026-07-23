@@ -17,7 +17,7 @@
 import type { ContentAddress } from '../schema/brands.js';
 import { CanonicalCbor } from '../schema/cbor.js';
 import { fnv1aBytes } from '../evidence/fnv.js';
-import { defineBoundary, Boundary } from './boundary.js';
+import { defineBoundary, Boundary, boundaryWireSpec } from './boundary.js';
 import type { Boundary as BoundaryType } from './boundary.js';
 import { defineStyle, Style } from './style.js';
 import type { Style as StyleType, StyleLayer } from './style.js';
@@ -273,20 +273,23 @@ export interface AdaptiveLowering {
 
 /**
  * The boundary-identity object serialized into `data-liteship-boundary` —
- * `{ id, input, thresholds, states, hysteresis? }` in exactly that key order.
+ * `{ id, input, thresholds, states, hysteresis?, spec? }` in exactly that key order.
  * The SINGLE source of that order: `@liteship/astro`'s `adaptiveAttrs` spreads
  * this object then appends its component-specific extras, and the headless
  * {@link serializeBoundaryAttrValue} stringifies it directly — so the two can
- * never drift. `hysteresis` is present only when the boundary declares it
- * (`JSON.stringify` drops the `undefined` otherwise), matching the astro pin.
+ * never drift. Optional fields are present only when authored. The spec
+ * projection deliberately carries only JSON-safe activation semantics;
+ * `deviceFilter` remains host-only and never crosses the DOM wire.
  */
 export function boundaryAttrIdentity(boundary: BoundaryType): Record<string, unknown> {
+  const wireSpec = boundaryWireSpec(boundary.spec);
   return {
     id: boundary.id,
     input: boundary.input,
     thresholds: boundary.thresholds,
     states: boundary.states,
     ...(boundary.hysteresis !== undefined ? { hysteresis: boundary.hysteresis } : {}),
+    ...(wireSpec !== undefined ? { spec: wireSpec } : {}),
   };
 }
 

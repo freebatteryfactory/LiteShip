@@ -16,7 +16,13 @@ import { fileURLToPath } from 'node:url';
 import type { AstroIntegration } from 'astro';
 import type { BoundaryManifestFile } from '@liteship/edge';
 import { InvariantViolationError } from '@liteship/error';
-import { collectBoundaryManifest, loadProjectConfig, plugin, primitiveSearchPatterns } from '@liteship/vite';
+import {
+  collectBoundaryManifest,
+  loadProjectConfig,
+  mergePluginConfig,
+  plugin,
+  primitiveSearchPatterns,
+} from '@liteship/vite';
 import type { PluginConfig, PrimitiveKind } from '@liteship/vite';
 import type { LoadedProjectConfig, ProjectConfigLoader } from '@liteship/vite';
 import { DETECT_UPGRADE_SCRIPT } from './detect-upgrade.js';
@@ -377,10 +383,12 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
 
         const root = astroConfig?.root ? fileURLToPath(astroConfig.root) : process.cwd();
         const configure = (project: LoadedProjectConfig | null): void => {
+          const mergedVite = mergePluginConfig(project?.vite, config?.vite);
           applyConfig({
             ...(project?.astro.adaptive !== undefined ? { adaptive: project.astro.adaptive } : {}),
             ...(project?.astro.edgeRuntime !== undefined ? { middleware: project.astro.edgeRuntime } : {}),
             ...(config ?? {}),
+            ...(Object.keys(mergedVite).length > 0 ? { vite: mergedVite } : {}),
           });
 
           // Watch the convention primitive source files so definition edits restart

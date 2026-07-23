@@ -190,6 +190,26 @@ describe('Boundary.evaluateWithHysteresis', () => {
 });
 
 describe('Boundary.isActive / BoundarySpec.isActive', () => {
+  test('defineBoundary retains a host-only deviceFilter without encoding the function into its portable id', () => {
+    const deviceFilter = (capabilities: Record<string, unknown>) => capabilities['gpu'] === true;
+    const withFilter = defineBoundary({
+      input: 'viewport.width',
+      at: [[0, 'ready']],
+      spec: { deviceFilter, experimentId: 'gpu-test' },
+    });
+    const portableTwin = defineBoundary({
+      input: 'viewport.width',
+      at: [[0, 'ready']],
+      spec: { experimentId: 'gpu-test' },
+    });
+
+    expect(withFilter.spec?.deviceFilter).toBe(deviceFilter);
+    expect(withFilter.id).toBe(portableTwin.id);
+    expect(Boundary.isActive(withFilter, { capabilities: { gpu: false }, activeExperiments: ['gpu-test'] })).toBe(
+      false,
+    );
+  });
+
   test('returns true when no spec is present', () => {
     const boundary = defineBoundary({
       input: 'viewport.width',

@@ -348,6 +348,31 @@ describe('defineAdaptive.attrs / plan', () => {
     expect(payload.hysteresis).toBeUndefined();
   });
 
+  test('attrs() carries only the JSON-safe BoundarySpec subset', () => {
+    const gated = defineAdaptive({
+      boundary: {
+        input: 'viewport.width',
+        at: [
+          [0, 'small'],
+          [800, 'large'],
+        ],
+        spec: {
+          timeRange: { from: 100, until: 200 },
+          experimentId: 'checkout-v2',
+          deviceFilter: () => false,
+        },
+      },
+      style: { base: { properties: { display: 'block' } } },
+    });
+
+    const payload = JSON.parse(gated.attrs()['data-liteship-boundary']!) as Record<string, unknown>;
+    expect(payload['spec']).toEqual({
+      timeRange: { from: 100, until: 200 },
+      experimentId: 'checkout-v2',
+    });
+    expect(JSON.stringify(payload)).not.toContain('deviceFilter');
+  });
+
   test('plan() carries member ids, compiled CSS layers, and attrs', () => {
     const plan = adaptive.plan();
     expect(plan.boundaryId).toBe(adaptive.boundary.id);

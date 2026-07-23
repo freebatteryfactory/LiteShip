@@ -20,6 +20,7 @@ import {
 } from '@liteship/astro';
 import type { AdaptiveProps } from '@liteship/astro';
 import { Diagnostics, defineBoundary } from '@liteship/core';
+import { serializeBoundaryAttrValue } from '@liteship/core/authoring';
 import { runIsolatedAstroConfigSetup } from '../../helpers/astro-config-setup.js';
 
 // ---------------------------------------------------------------------------
@@ -115,6 +116,29 @@ describe('adaptiveAttrs', () => {
 
     const parsed = JSON.parse(attrs['data-liteship-boundary']!);
     expect(parsed.hysteresis).toBe(50);
+  });
+
+  test('serializes the safe activation spec byte-identically to core attrs', () => {
+    const boundary = defineBoundary({
+      input: 'viewport.width',
+      at: [
+        [0, 'compact'],
+        [768, 'wide'],
+      ],
+      spec: {
+        timeRange: { from: 100, until: 200 },
+        experimentId: 'checkout-v2',
+        deviceFilter: () => false,
+      },
+    });
+
+    const serialized = adaptiveAttrs({ boundary })['data-liteship-boundary']!;
+    expect(serialized).toBe(serializeBoundaryAttrValue(boundary));
+    expect(JSON.parse(serialized).spec).toEqual({
+      timeRange: { from: 100, until: 200 },
+      experimentId: 'checkout-v2',
+    });
+    expect(serialized).not.toContain('deviceFilter');
   });
 
   test('sets data-liteship-state from initialState', () => {

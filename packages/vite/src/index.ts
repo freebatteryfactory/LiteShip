@@ -40,7 +40,7 @@ export type { PluginConfig } from './plugin.js';
 export { plugin } from './plugin.js';
 export { plugin as liteship } from './plugin.js';
 export type { LoadedProjectConfig, ProjectConfigLoader } from './project-config.js';
-export { loadProjectConfig } from './project-config.js';
+export { loadProjectConfig, mergePluginConfig } from './project-config.js';
 export { resolveWASM } from './wasm-resolve.js';
 export type { WASMResolution } from './wasm-resolve.js';
 

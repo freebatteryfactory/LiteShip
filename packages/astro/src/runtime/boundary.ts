@@ -150,6 +150,31 @@ function isAllowedBoundaryCssProperty(property: string): boolean {
   return property.startsWith('--liteship-');
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isFiniteOptionalNumber(value: unknown): boolean {
+  return value === undefined || (typeof value === 'number' && Number.isFinite(value));
+}
+
+/** Validate the exact JSON-safe BoundarySpec subset accepted from the DOM wire. */
+function isSerializedBoundarySpec(value: unknown): value is NonNullable<SerializedBoundary['spec']> {
+  if (value === undefined) return true;
+  if (!isRecord(value) || !Object.keys(value).every((key) => key === 'timeRange' || key === 'experimentId')) {
+    return false;
+  }
+  if (value['experimentId'] !== undefined && typeof value['experimentId'] !== 'string') return false;
+  const timeRange = value['timeRange'];
+  if (timeRange === undefined) return true;
+  return (
+    isRecord(timeRange) &&
+    Object.keys(timeRange).every((key) => key === 'from' || key === 'until') &&
+    isFiniteOptionalNumber(timeRange['from']) &&
+    isFiniteOptionalNumber(timeRange['until'])
+  );
+}
+
 /** User-facing parse failure text shared by the runtime and dev inspector. */
 export function boundaryParseFailureMessage(boundaryJson: string | null): string | null {
   if (!boundaryJson) {
@@ -165,6 +190,7 @@ export function boundaryParseFailureMessage(boundaryJson: string | null): string
   }
 
   if (
+    !isRecord(parsed) ||
     typeof parsed.input !== 'string' ||
     !Array.isArray(parsed.thresholds) ||
     parsed.thresholds.length === 0 ||
@@ -176,6 +202,13 @@ export function boundaryParseFailureMessage(boundaryJson: string | null): string
     return (
       `data-liteship-boundary JSON is missing required fields (input, thresholds, states) — ` +
       `the adaptive runtime will stay inert. Fix: export a defineBoundary({ input, at }) value via adaptiveAttrs().`
+    );
+  }
+
+  if (!isSerializedBoundarySpec(parsed.spec)) {
+    return (
+      `data-liteship-boundary JSON contains an invalid activation spec — ` +
+      `only finite timeRange.from/timeRange.until numbers and a string experimentId may cross the DOM wire.`
     );
   }
 
