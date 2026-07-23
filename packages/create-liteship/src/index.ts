@@ -89,7 +89,7 @@ export async function run(argv: readonly string[], io: RunIo = defaultIo): Promi
         `  pnpm install   (or npm install)\n` +
         `  pnpm dev       (or npm run dev)\n\n` +
         `Verify the project any time with:\n` +
-        `  liteship check --profile quick\n\n` +
+        `  pnpm check     (or npm run check)\n\n` +
         `Then edit src/adaptive.ts — one defineAdaptive value owns the\n` +
         `definition, attrs, explanation, and compiled plan.\n`,
     );

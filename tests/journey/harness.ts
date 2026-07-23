@@ -12,7 +12,7 @@
  * This module owns the machinery the tarball-consuming journeys (1, 2, 4, 5, 7) share:
  * packing every publishable scope in-workspace (REUSING `tests/support/pack.ts`),
  * scaffolding the `create-liteship` starter, rewriting its manifest to
- * `file://…tgz` deps + a `pnpm.overrides` map (MIRRORING
+ * `file://…tgz` deps + the package manager's root override map (MIRRORING
  * `packages/cli/src/commands/package-smoke.ts`), an offline-first install, and a
  * headless `astro build` + `data-liteship-*` HTML assertion (the
  * `tests/integration/astro/test.ts` pattern).
@@ -238,13 +238,13 @@ export type ConsumerPackageManager = 'npm' | 'pnpm';
 /**
  * Rewrite the scaffolded app's `package.json` so every `@liteship/*` scope (plus
  * the `liteship` umbrella and `create-liteship`) resolves to its packed
- * `file://…tgz` tarball via a `pnpm.overrides` map — MIRRORING how
+ * `file://…tgz` tarball via the selected package manager's root override map — MIRRORING how
  * `package-smoke.ts` builds its consumer. The app's DIRECT deps stay the real
  * consumer shape (`liteship` + `astro` + `typescript`); the overrides resolve the
- * umbrella's transitive workspace edges to the local tarballs. Writes a hoisted
- * `.npmrc` (the package-smoke precedent) so the umbrella's deep subpaths — e.g.
- * `@liteship/astro/client-directives/adaptive`, which astro's integration bundles —
- * resolve from the app root under pnpm's linker.
+ * umbrella's transitive workspace edges to the local tarballs. The pnpm route keeps
+ * the default isolated linker: the facade must own its executable and host packages
+ * must resolve their runtime entrypoints relative to themselves, never through public
+ * hoisting or phantom root dependencies.
  */
 export function rewriteConsumerToTarballs(appDir: string, packed: PackedWorkspace, options: RewriteOptions = {}): void {
   const overrides: Record<string, string> = {};
@@ -264,22 +264,24 @@ export function rewriteConsumerToTarballs(appDir: string, packed: PackedWorkspac
     };
     manifest['pnpm'] = { overrides };
   } else {
-    // npm has no pnpm-style root override graph for unpublished same-version
-    // transitive peers. Installing every packed scope as a direct file dependency
-    // gives npm one physical candidate for each exact/ranged fleet edge, while the
-    // app still consumes only the public `liteship` facade in authored source.
+    // npm supports root overrides using any dependency specifier, including file:
+    // tarballs. Keep the authored dependency surface identical to pnpm while the
+    // override graph redirects unpublished transitive fleet edges to this pack run.
     manifest['dependencies'] = {
-      ...overrides,
       liteship: options.liteshipSpec ?? tarballFileUrl(liteshipTgz!),
       astro: peerVersion('astro'),
       typescript: peerVersion('typescript'),
     };
+    manifest['overrides'] = Object.fromEntries(
+      Object.entries(overrides).filter(([name]) => name !== 'liteship' && name !== 'create-liteship'),
+    );
     delete manifest['pnpm'];
   }
   writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
-  if (packageManager === 'pnpm') {
-    writeFileSync(join(appDir, '.npmrc'), ['node-linker=hoisted', 'public-hoist-pattern[]=*', ''].join('\n'));
-  }
+  // A prior-control upgrade may have left the historical journey's compatibility
+  // linker behind. Current one-install authority always returns to pnpm's default
+  // isolated graph before installing the current facade.
+  rmSync(join(appDir, '.npmrc'), { force: true });
 }
 
 /** Wire the historical starter to the genuinely historical package tarballs. */
@@ -425,6 +427,19 @@ export async function runInstalledLiteshipCli(
   const result = await spawnArgvCapture('npm', ['exec', '--', 'liteship', ...args], {
     cwd,
   });
+  return { code: result.exitCode, stdout: result.stdout, stderr: result.stderr };
+}
+
+/** Run one package-owned consumer script through its selected package manager. */
+export async function runConsumerScript(
+  script: string,
+  cwd: string,
+  packageManager: ConsumerPackageManager,
+): Promise<{ readonly code: number; readonly stdout: string; readonly stderr: string }> {
+  if (packageManager === 'pnpm') {
+    return runPnpm(['run', script], { cwd, env: { FORCE_COLOR: '0' } });
+  }
+  const result = await spawnArgvCapture('npm', ['run', script], { cwd });
   return { code: result.exitCode, stdout: result.stdout, stderr: result.stderr };
 }
 

@@ -22,6 +22,7 @@ import {
   parseReceipt,
   rewriteConsumerToTarballs,
   removeDir,
+  runConsumerScript,
   runInstalledLiteshipCli,
   scaffoldConsumer,
   type ConsumerPackageManager,
@@ -36,11 +37,38 @@ async function proveManager(manager: ConsumerPackageManager, packed: PackedWorks
   try {
     rewriteConsumerToTarballs(appDir, packed, { packageManager: manager });
 
+    const manifest = JSON.parse(readFileSync(join(appDir, 'package.json'), 'utf8')) as {
+      readonly dependencies?: Readonly<Record<string, string>>;
+      readonly scripts?: Readonly<Record<string, string>>;
+    };
+    journeyAssert(
+      JSON.stringify(Object.keys(manifest.dependencies ?? {}).sort()) ===
+        JSON.stringify(['astro', 'liteship', 'typescript']),
+      `${manager} consumer direct dependencies are not exactly astro + liteship + typescript`,
+    );
+    journeyAssert(
+      manifest.scripts?.['check'] === 'liteship check --profile quick',
+      `${manager} consumer does not own the portable check script`,
+    );
+    journeyAssert(!existsSync(join(appDir, '.npmrc')), `${manager} one-install proof must not enable package hoisting`);
+
     const install = await installConsumer(appDir, manager);
     if (install.code !== 0) {
       const blob = install.stdout + install.stderr;
       throw new Error(`${manager} install failed (exit ${install.code}):\n${blob.slice(-1200)}`);
     }
+
+    const binDir = join(appDir, 'node_modules', '.bin');
+    journeyAssert(
+      existsSync(join(binDir, 'liteship')) || existsSync(join(binDir, 'liteship.cmd')),
+      `${manager} one-install did not link the facade-owned liteship executable`,
+    );
+
+    const check = await runConsumerScript('check', appDir, manager);
+    journeyAssert(
+      check.code === 0,
+      `${manager} project-owned check script failed (exit ${check.code}):\n${(check.stderr || check.stdout).slice(-1200)}`,
+    );
 
     const build = await runInstalledLiteshipCli(['build'], appDir, manager);
     journeyAssert(

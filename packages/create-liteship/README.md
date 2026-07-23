@@ -38,6 +38,7 @@ The page's `adaptiveAttrs({ boundary: layout })` element and its `@quantize layo
 cd my-liteship-app
 pnpm install   # or npm install
 pnpm dev       # or npm run dev
+pnpm check     # or npm run check
 ```
 
 Then edit `src/pages/index.astro` — add a state to the boundary in `src/boundaries/layout.boundaries.ts` and both the compiled CSS and the runtime pick it up.

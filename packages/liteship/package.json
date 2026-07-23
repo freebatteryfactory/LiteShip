@@ -20,6 +20,9 @@
   ],
   "type": "module",
   "sideEffects": false,
+  "bin": {
+    "liteship": "./bin/liteship.mjs"
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "//exports-facade": "CURATED FACADE (P13): the `.` root is a BUDGETED authoring surface (enforced by the gauntlet/facade-export-budget gate against src/export-budget.ts); the twelve domain SUBPATHS each resolve to a `src/<name>.ts` facade of EXPLICIT curated named re-exports (facade law — no `export *`, guarded by the sgrules facade globs). Importing `.` evaluates NO host integration; `./astro` and `./vite` live behind their own subpaths whose module graphs are independent, so a vite-only app never evaluates @liteship/astro. `./migrate` (added in P14) re-exports the @liteship/compiler/migrate adapters.",
@@ -93,6 +96,7 @@
   "files": [
     "dist",
     "src",
+    "bin",
     "LICENSE"
   ],
   "scripts": {

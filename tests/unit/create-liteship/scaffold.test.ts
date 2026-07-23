@@ -74,6 +74,7 @@ describe('create-liteship scaffold', () => {
     expect(manifest.type).toBe('module');
     expect(manifest.scripts['dev']).toBe('astro dev');
     expect(manifest.scripts['build']).toBe('astro build');
+    expect(manifest.scripts['check']).toBe('liteship check --profile quick');
     // The curated facade (P13): the scaffold depends on `liteship` (one package, one
     // import path) plus its `astro` host peer — never `@liteship/core` / `@liteship/astro`
     // directly. Every dependency must be a plain published range — workspace:/file:/link:
@@ -113,7 +114,8 @@ describe('create-liteship scaffold', () => {
     // The README teaches the author model (define -> apply -> inspect) and the verify hint.
     const readme = readFileSync(join(result.projectDir, 'README.md'), 'utf8');
     expect(readme).toContain('define → apply → inspect');
-    expect(readme).toContain('liteship check --profile quick');
+    expect(readme).toContain('pnpm check');
+    expect(readme).toContain('npm run check');
     expect(readme).toContain('one 14-line definition');
   });
 
@@ -237,10 +239,10 @@ describe('create-liteship run (CLI surface)', () => {
     expect(text).toContain('pnpm install');
     expect(text).toContain('pnpm dev');
     expect(text).toContain('cd ');
-    // The post-install verify hint teaches the "inspect" leg of the journey — and
-    // recommends the `consumer` profile, the one that actually runs in a scaffolded
-    // app (quick/full project monorepo-root checks the generated app does not have).
-    expect(text).toContain('liteship check --profile quick');
+    // The post-install verify hint teaches the package-script-owned quick check,
+    // which resolves the facade binary under both npm and pnpm.
+    expect(text).toContain('pnpm check');
+    expect(text).toContain('npm run check');
   });
 
   it('prompts when no dir is given and uses the answer', async () => {

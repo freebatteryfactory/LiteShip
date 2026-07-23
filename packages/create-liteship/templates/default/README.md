@@ -12,7 +12,7 @@ You author in terms of **inputs → states → outputs** — never the engine's 
 - **Apply.** `layout.attrs()` wires that definition onto the page; `layout.plan()`
   provides the byte-stable compiled CSS.
 - **Inspect.** `layout.explain(value)` reports exactly why a state won, and
-  `liteship check --profile quick` verifies the app.
+  the project-owned `check` script verifies the app.
 
 The first adaptive feature is one 14-line definition imported from `liteship`.
 Advanced packages and projection targets remain available through explicit subpaths.
@@ -27,7 +27,8 @@ pnpm dev
 Then verify the project at any time:
 
 ```sh
-liteship check --profile quick
+pnpm check
+# or: npm run check
 ```
 
 Open the page and drag the window edge — the layout's state flips

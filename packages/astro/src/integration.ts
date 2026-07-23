@@ -32,6 +32,33 @@ import {
   type RuntimeSecurityPolicy,
 } from './runtime/policy.js';
 
+/**
+ * Resolve an Astro runtime entrypoint from this package's own module location.
+ * A consumer that installs only `liteship` must not need the Astro package publicly
+ * hoisted into its application root for Astro/esbuild to find these modules.
+ */
+function ownedEntrypoint(relativePath: string): string {
+  const builtPath = fileURLToPath(new URL(relativePath, import.meta.url));
+  if (existsSync(builtPath)) return builtPath;
+  const sourcePath = builtPath.endsWith('.js') ? `${builtPath.slice(0, -3)}.ts` : builtPath;
+  if (existsSync(sourcePath)) return sourcePath;
+  throw new Error(`@liteship/astro owns no runtime entrypoint at ${relativePath}`);
+}
+
+const OWNED_ENTRYPOINTS = Object.freeze({
+  adaptive: ownedEntrypoint('./client-directives/adaptive.js'),
+  graph: ownedEntrypoint('./client-directives/graph.js'),
+  stream: ownedEntrypoint('./client-directives/stream.js'),
+  llm: ownedEntrypoint('./client-directives/llm.js'),
+  worker: ownedEntrypoint('./client-directives/worker.js'),
+  gpu: ownedEntrypoint('./client-directives/gpu.js'),
+  wasm: ownedEntrypoint('./client-directives/wasm.js'),
+  motion: ownedEntrypoint('./client-directives/motion.js'),
+  svg: ownedEntrypoint('./client-directives/svg.js'),
+  middleware: ownedEntrypoint('./middleware-entry.js'),
+  inspector: ownedEntrypoint('./runtime/inspector-toolbar-app.js'),
+});
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -394,7 +421,7 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
           if (adaptiveEnabled) {
             addClientDirective({
               name: 'adaptive',
-              entrypoint: '@liteship/astro/client-directives/adaptive',
+              entrypoint: OWNED_ENTRYPOINTS.adaptive,
             });
             logger.info('Registered adaptive client directive');
           }
@@ -402,14 +429,14 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
           // `graph` — the DocumentGraph-loader primitive, always-on like adaptive.
           addClientDirective({
             name: 'graph',
-            entrypoint: '@liteship/astro/client-directives/graph',
+            entrypoint: OWNED_ENTRYPOINTS.graph,
           });
           logger.info('Registered graph client directive');
 
           if (streamEnabled) {
             addClientDirective({
               name: 'stream',
-              entrypoint: '@liteship/astro/client-directives/stream',
+              entrypoint: OWNED_ENTRYPOINTS.stream,
             });
             logger.info('Registered stream client directive');
           }
@@ -417,7 +444,7 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
           if (llmEnabled) {
             addClientDirective({
               name: 'llm',
-              entrypoint: '@liteship/astro/client-directives/llm',
+              entrypoint: OWNED_ENTRYPOINTS.llm,
             });
             logger.info('Registered llm client directive');
           }
@@ -425,7 +452,7 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
           if (workersEnabled) {
             addClientDirective({
               name: 'worker',
-              entrypoint: '@liteship/astro/client-directives/worker',
+              entrypoint: OWNED_ENTRYPOINTS.worker,
             });
             logger.info('Registered worker client directive');
           }
@@ -433,7 +460,7 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
           if (gpuEnabled) {
             addClientDirective({
               name: 'gpu',
-              entrypoint: '@liteship/astro/client-directives/gpu',
+              entrypoint: OWNED_ENTRYPOINTS.gpu,
             });
             logger.info('Registered gpu client directive');
           }
@@ -441,7 +468,7 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
           if (wasmEnabled) {
             addClientDirective({
               name: 'wasm',
-              entrypoint: '@liteship/astro/client-directives/wasm',
+              entrypoint: OWNED_ENTRYPOINTS.wasm,
             });
             logger.info('Registered wasm client directive');
           }
@@ -449,7 +476,7 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
           if (motionEnabled) {
             addClientDirective({
               name: 'motion',
-              entrypoint: '@liteship/astro/client-directives/motion',
+              entrypoint: OWNED_ENTRYPOINTS.motion,
             });
             logger.info('Registered motion client directive');
           }
@@ -459,7 +486,7 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
           // live DOM wherever a `[data-liteship-entity]` SVG element is authored.
           addClientDirective({
             name: 'svg',
-            entrypoint: '@liteship/astro/client-directives/svg',
+            entrypoint: OWNED_ENTRYPOINTS.svg,
           });
           logger.info('Registered svg client directive');
 
@@ -498,7 +525,7 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
           // needs a consumer middleware — it runs after this 'pre' one and refines
           // the same locals. Opt in with `middleware: true` (default off).
           if (effectiveConfig?.middleware === true) {
-            addMiddleware({ order: 'pre', entrypoint: '@liteship/astro/middleware-entry' });
+            addMiddleware({ order: 'pre', entrypoint: OWNED_ENTRYPOINTS.middleware });
             logger.info('Auto-wired capability-detection middleware');
           }
 
@@ -510,10 +537,9 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
               id: 'liteship-inspector',
               name: 'liteship boundaries',
               icon: INSPECTOR_TOOLBAR_ICON,
-              // Resolved through @liteship/astro's package exports so the `development`
-              // condition maps to the TS source in `astro dev` and to `dist` in a
-              // built integration — never a bare `.js` path that misses in dev.
-              entrypoint: '@liteship/astro/runtime/inspector-toolbar-app',
+              // Resolve from this module's physical owner. A transitive installation
+              // therefore never depends on the consumer hoisting @liteship/astro.
+              entrypoint: OWNED_ENTRYPOINTS.inspector,
             });
             logger.info('Registered dev boundary inspector toolbar app');
           }

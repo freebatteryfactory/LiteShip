@@ -508,6 +508,12 @@ describe('integration', () => {
     });
 
     expect(directives.map((directive) => directive.name)).toEqual(['adaptive', 'graph', 'stream', 'llm', 'gpu', 'svg']);
+    for (const directive of directives) {
+      expect(existsSync(directive.entrypoint)).toBe(true);
+      expect(directive.entrypoint.replaceAll('\\', '/')).toMatch(
+        new RegExp(`/packages/astro/(?:src|dist)/client-directives/${directive.name}\\.(?:ts|js)$`),
+      );
+    }
     expect(updates[0]).toMatchObject({
       vite: {
         plugins: [expect.objectContaining({ name: '@liteship/vite' })],
@@ -589,7 +595,12 @@ describe('integration', () => {
       },
       logger: { info() {} },
     });
-    expect(wired).toContainEqual({ order: 'pre', entrypoint: '@liteship/astro/middleware-entry' });
+    expect(wired).toHaveLength(1);
+    expect(wired[0]?.order).toBe('pre');
+    expect(existsSync(wired[0]!.entrypoint)).toBe(true);
+    expect(wired[0]?.entrypoint.replaceAll('\\', '/')).toMatch(
+      /\/packages\/astro\/(?:src|dist)\/middleware-entry\.(?:ts|js)$/,
+    );
 
     // Default (no opt-in): nothing auto-wired.
     let calledByDefault = false;
@@ -634,7 +645,10 @@ describe('integration', () => {
 
     const inspector = devApps.find((app) => app.id === 'liteship-inspector');
     expect(inspector).toBeDefined();
-    expect(inspector?.entrypoint).toBe('@liteship/astro/runtime/inspector-toolbar-app');
+    expect(existsSync(inspector!.entrypoint)).toBe(true);
+    expect(inspector?.entrypoint.replaceAll('\\', '/')).toMatch(
+      /\/packages\/astro\/(?:src|dist)\/runtime\/inspector-toolbar-app\.(?:ts|js)$/,
+    );
     expect(buildApps.some((app) => app.id === 'liteship-inspector')).toBe(false);
   });
 

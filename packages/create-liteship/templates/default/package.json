@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "preview": "astro preview"
+    "preview": "astro preview",
+    "check": "liteship check --profile quick"
   },
   "dependencies": {
     "astro": "^7.0.0",
