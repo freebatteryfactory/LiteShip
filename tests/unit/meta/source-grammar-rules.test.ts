@@ -80,8 +80,7 @@ const VITEST_MODULE_METHODS = new Set(['mock', 'doMock']);
 // to ast-grep. Keeping this prefilter aligned with the AST detector avoids parsing
 // every ordinary `vi.fn`/`vi.spyOn` test while preserving the full hidden-authority
 // guard.
-const POSSIBLE_VITEST_MOCK_INDIRECTION =
-  /\bvi\s+as\b|=\s*vi\s*(?:[;,\)\r\n]|\.\s*(?:mock|doMock)\b)|\bvi\s*\[/;
+const POSSIBLE_VITEST_MOCK_INDIRECTION = /\bvi\s+as\b|=\s*vi\s*(?:[;,\)\r\n]|\.\s*(?:mock|doMock)\b)|\bvi\s*\[/;
 
 function propertyText(name: ts.PropertyName | ts.BindingName | undefined): string | undefined {
   if (!name) return undefined;
@@ -174,11 +173,7 @@ async function repositoryTestTypeScriptFiles(): Promise<readonly string[]> {
     throw new Error(`git ls-files failed while enumerating untracked test candidates: ${untracked.stderr}`);
   }
 
-  const candidates = new Set(
-    tracked.stdout
-      .split(/\r?\n/)
-      .filter((relative) => TEST_TS_EXTENSION.test(relative)),
-  );
+  const candidates = new Set(tracked.stdout.split(/\r?\n/).filter((relative) => TEST_TS_EXTENSION.test(relative)));
   for (const relative of untracked.stdout.split(/\r?\n/).filter((path) => TEST_TS_EXTENSION.test(path))) {
     const source = readFileSync(resolve(REPO, relative), 'utf8');
     if (/\bvi\b/.test(source)) candidates.add(relative);
@@ -312,6 +307,24 @@ describe('facade-only-reexports (a) — facades are pure re-export surfaces', ()
       ].join('\n'),
     );
     expect((await scan(RULE, f)).length).toBe(0);
+  });
+
+  it('GREEN: nested liteship domain modules remain implementation owners, not facade entries', async () => {
+    const f = fixture(
+      'packages/liteship/src/authoring/adaptive.ts',
+      'export function defineAdaptive() { return { kind: "adaptive" }; }\n',
+    );
+    expect((await scan(RULE, f)).length).toBe(0);
+  });
+
+  it('RED: top-level liteship subpath entries remain facade-only', async () => {
+    const f = fixture('packages/liteship/src/schema.ts', 'export const localSchema = {} as const;\n');
+    expect((await scan(RULE, f)).length).toBe(1);
+  });
+
+  it('RED: nested liteship index files remain facade-only', async () => {
+    const f = fixture('packages/liteship/src/authoring/index.ts', 'export function localLowering() {}\n');
+    expect((await scan(RULE, f)).length).toBe(1);
   });
 });
 

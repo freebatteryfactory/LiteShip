@@ -35,10 +35,10 @@
 id: facade-only-reexports
 language: typescript
 severity: error
-message: "Facade files (packages/*/src/*/index.ts and packages/core/src/index.ts) are pure re-export surfaces (ADR-0045) — no declarations or side effects. Move this definition into a domain module and re-export it by name with `export {...} from` / `export type {...} from`."
+message: 'Facade files (packages/*/src/*/index.ts and packages/core/src/index.ts) are pure re-export surfaces (ADR-0045) — no declarations or side effects. Move this definition into a domain module and re-export it by name with `export {...} from` / `export type {...} from`.'
 files:
-  - "**/packages/*/src/*/index.ts"
-  - "**/packages/core/src/index.ts"
+  - '**/packages/*/src/*/index.ts'
+  - '**/packages/core/src/index.ts'
   # The `liteship` curated facade (P13): every top-level src/*.ts is a facade
   # ENTRY — the root index.ts and the eleven domain subpaths (schema/reactive/
   # motion/graph/media/evidence/compiler/runtime/astro/vite/testing) — governed
@@ -46,10 +46,14 @@ files:
   # and are excluded below: the root index.ts (it keeps the gen-roster
   # `LITESHIP_PACKAGES` const + the `LiteshipPackageName` type) and
   # export-budget.ts (the allowlist DATA the facade-export-budget gate reads).
-  - "**/packages/liteship/src/*.ts"
+  - '**/packages/liteship/src/*.ts'
 ignores:
-  - "**/packages/liteship/src/index.ts"
-  - "**/packages/liteship/src/export-budget.ts"
+  - '**/packages/liteship/src/index.ts'
+  - '**/packages/liteship/src/export-budget.ts'
+  # ast-grep's globstar matcher lets the top-level `*.ts` pattern reach this
+  # nested implementation owner. Exempt only the concrete owner: a broad
+  # `*/*.ts` ignore would also disable the domain-index facade law below it.
+  - '**/packages/liteship/src/authoring/adaptive.ts'
 rule:
   any:
     - kind: function_declaration
