@@ -98,8 +98,19 @@ export function boundedJourneyOutput(...chunks: readonly string[]): string {
   const output = chunks.join('').trim();
   const limit = 1_200;
   if (output.length <= limit) return output;
-  const half = Math.floor((limit - 80) / 2);
-  return `${output.slice(0, half)}\n… ${output.length - half * 2} characters omitted …\n${output.slice(-half)}`;
+  const diagnosticLines = output
+    .split(/\r?\n/u)
+    .filter((line) =>
+      /error|fail(?:ed|ure)?|cannot|could not|not found|invalid|unknown/iu.test(line.replace(/\u001b\[[0-9;]*m/gu, '')),
+    )
+    .slice(0, 6)
+    .join('\n');
+  const head = output.slice(0, 360);
+  const middle = diagnosticLines.slice(0, 360);
+  const tail = output.slice(-360);
+  return [head, `… ${output.length - head.length - tail.length} characters omitted …`, middle, tail]
+    .filter((part) => part.length > 0)
+    .join('\n');
 }
 
 /**

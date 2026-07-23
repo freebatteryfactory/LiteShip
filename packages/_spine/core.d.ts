@@ -1,3 +1,5 @@
+/// <reference lib="esnext.disposable" />
+
 /**
  * @liteship/core type spine -- the contract all implementations satisfy.
  *

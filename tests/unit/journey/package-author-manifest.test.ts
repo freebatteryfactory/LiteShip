@@ -8,8 +8,14 @@ import { boundedJourneyOutput, writePackedAuthorManifest, type PackedWorkspace }
 
 describe('bounded journey diagnostics', () => {
   test('preserves the owning error and the process epilogue when output is long', () => {
-    const output = boundedJourneyOutput('FIRST_ERROR\n', 'x'.repeat(2_000), '\nFINAL_EXIT');
-    expect(output).toContain('FIRST_ERROR');
+    const output = boundedJourneyOutput(
+      'setup\n',
+      'x'.repeat(1_000),
+      '\nACTUAL_ERROR middle\n',
+      'y'.repeat(1_000),
+      '\nFINAL_EXIT',
+    );
+    expect(output).toContain('ACTUAL_ERROR middle');
     expect(output).toContain('FINAL_EXIT');
     expect(output).toContain('characters omitted');
     expect(output.length).toBeLessThanOrEqual(1_300);

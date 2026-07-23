@@ -1,3 +1,5 @@
+/// <reference lib="esnext.disposable" />
+
 /**
  * Lifetime — the disposal primitive that replaces `Scope`/`ManagedRuntime` at
  * the shed seams.
