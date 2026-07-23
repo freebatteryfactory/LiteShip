@@ -97,11 +97,12 @@ type Executor = (rest: readonly string[], deps: ResolvedDeps) => number | Promis
 const CLI_EXECUTORS: Record<CliOwnedName, Executor> = {
   help: () => help(),
   describe: (rest) => {
-    const formatRaw = parseFlag(rest, '--format');
+    const formatFlag = takeFlagValue(rest, '--format');
+    const formatRaw = formatFlag.value;
     const format = formatRaw === 'json' || formatRaw === 'mcp' ? formatRaw : undefined;
     // An unknown format must not silently fall through to JSON mode.
-    if (formatRaw !== undefined && format === undefined) {
-      emitError('describe', 'cli/invalid-argument', `expected format: json | mcp (got: ${formatRaw})`);
+    if (formatFlag.present && format === undefined) {
+      emitError('describe', 'cli/invalid-argument', `expected format: json | mcp (got: ${formatRaw ?? '<missing>'})`);
       return 1;
     }
     process.stdout.write(JSON.stringify(describeCmd({ format })) + '\n');
@@ -143,6 +144,11 @@ const CLI_EXECUTORS: Record<CliOwnedName, Executor> = {
   ship: (rest) => ship(rest),
   sbom: (rest) => sbom(rest),
   mcp: async (rest, deps) => {
+    const httpFlag = takeFlagValue(rest, '--http');
+    if (httpFlag.present && httpFlag.value === undefined) {
+      emitError('mcp', 'cli/usage', 'usage: liteship mcp --http <address>');
+      return 1;
+    }
     // @liteship/mcp-server is an optional sibling install, not a dependency of
     // @liteship/cli — an unguarded import would break the one-JSON-line-on-stderr
     // contract with a raw ERR_MODULE_NOT_FOUND stack trace.
@@ -166,8 +172,7 @@ const CLI_EXECUTORS: Record<CliOwnedName, Executor> = {
       );
       return 1;
     }
-    const httpFlag = parseFlag(rest, '--http');
-    await mcpServer.start(httpFlag !== undefined ? { http: httpFlag } : {});
+    await mcpServer.start(httpFlag.value !== undefined ? { http: httpFlag.value } : {});
     return 0;
   },
   lsp: (rest, deps) =>
@@ -194,7 +199,12 @@ const CLI_EXECUTORS: Record<CliOwnedName, Executor> = {
   'astro.stop': () => astroDev('stop'),
   dev: (rest) => {
     // `--example <name>` in either `--example=x` or `--example x` form.
-    const example = takeFlagValue(rest, '--example').value;
+    const exampleFlag = takeFlagValue(rest, '--example');
+    if (exampleFlag.present && exampleFlag.value === undefined) {
+      emitError('dev', 'cli/usage', 'usage: liteship dev --example <name>');
+      return 1;
+    }
+    const example = exampleFlag.value;
     return dev({
       ...(example !== undefined ? { example } : {}),
       tutorial: rest.includes('--tutorial'),
@@ -272,7 +282,8 @@ function execAsset(rest: readonly string[]): number | Promise<number> {
       );
       return 1;
     }
-    const projectionRaw = parseFlag(subRest, '--projection');
+    const projectionFlag = takeFlagValue(subRest, '--projection');
+    const projectionRaw = projectionFlag.value;
     if (projectionRaw === undefined) {
       emitError(
         'asset.analyze',
@@ -314,7 +325,14 @@ function execCapsule(rest: readonly string[]): number | Promise<number> {
     }
     return sub === 'inspect' ? capsuleInspect(name) : capsuleVerify(name);
   }
-  if (sub === 'list') return capsuleList(parseFlag(subRest, '--kind'));
+  if (sub === 'list') {
+    const kind = takeFlagValue(subRest, '--kind');
+    if (kind.present && kind.value === undefined) {
+      emitError('capsule.list', 'cli/usage', 'usage: liteship capsule list --kind <kind>');
+      return 1;
+    }
+    return capsuleList(kind.value);
+  }
   emitError('capsule', 'cli/invalid-argument', `unknown subcommand: ${sub ?? '<missing>'}`);
   return 1;
 }
@@ -323,7 +341,12 @@ function execCapsule(rest: readonly string[]): number | Promise<number> {
 function execAudit(rest: readonly string[]): Promise<number> {
   // `--profile <name>` is value-taking — the same swallow guard as doctor's
   // flags: `audit --profile --consumer` must not read profile='--consumer'.
-  const profile = takeFlagValue(rest, '--profile').value;
+  const profileFlag = takeFlagValue(rest, '--profile');
+  if (profileFlag.present && profileFlag.value === undefined) {
+    emitError('audit', 'cli/usage', 'usage: liteship audit --profile <path>');
+    return Promise.resolve(1);
+  }
+  const profile = profileFlag.value;
   const consumer = rest.includes('--consumer');
   const consumerApp = rest.includes('--consumer-app');
   const findings = rest.includes('--findings');
@@ -500,7 +523,14 @@ const GROUPED_EXECUTORS: Record<string, Executor> = {
 const HANDLER_EXECUTORS: Record<string, Executor> = {
   glossary: (rest) => glossary(rest[0] && !rest[0].startsWith('-') ? rest[0] : null),
   explain: (rest) => explain(positional(rest) ?? null, { json: rest.includes('--json') }),
-  context: (rest) => context(takeFlagValue(rest, '--task').value ?? null, { json: rest.includes('--json') }),
+  context: (rest) => {
+    const task = takeFlagValue(rest, '--task');
+    if (task.present && task.value === undefined) {
+      emitError('context', 'cli/usage', 'usage: liteship context --task <task-id>');
+      return 1;
+    }
+    return context(task.value ?? null, { json: rest.includes('--json') });
+  },
   version: () => version(),
   audit: (rest) => execAudit(rest),
   'audit-floor': () => auditFloor(),
@@ -621,14 +651,6 @@ function normalizeTopLevel(raw: string | undefined): string | undefined {
   if (raw === '--help' || raw === '-h') return 'help';
   if (raw === '--version' || raw === '-V' || raw === '-v') return 'version';
   return raw;
-}
-
-/** Parse a `--flag=value` style option out of the argv tail. Returns undefined if absent. */
-function parseFlag(argv: readonly string[], flag: string): string | undefined {
-  for (const a of argv) {
-    if (a.startsWith(`${flag}=`)) return a.slice(flag.length + 1);
-  }
-  return undefined;
 }
 
 /** A value-taking flag read from argv: whether it appeared at all, and its parsed value (if any). */

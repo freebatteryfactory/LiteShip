@@ -196,9 +196,10 @@ function attachAssetUrls(
  */
 export function plugin(
   config?: PluginConfig,
-  resolvePackaged: () => string | null = resolvePackagedWasm,
+  resolvePackaged?: () => string | null,
   projectConfigLoader?: ProjectConfigLoader,
 ): Plugin {
+  const resolvePackagedBinary = resolvePackaged ?? resolvePackagedWasm;
   let effectiveConfig = config ?? {};
   let hmrEnabled = effectiveConfig.hmr !== false;
   let emitBoundaryAssets = effectiveConfig.emitBoundaryAssets === true;
@@ -208,7 +209,7 @@ export function plugin(
   //  - `cache`     : resolution + watch caches shared across transform/HMR.
   //  - `wasmState` : the compute-binary state machine (resolve/enable/emit).
   const cache = createPrimitiveResolutionCache();
-  let wasmState = createWasmState(normalizeWasmConfig(effectiveConfig.wasm), process.cwd(), resolvePackaged);
+  let wasmState = createWasmState(normalizeWasmConfig(effectiveConfig.wasm), process.cwd(), resolvePackagedBinary);
 
   let projectRoot = process.cwd();
   let isBuild = false;
@@ -301,7 +302,7 @@ export function plugin(
       boundaryAssetState = null;
       const resolved = refreshWasmAtBuildStart(wasmState, projectRoot);
       if (wasmState.config.mode !== 'off' && !resolved && wasmState.config.mode === 'on') {
-        const searched = formatWasmSearchPaths(projectRoot, wasmState.config.path, resolvePackaged);
+        const searched = formatWasmSearchPaths(projectRoot, wasmState.config.path, resolvePackagedBinary);
         this.warn(
           `WASM support was enabled, but no liteship-compute binary could be resolved. Searched: ${searched}. ` +
             'Fix: the binary ships inside @liteship/core (>=0.2.1) — ensure it is installed so it resolves from ' +
@@ -566,7 +567,7 @@ export function plugin(
         effectiveConfig = mergePluginConfig(loaded?.vite, config);
         hmrEnabled = effectiveConfig.hmr !== false;
         emitBoundaryAssets = effectiveConfig.emitBoundaryAssets === true;
-        wasmState = createWasmState(normalizeWasmConfig(effectiveConfig.wasm), projectRoot, resolvePackaged);
+        wasmState = createWasmState(normalizeWasmConfig(effectiveConfig.wasm), projectRoot, resolvePackagedBinary);
 
         const envNames = resolveEnvironmentNames(effectiveConfig.environments);
         const next: UserConfig = {};

@@ -15,8 +15,9 @@ import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { AstroIntegration } from 'astro';
 import type { BoundaryManifestFile } from '@liteship/edge';
-import { collectBoundaryManifest, plugin, primitiveSearchPatterns } from '@liteship/vite';
+import { collectBoundaryManifest, loadProjectConfig, plugin, primitiveSearchPatterns } from '@liteship/vite';
 import type { PluginConfig, PrimitiveKind } from '@liteship/vite';
+import type { LoadedProjectConfig, ProjectConfigLoader } from '@liteship/vite';
 import { DETECT_UPGRADE_SCRIPT } from './detect-upgrade.js';
 import { DETECT_INLINE_SCRIPT } from './detect-provisional.js';
 import { getLiteshipHeaderEntries, mergeVaryHeader } from './headers.js';
@@ -44,6 +45,8 @@ import {
 export interface IntegrationConfig {
   /** Overrides passed through to `@liteship/vite`'s plugin. */
   readonly vite?: PluginConfig;
+  /** Enable the adaptive client directive (default true). Root project config supplies the same field. */
+  readonly adaptive?: boolean;
   /**
    * Route globs on which liteship's costly runtime scripts (detect, the GPU probe,
    * wasm, the dev inspector) should NOT run. For embedding liteship alongside another
@@ -254,38 +257,66 @@ const INSPECTOR_TOOLBAR_ICON =
  * ```
  */
 export function integration(config?: IntegrationConfig): AstroIntegration {
-  const runtimeToggles = resolveIntegrationToggles(config);
-  publishIntegrationToggles(runtimeToggles);
-  const detectEnabled = runtimeToggles.detectEnabled;
-  const workersEnabled = runtimeToggles.workersEnabled;
-  const coep = runtimeToggles.coep;
-  const gpuEnabled = config?.gpu?.enabled !== false;
-  const streamEnabled = config?.stream?.enabled !== false;
-  const llmEnabled = config?.llm?.enabled !== false;
-  const motionEnabled = config?.motion?.enabled === true;
-  const wasmEnabled = config?.wasm?.enabled === true;
-  const inspectorEnabled = config?.inspector !== false;
-  const excludeRoutes = (config?.exclude ?? []).filter((route): route is string => typeof route === 'string');
-  const runtimePolicy = normalizeRuntimeSecurityPolicy({
-    endpointPolicy: config?.security?.endpointPolicy,
-    htmlPolicy: config?.security?.htmlPolicy,
-  });
-  // Mirrors the addClientDirective registrations below exactly; the boot
-  // scanner activates the same set on plain elements / .astro output.
-  const enabledDirectives: readonly DirectiveName[] = [
-    'adaptive',
-    // `graph` is the DocumentGraph-loader counterpart of `adaptive`: an
-    // always-on runtime primitive (no escalation tier / config gate), so it
-    // activates wherever a `data-liteship-graph` payload is present.
-    'graph',
-    ...(streamEnabled ? (['stream'] as const) : []),
-    ...(llmEnabled ? (['llm'] as const) : []),
-    ...(workersEnabled ? (['worker'] as const) : []),
-    ...(gpuEnabled ? (['gpu'] as const) : []),
-    ...(wasmEnabled ? (['wasm'] as const) : []),
-    ...(motionEnabled ? (['motion'] as const) : []),
-    'svg',
-  ];
+  let effectiveConfig = config;
+  let detectEnabled = true;
+  let workersEnabled = false;
+  let coep: CrossOriginEmbedderPolicy | undefined;
+  let adaptiveEnabled = true;
+  let gpuEnabled = true;
+  let streamEnabled = true;
+  let llmEnabled = true;
+  let motionEnabled = false;
+  let wasmEnabled = false;
+  let inspectorEnabled = true;
+  let excludeRoutes: readonly string[] = [];
+  let runtimePolicy = normalizeRuntimeSecurityPolicy({});
+  let enabledDirectives: readonly DirectiveName[] = [];
+
+  const applyConfig = (next: IntegrationConfig | undefined): void => {
+    effectiveConfig = next;
+    const runtimeToggles = resolveIntegrationToggles(next);
+    publishIntegrationToggles(runtimeToggles);
+    detectEnabled = runtimeToggles.detectEnabled;
+    workersEnabled = runtimeToggles.workersEnabled;
+    coep = runtimeToggles.coep;
+    adaptiveEnabled = next?.adaptive !== false;
+    gpuEnabled = next?.gpu?.enabled !== false;
+    streamEnabled = next?.stream?.enabled !== false;
+    llmEnabled = next?.llm?.enabled !== false;
+    motionEnabled = next?.motion?.enabled === true;
+    wasmEnabled = next?.wasm?.enabled === true;
+    inspectorEnabled = next?.inspector !== false;
+    excludeRoutes = (next?.exclude ?? []).filter((route): route is string => typeof route === 'string');
+    runtimePolicy = normalizeRuntimeSecurityPolicy({
+      endpointPolicy: next?.security?.endpointPolicy,
+      htmlPolicy: next?.security?.htmlPolicy,
+    });
+    // Mirrors the addClientDirective registrations below exactly.
+    enabledDirectives = [
+      ...(adaptiveEnabled ? (['adaptive'] as const) : []),
+      'graph',
+      ...(streamEnabled ? (['stream'] as const) : []),
+      ...(llmEnabled ? (['llm'] as const) : []),
+      ...(workersEnabled ? (['worker'] as const) : []),
+      ...(gpuEnabled ? (['gpu'] as const) : []),
+      ...(wasmEnabled ? (['wasm'] as const) : []),
+      ...(motionEnabled ? (['motion'] as const) : []),
+      'svg',
+    ];
+  };
+  applyConfig(config);
+
+  // Astro and its nested Vite plugin evaluate the authored config through one
+  // memoized Vite loader. Both projections consume the same loaded value.
+  let projectConfigLoad: ReturnType<ProjectConfigLoader> | undefined;
+  const projectConfigLoader: ProjectConfigLoader = (env, file, root) => {
+    projectConfigLoad ??= (async () => {
+      const viteModule = 'vite';
+      const { loadConfigFromFile } = await import(viteModule);
+      return loadConfigFromFile(env, file, root);
+    })();
+    return projectConfigLoad;
+  };
 
   let projectRoot: string | null = null;
   let restoreDiagnostics: (() => void) | null = null;
@@ -313,165 +344,192 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
         type AstroViteConfig = Parameters<typeof updateConfig>[0]['vite'];
         logger.info('Setting up @liteship integration');
 
-        // Watch the convention primitive source files so definition edits restart
-        // the dev server and re-collect the manifest (Astro battery: addWatchFile).
-        // Guarded: real Astro always provides these, but keep it null-safe.
-        if (typeof addWatchFile === 'function' && astroConfig?.root && astroConfig.srcDir) {
-          watchConventionPrimitives(
-            addWatchFile,
-            fileURLToPath(astroConfig.root),
-            fileURLToPath(astroConfig.srcDir),
-            config?.vite?.dirs,
-          );
-        }
-
-        // Route @liteship/* runtime diagnostics through Astro's logger so they carry
-        // the liteship label and flow into `astro dev --json` structured output —
-        // one log stream the host (and CI / agents) already parse.
-        restoreDiagnosticsBridge();
-        restoreDiagnostics = installDiagnosticsBridge(logger);
-
-        // Astro may carry a different Vite type graph than @liteship/vite. The plugin
-        // runtime contract is still compatible, so the host integration owns the
-        // version bridge here instead of leaking duplicate plugin shapes downstream.
-        const astroViteConfig = {
-          plugins: [
-            plugin({
-              ...(config?.vite ?? {}),
-              ...(wasmEnabled ? { wasm: { enabled: true, path: config?.wasm?.path } } : {}),
-            }),
-          ],
-        } as AstroViteConfig;
-
-        updateConfig({
-          vite: astroViteConfig,
-        });
-
-        // Register client directives
-        addClientDirective({
-          name: 'adaptive',
-          entrypoint: '@liteship/astro/client-directives/adaptive',
-        });
-        logger.info('Registered adaptive client directive');
-
-        // `graph` — the DocumentGraph-loader primitive, always-on like adaptive.
-        addClientDirective({
-          name: 'graph',
-          entrypoint: '@liteship/astro/client-directives/graph',
-        });
-        logger.info('Registered graph client directive');
-
-        if (streamEnabled) {
-          addClientDirective({
-            name: 'stream',
-            entrypoint: '@liteship/astro/client-directives/stream',
+        const root = astroConfig?.root ? fileURLToPath(astroConfig.root) : process.cwd();
+        const configure = (project: LoadedProjectConfig | null): void => {
+          applyConfig({
+            ...(project?.astro.adaptive !== undefined ? { adaptive: project.astro.adaptive } : {}),
+            ...(project?.astro.edgeRuntime !== undefined ? { middleware: project.astro.edgeRuntime } : {}),
+            ...(config ?? {}),
           });
-          logger.info('Registered stream client directive');
-        }
 
-        if (llmEnabled) {
-          addClientDirective({
-            name: 'llm',
-            entrypoint: '@liteship/astro/client-directives/llm',
-          });
-          logger.info('Registered llm client directive');
-        }
-
-        if (workersEnabled) {
-          addClientDirective({
-            name: 'worker',
-            entrypoint: '@liteship/astro/client-directives/worker',
-          });
-          logger.info('Registered worker client directive');
-        }
-
-        if (gpuEnabled) {
-          addClientDirective({
-            name: 'gpu',
-            entrypoint: '@liteship/astro/client-directives/gpu',
-          });
-          logger.info('Registered gpu client directive');
-        }
-
-        if (wasmEnabled) {
-          addClientDirective({
-            name: 'wasm',
-            entrypoint: '@liteship/astro/client-directives/wasm',
-          });
-          logger.info('Registered wasm client directive');
-        }
-
-        if (motionEnabled) {
-          addClientDirective({
-            name: 'motion',
-            entrypoint: '@liteship/astro/client-directives/motion',
-          });
-          logger.info('Registered motion client directive');
-        }
-
-        // SVG last-mile: always-on (parity with adaptive) — a pure DOM
-        // applicator with no capability gate, so the SVG cast arm reaches the
-        // live DOM wherever a `[data-liteship-entity]` SVG element is authored.
-        addClientDirective({
-          name: 'svg',
-          entrypoint: '@liteship/astro/client-directives/svg',
-        });
-        logger.info('Registered svg client directive');
-
-        // Route scope guard FIRST (head-inline, ahead of every other liteship
-        // script) so `__LITESHIP_OFF__` is set before anything reads it. Only when
-        // routes are excluded — otherwise no guard, no flag, scripts run as before.
-        if (excludeRoutes.length > 0) {
-          injectScript('head-inline', scopeGuardScript(excludeRoutes));
-          logger.info(`Injected route scope guard (excluded: ${excludeRoutes.join(', ')})`);
-        }
-
-        // Inject detect script for client-side capability detection
-        if (detectEnabled) {
-          injectScript('head-inline', DETECT_INLINE_SCRIPT);
-          logger.info('Injected detect script');
-
-          // Inject GPU probe upgrade (deferred, non-blocking)
-          if (gpuEnabled) {
-            injectScript('page', DETECT_UPGRADE_SCRIPT);
-            logger.info('Injected GPU probe upgrade');
+          // Watch the convention primitive source files so definition edits restart
+          // the dev server and re-collect the manifest (Astro battery: addWatchFile).
+          // Guarded: real Astro always provides these, but keep it null-safe.
+          if (typeof addWatchFile === 'function' && astroConfig?.root && astroConfig.srcDir) {
+            watchConventionPrimitives(
+              addWatchFile,
+              fileURLToPath(astroConfig.root),
+              fileURLToPath(astroConfig.srcDir),
+              effectiveConfig?.vite?.dirs,
+            );
           }
-        }
 
-        injectScript('page', runtimeBootstrapScript(runtimePolicy, enabledDirectives));
+          // Route @liteship/* runtime diagnostics through Astro's logger so they carry
+          // the liteship label and flow into `astro dev --json` structured output —
+          // one log stream the host (and CI / agents) already parse.
+          restoreDiagnosticsBridge();
+          restoreDiagnostics = installDiagnosticsBridge(logger);
 
-        if (wasmEnabled) {
-          injectScript('page', WASM_RUNTIME_SCRIPT);
-          logger.info('Injected wasm runtime bootstrap');
-        }
+          // Astro may carry a different Vite type graph than @liteship/vite. The plugin
+          // runtime contract is still compatible, so the host integration owns the
+          // version bridge here instead of leaking duplicate plugin shapes downstream.
+          const astroViteConfig = {
+            plugins: [
+              plugin(
+                {
+                  ...(effectiveConfig?.vite ?? {}),
+                  ...(wasmEnabled ? { wasm: { enabled: true, path: effectiveConfig?.wasm?.path } } : {}),
+                },
+                undefined,
+                projectConfigLoader,
+              ),
+            ],
+          } as AstroViteConfig;
 
-        // Zero-config detection: auto-wire the detection-only middleware so a
-        // consumer needs no src/middleware.ts for the common case. It inherits
-        // the integration's detect/workers toggles (published-toggles channel)
-        // and populates Astro.locals.liteship. Edge/theme config carries functions
-        // that can't ride a static integration option, so the edge cache still
-        // needs a consumer middleware — it runs after this 'pre' one and refines
-        // the same locals. Opt in with `middleware: true` (default off).
-        if (config?.middleware === true) {
-          addMiddleware({ order: 'pre', entrypoint: '@liteship/astro/middleware-entry' });
-          logger.info('Auto-wired capability-detection middleware');
-        }
-
-        // Register the boundary inspector as a dev-toolbar app (dev only).
-        // Astro mounts the entrypoint in the main page realm and toggles it
-        // from a toolbar icon — no injected page script, no custom hotkey.
-        if (command === 'dev' && inspectorEnabled) {
-          addDevToolbarApp({
-            id: 'liteship-inspector',
-            name: 'liteship boundaries',
-            icon: INSPECTOR_TOOLBAR_ICON,
-            // Resolved through @liteship/astro's package exports so the `development`
-            // condition maps to the TS source in `astro dev` and to `dist` in a
-            // built integration — never a bare `.js` path that misses in dev.
-            entrypoint: '@liteship/astro/runtime/inspector-toolbar-app',
+          updateConfig({
+            vite: astroViteConfig,
           });
-          logger.info('Registered dev boundary inspector toolbar app');
+
+          // Register client directives
+          if (adaptiveEnabled) {
+            addClientDirective({
+              name: 'adaptive',
+              entrypoint: '@liteship/astro/client-directives/adaptive',
+            });
+            logger.info('Registered adaptive client directive');
+          }
+
+          // `graph` — the DocumentGraph-loader primitive, always-on like adaptive.
+          addClientDirective({
+            name: 'graph',
+            entrypoint: '@liteship/astro/client-directives/graph',
+          });
+          logger.info('Registered graph client directive');
+
+          if (streamEnabled) {
+            addClientDirective({
+              name: 'stream',
+              entrypoint: '@liteship/astro/client-directives/stream',
+            });
+            logger.info('Registered stream client directive');
+          }
+
+          if (llmEnabled) {
+            addClientDirective({
+              name: 'llm',
+              entrypoint: '@liteship/astro/client-directives/llm',
+            });
+            logger.info('Registered llm client directive');
+          }
+
+          if (workersEnabled) {
+            addClientDirective({
+              name: 'worker',
+              entrypoint: '@liteship/astro/client-directives/worker',
+            });
+            logger.info('Registered worker client directive');
+          }
+
+          if (gpuEnabled) {
+            addClientDirective({
+              name: 'gpu',
+              entrypoint: '@liteship/astro/client-directives/gpu',
+            });
+            logger.info('Registered gpu client directive');
+          }
+
+          if (wasmEnabled) {
+            addClientDirective({
+              name: 'wasm',
+              entrypoint: '@liteship/astro/client-directives/wasm',
+            });
+            logger.info('Registered wasm client directive');
+          }
+
+          if (motionEnabled) {
+            addClientDirective({
+              name: 'motion',
+              entrypoint: '@liteship/astro/client-directives/motion',
+            });
+            logger.info('Registered motion client directive');
+          }
+
+          // SVG last-mile: always-on (parity with adaptive) — a pure DOM
+          // applicator with no capability gate, so the SVG cast arm reaches the
+          // live DOM wherever a `[data-liteship-entity]` SVG element is authored.
+          addClientDirective({
+            name: 'svg',
+            entrypoint: '@liteship/astro/client-directives/svg',
+          });
+          logger.info('Registered svg client directive');
+
+          // Route scope guard FIRST (head-inline, ahead of every other liteship
+          // script) so `__LITESHIP_OFF__` is set before anything reads it. Only when
+          // routes are excluded — otherwise no guard, no flag, scripts run as before.
+          if (excludeRoutes.length > 0) {
+            injectScript('head-inline', scopeGuardScript(excludeRoutes));
+            logger.info(`Injected route scope guard (excluded: ${excludeRoutes.join(', ')})`);
+          }
+
+          // Inject detect script for client-side capability detection
+          if (detectEnabled) {
+            injectScript('head-inline', DETECT_INLINE_SCRIPT);
+            logger.info('Injected detect script');
+
+            // Inject GPU probe upgrade (deferred, non-blocking)
+            if (gpuEnabled) {
+              injectScript('page', DETECT_UPGRADE_SCRIPT);
+              logger.info('Injected GPU probe upgrade');
+            }
+          }
+
+          injectScript('page', runtimeBootstrapScript(runtimePolicy, enabledDirectives));
+
+          if (wasmEnabled) {
+            injectScript('page', WASM_RUNTIME_SCRIPT);
+            logger.info('Injected wasm runtime bootstrap');
+          }
+
+          // Zero-config detection: auto-wire the detection-only middleware so a
+          // consumer needs no src/middleware.ts for the common case. It inherits
+          // the integration's detect/workers toggles (published-toggles channel)
+          // and populates Astro.locals.liteship. Edge/theme config carries functions
+          // that can't ride a static integration option, so the edge cache still
+          // needs a consumer middleware — it runs after this 'pre' one and refines
+          // the same locals. Opt in with `middleware: true` (default off).
+          if (effectiveConfig?.middleware === true) {
+            addMiddleware({ order: 'pre', entrypoint: '@liteship/astro/middleware-entry' });
+            logger.info('Auto-wired capability-detection middleware');
+          }
+
+          // Register the boundary inspector as a dev-toolbar app (dev only).
+          // Astro mounts the entrypoint in the main page realm and toggles it
+          // from a toolbar icon — no injected page script, no custom hotkey.
+          if (command === 'dev' && inspectorEnabled) {
+            addDevToolbarApp({
+              id: 'liteship-inspector',
+              name: 'liteship boundaries',
+              icon: INSPECTOR_TOOLBAR_ICON,
+              // Resolved through @liteship/astro's package exports so the `development`
+              // condition maps to the TS source in `astro dev` and to `dist` in a
+              // built integration — never a bare `.js` path that misses in dev.
+              entrypoint: '@liteship/astro/runtime/inspector-toolbar-app',
+            });
+            logger.info('Registered dev boundary inspector toolbar app');
+          }
+        };
+
+        // Keep convention-only and explicit-only Astro integrations synchronous.
+        // A present authored project hub is the sole path that needs Vite's async loader.
+        if (!existsSync(path.resolve(root, 'liteship.config.ts'))) {
+          configure(null);
+          return;
         }
+        return loadProjectConfig(
+          root,
+          { command: command === 'dev' ? 'serve' : 'build', mode: command === 'dev' ? 'development' : 'production' },
+          projectConfigLoader,
+        ).then(configure);
       },
 
       'astro:config:done': ({ config: astroConfig, logger }) => {
@@ -522,7 +580,7 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
 
       'astro:build:done': async ({ dir, logger }) => {
         try {
-          if (config?.vite?.emitBoundaryAssets === true) {
+          if (effectiveConfig?.vite?.emitBoundaryAssets === true) {
             if (dir) {
               const outDir = fileURLToPath(dir);
               if (ensureLiteshipAssetHeaders(outDir)) {
@@ -540,8 +598,8 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
           // worker entry assembled outside this Vite build).
           if (projectRoot && dir) {
             const boundaries = await collectBoundaryManifest(projectRoot, {
-              boundaryDir: config?.vite?.dirs?.boundary,
-              container: config?.vite?.quantize?.container,
+              boundaryDir: effectiveConfig?.vite?.dirs?.boundary,
+              container: effectiveConfig?.vite?.quantize?.container,
             });
             if (Object.keys(boundaries).length > 0) {
               const manifestFile: BoundaryManifestFile = {

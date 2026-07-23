@@ -39,6 +39,7 @@ import { createNodeCommandContext, currentEnvFingerprint } from '@liteship/comma
 import { detectEarlyReturnBeforeExpectAST, detectSkipsAST } from '@liteship/audit';
 import { emit, type WallClockTimestamp } from '../receipts.js';
 import { runGauntletWithRepoIR } from '../lib/repo-ir-gauntlet.js';
+import { detectProjectPackageManager, projectBinaryInvocation } from '../lib/project-package-manager.js';
 
 /** Receipt emitted by `liteship check gates`. */
 export interface CheckReceipt extends CheckPayload {
@@ -461,7 +462,7 @@ function executeCheckPlan(
   for (const check of plan.checks) {
     // Applicability was decided by planChecks before execution. Once a check is in
     // the plan, a missing declared script is a broken authority, never a skip.
-    const script = invokedScriptName(check.command);
+    const script = check.execution === undefined ? invokedScriptName(check.command) : null;
     if (script !== null && definedScripts !== null && !definedScripts.has(script)) {
       if (check.authority === 'blocking') blocked = true;
       results.push({
@@ -493,13 +494,14 @@ function executeCheckPlan(
       }
     }
 
+    const command = materializeCheckCommand(check, cwd);
     const start = now();
-    const r = spawn(check.command, cwd, check.timeoutMs);
+    const r = spawn(command, cwd, check.timeoutMs);
     const durationMs = Math.max(0, now() - start);
     const passed = r.status === 0;
     if (!passed && check.authority === 'blocking') blocked = true;
     const verdict: CheckVerdict = passed ? 'pass' : 'fail';
-    const findings = passed ? [] : checkFailureFindings(check.command, check.timeoutMs, r);
+    const findings = passed ? [] : checkFailureFindings(command, check.timeoutMs, r);
     const result: CheckRunResult = { id: check.id, verdict, durationMs, cacheHit: false, findings };
     results.push(result);
 
@@ -525,6 +527,14 @@ function executeCheckPlan(
     blocked,
     results,
   };
+}
+
+/** Materialize structured application checks only at the CLI host boundary. */
+function materializeCheckCommand(check: CheckPlan['checks'][number], cwd: string): string {
+  if (check.execution === undefined) return check.command;
+  const manager = detectProjectPackageManager(cwd);
+  const invocation = projectBinaryInvocation(manager, 'liteship', check.execution.argv);
+  return [invocation.command, ...invocation.args].join(' ');
 }
 
 interface InputCorpus {
@@ -589,6 +599,7 @@ function checkCacheKey(
     schema: CHECK_CACHE_SCHEMA,
     id: check.id,
     command: check.command,
+    ...(check.execution !== undefined ? { execution: check.execution } : {}),
     profile: plan.profile,
     platform: plan.platform,
     env,

@@ -113,7 +113,11 @@ describe('liteship check --profile — the profile sweep emits a CheckReport', (
       const plan = runCheckPlanMock.mock.calls[0]![0];
       expect(plan).toMatchObject({ profile: 'quick', context: 'application' });
       expect(plan.checks.map((entry) => entry.id)).toEqual(['check/app-build']);
-      expect(plan.checks[0]).toMatchObject({ command: 'pnpm exec liteship build', cacheable: false });
+      expect(plan.checks[0]).toMatchObject({
+        command: 'liteship build',
+        execution: { kind: 'cli-command', argv: ['build'] },
+        cacheable: false,
+      });
     } finally {
       rmSync(app, { recursive: true, force: true });
     }
@@ -350,6 +354,31 @@ describe('check profile cache and diagnostic execution', () => {
       rmSync(root, { recursive: true, force: true });
     }
   });
+
+  it.each([
+    { manager: 'npm', expected: 'npm exec -- liteship build' },
+    { manager: 'pnpm', expected: 'pnpm exec liteship build' },
+  ] as const)(
+    'materializes application CLI checks through the project $manager installation',
+    ({ manager, expected }) => {
+      const root = mkdtempSync(join(tmpdir(), `liteship-check-${manager}-`));
+      try {
+        const spawn = vi.fn(() => ({ status: 0, signal: null, stdout: '', stderr: '' }));
+        const plan = oneCheckPlan(root, {
+          context: 'application',
+          command: 'liteship build',
+          execution: { kind: 'cli-command', argv: ['build'] },
+          cache: 'none',
+          cacheable: false,
+        });
+        writeFileSync(join(root, 'package.json'), JSON.stringify({ packageManager: `${manager}@1.0.0` }));
+        createCheckPlanRunner({ spawn })(plan, root);
+        expect(spawn).toHaveBeenCalledWith(expected, root, 1_000);
+      } finally {
+        rmSync(root, { recursive: true, force: true });
+      }
+    },
+  );
 
   it('keeps non-quick checks uncached and invalidates cache probes on support/config changes', () => {
     const structural = CHECK_REGISTRY.find((entry) => entry.id === 'check/lint-structural')!;

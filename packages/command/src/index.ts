@@ -91,6 +91,7 @@ export type {
   CheckPlatform,
   CheckCache,
   CheckAuthority,
+  CliCheckExecution,
 } from './checks/definition.js';
 export { planChecks, formatCheckPlan, CHECK_PROFILES, CHECK_CONTEXTS, CHECK_PLATFORMS } from './checks/plan.js';
 export type {

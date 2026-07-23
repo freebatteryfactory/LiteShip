@@ -98,4 +98,34 @@ describe('dispatch — a value-taking flag never swallows the next flag (F-PROTO
     expect(exit).toBe(0);
     expect(doctorMock.mock.calls[0]![0]).toMatchObject({ target: 'astro', fix: true });
   });
+
+  it.each([
+    { argv: ['dev', '--example'], command: 'dev', usage: 'usage: liteship dev --example <name>' },
+    { argv: ['audit', '--profile'], command: 'audit', usage: 'usage: liteship audit --profile <path>' },
+    { argv: ['context', '--task'], command: 'context', usage: 'usage: liteship context --task <task-id>' },
+    { argv: ['mcp', '--http'], command: 'mcp', usage: 'usage: liteship mcp --http <address>' },
+    {
+      argv: ['capsule', 'list', '--kind'],
+      command: 'capsule.list',
+      usage: 'usage: liteship capsule list --kind <kind>',
+    },
+  ])('$command refuses a present value flag with no value', async ({ argv, command, usage }) => {
+    const r = await capture(() => runDispatch(argv));
+    expect(r.exit).toBe(1);
+    expect(lastStderrReceipt(r.stderr)).toEqual(expect.objectContaining({ command, error: usage }));
+  });
+
+  it('describe --format with no value reports the missing closed-set value', async () => {
+    const r = await capture(() => runDispatch(['describe', '--format']));
+    expect(r.exit).toBe(1);
+    expect(lastStderrReceipt(r.stderr)).toEqual(
+      expect.objectContaining({ command: 'describe', error: 'expected format: json | mcp (got: <missing>)' }),
+    );
+  });
+
+  it('asset analyze --projection accepts the space form through the shared parser', async () => {
+    const r = await capture(() => runDispatch(['asset', 'analyze', 'missing-asset', '--projection', 'beat']));
+    expect(r.exit).toBe(1);
+    expect(lastStderrReceipt(r.stderr).error).not.toMatch(/missing --projection/);
+  });
 });

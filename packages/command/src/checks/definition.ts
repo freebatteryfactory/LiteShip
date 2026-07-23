@@ -77,6 +77,12 @@ export type CheckCache = 'content-addressed' | 'none';
  */
 export type CheckAuthority = 'blocking' | 'advisory';
 
+/** Structured execution owned by the CLI host rather than an opaque shell line. */
+export interface CliCheckExecution {
+  readonly kind: 'cli-command';
+  readonly argv: readonly [string, ...string[]];
+}
+
 /**
  * One declared check — a root `package.json` script that asserts something, described
  * (never reimplemented). The `id` is `check/<slug>` (the stable identity a plan and a
@@ -93,6 +99,8 @@ interface CheckDefinitionBase {
   readonly owner: string;
   /** The full shell line to spawn — the SAME contract as `GauntletPhase.command`; references the root script. */
   readonly command: string;
+  /** Optional structured execution. The host materializes it for the current project package manager. */
+  readonly execution?: CliCheckExecution;
   /** Globs of the bytes whose change invalidates a content-addressed verdict (the cache coverage). */
   readonly inputs: readonly string[];
   /** The profiles this check is a member of — a projection runs it iff its profile is listed. */

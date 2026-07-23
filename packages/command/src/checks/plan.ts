@@ -19,7 +19,14 @@
  * @module
  */
 
-import type { CheckAuthority, CheckCache, CheckContext, CheckPlatform, CheckProfile } from './definition.js';
+import type {
+  CheckAuthority,
+  CheckCache,
+  CheckContext,
+  CheckPlatform,
+  CheckProfile,
+  CliCheckExecution,
+} from './definition.js';
 import { CHECK_REGISTRY } from './registry.js';
 
 /** One check as scheduled into a plan — the registry entry projected to what a run needs. */
@@ -34,6 +41,8 @@ export interface PlannedCheck {
   readonly context: CheckContext;
   /** The full shell line the host spawns. */
   readonly command: string;
+  /** Structured CLI execution, when this check is owned by the current LiteShip application. */
+  readonly execution?: CliCheckExecution;
   /** The package or script path that owns the assertion. */
   readonly owner: string;
   /** Whether a finding (or non-zero exit) blocks the aggregate verdict. */
@@ -148,6 +157,7 @@ export function planChecks(
         claim: check.claim,
         context,
         command: check.command,
+        ...(check.execution !== undefined ? { execution: check.execution } : {}),
         owner: check.owner,
         authority: check.authority,
         cache: check.cache,
