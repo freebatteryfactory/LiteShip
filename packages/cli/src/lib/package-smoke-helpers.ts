@@ -21,7 +21,7 @@
  *
  * @module
  */
-import { existsSync, readdirSync, realpathSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, realpathSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -453,7 +453,10 @@ function boundedDiagnosticReport(
  * Resolution alone is insufficient: TypeScript may fall back to JavaScript, a
  * workspace symlink, or a malformed declaration. This assertion requires the
  * exact declared target, containment beneath the consumer's real node_modules,
- * and a diagnostic-free pre-emit program under both Node16 and Bundler.
+ * and a diagnostic-free LiteShip-owned public graph under both Node16 and
+ * Bundler. Third-party declaration internals remain their package owners'
+ * authority; errors they cause at a LiteShip import edge still point into the
+ * LiteShip declaration (and remain blocking here).
  */
 export function assertPackedTypeClosure(
   ts: typeof TypeScript,
@@ -471,22 +474,17 @@ export function assertPackedTypeClosure(
     const options = compilerOptionsForTypeClosure(ts, mode);
     const host = ts.createCompilerHost(options);
     const probePath = join(consumerDir, `.liteship-type-closure-${mode}.ts`);
-    writeFileSync(
-      probePath,
-      entries
-        .map((entry, index) => `import type * as PublicType${index} from ${JSON.stringify(entry.specifier)};`)
-        .concat(
-          entries.map((_entry, index) => `export type PublicTypeUse${index} = typeof PublicType${index};`),
-          '',
-        )
-        .join('\n'),
-    );
+    const ambientReferences: string[] = [];
+    const moduleImports: string[] = [];
+    const moduleUses: string[] = [];
+    const ownedPackageRoots = new Set<string>();
 
-    for (const entry of entries) {
+    for (const [index, entry] of entries.entries()) {
       const packageRoot = findConsumerDependencyRoot(consumerDir, entry.packageName);
       if (packageRoot === undefined) {
         throw IntegrityError('package-smoke', `${entry.specifier} (${mode}) has no installed package root`);
       }
+      ownedPackageRoots.add(normalizedRealpath(packageRoot));
       const expectedTarget = resolve(packageRoot, entry.typesTarget);
       if (!existsSync(expectedTarget)) {
         throw IntegrityError(
@@ -534,9 +532,37 @@ export function assertPackedTypeClosure(
           `${entry.specifier} (${mode}) resolved ${physicalResolved}, not declared target ${physicalExpected}`,
         );
       }
+
+      const declaration = ts.createSourceFile(
+        physicalExpected,
+        readFileSync(physicalExpected, 'utf8'),
+        ts.ScriptTarget.Latest,
+        true,
+      );
+      if (ts.isExternalModule(declaration)) {
+        moduleImports.push(`import type * as PublicType${index} from ${JSON.stringify(entry.specifier)};`);
+        moduleUses.push(`export type PublicTypeUse${index} = typeof PublicType${index};`);
+      } else {
+        // Ambient registration entrypoints (for example
+        // `@liteship/vite/virtual`) are consumed through `reference types`, not
+        // as importable modules. Exercise that real public contract while the
+        // exact-target checks above still prove the packed exports-map edge.
+        ambientReferences.push(`/// <reference types=${JSON.stringify(entry.specifier)} />`);
+      }
     }
 
-    const diagnostics = ts.getPreEmitDiagnostics(ts.createProgram({ rootNames: [probePath], options, host }));
+    writeFileSync(probePath, [...ambientReferences, ...moduleImports, ...moduleUses, ''].join('\n'));
+
+    const diagnostics = ts
+      .getPreEmitDiagnostics(ts.createProgram({ rootNames: [probePath], options, host }))
+      .filter((diagnostic) => {
+        if (diagnostic.file === undefined) return true;
+        const physicalFile = normalizedRealpath(diagnostic.file.fileName);
+        return (
+          physicalFile === normalizedRealpath(probePath) ||
+          [...ownedPackageRoots].some((packageRoot) => pathIsInside(packageRoot, physicalFile))
+        );
+      });
     if (diagnostics.length > 0) {
       throw IntegrityError(
         'package-smoke',

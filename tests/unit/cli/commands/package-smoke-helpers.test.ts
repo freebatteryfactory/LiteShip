@@ -439,6 +439,14 @@ describe('assertPackedTypeClosure — exact physical declaration proof', () => {
     expect(() => assertPackedTypeClosure(ts, consumer, [entry])).not.toThrow();
   });
 
+  it('loads an ambient registration entrypoint through its reference-types contract', () => {
+    plantPackage({
+      declaration: "declare module 'virtual:fixture' {\n  export const value: true;\n}\n",
+    });
+
+    expect(() => assertPackedTypeClosure(ts, consumer, [entry])).not.toThrow();
+  });
+
   it('rejects a public types condition that resolves to JavaScript', () => {
     plantPackage({ typesTarget: './dist/index.js' });
     const jsEntry = { ...entry, typesTarget: './dist/index.js' };
@@ -486,7 +494,7 @@ describe('assertPackedTypeClosure — exact physical declaration proof', () => {
     );
   });
 
-  it('rejects a transitive declaration conflict reachable from the public type graph', () => {
+  it('does not make third-party declaration internals a LiteShip release failure', () => {
     const externalRoot = join(consumer, 'node_modules', 'external-types');
     mkdirSync(externalRoot, { recursive: true });
     writeFileSync(
@@ -503,9 +511,7 @@ describe('assertPackedTypeClosure — exact physical declaration proof', () => {
     );
     plantPackage({ declaration: "import 'external-types';\nexport declare const value: true;\n" });
 
-    expect(() => assertPackedTypeClosure(ts, consumer, [entry], ['node16'])).toThrow(
-      /failed node16 pre-emit diagnostics \(2\):\n.*external-types.*:\d+:\d+ TS2451 Cannot redeclare block-scoped variable 'externalConflict'/s,
-    );
+    expect(() => assertPackedTypeClosure(ts, consumer, [entry], ['node16'])).not.toThrow();
   });
 
   it('rejects a package whose physical declaration escapes the packed node_modules tree', () => {

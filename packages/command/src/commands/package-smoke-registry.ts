@@ -38,8 +38,19 @@ export const PEER_INSTALLS: readonly string[] = [
   // Must satisfy @liteship/astro's `astro >=7.0.0 <8` peer (a stale `astro@6.0.0`
   // here failed the consumer install under strict-peer once we hard-cut to 7).
   'astro@7.0.0',
+  // The packed declaration authority deliberately runs with skipLibCheck=false.
+  // Astro exposes this optional peer in its public declaration graph, so the
+  // proof fixture must provide the valid typed-host environment it claims to
+  // verify even though a runtime-only Astro install may omit Markdown support.
+  '@astrojs/markdown-remark@7.2.0',
   'react@19.2.0',
   'react-dom@19.2.0',
+  // React ships JavaScript; @liteship/remotion's public declarations name
+  // ReactElement/ReactNode and therefore require React's declaration peer.
+  '@types/react@19.2.2',
+  // Vite/Astro declarations expose Node host types. Keep this explicit rather
+  // than hiding their diagnostics with skipLibCheck.
+  '@types/node@22.19.15',
   'remotion@4.0.440',
   'fast-check@4.7.0',
   // @liteship/audit's runtime deps — the engine parses + globs the target repo.
