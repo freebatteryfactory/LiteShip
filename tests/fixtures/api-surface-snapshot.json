@@ -2,7 +2,7 @@
   "snapshotFormat": 1,
   "packages": {
     "@liteship/assets": {
-      "version": "0.18.0",
+      "version": "0.19.0",
       "exports": [
         {
           "name": "AssetRegistry",
@@ -92,7 +92,7 @@
       ]
     },
     "@liteship/astro": {
-      "version": "0.18.0",
+      "version": "0.19.0",
       "exports": [
         {
           "name": "adaptiveAttrs",
@@ -187,7 +187,7 @@
       ]
     },
     "@liteship/audit": {
-      "version": "0.18.0",
+      "version": "0.19.0",
       "exports": [
         {
           "name": "ACTIVE_SURFACE_ORACLE_ID",
@@ -612,7 +612,7 @@
       ]
     },
     "@liteship/canonical": {
-      "version": "0.18.0",
+      "version": "0.19.0",
       "exports": [
         {
           "name": "AddressedDigest",
@@ -667,7 +667,7 @@
       ]
     },
     "@liteship/cli": {
-      "version": "0.18.0",
+      "version": "0.19.0",
       "exports": [
         {
           "name": "run",
@@ -677,7 +677,7 @@
       ]
     },
     "@liteship/cloudflare": {
-      "version": "0.18.0",
+      "version": "0.19.0",
       "exports": [
         {
           "name": "cloudflareAdapterCapsule",
@@ -701,7 +701,7 @@
       ]
     },
     "@liteship/command": {
-      "version": "0.18.0",
+      "version": "0.19.0",
       "exports": [
         {
           "name": "AUDIT_WARNING_FLOOR",
@@ -999,7 +999,7 @@
       ]
     },
     "@liteship/compiler": {
-      "version": "0.18.0",
+      "version": "0.19.0",
       "exports": [
         {
           "name": "AIManifestCompiler",
@@ -1034,7 +1034,7 @@
         {
           "name": "StyleCSSCompiler",
           "kind": "namespace",
-          "signature": "compile:function"
+          "signature": "compile:function,compileAdaptive:function"
         },
         {
           "name": "ThemeCSSCompiler",
@@ -1114,7 +1114,7 @@
       ]
     },
     "@liteship/core": {
-      "version": "0.18.0",
+      "version": "0.19.0",
       "exports": [
         {
           "name": "AICast",
@@ -2210,7 +2210,7 @@
       ]
     },
     "@liteship/detect": {
-      "version": "0.18.0",
+      "version": "0.19.0",
       "exports": [
         {
           "name": "CAP_AXES",
@@ -2310,7 +2310,7 @@
       ]
     },
     "@liteship/edge": {
-      "version": "0.18.0",
+      "version": "0.19.0",
       "exports": [
         {
           "name": "ClientHints",
@@ -2388,7 +2388,7 @@
       ]
     },
     "@liteship/error": {
-      "version": "0.18.0",
+      "version": "0.19.0",
       "exports": [
         {
           "name": "DIAGNOSTIC_AREAS",
@@ -2510,7 +2510,7 @@
       ]
     },
     "@liteship/gauntlet": {
-      "version": "0.18.0",
+      "version": "0.19.0",
       "exports": [
         {
           "name": "ABSENT_SUFFIX",
@@ -3238,7 +3238,7 @@
       ]
     },
     "@liteship/genui": {
-      "version": "0.18.0",
+      "version": "0.19.0",
       "exports": [
         {
           "name": "ContentAddress",
@@ -3282,7 +3282,7 @@
       ]
     },
     "@liteship/mcp-server": {
-      "version": "0.18.0",
+      "version": "0.19.0",
       "exports": [
         {
           "name": "APPLY_PATCH_COMMAND",
@@ -3495,7 +3495,7 @@
       ]
     },
     "@liteship/quantizer": {
-      "version": "0.18.0",
+      "version": "0.19.0",
       "exports": [
         {
           "name": "AnimatedQuantizer",
@@ -3535,7 +3535,7 @@
       ]
     },
     "@liteship/remotion": {
-      "version": "0.18.0",
+      "version": "0.19.0",
       "exports": [
         {
           "name": "Provider",
@@ -3589,7 +3589,7 @@
       ]
     },
     "@liteship/scene": {
-      "version": "0.18.0",
+      "version": "0.19.0",
       "exports": [
         {
           "name": "AudioSystem",
@@ -3767,7 +3767,7 @@
       ]
     },
     "@liteship/stage": {
-      "version": "0.18.0",
+      "version": "0.19.0",
       "exports": [
         {
           "name": "dualExport",
@@ -3807,7 +3807,7 @@
       ]
     },
     "@liteship/vite": {
-      "version": "0.18.0",
+      "version": "0.19.0",
       "exports": [
         {
           "name": "collectBoundaryManifest",
@@ -3942,7 +3942,7 @@
       ]
     },
     "@liteship/web": {
-      "version": "0.18.0",
+      "version": "0.19.0",
       "exports": [
         {
           "name": "DEFAULT_SHADER_INTEGRITY_MODE",
@@ -4236,7 +4236,7 @@
       ]
     },
     "@liteship/worker": {
-      "version": "0.18.0",
+      "version": "0.19.0",
       "exports": [
         {
           "name": "CompositorWorker",

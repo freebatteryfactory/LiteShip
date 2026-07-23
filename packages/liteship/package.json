@@ -1,6 +1,6 @@
 {
   "name": "liteship",
-  "version": "0.18.0",
+  "version": "0.19.0",
   "description": "The curated public facade and executable owner for LiteShip: one dependency, one command, and one import path over the whole `@liteship/*` adaptive rendering stack.",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",

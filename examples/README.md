@@ -37,4 +37,4 @@ pnpm --filter <example-package-name> dev   # or: cd examples/<folder> && pnpm de
 ```
 
 Inside the monorepo the examples resolve the workspace `@liteship/*`. Copying an example out
-standalone, pin `@liteship/*` at `^0.18.0`.
+standalone, pin `@liteship/*` at `^0.19.0`.

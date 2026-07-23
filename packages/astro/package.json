@@ -1,6 +1,6 @@
 {
   "name": "@liteship/astro",
-  "version": "0.18.0",
+  "version": "0.19.0",
   "description": "The Astro integration for LiteShip: render adaptive UI as islands with the `client:adaptive` directive and resolve device tiers on the server for first paint.",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",

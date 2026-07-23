@@ -1,6 +1,6 @@
 {
   "name": "@liteship/_spine",
-  "version": "0.18.0",
+  "version": "0.19.0",
   "description": "Install-only TypeScript declaration spine for LiteShip: the shared type anchor that `@liteship/core` and `@liteship/scene` reference from their published `.d.ts` — there is nothing to import at runtime.",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",

@@ -7,7 +7,7 @@ thresholds 0/33/66; each Remotion frame evaluates it, and the resulting
 on the composition — `useLiteshipState()` reads the current frame's state from the
 `<Provider>` context.
 
-When installing from npm (outside the monorepo), pin `@liteship/*` packages at `^0.18.0`.
+When installing from npm (outside the monorepo), pin `@liteship/*` packages at `^0.19.0`.
 
 ## Run it
 
