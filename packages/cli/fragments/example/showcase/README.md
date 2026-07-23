@@ -6,7 +6,7 @@
 One app, the cast family together: worker, GPU, stream, and LLM client
 directives, five pages driven from the same boundary/token/theme definitions.
 
-When installing from npm (outside the monorepo), pin `@liteship/*` packages at `^0.18.0`.
+When installing from npm (outside the monorepo), pin `@liteship/*` packages at `^0.19.0`.
 
 ## Run it
 

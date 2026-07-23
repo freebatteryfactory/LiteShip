@@ -213,7 +213,7 @@ Reach for the rest only when the surface meaning justifies the runtime escalatio
 | [`@liteship/scene`](./packages/scene) | Author video timelines for LiteShip: a typed scene and track model built on the entity-component substrate in `@liteship/core`. |
 | [`@liteship/assets`](./packages/assets) | Manage media assets for LiteShip: declare audio, video, and image assets and read cached analysis such as waveforms, beat markers, and onsets. |
 | [`@liteship/stage`](./packages/stage) | Export one LiteShip document graph to many carriers: prove a single source renders to both a static Astro page and a video, joined under one receipt. |
-| [`@liteship/cli`](./packages/cli) | The `liteship` command-line tool for LiteShip: JSON-in, JSON-out verbs built for AI agents, with a human-friendly terminal mode. |
+| [`@liteship/cli`](./packages/cli) | The programmatic command dispatcher and terminal implementation behind the facade-owned `liteship` executable: JSON-in, JSON-out verbs with a human-friendly terminal mode. |
 | [`@liteship/mcp-server`](./packages/mcp-server) | The Model Context Protocol server for LiteShip: exposes the `liteship` commands and capsule catalog as MCP tools that AI assistants can call. |
 | [`@liteship/_spine`](./packages/_spine) | Install-only TypeScript declaration spine for LiteShip: the shared type anchor that `@liteship/core` and `@liteship/scene` reference from their published `.d.ts` — there is nothing to import at runtime. |
 
