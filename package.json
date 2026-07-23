@@ -126,7 +126,7 @@
     "@types/node": "^22.19.15",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
-    "@vitest/browser": "^4.1.2",
+    "@vitest/browser": "^4.1.10",
     "@vitest/browser-playwright": "^4.1.2",
     "@vitest/coverage-v8": "^4.1.2",
     "cborg": "^4.5.8",
