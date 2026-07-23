@@ -1,12 +1,9 @@
 /**
  * End-to-end proof of the directive boot scanner against the REAL built
- * Astro example (deferred from the 0.1.4 dogfood wave). The integration
- * test (tests/integration/astro/test.ts) asserts the build emits the
- * `data-liteship-directive` marker and the bootstrap script; this spec proves
- * the part that was inert downstream: a real browser loads the built page,
- * the scanner activates the Adaptive element, and `data-liteship-state`
- * tracks viewport.width across its boundary thresholds (0/768/1280 →
- * compact/medium/full).
+ * Astro example. The page uses only public `defineAdaptive().attrs()` plus
+ * `plan().css`; this spec proves the scanner's runtime state marker drives the
+ * matching CSS, two style identities cannot bleed, and hysteresis wins over a
+ * stateless raw-width interpretation.
  *
  * Skips with a message when the astro example has not been built — the
  * gauntlet runs the integration build before the e2e lane, so CI always
@@ -22,21 +19,45 @@ const built = !astroExampleNotBuilt;
 test.describe('astro directive boot (built example)', () => {
   test.skip(!built, 'astro example not built — run: pnpm exec tsx tests/integration/astro/test.ts');
 
-  test('the boot scanner activates the Adaptive and data-liteship-state tracks viewport.width', async ({ page }) => {
+  test('attrs plus plan CSS follow runtime state without cross-definition bleed', async ({ page }) => {
     await page.setViewportSize({ width: 1400, height: 800 });
     await page.goto('/astro-example/');
 
-    const adaptive = page.locator('[data-liteship-directive~="adaptive"]');
-    await expect(adaptive).toHaveCount(1);
+    const adaptives = page.locator('[data-liteship-directive~="adaptive"]');
+    const alpha = page.locator('#adaptive-alpha');
+    const beta = page.locator('#adaptive-beta');
+    await expect(adaptives).toHaveCount(2);
 
-    // Activation is the regression: 0.1.4 shipped this exact page shape inert.
-    await expect(adaptive).toHaveAttribute('data-liteship-state', 'full');
+    const columnCount = async (selector: '#adaptive-alpha' | '#adaptive-beta'): Promise<number> =>
+      page.locator(selector).evaluate((element) => getComputedStyle(element).gridTemplateColumns.split(' ').length);
+    const owner = async (selector: '#adaptive-alpha' | '#adaptive-beta'): Promise<string> =>
+      page.locator(selector).evaluate((element) => getComputedStyle(element).getPropertyValue('--adaptive-owner').trim());
+
+    await expect(alpha).toHaveAttribute('data-liteship-state', 'full');
+    await expect(beta).toHaveAttribute('data-liteship-state', 'full');
+    expect(await columnCount('#adaptive-alpha')).toBe(3);
+    expect(await columnCount('#adaptive-beta')).toBe(1);
+    expect(await owner('#adaptive-alpha')).toBe('alpha');
+    expect(await owner('#adaptive-beta')).toBe('beta');
 
     await page.setViewportSize({ width: 900, height: 800 });
-    await expect(adaptive).toHaveAttribute('data-liteship-state', 'medium');
+    await expect(alpha).toHaveAttribute('data-liteship-state', 'medium');
+    await expect(beta).toHaveAttribute('data-liteship-state', 'medium');
+    expect(await columnCount('#adaptive-alpha')).toBe(2);
+    expect(await columnCount('#adaptive-beta')).toBe(2);
 
-    await page.setViewportSize({ width: 500, height: 800 });
-    await expect(adaptive).toHaveAttribute('data-liteship-state', 'compact');
+    // A stateless width evaluation chooses compact at 760, but the 40px
+    // hysteresis band retains medium until the viewport drops below 748. CSS
+    // must follow the runtime marker, not independently re-evaluate width.
+    await page.setViewportSize({ width: 760, height: 800 });
+    await expect(alpha).toHaveAttribute('data-liteship-state', 'medium');
+    expect(await columnCount('#adaptive-alpha')).toBe(2);
+
+    await page.setViewportSize({ width: 740, height: 800 });
+    await expect(alpha).toHaveAttribute('data-liteship-state', 'compact');
+    await expect(beta).toHaveAttribute('data-liteship-state', 'compact');
+    expect(await columnCount('#adaptive-alpha')).toBe(1);
+    expect(await columnCount('#adaptive-beta')).toBe(3);
 
     // The plain data-liteship-boundary div carries no directive marker and no
     // client:* attribute — the scanner must leave it alone.

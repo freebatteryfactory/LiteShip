@@ -39,7 +39,7 @@ import type { MotionTier } from '../evidence/ui-quality.js';
 // quantizer config/options below are those structural twins; the REAL, MEMOIZED
 // constructors are supplied explicitly by the composition root, so adaptive
 // lowering still delegates to the exact configCache-backed `defineQuantizer`
-// (referential identity holds) and the exact `StyleCSSCompiler.compile` — never
+// (referential identity holds) and the exact `StyleCSSCompiler.compileAdaptive` — never
 // a reimplementation and never a load-order-dependent ambient registration.
 
 // ---------------------------------------------------------------------------
@@ -203,7 +203,7 @@ export interface AdaptivePlan {
   readonly boundaryId: ContentAddress;
   readonly styleId: ContentAddress;
   readonly quantizerId?: ContentAddress;
-  /** `StyleCSSCompiler.compile(style).layers` — the cascade-layered scoped CSS. */
+  /** Compiler-owned CSS driven by this Adaptive's runtime state marker. */
   readonly css: string;
   /** The headless boundary attr set (`Adaptive.attrs()`). */
   readonly attrs: Readonly<Record<string, string>>;
@@ -247,14 +247,14 @@ export interface Adaptive {
 // `lowerAdaptive` must LOWER through the real `@liteship/quantizer`
 // `defineQuantizer` (so the returned quantizer is the SAME configCache object
 // the hand-lowered call returns — the P15 referential-identity thesis) and the
-// real `@liteship/compiler` `StyleCSSCompiler.compile`. Both packages DEPEND ON
+// real `@liteship/compiler` `StyleCSSCompiler.compileAdaptive`. Both packages DEPEND ON
 // core, so core cannot import them (a runtime edge closes a build/init cycle).
 // Instead the composition root passes both owners explicitly for each lowering.
 // There is no mutable registry, no side-effect import, and no import-order
 // requirement. The function objects come from the same modules a hand-lowered
 // consumer imports, preserving quantizer configCache identity.
 
-/** The supplied `@liteship/compiler` style→layers compiler (`StyleCSSCompiler.compile(style).layers`). */
+/** The supplied `@liteship/compiler` Adaptive state-marker CSS projection. */
 export interface AdaptiveLowering {
   /** The real memoized `@liteship/quantizer` constructor. */
   readonly defineQuantizer: AdaptiveQuantizerLowering;
@@ -263,8 +263,8 @@ export interface AdaptiveLowering {
     tier: MotionTier | undefined,
     force: readonly QualityTierTarget[] | undefined,
   ) => ReadonlySet<QualityTierTarget>;
-  /** The real `@liteship/compiler` style-layer projection. */
-  readonly compileStyleLayers: (style: StyleType) => string;
+  /** The real `@liteship/compiler` state-marker projection. */
+  readonly compileAdaptiveCss: (style: StyleType) => string;
 }
 
 // ---------------------------------------------------------------------------
@@ -377,11 +377,11 @@ export function lowerAdaptive<const B extends AdaptiveBoundarySpec>(
   );
 
   const attrs = (): Record<string, string> => ({
-    // `StyleCSSCompiler`'s unscoped projection targets `.liteship-styled`.
-    // Carry both runtime and style markers so `attrs()` + `plan().css` is a
-    // complete, directly applicable pair.
+    // `StyleCSSCompiler.compileAdaptive` scopes runtime state rules to this
+    // style content address. The pair is complete without container setup.
     class: 'liteship-adaptive liteship-styled',
     'data-liteship-boundary': serializeBoundaryAttrValue(boundary),
+    'data-liteship-style': style.id,
     'data-liteship-state': boundary.states[0]!,
     'data-liteship-directive': 'adaptive',
   });
@@ -459,7 +459,7 @@ export function lowerAdaptive<const B extends AdaptiveBoundarySpec>(
     boundaryId: boundary.id,
     styleId: style.id,
     ...(quantizer !== undefined ? { quantizerId: quantizer.id } : {}),
-    css: lowering.compileStyleLayers(style),
+    css: lowering.compileAdaptiveCss(style),
     attrs: attrs(),
   });
 

@@ -715,6 +715,36 @@ describe('StyleCSSCompiler', () => {
     const result = StyleCSSCompiler.compile(cardStyle, 'card');
     expect(result.startingStyle).toContain('@starting-style');
   });
+
+  test('compileAdaptive() scopes every runtime-state layer to the style identity', () => {
+    const css = StyleCSSCompiler.compileAdaptive(cardStyle);
+    const scope = `:where(.liteship-styled)[data-liteship-style="${cardStyle.id}"]`;
+
+    expect(css).toContain(`${scope} {`);
+    expect(css).toContain(`${scope}[data-liteship-state="mobile"] {`);
+    expect(css).toContain(`${scope}[data-liteship-state="desktop"] {`);
+    expect(css).toContain('box-shadow: 0px 2px 8px 0px rgba(0,0,0,0.1);');
+    expect(css).toContain('transition: padding, font-size 200ms ease-out;');
+    expect(css).toContain('@starting-style');
+    expect(css).not.toContain('@container');
+  });
+
+  test('compileAdaptive() escapes state labels inside attribute selectors', () => {
+    const boundary = defineBoundary({
+      input: 'custom.state',
+      at: [
+        [0, 'plain'],
+        [1, 'quoted"state'],
+      ] as const,
+    });
+    const style = defineStyle({
+      boundary,
+      base: { properties: { color: 'black' } },
+      states: { 'quoted"state': { properties: { color: 'red' } } },
+    });
+
+    expect(StyleCSSCompiler.compileAdaptive(style)).toContain('[data-liteship-state="quoted\\"state"]');
+  });
 });
 
 // ===========================================================================

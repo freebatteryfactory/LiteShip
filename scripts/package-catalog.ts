@@ -634,7 +634,7 @@ export const PACKAGE_CATALOG = [
     },
     docs: { group: 'runtime', order: 7, surface: true },
     plumbStatus: 'tooling',
-    plumbReason: 'The `liteship` CLI — a developer tool, not a runtime surface.',
+    plumbReason: 'The programmatic command dispatcher and terminal implementation behind the facade-owned executable.',
     apiSurface: true,
     apiSurfaceOrder: 20,
     typedocEntry: 'packages/cli/src/index.ts',
@@ -650,11 +650,11 @@ export const PACKAGE_CATALOG = [
       '@liteship/gauntlet',
       '@liteship/error',
     ],
-    capabilities: ['command-line-interface', 'project-doctor', 'package-smoke'],
+    capabilities: ['command-dispatcher', 'terminal-rendering', 'project-doctor', 'package-smoke'],
     publicSubpaths: ['.'],
     smokeImports: ['@liteship/cli'],
     description:
-      'The `liteship` command-line tool for LiteShip: JSON-in, JSON-out verbs built for AI agents, with a human-friendly terminal mode.',
+      'The programmatic command dispatcher and terminal implementation behind the facade-owned `liteship` executable: JSON-in, JSON-out verbs with a human-friendly terminal mode.',
     keywords: ['liteship', 'cli', 'command-line', 'json', 'typescript'],
   }),
   pkg({
@@ -743,7 +743,7 @@ export const PACKAGE_CATALOG = [
     },
     docs: { group: 'prose-only', order: 0, surface: true },
     plumbStatus: 'tooling',
-    plumbReason: 'The umbrella meta-package — re-exports, no runtime of its own.',
+    plumbReason: 'The curated facade and public executable owner, including facade-owned MCP/LSP dependency composition.',
     apiSurface: false,
     apiSurfaceOrder: null,
     typedocEntry: null,
@@ -773,7 +773,7 @@ export const PACKAGE_CATALOG = [
       '@liteship/web',
       '@liteship/worker',
     ],
-    capabilities: ['curated-facade', 'host-subpaths', 'one-install'],
+    capabilities: ['curated-facade', 'public-executable', 'host-subpaths', 'one-install'],
     publicSubpaths: [
       '.',
       './schema',
@@ -791,7 +791,7 @@ export const PACKAGE_CATALOG = [
     ],
     smokeImports: ['liteship'],
     description:
-      'The curated public facade for LiteShip: one dependency and one import path over the whole `@liteship/*` adaptive rendering stack, with domain subpaths like `liteship/astro` for deeper surfaces.',
+      'The curated public facade and executable owner for LiteShip: one dependency, one command, and one import path over the whole `@liteship/*` adaptive rendering stack.',
     keywords: ['liteship', 'adaptive-rendering', 'framework', 'meta-package', 'typescript'],
   }),
 ] as const satisfies readonly PackageCatalogRecord[];

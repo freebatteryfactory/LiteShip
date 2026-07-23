@@ -45,7 +45,7 @@ export const VERIFY_PHASES: readonly VerifyPhase[] = [
   },
   {
     name: 'quick checks',
-    cmd: ['node', 'packages/cli/bin/liteship.mjs', 'check', '--profile', 'quick'],
+    cmd: ['node', 'packages/liteship/bin/liteship.mjs', 'check', '--profile', 'quick'],
     hint: 'Registry-backed quick profile — the same claim exposed by `liteship check --profile quick`.',
   },
 ];

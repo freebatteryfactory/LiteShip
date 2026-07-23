@@ -50,10 +50,10 @@ Use this index to find the semantic owner; public subpaths and dependency edges 
 | `@liteship/gauntlet` | `packages/gauntlet` | quality-gates, authority-ratchet |
 | `@liteship/audit` | `packages/audit` | repository-audit, consumer-audit, fact-building |
 | `@liteship/command` | `packages/command` | command-catalog, check-registry, context-map |
-| `@liteship/cli` | `packages/cli` | command-line-interface, project-doctor, package-smoke |
+| `@liteship/cli` | `packages/cli` | command-dispatcher, terminal-rendering, project-doctor, package-smoke |
 | `@liteship/mcp-server` | `packages/mcp-server` | mcp-server, agent-tools |
 | `create-liteship` | `packages/create-liteship` | project-scaffolding |
-| `liteship` | `packages/liteship` | curated-facade, host-subpaths, one-install |
+| `liteship` | `packages/liteship` | curated-facade, public-executable, host-subpaths, one-install |
 
 ### Commands
 

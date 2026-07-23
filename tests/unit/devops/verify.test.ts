@@ -11,7 +11,13 @@ describe('workspace verify phase contract', () => {
     };
 
     expect(VERIFY_PHASES.map((phase) => phase.name)).toEqual(['environment', 'build', 'test', 'quick checks']);
-    expect(VERIFY_PHASES.at(-1)?.cmd).toEqual(['node', 'packages/cli/bin/liteship.mjs', 'check', '--profile', 'quick']);
+    expect(VERIFY_PHASES.at(-1)?.cmd).toEqual([
+      'node',
+      'packages/liteship/bin/liteship.mjs',
+      'check',
+      '--profile',
+      'quick',
+    ]);
     await expect(runVerify(spawn, vi.fn())).resolves.toBe(0);
     expect(calls).toEqual(VERIFY_PHASES.map((phase) => [phase.cmd[0], phase.cmd.slice(1)]));
   });

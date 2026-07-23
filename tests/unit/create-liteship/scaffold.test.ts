@@ -107,7 +107,8 @@ describe('create-liteship scaffold', () => {
     expect(index).not.toContain('@quantize');
     expect(index).not.toContain('@style');
     const base = readFileSync(join(result.projectDir, 'src/layouts/Base.astro'), 'utf8');
-    expect(base).toContain('container-name: viewport-width');
+    expect(base).not.toContain('container-name');
+    expect(base).not.toContain('container-type');
     // The astro.config wires the integration from the liteship/astro subpath.
     const config = readFileSync(join(result.projectDir, 'astro.config.ts'), 'utf8');
     expect(config).toContain("import { integration } from 'liteship/astro'");

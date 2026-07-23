@@ -18,7 +18,7 @@
  *                     member is REFERENTIALLY the memoized `defineQuantizer`
  *                     object (the configCache identity thesis).
  *  - CSS-BYTE-EQUAL — the PUBLIC root `adaptive.plan().css` and the direct
- *                     `StyleCSSCompiler.compile(style).layers` hand path are
+ *                     `StyleCSSCompiler.compileAdaptive(style)` hand path are
  *                     byte-equal (Buffer.compare === 0).
  *  - TRACE-EQUAL    — boundary explanation traces plus live quantizer crossing /
  *                     output receipt sequences are deep-equal under one fixed
@@ -207,10 +207,10 @@ describe('defineAdaptive is a pure lowering — content-address, CSS-byte, and t
         const hb = defineBoundary(g.boundary as Parameters<typeof defineBoundary>[0]);
         const hs = defineStyle({ ...g.style, boundary: hb } as Parameters<typeof defineStyle>[0]);
 
-        // Full style → @layer CSS: byte-identical between the adaptive's style
-        // member and the independently hand-lowered style.
+        // Adaptive state-marker CSS: byte-identical between the public plan and
+        // the independently hand-lowered style passed to the compiler owner.
         const aLayers = Buffer.from(a.plan().css, 'utf8');
-        const hLayers = Buffer.from(StyleCSSCompiler.compile(hs).layers, 'utf8');
+        const hLayers = Buffer.from(StyleCSSCompiler.compileAdaptive(hs), 'utf8');
         expect(Buffer.compare(aLayers, hLayers)).toBe(0);
 
         // The @container raw path off the boundary member — compiled against the

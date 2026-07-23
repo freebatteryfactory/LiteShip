@@ -352,6 +352,7 @@ export declare const ThemeCSSCompiler: {
 
 export declare const StyleCSSCompiler: {
   compile(style: Style, componentName?: string): StyleCSSResult;
+  compileAdaptive(style: Style): string;
 };
 
 export declare const ComponentCSSCompiler: {

@@ -22,8 +22,8 @@ export const GENERATED_PACKAGE_PLUMB = {
   "@liteship/gauntlet": { status: "tooling", reason: "The rigor engine — gates/findings/assurance/authority-ratchet; build/CI tooling, not site runtime." },
   "@liteship/audit": { status: "tooling", reason: "The audit engine — build/CI tooling." },
   "@liteship/command": { status: "tooling", reason: "CLI command catalog/host — tooling." },
-  "@liteship/cli": { status: "tooling", reason: "The `liteship` CLI — a developer tool, not a runtime surface." },
+  "@liteship/cli": { status: "tooling", reason: "The programmatic command dispatcher and terminal implementation behind the facade-owned executable." },
   "@liteship/mcp-server": { status: "tooling", reason: "MCP server — a developer-assistant surface, not site runtime." },
   "create-liteship": { status: "tooling", reason: "The scaffolder — a one-shot CLI, not runtime." },
-  "liteship": { status: "tooling", reason: "The umbrella meta-package — re-exports, no runtime of its own." },
+  "liteship": { status: "tooling", reason: "The curated facade and public executable owner, including facade-owned MCP/LSP dependency composition." },
 } as const;

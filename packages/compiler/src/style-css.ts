@@ -13,6 +13,7 @@
 
 import type { Style, StyleLayer, ShadowLayer } from '@liteship/core';
 import { CSSCompiler } from './css.js';
+import { escapeCssString } from './css-string.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -193,6 +194,42 @@ function compile(style: Style, componentName?: string): StyleCSSResult {
 }
 
 /**
+ * Compile a {@link Style} for the high-level Adaptive runtime contract.
+ *
+ * Unlike {@link compile}, which intentionally projects boundary states to
+ * native `@container` rules for low-level compiler consumers, this projection
+ * follows the `data-liteship-state` attribute written by the Adaptive runtime.
+ * The style content address scopes every selector, so independently authored
+ * Adaptives with the same state names cannot style each other.
+ *
+ * The returned string is self-contained: it includes the component layer and
+ * the matching entry `@starting-style` block when one is authored.
+ */
+function compileAdaptive(style: Style): string {
+  const selector = `:where(.liteship-styled)[data-liteship-style="${escapeCssString(style.id)}"]`;
+  const layerContent: string[] = [];
+  const transitionProps = buildTransition(style);
+  const baseWithTransition: StyleLayer = {
+    ...style.base,
+    properties: { ...style.base.properties, ...transitionProps },
+  };
+
+  layerContent.push(...emitStyleLayerBlock(baseWithTransition, selector, ''));
+
+  for (const [state, stateLayer] of Object.entries(style.states ?? {})) {
+    if (stateLayer === undefined) continue;
+    const stateSelector = `${selector}[data-liteship-state="${escapeCssString(state)}"]`;
+    layerContent.push(...emitStyleLayerBlock(stateLayer, stateSelector, ''));
+  }
+
+  const layers = [`@layer liteship.components {`, ...layerContent.map((line) => (line ? `  ${line}` : '')), `}`].join(
+    '\n',
+  );
+  const startingStyle = emitStartingStyle(style.base, selector);
+  return [layers, startingStyle].filter((part) => part.length > 0).join('\n\n');
+}
+
+/**
  * Style CSS compiler namespace.
  *
  * Compiles a {@link Style} into cascade-layered, scoped CSS using
@@ -203,4 +240,6 @@ function compile(style: Style, componentName?: string): StyleCSSResult {
 export const StyleCSSCompiler = {
   /** Compile a style definition into scoped, layered CSS. */
   compile,
+  /** Compile a self-contained Adaptive projection driven by `data-liteship-state`. */
+  compileAdaptive,
 } as const;

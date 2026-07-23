@@ -1,7 +1,7 @@
 {
   "name": "@liteship/cli",
   "version": "0.18.0",
-  "description": "The `liteship` command-line tool for LiteShip: JSON-in, JSON-out verbs built for AI agents, with a human-friendly terminal mode.",
+  "description": "The programmatic command dispatcher and terminal implementation behind the facade-owned `liteship` executable: JSON-in, JSON-out verbs with a human-friendly terminal mode.",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",
   "repository": {
@@ -32,7 +32,6 @@
   "files": [
     "dist",
     "src",
-    "bin",
     "fragments",
     "LICENSE"
   ],

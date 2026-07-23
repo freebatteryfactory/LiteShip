@@ -75,7 +75,7 @@ const preview = layout.explain(940);
 <style is:inline set:html={plan.css}></style>
 ```
 
-Run `pnpm dev` and drag the window edge. The state marker changes `mobile` → `tablet` → `desktop`, while the emitted CSS comes from the same definition. Use `layout.explain(currentWidth)` when you need the selected state, satisfied thresholds, style source, admitted targets, and aggregate identity. Do not hand-author `data-liteship-*`; `attrs()` owns that serialization contract.
+Run `pnpm dev` and drag the window edge. The state marker changes `mobile` → `tablet` → `desktop`, and the style-address-scoped CSS follows that exact runtime marker—there is no query-container setup to add. Use `layout.explain(currentWidth)` when you need the selected state, satisfied thresholds, style source, admitted targets, and aggregate identity. Do not hand-author `data-liteship-*`; `attrs()` owns that serialization contract.
 
 ## Generated UI with a component catalog
 

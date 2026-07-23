@@ -211,6 +211,7 @@ describe('partitionRuntimeClosureSpecifiers — catalog-owned runtime authority'
   const subpaths = [
     { packageName: '@liteship/core', specifier: '@liteship/core', runtimeTarget: './dist/index.js' },
     { packageName: '@liteship/_spine', specifier: '@liteship/_spine', runtimeTarget: './stub.js' },
+    { packageName: '@liteship/_spine', specifier: '@liteship/_spine/core', runtimeTarget: './stub.js' },
     { packageName: '@liteship/astro', specifier: '@liteship/astro/Adaptive.astro', runtimeTarget: null },
   ] as const;
 
@@ -221,7 +222,13 @@ describe('partitionRuntimeClosureSpecifiers — catalog-owned runtime authority'
         { name: '@liteship/_spine', runtimeSurface: 'types-only' },
         { name: '@liteship/astro', runtimeSurface: 'module' },
       ]),
-    ).toEqual({ imports: ['@liteship/core'], refusals: ['@liteship/_spine'] });
+    ).toEqual({
+      imports: ['@liteship/core'],
+      refusals: [
+        { packageName: '@liteship/_spine', specifier: '@liteship/_spine' },
+        { packageName: '@liteship/_spine', specifier: '@liteship/_spine/core' },
+      ],
+    });
   });
 
   it('fails closed when an exported package has no catalog classification', () => {

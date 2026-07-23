@@ -1,33 +1,69 @@
 ---
 /**
- * Minimal page to validate @liteship/astro integration builds without errors.
- * The detect script should be injected into <head> by the integration,
- * and the Adaptive shell should serialize its boundary + directive
- * marker for the injected boot scanner.
+ * Real Astro golden path: the public facade's attrs and CSS plan are the only
+ * authoring inputs. The browser E2E proves the runtime state marker selects the
+ * matching, style-address-scoped CSS without a hidden query-container setup.
  */
-import Adaptive from '@liteship/astro/Adaptive';
-import { defineBoundary } from '@liteship/core';
+import { defineAdaptive } from 'liteship';
 
-const layout = defineBoundary({
+const boundary = {
   input: 'viewport.width',
-  at: [
-    [0, 'compact'],
-    [768, 'medium'],
-    [1280, 'full'],
-  ] as const,
+  at: [[0, 'compact'], [768, 'medium'], [1280, 'full']],
+  hysteresis: 40,
+} as const;
+
+const alpha = defineAdaptive({
+  boundary,
+  style: {
+    base: {
+      properties: {
+        display: 'grid',
+        'grid-template-columns': '1fr',
+        '--adaptive-owner': 'alpha',
+      },
+    },
+    states: {
+      medium: { properties: { 'grid-template-columns': 'repeat(2, 1fr)' } },
+      full: { properties: { 'grid-template-columns': 'repeat(3, 1fr)' } },
+    },
+  },
 });
+
+const beta = defineAdaptive({
+  boundary,
+  style: {
+    base: {
+      properties: {
+        display: 'grid',
+        'grid-template-columns': 'repeat(3, 1fr)',
+        '--adaptive-owner': 'beta',
+      },
+    },
+    states: {
+      medium: { properties: { 'grid-template-columns': 'repeat(2, 1fr)' } },
+      full: { properties: { 'grid-template-columns': '1fr' } },
+    },
+  },
+});
+
+const alphaPlan = alpha.plan();
+const betaPlan = beta.plan();
 ---
 
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <title>liteship integration test</title>
+    <style is:inline set:html={`${alphaPlan.css}\n${betaPlan.css}`}></style>
   </head>
   <body>
     <h1>liteship integration test</h1>
-    <Adaptive boundary={layout}>
-      <p>Adaptive boundary test element</p>
-    </Adaptive>
+    <main id="adaptive-alpha" {...alpha.attrs()}>
+      <span>one</span><span>two</span><span>three</span>
+    </main>
+    <aside id="adaptive-beta" {...beta.attrs()}>
+      <span>one</span><span>two</span><span>three</span>
+    </aside>
     <div data-liteship-boundary='{"id":"test","input":"viewport.width","thresholds":[0,768,1280],"states":["compact","medium","full"]}'>
       <p>Plain boundary test element</p>
     </div>

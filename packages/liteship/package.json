@@ -1,7 +1,7 @@
 {
   "name": "liteship",
   "version": "0.18.0",
-  "description": "The curated public facade for LiteShip: one dependency and one import path over the whole `@liteship/*` adaptive rendering stack, with domain subpaths like `liteship/astro` for deeper surfaces.",
+  "description": "The curated public facade and executable owner for LiteShip: one dependency, one command, and one import path over the whole `@liteship/*` adaptive rendering stack.",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",
   "repository": {

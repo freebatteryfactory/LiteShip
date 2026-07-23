@@ -47,10 +47,10 @@ export const hero = defineAdaptive({
 From that one value:
 
 - `hero.attrs()` returns the host attributes that identify and activate it.
-- `hero.plan()` returns matching compiled CSS plus member identities.
+- `hero.plan()` returns matching, style-address-scoped CSS plus member identities.
 - `hero.explain(940)` reports the selected state, satisfied thresholds, style provenance, capability tier, and aggregate identity.
 
-These are projections of the real underlying boundary, style, quantizer, token, and theme constructors. The facade does not maintain a parallel semantic model.
+These are projections of the real underlying boundary, style, quantizer, token, and theme constructors. The facade does not maintain a parallel semantic model. The runtime writes `data-liteship-state`; the plan's compiler-owned selectors follow that exact marker and scope it with `data-liteship-style`, so hysteresis and activation policy cannot drift from the visible CSS and unrelated definitions cannot style one another.
 
 ## Engine vocabulary after the first feature
 

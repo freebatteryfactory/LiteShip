@@ -222,7 +222,7 @@ jobs:
 
           for pkg in $(jq -r '.packages[]' scripts/ci/publish-roster.json); do
             echo "::group::$pkg"
-            node packages/cli/bin/liteship.mjs ship --filter "$pkg" --provenance $DRY_RUN_FLAG
+            node packages/liteship/bin/liteship.mjs ship --filter "$pkg" --provenance $DRY_RUN_FLAG
             if [ "$ATTACH" = "true" ]; then
               shopt -s nullglob
               capsules=(packages/*/*-"$VERSION".shipcapsule.cbor)

@@ -144,7 +144,10 @@ export interface ClosurePackageSurface {
 /** Runtime paths split into positive imports and deliberate type-only refusals. */
 export interface RuntimeClosurePartition {
   readonly imports: readonly string[];
-  readonly refusals: readonly string[];
+  readonly refusals: readonly {
+    readonly packageName: string;
+    readonly specifier: string;
+  }[];
 }
 
 /**
@@ -158,14 +161,18 @@ export function partitionRuntimeClosureSpecifiers(
 ): RuntimeClosurePartition {
   const surfaces = new Map(packages.map((pkg) => [pkg.name, pkg.runtimeSurface] as const));
   const imports: string[] = [];
-  const refusals: string[] = [];
+  const refusals: { packageName: string; specifier: string }[] = [];
   for (const entry of subpaths) {
     if (entry.runtimeTarget === null) continue;
     const surface = surfaces.get(entry.packageName);
     if (surface === undefined) {
       throw IntegrityError('package-smoke', `public subpath ${entry.specifier} has no package-catalog runtime surface`);
     }
-    (surface === 'types-only' ? refusals : imports).push(entry.specifier);
+    if (surface === 'types-only') {
+      refusals.push({ packageName: entry.packageName, specifier: entry.specifier });
+    } else {
+      imports.push(entry.specifier);
+    }
   }
   return { imports, refusals };
 }

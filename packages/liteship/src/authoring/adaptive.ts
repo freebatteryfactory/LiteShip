@@ -17,7 +17,7 @@ import { StyleCSSCompiler } from '@liteship/compiler';
 const lowering: AdaptiveLowering = {
   defineQuantizer: defineQuantizer as AdaptiveLowering['defineQuantizer'],
   resolveQuantizerTargets,
-  compileStyleLayers: (style: Style): string => StyleCSSCompiler.compile(style).layers,
+  compileAdaptiveCss: (style: Style): string => StyleCSSCompiler.compileAdaptive(style),
 };
 
 /** Define adaptive intent using the real core, quantizer, and compiler owners. */

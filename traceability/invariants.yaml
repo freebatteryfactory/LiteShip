@@ -73,7 +73,7 @@ invariants:
     level: L4
     category: content-address
   - id: INV-ADAPTIVE-CSS-BYTE-EQUAL
-    law: "The public liteship root adaptive plan compiles to BYTE-IDENTICAL CSS as the independently hand-lowered path: adaptive.plan().css equals StyleCSSCompiler.compile(style).layers and the boundary container projection remains byte-equal (Buffer.compare === 0) — the facade adds no CSS semantics of its own."
+    law: "The public liteship root adaptive plan compiles to BYTE-IDENTICAL state-marker CSS as the independently hand-lowered path: adaptive.plan().css equals StyleCSSCompiler.compileAdaptive(style), every selector is scoped by style identity, and browser-computed style follows the runtime data-liteship-state marker even through hysteresis."
     level: L4
     category: content-address
   - id: INV-ADAPTIVE-TRACE-EQUAL

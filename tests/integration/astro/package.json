@@ -4,6 +4,7 @@
   "type": "module",
   "dependencies": {
     "astro": "^7.0.0",
-    "@liteship/astro": "workspace:*"
+    "@liteship/astro": "workspace:*",
+    "liteship": "workspace:*"
   }
 }

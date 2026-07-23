@@ -123,6 +123,10 @@ export async function journeyAddFeature(packed: PackedWorkspace): Promise<Journe
       heroHtml!.includes(`data-liteship-directive="${predicted.plan.attrs['data-liteship-directive']}"`),
       'built directive marker did not match installed defineAdaptive().attrs()',
     );
+    journeyAssert(
+      heroHtml!.includes(`data-liteship-style="${predicted.plan.attrs['data-liteship-style']}"`),
+      'built style scope did not match installed defineAdaptive().attrs()',
+    );
 
     const stateMatch = /data-liteship-state="([^"]*)"/.exec(heroHtml!);
     journeyAssert(stateMatch !== null, 'hero page emitted no data-liteship-state attribute');
@@ -139,7 +143,7 @@ export async function journeyAddFeature(packed: PackedWorkspace): Promise<Journe
       name,
       status: 'pass',
       detail:
-        `packed root defineAdaptive authored + built the hero; attrs, state, and ${predicted.plan.css.length} CSS bytes ` +
+        `packed root defineAdaptive authored + built the hero; attrs, scoped state, and ${predicted.plan.css.length} CSS bytes ` +
         'match the installed plan()/explain() projections',
       notes: ['no workspace import and no ambient compiler registration'],
     };

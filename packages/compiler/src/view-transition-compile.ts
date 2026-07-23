@@ -26,6 +26,8 @@
  * @module
  */
 
+import { escapeCssString } from './css-string.js';
+
 /** Input to {@link compileViewTransition}. */
 export interface ViewTransitionCompileInput {
   /** The boundary/target name (e.g. `'hero'`) — seeds the `view-transition-name` ident. */
@@ -81,24 +83,6 @@ function viewTransitionNameFor(boundary: string): string {
     .replace(/[^A-Za-z0-9_-]+/g, '-')
     .replace(/^-+|-+$/g, '');
   return `liteship-vt-${slug.length > 0 ? slug : 'boundary'}`;
-}
-
-/**
- * Escape a value for interpolation inside a DOUBLE-QUOTED CSS string (here, the
- * default attribute-selector value). A raw `"` closes the string and can
- * terminate the rule, `\` starts an escape, and a raw newline/CR/FF is invalid
- * inside a CSS string — so backslash + quote are backslash-escaped and the line
- * terminators use the CSS hex-escape form (`\A `/`\D `/`\C `). Without this a
- * boundary like `hero"card` would emit `[data-liteship-boundary="hero"card"]` and the
- * `view-transition-name` assignment would be silently dropped (CSS Syntax §4.3.5).
- */
-function escapeCssString(value: string): string {
-  return value.replace(/[\\"\n\r\f]/g, (ch) => {
-    if (ch === '\n') return '\\A ';
-    if (ch === '\r') return '\\D ';
-    if (ch === '\f') return '\\C ';
-    return `\\${ch}`;
-  });
 }
 
 /**

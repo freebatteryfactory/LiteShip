@@ -38,10 +38,10 @@ Product naming for surrounding docs: [GLOSSARY.md](./GLOSSARY.md).
 | `@liteship/gauntlet` | verification | `.` | quality-gates, authority-ratchet |
 | `@liteship/audit` | verification | `.` | repository-audit, consumer-audit, fact-building |
 | `@liteship/command` | tooling | `.`, `./host`, `./host-browser`, `./invariants` | command-catalog, check-registry, context-map |
-| `@liteship/cli` | tooling | `.` | command-line-interface, project-doctor, package-smoke |
+| `@liteship/cli` | tooling | `.` | command-dispatcher, terminal-rendering, project-doctor, package-smoke |
 | `@liteship/mcp-server` | tooling | `.` | mcp-server, agent-tools |
 | `create-liteship` | tooling | `.` | project-scaffolding |
-| `liteship` | facade | `.`, `./schema`, `./reactive`, `./motion`, `./graph`, `./media`, `./evidence`, `./compiler`, `./runtime`, `./astro`, `./vite`, `./testing`, `./migrate` | curated-facade, host-subpaths, one-install |
+| `liteship` | facade | `.`, `./schema`, `./reactive`, `./motion`, `./graph`, `./media`, `./evidence`, `./compiler`, `./runtime`, `./astro`, `./vite`, `./testing`, `./migrate` | curated-facade, public-executable, host-subpaths, one-install |
 <!-- END PACKAGE-SURFACE-INDEX -->
 
 ---

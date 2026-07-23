@@ -332,6 +332,7 @@ describe('defineAdaptive.attrs / plan', () => {
     const attrs = adaptive.attrs();
     expect(attrs['class']).toBe('liteship-adaptive liteship-styled');
     expect(attrs['data-liteship-directive']).toBe('adaptive');
+    expect(attrs['data-liteship-style']).toBe(adaptive.style.id);
     expect(attrs['data-liteship-state']).toBe('sm');
     // The boundary payload comes from the ONE core serializer.
     expect(attrs['data-liteship-boundary']).toBe(serializeBoundaryAttrValue(adaptive.boundary));
@@ -380,6 +381,9 @@ describe('defineAdaptive.attrs / plan', () => {
     expect(plan.quantizerId).toBe(adaptive.quantizer?.id);
     expect(typeof plan.css).toBe('string');
     expect(plan.css).toContain('@layer liteship.components');
+    expect(plan.css).toContain(`[data-liteship-style="${adaptive.style.id}"]`);
+    expect(plan.css).toContain('[data-liteship-state="lg"]');
+    expect(plan.css).not.toContain('@container');
     expect(plan.attrs).toEqual(adaptive.attrs());
   });
 });

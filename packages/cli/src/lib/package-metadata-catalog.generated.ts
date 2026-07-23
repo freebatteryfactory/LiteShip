@@ -86,7 +86,7 @@ export const GENERATED_PACKAGE_METADATA = {
     keywords: ["liteship", "cli", "mcp", "command-registry", "typescript"],
   },
   "@liteship/cli": {
-    description: "The `liteship` command-line tool for LiteShip: JSON-in, JSON-out verbs built for AI agents, with a human-friendly terminal mode.",
+    description: "The programmatic command dispatcher and terminal implementation behind the facade-owned `liteship` executable: JSON-in, JSON-out verbs with a human-friendly terminal mode.",
     keywords: ["liteship", "cli", "command-line", "json", "typescript"],
   },
   "@liteship/mcp-server": {
@@ -98,7 +98,7 @@ export const GENERATED_PACKAGE_METADATA = {
     keywords: ["create-liteship", "liteship", "scaffold", "astro", "typescript"],
   },
   "liteship": {
-    description: "The curated public facade for LiteShip: one dependency and one import path over the whole `@liteship/*` adaptive rendering stack, with domain subpaths like `liteship/astro` for deeper surfaces.",
+    description: "The curated public facade and executable owner for LiteShip: one dependency, one command, and one import path over the whole `@liteship/*` adaptive rendering stack.",
     keywords: ["liteship", "adaptive-rendering", "framework", "meta-package", "typescript"],
   },
 } as const;

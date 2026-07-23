@@ -453,14 +453,15 @@ for (const specifier of imports) {
     process.exit(1);
   }
 }
-for (const specifier of refusals) {
+for (const refusal of refusals) {
+  const { packageName, specifier } = refusal;
   try {
     await import(specifier);
     process.stdout.write(specifier + '\\t' + 'type-only package unexpectedly allowed a runtime import');
     process.exit(1);
   } catch (error) {
     const message = error && error.message ? error.message : String(error);
-    if (!message.includes(specifier + ' is type-only') || !message.includes('no runtime exports')) {
+    if (!message.includes(packageName + ' is type-only') || !message.includes('no runtime exports')) {
       process.stdout.write(specifier + '\\t' + 'runtime refusal was not the packed type-only teaching contract: ' + message);
       process.exit(1);
     }

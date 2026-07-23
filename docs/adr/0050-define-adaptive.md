@@ -29,7 +29,7 @@ the value WITHOUT adding a parallel implementation.
 constructors and returns their outputs verbatim — it reimplements nothing:
 
 - `boundary = defineBoundary(spec.boundary)`
-- `style = defineStyle({ boundary, ...spec.style })`
+- `style = defineStyle({ ...spec.style, boundary })` (the generated boundary is authoritative)
 - `quantizer = spec.quantize ? defineQuantizer(boundary, spec.quantize) : undefined`
 - `tokens = spec.tokens?.map(defineToken)`, `theme = spec.theme && defineTheme(spec.theme)`
 - `id = fnv1aBytes(CanonicalCbor.encode({ _tag: 'AdaptiveDef', _version: 1, boundary: boundary.id, style: style.id, quantizer: quantizer?.id ?? null, tokens: …, theme: … }))`
@@ -52,15 +52,23 @@ serializer, no drift, and the astro byte-identical pin (`tests/unit/astro`) stil
 holds. This resolves the layering the right direction: the shared identity lives
 in core (which astro already depends on), never duplicated upward.
 
-**The cycle seam.** `@liteship/quantizer` and `@liteship/compiler` both DEPEND ON
-core, so core cannot import them back (a runtime edge closes a `tsc --build`
-project-reference cycle and crashes core's module init). Each package instead
-REGISTERS its constructor with core at load
-(`_registerAdaptiveQuantizerLowering`, `_registerAdaptiveStyleLayerCompiler`) —
-the same module instance a consumer imports, so the configCache is shared and
-referential identity survives with zero new core→(quantizer|compiler) edges. Core
-types the injected constructors against structural twins
-(`AdaptiveQuantizerConfig`), the same discipline `schema/quantizer-types.ts` uses.
+**The explicit composition seam.** `@liteship/quantizer` and
+`@liteship/compiler` both depend on core, so core cannot import them back (a
+runtime edge would close the project-reference cycle). Core therefore exposes a
+pure `lowerAdaptive(spec, lowering)` kernel typed against structural twins. The
+`liteship` facade is the composition root: on every call it explicitly supplies
+the real memoized `defineQuantizer`, the real target resolver, and the real
+compiler projection. There is no mutable registry, side-effect import, or
+import-order contract. The same module instance a hand-lowered consumer imports
+is supplied directly, so quantizer config-cache referential identity survives.
+
+**The state-marker CSS projection.** The paved road is driven by the runtime's
+discrete state, not by an independently evaluated CSS query. `attrs()` carries
+both `data-liteship-state` and `data-liteship-style=<style.id>`.
+`StyleCSSCompiler.compileAdaptive(style)` emits a self-contained component layer
+whose base, state, pseudo, shadow, transition, and starting-style rules all use
+that style-address scope. The low-level `StyleCSSCompiler.compile(style)` native
+container projection remains available unchanged for direct compiler consumers.
 
 **New types.** `ConstraintTrace` is introduced — the per-threshold row of
 `explain()` (`{ index, threshold, state, satisfied }`, where `state` is
@@ -77,9 +85,10 @@ off the adaptive's members — non-tautological):
 
 - `INV-ADAPTIVE-LOWERING-PURE` — member ids equal, member defs deep-equal, and the
   quantizer member is referentially the memoized `defineQuantizer` object.
-- `INV-ADAPTIVE-CSS-BYTE-EQUAL` — `StyleCSSCompiler.compile(style).layers` and the
-  `CSSCompiler.compile(boundary, states).raw` container path are byte-equal
-  (`Buffer.compare === 0`).
+- `INV-ADAPTIVE-CSS-BYTE-EQUAL` — public `adaptive.plan().css` and an
+  independently hand-lowered `StyleCSSCompiler.compileAdaptive(style)` call are
+  byte-equal (`Buffer.compare === 0`). The native boundary container projection
+  retains its separate lower-level equality proof.
 - `INV-ADAPTIVE-TRACE-EQUAL` — `Boundary.evaluateBatch` over a below/at/above
   sweep agrees index-for-index, and the content-addressed `traceDigest` of the
   `evaluateResult` sweep is identical.
@@ -94,27 +103,30 @@ off the adaptive's members — non-tautological):
   reshaped config, a recomputed id, an extra CSS byte) reds an L4 property gate.
 - The boundary-attr serializer is single-sourced; the astro component and the
   headless core path can never disagree on `data-liteship-boundary`.
-- `defineAdaptive` with a `quantize` field REQUIRES `@liteship/quantizer` loaded
-  (and `plan()` requires `@liteship/compiler`) so the seam is populated. This is a
-  deliberate load-order contract with a clear throw, not a silent fallback — the
-  alternative (a core-local quantizer) is exactly the parallel impl this ADR
-  forbids.
+- `attrs()` plus `plan().css` is self-contained: the runtime marker that records
+  hysteresis and activation decisions is the same marker the CSS selects, and
+  style-address scoping prevents cross-definition bleed.
+- Root `defineAdaptive(...).plan()` works with one `liteship` import because the
+  facade explicitly owns composition; direct core consumers must supply a
+  lowering object to `lowerAdaptive` rather than relying on ambient state.
 - The core `.` and `liteship` `.` barrels GAIN `defineAdaptive` (value) and
   `Adaptive` (type-only). Additive, minor-compatible; the api-surface snapshot was
   regenerated, no semver bump.
 
 ## Evidence
 
-- `packages/core/src/authoring/adaptive.ts` — the facade, the aggregate-id kernel
-  (`fnv1aBytes(CanonicalCbor.encode(...))`), the boundary-attr serializer, and the
-  registration seams.
-- `packages/quantizer/src/adaptive-lowering.ts`,
-  `packages/compiler/src/adaptive-lowering.ts` — the load-time registrations that
-  keep the configCache/compiler identity shared with zero back-imports.
+- `packages/core/src/authoring/adaptive.ts` — the lowering kernel, aggregate-id
+  kernel, boundary-attr serializer, and structural composition contract.
+- `packages/liteship/src/authoring/adaptive.ts` — the explicit facade composition
+  root supplying quantizer and compiler owners.
+- `packages/compiler/src/style-css.ts` — native container and Adaptive
+  state-marker projections sharing one style-layer serializer.
 - `tests/property/adaptive-lowering-equivalence.prop.test.ts` — the three proofs,
   200 runs each at seed `0xada9741e`.
 - `tests/unit/core/authoring/adaptive.test.ts` — the unit pin, including the
   `adaptive.quantizer === hq` referential assertion.
+- `tests/e2e/astro-directives.e2e.ts` — real-browser attrs + plan proof,
+  cross-definition isolation, and hysteresis-driven computed CSS.
 - `traceability/invariants.yaml` / `traceability/testing-ledger.yaml` — the three
   L4 laws enrolled and traced (bridge green).
 
@@ -126,8 +138,13 @@ off the adaptive's members — non-tautological):
 - **Address the adaptive by its member DATA rather than member IDS** — would
   duplicate the sub-addressing the constructors already do and diverge from the
   house content-address shape (id-of-ids).
-- **A core-local quantizer/compiler to avoid the load-order contract** — a
-  parallel impl by another name; loses the referential-identity thesis.
+- **Ambient load-time registration** — makes correctness depend on import order
+  and lets the root facade advertise a method it has not actually wired.
+- **A core-local quantizer/compiler** — a parallel implementation by another
+  name; loses the referential-identity thesis.
+- **Global or self-query-container setup for the paved road** — either hides a
+  prerequisite or re-evaluates a different signal than the runtime. The marker
+  projection follows the runtime decision directly.
 - **Duplicate the boundary-attr JSON in a headless core path** — a third copy of
   the astro serializer; hoisting to one core function is the whole point of the
   layering decision.
@@ -143,8 +160,8 @@ off the adaptive's members — non-tautological):
 - `packages/core/src/authoring/boundary.ts:287` — `defineBoundary`
 - `packages/core/src/authoring/style.ts:222` — `defineStyle`
 - `packages/quantizer/src/quantizer.ts:462` — `defineQuantizer` (configCache)
-- `packages/compiler/src/style-css.ts:151`, `packages/compiler/src/css.ts` —
-  `StyleCSSCompiler.compile`, `CSSCompiler.compile`
+- `packages/compiler/src/style-css.ts`, `packages/compiler/src/css.ts` —
+  `StyleCSSCompiler.compileAdaptive`, `StyleCSSCompiler.compile`, `CSSCompiler.compile`
 - `packages/core/src/simulation/trace.ts:84` — `traceDigest`
 - `packages/astro/src/Adaptive.ts` — `adaptiveAttrs` (the byte-identical pin)
 - ADR-0044 (brand consolidation), ADR-0045 (source grammar), ADR-0048 (export budget)

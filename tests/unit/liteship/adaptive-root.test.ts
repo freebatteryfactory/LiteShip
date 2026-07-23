@@ -28,6 +28,7 @@ describe('liteship root Adaptive composition', () => {
     const adaptive = defineAdaptive(spec);
 
     expect(adaptive.attrs()['data-liteship-directive']).toBe('adaptive');
+    expect(adaptive.attrs()['data-liteship-style']).toBe(adaptive.style.id);
     expect(adaptive.explain(800).boundary.state).toBe('md');
     expect(adaptive.explain(800).quantized?.['css']?.value).toEqual({ color: 'white' });
     expect(adaptive.plan()).toMatchObject({
@@ -37,6 +38,7 @@ describe('liteship root Adaptive composition', () => {
       attrs: adaptive.attrs(),
     });
     expect(adaptive.plan().css).toContain('@layer liteship.components');
+    expect(adaptive.plan().css).toContain('[data-liteship-state="md"]');
   });
 
   test('Computed<T> is the public type matching computed()', async () => {

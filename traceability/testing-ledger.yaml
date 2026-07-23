@@ -62,6 +62,7 @@ traces:
   - id: INV-ADAPTIVE-CSS-BYTE-EQUAL
     tests:
       - 'tests/property/adaptive-lowering-equivalence.prop.test.ts::INV-ADAPTIVE-CSS-BYTE-EQUAL: the public adaptive plan CSS is byte-identical to the hand-lowered compiler output'
+      - 'tests/e2e/astro-directives.e2e.ts::attrs plus plan CSS follow runtime state without cross-definition bleed'
   - id: INV-ADAPTIVE-TRACE-EQUAL
     tests:
       - 'tests/property/adaptive-lowering-equivalence.prop.test.ts::INV-ADAPTIVE-TRACE-EQUAL: public explanations and live crossing/output receipts equal the hand-lowered runtime sweep'
