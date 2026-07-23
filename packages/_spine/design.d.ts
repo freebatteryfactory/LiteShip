@@ -47,7 +47,10 @@ export declare function defineToken<N extends string>(config: {
   /** Single-value shorthand — derives `axes: []`, `values: {}`, `fallback: value`. */
   readonly value: unknown;
 }): Token<N, readonly []>;
-export declare function defineToken<N extends string, const A extends readonly [string, ...string[]] = readonly ['default']>(config: {
+export declare function defineToken<
+  N extends string,
+  const A extends readonly [string, ...string[]] = readonly ['default'],
+>(config: {
   readonly name: N;
   readonly category: Token['category'];
   /** Default: ['default'] — single-value tokens need no axis declaration. */
@@ -86,7 +89,7 @@ export interface StyleLayer {
 }
 
 /** `defineStyle` transition input — plain `number` durations are branded with {@link Millis} internally. */
-export interface StyleTransitionConfig {
+interface StyleTransitionConfig {
   readonly duration: number;
   readonly easing?: string;
   readonly properties?: readonly string[];

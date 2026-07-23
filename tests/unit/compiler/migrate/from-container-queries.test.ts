@@ -70,12 +70,15 @@ describe('fromContainerQueries — explicit input ownership', () => {
   });
 
   it('lets differently scaled containers select distinct host inputs', () => {
-    const result = fromContainerQueries(`
+    const result = fromContainerQueries(
+      `
       @container compact (min-width: 40em) { .x {} }
       @container spacious (min-width: 40em) { .y {} }
-    `, {
-      resolveInput: ({ name, axis, unit }) => `custom:container.${name}.${axis}.${unit}`,
-    });
+    `,
+      {
+        resolveInput: ({ name, axis, unit }) => `custom:container.${name}.${axis}.${unit}`,
+      },
+    );
     expect(result.boundaries.map((boundary) => boundary.input)).toEqual([
       'custom:container.compact.width.em',
       'custom:container.spacious.width.em',
@@ -84,12 +87,15 @@ describe('fromContainerQueries — explicit input ownership', () => {
   });
 
   it('refuses one container state chain when its authored units resolve to different signals', () => {
-    const result = fromContainerQueries(`
+    const result = fromContainerQueries(
+      `
       @container sidebar (min-width: 400px) { .x {} }
       @container sidebar (min-width: 40em) { .y {} }
-    `, {
-      resolveInput: ({ name, axis, unit }) => `custom:container.${name}.${axis}.${unit}`,
-    });
+    `,
+      {
+        resolveInput: ({ name, axis, unit }) => `custom:container.${name}.${axis}.${unit}`,
+      },
+    );
     expect(result.boundaries).toEqual([]);
     expect(result.diagnostics).toContainEqual(
       expect.objectContaining({ code: MIGRATE_CODES.unsupportedAtRule, severity: 'error' }),

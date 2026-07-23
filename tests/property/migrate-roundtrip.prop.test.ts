@@ -69,9 +69,7 @@ describe('fromMediaQueries — width-sweep semantic equivalence', () => {
     const prefix = 'bp';
     fc.assert(
       fc.property(arbBreakpoints, (thresholds) => {
-        const css = thresholds
-          .map((n) => `@media (min-width: ${n}px) { .x { --n: ${n}; } }`)
-          .join('\n');
+        const css = thresholds.map((n) => `@media (min-width: ${n}px) { .x { --n: ${n}; } }`).join('\n');
 
         const { boundaries, diagnostics } = fromMediaQueries(css, { statePrefix: prefix });
 
@@ -96,26 +94,22 @@ describe('fromMediaQueries — width-sweep semantic equivalence', () => {
 describe('breakpoint migration — relative-unit and connective refusal properties', () => {
   test('relative thresholds never acquire an implicit 16px conversion', () => {
     fc.assert(
-      fc.property(
-        fc.integer({ min: 1, max: 200 }),
-        fc.constantFrom('em' as const, 'rem' as const),
-        (value, unit) => {
-          const media = fromMediaQueries(`@media (min-width: ${value}${unit}) { .x {} }`);
-          const tailwind = fromTailwindTheme(`@theme { --breakpoint-test: ${value}${unit}; }`);
-          const container = fromContainerQueries(`@container (min-width: ${value}${unit}) { .x {} }`);
+      fc.property(fc.integer({ min: 1, max: 200 }), fc.constantFrom('em' as const, 'rem' as const), (value, unit) => {
+        const media = fromMediaQueries(`@media (min-width: ${value}${unit}) { .x {} }`);
+        const tailwind = fromTailwindTheme(`@theme { --breakpoint-test: ${value}${unit}; }`);
+        const container = fromContainerQueries(`@container (min-width: ${value}${unit}) { .x {} }`);
 
-          for (const result of [media, tailwind, container]) {
-            expect(result.boundaries).toEqual([]);
-            expect(result.diagnostics.some((diagnostic) => diagnostic.severity === 'error')).toBe(true);
-          }
+        for (const result of [media, tailwind, container]) {
+          expect(result.boundaries).toEqual([]);
+          expect(result.diagnostics.some((diagnostic) => diagnostic.severity === 'error')).toBe(true);
+        }
 
-          const resolved = fromMediaQueries(`@media (min-width: ${value}${unit}) { .x {} }`, {
-            resolveLengthInput: ({ axis, unit: authoredUnit }) => `custom:${axis}.${authoredUnit}`,
-          });
-          expect(resolved.boundaries[0]!.input).toBe(`custom:width.${unit}`);
-          expect([...resolved.boundaries[0]!.thresholds]).toEqual([0, value]);
-        },
-      ),
+        const resolved = fromMediaQueries(`@media (min-width: ${value}${unit}) { .x {} }`, {
+          resolveLengthInput: ({ axis, unit: authoredUnit }) => `custom:${axis}.${authoredUnit}`,
+        });
+        expect(resolved.boundaries[0]!.input).toBe(`custom:width.${unit}`);
+        expect([...resolved.boundaries[0]!.thresholds]).toEqual([0, value]);
+      }),
       { seed: 0x5eed_1423, numRuns: 100 },
     );
   });
