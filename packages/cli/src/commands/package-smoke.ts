@@ -29,6 +29,7 @@ import {
 import type { CommandContext } from '@liteship/command';
 import { wallClock } from '@liteship/core';
 import { IntegrityError, InvariantViolationError } from '@liteship/error';
+import type * as TypeScript from 'typescript';
 import {
   assertConsumerDependencyInstalled,
   assertPackedTypeClosure,
@@ -463,7 +464,7 @@ process.stdout.write('OK ' + imports.length + ' imports + ' + refusals.length + 
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'inherit'],
     });
-    const ts = createRequire(import.meta.url)('typescript') as typeof import('typescript');
+    const ts = createRequire(import.meta.url)('typescript') as typeof TypeScript;
     assertPackedTypeClosure(ts, consumerDir, typeEntries);
     process.stderr.write(`[package:smoke] ok packed-consumer-closure: all ${subpaths.length} public subpaths proved\n`);
     return { ok: true, subpathCount: subpaths.length, failure: null };
