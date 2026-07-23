@@ -132,10 +132,17 @@ describe('detectHost — consumer-app host recognition', () => {
     }
   });
 
-  it('detects vite from vite.config.ts', () => {
+  it.each([
+    'vite.config.ts',
+    'vite.config.mts',
+    'vite.config.cts',
+    'vite.config.mjs',
+    'vite.config.cjs',
+    'vite.config.js',
+  ] as const)('detects vite from %s', (configFile) => {
     const dir = mkdtempSync(join(tmpdir(), 'liteship-host-'));
     try {
-      writeFileSync(join(dir, 'vite.config.ts'), '');
+      writeFileSync(join(dir, configFile), '');
       expect(detectHost(dir)).toBe('vite');
     } finally {
       rmSync(dir, { recursive: true, force: true });
@@ -176,6 +183,32 @@ describe('liteship dev — consumer-app host route', () => {
       expect(receipt.host).toBe('astro');
       expect(receipt.packageManager).toBe(row.manager);
       expect(spawn).toHaveBeenCalledWith(row.expectedCommand, row.expectedArgs, { stdio: 'inherit', cwd: app });
+    } finally {
+      rmSync(app, { recursive: true, force: true });
+    }
+  });
+
+  it.each([
+    'vite.config.ts',
+    'vite.config.mts',
+    'vite.config.cts',
+    'vite.config.mjs',
+    'vite.config.cjs',
+    'vite.config.js',
+  ] as const)('recognizes %s as the Vite dev host', async (configFile) => {
+    const app = mkdtempSync(join(tmpdir(), 'liteship-dev-vite-host-'));
+    try {
+      writeFileSync(join(app, 'liteship.config.ts'), '');
+      writeFileSync(join(app, configFile), '');
+      writeFileSync(join(app, 'package.json'), JSON.stringify({ packageManager: 'pnpm@10.0.0' }));
+      const spawn = vi.fn(async () => ({ exitCode: 0, stderrTail: '' }));
+      const run = createDevCommand(spawn);
+      const result = await capture(() => run({ cwd: app }));
+      const receipt = JSON.parse(result.stdout.trim().split('\n').pop()!);
+
+      expect(result.exit).toBe(0);
+      expect(receipt).toMatchObject({ status: 'ok', mode: 'host', host: 'vite' });
+      expect(spawn).toHaveBeenCalledWith('pnpm', ['exec', 'vite', 'dev'], { stdio: 'inherit', cwd: app });
     } finally {
       rmSync(app, { recursive: true, force: true });
     }

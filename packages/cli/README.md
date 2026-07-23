@@ -1,13 +1,13 @@
 # @liteship/cli
 
-The `liteship` command-line tool: every verb emits one JSON receipt (a structured result line) on stdout and keeps human-readable summaries on stderr, so output pipes cleanly into `jq`, CI, or an AI agent.
+The implementation behind the `liteship` command-line tool: every verb emits one JSON receipt (a structured result line) on stdout and keeps human-readable summaries on stderr, so output pipes cleanly into `jq`, CI, or an AI agent.
 
-> Install this directly when you want the `liteship` verbs in a project or CI. If you're starting a new project, start with [liteship](https://www.npmjs.com/package/liteship) instead — it installs this package along with the rest of the stack.
+> Install [liteship](https://www.npmjs.com/package/liteship) for the public `liteship` executable. This package owns the programmatic dispatcher; it deliberately does not publish a competing bin shim, so npm and pnpm always resolve the facade-owned command.
 
 ## Install
 
 ```bash
-pnpm add -D @liteship/cli
+pnpm add -D liteship
 ```
 
 ## 30 seconds

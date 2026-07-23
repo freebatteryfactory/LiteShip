@@ -118,6 +118,24 @@ describe('liteship build', () => {
     });
   });
 
+  it.each([
+    'vite.config.ts',
+    'vite.config.mts',
+    'vite.config.cts',
+    'vite.config.mjs',
+    'vite.config.cjs',
+    'vite.config.js',
+  ] as const)('recognizes %s as the Vite build host', async (configFile) => {
+    const root = fixtureWithManager('pnpm', 'liteship.config.ts', configFile);
+    const spawn = vi.fn(async () => ({ exitCode: 0, stderrTail: '' }));
+    const run = createBuildCommand(spawn);
+    const result = await captureCli(() => run({ cwd: root }));
+
+    expect(result.exit).toBe(0);
+    expect(lastReceipt(result.stdout)).toMatchObject({ host: 'vite', status: 'ok' });
+    expect(spawn).toHaveBeenCalledWith('pnpm', ['exec', 'vite', 'build'], { cwd: root });
+  });
+
   it('returns the child nonzero exit and emits a failed BuildReceipt', async () => {
     const root = fixtureWithManager('npm', 'liteship.config.ts', 'astro.config.mjs');
     const spawn = vi.fn(async () => ({ exitCode: 23, stderrTail: 'host build failed' }));

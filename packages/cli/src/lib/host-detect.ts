@@ -18,7 +18,17 @@ export type BuildHost = 'astro' | 'vite';
 /** Config-file basenames that identify each host, in detection order. */
 export const HOST_CONFIGS: ReadonlyArray<{ readonly host: BuildHost; readonly bases: readonly string[] }> = [
   { host: 'astro', bases: ['astro.config.ts', 'astro.config.mts', 'astro.config.mjs', 'astro.config.js'] },
-  { host: 'vite', bases: ['vite.config.ts', 'vite.config.mts', 'vite.config.mjs', 'vite.config.js'] },
+  {
+    host: 'vite',
+    bases: [
+      'vite.config.ts',
+      'vite.config.mts',
+      'vite.config.cts',
+      'vite.config.mjs',
+      'vite.config.cjs',
+      'vite.config.js',
+    ],
+  },
 ];
 
 /** Detect the consumer app's host build backend from the config files beside `liteship.config.ts`. */
