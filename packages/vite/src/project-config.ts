@@ -4,8 +4,8 @@
  * `liteship.config.ts` is authored TypeScript, so Vite's own config loader is
  * the one execution authority. The loaded value is then re-addressed through
  * `defineConfig` before any host projection may consume it: a hand-written
- * lookalike or stale/tampered id is rejected loudly rather than silently
- * widening into plugin defaults.
+ * lookalike, stale mutation, or copied value with a mismatched local definition
+ * label is rejected loudly rather than silently widening into plugin defaults.
  *
  * @module
  */

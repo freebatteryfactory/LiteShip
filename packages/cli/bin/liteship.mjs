@@ -13,8 +13,8 @@ const distEntry = resolve(here, '../dist/index.js');
 
 if (!existsSync(distEntry)) {
   process.stderr.write(
-    'liteship: Hull not yet laid (packages/cli/dist/ is missing).\n' +
-      '  Lay the keel with: pnpm run build\n' +
+    'liteship: packages/cli/dist is missing.\n' +
+      '  Build the workspace with: pnpm run build\n' +
       '  Or, for a one-shot environment check without building: pnpm run doctor\n' +
       '  Or, for the full verify:                               pnpm verify\n',
   );

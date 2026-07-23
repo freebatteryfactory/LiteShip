@@ -6,11 +6,11 @@
 
 ## Context
 
-CZAP primitives (Boundaries, Quantizer configs, Receipts, GenFrames, Tokens, Themes) need stable identity that tracks definition changes. Caching (edge KV, HMR memoization, compositor reconciliation) depends on being able to ask "is this definition the same one I already processed?" without structural walks. The same definition on two different machines (dev laptop and edge worker) must produce the same identifier. Changing any field of a definition must change the identifier.
+LiteShip primitives (Boundaries, Quantizer configs, Receipts, GenFrames, Tokens, Themes) need a stable, compact definition label that tracks definition changes. Local caching (HMR memoization and compositor reconciliation) depends on being able to ask "is this definition the same one I already processed?" without structural walks. The same definition on two different machines (dev laptop and edge worker) must produce the same label. Changing any identity-bearing field of a definition must change the label.
 
 ## Decision
 
-Identity is `fnv1a:XXXXXXXX`: a 32-bit FNV-1a hash of the CBOR-canonical serialization of the payload, wrapped in the branded `ContentAddress` type (see ADR-0001). SHA-256 via `crypto.subtle.digest` is available for security-sensitive contexts (see `typed-ref.ts`, used for `schema_hash` and `content_hash` of typed references).
+The local definition label is `fnv1a:XXXXXXXX`: a 32-bit FNV-1a hash of the CBOR-canonical serialization of the payload, wrapped in the branded `ContentAddress` type (see ADR-0001). It is not a cryptographic identity or trust witness. Security-sensitive, external-artifact, attacker-influenced cache, wire-validation, and release-evidence paths must carry an `IntegrityDigest` or the paired `AddressedDigest` over the same authoritative bytes (see ADR-0011 and `addressed-digest.ts`).
 
 ## Consequences
 
@@ -18,7 +18,7 @@ Identity is `fnv1a:XXXXXXXX`: a 32-bit FNV-1a hash of the CBOR-canonical seriali
 - **Cheap to compute.** FNV-1a via `Math.imul` for 32-bit hashing (`packages/core/src/fnv.ts`). Suitable for per-definition use throughout the build pipeline without measurable overhead.
 - **Collision probability at 32 bits is ~1 in 4B.** Acceptable for content-identity within a single app; not cryptographic. SHA-256 via `typed-ref.ts` covers signature-grade needs.
 - **Automatic cache invalidation.** Hash-indexed caches (`quantizer/src/memo-cache.ts`) invalidate correctly on any change to the addressed definition. *(Amended 0.3.0: when a cached VALUE also depends on inputs OUTSIDE the addressed definition — a per-request theme, or a bundled `compile`'s build-time content — those inputs must be folded into the cache key or a per-deploy content-version `prefix`, or the key survives a change to them. The edge boundary cache now folds tier + name + a resolved-theme fingerprint; `prefix` is the content version. See [ADR-0017](./0017-cache-content-version.md) and HOSTING.md §KV trust boundary.)*
-- **Reliable edge/CDN behavior.** Same definition on different machines → same hash → same cached output.
+- **Reliable non-adversarial projection labels.** The same addressed definition on different machines produces the same label. Edge/CDN trust and external artifact validation additionally require the integrity rules above and the complete cache key described by ADR-0017.
 
 ## Evidence
 
