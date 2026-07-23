@@ -32,6 +32,7 @@ import {
   projectQualityTiers,
 } from '@liteship/core';
 import { ValidationError } from '@liteship/error';
+import { snapshotDefinitionValue } from '@liteship/core/evidence';
 import { evaluate } from './evaluate.js';
 import type { EvaluateResult } from './evaluate.js';
 import { MemoCache } from './memo-cache.js';
@@ -477,7 +478,7 @@ export function defineQuantizer<B extends Boundary, O extends QuantizerOutputs<B
   boundary: B,
   options: DefineQuantizerOptions<B, O>,
 ): QuantizerConfig<B, O> {
-  const { outputs, spring, force } = options;
+  const { force } = options;
   const tier = options.tier;
   // Preserve defineQuantizer's public diagnostic owner even though the shared
   // resolver also rejects hostile runtime values defensively.
@@ -491,14 +492,16 @@ export function defineQuantizer<B extends Boundary, O extends QuantizerOutputs<B
   // hashed or retained. Caller mutation can therefore never make the stored
   // authored intent disagree with its content address.
   const forceSnapshot =
-    force === undefined ? undefined : (Object.freeze([...new Set(force)].sort()) as readonly OutputTarget[]);
+    force === undefined ? undefined : (snapshotDefinitionValue([...new Set(force)].sort()) as readonly OutputTarget[]);
+  const outputsSnapshot = snapshotDefinitionValue(options.outputs);
+  const springSnapshot = options.spring === undefined ? undefined : snapshotDefinitionValue(options.spring);
   const admittedTargets = resolveQuantizerTargets(tier, forceSnapshot);
 
   if (tier !== undefined) {
     // Outputs for a tier-gated target silently never fire; say so once at
     // definition time with the literal escape hatches.
-    for (const target of Object.keys(outputs) as readonly OutputTarget[]) {
-      if (outputs[target] === undefined || admittedTargets.has(target)) continue;
+    for (const target of Object.keys(outputsSnapshot) as readonly OutputTarget[]) {
+      if (outputsSnapshot[target] === undefined || admittedTargets.has(target)) continue;
       Diagnostics.warnOnce({
         source: 'liteship/quantizer',
         code: 'tier-gated-output-dropped',
@@ -507,7 +510,7 @@ export function defineQuantizer<B extends Boundary, O extends QuantizerOutputs<B
     }
   }
 
-  const id = contentAddress(boundary, outputs, tier, spring, forceSnapshot);
+  const id = contentAddress(boundary, outputsSnapshot, tier, springSnapshot, forceSnapshot);
 
   // Content-address memoization: identical definitions share one object.
   const cachedConfig = configCache.get(id);
@@ -515,10 +518,10 @@ export function defineQuantizer<B extends Boundary, O extends QuantizerOutputs<B
 
   const config: QuantizerConfig<B, O> = Object.freeze({
     boundary,
-    outputs,
+    outputs: outputsSnapshot,
     id,
     tier,
-    spring,
+    spring: springSnapshot,
     force: forceSnapshot,
   });
   configCache.set(id, config);

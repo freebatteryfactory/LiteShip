@@ -37,6 +37,8 @@ export { Receipt, inspectReceipt } from './receipt.js';
 
 export { contentAddressOf, canonicalAddressBytes } from './content-address.js';
 
+export { snapshotDefinitionValue } from './definition-snapshot.js';
+
 export type { ValidatedProposal, ApplyToken, ProposalTarget } from './validated-output.js';
 
 export { assertTokenBinds, unwrapValidated, proposalSubject, proposalReceiptSubject } from './validated-output.js';

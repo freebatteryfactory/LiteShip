@@ -8,7 +8,10 @@ import { Config, defineConfig } from '@liteship/core';
 
 const boundary = defineBoundary({
   input: 'viewport.width',
-  at: [[0, 'mobile'], [768, 'desktop']] as const,
+  at: [
+    [0, 'mobile'],
+    [768, 'desktop'],
+  ] as const,
 });
 
 describe('defineConfig()', () => {
@@ -42,6 +45,65 @@ describe('defineConfig()', () => {
     expect(cfg.tokens).toEqual({});
     expect(cfg.themes).toEqual({});
     expect(cfg.styles).toEqual({});
+  });
+
+  test('snapshots and recursively freezes authored data before identity and storage', () => {
+    const authoredBoundary = defineBoundary({
+      input: 'snapshot.width',
+      at: [
+        [0, 'compact'],
+        [900, 'wide'],
+      ] as const,
+    });
+    const authored = {
+      boundaries: { viewport: authoredBoundary },
+      vite: {
+        dirs: { boundary: '/before' },
+        environments: ['browser', 'server'] as ('browser' | 'server' | 'shader')[],
+        wasm: { enabled: true, path: '/before.wasm' },
+      },
+    };
+    const cfg = defineConfig(authored);
+    const id = cfg.id;
+
+    authored.vite.dirs.boundary = '/after';
+    authored.vite.environments.push('shader');
+    authored.vite.wasm.path = '/after.wasm';
+    (authoredBoundary.thresholds as number[])[1] = 1200;
+
+    expect(cfg.id).toBe(id);
+    expect(cfg.vite).toEqual({
+      dirs: { boundary: '/before' },
+      environments: ['browser', 'server'],
+      wasm: { enabled: true, path: '/before.wasm' },
+    });
+    expect(cfg.boundaries['viewport']?.thresholds).toEqual([0, 900]);
+    expect(Object.isFrozen(cfg.boundaries)).toBe(true);
+    expect(Object.isFrozen(cfg.boundaries['viewport'])).toBe(true);
+    expect(Object.isFrozen(cfg.boundaries['viewport']?.thresholds)).toBe(true);
+    expect(Object.isFrozen(cfg.vite)).toBe(true);
+    expect(Object.isFrozen(cfg.vite?.dirs)).toBe(true);
+    expect(Object.isFrozen(cfg.vite?.environments)).toBe(true);
+    expect(Object.isFrozen(cfg.vite?.wasm)).toBe(true);
+    expect(() => ((cfg.vite!.dirs as Record<string, string>).boundary = '/poison')).toThrow();
+
+    const equivalent = defineConfig({
+      boundaries: {
+        viewport: defineBoundary({
+          input: 'snapshot.width',
+          at: [
+            [0, 'compact'],
+            [900, 'wide'],
+          ] as const,
+        }),
+      },
+      vite: {
+        dirs: { boundary: '/before' },
+        environments: ['browser', 'server'],
+        wasm: { enabled: true, path: '/before.wasm' },
+      },
+    });
+    expect(equivalent.id).toBe(id);
   });
 
   test('defineConfig() is an alias for defineConfig()', () => {

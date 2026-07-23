@@ -229,10 +229,11 @@ describe('defineAdaptive.explain', () => {
     expect(gpu.explain(800).tier.tier).toBe('gpu');
   });
 
-  test('uses the live quantizer tier + force resolver and preserves spring intent', async () => {
+  test('separates Adaptive capability tier from the live quantizer MotionTier + force resolver', async () => {
     const gated = defineAdaptive({
       boundary: boundarySpec,
       style: styleSpec,
+      tier: 'gpu',
       quantize: {
         tier: 'none',
         force: ['css'],
@@ -260,7 +261,15 @@ describe('defineAdaptive.explain', () => {
 
     expect(explainedTargets).toEqual(liveTargets);
     expect(explainedTargets).toEqual(['aria', 'css']);
-    expect(explanation.tier.admittedTargets).toEqual(new Set(['aria', 'css']));
+    expect(explanation.tier).toEqual({
+      tier: 'gpu',
+      admittedTargets: new Set(['css', 'glsl', 'wgsl', 'aria', 'ai']),
+    });
+    expect(explanation.quantizerTier).toEqual({
+      tier: 'none',
+      force: ['css'],
+      admittedTargets: new Set(['aria', 'css']),
+    });
     expect(gated.quantizer?.spring).toEqual({ stiffness: 170, damping: 26, mass: 2 });
     await live.dispose();
   });

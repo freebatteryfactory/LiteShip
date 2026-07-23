@@ -13,6 +13,7 @@ import type { Style } from './style.js';
 import { fnv1aBytes } from '../evidence/fnv.js';
 import { CanonicalCbor } from '../schema/cbor.js';
 import { normalizeRepoPath } from '../repository-path.js';
+import { snapshotDefinitionValue } from '../evidence/definition-snapshot.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public types
@@ -143,6 +144,12 @@ export interface ConfigInput {
  * frozen, FNV-1a content-addressed value from raw {@link ConfigInput}.
  */
 export function defineConfig(input: ConfigInput): Config {
+  const boundaries = snapshotDefinitionValue(input.boundaries ?? {});
+  const tokens = snapshotDefinitionValue(input.tokens ?? {});
+  const themes = snapshotDefinitionValue(input.themes ?? {});
+  const styles = snapshotDefinitionValue(input.styles ?? {});
+  const vite = input.vite === undefined ? undefined : snapshotDefinitionValue(input.vite);
+  const astro = input.astro === undefined ? undefined : snapshotDefinitionValue(input.astro);
   // CUT B5a — mint the internal identity through the CanonicalCbor doctrine
   // (RFC 8949 §4.2.1, recursive key sort, always-float64), the same path as
   // every other `fnv1a:` content address. This replaces the old top-level-only
@@ -150,22 +157,22 @@ export function defineConfig(input: ConfigInput): Config {
   // dependent. CanonicalCbor sorts keys recursively, so no manual sort is needed.
   const id = fnv1aBytes(
     CanonicalCbor.encode({
-      boundaries: input.boundaries ?? {},
-      tokens: input.tokens ?? {},
-      themes: input.themes ?? {},
-      styles: input.styles ?? {},
-      vite: input.vite,
-      astro: input.astro,
+      boundaries,
+      tokens,
+      themes,
+      styles,
+      vite,
+      astro,
     }),
   );
   return Object.freeze({
     _tag: 'ConfigDef' as const,
     id,
-    boundaries: input.boundaries ?? {},
-    tokens: input.tokens ?? {},
-    themes: input.themes ?? {},
-    styles: input.styles ?? {},
-    vite: input.vite,
-    astro: input.astro,
+    boundaries,
+    tokens,
+    themes,
+    styles,
+    vite,
+    astro,
   });
 }

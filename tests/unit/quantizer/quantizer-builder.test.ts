@@ -164,6 +164,50 @@ describe('defineQuantizer() config creation', () => {
     });
     expect(config.spring).toEqual({ stiffness: 170, damping: 26 });
   });
+
+  test('snapshots and recursively freezes outputs and spring before cache identity/storage', () => {
+    const b = viewport();
+    const tag = `snapshot${++outputCounter}`;
+    const outputs = {
+      css: {
+        compact: { [`--${tag}`]: 'before' },
+        medium: { [`--${tag}`]: 'before' },
+        expanded: { [`--${tag}`]: 'before' },
+      },
+    };
+    const spring = { stiffness: 170, damping: 26, mass: 2 };
+    const config = defineQuantizer(b, { outputs, spring });
+    const id = config.id;
+
+    outputs.css.compact[`--${tag}`] = 'poisoned';
+    spring.stiffness = 999;
+
+    expect(config.id).toBe(id);
+    expect(config.outputs.css?.compact[`--${tag}`]).toBe('before');
+    expect(config.spring).toEqual({ stiffness: 170, damping: 26, mass: 2 });
+    expect(Object.isFrozen(config.outputs)).toBe(true);
+    expect(Object.isFrozen(config.outputs.css)).toBe(true);
+    expect(Object.isFrozen(config.outputs.css?.compact)).toBe(true);
+    expect(Object.isFrozen(config.spring)).toBe(true);
+    expect(() => ((config.outputs.css!.compact as Record<string, string | number>)[`--${tag}`] = 'poison')).toThrow();
+    expect(() => ((config.spring as { stiffness: number }).stiffness = 1)).toThrow();
+
+    const equivalent = defineQuantizer(b, {
+      outputs: {
+        css: {
+          compact: { [`--${tag}`]: 'before' },
+          medium: { [`--${tag}`]: 'before' },
+          expanded: { [`--${tag}`]: 'before' },
+        },
+      },
+      spring: { stiffness: 170, damping: 26, mass: 2 },
+    });
+    expect(equivalent).toBe(config);
+
+    const changed = defineQuantizer(b, { outputs, spring });
+    expect(changed.id).not.toBe(id);
+    expect(changed).not.toBe(config);
+  });
 });
 
 // ---------------------------------------------------------------------------

@@ -182,8 +182,14 @@ export interface AdaptiveExplanation {
   >;
   /** The resolved style properties at the state, each tagged with its source layer. */
   readonly style: Readonly<Record<string, { readonly value: string; readonly source: 'base' | 'state' }>>;
-  /** The capability tier and the projection targets it admits. */
+  /** The Adaptive capability tier and the projection targets that capability admits. */
   readonly tier: TierChoice;
+  /** The quantizer's distinct MotionTier gate, when this Adaptive owns a quantizer. */
+  readonly quantizerTier?: {
+    readonly tier: MotionTier | null;
+    readonly force: readonly QualityTierTarget[];
+    readonly admittedTargets: ReadonlySet<QualityTierTarget>;
+  };
   /** The adaptive's aggregate content address (`adaptive.id`). */
   readonly contentAddress: ContentAddress;
 }
@@ -392,14 +398,15 @@ export function lowerAdaptive<const B extends AdaptiveBoundarySpec>(
     );
 
     let quantized: Partial<Record<QualityTierTarget, { readonly state: string; readonly value: unknown }>> | undefined;
-    const admittedTargets =
-      quantizer === undefined ? tierTargets(tier) : lowering.resolveQuantizerTargets(quantizer.tier, quantizer.force);
+    const capabilityTargets = tierTargets(tier);
+    const quantizerTargets =
+      quantizer === undefined ? undefined : lowering.resolveQuantizerTargets(quantizer.tier, quantizer.force);
     if (quantizer !== undefined) {
       quantized = {};
       const outputs = quantizer.outputs as Readonly<
         Partial<Record<QualityTierTarget, Readonly<Record<string, unknown>>>>
       >;
-      for (const target of admittedTargets) {
+      for (const target of quantizerTargets!) {
         const table = outputs[target];
         if (table === undefined) continue;
         quantized[target] = { state: result.state, value: table[result.state] };
@@ -431,7 +438,16 @@ export function lowerAdaptive<const B extends AdaptiveBoundarySpec>(
       boundary: { id: boundary.id, state: result.state, matched },
       ...(quantized !== undefined ? { quantized } : {}),
       style: styleRecord,
-      tier: { tier, admittedTargets },
+      tier: { tier, admittedTargets: capabilityTargets },
+      ...(quantizer !== undefined
+        ? {
+            quantizerTier: {
+              tier: quantizer.tier ?? null,
+              force: quantizer.force ?? Object.freeze([]),
+              admittedTargets: quantizerTargets!,
+            },
+          }
+        : {}),
       contentAddress: id,
     };
   };
