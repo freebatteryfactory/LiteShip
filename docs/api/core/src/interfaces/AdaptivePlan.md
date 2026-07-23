@@ -38,7 +38,7 @@ Defined in: [core/src/authoring/adaptive.ts:203](https://github.com/freebatteryf
 
 Defined in: [core/src/authoring/adaptive.ts:207](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L207)
 
-`StyleCSSCompiler.compile(style).layers` — the cascade-layered scoped CSS.
+Compiler-owned CSS driven by this Adaptive's runtime state marker.
 
 ***
 

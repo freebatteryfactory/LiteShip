@@ -8,17 +8,17 @@
 
 Defined in: [core/src/authoring/adaptive.ts:258](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L258)
 
-The supplied `@liteship/compiler` style→layers compiler (`StyleCSSCompiler.compile(style).layers`).
+The supplied `@liteship/compiler` Adaptive state-marker CSS projection.
 
 ## Properties
 
-### compileStyleLayers
+### compileAdaptiveCss
 
-> `readonly` **compileStyleLayers**: (`style`) => `string`
+> `readonly` **compileAdaptiveCss**: (`style`) => `string`
 
 Defined in: [core/src/authoring/adaptive.ts:267](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L267)
 
-The real `@liteship/compiler` style-layer projection.
+The real `@liteship/compiler` state-marker projection.
 
 #### Parameters
 
