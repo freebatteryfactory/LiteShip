@@ -184,7 +184,7 @@ export const CI_SPECIALIZED_CHECK_SPECS: Readonly<Record<string, SpecializedChec
   },
   doctor: {
     checkId: 'check/doctor',
-    job: 'truth-linux-parallel-preflight',
+    job: 'truth-linux-parallel-setup',
   },
   benchAlloc: {
     checkId: 'check/bench-alloc',

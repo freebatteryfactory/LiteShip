@@ -188,12 +188,12 @@ describe('doctor/probes-workspace — probeGitHooks()', () => {
     expect(probeGitHooks(dir)).toMatchObject({ status: 'warn', fixable: true });
   });
 
-  it('ok when the pre-commit hook is rigged', () => {
+  it('ok when the pre-commit hook is installed', () => {
     const dir = mkTmp();
     const hooks = resolve(dir, '.git', 'hooks');
     mkdirSync(hooks, { recursive: true });
     writeFileSync(resolve(hooks, 'pre-commit'), '#!/bin/sh\n');
-    expect(probeGitHooks(dir)).toMatchObject({ status: 'ok', detail: 'pre-commit rigged' });
+    expect(probeGitHooks(dir)).toMatchObject({ status: 'ok', detail: 'pre-commit installed' });
   });
 
   it('warn-unresolved (NOT fixable) on a corrupt .git pointer file', () => {
@@ -217,7 +217,7 @@ describe('doctor/probes-workspace — probeGitHooks()', () => {
     const work = resolve(dir, 'worktree');
     mkdirSync(work, { recursive: true });
     writeFileSync(resolve(work, '.git'), `gitdir: ${wt}\n`);
-    expect(probeGitHooks(work)).toMatchObject({ status: 'ok', detail: 'pre-commit rigged' });
+    expect(probeGitHooks(work)).toMatchObject({ status: 'ok', detail: 'pre-commit installed' });
   });
 
   it('falls back to the worktree gitdir hooks when no commondir file exists', () => {
@@ -228,7 +228,7 @@ describe('doctor/probes-workspace — probeGitHooks()', () => {
     const work = resolve(dir, 'worktree');
     mkdirSync(work, { recursive: true });
     writeFileSync(resolve(work, '.git'), `gitdir: ${wt}\n`);
-    expect(probeGitHooks(work)).toMatchObject({ status: 'ok', detail: 'pre-commit rigged' });
+    expect(probeGitHooks(work)).toMatchObject({ status: 'ok', detail: 'pre-commit installed' });
   });
 });
 

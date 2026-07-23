@@ -56,7 +56,7 @@ liteship check --profile consumer --json
 liteship check --profile environment --json
 ```
 
-The check registry is the source of profile membership, ownership, commands, inputs, platform support, timeouts, authority, and negative controls. CLI help, CI planning, and generated check documentation project from that registry rather than maintaining independent check lists.
+The check registry at [`packages/command/src/checks/registry.ts`](./packages/command/src/checks/registry.ts) is the source of profile membership, ownership, commands, inputs, platform support, timeouts, authority, and negative controls. CLI help, CI planning, and generated check documentation project from that registry rather than maintaining independent check lists.
 
 ## Contributor first run
 

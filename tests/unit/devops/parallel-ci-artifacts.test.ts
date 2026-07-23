@@ -9,12 +9,16 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const CI_YML = resolve(import.meta.dirname, '../../../.github/workflows/ci.yml');
+const RUST_TOOLCHAIN = resolve(import.meta.dirname, '../../../rust-toolchain.toml');
 
 describe('parallel setup artifact ships dist + capsule manifest', () => {
   const ci = readFileSync(CI_YML, 'utf8');
 
   it('truth-linux-parallel-setup mints and uploads dist, capsule manifest, and gauntlet context', () => {
-    const setupBlock = ci.slice(ci.indexOf('truth-linux-parallel-setup:'), ci.indexOf('truth-linux-parallel-preflight:'));
+    const setupBlock = ci.slice(
+      ci.indexOf('truth-linux-parallel-setup:'),
+      ci.indexOf('truth-linux-parallel-preflight:'),
+    );
     expect(setupBlock).toContain('mint-gauntlet-context.ts');
     expect(setupBlock).toContain('packages/*/dist');
     expect(setupBlock).toContain('reports/capsule-manifest.json');
@@ -41,9 +45,14 @@ describe('parallel setup artifact ships dist + capsule manifest', () => {
   });
 
   it('bench lane installs wasm32 rust toolchain before build:wasm', () => {
-    const benchBlock = ci.slice(ci.indexOf('truth-linux-parallel-bench:'), ci.indexOf('truth-linux-parallel-mutating:'));
+    const channel = readFileSync(RUST_TOOLCHAIN, 'utf8').match(/^channel\s*=\s*"([^"]+)"/m)?.[1];
+    expect(channel).toBeDefined();
+    const benchBlock = ci.slice(
+      ci.indexOf('truth-linux-parallel-bench:'),
+      ci.indexOf('truth-linux-parallel-mutating:'),
+    );
     expect(benchBlock).toContain('dtolnay/rust-toolchain@');
-    expect(benchBlock).toMatch(/toolchain:\s*stable/);
+    expect(benchBlock).toContain(`toolchain: ${channel}`);
     expect(benchBlock).toContain('targets: wasm32-unknown-unknown');
     expect(benchBlock).toContain('pnpm run build:wasm');
   });

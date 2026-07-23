@@ -249,7 +249,7 @@ describe('D3 stability — projection drift tripwire', () => {
     // P17 nautical glossary trim: the retired maritime entries (hull, keel, cast off, moored,
     // shake-down, quay) were dropped from GLOSSARY_ENTRIES — the JSON glossary resource embeds
     // the catalog, so the {resources, prompts} projection digest shifted.
-    expect(address).toBe('fnv1a:81fb9604');
+    expect(address).toBe('fnv1a:31826c71');
   });
 });
 

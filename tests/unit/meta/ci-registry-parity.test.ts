@@ -180,6 +180,17 @@ describe('blocking release checks have one real CI owner', () => {
   it('the merge-gate final waits for the fail-closed packed-consumer owner', () => {
     expect(JOB_BLOCKS.get('truth-linux-parallel-final')).toContain('- truth-linux-parallel-consumer');
   });
+
+  it('provisions every doctor tool in its owning setup job before running doctor', () => {
+    const setup = JOB_BLOCKS.get('truth-linux-parallel-setup')!;
+    const doctor = setup.indexOf('specializedChecks.doctor.command');
+    expect(setup.indexOf('toolchain: 1.85.1')).toBeGreaterThanOrEqual(0);
+    expect(setup.indexOf('playwright install --with-deps chromium chromium-headless-shell')).toBeGreaterThanOrEqual(0);
+    expect(setup.indexOf('apt-get install -y ffmpeg')).toBeGreaterThanOrEqual(0);
+    expect(doctor).toBeGreaterThan(setup.indexOf('toolchain: 1.85.1'));
+    expect(doctor).toBeGreaterThan(setup.indexOf('playwright install --with-deps chromium chromium-headless-shell'));
+    expect(doctor).toBeGreaterThan(setup.indexOf('apt-get install -y ffmpeg'));
+  });
 });
 
 // ── (a) gauntlet-lane commands map to a registry-projected profile ──────────

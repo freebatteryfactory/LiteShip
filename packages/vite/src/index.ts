@@ -70,8 +70,6 @@ export { transformHTML } from './html-transform.js';
 // Virtual modules
 export type { VirtualModuleId, VirtualModuleData } from './virtual-modules.js';
 export { resolveVirtualId, isVirtualId, loadVirtualModule } from './virtual-modules.js';
-export type { LoadedProjectConfig } from './project-config.js';
-export { PROJECT_CONFIG_FILE, loadProjectConfig, validateProjectConfig } from './project-config.js';
 
 // Boundary manifest (build-to-edge handoff, ADR-0003)
 export type { CollectBoundaryManifestOptions } from './boundary-manifest.js';

@@ -34,6 +34,7 @@ import { packInWorkspace } from '../support/pack.js';
 import { tarballFileUrl } from '../../packages/cli/src/lib/package-smoke-helpers.js';
 import { spawnArgvCapture } from '../../scripts/lib/spawn.js';
 import { runPnpm, type PnpmRunResult } from '../../scripts/support/pnpm-process.js';
+import { PRIOR_ASTRO_PACKAGE, PRIOR_CORE_PACKAGE } from './prior-operation-brand.js';
 
 /** Absolute repo root (this file lives at `<root>/tests/journey/harness.ts`). */
 export const REPO_ROOT = resolve(fileURLToPath(import.meta.url), '..', '..', '..');
@@ -281,21 +282,21 @@ export function rewriteConsumerToTarballs(appDir: string, packed: PackedWorkspac
   }
 }
 
-/** Wire the historical starter to the genuinely historical `@czap/*` tarballs. */
+/** Wire the historical starter to the genuinely historical package tarballs. */
 export function rewritePriorConsumerToTarballs(appDir: string, prior: PriorPackedWorkspace): void {
   const overrides = Object.fromEntries([...prior.tarballByName].map(([name, tgz]) => [name, tarballFileUrl(tgz)]));
-  const core = prior.tarballByName.get('@czap/core');
-  const astro = prior.tarballByName.get('@czap/astro');
+  const core = prior.tarballByName.get(PRIOR_CORE_PACKAGE);
+  const astro = prior.tarballByName.get(PRIOR_ASTRO_PACKAGE);
   journeyAssert(
     core !== undefined && astro !== undefined,
-    'prior-control tarballs are missing @czap/core or @czap/astro',
+    `prior-control tarballs are missing ${PRIOR_CORE_PACKAGE} or ${PRIOR_ASTRO_PACKAGE}`,
   );
 
   const manifestPath = join(appDir, 'package.json');
   const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as Record<string, unknown>;
   manifest['dependencies'] = {
-    '@czap/core': tarballFileUrl(core!),
-    '@czap/astro': tarballFileUrl(astro!),
+    [PRIOR_CORE_PACKAGE]: tarballFileUrl(core!),
+    [PRIOR_ASTRO_PACKAGE]: tarballFileUrl(astro!),
     astro: peerVersion('astro'),
     typescript: peerVersion('typescript'),
   };

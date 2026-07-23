@@ -68,6 +68,10 @@ const ALLOWLIST = new Set([
 /** Allowlisted path prefixes (whole subtrees of immutable history). */
 const ALLOWLIST_PREFIXES = ['docs/adr/', 'docs/plan/'];
 
+/** Exact old-brand literals retained solely by the genuine prior-operation journey fixture. */
+const PRIOR_OPERATION_BRAND_FIXTURE = 'tests/journey/prior-operation-brand.ts';
+const PRIOR_OPERATION_BRAND_LITERALS = ['@czap/core', '@czap/astro', 'data-czap-boundary'] as const;
+
 /** Binary extensions we do not read as text. */
 const BINARY_EXT = new Set([
   '.png',
@@ -168,7 +172,13 @@ describe('brand residue — the LiteShip brand is the only brand (ADR-0044)', ()
       }
 
       // Strip the sanctioned sentence; anything left that still matches is residue.
-      const stripped = content.split(SANCTIONED_SENTENCE).join('\u0000');
+      let stripped = content.split(SANCTIONED_SENTENCE).join('\u0000');
+      if (rel === PRIOR_OPERATION_BRAND_FIXTURE) {
+        for (const literal of PRIOR_OPERATION_BRAND_LITERALS) {
+          expect(occurrences(stripped, literal), `${rel} must retain exactly one frozen ${literal} literal`).toBe(1);
+          stripped = stripped.split(literal).join('\u0000');
+        }
+      }
       if (RESIDUE.test(stripped)) {
         stripped.split('\n').forEach((line, i) => {
           if (RESIDUE.test(line)) violations.push(`${rel}:${i + 1}: ${line.trim().slice(0, 160)}`);

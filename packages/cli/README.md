@@ -49,7 +49,7 @@ You should see one JSON line like the above on stdout (shown wrapped here) and, 
 | `liteship completion` | Emit a shell tab-completion script for sourcing into a shell rc. | CLI orchestration |
 | `liteship context` | Get the ordered file/check/test pointers for a repo task (add-boundary, release, extend-cli, …). | shared handler |
 | `liteship describe` | Dump the capsule catalog + command schema (the AI discovery surface). | CLI orchestration |
-| `liteship dev` | Launch a dev host — an example app dev server (default examples/showcase; --example/--tutorial). | CLI orchestration |
+| `liteship dev` | Launch the detected Astro/Vite host in a LiteShip application; repository-only --example/--tutorial selectors remain explicit. | CLI orchestration |
 | `liteship doctor` | Preflight environment check: Node, pnpm, workspace, build artifacts, git hooks. | CLI orchestration |
 | `liteship explain` | Explain a diagnostic code (its meaning + emitter + negative control) or an exported symbol (its owner + TSDoc). | shared handler |
 | `liteship gauntlet` | Run the full release-grade gauntlet. | CLI orchestration |

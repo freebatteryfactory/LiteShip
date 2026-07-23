@@ -168,6 +168,8 @@ jobs:
   truth-linux-parallel-setup:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    needs:
+      - plan
     steps:
       - uses: actions/checkout@v6
         with:
@@ -179,8 +181,19 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # action implementation pinned
+        with:
+          # Projection of rust-toolchain.toml; check/devcontainer-pins rejects drift.
+          toolchain: 1.85.1
+          targets: wasm32-unknown-unknown
       - run: pnpm exec playwright install --with-deps chromium chromium-headless-shell
       - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - name: Configure git identity for doctor --ci
+        run: |
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+      - name: Run registry-projected environment doctor
+        run: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.doctor.command }}
       - run: pnpm run build && pnpm run capsule:compile
       - name: Mint gauntlet run context for parallel fan-out
         run: pnpm exec tsx scripts/mint-gauntlet-context.ts
@@ -213,12 +226,6 @@ jobs:
         with:
           name: dist-packages
           path: .
-      - name: Configure git identity for doctor --ci
-        run: |
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git config user.name "github-actions[bot]"
-      - name: Run registry-projected environment doctor
-        run: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.doctor.command }}
       - name: Confirm lane matches the registry-projected plan
         env:
           PLANNED_PROFILE: ${{ fromJSON(needs.plan.outputs.matrix).lanes.preflight.profile }}

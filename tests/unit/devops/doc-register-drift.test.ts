@@ -5,8 +5,8 @@
  * The "15 publishable / 14 compiled / 11 compilers" numbers were hand-copied into many
  * docs and had already drifted twice (a package count is not a sentence). The fix is to
  * DE-NUMBER recurring counts (say "every publishable scope", not "15") and DE-ENUMERATE
- * the gauntlet phase list (point at packages/cli/src/gauntlet-phases.ts, don't mirror all
- * 32). This guard keeps the stale mirrors from coming back, and pins the roster docs that
+ * the check registry (point at packages/command/src/checks/registry.ts, don't mirror the
+ * projected phases). This guard keeps stale mirrors from coming back and pins the roster docs that
  * must name the real package set.
  *
  * Scope: LIVE docs only. CHANGELOG.md and RELEASE_NOTES_*.md are historical artifacts —
@@ -56,8 +56,8 @@ describe('B6b — SECURITY.md does not pin a brittle gauntlet phase number for t
 
 describe('B6b — STATUS.md points at the canonical phase source instead of mirroring it', () => {
   const src = read('STATUS.md');
-  it('points at packages/cli/src/gauntlet-phases.ts (the ONE phase source, CUT D8)', () => {
-    expect(src).toMatch(/gauntlet-phases\.ts/);
+  it('points at packages/command/src/checks/registry.ts (the check and phase source)', () => {
+    expect(src).toMatch(/packages\/command\/src\/checks\/registry\.ts/);
   });
   it('does not credit `await run(...)` calls in scripts/gauntlet.ts as the phase source', () => {
     expect(src).not.toMatch(/await run\(/);

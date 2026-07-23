@@ -4,7 +4,7 @@
  * install the current packed fleet, and rebuild green.
  *
  * This is a genuine two-version control. The prior phase is exported from Git,
- * installed, built, and packed independently; it emits the old `data-czap-*`
+ * installed, built, and packed independently; it emits the historical wire
  * wire marker. The migration then applies the current canonical starter source,
  * replaces the prior tarballs with the current packed fleet, and drives the
  * installed current `liteship build`, which must emit `data-liteship-*`.
@@ -35,6 +35,7 @@ import {
   type PackedWorkspace,
   type PriorPackedWorkspace,
 } from './harness.js';
+import { PRIOR_BOUNDARY_MARKER } from './prior-operation-brand.js';
 
 /** True iff any built HTML carries `marker`. */
 function builtWithMarker(appDir: string, marker: string): boolean {
@@ -67,8 +68,8 @@ export async function journeyUpgrade(current: PackedWorkspace): Promise<JourneyR
       )}`,
     );
     journeyAssert(
-      builtWithMarker(appDir, 'data-czap-boundary'),
-      `consumer built from ${PRIOR_OPERATION_BASE} emitted no data-czap-boundary marker`,
+      builtWithMarker(appDir, PRIOR_BOUNDARY_MARKER),
+      `consumer built from ${PRIOR_OPERATION_BASE} emitted no historical boundary marker`,
     );
 
     // Phase B: apply the explicit breaking source migration, then install the
@@ -105,7 +106,7 @@ export async function journeyUpgrade(current: PackedWorkspace): Promise<JourneyR
       name,
       status: 'pass',
       detail:
-        `${PRIOR_OPERATION_BASE} source built + packed a real data-czap consumer; explicit pre-1.0 source migration ` +
+        `${PRIOR_OPERATION_BASE} source built + packed a real historical consumer; explicit pre-1.0 source migration ` +
         'installed the current packed fleet and rebuilt data-liteship output through the installed CLI',
       notes: ['no compatibility alias and no current-to-current range substitution'],
     };
