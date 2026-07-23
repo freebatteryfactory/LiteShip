@@ -15,6 +15,41 @@ export interface CSSDeclarationValue {
   readonly important: boolean;
 }
 
+/** Decode one CSS identifier token, including hexadecimal and simple escapes. */
+function decodeCSSIdentifier(authored: string): string | null {
+  let decoded = '';
+  for (let i = 0; i < authored.length; i++) {
+    const ch = authored[i]!;
+    if (ch !== '\\') {
+      decoded += ch;
+      continue;
+    }
+
+    const next = authored[i + 1];
+    if (next === undefined || next === '\n' || next === '\r' || next === '\f') return null;
+    if (/[0-9a-f]/i.test(next)) {
+      let hex = '';
+      let cursor = i + 1;
+      while (cursor < authored.length && hex.length < 6 && /[0-9a-f]/i.test(authored[cursor]!)) {
+        hex += authored[cursor]!;
+        cursor++;
+      }
+      const codePoint = Number.parseInt(hex, 16);
+      decoded +=
+        codePoint === 0 || codePoint > 0x10ffff || (codePoint >= 0xd800 && codePoint <= 0xdfff)
+          ? '\uFFFD'
+          : String.fromCodePoint(codePoint);
+      if (cursor < authored.length && /[\t\n\f\r ]/.test(authored[cursor]!)) cursor++;
+      i = cursor - 1;
+      continue;
+    }
+
+    decoded += next;
+    i++;
+  }
+  return decoded;
+}
+
 /**
  * Split a selector list on top-level commas. Comments become whitespace while
  * quoted strings, attribute selectors, and functional selectors remain intact.
@@ -120,7 +155,8 @@ export function parseCSSDeclarationValue(authored: string): CSSDeclarationValue 
 
   for (let i = topLevelBangOffsets.length - 1; i >= 0; i--) {
     const offset = topLevelBangOffsets[i]!;
-    if (/^!\s*important\s*$/i.test(normalized.slice(offset))) {
+    const priorityIdentifier = normalized.slice(offset + 1).trim();
+    if (decodeCSSIdentifier(priorityIdentifier)?.toLowerCase() === 'important') {
       return { value: normalized.slice(0, offset).trim(), important: true };
     }
   }

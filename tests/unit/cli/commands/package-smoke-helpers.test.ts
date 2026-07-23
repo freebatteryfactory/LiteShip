@@ -421,14 +421,14 @@ describe('assertPackedTypeClosure — exact physical declaration proof', () => {
   it('rejects malformed packed declarations through pre-emit diagnostics', () => {
     plantPackage({ declaration: 'export interface Broken {\n' });
     expect(() => assertPackedTypeClosure(ts, consumer, [entry], ['bundler'])).toThrow(
-      /failed bundler pre-emit diagnostics \(1 owned; 0 external\):\n.*:\d+:\d+ TS1005/s,
+      /failed bundler pre-emit diagnostics \(1\):\n.*:\d+:\d+ TS1005/s,
     );
   });
 
   it('reports semantic diagnostics from the packed declaration itself', () => {
     plantPackage({ declaration: 'export declare const value: MissingOwnedType;\n' });
     expect(() => assertPackedTypeClosure(ts, consumer, [entry], ['node16'])).toThrow(
-      /failed node16 pre-emit diagnostics \(1 owned; 0 external\):\n.*:\d+:\d+ TS2304 Cannot find name 'MissingOwnedType'/s,
+      /failed node16 pre-emit diagnostics \(1\):\n.*:\d+:\d+ TS2304 Cannot find name 'MissingOwnedType'/s,
     );
   });
 
@@ -450,11 +450,11 @@ describe('assertPackedTypeClosure — exact physical declaration proof', () => {
     });
 
     expect(() => assertPackedTypeClosure(ts, consumer, [entry], ['node16'])).toThrow(
-      /failed node16 pre-emit diagnostics \(1 owned; 0 external\):\n.*:\d+:\d+ TS2305 Module '"external-types"' has no exported member 'MissingExternal'/s,
+      /failed node16 pre-emit diagnostics \(1\):\n.*:\d+:\d+ TS2305 Module '"external-types"' has no exported member 'MissingExternal'/s,
     );
   });
 
-  it('does not reclassify a transitive third-party declaration conflict as a LiteShip package defect', () => {
+  it('rejects a transitive declaration conflict reachable from the public type graph', () => {
     const externalRoot = join(consumer, 'node_modules', 'external-types');
     mkdirSync(externalRoot, { recursive: true });
     writeFileSync(
@@ -471,7 +471,9 @@ describe('assertPackedTypeClosure — exact physical declaration proof', () => {
     );
     plantPackage({ declaration: "import 'external-types';\nexport declare const value: true;\n" });
 
-    expect(() => assertPackedTypeClosure(ts, consumer, [entry], ['node16'])).not.toThrow();
+    expect(() => assertPackedTypeClosure(ts, consumer, [entry], ['node16'])).toThrow(
+      /failed node16 pre-emit diagnostics \(2\):\n.*external-types.*:\d+:\d+ TS2451 Cannot redeclare block-scoped variable 'externalConflict'/s,
+    );
   });
 
   it('rejects a package whose physical declaration escapes the packed node_modules tree', () => {

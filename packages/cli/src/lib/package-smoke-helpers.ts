@@ -414,19 +414,6 @@ function diagnosticText(ts: typeof TypeScript, diagnostic: TypeScript.Diagnostic
   return `${location}TS${diagnostic.code} ${ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n')}`;
 }
 
-function diagnosticsFromOwnedSurface(
-  diagnostics: readonly TypeScript.Diagnostic[],
-  probePath: string,
-  physicalPackageRoots: readonly string[],
-): readonly TypeScript.Diagnostic[] {
-  const physicalProbe = normalizedRealpath(probePath);
-  return diagnostics.filter((diagnostic) => {
-    if (diagnostic.file === undefined) return true;
-    const physicalFile = normalizedRealpath(diagnostic.file.fileName);
-    return physicalFile === physicalProbe || physicalPackageRoots.some((root) => pathIsInside(root, physicalFile));
-  });
-}
-
 function boundedDiagnosticReport(
   ts: typeof TypeScript,
   diagnostics: readonly TypeScript.Diagnostic[],
@@ -464,7 +451,6 @@ export function assertPackedTypeClosure(
     const options = compilerOptionsForTypeClosure(ts, mode);
     const host = ts.createCompilerHost(options);
     const probePath = join(consumerDir, `.liteship-type-closure-${mode}.ts`);
-    const physicalPackageRoots: string[] = [];
     writeFileSync(
       probePath,
       entries
@@ -481,8 +467,6 @@ export function assertPackedTypeClosure(
       if (packageRoot === undefined) {
         throw IntegrityError('package-smoke', `${entry.specifier} (${mode}) has no installed package root`);
       }
-      const physicalPackageRoot = normalizedRealpath(packageRoot);
-      if (!physicalPackageRoots.includes(physicalPackageRoot)) physicalPackageRoots.push(physicalPackageRoot);
       const expectedTarget = resolve(packageRoot, entry.typesTarget);
       if (!existsSync(expectedTarget)) {
         throw IntegrityError(
@@ -532,17 +516,11 @@ export function assertPackedTypeClosure(
       }
     }
 
-    const allDiagnostics = ts.getPreEmitDiagnostics(ts.createProgram({ rootNames: [probePath], options, host }));
-    // The authority owns the generated probe and the declarations shipped by the
-    // 25 LiteShip packages. Third-party declaration packages may conflict with the
-    // selected DOM lib independently of LiteShip (for example mediabunny's pinned
-    // WebCodecs compatibility declarations); those are not allowed to conceal an
-    // owned diagnostic, but they are not reclassified as a LiteShip package defect.
-    const diagnostics = diagnosticsFromOwnedSurface(allDiagnostics, probePath, physicalPackageRoots);
+    const diagnostics = ts.getPreEmitDiagnostics(ts.createProgram({ rootNames: [probePath], options, host }));
     if (diagnostics.length > 0) {
       throw IntegrityError(
         'package-smoke',
-        `packed public declarations failed ${mode} pre-emit diagnostics (${diagnostics.length} owned; ${allDiagnostics.length - diagnostics.length} external):\n${boundedDiagnosticReport(ts, diagnostics)}`,
+        `packed public declarations failed ${mode} pre-emit diagnostics (${diagnostics.length}):\n${boundedDiagnosticReport(ts, diagnostics)}`,
       );
     }
   }

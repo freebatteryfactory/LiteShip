@@ -198,6 +198,15 @@ describe('fromCSSCustomProperties — supported selector cascade', () => {
     expect(result.tokens[0]!.fallback).toBe('red !important');
   });
 
+  it('recognizes escaped CSS identifiers in the important priority token', () => {
+    const result = fromCSSCustomProperties(`
+      :root { --accent: red !\\69mportant; }
+      :root { --accent: blue; }
+    `);
+
+    expect(result.tokens[0]!.fallback).toBe('red !important');
+  });
+
   it('retains important priority in compiled theme CSS', () => {
     const result = fromCSSCustomProperties(`
       :root { --accent: red !important; }

@@ -6,8 +6,10 @@ import { WebCodecsCapture } from '../../../packages/web/src/capture/webcodecs.js
 
 // The `./mediabunny.js` shim re-exports the third-party mediabunny muxer classes.
 // Rather than interaction-mock our own wrapper, we script the muxer boundary with
-// fake classes and inject them through WebCodecsCapture.make's encoder seam
-// (its optional second parameter, which defaults to the real mediabunny classes).
+// fake classes and inject them through the implementation's encoder seam. The
+// public WebCodecsCapture.make type intentionally exposes only authored options;
+// this source-level test capability must not pull Mediabunny declarations into
+// the package's public type graph.
 const mediabunnyState = {
   codecNames: [] as string[],
   packets: [] as Array<{ packet: unknown; metadata?: unknown }>,
@@ -71,7 +73,18 @@ const mediabunny = {
   EncodedVideoPacketSource: EncodedVideoPacketSourceFake,
   Mp4OutputFormat: Mp4OutputFormatFake,
   Output: OutputFake,
-} as unknown as Parameters<typeof WebCodecsCapture.make>[1];
+};
+
+const makeWebCodecsCapture = WebCodecsCapture.make as unknown as (
+  options: Parameters<typeof WebCodecsCapture.make>[0],
+  codecs: unknown,
+) => ReturnType<typeof WebCodecsCapture.make>;
+
+if (false) {
+  // @ts-expect-error The third-party injection seam is source-test capability,
+  // not part of the public WebCodecsCapture factory contract.
+  WebCodecsCapture.make(undefined, mediabunny);
+}
 
 type VideoEncoderInit = {
   output: (chunk: unknown, metadata?: unknown) => void;
@@ -292,7 +305,7 @@ describe('web capture runtime', () => {
   });
 
   test('covers support probing, timestamp normalization, packet draining, and codec mapping', async () => {
-    const avcCapture = WebCodecsCapture.make(undefined, mediabunny);
+    const avcCapture = makeWebCodecsCapture(undefined, mediabunny);
     await expect(
       avcCapture.init({
         width: 641,
@@ -304,7 +317,7 @@ describe('web capture runtime', () => {
       /\(H\.264\/HEVC\) requires even width and height\. Got 641x480 — round to 640x480, or use a VP9\/AV1 codec string/,
     );
 
-    const capture = WebCodecsCapture.make(
+    const capture = makeWebCodecsCapture(
       {
         codec: 'vp09.00.10.08',
         bitrate: 2_000_000,
@@ -375,7 +388,7 @@ describe('web capture runtime', () => {
   });
 
   test('rejects unsupported codec mappings and support probe failures', async () => {
-    const unsupportedCapture = WebCodecsCapture.make(
+    const unsupportedCapture = makeWebCodecsCapture(
       {
         codec: 'weird-codec',
       },
@@ -390,7 +403,7 @@ describe('web capture runtime', () => {
     ).rejects.toThrow('Unsupported WebCodecs codec');
 
     encoderState.supportResult = false;
-    const unsupportedConfigCapture = WebCodecsCapture.make(undefined, mediabunny);
+    const unsupportedConfigCapture = makeWebCodecsCapture(undefined, mediabunny);
     await expect(
       unsupportedConfigCapture.init({
         width: 640,
@@ -401,7 +414,7 @@ describe('web capture runtime', () => {
 
     encoderState.supportResult = true;
     encoderState.supportError = new Error('probe boom');
-    const probeErrorCapture = WebCodecsCapture.make(undefined, mediabunny);
+    const probeErrorCapture = makeWebCodecsCapture(undefined, mediabunny);
     await expect(
       probeErrorCapture.init({
         width: 640,
@@ -413,7 +426,7 @@ describe('web capture runtime', () => {
 
   test('maps HEVC and AV1 codec aliases and stringifies non-Error support probe failures', async () => {
     encoderState.supportError = 'probe string boom' as never;
-    const stringProbeCapture = WebCodecsCapture.make(
+    const stringProbeCapture = makeWebCodecsCapture(
       {
         codec: 'hev1.1.6.L93.B0',
       },
@@ -429,7 +442,7 @@ describe('web capture runtime', () => {
 
     encoderState.supportError = null;
 
-    const hevcCapture = WebCodecsCapture.make(
+    const hevcCapture = makeWebCodecsCapture(
       {
         codec: 'hvc1.1.6.L93.B0',
       },
@@ -443,7 +456,7 @@ describe('web capture runtime', () => {
     await hevcCapture.capture({ bitmap: { close() {} }, timestamp: 0 } as never);
     await hevcCapture.finalize();
 
-    const av1Capture = WebCodecsCapture.make(
+    const av1Capture = makeWebCodecsCapture(
       {
         codec: 'av1',
       },
@@ -464,7 +477,7 @@ describe('web capture runtime', () => {
     const originalVideoEncoder = VideoEncoderMock as unknown as typeof VideoEncoder;
     vi.stubGlobal('VideoEncoder', undefined);
 
-    const unavailableCapture = WebCodecsCapture.make(undefined, mediabunny);
+    const unavailableCapture = makeWebCodecsCapture(undefined, mediabunny);
     await expect(
       unavailableCapture.init({
         width: 640,
@@ -482,7 +495,7 @@ describe('web capture runtime', () => {
         value: undefined,
       });
 
-      const capture = WebCodecsCapture.make(
+      const capture = makeWebCodecsCapture(
         {
           codec: 'vp09.00.10.08',
         },
@@ -511,7 +524,7 @@ describe('web capture runtime', () => {
   });
 
   test('surfaces encoder errors, missing packets, and empty muxer output deterministically', async () => {
-    const errorCapture = WebCodecsCapture.make(undefined, mediabunny);
+    const errorCapture = makeWebCodecsCapture(undefined, mediabunny);
     await errorCapture.init({
       width: 640,
       height: 480,
@@ -528,7 +541,7 @@ describe('web capture runtime', () => {
 
     encoderState.pendingError = null;
     encoderState.emitChunks = false;
-    const noPacketsCapture = WebCodecsCapture.make(undefined, mediabunny);
+    const noPacketsCapture = makeWebCodecsCapture(undefined, mediabunny);
     await noPacketsCapture.init({
       width: 640,
       height: 480,
@@ -543,7 +556,7 @@ describe('web capture runtime', () => {
 
     encoderState.emitChunks = true;
     mediabunnyState.buffer = null;
-    const noOutputCapture = WebCodecsCapture.make(undefined, mediabunny);
+    const noOutputCapture = makeWebCodecsCapture(undefined, mediabunny);
     await noOutputCapture.init({
       width: 640,
       height: 480,
@@ -558,7 +571,7 @@ describe('web capture runtime', () => {
   });
 
   test('rejects capture and finalize before initialization and rejects empty finalize runs', async () => {
-    const capture = WebCodecsCapture.make(
+    const capture = makeWebCodecsCapture(
       {
         codec: 'vp09.00.10.08',
       },

@@ -274,7 +274,9 @@ function make(options?: WebCodecsCaptureOptions, mediabunny: MediabunnyCodecs = 
 /**
  * WebCodecsCapture -- module object + namespace for browser-native video capture.
  */
-export const WebCodecsCapture = { make } as const;
+export const WebCodecsCapture: {
+  readonly make: (options?: WebCodecsCaptureOptions) => FrameCapture;
+} = { make };
 
 /** Public structural type for `WebCodecsCapture`. */
 export type WebCodecsCapture = FrameCapture;
