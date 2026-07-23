@@ -421,8 +421,57 @@ describe('assertPackedTypeClosure — exact physical declaration proof', () => {
   it('rejects malformed packed declarations through pre-emit diagnostics', () => {
     plantPackage({ declaration: 'export interface Broken {\n' });
     expect(() => assertPackedTypeClosure(ts, consumer, [entry], ['bundler'])).toThrow(
-      /failed bundler pre-emit diagnostics/,
+      /failed bundler pre-emit diagnostics \(1 owned; 0 external\):\n.*:\d+:\d+ TS1005/s,
     );
+  });
+
+  it('reports semantic diagnostics from the packed declaration itself', () => {
+    plantPackage({ declaration: 'export declare const value: MissingOwnedType;\n' });
+    expect(() => assertPackedTypeClosure(ts, consumer, [entry], ['node16'])).toThrow(
+      /failed node16 pre-emit diagnostics \(1 owned; 0 external\):\n.*:\d+:\d+ TS2304 Cannot find name 'MissingOwnedType'/s,
+    );
+  });
+
+  it('rejects an owned declaration that imports a missing external symbol', () => {
+    const externalRoot = join(consumer, 'node_modules', 'external-types');
+    mkdirSync(externalRoot, { recursive: true });
+    writeFileSync(
+      join(externalRoot, 'package.json'),
+      JSON.stringify({
+        name: 'external-types',
+        type: 'module',
+        exports: { '.': { types: './index.d.ts' } },
+      }),
+    );
+    writeFileSync(join(externalRoot, 'index.d.ts'), 'export interface PresentExternal {}\n');
+    plantPackage({
+      declaration:
+        "import type { MissingExternal } from 'external-types';\nexport declare const value: MissingExternal;\n",
+    });
+
+    expect(() => assertPackedTypeClosure(ts, consumer, [entry], ['node16'])).toThrow(
+      /failed node16 pre-emit diagnostics \(1 owned; 0 external\):\n.*:\d+:\d+ TS2305 Module '"external-types"' has no exported member 'MissingExternal'/s,
+    );
+  });
+
+  it('does not reclassify a transitive third-party declaration conflict as a LiteShip package defect', () => {
+    const externalRoot = join(consumer, 'node_modules', 'external-types');
+    mkdirSync(externalRoot, { recursive: true });
+    writeFileSync(
+      join(externalRoot, 'package.json'),
+      JSON.stringify({
+        name: 'external-types',
+        type: 'module',
+        exports: { '.': { types: './index.d.ts' } },
+      }),
+    );
+    writeFileSync(
+      join(externalRoot, 'index.d.ts'),
+      'declare const externalConflict: string;\ndeclare const externalConflict: number;\n',
+    );
+    plantPackage({ declaration: "import 'external-types';\nexport declare const value: true;\n" });
+
+    expect(() => assertPackedTypeClosure(ts, consumer, [entry], ['node16'])).not.toThrow();
   });
 
   it('rejects a package whose physical declaration escapes the packed node_modules tree', () => {

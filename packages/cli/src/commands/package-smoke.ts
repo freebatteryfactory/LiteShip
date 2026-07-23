@@ -354,6 +354,17 @@ function firstLine(message: string): string {
   return message.split('\n')[0] ?? message;
 }
 
+/** Keep multi-line authority failures useful without allowing an unbounded child dump. */
+function boundedFailure(message: string, lineLimit = 16, characterLimit = 16_000): string {
+  const lines = message.split(/\r?\n/);
+  const bounded = lines.slice(0, lineLimit);
+  if (lines.length > lineLimit) bounded.push(`... ${lines.length - lineLimit} more lines`);
+  const report = bounded.join('\n');
+  return report.length <= characterLimit
+    ? report
+    : `${report.slice(0, characterLimit)}\n... failure report truncated at ${characterLimit} characters`;
+}
+
 type HermeticResult = NonNullable<PackageSmokePayload['hermetic']>;
 
 /**
@@ -473,7 +484,7 @@ process.stdout.write('OK ' + imports.length + ' imports + ' + refusals.length + 
     const [spec, ...rest] = out.split('\t');
     const failure = out
       ? `closure import failed at ${spec}: ${firstLine(rest.join('\t'))}`
-      : firstLine(error instanceof Error ? error.message : String(error));
+      : boundedFailure(error instanceof Error ? error.message : String(error));
     return { ok: false, subpathCount: subpaths.length, failure };
   }
 }

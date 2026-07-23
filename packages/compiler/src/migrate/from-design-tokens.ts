@@ -151,8 +151,7 @@ function isLossyValue(value: unknown): boolean {
 }
 
 type LoweredDtcgValue =
-  | { readonly ok: true; readonly value: string | number }
-  | { readonly ok: false; readonly reason: string };
+  { readonly ok: true; readonly value: string | number } | { readonly ok: false; readonly reason: string };
 
 const FONT_WEIGHT_NAMES = new Set([
   'thin',
@@ -179,7 +178,11 @@ const FONT_WEIGHT_NAMES = new Set([
 function lowerDtcgValue(value: unknown, type: string): LoweredDtcgValue {
   if (type === 'fontFamily') {
     if (typeof value === 'string' && value.length > 0) return { ok: true, value };
-    if (!Array.isArray(value) || value.length === 0 || !value.every((part) => typeof part === 'string' && part.length > 0)) {
+    if (
+      !Array.isArray(value) ||
+      value.length === 0 ||
+      !value.every((part) => typeof part === 'string' && part.length > 0)
+    ) {
       return { ok: false, reason: 'fontFamily requires a non-empty font name or non-empty array of font names' };
     }
     const generics = new Set([
@@ -367,11 +370,13 @@ export function fromDesignTokens(json: unknown, options?: FromDesignTokensOption
     name: string,
     valuePath: readonly string[],
   ): { readonly ok: true; readonly value: unknown } | { readonly ok: false } => {
-    const lowered = type === undefined ? { ok: false as const, reason: 'missing DTCG type' } : lowerDtcgValue(value, type);
+    const lowered =
+      type === undefined ? { ok: false as const, reason: 'missing DTCG type' } : lowerDtcgValue(value, type);
     if (lowered.ok) return lowered;
-    const code = type === 'shadow' || type === 'typography' || type === 'borderRadius'
-      ? MIGRATE_CODES.lossyTokenConversion
-      : MIGRATE_CODES.malformedInput;
+    const code =
+      type === 'shadow' || type === 'typography' || type === 'borderRadius'
+        ? MIGRATE_CODES.lossyTokenConversion
+        : MIGRATE_CODES.malformedInput;
     diagnostics.push(
       makeMigrationDiagnostic(
         code,
@@ -531,9 +536,10 @@ export function fromDesignTokens(json: unknown, options?: FromDesignTokensOption
     }
     const lowered = lowerDtcgValue(value, type);
     if (!lowered.ok) {
-      const code = type === 'shadow' || type === 'typography' || type === 'borderRadius'
-        ? MIGRATE_CODES.lossyTokenConversion
-        : MIGRATE_CODES.malformedInput;
+      const code =
+        type === 'shadow' || type === 'typography' || type === 'borderRadius'
+          ? MIGRATE_CODES.lossyTokenConversion
+          : MIGRATE_CODES.malformedInput;
       diagnostics.push(
         makeMigrationDiagnostic(
           code,

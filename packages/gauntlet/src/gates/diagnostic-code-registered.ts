@@ -5,8 +5,10 @@
  * ({@link DIAGNOSTIC_REGISTRY} in `@liteship/error`), so a human or an agent can
  * `explainDiagnostic(code)` and get the code's title / explanation / remediation. This
  * gate is the INDEPENDENT source backstop for the exact TypeScript unions at each
- * emitter boundary: every static `area/slug` identity in package source must resolve
- * through the registry. It scans all eight declared areas and all quote styles.
+ * emitter boundary: every static diagnostic `area/slug` identity in package source,
+ * plus every check identity authored by CHECK_REGISTRY, must resolve through the
+ * registry. It scans all eight declared areas and all quote styles without treating
+ * planted governance facts as emitters.
  *
  * LEAF-LEGAL BY CONSTRUCTION: the gate reads the registry from `@liteship/error` (the
  * leaf every package imports — gauntlet imports error, never the reverse) and reads the
@@ -31,6 +33,7 @@ const RULE_ID = 'gauntlet/diagnostic-code-registered';
 /** Package source is the governed emitter corpus; error/codes.ts is the registry, not an emitter. */
 const PACKAGE_SRC = /^packages\/[^/]+\/src\//;
 const REGISTRY_FILE = 'packages/error/src/codes.ts';
+const CHECK_REGISTRY_FILE = 'packages/command/src/checks/registry.ts';
 
 /**
  * This gate's OWN source file — SELF-EXCLUDED from the scan. It legitimately carries
@@ -41,11 +44,13 @@ const REGISTRY_FILE = 'packages/error/src/codes.ts';
 const SELF_FILE_SUFFIX = '/gates/diagnostic-code-registered.ts';
 
 /**
- * Every static stable-code string literal in one of the eight declared areas. The
- * emitter types reject dynamic/invented runtime identities; this regex is deliberately
- * independent and catches single, double, and no-substitution template literals.
+ * Every static diagnostic-code string literal in the seven runtime/gate areas. Check
+ * identities have one authored owner (CHECK_REGISTRY) and use the adjacent pattern.
+ * The emitter types reject dynamic/invented runtime identities; both regexes remain
+ * deliberately independent and catch single, double, and no-substitution templates.
  */
-const STABLE_CODE = /(['"`])((?:gauntlet|check|core|schema|compiler|astro|cli|migrate)\/[a-zA-Z0-9_/-]+)\1/g;
+const STABLE_DIAGNOSTIC_CODE = /(['"`])((?:gauntlet|core|schema|compiler|astro|cli|migrate)\/[a-zA-Z0-9_/-]+)\1/g;
+const STABLE_CHECK_ID = /(['"`])(check\/[a-zA-Z0-9_/-]+)\1/g;
 
 /** All the codes a single source file emits (comments stripped so a doc mention never counts). */
 function codesIn(text: string, pattern: RegExp): readonly string[] {
@@ -101,7 +106,15 @@ function scan(context: GateContext): readonly Finding[] {
     if (file.endsWith(SELF_FILE_SUFFIX)) continue; // self-exclude (carries example fixture ids)
     if (!PACKAGE_SRC.test(file) || file === REGISTRY_FILE) continue;
     const text = context.readFile(file);
-    if (text !== undefined) for (const code of codesIn(text, STABLE_CODE)) record(code, file);
+    if (text === undefined) continue;
+
+    // A check identity is authored exactly once by CHECK_REGISTRY. Other package files
+    // legitimately carry planted check ids as negative-control facts and test data; those
+    // values are not emitted diagnostics. Diagnostic areas remain source-scanned across
+    // the full package corpus because their codes may be routed through typed maps before
+    // reaching the emitter.
+    const pattern = file === CHECK_REGISTRY_FILE ? STABLE_CHECK_ID : STABLE_DIAGNOSTIC_CODE;
+    for (const code of codesIn(text, pattern)) record(code, file);
   }
   return findings;
 }
@@ -112,6 +125,7 @@ function scan(context: GateContext): readonly Finding[] {
 const RED_CONTEXT = memoryContext({
   'packages/astro/src/__unregistered_fixture__.ts':
     'export const payload = { code: "astro/__unregistered_fixture_code__", message: "x" };\n',
+  [CHECK_REGISTRY_FILE]: "export const CHECK_REGISTRY = [{ id: 'check/__unregistered_fixture_check__' }] as const;\n",
 });
 
 /** A green world: a gauntlet gate source + a check registry that emit only ENROLLED codes. */
@@ -128,6 +142,9 @@ const GREEN_CONTEXT = memoryContext({
   'packages/cli/src/__registered_fixture__.ts': "export const failure = { code: 'cli/usage', message: 'x' };\n",
   'packages/compiler/src/migrate/__registered_fixture__.ts':
     "export const warning = { code: 'migrate/malformed-input', message: 'x' };\n",
+  // Planted governance facts are not check emitters. Only CHECK_REGISTRY owns check ids.
+  'packages/gauntlet/src/gates/__negative_control_fixture__.ts':
+    "export const facts = [{ id: 'check/example-not-an-emitter', blocking: true }] as const;\n",
 });
 
 /**
@@ -138,7 +155,7 @@ export const diagnosticCodeRegisteredGate: Gate = defineGate({
   id: RULE_ID,
   level: 'L2',
   describe:
-    "Statically scans package source for every stable gauntlet/check/core/schema/compiler/astro/cli/migrate identity and reports any that is not a key in @liteship/error's DIAGNOSTIC_REGISTRY — the independent backstop that keeps every emitted diagnostic code explainable.",
+    "Statically scans package source for every stable gauntlet/core/schema/compiler/astro/cli/migrate diagnostic identity plus every CHECK_REGISTRY-owned check identity, and reports any that is not a key in @liteship/error's DIAGNOSTIC_REGISTRY — the independent backstop that keeps every emitted diagnostic code explainable without treating planted governance facts as emitters.",
   run: scan,
   fixtures: {
     red: {
