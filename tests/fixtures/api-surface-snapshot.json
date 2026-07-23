@@ -3526,6 +3526,11 @@
           "name": "evaluate",
           "kind": "function",
           "signature": "(3)"
+        },
+        {
+          "name": "resolveQuantizerTargets",
+          "kind": "function",
+          "signature": "(1)"
         }
       ]
     },
