@@ -138,7 +138,7 @@ export function renderAuditRoster(): string {
 export function renderCommandSmokeRoster(): string {
   const rows = PACKAGE_CATALOG.map((record) => {
     const imports = record.smokeImports.map((specifier) => quote(specifier)).join(', ');
-    return `  { dir: ${quote(record.dir)}, name: ${quote(record.name)}, imports: [${imports}] },`;
+    return `  { dir: ${quote(record.dir)}, name: ${quote(record.name)}, runtimeSurface: ${quote(record.runtimeSurface)}, imports: [${imports}] },`;
   }).join('\n');
   return (
     generatedHeader('scripts/gen-roster.ts from scripts/package-catalog.ts') +
@@ -527,6 +527,18 @@ export function validatePackageCatalog(
     }
     if (record.plumbStatus === 'deferred' && record.plumbIssue == null) {
       drift.push({ copy: `PACKAGE_CATALOG:${record.name}`, detail: 'deferred plumb status requires plumbIssue' });
+    }
+    if (record.runtimeSurface === 'types-only' && record.smokeImports.length !== 0) {
+      drift.push({
+        copy: `PACKAGE_CATALOG:${record.name}`,
+        detail: 'types-only runtime surface cannot declare positive runtime smoke imports',
+      });
+    }
+    if (record.runtimeSurface === 'module' && record.smokeImports.length === 0) {
+      drift.push({
+        copy: `PACKAGE_CATALOG:${record.name}`,
+        detail: 'module runtime surface requires at least one positive runtime smoke import',
+      });
     }
     for (const [field, values] of [
       ['dependencies', record.dependencies],

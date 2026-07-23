@@ -31,6 +31,8 @@ import { IntegrityError, InvariantViolationError } from '@liteship/error';
 import {
   assertConsumerDependencyInstalled,
   findConsumerDependencyRoot,
+  diffSemanticClosures,
+  partitionRuntimeClosureSpecifiers,
   peerDependenciesOnly as peerDependenciesOnlyHelper,
   resolveExecutable,
   tarballFileUrl,
@@ -342,13 +344,6 @@ function tarballClosure(tarballPath: string, destDir: string): Map<string, strin
   return closure;
 }
 
-/** Two per-file closures are equal iff they carry the same paths with the same content hashes. */
-function closuresEqual(a: Map<string, string>, b: Map<string, string>): boolean {
-  if (a.size !== b.size) return false;
-  for (const [path, hash] of a) if (b.get(path) !== hash) return false;
-  return true;
-}
-
 /** First line of an error message (the actionable head; the full stream already inherited to stderr). */
 function firstLine(message: string): string {
   return message.split('\n')[0] ?? message;
@@ -398,11 +393,13 @@ function runHermeticBuild(scratch: string, tarballByPackage: Map<string, string>
  */
 function runPackedConsumerClosure(root: string, consumerDir: string): HermeticResult['packedConsumerClosure'] {
   const subpaths = enumeratePublicSubpaths(root);
-  const runtimeSpecifiers = subpaths.filter((entry) => entry.runtimeTarget !== null).map((entry) => entry.specifier);
+  const runtime = partitionRuntimeClosureSpecifiers(subpaths, PACKAGES);
+  const runtimeSpecifiers = runtime.imports;
+  const refusalSpecifiers = runtime.refusals;
   const typeSpecifiers = subpaths.filter((entry) => entry.typesTarget !== null).map((entry) => entry.specifier);
   process.stderr.write(
     `[package:smoke] > packed-consumer-closure: prove ${subpaths.length} enumerated public subpaths ` +
-      `(${runtimeSpecifiers.length} runtime, ${typeSpecifiers.length} typed)\n`,
+      `(${runtimeSpecifiers.length} runtime, ${refusalSpecifiers.length} type-only refusal, ${typeSpecifiers.length} typed)\n`,
   );
 
   for (const entry of subpaths) {
@@ -420,6 +417,7 @@ function runPackedConsumerClosure(root: string, consumerDir: string): HermeticRe
 
   const closureModule = `
 const imports = ${JSON.stringify(runtimeSpecifiers, null, 2)};
+const refusals = ${JSON.stringify(refusalSpecifiers, null, 2)};
 for (const specifier of imports) {
   try {
     const mod = await import(specifier);
@@ -432,7 +430,20 @@ for (const specifier of imports) {
     process.exit(1);
   }
 }
-process.stdout.write('OK ' + imports.length);
+for (const specifier of refusals) {
+  try {
+    await import(specifier);
+    process.stdout.write(specifier + '\\t' + 'type-only package unexpectedly allowed a runtime import');
+    process.exit(1);
+  } catch (error) {
+    const message = error && error.message ? error.message : String(error);
+    if (!message.includes(specifier + ' is type-only') || !message.includes('no runtime exports')) {
+      process.stdout.write(specifier + '\\t' + 'runtime refusal was not the packed type-only teaching contract: ' + message);
+      process.exit(1);
+    }
+  }
+}
+process.stdout.write('OK ' + imports.length + ' imports + ' + refusals.length + ' refusals');
 `;
   writeFileSync(join(consumerDir, 'closure.mjs'), closureModule);
   try {
@@ -505,7 +516,13 @@ async function runDoubleBuildRepro(args: {
     const extractBase = join(scratch, 'repro-extract');
     await mkdir(extractBase, { recursive: true });
 
-    const perPackage: { package: string; semantic: boolean; artifact: boolean; fileCount: number }[] = [];
+    const perPackage: {
+      package: string;
+      semantic: boolean;
+      artifact: boolean;
+      fileCount: number;
+      semanticDiff: ReturnType<typeof diffSemanticClosures>;
+    }[] = [];
     let semanticAll = true;
     let artifactAll = true;
     for (const pkg of PACKAGES) {
@@ -515,10 +532,20 @@ async function runDoubleBuildRepro(args: {
       const slug = pkg.name.replace(/[^a-z0-9]+/gi, '_');
       const closureA = tarballClosure(first, join(extractBase, `${slug}-a`));
       const closureB = tarballClosure(second, join(extractBase, `${slug}-b`));
-      const semantic = closuresEqual(closureA, closureB);
+      const semanticDiff = diffSemanticClosures(closureA, closureB);
+      const semantic = semanticDiff.total === 0;
       if (!artifact) artifactAll = false;
-      if (!semantic) semanticAll = false;
-      perPackage.push({ package: pkg.name, semantic, artifact, fileCount: closureA.size });
+      if (!semantic) {
+        semanticAll = false;
+        const preview = semanticDiff.paths
+          .map((entry) => `${entry.path} (${entry.firstHash ?? 'missing'} -> ${entry.secondHash ?? 'missing'})`)
+          .join(', ');
+        process.stderr.write(
+          `[package:smoke] ! semantic drift ${pkg.name}: ${semanticDiff.total} path(s): ${preview}` +
+            `${semanticDiff.truncated ? ', ...' : ''}\n`,
+        );
+      }
+      perPackage.push({ package: pkg.name, semantic, artifact, fileCount: closureA.size, semanticDiff });
     }
 
     const report = {
@@ -528,6 +555,9 @@ async function runDoubleBuildRepro(args: {
         reproducible: semanticAll,
         packageCount: PACKAGES.length,
         drift: perPackage.filter((entry) => !entry.semantic).map((entry) => entry.package),
+        details: perPackage
+          .filter((entry) => !entry.semantic)
+          .map((entry) => ({ package: entry.package, ...entry.semanticDiff })),
       },
       artifact: {
         reproducible: artifactAll,

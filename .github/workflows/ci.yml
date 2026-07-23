@@ -450,6 +450,13 @@ jobs:
         run: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.hermetic.command }}
         env:
           CI: true
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: reproducibility-report
+          path: benchmarks/reproducibility-report.json
+          if-no-files-found: ignore
+          retention-days: 7
 
   truth-linux-parallel-coverage-browser:
     runs-on: ubuntu-latest

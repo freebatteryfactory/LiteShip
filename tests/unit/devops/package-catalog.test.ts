@@ -118,6 +118,24 @@ describe('PACKAGE_CATALOG negative controls', () => {
     );
   });
 
+  it('binds runtime-surface classification to positive smoke imports', () => {
+    const typeOnlyWithImport = replaceRecord(PACKAGE_CATALOG, '@liteship/_spine', (record) => ({
+      ...record,
+      smokeImports: ['@liteship/_spine'],
+    }));
+    expect(details(typeOnlyWithImport)).toEqual(
+      expect.arrayContaining([expect.stringContaining('types-only runtime surface cannot declare')]),
+    );
+
+    const moduleWithoutImport = replaceRecord(PACKAGE_CATALOG, '@liteship/core', (record) => ({
+      ...record,
+      smokeImports: [],
+    }));
+    expect(details(moduleWithoutImport)).toEqual(
+      expect.arrayContaining([expect.stringContaining('module runtime surface requires at least one')]),
+    );
+  });
+
   it('rejects duplicate projection order and a deferred package without an issue', () => {
     const duplicateOrder = replaceRecord(PACKAGE_CATALOG, '@liteship/error', (record) => ({
       ...record,

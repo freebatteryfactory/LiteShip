@@ -61,4 +61,14 @@ describe('parallel setup artifact ships dist + capsule manifest', () => {
     expect(ci).toContain('name: benchmarks-parallel');
     expect(ci).toMatch(/name: benchmarks-parallel[\s\S]*?path: benchmarks/);
   });
+
+  it('consumer lane retains semantic reproducibility evidence even when the gate fails', () => {
+    const consumerBlock = ci.slice(
+      ci.indexOf('truth-linux-parallel-consumer:'),
+      ci.indexOf('truth-linux-parallel-coverage-browser:'),
+    );
+    expect(consumerBlock).toContain('if: always()');
+    expect(consumerBlock).toContain('name: reproducibility-report');
+    expect(consumerBlock).toContain('path: benchmarks/reproducibility-report.json');
+  });
 });

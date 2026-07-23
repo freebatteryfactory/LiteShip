@@ -119,3 +119,83 @@ export function assertConsumerDependencyInstalled(consumerDir: string, packageNa
     );
   }
 }
+
+/** The export-map facts needed to decide which public module paths execute. */
+export interface ClosureSubpath {
+  readonly packageName: string;
+  readonly specifier: string;
+  readonly runtimeTarget: string | null;
+}
+
+/** The package-catalog classification projected into package-smoke. */
+export interface ClosurePackageSurface {
+  readonly name: string;
+  readonly runtimeSurface: 'module' | 'types-only';
+}
+
+/** Runtime paths split into positive imports and deliberate type-only refusals. */
+export interface RuntimeClosurePartition {
+  readonly imports: readonly string[];
+  readonly refusals: readonly string[];
+}
+
+/**
+ * Partition export-map runtime targets by the package catalog's declared runtime
+ * surface. A type-only package may ship a default refusal stub for a useful error;
+ * that stub is a negative runtime contract, not a positive module import.
+ */
+export function partitionRuntimeClosureSpecifiers(
+  subpaths: readonly ClosureSubpath[],
+  packages: readonly ClosurePackageSurface[],
+): RuntimeClosurePartition {
+  const surfaces = new Map(packages.map((pkg) => [pkg.name, pkg.runtimeSurface] as const));
+  const imports: string[] = [];
+  const refusals: string[] = [];
+  for (const entry of subpaths) {
+    if (entry.runtimeTarget === null) continue;
+    const surface = surfaces.get(entry.packageName);
+    if (surface === undefined) {
+      throw IntegrityError('package-smoke', `public subpath ${entry.specifier} has no package-catalog runtime surface`);
+    }
+    (surface === 'types-only' ? refusals : imports).push(entry.specifier);
+  }
+  return { imports, refusals };
+}
+
+/** One differing file in a pair of semantic tarball closures. */
+export interface SemanticClosurePathDiff {
+  readonly path: string;
+  readonly firstHash: string | null;
+  readonly secondHash: string | null;
+}
+
+/** Bounded but count-complete semantic closure differences. */
+export interface SemanticClosureDiff {
+  readonly total: number;
+  readonly paths: readonly SemanticClosurePathDiff[];
+  readonly truncated: boolean;
+}
+
+/**
+ * Compare two `{relative path -> content hash}` closures. The count covers every
+ * difference while `paths` is deterministically bounded for receipts and CI logs.
+ */
+export function diffSemanticClosures(
+  first: ReadonlyMap<string, string>,
+  second: ReadonlyMap<string, string>,
+  limit = 12,
+): SemanticClosureDiff {
+  const boundedLimit = Number.isFinite(limit) ? Math.max(0, Math.floor(limit)) : 0;
+  const differing = [...new Set([...first.keys(), ...second.keys()])]
+    .sort((a, b) => a.localeCompare(b))
+    .filter((path) => first.get(path) !== second.get(path));
+  return {
+    total: differing.length,
+    paths: differing.slice(0, boundedLimit).map((path) => ({
+      path,
+      firstHash: first.get(path) ?? null,
+      secondHash: second.get(path) ?? null,
+    })),
+    truncated: differing.length > boundedLimit,
+  };
+}

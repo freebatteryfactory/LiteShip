@@ -24,6 +24,8 @@ import {
   peerDependenciesOnly,
   findConsumerDependencyRoot,
   assertConsumerDependencyInstalled,
+  partitionRuntimeClosureSpecifiers,
+  diffSemanticClosures,
 } from '../../../../packages/cli/src/lib/package-smoke-helpers.js';
 
 describe('peerDependenciesOnly — PEER_INSTALLS → {name: version} (split on LAST @)', () => {
@@ -182,5 +184,70 @@ describe('assertConsumerDependencyInstalled — fail-closed when a dep is unreso
     expect((caught as Error).message).toContain('@liteship/ghost');
     expect((caught as Error).message).toContain('node_modules');
     expect((caught as Error).message).toContain('import-smoke cannot resolve it');
+  });
+});
+
+describe('partitionRuntimeClosureSpecifiers — catalog-owned runtime authority', () => {
+  const subpaths = [
+    { packageName: '@liteship/core', specifier: '@liteship/core', runtimeTarget: './dist/index.js' },
+    { packageName: '@liteship/_spine', specifier: '@liteship/_spine', runtimeTarget: './stub.js' },
+    { packageName: '@liteship/astro', specifier: '@liteship/astro/Adaptive.astro', runtimeTarget: null },
+  ] as const;
+
+  it('imports modules, checks type-only stubs as refusals, and ignores host assets', () => {
+    expect(
+      partitionRuntimeClosureSpecifiers(subpaths, [
+        { name: '@liteship/core', runtimeSurface: 'module' },
+        { name: '@liteship/_spine', runtimeSurface: 'types-only' },
+        { name: '@liteship/astro', runtimeSurface: 'module' },
+      ]),
+    ).toEqual({ imports: ['@liteship/core'], refusals: ['@liteship/_spine'] });
+  });
+
+  it('fails closed when an exported package has no catalog classification', () => {
+    expect(() => partitionRuntimeClosureSpecifiers(subpaths, [])).toThrow(/no package-catalog runtime surface/);
+  });
+});
+
+describe('diffSemanticClosures — bounded actionable reproducibility evidence', () => {
+  it('reports added, removed, and changed paths in stable order', () => {
+    const first = new Map([
+      ['package/a.js', 'a1'],
+      ['package/removed.js', 'r1'],
+      ['package/same.js', 'same'],
+    ]);
+    const second = new Map([
+      ['package/a.js', 'a2'],
+      ['package/added.js', 'n1'],
+      ['package/same.js', 'same'],
+    ]);
+    expect(diffSemanticClosures(first, second)).toEqual({
+      total: 3,
+      paths: [
+        { path: 'package/a.js', firstHash: 'a1', secondHash: 'a2' },
+        { path: 'package/added.js', firstHash: null, secondHash: 'n1' },
+        { path: 'package/removed.js', firstHash: 'r1', secondHash: null },
+      ],
+      truncated: false,
+    });
+  });
+
+  it('preserves the total while bounding disclosed paths', () => {
+    const diff = diffSemanticClosures(
+      new Map([
+        ['b', '1'],
+        ['a', '1'],
+      ]),
+      new Map([
+        ['b', '2'],
+        ['a', '2'],
+      ]),
+      1,
+    );
+    expect(diff).toEqual({
+      total: 2,
+      paths: [{ path: 'a', firstHash: '1', secondHash: '2' }],
+      truncated: true,
+    });
   });
 });

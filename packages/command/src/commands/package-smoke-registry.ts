@@ -20,6 +20,7 @@
 export interface PackageSmokeSpec {
   readonly dir: string;
   readonly name: string;
+  readonly runtimeSurface: 'module' | 'types-only';
   readonly imports: readonly string[];
 }
 

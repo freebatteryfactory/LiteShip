@@ -20,6 +20,8 @@ export interface PackageCatalogRecord {
   readonly name: string;
   readonly dir: `packages/${string}`;
   readonly publishable: true;
+  /** Whether consumers may import package exports as runtime modules. */
+  readonly runtimeSurface: 'module' | 'types-only';
   readonly layer: PackageLayer;
   readonly audit: {
     readonly kind: 'core' | 'layered' | 'host-adjacent' | 'standalone';
@@ -53,6 +55,7 @@ export const PACKAGE_CATALOG = [
     name: '@liteship/_spine',
     dir: 'packages/_spine',
     publishable: true,
+    runtimeSurface: 'types-only',
     layer: 'foundation',
     audit: { kind: 'standalone', allowedInternalImports: [] },
     docs: { group: 'runtime', order: 9, surface: false },
@@ -74,6 +77,7 @@ export const PACKAGE_CATALOG = [
     name: '@liteship/error',
     dir: 'packages/error',
     publishable: true,
+    runtimeSurface: 'module',
     layer: 'foundation',
     audit: { kind: 'standalone', allowedInternalImports: [] },
     docs: { group: 'foundations', order: 2, surface: true },
@@ -96,6 +100,7 @@ export const PACKAGE_CATALOG = [
     name: '@liteship/canonical',
     dir: 'packages/canonical',
     publishable: true,
+    runtimeSurface: 'module',
     layer: 'foundation',
     audit: { kind: 'standalone', allowedInternalImports: [] },
     docs: { group: 'foundations', order: 1, surface: true },
@@ -117,6 +122,7 @@ export const PACKAGE_CATALOG = [
     name: '@liteship/core',
     dir: 'packages/core',
     publishable: true,
+    runtimeSurface: 'module',
     layer: 'semantic',
     audit: {
       kind: 'core',
@@ -157,6 +163,7 @@ export const PACKAGE_CATALOG = [
     name: '@liteship/genui',
     dir: 'packages/genui',
     publishable: true,
+    runtimeSurface: 'module',
     layer: 'semantic',
     audit: { kind: 'layered', allowedInternalImports: ['@liteship/canonical', '@liteship/_spine'] },
     docs: { group: 'foundations', order: 3, surface: true },
@@ -178,6 +185,7 @@ export const PACKAGE_CATALOG = [
     name: '@liteship/quantizer',
     dir: 'packages/quantizer',
     publishable: true,
+    runtimeSurface: 'module',
     layer: 'semantic',
     audit: {
       kind: 'layered',
@@ -202,6 +210,7 @@ export const PACKAGE_CATALOG = [
     name: '@liteship/compiler',
     dir: 'packages/compiler',
     publishable: true,
+    runtimeSurface: 'module',
     layer: 'semantic',
     audit: {
       kind: 'layered',
@@ -227,6 +236,7 @@ export const PACKAGE_CATALOG = [
     name: '@liteship/web',
     dir: 'packages/web',
     publishable: true,
+    runtimeSurface: 'module',
     layer: 'runtime',
     audit: { kind: 'layered', allowedInternalImports: ['@liteship/core', '@liteship/genui', '@liteship/canonical'] },
     docs: { group: 'runtime', order: 0, surface: true },
@@ -248,6 +258,7 @@ export const PACKAGE_CATALOG = [
     name: '@liteship/detect',
     dir: 'packages/detect',
     publishable: true,
+    runtimeSurface: 'module',
     layer: 'runtime',
     audit: { kind: 'layered', allowedInternalImports: ['@liteship/core'] },
     docs: { group: 'runtime', order: 1, surface: true },
@@ -269,6 +280,7 @@ export const PACKAGE_CATALOG = [
     name: '@liteship/edge',
     dir: 'packages/edge',
     publishable: true,
+    runtimeSurface: 'module',
     layer: 'runtime',
     audit: { kind: 'host-adjacent', allowedInternalImports: ['@liteship/core', '@liteship/detect'] },
     docs: { group: 'hosts', order: 2, surface: true },
@@ -290,6 +302,7 @@ export const PACKAGE_CATALOG = [
     name: '@liteship/vite',
     dir: 'packages/vite',
     publishable: true,
+    runtimeSurface: 'module',
     layer: 'host-adapter',
     audit: {
       kind: 'host-adjacent',
@@ -315,6 +328,7 @@ export const PACKAGE_CATALOG = [
     name: '@liteship/worker',
     dir: 'packages/worker',
     publishable: true,
+    runtimeSurface: 'module',
     layer: 'runtime',
     audit: { kind: 'host-adjacent', allowedInternalImports: ['@liteship/core'] },
     docs: { group: 'runtime', order: 2, surface: true },
@@ -336,6 +350,7 @@ export const PACKAGE_CATALOG = [
     name: '@liteship/remotion',
     dir: 'packages/remotion',
     publishable: true,
+    runtimeSurface: 'module',
     layer: 'runtime',
     audit: { kind: 'standalone', allowedInternalImports: ['@liteship/core'] },
     docs: { group: 'runtime', order: 3, surface: true },
@@ -357,6 +372,7 @@ export const PACKAGE_CATALOG = [
     name: '@liteship/scene',
     dir: 'packages/scene',
     publishable: true,
+    runtimeSurface: 'module',
     layer: 'runtime',
     audit: { kind: 'layered', allowedInternalImports: ['@liteship/core', '@liteship/_spine'] },
     docs: { group: 'runtime', order: 4, surface: true },
@@ -379,6 +395,7 @@ export const PACKAGE_CATALOG = [
     name: '@liteship/astro',
     dir: 'packages/astro',
     publishable: true,
+    runtimeSurface: 'module',
     layer: 'host-adapter',
     audit: {
       kind: 'host-adjacent',
@@ -454,6 +471,7 @@ export const PACKAGE_CATALOG = [
     name: '@liteship/cloudflare',
     dir: 'packages/cloudflare',
     publishable: true,
+    runtimeSurface: 'module',
     layer: 'host-adapter',
     audit: { kind: 'host-adjacent', allowedInternalImports: ['@liteship/core', '@liteship/edge', '@liteship/astro'] },
     docs: { group: 'hosts', order: 3, surface: true },
@@ -475,6 +493,7 @@ export const PACKAGE_CATALOG = [
     name: '@liteship/stage',
     dir: 'packages/stage',
     publishable: true,
+    runtimeSurface: 'module',
     layer: 'runtime',
     audit: {
       kind: 'host-adjacent',
@@ -500,6 +519,7 @@ export const PACKAGE_CATALOG = [
     name: '@liteship/assets',
     dir: 'packages/assets',
     publishable: true,
+    runtimeSurface: 'module',
     layer: 'runtime',
     audit: { kind: 'layered', allowedInternalImports: ['@liteship/core', '@liteship/_spine'] },
     docs: { group: 'runtime', order: 5, surface: true },
@@ -521,6 +541,7 @@ export const PACKAGE_CATALOG = [
     name: '@liteship/gauntlet',
     dir: 'packages/gauntlet',
     publishable: true,
+    runtimeSurface: 'module',
     layer: 'verification',
     audit: { kind: 'standalone', allowedInternalImports: [] },
     docs: { group: 'tooling', order: 2, surface: true },
@@ -542,6 +563,7 @@ export const PACKAGE_CATALOG = [
     name: '@liteship/audit',
     dir: 'packages/audit',
     publishable: true,
+    runtimeSurface: 'module',
     layer: 'verification',
     audit: { kind: 'standalone', allowedInternalImports: ['@liteship/canonical', '@liteship/gauntlet'] },
     docs: { group: 'tooling', order: 1, surface: true },
@@ -563,6 +585,7 @@ export const PACKAGE_CATALOG = [
     name: '@liteship/command',
     dir: 'packages/command',
     publishable: true,
+    runtimeSurface: 'module',
     layer: 'tooling',
     audit: {
       kind: 'layered',
@@ -594,6 +617,7 @@ export const PACKAGE_CATALOG = [
     name: '@liteship/cli',
     dir: 'packages/cli',
     publishable: true,
+    runtimeSurface: 'module',
     layer: 'tooling',
     audit: {
       kind: 'host-adjacent',
@@ -637,6 +661,7 @@ export const PACKAGE_CATALOG = [
     name: '@liteship/mcp-server',
     dir: 'packages/mcp-server',
     publishable: true,
+    runtimeSurface: 'module',
     layer: 'tooling',
     audit: {
       kind: 'host-adjacent',
@@ -675,6 +700,7 @@ export const PACKAGE_CATALOG = [
     name: 'create-liteship',
     dir: 'packages/create-liteship',
     publishable: true,
+    runtimeSurface: 'module',
     layer: 'tooling',
     audit: {
       kind: 'standalone',
@@ -700,6 +726,7 @@ export const PACKAGE_CATALOG = [
     name: 'liteship',
     dir: 'packages/liteship',
     publishable: true,
+    runtimeSurface: 'module',
     layer: 'facade',
     audit: {
       kind: 'host-adjacent',
