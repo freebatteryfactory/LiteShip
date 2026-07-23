@@ -2,12 +2,12 @@
 
 The shared command catalog and dispatcher behind the `liteship` CLI and the MCP server — one definition of every command's name and input schema (plus the handler, for commands that execute here; terminal-owned verbs are descriptor-only), so both surfaces stay in sync by construction.
 
-> You usually don't install this directly — it arrives as a dependency of `@liteship/cli` and `@liteship/mcp-server`. Install one of those instead unless you're building your own adapter (a new protocol skin) over the same commands.
+> You usually don't install this directly — it arrives through `liteship` and `@liteship/mcp-server`. Install `liteship` for the public command, or this package directly only when building a protocol adapter over the same catalog.
 
 ## Install
 
 ```bash
-pnpm add @liteship/cli   # brings @liteship/command with it
+pnpm add -D liteship   # brings @liteship/command with the public CLI
 ```
 
 ## 30 seconds

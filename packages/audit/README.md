@@ -2,7 +2,7 @@
 
 Runs structure, integrity, and surface checks over `@liteship/*` packages and reports findings as structured data — against the LiteShip monorepo or against the packages installed in your own app.
 
-> Install this directly when you want to run the audit passes programmatically. Most projects run it through `liteship audit` from `@liteship/cli` instead, which wraps the same engine in a JSON receipt.
+> Install this directly when you want to run the audit passes programmatically. Most projects run it through the facade-owned `liteship audit` command instead, which wraps the same engine in a JSON receipt.
 
 ## Install
 

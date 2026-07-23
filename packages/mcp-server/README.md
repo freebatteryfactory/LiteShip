@@ -2,12 +2,12 @@
 
 An MCP (Model Context Protocol) server that exposes the **liteship command catalog** as tools, resources, and prompts over stdio or HTTP — so AI agents can run the same commands the `liteship` CLI does. **This is not a documentation server.** For sealed prose/API docs over HTTP, use `docsMcpRoute` from `@liteship/astro` with a `docs:bundle` artifact (#113).
 
-> You usually don't install this directly — it arrives as a dependency of `liteship`, and the `liteship mcp` verb launches it. Install `liteship` (or this package alongside `@liteship/cli`) instead, unless you're embedding the server in your own process via `start()`.
+> You usually don't install this directly — it arrives as a dependency of `liteship`, and the facade-owned `liteship mcp` verb launches it. Install `liteship` for the command, or install this package alone when embedding the server in your own process via `start()`.
 
 ## Install
 
 ```bash
-pnpm add @liteship/cli @liteship/mcp-server   # `liteship mcp` dynamically loads this package
+pnpm add -D liteship   # provides the facade-owned `liteship mcp` command
 ```
 
 `@liteship/cli` is not a peer — this package never imports the CLI.
