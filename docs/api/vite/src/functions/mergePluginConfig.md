@@ -8,7 +8,7 @@
 
 > **mergePluginConfig**(`project`, `explicit`): [`PluginConfig`](../interfaces/PluginConfig.md)
 
-Defined in: [vite/src/project-config.ts:116](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/project-config.ts#L116)
+Defined in: [vite/src/project-config.ts:119](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/project-config.ts#L119)
 
 Root project config first; explicit host options win at their authored keys.
 

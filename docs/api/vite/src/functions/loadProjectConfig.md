@@ -8,7 +8,7 @@
 
 > **loadProjectConfig**(`root`, `env`, `loader?`): `Promise`\<[`LoadedProjectConfig`](../interfaces/LoadedProjectConfig.md) \| `null`\>
 
-Defined in: [vite/src/project-config.ts:94](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/project-config.ts#L94)
+Defined in: [vite/src/project-config.ts:97](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/project-config.ts#L97)
 
 Load and validate `<root>/liteship.config.ts`. Absence is allowed for the
 low-level convention-only Vite plugin; malformed or unevaluable presence is
