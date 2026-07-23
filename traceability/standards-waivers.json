@@ -217,6 +217,69 @@
       "owner": "heyoub",
       "justification": "Glob-membership RESTRUCTURE, not a rigor loss: the former L3 group {boundary,signal,zap,evaluate,gen-frame,speculative,token-buffer,blend,animation,ai-cast,clock,rng}.ts was SPLIT — signal.ts moved into the new reactive-core group {cell-kernel,cell,derived,store,signal,timeline,live-cell}.ts at L4 (a PROMOTION L3→L4; see assurance-map.ts: 'signal moves L4 from its former L3 … a CellKernel-backed value channel, not a bespoke source') plus a new mutation-score floor, and the remaining paths stay L3 under the renamed glob {boundary,zap,evaluate,gen-frame,speculative,token-buffer,blend,animation,ai-cast,clock,rng}.ts (surfaced as the paired ADD strengthen). The waiver key embeds the exact glob string, so editing group membership surfaces as remove(old glob)+add(new glob) — no path lost its rigor band; net rigor INCREASED. Surfaces as a weakening vs origin/main now that the base ref carries the snapshot (the gate moved from birth-baseline to origin/main baseline).",
       "expiry": "2027-06-20"
+    },
+    {
+      "elementKey": "assurance::packages/core/src/{boundary,zap,evaluate,gen-frame,speculative,token-buffer,blend,animation,ai-cast,clock,rng}.ts",
+      "weakening": "assurance-level-lowered",
+      "owner": "heyoub",
+      "justification": "Pure P4 path relocation, not a rigor reduction: every member of this removed flat L3 glob remains L3 under the live domain-owned globs authoring/{boundary,ai-cast}.ts, reactive/{zap,speculative}.ts, media/{gen-frame,token-buffer}.ts, motion/{blend,animation}.ts, clock/clock.ts, and clock/rng.ts. The element key embeds the old flat path, so the relocation appears mechanically as one removal plus paired live strengthen additions. No source file lost assurance coverage.",
+      "expiry": "2027-06-20"
+    },
+    {
+      "elementKey": "assurance::packages/core/src/{cell-kernel,cell,derived,store,signal,timeline,live-cell}.ts",
+      "weakening": "assurance-level-lowered",
+      "owner": "heyoub",
+      "justification": "Pure P4 path relocation, not a rigor reduction: cell-kernel, cell, derived, store, signal, and live-cell remain L4 under packages/core/src/reactive/{cell-kernel,cell,derived,store,signal,live-cell}.ts, while timeline remains L4 under packages/core/src/motion/timeline.ts. The element key embeds the old flat paths, so the domain split appears as a removal plus paired live strengthen additions. No reactive kernel lost assurance coverage.",
+      "expiry": "2027-06-20"
+    },
+    {
+      "elementKey": "floor::mutation-score::packages/core/src/cell-kernel.ts",
+      "weakening": "floor-lowered",
+      "owner": "heyoub",
+      "justification": "Pure P4 path relocation: the removed flat-path mutation floor 0.75 is preserved exactly as 0.75 at packages/core/src/reactive/cell-kernel.ts. The standards key includes the file path, so moving the same implementation appears as a removed floor paired with an equal live strengthen. Mutation rigor is unchanged.",
+      "expiry": "2027-06-20"
+    },
+    {
+      "elementKey": "floor::mutation-score::packages/core/src/cell.ts",
+      "weakening": "floor-lowered",
+      "owner": "heyoub",
+      "justification": "Pure P4 path relocation: the removed flat-path mutation floor 0.8333 is preserved exactly as 0.8333 at packages/core/src/reactive/cell.ts. The standards key includes the file path, so moving the same implementation appears as a removed floor paired with an equal live strengthen. Mutation rigor is unchanged.",
+      "expiry": "2027-06-20"
+    },
+    {
+      "elementKey": "floor::mutation-score::packages/core/src/derived.ts",
+      "weakening": "floor-lowered",
+      "owner": "heyoub",
+      "justification": "Pure P4 path relocation: the removed flat-path mutation floor 0.8889 is preserved exactly as 0.8889 at packages/core/src/reactive/derived.ts. The standards key includes the file path, so moving the same implementation appears as a removed floor paired with an equal live strengthen. Mutation rigor is unchanged.",
+      "expiry": "2027-06-20"
+    },
+    {
+      "elementKey": "floor::mutation-score::packages/core/src/live-cell.ts",
+      "weakening": "floor-lowered",
+      "owner": "heyoub",
+      "justification": "Pure P4 path relocation: the removed flat-path mutation floor 1 is preserved exactly as 1 at packages/core/src/reactive/live-cell.ts. The standards key includes the file path, so moving the same implementation appears as a removed floor paired with an equal live strengthen. Mutation rigor is unchanged.",
+      "expiry": "2027-06-20"
+    },
+    {
+      "elementKey": "floor::mutation-score::packages/core/src/signal.ts",
+      "weakening": "floor-lowered",
+      "owner": "heyoub",
+      "justification": "Pure P4 path relocation: the removed flat-path mutation floor 0.8333 is preserved exactly as 0.8333 at packages/core/src/reactive/signal.ts. The standards key includes the file path, so moving the same implementation appears as a removed floor paired with an equal live strengthen. Mutation rigor is unchanged.",
+      "expiry": "2027-06-20"
+    },
+    {
+      "elementKey": "floor::mutation-score::packages/core/src/store.ts",
+      "weakening": "floor-lowered",
+      "owner": "heyoub",
+      "justification": "Pure P4 path relocation: the removed flat-path mutation floor 0.8333 is preserved exactly as 0.8333 at packages/core/src/reactive/store.ts. The standards key includes the file path, so moving the same implementation appears as a removed floor paired with an equal live strengthen. Mutation rigor is unchanged.",
+      "expiry": "2027-06-20"
+    },
+    {
+      "elementKey": "floor::mutation-score::packages/core/src/timeline.ts",
+      "weakening": "floor-lowered",
+      "owner": "heyoub",
+      "justification": "Pure P4 path relocation: the removed flat-path mutation floor 0.8333 is preserved exactly as 0.8333 at packages/core/src/motion/timeline.ts. The standards key includes the file path, so moving the same implementation appears as a removed floor paired with an equal live strengthen. Mutation rigor is unchanged.",
+      "expiry": "2027-06-20"
     }
   ]
 }
