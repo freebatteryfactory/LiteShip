@@ -3,12 +3,14 @@
  *
  * Run: pnpm run test:cloudflare-dev
  */
+import { existsSync, readFileSync } from 'node:fs';
 import { delimiter, resolve } from 'node:path';
 import { runPnpm, spawnPnpm } from './support/pnpm-process.ts';
 import { cloudflareChildEnv } from './support/cloudflare-env.ts';
 
 const REPO_ROOT = resolve(import.meta.dirname, '..');
 const EXAMPLE_DIR = resolve(REPO_ROOT, 'examples/cloudflare-astro');
+const ASTRO_DEV_LOG = resolve(EXAMPLE_DIR, '.astro/dev.log');
 const EXAMPLE_BIN_DIR = resolve(EXAMPLE_DIR, 'node_modules/.bin');
 const SERVER_READY_TIMEOUT_MS = 120_000;
 const REQUEST_TIMEOUT_MS = 30_000;
@@ -36,6 +38,11 @@ function devChildEnv(): Record<string, string> {
 function fail(message: string): never {
   console.error(`FAIL: ${message}`);
   process.exit(1);
+}
+
+/** Preserve the bounded tail that explains a failed dev response in cloud logs. */
+function boundedTail(value: string, max = 8_000): string {
+  return value.length <= max ? value : `[... ${value.length - max} bytes omitted ...]\n${value.slice(-max)}`;
 }
 
 function spawnAstroDev(): ReturnType<typeof spawnPnpm> {
@@ -119,7 +126,9 @@ async function stopLauncher(child: ReturnType<typeof spawnPnpm>): Promise<void> 
   child.kill('SIGKILL');
 }
 
-function waitForDevServer(child: ReturnType<typeof spawnPnpm>): Promise<{ url: URL; daemonPid?: number; output: () => string }> {
+function waitForDevServer(
+  child: ReturnType<typeof spawnPnpm>,
+): Promise<{ url: URL; daemonPid?: number; output: () => string }> {
   let output = '';
   let settled = false;
 
@@ -160,7 +169,9 @@ function waitForDevServer(child: ReturnType<typeof spawnPnpm>): Promise<{ url: U
       if (settled) return;
       settled = true;
       clearTimeout(timer);
-      rejectReady(new Error(`astro dev exited before listening (code=${code ?? 'null'}, signal=${signal ?? 'null'})\n${output}`));
+      rejectReady(
+        new Error(`astro dev exited before listening (code=${code ?? 'null'}, signal=${signal ?? 'null'})\n${output}`),
+      );
     });
   });
 }
@@ -200,12 +211,7 @@ function parseAttributes(tag: string): Readonly<Record<string, string>> {
   return attrs;
 }
 
-function addReference(
-  refs: Map<string, PageReference>,
-  base: URL,
-  kind: PageReference['kind'],
-  source: string,
-): void {
+function addReference(refs: Map<string, PageReference>, base: URL, kind: PageReference['kind'], source: string): void {
   if (source.length === 0 || source.startsWith('data:') || source.startsWith('javascript:')) return;
   const url = new URL(source, base);
   if (url.origin !== base.origin) return;
@@ -250,7 +256,9 @@ function classify(result: FetchResult): string {
         return `LiteShip-injected page script (${marker})`;
       }
     }
-    return result.reference.kind === 'modulepreload' ? 'modulepreload dependency' : `${result.reference.kind} referenced by page`;
+    return result.reference.kind === 'modulepreload'
+      ? 'modulepreload dependency'
+      : `${result.reference.kind} referenced by page`;
   }
 
   const path = result.reference.url.pathname;
@@ -309,6 +317,10 @@ async function main(): Promise<void> {
     const page = await fetchTextWithRetry(pageUrl, SERVER_READY_TIMEOUT_MS);
     if (page.status !== 200) {
       console.error(ready.output());
+      console.error(`HTTP ${page.status} body:\n${boundedTail(page.body)}`);
+      if (existsSync(ASTRO_DEV_LOG)) {
+        console.error(`Astro dev log:\n${boundedTail(readFileSync(ASTRO_DEV_LOG, 'utf8'))}`);
+      }
       fail(`GET ${pageUrl.href} returned ${page.status}`);
     }
     const references = discoverReferences(page.body, pageUrl);
