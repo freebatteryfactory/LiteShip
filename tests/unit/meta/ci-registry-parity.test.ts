@@ -190,6 +190,7 @@ describe('blocking release checks have one real CI owner', () => {
     expect(doctor).toBeGreaterThan(setup.indexOf('toolchain: 1.85.1'));
     expect(doctor).toBeGreaterThan(setup.indexOf('playwright install --with-deps chromium chromium-headless-shell'));
     expect(doctor).toBeGreaterThan(setup.indexOf('apt-get install -y ffmpeg'));
+    expect(doctor).toBeGreaterThan(setup.indexOf('pnpm run build && pnpm run capsule:compile'));
   });
 });
 

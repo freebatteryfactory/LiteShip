@@ -192,9 +192,9 @@ jobs:
         run: |
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
+      - run: pnpm run build && pnpm run capsule:compile
       - name: Run registry-projected environment doctor
         run: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.doctor.command }}
-      - run: pnpm run build && pnpm run capsule:compile
       - name: Mint gauntlet run context for parallel fan-out
         run: pnpm exec tsx scripts/mint-gauntlet-context.ts
       - uses: actions/upload-artifact@v7
