@@ -17,7 +17,8 @@ describe('@liteship/vite environments', () => {
   it('buildEnvironments merges only requested names', () => {
     const envs = buildEnvironments(['browser', 'shader']);
     expect(Object.keys(envs).sort()).toEqual(['browser', 'shader']);
-    expect(envs.browser?.optimizeDeps.include).toContain('@liteship/core');
+    expect(envs.browser?.optimizeDeps.include).toEqual([]);
+    expect(envs.shader?.optimizeDeps.include).toEqual([]);
     expect(envs.shader?.optimizeDeps.exclude).toContain('@liteship/detect');
   });
 

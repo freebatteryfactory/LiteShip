@@ -546,8 +546,20 @@ describe('integration', () => {
     expect(updates[0]).toMatchObject({
       vite: {
         plugins: [expect.objectContaining({ name: '@liteship/vite' })],
+        resolve: {
+          alias: {
+            '@liteship/astro/runtime': expect.any(String),
+          },
+        },
       },
     });
+    const runtimeEntrypoint = (updates[0] as { vite: { resolve: { alias: Record<string, string> } } }).vite.resolve
+      .alias['@liteship/astro/runtime'];
+    expect(runtimeEntrypoint).toBeDefined();
+    expect(existsSync(runtimeEntrypoint!)).toBe(true);
+    expect(runtimeEntrypoint!.replaceAll('\\', '/')).toMatch(
+      /\/packages\/astro\/(?:src|dist)\/runtime\/index\.(?:ts|js)$/u,
+    );
     const detectScript = scripts.find(
       (script) => script.stage === 'head-inline' && script.content.includes('__LITESHIP_DETECT__'),
     );
@@ -578,6 +590,9 @@ describe('integration', () => {
     expect(gpuUpgradeScript?.content).toContain('writable: false');
     expect(gpuUpgradeScript?.content).not.toContain('window.__LITESHIP_DETECT__ || {}');
     expect(scripts.some((script) => script.stage === 'page' && script.content.includes('bootstrapSlots'))).toBe(true);
+    expect(
+      scripts.some((script) => script.stage === 'page' && script.content.includes("from '@liteship/astro/runtime'")),
+    ).toBe(true);
     expect(scripts.some((script) => script.stage === 'page' && script.content.includes('installSwapPipeline'))).toBe(
       true,
     );

@@ -98,16 +98,22 @@ export function boundedJourneyOutput(...chunks: readonly string[]): string {
   const output = chunks.join('').trim();
   const limit = 1_200;
   if (output.length <= limit) return output;
-  const diagnosticLines = output
-    .split(/\r?\n/u)
-    .filter((line) =>
-      /error|fail(?:ed|ure)?|cannot|could not|not found|invalid|unknown/iu.test(line.replace(/\u001b\[[0-9;]*m/gu, '')),
-    )
-    .slice(0, 6)
-    .join('\n');
-  const head = output.slice(0, 360);
-  const middle = diagnosticLines.slice(0, 360);
-  const tail = output.slice(-360);
+  const lines = output.split(/\r?\n/u);
+  const diagnosticIndex = lines.findIndex((line) =>
+    /\[ERROR\]|(?:^|\s)error(?:\s|:)|exception/iu.test(line.replace(/\u001b\[[0-9;]*m/gu, '')),
+  );
+  const diagnosticLines =
+    diagnosticIndex >= 0
+      ? lines.slice(diagnosticIndex, diagnosticIndex + 5).join('\n')
+      : lines
+          .filter((line) =>
+            /fail(?:ed|ure)?|cannot|could not|not found|invalid|unknown/iu.test(line.replace(/\u001b\[[0-9;]*m/gu, '')),
+          )
+          .slice(0, 5)
+          .join('\n');
+  const head = output.slice(0, 300);
+  const middle = diagnosticLines.slice(0, 480);
+  const tail = output.slice(-300);
   return [head, `… ${output.length - head.length - tail.length} characters omitted …`, middle, tail]
     .filter((part) => part.length > 0)
     .join('\n');

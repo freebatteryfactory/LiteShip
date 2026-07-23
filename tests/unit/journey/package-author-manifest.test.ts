@@ -11,11 +11,11 @@ describe('bounded journey diagnostics', () => {
     const output = boundedJourneyOutput(
       'setup\n',
       'x'.repeat(1_000),
-      '\nACTUAL_ERROR middle\n',
+      '\n[ERROR] actual middle\n',
       'y'.repeat(1_000),
       '\nFINAL_EXIT',
     );
-    expect(output).toContain('ACTUAL_ERROR middle');
+    expect(output).toContain('[ERROR] actual middle');
     expect(output).toContain('FINAL_EXIT');
     expect(output).toContain('characters omitted');
     expect(output.length).toBeLessThanOrEqual(1_300);

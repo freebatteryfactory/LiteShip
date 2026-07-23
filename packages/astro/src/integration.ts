@@ -75,6 +75,7 @@ function ownedEntrypoints() {
     svg: ownedEntrypoint('./client-directives/svg.js'),
     middleware: ownedEntrypoint('./middleware-entry.js'),
     inspector: ownedEntrypoint('./runtime/inspector-toolbar-app.js'),
+    runtime: ownedEntrypoint('./runtime/index.js'),
   });
 }
 
@@ -433,6 +434,16 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
                 projectConfigLoader,
               ),
             ],
+            // Astro compiles injected page scripts from a virtual app-root module.
+            // Under pnpm's default isolation that module cannot resolve this
+            // integration's transitive package name. Bind the stable authored
+            // specifier to the physical entrypoint owned by this package instead
+            // of requiring a consumer-visible hoist.
+            resolve: {
+              alias: {
+                '@liteship/astro/runtime': entrypoints.runtime,
+              },
+            },
           } as AstroViteConfig;
 
           updateConfig({

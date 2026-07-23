@@ -41,7 +41,10 @@ const BROWSER_ENV: LiteshipEnvironmentConfig = {
     extensions: ['.ts', '.tsx', '.js', '.jsx', '.css'],
   },
   optimizeDeps: {
-    include: ['@liteship/core', '@liteship/detect'],
+    // Let Vite discover transitive LiteShip modules from their physical
+    // importers. Naming them here forces app-root resolution and breaks the
+    // one-install facade under pnpm's default isolated linker.
+    include: [],
     exclude: [],
   },
 } as const;
@@ -63,7 +66,7 @@ const SHADER_ENV: LiteshipEnvironmentConfig = {
     extensions: ['.ts', '.js', '.glsl', '.wgsl', '.vert', '.frag'],
   },
   optimizeDeps: {
-    include: ['@liteship/core'],
+    include: [],
     exclude: ['@liteship/detect'],
   },
 } as const;

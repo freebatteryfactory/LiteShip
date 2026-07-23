@@ -47,7 +47,7 @@ describe('@liteship/vite environments', () => {
   test('returns the expected browser environment config', () => {
     const config = getEnvironmentConfig('browser');
     expect(config.resolve.conditions).toContain('browser');
-    expect(config.optimizeDeps.include).toContain('@liteship/core');
+    expect(config.optimizeDeps.include).toEqual([]);
   });
 
   test('builds a keyed environment map', () => {
