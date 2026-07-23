@@ -30,6 +30,7 @@ import { wallClock } from '@liteship/core';
 import { IntegrityError, InvariantViolationError } from '@liteship/error';
 import {
   assertConsumerDependencyInstalled,
+  diffJsonFields,
   findConsumerDependencyRoot,
   diffSemanticClosures,
   partitionRuntimeClosureSpecifiers,
@@ -522,6 +523,7 @@ async function runDoubleBuildRepro(args: {
       artifact: boolean;
       fileCount: number;
       semanticDiff: ReturnType<typeof diffSemanticClosures>;
+      packageJsonDiff: ReturnType<typeof diffJsonFields> | null;
     }[] = [];
     let semanticAll = true;
     let artifactAll = true;
@@ -530,9 +532,18 @@ async function runDoubleBuildRepro(args: {
       const second = await packPackage(resolve(root, pkg.dir), secondDir);
       const artifact = sha256File(first) === sha256File(second);
       const slug = pkg.name.replace(/[^a-z0-9]+/gi, '_');
-      const closureA = tarballClosure(first, join(extractBase, `${slug}-a`));
-      const closureB = tarballClosure(second, join(extractBase, `${slug}-b`));
+      const extractA = join(extractBase, `${slug}-a`);
+      const extractB = join(extractBase, `${slug}-b`);
+      const closureA = tarballClosure(first, extractA);
+      const closureB = tarballClosure(second, extractB);
       const semanticDiff = diffSemanticClosures(closureA, closureB);
+      const packageJsonDiff =
+        closureA.get('package/package.json') !== closureB.get('package/package.json')
+          ? diffJsonFields(
+              JSON.parse(readFileSync(join(extractA, 'package', 'package.json'), 'utf8')),
+              JSON.parse(readFileSync(join(extractB, 'package', 'package.json'), 'utf8')),
+            )
+          : null;
       const semantic = semanticDiff.total === 0;
       if (!artifact) artifactAll = false;
       if (!semantic) {
@@ -545,7 +556,14 @@ async function runDoubleBuildRepro(args: {
             `${semanticDiff.truncated ? ', ...' : ''}\n`,
         );
       }
-      perPackage.push({ package: pkg.name, semantic, artifact, fileCount: closureA.size, semanticDiff });
+      perPackage.push({
+        package: pkg.name,
+        semantic,
+        artifact,
+        fileCount: closureA.size,
+        semanticDiff,
+        packageJsonDiff,
+      });
     }
 
     const report = {
@@ -557,7 +575,7 @@ async function runDoubleBuildRepro(args: {
         drift: perPackage.filter((entry) => !entry.semantic).map((entry) => entry.package),
         details: perPackage
           .filter((entry) => !entry.semantic)
-          .map((entry) => ({ package: entry.package, ...entry.semanticDiff })),
+          .map((entry) => ({ package: entry.package, ...entry.semanticDiff, packageJsonDiff: entry.packageJsonDiff })),
       },
       artifact: {
         reproducible: artifactAll,

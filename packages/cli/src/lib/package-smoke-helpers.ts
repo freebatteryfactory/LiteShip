@@ -20,6 +20,7 @@
  * @module
  */
 import { existsSync, readdirSync, realpathSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { IntegrityError } from '@liteship/error';
@@ -197,5 +198,122 @@ export function diffSemanticClosures(
       secondHash: second.get(path) ?? null,
     })),
     truncated: differing.length > boundedLimit,
+  };
+}
+
+/** Bounded evidence for one side of a JSON field comparison. */
+export interface JsonFieldValueSnapshot {
+  readonly present: boolean;
+  readonly preview: string | null;
+  readonly sha256: string | null;
+  readonly truncated: boolean;
+}
+
+/** One differing leaf (or type boundary) in two JSON documents. */
+export interface JsonFieldPathDiff {
+  readonly path: string;
+  readonly first: JsonFieldValueSnapshot;
+  readonly second: JsonFieldValueSnapshot;
+}
+
+/** Bounded but count-complete field differences for a JSON document pair. */
+export interface JsonFieldDiff {
+  readonly total: number;
+  readonly fields: readonly JsonFieldPathDiff[];
+  readonly truncated: boolean;
+}
+
+const MISSING_JSON_FIELD = Symbol('missing-json-field');
+
+function stableJson(value: unknown): string {
+  if (value === null || typeof value !== 'object') {
+    return JSON.stringify(value) ?? 'undefined';
+  }
+  if (Array.isArray(value)) {
+    return `[${value.map((entry) => stableJson(entry)).join(',')}]`;
+  }
+  const record = value as Record<string, unknown>;
+  return `{${Object.keys(record)
+    .sort((a, b) => a.localeCompare(b))
+    .map((key) => `${JSON.stringify(key)}:${stableJson(record[key])}`)
+    .join(',')}}`;
+}
+
+function jsonValueSnapshot(value: unknown | typeof MISSING_JSON_FIELD, valueLimit: number): JsonFieldValueSnapshot {
+  if (value === MISSING_JSON_FIELD) {
+    return { present: false, preview: null, sha256: null, truncated: false };
+  }
+  const serialized = stableJson(value);
+  return {
+    present: true,
+    preview: serialized.slice(0, valueLimit),
+    sha256: createHash('sha256').update(serialized).digest('hex'),
+    truncated: serialized.length > valueLimit,
+  };
+}
+
+function jsonPointerSegment(segment: string): string {
+  return segment.replaceAll('~', '~0').replaceAll('/', '~1');
+}
+
+function isJsonRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+/**
+ * Compare two parsed JSON documents at field granularity. Paths use JSON Pointer;
+ * field count and value previews are bounded independently, while per-value hashes
+ * retain exact evidence when a preview is truncated. Object key order is ignored,
+ * so a changed manifest with zero field differences is identifiable as formatting-
+ * or ordering-only drift rather than a semantic field change.
+ */
+export function diffJsonFields(first: unknown, second: unknown, fieldLimit = 24, valueLimit = 512): JsonFieldDiff {
+  const boundedFieldLimit = Number.isFinite(fieldLimit) ? Math.max(0, Math.floor(fieldLimit)) : 0;
+  const boundedValueLimit = Number.isFinite(valueLimit) ? Math.max(0, Math.floor(valueLimit)) : 0;
+  const differing: JsonFieldPathDiff[] = [];
+
+  const visit = (
+    left: unknown | typeof MISSING_JSON_FIELD,
+    right: unknown | typeof MISSING_JSON_FIELD,
+    path: string,
+  ): void => {
+    if (left !== MISSING_JSON_FIELD && right !== MISSING_JSON_FIELD) {
+      if (Array.isArray(left) && Array.isArray(right)) {
+        const length = Math.max(left.length, right.length);
+        for (let index = 0; index < length; index += 1) {
+          visit(
+            index < left.length ? left[index] : MISSING_JSON_FIELD,
+            index < right.length ? right[index] : MISSING_JSON_FIELD,
+            `${path}/${index}`,
+          );
+        }
+        return;
+      }
+      if (isJsonRecord(left) && isJsonRecord(right)) {
+        const keys = [...new Set([...Object.keys(left), ...Object.keys(right)])].sort((a, b) => a.localeCompare(b));
+        for (const key of keys) {
+          visit(
+            Object.hasOwn(left, key) ? left[key] : MISSING_JSON_FIELD,
+            Object.hasOwn(right, key) ? right[key] : MISSING_JSON_FIELD,
+            `${path}/${jsonPointerSegment(key)}`,
+          );
+        }
+        return;
+      }
+    }
+
+    const firstSnapshot = jsonValueSnapshot(left, boundedValueLimit);
+    const secondSnapshot = jsonValueSnapshot(right, boundedValueLimit);
+    if (firstSnapshot.present === secondSnapshot.present && firstSnapshot.sha256 === secondSnapshot.sha256) {
+      return;
+    }
+    differing.push({ path: path || '/', first: firstSnapshot, second: secondSnapshot });
+  };
+
+  visit(first, second, '');
+  return {
+    total: differing.length,
+    fields: differing.slice(0, boundedFieldLimit),
+    truncated: differing.length > boundedFieldLimit,
   };
 }

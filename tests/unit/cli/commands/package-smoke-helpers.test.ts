@@ -26,6 +26,7 @@ import {
   assertConsumerDependencyInstalled,
   partitionRuntimeClosureSpecifiers,
   diffSemanticClosures,
+  diffJsonFields,
 } from '../../../../packages/cli/src/lib/package-smoke-helpers.js';
 
 describe('peerDependenciesOnly — PEER_INSTALLS → {name: version} (split on LAST @)', () => {
@@ -248,6 +249,61 @@ describe('diffSemanticClosures — bounded actionable reproducibility evidence',
       total: 2,
       paths: [{ path: 'a', firstHash: '1', secondHash: '2' }],
       truncated: true,
+    });
+  });
+});
+
+describe('diffJsonFields — bounded package manifest evidence', () => {
+  it('reports nested before/after fields with stable JSON Pointer paths', () => {
+    const diff = diffJsonFields(
+      {
+        dependencies: { '@liteship/core': 'file:first.tgz', keep: '1.0.0' },
+        files: ['dist', 'src'],
+      },
+      {
+        dependencies: { '@liteship/core': 'file:second.tgz', keep: '1.0.0' },
+        files: ['dist', 'types'],
+      },
+    );
+
+    expect(diff.total).toBe(2);
+    expect(diff.truncated).toBe(false);
+    expect(
+      diff.fields.map((entry) => ({ path: entry.path, first: entry.first.preview, second: entry.second.preview })),
+    ).toEqual([
+      {
+        path: '/dependencies/@liteship~1core',
+        first: '"file:first.tgz"',
+        second: '"file:second.tgz"',
+      },
+      { path: '/files/1', first: '"src"', second: '"types"' },
+    ]);
+    expect(diff.fields.every((entry) => entry.first.sha256 !== entry.second.sha256)).toBe(true);
+  });
+
+  it('distinguishes missing fields and bounds field count and value previews', () => {
+    const diff = diffJsonFields({ a: 'abcdefgh', removed: true }, { a: 'abcdefXY', added: true }, 2, 5);
+
+    expect(diff).toMatchObject({ total: 3, truncated: true });
+    expect(diff.fields).toHaveLength(2);
+    expect(diff.fields[0]).toMatchObject({
+      path: '/a',
+      first: { present: true, preview: '"abcd', truncated: true },
+      second: { present: true, preview: '"abcd', truncated: true },
+    });
+    expect(diff.fields[0]?.first.sha256).not.toBe(diff.fields[0]?.second.sha256);
+    expect(diff.fields[1]).toMatchObject({
+      path: '/added',
+      first: { present: false, preview: null, sha256: null, truncated: false },
+      second: { present: true, preview: 'true', truncated: false },
+    });
+  });
+
+  it('treats object key ordering as formatting-only rather than a field change', () => {
+    expect(diffJsonFields({ b: 2, a: 1 }, { a: 1, b: 2 })).toEqual({
+      total: 0,
+      fields: [],
+      truncated: false,
     });
   });
 });
