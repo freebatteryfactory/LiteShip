@@ -107,10 +107,11 @@ export interface LiveQuantizer<
  * outputs / crossings kernels. The value IS the disposable — no pair to
  * destructure — with the owning `lifetime` still reachable.
  */
-export type OwnedQuantizer<
-  B extends Boundary,
-  O extends QuantizerOutputs<B> = QuantizerOutputs<B>,
-> = LiveQuantizer<B, O> & AsyncOwnedResource;
+export type OwnedQuantizer<B extends Boundary, O extends QuantizerOutputs<B> = QuantizerOutputs<B>> = LiveQuantizer<
+  B,
+  O
+> &
+  AsyncOwnedResource;
 
 export declare function defineQuantizer<B extends Boundary, O extends QuantizerOutputs<B>>(
   boundary: B,

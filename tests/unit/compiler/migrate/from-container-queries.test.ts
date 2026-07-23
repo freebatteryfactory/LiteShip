@@ -97,16 +97,13 @@ describe('fromContainerQueries — refusal and diagnostic teeth', () => {
     'width: 400px',
     'width <= 400px',
     '100px <= width <= 400px',
-  ])(
-    'refuses strict/exact condition %s rather than changing its edge semantics',
-    (condition) => {
-      const result = migrate(`@container (${condition}) { .x {} }`);
-      expect(result.boundaries).toEqual([]);
-      expect(result.diagnostics).toContainEqual(
-        expect.objectContaining({ code: MIGRATE_CODES.unsupportedAtRule, severity: 'error' }),
-      );
-    },
-  );
+  ])('refuses strict/exact condition %s rather than changing its edge semantics', (condition) => {
+    const result = migrate(`@container (${condition}) { .x {} }`);
+    expect(result.boundaries).toEqual([]);
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({ code: MIGRATE_CODES.unsupportedAtRule, severity: 'error' }),
+    );
+  });
 
   it('refuses a unitless nonzero length while accepting unitless zero', () => {
     const refused = migrate(`@container (min-width: 400) { .x {} }`);

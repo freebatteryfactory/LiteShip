@@ -222,7 +222,7 @@ function readContainerBlocks(css: string): { blocks: ContainerBlock[]; diagnosti
       diagnostics.push(
         makeMigrationDiagnostic(
           MIGRATE_CODES.unsupportedAtRule,
-          'A nested @container rule is outside the adapter\'s top-level safe subset and was refused.',
+          "A nested @container rule is outside the adapter's top-level safe subset and was refused.",
           { path: ['@container', 'nested'], severity: 'error' },
         ),
       );
