@@ -2,7 +2,7 @@
  * @liteship/worker type spine -- off-main-thread compositor and render workers.
  */
 
-import type { CompositeState, VideoConfig, VideoFrameOutput, ContentAddress, StateName } from './core.d.ts';
+import type { CompositeState, VideoConfig, VideoFrameOutput, ContentAddress, StateName } from './core.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 1. MESSAGES

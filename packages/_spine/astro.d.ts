@@ -2,9 +2,9 @@
  * @liteship/astro type spine -- Astro 7 integration + <Quantize> component.
  */
 
-import type { Boundary, Quantizer, CapTier } from './core.d.ts';
-import type { EdgeHostAdapterConfig, EdgeHostResolution } from './edge.d.ts';
-import type { PluginConfig } from './vite.d.ts';
+import type { Boundary, Quantizer, CapTier } from './core.js';
+import type { EdgeHostAdapterConfig, EdgeHostResolution } from './edge.js';
+import type { PluginConfig } from './vite.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 1. INTEGRATION

@@ -2,7 +2,7 @@
  * @liteship/genui type spine — host-owned generated UI catalog contracts.
  */
 
-import type { ContentAddress } from './core.d.ts';
+import type { ContentAddress } from './core.js';
 
 /** Structured UI node emitted by model/runtime — references catalog components by name. */
 export interface GeneratedUINode {

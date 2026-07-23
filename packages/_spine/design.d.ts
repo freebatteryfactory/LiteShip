@@ -6,7 +6,7 @@
  * and Tailwind v4 @theme blocks.
  */
 
-import type { Boundary, StateUnion, ContentAddress, Millis, SignalInput, StateName } from './core.d.ts';
+import type { Boundary, StateUnion, ContentAddress, Millis, SignalInput, StateName } from './core.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 1. BRANDS
@@ -86,7 +86,7 @@ export interface StyleLayer {
 }
 
 /** `defineStyle` transition input — plain `number` durations are branded with {@link Millis} internally. */
-export interface TransitionConfig {
+export interface StyleTransitionConfig {
   readonly duration: number;
   readonly easing?: string;
   readonly properties?: readonly string[];
@@ -111,7 +111,7 @@ export declare function defineStyle<B extends Boundary>(config: {
   readonly boundary?: B;
   readonly base: StyleLayer;
   readonly states?: { readonly [S in StateUnion<B> & string]?: StyleLayer };
-  readonly transition?: TransitionConfig;
+  readonly transition?: StyleTransitionConfig;
 }): Style<B>;
 
 export declare namespace Style {

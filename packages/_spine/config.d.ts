@@ -2,8 +2,8 @@
  * @liteship config type spine -- Config and defineConfig() contract.
  */
 
-import type { ContentAddress, Boundary } from './core.d.ts';
-import type { Token, Theme, Style } from './design.d.ts';
+import type { ContentAddress, Boundary } from './core.js';
+import type { Token, Theme, Style } from './design.js';
 
 type ReadonlyConfigValue<T> = T extends (...args: never[]) => unknown
   ? T

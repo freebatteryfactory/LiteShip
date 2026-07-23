@@ -48,18 +48,19 @@ export function resolveExecutable(command: string): string {
 }
 
 /**
- * Tarball path → `file://` URL for pnpm `dependencies` / `pnpm.overrides`.
- * Windows CI profiles often live under 8.3 short paths (`RUNNER~1`);
- * `pathToFileURL` percent-encodes `~` as `%7E`, which pnpm then can't find, so
- * the path is realpath-resolved first on win32.
+ * Tarball path → package-manager-readable `file://` URL for the same physical
+ * tarball. Windows CI profiles often live under 8.3 short paths (`RUNNER~1`);
+ * resolving the physical path may canonicalize that alias to its long spelling.
+ * Any `~` that remains must stay literal because npm/pnpm do not open `%7E` as
+ * the same Windows path segment.
  */
 export function tarballFileUrl(absolutePath: string): string {
   const resolved = process.platform === 'win32' ? realpathSync.native(absolutePath) : absolutePath;
   // RFC 3986 treats `~` as an unreserved path character, but Node's
   // `pathToFileURL()` encodes it as `%7E`. npm and pnpm do not decode that
   // spelling when the URL points through a Windows 8.3 segment such as
-  // `RUNNER~1`; they attempt to open a literal `%7E` path instead. Preserve the
-  // filesystem spelling while leaving every reserved character encoded.
+  // `RUNNER~1`; they attempt to open a literal `%7E` path instead. Preserve any
+  // remaining unreserved tilde while leaving every reserved character encoded.
   return pathToFileURL(resolved).href.replaceAll(/%7E/gi, '~');
 }
 

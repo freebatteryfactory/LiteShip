@@ -2,8 +2,8 @@
  * @liteship/edge type spine -- CDN-edge tier detection, boundary caching, theme compilation.
  */
 
-import type { CapTier, ContentAddress } from './core.d.ts';
-import type { DeviceCapabilities, DesignTier, MotionTier, ExtendedDeviceCapabilities } from './detect.d.ts';
+import type { CapTier, ContentAddress } from './core.js';
+import type { DeviceCapabilities, DesignTier, MotionTier, ExtendedDeviceCapabilities } from './detect.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 1. CLIENT HINTS

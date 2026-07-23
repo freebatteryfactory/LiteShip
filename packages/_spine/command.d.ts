@@ -5,7 +5,7 @@
  * are projection adapters. These types carry no runtime behavior.
  */
 
-import type { ContentAddress } from './core.d.ts';
+import type { ContentAddress } from './core.js';
 
 /**
  * A volatile wall-clock timestamp (CUT B2): an ISO-8601 string stamped at the

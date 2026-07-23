@@ -2,7 +2,7 @@
  * @liteship/detect type spine -- device capability detection + branded tiers.
  */
 
-import type { CapTier, CapSet, MotionTier } from './core.d.ts';
+import type { CapTier, CapSet, MotionTier } from './core.js';
 
 // MotionTier canonical declaration lives in core.d.ts; re-exported here so
 // `@liteship/_spine` consumers reading the detect surface still see it on this

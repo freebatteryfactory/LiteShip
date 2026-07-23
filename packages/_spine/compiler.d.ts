@@ -2,7 +2,7 @@
  * @liteship/compiler type spine -- multi-target output generation.
  */
 
-import type { Boundary, StateUnion, ContentAddress } from './core.d.ts';
+import type { Boundary, StateUnion, ContentAddress } from './core.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 1. CSS COMPILER (Boundary -> @container rules via lightningcss)
@@ -262,7 +262,7 @@ export declare const AIManifestCompiler: {
 // § 6. DISPATCH — tagged CompilerDef discriminated union
 // ═══════════════════════════════════════════════════════════════════════════════
 
-import type { Config } from './config.d.ts';
+import type { Config } from './config.js';
 
 export type CSSStates = Readonly<Record<string, Readonly<Record<string, string>>>>;
 export type GLSLStates = Readonly<Record<string, Readonly<Record<string, number>>>>;
@@ -304,7 +304,7 @@ export declare function dispatch(def: CompilerDef): CompileResult;
 // § 7. DESIGN LAYER COMPILER TARGETS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-import type { Token, Style, Theme, Component } from './design.d.ts';
+import type { Token, Style, Theme, Component } from './design.js';
 
 export type DefKind = 'boundary' | 'token' | 'style' | 'theme' | 'component';
 

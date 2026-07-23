@@ -2,9 +2,9 @@
  * @liteship/vite type spine -- Vite 8 plugin for @token, @theme, @style, @quantize processing + HMR.
  */
 
-import type { Boundary } from './core.d.ts';
-import type { Token, Theme, Style } from './design.d.ts';
-import type { BoundaryManifest, CompiledOutputs } from './edge.d.ts';
+import type { Boundary } from './core.js';
+import type { Token, Theme, Style } from './design.js';
+import type { BoundaryManifest, CompiledOutputs } from './edge.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 0. PRIMITIVE KIND

@@ -55,19 +55,28 @@ function ownedEntrypoint(relativePath: string): string {
   );
 }
 
-const OWNED_ENTRYPOINTS = Object.freeze({
-  adaptive: ownedEntrypoint('./client-directives/adaptive.js'),
-  graph: ownedEntrypoint('./client-directives/graph.js'),
-  stream: ownedEntrypoint('./client-directives/stream.js'),
-  llm: ownedEntrypoint('./client-directives/llm.js'),
-  worker: ownedEntrypoint('./client-directives/worker.js'),
-  gpu: ownedEntrypoint('./client-directives/gpu.js'),
-  wasm: ownedEntrypoint('./client-directives/wasm.js'),
-  motion: ownedEntrypoint('./client-directives/motion.js'),
-  svg: ownedEntrypoint('./client-directives/svg.js'),
-  middleware: ownedEntrypoint('./middleware-entry.js'),
-  inspector: ownedEntrypoint('./runtime/inspector-toolbar-app.js'),
-});
+/**
+ * Resolve host-only entrypoints only while Astro runs integration setup.
+ *
+ * The package root also exposes runtime helpers used by Cloudflare SSR. Keeping
+ * filesystem probes at module evaluation made importing those helpers inside a
+ * workerd request evaluate a build-host invariant where no filesystem exists.
+ */
+function ownedEntrypoints() {
+  return Object.freeze({
+    adaptive: ownedEntrypoint('./client-directives/adaptive.js'),
+    graph: ownedEntrypoint('./client-directives/graph.js'),
+    stream: ownedEntrypoint('./client-directives/stream.js'),
+    llm: ownedEntrypoint('./client-directives/llm.js'),
+    worker: ownedEntrypoint('./client-directives/worker.js'),
+    gpu: ownedEntrypoint('./client-directives/gpu.js'),
+    wasm: ownedEntrypoint('./client-directives/wasm.js'),
+    motion: ownedEntrypoint('./client-directives/motion.js'),
+    svg: ownedEntrypoint('./client-directives/svg.js'),
+    middleware: ownedEntrypoint('./middleware-entry.js'),
+    inspector: ownedEntrypoint('./runtime/inspector-toolbar-app.js'),
+  });
+}
 
 // ---------------------------------------------------------------------------
 // Types
@@ -383,6 +392,7 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
 
         const root = astroConfig?.root ? fileURLToPath(astroConfig.root) : process.cwd();
         const configure = (project: LoadedProjectConfig | null): void => {
+          const entrypoints = ownedEntrypoints();
           const mergedVite = mergePluginConfig(project?.vite, config?.vite);
           applyConfig({
             ...(project?.astro.adaptive !== undefined ? { adaptive: project.astro.adaptive } : {}),
@@ -433,7 +443,7 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
           if (adaptiveEnabled) {
             addClientDirective({
               name: 'adaptive',
-              entrypoint: OWNED_ENTRYPOINTS.adaptive,
+              entrypoint: entrypoints.adaptive,
             });
             logger.info('Registered adaptive client directive');
           }
@@ -441,14 +451,14 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
           // `graph` — the DocumentGraph-loader primitive, always-on like adaptive.
           addClientDirective({
             name: 'graph',
-            entrypoint: OWNED_ENTRYPOINTS.graph,
+            entrypoint: entrypoints.graph,
           });
           logger.info('Registered graph client directive');
 
           if (streamEnabled) {
             addClientDirective({
               name: 'stream',
-              entrypoint: OWNED_ENTRYPOINTS.stream,
+              entrypoint: entrypoints.stream,
             });
             logger.info('Registered stream client directive');
           }
@@ -456,7 +466,7 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
           if (llmEnabled) {
             addClientDirective({
               name: 'llm',
-              entrypoint: OWNED_ENTRYPOINTS.llm,
+              entrypoint: entrypoints.llm,
             });
             logger.info('Registered llm client directive');
           }
@@ -464,7 +474,7 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
           if (workersEnabled) {
             addClientDirective({
               name: 'worker',
-              entrypoint: OWNED_ENTRYPOINTS.worker,
+              entrypoint: entrypoints.worker,
             });
             logger.info('Registered worker client directive');
           }
@@ -472,7 +482,7 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
           if (gpuEnabled) {
             addClientDirective({
               name: 'gpu',
-              entrypoint: OWNED_ENTRYPOINTS.gpu,
+              entrypoint: entrypoints.gpu,
             });
             logger.info('Registered gpu client directive');
           }
@@ -480,7 +490,7 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
           if (wasmEnabled) {
             addClientDirective({
               name: 'wasm',
-              entrypoint: OWNED_ENTRYPOINTS.wasm,
+              entrypoint: entrypoints.wasm,
             });
             logger.info('Registered wasm client directive');
           }
@@ -488,7 +498,7 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
           if (motionEnabled) {
             addClientDirective({
               name: 'motion',
-              entrypoint: OWNED_ENTRYPOINTS.motion,
+              entrypoint: entrypoints.motion,
             });
             logger.info('Registered motion client directive');
           }
@@ -498,7 +508,7 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
           // live DOM wherever a `[data-liteship-entity]` SVG element is authored.
           addClientDirective({
             name: 'svg',
-            entrypoint: OWNED_ENTRYPOINTS.svg,
+            entrypoint: entrypoints.svg,
           });
           logger.info('Registered svg client directive');
 
@@ -537,7 +547,7 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
           // needs a consumer middleware — it runs after this 'pre' one and refines
           // the same locals. Opt in with `middleware: true` (default off).
           if (effectiveConfig?.middleware === true) {
-            addMiddleware({ order: 'pre', entrypoint: OWNED_ENTRYPOINTS.middleware });
+            addMiddleware({ order: 'pre', entrypoint: entrypoints.middleware });
             logger.info('Auto-wired capability-detection middleware');
           }
 
@@ -551,7 +561,7 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
               icon: INSPECTOR_TOOLBAR_ICON,
               // Resolve from this module's physical owner. A transitive installation
               // therefore never depends on the consumer hoisting @liteship/astro.
-              entrypoint: OWNED_ENTRYPOINTS.inspector,
+              entrypoint: entrypoints.inspector,
             });
             logger.info('Registered dev boundary inspector toolbar app');
           }

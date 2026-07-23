@@ -12,7 +12,7 @@
  * globals); `tarballFileUrl` is pinned as a valid `file://` URL round-trip.
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync, symlinkSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, symlinkSync, realpathSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -119,7 +119,7 @@ describe('tarballFileUrl — tarball path → file:// URL round-trip', () => {
     }
   });
 
-  it('preserves a literal short-path tilde for npm and pnpm file specs', () => {
+  it('preserves physical identity and any remaining tilde for npm and pnpm file specs', () => {
     const root = mkdtempSync(join(tmpdir(), 'liteship-tarball-short-path-'));
     try {
       const dir = join(root, 'RUNNER~1');
@@ -128,9 +128,8 @@ describe('tarballFileUrl — tarball path → file:// URL round-trip', () => {
       writeFileSync(tarball, 'x');
 
       const url = tarballFileUrl(tarball);
-      expect(url).toContain('RUNNER~1');
-      expect(url.toUpperCase()).not.toContain('RUNNER%7E1');
-      expect(fileURLToPath(url)).toBe(tarball);
+      expect(url.toUpperCase()).not.toContain('%7E');
+      expect(realpathSync.native(fileURLToPath(url))).toBe(realpathSync.native(tarball));
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

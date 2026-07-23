@@ -16,7 +16,7 @@ import type {
   CellKernel,
   AsyncOwnedResource,
   Clock,
-} from './core.d.ts';
+} from './core.js';
 
 type ReadonlyQuantizerValue<T> = T extends (...args: never[]) => unknown
   ? T
