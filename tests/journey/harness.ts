@@ -326,7 +326,6 @@ export function writePackedAuthorManifest(appDir: string, packed: PackedWorkspac
       2,
     )}\n`,
   );
-  writeFileSync(join(appDir, '.npmrc'), ['node-linker=hoisted', 'public-hoist-pattern[]=*', ''].join('\n'));
 }
 
 /**

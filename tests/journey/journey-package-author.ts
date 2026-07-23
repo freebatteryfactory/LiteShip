@@ -12,7 +12,7 @@
  */
 
 import ts from 'typescript';
-import { mkdtempSync, realpathSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, realpathSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
@@ -23,6 +23,7 @@ import {
   type JourneyResult,
   type PackedWorkspace,
 } from './harness.js';
+import { assertPackedTypeClosure } from '../../packages/cli/src/lib/package-smoke-helpers.js';
 
 const SUBPATHS = [
   { specifier: 'liteship/schema', dist: 'schema.d.ts', symbol: 'schema' },
@@ -39,8 +40,6 @@ function optionsFor(mode: 'node16' | 'bundler'): ts.CompilerOptions {
     target: ts.ScriptTarget.ES2022,
     lib: ['lib.es2022.d.ts', 'lib.dom.d.ts', 'lib.dom.iterable.d.ts'],
     strict: true,
-    skipLibCheck: true,
-    skipDefaultLibCheck: true,
     esModuleInterop: true,
     noEmit: true,
     types: [],
@@ -53,10 +52,21 @@ export async function journeyPackageAuthor(packed: PackedWorkspace): Promise<Jou
   try {
     sandbox = mkdtempSync(join(tmpdir(), 'liteship-journey-author-'));
     writePackedAuthorManifest(sandbox, packed);
+    journeyAssert(!existsSync(join(sandbox, '.npmrc')), 'current package-author proof must use default pnpm isolation');
     const install = await installConsumer(sandbox);
     journeyAssert(
       install.code === 0,
       `packed package-author install failed (exit ${install.code}):\n${(install.stdout + install.stderr).slice(-1200)}`,
+    );
+
+    assertPackedTypeClosure(
+      ts,
+      sandbox,
+      SUBPATHS.map((entry) => ({
+        packageName: 'liteship',
+        specifier: entry.specifier,
+        typesTarget: `./dist/${entry.dist}`,
+      })),
     );
 
     const installedRoot = realpathSync(join(sandbox, 'node_modules', 'liteship')).replaceAll('\\', '/');
@@ -99,12 +109,7 @@ export async function journeyPackageAuthor(packed: PackedWorkspace): Promise<Jou
       }
 
       const program = ts.createProgram({ rootNames: files, options });
-      const consumerSet = new Set(files.map((file) => file.replaceAll('\\', '/')));
-      const diagnostics = ts
-        .getPreEmitDiagnostics(program)
-        .filter((diagnostic) =>
-          diagnostic.file === undefined ? false : consumerSet.has(diagnostic.file.fileName.replaceAll('\\', '/')),
-        );
+      const diagnostics = ts.getPreEmitDiagnostics(program);
       const report = diagnostics.map(
         (diagnostic) => `TS${diagnostic.code} ${ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n')}`,
       );
@@ -115,8 +120,8 @@ export async function journeyPackageAuthor(packed: PackedWorkspace): Promise<Jou
       name,
       status: 'pass',
       detail:
-        'packed liteship/schema + liteship/evidence resolved from physical node_modules dist declarations and type-checked under node16 + bundler',
-      notes: ['no workspace-package link and no TypeScript paths alias'],
+        'default-isolated packed liteship/schema + liteship/evidence resolved from physical node_modules dist declarations and full-graph type-checked under node16 + bundler',
+      notes: ['no hoisting, workspace-package link, TypeScript paths alias, or declaration-check skip'],
     };
   } catch (error) {
     return { name, status: 'fail', detail: error instanceof Error ? error.message : String(error), notes: [] };
