@@ -27,6 +27,7 @@ import {
   partitionRuntimeClosureSpecifiers,
   diffSemanticClosures,
   diffJsonFields,
+  semanticClosureFileHash,
 } from '../../../../packages/cli/src/lib/package-smoke-helpers.js';
 
 describe('peerDependenciesOnly — PEER_INSTALLS → {name: version} (split on LAST @)', () => {
@@ -305,5 +306,25 @@ describe('diffJsonFields — bounded package manifest evidence', () => {
       fields: [],
       truncated: false,
     });
+  });
+});
+
+describe('semanticClosureFileHash — JSON manifest semantics', () => {
+  it('ignores package.json whitespace and object-key ordering', () => {
+    const first = Buffer.from('{"name":"fixture","dependencies":{"b":"2","a":"1"}}\n');
+    const second = Buffer.from('{\n  "dependencies": { "a": "1", "b": "2" },\n  "name": "fixture"\n}\n');
+
+    expect(semanticClosureFileHash('package/package.json', first)).toBe(
+      semanticClosureFileHash('package/package.json', second),
+    );
+  });
+
+  it('retains a real package.json field-value change as semantic drift', () => {
+    const first = Buffer.from('{"name":"fixture","version":"1.0.0"}');
+    const second = Buffer.from('{"name":"fixture","version":"1.0.1"}');
+
+    expect(semanticClosureFileHash('package/package.json', first)).not.toBe(
+      semanticClosureFileHash('package/package.json', second),
+    );
   });
 });

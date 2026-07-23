@@ -36,6 +36,7 @@ import {
   partitionRuntimeClosureSpecifiers,
   peerDependenciesOnly as peerDependenciesOnlyHelper,
   resolveExecutable,
+  semanticClosureFileHash,
   tarballFileUrl,
 } from '../lib/package-smoke-helpers.js';
 import { checkPackedMetadata } from '../lib/package-metadata-catalog.js';
@@ -338,7 +339,7 @@ function tarballClosure(tarballPath: string, destDir: string): Map<string, strin
       const abs = join(dir, entry.name);
       const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
       if (entry.isDirectory()) walk(abs, rel);
-      else if (entry.isFile()) closure.set(rel, sha256File(abs));
+      else if (entry.isFile()) closure.set(rel, semanticClosureFileHash(rel, readFileSync(abs)));
     }
   };
   walk(destDir, '');

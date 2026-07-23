@@ -239,6 +239,18 @@ function stableJson(value: unknown): string {
     .join(',')}}`;
 }
 
+/**
+ * Hash one packed file for the semantic closure. Package manifests are JSON
+ * documents, so insignificant formatting and object-key order are normalized;
+ * every other packed file remains byte-sensitive. Artifact reproducibility is
+ * measured separately from the raw tarball bytes and is intentionally unchanged.
+ */
+export function semanticClosureFileHash(path: string, content: Uint8Array): string {
+  const bytes = Buffer.from(content);
+  const semanticBytes = path === 'package/package.json' ? stableJson(JSON.parse(bytes.toString('utf8'))) : bytes;
+  return createHash('sha256').update(semanticBytes).digest('hex');
+}
+
 function jsonValueSnapshot(value: unknown | typeof MISSING_JSON_FIELD, valueLimit: number): JsonFieldValueSnapshot {
   if (value === MISSING_JSON_FIELD) {
     return { present: false, preview: null, sha256: null, truncated: false };
