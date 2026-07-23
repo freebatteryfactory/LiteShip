@@ -1,6 +1,6 @@
 /** Root liteship.config.ts loading, validation, and virtual projection. */
 
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -23,6 +23,12 @@ afterEach(() => {
 });
 
 describe('liteship.config.ts host composition', () => {
+  it('keeps Vite config evaluation behind a type-only/lazy runtime boundary', () => {
+    const source = readFileSync(join(import.meta.dirname, '../../../packages/vite/src/project-config.ts'), 'utf8');
+    expect(source).not.toMatch(/import\s*\{[^}]*loadConfigFromFile[^}]*\}\s*from\s*['"]vite['"]/);
+    expect(source).toContain("const viteModule = 'vite'");
+  });
+
   it('loads one validated Config and derives its Vite/Astro projections', async () => {
     const root = fixture();
     const boundary = defineBoundary({

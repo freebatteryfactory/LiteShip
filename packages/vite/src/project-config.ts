@@ -14,7 +14,7 @@ import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { Config, defineConfig, type Config as LiteshipConfig } from '@liteship/core';
 import { ValidationError } from '@liteship/error';
-import { loadConfigFromFile, type ConfigEnv } from 'vite';
+import type { ConfigEnv, loadConfigFromFile } from 'vite';
 import type { PluginConfig } from './plugin.js';
 
 /** The one project config filename LiteShip hosts load. */
@@ -30,6 +30,15 @@ export interface LoadedProjectConfig {
 
 /** Narrow Vite's loader behind a testable capability without mocking a module. */
 export type ProjectConfigLoader = typeof loadConfigFromFile;
+
+/** Load Vite only when a present TypeScript project config actually needs evaluation. */
+const defaultProjectConfigLoader: ProjectConfigLoader = async (env, configFile, configRoot) => {
+  // Keep Vite's Node-only config loader out of application/worker module graphs.
+  // A non-literal dynamic import is resolved only inside Vite's own config hook.
+  const viteModule = 'vite';
+  const { loadConfigFromFile: load } = await import(viteModule);
+  return load(env, configFile, configRoot);
+};
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -85,7 +94,7 @@ export function validateProjectConfig(value: unknown, source: string): LiteshipC
 export async function loadProjectConfig(
   root: string,
   env: ConfigEnv,
-  loader: ProjectConfigLoader = loadConfigFromFile,
+  loader: ProjectConfigLoader = defaultProjectConfigLoader,
 ): Promise<LoadedProjectConfig | null> {
   const path = resolve(root, PROJECT_CONFIG_FILE);
   if (!existsSync(path)) return null;
