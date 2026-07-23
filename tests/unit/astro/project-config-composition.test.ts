@@ -1,6 +1,6 @@
 /** Astro's Vite composition loads the same validated root LiteShip config. */
 
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -117,8 +117,9 @@ describe('Astro project-config composition', () => {
       writeFileSync(join(root, 'liteship.config.ts'), `export default ${JSON.stringify(authored)};\n`);
 
       const watched: string[] = [];
+      const astroIntegration = integration({ vite: { dirs: { boundary: explicitBoundaryDir } } });
       let vitePlugin: Plugin | undefined;
-      await integration({ vite: { dirs: { boundary: explicitBoundaryDir } } }).hooks['astro:config:setup']({
+      await astroIntegration.hooks['astro:config:setup']({
         updateConfig(update: { vite?: { plugins?: Plugin[] } }) {
           vitePlugin = update.vite?.plugins?.[0];
         },
@@ -151,6 +152,22 @@ describe('Astro project-config composition', () => {
       expect(boundaries).toContain('explicitBoundary');
       expect(boundaries).not.toContain('projectBoundary');
       expect(tokens).toContain(token.id);
+
+      const outDir = join(root, 'dist');
+      mkdirSync(outDir);
+      astroIntegration.hooks['astro:config:done']({
+        config: { root: pathToFileURL(`${root}/`), output: 'static' },
+        logger: { info() {} },
+      } as never);
+      await astroIntegration.hooks['astro:build:done']({
+        dir: pathToFileURL(`${outDir}/`),
+        logger: { info() {} },
+      } as never);
+      const buildManifest = JSON.parse(readFileSync(join(outDir, 'liteship-boundary-manifest.json'), 'utf8')) as {
+        readonly boundaries: Readonly<Record<string, unknown>>;
+      };
+      expect(Object.keys(buildManifest.boundaries)).toContain('explicitBoundary');
+      expect(Object.keys(buildManifest.boundaries)).not.toContain('projectBoundary');
     } finally {
       rmSync(root, { recursive: true, force: true });
       rmSync(externalRoot, { recursive: true, force: true });

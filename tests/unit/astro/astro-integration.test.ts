@@ -21,6 +21,7 @@ import {
 import type { AdaptiveProps } from '@liteship/astro';
 import { Diagnostics, defineBoundary } from '@liteship/core';
 import { serializeBoundaryAttrValue } from '@liteship/core/authoring';
+import { defineAdaptive } from '../../../packages/liteship/src/index.js';
 import { runIsolatedAstroConfigSetup } from '../../helpers/astro-config-setup.js';
 
 // ---------------------------------------------------------------------------
@@ -119,21 +120,25 @@ describe('adaptiveAttrs', () => {
   });
 
   test('serializes the safe activation spec byte-identically to core attrs', () => {
-    const boundary = defineBoundary({
-      input: 'viewport.width',
-      at: [
-        [0, 'compact'],
-        [768, 'wide'],
-      ],
-      spec: {
-        timeRange: { from: 100, until: 200 },
-        experimentId: 'checkout-v2',
-        deviceFilter: () => false,
+    const adaptive = defineAdaptive({
+      boundary: {
+        input: 'viewport.width',
+        at: [
+          [0, 'compact'],
+          [768, 'wide'],
+        ],
+        spec: {
+          timeRange: { from: 100, until: 200 },
+          experimentId: 'checkout-v2',
+          deviceFilter: () => false,
+        },
       },
+      style: { base: { properties: { display: 'block' } } },
     });
 
-    const serialized = adaptiveAttrs({ boundary })['data-liteship-boundary']!;
-    expect(serialized).toBe(serializeBoundaryAttrValue(boundary));
+    const serialized = adaptiveAttrs({ boundary: adaptive.boundary })['data-liteship-boundary']!;
+    expect(serialized).toBe(adaptive.attrs()['data-liteship-boundary']);
+    expect(serialized).toBe(serializeBoundaryAttrValue(adaptive.boundary));
     expect(JSON.parse(serialized).spec).toEqual({
       timeRange: { from: 100, until: 200 },
       experimentId: 'checkout-v2',

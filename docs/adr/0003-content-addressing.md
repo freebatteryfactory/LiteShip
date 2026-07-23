@@ -12,6 +12,8 @@ LiteShip primitives (Boundaries, Quantizer configs, Receipts, GenFrames, Tokens,
 
 The local definition label is `fnv1a:XXXXXXXX`: a 32-bit FNV-1a hash of the CBOR-canonical serialization of the payload, wrapped in the branded `ContentAddress` type (see ADR-0001). It is not a cryptographic identity or trust witness. Security-sensitive, external-artifact, attacker-influenced cache, wire-validation, and release-evidence paths must carry an `IntegrityDigest` or the paired `AddressedDigest` over the same authoritative bytes (see ADR-0011 and `addressed-digest.ts`).
 
+Host-only executable closures are outside the portable label because functions have no canonical cross-machine byte form. For example, `BoundarySpec.deviceFilter` remains on the host boundary object, while the portable label and DOM wire include only `timeRange` and `experimentId`. Changing portable activation semantics changes the label; changing a host closure changes host behavior without pretending that closure has portable bytes.
+
 ## Consequences
 
 - **Deterministic and cross-machine stable.** CBOR normalizes key ordering, integer canonicalization, and floating-point representation; two machines produce the same bytes, therefore the same hash.
