@@ -44,6 +44,58 @@ describe('fromContainerQueries — explicit input ownership', () => {
     ]);
   });
 
+  it('passes the authored unit to the resolver and keeps the threshold in that unit', () => {
+    const requests: unknown[] = [];
+    const result = fromContainerQueries(`@container sidebar (min-width: 40rem) { .x {} }`, {
+      resolveInput: (request) => {
+        requests.push(request);
+        return `custom:container.${request.name}.${request.axis}.${request.unit}`;
+      },
+    });
+
+    expect(requests).toEqual([{ name: 'sidebar', axis: 'width', unit: 'rem' }]);
+    expect(result.diagnostics).toEqual([]);
+    expect(result.boundaries[0]!.input).toBe('custom:container.sidebar.width.rem');
+    expect([...result.boundaries[0]!.thresholds]).toEqual([0, 40]);
+  });
+
+  it('refuses a relative threshold when the host does not map that authored unit', () => {
+    const result = fromContainerQueries(`@container (min-width: 40em) { .x {} }`, {
+      resolveInput: ({ unit }) => (unit === 'px' ? 'custom:container.nearest.width.px' : undefined),
+    });
+    expect(result.boundaries).toEqual([]);
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({ code: MIGRATE_CODES.unsupportedAtRule, severity: 'error' }),
+    );
+  });
+
+  it('lets differently scaled containers select distinct host inputs', () => {
+    const result = fromContainerQueries(`
+      @container compact (min-width: 40em) { .x {} }
+      @container spacious (min-width: 40em) { .y {} }
+    `, {
+      resolveInput: ({ name, axis, unit }) => `custom:container.${name}.${axis}.${unit}`,
+    });
+    expect(result.boundaries.map((boundary) => boundary.input)).toEqual([
+      'custom:container.compact.width.em',
+      'custom:container.spacious.width.em',
+    ]);
+    expect(result.boundaries.every((boundary) => boundary.thresholds[1] === 40)).toBe(true);
+  });
+
+  it('refuses one container state chain when its authored units resolve to different signals', () => {
+    const result = fromContainerQueries(`
+      @container sidebar (min-width: 400px) { .x {} }
+      @container sidebar (min-width: 40em) { .y {} }
+    `, {
+      resolveInput: ({ name, axis, unit }) => `custom:container.${name}.${axis}.${unit}`,
+    });
+    expect(result.boundaries).toEqual([]);
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({ code: MIGRATE_CODES.unsupportedAtRule, severity: 'error' }),
+    );
+  });
+
   it('refuses every container group when the host supplies no mapping', () => {
     const result = fromContainerQueries(`
       @container (width >= 400px) { .x {} }

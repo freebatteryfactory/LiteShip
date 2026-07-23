@@ -36,6 +36,7 @@ import { blankCssCommentsAndStrings, parseFlatDeclarations } from '@liteship/com
 import { inferSyntax } from '../css-utils.js';
 import type { MigrationDiagnostic, MigrationResult, FromMediaQueriesOptions } from './types.js';
 import { makeMigrationDiagnostic, MIGRATE_CODES } from './diagnostics.js';
+import { parseQueryLength } from './query-length.js';
 
 // ---------------------------------------------------------------------------
 // Namespace → category inverse (NEW LOCAL table — the emit-side const is private)
@@ -95,25 +96,6 @@ function matchBrace(blanked: string, openIdx: number): number {
     }
   }
   return blanked.length;
-}
-
-/**
- * Parse a CSS length to pixels, or `null` when it is not a length. `rem`/`em`
- * resolve against the conventional 16px root. A non-finite length (`1e400px` →
- * `Infinity`) is deliberately NOT rejected here — it is a valid parse that the
- * `defineBoundary` constructor gate then legitimately refuses, so the
- * pathological case surfaces as a caught diagnostic instead of a silent drop.
- */
-function parseLength(raw: string): number | null {
-  const s = raw.trim();
-  const unitMatch = s.match(/(px|rem|em)$/i);
-  const unit = unitMatch?.[1]?.toLowerCase();
-  const numStr = unit ? s.slice(0, s.length - unit.length) : s;
-  if (numStr.trim() === '') return null;
-  const n = Number(numStr);
-  if (Number.isNaN(n)) return null;
-  if (unit === undefined && n !== 0) return null;
-  return unit === 'rem' || unit === 'em' ? n * 16 : n;
 }
 
 /**
@@ -340,33 +322,61 @@ export function fromTailwindTheme(css: string, options?: FromTailwindThemeOption
   }
 
   if (screenEntries.length > 0) {
-    // Parse each screen to px in source order. A value that is not a supported
+    // Parse each screen without collapsing relative units. A value that is not a supported
     // length (`40vw`, `100%`, a malformed number) cannot become a threshold — it
     // is DROPPED, so surface it as a diagnostic rather than silently losing the
     // breakpoint (the adapter's no-silent-drift contract).
-    const parsed: Array<{ name: string; px: number }> = [];
+    const parsed: Array<{ name: string; value: number; input: string }> = [];
+    let refuseBoundary = false;
     for (const { name, raw } of screenEntries) {
-      const px = parseLength(raw);
-      if (px === null) {
+      const length = parseQueryLength(raw);
+      if (length === null) {
         diagnostics.push(
           makeMigrationDiagnostic(
             MIGRATE_CODES.unsupportedAtRule,
-            `Tailwind screen "${name}" value "${raw}" is not a supported length (px/rem/em); dropped from the viewport.width boundary.`,
+            `Tailwind screen "${name}" value "${raw}" is not a supported length (px/em/rem or unitless zero); dropped from the boundary.`,
             { path: [name] },
           ),
         );
         continue;
       }
-      parsed.push({ name, px });
+      const input =
+        length.unit === 'px' || length.unit === 'zero'
+          ? (sourceToInput({ type: 'viewport', axis: 'width' }) as string)
+          : options?.resolveLengthInput?.({ axis: 'width', unit: length.unit });
+      if (!input) {
+        diagnostics.push(
+          makeMigrationDiagnostic(
+            MIGRATE_CODES.unsupportedAtRule,
+            `Tailwind screen "${name}" value "${raw}" uses ${length.unit}, but no host input measured in that unit was provided; the complete breakpoint boundary was refused.`,
+            { path: [name], severity: 'error' },
+          ),
+        );
+        refuseBoundary = true;
+        continue;
+      }
+      parsed.push({ name, value: length.value, input });
     }
 
-    if (parsed.length > 0) {
-      const input = sourceToInput({ type: 'viewport', axis: 'width' }) as string;
+    const inputs = new Set(parsed.map((screen) => screen.input));
+    if (inputs.size > 1) {
+      diagnostics.push(
+        makeMigrationDiagnostic(
+          MIGRATE_CODES.unsupportedAtRule,
+          `Tailwind screens resolve through multiple measured inputs (${[...inputs].join(', ')}); one ordered breakpoint boundary cannot preserve that comparison.`,
+          { path: ['screens'], severity: 'error' },
+        ),
+      );
+      refuseBoundary = true;
+    }
+
+    if (!refuseBoundary && parsed.length > 0) {
+      const input = parsed[0]!.input;
 
       // Base 0 state + one state per screen threshold.
       const sourcePairs: Array<readonly [number, string]> = [
         [0, prefix !== undefined ? `${prefix}-0` : 'base'],
-        ...parsed.map((s) => [s.px, prefix !== undefined ? `${prefix}-${s.px}` : s.name] as const),
+        ...parsed.map((s) => [s.value, prefix !== undefined ? `${prefix}-${s.value}` : s.name] as const),
       ];
 
       // Dedupe by threshold (first wins) and sort ascending; flag either fixup.

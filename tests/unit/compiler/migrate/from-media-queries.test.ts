@@ -62,9 +62,26 @@ describe('fromMediaQueries — decomposition branches', () => {
     );
   });
 
-  it('resolves rem breakpoints against the 16px root', () => {
+  it('refuses a relative breakpoint when no matching host input is provided', () => {
     const result = fromMediaQueries(`@media (min-width: 48rem) { .x { a: b; } }`);
-    expect([...result.boundaries[0]!.thresholds]).toEqual([0, 768]);
+    expect(result.boundaries).toEqual([]);
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({ code: MIGRATE_CODES.unmappableMediaFeature, severity: 'error' }),
+    );
+  });
+
+  it.each(['em', 'rem'] as const)('keeps an authored %s threshold on a host signal measured in that unit', (unit) => {
+    const requests: unknown[] = [];
+    const result = fromMediaQueries(`@media (min-width: 40${unit}) { .x { a: b; } }`, {
+      resolveLengthInput: (request) => {
+        requests.push(request);
+        return `custom:viewport.width.${request.unit}`;
+      },
+    });
+    expect(requests).toEqual([{ axis: 'width', unit }]);
+    expect(result.diagnostics).toEqual([]);
+    expect(result.boundaries[0]!.input).toBe(`custom:viewport.width.${unit}`);
+    expect([...result.boundaries[0]!.thresholds]).toEqual([0, 40]);
   });
 
   it('routes *-height features to a viewport.height boundary', () => {
@@ -379,6 +396,33 @@ describe('fromMediaQueries — no-silent-drift review findings', () => {
     const result = fromMediaQueries(`@media (min-width: 768px) and (min-width: 1024px) { .x { a: b; } }`);
     expect(result.diagnostics).toEqual([]);
     expect([...result.boundaries[0]!.thresholds]).toEqual([0, 1024]);
+  });
+});
+
+describe('fromMediaQueries — conjunction grammar', () => {
+  it.each([
+    '(min-width: 500px) (min-width: 700px)',
+    '(min-width: 500px) and and (min-width: 700px)',
+    '(min-width: 500px) and',
+    'and (min-width: 500px)',
+    '(min-width: 500px) banana (min-width: 700px)',
+    '(min-width: 500px',
+    '()',
+  ])('refuses malformed prelude %s atomically', (prelude) => {
+    const result = fromMediaQueries(`@media ${prelude} { .x { display: block; } }`);
+    expect(result.boundaries).toEqual([]);
+    expect(result.themes).toEqual([]);
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({ code: MIGRATE_CODES.unsupportedAtRule, severity: 'error' }),
+    );
+  });
+
+  it('accepts a neutral all type with a structurally valid conjunction', () => {
+    const result = fromMediaQueries(
+      `@media all and (min-width: 500px) and (min-width: 700px) { .x { display: block; } }`,
+    );
+    expect(result.diagnostics).toEqual([]);
+    expect([...result.boundaries[0]!.thresholds]).toEqual([0, 700]);
   });
 });
 

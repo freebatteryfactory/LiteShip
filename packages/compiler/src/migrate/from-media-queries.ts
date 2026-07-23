@@ -43,6 +43,7 @@ import {
 import { parseFlatDeclarationValues } from '../parse/css-scan.js';
 import type { MigrationDiagnostic, MigrationResult, FromMediaQueriesOptions } from './types.js';
 import { makeMigrationDiagnostic, MIGRATE_CODES } from './diagnostics.js';
+import { parseQueryLength } from './query-length.js';
 
 // ---------------------------------------------------------------------------
 // Feature vocabulary
@@ -139,23 +140,50 @@ function parseFeatures(prelude: string): ParsedFeature[] {
 }
 
 /**
- * Parse a length feature value to CSS pixels, or `null` when it is not a
- * length (`auto`, a keyword, empty). `rem`/`em` are resolved against the
- * conventional 16px root. `Number('1e400')` is `Infinity` — deliberately NOT
- * rejected here: a non-finite length is a valid parse that the `defineBoundary`
- * constructor gate then legitimately refuses, so the pathological case surfaces
- * as a caught diagnostic instead of a silent drop.
+ * Validate the supported positive conjunction grammar structurally. The
+ * prelude is an optional neutral `all` media type followed by
+ * `feature (and feature)*`; adjacent groups, stray/duplicated connectives,
+ * foreign text, and unbalanced groups are refused atomically.
  */
-function parseLength(raw: string): number | null {
-  const s = raw.trim();
-  const unitMatch = s.match(/(px|rem|em)$/i);
-  const unit = unitMatch?.[1]?.toLowerCase();
-  const numStr = unit ? s.slice(0, s.length - unit.length) : s;
-  if (numStr.trim() === '') return null;
-  const n = Number(numStr);
-  if (Number.isNaN(n)) return null;
-  if (unit === undefined && n !== 0) return null;
-  return unit === 'rem' || unit === 'em' ? n * 16 : n;
+function hasValidPositiveFeatureSequence(prelude: string): boolean {
+  const source = blankCssCommentsAndStrings(prelude).trim();
+  let offset = 0;
+  const neutral = /^(?:(?:only\s+)?all\s+and)\b/i.exec(source);
+  if (neutral) offset = neutral[0].length;
+
+  let groups = 0;
+  while (offset < source.length) {
+    while (/\s/.test(source[offset] ?? '')) offset++;
+    if (source[offset] !== '(') return false;
+
+    let depth = 0;
+    let closed = false;
+    for (; offset < source.length; offset++) {
+      const char = source[offset]!;
+      if (char === '(') depth++;
+      else if (char === ')') {
+        depth--;
+        if (depth < 0) return false;
+        if (depth === 0) {
+          offset++;
+          closed = true;
+          groups++;
+          break;
+        }
+      }
+    }
+    if (!closed || depth !== 0) return false;
+    while (/\s/.test(source[offset] ?? '')) offset++;
+    if (offset === source.length) return groups > 0;
+
+    const connective = /^and\b/i.exec(source.slice(offset));
+    if (!connective) return false;
+    offset += connective[0].length;
+    const beforeNext = offset;
+    while (/\s/.test(source[offset] ?? '')) offset++;
+    if (offset === beforeNext || source[offset] !== '(') return false;
+  }
+  return false;
 }
 
 /** Index of the `}` that closes the block whose `{` is at `openIdx` (on the blanked copy). */
@@ -296,9 +324,8 @@ type AtPairs = readonly [readonly [number, string], ...(readonly [number, string
 /**
  * Lower a foreign `@media` stylesheet into `@liteship/core` definitions.
  *
- * Produces at most one `viewport.width` boundary and one `viewport.height`
- * boundary (folded from every `min-width`/`max-width`/`width` and
- * `*-height`/`height` breakpoint respectively), one two-state boundary per
+ * Produces one boundary per faithfully resolved dimensional input (the built-in
+ * viewport inputs for px/unitless-zero; host-resolved inputs for em/rem), one two-state boundary per
  * distinct discrete feature, and one light/dark `defineTheme` when any
  * `prefers-color-scheme` block is present. Every lossy or dropped construct is
  * recorded as a {@link MigrationDiagnostic} instead of throwing.
@@ -323,9 +350,13 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
   const boundaries: Boundary[] = [];
   const themes: Theme[] = [];
 
-  // Dimensional breakpoints, in SOURCE order (base 0 is prepended later).
-  const widthValues: number[] = [];
-  const heightValues: number[] = [];
+  // Dimensional breakpoints, grouped by their actual measured input and kept in
+  // source order (base 0 is prepended later).
+  interface DimensionBucket {
+    readonly axis: 'width' | 'height';
+    readonly values: number[];
+  }
+  const dimensionValues = new Map<string, DimensionBucket>();
 
   // Distinct discrete-feature boundaries, keyed by their resolved input string.
   interface DiscreteConfig {
@@ -453,15 +484,26 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
       return;
     }
 
+    if (!hasValidPositiveFeatureSequence(prelude)) {
+      diagnostics.push(
+        makeMigrationDiagnostic(
+          MIGRATE_CODES.unsupportedAtRule,
+          `@media "${prelude.trim()}" is outside the supported feature (and feature)* grammar; the complete block was refused.`,
+          { path: ['@media', prelude.trim()], severity: 'error' },
+        ),
+      );
+      return;
+    }
+
     const feats = parseFeatures(prelude);
-    if (feats.length === 0) {
+    if (feats.length === 0 || feats.some((feature) => feature.feature === '')) {
       // Bare media-type query (`@media screen`, `@media print`) — no condition
       // to lower onto a boundary.
       diagnostics.push(
         makeMigrationDiagnostic(
           MIGRATE_CODES.unsupportedAtRule,
           `@media "${prelude.trim()}" has no lowerable feature condition; skipped.`,
-          { path: ['@media', prelude.trim()] },
+          { path: ['@media', prelude.trim()], severity: 'error' },
         ),
       );
       return;
@@ -497,12 +539,12 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
     // Preflight dimensional features before mutating any shared accumulator.
     // Only inclusive min predicates are faithful. Multiple min predicates on
     // the same axis intersect at their maximum lower bound.
-    const dimensionThresholds = new Map<'width' | 'height', number>();
+    const dimensionThresholds = new Map<'width' | 'height', { readonly input: string; readonly value: number }>();
     for (const feat of feats) {
       const f = feat.feature;
       if (!WIDTH_FEATURES.has(f) && !HEIGHT_FEATURES.has(f)) continue;
-      const px = parseLength(feat.value ?? '');
-      if (px === null) {
+      const length = parseQueryLength(feat.value ?? '');
+      if (length === null) {
         diagnostics.push(
           makeMigrationDiagnostic(
             MIGRATE_CODES.unmappableMediaFeature,
@@ -523,7 +565,35 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
         return;
       }
       const axis = WIDTH_FEATURES.has(f) ? 'width' : 'height';
-      dimensionThresholds.set(axis, Math.max(dimensionThresholds.get(axis) ?? -Infinity, px));
+      const input =
+        length.unit === 'px' || length.unit === 'zero'
+          ? (sourceToInput({ type: 'viewport', axis }) as string)
+          : options?.resolveLengthInput?.({ axis, unit: length.unit });
+      if (!input) {
+        diagnostics.push(
+          makeMigrationDiagnostic(
+            MIGRATE_CODES.unmappableMediaFeature,
+            `Media feature "${f}: ${feat.value ?? ''}" uses ${length.unit}, but no host input measured in that unit was provided; the complete block was refused.`,
+            { path: ['@media', prelude.trim(), f], severity: 'error' },
+          ),
+        );
+        return;
+      }
+      const prior = dimensionThresholds.get(axis);
+      if (prior !== undefined && prior.input !== input) {
+        diagnostics.push(
+          makeMigrationDiagnostic(
+            MIGRATE_CODES.unsupportedAtRule,
+            `@media "${prelude.trim()}" compares one ${axis} axis through multiple host inputs; the complete block was refused.`,
+            { path: ['@media', prelude.trim(), axis], severity: 'error' },
+          ),
+        );
+        return;
+      }
+      dimensionThresholds.set(axis, {
+        input,
+        value: Math.max(prior?.value ?? -Infinity, length.value),
+      });
     }
 
     // The adapter mutates shared accumulators while lowering one block. Keep a
@@ -531,8 +601,6 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
     // refused as a WHOLE rather than returning independently active definitions.
     const checkpoint = {
       diagnostics: diagnostics.length,
-      width: widthValues.length,
-      height: heightValues.length,
       discrete: discreteConfigs.length,
       discreteInputs: new Set(discreteInputs),
       sawColorScheme,
@@ -543,7 +611,7 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
     // lower to DIFFERENT targets loses the "only together" semantics — each
     // target becomes an independent definition matched on its own.
     const targets = new Set<string>();
-    for (const axis of dimensionThresholds.keys()) targets.add(`${axis}-axis`);
+    for (const [axis, threshold] of dimensionThresholds) targets.add(`${axis}-axis:${threshold.input}`);
     for (const feat of feats) {
       const f = feat.feature;
       if (WIDTH_FEATURES.has(f) || HEIGHT_FEATURES.has(f)) {
@@ -570,8 +638,6 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
     // width AND height axes) cannot be represented — each lowers independently and
     // is matched separately, so the "only together" conjunction is silently lost.
     if (targets.size > 1) {
-      widthValues.length = checkpoint.width;
-      heightValues.length = checkpoint.height;
       discreteConfigs.length = checkpoint.discrete;
       discreteInputs.clear();
       for (const input of checkpoint.discreteInputs) discreteInputs.add(input);
@@ -590,10 +656,11 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
       return;
     }
 
-    const widthThreshold = dimensionThresholds.get('width');
-    if (widthThreshold !== undefined) widthValues.push(widthThreshold);
-    const heightThreshold = dimensionThresholds.get('height');
-    if (heightThreshold !== undefined) heightValues.push(heightThreshold);
+    for (const [axis, threshold] of dimensionThresholds) {
+      const bucket = dimensionValues.get(threshold.input);
+      if (bucket) bucket.values.push(threshold.value);
+      else dimensionValues.set(threshold.input, { axis, values: [threshold.value] });
+    }
   };
 
   // -------------------------------------------------------------------------
@@ -673,7 +740,7 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
   // -------------------------------------------------------------------------
   // Fold dimensional breakpoints into ascending boundaries.
   // -------------------------------------------------------------------------
-  const buildDimensionBoundary = (values: readonly number[], axis: 'width' | 'height'): void => {
+  const buildDimensionBoundary = (input: string, values: readonly number[], axis: 'width' | 'height'): void => {
     if (values.length === 0) return;
 
     if (new Set(values).size !== values.length) {
@@ -681,14 +748,12 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
         makeMigrationDiagnostic(
           MIGRATE_CODES.ambiguousBreakpoint,
           `Duplicate ${axis} breakpoints in source order [${values.join(', ')}] cannot preserve CSS cascade identity; the boundary was refused.`,
-          { path: [sourceToInput({ type: 'viewport', axis }) as string], severity: 'error' },
+          { path: [input], severity: 'error' },
         ),
       );
       return;
     }
     const seq = values[0] === 0 ? [...values] : [0, ...values]; // base 0 is implicit unless explicitly authored
-
-    const input = sourceToInput({ type: 'viewport', axis }) as string;
 
     if (seq.some((value, index) => index > 0 && value <= seq[index - 1]!)) {
       diagnostics.push(
@@ -716,8 +781,7 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
     }
   };
 
-  buildDimensionBoundary(widthValues, 'width');
-  buildDimensionBoundary(heightValues, 'height');
+  for (const [input, bucket] of dimensionValues) buildDimensionBoundary(input, bucket.values, bucket.axis);
 
   // -------------------------------------------------------------------------
   // Discrete-feature boundaries (two-state on/off).

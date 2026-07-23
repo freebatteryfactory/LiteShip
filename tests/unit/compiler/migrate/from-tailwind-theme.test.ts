@@ -128,9 +128,21 @@ describe('fromTailwindTheme — screens → viewport.width boundary', () => {
     expect(Boundary.evaluate(b, 1200)).toBe('lg');
   });
 
-  it('resolves rem breakpoints against the 16px root', () => {
+  it('refuses a relative breakpoint without a host signal in that unit', () => {
     const result = fromTailwindTheme(`@theme { --breakpoint-md: 48rem; }`);
-    expect([...result.boundaries[0]!.thresholds]).toEqual([0, 768]);
+    expect(result.boundaries).toEqual([]);
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({ code: MIGRATE_CODES.unsupportedAtRule, severity: 'error' }),
+    );
+  });
+
+  it('keeps a relative breakpoint on a host signal measured in the authored unit', () => {
+    const result = fromTailwindTheme(`@theme { --breakpoint-md: 48rem; }`, {
+      resolveLengthInput: ({ axis, unit }) => `custom:tailwind.${axis}.${unit}`,
+    });
+    expect(result.diagnostics).toEqual([]);
+    expect(result.boundaries[0]!.input).toBe('custom:tailwind.width.rem');
+    expect([...result.boundaries[0]!.thresholds]).toEqual([0, 48]);
   });
 
   it('accepts an explicit screens option map', () => {

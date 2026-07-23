@@ -14,6 +14,8 @@ export type {
   FromMediaQueriesOptions,
   FromContainerQueriesOptions,
   ContainerInputRequest,
+  MediaLengthInputRequest,
+  QueryLengthUnit,
 } from './types.js';
 export { makeMigrationDiagnostic, MIGRATE_CODES } from './diagnostics.js';
 

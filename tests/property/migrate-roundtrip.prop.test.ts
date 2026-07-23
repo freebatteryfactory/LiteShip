@@ -24,7 +24,7 @@
 import { describe, test, expect } from 'vitest';
 import fc from 'fast-check';
 import { Boundary } from '@liteship/core';
-import { fromMediaQueries } from '@liteship/compiler/migrate';
+import { fromContainerQueries, fromMediaQueries, fromTailwindTheme } from '@liteship/compiler/migrate';
 
 /** The state name the adapter synthesizes for a threshold under an explicit prefix. */
 const stateName = (prefix: string, threshold: number): string => `${prefix}-${threshold}`;
@@ -89,6 +89,63 @@ describe('fromMediaQueries — width-sweep semantic equivalence', () => {
         }
       }),
       { seed: 0x5eed_1422, numRuns: 300 },
+    );
+  });
+});
+
+describe('breakpoint migration — relative-unit and connective refusal properties', () => {
+  test('relative thresholds never acquire an implicit 16px conversion', () => {
+    fc.assert(
+      fc.property(
+        fc.integer({ min: 1, max: 200 }),
+        fc.constantFrom('em' as const, 'rem' as const),
+        (value, unit) => {
+          const media = fromMediaQueries(`@media (min-width: ${value}${unit}) { .x {} }`);
+          const tailwind = fromTailwindTheme(`@theme { --breakpoint-test: ${value}${unit}; }`);
+          const container = fromContainerQueries(`@container (min-width: ${value}${unit}) { .x {} }`);
+
+          for (const result of [media, tailwind, container]) {
+            expect(result.boundaries).toEqual([]);
+            expect(result.diagnostics.some((diagnostic) => diagnostic.severity === 'error')).toBe(true);
+          }
+
+          const resolved = fromMediaQueries(`@media (min-width: ${value}${unit}) { .x {} }`, {
+            resolveLengthInput: ({ axis, unit: authoredUnit }) => `custom:${axis}.${authoredUnit}`,
+          });
+          expect(resolved.boundaries[0]!.input).toBe(`custom:width.${unit}`);
+          expect([...resolved.boundaries[0]!.thresholds]).toEqual([0, value]);
+        },
+      ),
+      { seed: 0x5eed_1423, numRuns: 100 },
+    );
+  });
+
+  test('malformed positive conjunctions refuse the whole media block', () => {
+    fc.assert(
+      fc.property(
+        fc.integer({ min: 1, max: 2000 }),
+        fc.integer({ min: 1, max: 2000 }),
+        fc.constantFrom('adjacent', 'leading', 'trailing', 'duplicate', 'foreign'),
+        (left, right, shape) => {
+          const a = `(min-width: ${left}px)`;
+          const b = `(min-width: ${right}px)`;
+          const prelude =
+            shape === 'adjacent'
+              ? `${a} ${b}`
+              : shape === 'leading'
+                ? `and ${a}`
+                : shape === 'trailing'
+                  ? `${a} and`
+                  : shape === 'duplicate'
+                    ? `${a} and and ${b}`
+                    : `${a} banana ${b}`;
+          const result = fromMediaQueries(`@media ${prelude} { .x {} }`);
+          expect(result.boundaries).toEqual([]);
+          expect(result.themes).toEqual([]);
+          expect(result.diagnostics.some((diagnostic) => diagnostic.severity === 'error')).toBe(true);
+        },
+      ),
+      { seed: 0x5eed_1424, numRuns: 100 },
     );
   });
 });

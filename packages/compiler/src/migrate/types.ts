@@ -47,6 +47,15 @@ export interface MigrationResult {
   readonly diagnostics: readonly MigrationDiagnostic[];
 }
 
+/** Units preserved by query migration; relative values are never guessed as pixels. */
+export type QueryLengthUnit = 'px' | 'em' | 'rem' | 'zero';
+
+/** A viewport dimension the migration host may expose in an authored relative unit. */
+export interface MediaLengthInputRequest {
+  readonly axis: 'width' | 'height';
+  readonly unit: 'em' | 'rem';
+}
+
 /**
  * Shared shape for the media/container-query adapters: the `state:` name prefix
  * used when synthesizing boundary state names from parsed thresholds. Adapters
@@ -55,6 +64,12 @@ export interface MigrationResult {
 export interface FromMediaQueriesOptions {
   /** Prefix for synthesized boundary state names (e.g. `'bp'` → `bp-0`, `bp-768`). */
   readonly statePrefix?: string;
+  /**
+   * Resolve a relative media-query length onto a host signal measured in that
+   * exact authored unit. Pixel and unitless-zero queries keep the built-in
+   * viewport input and do not call this hook.
+   */
+  readonly resolveLengthInput?: (request: MediaLengthInputRequest) => string | undefined;
 }
 
 /** One source container dimension that a migration host must bind to a LiteShip input. */
@@ -63,6 +78,8 @@ export interface ContainerInputRequest {
   readonly name?: string;
   /** The queried physical/logical axis after normalization. */
   readonly axis: 'width' | 'height';
+  /** The authored threshold unit; `zero` is unitless zero. */
+  readonly unit: QueryLengthUnit;
 }
 
 /** Options for {@link fromContainerQueries}. */

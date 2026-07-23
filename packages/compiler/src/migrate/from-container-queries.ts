@@ -28,6 +28,8 @@ import {
 } from '@liteship/compiler/parse';
 import type { MigrationResult, MigrationDiagnostic, FromContainerQueriesOptions } from './types.js';
 import { makeMigrationDiagnostic, MIGRATE_CODES } from './diagnostics.js';
+import { parseQueryLength } from './query-length.js';
+import type { QueryLengthUnit } from './types.js';
 
 // ---------------------------------------------------------------------------
 // Condition model
@@ -44,6 +46,8 @@ interface ContainerBlock {
   readonly axis: Axis;
   /** Inclusive lower bound (default `0`). Becomes the boundary threshold. */
   readonly lo: number;
+  /** Authored threshold unit; relative units stay relative. */
+  readonly unit: QueryLengthUnit;
   /** The raw condition text, for diagnostic paths. */
   readonly condition: string;
 }
@@ -52,6 +56,7 @@ interface ContainerBlock {
 interface AxisBound {
   readonly axis: Axis;
   readonly lo: number;
+  readonly unit: QueryLengthUnit;
 }
 
 // ---------------------------------------------------------------------------
@@ -59,20 +64,8 @@ interface AxisBound {
 // ---------------------------------------------------------------------------
 
 /**
- * Parse a CSS length into a pixel number. Accepts `px`, `rem` (×16), and bare
- * zero; every other unit (`em`, `%`, `vw`, …) or unitless non-zero value returns `null`, marking
- * the whole condition unsupported.
+ * Map a feature name to its axis, or `null` when it is not a width/height axis.
  */
-function parseLength(raw: string): number | null {
-  const m = /^(-?\d*\.?\d+)(px|rem)?$/.exec(raw.trim());
-  if (!m) return null;
-  const n = Number(m[1]);
-  if (!Number.isFinite(n)) return null;
-  if (m[2] === undefined && n !== 0) return null;
-  return m[2] === 'rem' ? n * 16 : n;
-}
-
-/** Map a feature name to its axis, or `null` when it is not a width/height axis. */
 function axisOfFeature(feature: string): Axis | null {
   switch (feature) {
     case 'width':
@@ -103,10 +96,12 @@ function parseFeature(inner: string): AxisBound | null {
   const colon = text.indexOf(':');
   if (colon !== -1) {
     const feature = text.slice(0, colon).trim().toLowerCase();
-    const value = parseLength(text.slice(colon + 1));
-    if (value === null) return null;
-    if (feature === 'min-width' || feature === 'min-inline-size') return { axis: 'width', lo: value };
-    if (feature === 'min-height' || feature === 'min-block-size') return { axis: 'height', lo: value };
+    const length = parseQueryLength(text.slice(colon + 1));
+    if (length === null) return null;
+    if (feature === 'min-width' || feature === 'min-inline-size')
+      return { axis: 'width', lo: length.value, unit: length.unit };
+    if (feature === 'min-height' || feature === 'min-block-size')
+      return { axis: 'height', lo: length.value, unit: length.unit };
     // Exact size queries are point predicates; a threshold state persists above
     // its lower bound and cannot represent them.
     const exact = axisOfFeature(feature);
@@ -118,9 +113,9 @@ function parseFeature(inner: string): AxisBound | null {
   const range = /^([a-z-]+)\s*(>=)\s*(.+)$/i.exec(text);
   if (range) {
     const axis = axisOfFeature(range[1]!.toLowerCase());
-    const value = parseLength(range[3]!);
-    if (!axis || value === null) return null;
-    return { axis, lo: value };
+    const length = parseQueryLength(range[3]!);
+    if (!axis || length === null) return null;
+    return { axis, lo: length.value, unit: length.unit };
   }
 
   return null;
@@ -173,16 +168,21 @@ function reduceCondition(cond: string): Omit<ContainerBlock, 'name' | 'condition
   if (connectives.length !== split.groups.length - 1 || connectives.some((word) => word !== 'and')) return null;
 
   let axis: Axis | null = null;
+  let unit: QueryLengthUnit | null = null;
   let lo = 0;
   for (const group of split.groups) {
     const bound = parseFeature(group);
     if (!bound) return null;
     if (axis === null) axis = bound.axis;
     else if (axis !== bound.axis) return null; // mixed width/height → not single-axis
+    if (bound.unit !== 'zero') {
+      if (unit === null || unit === 'zero') unit = bound.unit;
+      else if (unit !== bound.unit) return null;
+    }
     lo = Math.max(lo, bound.lo);
   }
   if (axis === null) return null;
-  return { axis, lo };
+  return { axis, lo, unit: unit ?? 'zero' };
 }
 
 // ---------------------------------------------------------------------------
@@ -288,7 +288,7 @@ function readContainerBlocks(css: string): { blocks: ContainerBlock[]; diagnosti
         ),
       );
     } else {
-      blocks.push({ name, axis: reduced.axis, lo: reduced.lo, condition });
+      blocks.push({ name, axis: reduced.axis, lo: reduced.lo, unit: reduced.unit, condition });
     }
 
     CONTAINER_MARKER.lastIndex = bodyEnd;
@@ -348,34 +348,52 @@ export function fromContainerQueries(css: string, options?: FromContainerQueries
   const diagnostics: MigrationDiagnostic[] = [...readDiagnostics];
   const boundaries: Boundary[] = [];
 
-  // Preserve first-seen group order.
-  const groups = new Map<string, ContainerBlock[]>();
+  // Preserve first-seen group order after the host maps each authored unit to
+  // the signal that measures that exact fact.
+  const groups = new Map<string, Array<{ readonly block: ContainerBlock; readonly input: string }>>();
   for (const block of blocks) {
-    const key = groupKey(block);
-    const bucket = groups.get(key);
-    if (bucket) bucket.push(block);
-    else groups.set(key, [block]);
-  }
-
-  for (const bucket of groups.values()) {
-    const first = bucket[0]!;
-    const axis = first.axis;
-    const path: (string | number)[] = first.name ? [first.name, axis] : [axis];
-    const input = options?.resolveInput?.({ ...(first.name ? { name: first.name } : {}), axis });
+    const path: (string | number)[] = block.name ? [block.name, block.axis] : [block.axis];
+    const input = options?.resolveInput?.({
+      ...(block.name ? { name: block.name } : {}),
+      axis: block.axis,
+      unit: block.unit,
+    });
     if (!input) {
       diagnostics.push(
         makeMigrationDiagnostic(
           MIGRATE_CODES.unsupportedAtRule,
-          `@container "${first.name || '(anonymous)'}" (${axis}) has no explicit LiteShip input mapping; the block was refused rather than measured against viewport.${axis}.`,
+          `@container "${block.name || '(anonymous)'}" (${block.axis}, ${block.unit}) has no explicit LiteShip input mapping; the block was refused rather than measured against the viewport.`,
           { path, severity: 'error' },
         ),
       );
       continue;
     }
+    const key = groupKey(block);
+    const bucket = groups.get(key);
+    if (bucket) bucket.push({ block, input });
+    else groups.set(key, [{ block, input }]);
+  }
+
+  for (const bucket of groups.values()) {
+    const first = bucket[0]!.block;
+    const axis = first.axis;
+    const path: (string | number)[] = first.name ? [first.name, axis] : [axis];
+    const inputs = new Set(bucket.map((entry) => entry.input));
+    if (inputs.size !== 1) {
+      diagnostics.push(
+        makeMigrationDiagnostic(
+          MIGRATE_CODES.unsupportedAtRule,
+          `@container blocks for "${first.name || '(anonymous)'}" (${axis}) resolve through multiple measured inputs (${[...inputs].join(', ')}); the group was refused rather than split into independent states.`,
+          { path, severity: 'error' },
+        ),
+      );
+      continue;
+    }
+    const input = bucket[0]!.input;
 
     // Only a strictly ascending, collision-free source chain is faithful. CSS
     // cascade order is observable, so sorting or collapsing would change it.
-    const sourceLos = bucket.map((b) => b.lo);
+    const sourceLos = bucket.map(({ block }) => block.lo);
     if (new Set(sourceLos).size !== sourceLos.length) {
       diagnostics.push(
         makeMigrationDiagnostic(
