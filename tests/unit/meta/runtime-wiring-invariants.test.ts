@@ -1,4 +1,6 @@
 import { describe, expect, test } from 'vitest';
+import { existsSync, realpathSync } from 'node:fs';
+import { isAbsolute } from 'node:path';
 
 import { integration } from '@liteship/astro';
 import { bootstrapSlots, installSwapPipeline, loadWasmRuntime } from '@liteship/astro/runtime';
@@ -8,14 +10,20 @@ import { createEdgeHostAdapter } from '@liteship/edge';
 import { runIsolatedAstroConfigSetup } from '../../helpers/astro-config-setup.js';
 
 describe('cross-package runtime wiring invariants', () => {
+  function expectOwnedAstroEntrypoint(entrypoint: string, name: 'worker' | 'wasm'): void {
+    expect(isAbsolute(entrypoint)).toBe(true);
+    expect(existsSync(entrypoint)).toBe(true);
+    const physical = realpathSync(entrypoint).replaceAll('\\', '/');
+    expect(physical).toMatch(new RegExp(`/packages/astro/(?:src|dist)/client-directives/${name}\\.(?:ts|js)$`));
+    expect(physical).not.toBe(`@liteship/astro/client-directives/${name}`);
+  }
+
   // ---------------------------------------------------------------------------
   // 1. Worker directive uses initWorkerDirective (not inline Blob URLs)
   //
-  // The Astro integration registers a worker client directive whose entrypoint
-  // is '@liteship/astro/client-directives/worker'. That module delegates to
-  // initWorkerDirective from the runtime layer. We verify the integration
-  // wires the correct entrypoint by calling the hooks and inspecting the
-  // registered directives.
+  // The Astro integration registers a package-owned absolute worker entrypoint.
+  // This lets an isolated one-install consumer resolve the transitive Astro
+  // package without requiring it to be hoisted into the application root.
   // ---------------------------------------------------------------------------
   test('worker directive is registered through the integration entrypoint', async () => {
     const astroIntegration = integration({ workers: { enabled: true } });
@@ -37,7 +45,7 @@ describe('cross-package runtime wiring invariants', () => {
 
     const workerDirective = directives.find((d) => d.name === 'worker');
     expect(workerDirective).toBeDefined();
-    expect(workerDirective!.entrypoint).toBe('@liteship/astro/client-directives/worker');
+    expectOwnedAstroEntrypoint(workerDirective!.entrypoint, 'worker');
   });
 
   // ---------------------------------------------------------------------------
@@ -65,7 +73,7 @@ describe('cross-package runtime wiring invariants', () => {
 
     const wasmDirective = directives.find((d) => d.name === 'wasm');
     expect(wasmDirective).toBeDefined();
-    expect(wasmDirective!.entrypoint).toBe('@liteship/astro/client-directives/wasm');
+    expectOwnedAstroEntrypoint(wasmDirective!.entrypoint, 'wasm');
   });
 
   // ---------------------------------------------------------------------------

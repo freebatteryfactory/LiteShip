@@ -118,6 +118,23 @@ describe('tarballFileUrl — tarball path → file:// URL round-trip', () => {
       rmSync(dir, { recursive: true, force: true });
     }
   });
+
+  it('preserves a literal short-path tilde for npm and pnpm file specs', () => {
+    const root = mkdtempSync(join(tmpdir(), 'liteship-tarball-short-path-'));
+    try {
+      const dir = join(root, 'RUNNER~1');
+      mkdirSync(dir);
+      const tarball = join(dir, 'liteship-1.0.0.tgz');
+      writeFileSync(tarball, 'x');
+
+      const url = tarballFileUrl(tarball);
+      expect(url).toContain('RUNNER~1');
+      expect(url.toUpperCase()).not.toContain('RUNNER%7E1');
+      expect(fileURLToPath(url)).toBe(tarball);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
 });
 
 describe('findConsumerDependencyRoot — the three pnpm resolution strategies', () => {

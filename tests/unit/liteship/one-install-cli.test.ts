@@ -13,7 +13,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { tarballFileUrl } from '../../../packages/cli/src/lib/package-smoke-helpers.js';
 import { spawnArgvCapture } from '../../../scripts/lib/spawn.js';
 import { runPnpm } from '../../../scripts/support/pnpm-process.js';
 import { scaledTimeout } from '../../../vitest.shared.js';
@@ -22,6 +22,7 @@ type Manager = 'npm' | 'pnpm';
 
 const ROOT = resolve(import.meta.dirname, '..', '..', '..');
 let scratch: string;
+let scratchRoot: string;
 let facadeTarball: string;
 let noBinFacadeTarball: string;
 let cliTarball: string;
@@ -50,7 +51,11 @@ async function pack(packageDir: string, destination: string): Promise<string> {
 }
 
 beforeAll(async () => {
-  scratch = mkdtempSync(join(tmpdir(), 'liteship-one-install-'));
+  scratchRoot = mkdtempSync(join(tmpdir(), 'liteship-one-install-'));
+  // Plant the Windows CI spelling that npm/pnpm must open literally. This is
+  // intentionally part of every real install below, not a string-only fixture.
+  scratch = join(scratchRoot, 'RUNNER~1');
+  mkdirSync(scratch);
   const packages = join(scratch, 'packages');
   const tarballs = join(scratch, 'tarballs');
   const cli = join(packages, 'cli');
@@ -99,17 +104,17 @@ beforeAll(async () => {
 });
 
 afterAll(() => {
-  if (scratch) rmSync(scratch, { recursive: true, force: true });
+  if (scratchRoot) rmSync(scratchRoot, { recursive: true, force: true });
 });
 
 async function prove(manager: Manager): Promise<void> {
   const consumer = join(scratch, `consumer-${manager}`);
   mkdirSync(consumer, { recursive: true });
-  const cliOverride = pathToFileURL(cliTarball).href;
+  const cliOverride = tarballFileUrl(cliTarball);
   const manifest: Record<string, unknown> = {
     name: `one-install-${manager}`,
     private: true,
-    dependencies: { liteship: pathToFileURL(facadeTarball).href },
+    dependencies: { liteship: tarballFileUrl(facadeTarball) },
   };
   if (manager === 'pnpm') manifest['pnpm'] = { overrides: { '@liteship/cli': cliOverride } };
   else manifest['overrides'] = { '@liteship/cli': cliOverride };
@@ -161,8 +166,8 @@ describe('liteship facade executable — one direct dependency', () => {
       writeJson(join(consumer, 'package.json'), {
         name: 'one-install-negative-control',
         private: true,
-        dependencies: { liteship: pathToFileURL(noBinFacadeTarball).href },
-        pnpm: { overrides: { '@liteship/cli': pathToFileURL(cliTarball).href } },
+        dependencies: { liteship: tarballFileUrl(noBinFacadeTarball) },
+        pnpm: { overrides: { '@liteship/cli': tarballFileUrl(cliTarball) } },
       });
 
       const install = await runPnpm(['install', '--prefer-offline'], {

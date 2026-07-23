@@ -13,8 +13,9 @@
  * @module
  */
 
-import { existsSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { isAbsolute, join } from 'node:path';
+import { spawnArgvCapture } from '../../scripts/lib/spawn.js';
 import {
   findFiles,
   installConsumer,
@@ -31,6 +32,55 @@ import {
 } from './harness.js';
 
 const MANAGERS: readonly ConsumerPackageManager[] = ['npm', 'pnpm'];
+
+async function proveOwnedDirectiveEntrypoints(appDir: string, manager: ConsumerPackageManager): Promise<void> {
+  const probePath = join(appDir, '.liteship-owned-entrypoints.mjs');
+  writeFileSync(
+    probePath,
+    [
+      "import { integration } from 'liteship/astro';",
+      "import { pathToFileURL } from 'node:url';",
+      'const directives = [];',
+      "const hook = integration({ workers: { enabled: true }, wasm: { enabled: true } }).hooks['astro:config:setup'];",
+      'const root = pathToFileURL(`${process.cwd()}/`);',
+      'await hook({',
+      "  command: 'build',",
+      '  config: { root, srcDir: new URL("src/", root) },',
+      '  updateConfig() {},',
+      '  addClientDirective(directive) { directives.push(directive); },',
+      '  injectScript() {},',
+      '  logger: { info() {} },',
+      '});',
+      "process.stdout.write(JSON.stringify(directives.filter(({ name }) => name === 'worker' || name === 'wasm')));",
+      '',
+    ].join('\n'),
+  );
+
+  const probe = await spawnArgvCapture(process.execPath, [probePath], { cwd: appDir });
+  journeyAssert(
+    probe.exitCode === 0,
+    `${manager} owned-entrypoint probe failed (exit ${probe.exitCode}):\n${(probe.stderr || probe.stdout).slice(-1200)}`,
+  );
+  const directives = JSON.parse(probe.stdout) as readonly { readonly name: string; readonly entrypoint: string }[];
+  for (const name of ['worker', 'wasm'] as const) {
+    const entrypoint = directives.find((entry) => entry.name === name)?.entrypoint;
+    journeyAssert(typeof entrypoint === 'string', `${manager} registered no ${name} directive`);
+    journeyAssert(
+      isAbsolute(entrypoint!),
+      `${manager} ${name} directive is not package-owned absolute path: ${entrypoint}`,
+    );
+    journeyAssert(existsSync(entrypoint!), `${manager} ${name} directive entrypoint does not exist: ${entrypoint}`);
+    const normalized = entrypoint!.replaceAll('\\', '/');
+    journeyAssert(
+      normalized.includes('/node_modules/@liteship/astro/dist/client-directives/'),
+      `${manager} ${name} directive escaped the packed Astro owner: ${entrypoint}`,
+    );
+    journeyAssert(
+      normalized.endsWith(`/client-directives/${name}.js`),
+      `${manager} ${name} directive did not resolve to packed dist/${name}.js: ${entrypoint}`,
+    );
+  }
+}
 
 async function proveManager(manager: ConsumerPackageManager, packed: PackedWorkspace): Promise<number> {
   const appDir = scaffoldConsumer();
@@ -63,6 +113,8 @@ async function proveManager(manager: ConsumerPackageManager, packed: PackedWorks
       existsSync(join(binDir, 'liteship')) || existsSync(join(binDir, 'liteship.cmd')),
       `${manager} one-install did not link the facade-owned liteship executable`,
     );
+
+    await proveOwnedDirectiveEntrypoints(appDir, manager);
 
     const check = await runConsumerScript('check', appDir, manager);
     journeyAssert(
