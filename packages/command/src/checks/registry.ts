@@ -14,8 +14,7 @@
  * @module
  */
 
-import type { CheckAuthority, CheckDefinition, CheckProfile, CheckPlatform } from './definition.js';
-import { InvariantViolationError } from '@liteship/error';
+import type { CheckDefinition, CheckProfile, CheckPlatform } from './definition.js';
 
 /** Package TypeScript source — the covered bytes of every source-reading check. */
 const SRC_GLOB = 'packages/*/src/**/*.ts';
@@ -26,8 +25,8 @@ const TESTS_GLOB = 'tests/**';
 /** Repo scripts — the covered bytes of the script-owned gates. */
 const SCRIPTS_GLOB = 'scripts/**/*.ts';
 
-/** A repository row before the one shared repository context is projected onto it. */
-interface RepositoryCheckRow {
+/** Fields shared by repository rows before the repository context is projected. */
+interface RepositoryCheckRowBase {
   readonly id: string;
   readonly title: string;
   readonly claim: string;
@@ -38,8 +37,6 @@ interface RepositoryCheckRow {
   readonly platforms: readonly CheckPlatform[];
   readonly timeoutMs: number;
   readonly cache: 'content-addressed' | 'none';
-  readonly authority: CheckAuthority;
-  readonly negativeControl?: string;
   readonly remediation: string;
 }
 
@@ -49,7 +46,7 @@ interface RepositoryCheckRow {
  * asserts a non-zero/red result for every id listed here.
  */
 const EXECUTED_CONTROL = 'tests/unit/devops/blocking-check-negative-controls.test.ts';
-const EXECUTED_CONTROL_IDS = new Set<string>([
+const _EXECUTED_CONTROL_IDS = [
   'check/format',
   'check/lint-structural',
   'check/lint',
@@ -74,15 +71,38 @@ const EXECUTED_CONTROL_IDS = new Set<string>([
   'check/package-smoke',
   'check/journey',
   'check/hermetic',
-] as const);
+] as const;
+
+type ExecutedControlId = (typeof _EXECUTED_CONTROL_IDS)[number];
+
+/**
+ * A repository row is statically unrepresentable as a blocker without either
+ * its own negative control or membership in the shared executed-control suite.
+ * Keeping this law in the type removes the check registry's former runtime
+ * dependency on built `@liteship/error` artifacts, so the CI plan can project
+ * the registry before any package build exists.
+ */
+type RepositoryCheckRow = RepositoryCheckRowBase &
+  (
+    | {
+        readonly authority: 'blocking';
+        readonly id: ExecutedControlId;
+        readonly negativeControl?: string;
+      }
+    | {
+        readonly authority: 'blocking';
+        readonly negativeControl: string;
+      }
+    | {
+        readonly authority: 'advisory';
+        readonly negativeControl?: never;
+      }
+  );
 
 /** Add the explicit repository context and close any former control hole. */
 function materializeRepositoryCheck(row: RepositoryCheckRow): CheckDefinition {
   if (row.authority === 'blocking') {
-    const negativeControl = row.negativeControl ?? (EXECUTED_CONTROL_IDS.has(row.id) ? EXECUTED_CONTROL : undefined);
-    if (negativeControl === undefined) {
-      throw InvariantViolationError('check-negative-control', `Blocking check ${row.id} has no negative control`);
-    }
+    const negativeControl = row.negativeControl ?? EXECUTED_CONTROL;
     return { ...row, contexts: ['repository'], authority: 'blocking', negativeControl };
   }
   const { negativeControl: _unused, ...advisory } = row;

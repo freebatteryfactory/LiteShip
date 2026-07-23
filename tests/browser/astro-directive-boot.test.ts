@@ -73,6 +73,7 @@ describe('directive boot scanner', () => {
     delete (window as Window & { __LITESHIP_SWAP_PIPELINE__?: boolean }).__LITESHIP_SWAP_PIPELINE__;
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
+    Diagnostics.reset();
     document.body.innerHTML = '';
   });
 
@@ -107,7 +108,9 @@ describe('directive boot scanner', () => {
 
   test('two liteship directives on one element warn about the collision (the client:gpu + adaptive trap)', async () => {
     vi.stubGlobal('innerWidth', 500);
-    const warnSpy = vi.spyOn(Diagnostics, 'warnOnce');
+    const { sink, events } = Diagnostics.createBufferSink();
+    Diagnostics.clearOnce();
+    Diagnostics.setSink(sink);
     // One element carrying BOTH an adaptive marker and a legacy client:gpu
     // attribute -- exactly the canvas that booted an adaptive and never started
     // its GPU shader, with no warning.
@@ -121,7 +124,9 @@ describe('directive boot scanner', () => {
 
     // adaptive (scanned first) claims the element; gpu then sees it already
     // bound and warns instead of silently fighting over the node.
-    expect(warnSpy).toHaveBeenCalledWith(expect.objectContaining({ code: 'directive-collision:adaptive+gpu' }));
+    const collisions = events.filter((event) => event.code === 'astro/directive-boot/directive-collision');
+    expect(collisions).toHaveLength(1);
+    expect(collisions[0]?.detail).toEqual({ conflicting: ['adaptive', 'gpu'] });
     expect(el.getAttribute('data-liteship-directive-bound')).toContain('adaptive');
   });
 

@@ -109,6 +109,9 @@ export interface AdaptiveQuantizerLowering {
 // Spec
 // ---------------------------------------------------------------------------
 
+type AdaptiveBoundarySpec = Parameters<typeof defineBoundary>[0];
+type AdaptiveStates<B extends AdaptiveBoundarySpec> = B['at'][number][1] & string;
+
 /**
  * The authored intent of an adaptive: exactly the five sibling constructor
  * configs, one field each. `lowerAdaptive` feeds each field to its constructor
@@ -118,9 +121,6 @@ export interface AdaptiveQuantizerLowering {
  * `theme` to {@link defineTheme}. Nothing here is re-shaped, so the lowering is a
  * pure delegation.
  */
-type AdaptiveBoundarySpec = Parameters<typeof defineBoundary>[0];
-type AdaptiveStates<B extends AdaptiveBoundarySpec> = B['at'][number][1] & string;
-
 export interface AdaptiveSpec<B extends AdaptiveBoundarySpec = AdaptiveBoundarySpec> {
   /** {@link defineBoundary} config — the constraint the adaptive tracks. */
   readonly boundary: B;
@@ -353,10 +353,8 @@ export function lowerAdaptive<const B extends AdaptiveBoundarySpec>(
   // The generated boundary is authoritative. A JavaScript caller can still
   // smuggle a `boundary` key through the type-level Omit, so splice it LAST.
   const style = defineStyle({ ...spec.style, boundary });
-  const quantizer =
-    spec.quantize !== undefined ? lowering.defineQuantizer(boundary, spec.quantize) : undefined;
-  const tokens =
-    spec.tokens !== undefined ? Object.freeze(spec.tokens.map((t) => defineToken(t))) : undefined;
+  const quantizer = spec.quantize !== undefined ? lowering.defineQuantizer(boundary, spec.quantize) : undefined;
+  const tokens = spec.tokens !== undefined ? Object.freeze(spec.tokens.map((t) => defineToken(t))) : undefined;
   const theme = spec.theme !== undefined ? defineTheme(spec.theme) : undefined;
   const tier: CapTier = spec.tier ?? 'styled';
 
@@ -393,13 +391,9 @@ export function lowerAdaptive<const B extends AdaptiveBoundarySpec>(
       })),
     );
 
-    let quantized:
-      | Partial<Record<QualityTierTarget, { readonly state: string; readonly value: unknown }>>
-      | undefined;
+    let quantized: Partial<Record<QualityTierTarget, { readonly state: string; readonly value: unknown }>> | undefined;
     const admittedTargets =
-      quantizer === undefined
-        ? tierTargets(tier)
-        : lowering.resolveQuantizerTargets(quantizer.tier, quantizer.force);
+      quantizer === undefined ? tierTargets(tier) : lowering.resolveQuantizerTargets(quantizer.tier, quantizer.force);
     if (quantizer !== undefined) {
       quantized = {};
       const outputs = quantizer.outputs as Readonly<
