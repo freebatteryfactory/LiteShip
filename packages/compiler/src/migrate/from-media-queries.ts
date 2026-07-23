@@ -33,7 +33,7 @@
 import { defineBoundary, defineTheme, sourceToInput, VIEWPORT } from '@liteship/core';
 import type { Boundary, Token, Theme } from '@liteship/core';
 import { hasTag } from '@liteship/error';
-import { blankCssCommentsAndStrings } from '@liteship/compiler/parse';
+import { blankCssCommentsAndStrings, cssCommentParsingView } from '@liteship/compiler/parse';
 import {
   serializeCSSDeclarationValue,
   splitCSSSelectorList,
@@ -94,6 +94,8 @@ const MUTUALLY_EXCLUSIVE_DISCRETE_FEATURES: ReadonlySet<string> = new Set([
 /** `viewport.width` breakpoint features and their axis. */
 const WIDTH_FEATURES: ReadonlySet<string> = new Set(['min-width', 'max-width', 'width']);
 const HEIGHT_FEATURES: ReadonlySet<string> = new Set(['min-height', 'max-height', 'height']);
+/** Standard or custom media-feature identifier accepted by this parser. */
+const MEDIA_FEATURE_NAME = /^(?:[a-z][a-z0-9-]*|--[a-z0-9-]+)$/;
 
 // ---------------------------------------------------------------------------
 // Low-level parsing helpers (NEW: no importable inverse of the private emit fns)
@@ -146,7 +148,7 @@ function parseFeatures(prelude: string): ParsedFeature[] {
  * foreign text, and unbalanced groups are refused atomically.
  */
 function hasValidPositiveFeatureSequence(prelude: string): boolean {
-  const source = blankCssCommentsAndStrings(prelude).trim();
+  const source = prelude.trim();
   let offset = 0;
   const neutral = /^(?:(?:only\s+)?all\s+and)\b/i.exec(source);
   if (neutral) offset = neutral[0].length;
@@ -451,18 +453,20 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
     return input;
   };
 
-  const processMedia = (prelude: string, bodyStart: number, bodyEnd: number): void => {
+  const processMedia = (rawPrelude: string, bodyStart: number, bodyEnd: number): void => {
+    const parsedPrelude = cssCommentParsingView(rawPrelude).parsed;
+    const diagnosticPrelude = rawPrelude.trim();
     // not / or / a comma query-list separator change the query's boolean meaning
     // (`not (prefers-color-scheme: dark)` is the NEGATION). A flat positive
     // feature fold cannot preserve that, so reject the whole block rather than
     // silently inverting its semantics or over-collecting its overrides.
-    const connective = preludeConnective(prelude);
+    const connective = preludeConnective(parsedPrelude);
     if (/\bnot\b/.test(connective) || /\bor\b/.test(connective) || connective.includes(',')) {
       diagnostics.push(
         makeMigrationDiagnostic(
           MIGRATE_CODES.unsupportedAtRule,
-          `@media "${prelude.trim()}" uses boolean logic (not/or/comma) that a positive feature lowering cannot preserve; skipped rather than silently inverted.`,
-          { path: ['@media', prelude.trim()], severity: 'error' },
+          `@media "${diagnosticPrelude}" uses boolean logic (not/or/comma) that a positive feature lowering cannot preserve; skipped rather than silently inverted.`,
+          { path: ['@media', diagnosticPrelude], severity: 'error' },
         ),
       );
       return;
@@ -473,37 +477,37 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
       diagnostics.push(
         makeMigrationDiagnostic(
           MIGRATE_CODES.unsupportedAtRule,
-          `@media "${prelude.trim()}" is restricted to media type ${mediaTypes
+          `@media "${diagnosticPrelude}" is restricted to media type ${mediaTypes
             .map((type) => `"${type}"`)
             .join(
               ', ',
             )}; LiteShip boundaries do not carry media-type identity, so the block was skipped rather than widened to every runtime surface.`,
-          { path: ['@media', prelude.trim()], severity: 'error' },
+          { path: ['@media', diagnosticPrelude], severity: 'error' },
         ),
       );
       return;
     }
 
-    if (!hasValidPositiveFeatureSequence(prelude)) {
+    if (!hasValidPositiveFeatureSequence(parsedPrelude)) {
       diagnostics.push(
         makeMigrationDiagnostic(
           MIGRATE_CODES.unsupportedAtRule,
-          `@media "${prelude.trim()}" is outside the supported feature (and feature)* grammar; the complete block was refused.`,
-          { path: ['@media', prelude.trim()], severity: 'error' },
+          `@media "${diagnosticPrelude}" is outside the supported feature (and feature)* grammar; the complete block was refused.`,
+          { path: ['@media', diagnosticPrelude], severity: 'error' },
         ),
       );
       return;
     }
 
-    const feats = parseFeatures(prelude);
-    if (feats.length === 0 || feats.some((feature) => feature.feature === '')) {
+    const feats = parseFeatures(parsedPrelude);
+    if (feats.length === 0 || feats.some((feature) => !MEDIA_FEATURE_NAME.test(feature.feature))) {
       // Bare media-type query (`@media screen`, `@media print`) — no condition
       // to lower onto a boundary.
       diagnostics.push(
         makeMigrationDiagnostic(
           MIGRATE_CODES.unsupportedAtRule,
-          `@media "${prelude.trim()}" has no lowerable feature condition; skipped.`,
-          { path: ['@media', prelude.trim()], severity: 'error' },
+          `@media "${diagnosticPrelude}" has no valid lowerable feature condition; skipped.`,
+          { path: ['@media', diagnosticPrelude], severity: 'error' },
         ),
       );
       return;
@@ -527,10 +531,10 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
       diagnostics.push(
         makeMigrationDiagnostic(
           MIGRATE_CODES.unsupportedAtRule,
-          `@media "${prelude.trim()}" requires mutually exclusive values of "${feature}" (${[...values].join(
+          `@media "${diagnosticPrelude}" requires mutually exclusive values of "${feature}" (${[...values].join(
             ', ',
           )}); the unsatisfiable block emitted no definitions.`,
-          { path: ['@media', prelude.trim(), feature], severity: 'error' },
+          { path: ['@media', diagnosticPrelude, feature], severity: 'error' },
         ),
       );
       return;
@@ -549,7 +553,7 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
           makeMigrationDiagnostic(
             MIGRATE_CODES.unmappableMediaFeature,
             `Media feature "${f}" value "${feat.value ?? ''}" is not a supported CSS length; the complete block was refused.`,
-            { path: ['@media', prelude.trim(), f], severity: 'error' },
+            { path: ['@media', diagnosticPrelude, f], severity: 'error' },
           ),
         );
         return;
@@ -559,7 +563,7 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
           makeMigrationDiagnostic(
             MIGRATE_CODES.unsupportedAtRule,
             `Media feature "${f}: ${feat.value ?? ''}" is a finite-upper or exact predicate that an unbounded LiteShip threshold cannot preserve; the complete block was refused.`,
-            { path: ['@media', prelude.trim(), f], severity: 'error' },
+            { path: ['@media', diagnosticPrelude, f], severity: 'error' },
           ),
         );
         return;
@@ -574,7 +578,7 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
           makeMigrationDiagnostic(
             MIGRATE_CODES.unmappableMediaFeature,
             `Media feature "${f}: ${feat.value ?? ''}" uses ${length.unit}, but no host input measured in that unit was provided; the complete block was refused.`,
-            { path: ['@media', prelude.trim(), f], severity: 'error' },
+            { path: ['@media', diagnosticPrelude, f], severity: 'error' },
           ),
         );
         return;
@@ -584,8 +588,8 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
         diagnostics.push(
           makeMigrationDiagnostic(
             MIGRATE_CODES.unsupportedAtRule,
-            `@media "${prelude.trim()}" compares one ${axis} axis through multiple host inputs; the complete block was refused.`,
-            { path: ['@media', prelude.trim(), axis], severity: 'error' },
+            `@media "${diagnosticPrelude}" compares one ${axis} axis through multiple host inputs; the complete block was refused.`,
+            { path: ['@media', diagnosticPrelude, axis], severity: 'error' },
           ),
         );
         return;
@@ -647,10 +651,10 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
       diagnostics.push(
         makeMigrationDiagnostic(
           MIGRATE_CODES.unsupportedAtRule,
-          `@media "${prelude.trim()}" conjoins ${targets.size} independent targets with "and" (${[...targets].join(
+          `@media "${diagnosticPrelude}" conjoins ${targets.size} independent targets with "and" (${[...targets].join(
             ', ',
           )}); no independent definitions were emitted because that would lose the conjunction.`,
-          { path: ['@media', prelude.trim()], severity: 'error' },
+          { path: ['@media', diagnosticPrelude], severity: 'error' },
         ),
       );
       return;

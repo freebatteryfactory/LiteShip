@@ -23,6 +23,7 @@ import { hasTag } from '@liteship/error';
 import {
   normalizeCssLineEndings,
   blankCssCommentsAndStrings,
+  cssCommentParsingView,
   braceDepthDelta,
   skipSegment,
 } from '@liteship/compiler/parse';
@@ -232,14 +233,17 @@ function readContainerBlocks(css: string): { blocks: ContainerBlock[]; diagnosti
     const braceIdx = blanked.indexOf('{', CONTAINER_MARKER.lastIndex);
     if (braceIdx === -1) break;
 
-    const prelude = normalized.slice(CONTAINER_MARKER.lastIndex, braceIdx).trim();
+    const preludeView = cssCommentParsingView(normalized.slice(CONTAINER_MARKER.lastIndex, braceIdx));
+    const rawPrelude = preludeView.raw.trim();
+    const parsedPrelude = preludeView.parsed;
     const bodyEnd = skipSegment(normalized, braceIdx); // consume the balanced body
     const bodyContainsNestedContainer = /@container(?![a-zA-Z0-9_-])/i.test(blanked.slice(braceIdx + 1, bodyEnd));
 
     // Split an optional leading container name off the parenthesized condition.
-    const parenAt = prelude.indexOf('(');
-    const nameText = (parenAt === -1 ? prelude : prelude.slice(0, parenAt)).trim();
-    const condition = parenAt === -1 ? '' : prelude.slice(parenAt);
+    const parenAt = parsedPrelude.indexOf('(');
+    const nameText = (parenAt === -1 ? parsedPrelude : parsedPrelude.slice(0, parenAt)).trim();
+    const parsedCondition = parenAt === -1 ? '' : parsedPrelude.slice(parenAt);
+    const rawCondition = parenAt === -1 ? '' : preludeView.raw.slice(parenAt).trim();
 
     let name = '';
     if (nameText !== '') {
@@ -253,8 +257,8 @@ function readContainerBlocks(css: string): { blocks: ContainerBlock[]; diagnosti
         diagnostics.push(
           makeMigrationDiagnostic(
             MIGRATE_CODES.unsupportedAtRule,
-            `@container prelude "${prelude}" is not a single-axis width/height range and was dropped.`,
-            { path: [prelude], severity: 'error' },
+            `@container prelude "${rawPrelude}" is not a single-axis width/height range and was dropped.`,
+            { path: [rawPrelude], severity: 'error' },
           ),
         );
         CONTAINER_MARKER.lastIndex = bodyEnd;
@@ -269,7 +273,7 @@ function readContainerBlocks(css: string): { blocks: ContainerBlock[]; diagnosti
         makeMigrationDiagnostic(
           MIGRATE_CODES.unsupportedAtRule,
           `@container "${name || '(anonymous)'}" contains a nested @container rule; nested query semantics were refused atomically.`,
-          { path: name ? [name, condition] : [condition || prelude], severity: 'error' },
+          { path: name ? [name, rawCondition] : [rawCondition || rawPrelude], severity: 'error' },
         ),
       );
       CONTAINER_MARKER.lastIndex = bodyEnd;
@@ -278,17 +282,17 @@ function readContainerBlocks(css: string): { blocks: ContainerBlock[]; diagnosti
       continue;
     }
 
-    const reduced = condition === '' ? null : reduceCondition(condition);
+    const reduced = parsedCondition.trim() === '' ? null : reduceCondition(parsedCondition);
     if (!reduced) {
       diagnostics.push(
         makeMigrationDiagnostic(
           MIGRATE_CODES.unsupportedAtRule,
-          `@container condition "${condition || '(empty)'}" is not a single-axis width/height range and was dropped.`,
-          { path: name ? [name, condition] : [condition || prelude], severity: 'error' },
+          `@container condition "${rawCondition || '(empty)'}" is not a single-axis width/height range and was dropped.`,
+          { path: name ? [name, rawCondition] : [rawCondition || rawPrelude], severity: 'error' },
         ),
       );
     } else {
-      blocks.push({ name, axis: reduced.axis, lo: reduced.lo, unit: reduced.unit, condition });
+      blocks.push({ name, axis: reduced.axis, lo: reduced.lo, unit: reduced.unit, condition: rawCondition });
     }
 
     CONTAINER_MARKER.lastIndex = bodyEnd;
@@ -348,52 +352,52 @@ export function fromContainerQueries(css: string, options?: FromContainerQueries
   const diagnostics: MigrationDiagnostic[] = [...readDiagnostics];
   const boundaries: Boundary[] = [];
 
-  // Preserve first-seen group order after the host maps each authored unit to
-  // the signal that measures that exact fact.
-  const groups = new Map<string, Array<{ readonly block: ContainerBlock; readonly input: string }>>();
+  // Preserve first-seen source-container/axis order. Unit compatibility is a
+  // property of the complete state chain, so choose one effective unit before
+  // asking the host for its one matching signal.
+  const groups = new Map<string, ContainerBlock[]>();
   for (const block of blocks) {
-    const path: (string | number)[] = block.name ? [block.name, block.axis] : [block.axis];
+    const key = groupKey(block);
+    const bucket = groups.get(key);
+    if (bucket) bucket.push(block);
+    else groups.set(key, [block]);
+  }
+
+  for (const bucket of groups.values()) {
+    const first = bucket[0]!;
+    const axis = first.axis;
+    const path: (string | number)[] = first.name ? [first.name, axis] : [axis];
+    const nonzeroUnits = new Set(bucket.flatMap((block) => (block.unit === 'zero' ? [] : [block.unit])));
+    if (nonzeroUnits.size > 1) {
+      diagnostics.push(
+        makeMigrationDiagnostic(
+          MIGRATE_CODES.unsupportedAtRule,
+          `@container blocks for "${first.name || '(anonymous)'}" (${axis}) mix incompatible authored units (${[...nonzeroUnits].join(', ')}); the complete state chain was refused before input resolution.`,
+          { path, severity: 'error' },
+        ),
+      );
+      continue;
+    }
+    const effectiveUnit = nonzeroUnits.values().next().value ?? 'zero';
     const input = options?.resolveInput?.({
-      ...(block.name ? { name: block.name } : {}),
-      axis: block.axis,
-      unit: block.unit,
+      ...(first.name ? { name: first.name } : {}),
+      axis,
+      unit: effectiveUnit,
     });
     if (!input) {
       diagnostics.push(
         makeMigrationDiagnostic(
           MIGRATE_CODES.unsupportedAtRule,
-          `@container "${block.name || '(anonymous)'}" (${block.axis}, ${block.unit}) has no explicit LiteShip input mapping; the block was refused rather than measured against the viewport.`,
+          `@container "${first.name || '(anonymous)'}" (${axis}, ${effectiveUnit}) has no explicit LiteShip input mapping; the complete state chain was refused rather than measured against the viewport.`,
           { path, severity: 'error' },
         ),
       );
       continue;
     }
-    const key = groupKey(block);
-    const bucket = groups.get(key);
-    if (bucket) bucket.push({ block, input });
-    else groups.set(key, [{ block, input }]);
-  }
-
-  for (const bucket of groups.values()) {
-    const first = bucket[0]!.block;
-    const axis = first.axis;
-    const path: (string | number)[] = first.name ? [first.name, axis] : [axis];
-    const inputs = new Set(bucket.map((entry) => entry.input));
-    if (inputs.size !== 1) {
-      diagnostics.push(
-        makeMigrationDiagnostic(
-          MIGRATE_CODES.unsupportedAtRule,
-          `@container blocks for "${first.name || '(anonymous)'}" (${axis}) resolve through multiple measured inputs (${[...inputs].join(', ')}); the group was refused rather than split into independent states.`,
-          { path, severity: 'error' },
-        ),
-      );
-      continue;
-    }
-    const input = bucket[0]!.input;
 
     // Only a strictly ascending, collision-free source chain is faithful. CSS
     // cascade order is observable, so sorting or collapsing would change it.
-    const sourceLos = bucket.map(({ block }) => block.lo);
+    const sourceLos = bucket.map((block) => block.lo);
     if (new Set(sourceLos).size !== sourceLos.length) {
       diagnostics.push(
         makeMigrationDiagnostic(

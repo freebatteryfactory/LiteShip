@@ -142,4 +142,32 @@ describe('breakpoint migration — relative-unit and connective refusal properti
       { seed: 0x5eed_1424, numRuns: 100 },
     );
   });
+
+  test('comment words never become media operators and mixed container units never collapse', () => {
+    fc.assert(
+      fc.property(
+        fc.integer({ min: 1, max: 2000 }),
+        fc.integer({ min: 1, max: 2000 }),
+        fc.constantFrom('or', 'not', 'print', 'only', 'screen'),
+        (left, right, commentWord) => {
+          const media = fromMediaQueries(
+            `@media (min-width: ${left}px) /* ${commentWord} */ and (min-width: ${right}px) { .x {} }`,
+          );
+          expect(media.diagnostics).toEqual([]);
+          expect([...media.boundaries[0]!.thresholds]).toEqual([0, Math.max(left, right)]);
+
+          const container = fromContainerQueries(
+            `
+              @container card (min-width: ${left}px) { .x {} }
+              @container card (min-width: ${right}em) { .x {} }
+            `,
+            { resolveInput: () => 'custom:container.card.width' },
+          );
+          expect(container.boundaries).toEqual([]);
+          expect(container.diagnostics.some((diagnostic) => diagnostic.severity === 'error')).toBe(true);
+        },
+      ),
+      { seed: 0x5eed_1425, numRuns: 100 },
+    );
+  });
 });

@@ -86,20 +86,58 @@ describe('fromContainerQueries — explicit input ownership', () => {
     expect(result.boundaries.every((boundary) => boundary.thresholds[1] === 40)).toBe(true);
   });
 
-  it('refuses one container state chain when its authored units resolve to different signals', () => {
+  it('refuses one container state chain before resolving mixed nonzero units', () => {
+    const requests: unknown[] = [];
     const result = fromContainerQueries(
       `
       @container sidebar (min-width: 400px) { .x {} }
       @container sidebar (min-width: 40em) { .y {} }
     `,
       {
-        resolveInput: ({ name, axis, unit }) => `custom:container.${name}.${axis}.${unit}`,
+        resolveInput: (request) => {
+          requests.push(request);
+          return 'custom:container.sidebar.width';
+        },
       },
     );
+    expect(requests).toEqual([]);
     expect(result.boundaries).toEqual([]);
     expect(result.diagnostics).toContainEqual(
       expect.objectContaining({ code: MIGRATE_CODES.unsupportedAtRule, severity: 'error' }),
     );
+  });
+
+  it.each([
+    {
+      unit: 'em' as const,
+      css: `
+        @container sidebar (min-width: 0) { .x {} }
+        @container sidebar (min-width: 40em) { .x {} }
+        @container sidebar (min-width: 60em) { .x {} }
+      `,
+      thresholds: [0, 40, 60],
+    },
+    {
+      unit: 'px' as const,
+      css: `
+        @container sidebar (min-width: 0) { .x {} }
+        @container sidebar (min-width: 400px) { .x {} }
+        @container sidebar (min-width: 800px) { .x {} }
+      `,
+      thresholds: [0, 400, 800],
+    },
+  ])('treats unitless zero as neutral in a $unit state chain', ({ unit, css, thresholds }) => {
+    const requests: unknown[] = [];
+    const result = fromContainerQueries(css, {
+      resolveInput: (request) => {
+        requests.push(request);
+        return `custom:container.sidebar.width.${request.unit}`;
+      },
+    });
+
+    expect(requests).toEqual([{ name: 'sidebar', axis: 'width', unit }]);
+    expect(result.diagnostics).toEqual([]);
+    expect([...result.boundaries[0]!.thresholds]).toEqual(thresholds);
   });
 
   it('refuses every container group when the host supplies no mapping', () => {
@@ -257,6 +295,27 @@ describe('fromContainerQueries — refusal and diagnostic teeth', () => {
     `);
     expect(result.diagnostics).toEqual([]);
     expect([...result.boundaries[0]!.thresholds]).toEqual([0, 300]);
+  });
+
+  it('uses one comment-normalized prelude for container names, conditions, and lengths', () => {
+    const named = migrate(`@container card /* note */ (min-width: 400px) { .x {} }`);
+    const anonymous = migrate(`@container /* note */ (min-width: 400px) { .x {} }`);
+    const value = migrate(`@container card (min-width: /* note */ 400px) { .x {} }`);
+
+    expect(named.diagnostics).toEqual([]);
+    expect(named.boundaries[0]!.input).toBe('custom:container.card.width');
+    expect(anonymous.diagnostics).toEqual([]);
+    expect(anonymous.boundaries[0]!.input).toBe('custom:container.nearest.width');
+    expect(value.diagnostics).toEqual([]);
+    expect([...value.boundaries[0]!.thresholds]).toEqual([0, 400]);
+  });
+
+  it('does not concatenate a container name across a comment', () => {
+    const result = migrate(`@container ca/* note */rd (min-width: 400px) { .x {} }`);
+    expect(result.boundaries).toEqual([]);
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({ code: MIGRATE_CODES.unsupportedAtRule, severity: 'error' }),
+    );
   });
 });
 

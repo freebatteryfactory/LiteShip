@@ -16,8 +16,23 @@
 import { describe, it, expect } from 'vitest';
 import fc from 'fast-check';
 import { Boundary } from '@liteship/core';
+import { cssCommentParsingView } from '@liteship/compiler/parse';
 import { fromMediaQueries } from '@liteship/compiler/migrate';
 import { MIGRATE_CODES } from '@liteship/compiler/migrate';
+
+describe('CSS comment parsing view', () => {
+  it('preserves strings, newlines, and offsets while replacing comments with whitespace', () => {
+    const source = '/* or print */ "/* stays */"\n(min-width: 500px)';
+    const view = cssCommentParsingView(source);
+
+    expect(view.raw).toBe(source);
+    expect(view.parsed).toHaveLength(source.length);
+    expect(view.parsed).toContain('"/* stays */"');
+    expect(view.parsed.indexOf('\n')).toBe(source.indexOf('\n'));
+    expect(view.parsed.slice(source.indexOf('('))).toBe('(min-width: 500px)');
+    expect(view.parsed.slice(0, source.indexOf('"'))).not.toMatch(/or|print/);
+  });
+});
 
 describe('fromMediaQueries — clean lossless case', () => {
   it('folds ascending min-width blocks into one viewport.width boundary with no diagnostics', () => {
@@ -423,6 +438,34 @@ describe('fromMediaQueries — conjunction grammar', () => {
     );
     expect(result.diagnostics).toEqual([]);
     expect([...result.boundaries[0]!.thresholds]).toEqual([0, 700]);
+  });
+
+  it('uses one comment-normalized prelude for grammar, media types, features, and lengths', () => {
+    const cases = [
+      '@media /* note */ (min-width: 500px) { .x {} }',
+      '@media (min-width: /* note */ 500px) { .x {} }',
+      '@media (min-width: 500px) /* note */ and (min-width: 700px) { .x {} }',
+      '@media (min-width: 500px) /* or not print */ and (min-width: 700px) { .x {} }',
+    ];
+
+    expect(cases.map((css) => fromMediaQueries(css).diagnostics)).toEqual([[], [], [], []]);
+    expect(cases.map((css) => [...fromMediaQueries(css).boundaries[0]!.thresholds])).toEqual([
+      [0, 500],
+      [0, 500],
+      [0, 700],
+      [0, 700],
+    ]);
+  });
+
+  it('treats comments as whitespace instead of concatenating feature or dimension fragments', () => {
+    for (const css of [
+      '@media (min-wi/* note */dth: 500px) { .x {} }',
+      '@media (min-width: 5/* note */00px) { .x {} }',
+    ]) {
+      const result = fromMediaQueries(css);
+      expect(result.boundaries).toEqual([]);
+      expect(result.diagnostics).toContainEqual(expect.objectContaining({ severity: 'error' }));
+    }
   });
 });
 

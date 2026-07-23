@@ -14,6 +14,56 @@
 
 import { parseCSSDeclarationValue, serializeCSSDeclarationValue, type CSSDeclarationValue } from './css-cascade.js';
 
+/** Raw CSS plus the offset-identical view used for structural parsing. */
+export interface CSSCommentParsingView {
+  /** Authored text, retained for diagnostics and source slices only. */
+  readonly raw: string;
+  /** Block comments replaced by whitespace; strings and offsets are preserved. */
+  readonly parsed: string;
+}
+
+/**
+ * Build the one parsing view for a CSS prelude.
+ *
+ * CSS comments are whitespace, including comments between identifier or
+ * dimension fragments. Quoted strings stay byte-for-byte intact, and every
+ * comment byte becomes either a space or its original newline so source
+ * offsets and line numbers remain stable. Consumers parse `parsed` and retain
+ * `raw` only for diagnostics; mixing the two recreates the comment drift this
+ * helper exists to prevent.
+ */
+export function cssCommentParsingView(raw: string): CSSCommentParsingView {
+  const out = raw.split('');
+  let quote: '"' | "'" | null = null;
+  let escaped = false;
+
+  for (let i = 0; i < raw.length; i++) {
+    const ch = raw[i]!;
+    if (quote !== null) {
+      if (escaped) escaped = false;
+      else if (ch === '\\') escaped = true;
+      else if (ch === quote) quote = null;
+      continue;
+    }
+
+    if (ch === '"' || ch === "'") {
+      quote = ch;
+      continue;
+    }
+
+    if (ch !== '/' || raw[i + 1] !== '*') continue;
+    const start = i;
+    i += 2;
+    while (i < raw.length - 1 && !(raw[i] === '*' && raw[i + 1] === '/')) i++;
+    i = Math.min(i + 1, raw.length - 1);
+    for (let cursor = start; cursor <= i; cursor++) {
+      if (raw[cursor] !== '\n' && raw[cursor] !== '\r') out[cursor] = ' ';
+    }
+  }
+
+  return { raw, parsed: out.join('') };
+}
+
 /**
  * Blank out block comments, quoted-string contents, and unquoted
  * `url(...)` contents while preserving every newline AND every

@@ -10,6 +10,7 @@
 
 export {
   blankCssCommentsAndStrings,
+  cssCommentParsingView,
   parseFlatDeclarations,
   cssPrologueEnd,
   skipWsAndComments,
@@ -17,4 +18,5 @@ export {
   braceDepthDelta,
   lineOfOffset,
 } from './css-scan.js';
+export type { CSSCommentParsingView } from './css-scan.js';
 export { normalizeCssLineEndings } from './normalize-css-eol.js';
