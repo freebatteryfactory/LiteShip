@@ -7,10 +7,10 @@
  * `explain`/`attrs`/`plan` projections read straight off those members.
  */
 import { describe, expect, test } from 'vitest';
-import { defineBoundary, defineStyle, defineToken, defineTheme } from '@liteship/core';
+import { defineBoundary, defineStyle, defineToken, defineTheme, type Token } from '@liteship/core';
 import { defineAdaptive } from '../../../../packages/liteship/src/index.js';
 import { serializeBoundaryAttrValue } from '@liteship/core/authoring';
-import { defineQuantizer } from '@liteship/quantizer';
+import { createQuantizer, defineQuantizer } from '@liteship/quantizer';
 
 const boundarySpec = {
   input: 'viewport.width',
@@ -92,6 +92,24 @@ describe('defineAdaptive — pure lowering', () => {
     expect(a2.id).toBe(a.id);
   });
 
+  test('normalizes the default tier into aggregate identity', () => {
+    const omitted = defineAdaptive({ boundary: boundarySpec, style: styleSpec });
+    const explicitDefault = defineAdaptive({ boundary: boundarySpec, style: styleSpec, tier: 'styled' });
+    const gpu = defineAdaptive({ boundary: boundarySpec, style: styleSpec, tier: 'gpu' });
+
+    expect(omitted.id).toBe(explicitDefault.id);
+    expect(gpu.id).not.toBe(omitted.id);
+  });
+
+  test('keeps the generated boundary authoritative over a JavaScript extra style.boundary', () => {
+    const unrelated = defineBoundary({ input: 'other', at: [[0, 'only']] as const });
+    const hostileStyle = { ...styleSpec, boundary: unrelated } as typeof styleSpec;
+    const adaptive = defineAdaptive({ boundary: boundarySpec, style: hostileStyle });
+
+    expect(adaptive.style.boundary).toBe(adaptive.boundary);
+    expect(adaptive.style.boundary).not.toBe(unrelated);
+  });
+
   test('tokens and theme lower to the hand-lowered constructor outputs', () => {
     const tokenSpec = { name: 'gap', category: 'spacing', value: '8px' } as const;
     const themeSpec = {
@@ -113,6 +131,35 @@ describe('defineAdaptive — pure lowering', () => {
     expect(adaptive.theme?.id).toBe(hth.id);
     expect(adaptive.tokens?.[0]).toEqual(ht);
     expect(adaptive.theme).toEqual(hth);
+    expect(Object.isFrozen(adaptive)).toBe(true);
+    expect(Object.isFrozen(adaptive.tokens)).toBe(true);
+    expect(() => (adaptive.tokens as Token[]).push(ht)).toThrow();
+  });
+
+  test('requires complete state maps and exact target value contracts', () => {
+    defineAdaptive({
+      boundary: boundarySpec,
+      style: styleSpec,
+      quantize: {
+        outputs: {
+          // @ts-expect-error `lg` is required because it is a boundary state.
+          css: { sm: { opacity: 0 }, md: { opacity: 1 } },
+        },
+      },
+    });
+
+    defineAdaptive({
+      boundary: boundarySpec,
+      style: styleSpec,
+      quantize: {
+        outputs: {
+          // @ts-expect-error GLSL values are numeric, never CSS strings.
+          glsl: { sm: { scale: '0' }, md: { scale: 1 }, lg: { scale: 2 } },
+        },
+        // @ts-expect-error SpringConfig requires numeric stiffness and damping.
+        spring: { stiffness: '170', damping: 26 },
+      },
+    });
   });
 });
 
@@ -153,6 +200,7 @@ describe('defineAdaptive.explain', () => {
       { index: 1, threshold: 768, state: 'md', satisfied: false },
       { index: 2, threshold: 1024, state: 'lg', satisfied: false },
     ]);
+    expect(Object.isFrozen(sm.boundary.matched)).toBe(true);
     expect(sm.quantized).toEqual({ css: { state: 'sm', value: { fontSize: '14px' } } });
     // base style at 'sm' (no state override applies).
     expect(sm.style['font-size']).toEqual({ value: '14px', source: 'base' });
@@ -181,6 +229,42 @@ describe('defineAdaptive.explain', () => {
     expect(gpu.explain(800).tier.tier).toBe('gpu');
   });
 
+  test('uses the live quantizer tier + force resolver and preserves spring intent', async () => {
+    const gated = defineAdaptive({
+      boundary: boundarySpec,
+      style: styleSpec,
+      quantize: {
+        tier: 'none',
+        force: ['css'],
+        spring: { stiffness: 170, damping: 26, mass: 2 },
+        outputs: {
+          css: {
+            sm: { opacity: 0 },
+            md: { opacity: 0.5 },
+            lg: { opacity: 1 },
+          },
+          glsl: { sm: { scale: 0 }, md: { scale: 0.5 }, lg: { scale: 1 } },
+          aria: {
+            sm: { 'aria-label': 'small' },
+            md: { 'aria-label': 'medium' },
+            lg: { 'aria-label': 'large' },
+          },
+        },
+      },
+    });
+
+    const explanation = gated.explain(800);
+    const live = createQuantizer(gated.quantizer!);
+    const liveTargets = Object.keys(live.currentOutputs.read()).sort();
+    const explainedTargets = Object.keys(explanation.quantized ?? {}).sort();
+
+    expect(explainedTargets).toEqual(liveTargets);
+    expect(explainedTargets).toEqual(['aria', 'css']);
+    expect(explanation.tier.admittedTargets).toEqual(new Set(['aria', 'css']));
+    expect(gated.quantizer?.spring).toEqual({ stiffness: 170, damping: 26, mass: 2 });
+    await live.dispose();
+  });
+
   test('provenance is by DECLARATION: a same-value state override reads as `state`, not `base`', () => {
     // The 'lg' state re-declares `color` with the SAME string as base. Declaration
     // (not value equality) decides provenance: `color` is the state layer's winning
@@ -199,6 +283,36 @@ describe('defineAdaptive.explain', () => {
     // A state that declares nothing (e.g. 'sm') leaves every property `base`-sourced.
     const sm = adaptive.explain(400);
     expect(sm.style['color']).toEqual({ value: 'black', source: 'base' });
+  });
+
+  test('attributes pseudo-properties and box-shadow to their actual declaration layer', () => {
+    const adaptive = defineAdaptive({
+      boundary: boundarySpec,
+      style: {
+        base: {
+          properties: { color: 'black' },
+          pseudo: { ':hover': { color: 'red', opacity: '0.5' } },
+          boxShadow: [{ x: 0, y: 1, blur: 2, color: '#000' }],
+        },
+        states: {
+          lg: {
+            properties: {},
+            pseudo: { ':hover': { color: 'blue' }, '::before': { content: '"wide"' } },
+            boxShadow: [{ x: 0, y: 2, blur: 4, color: '#333' }],
+          },
+        },
+      },
+    });
+
+    const lg = adaptive.explain(1400);
+    expect(lg.style[':hover::color']).toEqual({ value: 'blue', source: 'state' });
+    expect(lg.style[':hover::opacity']).toEqual({ value: '0.5', source: 'base' });
+    expect(lg.style['::before::content']).toEqual({ value: '"wide"', source: 'state' });
+    expect(lg.style['box-shadow']?.source).toBe('state');
+
+    const sm = adaptive.explain(400);
+    expect(sm.style[':hover::color']?.source).toBe('base');
+    expect(sm.style['box-shadow']?.source).toBe('base');
   });
 });
 

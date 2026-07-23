@@ -355,6 +355,28 @@ describe('force option escape hatch', () => {
     const config = defineQuantizer(b, { tier: 'none', force: ['css'], outputs: simpleOutputs(b) });
     expect(config.force).toEqual(['css']);
   });
+
+  test('force is canonically snapshotted and frozen before identity/storage', () => {
+    const b = viewport();
+    const authored: OutputTarget[] = ['glsl', 'css', 'glsl'];
+    const config = defineQuantizer(b, { tier: 'none', force: authored, outputs: simpleOutputs(b) });
+    const id = config.id;
+
+    authored.push('wgsl');
+
+    expect(config.id).toBe(id);
+    expect(config.force).toEqual(['css', 'glsl']);
+    expect(Object.isFrozen(config.force)).toBe(true);
+    expect(Object.isFrozen(config)).toBe(true);
+    expect(() => (config.force as OutputTarget[]).push('wgsl')).toThrow();
+
+    const equivalent = defineQuantizer(b, {
+      tier: 'none',
+      force: ['css', 'glsl'],
+      outputs: config.outputs,
+    });
+    expect(equivalent).toBe(config);
+  });
 });
 
 // ---------------------------------------------------------------------------

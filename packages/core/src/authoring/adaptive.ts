@@ -8,8 +8,8 @@
  * content-address identical to what you would get calling the sibling
  * constructors by hand — the quantizer member is the SAME object the
  * `@liteship/quantizer` configCache returns for the same input. The aggregate
- * `id` is the FNV-1a content address of the member ids (never the member data),
- * so an adaptive is addressed by what it lowers to.
+ * `id` is the FNV-1a content address of the normalized tier plus member ids
+ * (never the member data), so an adaptive is addressed by what it lowers to.
  *
  * @module
  */
@@ -20,7 +20,7 @@ import { fnv1aBytes } from '../evidence/fnv.js';
 import { defineBoundary, Boundary } from './boundary.js';
 import type { Boundary as BoundaryType } from './boundary.js';
 import { defineStyle, Style } from './style.js';
-import type { Style as StyleType } from './style.js';
+import type { Style as StyleType, StyleLayer } from './style.js';
 import { defineToken } from './token.js';
 import type { Token } from './token.js';
 import { defineTheme } from './theme.js';
@@ -29,6 +29,7 @@ import type { CapTier } from '../evidence/caps.js';
 import { tierTargets } from '../evidence/escalation.js';
 import type { TierChoice } from '../evidence/escalation.js';
 import type { QualityTierTarget } from '../evidence/quality-tiers.js';
+import type { MotionTier } from '../evidence/ui-quality.js';
 // `@liteship/core` takes NO import — not even type-only — on `@liteship/quantizer`
 // or `@liteship/compiler`. Both DEPEND ON core, so a back-import (even a type one,
 // whose `.d.ts` resolution loops back to `core/dist`) closes a project-reference
@@ -60,31 +61,49 @@ import type { QualityTierTarget } from '../evidence/quality-tiers.js';
  * would let a consumer write a phantom target (`{ cs: {...} }`) that typechecks,
  * survives into `Adaptive.explain()`, yet is silently dropped at runtime.
  */
-type AdaptiveQuantizerOutputs = Readonly<Partial<Record<QualityTierTarget, Readonly<Record<string, unknown>>>>>;
+type AdaptiveStateOutputs<State extends string, Value> = Readonly<Record<State, Readonly<Record<string, Value>>>>;
+
+/** Structural twin of `@liteship/quantizer`'s exact per-target value contracts. */
+export interface AdaptiveQuantizerOutputs<State extends string = string> {
+  readonly css?: AdaptiveStateOutputs<State, string | number>;
+  readonly glsl?: AdaptiveStateOutputs<State, number>;
+  readonly wgsl?: AdaptiveStateOutputs<State, number>;
+  readonly aria?: AdaptiveStateOutputs<State, string>;
+  readonly ai?: AdaptiveStateOutputs<State, unknown>;
+}
+
+/** Structural twin of `@liteship/quantizer`'s spring contract. */
+export interface AdaptiveSpringConfig {
+  readonly stiffness: number;
+  readonly damping: number;
+  readonly mass?: number;
+}
 
 /** Structural twin of `@liteship/quantizer`'s `DefineQuantizerOptions`. */
-export interface AdaptiveQuantizeOptions {
-  readonly outputs: AdaptiveQuantizerOutputs;
-  readonly tier?: string;
-  readonly spring?: unknown;
-  readonly force?: readonly string[];
+export interface AdaptiveQuantizeOptions<State extends string = string> {
+  readonly outputs: AdaptiveQuantizerOutputs<State>;
+  readonly tier?: MotionTier;
+  readonly spring?: AdaptiveSpringConfig;
+  readonly force?: readonly QualityTierTarget[];
 }
 
 /** Structural twin of `@liteship/quantizer`'s `QuantizerConfig` (the authored, content-addressed config). */
 export interface AdaptiveQuantizerConfig<B extends BoundaryType = BoundaryType> {
   readonly boundary: B;
-  readonly outputs: AdaptiveQuantizerOutputs;
+  readonly outputs: AdaptiveQuantizerOutputs<B['states'][number] & string>;
   readonly id: ContentAddress;
-  readonly tier?: string;
-  readonly spring?: unknown;
-  readonly force?: readonly string[];
+  readonly tier?: MotionTier;
+  readonly spring?: AdaptiveSpringConfig;
+  readonly force?: readonly QualityTierTarget[];
 }
 
 /** The supplied `@liteship/quantizer` `defineQuantizer`, typed against the twins. */
-export type AdaptiveQuantizerLowering = (
-  boundary: BoundaryType,
-  options: AdaptiveQuantizeOptions,
-) => AdaptiveQuantizerConfig;
+export interface AdaptiveQuantizerLowering {
+  <B extends BoundaryType>(
+    boundary: B,
+    options: AdaptiveQuantizeOptions<B['states'][number] & string>,
+  ): AdaptiveQuantizerConfig<B>;
+}
 
 // ---------------------------------------------------------------------------
 // Spec
@@ -99,13 +118,16 @@ export type AdaptiveQuantizerLowering = (
  * `theme` to {@link defineTheme}. Nothing here is re-shaped, so the lowering is a
  * pure delegation.
  */
-export interface AdaptiveSpec {
+type AdaptiveBoundarySpec = Parameters<typeof defineBoundary>[0];
+type AdaptiveStates<B extends AdaptiveBoundarySpec> = B['at'][number][1] & string;
+
+export interface AdaptiveSpec<B extends AdaptiveBoundarySpec = AdaptiveBoundarySpec> {
   /** {@link defineBoundary} config — the constraint the adaptive tracks. */
-  readonly boundary: Parameters<typeof defineBoundary>[0];
+  readonly boundary: B;
   /** {@link defineStyle} config WITHOUT `boundary` (the boundary is spliced in by the lowering). */
   readonly style: Omit<Parameters<typeof defineStyle>[0], 'boundary'>;
   /** Optional `defineQuantizer` options (`outputs` + optional `tier`/`spring`/`force`). */
-  readonly quantize?: AdaptiveQuantizeOptions;
+  readonly quantize?: AdaptiveQuantizeOptions<AdaptiveStates<NoInfer<B>>>;
   /** Optional design tokens, each a {@link defineToken} config. */
   readonly tokens?: readonly Parameters<typeof defineToken>[0][];
   /** Optional {@link defineTheme} config. */
@@ -155,7 +177,9 @@ export interface AdaptiveExplanation {
     readonly matched: readonly ConstraintTrace[];
   };
   /** Per-target quantizer output for the resolved state, keyed by output target. */
-  readonly quantized?: Readonly<Record<string, { readonly state: string; readonly value: unknown }>>;
+  readonly quantized?: Readonly<
+    Partial<Record<QualityTierTarget, { readonly state: string; readonly value: unknown }>>
+  >;
   /** The resolved style properties at the state, each tagged with its source layer. */
   readonly style: Readonly<Record<string, { readonly value: string; readonly source: 'base' | 'state' }>>;
   /** The capability tier and the projection targets it admits. */
@@ -200,7 +224,7 @@ export interface Adaptive {
   readonly tokens?: readonly Token[];
   /** `defineTheme(spec.theme)` — undefined when `spec.theme` is omitted. */
   readonly theme?: Theme;
-  /** FNV-1a content address of `{ boundary, style, quantizer, tokens, theme }` ids. */
+  /** FNV-1a content address of normalized tier + `{ boundary, style, quantizer, tokens, theme }` ids. */
   readonly id: ContentAddress;
   /** The headless DOM attr set a boundary-aware consumer needs. */
   attrs(): Record<string, string>;
@@ -228,6 +252,11 @@ export interface Adaptive {
 export interface AdaptiveLowering {
   /** The real memoized `@liteship/quantizer` constructor. */
   readonly defineQuantizer: AdaptiveQuantizerLowering;
+  /** The quantizer owner's exact tier + force target resolver used by live dispatch. */
+  readonly resolveQuantizerTargets: (
+    tier: MotionTier | undefined,
+    force: readonly QualityTierTarget[] | undefined,
+  ) => ReadonlySet<QualityTierTarget>;
   /** The real `@liteship/compiler` style-layer projection. */
   readonly compileStyleLayers: (style: StyleType) => string;
 }
@@ -270,8 +299,8 @@ export function serializeBoundaryAttrValue(boundary: BoundaryType): string {
 // ---------------------------------------------------------------------------
 
 /**
- * Aggregate content address of an adaptive — FNV-1a of the member IDs (never the
- * member data), matching how every sibling constructor builds its own id.
+ * Aggregate content address of an adaptive — FNV-1a of the normalized tier and
+ * member IDs (never the member data), matching how sibling constructors build ids.
  */
 function aggregateId(
   boundaryId: ContentAddress,
@@ -279,6 +308,7 @@ function aggregateId(
   quantizerId: ContentAddress | null,
   tokenIds: readonly ContentAddress[] | null,
   themeId: ContentAddress | null,
+  tier: CapTier,
 ): ContentAddress {
   return fnv1aBytes(
     CanonicalCbor.encode({
@@ -289,6 +319,7 @@ function aggregateId(
       quantizer: quantizerId,
       tokens: tokenIds,
       theme: themeId,
+      tier,
     }),
   );
 }
@@ -298,12 +329,12 @@ function aggregateId(
  * five sibling constructors — never reimplementing them.
  *
  * Concretely: `boundary = defineBoundary(spec.boundary)`;
- * `style = defineStyle({ boundary, ...spec.style })`;
+ * `style = defineStyle({ ...spec.style, boundary })` (generated boundary wins);
  * `quantizer = defineQuantizer(boundary, spec.quantize)` (the configCache makes
  * this referentially identical to the hand-lowered call);
  * `tokens = spec.tokens.map(defineToken)`; `theme = defineTheme(spec.theme)`.
- * The aggregate `id` addresses the member ids. `explain`/`attrs`/`plan` are pure
- * projections of those members.
+ * The aggregate `id` addresses the normalized tier and member ids.
+ * `explain`/`attrs`/`plan` are pure projections of those members.
  *
  * @example
  * ```ts
@@ -314,13 +345,20 @@ function aggregateId(
  * adaptive.explain(800).boundary.state; // 'md'
  * ```
  */
-export function lowerAdaptive(spec: AdaptiveSpec, lowering: AdaptiveLowering): Adaptive {
+export function lowerAdaptive<const B extends AdaptiveBoundarySpec>(
+  spec: AdaptiveSpec<B>,
+  lowering: AdaptiveLowering,
+): Adaptive {
   const boundary = defineBoundary(spec.boundary);
-  const style = defineStyle({ boundary, ...spec.style });
+  // The generated boundary is authoritative. A JavaScript caller can still
+  // smuggle a `boundary` key through the type-level Omit, so splice it LAST.
+  const style = defineStyle({ ...spec.style, boundary });
   const quantizer =
     spec.quantize !== undefined ? lowering.defineQuantizer(boundary, spec.quantize) : undefined;
-  const tokens = spec.tokens !== undefined ? spec.tokens.map((t) => defineToken(t)) : undefined;
+  const tokens =
+    spec.tokens !== undefined ? Object.freeze(spec.tokens.map((t) => defineToken(t))) : undefined;
   const theme = spec.theme !== undefined ? defineTheme(spec.theme) : undefined;
+  const tier: CapTier = spec.tier ?? 'styled';
 
   const id = aggregateId(
     boundary.id,
@@ -328,9 +366,8 @@ export function lowerAdaptive(spec: AdaptiveSpec, lowering: AdaptiveLowering): A
     quantizer?.id ?? null,
     tokens !== undefined ? tokens.map((t) => t.id) : null,
     theme?.id ?? null,
+    tier,
   );
-
-  const tier: CapTier = spec.tier ?? 'styled';
 
   const attrs = (): Record<string, string> => ({
     // `StyleCSSCompiler`'s unscoped projection targets `.liteship-styled`.
@@ -344,21 +381,31 @@ export function lowerAdaptive(spec: AdaptiveSpec, lowering: AdaptiveLowering): A
 
   const explain = (value: number): AdaptiveExplanation => {
     const result = Boundary.evaluateResult(boundary, value);
-    const matched: ConstraintTrace[] = boundary.thresholds.map((threshold, index) => ({
-      index,
-      threshold,
-      // `threshold` is the lower bound of `states[index]` (rawIndexF32 selects
-      // the rightmost threshold <= value), so the state entered at/above it is
-      // `states[index]`, not `states[index + 1]`.
-      state: boundary.states[index]!,
-      satisfied: value >= threshold,
-    }));
+    const matched: readonly ConstraintTrace[] = Object.freeze(
+      boundary.thresholds.map((threshold, index) => ({
+        index,
+        threshold,
+        // `threshold` is the lower bound of `states[index]` (rawIndexF32 selects
+        // the rightmost threshold <= value), so the state entered at/above it is
+        // `states[index]`, not `states[index + 1]`.
+        state: boundary.states[index]!,
+        satisfied: value >= threshold,
+      })),
+    );
 
-    let quantized: Record<string, { readonly state: string; readonly value: unknown }> | undefined;
+    let quantized:
+      | Partial<Record<QualityTierTarget, { readonly state: string; readonly value: unknown }>>
+      | undefined;
+    const admittedTargets =
+      quantizer === undefined
+        ? tierTargets(tier)
+        : lowering.resolveQuantizerTargets(quantizer.tier, quantizer.force);
     if (quantizer !== undefined) {
       quantized = {};
-      const outputs = quantizer.outputs as Readonly<Record<string, Record<string, unknown>>>;
-      for (const target of Object.keys(outputs)) {
+      const outputs = quantizer.outputs as Readonly<
+        Partial<Record<QualityTierTarget, Readonly<Record<string, unknown>>>>
+      >;
+      for (const target of admittedTargets) {
         const table = outputs[target];
         if (table === undefined) continue;
         quantized[target] = { state: result.state, value: table[result.state] };
@@ -371,13 +418,16 @@ export function lowerAdaptive(spec: AdaptiveSpec, lowering: AdaptiveLowering): A
     // override — value equality would misattribute the winning declaration to
     // `base`. Properties the state layer does not declare fall through to `base`.
     const stateResolved = Style.tap(style, result.state);
-    const statesByName = (style.states ?? {}) as Readonly<
-      Record<string, { readonly properties?: Readonly<Record<string, string>> } | undefined>
-    >;
-    const stateDeclared = statesByName[result.state]?.properties ?? {};
+    const statesByName = (style.states ?? {}) as Readonly<Record<string, StyleLayer | undefined>>;
+    const stateLayer = statesByName[result.state];
+    const stateDeclared = new Set<string>(Object.keys(stateLayer?.properties ?? {}));
+    for (const [selector, properties] of Object.entries(stateLayer?.pseudo ?? {})) {
+      for (const property of Object.keys(properties)) stateDeclared.add(`${selector}::${property}`);
+    }
+    if ((stateLayer?.boxShadow?.length ?? 0) > 0) stateDeclared.add('box-shadow');
     const styleRecord: Record<string, { readonly value: string; readonly source: 'base' | 'state' }> = {};
     for (const [property, propValue] of Object.entries(stateResolved)) {
-      const source: 'base' | 'state' = property in stateDeclared ? 'state' : 'base';
+      const source: 'base' | 'state' = stateDeclared.has(property) ? 'state' : 'base';
       styleRecord[property] = { value: propValue, source };
     }
 
@@ -387,7 +437,7 @@ export function lowerAdaptive(spec: AdaptiveSpec, lowering: AdaptiveLowering): A
       boundary: { id: boundary.id, state: result.state, matched },
       ...(quantized !== undefined ? { quantized } : {}),
       style: styleRecord,
-      tier: { tier, admittedTargets: tierTargets(tier) },
+      tier: { tier, admittedTargets },
       contentAddress: id,
     };
   };
@@ -400,7 +450,7 @@ export function lowerAdaptive(spec: AdaptiveSpec, lowering: AdaptiveLowering): A
     attrs: attrs(),
   });
 
-  return {
+  return Object.freeze({
     boundary,
     style,
     ...(quantizer !== undefined ? { quantizer } : {}),
@@ -410,5 +460,5 @@ export function lowerAdaptive(spec: AdaptiveSpec, lowering: AdaptiveLowering): A
     attrs,
     explain,
     plan,
-  };
+  });
 }

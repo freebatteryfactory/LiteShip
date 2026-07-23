@@ -11,15 +11,16 @@
 
 import { lowerAdaptive } from '@liteship/core';
 import type { Adaptive, AdaptiveLowering, AdaptiveSpec, Style } from '@liteship/core';
-import { defineQuantizer } from '@liteship/quantizer';
+import { defineQuantizer, resolveQuantizerTargets } from '@liteship/quantizer';
 import { StyleCSSCompiler } from '@liteship/compiler';
 
 const lowering: AdaptiveLowering = {
   defineQuantizer: defineQuantizer as AdaptiveLowering['defineQuantizer'],
+  resolveQuantizerTargets,
   compileStyleLayers: (style: Style): string => StyleCSSCompiler.compile(style).layers,
 };
 
 /** Define adaptive intent using the real core, quantizer, and compiler owners. */
-export function defineAdaptive(spec: AdaptiveSpec): Adaptive {
+export function defineAdaptive<const B extends AdaptiveSpec['boundary']>(spec: AdaptiveSpec<B>): Adaptive {
   return lowerAdaptive(spec, lowering);
 }

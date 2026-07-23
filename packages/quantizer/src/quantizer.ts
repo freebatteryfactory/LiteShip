@@ -92,6 +92,29 @@ export const TIER_TARGETS: Record<MotionTier, ReadonlySet<OutputTarget>> = proje
   'compute',
 ]);
 
+const OUTPUT_TARGETS = ['css', 'glsl', 'wgsl', 'aria', 'ai'] as const satisfies readonly OutputTarget[];
+
+/**
+ * Resolve the exact target set a live quantizer admits for a motion tier plus
+ * explicit force overrides. This is the single target-gating owner used by
+ * both runtime dispatch and higher-level explanations.
+ */
+export function resolveQuantizerTargets(
+  tier: MotionTier | undefined,
+  force: readonly OutputTarget[] = [],
+): ReadonlySet<OutputTarget> {
+  if (tier !== undefined && !(tier in TIER_TARGETS)) {
+    throw ValidationError(
+      'resolveQuantizerTargets',
+      `unknown MotionTier '${String(tier)}'. Valid tiers: ${Object.keys(TIER_TARGETS).join(', ')}. Omit \`tier\` to allow all targets.`,
+    );
+  }
+
+  const admitted = new Set<OutputTarget>(tier === undefined ? OUTPUT_TARGETS : TIER_TARGETS[tier]);
+  for (const target of force) admitted.add(target);
+  return admitted;
+}
+
 // ---------------------------------------------------------------------------
 // Quantizer outputs shape
 // ---------------------------------------------------------------------------
@@ -316,14 +339,14 @@ function contentAddress<B extends Boundary, O extends QuantizerOutputs<B>>(
   outputs: O,
   tier: MotionTier | undefined,
   spring: SpringConfig | undefined,
-  forcedTargets: ReadonlySet<OutputTarget> | null,
+  force: readonly OutputTarget[] | undefined,
 ): ContentAddress {
   const payload = {
     boundaryId: boundary.id,
     outputs,
     tier: tier ?? null,
     spring: spring ? { stiffness: spring.stiffness, damping: spring.damping, mass: spring.mass ?? 1 } : null,
-    force: forcedTargets ? [...forcedTargets].sort() : null,
+    force: force ?? null,
   };
   return fnv1aBytes(CanonicalCbor.encode(payload));
 }
@@ -374,8 +397,7 @@ function readTargetState<B extends Boundary, O extends QuantizerOutputs<B>>(
 function resolveOutputs<B extends Boundary, O extends QuantizerOutputs<B>>(
   outputs: O,
   state: StateUnion<B>,
-  allowedTargets: ReadonlySet<OutputTarget> | null,
-  forcedTargets: ReadonlySet<OutputTarget> | null,
+  admittedTargets: ReadonlySet<OutputTarget>,
   configId: ContentAddress,
   springCSS: string | null,
 ): Partial<{ [K in OutputTarget]: Record<string, unknown> }> {
@@ -385,16 +407,8 @@ function resolveOutputs<B extends Boundary, O extends QuantizerOutputs<B>>(
   if (cached) return cached;
 
   const result: Partial<{ [K in OutputTarget]: Record<string, unknown> }> = {};
-  const targets: OutputTarget[] = ['css', 'glsl', 'wgsl', 'aria', 'ai'];
-
-  for (const target of targets) {
-    // Check tier gating
-    if (allowedTargets !== null && !allowedTargets.has(target)) {
-      // Check force escape hatch
-      if (forcedTargets === null || !forcedTargets.has(target)) {
-        continue;
-      }
-    }
+  for (const target of OUTPUT_TARGETS) {
+    if (!admittedTargets.has(target)) continue;
 
     const stateOutputs = readTargetState(outputs, target, state);
     if (stateOutputs !== undefined) {
@@ -465,44 +479,50 @@ export function defineQuantizer<B extends Boundary, O extends QuantizerOutputs<B
 ): QuantizerConfig<B, O> {
   const { outputs, spring, force } = options;
   const tier = options.tier;
-  // Failing open on an invalid tier would disable gating entirely and allow
-  // every target (including ai/wgsl) — the inverse of what gating is for.
+  // Preserve defineQuantizer's public diagnostic owner even though the shared
+  // resolver also rejects hostile runtime values defensively.
   if (tier !== undefined && !(tier in TIER_TARGETS)) {
     throw ValidationError(
       'defineQuantizer',
       `unknown MotionTier '${String(tier)}'. Valid tiers: ${Object.keys(TIER_TARGETS).join(', ')}. Omit \`tier\` to allow all targets.`,
     );
   }
-  const allowedTargets = tier ? TIER_TARGETS[tier] : null;
-  const forcedTargets: Set<OutputTarget> | null = force ? new Set(force) : null;
+  // Snapshot, de-duplicate, canonically order, and freeze force BEFORE it is
+  // hashed or retained. Caller mutation can therefore never make the stored
+  // authored intent disagree with its content address.
+  const forceSnapshot =
+    force === undefined
+      ? undefined
+      : (Object.freeze([...new Set(force)].sort()) as readonly OutputTarget[]);
+  const admittedTargets = resolveQuantizerTargets(tier, forceSnapshot);
 
-  if (allowedTargets !== null && tier !== undefined) {
+  if (tier !== undefined) {
     // Outputs for a tier-gated target silently never fire; say so once at
     // definition time with the literal escape hatches.
     for (const target of Object.keys(outputs) as readonly OutputTarget[]) {
-      if (outputs[target] === undefined || allowedTargets.has(target) || forcedTargets?.has(target)) continue;
+      if (outputs[target] === undefined || admittedTargets.has(target)) continue;
       Diagnostics.warnOnce({
         source: 'liteship/quantizer',
         code: 'tier-gated-output-dropped',
-        message: `you defined \`${target}\` outputs but tier '${tier}' only emits ${[...allowedTargets].join('+')}, so they will never fire. Pass a tier that includes ${target} to defineQuantizer(boundary, { tier }), or add '${target}' to the \`force\` option.`,
+        message: `you defined \`${target}\` outputs but tier '${tier}' only emits ${[...TIER_TARGETS[tier]].join('+')}, so they will never fire. Pass a tier that includes ${target} to defineQuantizer(boundary, { tier }), or add '${target}' to the \`force\` option.`,
       });
     }
   }
 
-  const id = contentAddress(boundary, outputs, tier, spring, forcedTargets);
+  const id = contentAddress(boundary, outputs, tier, spring, forceSnapshot);
 
   // Content-address memoization: identical definitions share one object.
   const cachedConfig = configCache.get(id);
   if (cachedConfig) return cachedConfig as QuantizerConfig<B, O>;
 
-  const config: QuantizerConfig<B, O> = {
+  const config: QuantizerConfig<B, O> = Object.freeze({
     boundary,
     outputs,
     id,
     tier,
     spring,
-    force,
-  };
+    force: forceSnapshot,
+  });
   configCache.set(id, config);
   return config;
 }
@@ -554,8 +574,7 @@ export function createQuantizer<B extends Boundary, O extends QuantizerOutputs<B
   runtime?: QuantizerRuntime,
 ): OwnedQuantizer<B, O> {
   const { boundary, outputs, id, tier, spring, force } = definition;
-  const allowedTargets = tier ? TIER_TARGETS[tier] : null;
-  const forcedTargets: ReadonlySet<OutputTarget> | null = force ? new Set(force) : null;
+  const admittedTargets = resolveQuantizerTargets(tier, force);
   // Recompute (getSpringCSS is memoized): the easing string is derived reactive
   // value, not part of the config's authored identity, so it lives on the instance.
   const springCSS = spring && outputs.css ? getSpringCSS(spring) : null;
@@ -569,7 +588,7 @@ export function createQuantizer<B extends Boundary, O extends QuantizerOutputs<B
 
   // defineBoundary guarantees non-empty states; head access widens to StateUnion<B>.
   const initialState: StateUnion<B> = firstState(boundary);
-  const initialOutputs = resolveOutputs(outputs, initialState, allowedTargets, forcedTargets, id, springCSS);
+  const initialOutputs = resolveOutputs(outputs, initialState, admittedTargets, id, springCSS);
 
   // Reactive substrate on the extracted CellKernel (was SubscriptionRef /
   // Queue): a replay-1 current-state slot, a replay-1 outputs slot (its
@@ -637,7 +656,7 @@ export function createQuantizer<B extends Boundary, O extends QuantizerOutputs<B
         };
         previousState = result.state;
 
-        const newOutputs = resolveOutputs(outputs, result.state, allowedTargets, forcedTargets, id, springCSS);
+        const newOutputs = resolveOutputs(outputs, result.state, admittedTargets, id, springCSS);
         // Publish state + outputs + crossing as ONE consistent advance (were
         // `Effect.runSync(Effect.all([...]))` + `Queue.offerUnsafe`). The kernel
         // fan-out is fail-fast, so a bare sequential publish would let a throwing

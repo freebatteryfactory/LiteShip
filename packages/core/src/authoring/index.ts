@@ -36,6 +36,8 @@ export { lowerAdaptive, serializeBoundaryAttrValue, boundaryAttrIdentity } from 
 
 export type {
   AdaptiveQuantizeOptions,
+  AdaptiveQuantizerOutputs,
+  AdaptiveSpringConfig,
   AdaptiveQuantizerConfig,
   AdaptiveQuantizerLowering,
   AdaptiveLowering,

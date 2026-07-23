@@ -9,7 +9,7 @@
 export { evaluate, Evaluate } from './evaluate.js';
 export type { EvaluateResult } from './evaluate.js';
 
-export { defineQuantizer, createQuantizer } from './quantizer.js';
+export { defineQuantizer, createQuantizer, resolveQuantizerTargets } from './quantizer.js';
 export type { OutputTarget, QuantizerOutputs, QuantizerConfig, LiveQuantizer } from './quantizer.js';
 
 export { Transition } from './transition.js';

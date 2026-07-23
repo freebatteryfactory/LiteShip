@@ -174,7 +174,7 @@ describe('defineAdaptive is a pure lowering — content-address, CSS-byte, and t
         // Hand path — the SAME spec configs, lowered by hand. Non-tautological:
         // hb/hs/hq are built from g.boundary/g.style/g.quantize, NOT from a.*.
         const hb = defineBoundary(g.boundary as Parameters<typeof defineBoundary>[0]);
-        const hs = defineStyle({ boundary: hb, ...g.style } as Parameters<typeof defineStyle>[0]);
+        const hs = defineStyle({ ...g.style, boundary: hb } as Parameters<typeof defineStyle>[0]);
         const hq =
           g.quantize !== undefined
             ? defineQuantizer(hb, g.quantize as Parameters<typeof defineQuantizer>[1])
@@ -205,7 +205,7 @@ describe('defineAdaptive is a pure lowering — content-address, CSS-byte, and t
       fc.property(specArb, (g) => {
         const a = defineAdaptive(toSpec(g));
         const hb = defineBoundary(g.boundary as Parameters<typeof defineBoundary>[0]);
-        const hs = defineStyle({ boundary: hb, ...g.style } as Parameters<typeof defineStyle>[0]);
+        const hs = defineStyle({ ...g.style, boundary: hb } as Parameters<typeof defineStyle>[0]);
 
         // Full style → @layer CSS: byte-identical between the adaptive's style
         // member and the independently hand-lowered style.
