@@ -14,7 +14,10 @@
  *    `<selector> { … }` rules, reusing `skipSegment` to step over each balanced block
  *    and reading structural characters off the comment/string-blanked copy.
  *  - `:root` is the base (`'default'`) variant; each `html[data-theme="X"]` is variant
- *    `X`. Declarations are grouped per token name into a variant map.
+ *    `X`. Declarations are grouped per token and resolved through the supported
+ *    selector cascade: specificity first, then source order. Base declarations
+ *    participate in every named variant because `:root` still matches the themed
+ *    root element.
  *  - When more than one variant is present the group lowers to a single `defineTheme`
  *    (`tokens: Record<name, Record<variant, value>>`); `defineTheme` requires every
  *    token to have a value for every variant, so a token missing in some variant is
@@ -125,19 +128,27 @@ function splitSelectorList(selector: string): readonly string[] {
   return members;
 }
 
-/** Recognized migrated variants carried by one comma-separated selector list. */
-function variantsOfSelector(selector: string): readonly VariantKey[] {
-  const variants: VariantKey[] = [];
+interface SupportedSelector {
+  readonly variant: VariantKey;
+  /** CSS specificity for the supported selector subset, encoded as class * 100 + type. */
+  readonly specificity: number;
+}
+
+/** Recognized selectors carried by one comma-separated selector list. */
+function supportedSelectorsOf(selector: string): readonly SupportedSelector[] {
+  const selectors: SupportedSelector[] = [];
   for (const member of splitSelectorList(selector)) {
     if (member.toLowerCase() === ':root') {
-      if (!variants.includes(DEFAULT_VARIANT)) variants.push(DEFAULT_VARIANT);
+      selectors.push({ variant: DEFAULT_VARIANT, specificity: 100 });
       continue;
     }
     const match = DATA_THEME_RE.exec(member);
     const variant = match?.[1] ?? match?.[2] ?? match?.[3];
-    if (variant !== undefined && !variants.includes(variant)) variants.push(variant);
+    if (variant !== undefined) {
+      selectors.push({ variant, specificity: /^html\b/i.test(member) ? 101 : 100 });
+    }
   }
-  return variants;
+  return selectors;
 }
 
 // ---------------------------------------------------------------------------
@@ -288,9 +299,19 @@ export function fromCSSCustomProperties(css: string, options?: FromCSSCustomProp
   const boundaries: readonly Boundary[] = []; // no boundaries from custom-property rules
 
   // -------------------------------------------------------------------------
-  // Read every recognized rule into: token name → (variant → value).
+  // Read every recognized rule into cascade candidates. A :root declaration
+  // applies to the root element in every named theme; a named selector applies
+  // only to that variant. Resolution happens after the complete variant set is
+  // known so specificity and source order are preserved across those selectors.
   // -------------------------------------------------------------------------
-  const byToken = new Map<string, Map<VariantKey, string>>();
+  interface CascadeCandidate {
+    readonly sourceVariant: VariantKey;
+    readonly value: string;
+    readonly specificity: number;
+    readonly sourceOrder: number;
+  }
+
+  const byToken = new Map<string, CascadeCandidate[]>();
   const tokenOrder: string[] = [];
   const variantOrder: VariantKey[] = [];
   const variantSeen = new Set<VariantKey>();
@@ -302,21 +323,28 @@ export function fromCSSCustomProperties(css: string, options?: FromCSSCustomProp
     }
   };
 
-  for (const rule of readTopLevelRules(css)) {
-    const ruleVariants = variantsOfSelector(rule.selector);
-    if (ruleVariants.length === 0) continue; // selector we do not migrate
-    for (const variant of ruleVariants) recordVariant(variant);
+  for (const [sourceOrder, rule] of readTopLevelRules(css).entries()) {
+    const selectors = supportedSelectorsOf(rule.selector);
+    if (selectors.length === 0) continue; // selector we do not migrate
+    for (const { variant } of selectors) recordVariant(variant);
     const { props } = parseFlatDeclarations(css, rule.bodyStart);
     for (const [prop, value] of Object.entries(props)) {
       const name = tokenNameOf(prop);
       if (name === null) continue;
-      let vm = byToken.get(name);
-      if (!vm) {
-        vm = new Map();
-        byToken.set(name, vm);
+      let candidates = byToken.get(name);
+      if (!candidates) {
+        candidates = [];
+        byToken.set(name, candidates);
         tokenOrder.push(name);
       }
-      for (const variant of ruleVariants) vm.set(variant, value);
+      for (const selector of selectors) {
+        candidates.push({
+          sourceVariant: selector.variant,
+          value,
+          specificity: selector.specificity,
+          sourceOrder,
+        });
+      }
     }
   }
 
@@ -342,6 +370,26 @@ export function fromCSSCustomProperties(css: string, options?: FromCSSCustomProp
     return { boundaries, tokens, themes, diagnostics };
   }
 
+  const applicableCandidates = (name: string, variant: VariantKey): readonly CascadeCandidate[] =>
+    byToken.get(name)!.filter(({ sourceVariant }) => sourceVariant === DEFAULT_VARIANT || sourceVariant === variant);
+
+  const resolveCascade = (name: string, variant: VariantKey): string | undefined => {
+    let winner: CascadeCandidate | undefined;
+    for (const candidate of applicableCandidates(name, variant)) {
+      if (
+        winner === undefined ||
+        candidate.specificity > winner.specificity ||
+        (candidate.specificity === winner.specificity && candidate.sourceOrder >= winner.sourceOrder)
+      ) {
+        winner = candidate;
+      }
+    }
+    return winner?.value;
+  };
+
+  const hasAuthoredVariant = (name: string, variant: VariantKey): boolean =>
+    byToken.get(name)!.some(({ sourceVariant }) => sourceVariant === variant);
+
   // -------------------------------------------------------------------------
   // Single variant → one defineToken per token.
   // -------------------------------------------------------------------------
@@ -360,7 +408,7 @@ export function fromCSSCustomProperties(css: string, options?: FromCSSCustomProp
       return { boundaries, tokens, themes, diagnostics };
     }
     for (const name of tokenOrder) {
-      const value = byToken.get(name)!.get(only)!;
+      const value = resolveCascade(name, only)!;
       const { category, code } = classifyValue(value);
       if (code === MIGRATE_CODES.lossyTokenConversion) {
         diagnostics.push(
@@ -401,32 +449,29 @@ export function fromCSSCustomProperties(css: string, options?: FromCSSCustomProp
   const themeTokens: Record<string, Record<string, unknown>> = {};
 
   for (const name of tokenOrder) {
-    const vm = byToken.get(name)!;
-    const baseValue = vm.get(DEFAULT_VARIANT);
+    const candidates = byToken.get(name)!;
+    const baseValue = resolveCascade(name, DEFAULT_VARIANT);
     const entry: Record<string, unknown> = {};
     let dropped = false;
 
     for (const variant of variants) {
-      const val = vm.get(variant);
+      const val = resolveCascade(name, variant);
       const publicVariant = publicVariantName(variant);
       if (val !== undefined) {
         entry[publicVariant] = val;
+        if (variant !== DEFAULT_VARIANT && !hasAuthoredVariant(name, variant) && baseValue !== undefined) {
+          diagnostics.push(
+            makeMigrationDiagnostic(
+              MIGRATE_CODES.incompleteThemeVariant,
+              `Token "${name}" has no value for variant "${publicVariant}"; filled from the base (:root) value "${baseValue}".`,
+              { path: [name, publicVariant] },
+            ),
+          );
+        }
         continue;
       }
-      // Missing for this variant: fill from base, else the token cannot complete.
-      if (baseValue !== undefined) {
-        entry[publicVariant] = baseValue;
-        diagnostics.push(
-          makeMigrationDiagnostic(
-            MIGRATE_CODES.incompleteThemeVariant,
-            `Token "${name}" has no value for variant "${publicVariant}"; filled from the base (:root) value "${baseValue}".`,
-            { path: [name, publicVariant] },
-          ),
-        );
-      } else {
-        dropped = true;
-        break;
-      }
+      dropped = true;
+      break;
     }
 
     if (dropped) {
@@ -442,8 +487,8 @@ export function fromCSSCustomProperties(css: string, options?: FromCSSCustomProp
 
     // Inspect EVERY authored variant. A literal base must not hide a lossy
     // `var()`/`calc()` override from the migration report.
-    for (const [variant, value] of vm) {
-      const publicVariant = publicVariantName(variant);
+    for (const { sourceVariant, value } of candidates) {
+      const publicVariant = publicVariantName(sourceVariant);
       if (/var\(|calc\(/.test(value)) {
         diagnostics.push(
           makeMigrationDiagnostic(

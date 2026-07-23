@@ -145,6 +145,69 @@ describe('fromCSSCustomProperties — selector reader (NEW)', () => {
   });
 });
 
+describe('fromCSSCustomProperties — supported selector cascade', () => {
+  it('lets a later :root declaration beat an earlier bare data-theme declaration at equal specificity', () => {
+    const result = fromCSSCustomProperties(`
+      [data-theme="dark"] { --accent: darkred; }
+      :root { --accent: red; }
+    `);
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.themes[0]!.tokens.accent).toEqual({ default: 'red', dark: 'red' });
+  });
+
+  it('lets a later bare data-theme declaration beat an earlier :root declaration at equal specificity', () => {
+    const result = fromCSSCustomProperties(`
+      :root { --accent: red; }
+      [data-theme="dark"] { --accent: darkred; }
+    `);
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.themes[0]!.tokens.accent).toEqual({ default: 'red', dark: 'darkred' });
+  });
+
+  it('keeps an earlier html[data-theme] declaration over a later :root declaration by specificity', () => {
+    const result = fromCSSCustomProperties(`
+      html[data-theme="dark"] { --accent: darkred; }
+      :root { --accent: red; }
+    `);
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.themes[0]!.tokens.accent).toEqual({ default: 'red', dark: 'darkred' });
+  });
+
+  it('uses source order for repeated occurrences of the same supported selector', () => {
+    const result = fromCSSCustomProperties(`
+      :root { --accent: red; }
+      [data-theme="dark"] { --accent: darkred; }
+      [data-theme="dark"] { --accent: black; }
+    `);
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.themes[0]!.tokens.accent).toEqual({ default: 'red', dark: 'black' });
+  });
+
+  it('applies selector-list declarations as cascade candidates for every supported member', () => {
+    const result = fromCSSCustomProperties(`
+      :root, [data-theme="dark"] { --accent: red; }
+      :root { --accent: blue; }
+    `);
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.themes[0]!.tokens.accent).toEqual({ default: 'blue', dark: 'blue' });
+  });
+
+  it('retains the strongest matching member when a selector list names one variant more than once', () => {
+    const result = fromCSSCustomProperties(`
+      [data-theme="dark"], html[data-theme="dark"] { --accent: darkred; }
+      :root { --accent: red; }
+    `);
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.themes[0]!.tokens.accent).toEqual({ default: 'red', dark: 'darkred' });
+  });
+});
+
 describe('fromCSSCustomProperties — variant grouping + single/multi switch (NEW)', () => {
   it('keeps :root as the base variant ordered first, then data-theme variants in first-seen order', () => {
     const result = fromCSSCustomProperties(`
