@@ -54,18 +54,12 @@ describe('fromMediaQueries — clean lossless case', () => {
 });
 
 describe('fromMediaQueries — decomposition branches', () => {
-  it('max-width folds to the strict threshold T+1 (inclusive → exclusive) and flags the lossy approximation', () => {
+  it('refuses max-width instead of approximating a finite upper bound', () => {
     const result = fromMediaQueries(`@media (max-width: 767px) { .x { a: b; } }`);
-    const b = result.boundaries[0]!;
-    expect(b.input).toBe('viewport.width');
-    expect([...b.thresholds]).toEqual([0, 768]);
-    // The threshold is still folded, but the inclusive→exclusive +1 integer
-    // approximation is lossy against continuous widths, so it is surfaced.
-    const lossy = result.diagnostics.filter((d) => d.code === MIGRATE_CODES.lossyTokenConversion);
-    expect(lossy).toHaveLength(1);
-    expect(lossy[0]!.severity).toBe('warning');
-    expect(lossy[0]!.path).toEqual(['max-width']);
-    expect(lossy[0]!.message).toContain('inclusive');
+    expect(result.boundaries).toEqual([]);
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({ code: MIGRATE_CODES.unsupportedAtRule, severity: 'error' }),
+    );
   });
 
   it('resolves rem breakpoints against the 16px root', () => {
@@ -89,25 +83,23 @@ describe('fromMediaQueries — decomposition branches', () => {
     expect(inputs).toEqual(['viewport.height', 'viewport.width']);
   });
 
-  it('sorts non-ascending source-order breakpoints and flags it', () => {
+  it('refuses non-ascending source-order breakpoints instead of reordering cascade', () => {
     const result = fromMediaQueries(`
       @media (min-width: 1280px) { .x { a: b; } }
       @media (min-width: 768px)  { .x { a: b; } }
     `);
-    const b = result.boundaries[0]!;
-    expect([...b.thresholds]).toEqual([0, 768, 1280]); // strictly ascending
+    expect(result.boundaries).toEqual([]);
     expect(result.diagnostics.some((d) => d.code === MIGRATE_CODES.nonAscendingThresholds)).toBe(true);
     // Not a duplicate case.
     expect(result.diagnostics.some((d) => d.code === MIGRATE_CODES.ambiguousBreakpoint)).toBe(false);
   });
 
-  it('collapses duplicate breakpoints and flags it', () => {
+  it('refuses duplicate breakpoints instead of collapsing cascade identity', () => {
     const result = fromMediaQueries(`
       @media (min-width: 768px) { .x { a: b; } }
       @media (min-width: 768px) { .y { c: d; } }
     `);
-    const b = result.boundaries[0]!;
-    expect([...b.thresholds]).toEqual([0, 768]);
+    expect(result.boundaries).toEqual([]);
     expect(result.diagnostics.some((d) => d.code === MIGRATE_CODES.ambiguousBreakpoint)).toBe(true);
     expect(result.diagnostics.some((d) => d.code === MIGRATE_CODES.nonAscendingThresholds)).toBe(false);
   });
@@ -133,6 +125,22 @@ describe('fromMediaQueries — decomposition branches', () => {
       fg: { light: '#000000', dark: '#eeeeee' },
     });
     expect(t.meta).toBeUndefined();
+  });
+
+  it('preserves source-order cascade when a later :root overrides an earlier scheme rule', () => {
+    const result = fromMediaQueries(`
+      @media (prefers-color-scheme: dark) { :root { --bg: #111111; } }
+      :root { --bg: #ffffff; }
+    `);
+    expect(result.themes[0]!.tokens.bg).toEqual({ light: '#ffffff', dark: '#ffffff' });
+  });
+
+  it('preserves source-order cascade when a later scheme rule overrides the shared root', () => {
+    const result = fromMediaQueries(`
+      :root { --bg: #ffffff; }
+      @media (prefers-color-scheme: dark) { :root { --bg: #111111; } }
+    `);
+    expect(result.themes[0]!.tokens.bg).toEqual({ light: '#ffffff', dark: '#111111' });
   });
 
   it('cross-fills a dark-only token so the theme stays complete (no throw)', () => {
@@ -226,15 +234,12 @@ describe('fromMediaQueries — no-silent-drift review findings', () => {
   });
 
   // FINDING B — dimensional threshold fidelity.
-  it('flags an exact width query as a lossy unbounded >= lowering', () => {
+  it('refuses an exact width query rather than emitting an unbounded state', () => {
     const result = fromMediaQueries(`@media (width: 768px) { .x { a: b; } }`);
-    const b = result.boundaries[0]!;
-    expect([...b.thresholds]).toEqual([0, 768]); // threshold still folded
-    const d = result.diagnostics.find((x) => x.code === MIGRATE_CODES.lossyTokenConversion);
+    expect(result.boundaries).toEqual([]);
+    const d = result.diagnostics.find((x) => x.code === MIGRATE_CODES.unsupportedAtRule);
     expect(d).toBeDefined();
-    expect(d!.severity).toBe('warning');
-    expect(d!.path).toEqual(['width']);
-    expect(d!.message).toContain('point match');
+    expect(d!.severity).toBe('error');
   });
 
   it('does NOT flag a faithful plain min-width lowering', () => {
@@ -268,14 +273,18 @@ describe('fromMediaQueries — no-silent-drift review findings', () => {
     expect(result.boundaries).toEqual([]);
   });
 
-  it('does NOT flag an `and` whose features fold into the SAME single width target', () => {
+  it('refuses a same-axis conjunction containing a finite upper bound', () => {
     const result = fromMediaQueries(`@media (min-width: 768px) and (max-width: 1200px) { .x { a: b; } }`);
-    // Two width-axis features → ONE width boundary → no conjunction diagnostic.
-    expect(result.diagnostics.some((d) => d.message.includes('conjoins'))).toBe(false);
-    const b = result.boundaries[0]!;
-    expect(b.input).toBe('viewport.width');
-    // (max-width still contributes its own lossy flag, but no conjunction flag.)
-    expect(result.diagnostics.some((d) => d.code === MIGRATE_CODES.lossyTokenConversion)).toBe(true);
+    expect(result.boundaries).toEqual([]);
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({ code: MIGRATE_CODES.unsupportedAtRule, severity: 'error' }),
+    );
+  });
+
+  it('intersects same-axis inclusive-min conjunctions at the maximum lower bound', () => {
+    const result = fromMediaQueries(`@media (min-width: 768px) and (min-width: 1024px) { .x { a: b; } }`);
+    expect(result.diagnostics).toEqual([]);
+    expect([...result.boundaries[0]!.thresholds]).toEqual([0, 1024]);
   });
 });
 

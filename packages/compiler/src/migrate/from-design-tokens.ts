@@ -95,6 +95,7 @@ const DTCG_TYPE_TO_CATEGORY: Readonly<Record<string, TokenCategory>> = {
   borderRadius: 'radius',
   duration: 'animation',
   cubicBezier: 'animation',
+  number: 'effect',
 };
 
 // ---------------------------------------------------------------------------
@@ -146,21 +147,41 @@ function isTokenNode(value: unknown): value is Record<string, unknown> {
 function isLossyValue(value: unknown): boolean {
   if (typeof value !== 'string') return false;
   const s = value.trim();
-  return /^\{.+\}$/.test(s) || s.includes('calc(');
+  return /^\{.+\}$/.test(s) || s.toLowerCase().includes('calc(');
 }
 
-/**
- * The CSS-string form of a SCALAR DTCG structured value, or `null` for a composite.
- *
- * DTCG's scalar `dimension` is `{ value: number, unit: string }` (`{value:8,unit:'px'}`
- * → `8px`); a color object carrying an explicit `hex` uses that hex. Composites
- * (shadow/typography/gradient/…) have no single-token CSS form and return `null` — the
- * caller refuses them with a diagnostic. Without this, a structured `$value`
- * reaches the Token CSS compiler as an object and `String(value)` renders
- * `[object Object]`.
- */
-function scalarDtcgCssValue(value: unknown, type: string | undefined): string | null {
-  if (type === 'fontFamily' && Array.isArray(value) && value.every((part) => typeof part === 'string')) {
+type LoweredDtcgValue =
+  | { readonly ok: true; readonly value: string | number }
+  | { readonly ok: false; readonly reason: string };
+
+const FONT_WEIGHT_NAMES = new Set([
+  'thin',
+  'hairline',
+  'extra-light',
+  'ultra-light',
+  'light',
+  'normal',
+  'regular',
+  'book',
+  'medium',
+  'semi-bold',
+  'demi-bold',
+  'bold',
+  'extra-bold',
+  'ultra-bold',
+  'black',
+  'heavy',
+  'extra-black',
+  'ultra-black',
+]);
+
+/** Validate one supported DTCG 2025.10 scalar and lower it to faithful CSS. */
+function lowerDtcgValue(value: unknown, type: string): LoweredDtcgValue {
+  if (type === 'fontFamily') {
+    if (typeof value === 'string' && value.length > 0) return { ok: true, value };
+    if (!Array.isArray(value) || value.length === 0 || !value.every((part) => typeof part === 'string' && part.length > 0)) {
+      return { ok: false, reason: 'fontFamily requires a non-empty font name or non-empty array of font names' };
+    }
     const generics = new Set([
       'serif',
       'sans-serif',
@@ -176,32 +197,62 @@ function scalarDtcgCssValue(value: unknown, type: string | undefined): string | 
       'math',
       'fangsong',
     ]);
-    return value.map((part) => (generics.has(part.toLowerCase()) ? part : JSON.stringify(part))).join(', ');
+    return {
+      ok: true,
+      value: value.map((part) => (generics.has(part.toLowerCase()) ? part : JSON.stringify(part))).join(', '),
+    };
   }
-  if (
-    type === 'cubicBezier' &&
-    Array.isArray(value) &&
-    value.length === 4 &&
-    value.every((part) => typeof part === 'number' && Number.isFinite(part))
-  ) {
-    return `cubic-bezier(${value.join(', ')})`;
+  if (type === 'fontWeight') {
+    if (typeof value === 'number' && Number.isFinite(value) && value >= 1 && value <= 1000) {
+      return { ok: true, value };
+    }
+    if (typeof value === 'string' && FONT_WEIGHT_NAMES.has(value)) return { ok: true, value };
+    return { ok: false, reason: 'fontWeight requires a number in [1, 1000] or an exact DTCG font-weight name' };
   }
-  if (!isPlainObject(value)) return null;
-  if (typeof value['value'] === 'number' && typeof value['unit'] === 'string') {
-    return `${value['value']}${value['unit']}`;
+  if (type === 'cubicBezier') {
+    if (
+      !Array.isArray(value) ||
+      value.length !== 4 ||
+      !value.every((part) => typeof part === 'number' && Number.isFinite(part)) ||
+      (value[0] as number) < 0 ||
+      (value[0] as number) > 1 ||
+      (value[2] as number) < 0 ||
+      (value[2] as number) > 1
+    ) {
+      return { ok: false, reason: 'cubicBezier requires four finite numbers with both x coordinates in [0, 1]' };
+    }
+    return { ok: true, value: `cubic-bezier(${value.join(', ')})` };
   }
-  if (typeof value['hex'] === 'string') {
-    return value['hex'];
+  if (type === 'number') {
+    return typeof value === 'number' && Number.isFinite(value)
+      ? { ok: true, value }
+      : { ok: false, reason: 'number requires a finite JSON number' };
   }
-  if (
-    type === 'color' &&
-    typeof value['colorSpace'] === 'string' &&
-    Array.isArray(value['components']) &&
-    value['components'].length === 3 &&
-    value['components'].every(
-      (component) => (typeof component === 'number' && Number.isFinite(component)) || component === 'none',
-    )
-  ) {
+  if (type === 'dimension' || type === 'duration') {
+    const units = type === 'dimension' ? new Set(['px', 'rem']) : new Set(['ms', 's']);
+    if (
+      !isPlainObject(value) ||
+      typeof value['value'] !== 'number' ||
+      !Number.isFinite(value['value']) ||
+      typeof value['unit'] !== 'string' ||
+      !units.has(value['unit'])
+    ) {
+      return { ok: false, reason: `${type} requires { value: finite number, unit: ${[...units].join('|')} }` };
+    }
+    return { ok: true, value: `${value['value']}${value['unit']}` };
+  }
+  if (type === 'color') {
+    if (
+      !isPlainObject(value) ||
+      typeof value['colorSpace'] !== 'string' ||
+      !Array.isArray(value['components']) ||
+      value['components'].length !== 3 ||
+      !value['components'].every(
+        (component) => (typeof component === 'number' && Number.isFinite(component)) || component === 'none',
+      )
+    ) {
+      return { ok: false, reason: 'color requires a structured colorSpace/components value' };
+    }
     const colorFunctionSpaces = new Set([
       'srgb',
       'srgb-linear',
@@ -214,14 +265,27 @@ function scalarDtcgCssValue(value: unknown, type: string | undefined): string | 
     ]);
     const colorSpace = value['colorSpace'].toLowerCase();
     const alpha = value['alpha'];
+    if (!colorFunctionSpaces.has(colorSpace)) return { ok: false, reason: `unsupported color space "${colorSpace}"` };
     if (
-      colorFunctionSpaces.has(colorSpace) &&
-      (alpha === undefined || alpha === 'none' || (typeof alpha === 'number' && Number.isFinite(alpha)))
+      alpha !== undefined &&
+      alpha !== 'none' &&
+      (typeof alpha !== 'number' || !Number.isFinite(alpha) || alpha < 0 || alpha > 1)
     ) {
-      return `color(${colorSpace} ${value['components'].join(' ')}${alpha === undefined ? '' : ` / ${alpha}`})`;
+      return { ok: false, reason: 'color alpha must be "none" or a finite number in [0, 1]' };
     }
+    const hex = value['hex'];
+    if (hex !== undefined && (typeof hex !== 'string' || !/^#[0-9a-f]{6}(?:[0-9a-f]{2})?$/i.test(hex))) {
+      return { ok: false, reason: 'color hex fallback must be a 6- or 8-digit hexadecimal color' };
+    }
+    return {
+      ok: true,
+      value:
+        typeof hex === 'string'
+          ? hex
+          : `color(${colorSpace} ${value['components'].join(' ')}${alpha === undefined ? '' : ` / ${alpha}`})`,
+    };
   }
-  return null;
+  return { ok: false, reason: `${type} is not in the adapter's supported scalar DTCG subset` };
 }
 
 // ---------------------------------------------------------------------------
@@ -240,8 +304,8 @@ function scalarDtcgCssValue(value: unknown, type: string | undefined): string | 
  * @example
  * ```ts
  * const { tokens } = fromDesignTokens({
- *   color: { primary: { $type: 'color', $value: '#0066cc' } },
- *   space: { sm: { $type: 'dimension', $value: '8px' } },
+ *   color: { primary: { $type: 'color', $value: { colorSpace: 'srgb', components: [0, .4, .8] } } },
+ *   space: { sm: { $type: 'dimension', $value: { value: 8, unit: 'px' } } },
  * });
  * // tokens[0].name === 'color.primary'; tokens[0].category === 'color'
  * // tokens[1].name === 'space.sm';      tokens[1].category === 'spacing'
@@ -294,13 +358,8 @@ export function fromDesignTokens(json: unknown, options?: FromDesignTokensOption
   const resolveCategory = (type: string): TokenCategory => DTCG_TYPE_TO_CATEGORY[type]!;
 
   /**
-   * Convert one MODE value exactly as the plain-token structured branch in
-   * {@link processToken} does: a scalar DTCG structured value (`{value,unit}` /
-   * `{hex}`) serializes to its canonical CSS string; a composite object has no
-   * single CSS custom-property form, so the complete token is refused with an
-   * error `lossy-token-conversion`; a non-object scalar passes through unchanged.
-   * Without this a structured mode value reaches the Theme CSS compiler as an
-   * object and renders `[object Object]`.
+   * Validate and lower one mode value using the same type-specific DTCG 2025.10
+   * rules as a plain token. Invalid values refuse the complete mode token.
    */
   const toModeCssValue = (
     value: unknown,
@@ -308,13 +367,15 @@ export function fromDesignTokens(json: unknown, options?: FromDesignTokensOption
     name: string,
     valuePath: readonly string[],
   ): { readonly ok: true; readonly value: unknown } | { readonly ok: false } => {
-    if (!isPlainObject(value) && !Array.isArray(value)) return { ok: true, value };
-    const scalar = scalarDtcgCssValue(value, type);
-    if (scalar !== null) return { ok: true, value: scalar };
+    const lowered = type === undefined ? { ok: false as const, reason: 'missing DTCG type' } : lowerDtcgValue(value, type);
+    if (lowered.ok) return lowered;
+    const code = type === 'shadow' || type === 'typography' || type === 'borderRadius'
+      ? MIGRATE_CODES.lossyTokenConversion
+      : MIGRATE_CODES.malformedInput;
     diagnostics.push(
       makeMigrationDiagnostic(
-        MIGRATE_CODES.lossyTokenConversion,
-        `Token "${name}" is a composite or unsupported DTCG ${DTCG_FORMAT_VERSION} value (${JSON.stringify(value)}) with no faithful scalar CSS form; the token was refused rather than emitting "[object Object]" or fabricated CSS.`,
+        code,
+        `Token "${name}" has a value incompatible with DTCG ${DTCG_FORMAT_VERSION} type "${type ?? '(missing)'}": ${lowered.reason}; the token was refused.`,
         { path: valuePath, severity: 'error' },
       ),
     );
@@ -405,6 +466,16 @@ export function fromDesignTokens(json: unknown, options?: FromDesignTokensOption
     path: readonly string[],
     inheritedType: string | undefined,
   ): void => {
+    if (Object.hasOwn(node, '$extends')) {
+      diagnostics.push(
+        makeMigrationDiagnostic(
+          MIGRATE_CODES.unsupportedAtRule,
+          `DTCG ${DTCG_FORMAT_VERSION} token "${path.join('.')}" uses $extends, which is not valid token syntax in this migration subset; the token was refused.`,
+          { path: [...path, '$extends'], severity: 'error' },
+        ),
+      );
+      return;
+    }
     const result = decode(DtcgTokenSchema, node);
     if (!result.ok) {
       // Project each DecodeIssue → a migrate diagnostic, keeping its path and
@@ -447,6 +518,8 @@ export function fromDesignTokens(json: unknown, options?: FromDesignTokensOption
       return;
     }
 
+    if (refuseUnresolvedValue(value, path)) return;
+
     // A mode token: $value is an object whose keys are ALL in the mode set (so a
     // shadow/typography composite — keys `color`/`offsetX`/… — is NOT a mode map).
     if (isPlainObject(value)) {
@@ -455,41 +528,22 @@ export function fromDesignTokens(json: unknown, options?: FromDesignTokensOption
         processModeToken(value, type, name, path);
         return;
       }
-      // A DTCG SCALAR structured value — dimension `{value,unit}` or a color object
-      // with an explicit `hex` — has a single canonical CSS string. Serialize it, or
-      // it reaches the Token CSS compiler as an object and renders `[object Object]`.
-      const scalar = scalarDtcgCssValue(value, type);
-      if (scalar !== null) {
-        processPlainToken(scalar, type, name, path);
-        return;
-      }
-      // A composite (shadow/typography/gradient/…) has no single CSS custom-property
-      // form. Refuse it rather than handing an object to the scalar CSS compiler.
+    }
+    const lowered = lowerDtcgValue(value, type);
+    if (!lowered.ok) {
+      const code = type === 'shadow' || type === 'typography' || type === 'borderRadius'
+        ? MIGRATE_CODES.lossyTokenConversion
+        : MIGRATE_CODES.malformedInput;
       diagnostics.push(
         makeMigrationDiagnostic(
-          MIGRATE_CODES.lossyTokenConversion,
-          `Token "${name}" is a composite or unsupported DTCG ${DTCG_FORMAT_VERSION} value (${JSON.stringify(value)}) with no faithful scalar CSS form; the token was refused rather than emitting "[object Object]" or fabricated CSS.`,
+          code,
+          `Token "${name}" has a value incompatible with DTCG ${DTCG_FORMAT_VERSION} type "${type}": ${lowered.reason}; the token was refused.`,
           { path, severity: 'error' },
         ),
       );
       return;
     }
-    if (Array.isArray(value)) {
-      const scalar = scalarDtcgCssValue(value, type);
-      if (scalar !== null) {
-        processPlainToken(scalar, type, name, path);
-        return;
-      }
-      diagnostics.push(
-        makeMigrationDiagnostic(
-          MIGRATE_CODES.lossyTokenConversion,
-          `Token "${name}" is an unsupported DTCG ${DTCG_FORMAT_VERSION} array value (${JSON.stringify(value)}); the token was refused rather than fabricating CSS.`,
-          { path, severity: 'error' },
-        ),
-      );
-      return;
-    }
-    processPlainToken(value, type, name, path);
+    processPlainToken(lowered.value, type, name, path);
   };
 
   // -------------------------------------------------------------------------

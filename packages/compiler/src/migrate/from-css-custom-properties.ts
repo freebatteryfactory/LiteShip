@@ -63,20 +63,73 @@ export interface FromCSSCustomPropertiesOptions {
 const LITESHIP_PREFIX = '--liteship-';
 
 /** The base/default variant contributed by a `:root { … }` rule. */
-const DEFAULT_VARIANT = 'default';
+const DEFAULT_VARIANT = Symbol('liteship.migrate.css-root');
+type VariantKey = typeof DEFAULT_VARIANT | string;
+
+function publicVariantName(variant: VariantKey): string {
+  return variant === DEFAULT_VARIANT ? 'default' : variant;
+}
 
 /**
  * Recognize an `html[data-theme="X"]` (or bare `[data-theme="X"]`) selector and
  * capture the variant name `X` — the exact inverse of the `theme-css.ts` /
  * `token-css.ts` emit selector. Accepts single-, double-, or un-quoted values.
  */
-const DATA_THEME_RE = /^(?:html)?\s*\[\s*data-theme\s*=\s*(?:"([^"]*)"|'([^']*)'|([\w-]+))\s*\]$/;
+const DATA_THEME_RE = /^(?:html)?\s*\[\s*data-theme\s*=\s*(?:"([^"]*)"|'([^']*)'|([\w-]+))\s*\]$/i;
+
+/**
+ * Split a selector list without treating commas inside quoted attribute values
+ * or functional selectors as list separators. CSS comments are removed while
+ * strings are preserved, so selector recognition is structural rather than a
+ * raw-text equality check.
+ */
+function splitSelectorList(selector: string): readonly string[] {
+  const members: string[] = [];
+  let current = '';
+  let quote: '"' | "'" | null = null;
+  let escaped = false;
+  let bracketDepth = 0;
+  let parenDepth = 0;
+  for (let i = 0; i < selector.length; i++) {
+    const ch = selector[i]!;
+    if (quote !== null) {
+      current += ch;
+      if (escaped) escaped = false;
+      else if (ch === '\\') escaped = true;
+      else if (ch === quote) quote = null;
+      continue;
+    }
+    if (ch === '"' || ch === "'") {
+      quote = ch;
+      current += ch;
+      continue;
+    }
+    if (ch === '/' && selector[i + 1] === '*') {
+      const end = selector.indexOf('*/', i + 2);
+      i = end === -1 ? selector.length : end + 1;
+      current += ' ';
+      continue;
+    }
+    if (ch === '[') bracketDepth++;
+    else if (ch === ']' && bracketDepth > 0) bracketDepth--;
+    else if (ch === '(') parenDepth++;
+    else if (ch === ')' && parenDepth > 0) parenDepth--;
+    if (ch === ',' && bracketDepth === 0 && parenDepth === 0) {
+      members.push(current.trim());
+      current = '';
+    } else {
+      current += ch;
+    }
+  }
+  members.push(current.trim());
+  return members;
+}
 
 /** Recognized migrated variants carried by one comma-separated selector list. */
-function variantsOfSelector(selector: string): readonly string[] {
-  const variants: string[] = [];
-  for (const member of selector.split(',').map((part) => part.trim())) {
-    if (member === ':root') {
+function variantsOfSelector(selector: string): readonly VariantKey[] {
+  const variants: VariantKey[] = [];
+  for (const member of splitSelectorList(selector)) {
+    if (member.toLowerCase() === ':root') {
       if (!variants.includes(DEFAULT_VARIANT)) variants.push(DEFAULT_VARIANT);
       continue;
     }
@@ -237,12 +290,12 @@ export function fromCSSCustomProperties(css: string, options?: FromCSSCustomProp
   // -------------------------------------------------------------------------
   // Read every recognized rule into: token name → (variant → value).
   // -------------------------------------------------------------------------
-  const byToken = new Map<string, Map<string, string>>();
+  const byToken = new Map<string, Map<VariantKey, string>>();
   const tokenOrder: string[] = [];
-  const variantOrder: string[] = [];
-  const variantSeen = new Set<string>();
+  const variantOrder: VariantKey[] = [];
+  const variantSeen = new Set<VariantKey>();
 
-  const recordVariant = (variant: string): void => {
+  const recordVariant = (variant: VariantKey): void => {
     if (!variantSeen.has(variant)) {
       variantSeen.add(variant);
       variantOrder.push(variant);
@@ -277,25 +330,34 @@ export function fromCSSCustomProperties(css: string, options?: FromCSSCustomProp
     return { boundaries, tokens, themes, diagnostics };
   }
 
+  const publicVariants = variants.map(publicVariantName);
+  if (new Set(publicVariants).size !== publicVariants.length) {
+    diagnostics.push(
+      makeMigrationDiagnostic(
+        MIGRATE_CODES.malformedInput,
+        'A named data-theme="default" collides with the internal :root base variant; the theme was refused.',
+        { path: ['default'], severity: 'error' },
+      ),
+    );
+    return { boundaries, tokens, themes, diagnostics };
+  }
+
   // -------------------------------------------------------------------------
   // Single variant → one defineToken per token.
   // -------------------------------------------------------------------------
   if (variants.length === 1) {
     const only = variants[0]!;
     if (only !== DEFAULT_VARIANT) {
-      // A lone `[data-theme="X"]` sheet with no `:root` base: the values migrate to
-      // GLOBAL tokens (a single variant carries no theme variance to encode), which
-      // does NOT preserve the `data-theme` scope. Single variant -> tokens is the
-      // deliberate design (see the "produces defineTokens (not a theme)" test), so the
-      // fix is not to change the shape but to surface the scope collapse rather than
-      // let it happen silently.
+      // A lone named variant cannot become a global token without widening its
+      // selector scope. Refuse the whole sheet shape rather than globalizing it.
       diagnostics.push(
         makeMigrationDiagnostic(
           MIGRATE_CODES.lossyTokenConversion,
-          `Only the "[data-theme=\\"${only}\\"]" variant is present (no :root base); its custom properties migrate to GLOBAL tokens — the theme (data-theme) scope is not preserved.`,
-          { path: [only] },
+          `Only the "[data-theme=\\"${only}\\"]" variant is present (no :root base); the rule was refused because global tokens cannot preserve its theme scope.`,
+          { path: [only], severity: 'error' },
         ),
       );
+      return { boundaries, tokens, themes, diagnostics };
     }
     for (const name of tokenOrder) {
       const value = byToken.get(name)!.get(only)!;
@@ -346,18 +408,19 @@ export function fromCSSCustomProperties(css: string, options?: FromCSSCustomProp
 
     for (const variant of variants) {
       const val = vm.get(variant);
+      const publicVariant = publicVariantName(variant);
       if (val !== undefined) {
-        entry[variant] = val;
+        entry[publicVariant] = val;
         continue;
       }
       // Missing for this variant: fill from base, else the token cannot complete.
       if (baseValue !== undefined) {
-        entry[variant] = baseValue;
+        entry[publicVariant] = baseValue;
         diagnostics.push(
           makeMigrationDiagnostic(
             MIGRATE_CODES.incompleteThemeVariant,
-            `Token "${name}" has no value for variant "${variant}"; filled from the base (:root) value "${baseValue}".`,
-            { path: [name, variant] },
+            `Token "${name}" has no value for variant "${publicVariant}"; filled from the base (:root) value "${baseValue}".`,
+            { path: [name, publicVariant] },
           ),
         );
       } else {
@@ -380,12 +443,13 @@ export function fromCSSCustomProperties(css: string, options?: FromCSSCustomProp
     // Inspect EVERY authored variant. A literal base must not hide a lossy
     // `var()`/`calc()` override from the migration report.
     for (const [variant, value] of vm) {
+      const publicVariant = publicVariantName(variant);
       if (/var\(|calc\(/.test(value)) {
         diagnostics.push(
           makeMigrationDiagnostic(
             MIGRATE_CODES.lossyTokenConversion,
-            `Token "${name}" variant "${variant}" value "${value}" references/computes another value; kept verbatim (not resolved).`,
-            { path: [name, variant] },
+            `Token "${name}" variant "${publicVariant}" value "${value}" references/computes another value; kept verbatim (not resolved).`,
+            { path: [name, publicVariant] },
           ),
         );
       }
@@ -400,7 +464,7 @@ export function fromCSSCustomProperties(css: string, options?: FromCSSCustomProp
       themes = [
         defineTheme({
           name: themeName,
-          variants: variants as [string, ...string[]],
+          variants: publicVariants as [string, ...string[]],
           tokens: themeTokens,
         }),
       ];

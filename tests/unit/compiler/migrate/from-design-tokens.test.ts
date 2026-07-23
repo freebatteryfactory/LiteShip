@@ -20,11 +20,17 @@ import fc from 'fast-check';
 import { DTCG_FORMAT_VERSION, fromDesignTokens } from '@liteship/compiler/migrate';
 import { MIGRATE_CODES } from '@liteship/compiler/migrate';
 
+const color = (hex: string, components: readonly number[] = [0, 0, 0]) => ({
+  colorSpace: 'srgb',
+  components,
+  hex,
+});
+
 describe('fromDesignTokens — clean lossless case', () => {
   it('lowers a two-group document into exactly two single-value tokens with no diagnostics', () => {
     const result = fromDesignTokens({
-      color: { primary: { $type: 'color', $value: '#0066cc' } },
-      space: { sm: { $type: 'dimension', $value: '8px' } },
+      color: { primary: { $type: 'color', $value: color('#0066cc') } },
+      space: { sm: { $type: 'dimension', $value: { value: 8, unit: 'px' } } },
     });
 
     expect(result.diagnostics).toEqual([]);
@@ -49,8 +55,8 @@ describe('fromDesignTokens — clean lossless case', () => {
   it('lowers a mode token document into exactly one complete defineTheme with no diagnostics', () => {
     const result = fromDesignTokens({
       color: {
-        bg: { $type: 'color', $value: { light: '#ffffff', dark: '#111111' } },
-        fg: { $type: 'color', $value: { light: '#000000', dark: '#eeeeee' } },
+        bg: { $type: 'color', $value: { light: color('#ffffff'), dark: color('#111111') } },
+        fg: { $type: 'color', $value: { light: color('#000000'), dark: color('#eeeeee') } },
       },
     });
 
@@ -73,13 +79,13 @@ describe('fromDesignTokens — clean lossless case', () => {
 
 describe('fromDesignTokens — $type → TokenCategory map', () => {
   const cases: ReadonlyArray<readonly [string, unknown, string, unknown]> = [
-    ['color', '#fff', 'color', '#fff'],
-    ['dimension', '4px', 'spacing', '4px'],
+    ['color', color('#ffffff'), 'color', '#ffffff'],
+    ['dimension', { value: 4, unit: 'px' }, 'spacing', '4px'],
     ['fontFamily', ['Inter', 'sans-serif'], 'typography', '"Inter", sans-serif'],
     ['fontWeight', 600, 'typography', 600],
-    ['borderRadius', '8px', 'radius', '8px'],
-    ['duration', '200ms', 'animation', '200ms'],
+    ['duration', { value: 200, unit: 'ms' }, 'animation', '200ms'],
     ['cubicBezier', [0.4, 0, 0.2, 1], 'animation', 'cubic-bezier(0.4, 0, 0.2, 1)'],
+    ['number', 1.25, 'effect', 1.25],
   ];
 
   for (const [dtcgType, value, category, expected] of cases) {
@@ -104,8 +110,8 @@ describe('fromDesignTokens — decomposition branches', () => {
       color: {
         accent: {
           $type: 'color',
-          $root: { $value: '#dd0000' },
-          light: { $value: '#ff2222' },
+          $root: { $value: color('#dd0000') },
+          light: { $value: color('#ff2222') },
         },
       },
     });
@@ -124,14 +130,14 @@ describe('fromDesignTokens — decomposition branches', () => {
     expect(diagnostic?.path).toEqual(['color', '$root']);
   });
   it('flattens deeply nested groups to dotted names', () => {
-    const result = fromDesignTokens({ a: { b: { c: { $type: 'dimension', $value: '4px' } } } });
+    const result = fromDesignTokens({ a: { b: { c: { $type: 'dimension', $value: { value: 4, unit: 'px' } } } } });
     expect(result.tokens).toHaveLength(1);
     expect(result.tokens[0]!.name).toBe('a.b.c');
   });
 
   it('inherits a group-level $type for tokens that declare none', () => {
     const result = fromDesignTokens({
-      color: { $type: 'color', primary: { $value: '#123456' }, secondary: { $value: '#654321' } },
+      color: { $type: 'color', primary: { $value: color('#123456') }, secondary: { $value: color('#654321') } },
     });
     expect(result.tokens.map((t) => t.category)).toEqual(['color', 'color']);
     expect(result.tokens.map((t) => t.name)).toEqual(['color.primary', 'color.secondary']);
@@ -152,16 +158,16 @@ describe('fromDesignTokens — decomposition branches', () => {
   });
 
   it('cross-fills a mode token that is missing a mode and flags it incomplete', () => {
-    const result = fromDesignTokens({ color: { accent: { $type: 'color', $value: { light: '#f90' } } } });
+    const result = fromDesignTokens({ color: { accent: { $type: 'color', $value: { light: color('#ff9900') } } } });
     const t = result.themes[0]!;
     // dark reuses the light value so the theme stays complete.
-    expect(t.tokens['color.accent']).toEqual({ light: '#f90', dark: '#f90' });
+    expect(t.tokens['color.accent']).toEqual({ light: '#ff9900', dark: '#ff9900' });
     expect(result.diagnostics.some((d) => d.code === MIGRATE_CODES.incompleteThemeVariant)).toBe(true);
   });
 
   it('honours custom modes and a custom theme name', () => {
     const result = fromDesignTokens(
-      { c: { x: { $type: 'color', $value: { day: '#ffffff', night: '#000000' } } } },
+      { c: { x: { $type: 'color', $value: { day: color('#ffffff'), night: color('#000000') } } } },
       { modes: ['day', 'night'], themeName: 'brand' },
     );
     const t = result.themes[0]!;
@@ -248,6 +254,38 @@ describe('fromDesignTokens — decomposition branches', () => {
     expect(result.diagnostics).toEqual([]);
   });
 
+  it.each([
+    ['color', '#ffffff'],
+    ['dimension', { value: 8, unit: 'em' }],
+    ['dimension', '8px'],
+    ['duration', { value: 200, unit: 'px' }],
+    ['fontWeight', 1001],
+    ['fontWeight', 'Bold'],
+    ['cubicBezier', [-0.1, 0, 0.5, 1]],
+    ['number', '1'],
+  ])('refuses a value that does not match DTCG type %s', (type, value) => {
+    const result = fromDesignTokens({ bad: { $type: type, $value: value } });
+    expect(result.tokens).toEqual([]);
+    expect(result.themes).toEqual([]);
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({ code: MIGRATE_CODES.malformedInput, severity: 'error', path: ['bad'] }),
+    );
+  });
+
+  it('refuses a complete mode token when any mode value violates its declared type', () => {
+    const result = fromDesignTokens({
+      gap: {
+        $type: 'dimension',
+        $value: { light: { value: 8, unit: 'px' }, dark: { value: 1, unit: 'vh' } },
+      },
+    });
+    expect(result.tokens).toEqual([]);
+    expect(result.themes).toEqual([]);
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({ code: MIGRATE_CODES.malformedInput, severity: 'error', path: ['gap', 'dark'] }),
+    );
+  });
+
   it('refuses a composite DTCG value rather than silently rendering [object Object]', () => {
     const shadow = { color: '#000', offsetX: '0', offsetY: '2px', blur: '4px' };
     const result = fromDesignTokens({ elevation: { low: { $type: 'shadow', $value: shadow } } });
@@ -304,7 +342,7 @@ describe('fromDesignTokens — every diagnostic code has teeth', () => {
   });
 
   it('emits lossy-token-conversion for a calc() expression', () => {
-    const result = fromDesignTokens({ w: { $type: 'dimension', $value: 'calc(100% - 8px)' } });
+    const result = fromDesignTokens({ w: { $type: 'dimension', $value: 'CALC(100% - 8px)' } });
     expect(result.diagnostics.some((d) => d.code === MIGRATE_CODES.lossyTokenConversion)).toBe(true);
     expect(result.tokens).toEqual([]);
   });
@@ -327,8 +365,22 @@ describe('fromDesignTokens — every diagnostic code has teeth', () => {
     );
   });
 
+  it('refuses token-level $extends as invalid subset syntax', () => {
+    const result = fromDesignTokens({
+      accent: { $type: 'color', $value: color('#ff9900'), $extends: '{base}' },
+    });
+    expect(result.tokens).toEqual([]);
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: MIGRATE_CODES.unsupportedAtRule,
+        severity: 'error',
+        path: ['accent', '$extends'],
+      }),
+    );
+  });
+
   it('emits incomplete-theme-variant', () => {
-    const result = fromDesignTokens({ c: { x: { $type: 'color', $value: { light: '#fff' } } } });
+    const result = fromDesignTokens({ c: { x: { $type: 'color', $value: { light: color('#ffffff') } } } });
     expect(result.diagnostics.some((d) => d.code === MIGRATE_CODES.incompleteThemeVariant)).toBe(true);
   });
 });
@@ -338,7 +390,7 @@ describe('fromDesignTokens — pathological input is caught, not thrown', () => 
     let result!: ReturnType<typeof fromDesignTokens>;
     expect(() => {
       // An empty JSON key yields an empty token name; defineToken rejects it.
-      result = fromDesignTokens({ '': { $type: 'color', $value: '#fff' } });
+      result = fromDesignTokens({ '': { $type: 'color', $value: color('#ffffff') } });
     }).not.toThrow();
 
     // No token was produced (the throw was caught)...
@@ -364,7 +416,7 @@ describe('fromDesignTokens — property: flat color tokens fold losslessly', () 
         ),
         (entries) => {
           const doc: Record<string, unknown> = {};
-          for (const [name, hex] of entries) doc[name] = { $type: 'color', $value: hex };
+          for (const [name, hex] of entries) doc[name] = { $type: 'color', $value: color(hex) };
 
           const result = fromDesignTokens(doc);
           expect(result.tokens).toHaveLength(entries.length);

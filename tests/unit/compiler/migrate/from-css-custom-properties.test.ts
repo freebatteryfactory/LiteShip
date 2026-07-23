@@ -97,6 +97,23 @@ describe('fromCSSCustomProperties — selector reader (NEW)', () => {
     expect(result.themes[0]!.tokens.accent).toEqual({ default: 'red', dark: 'darkred' });
   });
 
+  it('recognizes selector keywords case-insensitively and ignores structural comments', () => {
+    const result = fromCSSCustomProperties(`
+      :ROOT /* base */ , :host { --accent: red; }
+      HTML /* host */ [DATA-THEME="dark"] { --accent: darkred; }
+    `);
+    expect(result.diagnostics).toEqual([]);
+    expect(result.themes[0]!.tokens.accent).toEqual({ default: 'red', dark: 'darkred' });
+  });
+
+  it('does not split a selector-list comma inside a quoted data-theme value', () => {
+    const result = fromCSSCustomProperties(`
+      :root { --accent: red; }
+      html[data-theme="dark,contrast"] { --accent: black; }
+    `);
+    expect([...result.themes[0]!.variants]).toEqual(['default', 'dark,contrast']);
+  });
+
   it('reads only :root rules, ignoring comments, @import, decoy selectors, and braces inside strings', () => {
     const result = fromCSSCustomProperties(`
       @import "base.css";
@@ -138,31 +155,42 @@ describe('fromCSSCustomProperties — variant grouping + single/multi switch (NE
     expect([...result.themes[0]!.variants]).toEqual(['default', 'dark', 'hc']);
   });
 
-  it('produces defineTokens (not a theme) when only a single named variant is present', () => {
+  it('refuses a single named variant because global tokens cannot preserve its scope', () => {
     const result = fromCSSCustomProperties(`html[data-theme="dark"] { --liteship-a: #111; }`);
     expect(result.themes).toEqual([]);
-    expect(result.tokens).toHaveLength(1);
-    expect(result.tokens[0]!.name).toBe('a');
-    expect(result.tokens[0]!.fallback).toBe('#111');
+    expect(result.tokens).toEqual([]);
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({ code: MIGRATE_CODES.lossyTokenConversion, severity: 'error' }),
+    );
   });
 
-  it('flags the lost data-theme scope when a lone non-default variant collapses to global tokens', () => {
+  it('does not globalize a lone non-default variant', () => {
     const result = fromCSSCustomProperties(`html[data-theme="dark"] { --liteship-bg: #111; }`);
-    // Behavior is unchanged (single variant -> tokens is the deliberate design)...
     expect(result.themes).toEqual([]);
-    expect(result.tokens).toHaveLength(1);
-    expect(result.tokens[0]!.fallback).toBe('#111');
-    // ...but the scope collapse (dark-only -> global) is now surfaced, not silent.
+    expect(result.tokens).toEqual([]);
     const d = result.diagnostics.find((x) => x.code === MIGRATE_CODES.lossyTokenConversion);
     expect(d).toBeDefined();
+    expect(d!.severity).toBe('error');
     expect(d!.message).toContain('dark');
-    expect(d!.message).toContain('scope is not preserved');
+    expect(d!.message).toContain('refused');
   });
 
   it('does NOT flag a lone :root sheet (global tokens are correct there)', () => {
     const result = fromCSSCustomProperties(`:root { --liteship-bg: #111; }`);
     expect(result.tokens).toHaveLength(1);
     expect(result.diagnostics).toEqual([]);
+  });
+
+  it('refuses a named "default" variant that collides with the internal :root base', () => {
+    const result = fromCSSCustomProperties(`
+      :root { --liteship-bg: white; }
+      html[data-theme="default"] { --liteship-bg: black; }
+    `);
+    expect(result.tokens).toEqual([]);
+    expect(result.themes).toEqual([]);
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({ code: MIGRATE_CODES.malformedInput, severity: 'error' }),
+    );
   });
 });
 

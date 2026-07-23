@@ -5,21 +5,15 @@
  * A stylesheet's `@container [name] (<condition>) { … }` blocks each declare
  * a single-axis width/height range. This adapter reads every top-level block,
  * requires the caller to map each source container identity to an explicit
- * LiteShip input, reduces representable inclusive min/max conditions to a
- * `(lo, hi)` range on one axis, then range-merges adjacent blocks on that axis
- * into a single ascending threshold list. Strict and exact comparisons are
- * refused because a threshold-only boundary cannot preserve them exactly. The
- * merged thresholds become one `defineBoundary` whose
+ * LiteShip input, and accepts only faithful inclusive-min conditions on one
+ * axis. Finite upper bounds, exact/strict comparisons, mixed axes, and nested
+ * queries are refused because a threshold-only boundary cannot preserve them.
+ * The ascending lower bounds become one `defineBoundary` whose
  * `input` is the caller's resolved custom/host input. It never substitutes
  * `viewport.<axis>` because a query container and the viewport are different facts.
  *
- * Lossy / dropped cases are surfaced as {@link MigrationDiagnostic}s rather than
- * thrown: conditions that are not a single-axis width/height range
- * (`migrate/unsupported-at-rule`), source blocks whose thresholds are not
- * strictly ascending (`migrate/non-ascending-thresholds`, sorted before
- * `defineBoundary`), duplicate breakpoints (`migrate/ambiguous-breakpoint`,
- * collapsed), and — as a last resort — a `defineBoundary` `ValidationError`
- * caught and re-surfaced as a `severity:'error'` diagnostic.
+ * Refused cases are surfaced as error {@link MigrationDiagnostic}s and produce
+ * no definition. Nothing is sorted, collapsed, or approximated after parsing.
  *
  * @module
  */
@@ -50,8 +44,6 @@ interface ContainerBlock {
   readonly axis: Axis;
   /** Inclusive lower bound (default `0`). Becomes the boundary threshold. */
   readonly lo: number;
-  /** Exclusive upper bound (default `Infinity`). Used for overlap/ordering checks. */
-  readonly hi: number;
   /** The raw condition text, for diagnostic paths. */
   readonly condition: string;
 }
@@ -59,8 +51,7 @@ interface ContainerBlock {
 /** A single-axis bound parsed from one parenthesized feature. */
 interface AxisBound {
   readonly axis: Axis;
-  readonly lo?: number;
-  readonly hi?: number;
+  readonly lo: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -99,10 +90,11 @@ function axisOfFeature(feature: string): Axis | null {
  * Parse one parenthesized feature's inner text into an {@link AxisBound}, or
  * `null` when it is not reducible to a single-axis width/height bound. Handles:
  *
- * - legacy `min-width`/`max-width`/`min-height`/`max-height` (and `*-inline-size`
- *   / `*-block-size`) `feature: value` form,
- * - the range form `<axis> <op> <value>` (`op` ∈ `>=`,`>`,`<=`,`<`,`=`),
- * - the interval form `<value> <op> <axis> <op> <value>`.
+ * - legacy `min-width`/`min-height` (and `min-inline-size` / `min-block-size`),
+ * - the inclusive range form `<axis> >= <value>`.
+ *
+ * Every finite-upper, strict, exact, interval, or unsupported-unit form returns
+ * `null`; callers refuse the complete source block rather than approximating it.
  */
 function parseFeature(inner: string): AxisBound | null {
   const text = inner.trim();
@@ -114,9 +106,7 @@ function parseFeature(inner: string): AxisBound | null {
     const value = parseLength(text.slice(colon + 1));
     if (value === null) return null;
     if (feature === 'min-width' || feature === 'min-inline-size') return { axis: 'width', lo: value };
-    if (feature === 'max-width' || feature === 'max-inline-size') return { axis: 'width', hi: value };
     if (feature === 'min-height' || feature === 'min-block-size') return { axis: 'height', lo: value };
-    if (feature === 'max-height' || feature === 'max-block-size') return { axis: 'height', hi: value };
     // Exact size queries are point predicates; a threshold state persists above
     // its lower bound and cannot represent them.
     const exact = axisOfFeature(feature);
@@ -124,28 +114,13 @@ function parseFeature(inner: string): AxisBound | null {
     return null;
   }
 
-  // Interval form: `<value> <op> <axis> <op> <value>` — both operators point up.
-  const interval = /^(.+?)\s*(<=)\s*([a-z-]+)\s*(<=)\s*(.+)$/i.exec(text);
-  if (interval) {
-    const axis = axisOfFeature(interval[3]!.toLowerCase());
-    const lo = parseLength(interval[1]!);
-    const hi = parseLength(interval[5]!);
-    if (!axis || lo === null || hi === null) return null;
-    return { axis, lo, hi };
-  }
-
-  // Range form: `<axis> <op> <value>`.
-  const range = /^([a-z-]+)\s*(<=|>=)\s*(.+)$/i.exec(text);
+  // Range form: `<axis> >= <value>` only.
+  const range = /^([a-z-]+)\s*(>=)\s*(.+)$/i.exec(text);
   if (range) {
     const axis = axisOfFeature(range[1]!.toLowerCase());
     const value = parseLength(range[3]!);
     if (!axis || value === null) return null;
-    switch (range[2]) {
-      case '>=':
-        return { axis, lo: value };
-      case '<=':
-        return { axis, hi: value };
-    }
+    return { axis, lo: value };
   }
 
   return null;
@@ -187,28 +162,27 @@ function splitCondition(cond: string): { groups: string[]; connective: string } 
 /**
  * Reduce a full container condition to a single-axis {@link ContainerBlock}
  * range, or `null` when it cannot be represented as one (empty, `or`/`not`
- * logic, a non-width/height feature, mixed axes, or an unparseable length).
- * `and`-combined groups intersect: `lo = max`, `hi = min`.
+ * logic/connective text, a non-width/height feature, mixed axes, or an
+ * unparseable length). `and`-combined inclusive lower bounds intersect by
+ * retaining their maximum lower bound.
  */
 function reduceCondition(cond: string): Omit<ContainerBlock, 'name' | 'condition'> | null {
   const split = splitCondition(cond);
   if (!split || split.groups.length === 0) return null;
-  // `or` / `not` cannot be a single contiguous range.
-  if (/\b(or|not)\b/.test(split.connective)) return null;
+  const connectives = split.connective.trim() === '' ? [] : split.connective.trim().split(/\s+/);
+  if (connectives.length !== split.groups.length - 1 || connectives.some((word) => word !== 'and')) return null;
 
   let axis: Axis | null = null;
   let lo = 0;
-  let hi = Infinity;
   for (const group of split.groups) {
     const bound = parseFeature(group);
     if (!bound) return null;
     if (axis === null) axis = bound.axis;
     else if (axis !== bound.axis) return null; // mixed width/height → not single-axis
-    if (bound.lo !== undefined) lo = Math.max(lo, bound.lo);
-    if (bound.hi !== undefined) hi = Math.min(hi, bound.hi);
+    lo = Math.max(lo, bound.lo);
   }
   if (axis === null) return null;
-  return { axis, lo, hi };
+  return { axis, lo };
 }
 
 // ---------------------------------------------------------------------------
@@ -244,13 +218,23 @@ function readContainerBlocks(css: string): { blocks: ContainerBlock[]; diagnosti
   while ((match = CONTAINER_MARKER.exec(blanked)) !== null) {
     depth = braceDepthDelta(blanked, depthFrom, match.index, depth);
     depthFrom = match.index;
-    if (depth > 0) continue; // nested @container — not a sheet-top-level block
+    if (depth > 0) {
+      diagnostics.push(
+        makeMigrationDiagnostic(
+          MIGRATE_CODES.unsupportedAtRule,
+          'A nested @container rule is outside the adapter\'s top-level safe subset and was refused.',
+          { path: ['@container', 'nested'], severity: 'error' },
+        ),
+      );
+      continue;
+    }
 
     const braceIdx = blanked.indexOf('{', CONTAINER_MARKER.lastIndex);
     if (braceIdx === -1) break;
 
     const prelude = normalized.slice(CONTAINER_MARKER.lastIndex, braceIdx).trim();
     const bodyEnd = skipSegment(normalized, braceIdx); // consume the balanced body
+    const bodyContainsNestedContainer = /@container(?![a-zA-Z0-9_-])/i.test(blanked.slice(braceIdx + 1, bodyEnd));
 
     // Split an optional leading container name off the parenthesized condition.
     const parenAt = prelude.indexOf('(');
@@ -280,6 +264,20 @@ function readContainerBlocks(css: string): { blocks: ContainerBlock[]; diagnosti
       }
     }
 
+    if (bodyContainsNestedContainer) {
+      diagnostics.push(
+        makeMigrationDiagnostic(
+          MIGRATE_CODES.unsupportedAtRule,
+          `@container "${name || '(anonymous)'}" contains a nested @container rule; nested query semantics were refused atomically.`,
+          { path: name ? [name, condition] : [condition || prelude], severity: 'error' },
+        ),
+      );
+      CONTAINER_MARKER.lastIndex = bodyEnd;
+      depthFrom = bodyEnd;
+      depth = 0;
+      continue;
+    }
+
     const reduced = condition === '' ? null : reduceCondition(condition);
     if (!reduced) {
       diagnostics.push(
@@ -290,7 +288,7 @@ function readContainerBlocks(css: string): { blocks: ContainerBlock[]; diagnosti
         ),
       );
     } else {
-      blocks.push({ name, axis: reduced.axis, lo: reduced.lo, hi: reduced.hi, condition });
+      blocks.push({ name, axis: reduced.axis, lo: reduced.lo, condition });
     }
 
     CONTAINER_MARKER.lastIndex = bodyEnd;
@@ -375,63 +373,44 @@ export function fromContainerQueries(css: string, options?: FromContainerQueries
       continue;
     }
 
-    // Source-order lower bounds — diagnose non-ascending / duplicate BEFORE sorting.
+    // Only a strictly ascending, collision-free source chain is faithful. CSS
+    // cascade order is observable, so sorting or collapsing would change it.
     const sourceLos = bucket.map((b) => b.lo);
-    let nonAscending = false;
-    for (let i = 1; i < sourceLos.length; i++) {
-      if (sourceLos[i]! < sourceLos[i - 1]!) nonAscending = true;
+    if (new Set(sourceLos).size !== sourceLos.length) {
+      diagnostics.push(
+        makeMigrationDiagnostic(
+          MIGRATE_CODES.ambiguousBreakpoint,
+          `@container blocks for "${first.name || '(anonymous)'}" (${axis}) declare duplicate inclusive thresholds [${sourceLos.join(', ')}]; the group was refused.`,
+          { path, severity: 'error' },
+        ),
+      );
+      continue;
     }
+    const nonAscending = sourceLos.some((value, index) => index > 0 && value < sourceLos[index - 1]!);
     if (nonAscending) {
       diagnostics.push(
         makeMigrationDiagnostic(
           MIGRATE_CODES.nonAscendingThresholds,
-          `@container thresholds for "${first.name || '(anonymous)'}" (${axis}) were not strictly ascending in source order [${sourceLos.join(', ')}]; sorted before defineBoundary.`,
-          { path },
+          `@container thresholds for "${first.name || '(anonymous)'}" (${axis}) are not strictly ascending in source order [${sourceLos.join(', ')}]; the group was refused rather than reordered.`,
+          { path, severity: 'error' },
         ),
       );
+      continue;
     }
-    // Duplicate lower bounds collapse to the same threshold and are ambiguous.
-    // Ordinary ascending `min-*` queries overlap by design: CSS cascade chooses
-    // the later matching rule, exactly as a threshold boundary chooses the
-    // highest admitted state. Do not misdiagnose that faithful overlap.
-    const duplicateLo = new Set(sourceLos).size < sourceLos.length;
-    if (duplicateLo) {
+
+    const stateNames = sourceLos.map((value) => `${prefix}-${Math.round(value)}`);
+    if (new Set(stateNames).size !== stateNames.length) {
       diagnostics.push(
         makeMigrationDiagnostic(
           MIGRATE_CODES.ambiguousBreakpoint,
-          `@container blocks for "${first.name || '(anonymous)'}" (${axis}) declared duplicate breakpoints in [${sourceLos.join(
-            ', ',
-          )}]; collapsed to distinct thresholds.`,
-          { path },
+          `@container thresholds for "${first.name || '(anonymous)'}" (${axis}) synthesize colliding state names [${stateNames.join(', ')}]; the group was refused.`,
+          { path, severity: 'error' },
         ),
       );
+      continue;
     }
 
-    // A finite upper bound (`hi`) is only represented when some block STARTS at it
-    // (its `lo` becomes that threshold). In a complete partition every finite `hi`
-    // coincides with the next block's `lo`, so nothing is lost; but a block whose
-    // finite `hi` is not the lower bound of any block in this group has its cutoff
-    // silently dropped by the lower-bounds-only reconstruction. Surface it rather
-    // than lose it (the adapter's no-silent-drift contract).
-    const loSet = new Set(sourceLos);
-    const uncoveredHis = [
-      ...new Set(bucket.filter((b) => Number.isFinite(b.hi) && !loSet.has(b.hi)).map((b) => b.hi)),
-    ].sort((a, b) => a - b);
-    if (uncoveredHis.length > 0) {
-      diagnostics.push(
-        makeMigrationDiagnostic(
-          MIGRATE_CODES.unsupportedAtRule,
-          `@container blocks for "${first.name || '(anonymous)'}" (${axis}) declared finite upper bound(s) [${uncoveredHis.join(
-            ', ',
-          )}] with no block starting there; the cutoff is not representable as a boundary threshold and was dropped.`,
-          { path },
-        ),
-      );
-    }
-
-    // Sort + dedupe the lower bounds into the ascending threshold list.
-    const thresholds = [...new Set(sourceLos)].sort((a, b) => a - b);
-    const at = thresholds.map((t) => [t, `${prefix}-${Math.round(t)}`] as const);
+    const at = sourceLos.map((t, index) => [t, stateNames[index]!] as const);
 
     try {
       const boundary = defineBoundary({ input, at: at as unknown as AtPairs });

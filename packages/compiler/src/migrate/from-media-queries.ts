@@ -2,15 +2,15 @@
  * `migrate/from-media-queries` — lower a foreign CSS `@media` stylesheet into
  * ordinary `@liteship/core` primitives.
  *
- * The dimensional media features (`min-width`, `max-width`, `width`, and their
- * `height` counterparts) are the ones with a first-class LiteShip signal: they
+ * The inclusive-min dimensional media features (`min-width` and `min-height`)
+ * are the ones with a first-class LiteShip signal: they
  * fold into a `defineBoundary` on `viewport.width` / `viewport.height`. This is
  * the exact inverse of the compiler's own emit convention (`css.ts`
  * `buildContainerQuery`: `(width < T1)`, `(width >= Ti) and (width < Ti+1)`,
  * `(width >= Tlast)`; `queryAxisOf`: `.height` → height else width) — a
- * `min-width: T` block applies at `width >= T`, so `T` is a boundary threshold;
- * a `max-width: T` block applies at `width <= T`, so the strict boundary sits at
- * `T + 1`. Every threshold is the lower bound of a synthesized state.
+ * `min-width: T` block applies at `width >= T`, so `T` is a boundary threshold.
+ * Finite-upper and exact predicates are refused because an unbounded threshold
+ * state cannot represent them faithfully.
  *
  * The discrete features are routed structurally:
  *  - `prefers-color-scheme: light|dark` → a `defineTheme` whose `light`/`dark`
@@ -297,10 +297,10 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
   const discreteConfigs: DiscreteConfig[] = [];
   const discreteInputs = new Set<string>();
 
-  // prefers-color-scheme overrides, per variant; top-level :root props are the
-  // shared light defaults.
-  const baseTokens: Record<string, string> = {};
-  const schemeVariants: { light?: Record<string, string>; dark?: Record<string, string> } = {};
+  // Resolved light/dark values in source order. A top-level :root declaration
+  // applies to both variants at its position; a color-scheme block applies only
+  // to its selected variant. This preserves CSS cascade ordering across the two.
+  const schemeValues: { light: Record<string, string>; dark: Record<string, string> } = { light: {}, dark: {} };
   let sawColorScheme = false;
 
   const addDiscrete = (feat: ParsedFeature): void => {
@@ -370,6 +370,38 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
       return;
     }
 
+    // Preflight dimensional features before mutating any shared accumulator.
+    // Only inclusive min predicates are faithful. Multiple min predicates on
+    // the same axis intersect at their maximum lower bound.
+    const dimensionThresholds = new Map<'width' | 'height', number>();
+    for (const feat of feats) {
+      const f = feat.feature;
+      if (!WIDTH_FEATURES.has(f) && !HEIGHT_FEATURES.has(f)) continue;
+      const px = parseLength(feat.value ?? '');
+      if (px === null) {
+        diagnostics.push(
+          makeMigrationDiagnostic(
+            MIGRATE_CODES.unmappableMediaFeature,
+            `Media feature "${f}" value "${feat.value ?? ''}" is not a supported CSS length; the complete block was refused.`,
+            { path: ['@media', prelude.trim(), f], severity: 'error' },
+          ),
+        );
+        return;
+      }
+      if (!f.startsWith('min-')) {
+        diagnostics.push(
+          makeMigrationDiagnostic(
+            MIGRATE_CODES.unsupportedAtRule,
+            `Media feature "${f}: ${feat.value ?? ''}" is a finite-upper or exact predicate that an unbounded LiteShip threshold cannot preserve; the complete block was refused.`,
+            { path: ['@media', prelude.trim(), f], severity: 'error' },
+          ),
+        );
+        return;
+      }
+      const axis = WIDTH_FEATURES.has(f) ? 'width' : 'height';
+      dimensionThresholds.set(axis, Math.max(dimensionThresholds.get(axis) ?? -Infinity, px));
+    }
+
     // The adapter mutates shared accumulators while lowering one block. Keep a
     // transaction checkpoint so an unsupported cross-target conjunction can be
     // refused as a WHOLE rather than returning independently active definitions.
@@ -380,55 +412,19 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
       discrete: discreteConfigs.length,
       discreteInputs: new Set(discreteInputs),
       sawColorScheme,
-      light: schemeVariants.light ? { ...schemeVariants.light } : undefined,
-      dark: schemeVariants.dark ? { ...schemeVariants.dark } : undefined,
+      light: { ...schemeValues.light },
+      dark: { ...schemeValues.dark },
     };
 
     // Distinct lowering targets in THIS block. An `and` conjoining features that
     // lower to DIFFERENT targets loses the "only together" semantics — each
     // target becomes an independent definition matched on its own.
     const targets = new Set<string>();
+    for (const axis of dimensionThresholds.keys()) targets.add(`${axis}-axis`);
     for (const feat of feats) {
       const f = feat.feature;
       if (WIDTH_FEATURES.has(f) || HEIGHT_FEATURES.has(f)) {
-        const px = parseLength(feat.value ?? '');
-        if (px === null) {
-          diagnostics.push(
-            makeMigrationDiagnostic(
-              MIGRATE_CODES.unmappableMediaFeature,
-              `Media feature "${f}" value "${feat.value ?? ''}" is not a length; skipped.`,
-              { path: [f] },
-            ),
-          );
-          continue;
-        }
-        // A `max-*` query is inclusive (`<= T`) and an EXACT `width`/`height` query
-        // is a point match, but the only lowering available is a `>= threshold`
-        // lower bound. Viewport/container widths are continuous, so both foldings
-        // are lossy — surface each (a faithful `min-*` lower bound is NOT flagged).
-        if (f.startsWith('max-')) {
-          diagnostics.push(
-            makeMigrationDiagnostic(
-              MIGRATE_CODES.lossyTokenConversion,
-              `"${f}: ${feat.value ?? ''}" is inclusive (<= ${px}px); migrated as a >= ${
-                px + 1
-              } threshold — a 1px integer approximation that is lossy at fractional widths.`,
-              { path: [f] },
-            ),
-          );
-        } else if (f === 'width' || f === 'height') {
-          diagnostics.push(
-            makeMigrationDiagnostic(
-              MIGRATE_CODES.lossyTokenConversion,
-              `Exact "${f}: ${feat.value ?? ''}" is a point match; migrated as an unbounded >= ${px} threshold (the state persists above ${px}) — no faithful discrete-threshold lowering exists.`,
-              { path: [f] },
-            ),
-          );
-        }
-        // max-* is inclusive (`<= T`); the strict boundary threshold is `T + 1`.
-        const threshold = f.startsWith('max-') ? px + 1 : px;
-        (WIDTH_FEATURES.has(f) ? widthValues : heightValues).push(threshold);
-        targets.add(WIDTH_FEATURES.has(f) ? 'width-axis' : 'height-axis');
+        continue; // committed once per axis after conjunction validation
       } else if (f === 'prefers-color-scheme') {
         const variant = (feat.value ?? '').toLowerCase();
         if (variant !== 'light' && variant !== 'dark') {
@@ -438,7 +434,7 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
         }
         sawColorScheme = true;
         const props = collectRootCustomProps(css, bodyStart, bodyEnd);
-        schemeVariants[variant] = { ...(schemeVariants[variant] ?? {}), ...props };
+        schemeValues[variant] = { ...schemeValues[variant], ...props };
         targets.add('color-scheme');
       } else {
         addDiscrete(feat);
@@ -458,10 +454,8 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
       discreteInputs.clear();
       for (const input of checkpoint.discreteInputs) discreteInputs.add(input);
       sawColorScheme = checkpoint.sawColorScheme;
-      if (checkpoint.light) schemeVariants.light = checkpoint.light;
-      else delete schemeVariants.light;
-      if (checkpoint.dark) schemeVariants.dark = checkpoint.dark;
-      else delete schemeVariants.dark;
+      schemeValues.light = checkpoint.light;
+      schemeValues.dark = checkpoint.dark;
       diagnostics.length = checkpoint.diagnostics;
       diagnostics.push(
         makeMigrationDiagnostic(
@@ -472,7 +466,13 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
           { path: ['@media', prelude.trim()], severity: 'error' },
         ),
       );
+      return;
     }
+
+    const widthThreshold = dimensionThresholds.get('width');
+    if (widthThreshold !== undefined) widthValues.push(widthThreshold);
+    const heightThreshold = dimensionThresholds.get('height');
+    if (heightThreshold !== undefined) heightValues.push(heightThreshold);
   };
 
   // -------------------------------------------------------------------------
@@ -542,7 +542,11 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
     if (selectorTargetsRoot(selector)) {
       const { props } = parseFlatDeclarations(css, bodyStart);
       for (const [p, v] of Object.entries(props)) {
-        if (p.startsWith('--')) baseTokens[p.slice(2)] = v;
+        if (p.startsWith('--')) {
+          const name = p.slice(2);
+          schemeValues.light[name] = v;
+          schemeValues.dark[name] = v;
+        }
       }
     }
     i = bodyEnd + 1;
@@ -554,34 +558,32 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
   const buildDimensionBoundary = (values: readonly number[], axis: 'width' | 'height'): void => {
     if (values.length === 0) return;
 
-    const seq = [0, ...values]; // base 0 is the implicit lower bound
-    const firstOcc = [...new Set(seq)]; // dedupe, first-occurrence order
-    const sorted = [...firstOcc].sort((a, b) => a - b);
-
-    const input = sourceToInput({ type: 'viewport', axis }) as string;
-
-    if (firstOcc.length !== seq.length) {
+    if (new Set(values).size !== values.length) {
       diagnostics.push(
         makeMigrationDiagnostic(
           MIGRATE_CODES.ambiguousBreakpoint,
-          `Duplicate ${axis} breakpoints collapsed (${seq.join(', ')} → ${sorted.join(', ')}).`,
-          { path: [input] },
+          `Duplicate ${axis} breakpoints in source order [${values.join(', ')}] cannot preserve CSS cascade identity; the boundary was refused.`,
+          { path: [sourceToInput({ type: 'viewport', axis }) as string], severity: 'error' },
         ),
       );
+      return;
     }
-    if (firstOcc.some((v, idx) => v !== sorted[idx])) {
+    const seq = values[0] === 0 ? [...values] : [0, ...values]; // base 0 is implicit unless explicitly authored
+
+    const input = sourceToInput({ type: 'viewport', axis }) as string;
+
+    if (seq.some((value, index) => index > 0 && value <= seq[index - 1]!)) {
       diagnostics.push(
         makeMigrationDiagnostic(
           MIGRATE_CODES.nonAscendingThresholds,
-          `${axis} breakpoints were not strictly ascending in source order; sorted (${firstOcc.join(
-            ', ',
-          )} → ${sorted.join(', ')}).`,
-          { path: [input] },
+          `${axis} breakpoints are not strictly ascending in source order [${seq.join(', ')}]; the boundary was refused rather than reordered.`,
+          { path: [input], severity: 'error' },
         ),
       );
+      return;
     }
 
-    const pairs = sorted.map((t) => [t, stateNameFor(t, prefix)] as const);
+    const pairs = seq.map((t) => [t, stateNameFor(t, prefix)] as const);
     try {
       boundaries.push(defineBoundary({ input, at: pairs as unknown as AtPairs }));
     } catch (e) {
@@ -627,8 +629,8 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
   // prefers-color-scheme → light/dark theme.
   // -------------------------------------------------------------------------
   if (sawColorScheme) {
-    const lightMap = { ...baseTokens, ...(schemeVariants.light ?? {}) };
-    const darkMap = { ...baseTokens, ...(schemeVariants.dark ?? {}) };
+    const lightMap = schemeValues.light;
+    const darkMap = schemeValues.dark;
     const names = [...new Set([...Object.keys(lightMap), ...Object.keys(darkMap)])];
     if (names.length > 0) {
       const tokens: Record<string, Record<'light' | 'dark', unknown>> = {};

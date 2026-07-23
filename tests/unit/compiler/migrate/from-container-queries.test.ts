@@ -61,7 +61,14 @@ describe('fromContainerQueries — explicit input ownership', () => {
 });
 
 describe('fromContainerQueries — refusal and diagnostic teeth', () => {
-  it.each(['width < 400px', 'width > 400px', 'width = 400px', 'width: 400px'])(
+  it.each([
+    'width < 400px',
+    'width > 400px',
+    'width = 400px',
+    'width: 400px',
+    'width <= 400px',
+    '100px <= width <= 400px',
+  ])(
     'refuses strict/exact condition %s rather than changing its edge semantics',
     (condition) => {
       const result = migrate(`@container (${condition}) { .x {} }`);
@@ -88,6 +95,7 @@ describe('fromContainerQueries — refusal and diagnostic teeth', () => {
     'not (width >= 400px)',
     '(width >= 200px) or (width >= 800px)',
     '(width >= 400px) and (height >= 400px)',
+    '(width >= 400px) banana (width >= 800px)',
     '(orientation: landscape)',
   ])('refuses unsupported condition %s', (condition) => {
     const result = migrate(`@container ${condition} { .x {} }`);
@@ -95,32 +103,66 @@ describe('fromContainerQueries — refusal and diagnostic teeth', () => {
     expect(result.diagnostics.some((d) => d.code === MIGRATE_CODES.unsupportedAtRule)).toBe(true);
   });
 
-  it('diagnoses duplicate and non-ascending lower bounds before sorting/deduping', () => {
+  it('refuses non-ascending lower bounds instead of reordering CSS cascade', () => {
     const result = migrate(`
       @container (min-width: 768px) { .x {} }
       @container (min-width: 500px) { .x {} }
-      @container (min-width: 500px) { .y {} }
     `);
     expect(result.diagnostics.some((d) => d.code === MIGRATE_CODES.nonAscendingThresholds)).toBe(true);
-    expect(result.diagnostics.some((d) => d.code === MIGRATE_CODES.ambiguousBreakpoint)).toBe(true);
-    expect([...result.boundaries[0]!.thresholds]).toEqual([500, 768]);
-  });
-
-  it('surfaces an unmatched finite max cutoff instead of silently dropping it', () => {
-    const result = migrate(`@container (max-width: 768px) { .x {} }`);
-    expect(result.boundaries).toHaveLength(1);
+    expect(result.boundaries).toEqual([]);
     expect(result.diagnostics).toContainEqual(
-      expect.objectContaining({ code: MIGRATE_CODES.unsupportedAtRule, message: expect.stringContaining('768') }),
+      expect.objectContaining({ code: MIGRATE_CODES.nonAscendingThresholds, severity: 'error' }),
     );
   });
 
-  it('catches defineBoundary failures as error diagnostics', () => {
+  it('refuses duplicate inclusive thresholds instead of collapsing their cascade identity', () => {
+    const result = migrate(`
+      @container (min-width: 500px) { .x {} }
+      @container (min-width: 500px) { .y {} }
+    `);
+    expect(result.boundaries).toEqual([]);
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({ code: MIGRATE_CODES.ambiguousBreakpoint, severity: 'error' }),
+    );
+  });
+
+  it('refuses a finite max cutoff instead of emitting an unbounded threshold', () => {
+    const result = migrate(`@container (max-width: 768px) { .x {} }`);
+    expect(result.boundaries).toEqual([]);
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({ code: MIGRATE_CODES.unsupportedAtRule, severity: 'error' }),
+    );
+  });
+
+  it('refuses synthesized state-name collisions before construction', () => {
     const result = migrate(`
       @container (min-width: 100.2px) { .x {} }
       @container (min-width: 100.4px) { .x {} }
     `);
     expect(result.boundaries).toEqual([]);
-    expect(result.diagnostics).toContainEqual(expect.objectContaining({ severity: 'error', cause: expect.anything() }));
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({ code: MIGRATE_CODES.ambiguousBreakpoint, severity: 'error' }),
+    );
+  });
+
+  it('refuses nested container queries atomically', () => {
+    const result = migrate(`
+      @container (min-width: 300px) {
+        @container (min-width: 600px) { .x {} }
+      }
+    `);
+    expect(result.boundaries).toEqual([]);
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({ code: MIGRATE_CODES.unsupportedAtRule, severity: 'error' }),
+    );
+  });
+
+  it('diagnoses a container query nested under another at-rule', () => {
+    const result = migrate(`@supports (display: grid) { @container (min-width: 300px) { .x {} } }`);
+    expect(result.boundaries).toEqual([]);
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({ code: MIGRATE_CODES.unsupportedAtRule, severity: 'error' }),
+    );
   });
 
   it('ignores markers inside comments and strings', () => {
